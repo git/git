@@ -190,7 +190,7 @@ test_expect_success "follow-parent is atomic" '
 	git svn init --minimize-url -i stunk "$svnrepo"/stunk &&
 	git svn fetch -i stunk &&
 	git svn init --minimize-url -i flunked "$svnrepo"/flunked &&
-	git svn fetch -i flunked
+	git svn fetch -i flunked &&
 	test "`git rev-parse --verify refs/remotes/flunk@18`" \
 	   = "`git rev-parse --verify refs/remotes/stunk`" &&
 	test "`git rev-parse --verify refs/remotes/flunk~1`" \

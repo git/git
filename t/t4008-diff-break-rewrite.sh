@@ -155,7 +155,7 @@ test_expect_success \
      git checkout-index -f -u -a &&
      sed -e "s/git/GIT/" file0 >file1 &&
      sed -e "s/git/GET/" file0 >file2 &&
-     rm -f file0
+     rm -f file0 &&
      git update-index --add --remove file0 file1 file2'
 
 test_expect_success \

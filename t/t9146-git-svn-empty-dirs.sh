@@ -33,7 +33,7 @@ test_expect_success 'more emptiness' '
 '
 
 test_expect_success 'git svn rebase creates empty directory' '
-	( cd cloned && git svn rebase )
+	( cd cloned && git svn rebase ) &&
 	test -d cloned/"! !"
 '
 

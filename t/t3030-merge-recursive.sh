@@ -544,7 +544,7 @@ test_expect_success 'reset and bind merge' '
 		echo "100644 $o0 0	c"
 		echo "100644 $o1 0	d/e"
 	) >expected &&
-	test_cmp expected actual
+	test_cmp expected actual &&
 
 	git read-tree --prefix=z/ master &&
 	git ls-files -s >actual &&

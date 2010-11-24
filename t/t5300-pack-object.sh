@@ -12,7 +12,7 @@ TRASH=`pwd`
 
 test_expect_success \
     'setup' \
-    'rm -f .git/index*
+    'rm -f .git/index* &&
      perl -e "print \"a\" x 4096;" > a &&
      perl -e "print \"b\" x 4096;" > b &&
      perl -e "print \"c\" x 4096;" > c &&

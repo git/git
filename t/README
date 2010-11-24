@@ -265,14 +265,11 @@ Do:
 	test ...
 
    That way all of the commands in your tests will succeed or fail. If
-   you must ignore the return value of something (e.g., the return
-   after unsetting a variable that was already unset is unportable) it's
-   best to indicate so explicitly with a semicolon:
-
-	unset HLAGH;
-	git merge hla &&
-	git push gh &&
-	test ...
+   you must ignore the return value of something, consider using a
+   helper function (e.g. use sane_unset instead of unset, in order
+   to avoid unportable return value for unsetting a variable that was
+   already unset), or prepending the command with test_might_fail or
+   test_must_fail.
 
  - Check the test coverage for your tests. See the "Test coverage"
    below.
@@ -401,13 +398,6 @@ library for your script to use.
    Like test_expect_success this function can optionally use a three
    argument invocation with a prerequisite as the first argument.
 
- - test_expect_code [<prereq>] <code> <message> <script>
-
-   Analogous to test_expect_success, but pass the test if it exits
-   with a given exit <code>
-
- test_expect_code 1 'Merge with d/f conflicts' 'git merge "merge msg" B master'
-
  - test_debug <script>
 
    This takes a single argument, <script>, and evaluates it only
@@ -488,6 +478,15 @@ library for your script to use.
 	    'Perl API' \
 	    "$PERL_PATH" "$TEST_DIRECTORY"/t9700/test.pl
 
+ - test_expect_code <exit-code> <command>
+
+   Run a command and ensure that it exits with the given exit code.
+   For example:
+
+	test_expect_success 'Merge with d/f conflicts' '
+		test_expect_code 1 git merge "merge msg" B master
+	'
+
  - test_must_fail <git-command>
 
    Run a git command and ensure it fails in a controlled way.  Use
@@ -506,6 +505,10 @@ library for your script to use.
    Check whether the content of the <actual> file matches the
    <expected> file.  This behaves like "cmp" but produces more
    helpful output when the test is run with "-v" option.
+
+ - test_line_count (= | -lt | -ge | ...) <length> <file>
+
+   Check whether a file has the length it is expected to.
 
  - test_path_is_file <file> [<diagnosis>]
    test_path_is_dir <dir> [<diagnosis>]

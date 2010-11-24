@@ -252,8 +252,8 @@ test_expect_success 'committer is automatic' '
 
 	echo >>negative &&
 	(
-		unset GIT_COMMITTER_EMAIL
-		unset GIT_COMMITTER_NAME
+		sane_unset GIT_COMMITTER_EMAIL &&
+		sane_unset GIT_COMMITTER_NAME &&
 		# must fail because there is no change
 		test_must_fail git commit -e -m "sample"
 	) &&
@@ -390,7 +390,7 @@ try_commit_status_combo () {
 
 	test_expect_success 'commit --no-status' '
 		clear_config commit.status &&
-		try_commit --no-status
+		try_commit --no-status &&
 		! grep "^# Changes to be committed:" .git/COMMIT_EDITMSG
 	'
 

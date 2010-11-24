@@ -38,7 +38,7 @@ test_expect_success \
     'prepare reference tree' \
     'echo "1A quick brown fox jumps over the" >file &&
      echo "lazy dog" >>file &&
-     git add file
+     git add file &&
      GIT_AUTHOR_NAME="A" git commit -a -m "Initial."'
 
 test_expect_success \

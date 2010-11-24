@@ -176,9 +176,8 @@ test_expect_success 'trailing whitespace & no newline at the end of file' '
 '
 
 test_expect_success 'blank at EOF with --whitespace=fix (1)' '
-	: these can fail depending on what we did before
-	git config --unset core.whitespace
-	rm -f .gitattributes
+	test_might_fail git config --unset core.whitespace &&
+	rm -f .gitattributes &&
 
 	{ echo a; echo b; echo c; } >one &&
 	git add one &&
@@ -368,7 +367,7 @@ test_expect_success 'missing blanks at EOF must only match blank lines' '
 	git diff -- one >patch &&
 
 	echo a >one &&
-	test_must_fail git apply patch
+	test_must_fail git apply patch &&
 	test_must_fail git apply --whitespace=fix patch &&
 	test_must_fail git apply --ignore-space-change --whitespace=fix patch
 '
@@ -419,7 +418,7 @@ test_expect_success 'same, but with CR-LF line endings && cr-at-eol set' '
 	printf "b\r\n" >>one &&
 	printf "c\r\n" >>one &&
 	cp one save-one &&
-	printf "                 \r\n" >>one
+	printf "                 \r\n" >>one &&
 	git add one &&
 	printf "d\r\n" >>one &&
 	cp one expect &&
@@ -436,7 +435,7 @@ test_expect_success 'same, but with CR-LF line endings && cr-at-eol unset' '
 	printf "b\r\n" >>one &&
 	printf "c\r\n" >>one &&
 	cp one save-one &&
-	printf "                 \r\n" >>one
+	printf "                 \r\n" >>one &&
 	git add one &&
 	cp one expect &&
 	printf "d\r\n" >>one &&

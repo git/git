@@ -56,7 +56,7 @@ test_expect_success 'loose objects in alternate ODB are not repacked' '
 '
 
 test_expect_success 'packed obs in alt ODB are repacked even when local repo is packless' '
-	mkdir alt_objects/pack
+	mkdir alt_objects/pack &&
 	mv .git/objects/pack/* alt_objects/pack &&
 	git repack -a &&
 	myidx=$(ls -1 .git/objects/pack/*.idx) &&
@@ -95,14 +95,14 @@ test_expect_success 'packed obs in alternate ODB kept pack are repacked' '
 	# swap the .keep so the commit object is in the pack with .keep
 	for p in alt_objects/pack/*.pack
 	do
-		base_name=$(basename $p .pack)
+		base_name=$(basename $p .pack) &&
 		if test -f alt_objects/pack/$base_name.keep
 		then
 			rm alt_objects/pack/$base_name.keep
 		else
 			touch alt_objects/pack/$base_name.keep
 		fi
-	done
+	done &&
 	git repack -a -d &&
 	myidx=$(ls -1 .git/objects/pack/*.idx) &&
 	test -f "$myidx" &&

@@ -123,7 +123,7 @@ test_expect_success 'bob works and pushes again' '
 	(
 		cd alice-pub &&
 		git cat-file commit master >../bob-work/commit
-	)
+	) &&
 	(
 		# This time Bob does not pull from Alice, and
 		# the master branch at her public repository points

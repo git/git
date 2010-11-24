@@ -439,7 +439,7 @@ test_expect_success 'checkout when deleting .gitattributes' '
 	git rm .gitattributes &&
 	echo "contentsQ" | q_to_cr > .file2 &&
 	git add .file2 &&
-	git commit -m third
+	git commit -m third &&
 
 	git checkout master~1 &&
 	git checkout master &&

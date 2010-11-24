@@ -36,11 +36,12 @@ prepare_output () {
 	git diff --color >output
 	$grep_a "$blue_grep" output >error
 	$grep_a -v "$blue_grep" output >normal
+	return 0
 }
 
 test_expect_success default '
 
-	prepare_output
+	prepare_output &&
 
 	grep Eight normal >/dev/null &&
 	grep HT error >/dev/null &&
@@ -52,8 +53,8 @@ test_expect_success default '
 
 test_expect_success 'without -trail' '
 
-	git config core.whitespace -trail
-	prepare_output
+	git config core.whitespace -trail &&
+	prepare_output &&
 
 	grep Eight normal >/dev/null &&
 	grep HT error >/dev/null &&
@@ -65,9 +66,9 @@ test_expect_success 'without -trail' '
 
 test_expect_success 'without -trail (attribute)' '
 
-	git config --unset core.whitespace
-	echo "F whitespace=-trail" >.gitattributes
-	prepare_output
+	test_might_fail git config --unset core.whitespace &&
+	echo "F whitespace=-trail" >.gitattributes &&
+	prepare_output &&
 
 	grep Eight normal >/dev/null &&
 	grep HT error >/dev/null &&
@@ -79,9 +80,9 @@ test_expect_success 'without -trail (attribute)' '
 
 test_expect_success 'without -space' '
 
-	rm -f .gitattributes
-	git config core.whitespace -space
-	prepare_output
+	rm -f .gitattributes &&
+	git config core.whitespace -space &&
+	prepare_output &&
 
 	grep Eight normal >/dev/null &&
 	grep HT normal >/dev/null &&
@@ -93,9 +94,9 @@ test_expect_success 'without -space' '
 
 test_expect_success 'without -space (attribute)' '
 
-	git config --unset core.whitespace
-	echo "F whitespace=-space" >.gitattributes
-	prepare_output
+	test_might_fail git config --unset core.whitespace &&
+	echo "F whitespace=-space" >.gitattributes &&
+	prepare_output &&
 
 	grep Eight normal >/dev/null &&
 	grep HT normal >/dev/null &&
@@ -107,9 +108,9 @@ test_expect_success 'without -space (attribute)' '
 
 test_expect_success 'with indent-non-tab only' '
 
-	rm -f .gitattributes
-	git config core.whitespace indent,-trailing,-space
-	prepare_output
+	rm -f .gitattributes &&
+	git config core.whitespace indent,-trailing,-space &&
+	prepare_output &&
 
 	grep Eight error >/dev/null &&
 	grep HT normal >/dev/null &&
@@ -121,9 +122,9 @@ test_expect_success 'with indent-non-tab only' '
 
 test_expect_success 'with indent-non-tab only (attribute)' '
 
-	git config --unset core.whitespace
-	echo "F whitespace=indent,-trailing,-space" >.gitattributes
-	prepare_output
+	test_might_fail git config --unset core.whitespace &&
+	echo "F whitespace=indent,-trailing,-space" >.gitattributes &&
+	prepare_output &&
 
 	grep Eight error >/dev/null &&
 	grep HT normal >/dev/null &&
@@ -135,9 +136,9 @@ test_expect_success 'with indent-non-tab only (attribute)' '
 
 test_expect_success 'with cr-at-eol' '
 
-	rm -f .gitattributes
-	git config core.whitespace cr-at-eol
-	prepare_output
+	rm -f .gitattributes &&
+	git config core.whitespace cr-at-eol &&
+	prepare_output &&
 
 	grep Eight normal >/dev/null &&
 	grep HT error >/dev/null &&
@@ -149,9 +150,9 @@ test_expect_success 'with cr-at-eol' '
 
 test_expect_success 'with cr-at-eol (attribute)' '
 
-	git config --unset core.whitespace
-	echo "F whitespace=trailing,cr-at-eol" >.gitattributes
-	prepare_output
+	test_might_fail git config --unset core.whitespace &&
+	echo "F whitespace=trailing,cr-at-eol" >.gitattributes &&
+	prepare_output &&
 
 	grep Eight normal >/dev/null &&
 	grep HT error >/dev/null &&
@@ -179,11 +180,11 @@ test_expect_success 'trailing empty lines (2)' '
 '
 
 test_expect_success 'do not color trailing cr in context' '
-	git config --unset core.whitespace
+	test_might_fail git config --unset core.whitespace &&
 	rm -f .gitattributes &&
 	echo AAAQ | tr Q "\015" >G &&
 	git add G &&
-	echo BBBQ | tr Q "\015" >>G
+	echo BBBQ | tr Q "\015" >>G &&
 	git diff --color G | tr "\015" Q >output &&
 	grep "BBB.*${blue_grep}Q" output &&
 	grep "AAA.*\[mQ" output

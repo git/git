@@ -74,7 +74,6 @@ test_expect_success 'extra character after attribute' '
 '
 
 test_expect_success 'unknown color slots are ignored (diff)' '
-	git config --unset diff.color.new
 	git config color.diff.nosuchslotwilleverbedefined white &&
 	git diff --color
 '

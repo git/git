@@ -31,7 +31,7 @@ test_expect_success 'apply same filename with independent changes' '
 '
 
 test_expect_success 'apply same filename with overlapping changes' '
-	git reset --hard
+	git reset --hard &&
 	modify "s/^d/z/" same_fn &&
 	git diff > patch0 &&
 	git add same_fn &&
@@ -44,8 +44,8 @@ test_expect_success 'apply same filename with overlapping changes' '
 '
 
 test_expect_success 'apply same new filename after rename' '
-	git reset --hard
-	git mv same_fn new_fn
+	git reset --hard &&
+	git mv same_fn new_fn &&
 	modify "s/^d/z/" new_fn &&
 	git add new_fn &&
 	git diff -M --cached > patch1 &&
@@ -58,12 +58,12 @@ test_expect_success 'apply same new filename after rename' '
 '
 
 test_expect_success 'apply same old filename after rename -- should fail.' '
-	git reset --hard
-	git mv same_fn new_fn
+	git reset --hard &&
+	git mv same_fn new_fn &&
 	modify "s/^d/z/" new_fn &&
 	git add new_fn &&
 	git diff -M --cached > patch1 &&
-	git mv new_fn same_fn
+	git mv new_fn same_fn &&
 	modify "s/^e/y/" same_fn &&
 	git diff >> patch1 &&
 	git reset --hard &&
@@ -71,13 +71,13 @@ test_expect_success 'apply same old filename after rename -- should fail.' '
 '
 
 test_expect_success 'apply A->B (rename), C->A (rename), A->A -- should pass.' '
-	git reset --hard
-	git mv same_fn new_fn
+	git reset --hard &&
+	git mv same_fn new_fn &&
 	modify "s/^d/z/" new_fn &&
 	git add new_fn &&
 	git diff -M --cached > patch1 &&
 	git commit -m "a rename" &&
-	git mv other_fn same_fn
+	git mv other_fn same_fn &&
 	modify "s/^e/y/" same_fn &&
 	git add same_fn &&
 	git diff -M --cached >> patch1 &&

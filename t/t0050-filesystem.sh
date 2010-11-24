@@ -12,14 +12,14 @@ unibad=
 no_symlinks=
 test_expect_success 'see what we expect' '
 
-	test_case=test_expect_success
-	test_unicode=test_expect_success
+	test_case=test_expect_success &&
+	test_unicode=test_expect_success &&
 	mkdir junk &&
 	echo good >junk/CamelCase &&
 	echo bad >junk/camelcase &&
 	if test "$(cat junk/CamelCase)" != good
 	then
-		test_case=test_expect_failure
+		test_case=test_expect_failure &&
 		case_insensitive=t
 	fi &&
 	rm -fr junk &&
@@ -27,7 +27,7 @@ test_expect_success 'see what we expect' '
 	>junk/"$auml" &&
 	case "$(cd junk && echo *)" in
 	"$aumlcdiar")
-		test_unicode=test_expect_failure
+		test_unicode=test_expect_failure &&
 		unibad=t
 		;;
 	*)	;;
@@ -36,7 +36,7 @@ test_expect_success 'see what we expect' '
 	{
 		ln -s x y 2> /dev/null &&
 		test -h y 2> /dev/null ||
-		no_symlinks=1
+		no_symlinks=1 &&
 		rm -f y
 	}
 '
@@ -128,7 +128,7 @@ test_expect_success "setup unicode normalization tests" '
   cd unicode &&
   touch "$aumlcdiar" &&
   git add "$aumlcdiar" &&
-  git commit -m initial
+  git commit -m initial &&
   git tag initial &&
   git checkout -b topic &&
   git mv $aumlcdiar tmp &&

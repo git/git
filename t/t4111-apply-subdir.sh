@@ -89,7 +89,7 @@ test_expect_success 'apply --index from subdir of toplevel' '
 test_expect_success 'apply from .git dir' '
 	cp postimage expected &&
 	cp preimage .git/file &&
-	cp preimage .git/objects/file
+	cp preimage .git/objects/file &&
 	(
 		cd .git &&
 		git apply "$patch"
@@ -100,7 +100,7 @@ test_expect_success 'apply from .git dir' '
 test_expect_success 'apply from subdir of .git dir' '
 	cp postimage expected &&
 	cp preimage .git/file &&
-	cp preimage .git/objects/file
+	cp preimage .git/objects/file &&
 	(
 		cd .git/objects &&
 		git apply "$patch"

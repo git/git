@@ -40,7 +40,7 @@ extra1    line above used to cause a segfault but no longer does
 EOF
 
 test_expect_success 'test --parseopt help output' '
-	git rev-parse --parseopt -- -h > output < optionspec
+	test_expect_code 129 git rev-parse --parseopt -- -h > output < optionspec &&
 	test_cmp expect output
 '
 

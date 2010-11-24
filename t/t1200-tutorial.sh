@@ -42,7 +42,7 @@ test_expect_success 'git diff' '
 '
 
 test_expect_success 'tree' '
-	tree=$(git write-tree 2>/dev/null)
+	tree=$(git write-tree 2>/dev/null) &&
 	test 8988da15d077d4829fc51d8544c097def6644dbb = $tree
 '
 
