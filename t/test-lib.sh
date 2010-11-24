@@ -248,6 +248,10 @@ test_decode_color () {
 		-e 's/.\[m/<RESET>/g'
 }
 
+nul_to_q () {
+	perl -pe 'y/\000/Q/'
+}
+
 q_to_nul () {
 	perl -pe 'y/Q/\000/'
 }
