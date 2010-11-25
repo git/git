@@ -14,8 +14,12 @@ SYNOPSIS
 'git notes' append [-F <file> | -m <msg> | (-c | -C) <object>] [<object>]
 'git notes' edit [<object>]
 'git notes' show [<object>]
+'git notes' merge [-v | -q] [-s <strategy> ] <notes_ref>
+'git notes' merge --commit [-v | -q]
+'git notes' merge --abort [-v | -q]
 'git notes' remove [<object>]
 'git notes' prune [-n | -v]
+'git notes' get-ref
 
 
 DESCRIPTION
@@ -83,6 +87,21 @@ edit::
 show::
 	Show the notes for a given object (defaults to HEAD).
 
+merge::
+	Merge the given notes ref into the current notes ref.
+	This will try to merge the changes made by the given
+	notes ref (called "remote") since the merge-base (if
+	any) into the current notes ref (called "local").
++
+If conflicts arise and a strategy for automatically resolving
+conflicting notes (see the -s/--strategy option) is not given,
+the "manual" resolver is used. This resolver checks out the
+conflicting notes in a special worktree (`.git/NOTES_MERGE_WORKTREE`),
+and instructs the user to manually resolve the conflicts there.
+When done, the user can either finalize the merge with
+'git notes merge --commit', or abort the merge with
+'git notes merge --abort'.
+
 remove::
 	Remove the notes for a given object (defaults to HEAD).
 	This is equivalent to specifying an empty note message to
@@ -90,6 +109,10 @@ remove::
 
 prune::
 	Remove all notes for non-existing/unreachable objects.
+
+get-ref::
+	Print the current notes ref. This provides an easy way to
+	retrieve the current notes ref (e.g. from scripts).
 
 OPTIONS
 -------
@@ -133,9 +156,37 @@ OPTIONS
 	Do not remove anything; just report the object names whose notes
 	would be removed.
 
+-s <strategy>::
+--strategy=<strategy>::
+	When merging notes, resolve notes conflicts using the given
+	strategy. The following strategies are recognized: "manual"
+	(default), "ours", "theirs", "union" and "cat_sort_uniq".
+	See the "NOTES MERGE STRATEGIES" section below for more
+	information on each notes merge strategy.
+
+--commit::
+	Finalize an in-progress 'git notes merge'. Use this option
+	when you have resolved the conflicts that 'git notes merge'
+	stored in .git/NOTES_MERGE_WORKTREE. This amends the partial
+	merge commit created by 'git notes merge' (stored in
+	.git/NOTES_MERGE_PARTIAL) by adding the notes in
+	.git/NOTES_MERGE_WORKTREE. The notes ref stored in the
+	.git/NOTES_MERGE_REF symref is updated to the resulting commit.
+
+--abort::
+	Abort/reset a in-progress 'git notes merge', i.e. a notes merge
+	with conflicts. This simply removes all files related to the
+	notes merge.
+
+-q::
+--quiet::
+	When merging notes, operate quietly.
+
 -v::
 --verbose::
-	Report all object names whose notes are removed.
+	When merging notes, be more verbose.
+	When pruning notes, report all object names whose notes are
+	removed.
 
 
 DISCUSSION
@@ -161,6 +212,38 @@ These details may change in the future.
 It is also permitted for a notes ref to point directly to a tree
 object, in which case the history of the notes can be read with
 `git log -p -g <refname>`.
+
+
+NOTES MERGE STRATEGIES
+----------------------
+
+The default notes merge strategy is "manual", which checks out
+conflicting notes in a special work tree for resolving notes conflicts
+(`.git/NOTES_MERGE_WORKTREE`), and instructs the user to resolve the
+conflicts in that work tree.
+When done, the user can either finalize the merge with
+'git notes merge --commit', or abort the merge with
+'git notes merge --abort'.
+
+"ours" automatically resolves conflicting notes in favor of the local
+version (i.e. the current notes ref).
+
+"theirs" automatically resolves notes conflicts in favor of the remote
+version (i.e. the given notes ref being merged into the current notes
+ref).
+
+"union" automatically resolves notes conflicts by concatenating the
+local and remote versions.
+
+"cat_sort_uniq" is similar to "union", but in addition to concatenating
+the local and remote versions, this strategy also sorts the resulting
+lines, and removes duplicate lines from the result. This is equivalent
+to applying the "cat | sort | uniq" shell pipeline to the local and
+remote versions. This strategy is useful if the notes follow a line-based
+format where one wants to avoid duplicated lines in the merge result.
+Note that if either the local or remote version contain duplicate lines
+prior to the merge, these will also be removed by this notes merge
+strategy.
 
 
 EXAMPLES

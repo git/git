@@ -12,7 +12,10 @@
  * resulting SHA1 into the first SHA1 argument (cur_sha1). A non-zero return
  * value indicates failure.
  *
- * The two given SHA1s must both be non-NULL and different from each other.
+ * The two given SHA1s shall both be non-NULL and different from each other.
+ * Either of them (but not both) may be == null_sha1, which indicates an
+ * empty/non-existent note. If the resulting SHA1 (cur_sha1) is == null_sha1,
+ * the note will be removed from the notes tree.
  *
  * The default combine_notes function (you get this when passing NULL) is
  * combine_notes_concatenate(), which appends the contents of the new note to
@@ -24,6 +27,7 @@ typedef int (*combine_notes_fn)(unsigned char *cur_sha1, const unsigned char *ne
 int combine_notes_concatenate(unsigned char *cur_sha1, const unsigned char *new_sha1);
 int combine_notes_overwrite(unsigned char *cur_sha1, const unsigned char *new_sha1);
 int combine_notes_ignore(unsigned char *cur_sha1, const unsigned char *new_sha1);
+int combine_notes_cat_sort_uniq(unsigned char *cur_sha1, const unsigned char *new_sha1);
 
 /*
  * Notes tree object
@@ -42,6 +46,20 @@ extern struct notes_tree {
 	int initialized;
 	int dirty;
 } default_notes_tree;
+
+/*
+ * Return the default notes ref.
+ *
+ * The default notes ref is the notes ref that is used when notes_ref == NULL
+ * is passed to init_notes().
+ *
+ * This the first of the following to be defined:
+ * 1. The '--ref' option to 'git notes', if given
+ * 2. The $GIT_NOTES_REF environment variable, if set
+ * 3. The value of the core.notesRef config variable, if set
+ * 4. GIT_NOTES_DEFAULT_REF (i.e. "refs/notes/commits")
+ */
+const char *default_notes_ref(void);
 
 /*
  * Flags controlling behaviour of notes tree initialization
@@ -76,11 +94,24 @@ void init_notes(struct notes_tree *t, const char *notes_ref,
 /*
  * Add the given note object to the given notes_tree structure
  *
+ * If there already exists a note for the given object_sha1, the given
+ * combine_notes function is invoked to break the tie. If not given (i.e.
+ * combine_notes == NULL), the default combine_notes function for the given
+ * notes_tree is used.
+ *
+ * Passing note_sha1 == null_sha1 indicates the addition of an
+ * empty/non-existent note. This is a (potentially expensive) no-op unless
+ * there already exists a note for the given object_sha1, AND combining that
+ * note with the empty note (using the given combine_notes function) results
+ * in a new/changed note.
+ *
+ * Returns zero on success; non-zero means combine_notes failed.
+ *
  * IMPORTANT: The changes made by add_note() to the given notes_tree structure
  * are not persistent until a subsequent call to write_notes_tree() returns
  * zero.
  */
-void add_note(struct notes_tree *t, const unsigned char *object_sha1,
+int add_note(struct notes_tree *t, const unsigned char *object_sha1,
 		const unsigned char *note_sha1, combine_notes_fn combine_notes);
 
 /*
@@ -105,11 +136,18 @@ const unsigned char *get_note(struct notes_tree *t,
 /*
  * Copy a note from one object to another in the given notes_tree.
  *
- * Fails if the to_obj already has a note unless 'force' is true.
+ * Returns 1 if the to_obj already has a note and 'force' is false. Otherwise,
+ * returns non-zero if 'force' is true, but the given combine_notes function
+ * failed to combine from_obj's note with to_obj's existing note.
+ * Returns zero on success.
+ *
+ * IMPORTANT: The changes made by copy_note() to the given notes_tree structure
+ * are not persistent until a subsequent call to write_notes_tree() returns
+ * zero.
  */
 int copy_note(struct notes_tree *t,
 	      const unsigned char *from_obj, const unsigned char *to_obj,
-	      int force, combine_notes_fn combine_fn);
+	      int force, combine_notes_fn combine_notes);
 
 /*
  * Flags controlling behaviour of for_each_note()
@@ -151,6 +189,7 @@ int copy_note(struct notes_tree *t,
  * notes tree) from within the callback:
  * - add_note()
  * - remove_note()
+ * - copy_note()
  * - free_notes()
  */
 typedef int each_note_fn(const unsigned char *object_sha1,
