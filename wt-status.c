@@ -744,10 +744,20 @@ static void wt_shortstatus_status(int null_termination, struct string_list_item 
 		const char *one;
 		if (d->head_path) {
 			one = quote_path(d->head_path, -1, &onebuf, s->prefix);
+			if (*one != '"' && strchr(one, ' ') != NULL) {
+				putchar('"');
+				strbuf_addch(&onebuf, '"');
+				one = onebuf.buf;
+			}
 			printf("%s -> ", one);
 			strbuf_release(&onebuf);
 		}
 		one = quote_path(it->string, -1, &onebuf, s->prefix);
+		if (*one != '"' && strchr(one, ' ') != NULL) {
+			putchar('"');
+			strbuf_addch(&onebuf, '"');
+			one = onebuf.buf;
+		}
 		printf("%s\n", one);
 		strbuf_release(&onebuf);
 	}
