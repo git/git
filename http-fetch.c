@@ -14,8 +14,7 @@ int main(int argc, const char **argv)
 	int commits;
 	const char **write_ref = NULL;
 	char **commit_id;
-	const char *url;
-	char *rewritten_url = NULL;
+	char *url = NULL;
 	int arg = 1;
 	int rc = 0;
 	int get_tree = 0;
@@ -57,18 +56,13 @@ int main(int argc, const char **argv)
 		commit_id = (char **) &argv[arg++];
 		commits = 1;
 	}
-	url = argv[arg];
+
+	if (argv[arg])
+		str_end_url_with_slash(argv[arg], &url);
 
 	prefix = setup_git_directory();
 
 	git_config(git_default_config, NULL);
-
-	if (url && url[strlen(url)-1] != '/') {
-		rewritten_url = xmalloc(strlen(url)+2);
-		strcpy(rewritten_url, url);
-		strcat(rewritten_url, "/");
-		url = rewritten_url;
-	}
 
 	http_init(NULL);
 	walker = get_http_walker(url);
@@ -93,7 +87,7 @@ int main(int argc, const char **argv)
 	walker_free(walker);
 	http_cleanup();
 
-	free(rewritten_url);
+	free(url);
 
 	return rc;
 }
