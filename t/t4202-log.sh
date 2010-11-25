@@ -422,6 +422,15 @@ test_expect_success 'log.decorate configuration' '
 	test_cmp expect.full actual &&
 
 	git config --unset-all log.decorate &&
+	git config log.decorate 1 &&
+	git log --oneline >actual &&
+	test_cmp expect.short actual &&
+	git log --oneline --decorate=full >actual &&
+	test_cmp expect.full actual &&
+	git log --oneline --decorate=no >actual &&
+	test_cmp expect.none actual &&
+
+	git config --unset-all log.decorate &&
 	git config log.decorate short &&
 	git log --oneline >actual &&
 	test_cmp expect.short actual &&
