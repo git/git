@@ -8,12 +8,17 @@ git-diff - Show changes between commits, commit and working tree, etc
 
 SYNOPSIS
 --------
-'git diff' [<common diff options>] <commit>{0,2} [--] [<path>...]
+[verse]
+'git diff' [options] [<commit>] [--] [<path>...]
+'git diff' [options] --cached [<commit>] [--] [<path>...]
+'git diff' [options] <commit> <commit> [--] [<path>...]
+'git diff' [options] [--no-index] [--] <path> <path>
 
 DESCRIPTION
 -----------
-Show changes between two trees, a tree and the working tree, a
-tree and the index file, or the index file and the working tree.
+Show changes between the working tree and the index or a tree, changes
+between the index and a tree, changes between two trees, or changes
+between two files on disk.
 
 'git diff' [--options] [--] [<path>...]::
 
