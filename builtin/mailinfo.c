@@ -1032,7 +1032,7 @@ int cmd_mailinfo(int argc, const char **argv, const char *prefix)
 	 */
 	git_config(git_mailinfo_config, NULL);
 
-	def_charset = (git_commit_encoding ? git_commit_encoding : "UTF-8");
+	def_charset = get_commit_output_encoding();
 	metainfo_charset = def_charset;
 
 	while (1 < argc && argv[1][0] == '-') {
