@@ -2,6 +2,7 @@
 #include "pack.h"
 #include "sideband.h"
 #include "run-command.h"
+#include "url.h"
 
 int data_received;
 int active_requests;
@@ -726,13 +727,6 @@ static inline int hex(int v)
 		return '0' + v;
 	else
 		return 'A' + v - 10;
-}
-
-void end_url_with_slash(struct strbuf *buf, const char *url)
-{
-	strbuf_addstr(buf, url);
-	if (buf->len && buf->buf[buf->len - 1] != '/')
-		strbuf_addstr(buf, "/");
 }
 
 static char *quote_ref_url(const char *base, const char *ref)

@@ -7,4 +7,6 @@ extern char *url_decode(const char *url);
 extern char *url_decode_parameter_name(const char **query);
 extern char *url_decode_parameter_value(const char **query);
 
+extern void end_url_with_slash(struct strbuf *buf, const char *url);
+
 #endif /* URL_H */
