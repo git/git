@@ -34,6 +34,13 @@ test_expect_success 'clone http repository' '
 	test_cmp file clone/file
 '
 
+test_expect_success 'clone http repository with authentication' '
+	mkdir "$HTTPD_DOCUMENT_ROOT_PATH/auth/" &&
+	cp -Rf "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" "$HTTPD_DOCUMENT_ROOT_PATH/auth/repo.git" &&
+	git clone $AUTH_HTTPD_URL/auth/repo.git clone-auth &&
+	test_cmp file clone-auth/file
+'
+
 test_expect_success 'fetch changes via http' '
 	echo content >>file &&
 	git commit -a -m two &&
