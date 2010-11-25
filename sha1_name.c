@@ -206,7 +206,9 @@ const char *find_unique_abbrev(const unsigned char *sha1, int len)
 		if (exists
 		    ? !status
 		    : status == SHORT_NAME_NOT_FOUND) {
-			hex[len] = 0;
+			int cut_at = len + unique_abbrev_extra_length;
+			cut_at = (cut_at < 40) ? cut_at : 40;
+			hex[cut_at] = 0;
 			return hex;
 		}
 		len++;
