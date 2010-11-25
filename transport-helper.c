@@ -9,6 +9,11 @@
 #include "remote.h"
 #include "string-list.h"
 
+#ifndef NO_PTHREADS
+#include <pthread.h>
+#include "thread-utils.h"
+#endif
+
 static int debug;
 
 struct helper_data
