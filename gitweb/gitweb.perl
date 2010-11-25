@@ -601,6 +601,14 @@ sub filter_snapshot_fmts {
 		!$known_snapshot_formats{$_}{'disabled'}} @fmts;
 }
 
+# If it is set to code reference, it is code that it is to be run once per
+# request, allowing updating configurations that change with each request,
+# while running other code in config file only once.
+#
+# Otherwise, if it is false then gitweb would process config file only once;
+# if it is true then gitweb config would be run for each request.
+our $per_request_config = 1;
+
 our ($GITWEB_CONFIG, $GITWEB_CONFIG_SYSTEM);
 sub evaluate_gitweb_config {
 	our $GITWEB_CONFIG = $ENV{'GITWEB_CONFIG'} || "++GITWEB_CONFIG++";
@@ -1070,12 +1078,22 @@ sub reset_timer {
 	our $number_of_git_cmds = 0;
 }
 
+our $first_request = 1;
 sub run_request {
 	reset_timer();
 
 	evaluate_uri();
-	evaluate_gitweb_config();
-	evaluate_git_version();
+	if ($first_request) {
+		evaluate_gitweb_config();
+		evaluate_git_version();
+	}
+	if ($per_request_config) {
+		if (ref($per_request_config) eq 'CODE') {
+			$per_request_config->();
+		} elsif (!$first_request) {
+			evaluate_gitweb_config();
+		}
+	}
 	check_loadavg();
 
 	# $projectroot and $projects_list might be set in gitweb config file
@@ -1129,6 +1147,7 @@ sub evaluate_argv {
 sub run {
 	evaluate_argv();
 
+	$first_request = 1;
 	$pre_listen_hook->()
 		if $pre_listen_hook;
 
@@ -1141,6 +1160,7 @@ sub run {
 
 		$post_dispatch_hook->()
 			if $post_dispatch_hook;
+		$first_request = 0;
 
 		last REQUEST if ($is_last_request->());
 	}

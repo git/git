@@ -246,6 +246,13 @@ not include variables usually directly set during build):
    http://www.andre-simon.de due to assumptions about parameters and output).
    Useful if highlight is not installed on your webserver's PATH.
    [Default: highlight]
+ * $per_request_config
+   If set to code reference, it would be run once per each request.  You can
+   set parts of configuration that change per session, e.g. by setting it to
+     sub { $ENV{GL_USER} = $cgi->remote_user || "gitweb"; }
+   Otherwise it is treated as boolean value: if true gitweb would process
+   config file once per request, if false it would process config file only
+   once.  The default is true.
 
 Projects list file format
 ~~~~~~~~~~~~~~~~~~~~~~~~~
