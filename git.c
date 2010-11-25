@@ -19,14 +19,22 @@ static struct startup_info git_startup_info;
 static int use_pager = -1;
 struct pager_config {
 	const char *cmd;
-	int val;
+	int want;
+	char *value;
 };
 
 static int pager_command_config(const char *var, const char *value, void *data)
 {
 	struct pager_config *c = data;
-	if (!prefixcmp(var, "pager.") && !strcmp(var + 6, c->cmd))
-		c->val = git_config_bool(var, value);
+	if (!prefixcmp(var, "pager.") && !strcmp(var + 6, c->cmd)) {
+		int b = git_config_maybe_bool(var, value);
+		if (b >= 0)
+			c->want = b;
+		else {
+			c->want = 1;
+			c->value = xstrdup(value);
+		}
+	}
 	return 0;
 }
 
@@ -35,9 +43,12 @@ int check_pager_config(const char *cmd)
 {
 	struct pager_config c;
 	c.cmd = cmd;
-	c.val = -1;
+	c.want = -1;
+	c.value = NULL;
 	git_config(pager_command_config, &c);
-	return c.val;
+	if (c.value)
+		pager_program = c.value;
+	return c.want;
 }
 
 static void commit_pager_choice(void) {
