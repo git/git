@@ -4221,4 +4221,43 @@ EOF
 	test_repo 29/sub
 '
 
+#
+# case #30
+#
+############################################################
+#
+# Input:
+#
+#  - GIT_WORK_TREE is not set
+#  - GIT_DIR is set
+#  - core.worktree is set
+#  - .git is a file
+#  - core.bare is set
+#
+# Output:
+#
+# core.worktree and core.bare conflict, won't fly.
+
+test_expect_success '#30: setup' '
+	unset GIT_DIR GIT_WORK_TREE &&
+	mkdir 30 &&
+	cd 30 &&
+	git init &&
+	git config core.bare true &&
+	git config core.worktree non-existent &&
+	mv .git ../30.git &&
+	echo gitdir: ../30.git >.git &&
+	cd ..
+'
+
+test_expect_failure '#30: at root' '
+	(
+	cd 30 &&
+	GIT_DIR=.git &&
+	export GIT_DIR &&
+	test_must_fail git symbolic-ref HEAD 2>result &&
+	grep "core.bare and core.worktree do not make sense" result
+	)
+'
+
 test_done
