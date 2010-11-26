@@ -2360,4 +2360,133 @@ EOF
 	test_repo 16/sub
 '
 
+#
+# case #17.1
+#
+############################################################
+#
+# Input:
+#
+#  - GIT_WORK_TREE is set
+#  - GIT_DIR is not set
+#  - core.worktree is not set
+#  - .git is a directory
+#  - cwd is inside .git
+#
+# Output:
+#
+# GIT_WORK_TREE is ignored -> #16.1 (with warnings perhaps)
+
+test_expect_success '#17.1: setup' '
+	unset GIT_DIR GIT_WORK_TREE &&
+	mkdir 17 17/sub &&
+	cd 17 &&
+	git init &&
+	mkdir .git/wt .git/wt/sub &&
+	GIT_WORK_TREE=non-existent &&
+	export GIT_WORK_TREE &&
+	cd ..
+'
+
+test_expect_failure '#17.1: at .git' '
+	cat >17/.git/expected <<EOF &&
+setup: git_dir: .
+setup: worktree: (null)
+setup: cwd: $TRASH_DIRECTORY/17/.git
+setup: prefix: (null)
+EOF
+	test_repo 17/.git
+'
+
+test_expect_failure '#17.1: in .git/wt' '
+	cat >17/.git/wt/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/17/.git
+setup: worktree: (null)
+setup: cwd: $TRASH_DIRECTORY/17/.git/wt
+setup: prefix: (null)
+EOF
+	test_repo 17/.git/wt
+'
+
+test_expect_failure '#17.1: in .git/wt/sub' '
+	cat >17/.git/wt/sub/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/17/.git
+setup: worktree: (null)
+setup: cwd: $TRASH_DIRECTORY/17/.git/wt/sub
+setup: prefix: (null)
+EOF
+	test_repo 17/.git/wt/sub
+'
+
+#
+# case #17.2
+#
+############################################################
+#
+# Input:
+#
+#  - GIT_WORK_TREE is set
+#  - GIT_DIR is not set
+#  - core.worktree is not set
+#  - .git is a directory
+#  - core.bare is set
+#
+# Output:
+#
+# GIT_WORK_TREE is ignored -> #16.2 (with warnings perhaps)
+
+test_expect_success '#17.2: setup' '
+	git config --file="$TRASH_DIRECTORY/17/.git/config" core.bare true
+'
+
+test_expect_failure '#17.2: at .git' '
+	cat >17/.git/expected <<EOF &&
+setup: git_dir: .
+setup: worktree: (null)
+setup: cwd: $TRASH_DIRECTORY/17/.git
+setup: prefix: (null)
+EOF
+	test_repo 17/.git
+'
+
+test_expect_failure '#17.2: in .git/wt' '
+	cat >17/.git/wt/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/17/.git
+setup: worktree: (null)
+setup: cwd: $TRASH_DIRECTORY/17/.git/wt
+setup: prefix: (null)
+EOF
+	test_repo 17/.git/wt
+'
+
+test_expect_failure '#17.2: in .git/wt/sub' '
+	cat >17/.git/wt/sub/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/17/.git
+setup: worktree: (null)
+setup: cwd: $TRASH_DIRECTORY/17/.git/wt/sub
+setup: prefix: (null)
+EOF
+	test_repo 17/.git/wt/sub
+'
+
+test_expect_failure '#17.2: at root' '
+	cat >17/expected <<EOF &&
+setup: git_dir: .git
+setup: worktree: (null)
+setup: cwd: $TRASH_DIRECTORY/17
+setup: prefix: (null)
+EOF
+	test_repo 17
+'
+
+test_expect_failure '#17.2: in subdir' '
+	cat >17/sub/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/17/.git
+setup: worktree: (null)
+setup: cwd: $TRASH_DIRECTORY/17/sub
+setup: prefix: (null)
+EOF
+	test_repo 17/sub
+'
+
 test_done
