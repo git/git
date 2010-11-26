@@ -285,7 +285,7 @@ help ...`.
 	This can also be controlled by setting the GIT_WORK_TREE
 	environment variable and the core.worktree configuration
 	variable. It can be an absolute path or relative path to
-	the directory specified by --git-dir or GIT_DIR.
+	current working directory.
 	Note: If --git-dir or GIT_DIR are specified but none of
 	--work-tree, GIT_WORK_TREE and core.worktree is specified,
 	the current working directory is regarded as the top directory
