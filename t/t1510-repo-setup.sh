@@ -580,4 +580,295 @@ EOF
 	test_repo 5/sub
 '
 
+#
+# case #6
+#
+############################################################
+#
+# Input:
+#
+#  - GIT_WORK_TREE is not set
+#  - GIT_DIR is set
+#  - core.worktree is set
+#  - .git is a directory
+#  - core.bare is not set, cwd is outside .git
+#
+# Output:
+#
+#  - worktree is at core.worktree
+#  - cwd is at worktree root
+#  - prefix is calculated
+#  - git_dir is at $GIT_DIR
+#  - cwd can be outside worktree
+
+test_expect_success '#6: setup' '
+	unset GIT_DIR GIT_WORK_TREE &&
+	mkdir 6 6/sub 6/sub/sub 6.wt 6.wt/sub 6/wt 6/wt/sub &&
+	cd 6 && git init && cd ..
+'
+
+test_expect_success '#6: GIT_DIR(rel), core.worktree=.. at root' '
+	cat >6/expected <<EOF &&
+setup: git_dir: .git
+setup: worktree: $TRASH_DIRECTORY/6
+setup: cwd: $TRASH_DIRECTORY/6
+setup: prefix: (null)
+EOF
+	git config --file="$TRASH_DIRECTORY/6/.git/config" core.worktree "$TRASH_DIRECTORY/6" &&
+	test_repo 6 .git
+'
+
+test_expect_success '#6: GIT_DIR(rel), core.worktree=..(rel) at root' '
+	cat >6/expected <<EOF &&
+setup: git_dir: .git
+setup: worktree: $TRASH_DIRECTORY/6
+setup: cwd: $TRASH_DIRECTORY/6
+setup: prefix: (null)
+EOF
+	git config --file="$TRASH_DIRECTORY/6/.git/config" core.worktree .. &&
+	test_repo 6 .git
+'
+
+test_expect_success '#6: GIT_DIR, core.worktree=.. at root' '
+	cat >6/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/6/.git
+setup: worktree: $TRASH_DIRECTORY/6
+setup: cwd: $TRASH_DIRECTORY/6
+setup: prefix: (null)
+EOF
+	git config --file="$TRASH_DIRECTORY/6/.git/config" core.worktree "$TRASH_DIRECTORY/6" &&
+	test_repo 6 "$TRASH_DIRECTORY/6/.git"
+'
+
+test_expect_success '#6: GIT_DIR, core.worktree=..(rel) at root' '
+	cat >6/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/6/.git
+setup: worktree: $TRASH_DIRECTORY/6
+setup: cwd: $TRASH_DIRECTORY/6
+setup: prefix: (null)
+EOF
+	git config --file="$TRASH_DIRECTORY/6/.git/config" core.worktree .. &&
+	test_repo 6 "$TRASH_DIRECTORY/6/.git"
+'
+
+test_expect_failure '#6: GIT_DIR(rel), core.worktree=.. in subdir' '
+	cat >6/sub/sub/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/6/.git
+setup: worktree: $TRASH_DIRECTORY/6
+setup: cwd: $TRASH_DIRECTORY/6
+setup: prefix: sub/sub/
+EOF
+	git config --file="$TRASH_DIRECTORY/6/.git/config" core.worktree "$TRASH_DIRECTORY/6" &&
+	test_repo 6/sub/sub ../../.git
+'
+
+test_expect_failure '#6: GIT_DIR(rel), core.worktree=..(rel) in subdir' '
+	cat >6/sub/sub/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/6/.git
+setup: worktree: $TRASH_DIRECTORY/6
+setup: cwd: $TRASH_DIRECTORY/6
+setup: prefix: sub/sub/
+EOF
+	git config --file="$TRASH_DIRECTORY/6/.git/config" core.worktree .. &&
+	test_repo 6/sub/sub ../../.git
+'
+
+test_expect_success '#6: GIT_DIR, core.worktree=.. in subdir' '
+	cat >6/sub/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/6/.git
+setup: worktree: $TRASH_DIRECTORY/6
+setup: cwd: $TRASH_DIRECTORY/6
+setup: prefix: sub/
+EOF
+	git config --file="$TRASH_DIRECTORY/6/.git/config" core.worktree "$TRASH_DIRECTORY/6" &&
+	test_repo 6/sub "$TRASH_DIRECTORY/6/.git"
+'
+
+test_expect_success '#6: GIT_DIR, core.worktree=..(rel) in subdir' '
+	cat >6/sub/sub/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/6/.git
+setup: worktree: $TRASH_DIRECTORY/6
+setup: cwd: $TRASH_DIRECTORY/6
+setup: prefix: sub/sub/
+EOF
+	git config --file="$TRASH_DIRECTORY/6/.git/config" core.worktree .. &&
+	test_repo 6/sub/sub "$TRASH_DIRECTORY/6/.git"
+'
+
+test_expect_success '#6: GIT_DIR(rel), core.worktree=../wt at root' '
+	cat >6/expected <<EOF &&
+setup: git_dir: .git
+setup: worktree: $TRASH_DIRECTORY/6/wt
+setup: cwd: $TRASH_DIRECTORY/6
+setup: prefix: (null)
+EOF
+	git config --file="$TRASH_DIRECTORY/6/.git/config" core.worktree "$TRASH_DIRECTORY/6/wt" &&
+	test_repo 6 .git
+'
+
+test_expect_success '#6: GIT_DIR(rel), core.worktree=../wt(rel) at root' '
+	cat >6/expected <<EOF &&
+setup: git_dir: .git
+setup: worktree: $TRASH_DIRECTORY/6/wt
+setup: cwd: $TRASH_DIRECTORY/6
+setup: prefix: (null)
+EOF
+	git config --file="$TRASH_DIRECTORY/6/.git/config" core.worktree ../wt &&
+	test_repo 6 .git
+'
+
+test_expect_success '#6: GIT_DIR, core.worktree=../wt(rel) at root' '
+	cat >6/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/6/.git
+setup: worktree: $TRASH_DIRECTORY/6/wt
+setup: cwd: $TRASH_DIRECTORY/6
+setup: prefix: (null)
+EOF
+	git config --file="$TRASH_DIRECTORY/6/.git/config" core.worktree ../wt &&
+	test_repo 6 "$TRASH_DIRECTORY/6/.git"
+'
+
+test_expect_success '#6: GIT_DIR, core.worktree=../wt at root' '
+	cat >6/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/6/.git
+setup: worktree: $TRASH_DIRECTORY/6/wt
+setup: cwd: $TRASH_DIRECTORY/6
+setup: prefix: (null)
+EOF
+	git config --file="$TRASH_DIRECTORY/6/.git/config" core.worktree "$TRASH_DIRECTORY/6/wt" &&
+	test_repo 6 "$TRASH_DIRECTORY/6/.git"
+'
+
+test_expect_success '#6: GIT_DIR(rel), core.worktree=../wt in subdir' '
+	cat >6/sub/sub/expected <<EOF &&
+setup: git_dir: ../../.git
+setup: worktree: $TRASH_DIRECTORY/6/wt
+setup: cwd: $TRASH_DIRECTORY/6/sub/sub
+setup: prefix: (null)
+EOF
+	git config --file="$TRASH_DIRECTORY/6/.git/config" core.worktree "$TRASH_DIRECTORY/6/wt" &&
+	test_repo 6/sub/sub ../../.git
+'
+
+test_expect_success '#6: GIT_DIR(rel), core.worktree=../wt(rel) in subdir' '
+	cat >6/sub/sub/expected <<EOF &&
+setup: git_dir: ../../.git
+setup: worktree: $TRASH_DIRECTORY/6/wt
+setup: cwd: $TRASH_DIRECTORY/6/sub/sub
+setup: prefix: (null)
+EOF
+	git config --file="$TRASH_DIRECTORY/6/.git/config" core.worktree ../wt &&
+	test_repo 6/sub/sub ../../.git
+'
+
+test_expect_success '#6: GIT_DIR, core.worktree=../wt(rel) in subdir' '
+	cat >6/sub/sub/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/6/.git
+setup: worktree: $TRASH_DIRECTORY/6/wt
+setup: cwd: $TRASH_DIRECTORY/6/sub/sub
+setup: prefix: (null)
+EOF
+	git config --file="$TRASH_DIRECTORY/6/.git/config" core.worktree ../wt &&
+	test_repo 6/sub/sub "$TRASH_DIRECTORY/6/.git"
+'
+
+test_expect_success '#6: GIT_DIR, core.worktree=../wt in subdir' '
+	cat >6/sub/sub/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/6/.git
+setup: worktree: $TRASH_DIRECTORY/6/wt
+setup: cwd: $TRASH_DIRECTORY/6/sub/sub
+setup: prefix: (null)
+EOF
+	git config --file="$TRASH_DIRECTORY/6/.git/config" core.worktree "$TRASH_DIRECTORY/6/wt" &&
+	test_repo 6/sub/sub "$TRASH_DIRECTORY/6/.git"
+'
+
+test_expect_failure '#6: GIT_DIR(rel), core.worktree=../.. at root' '
+	cat >6/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/6/.git
+setup: worktree: $TRASH_DIRECTORY
+setup: cwd: $TRASH_DIRECTORY
+setup: prefix: 6/
+EOF
+	git config --file="$TRASH_DIRECTORY/6/.git/config" core.worktree "$TRASH_DIRECTORY" &&
+	test_repo 6 .git
+'
+
+test_expect_failure '#6: GIT_DIR(rel), core.worktree=../..(rel) at root' '
+	cat >6/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/6/.git
+setup: worktree: $TRASH_DIRECTORY
+setup: cwd: $TRASH_DIRECTORY
+setup: prefix: 6/
+EOF
+	git config --file="$TRASH_DIRECTORY/6/.git/config" core.worktree ../../ &&
+	test_repo 6 .git
+'
+
+test_expect_success '#6: GIT_DIR, core.worktree=../..(rel) at root' '
+	cat >6/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/6/.git
+setup: worktree: $TRASH_DIRECTORY
+setup: cwd: $TRASH_DIRECTORY
+setup: prefix: 6/
+EOF
+	git config --file="$TRASH_DIRECTORY/6/.git/config" core.worktree ../../ &&
+	test_repo 6 "$TRASH_DIRECTORY/6/.git"
+'
+
+test_expect_success '#6: GIT_DIR, core.worktree=../.. at root' '
+	cat >6/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/6/.git
+setup: worktree: $TRASH_DIRECTORY
+setup: cwd: $TRASH_DIRECTORY
+setup: prefix: 6/
+EOF
+	git config --file="$TRASH_DIRECTORY/6/.git/config" core.worktree "$TRASH_DIRECTORY" &&
+	test_repo 6 "$TRASH_DIRECTORY/6/.git"
+'
+
+test_expect_failure '#6: GIT_DIR(rel), core.worktree=../.. in subdir' '
+	cat >6/sub/sub/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/6/.git
+setup: worktree: $TRASH_DIRECTORY
+setup: cwd: $TRASH_DIRECTORY
+setup: prefix: 6/sub/sub/
+EOF
+	git config --file="$TRASH_DIRECTORY/6/.git/config" core.worktree "$TRASH_DIRECTORY" &&
+	test_repo 6/sub/sub ../../.git
+'
+
+test_expect_failure '#6: GIT_DIR(rel), core.worktree=../..(rel) in subdir' '
+	cat >6/sub/sub/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/6/.git
+setup: worktree: $TRASH_DIRECTORY
+setup: cwd: $TRASH_DIRECTORY
+setup: prefix: 6/sub/sub/
+EOF
+	git config --file="$TRASH_DIRECTORY/6/.git/config" core.worktree ../.. &&
+	test_repo 6/sub/sub ../../.git
+'
+
+test_expect_success '#6: GIT_DIR, core.worktree=../..(rel) in subdir' '
+	cat >6/sub/sub/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/6/.git
+setup: worktree: $TRASH_DIRECTORY
+setup: cwd: $TRASH_DIRECTORY
+setup: prefix: 6/sub/sub/
+EOF
+	git config --file="$TRASH_DIRECTORY/6/.git/config" core.worktree ../.. &&
+	test_repo 6/sub/sub "$TRASH_DIRECTORY/6/.git"
+'
+
+test_expect_success '#6: GIT_DIR, core.worktree=../.. in subdir' '
+	cat >6/sub/sub/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/6/.git
+setup: worktree: $TRASH_DIRECTORY
+setup: cwd: $TRASH_DIRECTORY
+setup: prefix: 6/sub/sub/
+EOF
+	git config --file="$TRASH_DIRECTORY/6/.git/config" core.worktree "$TRASH_DIRECTORY" &&
+	test_repo 6/sub/sub "$TRASH_DIRECTORY/6/.git"
+'
+
 test_done
