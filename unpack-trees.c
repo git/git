@@ -945,11 +945,7 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 		*o->dst_index = o->result;
 
 done:
-	for (i = 0;i < el.nr;i++)
-		free(el.excludes[i]);
-	if (el.excludes)
-		free(el.excludes);
-
+	free_excludes(&el);
 	return ret;
 
 return_failed:

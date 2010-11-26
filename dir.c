@@ -223,6 +223,18 @@ static void *read_skip_worktree_file_from_index(const char *path, size_t *size)
 	return data;
 }
 
+void free_excludes(struct exclude_list *el)
+{
+	int i;
+
+	for (i = 0; i < el->nr; i++)
+		free(el->excludes[i]);
+	free(el->excludes);
+
+	el->nr = 0;
+	el->excludes = NULL;
+}
+
 int add_excludes_from_file_to_list(const char *fname,
 				   const char *base,
 				   int baselen,

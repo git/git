@@ -78,6 +78,7 @@ extern int add_excludes_from_file_to_list(const char *fname, const char *base, i
 extern void add_excludes_from_file(struct dir_struct *, const char *fname);
 extern void add_exclude(const char *string, const char *base,
 			int baselen, struct exclude_list *which);
+extern void free_excludes(struct exclude_list *el);
 extern int file_exists(const char *);
 
 extern char *get_relative_cwd(char *buffer, int size, const char *dir);
