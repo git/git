@@ -132,7 +132,7 @@ test_expect_success '#1: setup' '
 	cd ..
 '
 
-test_expect_failure '#1: at root' '
+test_expect_success '#1: at root' '
 	cat >1/expected <<EOF &&
 setup: git_dir: .git
 setup: worktree: $TRASH_DIRECTORY/1
@@ -142,7 +142,7 @@ EOF
 	test_repo 1
 '
 
-test_expect_failure '#1: in subdir' '
+test_expect_success '#1: in subdir' '
 	cat >1/sub/expected <<EOF &&
 setup: git_dir: .git
 setup: worktree: $TRASH_DIRECTORY/1
@@ -512,7 +512,7 @@ test_expect_success '#4: setup' '
 	cd ..
 '
 
-test_expect_failure '#4: at root' '
+test_expect_success '#4: at root' '
 	cat >4/expected <<EOF &&
 setup: git_dir: .git
 setup: worktree: $TRASH_DIRECTORY/4
@@ -522,7 +522,7 @@ EOF
 	test_repo 4
 '
 
-test_expect_failure '#4: in subdir' '
+test_expect_success '#4: in subdir' '
 	cat >4/sub/expected <<EOF &&
 setup: git_dir: .git
 setup: worktree: $TRASH_DIRECTORY/4
@@ -560,7 +560,7 @@ test_expect_success '#5: setup' '
 	cd ..
 '
 
-test_expect_failure '#5: at root' '
+test_expect_success '#5: at root' '
 	cat >5/expected <<EOF &&
 setup: git_dir: .git
 setup: worktree: $TRASH_DIRECTORY/5
@@ -570,7 +570,7 @@ EOF
 	test_repo 5
 '
 
-test_expect_failure '#5: in subdir' '
+test_expect_success '#5: in subdir' '
 	cat >5/sub/expected <<EOF &&
 setup: git_dir: .git
 setup: worktree: $TRASH_DIRECTORY/5
@@ -1213,7 +1213,7 @@ test_expect_success '#9: setup' '
 	cd ..
 '
 
-test_expect_failure '#9: at root' '
+test_expect_success '#9: at root' '
 	cat >9/expected <<EOF &&
 setup: git_dir: $TRASH_DIRECTORY/9.git
 setup: worktree: $TRASH_DIRECTORY/9
@@ -1223,7 +1223,7 @@ EOF
 	test_repo 9
 '
 
-test_expect_failure '#9: in subdir' '
+test_expect_success '#9: in subdir' '
 	cat >9/sub/expected <<EOF &&
 setup: git_dir: $TRASH_DIRECTORY/9.git
 setup: worktree: $TRASH_DIRECTORY/9
@@ -1596,7 +1596,7 @@ test_expect_success '#12: setup' '
 	cd ..
 '
 
-test_expect_failure '#12: at root' '
+test_expect_success '#12: at root' '
 	cat >12/expected <<EOF &&
 setup: git_dir: $TRASH_DIRECTORY/12.git
 setup: worktree: $TRASH_DIRECTORY/12
@@ -1606,7 +1606,7 @@ EOF
 	test_repo 12
 '
 
-test_expect_failure '#12: in subdir' '
+test_expect_success '#12: in subdir' '
 	cat >12/sub/expected <<EOF &&
 setup: git_dir: $TRASH_DIRECTORY/12.git
 setup: worktree: $TRASH_DIRECTORY/12
@@ -1646,7 +1646,7 @@ test_expect_success '#13: setup' '
 	cd ..
 '
 
-test_expect_failure '#13: at root' '
+test_expect_success '#13: at root' '
 	cat >13/expected <<EOF &&
 setup: git_dir: $TRASH_DIRECTORY/13.git
 setup: worktree: $TRASH_DIRECTORY/13
@@ -1656,7 +1656,7 @@ EOF
 	test_repo 13
 '
 
-test_expect_failure '#13: in subdir' '
+test_expect_success '#13: in subdir' '
 	cat >13/sub/expected <<EOF &&
 setup: git_dir: $TRASH_DIRECTORY/13.git
 setup: worktree: $TRASH_DIRECTORY/13
@@ -2388,7 +2388,7 @@ test_expect_success '#17.1: setup' '
 	cd ..
 '
 
-test_expect_failure '#17.1: at .git' '
+test_expect_success '#17.1: at .git' '
 	cat >17/.git/expected <<EOF &&
 setup: git_dir: .
 setup: worktree: (null)
@@ -2398,7 +2398,7 @@ EOF
 	test_repo 17/.git
 '
 
-test_expect_failure '#17.1: in .git/wt' '
+test_expect_success '#17.1: in .git/wt' '
 	cat >17/.git/wt/expected <<EOF &&
 setup: git_dir: $TRASH_DIRECTORY/17/.git
 setup: worktree: (null)
@@ -2408,7 +2408,7 @@ EOF
 	test_repo 17/.git/wt
 '
 
-test_expect_failure '#17.1: in .git/wt/sub' '
+test_expect_success '#17.1: in .git/wt/sub' '
 	cat >17/.git/wt/sub/expected <<EOF &&
 setup: git_dir: $TRASH_DIRECTORY/17/.git
 setup: worktree: (null)
@@ -2439,7 +2439,7 @@ test_expect_success '#17.2: setup' '
 	git config --file="$TRASH_DIRECTORY/17/.git/config" core.bare true
 '
 
-test_expect_failure '#17.2: at .git' '
+test_expect_success '#17.2: at .git' '
 	cat >17/.git/expected <<EOF &&
 setup: git_dir: .
 setup: worktree: (null)
@@ -2449,7 +2449,7 @@ EOF
 	test_repo 17/.git
 '
 
-test_expect_failure '#17.2: in .git/wt' '
+test_expect_success '#17.2: in .git/wt' '
 	cat >17/.git/wt/expected <<EOF &&
 setup: git_dir: $TRASH_DIRECTORY/17/.git
 setup: worktree: (null)
@@ -2459,7 +2459,7 @@ EOF
 	test_repo 17/.git/wt
 '
 
-test_expect_failure '#17.2: in .git/wt/sub' '
+test_expect_success '#17.2: in .git/wt/sub' '
 	cat >17/.git/wt/sub/expected <<EOF &&
 setup: git_dir: $TRASH_DIRECTORY/17/.git
 setup: worktree: (null)
@@ -2469,7 +2469,7 @@ EOF
 	test_repo 17/.git/wt/sub
 '
 
-test_expect_failure '#17.2: at root' '
+test_expect_success '#17.2: at root' '
 	cat >17/expected <<EOF &&
 setup: git_dir: .git
 setup: worktree: (null)
@@ -2853,7 +2853,7 @@ test_expect_success '#20.1: setup' '
 	cd ..
 '
 
-test_expect_failure '#20.1: at .git' '
+test_expect_success '#20.1: at .git' '
 	cat >20/.git/expected <<EOF &&
 setup: git_dir: .
 setup: worktree: (null)
@@ -2863,7 +2863,7 @@ EOF
 	test_repo 20/.git
 '
 
-test_expect_failure '#20.1: in .git/wt' '
+test_expect_success '#20.1: in .git/wt' '
 	cat >20/.git/wt/expected <<EOF &&
 setup: git_dir: $TRASH_DIRECTORY/20/.git
 setup: worktree: (null)
@@ -2873,7 +2873,7 @@ EOF
 	test_repo 20/.git/wt
 '
 
-test_expect_failure '#20.1: in .git/wt/sub' '
+test_expect_success '#20.1: in .git/wt/sub' '
 	cat >20/.git/wt/sub/expected <<EOF &&
 setup: git_dir: $TRASH_DIRECTORY/20/.git
 setup: worktree: (null)
@@ -2983,7 +2983,7 @@ test_expect_success '#21.1: setup' '
 	cd ..
 '
 
-test_expect_failure '#21.1: at .git' '
+test_expect_success '#21.1: at .git' '
 	cat >21/.git/expected <<EOF &&
 setup: git_dir: .
 setup: worktree: (null)
@@ -2993,7 +2993,7 @@ EOF
 	test_repo 21/.git
 '
 
-test_expect_failure '#21.1: in .git/wt' '
+test_expect_success '#21.1: in .git/wt' '
 	cat >21/.git/wt/expected <<EOF &&
 setup: git_dir: $TRASH_DIRECTORY/21/.git
 setup: worktree: (null)
@@ -3003,7 +3003,7 @@ EOF
 	test_repo 21/.git/wt
 '
 
-test_expect_failure '#21.1: in .git/wt/sub' '
+test_expect_success '#21.1: in .git/wt/sub' '
 	cat >21/.git/wt/sub/expected <<EOF &&
 setup: git_dir: $TRASH_DIRECTORY/21/.git
 setup: worktree: (null)
@@ -3034,7 +3034,7 @@ test_expect_success '#21.2: setup' '
 	git config --file="$TRASH_DIRECTORY/21/.git/config" core.bare true
 '
 
-test_expect_failure '#21.2: at .git' '
+test_expect_success '#21.2: at .git' '
 	cat >21/.git/expected <<EOF &&
 setup: git_dir: .
 setup: worktree: (null)
@@ -3044,7 +3044,7 @@ EOF
 	test_repo 21/.git
 '
 
-test_expect_failure '#21.2: in .git/wt' '
+test_expect_success '#21.2: in .git/wt' '
 	cat >21/.git/wt/expected <<EOF &&
 setup: git_dir: $TRASH_DIRECTORY/21/.git
 setup: worktree: (null)
@@ -3054,7 +3054,7 @@ EOF
 	test_repo 21/.git/wt
 '
 
-test_expect_failure '#21.2: in .git/wt/sub' '
+test_expect_success '#21.2: in .git/wt/sub' '
 	cat >21/.git/wt/sub/expected <<EOF &&
 setup: git_dir: $TRASH_DIRECTORY/21/.git
 setup: worktree: (null)
@@ -3064,7 +3064,7 @@ EOF
 	test_repo 21/.git/wt/sub
 '
 
-test_expect_failure '#21.2: at root' '
+test_expect_success '#21.2: at root' '
 	cat >21/expected <<EOF &&
 setup: git_dir: .git
 setup: worktree: (null)
@@ -3716,7 +3716,7 @@ test_expect_success '#24: setup' '
 	cd ..
 '
 
-test_expect_success '#24: at root' '
+test_expect_failure '#24: at root' '
 	cat >24/expected <<EOF &&
 setup: git_dir: $TRASH_DIRECTORY/24.git
 setup: worktree: (null)
@@ -3726,7 +3726,7 @@ EOF
 	test_repo 24
 '
 
-test_expect_success '#24: in subdir' '
+test_expect_failure '#24: in subdir' '
 	cat >24/sub/expected <<EOF &&
 setup: git_dir: $TRASH_DIRECTORY/24.git
 setup: worktree: (null)
@@ -4151,7 +4151,7 @@ test_expect_success '#28: setup' '
 	cd ..
 '
 
-test_expect_success '#28: at root' '
+test_expect_failure '#28: at root' '
 	cat >28/expected <<EOF &&
 setup: git_dir: $TRASH_DIRECTORY/28.git
 setup: worktree: (null)
@@ -4161,7 +4161,7 @@ EOF
 	test_repo 28
 '
 
-test_expect_success '#28: in subdir' '
+test_expect_failure '#28: in subdir' '
 	cat >28/sub/expected <<EOF &&
 setup: git_dir: $TRASH_DIRECTORY/28.git
 setup: worktree: (null)

@@ -331,6 +331,8 @@ static const char *setup_explicit_git_dir(const char *gitdirenv,
 	static char buffer[1024 + 1];
 	const char *retval;
 
+	if (startup_info)
+		startup_info->setup_explicit = 1;
 	if (PATH_MAX - 40 < strlen(gitdirenv))
 		die("'$%s' too big", GIT_DIR_ENVIRONMENT);
 	if (!is_git_directory(gitdirenv)) {
@@ -382,12 +384,15 @@ static const char *setup_discovered_git_dir(const char *work_tree_env,
 					    char *cwd, int *nongit_ok)
 {
 	int root_len;
+	char *work_tree;
 
 	inside_git_dir = 0;
 	if (!work_tree_env)
 		inside_work_tree = 1;
 	root_len = offset_1st_component(cwd);
-	git_work_tree_cfg = xstrndup(cwd, offset > root_len ? offset : root_len);
+	work_tree = xstrndup(cwd, offset > root_len ? offset : root_len);
+	set_git_work_tree(work_tree);
+	free(work_tree);
 	if (check_repository_format_gently(gitdir, nongit_ok))
 		return NULL;
 	if (offset == len)
@@ -627,7 +632,8 @@ const char *setup_git_directory(void)
 	const char *retval = setup_git_directory_gently(NULL);
 
 	/* If the work tree is not the default one, recompute prefix */
-	if (inside_work_tree < 0) {
+	if ((!startup_info || startup_info->setup_explicit) &&
+	    inside_work_tree < 0) {
 		static char buffer[PATH_MAX + 1];
 		char *rel;
 		if (retval && chdir(retval))

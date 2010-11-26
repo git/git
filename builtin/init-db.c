@@ -496,6 +496,7 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 	if (is_bare_repository_cfg < 0)
 		is_bare_repository_cfg = guess_repository_type(git_dir);
 
+	startup_info->setup_explicit = 1;
 	if (!is_bare_repository_cfg) {
 		if (git_dir) {
 			const char *git_dir_parent = strrchr(git_dir, '/');

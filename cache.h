@@ -1119,6 +1119,7 @@ const char *split_cmdline_strerror(int cmdline_errno);
 /* git.c */
 struct startup_info {
 	int have_repository;
+	int setup_explicit;
 };
 extern struct startup_info *startup_info;
 
