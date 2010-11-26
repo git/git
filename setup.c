@@ -405,26 +405,25 @@ static const char *setup_discovered_git_dir(const char *work_tree_env,
 	return cwd + offset;
 }
 
-static const char *setup_bare_git_dir(const char *work_tree_env,
-		int offset, int len, char *cwd, int *nongit_ok)
+/* #16.1, #17.1, #20.1, #21.1, #22.1 (see t1510) */
+static const char *setup_bare_git_dir(char *cwd, int offset, int len, int *nongit_ok)
 {
 	int root_len;
 
+	if (check_repository_format_gently(".", nongit_ok))
+		return NULL;
+
 	inside_git_dir = 1;
-	if (!work_tree_env)
-		inside_work_tree = 0;
+	inside_work_tree = 0;
 	if (offset != len) {
 		if (chdir(cwd))
 			die_errno("Cannot come back to cwd");
 		root_len = offset_1st_component(cwd);
 		cwd[offset > root_len ? offset : root_len] = '\0';
 		set_git_dir(cwd);
-		check_repository_format_gently(cwd, nongit_ok);
 	}
-	else {
+	else
 		set_git_dir(".");
-		check_repository_format_gently(".", nongit_ok);
-	}
 	return NULL;
 }
 
@@ -509,8 +508,8 @@ static const char *setup_git_directory_gently_1(int *nongit_ok)
 							offset, len,
 							cwd, nongit_ok);
 		if (is_git_directory("."))
-			return setup_bare_git_dir(work_tree_env, offset,
-							len, cwd, nongit_ok);
+			return setup_bare_git_dir(cwd, offset, len, nongit_ok);
+
 		while (--offset > ceil_offset && cwd[offset] != '/');
 		if (offset <= ceil_offset)
 			return setup_nongit(cwd, nongit_ok);
