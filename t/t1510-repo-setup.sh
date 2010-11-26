@@ -3421,4 +3421,271 @@ test_expect_failure '#22.2: at root' '
 	)
 '
 
+#
+# case #23
+#
+############################################################
+#
+# Input:
+#
+#  - GIT_WORK_TREE is set
+#  - GIT_DIR is set
+#  - core.worktree is set
+#  - .git is a directory
+#  - core.bare is set
+#
+# Output:
+#
+# core.worktree is overridden by GIT_WORK_TREE -> #19
+
+test_expect_success '#23: setup' '
+	unset GIT_DIR GIT_WORK_TREE &&
+	mkdir 23 23/sub 23/sub/sub 23.wt 23.wt/sub 23/wt 23/wt/sub &&
+	cd 23 &&
+	git init &&
+	git config core.bare true &&
+	git config core.worktree non-existent &&
+	cd ..
+'
+
+test_expect_success '#23: GIT_DIR(rel), GIT_WORK_TREE=root at root' '
+	cat >23/expected <<EOF &&
+setup: git_dir: .git
+setup: worktree: $TRASH_DIRECTORY/23
+setup: cwd: $TRASH_DIRECTORY/23
+setup: prefix: (null)
+EOF
+	test_repo 23 .git "$TRASH_DIRECTORY/23"
+'
+
+test_expect_success '#23: GIT_DIR(rel), GIT_WORK_TREE=root(rel) at root' '
+	cat >23/expected <<EOF &&
+setup: git_dir: .git
+setup: worktree: $TRASH_DIRECTORY/23
+setup: cwd: $TRASH_DIRECTORY/23
+setup: prefix: (null)
+EOF
+	test_repo 23 .git .
+'
+
+test_expect_success '#23: GIT_DIR, GIT_WORK_TREE=root at root' '
+	cat >23/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/23/.git
+setup: worktree: $TRASH_DIRECTORY/23
+setup: cwd: $TRASH_DIRECTORY/23
+setup: prefix: (null)
+EOF
+	test_repo 23 "$TRASH_DIRECTORY/23/.git" "$TRASH_DIRECTORY/23"
+'
+
+test_expect_success '#23: GIT_DIR, GIT_WORK_TREE=root(rel) at root' '
+	cat >23/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/23/.git
+setup: worktree: $TRASH_DIRECTORY/23
+setup: cwd: $TRASH_DIRECTORY/23
+setup: prefix: (null)
+EOF
+	test_repo 23 "$TRASH_DIRECTORY/23/.git" .
+'
+
+test_expect_success '#23: GIT_DIR(rel), GIT_WORKTREE=root in subdir' '
+	cat >23/sub/sub/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/23/.git
+setup: worktree: $TRASH_DIRECTORY/23
+setup: cwd: $TRASH_DIRECTORY/23
+setup: prefix: sub/sub/
+EOF
+	test_repo 23/sub/sub ../../.git "$TRASH_DIRECTORY/23"
+'
+
+test_expect_success '#23: GIT_DIR(rel), GIT_WORKTREE=root(rel) in subdir' '
+	cat >23/sub/sub/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/23/.git
+setup: worktree: $TRASH_DIRECTORY/23
+setup: cwd: $TRASH_DIRECTORY/23
+setup: prefix: sub/sub/
+EOF
+	test_repo 23/sub/sub ../../.git ../..
+'
+
+test_expect_success '#23: GIT_DIR, GIT_WORKTREE=root in subdir' '
+	cat >23/sub/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/23/.git
+setup: worktree: $TRASH_DIRECTORY/23
+setup: cwd: $TRASH_DIRECTORY/23
+setup: prefix: sub/
+EOF
+	test_repo 23/sub "$TRASH_DIRECTORY/23/.git" "$TRASH_DIRECTORY/23"
+'
+
+test_expect_success '#23: GIT_DIR, GIT_WORKTREE=root(rel) in subdir' '
+	cat >23/sub/sub/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/23/.git
+setup: worktree: $TRASH_DIRECTORY/23
+setup: cwd: $TRASH_DIRECTORY/23
+setup: prefix: sub/sub/
+EOF
+	test_repo 23/sub/sub "$TRASH_DIRECTORY/23/.git" ../..
+'
+
+test_expect_success '#23: GIT_DIR(rel), GIT_WORK_TREE=wt at root' '
+	cat >23/expected <<EOF &&
+setup: git_dir: .git
+setup: worktree: $TRASH_DIRECTORY/23/wt
+setup: cwd: $TRASH_DIRECTORY/23
+setup: prefix: (null)
+EOF
+	test_repo 23 .git "$TRASH_DIRECTORY/23/wt"
+'
+
+test_expect_success '#23: GIT_DIR(rel), GIT_WORK_TREE=wt(rel) at root' '
+	cat >23/expected <<EOF &&
+setup: git_dir: .git
+setup: worktree: $TRASH_DIRECTORY/23/wt
+setup: cwd: $TRASH_DIRECTORY/23
+setup: prefix: (null)
+EOF
+	test_repo 23 .git wt
+'
+
+test_expect_success '#23: GIT_DIR, GIT_WORK_TREE=wt(rel) at root' '
+	cat >23/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/23/.git
+setup: worktree: $TRASH_DIRECTORY/23/wt
+setup: cwd: $TRASH_DIRECTORY/23
+setup: prefix: (null)
+EOF
+	test_repo 23 "$TRASH_DIRECTORY/23/.git" wt
+'
+
+test_expect_success '#23: GIT_DIR, GIT_WORK_TREE=wt at root' '
+	cat >23/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/23/.git
+setup: worktree: $TRASH_DIRECTORY/23/wt
+setup: cwd: $TRASH_DIRECTORY/23
+setup: prefix: (null)
+EOF
+	test_repo 23 "$TRASH_DIRECTORY/23/.git" "$TRASH_DIRECTORY/23/wt"
+'
+
+test_expect_success '#23: GIT_DIR(rel), GIT_WORK_TREE=wt in subdir' '
+	cat >23/sub/sub/expected <<EOF &&
+setup: git_dir: ../../.git
+setup: worktree: $TRASH_DIRECTORY/23/wt
+setup: cwd: $TRASH_DIRECTORY/23/sub/sub
+setup: prefix: (null)
+EOF
+	test_repo 23/sub/sub ../../.git "$TRASH_DIRECTORY/23/wt"
+'
+
+test_expect_success '#23: GIT_DIR(rel), GIT_WORK_TREE=wt(rel) in subdir' '
+	cat >23/sub/sub/expected <<EOF &&
+setup: git_dir: ../../.git
+setup: worktree: $TRASH_DIRECTORY/23/wt
+setup: cwd: $TRASH_DIRECTORY/23/sub/sub
+setup: prefix: (null)
+EOF
+	test_repo 23/sub/sub ../../.git ../../wt
+'
+
+test_expect_success '#23: GIT_DIR, GIT_WORK_TREE=wt(rel) in subdir' '
+	cat >23/sub/sub/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/23/.git
+setup: worktree: $TRASH_DIRECTORY/23/wt
+setup: cwd: $TRASH_DIRECTORY/23/sub/sub
+setup: prefix: (null)
+EOF
+	test_repo 23/sub/sub "$TRASH_DIRECTORY/23/.git" ../../wt
+'
+
+test_expect_success '#23: GIT_DIR, GIT_WORK_TREE=wt in subdir' '
+	cat >23/sub/sub/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/23/.git
+setup: worktree: $TRASH_DIRECTORY/23/wt
+setup: cwd: $TRASH_DIRECTORY/23/sub/sub
+setup: prefix: (null)
+EOF
+	test_repo 23/sub/sub "$TRASH_DIRECTORY/23/.git" "$TRASH_DIRECTORY/23/wt"
+'
+
+test_expect_success '#23: GIT_DIR(rel), GIT_WORK_TREE=.. at root' '
+	cat >23/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/23/.git
+setup: worktree: $TRASH_DIRECTORY
+setup: cwd: $TRASH_DIRECTORY
+setup: prefix: 23/
+EOF
+	test_repo 23 .git "$TRASH_DIRECTORY"
+'
+
+test_expect_success '#23: GIT_DIR(rel), GIT_WORK_TREE=..(rel) at root' '
+	cat >23/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/23/.git
+setup: worktree: $TRASH_DIRECTORY
+setup: cwd: $TRASH_DIRECTORY
+setup: prefix: 23/
+EOF
+	test_repo 23 .git ..
+'
+
+test_expect_success '#23: GIT_DIR, GIT_WORK_TREE=..(rel) at root' '
+	cat >23/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/23/.git
+setup: worktree: $TRASH_DIRECTORY
+setup: cwd: $TRASH_DIRECTORY
+setup: prefix: 23/
+EOF
+	test_repo 23 "$TRASH_DIRECTORY/23/.git" ..
+'
+
+test_expect_success '#23: GIT_DIR, GIT_WORK_TREE=.. at root' '
+	cat >23/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/23/.git
+setup: worktree: $TRASH_DIRECTORY
+setup: cwd: $TRASH_DIRECTORY
+setup: prefix: 23/
+EOF
+	test_repo 23 "$TRASH_DIRECTORY/23/.git" "$TRASH_DIRECTORY"
+'
+
+test_expect_success '#23: GIT_DIR(rel), GIT_WORK_TREE=.. in subdir' '
+	cat >23/sub/sub/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/23/.git
+setup: worktree: $TRASH_DIRECTORY
+setup: cwd: $TRASH_DIRECTORY
+setup: prefix: 23/sub/sub/
+EOF
+	test_repo 23/sub/sub ../../.git "$TRASH_DIRECTORY"
+'
+
+test_expect_success '#23: GIT_DIR(rel), GIT_WORK_TREE=..(rel) in subdir' '
+	cat >23/sub/sub/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/23/.git
+setup: worktree: $TRASH_DIRECTORY
+setup: cwd: $TRASH_DIRECTORY
+setup: prefix: 23/sub/sub/
+EOF
+	test_repo 23/sub/sub ../../.git ../../..
+'
+
+test_expect_success '#23: GIT_DIR, GIT_WORK_TREE=..(rel) in subdir' '
+	cat >23/sub/sub/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/23/.git
+setup: worktree: $TRASH_DIRECTORY
+setup: cwd: $TRASH_DIRECTORY
+setup: prefix: 23/sub/sub/
+EOF
+	test_repo 23/sub/sub "$TRASH_DIRECTORY/23/.git" ../../../
+'
+
+test_expect_success '#23: GIT_DIR, GIT_WORK_TREE=.. in subdir' '
+	cat >23/sub/sub/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/23/.git
+setup: worktree: $TRASH_DIRECTORY
+setup: cwd: $TRASH_DIRECTORY
+setup: prefix: 23/sub/sub/
+EOF
+	test_repo 23/sub/sub "$TRASH_DIRECTORY/23/.git" "$TRASH_DIRECTORY"
+'
+
 test_done
