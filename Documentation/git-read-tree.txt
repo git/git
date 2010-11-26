@@ -412,13 +412,6 @@ turn `core.sparseCheckout` on in order to have sparse checkout
 support.
 
 
-BUGS
-----
-In order to match a directory with $GIT_DIR/info/sparse-checkout,
-trailing slash must be used. The form without trailing slash, while
-works with .gitignore, does not work with sparse checkout.
-
-
 SEE ALSO
 --------
 linkgit:git-write-tree[1]; linkgit:git-ls-files[1];

@@ -245,15 +245,6 @@ static int check_updates(struct unpack_trees_options *o)
 static int verify_uptodate_sparse(struct cache_entry *ce, struct unpack_trees_options *o);
 static int verify_absent_sparse(struct cache_entry *ce, enum unpack_trees_error_types, struct unpack_trees_options *o);
 
-static int will_have_skip_worktree(const struct cache_entry *ce, struct unpack_trees_options *o)
-{
-	const char *basename;
-
-	basename = strrchr(ce->name, '/');
-	basename = basename ? basename+1 : ce->name;
-	return excluded_from_list(ce->name, ce_namelen(ce), basename, NULL, o->el) <= 0;
-}
-
 static int apply_sparse_checkout(struct cache_entry *ce, struct unpack_trees_options *o)
 {
 	int was_skip_worktree = ce_skip_worktree(ce);
@@ -834,6 +825,138 @@ static int unpack_callback(int n, unsigned long mask, unsigned long dirmask, str
 	return mask;
 }
 
+/* Whole directory matching */
+static int clear_ce_flags_dir(struct cache_entry **cache, int nr,
+			      char *prefix, int prefix_len,
+			      char *basename,
+			      int select_mask, int clear_mask,
+			      struct exclude_list *el)
+{
+	struct cache_entry **cache_end = cache + nr;
+	int dtype = DT_DIR;
+	int ret = excluded_from_list(prefix, prefix_len, basename, &dtype, el);
+
+	prefix[prefix_len++] = '/';
+
+	/* included, no clearing for any entries under this directory */
+	if (!ret) {
+		for (; cache != cache_end; cache++) {
+			struct cache_entry *ce = *cache;
+			if (strncmp(ce->name, prefix, prefix_len))
+				break;
+		}
+		return nr - (cache_end - cache);
+	}
+
+	/* excluded, clear all selected entries under this directory. */
+	if (ret == 1) {
+		for (; cache != cache_end; cache++) {
+			struct cache_entry *ce = *cache;
+			if (select_mask && !(ce->ce_flags & select_mask))
+				continue;
+			if (strncmp(ce->name, prefix, prefix_len))
+				break;
+			ce->ce_flags &= ~clear_mask;
+		}
+		return nr - (cache_end - cache);
+	}
+
+	return 0;
+}
+
+/*
+ * Traverse the index, find every entry that matches according to
+ * o->el. Do "ce_flags &= ~clear_mask" on those entries. Return the
+ * number of traversed entries.
+ *
+ * If select_mask is non-zero, only entries whose ce_flags has on of
+ * those bits enabled are traversed.
+ *
+ * cache	: pointer to an index entry
+ * prefix_len	: an offset to its path
+ *
+ * The current path ("prefix") including the trailing '/' is
+ *   cache[0]->name[0..(prefix_len-1)]
+ * Top level path has prefix_len zero.
+ */
+static int clear_ce_flags_1(struct cache_entry **cache, int nr,
+			    char *prefix, int prefix_len,
+			    int select_mask, int clear_mask,
+			    struct exclude_list *el)
+{
+	struct cache_entry **cache_end = cache + nr;
+
+	/*
+	 * Process all entries that have the given prefix and meet
+	 * select_mask condition
+	 */
+	while(cache != cache_end) {
+		struct cache_entry *ce = *cache;
+		const char *name, *slash;
+		int len, dtype;
+
+		if (select_mask && !(ce->ce_flags & select_mask)) {
+			cache++;
+			continue;
+		}
+
+		if (prefix_len && strncmp(ce->name, prefix, prefix_len))
+			break;
+
+		name = ce->name + prefix_len;
+		slash = strchr(name, '/');
+
+		/* If it's a directory, try whole directory match first */
+		if (slash) {
+			int processed;
+
+			len = slash - name;
+			memcpy(prefix + prefix_len, name, len);
+
+			/*
+			 * terminate the string (no trailing slash),
+			 * clear_c_f_dir needs it
+			 */
+			prefix[prefix_len + len] = '\0';
+			processed = clear_ce_flags_dir(cache, cache_end - cache,
+						       prefix, prefix_len + len,
+						       prefix + prefix_len,
+						       select_mask, clear_mask,
+						       el);
+
+			/* clear_c_f_dir eats a whole dir already? */
+			if (processed) {
+				cache += processed;
+				continue;
+			}
+
+			prefix[prefix_len + len++] = '/';
+			cache += clear_ce_flags_1(cache, cache_end - cache,
+						  prefix, prefix_len + len,
+						  select_mask, clear_mask, el);
+			continue;
+		}
+
+		/* Non-directory */
+		dtype = ce_to_dtype(ce);
+		if (excluded_from_list(ce->name, ce_namelen(ce), name, &dtype, el) > 0)
+			ce->ce_flags &= ~clear_mask;
+		cache++;
+	}
+	return nr - (cache_end - cache);
+}
+
+static int clear_ce_flags(struct cache_entry **cache, int nr,
+			    int select_mask, int clear_mask,
+			    struct exclude_list *el)
+{
+	char prefix[PATH_MAX];
+	return clear_ce_flags_1(cache, nr,
+				prefix, 0,
+				select_mask, clear_mask,
+				el);
+}
+
 /*
  * Set/Clear CE_NEW_SKIP_WORKTREE according to $GIT_DIR/info/sparse-checkout
  */
@@ -843,17 +966,28 @@ static void mark_new_skip_worktree(struct exclude_list *el,
 {
 	int i;
 
+	/*
+	 * 1. Pretend the narrowest worktree: only unmerged entries
+	 * are checked out
+	 */
 	for (i = 0; i < the_index->cache_nr; i++) {
 		struct cache_entry *ce = the_index->cache[i];
 
 		if (select_flag && !(ce->ce_flags & select_flag))
 			continue;
 
-		if (!ce_stage(ce) && will_have_skip_worktree(ce, o))
+		if (!ce_stage(ce))
 			ce->ce_flags |= skip_wt_flag;
 		else
 			ce->ce_flags &= ~skip_wt_flag;
 	}
+
+	/*
+	 * 2. Widen worktree according to sparse-checkout file.
+	 * Matched entries will have skip_wt_flag cleared (i.e. "in")
+	 */
+	clear_ce_flags(the_index->cache, the_index->cache_nr,
+		       select_flag, skip_wt_flag, el);
 }
 
 static int verify_absent(struct cache_entry *, enum unpack_trees_error_types, struct unpack_trees_options *);
