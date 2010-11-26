@@ -2489,4 +2489,75 @@ EOF
 	test_repo 17/sub
 '
 
+#
+# case #18
+#
+############################################################
+#
+# Input:
+#
+#  - GIT_WORK_TREE is not set
+#  - GIT_DIR is set
+#  - core.worktree is not set
+#  - .git is a directory
+#  - core.bare is set
+#
+# Output:
+#
+#  - no worktree (rule #8)
+#  - cwd is unchanged
+#  - prefix is NULL
+#  - git_dir is set to $GIT_DIR
+#  - cwd can't be outside worktree
+
+test_expect_success '#18: setup' '
+	unset GIT_DIR GIT_WORK_TREE &&
+	mkdir 18 18/sub &&
+	cd 18 &&
+	git init &&
+	mkdir .git/wt .git/wt/sub &&
+	git config core.bare true &&
+	cd ..
+'
+
+test_expect_success '#18: (rel) at root' '
+	cat >18/expected <<EOF &&
+setup: git_dir: .git
+setup: worktree: (null)
+setup: cwd: $TRASH_DIRECTORY/18
+setup: prefix: (null)
+EOF
+	 test_repo 18 .git
+'
+
+test_expect_success '#18: at root' '
+	cat >18/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/18/.git
+setup: worktree: (null)
+setup: cwd: $TRASH_DIRECTORY/18
+setup: prefix: (null)
+EOF
+	 test_repo 18 "$TRASH_DIRECTORY/18/.git"
+'
+
+test_expect_success '#18: (rel) in subdir' '
+	cat >18/sub/expected <<EOF &&
+setup: git_dir: ../.git
+setup: worktree: (null)
+setup: cwd: $TRASH_DIRECTORY/18/sub
+setup: prefix: (null)
+EOF
+	test_repo 18/sub ../.git
+'
+
+test_expect_success '#18: in subdir' '
+	cat >18/sub/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/18/.git
+setup: worktree: (null)
+setup: cwd: $TRASH_DIRECTORY/18/sub
+setup: prefix: (null)
+EOF
+	test_repo 18/sub "$TRASH_DIRECTORY/18/.git"
+'
+
 test_done
