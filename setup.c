@@ -243,9 +243,21 @@ void setup_work_tree(void)
 	initialized = 1;
 }
 
-static int check_repository_format_gently(int *nongit_ok)
+static int check_repository_format_gently(const char *gitdir, int *nongit_ok)
 {
-	git_config(check_repository_format_version, NULL);
+	char repo_config[PATH_MAX+1];
+
+	/*
+	 * git_config() can't be used here because it calls git_pathdup()
+	 * to get $GIT_CONFIG/config. That call will make setup_git_env()
+	 * set git_dir to ".git".
+	 *
+	 * We are in gitdir setup, no git dir has been found useable yet.
+	 * Use a gentler version of git_config() to check if this repo
+	 * is a good one.
+	 */
+	snprintf(repo_config, PATH_MAX, "%s/config", gitdir);
+	git_config_early(check_repository_format_version, NULL, repo_config);
 	if (GIT_REPO_VERSION < repository_format_version) {
 		if (!nongit_ok)
 			die ("Expected git repo version <= %d, found %d",
@@ -331,11 +343,11 @@ static const char *setup_explicit_git_dir(const char *gitdirenv,
 	if (!work_tree_env) {
 		retval = set_work_tree(gitdirenv);
 		/* config may override worktree */
-		if (check_repository_format_gently(nongit_ok))
+		if (check_repository_format_gently(gitdirenv, nongit_ok))
 			return NULL;
 		return retval;
 	}
-	if (check_repository_format_gently(nongit_ok))
+	if (check_repository_format_gently(gitdirenv, nongit_ok))
 		return NULL;
 	retval = get_relative_cwd(buffer, sizeof(buffer) - 1,
 			get_git_work_tree());
@@ -357,11 +369,17 @@ static int cwd_contains_git_dir(const char **gitfile_dirp)
 			die("Repository setup failed");
 		return 1;
 	}
-	return is_git_directory(DEFAULT_GIT_DIR_ENVIRONMENT);
+	if (is_git_directory(DEFAULT_GIT_DIR_ENVIRONMENT)) {
+		*gitfile_dirp = DEFAULT_GIT_DIR_ENVIRONMENT;
+		return 1;
+	}
+	return 0;
 }
 
 static const char *setup_discovered_git_dir(const char *work_tree_env,
-		int offset, int len, char *cwd, int *nongit_ok)
+					    const char *gitdir,
+					    int offset, int len,
+					    char *cwd, int *nongit_ok)
 {
 	int root_len;
 
@@ -370,7 +388,7 @@ static const char *setup_discovered_git_dir(const char *work_tree_env,
 		inside_work_tree = 1;
 	root_len = offset_1st_component(cwd);
 	git_work_tree_cfg = xstrndup(cwd, offset > root_len ? offset : root_len);
-	if (check_repository_format_gently(nongit_ok))
+	if (check_repository_format_gently(gitdir, nongit_ok))
 		return NULL;
 	if (offset == len)
 		return NULL;
@@ -396,9 +414,12 @@ static const char *setup_bare_git_dir(const char *work_tree_env,
 		root_len = offset_1st_component(cwd);
 		cwd[offset > root_len ? offset : root_len] = '\0';
 		set_git_dir(cwd);
-	} else
+		check_repository_format_gently(cwd, nongit_ok);
+	}
+	else {
 		set_git_dir(".");
-	check_repository_format_gently(nongit_ok);
+		check_repository_format_gently(".", nongit_ok);
+	}
 	return NULL;
 }
 
@@ -478,8 +499,10 @@ static const char *setup_git_directory_gently_1(int *nongit_ok)
 		current_device = get_device_or_die(".", NULL);
 	for (;;) {
 		if (cwd_contains_git_dir(&gitfile_dir))
-			return setup_discovered_git_dir(work_tree_env, offset,
-							len, cwd, nongit_ok);
+			return setup_discovered_git_dir(work_tree_env,
+							gitfile_dir,
+							offset, len,
+							cwd, nongit_ok);
 		if (is_git_directory("."))
 			return setup_bare_git_dir(work_tree_env, offset,
 							len, cwd, nongit_ok);
@@ -590,7 +613,7 @@ int check_repository_format_version(const char *var, const char *value, void *cb
 
 int check_repository_format(void)
 {
-	return check_repository_format_gently(NULL);
+	return check_repository_format_gently(get_git_dir(), NULL);
 }
 
 /*
