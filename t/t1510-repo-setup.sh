@@ -41,8 +41,10 @@ test_description='Tests of cwd/prefix/worktree/gitdir setup in all cases'
 
 test_repo() {
 	(
-	if test -n "$1"; then cd "$1"; fi &&
-	if test -f trace; then rm trace; fi &&
+	cd "$1" &&
+	if test -n "$2"; then GIT_DIR="$2" && export GIT_DIR; fi &&
+	if test -n "$3"; then GIT_WORK_TREE="$3" && export GIT_WORK_TREE; fi &&
+	rm -f trace &&
 	GIT_TRACE="`pwd`/trace" git symbolic-ref HEAD >/dev/null &&
 	grep '^setup: ' trace >result &&
 	test_cmp expected result
@@ -55,5 +57,52 @@ test_repo() {
 # Bit 3 = .git is a file
 # Bit 4 = bare repo
 # Case# = encoding of the above 5 bits
+
+#
+# Case #0
+#
+############################################################
+#
+# Input:
+#
+#  - GIT_WORK_TREE is not set
+#  - GIT_DIR is not set
+#  - core.worktree is not set
+#  - .git is a directory
+#  - core.bare is not set, cwd is outside .git
+#
+# Output:
+#
+#  - worktree is .git's parent directory
+#  - cwd is at worktree root dir
+#  - prefix is calculated
+#  - git_dir is set to ".git"
+#  - cwd can't be outside worktree
+
+test_expect_success '#0: setup' '
+	unset GIT_DIR GIT_WORK_TREE &&
+	mkdir 0 0/sub &&
+	cd 0 && git init && cd ..
+'
+
+test_expect_success '#0: at root' '
+	cat >0/expected <<EOF &&
+setup: git_dir: .git
+setup: worktree: $TRASH_DIRECTORY/0
+setup: cwd: $TRASH_DIRECTORY/0
+setup: prefix: (null)
+EOF
+	test_repo 0
+'
+
+test_expect_success '#0: in subdir' '
+	cat >0/sub/expected <<EOF &&
+setup: git_dir: .git
+setup: worktree: $TRASH_DIRECTORY/0
+setup: cwd: $TRASH_DIRECTORY/0
+setup: prefix: sub/
+EOF
+	test_repo 0/sub
+'
 
 test_done
