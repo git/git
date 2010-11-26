@@ -110,6 +110,14 @@ test_expect_success 'read-tree' '
 	)
 '
 
+test_expect_success 'alias expansion' '
+	(
+		git config alias.ss status &&
+		cd dir &&
+		git status &&
+		git ss
+	)
+'
 test_expect_success 'no file/rev ambiguity check inside .git' '
 	git commit -a -m 1 &&
 	(
