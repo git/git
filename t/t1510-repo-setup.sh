@@ -1616,4 +1616,54 @@ EOF
 	test_repo 12/sub
 '
 
+#
+# case #13
+#
+############################################################
+#
+# Input:
+#
+#  - GIT_WORK_TREE is set
+#  - GIT_DIR is not set
+#  - core.worktree is set
+#  - .git is a file
+#  - core.bare is not set, cwd is outside .git
+#
+# Output:
+#
+# #5 except that git_dir is set by .git file
+
+test_expect_success '#13: setup' '
+	unset GIT_DIR GIT_WORK_TREE &&
+	mkdir 13 13/sub 13/sub/sub 13.wt 13.wt/sub 13/wt 13/wt/sub &&
+	cd 13 &&
+	git init &&
+	git config core.worktree non-existent &&
+	GIT_WORK_TREE=non-existent-too &&
+	export GIT_WORK_TREE &&
+	mv .git ../13.git &&
+	echo gitdir: ../13.git >.git &&
+	cd ..
+'
+
+test_expect_failure '#13: at root' '
+	cat >13/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/13.git
+setup: worktree: $TRASH_DIRECTORY/13
+setup: cwd: $TRASH_DIRECTORY/13
+setup: prefix: (null)
+EOF
+	test_repo 13
+'
+
+test_expect_failure '#13: in subdir' '
+	cat >13/sub/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/13.git
+setup: worktree: $TRASH_DIRECTORY/13
+setup: cwd: $TRASH_DIRECTORY/13
+setup: prefix: sub/
+EOF
+	test_repo 13/sub
+'
+
 test_done
