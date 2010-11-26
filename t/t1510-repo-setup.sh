@@ -4260,4 +4260,273 @@ test_expect_failure '#30: at root' '
 	)
 '
 
+#
+# case #31
+#
+############################################################
+#
+# Input:
+#
+#  - GIT_WORK_TREE is set
+#  - GIT_DIR is set
+#  - core.worktree is set
+#  - .git is a file
+#  - core.bare is set
+#
+# Output:
+#
+# #23 except git_dir is set according to .git file
+
+test_expect_success '#31: setup' '
+	unset GIT_DIR GIT_WORK_TREE &&
+	mkdir 31 31/sub 31/sub/sub 31.wt 31.wt/sub 31/wt 31/wt/sub &&
+	cd 31 &&
+	git init &&
+	git config core.bare true &&
+	git config core.worktree non-existent &&
+	mv .git ../31.git &&
+	echo gitdir: ../31.git >.git &&
+	cd ..
+'
+
+test_expect_failure '#31: GIT_DIR(rel), GIT_WORK_TREE=root at root' '
+	cat >31/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/31.git
+setup: worktree: $TRASH_DIRECTORY/31
+setup: cwd: $TRASH_DIRECTORY/31
+setup: prefix: (null)
+EOF
+	test_repo 31 .git "$TRASH_DIRECTORY/31"
+'
+
+test_expect_failure '#31: GIT_DIR(rel), GIT_WORK_TREE=root(rel) at root' '
+	cat >31/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/31.git
+setup: worktree: $TRASH_DIRECTORY/31
+setup: cwd: $TRASH_DIRECTORY/31
+setup: prefix: (null)
+EOF
+	test_repo 31 .git .
+'
+
+test_expect_failure '#31: GIT_DIR, GIT_WORK_TREE=root at root' '
+	cat >31/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/31.git
+setup: worktree: $TRASH_DIRECTORY/31
+setup: cwd: $TRASH_DIRECTORY/31
+setup: prefix: (null)
+EOF
+	test_repo 31 "$TRASH_DIRECTORY/31/.git" "$TRASH_DIRECTORY/31"
+'
+
+test_expect_failure '#31: GIT_DIR, GIT_WORK_TREE=root(rel) at root' '
+	cat >31/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/31.git
+setup: worktree: $TRASH_DIRECTORY/31
+setup: cwd: $TRASH_DIRECTORY/31
+setup: prefix: (null)
+EOF
+	test_repo 31 "$TRASH_DIRECTORY/31/.git" .
+'
+
+test_expect_failure '#31: GIT_DIR(rel), GIT_WORKTREE=root in subdir' '
+	cat >31/sub/sub/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/31.git
+setup: worktree: $TRASH_DIRECTORY/31
+setup: cwd: $TRASH_DIRECTORY/31
+setup: prefix: sub/sub/
+EOF
+	test_repo 31/sub/sub ../../.git "$TRASH_DIRECTORY/31"
+'
+
+test_expect_failure '#31: GIT_DIR(rel), GIT_WORKTREE=root(rel) in subdir' '
+	cat >31/sub/sub/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/31.git
+setup: worktree: $TRASH_DIRECTORY/31
+setup: cwd: $TRASH_DIRECTORY/31
+setup: prefix: sub/sub/
+EOF
+	test_repo 31/sub/sub ../../.git ../..
+'
+
+test_expect_failure '#31: GIT_DIR, GIT_WORKTREE=root in subdir' '
+	cat >31/sub/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/31.git
+setup: worktree: $TRASH_DIRECTORY/31
+setup: cwd: $TRASH_DIRECTORY/31
+setup: prefix: sub/
+EOF
+	test_repo 31/sub "$TRASH_DIRECTORY/31/.git" "$TRASH_DIRECTORY/31"
+'
+
+test_expect_failure '#31: GIT_DIR, GIT_WORKTREE=root(rel) in subdir' '
+	cat >31/sub/sub/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/31.git
+setup: worktree: $TRASH_DIRECTORY/31
+setup: cwd: $TRASH_DIRECTORY/31
+setup: prefix: sub/sub/
+EOF
+	test_repo 31/sub/sub "$TRASH_DIRECTORY/31/.git" ../..
+'
+
+test_expect_failure '#31: GIT_DIR(rel), GIT_WORK_TREE=wt at root' '
+	cat >31/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/31.git
+setup: worktree: $TRASH_DIRECTORY/31/wt
+setup: cwd: $TRASH_DIRECTORY/31
+setup: prefix: (null)
+EOF
+	test_repo 31 .git "$TRASH_DIRECTORY/31/wt"
+'
+
+test_expect_failure '#31: GIT_DIR(rel), GIT_WORK_TREE=wt(rel) at root' '
+	cat >31/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/31.git
+setup: worktree: $TRASH_DIRECTORY/31/wt
+setup: cwd: $TRASH_DIRECTORY/31
+setup: prefix: (null)
+EOF
+	test_repo 31 .git wt
+'
+
+test_expect_failure '#31: GIT_DIR, GIT_WORK_TREE=wt(rel) at root' '
+	cat >31/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/31.git
+setup: worktree: $TRASH_DIRECTORY/31/wt
+setup: cwd: $TRASH_DIRECTORY/31
+setup: prefix: (null)
+EOF
+	test_repo 31 "$TRASH_DIRECTORY/31/.git" wt
+'
+
+test_expect_failure '#31: GIT_DIR, GIT_WORK_TREE=wt at root' '
+	cat >31/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/31.git
+setup: worktree: $TRASH_DIRECTORY/31/wt
+setup: cwd: $TRASH_DIRECTORY/31
+setup: prefix: (null)
+EOF
+	test_repo 31 "$TRASH_DIRECTORY/31/.git" "$TRASH_DIRECTORY/31/wt"
+'
+
+test_expect_failure '#31: GIT_DIR(rel), GIT_WORK_TREE=wt in subdir' '
+	cat >31/sub/sub/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/31.git
+setup: worktree: $TRASH_DIRECTORY/31/wt
+setup: cwd: $TRASH_DIRECTORY/31/sub/sub
+setup: prefix: (null)
+EOF
+	test_repo 31/sub/sub ../../.git "$TRASH_DIRECTORY/31/wt"
+'
+
+test_expect_failure '#31: GIT_DIR(rel), GIT_WORK_TREE=wt(rel) in subdir' '
+	cat >31/sub/sub/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/31.git
+setup: worktree: $TRASH_DIRECTORY/31/wt
+setup: cwd: $TRASH_DIRECTORY/31/sub/sub
+setup: prefix: (null)
+EOF
+	test_repo 31/sub/sub ../../.git ../../wt
+'
+
+test_expect_failure '#31: GIT_DIR, GIT_WORK_TREE=wt(rel) in subdir' '
+	cat >31/sub/sub/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/31.git
+setup: worktree: $TRASH_DIRECTORY/31/wt
+setup: cwd: $TRASH_DIRECTORY/31/sub/sub
+setup: prefix: (null)
+EOF
+	test_repo 31/sub/sub "$TRASH_DIRECTORY/31/.git" ../../wt
+'
+
+test_expect_failure '#31: GIT_DIR, GIT_WORK_TREE=wt in subdir' '
+	cat >31/sub/sub/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/31.git
+setup: worktree: $TRASH_DIRECTORY/31/wt
+setup: cwd: $TRASH_DIRECTORY/31/sub/sub
+setup: prefix: (null)
+EOF
+	test_repo 31/sub/sub "$TRASH_DIRECTORY/31/.git" "$TRASH_DIRECTORY/31/wt"
+'
+
+test_expect_failure '#31: GIT_DIR(rel), GIT_WORK_TREE=.. at root' '
+	cat >31/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/31.git
+setup: worktree: $TRASH_DIRECTORY
+setup: cwd: $TRASH_DIRECTORY
+setup: prefix: 31/
+EOF
+	test_repo 31 .git "$TRASH_DIRECTORY"
+'
+
+test_expect_failure '#31: GIT_DIR(rel), GIT_WORK_TREE=..(rel) at root' '
+	cat >31/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/31.git
+setup: worktree: $TRASH_DIRECTORY
+setup: cwd: $TRASH_DIRECTORY
+setup: prefix: 31/
+EOF
+	test_repo 31 .git ..
+'
+
+test_expect_failure '#31: GIT_DIR, GIT_WORK_TREE=..(rel) at root' '
+	cat >31/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/31.git
+setup: worktree: $TRASH_DIRECTORY
+setup: cwd: $TRASH_DIRECTORY
+setup: prefix: 31/
+EOF
+	test_repo 31 "$TRASH_DIRECTORY/31/.git" ..
+'
+
+test_expect_failure '#31: GIT_DIR, GIT_WORK_TREE=.. at root' '
+	cat >31/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/31.git
+setup: worktree: $TRASH_DIRECTORY
+setup: cwd: $TRASH_DIRECTORY
+setup: prefix: 31/
+EOF
+	test_repo 31 "$TRASH_DIRECTORY/31/.git" "$TRASH_DIRECTORY"
+'
+
+test_expect_failure '#31: GIT_DIR(rel), GIT_WORK_TREE=.. in subdir' '
+	cat >31/sub/sub/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/31.git
+setup: worktree: $TRASH_DIRECTORY
+setup: cwd: $TRASH_DIRECTORY
+setup: prefix: 31/sub/sub/
+EOF
+	test_repo 31/sub/sub ../../.git "$TRASH_DIRECTORY"
+'
+
+test_expect_failure '#31: GIT_DIR(rel), GIT_WORK_TREE=..(rel) in subdir' '
+	cat >31/sub/sub/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/31.git
+setup: worktree: $TRASH_DIRECTORY
+setup: cwd: $TRASH_DIRECTORY
+setup: prefix: 31/sub/sub/
+EOF
+	test_repo 31/sub/sub ../../.git ../../..
+'
+
+test_expect_failure '#31: GIT_DIR, GIT_WORK_TREE=..(rel) in subdir' '
+	cat >31/sub/sub/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/31.git
+setup: worktree: $TRASH_DIRECTORY
+setup: cwd: $TRASH_DIRECTORY
+setup: prefix: 31/sub/sub/
+EOF
+	test_repo 31/sub/sub "$TRASH_DIRECTORY/31/.git" ../../../
+'
+
+test_expect_failure '#31: GIT_DIR, GIT_WORK_TREE=.. in subdir' '
+	cat >31/sub/sub/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/31.git
+setup: worktree: $TRASH_DIRECTORY
+setup: cwd: $TRASH_DIRECTORY
+setup: prefix: 31/sub/sub/
+EOF
+	test_repo 31/sub/sub "$TRASH_DIRECTORY/31/.git" "$TRASH_DIRECTORY"
+'
+
 test_done
