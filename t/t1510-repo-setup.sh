@@ -3688,4 +3688,52 @@ EOF
 	test_repo 23/sub/sub "$TRASH_DIRECTORY/23/.git" "$TRASH_DIRECTORY"
 '
 
+#
+# case #24
+#
+############################################################
+#
+# Input:
+#
+#  - GIT_WORK_TREE is not set
+#  - GIT_DIR is not set
+#  - core.worktree is not set
+#  - .git is a file
+#  - core.bare is set
+#
+# Output:
+#
+# #16.2 except git_dir is set according to .git file
+
+test_expect_success '#24: setup' '
+	unset GIT_DIR GIT_WORK_TREE &&
+	mkdir 24 24/sub &&
+	cd 24 &&
+	git init &&
+	git config core.bare true &&
+	mv .git ../24.git &&
+	echo gitdir: ../24.git >.git &&
+	cd ..
+'
+
+test_expect_success '#24: at root' '
+	cat >24/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/24.git
+setup: worktree: (null)
+setup: cwd: $TRASH_DIRECTORY/24
+setup: prefix: (null)
+EOF
+	test_repo 24
+'
+
+test_expect_success '#24: in subdir' '
+	cat >24/sub/expected <<EOF &&
+setup: git_dir: $TRASH_DIRECTORY/24.git
+setup: worktree: (null)
+setup: cwd: $TRASH_DIRECTORY/24/sub
+setup: prefix: (null)
+EOF
+	test_repo 24/sub
+'
+
 test_done
