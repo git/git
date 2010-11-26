@@ -414,6 +414,7 @@ static const char *const init_db_usage[] = {
 int cmd_init_db(int argc, const char **argv, const char *prefix)
 {
 	const char *git_dir;
+	const char *work_tree;
 	const char *template_dir = NULL;
 	unsigned int flags = 0;
 	const struct option init_db_options[] = {
@@ -480,8 +481,8 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 	 * without --bare.  Catch the error early.
 	 */
 	git_dir = getenv(GIT_DIR_ENVIRONMENT);
-	if ((!git_dir || is_bare_repository_cfg == 1)
-	    && getenv(GIT_WORK_TREE_ENVIRONMENT))
+	work_tree = getenv(GIT_WORK_TREE_ENVIRONMENT);
+	if ((!git_dir || is_bare_repository_cfg == 1) && work_tree)
 		die("%s (or --work-tree=<directory>) not allowed without "
 		    "specifying %s (or --git-dir=<directory>)",
 		    GIT_WORK_TREE_ENVIRONMENT,
@@ -496,7 +497,6 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 	if (is_bare_repository_cfg < 0)
 		is_bare_repository_cfg = guess_repository_type(git_dir);
 
-	startup_info->setup_explicit = 1;
 	if (!is_bare_repository_cfg) {
 		if (git_dir) {
 			const char *git_dir_parent = strrchr(git_dir, '/');
@@ -511,9 +511,17 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 			if (!getcwd(git_work_tree_cfg, PATH_MAX))
 				die_errno ("Cannot access current working directory");
 		}
+		if (work_tree)
+			set_git_work_tree(make_absolute_path(work_tree));
+		else
+			set_git_work_tree(git_work_tree_cfg);
 		if (access(get_git_work_tree(), X_OK))
 			die_errno ("Cannot access work tree '%s'",
 				   get_git_work_tree());
+	}
+	else {
+		if (work_tree)
+			set_git_work_tree(make_absolute_path(work_tree));
 	}
 
 	set_git_dir(make_absolute_path(git_dir));
