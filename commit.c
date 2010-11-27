@@ -360,7 +360,7 @@ void free_commit_list(struct commit_list *list)
 	}
 }
 
-struct commit_list * insert_by_date(struct commit *item, struct commit_list **list)
+struct commit_list * commit_list_insert_by_date(struct commit *item, struct commit_list **list)
 {
 	struct commit_list **pp = list;
 	struct commit_list *p;
@@ -374,11 +374,11 @@ struct commit_list * insert_by_date(struct commit *item, struct commit_list **li
 }
 
 
-void sort_by_date(struct commit_list **list)
+void commit_list_sort_by_date(struct commit_list **list)
 {
 	struct commit_list *ret = NULL;
 	while (*list) {
-		insert_by_date((*list)->item, &ret);
+		commit_list_insert_by_date((*list)->item, &ret);
 		*list = (*list)->next;
 	}
 	*list = ret;
@@ -398,7 +398,7 @@ struct commit *pop_most_recent_commit(struct commit_list **list,
 		struct commit *commit = parents->item;
 		if (!parse_commit(commit) && !(commit->object.flags & mark)) {
 			commit->object.flags |= mark;
-			insert_by_date(commit, list);
+			commit_list_insert_by_date(commit, list);
 		}
 		parents = parents->next;
 	}
@@ -487,7 +487,7 @@ void sort_in_topological_order(struct commit_list ** list, int lifo)
 
 	/* process the list in topological order */
 	if (!lifo)
-		sort_by_date(&work);
+		commit_list_sort_by_date(&work);
 
 	pptr = list;
 	*list = NULL;
@@ -513,7 +513,7 @@ void sort_in_topological_order(struct commit_list ** list, int lifo)
 			 */
 			if (--parent->indegree == 1) {
 				if (!lifo)
-					insert_by_date(parent, &work);
+					commit_list_insert_by_date(parent, &work);
 				else
 					commit_list_insert(parent, &work);
 			}
@@ -573,10 +573,10 @@ static struct commit_list *merge_bases_many(struct commit *one, int n, struct co
 	}
 
 	one->object.flags |= PARENT1;
-	insert_by_date(one, &list);
+	commit_list_insert_by_date(one, &list);
 	for (i = 0; i < n; i++) {
 		twos[i]->object.flags |= PARENT2;
-		insert_by_date(twos[i], &list);
+		commit_list_insert_by_date(twos[i], &list);
 	}
 
 	while (interesting(list)) {
@@ -594,7 +594,7 @@ static struct commit_list *merge_bases_many(struct commit *one, int n, struct co
 		if (flags == (PARENT1 | PARENT2)) {
 			if (!(commit->object.flags & RESULT)) {
 				commit->object.flags |= RESULT;
-				insert_by_date(commit, &result);
+				commit_list_insert_by_date(commit, &result);
 			}
 			/* Mark parents of a found merge stale */
 			flags |= STALE;
@@ -608,7 +608,7 @@ static struct commit_list *merge_bases_many(struct commit *one, int n, struct co
 			if (parse_commit(p))
 				return NULL;
 			p->object.flags |= flags;
-			insert_by_date(p, &list);
+			commit_list_insert_by_date(p, &list);
 		}
 	}
 
@@ -618,7 +618,7 @@ static struct commit_list *merge_bases_many(struct commit *one, int n, struct co
 	while (list) {
 		struct commit_list *next = list->next;
 		if (!(list->item->object.flags & STALE))
-			insert_by_date(list->item, &result);
+			commit_list_insert_by_date(list->item, &result);
 		free(list);
 		list = next;
 	}
@@ -711,7 +711,7 @@ struct commit_list *get_merge_bases_many(struct commit *one,
 	result = NULL;
 	for (i = 0; i < cnt; i++) {
 		if (rslt[i])
-			insert_by_date(rslt[i], &result);
+			commit_list_insert_by_date(rslt[i], &result);
 	}
 	free(rslt);
 	return result;

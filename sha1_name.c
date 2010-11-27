@@ -683,7 +683,7 @@ static int handle_one_ref(const char *path,
 	}
 	if (object->type != OBJ_COMMIT)
 		return 0;
-	insert_by_date((struct commit *)object, list);
+	commit_list_insert_by_date((struct commit *)object, list);
 	object->flags |= ONELINE_SEEN;
 	return 0;
 }
