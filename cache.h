@@ -181,6 +181,7 @@ struct cache_entry {
 #define CE_CONFLICTED        (1 << 23)
 
 #define CE_UNPACKED          (1 << 24)
+#define CE_NEW_SKIP_WORKTREE (1 << 25)
 
 /*
  * Extended on-disk flags

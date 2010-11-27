@@ -258,7 +258,7 @@ static int apply_sparse_checkout(struct cache_entry *ce, struct unpack_trees_opt
 {
 	int was_skip_worktree = ce_skip_worktree(ce);
 
-	if (!ce_stage(ce) && will_have_skip_worktree(ce, o))
+	if (ce->ce_flags & CE_NEW_SKIP_WORKTREE)
 		ce->ce_flags |= CE_SKIP_WORKTREE;
 	else
 		ce->ce_flags &= ~CE_SKIP_WORKTREE;
@@ -333,7 +333,7 @@ static void mark_all_ce_unused(struct index_state *index)
 {
 	int i;
 	for (i = 0; i < index->cache_nr; i++)
-		index->cache[i]->ce_flags &= ~CE_UNPACKED;
+		index->cache[i]->ce_flags &= ~(CE_UNPACKED | CE_ADDED | CE_NEW_SKIP_WORKTREE);
 }
 
 static int locate_in_src_index(struct cache_entry *ce,
@@ -835,8 +835,33 @@ static int unpack_callback(int n, unsigned long mask, unsigned long dirmask, str
 }
 
 /*
+ * Set/Clear CE_NEW_SKIP_WORKTREE according to $GIT_DIR/info/sparse-checkout
+ */
+static void mark_new_skip_worktree(struct exclude_list *el,
+				   struct index_state *the_index,
+				   int select_flag, int skip_wt_flag)
+{
+	int i;
+
+	for (i = 0; i < the_index->cache_nr; i++) {
+		struct cache_entry *ce = the_index->cache[i];
+
+		if (select_flag && !(ce->ce_flags & select_flag))
+			continue;
+
+		if (!ce_stage(ce) && will_have_skip_worktree(ce, o))
+			ce->ce_flags |= skip_wt_flag;
+		else
+			ce->ce_flags &= ~skip_wt_flag;
+	}
+}
+
+static int verify_absent(struct cache_entry *, enum unpack_trees_error_types, struct unpack_trees_options *);
+/*
  * N-way merge "len" trees.  Returns 0 on success, -1 on failure to manipulate the
  * resulting index, -2 on failure to reflect the changes to the work tree.
+ *
+ * CE_ADDED, CE_UNPACKED and CE_NEW_SKIP_WORKTREE are used internally
  */
 int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options *o)
 {
@@ -868,6 +893,12 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 	o->result.timestamp.nsec = o->src_index->timestamp.nsec;
 	o->merge_size = len;
 	mark_all_ce_unused(o->src_index);
+
+	/*
+	 * Sparse checkout loop #1: set NEW_SKIP_WORKTREE on existing entries
+	 */
+	if (!o->skip_sparse_checkout)
+		mark_new_skip_worktree(o->el, o->src_index, 0, CE_NEW_SKIP_WORKTREE);
 
 	if (!dfc)
 		dfc = xcalloc(1, cache_entry_size(0));
@@ -922,8 +953,28 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 
 	if (!o->skip_sparse_checkout) {
 		int empty_worktree = 1;
-		for (i = 0;i < o->result.cache_nr;i++) {
+
+		/*
+		 * Sparse checkout loop #2: set NEW_SKIP_WORKTREE on entries not in loop #1
+		 * If the will have NEW_SKIP_WORKTREE, also set CE_SKIP_WORKTREE
+		 * so apply_sparse_checkout() won't attempt to remove it from worktree
+		 */
+		mark_new_skip_worktree(o->el, &o->result, CE_ADDED, CE_SKIP_WORKTREE | CE_NEW_SKIP_WORKTREE);
+
+		for (i = 0; i < o->result.cache_nr; i++) {
 			struct cache_entry *ce = o->result.cache[i];
+
+			/*
+			 * Entries marked with CE_ADDED in merged_entry() do not have
+			 * verify_absent() check (the check is effectively disabled
+			 * because CE_NEW_SKIP_WORKTREE is set unconditionally).
+			 *
+			 * Do the real check now because we have had
+			 * correct CE_NEW_SKIP_WORKTREE
+			 */
+			if (ce->ce_flags & CE_ADDED &&
+			    verify_absent(ce, ERROR_WOULD_LOSE_UNTRACKED_OVERWRITTEN, o))
+					return -1;
 
 			if (apply_sparse_checkout(ce, o)) {
 				ret = -1;
@@ -1013,7 +1064,7 @@ static int verify_uptodate_1(struct cache_entry *ce,
 static int verify_uptodate(struct cache_entry *ce,
 			   struct unpack_trees_options *o)
 {
-	if (!o->skip_sparse_checkout && will_have_skip_worktree(ce, o))
+	if (!o->skip_sparse_checkout && (ce->ce_flags & CE_NEW_SKIP_WORKTREE))
 		return 0;
 	return verify_uptodate_1(ce, o, ERROR_NOT_UPTODATE_FILE);
 }
@@ -1200,7 +1251,7 @@ static int verify_absent(struct cache_entry *ce,
 			 enum unpack_trees_error_types error_type,
 			 struct unpack_trees_options *o)
 {
-	if (!o->skip_sparse_checkout && will_have_skip_worktree(ce, o))
+	if (!o->skip_sparse_checkout && (ce->ce_flags & CE_NEW_SKIP_WORKTREE))
 		return 0;
 	return verify_absent_1(ce, error_type, o);
 }
@@ -1222,10 +1273,23 @@ static int merged_entry(struct cache_entry *merge, struct cache_entry *old,
 	int update = CE_UPDATE;
 
 	if (!old) {
+		/*
+		 * New index entries. In sparse checkout, the following
+		 * verify_absent() will be delayed until after
+		 * traverse_trees() finishes in unpack_trees(), then:
+		 *
+		 *  - CE_NEW_SKIP_WORKTREE will be computed correctly
+		 *  - verify_absent() be called again, this time with
+		 *    correct CE_NEW_SKIP_WORKTREE
+		 *
+		 * verify_absent() call here does nothing in sparse
+		 * checkout (i.e. o->skip_sparse_checkout == 0)
+		 */
+		update |= CE_ADDED;
+		merge->ce_flags |= CE_NEW_SKIP_WORKTREE;
+
 		if (verify_absent(merge, ERROR_WOULD_LOSE_UNTRACKED_OVERWRITTEN, o))
 			return -1;
-		if (!o->skip_sparse_checkout && will_have_skip_worktree(merge, o))
-			update |= CE_SKIP_WORKTREE;
 		invalidate_ce_path(merge, o);
 	} else if (!(old->ce_flags & CE_CONFLICTED)) {
 		/*
@@ -1241,8 +1305,8 @@ static int merged_entry(struct cache_entry *merge, struct cache_entry *old,
 		} else {
 			if (verify_uptodate(old, o))
 				return -1;
-			if (ce_skip_worktree(old))
-				update |= CE_SKIP_WORKTREE;
+			/* Migrate old flags over */
+			update |= old->ce_flags & (CE_SKIP_WORKTREE | CE_NEW_SKIP_WORKTREE);
 			invalidate_ce_path(old, o);
 		}
 	} else {
