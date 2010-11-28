@@ -121,6 +121,10 @@ the `$GIT_DIR/refs` directory or from the `$GIT_DIR/packed-refs` file.
   ':path' (with an empty part before the colon, e.g. `:README`)
   is a special case of the syntax described next: content
   recorded in the index at the given path.
+  A path starting with './' or '../' is relative to current working directory.
+  The given path will be converted to be relative to working tree's root directory.
+  This is most useful to address a blob or tree from a commit or tree that has
+  the same tree structure with the working tree.
 
 * A colon, optionally followed by a stage number (0 to 3) and a
   colon, followed by a path (e.g. `:0:README`); this names a blob object in the
