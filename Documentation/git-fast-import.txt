@@ -92,6 +92,11 @@ OPTIONS
 	--(no-)-relative-marks= with the --(import|export)-marks=
 	options.
 
+--cat-blob-fd=<fd>::
+	Specify the file descriptor that will be written to
+	when the `cat-blob` command is encountered in the stream.
+	The default behaviour is to write to `stdout`.
+
 --export-pack-edges=<file>::
 	After creating a packfile, print a line of data to
 	<file> listing the filename of the packfile and the last
@@ -319,6 +324,11 @@ and control the current import process.  More detailed discussion
 	Causes fast-import to echo the entire line to its own
 	standard output.  This command is optional and is not needed
 	to perform an import.
+
+`cat-blob`::
+	Causes fast-import to print a blob in 'cat-file --batch'
+	format to the file descriptor set with `--cat-blob-fd` or
+	`stdout` if unspecified.
 
 `feature`::
 	Require that fast-import supports the specified feature, or
@@ -879,6 +889,29 @@ Placing a `progress` command immediately after a `checkpoint` will
 inform the reader when the `checkpoint` has been completed and it
 can safely access the refs that fast-import updated.
 
+`cat-blob`
+~~~~~~~~~~
+Causes fast-import to print a blob to a file descriptor previously
+arranged with the `--cat-blob-fd` argument.  The command otherwise
+has no impact on the current import; its main purpose is to
+retrieve blobs that may be in fast-import's memory but not
+accessible from the target repository.
+
+....
+	'cat-blob' SP <dataref> LF
+....
+
+The `<dataref>` can be either a mark reference (`:<idnum>`)
+set previously or a full 40-byte SHA-1 of a Git blob, preexisting or
+ready to be written.
+
+output uses the same format as `git cat-file --batch`:
+
+====
+	<sha1> SP 'blob' SP <size> LF
+	<contents> LF
+====
+
 `feature`
 ~~~~~~~~~
 Require that fast-import supports the specified feature, or abort if
@@ -905,6 +938,13 @@ import-marks::
 	second, an --import-marks= command-line option overrides
 	any "feature import-marks" command in the stream.
 
+cat-blob::
+	Ignored.  Versions of fast-import not supporting the
+	"cat-blob" command will exit with a message indicating so.
+	This lets the import error out early with a clear message,
+	rather than wasting time on the early part of an import
+	before the unsupported command is detected.
+
 `option`
 ~~~~~~~~
 Processes the specified option so that git fast-import behaves in a
@@ -930,6 +970,7 @@ not be passed as option:
 * date-format
 * import-marks
 * export-marks
+* cat-blob-fd
 * force
 
 Crash Reports

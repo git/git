@@ -23,11 +23,18 @@ file5_data='an inline file.
 file6_data='#!/bin/sh
 echo "$@"'
 
+>empty
+
 ###
 ### series A
 ###
 
 test_tick
+
+test_expect_success 'empty stream succeeds' '
+	git fast-import </dev/null
+'
+
 cat >input <<INPUT_END
 blob
 mark :2
@@ -1632,6 +1639,190 @@ test_expect_success 'R: feature no-relative-marks should be honoured' '
     test_cmp marks.new non-relative.out
 '
 
+test_expect_success 'R: feature cat-blob supported' '
+	echo "feature cat-blob" |
+	git fast-import
+'
+
+test_expect_success 'R: cat-blob-fd must be a nonnegative integer' '
+	test_must_fail git fast-import --cat-blob-fd=-1 </dev/null
+'
+
+test_expect_success 'R: print old blob' '
+	blob=$(echo "yes it can" | git hash-object -w --stdin) &&
+	cat >expect <<-EOF &&
+	${blob} blob 11
+	yes it can
+
+	EOF
+	echo "cat-blob $blob" |
+	git fast-import --cat-blob-fd=6 6>actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'R: in-stream cat-blob-fd not respected' '
+	echo hello >greeting &&
+	blob=$(git hash-object -w greeting) &&
+	cat >expect <<-EOF &&
+	${blob} blob 6
+	hello
+
+	EOF
+	git fast-import --cat-blob-fd=3 3>actual.3 >actual.1 <<-EOF &&
+	cat-blob $blob
+	EOF
+	test_cmp expect actual.3 &&
+	test_cmp empty actual.1 &&
+	git fast-import 3>actual.3 >actual.1 <<-EOF &&
+	option cat-blob-fd=3
+	cat-blob $blob
+	EOF
+	test_cmp empty actual.3 &&
+	test_cmp expect actual.1
+'
+
+test_expect_success 'R: print new blob' '
+	blob=$(echo "yep yep yep" | git hash-object --stdin) &&
+	cat >expect <<-EOF &&
+	${blob} blob 12
+	yep yep yep
+
+	EOF
+	git fast-import --cat-blob-fd=6 6>actual <<-\EOF &&
+	blob
+	mark :1
+	data <<BLOB_END
+	yep yep yep
+	BLOB_END
+	cat-blob :1
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'R: print new blob by sha1' '
+	blob=$(echo "a new blob named by sha1" | git hash-object --stdin) &&
+	cat >expect <<-EOF &&
+	${blob} blob 25
+	a new blob named by sha1
+
+	EOF
+	git fast-import --cat-blob-fd=6 6>actual <<-EOF &&
+	blob
+	data <<BLOB_END
+	a new blob named by sha1
+	BLOB_END
+	cat-blob $blob
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'setup: big file' '
+	(
+		echo "the quick brown fox jumps over the lazy dog" >big &&
+		for i in 1 2 3
+		do
+			cat big big big big >bigger &&
+			cat bigger bigger bigger bigger >big ||
+			exit
+		done
+	)
+'
+
+test_expect_success 'R: print two blobs to stdout' '
+	blob1=$(git hash-object big) &&
+	blob1_len=$(wc -c <big) &&
+	blob2=$(echo hello | git hash-object --stdin) &&
+	{
+		echo ${blob1} blob $blob1_len &&
+		cat big &&
+		cat <<-EOF
+
+		${blob2} blob 6
+		hello
+
+		EOF
+	} >expect &&
+	{
+		cat <<-\END_PART1 &&
+			blob
+			mark :1
+			data <<data_end
+		END_PART1
+		cat big &&
+		cat <<-\EOF
+			data_end
+			blob
+			mark :2
+			data <<data_end
+			hello
+			data_end
+			cat-blob :1
+			cat-blob :2
+		EOF
+	} |
+	git fast-import >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'setup: have pipes?' '
+	rm -f frob &&
+	if mkfifo frob
+	then
+		test_set_prereq PIPE
+	fi
+'
+
+test_expect_success PIPE 'R: copy using cat-file' '
+	expect_id=$(git hash-object big) &&
+	expect_len=$(wc -c <big) &&
+	echo $expect_id blob $expect_len >expect.response &&
+
+	rm -f blobs &&
+	cat >frontend <<-\FRONTEND_END &&
+	#!/bin/sh
+	cat <<EOF &&
+	feature cat-blob
+	blob
+	mark :1
+	data <<BLOB
+	EOF
+	cat big
+	cat <<EOF
+	BLOB
+	cat-blob :1
+	EOF
+
+	read blob_id type size <&3 &&
+	echo "$blob_id $type $size" >response &&
+	dd if=/dev/stdin of=blob bs=$size count=1 <&3 &&
+	read newline <&3 &&
+
+	cat <<EOF &&
+	commit refs/heads/copied
+	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+	data <<COMMIT
+	copy big file as file3
+	COMMIT
+	M 644 inline file3
+	data <<BLOB
+	EOF
+	cat blob &&
+	cat <<EOF
+	BLOB
+	EOF
+	FRONTEND_END
+
+	mkfifo blobs &&
+	(
+		export GIT_COMMITTER_NAME GIT_COMMITTER_EMAIL GIT_COMMITTER_DATE &&
+		sh frontend 3<blobs |
+		git fast-import --cat-blob-fd=3 3>blobs
+	) &&
+	git show copied:file3 >actual &&
+	test_cmp expect.response response &&
+	test_cmp big actual
+'
+
 cat >input << EOF
 option git quiet
 blob
@@ -1639,8 +1830,6 @@ data 3
 hi
 
 EOF
-
-touch empty
 
 test_expect_success 'R: quiet option results in no stats being output' '
     cat input | git fast-import 2> output &&
