@@ -1659,6 +1659,14 @@ test_expect_success 'R: unknown commandline options are rejected' '\
     test_must_fail git fast-import --non-existing-option < /dev/null
 '
 
+test_expect_success 'R: die on invalid option argument' '
+	echo "option git active-branches=-5" |
+	test_must_fail git fast-import &&
+	echo "option git depth=" |
+	test_must_fail git fast-import &&
+	test_must_fail git fast-import --depth="5 elephants" </dev/null
+'
+
 cat >input <<EOF
 option non-existing-vcs non-existing-option
 EOF
