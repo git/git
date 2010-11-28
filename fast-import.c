@@ -55,8 +55,6 @@ Format of STDIN stream:
     ('from' sp committish lf)?
     lf?;
 
-  cat_blob ::= 'cat-blob' sp (hexsha1 | idnum) lf;
-
   checkpoint ::= 'checkpoint' lf
     lf?;
 
@@ -134,14 +132,17 @@ Format of STDIN stream:
   ts    ::= # time since the epoch in seconds, ascii base10 notation;
   tz    ::= # GIT style timezone;
 
-     # note: comments may appear anywhere in the input, except
-     # within a data command.  Any form of the data command
-     # always escapes the related input from comment processing.
+     # note: comments and cat requests may appear anywhere
+     # in the input, except within a data command.  Any form
+     # of the data command always escapes the related input
+     # from comment processing.
      #
      # In case it is not clear, the '#' that starts the comment
      # must be the first character on that line (an lf
      # preceded it).
      #
+  cat_blob ::= 'cat-blob' sp (hexsha1 | idnum) lf;
+
   comment ::= '#' not_lf* lf;
   not_lf  ::= # Any byte that is not ASCII newline (LF);
 */
@@ -367,6 +368,7 @@ static int seen_data_command;
 static int cat_blob_fd = STDOUT_FILENO;
 
 static void parse_argv(void);
+static void parse_cat_blob(void);
 
 static void write_branch_report(FILE *rpt, struct branch *b)
 {
@@ -1785,7 +1787,6 @@ static void read_marks(void)
 	fclose(f);
 }
 
-
 static int read_next_command(void)
 {
 	static int stdin_eof = 0;
@@ -1795,7 +1796,7 @@ static int read_next_command(void)
 		return EOF;
 	}
 
-	do {
+	for (;;) {
 		if (unread_command_buf) {
 			unread_command_buf = 0;
 		} else {
@@ -1828,9 +1829,14 @@ static int read_next_command(void)
 			rc->prev->next = rc;
 			cmd_tail = rc;
 		}
-	} while (command_buf.buf[0] == '#');
-
-	return 0;
+		if (!prefixcmp(command_buf.buf, "cat-blob ")) {
+			parse_cat_blob();
+			continue;
+		}
+		if (command_buf.buf[0] == '#')
+			continue;
+		return 0;
+	}
 }
 
 static void skip_optional_lf(void)
@@ -3066,8 +3072,6 @@ int main(int argc, const char **argv)
 			parse_new_tag();
 		else if (!prefixcmp(command_buf.buf, "reset "))
 			parse_reset_branch();
-		else if (!prefixcmp(command_buf.buf, "cat-blob "))
-			parse_cat_blob();
 		else if (!strcmp("checkpoint", command_buf.buf))
 			parse_checkpoint();
 		else if (!prefixcmp(command_buf.buf, "progress "))

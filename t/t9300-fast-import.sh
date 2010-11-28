@@ -1823,6 +1823,72 @@ test_expect_success PIPE 'R: copy using cat-file' '
 	test_cmp big actual
 '
 
+test_expect_success PIPE 'R: print blob mid-commit' '
+	rm -f blobs &&
+	echo "A blob from _before_ the commit." >expect &&
+	mkfifo blobs &&
+	(
+		exec 3<blobs &&
+		cat <<-EOF &&
+		feature cat-blob
+		blob
+		mark :1
+		data <<BLOB
+		A blob from _before_ the commit.
+		BLOB
+		commit refs/heads/temporary
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+		data <<COMMIT
+		Empty commit
+		COMMIT
+		cat-blob :1
+		EOF
+
+		read blob_id type size <&3 &&
+		dd if=/dev/stdin of=actual bs=$size count=1 <&3 &&
+		read newline <&3 &&
+
+		echo
+	) |
+	git fast-import --cat-blob-fd=3 3>blobs &&
+	test_cmp expect actual
+'
+
+test_expect_success PIPE 'R: print staged blob within commit' '
+	rm -f blobs &&
+	echo "A blob from _within_ the commit." >expect &&
+	mkfifo blobs &&
+	(
+		exec 3<blobs &&
+		cat <<-EOF &&
+		feature cat-blob
+		commit refs/heads/within
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+		data <<COMMIT
+		Empty commit
+		COMMIT
+		M 644 inline within
+		data <<BLOB
+		A blob from _within_ the commit.
+		BLOB
+		EOF
+
+		to_get=$(
+			echo "A blob from _within_ the commit." |
+			git hash-object --stdin
+		) &&
+		echo "cat-blob $to_get" &&
+
+		read blob_id type size <&3 &&
+		dd if=/dev/stdin of=actual bs=$size count=1 <&3 &&
+		read newline <&3 &&
+
+		echo deleteall
+	) |
+	git fast-import --cat-blob-fd=3 3>blobs &&
+	test_cmp expect actual
+'
+
 cat >input << EOF
 option git quiet
 blob

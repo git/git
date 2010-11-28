@@ -912,6 +912,10 @@ output uses the same format as `git cat-file --batch`:
 	<contents> LF
 ====
 
+This command can be used anywhere in the stream that comments are
+accepted.  In particular, the `cat-blob` command can be used in the
+middle of a commit but not in the middle of a `data` command.
+
 `feature`
 ~~~~~~~~~
 Require that fast-import supports the specified feature, or abort if
