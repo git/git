@@ -122,22 +122,22 @@ proc show_unmerged_diff {cont_info} {
 	if {$merge_stages(2) eq {}} {
 		set is_conflict_diff 1
 		lappend current_diff_queue \
-			[list [mc "LOCAL: deleted\nREMOTE:\n"] d======= \
+			[list [mc "LOCAL: deleted\nREMOTE:\n"] d= \
 			    [list ":1:$current_diff_path" ":3:$current_diff_path"]]
 	} elseif {$merge_stages(3) eq {}} {
 		set is_conflict_diff 1
 		lappend current_diff_queue \
-			[list [mc "REMOTE: deleted\nLOCAL:\n"] d======= \
+			[list [mc "REMOTE: deleted\nLOCAL:\n"] d= \
 			    [list ":1:$current_diff_path" ":2:$current_diff_path"]]
 	} elseif {[lindex $merge_stages(1) 0] eq {120000}
 		|| [lindex $merge_stages(2) 0] eq {120000}
 		|| [lindex $merge_stages(3) 0] eq {120000}} {
 		set is_conflict_diff 1
 		lappend current_diff_queue \
-			[list [mc "LOCAL:\n"] d======= \
+			[list [mc "LOCAL:\n"] d= \
 			    [list ":1:$current_diff_path" ":2:$current_diff_path"]]
 		lappend current_diff_queue \
-			[list [mc "REMOTE:\n"] d======= \
+			[list [mc "REMOTE:\n"] d= \
 			    [list ":1:$current_diff_path" ":3:$current_diff_path"]]
 	} else {
 		start_show_diff $cont_info
