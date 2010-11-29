@@ -3194,7 +3194,7 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 		DIFF_OPT_SET(options, TEXT);
 	else if (!strcmp(arg, "-R"))
 		DIFF_OPT_SET(options, REVERSE_DIFF);
-	else if (!strcmp(arg, "--find-copies-harder"))
+	else if (!strcmp(arg, "--find-copies-harder") || !strcmp(arg, "--detect-copies-harder"))
 		DIFF_OPT_SET(options, FIND_COPIES_HARDER);
 	else if (!strcmp(arg, "--follow"))
 		DIFF_OPT_SET(options, FOLLOW_RENAMES);

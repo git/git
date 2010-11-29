@@ -251,6 +251,7 @@ endif::git-log[]
 	If `n` is specified, it has the same meaning as for `-M<n>`.
 
 --find-copies-harder::
+--detect-copies-harder::
 	For performance reasons, by default, `-C` option finds copies only
 	if the original file of the copy was modified in the same
 	changeset.  This flag makes the command
