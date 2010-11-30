@@ -66,6 +66,8 @@ static struct option builtin_clone_options[] = {
 		    "setup as shared repository"),
 	OPT_BOOLEAN(0, "recursive", &option_recursive,
 		    "initialize submodules in the clone"),
+	OPT_BOOLEAN(0, "recurse_submodules", &option_recursive,
+		    "initialize submodules in the clone"),
 	OPT_STRING(0, "template", &option_template, "path",
 		   "path the template repository"),
 	OPT_STRING(0, "reference", &option_reference, "repo",
