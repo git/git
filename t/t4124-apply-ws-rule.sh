@@ -121,6 +121,34 @@ test_expect_success 'whitespace=error-all, no rule (attribute)' '
 
 '
 
+test_expect_success 'spaces inserted by tab-in-indent' '
+
+	git config core.whitespace -trailing,-space,-indent,tab &&
+	rm -f .gitattributes &&
+	test_fix % &&
+	sed -e "s/_/ /g" -e "s/>/	/" <<-\EOF >expect &&
+		An_SP in an ordinary line>and a HT.
+		________A HT (%).
+		________A SP and a HT (@%).
+		_________A SP, a HT and a SP (@%).
+		_______Seven SP.
+		________Eight SP (#).
+		________Seven SP and a HT (@%).
+		________________Eight SP and a HT (@#%).
+		_________Seven SP, a HT and a SP (@%).
+		_________________Eight SP, a HT and a SP (@#%).
+		_______________Fifteen SP (#).
+		________________Fifteen SP and a HT (@#%).
+		________________Sixteen SP (#).
+		________________________Sixteen SP and a HT (@#%).
+		_____a__Five SP, a non WS, two SP.
+		A line with a (!) trailing SP_
+		A line with a (!) trailing HT>
+	EOF
+	test_cmp expect target
+
+'
+
 for t in - ''
 do
 	case "$t" in '') tt='!' ;; *) tt= ;; esac
