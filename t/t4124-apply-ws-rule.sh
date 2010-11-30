@@ -10,7 +10,8 @@ prepare_test_file () {
 	#       X  RULE
 	#   	!  trailing-space
 	#   	@  space-before-tab
-	#   	#  indent-with-non-tab
+	#   	#  indent-with-non-tab (default tab width 8)
+	#	=  indent-with-non-tab,tabwidth=16
 	#   	%  tab-in-indent
 	sed -e "s/_/ /g" -e "s/>/	/" <<-\EOF
 		An_SP in an ordinary line>and a HT.
@@ -25,8 +26,8 @@ prepare_test_file () {
 		________>_Eight SP, a HT and a SP (@#%).
 		_______________Fifteen SP (#).
 		_______________>Fifteen SP and a HT (@#%).
-		________________Sixteen SP (#).
-		________________>Sixteen SP and a HT (@#%).
+		________________Sixteen SP (#=).
+		________________>Sixteen SP and a HT (@#%=).
 		_____a__Five SP, a non WS, two SP.
 		A line with a (!) trailing SP_
 		A line with a (!) trailing HT>
@@ -139,8 +140,8 @@ test_expect_success 'spaces inserted by tab-in-indent' '
 		_________________Eight SP, a HT and a SP (@#%).
 		_______________Fifteen SP (#).
 		________________Fifteen SP and a HT (@#%).
-		________________Sixteen SP (#).
-		________________________Sixteen SP and a HT (@#%).
+		________________Sixteen SP (#=).
+		________________________Sixteen SP and a HT (@#%=).
 		_____a__Five SP, a non WS, two SP.
 		A line with a (!) trailing SP_
 		A line with a (!) trailing HT>
@@ -157,7 +158,7 @@ do
 		case "$s" in '') ts='@' ;; *) ts= ;; esac
 		for i in - ''
 		do
-			case "$i" in '') ti='#' ;; *) ti= ;; esac
+			case "$i" in '') ti='#' ti16='=';; *) ti= ti16= ;; esac
 			for h in - ''
 			do
 				[ -z "$h$i" ] && continue
@@ -170,10 +171,20 @@ do
 					test_fix "$tt$ts$ti$th"
 				'
 
+				test_expect_success "rule=$rule,tabwidth=16" '
+					git config core.whitespace "$rule,tabwidth=16" &&
+					test_fix "$tt$ts$ti16$th"
+				'
+
 				test_expect_success "rule=$rule (attributes)" '
 					git config --unset core.whitespace &&
 					echo "target whitespace=$rule" >.gitattributes &&
 					test_fix "$tt$ts$ti$th"
+				'
+
+				test_expect_success "rule=$rule,tabwidth=16 (attributes)" '
+					echo "target whitespace=$rule,tabwidth=16" >.gitattributes &&
+					test_fix "$tt$ts$ti16$th"
 				'
 
 			done
