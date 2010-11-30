@@ -179,7 +179,7 @@ test_expect_success 'git clean -d with prefix and path' '
 
 '
 
-test_expect_success 'git clean symbolic link' '
+test_expect_success SYMLINKS 'git clean symbolic link' '
 
 	mkdir -p build docs &&
 	touch a.out src/part3.c docs/manual.txt obj.o build/lib.so &&
