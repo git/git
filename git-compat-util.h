@@ -105,7 +105,11 @@
 #include <regex.h>
 #include <utime.h>
 #include <syslog.h>
+#ifndef NO_SYS_POLL_H
 #include <sys/poll.h>
+#else
+#include <poll.h>
+#endif
 #ifndef __MINGW32__
 #include <sys/wait.h>
 #include <sys/socket.h>
@@ -119,7 +123,11 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <pwd.h>
+#ifndef NO_INTTYPES_H
 #include <inttypes.h>
+#else
+#include <stdint.h>
+#endif
 #if defined(__CYGWIN__)
 #undef _XOPEN_SOURCE
 #include <grp.h>

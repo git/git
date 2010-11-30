@@ -13,6 +13,10 @@
 #define NI_MAXSERV 32
 #endif
 
+#ifdef NO_INITGROUPS
+#define initgroups(x, y) (0) /* nothing */
+#endif
+
 static int log_syslog;
 static int verbose;
 static int reuseaddr;
