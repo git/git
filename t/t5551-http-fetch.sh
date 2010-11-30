@@ -101,5 +101,13 @@ test_expect_success 'used upload-pack service' '
 	test_cmp exp act
 '
 
+test_expect_success 'follow redirects (301)' '
+	git clone $HTTPD_URL/smart-redir-perm/repo.git --quiet repo-p
+'
+
+test_expect_success 'follow redirects (302)' '
+	git clone $HTTPD_URL/smart-redir-temp/repo.git --quiet repo-t
+'
+
 stop_httpd
 test_done
