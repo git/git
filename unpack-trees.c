@@ -53,6 +53,7 @@ const char *unpack_plumbing_errors[NB_UNPACK_TREES_ERROR_TYPES] = {
 void setup_unpack_trees_porcelain(struct unpack_trees_options *opts,
 				  const char *cmd)
 {
+	int i;
 	const char **msgs = opts->msgs;
 	const char *msg;
 	char *tmp;
@@ -96,6 +97,9 @@ void setup_unpack_trees_porcelain(struct unpack_trees_options *opts,
 		"The following Working tree files would be removed by sparse checkout update:\n%s";
 
 	opts->show_all_errors = 1;
+	/* rejected paths may not have a static buffer */
+	for (i = 0; i < ARRAY_SIZE(opts->unpack_rejects); i++)
+		opts->unpack_rejects[i].strdup_strings = 1;
 }
 
 static void add_entry(struct unpack_trees_options *o, struct cache_entry *ce,
@@ -124,7 +128,6 @@ static int add_rejected_path(struct unpack_trees_options *o,
 			     enum unpack_trees_error_types e,
 			     const char *path)
 {
-	struct rejected_paths_list *newentry;
 	if (!o->show_all_errors)
 		return error(ERRORMSG(o, e), path);
 
@@ -132,25 +135,8 @@ static int add_rejected_path(struct unpack_trees_options *o,
 	 * Otherwise, insert in a list for future display by
 	 * display_error_msgs()
 	 */
-	newentry = xmalloc(sizeof(struct rejected_paths_list));
-	newentry->path = (char *)path;
-	newentry->next = o->unpack_rejects[e];
-	o->unpack_rejects[e] = newentry;
+	string_list_append(&o->unpack_rejects[e], path);
 	return -1;
-}
-
-/*
- * free all the structures allocated for the error <e>
- */
-static void free_rejected_paths(struct unpack_trees_options *o,
-				enum unpack_trees_error_types e)
-{
-	while (o->unpack_rejects[e]) {
-		struct rejected_paths_list *del = o->unpack_rejects[e];
-		o->unpack_rejects[e] = o->unpack_rejects[e]->next;
-		free(del);
-	}
-	free(o->unpack_rejects[e]);
 }
 
 /*
@@ -158,19 +144,19 @@ static void free_rejected_paths(struct unpack_trees_options *o,
  */
 static void display_error_msgs(struct unpack_trees_options *o)
 {
-	int e;
+	int e, i;
 	int something_displayed = 0;
 	for (e = 0; e < NB_UNPACK_TREES_ERROR_TYPES; e++) {
-		if (o->unpack_rejects[e]) {
-			struct rejected_paths_list *rp;
+		struct string_list *rejects = &o->unpack_rejects[e];
+		if (rejects->nr > 0) {
 			struct strbuf path = STRBUF_INIT;
 			something_displayed = 1;
-			for (rp = o->unpack_rejects[e]; rp; rp = rp->next)
-				strbuf_addf(&path, "\t%s\n", rp->path);
+			for (i = 0; i < rejects->nr; i++)
+				strbuf_addf(&path, "\t%s\n", rejects->items[i].string);
 			error(ERRORMSG(o, e), path.buf);
 			strbuf_release(&path);
-			free_rejected_paths(o, e);
 		}
+		string_list_clear(rejects, 0);
 	}
 	if (something_displayed)
 		printf("Aborting\n");
@@ -182,7 +168,7 @@ static void display_error_msgs(struct unpack_trees_options *o)
  */
 static void unlink_entry(struct cache_entry *ce)
 {
-	if (has_symlink_or_noent_leading_path(ce->name, ce_namelen(ce)))
+	if (!check_leading_path(ce->name, ce_namelen(ce)))
 		return;
 	if (remove_or_warn(ce->ce_mode, ce->name))
 		return;
@@ -1127,12 +1113,63 @@ static int verify_clean_subdirectory(struct cache_entry *ce,
  * See if we can find a case-insensitive match in the index that also
  * matches the stat information, and assume it's that other file!
  */
-static int icase_exists(struct unpack_trees_options *o, struct cache_entry *dst, struct stat *st)
+static int icase_exists(struct unpack_trees_options *o, const char *name, int len, struct stat *st)
 {
 	struct cache_entry *src;
 
-	src = index_name_exists(o->src_index, dst->name, ce_namelen(dst), 1);
+	src = index_name_exists(o->src_index, name, len, 1);
 	return src && !ie_match_stat(o->src_index, src, st, CE_MATCH_IGNORE_VALID|CE_MATCH_IGNORE_SKIP_WORKTREE);
+}
+
+static int check_ok_to_remove(const char *name, int len, int dtype,
+			      struct cache_entry *ce, struct stat *st,
+			      enum unpack_trees_error_types error_type,
+			      struct unpack_trees_options *o)
+{
+	struct cache_entry *result;
+
+	/*
+	 * It may be that the 'lstat()' succeeded even though
+	 * target 'ce' was absent, because there is an old
+	 * entry that is different only in case..
+	 *
+	 * Ignore that lstat() if it matches.
+	 */
+	if (ignore_case && icase_exists(o, name, len, st))
+		return 0;
+
+	if (o->dir && excluded(o->dir, name, &dtype))
+		/*
+		 * ce->name is explicitly excluded, so it is Ok to
+		 * overwrite it.
+		 */
+		return 0;
+	if (S_ISDIR(st->st_mode)) {
+		/*
+		 * We are checking out path "foo" and
+		 * found "foo/." in the working tree.
+		 * This is tricky -- if we have modified
+		 * files that are in "foo/" we would lose
+		 * them.
+		 */
+		if (verify_clean_subdirectory(ce, error_type, o) < 0)
+			return -1;
+		return 0;
+	}
+
+	/*
+	 * The previous round may already have decided to
+	 * delete this path, which is in a subdirectory that
+	 * is being replaced with a blob.
+	 */
+	result = index_name_exists(&o->result, name, len, 0);
+	if (result) {
+		if (result->ce_flags & CE_REMOVE)
+			return 0;
+	}
+
+	return o->gently ? -1 :
+		add_rejected_path(o, error_type, name);
 }
 
 /*
@@ -1143,63 +1180,31 @@ static int verify_absent_1(struct cache_entry *ce,
 				 enum unpack_trees_error_types error_type,
 				 struct unpack_trees_options *o)
 {
+	int len;
 	struct stat st;
 
 	if (o->index_only || o->reset || !o->update)
 		return 0;
 
-	if (has_symlink_or_noent_leading_path(ce->name, ce_namelen(ce)))
+	len = check_leading_path(ce->name, ce_namelen(ce));
+	if (!len)
 		return 0;
+	else if (len > 0) {
+		char path[PATH_MAX + 1];
+		memcpy(path, ce->name, len);
+		path[len] = 0;
+		lstat(path, &st);
 
-	if (!lstat(ce->name, &st)) {
-		int dtype = ce_to_dtype(ce);
-		struct cache_entry *result;
+		return check_ok_to_remove(path, len, DT_UNKNOWN, NULL, &st,
+				error_type, o);
+	} else if (!lstat(ce->name, &st))
+		return check_ok_to_remove(ce->name, ce_namelen(ce),
+				ce_to_dtype(ce), ce, &st,
+				error_type, o);
 
-		/*
-		 * It may be that the 'lstat()' succeeded even though
-		 * target 'ce' was absent, because there is an old
-		 * entry that is different only in case..
-		 *
-		 * Ignore that lstat() if it matches.
-		 */
-		if (ignore_case && icase_exists(o, ce, &st))
-			return 0;
-
-		if (o->dir && excluded(o->dir, ce->name, &dtype))
-			/*
-			 * ce->name is explicitly excluded, so it is Ok to
-			 * overwrite it.
-			 */
-			return 0;
-		if (S_ISDIR(st.st_mode)) {
-			/*
-			 * We are checking out path "foo" and
-			 * found "foo/." in the working tree.
-			 * This is tricky -- if we have modified
-			 * files that are in "foo/" we would lose
-			 * them.
-			 */
-			if (verify_clean_subdirectory(ce, error_type, o) < 0)
-				return -1;
-			return 0;
-		}
-
-		/*
-		 * The previous round may already have decided to
-		 * delete this path, which is in a subdirectory that
-		 * is being replaced with a blob.
-		 */
-		result = index_name_exists(&o->result, ce->name, ce_namelen(ce), 0);
-		if (result) {
-			if (result->ce_flags & CE_REMOVE)
-				return 0;
-		}
-
-		return o->gently ? -1 :
-			add_rejected_path(o, error_type, ce->name);
-	}
 	return 0;
 }
+
 static int verify_absent(struct cache_entry *ce,
 			 enum unpack_trees_error_types error_type,
 			 struct unpack_trees_options *o)

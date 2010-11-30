@@ -1,6 +1,8 @@
 #ifndef UNPACK_TREES_H
 #define UNPACK_TREES_H
 
+#include "string-list.h"
+
 #define MAX_UNPACK_TREES 8
 
 struct unpack_trees_options;
@@ -29,11 +31,6 @@ enum unpack_trees_error_types {
 void setup_unpack_trees_porcelain(struct unpack_trees_options *opts,
 				  const char *cmd);
 
-struct rejected_paths_list {
-	char *path;
-	struct rejected_paths_list *next;
-};
-
 struct unpack_trees_options {
 	unsigned int reset,
 		     merge,
@@ -59,7 +56,7 @@ struct unpack_trees_options {
 	 * Store error messages in an array, each case
 	 * corresponding to a error message type
 	 */
-	struct rejected_paths_list *unpack_rejects[NB_UNPACK_TREES_ERROR_TYPES];
+	struct string_list unpack_rejects[NB_UNPACK_TREES_ERROR_TYPES];
 
 	int head_idx;
 	int merge_size;
