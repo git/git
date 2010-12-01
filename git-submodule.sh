@@ -241,7 +241,7 @@ cmd_add()
 			# ash fails to wordsplit ${branch:+-b "$branch"...}
 			case "$branch" in
 			'') git checkout -f -q ;;
-			?*) git checkout -f -q -b "$branch" "origin/$branch" ;;
+			?*) git checkout -f -q -B "$branch" "origin/$branch" ;;
 			esac
 		) || die "Unable to checkout submodule '$path'"
 	fi
