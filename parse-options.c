@@ -537,7 +537,8 @@ static int usage_with_options_internal(struct parse_opt_ctx_t *ctx,
 		if (opts->type == OPTION_NUMBER)
 			pos += fprintf(outfile, "-NUM");
 
-		if (!(opts->flags & PARSE_OPT_NOARG))
+		if ((opts->flags & PARSE_OPT_LITERAL_ARGHELP) ||
+		    !(opts->flags & PARSE_OPT_NOARG))
 			pos += usage_argh(opts, outfile);
 
 		if (pos <= USAGE_OPTS_WIDTH)
