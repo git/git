@@ -17,6 +17,7 @@ enum parse_opt_type {
 	OPTION_STRING,
 	OPTION_INTEGER,
 	OPTION_CALLBACK,
+	OPTION_LOWLEVEL_CALLBACK,
 	OPTION_FILENAME
 };
 
@@ -42,6 +43,10 @@ enum parse_opt_option_flags {
 
 struct option;
 typedef int parse_opt_cb(const struct option *, const char *arg, int unset);
+
+struct parse_opt_ctx_t;
+typedef int parse_opt_ll_cb(struct parse_opt_ctx_t *ctx,
+				const struct option *opt, int unset);
 
 /*
  * `type`::
@@ -87,7 +92,8 @@ typedef int parse_opt_cb(const struct option *, const char *arg, int unset);
  *				useful for users of OPTION_NEGBIT.
  *
  * `callback`::
- *   pointer to the callback to use for OPTION_CALLBACK.
+ *   pointer to the callback to use for OPTION_CALLBACK or
+ *   OPTION_LOWLEVEL_CALLBACK.
  *
  * `defval`::
  *   default value to fill (*->value) with for PARSE_OPT_OPTARG.

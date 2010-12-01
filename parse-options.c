@@ -66,6 +66,9 @@ static int get_value(struct parse_opt_ctx_t *p,
 		return opterror(opt, "takes no value", flags);
 
 	switch (opt->type) {
+	case OPTION_LOWLEVEL_CALLBACK:
+		return (*(parse_opt_ll_cb *)opt->callback)(p, opt, unset);
+
 	case OPTION_BIT:
 		if (unset)
 			*(int *)opt->value &= ~opt->defval;
