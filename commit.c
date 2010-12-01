@@ -137,12 +137,8 @@ struct commit_graft *read_graft_line(char *buf, int len)
 		buf[--len] = '\0';
 	if (buf[0] == '#' || buf[0] == '\0')
 		return NULL;
-	if ((len + 1) % 41) {
-	bad_graft_data:
-		error("bad graft data: %s", buf);
-		free(graft);
-		return NULL;
-	}
+	if ((len + 1) % 41)
+		goto bad_graft_data;
 	i = (len + 1) / 41 - 1;
 	graft = xmalloc(sizeof(*graft) + 20 * i);
 	graft->nr_parent = i;
@@ -155,6 +151,11 @@ struct commit_graft *read_graft_line(char *buf, int len)
 			goto bad_graft_data;
 	}
 	return graft;
+
+bad_graft_data:
+	error("bad graft data: %s", buf);
+	free(graft);
+	return NULL;
 }
 
 static int read_graft_file(const char *graft_file)
