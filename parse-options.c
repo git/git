@@ -288,13 +288,6 @@ static int parse_nodash_opt(struct parse_opt_ctx_t *p, const char *arg,
 	for (; options->type != OPTION_END; options++) {
 		if (!(options->flags & PARSE_OPT_NODASH))
 			continue;
-		if ((options->flags & PARSE_OPT_OPTARG) ||
-		    !(options->flags & PARSE_OPT_NOARG))
-			die("BUG: dashless options don't support arguments");
-		if (!(options->flags & PARSE_OPT_NONEG))
-			die("BUG: dashless options don't support negation");
-		if (options->long_name)
-			die("BUG: dashless options can't be long");
 		if (options->short_name == arg[0] && arg[1] == '\0')
 			return get_value(p, options, OPT_SHORT);
 	}
@@ -330,6 +323,13 @@ static void parse_options_check(const struct option *opts)
 		    (opts->flags & PARSE_OPT_OPTARG))
 			err |= optbug(opts, "uses incompatible flags "
 					"LASTARG_DEFAULT and OPTARG");
+		if (opts->flags & PARSE_OPT_NODASH &&
+		    ((opts->flags & PARSE_OPT_OPTARG) ||
+		     !(opts->flags & PARSE_OPT_NOARG) ||
+		     !(opts->flags & PARSE_OPT_NONEG) ||
+		     opts->long_name))
+			err |= optbug(opts, "uses feature "
+					"not supported for dashless options");
 	}
 	if (err)
 		exit(128);
