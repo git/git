@@ -261,7 +261,7 @@ __git_ps1 ()
 				(describe)
 					git describe HEAD ;;
 				(* | default)
-					git describe --exact-match HEAD ;;
+					git describe --tags --exact-match HEAD ;;
 				esac 2>/dev/null)" ||
 
 				b="$(cut -c1-7 "$g/HEAD" 2>/dev/null)..." ||
