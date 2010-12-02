@@ -92,7 +92,7 @@ git cherry-pick ^HEAD master::
 	Apply the changes introduced by all commits that are ancestors
 	of master but not of HEAD to produce new commits.
 
-git cherry-pick master\~4 master~2::
+git cherry-pick master{tilde}4 master{tilde}2::
 
 	Apply the changes introduced by the fifth and third last
 	commits pointed to by master and create 2 new commits with
