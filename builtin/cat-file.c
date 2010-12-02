@@ -143,7 +143,7 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name)
 			die("git cat-file --textconv %s: <object> must be <sha1:path>",
 			    obj_name);
 
-		if (!textconv_object(obj_context.path, sha1, &buf, &size))
+		if (!textconv_object(obj_context.path, obj_context.mode, sha1, &buf, &size))
 			die("git cat-file --textconv: unable to run textconv on %s",
 			    obj_name);
 		break;
