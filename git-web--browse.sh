@@ -31,7 +31,8 @@ valid_custom_tool()
 
 valid_tool() {
 	case "$1" in
-	firefox | iceweasel | chrome | google-chrome | chromium | konqueror | w3m | links | lynx | dillo | open | start)
+	firefox | iceweasel | chrome | google-chrome | chromium | \
+	konqueror | w3m | links | lynx | dillo | open | start)
 		;; # happy
 	*)
 		valid_custom_tool "$1" || return 1
