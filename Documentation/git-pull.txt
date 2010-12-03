@@ -27,8 +27,8 @@ With `--rebase`, it runs 'git rebase' instead of 'git merge'.
 passed to linkgit:git-fetch[1].  <refspec> can name an
 arbitrary remote ref (for example, the name of a tag) or even
 a collection of refs with corresponding remote tracking branches
-(e.g., refs/heads/*:refs/remotes/origin/*), but usually it is
-the name of a branch in the remote repository.
+(e.g., refs/heads/{asterisk}:refs/remotes/origin/{asterisk}),
+but usually it is the name of a branch in the remote repository.
 
 Default values for <repository> and <branch> are read from the
 "remote" and "merge" configuration for the current branch
