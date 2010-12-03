@@ -31,7 +31,8 @@ valid_custom_tool()
 
 valid_tool() {
 	case "$1" in
-	firefox | iceweasel | seamonkey | iceape | chrome | google-chrome | chromium | \
+	firefox | iceweasel | seamonkey | iceape | \
+	chrome | google-chrome | chromium | chromium-browser |\
 	konqueror | opera | w3m | elinks | links | lynx | dillo | open | start)
 		;; # happy
 	*)
@@ -42,7 +43,13 @@ valid_tool() {
 
 init_browser_path() {
 	browser_path=$(git config "browser.$1.path")
-	test -z "$browser_path" && browser_path="$1"
+	if test -z "$browser_path" &&
+	   test "$1" = chromium &&
+	   type chromium-browser >/dev/null 2>&1
+	then
+		browser_path=chromium-browser
+	fi
+	: ${browser_path:="$1"}
 }
 
 while test $# != 0
@@ -104,7 +111,7 @@ fi
 
 if test -z "$browser" ; then
 	if test -n "$DISPLAY"; then
-		browser_candidates="firefox iceweasel google-chrome chrome chromium konqueror opera seamonkey iceape w3m elinks links lynx dillo"
+		browser_candidates="firefox iceweasel google-chrome chrome chromium chromium-browser konqueror opera seamonkey iceape w3m elinks links lynx dillo"
 		if test "$KDE_FULL_SESSION" = "true"; then
 			browser_candidates="konqueror $browser_candidates"
 		fi
@@ -147,8 +154,7 @@ firefox|iceweasel|seamonkey|iceape)
 	test "$vers" -lt 2 && NEWTAB=''
 	"$browser_path" $NEWTAB "$@" &
 	;;
-google-chrome|chrome|chromium)
-	# Actual command for chromium is chromium-browser.
+google-chrome|chrome|chromium|chromium-browser)
 	# No need to specify newTab. It's default in chromium
 	eval "$browser_path" "$@" &
 	;;

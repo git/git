@@ -22,8 +22,8 @@ The following browsers (or commands) are currently supported:
 * iceweasel
 * seamonkey
 * iceape
-* chromium
-* google-chrome
+* chromium (also supported as chromium-browser)
+* google-chrome (also supported as chrome)
 * konqueror (this is the default under KDE, see 'Note about konqueror' below)
 * opera
 * w3m (this is the default outside graphical environments)
