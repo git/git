@@ -1,6 +1,15 @@
 Git v1.7.3.3 Release Notes
 ==========================
 
+In addition to the usual fixes, this release also includes support for
+the new "add.ignoreErrors" name given to the existing "add.ignore-errors"
+configuration variable.
+
+The next version, Git 1.7.4, and future versions, will support both
+old and incorrect name and the new corrected name, but without this
+backport, users who want to use the new name "add.ignoreErrors" in
+their repositories cannot use older versions of Git.
+
 Fixes since v1.7.3.2
 --------------------
 
@@ -42,5 +51,4 @@ Fixes since v1.7.3.2
 
  * "git-p4" (in contrib/) did not correctly handle deleted files.
 
-
-Other minor fixes and documentation updates may be included.
+Other minor fixes and documentation updates are also included.
