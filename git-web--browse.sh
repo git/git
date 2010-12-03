@@ -31,8 +31,8 @@ valid_custom_tool()
 
 valid_tool() {
 	case "$1" in
-	firefox | iceweasel | chrome | google-chrome | chromium | \
-	konqueror | w3m | links | lynx | dillo | open | start)
+	firefox | iceweasel | seamonkey | iceape | chrome | google-chrome | chromium | \
+	konqueror | opera | w3m | elinks | links | lynx | dillo | open | start)
 		;; # happy
 	*)
 		valid_custom_tool "$1" || return 1
@@ -104,12 +104,12 @@ fi
 
 if test -z "$browser" ; then
 	if test -n "$DISPLAY"; then
-		browser_candidates="firefox iceweasel google-chrome chrome chromium konqueror w3m links lynx dillo"
+		browser_candidates="firefox iceweasel google-chrome chrome chromium konqueror opera seamonkey iceape w3m elinks links lynx dillo"
 		if test "$KDE_FULL_SESSION" = "true"; then
 			browser_candidates="konqueror $browser_candidates"
 		fi
 	else
-		browser_candidates="w3m links lynx"
+		browser_candidates="w3m elinks links lynx"
 	fi
 	# SECURITYSESSIONID indicates an OS X GUI login session
 	if test -n "$SECURITYSESSIONID" \
@@ -140,7 +140,7 @@ else
 fi
 
 case "$browser" in
-firefox|iceweasel)
+firefox|iceweasel|seamonkey|iceape)
 	# Check version because firefox < 2.0 does not support "-new-tab".
 	vers=$(expr "$($browser_path -version)" : '.* \([0-9][0-9]*\)\..*')
 	NEWTAB='-new-tab'
@@ -168,13 +168,13 @@ konqueror)
 		;;
 	esac
 	;;
-w3m|links|lynx|open)
+w3m|elinks|links|lynx|open)
 	eval "$browser_path" "$@"
 	;;
 start)
 	exec "$browser_path" '"web-browse"' "$@"
 	;;
-dillo)
+opera|dillo)
 	"$browser_path" "$@" &
 	;;
 *)
