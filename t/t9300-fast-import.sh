@@ -1794,7 +1794,7 @@ test_expect_success PIPE 'R: copy using cat-file' '
 
 	read blob_id type size <&3 &&
 	echo "$blob_id $type $size" >response &&
-	dd if=/dev/stdin of=blob bs=$size count=1 <&3 &&
+	dd of=blob bs=$size count=1 <&3 &&
 	read newline <&3 &&
 
 	cat <<EOF &&
@@ -1845,7 +1845,7 @@ test_expect_success PIPE 'R: print blob mid-commit' '
 		EOF
 
 		read blob_id type size <&3 &&
-		dd if=/dev/stdin of=actual bs=$size count=1 <&3 &&
+		dd of=actual bs=$size count=1 <&3 &&
 		read newline <&3 &&
 
 		echo
@@ -1880,7 +1880,7 @@ test_expect_success PIPE 'R: print staged blob within commit' '
 		echo "cat-blob $to_get" &&
 
 		read blob_id type size <&3 &&
-		dd if=/dev/stdin of=actual bs=$size count=1 <&3 &&
+		dd of=actual bs=$size count=1 <&3 &&
 		read newline <&3 &&
 
 		echo deleteall
