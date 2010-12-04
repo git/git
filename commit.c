@@ -49,6 +49,19 @@ struct commit *lookup_commit(const unsigned char *sha1)
 	return check_commit(obj, sha1, 0);
 }
 
+struct commit *lookup_commit_reference_by_name(const char *name)
+{
+	unsigned char sha1[20];
+	struct commit *commit;
+
+	if (get_sha1(name, sha1))
+		return NULL;
+	commit = lookup_commit_reference(sha1);
+	if (!commit || parse_commit(commit))
+		return NULL;
+	return commit;
+}
+
 static unsigned long parse_commit_date(const char *buf, const char *tail)
 {
 	const char *dateptr;

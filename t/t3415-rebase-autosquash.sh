@@ -14,6 +14,7 @@ test_expect_success setup '
 	git add . &&
 	test_tick &&
 	git commit -m "first commit" &&
+	git tag first-commit &&
 	echo 3 >file3 &&
 	git add . &&
 	test_tick &&
@@ -21,7 +22,7 @@ test_expect_success setup '
 	git tag base
 '
 
-test_auto_fixup() {
+test_auto_fixup () {
 	git reset --hard base &&
 	echo 1 >file1 &&
 	git add -u &&
@@ -50,7 +51,7 @@ test_expect_success 'auto fixup (config)' '
 	test_must_fail test_auto_fixup final-fixup-config-false
 '
 
-test_auto_squash() {
+test_auto_squash () {
 	git reset --hard base &&
 	echo 1 >file1 &&
 	git add -u &&
@@ -166,6 +167,30 @@ test_expect_success 'auto squash that matches longer sha1' '
 	git diff --exit-code final-longshasquash &&
 	test 1 = "$(git cat-file blob HEAD^:file1)" &&
 	test 1 = $(git cat-file commit HEAD^ | grep squash | wc -l)
+'
+
+test_auto_commit_flags () {
+	git reset --hard base &&
+	echo 1 >file1 &&
+	git add -u &&
+	test_tick &&
+	git commit --$1 first-commit &&
+	git tag final-commit-$1 &&
+	test_tick &&
+	git rebase --autosquash -i HEAD^^^ &&
+	git log --oneline >actual &&
+	test 3 = $(wc -l <actual) &&
+	git diff --exit-code final-commit-$1 &&
+	test 1 = "$(git cat-file blob HEAD^:file1)" &&
+	test $2 = $(git cat-file commit HEAD^ | grep first | wc -l)
+}
+
+test_expect_success 'use commit --fixup' '
+	test_auto_commit_flags fixup 1
+'
+
+test_expect_success 'use commit --squash' '
+	test_auto_commit_flags squash 2
 '
 
 test_done

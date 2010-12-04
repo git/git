@@ -36,6 +36,7 @@ struct commit *lookup_commit(const unsigned char *sha1);
 struct commit *lookup_commit_reference(const unsigned char *sha1);
 struct commit *lookup_commit_reference_gently(const unsigned char *sha1,
 					      int quiet);
+struct commit *lookup_commit_reference_by_name(const char *name);
 
 int parse_commit_buffer(struct commit *item, void *buffer, unsigned long size);
 
@@ -76,6 +77,7 @@ struct pretty_print_context
 	int need_8bit_cte;
 	int show_notes;
 	struct reflog_walk_info *reflog_info;
+	const char *output_encoding;
 };
 
 struct userformat_want {
@@ -84,6 +86,8 @@ struct userformat_want {
 
 extern int has_non_ascii(const char *text);
 struct rev_info; /* in revision.h, it circularly uses enum cmit_fmt */
+extern char *logmsg_reencode(const struct commit *commit,
+			     const char *output_encoding);
 extern char *reencode_commit_message(const struct commit *commit,
 				     const char **encoding_p);
 extern void get_commit_format(const char *arg, struct rev_info *);
