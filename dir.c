@@ -18,6 +18,22 @@ static int read_directory_recursive(struct dir_struct *dir, const char *path, in
 	int check_only, const struct path_simplify *simplify);
 static int get_dtype(struct dirent *de, const char *path, int len);
 
+/* helper string functions with support for the ignore_case flag */
+int strcmp_icase(const char *a, const char *b)
+{
+	return ignore_case ? strcasecmp(a, b) : strcmp(a, b);
+}
+
+int strncmp_icase(const char *a, const char *b, size_t count)
+{
+	return ignore_case ? strncasecmp(a, b, count) : strncmp(a, b, count);
+}
+
+int fnmatch_icase(const char *pattern, const char *string, int flags)
+{
+	return fnmatch(pattern, string, flags | (ignore_case ? FNM_CASEFOLD : 0));
+}
+
 static int common_prefix(const char **pathspec)
 {
 	const char *path, *slash, *next;
@@ -91,16 +107,30 @@ static int match_one(const char *match, const char *name, int namelen)
 	if (!*match)
 		return MATCHED_RECURSIVELY;
 
-	for (;;) {
-		unsigned char c1 = *match;
-		unsigned char c2 = *name;
-		if (c1 == '\0' || is_glob_special(c1))
-			break;
-		if (c1 != c2)
-			return 0;
-		match++;
-		name++;
-		namelen--;
+	if (ignore_case) {
+		for (;;) {
+			unsigned char c1 = tolower(*match);
+			unsigned char c2 = tolower(*name);
+			if (c1 == '\0' || is_glob_special(c1))
+				break;
+			if (c1 != c2)
+				return 0;
+			match++;
+			name++;
+			namelen--;
+		}
+	} else {
+		for (;;) {
+			unsigned char c1 = *match;
+			unsigned char c2 = *name;
+			if (c1 == '\0' || is_glob_special(c1))
+				break;
+			if (c1 != c2)
+				return 0;
+			match++;
+			name++;
+			namelen--;
+		}
 	}
 
 
@@ -109,8 +139,8 @@ static int match_one(const char *match, const char *name, int namelen)
 	 * we need to match by fnmatch
 	 */
 	matchlen = strlen(match);
-	if (strncmp(match, name, matchlen))
-		return !fnmatch(match, name, 0) ? MATCHED_FNMATCH : 0;
+	if (strncmp_icase(match, name, matchlen))
+		return !fnmatch_icase(match, name, 0) ? MATCHED_FNMATCH : 0;
 
 	if (namelen == matchlen)
 		return MATCHED_EXACTLY;
@@ -375,14 +405,14 @@ int excluded_from_list(const char *pathname,
 			if (x->flags & EXC_FLAG_NODIR) {
 				/* match basename */
 				if (x->flags & EXC_FLAG_NOWILDCARD) {
-					if (!strcmp(exclude, basename))
+					if (!strcmp_icase(exclude, basename))
 						return to_exclude;
 				} else if (x->flags & EXC_FLAG_ENDSWITH) {
 					if (x->patternlen - 1 <= pathlen &&
-					    !strcmp(exclude + 1, pathname + pathlen - x->patternlen + 1))
+					    !strcmp_icase(exclude + 1, pathname + pathlen - x->patternlen + 1))
 						return to_exclude;
 				} else {
-					if (fnmatch(exclude, basename, 0) == 0)
+					if (fnmatch_icase(exclude, basename, 0) == 0)
 						return to_exclude;
 				}
 			}
@@ -397,14 +427,14 @@ int excluded_from_list(const char *pathname,
 
 				if (pathlen < baselen ||
 				    (baselen && pathname[baselen-1] != '/') ||
-				    strncmp(pathname, x->base, baselen))
+				    strncmp_icase(pathname, x->base, baselen))
 				    continue;
 
 				if (x->flags & EXC_FLAG_NOWILDCARD) {
-					if (!strcmp(exclude, pathname + baselen))
+					if (!strcmp_icase(exclude, pathname + baselen))
 						return to_exclude;
 				} else {
-					if (fnmatch(exclude, pathname+baselen,
+					if (fnmatch_icase(exclude, pathname+baselen,
 						    FNM_PATHNAME) == 0)
 					    return to_exclude;
 				}
@@ -470,6 +500,39 @@ enum exist_status {
 };
 
 /*
+ * Do not use the alphabetically stored index to look up
+ * the directory name; instead, use the case insensitive
+ * name hash.
+ */
+static enum exist_status directory_exists_in_index_icase(const char *dirname, int len)
+{
+	struct cache_entry *ce = index_name_exists(&the_index, dirname, len + 1, ignore_case);
+	unsigned char endchar;
+
+	if (!ce)
+		return index_nonexistent;
+	endchar = ce->name[len];
+
+	/*
+	 * The cache_entry structure returned will contain this dirname
+	 * and possibly additional path components.
+	 */
+	if (endchar == '/')
+		return index_directory;
+
+	/*
+	 * If there are no additional path components, then this cache_entry
+	 * represents a submodule.  Submodules, despite being directories,
+	 * are stored in the cache without a closing slash.
+	 */
+	if (!endchar && S_ISGITLINK(ce->ce_mode))
+		return index_gitdir;
+
+	/* This should never be hit, but it exists just in case. */
+	return index_nonexistent;
+}
+
+/*
  * The index sorts alphabetically by entry name, which
  * means that a gitlink sorts as '\0' at the end, while
  * a directory (which is defined not as an entry, but as
@@ -478,7 +541,12 @@ enum exist_status {
  */
 static enum exist_status directory_exists_in_index(const char *dirname, int len)
 {
-	int pos = cache_name_pos(dirname, len);
+	int pos;
+
+	if (ignore_case)
+		return directory_exists_in_index_icase(dirname, len);
+
+	pos = cache_name_pos(dirname, len);
 	if (pos < 0)
 		pos = -pos-1;
 	while (pos < active_nr) {
