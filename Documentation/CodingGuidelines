@@ -143,3 +143,55 @@ For C programs:
 
  - When we pass <string, length> pair to functions, we should try to
    pass them in that order.
+
+Writing Documentation:
+
+ Every user-visible change should be reflected in the documentation.
+ The same general rule as for code applies -- imitate the existing
+ conventions.  A few commented examples follow to provide reference
+ when writing or modifying command usage strings and synopsis sections
+ in the manual pages:
+
+ Placeholders are enclosed in angle brackets:
+   <file>
+   --sort=<key>
+   --abbrev[=<n>]
+
+ Possibility of multiple occurences is indicated by three dots:
+   <file>...
+   (One or more of <file>.)
+
+ Optional parts are enclosed in square brackets:
+   [<extra>]
+   (Zero or one <extra>.)
+
+   --exec-path[=<path>]
+   (Option with an optional argument.  Note that the "=" is inside the
+   brackets.)
+
+   [<patch>...]
+   (Zero or more of <patch>.  Note that the dots are inside, not
+   outside the brackets.)
+
+ Multiple alternatives are indicated with vertical bar:
+   [-q | --quiet]
+   [--utf8 | --no-utf8]
+
+ Parentheses are used for grouping:
+   [(<rev>|<range>)...]
+   (Any number of either <rev> or <range>.  Parens are needed to make
+   it clear that "..." pertains to both <rev> and <range>.)
+
+   [(-p <parent>)...]
+   (Any number of option -p, each with one <parent> argument.)
+
+   git remote set-head <name> (-a | -d | <branch>)
+   (One and only one of "-a", "-d" or "<branch>" _must_ (no square
+   brackets) be provided.)
+
+ And a somewhat more contrived example:
+   --diff-filter=[(A|C|D|M|R|T|U|X|B)...[*]]
+   Here "=" is outside the brackets, because "--diff-filter=" is a
+   valid usage.  "*" has its own pair of brackets, because it can
+   (optionally) be specified only when one or more of the letters is
+   also provided.

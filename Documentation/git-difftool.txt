@@ -7,13 +7,14 @@ git-difftool - Show changes using common diff tools
 
 SYNOPSIS
 --------
-'git difftool' [<options>] <commit>{0,2} [--] [<path>...]
+'git difftool' [<options>] [<commit> [<commit>]] [--] [<path>...]
 
 DESCRIPTION
 -----------
 'git difftool' is a git command that allows you to compare and edit files
 between revisions using common diff tools.  'git difftool' is a frontend
-to 'git diff' and accepts the same options and arguments.
+to 'git diff' and accepts the same options and arguments. See
+linkgit:git-diff[1].
 
 OPTIONS
 -------
