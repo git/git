@@ -14,12 +14,6 @@ typedef int socklen_t;
 #define S_ISLNK(x) (((x) & S_IFMT) == S_IFLNK)
 #define S_ISSOCK(x) 0
 
-#ifndef _STAT_H_
-#define S_IRUSR 0
-#define S_IWUSR 0
-#define S_IXUSR 0
-#define S_IRWXU (S_IRUSR | S_IWUSR | S_IXUSR)
-#endif
 #define S_IRGRP 0
 #define S_IWGRP 0
 #define S_IXGRP 0
