@@ -421,11 +421,29 @@ test_expect_success 'add submodules without specifying an explicit path' '
 		git commit -m "repo commit 1"
 	) &&
 	git clone --bare repo/ bare.git &&
-	cd addtest &&
-	git submodule add "$submodurl/repo" &&
-	git config -f .gitmodules submodule.repo.path repo &&
-	git submodule add "$submodurl/bare.git" &&
-	git config -f .gitmodules submodule.bare.path bare
+	(
+		cd addtest &&
+		git submodule add "$submodurl/repo" &&
+		git config -f .gitmodules submodule.repo.path repo &&
+		git submodule add "$submodurl/bare.git" &&
+		git config -f .gitmodules submodule.bare.path bare
+	)
+'
+
+test_expect_success 'add should fail when path is used by a file' '
+	(
+		cd addtest &&
+		touch file &&
+		test_must_fail	git submodule add "$submodurl/repo" file
+	)
+'
+
+test_expect_success 'add should fail when path is used by an existing directory' '
+	(
+		cd addtest &&
+		mkdir empty-dir &&
+		test_must_fail git submodule add "$submodurl/repo" empty-dir
+	)
 '
 
 test_done
