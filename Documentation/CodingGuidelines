@@ -31,6 +31,10 @@ But if you must have a list of rules, here they are.
 
 For shell scripts specifically (not exhaustive):
 
+ - We use tabs for indentation.
+
+ - Case arms are indented at the same depth as case and esac lines.
+
  - We prefer $( ... ) for command substitution; unlike ``, it
    properly nests.  It should have been the way Bourne spelled
    it from day one, but unfortunately isn't.
