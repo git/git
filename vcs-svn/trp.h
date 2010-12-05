@@ -188,11 +188,12 @@ a_attr uint32_t MAYBE_UNUSED a_pre##insert_recurse(uint32_t cur_node, uint32_t i
 		return ret; \
 	} \
 } \
-a_attr void MAYBE_UNUSED a_pre##insert(struct trp_root *treap, a_type *node) \
+a_attr a_type *MAYBE_UNUSED a_pre##insert(struct trp_root *treap, a_type *node) \
 { \
 	uint32_t offset = trpn_offset(a_base, node); \
 	trp_node_new(a_base, a_field, offset); \
 	treap->trp_root = a_pre##insert_recurse(treap->trp_root, offset); \
+	return trpn_pointer(a_base, offset); \
 } \
 a_attr uint32_t MAYBE_UNUSED a_pre##remove_recurse(uint32_t cur_node, uint32_t rem_node) \
 { \
