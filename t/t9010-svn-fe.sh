@@ -580,6 +580,61 @@ test_expect_success 'property deltas supported' '
 	test_cmp expect actual
 '
 
+test_expect_success 'properties on /' '
+	reinit_git &&
+	cat <<-\EOF >expect &&
+	OBJID
+	OBJID
+	:000000 100644 OBJID OBJID A	greeting
+	EOF
+	sed -e "s/X$//" <<-\EOF >changeroot.dump &&
+	SVN-fs-dump-format-version: 3
+
+	Revision-number: 1
+	Prop-content-length: 10
+	Content-length: 10
+
+	PROPS-END
+
+	Node-path: greeting
+	Node-kind: file
+	Node-action: add
+	Text-content-length: 0
+	Prop-content-length: 10
+	Content-length: 10
+
+	PROPS-END
+
+	Revision-number: 2
+	Prop-content-length: 10
+	Content-length: 10
+
+	PROPS-END
+
+	Node-path: X
+	Node-kind: dir
+	Node-action: change
+	Prop-delta: true
+	Prop-content-length: 43
+	Content-length: 43
+
+	K 10
+	svn:ignore
+	V 11
+	build-area
+
+	PROPS-END
+	EOF
+	test-svn-fe changeroot.dump >stream &&
+	git fast-import <stream &&
+	{
+		git rev-list HEAD |
+		git diff-tree --root --always --stdin |
+		sed "s/$_x40/OBJID/g"
+	} >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'deltas for typechange' '
 	reinit_git &&
 	cat >expect <<-\EOF &&

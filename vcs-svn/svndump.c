@@ -221,7 +221,10 @@ static void handle_node(void)
 	}
 	if (mark && type == REPO_MODE_DIR)
 		die("invalid dump: directories cannot have text attached");
-	if (node_ctx.action == NODEACT_CHANGE) {
+	if (node_ctx.action == NODEACT_CHANGE && !~*node_ctx.dst) {
+		if (type != REPO_MODE_DIR)
+			die("invalid dump: root of tree is not a regular file");
+	} else if (node_ctx.action == NODEACT_CHANGE) {
 		uint32_t mode = repo_modify_path(node_ctx.dst, 0, mark);
 		if (!mode)
 			die("invalid dump: path to be modified is missing");
