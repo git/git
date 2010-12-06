@@ -208,32 +208,32 @@ proc show_other_diff {path w m cont_info} {
 			$ui_diff insert end [append \
 				"* " \
 				[mc "Git Repository (subproject)"] \
-				"\n"] d_@
+				"\n"] d_info
 		} elseif {![catch {set type [exec file $path]}]} {
 			set n [string length $path]
 			if {[string equal -length $n $path $type]} {
 				set type [string range $type $n end]
 				regsub {^:?\s*} $type {} type
 			}
-			$ui_diff insert end "* $type\n" d_@
+			$ui_diff insert end "* $type\n" d_info
 		}
 		if {[string first "\0" $content] != -1} {
 			$ui_diff insert end \
 				[mc "* Binary file (not showing content)."] \
-				d_@
+				d_info
 		} else {
 			if {$sz > $max_sz} {
 				$ui_diff insert end [mc \
 "* Untracked file is %d bytes.
 * Showing only first %d bytes.
-" $sz $max_sz] d_@
+" $sz $max_sz] d_info
 			}
 			$ui_diff insert end $content
 			if {$sz > $max_sz} {
 				$ui_diff insert end [mc "
 * Untracked file clipped here by %s.
 * To see the entire file, use an external editor.
-" [appname]] d_@
+" [appname]] d_info
 			}
 		}
 		$ui_diff conf -state disabled
@@ -442,10 +442,10 @@ proc read_diff {fd conflict_size cont_info} {
 		} elseif {$is_submodule_diff} {
 			if {$line == ""} continue
 			if {[regexp {^Submodule } $line]} {
-				set tags d_@
+				set tags d_info
 			} elseif {[regexp {^\* } $line]} {
 				set line [string replace $line 0 1 {Submodule }]
-				set tags d_@
+				set tags d_info
 			} else {
 				set op [string range $line 0 2]
 				switch -- $op {
