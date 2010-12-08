@@ -125,3 +125,17 @@ char *url_decode_parameter_value(const char **query)
 	struct strbuf out = STRBUF_INIT;
 	return url_decode_internal(query, "&", &out, 1);
 }
+
+void end_url_with_slash(struct strbuf *buf, const char *url)
+{
+	strbuf_addstr(buf, url);
+	if (buf->len && buf->buf[buf->len - 1] != '/')
+		strbuf_addstr(buf, "/");
+}
+
+void str_end_url_with_slash(const char *url, char **dest) {
+	struct strbuf buf = STRBUF_INIT;
+	end_url_with_slash(&buf, url);
+	free(*dest);
+	*dest = strbuf_detach(&buf, NULL);
+}
