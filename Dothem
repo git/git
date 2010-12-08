@@ -48,7 +48,8 @@ do
 done
 
 sh -c 'asciidoc --version >/dev/null 2>&1' || nodoc=y
-if sh -c 'prove --version >/dev/null 2>&1'
+if sh -c 'prove --version >/dev/null 2>&1' &&
+   sh -c 'prove --exec : >/dev/null 2>&1'
 then
 	DEFAULT_TEST_TARGET=prove GIT_PROVE_OPTS="$jobs"
 	export DEFAULT_TEST_TARGET GIT_PROVE_OPTS
