@@ -1303,10 +1303,14 @@ else
 	BLK_SHA1 = 1
 	OPENSSL_LIBSSL =
 endif
+ifdef NO_OPENSSL
+	LIB_4_CRYPTO =
+else
 ifdef NEEDS_SSL_WITH_CRYPTO
 	LIB_4_CRYPTO = $(OPENSSL_LINK) -lcrypto -lssl
 else
 	LIB_4_CRYPTO = $(OPENSSL_LINK) -lcrypto
+endif
 endif
 ifdef NEEDS_LIBICONV
 	ifdef ICONVDIR
