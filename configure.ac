@@ -398,21 +398,21 @@ if test -n "$ASCIIDOC"; then
 	AC_MSG_CHECKING([for asciidoc version])
 	asciidoc_version=`$ASCIIDOC --version 2>/dev/null`
 	case "${asciidoc_version}" in
-	asciidoc' '8*)
-		ASCIIDOC8=YesPlease
+	asciidoc' '7*)
+		ASCIIDOC7=YesPlease
 		AC_MSG_RESULT([${asciidoc_version} > 7])
 		;;
-	asciidoc' '7*)
-		ASCIIDOC8=
+	asciidoc' '8*)
+		ASCIIDOC7=
 		AC_MSG_RESULT([${asciidoc_version}])
 		;;
 	*)
-		ASCIIDOC8=
+		ASCIIDOC7=
 		AC_MSG_RESULT([${asciidoc_version} (unknown)])
 		;;
 	esac
 fi
-AC_SUBST(ASCIIDOC8)
+AC_SUBST(ASCIIDOC7)
 
 
 ## Checks for libraries.
