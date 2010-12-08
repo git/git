@@ -4,7 +4,7 @@
 static int inside_git_dir = -1;
 static int inside_work_tree = -1;
 
-const char *prefix_path(const char *prefix, int len, const char *path)
+char *prefix_path(const char *prefix, int len, const char *path)
 {
 	const char *orig = path;
 	char *sanitized = xmalloc(len + strlen(path) + 1);
