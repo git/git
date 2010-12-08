@@ -66,7 +66,7 @@ get_remote_merge_branch () {
 	    origin="$1"
 	    default=$(get_default_remote)
 	    test -z "$origin" && origin=$default
-	    curr_branch=$(git symbolic-ref -q HEAD)
+	    curr_branch=$(git symbolic-ref -q HEAD) &&
 	    [ "$origin" = "$default" ] &&
 	    echo $(git for-each-ref --format='%(upstream)' $curr_branch)
 	    ;;
