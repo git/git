@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Dec 2010, #01; Sat, 4)
-X-master-at: 0b0cd0e0a29a139f418991dd769ea4266ffec370
-X-next-at: 98527b968b3ba19b57ff8906ec69d51dceda9030
+Subject: What's cooking in git.git (Dec 2010, #02; Wed, 8)
+X-master-at: f80b6de4eca9c4c4abfe9407736311de27726e53
+X-next-at: e348a8704e9acfb4ce3956593fbefdb9bd0ba893
 
-What's cooking in git.git (Dec 2010, #01; Sat, 4)
+What's cooking in git.git (Dec 2010, #02; Wed, 8)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -12,284 +12,113 @@ marked with '.' do not appear in any of the integration branches, but I am
 still holding onto them.
 
 --------------------------------------------------
-[New Topics]
-
-* aa/status-hilite-branch (2010-11-18) 1 commit
- - status: show branchname with a configurable color
-
-I am indifferent/uninterested; I don't see anything wrong with it, but I
-do not find coloring the field particularly useful myself.
-
-* ef/help-cmd-prefix (2010-11-26) 2 commits
- - (jc) review comments
- - help: always suggest common-cmds if prefix of cmd
-
-Reroll, or squash?
-
-* jn/fast-import-blob-access (2010-12-03) 5 commits
- - t9300: remove unnecessary use of /dev/stdin
- - fast-import: Allow cat-blob requests at arbitrary points in stream
- - fast-import: let importers retrieve blobs
- - fast-import: clarify documentation of "feature" command
- - fast-import: stricter parsing of integer options
-
-Will merge to 'next' soon.
-
-* jn/gitweb-per-request-config (2010-11-28) 2 commits
- - gitweb: document $per_request_config better
- - gitweb: selectable configurations that change with each request
-
-Will merge to 'next' soon.
-
-* kb/diff-C-M-synonym (2010-11-29) 1 commit
- - diff: add --detect-copies-harder as a synonym for --find-copies-harder
-
-Will merge to 'next' soon.
-
-* mg/cvsimport (2010-11-28) 3 commits
- - cvsimport.txt: document the mapping between config and options
- - cvsimport: fix the parsing of uppercase config options
- - cvsimport: partial whitespace cleanup
-
-I was being lazy and said "Ok" to "cvsimport.capital-r" but luckily other
-people injected sanity to the discussion.  Weatherbaloon patch sent, but
-not queued here.
-
-* mz/maint-rebase-stat-config (2010-11-09) 1 commit
- - rebase: only show stat if configured to true
-
-Will merge to 'next' soon.
-
-* mz/pull-rebase-rebased (2010-11-13) 1 commit
- - Use reflog in 'pull --rebase . foo'
-
-Will merge to 'next' soon.
-
-* nd/maint-hide-checkout-index-from-error (2010-11-28) 1 commit
- - entry.c: remove "checkout-index" from error messages
-
-Will merge to 'next' soon.
-
-* tf/commit-list-prefix (2010-11-26) 1 commit
- - commit: Add commit_list prefix in two function names.
-
-* gb/web--browse (2010-12-03) 4 commits
- - web--browse: better support for chromium
- - web--browse: support opera, seamonkey and elinks
- - web--browse: split valid_tool list
- - web--browse: coding style
-
-Will merge to 'next' soon.  The remainder of the series, which is mostly
-Debian specific addition, can wait (or just left for the distro).
-
-* ja/maint-pull-rebase-doc (2010-12-03) 1 commit
- - git-pull.txt: Mention branch.autosetuprebase
-
-Will merge to 'next'.
-
-* js/configurable-tab (2010-11-30) 2 commits
- - Make the tab width used for whitespace checks configurable
- - Merge branch 'js/maint-apply-tab-in-indent-fix' into HEAD
- (this branch uses js/maint-apply-tab-in-indent-fix.)
-
-Will merge to 'next'.
-
-* js/maint-apply-tab-in-indent-fix (2010-11-30) 1 commit
- - apply --whitespace=fix: fix tab-in-indent
- (this branch is used by js/configurable-tab.)
-
-Will merge to 'next'.
-
-* pd/bash-4-completion (2010-12-01) 2 commits
- - Use the new functions to get the current cword.
- - Introduce functions from bash-completion project.
-
-There is a "here is a better way to do this" from Jonathan, still in
-flight.
-
---------------------------------------------------
 [Graduated to "master"]
 
-* ak/apply-non-git-epoch (2010-09-29) 2 commits
-  (merged to 'next' on 2010-11-17 at a00579c)
- + apply: handle patches with funny filename and colon in timezone
- + apply: Recognize epoch timestamps with : in the timezone
+* gb/gitweb-remote-heads (2010-11-11) 11 commits
+  (merged to 'next' on 2010-11-24 at 6fb4a6f)
+ + git instaweb: enable remote_heads
+ + gitweb: group remote heads by remote
+ + gitweb: provide a routine to display (sub)sections
+ + gitweb: refactor repository URL printing
+ + gitweb: remotes view for a single remote
+ + gitweb: allow action specialization in page header
+ + gitweb: nagivation menu for tags, heads and remotes
+ + gitweb: separate heads and remotes lists
+ + gitweb: git_get_heads_list accepts an optional list of refs
+ + gitweb: introduce remote_heads feature
+ + gitweb: use fullname as hash_base in heads link
 
-* cb/leading-path-removal (2010-11-15) 6 commits
-  (merged to 'next' on 2010-11-17 at ec7d709)
- + use persistent memory for rejected paths
-  (merged to 'next' on 2010-11-05 at 55ea322)
- + do not overwrite files in leading path
- + lstat_cache: optionally return match_len
- + add function check_ok_to_remove()
- + t7607: add leading-path tests
- + t7607: use test-lib functions and check MERGE_HEAD
+* gc/http-with-non-ascii-username-url (2010-11-14) 2 commits
+  (merged to 'next' on 2010-11-24 at 08f317f)
+ + Fix username and password extraction from HTTP URLs
+ + t5550: test HTTP authentication and userinfo decoding
 
-* cm/diff-check-at-eol (2010-10-10) 1 commit
-  (merged to 'next' on 2010-11-17 at ad7005a)
- + diff --check: correct line numbers of new blank lines at EOF
+* il/remote-fd-ext (2010-11-17) 4 commits
+  (merged to 'next' on 2010-11-24 at ef80cf1)
+ + remote-fd/ext: finishing touches after code review
+  (merged to 'next' on 2010-11-05 at 7413413)
+ + git-remote-ext
+ + git-remote-fd
+ + Add bidirectional_transfer_loop()
 
-* en/merge-recursive (2010-11-08) 40 commits
-  (merged to 'next' on 2010-11-17 at 1b6f865)
- + t6022: Use -eq not = to test output of wc -l
-  (merged to 'next' on 2010-11-05 at 16902eb)
- + merge-recursive:make_room_for_directories - work around dumb compilers
- + merge-recursive: Remove redundant path clearing for D/F conflicts
- + merge-recursive: Make room for directories in D/F conflicts
- + handle_delete_modify(): Check whether D/F conflicts are still present
- + merge_content(): Check whether D/F conflicts are still present
- + conflict_rename_rename_1to2(): Fix checks for presence of D/F conflicts
- + conflict_rename_delete(): Check whether D/F conflicts are still present
- + merge-recursive: Delay modify/delete conflicts if D/F conflict present
- + merge-recursive: Delay content merging for renames
- + merge-recursive: Delay handling of rename/delete conflicts
- + merge-recursive: Move handling of double rename of one file to other file
- + merge-recursive: Move handling of double rename of one file to two
- + merge-recursive: Avoid doubly merging rename/add conflict contents
- + merge-recursive: Update merge_content() call signature
- + merge-recursive: Update conflict_rename_rename_1to2() call signature
- + merge-recursive: Structure process_df_entry() to handle more cases
- + merge-recursive: Have process_entry() skip D/F or rename entries
- + merge-recursive: New function to assist resolving renames in-core only
- + merge-recursive: New data structures for deferring of D/F conflicts
- + merge-recursive: Move process_entry's content merging into a function
- + merge-recursive: Move delete/modify handling into dedicated function
- + merge-recursive: Move rename/delete handling into dedicated function
- + merge-recursive: Nuke rename/directory conflict detection
- + merge-recursive: Rename conflict_rename_rename*() for clarity
- + merge-recursive: Small code clarification -- variable name and comments
- + t6036: Add testcase for undetected conflict
- + t6036: Add a second testcase similar to the first but with content changes
- + t6036: Test index and worktree state, not just that merge fails
- + t6020: Add a testcase for modify/delete + directory/file conflict
- + t6020: Modernize style a bit
- + t6022: Add tests for rename/rename combined with D/F conflicts
- + t6022: Add paired rename+D/F conflict: (two/file, one/file) -> (one, two)
- + t6022: Add tests with both rename source & dest involved in D/F conflicts
- + t6022: Add tests for reversing order of merges when D/F conflicts present
- + t6022: Add test combinations of {content conflict?, D/F conflict remains?}
- + t6032: Add a test checking for excessive output from merge
- + merge-recursive: Restructure showing how to chain more process_* functions
- + t3030: Add a testcase for resolvable rename/add conflict with symlinks
- + Merge branch 'en/rename-d-f' into en/merge-recursive
- (this branch uses en/rename-d-f.)
+* jh/notes-merge (2010-11-09) 23 commits
+  (merged to 'next' on 2010-11-24 at 6218115)
+ + Provide 'git merge --abort' as a synonym to 'git reset --merge'
+ + cmd_merge(): Parse options before checking MERGE_HEAD
+ + Provide 'git notes get-ref' to easily retrieve current notes ref
+ + git notes merge: Add testcases for merging notes trees at different fanouts
+ + git notes merge: Add another auto-resolving strategy: "cat_sort_uniq"
+ + git notes merge: --commit should fail if underlying notes ref has moved
+ + git notes merge: List conflicting notes in notes merge commit message
+ + git notes merge: Manual conflict resolution, part 2/2
+ + git notes merge: Manual conflict resolution, part 1/2
+ + Documentation: Preliminary docs on 'git notes merge'
+ + git notes merge: Add automatic conflict resolvers (ours, theirs, union)
+ + git notes merge: Handle real, non-conflicting notes merges
+ + builtin/notes.c: Refactor creation of notes commits.
+ + git notes merge: Initial implementation handling trivial merges only
+ + builtin/notes.c: Split notes ref DWIMmery into a separate function
+ + notes.c: Use two newlines (instead of one) when concatenating notes
+ + (trivial) t3303: Indent with tabs instead of spaces for consistency
+ + notes.h/c: Propagate combine_notes_fn return value to add_note() and beyond
+ + notes.h/c: Allow combine_notes functions to remove notes
+ + notes.c: Reorder functions in preparation for next commit
+ + notes.h: Make default_notes_ref() available in notes API
+ + (trivial) notes.h: Minor documentation fixes to copy_notes()
+ + notes.c: Hexify SHA1 in die() message from init_notes()
 
-* en/rename-d-f (2010-09-08) 2 commits
- + merge-recursive: D/F conflicts where was_a_dir/file -> was_a_dir
- + t3509: Add rename + D/F conflict testcase that recursive strategy fails
- (this branch is used by en/merge-recursive.)
+* jk/diff-CBM (2010-10-21) 1 commit
+  (merged to 'next' on 2010-11-05 at 9d1ec14)
+ + diff: report bogus input to -C/-M/-B
 
-* fc/apply-p2-get-header-name (2010-10-21) 2 commits
-  (merged to 'next' on 2010-11-17 at 05a8e94)
- + test: git-apply -p2 rename/chmod only
- + Fix git-apply with -p greater than 1
+* jk/maint-decorate-01-bool (2010-11-17) 1 commit
+  (merged to 'next' on 2010-11-24 at 347f73b)
+ + log.decorate: accept 0/1 bool values
+ (this branch is used by jk/pager-per-command.)
 
-* jc/abbrev-guard (2010-10-28) 1 commit
-  (merged to 'next' on 2010-11-24 at f26c943)
- + core.abbrevguard: Ensure short object names stay unique a bit longer
+* jk/pager-per-command (2010-11-17) 1 commit
+  (merged to 'next' on 2010-11-24 at 9ebcffc)
+ + allow command-specific pagers in pager.<cmd>
+ (this branch uses jk/maint-decorate-01-bool.)
 
-* jc/emfile (2010-10-28) 2 commits
-  (merged to 'next' on 2010-11-17 at dac1bc6)
- + A loose object is not corrupt if it cannot be read due to EMFILE
- + read_sha1_file(): report correct name of packfile with a corrupt object
- (this branch is used by sp/emfile.)
+* jn/gitweb-time-hires-comes-with-5.8 (2010-11-09) 1 commit
+  (merged to 'next' on 2010-11-24 at 6b91b41)
+ + gitweb: Time::HiRes is in core for Perl 5.8
 
-* jj/icase-directory (2010-10-03) 8 commits
-  (merged to 'next' on 2010-11-24 at 0da9385)
- + Support case folding in git fast-import when core.ignorecase=true
- + Support case folding for git add when core.ignorecase=true
- + Add case insensitivity support when using git ls-files
- + Add case insensitivity support for directories when using git status
- + Case insensitivity support for .gitignore via core.ignorecase
- + Add string comparison functions that respect the ignore_case variable.
- + Makefile & configure: add a NO_FNMATCH_CASEFOLD flag
- + Makefile & configure: add a NO_FNMATCH flag
+* ks/maint-getenv-fix (2010-11-11) 1 commit
+  (merged to 'next' on 2010-11-24 at fa89826)
+ + setup: make sure git_dir path is in a permanent buffer, getenv(3) case
+ (this branch is used by jn/getenv-poison.)
 
-* jl/add-p-reverse-message (2010-10-27) 1 commit
-  (merged to 'next' on 2010-11-17 at db2ce14)
- + Correct help blurb in checkout -p and friends
+* mg/maint-tag-rfc1991 (2010-11-10) 5 commits
+  (merged to 'next' on 2010-11-24 at 03864ed)
+ + tag: recognize rfc1991 signatures
+ + tag: factor out sig detection for tag display
+ + tag: factor out sig detection for body edits
+ + verify-tag: factor out signature detection
+ + t/t7004-tag: test handling of rfc1991 signatures
 
-* jl/clone-recurse-sm-synonym (2010-11-04) 1 commit
-  (merged to 'next' on 2010-11-17 at 8c326c2)
- + clone: Add the --recurse-submodules option as alias for --recursive
+--------------------------------------------------
+[New Topics]
 
-* jn/cherry-pick-refresh-index (2010-10-31) 1 commit
-  (merged to 'next' on 2010-11-17 at 75e9103)
- + cherry-pick/revert: transparently refresh index
+* ak/describe-exact (2010-12-07) 4 commits
+ - describe: Delay looking up commits until searching for an inexact match
+ - describe: Store commit_names in a hash table by commit SHA1
+ - describe: Do not use a flex array in struct commit_name
+ - describe: Use for_each_rawref
 
-* jn/fast-import-fix (2010-10-20) 4 commits
-  (merged to 'next' on 2010-11-17 at ef3b791)
- + fast-import: do not clear notes in do_change_note_fanout()
- + t9300 (fast-import): another test for the "replace root" feature
- + fast-import: tighten M 040000 syntax
- + fast-import: filemodify after M 040000 <tree> "" crashes
+* jc/maint-svn-info-test-fix (2010-12-06) 1 commit
+  (merged to 'next' on 2010-12-08 at f821694)
+ + t9119: do not compare "Text Last Updated" line from "svn info"
 
-* jn/ignore-doc (2010-11-10) 2 commits
-  (merged to 'next' on 2010-11-24 at c0a9730)
- + Documentation: point to related commands from gitignore
- + Documentation: split gitignore page into sections
+* jn/submodule-b-current (2010-12-05) 2 commits
+  (merged to 'next' on 2010-12-08 at 33423f3)
+ + git submodule: Remove now obsolete tests before cloning a repo
+ + git submodule -b ... of current HEAD fails
 
-* jn/thinner-wrapper (2010-11-06) 7 commits
-  (merged to 'next' on 2010-11-24 at 3f2227d)
- + Remove pack file handling dependency from wrapper.o
- + pack-objects: mark file-local variable static
- + wrapper: give zlib wrappers their own translation unit
- + strbuf: move strbuf_branchname to sha1_name.c
- + path helpers: move git_mkstemp* to wrapper.c
- + wrapper: move odb_* to environment.c
- + wrapper: move xmmap() to sha1_file.c
-
-* js/configuable-tab (2010-11-29) 1 commit
- - Make the tab width used for whitespace checks configurable
-
-* kb/blame-author-email (2010-10-15) 1 commit
-  (merged to 'next' on 2010-11-17 at 6fd6a2f)
- + blame: Add option to show author email instead of name
-
-* kb/maint-status-cquote (2010-11-08) 1 commit
-  (merged to 'next' on 2010-11-24 at e15b73d)
- + status: Quote paths with spaces in short format
-
-* md/interix (2010-10-27) 2 commits
-  (merged to 'next' on 2010-11-17 at 2a8b562)
- + Interix: add configure checks
- + add support for the SUA layer (interix; windows)
-
-* np/diff-in-corrupt-repository (2010-10-22) 1 commit
-  (merged to 'next' on 2010-11-17 at b57a6cb)
- + diff: don't presume empty file when corresponding object is missing
-
-* np/pack-broken-boundary (2010-10-22) 1 commit
-  (merged to 'next' on 2010-11-17 at 69a9f46)
- + make pack-objects a bit more resilient to repo corruption
-
-* pn/commit-autosquash (2010-11-02) 6 commits
-  (merged to 'next' on 2010-11-24 at acc9c78)
- + add tests of commit --squash
- + commit: --squash option for use with rebase --autosquash
- + add tests of commit --fixup
- + commit: --fixup option for use with rebase --autosquash
- + pretty.c: teach format_commit_message() to reencode the output
- + commit: helper methods to reduce redundant blocks of code
-
-* rr/needs-clean-work-tree (2010-10-19) 1 commit
-  (merged to 'next' on 2010-11-17 at b8aee21)
- + Porcelain scripts: Rewrite cryptic "needs update" error message
-
-* sn/diff-doc (2010-11-04) 3 commits
-  (merged to 'next' on 2010-11-24 at 77190a5)
- + docs: clarify git diff modes of operation
- + diff,difftool: Don't use the {0,2} notation in usage strings
- + CodingGuidelines: Add a section on writing documentation
-
-* sp/emfile (2010-11-01) 2 commits
-  (merged to 'next' on 2010-11-24 at f46d2ce)
- + Work around EMFILE when there are too many pack files
- + Use git_open_noatime when accessing pack data
-
-* tc/smart-http-post-redirect (2010-09-25) 1 commit
-  (merged to 'next' on 2010-11-17 at 6478f7f)
- + smart-http: Don't change POST to GET when following redirect
+* jc/maint-no-openssl-build-fix (2010-12-08) 1 commit
+  (merged to 'next' on 2010-12-08 at e348a87)
+ + Do not link with -lcrypto under NO_OPENSSL
 
 --------------------------------------------------
 [Stalled]
@@ -330,40 +159,125 @@ This unfortunately heavily conflicts with patches in flight...
 --------------------------------------------------
 [Cooking]
 
-* ef/win32-dirent (2010-11-23) 6 commits
- - win32: use our own dirent.h
- - msvc: opendir: handle paths ending with a slash
- - win32: dirent: handle errors
- - msvc: opendir: do not start the search
- - msvc: opendir: allocate enough memory
- - msvc: opendir: fix malloc-failure
+* aa/status-hilite-branch (2010-11-18) 1 commit
+  (merged to 'next' on 2010-12-08 at 0291858)
+ + status: show branchname with a configurable color
 
-Will merge to 'next' soon.
+I am indifferent/uninterested; I don't see anything wrong with it, but I
+do not find coloring the field particularly useful myself.
+
+* ef/help-cmd-prefix (2010-11-26) 1 commit
+  (merged to 'next' on 2010-12-08 at c92752e)
+ + help: always suggest common-cmds if prefix of cmd
+
+* jn/fast-import-blob-access (2010-12-03) 5 commits
+  (merged to 'next' on 2010-12-08 at a42f0b3)
+ + t9300: remove unnecessary use of /dev/stdin
+ + fast-import: Allow cat-blob requests at arbitrary points in stream
+ + fast-import: let importers retrieve blobs
+ + fast-import: clarify documentation of "feature" command
+ + fast-import: stricter parsing of integer options
+
+* jn/gitweb-per-request-config (2010-11-28) 2 commits
+  (merged to 'next' on 2010-12-08 at 44be9e5)
+ + gitweb: document $per_request_config better
+ + gitweb: selectable configurations that change with each request
+
+* kb/diff-C-M-synonym (2010-11-29) 1 commit
+ - diff: add --detect-copies-harder as a synonym for --find-copies-harder
+
+I am not married to the approach and actually am fine with renaming the
+recent "detect" to "find", which I tend to think is probably nicer.
+
+* mg/cvsimport (2010-11-28) 3 commits
+ - cvsimport.txt: document the mapping between config and options
+ - cvsimport: fix the parsing of uppercase config options
+ - cvsimport: partial whitespace cleanup
+
+I was being lazy and said "Ok" to "cvsimport.capital-r" but luckily other
+people injected sanity to the discussion.  Weatherbaloon patch sent, but
+not queued here.
+
+* mz/maint-rebase-stat-config (2010-11-09) 1 commit
+  (merged to 'next' on 2010-12-08 at 97d4912)
+ + rebase: only show stat if configured to true
+
+* mz/pull-rebase-rebased (2010-11-13) 1 commit
+  (merged to 'next' on 2010-12-08 at 99c1762)
+ + Use reflog in 'pull --rebase . foo'
+
+* nd/maint-hide-checkout-index-from-error (2010-11-28) 1 commit
+  (merged to 'next' on 2010-12-08 at 1869996)
+ + entry.c: remove "checkout-index" from error messages
+
+* tf/commit-list-prefix (2010-11-26) 1 commit
+ - commit: Add commit_list prefix in two function names.
+
+* gb/web--browse (2010-12-03) 4 commits
+  (merged to 'next' on 2010-12-08 at cff4009)
+ + web--browse: better support for chromium
+ + web--browse: support opera, seamonkey and elinks
+ + web--browse: split valid_tool list
+ + web--browse: coding style
+
+The remainder of the series, which is mostly Debian specific addition, can
+wait (or just left for the distro).
+
+* ja/maint-pull-rebase-doc (2010-12-03) 1 commit
+  (merged to 'next' on 2010-12-08 at 211bf89)
+ + git-pull.txt: Mention branch.autosetuprebase
+
+* js/configurable-tab (2010-11-30) 2 commits
+  (merged to 'next' on 2010-12-08 at 3257365)
+ + Make the tab width used for whitespace checks configurable
+ + Merge branch 'js/maint-apply-tab-in-indent-fix' into HEAD
+ (this branch uses js/maint-apply-tab-in-indent-fix.)
+
+* js/maint-apply-tab-in-indent-fix (2010-11-30) 1 commit
+  (merged to 'next' on 2010-12-08 at 02aedd5)
+ + apply --whitespace=fix: fix tab-in-indent
+ (this branch is used by js/configurable-tab.)
+
+* pd/bash-4-completion (2010-12-01) 2 commits
+ - Use the new functions to get the current cword.
+ - Introduce functions from bash-completion project.
+
+There is a "here is a better way to do this" from Jonathan, but I lost
+track.
+
+* ef/win32-dirent (2010-11-23) 6 commits
+  (merged to 'next' on 2010-12-08 at 1a7169d)
+ + win32: use our own dirent.h
+ + msvc: opendir: handle paths ending with a slash
+ + win32: dirent: handle errors
+ + msvc: opendir: do not start the search
+ + msvc: opendir: allocate enough memory
+ + msvc: opendir: fix malloc-failure
 
 * jk/asciidoc-update (2010-11-19) 1 commit
- - docs: default to more modern toolset
-
-Will merge to 'next' soon.
+  (merged to 'next' on 2010-12-08 at 72ffafe)
+ + docs: default to more modern toolset
 
 * jk/maint-reflog-bottom (2010-11-21) 1 commit
- - reflogs: clear flags properly in corner case
-
-Will merge to 'next' soon.
+  (merged to 'next' on 2010-12-08 at f5ca80a)
+ + reflogs: clear flags properly in corner case
 
 * jn/fast-import-ondemand-checkpoint (2010-11-22) 1 commit
- - fast-import: treat SIGUSR1 as a request to access objects early
+  (merged to 'next' on 2010-12-08 at f538396)
+ + fast-import: treat SIGUSR1 as a request to access objects early
 
 * jn/maint-fast-import-object-reuse (2010-11-23) 1 commit
- - fast-import: insert new object entries at start of hash bucket
+  (merged to 'next' on 2010-12-08 at 5d29c08)
+ + fast-import: insert new object entries at start of hash bucket
 
-Will merge to 'next' soon.
+* jn/maint-svn-fe (2010-12-05) 3 commits
+  (merged to 'next' on 2010-12-08 at e25350b)
+ + vcs-svn: fix intermittent repo_tree corruption
+ + treap: make treap_insert return inserted node
+ + t9010 (svn-fe): Eliminate dependency on svn perl bindings
 
-* jn/maint-svn-fe (2010-10-10) 1 commit
- - t9010 (svn-fe): Eliminate dependency on svn perl bindings
-
-Will merge to 'next' soon.
-
-* jn/svn-fe (2010-11-19) 17 commits
+* jn/svn-fe (2010-12-06) 18 commits
+ - vcs-svn: Allow change nodes for root of tree (/)
  - vcs-svn: Implement Prop-delta handling
  - vcs-svn: Sharpen parsing of property lines
  - vcs-svn: Split off function for handling of individual properties
@@ -385,12 +299,12 @@ Will merge to 'next' soon.
 Some RFC patches, to give them early and wider exposure.
 
 * mz/rebase-abort-reflog-fix (2010-11-21) 1 commit
- - rebase --abort: do not update branch ref
+  (merged to 'next' on 2010-12-08 at adce2e1)
+ + rebase --abort: do not update branch ref
 
 * mz/rebase-i-verify (2010-11-22) 1 commit
- - rebase: support --verify
-
-Will merge to 'next' soon.
+  (merged to 'next' on 2010-12-08 at 18275df)
+ + rebase: support --verify
 
 * nd/maint-relative (2010-11-20) 1 commit
  - get_cwd_relative(): do not misinterpret root path
@@ -398,107 +312,59 @@ Will merge to 'next' soon.
 Will merge to 'next' soon.
 
 * tc/format-patch-p (2010-11-23) 1 commit
- - format-patch: page output with --stdout
+  (merged to 'next' on 2010-12-08 at e8bff23)
+ + format-patch: page output with --stdout
 
 I am indifferent/uninterested; I don't see anything wrong with it,
 though.
 
 * tc/http-urls-ends-with-slash (2010-11-25) 9 commits
- - http-fetch: rework url handling
- - http-push: add trailing slash at arg-parse time, instead of later on
- - http-push: check path length before using it
- - http-push: Normalise directory names when pushing to some WebDAV servers
- - http-backend: use end_url_with_slash()
- - url: add str wrapper for end_url_with_slash()
- - shift end_url_with_slash() from http.[ch] to url.[ch]
- - t5550-http-fetch: add test for http-fetch
- - t5550-http-fetch: add missing '&&'
-
-Will merge to 'next' soon.
-
-* gb/gitweb-remote-heads (2010-11-11) 11 commits
-  (merged to 'next' on 2010-11-24 at 6fb4a6f)
- + git instaweb: enable remote_heads
- + gitweb: group remote heads by remote
- + gitweb: provide a routine to display (sub)sections
- + gitweb: refactor repository URL printing
- + gitweb: remotes view for a single remote
- + gitweb: allow action specialization in page header
- + gitweb: nagivation menu for tags, heads and remotes
- + gitweb: separate heads and remotes lists
- + gitweb: git_get_heads_list accepts an optional list of refs
- + gitweb: introduce remote_heads feature
- + gitweb: use fullname as hash_base in heads link
-
-* gc/http-with-non-ascii-username-url (2010-11-14) 2 commits
-  (merged to 'next' on 2010-11-24 at 08f317f)
- + Fix username and password extraction from HTTP URLs
- + t5550: test HTTP authentication and userinfo decoding
-
-* jk/maint-decorate-01-bool (2010-11-17) 1 commit
-  (merged to 'next' on 2010-11-24 at 347f73b)
- + log.decorate: accept 0/1 bool values
- (this branch is used by jk/pager-per-command.)
-
-* jk/pager-per-command (2010-11-17) 1 commit
-  (merged to 'next' on 2010-11-24 at 9ebcffc)
- + allow command-specific pagers in pager.<cmd>
- (this branch uses jk/maint-decorate-01-bool.)
-
-* jn/getenv-poison (2010-11-12) 1 commit
- . add GETENV_POISON option to simulate unfriendly getenv()
- (this branch uses ks/maint-getenv-fix.)
-
-* jn/gitweb-time-hires-comes-with-5.8 (2010-11-09) 1 commit
-  (merged to 'next' on 2010-11-24 at 6b91b41)
- + gitweb: Time::HiRes is in core for Perl 5.8
-
-* ks/maint-getenv-fix (2010-11-11) 1 commit
-  (merged to 'next' on 2010-11-24 at fa89826)
- + setup: make sure git_dir path is in a permanent buffer, getenv(3) case
- (this branch is used by jn/getenv-poison.)
+  (merged to 'next' on 2010-12-08 at b9a878a)
+ + http-fetch: rework url handling
+ + http-push: add trailing slash at arg-parse time, instead of later on
+ + http-push: check path length before using it
+ + http-push: Normalise directory names when pushing to some WebDAV servers
+ + http-backend: use end_url_with_slash()
+ + url: add str wrapper for end_url_with_slash()
+ + shift end_url_with_slash() from http.[ch] to url.[ch]
+ + t5550-http-fetch: add test for http-fetch
+ + t5550-http-fetch: add missing '&&'
 
 * nd/extended-sha1-relpath (2010-11-28) 2 commits
- - get_sha1: support relative path ":path" syntax
- - Make prefix_path() return char* without const
+  (merged to 'next' on 2010-12-08 at 940e5e2)
+ + get_sha1: support relative path ":path" syntax
+ + Make prefix_path() return char* without const
  (this branch uses jn/parse-options-extra.)
 
-As jn/parse-options-extra seems to be still rerolled, this needs to stay
-outside 'next' waiting for it.
-
-* nd/maint-fix-add-typo-detection (2010-11-27) 6 commits
+* nd/maint-fix-add-typo-detection (2010-11-27) 5 commits
  - Revert "excluded_1(): support exclude files in index"
  - unpack-trees: fix sparse checkout's "unable to match directories"
  - unpack-trees: move all skip-worktree checks back to unpack_trees()
  - dir.c: add free_excludes()
  - cache.h: realign and use (1 << x) form for CE_* constants
-  (merged to 'next' on 2010-11-24 at 6832306)
- + add: do not rely on dtype being NULL behavior
 
-Will merge to 'next'.
+Note that the commit that used to be at the bottom of this series
+have been merged to 'master' (it was a no-op fix).
 
 * jh/gitweb-caching (2010-12-03) 4 commits
- - gitweb: Minimal testing of gitweb caching
- - gitweb: File based caching layer (from git.kernel.org)
- - gitweb: add output buffering and associated functions
- - gitweb: Prepare for splitting gitweb
-
-Slightly updated.
+ . gitweb: Minimal testing of gitweb caching
+ . gitweb: File based caching layer (from git.kernel.org)
+ . gitweb: add output buffering and associated functions
+ . gitweb: Prepare for splitting gitweb
 
 * jn/parse-options-extra (2010-12-01) 10 commits
- - update-index: migrate to parse-options API
- - setup: save prefix (original cwd relative to toplevel) in startup_info
- - parse-options: make resuming easier after PARSE_OPT_STOP_AT_NON_OPTION
- - parse-options: allow git commands to invent new option types
- - parse-options: never suppress arghelp if LITERAL_ARGHELP is set
- - parse-options: do not infer PARSE_OPT_NOARG from option type
- - parse-options: sanity check PARSE_OPT_NOARG flag
- - parse-options: move NODASH sanity checks to parse_options_check
- - parse-options: clearer reporting of API misuse
- - parse-options: Don't call parse_options_check() so much
+  (merged to 'next' on 2010-12-08 at 3a3e3ac)
+ + update-index: migrate to parse-options API
+ + setup: save prefix (original cwd relative to toplevel) in startup_info
+ + parse-options: make resuming easier after PARSE_OPT_STOP_AT_NON_OPTION
+ + parse-options: allow git commands to invent new option types
+ + parse-options: never suppress arghelp if LITERAL_ARGHELP is set
+ + parse-options: do not infer PARSE_OPT_NOARG from option type
+ + parse-options: sanity check PARSE_OPT_NOARG flag
+ + parse-options: move NODASH sanity checks to parse_options_check
+ + parse-options: clearer reporting of API misuse
+ + parse-options: Don't call parse_options_check() so much
  (this branch is used by nd/extended-sha1-relpath.)
-
-Rerolled.
 
 * nd/setup (2010-11-26) 47 commits
  - git.txt: correct where --work-tree path is relative to
@@ -549,32 +415,15 @@ Rerolled.
  - Add t1510 and basic rules that run repo setup
  - builtins: print setup info if repo is found
 
-Rerolled.
-
-* mg/maint-tag-rfc1991 (2010-11-10) 5 commits
-  (merged to 'next' on 2010-11-24 at 03864ed)
- + tag: recognize rfc1991 signatures
- + tag: factor out sig detection for tag display
- + tag: factor out sig detection for body edits
- + verify-tag: factor out signature detection
- + t/t7004-tag: test handling of rfc1991 signatures
-
-* jk/diff-CBM (2010-10-21) 1 commit
-  (merged to 'next' on 2010-11-05 at 9d1ec14)
- + diff: report bogus input to -C/-M/-B
-
-Will merge to master soonish.
-
 * jn/git-cmd-h-bypass-setup (2010-10-22) 7 commits
- - update-index -h: show usage even with corrupt index
- - merge -h: show usage even with corrupt index
- - ls-files -h: show usage even with corrupt index
- - gc -h: show usage even with broken configuration
- - commit/status -h: show usage even with broken configuration
- - checkout-index -h: show usage even in an invalid repository
- - branch -h: show usage even in an invalid repository
-
-Will merge to 'next'.
+  (merged to 'next' on 2010-12-08 at 0fc3158)
+ + update-index -h: show usage even with corrupt index
+ + merge -h: show usage even with corrupt index
+ + ls-files -h: show usage even with corrupt index
+ + gc -h: show usage even with broken configuration
+ + commit/status -h: show usage even with broken configuration
+ + checkout-index -h: show usage even in an invalid repository
+ + branch -h: show usage even in an invalid repository
 
 * yd/dir-rename (2010-10-29) 5 commits
  - Allow hiding renames of individual files involved in a directory rename.
@@ -585,46 +434,18 @@ Will merge to 'next'.
 
 Yet to be rerolled.
 
-* il/remote-fd-ext (2010-11-17) 4 commits
-  (merged to 'next' on 2010-11-24 at ef80cf1)
- + remote-fd/ext: finishing touches after code review
-  (merged to 'next' on 2010-11-05 at 7413413)
- + git-remote-ext
- + git-remote-fd
- + Add bidirectional_transfer_loop()
-
-* jh/notes-merge (2010-11-09) 23 commits
-  (merged to 'next' on 2010-11-24 at 6218115)
- + Provide 'git merge --abort' as a synonym to 'git reset --merge'
- + cmd_merge(): Parse options before checking MERGE_HEAD
- + Provide 'git notes get-ref' to easily retrieve current notes ref
- + git notes merge: Add testcases for merging notes trees at different fanouts
- + git notes merge: Add another auto-resolving strategy: "cat_sort_uniq"
- + git notes merge: --commit should fail if underlying notes ref has moved
- + git notes merge: List conflicting notes in notes merge commit message
- + git notes merge: Manual conflict resolution, part 2/2
- + git notes merge: Manual conflict resolution, part 1/2
- + Documentation: Preliminary docs on 'git notes merge'
- + git notes merge: Add automatic conflict resolvers (ours, theirs, union)
- + git notes merge: Handle real, non-conflicting notes merges
- + builtin/notes.c: Refactor creation of notes commits.
- + git notes merge: Initial implementation handling trivial merges only
- + builtin/notes.c: Split notes ref DWIMmery into a separate function
- + notes.c: Use two newlines (instead of one) when concatenating notes
- + (trivial) t3303: Indent with tabs instead of spaces for consistency
- + notes.h/c: Propagate combine_notes_fn return value to add_note() and beyond
- + notes.h/c: Allow combine_notes functions to remove notes
- + notes.c: Reorder functions in preparation for next commit
- + notes.h: Make default_notes_ref() available in notes API
- + (trivial) notes.h: Minor documentation fixes to copy_notes()
- + notes.c: Hexify SHA1 in die() message from init_notes()
-
-* nd/struct-pathspec (2010-09-20) 5 commits
+* nd/struct-pathspec (2010-09-20) 11 commits
  - ce_path_match: drop prefix matching in favor of match_pathspec
  - Convert ce_path_match() to use struct pathspec
  - tree_entry_interesting: turn to match_pathspec if wildcard is present
  - pathspec: add tree_recursive_diff parameter
  - pathspec: mark wildcard pathspecs from the beginning
+ - Move tree_entry_interesting() to tree-walk.c and export it
+ - tree_entry_interesting(): remove dependency on struct diff_options
+ - Convert struct diff_options to use struct pathspec
+ - pathspec: cache string length when initializing pathspec
+ - diff-no-index: use diff_tree_setup_paths()
+ - Add struct pathspec
  (this branch is tangled with en/object-list-with-pathspec.)
 
 This is related to something I have long been wanting to see happen.
@@ -642,11 +463,10 @@ Wait Nguyen for another round (2010-11-11).
  (this branch is tangled with nd/struct-pathspec.)
 
 * jl/fetch-submodule-recursive (2010-11-11) 3 commits
- - Submodules: Add the "fetchRecurseSubmodules" config option
- - Add the 'fetch.recurseSubmodules' config setting
- - fetch/pull: Add the --recurse-submodules option
-
-Will merge to 'next' soonish.
+  (merged to 'next' on 2010-12-08 at 676c4f5)
+ + Submodules: Add the "fetchRecurseSubmodules" config option
+ + Add the 'fetch.recurseSubmodules' config setting
+ + fetch/pull: Add the --recurse-submodules option
 
 * tr/merge-unborn-clobber (2010-08-22) 1 commit
  - Exhibit merge bug that clobbers index&WT
