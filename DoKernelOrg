@@ -16,12 +16,12 @@ GNU_ROFF=YesPlease'
 rm -f version
 case `hostname` in
 hera.kernel.org)
-	narch='x86_64 i386'
+	narch='x86_64 i386 i686'
 	arch=x86_64 ;;
-wing-fc*|fc*.siamese.dyndns.org)
+wing-fc*|fc*.siamese.dyndns.org|fc*)
 	eval $(rpm --showrc | sed -ne '
 		s/^-14: dist[ 	]*\./dist=/p
-		s/^-14: _build_arch[ 	]*/arch=/p
+		s/^-11= _target_cpu[ 	]*/arch=/p
 	') &&
 	test -n "$dist" && test -n "$arch" || exit 1
 	;;
@@ -32,7 +32,7 @@ esac &&
 echo "* Building $THIS" &&
 make $J git >./:all.log 2>&1 &&
 V=`./git --version | sed -e 's/git version //'` &&
-make $d rpm >>./:all.log 2>&1 &&
+NEEDS_CRYPTO_WITH_SSL=YesPlease make $d rpm >>./:all.log 2>&1 &&
 case "$narch" in
 '')
 	# This is not the primary build machine.

@@ -1,0 +1,12 @@
+#!/bin/sh
+# Feed whats-cooking to find who are involved
+
+sed -ne 's|\(.* \)*\* \([a-z][a-z]/[a-z0-9][-_a-z0-9]*\) ([-0-9]*) [0-9]* commit.*|\2|p' |
+while read topic
+do
+	git log --format="%an <%ae>" --no-merges "$topic" ^master
+done |
+sort -u |
+sed -e '/Junio C Hamano/d' -e 's/.*/    &,/' -e '$s/,$//'
+
+

@@ -3,6 +3,24 @@
 
 use strict;
 
+my %reverts = ('next' => {
+	map { $_ => 1 } qw(
+		c9bb83f
+		8f6d1e2
+		477e5a8
+		cc17e9f
+		07b74a9
+		e4b5259
+		76c7727
+		7e7b4f7
+		44d3770
+		107880a
+		02f9c7c
+		a9ef3e3
+	    ) });
+
+%reverts = ();
+
 sub phrase_these {
 	my (@u) = sort @_;
 	my @d = ();
@@ -163,7 +181,9 @@ sub get_commit {
 					};
 				}
 				my $co = $commit{$sha1};
-				$co->{'branch'}{$branch} = 1;
+				if (!exists $reverts{$branch}{$sha1}) {
+					$co->{'branch'}{$branch} = 1;
+				}
 				next if (exists $base{$branch});
 				push @{$topic{$branch}{'log'}}, $sha1;
 			}
@@ -211,6 +231,7 @@ sub get_commit {
 		}
 		for my $tip (split(' ', $tips)) {
 			my $co = $commit{$tip};
+			next unless ($co->{'branch'}{'next'});
 			$co->{'merged'} = " (merged to 'next' on $date at $commit)";
 		}
 	}
