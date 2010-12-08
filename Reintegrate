@@ -54,7 +54,7 @@ no)
 			elif git show-ref -q --verify "refs/merge-fix/$branch"
 			then
 				git cherry-pick --no-commit "refs/merge-fix/$branch" &&
-				EDITOR=: git commit --amend -a
+				EDITOR=: git commit --amend -a || exit
 			fi
 			;;
 		pick" "*)
