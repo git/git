@@ -89,8 +89,8 @@ the paths that have disappeared from the filesystem. However,
 depending on the use case, there are several ways that can be
 done.
 
-Using "git commit -a"
-~~~~~~~~~~~~~~~~~~~~~
+Using ``git commit -a''
+~~~~~~~~~~~~~~~~~~~~~~~
 If you intend that your next commit should record all modifications
 of tracked files in the working tree and record all removals of
 files that have been removed from the working tree with `rm`
@@ -98,8 +98,8 @@ files that have been removed from the working tree with `rm`
 automatically notice and record all removals.  You can also have a
 similar effect without committing by using `git add -u`.
 
-Using "git add -A"
-~~~~~~~~~~~~~~~~~~
+Using ``git add -A''
+~~~~~~~~~~~~~~~~~~~~
 When accepting a new code drop for a vendor branch, you probably
 want to record both the removal of paths and additions of new paths
 as well as modifications of existing paths.
@@ -111,8 +111,8 @@ tree using this command:
 git ls-files -z | xargs -0 rm -f
 ----------------
 
-and then "untar" the new code in the working tree. Alternately
-you could "rsync" the changes into the working tree.
+and then untar the new code in the working tree. Alternately
+you could 'rsync' the changes into the working tree.
 
 After that, the easiest way to record all removals, additions, and
 modifications in the working tree is:
