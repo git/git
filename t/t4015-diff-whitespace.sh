@@ -344,11 +344,32 @@ test_expect_success 'check spaces as indentation (indent-with-non-tab: on)' '
 
 '
 
+test_expect_success 'ditto, but tabwidth=9' '
+
+	git config core.whitespace "indent-with-non-tab,tabwidth=9" &&
+	git diff --check
+
+'
+
 test_expect_success 'check tabs and spaces as indentation (indent-with-non-tab: on)' '
 
 	git config core.whitespace "indent-with-non-tab" &&
 	echo "	                foo ();" > x &&
 	test_must_fail git diff --check
+
+'
+
+test_expect_success 'ditto, but tabwidth=10' '
+
+	git config core.whitespace "indent-with-non-tab,tabwidth=10" &&
+	test_must_fail git diff --check
+
+'
+
+test_expect_success 'ditto, but tabwidth=20' '
+
+	git config core.whitespace "indent-with-non-tab,tabwidth=20" &&
+	git diff --check
 
 '
 
@@ -372,6 +393,13 @@ test_expect_success 'check tabs and spaces as indentation (tab-in-indent: on)' '
 
 	git config core.whitespace "tab-in-indent" &&
 	echo "	                foo ();" > x &&
+	test_must_fail git diff --check
+
+'
+
+test_expect_success 'ditto, but tabwidth=1 (must be irrelevant)' '
+
+	git config core.whitespace "tab-in-indent,tabwidth=1" &&
 	test_must_fail git diff --check
 
 '

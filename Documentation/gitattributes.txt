@@ -723,6 +723,8 @@ control per path.
 Set::
 
 	Notice all types of potential whitespace errors known to git.
+	The tab width is taken from the value of the `core.whitespace`
+	configuration variable.
 
 Unset::
 
@@ -730,13 +732,13 @@ Unset::
 
 Unspecified::
 
-	Use the value of `core.whitespace` configuration variable to
+	Use the value of the `core.whitespace` configuration variable to
 	decide what to notice as error.
 
 String::
 
 	Specify a comma separate list of common whitespace problems to
-	notice in the same format as `core.whitespace` configuration
+	notice in the same format as the `core.whitespace` configuration
 	variable.
 
 

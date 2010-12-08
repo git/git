@@ -51,8 +51,65 @@ test_expect_success default '
 
 '
 
+test_expect_success 'default (attribute)' '
+
+	test_might_fail git config --unset core.whitespace &&
+	echo "F whitespace" >.gitattributes &&
+	prepare_output &&
+
+	grep Eight error >/dev/null &&
+	grep HT error >/dev/null &&
+	grep With error >/dev/null &&
+	grep Return error >/dev/null &&
+	grep No normal >/dev/null
+
+'
+
+test_expect_success 'default, tabwidth=10 (attribute)' '
+
+	git config core.whitespace "tabwidth=10" &&
+	echo "F whitespace" >.gitattributes &&
+	prepare_output &&
+
+	grep Eight normal >/dev/null &&
+	grep HT error >/dev/null &&
+	grep With error >/dev/null &&
+	grep Return error >/dev/null &&
+	grep No normal >/dev/null
+
+'
+
+test_expect_success 'no check (attribute)' '
+
+	test_might_fail git config --unset core.whitespace &&
+	echo "F -whitespace" >.gitattributes &&
+	prepare_output &&
+
+	grep Eight normal >/dev/null &&
+	grep HT normal >/dev/null &&
+	grep With normal >/dev/null &&
+	grep Return normal >/dev/null &&
+	grep No normal >/dev/null
+
+'
+
+test_expect_success 'no check, tabwidth=10 (attribute), must be irrelevant' '
+
+	git config core.whitespace "tabwidth=10" &&
+	echo "F -whitespace" >.gitattributes &&
+	prepare_output &&
+
+	grep Eight normal >/dev/null &&
+	grep HT normal >/dev/null &&
+	grep With normal >/dev/null &&
+	grep Return normal >/dev/null &&
+	grep No normal >/dev/null
+
+'
+
 test_expect_success 'without -trail' '
 
+	rm -f .gitattributes &&
 	git config core.whitespace -trail &&
 	prepare_output &&
 
@@ -127,6 +184,34 @@ test_expect_success 'with indent-non-tab only (attribute)' '
 	prepare_output &&
 
 	grep Eight error >/dev/null &&
+	grep HT normal >/dev/null &&
+	grep With normal >/dev/null &&
+	grep Return normal >/dev/null &&
+	grep No normal >/dev/null
+
+'
+
+test_expect_success 'with indent-non-tab only, tabwidth=10' '
+
+	rm -f .gitattributes &&
+	git config core.whitespace indent,tabwidth=10,-trailing,-space &&
+	prepare_output &&
+
+	grep Eight normal >/dev/null &&
+	grep HT normal >/dev/null &&
+	grep With normal >/dev/null &&
+	grep Return normal >/dev/null &&
+	grep No normal >/dev/null
+
+'
+
+test_expect_success 'with indent-non-tab only, tabwidth=10 (attribute)' '
+
+	test_might_fail git config --unset core.whitespace &&
+	echo "F whitespace=indent,-trailing,-space,tabwidth=10" >.gitattributes &&
+	prepare_output &&
+
+	grep Eight normal >/dev/null &&
 	grep HT normal >/dev/null &&
 	grep With normal >/dev/null &&
 	grep Return normal >/dev/null &&
