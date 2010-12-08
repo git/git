@@ -1011,6 +1011,8 @@ static int parse_status_slot(const char *var, int offset)
 {
 	if (!strcasecmp(var+offset, "header"))
 		return WT_STATUS_HEADER;
+	if (!strcasecmp(var+offset, "branch"))
+		return WT_STATUS_ONBRANCH;
 	if (!strcasecmp(var+offset, "updated")
 		|| !strcasecmp(var+offset, "added"))
 		return WT_STATUS_UPDATED;
