@@ -362,6 +362,9 @@ static uintmax_t next_mark;
 static struct strbuf new_data = STRBUF_INIT;
 static int seen_data_command;
 
+/* Signal handling */
+static volatile sig_atomic_t checkpoint_requested;
+
 static void parse_argv(void);
 
 static void write_branch_report(FILE *rpt, struct branch *b)
@@ -500,6 +503,32 @@ static NORETURN void die_nicely(const char *err, va_list params)
 	}
 	exit(128);
 }
+
+#ifndef SIGUSR1	/* Windows, for example */
+
+static void set_checkpoint_signal(void)
+{
+}
+
+#else
+
+static void checkpoint_signal(int signo)
+{
+	checkpoint_requested = 1;
+}
+
+static void set_checkpoint_signal(void)
+{
+	struct sigaction sa;
+
+	memset(&sa, 0, sizeof(sa));
+	sa.sa_handler = checkpoint_signal;
+	sigemptyset(&sa.sa_mask);
+	sa.sa_flags = SA_RESTART;
+	sigaction(SIGUSR1, &sa, NULL);
+}
+
+#endif
 
 static void alloc_objects(unsigned int cnt)
 {
@@ -2715,14 +2744,20 @@ static void parse_reset_branch(void)
 		unread_command_buf = 1;
 }
 
-static void parse_checkpoint(void)
+static void checkpoint(void)
 {
+	checkpoint_requested = 0;
 	if (object_count) {
 		cycle_packfile();
 		dump_branches();
 		dump_tags();
 		dump_marks();
 	}
+}
+
+static void parse_checkpoint(void)
+{
+	checkpoint_requested = 1;
 	skip_optional_lf();
 }
 
@@ -2979,6 +3014,7 @@ int main(int argc, const char **argv)
 	prepare_packed_git();
 	start_packfile();
 	set_die_routine(die_nicely);
+	set_checkpoint_signal();
 	while (read_next_command() != EOF) {
 		if (!strcmp("blob", command_buf.buf))
 			parse_new_blob();
@@ -3000,6 +3036,9 @@ int main(int argc, const char **argv)
 			/* ignore non-git options*/;
 		else
 			die("Unsupported command: %s", command_buf.buf);
+
+		if (checkpoint_requested)
+			checkpoint();
 	}
 
 	/* argv hasn't been parsed yet, do so */
