@@ -28,6 +28,7 @@ continue           continue rebasing process
 abort              abort rebasing process and restore original branch
 skip               skip current patch and continue rebasing process
 no-verify          override pre-rebase hook from stopping the operation
+verify             allow pre-rebase hook to run
 root               rebase all reachable commmits up to the root(s)
 autosquash         move commits that begin with squash!/fixup! under -i
 "
@@ -749,6 +750,7 @@ do
 		OK_TO_SKIP_PRE_REBASE=yes
 		;;
 	--verify)
+		OK_TO_SKIP_PRE_REBASE=
 		;;
 	--continue)
 		is_standalone "$@" || usage
