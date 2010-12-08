@@ -401,4 +401,33 @@ test_core_pager_subdir    expect_success 'git -p shortlog'
 test_core_pager_subdir    expect_success test_must_fail \
 					 'git -p apply </dev/null'
 
+test_expect_success TTY 'command-specific pager' '
+	unset PAGER GIT_PAGER;
+	echo "foo:initial" >expect &&
+	>actual &&
+	git config --unset core.pager &&
+	git config pager.log "sed s/^/foo:/ >actual" &&
+	test_terminal git log --format=%s -1 &&
+	test_cmp expect actual
+'
+
+test_expect_success TTY 'command-specific pager overrides core.pager' '
+	unset PAGER GIT_PAGER;
+	echo "foo:initial" >expect &&
+	>actual &&
+	git config core.pager "exit 1"
+	git config pager.log "sed s/^/foo:/ >actual" &&
+	test_terminal git log --format=%s -1 &&
+	test_cmp expect actual
+'
+
+test_expect_success TTY 'command-specific pager overridden by environment' '
+	GIT_PAGER="sed s/^/foo:/ >actual" && export GIT_PAGER &&
+	>actual &&
+	echo "foo:initial" >expect &&
+	git config pager.log "exit 1" &&
+	test_terminal git log --format=%s -1 &&
+	test_cmp expect actual
+'
+
 test_done
