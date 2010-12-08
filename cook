@@ -50,7 +50,7 @@ sub describe_relation {
 	}
 
 	if (exists $topic_info->{'shares'}) {
-		push @desc, ("shares commits with " .
+		push @desc, ("is tangled with " .
 			     phrase_these(@{$topic_info->{'shares'}}));
 	}
 
@@ -97,14 +97,8 @@ sub topic_relation {
 	} elsif (!@right) {
 		forks_from($topic, $one, $two);
 	} else {
-		if (@left < @right) {
-			forks_from($topic, $two, $one, @left);
-		} elsif (@right < @left) {
-			forks_from($topic, $one, $two, @right);
-		} else {
-			push @{$topic->{$one}{'shares'}}, $two;
-			push @{$topic->{$two}{'shares'}}, $one;
-		}
+		push @{$topic->{$one}{'shares'}}, $two;
+		push @{$topic->{$two}{'shares'}}, $one;
 	}
 }
 
