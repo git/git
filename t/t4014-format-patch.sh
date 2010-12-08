@@ -6,6 +6,7 @@
 test_description='various format-patch tests'
 
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/lib-terminal.sh
 
 test_expect_success setup '
 
@@ -684,6 +685,28 @@ test_expect_success 'format-patch --no-signature supresses signatures' '
 test_expect_success 'format-patch --signature="" supresses signatures' '
 	git format-patch --signature="" -1 >output &&
 	! grep "^-- \$" output
+'
+
+test_expect_success TTY 'format-patch --stdout paginates' '
+	rm -f pager_used &&
+	(
+		GIT_PAGER="wc >pager_used" &&
+		export GIT_PAGER &&
+		test_terminal git format-patch --stdout --all
+	) &&
+	test_path_is_file pager_used
+'
+
+ test_expect_success TTY 'format-patch --stdout pagination can be disabled' '
+	rm -f pager_used &&
+	(
+		GIT_PAGER="wc >pager_used" &&
+		export GIT_PAGER &&
+		test_terminal git --no-pager format-patch --stdout --all &&
+		test_terminal git -c "pager.format-patch=false" format-patch --stdout --all
+	) &&
+	test_path_is_missing pager_used &&
+	test_path_is_missing .git/pager_used
 '
 
 test_done
