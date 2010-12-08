@@ -66,6 +66,17 @@ ifndef::git-pull[]
 	linkgit:git-config[1].
 endif::git-pull[]
 
+--[no-]recurse-submodules::
+	This option controls if new commits of all populated submodules should
+	be fetched too (see linkgit:git-config[1] and linkgit:gitmodules[5]).
+
+ifndef::git-pull[]
+--submodule-prefix=<path>::
+	Prepend <path> to paths printed in informative messages
+	such as "Fetching submodule foo".  This option is used
+	internally when recursing over submodules.
+endif::git-pull[]
+
 -u::
 --update-head-ok::
 	By default 'git fetch' refuses to update the head which
