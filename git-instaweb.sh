@@ -580,6 +580,8 @@ gitweb_conf() {
 our \$projectroot = "$(dirname "$fqgitdir")";
 our \$git_temp = "$fqgitdir/gitweb/tmp";
 our \$projects_list = \$projectroot;
+
+\$feature{'remote_heads'}{'default'} = [1];
 EOF
 }
 
