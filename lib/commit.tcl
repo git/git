@@ -161,7 +161,8 @@ The rescan will be automatically started now.
 	#
 	set files_ready 0
 	foreach path [array names file_states] {
-		switch -glob -- [lindex $file_states($path) 0] {
+		set s $file_states($path)
+		switch -glob -- [lindex $s 0] {
 		_? {continue}
 		A? -
 		D? -
