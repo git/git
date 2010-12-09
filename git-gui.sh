@@ -1962,8 +1962,8 @@ static unsigned char file_merge_bits[] = {
 } -maskdata $filemask
 
 image create bitmap file_statechange -background white -foreground green -data {
-#define file_merge_width 14
-#define file_merge_height 15
+#define file_statechange_width 14
+#define file_statechange_height 15
 static unsigned char file_statechange_bits[] = {
    0xfe, 0x01, 0x02, 0x03, 0x02, 0x05, 0x02, 0x09, 0x02, 0x1f, 0x62, 0x10,
    0x62, 0x10, 0xba, 0x11, 0xba, 0x11, 0x62, 0x10, 0x62, 0x10, 0x02, 0x10,
