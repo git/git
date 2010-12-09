@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
 #
 # Copyright 2002,2005 Greg Kroah-Hartman <greg@kroah.com>
 # Copyright 2005 Ryan Anderson <ryan@michonline.com>
@@ -16,6 +16,7 @@
 #    and second line is the subject of the message.
 #
 
+use 5.008;
 use strict;
 use warnings;
 use Term::ReadLine;
