@@ -166,7 +166,7 @@ The rescan will be automatically started now.
 		_? {continue}
 		A? -
 		D? -
-		T_ -
+		T? -
 		M? {set files_ready 1}
 		_U -
 		U? {
@@ -453,7 +453,11 @@ A rescan will be automatically started now.
 		}
 		AM -
 		AD -
+		AT -
+		TM -
+		TD -
 		MM -
+		MT -
 		MD {
 			set file_states($path) [list \
 				_[string index $m 1] \

@@ -1997,7 +1997,11 @@ foreach i {
 		{MD {mc "Staged for commit, missing"}}
 
 		{_T {mc "File type changed, not staged"}}
+		{MT {mc "File type changed, old type staged for commit"}}
+		{AT {mc "File type changed, old type staged for commit"}}
 		{T_ {mc "File type changed, staged"}}
+		{TM {mc "File type change staged, modification not staged"}}
+		{TD {mc "File type change staged, file missing"}}
 
 		{_O {mc "Untracked, not staged"}}
 		{A_ {mc "Staged for commit"}}
@@ -3539,8 +3543,8 @@ proc popup_diff_menu {ctxm ctxmmg ctxmsm x y X Y} {
 			|| $current_diff_path eq {}
 			|| {__} eq $state
 			|| {_O} eq $state
-			|| {_T} eq $state
-			|| {T_} eq $state
+			|| [string match {?T} $state]
+			|| [string match {T?} $state]
 			|| [has_textconv $current_diff_path]} {
 			set s disabled
 		} else {
