@@ -418,7 +418,7 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 		return cmd_name_rev(i + argc, args, prefix);
 	}
 
-	for_each_ref(get_name, NULL);
+	for_each_rawref(get_name, NULL);
 	if (!found_names && !always)
 		die("No names found, cannot describe anything.");
 
