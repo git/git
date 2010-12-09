@@ -38,7 +38,7 @@ struct commit_name {
 	unsigned prio:2; /* annotated tag = 2, tag = 1, head = 0 */
 	unsigned name_checked:1;
 	unsigned char sha1[20];
-	char path[FLEX_ARRAY]; /* more */
+	const char *path;
 };
 static const char *prio_names[] = {
 	"head", "lightweight", "annotated",
@@ -85,15 +85,15 @@ static void add_to_known_names(const char *path,
 	struct commit_name *e = commit->util;
 	struct tag *tag = NULL;
 	if (replace_name(e, prio, sha1, &tag)) {
-		size_t len = strlen(path)+1;
-		free(e);
-		e = xmalloc(sizeof(struct commit_name) + len);
+		if (!e) {
+			e = xmalloc(sizeof(struct commit_name));
+			commit->util = e;
+		}
 		e->tag = tag;
 		e->prio = prio;
 		e->name_checked = 0;
 		hashcpy(e->sha1, sha1);
-		memcpy(e->path, path, len);
-		commit->util = e;
+		e->path = path;
 	}
 	found_names = 1;
 }
