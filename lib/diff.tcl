@@ -417,8 +417,7 @@ proc read_diff {fd conflict_size cont_info} {
 		#
 		if {[string match {@@@ *} $line]} {set is_3way_diff 1}
 
-		if {[string match {mode *} $line]
-			|| [string match {new file *} $line]
+		if {[string match {new file *} $line]
 			|| [regexp {^(old|new) mode *} $line]
 			|| [string match {deleted file *} $line]
 			|| [string match {deleted symlink} $line]
