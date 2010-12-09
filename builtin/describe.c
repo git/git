@@ -6,6 +6,7 @@
 #include "exec_cmd.h"
 #include "parse-options.h"
 #include "diff.h"
+#include "hash.h"
 
 #define SEEN		(1u<<0)
 #define MAX_TAGS	(FLAG_BITS - 1)
@@ -22,7 +23,7 @@ static int tags;	/* Allow lightweight tags */
 static int longformat;
 static int abbrev = DEFAULT_ABBREV;
 static int max_candidates = 10;
-static int found_names;
+static struct hash_table names;
 static const char *pattern;
 static int always;
 static const char *dirty;
@@ -34,6 +35,8 @@ static const char *diff_index_args[] = {
 
 
 struct commit_name {
+	struct commit_name *next;
+	unsigned char peeled[20];
 	struct tag *tag;
 	unsigned prio:2; /* annotated tag = 2, tag = 1, head = 0 */
 	unsigned name_checked:1;
@@ -43,6 +46,21 @@ struct commit_name {
 static const char *prio_names[] = {
 	"head", "lightweight", "annotated",
 };
+
+static inline unsigned int hash_sha1(const unsigned char *sha1)
+{
+	unsigned int hash;
+	memcpy(&hash, sha1, sizeof(hash));
+	return hash;
+}
+
+static inline struct commit_name *find_commit_name(const unsigned char *peeled)
+{
+	struct commit_name *n = lookup_hash(hash_sha1(peeled), &names);
+	while (n && !!hashcmp(peeled, n->peeled))
+		n = n->next;
+	return n;
+}
 
 static int replace_name(struct commit_name *e,
 			       int prio,
@@ -82,12 +100,22 @@ static void add_to_known_names(const char *path,
 			       int prio,
 			       const unsigned char *sha1)
 {
-	struct commit_name *e = commit->util;
+	const unsigned char *peeled = commit->object.sha1;
+	struct commit_name *e = find_commit_name(peeled);
 	struct tag *tag = NULL;
 	if (replace_name(e, prio, sha1, &tag)) {
 		if (!e) {
+			void **pos;
 			e = xmalloc(sizeof(struct commit_name));
 			commit->util = e;
+			hashcpy(e->peeled, peeled);
+			pos = insert_hash(hash_sha1(peeled), e, &names);
+			if (pos) {
+				e->next = *pos;
+				*pos = e;
+			} else {
+				e->next = NULL;
+			}
 		}
 		e->tag = tag;
 		e->prio = prio;
@@ -95,7 +123,6 @@ static void add_to_known_names(const char *path,
 		hashcpy(e->sha1, sha1);
 		e->path = path;
 	}
-	found_names = 1;
 }
 
 static int get_name(const char *path, const unsigned char *sha1, int flag, void *cb_data)
@@ -240,7 +267,7 @@ static void describe(const char *arg, int last_one)
 	if (!cmit)
 		die("%s is not a valid '%s' object", arg, commit_type);
 
-	n = cmit->util;
+	n = find_commit_name(cmit->object.sha1);
 	if (n && (tags || all || n->prio == 2)) {
 		/*
 		 * Exact match to an existing ref.
@@ -418,8 +445,9 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 		return cmd_name_rev(i + argc, args, prefix);
 	}
 
+	init_hash(&names);
 	for_each_rawref(get_name, NULL);
-	if (!found_names && !always)
+	if (!names.nr && !always)
 		die("No names found, cannot describe anything.");
 
 	if (argc == 0) {
