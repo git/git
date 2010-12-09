@@ -406,11 +406,12 @@ proc read_diff {fd conflict_size cont_info} {
 			    || [string match {index *}           $line]} {
 				continue
 			}
+
+			# -- Name it symlink, not 120000
+			#    Note, that the original line is in $current_diff_header
+			regsub {^(deleted|new) file mode 120000} $line {\1 symlink} line
 		}
 
-		if {$line eq {deleted file mode 120000}} {
-			set line "deleted symlink"
-		}
 
 		# -- Automatically detect if this is a 3 way diff.
 		#
@@ -421,6 +422,7 @@ proc read_diff {fd conflict_size cont_info} {
 			|| [regexp {^(old|new) mode *} $line]
 			|| [string match {deleted file *} $line]
 			|| [string match {deleted symlink} $line]
+			|| [string match {new symlink} $line]
 			|| [string match {Binary files * and * differ} $line]
 			|| $line eq {\ No newline at end of file}
 			|| [regexp {^\* Unmerged path } $line]} {
