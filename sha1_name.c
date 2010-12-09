@@ -1091,17 +1091,19 @@ int get_sha1_with_context_1(const char *name, unsigned char *sha1,
 			return get_sha1_oneline(name + 2, sha1);
 		if (namelen < 3 ||
 		    name[2] != ':' ||
-		    name[1] < '0' || '3' < name[1]) {
+		    name[1] < '0' || '3' < name[1])
 			cp = name + 1;
-			new_path = resolve_relative_path(cp);
-			if (new_path)
-				cp = new_path;
-		}
 		else {
 			stage = name[1] - '0';
 			cp = name + 3;
 		}
-		namelen = strlen(cp);
+		new_path = resolve_relative_path(cp);
+		if (!new_path) {
+			namelen = namelen - (cp - name);
+		} else {
+			cp = new_path;
+			namelen = strlen(cp);
+		}
 
 		strncpy(oc->path, cp,
 			sizeof(oc->path));
