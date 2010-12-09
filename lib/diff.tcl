@@ -382,23 +382,35 @@ proc read_diff {fd conflict_size cont_info} {
 		foreach {line markup} [parse_color_line $line] break
 		set line [string map {\033 ^} $line]
 
-		# -- Cleanup uninteresting diff header lines.
+		# -- Check for start of diff header.
+		if {   [string match {diff --git *}      $line]
+		    || [string match {diff --cc *}       $line]
+		    || [string match {diff --combined *} $line]} {
+			set ::current_diff_inheader 1
+		}
+
+		# -- Check for end of diff header (any hunk line will do this).
 		#
+		if {[regexp {^@@+ } $line]} {set ::current_diff_inheader 0}
+
 		if {$::current_diff_inheader} {
+			append current_diff_header $line "\n"
+
+			# -- Cleanup uninteresting diff header lines.
+			#
 			if {   [string match {diff --git *}      $line]
 			    || [string match {diff --cc *}       $line]
 			    || [string match {diff --combined *} $line]
 			    || [string match {--- *}             $line]
 			    || [string match {+++ *}             $line]} {
-				append current_diff_header $line "\n"
 				continue
 			}
 		}
+
 		if {[string match {index *} $line]} continue
 		if {$line eq {deleted file mode 120000}} {
 			set line "deleted symlink"
 		}
-		set ::current_diff_inheader 0
 
 		# -- Automatically detect if this is a 3 way diff.
 		#
