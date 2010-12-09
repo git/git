@@ -21,12 +21,15 @@ static char default_wt_status_colors[][COLOR_MAXLEN] = {
 	GIT_COLOR_RED,    /* WT_STATUS_UNMERGED */
 	GIT_COLOR_GREEN,  /* WT_STATUS_LOCAL_BRANCH */
 	GIT_COLOR_RED,    /* WT_STATUS_REMOTE_BRANCH */
-	GIT_COLOR_NORMAL, /* WT_STATUS_ONBRANCH */
+	GIT_COLOR_NIL,    /* WT_STATUS_ONBRANCH */
 };
 
 static const char *color(int slot, struct wt_status *s)
 {
-	return s->use_color > 0 ? s->color_palette[slot] : "";
+	const char *c = s->use_color > 0 ? s->color_palette[slot] : "";
+	if (slot == WT_STATUS_ONBRANCH && color_is_nil(c))
+		c = s->color_palette[WT_STATUS_HEADER];
+	return c;
 }
 
 void wt_status_prepare(struct wt_status *s)

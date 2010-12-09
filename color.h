@@ -43,6 +43,9 @@
 #define GIT_COLOR_BG_MAGENTA	"\033[45m"
 #define GIT_COLOR_BG_CYAN	"\033[46m"
 
+/* A special value meaning "no color selected" */
+#define GIT_COLOR_NIL "NIL"
+
 /*
  * This variable stores the value of color.ui
  */
@@ -61,5 +64,7 @@ __attribute__((format (printf, 3, 4)))
 int color_fprintf(FILE *fp, const char *color, const char *fmt, ...);
 __attribute__((format (printf, 3, 4)))
 int color_fprintf_ln(FILE *fp, const char *color, const char *fmt, ...);
+
+int color_is_nil(const char *color);
 
 #endif /* COLOR_H */

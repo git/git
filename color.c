@@ -211,3 +211,8 @@ int color_fprintf_ln(FILE *fp, const char *color, const char *fmt, ...)
 	va_end(args);
 	return r;
 }
+
+int color_is_nil(const char *c)
+{
+	return !strcmp(c, "NIL");
+}
