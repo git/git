@@ -402,12 +402,12 @@ proc read_diff {fd conflict_size cont_info} {
 			    || [string match {diff --cc *}       $line]
 			    || [string match {diff --combined *} $line]
 			    || [string match {--- *}             $line]
-			    || [string match {+++ *}             $line]} {
+			    || [string match {+++ *}             $line]
+			    || [string match {index *}           $line]} {
 				continue
 			}
 		}
 
-		if {[string match {index *} $line]} continue
 		if {$line eq {deleted file mode 120000}} {
 			set line "deleted symlink"
 		}
