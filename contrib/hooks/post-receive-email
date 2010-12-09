@@ -144,13 +144,13 @@ prep_for_email()
 			short_refname=${refname##refs/remotes/}
 			echo >&2 "*** Push-update of tracking branch, $refname"
 			echo >&2 "***  - no email generated."
-			exit 0
+			return 1
 			;;
 		*)
 			# Anything else (is there anything else?)
 			echo >&2 "*** Unknown type of update to $refname ($rev_type)"
 			echo >&2 "***  - no email generated"
-			return 0
+			return 1
 			;;
 	esac
 
@@ -166,10 +166,10 @@ prep_for_email()
 		esac
 		echo >&2 "*** $config_name is not set so no email will be sent"
 		echo >&2 "*** for $refname update $oldrev->$newrev"
-		return 0
+		return 1
 	fi
 
-	return 1
+	return 0
 }
 
 #
