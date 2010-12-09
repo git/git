@@ -393,6 +393,10 @@ proc read_diff {fd conflict_size cont_info} {
 		#
 		if {[regexp {^@@+ } $line]} {set ::current_diff_inheader 0}
 
+		# -- Automatically detect if this is a 3 way diff.
+		#
+		if {[string match {@@@ *} $line]} {set is_3way_diff 1}
+
 		if {$::current_diff_inheader} {
 			append current_diff_header $line "\n"
 
@@ -413,9 +417,6 @@ proc read_diff {fd conflict_size cont_info} {
 		}
 
 
-		# -- Automatically detect if this is a 3 way diff.
-		#
-		if {[string match {@@@ *} $line]} {set is_3way_diff 1}
 
 		if {[string match {new file *} $line]
 			|| [regexp {^(old|new) mode *} $line]
