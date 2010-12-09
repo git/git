@@ -400,7 +400,14 @@ proc read_diff {fd conflict_size cont_info} {
 		if {[string match {@@@ *} $line]} {set is_3way_diff 1}
 
 		if {$::current_diff_inheader} {
-			append current_diff_header $line "\n"
+
+			# -- These two lines stop a diff header and shouldn't be in there
+			if {   [string match {Binary files * and * differ} $line]
+			    || [regexp {^\* Unmerged path }                $line]} {
+				set ::current_diff_inheader 0
+			} else {
+				append current_diff_header $line "\n"
+			}
 
 			# -- Cleanup uninteresting diff header lines.
 			#
@@ -418,16 +425,12 @@ proc read_diff {fd conflict_size cont_info} {
 			regsub {^(deleted|new) file mode 120000} $line {\1 symlink} line
 		}
 
-
-
 		if {[string match {new file *} $line]
 			|| [regexp {^(old|new) mode *} $line]
 			|| [string match {deleted file *} $line]
 			|| [string match {deleted symlink} $line]
 			|| [string match {new symlink} $line]
-			|| [string match {Binary files * and * differ} $line]
-			|| $line eq {\ No newline at end of file}
-			|| [regexp {^\* Unmerged path } $line]} {
+			|| $line eq {\ No newline at end of file}} {
 		} elseif {$is_3way_diff} {
 			set op [string range $line 0 1]
 			switch -- $op {
