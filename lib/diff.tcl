@@ -382,6 +382,8 @@ proc read_diff {fd conflict_size cont_info} {
 		foreach {line markup} [parse_color_line $line] break
 		set line [string map {\033 ^} $line]
 
+		set tags {}
+
 		# -- Check for start of diff header.
 		if {   [string match {diff --git *}      $line]
 		    || [string match {diff --cc *}       $line]
@@ -426,7 +428,6 @@ proc read_diff {fd conflict_size cont_info} {
 			|| [string match {Binary files * and * differ} $line]
 			|| $line eq {\ No newline at end of file}
 			|| [regexp {^\* Unmerged path } $line]} {
-			set tags {}
 		} elseif {$is_3way_diff} {
 			set op [string range $line 0 1]
 			switch -- $op {
