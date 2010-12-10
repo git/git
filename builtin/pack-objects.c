@@ -16,11 +16,7 @@
 #include "list-objects.h"
 #include "progress.h"
 #include "refs.h"
-
-#ifndef NO_PTHREADS
-#include <pthread.h>
 #include "thread-utils.h"
-#endif
 
 static const char pack_usage[] =
   "git pack-objects [ -q | --progress | --all-progress ]\n"
