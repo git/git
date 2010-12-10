@@ -106,7 +106,7 @@ static struct repo_dirent *repo_read_dirent(uint32_t revision,
 	return dent;
 }
 
-static void repo_write_dirent(uint32_t *path, uint32_t mode,
+static void repo_write_dirent(const uint32_t *path, uint32_t mode,
 			      uint32_t content_offset, uint32_t del)
 {
 	uint32_t name, revision, dir_o = ~0, parent_dir_o = ~0;
@@ -167,7 +167,15 @@ uint32_t repo_read_path(const uint32_t *path)
 	return content_offset;
 }
 
-uint32_t repo_copy(uint32_t revision, uint32_t *src, uint32_t *dst)
+uint32_t repo_read_mode(const uint32_t *path)
+{
+	struct repo_dirent *dent = repo_read_dirent(active_commit, path);
+	if (dent == NULL)
+		die("invalid dump: path to be modified is missing");
+	return dent->mode;
+}
+
+void repo_copy(uint32_t revision, const uint32_t *src, const uint32_t *dst)
 {
 	uint32_t mode = 0, content_offset = 0;
 	struct repo_dirent *src_dent;
@@ -177,26 +185,11 @@ uint32_t repo_copy(uint32_t revision, uint32_t *src, uint32_t *dst)
 		content_offset = src_dent->content_offset;
 		repo_write_dirent(dst, mode, content_offset, 0);
 	}
-	return mode;
 }
 
 void repo_add(uint32_t *path, uint32_t mode, uint32_t blob_mark)
 {
 	repo_write_dirent(path, mode, blob_mark, 0);
-}
-
-uint32_t repo_modify_path(uint32_t *path, uint32_t mode, uint32_t blob_mark)
-{
-	struct repo_dirent *src_dent;
-	src_dent = repo_read_dirent(active_commit, path);
-	if (!src_dent)
-		return 0;
-	if (!blob_mark)
-		blob_mark = src_dent->content_offset;
-	if (!mode)
-		mode = src_dent->mode;
-	repo_write_dirent(path, mode, blob_mark, 0);
-	return mode;
 }
 
 void repo_delete(uint32_t *path)
