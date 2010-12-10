@@ -292,6 +292,9 @@ have been specified, in which case default to 'compose'.
 Default is the value of 'sendemail.validate'; if this is not set,
 default to '--validate'.
 
+--force::
+	Send emails even if safety checks would prevent it.
+
 
 CONFIGURATION
 -------------
