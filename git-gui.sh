@@ -1448,13 +1448,17 @@ proc rescan_stage2 {fd after} {
 		close $fd
 	}
 
-	set ls_others [list --exclude-per-directory=.gitignore]
-	if {[have_info_exclude]} {
-		lappend ls_others "--exclude-from=[gitdir info exclude]"
-	}
-	set user_exclude [get_config core.excludesfile]
-	if {$user_exclude ne {} && [file readable $user_exclude]} {
-		lappend ls_others "--exclude-from=$user_exclude"
+	if {[package vsatisfies $::_git_version 1.6.3]} {
+		set ls_others [list --exclude-standard]
+	} else {
+		set ls_others [list --exclude-per-directory=.gitignore]
+		if {[have_info_exclude]} {
+			lappend ls_others "--exclude-from=[gitdir info exclude]"
+		}
+		set user_exclude [get_config core.excludesfile]
+		if {$user_exclude ne {} && [file readable $user_exclude]} {
+			lappend ls_others "--exclude-from=[file normalize $user_exclude]"
+		}
 	}
 
 	set buf_rdi {}
