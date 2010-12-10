@@ -37,13 +37,11 @@ test_expect_success 'git svn gc runs' 'git svn gc'
 
 test_expect_success 'git svn index removed' '! test -f .git/svn/refs/remotes/git-svn/index'
 
-if perl -MCompress::Zlib -e 0 2>/dev/null
+if test -r .git/svn/refs/remotes/git-svn/unhandled.log.gz
 then
 	test_expect_success 'git svn gc produces a valid gzip file' '
 		 gunzip .git/svn/refs/remotes/git-svn/unhandled.log.gz
 		'
-else
-	say "# Perl Compress::Zlib unavailable, skipping gunzip test"
 fi
 
 test_expect_success 'git svn gc does not change unhandled.log files' '
