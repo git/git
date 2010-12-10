@@ -8,6 +8,7 @@
 #include "line_buffer.h"
 #include "repo_tree.h"
 #include "string_pool.h"
+#include "strbuf.h"
 
 #define MAX_GITSVN_LINE_LEN 4096
 
@@ -31,7 +32,7 @@ void fast_export_reset(void)
 	buffer_reset(&report_buffer);
 }
 
-void fast_export_delete(uint32_t depth, uint32_t *path)
+void fast_export_delete(uint32_t depth, const uint32_t *path)
 {
 	putchar('D');
 	putchar(' ');
@@ -39,22 +40,27 @@ void fast_export_delete(uint32_t depth, uint32_t *path)
 	putchar('\n');
 }
 
-void fast_export_modify(uint32_t depth, uint32_t *path, uint32_t mode,
-			uint32_t mark)
+static void fast_export_truncate(uint32_t depth, const uint32_t *path, uint32_t mode)
+{
+	fast_export_modify(depth, path, mode, "inline");
+	printf("data 0\n\n");
+}
+
+void fast_export_modify(uint32_t depth, const uint32_t *path, uint32_t mode,
+			const char *dataref)
 {
 	/* Mode must be 100644, 100755, 120000, or 160000. */
-	printf("M %06"PRIo32" :%"PRIu32" ", mode, mark);
+	if (!dataref) {
+		fast_export_truncate(depth, path, mode);
+		return;
+	}
+	printf("M %06"PRIo32" %s ", mode, dataref);
 	pool_print_seq(depth, path, '/', stdout);
 	putchar('\n');
 }
 
-void fast_export_begin_commit(uint32_t revision)
-{
-	printf("# commit %"PRIu32".\n", revision);
-}
-
 static char gitsvnline[MAX_GITSVN_LINE_LEN];
-void fast_export_commit(uint32_t revision, uint32_t author, char *log,
+void fast_export_begin_commit(uint32_t revision, uint32_t author, char *log,
 			uint32_t uuid, uint32_t url,
 			unsigned long timestamp)
 {
@@ -81,10 +87,29 @@ void fast_export_commit(uint32_t revision, uint32_t author, char *log,
 			printf("from refs/heads/master^0\n");
 		first_commit_done = 1;
 	}
-	repo_diff(revision - 1, revision);
-	fputc('\n', stdout);
+}
 
+void fast_export_end_commit(uint32_t revision)
+{
 	printf("progress Imported commit %"PRIu32".\n\n", revision);
+}
+
+static void ls_from_rev(uint32_t rev, uint32_t depth, const uint32_t *path)
+{
+	/* ls :5 path/to/old/file */
+	printf("ls :%"PRIu32" ", rev);
+	pool_print_seq(depth, path, '/', stdout);
+	putchar('\n');
+	fflush(stdout);
+}
+
+static void ls_from_active_commit(uint32_t depth, const uint32_t *path)
+{
+	/* ls "path/to/file" */
+	printf("ls \"");
+	pool_print_seq(depth, path, '/', stdout);
+	printf("\"\n");
+	fflush(stdout);
 }
 
 static const char *get_response_line(void)
@@ -97,14 +122,69 @@ static const char *get_response_line(void)
 	die("unexpected end of fast-import feedback");
 }
 
-void fast_export_blob(uint32_t mode, uint32_t mark, uint32_t len, struct line_buffer *input)
+void fast_export_data(uint32_t mode, uint32_t len, struct line_buffer *input)
 {
 	if (mode == REPO_MODE_LNK) {
 		/* svn symlink blobs start with "link " */
 		buffer_skip_bytes(input, 5);
 		len -= 5;
 	}
-	printf("blob\nmark :%"PRIu32"\ndata %"PRIu32"\n", mark, len);
+	printf("data %"PRIu32"\n", len);
 	buffer_copy_bytes(input, len);
 	fputc('\n', stdout);
+}
+
+static int parse_ls_response(const char *response, uint32_t *mode,
+					struct strbuf *dataref)
+{
+	const char *tab;
+	const char *response_end;
+
+	assert(response);
+	response_end = response + strlen(response);
+
+	if (*response == 'm') {	/* Missing. */
+		errno = ENOENT;
+		return -1;
+	}
+
+	/* Mode. */
+	if (response_end - response < strlen("100644") ||
+	    response[strlen("100644")] != ' ')
+		die("invalid ls response: missing mode: %s", response);
+	*mode = 0;
+	for (; *response != ' '; response++) {
+		char ch = *response;
+		if (ch < '0' || ch > '7')
+			die("invalid ls response: mode is not octal: %s", response);
+		*mode *= 8;
+		*mode += ch - '0';
+	}
+
+	/* ' blob ' or ' tree ' */
+	if (response_end - response < strlen(" blob ") ||
+	    (response[1] != 'b' && response[1] != 't'))
+		die("unexpected ls response: not a tree or blob: %s", response);
+	response += strlen(" blob ");
+
+	/* Dataref. */
+	tab = memchr(response, '\t', response_end - response);
+	if (!tab)
+		die("invalid ls response: missing tab: %s", response);
+	strbuf_add(dataref, response, tab - response);
+	return 0;
+}
+
+int fast_export_ls_rev(uint32_t rev, uint32_t depth, const uint32_t *path,
+				uint32_t *mode, struct strbuf *dataref)
+{
+	ls_from_rev(rev, depth, path);
+	return parse_ls_response(get_response_line(), mode, dataref);
+}
+
+int fast_export_ls(uint32_t depth, const uint32_t *path,
+				uint32_t *mode, struct strbuf *dataref)
+{
+	ls_from_active_commit(depth, path);
+	return parse_ls_response(get_response_line(), mode, dataref);
 }
