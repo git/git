@@ -63,6 +63,7 @@ void fast_export_commit(uint32_t revision, uint32_t author, char *log,
 		*gitsvnline = '\0';
 	}
 	printf("commit refs/heads/master\n");
+	printf("mark :%"PRIu32"\n", revision);
 	printf("committer %s <%s@%s> %ld +0000\n",
 		   ~author ? pool_fetch(author) : "nobody",
 		   ~author ? pool_fetch(author) : "nobody",
