@@ -34,10 +34,9 @@ void fast_export_reset(void)
 
 void fast_export_delete(uint32_t depth, const uint32_t *path)
 {
-	putchar('D');
-	putchar(' ');
-	pool_print_seq(depth, path, '/', stdout);
-	putchar('\n');
+	printf("D \"");
+	pool_print_seq_q(depth, path, '/', stdout);
+	printf("\"\n");
 }
 
 static void fast_export_truncate(uint32_t depth, const uint32_t *path, uint32_t mode)
@@ -54,9 +53,9 @@ void fast_export_modify(uint32_t depth, const uint32_t *path, uint32_t mode,
 		fast_export_truncate(depth, path, mode);
 		return;
 	}
-	printf("M %06"PRIo32" %s ", mode, dataref);
-	pool_print_seq(depth, path, '/', stdout);
-	putchar('\n');
+	printf("M %06"PRIo32" %s \"", mode, dataref);
+	pool_print_seq_q(depth, path, '/', stdout);
+	printf("\"\n");
 }
 
 static char gitsvnline[MAX_GITSVN_LINE_LEN];
@@ -97,9 +96,9 @@ void fast_export_end_commit(uint32_t revision)
 static void ls_from_rev(uint32_t rev, uint32_t depth, const uint32_t *path)
 {
 	/* ls :5 path/to/old/file */
-	printf("ls :%"PRIu32" ", rev);
-	pool_print_seq(depth, path, '/', stdout);
-	putchar('\n');
+	printf("ls :%"PRIu32" \"", rev);
+	pool_print_seq_q(depth, path, '/', stdout);
+	printf("\"\n");
 	fflush(stdout);
 }
 
