@@ -1033,6 +1033,12 @@ char *get_relative_cwd(char *buffer, int size, const char *dir)
 	case '/':
 		return cwd + 1;
 	default:
+		/*
+		 * dir can end with a path separator when it's root
+		 * directory. Return proper prefix in that case.
+		 */
+		if (dir[-1] == '/')
+			return cwd;
 		return NULL;
 	}
 }
