@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Dec 2010, #02; Wed, 8)
-X-master-at: f80b6de4eca9c4c4abfe9407736311de27726e53
-X-next-at: e348a8704e9acfb4ce3956593fbefdb9bd0ba893
+Subject: What's cooking in git.git (Dec 2010, #03; Fri, 10)
+X-master-at: 4443091d961e91041e64c1675940f0585eeba456
+X-next-at: 018bc80d140aff02f61e3a5100dd1367311d38ff
 
-What's cooking in git.git (Dec 2010, #02; Wed, 8)
+What's cooking in git.git (Dec 2010, #03; Fri, 10)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -12,113 +12,38 @@ marked with '.' do not appear in any of the integration branches, but I am
 still holding onto them.
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* gb/gitweb-remote-heads (2010-11-11) 11 commits
-  (merged to 'next' on 2010-11-24 at 6fb4a6f)
- + git instaweb: enable remote_heads
- + gitweb: group remote heads by remote
- + gitweb: provide a routine to display (sub)sections
- + gitweb: refactor repository URL printing
- + gitweb: remotes view for a single remote
- + gitweb: allow action specialization in page header
- + gitweb: nagivation menu for tags, heads and remotes
- + gitweb: separate heads and remotes lists
- + gitweb: git_get_heads_list accepts an optional list of refs
- + gitweb: introduce remote_heads feature
- + gitweb: use fullname as hash_base in heads link
-
-* gc/http-with-non-ascii-username-url (2010-11-14) 2 commits
-  (merged to 'next' on 2010-11-24 at 08f317f)
- + Fix username and password extraction from HTTP URLs
- + t5550: test HTTP authentication and userinfo decoding
-
-* il/remote-fd-ext (2010-11-17) 4 commits
-  (merged to 'next' on 2010-11-24 at ef80cf1)
- + remote-fd/ext: finishing touches after code review
-  (merged to 'next' on 2010-11-05 at 7413413)
- + git-remote-ext
- + git-remote-fd
- + Add bidirectional_transfer_loop()
-
-* jh/notes-merge (2010-11-09) 23 commits
-  (merged to 'next' on 2010-11-24 at 6218115)
- + Provide 'git merge --abort' as a synonym to 'git reset --merge'
- + cmd_merge(): Parse options before checking MERGE_HEAD
- + Provide 'git notes get-ref' to easily retrieve current notes ref
- + git notes merge: Add testcases for merging notes trees at different fanouts
- + git notes merge: Add another auto-resolving strategy: "cat_sort_uniq"
- + git notes merge: --commit should fail if underlying notes ref has moved
- + git notes merge: List conflicting notes in notes merge commit message
- + git notes merge: Manual conflict resolution, part 2/2
- + git notes merge: Manual conflict resolution, part 1/2
- + Documentation: Preliminary docs on 'git notes merge'
- + git notes merge: Add automatic conflict resolvers (ours, theirs, union)
- + git notes merge: Handle real, non-conflicting notes merges
- + builtin/notes.c: Refactor creation of notes commits.
- + git notes merge: Initial implementation handling trivial merges only
- + builtin/notes.c: Split notes ref DWIMmery into a separate function
- + notes.c: Use two newlines (instead of one) when concatenating notes
- + (trivial) t3303: Indent with tabs instead of spaces for consistency
- + notes.h/c: Propagate combine_notes_fn return value to add_note() and beyond
- + notes.h/c: Allow combine_notes functions to remove notes
- + notes.c: Reorder functions in preparation for next commit
- + notes.h: Make default_notes_ref() available in notes API
- + (trivial) notes.h: Minor documentation fixes to copy_notes()
- + notes.c: Hexify SHA1 in die() message from init_notes()
-
-* jk/diff-CBM (2010-10-21) 1 commit
-  (merged to 'next' on 2010-11-05 at 9d1ec14)
- + diff: report bogus input to -C/-M/-B
-
-* jk/maint-decorate-01-bool (2010-11-17) 1 commit
-  (merged to 'next' on 2010-11-24 at 347f73b)
- + log.decorate: accept 0/1 bool values
- (this branch is used by jk/pager-per-command.)
-
-* jk/pager-per-command (2010-11-17) 1 commit
-  (merged to 'next' on 2010-11-24 at 9ebcffc)
- + allow command-specific pagers in pager.<cmd>
- (this branch uses jk/maint-decorate-01-bool.)
-
-* jn/gitweb-time-hires-comes-with-5.8 (2010-11-09) 1 commit
-  (merged to 'next' on 2010-11-24 at 6b91b41)
- + gitweb: Time::HiRes is in core for Perl 5.8
-
-* ks/maint-getenv-fix (2010-11-11) 1 commit
-  (merged to 'next' on 2010-11-24 at fa89826)
- + setup: make sure git_dir path is in a permanent buffer, getenv(3) case
- (this branch is used by jn/getenv-poison.)
-
-* mg/maint-tag-rfc1991 (2010-11-10) 5 commits
-  (merged to 'next' on 2010-11-24 at 03864ed)
- + tag: recognize rfc1991 signatures
- + tag: factor out sig detection for tag display
- + tag: factor out sig detection for body edits
- + verify-tag: factor out signature detection
- + t/t7004-tag: test handling of rfc1991 signatures
-
---------------------------------------------------
 [New Topics]
 
-* ak/describe-exact (2010-12-07) 4 commits
- - describe: Delay looking up commits until searching for an inexact match
- - describe: Store commit_names in a hash table by commit SHA1
- - describe: Do not use a flex array in struct commit_name
- - describe: Use for_each_rawref
+* jh/gitweb-caching-8 (2010-12-09) 18 commits
+ . gitweb: Add better error handling for gitweb caching
+ . gitweb: Prepare for cached error pages & better error page handling
+ . gitweb: When changing output (STDOUT) change STDERR as well
+ . gitweb: Add show_warning() to display an immediate warning, with refresh
+ . gitweb: add print_transient_header() function for central header printing
+ . gitweb: Add commented url & url hash to page footer
+ . gitweb: Change file handles (in caching) to lexical variables as opposed to globs
+ . gitweb: add isDumbClient() check
+ . gitweb: Adding isBinaryAction() and isFeedAction() to determine the action type
+ . gitweb: Revert reset_output() back to original code
+ . gitweb: Change is_cacheable() to return true always
+ . gitweb: Revert back to $cache_enable vs. $caching_enabled
+ . gitweb: Add more explicit means of disabling 'Generating...' page
+ . gitweb: Regression fix concerning binary output of files
+ . gitweb: Minimal testing of gitweb caching
+ . gitweb: File based caching layer (from git.kernel.org)
+ . gitweb: add output buffering and associated functions
+ . gitweb: Prepare for splitting gitweb
 
-* jc/maint-svn-info-test-fix (2010-12-06) 1 commit
-  (merged to 'next' on 2010-12-08 at f821694)
- + t9119: do not compare "Text Last Updated" line from "svn info"
+It appears that John and Jakub are finally working together to help
+producing something that we can ship in-tree, finally.  I am looking
+forward to seeing the conclusion of the discussion.
 
-* jn/submodule-b-current (2010-12-05) 2 commits
-  (merged to 'next' on 2010-12-08 at 33423f3)
- + git submodule: Remove now obsolete tests before cloning a repo
- + git submodule -b ... of current HEAD fails
-
-* jc/maint-no-openssl-build-fix (2010-12-08) 1 commit
-  (merged to 'next' on 2010-12-08 at e348a87)
- + Do not link with -lcrypto under NO_OPENSSL
+* rj/msvc-fix (2010-12-04) 4 commits
+  (merged to 'next' on 2010-12-10 at 7a2c2c6)
+ + msvc: Fix macro redefinition warnings
+ + msvc: Fix build by adding missing INTMAX_MAX define
+ + msvc: git-daemon.exe: Fix linker "unresolved externals" error
+ + msvc: Fix compilation errors in compat/win32/sys/poll.c
 
 --------------------------------------------------
 [Stalled]
@@ -159,16 +84,41 @@ This unfortunately heavily conflicts with patches in flight...
 --------------------------------------------------
 [Cooking]
 
-* aa/status-hilite-branch (2010-11-18) 1 commit
+* ak/describe-exact (2010-12-09) 4 commits
+  (merged to 'next' on 2010-12-10 at 33497db)
+ + describe: Delay looking up commits until searching for an inexact match
+ + describe: Store commit_names in a hash table by commit SHA1
+ + describe: Do not use a flex array in struct commit_name
+ + describe: Use for_each_rawref
+
+Rerolled and looked fine.
+
+* jc/maint-svn-info-test-fix (2010-12-06) 1 commit
+  (merged to 'next' on 2010-12-08 at f821694)
+ + t9119: do not compare "Text Last Updated" line from "svn info"
+
+* jn/submodule-b-current (2010-12-05) 2 commits
+  (merged to 'next' on 2010-12-08 at 33423f3)
+ + git submodule: Remove now obsolete tests before cloning a repo
+ + git submodule -b ... of current HEAD fails
+
+* jc/maint-no-openssl-build-fix (2010-12-08) 1 commit
+  (merged to 'next' on 2010-12-08 at e348a87)
+ + Do not link with -lcrypto under NO_OPENSSL
+
+* aa/status-hilite-branch (2010-12-09) 2 commits
+  (merged to 'next' on 2010-12-10 at d00551d)
+ + default color.status.branch to "same as header"
   (merged to 'next' on 2010-12-08 at 0291858)
  + status: show branchname with a configurable color
 
-I am indifferent/uninterested; I don't see anything wrong with it, but I
-do not find coloring the field particularly useful myself.
+Will merge to 'master'.
 
 * ef/help-cmd-prefix (2010-11-26) 1 commit
   (merged to 'next' on 2010-12-08 at c92752e)
  + help: always suggest common-cmds if prefix of cmd
+
+Will merge to 'master'.
 
 * jn/fast-import-blob-access (2010-12-03) 5 commits
   (merged to 'next' on 2010-12-08 at a42f0b3)
@@ -178,16 +128,18 @@ do not find coloring the field particularly useful myself.
  + fast-import: clarify documentation of "feature" command
  + fast-import: stricter parsing of integer options
 
+Will merge to 'master'.
+
 * jn/gitweb-per-request-config (2010-11-28) 2 commits
   (merged to 'next' on 2010-12-08 at 44be9e5)
  + gitweb: document $per_request_config better
  + gitweb: selectable configurations that change with each request
 
-* kb/diff-C-M-synonym (2010-11-29) 1 commit
- - diff: add --detect-copies-harder as a synonym for --find-copies-harder
+Will merge to 'master'.
 
-I am not married to the approach and actually am fine with renaming the
-recent "detect" to "find", which I tend to think is probably nicer.
+* kb/diff-C-M-synonym (2010-11-10) 2 commits
+ - diff: use "find" instead of "detect" as prefix for long forms of -M and -C
+ - diff: add --detect-copies-harder as a synonym for --find-copies-harder
 
 * mg/cvsimport (2010-11-28) 3 commits
  - cvsimport.txt: document the mapping between config and options
@@ -202,13 +154,19 @@ not queued here.
   (merged to 'next' on 2010-12-08 at 97d4912)
  + rebase: only show stat if configured to true
 
+Will merge to 'master'.
+
 * mz/pull-rebase-rebased (2010-11-13) 1 commit
   (merged to 'next' on 2010-12-08 at 99c1762)
  + Use reflog in 'pull --rebase . foo'
 
+Will merge to 'master'.
+
 * nd/maint-hide-checkout-index-from-error (2010-11-28) 1 commit
   (merged to 'next' on 2010-12-08 at 1869996)
  + entry.c: remove "checkout-index" from error messages
+
+Will merge to 'master'.
 
 * tf/commit-list-prefix (2010-11-26) 1 commit
  - commit: Add commit_list prefix in two function names.
@@ -223,9 +181,13 @@ not queued here.
 The remainder of the series, which is mostly Debian specific addition, can
 wait (or just left for the distro).
 
+Will merge to 'master'.
+
 * ja/maint-pull-rebase-doc (2010-12-03) 1 commit
   (merged to 'next' on 2010-12-08 at 211bf89)
  + git-pull.txt: Mention branch.autosetuprebase
+
+Will merge to 'master'.
 
 * js/configurable-tab (2010-11-30) 2 commits
   (merged to 'next' on 2010-12-08 at 3257365)
@@ -233,10 +195,14 @@ wait (or just left for the distro).
  + Merge branch 'js/maint-apply-tab-in-indent-fix' into HEAD
  (this branch uses js/maint-apply-tab-in-indent-fix.)
 
+Will merge to 'master'.
+
 * js/maint-apply-tab-in-indent-fix (2010-11-30) 1 commit
   (merged to 'next' on 2010-12-08 at 02aedd5)
  + apply --whitespace=fix: fix tab-in-indent
  (this branch is used by js/configurable-tab.)
+
+Will merge to 'master'.
 
 * pd/bash-4-completion (2010-12-01) 2 commits
  - Use the new functions to get the current cword.
@@ -254,27 +220,41 @@ track.
  + msvc: opendir: allocate enough memory
  + msvc: opendir: fix malloc-failure
 
+Will merge to 'master'.
+
 * jk/asciidoc-update (2010-11-19) 1 commit
   (merged to 'next' on 2010-12-08 at 72ffafe)
  + docs: default to more modern toolset
+
+Will merge to 'master'.
 
 * jk/maint-reflog-bottom (2010-11-21) 1 commit
   (merged to 'next' on 2010-12-08 at f5ca80a)
  + reflogs: clear flags properly in corner case
 
+Will merge to 'master'.
+
 * jn/fast-import-ondemand-checkpoint (2010-11-22) 1 commit
   (merged to 'next' on 2010-12-08 at f538396)
  + fast-import: treat SIGUSR1 as a request to access objects early
+
+Will merge to 'master'.
 
 * jn/maint-fast-import-object-reuse (2010-11-23) 1 commit
   (merged to 'next' on 2010-12-08 at 5d29c08)
  + fast-import: insert new object entries at start of hash bucket
 
-* jn/maint-svn-fe (2010-12-05) 3 commits
+Will merge to 'master'.
+
+* jn/maint-svn-fe (2010-12-08) 4 commits
+  (merged to 'next' on 2010-12-09 at 98beb7c)
+ + t9010 fails when no svn is available
   (merged to 'next' on 2010-12-08 at e25350b)
  + vcs-svn: fix intermittent repo_tree corruption
  + treap: make treap_insert return inserted node
  + t9010 (svn-fe): Eliminate dependency on svn perl bindings
+
+Will merge to 'master'.
 
 * jn/svn-fe (2010-12-06) 18 commits
  - vcs-svn: Allow change nodes for root of tree (/)
@@ -302,21 +282,23 @@ Some RFC patches, to give them early and wider exposure.
   (merged to 'next' on 2010-12-08 at adce2e1)
  + rebase --abort: do not update branch ref
 
+Will merge to 'master'.
+
 * mz/rebase-i-verify (2010-11-22) 1 commit
   (merged to 'next' on 2010-12-08 at 18275df)
  + rebase: support --verify
 
-* nd/maint-relative (2010-11-20) 1 commit
- - get_cwd_relative(): do not misinterpret root path
+Will merge to 'master'.
 
-Will merge to 'next' soon.
+* nd/maint-relative (2010-11-20) 1 commit
+  (merged to 'next' on 2010-12-10 at 018bc80)
+ + get_cwd_relative(): do not misinterpret root path
 
 * tc/format-patch-p (2010-11-23) 1 commit
   (merged to 'next' on 2010-12-08 at e8bff23)
  + format-patch: page output with --stdout
 
-I am indifferent/uninterested; I don't see anything wrong with it,
-though.
+Will merge to 'master'.
 
 * tc/http-urls-ends-with-slash (2010-11-25) 9 commits
   (merged to 'next' on 2010-12-08 at b9a878a)
@@ -330,7 +312,11 @@ though.
  + t5550-http-fetch: add test for http-fetch
  + t5550-http-fetch: add missing '&&'
 
-* nd/extended-sha1-relpath (2010-11-28) 2 commits
+Will merge to 'master'.
+
+* nd/extended-sha1-relpath (2010-12-09) 3 commits
+  (merged to 'next' on 2010-12-10 at 0018aa6)
+ + get_sha1: teach ":$n:<path>" the same relative path logic
   (merged to 'next' on 2010-12-08 at 940e5e2)
  + get_sha1: support relative path ":path" syntax
  + Make prefix_path() return char* without const
@@ -352,6 +338,8 @@ have been merged to 'master' (it was a no-op fix).
  . gitweb: add output buffering and associated functions
  . gitweb: Prepare for splitting gitweb
 
+Previous iteration; dropped.
+
 * jn/parse-options-extra (2010-12-01) 10 commits
   (merged to 'next' on 2010-12-08 at 3a3e3ac)
  + update-index: migrate to parse-options API
@@ -365,6 +353,8 @@ have been merged to 'master' (it was a no-op fix).
  + parse-options: clearer reporting of API misuse
  + parse-options: Don't call parse_options_check() so much
  (this branch is used by nd/extended-sha1-relpath.)
+
+Will merge to 'master'.
 
 * nd/setup (2010-11-26) 47 commits
  - git.txt: correct where --work-tree path is relative to
@@ -425,6 +415,8 @@ have been merged to 'master' (it was a no-op fix).
  + checkout-index -h: show usage even in an invalid repository
  + branch -h: show usage even in an invalid repository
 
+Will merge to 'master'.
+
 * yd/dir-rename (2010-10-29) 5 commits
  - Allow hiding renames of individual files involved in a directory rename.
  - Unified diff output format for bulk moves.
@@ -432,7 +424,7 @@ have been merged to 'master' (it was a no-op fix).
  - Raw diff output format for bulk moves.
  - Introduce bulk-move detection in diffcore.
 
-Yet to be rerolled.
+Need to re-queue the reroll.
 
 * nd/struct-pathspec (2010-09-20) 11 commits
  - ce_path_match: drop prefix matching in favor of match_pathspec
@@ -462,11 +454,18 @@ Wait Nguyen for another round (2010-11-11).
  - Add struct pathspec
  (this branch is tangled with nd/struct-pathspec.)
 
-* jl/fetch-submodule-recursive (2010-11-11) 3 commits
+* jl/fetch-submodule-recursive (2010-12-09) 4 commits
+  (merged to 'next' on 2010-12-10 at edd0bf0)
+ + fetch_populated_submodules(): document dynamic allocation
   (merged to 'next' on 2010-12-08 at 676c4f5)
  + Submodules: Add the "fetchRecurseSubmodules" config option
  + Add the 'fetch.recurseSubmodules' config setting
  + fetch/pull: Add the --recurse-submodules option
+
+After giving another look, I think this is Ok, although I didn't quite get
+where the magic number 5 in fetch_populated_submodules() came from.
+
+Will merge to 'master'.
 
 * tr/merge-unborn-clobber (2010-08-22) 1 commit
  - Exhibit merge bug that clobbers index&WT
