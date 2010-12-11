@@ -1,0 +1,32 @@
+Git v1.7.3.4 Release Notes
+==========================
+
+Fixes since v1.7.3.3
+--------------------
+
+ * Smart HTTP transport used to incorrectly retry redirected POST
+   request with GET request.
+
+ * "git apply" did not correctly handle patches that only change modes
+   if told to apply while stripping leading paths with -p option.
+
+ * "git apply" can deal with patches with timezone formatted with a
+   colon between the hours and minutes part (e.g. "-08:00" instead of
+   "-0800").
+
+ * "git cherry-pick" or "git revert" refused to work when a path that
+   would be modified by the operation was stat-dirty without a real
+   difference in the contents of the file.
+
+ * "git diff --check" reported an incorrect line number for added
+   blank lines at the end of file.
+
+ * Setting log.decorate configuration variable to "0" or "1" to mean
+   "false" or "true" did not work.
+
+ * "git tag -v" did not work with GPG signatures in rfc1991 mode.
+
+ * The post-receive-email sample hook was accidentally broken in 1.7.3.3
+   update.
+
+Other minor fixes and documentation updates are also included.
