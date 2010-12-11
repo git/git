@@ -34,6 +34,8 @@ test_expect_success 'correct file objects' '
 test_expect_success 'correct relative file objects (0)' '
 	git rev-parse :file.txt >expected &&
 	git rev-parse :./file.txt >result &&
+	test_cmp expected result &&
+	git rev-parse :0:./file.txt >result &&
 	test_cmp expected result
 '
 
@@ -64,6 +66,28 @@ test_expect_success 'correct relative file objects (4)' '
 	(
 		cd subdir &&
 		git rev-parse HEAD:./file.txt >result &&
+		test_cmp ../expected result
+	)
+'
+
+test_expect_success 'correct relative file objects (5)' '
+	git rev-parse :subdir/file.txt >expected &&
+	(
+		cd subdir &&
+		git rev-parse :./file.txt >result &&
+		test_cmp ../expected result &&
+		git rev-parse :0:./file.txt >result &&
+		test_cmp ../expected result
+	)
+'
+
+test_expect_success 'correct relative file objects (6)' '
+	git rev-parse :file.txt >expected &&
+	(
+		cd subdir &&
+		git rev-parse :../file.txt >result &&
+		test_cmp ../expected result &&
+		git rev-parse :0:../file.txt >result &&
 		test_cmp ../expected result
 	)
 '
