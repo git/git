@@ -1102,7 +1102,7 @@ ifeq ($(uname_S),Windows)
 		compat/win32/sys/poll.o compat/win32/dirent.o
 	COMPAT_CFLAGS = -D__USE_MINGW_ACCESS -DNOGDI -DHAVE_STRING_H -DHAVE_ALLOCA_H -Icompat -Icompat/regex -Icompat/win32 -DSTRIP_EXTENSION=\".exe\"
 	BASIC_LDFLAGS = -IGNORE:4217 -IGNORE:4049 -NOLOGO -SUBSYSTEM:CONSOLE -NODEFAULTLIB:MSVCRT.lib
-	EXTLIBS = advapi32.lib shell32.lib wininet.lib ws2_32.lib
+	EXTLIBS = user32.lib advapi32.lib shell32.lib wininet.lib ws2_32.lib
 	PTHREAD_LIBS =
 	lib =
 ifndef DEBUG
