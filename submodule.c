@@ -264,7 +264,8 @@ int fetch_populated_submodules(int num_options, const char **options,
 		if (read_cache() < 0)
 			die("index file corrupt");
 
-	argv = xcalloc(num_options + 5, sizeof(const char *));
+	/* 4: "fetch" (options) "--submodule-prefix" prefix NULL */
+	argv = xcalloc(num_options + 4, sizeof(const char *));
 	argv[argc++] = "fetch";
 	for (i = 0; i < num_options; i++)
 		argv[argc++] = options[i];
