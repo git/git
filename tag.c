@@ -4,6 +4,9 @@
 #include "tree.h"
 #include "blob.h"
 
+#define PGP_SIGNATURE "-----BEGIN PGP SIGNATURE-----"
+#define PGP_MESSAGE "-----BEGIN PGP MESSAGE-----"
+
 const char *tag_type = "tag";
 
 struct object *deref_tag(struct object *o, const char *warn, int warnlen)
@@ -132,4 +135,16 @@ int parse_tag(struct tag *item)
 	ret = parse_tag_buffer(item, data, size);
 	free(data);
 	return ret;
+}
+
+size_t parse_signature(const char *buf, unsigned long size)
+{
+	char *eol;
+	size_t len = 0;
+	while (len < size && prefixcmp(buf + len, PGP_SIGNATURE) &&
+			prefixcmp(buf + len, PGP_MESSAGE)) {
+		eol = memchr(buf + len, '\n', size - len);
+		len += eol ? eol - (buf + len) + 1 : size - len;
+	}
+	return len;
 }
