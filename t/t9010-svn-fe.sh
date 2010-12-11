@@ -270,6 +270,105 @@ test_expect_success PIPE 'directory with files' '
 	test_cmp hi directory/file2
 '
 
+test_expect_success PIPE 'branch name with backslash' '
+	reinit_git &&
+	sort <<-\EOF >expect.branch-files &&
+	trunk/file1
+	trunk/file2
+	"branches/UpdateFOPto094\\/file1"
+	"branches/UpdateFOPto094\\/file2"
+	EOF
+
+	echo hi >hi &&
+	echo hello >hello &&
+	{
+		properties \
+			svn:author author@example.com \
+			svn:date "1999-02-02T00:01:02.000000Z" \
+			svn:log "add directory with some files in it" &&
+		echo PROPS-END
+	} >props.setup &&
+	{
+		properties \
+			svn:author brancher@example.com \
+			svn:date "2007-12-06T21:38:34.000000Z" \
+			svn:log "Updating fop to .94 and adjust fo-stylesheets" &&
+		echo PROPS-END
+	} >props.branch &&
+	{
+		cat <<-EOF &&
+		SVN-fs-dump-format-version: 3
+
+		Revision-number: 1
+		EOF
+		echo Prop-content-length: $(wc -c <props.setup) &&
+		echo Content-length: $(wc -c <props.setup) &&
+		echo &&
+		cat props.setup &&
+		cat <<-\EOF &&
+
+		Node-path: trunk
+		Node-kind: dir
+		Node-action: add
+		Prop-content-length: 10
+		Content-length: 10
+
+		PROPS-END
+
+		Node-path: branches
+		Node-kind: dir
+		Node-action: add
+		Prop-content-length: 10
+		Content-length: 10
+
+		PROPS-END
+
+		Node-path: trunk/file1
+		Node-kind: file
+		Node-action: add
+		EOF
+		text_no_props hello &&
+		cat <<-\EOF &&
+		Node-path: trunk/file2
+		Node-kind: file
+		Node-action: add
+		EOF
+		text_no_props hi &&
+		cat <<-\EOF &&
+
+		Revision-number: 2
+		EOF
+		echo Prop-content-length: $(wc -c <props.branch) &&
+		echo Content-length: $(wc -c <props.branch) &&
+		echo &&
+		cat props.branch &&
+		cat <<-\EOF
+
+		Node-path: branches/UpdateFOPto094\
+		Node-kind: dir
+		Node-action: add
+		Node-copyfrom-rev: 1
+		Node-copyfrom-path: trunk
+
+		Node-kind: dir
+		Node-action: add
+		Prop-content-length: 34
+		Content-length: 34
+
+		K 13
+		svn:mergeinfo
+		V 0
+
+		PROPS-END
+		EOF
+	} >branch.dump &&
+	try_dump branch.dump &&
+
+	git ls-tree -r --name-only HEAD |
+	sort >actual.branch-files &&
+	test_cmp expect.branch-files actual.branch-files
+'
+
 test_expect_success PIPE 'node without action' '
 	reinit_git &&
 	cat >inaction.dump <<-\EOF &&

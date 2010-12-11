@@ -107,7 +107,7 @@ static void ls_from_active_commit(uint32_t depth, const uint32_t *path)
 {
 	/* ls "path/to/file" */
 	printf("ls \"");
-	pool_print_seq(depth, path, '/', stdout);
+	pool_print_seq_q(depth, path, '/', stdout);
 	printf("\"\n");
 	fflush(stdout);
 }
