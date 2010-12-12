@@ -83,7 +83,7 @@ void fast_export_begin_commit(uint32_t revision, uint32_t author, char *log,
 		   log, gitsvnline);
 	if (!first_commit_done) {
 		if (revision > 1)
-			printf("from refs/heads/master^0\n");
+			printf("from :%"PRIu32"\n", revision - 1);
 		first_commit_done = 1;
 	}
 }
