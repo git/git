@@ -7,6 +7,8 @@
 #include "refs.h"
 #include "remote.h"
 
+static int get_sha1_oneline(const char *, unsigned char *, struct commit_list *);
+
 static int find_short_object_filename(int len, const char *name, unsigned char *sha1)
 {
 	struct alternate_object_database *alt;
@@ -562,6 +564,8 @@ static int peel_onion(const char *name, int len, unsigned char *sha1)
 		expected_type = OBJ_BLOB;
 	else if (sp[0] == '}')
 		expected_type = OBJ_NONE;
+	else if (sp[0] == '/')
+		expected_type = OBJ_COMMIT;
 	else
 		return -1;
 
@@ -576,19 +580,30 @@ static int peel_onion(const char *name, int len, unsigned char *sha1)
 		if (!o || (!o->parsed && !parse_object(o->sha1)))
 			return -1;
 		hashcpy(sha1, o->sha1);
+		return 0;
 	}
-	else {
-		/*
-		 * At this point, the syntax look correct, so
-		 * if we do not get the needed object, we should
-		 * barf.
-		 */
-		o = peel_to_type(name, len, o, expected_type);
-		if (o) {
-			hashcpy(sha1, o->sha1);
-			return 0;
-		}
+
+	/*
+	 * At this point, the syntax look correct, so
+	 * if we do not get the needed object, we should
+	 * barf.
+	 */
+	o = peel_to_type(name, len, o, expected_type);
+	if (!o)
 		return -1;
+
+	hashcpy(sha1, o->sha1);
+	if (sp[0] == '/') {
+		/* "$commit^{/foo}" */
+		char *prefix;
+		int ret;
+		struct commit_list *list = NULL;
+
+		prefix = xstrndup(sp + 1, name + len - 1 - (sp + 1));
+		commit_list_insert((struct commit *)o, &list);
+		ret = get_sha1_oneline(prefix, sha1, list);
+		free(prefix);
+		return ret;
 	}
 	return 0;
 }
