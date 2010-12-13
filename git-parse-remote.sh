@@ -89,7 +89,13 @@ get_remote_merge_branch () {
 	    refs/heads/*) remote=${remote#refs/heads/} ;;
 	    refs/* | tags/* | remotes/* ) remote=
 	    esac
-
-	    [ -n "$remote" ] && echo "refs/remotes/$repo/$remote"
+	    [ -n "$remote" ] && case "$repo" in
+		.)
+		    echo "refs/heads/$remote"
+		    ;;
+		*)
+		    echo "refs/remotes/$repo/$remote"
+		    ;;
+	    esac
 	esac
 }
