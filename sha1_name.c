@@ -693,8 +693,7 @@ static int handle_one_ref(const char *path,
 static int get_sha1_oneline(const char *prefix, unsigned char *sha1)
 {
 	struct commit_list *list = NULL, *backup = NULL, *l;
-	int retval = -1;
-	char *temp_commit_buffer = NULL;
+	int found = 0;
 	regex_t regex;
 
 	if (prefix[0] == '!') {
@@ -710,37 +709,40 @@ static int get_sha1_oneline(const char *prefix, unsigned char *sha1)
 	for (l = list; l; l = l->next)
 		commit_list_insert(l->item, &backup);
 	while (list) {
-		char *p;
+		char *p, *to_free = NULL;
 		struct commit *commit;
 		enum object_type type;
 		unsigned long size;
+		int matches;
 
 		commit = pop_most_recent_commit(&list, ONELINE_SEEN);
 		if (!parse_object(commit->object.sha1))
 			continue;
-		free(temp_commit_buffer);
 		if (commit->buffer)
 			p = commit->buffer;
 		else {
 			p = read_sha1_file(commit->object.sha1, &type, &size);
 			if (!p)
 				continue;
-			temp_commit_buffer = p;
+			to_free = p;
 		}
-		if (!(p = strstr(p, "\n\n")))
-			continue;
-		if (!regexec(&regex, p + 2, 0, NULL, 0)) {
+
+		p = strstr(p, "\n\n");
+		matches = p && !regexec(&regex, p + 2, 0, NULL, 0);
+		free(to_free);
+
+		if (matches) {
 			hashcpy(sha1, commit->object.sha1);
-			retval = 0;
+			found = 1;
 			break;
 		}
 	}
 	regfree(&regex);
-	free(temp_commit_buffer);
 	free_commit_list(list);
 	for (l = backup; l; l = l->next)
 		clear_commit_marks(l->item, ONELINE_SEEN);
-	return retval;
+	free_commit_list(backup);
+	return found ? 0 : -1;
 }
 
 struct grab_nth_branch_switch_cbdata {
