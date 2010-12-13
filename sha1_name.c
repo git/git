@@ -686,13 +686,13 @@ static int handle_one_ref(const char *path,
 	if (object->type != OBJ_COMMIT)
 		return 0;
 	insert_by_date((struct commit *)object, list);
-	object->flags |= ONELINE_SEEN;
 	return 0;
 }
 
-static int get_sha1_oneline(const char *prefix, unsigned char *sha1)
+static int get_sha1_oneline(const char *prefix, unsigned char *sha1,
+			    struct commit_list *list)
 {
-	struct commit_list *list = NULL, *backup = NULL, *l;
+	struct commit_list *backup = NULL, *l;
 	int found = 0;
 	regex_t regex;
 
@@ -705,9 +705,10 @@ static int get_sha1_oneline(const char *prefix, unsigned char *sha1)
 	if (regcomp(&regex, prefix, REG_EXTENDED))
 		die("Invalid search pattern: %s", prefix);
 
-	for_each_ref(handle_one_ref, &list);
-	for (l = list; l; l = l->next)
+	for (l = list; l; l = l->next) {
+		l->item->object.flags |= ONELINE_SEEN;
 		commit_list_insert(l->item, &backup);
+	}
 	while (list) {
 		char *p, *to_free = NULL;
 		struct commit *commit;
@@ -1090,9 +1091,11 @@ int get_sha1_with_context_1(const char *name, unsigned char *sha1,
 		int stage = 0;
 		struct cache_entry *ce;
 		int pos;
-		if (namelen > 2 && name[1] == '/')
-			/* don't need mode for commit */
-			return get_sha1_oneline(name + 2, sha1);
+		if (namelen > 2 && name[1] == '/') {
+			struct commit_list *list = NULL;
+			for_each_ref(handle_one_ref, &list);
+			return get_sha1_oneline(name + 2, sha1, list);
+		}
 		if (namelen < 3 ||
 		    name[2] != ':' ||
 		    name[1] < '0' || '3' < name[1])
