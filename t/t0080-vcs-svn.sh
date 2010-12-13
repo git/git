@@ -76,26 +76,4 @@ test_expect_success 'obj pool: high-water mark' '
 	test_cmp expected actual
 '
 
-test_expect_success 'treap sort' '
-	cat <<-\EOF >unsorted &&
-	68
-	12
-	13
-	13
-	68
-	13
-	13
-	21
-	10
-	11
-	12
-	13
-	13
-	EOF
-	sort unsorted >expected &&
-
-	test-treap <unsorted >actual &&
-	test_cmp expected actual
-'
-
 test_done

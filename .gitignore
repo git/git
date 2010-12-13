@@ -179,7 +179,6 @@
 /test-sigchain
 /test-subprocess
 /test-svn-fe
-/test-treap
 /common-cmds.h
 *.tar.gz
 *.dsc
