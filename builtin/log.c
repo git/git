@@ -1158,6 +1158,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 
 	if (!use_stdout)
 		output_directory = set_outdir(prefix, output_directory);
+	else
+		setup_pager();
 
 	if (output_directory) {
 		if (use_stdout)
