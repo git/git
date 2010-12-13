@@ -63,14 +63,6 @@ static struct {
 	uint32_t version, uuid, url;
 } dump_ctx;
 
-static struct {
-	uint32_t uuid, revision_number, node_path, node_kind, node_action,
-		node_copyfrom_path, node_copyfrom_rev, text_content_length,
-		prop_content_length, content_length, svn_fs_dump_format_version,
-		/* version 3 format */
-		text_delta, prop_delta;
-} keys;
-
 static void reset_node_ctx(char *fname)
 {
 	node_ctx.type = 0;
@@ -97,24 +89,6 @@ static void reset_dump_ctx(uint32_t url)
 	dump_ctx.url = url;
 	dump_ctx.version = 1;
 	dump_ctx.uuid = ~0;
-}
-
-static void init_keys(void)
-{
-	keys.uuid = pool_intern("UUID");
-	keys.revision_number = pool_intern("Revision-number");
-	keys.node_path = pool_intern("Node-path");
-	keys.node_kind = pool_intern("Node-kind");
-	keys.node_action = pool_intern("Node-action");
-	keys.node_copyfrom_path = pool_intern("Node-copyfrom-path");
-	keys.node_copyfrom_rev = pool_intern("Node-copyfrom-rev");
-	keys.text_content_length = pool_intern("Text-content-length");
-	keys.prop_content_length = pool_intern("Prop-content-length");
-	keys.content_length = pool_intern("Content-length");
-	keys.svn_fs_dump_format_version = pool_intern("SVN-fs-dump-format-version");
-	/* version 3 format (Subversion 1.1.0) */
-	keys.text_delta = pool_intern("Text-delta");
-	keys.prop_delta = pool_intern("Prop-delta");
 }
 
 static void handle_property(const struct strbuf *key_buf,
@@ -320,44 +294,61 @@ void svndump_read(const char *url)
 	char *t;
 	uint32_t active_ctx = DUMP_CTX;
 	uint32_t len;
-	uint32_t key;
 
 	reset_dump_ctx(pool_intern(url));
 	while ((t = buffer_read_line(&input))) {
 		val = strstr(t, ": ");
 		if (!val)
 			continue;
-		*val++ = '\0';
-		*val++ = '\0';
-		key = pool_intern(t);
+		val += 2;
 
-		if (key == keys.svn_fs_dump_format_version) {
+		/* strlen(key) + 1 */
+		switch (val - t - 1) {
+		case sizeof("SVN-fs-dump-format-version"):
+			if (constcmp(t, "SVN-fs-dump-format-version"))
+				continue;
 			dump_ctx.version = atoi(val);
 			if (dump_ctx.version > 3)
 				die("expected svn dump format version <= 3, found %"PRIu32,
 				    dump_ctx.version);
-		} else if (key == keys.uuid) {
+			break;
+		case sizeof("UUID"):
+			if (constcmp(t, "UUID"))
+				continue;
 			dump_ctx.uuid = pool_intern(val);
-		} else if (key == keys.revision_number) {
+			break;
+		case sizeof("Revision-number"):
+			if (constcmp(t, "Revision-number"))
+				continue;
 			if (active_ctx == NODE_CTX)
 				handle_node();
 			if (active_ctx != DUMP_CTX)
 				handle_revision();
 			active_ctx = REV_CTX;
 			reset_rev_ctx(atoi(val));
-		} else if (key == keys.node_path) {
-			if (active_ctx == NODE_CTX)
-				handle_node();
-			active_ctx = NODE_CTX;
-			reset_node_ctx(val);
-		} else if (key == keys.node_kind) {
+			break;
+		case sizeof("Node-path"):
+			if (prefixcmp(t, "Node-"))
+				continue;
+			if (!constcmp(t + strlen("Node-"), "path")) {
+				if (active_ctx == NODE_CTX)
+					handle_node();
+				active_ctx = NODE_CTX;
+				reset_node_ctx(val);
+				break;
+			}
+			if (constcmp(t + strlen("Node-"), "kind"))
+				continue;
 			if (!strcmp(val, "dir"))
 				node_ctx.type = REPO_MODE_DIR;
 			else if (!strcmp(val, "file"))
 				node_ctx.type = REPO_MODE_BLB;
 			else
 				fprintf(stderr, "Unknown node-kind: %s\n", val);
-		} else if (key == keys.node_action) {
+			break;
+		case sizeof("Node-action"):
+			if (constcmp(t, "Node-action"))
+				continue;
 			if (!strcmp(val, "delete")) {
 				node_ctx.action = NODEACT_DELETE;
 			} else if (!strcmp(val, "add")) {
@@ -370,19 +361,38 @@ void svndump_read(const char *url)
 				fprintf(stderr, "Unknown node-action: %s\n", val);
 				node_ctx.action = NODEACT_UNKNOWN;
 			}
-		} else if (key == keys.node_copyfrom_path) {
+			break;
+		case sizeof("Node-copyfrom-path"):
+			if (constcmp(t, "Node-copyfrom-path"))
+				continue;
 			pool_tok_seq(REPO_MAX_PATH_DEPTH, node_ctx.src, "/", val);
-		} else if (key == keys.node_copyfrom_rev) {
+			break;
+		case sizeof("Node-copyfrom-rev"):
+			if (constcmp(t, "Node-copyfrom-rev"))
+				continue;
 			node_ctx.srcRev = atoi(val);
-		} else if (key == keys.text_content_length) {
-			node_ctx.textLength = atoi(val);
-		} else if (key == keys.prop_content_length) {
+			break;
+		case sizeof("Text-content-length"):
+			if (!constcmp(t, "Text-content-length")) {
+				node_ctx.textLength = atoi(val);
+				break;
+			}
+			if (constcmp(t, "Prop-content-length"))
+				continue;
 			node_ctx.propLength = atoi(val);
-		} else if (key == keys.text_delta) {
-			node_ctx.text_delta = !strcmp(val, "true");
-		} else if (key == keys.prop_delta) {
+			break;
+		case sizeof("Text-delta"):
+			if (!constcmp(t, "Text-delta")) {
+				node_ctx.text_delta = !strcmp(val, "true");
+				break;
+			}
+			if (constcmp(t, "Prop-delta"))
+				continue;
 			node_ctx.prop_delta = !strcmp(val, "true");
-		} else if (key == keys.content_length) {
+			break;
+		case sizeof("Content-length"):
+			if (constcmp(t, "Content-length"))
+				continue;
 			len = atoi(val);
 			t = buffer_read_line(&input);
 			if (!t)
@@ -417,7 +427,6 @@ int svndump_init(const char *filename)
 	reset_dump_ctx(~0);
 	reset_rev_ctx(0);
 	reset_node_ctx(NULL);
-	init_keys();
 	return 0;
 }
 
