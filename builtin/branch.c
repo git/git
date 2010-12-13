@@ -668,6 +668,9 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 		OPT_END(),
 	};
 
+	if (argc == 2 && !strcmp(argv[1], "-h"))
+		usage_with_options(builtin_branch_usage, options);
+
 	git_config(git_branch_config, NULL);
 
 	if (branch_use_color == -1)

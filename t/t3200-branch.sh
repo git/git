@@ -26,6 +26,17 @@ test_expect_success \
      ! test -f .git/refs/heads/--help
 '
 
+test_expect_success 'branch -h in broken repository' '
+	mkdir broken &&
+	(
+		cd broken &&
+		git init &&
+		>.git/refs/heads/master &&
+		test_expect_code 129 git branch -h >usage 2>&1
+	) &&
+	grep "[Uu]sage" broken/usage
+'
+
 test_expect_success \
     'git branch abc should create a branch' \
     'git branch abc && test -f .git/refs/heads/abc'

@@ -189,6 +189,9 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 		OPT_END()
 	};
 
+	if (argc == 2 && !strcmp(argv[1], "-h"))
+		usage_with_options(builtin_gc_usage, builtin_gc_options);
+
 	git_config(gc_config, NULL);
 
 	if (pack_refs < 0)
