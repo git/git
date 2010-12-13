@@ -4,6 +4,10 @@ Git v1.7.4 Release Notes (draft)
 Updates since v1.7.3
 --------------------
 
+ * The documentation Makefile now assumes by default asciidoc 8 and
+   docbook-xsl >= 1.73. If you have older versions, you can set
+   ASCIIDOC7 and ASCIIDOC_ROFF, respectively.
+
  * The option parsers of various commands that create new branch (or
    rename existing ones to a new name) were too loose and users were
    allowed to call a branch with a name that begins with a dash by
