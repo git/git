@@ -23,10 +23,10 @@ TGITWEB = $(wildcard t95[0-9][0-9]-*.sh)
 
 all: $(DEFAULT_TEST_TARGET)
 
-test: pre-clean
+test: pre-clean $(TEST_LINT)
 	$(MAKE) aggregate-results-and-cleanup
 
-prove: pre-clean
+prove: pre-clean $(TEST_LINT)
 	@echo "*** prove ***"; GIT_CONFIG=.git/config $(PROVE) --exec '$(SHELL_PATH_SQ)' $(GIT_PROVE_OPTS) $(T) :: $(GIT_TEST_OPTS)
 	$(MAKE) clean
 
@@ -40,6 +40,18 @@ clean:
 	$(RM) -r 'trash directory'.* test-results
 	$(RM) -r valgrind/bin
 	$(RM) .prove
+
+test-lint: test-lint-duplicates test-lint-executable
+
+test-lint-duplicates:
+	@dups=`echo $(T) | tr ' ' '\n' | sed 's/-.*//' | sort | uniq -d` && \
+		test -z "$$dups" || { \
+		echo >&2 "duplicate test numbers:" $$dups; exit 1; }
+
+test-lint-executable:
+	@bad=`for i in $(T); do test -x "$$i" || echo $$i; done` && \
+		test -z "$$bad" || { \
+		echo >&2 "non-executable tests:" $$bad; exit 1; }
 
 aggregate-results-and-cleanup: $(T)
 	$(MAKE) aggregate-results
