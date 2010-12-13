@@ -8,14 +8,14 @@
 #include "repo_tree.h"
 #include "fast_export.h"
 
-const char *repo_read_path(const uint32_t *path)
+const char *repo_read_path(const char *path)
 {
 	int err;
 	uint32_t dummy;
 	static struct strbuf buf = STRBUF_INIT;
 
 	strbuf_reset(&buf);
-	err = fast_export_ls(REPO_MAX_PATH_DEPTH, path, &dummy, &buf);
+	err = fast_export_ls(path, &dummy, &buf);
 	if (err) {
 		if (errno != ENOENT)
 			die_errno("BUG: unexpected fast_export_ls error");
@@ -24,14 +24,14 @@ const char *repo_read_path(const uint32_t *path)
 	return buf.buf;
 }
 
-uint32_t repo_read_mode(const uint32_t *path)
+uint32_t repo_read_mode(const char *path)
 {
 	int err;
 	uint32_t result;
 	static struct strbuf dummy = STRBUF_INIT;
 
 	strbuf_reset(&dummy);
-	err = fast_export_ls(REPO_MAX_PATH_DEPTH, path, &result, &dummy);
+	err = fast_export_ls(path, &result, &dummy);
 	if (err) {
 		if (errno != ENOENT)
 			die_errno("BUG: unexpected fast_export_ls error");
@@ -41,24 +41,24 @@ uint32_t repo_read_mode(const uint32_t *path)
 	return result;
 }
 
-void repo_copy(uint32_t revision, const uint32_t *src, const uint32_t *dst)
+void repo_copy(uint32_t revision, const char *src, const char *dst)
 {
 	int err;
 	uint32_t mode;
 	static struct strbuf data = STRBUF_INIT;
 
 	strbuf_reset(&data);
-	err = fast_export_ls_rev(revision, REPO_MAX_PATH_DEPTH, src, &mode, &data);
+	err = fast_export_ls_rev(revision, src, &mode, &data);
 	if (err) {
 		if (errno != ENOENT)
 			die_errno("BUG: unexpected fast_export_ls_rev error");
-		fast_export_delete(REPO_MAX_PATH_DEPTH, dst);
+		fast_export_delete(dst);
 		return;
 	}
-	fast_export_modify(REPO_MAX_PATH_DEPTH, dst, mode, data.buf);
+	fast_export_modify(dst, mode, data.buf);
 }
 
-void repo_delete(uint32_t *path)
+void repo_delete(const char *path)
 {
-	fast_export_delete(REPO_MAX_PATH_DEPTH, path);
+	fast_export_delete(path);
 }
