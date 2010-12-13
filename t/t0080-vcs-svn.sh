@@ -76,22 +76,6 @@ test_expect_success 'obj pool: high-water mark' '
 	test_cmp expected actual
 '
 
-test_expect_success 'string pool' '
-	echo a does not equal b >expected.differ &&
-	echo a equals a >expected.match &&
-	echo equals equals equals >expected.matchmore &&
-
-	test-string-pool "a,--b" >actual.differ &&
-	test-string-pool "a,a" >actual.match &&
-	test-string-pool "equals-equals" >actual.matchmore &&
-	test_must_fail test-string-pool a,a,a &&
-	test_must_fail test-string-pool a &&
-
-	test_cmp expected.differ actual.differ &&
-	test_cmp expected.match actual.match &&
-	test_cmp expected.matchmore actual.matchmore
-'
-
 test_expect_success 'treap sort' '
 	cat <<-\EOF >unsorted &&
 	68
