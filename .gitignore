@@ -171,7 +171,6 @@
 /test-line-buffer
 /test-match-trees
 /test-mktemp
-/test-obj-pool
 /test-parse-options
 /test-path-utils
 /test-run-command
