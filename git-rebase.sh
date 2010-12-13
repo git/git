@@ -206,6 +206,9 @@ do
 	--no-verify)
 		OK_TO_SKIP_PRE_REBASE=yes
 		;;
+	--verify)
+		OK_TO_SKIP_PRE_REBASE=
+		;;
 	--continue)
 		test -d "$dotest" -o -d "$GIT_DIR"/rebase-apply ||
 			die "No rebase in progress?"

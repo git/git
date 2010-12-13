@@ -279,6 +279,10 @@ which makes little sense.
 --no-verify::
 	This option bypasses the pre-rebase hook.  See also linkgit:githooks[5].
 
+--verify::
+	Allows the pre-rebase hook to run, which is the default.  This option can
+	be used to override --no-verify.  See also linkgit:githooks[5].
+
 -C<n>::
 	Ensure at least <n> lines of surrounding context match before
 	and after each change.  When fewer lines of surrounding
