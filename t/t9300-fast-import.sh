@@ -7,6 +7,23 @@ test_description='test git fast-import utility'
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/diff-lib.sh ;# test-lib chdir's into trash
 
+# Print $1 bytes from stdin to stdout.
+#
+# This could be written as "head -c $1", but IRIX "head" does not
+# support the -c option.
+head_c () {
+	perl -e '
+		my $len = $ARGV[1];
+		while ($len > 0) {
+			my $s;
+			my $nread = sysread(STDIN, $s, $len);
+			die "cannot read: $!" unless defined($nread);
+			print $s;
+			$len -= $nread;
+		}
+	' - "$1"
+}
+
 file2_data='file2
 second line of EOF'
 
@@ -1888,44 +1905,41 @@ test_expect_success PIPE 'R: copy using cat-file' '
 	rm -f blobs &&
 	cat >frontend <<-\FRONTEND_END &&
 	#!/bin/sh
-	cat <<EOF &&
-	feature cat-blob
-	blob
-	mark :1
-	data <<BLOB
-	EOF
-	cat big
-	cat <<EOF
-	BLOB
-	cat-blob :1
-	EOF
-
-	read blob_id type size <&3 &&
-	echo "$blob_id $type $size" >response &&
-	dd of=blob bs=1 count=$size <&3 &&
-	read newline <&3 &&
-
-	cat <<EOF &&
-	commit refs/heads/copied
-	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-	data <<COMMIT
-	copy big file as file3
-	COMMIT
-	M 644 inline file3
-	data <<BLOB
-	EOF
-	cat blob &&
-	cat <<EOF
-	BLOB
-	EOF
 	FRONTEND_END
 
 	mkfifo blobs &&
 	(
 		export GIT_COMMITTER_NAME GIT_COMMITTER_EMAIL GIT_COMMITTER_DATE &&
-		sh frontend 3<blobs |
-		git fast-import --cat-blob-fd=3 3>blobs
-	) &&
+		cat <<-\EOF &&
+		feature cat-blob
+		blob
+		mark :1
+		data <<BLOB
+		EOF
+		cat big &&
+		cat <<-\EOF &&
+		BLOB
+		cat-blob :1
+		EOF
+
+		read blob_id type size <&3 &&
+		echo "$blob_id $type $size" >response &&
+		head_c $size >blob <&3 &&
+		read newline <&3 &&
+
+		cat <<-EOF &&
+		commit refs/heads/copied
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+		data <<COMMIT
+		copy big file as file3
+		COMMIT
+		M 644 inline file3
+		data <<BLOB
+		EOF
+		cat blob &&
+		echo BLOB
+	) 3<blobs |
+	git fast-import --cat-blob-fd=3 3>blobs &&
 	git show copied:file3 >actual &&
 	test_cmp expect.response response &&
 	test_cmp big actual
@@ -1953,7 +1967,7 @@ test_expect_success PIPE 'R: print blob mid-commit' '
 		EOF
 
 		read blob_id type size <&3 &&
-		dd of=actual bs=1 count=$size <&3 &&
+		head_c $size >actual <&3 &&
 		read newline <&3 &&
 
 		echo
@@ -1988,7 +2002,7 @@ test_expect_success PIPE 'R: print staged blob within commit' '
 		echo "cat-blob $to_get" &&
 
 		read blob_id type size <&3 &&
-		dd of=actual bs=1 count=$size <&3 &&
+		head_c $size >actual <&3 &&
 		read newline <&3 &&
 
 		echo deleteall
