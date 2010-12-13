@@ -8,37 +8,21 @@
 #include "repo_tree.h"
 #include "fast_export.h"
 
-const char *repo_read_path(const uint32_t *path)
+const char *repo_read_path(const uint32_t *path, uint32_t *mode_out)
 {
 	int err;
-	uint32_t dummy;
 	static struct strbuf buf = STRBUF_INIT;
 
 	strbuf_reset(&buf);
-	err = fast_export_ls(REPO_MAX_PATH_DEPTH, path, &dummy, &buf);
-	if (err) {
-		if (errno != ENOENT)
-			die_errno("BUG: unexpected fast_export_ls error");
-		return NULL;
-	}
-	return buf.buf;
-}
-
-uint32_t repo_read_mode(const uint32_t *path)
-{
-	int err;
-	uint32_t result;
-	static struct strbuf dummy = STRBUF_INIT;
-
-	strbuf_reset(&dummy);
-	err = fast_export_ls(REPO_MAX_PATH_DEPTH, path, &result, &dummy);
+	err = fast_export_ls(REPO_MAX_PATH_DEPTH, path, mode_out, &buf);
 	if (err) {
 		if (errno != ENOENT)
 			die_errno("BUG: unexpected fast_export_ls error");
 		/* Treat missing paths as directories. */
-		return REPO_MODE_DIR;
+		*mode_out = REPO_MODE_DIR;
+		return NULL;
 	}
-	return result;
+	return buf.buf;
 }
 
 void repo_copy(uint32_t revision, const uint32_t *src, const uint32_t *dst)

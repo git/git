@@ -14,8 +14,7 @@
 uint32_t next_blob_mark(void);
 void repo_copy(uint32_t revision, const uint32_t *src, const uint32_t *dst);
 void repo_add(uint32_t *path, uint32_t mode, uint32_t blob_mark);
-const char *repo_read_path(const uint32_t *path);
-uint32_t repo_read_mode(const uint32_t *path);
+const char *repo_read_path(const uint32_t *path, uint32_t *mode_out);
 void repo_delete(uint32_t *path);
 void repo_commit(uint32_t revision, uint32_t author, char *log, uint32_t uuid,
 		 uint32_t url, long unsigned timestamp);
