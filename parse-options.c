@@ -11,6 +11,13 @@ static int parse_options_usage(struct parse_opt_ctx_t *ctx,
 #define OPT_SHORT 1
 #define OPT_UNSET 2
 
+static int optbug(const struct option *opt, const char *reason)
+{
+	if (opt->long_name)
+		return error("BUG: option '%s' %s", opt->long_name, reason);
+	return error("BUG: switch '%c' %s", opt->short_name, reason);
+}
+
 static int opterror(const struct option *opt, const char *reason, int flags)
 {
 	if (flags & OPT_SHORT)
@@ -55,25 +62,13 @@ static int get_value(struct parse_opt_ctx_t *p,
 		return opterror(opt, "takes no value", flags);
 	if (unset && (opt->flags & PARSE_OPT_NONEG))
 		return opterror(opt, "isn't available", flags);
-
-	if (!(flags & OPT_SHORT) && p->opt) {
-		switch (opt->type) {
-		case OPTION_CALLBACK:
-			if (!(opt->flags & PARSE_OPT_NOARG))
-				break;
-			/* FALLTHROUGH */
-		case OPTION_BOOLEAN:
-		case OPTION_BIT:
-		case OPTION_NEGBIT:
-		case OPTION_SET_INT:
-		case OPTION_SET_PTR:
-			return opterror(opt, "takes no value", flags);
-		default:
-			break;
-		}
-	}
+	if (!(flags & OPT_SHORT) && p->opt && (opt->flags & PARSE_OPT_NOARG))
+		return opterror(opt, "takes no value", flags);
 
 	switch (opt->type) {
+	case OPTION_LOWLEVEL_CALLBACK:
+		return (*(parse_opt_ll_cb *)opt->callback)(p, opt, unset);
+
 	case OPTION_BIT:
 		if (unset)
 			*(int *)opt->value &= ~opt->defval;
@@ -281,13 +276,6 @@ static int parse_nodash_opt(struct parse_opt_ctx_t *p, const char *arg,
 	for (; options->type != OPTION_END; options++) {
 		if (!(options->flags & PARSE_OPT_NODASH))
 			continue;
-		if ((options->flags & PARSE_OPT_OPTARG) ||
-		    !(options->flags & PARSE_OPT_NOARG))
-			die("BUG: dashless options don't support arguments");
-		if (!(options->flags & PARSE_OPT_NONEG))
-			die("BUG: dashless options don't support negation");
-		if (options->long_name)
-			die("BUG: dashless options can't be long");
 		if (options->short_name == arg[0] && arg[1] == '\0')
 			return get_value(p, options, OPT_SHORT);
 	}
@@ -320,25 +308,37 @@ static void parse_options_check(const struct option *opts)
 
 	for (; opts->type != OPTION_END; opts++) {
 		if ((opts->flags & PARSE_OPT_LASTARG_DEFAULT) &&
-		    (opts->flags & PARSE_OPT_OPTARG)) {
-			if (opts->long_name) {
-				error("`--%s` uses incompatible flags "
-				      "LASTARG_DEFAULT and OPTARG", opts->long_name);
-			} else {
-				error("`-%c` uses incompatible flags "
-				      "LASTARG_DEFAULT and OPTARG", opts->short_name);
-			}
-			err |= 1;
+		    (opts->flags & PARSE_OPT_OPTARG))
+			err |= optbug(opts, "uses incompatible flags "
+					"LASTARG_DEFAULT and OPTARG");
+		if (opts->flags & PARSE_OPT_NODASH &&
+		    ((opts->flags & PARSE_OPT_OPTARG) ||
+		     !(opts->flags & PARSE_OPT_NOARG) ||
+		     !(opts->flags & PARSE_OPT_NONEG) ||
+		     opts->long_name))
+			err |= optbug(opts, "uses feature "
+					"not supported for dashless options");
+		switch (opts->type) {
+		case OPTION_BOOLEAN:
+		case OPTION_BIT:
+		case OPTION_NEGBIT:
+		case OPTION_SET_INT:
+		case OPTION_SET_PTR:
+		case OPTION_NUMBER:
+			if ((opts->flags & PARSE_OPT_OPTARG) ||
+			    !(opts->flags & PARSE_OPT_NOARG))
+				err |= optbug(opts, "should not accept an argument");
+		default:
+			; /* ok. (usually accepts an argument) */
 		}
 	}
-
 	if (err)
-		exit(129);
+		exit(128);
 }
 
 void parse_options_start(struct parse_opt_ctx_t *ctx,
 			 int argc, const char **argv, const char *prefix,
-			 int flags)
+			 const struct option *options, int flags)
 {
 	memset(ctx, 0, sizeof(*ctx));
 	ctx->argc = argc - 1;
@@ -350,6 +350,7 @@ void parse_options_start(struct parse_opt_ctx_t *ctx,
 	if ((flags & PARSE_OPT_KEEP_UNKNOWN) &&
 	    (flags & PARSE_OPT_STOP_AT_NON_OPTION))
 		die("STOP_AT_NON_OPTION and KEEP_UNKNOWN don't go together");
+	parse_options_check(options);
 }
 
 static int usage_with_options_internal(struct parse_opt_ctx_t *,
@@ -362,8 +363,6 @@ int parse_options_step(struct parse_opt_ctx_t *ctx,
 {
 	int internal_help = !(ctx->flags & PARSE_OPT_NO_INTERNAL_HELP);
 
-	parse_options_check(options);
-
 	/* we must reset ->opt, unknown short option leave it dangling */
 	ctx->opt = NULL;
 
@@ -374,7 +373,7 @@ int parse_options_step(struct parse_opt_ctx_t *ctx,
 			if (parse_nodash_opt(ctx, arg, options) == 0)
 				continue;
 			if (ctx->flags & PARSE_OPT_STOP_AT_NON_OPTION)
-				break;
+				return PARSE_OPT_NON_OPTION;
 			ctx->out[ctx->cpidx++] = ctx->argv[0];
 			continue;
 		}
@@ -452,10 +451,11 @@ int parse_options(int argc, const char **argv, const char *prefix,
 {
 	struct parse_opt_ctx_t ctx;
 
-	parse_options_start(&ctx, argc, argv, prefix, flags);
+	parse_options_start(&ctx, argc, argv, prefix, options, flags);
 	switch (parse_options_step(&ctx, options, usagestr)) {
 	case PARSE_OPT_HELP:
 		exit(129);
+	case PARSE_OPT_NON_OPTION:
 	case PARSE_OPT_DONE:
 		break;
 	default: /* PARSE_OPT_UNKNOWN */
@@ -541,7 +541,8 @@ static int usage_with_options_internal(struct parse_opt_ctx_t *ctx,
 		if (opts->type == OPTION_NUMBER)
 			pos += fprintf(outfile, "-NUM");
 
-		if (!(opts->flags & PARSE_OPT_NOARG))
+		if ((opts->flags & PARSE_OPT_LITERAL_ARGHELP) ||
+		    !(opts->flags & PARSE_OPT_NOARG))
 			pos += usage_argh(opts, outfile);
 
 		if (pos <= USAGE_OPTS_WIDTH)
