@@ -522,6 +522,9 @@ core.whitespace::
   part of the line terminator, i.e. with it, `trailing-space`
   does not trigger if the character before such a carriage-return
   is not a whitespace (not enabled by default).
+* `tabwidth=<n>` tells how many character positions a tab occupies; this
+  is relevant for `indent-with-non-tab` and when git fixes `tab-in-indent`
+  errors. The default tab width is 8. Allowed values are 1 to 63.
 
 core.fsyncobjectfiles::
 	This boolean will enable 'fsync()' when writing object files.
