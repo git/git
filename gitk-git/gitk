@@ -131,6 +131,7 @@ proc unmerged_files {files} {
 
 proc parseviewargs {n arglist} {
     global vdatemode vmergeonly vflags vdflags vrevs vfiltered vorigargs env
+    global worddiff git_version
 
     set vdatemode($n) 0
     set vmergeonly($n) 0
@@ -168,7 +169,7 @@ proc parseviewargs {n arglist} {
 		lappend diffargs $arg
 	    }
 	    "--raw" - "--patch-with-raw" - "--patch-with-stat" -
-	    "--name-only" - "--name-status" - "--color" - "--color-words" -
+	    "--name-only" - "--name-status" - "--color" -
 	    "--log-size" - "--pretty=*" - "--decorate" - "--abbrev-commit" -
 	    "--cc" - "-z" - "--header" - "--parents" - "--boundary" -
 	    "--no-color" - "-g" - "--walk-reflogs" - "--no-walk" -
@@ -176,6 +177,18 @@ proc parseviewargs {n arglist} {
 	    "--objects" - "--objects-edge" - "--reverse" {
 		# These cause our parsing of git log's output to fail, or else
 		# they're options we want to set ourselves, so ignore them.
+	    }
+	    "--color-words*" - "--word-diff=color" {
+		# These trigger a word diff in the console interface,
+		# so help the user by enabling our own support
+		if {[package vcompare $git_version "1.7.2"] >= 0} {
+		    set worddiff [mc "Color words"]
+		}
+	    }
+	    "--word-diff*" {
+		if {[package vcompare $git_version "1.7.2"] >= 0} {
+		    set worddiff [mc "Markup words"]
+		}
 	    }
 	    "--stat=*" - "--numstat" - "--shortstat" - "--summary" -
 	    "--check" - "--exit-code" - "--quiet" - "--topo-order" -
@@ -313,6 +326,7 @@ proc start_rev_list {view} {
     global viewactive viewinstances vmergeonly
     global mainheadid viewmainheadid viewmainheadid_orig
     global vcanopt vflags vrevs vorigargs
+    global show_notes
 
     set startmsecs [clock clicks -milliseconds]
     set commitidx($view) 0
@@ -361,8 +375,8 @@ proc start_rev_list {view} {
     }
 
     if {[catch {
-	set fd [open [concat | git log --no-color -z --pretty=raw --parents \
-			 --boundary $args "--" $files] r]
+	set fd [open [concat | git log --no-color -z --pretty=raw $show_notes \
+			--parents --boundary $args "--" $files] r]
     } err]} {
 	error_popup "[mc "Error executing git log:"] $err"
 	return 0
@@ -456,6 +470,7 @@ proc updatecommits {} {
     global mainheadid viewmainheadid viewmainheadid_orig pending_select
     global isworktree
     global varcid vposids vnegids vflags vrevs
+    global show_notes
 
     set isworktree [expr {[exec git rev-parse --is-inside-work-tree] == "true"}]
     rereadrefs
@@ -508,8 +523,8 @@ proc updatecommits {} {
 	set args $vorigargs($view)
     }
     if {[catch {
-	set fd [open [concat | git log --no-color -z --pretty=raw --parents \
-			  --boundary $args "--" $vfilelimit($view)] r]
+	set fd [open [concat | git log --no-color -z --pretty=raw $show_notes \
+			--parents --boundary $args "--" $vfilelimit($view)] r]
     } err]} {
 	error_popup "[mc "Error executing git log:"] $err"
 	return
@@ -1970,6 +1985,8 @@ proc makewindow {} {
     global fprogitem fprogcoord lastprogupdate progupdatepending
     global rprogitem rprogcoord rownumsel numcommits
     global have_tk85 use_ttk NS
+    global git_version
+    global worddiff
 
     # The "mc" arguments here are purely so that xgettext
     # sees the following string as needing to be translated
@@ -2243,6 +2260,15 @@ proc makewindow {} {
     ${NS}::checkbutton .bleft.mid.ignspace -text [mc "Ignore space change"] \
 	-command changeignorespace -variable ignorespace
     pack .bleft.mid.ignspace -side left -padx 5
+
+    set worddiff [mc "Line diff"]
+    if {[package vcompare $git_version "1.7.2"] >= 0} {
+	makedroplist .bleft.mid.worddiff worddiff [mc "Line diff"] \
+	    [mc "Markup words"] [mc "Color words"]
+	trace add variable worddiff write changeworddiff
+	pack .bleft.mid.worddiff -side left -padx 5
+    }
+
     set ctext .bleft.bottom.ctext
     text $ctext -background $bgcolor -foreground $fgcolor \
 	-state disabled -font textfont \
@@ -2451,6 +2477,7 @@ proc makewindow {} {
     global ctxbut
     bind $cflist $ctxbut {pop_flist_menu %W %X %Y %x %y}
     bind $ctext $ctxbut {pop_diff_menu %W %X %Y %x %y}
+    bind $ctext <Button-1> {focus %W}
 
     set maincursor [. cget -cursor]
     set textcursor [$ctext cget -cursor]
@@ -7301,6 +7328,7 @@ proc getblobline {bf id} {
 			    [lindex [split $commentend .] 0]}]
 	    mark_ctext_line $lnum
 	}
+	$ctext config -state disabled
 	return 0
     }
     $ctext config -state disabled
@@ -7502,11 +7530,16 @@ proc changeignorespace {} {
     reselectline
 }
 
+proc changeworddiff {name ix op} {
+    reselectline
+}
+
 proc getblobdiffs {ids} {
     global blobdifffd diffids env
     global diffinhdr treediffs
     global diffcontext
     global ignorespace
+    global worddiff
     global limitdiffs vfilelimit curview
     global diffencoding targetline diffnparents
     global git_version currdiffsubmod
@@ -7522,6 +7555,9 @@ proc getblobdiffs {ids} {
     set cmd [diffcmd $ids "-p $textconv $submodule  -C --cc --no-commit-id -U$diffcontext"]
     if {$ignorespace} {
 	append cmd " -w"
+    }
+    if {$worddiff ne [mc "Line diff"]} {
+	append cmd " --word-diff=porcelain"
     }
     if {$limitdiffs && $vfilelimit($curview) ne {}} {
 	set cmd [concat $cmd -- $vfilelimit($curview)]
@@ -7608,6 +7644,7 @@ proc getblobdiffline {bdf ids} {
     global ctext_file_names ctext_file_lines
     global diffinhdr treediffs mergemax diffnparents
     global diffencoding jump_to_here targetline diffline currdiffsubmod
+    global worddiff
 
     set nr 0
     $ctext conf -state normal
@@ -7747,15 +7784,28 @@ proc getblobdiffline {bdf ids} {
 	    # parse the prefix - one ' ', '-' or '+' for each parent
 	    set prefix [string range $line 0 [expr {$diffnparents - 1}]]
 	    set tag [expr {$diffnparents > 1? "m": "d"}]
+	    set dowords [expr {$worddiff ne [mc "Line diff"] && $diffnparents == 1}]
+	    set words_pre_markup ""
+	    set words_post_markup ""
 	    if {[string trim $prefix " -+"] eq {}} {
 		# prefix only has " ", "-" and "+" in it: normal diff line
 		set num [string first "-" $prefix]
+		if {$dowords} {
+		    set line [string range $line 1 end]
+		}
 		if {$num >= 0} {
 		    # removed line, first parent with line is $num
 		    if {$num >= $mergemax} {
 			set num "max"
 		    }
-		    $ctext insert end "$line\n" $tag$num
+		    if {$dowords && $worddiff eq [mc "Markup words"]} {
+			$ctext insert end "\[-$line-\]" $tag$num
+		    } else {
+			$ctext insert end "$line" $tag$num
+		    }
+		    if {!$dowords} {
+			$ctext insert end "\n" $tag$num
+		    }
 		} else {
 		    set tags {}
 		    if {[string first "+" $prefix] >= 0} {
@@ -7770,6 +7820,8 @@ proc getblobdiffline {bdf ids} {
 				lappend tags m$num
 			    }
 			}
+			set words_pre_markup "{+"
+			set words_post_markup "+}"
 		    }
 		    if {$targetline ne {}} {
 			if {$diffline == $targetline} {
@@ -7779,8 +7831,17 @@ proc getblobdiffline {bdf ids} {
 			    incr diffline
 			}
 		    }
-		    $ctext insert end "$line\n" $tags
+		    if {$dowords && $worddiff eq [mc "Markup words"]} {
+			$ctext insert end "$words_pre_markup$line$words_post_markup" $tags
+		    } else {
+			$ctext insert end "$line" $tags
+		    }
+		    if {!$dowords} {
+			$ctext insert end "\n" $tags
+		    }
 		}
+	    } elseif {$dowords && $prefix eq "~"} {
+		$ctext insert end "\n" {}
 	    } else {
 		# "\ No newline at end of file",
 		# or something else we don't recognize
@@ -11391,6 +11452,7 @@ if {[tk windowingsystem] eq "win32"} {
 set diffcolors {red "#00a000" blue}
 set diffcontext 3
 set ignorespace 0
+set worddiff ""
 set markbgcolor "#e0e0ff"
 
 set circlecolors {white blue gray blue blue}
@@ -11520,6 +11582,11 @@ set use_ttk [expr {$have_ttk && $want_ttk}]
 set NS [expr {$use_ttk ? "ttk" : ""}]
 
 set git_version [join [lrange [split [lindex [exec git version] end] .] 0 2] .]
+
+set show_notes {}
+if {[package vcompare $git_version "1.6.6.2"] >= 0} {
+    set show_notes "--show-notes"
+}
 
 set runq {}
 set history {}
