@@ -1061,7 +1061,6 @@ case $(uname -s) in
 	;;
 *CYGWIN*)
 	test_set_prereq POSIXPERM
-	test_set_prereq BSLASHPSPEC
 	test_set_prereq EXECKEEPSPID
 	test_set_prereq NOT_MINGW
 	test_set_prereq SED_STRIPS_CR
