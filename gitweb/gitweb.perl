@@ -1230,7 +1230,7 @@ sub href {
 		$href =~ s,/$,,;
 
 		# Then add the project name, if present
-		$href .= "/".esc_url($params{'project'});
+		$href .= "/".esc_path_info($params{'project'});
 		delete $params{'project'};
 
 		# since we destructively absorb parameters, we keep this
@@ -1240,7 +1240,8 @@ sub href {
 		# Summary just uses the project path URL, any other action is
 		# added to the URL
 		if (defined $params{'action'}) {
-			$href .= "/".esc_url($params{'action'}) unless $params{'action'} eq 'summary';
+			$href .= "/".esc_path_info($params{'action'})
+				unless $params{'action'} eq 'summary';
 			delete $params{'action'};
 		}
 
@@ -1250,13 +1251,13 @@ sub href {
 			|| $params{'hash_parent'} || $params{'hash'});
 		if (defined $params{'hash_base'}) {
 			if (defined $params{'hash_parent_base'}) {
-				$href .= esc_url($params{'hash_parent_base'});
+				$href .= esc_path_info($params{'hash_parent_base'});
 				# skip the file_parent if it's the same as the file_name
 				if (defined $params{'file_parent'}) {
 					if (defined $params{'file_name'} && $params{'file_parent'} eq $params{'file_name'}) {
 						delete $params{'file_parent'};
 					} elsif ($params{'file_parent'} !~ /\.\./) {
-						$href .= ":/".esc_url($params{'file_parent'});
+						$href .= ":/".esc_path_info($params{'file_parent'});
 						delete $params{'file_parent'};
 					}
 				}
@@ -1264,19 +1265,19 @@ sub href {
 				delete $params{'hash_parent'};
 				delete $params{'hash_parent_base'};
 			} elsif (defined $params{'hash_parent'}) {
-				$href .= esc_url($params{'hash_parent'}). "..";
+				$href .= esc_path_info($params{'hash_parent'}). "..";
 				delete $params{'hash_parent'};
 			}
 
-			$href .= esc_url($params{'hash_base'});
+			$href .= esc_path_info($params{'hash_base'});
 			if (defined $params{'file_name'} && $params{'file_name'} !~ /\.\./) {
-				$href .= ":/".esc_url($params{'file_name'});
+				$href .= ":/".esc_path_info($params{'file_name'});
 				delete $params{'file_name'};
 			}
 			delete $params{'hash'};
 			delete $params{'hash_base'};
 		} elsif (defined $params{'hash'}) {
-			$href .= esc_url($params{'hash'});
+			$href .= esc_path_info($params{'hash'});
 			delete $params{'hash'};
 		}
 
@@ -1308,6 +1309,9 @@ sub href {
 		}
 	}
 	$href .= "?" . join(';', @result) if scalar @result;
+
+	# final transformation: trailing spaces must be escaped (URI-encoded)
+	$href =~ s/(\s+)$/CGI::escape($1)/e;
 
 	return $href;
 }
@@ -1388,6 +1392,17 @@ sub esc_param {
 	return undef unless defined $str;
 	$str =~ s/([^A-Za-z0-9\-_.~()\/:@ ]+)/CGI::escape($1)/eg;
 	$str =~ s/ /\+/g;
+	return $str;
+}
+
+# the quoting rules for path_info fragment are slightly different
+sub esc_path_info {
+	my $str = shift;
+	return undef unless defined $str;
+
+	# path_info doesn't treat '+' as space (specially), but '?' must be escaped
+	$str =~ s/([^A-Za-z0-9\-_.~();\/;:@&= +]+)/CGI::escape($1)/eg;
+
 	return $str;
 }
 
