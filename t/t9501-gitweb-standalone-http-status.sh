@@ -16,7 +16,7 @@ code and message.'
 # snapshot settings
 
 test_expect_success 'setup' "
-	test_commit 'SnapshotTests' 'i can has snapshot?'
+	test_commit 'SnapshotTests' 'i can has snapshot'
 "
 
 
