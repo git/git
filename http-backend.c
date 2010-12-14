@@ -510,9 +510,7 @@ static char* getdir(void)
 			die("GIT_PROJECT_ROOT is set but PATH_INFO is not");
 		if (daemon_avoid_alias(pathinfo))
 			die("'%s': aliased", pathinfo);
-		strbuf_addstr(&buf, root);
-		if (buf.buf[buf.len - 1] != '/')
-			strbuf_addch(&buf, '/');
+		end_url_with_slash(&buf, root);
 		if (pathinfo[0] == '/')
 			pathinfo++;
 		strbuf_addstr(&buf, pathinfo);
