@@ -81,6 +81,11 @@ then
 			break
 		fi
 	done
+	if test -z "$SVN_HTTPD_PATH"
+	then
+		skip_all='skipping git svn tests, Apache not found'
+		test_done
+	fi
 	for d in \
 		"$SVN_HTTPD_MODULE_PATH" \
 		/usr/lib/apache2/modules \
@@ -92,6 +97,11 @@ then
 			break
 		fi
 	done
+	if test -z "$SVN_HTTPD_MODULE_PATH"
+	then
+		skip_all='skipping git svn tests, Apache module dir not found'
+		test_done
+	fi
 fi
 
 start_httpd () {
