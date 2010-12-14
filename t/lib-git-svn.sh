@@ -68,28 +68,31 @@ svn_cmd () {
 	svn "$orig_svncmd" --config-dir "$svnconf" "$@"
 }
 
-for d in \
-	"$SVN_HTTPD_PATH" \
-	/usr/sbin/apache2 \
-	/usr/sbin/httpd \
-; do
-	if test -f "$d"
-	then
-		SVN_HTTPD_PATH="$d"
-		break
-	fi
-done
-for d in \
-	"$SVN_HTTPD_MODULE_PATH" \
-	/usr/lib/apache2/modules \
-	/usr/libexec/apache2 \
-; do
-	if test -d "$d"
-	then
-		SVN_HTTPD_MODULE_PATH="$d"
-		break
-	fi
-done
+if test -n "$SVN_HTTPD_PORT"
+then
+	for d in \
+		"$SVN_HTTPD_PATH" \
+		/usr/sbin/apache2 \
+		/usr/sbin/httpd \
+	; do
+		if test -f "$d"
+		then
+			SVN_HTTPD_PATH="$d"
+			break
+		fi
+	done
+	for d in \
+		"$SVN_HTTPD_MODULE_PATH" \
+		/usr/lib/apache2/modules \
+		/usr/libexec/apache2 \
+	; do
+		if test -d "$d"
+		then
+			SVN_HTTPD_MODULE_PATH="$d"
+			break
+		fi
+	done
+fi
 
 start_httpd () {
 	repo_base_path="$1"
