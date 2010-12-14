@@ -297,10 +297,13 @@ void svndump_read(const char *url)
 
 	reset_dump_ctx(pool_intern(url));
 	while ((t = buffer_read_line(&input))) {
-		val = strstr(t, ": ");
+		val = strchr(t, ':');
 		if (!val)
 			continue;
-		val += 2;
+		val++;
+		if (*val != ' ')
+			continue;
+		val++;
 
 		/* strlen(key) + 1 */
 		switch (val - t - 1) {
