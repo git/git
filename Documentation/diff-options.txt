@@ -230,7 +230,7 @@ eligible for being picked up as a possible source of a rename to
 another file.
 
 -M[<n>]::
---detect-renames[=<n>]::
+--find-renames[=<n>]::
 ifndef::git-log[]
 	Detect renames.
 endif::git-log[]
@@ -246,7 +246,7 @@ endif::git-log[]
 	hasn't changed.
 
 -C[<n>]::
---detect-copies[=<n>]::
+--find-copies[=<n>]::
 	Detect copies as well as renames.  See also `--find-copies-harder`.
 	If `n` is specified, it has the same meaning as for `-M<n>`.
 
