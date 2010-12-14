@@ -98,8 +98,9 @@ include::merge-options.txt[]
 	fetched, the rebase uses that information to avoid rebasing
 	non-local changes.
 +
-See `branch.<name>.rebase` in linkgit:git-config[1] if you want to make
-`git pull` always use `{litdd}rebase` instead of merging.
+See `branch.<name>.rebase` and `branch.autosetuprebase` in
+linkgit:git-config[1] if you want to make `git pull` always use
+`{litdd}rebase` instead of merging.
 +
 [NOTE]
 This is a potentially _dangerous_ mode of operation.
