@@ -64,6 +64,7 @@ with custom merge tool commands and has the same value as `$MERGED`.
 	Specify a custom command for viewing diffs.
 	'git-difftool' ignores the configured defaults and runs
 	`$command $LOCAL $REMOTE` when this option is specified.
+	Additionally, `$BASE` is set in the environment.
 
 -g::
 --gui::
