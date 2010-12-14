@@ -55,8 +55,9 @@ the configured command line will be invoked with the following
 variables available: `$LOCAL` is set to the name of the temporary
 file containing the contents of the diff pre-image and `$REMOTE`
 is set to the name of the temporary file containing the contents
-of the diff post-image.  `$BASE` is provided for compatibility
-with custom merge tool commands and has the same value as `$LOCAL`.
+of the diff post-image.  `$MERGED` is the name of the file which is
+being compared. `$BASE` is provided for compatibility
+with custom merge tool commands and has the same value as `$MERGED`.
 
 -x <command>::
 --extcmd=<command>::
