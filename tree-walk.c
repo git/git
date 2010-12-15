@@ -456,6 +456,90 @@ int get_tree_entry(const unsigned char *tree_sha1, const char *name, unsigned ch
 	return retval;
 }
 
+static int match_entry(const struct name_entry *entry, int pathlen,
+		       const char *match, int matchlen,
+		       int *never_interesting)
+{
+	int m = -1; /* signals that we haven't called strncmp() */
+
+	if (*never_interesting) {
+		/*
+		 * We have not seen any match that sorts later
+		 * than the current path.
+		 */
+
+		/*
+		 * Does match sort strictly earlier than path
+		 * with their common parts?
+		 */
+		m = strncmp(match, entry->path,
+			    (matchlen < pathlen) ? matchlen : pathlen);
+		if (m < 0)
+			return 0;
+
+		/*
+		 * If we come here even once, that means there is at
+		 * least one pathspec that would sort equal to or
+		 * later than the path we are currently looking at.
+		 * In other words, if we have never reached this point
+		 * after iterating all pathspecs, it means all
+		 * pathspecs are either outside of base, or inside the
+		 * base but sorts strictly earlier than the current
+		 * one.  In either case, they will never match the
+		 * subsequent entries.  In such a case, we initialized
+		 * the variable to -1 and that is what will be
+		 * returned, allowing the caller to terminate early.
+		 */
+		*never_interesting = 0;
+	}
+
+	if (pathlen > matchlen)
+		return 0;
+
+	if (matchlen > pathlen) {
+		if (match[pathlen] != '/')
+			return 0;
+		if (!S_ISDIR(entry->mode))
+			return 0;
+	}
+
+	if (m == -1)
+		/*
+		 * we cheated and did not do strncmp(), so we do
+		 * that here.
+		 */
+		m = strncmp(match, entry->path, pathlen);
+
+	/*
+	 * If common part matched earlier then it is a hit,
+	 * because we rejected the case where path is not a
+	 * leading directory and is shorter than match.
+	 */
+	if (!m)
+		return 1;
+
+	return 0;
+}
+
+static int match_dir_prefix(const char *base, int baselen,
+			    const char *match, int matchlen)
+{
+	if (strncmp(base, match, matchlen))
+		return 0;
+
+	/*
+	 * If the base is a subdirectory of a path which
+	 * was specified, all of them are interesting.
+	 */
+	if (!matchlen ||
+	    base[matchlen] == '/' ||
+	    match[matchlen - 1] == '/')
+		return 1;
+
+	/* Just a random prefix match */
+	return 0;
+}
+
 /*
  * Is a tree entry interesting given the pathspec we have?
  *
@@ -468,13 +552,12 @@ int get_tree_entry(const unsigned char *tree_sha1, const char *name, unsigned ch
  *  - negative for "no, and no subsequent entries will be either"
  */
 int tree_entry_interesting(const struct name_entry *entry,
-			   const struct strbuf *base_buf,
+			   const struct strbuf *base,
 			   const struct pathspec *ps)
 {
 	int i;
-	int pathlen, baselen = base_buf->len;
+	int pathlen, baselen = base->len;
 	int never_interesting = -1;
-	const char *base = base_buf->buf;
 
 	if (!ps || !ps->nr)
 		return 2;
@@ -485,88 +568,21 @@ int tree_entry_interesting(const struct name_entry *entry,
 		const struct pathspec_item *item = ps->items+i;
 		const char *match = item->match;
 		int matchlen = item->len;
-		int m = -1; /* signals that we haven't called strncmp() */
 
 		if (baselen >= matchlen) {
 			/* If it doesn't match, move along... */
-			if (strncmp(base, match, matchlen))
+			if (!match_dir_prefix(base->buf, baselen, match, matchlen))
 				continue;
-
-			/*
-			 * If the base is a subdirectory of a path which
-			 * was specified, all of them are interesting.
-			 */
-			if (!matchlen ||
-			    base[matchlen] == '/' ||
-			    match[matchlen - 1] == '/')
-				return 2;
-
-			/* Just a random prefix match */
-			continue;
+			return 2;
 		}
 
 		/* Does the base match? */
-		if (strncmp(base, match, baselen))
-			continue;
-
-		match += baselen;
-		matchlen -= baselen;
-
-		if (never_interesting) {
-			/*
-			 * We have not seen any match that sorts later
-			 * than the current path.
-			 */
-
-			/*
-			 * Does match sort strictly earlier than path
-			 * with their common parts?
-			 */
-			m = strncmp(match, entry->path,
-				    (matchlen < pathlen) ? matchlen : pathlen);
-			if (m < 0)
-				continue;
-
-			/*
-			 * If we come here even once, that means there is at
-			 * least one pathspec that would sort equal to or
-			 * later than the path we are currently looking at.
-			 * In other words, if we have never reached this point
-			 * after iterating all pathspecs, it means all
-			 * pathspecs are either outside of base, or inside the
-			 * base but sorts strictly earlier than the current
-			 * one.  In either case, they will never match the
-			 * subsequent entries.  In such a case, we initialized
-			 * the variable to -1 and that is what will be
-			 * returned, allowing the caller to terminate early.
-			 */
-			never_interesting = 0;
+		if (!strncmp(base->buf, match, baselen)) {
+			if (match_entry(entry, pathlen,
+					match + baselen, matchlen - baselen,
+					&never_interesting))
+				return 1;
 		}
-
-		if (pathlen > matchlen)
-			continue;
-
-		if (matchlen > pathlen) {
-			if (match[pathlen] != '/')
-				continue;
-			if (!S_ISDIR(entry->mode))
-				continue;
-		}
-
-		if (m == -1)
-			/*
-			 * we cheated and did not do strncmp(), so we do
-			 * that here.
-			 */
-			m = strncmp(match, entry->path, pathlen);
-
-		/*
-		 * If common part matched earlier then it is a hit,
-		 * because we rejected the case where path is not a
-		 * leading directory and is shorter than match.
-		 */
-		if (!m)
-			return 1;
 	}
 	return never_interesting; /* No matches */
 }
