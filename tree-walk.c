@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "tree-walk.h"
 #include "unpack-trees.h"
+#include "dir.h"
 #include "tree.h"
 
 static const char *get_mode(const char *str, unsigned int *modep)
@@ -559,8 +560,13 @@ int tree_entry_interesting(const struct name_entry *entry,
 	int pathlen, baselen = base->len;
 	int never_interesting = -1;
 
-	if (!ps || !ps->nr)
-		return 2;
+	if (!ps->nr) {
+		if (!ps->recursive || ps->max_depth == -1)
+			return 2;
+		return !!within_depth(base->buf, baselen,
+				      !!S_ISDIR(entry->mode),
+				      ps->max_depth);
+	}
 
 	pathlen = tree_entry_len(entry->path, entry->sha1);
 
@@ -573,7 +579,14 @@ int tree_entry_interesting(const struct name_entry *entry,
 			/* If it doesn't match, move along... */
 			if (!match_dir_prefix(base->buf, baselen, match, matchlen))
 				continue;
-			return 2;
+
+			if (!ps->recursive || ps->max_depth == -1)
+				return 2;
+
+			return !!within_depth(base->buf + matchlen + 1,
+					      baselen - matchlen - 1,
+					      !!S_ISDIR(entry->mode),
+					      ps->max_depth);
 		}
 
 		/* Does the base match? */

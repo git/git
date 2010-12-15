@@ -87,6 +87,21 @@ int fill_directory(struct dir_struct *dir, const char **pathspec)
 	return len;
 }
 
+int within_depth(const char *name, int namelen,
+			int depth, int max_depth)
+{
+	const char *cp = name, *cpe = name + namelen;
+
+	while (cp < cpe) {
+		if (*cp++ != '/')
+			continue;
+		depth++;
+		if (depth > max_depth)
+			return 0;
+	}
+	return 1;
+}
+
 /*
  * Does 'match' match the given name?
  * A match is found if
