@@ -182,6 +182,24 @@ do
 		test_cmp expected actual
 	'
 
+	test_expect_success "grep --max-depth 0 -- . t $L" '
+		{
+			echo ${HC}t/v:1:vvv
+			echo ${HC}v:1:vvv
+		} >expected &&
+		git grep --max-depth 0 -n -e vvv $H -- . t >actual &&
+		test_cmp expected actual
+	'
+
+	test_expect_success "grep --max-depth 0 -- t . $L" '
+		{
+			echo ${HC}t/v:1:vvv
+			echo ${HC}v:1:vvv
+		} >expected &&
+		git grep --max-depth 0 -n -e vvv $H -- t . >actual &&
+		test_cmp expected actual
+	'
+
 done
 
 cat >expected <<EOF
