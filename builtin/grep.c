@@ -581,7 +581,7 @@ static void run_pager(struct grep_opt *opt, const char *prefix)
 	free(argv);
 }
 
-static int grep_cache(struct grep_opt *opt, const char **paths, int cached)
+static int grep_cache(struct grep_opt *opt, const struct pathspec *pathspec, int cached)
 {
 	int hit = 0;
 	int nr;
@@ -591,7 +591,7 @@ static int grep_cache(struct grep_opt *opt, const char **paths, int cached)
 		struct cache_entry *ce = active_cache[nr];
 		if (!S_ISREG(ce->ce_mode))
 			continue;
-		if (!pathspec_matches(paths, ce->name, opt->max_depth))
+		if (!pathspec_matches(pathspec->raw, ce->name, opt->max_depth))
 			continue;
 		/*
 		 * If CE_VALID is on, we assume worktree file and its cache entry
@@ -618,7 +618,7 @@ static int grep_cache(struct grep_opt *opt, const char **paths, int cached)
 	return hit;
 }
 
-static int grep_tree(struct grep_opt *opt, const char **paths,
+static int grep_tree(struct grep_opt *opt, const struct pathspec *pathspec,
 		     struct tree_desc *tree,
 		     const char *tree_name, const char *base)
 {
@@ -652,7 +652,7 @@ static int grep_tree(struct grep_opt *opt, const char **paths,
 			strbuf_addch(&pathbuf, '/');
 
 		down = pathbuf.buf + tn_len;
-		if (!pathspec_matches(paths, down, opt->max_depth))
+		if (!pathspec_matches(pathspec->raw, down, opt->max_depth))
 			;
 		else if (S_ISREG(entry.mode))
 			hit |= grep_sha1(opt, entry.sha1, pathbuf.buf, tn_len);
@@ -667,7 +667,7 @@ static int grep_tree(struct grep_opt *opt, const char **paths,
 				die("unable to read tree (%s)",
 				    sha1_to_hex(entry.sha1));
 			init_tree_desc(&sub, data, size);
-			hit |= grep_tree(opt, paths, &sub, tree_name, down);
+			hit |= grep_tree(opt, pathspec, &sub, tree_name, down);
 			free(data);
 		}
 		if (hit && opt->status_only)
@@ -677,7 +677,7 @@ static int grep_tree(struct grep_opt *opt, const char **paths,
 	return hit;
 }
 
-static int grep_object(struct grep_opt *opt, const char **paths,
+static int grep_object(struct grep_opt *opt, const struct pathspec *pathspec,
 		       struct object *obj, const char *name)
 {
 	if (obj->type == OBJ_BLOB)
@@ -692,14 +692,14 @@ static int grep_object(struct grep_opt *opt, const char **paths,
 		if (!data)
 			die("unable to read tree (%s)", sha1_to_hex(obj->sha1));
 		init_tree_desc(&tree, data, size);
-		hit = grep_tree(opt, paths, &tree, name, "");
+		hit = grep_tree(opt, pathspec, &tree, name, "");
 		free(data);
 		return hit;
 	}
 	die("unable to grep from object of type %s", typename(obj->type));
 }
 
-static int grep_objects(struct grep_opt *opt, const char **paths,
+static int grep_objects(struct grep_opt *opt, const struct pathspec *pathspec,
 			const struct object_array *list)
 {
 	unsigned int i;
@@ -709,7 +709,7 @@ static int grep_objects(struct grep_opt *opt, const char **paths,
 	for (i = 0; i < nr; i++) {
 		struct object *real_obj;
 		real_obj = deref_tag(list->objects[i].item, NULL, 0);
-		if (grep_object(opt, paths, real_obj, list->objects[i].name)) {
+		if (grep_object(opt, pathspec, real_obj, list->objects[i].name)) {
 			hit = 1;
 			if (opt->status_only)
 				break;
@@ -718,7 +718,7 @@ static int grep_objects(struct grep_opt *opt, const char **paths,
 	return hit;
 }
 
-static int grep_directory(struct grep_opt *opt, const char **paths)
+static int grep_directory(struct grep_opt *opt, const struct pathspec *pathspec)
 {
 	struct dir_struct dir;
 	int i, hit = 0;
@@ -726,7 +726,7 @@ static int grep_directory(struct grep_opt *opt, const char **paths)
 	memset(&dir, 0, sizeof(dir));
 	setup_standard_excludes(&dir);
 
-	fill_directory(&dir, paths);
+	fill_directory(&dir, pathspec->raw);
 	for (i = 0; i < dir.nr; i++) {
 		hit |= grep_file(opt, dir.entries[i]->name);
 		if (hit && opt->status_only)
@@ -832,6 +832,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	struct grep_opt opt;
 	struct object_array list = OBJECT_ARRAY_INIT;
 	const char **paths = NULL;
+	struct pathspec pathspec;
 	struct string_list path_list = STRING_LIST_INIT_NODUP;
 	int i;
 	int dummy;
@@ -1059,6 +1060,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		paths[0] = prefix;
 		paths[1] = NULL;
 	}
+	init_pathspec(&pathspec, paths);
 
 	if (show_in_pager && (cached || list.nr))
 		die("--open-files-in-pager only works on the worktree");
@@ -1089,16 +1091,16 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 			die("--cached cannot be used with --no-index.");
 		if (list.nr)
 			die("--no-index cannot be used with revs.");
-		hit = grep_directory(&opt, paths);
+		hit = grep_directory(&opt, &pathspec);
 	} else if (!list.nr) {
 		if (!cached)
 			setup_work_tree();
 
-		hit = grep_cache(&opt, paths, cached);
+		hit = grep_cache(&opt, &pathspec, cached);
 	} else {
 		if (cached)
 			die("both --cached and trees are given.");
-		hit = grep_objects(&opt, paths, &list);
+		hit = grep_objects(&opt, &pathspec, &list);
 	}
 
 	if (use_threads)
