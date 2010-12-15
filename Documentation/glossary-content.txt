@@ -273,6 +273,29 @@ This commit is referred to as a "merge commit", or sometimes just a
 	<<def_pack,pack>>, to assist in efficiently accessing the contents of a
 	pack.
 
+[[def_pathspec]]pathspec::
+       Pattern used to specify paths.
++
+Pathspecs are used on the command line of "git ls-files", "git
+ls-tree", "git grep", "git checkout", and many other commands to
+limit the scope of operations to some subset of the tree or
+worktree.  See the documentation of each command for whether
+paths are relative to the current directory or toplevel.  The
+pathspec syntax is as follows:
+
+* any path matches itself
+* the pathspec up to the last slash represents a
+  directory prefix.  The scope of that pathspec is
+  limited to that subtree.
+* the rest of the pathspec is a pattern for the remainder
+  of the pathname.  Paths relative to the directory
+  prefix will be matched against that pattern using fnmatch(3);
+  in particular, '*' and '?' _can_ match directory separators.
++
+For example, Documentation/*.jpg will match all .jpg files
+in the Documentation subtree,
+including Documentation/chapter_1/figure_1.jpg.
+
 [[def_parent]]parent::
 	A <<def_commit_object,commit object>> contains a (possibly empty) list
 	of the logical predecessor(s) in the line of development, i.e. its
