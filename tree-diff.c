@@ -152,6 +152,10 @@ int diff_tree(struct tree_desc *t1, struct tree_desc *t2,
 	struct strbuf base;
 	int baselen = strlen(base_str);
 
+	/* Enable recursion indefinitely */
+	opt->pathspec.recursive = DIFF_OPT_TST(opt, RECURSIVE);
+	opt->pathspec.max_depth = -1;
+
 	strbuf_init(&base, PATH_MAX);
 	strbuf_add(&base, base_str, baselen);
 
