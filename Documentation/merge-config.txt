@@ -7,13 +7,25 @@ merge.conflictstyle::
 	marker and the original text before the `=======` marker.
 
 merge.log::
-	Whether to include summaries of merged commits in newly created
-	merge commit messages. False by default.
+	In addition to branch names, populate the log message with at
+	most the specified number of one-line descriptions from the
+	actual commits that are being merged.  Defaults to false, and
+	true is a synoym for 20.
 
 merge.renameLimit::
 	The number of files to consider when performing rename detection
 	during a merge; if not specified, defaults to the value of
 	diff.renameLimit.
+
+merge.renormalize::
+	Tell git that canonical representation of files in the
+	repository has changed over time (e.g. earlier commits record
+	text files with CRLF line endings, but recent ones use LF line
+	endings).  In such a repository, git can convert the data
+	recorded in commits to a canonical form before performing a
+	merge to reduce unnecessary conflicts.  For more information,
+	see section "Merging branches with differing checkin/checkout
+	attributes" in linkgit:gitattributes[5].
 
 merge.stat::
 	Whether to print the diffstat between ORIG_HEAD and the merge result

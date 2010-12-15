@@ -12,7 +12,7 @@ SYNOPSIS
 'git update-index'
 	     [--add] [--remove | --force-remove] [--replace]
 	     [--refresh] [-q] [--unmerged] [--ignore-missing]
-	     [--cacheinfo <mode> <object> <file>]\*
+	     [(--cacheinfo <mode> <object> <file>)...]
 	     [--chmod=(+|-)x]
 	     [--assume-unchanged | --no-assume-unchanged]
 	     [--skip-worktree | --no-skip-worktree]
@@ -21,7 +21,7 @@ SYNOPSIS
 	     [--info-only] [--index-info]
 	     [-z] [--stdin]
 	     [--verbose]
-	     [--] [<file>]\*
+	     [--] [<file>...]
 
 DESCRIPTION
 -----------
@@ -144,8 +144,8 @@ you will need to handle the situation manually.
         Report what is being added and removed from index.
 
 -z::
-	Only meaningful with `--stdin`; paths are separated with
-	NUL character instead of LF.
+	Only meaningful with `--stdin` or `--index-info`; paths are
+	separated with NUL character instead of LF.
 
 \--::
 	Do not interpret any more arguments as options.

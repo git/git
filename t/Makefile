@@ -8,6 +8,7 @@
 
 #GIT_TEST_OPTS=--verbose --debug
 SHELL_PATH ?= $(SHELL)
+PERL_PATH ?= /usr/bin/perl
 TAR ?= $(TAR)
 RM ?= rm -f
 
@@ -28,8 +29,8 @@ pre-clean:
 
 clean:
 	$(RM) -r 'trash directory'.* test-results
-	$(RM) t????/cvsroot/CVSROOT/?*
 	$(RM) -r valgrind/bin
+	$(RM) .prove
 
 aggregate-results-and-cleanup: $(T)
 	$(MAKE) aggregate-results
@@ -48,4 +49,42 @@ full-svn-test:
 valgrind:
 	GIT_TEST_OPTS=--valgrind $(MAKE)
 
-.PHONY: pre-clean $(T) aggregate-results clean valgrind
+# Smoke testing targets
+-include ../GIT-VERSION-FILE
+uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo unknown')
+uname_M := $(shell sh -c 'uname -m 2>/dev/null || echo unknown')
+
+test-results:
+	mkdir -p test-results
+
+test-results/git-smoke.tar.gz: test-results
+	$(PERL_PATH) ./harness \
+		--archive="test-results/git-smoke.tar.gz" \
+		$(T)
+
+smoke: test-results/git-smoke.tar.gz
+
+SMOKE_UPLOAD_FLAGS =
+ifdef SMOKE_USERNAME
+	SMOKE_UPLOAD_FLAGS += -F username="$(SMOKE_USERNAME)" -F password="$(SMOKE_PASSWORD)"
+endif
+ifdef SMOKE_COMMENT
+	SMOKE_UPLOAD_FLAGS += -F comments="$(SMOKE_COMMENT)"
+endif
+ifdef SMOKE_TAGS
+	SMOKE_UPLOAD_FLAGS += -F tags="$(SMOKE_TAGS)"
+endif
+
+smoke_report: smoke
+	curl \
+		-H "Expect: " \
+		-F project=Git \
+		-F architecture="$(uname_M)" \
+		-F platform="$(uname_S)" \
+		-F revision="$(GIT_VERSION)" \
+		-F report_file=@test-results/git-smoke.tar.gz \
+		$(SMOKE_UPLOAD_FLAGS) \
+		http://smoke.git.nix.is/app/projects/process_add_report/1 \
+	| grep -v ^Redirecting
+
+.PHONY: pre-clean $(T) aggregate-results clean valgrind smoke smoke_report

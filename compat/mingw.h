@@ -6,17 +6,30 @@
  */
 
 typedef int pid_t;
+typedef int uid_t;
 #define hstrerror strerror
 
 #define S_IFLNK    0120000 /* Symbolic link */
 #define S_ISLNK(x) (((x) & S_IFMT) == S_IFLNK)
 #define S_ISSOCK(x) 0
+
+#ifndef _STAT_H_
+#define S_IRUSR 0
+#define S_IWUSR 0
+#define S_IXUSR 0
+#define S_IRWXU (S_IRUSR | S_IWUSR | S_IXUSR)
+#endif
 #define S_IRGRP 0
 #define S_IWGRP 0
 #define S_IXGRP 0
-#define S_ISGID 0
+#define S_IRWXG (S_IRGRP | S_IWGRP | S_IXGRP)
 #define S_IROTH 0
+#define S_IWOTH 0
 #define S_IXOTH 0
+#define S_IRWXO (S_IROTH | S_IWOTH | S_IXOTH)
+#define S_ISUID 0
+#define S_ISGID 0
+#define S_ISVTX 0
 
 #define WIFEXITED(x) 1
 #define WIFSIGNALED(x) 0
@@ -66,6 +79,12 @@ struct itimerval {
 #define ITIMER_REAL 0
 
 /*
+ * sanitize preprocessor namespace polluted by Windows headers defining
+ * macros which collide with git local versions
+ */
+#undef HELP_COMMAND /* from winuser.h */
+
+/*
  * trivial stubs
  */
 
@@ -75,17 +94,17 @@ static inline int symlink(const char *oldpath, const char *newpath)
 { errno = ENOSYS; return -1; }
 static inline int fchmod(int fildes, mode_t mode)
 { errno = ENOSYS; return -1; }
-static inline int fork(void)
+static inline pid_t fork(void)
 { errno = ENOSYS; return -1; }
 static inline unsigned int alarm(unsigned int seconds)
 { return 0; }
 static inline int fsync(int fd)
 { return _commit(fd); }
-static inline int getppid(void)
+static inline pid_t getppid(void)
 { return 1; }
 static inline void sync(void)
 {}
-static inline int getuid()
+static inline uid_t getuid(void)
 { return 1; }
 static inline struct passwd *getpwnam(const char *name)
 { return NULL; }
@@ -117,7 +136,7 @@ static inline int mingw_unlink(const char *pathname)
 }
 #define unlink mingw_unlink
 
-static inline int waitpid(pid_t pid, int *status, unsigned options)
+static inline pid_t waitpid(pid_t pid, int *status, unsigned options)
 {
 	if (options == 0)
 		return _cwait(status, pid, 0);
@@ -158,7 +177,7 @@ int poll(struct pollfd *ufds, unsigned int nfds, int timeout);
 struct tm *gmtime_r(const time_t *timep, struct tm *result);
 struct tm *localtime_r(const time_t *timep, struct tm *result);
 int getpagesize(void);	/* defined in MinGW's libgcc.a */
-struct passwd *getpwuid(int uid);
+struct passwd *getpwuid(uid_t uid);
 int setitimer(int type, struct itimerval *in, struct itimerval *out);
 int sigaction(int sig, struct sigaction *in, struct sigaction *out);
 int link(const char *oldpath, const char *newpath);
@@ -222,10 +241,11 @@ int mingw_getpagesize(void);
 #ifndef ALREADY_DECLARED_STAT_FUNCS
 #define stat _stati64
 int mingw_lstat(const char *file_name, struct stat *buf);
+int mingw_stat(const char *file_name, struct stat *buf);
 int mingw_fstat(int fd, struct stat *buf);
 #define fstat mingw_fstat
 #define lstat mingw_lstat
-#define _stati64(x,y) mingw_lstat(x,y)
+#define _stati64(x,y) mingw_stat(x,y)
 #endif
 
 int mingw_utime(const char *file_name, const struct utimbuf *times);
@@ -236,6 +256,8 @@ pid_t mingw_spawnvpe(const char *cmd, const char **argv, char **env,
 		     int fhin, int fhout, int fherr);
 void mingw_execvp(const char *cmd, char *const *argv);
 #define execvp mingw_execvp
+void mingw_execv(const char *cmd, char *const *argv);
+#define execv mingw_execv
 
 static inline unsigned int git_ntohl(unsigned int x)
 { return (unsigned int)ntohl(x); }

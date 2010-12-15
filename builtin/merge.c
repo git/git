@@ -42,7 +42,7 @@ static const char * const builtin_merge_usage[] = {
 	NULL
 };
 
-static int show_diffstat = 1, option_log, squash;
+static int show_diffstat = 1, shortlog_len, squash;
 static int option_commit = 1, allow_fast_forward = 1;
 static int fast_forward_only;
 static int allow_trivial = 1, have_message;
@@ -54,6 +54,7 @@ static size_t use_strategies_nr, use_strategies_alloc;
 static const char **xopts;
 static size_t xopts_nr, xopts_alloc;
 static const char *branch;
+static int option_renormalize;
 static int verbosity;
 static int allow_rerere_auto;
 
@@ -131,6 +132,7 @@ static struct strategy *get_strategy(const char *name)
 
 	ret = xcalloc(1, sizeof(struct strategy));
 	ret->name = xstrdup(name);
+	ret->attr = NO_TRIVIAL;
 	return ret;
 }
 
@@ -175,8 +177,9 @@ static struct option builtin_merge_options[] = {
 	OPT_BOOLEAN(0, "stat", &show_diffstat,
 		"show a diffstat at the end of the merge"),
 	OPT_BOOLEAN(0, "summary", &show_diffstat, "(synonym to --stat)"),
-	OPT_BOOLEAN(0, "log", &option_log,
-		"add list of one-line log to merge commit message"),
+	{ OPTION_INTEGER, 0, "log", &shortlog_len, "n",
+	  "add (at most <n>) entries from shortlog to merge commit message",
+	  PARSE_OPT_OPTARG, NULL, DEFAULT_MERGE_LOG_LEN },
 	OPT_BOOLEAN(0, "squash", &squash,
 		"create a single commit instead of doing a merge"),
 	OPT_BOOLEAN(0, "commit", &option_commit,
@@ -437,7 +440,7 @@ static void merge_name(const char *remote, struct strbuf *msg)
 		strbuf_addstr(&truname, "refs/heads/");
 		strbuf_addstr(&truname, remote);
 		strbuf_setlen(&truname, truname.len - len);
-		if (resolve_ref(truname.buf, buf_sha, 0, NULL)) {
+		if (resolve_ref(truname.buf, buf_sha, 1, NULL)) {
 			strbuf_addf(msg,
 				    "%s\t\tbranch '%s'%s of .\n",
 				    sha1_to_hex(remote_head->sha1),
@@ -486,7 +489,8 @@ static int git_merge_config(const char *k, const char *v, void *cb)
 		buf = xstrdup(v);
 		argc = split_cmdline(buf, &argv);
 		if (argc < 0)
-			die("Bad branch.%s.mergeoptions string", branch);
+			die("Bad branch.%s.mergeoptions string: %s", branch,
+			    split_cmdline_strerror(argc));
 		argv = xrealloc(argv, sizeof(*argv) * (argc + 2));
 		memmove(argv + 1, argv, sizeof(*argv) * (argc + 1));
 		argc++;
@@ -501,8 +505,17 @@ static int git_merge_config(const char *k, const char *v, void *cb)
 		return git_config_string(&pull_twohead, k, v);
 	else if (!strcmp(k, "pull.octopus"))
 		return git_config_string(&pull_octopus, k, v);
-	else if (!strcmp(k, "merge.log") || !strcmp(k, "merge.summary"))
-		option_log = git_config_bool(k, v);
+	else if (!strcmp(k, "merge.renormalize"))
+		option_renormalize = git_config_bool(k, v);
+	else if (!strcmp(k, "merge.log") || !strcmp(k, "merge.summary")) {
+		int is_bool;
+		shortlog_len = git_config_bool_or_int(k, v, &is_bool);
+		if (!is_bool && shortlog_len < 0)
+			return error("%s: negative length %s", k, v);
+		if (is_bool && shortlog_len)
+			shortlog_len = DEFAULT_MERGE_LOG_LEN;
+		return 0;
+	}
 	return git_diff_ui_config(k, v, cb);
 }
 
@@ -624,18 +637,11 @@ static int try_merge_strategy(const char *strategy, struct commit_list *common,
 		if (!strcmp(strategy, "subtree"))
 			o.subtree_shift = "";
 
-		for (x = 0; x < xopts_nr; x++) {
-			if (!strcmp(xopts[x], "ours"))
-				o.recursive_variant = MERGE_RECURSIVE_OURS;
-			else if (!strcmp(xopts[x], "theirs"))
-				o.recursive_variant = MERGE_RECURSIVE_THEIRS;
-			else if (!strcmp(xopts[x], "subtree"))
-				o.subtree_shift = "";
-			else if (!prefixcmp(xopts[x], "subtree="))
-				o.subtree_shift = xopts[x]+8;
-			else
+		o.renormalize = option_renormalize;
+
+		for (x = 0; x < xopts_nr; x++)
+			if (parse_merge_opt(&o, xopts[x]))
 				die("Unknown option for merge-recursive: -X%s", xopts[x]);
-		}
 
 		o.branch1 = head_arg;
 		o.branch2 = remoteheads->item->util;
@@ -704,7 +710,7 @@ int checkout_fast_forward(const unsigned char *head, const unsigned char *remote
 	opts.verbose_update = 1;
 	opts.merge = 1;
 	opts.fn = twoway_merge;
-	opts.msgs = get_porcelain_error_msgs();
+	setup_unpack_trees_porcelain(&opts, "merge");
 
 	trees[nr_trees] = parse_tree_indirect(head);
 	if (!trees[nr_trees++])
@@ -816,7 +822,7 @@ static int finish_automerge(struct commit_list *common,
 	return 0;
 }
 
-static int suggest_conflicts(void)
+static int suggest_conflicts(int renormalizing)
 {
 	FILE *fp;
 	int pos;
@@ -998,14 +1004,12 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		for (i = 0; i < argc; i++)
 			merge_name(argv[i], &merge_names);
 
-		if (have_message && option_log)
-			fmt_merge_msg_shortlog(&merge_names, &merge_msg);
-		else if (!have_message)
-			fmt_merge_msg(option_log, &merge_names, &merge_msg);
-
-
-		if (!(have_message && !option_log) && merge_msg.len)
-			strbuf_setlen(&merge_msg, merge_msg.len-1);
+		if (!have_message || shortlog_len) {
+			fmt_merge_msg(&merge_names, &merge_msg, !have_message,
+				      shortlog_len);
+			if (merge_msg.len)
+				strbuf_setlen(&merge_msg, merge_msg.len - 1);
+		}
 	}
 
 	if (head_invalid || !argc)
@@ -1301,5 +1305,5 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 			"stopped before committing as requested\n");
 		return 0;
 	} else
-		return suggest_conflicts();
+		return suggest_conflicts(option_renormalize);
 }

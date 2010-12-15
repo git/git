@@ -14,6 +14,7 @@ Testing basic merge tool invocation'
 # running mergetool
 
 test_expect_success 'setup' '
+    git config rerere.enabled true &&
     echo master >file1 &&
     mkdir subdir &&
     echo master sub >subdir/file3 &&
@@ -67,23 +68,47 @@ test_expect_success 'mergetool crlf' '
 '
 
 test_expect_success 'mergetool in subdir' '
-    git checkout -b test3 branch1
-    cd subdir && (
-    test_must_fail git merge master >/dev/null 2>&1 &&
-    ( yes "" | git mergetool file3 >/dev/null 2>&1 ) &&
-    test "$(cat file3)" = "master new sub" )
+    git checkout -b test3 branch1 &&
+    (
+	cd subdir &&
+	test_must_fail git merge master >/dev/null 2>&1 &&
+	( yes "" | git mergetool file3 >/dev/null 2>&1 ) &&
+	test "$(cat file3)" = "master new sub"
+    )
 '
 
-# We can't merge files from parent directories when running mergetool
-# from a subdir. Is this a bug?
-#
-#test_expect_failure 'mergetool in subdir' '
-#    cd subdir && (
-#    ( yes "" | git mergetool ../file1 >/dev/null 2>&1 ) &&
-#    ( yes "" | git mergetool ../file2 >/dev/null 2>&1 ) &&
-#    test "$(cat ../file1)" = "master updated" &&
-#    test "$(cat ../file2)" = "master new" &&
-#    git commit -m "branch1 resolved with mergetool - subdir" )
-#'
+test_expect_success 'mergetool on file in parent dir' '
+    (
+	cd subdir &&
+	( yes "" | git mergetool ../file1 >/dev/null 2>&1 ) &&
+	( yes "" | git mergetool ../file2 >/dev/null 2>&1 ) &&
+	test "$(cat ../file1)" = "master updated" &&
+	test "$(cat ../file2)" = "master new" &&
+	git commit -m "branch1 resolved with mergetool - subdir"
+    )
+'
+
+test_expect_success 'mergetool skips autoresolved' '
+    git checkout -b test4 branch1 &&
+    test_must_fail git merge master &&
+    test -n "$(git ls-files -u)" &&
+    output="$(git mergetool --no-prompt)" &&
+    test "$output" = "No files need merging" &&
+    git reset --hard
+'
+
+test_expect_success 'mergetool merges all from subdir' '
+    (
+	cd subdir &&
+	git config rerere.enabled false &&
+	test_must_fail git merge master &&
+	git mergetool --no-prompt &&
+	test "$(cat ../file1)" = "master updated" &&
+	test "$(cat ../file2)" = "master new" &&
+	test "$(cat file3)" = "master new sub" &&
+	git add ../file1 ../file2 file3 &&
+	git commit -m "branch2 resolved by mergetool from subdir"
+    )
+'
 
 test_done

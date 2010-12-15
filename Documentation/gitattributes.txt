@@ -62,14 +62,21 @@ consults `$GIT_DIR/info/attributes` file (which has the highest
 precedence), `.gitattributes` file in the same directory as the
 path in question, and its parent directories up to the toplevel of the
 work tree (the further the directory that contains `.gitattributes`
-is from the path in question, the lower its precedence).
+is from the path in question, the lower its precedence). Finally
+global and system-wide files are considered (they have the lowest
+precedence).
 
 If you wish to affect only a single repository (i.e., to assign
-attributes to files that are particular to one user's workflow), then
+attributes to files that are particular to
+one user's workflow for that repository), then
 attributes should be placed in the `$GIT_DIR/info/attributes` file.
 Attributes which should be version-controlled and distributed to other
 repositories (i.e., attributes of interest to all users) should go into
-`.gitattributes` files.
+`.gitattributes` files. Attributes that should affect all repositories
+for a single user should be placed in a file specified by the
+`core.attributesfile` configuration option (see linkgit:git-config[1]).
+Attributes for all users on a system should be placed in the
+`$(prefix)/etc/gitattributes` file.
 
 Sometimes you would need to override an setting of an attribute
 for a path to `unspecified` state.  This can be done by listing
@@ -317,6 +324,17 @@ command is "cat").
 	smudge = cat
 ------------------------
 
+For best results, `clean` should not alter its output further if it is
+run twice ("clean->clean" should be equivalent to "clean"), and
+multiple `smudge` commands should not alter `clean`'s output
+("smudge->smudge->clean" should be equivalent to "clean").  See the
+section on merging below.
+
+The "indent" filter is well-behaved in this regard: it will not modify
+input that is already correctly indented.  In this case, the lack of a
+smudge filter means that the clean filter _must_ accept its own output
+without modifying it.
+
 
 Interaction between checkin/checkout attributes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -329,6 +347,29 @@ and applicable).
 
 In the check-out codepath, the blob content is first converted
 with `text`, and then `ident` and fed to `filter`.
+
+
+Merging branches with differing checkin/checkout attributes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If you have added attributes to a file that cause the canonical
+repository format for that file to change, such as adding a
+clean/smudge filter or text/eol/ident attributes, merging anything
+where the attribute is not in place would normally cause merge
+conflicts.
+
+To prevent these unnecessary merge conflicts, git can be told to run a
+virtual check-out and check-in of all three stages of a file when
+resolving a three-way merge by setting the `merge.renormalize`
+configuration variable.  This prevents changes caused by check-in
+conversion from causing spurious merge conflicts when a converted file
+is merged with an unconverted file.
+
+As long as a "smudge->clean" results in the same output as a "clean"
+even on files that are already smudged, this strategy will
+automatically resolve all filter-related conflicts.  Filters that do
+not act in this way may cause additional merge conflicts that must be
+resolved manually.
 
 
 Generating diff text
@@ -440,6 +481,10 @@ patterns are available:
 - `bibtex` suitable for files with BibTeX coded references.
 
 - `cpp` suitable for source code in the C and C++ languages.
+
+- `csharp` suitable for source code in the C# language.
+
+- `fortran` suitable for source code in the Fortran language.
 
 - `html` suitable for HTML/XHTML documents.
 

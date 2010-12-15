@@ -151,17 +151,14 @@ get_author_ident_from_commit () {
 		s/'\''/'\''\\'\'\''/g
 		h
 		s/^author \([^<]*\) <[^>]*> .*$/\1/
-		s/'\''/'\''\'\'\''/g
 		s/.*/GIT_AUTHOR_NAME='\''&'\''/p
 
 		g
 		s/^author [^<]* <\([^>]*\)> .*$/\1/
-		s/'\''/'\''\'\'\''/g
 		s/.*/GIT_AUTHOR_EMAIL='\''&'\''/p
 
 		g
 		s/^author [^<]* <[^>]*> \(.*\)$/\1/
-		s/'\''/'\''\'\'\''/g
 		s/.*/GIT_AUTHOR_DATE='\''&'\''/p
 
 		q
@@ -209,5 +206,20 @@ case $(uname -s) in
 	find () {
 		/usr/bin/find "$@"
 	}
+	is_absolute_path () {
+		case "$1" in
+		[/\\]* | [A-Za-z]:*)
+			return 0 ;;
+		esac
+		return 1
+	}
 	;;
+*)
+	is_absolute_path () {
+		case "$1" in
+		/*)
+			return 0 ;;
+		esac
+		return 1
+	}
 esac

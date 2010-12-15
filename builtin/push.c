@@ -22,13 +22,13 @@ static int progress;
 
 static const char **refspec;
 static int refspec_nr;
+static int refspec_alloc;
 
 static void add_refspec(const char *ref)
 {
-	int nr = refspec_nr + 1;
-	refspec = xrealloc(refspec, nr * sizeof(char *));
-	refspec[nr-1] = ref;
-	refspec_nr = nr;
+	refspec_nr++;
+	ALLOC_GROW(refspec, refspec_nr, refspec_alloc);
+	refspec[refspec_nr-1] = ref;
 }
 
 static void set_refspecs(const char **refs, int nr)

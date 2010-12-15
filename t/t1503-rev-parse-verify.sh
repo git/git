@@ -104,4 +104,15 @@ test_expect_success 'use --default' '
 	test_must_fail git rev-parse --verify --default bar
 '
 
+test_expect_success 'master@{n} for various n' '
+	N=$(git reflog | wc -l) &&
+	Nm1=$(($N-1)) &&
+	Np1=$(($N+1)) &&
+	git rev-parse --verify master@{0} &&
+	git rev-parse --verify master@{1} &&
+	git rev-parse --verify master@{$Nm1} &&
+	test_must_fail git rev-parse --verify master@{$N} &&
+	test_must_fail git rev-parse --verify master@{$Np1}
+'
+
 test_done

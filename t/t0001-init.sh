@@ -171,8 +171,6 @@ test_expect_success 'init with init.templatedir set' '
 	mkdir templatedir-source &&
 	echo Content >templatedir-source/file &&
 	(
-		HOME="`pwd`" &&
-		export HOME &&
 		test_config="${HOME}/.gitconfig" &&
 		git config -f "$test_config"  init.templatedir "${HOME}/templatedir-source" &&
 		mkdir templatedir-set &&
@@ -188,8 +186,6 @@ test_expect_success 'init with init.templatedir set' '
 
 test_expect_success 'init --bare/--shared overrides system/global config' '
 	(
-		HOME="`pwd`" &&
-		export HOME &&
 		test_config="$HOME"/.gitconfig &&
 		unset GIT_CONFIG_NOGLOBAL &&
 		git config -f "$test_config" core.bare false &&
@@ -205,8 +201,6 @@ test_expect_success 'init --bare/--shared overrides system/global config' '
 
 test_expect_success 'init honors global core.sharedRepository' '
 	(
-		HOME="`pwd`" &&
-		export HOME &&
 		test_config="$HOME"/.gitconfig &&
 		unset GIT_CONFIG_NOGLOBAL &&
 		git config -f "$test_config" core.sharedRepository 0666 &&
@@ -301,7 +295,7 @@ test_expect_success 'init notices EEXIST (2)' '
 	)
 '
 
-test_expect_success POSIXPERM 'init notices EPERM' '
+test_expect_success POSIXPERM,SANITY 'init notices EPERM' '
 	rm -fr newdir &&
 	(
 		mkdir newdir &&

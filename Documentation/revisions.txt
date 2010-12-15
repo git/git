@@ -107,11 +107,13 @@ the `$GIT_DIR/refs` directory or from the `$GIT_DIR/packed-refs` file.
   found.
 
 * A colon, followed by a slash, followed by a text (e.g. `:/fix nasty bug`): this names
-  a commit whose commit message starts with the specified text.
+  a commit whose commit message matches the specified regular expression.
   This name returns the youngest matching commit which is
   reachable from any ref.  If the commit message starts with a
   '!', you have to repeat that;  the special sequence ':/!',
   followed by something else than '!' is reserved for now.
+  The regular expression can match any part of the commit message. To
+  match messages starting with a string, one can use e.g. `:/^foo`.
 
 * A suffix ':' followed by a path (e.g. `HEAD:README`); this names the blob or tree
   at the given path in the tree-ish object named by the part

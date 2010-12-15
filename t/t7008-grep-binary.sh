@@ -5,7 +5,7 @@ test_description='git grep in binary files'
 . ./test-lib.sh
 
 test_expect_success 'setup' "
-	printf 'binary\000file\n' >a &&
+	echo 'binaryQfile' | q_to_nul >a &&
 	git add a &&
 	git commit -m.
 "
@@ -61,7 +61,7 @@ test_expect_success 'git grep -Fi iLE a' '
 
 # This test actually passes on platforms where regexec() supports the
 # flag REG_STARTEND.
-test_expect_failure 'git grep ile a' '
+test_expect_success 'git grep ile a' '
 	git grep ile a
 '
 
@@ -70,32 +70,32 @@ test_expect_failure 'git grep .fi a' '
 '
 
 test_expect_success 'git grep -F y<NUL>f a' "
-	printf 'y\000f' >f &&
+	printf 'yQf' | q_to_nul >f &&
 	git grep -f f -F a
 "
 
 test_expect_success 'git grep -F y<NUL>x a' "
-	printf 'y\000x' >f &&
+	printf 'yQx' | q_to_nul >f &&
 	test_must_fail git grep -f f -F a
 "
 
 test_expect_success 'git grep -Fi Y<NUL>f a' "
-	printf 'Y\000f' >f &&
+	printf 'YQf' | q_to_nul >f &&
 	git grep -f f -Fi a
 "
 
 test_expect_failure 'git grep -Fi Y<NUL>x a' "
-	printf 'Y\000x' >f &&
+	printf 'YQx' | q_to_nul >f &&
 	test_must_fail git grep -f f -Fi a
 "
 
 test_expect_success 'git grep y<NUL>f a' "
-	printf 'y\000f' >f &&
+	printf 'yQf' | q_to_nul >f &&
 	git grep -f f a
 "
 
 test_expect_failure 'git grep y<NUL>x a' "
-	printf 'y\000x' >f &&
+	printf 'yQx' | q_to_nul >f &&
 	test_must_fail git grep -f f a
 "
 

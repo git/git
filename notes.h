@@ -89,8 +89,10 @@ void add_note(struct notes_tree *t, const unsigned char *object_sha1,
  * IMPORTANT: The changes made by remove_note() to the given notes_tree
  * structure are not persistent until a subsequent call to write_notes_tree()
  * returns zero.
+ *
+ * Return 0 if a note was removed; 1 if there was no note to remove.
  */
-void remove_note(struct notes_tree *t, const unsigned char *object_sha1);
+int remove_note(struct notes_tree *t, const unsigned char *object_sha1);
 
 /*
  * Get the note object SHA1 containing the note data for the given object

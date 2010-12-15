@@ -28,22 +28,6 @@ embedded' &&
      git commit -m 'add files with tabs and newlines'
 "
 
-# Determine rm behavior
-# Later we will try removing an unremovable path to make sure
-# git rm barfs, but if the test is run as root that cannot be
-# arranged.
-: >test-file
-chmod a-w .
-rm -f test-file 2>/dev/null
-if test -f test-file
-then
-	test_set_prereq RO_DIR
-else
-	skip_all='skipping removal failure test (perhaps running as root?)'
-fi
-chmod 775 .
-rm -f test-file
-
 test_expect_success \
     'Pre-check that foo exists and is in index before git rm foo' \
     '[ -f foo ] && git ls-files --error-unmatch foo'

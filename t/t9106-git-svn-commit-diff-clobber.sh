@@ -6,21 +6,23 @@ test_description='git svn commit-diff clobber'
 
 test_expect_success 'initialize repo' '
 	mkdir import &&
-	cd import &&
-	echo initial > file &&
-	svn_cmd import -m "initial" . "$svnrepo" &&
-	cd .. &&
+	(
+		cd import &&
+		echo initial >file &&
+		svn_cmd import -m "initial" . "$svnrepo"
+	) &&
 	echo initial > file &&
 	git update-index --add file &&
 	git commit -a -m "initial"
 	'
 test_expect_success 'commit change from svn side' '
 	svn_cmd co "$svnrepo" t.svn &&
-	cd t.svn &&
-	echo second line from svn >> file &&
-	poke file &&
-	svn_cmd commit -m "second line from svn" &&
-	cd .. &&
+	(
+		cd t.svn &&
+		echo second line from svn >>file &&
+		poke file &&
+		svn_cmd commit -m "second line from svn"
+	) &&
 	rm -rf t.svn
 	'
 
@@ -44,11 +46,12 @@ test_expect_success 'dcommit fails to commit because of conflict' '
 	git svn fetch &&
 	git reset --hard refs/${remotes_git_svn} &&
 	svn_cmd co "$svnrepo" t.svn &&
-	cd t.svn &&
-	echo fourth line from svn >> file &&
-	poke file &&
-	svn_cmd commit -m "fourth line from svn" &&
-	cd .. &&
+	(
+		cd t.svn &&
+		echo fourth line from svn >>file &&
+		poke file &&
+		svn_cmd commit -m "fourth line from svn"
+	) &&
 	rm -rf t.svn &&
 	echo "fourth line from git" >> file &&
 	git commit -a -m "fourth line from git" &&
@@ -68,11 +71,12 @@ test_expect_success 'dcommit does the svn equivalent of an index merge' "
 
 test_expect_success 'commit another change from svn side' '
 	svn_cmd co "$svnrepo" t.svn &&
-	cd t.svn &&
-		echo third line from svn >> file &&
+	(
+		cd t.svn &&
+		echo third line from svn >>file &&
 		poke file &&
-		svn_cmd commit -m "third line from svn" &&
-	cd .. &&
+		svn_cmd commit -m "third line from svn"
+	) &&
 	rm -rf t.svn
 	'
 

@@ -294,11 +294,26 @@ static int create_default_files(const char *template_path)
 	return reinit;
 }
 
+static void create_object_directory(void)
+{
+	const char *object_directory = get_object_directory();
+	int len = strlen(object_directory);
+	char *path = xmalloc(len + 40);
+
+	memcpy(path, object_directory, len);
+
+	safe_create_dir(object_directory, 1);
+	strcpy(path+len, "/pack");
+	safe_create_dir(path, 1);
+	strcpy(path+len, "/info");
+	safe_create_dir(path, 1);
+
+	free(path);
+}
+
 int init_db(const char *template_dir, unsigned int flags)
 {
-	const char *sha1_dir;
-	char *path;
-	int len, reinit;
+	int reinit;
 
 	safe_create_dir(get_git_dir(), 0);
 
@@ -313,16 +328,7 @@ int init_db(const char *template_dir, unsigned int flags)
 
 	reinit = create_default_files(template_dir);
 
-	sha1_dir = get_object_directory();
-	len = strlen(sha1_dir);
-	path = xmalloc(len + 40);
-	memcpy(path, sha1_dir, len);
-
-	safe_create_dir(sha1_dir, 1);
-	strcpy(path+len, "/pack");
-	safe_create_dir(path, 1);
-	strcpy(path+len, "/info");
-	safe_create_dir(path, 1);
+	create_object_directory();
 
 	if (shared_repository) {
 		char buf[10];

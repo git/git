@@ -31,6 +31,7 @@ static const char *external_diff_cmd_cfg;
 int diff_auto_refresh_index = 1;
 static int diff_mnemonic_prefix;
 static int diff_no_prefix;
+static struct diff_options default_diff_options;
 
 static char diff_colors[][COLOR_MAXLEN] = {
 	GIT_COLOR_RESET,
@@ -107,6 +108,9 @@ int git_diff_ui_config(const char *var, const char *value, void *cb)
 	if (!strcmp(var, "diff.wordregex"))
 		return git_config_string(&diff_word_regex_cfg, var, value);
 
+	if (!strcmp(var, "diff.ignoresubmodules"))
+		handle_ignore_submodules_arg(&default_diff_options, value);
+
 	return git_diff_basic_config(var, value, cb);
 }
 
@@ -140,6 +144,9 @@ int git_diff_basic_config(const char *var, const char *value, void *cb)
 		diff_suppress_blank_empty = git_config_bool(var, value);
 		return 0;
 	}
+
+	if (!prefixcmp(var, "submodule."))
+		return parse_submodule_config_option(var, value);
 
 	return git_color_default_config(var, value, cb);
 }
@@ -2822,7 +2829,7 @@ static void run_checkdiff(struct diff_filepair *p, struct diff_options *o)
 
 void diff_setup(struct diff_options *options)
 {
-	memset(options, 0, sizeof(*options));
+	memcpy(options, &default_diff_options, sizeof(*options));
 
 	options->file = stdout;
 
@@ -2998,9 +3005,100 @@ static int opt_arg(const char *arg, int arg_short, const char *arg_long, int *va
 
 static int diff_scoreopt_parse(const char *opt);
 
+static inline int short_opt(char opt, const char **argv,
+			    const char **optarg)
+{
+	const char *arg = argv[0];
+	if (arg[0] != '-' || arg[1] != opt)
+		return 0;
+	if (arg[2] != '\0') {
+		*optarg = arg + 2;
+		return 1;
+	}
+	if (!argv[1])
+		die("Option '%c' requires a value", opt);
+	*optarg = argv[1];
+	return 2;
+}
+
+int parse_long_opt(const char *opt, const char **argv,
+		   const char **optarg)
+{
+	const char *arg = argv[0];
+	if (arg[0] != '-' || arg[1] != '-')
+		return 0;
+	arg += strlen("--");
+	if (prefixcmp(arg, opt))
+		return 0;
+	arg += strlen(opt);
+	if (*arg == '=') { /* sticked form: --option=value */
+		*optarg = arg + 1;
+		return 1;
+	}
+	if (*arg != '\0')
+		return 0;
+	/* separate form: --option value */
+	if (!argv[1])
+		die("Option '--%s' requires a value", opt);
+	*optarg = argv[1];
+	return 2;
+}
+
+static int stat_opt(struct diff_options *options, const char **av)
+{
+	const char *arg = av[0];
+	char *end;
+	int width = options->stat_width;
+	int name_width = options->stat_name_width;
+	int argcount = 1;
+
+	arg += strlen("--stat");
+	end = (char *)arg;
+
+	switch (*arg) {
+	case '-':
+		if (!prefixcmp(arg, "-width")) {
+			arg += strlen("-width");
+			if (*arg == '=')
+				width = strtoul(arg + 1, &end, 10);
+			else if (!*arg && !av[1])
+				die("Option '--stat-width' requires a value");
+			else if (!*arg) {
+				width = strtoul(av[1], &end, 10);
+				argcount = 2;
+			}
+		} else if (!prefixcmp(arg, "-name-width")) {
+			arg += strlen("-name-width");
+			if (*arg == '=')
+				name_width = strtoul(arg + 1, &end, 10);
+			else if (!*arg && !av[1])
+				die("Option '--stat-name-width' requires a value");
+			else if (!*arg) {
+				name_width = strtoul(av[1], &end, 10);
+				argcount = 2;
+			}
+		}
+		break;
+	case '=':
+		width = strtoul(arg+1, &end, 10);
+		if (*end == ',')
+			name_width = strtoul(end+1, &end, 10);
+	}
+
+	/* Important! This checks all the error cases! */
+	if (*end)
+		return 0;
+	options->output_format |= DIFF_FORMAT_DIFFSTAT;
+	options->stat_name_width = name_width;
+	options->stat_width = width;
+	return argcount;
+}
+
 int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 {
 	const char *arg = av[0];
+	const char *optarg;
+	int argcount;
 
 	/* Output format options */
 	if (!strcmp(arg, "-p") || !strcmp(arg, "-u") || !strcmp(arg, "--patch"))
@@ -3037,45 +3135,24 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 		options->output_format |= DIFF_FORMAT_NAME_STATUS;
 	else if (!strcmp(arg, "-s"))
 		options->output_format |= DIFF_FORMAT_NO_OUTPUT;
-	else if (!prefixcmp(arg, "--stat")) {
-		char *end;
-		int width = options->stat_width;
-		int name_width = options->stat_name_width;
-		arg += 6;
-		end = (char *)arg;
-
-		switch (*arg) {
-		case '-':
-			if (!prefixcmp(arg, "-width="))
-				width = strtoul(arg + 7, &end, 10);
-			else if (!prefixcmp(arg, "-name-width="))
-				name_width = strtoul(arg + 12, &end, 10);
-			break;
-		case '=':
-			width = strtoul(arg+1, &end, 10);
-			if (*end == ',')
-				name_width = strtoul(end+1, &end, 10);
-		}
-
-		/* Important! This checks all the error cases! */
-		if (*end)
-			return 0;
-		options->output_format |= DIFF_FORMAT_DIFFSTAT;
-		options->stat_name_width = name_width;
-		options->stat_width = width;
-	}
+	else if (!prefixcmp(arg, "--stat"))
+		/* --stat, --stat-width, or --stat-name-width */
+		return stat_opt(options, av);
 
 	/* renames options */
-	else if (!prefixcmp(arg, "-B")) {
+	else if (!prefixcmp(arg, "-B") || !prefixcmp(arg, "--break-rewrites=") ||
+		 !strcmp(arg, "--break-rewrites")) {
 		if ((options->break_opt = diff_scoreopt_parse(arg)) == -1)
 			return -1;
 	}
-	else if (!prefixcmp(arg, "-M")) {
+	else if (!prefixcmp(arg, "-M") || !prefixcmp(arg, "--detect-renames=") ||
+		 !strcmp(arg, "--detect-renames")) {
 		if ((options->rename_score = diff_scoreopt_parse(arg)) == -1)
 			return -1;
 		options->detect_rename = DIFF_DETECT_RENAME;
 	}
-	else if (!prefixcmp(arg, "-C")) {
+	else if (!prefixcmp(arg, "-C") || !prefixcmp(arg, "--detect-copies=") ||
+		 !strcmp(arg, "--detect-copies")) {
 		if (options->detect_rename == DIFF_DETECT_COPY)
 			DIFF_OPT_SET(options, FIND_COPIES_HARDER);
 		if ((options->rename_score = diff_scoreopt_parse(arg)) == -1)
@@ -3157,10 +3234,11 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 		else
 			die("bad --word-diff argument: %s", type);
 	}
-	else if (!prefixcmp(arg, "--word-diff-regex=")) {
+	else if ((argcount = parse_long_opt("word-diff-regex", av, &optarg))) {
 		if (options->word_diff == DIFF_WORDS_NONE)
 			options->word_diff = DIFF_WORDS_PLAIN;
-		options->word_regex = arg + 18;
+		options->word_regex = optarg;
+		return argcount;
 	}
 	else if (!strcmp(arg, "--exit-code"))
 		DIFF_OPT_SET(options, EXIT_WITH_STATUS);
@@ -3174,11 +3252,13 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 		DIFF_OPT_SET(options, ALLOW_TEXTCONV);
 	else if (!strcmp(arg, "--no-textconv"))
 		DIFF_OPT_CLR(options, ALLOW_TEXTCONV);
-	else if (!strcmp(arg, "--ignore-submodules"))
+	else if (!strcmp(arg, "--ignore-submodules")) {
+		DIFF_OPT_SET(options, OVERRIDE_SUBMODULE_CONFIG);
 		handle_ignore_submodules_arg(options, "all");
-	else if (!prefixcmp(arg, "--ignore-submodules="))
+	} else if (!prefixcmp(arg, "--ignore-submodules=")) {
+		DIFF_OPT_SET(options, OVERRIDE_SUBMODULE_CONFIG);
 		handle_ignore_submodules_arg(options, arg + 20);
-	else if (!strcmp(arg, "--submodule"))
+	} else if (!strcmp(arg, "--submodule"))
 		DIFF_OPT_SET(options, SUBMODULE_LOG);
 	else if (!prefixcmp(arg, "--submodule=")) {
 		if (!strcmp(arg + 12, "log"))
@@ -3188,18 +3268,31 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 	/* misc options */
 	else if (!strcmp(arg, "-z"))
 		options->line_termination = 0;
-	else if (!prefixcmp(arg, "-l"))
-		options->rename_limit = strtoul(arg+2, NULL, 10);
-	else if (!prefixcmp(arg, "-S"))
-		options->pickaxe = arg + 2;
+	else if ((argcount = short_opt('l', av, &optarg))) {
+		options->rename_limit = strtoul(optarg, NULL, 10);
+		return argcount;
+	}
+	else if ((argcount = short_opt('S', av, &optarg))) {
+		options->pickaxe = optarg;
+		options->pickaxe_opts |= DIFF_PICKAXE_KIND_S;
+		return argcount;
+	} else if ((argcount = short_opt('G', av, &optarg))) {
+		options->pickaxe = optarg;
+		options->pickaxe_opts |= DIFF_PICKAXE_KIND_G;
+		return argcount;
+	}
 	else if (!strcmp(arg, "--pickaxe-all"))
-		options->pickaxe_opts = DIFF_PICKAXE_ALL;
+		options->pickaxe_opts |= DIFF_PICKAXE_ALL;
 	else if (!strcmp(arg, "--pickaxe-regex"))
-		options->pickaxe_opts = DIFF_PICKAXE_REGEX;
-	else if (!prefixcmp(arg, "-O"))
-		options->orderfile = arg + 2;
-	else if (!prefixcmp(arg, "--diff-filter="))
-		options->filter = arg + 14;
+		options->pickaxe_opts |= DIFF_PICKAXE_REGEX;
+	else if ((argcount = short_opt('O', av, &optarg))) {
+		options->orderfile = optarg;
+		return argcount;
+	}
+	else if ((argcount = parse_long_opt("diff-filter", av, &optarg))) {
+		options->filter = optarg;
+		return argcount;
+	}
 	else if (!strcmp(arg, "--abbrev"))
 		options->abbrev = DEFAULT_ABBREV;
 	else if (!prefixcmp(arg, "--abbrev=")) {
@@ -3209,26 +3302,31 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 		else if (40 < options->abbrev)
 			options->abbrev = 40;
 	}
-	else if (!prefixcmp(arg, "--src-prefix="))
-		options->a_prefix = arg + 13;
-	else if (!prefixcmp(arg, "--dst-prefix="))
-		options->b_prefix = arg + 13;
+	else if ((argcount = parse_long_opt("src-prefix", av, &optarg))) {
+		options->a_prefix = optarg;
+		return argcount;
+	}
+	else if ((argcount = parse_long_opt("dst-prefix", av, &optarg))) {
+		options->b_prefix = optarg;
+		return argcount;
+	}
 	else if (!strcmp(arg, "--no-prefix"))
 		options->a_prefix = options->b_prefix = "";
 	else if (opt_arg(arg, '\0', "inter-hunk-context",
 			 &options->interhunkcontext))
 		;
-	else if (!prefixcmp(arg, "--output=")) {
-		options->file = fopen(arg + strlen("--output="), "w");
+	else if ((argcount = parse_long_opt("output", av, &optarg))) {
+		options->file = fopen(optarg, "w");
 		if (!options->file)
-			die_errno("Could not open '%s'", arg + strlen("--output="));
+			die_errno("Could not open '%s'", optarg);
 		options->close_file = 1;
+		return argcount;
 	} else
 		return 0;
 	return 1;
 }
 
-static int parse_num(const char **cp_p)
+int parse_rename_score(const char **cp_p)
 {
 	unsigned long num, scale;
 	int ch, dot;
@@ -3271,10 +3369,26 @@ static int diff_scoreopt_parse(const char *opt)
 	if (*opt++ != '-')
 		return -1;
 	cmd = *opt++;
+	if (cmd == '-') {
+		/* convert the long-form arguments into short-form versions */
+		if (!prefixcmp(opt, "break-rewrites")) {
+			opt += strlen("break-rewrites");
+			if (*opt == 0 || *opt++ == '=')
+				cmd = 'B';
+		} else if (!prefixcmp(opt, "detect-copies")) {
+			opt += strlen("detect-copies");
+			if (*opt == 0 || *opt++ == '=')
+				cmd = 'C';
+		} else if (!prefixcmp(opt, "detect-renames")) {
+			opt += strlen("detect-renames");
+			if (*opt == 0 || *opt++ == '=')
+				cmd = 'M';
+		}
+	}
 	if (cmd != 'M' && cmd != 'C' && cmd != 'B')
 		return -1; /* that is not a -M, -C nor -B option */
 
-	opt1 = parse_num(&opt);
+	opt1 = parse_rename_score(&opt);
 	if (cmd != 'B')
 		opt2 = 0;
 	else {
@@ -3284,7 +3398,7 @@ static int diff_scoreopt_parse(const char *opt)
 			return -1; /* we expect -B80/99 or -B80 */
 		else {
 			opt++;
-			opt2 = parse_num(&opt);
+			opt2 = parse_rename_score(&opt);
 		}
 	}
 	if (*opt != 0)
@@ -3437,7 +3551,7 @@ static void diff_flush_stat(struct diff_filepair *p, struct diff_options *o,
 
 	if ((DIFF_FILE_VALID(p->one) && S_ISDIR(p->one->mode)) ||
 	    (DIFF_FILE_VALID(p->two) && S_ISDIR(p->two->mode)))
-		return; /* no tree diffs in patch format */
+		return; /* no useful stat for tree diffs */
 
 	run_diffstat(p, o, diffstat);
 }
@@ -3450,7 +3564,7 @@ static void diff_flush_checkdiff(struct diff_filepair *p,
 
 	if ((DIFF_FILE_VALID(p->one) && S_ISDIR(p->one->mode)) ||
 	    (DIFF_FILE_VALID(p->two) && S_ISDIR(p->two->mode)))
-		return; /* no tree diffs in patch format */
+		return; /* nothing to check in tree diffs */
 
 	run_checkdiff(p, o);
 }
@@ -3766,6 +3880,13 @@ static int diff_get_patch_id(struct diff_options *options, unsigned char *sha1)
 					len2, p->two->path);
 		git_SHA1_Update(&ctx, buffer, len1);
 
+		if (diff_filespec_is_binary(p->one) ||
+		    diff_filespec_is_binary(p->two)) {
+			git_SHA1_Update(&ctx, sha1_to_hex(p->one->sha1), 40);
+			git_SHA1_Update(&ctx, sha1_to_hex(p->two->sha1), 40);
+			continue;
+		}
+
 		xpp.flags = 0;
 		xecfg.ctxlen = 3;
 		xecfg.flags = XDL_EMIT_FUNCNAMES;
@@ -4079,7 +4200,7 @@ void diffcore_std(struct diff_options *options)
 			diffcore_merge_broken();
 	}
 	if (options->pickaxe)
-		diffcore_pickaxe(options->pickaxe, options->pickaxe_opts);
+		diffcore_pickaxe(options);
 	if (options->orderfile)
 		diffcore_order(options->orderfile);
 	if (!options->found_follow)
@@ -4110,6 +4231,24 @@ int diff_result_code(struct diff_options *opt, int status)
 	return result;
 }
 
+/*
+ * Shall changes to this submodule be ignored?
+ *
+ * Submodule changes can be configured to be ignored separately for each path,
+ * but that configuration can be overridden from the command line.
+ */
+static int is_submodule_ignored(const char *path, struct diff_options *options)
+{
+	int ignored = 0;
+	unsigned orig_flags = options->flags;
+	if (!DIFF_OPT_TST(options, OVERRIDE_SUBMODULE_CONFIG))
+		set_diffopt_flags_from_submodule_config(options, path);
+	if (DIFF_OPT_TST(options, IGNORE_SUBMODULES))
+		ignored = 1;
+	options->flags = orig_flags;
+	return ignored;
+}
+
 void diff_addremove(struct diff_options *options,
 		    int addremove, unsigned mode,
 		    const unsigned char *sha1,
@@ -4117,7 +4256,7 @@ void diff_addremove(struct diff_options *options,
 {
 	struct diff_filespec *one, *two;
 
-	if (DIFF_OPT_TST(options, IGNORE_SUBMODULES) && S_ISGITLINK(mode))
+	if (S_ISGITLINK(mode) && is_submodule_ignored(concatpath, options))
 		return;
 
 	/* This may look odd, but it is a preparation for
@@ -4164,8 +4303,8 @@ void diff_change(struct diff_options *options,
 {
 	struct diff_filespec *one, *two;
 
-	if (DIFF_OPT_TST(options, IGNORE_SUBMODULES) && S_ISGITLINK(old_mode)
-			&& S_ISGITLINK(new_mode))
+	if (S_ISGITLINK(old_mode) && S_ISGITLINK(new_mode) &&
+	    is_submodule_ignored(concatpath, options))
 		return;
 
 	if (DIFF_OPT_TST(options, REVERSE_DIFF)) {

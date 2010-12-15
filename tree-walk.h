@@ -48,6 +48,7 @@ struct traverse_info {
 	unsigned long conflicts;
 	traverse_callback_t fn;
 	void *data;
+	int show_all_errors;
 };
 
 int get_tree_entry(const unsigned char *, const char *, unsigned char *, unsigned *);

@@ -21,6 +21,11 @@
 #    2) Added the following line to your .bashrc:
 #        source ~/.git-completion.sh
 #
+#       Or, add the following lines to your .zshrc:
+#        autoload bashcompinit
+#        bashcompinit
+#        source ~/.git-completion.sh
+#
 #    3) Consider changing your PS1 to also show the current branch:
 #        PS1='[\u@\h \W$(__git_ps1 " (%s)")]\$ '
 #
@@ -138,11 +143,12 @@ __git_ps1_show_upstream ()
 		# get the upstream from the "git-svn-id: ..." in a commit message
 		# (git-svn uses essentially the same procedure internally)
 		local svn_upstream=($(git log --first-parent -1 \
-					--grep="^git-svn-id: \(${svn_url_pattern:2}\)" 2>/dev/null))
+					--grep="^git-svn-id: \(${svn_url_pattern#??}\)" 2>/dev/null))
 		if [[ 0 -ne ${#svn_upstream[@]} ]]; then
 			svn_upstream=${svn_upstream[ ${#svn_upstream[@]} - 2 ]}
 			svn_upstream=${svn_upstream%@*}
-			for ((n=1; "$n" <= "${#svn_remote[@]}"; ++n)); do
+			local n_stop="${#svn_remote[@]}"
+			for ((n=1; n <= n_stop; ++n)); do
 				svn_upstream=${svn_upstream#${svn_remote[$n]}}
 			done
 
@@ -421,6 +427,7 @@ __git_reassemble_comp_words_by_ref()
 }
 
 if ! type _get_comp_words_by_ref >/dev/null 2>&1; then
+if [[ -z ${ZSH_VERSION:+set} ]]; then
 _get_comp_words_by_ref ()
 {
 	local exclude cur_ words_ cword_
@@ -448,6 +455,32 @@ _get_comp_words_by_ref ()
 		shift
 	done
 }
+else
+_get_comp_words_by_ref ()
+{
+	while [ $# -gt 0 ]; do
+		case "$1" in
+		cur)
+			cur=${COMP_WORDS[COMP_CWORD]}
+			;;
+		prev)
+			prev=${COMP_WORDS[COMP_CWORD-1]}
+			;;
+		words)
+			words=("${COMP_WORDS[@]}")
+			;;
+		cword)
+			cword=$COMP_CWORD
+			;;
+		-n)
+			# assume COMP_WORDBREAKS is already set sanely
+			shift
+			;;
+		esac
+		shift
+	done
+}
+fi
 fi
 
 # __gitcomp accepts 1, 2, 3, or 4 arguments
@@ -1275,7 +1308,7 @@ _git_diff ()
 	case "$cur" in
 	--*)
 		__gitcomp "--cached --staged --pickaxe-all --pickaxe-regex
-			--base --ours --theirs
+			--base --ours --theirs --no-index
 			$__git_diff_common_options
 			"
 		return
@@ -2522,6 +2555,11 @@ _git ()
 {
 	local i c=1 command __git_dir
 
+	if [[ -n ${ZSH_VERSION-} ]]; then
+		emulate -L bash
+		setopt KSH_TYPESET
+	fi
+
 	local cur words cword
 	_get_comp_words_by_ref -n =: cur words cword
 	while [ $c -lt $cword ]; do
@@ -2557,17 +2595,22 @@ _git ()
 	fi
 
 	local completion_func="_git_${command//-/_}"
-	declare -F $completion_func >/dev/null && $completion_func && return
+	declare -f $completion_func >/dev/null && $completion_func && return
 
 	local expansion=$(__git_aliased_command "$command")
 	if [ -n "$expansion" ]; then
 		completion_func="_git_${expansion//-/_}"
-		declare -F $completion_func >/dev/null && $completion_func
+		declare -f $completion_func >/dev/null && $completion_func
 	fi
 }
 
 _gitk ()
 {
+	if [[ -n ${ZSH_VERSION-} ]]; then
+		emulate -L bash
+		setopt KSH_TYPESET
+	fi
+
 	__git_has_doubledash && return
 
 	local cur
@@ -2602,4 +2645,30 @@ complete -o bashdefault -o default -o nospace -F _gitk gitk 2>/dev/null \
 if [ Cygwin = "$(uname -o 2>/dev/null)" ]; then
 complete -o bashdefault -o default -o nospace -F _git git.exe 2>/dev/null \
 	|| complete -o default -o nospace -F _git git.exe
+fi
+
+if [[ -n ${ZSH_VERSION-} ]]; then
+	shopt () {
+		local option
+		if [ $# -ne 2 ]; then
+			echo "USAGE: $0 (-q|-s|-u) <option>" >&2
+			return 1
+		fi
+		case "$2" in
+		nullglob)
+			option="$2"
+			;;
+		*)
+			echo "$0: invalid option: $2" >&2
+			return 1
+		esac
+		case "$1" in
+		-q)	setopt | grep -q "$option" ;;
+		-u)	unsetopt "$option" ;;
+		-s)	setopt "$option" ;;
+		*)
+			echo "$0: invalid flag: $1" >&2
+			return 1
+		esac
+	}
 fi

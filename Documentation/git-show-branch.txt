@@ -12,7 +12,7 @@ SYNOPSIS
 		[--current] [--color[=<when>] | --no-color] [--sparse]
 		[--more=<n> | --list | --independent | --merge-base]
 		[--no-name | --sha1-name] [--topics]
-		[<rev> | <glob>]...
+		[(<rev> | <glob>)...]
 
 'git show-branch' (-g|--reflog)[=<n>[,<base>]] [--list] [<ref>]
 
@@ -32,7 +32,7 @@ no <rev> nor <glob> is given on the command line.
 OPTIONS
 -------
 <rev>::
-	Arbitrary extended SHA1 expression (see linkgit:gitrevisions[1])
+	Arbitrary extended SHA1 expression (see linkgit:gitrevisions[7])
 	that typically names a branch head or a tag.
 
 <glob>::
@@ -168,10 +168,10 @@ $ git show-branch master fixes mhf
 ------------------------------------------------
 
 These three branches all forked from a common commit, [master],
-whose commit message is "Add \'git show-branch\'". The "fixes"
-branch adds one commit "Introduce "reset type" flag to "git reset"".
-The "mhf" branch adds many other commits. The current branch
-is "master".
+whose commit message is "Add {apostrophe}git show-branch{apostrophe}".
+The "fixes" branch adds one commit "Introduce "reset type" flag to
+"git reset"". The "mhf" branch adds many other commits.
+The current branch is "master".
 
 
 EXAMPLE

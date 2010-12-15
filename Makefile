@@ -68,6 +68,8 @@ all::
 #
 # Define NO_MKSTEMPS if you don't have mkstemps in the C library.
 #
+# Define NO_STRTOK_R if you don't have strtok_r in the C library.
+#
 # Define NO_LIBGEN_H if you don't have libgen.h.
 #
 # Define NEEDS_LIBGEN if your libgen needs -lgen when linking
@@ -268,6 +270,7 @@ STRIP ?= strip
 #   infodir
 #   htmldir
 #   ETC_GITCONFIG (but not sysconfdir)
+#   ETC_GITATTRIBUTES
 # can be specified as a relative path some/where/else;
 # this is interpreted as relative to $(prefix) and "git" at
 # runtime figures out where they are based on the path to the executable.
@@ -286,9 +289,11 @@ htmldir = share/doc/git-doc
 ifeq ($(prefix),/usr)
 sysconfdir = /etc
 ETC_GITCONFIG = $(sysconfdir)/gitconfig
+ETC_GITATTRIBUTES = $(sysconfdir)/gitattributes
 else
 sysconfdir = $(prefix)/etc
 ETC_GITCONFIG = etc/gitconfig
+ETC_GITATTRIBUTES = etc/gitattributes
 endif
 lib = lib
 # DESTDIR=
@@ -308,6 +313,7 @@ TCL_PATH = tclsh
 TCLTK_PATH = wish
 PTHREAD_LIBS = -lpthread
 PTHREAD_CFLAGS =
+GCOV = gcov
 
 export TCL_PATH TCLTK_PATH
 
@@ -387,6 +393,8 @@ SCRIPTS = $(patsubst %.sh,%,$(SCRIPT_SH)) \
 	  $(patsubst %.py,%,$(SCRIPT_PYTHON)) \
 	  git-instaweb
 
+ETAGS_TARGET = TAGS
+
 # Empty...
 EXTRA_PROGRAMS =
 
@@ -408,12 +416,17 @@ TEST_PROGRAMS_NEED_X += test-date
 TEST_PROGRAMS_NEED_X += test-delta
 TEST_PROGRAMS_NEED_X += test-dump-cache-tree
 TEST_PROGRAMS_NEED_X += test-genrandom
+TEST_PROGRAMS_NEED_X += test-line-buffer
 TEST_PROGRAMS_NEED_X += test-match-trees
+TEST_PROGRAMS_NEED_X += test-obj-pool
 TEST_PROGRAMS_NEED_X += test-parse-options
 TEST_PROGRAMS_NEED_X += test-path-utils
 TEST_PROGRAMS_NEED_X += test-run-command
 TEST_PROGRAMS_NEED_X += test-sha1
 TEST_PROGRAMS_NEED_X += test-sigchain
+TEST_PROGRAMS_NEED_X += test-string-pool
+TEST_PROGRAMS_NEED_X += test-svn-fe
+TEST_PROGRAMS_NEED_X += test-treap
 TEST_PROGRAMS_NEED_X += test-index-version
 
 TEST_PROGRAMS = $(patsubst %,%$X,$(TEST_PROGRAMS_NEED_X))
@@ -468,6 +481,7 @@ export PYTHON_PATH
 
 LIB_FILE=libgit.a
 XDIFF_LIB=xdiff/lib.a
+VCSSVN_LIB=vcs-svn/lib.a
 
 LIB_H += advice.h
 LIB_H += archive.h
@@ -973,6 +987,7 @@ ifeq ($(uname_S),IRIX)
 	# NO_MMAP.  If you suspect that your compiler is not affected by this
 	# issue, comment out the NO_MMAP statement.
 	NO_MMAP = YesPlease
+	NO_REGEX = YesPlease
 	SNPRINTF_RETURNS_BOGUS = YesPlease
 	SHELL_PATH = /usr/gnu/bin/bash
 	NEEDS_LIBGEN = YesPlease
@@ -991,6 +1006,7 @@ ifeq ($(uname_S),IRIX64)
 	# NO_MMAP.  If you suspect that your compiler is not affected by this
 	# issue, comment out the NO_MMAP statement.
 	NO_MMAP = YesPlease
+	NO_REGEX = YesPlease
 	SNPRINTF_RETURNS_BOGUS = YesPlease
 	SHELL_PATH=/usr/gnu/bin/bash
 	NEEDS_LIBGEN = YesPlease
@@ -1035,6 +1051,7 @@ ifeq ($(uname_S),Windows)
 	NO_UNSETENV = YesPlease
 	NO_STRCASESTR = YesPlease
 	NO_STRLCPY = YesPlease
+	NO_STRTOK_R = YesPlease
 	NO_MEMMEM = YesPlease
 	# NEEDS_LIBICONV = YesPlease
 	NO_ICONV = YesPlease
@@ -1089,6 +1106,7 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	NO_UNSETENV = YesPlease
 	NO_STRCASESTR = YesPlease
 	NO_STRLCPY = YesPlease
+	NO_STRTOK_R = YesPlease
 	NO_MEMMEM = YesPlease
 	NEEDS_LIBICONV = YesPlease
 	OLD_ICONV = YesPlease
@@ -1109,6 +1127,7 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	NO_REGEX = YesPlease
 	NO_PYTHON = YesPlease
 	BLK_SHA1 = YesPlease
+	ETAGS_TARGET = ETAGS
 	COMPAT_CFLAGS += -D__USE_MINGW_ACCESS -DNOGDI -Icompat -Icompat/fnmatch -Icompat/win32
 	COMPAT_CFLAGS += -DSTRIP_EXTENSION=\".exe\"
 	COMPAT_OBJS += compat/mingw.o compat/fnmatch/fnmatch.o compat/winansi.o \
@@ -1319,6 +1338,10 @@ endif
 ifdef NO_STRTOULL
 	COMPAT_CFLAGS += -DNO_STRTOULL
 endif
+ifdef NO_STRTOK_R
+	COMPAT_CFLAGS += -DNO_STRTOK_R
+	COMPAT_OBJS += compat/strtok_r.o
+endif
 ifdef NO_SETENV
 	COMPAT_CFLAGS += -DNO_SETENV
 	COMPAT_OBJS += compat/setenv.o
@@ -1485,6 +1508,7 @@ ifndef V
 	QUIET_BUILT_IN = @echo '   ' BUILTIN $@;
 	QUIET_GEN      = @echo '   ' GEN $@;
 	QUIET_LNCP     = @echo '   ' LN/CP $@;
+	QUIET_GCOV     = @echo '   ' GCOV $@;
 	QUIET_SUBDIR0  = +@subdir=
 	QUIET_SUBDIR1  = ;$(NO_SUBDIR) echo '   ' SUBDIR $$subdir; \
 			 $(MAKE) $(PRINT_DIR) -C $$subdir
@@ -1502,6 +1526,7 @@ endif
 
 SHA1_HEADER_SQ = $(subst ','\'',$(SHA1_HEADER))
 ETC_GITCONFIG_SQ = $(subst ','\'',$(ETC_GITCONFIG))
+ETC_GITATTRIBUTES_SQ = $(subst ','\'',$(ETC_GITATTRIBUTES))
 
 DESTDIR_SQ = $(subst ','\'',$(DESTDIR))
 bindir_SQ = $(subst ','\'',$(bindir))
@@ -1739,7 +1764,9 @@ ifndef NO_CURL
 endif
 XDIFF_OBJS = xdiff/xdiffi.o xdiff/xprepare.o xdiff/xutils.o xdiff/xemit.o \
 	xdiff/xmerge.o xdiff/xpatience.o
-OBJECTS := $(GIT_OBJS) $(XDIFF_OBJS)
+VCSSVN_OBJS = vcs-svn/string_pool.o vcs-svn/line_buffer.o \
+	vcs-svn/repo_tree.o vcs-svn/fast_export.o vcs-svn/svndump.o
+OBJECTS := $(GIT_OBJS) $(XDIFF_OBJS) $(VCSSVN_OBJS)
 
 dep_files := $(foreach f,$(OBJECTS),$(dir $f).depend/$(notdir $f).d)
 dep_dirs := $(addsuffix .depend,$(sort $(dir $(OBJECTS))))
@@ -1861,6 +1888,11 @@ http.o http-walker.o http-push.o http-fetch.o remote-curl.o: http.h
 xdiff-interface.o $(XDIFF_OBJS): \
 	xdiff/xinclude.h xdiff/xmacros.h xdiff/xdiff.h xdiff/xtypes.h \
 	xdiff/xutils.h xdiff/xprepare.h xdiff/xdiffi.h xdiff/xemit.h
+
+$(VCSSVN_OBJS): \
+	vcs-svn/obj_pool.h vcs-svn/trp.h vcs-svn/string_pool.h \
+	vcs-svn/line_buffer.h vcs-svn/repo_tree.h vcs-svn/fast_export.h \
+	vcs-svn/svndump.h
 endif
 
 exec_cmd.s exec_cmd.o: EXTRA_CPPFLAGS = \
@@ -1873,10 +1905,16 @@ builtin/init-db.s builtin/init-db.o: EXTRA_CPPFLAGS = \
 
 config.s config.o: EXTRA_CPPFLAGS = -DETC_GITCONFIG='"$(ETC_GITCONFIG_SQ)"'
 
-http.s http.o: EXTRA_CPPFLAGS = -DGIT_USER_AGENT='"git/$(GIT_VERSION)"'
+attr.s attr.o: EXTRA_CPPFLAGS = -DETC_GITATTRIBUTES='"$(ETC_GITATTRIBUTES_SQ)"'
+
+http.s http.o: EXTRA_CPPFLAGS = -DGIT_HTTP_USER_AGENT='"git/$(GIT_VERSION)"'
 
 ifdef NO_EXPAT
 http-walker.s http-walker.o: EXTRA_CPPFLAGS = -DNO_EXPAT
+endif
+
+ifdef NO_REGEX
+compat/regex/regex.o: EXTRA_CPPFLAGS = -DGAWK -DNO_MBSUPPORT
 endif
 
 ifdef USE_NED_ALLOCATOR
@@ -1914,6 +1952,8 @@ $(LIB_FILE): $(LIB_OBJS)
 $(XDIFF_LIB): $(XDIFF_OBJS)
 	$(QUIET_AR)$(RM) $@ && $(AR) rcs $@ $(XDIFF_OBJS)
 
+$(VCSSVN_LIB): $(VCSSVN_OBJS)
+	$(QUIET_AR)$(RM) $@ && $(AR) rcs $@ $(VCSSVN_OBJS)
 
 doc:
 	$(MAKE) -C Documentation all
@@ -1930,11 +1970,11 @@ info:
 pdf:
 	$(MAKE) -C Documentation pdf
 
-TAGS:
-	$(RM) TAGS
-	$(FIND) . -name '*.[hcS]' -print | xargs etags -a
+$(ETAGS_TARGET): FORCE
+	$(RM) $(ETAGS_TARGET)
+	$(FIND) . -name '*.[hcS]' -print | xargs etags -a -o $(ETAGS_TARGET)
 
-tags:
+tags: FORCE
 	$(RM) tags
 	$(FIND) . -name '*.[hcS]' -print | xargs ctags -a
 
@@ -1943,7 +1983,7 @@ cscope:
 	$(FIND) . -name '*.[hcS]' -print | xargs cscope -b
 
 ### Detect prefix changes
-TRACK_CFLAGS = $(subst ','\'',$(ALL_CFLAGS)):\
+TRACK_CFLAGS = $(CC):$(subst ','\'',$(ALL_CFLAGS)):\
              $(bindir_SQ):$(gitexecdir_SQ):$(template_dir_SQ):$(prefix_SQ)
 
 GIT-CFLAGS: FORCE
@@ -2012,12 +2052,18 @@ test-date$X: date.o ctype.o
 
 test-delta$X: diff-delta.o patch-delta.o
 
+test-line-buffer$X: vcs-svn/lib.a
+
 test-parse-options$X: parse-options.o
+
+test-string-pool$X: vcs-svn/lib.a
+
+test-svn-fe$X: vcs-svn/lib.a
 
 .PRECIOUS: $(TEST_OBJS)
 
 test-%$X: test-%.o $(GITLIBS)
-	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) $(LIBS)
+	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) $(filter %.a,$^) $(LIBS)
 
 check-sha1:: test-sha1$X
 	./test-sha1.sh
@@ -2192,13 +2238,13 @@ distclean: clean
 	$(RM) configure
 
 clean:
-	$(RM) *.o block-sha1/*.o ppc/*.o compat/*.o compat/*/*.o xdiff/*.o \
-		builtin/*.o $(LIB_FILE) $(XDIFF_LIB)
+	$(RM) *.o block-sha1/*.o ppc/*.o compat/*.o compat/*/*.o xdiff/*.o vcs-svn/*.o \
+		builtin/*.o $(LIB_FILE) $(XDIFF_LIB) $(VCSSVN_LIB)
 	$(RM) $(ALL_PROGRAMS) $(SCRIPT_LIB) $(BUILT_INS) git$X
 	$(RM) $(TEST_PROGRAMS)
 	$(RM) -r bin-wrappers
 	$(RM) -r $(dep_dirs)
-	$(RM) *.spec *.pyc *.pyo */*.pyc */*.pyo common-cmds.h TAGS tags cscope*
+	$(RM) *.spec *.pyc *.pyo */*.pyc */*.pyo common-cmds.h $(ETAGS_TARGET) tags cscope*
 	$(RM) -r autom4te.cache
 	$(RM) config.log config.mak.autogen config.mak.append config.status config.cache
 	$(RM) -r $(GIT_TARNAME) .doc-tmp-dir
@@ -2222,7 +2268,7 @@ endif
 
 .PHONY: all install clean strip
 .PHONY: shell_compatibility_test please_set_SHELL_PATH_to_a_more_modern_shell
-.PHONY: FORCE TAGS tags cscope
+.PHONY: FORCE cscope
 
 ### Check documentation
 #
@@ -2296,11 +2342,18 @@ coverage:
 	$(MAKE) coverage-build
 	$(MAKE) coverage-report
 
+object_dirs := $(sort $(dir $(OBJECTS)))
 coverage-clean:
-	rm -f *.gcda *.gcno
+	$(RM) $(addsuffix *.gcov,$(object_dirs))
+	$(RM) $(addsuffix *.gcda,$(object_dirs))
+	$(RM) $(addsuffix *.gcno,$(object_dirs))
+	$(RM) coverage-untested-functions
+	$(RM) -r cover_db/
+	$(RM) -r cover_db_html/
 
 COVERAGE_CFLAGS = $(CFLAGS) -O0 -ftest-coverage -fprofile-arcs
 COVERAGE_LDFLAGS = $(CFLAGS)  -O0 -lgcov
+GCOVFLAGS = --preserve-paths --branch-probabilities --all-blocks
 
 coverage-build: coverage-clean
 	$(MAKE) CFLAGS="$(COVERAGE_CFLAGS)" LDFLAGS="$(COVERAGE_LDFLAGS)" all
@@ -2308,7 +2361,17 @@ coverage-build: coverage-clean
 		-j1 test
 
 coverage-report:
-	gcov -b *.c
+	$(QUIET_GCOV)for dir in $(object_dirs); do \
+		$(GCOV) $(GCOVFLAGS) --object-directory=$$dir $$dir*.c || exit; \
+	done
+
+coverage-untested-functions: coverage-report
 	grep '^function.*called 0 ' *.c.gcov \
 		| sed -e 's/\([^:]*\)\.gcov: *function \([^ ]*\) called.*/\1: \2/' \
-		| tee coverage-untested-functions
+		> coverage-untested-functions
+
+cover_db: coverage-report
+	gcov2perl -db cover_db *.gcov
+
+cover_db_html: cover_db
+	cover -report html -outputdir cover_db_html cover_db

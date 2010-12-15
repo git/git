@@ -689,7 +689,7 @@ static int push_refs_with_export(struct transport *transport,
 	struct child_process *helper, exporter;
 	struct helper_data *data = transport->data;
 	char *export_marks = NULL, *import_marks = NULL;
-	struct string_list revlist_args = { NULL, 0, 0 };
+	struct string_list revlist_args = STRING_LIST_INIT_NODUP;
 	struct strbuf buf = STRBUF_INIT;
 
 	helper = get_helper(transport);

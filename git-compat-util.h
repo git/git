@@ -28,6 +28,18 @@
 #define ARRAY_SIZE(x) (sizeof(x)/sizeof(x[0]))
 #define bitsizeof(x)  (CHAR_BIT * sizeof(x))
 
+#define maximum_signed_value_of_type(a) \
+    (INTMAX_MAX >> (bitsizeof(intmax_t) - bitsizeof(a)))
+
+/*
+ * Signed integer overflow is undefined in C, so here's a helper macro
+ * to detect if the sum of two integers will overflow.
+ *
+ * Requires: a >= 0, typeof(a) equals typeof(b)
+ */
+#define signed_add_overflows(a, b) \
+    ((b) > maximum_signed_value_of_type(a) - (a))
+
 #ifdef __GNUC__
 #define TYPEOF(x) (__typeof__(x))
 #else
@@ -158,6 +170,10 @@ extern char *gitbasename(char *);
 
 #ifndef PRIx32
 #define PRIx32 "x"
+#endif
+
+#ifndef PRIo32
+#define PRIo32 "o"
 #endif
 
 #ifndef PATH_SEP
@@ -310,6 +326,11 @@ extern size_t gitstrlcpy(char *, const char *, size_t);
 #ifdef NO_STRTOUMAX
 #define strtoumax gitstrtoumax
 extern uintmax_t gitstrtoumax(const char *, char **, int);
+#endif
+
+#ifdef NO_STRTOK_R
+#define strtok_r gitstrtok_r
+extern char *gitstrtok_r(char *s, const char *delim, char **save_ptr);
 #endif
 
 #ifdef NO_HSTRERROR

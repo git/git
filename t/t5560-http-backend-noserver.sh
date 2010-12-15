@@ -5,16 +5,17 @@ test_description='test git-http-backend-noserver'
 
 HTTPD_DOCUMENT_ROOT_PATH="$TRASH_DIRECTORY"
 
+test_have_prereq MINGW && export GREP_OPTIONS=-U
+
 run_backend() {
 	echo "$2" |
 	QUERY_STRING="${1#*\?}" \
-	GIT_PROJECT_ROOT="$HTTPD_DOCUMENT_ROOT_PATH" \
-	PATH_INFO="${1%%\?*}" \
+	PATH_TRANSLATED="$HTTPD_DOCUMENT_ROOT_PATH/${1%%\?*}" \
 	git http-backend >act.out 2>act.err
 }
 
 GET() {
-	export REQUEST_METHOD="GET" &&
+	REQUEST_METHOD="GET" && export REQUEST_METHOD &&
 	run_backend "/repo.git/$1" &&
 	unset REQUEST_METHOD &&
 	if ! grep "Status" act.out >act
@@ -26,8 +27,8 @@ GET() {
 }
 
 POST() {
-	export REQUEST_METHOD="POST" &&
-	export CONTENT_TYPE="application/x-$1-request" &&
+	REQUEST_METHOD="POST" && export REQUEST_METHOD &&
+	CONTENT_TYPE="application/x-$1-request" && export CONTENT_TYPE &&
 	run_backend "/repo.git/$1" "$2" &&
 	unset REQUEST_METHOD &&
 	unset CONTENT_TYPE &&
@@ -46,7 +47,7 @@ log_div() {
 . "$TEST_DIRECTORY"/t556x_common
 
 expect_aliased() {
-	export REQUEST_METHOD="GET" &&
+	REQUEST_METHOD="GET" && export REQUEST_METHOD &&
 	if test $1 = 0; then
 		run_backend "$2"
 	else

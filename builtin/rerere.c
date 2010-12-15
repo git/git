@@ -1,13 +1,16 @@
 #include "builtin.h"
 #include "cache.h"
 #include "dir.h"
+#include "parse-options.h"
 #include "string-list.h"
 #include "rerere.h"
 #include "xdiff/xdiff.h"
 #include "xdiff-interface.h"
 
-static const char git_rerere_usage[] =
-"git rerere [clear | status | diff | gc]";
+static const char * const rerere_usage[] = {
+	"git rerere [clear | status | diff | gc]",
+	NULL,
+};
 
 /* these values are days */
 static int cutoff_noresolve = 15;
@@ -46,7 +49,7 @@ static int git_rerere_gc_config(const char *var, const char *value, void *cb)
 
 static void garbage_collect(struct string_list *rr)
 {
-	struct string_list to_remove = { NULL, 0, 0, 1 };
+	struct string_list to_remove = STRING_LIST_INIT_DUP;
 	DIR *dir;
 	struct dirent *e;
 	int i, cutoff;
@@ -113,26 +116,27 @@ static int diff_two(const char *file1, const char *label1,
 
 int cmd_rerere(int argc, const char **argv, const char *prefix)
 {
-	struct string_list merge_rr = { NULL, 0, 0, 1 };
-	int i, fd, flags = 0;
+	struct string_list merge_rr = STRING_LIST_INIT_DUP;
+	int i, fd, autoupdate = -1, flags = 0;
 
-	if (2 < argc) {
-		if (!strcmp(argv[1], "-h"))
-			usage(git_rerere_usage);
-		if (!strcmp(argv[1], "--rerere-autoupdate"))
-			flags = RERERE_AUTOUPDATE;
-		else if (!strcmp(argv[1], "--no-rerere-autoupdate"))
-			flags = RERERE_NOAUTOUPDATE;
-		if (flags) {
-			argc--;
-			argv++;
-		}
-	}
-	if (argc < 2)
+	struct option options[] = {
+		OPT_SET_INT(0, "rerere-autoupdate", &autoupdate,
+			"register clean resolutions in index", 1),
+		OPT_END(),
+	};
+
+	argc = parse_options(argc, argv, prefix, options, rerere_usage, 0);
+
+	if (autoupdate == 1)
+		flags = RERERE_AUTOUPDATE;
+	if (autoupdate == 0)
+		flags = RERERE_NOAUTOUPDATE;
+
+	if (argc < 1)
 		return rerere(flags);
 
-	if (!strcmp(argv[1], "forget")) {
-		const char **pathspec = get_pathspec(prefix, argv + 2);
+	if (!strcmp(argv[0], "forget")) {
+		const char **pathspec = get_pathspec(prefix, argv + 1);
 		return rerere_forget(pathspec);
 	}
 
@@ -140,26 +144,26 @@ int cmd_rerere(int argc, const char **argv, const char *prefix)
 	if (fd < 0)
 		return 0;
 
-	if (!strcmp(argv[1], "clear")) {
+	if (!strcmp(argv[0], "clear")) {
 		for (i = 0; i < merge_rr.nr; i++) {
 			const char *name = (const char *)merge_rr.items[i].util;
 			if (!has_rerere_resolution(name))
 				unlink_rr_item(name);
 		}
 		unlink_or_warn(git_path("MERGE_RR"));
-	} else if (!strcmp(argv[1], "gc"))
+	} else if (!strcmp(argv[0], "gc"))
 		garbage_collect(&merge_rr);
-	else if (!strcmp(argv[1], "status"))
+	else if (!strcmp(argv[0], "status"))
 		for (i = 0; i < merge_rr.nr; i++)
 			printf("%s\n", merge_rr.items[i].string);
-	else if (!strcmp(argv[1], "diff"))
+	else if (!strcmp(argv[0], "diff"))
 		for (i = 0; i < merge_rr.nr; i++) {
 			const char *path = merge_rr.items[i].string;
 			const char *name = (const char *)merge_rr.items[i].util;
 			diff_two(rerere_path(name, "preimage"), path, path, path);
 		}
 	else
-		usage(git_rerere_usage);
+		usage_with_options(rerere_usage, options);
 
 	string_list_clear(&merge_rr, 1);
 	return 0;

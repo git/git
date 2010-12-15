@@ -112,25 +112,19 @@ $ git tag pu-anchor pu
 $ git rebase master
 * Applying: Redo "revert" using three-way merge machinery.
 First trying simple merge strategy to cherry-pick.
-Finished one cherry-pick.
 * Applying: Remove git-apply-patch-script.
 First trying simple merge strategy to cherry-pick.
 Simple cherry-pick fails; trying Automatic cherry-pick.
 Removing Documentation/git-apply-patch-script.txt
 Removing git-apply-patch-script
-Finished one cherry-pick.
 * Applying: Document "git cherry-pick" and "git revert"
 First trying simple merge strategy to cherry-pick.
-Finished one cherry-pick.
 * Applying: mailinfo and applymbox updates
 First trying simple merge strategy to cherry-pick.
-Finished one cherry-pick.
 * Applying: Show commits in topo order and name all commits.
 First trying simple merge strategy to cherry-pick.
-Finished one cherry-pick.
 * Applying: More documentation updates.
 First trying simple merge strategy to cherry-pick.
-Finished one cherry-pick.
 ------------------------------------------------
 
 The temporary tag 'pu-anchor' is me just being careful, in case 'git

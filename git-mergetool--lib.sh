@@ -10,10 +10,10 @@ merge_mode() {
 
 translate_merge_tool_path () {
 	case "$1" in
-	vimdiff)
+	vimdiff|vimdiff2)
 		echo vim
 		;;
-	gvimdiff)
+	gvimdiff|gvimdiff2)
 		echo gvim
 		;;
 	emerge)
@@ -35,7 +35,7 @@ check_unchanged () {
 		while true; do
 			echo "$MERGED seems unchanged."
 			printf "Was the merge successful? [y/n] "
-			read answer < /dev/tty
+			read answer
 			case "$answer" in
 			y*|Y*) status=0; break ;;
 			n*|N*) status=1; break ;;
@@ -47,7 +47,8 @@ check_unchanged () {
 valid_tool () {
 	case "$1" in
 	kdiff3 | tkdiff | xxdiff | meld | opendiff | \
-	emerge | vimdiff | gvimdiff | ecmerge | diffuse | araxis | p4merge)
+	vimdiff | gvimdiff | vimdiff2 | gvimdiff2 | \
+	emerge | ecmerge | diffuse | araxis | p4merge)
 		;; # happy
 	tortoisemerge)
 		if ! merge_mode; then
@@ -169,25 +170,30 @@ run_merge_tool () {
 			"$merge_tool_path" "$LOCAL" "$REMOTE" | cat
 		fi
 		;;
-	vimdiff)
+	vimdiff|gvimdiff)
 		if merge_mode; then
 			touch "$BACKUP"
-			"$merge_tool_path" -d -c "wincmd l" \
-				"$LOCAL" "$MERGED" "$REMOTE"
+			if $base_present; then
+				"$merge_tool_path" -f -d -c "wincmd J" \
+					"$MERGED" "$LOCAL" "$BASE" "$REMOTE"
+			else
+				"$merge_tool_path" -f -d -c "wincmd l" \
+					"$LOCAL" "$MERGED" "$REMOTE"
+			fi
 			check_unchanged
 		else
-			"$merge_tool_path" -d -c "wincmd l" \
+			"$merge_tool_path" -f -d -c "wincmd l" \
 				"$LOCAL" "$REMOTE"
 		fi
 		;;
-	gvimdiff)
+	vimdiff2|gvimdiff2)
 		if merge_mode; then
 			touch "$BACKUP"
-			"$merge_tool_path" -d -c "wincmd l" -f \
+			"$merge_tool_path" -f -d -c "wincmd l" \
 				"$LOCAL" "$MERGED" "$REMOTE"
 			check_unchanged
 		else
-			"$merge_tool_path" -d -c "wincmd l" -f \
+			"$merge_tool_path" -f -d -c "wincmd l" \
 				"$LOCAL" "$REMOTE"
 		fi
 		;;

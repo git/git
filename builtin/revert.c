@@ -102,9 +102,9 @@ struct commit_message {
 static int get_message(const char *raw_message, struct commit_message *out)
 {
 	const char *encoding;
-	const char *p, *abbrev, *eol;
+	const char *abbrev, *subject;
+	int abbrev_len, subject_len;
 	char *q;
-	int abbrev_len, oneline_len;
 
 	if (!raw_message)
 		return -1;
@@ -125,27 +125,17 @@ static int get_message(const char *raw_message, struct commit_message *out)
 	abbrev = find_unique_abbrev(commit->object.sha1, DEFAULT_ABBREV);
 	abbrev_len = strlen(abbrev);
 
-	/* Find beginning and end of commit subject. */
-	p = out->message;
-	while (*p && (*p != '\n' || p[1] != '\n'))
-		p++;
-	if (*p) {
-		p += 2;
-		for (eol = p + 1; *eol && *eol != '\n'; eol++)
-			; /* do nothing */
-	} else
-		eol = p;
-	oneline_len = eol - p;
+	subject_len = find_commit_subject(out->message, &subject);
 
 	out->parent_label = xmalloc(strlen("parent of ") + abbrev_len +
-			      strlen("... ") + oneline_len + 1);
+			      strlen("... ") + subject_len + 1);
 	q = out->parent_label;
 	q = mempcpy(q, "parent of ", strlen("parent of "));
 	out->label = q;
 	q = mempcpy(q, abbrev, abbrev_len);
 	q = mempcpy(q, "... ", strlen("... "));
 	out->subject = q;
-	q = mempcpy(q, p, oneline_len);
+	q = mempcpy(q, subject, subject_len);
 	*q = '\0';
 	return 0;
 }
@@ -241,27 +231,30 @@ static void set_author_ident_env(const char *message)
 			sha1_to_hex(commit->object.sha1));
 }
 
-static char *help_msg(void)
+static void advise(const char *advice, ...)
 {
-	struct strbuf helpbuf = STRBUF_INIT;
+	va_list params;
+
+	va_start(params, advice);
+	vreportf("hint: ", advice, params);
+	va_end(params);
+}
+
+static void print_advice(void)
+{
 	char *msg = getenv("GIT_CHERRY_PICK_HELP");
 
-	if (msg)
-		return msg;
-
-	strbuf_addstr(&helpbuf, "  After resolving the conflicts,\n"
-		"mark the corrected paths with 'git add <paths>' or 'git rm <paths>'\n"
-		"and commit the result");
-
-	if (action == CHERRY_PICK) {
-		strbuf_addf(&helpbuf, " with: \n"
-			"\n"
-			"        git commit -c %s\n",
-			    sha1_to_hex(commit->object.sha1));
+	if (msg) {
+		fprintf(stderr, "%s\n", msg);
+		return;
 	}
-	else
-		strbuf_addch(&helpbuf, '.');
-	return strbuf_detach(&helpbuf, NULL);
+
+	advise("after resolving the conflicts, mark the corrected paths");
+	advise("with 'git add <paths>' or 'git rm <paths>'");
+
+	if (action == CHERRY_PICK)
+		advise("and commit the result with 'git commit -c %s'",
+		       find_unique_abbrev(commit->object.sha1, DEFAULT_ABBREV));
 }
 
 static void write_message(struct strbuf *msgbuf, const char *filename)
@@ -311,10 +304,9 @@ static int fast_forward_to(const unsigned char *to, const unsigned char *from)
 	return write_ref_sha1(ref_lock, to, "cherry-pick");
 }
 
-static void do_recursive_merge(struct commit *base, struct commit *next,
-			       const char *base_label, const char *next_label,
-			       unsigned char *head, struct strbuf *msgbuf,
-			       char *defmsg)
+static int do_recursive_merge(struct commit *base, struct commit *next,
+			      const char *base_label, const char *next_label,
+			      unsigned char *head, struct strbuf *msgbuf)
 {
 	struct merge_options o;
 	struct tree *result, *next_tree, *base_tree, *head_tree;
@@ -324,6 +316,13 @@ static void do_recursive_merge(struct commit *base, struct commit *next,
 	index_fd = hold_locked_index(&index_lock, 1);
 
 	read_cache();
+
+	/*
+	 * NEEDSWORK: cherry-picking between branches with
+	 * different end-of-line normalization is a pain;
+	 * plumb in an option to set o.renormalize?
+	 * (or better: arbitrary -X options)
+	 */
 	init_merge_options(&o);
 	o.ancestor = base ? base_label : "(empty tree)";
 	o.branch1 = "HEAD";
@@ -357,14 +356,35 @@ static void do_recursive_merge(struct commit *base, struct commit *next,
 					i++;
 			}
 		}
-		write_message(msgbuf, defmsg);
-		fprintf(stderr, "Automatic %s failed.%s\n",
-			me, help_msg());
-		rerere(allow_rerere_auto);
-		exit(1);
 	}
-	write_message(msgbuf, defmsg);
-	fprintf(stderr, "Finished one %s.\n", me);
+
+	return !clean;
+}
+
+/*
+ * If we are cherry-pick, and if the merge did not result in
+ * hand-editing, we will hit this commit and inherit the original
+ * author date and name.
+ * If we are revert, or if our cherry-pick results in a hand merge,
+ * we had better say that the current user is responsible for that.
+ */
+static int run_git_commit(const char *defmsg)
+{
+	/* 6 is max possible length of our args array including NULL */
+	const char *args[6];
+	int i = 0;
+
+	args[i++] = "commit";
+	args[i++] = "-n";
+	if (signoff)
+		args[i++] = "-s";
+	if (!edit) {
+		args[i++] = "-F";
+		args[i++] = defmsg;
+	}
+	args[i] = NULL;
+
+	return run_command_v_opt(args, RUN_GIT_CMD);
 }
 
 static int do_pick_commit(void)
@@ -375,6 +395,7 @@ static int do_pick_commit(void)
 	struct commit_message msg = { NULL, NULL, NULL, NULL, NULL };
 	char *defmsg = NULL;
 	struct strbuf msgbuf = STRBUF_INIT;
+	int res;
 
 	if (no_commit) {
 		/*
@@ -421,7 +442,7 @@ static int do_pick_commit(void)
 	else
 		parent = commit->parents->item;
 
-	if (allow_ff && !hashcmp(parent->object.sha1, head))
+	if (allow_ff && parent && !hashcmp(parent->object.sha1, head))
 		return fast_forward_to(commit->object.sha1, head);
 
 	if (parent && parse_commit(parent) < 0)
@@ -470,62 +491,40 @@ static int do_pick_commit(void)
 		}
 	}
 
-	if (!strategy || !strcmp(strategy, "recursive") || action == REVERT)
-		do_recursive_merge(base, next, base_label, next_label,
-				   head, &msgbuf, defmsg);
-	else {
-		int res;
+	if (!strategy || !strcmp(strategy, "recursive") || action == REVERT) {
+		res = do_recursive_merge(base, next, base_label, next_label,
+					 head, &msgbuf);
+		write_message(&msgbuf, defmsg);
+	} else {
 		struct commit_list *common = NULL;
 		struct commit_list *remotes = NULL;
+
 		write_message(&msgbuf, defmsg);
+
 		commit_list_insert(base, &common);
 		commit_list_insert(next, &remotes);
 		res = try_merge_command(strategy, common,
 					sha1_to_hex(head), remotes);
 		free_commit_list(common);
 		free_commit_list(remotes);
-		if (res) {
-			fprintf(stderr, "Automatic %s with strategy %s failed.%s\n",
-				me, strategy, help_msg());
-			rerere(allow_rerere_auto);
-			exit(1);
-		}
+	}
+
+	if (res) {
+		error("could not %s %s... %s",
+		      action == REVERT ? "revert" : "apply",
+		      find_unique_abbrev(commit->object.sha1, DEFAULT_ABBREV),
+		      msg.subject);
+		print_advice();
+		rerere(allow_rerere_auto);
+	} else {
+		if (!no_commit)
+			res = run_git_commit(defmsg);
 	}
 
 	free_message(&msg);
-
-	/*
-	 * If we are cherry-pick, and if the merge did not result in
-	 * hand-editing, we will hit this commit and inherit the original
-	 * author date and name.
-	 * If we are revert, or if our cherry-pick results in a hand merge,
-	 * we had better say that the current user is responsible for that.
-	 */
-
-	if (!no_commit) {
-		/* 6 is max possible length of our args array including NULL */
-		const char *args[6];
-		int res;
-		int i = 0;
-
-		args[i++] = "commit";
-		args[i++] = "-n";
-		if (signoff)
-			args[i++] = "-s";
-		if (!edit) {
-			args[i++] = "-F";
-			args[i++] = defmsg;
-		}
-		args[i] = NULL;
-		res = run_command_v_opt(args, RUN_GIT_CMD);
-		free(defmsg);
-
-		return res;
-	}
-
 	free(defmsg);
 
-	return 0;
+	return res;
 }
 
 static void prepare_revs(struct rev_info *revs)

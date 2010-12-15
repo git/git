@@ -37,6 +37,7 @@ size_t delta_base_cache_limit = 16 * 1024 * 1024;
 const char *pager_program;
 int pager_use_color = 1;
 const char *editor_program;
+const char *askpass_program;
 const char *excludes_file;
 enum auto_crlf auto_crlf = AUTO_CRLF_FALSE;
 int read_replace_refs = 1;
@@ -53,6 +54,7 @@ enum object_creation_mode object_creation_mode = OBJECT_CREATION_MODE;
 char *notes_ref_name;
 int grafts_replace_parents = 1;
 int core_apply_sparse_checkout;
+struct startup_info *startup_info;
 
 /* Parallel index stat data preload? */
 int core_preload_index = 0;
@@ -62,7 +64,7 @@ char *git_work_tree_cfg;
 static char *work_tree;
 
 static const char *git_dir;
-static char *git_object_dir, *git_index_file, *git_refs_dir, *git_graft_file;
+static char *git_object_dir, *git_index_file, *git_graft_file;
 
 /*
  * Repository-local GIT_* environment variables
@@ -72,6 +74,7 @@ static char *git_object_dir, *git_index_file, *git_refs_dir, *git_graft_file;
 const char * const local_repo_env[LOCAL_REPO_ENV_SIZE + 1] = {
 	ALTERNATE_DB_ENVIRONMENT,
 	CONFIG_ENVIRONMENT,
+	CONFIG_DATA_ENVIRONMENT,
 	DB_ENVIRONMENT,
 	GIT_DIR_ENVIRONMENT,
 	GIT_WORK_TREE_ENVIRONMENT,
@@ -84,8 +87,10 @@ const char * const local_repo_env[LOCAL_REPO_ENV_SIZE + 1] = {
 static void setup_git_env(void)
 {
 	git_dir = getenv(GIT_DIR_ENVIRONMENT);
-	if (!git_dir)
+	if (!git_dir) {
 		git_dir = read_gitfile_gently(DEFAULT_GIT_DIR_ENVIRONMENT);
+		git_dir = git_dir ? xstrdup(git_dir) : NULL;
+	}
 	if (!git_dir)
 		git_dir = DEFAULT_GIT_DIR_ENVIRONMENT;
 	git_object_dir = getenv(DB_ENVIRONMENT);
@@ -93,8 +98,6 @@ static void setup_git_env(void)
 		git_object_dir = xmalloc(strlen(git_dir) + 9);
 		sprintf(git_object_dir, "%s/objects", git_dir);
 	}
-	git_refs_dir = xmalloc(strlen(git_dir) + 6);
-	sprintf(git_refs_dir, "%s/refs", git_dir);
 	git_index_file = getenv(INDEX_ENVIRONMENT);
 	if (!git_index_file) {
 		git_index_file = xmalloc(strlen(git_dir) + 7);

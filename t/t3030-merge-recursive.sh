@@ -23,6 +23,8 @@ test_expect_success 'setup 1' '
 	git branch df-3 &&
 	git branch remove &&
 	git branch submod &&
+	git branch copy &&
+	git branch rename &&
 
 	echo hello >>a &&
 	cp a d/e &&
@@ -248,6 +250,22 @@ test_expect_success 'setup 7' '
 	git commit -m "make d/ a submodule"
 '
 
+test_expect_success 'setup 8' '
+	git checkout rename &&
+	git mv a e &&
+	git add e &&
+	test_tick &&
+	git commit -m "rename a->e"
+'
+
+test_expect_success 'setup 9' '
+	git checkout copy &&
+	cp a e &&
+	git add e &&
+	test_tick &&
+	git commit -m "copy a->e"
+'
+
 test_expect_success 'merge-recursive simple' '
 
 	rm -fr [abcd] &&
@@ -294,7 +312,7 @@ test_expect_success 'fail if the index has unresolved entries' '
 	grep "You have not concluded your merge" out &&
 	rm -f .git/MERGE_HEAD &&
 	test_must_fail git merge "$c5" 2> out &&
-	grep "Your local changes to .* would be overwritten by merge." out
+	grep "Your local changes to the following files would be overwritten by merge:" out
 '
 
 test_expect_success 'merge-recursive remove conflict' '
@@ -576,6 +594,23 @@ test_expect_failure 'merge-recursive simple w/submodule result' '
 		echo "100644 $o5 0	a"
 		echo "100644 $o0 0	c"
 		echo "160000 $c1 0	d"
+	) >expected &&
+	test_cmp expected actual
+'
+
+test_expect_success 'merge-recursive copy vs. rename' '
+	git checkout -f copy &&
+	git merge rename &&
+	( git ls-tree -r HEAD && git ls-files -s ) >actual &&
+	(
+		echo "100644 blob $o0	b"
+		echo "100644 blob $o0	c"
+		echo "100644 blob $o0	d/e"
+		echo "100644 blob $o0	e"
+		echo "100644 $o0 0	b"
+		echo "100644 $o0 0	c"
+		echo "100644 $o0 0	d/e"
+		echo "100644 $o0 0	e"
 	) >expected &&
 	test_cmp expected actual
 '

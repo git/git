@@ -134,8 +134,8 @@ cat >ls.expected <<EOF
 100644 $ONE_SHA1 0	me
 EOF
 
-export GIT_DIR="$TRASH_DIRECTORY/.git"
-export GIT_WORK_TREE=/
+GIT_DIR="$TRASH_DIRECTORY/.git" && export GIT_DIR
+GIT_WORK_TREE=/ && export GIT_WORK_TREE
 
 test_vars 'abs gitdir, root' "$GIT_DIR" "/" ""
 test_foobar_root
@@ -154,24 +154,24 @@ say "GIT_DIR relative, GIT_WORK_TREE set"
 
 test_expect_success 'go to /' 'cd /'
 
-export GIT_DIR="$(echo $TRASH_DIRECTORY|sed 's,^/,,')/.git"
-export GIT_WORK_TREE=/
+GIT_DIR="$(echo $TRASH_DIRECTORY|sed 's,^/,,')/.git" && export GIT_DIR
+GIT_WORK_TREE=/ && export GIT_WORK_TREE
 
 test_vars 'rel gitdir, root' "$GIT_DIR" "/" ""
 test_foobar_root
 
 test_expect_success 'go to /foo' 'cd /foo'
 
-export GIT_DIR="../$TRASH_DIRECTORY/.git"
-export GIT_WORK_TREE=/
+GIT_DIR="../$TRASH_DIRECTORY/.git" && export GIT_DIR
+GIT_WORK_TREE=/ && export GIT_WORK_TREE
 
 test_vars 'rel gitdir, foo' "$TRASH_DIRECTORY/.git" "/" "foo/"
 test_foobar_foo
 
 test_expect_success 'go to /foo/bar' 'cd /foo/bar'
 
-export GIT_DIR="../../$TRASH_DIRECTORY/.git"
-export GIT_WORK_TREE=/
+GIT_DIR="../../$TRASH_DIRECTORY/.git" && export GIT_DIR
+GIT_WORK_TREE=/ && export GIT_WORK_TREE
 
 test_vars 'rel gitdir, foo/bar' "$TRASH_DIRECTORY/.git" "/" "foo/bar/"
 test_foobar_foobar
@@ -180,24 +180,24 @@ say "GIT_DIR relative, GIT_WORK_TREE relative"
 
 test_expect_success 'go to /' 'cd /'
 
-export GIT_DIR="$(echo $TRASH_DIRECTORY|sed 's,^/,,')/.git"
-export GIT_WORK_TREE=.
+GIT_DIR="$(echo $TRASH_DIRECTORY|sed 's,^/,,')/.git" && export GIT_DIR
+GIT_WORK_TREE=. && export GIT_WORK_TREE
 
 test_vars 'rel gitdir, root' "$GIT_DIR" "/" ""
 test_foobar_root
 
 test_expect_success 'go to /' 'cd /foo'
 
-export GIT_DIR="../$TRASH_DIRECTORY/.git"
-export GIT_WORK_TREE=..
+GIT_DIR="../$TRASH_DIRECTORY/.git" && export GIT_DIR
+GIT_WORK_TREE=.. && export GIT_WORK_TREE
 
 test_vars 'rel gitdir, foo' "$TRASH_DIRECTORY/.git" "/" "foo/"
 test_foobar_foo
 
 test_expect_success 'go to /foo/bar' 'cd /foo/bar'
 
-export GIT_DIR="../../$TRASH_DIRECTORY/.git"
-export GIT_WORK_TREE=../..
+GIT_DIR="../../$TRASH_DIRECTORY/.git" && export GIT_DIR
+GIT_WORK_TREE=../.. && export GIT_WORK_TREE
 
 test_vars 'rel gitdir, foo/bar' "$TRASH_DIRECTORY/.git" "/" "foo/bar/"
 test_foobar_foobar

@@ -8,13 +8,14 @@
 #### Copyright The Open University UK - 2006.
 ####
 #### Authors: Martyn Smith    <martyn@catalyst.net.nz>
-####          Martin Langhoff <martin@catalyst.net.nz>
+####          Martin Langhoff <martin@laptop.org>
 ####
 ####
 #### Released under the GNU Public License, version 2.
 ####
 ####
 
+use 5.008;
 use strict;
 use warnings;
 use bytes;
@@ -2680,7 +2681,7 @@ package GITCVS::log;
 #### Copyright The Open University UK - 2006.
 ####
 #### Authors: Martyn Smith    <martyn@catalyst.net.nz>
-####          Martin Langhoff <martin@catalyst.net.nz>
+####          Martin Langhoff <martin@laptop.org>
 ####
 ####
 
@@ -2847,7 +2848,7 @@ package GITCVS::updater;
 #### Copyright The Open University UK - 2006.
 ####
 #### Authors: Martyn Smith    <martyn@catalyst.net.nz>
-####          Martin Langhoff <martin@catalyst.net.nz>
+####          Martin Langhoff <martin@laptop.org>
 ####
 ####
 

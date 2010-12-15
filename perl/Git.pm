@@ -7,6 +7,7 @@ Git - Perl interface to the Git version control system
 
 package Git;
 
+use 5.008;
 use strict;
 
 

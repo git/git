@@ -42,7 +42,7 @@ then
 fi
 
 # don't link to a workdir
-if test -L "$git_dir/config"
+if test -h "$git_dir/config"
 then
 	die "\"$orig_git\" is a working directory only, please specify" \
 		"a complete repository."

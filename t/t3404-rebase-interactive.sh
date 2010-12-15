@@ -64,6 +64,67 @@ test_expect_success 'setup' '
 	done
 '
 
+# "exec" commands are ran with the user shell by default, but this may
+# be non-POSIX. For example, if SHELL=zsh then ">file" doesn't work
+# to create a file. Unseting SHELL avoids such non-portable behavior
+# in tests.
+SHELL=
+
+test_expect_success 'rebase -i with the exec command' '
+	git checkout master &&
+	(
+	FAKE_LINES="1 exec_>touch-one
+		2 exec_>touch-two exec_false exec_>touch-three
+		3 4 exec_>\"touch-file__name_with_spaces\";_>touch-after-semicolon 5" &&
+	export FAKE_LINES &&
+	test_must_fail git rebase -i A
+	) &&
+	test_path_is_file touch-one &&
+	test_path_is_file touch-two &&
+	test_path_is_missing touch-three " (should have stopped before)" &&
+	test $(git rev-parse C) = $(git rev-parse HEAD) || {
+		echo "Stopped at wrong revision:"
+		echo "($(git describe --tags HEAD) instead of C)"
+		false
+	} &&
+	git rebase --continue &&
+	test_path_is_file touch-three &&
+	test_path_is_file "touch-file  name with spaces" &&
+	test_path_is_file touch-after-semicolon &&
+	test $(git rev-parse master) = $(git rev-parse HEAD) || {
+		echo "Stopped at wrong revision:"
+		echo "($(git describe --tags HEAD) instead of master)"
+		false
+	} &&
+	rm -f touch-*
+'
+
+test_expect_success 'rebase -i with the exec command runs from tree root' '
+	git checkout master &&
+	mkdir subdir && (cd subdir &&
+	FAKE_LINES="1 exec_>touch-subdir" \
+		git rebase -i HEAD^
+	) &&
+	test_path_is_file touch-subdir &&
+	rm -fr subdir
+'
+
+test_expect_success 'rebase -i with the exec command checks tree cleanness' '
+	git checkout master &&
+	(
+	FAKE_LINES="exec_echo_foo_>file1 1" &&
+	export FAKE_LINES &&
+	test_must_fail git rebase -i HEAD^
+	) &&
+	test $(git rev-parse master^) = $(git rev-parse HEAD) || {
+		echo "Stopped at wrong revision:"
+		echo "($(git describe --tags HEAD) instead of master^)"
+		false
+	} &&
+	git reset --hard &&
+	git rebase --continue
+'
+
 test_expect_success 'no changes are a nop' '
 	git checkout branch2 &&
 	git rebase -i F &&
@@ -143,16 +204,17 @@ test_expect_success 'abort' '
 	git rebase --abort &&
 	test $(git rev-parse new-branch1) = $(git rev-parse HEAD) &&
 	test "$(git symbolic-ref -q HEAD)" = "refs/heads/branch1" &&
-	! test -d .git/rebase-merge
+	test_path_is_missing .git/rebase-merge
 '
 
 test_expect_success 'abort with error when new base cannot be checked out' '
 	git rm --cached file1 &&
 	git commit -m "remove file in base" &&
 	test_must_fail git rebase -i master > output 2>&1 &&
-	grep "Untracked working tree file .file1. would be overwritten" \
+	grep "The following untracked working tree files would be overwritten by checkout:" \
 		output &&
-	! test -d .git/rebase-merge &&
+	grep "file1" output &&
+	test_path_is_missing .git/rebase-merge &&
 	git reset --hard HEAD^
 '
 

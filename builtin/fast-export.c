@@ -27,6 +27,7 @@ static enum { ABORT, VERBATIM, WARN, STRIP } signed_tag_mode = ABORT;
 static enum { ERROR, DROP, REWRITE } tag_of_filtered_mode = ABORT;
 static int fake_missing_tagger;
 static int no_data;
+static int full_tree;
 
 static int parse_opt_signed_tag_mode(const struct option *opt,
 				     const char *arg, int unset)
@@ -147,10 +148,47 @@ static void handle_object(const unsigned char *sha1)
 	free(buf);
 }
 
+static int depth_first(const void *a_, const void *b_)
+{
+	const struct diff_filepair *a = *((const struct diff_filepair **)a_);
+	const struct diff_filepair *b = *((const struct diff_filepair **)b_);
+	const char *name_a, *name_b;
+	int len_a, len_b, len;
+	int cmp;
+
+	name_a = a->one ? a->one->path : a->two->path;
+	name_b = b->one ? b->one->path : b->two->path;
+
+	len_a = strlen(name_a);
+	len_b = strlen(name_b);
+	len = (len_a < len_b) ? len_a : len_b;
+
+	/* strcmp will sort 'd' before 'd/e', we want 'd/e' before 'd' */
+	cmp = memcmp(name_a, name_b, len);
+	if (cmp)
+		return cmp;
+	cmp = len_b - len_a;
+	if (cmp)
+		return cmp;
+	/*
+	 * Move 'R'ename entries last so that all references of the file
+	 * appear in the output before it is renamed (e.g., when a file
+	 * was copied and renamed in the same commit).
+	 */
+	return (a->status == 'R') - (b->status == 'R');
+}
+
 static void show_filemodify(struct diff_queue_struct *q,
 			    struct diff_options *options, void *data)
 {
 	int i;
+
+	/*
+	 * Handle files below a directory first, in case they are all deleted
+	 * and the directory changes to a file or symlink.
+	 */
+	qsort(q->queue, q->nr, sizeof(q->queue[0]), depth_first);
+
 	for (i = 0; i < q->nr; i++) {
 		struct diff_filespec *ospec = q->queue[i]->one;
 		struct diff_filespec *spec = q->queue[i]->two;
@@ -241,7 +279,8 @@ static void handle_commit(struct commit *commit, struct rev_info *rev)
 		message += 2;
 
 	if (commit->parents &&
-	    get_object_mark(&commit->parents->item->object) != 0) {
+	    get_object_mark(&commit->parents->item->object) != 0 &&
+	    !full_tree) {
 		parse_commit(commit->parents->item);
 		diff_tree_sha1(commit->parents->item->tree->object.sha1,
 			       commit->tree->object.sha1, "", &rev->diffopt);
@@ -281,6 +320,8 @@ static void handle_commit(struct commit *commit, struct rev_info *rev)
 		i++;
 	}
 
+	if (full_tree)
+		printf("deleteall\n");
 	log_tree_diff_flush(rev);
 	rev->diffopt.output_format = saved_output_format;
 
@@ -565,8 +606,8 @@ static void import_marks(char *input_file)
 int cmd_fast_export(int argc, const char **argv, const char *prefix)
 {
 	struct rev_info revs;
-	struct object_array commits = { 0, 0, NULL };
-	struct string_list extra_refs = { NULL, 0, 0, 0 };
+	struct object_array commits = OBJECT_ARRAY_INIT;
+	struct string_list extra_refs = STRING_LIST_INIT_NODUP;
 	struct commit *commit;
 	char *export_filename = NULL, *import_filename = NULL;
 	struct option options[] = {
@@ -584,6 +625,8 @@ int cmd_fast_export(int argc, const char **argv, const char *prefix)
 			     "Import marks from this file"),
 		OPT_BOOLEAN(0, "fake-missing-tagger", &fake_missing_tagger,
 			     "Fake a tagger when tags lack one"),
+		OPT_BOOLEAN(0, "full-tree", &full_tree,
+			     "Output full tree for each commit"),
 		{ OPTION_NEGBIT, 0, "data", &no_data, NULL,
 			"Skip output of blob data",
 			PARSE_OPT_NOARG | PARSE_OPT_NEGHELP, NULL, 1 },
@@ -607,6 +650,9 @@ int cmd_fast_export(int argc, const char **argv, const char *prefix)
 
 	if (import_filename)
 		import_marks(import_filename);
+
+	if (import_filename && revs.prune_data)
+		full_tree = 1;
 
 	get_tags_and_duplicates(&revs.pending, &extra_refs);
 

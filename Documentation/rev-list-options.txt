@@ -13,7 +13,7 @@ include::pretty-options.txt[]
 
 	Synonym for `--date=relative`.
 
---date={relative,local,default,iso,rfc,short,raw}::
+--date=(relative|local|default|iso|rfc|short|raw)::
 
 	Only takes effect for dates shown in human-readable format, such
 	as when using "--pretty". `log.date` config variable sets a default
@@ -45,13 +45,13 @@ endif::git-rev-list[]
 
 --parents::
 
-	Print the parents of the commit.  Also enables parent
-	rewriting, see 'History Simplification' below.
+	Print also the parents of the commit (in the form "commit parent...").
+	Also enables parent rewriting, see 'History Simplification' below.
 
 --children::
 
-	Print the children of the commit.  Also enables parent
-	rewriting, see 'History Simplification' below.
+	Print also the children of the commit (in the form "commit child...").
+	Also enables parent rewriting, see 'History Simplification' below.
 
 ifdef::git-rev-list[]
 --timestamp::
@@ -246,29 +246,29 @@ endif::git-rev-list[]
 	Pretend as if all the refs in `refs/` are listed on the
 	command line as '<commit>'.
 
---branches[=pattern]::
+--branches[=<pattern>]::
 
 	Pretend as if all the refs in `refs/heads` are listed
-	on the command line as '<commit>'. If `pattern` is given, limit
+	on the command line as '<commit>'. If '<pattern>' is given, limit
 	branches to ones matching given shell glob. If pattern lacks '?',
 	'*', or '[', '/*' at the end is implied.
 
---tags[=pattern]::
+--tags[=<pattern>]::
 
 	Pretend as if all the refs in `refs/tags` are listed
-	on the command line as '<commit>'. If `pattern` is given, limit
+	on the command line as '<commit>'. If '<pattern>' is given, limit
 	tags to ones matching given shell glob. If pattern lacks '?', '*',
 	or '[', '/*' at the end is implied.
 
---remotes[=pattern]::
+--remotes[=<pattern>]::
 
 	Pretend as if all the refs in `refs/remotes` are listed
-	on the command line as '<commit>'. If `pattern`is given, limit
+	on the command line as '<commit>'. If '<pattern>' is given, limit
 	remote tracking branches to ones matching given shell glob.
 	If pattern lacks '?', '*', or '[', '/*' at the end is implied.
 
---glob=glob-pattern::
-	Pretend as if all the refs matching shell glob `glob-pattern`
+--glob=<glob-pattern>::
+	Pretend as if all the refs matching shell glob '<glob-pattern>'
 	are listed on the command line as '<commit>'. Leading 'refs/',
 	is automatically prepended if missing. If pattern lacks '?', '*',
 	or '[', '/*' at the end is implied.
@@ -321,7 +321,7 @@ excluded from the output.
 	reflog entries from the most recent one to older ones.
 	When this option is used you cannot specify commits to
 	exclude (that is, '{caret}commit', 'commit1..commit2',
-	nor 'commit1...commit2' notations cannot be used).
+	nor 'commit1\...commit2' notations cannot be used).
 +
 With '\--pretty' format other than oneline (for obvious reasons),
 this causes the output to have two extra lines of information

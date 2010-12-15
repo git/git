@@ -3,31 +3,34 @@
 test_description='git filter-branch'
 . ./test-lib.sh
 
-make_commit () {
-	lower=$(echo $1 | tr '[A-Z]' '[a-z]')
-	echo $lower > $lower
-	git add $lower
-	test_tick
-	git commit -m $1
-	git tag $1
-}
-
 test_expect_success 'setup' '
-	make_commit A
-	make_commit B
-	git checkout -b branch B
-	make_commit D
-	mkdir dir
-	make_commit dir/D
-	make_commit E
-	git checkout master
-	make_commit C
-	git checkout branch
-	git merge C
-	git tag F
-	make_commit G
-	make_commit H
+	test_commit A &&
+	test_commit B &&
+	git checkout -b branch B &&
+	test_commit D &&
+	mkdir dir &&
+	test_commit dir/D &&
+	test_commit E &&
+	git checkout master &&
+	test_commit C &&
+	git checkout branch &&
+	git merge C &&
+	git tag F &&
+	test_commit G &&
+	test_commit H
 '
+# * (HEAD, branch) H
+# * G
+# *   Merge commit 'C' into branch
+# |\
+# | * (master) C
+# * | E
+# * | dir/D
+# * | D
+# |/
+# * B
+# * A
+
 
 H=$(git rev-parse H)
 
@@ -65,14 +68,14 @@ test_expect_success 'Fail if commit filter fails' '
 '
 
 test_expect_success 'rewrite, renaming a specific file' '
-	git filter-branch -f --tree-filter "mv d doh || :" HEAD
+	git filter-branch -f --tree-filter "mv D.t doh || :" HEAD
 '
 
 test_expect_success 'test that the file was renamed' '
-	test d = "$(git show HEAD:doh --)" &&
-	! test -f d &&
+	test D = "$(git show HEAD:doh --)" &&
+	! test -f D.t &&
 	test -f doh &&
-	test d = "$(cat doh)"
+	test D = "$(cat doh)"
 '
 
 test_expect_success 'rewrite, renaming a specific directory' '
@@ -80,18 +83,18 @@ test_expect_success 'rewrite, renaming a specific directory' '
 '
 
 test_expect_success 'test that the directory was renamed' '
-	test dir/d = "$(git show HEAD:diroh/d --)" &&
+	test dir/D = "$(git show HEAD:diroh/D.t --)" &&
 	! test -d dir &&
 	test -d diroh &&
 	! test -d diroh/dir &&
-	test -f diroh/d &&
-	test dir/d = "$(cat diroh/d)"
+	test -f diroh/D.t &&
+	test dir/D = "$(cat diroh/D.t)"
 '
 
 git tag oldD HEAD~4
 test_expect_success 'rewrite one branch, keeping a side branch' '
 	git branch modD oldD &&
-	git filter-branch -f --tree-filter "mv b boh || :" D..modD
+	git filter-branch -f --tree-filter "mv B.t boh || :" D..modD
 '
 
 test_expect_success 'common ancestor is still common (unchanged)' '
@@ -104,13 +107,13 @@ test_expect_success 'filter subdirectory only' '
 	git add subdir/new &&
 	test_tick &&
 	git commit -m "subdir" &&
-	echo H > a &&
+	echo H > A.t &&
 	test_tick &&
-	git commit -m "not subdir" a &&
+	git commit -m "not subdir" A.t &&
 	echo A > subdir/new &&
 	test_tick &&
 	git commit -m "again subdir" subdir/new &&
-	git rm a &&
+	git rm A.t &&
 	test_tick &&
 	git commit -m "again not subdir" &&
 	git branch sub &&
@@ -134,7 +137,7 @@ test_expect_success 'more setup' '
 	git add subdir/new &&
 	test_tick &&
 	git commit -m "subdir on master" subdir/new &&
-	git rm a &&
+	git rm A.t &&
 	test_tick &&
 	git commit -m "again subdir on master" &&
 	git merge branch
@@ -283,8 +286,8 @@ test_expect_success 'Tag name filtering allows slashes in tag names' '
 
 test_expect_success 'Prune empty commits' '
 	git rev-list HEAD > expect &&
-	make_commit to_remove &&
-	git filter-branch -f --index-filter "git update-index --remove to_remove" --prune-empty HEAD &&
+	test_commit to_remove &&
+	git filter-branch -f --index-filter "git update-index --remove to_remove.t" --prune-empty HEAD &&
 	git rev-list HEAD > actual &&
 	test_cmp expect actual
 '
@@ -305,6 +308,24 @@ test_expect_success '--remap-to-ancestor with filename filters' '
 	test $(git rev-parse moved-foo) = $(git rev-parse moved-bar) &&
 	test $(git rev-parse moved-foo) = $(git rev-parse master^) &&
 	test $orig_invariant = $(git rev-parse invariant)
+'
+
+test_expect_success 'automatic remapping to ancestor with filename filters' '
+	git checkout master &&
+	git reset --hard A &&
+	test_commit add-foo2 foo 1 &&
+	git branch moved-foo2 &&
+	test_commit add-bar2 bar a &&
+	git branch invariant2 &&
+	orig_invariant=$(git rev-parse invariant2) &&
+	git branch moved-bar2 &&
+	test_commit change-foo2 foo 2 &&
+	git filter-branch -f \
+		moved-foo2 moved-bar2 A..master \
+		-- -- foo &&
+	test $(git rev-parse moved-foo2) = $(git rev-parse moved-bar2) &&
+	test $(git rev-parse moved-foo2) = $(git rev-parse master^) &&
+	test $orig_invariant = $(git rev-parse invariant2)
 '
 
 test_expect_success 'setup submodule' '

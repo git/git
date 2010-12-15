@@ -18,6 +18,7 @@
 #include "xdiff-interface.h"
 #include "ll-merge.h"
 #include "resolve-undo.h"
+#include "submodule.h"
 
 static const char * const checkout_usage[] = {
 	"git checkout [options] <branch>",
@@ -32,10 +33,15 @@ struct checkout_opts {
 	int writeout_stage;
 	int writeout_error;
 
+	/* not set by parse_options */
+	int branch_exists;
+
 	const char *new_branch;
+	const char *new_branch_force;
 	const char *new_orphan_branch;
 	int new_branch_log;
 	enum branch_track track;
+	struct diff_options diff_options;
 };
 
 static int post_checkout_hook(struct commit *old, struct commit *new,
@@ -150,8 +156,12 @@ static int checkout_merged(int pos, struct checkout *state)
 	read_mmblob(&ours, active_cache[pos+1]->sha1);
 	read_mmblob(&theirs, active_cache[pos+2]->sha1);
 
+	/*
+	 * NEEDSWORK: re-create conflicts from merges with
+	 * merge.renormalize set, too
+	 */
 	status = ll_merge(&result_buf, path, &ancestor, "base",
-			  &ours, "ours", &theirs, "theirs", 0);
+			  &ours, "ours", &theirs, "theirs", NULL);
 	free(ancestor.ptr);
 	free(ours.ptr);
 	free(theirs.ptr);
@@ -274,11 +284,12 @@ static int checkout_paths(struct tree *source_tree, const char **pathspec,
 	return errs;
 }
 
-static void show_local_changes(struct object *head)
+static void show_local_changes(struct object *head, struct diff_options *opts)
 {
 	struct rev_info rev;
 	/* I think we want full paths, even if we're in a subdirectory. */
 	init_revisions(&rev, NULL);
+	rev.diffopt.flags = opts->flags;
 	rev.diffopt.output_format |= DIFF_FORMAT_NAME_STATUS;
 	if (diff_setup_done(&rev.diffopt) < 0)
 		die("diff_setup_done failed");
@@ -372,7 +383,7 @@ static int merge_working_tree(struct checkout_opts *opts,
 		topts.src_index = &the_index;
 		topts.dst_index = &the_index;
 
-		topts.msgs.not_uptodate_file = "You have local changes to '%s'; cannot switch branches.";
+		setup_unpack_trees_porcelain(&topts, "checkout");
 
 		refresh_cache(REFRESH_QUIET);
 
@@ -432,6 +443,13 @@ static int merge_working_tree(struct checkout_opts *opts,
 			 */
 
 			add_files_to_cache(NULL, NULL, 0);
+			/*
+			 * NEEDSWORK: carrying over local changes
+			 * when branches have different end-of-line
+			 * normalization (or clean+smudge rules) is
+			 * a pain; plumb in an option to set
+			 * o.renormalize?
+			 */
 			init_merge_options(&o);
 			o.verbosity = 0;
 			work = write_tree_from_memory(&o);
@@ -455,7 +473,7 @@ static int merge_working_tree(struct checkout_opts *opts,
 		die("unable to write new index file");
 
 	if (!opts->force && !opts->quiet)
-		show_local_changes(&new->commit->object);
+		show_local_changes(&new->commit->object, &opts->diff_options);
 
 	return 0;
 }
@@ -510,7 +528,8 @@ static void update_refs_for_switch(struct checkout_opts *opts,
 			}
 		}
 		else
-			create_branch(old->name, opts->new_branch, new->name, 0,
+			create_branch(old->name, opts->new_branch, new->name,
+				      opts->new_branch_force ? 1 : 0,
 				      opts->new_branch_log, opts->track);
 		new->name = opts->new_branch;
 		setup_branch_path(new);
@@ -528,9 +547,12 @@ static void update_refs_for_switch(struct checkout_opts *opts,
 			if (old->path && !strcmp(new->path, old->path))
 				fprintf(stderr, "Already on '%s'\n",
 					new->name);
-			else
+			else if (opts->new_branch)
 				fprintf(stderr, "Switched to%s branch '%s'\n",
-					opts->new_branch ? " a new" : "",
+					opts->branch_exists ? " and reset" : " a new",
+					new->name);
+			else
+				fprintf(stderr, "Switched to branch '%s'\n",
 					new->name);
 		}
 		if (old->path && old->name) {
@@ -599,7 +621,16 @@ static int switch_branches(struct checkout_opts *opts, struct branch_info *new)
 
 static int git_checkout_config(const char *var, const char *value, void *cb)
 {
-	return git_xmerge_config(var, value, cb);
+	if (!strcmp(var, "diff.ignoresubmodules")) {
+		struct checkout_opts *opts = cb;
+		handle_ignore_submodules_arg(&opts->diff_options, value);
+		return 0;
+	}
+
+	if (!prefixcmp(var, "submodule."))
+		return parse_submodule_config_option(var, value);
+
+	return git_xmerge_config(var, value, NULL);
 }
 
 static int interactive_checkout(const char *revision, const char **pathspec,
@@ -656,17 +687,20 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 	int dwim_new_local_branch = 1;
 	struct option options[] = {
 		OPT__QUIET(&opts.quiet),
-		OPT_STRING('b', NULL, &opts.new_branch, "new branch", "branch"),
-		OPT_BOOLEAN('l', NULL, &opts.new_branch_log, "log for new branch"),
-		OPT_SET_INT('t', "track",  &opts.track, "track",
+		OPT_STRING('b', NULL, &opts.new_branch, "branch",
+			   "create and checkout a new branch"),
+		OPT_STRING('B', NULL, &opts.new_branch_force, "branch",
+			   "create/reset and checkout a branch"),
+		OPT_BOOLEAN('l', NULL, &opts.new_branch_log, "create reflog for new branch"),
+		OPT_SET_INT('t', "track",  &opts.track, "set upstream info for new branch",
 			BRANCH_TRACK_EXPLICIT),
 		OPT_STRING(0, "orphan", &opts.new_orphan_branch, "new branch", "new unparented branch"),
-		OPT_SET_INT('2', "ours", &opts.writeout_stage, "stage",
+		OPT_SET_INT('2', "ours", &opts.writeout_stage, "checkout our version for unmerged files",
 			    2),
-		OPT_SET_INT('3', "theirs", &opts.writeout_stage, "stage",
+		OPT_SET_INT('3', "theirs", &opts.writeout_stage, "checkout their version for unmerged files",
 			    3),
-		OPT_BOOLEAN('f', "force", &opts.force, "force"),
-		OPT_BOOLEAN('m', "merge", &opts.merge, "merge"),
+		OPT_BOOLEAN('f', "force", &opts.force, "force checkout (throw away local modifications)"),
+		OPT_BOOLEAN('m', "merge", &opts.merge, "perform a 3-way merge with the new branch"),
 		OPT_STRING(0, "conflict", &conflict_style, "style",
 			   "conflict style (merge or diff3)"),
 		OPT_BOOLEAN('p', "patch", &patch_mode, "select hunks interactively"),
@@ -680,12 +714,21 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 	memset(&opts, 0, sizeof(opts));
 	memset(&new, 0, sizeof(new));
 
-	git_config(git_checkout_config, NULL);
+	gitmodules_config();
+	git_config(git_checkout_config, &opts);
 
 	opts.track = BRANCH_TRACK_UNSPECIFIED;
 
 	argc = parse_options(argc, argv, prefix, options, checkout_usage,
 			     PARSE_OPT_KEEP_DASHDASH);
+
+	/* we can assume from now on new_branch = !new_branch_force */
+	if (opts.new_branch && opts.new_branch_force)
+		die("-B cannot be used with -b");
+
+	/* copy -B over to -b, so that we can just check the latter */
+	if (opts.new_branch_force)
+		opts.new_branch = opts.new_branch_force;
 
 	if (patch_mode && (opts.track > 0 || opts.new_branch
 			   || opts.new_branch_log || opts.merge || opts.force))
@@ -708,7 +751,7 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 
 	if (opts.new_orphan_branch) {
 		if (opts.new_branch)
-			die("--orphan and -b are mutually exclusive");
+			die("--orphan and -b|-B are mutually exclusive");
 		if (opts.track > 0)
 			die("--orphan cannot be used with -t");
 		opts.new_branch = opts.new_orphan_branch;
@@ -857,8 +900,12 @@ no_reference:
 		if (strbuf_check_branch_ref(&buf, opts.new_branch))
 			die("git checkout: we do not like '%s' as a branch name.",
 			    opts.new_branch);
-		if (!get_sha1(buf.buf, rev))
-			die("git checkout: branch %s already exists", opts.new_branch);
+		if (!get_sha1(buf.buf, rev)) {
+			opts.branch_exists = 1;
+			if (!opts.new_branch_force)
+				die("git checkout: branch %s already exists",
+				    opts.new_branch);
+		}
 		strbuf_release(&buf);
 	}
 

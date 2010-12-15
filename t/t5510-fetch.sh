@@ -21,27 +21,30 @@ test_expect_success setup '
 
 test_expect_success "clone and setup child repos" '
 	git clone . one &&
-	cd one &&
-	echo >file updated by one &&
-	git commit -a -m "updated by one" &&
-	cd .. &&
+	(
+		cd one &&
+		echo >file updated by one &&
+		git commit -a -m "updated by one"
+	) &&
 	git clone . two &&
-	cd two &&
-	git config branch.master.remote one &&
-	git config remote.one.url ../one/.git/ &&
-	git config remote.one.fetch refs/heads/master:refs/heads/one &&
-	cd .. &&
+	(
+		cd two &&
+		git config branch.master.remote one &&
+		git config remote.one.url ../one/.git/ &&
+		git config remote.one.fetch refs/heads/master:refs/heads/one
+	) &&
 	git clone . three &&
-	cd three &&
-	git config branch.master.remote two &&
-	git config branch.master.merge refs/heads/one &&
-	mkdir -p .git/remotes &&
-	{
-		echo "URL: ../two/.git/"
-		echo "Pull: refs/heads/master:refs/heads/two"
-		echo "Pull: refs/heads/one:refs/heads/one"
-	} >.git/remotes/two &&
-	cd .. &&
+	(
+		cd three &&
+		git config branch.master.remote two &&
+		git config branch.master.merge refs/heads/one &&
+		mkdir -p .git/remotes &&
+		{
+			echo "URL: ../two/.git/"
+			echo "Pull: refs/heads/master:refs/heads/two"
+			echo "Pull: refs/heads/one:refs/heads/one"
+		} >.git/remotes/two
+	) &&
 	git clone . bundle &&
 	git clone . seven
 '
@@ -238,6 +241,38 @@ test_expect_success 'fetch with a non-applying branch.<name>.merge' '
 	git config remote.blub.url one &&
 	git config remote.blub.fetch "refs/heads/*:refs/remotes/one/*" &&
 	git fetch blub
+'
+
+# URL supplied to fetch does not match the url of the configured branch's remote
+test_expect_success 'fetch from GIT URL with a non-applying branch.<name>.merge [1]' '
+	one_head=$(cd one && git rev-parse HEAD) &&
+	this_head=$(git rev-parse HEAD) &&
+	git update-ref -d FETCH_HEAD &&
+	git fetch one &&
+	test $one_head = "$(git rev-parse --verify FETCH_HEAD)" &&
+	test $this_head = "$(git rev-parse --verify HEAD)"
+'
+
+# URL supplied to fetch matches the url of the configured branch's remote and
+# the merge spec matches the branch the remote HEAD points to
+test_expect_success 'fetch from GIT URL with a non-applying branch.<name>.merge [2]' '
+	one_ref=$(cd one && git symbolic-ref HEAD) &&
+	git config branch.master.remote blub &&
+	git config branch.master.merge "$one_ref" &&
+	git update-ref -d FETCH_HEAD &&
+	git fetch one &&
+	test $one_head = "$(git rev-parse --verify FETCH_HEAD)" &&
+	test $this_head = "$(git rev-parse --verify HEAD)"
+'
+
+# URL supplied to fetch matches the url of the configured branch's remote, but
+# the merge spec does not match the branch the remote HEAD points to
+test_expect_success 'fetch from GIT URL with a non-applying branch.<name>.merge [3]' '
+	git config branch.master.merge "${one_ref}_not" &&
+	git update-ref -d FETCH_HEAD &&
+	git fetch one &&
+	test $one_head = "$(git rev-parse --verify FETCH_HEAD)" &&
+	test $this_head = "$(git rev-parse --verify HEAD)"
 '
 
 # the strange name is: a\!'b

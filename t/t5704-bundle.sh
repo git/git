@@ -30,6 +30,13 @@ test_expect_success 'tags can be excluded by rev-list options' '
 
 '
 
+test_expect_success 'die if bundle file cannot be created' '
+
+	mkdir adir &&
+	test_must_fail git bundle create adir --all
+
+'
+
 test_expect_failure 'bundle --stdin' '
 
 	echo master | git bundle create stdin-bundle.bdl --stdin &&

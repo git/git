@@ -530,7 +530,7 @@ static void check_aliased_update(struct command *cmd, struct string_list *list)
 static void check_aliased_updates(struct command *commands)
 {
 	struct command *cmd;
-	struct string_list ref_list = { NULL, 0, 0, 0 };
+	struct string_list ref_list = STRING_LIST_INIT_NODUP;
 
 	for (cmd = commands; cmd; cmd = cmd->next) {
 		struct string_list_item *item =

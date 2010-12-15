@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
 #
 # Copyright 2008-2009 Peter Krefting <peter@softwolves.pp.se>
 #
@@ -140,6 +140,7 @@ by whitespace or other characters.
 
 # Globals
 use strict;
+use warnings;
 use integer;
 my $crlfmode = 0;
 my @revs;

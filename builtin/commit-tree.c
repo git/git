@@ -9,7 +9,7 @@
 #include "builtin.h"
 #include "utf8.h"
 
-static const char commit_tree_usage[] = "git commit-tree <sha1> [-p <sha1>]* < changelog";
+static const char commit_tree_usage[] = "git commit-tree <sha1> [(-p <sha1>)...] < changelog";
 
 static void new_parent(struct commit *parent, struct commit_list **parents_p)
 {
@@ -56,10 +56,12 @@ int cmd_commit_tree(int argc, const char **argv, const char *prefix)
 	if (strbuf_read(&buffer, 0, 0) < 0)
 		die_errno("git commit-tree: failed to read");
 
-	if (!commit_tree(buffer.buf, tree_sha1, parents, commit_sha1, NULL)) {
-		printf("%s\n", sha1_to_hex(commit_sha1));
-		return 0;
-	}
-	else
+	if (commit_tree(buffer.buf, tree_sha1, parents, commit_sha1, NULL)) {
+		strbuf_release(&buffer);
 		return 1;
+	}
+
+	printf("%s\n", sha1_to_hex(commit_sha1));
+	strbuf_release(&buffer);
+	return 0;
 }

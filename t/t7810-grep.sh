@@ -65,7 +65,7 @@ do
 
 	test_expect_success "grep -w $L (w)" '
 		: >expected &&
-		! git grep -n -w -e "^w" >actual &&
+		test_must_fail git grep -n -w -e "^w" >actual &&
 		test_cmp expected actual
 	'
 
@@ -324,8 +324,13 @@ test_expect_success 'log grep setup' '
 
 	echo a >>file &&
 	test_tick &&
-	git commit -a -m "third"
+	git commit -a -m "third" &&
 
+	echo a >>file &&
+	test_tick &&
+	GIT_AUTHOR_NAME="Night Fall" \
+	GIT_AUTHOR_EMAIL="nitfol@frobozz.com" \
+	git commit -a -m "fourth"
 '
 
 test_expect_success 'log grep (1)' '
@@ -369,6 +374,28 @@ test_expect_success 'log --grep --author implicitly uses all-match' '
 	# author matches only initial and third
 	git log --author="A U Thor" --grep=s --grep=l --format=%s >actual &&
 	echo initial >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'log with multiple --author uses union' '
+	git log --author="Thor" --author="Aster" --format=%s >actual &&
+	{
+	    echo third && echo second && echo initial
+	} >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'log with --grep and multiple --author uses all-match' '
+	git log --author="Thor" --author="Night" --grep=i --format=%s >actual &&
+	{
+	    echo third && echo initial
+	} >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'log with --grep and multiple --author uses all-match' '
+	git log --author="Thor" --author="Night" --grep=q --format=%s >actual &&
+	>expect &&
 	test_cmp expect actual
 '
 

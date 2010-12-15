@@ -16,7 +16,7 @@
  *
  * 2. the ->buf member is a byte array that has at least ->len + 1 bytes
  *    allocated. The extra byte is used to store a '\0', allowing the ->buf
- *    member to be a valid C-string. Every strbuf function ensure this
+ *    member to be a valid C-string. Every strbuf function ensures this
  *    invariant is preserved.
  *
  *    Note that it is OK to "play" with the buffer directly if you work it

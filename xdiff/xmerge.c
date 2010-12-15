@@ -336,7 +336,7 @@ static int xdl_refine_conflicts(xdfenv_t *xe1, xdfenv_t *xe2, xdmerge_t *m,
 static int line_contains_alnum(const char *ptr, long size)
 {
 	while (size--)
-		if (isalnum(*(ptr++)))
+		if (isalnum((unsigned char)*(ptr++)))
 			return 1;
 	return 0;
 }

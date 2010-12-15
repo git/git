@@ -111,11 +111,12 @@ VERBOSE=
 OK_TO_SKIP_PRE_REBASE=
 REBASE_ROOT=
 AUTOSQUASH=
+test "$(git config --bool rebase.autosquash)" = "true" && AUTOSQUASH=t
 NEVER_FF=
 
-GIT_CHERRY_PICK_HELP="  After resolving the conflicts,
-mark the corrected paths with 'git add <paths>', and
-run 'git rebase --continue'"
+GIT_CHERRY_PICK_HELP="\
+hint: after resolving the conflicts, mark the corrected paths
+hint: with 'git add <paths>' and run 'git rebase --continue'"
 export GIT_CHERRY_PICK_HELP
 
 warn () {
@@ -537,6 +538,34 @@ do_next () {
 		esac
 		record_in_rewritten $sha1
 		;;
+	x|"exec")
+		read -r command rest < "$TODO"
+		mark_action_done
+		printf 'Executing: %s\n' "$rest"
+		# "exec" command doesn't take a sha1 in the todo-list.
+		# => can't just use $sha1 here.
+		git rev-parse --verify HEAD > "$DOTEST"/stopped-sha
+		${SHELL:-@SHELL_PATH@} -c "$rest" # Actual execution
+		status=$?
+		if test "$status" -ne 0
+		then
+			warn "Execution failed: $rest"
+			warn "You can fix the problem, and then run"
+			warn
+			warn "	git rebase --continue"
+			warn
+			exit "$status"
+		fi
+		# Run in subshell because require_clean_work_tree can die.
+		if ! (require_clean_work_tree)
+		then
+			warn "Commit or stash your changes, and then run"
+			warn
+			warn "	git rebase --continue"
+			warn
+			exit 1
+		fi
+		;;
 	*)
 		warn "Unknown command: $command $sha1 $rest"
 		if git rev-parse --verify -q "$sha1" >/dev/null
@@ -591,22 +620,30 @@ do_rest () {
 # skip picking commits whose parents are unchanged
 skip_unnecessary_picks () {
 	fd=3
-	while read -r command sha1 rest
+	while read -r command rest
 	do
 		# fd=3 means we skip the command
-		case "$fd,$command,$(git rev-parse --verify --quiet $sha1^)" in
-		3,pick,"$ONTO"*|3,p,"$ONTO"*)
+		case "$fd,$command" in
+		3,pick|3,p)
 			# pick a commit whose parent is current $ONTO -> skip
-			ONTO=$sha1
+			sha1=${rest%% *}
+			case "$(git rev-parse --verify --quiet "$sha1"^)" in
+			"$ONTO"*)
+				ONTO=$sha1
+				;;
+			*)
+				fd=1
+				;;
+			esac
 			;;
-		3,#*|3,,*)
+		3,#*|3,)
 			# copy comments
 			;;
 		*)
 			fd=1
 			;;
 		esac
-		printf '%s\n' "$command${sha1:+ }$sha1${rest:+ }$rest" >&$fd
+		printf '%s\n' "$command${rest:+ }$rest" >&$fd
 	done <"$TODO" >"$TODO.new" 3>>"$DONE" &&
 	mv -f "$TODO".new "$TODO" &&
 	case "$(peek_next_command)" in
@@ -795,6 +832,9 @@ first and then run 'git rebase --continue' again."
 	--autosquash)
 		AUTOSQUASH=t
 		;;
+	--no-autosquash)
+		AUTOSQUASH=
+		;;
 	--onto)
 		shift
 		ONTO=$(parse_onto "$1") ||
@@ -957,6 +997,7 @@ first and then run 'git rebase --continue' again."
 #  e, edit = use commit, but stop for amending
 #  s, squash = use commit, but meld into previous commit
 #  f, fixup = like "squash", but discard this commit's log message
+#  x <cmd>, exec <cmd> = Run a shell command <cmd>, and stop if it fails
 #
 # If you remove a line here THAT COMMIT WILL BE LOST.
 # However, if you remove everything, the rebase will be aborted.

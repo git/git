@@ -74,7 +74,7 @@ OPTIONS
 	properly quoted for consumption by shell.  Useful when
 	you expect your parameter to contain whitespaces and
 	newlines (e.g. when using pickaxe `-S` with
-	'git diff-\*'). In contrast to the `--sq-quote` option,
+	'git diff-{asterisk}'). In contrast to the `--sq-quote` option,
 	the command input is still interpreted as usual.
 
 --not::
@@ -95,7 +95,7 @@ OPTIONS
 	unfortunately named tag "master"), and show them as full
 	refnames (e.g. "refs/heads/master").
 
---abbrev-ref[={strict|loose}]::
+--abbrev-ref[=(strict|loose)]::
 	A non-ambiguous short name of the objects name.
 	The option core.warnAmbiguousRefs is used to select the strict
 	abbreviation mode.
@@ -112,14 +112,15 @@ OPTIONS
 +
 If a `pattern` is given, only refs matching the given shell glob are
 shown.  If the pattern does not contain a globbing character (`?`,
-`\*`, or `[`), it is turned into a prefix match by appending `/\*`.
+`{asterisk}`, or `[`), it is turned into a prefix match by
+appending `/{asterisk}`.
 
 --glob=pattern::
 	Show all refs matching the shell glob pattern `pattern`. If
 	the pattern does not start with `refs/`, this is automatically
 	prepended.  If the pattern does not contain a globbing
-	character (`?`, `\*`, or `[`), it is turned into a prefix
-	match by appending `/\*`.
+	character (`?`, `{asterisk}`, or `[`), it is turned into a prefix
+	match by appending `/{asterisk}`.
 
 --show-toplevel::
 	Show the absolute path of the top-level directory.

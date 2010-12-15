@@ -73,8 +73,8 @@ OPTIONS
 --exclude-existing[=<pattern>]::
 
 	Make 'git show-ref' act as a filter that reads refs from stdin of the
-	form "^(?:<anything>\s)?<refname>(?:\^\{\})?$" and performs the
-	following actions on each:
+	form "^(?:<anything>\s)?<refname>(?:{backslash}{caret}\{\})?$"
+	and performs the following actions on each:
 	(1) strip "^{}" at the end of line if any;
 	(2) ignore if pattern is provided and does not head-match refname;
 	(3) warn if refname is not a well-formed refname and skip;
@@ -84,7 +84,11 @@ OPTIONS
 
 <pattern>...::
 
-	Show references matching one or more patterns.
+	Show references matching one or more patterns. Patterns are matched from
+	the end of the full name, and only complete parts are matched, e.g.
+	'master' matches 'refs/heads/master', 'refs/remotes/origin/master',
+	'refs/tags/jedi/master' but not 'refs/heads/mymaster' nor
+	'refs/remotes/master/jedi'.
 
 OUTPUT
 ------

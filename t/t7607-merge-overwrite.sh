@@ -31,7 +31,7 @@ test_expect_success 'setup' '
 test_expect_success 'will not overwrite untracked file' '
 	git reset --hard c1 &&
 	cat important > c2.c &&
-	! git merge c2 &&
+	test_must_fail git merge c2 &&
 	test_cmp important c2.c
 '
 
@@ -39,7 +39,7 @@ test_expect_success 'will not overwrite new file' '
 	git reset --hard c1 &&
 	cat important > c2.c &&
 	git add c2.c &&
-	! git merge c2 &&
+	test_must_fail git merge c2 &&
 	test_cmp important c2.c
 '
 
@@ -48,7 +48,7 @@ test_expect_success 'will not overwrite staged changes' '
 	cat important > c2.c &&
 	git add c2.c &&
 	rm c2.c &&
-	! git merge c2 &&
+	test_must_fail git merge c2 &&
 	git checkout c2.c &&
 	test_cmp important c2.c
 '
@@ -58,7 +58,7 @@ test_expect_success 'will not overwrite removed file' '
 	git rm c1.c &&
 	git commit -m "rm c1.c" &&
 	cat important > c1.c &&
-	! git merge c1a &&
+	test_must_fail git merge c1a &&
 	test_cmp important c1.c
 '
 
@@ -68,7 +68,7 @@ test_expect_success 'will not overwrite re-added file' '
 	git commit -m "rm c1.c" &&
 	cat important > c1.c &&
 	git add c1.c &&
-	! git merge c1a &&
+	test_must_fail git merge c1a &&
 	test_cmp important c1.c
 '
 
@@ -79,7 +79,7 @@ test_expect_success 'will not overwrite removed file with staged changes' '
 	cat important > c1.c &&
 	git add c1.c &&
 	rm c1.c &&
-	! git merge c1a &&
+	test_must_fail git merge c1a &&
 	git checkout c1.c &&
 	test_cmp important c1.c
 '

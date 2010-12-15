@@ -13,12 +13,14 @@ P1='pathname	with HT'
 P2='pathname with SP'
 P3='pathname
 with LF'
-: 2>/dev/null >"$P1" && test -f "$P1" && rm -f "$P1" || {
-	skip_all='Your filesystem does not allow tabs in filenames, test skipped.'
-	test_done
-}
+if : 2>/dev/null >"$P1" && test -f "$P1" && rm -f "$P1"
+then
+	test_set_prereq TABS_IN_FILENAMES
+else
+	say 'Your filesystem does not allow tabs in filenames'
+fi
 
-test_expect_success setup '
+test_expect_success TABS_IN_FILENAMES setup '
 	echo P0.0 >"$P0.0" &&
 	echo P0.1 >"$P0.1" &&
 	echo P0.2 >"$P0.2" &&
@@ -38,6 +40,7 @@ test_expect_success setup '
 	:
 '
 
+test_expect_success TABS_IN_FILENAMES 'setup expected files' '
 cat >expect <<\EOF
  rename pathname.1 => "Rpathname\twith HT.0" (100%)
  rename pathname.3 => "Rpathname\nwith LF.0" (100%)
@@ -47,11 +50,14 @@ cat >expect <<\EOF
  rename pathname.0 => Rpathname.0 (100%)
  rename "pathname\twith HT.0" => Rpathname.1 (100%)
 EOF
-test_expect_success 'git diff --summary -M HEAD' '
+'
+
+test_expect_success TABS_IN_FILENAMES 'git diff --summary -M HEAD' '
 	git diff --summary -M HEAD >actual &&
 	test_cmp expect actual
 '
 
+test_expect_success TABS_IN_FILENAMES 'setup expected files' '
 cat >expect <<\EOF
  pathname.1 => "Rpathname\twith HT.0"            |    0
  pathname.3 => "Rpathname\nwith LF.0"            |    0
@@ -62,7 +68,9 @@ cat >expect <<\EOF
  "pathname\twith HT.0" => Rpathname.1            |    0
  7 files changed, 0 insertions(+), 0 deletions(-)
 EOF
-test_expect_success 'git diff --stat -M HEAD' '
+'
+
+test_expect_success TABS_IN_FILENAMES 'git diff --stat -M HEAD' '
 	git diff --stat -M HEAD >actual &&
 	test_cmp expect actual
 '

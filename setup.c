@@ -313,21 +313,129 @@ const char *read_gitfile_gently(const char *path)
 	return path;
 }
 
+static const char *setup_explicit_git_dir(const char *gitdirenv,
+				const char *work_tree_env, int *nongit_ok)
+{
+	static char buffer[1024 + 1];
+	const char *retval;
+
+	if (PATH_MAX - 40 < strlen(gitdirenv))
+		die("'$%s' too big", GIT_DIR_ENVIRONMENT);
+	if (!is_git_directory(gitdirenv)) {
+		if (nongit_ok) {
+			*nongit_ok = 1;
+			return NULL;
+		}
+		die("Not a git repository: '%s'", gitdirenv);
+	}
+	if (!work_tree_env) {
+		retval = set_work_tree(gitdirenv);
+		/* config may override worktree */
+		if (check_repository_format_gently(nongit_ok))
+			return NULL;
+		return retval;
+	}
+	if (check_repository_format_gently(nongit_ok))
+		return NULL;
+	retval = get_relative_cwd(buffer, sizeof(buffer) - 1,
+			get_git_work_tree());
+	if (!retval || !*retval)
+		return NULL;
+	set_git_dir(make_absolute_path(gitdirenv));
+	if (chdir(work_tree_env) < 0)
+		die_errno ("Could not chdir to '%s'", work_tree_env);
+	strcat(buffer, "/");
+	return retval;
+}
+
+static int cwd_contains_git_dir(const char **gitfile_dirp)
+{
+	const char *gitfile_dir = read_gitfile_gently(DEFAULT_GIT_DIR_ENVIRONMENT);
+	*gitfile_dirp = gitfile_dir;
+	if (gitfile_dir) {
+		if (set_git_dir(gitfile_dir))
+			die("Repository setup failed");
+		return 1;
+	}
+	return is_git_directory(DEFAULT_GIT_DIR_ENVIRONMENT);
+}
+
+static const char *setup_discovered_git_dir(const char *work_tree_env,
+		int offset, int len, char *cwd, int *nongit_ok)
+{
+	int root_len;
+
+	inside_git_dir = 0;
+	if (!work_tree_env)
+		inside_work_tree = 1;
+	root_len = offset_1st_component(cwd);
+	git_work_tree_cfg = xstrndup(cwd, offset > root_len ? offset : root_len);
+	if (check_repository_format_gently(nongit_ok))
+		return NULL;
+	if (offset == len)
+		return NULL;
+
+	/* Make "offset" point to past the '/', and add a '/' at the end */
+	offset++;
+	cwd[len++] = '/';
+	cwd[len] = 0;
+	return cwd + offset;
+}
+
+static const char *setup_bare_git_dir(const char *work_tree_env,
+		int offset, int len, char *cwd, int *nongit_ok)
+{
+	int root_len;
+
+	inside_git_dir = 1;
+	if (!work_tree_env)
+		inside_work_tree = 0;
+	if (offset != len) {
+		if (chdir(cwd))
+			die_errno("Cannot come back to cwd");
+		root_len = offset_1st_component(cwd);
+		cwd[offset > root_len ? offset : root_len] = '\0';
+		set_git_dir(cwd);
+	} else
+		set_git_dir(".");
+	check_repository_format_gently(nongit_ok);
+	return NULL;
+}
+
+static const char *setup_nongit(const char *cwd, int *nongit_ok)
+{
+	if (!nongit_ok)
+		die("Not a git repository (or any of the parent directories): %s", DEFAULT_GIT_DIR_ENVIRONMENT);
+	if (chdir(cwd))
+		die_errno("Cannot come back to cwd");
+	*nongit_ok = 1;
+	return NULL;
+}
+
+static dev_t get_device_or_die(const char *path, const char *prefix)
+{
+	struct stat buf;
+	if (stat(path, &buf))
+		die_errno("failed to stat '%s%s%s'",
+				prefix ? prefix : "",
+				prefix ? "/" : "", path);
+	return buf.st_dev;
+}
+
 /*
  * We cannot decide in this function whether we are in the work tree or
  * not, since the config can only be read _after_ this function was called.
  */
-const char *setup_git_directory_gently(int *nongit_ok)
+static const char *setup_git_directory_gently_1(int *nongit_ok)
 {
 	const char *work_tree_env = getenv(GIT_WORK_TREE_ENVIRONMENT);
 	const char *env_ceiling_dirs = getenv(CEILING_DIRECTORIES_ENVIRONMENT);
 	static char cwd[PATH_MAX+1];
 	const char *gitdirenv;
 	const char *gitfile_dir;
-	int len, offset, ceil_offset, root_len;
+	int len, offset, ceil_offset;
 	dev_t current_device = 0;
 	int one_filesystem = 1;
-	struct stat buf;
 
 	/*
 	 * Let's assume that we are in a git repository.
@@ -343,38 +451,8 @@ const char *setup_git_directory_gently(int *nongit_ok)
 	 * validation.
 	 */
 	gitdirenv = getenv(GIT_DIR_ENVIRONMENT);
-	if (gitdirenv) {
-		if (PATH_MAX - 40 < strlen(gitdirenv))
-			die("'$%s' too big", GIT_DIR_ENVIRONMENT);
-		if (is_git_directory(gitdirenv)) {
-			static char buffer[1024 + 1];
-			const char *retval;
-
-			if (!work_tree_env) {
-				retval = set_work_tree(gitdirenv);
-				/* config may override worktree */
-				if (check_repository_format_gently(nongit_ok))
-					return NULL;
-				return retval;
-			}
-			if (check_repository_format_gently(nongit_ok))
-				return NULL;
-			retval = get_relative_cwd(buffer, sizeof(buffer) - 1,
-					get_git_work_tree());
-			if (!retval || !*retval)
-				return NULL;
-			set_git_dir(make_absolute_path(gitdirenv));
-			if (chdir(work_tree_env) < 0)
-				die_errno ("Could not chdir to '%s'", work_tree_env);
-			strcat(buffer, "/");
-			return retval;
-		}
-		if (nongit_ok) {
-			*nongit_ok = 1;
-			return NULL;
-		}
-		die("Not a git repository: '%s'", gitdirenv);
-	}
+	if (gitdirenv)
+		return setup_explicit_git_dir(gitdirenv, work_tree_env, nongit_ok);
 
 	if (!getcwd(cwd, sizeof(cwd)-1))
 		die_errno("Unable to read current working directory");
@@ -396,49 +474,21 @@ const char *setup_git_directory_gently(int *nongit_ok)
 	 */
 	offset = len = strlen(cwd);
 	one_filesystem = !git_env_bool("GIT_DISCOVERY_ACROSS_FILESYSTEM", 0);
-	if (one_filesystem) {
-		if (stat(".", &buf))
-			die_errno("failed to stat '.'");
-		current_device = buf.st_dev;
-	}
+	if (one_filesystem)
+		current_device = get_device_or_die(".", NULL);
 	for (;;) {
-		gitfile_dir = read_gitfile_gently(DEFAULT_GIT_DIR_ENVIRONMENT);
-		if (gitfile_dir) {
-			if (set_git_dir(gitfile_dir))
-				die("Repository setup failed");
-			break;
-		}
-		if (is_git_directory(DEFAULT_GIT_DIR_ENVIRONMENT))
-			break;
-		if (is_git_directory(".")) {
-			inside_git_dir = 1;
-			if (!work_tree_env)
-				inside_work_tree = 0;
-			if (offset != len) {
-				root_len = offset_1st_component(cwd);
-				cwd[offset > root_len ? offset : root_len] = '\0';
-				set_git_dir(cwd);
-			} else
-				set_git_dir(".");
-			check_repository_format_gently(nongit_ok);
-			return NULL;
-		}
+		if (cwd_contains_git_dir(&gitfile_dir))
+			return setup_discovered_git_dir(work_tree_env, offset,
+							len, cwd, nongit_ok);
+		if (is_git_directory("."))
+			return setup_bare_git_dir(work_tree_env, offset,
+							len, cwd, nongit_ok);
 		while (--offset > ceil_offset && cwd[offset] != '/');
-		if (offset <= ceil_offset) {
-			if (nongit_ok) {
-				if (chdir(cwd))
-					die_errno("Cannot come back to cwd");
-				*nongit_ok = 1;
-				return NULL;
-			}
-			die("Not a git repository (or any of the parent directories): %s", DEFAULT_GIT_DIR_ENVIRONMENT);
-		}
+		if (offset <= ceil_offset)
+			return setup_nongit(cwd, nongit_ok);
 		if (one_filesystem) {
-			if (stat("..", &buf)) {
-				cwd[offset] = '\0';
-				die_errno("failed to stat '%s/..'", cwd);
-			}
-			if (buf.st_dev != current_device) {
+			dev_t parent_device = get_device_or_die("..", cwd);
+			if (parent_device != current_device) {
 				if (nongit_ok) {
 					if (chdir(cwd))
 						die_errno("Cannot come back to cwd");
@@ -455,22 +505,16 @@ const char *setup_git_directory_gently(int *nongit_ok)
 			die_errno("Cannot change to '%s/..'", cwd);
 		}
 	}
+}
 
-	inside_git_dir = 0;
-	if (!work_tree_env)
-		inside_work_tree = 1;
-	root_len = offset_1st_component(cwd);
-	git_work_tree_cfg = xstrndup(cwd, offset > root_len ? offset : root_len);
-	if (check_repository_format_gently(nongit_ok))
-		return NULL;
-	if (offset == len)
-		return NULL;
+const char *setup_git_directory_gently(int *nongit_ok)
+{
+	const char *prefix;
 
-	/* Make "offset" point to past the '/', and add a '/' at the end */
-	offset++;
-	cwd[len++] = '/';
-	cwd[len] = 0;
-	return cwd + offset;
+	prefix = setup_git_directory_gently_1(nongit_ok);
+	if (startup_info)
+		startup_info->have_repository = !nongit_ok || !*nongit_ok;
+	return prefix;
 }
 
 int git_config_perm(const char *var, const char *value)

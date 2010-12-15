@@ -63,7 +63,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 	const char **source, **destination, **dest_path;
 	enum update_mode { BOTH = 0, WORKING_DIRECTORY, INDEX } *modes;
 	struct stat st;
-	struct string_list src_for_dst = {NULL, 0, 0, 0};
+	struct string_list src_for_dst = STRING_LIST_INIT_NODUP;
 
 	git_config(git_default_config, NULL);
 

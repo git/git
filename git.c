@@ -1,19 +1,21 @@
 #include "builtin.h"
-#include "exec_cmd.h"
 #include "cache.h"
+#include "exec_cmd.h"
+#include "help.h"
 #include "quote.h"
 #include "run-command.h"
 
 const char git_usage_string[] =
-	"git [--version] [--exec-path[=GIT_EXEC_PATH]] [--html-path]\n"
+	"git [--version] [--exec-path[=<path>]] [--html-path]\n"
 	"           [-p|--paginate|--no-pager] [--no-replace-objects]\n"
-	"           [--bare] [--git-dir=GIT_DIR] [--work-tree=GIT_WORK_TREE]\n"
+	"           [--bare] [--git-dir=<path>] [--work-tree=<path>]\n"
 	"           [-c name=value] [--help]\n"
-	"           COMMAND [ARGS]";
+	"           <command> [<args>]";
 
 const char git_more_info_string[] =
-	"See 'git help COMMAND' for more information on a specific command.";
+	"See 'git help <command>' for more information on a specific command.";
 
+static struct startup_info git_startup_info;
 static int use_pager = -1;
 struct pager_config {
 	const char *cmd;
@@ -54,9 +56,6 @@ static void commit_pager_choice(void) {
 static int handle_options(const char ***argv, int *argc, int *envchanged)
 {
 	int handled = 0;
-
-	if (!getenv("GIT_ASKPASS") && getenv("SSH_ASKPASS"))
-		setenv("GIT_ASKPASS", getenv("SSH_ASKPASS"), 1);
 
 	while (*argc > 0) {
 		const char *cmd = (*argv)[0];
@@ -136,7 +135,7 @@ static int handle_options(const char ***argv, int *argc, int *envchanged)
 				fprintf(stderr, "-c expects a configuration string\n" );
 				usage(git_usage_string);
 			}
-			git_config_parse_parameter((*argv)[1]);
+			git_config_push_parameter((*argv)[1]);
 			(*argv)++;
 			(*argc)--;
 		} else {
@@ -188,7 +187,8 @@ static int handle_alias(int *argcp, const char ***argv)
 		}
 		count = split_cmdline(alias_string, &new_argv);
 		if (count < 0)
-			die("Bad alias.%s string", alias_command);
+			die("Bad alias.%s string: %s", alias_command,
+			    split_cmdline_strerror(count));
 		option_count = handle_options(&new_argv, &count, &envchanged);
 		if (envchanged)
 			die("alias '%s' changes environment variables\n"
@@ -229,13 +229,14 @@ static int handle_alias(int *argcp, const char ***argv)
 
 const char git_version_string[] = GIT_VERSION;
 
-#define RUN_SETUP	(1<<0)
-#define USE_PAGER	(1<<1)
+#define RUN_SETUP		(1<<0)
+#define RUN_SETUP_GENTLY	(1<<1)
+#define USE_PAGER		(1<<2)
 /*
  * require working tree to be present -- anything uses this needs
  * RUN_SETUP for reading from the configuration file.
  */
-#define NEED_WORK_TREE	(1<<2)
+#define NEED_WORK_TREE		(1<<3)
 
 struct cmd_struct {
 	const char *cmd;
@@ -254,8 +255,12 @@ static int run_builtin(struct cmd_struct *p, int argc, const char **argv)
 	if (!help) {
 		if (p->option & RUN_SETUP)
 			prefix = setup_git_directory();
+		if (p->option & RUN_SETUP_GENTLY) {
+			int nongit_ok;
+			prefix = setup_git_directory_gently(&nongit_ok);
+		}
 
-		if (use_pager == -1 && p->option & RUN_SETUP)
+		if (use_pager == -1 && p->option & (RUN_SETUP | RUN_SETUP_GENTLY))
 			use_pager = check_pager_config(p->cmd);
 		if (use_pager == -1 && p->option & USE_PAGER)
 			use_pager = 1;
@@ -295,12 +300,12 @@ static void handle_internal_command(int argc, const char **argv)
 		{ "add", cmd_add, RUN_SETUP | NEED_WORK_TREE },
 		{ "stage", cmd_add, RUN_SETUP | NEED_WORK_TREE },
 		{ "annotate", cmd_annotate, RUN_SETUP },
-		{ "apply", cmd_apply },
+		{ "apply", cmd_apply, RUN_SETUP_GENTLY },
 		{ "archive", cmd_archive },
 		{ "bisect--helper", cmd_bisect__helper, RUN_SETUP | NEED_WORK_TREE },
 		{ "blame", cmd_blame, RUN_SETUP },
 		{ "branch", cmd_branch, RUN_SETUP },
-		{ "bundle", cmd_bundle },
+		{ "bundle", cmd_bundle, RUN_SETUP_GENTLY },
 		{ "cat-file", cmd_cat_file, RUN_SETUP },
 		{ "checkout", cmd_checkout, RUN_SETUP | NEED_WORK_TREE },
 		{ "checkout-index", cmd_checkout_index,
@@ -313,7 +318,7 @@ static void handle_internal_command(int argc, const char **argv)
 		{ "clean", cmd_clean, RUN_SETUP | NEED_WORK_TREE },
 		{ "commit", cmd_commit, RUN_SETUP | NEED_WORK_TREE },
 		{ "commit-tree", cmd_commit_tree, RUN_SETUP },
-		{ "config", cmd_config },
+		{ "config", cmd_config, RUN_SETUP_GENTLY },
 		{ "count-objects", cmd_count_objects, RUN_SETUP },
 		{ "describe", cmd_describe, RUN_SETUP },
 		{ "diff", cmd_diff },
@@ -330,21 +335,21 @@ static void handle_internal_command(int argc, const char **argv)
 		{ "fsck-objects", cmd_fsck, RUN_SETUP },
 		{ "gc", cmd_gc, RUN_SETUP },
 		{ "get-tar-commit-id", cmd_get_tar_commit_id },
-		{ "grep", cmd_grep },
+		{ "grep", cmd_grep, RUN_SETUP_GENTLY },
 		{ "hash-object", cmd_hash_object },
 		{ "help", cmd_help },
-		{ "index-pack", cmd_index_pack },
+		{ "index-pack", cmd_index_pack, RUN_SETUP_GENTLY },
 		{ "init", cmd_init_db },
 		{ "init-db", cmd_init_db },
 		{ "log", cmd_log, RUN_SETUP },
 		{ "ls-files", cmd_ls_files, RUN_SETUP },
 		{ "ls-tree", cmd_ls_tree, RUN_SETUP },
-		{ "ls-remote", cmd_ls_remote },
+		{ "ls-remote", cmd_ls_remote, RUN_SETUP_GENTLY },
 		{ "mailinfo", cmd_mailinfo },
 		{ "mailsplit", cmd_mailsplit },
 		{ "merge", cmd_merge, RUN_SETUP | NEED_WORK_TREE },
 		{ "merge-base", cmd_merge_base, RUN_SETUP },
-		{ "merge-file", cmd_merge_file },
+		{ "merge-file", cmd_merge_file, RUN_SETUP_GENTLY },
 		{ "merge-index", cmd_merge_index, RUN_SETUP },
 		{ "merge-ours", cmd_merge_ours, RUN_SETUP },
 		{ "merge-recursive", cmd_merge_recursive, RUN_SETUP | NEED_WORK_TREE },
@@ -360,7 +365,7 @@ static void handle_internal_command(int argc, const char **argv)
 		{ "pack-objects", cmd_pack_objects, RUN_SETUP },
 		{ "pack-redundant", cmd_pack_redundant, RUN_SETUP },
 		{ "patch-id", cmd_patch_id },
-		{ "peek-remote", cmd_ls_remote },
+		{ "peek-remote", cmd_ls_remote, RUN_SETUP_GENTLY },
 		{ "pickaxe", cmd_blame, RUN_SETUP },
 		{ "prune", cmd_prune, RUN_SETUP },
 		{ "prune-packed", cmd_prune_packed, RUN_SETUP },
@@ -370,7 +375,7 @@ static void handle_internal_command(int argc, const char **argv)
 		{ "reflog", cmd_reflog, RUN_SETUP },
 		{ "remote", cmd_remote, RUN_SETUP },
 		{ "replace", cmd_replace, RUN_SETUP },
-		{ "repo-config", cmd_config },
+		{ "repo-config", cmd_config, RUN_SETUP_GENTLY },
 		{ "rerere", cmd_rerere, RUN_SETUP },
 		{ "reset", cmd_reset, RUN_SETUP },
 		{ "rev-list", cmd_rev_list, RUN_SETUP },
@@ -378,7 +383,7 @@ static void handle_internal_command(int argc, const char **argv)
 		{ "revert", cmd_revert, RUN_SETUP | NEED_WORK_TREE },
 		{ "rm", cmd_rm, RUN_SETUP },
 		{ "send-pack", cmd_send_pack, RUN_SETUP },
-		{ "shortlog", cmd_shortlog, USE_PAGER },
+		{ "shortlog", cmd_shortlog, RUN_SETUP_GENTLY | USE_PAGER },
 		{ "show-branch", cmd_show_branch, RUN_SETUP },
 		{ "show", cmd_show, RUN_SETUP },
 		{ "status", cmd_status, RUN_SETUP | NEED_WORK_TREE },
@@ -392,7 +397,7 @@ static void handle_internal_command(int argc, const char **argv)
 		{ "update-ref", cmd_update_ref, RUN_SETUP },
 		{ "update-server-info", cmd_update_server_info, RUN_SETUP },
 		{ "upload-archive", cmd_upload_archive },
-		{ "var", cmd_var },
+		{ "var", cmd_var, RUN_SETUP_GENTLY },
 		{ "verify-tag", cmd_verify_tag, RUN_SETUP },
 		{ "version", cmd_version },
 		{ "whatchanged", cmd_whatchanged, RUN_SETUP },
@@ -488,6 +493,8 @@ static int run_argv(int *argcp, const char ***argv)
 int main(int argc, const char **argv)
 {
 	const char *cmd;
+
+	startup_info = &git_startup_info;
 
 	cmd = git_extract_argv0_path(argv[0]);
 	if (!cmd)

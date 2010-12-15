@@ -97,7 +97,7 @@ See the CONFIGURATION section for 'sendemail.multiedit'.
 	Specify the primary recipient of the emails generated. Generally, this
 	will be the upstream maintainer of the project involved. Default is the
 	value of the 'sendemail.to' configuration value; if that is unspecified,
-	this will be prompted for.
+	and --to-cmd is not specified, this will be prompted for.
 +
 The --to option must be repeated for each user you want on the to list.
 
@@ -165,6 +165,15 @@ user is prompted for a password while the input is masked for privacy.
 	are also accepted. The port can also be set with the
 	'sendemail.smtpserverport' configuration variable.
 
+--smtp-server-option=<option>::
+	If set, specifies the outgoing SMTP server option to use.
+	Default value can be specified by the 'sendemail.smtpserveroption'
+	configuration option.
++
+The --smtp-server-option option must be repeated for each option you want
+to pass to the server. Likewise, different lines in the configuration files
+must be used for each option.
+
 --smtp-ssl::
 	Legacy alias for '--smtp-encryption ssl'.
 
@@ -176,6 +185,12 @@ user is prompted for a password while the input is masked for privacy.
 
 Automating
 ~~~~~~~~~~
+
+--to-cmd=<command>::
+	Specify a command to execute once per patch file which
+	should generate patch file specific "To:" entries.
+	Output of this command must be single email address per line.
+	Default is the value of 'sendemail.tocmd' configuration value.
 
 --cc-cmd=<command>::
 	Specify a command to execute once per patch file which

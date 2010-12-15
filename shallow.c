@@ -47,7 +47,7 @@ struct commit_list *get_shallow_commits(struct object_array *heads, int depth,
 {
 	int i = 0, cur_depth = 0;
 	struct commit_list *result = NULL;
-	struct object_array stack = {0, 0, NULL};
+	struct object_array stack = OBJECT_ARRAY_INIT;
 	struct commit *commit = NULL;
 
 	while (commit || i < heads->nr || stack.nr) {

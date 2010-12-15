@@ -820,12 +820,12 @@ static void init_all_refs_cb(struct all_refs_cb *cb, struct rev_info *revs,
 	cb->all_flags = flags;
 }
 
-static void handle_refs(struct rev_info *revs, unsigned flags,
-		int (*for_each)(each_ref_fn, void *))
+static void handle_refs(const char *submodule, struct rev_info *revs, unsigned flags,
+		int (*for_each)(const char *, each_ref_fn, void *))
 {
 	struct all_refs_cb cb;
 	init_all_refs_cb(&cb, revs, flags);
-	for_each(handle_one_ref, &cb);
+	for_each(submodule, handle_one_ref, &cb);
 }
 
 static void handle_one_reflog_commit(unsigned char *sha1, void *cb_data)
@@ -1148,6 +1148,8 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 			       int *unkc, const char **unkv)
 {
 	const char *arg = argv[0];
+	const char *optarg;
+	int argcount;
 
 	/* pseudo revision arguments */
 	if (!strcmp(arg, "--all") || !strcmp(arg, "--branches") ||
@@ -1160,11 +1162,13 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		return 1;
 	}
 
-	if (!prefixcmp(arg, "--max-count=")) {
-		revs->max_count = atoi(arg + 12);
+	if ((argcount = parse_long_opt("max-count", argv, &optarg))) {
+		revs->max_count = atoi(optarg);
 		revs->no_walk = 0;
-	} else if (!prefixcmp(arg, "--skip=")) {
-		revs->skip_count = atoi(arg + 7);
+		return argcount;
+	} else if ((argcount = parse_long_opt("skip", argv, &optarg))) {
+		revs->skip_count = atoi(optarg);
+		return argcount;
 	} else if ((*arg == '-') && isdigit(arg[1])) {
 	/* accept -<digit>, like traditional "head" */
 		revs->max_count = atoi(arg + 1);
@@ -1178,18 +1182,24 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 	} else if (!prefixcmp(arg, "-n")) {
 		revs->max_count = atoi(arg + 2);
 		revs->no_walk = 0;
-	} else if (!prefixcmp(arg, "--max-age=")) {
-		revs->max_age = atoi(arg + 10);
-	} else if (!prefixcmp(arg, "--since=")) {
-		revs->max_age = approxidate(arg + 8);
-	} else if (!prefixcmp(arg, "--after=")) {
-		revs->max_age = approxidate(arg + 8);
-	} else if (!prefixcmp(arg, "--min-age=")) {
-		revs->min_age = atoi(arg + 10);
-	} else if (!prefixcmp(arg, "--before=")) {
-		revs->min_age = approxidate(arg + 9);
-	} else if (!prefixcmp(arg, "--until=")) {
-		revs->min_age = approxidate(arg + 8);
+	} else if ((argcount = parse_long_opt("max-age", argv, &optarg))) {
+		revs->max_age = atoi(optarg);
+		return argcount;
+	} else if ((argcount = parse_long_opt("since", argv, &optarg))) {
+		revs->max_age = approxidate(optarg);
+		return argcount;
+	} else if ((argcount = parse_long_opt("after", argv, &optarg))) {
+		revs->max_age = approxidate(optarg);
+		return argcount;
+	} else if ((argcount = parse_long_opt("min-age", argv, &optarg))) {
+		revs->min_age = atoi(optarg);
+		return argcount;
+	} else if ((argcount = parse_long_opt("before", argv, &optarg))) {
+		revs->min_age = approxidate(optarg);
+		return argcount;
+	} else if ((argcount = parse_long_opt("until", argv, &optarg))) {
+		revs->min_age = approxidate(optarg);
+		return argcount;
 	} else if (!strcmp(arg, "--first-parent")) {
 		revs->first_parent_only = 1;
 	} else if (!strcmp(arg, "--ancestry-path")) {
@@ -1295,6 +1305,10 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		revs->pretty_given = 1;
 		get_commit_format(arg+8, revs);
 	} else if (!prefixcmp(arg, "--pretty=") || !prefixcmp(arg, "--format=")) {
+		/*
+		 * Detached form ("--pretty X" as opposed to "--pretty=X")
+		 * not allowed, since the argument is optional.
+		 */
 		revs->verbose_header = 1;
 		revs->pretty_given = 1;
 		get_commit_format(arg+9, revs);
@@ -1359,21 +1373,25 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 	} else if (!strcmp(arg, "--relative-date")) {
 		revs->date_mode = DATE_RELATIVE;
 		revs->date_mode_explicit = 1;
-	} else if (!strncmp(arg, "--date=", 7)) {
-		revs->date_mode = parse_date_format(arg + 7);
+	} else if ((argcount = parse_long_opt("date", argv, &optarg))) {
+		revs->date_mode = parse_date_format(optarg);
 		revs->date_mode_explicit = 1;
+		return argcount;
 	} else if (!strcmp(arg, "--log-size")) {
 		revs->show_log_size = 1;
 	}
 	/*
 	 * Grepping the commit log
 	 */
-	else if (!prefixcmp(arg, "--author=")) {
-		add_header_grep(revs, GREP_HEADER_AUTHOR, arg+9);
-	} else if (!prefixcmp(arg, "--committer=")) {
-		add_header_grep(revs, GREP_HEADER_COMMITTER, arg+12);
-	} else if (!prefixcmp(arg, "--grep=")) {
-		add_message_grep(revs, arg+7);
+	else if ((argcount = parse_long_opt("author", argv, &optarg))) {
+		add_header_grep(revs, GREP_HEADER_AUTHOR, optarg);
+		return argcount;
+	} else if ((argcount = parse_long_opt("committer", argv, &optarg))) {
+		add_header_grep(revs, GREP_HEADER_COMMITTER, optarg);
+		return argcount;
+	} else if ((argcount = parse_long_opt("grep", argv, &optarg))) {
+		add_message_grep(revs, optarg);
+		return argcount;
 	} else if (!strcmp(arg, "--extended-regexp") || !strcmp(arg, "-E")) {
 		revs->grep_filter.regflags |= REG_EXTENDED;
 	} else if (!strcmp(arg, "--regexp-ignore-case") || !strcmp(arg, "-i")) {
@@ -1382,12 +1400,12 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		revs->grep_filter.fixed = 1;
 	} else if (!strcmp(arg, "--all-match")) {
 		revs->grep_filter.all_match = 1;
-	} else if (!prefixcmp(arg, "--encoding=")) {
-		arg += 11;
-		if (strcmp(arg, "none"))
-			git_log_output_encoding = xstrdup(arg);
+	} else if ((argcount = parse_long_opt("encoding", argv, &optarg))) {
+		if (strcmp(optarg, "none"))
+			git_log_output_encoding = xstrdup(optarg);
 		else
 			git_log_output_encoding = "";
+		return argcount;
 	} else if (!strcmp(arg, "--reverse")) {
 		revs->reverse ^= 1;
 	} else if (!strcmp(arg, "--children")) {
@@ -1417,14 +1435,14 @@ void parse_revision_opt(struct rev_info *revs, struct parse_opt_ctx_t *ctx,
 	ctx->argc -= n;
 }
 
-static int for_each_bad_bisect_ref(each_ref_fn fn, void *cb_data)
+static int for_each_bad_bisect_ref(const char *submodule, each_ref_fn fn, void *cb_data)
 {
-	return for_each_ref_in("refs/bisect/bad", fn, cb_data);
+	return for_each_ref_in_submodule(submodule, "refs/bisect/bad", fn, cb_data);
 }
 
-static int for_each_good_bisect_ref(each_ref_fn fn, void *cb_data)
+static int for_each_good_bisect_ref(const char *submodule, each_ref_fn fn, void *cb_data)
 {
-	return for_each_ref_in("refs/bisect/good", fn, cb_data);
+	return for_each_ref_in_submodule(submodule, "refs/bisect/good", fn, cb_data);
 }
 
 static void append_prune_data(const char ***prune_data, const char **av)
@@ -1466,6 +1484,12 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 {
 	int i, flags, left, seen_dashdash, read_from_stdin, got_rev_arg = 0;
 	const char **prune_data = NULL;
+	const char *submodule = NULL;
+	const char *optarg;
+	int argcount;
+
+	if (opt)
+		submodule = opt->submodule;
 
 	/* First, search for "--" */
 	seen_dashdash = 0;
@@ -1490,32 +1514,33 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 			int opts;
 
 			if (!strcmp(arg, "--all")) {
-				handle_refs(revs, flags, for_each_ref);
-				handle_refs(revs, flags, head_ref);
+				handle_refs(submodule, revs, flags, for_each_ref_submodule);
+				handle_refs(submodule, revs, flags, head_ref_submodule);
 				continue;
 			}
 			if (!strcmp(arg, "--branches")) {
-				handle_refs(revs, flags, for_each_branch_ref);
+				handle_refs(submodule, revs, flags, for_each_branch_ref_submodule);
 				continue;
 			}
 			if (!strcmp(arg, "--bisect")) {
-				handle_refs(revs, flags, for_each_bad_bisect_ref);
-				handle_refs(revs, flags ^ UNINTERESTING, for_each_good_bisect_ref);
+				handle_refs(submodule, revs, flags, for_each_bad_bisect_ref);
+				handle_refs(submodule, revs, flags ^ UNINTERESTING, for_each_good_bisect_ref);
 				revs->bisect = 1;
 				continue;
 			}
 			if (!strcmp(arg, "--tags")) {
-				handle_refs(revs, flags, for_each_tag_ref);
+				handle_refs(submodule, revs, flags, for_each_tag_ref_submodule);
 				continue;
 			}
 			if (!strcmp(arg, "--remotes")) {
-				handle_refs(revs, flags, for_each_remote_ref);
+				handle_refs(submodule, revs, flags, for_each_remote_ref_submodule);
 				continue;
 			}
-			if (!prefixcmp(arg, "--glob=")) {
+			if ((argcount = parse_long_opt("glob", argv + i, &optarg))) {
 				struct all_refs_cb cb;
+				i += argcount - 1;
 				init_all_refs_cb(&cb, revs, flags);
-				for_each_glob_ref(handle_one_ref, arg + 7, &cb);
+				for_each_glob_ref(handle_one_ref, optarg, &cb);
 				continue;
 			}
 			if (!prefixcmp(arg, "--branches=")) {

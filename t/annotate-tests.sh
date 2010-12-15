@@ -8,27 +8,27 @@ check_count () {
 	$PROG file $head >.result || return 1
 	cat .result | perl -e '
 		my %expect = (@ARGV);
-		my %count = ();
+		my %count = map { $_ => 0 } keys %expect;
 		while (<STDIN>) {
 			if (/^[0-9a-f]+\t\(([^\t]+)\t/) {
 				my $author = $1;
 				for ($author) { s/^\s*//; s/\s*$//; }
-				if (exists $expect{$author}) {
-					$count{$author}++;
-				}
+				$count{$author}++;
 			}
 		}
 		my $bad = 0;
 		while (my ($author, $count) = each %count) {
 			my $ok;
-			if ($expect{$author} != $count) {
+			my $value = 0;
+			$value = $expect{$author} if defined $expect{$author};
+			if ($value != $count) {
 				$bad = 1;
 				$ok = "bad";
 			}
 			else {
 				$ok = "good";
 			}
-			print STDERR "Author $author (expected $expect{$author}, attributed $count) $ok\n";
+			print STDERR "Author $author (expected $value, attributed $count) $ok\n";
 		}
 		exit($bad);
 	' "$@"

@@ -24,7 +24,7 @@ static int chomp_prefix;
 static const char *ls_tree_prefix;
 
 static const  char * const ls_tree_usage[] = {
-	"git ls-tree [<options>] <tree-ish> [path...]",
+	"git ls-tree [<options>] <tree-ish> [<path>...]",
 	NULL
 };
 
@@ -51,6 +51,8 @@ static int show_recursive(const char *base, int baselen, const char *pathname)
 		spec += baselen;
 		speclen = strlen(spec);
 		if (speclen <= len)
+			continue;
+		if (spec[len] && spec[len] != '/')
 			continue;
 		if (memcmp(pathname, spec, len))
 			continue;

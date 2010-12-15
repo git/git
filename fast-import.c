@@ -1454,6 +1454,15 @@ static int tree_content_set(
 		n = slash1 - p;
 	else
 		n = strlen(p);
+	if (!slash1 && !n) {
+		if (!S_ISDIR(mode))
+			die("Root cannot be a non-directory");
+		hashcpy(root->versions[1].sha1, sha1);
+		if (root->tree)
+			release_tree_content_recursive(root->tree);
+		root->tree = subtree;
+		return 1;
+	}
 	if (!n)
 		die("Empty path component found in input");
 	if (!slash1 && !S_ISDIR(mode) && subtree)
@@ -1528,6 +1537,14 @@ static int tree_content_remove(
 	for (i = 0; i < t->entry_count; i++) {
 		e = t->entries[i];
 		if (e->name->str_len == n && !strncmp(p, e->name->str_dat, n)) {
+			if (slash1 && !S_ISDIR(e->versions[1].mode))
+				/*
+				 * If p names a file in some subdirectory, and a
+				 * file or symlink matching the name of the
+				 * parent directory of p exists, then p cannot
+				 * exist and need not be deleted.
+				 */
+				return 1;
 			if (!slash1 || !S_ISDIR(e->versions[1].mode))
 				goto del_entry;
 			if (!e->tree)
@@ -2131,6 +2148,7 @@ static void file_change_m(struct branch *b)
 	case S_IFREG | 0644:
 	case S_IFREG | 0755:
 	case S_IFLNK:
+	case S_IFDIR:
 	case S_IFGITLINK:
 		/* ok */
 		break;
@@ -2176,23 +2194,28 @@ static void file_change_m(struct branch *b)
 		 * another repository.
 		 */
 	} else if (inline_data) {
+		if (S_ISDIR(mode))
+			die("Directories cannot be specified 'inline': %s",
+				command_buf.buf);
 		if (p != uq.buf) {
 			strbuf_addstr(&uq, p);
 			p = uq.buf;
 		}
 		read_next_command();
 		parse_and_store_blob(&last_blob, sha1, 0);
-	} else if (oe) {
-		if (oe->type != OBJ_BLOB)
-			die("Not a blob (actually a %s): %s",
-				typename(oe->type), command_buf.buf);
 	} else {
-		enum object_type type = sha1_object_info(sha1, NULL);
+		enum object_type expected = S_ISDIR(mode) ?
+						OBJ_TREE: OBJ_BLOB;
+		enum object_type type = oe ? oe->type :
+					sha1_object_info(sha1, NULL);
 		if (type < 0)
-			die("Blob not found: %s", command_buf.buf);
-		if (type != OBJ_BLOB)
-			die("Not a blob (actually a %s): %s",
-			    typename(type), command_buf.buf);
+			die("%s not found: %s",
+					S_ISDIR(mode) ?  "Tree" : "Blob",
+					command_buf.buf);
+		if (type != expected)
+			die("Not a %s (actually a %s): %s",
+				typename(expected), typename(type),
+				command_buf.buf);
 	}
 
 	tree_content_set(&b->branch_tree, p, sha1, mode, NULL);
@@ -2870,7 +2893,7 @@ static int git_pack_config(const char *k, const char *v, void *cb)
 }
 
 static const char fast_import_usage[] =
-"git fast-import [--date-format=f] [--max-pack-size=n] [--big-file-threshold=n] [--depth=n] [--active-branches=n] [--export-marks=marks.file]";
+"git fast-import [--date-format=<f>] [--max-pack-size=<n>] [--big-file-threshold=<n>] [--depth=<n>] [--active-branches=<n>] [--export-marks=<marks.file>]";
 
 static void parse_argv(void)
 {

@@ -88,7 +88,7 @@ test_expect_success 'enable broken symlink workaround' \
 test_expect_success '"bar" is an empty file' 'test -f x/bar && ! test -s x/bar'
 test_expect_success 'get "bar" => symlink fix from svn' \
 		'(cd x && git svn rebase)'
-test_expect_success SYMLINKS '"bar" becomes a symlink' 'test -L x/bar'
+test_expect_success SYMLINKS '"bar" becomes a symlink' 'test -h x/bar'
 
 
 test_expect_success 'clone using git svn' 'git svn clone -r1 "$svnrepo" y'

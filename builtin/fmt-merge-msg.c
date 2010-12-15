@@ -7,21 +7,22 @@
 #include "string-list.h"
 
 static const char * const fmt_merge_msg_usage[] = {
-	"git fmt-merge-msg [--log|--no-log] [--file <file>]",
+	"git fmt-merge-msg [-m <message>] [--log[=<n>]|--no-log] [--file <file>]",
 	NULL
 };
 
-static int merge_summary;
+static int shortlog_len;
 
 static int fmt_merge_msg_config(const char *key, const char *value, void *cb)
 {
-	static int found_merge_log = 0;
-	if (!strcmp("merge.log", key)) {
-		found_merge_log = 1;
-		merge_summary = git_config_bool(key, value);
+	if (!strcmp(key, "merge.log") || !strcmp(key, "merge.summary")) {
+		int is_bool;
+		shortlog_len = git_config_bool_or_int(key, value, &is_bool);
+		if (!is_bool && shortlog_len < 0)
+			return error("%s: negative length %s", key, value);
+		if (is_bool && shortlog_len)
+			shortlog_len = DEFAULT_MERGE_LOG_LEN;
 	}
-	if (!found_merge_log && !strcmp("merge.summary", key))
-		merge_summary = git_config_bool(key, value);
 	return 0;
 }
 
@@ -38,8 +39,8 @@ void init_src_data(struct src_data *data)
 	data->generic.strdup_strings = 1;
 }
 
-static struct string_list srcs = { NULL, 0, 0, 1 };
-static struct string_list origins = { NULL, 0, 0, 1 };
+static struct string_list srcs = STRING_LIST_INIT_DUP;
+static struct string_list origins = STRING_LIST_INIT_DUP;
 
 static int handle_line(char *line)
 {
@@ -146,7 +147,7 @@ static void shortlog(const char *name, unsigned char *sha1,
 	int i, count = 0;
 	struct commit *commit;
 	struct object *branch;
-	struct string_list subjects = { NULL, 0, 0, 1 };
+	struct string_list subjects = STRING_LIST_INIT_DUP;
 	int flags = UNINTERESTING | TREESAME | SEEN | SHOWN | ADDED;
 	struct strbuf sb = STRBUF_INIT;
 
@@ -255,9 +256,9 @@ static void do_fmt_merge_msg_title(struct strbuf *out,
 		strbuf_addf(out, " into %s\n", current_branch);
 }
 
-static int do_fmt_merge_msg(int merge_title, int merge_summary,
-	struct strbuf *in, struct strbuf *out) {
-	int limit = 20, i = 0, pos = 0;
+static int do_fmt_merge_msg(int merge_title, struct strbuf *in,
+	struct strbuf *out, int shortlog_len) {
+	int i = 0, pos = 0;
 	unsigned char head_sha1[20];
 	const char *current_branch;
 
@@ -288,7 +289,7 @@ static int do_fmt_merge_msg(int merge_title, int merge_summary,
 	if (merge_title)
 		do_fmt_merge_msg_title(out, current_branch);
 
-	if (merge_summary) {
+	if (shortlog_len) {
 		struct commit *head;
 		struct rev_info rev;
 
@@ -303,27 +304,30 @@ static int do_fmt_merge_msg(int merge_title, int merge_summary,
 
 		for (i = 0; i < origins.nr; i++)
 			shortlog(origins.items[i].string, origins.items[i].util,
-					head, &rev, limit, out);
+					head, &rev, shortlog_len, out);
 	}
 	return 0;
 }
 
-int fmt_merge_msg(int merge_summary, struct strbuf *in, struct strbuf *out) {
-	return do_fmt_merge_msg(1, merge_summary, in, out);
-}
-
-int fmt_merge_msg_shortlog(struct strbuf *in, struct strbuf *out) {
-	return do_fmt_merge_msg(0, 1, in, out);
+int fmt_merge_msg(struct strbuf *in, struct strbuf *out,
+		  int merge_title, int shortlog_len) {
+	return do_fmt_merge_msg(merge_title, in, out, shortlog_len);
 }
 
 int cmd_fmt_merge_msg(int argc, const char **argv, const char *prefix)
 {
 	const char *inpath = NULL;
+	const char *message = NULL;
 	struct option options[] = {
-		OPT_BOOLEAN(0, "log",     &merge_summary, "populate log with the shortlog"),
-		{ OPTION_BOOLEAN, 0, "summary", &merge_summary, NULL,
+		{ OPTION_INTEGER, 0, "log", &shortlog_len, "n",
+		  "populate log with at most <n> entries from shortlog",
+		  PARSE_OPT_OPTARG, NULL, DEFAULT_MERGE_LOG_LEN },
+		{ OPTION_INTEGER, 0, "summary", &shortlog_len, "n",
 		  "alias for --log (deprecated)",
-		  PARSE_OPT_NOARG | PARSE_OPT_HIDDEN },
+		  PARSE_OPT_OPTARG | PARSE_OPT_HIDDEN, NULL,
+		  DEFAULT_MERGE_LOG_LEN },
+		OPT_STRING('m', "message", &message, "text",
+			"use <text> as start of message"),
 		OPT_FILENAME('F', "file", &inpath, "file to read from"),
 		OPT_END()
 	};
@@ -337,6 +341,14 @@ int cmd_fmt_merge_msg(int argc, const char **argv, const char *prefix)
 			     0);
 	if (argc > 0)
 		usage_with_options(fmt_merge_msg_usage, options);
+	if (message && !shortlog_len) {
+		char nl = '\n';
+		write_in_full(STDOUT_FILENO, message, strlen(message));
+		write_in_full(STDOUT_FILENO, &nl, 1);
+		return 0;
+	}
+	if (shortlog_len < 0)
+		die("Negative --log=%d", shortlog_len);
 
 	if (inpath && strcmp(inpath, "-")) {
 		in = fopen(inpath, "r");
@@ -346,7 +358,13 @@ int cmd_fmt_merge_msg(int argc, const char **argv, const char *prefix)
 
 	if (strbuf_read(&input, fileno(in), 0) < 0)
 		die_errno("could not read input file");
-	ret = fmt_merge_msg(merge_summary, &input, &output);
+
+	if (message)
+		strbuf_addstr(&output, message);
+	ret = fmt_merge_msg(&input, &output,
+			    message ? 0 : 1,
+			    shortlog_len);
+
 	if (ret)
 		return ret;
 	write_in_full(STDOUT_FILENO, output.buf, output.len);

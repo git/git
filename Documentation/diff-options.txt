@@ -48,9 +48,9 @@ endif::git-format-patch[]
 --patience::
 	Generate a diff using the "patience diff" algorithm.
 
---stat[=width[,name-width]]::
+--stat[=<width>[,<name-width>]]::
 	Generate a diffstat.  You can override the default
-	output width for 80-column terminal by `--stat=width`.
+	output width for 80-column terminal by `--stat=<width>`.
 	The width of the filename part can be controlled by
 	giving another width to it separated by a comma.
 
@@ -66,14 +66,14 @@ endif::git-format-patch[]
 	number of modified files, as well as number of added and deleted
 	lines.
 
---dirstat[=limit]::
+--dirstat[=<limit>]::
 	Output the distribution of relative amount of changes (number of lines added or
 	removed) for each sub-directory. Directories with changes below
 	a cut-off percent (3% by default) are not shown. The cut-off percent
-	can be set with `--dirstat=limit`. Changes in a child directory is not
+	can be set with `--dirstat=<limit>`. Changes in a child directory are not
 	counted for the parent directory, unless `--cumulative` is used.
 
---dirstat-by-file[=limit]::
+--dirstat-by-file[=<limit>]::
 	Same as `--dirstat`, but counts changed files instead of lines.
 
 --summary::
@@ -207,6 +207,7 @@ endif::git-format-patch[]
 	digits can be specified with `--abbrev=<n>`.
 
 -B[<n>][/<m>]::
+--break-rewrites[=[<n>][/<m>]]::
 	Break complete rewrite changes into pairs of delete and
 	create. This serves two purposes:
 +
@@ -229,6 +230,7 @@ eligible for being picked up as a possible source of a rename to
 another file.
 
 -M[<n>]::
+--detect-renames[=<n>]::
 ifndef::git-log[]
 	Detect renames.
 endif::git-log[]
@@ -244,17 +246,18 @@ endif::git-log[]
 	hasn't changed.
 
 -C[<n>]::
+--detect-copies[=<n>]::
 	Detect copies as well as renames.  See also `--find-copies-harder`.
 	If `n` is specified, it has the same meaning as for `-M<n>`.
 
 ifndef::git-format-patch[]
---diff-filter=[ACDMRTUXB*]::
+--diff-filter=[(A|C|D|M|R|T|U|X|B)...[*]]::
 	Select only files that are Added (`A`), Copied (`C`),
 	Deleted (`D`), Modified (`M`), Renamed (`R`), have their
 	type (i.e. regular file, symlink, submodule, ...) changed (`T`),
 	are Unmerged (`U`), are
 	Unknown (`X`), or have had their pairing Broken (`B`).
-	Any combination of the filter characters may be used.
+	Any combination of the filter characters (including none) can be used.
 	When `*` (All-or-none) is added to the combination, all
 	paths are selected if there is any file that matches
 	other criteria in the comparison; if there is no file
@@ -284,8 +287,12 @@ ifndef::git-format-patch[]
 	appearing in diff output; see the 'pickaxe' entry in
 	linkgit:gitdiffcore[7] for more details.
 
+-G<regex>::
+	Look for differences whose added or removed line matches
+	the given <regex>.
+
 --pickaxe-all::
-	When `-S` finds a change, show all the changes in that
+	When `-S` or `-G` finds a change, show all the changes in that
 	changeset, not just the files that contain the change
 	in <string>.
 
@@ -355,7 +362,11 @@ endif::git-format-patch[]
 
 --ignore-submodules[=<when>]::
 	Ignore changes to submodules in the diff generation. <when> can be
-	either "untracked", "dirty" or "all", which is the default. When
+	either "none", "untracked", "dirty" or "all", which is the default
+	Using "none" will consider the submodule modified when it either contains
+	untracked or modified files or its HEAD differs from the commit recorded
+	in the superproject and can be used to override any settings of the
+	'ignore' option in linkgit:git-config[1] or linkgit:gitmodules[5]. When
 	"untracked" is used submodules are not considered dirty when they only
 	contain untracked content (but they are still scanned for modified
 	content). Using "dirty" ignores all changes to the work tree of submodules,

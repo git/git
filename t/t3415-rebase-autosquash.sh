@@ -21,38 +21,62 @@ test_expect_success setup '
 	git tag base
 '
 
-test_expect_success 'auto fixup' '
+test_auto_fixup() {
 	git reset --hard base &&
 	echo 1 >file1 &&
 	git add -u &&
 	test_tick &&
-	git commit -m "fixup! first"
+	git commit -m "fixup! first" &&
 
-	git tag final-fixup &&
+	git tag $1 &&
 	test_tick &&
-	git rebase --autosquash -i HEAD^^^ &&
+	git rebase $2 -i HEAD^^^ &&
 	git log --oneline >actual &&
 	test 3 = $(wc -l <actual) &&
-	git diff --exit-code final-fixup &&
+	git diff --exit-code $1 &&
 	test 1 = "$(git cat-file blob HEAD^:file1)" &&
 	test 1 = $(git cat-file commit HEAD^ | grep first | wc -l)
+}
+
+test_expect_success 'auto fixup (option)' '
+	test_auto_fixup final-fixup-option --autosquash
 '
 
-test_expect_success 'auto squash' '
+test_expect_success 'auto fixup (config)' '
+	git config rebase.autosquash true &&
+	test_auto_fixup final-fixup-config-true &&
+	test_must_fail test_auto_fixup fixup-config-true-no --no-autosquash &&
+	git config rebase.autosquash false &&
+	test_must_fail test_auto_fixup final-fixup-config-false
+'
+
+test_auto_squash() {
 	git reset --hard base &&
 	echo 1 >file1 &&
 	git add -u &&
 	test_tick &&
-	git commit -m "squash! first"
+	git commit -m "squash! first" &&
 
-	git tag final-squash &&
+	git tag $1 &&
 	test_tick &&
-	git rebase --autosquash -i HEAD^^^ &&
+	git rebase $2 -i HEAD^^^ &&
 	git log --oneline >actual &&
 	test 3 = $(wc -l <actual) &&
-	git diff --exit-code final-squash &&
+	git diff --exit-code $1 &&
 	test 1 = "$(git cat-file blob HEAD^:file1)" &&
 	test 2 = $(git cat-file commit HEAD^ | grep first | wc -l)
+}
+
+test_expect_success 'auto squash (option)' '
+	test_auto_squash final-squash --autosquash
+'
+
+test_expect_success 'auto squash (config)' '
+	git config rebase.autosquash true &&
+	test_auto_squash final-squash-config-true &&
+	test_must_fail test_auto_squash squash-config-true-no --no-autosquash &&
+	git config rebase.autosquash false &&
+	test_must_fail test_auto_squash final-squash-config-false
 '
 
 test_expect_success 'misspelled auto squash' '
@@ -60,7 +84,7 @@ test_expect_success 'misspelled auto squash' '
 	echo 1 >file1 &&
 	git add -u &&
 	test_tick &&
-	git commit -m "squash! forst"
+	git commit -m "squash! forst" &&
 	git tag final-missquash &&
 	test_tick &&
 	git rebase --autosquash -i HEAD^^^ &&

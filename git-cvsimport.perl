@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
 
 # This tool is copyright (c) 2005, Matthias Urlichs.
 # It is released under the Gnu Public License, version 2.
@@ -13,6 +13,7 @@
 # The head revision is on branch "origin" by default.
 # You can change that with the '-o' option.
 
+use 5.008;
 use strict;
 use warnings;
 use Getopt::Long;
@@ -611,7 +612,7 @@ my %index; # holds filenames of one index per branch
 unless (-d $git_dir) {
 	system(qw(git init));
 	die "Cannot init the GIT db at $git_tree: $?\n" if $?;
-	system(qw(git read-tree));
+	system(qw(git read-tree --empty));
 	die "Cannot init an empty tree: $?\n" if $?;
 
 	$last_branch = $opt_o;

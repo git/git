@@ -9,7 +9,7 @@ SYNOPSIS
 --------
 [verse]
 'git for-each-ref' [--count=<count>] [--shell|--perl|--python|--tcl]
-		   [--sort=<key>]\* [--format=<format>] [<pattern>...]
+		   [(--sort=<key>)...] [--format=<format>] [<pattern>...]
 
 DESCRIPTION
 -----------

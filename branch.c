@@ -159,7 +159,7 @@ void create_branch(const char *head,
 			dont_change_ref = 1;
 		else if (!force)
 			die("A branch named '%s' already exists.", name);
-		else if (!is_bare_repository() && !strcmp(head, name))
+		else if (!is_bare_repository() && head && !strcmp(head, name))
 			die("Cannot force update the current branch.");
 		forcing = 1;
 	}

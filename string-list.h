@@ -12,6 +12,9 @@ struct string_list
 	unsigned int strdup_strings:1;
 };
 
+#define STRING_LIST_INIT_NODUP { NULL, 0, 0, 0 }
+#define STRING_LIST_INIT_DUP   { NULL, 0, 0, 1 }
+
 void print_string_list(const struct string_list *p, const char *text);
 void string_list_clear(struct string_list *list, int free_util);
 
@@ -20,10 +23,12 @@ void string_list_clear(struct string_list *list, int free_util);
 typedef void (*string_list_clear_func_t)(void *p, const char *str);
 void string_list_clear_func(struct string_list *list, string_list_clear_func_t clearfunc);
 
-/* Use this function to iterate over each item */
+/* Use this function or the macro below to iterate over each item */
 typedef int (*string_list_each_func_t)(struct string_list_item *, void *);
 int for_each_string_list(struct string_list *list,
 			 string_list_each_func_t, void *cb_data);
+#define for_each_string_list_item(item,list) \
+	for (item = (list)->items; item < (list)->items + (list)->nr; ++item)
 
 /* Use these functions only on sorted lists: */
 int string_list_has_string(const struct string_list *list, const char *string);

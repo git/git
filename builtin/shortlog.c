@@ -249,7 +249,7 @@ int cmd_shortlog(int argc, const char **argv, const char *prefix)
 {
 	static struct shortlog log;
 	static struct rev_info rev;
-	int nongit;
+	int nongit = !startup_info->have_repository;
 
 	static const struct option options[] = {
 		OPT_BOOLEAN('n', "numbered", &log.sort_by_number,
@@ -265,7 +265,6 @@ int cmd_shortlog(int argc, const char **argv, const char *prefix)
 
 	struct parse_opt_ctx_t ctx;
 
-	prefix = setup_git_directory_gently(&nongit);
 	git_config(git_default_config, NULL);
 	shortlog_init(&log);
 	init_revisions(&rev, prefix);

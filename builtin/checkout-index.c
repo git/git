@@ -155,7 +155,7 @@ static void checkout_all(const char *prefix, int prefix_length)
 }
 
 static const char * const builtin_checkout_index_usage[] = {
-	"git checkout-index [options] [--] <file>...",
+	"git checkout-index [options] [--] [<file>...]",
 	NULL
 };
 

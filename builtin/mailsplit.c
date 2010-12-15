@@ -10,7 +10,7 @@
 #include "strbuf.h"
 
 static const char git_mailsplit_usage[] =
-"git mailsplit [-d<prec>] [-f<n>] [-b] [--keep-cr] -o<directory> [<mbox>|<Maildir>...]";
+"git mailsplit [-d<prec>] [-f<n>] [-b] [--keep-cr] -o<directory> [(<mbox>|<Maildir>)...]";
 
 static int is_from_line(const char *line, int len)
 {
@@ -137,7 +137,7 @@ static int split_maildir(const char *maildir, const char *dir,
 	char name[PATH_MAX];
 	int ret = -1;
 	int i;
-	struct string_list list = {NULL, 0, 0, 1};
+	struct string_list list = STRING_LIST_INIT_DUP;
 
 	if (populate_maildir_list(&list, maildir) < 0)
 		goto out;

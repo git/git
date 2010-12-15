@@ -6,13 +6,13 @@ for h in \
 	*.txt *.html \
 	howto/*.txt howto/*.html \
 	technical/*.txt technical/*.html \
-	RelNotes-*.txt *.css
+	RelNotes/*.txt *.css
 do
 	if test ! -f "$h"
 	then
 		: did not match
 	elif test -f "$T/$h" &&
-	   $DIFF -u -I'Last updated [0-9][0-9]-[A-Z][a-z][a-z]-' "$T/$h" "$h"
+		$DIFF -u -I'^Last updated ' "$T/$h" "$h"
 	then
 		:; # up to date
 	else
@@ -30,7 +30,7 @@ for th in \
 do
 	h=`expr "$th" : "$strip_leading"'\(.*\)'`
 	case "$h" in
-	index.html) continue ;;
+	RelNotes-*.txt | index.html) continue ;;
 	esac
 	test -f "$h" && continue
 	echo >&2 "# rm -f $th"

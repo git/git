@@ -179,8 +179,7 @@ struct cache_entry {
 #define CE_UNHASHED  (0x200000)
 #define CE_CONFLICTED (0x800000)
 
-/* Only remove in work directory, not index */
-#define CE_WT_REMOVE (0x400000)
+#define CE_WT_REMOVE (0x400000) /* remove in work directory */
 
 #define CE_UNPACKED  (0x1000000)
 
@@ -278,9 +277,16 @@ static inline int ce_to_dtype(const struct cache_entry *ce)
 	else
 		return DT_UNKNOWN;
 }
-#define canon_mode(mode) \
-	(S_ISREG(mode) ? (S_IFREG | ce_permissions(mode)) : \
-	S_ISLNK(mode) ? S_IFLNK : S_ISDIR(mode) ? S_IFDIR : S_IFGITLINK)
+static inline unsigned int canon_mode(unsigned int mode)
+{
+	if (S_ISREG(mode))
+		return S_IFREG | ce_permissions(mode);
+	if (S_ISLNK(mode))
+		return S_IFLNK;
+	if (S_ISDIR(mode))
+		return S_IFDIR;
+	return S_IFGITLINK;
+}
 
 #define flexible_size(STRUCT,len) ((offsetof(struct STRUCT,name) + (len) + 8) & ~7)
 #define cache_entry_size(len) flexible_size(cache_entry,len)
@@ -379,6 +385,7 @@ static inline enum object_type object_type(unsigned int mode)
 #define GRAFT_ENVIRONMENT "GIT_GRAFT_FILE"
 #define TEMPLATE_DIR_ENVIRONMENT "GIT_TEMPLATE_DIR"
 #define CONFIG_ENVIRONMENT "GIT_CONFIG"
+#define CONFIG_DATA_ENVIRONMENT "GIT_CONFIG_PARAMETERS"
 #define EXEC_PATH_ENVIRONMENT "GIT_EXEC_PATH"
 #define CEILING_DIRECTORIES_ENVIRONMENT "GIT_CEILING_DIRECTORIES"
 #define NO_REPLACE_OBJECTS_ENVIRONMENT "GIT_NO_REPLACE_OBJECTS"
@@ -397,7 +404,7 @@ static inline enum object_type object_type(unsigned int mode)
  * environment creation or simple walk of the list.
  * The number of non-NULL entries is available as a macro.
  */
-#define LOCAL_REPO_ENV_SIZE 8
+#define LOCAL_REPO_ENV_SIZE 9
 extern const char *const local_repo_env[LOCAL_REPO_ENV_SIZE + 1];
 
 extern int is_bare_repository_cfg;
@@ -438,7 +445,7 @@ extern int init_db(const char *template_dir, unsigned int flags);
  * at least 'nr' entries; the number of entries currently allocated
  * is 'alloc', using the standard growing factor alloc_nr() macro.
  *
- * DO NOT USE any expression with side-effect for 'x' or 'alloc'.
+ * DO NOT USE any expression with side-effect for 'x', 'nr', or 'alloc'.
  */
 #define ALLOC_GROW(x, nr, alloc) \
 	do { \
@@ -641,6 +648,9 @@ extern char *git_pathdup(const char *fmt, ...)
 /* Return a statically allocated filename matching the sha1 signature */
 extern char *mkpath(const char *fmt, ...) __attribute__((format (printf, 1, 2)));
 extern char *git_path(const char *fmt, ...) __attribute__((format (printf, 1, 2)));
+extern char *git_path_submodule(const char *path, const char *fmt, ...)
+	__attribute__((format (printf, 2, 3)));
+
 extern char *sha1_file_name(const unsigned char *sha1);
 extern char *sha1_pack_name(const unsigned char *sha1);
 extern char *sha1_pack_index_name(const unsigned char *sha1);
@@ -811,6 +821,7 @@ const char *show_date_relative(unsigned long time, int tz,
 			       char *timebuf,
 			       size_t timebuf_size);
 int parse_date(const char *date, char *buf, int bufsize);
+int parse_date_basic(const char *date, unsigned long *timestamp, int *offset);
 void datestamp(char *buf, int bufsize);
 #define approxidate(s) approxidate_careful((s), NULL)
 unsigned long approxidate_careful(const char *, int *);
@@ -970,7 +981,9 @@ extern int update_server_info(int);
 typedef int (*config_fn_t)(const char *, const char *, void *);
 extern int git_default_config(const char *, const char *, void *);
 extern int git_config_from_file(config_fn_t fn, const char *, void *);
+extern void git_config_push_parameter(const char *text);
 extern int git_config_parse_parameter(const char *text);
+extern int git_config_parse_environment(void);
 extern int git_config_from_parameters(config_fn_t fn, void *data);
 extern int git_config(config_fn_t fn, void *);
 extern int git_parse_ulong(const char *, unsigned long *);
@@ -1029,6 +1042,7 @@ extern int pager_in_use(void);
 extern int pager_use_color;
 
 extern const char *editor_program;
+extern const char *askpass_program;
 extern const char *excludes_file;
 
 /* base85 */
@@ -1054,6 +1068,7 @@ extern void trace_argv_printf(const char **argv, const char *format, ...);
 extern int convert_to_git(const char *path, const char *src, size_t len,
                           struct strbuf *dst, enum safe_crlf checksafe);
 extern int convert_to_working_tree(const char *path, const char *src, size_t len, struct strbuf *dst);
+extern int renormalize_buffer(const char *path, const char *src, size_t len, struct strbuf *dst);
 
 /* add */
 /*
@@ -1096,6 +1111,14 @@ void overlay_tree_on_cache(const char *tree_name, const char *prefix);
 
 char *alias_lookup(const char *alias);
 int split_cmdline(char *cmdline, const char ***argv);
+/* Takes a negative value returned by split_cmdline */
+const char *split_cmdline_strerror(int cmdline_errno);
+
+/* git.c */
+struct startup_info {
+	int have_repository;
+};
+extern struct startup_info *startup_info;
 
 /* builtin/merge.c */
 int checkout_fast_forward(const unsigned char *from, const unsigned char *to);

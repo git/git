@@ -450,6 +450,21 @@ core.excludesfile::
 	to the value of `$HOME` and "{tilde}user/" to the specified user's
 	home directory.  See linkgit:gitignore[5].
 
+core.askpass::
+	Some commands (e.g. svn and http interfaces) that interactively
+	ask for a password can be told to use an external program given
+	via the value of this variable. Can be overridden by the 'GIT_ASKPASS'
+	environment variable. If not set, fall back to the value of the
+	'SSH_ASKPASS' environment variable or, failing that, a simple password
+	prompt. The external program shall be given a suitable prompt as
+	command line argument and write the password on its STDOUT.
+
+core.attributesfile::
+	In addition to '.gitattributes' (per-directory) and
+	'.git/info/attributes', git looks into this file for attributes
+	(see linkgit:gitattributes[5]). Path expansions are made the same
+	way as for `core.excludesfile`.
+
 core.editor::
 	Commands such as `commit` and `tag` that lets you edit
 	messages by launching an editor uses the value of this
@@ -830,6 +845,12 @@ diff.renames::
 	Tells git to detect renames.  If set to any boolean value, it
 	will enable basic rename detection.  If set to "copies" or
 	"copy", it will detect copies, as well.
+
+diff.ignoreSubmodules::
+	Sets the default value of --ignore-submodules. Note that this
+	affects only 'git diff' Porcelain, and not lower level 'diff'
+	commands such as 'git diff-files'. 'git checkout' also honors
+	this setting when reporting uncommitted changes.
 
 diff.suppressBlankEmpty::
 	A boolean to inhibit the standard behavior of printing a space
@@ -1248,6 +1269,15 @@ http.noEPSV::
 	support EPSV mode. Can be overridden by the 'GIT_CURL_FTP_NO_EPSV'
 	environment variable. Default is false (curl will use EPSV).
 
+http.useragent::
+	The HTTP USER_AGENT string presented to an HTTP server.  The default
+	value represents the version of the client git such as git/1.7.1.
+	This option allows you to override this value to a more common value
+	such as Mozilla/4.0.  This may be necessary, for instance, if
+	connecting through a firewall that restricts HTTP connections to a set
+	of common USER_AGENT strings (but not including those like git/1.7.1).
+	Can be overridden by the 'GIT_HTTP_USER_AGENT' environment variable.
+
 i18n.commitEncoding::
 	Character encoding the commit messages are stored in; git itself
 	does not care per se, but this information is necessary e.g. when
@@ -1296,10 +1326,11 @@ interactive.singlekey::
 	ignored if portable keystroke input is not available.
 
 log.date::
-	Set default date-time mode for the log command. Setting log.date
-	value is similar to using 'git log'\'s --date option. The value is one of the
-	following alternatives: {relative,local,default,iso,rfc,short}.
-	See linkgit:git-log[1].
+	Set the default date-time mode for the 'log' command.
+	Setting a value for log.date is similar to using 'git log''s
+	`\--date` option.  Possible values are `relative`, `local`,
+	`default`, `iso`, `rfc`, and `short`; see linkgit:git-log[1]
+	for details.
 
 log.decorate::
 	Print out the ref names of any commits that are shown by the log
@@ -1445,6 +1476,10 @@ pack.compression::
 	not set,  defaults to -1, the zlib default, which is "a default
 	compromise between speed and compression (currently equivalent
 	to level 6)."
++
+Note that changing the compression level will not automatically recompress
+all existing objects. You can force recompression by passing the -F option
+to linkgit:git-repack[1].
 
 pack.deltaCacheSize::
 	The maximum memory in bytes used for caching deltas in
@@ -1529,16 +1564,19 @@ push.default::
 	no refspec is implied by any of the options given on the command
 	line. Possible values are:
 +
-* `nothing` do not push anything.
-* `matching` push all matching branches.
+* `nothing` - do not push anything.
+* `matching` - push all matching branches.
   All branches having the same name in both ends are considered to be
   matching. This is the default.
-* `tracking` push the current branch to its upstream branch.
-* `current` push the current branch to a branch of the same name.
+* `tracking` - push the current branch to its upstream branch.
+* `current` - push the current branch to a branch of the same name.
 
 rebase.stat::
 	Whether to show a diffstat of what changed upstream since the last
 	rebase. False by default.
+
+rebase.autosquash::
+	If set to true enable '--autosquash' option by default.
 
 receive.autogc::
 	By default, git-receive-pack will run "git-gc --auto" after
@@ -1703,6 +1741,7 @@ sendemail.to::
 sendemail.smtpdomain::
 sendemail.smtpserver::
 sendemail.smtpserverport::
+sendemail.smtpserveroption::
 sendemail.smtpuser::
 sendemail.thread::
 sendemail.validate::
@@ -1731,9 +1770,9 @@ status.showUntrackedFiles::
 	the untracked files. Possible values are:
 +
 --
-	- 'no'     - Show no untracked files
-	- 'normal' - Shows untracked files and directories
-	- 'all'    - Shows also individual files in untracked directories.
+* `no` - Show no untracked files.
+* `normal` - Show untracked files and directories.
+* `all` - Show also individual files in untracked directories.
 --
 +
 If this variable is not specified, it defaults to 'normal'.
@@ -1755,6 +1794,19 @@ submodule.<name>.update::
 	by 'git submodule init'; edit them to override the
 	URL and other values found in the `.gitmodules` file.  See
 	linkgit:git-submodule[1] and linkgit:gitmodules[5] for details.
+
+submodule.<name>.ignore::
+	Defines under what circumstances "git status" and the diff family show
+	a submodule as modified. When set to "all", it will never be considered
+	modified, "dirty" will ignore all changes to the submodules work tree and
+	takes only differences between the HEAD of the submodule and the commit
+	recorded in the superproject into account. "untracked" will additionally
+	let submodules with modified tracked files in their work tree show up.
+	Using "none" (the default when this option is not set) also shows
+	submodules that have untracked files in their work tree as changed.
+	This setting overrides any setting made in .gitmodules for this submodule,
+	both settings can be overridden on the command line by using the
+	"--ignore-submodules" option.
 
 tar.umask::
 	This variable can be used to restrict the permission bits of

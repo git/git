@@ -16,7 +16,7 @@
 static const char * const builtin_fetch_usage[] = {
 	"git fetch [<options>] [<repository> [<refspec>...]]",
 	"git fetch [<options>] <group>",
-	"git fetch --multiple [<options>] [<repository> | <group>]...",
+	"git fetch --multiple [<options>] [(<repository> | <group>)...]",
 	"git fetch --all [<options>]",
 	NULL
 };
@@ -146,7 +146,10 @@ static struct ref *get_ref_map(struct transport *transport,
 		struct remote *remote = transport->remote;
 		struct branch *branch = branch_get(NULL);
 		int has_merge = branch_has_merge_config(branch);
-		if (remote && (remote->fetch_refspec_nr || has_merge)) {
+		if (remote &&
+		    (remote->fetch_refspec_nr ||
+		     /* Note: has_merge implies non-NULL branch->remote_name */
+		     (has_merge && !strcmp(branch->remote_name, remote->name)))) {
 			for (i = 0; i < remote->fetch_refspec_nr; i++) {
 				get_fetch_map(remote_refs, &remote->fetch[i], &tail, 0);
 				if (remote->fetch[i].dst &&
@@ -160,6 +163,8 @@ static struct ref *get_ref_map(struct transport *transport,
 			 * if the remote we're fetching from is the same
 			 * as given in branch.<name>.remote, we add the
 			 * ref given in branch.<name>.merge, too.
+			 *
+			 * Note: has_merge implies non-NULL branch->remote_name
 			 */
 			if (has_merge &&
 			    !strcmp(branch->remote_name, remote->name))
@@ -544,40 +549,14 @@ static int will_fetch(struct ref **head, const unsigned char *sha1)
 	return 0;
 }
 
-struct tag_data {
-	struct ref **head;
-	struct ref ***tail;
-};
-
-static int add_to_tail(struct string_list_item *item, void *cb_data)
-{
-	struct tag_data *data = (struct tag_data *)cb_data;
-	struct ref *rm = NULL;
-
-	/* We have already decided to ignore this item */
-	if (!item->util)
-		return 0;
-
-	rm = alloc_ref(item->string);
-	rm->peer_ref = alloc_ref(item->string);
-	hashcpy(rm->old_sha1, item->util);
-
-	**data->tail = rm;
-	*data->tail = &rm->next;
-
-	return 0;
-}
-
 static void find_non_local_tags(struct transport *transport,
 			struct ref **head,
 			struct ref ***tail)
 {
-	struct string_list existing_refs = { NULL, 0, 0, 0 };
-	struct string_list remote_refs = { NULL, 0, 0, 0 };
-	struct tag_data data;
+	struct string_list existing_refs = STRING_LIST_INIT_NODUP;
+	struct string_list remote_refs = STRING_LIST_INIT_NODUP;
 	const struct ref *ref;
 	struct string_list_item *item = NULL;
-	data.head = head; data.tail = tail;
 
 	for_each_ref(add_existing, &existing_refs);
 	for (ref = transport_get_remote_refs(transport); ref; ref = ref->next) {
@@ -631,10 +610,20 @@ static void find_non_local_tags(struct transport *transport,
 		item->util = NULL;
 
 	/*
-	 * For all the tags in the remote_refs string list, call
-	 * add_to_tail to add them to the list of refs to be fetched
+	 * For all the tags in the remote_refs string list,
+	 * add them to the list of refs to be fetched
 	 */
-	for_each_string_list(&remote_refs, add_to_tail, &data);
+	for_each_string_list_item(item, &remote_refs) {
+		/* Unless we have already decided to ignore this item... */
+		if (item->util)
+		{
+			struct ref *rm = alloc_ref(item->string);
+			rm->peer_ref = alloc_ref(item->string);
+			hashcpy(rm->old_sha1, item->util);
+			**tail = rm;
+			*tail = &rm->next;
+		}
+	}
 
 	string_list_clear(&remote_refs, 0);
 }
@@ -667,7 +656,7 @@ static int truncate_fetch_head(void)
 static int do_fetch(struct transport *transport,
 		    struct refspec *refs, int ref_count)
 {
-	struct string_list existing_refs = { NULL, 0, 0, 0 };
+	struct string_list existing_refs = STRING_LIST_INIT_NODUP;
 	struct string_list_item *peer_item = NULL;
 	struct ref *ref_map;
 	struct ref *rm;
@@ -893,7 +882,7 @@ static int fetch_one(struct remote *remote, int argc, const char **argv)
 int cmd_fetch(int argc, const char **argv, const char *prefix)
 {
 	int i;
-	struct string_list list = { NULL, 0, 0, 0 };
+	struct string_list list = STRING_LIST_INIT_NODUP;
 	struct remote *remote;
 	int result = 0;
 

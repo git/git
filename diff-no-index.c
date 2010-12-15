@@ -64,7 +64,8 @@ static int queue_diff(struct diff_options *o,
 
 	if (S_ISDIR(mode1) || S_ISDIR(mode2)) {
 		char buffer1[PATH_MAX], buffer2[PATH_MAX];
-		struct string_list p1 = {NULL, 0, 0, 1}, p2 = {NULL, 0, 0, 1};
+		struct string_list p1 = STRING_LIST_INIT_DUP;
+		struct string_list p2 = STRING_LIST_INIT_DUP;
 		int len1 = 0, len2 = 0, i1, i2, ret = 0;
 
 		if (name1 && read_directory(name1, &p1))

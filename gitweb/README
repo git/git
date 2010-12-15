@@ -114,6 +114,11 @@ You can specify the following configuration variables when building GIT:
    when gitweb.cgi is executed, then the file specified in the environment
    variable will be loaded instead of the file specified when gitweb.cgi was
    created.  [Default: /etc/gitweb.conf]
+ * HIGHLIGHT_BIN
+   Path to the highlight executable to use (must be the one from
+   http://www.andre-simon.de due to assumptions about parameters and output).
+   Useful if highlight is not installed on your webserver's PATH.
+   [Default: highlight]
 
 
 Runtime gitweb configuration
@@ -236,7 +241,11 @@ not include variables usually directly set during build):
    If server load exceed this value then return "503 Service Unavailable" error.
    Server load is taken to be 0 if gitweb cannot determine its value.  Set it to
    undefined value to turn it off.  The default is 300.
-
+ * $highlight_bin
+   Path to the highlight executable to use (must be the one from
+   http://www.andre-simon.de due to assumptions about parameters and output).
+   Useful if highlight is not installed on your webserver's PATH.
+   [Default: highlight]
 
 Projects list file format
 ~~~~~~~~~~~~~~~~~~~~~~~~~

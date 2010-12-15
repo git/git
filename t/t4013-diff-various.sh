@@ -208,7 +208,11 @@ log -p --first-parent master
 log -m -p --first-parent master
 log -m -p master
 log -SF master
+log -S F master
 log -SF -p master
+log -GF master
+log -GF -p master
+log -GF -p --pickaxe-all master
 log --decorate --all
 log --decorate=full --all
 
@@ -281,5 +285,9 @@ diff --no-index dir dir3
 diff master master^ side
 diff --dirstat master~1 master~2
 EOF
+
+test_expect_success 'log -S requires an argument' '
+	test_must_fail git log -S
+'
 
 test_done

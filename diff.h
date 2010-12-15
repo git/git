@@ -77,6 +77,7 @@ typedef struct strbuf *(*diff_prefix_fn_t)(struct diff_options *opt, void *data)
 #define DIFF_OPT_DIRTY_SUBMODULES    (1 << 24)
 #define DIFF_OPT_IGNORE_UNTRACKED_IN_SUBMODULES (1 << 25)
 #define DIFF_OPT_IGNORE_DIRTY_SUBMODULES (1 << 26)
+#define DIFF_OPT_OVERRIDE_SUBMODULE_CONFIG (1 << 27)
 
 #define DIFF_OPT_TST(opts, flag)    ((opts)->flags & DIFF_OPT_##flag)
 #define DIFF_OPT_SET(opts, flag)    ((opts)->flags |= DIFF_OPT_##flag)
@@ -217,6 +218,13 @@ extern void diff_unmerge(struct diff_options *,
 #define DIFF_SETUP_USE_CACHE		2
 #define DIFF_SETUP_USE_SIZE_CACHE	4
 
+/*
+ * Poor man's alternative to parse-option, to allow both sticked form
+ * (--option=value) and separate form (--option value).
+ */
+extern int parse_long_opt(const char *opt, const char **argv,
+			 const char **optarg);
+
 extern int git_diff_basic_config(const char *var, const char *value, void *cb);
 extern int git_diff_ui_config(const char *var, const char *value, void *cb);
 extern int diff_use_color_default;
@@ -229,6 +237,9 @@ extern int diff_setup_done(struct diff_options *);
 
 #define DIFF_PICKAXE_ALL	1
 #define DIFF_PICKAXE_REGEX	2
+
+#define DIFF_PICKAXE_KIND_S	4 /* traditional plumbing counter */
+#define DIFF_PICKAXE_KIND_G	8 /* grep in the patch */
 
 extern void diffcore_std(struct diff_options *);
 extern void diffcore_fix_diff_index(struct diff_options *);
@@ -303,5 +314,7 @@ extern size_t fill_textconv(struct userdiff_driver *driver,
 			    char **outbuf);
 
 extern struct userdiff_driver *get_textconv(struct diff_filespec *one);
+
+extern int parse_rename_score(const char **cp_p);
 
 #endif /* DIFF_H */

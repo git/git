@@ -5,6 +5,7 @@
 test_description='Test export of commits to CVS'
 
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/lib-prereq-FILEMODE.sh
 
 if ! test_have_prereq PERL; then
 	skip_all='skipping git cvsexportcommit tests, perl not available'
@@ -228,11 +229,6 @@ test_expect_success \
       (cd "$CVSWORK" &&
       test_must_fail git cvsexportcommit -c $id
       )'
-
-if ! test "$(git config --bool core.filemode)" = false
-then
-	test_set_prereq FILEMODE
-fi
 
 test_expect_success FILEMODE \
      'Retain execute bit' \

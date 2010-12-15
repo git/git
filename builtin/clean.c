@@ -10,12 +10,13 @@
 #include "cache.h"
 #include "dir.h"
 #include "parse-options.h"
+#include "string-list.h"
 #include "quote.h"
 
 static int force = -1; /* unset */
 
 static const char *const builtin_clean_usage[] = {
-	"git clean [-d] [-f] [-n] [-q] [-x | -X] [--] <paths>...",
+	"git clean [-d] [-f] [-n] [-q] [-e <pattern>] [-x | -X] [--] <paths>...",
 	NULL
 };
 
@@ -24,6 +25,13 @@ static int git_clean_config(const char *var, const char *value, void *cb)
 	if (!strcmp(var, "clean.requireforce"))
 		force = !git_config_bool(var, value);
 	return git_default_config(var, value, cb);
+}
+
+static int exclude_cb(const struct option *opt, const char *arg, int unset)
+{
+	struct string_list *exclude_list = opt->value;
+	string_list_append(exclude_list, arg);
+	return 0;
 }
 
 int cmd_clean(int argc, const char **argv, const char *prefix)
@@ -36,6 +44,7 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 	struct dir_struct dir;
 	static const char **pathspec;
 	struct strbuf buf = STRBUF_INIT;
+	struct string_list exclude_list = STRING_LIST_INIT_NODUP;
 	const char *qname;
 	char *seen = NULL;
 	struct option options[] = {
@@ -44,6 +53,8 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 		OPT_BOOLEAN('f', "force", &force, "force"),
 		OPT_BOOLEAN('d', NULL, &remove_directories,
 				"remove whole directories"),
+		{ OPTION_CALLBACK, 'e', "exclude", &exclude_list, "pattern",
+		  "exclude <pattern>", PARSE_OPT_NONEG, exclude_cb },
 		OPT_BOOLEAN('x', NULL, &ignored, "remove ignored files, too"),
 		OPT_BOOLEAN('X', NULL, &ignored_only,
 				"remove only ignored files"),
@@ -80,6 +91,9 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 
 	if (!ignored)
 		setup_standard_excludes(&dir);
+
+	for (i = 0; i < exclude_list.nr; i++)
+		add_exclude(exclude_list.items[i].string, "", 0, dir.exclude_list);
 
 	pathspec = get_pathspec(prefix, argv);
 
@@ -167,5 +181,6 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 	free(seen);
 
 	strbuf_release(&directory);
+	string_list_clear(&exclude_list, 0);
 	return (errors != 0);
 }

@@ -232,7 +232,7 @@ int add_excludes_from_file_to_list(const char *fname,
 {
 	struct stat st;
 	int fd, i;
-	size_t size;
+	size_t size = 0;
 	char *buf, *entry;
 
 	fd = open(fname, O_RDONLY);

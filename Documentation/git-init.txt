@@ -31,7 +31,7 @@ current working directory.
 Specify the directory from which templates will be used.  (See the "TEMPLATE
 DIRECTORY" section below.)
 
---shared[={false|true|umask|group|all|world|everybody|0xxx}]::
+--shared[=(false|true|umask|group|all|world|everybody|0xxx)]::
 
 Specify that the git repository is to be shared amongst several users.  This
 allows users belonging to the same group to push into that

@@ -4,12 +4,6 @@ test_description='pulling from symlinked subdir'
 
 . ./test-lib.sh
 
-if ! test_have_prereq SYMLINKS
-then
-	skip_all='Symbolic links not supported, skipping tests.'
-	test_done
-fi
-
 # The scenario we are building:
 #
 #   trash\ directory/
@@ -20,7 +14,7 @@ fi
 #
 # The working directory is subdir-link.
 
-test_expect_success setup '
+test_expect_success SYMLINKS setup '
 	mkdir subdir &&
 	echo file >subdir/file &&
 	git add subdir/file &&
@@ -36,7 +30,7 @@ test_expect_success setup '
 
 # Demonstrate that things work if we just avoid the symlink
 #
-test_expect_success 'pulling from real subdir' '
+test_expect_success SYMLINKS 'pulling from real subdir' '
 	(
 		echo real >subdir/file &&
 		git commit -m real subdir/file &&
@@ -64,7 +58,7 @@ test_expect_success 'pulling from real subdir' '
 # directory.  A POSIX shell's "cd" works a little differently
 # than chdir() in C; "cd -P" is much closer to chdir().
 #
-test_expect_success 'pulling from symlinked subdir' '
+test_expect_success SYMLINKS 'pulling from symlinked subdir' '
 	(
 		echo link >subdir/file &&
 		git commit -m link subdir/file &&
@@ -77,7 +71,7 @@ test_expect_success 'pulling from symlinked subdir' '
 # Prove that the remote end really is a repo, and other commands
 # work fine in this context.  It's just that "git pull" breaks.
 #
-test_expect_success 'pushing from symlinked subdir' '
+test_expect_success SYMLINKS 'pushing from symlinked subdir' '
 	(
 		cd subdir-link/ &&
 		echo push >file &&

@@ -35,21 +35,28 @@ For shell scripts specifically (not exhaustive):
    properly nests.  It should have been the way Bourne spelled
    it from day one, but unfortunately isn't.
 
- - We use ${parameter-word} and its [-=?+] siblings, and their
-   colon'ed "unset or null" form.
+ - We use POSIX compliant parameter substitutions and avoid bashisms;
+   namely:
 
- - We use ${parameter#word} and its [#%] siblings, and their
-   doubled "longest matching" form.
+   - We use ${parameter-word} and its [-=?+] siblings, and their
+     colon'ed "unset or null" form.
+
+   - We use ${parameter#word} and its [#%] siblings, and their
+     doubled "longest matching" form.
+
+   - No "Substring Expansion" ${parameter:offset:length}.
+
+   - No shell arrays.
+
+   - No strlen ${#parameter}.
+
+   - No pattern replacement ${parameter/pattern/string}.
 
  - We use Arithmetic Expansion $(( ... )).
 
- - No "Substring Expansion" ${parameter:offset:length}.
-
- - No shell arrays.
-
- - No strlen ${#parameter}.
-
- - No regexp ${parameter/pattern/string}.
+ - Inside Arithmetic Expansion, spell shell variables with $ in front
+   of them, as some shells do not grok $((x)) while accepting $(($x))
+   just fine (e.g. dash older than 0.5.4).
 
  - We do not use Process Substitution <(list) or >(list).
 

@@ -586,7 +586,7 @@ static int date_string(unsigned long date, int offset, char *buf, int len)
 
 /* Gr. strptime is crap for this; it doesn't have a way to require RFC2822
    (i.e. English) day/month names, and it doesn't work correctly with %z. */
-int parse_date_toffset(const char *date, unsigned long *timestamp, int *offset)
+int parse_date_basic(const char *date, unsigned long *timestamp, int *offset)
 {
 	struct tm tm;
 	int tm_gmt;
@@ -642,17 +642,16 @@ int parse_date_toffset(const char *date, unsigned long *timestamp, int *offset)
 
 	if (!tm_gmt)
 		*timestamp -= *offset * 60;
-	return 1; /* success */
+	return 0; /* success */
 }
 
 int parse_date(const char *date, char *result, int maxlen)
 {
 	unsigned long timestamp;
 	int offset;
-	if (parse_date_toffset(date, &timestamp, &offset) > 0)
-		return date_string(timestamp, offset, result, maxlen);
-	else
+	if (parse_date_basic(date, &timestamp, &offset))
 		return -1;
+	return date_string(timestamp, offset, result, maxlen);
 }
 
 enum date_mode parse_date_format(const char *format)
@@ -1004,9 +1003,8 @@ unsigned long approxidate_relative(const char *date, const struct timeval *tv)
 	int offset;
 	int errors = 0;
 
-	if (parse_date_toffset(date, &timestamp, &offset) > 0)
+	if (!parse_date_basic(date, &timestamp, &offset))
 		return timestamp;
-
 	return approxidate_str(date, tv, &errors);
 }
 
@@ -1019,7 +1017,7 @@ unsigned long approxidate_careful(const char *date, int *error_ret)
 	if (!error_ret)
 		error_ret = &dummy;
 
-	if (parse_date_toffset(date, &timestamp, &offset) > 0) {
+	if (!parse_date_basic(date, &timestamp, &offset)) {
 		*error_ret = 0;
 		return timestamp;
 	}

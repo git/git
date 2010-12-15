@@ -20,7 +20,7 @@ static char delim = '=';
 static char key_delim = ' ';
 static char term = '\n';
 
-static int use_global_config, use_system_config;
+static int use_global_config, use_system_config, use_local_config;
 static const char *given_config_file;
 static int actions, types;
 static const char *get_color_slot, *get_colorbool_slot;
@@ -51,6 +51,7 @@ static struct option builtin_config_options[] = {
 	OPT_GROUP("Config file location"),
 	OPT_BOOLEAN(0, "global", &use_global_config, "use global config file"),
 	OPT_BOOLEAN(0, "system", &use_system_config, "use system config file"),
+	OPT_BOOLEAN(0, "local", &use_local_config, "use repository config file"),
 	OPT_STRING('f', "file", &given_config_file, "FILE", "use given config file"),
 	OPT_GROUP("Action"),
 	OPT_BIT(0, "get", &actions, "get value: name [value-regex]", ACTION_GET),
@@ -330,11 +331,10 @@ static int get_colorbool(int print)
 		return get_colorbool_found ? 0 : 1;
 }
 
-int cmd_config(int argc, const char **argv, const char *unused_prefix)
+int cmd_config(int argc, const char **argv, const char *prefix)
 {
-	int nongit;
+	int nongit = !startup_info->have_repository;
 	char *value;
-	const char *prefix = setup_git_directory_gently(&nongit);
 
 	config_exclusive_filename = getenv(CONFIG_ENVIRONMENT);
 
@@ -342,7 +342,7 @@ int cmd_config(int argc, const char **argv, const char *unused_prefix)
 			     builtin_config_usage,
 			     PARSE_OPT_STOP_AT_NON_OPTION);
 
-	if (use_global_config + use_system_config + !!given_config_file > 1) {
+	if (use_global_config + use_system_config + use_local_config + !!given_config_file > 1) {
 		error("only one config file at a time.");
 		usage_with_options(builtin_config_usage, builtin_config_options);
 	}
@@ -358,6 +358,8 @@ int cmd_config(int argc, const char **argv, const char *unused_prefix)
 	}
 	else if (use_system_config)
 		config_exclusive_filename = git_etc_gitconfig();
+	else if (use_local_config)
+		config_exclusive_filename = git_pathdup("config");
 	else if (given_config_file) {
 		if (!is_absolute_path(given_config_file) && prefix)
 			config_exclusive_filename = prefix_filename(prefix,

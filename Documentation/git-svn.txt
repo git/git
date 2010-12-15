@@ -56,6 +56,8 @@ COMMANDS
 	as well, they take precedence.
 --no-metadata;;
 	Set the 'noMetadata' option in the [svn-remote] config.
+	This option is not recommended, please read the 'svn.noMetadata'
+	section of this manpage before using this option.
 --use-svm-props;;
 	Set the 'useSvmProps' option in the [svn-remote] config.
 --use-svnsync-props;;
@@ -436,7 +438,7 @@ git rebase --onto remotes/git-svn A^ master
 OPTIONS
 -------
 
---shared[={false|true|umask|group|all|world|everybody}]::
+--shared[=(false|true|umask|group|all|world|everybody)]::
 --template=<template_directory>::
 	Only used with the 'init' command.
 	These are passed directly to 'git init'.
@@ -597,13 +599,22 @@ svn.noMetadata::
 svn-remote.<name>.noMetadata::
 	This gets rid of the 'git-svn-id:' lines at the end of every commit.
 +
-If you lose your .git/svn/git-svn/.rev_db file, 'git svn' will not
-be able to rebuild it and you won't be able to fetch again,
-either.  This is fine for one-shot imports.
+This option can only be used for one-shot imports as 'git svn'
+will not be able to fetch again without metadata. Additionally,
+if you lose your .git/svn/**/.rev_map.* files, 'git svn' will not
+be able to rebuild them.
 +
 The 'git svn log' command will not work on repositories using
 this, either.  Using this conflicts with the 'useSvmProps'
 option for (hopefully) obvious reasons.
++
+This option is NOT recommended as it makes it difficult to track down
+old references to SVN revision numbers in existing documentation, bug
+reports and archives.  If you plan to eventually migrate from SVN to git
+and are certain about dropping SVN history, consider
+linkgit:git-filter-branch[1] instead.  filter-branch also allows
+reformating of metadata for ease-of-reading and rewriting authorship
+info for non-"svn.authorsFile" users.
 
 svn.useSvmProps::
 svn-remote.<name>.useSvmProps::
@@ -645,6 +656,12 @@ svn.brokenSymlinkWorkaround::
 	while 'git svn' is running and take effect on the next
 	revision fetched.  If unset, 'git svn' assumes this option to
 	be "true".
+
+svn.pathnameencoding::
+	This instructs git svn to recode pathnames to a given encoding.
+	It can be used by windows users and by those who work in non-utf8
+	locales to avoid corrupted file names with non-ASCII characters.
+	Valid encodings are the ones supported by Perl's Encode module.
 
 Since the noMetadata, rewriteRoot, rewriteUUID, useSvnsyncProps and useSvmProps
 options all affect the metadata generated and used by 'git svn'; they

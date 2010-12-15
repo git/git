@@ -25,6 +25,7 @@ static int show_modified;
 static int show_killed;
 static int show_valid_bit;
 static int line_terminator = '\n';
+static int debug_mode;
 
 static const char *prefix;
 static int max_prefix_len;
@@ -162,35 +163,41 @@ static void show_ce_entry(const char *tag, struct cache_entry *ce)
 		       ce_stage(ce));
 	}
 	write_name(ce->name, ce_namelen(ce));
-}
-
-static int show_one_ru(struct string_list_item *item, void *cbdata)
-{
-	const char *path = item->string;
-	struct resolve_undo_info *ui = item->util;
-	int i, len;
-
-	len = strlen(path);
-	if (len < max_prefix_len)
-		return 0; /* outside of the prefix */
-	if (!match_pathspec(pathspec, path, len, max_prefix_len, ps_matched))
-		return 0; /* uninterested */
-	for (i = 0; i < 3; i++) {
-		if (!ui->mode[i])
-			continue;
-		printf("%s%06o %s %d\t", tag_resolve_undo, ui->mode[i],
-		       find_unique_abbrev(ui->sha1[i], abbrev),
-		       i + 1);
-		write_name(path, len);
+	if (debug_mode) {
+		printf("  ctime: %d:%d\n", ce->ce_ctime.sec, ce->ce_ctime.nsec);
+		printf("  mtime: %d:%d\n", ce->ce_mtime.sec, ce->ce_mtime.nsec);
+		printf("  dev: %d\tino: %d\n", ce->ce_dev, ce->ce_ino);
+		printf("  uid: %d\tgid: %d\n", ce->ce_uid, ce->ce_gid);
+		printf("  size: %d\tflags: %x\n", ce->ce_size, ce->ce_flags);
 	}
-	return 0;
 }
 
 static void show_ru_info(void)
 {
+	struct string_list_item *item;
+
 	if (!the_index.resolve_undo)
 		return;
-	for_each_string_list(the_index.resolve_undo, show_one_ru, NULL);
+
+	for_each_string_list_item(item, the_index.resolve_undo) {
+		const char *path = item->string;
+		struct resolve_undo_info *ui = item->util;
+		int i, len;
+
+		len = strlen(path);
+		if (len < max_prefix_len)
+			continue; /* outside of the prefix */
+		if (!match_pathspec(pathspec, path, len, max_prefix_len, ps_matched))
+			continue; /* uninterested */
+		for (i = 0; i < 3; i++) {
+			if (!ui->mode[i])
+				continue;
+			printf("%s%06o %s %d\t", tag_resolve_undo, ui->mode[i],
+			       find_unique_abbrev(ui->sha1[i], abbrev),
+			       i + 1);
+			write_name(path, len);
+		}
+	}
 }
 
 static void show_files(struct dir_struct *dir)
@@ -417,7 +424,7 @@ int report_path_error(const char *ps_matched, const char **pathspec, int prefix_
 }
 
 static const char * const ls_files_usage[] = {
-	"git ls-files [options] [<file>]*",
+	"git ls-files [options] [<file>...]",
 	NULL
 };
 
@@ -519,6 +526,7 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 		OPT_STRING(0, "with-tree", &with_tree, "tree-ish",
 			"pretend that paths removed since <tree-ish> are still present"),
 		OPT__ABBREV(&abbrev),
+		OPT_BOOLEAN(0, "debug", &debug_mode, "show debugging data"),
 		OPT_END()
 	};
 

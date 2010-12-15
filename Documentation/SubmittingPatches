@@ -7,17 +7,16 @@ Checklist (and a short version for the impatient):
 	  before committing
 	- do not check in commented out code or unneeded files
 	- the first line of the commit message should be a short
-	  description and should skip the full stop
+	  description (50 characters is the soft limit, see DISCUSSION
+	  in git-commit(1)), and should skip the full stop
 	- the body should provide a meaningful commit message, which:
 		- uses the imperative, present tense: "change",
 		  not "changed" or "changes".
 		- includes motivation for the change, and contrasts
 		  its implementation with previous behaviour
-	- if you want your work included in git.git, add a
-	  "Signed-off-by: Your Name <you@example.com>" line to the
-	  commit message (or just use the option "-s" when
-	  committing) to confirm that you agree to the Developer's
-	  Certificate of Origin
+	- add a "Signed-off-by: Your Name <you@example.com>" line to the
+	  commit message (or just use the option "-s" when committing)
+	  to confirm that you agree to the Developer's Certificate of Origin
 	- make sure that you have tests for the bug you are fixing
 	- make sure that the test suite passes after your commit
 
@@ -265,12 +264,21 @@ the change to its true author (see (2) above).
 Also notice that a real name is used in the Signed-off-by: line. Please
 don't hide your real name.
 
-Some people also put extra tags at the end.
+If you like, you can put extra tags at the end:
 
-"Acked-by:" says that the patch was reviewed by the person who
-is more familiar with the issues and the area the patch attempts
-to modify.  "Tested-by:" says the patch was tested by the person
-and found to have the desired effect.
+1. "Reported-by:" is used to to credit someone who found the bug that
+   the patch attempts to fix.
+2. "Acked-by:" says that the person who is more familiar with the area
+   the patch attempts to modify liked the patch.
+3. "Reviewed-by:", unlike the other tags, can only be offered by the
+   reviewer and means that she is completely satisfied that the patch
+   is ready for application.  It is usually offered only after a
+   detailed review.
+4. "Tested-by:" is used to indicate that the person applied the patch
+   and found it to have the desired effect.
+
+You can also create your own tag or use one that's in common usage
+such as "Thanks-to:", "Based-on-patch-by:", or "Mentored-by:".
 
 ------------------------------------------------
 An ideal patch flow

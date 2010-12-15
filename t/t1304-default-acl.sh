@@ -18,9 +18,11 @@ umask 077
 setfacl_out="$(setfacl -m u:root:rwx . 2>&1)"
 setfacl_ret=$?
 
-if [ $setfacl_ret != 0 ]; then
-	skip_all="Skipping ACL tests: unable to use setfacl (output: '$setfacl_out'; return code: '$setfacl_ret')"
-	test_done
+if test $setfacl_ret != 0
+then
+	say "Unable to use setfacl (output: '$setfacl_out'; return code: '$setfacl_ret')"
+else
+	test_set_prereq SETFACL
 fi
 
 check_perms_and_acl () {
@@ -34,7 +36,7 @@ check_perms_and_acl () {
 
 dirs_to_set="./ .git/ .git/objects/ .git/objects/pack/"
 
-test_expect_success 'Setup test repo' '
+test_expect_success SETFACL 'Setup test repo' '
 	setfacl -m d:u::rwx,d:g::---,d:o:---,d:m:rwx $dirs_to_set &&
 	setfacl -m m:rwx               $dirs_to_set &&
 	setfacl -m u:root:rwx          $dirs_to_set &&
@@ -46,12 +48,12 @@ test_expect_success 'Setup test repo' '
 	git commit -m "init"
 '
 
-test_expect_success 'Objects creation does not break ACLs with restrictive umask' '
+test_expect_success SETFACL 'Objects creation does not break ACLs with restrictive umask' '
 	# SHA1 for empty blob
 	check_perms_and_acl .git/objects/e6/9de29bb2d1d6434b8b29ae775ad8c2e48c5391
 '
 
-test_expect_success 'git gc does not break ACLs with restrictive umask' '
+test_expect_success SETFACL 'git gc does not break ACLs with restrictive umask' '
 	git gc &&
 	check_perms_and_acl .git/objects/pack/*.pack
 '

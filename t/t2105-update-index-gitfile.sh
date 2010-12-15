@@ -13,7 +13,7 @@ test_expect_success 'submodule with absolute .git file' '
 	(cd sub1 &&
 	 git init &&
 	 REAL="$(pwd)/.real" &&
-	 mv .git "$REAL"
+	 mv .git "$REAL" &&
 	 echo "gitdir: $REAL" >.git &&
 	 test_commit first)
 '

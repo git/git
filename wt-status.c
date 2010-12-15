@@ -313,8 +313,10 @@ static void wt_status_collect_changes_worktree(struct wt_status *s)
 	DIFF_OPT_SET(&rev.diffopt, DIRTY_SUBMODULES);
 	if (!s->show_untracked_files)
 		DIFF_OPT_SET(&rev.diffopt, IGNORE_UNTRACKED_IN_SUBMODULES);
-	if (s->ignore_submodule_arg)
+	if (s->ignore_submodule_arg) {
+		DIFF_OPT_SET(&rev.diffopt, OVERRIDE_SUBMODULE_CONFIG);
 		handle_ignore_submodules_arg(&rev.diffopt, s->ignore_submodule_arg);
+    }
 	rev.diffopt.format_callback = wt_status_collect_changed_cb;
 	rev.diffopt.format_callback_data = s;
 	rev.prune_data = s->pathspec;
@@ -331,8 +333,10 @@ static void wt_status_collect_changes_index(struct wt_status *s)
 	opt.def = s->is_initial ? EMPTY_TREE_SHA1_HEX : s->reference;
 	setup_revisions(0, NULL, &rev, &opt);
 
-	if (s->ignore_submodule_arg)
+	if (s->ignore_submodule_arg) {
+		DIFF_OPT_SET(&rev.diffopt, OVERRIDE_SUBMODULE_CONFIG);
 		handle_ignore_submodules_arg(&rev.diffopt, s->ignore_submodule_arg);
+	}
 
 	rev.diffopt.output_format |= DIFF_FORMAT_CALLBACK;
 	rev.diffopt.format_callback = wt_status_collect_updated_cb;
@@ -386,11 +390,9 @@ static void wt_status_collect_untracked(struct wt_status *s)
 	fill_directory(&dir, s->pathspec);
 	for (i = 0; i < dir.nr; i++) {
 		struct dir_entry *ent = dir.entries[i];
-		if (!cache_name_is_other(ent->name, ent->len))
-			continue;
-		if (!match_pathspec(s->pathspec, ent->name, ent->len, 0, NULL))
-			continue;
-		string_list_insert(&s->untracked, ent->name);
+		if (cache_name_is_other(ent->name, ent->len) &&
+		    match_pathspec(s->pathspec, ent->name, ent->len, 0, NULL))
+			string_list_insert(&s->untracked, ent->name);
 		free(ent);
 	}
 
@@ -400,11 +402,9 @@ static void wt_status_collect_untracked(struct wt_status *s)
 		fill_directory(&dir, s->pathspec);
 		for (i = 0; i < dir.nr; i++) {
 			struct dir_entry *ent = dir.entries[i];
-			if (!cache_name_is_other(ent->name, ent->len))
-				continue;
-			if (!match_pathspec(s->pathspec, ent->name, ent->len, 0, NULL))
-				continue;
-			string_list_insert(&s->ignored, ent->name);
+			if (cache_name_is_other(ent->name, ent->len) &&
+			    match_pathspec(s->pathspec, ent->name, ent->len, 0, NULL))
+				string_list_insert(&s->ignored, ent->name);
 			free(ent);
 		}
 	}

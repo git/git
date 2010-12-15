@@ -41,7 +41,7 @@ OPTIONS[[OPTIONS]]
 +
 The <src> is often the name of the branch you would want to push, but
 it can be any arbitrary "SHA-1 expression", such as `master~4` or
-`HEAD` (see linkgit:gitrevisions[1]).
+`HEAD` (see linkgit:gitrevisions[7]).
 +
 The <dst> tells which ref on the remote side is updated with this
 push. Arbitrary expressions cannot be used here, an actual ref must
@@ -200,7 +200,7 @@ summary::
 	For a successfully pushed ref, the summary shows the old and new
 	values of the ref in a form suitable for using as an argument to
 	`git log` (this is `<old>..<new>` in most cases, and
-	`<old>...<new>` for forced non-fast-forward updates).
+	`<old>\...<new>` for forced non-fast-forward updates).
 +
 For a failed update, more details are given:
 +

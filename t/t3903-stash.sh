@@ -69,9 +69,10 @@ test_expect_success 'apply stashed changes (including index)' '
 test_expect_success 'unstashing in a subdirectory' '
 	git reset --hard HEAD &&
 	mkdir subdir &&
-	cd subdir &&
-	git stash apply &&
-	cd ..
+	(
+		cd subdir &&
+		git stash apply
+	)
 '
 
 test_expect_success 'drop top stash' '
@@ -376,6 +377,183 @@ test_expect_failure 'stash file to directory' '
 	git stash apply &&
 	test -f file/file &&
 	test foo = "$(cat file/file)"
+'
+
+test_expect_success 'stash branch - no stashes on stack, stash-like argument' '
+	git stash clear &&
+	test_when_finished "git reset --hard HEAD" &&
+	git reset --hard &&
+	echo foo >> file &&
+	STASH_ID=$(git stash create) &&
+	git reset --hard &&
+	git stash branch stash-branch ${STASH_ID} &&
+	test_when_finished "git reset --hard HEAD && git checkout master && git branch -D stash-branch" &&
+	test $(git ls-files --modified | wc -l) -eq 1
+'
+
+test_expect_success 'stash branch - stashes on stack, stash-like argument' '
+	git stash clear &&
+	test_when_finished "git reset --hard HEAD" &&
+	git reset --hard &&
+	echo foo >> file &&
+	git stash &&
+	test_when_finished "git stash drop" &&
+	echo bar >> file &&
+	STASH_ID=$(git stash create) &&
+	git reset --hard &&
+	git stash branch stash-branch ${STASH_ID} &&
+	test_when_finished "git reset --hard HEAD && git checkout master && git branch -D stash-branch" &&
+	test $(git ls-files --modified | wc -l) -eq 1
+'
+
+test_expect_success 'stash show - stashes on stack, stash-like argument' '
+	git stash clear &&
+	test_when_finished "git reset --hard HEAD" &&
+	git reset --hard &&
+	echo foo >> file &&
+	git stash &&
+	test_when_finished "git stash drop" &&
+	echo bar >> file &&
+	STASH_ID=$(git stash create) &&
+	git reset --hard &&
+	cat >expected <<-EOF &&
+	 file |    1 +
+	 1 files changed, 1 insertions(+), 0 deletions(-)
+	EOF
+	git stash show ${STASH_ID} >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'stash show -p - stashes on stack, stash-like argument' '
+	git stash clear &&
+	test_when_finished "git reset --hard HEAD" &&
+	git reset --hard &&
+	echo foo >> file &&
+	git stash &&
+	test_when_finished "git stash drop" &&
+	echo bar >> file &&
+	STASH_ID=$(git stash create) &&
+	git reset --hard &&
+	cat >expected <<-EOF &&
+	diff --git a/file b/file
+	index 7601807..935fbd3 100644
+	--- a/file
+	+++ b/file
+	@@ -1 +1,2 @@
+	 baz
+	+bar
+	EOF
+	git stash show -p ${STASH_ID} >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'stash show - no stashes on stack, stash-like argument' '
+	git stash clear &&
+	test_when_finished "git reset --hard HEAD" &&
+	git reset --hard &&
+	echo foo >> file &&
+	STASH_ID=$(git stash create) &&
+	git reset --hard &&
+	cat >expected <<-EOF &&
+	 file |    1 +
+	 1 files changed, 1 insertions(+), 0 deletions(-)
+	EOF
+	git stash show ${STASH_ID} >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'stash show -p - no stashes on stack, stash-like argument' '
+	git stash clear &&
+	test_when_finished "git reset --hard HEAD" &&
+	git reset --hard &&
+	echo foo >> file &&
+	STASH_ID=$(git stash create) &&
+	git reset --hard &&
+	cat >expected <<-EOF &&
+	diff --git a/file b/file
+	index 7601807..71b52c4 100644
+	--- a/file
+	+++ b/file
+	@@ -1 +1,2 @@
+	 baz
+	+foo
+	EOF
+	git stash show -p ${STASH_ID} >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'stash drop - fail early if specified stash is not a stash reference' '
+	git stash clear &&
+	test_when_finished "git reset --hard HEAD && git stash clear" &&
+	git reset --hard &&
+	echo foo > file &&
+	git stash &&
+	echo bar > file &&
+	git stash &&
+	test_must_fail git stash drop $(git rev-parse stash@{0}) &&
+	git stash pop &&
+	test bar = "$(cat file)" &&
+	git reset --hard HEAD
+'
+
+test_expect_success 'stash pop - fail early if specified stash is not a stash reference' '
+	git stash clear &&
+	test_when_finished "git reset --hard HEAD && git stash clear" &&
+	git reset --hard &&
+	echo foo > file &&
+	git stash &&
+	echo bar > file &&
+	git stash &&
+	test_must_fail git stash pop $(git rev-parse stash@{0}) &&
+	git stash pop &&
+	test bar = "$(cat file)" &&
+	git reset --hard HEAD
+'
+
+test_expect_success 'ref with non-existant reflog' '
+	git stash clear &&
+	echo bar5 > file &&
+	echo bar6 > file2 &&
+	git add file2 &&
+	git stash &&
+	! "git rev-parse --quiet --verify does-not-exist" &&
+	test_must_fail git stash drop does-not-exist &&
+	test_must_fail git stash drop does-not-exist@{0} &&
+	test_must_fail git stash pop does-not-exist &&
+	test_must_fail git stash pop does-not-exist@{0} &&
+	test_must_fail git stash apply does-not-exist &&
+	test_must_fail git stash apply does-not-exist@{0} &&
+	test_must_fail git stash show does-not-exist &&
+	test_must_fail git stash show does-not-exist@{0} &&
+	test_must_fail git stash branch tmp does-not-exist &&
+	test_must_fail git stash branch tmp does-not-exist@{0} &&
+	git stash drop
+'
+
+test_expect_success 'invalid ref of the form stash@{n}, n >= N' '
+	git stash clear &&
+	test_must_fail git stash drop stash@{0} &&
+	echo bar5 > file &&
+	echo bar6 > file2 &&
+	git add file2 &&
+	git stash &&
+	test_must_fail git drop stash@{1} &&
+	test_must_fail git pop stash@{1} &&
+	test_must_fail git apply stash@{1} &&
+	test_must_fail git show stash@{1} &&
+	test_must_fail git branch tmp stash@{1} &&
+	git stash drop
+'
+
+test_expect_success 'stash branch should not drop the stash if the branch exists' '
+	git stash clear &&
+	echo foo >file &&
+	git add file &&
+	git commit -m initial &&
+	echo bar >file &&
+	git stash &&
+	test_must_fail git stash branch master stash@{0} &&
+	git rev-parse stash@{0} --
 '
 
 test_done

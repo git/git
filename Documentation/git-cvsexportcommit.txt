@@ -114,11 +114,11 @@ $ git cherry cvshead myhead | sed -n 's/^+ //p' | xargs -l1 git cvsexportcommit 
 
 Author
 ------
-Written by Martin Langhoff <martin@catalyst.net.nz> and others.
+Written by Martin Langhoff <martin@laptop.org> and others.
 
 Documentation
 --------------
-Documentation by Martin Langhoff <martin@catalyst.net.nz> and others.
+Documentation by Martin Langhoff <martin@laptop.org> and others.
 
 GIT
 ---

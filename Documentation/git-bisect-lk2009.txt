@@ -873,7 +873,7 @@ c * N * T + b * M * log2(M) tests
 where c is the number of rounds of test (so a small constant) and b is
 the ratio of bug per commit (hopefully a small constant too).
 
-So of course it's much better as it's O(N \* T) vs O(N \* T \* M) if
+So of course it's much better as it's O(N * T) vs O(N * T * M) if
 you would test everything after each commit.
 
 This means that test suites are good to prevent some bugs from being
