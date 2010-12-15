@@ -553,12 +553,12 @@ static int match_dir_prefix(const char *base, int baselen,
  *  - negative for "no, and no subsequent entries will be either"
  */
 int tree_entry_interesting(const struct name_entry *entry,
-			   const struct strbuf *base,
+			   struct strbuf *base,
 			   const struct pathspec *ps)
 {
 	int i;
 	int pathlen, baselen = base->len;
-	int never_interesting = -1;
+	int never_interesting = ps->has_wildcard ? 0 : -1;
 
 	if (!ps->nr) {
 		if (!ps->recursive || ps->max_depth == -1)
@@ -578,7 +578,7 @@ int tree_entry_interesting(const struct name_entry *entry,
 		if (baselen >= matchlen) {
 			/* If it doesn't match, move along... */
 			if (!match_dir_prefix(base->buf, baselen, match, matchlen))
-				continue;
+				goto match_wildcards;
 
 			if (!ps->recursive || ps->max_depth == -1)
 				return 2;
@@ -596,6 +596,30 @@ int tree_entry_interesting(const struct name_entry *entry,
 					&never_interesting))
 				return 1;
 		}
+
+match_wildcards:
+		if (!ps->items[i].has_wildcard)
+			continue;
+
+		/*
+		 * Concatenate base and entry->path into one and do
+		 * fnmatch() on it.
+		 */
+
+		strbuf_add(base, entry->path, pathlen);
+
+		if (!fnmatch(match, base->buf, 0)) {
+			strbuf_setlen(base, baselen);
+			return 1;
+		}
+		strbuf_setlen(base, baselen);
+
+		/*
+		 * Match all directories. We'll try to match files
+		 * later on.
+		 */
+		if (ps->recursive && S_ISDIR(entry->mode))
+			return 1;
 	}
 	return never_interesting; /* No matches */
 }

@@ -1197,6 +1197,9 @@ int init_pathspec(struct pathspec *pathspec, const char **paths)
 
 		item->match = path;
 		item->len = strlen(path);
+		item->has_wildcard = !no_wildcard(path);
+		if (item->has_wildcard)
+			pathspec->has_wildcard = 1;
 	}
 
 	qsort(pathspec->items, pathspec->nr,
