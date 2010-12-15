@@ -501,7 +501,7 @@ int do_diff_cache(const unsigned char *tree_sha1, struct diff_options *opt)
 	active_nr = dst - active_cache;
 
 	init_revisions(&revs, NULL);
-	revs.prune_data = opt->paths;
+	revs.prune_data = opt->pathspec.raw;
 	tree = parse_tree_indirect(tree_sha1);
 	if (!tree)
 		die("bad tree object %s", sha1_to_hex(tree_sha1));
