@@ -1151,3 +1151,34 @@ int remove_path(const char *name)
 	return 0;
 }
 
+int init_pathspec(struct pathspec *pathspec, const char **paths)
+{
+	const char **p = paths;
+	int i;
+
+	memset(pathspec, 0, sizeof(*pathspec));
+	if (!p)
+		return 0;
+	while (*p)
+		p++;
+	pathspec->raw = paths;
+	pathspec->nr = p - paths;
+	if (!pathspec->nr)
+		return 0;
+
+	pathspec->items = xmalloc(sizeof(struct pathspec_item)*pathspec->nr);
+	for (i = 0; i < pathspec->nr; i++) {
+		struct pathspec_item *item = pathspec->items+i;
+		const char *path = paths[i];
+
+		item->match = path;
+		item->len = strlen(path);
+	}
+	return 0;
+}
+
+void free_pathspec(struct pathspec *pathspec)
+{
+	free(pathspec->items);
+	pathspec->items = NULL;
+}
