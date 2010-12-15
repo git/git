@@ -1,0 +1,8 @@
+Git v1.7.0.9 Release Notes
+==========================
+
+Fixes since v1.7.0.8
+--------------------
+
+ * "gitweb" can sometimes be tricked into parrotting a filename argument
+   given in a request without properly quoting.
