@@ -84,4 +84,22 @@ test_expect_success 'diff-tree -r with wildcard' '
 	test_cmp expected result
 '
 
+test_expect_success 'diff-tree with wildcard shows dir also matches' '
+	git diff-tree --name-only $tree $tree2 -- "path1/f*" >result &&
+	echo path1 >expected &&
+	test_cmp expected result
+'
+
+test_expect_success 'diff-tree -r with wildcard from beginning' '
+	git diff-tree -r --name-only $tree $tree2 -- "path1/*file1" >result &&
+	echo path1/file1 >expected &&
+	test_cmp expected result
+'
+
+test_expect_success 'diff-tree -r with wildcard' '
+	git diff-tree -r --name-only $tree $tree2 -- "path1/f*" >result &&
+	echo path1/file1 >expected &&
+	test_cmp expected result
+'
+
 test_done

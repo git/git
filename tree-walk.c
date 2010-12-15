@@ -595,6 +595,20 @@ int tree_entry_interesting(const struct name_entry *entry,
 					match + baselen, matchlen - baselen,
 					&never_interesting))
 				return 1;
+
+			if (ps->items[i].has_wildcard) {
+				if (!fnmatch(match + baselen, entry->path, 0))
+					return 1;
+
+				/*
+				 * Match all directories. We'll try to
+				 * match files later on.
+				 */
+				if (ps->recursive && S_ISDIR(entry->mode))
+					return 1;
+			}
+
+			continue;
 		}
 
 match_wildcards:
