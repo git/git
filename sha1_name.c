@@ -599,6 +599,13 @@ static int peel_onion(const char *name, int len, unsigned char *sha1)
 		int ret;
 		struct commit_list *list = NULL;
 
+		/*
+		 * $commit^{/}. Some regex implementation may reject.
+		 * We don't need regex anyway. '' pattern always matches.
+		 */
+		if (sp[1] == '}')
+			return 0;
+
 		prefix = xstrndup(sp + 1, name + len - 1 - (sp + 1));
 		commit_list_insert((struct commit *)o, &list);
 		ret = get_sha1_oneline(prefix, sha1, list);
