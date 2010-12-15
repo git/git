@@ -1166,6 +1166,15 @@ int remove_path(const char *name)
 	return 0;
 }
 
+static int pathspec_item_cmp(const void *a_, const void *b_)
+{
+	struct pathspec_item *a, *b;
+
+	a = (struct pathspec_item *)a_;
+	b = (struct pathspec_item *)b_;
+	return strcmp(a->match, b->match);
+}
+
 int init_pathspec(struct pathspec *pathspec, const char **paths)
 {
 	const char **p = paths;
@@ -1189,6 +1198,10 @@ int init_pathspec(struct pathspec *pathspec, const char **paths)
 		item->match = path;
 		item->len = strlen(path);
 	}
+
+	qsort(pathspec->items, pathspec->nr,
+	      sizeof(struct pathspec_item), pathspec_item_cmp);
+
 	return 0;
 }
 

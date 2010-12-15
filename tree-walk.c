@@ -570,7 +570,7 @@ int tree_entry_interesting(const struct name_entry *entry,
 
 	pathlen = tree_entry_len(entry->path, entry->sha1);
 
-	for (i = 0; i < ps->nr; i++) {
+	for (i = ps->nr-1; i >= 0; i--) {
 		const struct pathspec_item *item = ps->items+i;
 		const char *match = item->match;
 		int matchlen = item->len;
