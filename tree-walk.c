@@ -468,12 +468,13 @@ int get_tree_entry(const unsigned char *tree_sha1, const char *name, unsigned ch
  *  - negative for "no, and no subsequent entries will be either"
  */
 int tree_entry_interesting(const struct name_entry *entry,
-			   const char *base, int baselen,
+			   const struct strbuf *base_buf,
 			   const struct pathspec *ps)
 {
 	int i;
-	int pathlen;
+	int pathlen, baselen = base_buf->len;
 	int never_interesting = -1;
+	const char *base = base_buf->buf;
 
 	if (!ps || !ps->nr)
 		return 2;
