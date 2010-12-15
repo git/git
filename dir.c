@@ -199,6 +199,95 @@ int match_pathspec(const char **pathspec, const char *name, int namelen,
 	return retval;
 }
 
+/*
+ * Does 'match' match the given name?
+ * A match is found if
+ *
+ * (1) the 'match' string is leading directory of 'name', or
+ * (2) the 'match' string is a wildcard and matches 'name', or
+ * (3) the 'match' string is exactly the same as 'name'.
+ *
+ * and the return value tells which case it was.
+ *
+ * It returns 0 when there is no match.
+ */
+static int match_pathspec_item(const struct pathspec_item *item, int prefix,
+			       const char *name, int namelen)
+{
+	/* name/namelen has prefix cut off by caller */
+	const char *match = item->match + prefix;
+	int matchlen = item->len - prefix;
+
+	/* If the match was just the prefix, we matched */
+	if (!*match)
+		return MATCHED_RECURSIVELY;
+
+	if (matchlen <= namelen && !strncmp(match, name, matchlen)) {
+		if (matchlen == namelen)
+			return MATCHED_EXACTLY;
+
+		if (match[matchlen-1] == '/' || name[matchlen] == '/')
+			return MATCHED_RECURSIVELY;
+	}
+
+	if (item->has_wildcard && !fnmatch(match, name, 0))
+		return MATCHED_FNMATCH;
+
+	return 0;
+}
+
+/*
+ * Given a name and a list of pathspecs, see if the name matches
+ * any of the pathspecs.  The caller is also interested in seeing
+ * all pathspec matches some names it calls this function with
+ * (otherwise the user could have mistyped the unmatched pathspec),
+ * and a mark is left in seen[] array for pathspec element that
+ * actually matched anything.
+ */
+int match_pathspec_depth(const struct pathspec *ps,
+			 const char *name, int namelen,
+			 int prefix, char *seen)
+{
+	int i, retval = 0;
+
+	if (!ps->nr) {
+		if (!ps->recursive || ps->max_depth == -1)
+			return MATCHED_RECURSIVELY;
+
+		if (within_depth(name, namelen, 0, ps->max_depth))
+			return MATCHED_EXACTLY;
+		else
+			return 0;
+	}
+
+	name += prefix;
+	namelen -= prefix;
+
+	for (i = ps->nr - 1; i >= 0; i--) {
+		int how;
+		if (seen && seen[i] == MATCHED_EXACTLY)
+			continue;
+		how = match_pathspec_item(ps->items+i, prefix, name, namelen);
+		if (ps->recursive && ps->max_depth != -1 &&
+		    how && how != MATCHED_FNMATCH) {
+			int len = ps->items[i].len;
+			if (name[len] == '/')
+				len++;
+			if (within_depth(name+len, namelen-len, 0, ps->max_depth))
+				how = MATCHED_EXACTLY;
+			else
+				how = 0;
+		}
+		if (how) {
+			if (retval < how)
+				retval = how;
+			if (seen && seen[i] < how)
+				seen[i] = how;
+		}
+	}
+	return retval;
+}
+
 static int no_wildcard(const char *string)
 {
 	return string[strcspn(string, "*?[{\\")] == '\0';
