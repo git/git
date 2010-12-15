@@ -1,0 +1,23 @@
+Git v1.6.6.3 Release Notes
+==========================
+
+Fixes since v1.6.6.2
+--------------------
+
+ * An overlong line after ".gitdir: " in a git file caused out of bounds
+   access to an array on the stack.
+
+ * "git bisect $path" did not correctly diagnose an error when given a
+   non-existent path.
+
+ * "git blame -L $start,$end" segfaulted when too large $start was given.
+
+ * "git imap-send" did not write draft box with CRLF line endings per RFC.
+
+ * "git rev-parse --parseopt --stop-at-non-option" did not stop at non option
+   when --keep-dashdash was in effect.
+
+ * "gitweb" can sometimes be tricked into parrotting a filename argument
+   given in a request without properly quoting.
+
+Other minor fixes and documentation updates are included.

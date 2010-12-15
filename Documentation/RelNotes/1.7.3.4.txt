@@ -39,4 +39,7 @@ Fixes since v1.7.3.3
  * The post-receive-email sample hook was accidentally broken in 1.7.3.3
    update.
 
+ * "gitweb" can sometimes be tricked into parrotting a filename argument
+   given in a request without properly quoting.
+
 Other minor fixes and documentation updates are also included.
