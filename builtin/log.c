@@ -89,7 +89,7 @@ static void cmd_log_init(int argc, const char **argv, const char *prefix,
 		rev->always_show_header = 0;
 	if (DIFF_OPT_TST(&rev->diffopt, FOLLOW_RENAMES)) {
 		rev->always_show_header = 0;
-		if (rev->diffopt.nr_paths != 1)
+		if (rev->diffopt.pathspec.nr != 1)
 			usage("git logs can only follow renames on one pathname at a time");
 	}
 	for (i = 1; i < argc; i++) {
