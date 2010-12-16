@@ -132,14 +132,17 @@ Format of STDIN stream:
   ts    ::= # time since the epoch in seconds, ascii base10 notation;
   tz    ::= # GIT style timezone;
 
-     # note: comments may appear anywhere in the input, except
-     # within a data command.  Any form of the data command
-     # always escapes the related input from comment processing.
+     # note: comments and cat requests may appear anywhere
+     # in the input, except within a data command.  Any form
+     # of the data command always escapes the related input
+     # from comment processing.
      #
      # In case it is not clear, the '#' that starts the comment
      # must be the first character on that line (an lf
      # preceded it).
      #
+  cat_blob ::= 'cat-blob' sp (hexsha1 | idnum) lf;
+
   comment ::= '#' not_lf* lf;
   not_lf  ::= # Any byte that is not ASCII newline (LF);
 */
@@ -365,7 +368,11 @@ static int seen_data_command;
 /* Signal handling */
 static volatile sig_atomic_t checkpoint_requested;
 
+/* Where to write output of cat-blob commands */
+static int cat_blob_fd = STDOUT_FILENO;
+
 static void parse_argv(void);
+static void parse_cat_blob(void);
 
 static void write_branch_report(FILE *rpt, struct branch *b)
 {
@@ -1829,7 +1836,7 @@ static int read_next_command(void)
 		return EOF;
 	}
 
-	do {
+	for (;;) {
 		if (unread_command_buf) {
 			unread_command_buf = 0;
 		} else {
@@ -1862,9 +1869,14 @@ static int read_next_command(void)
 			rc->prev->next = rc;
 			cmd_tail = rc;
 		}
-	} while (command_buf.buf[0] == '#');
-
-	return 0;
+		if (!prefixcmp(command_buf.buf, "cat-blob ")) {
+			parse_cat_blob();
+			continue;
+		}
+		if (command_buf.buf[0] == '#')
+			continue;
+		return 0;
+	}
 }
 
 static void skip_optional_lf(void)
@@ -2739,6 +2751,81 @@ static void parse_reset_branch(void)
 		unread_command_buf = 1;
 }
 
+static void cat_blob_write(const char *buf, unsigned long size)
+{
+	if (write_in_full(cat_blob_fd, buf, size) != size)
+		die_errno("Write to frontend failed");
+}
+
+static void cat_blob(struct object_entry *oe, unsigned char sha1[20])
+{
+	struct strbuf line = STRBUF_INIT;
+	unsigned long size;
+	enum object_type type = 0;
+	char *buf;
+
+	if (!oe || oe->pack_id == MAX_PACK_ID) {
+		buf = read_sha1_file(sha1, &type, &size);
+	} else {
+		type = oe->type;
+		buf = gfi_unpack_entry(oe, &size);
+	}
+
+	/*
+	 * Output based on batch_one_object() from cat-file.c.
+	 */
+	if (type <= 0) {
+		strbuf_reset(&line);
+		strbuf_addf(&line, "%s missing\n", sha1_to_hex(sha1));
+		cat_blob_write(line.buf, line.len);
+		strbuf_release(&line);
+		free(buf);
+		return;
+	}
+	if (!buf)
+		die("Can't read object %s", sha1_to_hex(sha1));
+	if (type != OBJ_BLOB)
+		die("Object %s is a %s but a blob was expected.",
+		    sha1_to_hex(sha1), typename(type));
+	strbuf_reset(&line);
+	strbuf_addf(&line, "%s %s %lu\n", sha1_to_hex(sha1),
+						typename(type), size);
+	cat_blob_write(line.buf, line.len);
+	strbuf_release(&line);
+	cat_blob_write(buf, size);
+	cat_blob_write("\n", 1);
+	free(buf);
+}
+
+static void parse_cat_blob(void)
+{
+	const char *p;
+	struct object_entry *oe = oe;
+	unsigned char sha1[20];
+
+	/* cat-blob SP <object> LF */
+	p = command_buf.buf + strlen("cat-blob ");
+	if (*p == ':') {
+		char *x;
+		oe = find_mark(strtoumax(p + 1, &x, 10));
+		if (x == p + 1)
+			die("Invalid mark: %s", command_buf.buf);
+		if (!oe)
+			die("Unknown mark: %s", command_buf.buf);
+		if (*x)
+			die("Garbage after mark: %s", command_buf.buf);
+		hashcpy(sha1, oe->idx.sha1);
+	} else {
+		if (get_sha1_hex(p, sha1))
+			die("Invalid SHA1: %s", command_buf.buf);
+		if (p[40])
+			die("Garbage after SHA1: %s", command_buf.buf);
+		oe = find_object(sha1);
+	}
+
+	cat_blob(oe, sha1);
+}
+
 static void checkpoint(void)
 {
 	checkpoint_requested = 0;
@@ -2802,22 +2889,39 @@ static void option_date_format(const char *fmt)
 		die("unknown --date-format argument %s", fmt);
 }
 
+static unsigned long ulong_arg(const char *option, const char *arg)
+{
+	char *endptr;
+	unsigned long rv = strtoul(arg, &endptr, 0);
+	if (strchr(arg, '-') || endptr == arg || *endptr)
+		die("%s: argument must be a non-negative integer", option);
+	return rv;
+}
+
 static void option_depth(const char *depth)
 {
-	max_depth = strtoul(depth, NULL, 0);
+	max_depth = ulong_arg("--depth", depth);
 	if (max_depth > MAX_DEPTH)
 		die("--depth cannot exceed %u", MAX_DEPTH);
 }
 
 static void option_active_branches(const char *branches)
 {
-	max_active_branches = strtoul(branches, NULL, 0);
+	max_active_branches = ulong_arg("--active-branches", branches);
 }
 
 static void option_export_marks(const char *marks)
 {
 	export_marks_file = make_fast_import_path(marks);
 	safe_create_leading_directories_const(export_marks_file);
+}
+
+static void option_cat_blob_fd(const char *fd)
+{
+	unsigned long n = ulong_arg("--cat-blob-fd", fd);
+	if (n > (unsigned long) INT_MAX)
+		die("--cat-blob-fd cannot exceed %d", INT_MAX);
+	cat_blob_fd = (int) n;
 }
 
 static void option_export_pack_edges(const char *edges)
@@ -2873,6 +2977,8 @@ static int parse_one_feature(const char *feature, int from_stream)
 		option_import_marks(feature + 13, from_stream);
 	} else if (!prefixcmp(feature, "export-marks=")) {
 		option_export_marks(feature + 13);
+	} else if (!strcmp(feature, "cat-blob")) {
+		; /* Don't die - this feature is supported */
 	} else if (!prefixcmp(feature, "relative-marks")) {
 		relative_marks_paths = 1;
 	} else if (!prefixcmp(feature, "no-relative-marks")) {
@@ -2966,6 +3072,11 @@ static void parse_argv(void)
 
 		if (parse_one_feature(a + 2, 0))
 			continue;
+
+		if (!prefixcmp(a + 2, "cat-blob-fd=")) {
+			option_cat_blob_fd(a + 2 + strlen("cat-blob-fd="));
+			continue;
+		}
 
 		die("unknown option %s", a);
 	}
