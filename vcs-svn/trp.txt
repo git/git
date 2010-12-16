@@ -21,7 +21,9 @@ The caller:
 
 . Allocates a `struct trp_root` variable and sets it to {~0}.
 
-. Adds new nodes to the set using `foo_insert`.
+. Adds new nodes to the set using `foo_insert`.  Any pointers
+  to existing nodes cannot be relied upon any more, so the caller
+  might retrieve them anew with `foo_pointer`.
 
 . Can find a specific item in the set using `foo_search`.
 
@@ -73,10 +75,14 @@ int (*cmp)(node_type \*a, node_type \*b)
 and returning a value less than, equal to, or greater than zero
 according to the result of comparison.
 
-void foo_insert(struct trp_root *treap, node_type \*node)::
+node_type {asterisk}foo_insert(struct trp_root *treap, node_type \*node)::
 
 	Insert node into treap.  If inserted multiple times,
 	a node will appear in the treap multiple times.
++
+The return value is the address of the node within the treap,
+which might differ from `node` if `pool_alloc` had to call
+`realloc` to expand the pool.
 
 void foo_remove(struct trp_root *treap, node_type \*node)::
 

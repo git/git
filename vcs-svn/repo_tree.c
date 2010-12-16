@@ -131,7 +131,7 @@ static void repo_write_dirent(uint32_t *path, uint32_t mode,
 		if (dent == key) {
 			dent->mode = REPO_MODE_DIR;
 			dent->content_offset = 0;
-			dent_insert(&dir->entries, dent);
+			dent = dent_insert(&dir->entries, dent);
 		}
 
 		if (dent_offset(dent) < dent_pool.committed) {
@@ -142,7 +142,7 @@ static void repo_write_dirent(uint32_t *path, uint32_t mode,
 			dent->name_offset = name;
 			dent->mode = REPO_MODE_DIR;
 			dent->content_offset = dir_o;
-			dent_insert(&dir->entries, dent);
+			dent = dent_insert(&dir->entries, dent);
 		}
 
 		dir = repo_dir_from_dirent(dent);

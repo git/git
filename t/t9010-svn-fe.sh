@@ -2,9 +2,25 @@
 
 test_description='check svn dumpfile importer'
 
-. ./lib-git-svn.sh
+. ./test-lib.sh
 
-test_dump() {
+if ! svnadmin -h >/dev/null 2>&1
+then
+	skip_all='skipping svn-fe tests, svn not available'
+	test_done
+fi
+
+svnconf=$PWD/svnconf
+export svnconf
+
+svn_cmd () {
+	subcommand=$1 &&
+	shift &&
+	mkdir -p "$svnconf" &&
+	svn "$subcommand" --config-dir "$svnconf" "$@"
+}
+
+test_dump () {
 	label=$1
 	dump=$2
 	test_expect_success "$dump" '
