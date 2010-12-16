@@ -44,6 +44,14 @@ submodule.<name>.update::
 	This config option is overridden if 'git submodule update' is given
 	the '--merge' or '--rebase' options.
 
+submodule.<name>.fetchRecurseSubmodules::
+	This option can be used to enable/disable recursive fetching of this
+	submodule. If this option is also present in the submodules entry in
+	.git/config of the superproject, the setting there will override the
+	one found in .gitmodules.
+	Both settings can be overriden on the command line by using the
+	"--[no-]recurse-submodules" option to "git fetch" and "git pull"..
+
 submodule.<name>.ignore::
 	Defines under what circumstances "git status" and the diff family show
 	a submodule as modified. When set to "all", it will never be considered

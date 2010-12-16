@@ -12,6 +12,7 @@
 #include "parse-options.h"
 #include "sigchain.h"
 #include "transport.h"
+#include "submodule.h"
 
 static const char * const builtin_fetch_usage[] = {
 	"git fetch [<options>] [<repository> [<refspec>...]]",
@@ -27,13 +28,20 @@ enum {
 	TAGS_SET = 2
 };
 
+enum {
+	RECURSE_SUBMODULES_OFF = 0,
+	RECURSE_SUBMODULES_DEFAULT = 1,
+	RECURSE_SUBMODULES_ON = 2
+};
+
 static int all, append, dry_run, force, keep, multiple, prune, update_head_ok, verbosity;
-static int progress;
+static int progress, recurse_submodules = RECURSE_SUBMODULES_DEFAULT;
 static int tags = TAGS_DEFAULT;
 static const char *depth;
 static const char *upload_pack;
 static struct strbuf default_rla = STRBUF_INIT;
 static struct transport *transport;
+static const char *submodule_prefix = "";
 
 static struct option builtin_fetch_options[] = {
 	OPT__VERBOSITY(&verbosity),
@@ -52,6 +60,9 @@ static struct option builtin_fetch_options[] = {
 		    "do not fetch all tags (--no-tags)", TAGS_UNSET),
 	OPT_BOOLEAN('p', "prune", &prune,
 		    "prune remote-tracking branches no longer on remote"),
+	OPT_SET_INT(0, "recurse-submodules", &recurse_submodules,
+		    "control recursive fetching of submodules",
+		    RECURSE_SUBMODULES_ON),
 	OPT_BOOLEAN(0, "dry-run", &dry_run,
 		    "dry run"),
 	OPT_BOOLEAN('k', "keep", &keep, "keep downloaded pack"),
@@ -60,6 +71,8 @@ static struct option builtin_fetch_options[] = {
 	OPT_BOOLEAN(0, "progress", &progress, "force progress reporting"),
 	OPT_STRING(0, "depth", &depth, "DEPTH",
 		   "deepen history of shallow clone"),
+	{ OPTION_STRING, 0, "submodule-prefix", &submodule_prefix, "DIR",
+		   "prepend this to submodule path output", PARSE_OPT_HIDDEN },
 	OPT_END()
 };
 
@@ -783,28 +796,36 @@ static int add_remote_or_group(const char *name, struct string_list *list)
 	return 1;
 }
 
+static void add_options_to_argv(int *argc, const char **argv)
+{
+	if (dry_run)
+		argv[(*argc)++] = "--dry-run";
+	if (prune)
+		argv[(*argc)++] = "--prune";
+	if (update_head_ok)
+		argv[(*argc)++] = "--update-head-ok";
+	if (force)
+		argv[(*argc)++] = "--force";
+	if (keep)
+		argv[(*argc)++] = "--keep";
+	if (recurse_submodules == RECURSE_SUBMODULES_ON)
+		argv[(*argc)++] = "--recurse-submodules";
+	if (verbosity >= 2)
+		argv[(*argc)++] = "-v";
+	if (verbosity >= 1)
+		argv[(*argc)++] = "-v";
+	else if (verbosity < 0)
+		argv[(*argc)++] = "-q";
+
+}
+
 static int fetch_multiple(struct string_list *list)
 {
 	int i, result = 0;
-	const char *argv[11] = { "fetch", "--append" };
+	const char *argv[12] = { "fetch", "--append" };
 	int argc = 2;
 
-	if (dry_run)
-		argv[argc++] = "--dry-run";
-	if (prune)
-		argv[argc++] = "--prune";
-	if (update_head_ok)
-		argv[argc++] = "--update-head-ok";
-	if (force)
-		argv[argc++] = "--force";
-	if (keep)
-		argv[argc++] = "--keep";
-	if (verbosity >= 2)
-		argv[argc++] = "-v";
-	if (verbosity >= 1)
-		argv[argc++] = "-v";
-	else if (verbosity < 0)
-		argv[argc++] = "-q";
+	add_options_to_argv(&argc, argv);
 
 	if (!append && !dry_run) {
 		int errcode = truncate_fetch_head();
@@ -923,6 +944,21 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 			remote = remote_get(argv[0]);
 			result = fetch_one(remote, argc-1, argv+1);
 		}
+	}
+
+	if (!result && (recurse_submodules != RECURSE_SUBMODULES_OFF)) {
+		const char *options[10];
+		int num_options = 0;
+		/* Set recursion as default when we already are recursing */
+		if (submodule_prefix[0])
+			set_config_fetch_recurse_submodules(1);
+		gitmodules_config();
+		git_config(submodule_config, NULL);
+		add_options_to_argv(&num_options, options);
+		result = fetch_populated_submodules(num_options, options,
+						    submodule_prefix,
+						    recurse_submodules == RECURSE_SUBMODULES_ON,
+						    verbosity < 0);
 	}
 
 	/* All names were strdup()ed or strndup()ed */
