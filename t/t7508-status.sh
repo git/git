@@ -405,12 +405,13 @@ test_expect_success 'status --porcelain ignores relative paths setting' '
 
 test_expect_success 'setup unique colors' '
 
-	git config status.color.untracked blue
+	git config status.color.untracked blue &&
+	git config status.color.branch green
 
 '
 
 cat >expect <<\EOF
-# On branch master
+# On branch <GREEN>master<RESET>
 # Changes to be committed:
 #   (use "git reset HEAD <file>..." to unstage)
 #
