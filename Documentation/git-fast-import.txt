@@ -1233,6 +1233,13 @@ and lazy loading of subtrees, allows fast-import to efficiently import
 projects with 2,000+ branches and 45,114+ files in a very limited
 memory footprint (less than 2.7 MiB per active branch).
 
+Signals
+-------
+Sending *SIGUSR1* to the 'git fast-import' process ends the current
+packfile early, simulating a `checkpoint` command.  The impatient
+operator can use this facility to peek at the objects and refs from an
+import in progress, at the cost of some added running time and worse
+compression.
 
 Author
 ------
