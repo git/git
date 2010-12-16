@@ -6,6 +6,7 @@
 #include "exec_cmd.h"
 #include "parse-options.h"
 #include "diff.h"
+#include "hash.h"
 
 #define SEEN		(1u<<0)
 #define MAX_TAGS	(FLAG_BITS - 1)
@@ -22,7 +23,8 @@ static int tags;	/* Allow lightweight tags */
 static int longformat;
 static int abbrev = DEFAULT_ABBREV;
 static int max_candidates = 10;
-static int found_names;
+static struct hash_table names;
+static int have_util;
 static const char *pattern;
 static int always;
 static const char *dirty;
@@ -34,15 +36,43 @@ static const char *diff_index_args[] = {
 
 
 struct commit_name {
+	struct commit_name *next;
+	unsigned char peeled[20];
 	struct tag *tag;
 	unsigned prio:2; /* annotated tag = 2, tag = 1, head = 0 */
 	unsigned name_checked:1;
 	unsigned char sha1[20];
-	char path[FLEX_ARRAY]; /* more */
+	const char *path;
 };
 static const char *prio_names[] = {
 	"head", "lightweight", "annotated",
 };
+
+static inline unsigned int hash_sha1(const unsigned char *sha1)
+{
+	unsigned int hash;
+	memcpy(&hash, sha1, sizeof(hash));
+	return hash;
+}
+
+static inline struct commit_name *find_commit_name(const unsigned char *peeled)
+{
+	struct commit_name *n = lookup_hash(hash_sha1(peeled), &names);
+	while (n && !!hashcmp(peeled, n->peeled))
+		n = n->next;
+	return n;
+}
+
+static int set_util(void *chain)
+{
+	struct commit_name *n;
+	for (n = chain; n; n = n->next) {
+		struct commit *c = lookup_commit_reference_gently(n->peeled, 1);
+		if (c)
+			c->util = n;
+	}
+	return 0;
+}
 
 static int replace_name(struct commit_name *e,
 			       int prio,
@@ -78,31 +108,36 @@ static int replace_name(struct commit_name *e,
 }
 
 static void add_to_known_names(const char *path,
-			       struct commit *commit,
+			       const unsigned char *peeled,
 			       int prio,
 			       const unsigned char *sha1)
 {
-	struct commit_name *e = commit->util;
+	struct commit_name *e = find_commit_name(peeled);
 	struct tag *tag = NULL;
 	if (replace_name(e, prio, sha1, &tag)) {
-		size_t len = strlen(path)+1;
-		free(e);
-		e = xmalloc(sizeof(struct commit_name) + len);
+		if (!e) {
+			void **pos;
+			e = xmalloc(sizeof(struct commit_name));
+			hashcpy(e->peeled, peeled);
+			pos = insert_hash(hash_sha1(peeled), e, &names);
+			if (pos) {
+				e->next = *pos;
+				*pos = e;
+			} else {
+				e->next = NULL;
+			}
+		}
 		e->tag = tag;
 		e->prio = prio;
 		e->name_checked = 0;
 		hashcpy(e->sha1, sha1);
-		memcpy(e->path, path, len);
-		commit->util = e;
+		e->path = path;
 	}
-	found_names = 1;
 }
 
 static int get_name(const char *path, const unsigned char *sha1, int flag, void *cb_data)
 {
 	int might_be_tag = !prefixcmp(path, "refs/tags/");
-	struct commit *commit;
-	struct object *object;
 	unsigned char peeled[20];
 	int is_tag, prio;
 
@@ -110,16 +145,10 @@ static int get_name(const char *path, const unsigned char *sha1, int flag, void 
 		return 0;
 
 	if (!peel_ref(path, peeled) && !is_null_sha1(peeled)) {
-		commit = lookup_commit_reference_gently(peeled, 1);
-		if (!commit)
-			return 0;
-		is_tag = !!hashcmp(sha1, commit->object.sha1);
+		is_tag = !!hashcmp(sha1, peeled);
 	} else {
-		commit = lookup_commit_reference_gently(sha1, 1);
-		object = parse_object(sha1);
-		if (!commit || !object)
-			return 0;
-		is_tag = object->type == OBJ_TAG;
+		hashcpy(peeled, sha1);
+		is_tag = 0;
 	}
 
 	/* If --all, then any refs are used.
@@ -142,7 +171,7 @@ static int get_name(const char *path, const unsigned char *sha1, int flag, void 
 		if (!prio)
 			return 0;
 	}
-	add_to_known_names(all ? path + 5 : path + 10, commit, prio, sha1);
+	add_to_known_names(all ? path + 5 : path + 10, peeled, prio, sha1);
 	return 0;
 }
 
@@ -240,7 +269,7 @@ static void describe(const char *arg, int last_one)
 	if (!cmit)
 		die("%s is not a valid '%s' object", arg, commit_type);
 
-	n = cmit->util;
+	n = find_commit_name(cmit->object.sha1);
 	if (n && (tags || all || n->prio == 2)) {
 		/*
 		 * Exact match to an existing ref.
@@ -258,6 +287,11 @@ static void describe(const char *arg, int last_one)
 		die("no tag exactly matches '%s'", sha1_to_hex(cmit->object.sha1));
 	if (debug)
 		fprintf(stderr, "searching to describe %s\n", arg);
+
+	if (!have_util) {
+		for_each_hash(&names, set_util);
+		have_util = 1;
+	}
 
 	list = NULL;
 	cmit->object.flags = SEEN;
@@ -418,8 +452,9 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 		return cmd_name_rev(i + argc, args, prefix);
 	}
 
-	for_each_ref(get_name, NULL);
-	if (!found_names && !always)
+	init_hash(&names);
+	for_each_rawref(get_name, NULL);
+	if (!names.nr && !always)
 		die("No names found, cannot describe anything.");
 
 	if (argc == 0) {
