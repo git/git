@@ -25,7 +25,7 @@
 #include "cache.h"
 #include "quote.h"
 
-void do_nothing(size_t unused)
+static void do_nothing(size_t unused)
 {
 }
 
