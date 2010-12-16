@@ -1066,6 +1066,23 @@ int get_sha1_with_mode_1(const char *name, unsigned char *sha1, unsigned *mode, 
 	return ret;
 }
 
+static char *resolve_relative_path(const char *rel)
+{
+	if (prefixcmp(rel, "./") && prefixcmp(rel, "../"))
+		return NULL;
+
+	if (!startup_info)
+		die("BUG: startup_info struct is not initialized.");
+
+	if (!is_inside_work_tree())
+		die("relative path syntax can't be used outside working tree.");
+
+	/* die() inside prefix_path() if resolved path is outside worktree */
+	return prefix_path(startup_info->prefix,
+			   startup_info->prefix ? strlen(startup_info->prefix) : 0,
+			   rel);
+}
+
 int get_sha1_with_context_1(const char *name, unsigned char *sha1,
 			    struct object_context *oc,
 			    int gently, const char *prefix)
@@ -1080,13 +1097,15 @@ int get_sha1_with_context_1(const char *name, unsigned char *sha1,
 	if (!ret)
 		return ret;
 	/* sha1:path --> object name of path in ent sha1
-	 * :path -> object name of path in index
+	 * :path -> object name of absolute path in index
+	 * :./path -> object name of path relative to cwd in index
 	 * :[0-3]:path -> object name of path in index at stage
 	 * :/foo -> recent commit matching foo
 	 */
 	if (name[0] == ':') {
 		int stage = 0;
 		struct cache_entry *ce;
+		char *new_path = NULL;
 		int pos;
 		if (namelen > 2 && name[1] == '/')
 			/* don't need mode for commit */
@@ -1099,7 +1118,13 @@ int get_sha1_with_context_1(const char *name, unsigned char *sha1,
 			stage = name[1] - '0';
 			cp = name + 3;
 		}
-		namelen = namelen - (cp - name);
+		new_path = resolve_relative_path(cp);
+		if (!new_path) {
+			namelen = namelen - (cp - name);
+		} else {
+			cp = new_path;
+			namelen = strlen(cp);
+		}
 
 		strncpy(oc->path, cp,
 			sizeof(oc->path));
@@ -1118,12 +1143,14 @@ int get_sha1_with_context_1(const char *name, unsigned char *sha1,
 			if (ce_stage(ce) == stage) {
 				hashcpy(sha1, ce->sha1);
 				oc->mode = ce->ce_mode;
+				free(new_path);
 				return 0;
 			}
 			pos++;
 		}
 		if (!gently)
 			diagnose_invalid_index_path(stage, prefix, cp);
+		free(new_path);
 		return -1;
 	}
 	for (cp = name, bracket_depth = 0; *cp; cp++) {
@@ -1144,6 +1171,11 @@ int get_sha1_with_context_1(const char *name, unsigned char *sha1,
 		}
 		if (!get_sha1_1(name, cp-name, tree_sha1)) {
 			const char *filename = cp+1;
+			char *new_filename = NULL;
+
+			new_filename = resolve_relative_path(filename);
+			if (new_filename)
+				filename = new_filename;
 			ret = get_tree_entry(tree_sha1, filename, sha1, &oc->mode);
 			if (!gently) {
 				diagnose_invalid_sha1_path(prefix, filename,
@@ -1155,6 +1187,7 @@ int get_sha1_with_context_1(const char *name, unsigned char *sha1,
 				sizeof(oc->path));
 			oc->path[sizeof(oc->path)-1] = '\0';
 
+			free(new_filename);
 			return ret;
 		} else {
 			if (!gently)
