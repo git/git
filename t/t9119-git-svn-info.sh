@@ -18,21 +18,14 @@ case $v in
 	;;
 esac
 
-ptouch() {
-	perl -w -e '
-		use strict;
-		use POSIX qw(mktime);
-		die "ptouch requires exactly 2 arguments" if @ARGV != 2;
-		my $text_last_updated = shift @ARGV;
-		my $git_file = shift @ARGV;
-		die "\"$git_file\" does not exist" if ! -e $git_file;
-		if ($text_last_updated
-		    =~ /(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})/) {
-			my $mtime = mktime($6, $5, $4, $3, $2 - 1, $1 - 1900);
-			my $atime = $mtime;
-			utime $atime, $mtime, $git_file;
-		}
-	' "`svn_cmd info $2 | grep '^Text Last Updated:'`" "$1"
+# On the "Text Last Updated" line, "git svn info" does not return the
+# same value as "svn info" (i.e. the commit timestamp that touched the
+# path most recently); do not expect that field to match.
+test_cmp_info () {
+	sed -e '/^Text Last Updated:/d' "$1" >tmp.expect
+	sed -e '/^Text Last Updated:/d' "$2" >tmp.actual
+	test_cmp tmp.expect tmp.actual &&
+	rm -f tmp.expect tmp.actual
 }
 
 quoted_svnrepo="$(echo $svnrepo | sed 's/ /%20/')"
@@ -62,17 +55,13 @@ test_expect_success 'setup repository and import' '
 		cd gitwc &&
 		git svn init "$svnrepo" &&
 		git svn fetch
-	) &&
-	ptouch gitwc/file svnwc/file &&
-	ptouch gitwc/directory svnwc/directory &&
-	ptouch gitwc/symlink-file svnwc/symlink-file &&
-	ptouch gitwc/symlink-directory svnwc/symlink-directory
+	)
 	'
 
 test_expect_success 'info' "
 	(cd svnwc; svn info) > expected.info &&
 	(cd gitwc; git svn info) > actual.info &&
-	test_cmp expected.info actual.info
+	test_cmp_info expected.info actual.info
 	"
 
 test_expect_success 'info --url' '
@@ -82,7 +71,7 @@ test_expect_success 'info --url' '
 test_expect_success 'info .' "
 	(cd svnwc; svn info .) > expected.info-dot &&
 	(cd gitwc; git svn info .) > actual.info-dot &&
-	test_cmp expected.info-dot actual.info-dot
+	test_cmp_info expected.info-dot actual.info-dot
 	"
 
 test_expect_success 'info --url .' '
@@ -92,7 +81,7 @@ test_expect_success 'info --url .' '
 test_expect_success 'info file' "
 	(cd svnwc; svn info file) > expected.info-file &&
 	(cd gitwc; git svn info file) > actual.info-file &&
-	test_cmp expected.info-file actual.info-file
+	test_cmp_info expected.info-file actual.info-file
 	"
 
 test_expect_success 'info --url file' '
@@ -102,13 +91,13 @@ test_expect_success 'info --url file' '
 test_expect_success 'info directory' "
 	(cd svnwc; svn info directory) > expected.info-directory &&
 	(cd gitwc; git svn info directory) > actual.info-directory &&
-	test_cmp expected.info-directory actual.info-directory
+	test_cmp_info expected.info-directory actual.info-directory
 	"
 
 test_expect_success 'info inside directory' "
 	(cd svnwc/directory; svn info) > expected.info-inside-directory &&
 	(cd gitwc/directory; git svn info) > actual.info-inside-directory &&
-	test_cmp expected.info-inside-directory actual.info-inside-directory
+	test_cmp_info expected.info-inside-directory actual.info-inside-directory
 	"
 
 test_expect_success 'info --url directory' '
@@ -118,7 +107,7 @@ test_expect_success 'info --url directory' '
 test_expect_success 'info symlink-file' "
 	(cd svnwc; svn info symlink-file) > expected.info-symlink-file &&
 	(cd gitwc; git svn info symlink-file) > actual.info-symlink-file &&
-	test_cmp expected.info-symlink-file actual.info-symlink-file
+	test_cmp_info expected.info-symlink-file actual.info-symlink-file
 	"
 
 test_expect_success 'info --url symlink-file' '
@@ -131,7 +120,7 @@ test_expect_success 'info symlink-directory' "
 		> expected.info-symlink-directory &&
 	(cd gitwc; git svn info symlink-directory) \
 		> actual.info-symlink-directory &&
-	test_cmp expected.info-symlink-directory actual.info-symlink-directory
+	test_cmp_info expected.info-symlink-directory actual.info-symlink-directory
 	"
 
 test_expect_success 'info --url symlink-directory' '
@@ -146,14 +135,13 @@ test_expect_success 'info added-file' "
 		git add added-file
 	) &&
 	cp gitwc/added-file svnwc/added-file &&
-	ptouch gitwc/added-file svnwc/added-file &&
 	(
 		cd svnwc &&
 		svn_cmd add added-file > /dev/null
 	) &&
 	(cd svnwc; svn info added-file) > expected.info-added-file &&
 	(cd gitwc; git svn info added-file) > actual.info-added-file &&
-	test_cmp expected.info-added-file actual.info-added-file
+	test_cmp_info expected.info-added-file actual.info-added-file
 	"
 
 test_expect_success 'info --url added-file' '
@@ -163,7 +151,6 @@ test_expect_success 'info --url added-file' '
 
 test_expect_success 'info added-directory' "
 	mkdir gitwc/added-directory svnwc/added-directory &&
-	ptouch gitwc/added-directory svnwc/added-directory &&
 	touch gitwc/added-directory/.placeholder &&
 	(
 		cd svnwc &&
@@ -177,7 +164,7 @@ test_expect_success 'info added-directory' "
 		> expected.info-added-directory &&
 	(cd gitwc; git svn info added-directory) \
 		> actual.info-added-directory &&
-	test_cmp expected.info-added-directory actual.info-added-directory
+	test_cmp_info expected.info-added-directory actual.info-added-directory
 	"
 
 test_expect_success 'info --url added-directory' '
@@ -196,13 +183,12 @@ test_expect_success 'info added-symlink-file' "
 		ln -s added-file added-symlink-file &&
 		svn_cmd add added-symlink-file > /dev/null
 	) &&
-	ptouch gitwc/added-symlink-file svnwc/added-symlink-file &&
 	(cd svnwc; svn info added-symlink-file) \
 		> expected.info-added-symlink-file &&
 	(cd gitwc; git svn info added-symlink-file) \
 		> actual.info-added-symlink-file &&
-	test_cmp expected.info-added-symlink-file \
-		 actual.info-added-symlink-file
+	test_cmp_info expected.info-added-symlink-file \
+		actual.info-added-symlink-file
 	"
 
 test_expect_success 'info --url added-symlink-file' '
@@ -221,24 +207,18 @@ test_expect_success 'info added-symlink-directory' "
 		ln -s added-directory added-symlink-directory &&
 		svn_cmd add added-symlink-directory > /dev/null
 	) &&
-	ptouch gitwc/added-symlink-directory svnwc/added-symlink-directory &&
 	(cd svnwc; svn info added-symlink-directory) \
 		> expected.info-added-symlink-directory &&
 	(cd gitwc; git svn info added-symlink-directory) \
 		> actual.info-added-symlink-directory &&
-	test_cmp expected.info-added-symlink-directory \
-		 actual.info-added-symlink-directory
+	test_cmp_info expected.info-added-symlink-directory \
+		actual.info-added-symlink-directory
 	"
 
 test_expect_success 'info --url added-symlink-directory' '
 	test "$(cd gitwc; git svn info --url added-symlink-directory)" \
 	     = "$quoted_svnrepo/added-symlink-directory"
 	'
-
-# The next few tests replace the "Text Last Updated" value with a
-# placeholder since git doesn't have a way to know the date that a
-# now-deleted file was last checked out locally.  Internally it
-# simply reuses the Last Changed Date.
 
 test_expect_success 'info deleted-file' "
 	(
@@ -249,13 +229,9 @@ test_expect_success 'info deleted-file' "
 		cd svnwc &&
 		svn_cmd rm --force file > /dev/null
 	) &&
-	(cd svnwc; svn info file) |
-	sed -e 's/^\(Text Last Updated:\).*/\1 TEXT-LAST-UPDATED-STRING/' \
-		> expected.info-deleted-file &&
-	(cd gitwc; git svn info file) |
-	sed -e 's/^\(Text Last Updated:\).*/\1 TEXT-LAST-UPDATED-STRING/' \
-		> actual.info-deleted-file &&
-	test_cmp expected.info-deleted-file actual.info-deleted-file
+	(cd svnwc; svn info file) >expected.info-deleted-file &&
+	(cd gitwc; git svn info file) >actual.info-deleted-file &&
+	test_cmp_info expected.info-deleted-file actual.info-deleted-file
 	"
 
 test_expect_success 'info --url file (deleted)' '
@@ -272,13 +248,9 @@ test_expect_success 'info deleted-directory' "
 		cd svnwc &&
 		svn_cmd rm --force directory > /dev/null
 	) &&
-	(cd svnwc; svn info directory) |
-	sed -e 's/^\(Text Last Updated:\).*/\1 TEXT-LAST-UPDATED-STRING/' \
-		> expected.info-deleted-directory &&
-	(cd gitwc; git svn info directory) |
-	sed -e 's/^\(Text Last Updated:\).*/\1 TEXT-LAST-UPDATED-STRING/' \
-		> actual.info-deleted-directory &&
-	test_cmp expected.info-deleted-directory actual.info-deleted-directory
+	(cd svnwc; svn info directory) >expected.info-deleted-directory &&
+	(cd gitwc; git svn info directory) >actual.info-deleted-directory &&
+	test_cmp_info expected.info-deleted-directory actual.info-deleted-directory
 	"
 
 test_expect_success 'info --url directory (deleted)' '
@@ -295,14 +267,9 @@ test_expect_success 'info deleted-symlink-file' "
 		cd svnwc &&
 		svn_cmd rm --force symlink-file > /dev/null
 	) &&
-	(cd svnwc; svn info symlink-file) |
-	sed -e 's/^\(Text Last Updated:\).*/\1 TEXT-LAST-UPDATED-STRING/' \
-		> expected.info-deleted-symlink-file &&
-	(cd gitwc; git svn info symlink-file) |
-	sed -e 's/^\(Text Last Updated:\).*/\1 TEXT-LAST-UPDATED-STRING/' \
-		> actual.info-deleted-symlink-file &&
-	test_cmp expected.info-deleted-symlink-file \
-		 actual.info-deleted-symlink-file
+	(cd svnwc; svn info symlink-file) >expected.info-deleted-symlink-file &&
+	(cd gitwc; git svn info symlink-file) >actual.info-deleted-symlink-file &&
+	test_cmp_info expected.info-deleted-symlink-file actual.info-deleted-symlink-file
 	"
 
 test_expect_success 'info --url symlink-file (deleted)' '
@@ -319,14 +286,9 @@ test_expect_success 'info deleted-symlink-directory' "
 		cd svnwc &&
 		svn_cmd rm --force symlink-directory > /dev/null
 	) &&
-	(cd svnwc; svn info symlink-directory) |
-	sed -e 's/^\(Text Last Updated:\).*/\1 TEXT-LAST-UPDATED-STRING/' \
-		 > expected.info-deleted-symlink-directory &&
-	(cd gitwc; git svn info symlink-directory) |
-	sed -e 's/^\(Text Last Updated:\).*/\1 TEXT-LAST-UPDATED-STRING/' \
-		 > actual.info-deleted-symlink-directory &&
-	test_cmp expected.info-deleted-symlink-directory \
-		 actual.info-deleted-symlink-directory
+	(cd svnwc; svn info symlink-directory) >expected.info-deleted-symlink-directory &&
+	(cd gitwc; git svn info symlink-directory) >actual.info-deleted-symlink-directory &&
+	test_cmp_info expected.info-deleted-symlink-directory actual.info-deleted-symlink-directory
 	"
 
 test_expect_success 'info --url symlink-directory (deleted)' '
