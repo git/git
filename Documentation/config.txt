@@ -971,7 +971,7 @@ gc.packrefs::
 	Running `git pack-refs` in a repository renders it
 	unclonable by Git versions prior to 1.5.1.2 over dumb
 	transports such as HTTP.  This variable determines whether
-	'git gc' runs `git pack-refs`. This can be set to `nobare`
+	'git gc' runs `git pack-refs`. This can be set to `notbare`
 	to enable it within all non-bare repos or it can be set to a
 	boolean value.  The default is `true`.
 
