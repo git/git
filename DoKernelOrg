@@ -3,7 +3,7 @@
 : ${J='-l 4 -j'}
 G=/pub/software/scm/git &&
 
-HERE=$(git symbolic-ref HEAD) || exit 1
+# HERE=$(git symbolic-ref HEAD) || exit 1
 THIS=$(git describe HEAD)
 
 d='
