@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Dec 2010, #04; Mon, 13)
-X-master-at: b5c178143088350c49129acbedb864d70c666215
-X-next-at: 7dc56dda544e82bf53b1f2c717157a78f946c464
+Subject: What's cooking in git.git (Dec 2010, #05; Thu, 16)
+X-master-at: 1b9743462d9ef3c0e73a3c439de45c0c16b6c938
+X-next-at: 987cddb87165104f919f3287f393191042955364
 
-What's cooking in git.git (Dec 2010, #04; Mon, 13)
+What's cooking in git.git (Dec 2010, #05; Thu, 16)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -14,124 +14,138 @@ still holding onto them.
 --------------------------------------------------
 [New Topics]
 
-* nd/oneline-sha1-name-from-specific-ref (2010-12-13) 3 commits
- - get_sha1: support $commit^{/regex} syntax
- - get_sha1_oneline: make callers prepare the commit list to traverse
- - get_sha1_oneline: fix lifespan rule of temp_commit_buffer variable
+* jn/maint-gitweb-pathinfo-fix (2010-12-14) 1 commit
+  (merged to 'next' on 2010-12-14 at 1af8cca)
+ + gitweb: Fix handling of whitespace in generated links
+
+* rj/maint-difftool-cygwin-workaround (2010-12-14) 1 commit
+ - difftool: Fix failure on Cygwin
+
+* rj/maint-test-fixes (2010-12-14) 5 commits
+ - t9501-*.sh: Fix a test failure on Cygwin
+ - lib-git-svn.sh: Add check for mis-configured web server variables
+ - lib-git-svn.sh: Avoid setting web server variables unnecessarily
+ - t9142: Move call to start_httpd into the setup test
+ - t3600-rm.sh: Don't pass a non-existent prereq to test #15
+
+* rj/test-fixes (2010-12-14) 4 commits
+ - t4135-*.sh: Skip the "backslash" tests on cygwin
+ - t3032-*.sh: Do not strip CR from line-endings while grepping on MinGW
+ - t3032-*.sh: Pass the -b (--binary) option to sed on cygwin
+ - t6038-*.sh: Pass the -b (--binary) option to sed on cygwin
+
+* tr/maint-branch-no-track-head (2010-12-14) 1 commit
+ - branch: do not attempt to track HEAD implicitly
+
+Probably needs a re-roll to exclude either (1) any ref outside the
+hierarchies for branches (i.e. refs/{heads,remotes}/), or (2) only refs
+outside refs/ hierarchies (e.g. HEAD, ORIG_HEAD, ...).  The latter feels
+safer and saner.
+
+* by/log-l (2010-12-14) 8 commits
+ . log -L: implement move/copy detection (-M/-C)
+ . log -L: add --full-line-diff option
+ . log -L: add --graph prefix before output
+ . log -L: support parent rewriting
+ . Implement line-history search (git log -L)
+ . Export rewrite_parents() for 'log -L'
+ . Export three functions from diff.c
+ . Refactor parse_loc
+
+Seems to have some bad interactions with nd/struct-pathspec.
+
+* hv/mingw-fs-funnies (2010-12-14) 5 commits
+ - mingw_rmdir: set errno=ENOTEMPTY when appropriate
+ - mingw: add fallback for rmdir in case directory is in use
+ - mingw: make failures to unlink or move raise a question
+ - mingw: work around irregular failures of unlink on windows
+ - mingw: move unlink wrapper to mingw.c
 
 --------------------------------------------------
 [Graduated to "master"]
 
-* ef/help-cmd-prefix (2010-11-26) 1 commit
-  (merged to 'next' on 2010-12-08 at c92752e)
- + help: always suggest common-cmds if prefix of cmd
+* aa/status-hilite-branch (2010-12-09) 2 commits
+  (merged to 'next' on 2010-12-10 at d00551d)
+ + default color.status.branch to "same as header"
+  (merged to 'next' on 2010-12-08 at 0291858)
+ + status: show branchname with a configurable color
 
-* ef/win32-dirent (2010-11-23) 6 commits
-  (merged to 'next' on 2010-12-08 at 1a7169d)
- + win32: use our own dirent.h
- + msvc: opendir: handle paths ending with a slash
- + win32: dirent: handle errors
- + msvc: opendir: do not start the search
- + msvc: opendir: allocate enough memory
- + msvc: opendir: fix malloc-failure
+* ak/describe-exact (2010-12-09) 4 commits
+  (merged to 'next' on 2010-12-10 at 33497db)
+ + describe: Delay looking up commits until searching for an inexact match
+ + describe: Store commit_names in a hash table by commit SHA1
+ + describe: Do not use a flex array in struct commit_name
+ + describe: Use for_each_rawref
 
-* gb/web--browse (2010-12-03) 4 commits
-  (merged to 'next' on 2010-12-08 at cff4009)
- + web--browse: better support for chromium
- + web--browse: support opera, seamonkey and elinks
- + web--browse: split valid_tool list
- + web--browse: coding style
+* jc/maint-no-openssl-build-fix (2010-12-08) 1 commit
+  (merged to 'next' on 2010-12-08 at e348a87)
+ + Do not link with -lcrypto under NO_OPENSSL
 
-The remainder of the series, which is mostly Debian specific addition, can
-wait (or just left for the distro).
+* jc/maint-svn-info-test-fix (2010-12-06) 1 commit
+  (merged to 'next' on 2010-12-08 at f821694)
+ + t9119: do not compare "Text Last Updated" line from "svn info"
 
-* ja/maint-pull-rebase-doc (2010-12-03) 1 commit
-  (merged to 'next' on 2010-12-08 at 211bf89)
- + git-pull.txt: Mention branch.autosetuprebase
+* jl/fetch-submodule-recursive (2010-12-09) 4 commits
+  (merged to 'next' on 2010-12-10 at edd0bf0)
+ + fetch_populated_submodules(): document dynamic allocation
+  (merged to 'next' on 2010-12-08 at 676c4f5)
+ + Submodules: Add the "fetchRecurseSubmodules" config option
+ + Add the 'fetch.recurseSubmodules' config setting
+ + fetch/pull: Add the --recurse-submodules option
 
-* jk/asciidoc-update (2010-11-19) 1 commit
-  (merged to 'next' on 2010-12-08 at 72ffafe)
- + docs: default to more modern toolset
+* jn/fast-import-blob-access (2010-12-13) 6 commits
+  (merged to 'next' on 2010-12-12 at 7dc56dd)
+ + t9300: avoid short reads from dd
+  (merged to 'next' on 2010-12-08 at a42f0b3)
+ + t9300: remove unnecessary use of /dev/stdin
+ + fast-import: Allow cat-blob requests at arbitrary points in stream
+ + fast-import: let importers retrieve blobs
+ + fast-import: clarify documentation of "feature" command
+ + fast-import: stricter parsing of integer options
 
-* jk/maint-reflog-bottom (2010-11-21) 1 commit
-  (merged to 'next' on 2010-12-08 at f5ca80a)
- + reflogs: clear flags properly in corner case
+* jn/fast-import-ondemand-checkpoint (2010-11-22) 1 commit
+  (merged to 'next' on 2010-12-08 at f538396)
+ + fast-import: treat SIGUSR1 as a request to access objects early
 
-* jn/git-cmd-h-bypass-setup (2010-10-22) 7 commits
-  (merged to 'next' on 2010-12-08 at 0fc3158)
- + update-index -h: show usage even with corrupt index
- + merge -h: show usage even with corrupt index
- + ls-files -h: show usage even with corrupt index
- + gc -h: show usage even with broken configuration
- + commit/status -h: show usage even with broken configuration
- + checkout-index -h: show usage even in an invalid repository
- + branch -h: show usage even in an invalid repository
+* jn/maint-fast-import-object-reuse (2010-11-23) 1 commit
+  (merged to 'next' on 2010-12-08 at 5d29c08)
+ + fast-import: insert new object entries at start of hash bucket
 
-* jn/gitweb-per-request-config (2010-11-28) 2 commits
-  (merged to 'next' on 2010-12-08 at 44be9e5)
- + gitweb: document $per_request_config better
- + gitweb: selectable configurations that change with each request
+* jn/maint-svn-fe (2010-12-08) 4 commits
+  (merged to 'next' on 2010-12-09 at 98beb7c)
+ + t9010 fails when no svn is available
+  (merged to 'next' on 2010-12-08 at e25350b)
+ + vcs-svn: fix intermittent repo_tree corruption
+ + treap: make treap_insert return inserted node
+ + t9010 (svn-fe): Eliminate dependency on svn perl bindings
 
-* jn/parse-options-extra (2010-12-01) 10 commits
-  (merged to 'next' on 2010-12-08 at 3a3e3ac)
- + update-index: migrate to parse-options API
- + setup: save prefix (original cwd relative to toplevel) in startup_info
- + parse-options: make resuming easier after PARSE_OPT_STOP_AT_NON_OPTION
- + parse-options: allow git commands to invent new option types
- + parse-options: never suppress arghelp if LITERAL_ARGHELP is set
- + parse-options: do not infer PARSE_OPT_NOARG from option type
- + parse-options: sanity check PARSE_OPT_NOARG flag
- + parse-options: move NODASH sanity checks to parse_options_check
- + parse-options: clearer reporting of API misuse
- + parse-options: Don't call parse_options_check() so much
- (this branch is used by nd/extended-sha1-relpath.)
+* jn/submodule-b-current (2010-12-05) 2 commits
+  (merged to 'next' on 2010-12-08 at 33423f3)
+ + git submodule: Remove now obsolete tests before cloning a repo
+ + git submodule -b ... of current HEAD fails
 
-* js/configurable-tab (2010-11-30) 2 commits
-  (merged to 'next' on 2010-12-08 at 3257365)
- + Make the tab width used for whitespace checks configurable
- + Merge branch 'js/maint-apply-tab-in-indent-fix' into HEAD
- (this branch uses js/maint-apply-tab-in-indent-fix.)
+* kb/diff-C-M-synonym (2010-11-10) 2 commits
+  (merged to 'next' on 2010-12-13 at 13fdbdd)
+ + diff: use "find" instead of "detect" as prefix for long forms of -M and -C
+ + diff: add --detect-copies-harder as a synonym for --find-copies-harder
 
-* js/maint-apply-tab-in-indent-fix (2010-11-30) 1 commit
-  (merged to 'next' on 2010-12-08 at 02aedd5)
- + apply --whitespace=fix: fix tab-in-indent
- (this branch is used by js/configurable-tab.)
+* nd/extended-sha1-relpath (2010-12-09) 3 commits
+  (merged to 'next' on 2010-12-10 at 0018aa6)
+ + get_sha1: teach ":$n:<path>" the same relative path logic
+  (merged to 'next' on 2010-12-08 at 940e5e2)
+ + get_sha1: support relative path ":path" syntax
+ + Make prefix_path() return char* without const
 
-* mz/maint-rebase-stat-config (2010-11-09) 1 commit
-  (merged to 'next' on 2010-12-08 at 97d4912)
- + rebase: only show stat if configured to true
+* nd/maint-relative (2010-11-20) 1 commit
+  (merged to 'next' on 2010-12-10 at 018bc80)
+ + get_cwd_relative(): do not misinterpret root path
 
-* mz/pull-rebase-rebased (2010-11-13) 1 commit
-  (merged to 'next' on 2010-12-08 at 99c1762)
- + Use reflog in 'pull --rebase . foo'
-
-* mz/rebase-abort-reflog-fix (2010-11-21) 1 commit
-  (merged to 'next' on 2010-12-08 at adce2e1)
- + rebase --abort: do not update branch ref
-
-* mz/rebase-i-verify (2010-11-22) 1 commit
-  (merged to 'next' on 2010-12-08 at 18275df)
- + rebase: support --verify
-
-* nd/maint-hide-checkout-index-from-error (2010-11-28) 1 commit
-  (merged to 'next' on 2010-12-08 at 1869996)
- + entry.c: remove "checkout-index" from error messages
-
-* tc/format-patch-p (2010-11-23) 1 commit
-  (merged to 'next' on 2010-12-08 at e8bff23)
- + format-patch: page output with --stdout
-
-* tc/http-urls-ends-with-slash (2010-11-25) 9 commits
-  (merged to 'next' on 2010-12-08 at b9a878a)
- + http-fetch: rework url handling
- + http-push: add trailing slash at arg-parse time, instead of later on
- + http-push: check path length before using it
- + http-push: Normalise directory names when pushing to some WebDAV servers
- + http-backend: use end_url_with_slash()
- + url: add str wrapper for end_url_with_slash()
- + shift end_url_with_slash() from http.[ch] to url.[ch]
- + t5550-http-fetch: add test for http-fetch
- + t5550-http-fetch: add missing '&&'
+* rj/msvc-fix (2010-12-04) 4 commits
+  (merged to 'next' on 2010-12-10 at 7a2c2c6)
+ + msvc: Fix macro redefinition warnings
+ + msvc: Fix build by adding missing INTMAX_MAX define
+ + msvc: git-daemon.exe: Fix linker "unresolved externals" error
+ + msvc: Fix compilation errors in compat/win32/sys/poll.c
 
 --------------------------------------------------
 [Stalled]
@@ -172,64 +186,12 @@ This unfortunately heavily conflicts with patches in flight...
 --------------------------------------------------
 [Cooking]
 
-* rj/msvc-fix (2010-12-04) 4 commits
-  (merged to 'next' on 2010-12-10 at 7a2c2c6)
- + msvc: Fix macro redefinition warnings
- + msvc: Fix build by adding missing INTMAX_MAX define
- + msvc: git-daemon.exe: Fix linker "unresolved externals" error
- + msvc: Fix compilation errors in compat/win32/sys/poll.c
+* nd/oneline-sha1-name-from-specific-ref (2010-12-13) 3 commits
+ - get_sha1: support $commit^{/regex} syntax
+ - get_sha1_oneline: make callers prepare the commit list to traverse
+ - get_sha1_oneline: fix lifespan rule of temp_commit_buffer variable
 
-* ak/describe-exact (2010-12-09) 4 commits
-  (merged to 'next' on 2010-12-10 at 33497db)
- + describe: Delay looking up commits until searching for an inexact match
- + describe: Store commit_names in a hash table by commit SHA1
- + describe: Do not use a flex array in struct commit_name
- + describe: Use for_each_rawref
-
-Rerolled and looked fine.
-
-* jc/maint-svn-info-test-fix (2010-12-06) 1 commit
-  (merged to 'next' on 2010-12-08 at f821694)
- + t9119: do not compare "Text Last Updated" line from "svn info"
-
-Will merge to 'master'.
-
-* jn/submodule-b-current (2010-12-05) 2 commits
-  (merged to 'next' on 2010-12-08 at 33423f3)
- + git submodule: Remove now obsolete tests before cloning a repo
- + git submodule -b ... of current HEAD fails
-
-Will merge to 'master'.
-
-* jc/maint-no-openssl-build-fix (2010-12-08) 1 commit
-  (merged to 'next' on 2010-12-08 at e348a87)
- + Do not link with -lcrypto under NO_OPENSSL
-
-Will merge to 'master'.
-
-* aa/status-hilite-branch (2010-12-09) 2 commits
-  (merged to 'next' on 2010-12-10 at d00551d)
- + default color.status.branch to "same as header"
-  (merged to 'next' on 2010-12-08 at 0291858)
- + status: show branchname with a configurable color
-
-Will merge to 'master'.
-
-* jn/fast-import-blob-access (2010-12-13) 6 commits
-  (merged to 'next' on 2010-12-12 at 7dc56dd)
- + t9300: avoid short reads from dd
-  (merged to 'next' on 2010-12-08 at a42f0b3)
- + t9300: remove unnecessary use of /dev/stdin
- + fast-import: Allow cat-blob requests at arbitrary points in stream
- + fast-import: let importers retrieve blobs
- + fast-import: clarify documentation of "feature" command
- + fast-import: stricter parsing of integer options
-
-Will merge to 'master'.
-
-* kb/diff-C-M-synonym (2010-11-10) 2 commits
- - diff: use "find" instead of "detect" as prefix for long forms of -M and -C
- - diff: add --detect-copies-harder as a synonym for --find-copies-harder
+This should be more or less ready for 'next'.
 
 * mg/cvsimport (2010-11-28) 3 commits
  - cvsimport.txt: document the mapping between config and options
@@ -246,34 +208,13 @@ not queued here.
 This churn already introduced an unnecessary conflict.  It is not by
 itself a biggie, but these things tend to add up.
 
-* pd/bash-4-completion (2010-12-01) 2 commits
- - Use the new functions to get the current cword.
- - Introduce functions from bash-completion project.
+* pd/bash-4-completion (2010-12-15) 3 commits
+ - Merge branch 'master' (early part) into pd/bash-4-completion
+ - bash: simple reimplementation of _get_comp_words_by_ref
+ - bash: get --pretty=m<tab> completion to work with bash v4
 
-There is a "here is a better way to do this" from Jonathan, but I lost
-track.
-
-* jn/fast-import-ondemand-checkpoint (2010-11-22) 1 commit
-  (merged to 'next' on 2010-12-08 at f538396)
- + fast-import: treat SIGUSR1 as a request to access objects early
-
-Will merge to 'master'.
-
-* jn/maint-fast-import-object-reuse (2010-11-23) 1 commit
-  (merged to 'next' on 2010-12-08 at 5d29c08)
- + fast-import: insert new object entries at start of hash bucket
-
-Will merge to 'master'.
-
-* jn/maint-svn-fe (2010-12-08) 4 commits
-  (merged to 'next' on 2010-12-09 at 98beb7c)
- + t9010 fails when no svn is available
-  (merged to 'next' on 2010-12-08 at e25350b)
- + vcs-svn: fix intermittent repo_tree corruption
- + treap: make treap_insert return inserted node
- + t9010 (svn-fe): Eliminate dependency on svn perl bindings
-
-Will merge to 'master'.
+Updated by Jonathan; this still has some conflicts around "notes"
+completion I tried to resolve near the tip of 'pu'.
 
 * jn/svn-fe (2010-12-06) 18 commits
  - vcs-svn: Allow change nodes for root of tree (/)
@@ -296,21 +237,6 @@ Will merge to 'master'.
  - vcs-svn: Error out for v3 dumps
 
 Some RFC patches, to give them early and wider exposure.
-
-* nd/maint-relative (2010-11-20) 1 commit
-  (merged to 'next' on 2010-12-10 at 018bc80)
- + get_cwd_relative(): do not misinterpret root path
-
-Will merge to 'master'.
-
-* nd/extended-sha1-relpath (2010-12-09) 3 commits
-  (merged to 'next' on 2010-12-10 at 0018aa6)
- + get_sha1: teach ":$n:<path>" the same relative path logic
-  (merged to 'next' on 2010-12-08 at 940e5e2)
- + get_sha1: support relative path ":path" syntax
- + Make prefix_path() return char* without const
-
-Will merge to 'master'.
 
 * nd/maint-fix-add-typo-detection (2010-11-27) 5 commits
  - Revert "excluded_1(): support exclude files in index"
@@ -411,43 +337,36 @@ Need to re-read this series to move it forward.
 
 Need to re-queue the reroll.
 
-* nd/struct-pathspec (2010-09-20) 11 commits
- - ce_path_match: drop prefix matching in favor of match_pathspec
+* nd/struct-pathspec (2010-12-15) 21 commits
+ - t7810: overlapping pathspecs and depth limit
+ - grep: drop pathspec_matches() in favor of tree_entry_interesting()
+ - grep: use writable strbuf from caller in grep_tree()
+ - strbuf: allow "buf" to point to the middle of the allocated buffer
+ - grep: use match_pathspec_depth() for cache/worktree grepping
+ - grep: convert to use struct pathspec
+ - Convert ce_path_match() to use match_pathspec_depth()
  - Convert ce_path_match() to use struct pathspec
- - tree_entry_interesting: turn to match_pathspec if wildcard is present
- - pathspec: add tree_recursive_diff parameter
- - pathspec: mark wildcard pathspecs from the beginning
+ - pathspec: add match_pathspec_depth()
+ - tree_entry_interesting(): optimize wildcard matching when base is matched
+ - tree_entry_interesting(): support wildcard matching
+ - tree_entry_interesting(): fix depth limit with overlapping pathspecs
+ - tree_entry_interesting(): support depth limit
+ - tree_entry_interesting(): refactor into separate smaller functions
+ - diff-tree: convert base+baselen to writable strbuf
+ - glossary: define pathspec
  - Move tree_entry_interesting() to tree-walk.c and export it
  - tree_entry_interesting(): remove dependency on struct diff_options
  - Convert struct diff_options to use struct pathspec
- - pathspec: cache string length when initializing pathspec
  - diff-no-index: use diff_tree_setup_paths()
  - Add struct pathspec
- (this branch is tangled with en/object-list-with-pathspec.)
+ (this branch is used by en/object-list-with-pathspec.)
 
-This is related to something I have long been wanting to see happen.
-Wait Nguyen for another round (2010-11-11).
+Rerolled again.  Getting nicer by the round ;-)
 
-* en/object-list-with-pathspec (2010-09-20) 8 commits
+* en/object-list-with-pathspec (2010-09-20) 2 commits
  - Add testcases showing how pathspecs are handled with rev-list --objects
  - Make rev-list --objects work together with pathspecs
- - Move tree_entry_interesting() to tree-walk.c and export it
- - tree_entry_interesting(): remove dependency on struct diff_options
- - Convert struct diff_options to use struct pathspec
- - pathspec: cache string length when initializing pathspec
- - diff-no-index: use diff_tree_setup_paths()
- - Add struct pathspec
- (this branch is tangled with nd/struct-pathspec.)
-
-* jl/fetch-submodule-recursive (2010-12-09) 4 commits
-  (merged to 'next' on 2010-12-10 at edd0bf0)
- + fetch_populated_submodules(): document dynamic allocation
-  (merged to 'next' on 2010-12-08 at 676c4f5)
- + Submodules: Add the "fetchRecurseSubmodules" config option
- + Add the 'fetch.recurseSubmodules' config setting
- + fetch/pull: Add the --recurse-submodules option
-
-Will merge to 'master'.
+ (this branch uses nd/struct-pathspec.)
 
 * tr/merge-unborn-clobber (2010-08-22) 1 commit
  - Exhibit merge bug that clobbers index&WT
