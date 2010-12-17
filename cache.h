@@ -515,7 +515,7 @@ struct pathspec {
 
 extern int init_pathspec(struct pathspec *, const char **);
 extern void free_pathspec(struct pathspec *);
-extern int ce_path_match(const struct cache_entry *ce, const char **pathspec);
+extern int ce_path_match(const struct cache_entry *ce, const struct pathspec *pathspec);
 extern int index_fd(unsigned char *sha1, int fd, struct stat *st, int write_object, enum object_type type, const char *path);
 extern int index_path(unsigned char *sha1, const char *path, struct stat *st, int write_object);
 extern void fill_stat_cache_info(struct cache_entry *ce, struct stat *st);

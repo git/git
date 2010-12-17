@@ -706,17 +706,18 @@ int ce_same_name(struct cache_entry *a, struct cache_entry *b)
 	return ce_namelen(b) == len && !memcmp(a->name, b->name, len);
 }
 
-int ce_path_match(const struct cache_entry *ce, const char **pathspec)
+int ce_path_match(const struct cache_entry *ce, const struct pathspec *pathspec)
 {
 	const char *match, *name;
+	const char **ps = pathspec->raw;
 	int len;
 
-	if (!pathspec)
+	if (!pathspec->nr)
 		return 1;
 
 	len = ce_namelen(ce);
 	name = ce->name;
-	while ((match = *pathspec++) != NULL) {
+	while ((match = *ps++) != NULL) {
 		int matchlen = strlen(match);
 		if (matchlen > len)
 			continue;

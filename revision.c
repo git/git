@@ -969,7 +969,7 @@ static void prepare_show_merge(struct rev_info *revs)
 		struct cache_entry *ce = active_cache[i];
 		if (!ce_stage(ce))
 			continue;
-		if (ce_path_match(ce, revs->prune_data.raw)) {
+		if (ce_path_match(ce, &revs->prune_data)) {
 			prune_num++;
 			prune = xrealloc(prune, sizeof(*prune) * prune_num);
 			prune[prune_num-2] = ce->name;
