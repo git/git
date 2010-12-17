@@ -619,43 +619,29 @@ static int grep_cache(struct grep_opt *opt, const struct pathspec *pathspec, int
 }
 
 static int grep_tree(struct grep_opt *opt, const struct pathspec *pathspec,
-		     struct tree_desc *tree,
-		     const char *tree_name, const char *base)
+		     struct tree_desc *tree, struct strbuf *base, int tn_len)
 {
-	int len;
 	int hit = 0;
 	struct name_entry entry;
-	char *down;
-	int tn_len = strlen(tree_name);
-	struct strbuf pathbuf;
-
-	strbuf_init(&pathbuf, PATH_MAX + tn_len);
-
-	if (tn_len) {
-		strbuf_add(&pathbuf, tree_name, tn_len);
-		strbuf_addch(&pathbuf, ':');
-		tn_len = pathbuf.len;
-	}
-	strbuf_addstr(&pathbuf, base);
-	len = pathbuf.len;
+	int old_baselen = base->len;
 
 	while (tree_entry(tree, &entry)) {
 		int te_len = tree_entry_len(entry.path, entry.sha1);
-		pathbuf.len = len;
-		strbuf_add(&pathbuf, entry.path, te_len);
+
+		strbuf_add(base, entry.path, te_len);
 
 		if (S_ISDIR(entry.mode))
 			/* Match "abc/" against pathspec to
 			 * decide if we want to descend into "abc"
 			 * directory.
 			 */
-			strbuf_addch(&pathbuf, '/');
+			strbuf_addch(base, '/');
 
-		down = pathbuf.buf + tn_len;
-		if (!pathspec_matches(pathspec->raw, down, opt->max_depth))
+		if (!pathspec_matches(pathspec->raw, base->buf + tn_len, opt->max_depth))
 			;
-		else if (S_ISREG(entry.mode))
-			hit |= grep_sha1(opt, entry.sha1, pathbuf.buf, tn_len);
+		else if (S_ISREG(entry.mode)) {
+			hit |= grep_sha1(opt, entry.sha1, base->buf, tn_len);
+		}
 		else if (S_ISDIR(entry.mode)) {
 			enum object_type type;
 			struct tree_desc sub;
@@ -667,13 +653,14 @@ static int grep_tree(struct grep_opt *opt, const struct pathspec *pathspec,
 				die("unable to read tree (%s)",
 				    sha1_to_hex(entry.sha1));
 			init_tree_desc(&sub, data, size);
-			hit |= grep_tree(opt, pathspec, &sub, tree_name, down);
+			hit |= grep_tree(opt, pathspec, &sub, base, tn_len);
 			free(data);
 		}
+		strbuf_setlen(base, old_baselen);
+
 		if (hit && opt->status_only)
 			break;
 	}
-	strbuf_release(&pathbuf);
 	return hit;
 }
 
@@ -686,13 +673,23 @@ static int grep_object(struct grep_opt *opt, const struct pathspec *pathspec,
 		struct tree_desc tree;
 		void *data;
 		unsigned long size;
-		int hit;
+		struct strbuf base;
+		int hit, len;
+
 		data = read_object_with_reference(obj->sha1, tree_type,
 						  &size, NULL);
 		if (!data)
 			die("unable to read tree (%s)", sha1_to_hex(obj->sha1));
+
+		len = name ? strlen(name) : 0;
+		strbuf_init(&base, PATH_MAX + len + 1);
+		if (len) {
+			strbuf_add(&base, name, len);
+			strbuf_addch(&base, ':');
+		}
 		init_tree_desc(&tree, data, size);
-		hit = grep_tree(opt, pathspec, &tree, name, "");
+		hit = grep_tree(opt, pathspec, &tree, &base, base.len);
+		strbuf_release(&base);
 		free(data);
 		return hit;
 	}
