@@ -329,106 +329,6 @@ static int grep_config(const char *var, const char *value, void *cb)
 	return 0;
 }
 
-/*
- * Return non-zero if max_depth is negative or path has no more then max_depth
- * slashes.
- */
-static int accept_subdir(const char *path, int max_depth)
-{
-	if (max_depth < 0)
-		return 1;
-
-	while ((path = strchr(path, '/')) != NULL) {
-		max_depth--;
-		if (max_depth < 0)
-			return 0;
-		path++;
-	}
-	return 1;
-}
-
-/*
- * Return non-zero if name is a subdirectory of match and is not too deep.
- */
-static int is_subdir(const char *name, int namelen,
-		const char *match, int matchlen, int max_depth)
-{
-	if (matchlen > namelen || strncmp(name, match, matchlen))
-		return 0;
-
-	if (name[matchlen] == '\0') /* exact match */
-		return 1;
-
-	if (!matchlen || match[matchlen-1] == '/' || name[matchlen] == '/')
-		return accept_subdir(name + matchlen + 1, max_depth);
-
-	return 0;
-}
-
-/*
- * git grep pathspecs are somewhat different from diff-tree pathspecs;
- * pathname wildcards are allowed.
- */
-static int pathspec_matches(const char **paths, const char *name, int max_depth)
-{
-	int namelen, i;
-	if (!paths || !*paths)
-		return accept_subdir(name, max_depth);
-	namelen = strlen(name);
-	for (i = 0; paths[i]; i++) {
-		const char *match = paths[i];
-		int matchlen = strlen(match);
-		const char *cp, *meta;
-
-		if (is_subdir(name, namelen, match, matchlen, max_depth))
-			return 1;
-		if (!fnmatch(match, name, 0))
-			return 1;
-		if (name[namelen-1] != '/')
-			continue;
-
-		/* We are being asked if the directory ("name") is worth
-		 * descending into.
-		 *
-		 * Find the longest leading directory name that does
-		 * not have metacharacter in the pathspec; the name
-		 * we are looking at must overlap with that directory.
-		 */
-		for (cp = match, meta = NULL; cp - match < matchlen; cp++) {
-			char ch = *cp;
-			if (ch == '*' || ch == '[' || ch == '?') {
-				meta = cp;
-				break;
-			}
-		}
-		if (!meta)
-			meta = cp; /* fully literal */
-
-		if (namelen <= meta - match) {
-			/* Looking at "Documentation/" and
-			 * the pattern says "Documentation/howto/", or
-			 * "Documentation/diff*.txt".  The name we
-			 * have should match prefix.
-			 */
-			if (!memcmp(match, name, namelen))
-				return 1;
-			continue;
-		}
-
-		if (meta - match < namelen) {
-			/* Looking at "Documentation/howto/" and
-			 * the pattern says "Documentation/h*";
-			 * match up to "Do.../h"; this avoids descending
-			 * into "Documentation/technical/".
-			 */
-			if (!memcmp(match, name, meta - match))
-				return 1;
-			continue;
-		}
-	}
-	return 0;
-}
-
 static void *lock_and_read_sha1_file(const unsigned char *sha1, enum object_type *type, unsigned long *size)
 {
 	void *data;
@@ -621,25 +521,24 @@ static int grep_cache(struct grep_opt *opt, const struct pathspec *pathspec, int
 static int grep_tree(struct grep_opt *opt, const struct pathspec *pathspec,
 		     struct tree_desc *tree, struct strbuf *base, int tn_len)
 {
-	int hit = 0;
+	int hit = 0, matched = 0;
 	struct name_entry entry;
 	int old_baselen = base->len;
 
 	while (tree_entry(tree, &entry)) {
 		int te_len = tree_entry_len(entry.path, entry.sha1);
 
+		if (matched != 2) {
+			matched = tree_entry_interesting(&entry, base, tn_len, pathspec);
+			if (matched == -1)
+				break; /* no more matches */
+			if (!matched)
+				continue;
+		}
+
 		strbuf_add(base, entry.path, te_len);
 
-		if (S_ISDIR(entry.mode))
-			/* Match "abc/" against pathspec to
-			 * decide if we want to descend into "abc"
-			 * directory.
-			 */
-			strbuf_addch(base, '/');
-
-		if (!pathspec_matches(pathspec->raw, base->buf + tn_len, opt->max_depth))
-			;
-		else if (S_ISREG(entry.mode)) {
+		if (S_ISREG(entry.mode)) {
 			hit |= grep_sha1(opt, entry.sha1, base->buf, tn_len);
 		}
 		else if (S_ISDIR(entry.mode)) {
@@ -652,6 +551,8 @@ static int grep_tree(struct grep_opt *opt, const struct pathspec *pathspec,
 			if (!data)
 				die("unable to read tree (%s)",
 				    sha1_to_hex(entry.sha1));
+
+			strbuf_addch(base, '/');
 			init_tree_desc(&sub, data, size);
 			hit |= grep_tree(opt, pathspec, &sub, base, tn_len);
 			free(data);
@@ -1058,6 +959,8 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		paths[1] = NULL;
 	}
 	init_pathspec(&pathspec, paths);
+	pathspec.max_depth = opt.max_depth;
+	pathspec.recursive = 1;
 
 	if (show_in_pager && (cached || list.nr))
 		die("--open-files-in-pager only works on the worktree");

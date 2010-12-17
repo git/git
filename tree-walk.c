@@ -544,7 +544,8 @@ static int match_dir_prefix(const char *base, int baselen,
 /*
  * Is a tree entry interesting given the pathspec we have?
  *
- * Pre-condition: baselen == 0 || base[baselen-1] == '/'
+ * Pre-condition: either baselen == base_offset (i.e. empty path)
+ * or base[baselen-1] == '/' (i.e. with trailing slash).
  *
  * Return:
  *  - 2 for "yes, and all subsequent entries will be"
@@ -553,44 +554,45 @@ static int match_dir_prefix(const char *base, int baselen,
  *  - negative for "no, and no subsequent entries will be either"
  */
 int tree_entry_interesting(const struct name_entry *entry,
-			   struct strbuf *base,
+			   struct strbuf *base, int base_offset,
 			   const struct pathspec *ps)
 {
 	int i;
-	int pathlen, baselen = base->len;
+	int pathlen, baselen = base->len - base_offset;
 	int never_interesting = ps->has_wildcard ? 0 : -1;
 
 	if (!ps->nr) {
 		if (!ps->recursive || ps->max_depth == -1)
 			return 2;
-		return !!within_depth(base->buf, baselen,
+		return !!within_depth(base->buf + base_offset, baselen,
 				      !!S_ISDIR(entry->mode),
 				      ps->max_depth);
 	}
 
 	pathlen = tree_entry_len(entry->path, entry->sha1);
 
-	for (i = ps->nr-1; i >= 0; i--) {
+	for (i = ps->nr - 1; i >= 0; i--) {
 		const struct pathspec_item *item = ps->items+i;
 		const char *match = item->match;
+		const char *base_str = base->buf + base_offset;
 		int matchlen = item->len;
 
 		if (baselen >= matchlen) {
 			/* If it doesn't match, move along... */
-			if (!match_dir_prefix(base->buf, baselen, match, matchlen))
+			if (!match_dir_prefix(base_str, baselen, match, matchlen))
 				goto match_wildcards;
 
 			if (!ps->recursive || ps->max_depth == -1)
 				return 2;
 
-			return !!within_depth(base->buf + matchlen + 1,
+			return !!within_depth(base_str + matchlen + 1,
 					      baselen - matchlen - 1,
 					      !!S_ISDIR(entry->mode),
 					      ps->max_depth);
 		}
 
 		/* Does the base match? */
-		if (!strncmp(base->buf, match, baselen)) {
+		if (!strncmp(base_str, match, baselen)) {
 			if (match_entry(entry, pathlen,
 					match + baselen, matchlen - baselen,
 					&never_interesting))
@@ -622,11 +624,11 @@ match_wildcards:
 
 		strbuf_add(base, entry->path, pathlen);
 
-		if (!fnmatch(match, base->buf, 0)) {
-			strbuf_setlen(base, baselen);
+		if (!fnmatch(match, base->buf + base_offset, 0)) {
+			strbuf_setlen(base, base_offset + baselen);
 			return 1;
 		}
-		strbuf_setlen(base, baselen);
+		strbuf_setlen(base, base_offset + baselen);
 
 		/*
 		 * Match all directories. We'll try to match files
