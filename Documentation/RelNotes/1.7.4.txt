@@ -29,16 +29,41 @@ Updates since v1.7.3
  * Bash completion script in contrib/ has been adjusted to be also
    usable by zsh.
 
+ * Different pagers can be chosen depending on which subcommand is
+   being run under the pager, using "pager.<subcommand>" variable.
+
+ * The hardcoded tab-width of 8 used in whitespace breakage checks is now
+   configurable via the attributes mechanism.
+
+ * Support of case insensitive filesystems (i.e. "core.ignorecase") has
+   been improved.  For example, the gitignore mechanism didn't pay attention
+   to the case insensitivity.
+
+ * The <tree>:<path> syntax to name a blob in a tree, and :<path>
+   syntax to name a blob in the index (e.g. "master:Makefile",
+   ":hello.c") have been extended.  You can start <path> with "./" to
+   implicitly have the (sub)directory you are in prefixed to the
+   lookup.  Similarly, ":../Makefile" from a subdirectory would mean
+   "the Makefile of the parent directory in the index".
+
  * "git blame" learned --show-email option to display the e-mail
    addresses instead of the names of authors.
+
+ * "git commit" learned --fixup and --squash options to help later invocation
+   of the interactive rebase.
 
  * "git daemon" can be built in MinGW environment.
 
  * "git daemon" can take more than one --listen option to listen to
    multiple addresses.
 
+ * "git describe --exact-match" was optimized not to read commit
+   objects unnecessarily.
+
  * "git diff" and "git grep" learned how functions and subroutines
    in Fortran look like.
+
+ * "git fetch" learned "--recurse-submodules" option.
 
  * "git mergetool" tells vim/gvim to show three-way diff by default
    (use vimdiff2/gvimdiff2 as the tool name for old behaviour).
@@ -81,10 +106,15 @@ Updates since v1.7.3
    git-only login over ssh as login shell, with custom set of
    commands.
 
+ * The current branch name in "git status" output can be colored differently
+   from the generic header color by setting "color.status.branch" variable.
+
  * "git submodule sync" updates metainformation for all submodules,
    not just the ones that have been checked out.
 
  * gitweb can use custom 'highlight' command with its configuration file.
+
+ * other gitweb updates.
 
 
 Also contains various documentation updates.
@@ -113,6 +143,6 @@ release, unless otherwise noted.
 
 ---
 exec >/var/tmp/1
-O=v1.7.3.2-450-g5b9c331
+O=v1.7.3.4-567-g38a5932
 echo O=$(git describe master)
 git shortlog --no-merges ^maint ^$O master
