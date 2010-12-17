@@ -72,7 +72,7 @@ static void show_tree(struct diff_options *opt, const char *prefix,
 		if (all_interesting)
 			show = 1;
 		else {
-			show = tree_entry_interesting(&desc->entry, base,
+			show = tree_entry_interesting(&desc->entry, base, 0,
 						      &opt->pathspec);
 			if (show == 2)
 				all_interesting = 1;
@@ -130,7 +130,7 @@ static void skip_uninteresting(struct tree_desc *t, struct strbuf *base,
 		if (all_interesting)
 			show = 1;
 		else {
-			show = tree_entry_interesting(&t->entry, base,
+			show = tree_entry_interesting(&t->entry, base, 0,
 						      &opt->pathspec);
 			if (show == 2)
 				all_interesting = 1;
