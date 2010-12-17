@@ -1,97 +1,160 @@
 #!/bin/sh
 
-: ${J='-l 4 -j'}
-G=/pub/software/scm/git &&
+exec 3>&2 >./:all.log 2>&1
 
-# HERE=$(git symbolic-ref HEAD) || exit 1
+ln_or_cp () {
+	ln -f "$@" || cp -f "$@"
+}
+
+STAGE= narch= arch= master= jobs= rpm=t final=
+G=/pub/software/scm/git
 THIS=$(git describe HEAD)
+
+while case "$1" in -*) ;; *) break ;; esac
+do
+	case "$1" in
+	--master) master=t ;;
+	--slave) master=f ;;
+	-j*) jobs="$1" ;;
+	--dist-only) rpm=f ;;
+	--stage=?*) STAGE=${1#--stage=} ;;
+	--final) final=t ;;
+	--pub=?*) G=${1#--pub=} ;;
+	*) echo >&3 "Eh? $1"; exit 1 ;;
+	esac
+	shift
+done
+
+while test -n "$STAGE" && test "$STAGE" != "${STAGE%/}"
+do
+	STAGE="${STAGE%/}"
+done
+
+if test -z "$final"
+then
+	case "$STAGE" in
+	?*)	final=f ;;
+	'')	final=t ;;
+	esac
+fi
+
+if test -z "$master"
+then
+	case "$(hostname)" in
+	hera.kernel.org) master=t ;;
+	*) master=f ;;
+	esac
+fi
+
+if test t = "$master"
+then
+	narch='x86_64 i386 i686'
+else
+	if test t != "$rpm"
+	then
+		echo >&3 "'--dist-only' only makes sense on the master machine"
+		exit 1
+	fi
+	if test t = "$final"
+	then
+		echo >&3 "'--final' only makes sense on the master machine"
+		exit 1
+	fi
+fi
+
+eval $(rpm --showrc | sed -ne '
+	s/^-14: dist[ 	]*\./dist=/p
+	s/^-11= _target_cpu[ 	]*/arch=/p
+') && test -n "$dist" && test -n "$arch" || exit 1
 
 d='
 MAN_BASE_URL="http://www.kernel.org/pub/software/scm/git/docs/"
 ASCIIDOC_NO_ROFF=YesPlease
 ASCIIDOC8=YesPlease
 BLK_SHA1=YesPlease
-GNU_ROFF=YesPlease'
+GNU_ROFF=YesPlease
+'
 
 rm -f version
-case `hostname` in
-hera.kernel.org)
-	narch='x86_64 i386 i686'
-	arch=x86_64 ;;
-wing-fc*|fc*.siamese.dyndns.org|fc*)
-	eval $(rpm --showrc | sed -ne '
-		s/^-14: dist[ 	]*\./dist=/p
-		s/^-11= _target_cpu[ 	]*/arch=/p
-	') &&
-	test -n "$dist" && test -n "$arch" || exit 1
-	;;
-*)	echo >&2 "What are you talking about???"
-	exit 1 ;;
-esac &&
-: >./:all.log &&
-echo "* Building $THIS" &&
-make $J git >./:all.log 2>&1 &&
-V=`./git --version | sed -e 's/git version //'` &&
-NEEDS_CRYPTO_WITH_SSL=YesPlease make $d rpm >>./:all.log 2>&1 &&
-case "$narch" in
-'')
-	# This is not the primary build machine.
-	status=$?
-	case "$status" in
-	0)
-		echo >&2 "Done -- move RPMS to the master machine."
-		(
-			cd "$HOME/rpms/" &&
-			tar cf "TARBALL/$V.$arch.$dist.tar" \
-				RPMS/$arch/*-$V-*.$dist.$arch.rpm &&
-			ls -ld $HOME/rpms/TARBALL/$V.$arch.$dist.tar
-		) &&
-		make clean
-		;;
-	?)
-		echo >&2 "Failed with status $status"
-		;;
-	esac
-	exit $status ;;
-*)
-	make $d dist-doc >>./:all.log 2>&1 &&
-	ln -f git-$V.tar.gz $G/. &&
-	ln -f git-htmldocs-$V.tar.gz git-manpages-$V.tar.gz $G/.
-	;;
-esac >>./:all.log 2>&1 &&
+echo "* Building $THIS"
+
+make $jobs git &&
+V=`./git --version | sed -e 's/git version //'` || exit
+
+make $jobs dist || exit
+
+if test t = "$rpm"
+then
+	NEEDS_CRYPTO_WITH_SSL=YesPlease make $jobs $d rpm || exit
+fi
+
+if test t != "$master"
+then
+	(
+		cd "$HOME/rpms/" &&
+		tar cf "TARPIT/$V.$arch.$dist.tar" \
+			RPMS/$arch/*-$V-*.$dist.$arch.rpm &&
+		ls -ld $HOME/rpms/TARPIT/$V.$arch.$dist.tar
+	) || exit
+	make clean
+	echo >&2 "Done -- move RPMS to the master machine."
+	echo >&2 "scp $HOME/rpms/TARPIT/$V.$arch.$dist.tar master.kernel.org:rpms/TARPIT"
+	exit
+fi
+
+make $jobs $d dist-doc || exit
+
+mkdir -p "$STAGE$G" &&
+ln_or_cp git-$V.tar.gz "$STAGE$G/." &&
+ln_or_cp git-htmldocs-$V.tar.gz git-manpages-$V.tar.gz "$STAGE$G/." &&
+mkdir -p "$STAGE$G/docs/v$V" &&
+tar Cxf "$STAGE$G/docs/v$V" "$STAGE$G/git-htmldocs-$V.tar.gz" || exit
+
 case "$V" in
 *.rc[0-9]* | *-rc[0-9]*)
-	mkdir -p $G/testing &&
+	mkdir -p "$STAGE$G/testing" || exit
 	for a in $narch
 	do
 		for rr in $HOME/rpms/RPMS/$a/*-$V-*.$a.rpm
 		do
 			test -f "$rr" || continue
-			ln -f "$rr" $G/testing/.
+			ln_or_cp "$rr" "$STAGE$G/testing/." || exit
 		done
-	done &&
-	ln -f $HOME/rpms/SRPMS/git-$V-*.src.rpm $G/testing/.
+	done
+	ln_or_cp $HOME/rpms/SRPMS/git-$V-*.src.rpm "$STAGE$G/testing/." || exit
 	;;
 *)
-	mkdir -p $G/RPMS/$arch $G/RPMS/SRPMS &&
+	mkdir -p "$STAGE$G/RPMS/$arch" "$STAGE$G/RPMS/SRPMS" || exit
 	for a in $narch
 	do
-		mkdir -p "$G/RPMS/$a" &&
+		mkdir -p "$STAGE$G/RPMS/$a" || exit
 		for rr in $HOME/rpms/RPMS/$a/*-$V-*.$a.rpm
 		do
 			test -f "$rr" || continue
-			ln -f "$rr" $G/RPMS/$a/.
+			ln_or_cp "$rr" "$STAGE$G/RPMS/$a/." || exit
 		done
-	done &&
-	ln -f $HOME/rpms/SRPMS/git-$V-*.src.rpm $G/RPMS/SRPMS/. &&
-	{
-		# I do not know how it exits, and I do not care much.
+	done
+	ln_or_cp $HOME/rpms/SRPMS/git-$V-*.src.rpm "$STAGE$G/RPMS/SRPMS/." || exit
+esac
+
+make clean
+
+if test t = "$final"
+then
+	if test -n "$STAGE"
+	then
+		(
+			cd "$STAGE$G" &&
+			find . ! -type d -print0 | cpio -0plumda "$G" ||
+			find . ! -type d -print0 | cpio -0pumda "$G"
+		)
+	fi || exit
+	if test -f /usr/local/bin/yummy
+	then
 		for a in $narch
 		do
-			/usr/local/bin/yummy $G/RPMS/$a
+			/usr/local/bin/yummy "$G/RPMS/$a"
 		done
-		/usr/local/bin/yummy $G/RPMS/SRPMS
-		:
-	} >>./:all.log 2>&1 ;;
-esac &&
-make clean
+		/usr/local/bin/yummy "$G/RPMS/SRPMS"
+	fi
+fi
