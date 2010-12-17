@@ -323,7 +323,7 @@ static void wt_status_collect_changes_worktree(struct wt_status *s)
     }
 	rev.diffopt.format_callback = wt_status_collect_changed_cb;
 	rev.diffopt.format_callback_data = s;
-	rev.prune_data = s->pathspec;
+	init_pathspec(&rev.prune_data, s->pathspec);
 	run_diff_files(&rev, 0);
 }
 
@@ -348,7 +348,7 @@ static void wt_status_collect_changes_index(struct wt_status *s)
 	rev.diffopt.detect_rename = 1;
 	rev.diffopt.rename_limit = 200;
 	rev.diffopt.break_opt = 0;
-	rev.prune_data = s->pathspec;
+	init_pathspec(&rev.prune_data, s->pathspec);
 	run_diff_index(&rev, 1);
 }
 

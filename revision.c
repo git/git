@@ -323,7 +323,7 @@ static int rev_compare_tree(struct rev_info *revs, struct commit *parent, struct
 		 * tagged commit by specifying both --simplify-by-decoration
 		 * and pathspec.
 		 */
-		if (!revs->prune_data)
+		if (!revs->prune_data.nr)
 			return REV_TREE_SAME;
 	}
 
@@ -969,7 +969,7 @@ static void prepare_show_merge(struct rev_info *revs)
 		struct cache_entry *ce = active_cache[i];
 		if (!ce_stage(ce))
 			continue;
-		if (ce_path_match(ce, revs->prune_data)) {
+		if (ce_path_match(ce, revs->prune_data.raw)) {
 			prune_num++;
 			prune = xrealloc(prune, sizeof(*prune) * prune_num);
 			prune[prune_num-2] = ce->name;
@@ -979,7 +979,8 @@ static void prepare_show_merge(struct rev_info *revs)
 		       ce_same_name(ce, active_cache[i+1]))
 			i++;
 	}
-	revs->prune_data = prune;
+	free_pathspec(&revs->prune_data);
+	init_pathspec(&revs->prune_data, prune);
 	revs->limited = 1;
 }
 
@@ -1616,7 +1617,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 	}
 
 	if (prune_data)
-		revs->prune_data = get_pathspec(revs->prefix, prune_data);
+		init_pathspec(&revs->prune_data, get_pathspec(revs->prefix, prune_data));
 
 	if (revs->def == NULL)
 		revs->def = opt ? opt->def : NULL;
@@ -1647,13 +1648,13 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 	if (revs->topo_order)
 		revs->limited = 1;
 
-	if (revs->prune_data) {
-		diff_tree_setup_paths(revs->prune_data, &revs->pruning);
+	if (revs->prune_data.nr) {
+		diff_tree_setup_paths(revs->prune_data.raw, &revs->pruning);
 		/* Can't prune commits with rename following: the paths change.. */
 		if (!DIFF_OPT_TST(&revs->diffopt, FOLLOW_RENAMES))
 			revs->prune = 1;
 		if (!revs->full_diff)
-			diff_tree_setup_paths(revs->prune_data, &revs->diffopt);
+			diff_tree_setup_paths(revs->prune_data.raw, &revs->diffopt);
 	}
 	if (revs->combine_merges)
 		revs->ignore_merges = 0;

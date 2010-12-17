@@ -371,14 +371,10 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 		}
 		die("unhandled object '%s' given.", name);
 	}
-	if (rev.prune_data) {
-		const char **pathspec = rev.prune_data;
-		while (*pathspec) {
-			if (!path)
-				path = *pathspec;
-			paths++;
-			pathspec++;
-		}
+	if (rev.prune_data.nr) {
+		if (!path)
+			path = rev.prune_data.items[0].match;
+		paths += rev.prune_data.nr;
 	}
 
 	/*
