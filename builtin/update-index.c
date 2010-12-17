@@ -543,7 +543,10 @@ static int do_reupdate(int ac, const char **av,
 	 */
 	int pos;
 	int has_head = 1;
-	const char **pathspec = get_pathspec(prefix, av + 1);
+	const char **paths = get_pathspec(prefix, av + 1);
+	struct pathspec pathspec;
+
+	init_pathspec(&pathspec, paths);
 
 	if (read_ref("HEAD", head_sha1))
 		/* If there is no HEAD, that means it is an initial
@@ -556,7 +559,7 @@ static int do_reupdate(int ac, const char **av,
 		struct cache_entry *old = NULL;
 		int save_nr;
 
-		if (ce_stage(ce) || !ce_path_match(ce, pathspec))
+		if (ce_stage(ce) || !ce_path_match(ce, &pathspec))
 			continue;
 		if (has_head)
 			old = read_one_ent(NULL, head_sha1,
@@ -575,6 +578,7 @@ static int do_reupdate(int ac, const char **av,
 		if (save_nr != active_nr)
 			goto redo;
 	}
+	free_pathspec(&pathspec);
 	return 0;
 }
 
