@@ -331,4 +331,19 @@ test_expect_success '--word-diff=none' '
 
 '
 
+word_diff_for_language () {
+	cp "$TEST_DIRECTORY/t4034/$1/pre" \
+		"$TEST_DIRECTORY/t4034/$1/post" \
+		"$TEST_DIRECTORY/t4034/$1/expect" . &&
+	echo "* diff=$1" >.gitattributes &&
+	word_diff --color-words && cp output output.$1
+}
+
+for lang_dir in $TEST_DIRECTORY/t4034/*; do
+	lang=${lang_dir#$TEST_DIRECTORY/t4034/}
+	test_expect_success "diff driver '$lang' has sane word regex" "
+		word_diff_for_language $lang
+	"
+done
+
 test_done
