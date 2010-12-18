@@ -81,8 +81,7 @@ cat >expected_one <<EOF
 (Number2 2010-01-01 20:00:00 +0000 1) converted: test 1 version 2
 EOF
 
-# one.bin is blamed as 'Not Committed yet'
-test_expect_failure 'blame --textconv works with textconvcache' '
+test_expect_success 'blame --textconv works with textconvcache' '
 	git blame --textconv two.bin >blame &&
 	find_blame <blame >result &&
 	test_cmp expected result &&
