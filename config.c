@@ -429,13 +429,11 @@ static int git_config_maybe_bool_text(const char *name, const char *value)
 
 int git_config_maybe_bool(const char *name, const char *value)
 {
-	int v = git_config_maybe_bool_text(name, value);
+	long v = git_config_maybe_bool_text(name, value);
 	if (0 <= v)
 		return v;
-	if (!strcmp(value, "0"))
-		return 0;
-	if (!strcmp(value, "1"))
-		return 1;
+	if (git_parse_long(value, &v))
+		return !!v;
 	return -1;
 }
 
