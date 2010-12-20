@@ -20,15 +20,6 @@ static struct {
 	const char **name;
 } list;
 
-static void add_list(const char *name)
-{
-	if (list.nr >= list.alloc) {
-		list.alloc = alloc_nr(list.alloc);
-		list.name = xrealloc(list.name, list.alloc * sizeof(const char *));
-	}
-	list.name[list.nr++] = name;
-}
-
 static int check_local_mod(unsigned char *head, int index_only)
 {
 	/*
@@ -182,7 +173,8 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 		struct cache_entry *ce = active_cache[i];
 		if (!match_pathspec(pathspec, ce->name, ce_namelen(ce), 0, seen))
 			continue;
-		add_list(ce->name);
+		ALLOC_GROW(list.name, list.nr + 1, list.alloc);
+		list.name[list.nr++] = ce->name;
 	}
 
 	if (pathspec) {
