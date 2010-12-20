@@ -123,9 +123,6 @@ dangling <type> <object>::
 	The <type> object <object>, is present in the database but never
 	'directly' used. A dangling commit could be a root node.
 
-warning: git-fsck: tree <tree> has full pathnames in it::
-	And it shouldn't...
-
 sha1 mismatch <object>::
 	The database has an object who's sha1 doesn't match the
 	database value.
