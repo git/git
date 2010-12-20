@@ -1864,30 +1864,50 @@ _git_config ()
 		;;
 	esac
 	__gitcomp "
-		add.ignore-errors
+		add.ignoreErrors
+		advice.commitBeforeMerge
+		advice.detachedHead
+		advice.implicitIdentity
+		advice.pushNonFastForward
+		advice.resolveConflict
+		advice.statusHints
 		alias.
+		am.keepcr
 		apply.ignorewhitespace
 		apply.whitespace
 		branch.autosetupmerge
 		branch.autosetuprebase
+		browser.
 		clean.requireForce
 		color.branch
 		color.branch.current
 		color.branch.local
 		color.branch.plain
 		color.branch.remote
+		color.decorate.HEAD
+		color.decorate.branch
+		color.decorate.remoteBranch
+		color.decorate.stash
+		color.decorate.tag
 		color.diff
 		color.diff.commit
 		color.diff.frag
+		color.diff.func
 		color.diff.meta
 		color.diff.new
 		color.diff.old
 		color.diff.plain
 		color.diff.whitespace
 		color.grep
-		color.grep.external
+		color.grep.context
+		color.grep.filename
+		color.grep.function
+		color.grep.linenumber
 		color.grep.match
+		color.grep.selected
+		color.grep.separator
 		color.interactive
+		color.interactive.error
 		color.interactive.header
 		color.interactive.help
 		color.interactive.prompt
@@ -1901,21 +1921,29 @@ _git_config ()
 		color.status.untracked
 		color.status.updated
 		color.ui
+		commit.status
 		commit.template
+		core.abbrevguard
+		core.askpass
+		core.attributesfile
 		core.autocrlf
 		core.bare
+		core.bigFileThreshold
 		core.compression
 		core.createObject
 		core.deltaBaseCacheLimit
 		core.editor
+		core.eol
 		core.excludesfile
 		core.fileMode
 		core.fsyncobjectfiles
 		core.gitProxy
 		core.ignoreCygwinFSTricks
 		core.ignoreStat
+		core.ignorecase
 		core.logAllRefUpdates
 		core.loosecompression
+		core.notesRef
 		core.packedGitLimit
 		core.packedGitWindowSize
 		core.pager
@@ -1925,6 +1953,7 @@ _git_config ()
 		core.repositoryFormatVersion
 		core.safecrlf
 		core.sharedRepository
+		core.sparseCheckout
 		core.symlinks
 		core.trustctime
 		core.warnAmbiguousRefs
@@ -1932,15 +1961,17 @@ _git_config ()
 		core.worktree
 		diff.autorefreshindex
 		diff.external
+		diff.ignoreSubmodules
 		diff.mnemonicprefix
+		diff.noprefix
 		diff.renameLimit
-		diff.renameLimit.
 		diff.renames
 		diff.suppressBlankEmpty
 		diff.tool
 		diff.wordRegex
 		difftool.
 		difftool.prompt
+		fetch.recurseSubmodules
 		fetch.unpackLimit
 		format.attach
 		format.cc
@@ -1952,6 +1983,8 @@ _git_config ()
 		format.subjectprefix
 		format.suffix
 		format.thread
+		format.to
+		gc.
 		gc.aggressiveWindow
 		gc.auto
 		gc.autopacklimit
@@ -1989,15 +2022,20 @@ _git_config ()
 		http.lowSpeedLimit
 		http.lowSpeedTime
 		http.maxRequests
+		http.minSessions
 		http.noEPSV
+		http.postBuffer
 		http.proxy
 		http.sslCAInfo
 		http.sslCAPath
 		http.sslCert
+		http.sslCertPasswordProtected
 		http.sslKey
 		http.sslVerify
+		http.useragent
 		i18n.commitEncoding
 		i18n.logOutputEncoding
+		imap.authMethod
 		imap.folder
 		imap.host
 		imap.pass
@@ -2006,6 +2044,7 @@ _git_config ()
 		imap.sslverify
 		imap.tunnel
 		imap.user
+		init.templatedir
 		instaweb.browser
 		instaweb.httpd
 		instaweb.local
@@ -2013,19 +2052,29 @@ _git_config ()
 		instaweb.port
 		interactive.singlekey
 		log.date
+		log.decorate
 		log.showroot
 		mailmap.file
 		man.
 		man.viewer
+		merge.
 		merge.conflictstyle
 		merge.log
 		merge.renameLimit
+		merge.renormalize
 		merge.stat
 		merge.tool
 		merge.verbosity
 		mergetool.
 		mergetool.keepBackup
+		mergetool.keepTemporaries
 		mergetool.prompt
+		notes.displayRef
+		notes.rewrite.
+		notes.rewrite.amend
+		notes.rewrite.rebase
+		notes.rewriteMode
+		notes.rewriteRef
 		pack.compression
 		pack.deltaCacheLimit
 		pack.deltaCacheSize
@@ -2036,31 +2085,42 @@ _git_config ()
 		pack.window
 		pack.windowMemory
 		pager.
+		pretty.
 		pull.octopus
 		pull.twohead
 		push.default
+		rebase.autosquash
 		rebase.stat
+		receive.autogc
 		receive.denyCurrentBranch
+		receive.denyDeleteCurrent
 		receive.denyDeletes
 		receive.denyNonFastForwards
 		receive.fsckObjects
 		receive.unpackLimit
+		receive.updateserverinfo
+		remotes.
 		repack.usedeltabaseoffset
 		rerere.autoupdate
 		rerere.enabled
+		sendemail.
 		sendemail.aliasesfile
-		sendemail.aliasesfiletype
+		sendemail.aliasfiletype
 		sendemail.bcc
 		sendemail.cc
 		sendemail.cccmd
 		sendemail.chainreplyto
 		sendemail.confirm
 		sendemail.envelopesender
+		sendemail.from
+		sendemail.identity
 		sendemail.multiedit
 		sendemail.signedoffbycc
+		sendemail.smtpdomain
 		sendemail.smtpencryption
 		sendemail.smtppass
 		sendemail.smtpserver
+		sendemail.smtpserveroption
 		sendemail.smtpserverport
 		sendemail.smtpuser
 		sendemail.suppresscc
@@ -2071,6 +2131,8 @@ _git_config ()
 		showbranch.default
 		status.relativePaths
 		status.showUntrackedFiles
+		status.submodulesummary
+		submodule.
 		tar.umask
 		transfer.unpackLimit
 		url.
