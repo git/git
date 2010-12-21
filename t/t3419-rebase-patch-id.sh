@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 test_description='git rebase - test patch id computation'
 
@@ -27,7 +27,7 @@ scramble()
 		then
 			echo "$x"
 		fi
-		i=$(((i+1) % 10))
+		i=$((($i+1) % 10))
 	done < "$1" > "$1.new"
 	mv -f "$1.new" "$1"
 }
