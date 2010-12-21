@@ -62,4 +62,13 @@ do
 
 done
 
+test_expect_success 'am --abort will keep the local commits intact' '
+	test_must_fail git am 0004-*.patch &&
+	test_commit unrelated &&
+	git rev-parse HEAD >expect &&
+	git am --abort &&
+	git rev-parse HEAD >actual &&
+	test_cmp expect actual
+'
+
 test_done
