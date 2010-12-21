@@ -4412,7 +4412,7 @@ size_t fill_textconv(struct userdiff_driver *driver,
 		return df->size;
 	}
 
-	if (driver->textconv_cache) {
+	if (driver->textconv_cache && df->sha1_valid) {
 		*outbuf = notes_cache_get(driver->textconv_cache, df->sha1,
 					  &size);
 		if (*outbuf)
@@ -4423,7 +4423,7 @@ size_t fill_textconv(struct userdiff_driver *driver,
 	if (!*outbuf)
 		die("unable to read files to diff");
 
-	if (driver->textconv_cache) {
+	if (driver->textconv_cache && df->sha1_valid) {
 		/* ignore errors, as we might be in a readonly repository */
 		notes_cache_put(driver->textconv_cache, df->sha1, *outbuf,
 				size);
