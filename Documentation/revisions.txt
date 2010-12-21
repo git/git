@@ -106,6 +106,12 @@ the `$GIT_DIR/refs` directory or from the `$GIT_DIR/packed-refs` file.
   and dereference the tag recursively until a non-tag object is
   found.
 
+* A suffix '{caret}' to a revision parameter followed by a brace
+  pair that contains a text led by a slash (e.g. `HEAD^{/fix nasty bug}`):
+  this is the same as `:/fix nasty bug` syntax below except that
+  it returns the youngest matching commit which is reachable from
+  the ref before '{caret}'.
+
 * A colon, followed by a slash, followed by a text (e.g. `:/fix nasty bug`): this names
   a commit whose commit message matches the specified regular expression.
   This name returns the youngest matching commit which is

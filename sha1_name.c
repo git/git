@@ -7,6 +7,8 @@
 #include "refs.h"
 #include "remote.h"
 
+static int get_sha1_oneline(const char *, unsigned char *, struct commit_list *);
+
 static int find_short_object_filename(int len, const char *name, unsigned char *sha1)
 {
 	struct alternate_object_database *alt;
@@ -562,6 +564,8 @@ static int peel_onion(const char *name, int len, unsigned char *sha1)
 		expected_type = OBJ_BLOB;
 	else if (sp[0] == '}')
 		expected_type = OBJ_NONE;
+	else if (sp[0] == '/')
+		expected_type = OBJ_COMMIT;
 	else
 		return -1;
 
@@ -576,19 +580,37 @@ static int peel_onion(const char *name, int len, unsigned char *sha1)
 		if (!o || (!o->parsed && !parse_object(o->sha1)))
 			return -1;
 		hashcpy(sha1, o->sha1);
+		return 0;
 	}
-	else {
-		/*
-		 * At this point, the syntax look correct, so
-		 * if we do not get the needed object, we should
-		 * barf.
-		 */
-		o = peel_to_type(name, len, o, expected_type);
-		if (o) {
-			hashcpy(sha1, o->sha1);
-			return 0;
-		}
+
+	/*
+	 * At this point, the syntax look correct, so
+	 * if we do not get the needed object, we should
+	 * barf.
+	 */
+	o = peel_to_type(name, len, o, expected_type);
+	if (!o)
 		return -1;
+
+	hashcpy(sha1, o->sha1);
+	if (sp[0] == '/') {
+		/* "$commit^{/foo}" */
+		char *prefix;
+		int ret;
+		struct commit_list *list = NULL;
+
+		/*
+		 * $commit^{/}. Some regex implementation may reject.
+		 * We don't need regex anyway. '' pattern always matches.
+		 */
+		if (sp[1] == '}')
+			return 0;
+
+		prefix = xstrndup(sp + 1, name + len - 1 - (sp + 1));
+		commit_list_insert((struct commit *)o, &list);
+		ret = get_sha1_oneline(prefix, sha1, list);
+		free(prefix);
+		return ret;
 	}
 	return 0;
 }
@@ -686,15 +708,14 @@ static int handle_one_ref(const char *path,
 	if (object->type != OBJ_COMMIT)
 		return 0;
 	insert_by_date((struct commit *)object, list);
-	object->flags |= ONELINE_SEEN;
 	return 0;
 }
 
-static int get_sha1_oneline(const char *prefix, unsigned char *sha1)
+static int get_sha1_oneline(const char *prefix, unsigned char *sha1,
+			    struct commit_list *list)
 {
-	struct commit_list *list = NULL, *backup = NULL, *l;
-	int retval = -1;
-	char *temp_commit_buffer = NULL;
+	struct commit_list *backup = NULL, *l;
+	int found = 0;
 	regex_t regex;
 
 	if (prefix[0] == '!') {
@@ -706,41 +727,45 @@ static int get_sha1_oneline(const char *prefix, unsigned char *sha1)
 	if (regcomp(&regex, prefix, REG_EXTENDED))
 		die("Invalid search pattern: %s", prefix);
 
-	for_each_ref(handle_one_ref, &list);
-	for (l = list; l; l = l->next)
+	for (l = list; l; l = l->next) {
+		l->item->object.flags |= ONELINE_SEEN;
 		commit_list_insert(l->item, &backup);
+	}
 	while (list) {
-		char *p;
+		char *p, *to_free = NULL;
 		struct commit *commit;
 		enum object_type type;
 		unsigned long size;
+		int matches;
 
 		commit = pop_most_recent_commit(&list, ONELINE_SEEN);
 		if (!parse_object(commit->object.sha1))
 			continue;
-		free(temp_commit_buffer);
 		if (commit->buffer)
 			p = commit->buffer;
 		else {
 			p = read_sha1_file(commit->object.sha1, &type, &size);
 			if (!p)
 				continue;
-			temp_commit_buffer = p;
+			to_free = p;
 		}
-		if (!(p = strstr(p, "\n\n")))
-			continue;
-		if (!regexec(&regex, p + 2, 0, NULL, 0)) {
+
+		p = strstr(p, "\n\n");
+		matches = p && !regexec(&regex, p + 2, 0, NULL, 0);
+		free(to_free);
+
+		if (matches) {
 			hashcpy(sha1, commit->object.sha1);
-			retval = 0;
+			found = 1;
 			break;
 		}
 	}
 	regfree(&regex);
-	free(temp_commit_buffer);
 	free_commit_list(list);
 	for (l = backup; l; l = l->next)
 		clear_commit_marks(l->item, ONELINE_SEEN);
-	return retval;
+	free_commit_list(backup);
+	return found ? 0 : -1;
 }
 
 struct grab_nth_branch_switch_cbdata {
@@ -1107,9 +1132,11 @@ int get_sha1_with_context_1(const char *name, unsigned char *sha1,
 		struct cache_entry *ce;
 		char *new_path = NULL;
 		int pos;
-		if (namelen > 2 && name[1] == '/')
-			/* don't need mode for commit */
-			return get_sha1_oneline(name + 2, sha1);
+		if (namelen > 2 && name[1] == '/') {
+			struct commit_list *list = NULL;
+			for_each_ref(handle_one_ref, &list);
+			return get_sha1_oneline(name + 2, sha1, list);
+		}
 		if (namelen < 3 ||
 		    name[2] != ':' ||
 		    name[1] < '0' || '3' < name[1])
