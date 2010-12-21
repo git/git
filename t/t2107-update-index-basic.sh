@@ -13,7 +13,7 @@ test_expect_success 'update-index --nonsense fails' '
 	test -s msg
 '
 
-test_expect_failure 'update-index --nonsense dumps usage' '
+test_expect_success 'update-index --nonsense dumps usage' '
 	test_expect_code 129 git update-index --nonsense 2>err &&
 	grep "[Uu]sage: git update-index" err
 '
