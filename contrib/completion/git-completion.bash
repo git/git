@@ -735,7 +735,6 @@ __git_list_porcelain_commands ()
 		quiltimport)      : import;;
 		read-tree)        : plumbing;;
 		receive-pack)     : plumbing;;
-		reflog)           : plumbing;;
 		remote-*)         : transport;;
 		repo-config)      : deprecated;;
 		rerere)           : plumbing;;
@@ -1630,6 +1629,18 @@ _git_rebase ()
 		return
 	esac
 	__gitcomp "$(__git_refs)"
+}
+
+_git_reflog ()
+{
+	local subcommands="show delete expire"
+	local subcommand="$(__git_find_on_cmdline "$subcommands")"
+
+	if [ -z "$subcommand" ]; then
+		__gitcomp "$subcommands"
+	else
+		__gitcomp "$(__git_refs)"
+	fi
 }
 
 __git_send_email_confirm_options="always never auto cc compose"
