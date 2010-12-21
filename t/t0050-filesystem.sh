@@ -4,8 +4,8 @@ test_description='Various filesystem issues'
 
 . ./test-lib.sh
 
-auml=`printf '\xc3\xa4'`
-aumlcdiar=`printf '\x61\xcc\x88'`
+auml=$(printf '\303\244')
+aumlcdiar=$(printf '\141\314\210')
 
 case_insensitive=
 unibad=
