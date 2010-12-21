@@ -25,10 +25,6 @@
 #include "cache.h"
 #include "quote.h"
 
-static void do_nothing(size_t unused)
-{
-}
-
 /* Get a trace file descriptor from GIT_TRACE env variable. */
 static int get_trace_fd(int *need_close)
 {
@@ -76,7 +72,7 @@ void trace_printf(const char *fmt, ...)
 	if (!fd)
 		return;
 
-	set_try_to_free_routine(do_nothing);	/* is never reset */
+	set_try_to_free_routine(NULL);	/* is never reset */
 	strbuf_init(&buf, 64);
 	va_start(ap, fmt);
 	len = vsnprintf(buf.buf, strbuf_avail(&buf), fmt, ap);
@@ -108,7 +104,7 @@ void trace_argv_printf(const char **argv, const char *fmt, ...)
 	if (!fd)
 		return;
 
-	set_try_to_free_routine(do_nothing);	/* is never reset */
+	set_try_to_free_routine(NULL);	/* is never reset */
 	strbuf_init(&buf, 64);
 	va_start(ap, fmt);
 	len = vsnprintf(buf.buf, strbuf_avail(&buf), fmt, ap);
