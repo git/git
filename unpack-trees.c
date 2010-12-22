@@ -390,7 +390,7 @@ static void add_same_unmerged(struct cache_entry *ce,
 static int unpack_index_entry(struct cache_entry *ce,
 			      struct unpack_trees_options *o)
 {
-	struct cache_entry *src[5] = { NULL };
+	struct cache_entry *src[MAX_UNPACK_TREES + 1] = { NULL, };
 	int ret;
 
 	src[0] = ce;
@@ -436,7 +436,10 @@ static int switch_cache_bottom(struct traverse_info *info)
 	return ret;
 }
 
-static int traverse_trees_recursive(int n, unsigned long dirmask, unsigned long df_conflicts, struct name_entry *names, struct traverse_info *info)
+static int traverse_trees_recursive(int n, unsigned long dirmask,
+				    unsigned long df_conflicts,
+				    struct name_entry *names,
+				    struct traverse_info *info)
 {
 	int i, ret, bottom;
 	struct tree_desc t[MAX_UNPACK_TREES];
@@ -908,7 +911,7 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 
 	if (!o->skip_sparse_checkout) {
 		int empty_worktree = 1;
-		for (i = 0;i < o->result.cache_nr;i++) {
+		for (i = 0; i < o->result.cache_nr; i++) {
 			struct cache_entry *ce = o->result.cache[i];
 
 			if (apply_sparse_checkout(ce, o)) {
@@ -920,6 +923,7 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 
 		}
 		if (o->result.cache_nr && empty_worktree) {
+			/* dubious---why should this fail??? */
 			ret = unpack_failed(o, "Sparse checkout leaves no entry on working directory");
 			goto done;
 		}
@@ -931,7 +935,7 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 		*o->dst_index = o->result;
 
 done:
-	for (i = 0;i < el.nr;i++)
+	for (i = 0; i < el.nr; i++)
 		free(el.excludes[i]);
 	if (el.excludes)
 		free(el.excludes);
