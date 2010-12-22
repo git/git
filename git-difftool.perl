@@ -52,6 +52,7 @@ sub generate_command
 	my @command = (exe('git'), 'diff');
 	my $skip_next = 0;
 	my $idx = -1;
+	my $prompt = '';
 	for my $arg (@ARGV) {
 		$idx++;
 		if ($skip_next) {
@@ -89,19 +90,22 @@ sub generate_command
 			next;
 		}
 		if ($arg eq '-y' || $arg eq '--no-prompt') {
-			$ENV{GIT_DIFFTOOL_NO_PROMPT} = 'true';
-			delete $ENV{GIT_DIFFTOOL_PROMPT};
+			$prompt = 'no';
 			next;
 		}
 		if ($arg eq '--prompt') {
-			$ENV{GIT_DIFFTOOL_PROMPT} = 'true';
-			delete $ENV{GIT_DIFFTOOL_NO_PROMPT};
+			$prompt = 'yes';
 			next;
 		}
 		if ($arg eq '-h' || $arg eq '--help') {
 			usage();
 		}
 		push @command, $arg;
+	}
+	if ($prompt eq 'yes') {
+		$ENV{GIT_DIFFTOOL_PROMPT} = 'true';
+	} elsif ($prompt eq 'no') {
+		$ENV{GIT_DIFFTOOL_NO_PROMPT} = 'true';
 	}
 	return @command
 }
