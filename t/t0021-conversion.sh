@@ -100,6 +100,7 @@ test_expect_success expanded_in_repo '
 test_expect_success 'filter shell-escaped filenames' '
 	cat >argc.sh <<-EOF &&
 	#!$SHELL_PATH
+	cat >/dev/null
 	echo argc: \$# "\$@"
 	EOF
 	normal=name-no-magic &&
