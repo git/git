@@ -39,19 +39,19 @@ struct commit *lookup_commit_reference_gently(const unsigned char *sha1,
 struct commit *lookup_commit_reference_by_name(const char *name);
 
 int parse_commit_buffer(struct commit *item, void *buffer, unsigned long size);
-
 int parse_commit(struct commit *item);
 
 /* Find beginning and length of commit subject. */
 int find_commit_subject(const char *commit_buffer, const char **subject);
 
-struct commit_list * commit_list_insert(struct commit *item, struct commit_list **list_p);
+struct commit_list *commit_list_insert(struct commit *item,
+					struct commit_list **list);
 unsigned commit_list_count(const struct commit_list *l);
-struct commit_list * insert_by_date(struct commit *item, struct commit_list **list);
+struct commit_list *commit_list_insert_by_date(struct commit *item,
+				    struct commit_list **list);
+void commit_list_sort_by_date(struct commit_list **list);
 
 void free_commit_list(struct commit_list *list);
-
-void sort_by_date(struct commit_list **list);
 
 /* Commit formats */
 enum cmit_fmt {

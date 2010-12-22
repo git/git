@@ -444,15 +444,15 @@ static void try_to_simplify_commit(struct rev_info *revs, struct commit *commit)
 	commit->object.flags |= TREESAME;
 }
 
-static void insert_by_date_cached(struct commit *p, struct commit_list **head,
+static void commit_list_insert_by_date_cached(struct commit *p, struct commit_list **head,
 		    struct commit_list *cached_base, struct commit_list **cache)
 {
 	struct commit_list *new_entry;
 
 	if (cached_base && p->date < cached_base->item->date)
-		new_entry = insert_by_date(p, &cached_base->next);
+		new_entry = commit_list_insert_by_date(p, &cached_base->next);
 	else
-		new_entry = insert_by_date(p, head);
+		new_entry = commit_list_insert_by_date(p, head);
 
 	if (cache && (!*cache || p->date < (*cache)->item->date))
 		*cache = new_entry;
@@ -494,7 +494,7 @@ static int add_parents_to_list(struct rev_info *revs, struct commit *commit,
 			if (p->object.flags & SEEN)
 				continue;
 			p->object.flags |= SEEN;
-			insert_by_date_cached(p, list, cached_base, cache_ptr);
+			commit_list_insert_by_date_cached(p, list, cached_base, cache_ptr);
 		}
 		return 0;
 	}
@@ -521,7 +521,7 @@ static int add_parents_to_list(struct rev_info *revs, struct commit *commit,
 		p->object.flags |= left_flag;
 		if (!(p->object.flags & SEEN)) {
 			p->object.flags |= SEEN;
-			insert_by_date_cached(p, list, cached_base, cache_ptr);
+			commit_list_insert_by_date_cached(p, list, cached_base, cache_ptr);
 		}
 		if (revs->first_parent_only)
 			break;
@@ -1891,7 +1891,7 @@ int prepare_revision_walk(struct rev_info *revs)
 		if (commit) {
 			if (!(commit->object.flags & SEEN)) {
 				commit->object.flags |= SEEN;
-				insert_by_date(commit, &revs->commits);
+				commit_list_insert_by_date(commit, &revs->commits);
 			}
 		}
 		e++;

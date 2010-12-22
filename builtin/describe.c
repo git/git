@@ -218,7 +218,7 @@ static unsigned long finish_depth_computation(
 			struct commit *p = parents->item;
 			parse_commit(p);
 			if (!(p->object.flags & SEEN))
-				insert_by_date(p, list);
+				commit_list_insert_by_date(p, list);
 			p->object.flags |= c->object.flags;
 			parents = parents->next;
 		}
@@ -334,7 +334,7 @@ static void describe(const char *arg, int last_one)
 			struct commit *p = parents->item;
 			parse_commit(p);
 			if (!(p->object.flags & SEEN))
-				insert_by_date(p, &list);
+				commit_list_insert_by_date(p, &list);
 			p->object.flags |= c->object.flags;
 			parents = parents->next;
 		}
@@ -362,7 +362,7 @@ static void describe(const char *arg, int last_one)
 	qsort(all_matches, match_cnt, sizeof(all_matches[0]), compare_pt);
 
 	if (gave_up_on) {
-		insert_by_date(gave_up_on, &list);
+		commit_list_insert_by_date(gave_up_on, &list);
 		seen_commits--;
 	}
 	seen_commits += finish_depth_computation(&list, &all_matches[0]);

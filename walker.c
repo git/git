@@ -207,7 +207,7 @@ static int mark_complete(const char *path, const unsigned char *sha1, int flag, 
 	struct commit *commit = lookup_commit_reference_gently(sha1, 1);
 	if (commit) {
 		commit->object.flags |= COMPLETE;
-		insert_by_date(commit, &complete);
+		commit_list_insert_by_date(commit, &complete);
 	}
 	return 0;
 }

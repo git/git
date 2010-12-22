@@ -243,7 +243,7 @@ static void join_revs(struct commit_list **list_p,
 			if (mark_seen(p, seen_p) && !still_interesting)
 				extra--;
 			p->object.flags |= flags;
-			insert_by_date(p, list_p);
+			commit_list_insert_by_date(p, list_p);
 		}
 	}
 
@@ -859,7 +859,7 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 		 */
 		commit->object.flags |= flag;
 		if (commit->object.flags == flag)
-			insert_by_date(commit, &list);
+			commit_list_insert_by_date(commit, &list);
 		rev[num_rev] = commit;
 	}
 	for (i = 0; i < num_rev; i++)
@@ -868,7 +868,7 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 	if (0 <= extra)
 		join_revs(&list, &seen, num_rev, extra);
 
-	sort_by_date(&seen);
+	commit_list_sort_by_date(&seen);
 
 	if (merge_base)
 		return show_merge_base(seen, num_rev);
