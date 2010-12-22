@@ -94,12 +94,20 @@ test_expect_success 'match directories with trailing slash' '
 	test -f sub/added
 '
 
-test_expect_failure 'match directories without trailing slash' '
-	echo init.t >.git/info/sparse-checkout &&
+test_expect_success 'match directories without trailing slash' '
 	echo sub >>.git/info/sparse-checkout &&
 	git read-tree -m -u HEAD &&
 	git ls-files -t >result &&
-	test_cmp expected.swt result &&
+	test_cmp expected.swt-noinit result &&
+	test ! -f init.t &&
+	test -f sub/added
+'
+
+test_expect_success 'match directory pattern' '
+	echo "s?b" >>.git/info/sparse-checkout &&
+	git read-tree -m -u HEAD &&
+	git ls-files -t >result &&
+	test_cmp expected.swt-noinit result &&
 	test ! -f init.t &&
 	test -f sub/added
 '
