@@ -366,7 +366,7 @@ static int reachable(struct commit *want)
 {
 	struct commit_list *work = NULL;
 
-	insert_by_date(want, &work);
+	commit_list_insert_by_date(want, &work);
 	while (work) {
 		struct commit_list *list = work->next;
 		struct commit *commit = work->item;
@@ -387,7 +387,7 @@ static int reachable(struct commit *want)
 		for (list = commit->parents; list; list = list->next) {
 			struct commit *parent = list->item;
 			if (!(parent->object.flags & REACHABLE))
-				insert_by_date(parent, &work);
+				commit_list_insert_by_date(parent, &work);
 		}
 	}
 	want->object.flags |= REACHABLE;

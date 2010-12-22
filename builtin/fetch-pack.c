@@ -47,7 +47,7 @@ static void rev_list_push(struct commit *commit, int mark)
 			if (parse_commit(commit))
 				return;
 
-		insert_by_date(commit, &rev_list);
+		commit_list_insert_by_date(commit, &rev_list);
 
 		if (!(commit->object.flags & COMMON))
 			non_common_revs++;
@@ -436,7 +436,7 @@ static int mark_complete(const char *path, const unsigned char *sha1, int flag, 
 	if (o && o->type == OBJ_COMMIT) {
 		struct commit *commit = (struct commit *)o;
 		commit->object.flags |= COMPLETE;
-		insert_by_date(commit, &complete);
+		commit_list_insert_by_date(commit, &complete);
 	}
 	return 0;
 }
