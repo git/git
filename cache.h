@@ -170,26 +170,26 @@ struct cache_entry {
  *
  * In-memory only flags
  */
-#define CE_UPDATE    (0x10000)
-#define CE_REMOVE    (0x20000)
-#define CE_UPTODATE  (0x40000)
-#define CE_ADDED     (0x80000)
+#define CE_UPDATE            (1 << 16)
+#define CE_REMOVE            (1 << 17)
+#define CE_UPTODATE          (1 << 18)
+#define CE_ADDED             (1 << 19)
 
-#define CE_HASHED    (0x100000)
-#define CE_UNHASHED  (0x200000)
-#define CE_CONFLICTED (0x800000)
+#define CE_HASHED            (1 << 20)
+#define CE_UNHASHED          (1 << 21)
+#define CE_WT_REMOVE         (1 << 22) /* remove in work directory */
+#define CE_CONFLICTED        (1 << 23)
 
-#define CE_WT_REMOVE (0x400000) /* remove in work directory */
-
-#define CE_UNPACKED  (0x1000000)
+#define CE_UNPACKED          (1 << 24)
+#define CE_NEW_SKIP_WORKTREE (1 << 25)
 
 /*
  * Extended on-disk flags
  */
-#define CE_INTENT_TO_ADD 0x20000000
-#define CE_SKIP_WORKTREE 0x40000000
+#define CE_INTENT_TO_ADD     (1 << 29)
+#define CE_SKIP_WORKTREE     (1 << 30)
 /* CE_EXTENDED2 is for future extension */
-#define CE_EXTENDED2 0x80000000
+#define CE_EXTENDED2         (1 << 31)
 
 #define CE_EXTENDED_FLAGS (CE_INTENT_TO_ADD | CE_SKIP_WORKTREE)
 
