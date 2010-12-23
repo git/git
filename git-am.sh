@@ -554,13 +554,6 @@ then
 	resume=
 fi
 
-if test "$this" -gt "$last"
-then
-	say Nothing to do.
-	rm -fr "$dotest"
-	exit
-fi
-
 while test "$this" -le "$last"
 do
 	msgnum=`printf "%0${prec}d" $this`
