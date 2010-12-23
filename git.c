@@ -275,6 +275,10 @@ static int run_builtin(struct cmd_struct *p, int argc, const char **argv)
 			use_pager = check_pager_config(p->cmd);
 		if (use_pager == -1 && p->option & USE_PAGER)
 			use_pager = 1;
+
+		if ((p->option & (RUN_SETUP | RUN_SETUP_GENTLY)) &&
+		    startup_info->have_repository) /* get_git_dir() may set up repo, avoid that */
+			trace_repo_setup(prefix);
 	}
 	commit_pager_choice();
 
