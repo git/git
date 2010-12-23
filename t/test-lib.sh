@@ -260,7 +260,7 @@ test_decode_color () {
 			if (n == 47) return "BWHITE";
 		}
 		{
-			while (match($0, /\x1b\[[0-9;]*m/) != 0) {
+			while (match($0, /\033\[[0-9;]*m/) != 0) {
 				printf "%s<", substr($0, 1, RSTART-1);
 				codes = substr($0, RSTART+2, RLENGTH-3);
 				if (length(codes) == 0)
