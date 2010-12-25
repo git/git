@@ -1854,6 +1854,7 @@ VCSSVN_OBJS += vcs-svn/line_buffer.o
 VCSSVN_OBJS += vcs-svn/sliding_window.o
 VCSSVN_OBJS += vcs-svn/repo_tree.o
 VCSSVN_OBJS += vcs-svn/fast_export.o
+VCSSVN_OBJS += vcs-svn/svndiff.o
 VCSSVN_OBJS += vcs-svn/svndump.o
 
 VCSSVN_TEST_OBJS += test-obj-pool.o
@@ -1997,6 +1998,7 @@ VCSSVN_H += vcs-svn/line_buffer.h
 VCSSVN_H += vcs-svn/sliding_window.h
 VCSSVN_H += vcs-svn/repo_tree.h
 VCSSVN_H += vcs-svn/fast_export.h
+VCSSVN_H += vcs-svn/svndiff.h
 VCSSVN_H += vcs-svn/svndump.h
 
 $(VCSSVN_OBJS) $(VCSSVN_TEST_OBJS): $(LIB_H) $(VCSSVN_H)
