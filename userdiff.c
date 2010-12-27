@@ -63,7 +63,9 @@ PATTERNS("pascal",
 	 "|[^[:space:]]|[\x80-\xff]+"),
 PATTERNS("perl",
 	 "^[ \t]*package .*;\n"
-	 "^[ \t]*sub .* \\{",
+	 "^[ \t]*sub .* \\{\n"
+	 "^[A-Z]+ \\{\n"	/* BEGIN, END, ... */
+	 "^=head[0-9] ",	/* POD */
 	 /* -- */
 	 "[[:alpha:]_'][[:alnum:]_']*"
 	 "|0[xb]?[0-9a-fA-F_]*"
