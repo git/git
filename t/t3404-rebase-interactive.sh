@@ -67,8 +67,9 @@ test_expect_success 'setup' '
 # "exec" commands are ran with the user shell by default, but this may
 # be non-POSIX. For example, if SHELL=zsh then ">file" doesn't work
 # to create a file. Unseting SHELL avoids such non-portable behavior
-# in tests.
+# in tests. It must be exported for it to take effect where needed.
 SHELL=
+export SHELL
 
 test_expect_success 'rebase -i with the exec command' '
 	git checkout master &&
