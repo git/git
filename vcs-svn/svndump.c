@@ -149,6 +149,13 @@ static void handle_property(uint32_t key, const char *val, uint32_t len,
 	}
 }
 
+static void die_short_read(void)
+{
+	if (buffer_ferror(&input))
+		die_errno("error reading dump file");
+	die("invalid dump: unexpected end of file");
+}
+
 static void read_props(void)
 {
 	uint32_t key = ~0;
@@ -170,12 +177,21 @@ static void read_props(void)
 		uint32_t len;
 		const char *val;
 		const char type = t[0];
+		int ch;
 
 		if (!type || t[1] != ' ')
 			die("invalid property line: %s\n", t);
 		len = atoi(&t[2]);
 		val = buffer_read_string(&input, len);
-		buffer_skip_bytes(&input, 1);	/* Discard trailing newline. */
+		if (!val || strlen(val) != len)
+			die_short_read();
+
+		/* Discard trailing newline. */
+		ch = buffer_read_char(&input);
+		if (ch == EOF)
+			die_short_read();
+		if (ch != '\n')
+			die("invalid dump: expected newline after %s", val);
 
 		switch (type) {
 		case 'K':
@@ -344,7 +360,11 @@ void svndump_read(const char *url)
 			node_ctx.prop_delta = !strcmp(val, "true");
 		} else if (key == keys.content_length) {
 			len = atoi(val);
-			buffer_read_line(&input);
+			t = buffer_read_line(&input);
+			if (!t)
+				die_short_read();
+			if (*t)
+				die("invalid dump: expected blank line after content length header");
 			if (active_ctx == REV_CTX) {
 				read_props();
 			} else if (active_ctx == NODE_CTX) {
@@ -352,10 +372,13 @@ void svndump_read(const char *url)
 				active_ctx = REV_CTX;
 			} else {
 				fprintf(stderr, "Unexpected content length header: %"PRIu32"\n", len);
-				buffer_skip_bytes(&input, len);
+				if (buffer_skip_bytes(&input, len) != len)
+					die_short_read();
 			}
 		}
 	}
+	if (buffer_ferror(&input))
+		die_short_read();
 	if (active_ctx == NODE_CTX)
 		handle_node();
 	if (active_ctx != DUMP_CTX)
