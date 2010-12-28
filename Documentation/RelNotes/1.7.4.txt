@@ -26,8 +26,9 @@ Updates since v1.7.3
    cover letter of the previous series; this has been changed to make
    the patches in the new series replies to the new cover letter.
 
- * Bash completion script in contrib/ has been adjusted to be also
-   usable by zsh.
+ * Bash completion script in contrib/ has been adjusted to be usable with
+   Bash 4 (options with '=value' didn't complete)  It has been also made
+   usable with zsh.
 
  * Different pagers can be chosen depending on which subcommand is
    being run under the pager, using "pager.<subcommand>" variable.
@@ -76,8 +77,8 @@ Updates since v1.7.3
    use the new --empty option to be more explicit instead.
 
  * "git repack -f" does not spend cycles to recompress objects in the
-   non-delta representation anymore (use -F if you really mean it when
-   e.g. you changed the compression level).
+   non-delta representation anymore (use -F if you really mean it
+   e.g. after you changed the core.compression variable setting).
 
  * "git merge --log" used to limit the resulting merge log to 20
    entries; this is now customizable by giving e.g. "--log=47".
@@ -91,8 +92,9 @@ Updates since v1.7.3
 
  * The default "recursive" merge strategy learned --rename-threshold
    option to influence the rename detection, similar to the -M option
-   of "git diff".  E.g. "git merge -Xrename-threshold=50% ..." to use
-   this.
+   of "git diff".  From "git merge" frontend, "-X<strategy option>"
+   interface, e.g. "git merge -Xrename-threshold=50% ...", can be used
+   to trigger this.
 
  * The "recursive" strategy also learned to ignore various whitespace
    changes; the most notable is -Xignore-space-at-eol.
@@ -130,9 +132,6 @@ release, unless otherwise noted.
    me or by her; instead it looked for commits written by me and by
    her, which is impossible.
 
- * "git merge" into an unborn branch removed an untracked file "foo"
-   from the working tree when merged branch had "foo" (2caf20c..172b642).
-
  * "git push --progress" shows progress indicators now.
 
  * "git repack" places its temporary packs under $GIT_OBJECT_DIRECTORY/pack
@@ -143,6 +142,6 @@ release, unless otherwise noted.
 
 ---
 exec >/var/tmp/1
-O=v1.7.3.4-567-g38a5932
+O=v1.7.3.4-687-g2cd900f
 echo O=$(git describe master)
 git shortlog --no-merges ^maint ^$O master
