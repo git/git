@@ -10,7 +10,11 @@ test_expect_success 'setup' '
 	test_commit A foo A &&
 	test_commit B foo B &&
 	test_commit C foo C &&
-	test_commit D foo D
+	test_commit D foo D &&
+	git checkout A^0 &&
+	test_commit E bar E &&
+	test_commit F foo F &&
+	git checkout master
 '
 
 mkdir .git/hooks
@@ -75,6 +79,18 @@ test_expect_success 'git rebase --skip' '
 	echo rebase >expected.args &&
 	cat >expected.data <<EOF &&
 $(git rev-parse D) $(git rev-parse HEAD)
+EOF
+	verify_hook_input
+'
+
+test_expect_success 'git rebase --skip the last one' '
+	git reset --hard F &&
+	clear_hook_input &&
+	test_must_fail git rebase --onto D A &&
+	git rebase --skip &&
+	echo rebase >expected.args &&
+	cat >expected.data <<EOF &&
+$(git rev-parse E) $(git rev-parse HEAD)
 EOF
 	verify_hook_input
 '
