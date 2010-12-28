@@ -230,6 +230,10 @@ test_expect_success 'amend commit to fix date' '
 
 '
 
+test_expect_success 'commit complains about bogus date' '
+	test_must_fail git commit --amend --date=10.11.2010
+'
+
 test_expect_success 'sign off (1)' '
 
 	echo 1 >positive &&

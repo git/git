@@ -69,7 +69,6 @@ static enum {
 static const char *logfile, *force_author;
 static const char *template_file;
 static char *edit_message, *use_message;
-static char *author_name, *author_email, *author_date;
 static int all, edit_flag, also, interactive, only, amend, signoff;
 static int quiet, verbose, no_verify, allow_empty, dry_run, renew_authorship;
 static int no_post_rewrite, allow_empty_message;
@@ -459,7 +458,7 @@ static int is_a_merge(const unsigned char *sha1)
 
 static const char sign_off_header[] = "Signed-off-by: ";
 
-static void determine_author_info(void)
+static void determine_author_info(struct strbuf *author_ident)
 {
 	char *name, *email, *date;
 
@@ -503,10 +502,8 @@ static void determine_author_info(void)
 
 	if (force_date)
 		date = force_date;
-
-	author_name = name;
-	author_email = email;
-	author_date = date;
+	strbuf_addstr(author_ident, fmt_ident(name, email, date,
+					      IDENT_ERROR_ON_NO_NAME));
 }
 
 static int ends_rfc2822_footer(struct strbuf *sb)
@@ -550,10 +547,21 @@ static int ends_rfc2822_footer(struct strbuf *sb)
 	return 1;
 }
 
+static char *cut_ident_timestamp_part(char *string)
+{
+	char *ket = strrchr(string, '>');
+	if (!ket || ket[1] != ' ')
+		die("Malformed ident string: '%s'", string);
+	*++ket = '\0';
+	return ket;
+}
+
 static int prepare_to_commit(const char *index_file, const char *prefix,
-			     struct wt_status *s)
+			     struct wt_status *s,
+			     struct strbuf *author_ident)
 {
 	struct stat statbuf;
+	struct strbuf committer_ident = STRBUF_INIT;
 	int commitable, saved_color_setting;
 	struct strbuf sb = STRBUF_INIT;
 	char *buffer;
@@ -637,14 +645,13 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 
 	strbuf_release(&sb);
 
-	determine_author_info();
+	/* This checks and barfs if author is badly specified */
+	determine_author_info(author_ident);
 
 	/* This checks if committer ident is explicitly given */
-	git_committer_info(0);
+	strbuf_addstr(&committer_ident, git_committer_info(0));
 	if (use_editor && include_status) {
-		char *author_ident;
-		const char *committer_ident;
-
+		char *ai_tmp, *ci_tmp;
 		if (in_merge)
 			fprintf(fp,
 				"#\n"
@@ -672,23 +679,21 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		if (only_include_assumed)
 			fprintf(fp, "# %s\n", only_include_assumed);
 
-		author_ident = xstrdup(fmt_name(author_name, author_email));
-		committer_ident = fmt_name(getenv("GIT_COMMITTER_NAME"),
-					   getenv("GIT_COMMITTER_EMAIL"));
-		if (strcmp(author_ident, committer_ident))
+		ai_tmp = cut_ident_timestamp_part(author_ident->buf);
+		ci_tmp = cut_ident_timestamp_part(committer_ident.buf);
+		if (strcmp(author_ident->buf, committer_ident.buf))
 			fprintf(fp,
 				"%s"
 				"# Author:    %s\n",
 				ident_shown++ ? "" : "#\n",
-				author_ident);
-		free(author_ident);
+				author_ident->buf);
 
 		if (!user_ident_sufficiently_given())
 			fprintf(fp,
 				"%s"
 				"# Committer: %s\n",
 				ident_shown++ ? "" : "#\n",
-				committer_ident);
+				committer_ident.buf);
 
 		if (ident_shown)
 			fprintf(fp, "#\n");
@@ -697,6 +702,9 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		s->use_color = 0;
 		commitable = run_status(fp, index_file, prefix, 1, s);
 		s->use_color = saved_color_setting;
+
+		*ai_tmp = ' ';
+		*ci_tmp = ' ';
 	} else {
 		unsigned char sha1[20];
 		const char *parent = "HEAD";
@@ -712,6 +720,7 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		else
 			commitable = index_differs_from(parent, 0);
 	}
+	strbuf_release(&committer_ident);
 
 	fclose(fp);
 
@@ -1246,6 +1255,7 @@ static int run_rewrite_hook(const unsigned char *oldsha1,
 int cmd_commit(int argc, const char **argv, const char *prefix)
 {
 	struct strbuf sb = STRBUF_INIT;
+	struct strbuf author_ident = STRBUF_INIT;
 	const char *index_file, *reflog_msg;
 	char *nl, *p;
 	unsigned char commit_sha1[20];
@@ -1273,7 +1283,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 
 	/* Set up everything for writing the commit object.  This includes
 	   running hooks, writing the trees, and interacting with the user.  */
-	if (!prepare_to_commit(index_file, prefix, &s)) {
+	if (!prepare_to_commit(index_file, prefix, &s, &author_ident)) {
 		rollback_index_files();
 		return 1;
 	}
@@ -1352,11 +1362,11 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 	}
 
 	if (commit_tree(sb.buf, active_cache_tree->sha1, parents, commit_sha1,
-			fmt_ident(author_name, author_email, author_date,
-				IDENT_ERROR_ON_NO_NAME))) {
+			author_ident.buf)) {
 		rollback_index_files();
 		die("failed to write commit object");
 	}
+	strbuf_release(&author_ident);
 
 	ref_lock = lock_any_ref_for_update("HEAD",
 					   initial_commit ? NULL : head_sha1,
