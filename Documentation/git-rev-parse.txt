@@ -136,7 +136,12 @@ appending `/{asterisk}`.
 	directory (typically a sequence of "../", or an empty string).
 
 --git-dir::
-	Show `$GIT_DIR` if defined else show the path to the .git directory.
+	Show `$GIT_DIR` if defined. Otherwise show the path to
+	the .git directory, relative to the current directory.
++
+If `$GIT_DIR` is not defined and the current directory
+is not detected to lie in a git repository or work tree
+print a message to stderr and exit with nonzero status.
 
 --is-inside-git-dir::
 	When the current working directory is below the repository

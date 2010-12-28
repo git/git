@@ -317,24 +317,17 @@ false), while all other repositories are assumed to be bare (bare
 = true).
 
 core.worktree::
-	Set the path to the root of the work tree.
+	Set the path to the working tree.  The value will not be
+	used in combination with repositories found automatically in
+	a .git directory (i.e. $GIT_DIR is not set).
 	This can be overridden by the GIT_WORK_TREE environment
 	variable and the '--work-tree' command line option. It can be
-	an absolute path or a relative path to the .git directory,
-	either specified by --git-dir or GIT_DIR, or automatically
-	discovered.
-	If --git-dir or GIT_DIR are specified but none of
+	an absolute path or relative path to the directory specified by
+	--git-dir or GIT_DIR.
+	Note: If --git-dir or GIT_DIR are specified but none of
 	--work-tree, GIT_WORK_TREE and core.worktree is specified,
-	the current working directory is regarded as the root of the
-	work tree.
-+
-Note that this variable is honored even when set in a configuration
-file in a ".git" subdirectory of a directory, and its value differs
-from the latter directory (e.g. "/path/to/.git/config" has
-core.worktree set to "/different/path"), which is most likely a
-misconfiguration.  Running git commands in "/path/to" directory will
-still use "/different/path" as the root of the work tree and can cause
-great confusion to the users.
+	the current working directory is regarded as the top directory
+	of your working tree.
 
 core.logAllRefUpdates::
 	Enable the reflog. Updates to a ref <ref> is logged to the file
