@@ -73,6 +73,27 @@ test_expect_success 'blame --textconv going through revisions' '
 	test_cmp expected result
 '
 
+test_expect_success 'setup +cachetextconv' '
+	git config diff.test.cachetextconv true
+'
+
+cat >expected_one <<EOF
+(Number2 2010-01-01 20:00:00 +0000 1) converted: test 1 version 2
+EOF
+
+test_expect_success 'blame --textconv works with textconvcache' '
+	git blame --textconv two.bin >blame &&
+	find_blame <blame >result &&
+	test_cmp expected result &&
+	git blame --textconv one.bin >blame &&
+	find_blame  <blame >result &&
+	test_cmp expected_one result
+'
+
+test_expect_success 'setup -cachetextconv' '
+	git config diff.test.cachetextconv false
+'
+
 test_expect_success 'make a new commit' '
 	echo "bin: test number 2 version 3" >>two.bin &&
 	GIT_AUTHOR_NAME=Number3 git commit -a -m Third --date="2010-01-01 22:00:00"
