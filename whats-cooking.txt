@@ -1,61 +1,128 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Dec 2010, #06; Tue, 21)
-X-master-at: 853563d7344ee532aa56f8a9aabcfdfb5c4fe2c3
-X-next-at: 8883a0cd5dc07da65afadda4c449e5c028ed63f7
+Subject: What's cooking in git.git (Dec 2010, #07; Tue, 28)
+X-master-at: 01b97a4cb60723d18b437efdc474503d2a9dd384
+X-next-at: dee8dc8369a19c1b8b12dd40bf3a563a7524825b
 
-What's cooking in git.git (Dec 2010, #06; Tue, 21)
+What's cooking in git.git (Dec 2010, #07; Tue, 28)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
-only in 'pu' while commits prefixed with '+' are in 'next'.  The ones
-marked with '.' do not appear in any of the integration branches, but I am
-still holding onto them.
+only in 'pu' while commits prefixed with '+' are in 'next'.
 
-I'd like to merge nd/setup, nd/struct-pathspec, and everything in
-tonight's 'next' soon and tag 1.7.4-rc1 but I might be being a bit too
-ambitious.
---------------------------------------------------
-[Graduated to "master"]
-
-* jk/maint-decorate-01-bool (2010-12-18) 1 commit
-  (merged to 'next' on 2010-12-20 at 72471ca)
- + handle arbitrary ints in git_config_maybe_bool
-
-* jk/t2107-now-passes (2010-12-18) 1 commit
-  (merged to 'next' on 2010-12-20 at c9156b5)
- + t2107: mark passing test as success
-
-* jn/maint-gitweb-pathinfo-fix (2010-12-14) 1 commit
-  (merged to 'next' on 2010-12-14 at 1af8cca)
- + gitweb: Fix handling of whitespace in generated links
-
-* ks/blame-worktree-textconv-cached (2010-12-18) 2 commits
-  (merged to 'next' on 2010-12-20 at 459c940)
- + fill_textconv(): Don't get/put cache if sha1 is not valid
- + t/t8006: Demonstrate blame is broken when cachetextconv is on
-
-* nd/oneline-sha1-name-from-specific-ref (2010-12-15) 4 commits
-  (merged to 'next' on 2010-12-20 at 553cf37)
- + get_sha1: handle special case $commit^{/}
- + get_sha1: support $commit^{/regex} syntax
- + get_sha1_oneline: make callers prepare the commit list to traverse
- + get_sha1_oneline: fix lifespan rule of temp_commit_buffer variable
-
-* tc/completion-reflog (2010-12-16) 1 commit
-  (merged to 'next' on 2010-12-20 at 2fa91e0)
- + bash completion: add basic support for git-reflog
+We are finally at 1.7.4-rc0 as of tonight ;-).
 
 --------------------------------------------------
 [New Topics]
+
+* ae/better-template-failure-report (2010-12-18) 1 commit
+ - Improve error messages when temporary file creation fails
+
+* jc/unpack-trees (2010-12-22) 2 commits
+ - unpack_trees(): skip trees that are the same in all input
+ - unpack-trees.c: cosmetic fix
+
+* jn/cherry-pick-strategy-option (2010-12-10) 1 commit
+ - cherry-pick/revert: add support for -X/--strategy-option
+
+* jn/perl-funcname (2010-12-27) 2 commits
+ - userdiff/perl: catch BEGIN/END/... and POD as headers
+ - diff: funcname and word patterns for perl
+
+* pw/convert-pathname-substitution (2010-12-22) 2 commits
+ - t0021: avoid getting filter killed with SIGPIPE
+ - convert filter: supply path to external driver
+
+--------------------------------------------------
+[Graduated to "master"]
+
+* jc/maint-am-abort-safely (2010-12-21) 1 commit
+  (merged to 'next' on 2010-12-21 at 81602bc)
+ + am --abort: keep unrelated commits since the last failure and warn
 
 * jk/commit-die-on-bogus-ident (2010-12-20) 2 commits
   (merged to 'next' on 2010-12-21 at 7785c31)
  + commit: die before asking to edit the log message
  + ident: die on bogus date format
 
-* jc/maint-am-abort-safely (2010-12-21) 1 commit
-  (merged to 'next' on 2010-12-21 at 81602bc)
- + am --abort: keep unrelated commits since the last failure and warn
+* nd/maint-fix-add-typo-detection (2010-11-27) 5 commits
+  (merged to 'next' on 2010-12-21 at 87c702b)
+ + Revert "excluded_1(): support exclude files in index"
+ + unpack-trees: fix sparse checkout's "unable to match directories"
+ + unpack-trees: move all skip-worktree checks back to unpack_trees()
+ + dir.c: add free_excludes()
+ + cache.h: realign and use (1 << x) form for CE_* constants
+
+* nd/setup (2010-11-26) 47 commits
+ (merged to 'next' on 2010-12-23 at a2bc4196)
+ + setup_work_tree: adjust relative $GIT_WORK_TREE after moving cwd
+ + git.txt: correct where --work-tree path is relative to
+ + Revert "Documentation: always respect core.worktree if set"
+ + t0001: test git init when run via an alias
+ + Remove all logic from get_git_work_tree()
+ + setup: rework setup_explicit_git_dir()
+ + setup: clean up setup_discovered_git_dir()
+ + t1020-subdirectory: test alias expansion in a subdirectory
+ + setup: clean up setup_bare_git_dir()
+ + setup: limit get_git_work_tree()'s to explicit setup case only
+ + Use git_config_early() instead of git_config() during repo setup
+ + Add git_config_early()
+ + git-rev-parse.txt: clarify --git-dir
+ + t1510: setup case #31
+ + t1510: setup case #30
+ + t1510: setup case #29
+ + t1510: setup case #28
+ + t1510: setup case #27
+ + t1510: setup case #26
+ + t1510: setup case #25
+ + t1510: setup case #24
+ + t1510: setup case #23
+ + t1510: setup case #22
+ + t1510: setup case #21
+ + t1510: setup case #20
+ + t1510: setup case #19
+ + t1510: setup case #18
+ + t1510: setup case #17
+ + t1510: setup case #16
+ + t1510: setup case #15
+ + t1510: setup case #14
+ + t1510: setup case #13
+ + t1510: setup case #12
+ + t1510: setup case #11
+ + t1510: setup case #10
+ + t1510: setup case #9
+ + t1510: setup case #8
+ + t1510: setup case #7
+ + t1510: setup case #6
+ + t1510: setup case #5
+ + t1510: setup case #4
+ + t1510: setup case #3
+ + t1510: setup case #2
+ + t1510: setup case #1
+ + t1510: setup case #0
+ + Add t1510 and basic rules that run repo setup
+ + builtins: print setup info if repo is found
+
+* pd/bash-4-completion (2010-12-15) 3 commits
+  (merged to 'next' on 2010-12-21 at dbf80ff)
+ + Merge branch 'master' (early part) into pd/bash-4-completion
+ + bash: simple reimplementation of _get_comp_words_by_ref
+ + bash: get --pretty=m<tab> completion to work with bash v4
+
+* rj/maint-difftool-cygwin-workaround (2010-12-14) 1 commit
+  (merged to 'next' on 2010-12-21 at 74b9069)
+ + difftool: Fix failure on Cygwin
+
+* rj/maint-test-fixes (2010-12-14) 5 commits
+  (merged to 'next' on 2010-12-21 at 8883a0c)
+ + t9501-*.sh: Fix a test failure on Cygwin
+ + lib-git-svn.sh: Add check for mis-configured web server variables
+ + lib-git-svn.sh: Avoid setting web server variables unnecessarily
+ + t9142: Move call to start_httpd into the setup test
+ + t3600-rm.sh: Don't pass a non-existent prereq to test #15
+
+* tf/commit-list-prefix (2010-11-26) 1 commit
+  (merged to 'next' on 2010-12-21 at 16e1351)
+ + commit: Add commit_list prefix in two function names.
 
 --------------------------------------------------
 [Stalled]
@@ -96,26 +163,8 @@ flags needs to be rethought, or at least the helper needs to be moved to
 builtin/tag.c to make it clear that it should not be used outside the
 current usage context.
 
-* tr/config-doc (2010-10-24) 2 commits
- . Documentation: complete config list from other manpages
- . Documentation: Move variables from config.txt to separate file
-
-This unfortunately heavily conflicts with patches in flight...
-
 --------------------------------------------------
 [Cooking]
-
-* rj/maint-difftool-cygwin-workaround (2010-12-14) 1 commit
-  (merged to 'next' on 2010-12-21 at 74b9069)
- + difftool: Fix failure on Cygwin
-
-* rj/maint-test-fixes (2010-12-14) 5 commits
-  (merged to 'next' on 2010-12-21 at 8883a0c)
- + t9501-*.sh: Fix a test failure on Cygwin
- + lib-git-svn.sh: Add check for mis-configured web server variables
- + lib-git-svn.sh: Avoid setting web server variables unnecessarily
- + t9142: Move call to start_httpd into the setup test
- + t3600-rm.sh: Don't pass a non-existent prereq to test #15
 
 * rj/test-fixes (2010-12-14) 4 commits
  - t4135-*.sh: Skip the "backslash" tests on cygwin
@@ -131,18 +180,6 @@ hierarchies for branches (i.e. refs/{heads,remotes}/), or (2) only refs
 outside refs/ hierarchies (e.g. HEAD, ORIG_HEAD, ...).  The latter feels
 safer and saner.
 
-* by/log-l (2010-12-14) 8 commits
- . log -L: implement move/copy detection (-M/-C)
- . log -L: add --full-line-diff option
- . log -L: add --graph prefix before output
- . log -L: support parent rewriting
- . Implement line-history search (git log -L)
- . Export rewrite_parents() for 'log -L'
- . Export three functions from diff.c
- . Refactor parse_loc
-
-Seems to have some bad interactions with nd/struct-pathspec.
-
 * hv/mingw-fs-funnies (2010-12-14) 5 commits
  - mingw_rmdir: set errno=ENOTEMPTY when appropriate
  - mingw: add fallback for rmdir in case directory is in use
@@ -150,20 +187,7 @@ Seems to have some bad interactions with nd/struct-pathspec.
  - mingw: work around irregular failures of unlink on windows
  - mingw: move unlink wrapper to mingw.c
 
-Can somebody remind me what the status of this series is?
-
-* tf/commit-list-prefix (2010-11-26) 1 commit
-  (merged to 'next' on 2010-12-21 at 16e1351)
- + commit: Add commit_list prefix in two function names.
-
-This churn already introduced an unnecessary conflict.  It is not by
-itself a biggie, but these things tend to add up.
-
-* pd/bash-4-completion (2010-12-15) 3 commits
-  (merged to 'next' on 2010-12-21 at dbf80ff)
- + Merge branch 'master' (early part) into pd/bash-4-completion
- + bash: simple reimplementation of _get_comp_words_by_ref
- + bash: get --pretty=m<tab> completion to work with bash v4
+Will be rerolled (Heiko, 2010-12-23)
 
 * jn/svn-fe (2010-12-06) 18 commits
  - vcs-svn: Allow change nodes for root of tree (/)
@@ -186,106 +210,6 @@ itself a biggie, but these things tend to add up.
  - vcs-svn: Error out for v3 dumps
 
 Some RFC patches, to give them early and wider exposure.
-
-* nd/maint-fix-add-typo-detection (2010-11-27) 5 commits
-  (merged to 'next' on 2010-12-21 at 87c702b)
- + Revert "excluded_1(): support exclude files in index"
- + unpack-trees: fix sparse checkout's "unable to match directories"
- + unpack-trees: move all skip-worktree checks back to unpack_trees()
- + dir.c: add free_excludes()
- + cache.h: realign and use (1 << x) form for CE_* constants
-
-* jh/gitweb-caching (2010-12-03) 4 commits
- . gitweb: Minimal testing of gitweb caching
- . gitweb: File based caching layer (from git.kernel.org)
- . gitweb: add output buffering and associated functions
- . gitweb: Prepare for splitting gitweb
-
-Previous iteration; dropped.
-
-* jh/gitweb-caching-8 (2010-12-09) 18 commits
- . gitweb: Add better error handling for gitweb caching
- . gitweb: Prepare for cached error pages & better error page handling
- . gitweb: When changing output (STDOUT) change STDERR as well
- . gitweb: Add show_warning() to display an immediate warning, with refresh
- . gitweb: add print_transient_header() function for central header printing
- . gitweb: Add commented url & url hash to page footer
- . gitweb: Change file handles (in caching) to lexical variables as opposed to globs
- . gitweb: add isDumbClient() check
- . gitweb: Adding isBinaryAction() and isFeedAction() to determine the action type
- . gitweb: Revert reset_output() back to original code
- . gitweb: Change is_cacheable() to return true always
- . gitweb: Revert back to $cache_enable vs. $caching_enabled
- . gitweb: Add more explicit means of disabling 'Generating...' page
- . gitweb: Regression fix concerning binary output of files
- . gitweb: Minimal testing of gitweb caching
- . gitweb: File based caching layer (from git.kernel.org)
- . gitweb: add output buffering and associated functions
- . gitweb: Prepare for splitting gitweb
-
-It appears that John and Jakub are finally working together to help
-producing something that we can ship in-tree, finally.  I am looking
-forward to seeing the conclusion of the discussion.
-
-* nd/setup (2010-11-26) 47 commits
- - git.txt: correct where --work-tree path is relative to
- - Revert "Documentation: always respect core.worktree if set"
- - t0001: test git init when run via an alias
- - Remove all logic from get_git_work_tree()
- - setup: rework setup_explicit_git_dir()
- - setup: clean up setup_discovered_git_dir()
- - t1020-subdirectory: test alias expansion in a subdirectory
- - setup: clean up setup_bare_git_dir()
- - setup: limit get_git_work_tree()'s to explicit setup case only
- - Use git_config_early() instead of git_config() during repo setup
- - Add git_config_early()
- - rev-parse: prints --git-dir relative to user's cwd
- - git-rev-parse.txt: clarify --git-dir
- - t1510: setup case #31
- - t1510: setup case #30
- - t1510: setup case #29
- - t1510: setup case #28
- - t1510: setup case #27
- - t1510: setup case #26
- - t1510: setup case #25
- - t1510: setup case #24
- - t1510: setup case #23
- - t1510: setup case #22
- - t1510: setup case #21
- - t1510: setup case #20
- - t1510: setup case #19
- - t1510: setup case #18
- - t1510: setup case #17
- - t1510: setup case #16
- - t1510: setup case #15
- - t1510: setup case #14
- - t1510: setup case #13
- - t1510: setup case #12
- - t1510: setup case #11
- - t1510: setup case #10
- - t1510: setup case #9
- - t1510: setup case #8
- - t1510: setup case #7
- - t1510: setup case #6
- - t1510: setup case #5
- - t1510: setup case #4
- - t1510: setup case #3
- - t1510: setup case #2
- - t1510: setup case #1
- - t1510: setup case #0
- - Add t1510 and basic rules that run repo setup
- - builtins: print setup info if repo is found
-
-Need to re-read this series to move it forward.
-
-* yd/dir-rename (2010-10-29) 5 commits
- - Allow hiding renames of individual files involved in a directory rename.
- - Unified diff output format for bulk moves.
- - Add testcases for the --detect-bulk-moves diffcore flag.
- - Raw diff output format for bulk moves.
- - Introduce bulk-move detection in diffcore.
-
-Need to re-queue the reroll.
 
 * nd/struct-pathspec (2010-12-15) 21 commits
  - t7810: overlapping pathspecs and depth limit
@@ -311,12 +235,14 @@ Need to re-queue the reroll.
  - Add struct pathspec
  (this branch is used by en/object-list-with-pathspec.)
 
-Rerolled again.  Getting nicer by the round ;-)
+On hold, perhaps in 'next', til 1.7.4 final.
 
 * en/object-list-with-pathspec (2010-09-20) 2 commits
  - Add testcases showing how pathspecs are handled with rev-list --objects
  - Make rev-list --objects work together with pathspecs
  (this branch uses nd/struct-pathspec.)
+
+On hold, perhaps in 'next', til 1.7.4 final.
 
 * tr/merge-unborn-clobber (2010-08-22) 1 commit
  - Exhibit merge bug that clobbers index&WT
