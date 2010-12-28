@@ -104,20 +104,20 @@ void buffer_read_binary(struct line_buffer *buf,
 	strbuf_fread(sb, size, buf->infile);
 }
 
-void buffer_copy_bytes(struct line_buffer *buf, off_t len)
+off_t buffer_copy_bytes(struct line_buffer *buf, off_t nbytes)
 {
 	char byte_buffer[COPY_BUFFER_LEN];
-	uint32_t in;
-	while (len > 0 && !feof(buf->infile) && !ferror(buf->infile)) {
-		in = len < COPY_BUFFER_LEN ? len : COPY_BUFFER_LEN;
+	off_t done = 0;
+	while (done < nbytes && !feof(buf->infile) && !ferror(buf->infile)) {
+		off_t len = nbytes - done;
+		size_t in = len < COPY_BUFFER_LEN ? len : COPY_BUFFER_LEN;
 		in = fread(byte_buffer, 1, in, buf->infile);
-		len -= in;
+		done += in;
 		fwrite(byte_buffer, 1, in, stdout);
-		if (ferror(stdout)) {
-			buffer_skip_bytes(buf, len);
-			return;
-		}
+		if (ferror(stdout))
+			return done + buffer_skip_bytes(buf, nbytes - done);
 	}
+	return done;
 }
 
 off_t buffer_skip_bytes(struct line_buffer *buf, off_t nbytes)
