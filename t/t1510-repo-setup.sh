@@ -82,14 +82,15 @@ test_repo() {
 test_expect_success '#0: setup' '
 	sane_unset GIT_DIR GIT_WORK_TREE &&
 	mkdir 0 0/sub &&
-	cd 0 && git init && cd ..
+	(cd 0 && git init) &&
+	here=$(pwd)
 '
 
 test_expect_success '#0: at root' '
 	cat >0/expected <<EOF &&
 setup: git_dir: .git
-setup: worktree: $TRASH_DIRECTORY/0
-setup: cwd: $TRASH_DIRECTORY/0
+setup: worktree: $here/0
+setup: cwd: $here/0
 setup: prefix: (null)
 EOF
 	test_repo 0
@@ -98,8 +99,8 @@ EOF
 test_expect_success '#0: in subdir' '
 	cat >0/sub/expected <<EOF &&
 setup: git_dir: .git
-setup: worktree: $TRASH_DIRECTORY/0
-setup: cwd: $TRASH_DIRECTORY/0
+setup: worktree: $here/0
+setup: cwd: $here/0
 setup: prefix: sub/
 EOF
 	test_repo 0/sub
@@ -135,8 +136,8 @@ test_expect_success '#1: setup' '
 test_expect_success '#1: at root' '
 	cat >1/expected <<EOF &&
 setup: git_dir: .git
-setup: worktree: $TRASH_DIRECTORY/1
-setup: cwd: $TRASH_DIRECTORY/1
+setup: worktree: $here/1
+setup: cwd: $here/1
 setup: prefix: (null)
 EOF
 	test_repo 1
@@ -145,8 +146,8 @@ EOF
 test_expect_success '#1: in subdir' '
 	cat >1/sub/expected <<EOF &&
 setup: git_dir: .git
-setup: worktree: $TRASH_DIRECTORY/1
-setup: cwd: $TRASH_DIRECTORY/1
+setup: worktree: $here/1
+setup: cwd: $here/1
 setup: prefix: sub/
 EOF
 	test_repo 1/sub
@@ -181,29 +182,29 @@ test_expect_success '#2: setup' '
 
 test_expect_success '#2: at root' '
 	cat >2/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/2/.git
-setup: worktree: $TRASH_DIRECTORY/2
-setup: cwd: $TRASH_DIRECTORY/2
+setup: git_dir: $here/2/.git
+setup: worktree: $here/2
+setup: cwd: $here/2
 setup: prefix: (null)
 EOF
-	test_repo 2 "$TRASH_DIRECTORY/2/.git"
+	test_repo 2 "$here/2/.git"
 '
 
 test_expect_success '#2: in subdir' '
 	cat >2/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/2/.git
-setup: worktree: $TRASH_DIRECTORY/2/sub
-setup: cwd: $TRASH_DIRECTORY/2/sub
+setup: git_dir: $here/2/.git
+setup: worktree: $here/2/sub
+setup: cwd: $here/2/sub
 setup: prefix: (null)
 EOF
-	test_repo 2/sub "$TRASH_DIRECTORY/2/.git"
+	test_repo 2/sub "$here/2/.git"
 '
 
 test_expect_success '#2: relative GIT_DIR at root' '
 	cat >2/expected <<EOF &&
 setup: git_dir: .git
-setup: worktree: $TRASH_DIRECTORY/2
-setup: cwd: $TRASH_DIRECTORY/2
+setup: worktree: $here/2
+setup: cwd: $here/2
 setup: prefix: (null)
 EOF
 	test_repo 2 .git
@@ -212,8 +213,8 @@ EOF
 test_expect_success '#2: relative GIT_DIR in subdir' '
 	cat >2/sub/expected <<EOF &&
 setup: git_dir: ../.git
-setup: worktree: $TRASH_DIRECTORY/2/sub
-setup: cwd: $TRASH_DIRECTORY/2/sub
+setup: worktree: $here/2/sub
+setup: cwd: $here/2/sub
 setup: prefix: (null)
 EOF
 	test_repo 2/sub ../.git
@@ -249,18 +250,18 @@ test_expect_success '#3: setup' '
 test_expect_success '#3: GIT_DIR(rel), GIT_WORK_TREE=root at root' '
 	cat >3/expected <<EOF &&
 setup: git_dir: .git
-setup: worktree: $TRASH_DIRECTORY/3
-setup: cwd: $TRASH_DIRECTORY/3
+setup: worktree: $here/3
+setup: cwd: $here/3
 setup: prefix: (null)
 EOF
-	test_repo 3 .git "$TRASH_DIRECTORY/3"
+	test_repo 3 .git "$here/3"
 '
 
 test_expect_success '#3: GIT_DIR(rel), GIT_WORK_TREE=root(rel) at root' '
 	cat >3/expected <<EOF &&
 setup: git_dir: .git
-setup: worktree: $TRASH_DIRECTORY/3
-setup: cwd: $TRASH_DIRECTORY/3
+setup: worktree: $here/3
+setup: cwd: $here/3
 setup: prefix: (null)
 EOF
 	test_repo 3 .git .
@@ -268,39 +269,39 @@ EOF
 
 test_expect_success '#3: GIT_DIR, GIT_WORK_TREE=root at root' '
 	cat >3/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/3/.git
-setup: worktree: $TRASH_DIRECTORY/3
-setup: cwd: $TRASH_DIRECTORY/3
+setup: git_dir: $here/3/.git
+setup: worktree: $here/3
+setup: cwd: $here/3
 setup: prefix: (null)
 EOF
-	test_repo 3 "$TRASH_DIRECTORY/3/.git" "$TRASH_DIRECTORY/3"
+	test_repo 3 "$here/3/.git" "$here/3"
 '
 
 test_expect_success '#3: GIT_DIR, GIT_WORK_TREE=root(rel) at root' '
 	cat >3/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/3/.git
-setup: worktree: $TRASH_DIRECTORY/3
-setup: cwd: $TRASH_DIRECTORY/3
+setup: git_dir: $here/3/.git
+setup: worktree: $here/3
+setup: cwd: $here/3
 setup: prefix: (null)
 EOF
-	test_repo 3 "$TRASH_DIRECTORY/3/.git" .
+	test_repo 3 "$here/3/.git" .
 '
 
 test_expect_success '#3: GIT_DIR(rel), GIT_WORKTREE=root in subdir' '
 	cat >3/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/3/.git
-setup: worktree: $TRASH_DIRECTORY/3
-setup: cwd: $TRASH_DIRECTORY/3
+setup: git_dir: $here/3/.git
+setup: worktree: $here/3
+setup: cwd: $here/3
 setup: prefix: sub/sub/
 EOF
-	test_repo 3/sub/sub ../../.git "$TRASH_DIRECTORY/3"
+	test_repo 3/sub/sub ../../.git "$here/3"
 '
 
 test_expect_success '#3: GIT_DIR(rel), GIT_WORKTREE=root(rel) in subdir' '
 	cat >3/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/3/.git
-setup: worktree: $TRASH_DIRECTORY/3
-setup: cwd: $TRASH_DIRECTORY/3
+setup: git_dir: $here/3/.git
+setup: worktree: $here/3
+setup: cwd: $here/3
 setup: prefix: sub/sub/
 EOF
 	test_repo 3/sub/sub ../../.git ../..
@@ -308,39 +309,39 @@ EOF
 
 test_expect_success '#3: GIT_DIR, GIT_WORKTREE=root in subdir' '
 	cat >3/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/3/.git
-setup: worktree: $TRASH_DIRECTORY/3
-setup: cwd: $TRASH_DIRECTORY/3
+setup: git_dir: $here/3/.git
+setup: worktree: $here/3
+setup: cwd: $here/3
 setup: prefix: sub/
 EOF
-	test_repo 3/sub "$TRASH_DIRECTORY/3/.git" "$TRASH_DIRECTORY/3"
+	test_repo 3/sub "$here/3/.git" "$here/3"
 '
 
 test_expect_success '#3: GIT_DIR, GIT_WORKTREE=root(rel) in subdir' '
 	cat >3/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/3/.git
-setup: worktree: $TRASH_DIRECTORY/3
-setup: cwd: $TRASH_DIRECTORY/3
+setup: git_dir: $here/3/.git
+setup: worktree: $here/3
+setup: cwd: $here/3
 setup: prefix: sub/sub/
 EOF
-	test_repo 3/sub/sub "$TRASH_DIRECTORY/3/.git" ../..
+	test_repo 3/sub/sub "$here/3/.git" ../..
 '
 
 test_expect_success '#3: GIT_DIR(rel), GIT_WORK_TREE=wt at root' '
 	cat >3/expected <<EOF &&
 setup: git_dir: .git
-setup: worktree: $TRASH_DIRECTORY/3/wt
-setup: cwd: $TRASH_DIRECTORY/3
+setup: worktree: $here/3/wt
+setup: cwd: $here/3
 setup: prefix: (null)
 EOF
-	test_repo 3 .git "$TRASH_DIRECTORY/3/wt"
+	test_repo 3 .git "$here/3/wt"
 '
 
 test_expect_success '#3: GIT_DIR(rel), GIT_WORK_TREE=wt(rel) at root' '
 	cat >3/expected <<EOF &&
 setup: git_dir: .git
-setup: worktree: $TRASH_DIRECTORY/3/wt
-setup: cwd: $TRASH_DIRECTORY/3
+setup: worktree: $here/3/wt
+setup: cwd: $here/3
 setup: prefix: (null)
 EOF
 	test_repo 3 .git wt
@@ -348,39 +349,39 @@ EOF
 
 test_expect_success '#3: GIT_DIR, GIT_WORK_TREE=wt(rel) at root' '
 	cat >3/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/3/.git
-setup: worktree: $TRASH_DIRECTORY/3/wt
-setup: cwd: $TRASH_DIRECTORY/3
+setup: git_dir: $here/3/.git
+setup: worktree: $here/3/wt
+setup: cwd: $here/3
 setup: prefix: (null)
 EOF
-	test_repo 3 "$TRASH_DIRECTORY/3/.git" wt
+	test_repo 3 "$here/3/.git" wt
 '
 
 test_expect_success '#3: GIT_DIR, GIT_WORK_TREE=wt at root' '
 	cat >3/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/3/.git
-setup: worktree: $TRASH_DIRECTORY/3/wt
-setup: cwd: $TRASH_DIRECTORY/3
+setup: git_dir: $here/3/.git
+setup: worktree: $here/3/wt
+setup: cwd: $here/3
 setup: prefix: (null)
 EOF
-	test_repo 3 "$TRASH_DIRECTORY/3/.git" "$TRASH_DIRECTORY/3/wt"
+	test_repo 3 "$here/3/.git" "$here/3/wt"
 '
 
 test_expect_success '#3: GIT_DIR(rel), GIT_WORK_TREE=wt in subdir' '
 	cat >3/sub/sub/expected <<EOF &&
 setup: git_dir: ../../.git
-setup: worktree: $TRASH_DIRECTORY/3/wt
-setup: cwd: $TRASH_DIRECTORY/3/sub/sub
+setup: worktree: $here/3/wt
+setup: cwd: $here/3/sub/sub
 setup: prefix: (null)
 EOF
-	test_repo 3/sub/sub ../../.git "$TRASH_DIRECTORY/3/wt"
+	test_repo 3/sub/sub ../../.git "$here/3/wt"
 '
 
 test_expect_success '#3: GIT_DIR(rel), GIT_WORK_TREE=wt(rel) in subdir' '
 	cat >3/sub/sub/expected <<EOF &&
 setup: git_dir: ../../.git
-setup: worktree: $TRASH_DIRECTORY/3/wt
-setup: cwd: $TRASH_DIRECTORY/3/sub/sub
+setup: worktree: $here/3/wt
+setup: cwd: $here/3/sub/sub
 setup: prefix: (null)
 EOF
 	test_repo 3/sub/sub ../../.git ../../wt
@@ -388,39 +389,39 @@ EOF
 
 test_expect_success '#3: GIT_DIR, GIT_WORK_TREE=wt(rel) in subdir' '
 	cat >3/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/3/.git
-setup: worktree: $TRASH_DIRECTORY/3/wt
-setup: cwd: $TRASH_DIRECTORY/3/sub/sub
+setup: git_dir: $here/3/.git
+setup: worktree: $here/3/wt
+setup: cwd: $here/3/sub/sub
 setup: prefix: (null)
 EOF
-	test_repo 3/sub/sub "$TRASH_DIRECTORY/3/.git" ../../wt
+	test_repo 3/sub/sub "$here/3/.git" ../../wt
 '
 
 test_expect_success '#3: GIT_DIR, GIT_WORK_TREE=wt in subdir' '
 	cat >3/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/3/.git
-setup: worktree: $TRASH_DIRECTORY/3/wt
-setup: cwd: $TRASH_DIRECTORY/3/sub/sub
+setup: git_dir: $here/3/.git
+setup: worktree: $here/3/wt
+setup: cwd: $here/3/sub/sub
 setup: prefix: (null)
 EOF
-	test_repo 3/sub/sub "$TRASH_DIRECTORY/3/.git" "$TRASH_DIRECTORY/3/wt"
+	test_repo 3/sub/sub "$here/3/.git" "$here/3/wt"
 '
 
 test_expect_success '#3: GIT_DIR(rel), GIT_WORK_TREE=.. at root' '
 	cat >3/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/3/.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/3/.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 3/
 EOF
-	test_repo 3 .git "$TRASH_DIRECTORY"
+	test_repo 3 .git "$here"
 '
 
 test_expect_success '#3: GIT_DIR(rel), GIT_WORK_TREE=..(rel) at root' '
 	cat >3/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/3/.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/3/.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 3/
 EOF
 	test_repo 3 .git ..
@@ -428,39 +429,39 @@ EOF
 
 test_expect_success '#3: GIT_DIR, GIT_WORK_TREE=..(rel) at root' '
 	cat >3/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/3/.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/3/.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 3/
 EOF
-	test_repo 3 "$TRASH_DIRECTORY/3/.git" ..
+	test_repo 3 "$here/3/.git" ..
 '
 
 test_expect_success '#3: GIT_DIR, GIT_WORK_TREE=.. at root' '
 	cat >3/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/3/.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/3/.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 3/
 EOF
-	test_repo 3 "$TRASH_DIRECTORY/3/.git" "$TRASH_DIRECTORY"
+	test_repo 3 "$here/3/.git" "$here"
 '
 
 test_expect_success '#3: GIT_DIR(rel), GIT_WORK_TREE=.. in subdir' '
 	cat >3/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/3/.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/3/.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 3/sub/sub/
 EOF
-	test_repo 3/sub/sub ../../.git "$TRASH_DIRECTORY"
+	test_repo 3/sub/sub ../../.git "$here"
 '
 
 test_expect_success '#3: GIT_DIR(rel), GIT_WORK_TREE=..(rel) in subdir' '
 	cat >3/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/3/.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/3/.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 3/sub/sub/
 EOF
 	test_repo 3/sub/sub ../../.git ../../..
@@ -468,22 +469,22 @@ EOF
 
 test_expect_success '#3: GIT_DIR, GIT_WORK_TREE=..(rel) in subdir' '
 	cat >3/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/3/.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/3/.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 3/sub/sub/
 EOF
-	test_repo 3/sub/sub "$TRASH_DIRECTORY/3/.git" ../../../
+	test_repo 3/sub/sub "$here/3/.git" ../../../
 '
 
 test_expect_success '#3: GIT_DIR, GIT_WORK_TREE=.. in subdir' '
 	cat >3/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/3/.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/3/.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 3/sub/sub/
 EOF
-	test_repo 3/sub/sub "$TRASH_DIRECTORY/3/.git" "$TRASH_DIRECTORY"
+	test_repo 3/sub/sub "$here/3/.git" "$here"
 '
 
 #
@@ -515,8 +516,8 @@ test_expect_success '#4: setup' '
 test_expect_success '#4: at root' '
 	cat >4/expected <<EOF &&
 setup: git_dir: .git
-setup: worktree: $TRASH_DIRECTORY/4
-setup: cwd: $TRASH_DIRECTORY/4
+setup: worktree: $here/4
+setup: cwd: $here/4
 setup: prefix: (null)
 EOF
 	test_repo 4
@@ -525,8 +526,8 @@ EOF
 test_expect_success '#4: in subdir' '
 	cat >4/sub/expected <<EOF &&
 setup: git_dir: .git
-setup: worktree: $TRASH_DIRECTORY/4
-setup: cwd: $TRASH_DIRECTORY/4
+setup: worktree: $here/4
+setup: cwd: $here/4
 setup: prefix: sub/
 EOF
 	test_repo 4/sub
@@ -563,8 +564,8 @@ test_expect_success '#5: setup' '
 test_expect_success '#5: at root' '
 	cat >5/expected <<EOF &&
 setup: git_dir: .git
-setup: worktree: $TRASH_DIRECTORY/5
-setup: cwd: $TRASH_DIRECTORY/5
+setup: worktree: $here/5
+setup: cwd: $here/5
 setup: prefix: (null)
 EOF
 	test_repo 5
@@ -573,8 +574,8 @@ EOF
 test_expect_success '#5: in subdir' '
 	cat >5/sub/expected <<EOF &&
 setup: git_dir: .git
-setup: worktree: $TRASH_DIRECTORY/5
-setup: cwd: $TRASH_DIRECTORY/5
+setup: worktree: $here/5
+setup: cwd: $here/5
 setup: prefix: sub/
 EOF
 	test_repo 5/sub
@@ -610,265 +611,265 @@ test_expect_success '#6: setup' '
 test_expect_success '#6: GIT_DIR(rel), core.worktree=.. at root' '
 	cat >6/expected <<EOF &&
 setup: git_dir: .git
-setup: worktree: $TRASH_DIRECTORY/6
-setup: cwd: $TRASH_DIRECTORY/6
+setup: worktree: $here/6
+setup: cwd: $here/6
 setup: prefix: (null)
 EOF
-	git config --file="$TRASH_DIRECTORY/6/.git/config" core.worktree "$TRASH_DIRECTORY/6" &&
+	git config --file="$here/6/.git/config" core.worktree "$here/6" &&
 	test_repo 6 .git
 '
 
 test_expect_success '#6: GIT_DIR(rel), core.worktree=..(rel) at root' '
 	cat >6/expected <<EOF &&
 setup: git_dir: .git
-setup: worktree: $TRASH_DIRECTORY/6
-setup: cwd: $TRASH_DIRECTORY/6
+setup: worktree: $here/6
+setup: cwd: $here/6
 setup: prefix: (null)
 EOF
-	git config --file="$TRASH_DIRECTORY/6/.git/config" core.worktree .. &&
+	git config --file="$here/6/.git/config" core.worktree .. &&
 	test_repo 6 .git
 '
 
 test_expect_success '#6: GIT_DIR, core.worktree=.. at root' '
 	cat >6/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/6/.git
-setup: worktree: $TRASH_DIRECTORY/6
-setup: cwd: $TRASH_DIRECTORY/6
+setup: git_dir: $here/6/.git
+setup: worktree: $here/6
+setup: cwd: $here/6
 setup: prefix: (null)
 EOF
-	git config --file="$TRASH_DIRECTORY/6/.git/config" core.worktree "$TRASH_DIRECTORY/6" &&
-	test_repo 6 "$TRASH_DIRECTORY/6/.git"
+	git config --file="$here/6/.git/config" core.worktree "$here/6" &&
+	test_repo 6 "$here/6/.git"
 '
 
 test_expect_success '#6: GIT_DIR, core.worktree=..(rel) at root' '
 	cat >6/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/6/.git
-setup: worktree: $TRASH_DIRECTORY/6
-setup: cwd: $TRASH_DIRECTORY/6
+setup: git_dir: $here/6/.git
+setup: worktree: $here/6
+setup: cwd: $here/6
 setup: prefix: (null)
 EOF
-	git config --file="$TRASH_DIRECTORY/6/.git/config" core.worktree .. &&
-	test_repo 6 "$TRASH_DIRECTORY/6/.git"
+	git config --file="$here/6/.git/config" core.worktree .. &&
+	test_repo 6 "$here/6/.git"
 '
 
 test_expect_success '#6: GIT_DIR(rel), core.worktree=.. in subdir' '
 	cat >6/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/6/.git
-setup: worktree: $TRASH_DIRECTORY/6
-setup: cwd: $TRASH_DIRECTORY/6
+setup: git_dir: $here/6/.git
+setup: worktree: $here/6
+setup: cwd: $here/6
 setup: prefix: sub/sub/
 EOF
-	git config --file="$TRASH_DIRECTORY/6/.git/config" core.worktree "$TRASH_DIRECTORY/6" &&
+	git config --file="$here/6/.git/config" core.worktree "$here/6" &&
 	test_repo 6/sub/sub ../../.git
 '
 
 test_expect_success '#6: GIT_DIR(rel), core.worktree=..(rel) in subdir' '
 	cat >6/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/6/.git
-setup: worktree: $TRASH_DIRECTORY/6
-setup: cwd: $TRASH_DIRECTORY/6
+setup: git_dir: $here/6/.git
+setup: worktree: $here/6
+setup: cwd: $here/6
 setup: prefix: sub/sub/
 EOF
-	git config --file="$TRASH_DIRECTORY/6/.git/config" core.worktree .. &&
+	git config --file="$here/6/.git/config" core.worktree .. &&
 	test_repo 6/sub/sub ../../.git
 '
 
 test_expect_success '#6: GIT_DIR, core.worktree=.. in subdir' '
 	cat >6/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/6/.git
-setup: worktree: $TRASH_DIRECTORY/6
-setup: cwd: $TRASH_DIRECTORY/6
+setup: git_dir: $here/6/.git
+setup: worktree: $here/6
+setup: cwd: $here/6
 setup: prefix: sub/
 EOF
-	git config --file="$TRASH_DIRECTORY/6/.git/config" core.worktree "$TRASH_DIRECTORY/6" &&
-	test_repo 6/sub "$TRASH_DIRECTORY/6/.git"
+	git config --file="$here/6/.git/config" core.worktree "$here/6" &&
+	test_repo 6/sub "$here/6/.git"
 '
 
 test_expect_success '#6: GIT_DIR, core.worktree=..(rel) in subdir' '
 	cat >6/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/6/.git
-setup: worktree: $TRASH_DIRECTORY/6
-setup: cwd: $TRASH_DIRECTORY/6
+setup: git_dir: $here/6/.git
+setup: worktree: $here/6
+setup: cwd: $here/6
 setup: prefix: sub/sub/
 EOF
-	git config --file="$TRASH_DIRECTORY/6/.git/config" core.worktree .. &&
-	test_repo 6/sub/sub "$TRASH_DIRECTORY/6/.git"
+	git config --file="$here/6/.git/config" core.worktree .. &&
+	test_repo 6/sub/sub "$here/6/.git"
 '
 
 test_expect_success '#6: GIT_DIR(rel), core.worktree=../wt at root' '
 	cat >6/expected <<EOF &&
 setup: git_dir: .git
-setup: worktree: $TRASH_DIRECTORY/6/wt
-setup: cwd: $TRASH_DIRECTORY/6
+setup: worktree: $here/6/wt
+setup: cwd: $here/6
 setup: prefix: (null)
 EOF
-	git config --file="$TRASH_DIRECTORY/6/.git/config" core.worktree "$TRASH_DIRECTORY/6/wt" &&
+	git config --file="$here/6/.git/config" core.worktree "$here/6/wt" &&
 	test_repo 6 .git
 '
 
 test_expect_success '#6: GIT_DIR(rel), core.worktree=../wt(rel) at root' '
 	cat >6/expected <<EOF &&
 setup: git_dir: .git
-setup: worktree: $TRASH_DIRECTORY/6/wt
-setup: cwd: $TRASH_DIRECTORY/6
+setup: worktree: $here/6/wt
+setup: cwd: $here/6
 setup: prefix: (null)
 EOF
-	git config --file="$TRASH_DIRECTORY/6/.git/config" core.worktree ../wt &&
+	git config --file="$here/6/.git/config" core.worktree ../wt &&
 	test_repo 6 .git
 '
 
 test_expect_success '#6: GIT_DIR, core.worktree=../wt(rel) at root' '
 	cat >6/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/6/.git
-setup: worktree: $TRASH_DIRECTORY/6/wt
-setup: cwd: $TRASH_DIRECTORY/6
+setup: git_dir: $here/6/.git
+setup: worktree: $here/6/wt
+setup: cwd: $here/6
 setup: prefix: (null)
 EOF
-	git config --file="$TRASH_DIRECTORY/6/.git/config" core.worktree ../wt &&
-	test_repo 6 "$TRASH_DIRECTORY/6/.git"
+	git config --file="$here/6/.git/config" core.worktree ../wt &&
+	test_repo 6 "$here/6/.git"
 '
 
 test_expect_success '#6: GIT_DIR, core.worktree=../wt at root' '
 	cat >6/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/6/.git
-setup: worktree: $TRASH_DIRECTORY/6/wt
-setup: cwd: $TRASH_DIRECTORY/6
+setup: git_dir: $here/6/.git
+setup: worktree: $here/6/wt
+setup: cwd: $here/6
 setup: prefix: (null)
 EOF
-	git config --file="$TRASH_DIRECTORY/6/.git/config" core.worktree "$TRASH_DIRECTORY/6/wt" &&
-	test_repo 6 "$TRASH_DIRECTORY/6/.git"
+	git config --file="$here/6/.git/config" core.worktree "$here/6/wt" &&
+	test_repo 6 "$here/6/.git"
 '
 
 test_expect_success '#6: GIT_DIR(rel), core.worktree=../wt in subdir' '
 	cat >6/sub/sub/expected <<EOF &&
 setup: git_dir: ../../.git
-setup: worktree: $TRASH_DIRECTORY/6/wt
-setup: cwd: $TRASH_DIRECTORY/6/sub/sub
+setup: worktree: $here/6/wt
+setup: cwd: $here/6/sub/sub
 setup: prefix: (null)
 EOF
-	git config --file="$TRASH_DIRECTORY/6/.git/config" core.worktree "$TRASH_DIRECTORY/6/wt" &&
+	git config --file="$here/6/.git/config" core.worktree "$here/6/wt" &&
 	test_repo 6/sub/sub ../../.git
 '
 
 test_expect_success '#6: GIT_DIR(rel), core.worktree=../wt(rel) in subdir' '
 	cat >6/sub/sub/expected <<EOF &&
 setup: git_dir: ../../.git
-setup: worktree: $TRASH_DIRECTORY/6/wt
-setup: cwd: $TRASH_DIRECTORY/6/sub/sub
+setup: worktree: $here/6/wt
+setup: cwd: $here/6/sub/sub
 setup: prefix: (null)
 EOF
-	git config --file="$TRASH_DIRECTORY/6/.git/config" core.worktree ../wt &&
+	git config --file="$here/6/.git/config" core.worktree ../wt &&
 	test_repo 6/sub/sub ../../.git
 '
 
 test_expect_success '#6: GIT_DIR, core.worktree=../wt(rel) in subdir' '
 	cat >6/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/6/.git
-setup: worktree: $TRASH_DIRECTORY/6/wt
-setup: cwd: $TRASH_DIRECTORY/6/sub/sub
+setup: git_dir: $here/6/.git
+setup: worktree: $here/6/wt
+setup: cwd: $here/6/sub/sub
 setup: prefix: (null)
 EOF
-	git config --file="$TRASH_DIRECTORY/6/.git/config" core.worktree ../wt &&
-	test_repo 6/sub/sub "$TRASH_DIRECTORY/6/.git"
+	git config --file="$here/6/.git/config" core.worktree ../wt &&
+	test_repo 6/sub/sub "$here/6/.git"
 '
 
 test_expect_success '#6: GIT_DIR, core.worktree=../wt in subdir' '
 	cat >6/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/6/.git
-setup: worktree: $TRASH_DIRECTORY/6/wt
-setup: cwd: $TRASH_DIRECTORY/6/sub/sub
+setup: git_dir: $here/6/.git
+setup: worktree: $here/6/wt
+setup: cwd: $here/6/sub/sub
 setup: prefix: (null)
 EOF
-	git config --file="$TRASH_DIRECTORY/6/.git/config" core.worktree "$TRASH_DIRECTORY/6/wt" &&
-	test_repo 6/sub/sub "$TRASH_DIRECTORY/6/.git"
+	git config --file="$here/6/.git/config" core.worktree "$here/6/wt" &&
+	test_repo 6/sub/sub "$here/6/.git"
 '
 
 test_expect_success '#6: GIT_DIR(rel), core.worktree=../.. at root' '
 	cat >6/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/6/.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/6/.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 6/
 EOF
-	git config --file="$TRASH_DIRECTORY/6/.git/config" core.worktree "$TRASH_DIRECTORY" &&
+	git config --file="$here/6/.git/config" core.worktree "$here" &&
 	test_repo 6 .git
 '
 
 test_expect_success '#6: GIT_DIR(rel), core.worktree=../..(rel) at root' '
 	cat >6/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/6/.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/6/.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 6/
 EOF
-	git config --file="$TRASH_DIRECTORY/6/.git/config" core.worktree ../../ &&
+	git config --file="$here/6/.git/config" core.worktree ../../ &&
 	test_repo 6 .git
 '
 
 test_expect_success '#6: GIT_DIR, core.worktree=../..(rel) at root' '
 	cat >6/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/6/.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/6/.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 6/
 EOF
-	git config --file="$TRASH_DIRECTORY/6/.git/config" core.worktree ../../ &&
-	test_repo 6 "$TRASH_DIRECTORY/6/.git"
+	git config --file="$here/6/.git/config" core.worktree ../../ &&
+	test_repo 6 "$here/6/.git"
 '
 
 test_expect_success '#6: GIT_DIR, core.worktree=../.. at root' '
 	cat >6/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/6/.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/6/.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 6/
 EOF
-	git config --file="$TRASH_DIRECTORY/6/.git/config" core.worktree "$TRASH_DIRECTORY" &&
-	test_repo 6 "$TRASH_DIRECTORY/6/.git"
+	git config --file="$here/6/.git/config" core.worktree "$here" &&
+	test_repo 6 "$here/6/.git"
 '
 
 test_expect_success '#6: GIT_DIR(rel), core.worktree=../.. in subdir' '
 	cat >6/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/6/.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/6/.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 6/sub/sub/
 EOF
-	git config --file="$TRASH_DIRECTORY/6/.git/config" core.worktree "$TRASH_DIRECTORY" &&
+	git config --file="$here/6/.git/config" core.worktree "$here" &&
 	test_repo 6/sub/sub ../../.git
 '
 
 test_expect_success '#6: GIT_DIR(rel), core.worktree=../..(rel) in subdir' '
 	cat >6/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/6/.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/6/.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 6/sub/sub/
 EOF
-	git config --file="$TRASH_DIRECTORY/6/.git/config" core.worktree ../.. &&
+	git config --file="$here/6/.git/config" core.worktree ../.. &&
 	test_repo 6/sub/sub ../../.git
 '
 
 test_expect_success '#6: GIT_DIR, core.worktree=../..(rel) in subdir' '
 	cat >6/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/6/.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/6/.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 6/sub/sub/
 EOF
-	git config --file="$TRASH_DIRECTORY/6/.git/config" core.worktree ../.. &&
-	test_repo 6/sub/sub "$TRASH_DIRECTORY/6/.git"
+	git config --file="$here/6/.git/config" core.worktree ../.. &&
+	test_repo 6/sub/sub "$here/6/.git"
 '
 
 test_expect_success '#6: GIT_DIR, core.worktree=../.. in subdir' '
 	cat >6/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/6/.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/6/.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 6/sub/sub/
 EOF
-	git config --file="$TRASH_DIRECTORY/6/.git/config" core.worktree "$TRASH_DIRECTORY" &&
-	test_repo 6/sub/sub "$TRASH_DIRECTORY/6/.git"
+	git config --file="$here/6/.git/config" core.worktree "$here" &&
+	test_repo 6/sub/sub "$here/6/.git"
 '
 
 #
@@ -900,18 +901,18 @@ test_expect_success '#7: setup' '
 test_expect_success '#7: GIT_DIR(rel), GIT_WORK_TREE=root at root' '
 	cat >7/expected <<EOF &&
 setup: git_dir: .git
-setup: worktree: $TRASH_DIRECTORY/7
-setup: cwd: $TRASH_DIRECTORY/7
+setup: worktree: $here/7
+setup: cwd: $here/7
 setup: prefix: (null)
 EOF
-	test_repo 7 .git "$TRASH_DIRECTORY/7"
+	test_repo 7 .git "$here/7"
 '
 
 test_expect_success '#7: GIT_DIR(rel), GIT_WORK_TREE=root(rel) at root' '
 	cat >7/expected <<EOF &&
 setup: git_dir: .git
-setup: worktree: $TRASH_DIRECTORY/7
-setup: cwd: $TRASH_DIRECTORY/7
+setup: worktree: $here/7
+setup: cwd: $here/7
 setup: prefix: (null)
 EOF
 	test_repo 7 .git .
@@ -919,39 +920,39 @@ EOF
 
 test_expect_success '#7: GIT_DIR, GIT_WORK_TREE=root at root' '
 	cat >7/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/7/.git
-setup: worktree: $TRASH_DIRECTORY/7
-setup: cwd: $TRASH_DIRECTORY/7
+setup: git_dir: $here/7/.git
+setup: worktree: $here/7
+setup: cwd: $here/7
 setup: prefix: (null)
 EOF
-	test_repo 7 "$TRASH_DIRECTORY/7/.git" "$TRASH_DIRECTORY/7"
+	test_repo 7 "$here/7/.git" "$here/7"
 '
 
 test_expect_success '#7: GIT_DIR, GIT_WORK_TREE=root(rel) at root' '
 	cat >7/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/7/.git
-setup: worktree: $TRASH_DIRECTORY/7
-setup: cwd: $TRASH_DIRECTORY/7
+setup: git_dir: $here/7/.git
+setup: worktree: $here/7
+setup: cwd: $here/7
 setup: prefix: (null)
 EOF
-	test_repo 7 "$TRASH_DIRECTORY/7/.git" .
+	test_repo 7 "$here/7/.git" .
 '
 
 test_expect_success '#7: GIT_DIR(rel), GIT_WORKTREE=root in subdir' '
 	cat >7/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/7/.git
-setup: worktree: $TRASH_DIRECTORY/7
-setup: cwd: $TRASH_DIRECTORY/7
+setup: git_dir: $here/7/.git
+setup: worktree: $here/7
+setup: cwd: $here/7
 setup: prefix: sub/sub/
 EOF
-	test_repo 7/sub/sub ../../.git "$TRASH_DIRECTORY/7"
+	test_repo 7/sub/sub ../../.git "$here/7"
 '
 
 test_expect_success '#7: GIT_DIR(rel), GIT_WORKTREE=root(rel) in subdir' '
 	cat >7/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/7/.git
-setup: worktree: $TRASH_DIRECTORY/7
-setup: cwd: $TRASH_DIRECTORY/7
+setup: git_dir: $here/7/.git
+setup: worktree: $here/7
+setup: cwd: $here/7
 setup: prefix: sub/sub/
 EOF
 	test_repo 7/sub/sub ../../.git ../..
@@ -959,39 +960,39 @@ EOF
 
 test_expect_success '#7: GIT_DIR, GIT_WORKTREE=root in subdir' '
 	cat >7/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/7/.git
-setup: worktree: $TRASH_DIRECTORY/7
-setup: cwd: $TRASH_DIRECTORY/7
+setup: git_dir: $here/7/.git
+setup: worktree: $here/7
+setup: cwd: $here/7
 setup: prefix: sub/
 EOF
-	test_repo 7/sub "$TRASH_DIRECTORY/7/.git" "$TRASH_DIRECTORY/7"
+	test_repo 7/sub "$here/7/.git" "$here/7"
 '
 
 test_expect_success '#7: GIT_DIR, GIT_WORKTREE=root(rel) in subdir' '
 	cat >7/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/7/.git
-setup: worktree: $TRASH_DIRECTORY/7
-setup: cwd: $TRASH_DIRECTORY/7
+setup: git_dir: $here/7/.git
+setup: worktree: $here/7
+setup: cwd: $here/7
 setup: prefix: sub/sub/
 EOF
-	test_repo 7/sub/sub "$TRASH_DIRECTORY/7/.git" ../..
+	test_repo 7/sub/sub "$here/7/.git" ../..
 '
 
 test_expect_success '#7: GIT_DIR(rel), GIT_WORK_TREE=wt at root' '
 	cat >7/expected <<EOF &&
 setup: git_dir: .git
-setup: worktree: $TRASH_DIRECTORY/7/wt
-setup: cwd: $TRASH_DIRECTORY/7
+setup: worktree: $here/7/wt
+setup: cwd: $here/7
 setup: prefix: (null)
 EOF
-	test_repo 7 .git "$TRASH_DIRECTORY/7/wt"
+	test_repo 7 .git "$here/7/wt"
 '
 
 test_expect_success '#7: GIT_DIR(rel), GIT_WORK_TREE=wt(rel) at root' '
 	cat >7/expected <<EOF &&
 setup: git_dir: .git
-setup: worktree: $TRASH_DIRECTORY/7/wt
-setup: cwd: $TRASH_DIRECTORY/7
+setup: worktree: $here/7/wt
+setup: cwd: $here/7
 setup: prefix: (null)
 EOF
 	test_repo 7 .git wt
@@ -999,39 +1000,39 @@ EOF
 
 test_expect_success '#7: GIT_DIR, GIT_WORK_TREE=wt(rel) at root' '
 	cat >7/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/7/.git
-setup: worktree: $TRASH_DIRECTORY/7/wt
-setup: cwd: $TRASH_DIRECTORY/7
+setup: git_dir: $here/7/.git
+setup: worktree: $here/7/wt
+setup: cwd: $here/7
 setup: prefix: (null)
 EOF
-	test_repo 7 "$TRASH_DIRECTORY/7/.git" wt
+	test_repo 7 "$here/7/.git" wt
 '
 
 test_expect_success '#7: GIT_DIR, GIT_WORK_TREE=wt at root' '
 	cat >7/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/7/.git
-setup: worktree: $TRASH_DIRECTORY/7/wt
-setup: cwd: $TRASH_DIRECTORY/7
+setup: git_dir: $here/7/.git
+setup: worktree: $here/7/wt
+setup: cwd: $here/7
 setup: prefix: (null)
 EOF
-	test_repo 7 "$TRASH_DIRECTORY/7/.git" "$TRASH_DIRECTORY/7/wt"
+	test_repo 7 "$here/7/.git" "$here/7/wt"
 '
 
 test_expect_success '#7: GIT_DIR(rel), GIT_WORK_TREE=wt in subdir' '
 	cat >7/sub/sub/expected <<EOF &&
 setup: git_dir: ../../.git
-setup: worktree: $TRASH_DIRECTORY/7/wt
-setup: cwd: $TRASH_DIRECTORY/7/sub/sub
+setup: worktree: $here/7/wt
+setup: cwd: $here/7/sub/sub
 setup: prefix: (null)
 EOF
-	test_repo 7/sub/sub ../../.git "$TRASH_DIRECTORY/7/wt"
+	test_repo 7/sub/sub ../../.git "$here/7/wt"
 '
 
 test_expect_success '#7: GIT_DIR(rel), GIT_WORK_TREE=wt(rel) in subdir' '
 	cat >7/sub/sub/expected <<EOF &&
 setup: git_dir: ../../.git
-setup: worktree: $TRASH_DIRECTORY/7/wt
-setup: cwd: $TRASH_DIRECTORY/7/sub/sub
+setup: worktree: $here/7/wt
+setup: cwd: $here/7/sub/sub
 setup: prefix: (null)
 EOF
 	test_repo 7/sub/sub ../../.git ../../wt
@@ -1039,39 +1040,39 @@ EOF
 
 test_expect_success '#7: GIT_DIR, GIT_WORK_TREE=wt(rel) in subdir' '
 	cat >7/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/7/.git
-setup: worktree: $TRASH_DIRECTORY/7/wt
-setup: cwd: $TRASH_DIRECTORY/7/sub/sub
+setup: git_dir: $here/7/.git
+setup: worktree: $here/7/wt
+setup: cwd: $here/7/sub/sub
 setup: prefix: (null)
 EOF
-	test_repo 7/sub/sub "$TRASH_DIRECTORY/7/.git" ../../wt
+	test_repo 7/sub/sub "$here/7/.git" ../../wt
 '
 
 test_expect_success '#7: GIT_DIR, GIT_WORK_TREE=wt in subdir' '
 	cat >7/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/7/.git
-setup: worktree: $TRASH_DIRECTORY/7/wt
-setup: cwd: $TRASH_DIRECTORY/7/sub/sub
+setup: git_dir: $here/7/.git
+setup: worktree: $here/7/wt
+setup: cwd: $here/7/sub/sub
 setup: prefix: (null)
 EOF
-	test_repo 7/sub/sub "$TRASH_DIRECTORY/7/.git" "$TRASH_DIRECTORY/7/wt"
+	test_repo 7/sub/sub "$here/7/.git" "$here/7/wt"
 '
 
 test_expect_success '#7: GIT_DIR(rel), GIT_WORK_TREE=.. at root' '
 	cat >7/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/7/.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/7/.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 7/
 EOF
-	test_repo 7 .git "$TRASH_DIRECTORY"
+	test_repo 7 .git "$here"
 '
 
 test_expect_success '#7: GIT_DIR(rel), GIT_WORK_TREE=..(rel) at root' '
 	cat >7/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/7/.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/7/.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 7/
 EOF
 	test_repo 7 .git ..
@@ -1079,39 +1080,39 @@ EOF
 
 test_expect_success '#7: GIT_DIR, GIT_WORK_TREE=..(rel) at root' '
 	cat >7/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/7/.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/7/.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 7/
 EOF
-	test_repo 7 "$TRASH_DIRECTORY/7/.git" ..
+	test_repo 7 "$here/7/.git" ..
 '
 
 test_expect_success '#7: GIT_DIR, GIT_WORK_TREE=.. at root' '
 	cat >7/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/7/.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/7/.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 7/
 EOF
-	test_repo 7 "$TRASH_DIRECTORY/7/.git" "$TRASH_DIRECTORY"
+	test_repo 7 "$here/7/.git" "$here"
 '
 
 test_expect_success '#7: GIT_DIR(rel), GIT_WORK_TREE=.. in subdir' '
 	cat >7/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/7/.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/7/.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 7/sub/sub/
 EOF
-	test_repo 7/sub/sub ../../.git "$TRASH_DIRECTORY"
+	test_repo 7/sub/sub ../../.git "$here"
 '
 
 test_expect_success '#7: GIT_DIR(rel), GIT_WORK_TREE=..(rel) in subdir' '
 	cat >7/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/7/.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/7/.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 7/sub/sub/
 EOF
 	test_repo 7/sub/sub ../../.git ../../..
@@ -1119,22 +1120,22 @@ EOF
 
 test_expect_success '#7: GIT_DIR, GIT_WORK_TREE=..(rel) in subdir' '
 	cat >7/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/7/.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/7/.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 7/sub/sub/
 EOF
-	test_repo 7/sub/sub "$TRASH_DIRECTORY/7/.git" ../../../
+	test_repo 7/sub/sub "$here/7/.git" ../../../
 '
 
 test_expect_success '#7: GIT_DIR, GIT_WORK_TREE=.. in subdir' '
 	cat >7/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/7/.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/7/.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 7/sub/sub/
 EOF
-	test_repo 7/sub/sub "$TRASH_DIRECTORY/7/.git" "$TRASH_DIRECTORY"
+	test_repo 7/sub/sub "$here/7/.git" "$here"
 '
 
 #
@@ -1166,9 +1167,9 @@ test_expect_success '#8: setup' '
 
 test_expect_success '#8: at root' '
 	cat >8/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/8.git
-setup: worktree: $TRASH_DIRECTORY/8
-setup: cwd: $TRASH_DIRECTORY/8
+setup: git_dir: $here/8.git
+setup: worktree: $here/8
+setup: cwd: $here/8
 setup: prefix: (null)
 EOF
 	test_repo 8
@@ -1176,9 +1177,9 @@ EOF
 
 test_expect_success '#8: in subdir' '
 	cat >8/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/8.git
-setup: worktree: $TRASH_DIRECTORY/8
-setup: cwd: $TRASH_DIRECTORY/8
+setup: git_dir: $here/8.git
+setup: worktree: $here/8
+setup: cwd: $here/8
 setup: prefix: sub/
 EOF
 	test_repo 8/sub
@@ -1215,9 +1216,9 @@ test_expect_success '#9: setup' '
 
 test_expect_success '#9: at root' '
 	cat >9/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/9.git
-setup: worktree: $TRASH_DIRECTORY/9
-setup: cwd: $TRASH_DIRECTORY/9
+setup: git_dir: $here/9.git
+setup: worktree: $here/9
+setup: cwd: $here/9
 setup: prefix: (null)
 EOF
 	test_repo 9
@@ -1225,9 +1226,9 @@ EOF
 
 test_expect_success '#9: in subdir' '
 	cat >9/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/9.git
-setup: worktree: $TRASH_DIRECTORY/9
-setup: cwd: $TRASH_DIRECTORY/9
+setup: git_dir: $here/9.git
+setup: worktree: $here/9
+setup: cwd: $here/9
 setup: prefix: sub/
 EOF
 	test_repo 9/sub
@@ -1262,29 +1263,29 @@ test_expect_success '#10: setup' '
 
 test_expect_success '#10: at root' '
 	cat >10/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/10.git
-setup: worktree: $TRASH_DIRECTORY/10
-setup: cwd: $TRASH_DIRECTORY/10
+setup: git_dir: $here/10.git
+setup: worktree: $here/10
+setup: cwd: $here/10
 setup: prefix: (null)
 EOF
-	test_repo 10 "$TRASH_DIRECTORY/10/.git"
+	test_repo 10 "$here/10/.git"
 '
 
 test_expect_success '#10: in subdir' '
 	cat >10/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/10.git
-setup: worktree: $TRASH_DIRECTORY/10/sub
-setup: cwd: $TRASH_DIRECTORY/10/sub
+setup: git_dir: $here/10.git
+setup: worktree: $here/10/sub
+setup: cwd: $here/10/sub
 setup: prefix: (null)
 EOF
-	test_repo 10/sub "$TRASH_DIRECTORY/10/.git"
+	test_repo 10/sub "$here/10/.git"
 '
 
 test_expect_success '#10: relative GIT_DIR at root' '
 	cat >10/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/10.git
-setup: worktree: $TRASH_DIRECTORY/10
-setup: cwd: $TRASH_DIRECTORY/10
+setup: git_dir: $here/10.git
+setup: worktree: $here/10
+setup: cwd: $here/10
 setup: prefix: (null)
 EOF
 	test_repo 10 .git
@@ -1292,9 +1293,9 @@ EOF
 
 test_expect_success '#10: relative GIT_DIR in subdir' '
 	cat >10/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/10.git
-setup: worktree: $TRASH_DIRECTORY/10/sub
-setup: cwd: $TRASH_DIRECTORY/10/sub
+setup: git_dir: $here/10.git
+setup: worktree: $here/10/sub
+setup: cwd: $here/10/sub
 setup: prefix: (null)
 EOF
 	test_repo 10/sub ../.git
@@ -1329,19 +1330,19 @@ test_expect_success '#11: setup' '
 
 test_expect_success '#11: GIT_DIR(rel), GIT_WORK_TREE=root at root' '
 	cat >11/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/11.git
-setup: worktree: $TRASH_DIRECTORY/11
-setup: cwd: $TRASH_DIRECTORY/11
+setup: git_dir: $here/11.git
+setup: worktree: $here/11
+setup: cwd: $here/11
 setup: prefix: (null)
 EOF
-	test_repo 11 .git "$TRASH_DIRECTORY/11"
+	test_repo 11 .git "$here/11"
 '
 
 test_expect_success '#11: GIT_DIR(rel), GIT_WORK_TREE=root(rel) at root' '
 	cat >11/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/11.git
-setup: worktree: $TRASH_DIRECTORY/11
-setup: cwd: $TRASH_DIRECTORY/11
+setup: git_dir: $here/11.git
+setup: worktree: $here/11
+setup: cwd: $here/11
 setup: prefix: (null)
 EOF
 	test_repo 11 .git .
@@ -1349,39 +1350,39 @@ EOF
 
 test_expect_success '#11: GIT_DIR, GIT_WORK_TREE=root at root' '
 	cat >11/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/11.git
-setup: worktree: $TRASH_DIRECTORY/11
-setup: cwd: $TRASH_DIRECTORY/11
+setup: git_dir: $here/11.git
+setup: worktree: $here/11
+setup: cwd: $here/11
 setup: prefix: (null)
 EOF
-	test_repo 11 "$TRASH_DIRECTORY/11/.git" "$TRASH_DIRECTORY/11"
+	test_repo 11 "$here/11/.git" "$here/11"
 '
 
 test_expect_success '#11: GIT_DIR, GIT_WORK_TREE=root(rel) at root' '
 	cat >11/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/11.git
-setup: worktree: $TRASH_DIRECTORY/11
-setup: cwd: $TRASH_DIRECTORY/11
+setup: git_dir: $here/11.git
+setup: worktree: $here/11
+setup: cwd: $here/11
 setup: prefix: (null)
 EOF
-	test_repo 11 "$TRASH_DIRECTORY/11/.git" .
+	test_repo 11 "$here/11/.git" .
 '
 
 test_expect_success '#11: GIT_DIR(rel), GIT_WORKTREE=root in subdir' '
 	cat >11/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/11.git
-setup: worktree: $TRASH_DIRECTORY/11
-setup: cwd: $TRASH_DIRECTORY/11
+setup: git_dir: $here/11.git
+setup: worktree: $here/11
+setup: cwd: $here/11
 setup: prefix: sub/sub/
 EOF
-	test_repo 11/sub/sub ../../.git "$TRASH_DIRECTORY/11"
+	test_repo 11/sub/sub ../../.git "$here/11"
 '
 
 test_expect_success '#11: GIT_DIR(rel), GIT_WORKTREE=root(rel) in subdir' '
 	cat >11/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/11.git
-setup: worktree: $TRASH_DIRECTORY/11
-setup: cwd: $TRASH_DIRECTORY/11
+setup: git_dir: $here/11.git
+setup: worktree: $here/11
+setup: cwd: $here/11
 setup: prefix: sub/sub/
 EOF
 	test_repo 11/sub/sub ../../.git ../..
@@ -1389,39 +1390,39 @@ EOF
 
 test_expect_success '#11: GIT_DIR, GIT_WORKTREE=root in subdir' '
 	cat >11/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/11.git
-setup: worktree: $TRASH_DIRECTORY/11
-setup: cwd: $TRASH_DIRECTORY/11
+setup: git_dir: $here/11.git
+setup: worktree: $here/11
+setup: cwd: $here/11
 setup: prefix: sub/
 EOF
-	test_repo 11/sub "$TRASH_DIRECTORY/11/.git" "$TRASH_DIRECTORY/11"
+	test_repo 11/sub "$here/11/.git" "$here/11"
 '
 
 test_expect_success '#11: GIT_DIR, GIT_WORKTREE=root(rel) in subdir' '
 	cat >11/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/11.git
-setup: worktree: $TRASH_DIRECTORY/11
-setup: cwd: $TRASH_DIRECTORY/11
+setup: git_dir: $here/11.git
+setup: worktree: $here/11
+setup: cwd: $here/11
 setup: prefix: sub/sub/
 EOF
-	test_repo 11/sub/sub "$TRASH_DIRECTORY/11/.git" ../..
+	test_repo 11/sub/sub "$here/11/.git" ../..
 '
 
 test_expect_success '#11: GIT_DIR(rel), GIT_WORK_TREE=wt at root' '
 	cat >11/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/11.git
-setup: worktree: $TRASH_DIRECTORY/11/wt
-setup: cwd: $TRASH_DIRECTORY/11
+setup: git_dir: $here/11.git
+setup: worktree: $here/11/wt
+setup: cwd: $here/11
 setup: prefix: (null)
 EOF
-	test_repo 11 .git "$TRASH_DIRECTORY/11/wt"
+	test_repo 11 .git "$here/11/wt"
 '
 
 test_expect_success '#11: GIT_DIR(rel), GIT_WORK_TREE=wt(rel) at root' '
 	cat >11/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/11.git
-setup: worktree: $TRASH_DIRECTORY/11/wt
-setup: cwd: $TRASH_DIRECTORY/11
+setup: git_dir: $here/11.git
+setup: worktree: $here/11/wt
+setup: cwd: $here/11
 setup: prefix: (null)
 EOF
 	test_repo 11 .git wt
@@ -1429,39 +1430,39 @@ EOF
 
 test_expect_success '#11: GIT_DIR, GIT_WORK_TREE=wt(rel) at root' '
 	cat >11/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/11.git
-setup: worktree: $TRASH_DIRECTORY/11/wt
-setup: cwd: $TRASH_DIRECTORY/11
+setup: git_dir: $here/11.git
+setup: worktree: $here/11/wt
+setup: cwd: $here/11
 setup: prefix: (null)
 EOF
-	test_repo 11 "$TRASH_DIRECTORY/11/.git" wt
+	test_repo 11 "$here/11/.git" wt
 '
 
 test_expect_success '#11: GIT_DIR, GIT_WORK_TREE=wt at root' '
 	cat >11/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/11.git
-setup: worktree: $TRASH_DIRECTORY/11/wt
-setup: cwd: $TRASH_DIRECTORY/11
+setup: git_dir: $here/11.git
+setup: worktree: $here/11/wt
+setup: cwd: $here/11
 setup: prefix: (null)
 EOF
-	test_repo 11 "$TRASH_DIRECTORY/11/.git" "$TRASH_DIRECTORY/11/wt"
+	test_repo 11 "$here/11/.git" "$here/11/wt"
 '
 
 test_expect_success '#11: GIT_DIR(rel), GIT_WORK_TREE=wt in subdir' '
 	cat >11/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/11.git
-setup: worktree: $TRASH_DIRECTORY/11/wt
-setup: cwd: $TRASH_DIRECTORY/11/sub/sub
+setup: git_dir: $here/11.git
+setup: worktree: $here/11/wt
+setup: cwd: $here/11/sub/sub
 setup: prefix: (null)
 EOF
-	test_repo 11/sub/sub ../../.git "$TRASH_DIRECTORY/11/wt"
+	test_repo 11/sub/sub ../../.git "$here/11/wt"
 '
 
 test_expect_success '#11: GIT_DIR(rel), GIT_WORK_TREE=wt(rel) in subdir' '
 	cat >11/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/11.git
-setup: worktree: $TRASH_DIRECTORY/11/wt
-setup: cwd: $TRASH_DIRECTORY/11/sub/sub
+setup: git_dir: $here/11.git
+setup: worktree: $here/11/wt
+setup: cwd: $here/11/sub/sub
 setup: prefix: (null)
 EOF
 	test_repo 11/sub/sub ../../.git ../../wt
@@ -1469,39 +1470,39 @@ EOF
 
 test_expect_success '#11: GIT_DIR, GIT_WORK_TREE=wt(rel) in subdir' '
 	cat >11/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/11.git
-setup: worktree: $TRASH_DIRECTORY/11/wt
-setup: cwd: $TRASH_DIRECTORY/11/sub/sub
+setup: git_dir: $here/11.git
+setup: worktree: $here/11/wt
+setup: cwd: $here/11/sub/sub
 setup: prefix: (null)
 EOF
-	test_repo 11/sub/sub "$TRASH_DIRECTORY/11/.git" ../../wt
+	test_repo 11/sub/sub "$here/11/.git" ../../wt
 '
 
 test_expect_success '#11: GIT_DIR, GIT_WORK_TREE=wt in subdir' '
 	cat >11/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/11.git
-setup: worktree: $TRASH_DIRECTORY/11/wt
-setup: cwd: $TRASH_DIRECTORY/11/sub/sub
+setup: git_dir: $here/11.git
+setup: worktree: $here/11/wt
+setup: cwd: $here/11/sub/sub
 setup: prefix: (null)
 EOF
-	test_repo 11/sub/sub "$TRASH_DIRECTORY/11/.git" "$TRASH_DIRECTORY/11/wt"
+	test_repo 11/sub/sub "$here/11/.git" "$here/11/wt"
 '
 
 test_expect_success '#11: GIT_DIR(rel), GIT_WORK_TREE=.. at root' '
 	cat >11/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/11.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/11.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 11/
 EOF
-	test_repo 11 .git "$TRASH_DIRECTORY"
+	test_repo 11 .git "$here"
 '
 
 test_expect_success '#11: GIT_DIR(rel), GIT_WORK_TREE=..(rel) at root' '
 	cat >11/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/11.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/11.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 11/
 EOF
 	test_repo 11 .git ..
@@ -1509,39 +1510,39 @@ EOF
 
 test_expect_success '#11: GIT_DIR, GIT_WORK_TREE=..(rel) at root' '
 	cat >11/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/11.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/11.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 11/
 EOF
-	test_repo 11 "$TRASH_DIRECTORY/11/.git" ..
+	test_repo 11 "$here/11/.git" ..
 '
 
 test_expect_success '#11: GIT_DIR, GIT_WORK_TREE=.. at root' '
 	cat >11/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/11.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/11.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 11/
 EOF
-	test_repo 11 "$TRASH_DIRECTORY/11/.git" "$TRASH_DIRECTORY"
+	test_repo 11 "$here/11/.git" "$here"
 '
 
 test_expect_success '#11: GIT_DIR(rel), GIT_WORK_TREE=.. in subdir' '
 	cat >11/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/11.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/11.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 11/sub/sub/
 EOF
-	test_repo 11/sub/sub ../../.git "$TRASH_DIRECTORY"
+	test_repo 11/sub/sub ../../.git "$here"
 '
 
 test_expect_success '#11: GIT_DIR(rel), GIT_WORK_TREE=..(rel) in subdir' '
 	cat >11/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/11.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/11.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 11/sub/sub/
 EOF
 	test_repo 11/sub/sub ../../.git ../../..
@@ -1549,22 +1550,22 @@ EOF
 
 test_expect_success '#11: GIT_DIR, GIT_WORK_TREE=..(rel) in subdir' '
 	cat >11/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/11.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/11.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 11/sub/sub/
 EOF
-	test_repo 11/sub/sub "$TRASH_DIRECTORY/11/.git" ../../../
+	test_repo 11/sub/sub "$here/11/.git" ../../../
 '
 
 test_expect_success '#11: GIT_DIR, GIT_WORK_TREE=.. in subdir' '
 	cat >11/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/11.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/11.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 11/sub/sub/
 EOF
-	test_repo 11/sub/sub "$TRASH_DIRECTORY/11/.git" "$TRASH_DIRECTORY"
+	test_repo 11/sub/sub "$here/11/.git" "$here"
 '
 
 #
@@ -1598,9 +1599,9 @@ test_expect_success '#12: setup' '
 
 test_expect_success '#12: at root' '
 	cat >12/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/12.git
-setup: worktree: $TRASH_DIRECTORY/12
-setup: cwd: $TRASH_DIRECTORY/12
+setup: git_dir: $here/12.git
+setup: worktree: $here/12
+setup: cwd: $here/12
 setup: prefix: (null)
 EOF
 	test_repo 12
@@ -1608,9 +1609,9 @@ EOF
 
 test_expect_success '#12: in subdir' '
 	cat >12/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/12.git
-setup: worktree: $TRASH_DIRECTORY/12
-setup: cwd: $TRASH_DIRECTORY/12
+setup: git_dir: $here/12.git
+setup: worktree: $here/12
+setup: cwd: $here/12
 setup: prefix: sub/
 EOF
 	test_repo 12/sub
@@ -1648,9 +1649,9 @@ test_expect_success '#13: setup' '
 
 test_expect_success '#13: at root' '
 	cat >13/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/13.git
-setup: worktree: $TRASH_DIRECTORY/13
-setup: cwd: $TRASH_DIRECTORY/13
+setup: git_dir: $here/13.git
+setup: worktree: $here/13
+setup: cwd: $here/13
 setup: prefix: (null)
 EOF
 	test_repo 13
@@ -1658,9 +1659,9 @@ EOF
 
 test_expect_success '#13: in subdir' '
 	cat >13/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/13.git
-setup: worktree: $TRASH_DIRECTORY/13
-setup: cwd: $TRASH_DIRECTORY/13
+setup: git_dir: $here/13.git
+setup: worktree: $here/13
+setup: cwd: $here/13
 setup: prefix: sub/
 EOF
 	test_repo 13/sub
@@ -1695,266 +1696,266 @@ test_expect_success '#14: setup' '
 
 test_expect_success '#14: GIT_DIR(rel), core.worktree=../14 at root' '
 	cat >14/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/14.git
-setup: worktree: $TRASH_DIRECTORY/14
-setup: cwd: $TRASH_DIRECTORY/14
+setup: git_dir: $here/14.git
+setup: worktree: $here/14
+setup: cwd: $here/14
 setup: prefix: (null)
 EOF
-	git config --file="$TRASH_DIRECTORY/14.git/config" core.worktree "$TRASH_DIRECTORY/14" &&
+	git config --file="$here/14.git/config" core.worktree "$here/14" &&
 	test_repo 14 .git
 '
 
 test_expect_success '#14: GIT_DIR(rel), core.worktree=../14(rel) at root' '
 	cat >14/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/14.git
-setup: worktree: $TRASH_DIRECTORY/14
-setup: cwd: $TRASH_DIRECTORY/14
+setup: git_dir: $here/14.git
+setup: worktree: $here/14
+setup: cwd: $here/14
 setup: prefix: (null)
 EOF
-	git config --file="$TRASH_DIRECTORY/14.git/config" core.worktree ../14 &&
+	git config --file="$here/14.git/config" core.worktree ../14 &&
 	test_repo 14 .git
 '
 
 test_expect_success '#14: GIT_DIR, core.worktree=../14 at root' '
 	cat >14/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/14.git
-setup: worktree: $TRASH_DIRECTORY/14
-setup: cwd: $TRASH_DIRECTORY/14
+setup: git_dir: $here/14.git
+setup: worktree: $here/14
+setup: cwd: $here/14
 setup: prefix: (null)
 EOF
-	git config --file="$TRASH_DIRECTORY/14.git/config" core.worktree "$TRASH_DIRECTORY/14" &&
-	test_repo 14 "$TRASH_DIRECTORY/14/.git"
+	git config --file="$here/14.git/config" core.worktree "$here/14" &&
+	test_repo 14 "$here/14/.git"
 '
 
 test_expect_success '#14: GIT_DIR, core.worktree=../14(rel) at root' '
 	cat >14/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/14.git
-setup: worktree: $TRASH_DIRECTORY/14
-setup: cwd: $TRASH_DIRECTORY/14
+setup: git_dir: $here/14.git
+setup: worktree: $here/14
+setup: cwd: $here/14
 setup: prefix: (null)
 EOF
-	git config --file="$TRASH_DIRECTORY/14.git/config" core.worktree ../14 &&
-	test_repo 14 "$TRASH_DIRECTORY/14/.git"
+	git config --file="$here/14.git/config" core.worktree ../14 &&
+	test_repo 14 "$here/14/.git"
 '
 
 test_expect_success '#14: GIT_DIR(rel), core.worktree=../14 in subdir' '
 	cat >14/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/14.git
-setup: worktree: $TRASH_DIRECTORY/14
-setup: cwd: $TRASH_DIRECTORY/14
+setup: git_dir: $here/14.git
+setup: worktree: $here/14
+setup: cwd: $here/14
 setup: prefix: sub/sub/
 EOF
-	git config --file="$TRASH_DIRECTORY/14.git/config" core.worktree "$TRASH_DIRECTORY/14" &&
+	git config --file="$here/14.git/config" core.worktree "$here/14" &&
 	test_repo 14/sub/sub ../../.git
 '
 
 test_expect_success '#14: GIT_DIR(rel), core.worktree=../14(rel) in subdir' '
 	cat >14/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/14.git
-setup: worktree: $TRASH_DIRECTORY/14
-setup: cwd: $TRASH_DIRECTORY/14
+setup: git_dir: $here/14.git
+setup: worktree: $here/14
+setup: cwd: $here/14
 setup: prefix: sub/sub/
 EOF
-	git config --file="$TRASH_DIRECTORY/14.git/config" core.worktree ../14 &&
+	git config --file="$here/14.git/config" core.worktree ../14 &&
 	test_repo 14/sub/sub ../../.git
 '
 
 test_expect_success '#14: GIT_DIR, core.worktree=../14 in subdir' '
 	cat >14/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/14.git
-setup: worktree: $TRASH_DIRECTORY/14
-setup: cwd: $TRASH_DIRECTORY/14
+setup: git_dir: $here/14.git
+setup: worktree: $here/14
+setup: cwd: $here/14
 setup: prefix: sub/
 EOF
-	git config --file="$TRASH_DIRECTORY/14.git/config" core.worktree "$TRASH_DIRECTORY/14" &&
-	test_repo 14/sub "$TRASH_DIRECTORY/14/.git"
+	git config --file="$here/14.git/config" core.worktree "$here/14" &&
+	test_repo 14/sub "$here/14/.git"
 '
 
 test_expect_success '#14: GIT_DIR, core.worktree=../14(rel) in subdir' '
 	cat >14/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/14.git
-setup: worktree: $TRASH_DIRECTORY/14
-setup: cwd: $TRASH_DIRECTORY/14
+setup: git_dir: $here/14.git
+setup: worktree: $here/14
+setup: cwd: $here/14
 setup: prefix: sub/sub/
 EOF
-	git config --file="$TRASH_DIRECTORY/14.git/config" core.worktree ../14 &&
-	test_repo 14/sub/sub "$TRASH_DIRECTORY/14/.git"
+	git config --file="$here/14.git/config" core.worktree ../14 &&
+	test_repo 14/sub/sub "$here/14/.git"
 '
 
 test_expect_success '#14: GIT_DIR(rel), core.worktree=../14/wt at root' '
 	cat >14/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/14.git
-setup: worktree: $TRASH_DIRECTORY/14/wt
-setup: cwd: $TRASH_DIRECTORY/14
+setup: git_dir: $here/14.git
+setup: worktree: $here/14/wt
+setup: cwd: $here/14
 setup: prefix: (null)
 EOF
-	git config --file="$TRASH_DIRECTORY/14.git/config" core.worktree "$TRASH_DIRECTORY/14/wt" &&
+	git config --file="$here/14.git/config" core.worktree "$here/14/wt" &&
 	test_repo 14 .git
 '
 
 test_expect_success '#14: GIT_DIR(rel), core.worktree=../14/wt(rel) at root' '
 	cat >14/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/14.git
-setup: worktree: $TRASH_DIRECTORY/14/wt
-setup: cwd: $TRASH_DIRECTORY/14
+setup: git_dir: $here/14.git
+setup: worktree: $here/14/wt
+setup: cwd: $here/14
 setup: prefix: (null)
 EOF
-	git config --file="$TRASH_DIRECTORY/14.git/config" core.worktree ../14/wt &&
+	git config --file="$here/14.git/config" core.worktree ../14/wt &&
 	test_repo 14 .git
 '
 
 test_expect_success '#14: GIT_DIR, core.worktree=../14/wt(rel) at root' '
 	cat >14/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/14.git
-setup: worktree: $TRASH_DIRECTORY/14/wt
-setup: cwd: $TRASH_DIRECTORY/14
+setup: git_dir: $here/14.git
+setup: worktree: $here/14/wt
+setup: cwd: $here/14
 setup: prefix: (null)
 EOF
-	git config --file="$TRASH_DIRECTORY/14.git/config" core.worktree ../14/wt &&
-	test_repo 14 "$TRASH_DIRECTORY/14/.git"
+	git config --file="$here/14.git/config" core.worktree ../14/wt &&
+	test_repo 14 "$here/14/.git"
 '
 
 test_expect_success '#14: GIT_DIR, core.worktree=../14/wt at root' '
 	cat >14/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/14.git
-setup: worktree: $TRASH_DIRECTORY/14/wt
-setup: cwd: $TRASH_DIRECTORY/14
+setup: git_dir: $here/14.git
+setup: worktree: $here/14/wt
+setup: cwd: $here/14
 setup: prefix: (null)
 EOF
-	git config --file="$TRASH_DIRECTORY/14.git/config" core.worktree "$TRASH_DIRECTORY/14/wt" &&
-	test_repo 14 "$TRASH_DIRECTORY/14/.git"
+	git config --file="$here/14.git/config" core.worktree "$here/14/wt" &&
+	test_repo 14 "$here/14/.git"
 '
 
 test_expect_success '#14: GIT_DIR(rel), core.worktree=../14/wt in subdir' '
 	cat >14/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/14.git
-setup: worktree: $TRASH_DIRECTORY/14/wt
-setup: cwd: $TRASH_DIRECTORY/14/sub/sub
+setup: git_dir: $here/14.git
+setup: worktree: $here/14/wt
+setup: cwd: $here/14/sub/sub
 setup: prefix: (null)
 EOF
-	git config --file="$TRASH_DIRECTORY/14.git/config" core.worktree "$TRASH_DIRECTORY/14/wt" &&
+	git config --file="$here/14.git/config" core.worktree "$here/14/wt" &&
 	test_repo 14/sub/sub ../../.git
 '
 
 test_expect_success '#14: GIT_DIR(rel), core.worktree=../14/wt(rel) in subdir' '
 	cat >14/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/14.git
-setup: worktree: $TRASH_DIRECTORY/14/wt
-setup: cwd: $TRASH_DIRECTORY/14/sub/sub
+setup: git_dir: $here/14.git
+setup: worktree: $here/14/wt
+setup: cwd: $here/14/sub/sub
 setup: prefix: (null)
 EOF
-	git config --file="$TRASH_DIRECTORY/14.git/config" core.worktree ../14/wt &&
+	git config --file="$here/14.git/config" core.worktree ../14/wt &&
 	test_repo 14/sub/sub ../../.git
 '
 
 test_expect_success '#14: GIT_DIR, core.worktree=../14/wt(rel) in subdir' '
 	cat >14/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/14.git
-setup: worktree: $TRASH_DIRECTORY/14/wt
-setup: cwd: $TRASH_DIRECTORY/14/sub/sub
+setup: git_dir: $here/14.git
+setup: worktree: $here/14/wt
+setup: cwd: $here/14/sub/sub
 setup: prefix: (null)
 EOF
-	git config --file="$TRASH_DIRECTORY/14.git/config" core.worktree ../14/wt &&
-	test_repo 14/sub/sub "$TRASH_DIRECTORY/14/.git"
+	git config --file="$here/14.git/config" core.worktree ../14/wt &&
+	test_repo 14/sub/sub "$here/14/.git"
 '
 
 test_expect_success '#14: GIT_DIR, core.worktree=../14/wt in subdir' '
 	cat >14/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/14.git
-setup: worktree: $TRASH_DIRECTORY/14/wt
-setup: cwd: $TRASH_DIRECTORY/14/sub/sub
+setup: git_dir: $here/14.git
+setup: worktree: $here/14/wt
+setup: cwd: $here/14/sub/sub
 setup: prefix: (null)
 EOF
-	git config --file="$TRASH_DIRECTORY/14.git/config" core.worktree "$TRASH_DIRECTORY/14/wt" &&
-	test_repo 14/sub/sub "$TRASH_DIRECTORY/14/.git"
+	git config --file="$here/14.git/config" core.worktree "$here/14/wt" &&
+	test_repo 14/sub/sub "$here/14/.git"
 '
 
 test_expect_success '#14: GIT_DIR(rel), core.worktree=.. at root' '
 	cat >14/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/14.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/14.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 14/
 EOF
-	git config --file="$TRASH_DIRECTORY/14.git/config" core.worktree "$TRASH_DIRECTORY" &&
+	git config --file="$here/14.git/config" core.worktree "$here" &&
 	test_repo 14 .git
 '
 
 test_expect_success '#14: GIT_DIR(rel), core.worktree=..(rel) at root' '
 	cat >14/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/14.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/14.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 14/
 EOF
-	git config --file="$TRASH_DIRECTORY/14.git/config" core.worktree .. &&
+	git config --file="$here/14.git/config" core.worktree .. &&
 	test_repo 14 .git
 '
 
 test_expect_success '#14: GIT_DIR, core.worktree=..(rel) at root' '
 	cat >14/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/14.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/14.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 14/
 EOF
-	git config --file="$TRASH_DIRECTORY/14.git/config" core.worktree .. &&
-	test_repo 14 "$TRASH_DIRECTORY/14/.git"
+	git config --file="$here/14.git/config" core.worktree .. &&
+	test_repo 14 "$here/14/.git"
 '
 
 test_expect_success '#14: GIT_DIR, core.worktree=.. at root' '
 	cat >14/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/14.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/14.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 14/
 EOF
-	git config --file="$TRASH_DIRECTORY/14.git/config" core.worktree "$TRASH_DIRECTORY" &&
-	test_repo 14 "$TRASH_DIRECTORY/14/.git"
+	git config --file="$here/14.git/config" core.worktree "$here" &&
+	test_repo 14 "$here/14/.git"
 '
 
 test_expect_success '#14: GIT_DIR(rel), core.worktree=.. in subdir' '
 	cat >14/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/14.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/14.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 14/sub/sub/
 EOF
-	git config --file="$TRASH_DIRECTORY/14.git/config" core.worktree "$TRASH_DIRECTORY" &&
+	git config --file="$here/14.git/config" core.worktree "$here" &&
 	test_repo 14/sub/sub ../../.git
 '
 
 test_expect_success '#14: GIT_DIR(rel), core.worktree=..(rel) in subdir' '
 	cat >14/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/14.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/14.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 14/sub/sub/
 EOF
-	git config --file="$TRASH_DIRECTORY/14.git/config" core.worktree .. &&
+	git config --file="$here/14.git/config" core.worktree .. &&
 	test_repo 14/sub/sub ../../.git
 '
 
 test_expect_success '#14: GIT_DIR, core.worktree=..(rel) in subdir' '
 	cat >14/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/14.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/14.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 14/sub/sub/
 EOF
-	git config --file="$TRASH_DIRECTORY/14.git/config" core.worktree .. &&
-	test_repo 14/sub/sub "$TRASH_DIRECTORY/14/.git"
+	git config --file="$here/14.git/config" core.worktree .. &&
+	test_repo 14/sub/sub "$here/14/.git"
 '
 
 test_expect_success '#14: GIT_DIR, core.worktree=.. in subdir' '
 	cat >14/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/14.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/14.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 14/sub/sub/
 EOF
-	git config --file="$TRASH_DIRECTORY/14.git/config" core.worktree "$TRASH_DIRECTORY" &&
-	test_repo 14/sub/sub "$TRASH_DIRECTORY/14/.git"
+	git config --file="$here/14.git/config" core.worktree "$here" &&
+	test_repo 14/sub/sub "$here/14/.git"
 '
 
 #
@@ -1987,19 +1988,19 @@ test_expect_success '#15: setup' '
 
 test_expect_success '#15: GIT_DIR(rel), GIT_WORK_TREE=root at root' '
 	cat >15/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/15.git
-setup: worktree: $TRASH_DIRECTORY/15
-setup: cwd: $TRASH_DIRECTORY/15
+setup: git_dir: $here/15.git
+setup: worktree: $here/15
+setup: cwd: $here/15
 setup: prefix: (null)
 EOF
-	test_repo 15 .git "$TRASH_DIRECTORY/15"
+	test_repo 15 .git "$here/15"
 '
 
 test_expect_success '#15: GIT_DIR(rel), GIT_WORK_TREE=root(rel) at root' '
 	cat >15/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/15.git
-setup: worktree: $TRASH_DIRECTORY/15
-setup: cwd: $TRASH_DIRECTORY/15
+setup: git_dir: $here/15.git
+setup: worktree: $here/15
+setup: cwd: $here/15
 setup: prefix: (null)
 EOF
 	test_repo 15 .git .
@@ -2007,39 +2008,39 @@ EOF
 
 test_expect_success '#15: GIT_DIR, GIT_WORK_TREE=root at root' '
 	cat >15/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/15.git
-setup: worktree: $TRASH_DIRECTORY/15
-setup: cwd: $TRASH_DIRECTORY/15
+setup: git_dir: $here/15.git
+setup: worktree: $here/15
+setup: cwd: $here/15
 setup: prefix: (null)
 EOF
-	test_repo 15 "$TRASH_DIRECTORY/15/.git" "$TRASH_DIRECTORY/15"
+	test_repo 15 "$here/15/.git" "$here/15"
 '
 
 test_expect_success '#15: GIT_DIR, GIT_WORK_TREE=root(rel) at root' '
 	cat >15/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/15.git
-setup: worktree: $TRASH_DIRECTORY/15
-setup: cwd: $TRASH_DIRECTORY/15
+setup: git_dir: $here/15.git
+setup: worktree: $here/15
+setup: cwd: $here/15
 setup: prefix: (null)
 EOF
-	test_repo 15 "$TRASH_DIRECTORY/15/.git" .
+	test_repo 15 "$here/15/.git" .
 '
 
 test_expect_success '#15: GIT_DIR(rel), GIT_WORKTREE=root in subdir' '
 	cat >15/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/15.git
-setup: worktree: $TRASH_DIRECTORY/15
-setup: cwd: $TRASH_DIRECTORY/15
+setup: git_dir: $here/15.git
+setup: worktree: $here/15
+setup: cwd: $here/15
 setup: prefix: sub/sub/
 EOF
-	test_repo 15/sub/sub ../../.git "$TRASH_DIRECTORY/15"
+	test_repo 15/sub/sub ../../.git "$here/15"
 '
 
 test_expect_success '#15: GIT_DIR(rel), GIT_WORKTREE=root(rel) in subdir' '
 	cat >15/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/15.git
-setup: worktree: $TRASH_DIRECTORY/15
-setup: cwd: $TRASH_DIRECTORY/15
+setup: git_dir: $here/15.git
+setup: worktree: $here/15
+setup: cwd: $here/15
 setup: prefix: sub/sub/
 EOF
 	test_repo 15/sub/sub ../../.git ../..
@@ -2047,39 +2048,39 @@ EOF
 
 test_expect_success '#15: GIT_DIR, GIT_WORKTREE=root in subdir' '
 	cat >15/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/15.git
-setup: worktree: $TRASH_DIRECTORY/15
-setup: cwd: $TRASH_DIRECTORY/15
+setup: git_dir: $here/15.git
+setup: worktree: $here/15
+setup: cwd: $here/15
 setup: prefix: sub/
 EOF
-	test_repo 15/sub "$TRASH_DIRECTORY/15/.git" "$TRASH_DIRECTORY/15"
+	test_repo 15/sub "$here/15/.git" "$here/15"
 '
 
 test_expect_success '#15: GIT_DIR, GIT_WORKTREE=root(rel) in subdir' '
 	cat >15/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/15.git
-setup: worktree: $TRASH_DIRECTORY/15
-setup: cwd: $TRASH_DIRECTORY/15
+setup: git_dir: $here/15.git
+setup: worktree: $here/15
+setup: cwd: $here/15
 setup: prefix: sub/sub/
 EOF
-	test_repo 15/sub/sub "$TRASH_DIRECTORY/15/.git" ../..
+	test_repo 15/sub/sub "$here/15/.git" ../..
 '
 
 test_expect_success '#15: GIT_DIR(rel), GIT_WORK_TREE=wt at root' '
 	cat >15/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/15.git
-setup: worktree: $TRASH_DIRECTORY/15/wt
-setup: cwd: $TRASH_DIRECTORY/15
+setup: git_dir: $here/15.git
+setup: worktree: $here/15/wt
+setup: cwd: $here/15
 setup: prefix: (null)
 EOF
-	test_repo 15 .git "$TRASH_DIRECTORY/15/wt"
+	test_repo 15 .git "$here/15/wt"
 '
 
 test_expect_success '#15: GIT_DIR(rel), GIT_WORK_TREE=wt(rel) at root' '
 	cat >15/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/15.git
-setup: worktree: $TRASH_DIRECTORY/15/wt
-setup: cwd: $TRASH_DIRECTORY/15
+setup: git_dir: $here/15.git
+setup: worktree: $here/15/wt
+setup: cwd: $here/15
 setup: prefix: (null)
 EOF
 	test_repo 15 .git wt
@@ -2087,39 +2088,39 @@ EOF
 
 test_expect_success '#15: GIT_DIR, GIT_WORK_TREE=wt(rel) at root' '
 	cat >15/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/15.git
-setup: worktree: $TRASH_DIRECTORY/15/wt
-setup: cwd: $TRASH_DIRECTORY/15
+setup: git_dir: $here/15.git
+setup: worktree: $here/15/wt
+setup: cwd: $here/15
 setup: prefix: (null)
 EOF
-	test_repo 15 "$TRASH_DIRECTORY/15/.git" wt
+	test_repo 15 "$here/15/.git" wt
 '
 
 test_expect_success '#15: GIT_DIR, GIT_WORK_TREE=wt at root' '
 	cat >15/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/15.git
-setup: worktree: $TRASH_DIRECTORY/15/wt
-setup: cwd: $TRASH_DIRECTORY/15
+setup: git_dir: $here/15.git
+setup: worktree: $here/15/wt
+setup: cwd: $here/15
 setup: prefix: (null)
 EOF
-	test_repo 15 "$TRASH_DIRECTORY/15/.git" "$TRASH_DIRECTORY/15/wt"
+	test_repo 15 "$here/15/.git" "$here/15/wt"
 '
 
 test_expect_success '#15: GIT_DIR(rel), GIT_WORK_TREE=wt in subdir' '
 	cat >15/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/15.git
-setup: worktree: $TRASH_DIRECTORY/15/wt
-setup: cwd: $TRASH_DIRECTORY/15/sub/sub
+setup: git_dir: $here/15.git
+setup: worktree: $here/15/wt
+setup: cwd: $here/15/sub/sub
 setup: prefix: (null)
 EOF
-	test_repo 15/sub/sub ../../.git "$TRASH_DIRECTORY/15/wt"
+	test_repo 15/sub/sub ../../.git "$here/15/wt"
 '
 
 test_expect_success '#15: GIT_DIR(rel), GIT_WORK_TREE=wt(rel) in subdir' '
 	cat >15/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/15.git
-setup: worktree: $TRASH_DIRECTORY/15/wt
-setup: cwd: $TRASH_DIRECTORY/15/sub/sub
+setup: git_dir: $here/15.git
+setup: worktree: $here/15/wt
+setup: cwd: $here/15/sub/sub
 setup: prefix: (null)
 EOF
 	test_repo 15/sub/sub ../../.git ../../wt
@@ -2127,39 +2128,39 @@ EOF
 
 test_expect_success '#15: GIT_DIR, GIT_WORK_TREE=wt(rel) in subdir' '
 	cat >15/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/15.git
-setup: worktree: $TRASH_DIRECTORY/15/wt
-setup: cwd: $TRASH_DIRECTORY/15/sub/sub
+setup: git_dir: $here/15.git
+setup: worktree: $here/15/wt
+setup: cwd: $here/15/sub/sub
 setup: prefix: (null)
 EOF
-	test_repo 15/sub/sub "$TRASH_DIRECTORY/15/.git" ../../wt
+	test_repo 15/sub/sub "$here/15/.git" ../../wt
 '
 
 test_expect_success '#15: GIT_DIR, GIT_WORK_TREE=wt in subdir' '
 	cat >15/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/15.git
-setup: worktree: $TRASH_DIRECTORY/15/wt
-setup: cwd: $TRASH_DIRECTORY/15/sub/sub
+setup: git_dir: $here/15.git
+setup: worktree: $here/15/wt
+setup: cwd: $here/15/sub/sub
 setup: prefix: (null)
 EOF
-	test_repo 15/sub/sub "$TRASH_DIRECTORY/15/.git" "$TRASH_DIRECTORY/15/wt"
+	test_repo 15/sub/sub "$here/15/.git" "$here/15/wt"
 '
 
 test_expect_success '#15: GIT_DIR(rel), GIT_WORK_TREE=.. at root' '
 	cat >15/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/15.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/15.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 15/
 EOF
-	test_repo 15 .git "$TRASH_DIRECTORY"
+	test_repo 15 .git "$here"
 '
 
 test_expect_success '#15: GIT_DIR(rel), GIT_WORK_TREE=..(rel) at root' '
 	cat >15/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/15.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/15.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 15/
 EOF
 	test_repo 15 .git ..
@@ -2167,39 +2168,39 @@ EOF
 
 test_expect_success '#15: GIT_DIR, GIT_WORK_TREE=..(rel) at root' '
 	cat >15/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/15.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/15.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 15/
 EOF
-	test_repo 15 "$TRASH_DIRECTORY/15/.git" ..
+	test_repo 15 "$here/15/.git" ..
 '
 
 test_expect_success '#15: GIT_DIR, GIT_WORK_TREE=.. at root' '
 	cat >15/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/15.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/15.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 15/
 EOF
-	test_repo 15 "$TRASH_DIRECTORY/15/.git" "$TRASH_DIRECTORY"
+	test_repo 15 "$here/15/.git" "$here"
 '
 
 test_expect_success '#15: GIT_DIR(rel), GIT_WORK_TREE=.. in subdir' '
 	cat >15/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/15.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/15.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 15/sub/sub/
 EOF
-	test_repo 15/sub/sub ../../.git "$TRASH_DIRECTORY"
+	test_repo 15/sub/sub ../../.git "$here"
 '
 
 test_expect_success '#15: GIT_DIR(rel), GIT_WORK_TREE=..(rel) in subdir' '
 	cat >15/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/15.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/15.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 15/sub/sub/
 EOF
 	test_repo 15/sub/sub ../../.git ../../..
@@ -2207,22 +2208,22 @@ EOF
 
 test_expect_success '#15: GIT_DIR, GIT_WORK_TREE=..(rel) in subdir' '
 	cat >15/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/15.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/15.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 15/sub/sub/
 EOF
-	test_repo 15/sub/sub "$TRASH_DIRECTORY/15/.git" ../../../
+	test_repo 15/sub/sub "$here/15/.git" ../../../
 '
 
 test_expect_success '#15: GIT_DIR, GIT_WORK_TREE=.. in subdir' '
 	cat >15/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/15.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/15.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 15/sub/sub/
 EOF
-	test_repo 15/sub/sub "$TRASH_DIRECTORY/15/.git" "$TRASH_DIRECTORY"
+	test_repo 15/sub/sub "$here/15/.git" "$here"
 '
 
 #
@@ -2259,7 +2260,7 @@ test_expect_success '#16.1: at .git' '
 	cat >16/.git/expected <<EOF &&
 setup: git_dir: .
 setup: worktree: (null)
-setup: cwd: $TRASH_DIRECTORY/16/.git
+setup: cwd: $here/16/.git
 setup: prefix: (null)
 EOF
 	test_repo 16/.git
@@ -2267,9 +2268,9 @@ EOF
 
 test_expect_success '#16.1: in .git/wt' '
 	cat >16/.git/wt/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/16/.git
+setup: git_dir: $here/16/.git
 setup: worktree: (null)
-setup: cwd: $TRASH_DIRECTORY/16/.git/wt
+setup: cwd: $here/16/.git/wt
 setup: prefix: (null)
 EOF
 	test_repo 16/.git/wt
@@ -2277,9 +2278,9 @@ EOF
 
 test_expect_success '#16.1: in .git/wt/sub' '
 	cat >16/.git/wt/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/16/.git
+setup: git_dir: $here/16/.git
 setup: worktree: (null)
-setup: cwd: $TRASH_DIRECTORY/16/.git/wt/sub
+setup: cwd: $here/16/.git/wt/sub
 setup: prefix: (null)
 EOF
 	test_repo 16/.git/wt/sub
@@ -2307,14 +2308,14 @@ EOF
 #  - cwd can't be outside worktree
 
 test_expect_success '#16.2: setup' '
-	git config --file="$TRASH_DIRECTORY/16/.git/config" core.bare true
+	git config --file="$here/16/.git/config" core.bare true
 '
 
 test_expect_success '#16.2: at .git' '
 	cat >16/.git/expected <<EOF &&
 setup: git_dir: .
 setup: worktree: (null)
-setup: cwd: $TRASH_DIRECTORY/16/.git
+setup: cwd: $here/16/.git
 setup: prefix: (null)
 EOF
 	test_repo 16/.git
@@ -2322,9 +2323,9 @@ EOF
 
 test_expect_success '#16.2: in .git/wt' '
 	cat >16/.git/wt/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/16/.git
+setup: git_dir: $here/16/.git
 setup: worktree: (null)
-setup: cwd: $TRASH_DIRECTORY/16/.git/wt
+setup: cwd: $here/16/.git/wt
 setup: prefix: (null)
 EOF
 	test_repo 16/.git/wt
@@ -2332,9 +2333,9 @@ EOF
 
 test_expect_success '#16.2: in .git/wt/sub' '
 	cat >16/.git/wt/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/16/.git
+setup: git_dir: $here/16/.git
 setup: worktree: (null)
-setup: cwd: $TRASH_DIRECTORY/16/.git/wt/sub
+setup: cwd: $here/16/.git/wt/sub
 setup: prefix: (null)
 EOF
 	test_repo 16/.git/wt/sub
@@ -2344,7 +2345,7 @@ test_expect_success '#16.2: at root' '
 	cat >16/expected <<EOF &&
 setup: git_dir: .git
 setup: worktree: (null)
-setup: cwd: $TRASH_DIRECTORY/16
+setup: cwd: $here/16
 setup: prefix: (null)
 EOF
 	test_repo 16
@@ -2352,9 +2353,9 @@ EOF
 
 test_expect_success '#16.2: in subdir' '
 	cat >16/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/16/.git
+setup: git_dir: $here/16/.git
 setup: worktree: (null)
-setup: cwd: $TRASH_DIRECTORY/16/sub
+setup: cwd: $here/16/sub
 setup: prefix: (null)
 EOF
 	test_repo 16/sub
@@ -2392,7 +2393,7 @@ test_expect_success '#17.1: at .git' '
 	cat >17/.git/expected <<EOF &&
 setup: git_dir: .
 setup: worktree: (null)
-setup: cwd: $TRASH_DIRECTORY/17/.git
+setup: cwd: $here/17/.git
 setup: prefix: (null)
 EOF
 	test_repo 17/.git
@@ -2400,9 +2401,9 @@ EOF
 
 test_expect_success '#17.1: in .git/wt' '
 	cat >17/.git/wt/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/17/.git
+setup: git_dir: $here/17/.git
 setup: worktree: (null)
-setup: cwd: $TRASH_DIRECTORY/17/.git/wt
+setup: cwd: $here/17/.git/wt
 setup: prefix: (null)
 EOF
 	test_repo 17/.git/wt
@@ -2410,9 +2411,9 @@ EOF
 
 test_expect_success '#17.1: in .git/wt/sub' '
 	cat >17/.git/wt/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/17/.git
+setup: git_dir: $here/17/.git
 setup: worktree: (null)
-setup: cwd: $TRASH_DIRECTORY/17/.git/wt/sub
+setup: cwd: $here/17/.git/wt/sub
 setup: prefix: (null)
 EOF
 	test_repo 17/.git/wt/sub
@@ -2436,14 +2437,14 @@ EOF
 # GIT_WORK_TREE is ignored -> #16.2 (with warnings perhaps)
 
 test_expect_success '#17.2: setup' '
-	git config --file="$TRASH_DIRECTORY/17/.git/config" core.bare true
+	git config --file="$here/17/.git/config" core.bare true
 '
 
 test_expect_success '#17.2: at .git' '
 	cat >17/.git/expected <<EOF &&
 setup: git_dir: .
 setup: worktree: (null)
-setup: cwd: $TRASH_DIRECTORY/17/.git
+setup: cwd: $here/17/.git
 setup: prefix: (null)
 EOF
 	test_repo 17/.git
@@ -2451,9 +2452,9 @@ EOF
 
 test_expect_success '#17.2: in .git/wt' '
 	cat >17/.git/wt/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/17/.git
+setup: git_dir: $here/17/.git
 setup: worktree: (null)
-setup: cwd: $TRASH_DIRECTORY/17/.git/wt
+setup: cwd: $here/17/.git/wt
 setup: prefix: (null)
 EOF
 	test_repo 17/.git/wt
@@ -2461,9 +2462,9 @@ EOF
 
 test_expect_success '#17.2: in .git/wt/sub' '
 	cat >17/.git/wt/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/17/.git
+setup: git_dir: $here/17/.git
 setup: worktree: (null)
-setup: cwd: $TRASH_DIRECTORY/17/.git/wt/sub
+setup: cwd: $here/17/.git/wt/sub
 setup: prefix: (null)
 EOF
 	test_repo 17/.git/wt/sub
@@ -2473,7 +2474,7 @@ test_expect_success '#17.2: at root' '
 	cat >17/expected <<EOF &&
 setup: git_dir: .git
 setup: worktree: (null)
-setup: cwd: $TRASH_DIRECTORY/17
+setup: cwd: $here/17
 setup: prefix: (null)
 EOF
 	test_repo 17
@@ -2481,9 +2482,9 @@ EOF
 
 test_expect_success '#17.2: in subdir' '
 	cat >17/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/17/.git
+setup: git_dir: $here/17/.git
 setup: worktree: (null)
-setup: cwd: $TRASH_DIRECTORY/17/sub
+setup: cwd: $here/17/sub
 setup: prefix: (null)
 EOF
 	test_repo 17/sub
@@ -2524,7 +2525,7 @@ test_expect_success '#18: (rel) at root' '
 	cat >18/expected <<EOF &&
 setup: git_dir: .git
 setup: worktree: (null)
-setup: cwd: $TRASH_DIRECTORY/18
+setup: cwd: $here/18
 setup: prefix: (null)
 EOF
 	 test_repo 18 .git
@@ -2532,19 +2533,19 @@ EOF
 
 test_expect_success '#18: at root' '
 	cat >18/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/18/.git
+setup: git_dir: $here/18/.git
 setup: worktree: (null)
-setup: cwd: $TRASH_DIRECTORY/18
+setup: cwd: $here/18
 setup: prefix: (null)
 EOF
-	 test_repo 18 "$TRASH_DIRECTORY/18/.git"
+	 test_repo 18 "$here/18/.git"
 '
 
 test_expect_success '#18: (rel) in subdir' '
 	cat >18/sub/expected <<EOF &&
 setup: git_dir: ../.git
 setup: worktree: (null)
-setup: cwd: $TRASH_DIRECTORY/18/sub
+setup: cwd: $here/18/sub
 setup: prefix: (null)
 EOF
 	test_repo 18/sub ../.git
@@ -2552,12 +2553,12 @@ EOF
 
 test_expect_success '#18: in subdir' '
 	cat >18/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/18/.git
+setup: git_dir: $here/18/.git
 setup: worktree: (null)
-setup: cwd: $TRASH_DIRECTORY/18/sub
+setup: cwd: $here/18/sub
 setup: prefix: (null)
 EOF
-	test_repo 18/sub "$TRASH_DIRECTORY/18/.git"
+	test_repo 18/sub "$here/18/.git"
 '
 
 #
@@ -2589,18 +2590,18 @@ test_expect_success '#19: setup' '
 test_expect_success '#19: GIT_DIR(rel), GIT_WORK_TREE=root at root' '
 	cat >19/expected <<EOF &&
 setup: git_dir: .git
-setup: worktree: $TRASH_DIRECTORY/19
-setup: cwd: $TRASH_DIRECTORY/19
+setup: worktree: $here/19
+setup: cwd: $here/19
 setup: prefix: (null)
 EOF
-	test_repo 19 .git "$TRASH_DIRECTORY/19"
+	test_repo 19 .git "$here/19"
 '
 
 test_expect_success '#19: GIT_DIR(rel), GIT_WORK_TREE=root(rel) at root' '
 	cat >19/expected <<EOF &&
 setup: git_dir: .git
-setup: worktree: $TRASH_DIRECTORY/19
-setup: cwd: $TRASH_DIRECTORY/19
+setup: worktree: $here/19
+setup: cwd: $here/19
 setup: prefix: (null)
 EOF
 	test_repo 19 .git .
@@ -2608,39 +2609,39 @@ EOF
 
 test_expect_success '#19: GIT_DIR, GIT_WORK_TREE=root at root' '
 	cat >19/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/19/.git
-setup: worktree: $TRASH_DIRECTORY/19
-setup: cwd: $TRASH_DIRECTORY/19
+setup: git_dir: $here/19/.git
+setup: worktree: $here/19
+setup: cwd: $here/19
 setup: prefix: (null)
 EOF
-	test_repo 19 "$TRASH_DIRECTORY/19/.git" "$TRASH_DIRECTORY/19"
+	test_repo 19 "$here/19/.git" "$here/19"
 '
 
 test_expect_success '#19: GIT_DIR, GIT_WORK_TREE=root(rel) at root' '
 	cat >19/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/19/.git
-setup: worktree: $TRASH_DIRECTORY/19
-setup: cwd: $TRASH_DIRECTORY/19
+setup: git_dir: $here/19/.git
+setup: worktree: $here/19
+setup: cwd: $here/19
 setup: prefix: (null)
 EOF
-	test_repo 19 "$TRASH_DIRECTORY/19/.git" .
+	test_repo 19 "$here/19/.git" .
 '
 
 test_expect_success '#19: GIT_DIR(rel), GIT_WORKTREE=root in subdir' '
 	cat >19/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/19/.git
-setup: worktree: $TRASH_DIRECTORY/19
-setup: cwd: $TRASH_DIRECTORY/19
+setup: git_dir: $here/19/.git
+setup: worktree: $here/19
+setup: cwd: $here/19
 setup: prefix: sub/sub/
 EOF
-	test_repo 19/sub/sub ../../.git "$TRASH_DIRECTORY/19"
+	test_repo 19/sub/sub ../../.git "$here/19"
 '
 
 test_expect_success '#19: GIT_DIR(rel), GIT_WORKTREE=root(rel) in subdir' '
 	cat >19/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/19/.git
-setup: worktree: $TRASH_DIRECTORY/19
-setup: cwd: $TRASH_DIRECTORY/19
+setup: git_dir: $here/19/.git
+setup: worktree: $here/19
+setup: cwd: $here/19
 setup: prefix: sub/sub/
 EOF
 	test_repo 19/sub/sub ../../.git ../..
@@ -2648,39 +2649,39 @@ EOF
 
 test_expect_success '#19: GIT_DIR, GIT_WORKTREE=root in subdir' '
 	cat >19/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/19/.git
-setup: worktree: $TRASH_DIRECTORY/19
-setup: cwd: $TRASH_DIRECTORY/19
+setup: git_dir: $here/19/.git
+setup: worktree: $here/19
+setup: cwd: $here/19
 setup: prefix: sub/
 EOF
-	test_repo 19/sub "$TRASH_DIRECTORY/19/.git" "$TRASH_DIRECTORY/19"
+	test_repo 19/sub "$here/19/.git" "$here/19"
 '
 
 test_expect_success '#19: GIT_DIR, GIT_WORKTREE=root(rel) in subdir' '
 	cat >19/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/19/.git
-setup: worktree: $TRASH_DIRECTORY/19
-setup: cwd: $TRASH_DIRECTORY/19
+setup: git_dir: $here/19/.git
+setup: worktree: $here/19
+setup: cwd: $here/19
 setup: prefix: sub/sub/
 EOF
-	test_repo 19/sub/sub "$TRASH_DIRECTORY/19/.git" ../..
+	test_repo 19/sub/sub "$here/19/.git" ../..
 '
 
 test_expect_success '#19: GIT_DIR(rel), GIT_WORK_TREE=wt at root' '
 	cat >19/expected <<EOF &&
 setup: git_dir: .git
-setup: worktree: $TRASH_DIRECTORY/19/wt
-setup: cwd: $TRASH_DIRECTORY/19
+setup: worktree: $here/19/wt
+setup: cwd: $here/19
 setup: prefix: (null)
 EOF
-	test_repo 19 .git "$TRASH_DIRECTORY/19/wt"
+	test_repo 19 .git "$here/19/wt"
 '
 
 test_expect_success '#19: GIT_DIR(rel), GIT_WORK_TREE=wt(rel) at root' '
 	cat >19/expected <<EOF &&
 setup: git_dir: .git
-setup: worktree: $TRASH_DIRECTORY/19/wt
-setup: cwd: $TRASH_DIRECTORY/19
+setup: worktree: $here/19/wt
+setup: cwd: $here/19
 setup: prefix: (null)
 EOF
 	test_repo 19 .git wt
@@ -2688,39 +2689,39 @@ EOF
 
 test_expect_success '#19: GIT_DIR, GIT_WORK_TREE=wt(rel) at root' '
 	cat >19/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/19/.git
-setup: worktree: $TRASH_DIRECTORY/19/wt
-setup: cwd: $TRASH_DIRECTORY/19
+setup: git_dir: $here/19/.git
+setup: worktree: $here/19/wt
+setup: cwd: $here/19
 setup: prefix: (null)
 EOF
-	test_repo 19 "$TRASH_DIRECTORY/19/.git" wt
+	test_repo 19 "$here/19/.git" wt
 '
 
 test_expect_success '#19: GIT_DIR, GIT_WORK_TREE=wt at root' '
 	cat >19/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/19/.git
-setup: worktree: $TRASH_DIRECTORY/19/wt
-setup: cwd: $TRASH_DIRECTORY/19
+setup: git_dir: $here/19/.git
+setup: worktree: $here/19/wt
+setup: cwd: $here/19
 setup: prefix: (null)
 EOF
-	test_repo 19 "$TRASH_DIRECTORY/19/.git" "$TRASH_DIRECTORY/19/wt"
+	test_repo 19 "$here/19/.git" "$here/19/wt"
 '
 
 test_expect_success '#19: GIT_DIR(rel), GIT_WORK_TREE=wt in subdir' '
 	cat >19/sub/sub/expected <<EOF &&
 setup: git_dir: ../../.git
-setup: worktree: $TRASH_DIRECTORY/19/wt
-setup: cwd: $TRASH_DIRECTORY/19/sub/sub
+setup: worktree: $here/19/wt
+setup: cwd: $here/19/sub/sub
 setup: prefix: (null)
 EOF
-	test_repo 19/sub/sub ../../.git "$TRASH_DIRECTORY/19/wt"
+	test_repo 19/sub/sub ../../.git "$here/19/wt"
 '
 
 test_expect_success '#19: GIT_DIR(rel), GIT_WORK_TREE=wt(rel) in subdir' '
 	cat >19/sub/sub/expected <<EOF &&
 setup: git_dir: ../../.git
-setup: worktree: $TRASH_DIRECTORY/19/wt
-setup: cwd: $TRASH_DIRECTORY/19/sub/sub
+setup: worktree: $here/19/wt
+setup: cwd: $here/19/sub/sub
 setup: prefix: (null)
 EOF
 	test_repo 19/sub/sub ../../.git ../../wt
@@ -2728,39 +2729,39 @@ EOF
 
 test_expect_success '#19: GIT_DIR, GIT_WORK_TREE=wt(rel) in subdir' '
 	cat >19/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/19/.git
-setup: worktree: $TRASH_DIRECTORY/19/wt
-setup: cwd: $TRASH_DIRECTORY/19/sub/sub
+setup: git_dir: $here/19/.git
+setup: worktree: $here/19/wt
+setup: cwd: $here/19/sub/sub
 setup: prefix: (null)
 EOF
-	test_repo 19/sub/sub "$TRASH_DIRECTORY/19/.git" ../../wt
+	test_repo 19/sub/sub "$here/19/.git" ../../wt
 '
 
 test_expect_success '#19: GIT_DIR, GIT_WORK_TREE=wt in subdir' '
 	cat >19/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/19/.git
-setup: worktree: $TRASH_DIRECTORY/19/wt
-setup: cwd: $TRASH_DIRECTORY/19/sub/sub
+setup: git_dir: $here/19/.git
+setup: worktree: $here/19/wt
+setup: cwd: $here/19/sub/sub
 setup: prefix: (null)
 EOF
-	test_repo 19/sub/sub "$TRASH_DIRECTORY/19/.git" "$TRASH_DIRECTORY/19/wt"
+	test_repo 19/sub/sub "$here/19/.git" "$here/19/wt"
 '
 
 test_expect_success '#19: GIT_DIR(rel), GIT_WORK_TREE=.. at root' '
 	cat >19/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/19/.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/19/.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 19/
 EOF
-	test_repo 19 .git "$TRASH_DIRECTORY"
+	test_repo 19 .git "$here"
 '
 
 test_expect_success '#19: GIT_DIR(rel), GIT_WORK_TREE=..(rel) at root' '
 	cat >19/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/19/.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/19/.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 19/
 EOF
 	test_repo 19 .git ..
@@ -2768,39 +2769,39 @@ EOF
 
 test_expect_success '#19: GIT_DIR, GIT_WORK_TREE=..(rel) at root' '
 	cat >19/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/19/.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/19/.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 19/
 EOF
-	test_repo 19 "$TRASH_DIRECTORY/19/.git" ..
+	test_repo 19 "$here/19/.git" ..
 '
 
 test_expect_success '#19: GIT_DIR, GIT_WORK_TREE=.. at root' '
 	cat >19/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/19/.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/19/.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 19/
 EOF
-	test_repo 19 "$TRASH_DIRECTORY/19/.git" "$TRASH_DIRECTORY"
+	test_repo 19 "$here/19/.git" "$here"
 '
 
 test_expect_success '#19: GIT_DIR(rel), GIT_WORK_TREE=.. in subdir' '
 	cat >19/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/19/.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/19/.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 19/sub/sub/
 EOF
-	test_repo 19/sub/sub ../../.git "$TRASH_DIRECTORY"
+	test_repo 19/sub/sub ../../.git "$here"
 '
 
 test_expect_success '#19: GIT_DIR(rel), GIT_WORK_TREE=..(rel) in subdir' '
 	cat >19/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/19/.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/19/.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 19/sub/sub/
 EOF
 	test_repo 19/sub/sub ../../.git ../../..
@@ -2808,22 +2809,22 @@ EOF
 
 test_expect_success '#19: GIT_DIR, GIT_WORK_TREE=..(rel) in subdir' '
 	cat >19/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/19/.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/19/.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 19/sub/sub/
 EOF
-	test_repo 19/sub/sub "$TRASH_DIRECTORY/19/.git" ../../../
+	test_repo 19/sub/sub "$here/19/.git" ../../../
 '
 
 test_expect_success '#19: GIT_DIR, GIT_WORK_TREE=.. in subdir' '
 	cat >19/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/19/.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/19/.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 19/sub/sub/
 EOF
-	test_repo 19/sub/sub "$TRASH_DIRECTORY/19/.git" "$TRASH_DIRECTORY"
+	test_repo 19/sub/sub "$here/19/.git" "$here"
 '
 
 #
@@ -2857,7 +2858,7 @@ test_expect_success '#20.1: at .git' '
 	cat >20/.git/expected <<EOF &&
 setup: git_dir: .
 setup: worktree: (null)
-setup: cwd: $TRASH_DIRECTORY/20/.git
+setup: cwd: $here/20/.git
 setup: prefix: (null)
 EOF
 	test_repo 20/.git
@@ -2865,9 +2866,9 @@ EOF
 
 test_expect_success '#20.1: in .git/wt' '
 	cat >20/.git/wt/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/20/.git
+setup: git_dir: $here/20/.git
 setup: worktree: (null)
-setup: cwd: $TRASH_DIRECTORY/20/.git/wt
+setup: cwd: $here/20/.git/wt
 setup: prefix: (null)
 EOF
 	test_repo 20/.git/wt
@@ -2875,9 +2876,9 @@ EOF
 
 test_expect_success '#20.1: in .git/wt/sub' '
 	cat >20/.git/wt/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/20/.git
+setup: git_dir: $here/20/.git
 setup: worktree: (null)
-setup: cwd: $TRASH_DIRECTORY/20/.git/wt/sub
+setup: cwd: $here/20/.git/wt/sub
 setup: prefix: (null)
 EOF
 	test_repo 20/.git/wt/sub
@@ -2901,14 +2902,14 @@ EOF
 # core.worktree is ignored -> #16.2
 
 test_expect_success '#20.2: setup' '
-	git config --file="$TRASH_DIRECTORY/20/.git/config" core.bare true
+	git config --file="$here/20/.git/config" core.bare true
 '
 
 test_expect_success '#20.2: at .git' '
 	cat >20/.git/expected <<EOF &&
 setup: git_dir: .
 setup: worktree: (null)
-setup: cwd: $TRASH_DIRECTORY/20/.git
+setup: cwd: $here/20/.git
 setup: prefix: (null)
 EOF
 	test_repo 20/.git
@@ -2916,9 +2917,9 @@ EOF
 
 test_expect_success '#20.2: in .git/wt' '
 	cat >20/.git/wt/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/20/.git
+setup: git_dir: $here/20/.git
 setup: worktree: (null)
-setup: cwd: $TRASH_DIRECTORY/20/.git/wt
+setup: cwd: $here/20/.git/wt
 setup: prefix: (null)
 EOF
 	test_repo 20/.git/wt
@@ -2926,9 +2927,9 @@ EOF
 
 test_expect_success '#20.2: in .git/wt/sub' '
 	cat >20/.git/wt/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/20/.git
+setup: git_dir: $here/20/.git
 setup: worktree: (null)
-setup: cwd: $TRASH_DIRECTORY/20/.git/wt/sub
+setup: cwd: $here/20/.git/wt/sub
 setup: prefix: (null)
 EOF
 	test_repo 20/.git/wt/sub
@@ -2938,7 +2939,7 @@ test_expect_success '#20.2: at root' '
 	cat >20/expected <<EOF &&
 setup: git_dir: .git
 setup: worktree: (null)
-setup: cwd: $TRASH_DIRECTORY/20
+setup: cwd: $here/20
 setup: prefix: (null)
 EOF
 	test_repo 20
@@ -2946,9 +2947,9 @@ EOF
 
 test_expect_success '#20.2: in subdir' '
 	cat >20/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/20/.git
+setup: git_dir: $here/20/.git
 setup: worktree: (null)
-setup: cwd: $TRASH_DIRECTORY/20/sub
+setup: cwd: $here/20/sub
 setup: prefix: (null)
 EOF
 	test_repo 20/sub
@@ -2987,7 +2988,7 @@ test_expect_success '#21.1: at .git' '
 	cat >21/.git/expected <<EOF &&
 setup: git_dir: .
 setup: worktree: (null)
-setup: cwd: $TRASH_DIRECTORY/21/.git
+setup: cwd: $here/21/.git
 setup: prefix: (null)
 EOF
 	test_repo 21/.git
@@ -2995,9 +2996,9 @@ EOF
 
 test_expect_success '#21.1: in .git/wt' '
 	cat >21/.git/wt/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/21/.git
+setup: git_dir: $here/21/.git
 setup: worktree: (null)
-setup: cwd: $TRASH_DIRECTORY/21/.git/wt
+setup: cwd: $here/21/.git/wt
 setup: prefix: (null)
 EOF
 	test_repo 21/.git/wt
@@ -3005,9 +3006,9 @@ EOF
 
 test_expect_success '#21.1: in .git/wt/sub' '
 	cat >21/.git/wt/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/21/.git
+setup: git_dir: $here/21/.git
 setup: worktree: (null)
-setup: cwd: $TRASH_DIRECTORY/21/.git/wt/sub
+setup: cwd: $here/21/.git/wt/sub
 setup: prefix: (null)
 EOF
 	test_repo 21/.git/wt/sub
@@ -3031,14 +3032,14 @@ EOF
 # GIT_WORK_TREE/core.worktree are ignored -> #20.2
 
 test_expect_success '#21.2: setup' '
-	git config --file="$TRASH_DIRECTORY/21/.git/config" core.bare true
+	git config --file="$here/21/.git/config" core.bare true
 '
 
 test_expect_success '#21.2: at .git' '
 	cat >21/.git/expected <<EOF &&
 setup: git_dir: .
 setup: worktree: (null)
-setup: cwd: $TRASH_DIRECTORY/21/.git
+setup: cwd: $here/21/.git
 setup: prefix: (null)
 EOF
 	test_repo 21/.git
@@ -3046,9 +3047,9 @@ EOF
 
 test_expect_success '#21.2: in .git/wt' '
 	cat >21/.git/wt/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/21/.git
+setup: git_dir: $here/21/.git
 setup: worktree: (null)
-setup: cwd: $TRASH_DIRECTORY/21/.git/wt
+setup: cwd: $here/21/.git/wt
 setup: prefix: (null)
 EOF
 	test_repo 21/.git/wt
@@ -3056,9 +3057,9 @@ EOF
 
 test_expect_success '#21.2: in .git/wt/sub' '
 	cat >21/.git/wt/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/21/.git
+setup: git_dir: $here/21/.git
 setup: worktree: (null)
-setup: cwd: $TRASH_DIRECTORY/21/.git/wt/sub
+setup: cwd: $here/21/.git/wt/sub
 setup: prefix: (null)
 EOF
 	test_repo 21/.git/wt/sub
@@ -3068,7 +3069,7 @@ test_expect_success '#21.2: at root' '
 	cat >21/expected <<EOF &&
 setup: git_dir: .git
 setup: worktree: (null)
-setup: cwd: $TRASH_DIRECTORY/21
+setup: cwd: $here/21
 setup: prefix: (null)
 EOF
 	test_repo 21
@@ -3076,9 +3077,9 @@ EOF
 
 test_expect_success '#21.2: in subdir' '
 	cat >21/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/21/.git
+setup: git_dir: $here/21/.git
 setup: worktree: (null)
-setup: cwd: $TRASH_DIRECTORY/21/sub
+setup: cwd: $here/21/sub
 setup: prefix: (null)
 EOF
 	test_repo 21/sub
@@ -3119,265 +3120,265 @@ test_expect_success '#22.1: setup' '
 test_expect_success '#22.1: GIT_DIR(rel), core.worktree=. at .git' '
 	cat >22/.git/expected <<EOF &&
 setup: git_dir: .
-setup: worktree: $TRASH_DIRECTORY/22/.git
-setup: cwd: $TRASH_DIRECTORY/22/.git
+setup: worktree: $here/22/.git
+setup: cwd: $here/22/.git
 setup: prefix: (null)
 EOF
-	git config --file="$TRASH_DIRECTORY/22/.git/config" core.worktree "$TRASH_DIRECTORY/22/.git" &&
+	git config --file="$here/22/.git/config" core.worktree "$here/22/.git" &&
 	test_repo 22/.git .
 '
 
 test_expect_success '#22.1: GIT_DIR(rel), core.worktree=.(rel) at .git' '
 	cat >22/.git/expected <<EOF &&
 setup: git_dir: .
-setup: worktree: $TRASH_DIRECTORY/22/.git
-setup: cwd: $TRASH_DIRECTORY/22/.git
+setup: worktree: $here/22/.git
+setup: cwd: $here/22/.git
 setup: prefix: (null)
 EOF
-	git config --file="$TRASH_DIRECTORY/22/.git/config" core.worktree . &&
+	git config --file="$here/22/.git/config" core.worktree . &&
 	test_repo 22/.git .
 '
 
 test_expect_success '#22.1: GIT_DIR, core.worktree=. at .git' '
 	cat >22/.git/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/22/.git
-setup: worktree: $TRASH_DIRECTORY/22/.git
-setup: cwd: $TRASH_DIRECTORY/22/.git
+setup: git_dir: $here/22/.git
+setup: worktree: $here/22/.git
+setup: cwd: $here/22/.git
 setup: prefix: (null)
 EOF
-	git config --file="$TRASH_DIRECTORY/22/.git/config" core.worktree "$TRASH_DIRECTORY/22/.git" &&
-	test_repo 22/.git "$TRASH_DIRECTORY/22/.git"
+	git config --file="$here/22/.git/config" core.worktree "$here/22/.git" &&
+	test_repo 22/.git "$here/22/.git"
 '
 
 test_expect_success '#22.1: GIT_DIR, core.worktree=.(rel) at root' '
 	cat >22/.git/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/22/.git
-setup: worktree: $TRASH_DIRECTORY/22/.git
-setup: cwd: $TRASH_DIRECTORY/22/.git
+setup: git_dir: $here/22/.git
+setup: worktree: $here/22/.git
+setup: cwd: $here/22/.git
 setup: prefix: (null)
 EOF
-	git config --file="$TRASH_DIRECTORY/22/.git/config" core.worktree . &&
-	test_repo 22/.git "$TRASH_DIRECTORY/22/.git"
+	git config --file="$here/22/.git/config" core.worktree . &&
+	test_repo 22/.git "$here/22/.git"
 '
 
 test_expect_success '#22.1: GIT_DIR(rel), core.worktree=. in .git/sub' '
 	cat >22/.git/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/22/.git
-setup: worktree: $TRASH_DIRECTORY/22/.git
-setup: cwd: $TRASH_DIRECTORY/22/.git
+setup: git_dir: $here/22/.git
+setup: worktree: $here/22/.git
+setup: cwd: $here/22/.git
 setup: prefix: sub/
 EOF
-	git config --file="$TRASH_DIRECTORY/22/.git/config" core.worktree "$TRASH_DIRECTORY/22/.git" &&
+	git config --file="$here/22/.git/config" core.worktree "$here/22/.git" &&
 	test_repo 22/.git/sub ..
 '
 
 test_expect_success '#22.1: GIT_DIR(rel), core.worktree=.(rel) in .git/sub' '
 	cat >22/.git/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/22/.git
-setup: worktree: $TRASH_DIRECTORY/22/.git
-setup: cwd: $TRASH_DIRECTORY/22/.git
+setup: git_dir: $here/22/.git
+setup: worktree: $here/22/.git
+setup: cwd: $here/22/.git
 setup: prefix: sub/
 EOF
-	git config --file="$TRASH_DIRECTORY/22/.git/config" core.worktree . &&
+	git config --file="$here/22/.git/config" core.worktree . &&
 	test_repo 22/.git/sub/ ..
 '
 
 test_expect_success '#22.1: GIT_DIR, core.worktree=. in .git/sub' '
 	cat >22/.git/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/22/.git
-setup: worktree: $TRASH_DIRECTORY/22/.git
-setup: cwd: $TRASH_DIRECTORY/22/.git
+setup: git_dir: $here/22/.git
+setup: worktree: $here/22/.git
+setup: cwd: $here/22/.git
 setup: prefix: sub/
 EOF
-	git config --file="$TRASH_DIRECTORY/22/.git/config" core.worktree "$TRASH_DIRECTORY/22/.git" &&
-	test_repo 22/.git/sub "$TRASH_DIRECTORY/22/.git"
+	git config --file="$here/22/.git/config" core.worktree "$here/22/.git" &&
+	test_repo 22/.git/sub "$here/22/.git"
 '
 
 test_expect_success '#22.1: GIT_DIR, core.worktree=.(rel) in .git/sub' '
 	cat >22/.git/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/22/.git
-setup: worktree: $TRASH_DIRECTORY/22/.git
-setup: cwd: $TRASH_DIRECTORY/22/.git
+setup: git_dir: $here/22/.git
+setup: worktree: $here/22/.git
+setup: cwd: $here/22/.git
 setup: prefix: sub/
 EOF
-	git config --file="$TRASH_DIRECTORY/22/.git/config" core.worktree . &&
-	test_repo 22/.git/sub "$TRASH_DIRECTORY/22/.git"
+	git config --file="$here/22/.git/config" core.worktree . &&
+	test_repo 22/.git/sub "$here/22/.git"
 '
 
 test_expect_success '#22.1: GIT_DIR(rel), core.worktree=wt at .git' '
 	cat >22/.git/expected <<EOF &&
 setup: git_dir: .
-setup: worktree: $TRASH_DIRECTORY/22/.git/wt
-setup: cwd: $TRASH_DIRECTORY/22/.git
+setup: worktree: $here/22/.git/wt
+setup: cwd: $here/22/.git
 setup: prefix: (null)
 EOF
-	git config --file="$TRASH_DIRECTORY/22/.git/config" core.worktree "$TRASH_DIRECTORY/22/.git/wt" &&
+	git config --file="$here/22/.git/config" core.worktree "$here/22/.git/wt" &&
 	test_repo 22/.git .
 '
 
 test_expect_success '#22.1: GIT_DIR(rel), core.worktree=wt(rel) at .git' '
 	cat >22/.git/expected <<EOF &&
 setup: git_dir: .
-setup: worktree: $TRASH_DIRECTORY/22/.git/wt
-setup: cwd: $TRASH_DIRECTORY/22/.git
+setup: worktree: $here/22/.git/wt
+setup: cwd: $here/22/.git
 setup: prefix: (null)
 EOF
-	git config --file="$TRASH_DIRECTORY/22/.git/config" core.worktree wt &&
+	git config --file="$here/22/.git/config" core.worktree wt &&
 	test_repo 22/.git .
 '
 
 test_expect_success '#22.1: GIT_DIR, core.worktree=wt(rel) at .git' '
 	cat >22/.git/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/22/.git
-setup: worktree: $TRASH_DIRECTORY/22/.git/wt
-setup: cwd: $TRASH_DIRECTORY/22/.git
+setup: git_dir: $here/22/.git
+setup: worktree: $here/22/.git/wt
+setup: cwd: $here/22/.git
 setup: prefix: (null)
 EOF
-	git config --file="$TRASH_DIRECTORY/22/.git/config" core.worktree wt &&
-	test_repo 22/.git "$TRASH_DIRECTORY/22/.git"
+	git config --file="$here/22/.git/config" core.worktree wt &&
+	test_repo 22/.git "$here/22/.git"
 '
 
 test_expect_success '#22.1: GIT_DIR, core.worktree=wt at .git' '
 	cat >22/.git/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/22/.git
-setup: worktree: $TRASH_DIRECTORY/22/.git/wt
-setup: cwd: $TRASH_DIRECTORY/22/.git
+setup: git_dir: $here/22/.git
+setup: worktree: $here/22/.git/wt
+setup: cwd: $here/22/.git
 setup: prefix: (null)
 EOF
-	git config --file="$TRASH_DIRECTORY/22/.git/config" core.worktree "$TRASH_DIRECTORY/22/.git/wt" &&
-	test_repo 22/.git "$TRASH_DIRECTORY/22/.git"
+	git config --file="$here/22/.git/config" core.worktree "$here/22/.git/wt" &&
+	test_repo 22/.git "$here/22/.git"
 '
 
 test_expect_success '#22.1: GIT_DIR(rel), core.worktree=wt in .git/sub' '
 	cat >22/.git/sub/expected <<EOF &&
 setup: git_dir: ..
-setup: worktree: $TRASH_DIRECTORY/22/.git/wt
-setup: cwd: $TRASH_DIRECTORY/22/.git/sub
+setup: worktree: $here/22/.git/wt
+setup: cwd: $here/22/.git/sub
 setup: prefix: (null)
 EOF
-	git config --file="$TRASH_DIRECTORY/22/.git/config" core.worktree "$TRASH_DIRECTORY/22/.git/wt" &&
+	git config --file="$here/22/.git/config" core.worktree "$here/22/.git/wt" &&
 	test_repo 22/.git/sub ..
 '
 
 test_expect_success '#22.1: GIT_DIR(rel), core.worktree=wt(rel) in .git/sub' '
 	cat >22/.git/sub/expected <<EOF &&
 setup: git_dir: ..
-setup: worktree: $TRASH_DIRECTORY/22/.git/wt
-setup: cwd: $TRASH_DIRECTORY/22/.git/sub
+setup: worktree: $here/22/.git/wt
+setup: cwd: $here/22/.git/sub
 setup: prefix: (null)
 EOF
-	git config --file="$TRASH_DIRECTORY/22/.git/config" core.worktree wt &&
+	git config --file="$here/22/.git/config" core.worktree wt &&
 	test_repo 22/.git/sub ..
 '
 
 test_expect_success '#22.1: GIT_DIR, core.worktree=wt(rel) in .git/sub' '
 	cat >22/.git/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/22/.git
-setup: worktree: $TRASH_DIRECTORY/22/.git/wt
-setup: cwd: $TRASH_DIRECTORY/22/.git/sub
+setup: git_dir: $here/22/.git
+setup: worktree: $here/22/.git/wt
+setup: cwd: $here/22/.git/sub
 setup: prefix: (null)
 EOF
-	git config --file="$TRASH_DIRECTORY/22/.git/config" core.worktree wt &&
-	test_repo 22/.git/sub "$TRASH_DIRECTORY/22/.git"
+	git config --file="$here/22/.git/config" core.worktree wt &&
+	test_repo 22/.git/sub "$here/22/.git"
 '
 
 test_expect_success '#22.1: GIT_DIR, core.worktree=wt in .git/sub' '
 	cat >22/.git/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/22/.git
-setup: worktree: $TRASH_DIRECTORY/22/.git/wt
-setup: cwd: $TRASH_DIRECTORY/22/.git/sub
+setup: git_dir: $here/22/.git
+setup: worktree: $here/22/.git/wt
+setup: cwd: $here/22/.git/sub
 setup: prefix: (null)
 EOF
-	git config --file="$TRASH_DIRECTORY/22/.git/config" core.worktree "$TRASH_DIRECTORY/22/.git/wt" &&
-	test_repo 22/.git/sub "$TRASH_DIRECTORY/22/.git"
+	git config --file="$here/22/.git/config" core.worktree "$here/22/.git/wt" &&
+	test_repo 22/.git/sub "$here/22/.git"
 '
 
 test_expect_success '#22.1: GIT_DIR(rel), core.worktree=.. at .git' '
 	cat >22/.git/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/22/.git
-setup: worktree: $TRASH_DIRECTORY/22
-setup: cwd: $TRASH_DIRECTORY/22
+setup: git_dir: $here/22/.git
+setup: worktree: $here/22
+setup: cwd: $here/22
 setup: prefix: .git/
 EOF
-	git config --file="$TRASH_DIRECTORY/22/.git/config" core.worktree "$TRASH_DIRECTORY/22" &&
+	git config --file="$here/22/.git/config" core.worktree "$here/22" &&
 	test_repo 22/.git .
 '
 
 test_expect_success '#22.1: GIT_DIR(rel), core.worktree=..(rel) at .git' '
 	cat >22/.git/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/22/.git
-setup: worktree: $TRASH_DIRECTORY/22
-setup: cwd: $TRASH_DIRECTORY/22
+setup: git_dir: $here/22/.git
+setup: worktree: $here/22
+setup: cwd: $here/22
 setup: prefix: .git/
 EOF
-	git config --file="$TRASH_DIRECTORY/22/.git/config" core.worktree .. &&
+	git config --file="$here/22/.git/config" core.worktree .. &&
 	test_repo 22/.git .
 '
 
 test_expect_success '#22.1: GIT_DIR, core.worktree=..(rel) at .git' '
 	cat >22/.git/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/22/.git
-setup: worktree: $TRASH_DIRECTORY/22
-setup: cwd: $TRASH_DIRECTORY/22
+setup: git_dir: $here/22/.git
+setup: worktree: $here/22
+setup: cwd: $here/22
 setup: prefix: .git/
 EOF
-	git config --file="$TRASH_DIRECTORY/22/.git/config" core.worktree .. &&
-	test_repo 22/.git "$TRASH_DIRECTORY/22/.git"
+	git config --file="$here/22/.git/config" core.worktree .. &&
+	test_repo 22/.git "$here/22/.git"
 '
 
 test_expect_success '#22.1: GIT_DIR, core.worktree=.. at .git' '
 	cat >22/.git/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/22/.git
-setup: worktree: $TRASH_DIRECTORY/22
-setup: cwd: $TRASH_DIRECTORY/22
+setup: git_dir: $here/22/.git
+setup: worktree: $here/22
+setup: cwd: $here/22
 setup: prefix: .git/
 EOF
-	git config --file="$TRASH_DIRECTORY/22/.git/config" core.worktree "$TRASH_DIRECTORY/22" &&
-	test_repo 22/.git "$TRASH_DIRECTORY/22/.git"
+	git config --file="$here/22/.git/config" core.worktree "$here/22" &&
+	test_repo 22/.git "$here/22/.git"
 '
 
 test_expect_success '#22.1: GIT_DIR(rel), core.worktree=.. in .git/sub' '
 	cat >22/.git/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/22/.git
-setup: worktree: $TRASH_DIRECTORY/22
-setup: cwd: $TRASH_DIRECTORY/22
+setup: git_dir: $here/22/.git
+setup: worktree: $here/22
+setup: cwd: $here/22
 setup: prefix: .git/sub/
 EOF
-	git config --file="$TRASH_DIRECTORY/22/.git/config" core.worktree "$TRASH_DIRECTORY/22" &&
+	git config --file="$here/22/.git/config" core.worktree "$here/22" &&
 	test_repo 22/.git/sub ..
 '
 
 test_expect_success '#22.1: GIT_DIR(rel), core.worktree=..(rel) in .git/sub' '
 	cat >22/.git/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/22/.git
-setup: worktree: $TRASH_DIRECTORY/22
-setup: cwd: $TRASH_DIRECTORY/22
+setup: git_dir: $here/22/.git
+setup: worktree: $here/22
+setup: cwd: $here/22
 setup: prefix: .git/sub/
 EOF
-	git config --file="$TRASH_DIRECTORY/22/.git/config" core.worktree .. &&
+	git config --file="$here/22/.git/config" core.worktree .. &&
 	test_repo 22/.git/sub ..
 '
 
 test_expect_success '#22.1: GIT_DIR, core.worktree=..(rel) in .git/sub' '
 	cat >22/.git/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/22/.git
-setup: worktree: $TRASH_DIRECTORY/22
-setup: cwd: $TRASH_DIRECTORY/22
+setup: git_dir: $here/22/.git
+setup: worktree: $here/22
+setup: cwd: $here/22
 setup: prefix: .git/sub/
 EOF
-	git config --file="$TRASH_DIRECTORY/22/.git/config" core.worktree .. &&
-	test_repo 22/.git/sub "$TRASH_DIRECTORY/22/.git"
+	git config --file="$here/22/.git/config" core.worktree .. &&
+	test_repo 22/.git/sub "$here/22/.git"
 '
 
 test_expect_success '#22.1: GIT_DIR, core.worktree=.. in .git/sub' '
 	cat >22/.git/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/22/.git
-setup: worktree: $TRASH_DIRECTORY/22
-setup: cwd: $TRASH_DIRECTORY/22
+setup: git_dir: $here/22/.git
+setup: worktree: $here/22
+setup: cwd: $here/22
 setup: prefix: .git/sub/
 EOF
-	git config --file="$TRASH_DIRECTORY/22/.git/config" core.worktree "$TRASH_DIRECTORY/22" &&
-	test_repo 22/.git/sub "$TRASH_DIRECTORY/22/.git"
+	git config --file="$here/22/.git/config" core.worktree "$here/22" &&
+	test_repo 22/.git/sub "$here/22/.git"
 '
 
 #
@@ -3398,7 +3399,7 @@ EOF
 # core.worktree and core.bare conflict, won't fly.
 
 test_expect_success '#22.2: setup' '
-	git config --file="$TRASH_DIRECTORY/22/.git/config" core.bare true
+	git config --file="$here/22/.git/config" core.bare true
 '
 
 test_expect_success '#22.2: at .git' '
@@ -3451,18 +3452,18 @@ test_expect_success '#23: setup' '
 test_expect_success '#23: GIT_DIR(rel), GIT_WORK_TREE=root at root' '
 	cat >23/expected <<EOF &&
 setup: git_dir: .git
-setup: worktree: $TRASH_DIRECTORY/23
-setup: cwd: $TRASH_DIRECTORY/23
+setup: worktree: $here/23
+setup: cwd: $here/23
 setup: prefix: (null)
 EOF
-	test_repo 23 .git "$TRASH_DIRECTORY/23"
+	test_repo 23 .git "$here/23"
 '
 
 test_expect_success '#23: GIT_DIR(rel), GIT_WORK_TREE=root(rel) at root' '
 	cat >23/expected <<EOF &&
 setup: git_dir: .git
-setup: worktree: $TRASH_DIRECTORY/23
-setup: cwd: $TRASH_DIRECTORY/23
+setup: worktree: $here/23
+setup: cwd: $here/23
 setup: prefix: (null)
 EOF
 	test_repo 23 .git .
@@ -3470,39 +3471,39 @@ EOF
 
 test_expect_success '#23: GIT_DIR, GIT_WORK_TREE=root at root' '
 	cat >23/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/23/.git
-setup: worktree: $TRASH_DIRECTORY/23
-setup: cwd: $TRASH_DIRECTORY/23
+setup: git_dir: $here/23/.git
+setup: worktree: $here/23
+setup: cwd: $here/23
 setup: prefix: (null)
 EOF
-	test_repo 23 "$TRASH_DIRECTORY/23/.git" "$TRASH_DIRECTORY/23"
+	test_repo 23 "$here/23/.git" "$here/23"
 '
 
 test_expect_success '#23: GIT_DIR, GIT_WORK_TREE=root(rel) at root' '
 	cat >23/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/23/.git
-setup: worktree: $TRASH_DIRECTORY/23
-setup: cwd: $TRASH_DIRECTORY/23
+setup: git_dir: $here/23/.git
+setup: worktree: $here/23
+setup: cwd: $here/23
 setup: prefix: (null)
 EOF
-	test_repo 23 "$TRASH_DIRECTORY/23/.git" .
+	test_repo 23 "$here/23/.git" .
 '
 
 test_expect_success '#23: GIT_DIR(rel), GIT_WORKTREE=root in subdir' '
 	cat >23/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/23/.git
-setup: worktree: $TRASH_DIRECTORY/23
-setup: cwd: $TRASH_DIRECTORY/23
+setup: git_dir: $here/23/.git
+setup: worktree: $here/23
+setup: cwd: $here/23
 setup: prefix: sub/sub/
 EOF
-	test_repo 23/sub/sub ../../.git "$TRASH_DIRECTORY/23"
+	test_repo 23/sub/sub ../../.git "$here/23"
 '
 
 test_expect_success '#23: GIT_DIR(rel), GIT_WORKTREE=root(rel) in subdir' '
 	cat >23/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/23/.git
-setup: worktree: $TRASH_DIRECTORY/23
-setup: cwd: $TRASH_DIRECTORY/23
+setup: git_dir: $here/23/.git
+setup: worktree: $here/23
+setup: cwd: $here/23
 setup: prefix: sub/sub/
 EOF
 	test_repo 23/sub/sub ../../.git ../..
@@ -3510,39 +3511,39 @@ EOF
 
 test_expect_success '#23: GIT_DIR, GIT_WORKTREE=root in subdir' '
 	cat >23/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/23/.git
-setup: worktree: $TRASH_DIRECTORY/23
-setup: cwd: $TRASH_DIRECTORY/23
+setup: git_dir: $here/23/.git
+setup: worktree: $here/23
+setup: cwd: $here/23
 setup: prefix: sub/
 EOF
-	test_repo 23/sub "$TRASH_DIRECTORY/23/.git" "$TRASH_DIRECTORY/23"
+	test_repo 23/sub "$here/23/.git" "$here/23"
 '
 
 test_expect_success '#23: GIT_DIR, GIT_WORKTREE=root(rel) in subdir' '
 	cat >23/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/23/.git
-setup: worktree: $TRASH_DIRECTORY/23
-setup: cwd: $TRASH_DIRECTORY/23
+setup: git_dir: $here/23/.git
+setup: worktree: $here/23
+setup: cwd: $here/23
 setup: prefix: sub/sub/
 EOF
-	test_repo 23/sub/sub "$TRASH_DIRECTORY/23/.git" ../..
+	test_repo 23/sub/sub "$here/23/.git" ../..
 '
 
 test_expect_success '#23: GIT_DIR(rel), GIT_WORK_TREE=wt at root' '
 	cat >23/expected <<EOF &&
 setup: git_dir: .git
-setup: worktree: $TRASH_DIRECTORY/23/wt
-setup: cwd: $TRASH_DIRECTORY/23
+setup: worktree: $here/23/wt
+setup: cwd: $here/23
 setup: prefix: (null)
 EOF
-	test_repo 23 .git "$TRASH_DIRECTORY/23/wt"
+	test_repo 23 .git "$here/23/wt"
 '
 
 test_expect_success '#23: GIT_DIR(rel), GIT_WORK_TREE=wt(rel) at root' '
 	cat >23/expected <<EOF &&
 setup: git_dir: .git
-setup: worktree: $TRASH_DIRECTORY/23/wt
-setup: cwd: $TRASH_DIRECTORY/23
+setup: worktree: $here/23/wt
+setup: cwd: $here/23
 setup: prefix: (null)
 EOF
 	test_repo 23 .git wt
@@ -3550,39 +3551,39 @@ EOF
 
 test_expect_success '#23: GIT_DIR, GIT_WORK_TREE=wt(rel) at root' '
 	cat >23/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/23/.git
-setup: worktree: $TRASH_DIRECTORY/23/wt
-setup: cwd: $TRASH_DIRECTORY/23
+setup: git_dir: $here/23/.git
+setup: worktree: $here/23/wt
+setup: cwd: $here/23
 setup: prefix: (null)
 EOF
-	test_repo 23 "$TRASH_DIRECTORY/23/.git" wt
+	test_repo 23 "$here/23/.git" wt
 '
 
 test_expect_success '#23: GIT_DIR, GIT_WORK_TREE=wt at root' '
 	cat >23/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/23/.git
-setup: worktree: $TRASH_DIRECTORY/23/wt
-setup: cwd: $TRASH_DIRECTORY/23
+setup: git_dir: $here/23/.git
+setup: worktree: $here/23/wt
+setup: cwd: $here/23
 setup: prefix: (null)
 EOF
-	test_repo 23 "$TRASH_DIRECTORY/23/.git" "$TRASH_DIRECTORY/23/wt"
+	test_repo 23 "$here/23/.git" "$here/23/wt"
 '
 
 test_expect_success '#23: GIT_DIR(rel), GIT_WORK_TREE=wt in subdir' '
 	cat >23/sub/sub/expected <<EOF &&
 setup: git_dir: ../../.git
-setup: worktree: $TRASH_DIRECTORY/23/wt
-setup: cwd: $TRASH_DIRECTORY/23/sub/sub
+setup: worktree: $here/23/wt
+setup: cwd: $here/23/sub/sub
 setup: prefix: (null)
 EOF
-	test_repo 23/sub/sub ../../.git "$TRASH_DIRECTORY/23/wt"
+	test_repo 23/sub/sub ../../.git "$here/23/wt"
 '
 
 test_expect_success '#23: GIT_DIR(rel), GIT_WORK_TREE=wt(rel) in subdir' '
 	cat >23/sub/sub/expected <<EOF &&
 setup: git_dir: ../../.git
-setup: worktree: $TRASH_DIRECTORY/23/wt
-setup: cwd: $TRASH_DIRECTORY/23/sub/sub
+setup: worktree: $here/23/wt
+setup: cwd: $here/23/sub/sub
 setup: prefix: (null)
 EOF
 	test_repo 23/sub/sub ../../.git ../../wt
@@ -3590,39 +3591,39 @@ EOF
 
 test_expect_success '#23: GIT_DIR, GIT_WORK_TREE=wt(rel) in subdir' '
 	cat >23/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/23/.git
-setup: worktree: $TRASH_DIRECTORY/23/wt
-setup: cwd: $TRASH_DIRECTORY/23/sub/sub
+setup: git_dir: $here/23/.git
+setup: worktree: $here/23/wt
+setup: cwd: $here/23/sub/sub
 setup: prefix: (null)
 EOF
-	test_repo 23/sub/sub "$TRASH_DIRECTORY/23/.git" ../../wt
+	test_repo 23/sub/sub "$here/23/.git" ../../wt
 '
 
 test_expect_success '#23: GIT_DIR, GIT_WORK_TREE=wt in subdir' '
 	cat >23/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/23/.git
-setup: worktree: $TRASH_DIRECTORY/23/wt
-setup: cwd: $TRASH_DIRECTORY/23/sub/sub
+setup: git_dir: $here/23/.git
+setup: worktree: $here/23/wt
+setup: cwd: $here/23/sub/sub
 setup: prefix: (null)
 EOF
-	test_repo 23/sub/sub "$TRASH_DIRECTORY/23/.git" "$TRASH_DIRECTORY/23/wt"
+	test_repo 23/sub/sub "$here/23/.git" "$here/23/wt"
 '
 
 test_expect_success '#23: GIT_DIR(rel), GIT_WORK_TREE=.. at root' '
 	cat >23/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/23/.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/23/.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 23/
 EOF
-	test_repo 23 .git "$TRASH_DIRECTORY"
+	test_repo 23 .git "$here"
 '
 
 test_expect_success '#23: GIT_DIR(rel), GIT_WORK_TREE=..(rel) at root' '
 	cat >23/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/23/.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/23/.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 23/
 EOF
 	test_repo 23 .git ..
@@ -3630,39 +3631,39 @@ EOF
 
 test_expect_success '#23: GIT_DIR, GIT_WORK_TREE=..(rel) at root' '
 	cat >23/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/23/.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/23/.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 23/
 EOF
-	test_repo 23 "$TRASH_DIRECTORY/23/.git" ..
+	test_repo 23 "$here/23/.git" ..
 '
 
 test_expect_success '#23: GIT_DIR, GIT_WORK_TREE=.. at root' '
 	cat >23/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/23/.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/23/.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 23/
 EOF
-	test_repo 23 "$TRASH_DIRECTORY/23/.git" "$TRASH_DIRECTORY"
+	test_repo 23 "$here/23/.git" "$here"
 '
 
 test_expect_success '#23: GIT_DIR(rel), GIT_WORK_TREE=.. in subdir' '
 	cat >23/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/23/.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/23/.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 23/sub/sub/
 EOF
-	test_repo 23/sub/sub ../../.git "$TRASH_DIRECTORY"
+	test_repo 23/sub/sub ../../.git "$here"
 '
 
 test_expect_success '#23: GIT_DIR(rel), GIT_WORK_TREE=..(rel) in subdir' '
 	cat >23/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/23/.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/23/.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 23/sub/sub/
 EOF
 	test_repo 23/sub/sub ../../.git ../../..
@@ -3670,22 +3671,22 @@ EOF
 
 test_expect_success '#23: GIT_DIR, GIT_WORK_TREE=..(rel) in subdir' '
 	cat >23/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/23/.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/23/.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 23/sub/sub/
 EOF
-	test_repo 23/sub/sub "$TRASH_DIRECTORY/23/.git" ../../../
+	test_repo 23/sub/sub "$here/23/.git" ../../../
 '
 
 test_expect_success '#23: GIT_DIR, GIT_WORK_TREE=.. in subdir' '
 	cat >23/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/23/.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/23/.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 23/sub/sub/
 EOF
-	test_repo 23/sub/sub "$TRASH_DIRECTORY/23/.git" "$TRASH_DIRECTORY"
+	test_repo 23/sub/sub "$here/23/.git" "$here"
 '
 
 #
@@ -3718,9 +3719,9 @@ test_expect_success '#24: setup' '
 
 test_expect_success '#24: at root' '
 	cat >24/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/24.git
+setup: git_dir: $here/24.git
 setup: worktree: (null)
-setup: cwd: $TRASH_DIRECTORY/24
+setup: cwd: $here/24
 setup: prefix: (null)
 EOF
 	test_repo 24
@@ -3728,9 +3729,9 @@ EOF
 
 test_expect_success '#24: in subdir' '
 	cat >24/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/24.git
+setup: git_dir: $here/24.git
 setup: worktree: (null)
-setup: cwd: $TRASH_DIRECTORY/24/sub
+setup: cwd: $here/24/sub
 setup: prefix: (null)
 EOF
 	test_repo 24/sub
@@ -3768,9 +3769,9 @@ test_expect_success '#25: setup' '
 
 test_expect_success '#25: at root' '
 	cat >25/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/25.git
+setup: git_dir: $here/25.git
 setup: worktree: (null)
-setup: cwd: $TRASH_DIRECTORY/25
+setup: cwd: $here/25
 setup: prefix: (null)
 EOF
 	test_repo 25
@@ -3778,9 +3779,9 @@ EOF
 
 test_expect_success '#25: in subdir' '
 	cat >25/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/25.git
+setup: git_dir: $here/25.git
 setup: worktree: (null)
-setup: cwd: $TRASH_DIRECTORY/25/sub
+setup: cwd: $here/25/sub
 setup: prefix: (null)
 EOF
 	test_repo 25/sub
@@ -3816,9 +3817,9 @@ test_expect_success '#26: setup' '
 
 test_expect_success '#26: (rel) at root' '
 	cat >26/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/26.git
+setup: git_dir: $here/26.git
 setup: worktree: (null)
-setup: cwd: $TRASH_DIRECTORY/26
+setup: cwd: $here/26
 setup: prefix: (null)
 EOF
 	 test_repo 26 .git
@@ -3826,19 +3827,19 @@ EOF
 
 test_expect_success '#26: at root' '
 	cat >26/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/26.git
+setup: git_dir: $here/26.git
 setup: worktree: (null)
-setup: cwd: $TRASH_DIRECTORY/26
+setup: cwd: $here/26
 setup: prefix: (null)
 EOF
-	 test_repo 26 "$TRASH_DIRECTORY/26/.git"
+	 test_repo 26 "$here/26/.git"
 '
 
 test_expect_success '#26: (rel) in subdir' '
 	cat >26/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/26.git
+setup: git_dir: $here/26.git
 setup: worktree: (null)
-setup: cwd: $TRASH_DIRECTORY/26/sub
+setup: cwd: $here/26/sub
 setup: prefix: (null)
 EOF
 	test_repo 26/sub ../.git
@@ -3846,12 +3847,12 @@ EOF
 
 test_expect_success '#26: in subdir' '
 	cat >26/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/26.git
+setup: git_dir: $here/26.git
 setup: worktree: (null)
-setup: cwd: $TRASH_DIRECTORY/26/sub
+setup: cwd: $here/26/sub
 setup: prefix: (null)
 EOF
-	test_repo 26/sub "$TRASH_DIRECTORY/26/.git"
+	test_repo 26/sub "$here/26/.git"
 '
 
 #
@@ -3884,19 +3885,19 @@ test_expect_success '#27: setup' '
 
 test_expect_success '#27: GIT_DIR(rel), GIT_WORK_TREE=root at root' '
 	cat >27/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/27.git
-setup: worktree: $TRASH_DIRECTORY/27
-setup: cwd: $TRASH_DIRECTORY/27
+setup: git_dir: $here/27.git
+setup: worktree: $here/27
+setup: cwd: $here/27
 setup: prefix: (null)
 EOF
-	test_repo 27 .git "$TRASH_DIRECTORY/27"
+	test_repo 27 .git "$here/27"
 '
 
 test_expect_success '#27: GIT_DIR(rel), GIT_WORK_TREE=root(rel) at root' '
 	cat >27/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/27.git
-setup: worktree: $TRASH_DIRECTORY/27
-setup: cwd: $TRASH_DIRECTORY/27
+setup: git_dir: $here/27.git
+setup: worktree: $here/27
+setup: cwd: $here/27
 setup: prefix: (null)
 EOF
 	test_repo 27 .git .
@@ -3904,39 +3905,39 @@ EOF
 
 test_expect_success '#27: GIT_DIR, GIT_WORK_TREE=root at root' '
 	cat >27/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/27.git
-setup: worktree: $TRASH_DIRECTORY/27
-setup: cwd: $TRASH_DIRECTORY/27
+setup: git_dir: $here/27.git
+setup: worktree: $here/27
+setup: cwd: $here/27
 setup: prefix: (null)
 EOF
-	test_repo 27 "$TRASH_DIRECTORY/27/.git" "$TRASH_DIRECTORY/27"
+	test_repo 27 "$here/27/.git" "$here/27"
 '
 
 test_expect_success '#27: GIT_DIR, GIT_WORK_TREE=root(rel) at root' '
 	cat >27/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/27.git
-setup: worktree: $TRASH_DIRECTORY/27
-setup: cwd: $TRASH_DIRECTORY/27
+setup: git_dir: $here/27.git
+setup: worktree: $here/27
+setup: cwd: $here/27
 setup: prefix: (null)
 EOF
-	test_repo 27 "$TRASH_DIRECTORY/27/.git" .
+	test_repo 27 "$here/27/.git" .
 '
 
 test_expect_success '#27: GIT_DIR(rel), GIT_WORKTREE=root in subdir' '
 	cat >27/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/27.git
-setup: worktree: $TRASH_DIRECTORY/27
-setup: cwd: $TRASH_DIRECTORY/27
+setup: git_dir: $here/27.git
+setup: worktree: $here/27
+setup: cwd: $here/27
 setup: prefix: sub/sub/
 EOF
-	test_repo 27/sub/sub ../../.git "$TRASH_DIRECTORY/27"
+	test_repo 27/sub/sub ../../.git "$here/27"
 '
 
 test_expect_success '#27: GIT_DIR(rel), GIT_WORKTREE=root(rel) in subdir' '
 	cat >27/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/27.git
-setup: worktree: $TRASH_DIRECTORY/27
-setup: cwd: $TRASH_DIRECTORY/27
+setup: git_dir: $here/27.git
+setup: worktree: $here/27
+setup: cwd: $here/27
 setup: prefix: sub/sub/
 EOF
 	test_repo 27/sub/sub ../../.git ../..
@@ -3944,39 +3945,39 @@ EOF
 
 test_expect_success '#27: GIT_DIR, GIT_WORKTREE=root in subdir' '
 	cat >27/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/27.git
-setup: worktree: $TRASH_DIRECTORY/27
-setup: cwd: $TRASH_DIRECTORY/27
+setup: git_dir: $here/27.git
+setup: worktree: $here/27
+setup: cwd: $here/27
 setup: prefix: sub/
 EOF
-	test_repo 27/sub "$TRASH_DIRECTORY/27/.git" "$TRASH_DIRECTORY/27"
+	test_repo 27/sub "$here/27/.git" "$here/27"
 '
 
 test_expect_success '#27: GIT_DIR, GIT_WORKTREE=root(rel) in subdir' '
 	cat >27/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/27.git
-setup: worktree: $TRASH_DIRECTORY/27
-setup: cwd: $TRASH_DIRECTORY/27
+setup: git_dir: $here/27.git
+setup: worktree: $here/27
+setup: cwd: $here/27
 setup: prefix: sub/sub/
 EOF
-	test_repo 27/sub/sub "$TRASH_DIRECTORY/27/.git" ../..
+	test_repo 27/sub/sub "$here/27/.git" ../..
 '
 
 test_expect_success '#27: GIT_DIR(rel), GIT_WORK_TREE=wt at root' '
 	cat >27/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/27.git
-setup: worktree: $TRASH_DIRECTORY/27/wt
-setup: cwd: $TRASH_DIRECTORY/27
+setup: git_dir: $here/27.git
+setup: worktree: $here/27/wt
+setup: cwd: $here/27
 setup: prefix: (null)
 EOF
-	test_repo 27 .git "$TRASH_DIRECTORY/27/wt"
+	test_repo 27 .git "$here/27/wt"
 '
 
 test_expect_success '#27: GIT_DIR(rel), GIT_WORK_TREE=wt(rel) at root' '
 	cat >27/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/27.git
-setup: worktree: $TRASH_DIRECTORY/27/wt
-setup: cwd: $TRASH_DIRECTORY/27
+setup: git_dir: $here/27.git
+setup: worktree: $here/27/wt
+setup: cwd: $here/27
 setup: prefix: (null)
 EOF
 	test_repo 27 .git wt
@@ -3984,39 +3985,39 @@ EOF
 
 test_expect_success '#27: GIT_DIR, GIT_WORK_TREE=wt(rel) at root' '
 	cat >27/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/27.git
-setup: worktree: $TRASH_DIRECTORY/27/wt
-setup: cwd: $TRASH_DIRECTORY/27
+setup: git_dir: $here/27.git
+setup: worktree: $here/27/wt
+setup: cwd: $here/27
 setup: prefix: (null)
 EOF
-	test_repo 27 "$TRASH_DIRECTORY/27/.git" wt
+	test_repo 27 "$here/27/.git" wt
 '
 
 test_expect_success '#27: GIT_DIR, GIT_WORK_TREE=wt at root' '
 	cat >27/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/27.git
-setup: worktree: $TRASH_DIRECTORY/27/wt
-setup: cwd: $TRASH_DIRECTORY/27
+setup: git_dir: $here/27.git
+setup: worktree: $here/27/wt
+setup: cwd: $here/27
 setup: prefix: (null)
 EOF
-	test_repo 27 "$TRASH_DIRECTORY/27/.git" "$TRASH_DIRECTORY/27/wt"
+	test_repo 27 "$here/27/.git" "$here/27/wt"
 '
 
 test_expect_success '#27: GIT_DIR(rel), GIT_WORK_TREE=wt in subdir' '
 	cat >27/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/27.git
-setup: worktree: $TRASH_DIRECTORY/27/wt
-setup: cwd: $TRASH_DIRECTORY/27/sub/sub
+setup: git_dir: $here/27.git
+setup: worktree: $here/27/wt
+setup: cwd: $here/27/sub/sub
 setup: prefix: (null)
 EOF
-	test_repo 27/sub/sub ../../.git "$TRASH_DIRECTORY/27/wt"
+	test_repo 27/sub/sub ../../.git "$here/27/wt"
 '
 
 test_expect_success '#27: GIT_DIR(rel), GIT_WORK_TREE=wt(rel) in subdir' '
 	cat >27/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/27.git
-setup: worktree: $TRASH_DIRECTORY/27/wt
-setup: cwd: $TRASH_DIRECTORY/27/sub/sub
+setup: git_dir: $here/27.git
+setup: worktree: $here/27/wt
+setup: cwd: $here/27/sub/sub
 setup: prefix: (null)
 EOF
 	test_repo 27/sub/sub ../../.git ../../wt
@@ -4024,39 +4025,39 @@ EOF
 
 test_expect_success '#27: GIT_DIR, GIT_WORK_TREE=wt(rel) in subdir' '
 	cat >27/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/27.git
-setup: worktree: $TRASH_DIRECTORY/27/wt
-setup: cwd: $TRASH_DIRECTORY/27/sub/sub
+setup: git_dir: $here/27.git
+setup: worktree: $here/27/wt
+setup: cwd: $here/27/sub/sub
 setup: prefix: (null)
 EOF
-	test_repo 27/sub/sub "$TRASH_DIRECTORY/27/.git" ../../wt
+	test_repo 27/sub/sub "$here/27/.git" ../../wt
 '
 
 test_expect_success '#27: GIT_DIR, GIT_WORK_TREE=wt in subdir' '
 	cat >27/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/27.git
-setup: worktree: $TRASH_DIRECTORY/27/wt
-setup: cwd: $TRASH_DIRECTORY/27/sub/sub
+setup: git_dir: $here/27.git
+setup: worktree: $here/27/wt
+setup: cwd: $here/27/sub/sub
 setup: prefix: (null)
 EOF
-	test_repo 27/sub/sub "$TRASH_DIRECTORY/27/.git" "$TRASH_DIRECTORY/27/wt"
+	test_repo 27/sub/sub "$here/27/.git" "$here/27/wt"
 '
 
 test_expect_success '#27: GIT_DIR(rel), GIT_WORK_TREE=.. at root' '
 	cat >27/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/27.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/27.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 27/
 EOF
-	test_repo 27 .git "$TRASH_DIRECTORY"
+	test_repo 27 .git "$here"
 '
 
 test_expect_success '#27: GIT_DIR(rel), GIT_WORK_TREE=..(rel) at root' '
 	cat >27/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/27.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/27.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 27/
 EOF
 	test_repo 27 .git ..
@@ -4064,39 +4065,39 @@ EOF
 
 test_expect_success '#27: GIT_DIR, GIT_WORK_TREE=..(rel) at root' '
 	cat >27/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/27.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/27.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 27/
 EOF
-	test_repo 27 "$TRASH_DIRECTORY/27/.git" ..
+	test_repo 27 "$here/27/.git" ..
 '
 
 test_expect_success '#27: GIT_DIR, GIT_WORK_TREE=.. at root' '
 	cat >27/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/27.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/27.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 27/
 EOF
-	test_repo 27 "$TRASH_DIRECTORY/27/.git" "$TRASH_DIRECTORY"
+	test_repo 27 "$here/27/.git" "$here"
 '
 
 test_expect_success '#27: GIT_DIR(rel), GIT_WORK_TREE=.. in subdir' '
 	cat >27/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/27.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/27.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 27/sub/sub/
 EOF
-	test_repo 27/sub/sub ../../.git "$TRASH_DIRECTORY"
+	test_repo 27/sub/sub ../../.git "$here"
 '
 
 test_expect_success '#27: GIT_DIR(rel), GIT_WORK_TREE=..(rel) in subdir' '
 	cat >27/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/27.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/27.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 27/sub/sub/
 EOF
 	test_repo 27/sub/sub ../../.git ../../..
@@ -4104,22 +4105,22 @@ EOF
 
 test_expect_success '#27: GIT_DIR, GIT_WORK_TREE=..(rel) in subdir' '
 	cat >27/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/27.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/27.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 27/sub/sub/
 EOF
-	test_repo 27/sub/sub "$TRASH_DIRECTORY/27/.git" ../../../
+	test_repo 27/sub/sub "$here/27/.git" ../../../
 '
 
 test_expect_success '#27: GIT_DIR, GIT_WORK_TREE=.. in subdir' '
 	cat >27/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/27.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/27.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 27/sub/sub/
 EOF
-	test_repo 27/sub/sub "$TRASH_DIRECTORY/27/.git" "$TRASH_DIRECTORY"
+	test_repo 27/sub/sub "$here/27/.git" "$here"
 '
 
 #
@@ -4153,9 +4154,9 @@ test_expect_success '#28: setup' '
 
 test_expect_success '#28: at root' '
 	cat >28/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/28.git
+setup: git_dir: $here/28.git
 setup: worktree: (null)
-setup: cwd: $TRASH_DIRECTORY/28
+setup: cwd: $here/28
 setup: prefix: (null)
 EOF
 	test_repo 28
@@ -4163,9 +4164,9 @@ EOF
 
 test_expect_success '#28: in subdir' '
 	cat >28/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/28.git
+setup: git_dir: $here/28.git
 setup: worktree: (null)
-setup: cwd: $TRASH_DIRECTORY/28/sub
+setup: cwd: $here/28/sub
 setup: prefix: (null)
 EOF
 	test_repo 28/sub
@@ -4203,9 +4204,9 @@ test_expect_success '#29: setup' '
 
 test_expect_success '#29: at root' '
 	cat >29/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/29.git
+setup: git_dir: $here/29.git
 setup: worktree: (null)
-setup: cwd: $TRASH_DIRECTORY/29
+setup: cwd: $here/29
 setup: prefix: (null)
 EOF
 	test_repo 29
@@ -4213,9 +4214,9 @@ EOF
 
 test_expect_success '#29: in subdir' '
 	cat >29/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/29.git
+setup: git_dir: $here/29.git
 setup: worktree: (null)
-setup: cwd: $TRASH_DIRECTORY/29/sub
+setup: cwd: $here/29/sub
 setup: prefix: (null)
 EOF
 	test_repo 29/sub
@@ -4291,19 +4292,19 @@ test_expect_success '#31: setup' '
 
 test_expect_success '#31: GIT_DIR(rel), GIT_WORK_TREE=root at root' '
 	cat >31/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/31.git
-setup: worktree: $TRASH_DIRECTORY/31
-setup: cwd: $TRASH_DIRECTORY/31
+setup: git_dir: $here/31.git
+setup: worktree: $here/31
+setup: cwd: $here/31
 setup: prefix: (null)
 EOF
-	test_repo 31 .git "$TRASH_DIRECTORY/31"
+	test_repo 31 .git "$here/31"
 '
 
 test_expect_success '#31: GIT_DIR(rel), GIT_WORK_TREE=root(rel) at root' '
 	cat >31/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/31.git
-setup: worktree: $TRASH_DIRECTORY/31
-setup: cwd: $TRASH_DIRECTORY/31
+setup: git_dir: $here/31.git
+setup: worktree: $here/31
+setup: cwd: $here/31
 setup: prefix: (null)
 EOF
 	test_repo 31 .git .
@@ -4311,39 +4312,39 @@ EOF
 
 test_expect_success '#31: GIT_DIR, GIT_WORK_TREE=root at root' '
 	cat >31/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/31.git
-setup: worktree: $TRASH_DIRECTORY/31
-setup: cwd: $TRASH_DIRECTORY/31
+setup: git_dir: $here/31.git
+setup: worktree: $here/31
+setup: cwd: $here/31
 setup: prefix: (null)
 EOF
-	test_repo 31 "$TRASH_DIRECTORY/31/.git" "$TRASH_DIRECTORY/31"
+	test_repo 31 "$here/31/.git" "$here/31"
 '
 
 test_expect_success '#31: GIT_DIR, GIT_WORK_TREE=root(rel) at root' '
 	cat >31/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/31.git
-setup: worktree: $TRASH_DIRECTORY/31
-setup: cwd: $TRASH_DIRECTORY/31
+setup: git_dir: $here/31.git
+setup: worktree: $here/31
+setup: cwd: $here/31
 setup: prefix: (null)
 EOF
-	test_repo 31 "$TRASH_DIRECTORY/31/.git" .
+	test_repo 31 "$here/31/.git" .
 '
 
 test_expect_success '#31: GIT_DIR(rel), GIT_WORKTREE=root in subdir' '
 	cat >31/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/31.git
-setup: worktree: $TRASH_DIRECTORY/31
-setup: cwd: $TRASH_DIRECTORY/31
+setup: git_dir: $here/31.git
+setup: worktree: $here/31
+setup: cwd: $here/31
 setup: prefix: sub/sub/
 EOF
-	test_repo 31/sub/sub ../../.git "$TRASH_DIRECTORY/31"
+	test_repo 31/sub/sub ../../.git "$here/31"
 '
 
 test_expect_success '#31: GIT_DIR(rel), GIT_WORKTREE=root(rel) in subdir' '
 	cat >31/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/31.git
-setup: worktree: $TRASH_DIRECTORY/31
-setup: cwd: $TRASH_DIRECTORY/31
+setup: git_dir: $here/31.git
+setup: worktree: $here/31
+setup: cwd: $here/31
 setup: prefix: sub/sub/
 EOF
 	test_repo 31/sub/sub ../../.git ../..
@@ -4351,39 +4352,39 @@ EOF
 
 test_expect_success '#31: GIT_DIR, GIT_WORKTREE=root in subdir' '
 	cat >31/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/31.git
-setup: worktree: $TRASH_DIRECTORY/31
-setup: cwd: $TRASH_DIRECTORY/31
+setup: git_dir: $here/31.git
+setup: worktree: $here/31
+setup: cwd: $here/31
 setup: prefix: sub/
 EOF
-	test_repo 31/sub "$TRASH_DIRECTORY/31/.git" "$TRASH_DIRECTORY/31"
+	test_repo 31/sub "$here/31/.git" "$here/31"
 '
 
 test_expect_success '#31: GIT_DIR, GIT_WORKTREE=root(rel) in subdir' '
 	cat >31/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/31.git
-setup: worktree: $TRASH_DIRECTORY/31
-setup: cwd: $TRASH_DIRECTORY/31
+setup: git_dir: $here/31.git
+setup: worktree: $here/31
+setup: cwd: $here/31
 setup: prefix: sub/sub/
 EOF
-	test_repo 31/sub/sub "$TRASH_DIRECTORY/31/.git" ../..
+	test_repo 31/sub/sub "$here/31/.git" ../..
 '
 
 test_expect_success '#31: GIT_DIR(rel), GIT_WORK_TREE=wt at root' '
 	cat >31/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/31.git
-setup: worktree: $TRASH_DIRECTORY/31/wt
-setup: cwd: $TRASH_DIRECTORY/31
+setup: git_dir: $here/31.git
+setup: worktree: $here/31/wt
+setup: cwd: $here/31
 setup: prefix: (null)
 EOF
-	test_repo 31 .git "$TRASH_DIRECTORY/31/wt"
+	test_repo 31 .git "$here/31/wt"
 '
 
 test_expect_success '#31: GIT_DIR(rel), GIT_WORK_TREE=wt(rel) at root' '
 	cat >31/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/31.git
-setup: worktree: $TRASH_DIRECTORY/31/wt
-setup: cwd: $TRASH_DIRECTORY/31
+setup: git_dir: $here/31.git
+setup: worktree: $here/31/wt
+setup: cwd: $here/31
 setup: prefix: (null)
 EOF
 	test_repo 31 .git wt
@@ -4391,39 +4392,39 @@ EOF
 
 test_expect_success '#31: GIT_DIR, GIT_WORK_TREE=wt(rel) at root' '
 	cat >31/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/31.git
-setup: worktree: $TRASH_DIRECTORY/31/wt
-setup: cwd: $TRASH_DIRECTORY/31
+setup: git_dir: $here/31.git
+setup: worktree: $here/31/wt
+setup: cwd: $here/31
 setup: prefix: (null)
 EOF
-	test_repo 31 "$TRASH_DIRECTORY/31/.git" wt
+	test_repo 31 "$here/31/.git" wt
 '
 
 test_expect_success '#31: GIT_DIR, GIT_WORK_TREE=wt at root' '
 	cat >31/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/31.git
-setup: worktree: $TRASH_DIRECTORY/31/wt
-setup: cwd: $TRASH_DIRECTORY/31
+setup: git_dir: $here/31.git
+setup: worktree: $here/31/wt
+setup: cwd: $here/31
 setup: prefix: (null)
 EOF
-	test_repo 31 "$TRASH_DIRECTORY/31/.git" "$TRASH_DIRECTORY/31/wt"
+	test_repo 31 "$here/31/.git" "$here/31/wt"
 '
 
 test_expect_success '#31: GIT_DIR(rel), GIT_WORK_TREE=wt in subdir' '
 	cat >31/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/31.git
-setup: worktree: $TRASH_DIRECTORY/31/wt
-setup: cwd: $TRASH_DIRECTORY/31/sub/sub
+setup: git_dir: $here/31.git
+setup: worktree: $here/31/wt
+setup: cwd: $here/31/sub/sub
 setup: prefix: (null)
 EOF
-	test_repo 31/sub/sub ../../.git "$TRASH_DIRECTORY/31/wt"
+	test_repo 31/sub/sub ../../.git "$here/31/wt"
 '
 
 test_expect_success '#31: GIT_DIR(rel), GIT_WORK_TREE=wt(rel) in subdir' '
 	cat >31/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/31.git
-setup: worktree: $TRASH_DIRECTORY/31/wt
-setup: cwd: $TRASH_DIRECTORY/31/sub/sub
+setup: git_dir: $here/31.git
+setup: worktree: $here/31/wt
+setup: cwd: $here/31/sub/sub
 setup: prefix: (null)
 EOF
 	test_repo 31/sub/sub ../../.git ../../wt
@@ -4431,39 +4432,39 @@ EOF
 
 test_expect_success '#31: GIT_DIR, GIT_WORK_TREE=wt(rel) in subdir' '
 	cat >31/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/31.git
-setup: worktree: $TRASH_DIRECTORY/31/wt
-setup: cwd: $TRASH_DIRECTORY/31/sub/sub
+setup: git_dir: $here/31.git
+setup: worktree: $here/31/wt
+setup: cwd: $here/31/sub/sub
 setup: prefix: (null)
 EOF
-	test_repo 31/sub/sub "$TRASH_DIRECTORY/31/.git" ../../wt
+	test_repo 31/sub/sub "$here/31/.git" ../../wt
 '
 
 test_expect_success '#31: GIT_DIR, GIT_WORK_TREE=wt in subdir' '
 	cat >31/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/31.git
-setup: worktree: $TRASH_DIRECTORY/31/wt
-setup: cwd: $TRASH_DIRECTORY/31/sub/sub
+setup: git_dir: $here/31.git
+setup: worktree: $here/31/wt
+setup: cwd: $here/31/sub/sub
 setup: prefix: (null)
 EOF
-	test_repo 31/sub/sub "$TRASH_DIRECTORY/31/.git" "$TRASH_DIRECTORY/31/wt"
+	test_repo 31/sub/sub "$here/31/.git" "$here/31/wt"
 '
 
 test_expect_success '#31: GIT_DIR(rel), GIT_WORK_TREE=.. at root' '
 	cat >31/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/31.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/31.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 31/
 EOF
-	test_repo 31 .git "$TRASH_DIRECTORY"
+	test_repo 31 .git "$here"
 '
 
 test_expect_success '#31: GIT_DIR(rel), GIT_WORK_TREE=..(rel) at root' '
 	cat >31/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/31.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/31.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 31/
 EOF
 	test_repo 31 .git ..
@@ -4471,39 +4472,39 @@ EOF
 
 test_expect_success '#31: GIT_DIR, GIT_WORK_TREE=..(rel) at root' '
 	cat >31/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/31.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/31.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 31/
 EOF
-	test_repo 31 "$TRASH_DIRECTORY/31/.git" ..
+	test_repo 31 "$here/31/.git" ..
 '
 
 test_expect_success '#31: GIT_DIR, GIT_WORK_TREE=.. at root' '
 	cat >31/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/31.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/31.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 31/
 EOF
-	test_repo 31 "$TRASH_DIRECTORY/31/.git" "$TRASH_DIRECTORY"
+	test_repo 31 "$here/31/.git" "$here"
 '
 
 test_expect_success '#31: GIT_DIR(rel), GIT_WORK_TREE=.. in subdir' '
 	cat >31/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/31.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/31.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 31/sub/sub/
 EOF
-	test_repo 31/sub/sub ../../.git "$TRASH_DIRECTORY"
+	test_repo 31/sub/sub ../../.git "$here"
 '
 
 test_expect_success '#31: GIT_DIR(rel), GIT_WORK_TREE=..(rel) in subdir' '
 	cat >31/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/31.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/31.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 31/sub/sub/
 EOF
 	test_repo 31/sub/sub ../../.git ../../..
@@ -4511,22 +4512,22 @@ EOF
 
 test_expect_success '#31: GIT_DIR, GIT_WORK_TREE=..(rel) in subdir' '
 	cat >31/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/31.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/31.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 31/sub/sub/
 EOF
-	test_repo 31/sub/sub "$TRASH_DIRECTORY/31/.git" ../../../
+	test_repo 31/sub/sub "$here/31/.git" ../../../
 '
 
 test_expect_success '#31: GIT_DIR, GIT_WORK_TREE=.. in subdir' '
 	cat >31/sub/sub/expected <<EOF &&
-setup: git_dir: $TRASH_DIRECTORY/31.git
-setup: worktree: $TRASH_DIRECTORY
-setup: cwd: $TRASH_DIRECTORY
+setup: git_dir: $here/31.git
+setup: worktree: $here
+setup: cwd: $here
 setup: prefix: 31/sub/sub/
 EOF
-	test_repo 31/sub/sub "$TRASH_DIRECTORY/31/.git" "$TRASH_DIRECTORY"
+	test_repo 31/sub/sub "$here/31/.git" "$here"
 '
 
 test_done
