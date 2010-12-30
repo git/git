@@ -250,13 +250,14 @@ our %highlight_ext = (
 	# main extensions, defining name of syntax;
 	# see files in /usr/share/highlight/langDefs/ directory
 	map { $_ => $_ }
-		qw(py c cpp rb java css php sh pl js tex bib xml awk bat ini spec tcl),
+		qw(py c cpp rb java css php sh pl js tex bib xml awk bat ini spec tcl sql make),
 	# alternate extensions, see /etc/highlight/filetypes.conf
 	'h' => 'c',
+	map { $_ => 'sh'  } qw(bash zsh ksh),
 	map { $_ => 'cpp' } qw(cxx c++ cc),
-	map { $_ => 'php' } qw(php3 php4),
+	map { $_ => 'php' } qw(php3 php4 php5 phps),
 	map { $_ => 'pl'  } qw(perl pm), # perhaps also 'cgi'
-	'mak' => 'make',
+	map { $_ => 'make'} qw(mak mk),
 	map { $_ => 'xml' } qw(xhtml html htm),
 );
 
