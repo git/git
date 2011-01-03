@@ -27,6 +27,11 @@ int buffer_deinit(struct line_buffer *buf)
 	return err;
 }
 
+int buffer_read_char(struct line_buffer *buf)
+{
+	return fgetc(buf->infile);
+}
+
 /* Read a line without trailing newline. */
 char *buffer_read_line(struct line_buffer *buf)
 {
