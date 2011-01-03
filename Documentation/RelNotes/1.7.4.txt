@@ -8,12 +8,11 @@ Updates since v1.7.3
    docbook-xsl >= 1.73. If you have older versions, you can set
    ASCIIDOC7 and ASCIIDOC_ROFF, respectively.
 
- * The option parsers of various commands that create new branch (or
+ * The option parsers of various commands that create new branches (or
    rename existing ones to a new name) were too loose and users were
-   allowed to call a branch with a name that begins with a dash by
-   creative abuse of their command line options, which only lead to
-   burn themselves.  The name of a branch cannot begin with a dash
-   now.
+   allowed to give a branch a name that begins with a dash by creative
+   abuse of their command line options, which only led to burning
+   themselves.  The name of a branch cannot begin with a dash now.
 
  * System-wide fallback default attributes can be stored in
    /etc/gitattributes; core.attributesfile configuration variable can

@@ -32,7 +32,7 @@ and installation code should look something like:
   }
 ------------------------------------------
 
-Handlers are given the typdef of sigchain_fun. This is the same type
+Handlers are given the typedef of sigchain_fun. This is the same type
 that is given to signal() or sigaction(). It is perfectly reasonable to
 push SIG_DFL or SIG_IGN onto the stack.
 
