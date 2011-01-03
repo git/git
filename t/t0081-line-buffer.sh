@@ -7,45 +7,44 @@ test_description="Test the svn importer's input handling routines.
 test_expect_success 'read greeting' '
 	echo HELLO >expect &&
 	test-line-buffer <<-\EOF >actual &&
-	read 5
+	read 6
 	HELLO
 	EOF
 	test_cmp expect actual
 '
 
 test_expect_success '0-length read, send along greeting' '
-	printf "%s\n" "" HELLO >expect &&
+	echo HELLO >expect &&
 	test-line-buffer <<-\EOF >actual &&
 	read 0
-
-	copy 5
+	copy 6
 	HELLO
 	EOF
 	test_cmp expect actual
 '
 
-test_expect_success 'buffer_read_string copes with trailing null byte' '
-	echo >expect &&
+test_expect_success 'buffer_read_string copes with null byte' '
+	>expect &&
 	q_to_nul <<-\EOF | test-line-buffer >actual &&
-	read 1
+	read 2
 	Q
 	EOF
 	test_cmp expect actual
 '
 
-test_expect_success '0-length read, copy null byte' '
-	printf "%s\n" "" Q | q_to_nul >expect &&
+test_expect_success 'skip, copy null byte' '
+	echo Q | q_to_nul >expect &&
 	q_to_nul <<-\EOF | test-line-buffer >actual &&
-	read 0
-
-	copy 1
+	skip 2
+	Q
+	copy 2
 	Q
 	EOF
 	test_cmp expect actual
 '
 
 test_expect_success 'long reads are truncated' '
-	printf "%s\n" foo "" >expect &&
+	echo foo >expect &&
 	test-line-buffer <<-\EOF >actual &&
 	read 5
 	foo
@@ -56,7 +55,7 @@ test_expect_success 'long reads are truncated' '
 test_expect_success 'long copies are truncated' '
 	printf "%s\n" "" foo >expect &&
 	test-line-buffer <<-\EOF >actual &&
-	read 0
+	read 1
 
 	copy 5
 	foo
