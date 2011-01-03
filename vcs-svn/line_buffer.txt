@@ -24,6 +24,28 @@ The calling program:
 When finished, the caller can use `buffer_reset` to deallocate
 resources.
 
+Using temporary files
+---------------------
+
+Temporary files provide a place to store data that should not outlive
+the calling program.  A program
+
+ - initializes a `struct line_buffer` to LINE_BUFFER_INIT
+ - requests a temporary file with `buffer_tmpfile_init`
+ - acquires an output handle by calling `buffer_tmpfile_rewind`
+ - uses standard I/O functions like `fprintf` and `fwrite` to fill
+   the temporary file
+ - declares writing is over with `buffer_tmpfile_prepare_to_read`
+ - can re-read what was written with `buffer_read_line`,
+   `buffer_read_string`, and so on
+ - can reuse the temporary file by calling `buffer_tmpfile_rewind`
+   again
+ - removes the temporary file with `buffer_deinit`, perhaps to
+   reuse the line_buffer for some other file.
+
+When finished, the calling program can use `buffer_reset` to deallocate
+resources.
+
 Functions
 ---------
 

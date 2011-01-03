@@ -25,6 +25,14 @@ int buffer_fdinit(struct line_buffer *buf, int fd)
 	return 0;
 }
 
+int buffer_tmpfile_init(struct line_buffer *buf)
+{
+	buf->infile = tmpfile();
+	if (!buf->infile)
+		return -1;
+	return 0;
+}
+
 int buffer_deinit(struct line_buffer *buf)
 {
 	int err;
@@ -33,6 +41,22 @@ int buffer_deinit(struct line_buffer *buf)
 	err = ferror(buf->infile);
 	err |= fclose(buf->infile);
 	return err;
+}
+
+FILE *buffer_tmpfile_rewind(struct line_buffer *buf)
+{
+	rewind(buf->infile);
+	return buf->infile;
+}
+
+long buffer_tmpfile_prepare_to_read(struct line_buffer *buf)
+{
+	long pos = ftell(buf->infile);
+	if (pos < 0)
+		return error("ftell error: %s", strerror(errno));
+	if (fseek(buf->infile, 0, SEEK_SET))
+		return error("seek error: %s", strerror(errno));
+	return pos;
 }
 
 int buffer_read_char(struct line_buffer *buf)
