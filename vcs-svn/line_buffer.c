@@ -17,6 +17,14 @@ int buffer_init(struct line_buffer *buf, const char *filename)
 	return 0;
 }
 
+int buffer_fdinit(struct line_buffer *buf, int fd)
+{
+	buf->infile = fdopen(fd, "r");
+	if (!buf->infile)
+		return -1;
+	return 0;
+}
+
 int buffer_deinit(struct line_buffer *buf)
 {
 	int err;

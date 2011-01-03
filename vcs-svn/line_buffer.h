@@ -13,6 +13,7 @@ struct line_buffer {
 #define LINE_BUFFER_INIT {"", STRBUF_INIT, NULL}
 
 int buffer_init(struct line_buffer *buf, const char *filename);
+int buffer_fdinit(struct line_buffer *buf, int fd);
 int buffer_deinit(struct line_buffer *buf);
 char *buffer_read_line(struct line_buffer *buf);
 char *buffer_read_string(struct line_buffer *buf, uint32_t len);

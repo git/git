@@ -131,6 +131,15 @@ test_expect_success PIPE,EXPENSIVE 'longer read (around 65536 bytes)' '
 	long_read_test 65536
 '
 
+test_expect_success 'read from file descriptor' '
+	rm -f input &&
+	echo hello >expect &&
+	echo hello >input &&
+	echo copy 6 |
+	test-line-buffer "&4" 4<input >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'buffer_read_string copes with null byte' '
 	>expect &&
 	q_to_nul <<-\EOF | test-line-buffer >actual &&

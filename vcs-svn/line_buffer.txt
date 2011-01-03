@@ -27,10 +27,11 @@ resources.
 Functions
 ---------
 
-`buffer_init`::
-	Open the named file for input.  If filename is NULL,
-	start reading from stdin.  On failure, returns -1 (with
-	errno indicating the nature of the failure).
+`buffer_init`, `buffer_fdinit`::
+	Open the named file or file descriptor for input.
+	buffer_init(buf, NULL) prepares to read from stdin.
+	On failure, returns -1 (with errno indicating the nature
+	of the failure).
 
 `buffer_deinit`::
 	Stop reading from the current file (closing it unless
