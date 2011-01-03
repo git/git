@@ -85,40 +85,40 @@ test_expect_success 'line buffer' '
 	printf "%s\n" "" foo >expected6 &&
 
 	test-line-buffer <<-\EOF >actual1 &&
-	5
+	read 5
 	HELLO
 	EOF
 
 	test-line-buffer <<-\EOF >actual2 &&
-	0
+	read 0
 
-	5
+	copy 5
 	HELLO
 	EOF
 
 	q_to_nul <<-\EOF |
-	1
+	read 1
 	Q
 	EOF
 	test-line-buffer >actual3 &&
 
 	q_to_nul <<-\EOF |
-	0
+	read 0
 
-	1
+	copy 1
 	Q
 	EOF
 	test-line-buffer >actual4 &&
 
 	test-line-buffer <<-\EOF >actual5 &&
-	5
+	read 5
 	foo
 	EOF
 
 	test-line-buffer <<-\EOF >actual6 &&
-	0
+	read 0
 
-	5
+	copy 5
 	foo
 	EOF
 

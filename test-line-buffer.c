@@ -1,11 +1,5 @@
 /*
  * test-line-buffer.c: code to exercise the svn importer's input helper
- *
- * Input format:
- *	number NL
- *	(number bytes) NL
- *	number NL
- *	...
  */
 
 #include "git-compat-util.h"
@@ -20,28 +14,50 @@ static uint32_t strtouint32(const char *s)
 	return (uint32_t) n;
 }
 
+static void handle_command(const char *command, const char *arg, struct line_buffer *buf)
+{
+	switch (*command) {
+	case 'c':
+		if (!prefixcmp(command, "copy ")) {
+			buffer_copy_bytes(buf, strtouint32(arg) + 1);
+			return;
+		}
+	case 'r':
+		if (!prefixcmp(command, "read ")) {
+			const char *s = buffer_read_string(buf, strtouint32(arg));
+			printf("%s\n", s);
+			buffer_skip_bytes(buf, 1);	/* consume newline */
+			return;
+		}
+	default:
+		die("unrecognized command: %s", command);
+	}
+}
+
+static void handle_line(const char *line, struct line_buffer *stdin_buf)
+{
+	const char *arg = strchr(line, ' ');
+	if (!arg)
+		die("no argument in line: %s", line);
+	handle_command(line, arg + 1, stdin_buf);
+}
+
 int main(int argc, char *argv[])
 {
-	struct line_buffer buf = LINE_BUFFER_INIT;
+	struct line_buffer stdin_buf = LINE_BUFFER_INIT;
 	char *s;
 
 	if (argc != 1)
-		usage("test-line-buffer < input.txt");
-	if (buffer_init(&buf, NULL))
+		usage("test-line-buffer < script");
+
+	if (buffer_init(&stdin_buf, NULL))
 		die_errno("open error");
-	while ((s = buffer_read_line(&buf))) {
-		s = buffer_read_string(&buf, strtouint32(s));
-		fputs(s, stdout);
-		fputc('\n', stdout);
-		buffer_skip_bytes(&buf, 1);
-		if (!(s = buffer_read_line(&buf)))
-			break;
-		buffer_copy_bytes(&buf, strtouint32(s) + 1);
-	}
-	if (buffer_deinit(&buf))
+	while ((s = buffer_read_line(&stdin_buf)))
+		handle_line(s, &stdin_buf);
+	if (buffer_deinit(&stdin_buf))
 		die("input error");
 	if (ferror(stdout))
 		die("output error");
-	buffer_reset(&buf);
+	buffer_reset(&stdin_buf);
 	return 0;
 }
