@@ -151,6 +151,15 @@ test_expect_success 'skip, copy null byte' '
 	test_cmp expect actual
 '
 
+test_expect_success 'read null byte' '
+	echo ">QhelloQ" | q_to_nul >expect &&
+	q_to_nul <<-\EOF | test-line-buffer >actual &&
+	binary 8
+	QhelloQ
+	EOF
+	test_cmp expect actual
+'
+
 test_expect_success 'long reads are truncated' '
 	echo foo >expect &&
 	test-line-buffer <<-\EOF >actual &&
@@ -166,6 +175,15 @@ test_expect_success 'long copies are truncated' '
 	read 1
 
 	copy 5
+	foo
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'long binary reads are truncated' '
+	echo ">foo" >expect &&
+	test-line-buffer <<-\EOF >actual &&
+	binary 5
 	foo
 	EOF
 	test_cmp expect actual

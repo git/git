@@ -3,6 +3,7 @@
  */
 
 #include "git-compat-util.h"
+#include "strbuf.h"
 #include "vcs-svn/line_buffer.h"
 
 static uint32_t strtouint32(const char *s)
@@ -17,6 +18,15 @@ static uint32_t strtouint32(const char *s)
 static void handle_command(const char *command, const char *arg, struct line_buffer *buf)
 {
 	switch (*command) {
+	case 'b':
+		if (!prefixcmp(command, "binary ")) {
+			struct strbuf sb = STRBUF_INIT;
+			strbuf_addch(&sb, '>');
+			buffer_read_binary(buf, &sb, strtouint32(arg));
+			fwrite(sb.buf, 1, sb.len, stdout);
+			strbuf_release(&sb);
+			return;
+		}
 	case 'c':
 		if (!prefixcmp(command, "copy ")) {
 			buffer_copy_bytes(buf, strtouint32(arg));
