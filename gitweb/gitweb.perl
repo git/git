@@ -7169,7 +7169,7 @@ XML
 		if (defined $favicon) {
 			print "<icon>" . esc_url($favicon) . "</icon>\n";
 		}
-		if (defined $logo_url) {
+		if (defined $logo) {
 			# not twice as wide as tall: 72 x 27 pixels
 			print "<logo>" . esc_url($logo) . "</logo>\n";
 		}
