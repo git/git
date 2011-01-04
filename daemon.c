@@ -1226,9 +1226,10 @@ int main(int argc, char **argv)
 
 	/* prepare argv for serving-processes */
 	cld_argv = xmalloc(sizeof (char *) * (argc + 2));
-	for (i = 0; i < argc; ++i)
-		cld_argv[i] = argv[i];
-	cld_argv[argc] = "--serve";
+	cld_argv[0] = argv[0];	/* git-daemon */
+	cld_argv[1] = "--serve";
+	for (i = 1; i < argc; ++i)
+		cld_argv[i+1] = argv[i];
 	cld_argv[argc+1] = NULL;
 
 	return serve(&listen_addr, listen_port, cred);
