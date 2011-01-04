@@ -1,140 +1,36 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Dec 2010, #07; Tue, 28)
-X-master-at: 01b97a4cb60723d18b437efdc474503d2a9dd384
-X-next-at: dee8dc8369a19c1b8b12dd40bf3a563a7524825b
+Subject: What's cooking in git.git (Jan 2011, #01; Tue, 4)
+X-master-at: f2665ec9fa42b75d92d0301cff85362836c5729a
+X-next-at: a5d186c925798fa5bd9318fd00f282ad564b1138
 
-What's cooking in git.git (Dec 2010, #07; Tue, 28)
+What's cooking in git.git (Jan 2011, #01; Tue, 4)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' while commits prefixed with '+' are in 'next'.
 
-We are finally at 1.7.4-rc0 as of tonight ;-).
+I'll start paying much less attention to any new features and enhancements
+and shift the focus almost entirely on trivial fixes and regressions from
+now on.  Hopefully lists will do the same and we can have a fairly short
+rc period this cycle.  Please remind if there are patches that ought to be
+in 1.7.4 but are forgotten.
 
 --------------------------------------------------
 [New Topics]
 
-* ae/better-template-failure-report (2010-12-18) 1 commit
- - Improve error messages when temporary file creation fails
+* jn/gitweb-no-logo (2010-09-03) 1 commit
+  (merged to 'next' on 2011-01-04 at a5d186c)
+ + gitweb: make logo optional
 
-* jc/unpack-trees (2010-12-22) 2 commits
- - unpack_trees(): skip trees that are the same in all input
- - unpack-trees.c: cosmetic fix
+Seemed trivial but came a bit too late for the cycle.
 
-* jn/cherry-pick-strategy-option (2010-12-10) 1 commit
- - cherry-pick/revert: add support for -X/--strategy-option
+* cb/setup (2010-12-27) 1 commit
+ - setup: translate symlinks in filename when using absolute paths
 
-* jn/perl-funcname (2010-12-27) 2 commits
- - userdiff/perl: catch BEGIN/END/... and POD as headers
- - diff: funcname and word patterns for perl
-
-* pw/convert-pathname-substitution (2010-12-22) 2 commits
- - t0021: avoid getting filter killed with SIGPIPE
- - convert filter: supply path to external driver
-
---------------------------------------------------
-[Graduated to "master"]
-
-* jc/maint-am-abort-safely (2010-12-21) 1 commit
-  (merged to 'next' on 2010-12-21 at 81602bc)
- + am --abort: keep unrelated commits since the last failure and warn
-
-* jk/commit-die-on-bogus-ident (2010-12-20) 2 commits
-  (merged to 'next' on 2010-12-21 at 7785c31)
- + commit: die before asking to edit the log message
- + ident: die on bogus date format
-
-* nd/maint-fix-add-typo-detection (2010-11-27) 5 commits
-  (merged to 'next' on 2010-12-21 at 87c702b)
- + Revert "excluded_1(): support exclude files in index"
- + unpack-trees: fix sparse checkout's "unable to match directories"
- + unpack-trees: move all skip-worktree checks back to unpack_trees()
- + dir.c: add free_excludes()
- + cache.h: realign and use (1 << x) form for CE_* constants
-
-* nd/setup (2010-11-26) 47 commits
- (merged to 'next' on 2010-12-23 at a2bc4196)
- + setup_work_tree: adjust relative $GIT_WORK_TREE after moving cwd
- + git.txt: correct where --work-tree path is relative to
- + Revert "Documentation: always respect core.worktree if set"
- + t0001: test git init when run via an alias
- + Remove all logic from get_git_work_tree()
- + setup: rework setup_explicit_git_dir()
- + setup: clean up setup_discovered_git_dir()
- + t1020-subdirectory: test alias expansion in a subdirectory
- + setup: clean up setup_bare_git_dir()
- + setup: limit get_git_work_tree()'s to explicit setup case only
- + Use git_config_early() instead of git_config() during repo setup
- + Add git_config_early()
- + git-rev-parse.txt: clarify --git-dir
- + t1510: setup case #31
- + t1510: setup case #30
- + t1510: setup case #29
- + t1510: setup case #28
- + t1510: setup case #27
- + t1510: setup case #26
- + t1510: setup case #25
- + t1510: setup case #24
- + t1510: setup case #23
- + t1510: setup case #22
- + t1510: setup case #21
- + t1510: setup case #20
- + t1510: setup case #19
- + t1510: setup case #18
- + t1510: setup case #17
- + t1510: setup case #16
- + t1510: setup case #15
- + t1510: setup case #14
- + t1510: setup case #13
- + t1510: setup case #12
- + t1510: setup case #11
- + t1510: setup case #10
- + t1510: setup case #9
- + t1510: setup case #8
- + t1510: setup case #7
- + t1510: setup case #6
- + t1510: setup case #5
- + t1510: setup case #4
- + t1510: setup case #3
- + t1510: setup case #2
- + t1510: setup case #1
- + t1510: setup case #0
- + Add t1510 and basic rules that run repo setup
- + builtins: print setup info if repo is found
-
-* pd/bash-4-completion (2010-12-15) 3 commits
-  (merged to 'next' on 2010-12-21 at dbf80ff)
- + Merge branch 'master' (early part) into pd/bash-4-completion
- + bash: simple reimplementation of _get_comp_words_by_ref
- + bash: get --pretty=m<tab> completion to work with bash v4
-
-* rj/maint-difftool-cygwin-workaround (2010-12-14) 1 commit
-  (merged to 'next' on 2010-12-21 at 74b9069)
- + difftool: Fix failure on Cygwin
-
-* rj/maint-test-fixes (2010-12-14) 5 commits
-  (merged to 'next' on 2010-12-21 at 8883a0c)
- + t9501-*.sh: Fix a test failure on Cygwin
- + lib-git-svn.sh: Add check for mis-configured web server variables
- + lib-git-svn.sh: Avoid setting web server variables unnecessarily
- + t9142: Move call to start_httpd into the setup test
- + t3600-rm.sh: Don't pass a non-existent prereq to test #15
-
-* tf/commit-list-prefix (2010-11-26) 1 commit
-  (merged to 'next' on 2010-12-21 at 16e1351)
- + commit: Add commit_list prefix in two function names.
+Seemed trivial but came a bit too late for the cycle.
 
 --------------------------------------------------
 [Stalled]
-
-* mg/cvsimport (2010-11-28) 3 commits
- - cvsimport.txt: document the mapping between config and options
- - cvsimport: fix the parsing of uppercase config options
- - cvsimport: partial whitespace cleanup
-
-I was being lazy and said "Ok" to "cvsimport.capital-r" but luckily other
-people injected sanity to the discussion.  Weatherbaloon patch sent, but
-not queued here.
 
 * nd/index-doc (2010-09-06) 1 commit
  - doc: technical details about the index file format
@@ -166,11 +62,41 @@ current usage context.
 --------------------------------------------------
 [Cooking]
 
+* mg/cvsimport (2010-12-29) 2 commits
+ - cvsimport: handle the parsing of uppercase config options
+ - cvsimport: partial whitespace cleanup
+
+Reviewed twice in the past and seemed sane.  Will merge to 'next' and then
+to 'master' before -rc1.
+
+* ae/better-template-failure-report (2010-12-18) 1 commit
+ - Improve error messages when temporary file creation fails
+
+* jc/unpack-trees (2010-12-22) 2 commits
+ - unpack_trees(): skip trees that are the same in all input
+ - unpack-trees.c: cosmetic fix
+
+* jn/cherry-pick-strategy-option (2010-12-10) 1 commit
+ - cherry-pick/revert: add support for -X/--strategy-option
+
+* jn/perl-funcname (2010-12-27) 2 commits
+ - userdiff/perl: catch BEGIN/END/... and POD as headers
+ - diff: funcname and word patterns for perl
+
+* pw/convert-pathname-substitution (2010-12-22) 2 commits
+ - t0021: avoid getting filter killed with SIGPIPE
+ - convert filter: supply path to external driver
+
+Trivial.  Will merge to 'next' and then to 'master' before -rc1.
+
 * rj/test-fixes (2010-12-14) 4 commits
  - t4135-*.sh: Skip the "backslash" tests on cygwin
  - t3032-*.sh: Do not strip CR from line-endings while grepping on MinGW
  - t3032-*.sh: Pass the -b (--binary) option to sed on cygwin
  - t6038-*.sh: Pass the -b (--binary) option to sed on cygwin
+
+I don't think people on different vintage of Cygwin agreed they are good
+workarounds---please correct me if I am mistaken.
 
 * tr/maint-branch-no-track-head (2010-12-14) 1 commit
  - branch: do not attempt to track HEAD implicitly
@@ -209,7 +135,8 @@ Will be rerolled (Heiko, 2010-12-23)
  - vcs-svn: Allow simple v3 dumps (no deltas yet)
  - vcs-svn: Error out for v3 dumps
 
-Some RFC patches, to give them early and wider exposure.
+Some RFC patches, to give them early and wider exposure.  Perhaps drop
+these during the -rc period?
 
 * nd/struct-pathspec (2010-12-15) 21 commits
  - t7810: overlapping pathspecs and depth limit
