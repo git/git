@@ -521,6 +521,16 @@ sub update_issue {
 	return $incremental;
 }
 
+sub topic_in_pu {
+	my ($topic_desc) = @_;
+	for my $line (split(/\n/, $topic_desc)) {
+		if ($line =~ /^ [+-] /) {
+			return 1;
+		}
+	}
+	return 0;
+}
+
 sub merge_cooking {
 	my ($cooking, $current) = @_;
 	my $td = $cooking->{'topic_description'};
@@ -543,7 +553,10 @@ sub merge_cooking {
 
 	for my $topic (sort keys %{$current}) {
 		if (!exists $td->{$topic}) {
-			push @new_topic, $topic;
+			# Ignore new topics without anything merged
+			if (topic_in_pu($current->{$topic}{'desc'})) {
+				push @new_topic, $topic;
+			}
 			next;
 		}
 		my $n = $current->{$topic}{'desc'};
