@@ -157,7 +157,7 @@ Writing Documentation:
    --sort=<key>
    --abbrev[=<n>]
 
- Possibility of multiple occurences is indicated by three dots:
+ Possibility of multiple occurrences is indicated by three dots:
    <file>...
    (One or more of <file>.)
 

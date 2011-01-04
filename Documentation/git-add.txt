@@ -333,7 +333,7 @@ likely to introduce confusing changes to the index.
 There are also more complex operations that can be performed. But beware
 that because the patch is applied only to the index and not the working
 tree, the working tree will appear to "undo" the change in the index.
-For example, introducing a a new line into the index that is in neither
+For example, introducing a new line into the index that is in neither
 the HEAD nor the working tree will stage the new line for commit, but
 the line will appear to be reverted in the working tree.
 

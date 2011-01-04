@@ -15,12 +15,12 @@ This remote helper uses the specified 'program' to connect
 to a remote git server.
 
 Data written to stdin of this specified 'program' is assumed
-to be sent to git:// server, git-upload-pack, git-receive-pack
+to be sent to a git:// server, git-upload-pack, git-receive-pack
 or git-upload-archive (depending on situation), and data read
 from stdout of this program is assumed to be received from
 the same service.
 
-Command and arguments are separated by unescaped space.
+Command and arguments are separated by an unescaped space.
 
 The following sequences have a special meaning:
 
@@ -39,19 +39,19 @@ The following sequences have a special meaning:
 	git-upload-pack, or git-upload-archive) of the service
 	git wants to invoke.
 
-'%G' (must be first characters in argument)::
+'%G' (must be the first characters in an argument)::
 	This argument will not be passed to 'program'. Instead, it
-	will cause helper to start by sending git:// service request to
-	remote side with service field set to approiate value and
-	repository field set to rest of the argument. Default is not to send
-	such request.
+	will cause the helper to start by sending git:// service requests to
+	the remote side with the service field set to an appropriate value and
+	the repository field set to rest of the argument. Default is not to send
+	such a request.
 +
 This is useful if remote side is git:// server accessed over
 some tunnel.
 
 '%V' (must be first characters in argument)::
 	This argument will not be passed to 'program'. Instead it sets
-	the vhost field in git:// service request (to rest of the argument).
+	the vhost field in the git:// service request (to rest of the argument).
 	Default is not to send vhost in such request (if sent).
 
 ENVIRONMENT VARIABLES:
