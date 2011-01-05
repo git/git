@@ -265,7 +265,7 @@ test_expect_success $PREREQ 'Author From: in message body' '
 		--to=nobody@example.com \
 		--smtp-server="$(pwd)/fake.sendmail" \
 		$patches &&
-	sed "1,/^\$/d" < msgtxt1 > msgbody1
+	sed "1,/^\$/d" < msgtxt1 > msgbody1 &&
 	grep "From: A <author@example.com>" msgbody1
 '
 
@@ -276,7 +276,7 @@ test_expect_success $PREREQ 'Author From: not in message body' '
 		--to=nobody@example.com \
 		--smtp-server="$(pwd)/fake.sendmail" \
 		$patches &&
-	sed "1,/^\$/d" < msgtxt1 > msgbody1
+	sed "1,/^\$/d" < msgtxt1 > msgbody1 &&
 	! grep "From: A <author@example.com>" msgbody1
 '
 
@@ -298,7 +298,7 @@ test_expect_success $PREREQ 'Invalid In-Reply-To' '
 		--in-reply-to=" " \
 		--smtp-server="$(pwd)/fake.sendmail" \
 		$patches \
-		2>errors
+		2>errors &&
 	! grep "^In-Reply-To: < *>" msgtxt1
 '
 
@@ -617,7 +617,7 @@ EOF
 "
 
 test_expect_success $PREREQ '--suppress-cc=sob' '
-	git config --unset sendemail.cccmd
+	test_might_fail git config --unset sendemail.cccmd &&
 	test_suppression sob
 '
 
