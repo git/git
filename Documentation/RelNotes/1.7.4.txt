@@ -52,6 +52,11 @@ Updates since v1.7.3
  * "git commit" learned --fixup and --squash options to help later invocation
    of the interactive rebase.
 
+ * Command line options to "git cvsimport" whose names are in capital
+   letters (-A, -M, -R and -S) can now be specified as the default in
+   the .git/config file by their longer names (cvsimport.authorsFile,
+   cvsimport.mergeRegex, cvsimport.trackRevisions, cvsimport.ignorePaths).
+
  * "git daemon" can be built in MinGW environment.
 
  * "git daemon" can take more than one --listen option to listen to
@@ -141,6 +146,6 @@ release, unless otherwise noted.
 
 ---
 exec >/var/tmp/1
-O=v1.7.3.4-687-g2cd900f
+O=v1.7.4-rc1
 echo O=$(git describe master)
 git shortlog --no-merges ^maint ^$O master
