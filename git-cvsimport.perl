@@ -90,23 +90,40 @@ sub write_author_info($) {
 }
 
 # convert getopts specs for use by git config
+my %longmap = (
+	'A:' => 'authors-file',
+	'M:' => 'merge-regex',
+	'P:' => undef,
+	'R' => 'track-revisions',
+	'S:' => 'ignore-paths',
+);
+
 sub read_repo_config {
-    # Split the string between characters, unless there is a ':'
-    # So "abc:de" becomes ["a", "b", "c:", "d", "e"]
+	# Split the string between characters, unless there is a ':'
+	# So "abc:de" becomes ["a", "b", "c:", "d", "e"]
 	my @opts = split(/ *(?!:)/, shift);
 	foreach my $o (@opts) {
 		my $key = $o;
 		$key =~ s/://g;
 		my $arg = 'git config';
 		$arg .= ' --bool' if ($o !~ /:$/);
+		my $ckey = $key;
 
-        chomp(my $tmp = `$arg --get cvsimport.$key`);
+		if (exists $longmap{$o}) {
+			# An uppercase option like -R cannot be
+			# expressed in the configuration, as the
+			# variable names are downcased.
+			$ckey = $longmap{$o};
+			next if (! defined $ckey);
+			$ckey =~ s/-//g;
+		}
+		chomp(my $tmp = `$arg --get cvsimport.$ckey`);
 		if ($tmp && !($arg =~ /--bool/ && $tmp eq 'false')) {
-            no strict 'refs';
-            my $opt_name = "opt_" . $key;
-            if (!$$opt_name) {
-                $$opt_name = $tmp;
-            }
+			no strict 'refs';
+			my $opt_name = "opt_" . $key;
+			if (!$$opt_name) {
+				$$opt_name = $tmp;
+			}
 		}
 	}
 }

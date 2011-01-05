@@ -89,7 +89,8 @@ EOF
 test_expect_success PERL 'update git module' '
 
 	(cd module-git &&
-	git cvsimport -a -R -z 0 module &&
+	git config cvsimport.trackRevisions true &&
+	git cvsimport -a -z 0 module &&
 	git merge origin
 	) &&
 	test_cmp module-cvs/o_fortuna module-git/o_fortuna
@@ -117,7 +118,8 @@ test_expect_success PERL 'cvsimport.module config works' '
 
 	(cd module-git &&
 		git config cvsimport.module module &&
-		git cvsimport -a -R -z0 &&
+		git config cvsimport.trackRevisions true &&
+		git cvsimport -a -z0 &&
 		git merge origin
 	) &&
 	test_cmp module-cvs/tick module-git/tick
@@ -137,6 +139,7 @@ test_expect_success PERL 'import from a CVS working tree' '
 
 	$CVS co -d import-from-wt module &&
 	(cd import-from-wt &&
+		git config cvsimport.trackRevisions false &&
 		git cvsimport -a -z0 &&
 		echo 1 >expect &&
 		git log -1 --pretty=format:%s%n >actual &&
