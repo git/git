@@ -30,14 +30,6 @@ do
 	STAGE="${STAGE%/}"
 done
 
-if test -z "$final"
-then
-	case "$STAGE" in
-	?*)	final=f ;;
-	'')	final=t ;;
-	esac
-fi
-
 if test -z "$master"
 then
 	case "$(hostname)" in
@@ -49,6 +41,13 @@ fi
 if test t = "$master"
 then
 	narch='x86_64 i386 i686'
+	if test -z "$final"
+	then
+		case "$STAGE" in
+		?*)	final=f ;;
+		'')	final=t ;;
+		esac
+	fi
 else
 	if test t != "$rpm"
 	then
