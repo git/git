@@ -335,6 +335,16 @@ input that is already correctly indented.  In this case, the lack of a
 smudge filter means that the clean filter _must_ accept its own output
 without modifying it.
 
+Sequence "%f" on the filter command line is replaced with the name of
+the file the filter is working on.  A filter might use this in keyword
+substitution.  For example:
+
+------------------------
+[filter "p4"]
+	clean = git-p4-filter --clean %f
+	smudge = git-p4-filter --smudge %f
+------------------------
+
 
 Interaction between checkin/checkout attributes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
