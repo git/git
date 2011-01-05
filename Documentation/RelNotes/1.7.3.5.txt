@@ -30,3 +30,5 @@ Git 1.7.3.5 Release Notes
  * "git rebase --skip" to skip the last commit in a series used to fail
    to run post-rewrite hook and to copy notes from old commits that have
    successfully been rebased so far.  Now it do (backmerge ef88ad2).
+
+ * "gitweb" tried to show a wrong feed logo when none was specified.
