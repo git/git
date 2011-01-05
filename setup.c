@@ -7,10 +7,13 @@ static int inside_work_tree = -1;
 char *prefix_path(const char *prefix, int len, const char *path)
 {
 	const char *orig = path;
-	char *sanitized = xmalloc(len + strlen(path) + 1);
-	if (is_absolute_path(orig))
-		strcpy(sanitized, path);
-	else {
+	char *sanitized;
+	if (is_absolute_path(orig)) {
+		const char *temp = make_absolute_path(path);
+		sanitized = xmalloc(len + strlen(temp) + 1);
+		strcpy(sanitized, temp);
+	} else {
+		sanitized = xmalloc(len + strlen(path) + 1);
 		if (len)
 			memcpy(sanitized, prefix, len);
 		strcpy(sanitized + len, path);
