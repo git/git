@@ -79,6 +79,16 @@ effect to your index in a row.
 	cherry-pick'ed commit, then a fast forward to this commit will
 	be performed.
 
+--strategy=<strategy>::
+	Use the given merge strategy.  Should only be used once.
+	See the MERGE STRATEGIES section in linkgit:git-merge[1]
+	for details.
+
+-X<option>::
+--strategy-option=<option>::
+	Pass the merge strategy-specific option through to the
+	merge strategy.  See linkgit:git-merge[1] for details.
+
 EXAMPLES
 --------
 git cherry-pick master::
@@ -119,6 +129,28 @@ git rev-list --reverse master \-- README | git cherry-pick -n --stdin::
 	branch that touched README to the working tree and index,
 	so the result can be inspected and made into a single new
 	commit if suitable.
+
+The following sequence attempts to backport a patch, bails out because
+the code the patch applies to has changed too much, and then tries
+again, this time exercising more care about matching up context lines.
+
+------------
+$ git cherry-pick topic^             <1>
+$ git diff                           <2>
+$ git reset --merge ORIG_HEAD        <3>
+$ git cherry-pick -Xpatience topic^  <4>
+------------
+<1> apply the change that would be shown by `git show topic^`.
+In this example, the patch does not apply cleanly, so
+information about the conflict is written to the index and
+working tree and no new commit results.
+<2> summarize changes to be reconciled
+<3> cancel the cherry-pick.  In other words, return to the
+pre-cherry-pick state, preserving any local modifications you had in
+the working tree.
+<4> try to apply the change introduced by `topic^` again,
+spending extra time to avoid mistakes based on incorrectly matching
+context lines.
 
 Author
 ------

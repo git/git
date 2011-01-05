@@ -80,6 +80,16 @@ effect to your index in a row.
 --signoff::
 	Add Signed-off-by line at the end of the commit message.
 
+--strategy=<strategy>::
+	Use the given merge strategy.  Should only be used once.
+	See the MERGE STRATEGIES section in linkgit:git-merge[1]
+	for details.
+
+-X<option>::
+--strategy-option=<option>::
+	Pass the merge strategy-specific option through to the
+	merge strategy.  See linkgit:git-merge[1] for details.
+
 EXAMPLES
 --------
 git revert HEAD~3::
