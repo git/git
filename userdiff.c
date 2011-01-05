@@ -61,6 +61,23 @@ PATTERNS("pascal",
 	 "|[-+0-9.e]+|0[xXbB]?[0-9a-fA-F]+"
 	 "|<>|<=|>=|:=|\\.\\."
 	 "|[^[:space:]]|[\x80-\xff]+"),
+PATTERNS("perl",
+	 "^[ \t]*package .*;\n"
+	 "^[ \t]*sub .* \\{\n"
+	 "^[A-Z]+ \\{\n"	/* BEGIN, END, ... */
+	 "^=head[0-9] ",	/* POD */
+	 /* -- */
+	 "[[:alpha:]_'][[:alnum:]_']*"
+	 "|0[xb]?[0-9a-fA-F_]*"
+	 /* taking care not to interpret 3..5 as (3.)(.5) */
+	 "|[0-9a-fA-F_]+(\\.[0-9a-fA-F_]+)?([eE][-+]?[0-9_]+)?"
+	 "|=>|-[rwxoRWXOezsfdlpSugkbctTBMAC>]|~~|::"
+	 "|&&=|\\|\\|=|//=|\\*\\*="
+	 "|&&|\\|\\||//|\\+\\+|--|\\*\\*|\\.\\.\\.?"
+	 "|[-+*/%.^&<>=!|]="
+	 "|=~|!~"
+	 "|<<|<>|<=>|>>"
+	 "|[^[:space:]]"),
 PATTERNS("php",
 	 "^[\t ]*(((public|protected|private|static)[\t ]+)*function.*)$\n"
 	 "^[\t ]*(class.*)$",
