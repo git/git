@@ -51,14 +51,14 @@ static struct {
 } rev_ctx;
 
 static struct {
-	uint32_t uuid, url;
+	uint32_t version, uuid, url;
 } dump_ctx;
 
 static struct {
 	uint32_t svn_log, svn_author, svn_date, svn_executable, svn_special, uuid,
 		revision_number, node_path, node_kind, node_action,
 		node_copyfrom_path, node_copyfrom_rev, text_content_length,
-		prop_content_length, content_length;
+		prop_content_length, content_length, svn_fs_dump_format_version;
 } keys;
 
 static void reset_node_ctx(char *fname)
@@ -85,6 +85,7 @@ static void reset_rev_ctx(uint32_t revision)
 static void reset_dump_ctx(uint32_t url)
 {
 	dump_ctx.url = url;
+	dump_ctx.version = 1;
 	dump_ctx.uuid = ~0;
 }
 
@@ -105,6 +106,7 @@ static void init_keys(void)
 	keys.text_content_length = pool_intern("Text-content-length");
 	keys.prop_content_length = pool_intern("Prop-content-length");
 	keys.content_length = pool_intern("Content-length");
+	keys.svn_fs_dump_format_version = pool_intern("SVN-fs-dump-format-version");
 }
 
 static void read_props(void)
@@ -206,7 +208,12 @@ void svndump_read(const char *url)
 		*val++ = '\0';
 		key = pool_intern(t);
 
-		if (key == keys.uuid) {
+		if (key == keys.svn_fs_dump_format_version) {
+			dump_ctx.version = atoi(val);
+			if (dump_ctx.version > 2)
+				die("expected svn dump format version <= 2, found %d",
+				    dump_ctx.version);
+		} else if (key == keys.uuid) {
 			dump_ctx.uuid = pool_intern(val);
 		} else if (key == keys.revision_number) {
 			if (active_ctx == NODE_CTX)
