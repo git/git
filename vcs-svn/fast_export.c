@@ -48,6 +48,11 @@ void fast_export_modify(uint32_t depth, uint32_t *path, uint32_t mode,
 	putchar('\n');
 }
 
+void fast_export_begin_commit(uint32_t revision)
+{
+	printf("# commit %"PRIu32".\n", revision);
+}
+
 static char gitsvnline[MAX_GITSVN_LINE_LEN];
 void fast_export_commit(uint32_t revision, uint32_t author, char *log,
 			uint32_t uuid, uint32_t url,
