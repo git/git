@@ -1067,7 +1067,7 @@ test_expect_success 'git notes copy diagnoses too many or too few parameters' '
 
 test_expect_success 'git notes get-ref (no overrides)' '
 	git config --unset core.notesRef &&
-	unset GIT_NOTES_REF &&
+	sane_unset GIT_NOTES_REF &&
 	test "$(git notes get-ref)" = "refs/notes/commits"
 '
 

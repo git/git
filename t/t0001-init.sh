@@ -35,7 +35,7 @@ test_expect_success 'plain' '
 
 test_expect_success 'plain nested in bare' '
 	(
-		unset GIT_DIR GIT_WORK_TREE &&
+		sane_unset GIT_DIR GIT_WORK_TREE &&
 		git init --bare bare-ancestor.git &&
 		cd bare-ancestor.git &&
 		mkdir plain-nested &&
@@ -47,7 +47,7 @@ test_expect_success 'plain nested in bare' '
 
 test_expect_success 'plain through aliased command, outside any git repo' '
 	(
-		unset GIT_DIR GIT_WORK_TREE GIT_CONFIG_NOGLOBAL &&
+		sane_unset GIT_DIR GIT_WORK_TREE GIT_CONFIG_NOGLOBAL &&
 		HOME=$(pwd)/alias-config &&
 		export HOME &&
 		mkdir alias-config &&
@@ -65,7 +65,7 @@ test_expect_success 'plain through aliased command, outside any git repo' '
 
 test_expect_failure 'plain nested through aliased command' '
 	(
-		unset GIT_DIR GIT_WORK_TREE &&
+		sane_unset GIT_DIR GIT_WORK_TREE &&
 		git init plain-ancestor-aliased &&
 		cd plain-ancestor-aliased &&
 		echo "[alias] aliasedinit = init" >>.git/config &&
@@ -78,7 +78,7 @@ test_expect_failure 'plain nested through aliased command' '
 
 test_expect_failure 'plain nested in bare through aliased command' '
 	(
-		unset GIT_DIR GIT_WORK_TREE &&
+		sane_unset GIT_DIR GIT_WORK_TREE &&
 		git init --bare bare-ancestor-aliased.git &&
 		cd bare-ancestor-aliased.git &&
 		echo "[alias] aliasedinit = init" >>config &&

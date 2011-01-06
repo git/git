@@ -80,7 +80,7 @@ test_repo() {
 #  - cwd can't be outside worktree
 
 test_expect_success '#0: setup' '
-	unset GIT_DIR GIT_WORK_TREE &&
+	sane_unset GIT_DIR GIT_WORK_TREE &&
 	mkdir 0 0/sub &&
 	cd 0 && git init && cd ..
 '
@@ -123,7 +123,7 @@ EOF
 # GIT_WORK_TREE is ignored -> #0
 
 test_expect_success '#1: setup' '
-	unset GIT_DIR GIT_WORK_TREE &&
+	sane_unset GIT_DIR GIT_WORK_TREE &&
 	mkdir 1 1/sub 1.wt 1.wt/sub 1/wt 1/wt/sub &&
 	cd 1 &&
 	git init &&
@@ -174,7 +174,7 @@ EOF
 #  - cwd can't be outside worktree
 
 test_expect_success '#2: setup' '
-	unset GIT_DIR GIT_WORK_TREE &&
+	sane_unset GIT_DIR GIT_WORK_TREE &&
 	mkdir 2 2/sub &&
 	cd 2 && git init && cd ..
 '
@@ -241,7 +241,7 @@ EOF
 #  - cwd can be outside worktree
 
 test_expect_success '#3: setup' '
-	unset GIT_DIR GIT_WORK_TREE &&
+	sane_unset GIT_DIR GIT_WORK_TREE &&
 	mkdir 3 3/sub 3/sub/sub 3.wt 3.wt/sub 3/wt 3/wt/sub &&
 	cd 3 && git init && cd ..
 '
@@ -504,7 +504,7 @@ EOF
 # core.worktree is ignored -> #0
 
 test_expect_success '#4: setup' '
-	unset GIT_DIR GIT_WORK_TREE &&
+	sane_unset GIT_DIR GIT_WORK_TREE &&
 	mkdir 4 4/sub &&
 	cd 4 &&
 	git init &&
@@ -550,7 +550,7 @@ EOF
 # GIT_WORK_TREE/core.worktree are ignored -> #0
 
 test_expect_success '#5: setup' '
-	unset GIT_DIR GIT_WORK_TREE &&
+	sane_unset GIT_DIR GIT_WORK_TREE &&
 	mkdir 5 5/sub &&
 	cd 5 &&
 	git init &&
@@ -602,7 +602,7 @@ EOF
 #  - cwd can be outside worktree
 
 test_expect_success '#6: setup' '
-	unset GIT_DIR GIT_WORK_TREE &&
+	sane_unset GIT_DIR GIT_WORK_TREE &&
 	mkdir 6 6/sub 6/sub/sub 6.wt 6.wt/sub 6/wt 6/wt/sub &&
 	cd 6 && git init && cd ..
 '
@@ -889,7 +889,7 @@ EOF
 # core.worktree is overridden by GIT_WORK_TREE -> #3
 
 test_expect_success '#7: setup' '
-	unset GIT_DIR GIT_WORK_TREE &&
+	sane_unset GIT_DIR GIT_WORK_TREE &&
 	mkdir 7 7/sub 7/sub/sub 7.wt 7.wt/sub 7/wt 7/wt/sub &&
 	cd 7 &&
 	git init &&
@@ -1155,7 +1155,7 @@ EOF
 # #0 except that git_dir is set by .git file
 
 test_expect_success '#8: setup' '
-	unset GIT_DIR GIT_WORK_TREE &&
+	sane_unset GIT_DIR GIT_WORK_TREE &&
 	mkdir 8 8/sub &&
 	cd 8 &&
 	git init &&
@@ -1202,7 +1202,7 @@ EOF
 # #1 except that git_dir is set by .git file
 
 test_expect_success '#9: setup' '
-	unset GIT_DIR GIT_WORK_TREE &&
+	sane_unset GIT_DIR GIT_WORK_TREE &&
 	mkdir 9 9/sub 9.wt 9.wt/sub 9/wt 9/wt/sub &&
 	cd 9 &&
 	git init &&
@@ -1251,7 +1251,7 @@ EOF
 # #2 except that git_dir is set by .git file
 
 test_expect_success '#10: setup' '
-	unset GIT_DIR GIT_WORK_TREE &&
+	sane_unset GIT_DIR GIT_WORK_TREE &&
 	mkdir 10 10/sub &&
 	cd 10 &&
 	git init &&
@@ -1318,7 +1318,7 @@ EOF
 # #3 except that git_dir is set by .git file
 
 test_expect_success '#11: setup' '
-	unset GIT_DIR GIT_WORK_TREE &&
+	sane_unset GIT_DIR GIT_WORK_TREE &&
 	mkdir 11 11/sub 11/sub/sub 11.wt 11.wt/sub 11/wt 11/wt/sub &&
 	cd 11 &&
 	git init &&
@@ -1586,7 +1586,7 @@ EOF
 
 
 test_expect_success '#12: setup' '
-	unset GIT_DIR GIT_WORK_TREE &&
+	sane_unset GIT_DIR GIT_WORK_TREE &&
 	mkdir 12 12/sub 12/sub/sub 12.wt 12.wt/sub 12/wt 12/wt/sub &&
 	cd 12 &&
 	git init &&
@@ -1634,7 +1634,7 @@ EOF
 # #5 except that git_dir is set by .git file
 
 test_expect_success '#13: setup' '
-	unset GIT_DIR GIT_WORK_TREE &&
+	sane_unset GIT_DIR GIT_WORK_TREE &&
 	mkdir 13 13/sub 13/sub/sub 13.wt 13.wt/sub 13/wt 13/wt/sub &&
 	cd 13 &&
 	git init &&
@@ -1684,7 +1684,7 @@ EOF
 # #6 except that git_dir is set by .git file
 
 test_expect_success '#14: setup' '
-	unset GIT_DIR GIT_WORK_TREE &&
+	sane_unset GIT_DIR GIT_WORK_TREE &&
 	mkdir 14 14/sub 14/sub/sub 14.wt 14.wt/sub 14/wt 14/wt/sub &&
 	cd 14 &&
 	git init &&
@@ -1975,7 +1975,7 @@ EOF
 # #7 except that git_dir is set by .git file
 
 test_expect_success '#15: setup' '
-	unset GIT_DIR GIT_WORK_TREE &&
+	sane_unset GIT_DIR GIT_WORK_TREE &&
 	mkdir 15 15/sub 15/sub/sub 15.wt 15.wt/sub 15/wt 15/wt/sub &&
 	cd 15 &&
 	git init &&
@@ -2247,7 +2247,7 @@ EOF
 #  - cwd can't be outside worktree
 
 test_expect_success '#16.1: setup' '
-	unset GIT_DIR GIT_WORK_TREE &&
+	sane_unset GIT_DIR GIT_WORK_TREE &&
 	mkdir 16 16/sub &&
 	cd 16 &&
 	git init &&
@@ -2378,7 +2378,7 @@ EOF
 # GIT_WORK_TREE is ignored -> #16.1 (with warnings perhaps)
 
 test_expect_success '#17.1: setup' '
-	unset GIT_DIR GIT_WORK_TREE &&
+	sane_unset GIT_DIR GIT_WORK_TREE &&
 	mkdir 17 17/sub &&
 	cd 17 &&
 	git init &&
@@ -2511,7 +2511,7 @@ EOF
 #  - cwd can't be outside worktree
 
 test_expect_success '#18: setup' '
-	unset GIT_DIR GIT_WORK_TREE &&
+	sane_unset GIT_DIR GIT_WORK_TREE &&
 	mkdir 18 18/sub &&
 	cd 18 &&
 	git init &&
@@ -2578,7 +2578,7 @@ EOF
 # bare repo is overridden by GIT_WORK_TREE -> #3
 
 test_expect_success '#19: setup' '
-	unset GIT_DIR GIT_WORK_TREE &&
+	sane_unset GIT_DIR GIT_WORK_TREE &&
 	mkdir 19 19/sub 19/sub/sub 19.wt 19.wt/sub 19/wt 19/wt/sub &&
 	cd 19 &&
 	git init &&
@@ -2844,7 +2844,7 @@ EOF
 # core.worktree is ignored -> #16.1
 
 test_expect_success '#20.1: setup' '
-	unset GIT_DIR GIT_WORK_TREE &&
+	sane_unset GIT_DIR GIT_WORK_TREE &&
 	mkdir 20 20/sub &&
 	cd 20 &&
 	git init &&
@@ -2972,7 +2972,7 @@ EOF
 # GIT_WORK_TREE/core.worktree are ignored -> #20.1
 
 test_expect_success '#21.1: setup' '
-	unset GIT_DIR GIT_WORK_TREE &&
+	sane_unset GIT_DIR GIT_WORK_TREE &&
 	mkdir 21 21/sub &&
 	cd 21 &&
 	git init &&
@@ -3108,7 +3108,7 @@ EOF
 #  - cwd can be outside worktree
 
 test_expect_success '#22.1: setup' '
-	unset GIT_DIR GIT_WORK_TREE &&
+	sane_unset GIT_DIR GIT_WORK_TREE &&
 	mkdir 22 &&
 	cd 22 &&
 	git init &&
@@ -3439,7 +3439,7 @@ test_expect_success '#22.2: at root' '
 # core.worktree is overridden by GIT_WORK_TREE -> #19
 
 test_expect_success '#23: setup' '
-	unset GIT_DIR GIT_WORK_TREE &&
+	sane_unset GIT_DIR GIT_WORK_TREE &&
 	mkdir 23 23/sub 23/sub/sub 23.wt 23.wt/sub 23/wt 23/wt/sub &&
 	cd 23 &&
 	git init &&
@@ -3706,7 +3706,7 @@ EOF
 # #16.2 except git_dir is set according to .git file
 
 test_expect_success '#24: setup' '
-	unset GIT_DIR GIT_WORK_TREE &&
+	sane_unset GIT_DIR GIT_WORK_TREE &&
 	mkdir 24 24/sub &&
 	cd 24 &&
 	git init &&
@@ -3754,7 +3754,7 @@ EOF
 # #17.2 except git_dir is set according to .git file
 
 test_expect_success '#25: setup' '
-	unset GIT_DIR GIT_WORK_TREE &&
+	sane_unset GIT_DIR GIT_WORK_TREE &&
 	mkdir 25 25/sub &&
 	cd 25 &&
 	git init &&
@@ -3804,7 +3804,7 @@ EOF
 # #18 except git_dir is set according to .git file
 
 test_expect_success '#26: setup' '
-	unset GIT_DIR GIT_WORK_TREE &&
+	sane_unset GIT_DIR GIT_WORK_TREE &&
 	mkdir 26 26/sub &&
 	cd 26 &&
 	git init &&
@@ -3872,7 +3872,7 @@ EOF
 # #19 except git_dir is set according to .git file
 
 test_expect_success '#27: setup' '
-	unset GIT_DIR GIT_WORK_TREE &&
+	sane_unset GIT_DIR GIT_WORK_TREE &&
 	mkdir 27 27/sub 27/sub/sub 27.wt 27.wt/sub 27/wt 27/wt/sub &&
 	cd 27 &&
 	git init &&
@@ -4140,7 +4140,7 @@ EOF
 # core.worktree is ignored -> #24
 
 test_expect_success '#28: setup' '
-	unset GIT_DIR GIT_WORK_TREE &&
+	sane_unset GIT_DIR GIT_WORK_TREE &&
 	mkdir 28 28/sub &&
 	cd 28 &&
 	git init &&
@@ -4189,7 +4189,7 @@ EOF
 # GIT_WORK_TREE/core.worktree are ignored -> #28
 
 test_expect_success '#29: setup' '
-	unset GIT_DIR GIT_WORK_TREE &&
+	sane_unset GIT_DIR GIT_WORK_TREE &&
 	mkdir 29 29/sub &&
 	cd 29 &&
 	git init &&
@@ -4239,7 +4239,7 @@ EOF
 # core.worktree and core.bare conflict, won't fly.
 
 test_expect_success '#30: setup' '
-	unset GIT_DIR GIT_WORK_TREE &&
+	sane_unset GIT_DIR GIT_WORK_TREE &&
 	mkdir 30 &&
 	cd 30 &&
 	git init &&
@@ -4278,7 +4278,7 @@ test_expect_success '#30: at root' '
 # #23 except git_dir is set according to .git file
 
 test_expect_success '#31: setup' '
-	unset GIT_DIR GIT_WORK_TREE &&
+	sane_unset GIT_DIR GIT_WORK_TREE &&
 	mkdir 31 31/sub 31/sub/sub 31.wt 31.wt/sub 31/wt 31/wt/sub &&
 	cd 31 &&
 	git init &&
