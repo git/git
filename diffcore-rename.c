@@ -55,22 +55,23 @@ static struct diff_rename_dst *locate_rename_dst(struct diff_filespec *two,
 
 /* Table of rename/copy src files */
 static struct diff_rename_src {
-	struct diff_filespec *one;
+	struct diff_filepair *p;
 	unsigned short score; /* to remember the break score */
 } *rename_src;
 static int rename_src_nr, rename_src_alloc;
 
-static struct diff_rename_src *register_rename_src(struct diff_filespec *one,
-						   unsigned short score)
+static struct diff_rename_src *register_rename_src(struct diff_filepair *p)
 {
 	int first, last;
+	struct diff_filespec *one = p->one;
+	unsigned short score = p->score;
 
 	first = 0;
 	last = rename_src_nr;
 	while (last > first) {
 		int next = (last + first) >> 1;
 		struct diff_rename_src *src = &(rename_src[next]);
-		int cmp = strcmp(one->path, src->one->path);
+		int cmp = strcmp(one->path, src->p->one->path);
 		if (!cmp)
 			return src;
 		if (cmp < 0) {
@@ -90,7 +91,7 @@ static struct diff_rename_src *register_rename_src(struct diff_filespec *one,
 	if (first < rename_src_nr)
 		memmove(rename_src + first + 1, rename_src + first,
 			(rename_src_nr - first - 1) * sizeof(*rename_src));
-	rename_src[first].one = one;
+	rename_src[first].p = p;
 	rename_src[first].score = score;
 	return &(rename_src[first]);
 }
@@ -205,7 +206,7 @@ static void record_rename_pair(int dst_index, int src_index, int score)
 	if (rename_dst[dst_index].pair)
 		die("internal error: dst already matched.");
 
-	src = rename_src[src_index].one;
+	src = rename_src[src_index].p->one;
 	src->rename_used++;
 	src->count++;
 
@@ -389,7 +390,7 @@ static int find_exact_renames(struct diff_options *options)
 
 	init_hash(&file_table);
 	for (i = 0; i < rename_src_nr; i++)
-		insert_file_table(&file_table, -1, i, rename_src[i].one);
+		insert_file_table(&file_table, -1, i, rename_src[i].p->one);
 
 	for (i = 0; i < rename_dst_nr; i++)
 		insert_file_table(&file_table, 1, i, rename_dst[i].two);
@@ -460,7 +461,7 @@ static int find_renames(struct diff_score *mx, int dst_cnt, int minimum_score, i
 		dst = &rename_dst[mx[i].dst];
 		if (dst->pair)
 			continue; /* already done, either exact or fuzzy. */
-		if (!copies && rename_src[mx[i].src].one->rename_used)
+		if (!copies && rename_src[mx[i].src].p->one->rename_used)
 			continue;
 		record_rename_pair(mx[i].dst, mx[i].src, mx[i].score);
 		count++;
@@ -503,7 +504,7 @@ void diffcore_rename(struct diff_options *options)
 			 */
 			if (p->broken_pair && !p->score)
 				p->one->rename_used++;
-			register_rename_src(p->one, p->score);
+			register_rename_src(p);
 		}
 		else if (detect_rename == DIFF_DETECT_COPY) {
 			/*
@@ -511,7 +512,7 @@ void diffcore_rename(struct diff_options *options)
 			 * one, to indicate ourselves as a user.
 			 */
 			p->one->rename_used++;
-			register_rename_src(p->one, p->score);
+			register_rename_src(p);
 		}
 	}
 	if (rename_dst_nr == 0 || rename_src_nr == 0)
@@ -560,7 +561,7 @@ void diffcore_rename(struct diff_options *options)
 			m[j].dst = -1;
 
 		for (j = 0; j < rename_src_nr; j++) {
-			struct diff_filespec *one = rename_src[j].one;
+			struct diff_filespec *one = rename_src[j].p->one;
 			struct diff_score this_src;
 			this_src.score = estimate_similarity(one, two,
 							     minimum_score);
