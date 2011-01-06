@@ -729,8 +729,11 @@ have each person clone that repository with 'git clone':
 	cd project
 	git init
 	git remote add origin server:/pub/project
-	git config --add remote.origin.fetch '+refs/remotes/*:refs/remotes/*'
+	git config --replace-all remote.origin.fetch '+refs/remotes/*:refs/remotes/*'
 	git fetch
+# Prevent fetch/pull from remote git server in the future,
+# we only want to use git svn for future updates
+	git config --remove-section remote.origin
 # Create a local branch from one of the branches just fetched
 	git checkout -b master FETCH_HEAD
 # Initialize 'git svn' locally (be sure to use the same URL and -T/-b/-t options as were used on server)
