@@ -419,6 +419,34 @@ static void record_if_better(struct diff_score m[], struct diff_score *o)
 		m[worst] = *o;
 }
 
+static int too_many_rename_candidates(int num_create,
+				      struct diff_options *options)
+{
+	int rename_limit = options->rename_limit;
+	int num_src = rename_src_nr;
+
+	options->needed_rename_limit = 0;
+
+	/*
+	 * This basically does a test for the rename matrix not
+	 * growing larger than a "rename_limit" square matrix, ie:
+	 *
+	 *    num_create * num_src > rename_limit * rename_limit
+	 *
+	 * but handles the potential overflow case specially (and we
+	 * assume at least 32-bit integers)
+	 */
+	if (rename_limit <= 0 || rename_limit > 32767)
+		rename_limit = 32767;
+	if ((num_create <= rename_limit || num_src <= rename_limit) &&
+	    (num_create * num_src <= rename_limit * rename_limit))
+		return 0;
+
+	options->needed_rename_limit =
+		num_src > num_create ? num_src : num_create;
+	return 1;
+}
+
 static int find_renames(struct diff_score *mx, int dst_cnt, int minimum_score, int copies)
 {
 	int count = 0, i;
@@ -444,7 +472,6 @@ void diffcore_rename(struct diff_options *options)
 {
 	int detect_rename = options->detect_rename;
 	int minimum_score = options->rename_score;
-	int rename_limit = options->rename_limit;
 	struct diff_queue_struct *q = &diff_queued_diff;
 	struct diff_queue_struct outq;
 	struct diff_score *mx;
@@ -511,24 +538,8 @@ void diffcore_rename(struct diff_options *options)
 	if (!num_create)
 		goto cleanup;
 
-	/*
-	 * This basically does a test for the rename matrix not
-	 * growing larger than a "rename_limit" square matrix, ie:
-	 *
-	 *    num_create * num_src > rename_limit * rename_limit
-	 *
-	 * but handles the potential overflow case specially (and we
-	 * assume at least 32-bit integers)
-	 */
-	options->needed_rename_limit = 0;
-	if (rename_limit <= 0 || rename_limit > 32767)
-		rename_limit = 32767;
-	if ((num_create > rename_limit && num_src > rename_limit) ||
-	    (num_create * num_src > rename_limit * rename_limit)) {
-		options->needed_rename_limit =
-			num_src > num_create ? num_src : num_create;
+	if (too_many_rename_candidates(num_create, options))
 		goto cleanup;
-	}
 
 	if (options->show_rename_progress) {
 		progress = start_progress_delay(
