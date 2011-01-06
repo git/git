@@ -16,13 +16,13 @@ test_description='merge-recursive options
 test_expect_success 'setup' '
 	conflict_hunks () {
 		sed -n -e "
-			/^<<<</ b inconflict
+			/^<<<</ b conflict
 			b
-			: inconflict
+			: conflict
 			p
 			/^>>>>/ b
 			n
-			b inconflict
+			b conflict
 		" "$@"
 	} &&
 
