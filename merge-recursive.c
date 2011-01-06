@@ -22,11 +22,6 @@
 #include "dir.h"
 #include "submodule.h"
 
-static const char rename_limit_advice[] =
-"inexact rename detection was skipped because there were too many\n"
-"  files. You may want to set your merge.renamelimit variable to at least\n"
-"  %d and retry this merge.";
-
 static struct tree *shift_tree_object(struct tree *one, struct tree *two,
 				      const char *subtree_shift)
 {
@@ -1656,8 +1651,9 @@ int merge_recursive(struct merge_options *o,
 		commit_list_insert(h2, &(*result)->parents->next);
 	}
 	flush_output(o);
-	if (o->needed_rename_limit)
-		warning(rename_limit_advice, o->needed_rename_limit);
+	if (show(o, 2))
+		diff_warn_rename_limit("merge.renamelimit",
+				       o->needed_rename_limit, 0);
 	return clean;
 }
 

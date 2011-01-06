@@ -420,11 +420,18 @@ static void record_if_better(struct diff_score m[], struct diff_score *o)
 		m[worst] = *o;
 }
 
+/*
+ * Returns:
+ * 0 if we are under the limit;
+ * 1 if we need to disable inexact rename detection;
+ * 2 if we would be under the limit if we were given -C instead of -C -C.
+ */
 static int too_many_rename_candidates(int num_create,
 				      struct diff_options *options)
 {
 	int rename_limit = options->rename_limit;
 	int num_src = rename_src_nr;
+	int i;
 
 	options->needed_rename_limit = 0;
 
@@ -445,6 +452,20 @@ static int too_many_rename_candidates(int num_create,
 
 	options->needed_rename_limit =
 		num_src > num_create ? num_src : num_create;
+
+	/* Are we running under -C -C? */
+	if (!DIFF_OPT_TST(options, FIND_COPIES_HARDER))
+		return 1;
+
+	/* Would we bust the limit if we were running under -C? */
+	for (num_src = i = 0; i < rename_src_nr; i++) {
+		if (diff_unmodified_pair(rename_src[i].p))
+			continue;
+		num_src++;
+	}
+	if ((num_create <= rename_limit || num_src <= rename_limit) &&
+	    (num_create * num_src <= rename_limit * rename_limit))
+		return 2;
 	return 1;
 }
 
@@ -476,7 +497,7 @@ void diffcore_rename(struct diff_options *options)
 	struct diff_queue_struct *q = &diff_queued_diff;
 	struct diff_queue_struct outq;
 	struct diff_score *mx;
-	int i, j, rename_count;
+	int i, j, rename_count, skip_unmodified = 0;
 	int num_create, num_src, dst_cnt;
 	struct progress *progress = NULL;
 
@@ -539,8 +560,16 @@ void diffcore_rename(struct diff_options *options)
 	if (!num_create)
 		goto cleanup;
 
-	if (too_many_rename_candidates(num_create, options))
+	switch (too_many_rename_candidates(num_create, options)) {
+	case 1:
 		goto cleanup;
+	case 2:
+		options->degraded_cc_to_c = 1;
+		skip_unmodified = 1;
+		break;
+	default:
+		break;
+	}
 
 	if (options->show_rename_progress) {
 		progress = start_progress_delay(
@@ -563,6 +592,11 @@ void diffcore_rename(struct diff_options *options)
 		for (j = 0; j < rename_src_nr; j++) {
 			struct diff_filespec *one = rename_src[j].p->one;
 			struct diff_score this_src;
+
+			if (skip_unmodified &&
+			    diff_unmodified_pair(rename_src[j].p))
+				continue;
+
 			this_src.score = estimate_similarity(one, two,
 							     minimum_score);
 			this_src.name_score = basename_same(one, two);
