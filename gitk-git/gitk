@@ -7811,6 +7811,7 @@ proc getblobdiffline {bdf ids} {
 		set diffinhdr 0
 		continue
 	    }
+	    set line [encoding convertfrom $line]
 	    $ctext insert end "$line\n" filesep
 
 	} else {
