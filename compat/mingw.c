@@ -475,7 +475,7 @@ static int do_lstat(int follow, const char *file_name, struct stat *buf)
 static int do_stat_internal(int follow, const char *file_name, struct stat *buf)
 {
 	int namelen;
-	static char alt_name[PATH_MAX];
+	char alt_name[PATH_MAX];
 
 	if (!do_lstat(follow, file_name, buf))
 		return 0;
