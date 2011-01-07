@@ -1841,6 +1841,12 @@ pid_t waitpid(pid_t pid, int *status, int options)
 	return -1;
 }
 
+/*
+ * Disable MSVCRT command line wildcard expansion (__getmainargs called from
+ * mingw startup code, see init.c in mingw runtime).
+ */
+int _CRT_glob = 0;
+
 void mingw_startup()
 {
 	/* copy executable name to argv[0] */
