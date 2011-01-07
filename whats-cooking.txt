@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jan 2011, #01; Tue, 4)
-X-master-at: f2665ec9fa42b75d92d0301cff85362836c5729a
-X-next-at: a5d186c925798fa5bd9318fd00f282ad564b1138
+Subject: What's cooking in git.git (Jan 2011, #02; Fri, 7)
+X-master-at: e17aa8a9dca972ca278dd91a097873101066e964
+X-next-at: 600460d4cecafb34f969eb58852adfcb96bc9732
 
-What's cooking in git.git (Jan 2011, #01; Tue, 4)
+What's cooking in git.git (Jan 2011, #02; Fri, 7)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -16,18 +16,91 @@ rc period this cycle.  Please remind if there are patches that ought to be
 in 1.7.4 but are forgotten.
 
 --------------------------------------------------
+[Graduated to "master"]
+
+* ao/t9001-fix (2011-01-04) 1 commit
+ + t/t9001-send-email.sh: fix '&&' chain in some tests
+
+* mg/cvsimport (2010-12-29) 2 commits
+ + cvsimport: handle the parsing of uppercase config options
+ + cvsimport: partial whitespace cleanup
+
+* pw/convert-pathname-substitution (2010-12-22) 2 commits
+ + t0021: avoid getting filter killed with SIGPIPE
+ + convert filter: supply path to external driver
+
+--------------------------------------------------
 [New Topics]
 
-* jn/gitweb-no-logo (2010-09-03) 1 commit
-  (merged to 'next' on 2011-01-04 at a5d186c)
- + gitweb: make logo optional
+* rj/svn-test (2010-12-30) 1 commit
+  (merged to 'next' on 2011-01-05 at ff38429)
+ + lib-git-svn.sh: Move web-server handling code into separate function
 
-Seemed trivial but came a bit too late for the cycle.
+Looked low-impact and trivial.  Might merge to 'master' sometime before
+1.7.4, but we are in no hurry.
 
-* cb/setup (2010-12-27) 1 commit
- - setup: translate symlinks in filename when using absolute paths
+* sr/gitweb-hilite-more (2010-12-30) 2 commits
+  (merged to 'next' on 2011-01-05 at 6b52e7e)
+ + gitweb: remove unnecessary test when closing file descriptor
+ + gitweb: add extensions to highlight feature map
 
-Seemed trivial but came a bit too late for the cycle.
+Looked low-impact and trivial.  Might merge to 'master' sometime before
+1.7.4, especially highlighting itself is a new feature.
+
+* mz/rebase (2010-12-28) 31 commits
+ - rebase -i: remove unnecessary state rebase-root
+ - rebase -i: don't read unused variable preserve_merges
+ - git-rebase--am: remove unnecessary --3way option
+ - rebase -m: don't print exit code 2 when merge fails
+ - rebase -m: remember allow_rerere_autoupdate option
+ - rebase: remember strategy and strategy options
+ - rebase: remember verbose option
+ - rebase: extract code for writing basic state
+ - rebase: factor out sub command handling
+ - rebase: make -v a tiny bit more verbose
+ - rebase -i: align variable names
+ - rebase: show consistent conflict resolution hint
+ - rebase: extract am code to new source file
+ - rebase: extract merge code to new source file
+ - rebase: remove $branch as synonym for $orig_head
+ - rebase -i: support --stat
+ - rebase: factor out call to pre-rebase hook
+ - rebase: factor out clean work tree check
+ - rebase: factor out reference parsing
+ - rebase: reorder validation steps
+ - rebase -i: remove now unnecessary directory checks
+ - rebase: factor out command line option processing
+ - rebase: align variable content
+ - rebase: align variable names
+ - rebase: stricter check of standalone sub command
+ - rebase: act on command line outside parsing loop
+ - rebase: improve detection of rebase in progress
+ - rebase: remove unused rebase state 'prev_head'
+ - rebase: read state outside loop
+ - rebase: refactor reading of state
+ - rebase: clearer names for directory variables
+
+I personally haven't finished reading this one yet; Thomas said the
+general direction of the series basically seemed sound (with nits here
+and there), which I trust.  Hopefully we will see a re-roll of this
+series sometime soon, but we are not in a hurry.
+
+* ef/alias-via-run-command (2011-01-07) 1 commit
+  (merged to 'next' on 2011-01-06 at 1fbd4a0)
+ + alias: use run_command api to execute aliases
+
+* jc/rename-degrade-cc-to-c (2011-01-06) 3 commits
+ - diffcore-rename: fall back to -C when -C -C busts the rename limit
+ - diffcore-rename: record filepair for rename src
+ - diffcore-rename: refactor "too many candidates" logic
+
+* jc/rerere-remaining (2011-01-06) 1 commit
+ - rerere "remaining"
+
+* uk/checkout-ambiguous-ref (2011-01-07) 3 commits
+ - checkout $branch: really favor branch over tag
+ - checkout $branch: favor branch over tag
+ - bug? in checkout with ambiguous refnames
 
 --------------------------------------------------
 [Stalled]
@@ -59,44 +132,49 @@ flags needs to be rethought, or at least the helper needs to be moved to
 builtin/tag.c to make it clear that it should not be used outside the
 current usage context.
 
+* rj/test-fixes (2010-12-14) 4 commits
+ . t4135-*.sh: Skip the "backslash" tests on cygwin
+ . t3032-*.sh: Do not strip CR from line-endings while grepping on MinGW
+ . t3032-*.sh: Pass the -b (--binary) option to sed on cygwin
+ . t6038-*.sh: Pass the -b (--binary) option to sed on cygwin
+
+I don't think people on different vintage of Cygwin agreed they are good
+workarounds---please correct me if I am mistaken.
+
 --------------------------------------------------
 [Cooking]
 
-* mg/cvsimport (2010-12-29) 2 commits
- - cvsimport: handle the parsing of uppercase config options
- - cvsimport: partial whitespace cleanup
+* jn/gitweb-no-logo (2010-09-03) 1 commit
+  (merged to 'next' on 2011-01-04 at a5d186c)
+ + gitweb: make logo optional
 
-Reviewed twice in the past and seemed sane.  Will merge to 'next' and then
-to 'master' before -rc1.
+Seems trivial but came a bit too late for the cycle.
+
+* cb/setup (2010-12-27) 1 commit
+  (merged to 'next' on 2011-01-05 at 790b288)
+ + setup: translate symlinks in filename when using absolute paths
+
+Seems trivial but came a bit too late for the cycle.
 
 * ae/better-template-failure-report (2010-12-18) 1 commit
- - Improve error messages when temporary file creation fails
+  (merged to 'next' on 2011-01-05 at d3f9142)
+ + Improve error messages when temporary file creation fails
 
 * jc/unpack-trees (2010-12-22) 2 commits
  - unpack_trees(): skip trees that are the same in all input
  - unpack-trees.c: cosmetic fix
 
 * jn/cherry-pick-strategy-option (2010-12-10) 1 commit
- - cherry-pick/revert: add support for -X/--strategy-option
+  (merged to 'next' on 2011-01-05 at 3ccc590)
+ + cherry-pick/revert: add support for -X/--strategy-option
 
 * jn/perl-funcname (2010-12-27) 2 commits
- - userdiff/perl: catch BEGIN/END/... and POD as headers
- - diff: funcname and word patterns for perl
+  (merged to 'next' on 2011-01-05 at 20542ed)
+ + userdiff/perl: catch BEGIN/END/... and POD as headers
+ + diff: funcname and word patterns for perl
 
-* pw/convert-pathname-substitution (2010-12-22) 2 commits
- - t0021: avoid getting filter killed with SIGPIPE
- - convert filter: supply path to external driver
-
-Trivial.  Will merge to 'next' and then to 'master' before -rc1.
-
-* rj/test-fixes (2010-12-14) 4 commits
- - t4135-*.sh: Skip the "backslash" tests on cygwin
- - t3032-*.sh: Do not strip CR from line-endings while grepping on MinGW
- - t3032-*.sh: Pass the -b (--binary) option to sed on cygwin
- - t6038-*.sh: Pass the -b (--binary) option to sed on cygwin
-
-I don't think people on different vintage of Cygwin agreed they are good
-workarounds---please correct me if I am mistaken.
+Looked low-impact and trivial.  Might merge to 'master' sometime before
+1.7.4, but we are in no hurry.
 
 * tr/maint-branch-no-track-head (2010-12-14) 1 commit
  - branch: do not attempt to track HEAD implicitly
@@ -115,7 +193,7 @@ safer and saner.
 
 Will be rerolled (Heiko, 2010-12-23)
 
-* jn/svn-fe (2010-12-06) 18 commits
+* jn/svn-fe (2010-12-06) 17 commits
  - vcs-svn: Allow change nodes for root of tree (/)
  - vcs-svn: Implement Prop-delta handling
  - vcs-svn: Sharpen parsing of property lines
@@ -133,10 +211,8 @@ Will be rerolled (Heiko, 2010-12-23)
  - vcs-svn: Eliminate node_ctx.srcRev global
  - vcs-svn: Check for errors from open()
  - vcs-svn: Allow simple v3 dumps (no deltas yet)
- - vcs-svn: Error out for v3 dumps
 
-Some RFC patches, to give them early and wider exposure.  Perhaps drop
-these during the -rc period?
+Some RFC patches, to give them early and wider exposure.
 
 * nd/struct-pathspec (2010-12-15) 21 commits
  - t7810: overlapping pathspecs and depth limit
