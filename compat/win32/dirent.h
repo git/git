@@ -9,8 +9,8 @@ typedef struct DIR DIR;
 #define DT_LNK     3
 
 struct dirent {
-	char d_name[FILENAME_MAX];       /* File name. */
 	unsigned char d_type;      /* file type to prevent lstat after readdir */
+	char d_name[MAX_PATH];     /* file name */
 };
 
 DIR *opendir(const char *dirname);
