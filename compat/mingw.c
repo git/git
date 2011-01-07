@@ -1847,3 +1847,18 @@ int mingw_offset_1st_component(const char *path)
 
 	return offset + is_dir_sep(path[offset]);
 }
+
+void mingw_startup()
+{
+	/* copy executable name to argv[0] */
+	__argv[0] = xstrdup(_pgmptr);
+
+	/* initialize critical section for waitpid pinfo_t list */
+	InitializeCriticalSection(&pinfo_cs);
+
+	/* set up default file mode and file modes for stdin/out/err */
+	_fmode = _O_BINARY;
+	_setmode(_fileno(stdin), _O_BINARY);
+	_setmode(_fileno(stdout), _O_BINARY);
+	_setmode(_fileno(stderr), _O_BINARY);
+}
