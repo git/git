@@ -11581,7 +11581,7 @@ if {![info exists have_ttk]} {
 set use_ttk [expr {$have_ttk && $want_ttk}]
 set NS [expr {$use_ttk ? "ttk" : ""}]
 
-set git_version [join [lrange [split [lindex [exec git version] end] .] 0 2] .]
+regexp {^git version ([\d.]*\d)} [exec git version] _ git_version
 
 set show_notes {}
 if {[package vcompare $git_version "1.6.6.2"] >= 0} {
