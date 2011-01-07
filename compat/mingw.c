@@ -1869,6 +1869,12 @@ int mingw_offset_1st_component(const char *path)
 	return offset + is_dir_sep(path[offset]);
 }
 
+/*
+ * Disable MSVCRT command line wildcard expansion (__getmainargs called from
+ * mingw startup code, see init.c in mingw runtime).
+ */
+int _CRT_glob = 0;
+
 void mingw_startup()
 {
 	/* copy executable name to argv[0] */
