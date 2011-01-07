@@ -9,7 +9,6 @@ typedef struct DIR DIR;
 #define DT_LNK     3
 
 struct dirent {
-	long d_ino;                      /* Always zero. */
 	char d_name[FILENAME_MAX];       /* File name. */
 	union {
 		unsigned short d_reclen; /* Always zero. */
