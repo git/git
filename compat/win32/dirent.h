@@ -10,10 +10,7 @@ typedef struct DIR DIR;
 
 struct dirent {
 	char d_name[FILENAME_MAX];       /* File name. */
-	union {
-		unsigned short d_reclen; /* Always zero. */
-		unsigned char  d_type;   /* Reimplementation adds this */
-	};
+	unsigned char d_type;      /* file type to prevent lstat after readdir */
 };
 
 DIR *opendir(const char *dirname);
