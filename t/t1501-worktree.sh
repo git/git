@@ -339,6 +339,10 @@ test_expect_success 'make_relative_path handles double slashes in GIT_DIR' '
 	git --git-dir="$(pwd)//repo.git" --work-tree="$(pwd)" add dummy_file
 '
 
+test_have_prereq MINGW &&
+# make sure to test DOS path on Windows
+TRASH_DIRECTORY="$(cd "$TRASH_DIRECTORY" && pwd)"
+
 test_expect_success 'relative $GIT_WORK_TREE and git subprocesses' '
 	GIT_DIR=repo.git GIT_WORK_TREE=repo.git/work \
 	test-subprocess --setup-work-tree rev-parse --show-toplevel >actual &&
