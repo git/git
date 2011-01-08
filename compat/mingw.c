@@ -1833,7 +1833,7 @@ pid_t waitpid(pid_t pid, int *status, unsigned options)
 	return -1;
 }
 
-const char *get_windows_home_directory()
+const char *get_windows_home_directory(void)
 {
 	static const char *home_directory = NULL;
 	struct strbuf buf = STRBUF_INIT;
