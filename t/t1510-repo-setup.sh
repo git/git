@@ -39,6 +39,10 @@ test_description='Tests of cwd/prefix/worktree/gitdir setup in all cases'
 #     prefix is NULL.
 #
 
+test_have_prereq MINGW &&
+# make sure to test DOS path on Windows
+TRASH_DIRECTORY="$(cd "$TRASH_DIRECTORY" && pwd)"
+
 test_repo() {
 	(
 	cd "$1" &&
