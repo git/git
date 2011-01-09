@@ -35,7 +35,7 @@ int mingw_fstat(int fd, struct stat *buf);
 #define _stat64(x,y) mingw_lstat(x,y)
 #define ALREADY_DECLARED_STAT_FUNCS
 
-#include "compat/mingw.h"
+#include "mingw.h"
 
 #undef ALREADY_DECLARED_STAT_FUNCS
 
@@ -73,6 +73,8 @@ int mingw_fstat(int fd, struct stat *buf);
 #define SHA1_HEADER "block-sha1\\sha1.h"
 #define GIT_EXEC_PATH "bin"
 #define GIT_VERSION "1.7.2.3"
+#define GIT_VERSION_VER 1,7,2,3
+#define GIT_VERSION_STRVER "1, 7, 2, 3\0"
 #define BINDIR "bin"
 #define PREFIX "."
 #define GIT_MAN_PATH "man"

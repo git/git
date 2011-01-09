@@ -1,0 +1,56 @@
+//
+// git.RC2 - resources Microsoft Visual C++ does not edit directly
+//
+
+#ifdef APSTUDIO_INVOKED
+#error this file is not editable by Microsoft Visual C++
+#endif //APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Add manually edited resources here...
+
+/////////////////////////////////////////////////////////////////////////////
+
+/////////////////////////////////////////////////////////////////////////////
+
+/////////////////////////////////////////////////////////////////////////////
+// Add manually edited resources here...
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+#include "..\..\msvc.h"
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION GIT_VERSION_VER
+ PRODUCTVERSION GIT_VERSION_VER
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x4L
+ FILETYPE VFT_APP
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040004e4"
+        BEGIN
+            VALUE "FileDescription", "Git is a fast, scalable, distributed revision control system.\0"
+            VALUE "FileVersion", GIT_VERSION_STRVER
+            VALUE "InternalName", "tgit.exe\0"
+            VALUE "OriginalFilename", "tgit.exe\0"
+            VALUE "ProductName", "GIT\0"
+            VALUE "ProductVersion", GIT_VERSION_STRVER
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x400, 1252
+    END
+END
+
+/////////////////////////////////////////////////////////////////////////////
+
