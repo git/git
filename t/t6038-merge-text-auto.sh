@@ -14,7 +14,7 @@ test_description='CRLF merge conflict across text=auto change
 
 . ./test-lib.sh
 
-test_have_prereq MINGW && SED_OPTIONS=-b
+test_have_prereq SED_STRIPS_CR && SED_OPTIONS=-b
 
 test_expect_success setup '
 	git config core.autocrlf false &&

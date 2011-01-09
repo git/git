@@ -13,9 +13,12 @@ test_description='merge-recursive options
 
 . ./test-lib.sh
 
+test_have_prereq SED_STRIPS_CR && SED_OPTIONS=-b
+test_have_prereq MINGW && export GREP_OPTIONS=-U
+
 test_expect_success 'setup' '
 	conflict_hunks () {
-		sed -n -e "
+		sed $SED_OPTIONS -n -e "
 			/^<<<</ b conflict
 			b
 			: conflict
@@ -105,20 +108,6 @@ test_expect_success 'naive merge fails' '
 test_expect_success '--ignore-space-change makes merge succeed' '
 	git read-tree --reset -u HEAD &&
 	git merge-recursive --ignore-space-change HEAD^ -- HEAD remote
-'
-
-test_expect_success 'naive cherry-pick fails' '
-	git read-tree --reset -u HEAD &&
-	test_must_fail git cherry-pick --no-commit remote &&
-	git read-tree --reset -u HEAD &&
-	test_must_fail git cherry-pick remote &&
-	test_must_fail git update-index --refresh &&
-	grep "<<<<<<" text.txt
-'
-
-test_expect_success '-Xignore-space-change makes cherry-pick succeed' '
-	git read-tree --reset -u HEAD &&
-	git cherry-pick --no-commit -Xignore-space-change remote
 '
 
 test_expect_success '--ignore-space-change: our w/s-only change wins' '
