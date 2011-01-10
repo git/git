@@ -4,22 +4,6 @@ test_description='check svn dumpfile importer'
 
 . ./test-lib.sh
 
-if ! svnadmin -h >/dev/null 2>&1
-then
-	skip_all='skipping svn-fe tests, svn not available'
-	test_done
-fi
-
-svnconf=$PWD/svnconf
-export svnconf
-
-svn_cmd () {
-	subcommand=$1 &&
-	shift &&
-	mkdir -p "$svnconf" &&
-	svn "$subcommand" --config-dir "$svnconf" "$@"
-}
-
 reinit_git () {
 	rm -fr .git &&
 	git init
@@ -41,10 +25,21 @@ test_expect_success 'v3 dumps not supported' '
 	test_cmp empty stream
 '
 
-test_expect_success 't9135/svn.dump' '
-	svnadmin create simple-svn &&
-	svnadmin load simple-svn <"$TEST_DIRECTORY/t9135/svn.dump" &&
-	svn_cmd export "file://$PWD/simple-svn" simple-svnco &&
+test_expect_success 'set up svn repo' '
+	svnconf=$PWD/svnconf &&
+	mkdir -p "$svnconf" &&
+
+	if
+		svnadmin -h >/dev/null 2>&1 &&
+		svnadmin create simple-svn &&
+		svnadmin load simple-svn <"$TEST_DIRECTORY/t9135/svn.dump" &&
+		svn export --config-dir "$svnconf" "file://$PWD/simple-svn" simple-svnco
+	then
+		test_set_prereq SVNREPO
+	fi
+'
+
+test_expect_success SVNREPO 't9135/svn.dump' '
 	git init simple-git &&
 	test-svn-fe "$TEST_DIRECTORY/t9135/svn.dump" >simple.fe &&
 	(
