@@ -36,12 +36,24 @@ resolve_relative_url ()
 		die "remote ($remote) does not have a url defined in .git/config"
 	url="$1"
 	remoteurl=${remoteurl%/}
+	sep=/
 	while test -n "$url"
 	do
 		case "$url" in
 		../*)
 			url="${url#../}"
-			remoteurl="${remoteurl%/*}"
+			case "$remoteurl" in
+			*/*)
+				remoteurl="${remoteurl%/*}"
+				;;
+			*:*)
+				remoteurl="${remoteurl%:*}"
+				sep=:
+				;;
+			*)
+				die "cannot strip one component off url '$remoteurl'"
+				;;
+			esac
 			;;
 		./*)
 			url="${url#./}"
@@ -50,7 +62,7 @@ resolve_relative_url ()
 			break;;
 		esac
 	done
-	echo "$remoteurl/${url%/}"
+	echo "$remoteurl$sep${url%/}"
 }
 
 #
