@@ -350,10 +350,6 @@ rebase::
 The commits are guaranteed to be listed in the order that they were
 processed by rebase.
 
-There is no default 'post-rewrite' hook, but see the
-`post-receive-copy-notes` script in `contrib/hooks` for an example
-that copies your git-notes to the rewritten commits.
-
 
 GIT
 ---
