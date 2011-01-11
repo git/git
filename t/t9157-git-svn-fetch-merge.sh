@@ -8,7 +8,7 @@ test_description='git svn merge detection'
 
 svn_ver="$(svn --version --quiet)"
 case $svn_ver in
-[0-1].[0-4].[0-6])
+0.* | 1.[0-4].*)
 	skip_all="skipping git-svn test - SVN too old ($svn_ver)"
 	test_done
 	;;
