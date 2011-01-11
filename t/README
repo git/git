@@ -283,6 +283,12 @@ Do:
    Tests that are likely to smoke out future regressions are better
    than tests that just inflate the coverage metrics.
 
+ - When a test checks for an absolute path that a git command generated,
+   construct the expected value using $(pwd) rather than $PWD,
+   $TEST_DIRECTORY, or $TRASH_DIRECTORY. It makes a difference on
+   Windows, where the shell (MSYS bash) mangles absolute path names.
+   For details, see the commit message of 4114156ae9.
+
 Don't:
 
  - exit() within a <script> part.
