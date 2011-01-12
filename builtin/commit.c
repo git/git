@@ -45,9 +45,9 @@ static const char implicit_ident_advice[] =
 "    git config --global user.name \"Your Name\"\n"
 "    git config --global user.email you@example.com\n"
 "\n"
-"If the identity used for this commit is wrong, you can fix it with:\n"
+"After doing this, you may fix the identity used for this commit with:\n"
 "\n"
-"    git commit --amend --author='Your Name <you@example.com>'\n";
+"    git commit --amend --reset-author\n";
 
 static const char empty_amend_advice[] =
 "You asked to amend the most recent commit, but doing so would make\n"
