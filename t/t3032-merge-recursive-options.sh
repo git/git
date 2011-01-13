@@ -110,6 +110,20 @@ test_expect_success '--ignore-space-change makes merge succeed' '
 	git merge-recursive --ignore-space-change HEAD^ -- HEAD remote
 '
 
+test_expect_success 'naive cherry-pick fails' '
+	git read-tree --reset -u HEAD &&
+	test_must_fail git cherry-pick --no-commit remote &&
+	git read-tree --reset -u HEAD &&
+	test_must_fail git cherry-pick remote &&
+	test_must_fail git update-index --refresh &&
+	grep "<<<<<<" text.txt
+'
+
+test_expect_success '-Xignore-space-change makes cherry-pick succeed' '
+	git read-tree --reset -u HEAD &&
+	git cherry-pick --no-commit -Xignore-space-change remote
+'
+
 test_expect_success '--ignore-space-change: our w/s-only change wins' '
 	q_to_cr <<-\EOF >expected &&
 	    justice and holiness and is the nurse of his age and theQ
