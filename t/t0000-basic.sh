@@ -80,11 +80,11 @@ EOF
     chmod +x passing-todo.sh &&
     ./passing-todo.sh >out 2>err &&
     ! test -s err &&
-cat >expect <<EOF &&
-ok 1 - pretend we have fixed a known breakage # TODO known breakage
-# fixed 1 known breakage(s)
-# passed all 1 test(s)
-1..1
+sed -e 's/^> //' >expect <<EOF &&
+> ok 1 - pretend we have fixed a known breakage # TODO known breakage
+> # fixed 1 known breakage(s)
+> # passed all 1 test(s)
+> 1..1
 EOF
     test_cmp expect out)
 "
@@ -164,19 +164,19 @@ EOF
     test_must_fail ./failing-cleanup.sh >out 2>err &&
     ! test -s err &&
     ! test -f \"trash directory.failing-cleanup/clean-after-failure\" &&
-sed -e 's/Z$//' >expect <<\EOF &&
-not ok - 1 tests clean up even after a failure
-#	Z
-#	    touch clean-after-failure &&
-#	    test_when_finished rm clean-after-failure &&
-#	    (exit 1)
-#	Z
-not ok - 2 failure to clean up causes the test to fail
-#	Z
-#	    test_when_finished \"(exit 2)\"
-#	Z
-# failed 2 among 2 test(s)
-1..2
+sed -e 's/Z$//' -e 's/^> //' >expect <<\EOF &&
+> not ok - 1 tests clean up even after a failure
+> #	Z
+> #	    touch clean-after-failure &&
+> #	    test_when_finished rm clean-after-failure &&
+> #	    (exit 1)
+> #	Z
+> not ok - 2 failure to clean up causes the test to fail
+> #	Z
+> #	    test_when_finished \"(exit 2)\"
+> #	Z
+> # failed 2 among 2 test(s)
+> 1..2
 EOF
     test_cmp expect out)
 "
