@@ -13,9 +13,12 @@ test_description='merge-recursive options
 
 . ./test-lib.sh
 
+test_have_prereq SED_STRIPS_CR && SED_OPTIONS=-b
+test_have_prereq MINGW && export GREP_OPTIONS=-U
+
 test_expect_success 'setup' '
 	conflict_hunks () {
-		sed -n -e "
+		sed $SED_OPTIONS -n -e "
 			/^<<<</ b conflict
 			b
 			: conflict
