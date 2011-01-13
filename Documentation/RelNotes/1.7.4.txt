@@ -66,7 +66,7 @@ Updates since v1.7.3
    objects unnecessarily.
 
  * "git diff" and "git grep" learned what functions and subroutines
-   in Fortran look like.
+   in Fortran and Perl look like.
 
  * "git fetch" learned the "--recurse-submodules" option.
 
@@ -90,6 +90,14 @@ Updates since v1.7.3
  * "git merge" may work better when all files were moved out of a
    directory in one branch while a new file is created in place of that
    directory in the other branch.
+
+ * "git merge" learned the "--abort" option, synonymous to
+   "git reset --merge" when a merge is in progress.
+
+ * "git notes" learned the "merge" subcommand to merge notes refs.
+   In addition to the default manual conflict resolution, there are
+   also several notes merge strategies for automatically resolving
+   notes merge conflicts.
 
  * "git rebase --autosquash" can use SHA-1 object names to name the
    commit which is to be fixed up (e.g. "fixup! e83c5163").
@@ -146,6 +154,6 @@ release, unless otherwise noted.
 
 ---
 exec >/var/tmp/1
-O=v1.7.4-rc1
+O=v1.7.4-rc2
 echo O=$(git describe master)
 git shortlog --no-merges ^maint ^$O master
