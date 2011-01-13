@@ -68,8 +68,7 @@ svn_cmd () {
 	svn "$orig_svncmd" --config-dir "$svnconf" "$@"
 }
 
-if test -n "$SVN_HTTPD_PORT"
-then
+prepare_httpd () {
 	for d in \
 		"$SVN_HTTPD_PATH" \
 		/usr/sbin/apache2 \
@@ -83,8 +82,8 @@ then
 	done
 	if test -z "$SVN_HTTPD_PATH"
 	then
-		skip_all='skipping git svn tests, Apache not found'
-		test_done
+		echo >&2 '*** error: Apache not found'
+		return 1
 	fi
 	for d in \
 		"$SVN_HTTPD_MODULE_PATH" \
@@ -99,23 +98,16 @@ then
 	done
 	if test -z "$SVN_HTTPD_MODULE_PATH"
 	then
-		skip_all='skipping git svn tests, Apache module dir not found'
-		test_done
+		echo >&2 '*** error: Apache module dir not found'
+		return 1
 	fi
-fi
-
-start_httpd () {
-	repo_base_path="$1"
-	if test -z "$SVN_HTTPD_PORT"
+	if test ! -f "$SVN_HTTPD_MODULE_PATH/mod_dav_svn.so"
 	then
-		echo >&2 'SVN_HTTPD_PORT is not defined!'
-		return
-	fi
-	if test -z "$repo_base_path"
-	then
-		repo_base_path=svn
+		echo >&2 '*** error: Apache module "mod_dav_svn" not found'
+		return 1
 	fi
 
+	repo_base_path="${1-svn}"
 	mkdir "$GIT_DIR"/logs
 
 	cat > "$GIT_DIR/httpd.conf" <<EOF
@@ -132,12 +124,24 @@ LoadModule dav_svn_module $SVN_HTTPD_MODULE_PATH/mod_dav_svn.so
 	SVNPath "$rawsvnrepo"
 </Location>
 EOF
+}
+
+start_httpd () {
+	if test -z "$SVN_HTTPD_PORT"
+	then
+		echo >&2 'SVN_HTTPD_PORT is not defined!'
+		return
+	fi
+
+	prepare_httpd "$1" || return 1
+
 	"$SVN_HTTPD_PATH" -f "$GIT_DIR"/httpd.conf -k start
 	svnrepo="http://127.0.0.1:$SVN_HTTPD_PORT/$repo_base_path"
 }
 
 stop_httpd () {
 	test -z "$SVN_HTTPD_PORT" && return
+	test ! -f "$GIT_DIR/httpd.conf" && return
 	"$SVN_HTTPD_PATH" -f "$GIT_DIR"/httpd.conf -k stop
 }
 
