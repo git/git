@@ -504,6 +504,8 @@ patterns are available:
 
 - `pascal` suitable for source code in the Pascal/Delphi language.
 
+- `perl` suitable for source code in the Perl language.
+
 - `php` suitable for source code in the PHP language.
 
 - `python` suitable for source code in the Python language.

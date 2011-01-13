@@ -32,7 +32,7 @@ EOF
 
 sed 's/beer\\/beer,\\/' < Beer.java > Beer-correct.java
 
-builtin_patterns="bibtex cpp csharp fortran html java objc pascal php python ruby tex"
+builtin_patterns="bibtex cpp csharp fortran html java objc pascal perl php python ruby tex"
 for p in $builtin_patterns
 do
 	test_expect_success "builtin $p pattern compiles" '
