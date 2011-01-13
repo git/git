@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jan 2011, #02; Fri, 7)
-X-master-at: e17aa8a9dca972ca278dd91a097873101066e964
-X-next-at: 600460d4cecafb34f969eb58852adfcb96bc9732
+Subject: What's cooking in git.git (Jan 2011, #03; Wed, 12)
+X-master-at: d2f15e29a6161b40dbc0142eb59f82092268e1d6
+X-next-at: b7420fc6b7d092b9cf75d0f348d4ea29ccad866a
 
-What's cooking in git.git (Jan 2011, #02; Fri, 7)
+What's cooking in git.git (Jan 2011, #03; Wed, 12)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -16,21 +16,85 @@ rc period this cycle.  Please remind if there are patches that ought to be
 in 1.7.4 but are forgotten.
 
 --------------------------------------------------
-[Graduated to "master"]
+[New Topics]
 
-* ao/t9001-fix (2011-01-04) 1 commit
- + t/t9001-send-email.sh: fix '&&' chain in some tests
+* jk/diff-driver-binary-doc (2011-01-09) 1 commit
+  (merged to 'next' on 2011-01-10 at 1aa4c70)
+ + docs: explain diff.*.binary option
 
-* mg/cvsimport (2010-12-29) 2 commits
- + cvsimport: handle the parsing of uppercase config options
- + cvsimport: partial whitespace cleanup
+* jn/t9010-work-around-broken-svnadmin (2011-01-06) 1 commit
+  (merged to 'next' on 2011-01-10 at bd2f619)
+ + t9010: svnadmin can fail even if available
 
-* pw/convert-pathname-substitution (2010-12-22) 2 commits
- + t0021: avoid getting filter killed with SIGPIPE
- + convert filter: supply path to external driver
+* tr/submodule-relative-scp-url (2011-01-10) 1 commit
+  (merged to 'next' on 2011-01-10 at 895f887)
+ + submodule: fix relative url parsing for scp-style origin
+
+The above three should all be 1.7.4 material.
+
+* js/test-windows (2011-01-11) 2 commits
+  (merged to 'next' on 2011-01-11 at c8274ed)
+ + t/README: hint about using $(pwd) rather than $PWD in tests
+ + Fix expected values of setup tests on Windows
+
+* ab/p4 (2011-01-11) 1 commit
+ - git-p4: correct indenting and formatting
+
+* as/userdiff-pascal (2011-01-11) 1 commit
+ - userdiff: match Pascal class methods
 
 --------------------------------------------------
-[New Topics]
+[Stalled]
+
+* nd/index-doc (2010-09-06) 1 commit
+ - doc: technical details about the index file format
+
+Half-written but it is a good start.  I may need to give some help in
+describing more recent index extensions.
+
+* cb/ignored-paths-are-precious (2010-08-21) 1 commit
+ - checkout/merge: optionally fail operation when ignored files need to be overwritten
+
+This needs tests; also we know of longstanding bugs in related area that
+needs to be addressed---they do not have to be part of this series but
+their reproduction recipe would belong to the test script for this topic.
+
+It would hurt users to make the new feature on by default, especially the
+ones with subdirectories that come and go.
+
+* jk/tag-contains (2010-07-05) 4 commits
+ - Why is "git tag --contains" so slow?
+ - default core.clockskew variable to one day
+ - limit "contains" traversals based on commit timestamp
+ - tag: speed up --contains calculation
+
+The idea of the bottom one is probably Ok, except that the use of object
+flags needs to be rethought, or at least the helper needs to be moved to
+builtin/tag.c to make it clear that it should not be used outside the
+current usage context.
+
+* jc/rename-degrade-cc-to-c (2011-01-06) 3 commits
+ - diffcore-rename: fall back to -C when -C -C busts the rename limit
+ - diffcore-rename: record filepair for rename src
+ - diffcore-rename: refactor "too many candidates" logic
+
+* jc/rerere-remaining (2011-01-06) 1 commit
+ - rerere "remaining"
+
+Just a handful of weatherballoon patches without proper tests, in response
+to feature/minor fix requests.
+
+--------------------------------------------------
+[Cooking]
+
+* rj/test-fixes (2010-12-14) 4 commits
+  (merged to 'next' on 2011-01-08 at 37ef456)
+ + t4135-*.sh: Skip the "backslash" tests on cygwin
+ + t3032-*.sh: Do not strip CR from line-endings while grepping on MinGW
+ + t3032-*.sh: Pass the -b (--binary) option to sed on cygwin
+ + t6038-*.sh: Pass the -b (--binary) option to sed on cygwin
+ 
+Will merge to 'master' soonish.
 
 * rj/svn-test (2010-12-30) 1 commit
   (merged to 'next' on 2011-01-05 at ff38429)
@@ -89,60 +153,9 @@ series sometime soon, but we are not in a hurry.
   (merged to 'next' on 2011-01-06 at 1fbd4a0)
  + alias: use run_command api to execute aliases
 
-* jc/rename-degrade-cc-to-c (2011-01-06) 3 commits
- - diffcore-rename: fall back to -C when -C -C busts the rename limit
- - diffcore-rename: record filepair for rename src
- - diffcore-rename: refactor "too many candidates" logic
-
-* jc/rerere-remaining (2011-01-06) 1 commit
- - rerere "remaining"
-
-* uk/checkout-ambiguous-ref (2011-01-07) 3 commits
- - checkout $branch: really favor branch over tag
- - checkout $branch: favor branch over tag
- - bug? in checkout with ambiguous refnames
-
---------------------------------------------------
-[Stalled]
-
-* nd/index-doc (2010-09-06) 1 commit
- - doc: technical details about the index file format
-
-Half-written but it is a good start.  I may need to give some help in
-describing more recent index extensions.
-
-* cb/ignored-paths-are-precious (2010-08-21) 1 commit
- - checkout/merge: optionally fail operation when ignored files need to be overwritten
-
-This needs tests; also we know of longstanding bugs in related area that
-needs to be addressed---they do not have to be part of this series but
-their reproduction recipe would belong to the test script for this topic.
-
-It would hurt users to make the new feature on by default, especially the
-ones with subdirectories that come and go.
-
-* jk/tag-contains (2010-07-05) 4 commits
- - Why is "git tag --contains" so slow?
- - default core.clockskew variable to one day
- - limit "contains" traversals based on commit timestamp
- - tag: speed up --contains calculation
-
-The idea of the bottom one is probably Ok, except that the use of object
-flags needs to be rethought, or at least the helper needs to be moved to
-builtin/tag.c to make it clear that it should not be used outside the
-current usage context.
-
-* rj/test-fixes (2010-12-14) 4 commits
- . t4135-*.sh: Skip the "backslash" tests on cygwin
- . t3032-*.sh: Do not strip CR from line-endings while grepping on MinGW
- . t3032-*.sh: Pass the -b (--binary) option to sed on cygwin
- . t6038-*.sh: Pass the -b (--binary) option to sed on cygwin
-
-I don't think people on different vintage of Cygwin agreed they are good
-workarounds---please correct me if I am mistaken.
-
---------------------------------------------------
-[Cooking]
+* uk/checkout-ambiguous-ref (2011-01-11) 1 commit
+  (merged to 'next' on 2011-01-11 at 2aa30de)
+ + checkout: fix bug with ambiguous refs
 
 * jn/gitweb-no-logo (2010-09-03) 1 commit
   (merged to 'next' on 2011-01-04 at a5d186c)
@@ -192,27 +205,6 @@ safer and saner.
  - mingw: move unlink wrapper to mingw.c
 
 Will be rerolled (Heiko, 2010-12-23)
-
-* jn/svn-fe (2010-12-06) 17 commits
- - vcs-svn: Allow change nodes for root of tree (/)
- - vcs-svn: Implement Prop-delta handling
- - vcs-svn: Sharpen parsing of property lines
- - vcs-svn: Split off function for handling of individual properties
- - vcs-svn: Make source easier to read on small screens
- - vcs-svn: More dump format sanity checks
- - vcs-svn: Reject path nodes without Node-action
- - vcs-svn: Delay read of per-path properties
- - vcs-svn: Combine repo_replace and repo_modify functions
- - vcs-svn: Replace = Delete + Add
- - vcs-svn: handle_node: Handle deletion case early
- - vcs-svn: Use mark to indicate nodes with included text
- - vcs-svn: Unclutter handle_node by introducing have_props var
- - vcs-svn: Eliminate node_ctx.mark global
- - vcs-svn: Eliminate node_ctx.srcRev global
- - vcs-svn: Check for errors from open()
- - vcs-svn: Allow simple v3 dumps (no deltas yet)
-
-Some RFC patches, to give them early and wider exposure.
 
 * nd/struct-pathspec (2010-12-15) 21 commits
  - t7810: overlapping pathspecs and depth limit
@@ -417,3 +409,27 @@ It is getting ridiculously painful to keep re-resolving the conflicts with
 other topics in flight, even with the help with rerere.
 
 Needs a bit more minor work to get the basic code structure right.
+
+--------------------------------------------------
+[Ejected]
+
+* jn/svn-fe (2010-12-06) 17 commits
+ . vcs-svn: Allow change nodes for root of tree (/)
+ . vcs-svn: Implement Prop-delta handling
+ . vcs-svn: Sharpen parsing of property lines
+ . vcs-svn: Split off function for handling of individual properties
+ . vcs-svn: Make source easier to read on small screens
+ . vcs-svn: More dump format sanity checks
+ . vcs-svn: Reject path nodes without Node-action
+ . vcs-svn: Delay read of per-path properties
+ . vcs-svn: Combine repo_replace and repo_modify functions
+ . vcs-svn: Replace = Delete + Add
+ . vcs-svn: handle_node: Handle deletion case early
+ . vcs-svn: Use mark to indicate nodes with included text
+ . vcs-svn: Unclutter handle_node by introducing have_props var
+ . vcs-svn: Eliminate node_ctx.mark global
+ . vcs-svn: Eliminate node_ctx.srcRev global
+ . vcs-svn: Check for errors from open()
+ . vcs-svn: Allow simple v3 dumps (no deltas yet)
+
+Some RFC patches, to give them early and wider exposure.  Ejected for now.
