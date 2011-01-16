@@ -1943,10 +1943,48 @@ int xwcstoutf(char *utf, const wchar_t *wcs, size_t utflen)
  */
 int _CRT_glob = 0;
 
+typedef struct {
+	int newmode;
+} _startupinfo;
+
+extern int __wgetmainargs(int *argc, wchar_t ***argv, wchar_t ***env, int glob,
+		_startupinfo *si);
+
+static NORETURN void die_startup()
+{
+	fputs("fatal: not enough memory for initialization", stderr);
+	exit(128);
+}
+
 void mingw_startup()
 {
-	/* copy executable name to argv[0] */
-	__argv[0] = xstrdup(_pgmptr);
+	int i, len, maxlen, argc;
+	char *buffer;
+	wchar_t **wenv, **wargv;
+	_startupinfo si;
+
+	/* get wide char arguments and environment */
+	si.newmode = 0;
+	if (__wgetmainargs(&argc, &wargv, &wenv, _CRT_glob, &si) < 0)
+		die_startup();
+
+	/* determine size of argv and environ conversion buffer */
+	maxlen = wcslen(_wpgmptr);
+	for (i = 1; i < argc; i++)
+		maxlen = max(maxlen, wcslen(wargv[i]));
+
+	/* allocate buffer (wchar_t encodes to max 3 UTF-8 bytes) */
+	maxlen = 3 * maxlen + 1;
+	buffer = xmalloc(maxlen);
+
+	/* convert command line arguments and environment to UTF-8 */
+	len = xwcstoutf(buffer, _wpgmptr, maxlen);
+	__argv[0] = xmemdupz(buffer, len);
+	for (i = 1; i < argc; i++) {
+		len = xwcstoutf(buffer, wargv[i], maxlen);
+		__argv[i] = xmemdupz(buffer, len);
+	}
+	free(buffer);
 
 	/* initialize critical section for waitpid pinfo_t list */
 	InitializeCriticalSection(&pinfo_cs);
