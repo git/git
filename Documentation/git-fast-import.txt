@@ -534,9 +534,6 @@ start with double quote (`"`).
 If an `LF` or double quote must be encoded into `<path>` shell-style
 quoting should be used, e.g. `"path/with\n and \" in it"`.
 
-Additionally, in `040000` mode, `<path>` may also be an empty string
-(`""`) to specify the root of the tree.
-
 The value of `<path>` must be in canonical form. That is it must not:
 
 * contain an empty directory component (e.g. `foo//bar` is invalid),
@@ -544,6 +541,8 @@ The value of `<path>` must be in canonical form. That is it must not:
 * start with a directory separator (e.g. `/foo` is invalid),
 * contain the special component `.` or `..` (e.g. `foo/./bar` and
   `foo/../bar` are invalid).
+
+The root of the tree can be represented by an empty string as `<path>`.
 
 It is recommended that `<path>` always be encoded using UTF-8.
 
