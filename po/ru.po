@@ -2292,11 +2292,11 @@ msgstr "Словарь вернут к %s."
 
 #: lib/spellcheck.tcl:73
 msgid "Spell checker silently failed on startup"
-msgstr "Программа проверки правописания не смогла запустится"
+msgstr "Программа проверки правописания не смогла запуститься"
 
 #: lib/spellcheck.tcl:80
 msgid "Unrecognized spell checker"
-msgstr "Нераспознаная программа проверки правописания"
+msgstr "Нераспознанная программа проверки правописания"
 
 #: lib/spellcheck.tcl:186
 msgid "No Suggestions"
