@@ -1342,7 +1342,7 @@ msgid ""
 "File %s has merge conflicts.  You must resolve them and stage the file "
 "before committing.\n"
 msgstr ""
-"Нельзя сохранить файлы с незавершённой операцей слияния.\n"
+"Нельзя сохранить файлы с незавершённой операцией слияния.\n"
 "\n"
 "Для файла %s возник конфликт слияния. Разрешите конфликт и добавьте к "
 "подготовленным файлам перед сохранением.\n"
@@ -1440,7 +1440,7 @@ msgstr ""
 
 #: lib/commit.tcl:338
 msgid "No changes to commit."
-msgstr "Отуствуют измения для сохранения."
+msgstr "Отсутствуют изменения для сохранения."
 
 #: lib/commit.tcl:352
 msgid "commit-tree failed:"
@@ -1540,7 +1540,7 @@ msgid ""
 msgstr ""
 "Изменений не обнаружено.\n"
 "\n"
-"в %s отутствуют изменения.\n"
+"в %s отсутствуют изменения.\n"
 "\n"
 "Дата изменения файла была обновлена другой программой, но содержимое файла "
 "осталось прежним.\n"
@@ -1599,7 +1599,7 @@ msgid ""
 "* Untracked file is %d bytes.\n"
 "* Showing only first %d bytes.\n"
 msgstr ""
-"* Размер неподготовленого файла %d байт.\n"
+"* Размер неподготовленного файла %d байт.\n"
 "* Показано первых %d байт.\n"
 
 #: lib/diff.tcl:228
@@ -1610,7 +1610,7 @@ msgid ""
 "* To see the entire file, use an external editor.\n"
 msgstr ""
 "\n"
-"* Неподготовленый файл обрезан: %s.\n"
+"* Неподготовленный файл обрезан: %s.\n"
 "* Чтобы увидеть весь файл, используйте программу-редактор.\n"
 
 #: lib/diff.tcl:436
@@ -1667,7 +1667,7 @@ msgid ""
 "Updating the Git index failed.  A rescan will be automatically started to "
 "resynchronize git-gui."
 msgstr ""
-"Не удалось обновить индекс Git. Состояние репозитория будетперечитано "
+"Не удалось обновить индекс Git. Состояние репозитория будет перечитано "
 "автоматически."
 
 #: lib/index.tcl:27
@@ -1714,7 +1714,7 @@ msgstr "Ничего не делать"
 
 #: lib/index.tcl:427
 msgid "Reverting selected files"
-msgstr "Удаление изменений в выбраных файлах"
+msgstr "Удаление изменений в выбранных файлах"
 
 #: lib/index.tcl:431
 #, tcl-format
@@ -1778,7 +1778,7 @@ msgstr ""
 "\n"
 "Файл %s изменен.\n"
 "\n"
-"Подготовьте и сохраните измения перед началом слияния. В случае "
+"Подготовьте и сохраните изменения перед началом слияния. В случае "
 "необходимости это позволит прервать операцию слияния.\n"
 
 #: lib/merge.tcl:107
@@ -1893,7 +1893,7 @@ msgstr ""
 #, tcl-format
 msgid "File %s seems to have unresolved conflicts, still stage?"
 msgstr ""
-"Файл %s кажется содержит необработаные конфликты. Продолжить подготовку к "
+"Файл %s кажется содержит необработанные конфликты. Продолжить подготовку к "
 "сохранению?"
 
 #: lib/mergetool.tcl:60
@@ -2152,7 +2152,7 @@ msgstr "Получение %s"
 #: lib/remote_add.tcl:157
 #, tcl-format
 msgid "Do not know how to initialize repository at location '%s'."
-msgstr "Невозможно инициалировать репозиторий в '%s'."
+msgstr "Невозможно инициализировать репозиторий в '%s'."
 
 #: lib/remote_add.tcl:163 lib/transport.tcl:25 lib/transport.tcl:63
 #: lib/transport.tcl:81
@@ -2179,7 +2179,7 @@ msgstr "внешний:"
 
 #: lib/remote_branch_delete.tcl:66 lib/transport.tcl:149
 msgid "Arbitrary Location:"
-msgstr "Указаное положение:"
+msgstr "Указанное положение:"
 
 #: lib/remote_branch_delete.tcl:84
 msgid "Branches"
@@ -2412,7 +2412,7 @@ msgstr "Описание вспомогательной операции"
 
 #: lib/tools_dlg.tcl:48
 msgid "Use '/' separators to create a submenu tree:"
-msgstr "Испольуйте '/' для создания подменю"
+msgstr "Используйте '/' для создания подменю"
 
 #: lib/tools_dlg.tcl:61
 msgid "Command:"
