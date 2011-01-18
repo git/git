@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jan 2011, #03; Wed, 12)
-X-master-at: d2f15e29a6161b40dbc0142eb59f82092268e1d6
-X-next-at: b7420fc6b7d092b9cf75d0f348d4ea29ccad866a
+Subject: What's cooking in git.git (Jan 2011, #04; Tue, 18)
+X-master-at: 60a2e3320f3030d7c1f453a8cadafad7012fd820
+X-next-at: f3988f86f5368178f7bfc023cb75c0f3524745ba
 
-What's cooking in git.git (Jan 2011, #03; Wed, 12)
+What's cooking in git.git (Jan 2011, #04; Tue, 18)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -18,30 +18,58 @@ in 1.7.4 but are forgotten.
 --------------------------------------------------
 [New Topics]
 
+* jn/unpack-lstat-failure-report (2011-01-12) 2 commits
+ - unpack-trees: handle lstat failure for existing file
+ - unpack-trees: handle lstat failure for existing directory
+
+* rr/fi-import-marks-if-exists (2011-01-15) 1 commit
+ - fast-import: Introduce --import-marks-if-exists
+
+* tr/diff-words-test (2011-01-18) 4 commits
+ - t4034 (diff --word-diff): add a minimum Perl drier test vector
+ - t4034 (diff --word-diff): style suggestions
+ - userdiff: simplify word-diff safeguard
+ - t4034: bulk verify builtin word regex sanity
+
+--------------------------------------------------
+[Graduated to "master"]
+
 * jk/diff-driver-binary-doc (2011-01-09) 1 commit
   (merged to 'next' on 2011-01-10 at 1aa4c70)
  + docs: explain diff.*.binary option
+
+* jn/gitweb-no-logo (2010-09-03) 1 commit
+  (merged to 'next' on 2011-01-04 at a5d186c)
+ + gitweb: make logo optional
+
+* jn/perl-funcname (2010-12-27) 2 commits
+  (merged to 'next' on 2011-01-05 at 20542ed)
+ + userdiff/perl: catch BEGIN/END/... and POD as headers
+ + diff: funcname and word patterns for perl
 
 * jn/t9010-work-around-broken-svnadmin (2011-01-06) 1 commit
   (merged to 'next' on 2011-01-10 at bd2f619)
  + t9010: svnadmin can fail even if available
 
+* rj/svn-test (2010-12-30) 1 commit
+  (merged to 'next' on 2011-01-05 at ff38429)
+ + lib-git-svn.sh: Move web-server handling code into separate function
+
+* rj/test-fixes (2010-12-14) 4 commits
+  (merged to 'next' on 2011-01-08 at 37ef456)
+ + t4135-*.sh: Skip the "backslash" tests on cygwin
+ + t3032-*.sh: Do not strip CR from line-endings while grepping on MinGW
+ + t3032-*.sh: Pass the -b (--binary) option to sed on cygwin
+ + t6038-*.sh: Pass the -b (--binary) option to sed on cygwin
+
+* sr/gitweb-hilite-more (2010-12-30) 2 commits
+  (merged to 'next' on 2011-01-05 at 6b52e7e)
+ + gitweb: remove unnecessary test when closing file descriptor
+ + gitweb: add extensions to highlight feature map
+
 * tr/submodule-relative-scp-url (2011-01-10) 1 commit
   (merged to 'next' on 2011-01-10 at 895f887)
  + submodule: fix relative url parsing for scp-style origin
-
-The above three should all be 1.7.4 material.
-
-* js/test-windows (2011-01-11) 2 commits
-  (merged to 'next' on 2011-01-11 at c8274ed)
- + t/README: hint about using $(pwd) rather than $PWD in tests
- + Fix expected values of setup tests on Windows
-
-* ab/p4 (2011-01-11) 1 commit
- - git-p4: correct indenting and formatting
-
-* as/userdiff-pascal (2011-01-11) 1 commit
- - userdiff: match Pascal class methods
 
 --------------------------------------------------
 [Stalled]
@@ -87,29 +115,16 @@ to feature/minor fix requests.
 --------------------------------------------------
 [Cooking]
 
-* rj/test-fixes (2010-12-14) 4 commits
-  (merged to 'next' on 2011-01-08 at 37ef456)
- + t4135-*.sh: Skip the "backslash" tests on cygwin
- + t3032-*.sh: Do not strip CR from line-endings while grepping on MinGW
- + t3032-*.sh: Pass the -b (--binary) option to sed on cygwin
- + t6038-*.sh: Pass the -b (--binary) option to sed on cygwin
- 
-Will merge to 'master' soonish.
+* js/test-windows (2011-01-11) 2 commits
+  (merged to 'next' on 2011-01-11 at c8274ed)
+ + t/README: hint about using $(pwd) rather than $PWD in tests
+ + Fix expected values of setup tests on Windows
 
-* rj/svn-test (2010-12-30) 1 commit
-  (merged to 'next' on 2011-01-05 at ff38429)
- + lib-git-svn.sh: Move web-server handling code into separate function
+* ab/p4 (2011-01-11) 1 commit
+ - git-p4: correct indenting and formatting
 
-Looked low-impact and trivial.  Might merge to 'master' sometime before
-1.7.4, but we are in no hurry.
-
-* sr/gitweb-hilite-more (2010-12-30) 2 commits
-  (merged to 'next' on 2011-01-05 at 6b52e7e)
- + gitweb: remove unnecessary test when closing file descriptor
- + gitweb: add extensions to highlight feature map
-
-Looked low-impact and trivial.  Might merge to 'master' sometime before
-1.7.4, especially highlighting itself is a new feature.
+* as/userdiff-pascal (2011-01-11) 1 commit
+ - userdiff: match Pascal class methods
 
 * mz/rebase (2010-12-28) 31 commits
  - rebase -i: remove unnecessary state rebase-root
@@ -157,12 +172,6 @@ series sometime soon, but we are not in a hurry.
   (merged to 'next' on 2011-01-11 at 2aa30de)
  + checkout: fix bug with ambiguous refs
 
-* jn/gitweb-no-logo (2010-09-03) 1 commit
-  (merged to 'next' on 2011-01-04 at a5d186c)
- + gitweb: make logo optional
-
-Seems trivial but came a bit too late for the cycle.
-
 * cb/setup (2010-12-27) 1 commit
   (merged to 'next' on 2011-01-05 at 790b288)
  + setup: translate symlinks in filename when using absolute paths
@@ -180,14 +189,6 @@ Seems trivial but came a bit too late for the cycle.
 * jn/cherry-pick-strategy-option (2010-12-10) 1 commit
   (merged to 'next' on 2011-01-05 at 3ccc590)
  + cherry-pick/revert: add support for -X/--strategy-option
-
-* jn/perl-funcname (2010-12-27) 2 commits
-  (merged to 'next' on 2011-01-05 at 20542ed)
- + userdiff/perl: catch BEGIN/END/... and POD as headers
- + diff: funcname and word patterns for perl
-
-Looked low-impact and trivial.  Might merge to 'master' sometime before
-1.7.4, but we are in no hurry.
 
 * tr/maint-branch-no-track-head (2010-12-14) 1 commit
  - branch: do not attempt to track HEAD implicitly
@@ -409,27 +410,3 @@ It is getting ridiculously painful to keep re-resolving the conflicts with
 other topics in flight, even with the help with rerere.
 
 Needs a bit more minor work to get the basic code structure right.
-
---------------------------------------------------
-[Ejected]
-
-* jn/svn-fe (2010-12-06) 17 commits
- . vcs-svn: Allow change nodes for root of tree (/)
- . vcs-svn: Implement Prop-delta handling
- . vcs-svn: Sharpen parsing of property lines
- . vcs-svn: Split off function for handling of individual properties
- . vcs-svn: Make source easier to read on small screens
- . vcs-svn: More dump format sanity checks
- . vcs-svn: Reject path nodes without Node-action
- . vcs-svn: Delay read of per-path properties
- . vcs-svn: Combine repo_replace and repo_modify functions
- . vcs-svn: Replace = Delete + Add
- . vcs-svn: handle_node: Handle deletion case early
- . vcs-svn: Use mark to indicate nodes with included text
- . vcs-svn: Unclutter handle_node by introducing have_props var
- . vcs-svn: Eliminate node_ctx.mark global
- . vcs-svn: Eliminate node_ctx.srcRev global
- . vcs-svn: Check for errors from open()
- . vcs-svn: Allow simple v3 dumps (no deltas yet)
-
-Some RFC patches, to give them early and wider exposure.  Ejected for now.
