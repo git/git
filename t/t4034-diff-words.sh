@@ -301,6 +301,7 @@ test_language_driver html
 test_language_driver java
 test_language_driver objc
 test_language_driver pascal
+test_language_driver perl
 test_language_driver php
 test_language_driver python
 test_language_driver ruby
