@@ -905,7 +905,7 @@ The `<dataref>` can be either a mark reference (`:<idnum>`)
 set previously or a full 40-byte SHA-1 of a Git blob, preexisting or
 ready to be written.
 
-output uses the same format as `git cat-file --batch`:
+Output uses the same format as `git cat-file --batch`:
 
 ====
 	<sha1> SP 'blob' SP <size> LF

@@ -351,16 +351,13 @@ int ll_merge(mmbuffer_t *result_buf,
 	     const struct ll_merge_options *opts)
 {
 	static struct git_attr_check check[2];
+	static const struct ll_merge_options default_opts;
 	const char *ll_driver_name = NULL;
 	int marker_size = DEFAULT_CONFLICT_MARKER_SIZE;
 	const struct ll_merge_driver *driver;
 
-	if (!opts) {
-		struct ll_merge_options default_opts = {0};
-		return ll_merge(result_buf, path, ancestor, ancestor_label,
-				ours, our_label, theirs, their_label,
-				&default_opts);
-	}
+	if (!opts)
+		opts = &default_opts;
 
 	if (opts->renormalize) {
 		normalize_file(ancestor, path);
