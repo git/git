@@ -446,4 +446,42 @@ test_expect_success 'add should fail when path is used by an existing directory'
 	)
 '
 
+test_expect_success 'set up for relative path tests' '
+	mkdir reltest &&
+	(
+		cd reltest &&
+		git init &&
+		mkdir sub &&
+		(
+			cd sub &&
+			git init &&
+			test_commit foo
+		) &&
+		git add sub &&
+		git config -f .gitmodules submodule.sub.path sub &&
+		git config -f .gitmodules submodule.sub.url ../subrepo &&
+		cp .git/config pristine-.git-config
+	)
+'
+
+test_expect_success 'relative path works with URL' '
+	(
+		cd reltest &&
+		cp pristine-.git-config .git/config &&
+		git config remote.origin.url ssh://hostname/repo &&
+		git submodule init &&
+		test "$(git config submodule.sub.url)" = ssh://hostname/subrepo
+	)
+'
+
+test_expect_success 'relative path works with user@host:path' '
+	(
+		cd reltest &&
+		cp pristine-.git-config .git/config &&
+		git config remote.origin.url user@host:repo &&
+		git submodule init &&
+		test "$(git config submodule.sub.url)" = user@host:subrepo
+	)
+'
+
 test_done
