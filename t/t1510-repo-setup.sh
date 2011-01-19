@@ -16,8 +16,12 @@ A few rules for repo setup:
 4. GIT_WORK_TREE is relative to user's cwd. --work-tree is
    equivalent to GIT_WORK_TREE.
 
-5. GIT_WORK_TREE/core.worktree is only effective if GIT_DIR is set
-   Uneffective worktree settings should be warned.
+5. GIT_WORK_TREE/core.worktree was originally meant to work only if
+   GIT_DIR is set, but earlier git didn't enforce it, and some scripts
+   depend on the implementation that happened to first discover .git by
+   going up from the users $cwd and then using the specified working tree
+   that may or may not have any relation to where .git was found in.  This
+   historical behaviour must be kept.
 
 6. Effective GIT_WORK_TREE overrides core.worktree and core.bare
 
@@ -224,13 +228,16 @@ try_repo () {
 test_expect_success '#0: nonbare repo, no explicit configuration' '
 	try_repo 0 unset unset unset "" unset \
 		.git "$here/0" "$here/0" "(null)" \
-		.git "$here/0" "$here/0" sub/
+		.git "$here/0" "$here/0" sub/ 2>message &&
+	! test -s message
 '
 
-test_expect_success '#1: GIT_WORK_TREE without explicit GIT_DIR is ignored' '
-	try_repo 1 non-existent unset unset "" unset \
-		.git "$here/1" "$here/1" "(null)" \
-		.git "$here/1" "$here/1" sub/
+test_expect_success '#1: GIT_WORK_TREE without explicit GIT_DIR is accepted' '
+	mkdir -p wt &&
+	try_repo 1 "$here" unset unset "" unset \
+		"$here/1/.git" "$here" "$here" 1/ \
+		"$here/1/.git" "$here" "$here" 1/sub/ 2>message &&
+	! test -s message
 '
 
 test_expect_success '#2: worktree defaults to cwd with explicit GIT_DIR' '
@@ -251,17 +258,24 @@ test_expect_success '#3: setup' '
 '
 run_wt_tests 3
 
-test_expect_success '#4: core.worktree without GIT_DIR set is ignored' '
-	try_repo 4 unset unset non-existent "" unset \
-		.git "$here/4" "$here/4" "(null)" \
-		.git "$here/4" "$here/4" sub/
+test_expect_success '#4: core.worktree without GIT_DIR set is accepted' '
+	setup_repo 4 ../sub "" unset &&
+	mkdir -p 4/sub sub &&
+	try_case 4 unset unset \
+		.git "$here/4/sub" "$here/4" "(null)" \
+		"$here/4/.git" "$here/4/sub" "$here/4/sub" "(null)" 2>message &&
+	! test -s message
 '
 
-test_expect_success '#5: core.worktree + GIT_WORK_TREE is still ignored' '
+test_expect_success '#5: core.worktree + GIT_WORK_TREE is accepted' '
 	# or: you cannot intimidate away the lack of GIT_DIR setting
-	try_repo 5 non-existent-too unset non-existent "" unset \
-		.git "$here/5" "$here/5" "(null)" \
-		.git "$here/5" "$here/5" sub/
+	try_repo 5 "$here" unset "$here/5" "" unset \
+		"$here/5/.git" "$here" "$here" 5/ \
+		"$here/5/.git" "$here" "$here" 5/sub/ 2>message &&
+	try_repo 5a .. unset "$here/5a" "" unset \
+		"$here/5a/.git" "$here" "$here" 5a/ \
+		"$here/5a/.git" "$here/5a" "$here/5a" sub/ &&
+	! test -s message
 '
 
 test_expect_success '#6: setting GIT_DIR brings core.worktree to life' '
@@ -353,10 +367,12 @@ test_expect_success '#8: gitfile, easy case' '
 		"$here/8.git" "$here/8" "$here/8" sub/
 '
 
-test_expect_success '#9: GIT_WORK_TREE ignored even with gitfile' '
-	try_repo 9 non-existent unset unset gitfile unset \
-		"$here/9.git" "$here/9" "$here/9" "(null)" \
-		"$here/9.git" "$here/9" "$here/9" sub/
+test_expect_success '#9: GIT_WORK_TREE accepted with gitfile' '
+	mkdir -p 9/wt &&
+	try_repo 9 wt unset unset gitfile unset \
+		"$here/9.git" "$here/9/wt" "$here/9" "(null)" \
+		"$here/9.git" "$here/9/sub/wt" "$here/9/sub" "(null)" 2>message &&
+	! test -s message
 '
 
 test_expect_success '#10: GIT_DIR can point to gitfile' '
@@ -378,17 +394,19 @@ test_expect_success '#11: setup' '
 '
 run_wt_tests 11 gitfile
 
-test_expect_success '#12: core.worktree with gitfile is still ignored' '
-	try_repo 12 unset unset non-existent gitfile unset \
+test_expect_success '#12: core.worktree with gitfile is accepted' '
+	try_repo 12 unset unset "$here/12" gitfile unset \
 		"$here/12.git" "$here/12" "$here/12" "(null)" \
-		"$here/12.git" "$here/12" "$here/12" sub/
+		"$here/12.git" "$here/12" "$here/12" sub/ 2>message &&
+	! test -s message
 '
 
-test_expect_success '#13: core.worktree+GIT_WORK_TREE ignored (with gitfile)' '
+test_expect_success '#13: core.worktree+GIT_WORK_TREE accepted (with gitfile)' '
 	# or: you cannot intimidate away the lack of GIT_DIR setting
 	try_repo 13 non-existent-too unset non-existent gitfile unset \
-		"$here/13.git" "$here/13" "$here/13" "(null)" \
-		"$here/13.git" "$here/13" "$here/13" sub/
+		"$here/13.git" "$here/13/non-existent-too" "$here/13" "(null)" \
+		"$here/13.git" "$here/13/sub/non-existent-too" "$here/13/sub" "(null)" 2>message &&
+	! test -s message
 '
 
 # case #14.
@@ -499,30 +517,32 @@ test_expect_success '#16c: bare .git has no worktree' '
 		"$here/16c/.git" "(null)" "$here/16c/sub" "(null)"
 '
 
-test_expect_success '#17: GIT_WORK_TREE without explicit GIT_DIR is ignored (bare case)' '
+test_expect_success '#17: GIT_WORK_TREE without explicit GIT_DIR is accepted (bare case)' '
 	# Just like #16.
 	setup_repo 17a unset "" true &&
 	setup_repo 17b unset "" true &&
 	mkdir -p 17a/.git/wt/sub &&
 	mkdir -p 17b/.git/wt/sub &&
 
-	try_case 17a/.git non-existent unset \
-		. "(null)" "$here/17a/.git" "(null)" &&
-	try_case 17a/.git/wt non-existent unset \
-		"$here/17a/.git" "(null)" "$here/17a/.git/wt" "(null)" &&
-	try_case 17a/.git/wt/sub non-existent unset \
-		"$here/17a/.git" "(null)" "$here/17a/.git/wt/sub" "(null)" &&
+	try_case 17a/.git "$here/17a" unset \
+		"$here/17a/.git" "$here/17a" "$here/17a" .git/ \
+		2>message &&
+	try_case 17a/.git/wt "$here/17a" unset \
+		"$here/17a/.git" "$here/17a" "$here/17a" .git/wt/ &&
+	try_case 17a/.git/wt/sub "$here/17a" unset \
+		"$here/17a/.git" "$here/17a" "$here/17a" .git/wt/sub/ &&
 
-	try_case 17b/.git non-existent unset \
-		. "(null)" "$here/17b/.git" "(null)" &&
-	try_case 17b/.git/wt non-existent unset \
-		"$here/17b/.git" "(null)" "$here/17b/.git/wt" "(null)" &&
-	try_case 17b/.git/wt/sub non-existent unset \
-		"$here/17b/.git" "(null)" "$here/17b/.git/wt/sub" "(null)" &&
+	try_case 17b/.git "$here/17b" unset \
+		"$here/17b/.git" "$here/17b" "$here/17b" .git/ &&
+	try_case 17b/.git/wt "$here/17b" unset \
+		"$here/17b/.git" "$here/17b" "$here/17b" .git/wt/ &&
+	try_case 17b/.git/wt/sub "$here/17b" unset \
+		"$here/17b/.git" "$here/17b" "$here/17b" .git/wt/sub/ &&
 
-	try_repo 17c non-existent unset unset "" true \
-		.git "(null)" "$here/17c" "(null)" \
-		"$here/17c/.git" "(null)" "$here/17c/sub" "(null)"
+	try_repo 17c "$here/17c" unset unset "" true \
+		.git "$here/17c" "$here/17c" "(null)" \
+		"$here/17c/.git" "$here/17c" "$here/17c" sub/ 2>message &&
+	! test -s message
 '
 
 test_expect_success '#18: bare .git named by GIT_DIR has no worktree' '
@@ -541,56 +561,43 @@ test_expect_success '#19: setup' '
 '
 run_wt_tests 19
 
-test_expect_success '#20a: core.worktree without GIT_DIR ignored (inside .git)' '
-	# Just like case #16a.
-	setup_repo 20a non-existent "" unset &&
+test_expect_success '#20a: core.worktree without GIT_DIR accepted (inside .git)' '
+	# Unlike case #16a.
+	setup_repo 20a "$here/20a" "" unset &&
 	mkdir -p 20a/.git/wt/sub &&
 	try_case 20a/.git unset unset \
-		. "(null)" "$here/20a/.git" "(null)" &&
+		"$here/20a/.git" "$here/20a" "$here/20a" .git/ 2>message &&
 	try_case 20a/.git/wt unset unset \
-		"$here/20a/.git" "(null)" "$here/20a/.git/wt" "(null)" &&
+		"$here/20a/.git" "$here/20a" "$here/20a" .git/wt/ &&
 	try_case 20a/.git/wt/sub unset unset \
-		"$here/20a/.git" "(null)" "$here/20a/.git/wt/sub" "(null)"
+		"$here/20a/.git" "$here/20a" "$here/20a" .git/wt/sub/ &&
+	! test -s message
 '
 
-test_expect_success '#20b/c: core.worktree without GIT_DIR ignored (bare repository)' '
-	# Just like case #16b/c.
+test_expect_success '#20b/c: core.worktree and core.bare conflict' '
 	setup_repo 20b non-existent "" true &&
 	mkdir -p 20b/.git/wt/sub &&
-	try_case 20b/.git unset unset \
-		. "(null)" "$here/20b/.git" "(null)" &&
-	try_case 20b/.git/wt unset unset \
-		"$here/20b/.git" "(null)" "$here/20b/.git/wt" "(null)" &&
-	try_case 20b/.git/wt/sub unset unset \
-		"$here/20b/.git" "(null)" "$here/20b/.git/wt/sub" "(null)" &&
-	try_repo 20c unset unset non-existent "" true \
-		.git "(null)" "$here/20c" "(null)" \
-		"$here/20c/.git" "(null)" "$here/20c/sub" "(null)"
+	(
+		cd 20b/.git &&
+		test_must_fail git symbolic-ref HEAD >/dev/null
+	) 2>message &&
+	grep "core.bare and core.worktree" message
 '
 
-test_expect_success '#21: core.worktree+GIT_WORK_TREE without GIT_DIR ignored (bare cases)' '
-	setup_repo 21a non-existent "" unset &&
-	mkdir -p 21a/.git/wt/sub &&
-	try_case 21a/.git non-existent-too unset \
-		. "(null)" "$here/21a/.git" "(null)" &&
-	try_case 21a/.git/wt non-existent-too unset \
-		"$here/21a/.git" "(null)" "$here/21a/.git/wt" "(null)" &&
-	try_case 21a/.git/wt/sub non-existent-too unset \
-		"$here/21a/.git" "(null)" "$here/21a/.git/wt/sub" "(null)" &&
+# Case #21: core.worktree/GIT_WORK_TREE overrides core.bare' '
+test_expect_success '#21: setup, core.worktree warns before overriding core.bare' '
+	setup_repo 21 non-existent "" unset &&
+	mkdir -p 21/.git/wt/sub &&
+	(
+		cd 21/.git &&
+		GIT_WORK_TREE="$here/21" &&
+		export GIT_WORK_TREE &&
+		git symbolic-ref HEAD >/dev/null
+	) 2>message &&
+	! test -s message
 
-	setup_repo 21b non-existent "" true &&
-	mkdir -p 21b/.git/wt/sub &&
-	try_case 21b/.git non-existent-too unset \
-		. "(null)" "$here/21b/.git" "(null)" &&
-	try_case 21b/.git/wt non-existent-too unset \
-		"$here/21b/.git" "(null)" "$here/21b/.git/wt" "(null)" &&
-	try_case 21b/.git/wt/sub non-existent-too unset \
-		"$here/21b/.git" "(null)" "$here/21b/.git/wt/sub" "(null)" &&
-
-	try_repo 21c non-existent-too unset non-existent "" true \
-		.git "(null)" "$here/21c" "(null)" \
-		"$here/21c/.git" "(null)" "$here/21c/sub" "(null)"
 '
+run_wt_tests 21
 
 test_expect_success '#22a: core.worktree = GIT_DIR = .git dir' '
 	# like case #6.
@@ -699,10 +706,11 @@ test_expect_success '#24: bare repo has no worktree (gitfile case)' '
 		"$here/24.git" "(null)" "$here/24/sub" "(null)"
 '
 
-test_expect_success '#25: GIT_WORK_TREE ignored if GIT_DIR unset (bare gitfile case)' '
-	try_repo 25 non-existent unset unset gitfile true \
-		"$here/25.git" "(null)" "$here/25" "(null)" \
-		"$here/25.git" "(null)" "$here/25/sub" "(null)"
+test_expect_success '#25: GIT_WORK_TREE accepted if GIT_DIR unset (bare gitfile case)' '
+	try_repo 25 "$here/25" unset unset gitfile true \
+		"$here/25.git" "$here/25" "$here/25" "(null)"  \
+		"$here/25.git" "$here/25" "$here/25" "sub/" 2>message &&
+	! test -s message
 '
 
 test_expect_success '#26: bare repo has no worktree (GIT_DIR -> gitfile case)' '
@@ -721,17 +729,29 @@ test_expect_success '#27: setup' '
 '
 run_wt_tests 27 gitfile
 
-test_expect_success '#28: core.worktree ignored if GIT_DIR unset (bare gitfile case)' '
-	try_repo 28 unset unset non-existent gitfile true \
-		"$here/28.git" "(null)" "$here/28" "(null)" \
-		"$here/28.git" "(null)" "$here/28/sub" "(null)"
+test_expect_success '#28: core.worktree and core.bare conflict (gitfile case)' '
+	setup_repo 28 "$here/28" gitfile true &&
+	(
+		cd 28 &&
+		test_must_fail git symbolic-ref HEAD
+	) 2>message &&
+	! grep "^warning:" message &&
+	grep "core.bare and core.worktree" message
 '
 
-test_expect_success '#29: GIT_WORK_TREE+core.worktree ignored if GIT_DIR unset (bare gitfile case)' '
-	try_repo 29 non-existent-too unset non-existent gitfile true \
-		"$here/29.git" "(null)" "$here/29" "(null)" \
-		"$here/29.git" "(null)" "$here/29/sub" "(null)"
+# Case #29: GIT_WORK_TREE(+core.worktree) overries core.bare (gitfile case).
+test_expect_success '#29: setup' '
+	setup_repo 29 non-existent gitfile true &&
+	mkdir -p 29/sub/sub 29/wt/sub
+	(
+		cd 29 &&
+		GIT_WORK_TREE="$here/29" &&
+		export GIT_WORK_TREE &&
+		git symbolic-ref HEAD >/dev/null
+	) 2>message &&
+	! test -s message
 '
+run_wt_tests 29 gitfile
 
 test_expect_success '#30: core.worktree and core.bare conflict (gitfile version)' '
 	# Just like case #22.
