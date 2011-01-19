@@ -1926,7 +1926,7 @@ msgstr ""
 #, tcl-format
 msgid "File %s seems to have unresolved conflicts, still stage?"
 msgstr ""
-"Файл %s кажется содержит необработанные конфликты. Продолжить подготовку к "
+"Файл %s, похоже, содержит необработанные конфликты. Продолжить подготовку к "
 "сохранению?"
 
 #: lib/mergetool.tcl:60
