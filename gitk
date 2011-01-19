@@ -1621,7 +1621,7 @@ proc readcommit {id} {
 }
 
 proc parsecommit {id contents listed} {
-    global commitinfo cdate
+    global commitinfo
 
     set inhdr 1
     set comment {}
@@ -1670,9 +1670,6 @@ proc parsecommit {id contents listed} {
 	    append newcomment "\n"
 	}
 	set comment $newcomment
-    }
-    if {$comdate != {}} {
-	set cdate($id) $comdate
     }
     set commitinfo($id) [list $headline $auname $audate \
 			     $comname $comdate $comment]
