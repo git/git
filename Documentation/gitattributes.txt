@@ -574,6 +574,39 @@ and now produces better output), you can remove the cache
 manually with `git update-ref -d refs/notes/textconv/jpg` (where
 "jpg" is the name of the diff driver, as in the example above).
 
+Marking files as binary
+^^^^^^^^^^^^^^^^^^^^^^^
+
+Git usually guesses correctly whether a blob contains text or binary
+data by examining the beginning of the contents. However, sometimes you
+may want to override its decision, either because a blob contains binary
+data later in the file, or because the content, while technically
+composed of text characters, is opaque to a human reader. For example,
+many postscript files contain only ascii characters, but produce noisy
+and meaningless diffs.
+
+The simplest way to mark a file as binary is to unset the diff
+attribute in the `.gitattributes` file:
+
+------------------------
+*.ps -diff
+------------------------
+
+This will cause git to generate `Binary files differ` (or a binary
+patch, if binary patches are enabled) instead of a regular diff.
+
+However, one may also want to specify other diff driver attributes. For
+example, you might want to use `textconv` to convert postscript files to
+an ascii representation for human viewing, but otherwise treat them as
+binary files. You cannot specify both `-diff` and `diff=ps` attributes.
+The solution is to use the `diff.*.binary` config option:
+
+------------------------
+[diff "ps"]
+  textconv = ps2ascii
+  binary = true
+------------------------
+
 Performing a three-way merge
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
