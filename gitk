@@ -9065,7 +9065,7 @@ proc cherrypick {} {
 			to file '%s'.\nPlease commit, reset or stash\
 			your changes and try again." $fname]
 	} elseif {[regexp -line \
-		       {^(CONFLICT \(.*\):|Automatic cherry-pick failed)} \
+		       {^(CONFLICT \(.*\):|Automatic cherry-pick failed|error: could not apply)} \
 		       $err]} {
 	    if {[confirm_popup [mc "Cherry-pick failed because of merge\
 			conflict.\nDo you wish to run git citool to\
