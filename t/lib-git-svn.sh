@@ -68,28 +68,41 @@ svn_cmd () {
 	svn "$orig_svncmd" --config-dir "$svnconf" "$@"
 }
 
-for d in \
-	"$SVN_HTTPD_PATH" \
-	/usr/sbin/apache2 \
-	/usr/sbin/httpd \
-; do
-	if test -f "$d"
+if test -n "$SVN_HTTPD_PORT"
+then
+	for d in \
+		"$SVN_HTTPD_PATH" \
+		/usr/sbin/apache2 \
+		/usr/sbin/httpd \
+	; do
+		if test -f "$d"
+		then
+			SVN_HTTPD_PATH="$d"
+			break
+		fi
+	done
+	if test -z "$SVN_HTTPD_PATH"
 	then
-		SVN_HTTPD_PATH="$d"
-		break
+		skip_all='skipping git svn tests, Apache not found'
+		test_done
 	fi
-done
-for d in \
-	"$SVN_HTTPD_MODULE_PATH" \
-	/usr/lib/apache2/modules \
-	/usr/libexec/apache2 \
-; do
-	if test -d "$d"
+	for d in \
+		"$SVN_HTTPD_MODULE_PATH" \
+		/usr/lib/apache2/modules \
+		/usr/libexec/apache2 \
+	; do
+		if test -d "$d"
+		then
+			SVN_HTTPD_MODULE_PATH="$d"
+			break
+		fi
+	done
+	if test -z "$SVN_HTTPD_MODULE_PATH"
 	then
-		SVN_HTTPD_MODULE_PATH="$d"
-		break
+		skip_all='skipping git svn tests, Apache module dir not found'
+		test_done
 	fi
-done
+fi
 
 start_httpd () {
 	repo_base_path="$1"

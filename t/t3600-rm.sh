@@ -96,7 +96,7 @@ test_expect_success FUNNYNAMES \
     "git rm -f 'space embedded' 'tab	embedded' 'newline
 embedded'"
 
-test_expect_success RO_DIR 'Test that "git rm -f" fails if its rm fails' '
+test_expect_success SANITY 'Test that "git rm -f" fails if its rm fails' '
 	chmod a-w . &&
 	test_must_fail git rm -f baz &&
 	chmod 775 .
