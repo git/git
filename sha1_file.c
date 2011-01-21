@@ -2141,7 +2141,7 @@ void *read_sha1_file_repl(const unsigned char *sha1,
 		return data;
 	}
 
-	if (errno != ENOENT)
+	if (errno && errno != ENOENT)
 		die_errno("failed to read object %s", sha1_to_hex(sha1));
 
 	/* die if we replaced an object with one that does not exist */
