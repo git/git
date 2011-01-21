@@ -76,15 +76,10 @@ In other words, --merge does something like a 'git read-tree -u -m <commit>',
 but carries forward unmerged index entries.
 
 --keep::
-	Resets the index, updates files in the working tree that are
-	different between <commit> and HEAD, but keeps those
-	which are different between HEAD and the working tree (i.e.
-	which have local changes).
+	Resets index entries and updates files in the working tree that are
+	different between <commit> and HEAD.
 	If a file that is different between <commit> and HEAD has local changes,
 	reset is aborted.
-+
-In other words, --keep does a 2-way merge between <commit> and HEAD followed by
-'git reset --mixed <commit>'.
 --
 
 If you want to undo a commit other than the latest on a branch,
