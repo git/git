@@ -309,6 +309,7 @@ proc start_show_diff {cont_info {add_opts {}}} {
 
 	lappend cmd -p
 	lappend cmd --color
+	set cmd [concat $cmd $repo_config(gui.diffopts)]
 	if {$repo_config(gui.diffcontext) >= 1} {
 		lappend cmd "-U$repo_config(gui.diffcontext)"
 	}

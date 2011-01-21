@@ -850,6 +850,7 @@ set default_config(gui.fastcopyblame) false
 set default_config(gui.copyblamethreshold) 40
 set default_config(gui.blamehistoryctx) 7
 set default_config(gui.diffcontext) 5
+set default_config(gui.diffopts) {}
 set default_config(gui.commitmsgwidth) 75
 set default_config(gui.newbranchtemplate) {}
 set default_config(gui.spellingdictionary) {}
