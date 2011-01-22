@@ -739,7 +739,7 @@ test_expect_success '#28: core.worktree and core.bare conflict (gitfile case)' '
 	grep "core.bare and core.worktree" message
 '
 
-# Case #29: GIT_WORK_TREE(+core.worktree) overries core.bare (gitfile case).
+# Case #29: GIT_WORK_TREE(+core.worktree) overrides core.bare (gitfile case).
 test_expect_success '#29: setup' '
 	setup_repo 29 non-existent gitfile true &&
 	mkdir -p 29/sub/sub 29/wt/sub
