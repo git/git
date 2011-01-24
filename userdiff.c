@@ -52,7 +52,7 @@ PATTERNS("objc",
 	 "|[-+*/<>%&^|=!]=|--|\\+\\+|<<=?|>>=?|&&|\\|\\||::|->"
 	 "|[^[:space:]]|[\x80-\xff]+"),
 PATTERNS("pascal",
-	 "^((procedure|function|constructor|destructor|interface|"
+	 "^(((class[ \t]+)?(procedure|function)|constructor|destructor|interface|"
 		"implementation|initialization|finalization)[ \t]*.*)$"
 	 "\n"
 	 "^(.*=[ \t]*(class|record).*)$",
