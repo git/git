@@ -329,106 +329,6 @@ static int grep_config(const char *var, const char *value, void *cb)
 	return 0;
 }
 
-/*
- * Return non-zero if max_depth is negative or path has no more then max_depth
- * slashes.
- */
-static int accept_subdir(const char *path, int max_depth)
-{
-	if (max_depth < 0)
-		return 1;
-
-	while ((path = strchr(path, '/')) != NULL) {
-		max_depth--;
-		if (max_depth < 0)
-			return 0;
-		path++;
-	}
-	return 1;
-}
-
-/*
- * Return non-zero if name is a subdirectory of match and is not too deep.
- */
-static int is_subdir(const char *name, int namelen,
-		const char *match, int matchlen, int max_depth)
-{
-	if (matchlen > namelen || strncmp(name, match, matchlen))
-		return 0;
-
-	if (name[matchlen] == '\0') /* exact match */
-		return 1;
-
-	if (!matchlen || match[matchlen-1] == '/' || name[matchlen] == '/')
-		return accept_subdir(name + matchlen + 1, max_depth);
-
-	return 0;
-}
-
-/*
- * git grep pathspecs are somewhat different from diff-tree pathspecs;
- * pathname wildcards are allowed.
- */
-static int pathspec_matches(const char **paths, const char *name, int max_depth)
-{
-	int namelen, i;
-	if (!paths || !*paths)
-		return accept_subdir(name, max_depth);
-	namelen = strlen(name);
-	for (i = 0; paths[i]; i++) {
-		const char *match = paths[i];
-		int matchlen = strlen(match);
-		const char *cp, *meta;
-
-		if (is_subdir(name, namelen, match, matchlen, max_depth))
-			return 1;
-		if (!fnmatch(match, name, 0))
-			return 1;
-		if (name[namelen-1] != '/')
-			continue;
-
-		/* We are being asked if the directory ("name") is worth
-		 * descending into.
-		 *
-		 * Find the longest leading directory name that does
-		 * not have metacharacter in the pathspec; the name
-		 * we are looking at must overlap with that directory.
-		 */
-		for (cp = match, meta = NULL; cp - match < matchlen; cp++) {
-			char ch = *cp;
-			if (ch == '*' || ch == '[' || ch == '?') {
-				meta = cp;
-				break;
-			}
-		}
-		if (!meta)
-			meta = cp; /* fully literal */
-
-		if (namelen <= meta - match) {
-			/* Looking at "Documentation/" and
-			 * the pattern says "Documentation/howto/", or
-			 * "Documentation/diff*.txt".  The name we
-			 * have should match prefix.
-			 */
-			if (!memcmp(match, name, namelen))
-				return 1;
-			continue;
-		}
-
-		if (meta - match < namelen) {
-			/* Looking at "Documentation/howto/" and
-			 * the pattern says "Documentation/h*";
-			 * match up to "Do.../h"; this avoids descending
-			 * into "Documentation/technical/".
-			 */
-			if (!memcmp(match, name, meta - match))
-				return 1;
-			continue;
-		}
-	}
-	return 0;
-}
-
 static void *lock_and_read_sha1_file(const unsigned char *sha1, enum object_type *type, unsigned long *size)
 {
 	void *data;
@@ -581,7 +481,7 @@ static void run_pager(struct grep_opt *opt, const char *prefix)
 	free(argv);
 }
 
-static int grep_cache(struct grep_opt *opt, const char **paths, int cached)
+static int grep_cache(struct grep_opt *opt, const struct pathspec *pathspec, int cached)
 {
 	int hit = 0;
 	int nr;
@@ -591,7 +491,7 @@ static int grep_cache(struct grep_opt *opt, const char **paths, int cached)
 		struct cache_entry *ce = active_cache[nr];
 		if (!S_ISREG(ce->ce_mode))
 			continue;
-		if (!pathspec_matches(paths, ce->name, opt->max_depth))
+		if (!match_pathspec_depth(pathspec, ce->name, ce_namelen(ce), 0, NULL))
 			continue;
 		/*
 		 * If CE_VALID is on, we assume worktree file and its cache entry
@@ -618,44 +518,29 @@ static int grep_cache(struct grep_opt *opt, const char **paths, int cached)
 	return hit;
 }
 
-static int grep_tree(struct grep_opt *opt, const char **paths,
-		     struct tree_desc *tree,
-		     const char *tree_name, const char *base)
+static int grep_tree(struct grep_opt *opt, const struct pathspec *pathspec,
+		     struct tree_desc *tree, struct strbuf *base, int tn_len)
 {
-	int len;
-	int hit = 0;
+	int hit = 0, matched = 0;
 	struct name_entry entry;
-	char *down;
-	int tn_len = strlen(tree_name);
-	struct strbuf pathbuf;
-
-	strbuf_init(&pathbuf, PATH_MAX + tn_len);
-
-	if (tn_len) {
-		strbuf_add(&pathbuf, tree_name, tn_len);
-		strbuf_addch(&pathbuf, ':');
-		tn_len = pathbuf.len;
-	}
-	strbuf_addstr(&pathbuf, base);
-	len = pathbuf.len;
+	int old_baselen = base->len;
 
 	while (tree_entry(tree, &entry)) {
 		int te_len = tree_entry_len(entry.path, entry.sha1);
-		pathbuf.len = len;
-		strbuf_add(&pathbuf, entry.path, te_len);
 
-		if (S_ISDIR(entry.mode))
-			/* Match "abc/" against pathspec to
-			 * decide if we want to descend into "abc"
-			 * directory.
-			 */
-			strbuf_addch(&pathbuf, '/');
+		if (matched != 2) {
+			matched = tree_entry_interesting(&entry, base, tn_len, pathspec);
+			if (matched == -1)
+				break; /* no more matches */
+			if (!matched)
+				continue;
+		}
 
-		down = pathbuf.buf + tn_len;
-		if (!pathspec_matches(paths, down, opt->max_depth))
-			;
-		else if (S_ISREG(entry.mode))
-			hit |= grep_sha1(opt, entry.sha1, pathbuf.buf, tn_len);
+		strbuf_add(base, entry.path, te_len);
+
+		if (S_ISREG(entry.mode)) {
+			hit |= grep_sha1(opt, entry.sha1, base->buf, tn_len);
+		}
 		else if (S_ISDIR(entry.mode)) {
 			enum object_type type;
 			struct tree_desc sub;
@@ -666,18 +551,21 @@ static int grep_tree(struct grep_opt *opt, const char **paths,
 			if (!data)
 				die("unable to read tree (%s)",
 				    sha1_to_hex(entry.sha1));
+
+			strbuf_addch(base, '/');
 			init_tree_desc(&sub, data, size);
-			hit |= grep_tree(opt, paths, &sub, tree_name, down);
+			hit |= grep_tree(opt, pathspec, &sub, base, tn_len);
 			free(data);
 		}
+		strbuf_setlen(base, old_baselen);
+
 		if (hit && opt->status_only)
 			break;
 	}
-	strbuf_release(&pathbuf);
 	return hit;
 }
 
-static int grep_object(struct grep_opt *opt, const char **paths,
+static int grep_object(struct grep_opt *opt, const struct pathspec *pathspec,
 		       struct object *obj, const char *name)
 {
 	if (obj->type == OBJ_BLOB)
@@ -686,20 +574,30 @@ static int grep_object(struct grep_opt *opt, const char **paths,
 		struct tree_desc tree;
 		void *data;
 		unsigned long size;
-		int hit;
+		struct strbuf base;
+		int hit, len;
+
 		data = read_object_with_reference(obj->sha1, tree_type,
 						  &size, NULL);
 		if (!data)
 			die("unable to read tree (%s)", sha1_to_hex(obj->sha1));
+
+		len = name ? strlen(name) : 0;
+		strbuf_init(&base, PATH_MAX + len + 1);
+		if (len) {
+			strbuf_add(&base, name, len);
+			strbuf_addch(&base, ':');
+		}
 		init_tree_desc(&tree, data, size);
-		hit = grep_tree(opt, paths, &tree, name, "");
+		hit = grep_tree(opt, pathspec, &tree, &base, base.len);
+		strbuf_release(&base);
 		free(data);
 		return hit;
 	}
 	die("unable to grep from object of type %s", typename(obj->type));
 }
 
-static int grep_objects(struct grep_opt *opt, const char **paths,
+static int grep_objects(struct grep_opt *opt, const struct pathspec *pathspec,
 			const struct object_array *list)
 {
 	unsigned int i;
@@ -709,7 +607,7 @@ static int grep_objects(struct grep_opt *opt, const char **paths,
 	for (i = 0; i < nr; i++) {
 		struct object *real_obj;
 		real_obj = deref_tag(list->objects[i].item, NULL, 0);
-		if (grep_object(opt, paths, real_obj, list->objects[i].name)) {
+		if (grep_object(opt, pathspec, real_obj, list->objects[i].name)) {
 			hit = 1;
 			if (opt->status_only)
 				break;
@@ -718,7 +616,7 @@ static int grep_objects(struct grep_opt *opt, const char **paths,
 	return hit;
 }
 
-static int grep_directory(struct grep_opt *opt, const char **paths)
+static int grep_directory(struct grep_opt *opt, const struct pathspec *pathspec)
 {
 	struct dir_struct dir;
 	int i, hit = 0;
@@ -726,7 +624,7 @@ static int grep_directory(struct grep_opt *opt, const char **paths)
 	memset(&dir, 0, sizeof(dir));
 	setup_standard_excludes(&dir);
 
-	fill_directory(&dir, paths);
+	fill_directory(&dir, pathspec->raw);
 	for (i = 0; i < dir.nr; i++) {
 		hit |= grep_file(opt, dir.entries[i]->name);
 		if (hit && opt->status_only)
@@ -832,6 +730,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	struct grep_opt opt;
 	struct object_array list = OBJECT_ARRAY_INIT;
 	const char **paths = NULL;
+	struct pathspec pathspec;
 	struct string_list path_list = STRING_LIST_INIT_NODUP;
 	int i;
 	int dummy;
@@ -1059,6 +958,9 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		paths[0] = prefix;
 		paths[1] = NULL;
 	}
+	init_pathspec(&pathspec, paths);
+	pathspec.max_depth = opt.max_depth;
+	pathspec.recursive = 1;
 
 	if (show_in_pager && (cached || list.nr))
 		die("--open-files-in-pager only works on the worktree");
@@ -1089,16 +991,16 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 			die("--cached cannot be used with --no-index.");
 		if (list.nr)
 			die("--no-index cannot be used with revs.");
-		hit = grep_directory(&opt, paths);
+		hit = grep_directory(&opt, &pathspec);
 	} else if (!list.nr) {
 		if (!cached)
 			setup_work_tree();
 
-		hit = grep_cache(&opt, paths, cached);
+		hit = grep_cache(&opt, &pathspec, cached);
 	} else {
 		if (cached)
 			die("both --cached and trees are given.");
-		hit = grep_objects(&opt, paths, &list);
+		hit = grep_objects(&opt, &pathspec, &list);
 	}
 
 	if (use_threads)

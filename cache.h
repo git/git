@@ -500,7 +500,22 @@ extern int index_name_is_other(const struct index_state *, const char *, int);
 extern int ie_match_stat(const struct index_state *, struct cache_entry *, struct stat *, unsigned int);
 extern int ie_modified(const struct index_state *, struct cache_entry *, struct stat *, unsigned int);
 
-extern int ce_path_match(const struct cache_entry *ce, const char **pathspec);
+struct pathspec {
+	const char **raw; /* get_pathspec() result, not freed by free_pathspec() */
+	int nr;
+	int has_wildcard:1;
+	int recursive:1;
+	int max_depth;
+	struct pathspec_item {
+		const char *match;
+		int len;
+		int has_wildcard:1;
+	} *items;
+};
+
+extern int init_pathspec(struct pathspec *, const char **);
+extern void free_pathspec(struct pathspec *);
+extern int ce_path_match(const struct cache_entry *ce, const struct pathspec *pathspec);
 extern int index_fd(unsigned char *sha1, int fd, struct stat *st, int write_object, enum object_type type, const char *path);
 extern int index_path(unsigned char *sha1, const char *path, struct stat *st, int write_object);
 extern void fill_stat_cache_info(struct cache_entry *ce, struct stat *st);
