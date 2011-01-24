@@ -291,17 +291,12 @@ help ...`.
 	path or relative path to current working directory.
 
 --work-tree=<path>::
-	Set the path to the working tree.  The value will not be
-	used in combination with repositories found automatically in
-	a .git directory (i.e. $GIT_DIR is not set).
+	Set the path to the working tree. It can be an absolute path
+	or a path relative to the current working directory.
 	This can also be controlled by setting the GIT_WORK_TREE
 	environment variable and the core.worktree configuration
-	variable. It can be an absolute path or relative path to
-	current working directory.
-	Note: If --git-dir or GIT_DIR are specified but none of
-	--work-tree, GIT_WORK_TREE and core.worktree is specified,
-	the current working directory is regarded as the top directory
-	of your working tree.
+	variable (see core.worktree in linkgit:git-config[1] for a
+	more detailed discussion).
 
 --bare::
 	Treat the repository as a bare repository.  If GIT_DIR
