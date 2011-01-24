@@ -66,7 +66,7 @@ Updates since v1.7.3
    objects unnecessarily.
 
  * "git diff" and "git grep" learned what functions and subroutines
-   in Fortran and Perl look like.
+   in Fortran, Pascal and Perl look like.
 
  * "git fetch" learned the "--recurse-submodules" option.
 
@@ -151,9 +151,3 @@ release, unless otherwise noted.
 
  * "git submodule update --recursive --other-flags" passes flags down
    to its subinvocations.
-
----
-exec >/var/tmp/1
-O=v1.7.4-rc2
-echo O=$(git describe master)
-git shortlog --no-merges ^maint ^$O master
