@@ -392,10 +392,20 @@ static void add_sha1_list(unsigned char *sha1, unsigned long ino)
 	sha1_list.nr = ++nr;
 }
 
+static inline int is_loose_object_file(struct dirent *de,
+				       char *name, unsigned char *sha1)
+{
+	if (strlen(de->d_name) != 38)
+		return 0;
+	memcpy(name + 2, de->d_name, 39);
+	return !get_sha1_hex(name, sha1);
+}
+
 static void fsck_dir(int i, char *path)
 {
 	DIR *dir = opendir(path);
 	struct dirent *de;
+	char name[100];
 
 	if (!dir)
 		return;
@@ -403,17 +413,13 @@ static void fsck_dir(int i, char *path)
 	if (verbose)
 		fprintf(stderr, "Checking directory %s\n", path);
 
+	sprintf(name, "%02x", i);
 	while ((de = readdir(dir)) != NULL) {
-		char name[100];
 		unsigned char sha1[20];
 
 		if (is_dot_or_dotdot(de->d_name))
 			continue;
-		if (strlen(de->d_name) == 38) {
-			sprintf(name, "%02x", i);
-			memcpy(name+2, de->d_name, 39);
-			if (get_sha1_hex(name, sha1) < 0)
-				break;
+		if (is_loose_object_file(de, name, sha1)) {
 			add_sha1_list(sha1, DIRENT_SORT_HINT(de));
 			continue;
 		}
