@@ -482,6 +482,7 @@ case "$#" in
 	then
 		head_name="detached HEAD"
 	else
+		echo >&2 "fatal: no such branch: $1"
 		usage
 	fi
 	;;
@@ -513,7 +514,7 @@ then
 	if test -z "$force_rebase"
 	then
 		# Lazily switch to the target branch if needed...
-		test -z "$switch_to" || git checkout "$switch_to"
+		test -z "$switch_to" || git checkout "$switch_to" --
 		say "Current branch $branch_name is up to date."
 		exit 0
 	else
