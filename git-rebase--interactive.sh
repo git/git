@@ -894,7 +894,7 @@ first and then run 'git rebase --continue' again."
 
 		if test ! -z "$1"
 		then
-			output git checkout "$1" ||
+			output git checkout "$1" -- ||
 				die "Could not checkout $1"
 		fi
 
@@ -1021,7 +1021,7 @@ first and then run 'git rebase --continue' again."
 #  e, edit = use commit, but stop for amending
 #  s, squash = use commit, but meld into previous commit
 #  f, fixup = like "squash", but discard this commit's log message
-#  x <cmd>, exec <cmd> = Run a shell command <cmd>, and stop if it fails
+#  x, exec = run command (the rest of the line) using shell
 #
 # If you remove a line here THAT COMMIT WILL BE LOST.
 # However, if you remove everything, the rebase will be aborted.
