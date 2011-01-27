@@ -2163,6 +2163,12 @@ static void file_change_m(struct branch *b)
 		p = uq.buf;
 	}
 
+	/* Git does not track empty, non-toplevel directories. */
+	if (S_ISDIR(mode) && !memcmp(sha1, EMPTY_TREE_SHA1_BIN, 20) && *p) {
+		tree_content_remove(&b->branch_tree, p, NULL);
+		return;
+	}
+
 	if (S_ISGITLINK(mode)) {
 		if (inline_data)
 			die("Git links cannot be specified 'inline': %s",
