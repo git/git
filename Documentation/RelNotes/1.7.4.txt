@@ -1,5 +1,5 @@
-Git v1.7.4 Release Notes (draft)
-================================
+Git v1.7.4 Release Notes
+========================
 
 Updates since v1.7.3
 --------------------
@@ -145,6 +145,9 @@ release, unless otherwise noted.
    her, which is impossible.
 
  * "git push --progress" shows progress indicators now.
+
+ * "git rebase -i" showed a confusing error message when given a
+   branch name that does not exist.
 
  * "git repack" places its temporary packs under $GIT_OBJECT_DIRECTORY/pack
    instead of $GIT_OBJECT_DIRECTORY/ to avoid cross directory renames.
