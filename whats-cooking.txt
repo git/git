@@ -1,31 +1,29 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jan 2011, #05; Mon, 24)
-X-master-at: 630fc7878b6fd1bc188d4916b64f4df37658df96
-X-next-at: c56cfa5dde233fbc2a459f8acd7743bae3060ba7
+Subject: What's cooking in git.git (Jan 2011, #06; Sun, 30)
+X-master-at: 7ed863a85a6ce2c4ac4476848310b8f917ab41f9
+X-next-at: 705f25818b894adc974363c5f334dc99cf97c83f
 
-What's cooking in git.git (Jan 2011, #05; Mon, 24)
+What's cooking in git.git (Jan 2011, #06; Sun, 30)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' while commits prefixed with '+' are in 'next'.
 
-I'll start paying much less attention to any new features and enhancements
-and shift the focus almost entirely on trivial fixes and regressions from
-now on.  Hopefully lists will do the same and we can have a fairly short
-rc period this cycle.  Please remind if there are patches that ought to be
-in 1.7.4 but are forgotten.
+1.7.4 is out. I'd like to stop and calm the tree down for a few days
+so that we can catch any brown-paper-bag bugs before moving things
+forward, and then open the floodgate for the next cycle, which I am
+inclined to designate as "We would have done these differently if we
+were creating git from scratch with the experience we have and wisdom
+we have gained" cycle, allowing minor backward incompatibilities,
+somewhat like 1.6.0 but not so drastic.  The result would probably
+be called 1.8.0--the details in a separate message.
 
 --------------------------------------------------
-[Graduated to "master"]
+[New Topics]
 
-* as/userdiff-pascal (2011-01-11) 1 commit
-  (merged to 'next' on 2011-01-18 at 9060389)
- + userdiff: match Pascal class methods
-
-* js/test-windows (2011-01-11) 2 commits
-  (merged to 'next' on 2011-01-11 at c8274ed)
- + t/README: hint about using $(pwd) rather than $PWD in tests
- + Fix expected values of setup tests on Windows
+* jc/fsck-fixes (2011-01-26) 2 commits
+ - fsck: do not give up too early in fsck_dir()
+ - fsck: drop unused parameter from traverse_one_object()
 
 --------------------------------------------------
 [Stalled]
@@ -62,30 +60,37 @@ current usage context.
  - diffcore-rename: record filepair for rename src
  - diffcore-rename: refactor "too many candidates" logic
 
+IIRC, this was a weather-baloon "if you wanted to, this may be how you
+would do it" without test updates.  People who care need to help moving
+things forward.
+
 * jc/rerere-remaining (2011-01-06) 1 commit
  - rerere "remaining"
 
 Just a handful of weatherballoon patches without proper tests, in response
 to feature/minor fix requests.
 
---------------------------------------------------
-[Cooking]
-
-* jn/unpack-lstat-failure-report (2011-01-12) 2 commits
- - unpack-trees: handle lstat failure for existing file
- - unpack-trees: handle lstat failure for existing directory
-
-* rr/fi-import-marks-if-exists (2011-01-15) 1 commit
- - fast-import: Introduce --import-marks-if-exists
-
-* tr/diff-words-test (2011-01-18) 4 commits
- - t4034 (diff --word-diff): add a minimum Perl drier test vector
- - t4034 (diff --word-diff): style suggestions
- - userdiff: simplify word-diff safeguard
- - t4034: bulk verify builtin word regex sanity
-
 * ab/p4 (2011-01-11) 1 commit
  - git-p4: correct indenting and formatting
+
+Lacks sign-off but is trivial.
+
+* tr/maint-branch-no-track-head (2010-12-14) 1 commit
+ - branch: do not attempt to track HEAD implicitly
+
+Probably needs a re-roll to exclude either (1) any ref outside the
+hierarchies for branches (i.e. refs/{heads,remotes}/), or (2) only refs
+outside refs/ hierarchies (e.g. HEAD, ORIG_HEAD, ...).  The latter feels
+safer and saner.
+
+* hv/mingw-fs-funnies (2010-12-14) 5 commits
+ - mingw_rmdir: set errno=ENOTEMPTY when appropriate
+ - mingw: add fallback for rmdir in case directory is in use
+ - mingw: make failures to unlink or move raise a question
+ - mingw: work around irregular failures of unlink on windows
+ - mingw: move unlink wrapper to mingw.c
+
+Will be rerolled (Heiko, 2010-12-23)
 
 * mz/rebase (2010-12-28) 31 commits
  - rebase -i: remove unnecessary state rebase-root
@@ -120,9 +125,28 @@ to feature/minor fix requests.
  - rebase: refactor reading of state
  - rebase: clearer names for directory variables
 
-The general direction of the series basically seemed sound, with nits here
-and there.  Hopefully we will see a re-roll of this series sometime soon,
-but we are not in a hurry.
+Will be rerolled (Martin, Jan 28).
+
+--------------------------------------------------
+[Cooking]
+
+* jn/unpack-lstat-failure-report (2011-01-12) 2 commits
+  (merged to 'next' on 2011-01-24 at 1245180)
+ + unpack-trees: handle lstat failure for existing file
+ + unpack-trees: handle lstat failure for existing directory
+
+* rr/fi-import-marks-if-exists (2011-01-15) 1 commit
+ - fast-import: Introduce --import-marks-if-exists
+
+Looked reasonable.
+
+* tr/diff-words-test (2011-01-18) 4 commits
+ - t4034 (diff --word-diff): add a minimum Perl drier test vector
+ - t4034 (diff --word-diff): style suggestions
+ - userdiff: simplify word-diff safeguard
+ - t4034: bulk verify builtin word regex sanity
+
+I thought this was Ok; further comments, anybody?
 
 * ef/alias-via-run-command (2011-01-07) 1 commit
   (merged to 'next' on 2011-01-06 at 1fbd4a0)
@@ -148,55 +172,41 @@ but we are not in a hurry.
   (merged to 'next' on 2011-01-05 at 3ccc590)
  + cherry-pick/revert: add support for -X/--strategy-option
 
-* tr/maint-branch-no-track-head (2010-12-14) 1 commit
- - branch: do not attempt to track HEAD implicitly
-
-Probably needs a re-roll to exclude either (1) any ref outside the
-hierarchies for branches (i.e. refs/{heads,remotes}/), or (2) only refs
-outside refs/ hierarchies (e.g. HEAD, ORIG_HEAD, ...).  The latter feels
-safer and saner.
-
-* hv/mingw-fs-funnies (2010-12-14) 5 commits
- - mingw_rmdir: set errno=ENOTEMPTY when appropriate
- - mingw: add fallback for rmdir in case directory is in use
- - mingw: make failures to unlink or move raise a question
- - mingw: work around irregular failures of unlink on windows
- - mingw: move unlink wrapper to mingw.c
-
-Will be rerolled (Heiko, 2010-12-23)
-
 * nd/struct-pathspec (2010-12-15) 21 commits
- - t7810: overlapping pathspecs and depth limit
- - grep: drop pathspec_matches() in favor of tree_entry_interesting()
- - grep: use writable strbuf from caller for grep_tree()
- - grep: use match_pathspec_depth() for cache/worktree grepping
- - grep: convert to use struct pathspec
- - Convert ce_path_match() to use match_pathspec_depth()
- - Convert ce_path_match() to use struct pathspec
- - struct rev_info: convert prune_data to struct pathspec
- - pathspec: add match_pathspec_depth()
- - tree_entry_interesting(): optimize wildcard matching when base is matched
- - tree_entry_interesting(): support wildcard matching
- - tree_entry_interesting(): fix depth limit with overlapping pathspecs
- - tree_entry_interesting(): support depth limit
- - tree_entry_interesting(): refactor into separate smaller functions
- - diff-tree: convert base+baselen to writable strbuf
- - glossary: define pathspec
- - Move tree_entry_interesting() to tree-walk.c and export it
- - tree_entry_interesting(): remove dependency on struct diff_options
- - Convert struct diff_options to use struct pathspec
- - diff-no-index: use diff_tree_setup_paths()
- - Add struct pathspec
+  (merged to 'next' on 2011-01-24 at 08f1774)
+ + t7810: overlapping pathspecs and depth limit
+ + grep: drop pathspec_matches() in favor of tree_entry_interesting()
+ + grep: use writable strbuf from caller for grep_tree()
+ + grep: use match_pathspec_depth() for cache/worktree grepping
+ + grep: convert to use struct pathspec
+ + Convert ce_path_match() to use match_pathspec_depth()
+ + Convert ce_path_match() to use struct pathspec
+ + struct rev_info: convert prune_data to struct pathspec
+ + pathspec: add match_pathspec_depth()
+ + tree_entry_interesting(): optimize wildcard matching when base is matched
+ + tree_entry_interesting(): support wildcard matching
+ + tree_entry_interesting(): fix depth limit with overlapping pathspecs
+ + tree_entry_interesting(): support depth limit
+ + tree_entry_interesting(): refactor into separate smaller functions
+ + diff-tree: convert base+baselen to writable strbuf
+ + glossary: define pathspec
+ + Move tree_entry_interesting() to tree-walk.c and export it
+ + tree_entry_interesting(): remove dependency on struct diff_options
+ + Convert struct diff_options to use struct pathspec
+ + diff-no-index: use diff_tree_setup_paths()
+ + Add struct pathspec
  (this branch is used by en/object-list-with-pathspec.)
 
-On hold, perhaps in 'next', til 1.7.4 final.
-
 * en/object-list-with-pathspec (2010-09-20) 2 commits
- - Add testcases showing how pathspecs are handled with rev-list --objects
- - Make rev-list --objects work together with pathspecs
+  (merged to 'next' on 2011-01-24 at 134f65c)
+ + Add testcases showing how pathspecs are handled with rev-list --objects
+ + Make rev-list --objects work together with pathspecs
  (this branch uses nd/struct-pathspec.)
 
-On hold, perhaps in 'next', til 1.7.4 final.
+I've been toying with the above two topics and am reasonably happy.
+I suspect that there could be (and probably need to be) further
+consolidation of the two remaining pathspec API, but this seems to
+be already usable.
 
 * tr/merge-unborn-clobber (2010-08-22) 1 commit
  - Exhibit merge bug that clobbers index&WT
