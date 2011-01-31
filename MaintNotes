@@ -55,7 +55,8 @@ also push into an alternate here:
 
         git://repo.or.cz/alt-git.git/
 
-Impatient people might have better luck with the latter one.
+Impatient people might have better luck with the latter one (there are a
+few other mirrors I push into at sourceforge and github as well).
 
 Their gitweb interfaces are found at:
 
@@ -96,7 +97,7 @@ minor breakages or brown paper bag bugs but they are not expected to be
 anything major, and more importantly quickly and trivially fixable.  Every
 now and then, a "feature release" is cut from the tip of this branch and
 they typically are named with three dotted decimal digits.  The last such
-release was 1.7.3 done on Sep 19, 2010.  You can expect that the tip of
+release was 1.7.4 done on Jan 30, 2011.  You can expect that the tip of
 the "master" branch is always more stable than any of the released
 versions.
 
@@ -105,7 +106,7 @@ Whenever a feature release is made, "maint" branch is forked off from
 release are applied to this branch and maintenance releases are cut from
 it.  The maintenance releases are named with four dotted decimal, named
 after the feature release they are updates to; the last such release was
-1.7.2.3.  New features never go to this branch.  This branch is also
+1.7.3.5.  New features never go to this branch.  This branch is also
 merged into "master" to propagate the fixes forward.
 
 A trivial and safe enhancement goes directly on top of "master".  A new
@@ -187,7 +188,7 @@ and enhancements in contrib/ area to the primary contributors of them.
 Although the following are included in git.git repository, they have their
 own authoritative repository and maintainers:
 
- - git-gui/ comes from Shawn Pearce's git-gui project:
+ - git-gui/ comes from git-gui project, maintained by Pat Thoyts:
 
         git://repo.or.cz/git-gui.git
 
@@ -203,39 +204,37 @@ I have relied on and expect to continue relying on heavily:
 
  - Linus, Shawn Pearce, Johannes Schindelin, Nicolas Pitre, René
    Scharfe, Jeff King, Jonathan Nieder, Johan Herland, Johannes Sixt,
-   and Sverre Rabbelier on general implementation issues and reviews
-   on the mailing list.
+   Sverre Rabbelier and Thomas Rast on general implementation issues
+   and reviews on the mailing list.
 
  - Shawn and Nicolas Pitre on pack issues.
 
- - Martin Langhoff and Frank Lichtenheld on cvsserver and cvsimport.
+ - Martin Langhoff, Frank Lichtenheld and Ævar Arnfjörð Bjarmason on
+   cvsserver and cvsimport.
 
  - Paul Mackerras on gitk.
 
- - Eric Wong on git-svn.
+ - Eric Wong, David D. Kilzer and Sam Vilain on git-svn.
 
- - Simon Hausmann on git-p4.
+ - Simon Hausmann and Pete Wyckoff on git-p4.
 
- - Jakub Narebski, Petr Baudis, Luben Tuikov, Giuseppe Bilotta on
+ - Jakub Narebski, John Hawley, Petr Baudis, Luben Tuikov, Giuseppe Bilotta on
    gitweb.
 
- - J. Bruce Fields on documentation (and countless others for
-   proofreading and fixing).
+ - J. Bruce Fields, Jonathan Nieder, Michael J Gruber and Thomas Rast on
+   documentation (and countless others for proofreading and fixing).
 
  - Alexandre Julliard on Emacs integration.
 
- - Charles Bailey for taking good care of git-mergetool (and Theodore
-   Ts'o for creating it in the first place).
+ - David Aguilar and Charles Bailey for taking good care of git-mergetool
+   (and Theodore Ts'o for creating it in the first place) and git-difftool.
 
- - David Aguilar for git-difftool.
+ - Johannes Schindelin, Johannes Sixt, Erik Faye-Lund and others for their
+   effort to move things forward on the Windows front.
 
- - Johannes Schindelin, Johannes Sixt and others for their effort to
-   move things forward on the Windows front.
-
- - People on non-Linux platforms for keeping their eyes on
-   portability; especially, Randal Schwartz, Theodore Ts'o, Jason
-   Riedy, Thomas Glanzmann, Brandon Casey, Jeff King, Alex Riesen and
-   countless others.
+ - People on non-Linux platforms for keeping their eyes on portability;
+   especially, Randal Schwartz, Theodore Ts'o, Jason Riedy, Thomas Glanzmann,
+   Brandon Casey, Jeff King, Alex Riesen and countless others.
 
 * This document
 
