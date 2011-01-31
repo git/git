@@ -366,7 +366,9 @@ sub conn {
 	$self->{'socketo'}->write("valid-requests\n");
 	$self->{'socketo'}->flush();
 
-	chomp(my $rep=$self->readline());
+	my $rep=$self->readline();
+	die "Failed to read from server" unless defined $rep;
+	chomp($rep);
 	if ($rep !~ s/^Valid-requests\s*//) {
 		$rep="<unknown>" unless $rep;
 		die "Expected Valid-requests from server, but got: $rep\n";
