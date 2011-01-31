@@ -36,8 +36,7 @@ float: right;
 </style>
 </head>
 <body>
-<img src="http://members.cox.net/junkio/Kun-Wave.gif" id="git"
-width="64" height="64" />
+<img src="Kun-Wave.gif" id="git" width="64" height="64" />
 <h1>A Message from the Git Maintainer</h1>
 EOF
 
