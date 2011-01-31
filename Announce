@@ -48,7 +48,7 @@ $kind Git $vername is available at the usual places$for_testing:
 
 The RPM binary packages for a few architectures are found in:
 
-  $rpmroot/git-*-$vername-1.fc11.\$arch.rpm	(RPM)
+  $rpmroot/git-*-$vername-1.fc13.\$arch.rpm	(RPM)
 
 BLURB HERE BLURB HERE BLURB HERE
 
