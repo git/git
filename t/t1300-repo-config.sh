@@ -889,6 +889,10 @@ test_expect_success 'key sanity-checking' '
 	test_must_fail git config foo.1bar &&
 	test_must_fail git config foo."ba
 				z".bar &&
+	test_must_fail git config . false &&
+	test_must_fail git config .foo false &&
+	test_must_fail git config foo. false &&
+	test_must_fail git config .foo. false &&
 	git config foo.bar true &&
 	git config foo."ba =z".bar false
 '
