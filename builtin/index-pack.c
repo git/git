@@ -391,7 +391,18 @@ static void *get_data_from_pack(struct object_entry *obj)
 	return data;
 }
 
-static int find_delta(const union delta_base *base)
+static int compare_delta_bases(const union delta_base *base1,
+			       const union delta_base *base2,
+			       enum object_type type1,
+			       enum object_type type2)
+{
+	int cmp = type1 - type2;
+	if (cmp)
+		return cmp;
+	return memcmp(base1, base2, UNION_BASE_SZ);
+}
+
+static int find_delta(const union delta_base *base, enum object_type type)
 {
 	int first = 0, last = nr_deltas;
 
@@ -400,7 +411,8 @@ static int find_delta(const union delta_base *base)
                 struct delta_entry *delta = &deltas[next];
                 int cmp;
 
-                cmp = memcmp(base, &delta->base, UNION_BASE_SZ);
+		cmp = compare_delta_bases(base, &delta->base,
+					  type, objects[delta->obj_no].type);
                 if (!cmp)
                         return next;
                 if (cmp < 0) {
@@ -413,9 +425,10 @@ static int find_delta(const union delta_base *base)
 }
 
 static void find_delta_children(const union delta_base *base,
-				int *first_index, int *last_index)
+				int *first_index, int *last_index,
+				enum object_type type)
 {
-	int first = find_delta(base);
+	int first = find_delta(base, type);
 	int last = first;
 	int end = nr_deltas - 1;
 
@@ -543,11 +556,13 @@ static void find_unresolved_deltas(struct base_data *base,
 		union delta_base base_spec;
 
 		hashcpy(base_spec.sha1, base->obj->idx.sha1);
-		find_delta_children(&base_spec, &ref_first, &ref_last);
+		find_delta_children(&base_spec,
+				    &ref_first, &ref_last, OBJ_REF_DELTA);
 
 		memset(&base_spec, 0, sizeof(base_spec));
 		base_spec.offset = base->obj->idx.offset;
-		find_delta_children(&base_spec, &ofs_first, &ofs_last);
+		find_delta_children(&base_spec,
+				    &ofs_first, &ofs_last, OBJ_OFS_DELTA);
 	}
 
 	if (ref_last == -1 && ofs_last == -1) {
@@ -559,24 +574,24 @@ static void find_unresolved_deltas(struct base_data *base,
 
 	for (i = ref_first; i <= ref_last; i++) {
 		struct object_entry *child = objects + deltas[i].obj_no;
-		if (child->real_type == OBJ_REF_DELTA) {
-			struct base_data result;
-			resolve_delta(child, base, &result);
-			if (i == ref_last && ofs_last == -1)
-				free_base_data(base);
-			find_unresolved_deltas(&result, base);
-		}
+		struct base_data result;
+
+		assert(child->real_type == OBJ_REF_DELTA);
+		resolve_delta(child, base, &result);
+		if (i == ref_last && ofs_last == -1)
+			free_base_data(base);
+		find_unresolved_deltas(&result, base);
 	}
 
 	for (i = ofs_first; i <= ofs_last; i++) {
 		struct object_entry *child = objects + deltas[i].obj_no;
-		if (child->real_type == OBJ_OFS_DELTA) {
-			struct base_data result;
-			resolve_delta(child, base, &result);
-			if (i == ofs_last)
-				free_base_data(base);
-			find_unresolved_deltas(&result, base);
-		}
+		struct base_data result;
+
+		assert(child->real_type == OBJ_OFS_DELTA);
+		resolve_delta(child, base, &result);
+		if (i == ofs_last)
+			free_base_data(base);
+		find_unresolved_deltas(&result, base);
 	}
 
 	unlink_base_data(base);
@@ -586,7 +601,11 @@ static int compare_delta_entry(const void *a, const void *b)
 {
 	const struct delta_entry *delta_a = a;
 	const struct delta_entry *delta_b = b;
-	return memcmp(&delta_a->base, &delta_b->base, UNION_BASE_SZ);
+
+	/* group by type (ref vs ofs) and then by value (sha-1 or offset) */
+	return compare_delta_bases(&delta_a->base, &delta_b->base,
+				   objects[delta_a->obj_no].type,
+				   objects[delta_b->obj_no].type);
 }
 
 /* Parse all objects and return the pack content SHA1 hash */
