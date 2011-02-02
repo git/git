@@ -3,12 +3,14 @@
 test_description='Test cherry-pick with directory/file conflicts'
 . ./test-lib.sh
 
-test_expect_success SYMLINKS 'Setup rename across paths each below D/F conflicts' '
+test_expect_success 'Initialize repository' '
 	mkdir a &&
 	>a/f &&
 	git add a &&
-	git commit -m a &&
+	git commit -m a
+'
 
+test_expect_success SYMLINKS 'Setup rename across paths each below D/F conflicts' '
 	mkdir b &&
 	ln -s ../a b/a &&
 	git add b &&
