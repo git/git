@@ -6,6 +6,7 @@
 test_description='git apply -p handling.'
 
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/lib-prereq-FILEMODE.sh
 
 test_expect_success setup '
 	mkdir sub &&
@@ -62,8 +63,12 @@ test_expect_success 'apply (-p2) diff, mode change only' '
 	old mode 100644
 	new mode 100755
 	EOF
-	chmod 644 file1 &&
-	git apply -p2 patch.chmod &&
+	test_chmod -x file1 &&
+	git apply --index -p2 patch.chmod &&
+	case $(git ls-files -s file1) in 100755*) : good;; *) false;; esac
+'
+
+test_expect_success FILEMODE 'file mode was changed' '
 	test -x file1
 '
 
