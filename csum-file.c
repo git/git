@@ -11,8 +11,20 @@
 #include "progress.h"
 #include "csum-file.h"
 
-static void flush(struct sha1file *f, void * buf, unsigned int count)
+static void flush(struct sha1file *f, void *buf, unsigned int count)
 {
+	if (0 <= f->check_fd && count)  {
+		unsigned char check_buffer[8192];
+		ssize_t ret = read_in_full(f->check_fd, check_buffer, count);
+
+		if (ret < 0)
+			die_errno("%s: sha1 file read error", f->name);
+		if (ret < count)
+			die("%s: sha1 file truncated", f->name);
+		if (memcmp(buf, check_buffer, count))
+			die("sha1 file '%s' validation error", f->name);
+	}
+
 	for (;;) {
 		int ret = xwrite(f->fd, buf, count);
 		if (ret > 0) {
@@ -59,6 +71,17 @@ int sha1close(struct sha1file *f, unsigned char *result, unsigned int flags)
 		fd = 0;
 	} else
 		fd = f->fd;
+	if (0 <= f->check_fd) {
+		char discard;
+		int cnt = read_in_full(f->check_fd, &discard, 1);
+		if (cnt < 0)
+			die_errno("%s: error when reading the tail of sha1 file",
+				  f->name);
+		if (cnt)
+			die("%s: sha1 file has trailing garbage", f->name);
+		if (close(f->check_fd))
+			die_errno("%s: sha1 file error on close", f->name);
+	}
 	free(f);
 	return fd;
 }
@@ -101,10 +124,31 @@ struct sha1file *sha1fd(int fd, const char *name)
 	return sha1fd_throughput(fd, name, NULL);
 }
 
+struct sha1file *sha1fd_check(const char *name)
+{
+	int sink, check;
+	struct sha1file *f;
+
+	sink = open("/dev/null", O_WRONLY);
+	if (sink < 0)
+		return NULL;
+	check = open(name, O_RDONLY);
+	if (check < 0) {
+		int saved_errno = errno;
+		close(sink);
+		errno = saved_errno;
+		return NULL;
+	}
+	f = sha1fd(sink, name);
+	f->check_fd = check;
+	return f;
+}
+
 struct sha1file *sha1fd_throughput(int fd, const char *name, struct progress *tp)
 {
 	struct sha1file *f = xmalloc(sizeof(*f));
 	f->fd = fd;
+	f->check_fd = -1;
 	f->offset = 0;
 	f->total = 0;
 	f->tp = tp;

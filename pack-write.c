@@ -47,17 +47,22 @@ const char *write_idx_file(const char *index_name, struct pack_idx_entry **objec
 	else
 		sorted_by_sha = list = last = NULL;
 
-	if (!index_name) {
-		static char tmpfile[PATH_MAX];
-		fd = odb_mkstemp(tmpfile, sizeof(tmpfile), "pack/tmp_idx_XXXXXX");
-		index_name = xstrdup(tmpfile);
+	if (opts->flags & WRITE_IDX_VERIFY) {
+		assert(index_name);
+		f = sha1fd_check(index_name);
 	} else {
-		unlink(index_name);
-		fd = open(index_name, O_CREAT|O_EXCL|O_WRONLY, 0600);
+		if (!index_name) {
+			static char tmpfile[PATH_MAX];
+			fd = odb_mkstemp(tmpfile, sizeof(tmpfile), "pack/tmp_idx_XXXXXX");
+			index_name = xstrdup(tmpfile);
+		} else {
+			unlink(index_name);
+			fd = open(index_name, O_CREAT|O_EXCL|O_WRONLY, 0600);
+		}
+		if (fd < 0)
+			die_errno("unable to create '%s'", index_name);
+		f = sha1fd(fd, index_name);
 	}
-	if (fd < 0)
-		die_errno("unable to create '%s'", index_name);
-	f = sha1fd(fd, index_name);
 
 	/* if last object's offset is >= 2^31 we should use index V2 */
 	index_version = (last_obj_offset >> 31) ? 2 : opts->version;
@@ -142,7 +147,8 @@ const char *write_idx_file(const char *index_name, struct pack_idx_entry **objec
 	}
 
 	sha1write(f, sha1, 20);
-	sha1close(f, NULL, CSUM_FSYNC);
+	sha1close(f, NULL, ((opts->flags & WRITE_IDX_VERIFY)
+			    ? CSUM_CLOSE : CSUM_FSYNC));
 	git_SHA1_Final(sha1, &ctx);
 	return index_name;
 }

@@ -11,7 +11,7 @@
 #include "exec_cmd.h"
 
 static const char index_pack_usage[] =
-"git index-pack [-v] [-o <index-file>] [ --keep | --keep=<msg> ] [--strict] (<pack-file> | --stdin [--fix-thin] [<pack-file>])";
+"git index-pack [-v] [-o <index-file>] [--keep | --keep=<msg>] [--verify] [--strict] (<pack-file> | --stdin [--fix-thin] [<pack-file>])";
 
 struct object_entry
 {
@@ -891,9 +891,32 @@ static int git_index_pack_config(const char *k, const char *v, void *cb)
 	return git_default_config(k, v, cb);
 }
 
+static void read_idx_option(struct pack_idx_option *opts, const char *pack_name)
+{
+	struct packed_git *p = add_packed_git(pack_name, strlen(pack_name), 1);
+
+	if (!p)
+		die("Cannot open existing pack file '%s'", pack_name);
+	if (open_pack_index(p))
+		die("Cannot open existing pack idx file for '%s'", pack_name);
+
+	/* Read the attributes from the existing idx file */
+	opts->version = p->index_version;
+
+	/*
+	 * Get rid of the idx file as we do not need it anymore.
+	 * NEEDSWORK: extract this bit from free_pack_by_name() in
+	 * sha1_file.c, perhaps?  It shouldn't matter very much as we
+	 * know we haven't installed this pack (hence we never have
+	 * read anything from it).
+	 */
+	close_pack_index(p);
+	free(p);
+}
+
 int cmd_index_pack(int argc, const char **argv, const char *prefix)
 {
-	int i, fix_thin_pack = 0;
+	int i, fix_thin_pack = 0, verify = 0;
 	const char *curr_pack, *curr_index;
 	const char *index_name = NULL, *pack_name = NULL;
 	const char *keep_name = NULL, *keep_msg = NULL;
@@ -922,6 +945,8 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 				fix_thin_pack = 1;
 			} else if (!strcmp(arg, "--strict")) {
 				strict = 1;
+			} else if (!strcmp(arg, "--verify")) {
+				verify = 1;
 			} else if (!strcmp(arg, "--keep")) {
 				keep_msg = "";
 			} else if (!prefixcmp(arg, "--keep=")) {
@@ -988,6 +1013,12 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 		strcpy(keep_name_buf + len - 5, ".keep");
 		keep_name = keep_name_buf;
 	}
+	if (verify) {
+		if (!index_name)
+			die("--verify with no packfile name given");
+		read_idx_option(&opts, index_name);
+		opts.flags |= WRITE_IDX_VERIFY;
+	}
 
 	curr_pack = open_pack_file(pack_name);
 	parse_pack_header();
@@ -1038,10 +1069,13 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 	curr_index = write_idx_file(index_name, idx_objects, nr_objects, &opts, pack_sha1);
 	free(idx_objects);
 
-	final(pack_name, curr_pack,
-		index_name, curr_index,
-		keep_name, keep_msg,
-		pack_sha1);
+	if (!verify)
+		final(pack_name, curr_pack,
+		      index_name, curr_index,
+		      keep_name, keep_msg,
+		      pack_sha1);
+	else
+		close(input_fd);
 	free(objects);
 	free(index_name_buf);
 	free(keep_name_buf);

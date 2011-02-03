@@ -35,6 +35,10 @@ struct pack_header {
 #define PACK_IDX_SIGNATURE 0xff744f63	/* "\377tOc" */
 
 struct pack_idx_option {
+	unsigned flags;
+	/* flag bits */
+#define WRITE_IDX_VERIFY 01
+
 	uint32_t version;
 	uint32_t off32_limit;
 };
