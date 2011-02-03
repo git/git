@@ -44,7 +44,11 @@ static const char **commit_argv;
 static int allow_rerere_auto;
 
 static const char *me;
+
+/* Merge strategy. */
 static const char *strategy;
+static const char **xopts;
+static size_t xopts_nr, xopts_alloc;
 
 #define GIT_REFLOG_ACTION "GIT_REFLOG_ACTION"
 
@@ -53,6 +57,17 @@ static char *get_encoding(const char *message);
 static const char * const *revert_or_cherry_pick_usage(void)
 {
 	return action == REVERT ? revert_usage : cherry_pick_usage;
+}
+
+static int option_parse_x(const struct option *opt,
+			  const char *arg, int unset)
+{
+	if (unset)
+		return 0;
+
+	ALLOC_GROW(xopts, xopts_nr + 1, xopts_alloc);
+	xopts[xopts_nr++] = xstrdup(arg);
+	return 0;
 }
 
 static void parse_args(int argc, const char **argv)
@@ -67,6 +82,8 @@ static void parse_args(int argc, const char **argv)
 		OPT_INTEGER('m', "mainline", &mainline, "parent number"),
 		OPT_RERERE_AUTOUPDATE(&allow_rerere_auto),
 		OPT_STRING(0, "strategy", &strategy, "strategy", "merge strategy"),
+		OPT_CALLBACK('X', "strategy-option", &xopts, "option",
+			"option for merge strategy", option_parse_x),
 		OPT_END(),
 		OPT_END(),
 		OPT_END(),
@@ -311,18 +328,13 @@ static int do_recursive_merge(struct commit *base, struct commit *next,
 	struct merge_options o;
 	struct tree *result, *next_tree, *base_tree, *head_tree;
 	int clean, index_fd;
+	const char **xopt;
 	static struct lock_file index_lock;
 
 	index_fd = hold_locked_index(&index_lock, 1);
 
 	read_cache();
 
-	/*
-	 * NEEDSWORK: cherry-picking between branches with
-	 * different end-of-line normalization is a pain;
-	 * plumb in an option to set o.renormalize?
-	 * (or better: arbitrary -X options)
-	 */
 	init_merge_options(&o);
 	o.ancestor = base ? base_label : "(empty tree)";
 	o.branch1 = "HEAD";
@@ -331,6 +343,9 @@ static int do_recursive_merge(struct commit *base, struct commit *next,
 	head_tree = parse_tree_indirect(head);
 	next_tree = next ? next->tree : empty_tree();
 	base_tree = base ? base->tree : empty_tree();
+
+	for (xopt = xopts; xopt != xopts + xopts_nr; xopt++)
+		parse_merge_opt(&o, *xopt);
 
 	clean = merge_trees(&o,
 			    head_tree,
@@ -503,7 +518,7 @@ static int do_pick_commit(void)
 
 		commit_list_insert(base, &common);
 		commit_list_insert(next, &remotes);
-		res = try_merge_command(strategy, common,
+		res = try_merge_command(strategy, xopts_nr, xopts, common,
 					sha1_to_hex(head), remotes);
 		free_commit_list(common);
 		free_commit_list(remotes);

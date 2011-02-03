@@ -582,7 +582,8 @@ static void write_tree_trivial(unsigned char *sha1)
 		die("git write-tree failed to write a tree");
 }
 
-int try_merge_command(const char *strategy, struct commit_list *common,
+int try_merge_command(const char *strategy, size_t xopts_nr,
+		      const char **xopts, struct commit_list *common,
 		      const char *head_arg, struct commit_list *remotes)
 {
 	const char **args;
@@ -680,7 +681,8 @@ static int try_merge_strategy(const char *strategy, struct commit_list *common,
 		rollback_lock_file(lock);
 		return clean ? 0 : 1;
 	} else {
-		return try_merge_command(strategy, common, head_arg, remoteheads);
+		return try_merge_command(strategy, xopts_nr, xopts,
+						common, head_arg, remoteheads);
 	}
 }
 
