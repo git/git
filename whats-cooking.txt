@@ -1,29 +1,18 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jan 2011, #06; Sun, 30)
-X-master-at: 7ed863a85a6ce2c4ac4476848310b8f917ab41f9
-X-next-at: 705f25818b894adc974363c5f334dc99cf97c83f
+Subject: What's cooking in git.git (Feb 2011, #01; Thu, 3)
+X-master-at: 597a63054241c122515c93cbce45bc44eb231f18
+X-next-at: ccfc03dd6521ffd2cbd803a18b12c204fd5e54d0
 
-What's cooking in git.git (Jan 2011, #06; Sun, 30)
+What's cooking in git.git (Feb 2011, #01; Thu, 3)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' while commits prefixed with '+' are in 'next'.
 
-1.7.4 is out. I'd like to stop and calm the tree down for a few days
-so that we can catch any brown-paper-bag bugs before moving things
-forward, and then open the floodgate for the next cycle, which I am
-inclined to designate as "We would have done these differently if we
-were creating git from scratch with the experience we have and wisdom
-we have gained" cycle, allowing minor backward incompatibilities,
-somewhat like 1.6.0 but not so drastic.  The result would probably
-be called 1.8.0--the details in a separate message.
-
---------------------------------------------------
-[New Topics]
-
-* jc/fsck-fixes (2011-01-26) 2 commits
- - fsck: do not give up too early in fsck_dir()
- - fsck: drop unused parameter from traverse_one_object()
+The tip of 'next' has been rewound, as 1.7.4 is now out.  A few topics
+that were merged to 'next' during 1.7.4 pre-release freeze period have
+been kicked back to 'pu' to make sure I didn't make silly mistakes while
+rebasing them on top of 1.7.4 to reduce future merge conflicts.
 
 --------------------------------------------------
 [Stalled]
@@ -130,86 +119,104 @@ Will be rerolled (Martin, Jan 28).
 --------------------------------------------------
 [Cooking]
 
-* jn/unpack-lstat-failure-report (2011-01-12) 2 commits
-  (merged to 'next' on 2011-01-24 at 1245180)
- + unpack-trees: handle lstat failure for existing file
- + unpack-trees: handle lstat failure for existing directory
-
-* rr/fi-import-marks-if-exists (2011-01-15) 1 commit
- - fast-import: Introduce --import-marks-if-exists
-
-Looked reasonable.
-
-* tr/diff-words-test (2011-01-18) 4 commits
- - t4034 (diff --word-diff): add a minimum Perl drier test vector
- - t4034 (diff --word-diff): style suggestions
- - userdiff: simplify word-diff safeguard
- - t4034: bulk verify builtin word regex sanity
-
-I thought this was Ok; further comments, anybody?
-
-* ef/alias-via-run-command (2011-01-07) 1 commit
-  (merged to 'next' on 2011-01-06 at 1fbd4a0)
- + alias: use run_command api to execute aliases
-
-* uk/checkout-ambiguous-ref (2011-01-11) 1 commit
-  (merged to 'next' on 2011-01-11 at 2aa30de)
- + checkout: fix bug with ambiguous refs
-
-* cb/setup (2010-12-27) 1 commit
-  (merged to 'next' on 2011-01-05 at 790b288)
- + setup: translate symlinks in filename when using absolute paths
-
-* ae/better-template-failure-report (2010-12-18) 1 commit
-  (merged to 'next' on 2011-01-05 at d3f9142)
- + Improve error messages when temporary file creation fails
-
-* jc/unpack-trees (2010-12-22) 2 commits
- - unpack_trees(): skip trees that are the same in all input
- - unpack-trees.c: cosmetic fix
-
-* jn/cherry-pick-strategy-option (2010-12-10) 1 commit
-  (merged to 'next' on 2011-01-05 at 3ccc590)
- + cherry-pick/revert: add support for -X/--strategy-option
-
-* nd/struct-pathspec (2010-12-15) 21 commits
-  (merged to 'next' on 2011-01-24 at 08f1774)
- + t7810: overlapping pathspecs and depth limit
- + grep: drop pathspec_matches() in favor of tree_entry_interesting()
- + grep: use writable strbuf from caller for grep_tree()
- + grep: use match_pathspec_depth() for cache/worktree grepping
- + grep: convert to use struct pathspec
- + Convert ce_path_match() to use match_pathspec_depth()
- + Convert ce_path_match() to use struct pathspec
- + struct rev_info: convert prune_data to struct pathspec
- + pathspec: add match_pathspec_depth()
- + tree_entry_interesting(): optimize wildcard matching when base is matched
- + tree_entry_interesting(): support wildcard matching
- + tree_entry_interesting(): fix depth limit with overlapping pathspecs
- + tree_entry_interesting(): support depth limit
- + tree_entry_interesting(): refactor into separate smaller functions
- + diff-tree: convert base+baselen to writable strbuf
- + glossary: define pathspec
- + Move tree_entry_interesting() to tree-walk.c and export it
- + tree_entry_interesting(): remove dependency on struct diff_options
- + Convert struct diff_options to use struct pathspec
- + diff-no-index: use diff_tree_setup_paths()
- + Add struct pathspec
+* nd/struct-pathspec (2011-01-31) 22 commits
+ - t6004: add pathspec globbing test for log family
+ - t7810: overlapping pathspecs and depth limit
+ - grep: drop pathspec_matches() in favor of tree_entry_interesting()
+ - grep: use writable strbuf from caller for grep_tree()
+ - grep: use match_pathspec_depth() for cache/worktree grepping
+ - grep: convert to use struct pathspec
+ - Convert ce_path_match() to use match_pathspec_depth()
+ - Convert ce_path_match() to use struct pathspec
+ - struct rev_info: convert prune_data to struct pathspec
+ - pathspec: add match_pathspec_depth()
+ - tree_entry_interesting(): optimize wildcard matching when base is matched
+ - tree_entry_interesting(): support wildcard matching
+ - tree_entry_interesting(): fix depth limit with overlapping pathspecs
+ - tree_entry_interesting(): support depth limit
+ - tree_entry_interesting(): refactor into separate smaller functions
+ - diff-tree: convert base+baselen to writable strbuf
+ - glossary: define pathspec
+ - Move tree_entry_interesting() to tree-walk.c and export it
+ - tree_entry_interesting(): remove dependency on struct diff_options
+ - Convert struct diff_options to use struct pathspec
+ - diff-no-index: use diff_tree_setup_paths()
+ - Add struct pathspec
  (this branch is used by en/object-list-with-pathspec.)
 
 * en/object-list-with-pathspec (2010-09-20) 2 commits
-  (merged to 'next' on 2011-01-24 at 134f65c)
- + Add testcases showing how pathspecs are handled with rev-list --objects
- + Make rev-list --objects work together with pathspecs
+ - Add testcases showing how pathspecs are handled with rev-list --objects
+ - Make rev-list --objects work together with pathspecs
  (this branch uses nd/struct-pathspec.)
 
-I've been toying with the above two topics and am reasonably happy.
-I suspect that there could be (and probably need to be) further
-consolidation of the two remaining pathspec API, but this seems to
-be already usable.
+The above two were rebased on 1.7.4; I think the result is correct, but
+extra sets of eyeballs are always appreciated.
 
 * tr/merge-unborn-clobber (2010-08-22) 1 commit
- - Exhibit merge bug that clobbers index&WT
+  (merged to 'next' on 2011-02-03 at ccfc03d)
+ + Exhibit merge bug that clobbers index&WT
+
+* jc/unpack-trees (2010-12-22) 2 commits
+  (merged to 'next' on 2011-02-03 at 5bd48f8)
+ + unpack_trees(): skip trees that are the same in all input
+ + unpack-trees.c: cosmetic fix
+
+* jc/fsck-fixes (2011-01-26) 2 commits
+  (merged to 'next' on 2011-02-03 at 98e1c63)
+ + fsck: do not give up too early in fsck_dir()
+ + fsck: drop unused parameter from traverse_one_object()
+
+* tr/diff-words-test (2011-01-18) 4 commits
+  (merged to 'next' on 2011-02-03 at d346665)
+ + t4034 (diff --word-diff): add a minimum Perl drier test vector
+ + t4034 (diff --word-diff): style suggestions
+ + userdiff: simplify word-diff safeguard
+ + t4034: bulk verify builtin word regex sanity
+
+I thought this was Ok; further comments, anybody?
+
+* rr/fi-import-marks-if-exists (2011-01-15) 1 commit
+  (merged to 'next' on 2011-02-03 at 8c9d4ce)
+ + fast-import: Introduce --import-marks-if-exists
+
+Looked reasonable.
+
+* jn/unpack-lstat-failure-report (2011-01-12) 2 commits
+  (merged to 'next' on 2011-02-03 at 76586d2)
+ + unpack-trees: handle lstat failure for existing file
+ + unpack-trees: handle lstat failure for existing directory
+
+Looked reasonable.
+
+* ef/alias-via-run-command (2011-01-07) 1 commit
+  (merged to 'next' on 2011-02-03 at 4ce47ce)
+ + alias: use run_command api to execute aliases
+
+Will merge to 'master' shortly.
+
+* uk/checkout-ambiguous-ref (2011-01-11) 1 commit
+  (merged to 'next' on 2011-02-03 at 9044724)
+ + checkout: fix bug with ambiguous refs
+
+Will merge to 'master' shortly.
+
+* cb/setup (2010-12-27) 1 commit
+  (merged to 'next' on 2011-02-03 at 073980f)
+ + setup: translate symlinks in filename when using absolute paths
+
+Will merge to 'master' shortly.
+
+* ae/better-template-failure-report (2010-12-18) 1 commit
+  (merged to 'next' on 2011-02-03 at 3b269c9)
+ + Improve error messages when temporary file creation fails
+
+Will merge to 'master' shortly.
+
+* jn/cherry-pick-strategy-option (2010-12-10) 1 commit
+  (merged to 'next' on 2011-02-03 at 1c10f16)
+ + cherry-pick/revert: add support for -X/--strategy-option
+
+Will merge to 'master' shortly.
 
 * ab/i18n (2010-10-07) 161 commits
  - po/de.po: complete German translation
