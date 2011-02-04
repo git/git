@@ -194,6 +194,7 @@ fail_pipe:
 	}
 
 	trace_argv_printf(cmd->argv, "trace: run_command:");
+	fflush(NULL);
 
 #ifndef WIN32
 {
@@ -201,7 +202,6 @@ fail_pipe:
 	if (pipe(notify_pipe))
 		notify_pipe[0] = notify_pipe[1] = -1;
 
-	fflush(NULL);
 	cmd->pid = fork();
 	if (!cmd->pid) {
 		/*
