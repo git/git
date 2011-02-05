@@ -2020,8 +2020,16 @@ static int sha1_loose_object_info(const unsigned char *sha1, unsigned long *size
 
 int sha1_object_info(const unsigned char *sha1, unsigned long *sizep)
 {
+	struct cached_object *co;
 	struct pack_entry e;
 	int status;
+
+	co = find_cached_object(sha1);
+	if (co) {
+		if (sizep)
+			*sizep = co->size;
+		return co->type;
+	}
 
 	if (!find_pack_entry(sha1, &e)) {
 		/* Most likely it's a loose object. */
