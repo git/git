@@ -245,10 +245,10 @@ int unregister_shallow(const unsigned char *sha1)
 	return 0;
 }
 
-int parse_commit_buffer(struct commit *item, void *buffer, unsigned long size)
+int parse_commit_buffer(struct commit *item, const void *buffer, unsigned long size)
 {
-	char *tail = buffer;
-	char *bufptr = buffer;
+	const char *tail = buffer;
+	const char *bufptr = buffer;
 	unsigned char parent[20];
 	struct commit_list **pptr;
 	struct commit_graft *graft;

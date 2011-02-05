@@ -56,7 +56,7 @@ static unsigned long parse_tag_date(const char *buf, const char *tail)
 	return strtoul(dateptr, NULL, 10);
 }
 
-int parse_tag_buffer(struct tag *item, void *data, unsigned long size)
+int parse_tag_buffer(struct tag *item, const void *data, unsigned long size)
 {
 	unsigned char sha1[20];
 	char type[20];
