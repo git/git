@@ -37,6 +37,41 @@ const unsigned char null_sha1[20];
 
 static int git_open_noatime(const char *name, struct packed_git *p);
 
+/*
+ * This is meant to hold a *small* number of objects that you would
+ * want read_sha1_file() to be able to return, but yet you do not want
+ * to write them into the object store (e.g. a browse-only
+ * application).
+ */
+static struct cached_object {
+	unsigned char sha1[20];
+	enum object_type type;
+	void *buf;
+	unsigned long size;
+} *cached_objects;
+static int cached_object_nr, cached_object_alloc;
+
+static struct cached_object empty_tree = {
+	EMPTY_TREE_SHA1_BIN,
+	OBJ_TREE,
+	"",
+	0
+};
+
+static struct cached_object *find_cached_object(const unsigned char *sha1)
+{
+	int i;
+	struct cached_object *co = cached_objects;
+
+	for (i = 0; i < cached_object_nr; i++, co++) {
+		if (!hashcmp(co->sha1, sha1))
+			return co;
+	}
+	if (!hashcmp(sha1, empty_tree.sha1))
+		return &empty_tree;
+	return NULL;
+}
+
 int safe_create_leading_directories(char *path)
 {
 	char *pos = path + offset_1st_component(path);
@@ -2031,41 +2066,6 @@ static void *read_packed_sha1(const unsigned char *sha1,
 		data = read_object(sha1, type, size);
 	}
 	return data;
-}
-
-/*
- * This is meant to hold a *small* number of objects that you would
- * want read_sha1_file() to be able to return, but yet you do not want
- * to write them into the object store (e.g. a browse-only
- * application).
- */
-static struct cached_object {
-	unsigned char sha1[20];
-	enum object_type type;
-	void *buf;
-	unsigned long size;
-} *cached_objects;
-static int cached_object_nr, cached_object_alloc;
-
-static struct cached_object empty_tree = {
-	EMPTY_TREE_SHA1_BIN,
-	OBJ_TREE,
-	"",
-	0
-};
-
-static struct cached_object *find_cached_object(const unsigned char *sha1)
-{
-	int i;
-	struct cached_object *co = cached_objects;
-
-	for (i = 0; i < cached_object_nr; i++, co++) {
-		if (!hashcmp(co->sha1, sha1))
-			return co;
-	}
-	if (!hashcmp(sha1, empty_tree.sha1))
-		return &empty_tree;
-	return NULL;
 }
 
 int pretend_sha1_file(void *buf, unsigned long len, enum object_type type,
