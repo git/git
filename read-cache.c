@@ -92,7 +92,7 @@ static int ce_compare_data(struct cache_entry *ce, struct stat *st)
 
 	if (fd >= 0) {
 		unsigned char sha1[20];
-		if (!index_fd(sha1, fd, st, 0, OBJ_BLOB, ce->name))
+		if (!index_fd(sha1, fd, st, 0, OBJ_BLOB, ce->name, 0))
 			match = hashcmp(sha1, ce->sha1);
 		/* index_fd() closed the file descriptor already */
 	}

@@ -501,7 +501,7 @@ extern int ie_match_stat(const struct index_state *, struct cache_entry *, struc
 extern int ie_modified(const struct index_state *, struct cache_entry *, struct stat *, unsigned int);
 
 extern int ce_path_match(const struct cache_entry *ce, const char **pathspec);
-extern int index_fd(unsigned char *sha1, int fd, struct stat *st, int write_object, enum object_type type, const char *path);
+extern int index_fd(unsigned char *sha1, int fd, struct stat *st, int write_object, enum object_type type, const char *path, int format_check);
 extern int index_path(unsigned char *sha1, const char *path, struct stat *st, int write_object);
 extern void fill_stat_cache_info(struct cache_entry *ce, struct stat *st);
 

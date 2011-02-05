@@ -13,6 +13,7 @@
 #include "commit.h"
 #include "tag.h"
 #include "tree.h"
+#include "tree-walk.h"
 #include "refs.h"
 #include "pack-revindex.h"
 #include "sha1-lookup.h"
@@ -2471,8 +2472,37 @@ int has_sha1_file(const unsigned char *sha1)
 	return has_loose_object(sha1);
 }
 
+static void check_tree(const void *buf, size_t size)
+{
+	struct tree_desc desc;
+	struct name_entry entry;
+
+	init_tree_desc(&desc, buf, size);
+	while (tree_entry(&desc, &entry))
+		/* do nothing
+		 * tree_entry() will die() on malformed entries */
+		;
+}
+
+static void check_commit(const void *buf, size_t size)
+{
+	struct commit c;
+	memset(&c, 0, sizeof(c));
+	if (parse_commit_buffer(&c, buf, size))
+		die("corrupt commit");
+}
+
+static void check_tag(const void *buf, size_t size)
+{
+	struct tag t;
+	memset(&t, 0, sizeof(t));
+	if (parse_tag_buffer(&t, buf, size))
+		die("corrupt tag");
+}
+
 static int index_mem(unsigned char *sha1, void *buf, size_t size,
-		     int write_object, enum object_type type, const char *path)
+		     int write_object, enum object_type type,
+		     const char *path, int format_check)
 {
 	int ret, re_allocated = 0;
 
@@ -2490,6 +2520,14 @@ static int index_mem(unsigned char *sha1, void *buf, size_t size,
 			re_allocated = 1;
 		}
 	}
+	if (format_check) {
+		if (type == OBJ_TREE)
+			check_tree(buf, size);
+		if (type == OBJ_COMMIT)
+			check_commit(buf, size);
+		if (type == OBJ_TAG)
+			check_tag(buf, size);
+	}
 
 	if (write_object)
 		ret = write_sha1_file(buf, size, typename(type), sha1);
@@ -2503,7 +2541,7 @@ static int index_mem(unsigned char *sha1, void *buf, size_t size,
 #define SMALL_FILE_SIZE (32*1024)
 
 int index_fd(unsigned char *sha1, int fd, struct stat *st, int write_object,
-	     enum object_type type, const char *path)
+	     enum object_type type, const char *path, int format_check)
 {
 	int ret;
 	size_t size = xsize_t(st->st_size);
@@ -2512,23 +2550,25 @@ int index_fd(unsigned char *sha1, int fd, struct stat *st, int write_object,
 		struct strbuf sbuf = STRBUF_INIT;
 		if (strbuf_read(&sbuf, fd, 4096) >= 0)
 			ret = index_mem(sha1, sbuf.buf, sbuf.len, write_object,
-					type, path);
+					type, path, format_check);
 		else
 			ret = -1;
 		strbuf_release(&sbuf);
 	} else if (!size) {
-		ret = index_mem(sha1, NULL, size, write_object, type, path);
+		ret = index_mem(sha1, NULL, size, write_object, type, path,
+				format_check);
 	} else if (size <= SMALL_FILE_SIZE) {
 		char *buf = xmalloc(size);
 		if (size == read_in_full(fd, buf, size))
 			ret = index_mem(sha1, buf, size, write_object, type,
-					path);
+					path, format_check);
 		else
 			ret = error("short read %s", strerror(errno));
 		free(buf);
 	} else {
 		void *buf = xmmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
-		ret = index_mem(sha1, buf, size, write_object, type, path);
+		ret = index_mem(sha1, buf, size, write_object, type, path,
+				format_check);
 		munmap(buf, size);
 	}
 	close(fd);
@@ -2546,7 +2586,7 @@ int index_path(unsigned char *sha1, const char *path, struct stat *st, int write
 		if (fd < 0)
 			return error("open(\"%s\"): %s", path,
 				     strerror(errno));
-		if (index_fd(sha1, fd, st, write_object, OBJ_BLOB, path) < 0)
+		if (index_fd(sha1, fd, st, write_object, OBJ_BLOB, path, 0) < 0)
 			return error("%s: failed to insert into database",
 				     path);
 		break;
