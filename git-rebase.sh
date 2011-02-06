@@ -511,9 +511,9 @@ case "$#" in
 esac
 orig_head=$branch
 
-test "$type" = interactive && run_interactive_rebase "$@"
-
 require_clean_work_tree "rebase" "Please commit or stash them."
+
+test "$type" = interactive && run_interactive_rebase "$@"
 
 # Now we are rebasing commits $upstream..$branch (or with --root,
 # everything leading up to $branch) on top of $onto

@@ -753,8 +753,6 @@ esac
 git var GIT_COMMITTER_IDENT >/dev/null ||
 	die "You need to set your committer info first"
 
-require_clean_work_tree "rebase" "Please commit or stash them."
-
 run_pre_rebase_hook "$upstream_arg" "$@"
 
 comment_for_reflog start
