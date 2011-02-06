@@ -583,7 +583,6 @@ skip_unnecessary_picks () {
 }
 
 get_saved_options () {
-	test -d "$rewritten" && preserve_merges=t
 	test -f "$state_dir"/rebase-root && rebase_root=t
 }
 
