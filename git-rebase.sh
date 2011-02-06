@@ -74,6 +74,20 @@ read_basic_state () {
 	GIT_QUIET=$(cat "$state_dir"/quiet)
 }
 
+output () {
+	case "$verbose" in
+	'')
+		output=$("$@" 2>&1 )
+		status=$?
+		test $status != 0 && printf "%s\n" "$output"
+		return $status
+		;;
+	*)
+		"$@"
+		;;
+	esac
+}
+
 move_to_original_branch () {
 	case "$head_name" in
 	refs/*)
@@ -263,7 +277,7 @@ continue)
 	run_specific_rebase
 	;;
 skip)
-	git reset --hard HEAD || exit $?
+	output git reset --hard HEAD || exit $?
 	read_basic_state
 	run_specific_rebase
 	;;
@@ -276,7 +290,7 @@ abort)
 		die "Could not move back to $head_name"
 		;;
 	esac
-	git reset --hard $orig_head
+	output git reset --hard $orig_head
 	rm -r "$state_dir"
 	exit
 	;;

@@ -86,20 +86,6 @@ warn () {
 	printf '%s\n' "$*" >&2
 }
 
-output () {
-	case "$verbose" in
-	'')
-		output=$("$@" 2>&1 )
-		status=$?
-		test $status != 0 && printf "%s\n" "$output"
-		return $status
-		;;
-	*)
-		"$@"
-		;;
-	esac
-}
-
 # Output the commit message for the specified commit.
 commit_message () {
 	git cat-file commit "$1" | sed "1,/^$/d"
