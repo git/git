@@ -792,11 +792,11 @@ else
 	test -z "$onto" &&
 		die "You must specify --onto when using --root"
 fi
+require_clean_work_tree "rebase" "Please commit or stash them."
+
 run_pre_rebase_hook "$upstream_arg" "$@"
 
 comment_for_reflog start
-
-require_clean_work_tree "rebase" "Please commit or stash them."
 
 if test ! -z "$1"
 then

@@ -433,8 +433,6 @@ fi
 
 test "$type" = interactive && run_interactive_rebase "$@"
 
-require_clean_work_tree "rebase" "Please commit or stash them."
-
 if test -z "$rebase_root"
 then
 	# The upstream head must be given.  Make sure it is valid.
@@ -476,9 +474,6 @@ case "$onto_name" in
 	;;
 esac
 
-# If a hook exists, give it a chance to interrupt
-run_pre_rebase_hook "$upstream_arg" "$@"
-
 # If the branch to rebase is given, that is the branch we will rebase
 # $branch_name -- branch being rebased, or HEAD (already detached)
 # $orig_head -- commit object name of tip of the branch before rebasing
@@ -517,6 +512,8 @@ case "$#" in
 esac
 orig_head=$branch
 
+require_clean_work_tree "rebase" "Please commit or stash them."
+
 # Now we are rebasing commits $upstream..$branch (or with --root,
 # everything leading up to $branch) on top of $onto
 
@@ -537,6 +534,9 @@ then
 		say "Current branch $branch_name is up to date, rebase forced."
 	fi
 fi
+
+# If a hook exists, give it a chance to interrupt
+run_pre_rebase_hook "$upstream_arg" "$@"
 
 # Detach HEAD and reset the tree
 say "First, rewinding head to replay your work on top of it..."
