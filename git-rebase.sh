@@ -64,6 +64,9 @@ type=
 state_dir=
 # One of {'', continue, skip, abort}, as parsed from command line
 action=
+preserve_merges=
+autosquash=
+test "$(git config --bool rebase.autosquash)" = "true" && autosquash=t
 
 read_state () {
 	if test "$type" = merge
@@ -176,27 +179,12 @@ finish_rb_merge () {
 	say All done.
 }
 
-is_interactive () {
-	while test $# != 0
-	do
-		case "$1" in
-			-i|--interactive)
-				interactive_rebase=explicit
-				break
-			;;
-			-p|--preserve-merges)
-				interactive_rebase=implied
-			;;
-		esac
-		shift
-	done
-
+run_interactive_rebase () {
 	if [ "$interactive_rebase" = implied ]; then
 		GIT_EDITOR=:
 		export GIT_EDITOR
 	fi
-
-	test -n "$interactive_rebase" || test -f "$merge_dir"/interactive
+	. git-rebase--interactive "$@"
 }
 
 run_pre_rebase_hook () {
@@ -210,8 +198,6 @@ run_pre_rebase_hook () {
 
 test -f "$apply_dir"/applying &&
 	die 'It looks like git-am is in progress. Cannot rebase.'
-
-is_interactive "$@" && exec git-rebase--interactive "$@"
 
 if test -d "$apply_dir"
 then
@@ -248,6 +234,19 @@ do
 		test 2 -le "$#" || usage
 		onto="$2"
 		shift
+		;;
+	-i|--interactive)
+		interactive_rebase=explicit
+		;;
+	-p|--preserve-merges)
+		preserve_merges=t
+		test -z "$interactive_rebase" && interactive_rebase=implied
+		;;
+	--autosquash)
+		autosquash=t
+		;;
+	--no-autosquash)
+		autosquash=
 		;;
 	-M|-m|--m|--me|--mer|--merg|--merge)
 		do_merge=t
@@ -339,7 +338,11 @@ do
 done
 test $# -gt 2 && usage
 
-test -n "$action" && test -z "$in_progress" && die "No rebase in progress?"
+if test -n "$action"
+then
+	test -z "$in_progress" && die "No rebase in progress?"
+	test "$type" = interactive && run_interactive_rebase
+fi
 
 case "$action" in
 continue)
@@ -414,6 +417,21 @@ valuable there.'
 fi
 
 test $# -eq 0 && test -z "$rebase_root" && usage
+
+if test -n "$interactive_rebase"
+then
+	type=interactive
+	state_dir="$merge_dir"
+elif test -n "$do_merge"
+then
+	type=merge
+	state_dir="$merge_dir"
+else
+	type=am
+	state_dir="$apply_dir"
+fi
+
+test "$type" = interactive && run_interactive_rebase "$@"
 
 require_clean_work_tree "rebase" "Please commit or stash them."
 

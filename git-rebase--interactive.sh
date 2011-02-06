@@ -10,31 +10,7 @@
 # The original idea comes from Eric W. Biederman, in
 # http://article.gmane.org/gmane.comp.version-control.git/22407
 
-OPTIONS_KEEPDASHDASH=
-OPTIONS_SPEC="\
-git-rebase [-i] [options] [--] <upstream> [<branch>]
-git-rebase [-i] (--continue | --abort | --skip)
---
- Available options are
-v,verbose          display a diffstat of what changed upstream
-onto=              rebase onto given branch instead of upstream
-p,preserve-merges  try to recreate merges instead of ignoring them
-s,strategy=        use the given merge strategy
-no-ff              cherry-pick all commits, even if unchanged
-m,merge            always used (no-op)
-i,interactive      always used (no-op)
- Actions:
-continue           continue rebasing process
-abort              abort rebasing process and restore original branch
-skip               skip current patch and continue rebasing process
-no-verify          override pre-rebase hook from stopping the operation
-verify             allow pre-rebase hook to run
-root               rebase all reachable commmits up to the root(s)
-autosquash         move commits that begin with squash!/fixup! under -i
-"
-
 . git-sh-setup
-require_work_tree
 
 dotest="$GIT_DIR/rebase-merge"
 
@@ -104,16 +80,6 @@ amend="$dotest"/amend
 # e.g. because they are waiting for a 'squash' command.
 rewritten_list="$dotest"/rewritten-list
 rewritten_pending="$dotest"/rewritten-pending
-
-preserve_merges=
-strategy=
-onto=
-verbose=
-ok_to_skip_pre_rebase=
-rebase_root=
-autosquash=
-test "$(git config --bool rebase.autosquash)" = "true" && autosquash=t
-force_rebase=
 
 GIT_CHERRY_PICK_HELP="\
 hint: after resolving the conflicts, mark the corrected paths
@@ -648,15 +614,6 @@ skip_unnecessary_picks () {
 	die "Could not skip unnecessary pick commands"
 }
 
-# check if no other options are set
-is_standalone () {
-	test $# -eq 2 -a "$2" = '--' &&
-	test -z "$onto" &&
-	test -z "$preserve_merges" &&
-	test -z "$strategy" &&
-	test -z "$verbose"
-}
-
 get_saved_options () {
 	test -d "$rewritten" && preserve_merges=t
 	test -f "$dotest"/strategy && strategy="$(cat "$dotest"/strategy)"
@@ -744,134 +701,77 @@ parse_onto () {
 	git rev-parse --verify "$1^0"
 }
 
-while test $# != 0
-do
-	case "$1" in
-	--no-verify)
-		ok_to_skip_pre_rebase=yes
-		;;
-	--verify)
-		ok_to_skip_pre_rebase=
-		;;
-	--continue)
-		is_standalone "$@" || usage
-		get_saved_options
-		comment_for_reflog continue
+case "$action" in
+continue)
+	get_saved_options
+	comment_for_reflog continue
 
-		test -d "$dotest" || die "No interactive rebase running"
+	test -d "$dotest" || die "No interactive rebase running"
 
-		# Sanity check
-		git rev-parse --verify HEAD >/dev/null ||
-			die "Cannot read HEAD"
-		git update-index --ignore-submodules --refresh &&
-			git diff-files --quiet --ignore-submodules ||
-			die "Working tree is dirty"
+	# Sanity check
+	git rev-parse --verify HEAD >/dev/null ||
+		die "Cannot read HEAD"
+	git update-index --ignore-submodules --refresh &&
+		git diff-files --quiet --ignore-submodules ||
+		die "Working tree is dirty"
 
-		# do we have anything to commit?
-		if git diff-index --cached --quiet --ignore-submodules HEAD --
+	# do we have anything to commit?
+	if git diff-index --cached --quiet --ignore-submodules HEAD --
+	then
+		: Nothing to commit -- skip this
+	else
+		. "$author_script" ||
+			die "Cannot find the author identity"
+		current_head=
+		if test -f "$amend"
 		then
-			: Nothing to commit -- skip this
-		else
-			. "$author_script" ||
-				die "Cannot find the author identity"
-			current_head=
-			if test -f "$amend"
-			then
-				current_head=$(git rev-parse --verify HEAD)
-				test "$current_head" = $(cat "$amend") ||
-				die "\
+			current_head=$(git rev-parse --verify HEAD)
+			test "$current_head" = $(cat "$amend") ||
+			die "\
 You have uncommitted changes in your working tree. Please, commit them
 first and then run 'git rebase --continue' again."
-				git reset --soft HEAD^ ||
-				die "Cannot rewind the HEAD"
-			fi
-			do_with_author git commit --no-verify -F "$msg" -e || {
-				test -n "$current_head" && git reset --soft $current_head
-				die "Could not commit staged changes."
-			}
+			git reset --soft HEAD^ ||
+			die "Cannot rewind the HEAD"
 		fi
+		do_with_author git commit --no-verify -F "$msg" -e || {
+			test -n "$current_head" && git reset --soft $current_head
+			die "Could not commit staged changes."
+		}
+	fi
 
-		record_in_rewritten "$(cat "$dotest"/stopped-sha)"
+	record_in_rewritten "$(cat "$dotest"/stopped-sha)"
 
-		require_clean_work_tree "rebase"
-		do_rest
-		;;
-	--abort)
-		is_standalone "$@" || usage
-		get_saved_options
-		comment_for_reflog abort
+	require_clean_work_tree "rebase"
+	do_rest
+	;;
+abort)
+	get_saved_options
+	comment_for_reflog abort
 
-		git rerere clear
-		test -d "$dotest" || die "No interactive rebase running"
+	git rerere clear
+	test -d "$dotest" || die "No interactive rebase running"
 
-		headname=$(cat "$dotest"/head-name)
-		head=$(cat "$dotest"/head)
-		case $headname in
-		refs/*)
-			git symbolic-ref HEAD $headname
-			;;
-		esac &&
-		output git reset --hard $head &&
-		rm -rf "$dotest"
-		exit
+	headname=$(cat "$dotest"/head-name)
+	head=$(cat "$dotest"/head)
+	case $headname in
+	refs/*)
+		git symbolic-ref HEAD $headname
 		;;
-	--skip)
-		is_standalone "$@" || usage
-		get_saved_options
-		comment_for_reflog skip
+	esac &&
+	output git reset --hard $head &&
+	rm -rf "$dotest"
+	exit
+	;;
+skip)
+	get_saved_options
+	comment_for_reflog skip
 
-		git rerere clear
-		test -d "$dotest" || die "No interactive rebase running"
+	git rerere clear
+	test -d "$dotest" || die "No interactive rebase running"
 
-		output git reset --hard && do_rest
-		;;
-	-s)
-		case "$#,$1" in
-		*,*=*)
-			strategy=$(expr "z$1" : 'z-[^=]*=\(.*\)') ;;
-		1,*)
-			usage ;;
-		*)
-			strategy="$2"
-			shift ;;
-		esac
-		;;
-	-m)
-		# we use merge anyway
-		;;
-	-v)
-		verbose=t
-		;;
-	-p)
-		preserve_merges=t
-		;;
-	-i)
-		# yeah, we know
-		;;
-	--no-ff)
-		force_rebase=t
-		;;
-	--root)
-		rebase_root=t
-		;;
-	--autosquash)
-		autosquash=t
-		;;
-	--no-autosquash)
-		autosquash=
-		;;
-	--onto)
-		test 2 -le "$#" || usage
-		onto="$2"
-		shift
-		;;
-	--)
-		shift
-		break
-		;;
-	esac
-	shift
-done
+	output git reset --hard && do_rest
+	;;
+esac
 
 if test -n "$onto"
 then
