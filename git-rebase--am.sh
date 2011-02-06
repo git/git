@@ -7,12 +7,12 @@
 
 case "$action" in
 continue)
-	git am --resolved --3way --resolvemsg="$resolvemsg" &&
+	git am --resolved --resolvemsg="$resolvemsg" &&
 	move_to_original_branch
 	exit
 	;;
 skip)
-	git am --skip -3 --resolvemsg="$resolvemsg" &&
+	git am --skip --resolvemsg="$resolvemsg" &&
 	move_to_original_branch
 	exit
 	;;
