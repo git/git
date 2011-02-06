@@ -127,10 +127,7 @@ esac
 
 mkdir -p "$state_dir"
 echo "$onto_name" > "$state_dir/onto_name"
-echo "$head_name" > "$state_dir/head-name"
-echo "$onto" > "$state_dir/onto"
-echo "$orig_head" > "$state_dir/orig-head"
-echo "$GIT_QUIET" > "$state_dir/quiet"
+write_basic_state
 
 msgnum=0
 for cmt in `git rev-list --reverse --no-merges "$revisions"`

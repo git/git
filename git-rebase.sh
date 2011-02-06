@@ -70,13 +70,23 @@ test "$(git config --bool rebase.autosquash)" = "true" && autosquash=t
 read_basic_state () {
 	head_name=$(cat "$state_dir"/head-name) &&
 	onto=$(cat "$state_dir"/onto) &&
-	if test "$type" = interactive
+	# We always write to orig-head, but interactive rebase used to write to
+	# head. Fall back to reading from head to cover for the case that the
+	# user upgraded git with an ongoing interactive rebase.
+	if test -f "$state_dir"/orig-head
 	then
-		orig_head=$(cat "$state_dir"/head)
-	else
 		orig_head=$(cat "$state_dir"/orig-head)
+	else
+		orig_head=$(cat "$state_dir"/head)
 	fi &&
 	GIT_QUIET=$(cat "$state_dir"/quiet)
+}
+
+write_basic_state () {
+	echo "$head_name" > "$state_dir"/head-name &&
+	echo "$onto" > "$state_dir"/onto &&
+	echo "$orig_head" > "$state_dir"/orig-head &&
+	echo "$GIT_QUIET" > "$state_dir"/quiet
 }
 
 output () {

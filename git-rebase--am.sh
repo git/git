@@ -26,9 +26,5 @@ git format-patch -k --stdout --full-index --ignore-if-in-upstream \
 git am $git_am_opt --rebasing --resolvemsg="$resolvemsg" &&
 move_to_original_branch
 ret=$?
-test 0 != $ret -a -d "$state_dir" &&
-	echo $head_name > "$state_dir/head-name" &&
-	echo $onto > "$state_dir/onto" &&
-	echo $orig_head > "$state_dir/orig-head" &&
-	echo "$GIT_QUIET" > "$state_dir/quiet"
+test 0 != $ret -a -d "$state_dir" && write_basic_state
 exit $ret

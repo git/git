@@ -707,16 +707,13 @@ orig_head=$(git rev-parse --verify HEAD) || die "No HEAD?"
 mkdir "$state_dir" || die "Could not create temporary $state_dir"
 
 : > "$state_dir"/interactive || die "Could not mark as interactive"
-echo "$head_name" > "$state_dir"/head-name
-
-echo $orig_head > "$state_dir"/head
+write_basic_state
 case "$rebase_root" in
 '')
 	rm -f "$state_dir"/rebase-root ;;
 *)
 	: >"$state_dir"/rebase-root ;;
 esac
-echo $onto > "$state_dir"/onto
 test -z "$strategy" || echo "$strategy" > "$state_dir"/strategy
 test t = "$verbose" && : > "$state_dir"/verbose
 if test t = "$preserve_merges"
