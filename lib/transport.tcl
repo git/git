@@ -135,7 +135,9 @@ proc do_push_anywhere {} {
 			-value remote \
 			-variable push_urltype
 		if {$use_ttk} {
-			ttk::combobox $w.dest.remote_m -textvariable push_remote \
+			ttk::combobox $w.dest.remote_m -state readonly \
+				-exportselection false \
+				-textvariable push_remote \
 				-values $all_remotes
 		} else {
 			eval tk_optionMenu $w.dest.remote_m push_remote $all_remotes
