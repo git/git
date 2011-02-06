@@ -61,7 +61,6 @@ read_state () {
 	if test -d "$merge_dir"
 	then
 		state_dir="$merge_dir"
-		prev_head=$(cat "$merge_dir"/prev_head) &&
 		onto_name=$(cat "$merge_dir"/onto_name) &&
 		end=$(cat "$merge_dir"/end) &&
 		msgnum=$(cat "$merge_dir"/msgnum)
@@ -75,7 +74,6 @@ read_state () {
 }
 
 continue_merge () {
-	test -n "$prev_head" || die "prev_head must be defined"
 	test -d "$merge_dir" || die "$merge_dir directory does not exist"
 
 	unmerged=$(git ls-files -u)
@@ -108,10 +106,6 @@ continue_merge () {
 	fi
 	test -z "$GIT_QUIET" &&
 	GIT_PAGER='' git log --format=%s -1 "$cmt"
-
-	prev_head=`git rev-parse HEAD^0`
-	# save the resulting commit so we can read-tree on it later
-	echo "$prev_head" > "$merge_dir/prev_head"
 
 	# onto the next patch:
 	msgnum=$(($msgnum + 1))
@@ -568,8 +562,6 @@ fi
 
 mkdir -p "$merge_dir"
 echo "$onto_name" > "$merge_dir/onto_name"
-prev_head=$orig_head
-echo "$prev_head" > "$merge_dir/prev_head"
 echo "$head_name" > "$merge_dir/head-name"
 echo "$onto" > "$merge_dir/onto"
 echo "$orig_head" > "$merge_dir/orig-head"
