@@ -706,8 +706,6 @@ continue)
 	get_saved_options
 	comment_for_reflog continue
 
-	test -d "$dotest" || die "No interactive rebase running"
-
 	# Sanity check
 	git rev-parse --verify HEAD >/dev/null ||
 		die "Cannot read HEAD"
@@ -749,7 +747,6 @@ abort)
 	comment_for_reflog abort
 
 	git rerere clear
-	test -d "$dotest" || die "No interactive rebase running"
 
 	headname=$(cat "$dotest"/head-name)
 	head=$(cat "$dotest"/head)
@@ -767,7 +764,6 @@ skip)
 	comment_for_reflog skip
 
 	git rerere clear
-	test -d "$dotest" || die "No interactive rebase running"
 
 	output git reset --hard && do_rest
 	;;
@@ -780,8 +776,6 @@ fi
 
 test -z "$rebase_root" -a $# -ge 1 -a $# -le 2 ||
 test ! -z "$rebase_root" -a $# -le 1 || usage
-test -d "$dotest" &&
-	die "Interactive rebase already started"
 
 git var GIT_COMMITTER_IDENT >/dev/null ||
 	die "You need to set your committer info first"
