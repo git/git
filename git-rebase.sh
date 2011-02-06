@@ -485,10 +485,10 @@ case "$#" in
 	switch_to="$1"
 
 	if git show-ref --verify --quiet -- "refs/heads/$1" &&
-	   branch=$(git rev-parse -q --verify "refs/heads/$1")
+	   orig_head=$(git rev-parse -q --verify "refs/heads/$1")
 	then
 		head_name="refs/heads/$1"
-	elif branch=$(git rev-parse -q --verify "$1")
+	elif orig_head=$(git rev-parse -q --verify "$1")
 	then
 		head_name="detached HEAD"
 	else
@@ -506,24 +506,23 @@ case "$#" in
 		head_name="detached HEAD"
 		branch_name=HEAD ;# detached
 	fi
-	branch=$(git rev-parse --verify "${branch_name}^0") || exit
+	orig_head=$(git rev-parse --verify "${branch_name}^0") || exit
 	;;
 esac
-orig_head=$branch
 
 require_clean_work_tree "rebase" "Please commit or stash them."
 
-# Now we are rebasing commits $upstream..$branch (or with --root,
-# everything leading up to $branch) on top of $onto
+# Now we are rebasing commits $upstream..$orig_head (or with --root,
+# everything leading up to $orig_head) on top of $onto
 
 # Check if we are already based on $onto with linear history,
 # but this should be done only when upstream and onto are the same
 # and if this is not an interactive rebase.
-mb=$(git merge-base "$onto" "$branch")
+mb=$(git merge-base "$onto" "$orig_head")
 if test "$type" != interactive && test "$upstream" = "$onto" &&
 	test "$mb" = "$onto" &&
 	# linear history?
-	! (git rev-list --parents "$onto".."$branch" | sane_grep " .* ") > /dev/null
+	! (git rev-list --parents "$onto".."$orig_head" | sane_grep " .* ") > /dev/null
 then
 	if test -z "$force_rebase"
 	then
@@ -554,11 +553,11 @@ test "$type" = interactive && run_interactive_rebase
 # Detach HEAD and reset the tree
 say "First, rewinding head to replay your work on top of it..."
 git checkout -q "$onto^0" || die "could not detach HEAD"
-git update-ref ORIG_HEAD $branch
+git update-ref ORIG_HEAD $orig_head
 
 # If the $onto is a proper descendant of the tip of the branch, then
 # we just fast-forwarded.
-if test "$mb" = "$branch"
+if test "$mb" = "$orig_head"
 then
 	say "Fast-forwarded $branch_name to $onto_name."
 	move_to_original_branch
