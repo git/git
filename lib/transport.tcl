@@ -123,6 +123,7 @@ proc do_push_anywhere {} {
 		$w.source.l insert end $h
 		if {$h eq $current_branch} {
 			$w.source.l select set end
+			$w.source.l yview end
 		}
 	}
 	pack $w.source.l -side left -fill both -expand 1
