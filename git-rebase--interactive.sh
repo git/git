@@ -585,7 +585,6 @@ skip_unnecessary_picks () {
 get_saved_options () {
 	test -d "$rewritten" && preserve_merges=t
 	test -f "$state_dir"/strategy && strategy="$(cat "$state_dir"/strategy)"
-	test -f "$state_dir"/verbose && verbose=t
 	test -f "$state_dir"/rebase-root && rebase_root=t
 }
 
@@ -715,7 +714,6 @@ case "$rebase_root" in
 	: >"$state_dir"/rebase-root ;;
 esac
 test -z "$strategy" || echo "$strategy" > "$state_dir"/strategy
-test t = "$verbose" && : > "$state_dir"/verbose
 if test t = "$preserve_merges"
 then
 	if test -z "$rebase_root"

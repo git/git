@@ -79,14 +79,16 @@ read_basic_state () {
 	else
 		orig_head=$(cat "$state_dir"/head)
 	fi &&
-	GIT_QUIET=$(cat "$state_dir"/quiet)
+	GIT_QUIET=$(cat "$state_dir"/quiet) &&
+	test -f "$state_dir"/verbose && verbose=t
 }
 
 write_basic_state () {
 	echo "$head_name" > "$state_dir"/head-name &&
 	echo "$onto" > "$state_dir"/onto &&
 	echo "$orig_head" > "$state_dir"/orig-head &&
-	echo "$GIT_QUIET" > "$state_dir"/quiet
+	echo "$GIT_QUIET" > "$state_dir"/quiet &&
+	test t = "$verbose" && : > "$state_dir"/verbose
 }
 
 output () {
