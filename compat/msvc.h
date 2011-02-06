@@ -62,7 +62,9 @@ int mingw_fstat(int fd, struct stat *buf);
 #define	NO_POSIX_ONLY_PROGRAMS
 #define	NO_ST_BLOCKS_IN_STRUCT_STAT
 #define	NO_NSEC 
+#ifndef USE_WIN32_MMAP
 #define	USE_WIN32_MMAP
+#endif
 #define	UNRELIABLE_FSTAT 
 #define	NO_REGEX
 #define	NO_CURL
