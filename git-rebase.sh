@@ -56,16 +56,19 @@ git_am_opt=
 rebase_root=
 force_rebase=
 allow_rerere_autoupdate=
+# Non-empty if a rebase was in progress when 'git rebase' was invoked
+in_progress=
+# One of {am, merge, interactive}
+type=
+# One of {"$GIT_DIR"/rebase-apply, "$GIT_DIR"/rebase-merge}
+state_dir=
 
 read_state () {
-	if test -d "$merge_dir"
+	if test "$type" = merge
 	then
-		state_dir="$merge_dir"
-		onto_name=$(cat "$merge_dir"/onto_name) &&
-		end=$(cat "$merge_dir"/end) &&
-		msgnum=$(cat "$merge_dir"/msgnum)
-	else
-		state_dir="$apply_dir"
+		onto_name=$(cat "$state_dir"/onto_name) &&
+		end=$(cat "$state_dir"/end) &&
+		msgnum=$(cat "$state_dir"/msgnum)
 	fi &&
 	head_name=$(cat "$state_dir"/head-name) &&
 	onto=$(cat "$state_dir"/onto) &&
@@ -207,6 +210,23 @@ test -f "$apply_dir"/applying &&
 
 is_interactive "$@" && exec git-rebase--interactive "$@"
 
+if test -d "$apply_dir"
+then
+	type=am
+	state_dir="$apply_dir"
+elif test -d "$merge_dir"
+then
+	if test -f "$merge_dir"/interactive
+	then
+		type=interactive
+		interactive_rebase=explicit
+	else
+		type=merge
+	fi
+	state_dir="$merge_dir"
+fi
+test -n "$type" && in_progress=t
+
 while test $# != 0
 do
 	case "$1" in
@@ -217,8 +237,7 @@ do
 		OK_TO_SKIP_PRE_REBASE=
 		;;
 	--continue)
-		test -d "$merge_dir" -o -d "$apply_dir" ||
-			die "No rebase in progress?"
+		test -z "$in_progress" && die "No rebase in progress?"
 
 		git update-index --ignore-submodules --refresh &&
 		git diff-files --quiet --ignore-submodules || {
@@ -243,8 +262,7 @@ do
 		exit
 		;;
 	--skip)
-		test -d "$merge_dir" -o -d "$apply_dir" ||
-			die "No rebase in progress?"
+		test -z "$in_progress" && die "No rebase in progress?"
 
 		git reset --hard HEAD || exit $?
 		read_state
@@ -265,8 +283,7 @@ do
 		exit
 		;;
 	--abort)
-		test -d "$merge_dir" -o -d "$apply_dir" ||
-			die "No rebase in progress?"
+		test -z "$in_progress" && die "No rebase in progress?"
 
 		git rerere clear
 		read_state
@@ -374,36 +391,21 @@ do
 done
 test $# -gt 2 && usage
 
-if test $# -eq 0 && test -z "$rebase_root"
+# Make sure no rebase is in progress
+if test -n "$in_progress"
 then
-	test -d "$merge_dir" -o -d "$apply_dir" || usage
-	test -d "$merge_dir" -o -f "$apply_dir"/rebasing &&
-		die 'A rebase is in progress, try --continue, --skip or --abort.'
-fi
-
-# Make sure we do not have $apply_dir or $merge_dir
-if test -z "$do_merge"
-then
-	if mkdir "$apply_dir" 2>/dev/null
-	then
-		rmdir "$apply_dir"
-	else
-		echo >&2 '
-It seems that I cannot create a rebase-apply directory, and
-I wonder if you are in the middle of patch application or another
-rebase.  If that is not the case, please
-	rm -fr '"$apply_dir"'
+	die '
+It seems that there is already a '"${state_dir##*/}"' directory, and
+I wonder if you are in the middle of another rebase.  If that is the
+case, please try
+	git rebase (--continue | --abort | --skip)
+If that is not the case, please
+	rm -fr '"$state_dir"'
 and run me again.  I am stopping in case you still have something
 valuable there.'
-		exit 1
-	fi
-else
-	if test -d "$merge_dir"
-	then
-		die "previous rebase directory $merge_dir still exists." \
-			'Try git rebase (--continue | --abort | --skip)'
-	fi
 fi
+
+test $# -eq 0 && test -z "$rebase_root" && usage
 
 require_clean_work_tree "rebase" "Please commit or stash them."
 
