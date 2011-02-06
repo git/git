@@ -43,7 +43,7 @@ If you would prefer to skip this patch, instead run \"git rebase --skip\".
 To restore the original branch and stop rebasing run \"git rebase --abort\".
 "
 unset onto
-strategy=recursive
+strategy=
 strategy_opts=
 do_merge=
 merge_dir="$GIT_DIR"/rebase-merge
@@ -130,6 +130,7 @@ call_merge () {
 	then
 		GIT_MERGE_VERBOSITY=1 && export GIT_MERGE_VERBOSITY
 	fi
+	test -z "$strategy" && strategy=recursive
 	eval 'git-merge-$strategy' $strategy_opts '"$cmt^" -- "$hd" "$cmt"'
 	rv=$?
 	case "$rv" in
@@ -267,6 +268,7 @@ do
 		esac
 		strategy_opts="$strategy_opts $(git rev-parse --sq-quote "--$newopt")"
 		do_merge=t
+		test -z "$strategy" && strategy=recursive
 		;;
 	-s=*|--s=*|--st=*|--str=*|--stra=*|--strat=*|--strate=*|\
 		--strateg=*|--strategy=*|\

@@ -339,7 +339,8 @@ pick_one_preserving_merges () {
 			# No point in merging the first parent, that's HEAD
 			new_parents=${new_parents# $first_parent}
 			if ! do_with_author output \
-				git merge $strategy -m "$msg_content" $new_parents
+				git merge ${strategy:+-s $strategy} -m \
+					"$msg_content" $new_parents
 			then
 				printf "%s\n" "$msg_content" > "$GIT_DIR"/MERGE_MSG
 				die_with_patch $sha1 "Error redoing merge $sha1"
@@ -827,11 +828,11 @@ first and then run 'git rebase --continue' again."
 	-s)
 		case "$#,$1" in
 		*,*=*)
-			strategy="-s "$(expr "z$1" : 'z-[^=]*=\(.*\)') ;;
+			strategy=$(expr "z$1" : 'z-[^=]*=\(.*\)') ;;
 		1,*)
 			usage ;;
 		*)
-			strategy="-s $2"
+			strategy="$2"
 			shift ;;
 		esac
 		;;
@@ -860,9 +861,9 @@ first and then run 'git rebase --continue' again."
 		autosquash=
 		;;
 	--onto)
+		test 2 -le "$#" || usage
+		onto="$2"
 		shift
-		onto=$(parse_onto "$1") ||
-			die "Does not point to a valid commit: $1"
 		;;
 	--)
 		shift
@@ -871,6 +872,11 @@ first and then run 'git rebase --continue' again."
 	esac
 	shift
 done
+
+if test -n "$onto"
+then
+	onto=$(parse_onto "$onto") || die "Does not point to a valid commit: $1"
+fi
 
 test -z "$rebase_root" -a $# -ge 1 -a $# -le 2 ||
 test ! -z "$rebase_root" -a $# -le 1 || usage
