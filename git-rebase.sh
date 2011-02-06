@@ -36,13 +36,13 @@ cd_to_toplevel
 
 LF='
 '
-OK_TO_SKIP_PRE_REBASE=
-RESOLVEMSG="
+ok_to_skip_pre_rebase=
+resolvemsg="
 When you have resolved this problem run \"git rebase --continue\".
 If you would prefer to skip this patch, instead run \"git rebase --skip\".
 To restore the original branch and stop rebasing run \"git rebase --abort\".
 "
-unset newbase
+unset onto
 strategy=recursive
 strategy_opts=
 do_merge=
@@ -86,7 +86,7 @@ continue_merge () {
 	then
 		echo "You still have unmerged paths in your index"
 		echo "did you forget to use git add?"
-		die "$RESOLVEMSG"
+		die "$resolvemsg"
 	fi
 
 	cmt=`cat "$merge_dir/current"`
@@ -96,7 +96,7 @@ continue_merge () {
 		then
 			echo "Commit failed, please do not call \"git commit\""
 			echo "directly, but instead do one of the following: "
-			die "$RESOLVEMSG"
+			die "$resolvemsg"
 		fi
 		if test -z "$GIT_QUIET"
 		then
@@ -139,11 +139,11 @@ call_merge () {
 		;;
 	1)
 		git rerere $allow_rerere_autoupdate
-		die "$RESOLVEMSG"
+		die "$resolvemsg"
 		;;
 	2)
 		echo "Strategy: $rv $strategy failed, try another" 1>&2
-		die "$RESOLVEMSG"
+		die "$resolvemsg"
 		;;
 	*)
 		die "Unknown exit code ($rv) from command:" \
@@ -199,7 +199,7 @@ is_interactive () {
 }
 
 run_pre_rebase_hook () {
-	if test -z "$OK_TO_SKIP_PRE_REBASE" &&
+	if test -z "$ok_to_skip_pre_rebase" &&
 	   test -x "$GIT_DIR/hooks/pre-rebase"
 	then
 		"$GIT_DIR/hooks/pre-rebase" ${1+"$@"} ||
@@ -234,10 +234,10 @@ while test $# != 0
 do
 	case "$1" in
 	--no-verify)
-		OK_TO_SKIP_PRE_REBASE=yes
+		ok_to_skip_pre_rebase=yes
 		;;
 	--verify)
-		OK_TO_SKIP_PRE_REBASE=
+		ok_to_skip_pre_rebase=
 		;;
 	--continue|--skip|--abort)
 		test $total_argc -eq 1 || usage
@@ -245,7 +245,7 @@ do
 		;;
 	--onto)
 		test 2 -le "$#" || usage
-		newbase="$2"
+		onto="$2"
 		shift
 		;;
 	-M|-m|--m|--me|--mer|--merg|--merge)
@@ -359,7 +359,7 @@ continue)
 		finish_rb_merge
 		exit
 	fi
-	git am --resolved --3way --resolvemsg="$RESOLVEMSG" &&
+	git am --resolved --3way --resolvemsg="$resolvemsg" &&
 	move_to_original_branch
 	exit
 	;;
@@ -378,7 +378,7 @@ skip)
 		finish_rb_merge
 		exit
 	fi
-	git am -3 --skip --resolvemsg="$RESOLVEMSG" &&
+	git am -3 --skip --resolvemsg="$resolvemsg" &&
 	move_to_original_branch
 	exit
 	;;
@@ -425,7 +425,7 @@ then
 	unset root_flag
 	upstream_arg="$upstream_name"
 else
-	test -z "$newbase" && die "--root must be used with --onto"
+	test -z "$onto" && die "--root must be used with --onto"
 	unset upstream_name
 	unset upstream
 	root_flag="--root"
@@ -433,7 +433,7 @@ else
 fi
 
 # Make sure the branch to rebase onto is valid.
-onto_name=${newbase-"$upstream_name"}
+onto_name=${onto-"$upstream_name"}
 case "$onto_name" in
 *...*)
 	if	left=${onto_name%...*} right=${onto_name#*...} &&
@@ -554,7 +554,7 @@ then
 	git format-patch -k --stdout --full-index --ignore-if-in-upstream \
 		--src-prefix=a/ --dst-prefix=b/ \
 		--no-renames $root_flag "$revisions" |
-	git am $git_am_opt --rebasing --resolvemsg="$RESOLVEMSG" &&
+	git am $git_am_opt --rebasing --resolvemsg="$resolvemsg" &&
 	move_to_original_branch
 	ret=$?
 	test 0 != $ret -a -d "$apply_dir" &&
