@@ -62,6 +62,8 @@ in_progress=
 type=
 # One of {"$GIT_DIR"/rebase-apply, "$GIT_DIR"/rebase-merge}
 state_dir=
+# One of {'', continue, skip, abort}, as parsed from command line
+action=
 
 read_state () {
 	if test "$type" = merge
@@ -236,66 +238,10 @@ do
 	--verify)
 		OK_TO_SKIP_PRE_REBASE=
 		;;
-	--continue)
-		test -z "$in_progress" && die "No rebase in progress?"
-
-		git update-index --ignore-submodules --refresh &&
-		git diff-files --quiet --ignore-submodules || {
-			echo "You must edit all merge conflicts and then"
-			echo "mark them as resolved using git add"
-			exit 1
-		}
-		read_state
-		if test -d "$merge_dir"
-		then
-			continue_merge
-			while test "$msgnum" -le "$end"
-			do
-				call_merge "$msgnum"
-				continue_merge
-			done
-			finish_rb_merge
-			exit
-		fi
-		git am --resolved --3way --resolvemsg="$RESOLVEMSG" &&
-		move_to_original_branch
-		exit
-		;;
-	--skip)
-		test -z "$in_progress" && die "No rebase in progress?"
-
-		git reset --hard HEAD || exit $?
-		read_state
-		if test -d "$merge_dir"
-		then
-			git rerere clear
-			msgnum=$(($msgnum + 1))
-			while test "$msgnum" -le "$end"
-			do
-				call_merge "$msgnum"
-				continue_merge
-			done
-			finish_rb_merge
-			exit
-		fi
-		git am -3 --skip --resolvemsg="$RESOLVEMSG" &&
-		move_to_original_branch
-		exit
-		;;
-	--abort)
-		test -z "$in_progress" && die "No rebase in progress?"
-
-		git rerere clear
-		read_state
-		case "$head_name" in
-		refs/*)
-			git symbolic-ref HEAD $head_name ||
-			die "Could not move back to $head_name"
-			;;
-		esac
-		git reset --hard $orig_head
-		rm -r "$state_dir"
-		exit
+	--continue|--skip|--abort)
+		action=${1##--}
+		shift
+		break
 		;;
 	--onto)
 		test 2 -le "$#" || usage
@@ -390,6 +336,66 @@ do
 	shift
 done
 test $# -gt 2 && usage
+
+test -n "$action" && test -z "$in_progress" && die "No rebase in progress?"
+
+case "$action" in
+continue)
+	git update-index --ignore-submodules --refresh &&
+	git diff-files --quiet --ignore-submodules || {
+		echo "You must edit all merge conflicts and then"
+		echo "mark them as resolved using git add"
+		exit 1
+	}
+	read_state
+	if test -d "$merge_dir"
+	then
+		continue_merge
+		while test "$msgnum" -le "$end"
+		do
+			call_merge "$msgnum"
+			continue_merge
+		done
+		finish_rb_merge
+		exit
+	fi
+	git am --resolved --3way --resolvemsg="$RESOLVEMSG" &&
+	move_to_original_branch
+	exit
+	;;
+skip)
+	git reset --hard HEAD || exit $?
+	read_state
+	if test -d "$merge_dir"
+	then
+		git rerere clear
+		msgnum=$(($msgnum + 1))
+		while test "$msgnum" -le "$end"
+		do
+			call_merge "$msgnum"
+			continue_merge
+		done
+		finish_rb_merge
+		exit
+	fi
+	git am -3 --skip --resolvemsg="$RESOLVEMSG" &&
+	move_to_original_branch
+	exit
+	;;
+abort)
+	git rerere clear
+	read_state
+	case "$head_name" in
+	refs/*)
+		git symbolic-ref HEAD $head_name ||
+		die "Could not move back to $head_name"
+		;;
+	esac
+	git reset --hard $orig_head
+	rm -r "$state_dir"
+	exit
+	;;
+esac
 
 # Make sure no rebase is in progress
 if test -n "$in_progress"
