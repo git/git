@@ -229,6 +229,7 @@ then
 fi
 test -n "$type" && in_progress=t
 
+total_argc=$#
 while test $# != 0
 do
 	case "$1" in
@@ -239,9 +240,8 @@ do
 		OK_TO_SKIP_PRE_REBASE=
 		;;
 	--continue|--skip|--abort)
+		test $total_argc -eq 1 || usage
 		action=${1##--}
-		shift
-		break
 		;;
 	--onto)
 		test 2 -le "$#" || usage

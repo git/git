@@ -84,6 +84,16 @@ testrebase() {
 		test_cmp reflog_before reflog_after &&
 		rm reflog_before reflog_after
 	'
+
+	test_expect_success 'rebase --abort can not be used with other options' '
+		cd "$work_dir" &&
+		# Clean up the state from the previous one
+		git reset --hard pre-rebase &&
+		test_must_fail git rebase$type master &&
+		test_must_fail git rebase -v --abort &&
+		test_must_fail git rebase --abort -v &&
+		git rebase --abort
+	'
 }
 
 testrebase "" .git/rebase-apply

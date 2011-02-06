@@ -40,4 +40,9 @@ test_expect_success 'non-interactive rebase --continue works with touched file' 
 	git rebase --continue
 '
 
+test_expect_success 'rebase --continue can not be used with other options' '
+	test_must_fail git rebase -v --continue &&
+	test_must_fail git rebase --continue -v
+'
+
 test_done
