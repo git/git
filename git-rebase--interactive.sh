@@ -168,11 +168,6 @@ pick_one () {
 	output git rev-parse --verify $sha1 || die "Invalid commit name: $sha1"
 	test -d "$rewritten" &&
 		pick_one_preserving_merges "$@" && return
-	if test -n "$rebase_root"
-	then
-		output git cherry-pick "$@"
-		return
-	fi
 	output git cherry-pick $ff "$@"
 }
 
@@ -582,10 +577,6 @@ skip_unnecessary_picks () {
 	die "Could not skip unnecessary pick commands"
 }
 
-get_saved_options () {
-	test -f "$state_dir"/rebase-root && rebase_root=t
-}
-
 # Rearrange the todo list that has both "pick sha1 msg" and
 # "pick sha1 fixup!/squash! msg" appears in it so that the latter
 # comes immediately after the former, and change "pick" to
@@ -649,8 +640,6 @@ rearrange_squash () {
 
 case "$action" in
 continue)
-	get_saved_options
-
 	# do we have anything to commit?
 	if git diff-index --cached --quiet --ignore-submodules HEAD --
 	then
@@ -681,8 +670,6 @@ first and then run 'git rebase --continue' again."
 	do_rest
 	;;
 skip)
-	get_saved_options
-
 	git rerere clear
 
 	do_rest
@@ -705,12 +692,6 @@ mkdir "$state_dir" || die "Could not create temporary $state_dir"
 
 : > "$state_dir"/interactive || die "Could not mark as interactive"
 write_basic_state
-case "$rebase_root" in
-'')
-	rm -f "$state_dir"/rebase-root ;;
-*)
-	: >"$state_dir"/rebase-root ;;
-esac
 if test t = "$preserve_merges"
 then
 	if test -z "$rebase_root"
