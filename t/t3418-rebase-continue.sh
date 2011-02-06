@@ -74,4 +74,25 @@ test_expect_success 'rebase --continue remembers merge strategy and options' '
 	test -f funny.was.run
 '
 
+test_expect_success 'rebase --continue remembers --rerere-autoupdate' '
+	rm -fr .git/rebase-* &&
+	git reset --hard commit-new-file-F3-on-topic-branch &&
+	git checkout master
+	test_commit "commit-new-file-F3" F3 3 &&
+	git config rerere.enabled true &&
+	test_must_fail git rebase -m master topic &&
+	echo "Resolved" >F2 &&
+	git add F2 &&
+	test_must_fail git rebase --continue &&
+	echo "Resolved" >F3 &&
+	git add F3 &&
+	git rebase --continue &&
+	git reset --hard topic@{1} &&
+	test_must_fail git rebase -m --rerere-autoupdate master &&
+	test "$(cat F2)" = "Resolved" &&
+	test_must_fail git rebase --continue &&
+	test "$(cat F3)" = "Resolved" &&
+	git rebase --continue
+'
+
 test_done

@@ -84,6 +84,8 @@ read_basic_state () {
 	test -f "$state_dir"/strategy && strategy="$(cat "$state_dir"/strategy)"
 	test -f "$state_dir"/strategy_opts &&
 		strategy_opts="$(cat "$state_dir"/strategy_opts)"
+	test -f "$state_dir"/allow_rerere_autoupdate &&
+		allow_rerere_autoupdate="$(cat "$state_dir"/allow_rerere_autoupdate)"
 }
 
 write_basic_state () {
@@ -95,6 +97,8 @@ write_basic_state () {
 	test -n "$strategy" && echo "$strategy" > "$state_dir"/strategy
 	test -n "$strategy_opts" && echo "$strategy_opts" > \
 		"$state_dir"/strategy_opts
+	test -n "$allow_rerere_autoupdate" && echo "$allow_rerere_autoupdate" > \
+		"$state_dir"/allow_rerere_autoupdate
 }
 
 output () {
