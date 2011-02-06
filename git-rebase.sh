@@ -91,7 +91,7 @@ run_specific_rebase () {
 		GIT_EDITOR=:
 		export GIT_EDITOR
 	fi
-	test "$type" != am && . git-rebase--$type
+	. git-rebase--$type
 }
 
 run_pre_rebase_hook () {
@@ -261,17 +261,11 @@ continue)
 	}
 	read_basic_state
 	run_specific_rebase
-	git am --resolved --3way --resolvemsg="$resolvemsg" &&
-	move_to_original_branch
-	exit
 	;;
 skip)
 	git reset --hard HEAD || exit $?
 	read_basic_state
 	run_specific_rebase
-	git am -3 --skip --resolvemsg="$resolvemsg" &&
-	move_to_original_branch
-	exit
 	;;
 abort)
 	git rerere clear
@@ -324,14 +318,12 @@ then
 	shift
 	upstream=`git rev-parse --verify "${upstream_name}^0"` ||
 	die "invalid upstream $upstream_name"
-	unset root_flag
 	upstream_arg="$upstream_name"
 else
 	test -z "$onto" && die "You must specify --onto when using --root"
 	unset upstream_name
 	unset upstream
-	root_flag="--root"
-	upstream_arg="$root_flag"
+	upstream_arg=--root
 fi
 
 # Make sure the branch to rebase onto is valid.
@@ -456,24 +448,5 @@ then
 else
 	revisions="$upstream..$orig_head"
 fi
-
-if test -z "$do_merge"
-then
-	git format-patch -k --stdout --full-index --ignore-if-in-upstream \
-		--src-prefix=a/ --dst-prefix=b/ \
-		--no-renames $root_flag "$revisions" |
-	git am $git_am_opt --rebasing --resolvemsg="$resolvemsg" &&
-	move_to_original_branch
-	ret=$?
-	test 0 != $ret -a -d "$apply_dir" &&
-		echo $head_name > "$apply_dir/head-name" &&
-		echo $onto > "$apply_dir/onto" &&
-		echo $orig_head > "$apply_dir/orig-head" &&
-		echo "$GIT_QUIET" > "$apply_dir/quiet"
-	exit $ret
-fi
-
-# start doing a rebase with git-merge
-# this is rename-aware if the recursive (default) strategy is used
 
 run_specific_rebase
