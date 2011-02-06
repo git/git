@@ -48,7 +48,6 @@ strategy_opts=
 do_merge=
 merge_dir="$GIT_DIR"/rebase-merge
 apply_dir="$GIT_DIR"/rebase-apply
-prec=4
 verbose=
 diffstat=
 test "$(git config --bool rebase.stat)" = true && diffstat=t
@@ -68,92 +67,11 @@ preserve_merges=
 autosquash=
 test "$(git config --bool rebase.autosquash)" = "true" && autosquash=t
 
-read_state () {
-	if test "$type" = merge
-	then
-		onto_name=$(cat "$state_dir"/onto_name) &&
-		end=$(cat "$state_dir"/end) &&
-		msgnum=$(cat "$state_dir"/msgnum)
-	fi &&
+read_basic_state () {
 	head_name=$(cat "$state_dir"/head-name) &&
 	onto=$(cat "$state_dir"/onto) &&
 	orig_head=$(cat "$state_dir"/orig-head) &&
 	GIT_QUIET=$(cat "$state_dir"/quiet)
-}
-
-continue_merge () {
-	test -d "$merge_dir" || die "$merge_dir directory does not exist"
-
-	unmerged=$(git ls-files -u)
-	if test -n "$unmerged"
-	then
-		echo "You still have unmerged paths in your index"
-		echo "did you forget to use git add?"
-		die "$resolvemsg"
-	fi
-
-	cmt=`cat "$merge_dir/current"`
-	if ! git diff-index --quiet --ignore-submodules HEAD --
-	then
-		if ! git commit --no-verify -C "$cmt"
-		then
-			echo "Commit failed, please do not call \"git commit\""
-			echo "directly, but instead do one of the following: "
-			die "$resolvemsg"
-		fi
-		if test -z "$GIT_QUIET"
-		then
-			printf "Committed: %0${prec}d " $msgnum
-		fi
-		echo "$cmt $(git rev-parse HEAD^0)" >> "$merge_dir/rewritten"
-	else
-		if test -z "$GIT_QUIET"
-		then
-			printf "Already applied: %0${prec}d " $msgnum
-		fi
-	fi
-	test -z "$GIT_QUIET" &&
-	GIT_PAGER='' git log --format=%s -1 "$cmt"
-
-	# onto the next patch:
-	msgnum=$(($msgnum + 1))
-	echo "$msgnum" >"$merge_dir/msgnum"
-}
-
-call_merge () {
-	cmt="$(cat "$merge_dir/cmt.$1")"
-	echo "$cmt" > "$merge_dir/current"
-	hd=$(git rev-parse --verify HEAD)
-	cmt_name=$(git symbolic-ref HEAD 2> /dev/null || echo HEAD)
-	msgnum=$(cat "$merge_dir/msgnum")
-	eval GITHEAD_$cmt='"${cmt_name##refs/heads/}~$(($end - $msgnum))"'
-	eval GITHEAD_$hd='$onto_name'
-	export GITHEAD_$cmt GITHEAD_$hd
-	if test -n "$GIT_QUIET"
-	then
-		GIT_MERGE_VERBOSITY=1 && export GIT_MERGE_VERBOSITY
-	fi
-	test -z "$strategy" && strategy=recursive
-	eval 'git-merge-$strategy' $strategy_opts '"$cmt^" -- "$hd" "$cmt"'
-	rv=$?
-	case "$rv" in
-	0)
-		unset GITHEAD_$cmt GITHEAD_$hd
-		return
-		;;
-	1)
-		git rerere $allow_rerere_autoupdate
-		die "$resolvemsg"
-		;;
-	2)
-		echo "Strategy: $rv $strategy failed, try another" 1>&2
-		die "$resolvemsg"
-		;;
-	*)
-		die "Unknown exit code ($rv) from command:" \
-			"git-merge-$strategy $cmt^ -- HEAD $cmt"
-		;;
-	esac
 }
 
 move_to_original_branch () {
@@ -168,23 +86,12 @@ move_to_original_branch () {
 	esac
 }
 
-finish_rb_merge () {
-	move_to_original_branch
-	git notes copy --for-rewrite=rebase < "$merge_dir"/rewritten
-	if test -x "$GIT_DIR"/hooks/post-rewrite &&
-		test -s "$merge_dir"/rewritten; then
-		"$GIT_DIR"/hooks/post-rewrite rebase < "$merge_dir"/rewritten
-	fi
-	rm -r "$merge_dir"
-	say All done.
-}
-
-run_interactive_rebase () {
+run_specific_rebase () {
 	if [ "$interactive_rebase" = implied ]; then
 		GIT_EDITOR=:
 		export GIT_EDITOR
 	fi
-	. git-rebase--interactive
+	test "$type" != am && . git-rebase--$type
 }
 
 run_pre_rebase_hook () {
@@ -341,7 +248,7 @@ test $# -gt 2 && usage
 if test -n "$action"
 then
 	test -z "$in_progress" && die "No rebase in progress?"
-	test "$type" = interactive && run_interactive_rebase
+	test "$type" = interactive && run_specific_rebase
 fi
 
 case "$action" in
@@ -352,44 +259,23 @@ continue)
 		echo "mark them as resolved using git add"
 		exit 1
 	}
-	read_state
-	if test -d "$merge_dir"
-	then
-		continue_merge
-		while test "$msgnum" -le "$end"
-		do
-			call_merge "$msgnum"
-			continue_merge
-		done
-		finish_rb_merge
-		exit
-	fi
+	read_basic_state
+	run_specific_rebase
 	git am --resolved --3way --resolvemsg="$resolvemsg" &&
 	move_to_original_branch
 	exit
 	;;
 skip)
 	git reset --hard HEAD || exit $?
-	read_state
-	if test -d "$merge_dir"
-	then
-		git rerere clear
-		msgnum=$(($msgnum + 1))
-		while test "$msgnum" -le "$end"
-		do
-			call_merge "$msgnum"
-			continue_merge
-		done
-		finish_rb_merge
-		exit
-	fi
+	read_basic_state
+	run_specific_rebase
 	git am -3 --skip --resolvemsg="$resolvemsg" &&
 	move_to_original_branch
 	exit
 	;;
 abort)
 	git rerere clear
-	read_state
+	read_basic_state
 	case "$head_name" in
 	refs/*)
 		git symbolic-ref HEAD $head_name ||
@@ -548,7 +434,7 @@ then
 	GIT_PAGER='' git diff --stat --summary "$mb" "$onto"
 fi
 
-test "$type" = interactive && run_interactive_rebase
+test "$type" = interactive && run_specific_rebase
 
 # Detach HEAD and reset the tree
 say "First, rewinding head to replay your work on top of it..."
@@ -590,30 +476,4 @@ fi
 # start doing a rebase with git-merge
 # this is rename-aware if the recursive (default) strategy is used
 
-mkdir -p "$merge_dir"
-echo "$onto_name" > "$merge_dir/onto_name"
-echo "$head_name" > "$merge_dir/head-name"
-echo "$onto" > "$merge_dir/onto"
-echo "$orig_head" > "$merge_dir/orig-head"
-echo "$GIT_QUIET" > "$merge_dir/quiet"
-
-msgnum=0
-for cmt in `git rev-list --reverse --no-merges "$revisions"`
-do
-	msgnum=$(($msgnum + 1))
-	echo "$cmt" > "$merge_dir/cmt.$msgnum"
-done
-
-echo 1 >"$merge_dir/msgnum"
-echo $msgnum >"$merge_dir/end"
-
-end=$msgnum
-msgnum=1
-
-while test "$msgnum" -le "$end"
-do
-	call_merge "$msgnum"
-	continue_merge
-done
-
-finish_rb_merge
+run_specific_rebase

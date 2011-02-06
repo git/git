@@ -103,6 +103,7 @@
 /git-read-tree
 /git-rebase
 /git-rebase--interactive
+/git-rebase--merge
 /git-receive-pack
 /git-reflog
 /git-relink
