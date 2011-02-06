@@ -539,13 +539,6 @@ fi
 # If a hook exists, give it a chance to interrupt
 run_pre_rebase_hook "$upstream_arg" "$@"
 
-test "$type" = interactive && run_interactive_rebase
-
-# Detach HEAD and reset the tree
-say "First, rewinding head to replay your work on top of it..."
-git checkout -q "$onto^0" || die "could not detach HEAD"
-git update-ref ORIG_HEAD $branch
-
 if test -n "$diffstat"
 then
 	if test -n "$verbose"
@@ -555,6 +548,13 @@ then
 	# We want color (if set), but no pager
 	GIT_PAGER='' git diff --stat --summary "$mb" "$onto"
 fi
+
+test "$type" = interactive && run_interactive_rebase
+
+# Detach HEAD and reset the tree
+say "First, rewinding head to replay your work on top of it..."
+git checkout -q "$onto^0" || die "could not detach HEAD"
+git update-ref ORIG_HEAD $branch
 
 # If the $onto is a proper descendant of the tip of the branch, then
 # we just fast-forwarded.
