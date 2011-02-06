@@ -682,25 +682,6 @@ rearrange_squash () {
 	rm -f "$1.sq" "$1.rearranged"
 }
 
-LF='
-'
-parse_onto () {
-	case "$1" in
-	*...*)
-		if	left=${1%...*} right=${1#*...} &&
-			onto=$(git merge-base --all ${left:-HEAD} ${right:-HEAD})
-		then
-			case "$onto" in
-			?*"$LF"?* | '')
-				exit 1 ;;
-			esac
-			echo "$onto"
-			exit 0
-		fi
-	esac
-	git rev-parse --verify "$1^0"
-}
-
 case "$action" in
 continue)
 	get_saved_options
@@ -769,47 +750,26 @@ skip)
 	;;
 esac
 
-if test -n "$onto"
-then
-	onto=$(parse_onto "$onto") || die "Does not point to a valid commit: $1"
-fi
-
-test -z "$rebase_root" -a $# -ge 1 -a $# -le 2 ||
-test ! -z "$rebase_root" -a $# -le 1 || usage
-
 git var GIT_COMMITTER_IDENT >/dev/null ||
 	die "You need to set your committer info first"
 
-if test -z "$rebase_root"
-then
-	upstream_arg="$1"
-	upstream=$(git rev-parse --verify "$1") || die "Invalid base"
-	test -z "$onto" && onto=$upstream
-	shift
-else
-	upstream=
-	upstream_arg=--root
-	test -z "$onto" &&
-		die "You must specify --onto when using --root"
-fi
 require_clean_work_tree "rebase" "Please commit or stash them."
 
 run_pre_rebase_hook "$upstream_arg" "$@"
 
 comment_for_reflog start
 
-if test ! -z "$1"
+if test ! -z "$switch_to"
 then
-	output git checkout "$1" -- ||
-		die "Could not checkout $1"
+	output git checkout "$switch_to" -- ||
+		die "Could not checkout $switch_to"
 fi
 
 head=$(git rev-parse --verify HEAD) || die "No HEAD?"
 mkdir "$dotest" || die "Could not create temporary $dotest"
 
 : > "$dotest"/interactive || die "Could not mark as interactive"
-git symbolic-ref HEAD > "$dotest"/head-name 2> /dev/null ||
-	echo "detached HEAD" > "$dotest"/head-name
+echo "$head_name" > "$dotest"/head-name
 
 echo $head > "$dotest"/head
 case "$rebase_root" in
