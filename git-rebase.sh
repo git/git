@@ -184,7 +184,7 @@ run_interactive_rebase () {
 		GIT_EDITOR=:
 		export GIT_EDITOR
 	fi
-	. git-rebase--interactive "$@"
+	. git-rebase--interactive
 }
 
 run_pre_rebase_hook () {
@@ -513,15 +513,15 @@ orig_head=$branch
 
 require_clean_work_tree "rebase" "Please commit or stash them."
 
-test "$type" = interactive && run_interactive_rebase "$@"
-
 # Now we are rebasing commits $upstream..$branch (or with --root,
 # everything leading up to $branch) on top of $onto
 
 # Check if we are already based on $onto with linear history,
-# but this should be done only when upstream and onto are the same.
+# but this should be done only when upstream and onto are the same
+# and if this is not an interactive rebase.
 mb=$(git merge-base "$onto" "$branch")
-if test "$upstream" = "$onto" && test "$mb" = "$onto" &&
+if test "$type" != interactive && test "$upstream" = "$onto" &&
+	test "$mb" = "$onto" &&
 	# linear history?
 	! (git rev-list --parents "$onto".."$branch" | sane_grep " .* ") > /dev/null
 then
@@ -538,6 +538,8 @@ fi
 
 # If a hook exists, give it a chance to interrupt
 run_pre_rebase_hook "$upstream_arg" "$@"
+
+test "$type" = interactive && run_interactive_rebase
 
 # Detach HEAD and reset the tree
 say "First, rewinding head to replay your work on top of it..."
