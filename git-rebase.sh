@@ -57,6 +57,22 @@ rebase_root=
 force_rebase=
 allow_rerere_autoupdate=
 
+read_state () {
+	if test -d "$merge_dir"
+	then
+		state_dir="$merge_dir"
+		prev_head=$(cat "$merge_dir"/prev_head) &&
+		end=$(cat "$merge_dir"/end) &&
+		msgnum=$(cat "$merge_dir"/msgnum)
+	else
+		state_dir="$apply_dir"
+	fi &&
+	head_name=$(cat "$state_dir"/head-name) &&
+	onto=$(cat "$state_dir"/onto) &&
+	orig_head=$(cat "$state_dir"/orig-head) &&
+	GIT_QUIET=$(cat "$state_dir"/quiet)
+}
+
 continue_merge () {
 	test -n "$prev_head" || die "prev_head must be defined"
 	test -d "$merge_dir" || die "$merge_dir directory does not exist"
@@ -138,10 +154,6 @@ call_merge () {
 }
 
 move_to_original_branch () {
-	test -z "$head_name" &&
-		head_name="$(cat "$merge_dir"/head-name)" &&
-		onto="$(cat "$merge_dir"/onto)" &&
-		orig_head="$(cat "$merge_dir"/orig-head)"
 	case "$head_name" in
 	refs/*)
 		message="rebase finished: $head_name onto $onto"
@@ -220,13 +232,9 @@ do
 			echo "mark them as resolved using git add"
 			exit 1
 		}
+		read_state
 		if test -d "$merge_dir"
 		then
-			prev_head=$(cat "$merge_dir/prev_head")
-			end=$(cat "$merge_dir/end")
-			msgnum=$(cat "$merge_dir/msgnum")
-			onto=$(cat "$merge_dir/onto")
-			GIT_QUIET=$(cat "$merge_dir/quiet")
 			continue_merge
 			while test "$msgnum" -le "$end"
 			do
@@ -236,10 +244,6 @@ do
 			finish_rb_merge
 			exit
 		fi
-		head_name=$(cat "$apply_dir"/head-name) &&
-		onto=$(cat "$apply_dir"/onto) &&
-		orig_head=$(cat "$apply_dir"/orig-head) &&
-		GIT_QUIET=$(cat "$apply_dir"/quiet)
 		git am --resolved --3way --resolvemsg="$RESOLVEMSG" &&
 		move_to_original_branch
 		exit
@@ -249,15 +253,11 @@ do
 			die "No rebase in progress?"
 
 		git reset --hard HEAD || exit $?
+		read_state
 		if test -d "$merge_dir"
 		then
 			git rerere clear
-			prev_head=$(cat "$merge_dir/prev_head")
-			end=$(cat "$merge_dir/end")
-			msgnum=$(cat "$merge_dir/msgnum")
 			msgnum=$(($msgnum + 1))
-			onto=$(cat "$merge_dir/onto")
-			GIT_QUIET=$(cat "$merge_dir/quiet")
 			while test "$msgnum" -le "$end"
 			do
 				call_merge "$msgnum"
@@ -266,10 +266,6 @@ do
 			finish_rb_merge
 			exit
 		fi
-		head_name=$(cat "$apply_dir"/head-name) &&
-		onto=$(cat "$apply_dir"/onto) &&
-		orig_head=$(cat "$apply_dir"/orig-head) &&
-		GIT_QUIET=$(cat "$apply_dir"/quiet)
 		git am -3 --skip --resolvemsg="$RESOLVEMSG" &&
 		move_to_original_branch
 		exit
@@ -279,18 +275,15 @@ do
 			die "No rebase in progress?"
 
 		git rerere clear
-
-		test -d "$merge_dir" || merge_dir="$apply_dir"
-
-		head_name="$(cat "$merge_dir"/head-name)" &&
+		read_state
 		case "$head_name" in
 		refs/*)
 			git symbolic-ref HEAD $head_name ||
 			die "Could not move back to $head_name"
 			;;
 		esac
-		git reset --hard $(cat "$merge_dir/orig-head")
-		rm -r "$merge_dir"
+		git reset --hard $orig_head
+		rm -r "$state_dir"
 		exit
 		;;
 	--onto)
@@ -574,12 +567,12 @@ fi
 # this is rename-aware if the recursive (default) strategy is used
 
 mkdir -p "$merge_dir"
-echo "$onto" > "$merge_dir/onto"
 echo "$onto_name" > "$merge_dir/onto_name"
 prev_head=$orig_head
 echo "$prev_head" > "$merge_dir/prev_head"
-echo "$orig_head" > "$merge_dir/orig-head"
 echo "$head_name" > "$merge_dir/head-name"
+echo "$onto" > "$merge_dir/onto"
+echo "$orig_head" > "$merge_dir/orig-head"
 echo "$GIT_QUIET" > "$merge_dir/quiet"
 
 msgnum=0
