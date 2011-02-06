@@ -509,9 +509,7 @@ do_next () {
 	test -s "$todo" && return
 
 	comment_for_reflog finish &&
-	head_name=$(cat "$state_dir"/head-name) &&
-	orig_head=$(cat "$state_dir"/head) &&
-	shortonto=$(git rev-parse --short $(cat "$state_dir"/onto)) &&
+	shortonto=$(git rev-parse --short $onto) &&
 	newhead=$(git rev-parse HEAD) &&
 	case $head_name in
 	refs/*)
@@ -521,7 +519,7 @@ do_next () {
 		;;
 	esac && {
 		test ! -f "$state_dir"/verbose ||
-			git diff-tree --stat $(cat "$state_dir"/head)..HEAD
+			git diff-tree --stat $orig_head..HEAD
 	} &&
 	{
 		test -s "$rewritten_list" &&
@@ -655,14 +653,6 @@ rearrange_squash () {
 case "$action" in
 continue)
 	get_saved_options
-	comment_for_reflog continue
-
-	# Sanity check
-	git rev-parse --verify HEAD >/dev/null ||
-		die "Cannot read HEAD"
-	git update-index --ignore-submodules --refresh &&
-		git diff-files --quiet --ignore-submodules ||
-		die "Working tree is dirty"
 
 	# do we have anything to commit?
 	if git diff-index --cached --quiet --ignore-submodules HEAD --
@@ -693,30 +683,12 @@ first and then run 'git rebase --continue' again."
 	require_clean_work_tree "rebase"
 	do_rest
 	;;
-abort)
-	get_saved_options
-	comment_for_reflog abort
-
-	git rerere clear
-
-	head_name=$(cat "$state_dir"/head-name)
-	orig_head=$(cat "$state_dir"/head)
-	case $head_name in
-	refs/*)
-		git symbolic-ref HEAD $head_name
-		;;
-	esac &&
-	output git reset --hard $orig_head &&
-	rm -rf "$state_dir"
-	exit
-	;;
 skip)
 	get_saved_options
-	comment_for_reflog skip
 
 	git rerere clear
 
-	output git reset --hard && do_rest
+	do_rest
 	;;
 esac
 

@@ -70,7 +70,12 @@ test "$(git config --bool rebase.autosquash)" = "true" && autosquash=t
 read_basic_state () {
 	head_name=$(cat "$state_dir"/head-name) &&
 	onto=$(cat "$state_dir"/onto) &&
-	orig_head=$(cat "$state_dir"/orig-head) &&
+	if test "$type" = interactive
+	then
+		orig_head=$(cat "$state_dir"/head)
+	else
+		orig_head=$(cat "$state_dir"/orig-head)
+	fi &&
 	GIT_QUIET=$(cat "$state_dir"/quiet)
 }
 
@@ -262,11 +267,19 @@ test $# -gt 2 && usage
 if test -n "$action"
 then
 	test -z "$in_progress" && die "No rebase in progress?"
-	test "$type" = interactive && run_specific_rebase
+	# Only interactive rebase uses detailed reflog messages
+	if test "$type" = interactive && test "$GIT_REFLOG_ACTION" = rebase
+	then
+		GIT_REFLOG_ACTION="rebase -i ($action)"
+		export GIT_REFLOG_ACTION
+	fi
 fi
 
 case "$action" in
 continue)
+	# Sanity check
+	git rev-parse --verify HEAD >/dev/null ||
+		die "Cannot read HEAD"
 	git update-index --ignore-submodules --refresh &&
 	git diff-files --quiet --ignore-submodules || {
 		echo "You must edit all merge conflicts and then"
