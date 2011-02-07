@@ -116,6 +116,14 @@ int err_win_to_posix(DWORD winerr)
 	return error;
 }
 
+#undef unlink
+int mingw_unlink(const char *pathname)
+{
+	/* read-only files cannot be removed */
+	chmod(pathname, 0666);
+	return unlink(pathname);
+}
+
 #undef open
 int mingw_open (const char *filename, int oflags, ...)
 {
