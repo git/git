@@ -38,6 +38,8 @@ directories. This behavior can be forced by --no-index.
 	commit relative to the named <commit>.  Typically you
 	would want comparison with the latest commit, so if you
 	do not give <commit>, it defaults to HEAD.
+	If HEAD does not exist (e.g. unborned branches) and
+	<commit> is not given, it shows all staged changes.
 	--staged is a synonym of --cached.
 
 'git diff' [--options] <commit> [--] [<path>...]::

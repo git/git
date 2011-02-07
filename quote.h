@@ -1,8 +1,7 @@
 #ifndef QUOTE_H
 #define QUOTE_H
 
-#include <stddef.h>
-#include <stdio.h>
+struct strbuf;
 
 /* Help to copy the thing properly quoted for the shell safety.
  * any single quote is replaced with '\'', any exclamation point

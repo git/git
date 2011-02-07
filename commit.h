@@ -38,7 +38,7 @@ struct commit *lookup_commit_reference_gently(const unsigned char *sha1,
 					      int quiet);
 struct commit *lookup_commit_reference_by_name(const char *name);
 
-int parse_commit_buffer(struct commit *item, void *buffer, unsigned long size);
+int parse_commit_buffer(struct commit *item, const void *buffer, unsigned long size);
 int parse_commit(struct commit *item);
 
 /* Find beginning and length of commit subject. */
