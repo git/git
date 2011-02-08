@@ -542,7 +542,17 @@ static void update_refs_for_switch(struct checkout_opts *opts,
 	strbuf_addf(&msg, "checkout: moving from %s to %s",
 		    old_desc ? old_desc : "(invalid)", new->name);
 
-	if (new->path) {
+	if (!strcmp(new->name, "HEAD") && !new->path && !opts->force_detach) {
+		/* Nothing to do. */
+	} else if (opts->force_detach || !new->path) {	/* No longer on any branch. */
+		update_ref(msg.buf, "HEAD", new->commit->object.sha1, NULL,
+			   REF_NODEREF, DIE_ON_ERR);
+		if (!opts->quiet) {
+			if (old->path && advice_detached_head)
+				detach_advice(old->path, new->name);
+			describe_detached_head("HEAD is now at", new->commit);
+		}
+	} else if (new->path) {	/* Switch branches. */
 		create_symref("HEAD", new->path, msg.buf);
 		if (!opts->quiet) {
 			if (old->path && !strcmp(new->path, old->path))
@@ -563,14 +573,6 @@ static void update_refs_for_switch(struct checkout_opts *opts,
 			git_snpath(ref_file, sizeof(ref_file), "%s", old->path);
 			if (!file_exists(ref_file) && file_exists(log_file))
 				remove_path(log_file);
-		}
-	} else if (opts->force_detach || strcmp(new->name, "HEAD")) {
-		update_ref(msg.buf, "HEAD", new->commit->object.sha1, NULL,
-			   REF_NODEREF, DIE_ON_ERR);
-		if (!opts->quiet) {
-			if (old->path && advice_detached_head)
-				detach_advice(old->path, new->name);
-			describe_detached_head("HEAD is now at", new->commit);
 		}
 	}
 	remove_branch_state();
@@ -679,7 +681,6 @@ static const char *unique_tracking_name(const char *name)
 
 static int parse_branchname_arg(int argc, const char **argv,
 				int dwim_new_local_branch_ok,
-				int force_detach,
 				struct branch_info *new,
 				struct tree **source_tree,
 				unsigned char rev[20],
@@ -756,8 +757,7 @@ static int parse_branchname_arg(int argc, const char **argv,
 	new->name = arg;
 	setup_branch_path(new);
 
-	if (!force_detach &&
-	    check_ref_format(new->path) == CHECK_REF_FORMAT_OK &&
+	if (check_ref_format(new->path) == CHECK_REF_FORMAT_OK &&
 	    resolve_ref(new->path, branch_rev, 1, NULL))
 		hashcpy(rev, branch_rev);
 	else
@@ -906,8 +906,7 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 			dwim_new_local_branch &&
 			opts.track == BRANCH_TRACK_UNSPECIFIED &&
 			!opts.new_branch;
-		int n = parse_branchname_arg(argc, argv,
-				dwim_ok, opts.force_detach,
+		int n = parse_branchname_arg(argc, argv, dwim_ok,
 				&new, &source_tree, rev, &opts.new_branch);
 		argv += n;
 		argc -= n;
