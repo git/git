@@ -1,18 +1,28 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Feb 2011, #01; Thu, 3)
-X-master-at: 597a63054241c122515c93cbce45bc44eb231f18
-X-next-at: ccfc03dd6521ffd2cbd803a18b12c204fd5e54d0
+Subject: What's cooking in git.git (Feb 2011, #02; Mon, 7)
+X-master-at: 7811d9600f02e70c9f835719c71156c967a684f7
+X-next-at: 3b781df0a25d5ba23bd2603b0e3e9bb4731369df
 
-What's cooking in git.git (Feb 2011, #01; Thu, 3)
+What's cooking in git.git (Feb 2011, #02; Mon, 7)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' while commits prefixed with '+' are in 'next'.
 
-The tip of 'next' has been rewound, as 1.7.4 is now out.  A few topics
-that were merged to 'next' during 1.7.4 pre-release freeze period have
-been kicked back to 'pu' to make sure I didn't make silly mistakes while
-rebasing them on top of 1.7.4 to reduce future merge conflicts.
+--------------------------------------------------
+[New Topics]
+
+* pw/p4 (2011-02-05) 8 commits
+ - git-p4: support clone --bare
+ - git-p4: decode p4 wildcard characters
+ - git-p4: better message for "git-p4 sync" when not cloned
+ - git-p4: reinterpret confusing p4 message
+ - git-p4: accommodate new move/delete type in p4
+ - git-p4: add missing newline in initial import message
+ - git-p4: fix key error for p4 problem
+ - git-p4: test script
+
+Will be re-rolled after collecting comments (Petw Wyckoff, 2011-02-07).
 
 --------------------------------------------------
 [Stalled]
@@ -72,15 +82,6 @@ hierarchies for branches (i.e. refs/{heads,remotes}/), or (2) only refs
 outside refs/ hierarchies (e.g. HEAD, ORIG_HEAD, ...).  The latter feels
 safer and saner.
 
-* hv/mingw-fs-funnies (2010-12-14) 5 commits
- - mingw_rmdir: set errno=ENOTEMPTY when appropriate
- - mingw: add fallback for rmdir in case directory is in use
- - mingw: make failures to unlink or move raise a question
- - mingw: work around irregular failures of unlink on windows
- - mingw: move unlink wrapper to mingw.c
-
-Will be rerolled (Heiko, 2010-12-23)
-
 * mz/rebase (2010-12-28) 31 commits
  - rebase -i: remove unnecessary state rebase-root
  - rebase -i: don't read unused variable preserve_merges
@@ -114,109 +115,7 @@ Will be rerolled (Heiko, 2010-12-23)
  - rebase: refactor reading of state
  - rebase: clearer names for directory variables
 
-Will be rerolled (Martin, Jan 28).
-
---------------------------------------------------
-[Cooking]
-
-* nd/struct-pathspec (2011-01-31) 22 commits
- - t6004: add pathspec globbing test for log family
- - t7810: overlapping pathspecs and depth limit
- - grep: drop pathspec_matches() in favor of tree_entry_interesting()
- - grep: use writable strbuf from caller for grep_tree()
- - grep: use match_pathspec_depth() for cache/worktree grepping
- - grep: convert to use struct pathspec
- - Convert ce_path_match() to use match_pathspec_depth()
- - Convert ce_path_match() to use struct pathspec
- - struct rev_info: convert prune_data to struct pathspec
- - pathspec: add match_pathspec_depth()
- - tree_entry_interesting(): optimize wildcard matching when base is matched
- - tree_entry_interesting(): support wildcard matching
- - tree_entry_interesting(): fix depth limit with overlapping pathspecs
- - tree_entry_interesting(): support depth limit
- - tree_entry_interesting(): refactor into separate smaller functions
- - diff-tree: convert base+baselen to writable strbuf
- - glossary: define pathspec
- - Move tree_entry_interesting() to tree-walk.c and export it
- - tree_entry_interesting(): remove dependency on struct diff_options
- - Convert struct diff_options to use struct pathspec
- - diff-no-index: use diff_tree_setup_paths()
- - Add struct pathspec
- (this branch is used by en/object-list-with-pathspec.)
-
-* en/object-list-with-pathspec (2010-09-20) 2 commits
- - Add testcases showing how pathspecs are handled with rev-list --objects
- - Make rev-list --objects work together with pathspecs
- (this branch uses nd/struct-pathspec.)
-
-The above two were rebased on 1.7.4; I think the result is correct, but
-extra sets of eyeballs are always appreciated.
-
-* tr/merge-unborn-clobber (2010-08-22) 1 commit
-  (merged to 'next' on 2011-02-03 at ccfc03d)
- + Exhibit merge bug that clobbers index&WT
-
-* jc/unpack-trees (2010-12-22) 2 commits
-  (merged to 'next' on 2011-02-03 at 5bd48f8)
- + unpack_trees(): skip trees that are the same in all input
- + unpack-trees.c: cosmetic fix
-
-* jc/fsck-fixes (2011-01-26) 2 commits
-  (merged to 'next' on 2011-02-03 at 98e1c63)
- + fsck: do not give up too early in fsck_dir()
- + fsck: drop unused parameter from traverse_one_object()
-
-* tr/diff-words-test (2011-01-18) 4 commits
-  (merged to 'next' on 2011-02-03 at d346665)
- + t4034 (diff --word-diff): add a minimum Perl drier test vector
- + t4034 (diff --word-diff): style suggestions
- + userdiff: simplify word-diff safeguard
- + t4034: bulk verify builtin word regex sanity
-
-I thought this was Ok; further comments, anybody?
-
-* rr/fi-import-marks-if-exists (2011-01-15) 1 commit
-  (merged to 'next' on 2011-02-03 at 8c9d4ce)
- + fast-import: Introduce --import-marks-if-exists
-
-Looked reasonable.
-
-* jn/unpack-lstat-failure-report (2011-01-12) 2 commits
-  (merged to 'next' on 2011-02-03 at 76586d2)
- + unpack-trees: handle lstat failure for existing file
- + unpack-trees: handle lstat failure for existing directory
-
-Looked reasonable.
-
-* ef/alias-via-run-command (2011-01-07) 1 commit
-  (merged to 'next' on 2011-02-03 at 4ce47ce)
- + alias: use run_command api to execute aliases
-
-Will merge to 'master' shortly.
-
-* uk/checkout-ambiguous-ref (2011-01-11) 1 commit
-  (merged to 'next' on 2011-02-03 at 9044724)
- + checkout: fix bug with ambiguous refs
-
-Will merge to 'master' shortly.
-
-* cb/setup (2010-12-27) 1 commit
-  (merged to 'next' on 2011-02-03 at 073980f)
- + setup: translate symlinks in filename when using absolute paths
-
-Will merge to 'master' shortly.
-
-* ae/better-template-failure-report (2010-12-18) 1 commit
-  (merged to 'next' on 2011-02-03 at 3b269c9)
- + Improve error messages when temporary file creation fails
-
-Will merge to 'master' shortly.
-
-* jn/cherry-pick-strategy-option (2010-12-10) 1 commit
-  (merged to 'next' on 2011-02-03 at 1c10f16)
- + cherry-pick/revert: add support for -X/--strategy-option
-
-Will merge to 'master' shortly.
+Re-roll posted, but I haven't picked it up yet.
 
 * ab/i18n (2010-10-07) 161 commits
  - po/de.po: complete German translation
@@ -385,3 +284,115 @@ It is getting ridiculously painful to keep re-resolving the conflicts with
 other topics in flight, even with the help with rerere.
 
 Needs a bit more minor work to get the basic code structure right.
+
+--------------------------------------------------
+[Cooking]
+
+* hv/mingw-fs-funnies (2011-02-07) 5 commits
+ - mingw_rmdir: set errno=ENOTEMPTY when appropriate
+ - mingw: add fallback for rmdir in case directory is in use
+ - mingw: make failures to unlink or move raise a question
+ - mingw: work around irregular failures of unlink on windows
+ - mingw: move unlink wrapper to mingw.c
+
+Rerolled and seems ready to move forward.  Will merge to 'next'.
+
+* nd/struct-pathspec (2011-01-31) 22 commits
+ - t6004: add pathspec globbing test for log family
+ - t7810: overlapping pathspecs and depth limit
+ - grep: drop pathspec_matches() in favor of tree_entry_interesting()
+ - grep: use writable strbuf from caller for grep_tree()
+ - grep: use match_pathspec_depth() for cache/worktree grepping
+ - grep: convert to use struct pathspec
+ - Convert ce_path_match() to use match_pathspec_depth()
+ - Convert ce_path_match() to use struct pathspec
+ - struct rev_info: convert prune_data to struct pathspec
+ - pathspec: add match_pathspec_depth()
+ - tree_entry_interesting(): optimize wildcard matching when base is matched
+ - tree_entry_interesting(): support wildcard matching
+ - tree_entry_interesting(): fix depth limit with overlapping pathspecs
+ - tree_entry_interesting(): support depth limit
+ - tree_entry_interesting(): refactor into separate smaller functions
+ - diff-tree: convert base+baselen to writable strbuf
+ - glossary: define pathspec
+ - Move tree_entry_interesting() to tree-walk.c and export it
+ - tree_entry_interesting(): remove dependency on struct diff_options
+ - Convert struct diff_options to use struct pathspec
+ - diff-no-index: use diff_tree_setup_paths()
+ - Add struct pathspec
+ (this branch is used by en/object-list-with-pathspec.)
+
+* en/object-list-with-pathspec (2010-09-20) 2 commits
+ - Add testcases showing how pathspecs are handled with rev-list --objects
+ - Make rev-list --objects work together with pathspecs
+ (this branch uses nd/struct-pathspec.)
+
+The above two were rebased on 1.7.4; will merge to 'next'.
+
+* tr/merge-unborn-clobber (2010-08-22) 1 commit
+  (merged to 'next' on 2011-02-03 at ccfc03d)
+ + Exhibit merge bug that clobbers index&WT
+
+* jc/unpack-trees (2010-12-22) 2 commits
+  (merged to 'next' on 2011-02-03 at 5bd48f8)
+ + unpack_trees(): skip trees that are the same in all input
+ + unpack-trees.c: cosmetic fix
+
+* jc/fsck-fixes (2011-01-26) 2 commits
+  (merged to 'next' on 2011-02-03 at 98e1c63)
+ + fsck: do not give up too early in fsck_dir()
+ + fsck: drop unused parameter from traverse_one_object()
+
+* tr/diff-words-test (2011-01-18) 4 commits
+  (merged to 'next' on 2011-02-03 at d346665)
+ + t4034 (diff --word-diff): add a minimum Perl drier test vector
+ + t4034 (diff --word-diff): style suggestions
+ + userdiff: simplify word-diff safeguard
+ + t4034: bulk verify builtin word regex sanity
+
+I thought this was Ok; further comments, anybody?
+
+* rr/fi-import-marks-if-exists (2011-01-15) 1 commit
+  (merged to 'next' on 2011-02-03 at 8c9d4ce)
+ + fast-import: Introduce --import-marks-if-exists
+
+Looked reasonable.
+
+* jn/unpack-lstat-failure-report (2011-01-12) 2 commits
+  (merged to 'next' on 2011-02-03 at 76586d2)
+ + unpack-trees: handle lstat failure for existing file
+ + unpack-trees: handle lstat failure for existing directory
+
+Looked reasonable.
+
+* ef/alias-via-run-command (2011-01-07) 1 commit
+  (merged to 'next' on 2011-02-03 at 4ce47ce)
+ + alias: use run_command api to execute aliases
+
+Will merge to 'master' shortly.
+
+* uk/checkout-ambiguous-ref (2011-02-07) 2 commits
+ - NEEDS TESTS: commit: document --detach synonym for "git checkout foo^{commit}"
+  (merged to 'next' on 2011-02-03 at 9044724)
+ + checkout: fix bug with ambiguous refs
+
+Will merge the first one to 'master' shortly.
+
+* cb/setup (2010-12-27) 1 commit
+  (merged to 'next' on 2011-02-03 at 073980f)
+ + setup: translate symlinks in filename when using absolute paths
+
+Will merge to 'master' shortly.
+
+* ae/better-template-failure-report (2010-12-18) 1 commit
+  (merged to 'next' on 2011-02-03 at 3b269c9)
+ + Improve error messages when temporary file creation fails
+
+Will merge to 'master' shortly.
+
+* jn/cherry-pick-strategy-option (2010-12-10) 1 commit
+  (merged to 'next' on 2011-02-03 at 1c10f16)
+ + cherry-pick/revert: add support for -X/--strategy-option
+
+Will merge to 'master' shortly.
+
