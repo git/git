@@ -30,6 +30,7 @@ struct checkout_opts {
 	int quiet;
 	int merge;
 	int force;
+	int force_detach;
 	int writeout_stage;
 	int writeout_error;
 
@@ -563,7 +564,7 @@ static void update_refs_for_switch(struct checkout_opts *opts,
 			if (!file_exists(ref_file) && file_exists(log_file))
 				remove_path(log_file);
 		}
-	} else if (strcmp(new->name, "HEAD")) {
+	} else if (opts->force_detach || strcmp(new->name, "HEAD")) {
 		update_ref(msg.buf, "HEAD", new->commit->object.sha1, NULL,
 			   REF_NODEREF, DIE_ON_ERR);
 		if (!opts->quiet) {
@@ -574,7 +575,8 @@ static void update_refs_for_switch(struct checkout_opts *opts,
 	}
 	remove_branch_state();
 	strbuf_release(&msg);
-	if (!opts->quiet && (new->path || !strcmp(new->name, "HEAD")))
+	if (!opts->quiet &&
+	    (new->path || (!opts->force_detach && !strcmp(new->name, "HEAD"))))
 		report_tracking(new);
 }
 
@@ -677,6 +679,7 @@ static const char *unique_tracking_name(const char *name)
 
 static int parse_branchname_arg(int argc, const char **argv,
 				int dwim_new_local_branch_ok,
+				int force_detach,
 				struct branch_info *new,
 				struct tree **source_tree,
 				unsigned char rev[20],
@@ -753,7 +756,8 @@ static int parse_branchname_arg(int argc, const char **argv,
 	new->name = arg;
 	setup_branch_path(new);
 
-	if (check_ref_format(new->path) == CHECK_REF_FORMAT_OK &&
+	if (!force_detach &&
+	    check_ref_format(new->path) == CHECK_REF_FORMAT_OK &&
 	    resolve_ref(new->path, branch_rev, 1, NULL))
 		hashcpy(rev, branch_rev);
 	else
@@ -804,6 +808,7 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 		OPT_STRING('B', NULL, &opts.new_branch_force, "branch",
 			   "create/reset and checkout a branch"),
 		OPT_BOOLEAN('l', NULL, &opts.new_branch_log, "create reflog for new branch"),
+		OPT_BOOLEAN(0, "detach", &opts.force_detach, "detach the HEAD at named commit"),
 		OPT_SET_INT('t', "track",  &opts.track, "set upstream info for new branch",
 			BRANCH_TRACK_EXPLICIT),
 		OPT_STRING(0, "orphan", &opts.new_orphan_branch, "new branch", "new unparented branch"),
@@ -842,8 +847,14 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 		opts.new_branch = opts.new_branch_force;
 
 	if (patch_mode && (opts.track > 0 || opts.new_branch
-			   || opts.new_branch_log || opts.merge || opts.force))
+			   || opts.new_branch_log || opts.merge || opts.force
+			   || opts.force_detach))
 		die ("--patch is incompatible with all other options");
+
+	if (opts.force_detach && (opts.new_branch || opts.new_orphan_branch))
+		die("--detach cannot be used with -b/-B/--orphan");
+	if (opts.force_detach && 0 < opts.track)
+		die("--detach cannot be used with -t");
 
 	/* --track without -b should DWIM */
 	if (0 < opts.track && !opts.new_branch) {
@@ -895,7 +906,8 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 			dwim_new_local_branch &&
 			opts.track == BRANCH_TRACK_UNSPECIFIED &&
 			!opts.new_branch;
-		int n = parse_branchname_arg(argc, argv, dwim_ok,
+		int n = parse_branchname_arg(argc, argv,
+				dwim_ok, opts.force_detach,
 				&new, &source_tree, rev, &opts.new_branch);
 		argv += n;
 		argc -= n;
@@ -921,6 +933,9 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 				die("git checkout: updating paths is incompatible with switching branches.");
 			}
 		}
+
+		if (opts.force_detach)
+			die("git checkout: --detach does not take a path argument");
 
 		if (1 < !!opts.writeout_stage + !!opts.force + !!opts.merge)
 			die("git checkout: --ours/--theirs, --force and --merge are incompatible when\nchecking out of the index.");
