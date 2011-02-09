@@ -898,6 +898,12 @@ import-marks::
 	second, an --import-marks= command-line option overrides
 	any "feature import-marks" command in the stream.
 
+notes::
+	Require that the backend support the 'notemodify' (N)
+	subcommand to the 'commit' command.
+	Versions of fast-import not supporting notes will exit
+	with a message indicating so.
+
 `option`
 ~~~~~~~~
 Processes the specified option so that git fast-import behaves in a
