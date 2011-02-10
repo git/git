@@ -71,5 +71,5 @@ Additional tips
   relevant parts of your tree.
 
 - Please note that if the other project merges from you, then it will
-  connects its history to yours, which can be something they don't want
+  connect its history to yours, which can be something they don't want
   to.
