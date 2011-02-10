@@ -1748,6 +1748,61 @@ test_expect_success \
     'cat input | git fast-import --export-marks=other.marks &&
     grep :1 other.marks'
 
+test_expect_success 'R: catch typo in marks file name' '
+	test_must_fail git fast-import --import-marks=nonexistent.marks </dev/null &&
+	echo "feature import-marks=nonexistent.marks" |
+	test_must_fail git fast-import
+'
+
+test_expect_success 'R: import and output marks can be the same file' '
+	rm -f io.marks &&
+	blob=$(echo hi | git hash-object --stdin) &&
+	cat >expect <<-EOF &&
+	:1 $blob
+	:2 $blob
+	EOF
+	git fast-import --export-marks=io.marks <<-\EOF &&
+	blob
+	mark :1
+	data 3
+	hi
+
+	EOF
+	git fast-import --import-marks=io.marks --export-marks=io.marks <<-\EOF &&
+	blob
+	mark :2
+	data 3
+	hi
+
+	EOF
+	test_cmp expect io.marks
+'
+
+test_expect_success 'R: --import-marks=foo --output-marks=foo to create foo fails' '
+	rm -f io.marks &&
+	test_must_fail git fast-import --import-marks=io.marks --export-marks=io.marks <<-\EOF
+	blob
+	mark :1
+	data 3
+	hi
+
+	EOF
+'
+
+test_expect_success 'R: --import-marks-if-exists' '
+	rm -f io.marks &&
+	blob=$(echo hi | git hash-object --stdin) &&
+	echo ":1 $blob" >expect &&
+	git fast-import --import-marks-if-exists=io.marks --export-marks=io.marks <<-\EOF &&
+	blob
+	mark :1
+	data 3
+	hi
+
+	EOF
+	test_cmp expect io.marks
+'
+
 cat >input << EOF
 feature import-marks=marks.out
 feature export-marks=marks.new
