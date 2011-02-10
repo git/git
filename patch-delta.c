@@ -48,7 +48,7 @@ void *patch_delta(const void *src_buf, unsigned long src_size,
 			if (cmd & 0x20) cp_size |= (*data++ << 8);
 			if (cmd & 0x40) cp_size |= (*data++ << 16);
 			if (cp_size == 0) cp_size = 0x10000;
-			if (cp_off + cp_size < cp_size ||
+			if (unsigned_add_overflows(cp_off, cp_size) ||
 			    cp_off + cp_size > src_size ||
 			    cp_size > size)
 				break;

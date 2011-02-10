@@ -63,7 +63,8 @@ void strbuf_attach(struct strbuf *sb, void *buf, size_t len, size_t alloc)
 
 void strbuf_grow(struct strbuf *sb, size_t extra)
 {
-	if (sb->len + extra + 1 <= sb->len)
+	if (unsigned_add_overflows(extra, 1) ||
+	    unsigned_add_overflows(sb->len, extra + 1))
 		die("you want to use way too much memory");
 	if (!sb->alloc)
 		sb->buf = NULL;
@@ -152,7 +153,7 @@ int strbuf_cmp(const struct strbuf *a, const struct strbuf *b)
 void strbuf_splice(struct strbuf *sb, size_t pos, size_t len,
 				   const void *data, size_t dlen)
 {
-	if (pos + len < pos)
+	if (unsigned_add_overflows(pos, len))
 		die("you want to use way too much memory");
 	if (pos > sb->len)
 		die("`pos' is too far after the end of the buffer");
