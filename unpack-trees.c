@@ -381,7 +381,7 @@ static void add_same_unmerged(struct cache_entry *ce,
 static int unpack_index_entry(struct cache_entry *ce,
 			      struct unpack_trees_options *o)
 {
-	struct cache_entry *src[5] = { NULL };
+	struct cache_entry *src[MAX_UNPACK_TREES + 1] = { NULL, };
 	int ret;
 
 	src[0] = ce;
@@ -427,7 +427,14 @@ static int switch_cache_bottom(struct traverse_info *info)
 	return ret;
 }
 
-static int traverse_trees_recursive(int n, unsigned long dirmask, unsigned long df_conflicts, struct name_entry *names, struct traverse_info *info)
+static int fast_forward_merge(int n, unsigned long dirmask,
+			      struct name_entry *names,
+			      struct traverse_info *info);
+
+static int traverse_trees_recursive(int n, unsigned long dirmask,
+				    unsigned long df_conflicts,
+				    struct name_entry *names,
+				    struct traverse_info *info)
 {
 	int i, ret, bottom;
 	struct tree_desc t[MAX_UNPACK_TREES];
@@ -435,6 +442,11 @@ static int traverse_trees_recursive(int n, unsigned long dirmask, unsigned long 
 	struct traverse_info newinfo;
 	struct name_entry *p;
 
+	if (!df_conflicts) {
+		int status = fast_forward_merge(n, dirmask, names, info);
+		if (status)
+			return status;
+	}
 	p = names;
 	while (!p->mode)
 		p++;
@@ -680,6 +692,53 @@ static struct cache_entry *find_cache_entry(struct traverse_info *info,
 		return o->src_index->cache[pos];
 	else
 		return NULL;
+}
+
+static int fast_forward_merge(int n, unsigned long dirmask,
+			      struct name_entry *names,
+			      struct traverse_info *info)
+{
+	int i;
+	struct cache_entry *src[MAX_UNPACK_TREES + 1] = { NULL, };
+	struct unpack_trees_options *o = info->data;
+
+	/* merging two or more trees with an identical subdirectory? */
+	if ((n < 2) || ((1UL << n) - 1) != dirmask ||
+	    !o->merge || o->reset || o->initial_checkout)
+		return 0;
+	for (i = 1; i < n; i++)
+		if (hashcmp(names[i-1].sha1, names[i].sha1))
+			return 0;
+
+	/*
+	 * Instead of descending into the directory, keep the contents
+	 * of the current index.
+	 */
+	while (1) {
+		struct cache_entry *ce;
+		ce = next_cache_entry(o);
+		if (!ce)
+			break;
+		/* Is the entry still in that directory? */
+		if (do_compare_entry(ce, info, names))
+			break;
+		/*
+		 * Note: we do not just run unpack_index_entry() here,
+		 * as the callback may want to compare what is in the
+		 * index with what are from the HEAD and the other tree
+		 * and reject the merge.  We pretend that ancestors, the
+		 * HEAD and the other tree all have the same contents as
+		 * the current index, which is a lie, but it works.
+		 */
+		for (i = 0; i < n + 1; i++)
+			src[i] = ce;
+		mark_ce_used(ce, o);
+		if (call_unpack_fn(src, o) < 0)
+			return unpack_failed(o, NULL);
+		if (ce_stage(ce))
+			mark_ce_used_same_name(ce, o);
+	}
+	return dirmask;
 }
 
 static void debug_path(struct traverse_info *info)
@@ -1105,6 +1164,7 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 
 		}
 		if (o->result.cache_nr && empty_worktree) {
+			/* dubious---why should this fail??? */
 			ret = unpack_failed(o, "Sparse checkout leaves no entry on working directory");
 			goto done;
 		}
