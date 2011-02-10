@@ -3,7 +3,7 @@
 # Copyright (c) 2005 Junio C Hamano.
 #
 
-USAGE='[--interactive | -i] [-v] [--force-rebase | -f] [--no-ff] [--onto <newbase>] (<upstream>|--root) [<branch>] [--quiet | -q]'
+USAGE='[--interactive | -i] [-v] [--force-rebase | -f] [--no-ff] [--onto <newbase>] [<upstream>|--root] [<branch>] [--quiet | -q]'
 LONG_USAGE='git-rebase replaces <branch> with a new branch of the
 same name.  When the --onto option is provided the new branch starts
 out with a HEAD equal to <newbase>, otherwise it is equal to <upstream>
@@ -345,8 +345,6 @@ and run me again.  I am stopping in case you still have something
 valuable there.'
 fi
 
-test $# -eq 0 && test -z "$rebase_root" && usage
-
 if test -n "$interactive_rebase"
 then
 	type=interactive
@@ -362,9 +360,20 @@ fi
 
 if test -z "$rebase_root"
 then
-	# The upstream head must be given.  Make sure it is valid.
-	upstream_name="$1"
-	shift
+	case "$#" in
+	0)
+		if ! upstream_name=$(git rev-parse --symbolic-full-name \
+			--verify -q @{upstream} 2>/dev/null)
+		then
+			. git-parse-remote
+			error_on_missing_default_upstream "rebase" "rebase" \
+				"against" "git rebase <upstream branch>"
+		fi
+		;;
+	*)	upstream_name="$1"
+		shift
+		;;
+	esac
 	upstream=`git rev-parse --verify "${upstream_name}^0"` ||
 	die "invalid upstream $upstream_name"
 	upstream_arg="$upstream_name"
