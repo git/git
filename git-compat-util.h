@@ -31,6 +31,9 @@
 #define maximum_signed_value_of_type(a) \
     (INTMAX_MAX >> (bitsizeof(intmax_t) - bitsizeof(a)))
 
+#define maximum_unsigned_value_of_type(a) \
+    (UINTMAX_MAX >> (bitsizeof(uintmax_t) - bitsizeof(a)))
+
 /*
  * Signed integer overflow is undefined in C, so here's a helper macro
  * to detect if the sum of two integers will overflow.
@@ -39,6 +42,9 @@
  */
 #define signed_add_overflows(a, b) \
     ((b) > maximum_signed_value_of_type(a) - (a))
+
+#define unsigned_add_overflows(a, b) \
+    ((b) > maximum_unsigned_value_of_type(a) - (a))
 
 #ifdef __GNUC__
 #define TYPEOF(x) (__typeof__(x))
