@@ -86,7 +86,7 @@ int add_files_to_cache(const char *prefix, const char **pathspec, int flags)
 	struct rev_info rev;
 	init_revisions(&rev, prefix);
 	setup_revisions(0, NULL, &rev, NULL);
-	rev.prune_data = pathspec;
+	init_pathspec(&rev.prune_data, pathspec);
 	rev.diffopt.output_format = DIFF_FORMAT_CALLBACK;
 	rev.diffopt.format_callback = update_callback;
 	data.flags = flags;

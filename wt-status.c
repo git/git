@@ -323,7 +323,7 @@ static void wt_status_collect_changes_worktree(struct wt_status *s)
     }
 	rev.diffopt.format_callback = wt_status_collect_changed_cb;
 	rev.diffopt.format_callback_data = s;
-	rev.prune_data = s->pathspec;
+	init_pathspec(&rev.prune_data, s->pathspec);
 	run_diff_files(&rev, 0);
 }
 
@@ -348,20 +348,22 @@ static void wt_status_collect_changes_index(struct wt_status *s)
 	rev.diffopt.detect_rename = 1;
 	rev.diffopt.rename_limit = 200;
 	rev.diffopt.break_opt = 0;
-	rev.prune_data = s->pathspec;
+	init_pathspec(&rev.prune_data, s->pathspec);
 	run_diff_index(&rev, 1);
 }
 
 static void wt_status_collect_changes_initial(struct wt_status *s)
 {
+	struct pathspec pathspec;
 	int i;
 
+	init_pathspec(&pathspec, s->pathspec);
 	for (i = 0; i < active_nr; i++) {
 		struct string_list_item *it;
 		struct wt_status_change_data *d;
 		struct cache_entry *ce = active_cache[i];
 
-		if (!ce_path_match(ce, s->pathspec))
+		if (!ce_path_match(ce, &pathspec))
 			continue;
 		it = string_list_insert(&s->change, ce->name);
 		d = it->util;
@@ -376,6 +378,7 @@ static void wt_status_collect_changes_initial(struct wt_status *s)
 		else
 			d->index_status = DIFF_STATUS_ADDED;
 	}
+	free_pathspec(&pathspec);
 }
 
 static void wt_status_collect_untracked(struct wt_status *s)
