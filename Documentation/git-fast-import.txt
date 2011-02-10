@@ -948,6 +948,13 @@ cat-blob::
 	rather than wasting time on the early part of an import
 	before the unsupported command is detected.
 
+notes::
+	Require that the backend support the 'notemodify' (N)
+	subcommand to the 'commit' command.
+	Versions of fast-import not supporting notes will exit
+	with a message indicating so.
+
+
 `option`
 ~~~~~~~~
 Processes the specified option so that git fast-import behaves in a
