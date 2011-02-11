@@ -74,7 +74,13 @@ static int mark_object(struct object *obj, int type, void *data)
 {
 	struct object *parent = data;
 
+	/*
+	 * The only case data is NULL or type is OBJ_ANY is when
+	 * mark_object_reachable() calls us.  All the callers of
+	 * that function has non-NULL obj hence ...
+	 */
 	if (!obj) {
+		/* ... these references to parent->fld are safe here */
 		printf("broken link from %7s %s\n",
 			   typename(parent->type), sha1_to_hex(parent->sha1));
 		printf("broken link from %7s %s\n",
@@ -84,6 +90,7 @@ static int mark_object(struct object *obj, int type, void *data)
 	}
 
 	if (type != OBJ_ANY && obj->type != type)
+		/* ... and the reference to parent is safe here */
 		objerror(parent, "wrong object type in link");
 
 	if (obj->flags & REACHABLE)
@@ -109,7 +116,7 @@ static void mark_object_reachable(struct object *obj)
 	mark_object(obj, OBJ_ANY, NULL);
 }
 
-static int traverse_one_object(struct object *obj, struct object *parent)
+static int traverse_one_object(struct object *obj)
 {
 	int result;
 	struct tree *tree = NULL;
@@ -138,7 +145,7 @@ static int traverse_reachable(void)
 		entry = pending.objects + --pending.nr;
 		obj = entry->item;
 		parent = (struct object *) entry->name;
-		result |= traverse_one_object(obj, parent);
+		result |= traverse_one_object(obj);
 	}
 	return !!result;
 }
@@ -385,10 +392,20 @@ static void add_sha1_list(unsigned char *sha1, unsigned long ino)
 	sha1_list.nr = ++nr;
 }
 
+static inline int is_loose_object_file(struct dirent *de,
+				       char *name, unsigned char *sha1)
+{
+	if (strlen(de->d_name) != 38)
+		return 0;
+	memcpy(name + 2, de->d_name, 39);
+	return !get_sha1_hex(name, sha1);
+}
+
 static void fsck_dir(int i, char *path)
 {
 	DIR *dir = opendir(path);
 	struct dirent *de;
+	char name[100];
 
 	if (!dir)
 		return;
@@ -396,17 +413,13 @@ static void fsck_dir(int i, char *path)
 	if (verbose)
 		fprintf(stderr, "Checking directory %s\n", path);
 
+	sprintf(name, "%02x", i);
 	while ((de = readdir(dir)) != NULL) {
-		char name[100];
 		unsigned char sha1[20];
 
 		if (is_dot_or_dotdot(de->d_name))
 			continue;
-		if (strlen(de->d_name) == 38) {
-			sprintf(name, "%02x", i);
-			memcpy(name+2, de->d_name, 39);
-			if (get_sha1_hex(name, sha1) < 0)
-				break;
+		if (is_loose_object_file(de, name, sha1)) {
 			add_sha1_list(sha1, DIRENT_SORT_HINT(de));
 			continue;
 		}
@@ -556,8 +569,8 @@ static int fsck_cache_tree(struct cache_tree *it)
 			      sha1_to_hex(it->sha1));
 			return 1;
 		}
-		mark_object_reachable(obj);
 		obj->used = 1;
+		mark_object_reachable(obj);
 		if (obj->type != OBJ_TREE)
 			err |= objerror(obj, "non-tree in cache-tree");
 	}
