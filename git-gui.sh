@@ -139,6 +139,10 @@ if {$_trace >= 0} {
 	set _trace 0
 }
 
+# variable for the last merged branch (useful for a default when deleting
+# branches).
+set _last_merged_branch {}
+
 proc shellpath {} {
 	global _shellpath env
 	if {[string match @@* $_shellpath]} {
