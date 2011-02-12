@@ -18,6 +18,9 @@ Subversion repository mirrored on the local disk. Remote Subversion
 repositories can be mirrored on local disk using the `svnsync`
 command.
 
+Note: this tool is very young.  The details of its commandline
+interface may change in backward incompatible ways.
+
 INPUT FORMAT
 ------------
 Subversion's repository dump format is documented in full in
