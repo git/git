@@ -264,8 +264,8 @@ proc remove_remote {name} {
 		unset repo_config(remote.$name.push)
 	}
 
-	set i [lsearch -exact all_remotes $name]
-	lreplace all_remotes $i $i
+	set i [lsearch -exact $all_remotes $name]
+	set all_remotes [lreplace $all_remotes $i $i]
 
 	set remote_m .mbar.remote
 	delete_from_menu $remote_m.fetch $name
