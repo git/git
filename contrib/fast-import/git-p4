@@ -910,6 +910,22 @@ class P4Sync(Command):
         return files
 
     def stripRepoPath(self, path, prefixes):
+        if self.useClientSpec:
+
+            # if using the client spec, we use the output directory
+            # specified in the client.  For example, a view
+            #   //depot/foo/branch/... //client/branch/foo/...
+            # will end up putting all foo/branch files into
+            #  branch/foo/
+            for val in self.clientSpecDirs:
+                if path.startswith(val[0]):
+                    # replace the depot path with the client path
+                    path = path.replace(val[0], val[1][1])
+                    # now strip out the client (//client/...)
+                    path = re.sub("^(//[^/]+/)", '', path)
+                    # the rest is all path
+                    return path
+
         if self.keepRepoPath:
             prefixes = [re.sub("^(//[^/]+/).*", r'\1', prefixes[0])]
 
@@ -1032,7 +1048,7 @@ class P4Sync(Command):
             includeFile = True
             for val in self.clientSpecDirs:
                 if f['path'].startswith(val[0]):
-                    if val[1] <= 0:
+                    if val[1][0] <= 0:
                         includeFile = False
                     break
 
@@ -1475,19 +1491,45 @@ class P4Sync(Command):
         for entry in specList:
             for k,v in entry.iteritems():
                 if k.startswith("View"):
+
+                    # p4 has these %%1 to %%9 arguments in specs to
+                    # reorder paths; which we can't handle (yet :)
+                    if re.match('%%\d', v) != None:
+                        print "Sorry, can't handle %%n arguments in client specs"
+                        sys.exit(1)
+
                     if v.startswith('"'):
                         start = 1
                     else:
                         start = 0
                     index = v.find("...")
+
+                    # save the "client view"; i.e the RHS of the view
+                    # line that tells the client where to put the
+                    # files for this view.
+                    cv = v[index+3:].strip() # +3 to remove previous '...'
+
+                    # if the client view doesn't end with a
+                    # ... wildcard, then we're going to mess up the
+                    # output directory, so fail gracefully.
+                    if not cv.endswith('...'):
+                        print 'Sorry, client view in "%s" needs to end with wildcard' % (k)
+                        sys.exit(1)
+                    cv=cv[:-3]
+
+                    # now save the view; +index means included, -index
+                    # means it should be filtered out.
                     v = v[start:index]
                     if v.startswith("-"):
                         v = v[1:]
-                        temp[v] = -len(v)
+                        include = -len(v)
                     else:
-                        temp[v] = len(v)
+                        include = len(v)
+
+                    temp[v] = (include, cv)
+
         self.clientSpecDirs = temp.items()
-        self.clientSpecDirs.sort( lambda x, y: abs( y[1] ) - abs( x[1] ) )
+        self.clientSpecDirs.sort( lambda x, y: abs( y[1][0] ) - abs( x[1][0] ) )
 
     def run(self, args):
         self.depotPaths = []
