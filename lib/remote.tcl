@@ -157,22 +157,7 @@ proc add_fetch_entry {r} {
 	}
 
 	if {$enable} {
-		if {![winfo exists $fetch_m]} {
-			menu $remove_m
-			$remote_m insert 0 cascade \
-				-label [mc "Remove Remote"] \
-				-menu $remove_m
-
-			menu $prune_m
-			$remote_m insert 0 cascade \
-				-label [mc "Prune from"] \
-				-menu $prune_m
-
-			menu $fetch_m
-			$remote_m insert 0 cascade \
-				-label [mc "Fetch from"] \
-				-menu $fetch_m
-		}
+		make_sure_remote_submenues_exist $remote_m
 
 		$fetch_m add command \
 			-label $r \
@@ -219,6 +204,29 @@ proc add_push_entry {r} {
 		$push_m add command \
 			-label $r \
 			-command [list push_to $r]
+	}
+}
+
+proc make_sure_remote_submenues_exist {remote_m} {
+	set fetch_m $remote_m.fetch
+	set prune_m $remote_m.prune
+	set remove_m $remote_m.remove
+
+	if {![winfo exists $fetch_m]} {
+		menu $remove_m
+		$remote_m insert 0 cascade \
+			-label [mc "Remove Remote"] \
+			-menu $remove_m
+
+		menu $prune_m
+		$remote_m insert 0 cascade \
+			-label [mc "Prune from"] \
+			-menu $prune_m
+
+		menu $fetch_m
+		$remote_m insert 0 cascade \
+			-label [mc "Fetch from"] \
+			-menu $fetch_m
 	}
 }
 
