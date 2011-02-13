@@ -20,6 +20,35 @@ proc prune_from {remote} {
 	console::exec $w [list git remote prune $remote]
 }
 
+proc fetch_from_all {} {
+	set w [console::new \
+		[mc "fetch all remotes"] \
+		[mc "Fetching new changes from all remotes"]]
+
+	set cmd [list git fetch --all]
+	if {[is_config_true gui.pruneduringfetch]} {
+		lappend cmd --prune
+	}
+
+	console::exec $w $cmd
+}
+
+proc prune_from_all {} {
+	global all_remotes
+
+	set w [console::new \
+		[mc "remote prune all remotes"] \
+		[mc "Pruning tracking branches deleted from all remotes"]]
+
+	set cmd [list git remote prune]
+
+	foreach r $all_remotes {
+		lappend cmd $r
+	}
+
+	console::exec $w $cmd
+}
+
 proc push_to {remote} {
 	set w [console::new \
 		[mc "push %s" $remote] \
