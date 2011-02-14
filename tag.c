@@ -97,7 +97,9 @@ int parse_tag_buffer(struct tag *item, const void *data, unsigned long size)
 		item->tagged = NULL;
 	}
 
-	if (prefixcmp(bufptr, "tag "))
+	if (bufptr + 4 < tail && !prefixcmp(bufptr, "tag "))
+		; 		/* good */
+	else
 		return -1;
 	bufptr += 4;
 	nl = memchr(bufptr, '\n', tail - bufptr);
@@ -106,7 +108,7 @@ int parse_tag_buffer(struct tag *item, const void *data, unsigned long size)
 	item->tag = xmemdupz(bufptr, nl - bufptr);
 	bufptr = nl + 1;
 
-	if (!prefixcmp(bufptr, "tagger "))
+	if (bufptr + 7 < tail && !prefixcmp(bufptr, "tagger "))
 		item->date = parse_tag_date(bufptr, tail);
 	else
 		item->date = 0;
