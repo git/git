@@ -114,7 +114,7 @@ do
 	--d|--dr|--dry|--dry-|--dry-r|--dry-ru|--dry-run)
 		dry_run=--dry-run
 		;;
-	-h|--h|--he|--hel|--help)
+	-h|--h|--he|--hel|--help|--help-|--help-a|--help-al|--help-all)
 		usage
 		;;
 	*)
