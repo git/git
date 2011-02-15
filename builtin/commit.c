@@ -118,7 +118,7 @@ static struct option builtin_commit_options[] = {
 	OPT__VERBOSE(&verbose, "show diff in commit message template"),
 
 	OPT_GROUP("Commit message options"),
-	OPT_FILENAME('F', "file", &logfile, "read log from file"),
+	OPT_FILENAME('F', "file", &logfile, "read message from file"),
 	OPT_STRING(0, "author", &force_author, "AUTHOR", "override author for commit"),
 	OPT_STRING(0, "date", &force_date, "DATE", "override date for commit"),
 	OPT_CALLBACK('m', "message", &message, "MESSAGE", "specify commit message", opt_parse_m),

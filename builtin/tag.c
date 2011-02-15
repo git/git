@@ -378,7 +378,7 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 					"annotated tag, needs a message"),
 		OPT_CALLBACK('m', NULL, &msg, "msg",
 			     "message for the tag", parse_msg_arg),
-		OPT_FILENAME('F', NULL, &msgfile, "message in a file"),
+		OPT_FILENAME('F', NULL, &msgfile, "read message from file"),
 		OPT_BOOLEAN('s', NULL, &sign, "annotated and GPG-signed tag"),
 		OPT_STRING('u', NULL, &keyid, "key-id",
 					"use another key to sign the tag"),
