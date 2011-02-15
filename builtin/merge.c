@@ -795,6 +795,32 @@ static void add_strategies(const char *string, unsigned attr)
 
 }
 
+static void write_merge_msg(void)
+{
+	int fd = open(git_path("MERGE_MSG"), O_WRONLY | O_CREAT, 0666);
+	if (fd < 0)
+		die_errno("Could not open '%s' for writing",
+			  git_path("MERGE_MSG"));
+	if (write_in_full(fd, merge_msg.buf, merge_msg.len) != merge_msg.len)
+		die_errno("Could not write to '%s'", git_path("MERGE_MSG"));
+	close(fd);
+}
+
+static void read_merge_msg(void)
+{
+	strbuf_reset(&merge_msg);
+	if (strbuf_read_file(&merge_msg, git_path("MERGE_MSG"), 0) < 0)
+		die_errno("Could not read from '%s'", git_path("MERGE_MSG"));
+}
+
+static void run_prepare_commit_msg(void)
+{
+	write_merge_msg();
+	run_hook(get_index_file(), "prepare-commit-msg",
+		 git_path("MERGE_MSG"), "merge", NULL, NULL);
+	read_merge_msg();
+}
+
 static int merge_trivial(void)
 {
 	unsigned char result_tree[20], result_commit[20];
@@ -806,6 +832,7 @@ static int merge_trivial(void)
 	parent->next = xmalloc(sizeof(*parent->next));
 	parent->next->item = remoteheads->item;
 	parent->next->next = NULL;
+	run_prepare_commit_msg();
 	commit_tree(merge_msg.buf, result_tree, parent, result_commit, NULL);
 	finish(result_commit, "In-index merge");
 	drop_save();
@@ -835,6 +862,7 @@ static int finish_automerge(struct commit_list *common,
 	}
 	free_commit_list(remoteheads);
 	strbuf_addch(&merge_msg, '\n');
+	run_prepare_commit_msg();
 	commit_tree(merge_msg.buf, result_tree, parents, result_commit, NULL);
 	strbuf_addf(&buf, "Merge made by %s.", wt_strategy);
 	finish(result_commit, buf.buf);
@@ -1316,14 +1344,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 			die_errno("Could not write to '%s'", git_path("MERGE_HEAD"));
 		close(fd);
 		strbuf_addch(&merge_msg, '\n');
-		fd = open(git_path("MERGE_MSG"), O_WRONLY | O_CREAT, 0666);
-		if (fd < 0)
-			die_errno("Could not open '%s' for writing",
-				  git_path("MERGE_MSG"));
-		if (write_in_full(fd, merge_msg.buf, merge_msg.len) !=
-			merge_msg.len)
-			die_errno("Could not write to '%s'", git_path("MERGE_MSG"));
-		close(fd);
+		write_merge_msg();
 		fd = open(git_path("MERGE_MODE"), O_WRONLY | O_CREAT | O_TRUNC, 0666);
 		if (fd < 0)
 			die_errno("Could not open '%s' for writing",
