@@ -419,7 +419,7 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 	unsigned int flags = 0;
 	const struct option init_db_options[] = {
 		OPT_STRING(0, "template", &template_dir, "template-directory",
-				"provide the directory from which templates will be used"),
+				"directory from which templates will be used"),
 		OPT_SET_INT(0, "bare", &is_bare_repository_cfg,
 				"create a bare repository", 1),
 		{ OPTION_CALLBACK, 0, "shared", &init_shared_repository,
