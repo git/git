@@ -233,6 +233,8 @@ proc make_sure_remote_submenues_exist {remote_m} {
 proc update_all_remotes_menu_entry {} {
 	global all_remotes
 
+	if {[git-version < 1.6.6]} { return }
+
 	set have_remote 0
 	foreach r $all_remotes {
 		set have_remote 1
@@ -243,27 +245,29 @@ proc update_all_remotes_menu_entry {} {
 	set prune_m $remote_m.prune
 	if {$have_remote} {
 		make_sure_remote_submenues_exist $remote_m
-		if {[$fetch_m entrycget 0 -label] ne "All"} {
+		set index [expr {[$fetch_m type 0] eq "tearoff" ? 1 : 0}]
+		if {[$fetch_m entrycget $index -label] ne "All"} {
 
-			$fetch_m insert 0 separator
-			$fetch_m insert 0 command \
+			$fetch_m insert $index separator
+			$fetch_m insert $index command \
 				-label "All" \
 				-command fetch_from_all
 
-			$prune_m insert 0 separator
-			$prune_m insert 0 command \
-	  			-label "All" \
+			$prune_m insert $index separator
+			$prune_m insert $index command \
+				-label "All" \
 				-command prune_from_all
 		}
 	} else {
 		if {[winfo exists $fetch_m]} {
+			set index [expr {[$fetch_m type 0] eq "tearoff" ? 1 : 0}]
 			if {[$fetch_m type end] eq "separator"} {
 
-				delete_from_menu $fetch_m 0
-				delete_from_menu $fetch_m 0
+				delete_from_menu $fetch_m $index
+				delete_from_menu $fetch_m $index
 
-				delete_from_menu $prune_m 0
-				delete_from_menu $prune_m 0
+				delete_from_menu $prune_m $index
+				delete_from_menu $prune_m $index
 			}
 		}
 	}
