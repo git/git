@@ -317,7 +317,7 @@ static struct option builtin_add_options[] = {
 	OPT__VERBOSE(&verbose, "be verbose"),
 	OPT_GROUP(""),
 	OPT_BOOLEAN('i', "interactive", &add_interactive, "interactive picking"),
-	OPT_BOOLEAN('p', "patch", &patch_interactive, "interactive patching"),
+	OPT_BOOLEAN('p', "patch", &patch_interactive, "select hunks interactively"),
 	OPT_BOOLEAN('e', "edit", &edit_interactive, "edit current diff and apply"),
 	OPT__FORCE(&ignored_too, "allow adding otherwise ignored files"),
 	OPT_BOOLEAN('u', "update", &take_worktree_changes, "update tracked files"),

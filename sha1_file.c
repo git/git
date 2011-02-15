@@ -52,7 +52,7 @@ static struct cached_object {
 static int cached_object_nr, cached_object_alloc;
 
 static struct cached_object empty_tree = {
-	EMPTY_TREE_SHA1_BIN,
+	EMPTY_TREE_SHA1_BIN_LITERAL,
 	OBJ_TREE,
 	"",
 	0
