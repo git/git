@@ -9,6 +9,7 @@ SYNOPSIS
 --------
 [verse]
 'git checkout' [-q] [-f] [-m] [<branch>]
+'git checkout' [-q] [-f] [-m] [--detach] [<commit>]
 'git checkout' [-q] [-f] [-m] [[-b|-B|--orphan] <new_branch>] [<start_point>]
 'git checkout' [-f|--ours|--theirs|-m|--conflict=<style>] [<tree-ish>] [--] <paths>...
 'git checkout' --patch [<tree-ish>] [--] [<paths>...]
@@ -22,9 +23,10 @@ branch.
 
 'git checkout' [<branch>]::
 'git checkout' -b|-B <new_branch> [<start point>]::
+'git checkout' [--detach] [<commit>]::
 
 	This form switches branches by updating the index, working
-	tree, and HEAD to reflect the specified branch.
+	tree, and HEAD to reflect the specified branch or commit.
 +
 If `-b` is given, a new branch is created as if linkgit:git-branch[1]
 were called and then checked out; in this case you can
@@ -115,6 +117,13 @@ explicitly give a name with '-b' in such a case.
 	Create the new branch's reflog; see linkgit:git-branch[1] for
 	details.
 
+--detach::
+	Rather than checking out a branch to work on it, check out a
+	commit for inspection and discardable experiments.
+	This is the default behavior of "git checkout <commit>" when
+	<commit> is not a branch name.  See the "DETACHED HEAD" section
+	below for details.
+
 --orphan::
 	Create a new 'orphan' branch, named <new_branch>, started from
 	<start_point> and switch to it.  The first commit made on this
@@ -204,7 +213,7 @@ leave out at most one of `A` and `B`, in which case it defaults to `HEAD`.
 
 
 
-Detached HEAD
+DETACHED HEAD
 -------------
 
 It is sometimes useful to be able to 'checkout' a commit that is
