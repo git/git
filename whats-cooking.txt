@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Feb 2011, #03; Wed, 9)
-X-master-at: 1a9fe453263137be7d42e6fbfc041b5b2d9521d7
-X-next-at: 3d0bb1aecb5960274bb37fb5692cb0f4b10d7706
+Subject: What's cooking in git.git (Feb 2011, #04; Wed, 16)
+X-master-at: 5673d695fcce217b26d1a5956c1184ff62dc74f1
+X-next-at: a71843abac0d3679ef8ee8e818795c39d1910e44
 
-What's cooking in git.git (Feb 2011, #03; Wed, 9)
+What's cooking in git.git (Feb 2011, #04; Wed, 16)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -15,77 +15,79 @@ perhaps by the end of this week.
 --------------------------------------------------
 [New Topics]
 
-* jh/merge-sans-branch (2011-02-08) 3 commits
- - merge: optionally merge from upstream when run without argument
- - builtin/merge.c: Add function per_branch_config
- - builtin/merge.c: Add setup_merge_commit function
+* jh/do-not-track-non-branches (2011-02-16) 1 commit
+ - branch/checkout --track: Ensure that upstream branch is indeed a branch
 
-* js/checkout-untracked-symlink (2011-02-05) 2 commits
- - (weatherbaloon) needs in-code explanation updates
- - Demonstrate breakage: checkout overwrites untracked symlink with directory
+Conflicts with tr/maint-branch-no-track-head but we should probably say
+that this supersedes it.
 
-* lp/config-vername-check (2011-01-21) 2 commits
- - Documentation fixes in git-config
- - Sanity-check config variable names
+* jh/push-default-upstream-configname (2011-02-16) 1 commit
+ - push.default: Rename 'tracking' to 'upstream'
 
-* mz/rerere-remaining (2011-02-07) 1 commit
- - mergetool: don't skip modify/remove conflicts
- (this branch uses jc/rerere-remaining.)
+This is not "renaming" in the sense that breaks existing practice, but
+giving a new official name and deprecating the existing one.
 
-* nd/hash-object-sanity (2011-02-05) 1 commit
- - Make hash-object more robust against malformed objects
+* js/maint-merge-use-prepare-commit-msg-hook (2011-02-14) 1 commit
+ - merge: honor prepare-commit-msg hook
 
---------------------------------------------------
-[Graduated to "master"]
+Will merge to 'next'.
 
-* ae/better-template-failure-report (2010-12-18) 1 commit
-  (merged to 'next' on 2011-02-03 at 3b269c9)
- + Improve error messages when temporary file creation fails
+* mg/patch-id (2011-02-16) 2 commits
+ - git-patch-id: do not trip over "no newline" markers
+ - git-patch-id: test for "no newline" markers
 
-* cb/setup (2010-12-27) 1 commit
-  (merged to 'next' on 2011-02-03 at 073980f)
- + setup: translate symlinks in filename when using absolute paths
+The tip one is too strict in determining "\ No newline..." that needs to
+be loosened to be in line with what "git apply" does.
 
-* ef/alias-via-run-command (2011-01-07) 1 commit
-  (merged to 'next' on 2011-02-03 at 4ce47ce)
- + alias: use run_command api to execute aliases
+* mg/placeholders-are-lowercase (2011-02-15) 4 commits
+ - Make <identifier> lowercase as per CodingGuidelines
+ - Make <identifier> lowercase as per CodingGuidelines
+ - Make <identifier> lowercase as per CodingGuidelines
+ - CodingGuidelines: downcase placeholders in usage messages
 
-* jc/fsck-fixes (2011-01-26) 2 commits
-  (merged to 'next' on 2011-02-03 at 98e1c63)
- + fsck: do not give up too early in fsck_dir()
- + fsck: drop unused parameter from traverse_one_object()
+Will merge to 'next'.
 
-* jc/unpack-trees (2010-12-22) 2 commits
-  (merged to 'next' on 2011-02-03 at 5bd48f8)
- + unpack_trees(): skip trees that are the same in all input
- + unpack-trees.c: cosmetic fix
+* mo/perl-bidi-pipe-envfix (2011-02-15) 1 commit
+  (merged to 'next' on 2011-02-15 at c36e816)
+ + perl: command_bidi_pipe() method should set-up git environmens
 
-* jn/cherry-pick-strategy-option (2010-12-10) 1 commit
-  (merged to 'next' on 2011-02-03 at 1c10f16)
- + cherry-pick/revert: add support for -X/--strategy-option
+Looked reasonable.
 
-* jn/unpack-lstat-failure-report (2011-01-12) 2 commits
-  (merged to 'next' on 2011-02-03 at 76586d2)
- + unpack-trees: handle lstat failure for existing file
- + unpack-trees: handle lstat failure for existing directory
+* nd/sorted-builtin-command-list (2011-02-15) 1 commit
+ - git.c: reorder builtin command list
 
-* rr/fi-import-marks-if-exists (2011-01-15) 1 commit
-  (merged to 'next' on 2011-02-03 at 8c9d4ce)
- + fast-import: Introduce --import-marks-if-exists
+Looked Ok and low impact.  Will merge to 'next'.
 
-* tr/diff-words-test (2011-01-18) 4 commits
-  (merged to 'next' on 2011-02-03 at d346665)
- + t4034 (diff --word-diff): add a minimum Perl drier test vector
- + t4034 (diff --word-diff): style suggestions
- + userdiff: simplify word-diff safeguard
- + t4034: bulk verify builtin word regex sanity
+* sp/maint-smart-http-sans-100-continue (2011-02-15) 1 commit
+  (merged to 'next' on 2011-02-15 at 553e3e5)
+ + smart-http: Don't use Expect: 100-Continue
 
-* tr/merge-unborn-clobber (2010-08-22) 1 commit
-  (merged to 'next' on 2011-02-03 at ccfc03d)
- + Exhibit merge bug that clobbers index&WT
+* jc/grep--no-index-pathspec-fix (2011-02-16) 1 commit
+ - grep --no-index: honor pathspecs correctly
+ (this branch uses nd/struct-pathspec; is tangled with en/object-list-with-pathspec.)
 
 --------------------------------------------------
 [Stalled]
+
+* pw/p4 (2011-02-05) 8 commits
+ - git-p4: support clone --bare
+ - git-p4: decode p4 wildcard characters
+ - git-p4: better message for "git-p4 sync" when not cloned
+ - git-p4: reinterpret confusing p4 message
+ - git-p4: accommodate new move/delete type in p4
+ - git-p4: add missing newline in initial import message
+ - git-p4: fix key error for p4 problem
+ - git-p4: test script
+
+Will be re-rolled after collecting comments (Pete Wyckoff, 2011-02-07).
+
+* js/checkout-untracked-symlink (2011-02-05) 2 commits
+ . (weatherbaloon) needs in-code explanation updates
+ . Demonstrate breakage: checkout overwrites untracked symlink with directory
+
+The "fix" seems to test t6035, #2.
+
+Will discard the following topics carried over since pre-1.7.4 era.
 
 * nd/index-doc (2010-09-06) 1 commit
  - doc: technical details about the index file format
@@ -126,17 +128,21 @@ things forward.
 * ab/p4 (2011-01-11) 1 commit
  - git-p4: correct indenting and formatting
 
-Lacks sign-off but is trivial.
+Lacks sign-off.  There are a few topics in the same area discussed among
+Pete Wyckoff, Vitor Antunes and Tor Arvid Lund that I won't be picking up
+myself before the dust settles, so I'd discard this soonish, and wait for
+the resolution of the other topics.
 
 * tr/maint-branch-no-track-head (2010-12-14) 1 commit
  - branch: do not attempt to track HEAD implicitly
 
-Probably needs a re-roll to exclude either (1) any ref outside the
-hierarchies for branches (i.e. refs/{heads,remotes}/), or (2) only refs
-outside refs/ hierarchies (e.g. HEAD, ORIG_HEAD, ...).  The latter feels
-safer and saner.
+See jh/do-not-track-non-branches topic.
 
-* mz/rebase (2010-12-28) 31 commits
+--------------------------------------------------
+[Cooking]
+
+* mz/rebase (2011-02-09) 32 commits
+ - rebase: use @{upstream} if no upstream specified
  - rebase -i: remove unnecessary state rebase-root
  - rebase -i: don't read unused variable preserve_merges
  - git-rebase--am: remove unnecessary --3way option
@@ -169,197 +175,36 @@ safer and saner.
  - rebase: refactor reading of state
  - rebase: clearer names for directory variables
 
-Re-roll posted, but I haven't picked it up yet.
+Minor UI regression was reported but otherwise it looked like that the
+topic is in a good shape.  Will merge to 'next'.
 
-* ab/i18n (2010-10-07) 161 commits
- - po/de.po: complete German translation
- - po/sv.po: add Swedish translation
- - gettextize: git-bisect bisect_next_check "You need to" message
- - gettextize: git-bisect [Y/n] messages
- - gettextize: git-bisect bisect_replay + $1 messages
- - gettextize: git-bisect bisect_reset + $1 messages
- - gettextize: git-bisect bisect_run + $@ messages
- - gettextize: git-bisect die + eval_gettext messages
- - gettextize: git-bisect die + gettext messages
- - gettextize: git-bisect echo + eval_gettext message
- - gettextize: git-bisect echo + gettext messages
- - gettextize: git-bisect gettext + echo message
- - gettextize: git-bisect add git-sh-i18n
- - gettextize: git-stash drop_stash say/die messages
- - gettextize: git-stash "unknown option" message
- - gettextize: git-stash die + eval_gettext $1 messages
- - gettextize: git-stash die + eval_gettext $* messages
- - gettextize: git-stash die + eval_gettext messages
- - gettextize: git-stash die + gettext messages
- - gettextize: git-stash say + gettext messages
- - gettextize: git-stash echo + gettext message
- - gettextize: git-stash add git-sh-i18n
- - gettextize: git-submodule "blob" and "submodule" messages
- - gettextize: git-submodule "path not initialized" message
- - gettextize: git-submodule "[...] path is ignored" message
- - gettextize: git-submodule "Entering [...]" message
- - gettextize: git-submodule $errmsg messages
- - gettextize: git-submodule "Submodule change[...]" messages
- - gettextize: git-submodule "cached cannot be used" message
- - gettextize: git-submodule $update_module say + die messages
- - gettextize: git-submodule die + eval_gettext messages
- - gettextize: git-submodule say + eval_gettext messages
- - gettextize: git-submodule echo + eval_gettext messages
- - gettextize: git-submodule add git-sh-i18n
- - gettextize: git-pull "rebase against" / "merge with" messages
- - gettextize: git-pull "[...] not currently on a branch" message
- - gettextize: git-pull "You asked to pull" message
- - gettextize: git-pull split up "no candidate" message
- - gettextize: git-pull eval_gettext + warning message
- - gettextize: git-pull eval_gettext + die message
- - gettextize: git-pull die messages
- - gettextize: git-pull add git-sh-i18n
- - gettext docs: add "Testing marked strings" section to po/README
- - gettext docs: the Git::I18N Perl interface
- - gettext docs: the git-sh-i18n.sh Shell interface
- - gettext docs: the gettext.h C interface
- - gettext docs: add "Marking strings for translation" section in po/README
- - gettext docs: add a "Testing your changes" section to po/README
- - po/pl.po: add Polish translation
- - po/hi.po: add Hindi Translation
- - po/en_GB.po: add British English translation
- - po/de.po: add German translation
- - Makefile: only add gettext tests on XGETTEXT_INCLUDE_TESTS=YesPlease
- - gettext docs: add po/README file documenting Git's gettext
- - gettextize: git-am printf(1) message to eval_gettext
- - gettextize: git-am core say messages
- - gettextize: git-am "Apply?" message
- - gettextize: git-am clean_abort messages
- - gettextize: git-am cannot_fallback messages
- - gettextize: git-am die messages
- - gettextize: git-am eval_gettext messages
- - gettextize: git-am multi-line getttext $msg; echo
- - gettextize: git-am one-line gettext $msg; echo
- - gettextize: git-am add git-sh-i18n
- - gettext tests: add GETTEXT_POISON tests for shell scripts
- - gettext tests: add GETTEXT_POISON support for shell scripts
- - Makefile: MSGFMT="msgfmt --check" under GNU_GETTEXT
- - Makefile: add GNU_GETTEXT, set when we expect GNU gettext
- - gettextize: git-shortlog basic messages
- - gettextize: git-revert split up "could not revert/apply" message
- - gettextize: git-revert literal "me" messages
- - gettextize: git-revert "Your local changes" message
- - gettextize: git-revert basic messages
- - gettextize: git-notes "Refusing to %s notes in %s" message
- - gettextize: git-notes GIT_NOTES_REWRITE_MODE error message
- - gettextize: git-notes basic commands
- - gettextize: git-gc "Auto packing the repository" message
- - gettextize: git-gc basic messages
- - gettextize: git-describe basic messages
- - gettextize: git-clean clean.requireForce messages
- - gettextize: git-clean basic messages
- - gettextize: git-bundle basic messages
- - gettextize: git-archive basic messages
- - gettextize: git-status "renamed: " message
- - gettextize: git-status "Initial commit" message
- - gettextize: git-status "Changes to be committed" message
- - gettextize: git-status shortstatus messages
- - gettextize: git-status "nothing to commit" messages
- - gettextize: git-status basic messages
- - gettextize: git-push "prevent you from losing" message
- - gettextize: git-push basic messages
- - gettextize: git-tag tag_template message
- - gettextize: git-tag basic messages
- - gettextize: git-reset "Unstaged changes after reset" message
- - gettextize: git-reset reset_type_names messages
- - gettextize: git-reset basic messages
- - gettextize: git-rm basic messages
- - gettextize: git-mv "bad" messages
- - gettextize: git-mv basic messages
- - gettextize: git-merge "Wonderful" message
- - gettextize: git-merge "You have not concluded your merge" messages
- - gettextize: git-merge "Updating %s..%s" message
- - gettextize: git-merge basic messages
- - gettextize: git-log "--OPT does not make sense" messages
- - gettextize: git-log basic messages
- - gettextize: git-grep "--open-files-in-pager" message
- - gettextize: git-grep basic messages
- - gettextize: git-fetch split up "(non-fast-forward)" message
- - gettextize: git-fetch update_local_ref messages
- - gettextize: git-fetch formatting messages
- - gettextize: git-fetch basic messages
- - gettextize: git-diff basic messages
- - gettextize: git-commit advice messages
- - gettextize: git-commit "enter the commit message" message
- - gettextize: git-commit print_summary messages
- - gettextize: git-commit formatting messages
- - gettextize: git-commit "middle of a merge" message
- - gettextize: git-commit basic messages
- - gettextize: git-checkout "Switched to a .. branch" message
- - gettextize: git-checkout "HEAD is now at" message
- - gettextize: git-checkout describe_detached_head messages
- - gettextize: git-checkout: our/their version message
- - gettextize: git-checkout basic messages
- - gettextize: git-branch "(no branch)" message
- - gettextize: git-branch "git branch -v" messages
- - gettextize: git-branch "Deleted branch [...]" message
- - gettextize: git-branch "remote branch '%s' not found" message
- - gettextize: git-branch basic messages
- - gettextize: git-add refresh_index message
- - gettextize: git-add "remove '%s'" message
- - gettextize: git-add "pathspec [...] did not match" message
- - gettextize: git-add "Use -f if you really want" message
- - gettextize: git-add "no files added" message
- - gettextize: git-add basic messages
- - gettextize: git-clone "Cloning into" message
- - gettextize: git-clone basic messages
- - gettext tests: test message re-encoding under C
- - po/is.po: add Icelandic translation
- - gettext tests: mark a test message as not needing translation
- - gettext tests: test re-encoding with a UTF-8 msgid under Shell
- - gettext tests: test message re-encoding under Shell
- - gettext tests: add detection for is_IS.ISO-8859-1 locale
- - gettext tests: test if $VERSION exists before using it
- - gettextize: git-init "Initialized [...] repository" message
- - gettextize: git-init basic messages
- - gettext tests: skip lib-gettext.sh tests under GETTEXT_POISON
- - gettext tests: add GETTEXT_POISON=YesPlease Makefile parameter
- - gettext.c: use libcharset.h instead of langinfo.h when available
- - gettext.c: work around us not using setlocale(LC_CTYPE, "")
- - builtin.h: Include gettext.h
- - Makefile: use variables and shorter lines for xgettext
- - Makefile: tell xgettext(1) that our source is in UTF-8
- - Makefile: provide a --msgid-bugs-address to xgettext(1)
- - Makefile: A variable for options used by xgettext(1) calls
- - gettext tests: locate i18n lib&data correctly under --valgrind
- - gettext: setlocale(LC_CTYPE, "") breaks Git's C function assumptions
- - gettext tests: rename test to work around GNU gettext bug
- - gettext: add infrastructure for translating Git with gettext
- - builtin: use builtin.h for all builtin commands
- - tests: use test_cmp instead of piping to diff(1)
- - t7004-tag.sh: re-arrange git tag comment for clarity
+* jh/merge-sans-branch (2011-02-10) 4 commits
+ . merge: add support for merging from upstream by default
+ - merge: introduce per-branch-configuration helper function
+ - merge: introduce setup_merge_commit helper function
+ - merge: update the usage information to be more modern
 
-It is getting ridiculously painful to keep re-resolving the conflicts with
-other topics in flight, even with the help with rerere.
+There was an objection to the tip one that determines the upstream in a
+wrong way?
 
-Needs a bit more minor work to get the basic code structure right.
+* lp/config-vername-check (2011-02-10) 4 commits
+ - Fix-up detection of configuration key without section or variable
+ - Disallow empty section and variable names
+ - Fix-up configuration variable name parsing
+ - Sanity-check config variable names
 
---------------------------------------------------
-[Cooking]
+Will merge to 'next' but the two "Fix-up"s should be squashed in first.
 
-* jc/rerere-remaining (2011-01-06) 1 commit
+* mz/rerere-remaining (2011-02-16) 2 commits
+ - mergetool: don't skip modify/remove conflicts
  - rerere "remaining"
- (this branch is used by mz/rerere-remaining.)
 
-Just a handful of weatherballoon patches without proper tests, in response
-to feature/minor fix requests.
+Looked much better than my weatherbaloon patch.  Will merge to 'next'.
 
-* pw/p4 (2011-02-05) 8 commits
- - git-p4: support clone --bare
- - git-p4: decode p4 wildcard characters
- - git-p4: better message for "git-p4 sync" when not cloned
- - git-p4: reinterpret confusing p4 message
- - git-p4: accommodate new move/delete type in p4
- - git-p4: add missing newline in initial import message
- - git-p4: fix key error for p4 problem
- - git-p4: test script
+* nd/hash-object-sanity (2011-02-05) 1 commit
+ - Make hash-object more robust against malformed objects
 
-Will be re-rolled after collecting comments (Petw Wyckoff, 2011-02-07).
+Should be low-impact enough.  Will merge to 'next'.
 
 * hv/mingw-fs-funnies (2011-02-07) 5 commits
   (merged to 'next' on 2011-02-09 at 3d0bb1a)
@@ -395,19 +240,37 @@ Rerolled and seems ready to move forward.
  + Convert struct diff_options to use struct pathspec
  + diff-no-index: use diff_tree_setup_paths()
  + Add struct pathspec
- (this branch is used by en/object-list-with-pathspec.)
+ (this branch is used by en/object-list-with-pathspec and jc/grep--no-index-pathspec-fix.)
 
 * en/object-list-with-pathspec (2010-09-20) 2 commits
   (merged to 'next' on 2011-02-09 at ccf6c6a)
  + Add testcases showing how pathspecs are handled with rev-list --objects
  + Make rev-list --objects work together with pathspecs
- (this branch uses nd/struct-pathspec.)
+ (this branch uses nd/struct-pathspec; is tangled with jc/grep--no-index-pathspec-fix.)
 
-* uk/checkout-ambiguous-ref (2011-02-08) 4 commits
- - checkout: rearrange update_refs_for_switch for clarity
- - checkout: introduce --detach synonym for "git checkout foo^{commit}"
- - checkout: split off a function to peel away branchname arg
+* uk/checkout-ambiguous-ref (2011-02-15) 5 commits
+  (merged to 'next' on 2011-02-15 at 645dad6)
+ + Rename t2019 with typo "amiguous" that meant "ambiguous"
+ + checkout: rearrange update_refs_for_switch for clarity
+ + checkout: introduce --detach synonym for "git checkout foo^{commit}"
+ + checkout: split off a function to peel away branchname arg
   (merged to 'next' on 2011-02-03 at 9044724)
  + checkout: fix bug with ambiguous refs
 
 The topic has become about "checkout --detach" ;-).
+
+--------------------------------------------------
+[Discarded]
+
+* jc/rerere-remaining (2011-01-06) 1 commit
+ . rerere "remaining"
+
+Just a handful of weatherballoon patches without proper tests, in response
+to feature/minor fix requests.
+
+* ab/i18n (2010-10-07) 161 commits
+ . po/de.po: complete German translation
+ ....
+ . t7004-tag.sh: re-arrange git tag comment for clarity
+
+Will be re-rolled.
