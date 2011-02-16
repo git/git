@@ -2800,6 +2800,8 @@ static int parse_one_feature(const char *feature, int from_stream)
 		relative_marks_paths = 0;
 	} else if (!prefixcmp(feature, "force")) {
 		force_update = 1;
+	} else if (!strcmp(feature, "notes")) {
+		; /* do nothing; we have the feature */
 	} else {
 		return 0;
 	}
