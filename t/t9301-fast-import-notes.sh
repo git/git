@@ -120,6 +120,7 @@ test_expect_success 'add notes with simple M command' '
 
 test_tick
 cat >input <<INPUT_END
+feature notes
 commit refs/notes/test
 committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
 data <<COMMIT

@@ -882,28 +882,31 @@ Require that fast-import supports the specified feature, or abort if
 it does not.
 
 ....
-	'feature' SP <feature> LF
+	'feature' SP <feature> ('=' <argument>)? LF
 ....
 
-The <feature> part of the command may be any string matching
-^[a-zA-Z][a-zA-Z-]*$ and should be understood by fast-import.
+The <feature> part of the command may be any one of the following:
 
-Feature work identical as their option counterparts with the
-exception of the import-marks feature, see below.
+date-format::
+export-marks::
+relative-marks::
+no-relative-marks::
+force::
+	Act as though the corresponding command-line option with
+	a leading '--' was passed on the command line
+	(see OPTIONS, above).
 
-The following features are currently supported:
+import-marks::
+	Like --import-marks except in two respects: first, only one
+	"feature import-marks" command is allowed per stream;
+	second, an --import-marks= command-line option overrides
+	any "feature import-marks" command in the stream.
 
-* date-format
-* import-marks
-* export-marks
-* relative-marks
-* no-relative-marks
-* force
-
-The import-marks behaves differently from when it is specified as
-commandline option in that only one "feature import-marks" is allowed
-per stream. Also, any --import-marks= specified on the commandline
-will override those from the stream (if any).
+notes::
+	Require that the backend support the 'notemodify' (N)
+	subcommand to the 'commit' command.
+	Versions of fast-import not supporting notes will exit
+	with a message indicating so.
 
 `option`
 ~~~~~~~~
