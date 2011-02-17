@@ -1043,7 +1043,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		if (len > 4 && is_dir_sep(pager[len - 5]))
 			pager += len - 4;
 
-		if (!strcmp("less", pager))
+		if (opt.ignore_case && !strcmp("less", pager))
 			string_list_append(&path_list, "-i");
 
 		if (!strcmp("less", pager) || !strcmp("vi", pager)) {
