@@ -66,7 +66,7 @@ COMMANDS
 	Set the 'rewriteRoot' option in the [svn-remote] config.
 --rewrite-uuid=<UUID>;;
 	Set the 'rewriteUUID' option in the [svn-remote] config.
---username=<USER>;;
+--username=<user>;;
 	For transports that SVN handles authentication for (http,
 	https, and plain svn), specify the username.  For other
 	transports (eg svn+ssh://), you must include the username in
@@ -443,8 +443,8 @@ OPTIONS
 	Only used with the 'init' command.
 	These are passed directly to 'git init'.
 
--r <ARG>::
---revision <ARG>::
+-r <arg>::
+--revision <arg>::
 	   Used with the 'fetch' command.
 +
 This allows revision ranges for partial/cauterized history

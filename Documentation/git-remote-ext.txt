@@ -7,17 +7,17 @@ git-remote-ext - Bridge smart transport to external command.
 
 SYNOPSIS
 --------
-git remote add nick "ext::<command>[ <arguments>...]"
+git remote add <nick> "ext::<command>[ <arguments>...]"
 
 DESCRIPTION
 -----------
-This remote helper uses the specified 'program' to connect
+This remote helper uses the specified '<command>' to connect
 to a remote git server.
 
-Data written to stdin of this specified 'program' is assumed
+Data written to stdin of the specified '<command>' is assumed
 to be sent to a git:// server, git-upload-pack, git-receive-pack
 or git-upload-archive (depending on situation), and data read
-from stdout of this program is assumed to be received from
+from stdout of <command> is assumed to be received from
 the same service.
 
 Command and arguments are separated by an unescaped space.
@@ -40,7 +40,7 @@ The following sequences have a special meaning:
 	git wants to invoke.
 
 '%G' (must be the first characters in an argument)::
-	This argument will not be passed to 'program'. Instead, it
+	This argument will not be passed to '<command>'. Instead, it
 	will cause the helper to start by sending git:// service requests to
 	the remote side with the service field set to an appropriate value and
 	the repository field set to rest of the argument. Default is not to send
@@ -50,7 +50,7 @@ This is useful if remote side is git:// server accessed over
 some tunnel.
 
 '%V' (must be first characters in argument)::
-	This argument will not be passed to 'program'. Instead it sets
+	This argument will not be passed to '<command>'. Instead it sets
 	the vhost field in the git:// service request (to rest of the argument).
 	Default is not to send vhost in such request (if sent).
 
@@ -76,7 +76,7 @@ EXAMPLES:
 ---------
 This remote helper is transparently used by git when
 you use commands such as "git fetch <URL>", "git clone <URL>",
-, "git push <URL>" or "git remote add nick <URL>", where <URL>
+, "git push <URL>" or "git remote add <nick> <URL>", where <URL>
 begins with `ext::`.  Examples:
 
 "ext::ssh -i /home/foo/.ssh/somekey user&#64;host.example %S 'foo/repo'"::
