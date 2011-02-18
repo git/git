@@ -937,22 +937,26 @@ sub cat_blob {
 	}
 
 	my $size = $1;
-
-	my $blob;
 	my $bytesRead = 0;
 
 	while (1) {
+		my $blob;
 		my $bytesLeft = $size - $bytesRead;
 		last unless $bytesLeft;
 
 		my $bytesToRead = $bytesLeft < 1024 ? $bytesLeft : 1024;
-		my $read = read($in, $blob, $bytesToRead, $bytesRead);
+		my $read = read($in, $blob, $bytesToRead);
 		unless (defined($read)) {
 			$self->_close_cat_blob();
 			throw Error::Simple("in pipe went bad");
 		}
 
 		$bytesRead += $read;
+
+		unless (print $fh $blob) {
+			$self->_close_cat_blob();
+			throw Error::Simple("couldn't write to passed in filehandle");
+		}
 	}
 
 	# Skip past the trailing newline.
@@ -965,11 +969,6 @@ sub cat_blob {
 	unless ($read == 1 && $newline eq "\n") {
 		$self->_close_cat_blob();
 		throw Error::Simple("didn't find newline after blob");
-	}
-
-	unless (print $fh $blob) {
-		$self->_close_cat_blob();
-		throw Error::Simple("couldn't write to passed in filehandle");
 	}
 
 	return $size;
