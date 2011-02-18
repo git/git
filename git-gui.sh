@@ -93,6 +93,25 @@ if {![catch {set _verbose $env(GITGUI_VERBOSE)}]} {
 
 package require msgcat
 
+# Check for Windows 7 MUI language pack (missed by msgcat < 1.4.4)
+if {[tk windowingsystem] eq "win32"
+	&& [package vcompare [package provide msgcat] 1.4.4] < 0
+} then {
+	proc _mc_update_locale {} {
+		set key {HKEY_CURRENT_USER\Control Panel\Desktop}
+		if {![catch {
+			package require registry
+			set uilocale [registry get $key "PreferredUILanguages"]
+			msgcat::ConvertLocale [string map {- _} [lindex $uilocale 0]]
+		} uilocale]} {
+			if {[string length $uilocale] > 0} {
+				msgcat::mclocale $uilocale
+			}
+		}
+	}
+	_mc_update_locale
+}
+
 proc _mc_trim {fmt} {
 	set cmk [string first @@ $fmt]
 	if {$cmk > 0} {
