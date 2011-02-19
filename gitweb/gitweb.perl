@@ -3501,7 +3501,7 @@ sub print_feed_meta {
 			$href_params{'-title'} = 'log';
 		}
 
-		foreach my $format qw(RSS Atom) {
+		foreach my $format (qw(RSS Atom)) {
 			my $type = lc($format);
 			my %link_attr = (
 				'-rel' => 'alternate',
@@ -3682,7 +3682,7 @@ sub git_footer_html {
 		}
 		$href_params{'-title'} ||= 'log';
 
-		foreach my $format qw(RSS Atom) {
+		foreach my $format (qw(RSS Atom)) {
 			$href_params{'action'} = lc($format);
 			print $cgi->a({-href => href(%href_params),
 			              -title => "$href_params{'-title'} $format feed",
