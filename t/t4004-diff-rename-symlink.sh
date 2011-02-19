@@ -35,7 +35,7 @@ test_expect_success SYMLINKS \
 # a new creation.
 
 test_expect_success SYMLINKS 'setup diff output' "
-    GIT_DIFF_OPTS=--unified=0 git diff-index -M -p $tree >current &&
+    GIT_DIFF_OPTS=--unified=0 git diff-index -C -p $tree >current &&
     cat >expected <<\EOF
 diff --git a/bozbar b/bozbar
 new file mode 120000

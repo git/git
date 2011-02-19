@@ -278,6 +278,8 @@ static int find_identical_files(struct file_similarity *src,
 			}
 			/* Give higher scores to sources that haven't been used already */
 			score = !source->rename_used;
+			if (source->rename_used && options->detect_rename != DIFF_DETECT_COPY)
+				continue;
 			score += basename_same(source, target);
 			if (score > best_score) {
 				best = p;
@@ -416,6 +418,27 @@ static void record_if_better(struct diff_score m[], struct diff_score *o)
 		m[worst] = *o;
 }
 
+static int find_renames(struct diff_score *mx, int dst_cnt, int minimum_score, int copies)
+{
+	int count = 0, i;
+
+	for (i = 0; i < dst_cnt * NUM_CANDIDATE_PER_DST; i++) {
+		struct diff_rename_dst *dst;
+
+		if ((mx[i].dst < 0) ||
+		    (mx[i].score < minimum_score))
+			break; /* there is no more usable pair. */
+		dst = &rename_dst[mx[i].dst];
+		if (dst->pair)
+			continue; /* already done, either exact or fuzzy. */
+		if (!copies && rename_src[mx[i].src].one->rename_used)
+			continue;
+		record_rename_pair(mx[i].dst, mx[i].src, mx[i].score);
+		count++;
+	}
+	return count;
+}
+
 void diffcore_rename(struct diff_options *options)
 {
 	int detect_rename = options->detect_rename;
@@ -538,33 +561,9 @@ void diffcore_rename(struct diff_options *options)
 	/* cost matrix sorted by most to least similar pair */
 	qsort(mx, dst_cnt * NUM_CANDIDATE_PER_DST, sizeof(*mx), score_compare);
 
-	for (i = 0; i < dst_cnt * NUM_CANDIDATE_PER_DST; i++) {
-		struct diff_rename_dst *dst;
-
-		if ((mx[i].dst < 0) ||
-		    (mx[i].score < minimum_score))
-			break; /* there is no more usable pair. */
-		dst = &rename_dst[mx[i].dst];
-		if (dst->pair)
-			continue; /* already done, either exact or fuzzy. */
-		if (rename_src[mx[i].src].one->rename_used)
-			continue;
-		record_rename_pair(mx[i].dst, mx[i].src, mx[i].score);
-		rename_count++;
-	}
-
-	for (i = 0; i < dst_cnt * NUM_CANDIDATE_PER_DST; i++) {
-		struct diff_rename_dst *dst;
-
-		if ((mx[i].dst < 0) ||
-		    (mx[i].score < minimum_score))
-			break; /* there is no more usable pair. */
-		dst = &rename_dst[mx[i].dst];
-		if (dst->pair)
-			continue; /* already done, either exact or fuzzy. */
-		record_rename_pair(mx[i].dst, mx[i].src, mx[i].score);
-		rename_count++;
-	}
+	rename_count += find_renames(mx, dst_cnt, minimum_score, 0);
+	if (detect_rename == DIFF_DETECT_COPY)
+		rename_count += find_renames(mx, dst_cnt, minimum_score, 1);
 	free(mx);
 
  cleanup:
