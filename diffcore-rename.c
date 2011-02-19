@@ -170,7 +170,7 @@ static int estimate_similarity(struct diff_filespec *src,
 	 * and the final score computation below would not have a
 	 * divide-by-zero issue.
 	 */
-	if (base_size * (MAX_SCORE-minimum_score) < delta_size * MAX_SCORE)
+	if (max_size * (MAX_SCORE-minimum_score) < delta_size * MAX_SCORE)
 		return 0;
 
 	if (!src->cnt_data && diff_populate_filespec(src, 0))
