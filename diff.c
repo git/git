@@ -235,6 +235,15 @@ static int fill_mmfile(mmfile_t *mf, struct diff_filespec *one)
 	return 0;
 }
 
+/* like fill_mmfile, but only for size, so we can avoid retrieving blob */
+static unsigned long diff_filespec_size(struct diff_filespec *one)
+{
+	if (!DIFF_FILE_VALID(one))
+		return 0;
+	diff_populate_filespec(one, 1);
+	return one->size;
+}
+
 static int count_trailing_blank(mmfile_t *mf, unsigned ws_rule)
 {
 	char *ptr = mf->ptr;
@@ -1813,11 +1822,9 @@ static void builtin_diffstat(const char *name_a, const char *name_b,
 	}
 
 	if (diff_filespec_is_binary(one) || diff_filespec_is_binary(two)) {
-		if (fill_mmfile(&mf1, one) < 0 || fill_mmfile(&mf2, two) < 0)
-			die("unable to read files to diff");
 		data->is_binary = 1;
-		data->added = mf2.size;
-		data->deleted = mf1.size;
+		data->added = diff_filespec_size(two);
+		data->deleted = diff_filespec_size(one);
 	}
 
 	else if (complete_rewrite) {
