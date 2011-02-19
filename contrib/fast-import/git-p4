@@ -1429,7 +1429,7 @@ class P4Sync(Command):
         print "Doing initial import of %s from revision %s into %s" % (' '.join(self.depotPaths), revision, self.branch)
 
         details = { "user" : "git perforce import user", "time" : int(time.time()) }
-        details["desc"] = ("Initial import of %s from the state at revision %s"
+        details["desc"] = ("Initial import of %s from the state at revision %s\n"
                            % (' '.join(self.depotPaths), revision))
         details["change"] = revision
         newestRevision = 0
