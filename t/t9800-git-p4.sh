@@ -58,6 +58,28 @@ test_expect_success 'exit when p4 fails to produce marshaled output' '
 	test_must_fail grep -q Traceback errs
 '
 
+test_expect_success 'add p4 files with wildcards in the names' '
+	cd "$cli" &&
+	echo file-wild-hash >file-wild#hash &&
+	echo file-wild-star >file-wild\*star &&
+	echo file-wild-at >file-wild@at &&
+	echo file-wild-percent >file-wild%percent &&
+	p4 add -f file-wild* &&
+	p4 submit -d "file wildcards" &&
+	cd "$TRASH_DIRECTORY"
+'
+
+test_expect_success 'wildcard files git-p4 clone' '
+	"$GITP4" clone --dest="$git" //depot &&
+	cd "$git" &&
+	test -f file-wild#hash &&
+	test -f file-wild\*star &&
+	test -f file-wild@at &&
+	test -f file-wild%percent &&
+	cd "$TRASH_DIRECTORY" &&
+	rm -rf "$git" && mkdir "$git"
+'
+
 test_expect_success 'shutdown' '
 	pid=`pgrep -f p4d` &&
 	test -n "$pid" &&
