@@ -1676,6 +1676,8 @@ class P4Sync(Command):
 
                 changes.sort()
             else:
+                if not self.p4BranchesInGit:
+                    die("No remote p4 branches.  Perhaps you never did \"git p4 clone\" in here.");
                 if self.verbose:
                     print "Getting p4 changes for %s...%s" % (', '.join(self.depotPaths),
                                                               self.changeRange)
