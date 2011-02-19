@@ -834,6 +834,8 @@ class P4Submit(Command):
         return True
 
 class P4Sync(Command):
+    delete_actions = ( "delete", "move/delete", "purge" )
+
     def __init__(self):
         Command.__init__(self)
         self.options = [
@@ -1038,10 +1040,10 @@ class P4Sync(Command):
 
             if includeFile:
                 filesForCommit.append(f)
-                if f['action'] not in ('delete', 'move/delete', 'purge'):
-                    filesToRead.append(f)
-                else:
+                if f['action'] in self.delete_actions:
                     filesToDelete.append(f)
+                else:
+                    filesToRead.append(f)
 
         # deleted files...
         for f in filesToDelete:
@@ -1127,7 +1129,7 @@ class P4Sync(Command):
 
                 cleanedFiles = {}
                 for info in files:
-                    if info["action"] in ("delete", "purge"):
+                    if info["action"] in self.delete_actions:
                         continue
                     cleanedFiles[info["depotFile"]] = info["rev"]
 
@@ -1453,7 +1455,7 @@ class P4Sync(Command):
             if change > newestRevision:
                 newestRevision = change
 
-            if info["action"] in ("delete", "purge"):
+            if info["action"] in self.delete_actions:
                 # don't increase the file cnt, otherwise details["depotFile123"] will have gaps!
                 #fileCnt = fileCnt + 1
                 continue
