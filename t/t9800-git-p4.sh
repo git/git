@@ -80,6 +80,16 @@ test_expect_success 'wildcard files git-p4 clone' '
 	rm -rf "$git" && mkdir "$git"
 '
 
+test_expect_success 'clone bare' '
+	"$GITP4" clone --dest="$git" --bare //depot &&
+	cd "$git" &&
+	test ! -d .git &&
+	bare=`git config --get core.bare` &&
+	test "$bare" = true &&
+	cd "$TRASH_DIRECTORY" &&
+	rm -rf "$git" && mkdir "$git"
+'
+
 test_expect_success 'shutdown' '
 	pid=`pgrep -f p4d` &&
 	test -n "$pid" &&

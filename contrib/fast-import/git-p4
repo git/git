@@ -1776,10 +1776,13 @@ class P4Clone(P4Sync):
                                  help="where to leave result of the clone"),
             optparse.make_option("-/", dest="cloneExclude",
                                  action="append", type="string",
-                                 help="exclude depot path")
+                                 help="exclude depot path"),
+            optparse.make_option("--bare", dest="cloneBare",
+                                 action="store_true", default=False),
         ]
         self.cloneDestination = None
         self.needsGit = False
+        self.cloneBare = False
 
     # This is required for the "append" cloneExclude action
     def ensure_value(self, attr, value):
@@ -1819,11 +1822,16 @@ class P4Clone(P4Sync):
             self.cloneDestination = self.defaultDestination(args)
 
         print "Importing from %s into %s" % (', '.join(depotPaths), self.cloneDestination)
+
         if not os.path.exists(self.cloneDestination):
             os.makedirs(self.cloneDestination)
         chdir(self.cloneDestination)
-        system("git init")
-        self.gitdir = os.getcwd() + "/.git"
+
+        init_cmd = [ "git", "init" ]
+        if self.cloneBare:
+            init_cmd.append("--bare")
+        subprocess.check_call(init_cmd)
+
         if not P4Sync.run(self, depotPaths):
             return False
         if self.branch != "master":
@@ -1833,7 +1841,8 @@ class P4Clone(P4Sync):
                 masterbranch = "refs/heads/p4/master"
             if gitBranchExists(masterbranch):
                 system("git branch master %s" % masterbranch)
-                system("git checkout -f")
+                if not self.cloneBare:
+                    system("git checkout -f")
             else:
                 print "Could not detect main branch. No checkout/master branch created."
 
