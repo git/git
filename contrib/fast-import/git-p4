@@ -1440,9 +1440,12 @@ class P4Sync(Command):
                                            % (p, revision)
                                            for p in self.depotPaths])):
 
-            if info['code'] == 'error':
+            if 'code' in info and info['code'] == 'error':
                 sys.stderr.write("p4 returned an error: %s\n"
                                  % info['data'])
+                sys.exit(1)
+            if 'p4ExitCode' in info:
+                sys.stderr.write("p4 exitcode: %s\n" % info['p4ExitCode'])
                 sys.exit(1)
 
 
