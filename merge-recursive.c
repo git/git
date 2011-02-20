@@ -441,6 +441,7 @@ static struct string_list *get_renames(struct merge_options *o,
 			    o->diff_rename_limit >= 0 ? o->diff_rename_limit :
 			    1000;
 	opts.rename_score = o->rename_score;
+	opts.show_rename_progress = o->show_rename_progress;
 	opts.output_format = DIFF_FORMAT_NO_OUTPUT;
 	if (diff_setup_done(&opts) < 0)
 		die("diff setup failed");

@@ -21,6 +21,7 @@ struct merge_options {
 	int merge_rename_limit;
 	int rename_score;
 	int needed_rename_limit;
+	int show_rename_progress;
 	int call_depth;
 	struct strbuf obuf;
 	struct string_list current_file_set;

@@ -58,6 +58,7 @@ static int option_renormalize;
 static int verbosity;
 static int allow_rerere_auto;
 static int abort_current_merge;
+static int show_progress = -1;
 
 static struct strategy all_strategy[] = {
 	{ "recursive",  DEFAULT_TWOHEAD | NO_TRIVIAL },
@@ -200,6 +201,7 @@ static struct option builtin_merge_options[] = {
 	OPT__VERBOSITY(&verbosity),
 	OPT_BOOLEAN(0, "abort", &abort_current_merge,
 		"abort the current in-progress merge"),
+	OPT_SET_INT(0, "progress", &show_progress, "force progress reporting", 1),
 	OPT_END()
 };
 
@@ -659,6 +661,8 @@ static int try_merge_strategy(const char *strategy, struct commit_list *common,
 			o.subtree_shift = "";
 
 		o.renormalize = option_renormalize;
+		o.show_rename_progress =
+			show_progress == -1 ? isatty(2) : show_progress;
 
 		for (x = 0; x < xopts_nr; x++)
 			if (parse_merge_opt(&o, xopts[x]))
@@ -943,6 +947,9 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 
 	argc = parse_options(argc, argv, prefix, builtin_merge_options,
 			builtin_merge_usage, 0);
+
+	if (verbosity < 0 && show_progress == -1)
+		show_progress = 0;
 
 	if (abort_current_merge) {
 		int nargc = 2;
