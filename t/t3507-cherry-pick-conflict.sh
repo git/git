@@ -52,12 +52,86 @@ test_expect_success 'advice from failed cherry-pick' "
 	error: could not apply \$picked... picked
 	hint: after resolving the conflicts, mark the corrected paths
 	hint: with 'git add <paths>' or 'git rm <paths>'
-	hint: and commit the result with 'git commit -c \$picked'
+	hint: and commit the result with 'git commit -c CHERRY_PICK_HEAD'
 	EOF
 	test_must_fail git cherry-pick picked 2>actual &&
 
 	test_cmp expected actual
 "
+
+test_expect_success 'failed cherry-pick sets CHERRY_PICK_HEAD' '
+	pristine_detach initial &&
+	test_must_fail git cherry-pick picked &&
+	test_cmp_rev picked CHERRY_PICK_HEAD
+'
+
+test_expect_success 'successful cherry-pick does not set CHERRY_PICK_HEAD' '
+	pristine_detach initial &&
+	git cherry-pick base &&
+	test_must_fail git rev-parse --verify CHERRY_PICK_HEAD
+'
+
+test_expect_success 'cherry-pick --no-commit does not set CHERRY_PICK_HEAD' '
+	pristine_detach initial &&
+	git cherry-pick --no-commit base &&
+	test_must_fail git rev-parse --verify CHERRY_PICK_HEAD
+'
+
+test_expect_success 'GIT_CHERRY_PICK_HELP suppresses CHERRY_PICK_HEAD' '
+	pristine_detach initial &&
+	(
+		GIT_CHERRY_PICK_HELP="and then do something else" &&
+		export GIT_CHERRY_PICK_HELP &&
+		test_must_fail git cherry-pick picked
+	) &&
+	test_must_fail git rev-parse --verify CHERRY_PICK_HEAD
+'
+
+test_expect_success 'git reset clears CHERRY_PICK_HEAD' '
+	pristine_detach initial &&
+
+	test_must_fail git cherry-pick picked &&
+	git reset &&
+
+	test_must_fail git rev-parse --verify CHERRY_PICK_HEAD
+'
+
+test_expect_success 'failed commit does not clear CHERRY_PICK_HEAD' '
+	pristine_detach initial &&
+
+	test_must_fail git cherry-pick picked &&
+	test_must_fail git commit &&
+
+	test_cmp_rev picked CHERRY_PICK_HEAD
+'
+
+test_expect_success 'cancelled commit does not clear CHERRY_PICK_HEAD' '
+	pristine_detach initial &&
+
+	test_must_fail git cherry-pick picked &&
+	echo resolved >foo &&
+	git add foo &&
+	git update-index --refresh -q &&
+	test_must_fail git diff-index --exit-code HEAD &&
+	(
+		GIT_EDITOR=false &&
+		export GIT_EDITOR &&
+		test_must_fail git commit
+	) &&
+
+	test_cmp_rev picked CHERRY_PICK_HEAD
+'
+
+test_expect_success 'successful commit clears CHERRY_PICK_HEAD' '
+	pristine_detach initial &&
+
+	test_must_fail git cherry-pick picked &&
+	echo resolved >foo &&
+	git add foo &&
+	git commit &&
+
+	test_must_fail git rev-parse --verify CHERRY_PICK_HEAD
+'
 
 test_expect_success 'failed cherry-pick produces dirty index' '
 	pristine_detach initial &&
