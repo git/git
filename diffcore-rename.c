@@ -5,6 +5,7 @@
 #include "diff.h"
 #include "diffcore.h"
 #include "hash.h"
+#include "progress.h"
 
 /* Table of rename/copy destinations */
 
@@ -424,6 +425,7 @@ void diffcore_rename(struct diff_options *options)
 	struct diff_score *mx;
 	int i, j, rename_count;
 	int num_create, num_src, dst_cnt;
+	struct progress *progress = NULL;
 
 	if (!minimum_score)
 		minimum_score = DEFAULT_RENAME_SCORE;
@@ -503,6 +505,12 @@ void diffcore_rename(struct diff_options *options)
 		goto cleanup;
 	}
 
+	if (options->show_rename_progress) {
+		progress = start_progress_delay(
+				"Performing inexact rename detection",
+				rename_dst_nr * rename_src_nr, 50, 1);
+	}
+
 	mx = xcalloc(num_create * NUM_CANDIDATE_PER_DST, sizeof(*mx));
 	for (dst_cnt = i = 0; i < rename_dst_nr; i++) {
 		struct diff_filespec *two = rename_dst[i].two;
@@ -532,7 +540,9 @@ void diffcore_rename(struct diff_options *options)
 			diff_free_filespec_blob(two);
 		}
 		dst_cnt++;
+		display_progress(progress, (i+1)*rename_src_nr);
 	}
+	stop_progress(&progress);
 
 	/* cost matrix sorted by most to least similar pair */
 	qsort(mx, dst_cnt * NUM_CANDIDATE_PER_DST, sizeof(*mx), score_compare);
