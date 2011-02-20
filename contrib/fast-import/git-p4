@@ -543,13 +543,13 @@ class P4Submit(Command):
         self.options = [
                 optparse.make_option("--verbose", dest="verbose", action="store_true"),
                 optparse.make_option("--origin", dest="origin"),
-                optparse.make_option("-M", dest="detectRename", action="store_true"),
+                optparse.make_option("-M", dest="detectRenames", action="store_true"),
         ]
         self.description = "Submit changes from git to the perforce depot."
         self.usage += " [name of git branch to submit into perforce depot]"
         self.interactive = True
         self.origin = ""
-        self.detectRename = False
+        self.detectRenames = False
         self.verbose = False
         self.isWindows = (platform.system() == "Windows")
 
@@ -613,7 +613,16 @@ class P4Submit(Command):
 
     def applyCommit(self, id):
         print "Applying %s" % (read_pipe("git log --max-count=1 --pretty=oneline %s" % id))
-        diffOpts = ("", "-M")[self.detectRename]
+
+        if not self.detectRenames:
+            # If not explicitly set check the config variable
+            self.detectRenames = gitConfig("git-p4.detectRenames").lower() == "true"
+
+        if self.detectRenames:
+            diffOpts = "-M"
+        else:
+            diffOpts = ""
+
         diff = read_pipe_lines("git diff-tree -r %s \"%s^\" \"%s\"" % (diffOpts, id, id))
         filesToAdd = set()
         filesToDelete = set()
@@ -640,8 +649,10 @@ class P4Submit(Command):
             elif modifier == "R":
                 src, dest = diff['src'], diff['dst']
                 p4_system("integrate -Dt \"%s\" \"%s\"" % (src, dest))
-                p4_system("edit \"%s\"" % (dest))
+                if diff['src_sha1'] != diff['dst_sha1']:
+                    p4_system("edit \"%s\"" % (dest))
                 if isModeExecChanged(diff['src_mode'], diff['dst_mode']):
+                    p4_system("edit \"%s\"" % (dest))
                     filesToChangeExecBit[dest] = diff['dst_mode']
                 os.unlink(dest)
                 editedFiles.add(dest)
