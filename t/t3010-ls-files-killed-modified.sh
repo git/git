@@ -80,6 +80,9 @@ test_expect_success 'git ls-files -k to show killed files.' '
 		date >path3 &&
 		date >path5
 	fi &&
+	touch xyzzy
+	rm path1
+	rm xyzzy
 	mkdir -p path0 path1 path6 pathx/ju &&
 	date >path0/file0 &&
 	date >path1/file1 &&

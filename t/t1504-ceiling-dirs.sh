@@ -44,12 +44,13 @@ test_prefix ceil_at_sub ""
 GIT_CEILING_DIRECTORIES="$TRASH_ROOT/sub/"
 test_prefix ceil_at_sub_slash ""
 
+mkdir -p sub/dir || exit 1
+
 if test_have_prereq SYMLINKS
 then
 	ln -s sub top
 fi
 
-mkdir -p sub/dir || exit 1
 cd sub/dir || exit 1
 
 unset GIT_CEILING_DIRECTORIES

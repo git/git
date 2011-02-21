@@ -105,6 +105,7 @@ test_expect_success \
      printf "A\$Format:%s\$O" "$SUBSTFORMAT" >a/substfile1 &&
      printf "A not substituted O" >a/substfile2 &&
      if test_have_prereq SYMLINKS; then
+	> a/a
 	ln -s a a/l1
      else
 	printf %s a > a/l1

@@ -31,7 +31,8 @@ test_expect_success 'diff new symlink and file' '
 	# the empty tree
 	git update-index &&
 	tree=$(git write-tree) &&
-
+	
+	touch xyzzy &&
 	test_ln_s_add xyzzy frotz &&
 	echo xyzzy >nitfol &&
 	git update-index --add nitfol &&
