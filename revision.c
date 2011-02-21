@@ -733,6 +733,23 @@ static struct commit_list *collect_bottom_commits(struct commit_list *list)
 	return bottom;
 }
 
+/* Assumes either left_only or right_only is set */
+static void limit_left_right(struct commit_list *list, struct rev_info *revs)
+{
+	struct commit_list *p;
+
+	for (p = list; p; p = p->next) {
+		struct commit *commit = p->item;
+
+		if (revs->right_only) {
+			if (commit->object.flags & SYMMETRIC_LEFT)
+				commit->object.flags |= SHOWN;
+		} else	/* revs->left_only is set */
+			if (!(commit->object.flags & SYMMETRIC_LEFT))
+				commit->object.flags |= SHOWN;
+	}
+}
+
 static int limit_list(struct rev_info *revs)
 {
 	int slop = SLOP;
@@ -787,6 +804,9 @@ static int limit_list(struct rev_info *revs)
 	}
 	if (revs->cherry_pick)
 		cherry_pick_list(newlist, revs);
+
+	if (revs->left_only || revs->right_only)
+		limit_left_right(newlist, revs);
 
 	if (bottom) {
 		limit_to_ancestry(bottom, newlist);
@@ -1263,6 +1283,10 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		revs->boundary = 1;
 	} else if (!strcmp(arg, "--left-right")) {
 		revs->left_right = 1;
+	} else if (!strcmp(arg, "--left-only")) {
+		revs->left_only = 1;
+	} else if (!strcmp(arg, "--right-only")) {
+		revs->right_only = 1;
 	} else if (!strcmp(arg, "--count")) {
 		revs->count = 1;
 	} else if (!strcmp(arg, "--cherry-pick")) {

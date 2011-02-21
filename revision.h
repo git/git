@@ -59,6 +59,8 @@ struct rev_info {
 			boundary:2,
 			count:1,
 			left_right:1,
+			left_only:1,
+			right_only:1,
 			rewrite_parents:1,
 			print_parents:1,
 			show_source:1,
