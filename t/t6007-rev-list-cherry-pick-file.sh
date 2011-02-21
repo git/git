@@ -4,14 +4,14 @@ test_description='test git rev-list --cherry-pick -- file'
 
 . ./test-lib.sh
 
-# A---B---D
+# A---B---D---F
 #  \
 #   \
 #    C---E
 #
 # B changes a file foo.c, adding a line of text.  C changes foo.c as
 # well as bar.c, but the change in foo.c was identical to change B.
-# D and C change bar in the same way, E differently.
+# D and C change bar in the same way, E and F differently.
 
 test_expect_success setup '
 	echo Hallo > foo &&
@@ -40,7 +40,12 @@ test_expect_success setup '
 	git add bar &&
 	test_tick &&
 	git commit -m "D" &&
-	git tag D
+	git tag D &&
+	echo Nello > bar &&
+	git add bar &&
+	test_tick &&
+	git commit -m "F" &&
+	git tag F
 '
 
 cat >expect <<EOF
@@ -83,11 +88,30 @@ test_expect_success 'bar does not come up empty' '
 '
 
 cat >expect <<EOF
+<tags/F
 >tags/E
 EOF
 
 test_expect_success '--cherry-pick bar does not come up empty (II)' '
-	git rev-list --left-right --cherry-pick D...E -- bar > actual &&
+	git rev-list --left-right --cherry-pick F...E -- bar > actual &&
+	git name-rev --stdin --name-only --refs="*tags/*" \
+		< actual > actual.named &&
+	test_cmp actual.named expect
+'
+
+cat >expect <<EOF
+tags/E
+EOF
+
+test_expect_success '--cherry-pick --right-only' '
+	git rev-list --cherry-pick --right-only F...E -- bar > actual &&
+	git name-rev --stdin --name-only --refs="*tags/*" \
+		< actual > actual.named &&
+	test_cmp actual.named expect
+'
+
+test_expect_success '--cherry-pick --left-only' '
+	git rev-list --cherry-pick --left-only E...F -- bar > actual &&
 	git name-rev --stdin --name-only --refs="*tags/*" \
 		< actual > actual.named &&
 	test_cmp actual.named expect

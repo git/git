@@ -31,6 +31,8 @@ SYNOPSIS
 	     [ \--parents ]
 	     [ \--timestamp ]
 	     [ \--left-right ]
+	     [ \--left-only ]
+	     [ \--right-only ]
 	     [ \--cherry-pick ]
 	     [ \--encoding[=<encoding>] ]
 	     [ \--(author|committer|grep)=<pattern> ]
