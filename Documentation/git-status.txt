@@ -38,20 +38,20 @@ OPTIONS
 
 -u[<mode>]::
 --untracked-files[=<mode>]::
-	Show untracked files (Default: 'all').
+	Show untracked files.
 +
-The mode parameter is optional, and is used to specify
-the handling of untracked files. The possible options are:
+The mode parameter is optional (defaults to 'all'), and is used to
+specify the handling of untracked files; when -u is not used, the
+default is 'normal', i.e. show untracked files and directories.
 +
---
+The possible options are:
++
 	- 'no'     - Show no untracked files
 	- 'normal' - Shows untracked files and directories
 	- 'all'    - Also shows individual files in untracked directories.
---
 +
-See linkgit:git-config[1] for configuration variable
-used to change the default for when the option is not
-specified.
+The default can be changed using the status.showUntrackedFiles
+configuration variable documented in linkgit:git-config[1].
 
 --ignore-submodules[=<when>]::
 	Ignore changes to submodules when looking for changes. <when> can be
