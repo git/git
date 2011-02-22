@@ -217,7 +217,9 @@ all::
 # Define NO_REGEX if you have no or inferior regex support in your C library.
 #
 # Define GETTEXT_POISON if you are debugging the choice of strings marked
-# for translation.  This will turn all strings that use gettext into gibberish.
+# for translation.  In a GETTEXT_POISON build, you can turn all strings marked
+# for translation into gibberish by setting the GIT_GETTEXT_POISON variable
+# (to any value) in your environment.
 #
 # Define JSMIN to point to JavaScript minifier that functions as
 # a filter to have gitweb.js minified.
@@ -1374,6 +1376,7 @@ ifdef NO_SYMLINK_HEAD
 	BASIC_CFLAGS += -DNO_SYMLINK_HEAD
 endif
 ifdef GETTEXT_POISON
+	LIB_OBJS += gettext.o
 	BASIC_CFLAGS += -DGETTEXT_POISON
 endif
 ifdef NO_STRCASESTR
