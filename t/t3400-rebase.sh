@@ -158,15 +158,24 @@ test_expect_success 'Show verbose error when HEAD could not be detached' '
 '
 rm -f B
 
-test_expect_success 'dump usage when upstream arg is missing' '
-	git checkout -b usage topic &&
-	test_must_fail git rebase 2>error1 &&
-	grep "[Uu]sage" error1 &&
-	test_must_fail git rebase --abort 2>error2 &&
-	grep "No rebase in progress" error2 &&
-	test_must_fail git rebase --onto master 2>error3 &&
-	grep "[Uu]sage" error3 &&
-	! grep "can.t shift" error3
+test_expect_success 'fail when upstream arg is missing and not on branch' '
+	git checkout topic &&
+	test_must_fail git rebase >output.out &&
+	grep "You are not currently on a branch" output.out
+'
+
+test_expect_success 'fail when upstream arg is missing and not configured' '
+	git checkout -b no-config topic &&
+	test_must_fail git rebase >output.out &&
+	grep "branch.no-config.merge" output.out
+'
+
+test_expect_success 'default to @{upstream} when upstream arg is missing' '
+	git checkout -b default topic &&
+	git config branch.default.remote .
+	git config branch.default.merge refs/heads/master
+	git rebase &&
+	test "$(git rev-parse default~1)" = "$(git rev-parse master)"
 '
 
 test_expect_success 'rebase -q is quiet' '
