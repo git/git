@@ -63,4 +63,40 @@ test_expect_success 'patch-id supports git-format-patch MIME output' '
 	test_cmp patch-id_master patch-id_same
 '
 
+cat >nonl <<\EOF
+diff --git i/a w/a
+index e69de29..2e65efe 100644
+--- i/a
++++ w/a
+@@ -0,0 +1 @@
++a
+\ No newline at end of file
+diff --git i/b w/b
+index e69de29..6178079 100644
+--- i/b
++++ w/b
+@@ -0,0 +1 @@
++b
+EOF
+
+cat >withnl <<\EOF
+diff --git i/a w/a
+index e69de29..7898192 100644
+--- i/a
++++ w/a
+@@ -0,0 +1 @@
++a
+diff --git i/b w/b
+index e69de29..6178079 100644
+--- i/b
++++ w/b
+@@ -0,0 +1 @@
++b
+EOF
+
+test_expect_success 'patch-id handles no-nl-at-eof markers' '
+	cat nonl | calc_patch_id nonl &&
+	cat withnl | calc_patch_id withnl &&
+	test_cmp patch-id_nonl patch-id_withnl
+'
 test_done
