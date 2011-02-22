@@ -384,66 +384,66 @@ try_commit () {
 
 try_commit_status_combo () {
 
-	test_expect_success 'commit' '
+	test_expect_success C_LOCALE_OUTPUT 'commit' '
 		clear_config commit.status &&
 		try_commit "" &&
 		grep "^# Changes to be committed:" .git/COMMIT_EDITMSG
 	'
 
-	test_expect_success 'commit' '
+	test_expect_success C_LOCALE_OUTPUT 'commit' '
 		clear_config commit.status &&
 		try_commit "" &&
 		grep "^# Changes to be committed:" .git/COMMIT_EDITMSG
 	'
 
-	test_expect_success 'commit --status' '
+	test_expect_success C_LOCALE_OUTPUT 'commit --status' '
 		clear_config commit.status &&
 		try_commit --status &&
 		grep "^# Changes to be committed:" .git/COMMIT_EDITMSG
 	'
 
-	test_expect_success 'commit --no-status' '
+	test_expect_success C_LOCALE_OUTPUT 'commit --no-status' '
 		clear_config commit.status &&
 		try_commit --no-status &&
 		! grep "^# Changes to be committed:" .git/COMMIT_EDITMSG
 	'
 
-	test_expect_success 'commit with commit.status = yes' '
+	test_expect_success C_LOCALE_OUTPUT 'commit with commit.status = yes' '
 		clear_config commit.status &&
 		git config commit.status yes &&
 		try_commit "" &&
 		grep "^# Changes to be committed:" .git/COMMIT_EDITMSG
 	'
 
-	test_expect_success 'commit with commit.status = no' '
+	test_expect_success C_LOCALE_OUTPUT 'commit with commit.status = no' '
 		clear_config commit.status &&
 		git config commit.status no &&
 		try_commit "" &&
 		! grep "^# Changes to be committed:" .git/COMMIT_EDITMSG
 	'
 
-	test_expect_success 'commit --status with commit.status = yes' '
+	test_expect_success C_LOCALE_OUTPUT 'commit --status with commit.status = yes' '
 		clear_config commit.status &&
 		git config commit.status yes &&
 		try_commit --status &&
 		grep "^# Changes to be committed:" .git/COMMIT_EDITMSG
 	'
 
-	test_expect_success 'commit --no-status with commit.status = yes' '
+	test_expect_success C_LOCALE_OUTPUT 'commit --no-status with commit.status = yes' '
 		clear_config commit.status &&
 		git config commit.status yes &&
 		try_commit --no-status &&
 		! grep "^# Changes to be committed:" .git/COMMIT_EDITMSG
 	'
 
-	test_expect_success 'commit --status with commit.status = no' '
+	test_expect_success C_LOCALE_OUTPUT 'commit --status with commit.status = no' '
 		clear_config commit.status &&
 		git config commit.status no &&
 		try_commit --status &&
 		grep "^# Changes to be committed:" .git/COMMIT_EDITMSG
 	'
 
-	test_expect_success 'commit --no-status with commit.status = no' '
+	test_expect_success C_LOCALE_OUTPUT 'commit --no-status with commit.status = no' '
 		clear_config commit.status &&
 		git config commit.status no &&
 		try_commit --no-status &&
