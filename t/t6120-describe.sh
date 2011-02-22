@@ -123,7 +123,7 @@ cat - >err.expect <<EOF
 warning: tag 'A' is really 'Q' here
 EOF
 check_describe A-* HEAD
-test_expect_success 'warning was displayed for Q' '
+test_expect_success C_LOCALE_OUTPUT 'warning was displayed for Q' '
 	test_cmp err.expect err.actual
 '
 test_expect_success 'rename tag Q back to A' '
