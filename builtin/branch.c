@@ -476,7 +476,7 @@ static void show_detached(struct ref_list *ref_list)
 
 	if (head_commit && is_descendant_of(head_commit, ref_list->with_commit)) {
 		struct ref_item item;
-		item.name = xstrdup("(no branch)");
+		item.name = xstrdup(_("(no branch)"));
 		item.len = strlen(item.name);
 		item.kind = REF_LOCAL_BRANCH;
 		item.dest = NULL;
