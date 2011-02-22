@@ -279,17 +279,17 @@ static int update_local_ref(struct ref *ref,
 		int r;
 		if (!strncmp(ref->name, "refs/tags/", 10)) {
 			msg = "storing tag";
-			what = "[new tag]";
+			what = _("[new tag]");
 		}
 		else {
 			msg = "storing head";
-			what = "[new branch]";
+			what = _("[new branch]");
 		}
 
 		r = s_update_ref(msg, ref, 0);
 		sprintf(display, "%c %-*s %-*s -> %s%s", r ? '!' : '*',
 			TRANSPORT_SUMMARY_WIDTH, what, REFCOL_WIDTH, remote, pretty_ref,
-			r ? "  (unable to update local ref)" : "");
+			r ? _("  (unable to update local ref)") : "");
 		return r;
 	}
 
@@ -302,7 +302,7 @@ static int update_local_ref(struct ref *ref,
 		r = s_update_ref("fast-forward", ref, 1);
 		sprintf(display, "%c %-*s %-*s -> %s%s", r ? '!' : ' ',
 			TRANSPORT_SUMMARY_WIDTH, quickref, REFCOL_WIDTH, remote,
-			pretty_ref, r ? "  (unable to update local ref)" : "");
+			pretty_ref, r ? _("  (unable to update local ref)") : "");
 		return r;
 	} else if (force || ref->force) {
 		char quickref[84];
@@ -314,7 +314,7 @@ static int update_local_ref(struct ref *ref,
 		sprintf(display, "%c %-*s %-*s -> %s  (%s)", r ? '!' : '+',
 			TRANSPORT_SUMMARY_WIDTH, quickref, REFCOL_WIDTH, remote,
 			pretty_ref,
-			r ? "unable to update local ref" : "forced update");
+			r ? _("unable to update local ref") : _("forced update"));
 		return r;
 	} else {
 		sprintf(display, "! %-*s %-*s -> %s  (non-fast-forward)",
