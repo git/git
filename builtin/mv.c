@@ -74,7 +74,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 
 	newfd = hold_locked_index(&lock_file, 1);
 	if (read_cache() < 0)
-		die("index file corrupt");
+		die(_("index file corrupt"));
 
 	source = copy_pathspec(prefix, argv, argc, 0);
 	modes = xcalloc(argc, sizeof(enum update_mode));
@@ -100,7 +100,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 		const char *bad = NULL;
 
 		if (show_only)
-			printf("Checking rename of '%s' to '%s'\n", src, dst);
+			printf(_("Checking rename of '%s' to '%s'\n"), src, dst);
 
 		length = strlen(src);
 		if (lstat(src, &st) < 0)
@@ -120,7 +120,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 
 			first = cache_name_pos(src_w_slash, len_w_slash);
 			if (first >= 0)
-				die ("Huh? %.*s is in index?",
+				die (_("Huh? %.*s is in index?"),
 						len_w_slash, src_w_slash);
 
 			first = -1 - first;
@@ -172,7 +172,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 				 * check both source and destination
 				 */
 				if (S_ISREG(st.st_mode) || S_ISLNK(st.st_mode)) {
-					warning("%s; will overwrite!", bad);
+					warning(_("%s; will overwrite!"), bad);
 					bad = NULL;
 				} else
 					bad = "Cannot overwrite";
@@ -193,7 +193,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 					i--;
 				}
 			} else
-				die ("%s, source=%s, destination=%s",
+				die (_("%s, source=%s, destination=%s"),
 				     bad, src, dst);
 		}
 	}
@@ -203,10 +203,10 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 		enum update_mode mode = modes[i];
 		int pos;
 		if (show_only || verbose)
-			printf("Renaming %s to %s\n", src, dst);
+			printf(_("Renaming %s to %s\n"), src, dst);
 		if (!show_only && mode != INDEX &&
 				rename(src, dst) < 0 && !ignore_errors)
-			die_errno ("renaming '%s' failed", src);
+			die_errno (_("renaming '%s' failed"), src);
 
 		if (mode == WORKING_DIRECTORY)
 			continue;
@@ -220,7 +220,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 	if (active_cache_changed) {
 		if (write_cache(newfd, active_cache, active_nr) ||
 		    commit_locked_index(&lock_file))
-			die("Unable to write new index file");
+			die(_("Unable to write new index file"));
 	}
 
 	return 0;
