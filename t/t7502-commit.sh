@@ -221,19 +221,21 @@ test_expect_success 'cleanup commit messages (strip,-F)' '
 
 '
 
-echo "sample
-
-# Please enter the commit message for your changes. Lines starting
-# with '#' will be ignored, and an empty message aborts the commit." >expect
-
 test_expect_success 'cleanup commit messages (strip,-F,-e)' '
 
 	echo >>negative &&
 	{ echo;echo sample;echo; } >text &&
 	git commit -e -F text -a &&
-	head -n 4 .git/COMMIT_EDITMSG >actual &&
-	test_cmp expect actual
+	head -n 4 .git/COMMIT_EDITMSG >actual
+'
 
+echo "sample
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit." >expect
+
+test_expect_success C_LOCALE_OUTPUT 'cleanup commit messages (strip,-F,-e): output' '
+	test_cmp expect actual
 '
 
 echo "#
@@ -244,7 +246,10 @@ test_expect_success C_LOCALE_OUTPUT 'author different from committer' '
 
 	echo >>negative &&
 	git commit -e -m "sample"
-	head -n 7 .git/COMMIT_EDITMSG >actual &&
+	head -n 7 .git/COMMIT_EDITMSG >actual
+'
+
+test_expect_success C_LOCALE_OUTPUT 'author different from committer: output' '
 	test_cmp expect actual
 '
 
@@ -264,7 +269,10 @@ test_expect_success C_LOCALE_OUTPUT 'committer is automatic' '
 		test_must_fail git commit -e -m "sample"
 	) &&
 	head -n 8 .git/COMMIT_EDITMSG |	\
-	sed "s/^# Committer: .*/# Committer:/" >actual &&
+	sed "s/^# Committer: .*/# Committer:/" >actual
+'
+
+test_expect_success C_LOCALE_OUTPUT 'committer is automatic: output' '
 	test_cmp expect actual
 '
 
