@@ -373,11 +373,11 @@ static void fill_tracking_info(struct strbuf *stat, const char *branch_name,
 		strbuf_addf(stat, "%s: ",
 			shorten_unambiguous_ref(branch->merge[0]->dst, 0));
 	if (!ours)
-		strbuf_addf(stat, "behind %d] ", theirs);
+		strbuf_addf(stat, _("behind %d] "), theirs);
 	else if (!theirs)
-		strbuf_addf(stat, "ahead %d] ", ours);
+		strbuf_addf(stat, _("ahead %d] "), ours);
 	else
-		strbuf_addf(stat, "ahead %d, behind %d] ", ours, theirs);
+		strbuf_addf(stat, _("ahead %d, behind %d] "), ours, theirs);
 }
 
 static int matches_merge_filter(struct commit *commit)
