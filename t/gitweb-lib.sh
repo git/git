@@ -82,7 +82,12 @@ gitweb_run () {
 		}
 		close O;
 	' gitweb.output &&
-	if grep '^[[]' gitweb.log >/dev/null 2>&1; then false; else true; fi
+	if grep '^[[]' gitweb.log >/dev/null 2>&1; then
+		test_debug 'cat gitweb.log >&2' &&
+		false
+	else
+		true
+	fi
 
 	# gitweb.log is left for debugging
 	# gitweb.output is used to parse HTTP output
