@@ -213,10 +213,10 @@ static int do_sign(struct strbuf *buffer)
 }
 
 static const char tag_template[] =
-	"\n"
+	N_("\n"
 	"#\n"
 	"# Write a tag message\n"
-	"#\n";
+	"#\n");
 
 static void set_signingkey(const char *value)
 {
@@ -305,7 +305,7 @@ static void create_tag(const unsigned char *object, const char *tag,
 		if (!is_null_sha1(prev))
 			write_tag_body(fd, prev);
 		else
-			write_or_die(fd, tag_template, strlen(tag_template));
+			write_or_die(fd, _(tag_template), strlen(_(tag_template)));
 		close(fd);
 
 		if (launch_editor(path, buf, NULL)) {

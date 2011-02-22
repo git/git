@@ -1121,6 +1121,7 @@ test_expect_success \
 '
 
 test_expect_success \
+	C_LOCALE_OUTPUT \
 	'message in editor has initial comment: first line' '
 	# check the first line --- should be empty
 	echo >first.expect &&
