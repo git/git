@@ -30,7 +30,7 @@ static const char * const git_reset_usage[] = {
 
 enum reset_type { MIXED, SOFT, HARD, MERGE, KEEP, NONE };
 static const char *reset_type_names[] = {
-	"mixed", "soft", "hard", "merge", "keep", NULL
+	N_("mixed"), N_("soft"), N_("hard"), N_("merge"), N_("keep"), NULL
 };
 
 static char *args_to_str(const char **argv)
@@ -228,8 +228,8 @@ static void prepend_reflog_action(const char *action, char *buf, size_t size)
 static void die_if_unmerged_cache(int reset_type)
 {
 	if (is_merge() || read_cache() < 0 || unmerged_cache())
-		die("Cannot do a %s reset in the middle of a merge.",
-		    reset_type_names[reset_type]);
+		die(_("Cannot do a %s reset in the middle of a merge."),
+		    _(reset_type_names[reset_type]));
 
 }
 
@@ -320,8 +320,8 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 		if (reset_type == MIXED)
 			warning(_("--mixed with paths is deprecated; use 'git reset -- <paths>' instead."));
 		else if (reset_type != NONE)
-			die("Cannot do %s reset with paths.",
-					reset_type_names[reset_type]);
+			die(_("Cannot do %s reset with paths."),
+					_(reset_type_names[reset_type]));
 		return read_from_tree(prefix, argv + i, sha1,
 				quiet ? REFRESH_QUIET : REFRESH_IN_PORCELAIN);
 	}
@@ -332,8 +332,8 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 		setup_work_tree();
 
 	if (reset_type == MIXED && is_bare_repository())
-		die("%s reset is not allowed in a bare repository",
-		    reset_type_names[reset_type]);
+		die(_("%s reset is not allowed in a bare repository"),
+		    _(reset_type_names[reset_type]));
 
 	/* Soft reset does not touch the index file nor the working tree
 	 * at all, but requires them in a good order.  Other resets reset
