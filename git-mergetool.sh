@@ -269,7 +269,7 @@ rerere=false
 files_to_merge() {
     if test "$rerere" = true
     then
-	git rerere status
+	git rerere remaining
     else
 	git ls-files -u | sed -e 's/^[^	]*	//' | sort -u
     fi
