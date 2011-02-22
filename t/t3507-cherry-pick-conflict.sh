@@ -38,7 +38,7 @@ test_expect_success 'failed cherry-pick does not advance HEAD' '
 	test "$head" = "$newhead"
 '
 
-test_expect_success 'advice from failed cherry-pick' "
+test_expect_success C_LOCALE_OUTPUT 'advice from failed cherry-pick' "
 	git checkout -f initial^0 &&
 	git read-tree -u --reset HEAD &&
 	git clean -d -f -f -q -x &&
