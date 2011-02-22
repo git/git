@@ -157,7 +157,8 @@ static int delete_branches(int argc, const char **argv, int force, int kinds)
 	switch (kinds) {
 	case REF_REMOTE_BRANCH:
 		fmt = "refs/remotes/%s";
-		remote = "remote ";
+		/* TRANSLATORS: This is "remote " in "remote branch '%s' not found" */
+		remote = _("remote ");
 		force = 1;
 		break;
 	case REF_LOCAL_BRANCH:
