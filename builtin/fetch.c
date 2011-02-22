@@ -184,7 +184,7 @@ static struct ref *get_ref_map(struct transport *transport,
 		} else {
 			ref_map = get_remote_ref(remote_refs, "HEAD");
 			if (!ref_map)
-				die("Couldn't find remote ref HEAD");
+				die(_("Couldn't find remote ref HEAD"));
 			ref_map->merge = 1;
 			tail = &ref_map->next;
 		}
@@ -237,7 +237,7 @@ static int update_local_ref(struct ref *ref,
 	*display = 0;
 	type = sha1_object_info(ref->new_sha1, NULL);
 	if (type < 0)
-		die("object %s not found", sha1_to_hex(ref->new_sha1));
+		die(_("object %s not found"), sha1_to_hex(ref->new_sha1));
 
 	if (!hashcmp(ref->old_sha1, ref->new_sha1)) {
 		if (verbosity > 0)
@@ -337,7 +337,7 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 
 	fp = fopen(filename, "a");
 	if (!fp)
-		return error("cannot open %s: %s\n", filename, strerror(errno));
+		return error(_("cannot open %s: %s\n"), filename, strerror(errno));
 
 	if (raw_url)
 		url = transport_anonymize_url(raw_url);
@@ -426,9 +426,9 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 	free(url);
 	fclose(fp);
 	if (rc & STORE_REF_ERROR_DF_CONFLICT)
-		error("some local refs could not be updated; try running\n"
+		error(_("some local refs could not be updated; try running\n"
 		      " 'git remote prune %s' to remove any old, conflicting "
-		      "branches", remote_name);
+		      "branches"), remote_name);
 	return rc;
 }
 
@@ -476,7 +476,7 @@ static int quickfetch(struct ref *ref_map)
 
 	err = start_command(&revlist);
 	if (err) {
-		error("could not run rev-list");
+		error(_("could not run rev-list"));
 		return err;
 	}
 
@@ -490,14 +490,14 @@ static int quickfetch(struct ref *ref_map)
 		if (write_in_full(revlist.in, sha1_to_hex(ref->old_sha1), 40) < 0 ||
 		    write_str_in_full(revlist.in, "\n") < 0) {
 			if (errno != EPIPE && errno != EINVAL)
-				error("failed write to rev-list: %s", strerror(errno));
+				error(_("failed write to rev-list: %s"), strerror(errno));
 			err = -1;
 			break;
 		}
 	}
 
 	if (close(revlist.in)) {
-		error("failed to close rev-list's stdin: %s", strerror(errno));
+		error(_("failed to close rev-list's stdin: %s"), strerror(errno));
 		err = -1;
 	}
 
@@ -650,8 +650,8 @@ static void check_not_current_branch(struct ref *ref_map)
 	for (; ref_map; ref_map = ref_map->next)
 		if (ref_map->peer_ref && !strcmp(current_branch->refname,
 					ref_map->peer_ref->name))
-			die("Refusing to fetch into current branch %s "
-			    "of non-bare repository", current_branch->refname);
+			die(_("Refusing to fetch into current branch %s "
+			    "of non-bare repository"), current_branch->refname);
 }
 
 static int truncate_fetch_head(void)
@@ -660,7 +660,7 @@ static int truncate_fetch_head(void)
 	FILE *fp = fopen(filename, "w");
 
 	if (!fp)
-		return error("cannot open %s: %s\n", filename, strerror(errno));
+		return error(_("cannot open %s: %s\n"), filename, strerror(errno));
 	fclose(fp);
 	return 0;
 }
@@ -684,7 +684,7 @@ static int do_fetch(struct transport *transport,
 	}
 
 	if (!transport->get_refs_list || !transport->fetch)
-		die("Don't know how to fetch from %s", transport->url);
+		die(_("Don't know how to fetch from %s"), transport->url);
 
 	/* if not appending, truncate FETCH_HEAD */
 	if (!append && !dry_run) {
@@ -738,10 +738,10 @@ static void set_option(const char *name, const char *value)
 {
 	int r = transport_set_option(transport, name, value);
 	if (r < 0)
-		die("Option \"%s\" value \"%s\" is not valid for %s",
+		die(_("Option \"%s\" value \"%s\" is not valid for %s"),
 			name, value, transport->url);
 	if (r > 0)
-		warning("Option \"%s\" is ignored for %s\n",
+		warning(_("Option \"%s\" is ignored for %s\n"),
 			name, transport->url);
 }
 
@@ -838,9 +838,9 @@ static int fetch_multiple(struct string_list *list)
 		argv[argc] = name;
 		argv[argc + 1] = NULL;
 		if (verbosity >= 0)
-			printf("Fetching %s\n", name);
+			printf(_("Fetching %s\n"), name);
 		if (run_command_v_opt(argv, RUN_GIT_CMD)) {
-			error("Could not fetch %s", name);
+			error(_("Could not fetch %s"), name);
 			result = 1;
 		}
 	}
@@ -856,8 +856,8 @@ static int fetch_one(struct remote *remote, int argc, const char **argv)
 	int exit_code;
 
 	if (!remote)
-		die("No remote repository specified.  Please, specify either a URL or a\n"
-		    "remote name from which new revisions should be fetched.");
+		die(_("No remote repository specified.  Please, specify either a URL or a\n"
+		    "remote name from which new revisions should be fetched."));
 
 	transport = transport_get(remote, NULL);
 	transport_set_verbosity(transport, verbosity, progress);
@@ -876,7 +876,7 @@ static int fetch_one(struct remote *remote, int argc, const char **argv)
 				char *ref;
 				i++;
 				if (i >= argc)
-					die("You need to specify a tag name.");
+					die(_("You need to specify a tag name."));
 				ref = xmalloc(strlen(argv[i]) * 2 + 22);
 				strcpy(ref, "refs/tags/");
 				strcat(ref, argv[i]);
@@ -916,9 +916,9 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 
 	if (all) {
 		if (argc == 1)
-			die("fetch --all does not take a repository argument");
+			die(_("fetch --all does not take a repository argument"));
 		else if (argc > 1)
-			die("fetch --all does not make sense with refspecs");
+			die(_("fetch --all does not make sense with refspecs"));
 		(void) for_each_remote(get_one_remote_for_fetch, &list);
 		result = fetch_multiple(&list);
 	} else if (argc == 0) {
@@ -929,7 +929,7 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 		/* All arguments are assumed to be remotes or groups */
 		for (i = 0; i < argc; i++)
 			if (!add_remote_or_group(argv[i], &list))
-				die("No such remote or remote group: %s", argv[i]);
+				die(_("No such remote or remote group: %s"), argv[i]);
 		result = fetch_multiple(&list);
 	} else {
 		/* Single remote or group */
@@ -937,7 +937,7 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 		if (list.nr > 1) {
 			/* More than one remote */
 			if (argc > 1)
-				die("Fetching a group and specifying refspecs does not make sense");
+				die(_("Fetching a group and specifying refspecs does not make sense"));
 			result = fetch_multiple(&list);
 		} else {
 			/* Zero or one remotes */
