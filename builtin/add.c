@@ -307,7 +307,7 @@ static int edit_patch(int argc, const char **argv, const char *prefix)
 static struct lock_file lock_file;
 
 static const char ignore_error[] =
-"The following paths are ignored by one of your .gitignore files:\n";
+N_("The following paths are ignored by one of your .gitignore files:\n");
 
 static int verbose = 0, show_only = 0, ignored_too = 0, refresh_only = 0;
 static int ignore_add_errors, addremove, intent_to_add, ignore_missing = 0;
@@ -344,11 +344,11 @@ static int add_files(struct dir_struct *dir, int flags)
 	int i, exit_status = 0;
 
 	if (dir->ignored_nr) {
-		fprintf(stderr, ignore_error);
+		fprintf(stderr, _(ignore_error));
 		for (i = 0; i < dir->ignored_nr; i++)
 			fprintf(stderr, "%s\n", dir->ignored[i]->name);
-		fprintf(stderr, "Use -f if you really want to add them.\n");
-		die("no files added");
+		fprintf(stderr, _("Use -f if you really want to add them.\n"));
+		die(_("no files added"));
 	}
 
 	for (i = 0; i < dir->nr; i++)
