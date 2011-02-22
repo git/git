@@ -242,7 +242,7 @@ static int update_local_ref(struct ref *ref,
 	if (!hashcmp(ref->old_sha1, ref->new_sha1)) {
 		if (verbosity > 0)
 			sprintf(display, "= %-*s %-*s -> %s", TRANSPORT_SUMMARY_WIDTH,
-				"[up to date]", REFCOL_WIDTH, remote,
+				_("[up to date]"), REFCOL_WIDTH, remote,
 				pretty_ref);
 		return 0;
 	}
@@ -255,8 +255,8 @@ static int update_local_ref(struct ref *ref,
 		 * If this is the head, and it's not okay to update
 		 * the head, and the old value of the head isn't empty...
 		 */
-		sprintf(display, "! %-*s %-*s -> %s  (can't fetch in current branch)",
-			TRANSPORT_SUMMARY_WIDTH, "[rejected]", REFCOL_WIDTH, remote,
+		sprintf(display, _("! %-*s %-*s -> %s  (can't fetch in current branch)"),
+			TRANSPORT_SUMMARY_WIDTH, _("[rejected]"), REFCOL_WIDTH, remote,
 			pretty_ref);
 		return 1;
 	}
@@ -266,8 +266,8 @@ static int update_local_ref(struct ref *ref,
 		int r;
 		r = s_update_ref("updating tag", ref, 0);
 		sprintf(display, "%c %-*s %-*s -> %s%s", r ? '!' : '-',
-			TRANSPORT_SUMMARY_WIDTH, "[tag update]", REFCOL_WIDTH, remote,
-			pretty_ref, r ? "  (unable to update local ref)" : "");
+			TRANSPORT_SUMMARY_WIDTH, _("[tag update]"), REFCOL_WIDTH, remote,
+			pretty_ref, r ? _("  (unable to update local ref)") : "");
 		return r;
 	}
 
@@ -415,7 +415,7 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 				 REFCOL_WIDTH, *what ? what : "HEAD");
 		if (*note) {
 			if (verbosity >= 0 && !shown_url) {
-				fprintf(stderr, "From %.*s\n",
+				fprintf(stderr, _("From %.*s\n"),
 						url_len, url);
 				shown_url = 1;
 			}
@@ -524,16 +524,16 @@ static int prune_refs(struct transport *transport, struct ref *ref_map)
 	int result = 0;
 	struct ref *ref, *stale_refs = get_stale_heads(transport->remote, ref_map);
 	const char *dangling_msg = dry_run
-		? "   (%s will become dangling)\n"
-		: "   (%s has become dangling)\n";
+		? _("   (%s will become dangling)\n")
+		: _("   (%s has become dangling)\n");
 
 	for (ref = stale_refs; ref; ref = ref->next) {
 		if (!dry_run)
 			result |= delete_ref(ref->name, NULL, 0);
 		if (verbosity >= 0) {
 			fprintf(stderr, " x %-*s %-*s -> %s\n",
-				TRANSPORT_SUMMARY_WIDTH, "[deleted]",
-				REFCOL_WIDTH, "(none)", prettify_refname(ref->name));
+				TRANSPORT_SUMMARY_WIDTH, _("[deleted]"),
+				REFCOL_WIDTH, _("(none)"), prettify_refname(ref->name));
 			warn_dangling_symref(stderr, dangling_msg, ref->name);
 		}
 	}

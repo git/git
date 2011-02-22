@@ -66,7 +66,10 @@ test_expect_success "fetch --recurse-submodules recurses into submodules" '
 	(
 		cd downstream &&
 		git fetch --recurse-submodules >../actual.out 2>../actual.err
-	) &&
+	)
+'
+
+test_expect_success C_LOCALE_OUTPUT "fetch --recurse-submodules recurses into submodules: output" '
 	test_cmp expect.out actual.out &&
 	test_cmp expect.err actual.err
 '
@@ -95,7 +98,10 @@ test_expect_success "using fetchRecurseSubmodules=true in .gitmodules recurses i
 		cd downstream &&
 		git config -f .gitmodules submodule.submodule.fetchRecurseSubmodules true &&
 		git fetch >../actual.out 2>../actual.err
-	) &&
+	)
+'
+
+test_expect_success C_LOCALE_OUTPUT "using fetchRecurseSubmodules=true in .gitmodules recurses into submodules" '
 	test_cmp expect.out actual.out &&
 	test_cmp expect.err actual.err
 '
@@ -126,7 +132,10 @@ test_expect_success "--recurse-submodules overrides fetchRecurseSubmodules setti
 		git fetch --recurse-submodules >../actual.out 2>../actual.err &&
 		git config --unset -f .gitmodules submodule.submodule.fetchRecurseSubmodules &&
 		git config --unset submodule.submodule.fetchRecurseSubmodules
-	) &&
+	)
+'
+
+test_expect_success C_LOCALE_OUTPUT "--recurse-submodules overrides fetchRecurseSubmodules setting from .git/config: output" '
 	test_cmp expect.out actual.out &&
 	test_cmp expect.err actual.err
 '
@@ -145,13 +154,22 @@ test_expect_success "--dry-run propagates to submodules" '
 	(
 		cd downstream &&
 		git fetch --recurse-submodules --dry-run >../actual.out 2>../actual.err
-	) &&
+	)
+'
+
+test_expect_success C_LOCALE_OUTPUT "--dry-run propagates to submodules: output" '
 	test_cmp expect.out actual.out &&
-	test_cmp expect.err actual.err &&
+	test_cmp expect.err actual.err
+'
+
+test_expect_success "Without --dry-run propagates to submodules" '
 	(
 		cd downstream &&
 		git fetch --recurse-submodules >../actual.out 2>../actual.err
-	) &&
+	)
+'
+
+test_expect_success C_LOCALE_OUTPUT "Without --dry-run propagates to submodules: output" '
 	test_cmp expect.out actual.out &&
 	test_cmp expect.err actual.err
 '
@@ -162,7 +180,10 @@ test_expect_success "recurseSubmodules=true propagates into submodules" '
 		cd downstream &&
 		git config fetch.recurseSubmodules true
 		git fetch >../actual.out 2>../actual.err
-	) &&
+	)
+'
+
+test_expect_success C_LOCALE_OUTPUT "recurseSubmodules=true propagates into submodules: output" '
 	test_cmp expect.out actual.out &&
 	test_cmp expect.err actual.err
 '
@@ -176,7 +197,10 @@ test_expect_success "--recurse-submodules overrides config in submodule" '
 			git config fetch.recurseSubmodules false
 		) &&
 		git fetch --recurse-submodules >../actual.out 2>../actual.err
-	) &&
+	)
+'
+
+test_expect_success C_LOCALE_OUTPUT "--recurse-submodules overrides config in submodule: output" '
 	test_cmp expect.out actual.out &&
 	test_cmp expect.err actual.err
 '
