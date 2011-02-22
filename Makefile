@@ -321,6 +321,7 @@ INSTALL = install
 RPMBUILD = rpmbuild
 TCL_PATH = tclsh
 TCLTK_PATH = wish
+XGETTEXT = xgettext
 PTHREAD_LIBS = -lpthread
 PTHREAD_CFLAGS =
 GCOV = gcov
@@ -1590,6 +1591,7 @@ ifndef V
 	QUIET_BUILT_IN = @echo '   ' BUILTIN $@;
 	QUIET_GEN      = @echo '   ' GEN $@;
 	QUIET_LNCP     = @echo '   ' LN/CP $@;
+	QUIET_XGETTEXT = @echo '   ' XGETTEXT $@;
 	QUIET_GCOV     = @echo '   ' GCOV $@;
 	QUIET_SUBDIR0  = +@subdir=
 	QUIET_SUBDIR1  = ;$(NO_SUBDIR) echo '   ' SUBDIR $$subdir; \
@@ -2056,6 +2058,20 @@ info:
 
 pdf:
 	$(MAKE) -C Documentation pdf
+
+XGETTEXT_FLAGS = \
+	--force-po \
+	--add-comments \
+	--msgid-bugs-address="Git Mailing List <git@vger.kernel.org>" \
+	--from-code=UTF-8
+XGETTEXT_FLAGS_C = $(XGETTEXT_FLAGS) --keyword=_ --keyword=N_ --language=C
+LOCALIZED_C := $(C_OBJ:o=c)
+
+po/git.pot: $(LOCALIZED_C)
+	$(QUIET_XGETTEXT)$(XGETTEXT) -o$@+ $(XGETTEXT_FLAGS_C) $(LOCALIZED_C) && \
+	mv $@+ $@
+
+pot: po/git.pot
 
 $(ETAGS_TARGET): FORCE
 	$(RM) $(ETAGS_TARGET)
