@@ -116,7 +116,7 @@ static int check_all_stages(struct cache_entry *ce, int pos)
 	    ce_stage(active_cache[pos+1]) != 2 ||
 	    strcmp(active_cache[pos+2]->name, ce->name) ||
 	    ce_stage(active_cache[pos+2]) != 3)
-		return error("path '%s' does not have all three versions",
+		return error(_("path '%s' does not have all three versions"),
 			     ce->name);
 	return 0;
 }
@@ -150,7 +150,7 @@ static int checkout_merged(int pos, struct checkout *state)
 	    ce_stage(active_cache[pos+1]) != 2 ||
 	    strcmp(active_cache[pos+2]->name, path) ||
 	    ce_stage(active_cache[pos+2]) != 3)
-		return error("path '%s' does not have all 3 versions", path);
+		return error(_("path '%s' does not have all 3 versions"), path);
 
 	read_mmblob(&ancestor, active_cache[pos]->sha1);
 	read_mmblob(&ours, active_cache[pos+1]->sha1);
@@ -167,7 +167,7 @@ static int checkout_merged(int pos, struct checkout *state)
 	free(theirs.ptr);
 	if (status < 0 || !result_buf.ptr) {
 		free(result_buf.ptr);
-		return error("path '%s': cannot merge", path);
+		return error(_("path '%s': cannot merge"), path);
 	}
 
 	/*
@@ -184,12 +184,12 @@ static int checkout_merged(int pos, struct checkout *state)
 	 */
 	if (write_sha1_file(result_buf.ptr, result_buf.size,
 			    blob_type, sha1))
-		die("Unable to add merge result for '%s'", path);
+		die(_("Unable to add merge result for '%s'"), path);
 	ce = make_cache_entry(create_ce_mode(active_cache[pos+1]->ce_mode),
 			      sha1,
 			      path, 2, 0);
 	if (!ce)
-		die("make_cache_entry failed for path '%s'", path);
+		die(_("make_cache_entry failed for path '%s'"), path);
 	status = checkout_entry(ce, state, NULL);
 	return status;
 }
@@ -211,7 +211,7 @@ static int checkout_paths(struct tree *source_tree, const char **pathspec,
 
 	newfd = hold_locked_index(lock_file, 1);
 	if (read_cache_preload(pathspec) < 0)
-		return error("corrupt index file");
+		return error(_("corrupt index file"));
 
 	if (source_tree)
 		read_tree_some(source_tree, pathspec);
@@ -239,14 +239,14 @@ static int checkout_paths(struct tree *source_tree, const char **pathspec,
 			if (!ce_stage(ce))
 				continue;
 			if (opts->force) {
-				warning("path '%s' is unmerged", ce->name);
+				warning(_("path '%s' is unmerged"), ce->name);
 			} else if (stage) {
 				errs |= check_stage(stage, ce, pos);
 			} else if (opts->merge) {
 				errs |= check_all_stages(ce, pos);
 			} else {
 				errs = 1;
-				error("path '%s' is unmerged", ce->name);
+				error(_("path '%s' is unmerged"), ce->name);
 			}
 			pos = skip_same_name(ce, pos) - 1;
 		}
@@ -275,7 +275,7 @@ static int checkout_paths(struct tree *source_tree, const char **pathspec,
 
 	if (write_cache(newfd, active_cache, active_nr) ||
 	    commit_locked_index(lock_file))
-		die("unable to write new index file");
+		die(_("unable to write new index file"));
 
 	resolve_ref("HEAD", rev, 0, &flag);
 	head = lookup_commit_reference_gently(rev, 1);
@@ -292,7 +292,7 @@ static void show_local_changes(struct object *head, struct diff_options *opts)
 	rev.diffopt.flags = opts->flags;
 	rev.diffopt.output_format |= DIFF_FORMAT_NAME_STATUS;
 	if (diff_setup_done(&rev.diffopt) < 0)
-		die("diff_setup_done failed");
+		die(_("diff_setup_done failed"));
 	add_pending_object(&rev, head, NULL);
 	run_diff_index(&rev, 0);
 }
@@ -366,7 +366,7 @@ static int merge_working_tree(struct checkout_opts *opts,
 	int newfd = hold_locked_index(lock_file, 1);
 
 	if (read_cache_preload(NULL) < 0)
-		return error("corrupt index file");
+		return error(_("corrupt index file"));
 
 	resolve_undo_clear();
 	if (opts->force) {
@@ -388,7 +388,7 @@ static int merge_working_tree(struct checkout_opts *opts,
 		refresh_cache(REFRESH_QUIET);
 
 		if (unmerged_cache()) {
-			error("you need to resolve your current index first");
+			error(_("you need to resolve your current index first"));
 			return 1;
 		}
 
@@ -470,7 +470,7 @@ static int merge_working_tree(struct checkout_opts *opts,
 
 	if (write_cache(newfd, active_cache, active_nr) ||
 	    commit_locked_index(lock_file))
-		die("unable to write new index file");
+		die(_("unable to write new index file"));
 
 	if (!opts->force && !opts->quiet)
 		show_local_changes(&new->commit->object, &opts->diff_options);
@@ -519,7 +519,7 @@ static void update_refs_for_switch(struct checkout_opts *opts,
 				temp = log_all_ref_updates;
 				log_all_ref_updates = 1;
 				if (log_ref_setup(ref_name, log_file, sizeof(log_file))) {
-					fprintf(stderr, "Can not do reflog for '%s'\n",
+					fprintf(stderr, _("Can not do reflog for '%s'\n"),
 					    opts->new_orphan_branch);
 					log_all_ref_updates = temp;
 					return;
@@ -545,14 +545,14 @@ static void update_refs_for_switch(struct checkout_opts *opts,
 		create_symref("HEAD", new->path, msg.buf);
 		if (!opts->quiet) {
 			if (old->path && !strcmp(new->path, old->path))
-				fprintf(stderr, "Already on '%s'\n",
+				fprintf(stderr, _("Already on '%s'\n"),
 					new->name);
 			else if (opts->new_branch)
 				fprintf(stderr, "Switched to%s branch '%s'\n",
 					opts->branch_exists ? " and reset" : " a new",
 					new->name);
 			else
-				fprintf(stderr, "Switched to branch '%s'\n",
+				fprintf(stderr, _("Switched to branch '%s'\n"),
 					new->name);
 		}
 		if (old->path && old->name) {
@@ -597,7 +597,7 @@ static int switch_branches(struct checkout_opts *opts, struct branch_info *new)
 		new->name = "HEAD";
 		new->commit = old.commit;
 		if (!new->commit)
-			die("You are on a branch yet to be born");
+			die(_("You are on a branch yet to be born"));
 		parse_commit(new->commit);
 	}
 
@@ -724,7 +724,7 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 
 	/* we can assume from now on new_branch = !new_branch_force */
 	if (opts.new_branch && opts.new_branch_force)
-		die("-B cannot be used with -b");
+		die(_("-B cannot be used with -b"));
 
 	/* copy -B over to -b, so that we can just check the latter */
 	if (opts.new_branch_force)
@@ -732,28 +732,28 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 
 	if (patch_mode && (opts.track > 0 || opts.new_branch
 			   || opts.new_branch_log || opts.merge || opts.force))
-		die ("--patch is incompatible with all other options");
+		die (_("--patch is incompatible with all other options"));
 
 	/* --track without -b should DWIM */
 	if (0 < opts.track && !opts.new_branch) {
 		const char *argv0 = argv[0];
 		if (!argc || !strcmp(argv0, "--"))
-			die ("--track needs a branch name");
+			die (_("--track needs a branch name"));
 		if (!prefixcmp(argv0, "refs/"))
 			argv0 += 5;
 		if (!prefixcmp(argv0, "remotes/"))
 			argv0 += 8;
 		argv0 = strchr(argv0, '/');
 		if (!argv0 || !argv0[1])
-			die ("Missing branch name; try -b");
+			die (_("Missing branch name; try -b"));
 		opts.new_branch = argv0 + 1;
 	}
 
 	if (opts.new_orphan_branch) {
 		if (opts.new_branch)
-			die("--orphan and -b|-B are mutually exclusive");
+			die(_("--orphan and -b|-B are mutually exclusive"));
 		if (opts.track > 0)
-			die("--orphan cannot be used with -t");
+			die(_("--orphan cannot be used with -t"));
 		opts.new_branch = opts.new_orphan_branch;
 	}
 
@@ -763,7 +763,7 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 	}
 
 	if (opts.force && opts.merge)
-		die("git checkout: -f and -m are incompatible");
+		die(_("git checkout: -f and -m are incompatible"));
 
 	/*
 	 * case 1: git checkout <ref> -- [<paths>]
@@ -809,7 +809,7 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 
 		if (get_sha1_mb(arg, rev)) {
 			if (has_dash_dash)          /* case (1) */
-				die("invalid reference: %s", arg);
+				die(_("invalid reference: %s"), arg);
 			if (!patch_mode &&
 			    dwim_new_local_branch &&
 			    opts.track == BRANCH_TRACK_UNSPECIFIED &&
@@ -846,7 +846,7 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 			source_tree = parse_tree_indirect(rev);
 
 		if (!source_tree)                   /* case (1): want a tree */
-			die("reference is not a tree: %s", arg);
+			die(_("reference is not a tree: %s"), arg);
 		if (!has_dash_dash) {/* case (3 -> 1) */
 			/*
 			 * Do not complain the most common case
@@ -872,7 +872,7 @@ no_reference:
 		const char **pathspec = get_pathspec(prefix, argv);
 
 		if (!pathspec)
-			die("invalid path specification");
+			die(_("invalid path specification"));
 
 		if (patch_mode)
 			return interactive_checkout(new.name, pathspec, &opts);
@@ -880,14 +880,14 @@ no_reference:
 		/* Checkout paths */
 		if (opts.new_branch) {
 			if (argc == 1) {
-				die("git checkout: updating paths is incompatible with switching branches.\nDid you intend to checkout '%s' which can not be resolved as commit?", argv[0]);
+				die(_("git checkout: updating paths is incompatible with switching branches.\nDid you intend to checkout '%s' which can not be resolved as commit?"), argv[0]);
 			} else {
-				die("git checkout: updating paths is incompatible with switching branches.");
+				die(_("git checkout: updating paths is incompatible with switching branches."));
 			}
 		}
 
 		if (1 < !!opts.writeout_stage + !!opts.force + !!opts.merge)
-			die("git checkout: --ours/--theirs, --force and --merge are incompatible when\nchecking out of the index.");
+			die(_("git checkout: --ours/--theirs, --force and --merge are incompatible when\nchecking out of the index."));
 
 		return checkout_paths(source_tree, pathspec, &opts);
 	}
@@ -898,22 +898,22 @@ no_reference:
 	if (opts.new_branch) {
 		struct strbuf buf = STRBUF_INIT;
 		if (strbuf_check_branch_ref(&buf, opts.new_branch))
-			die("git checkout: we do not like '%s' as a branch name.",
+			die(_("git checkout: we do not like '%s' as a branch name."),
 			    opts.new_branch);
 		if (!get_sha1(buf.buf, rev)) {
 			opts.branch_exists = 1;
 			if (!opts.new_branch_force)
-				die("git checkout: branch %s already exists",
+				die(_("git checkout: branch %s already exists"),
 				    opts.new_branch);
 		}
 		strbuf_release(&buf);
 	}
 
 	if (new.name && !new.commit) {
-		die("Cannot switch branch to a non-commit.");
+		die(_("Cannot switch branch to a non-commit."));
 	}
 	if (opts.writeout_stage)
-		die("--ours/--theirs is incompatible with switching branches.");
+		die(_("--ours/--theirs is incompatible with switching branches."));
 
 	return switch_branches(&opts, &new);
 }
