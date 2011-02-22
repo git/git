@@ -22,7 +22,10 @@ check_summary_oneline() {
 	SUMMARY_POSTFIX="$(git log -1 --pretty='format:%h')"
 	echo "[$SUMMARY_PREFIX $SUMMARY_POSTFIX] $2" >exp &&
 
-	test_cmp exp act
+	if test_have_prereq C_LOCALE_OUTPUT
+	then
+		test_cmp exp act
+	fi
 }
 
 test_expect_success 'output summary format' '
@@ -32,7 +35,10 @@ test_expect_success 'output summary format' '
 	check_summary_oneline "root-commit" "initial" &&
 
 	echo change >>file1 &&
-	git add file1 &&
+	git add file1
+'
+
+test_expect_success 'output summary format: root-commit' '
 	check_summary_oneline "" "a change"
 '
 

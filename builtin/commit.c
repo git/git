@@ -1223,9 +1223,9 @@ static void print_summary(const char *prefix, const unsigned char *sha1)
 		!prefixcmp(head, "refs/heads/") ?
 			head + 11 :
 			!strcmp(head, "HEAD") ?
-				"detached HEAD" :
+				_("detached HEAD") :
 				head,
-		initial_commit ? " (root-commit)" : "");
+		initial_commit ? _(" (root-commit)") : "");
 
 	if (!log_tree_commit(&rev, commit)) {
 		rev.always_show_header = 1;
