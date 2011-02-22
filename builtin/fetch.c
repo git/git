@@ -317,9 +317,9 @@ static int update_local_ref(struct ref *ref,
 			r ? _("unable to update local ref") : _("forced update"));
 		return r;
 	} else {
-		sprintf(display, "! %-*s %-*s -> %s  (non-fast-forward)",
-			TRANSPORT_SUMMARY_WIDTH, "[rejected]", REFCOL_WIDTH, remote,
-			pretty_ref);
+		sprintf(display, "! %-*s %-*s -> %s  %s",
+			TRANSPORT_SUMMARY_WIDTH, _("[rejected]"), REFCOL_WIDTH, remote,
+			pretty_ref, _("(non-fast-forward)"));
 		return 1;
 	}
 }
