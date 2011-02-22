@@ -515,6 +515,7 @@ LIB_H += diff.h
 LIB_H += dir.h
 LIB_H += exec_cmd.h
 LIB_H += fsck.h
+LIB_H += gettext.h
 LIB_H += git-compat-util.h
 LIB_H += graph.h
 LIB_H += grep.h
