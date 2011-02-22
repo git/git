@@ -15,9 +15,15 @@
 
 #define FORMAT_PRESERVING(n) __attribute__((format_arg(n)))
 
+#ifdef GETTEXT_POISON
+#define use_gettext_poison() 1
+#else
+#define use_gettext_poison() 0
+#endif
+
 static inline FORMAT_PRESERVING(1) const char *_(const char *msgid)
 {
-	return msgid;
+	return use_gettext_poison() ? "# GETTEXT POISON #" : msgid;
 }
 
 /* Mark msgid for translation but do not translate it. */

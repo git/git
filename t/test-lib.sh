@@ -1079,6 +1079,9 @@ esac
 test -z "$NO_PERL" && test_set_prereq PERL
 test -z "$NO_PYTHON" && test_set_prereq PYTHON
 
+# Can we rely on git's output in the C locale?
+test -z "$GETTEXT_POISON" && test_set_prereq C_LOCALE_OUTPUT
+
 # test whether the filesystem supports symbolic links
 ln -s x y 2>/dev/null && test -h y 2>/dev/null && test_set_prereq SYMLINKS
 rm -f y
