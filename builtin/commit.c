@@ -695,12 +695,12 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		char *ai_tmp, *ci_tmp;
 		if (in_merge)
 			status_printf_ln(s, GIT_COLOR_NORMAL,
-				"\n"
+				_("\n"
 				"It looks like you may be committing a MERGE.\n"
 				"If this is not correct, please remove the file\n"
 				"	%s\n"
 				"and try again.\n"
-				"",
+				""),
 				git_path("MERGE_HEAD"));
 
 		fprintf(s->fp, "\n");
@@ -725,15 +725,15 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		ci_tmp = cut_ident_timestamp_part(committer_ident.buf);
 		if (strcmp(author_ident->buf, committer_ident.buf))
 			status_printf_ln(s, GIT_COLOR_NORMAL,
-				"%s"
-				"Author:    %s",
+				_("%s"
+				"Author:    %s"),
 				ident_shown++ ? "" : "\n",
 				author_ident->buf);
 
 		if (!user_ident_sufficiently_given())
 			status_printf_ln(s, GIT_COLOR_NORMAL,
-				"%s"
-				"Committer: %s",
+				_("%s"
+				"Committer: %s"),
 				ident_shown++ ? "" : "\n",
 				committer_ident.buf);
 

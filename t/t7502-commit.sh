@@ -234,7 +234,7 @@ echo "#
 # Author:    $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL>
 #" >> expect
 
-test_expect_success 'author different from committer' '
+test_expect_success C_LOCALE_OUTPUT 'author different from committer' '
 
 	echo >>negative &&
 	git commit -e -m "sample"
@@ -248,7 +248,7 @@ rm -f expect.tmp
 echo "# Committer:
 #" >> expect
 
-test_expect_success 'committer is automatic' '
+test_expect_success C_LOCALE_OUTPUT 'committer is automatic' '
 
 	echo >>negative &&
 	(
