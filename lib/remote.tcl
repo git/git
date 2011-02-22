@@ -245,29 +245,27 @@ proc update_all_remotes_menu_entry {} {
 	set prune_m $remote_m.prune
 	if {$have_remote > 1} {
 		make_sure_remote_submenues_exist $remote_m
-		set index [expr {[$fetch_m type 0] eq "tearoff" ? 1 : 0}]
-		if {[$fetch_m entrycget $index -label] ne "All"} {
+		if {[$fetch_m entrycget end -label] ne "All"} {
 
-			$fetch_m insert $index separator
-			$fetch_m insert $index command \
+			$fetch_m insert end separator
+			$fetch_m insert end command \
 				-label "All" \
 				-command fetch_from_all
 
-			$prune_m insert $index separator
-			$prune_m insert $index command \
+			$prune_m insert end separator
+			$prune_m insert end command \
 				-label "All" \
 				-command prune_from_all
 		}
 	} else {
 		if {[winfo exists $fetch_m]} {
-			set index [expr {[$fetch_m type 0] eq "tearoff" ? 1 : 0}]
-			if {[$fetch_m type end] eq "separator"} {
+			if {[$fetch_m entrycget end -label] eq "All"} {
 
-				delete_from_menu $fetch_m $index
-				delete_from_menu $fetch_m $index
+				delete_from_menu $fetch_m end
+				delete_from_menu $fetch_m end
 
-				delete_from_menu $prune_m $index
-				delete_from_menu $prune_m $index
+				delete_from_menu $prune_m end
+				delete_from_menu $prune_m end
 			}
 		}
 	}
