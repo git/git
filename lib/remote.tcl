@@ -237,13 +237,13 @@ proc update_all_remotes_menu_entry {} {
 
 	set have_remote 0
 	foreach r $all_remotes {
-		set have_remote 1
+		incr have_remote
 	}
 
 	set remote_m .mbar.remote
 	set fetch_m $remote_m.fetch
 	set prune_m $remote_m.prune
-	if {$have_remote} {
+	if {$have_remote > 1} {
 		make_sure_remote_submenues_exist $remote_m
 		set index [expr {[$fetch_m type 0] eq "tearoff" ? 1 : 0}]
 		if {[$fetch_m entrycget $index -label] ne "All"} {
