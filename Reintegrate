@@ -53,6 +53,7 @@ no)
 				:
 			elif git show-ref -q --verify "refs/merge-fix/$branch"
 			then
+				echo >&2 "Fixing up the merge"
 				git cherry-pick --no-commit "refs/merge-fix/$branch" &&
 				EDITOR=: git commit --amend -a || exit
 			fi
