@@ -38,7 +38,7 @@ static const char * const builtin_status_usage[] = {
 };
 
 static const char implicit_ident_advice[] =
-"Your name and email address were configured automatically based\n"
+N_("Your name and email address were configured automatically based\n"
 "on your username and hostname. Please check that they are accurate.\n"
 "You can suppress this message by setting them explicitly:\n"
 "\n"
@@ -47,12 +47,12 @@ static const char implicit_ident_advice[] =
 "\n"
 "After doing this, you may fix the identity used for this commit with:\n"
 "\n"
-"    git commit --amend --reset-author\n";
+"    git commit --amend --reset-author\n");
 
 static const char empty_amend_advice[] =
-"You asked to amend the most recent commit, but doing so would make\n"
+N_("You asked to amend the most recent commit, but doing so would make\n"
 "it empty. You can repeat your command with --allow-empty, or you can\n"
-"remove the commit entirely with \"git reset HEAD^\".\n";
+"remove the commit entirely with \"git reset HEAD^\".\n");
 
 static unsigned char head_sha1[20];
 
@@ -770,7 +770,7 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 	    !(amend && is_a_merge(head_sha1))) {
 		run_status(stdout, index_file, prefix, 0, s);
 		if (amend)
-			fputs(empty_amend_advice, stderr);
+			fputs(_(empty_amend_advice), stderr);
 		return 0;
 	}
 
@@ -1197,7 +1197,7 @@ static void print_summary(const char *prefix, const unsigned char *sha1)
 		strbuf_addbuf_percentquote(&format, &committer_ident);
 		if (advice_implicit_identity) {
 			strbuf_addch(&format, '\n');
-			strbuf_addstr(&format, implicit_ident_advice);
+			strbuf_addstr(&format, _(implicit_ident_advice));
 		}
 	}
 	strbuf_release(&author_ident);
