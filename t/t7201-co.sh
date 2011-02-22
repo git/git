@@ -223,7 +223,7 @@ test_expect_success 'checkout --merge --conflict=diff3 <branch>' '
 	test_cmp two expect
 '
 
-test_expect_success 'checkout to detach HEAD (with advice declined)' '
+test_expect_success C_LOCALE_OUTPUT 'checkout to detach HEAD (with advice declined)' '
 
 	git config advice.detachedHead false &&
 	git checkout -f renamer && git clean -f &&
@@ -242,7 +242,7 @@ test_expect_success 'checkout to detach HEAD (with advice declined)' '
 	fi
 '
 
-test_expect_success 'checkout to detach HEAD' '
+test_expect_success C_LOCALE_OUTPUT 'checkout to detach HEAD' '
 	git config advice.detachedHead true &&
 	git checkout -f renamer && git clean -f &&
 	git checkout renamer^ 2>messages &&
@@ -260,7 +260,7 @@ test_expect_success 'checkout to detach HEAD' '
 	fi
 '
 
-test_expect_success 'checkout to detach HEAD with branchname^' '
+test_expect_success C_LOCALE_OUTPUT 'checkout to detach HEAD with branchname^' '
 
 	git checkout -f master && git clean -f &&
 	git checkout renamer^ &&
@@ -276,7 +276,7 @@ test_expect_success 'checkout to detach HEAD with branchname^' '
 	fi
 '
 
-test_expect_success 'checkout to detach HEAD with :/message' '
+test_expect_success C_LOCALE_OUTPUT 'checkout to detach HEAD with :/message' '
 
 	git checkout -f master && git clean -f &&
 	git checkout ":/Initial" &&
@@ -292,7 +292,7 @@ test_expect_success 'checkout to detach HEAD with :/message' '
 	fi
 '
 
-test_expect_success 'checkout to detach HEAD with HEAD^0' '
+test_expect_success C_LOCALE_OUTPUT 'checkout to detach HEAD with HEAD^0' '
 
 	git checkout -f master && git clean -f &&
 	git checkout HEAD^0 &&
