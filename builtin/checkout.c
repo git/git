@@ -297,7 +297,7 @@ static void show_local_changes(struct object *head, struct diff_options *opts)
 	run_diff_index(&rev, 0);
 }
 
-static void describe_detached_head(char *msg, struct commit *commit)
+static void describe_detached_head(const char *msg, struct commit *commit)
 {
 	struct strbuf sb = STRBUF_INIT;
 	struct pretty_print_context ctx = {0};
