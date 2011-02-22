@@ -10,7 +10,12 @@ Tests for selected commit options.'
 . ./test-lib.sh
 
 commit_msg_is () {
-	test "`git log --pretty=format:%s%b -1`" = "$1"
+	expect=commit_msg_is.expect
+	actual=commit_msg_is.actual
+
+	printf "%s" "$(git log --pretty=format:%s%b -1)" >$expect &&
+	printf "%s" "$1" >$actual &&
+	test_cmp $expect $actual
 }
 
 # A sanity check to see if commit is working at all.

@@ -126,7 +126,6 @@ test_expect_success 'load checking: load too high (default action)' '
 	grep "Status: 503 Service Unavailable" gitweb.headers &&
 	grep "503 - The load average on the server is too high" gitweb.body
 '
-test_debug 'cat gitweb.log' # just in case
 test_debug 'cat gitweb.headers'
 
 # turn off load checking
