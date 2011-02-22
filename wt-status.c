@@ -878,13 +878,13 @@ static void wt_shortstatus_print_tracking(struct wt_status *s)
 	if (!prefixcmp(branch_name, "refs/heads/"))
 		branch_name += 11;
 	else if (!strcmp(branch_name, "HEAD")) {
-		branch_name = "HEAD (no branch)";
+		branch_name = _("HEAD (no branch)");
 		branch_color_local = color(WT_STATUS_NOBRANCH, s);
 	}
 
 	branch = branch_get(s->branch + 11);
 	if (s->is_initial)
-		color_fprintf(s->fp, header_color, "Initial commit on ");
+		color_fprintf(s->fp, header_color, _("Initial commit on "));
 	if (!stat_tracking_info(branch, &num_ours, &num_theirs)) {
 		color_fprintf_ln(s->fp, branch_color_local,
 			"%s", branch_name);
@@ -899,15 +899,15 @@ static void wt_shortstatus_print_tracking(struct wt_status *s)
 
 	color_fprintf(s->fp, header_color, " [");
 	if (!num_ours) {
-		color_fprintf(s->fp, header_color, "behind ");
+		color_fprintf(s->fp, header_color, _("behind "));
 		color_fprintf(s->fp, branch_color_remote, "%d", num_theirs);
 	} else if (!num_theirs) {
-		color_fprintf(s->fp, header_color, "ahead ");
+		color_fprintf(s->fp, header_color, _("ahead "));
 		color_fprintf(s->fp, branch_color_local, "%d", num_ours);
 	} else {
-		color_fprintf(s->fp, header_color, "ahead ");
+		color_fprintf(s->fp, header_color, _("ahead "));
 		color_fprintf(s->fp, branch_color_local, "%d", num_ours);
-		color_fprintf(s->fp, header_color, ", behind ");
+		color_fprintf(s->fp, header_color, _(", behind "));
 		color_fprintf(s->fp, branch_color_remote, "%d", num_theirs);
 	}
 
