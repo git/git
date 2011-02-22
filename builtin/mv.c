@@ -104,13 +104,13 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 
 		length = strlen(src);
 		if (lstat(src, &st) < 0)
-			bad = "bad source";
+			bad = _("bad source");
 		else if (!strncmp(src, dst, length) &&
 				(dst[length] == 0 || dst[length] == '/')) {
-			bad = "can not move directory into itself";
+			bad = _("can not move directory into itself");
 		} else if ((src_is_dir = S_ISDIR(st.st_mode))
 				&& lstat(dst, &st) == 0)
-			bad = "cannot move directory over file";
+			bad = _("cannot move directory over file");
 		else if (src_is_dir) {
 			const char *src_w_slash = add_slash(src);
 			int len_w_slash = length + 1;
@@ -132,7 +132,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 			free((char *)src_w_slash);
 
 			if (last - first < 1)
-				bad = "source directory is empty";
+				bad = _("source directory is empty");
 			else {
 				int j, dst_len;
 
@@ -163,9 +163,9 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 				argc += last - first;
 			}
 		} else if (cache_name_pos(src, length) < 0)
-			bad = "not under version control";
+			bad = _("not under version control");
 		else if (lstat(dst, &st) == 0) {
-			bad = "destination exists";
+			bad = _("destination exists");
 			if (force) {
 				/*
 				 * only files can overwrite each other:
@@ -175,10 +175,10 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 					warning(_("%s; will overwrite!"), bad);
 					bad = NULL;
 				} else
-					bad = "Cannot overwrite";
+					bad = _("Cannot overwrite");
 			}
 		} else if (string_list_has_string(&src_for_dst, dst))
-			bad = "multiple sources for the same target";
+			bad = _("multiple sources for the same target");
 		else
 			string_list_insert(&src_for_dst, dst);
 
