@@ -275,7 +275,7 @@ static void wt_status_print_change_data(struct wt_status *s,
 		status_printf_more(s, c, _("modified:   %s"), one);
 		break;
 	case DIFF_STATUS_RENAMED:
-		status_printf_more(s, c, "renamed:    %s -> %s", one, two);
+		status_printf_more(s, c, _("renamed:    %s -> %s"), one, two);
 		break;
 	case DIFF_STATUS_TYPE_CHANGED:
 		status_printf_more(s, c, _("typechange: %s"), one);
