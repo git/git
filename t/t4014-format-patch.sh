@@ -709,4 +709,88 @@ test_expect_success TTY 'format-patch --stdout paginates' '
 	test_path_is_missing .git/pager_used
 '
 
+test_expect_success 'format-patch handles multi-line subjects' '
+	rm -rf patches/ &&
+	echo content >>file &&
+	for i in one two three; do echo $i; done >msg &&
+	git add file &&
+	git commit -F msg &&
+	git format-patch -o patches -1 &&
+	grep ^Subject: patches/0001-one.patch >actual &&
+	echo "Subject: [PATCH] one two three" >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'format-patch handles multi-line encoded subjects' '
+	rm -rf patches/ &&
+	echo content >>file &&
+	for i in en två tre; do echo $i; done >msg &&
+	git add file &&
+	git commit -F msg &&
+	git format-patch -o patches -1 &&
+	grep ^Subject: patches/0001-en.patch >actual &&
+	echo "Subject: [PATCH] =?UTF-8?q?en=20tv=C3=A5=20tre?=" >expect &&
+	test_cmp expect actual
+'
+
+M8="foo bar "
+M64=$M8$M8$M8$M8$M8$M8$M8$M8
+M512=$M64$M64$M64$M64$M64$M64$M64$M64
+cat >expect <<'EOF'
+Subject: [PATCH] foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo
+ bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar
+ foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo
+ bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar
+ foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo
+ bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar
+ foo bar foo bar foo bar foo bar foo bar foo bar foo bar foo
+ bar foo bar foo bar foo bar foo bar foo bar foo bar foo bar
+ foo bar foo bar foo bar foo bar
+EOF
+test_expect_success 'format-patch wraps extremely long headers (ascii)' '
+	echo content >>file &&
+	git add file &&
+	git commit -m "$M512" &&
+	git format-patch --stdout -1 >patch &&
+	sed -n "/^Subject/p; /^ /p; /^$/q" <patch >subject &&
+	test_cmp expect subject
+'
+
+M8="föö bar "
+M64=$M8$M8$M8$M8$M8$M8$M8$M8
+M512=$M64$M64$M64$M64$M64$M64$M64$M64
+cat >expect <<'EOF'
+Subject: [PATCH] =?UTF-8?q?f=C3=B6=C3=B6=20bar=20f=C3=B6=C3=B6=20bar=20f=C3=B6?=
+ =?UTF-8?q?=C3=B6=20bar=20f=C3=B6=C3=B6=20bar=20f=C3=B6=C3=B6=20bar=20f=C3=B6?=
+ =?UTF-8?q?=C3=B6=20bar=20f=C3=B6=C3=B6=20bar=20f=C3=B6=C3=B6=20bar=20f=C3=B6?=
+ =?UTF-8?q?=C3=B6=20bar=20f=C3=B6=C3=B6=20bar=20f=C3=B6=C3=B6=20bar=20f=C3=B6?=
+ =?UTF-8?q?=C3=B6=20bar=20f=C3=B6=C3=B6=20bar=20f=C3=B6=C3=B6=20bar=20f=C3=B6?=
+ =?UTF-8?q?=C3=B6=20bar=20f=C3=B6=C3=B6=20bar=20f=C3=B6=C3=B6=20bar=20f=C3=B6?=
+ =?UTF-8?q?=C3=B6=20bar=20f=C3=B6=C3=B6=20bar=20f=C3=B6=C3=B6=20bar=20f=C3=B6?=
+ =?UTF-8?q?=C3=B6=20bar=20f=C3=B6=C3=B6=20bar=20f=C3=B6=C3=B6=20bar=20f=C3=B6?=
+ =?UTF-8?q?=C3=B6=20bar=20f=C3=B6=C3=B6=20bar=20f=C3=B6=C3=B6=20bar=20f=C3=B6?=
+ =?UTF-8?q?=C3=B6=20bar=20f=C3=B6=C3=B6=20bar=20f=C3=B6=C3=B6=20bar=20f=C3=B6?=
+ =?UTF-8?q?=C3=B6=20bar=20f=C3=B6=C3=B6=20bar=20f=C3=B6=C3=B6=20bar=20f=C3=B6?=
+ =?UTF-8?q?=C3=B6=20bar=20f=C3=B6=C3=B6=20bar=20f=C3=B6=C3=B6=20bar=20f=C3=B6?=
+ =?UTF-8?q?=C3=B6=20bar=20f=C3=B6=C3=B6=20bar=20f=C3=B6=C3=B6=20bar=20f=C3=B6?=
+ =?UTF-8?q?=C3=B6=20bar=20f=C3=B6=C3=B6=20bar=20f=C3=B6=C3=B6=20bar=20f=C3=B6?=
+ =?UTF-8?q?=C3=B6=20bar=20f=C3=B6=C3=B6=20bar=20f=C3=B6=C3=B6=20bar=20f=C3=B6?=
+ =?UTF-8?q?=C3=B6=20bar=20f=C3=B6=C3=B6=20bar=20f=C3=B6=C3=B6=20bar=20f=C3=B6?=
+ =?UTF-8?q?=C3=B6=20bar=20f=C3=B6=C3=B6=20bar=20f=C3=B6=C3=B6=20bar=20f=C3=B6?=
+ =?UTF-8?q?=C3=B6=20bar=20f=C3=B6=C3=B6=20bar=20f=C3=B6=C3=B6=20bar=20f=C3=B6?=
+ =?UTF-8?q?=C3=B6=20bar=20f=C3=B6=C3=B6=20bar=20f=C3=B6=C3=B6=20bar=20f=C3=B6?=
+ =?UTF-8?q?=C3=B6=20bar=20f=C3=B6=C3=B6=20bar=20f=C3=B6=C3=B6=20bar=20f=C3=B6?=
+ =?UTF-8?q?=C3=B6=20bar=20f=C3=B6=C3=B6=20bar=20f=C3=B6=C3=B6=20bar=20f=C3=B6?=
+ =?UTF-8?q?=C3=B6=20bar=20f=C3=B6=C3=B6=20bar?=
+EOF
+test_expect_success 'format-patch wraps extremely long headers (rfc2047)' '
+	rm -rf patches/ &&
+	echo content >>file &&
+	git add file &&
+	git commit -m "$M512" &&
+	git format-patch --stdout -1 >patch &&
+	sed -n "/^Subject/p; /^ /p; /^$/q" <patch >subject &&
+	test_cmp expect subject
+'
+
 test_done
