@@ -228,7 +228,7 @@ static void add_rfc2047(struct strbuf *sb, const char *line, int len,
 
 	for (i = 0; i < len; i++) {
 		int ch = line[i];
-		if (non_ascii(ch))
+		if (non_ascii(ch) || ch == '\n')
 			goto needquote;
 		if ((i + 1 < len) && (ch == '=' && line[i+1] == '?'))
 			goto needquote;
@@ -254,7 +254,7 @@ needquote:
 		 * many programs do not understand this and just
 		 * leave the underscore in place.
 		 */
-		if (is_rfc2047_special(ch) || ch == ' ') {
+		if (is_rfc2047_special(ch) || ch == ' ' || ch == '\n') {
 			strbuf_addf(sb, "=%02X", ch);
 			line_len += 3;
 		}
