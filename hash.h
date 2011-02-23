@@ -30,7 +30,7 @@ struct hash_table {
 
 extern void *lookup_hash(unsigned int hash, const struct hash_table *table);
 extern void **insert_hash(unsigned int hash, void *ptr, struct hash_table *table);
-extern int for_each_hash(const struct hash_table *table, int (*fn)(void *));
+extern int for_each_hash(const struct hash_table *table, int (*fn)(void *, void *), void *data);
 extern void free_hash(struct hash_table *table);
 
 static inline void init_hash(struct hash_table *table)
