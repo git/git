@@ -54,9 +54,17 @@ static const char empty_amend_advice[] =
 "it empty. You can repeat your command with --allow-empty, or you can\n"
 "remove the commit entirely with \"git reset HEAD^\".\n";
 
+static const char empty_cherry_pick_advice[] =
+"The previous cherry-pick is now empty, possibly due to conflict resolution.\n"
+"If you wish to commit it anyway, use:\n"
+"\n"
+"    git commit --allow-empty\n"
+"\n"
+"Otherwise, please use 'git reset'\n";
+
 static unsigned char head_sha1[20];
 
-static char *use_message_buffer;
+static const char *use_message_buffer;
 static const char commit_editmsg[] = "COMMIT_EDITMSG";
 static struct lock_file index_lock; /* real index */
 static struct lock_file false_lock; /* used only for partial commits */
@@ -68,6 +76,11 @@ static enum {
 
 static const char *logfile, *force_author;
 static const char *template_file;
+/*
+ * The _message variables are commit names from which to take
+ * the commit message and/or authorship.
+ */
+static const char *author_message, *author_message_buffer;
 static char *edit_message, *use_message;
 static char *fixup_message, *squash_message;
 static int all, edit_flag, also, interactive, only, amend, signoff;
@@ -88,7 +101,8 @@ static enum {
 } cleanup_mode;
 static char *cleanup_arg;
 
-static int use_editor = 1, initial_commit, in_merge, include_status = 1;
+static enum commit_whence whence;
+static int use_editor = 1, initial_commit, include_status = 1;
 static int show_ignored_in_status;
 static const char *only_include_assumed;
 static struct strbuf message;
@@ -162,6 +176,36 @@ static struct option builtin_commit_options[] = {
 
 	OPT_END()
 };
+
+static void determine_whence(struct wt_status *s)
+{
+	if (file_exists(git_path("MERGE_HEAD")))
+		whence = FROM_MERGE;
+	else if (file_exists(git_path("CHERRY_PICK_HEAD")))
+		whence = FROM_CHERRY_PICK;
+	else
+		whence = FROM_COMMIT;
+	if (s)
+		s->whence = whence;
+}
+
+static const char *whence_s(void)
+{
+	char *s = "";
+
+	switch (whence) {
+	case FROM_COMMIT:
+		break;
+	case FROM_MERGE:
+		s = "merge";
+		break;
+	case FROM_CHERRY_PICK:
+		s = "cherry-pick";
+		break;
+	}
+
+	return s;
+}
 
 static void rollback_index_files(void)
 {
@@ -378,8 +422,8 @@ static char *prepare_index(int argc, const char **argv, const char *prefix, int 
 	 */
 	commit_style = COMMIT_PARTIAL;
 
-	if (in_merge)
-		die("cannot do a partial commit during a merge.");
+	if (whence != FROM_COMMIT)
+		die("cannot do a partial commit during a %s.", whence_s());
 
 	memset(&partial, 0, sizeof(partial));
 	partial.strdup_strings = 1;
@@ -469,18 +513,18 @@ static void determine_author_info(struct strbuf *author_ident)
 	email = getenv("GIT_AUTHOR_EMAIL");
 	date = getenv("GIT_AUTHOR_DATE");
 
-	if (use_message && !renew_authorship) {
+	if (author_message) {
 		const char *a, *lb, *rb, *eol;
 
-		a = strstr(use_message_buffer, "\nauthor ");
+		a = strstr(author_message_buffer, "\nauthor ");
 		if (!a)
-			die("invalid commit: %s", use_message);
+			die("invalid commit: %s", author_message);
 
 		lb = strchrnul(a + strlen("\nauthor "), '<');
 		rb = strchrnul(lb, '>');
 		eol = strchrnul(rb, '\n');
 		if (!*lb || !*rb || !*eol)
-			die("invalid commit: %s", use_message);
+			die("invalid commit: %s", author_message);
 
 		if (lb == a + strlen("\nauthor "))
 			/* \nauthor <foo@example.com> */
@@ -641,11 +685,15 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 	}
 
 	/*
-	 * This final case does not modify the template message,
-	 * it just sets the argument to the prepare-commit-msg hook.
+	 * The remaining cases don't modify the template message, but
+	 * just set the argument(s) to the prepare-commit-msg hook.
 	 */
-	else if (in_merge)
+	else if (whence == FROM_MERGE)
 		hook_arg1 = "merge";
+	else if (whence == FROM_CHERRY_PICK) {
+		hook_arg1 = "commit";
+		hook_arg2 = "CHERRY_PICK_HEAD";
+	}
 
 	if (squash_message) {
 		/*
@@ -694,16 +742,18 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 	strbuf_addstr(&committer_ident, git_committer_info(0));
 	if (use_editor && include_status) {
 		char *ai_tmp, *ci_tmp;
-		if (in_merge)
+		if (whence != FROM_COMMIT)
 			fprintf(fp,
 				"#\n"
-				"# It looks like you may be committing a MERGE.\n"
+				"# It looks like you may be committing a %s.\n"
 				"# If this is not correct, please remove the file\n"
 				"#	%s\n"
 				"# and try again.\n"
 				"#\n",
-				git_path("MERGE_HEAD"));
-
+				whence_s(),
+				git_path(whence == FROM_MERGE
+					 ? "MERGE_HEAD"
+					 : "CHERRY_PICK_HEAD"));
 		fprintf(fp,
 			"\n"
 			"# Please enter the commit message for your changes.");
@@ -766,11 +816,18 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 
 	fclose(fp);
 
-	if (!commitable && !in_merge && !allow_empty &&
+	/*
+	 * Reject an attempt to record a non-merge empty commit without
+	 * explicit --allow-empty. In the cherry-pick case, it may be
+	 * empty due to conflict resolution, which the user should okay.
+	 */
+	if (!commitable && whence != FROM_MERGE && !allow_empty &&
 	    !(amend && is_a_merge(head_sha1))) {
 		run_status(stdout, index_file, prefix, 0, s);
 		if (amend)
 			fputs(empty_amend_advice, stderr);
+		else if (whence == FROM_CHERRY_PICK)
+			fputs(empty_cherry_pick_advice, stderr);
 		return 0;
 	}
 
@@ -898,6 +955,28 @@ static void handle_untracked_files_arg(struct wt_status *s)
 		die("Invalid untracked files mode '%s'", untracked_files_arg);
 }
 
+static const char *read_commit_message(const char *name)
+{
+	const char *out_enc, *out;
+	struct commit *commit;
+
+	commit = lookup_commit_reference_by_name(name);
+	if (!commit)
+		die("could not lookup commit %s", name);
+	out_enc = get_commit_output_encoding();
+	out = logmsg_reencode(commit, out_enc);
+
+	/*
+	 * If we failed to reencode the buffer, just copy it
+	 * byte for byte so the user can try to fix it up.
+	 * This also handles the case where input and output
+	 * encodings are identical.
+	 */
+	if (out == NULL)
+		out = xstrdup(commit->buffer);
+	return out;
+}
+
 static int parse_and_validate_options(int argc, const char *argv[],
 				      const char * const usage[],
 				      const char *prefix,
@@ -927,8 +1006,8 @@ static int parse_and_validate_options(int argc, const char *argv[],
 	/* Sanity check options */
 	if (amend && initial_commit)
 		die("You have nothing to amend.");
-	if (amend && in_merge)
-		die("You are in the middle of a merge -- cannot amend.");
+	if (amend && whence != FROM_COMMIT)
+		die("You are in the middle of a %s -- cannot amend.", whence_s());
 	if (fixup_message && squash_message)
 		die("Options --squash and --fixup cannot be used together");
 	if (use_message)
@@ -947,26 +1026,18 @@ static int parse_and_validate_options(int argc, const char *argv[],
 		use_message = edit_message;
 	if (amend && !use_message && !fixup_message)
 		use_message = "HEAD";
-	if (!use_message && renew_authorship)
+	if (!use_message && whence != FROM_CHERRY_PICK && renew_authorship)
 		die("--reset-author can be used only with -C, -c or --amend.");
 	if (use_message) {
-		const char *out_enc;
-		struct commit *commit;
-
-		commit = lookup_commit_reference_by_name(use_message);
-		if (!commit)
-			die("could not lookup commit %s", use_message);
-		out_enc = get_commit_output_encoding();
-		use_message_buffer = logmsg_reencode(commit, out_enc);
-
-		/*
-		 * If we failed to reencode the buffer, just copy it
-		 * byte for byte so the user can try to fix it up.
-		 * This also handles the case where input and output
-		 * encodings are identical.
-		 */
-		if (use_message_buffer == NULL)
-			use_message_buffer = xstrdup(commit->buffer);
+		use_message_buffer = read_commit_message(use_message);
+		if (!renew_authorship) {
+			author_message = use_message;
+			author_message_buffer = use_message_buffer;
+		}
+	}
+	if (whence == FROM_CHERRY_PICK && !renew_authorship) {
+		author_message = "CHERRY_PICK_HEAD";
+		author_message_buffer = read_commit_message(author_message);
 	}
 
 	if (!!also + !!only + !!all + !!interactive > 1)
@@ -1117,7 +1188,7 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 	wt_status_prepare(&s);
 	gitmodules_config();
 	git_config(git_status_config, &s);
-	in_merge = file_exists(git_path("MERGE_HEAD"));
+	determine_whence(&s);
 	argc = parse_options(argc, argv, prefix,
 			     builtin_status_options,
 			     builtin_status_usage, 0);
@@ -1140,7 +1211,6 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 	}
 
 	s.is_initial = get_sha1(s.reference, sha1) ? 1 : 0;
-	s.in_merge = in_merge;
 	s.ignore_submodule_arg = ignore_submodule_arg;
 	wt_status_collect(&s);
 
@@ -1302,8 +1372,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 
 	wt_status_prepare(&s);
 	git_config(git_commit_config, &s);
-	in_merge = file_exists(git_path("MERGE_HEAD"));
-	s.in_merge = in_merge;
+	determine_whence(&s);
 
 	if (s.use_color == -1)
 		s.use_color = git_use_color_default;
@@ -1340,7 +1409,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 
 		for (c = commit->parents; c; c = c->next)
 			pptr = &commit_list_insert(c->item, pptr)->next;
-	} else if (in_merge) {
+	} else if (whence == FROM_MERGE) {
 		struct strbuf m = STRBUF_INIT;
 		FILE *fp;
 
@@ -1369,7 +1438,9 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 			parents = reduce_heads(parents);
 	} else {
 		if (!reflog_msg)
-			reflog_msg = "commit";
+			reflog_msg = (whence == FROM_CHERRY_PICK)
+					? "commit (cherry-pick)"
+					: "commit";
 		pptr = &commit_list_insert(lookup_commit(head_sha1), pptr)->next;
 	}
 
@@ -1424,6 +1495,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 		die("cannot update HEAD ref");
 	}
 
+	unlink(git_path("CHERRY_PICK_HEAD"));
 	unlink(git_path("MERGE_HEAD"));
 	unlink(git_path("MERGE_MSG"));
 	unlink(git_path("MERGE_MODE"));
