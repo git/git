@@ -626,6 +626,10 @@ static int grep_directory(struct grep_opt *opt, const struct pathspec *pathspec)
 
 	fill_directory(&dir, pathspec->raw);
 	for (i = 0; i < dir.nr; i++) {
+		const char *name = dir.entries[i]->name;
+		int namelen = strlen(name);
+		if (!match_pathspec_depth(pathspec, name, namelen, 0, NULL))
+			continue;
 		hit |= grep_file(opt, dir.entries[i]->name);
 		if (hit && opt->status_only)
 			break;
