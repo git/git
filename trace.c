@@ -65,19 +65,14 @@ static const char err_msg[] = "Could not trace into fd given by "
 void trace_vprintf(const char *key, const char *fmt, va_list ap)
 {
 	struct strbuf buf = STRBUF_INIT;
-	int fd, need_close = 0;
 
-	fd = get_trace_fd(key, &need_close);
-	if (!fd)
+	if (!trace_want(key))
 		return;
 
 	set_try_to_free_routine(NULL);	/* is never reset */
 	strbuf_vaddf(&buf, fmt, ap);
-	write_or_whine_pipe(fd, buf.buf, buf.len, err_msg);
+	trace_strbuf(key, &buf);
 	strbuf_release(&buf);
-
-	if (need_close)
-		close(fd);
 }
 
 void trace_printf_key(const char *key, const char *fmt, ...)
@@ -94,6 +89,20 @@ void trace_printf(const char *fmt, ...)
 	va_start(ap, fmt);
 	trace_vprintf("GIT_TRACE", fmt, ap);
 	va_end(ap);
+}
+
+void trace_strbuf(const char *key, const struct strbuf *buf)
+{
+	int fd, need_close = 0;
+
+	fd = get_trace_fd(key, &need_close);
+	if (!fd)
+		return;
+
+	write_or_whine_pipe(fd, buf->buf, buf->len, err_msg);
+
+	if (need_close)
+		close(fd);
 }
 
 void trace_argv_printf(const char **argv, const char *fmt, ...)
