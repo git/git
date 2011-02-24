@@ -1071,6 +1071,7 @@ extern void trace_vprintf(const char *key, const char *format, va_list ap);
 __attribute__((format (printf, 2, 3)))
 extern void trace_argv_printf(const char **argv, const char *format, ...);
 extern void trace_repo_setup(const char *prefix);
+extern int trace_want(const char *key);
 
 /* convert.c */
 /* returns 1 if *dst was used */

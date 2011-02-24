@@ -148,10 +148,8 @@ void trace_repo_setup(const char *prefix)
 {
 	const char *git_work_tree;
 	char cwd[PATH_MAX];
-	char *trace = getenv("GIT_TRACE");
 
-	if (!trace || !strcmp(trace, "") ||
-	    !strcmp(trace, "0") || !strcasecmp(trace, "false"))
+	if (!trace_want("GIT_TRACE"))
 		return;
 
 	if (!getcwd(cwd, PATH_MAX))
@@ -167,4 +165,14 @@ void trace_repo_setup(const char *prefix)
 	trace_printf("setup: worktree: %s\n", quote_crnl(git_work_tree));
 	trace_printf("setup: cwd: %s\n", quote_crnl(cwd));
 	trace_printf("setup: prefix: %s\n", quote_crnl(prefix));
+}
+
+int trace_want(const char *key)
+{
+	const char *trace = getenv(key);
+
+	if (!trace || !strcmp(trace, "") ||
+	    !strcmp(trace, "0") || !strcasecmp(trace, "false"))
+		return 0;
+	return 1;
 }
