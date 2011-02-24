@@ -804,6 +804,8 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 	char **pack_lockfile_ptr = NULL;
 	struct child_process *conn;
 
+	packet_trace_identity("fetch-pack");
+
 	nr_heads = 0;
 	heads = NULL;
 	for (i = 1; i < argc; i++) {

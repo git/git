@@ -778,6 +778,8 @@ int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 	char *dir = NULL;
 	struct command *commands;
 
+	packet_trace_identity("receive-pack");
+
 	argv++;
 	for (i = 1; i < argc; i++) {
 		const char *arg = *argv++;

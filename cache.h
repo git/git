@@ -1074,6 +1074,8 @@ extern void trace_repo_setup(const char *prefix);
 extern int trace_want(const char *key);
 extern void trace_strbuf(const char *key, const struct strbuf *buf);
 
+void packet_trace_identity(const char *prog);
+
 /* convert.c */
 /* returns 1 if *dst was used */
 extern int convert_to_git(const char *path, const char *src, size_t len,
