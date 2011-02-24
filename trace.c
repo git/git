@@ -25,10 +25,10 @@
 #include "cache.h"
 #include "quote.h"
 
-/* Get a trace file descriptor from GIT_TRACE env variable. */
-static int get_trace_fd(int *need_close)
+/* Get a trace file descriptor from "key" env variable. */
+static int get_trace_fd(const char *key, int *need_close)
 {
-	char *trace = getenv("GIT_TRACE");
+	char *trace = getenv(key);
 
 	if (!trace || !strcmp(trace, "") ||
 	    !strcmp(trace, "0") || !strcasecmp(trace, "false"))
@@ -50,10 +50,10 @@ static int get_trace_fd(int *need_close)
 		return fd;
 	}
 
-	fprintf(stderr, "What does '%s' for GIT_TRACE mean?\n", trace);
+	fprintf(stderr, "What does '%s' for %s mean?\n", trace, key);
 	fprintf(stderr, "If you want to trace into a file, "
-		"then please set GIT_TRACE to an absolute pathname "
-		"(starting with /).\n");
+		"then please set %s to an absolute pathname "
+		"(starting with /).\n", key);
 	fprintf(stderr, "Defaulting to tracing on stderr...\n");
 
 	return STDERR_FILENO;
@@ -62,12 +62,12 @@ static int get_trace_fd(int *need_close)
 static const char err_msg[] = "Could not trace into fd given by "
 	"GIT_TRACE environment variable";
 
-void trace_vprintf(const char *fmt, va_list ap)
+void trace_vprintf(const char *key, const char *fmt, va_list ap)
 {
 	struct strbuf buf = STRBUF_INIT;
 	int fd, need_close = 0;
 
-	fd = get_trace_fd(&need_close);
+	fd = get_trace_fd(key, &need_close);
 	if (!fd)
 		return;
 
@@ -80,11 +80,19 @@ void trace_vprintf(const char *fmt, va_list ap)
 		close(fd);
 }
 
+void trace_printf_key(const char *key, const char *fmt, ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	trace_vprintf(key, fmt, ap);
+	va_end(ap);
+}
+
 void trace_printf(const char *fmt, ...)
 {
 	va_list ap;
 	va_start(ap, fmt);
-	trace_vprintf(fmt, ap);
+	trace_vprintf("GIT_TRACE", fmt, ap);
 	va_end(ap);
 }
 
@@ -94,7 +102,7 @@ void trace_argv_printf(const char **argv, const char *fmt, ...)
 	va_list ap;
 	int fd, need_close = 0;
 
-	fd = get_trace_fd(&need_close);
+	fd = get_trace_fd("GIT_TRACE", &need_close);
 	if (!fd)
 		return;
 
