@@ -182,7 +182,7 @@ run_merge_tool () {
 			fi
 			check_unchanged
 		else
-			"$merge_tool_path" -f -d -c "wincmd l" \
+			"$merge_tool_path" -R -f -d -c "wincmd l" \
 				"$LOCAL" "$REMOTE"
 		fi
 		;;
@@ -193,7 +193,7 @@ run_merge_tool () {
 				"$LOCAL" "$MERGED" "$REMOTE"
 			check_unchanged
 		else
-			"$merge_tool_path" -f -d -c "wincmd l" \
+			"$merge_tool_path" -R -f -d -c "wincmd l" \
 				"$LOCAL" "$REMOTE"
 		fi
 		;;
