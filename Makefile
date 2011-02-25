@@ -2340,6 +2340,7 @@ dist-doc:
 
 distclean: clean
 	$(RM) configure
+	$(RM) po/git.pot
 
 clean:
 	$(RM) *.o block-sha1/*.o ppc/*.o compat/*.o compat/*/*.o xdiff/*.o vcs-svn/*.o \
