@@ -602,7 +602,7 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		if (strbuf_read_file(&sb, git_path("SQUASH_MSG"), 0) < 0)
 			die_errno("could not read SQUASH_MSG");
 		hook_arg1 = "squash";
-	} else if (template_file && !stat(template_file, &statbuf)) {
+	} else if (template_file) {
 		if (strbuf_read_file(&sb, template_file, 0) < 0)
 			die_errno("could not read '%s'", template_file);
 		hook_arg1 = "template";
