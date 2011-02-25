@@ -2,8 +2,12 @@
 #include "pack.h"
 #include "csum-file.h"
 
-uint32_t pack_idx_default_version = 2;
-uint32_t pack_idx_off32_limit = 0x7fffffff;
+void reset_pack_idx_option(struct pack_idx_option *opts)
+{
+	memset(opts, 0, sizeof(*opts));
+	opts->version = 2;
+	opts->off32_limit = 0x7fffffff;
+}
 
 static int sha1_compare(const void *_a, const void *_b)
 {
@@ -18,7 +22,8 @@ static int sha1_compare(const void *_a, const void *_b)
  * will be sorted by SHA1 on exit.
  */
 const char *write_idx_file(const char *index_name, struct pack_idx_entry **objects,
-			   int nr_objects, unsigned char *sha1)
+			   int nr_objects, const struct pack_idx_option *opts,
+			   unsigned char *sha1)
 {
 	struct sha1file *f;
 	struct pack_idx_entry **sorted_by_sha, **list, **last;
@@ -55,7 +60,7 @@ const char *write_idx_file(const char *index_name, struct pack_idx_entry **objec
 	f = sha1fd(fd, index_name);
 
 	/* if last object's offset is >= 2^31 we should use index V2 */
-	index_version = (last_obj_offset >> 31) ? 2 : pack_idx_default_version;
+	index_version = (last_obj_offset >> 31) ? 2 : opts->version;
 
 	/* index versions 2 and above need a header */
 	if (index_version >= 2) {
@@ -115,7 +120,7 @@ const char *write_idx_file(const char *index_name, struct pack_idx_entry **objec
 		list = sorted_by_sha;
 		for (i = 0; i < nr_objects; i++) {
 			struct pack_idx_entry *obj = *list++;
-			uint32_t offset = (obj->offset <= pack_idx_off32_limit) ?
+			uint32_t offset = (obj->offset <= opts->off32_limit) ?
 				obj->offset : (0x80000000 | nr_large_offset++);
 			offset = htonl(offset);
 			sha1write(f, &offset, 4);
@@ -126,7 +131,7 @@ const char *write_idx_file(const char *index_name, struct pack_idx_entry **objec
 		while (nr_large_offset) {
 			struct pack_idx_entry *obj = *list++;
 			uint64_t offset = obj->offset;
-			if (offset > pack_idx_off32_limit) {
+			if (offset > opts->off32_limit) {
 				uint32_t split[2];
 				split[0] = htonl(offset >> 32);
 				split[1] = htonl(offset & 0xffffffff);

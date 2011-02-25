@@ -880,11 +880,12 @@ static void final(const char *final_pack_name, const char *curr_pack_name,
 
 static int git_index_pack_config(const char *k, const char *v, void *cb)
 {
+	struct pack_idx_option *opts = cb;
+
 	if (!strcmp(k, "pack.indexversion")) {
-		pack_idx_default_version = git_config_int(k, v);
-		if (pack_idx_default_version > 2)
-			die("bad pack.indexversion=%"PRIu32,
-				pack_idx_default_version);
+		opts->version = git_config_int(k, v);
+		if (opts->version > 2)
+			die("bad pack.indexversion=%"PRIu32, opts->version);
 		return 0;
 	}
 	return git_default_config(k, v, cb);
@@ -898,6 +899,7 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 	const char *keep_name = NULL, *keep_msg = NULL;
 	char *index_name_buf = NULL, *keep_name_buf = NULL;
 	struct pack_idx_entry **idx_objects;
+	struct pack_idx_option opts;
 	unsigned char pack_sha1[20];
 
 	if (argc == 2 && !strcmp(argv[1], "-h"))
@@ -905,7 +907,8 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 
 	read_replace_refs = 0;
 
-	git_config(git_index_pack_config, NULL);
+	reset_pack_idx_option(&opts);
+	git_config(git_index_pack_config, &opts);
 	if (prefix && chdir(prefix))
 		die("Cannot come back to cwd");
 
@@ -944,12 +947,12 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 				index_name = argv[++i];
 			} else if (!prefixcmp(arg, "--index-version=")) {
 				char *c;
-				pack_idx_default_version = strtoul(arg + 16, &c, 10);
-				if (pack_idx_default_version > 2)
+				opts.version = strtoul(arg + 16, &c, 10);
+				if (opts.version > 2)
 					die("bad %s", arg);
 				if (*c == ',')
-					pack_idx_off32_limit = strtoul(c+1, &c, 0);
-				if (*c || pack_idx_off32_limit & 0x80000000)
+					opts.off32_limit = strtoul(c+1, &c, 0);
+				if (*c || opts.off32_limit & 0x80000000)
 					die("bad %s", arg);
 			} else
 				usage(index_pack_usage);
@@ -1032,7 +1035,7 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 	idx_objects = xmalloc((nr_objects) * sizeof(struct pack_idx_entry *));
 	for (i = 0; i < nr_objects; i++)
 		idx_objects[i] = &objects[i].idx;
-	curr_index = write_idx_file(index_name, idx_objects, nr_objects, pack_sha1);
+	curr_index = write_idx_file(index_name, idx_objects, nr_objects, &opts, pack_sha1);
 	free(idx_objects);
 
 	final(pack_name, curr_pack,
