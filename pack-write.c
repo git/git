@@ -16,6 +16,11 @@ static int sha1_compare(const void *_a, const void *_b)
 	return hashcmp(a->sha1, b->sha1);
 }
 
+static int need_large_offset(off_t offset, const struct pack_idx_option *opts)
+{
+	return (offset >> 31) || (opts->off32_limit < offset);
+}
+
 /*
  * On entry *sha1 contains the pack content SHA1 hash, on exit it is
  * the SHA1 hash of sorted object names. The objects array passed in
@@ -65,7 +70,7 @@ const char *write_idx_file(const char *index_name, struct pack_idx_entry **objec
 	}
 
 	/* if last object's offset is >= 2^31 we should use index V2 */
-	index_version = (last_obj_offset >> 31) ? 2 : opts->version;
+	index_version = need_large_offset(last_obj_offset, opts) ? 2 : opts->version;
 
 	/* index versions 2 and above need a header */
 	if (index_version >= 2) {
@@ -125,8 +130,11 @@ const char *write_idx_file(const char *index_name, struct pack_idx_entry **objec
 		list = sorted_by_sha;
 		for (i = 0; i < nr_objects; i++) {
 			struct pack_idx_entry *obj = *list++;
-			uint32_t offset = (obj->offset <= opts->off32_limit) ?
-				obj->offset : (0x80000000 | nr_large_offset++);
+			uint32_t offset;
+
+			offset = (need_large_offset(obj->offset, opts)
+				  ? (0x80000000 | nr_large_offset++)
+				  : obj->offset);
 			offset = htonl(offset);
 			sha1write(f, &offset, 4);
 		}
@@ -136,13 +144,14 @@ const char *write_idx_file(const char *index_name, struct pack_idx_entry **objec
 		while (nr_large_offset) {
 			struct pack_idx_entry *obj = *list++;
 			uint64_t offset = obj->offset;
-			if (offset > opts->off32_limit) {
-				uint32_t split[2];
-				split[0] = htonl(offset >> 32);
-				split[1] = htonl(offset & 0xffffffff);
-				sha1write(f, split, 8);
-				nr_large_offset--;
-			}
+			uint32_t split[2];
+
+			if (!need_large_offset(offset, opts))
+				continue;
+			split[0] = htonl(offset >> 32);
+			split[1] = htonl(offset & 0xffffffff);
+			sha1write(f, split, 8);
+			nr_large_offset--;
 		}
 	}
 
