@@ -535,6 +535,10 @@ void git_qsort(void *base, size_t nmemb, size_t size,
 #define fstat_is_reliable() 1
 #endif
 
+#ifndef va_copy
+#define va_copy(dst,src) (dst) = (src)
+#endif
+
 /*
  * Preserves errno, prints a message, but gives no warning for ENOENT.
  * Always returns the return value of unlink(2).
