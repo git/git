@@ -9,7 +9,8 @@ int main(int argc, char *argv[])
 {
 	if (argc != 2)
 		usage("test-svn-fe <file>");
-	svndump_init(argv[1]);
+	if (svndump_init(argv[1]))
+		return 1;
 	svndump_read(NULL);
 	svndump_deinit();
 	svndump_reset();
