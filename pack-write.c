@@ -16,9 +16,25 @@ static int sha1_compare(const void *_a, const void *_b)
 	return hashcmp(a->sha1, b->sha1);
 }
 
+static int cmp_uint32(const void *a_, const void *b_)
+{
+	uint32_t a = *((uint32_t *)a_);
+	uint32_t b = *((uint32_t *)b_);
+
+	return (a < b) ? -1 : (a != b);
+}
+
 static int need_large_offset(off_t offset, const struct pack_idx_option *opts)
 {
-	return (offset >> 31) || (opts->off32_limit < offset);
+	uint32_t ofsval;
+
+	if ((offset >> 31) || (opts->off32_limit < offset))
+		return 1;
+	if (!opts->anomaly_nr)
+		return 0;
+	ofsval = offset;
+	return !!bsearch(&ofsval, opts->anomaly, opts->anomaly_nr,
+			 sizeof(ofsval), cmp_uint32);
 }
 
 /*

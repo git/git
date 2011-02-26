@@ -41,6 +41,14 @@ struct pack_idx_option {
 
 	uint32_t version;
 	uint32_t off32_limit;
+
+	/*
+	 * List of offsets that would fit within off32_limit but
+	 * need to be written out as 64-bit entity for byte-for-byte
+	 * verification.
+	 */
+	int anomaly_alloc, anomaly_nr;
+	uint32_t *anomaly;
 };
 
 extern void reset_pack_idx_option(struct pack_idx_option *);

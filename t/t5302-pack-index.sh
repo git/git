@@ -107,7 +107,7 @@ test_expect_success OFF64_T 'index-pack --verify on 64-bit offset v2 (cheat)' '
 	git index-pack --verify --index-version=2,0x40000 "test-3-${pack3}.pack"
 '
 
-test_expect_failure OFF64_T 'index-pack --verify on 64-bit offset v2' '
+test_expect_success OFF64_T 'index-pack --verify on 64-bit offset v2' '
 	git index-pack --verify "test-3-${pack3}.pack"
 '
 
