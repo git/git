@@ -568,7 +568,6 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 	int commitable, saved_color_setting;
 	struct strbuf sb = STRBUF_INIT;
 	char *buffer;
-	FILE *fp;
 	const char *hook_arg1 = NULL;
 	const char *hook_arg2 = NULL;
 	int ident_shown = 0;
@@ -657,8 +656,8 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		hook_arg2 = "";
 	}
 
-	fp = fopen(git_path(commit_editmsg), "w");
-	if (fp == NULL)
+	s->fp = fopen(git_path(commit_editmsg), "w");
+	if (s->fp == NULL)
 		die_errno("could not open '%s'", git_path(commit_editmsg));
 
 	if (cleanup_mode != CLEANUP_NONE)
@@ -682,7 +681,7 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		strbuf_release(&sob);
 	}
 
-	if (fwrite(sb.buf, 1, sb.len, fp) < sb.len)
+	if (fwrite(sb.buf, 1, sb.len, s->fp) < sb.len)
 		die_errno("could not write commit template");
 
 	strbuf_release(&sb);
@@ -695,7 +694,7 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 	if (use_editor && include_status) {
 		char *ai_tmp, *ci_tmp;
 		if (in_merge)
-			fprintf(fp,
+			fprintf(s->fp,
 				"#\n"
 				"# It looks like you may be committing a MERGE.\n"
 				"# If this is not correct, please remove the file\n"
@@ -704,45 +703,45 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 				"#\n",
 				git_path("MERGE_HEAD"));
 
-		fprintf(fp,
+		fprintf(s->fp,
 			"\n"
 			"# Please enter the commit message for your changes.");
 		if (cleanup_mode == CLEANUP_ALL)
-			fprintf(fp,
+			fprintf(s->fp,
 				" Lines starting\n"
 				"# with '#' will be ignored, and an empty"
 				" message aborts the commit.\n");
 		else /* CLEANUP_SPACE, that is. */
-			fprintf(fp,
+			fprintf(s->fp,
 				" Lines starting\n"
 				"# with '#' will be kept; you may remove them"
 				" yourself if you want to.\n"
 				"# An empty message aborts the commit.\n");
 		if (only_include_assumed)
-			fprintf(fp, "# %s\n", only_include_assumed);
+			fprintf(s->fp, "# %s\n", only_include_assumed);
 
 		ai_tmp = cut_ident_timestamp_part(author_ident->buf);
 		ci_tmp = cut_ident_timestamp_part(committer_ident.buf);
 		if (strcmp(author_ident->buf, committer_ident.buf))
-			fprintf(fp,
+			fprintf(s->fp,
 				"%s"
 				"# Author:    %s\n",
 				ident_shown++ ? "" : "#\n",
 				author_ident->buf);
 
 		if (!user_ident_sufficiently_given())
-			fprintf(fp,
+			fprintf(s->fp,
 				"%s"
 				"# Committer: %s\n",
 				ident_shown++ ? "" : "#\n",
 				committer_ident.buf);
 
 		if (ident_shown)
-			fprintf(fp, "#\n");
+			fprintf(s->fp, "#\n");
 
 		saved_color_setting = s->use_color;
 		s->use_color = 0;
-		commitable = run_status(fp, index_file, prefix, 1, s);
+		commitable = run_status(s->fp, index_file, prefix, 1, s);
 		s->use_color = saved_color_setting;
 
 		*ai_tmp = ' ';
@@ -764,7 +763,7 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 	}
 	strbuf_release(&committer_ident);
 
-	fclose(fp);
+	fclose(s->fp);
 
 	if (!commitable && !in_merge && !allow_empty &&
 	    !(amend && is_a_merge(head_sha1))) {
