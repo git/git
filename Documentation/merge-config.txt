@@ -34,7 +34,7 @@ merge.stat::
 merge.tool::
 	Controls which merge resolution program is used by
 	linkgit:git-mergetool[1].  Valid built-in values are: "araxis",
-	"diffuse", "ecmerge", "emerge", "gvimdiff", "kdiff3", "meld",
+	"bc3", "diffuse", "ecmerge", "emerge", "gvimdiff", "kdiff3", "meld",
 	"opendiff", "p4merge", "tkdiff", "tortoisemerge", "vimdiff"
 	and "xxdiff".  Any other value is treated is custom merge tool
 	and there must be a corresponding mergetool.<tool>.cmd option.

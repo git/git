@@ -13,6 +13,9 @@ translate_merge_tool_path () {
 	araxis)
 		echo compare
 		;;
+	bc3)
+		echo bcompare
+		;;
 	emerge)
 		echo emacs
 		;;
@@ -46,7 +49,7 @@ check_unchanged () {
 
 valid_tool () {
 	case "$1" in
-	araxis | diffuse | ecmerge | emerge | gvimdiff | gvimdiff2 | \
+	araxis | bc3 | diffuse | ecmerge | emerge | gvimdiff | gvimdiff2 | \
 	kdiff3 | meld | opendiff | p4merge | tkdiff | vimdiff | vimdiff2 | xxdiff)
 		;; # happy
 	kompare)
@@ -104,6 +107,21 @@ run_merge_tool () {
 		else
 			"$merge_tool_path" -wait -2 "$LOCAL" "$REMOTE" \
 				>/dev/null 2>&1
+		fi
+		;;
+	bc3)
+		if merge_mode; then
+			touch "$BACKUP"
+			if $base_present; then
+				"$merge_tool_path" "$LOCAL" "$REMOTE" "$BASE" \
+					-mergeoutput="$MERGED"
+			else
+				"$merge_tool_path" "$LOCAL" "$REMOTE" \
+					-mergeoutput="$MERGED"
+			fi
+			check_unchanged
+		else
+			"$merge_tool_path" "$LOCAL" "$REMOTE"
 		fi
 		;;
 	diffuse)
@@ -342,7 +360,7 @@ guess_merge_tool () {
 		else
 			tools="opendiff kdiff3 tkdiff xxdiff meld $tools"
 		fi
-		tools="$tools gvimdiff diffuse ecmerge p4merge araxis"
+		tools="$tools gvimdiff diffuse ecmerge p4merge araxis bc3"
 	fi
 	case "${VISUAL:-$EDITOR}" in
 	*vim*)

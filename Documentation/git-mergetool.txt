@@ -26,7 +26,7 @@ OPTIONS
 --tool=<tool>::
 	Use the merge resolution program specified by <tool>.
 	Valid merge tools are:
-	araxis, diffuse, ecmerge, emerge, gvimdiff, kdiff3,
+	araxis, bc3, diffuse, ecmerge, emerge, gvimdiff, kdiff3,
 	meld, opendiff, p4merge, tkdiff, tortoisemerge, vimdiff and xxdiff.
 +
 If a merge resolution program is not specified, 'git mergetool'
