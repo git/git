@@ -113,6 +113,16 @@ like($last_commit, qr/^[0-9a-fA-F]{40}$/, 'rev-parse returned hash');
 my $dir_commit = $r2->command_oneline('log', '-n1', '--pretty=format:%H', '.');
 isnt($last_commit, $dir_commit, 'log . does not show last commit');
 
+# commands outside working tree
+chdir($abs_repo_dir . '/..');
+my $r3 = Git->repository(Directory => $abs_repo_dir);
+my $tmpfile3 = "$abs_repo_dir/file3.tmp";
+open TEMPFILE3, "+>$tmpfile3" or die "Can't open $tmpfile3: $!";
+is($r3->cat_blob($file1hash, \*TEMPFILE3), 15, "cat_blob(outside): size");
+close TEMPFILE3;
+unlink $tmpfile3;
+chdir($abs_repo_dir);
+
 printf "1..%d\n", Test::More->builder->current_test;
 
 my $is_passing = eval { Test::More->is_passing };
