@@ -2848,7 +2848,7 @@ static struct object_entry *dereference(struct object_entry *oe,
 					unsigned char sha1[20])
 {
 	unsigned long size;
-	void *buf = NULL;
+	char *buf = NULL;
 	if (!oe) {
 		enum object_type type = sha1_object_info(sha1, NULL);
 		if (type < 0)
