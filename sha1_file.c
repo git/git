@@ -417,6 +417,8 @@ static unsigned int pack_used_ctr;
 static unsigned int pack_mmap_calls;
 static unsigned int peak_pack_open_windows;
 static unsigned int pack_open_windows;
+static unsigned int pack_open_fds;
+static unsigned int pack_max_fds;
 static size_t peak_pack_mapped;
 static size_t pack_mapped;
 struct packed_git *packed_git;
@@ -596,6 +598,7 @@ static int unuse_one_window(struct packed_git *current, int keep_fd)
 			lru_p->windows = lru_w->next;
 			if (!lru_p->windows && lru_p->pack_fd != keep_fd) {
 				close(lru_p->pack_fd);
+				pack_open_fds--;
 				lru_p->pack_fd = -1;
 			}
 		}
@@ -680,8 +683,10 @@ void free_pack_by_name(const char *pack_name)
 		if (strcmp(pack_name, p->pack_name) == 0) {
 			clear_delta_base_cache();
 			close_pack_windows(p);
-			if (p->pack_fd != -1)
+			if (p->pack_fd != -1) {
 				close(p->pack_fd);
+				pack_open_fds--;
+			}
 			close_pack_index(p);
 			free(p->bad_object_sha1);
 			*pp = p->next;
@@ -707,9 +712,29 @@ static int open_packed_git_1(struct packed_git *p)
 	if (!p->index_data && open_pack_index(p))
 		return error("packfile %s index unavailable", p->pack_name);
 
+	if (!pack_max_fds) {
+		struct rlimit lim;
+		unsigned int max_fds;
+
+		if (getrlimit(RLIMIT_NOFILE, &lim))
+			die_errno("cannot get RLIMIT_NOFILE");
+
+		max_fds = lim.rlim_cur;
+
+		/* Save 3 for stdin/stdout/stderr, 22 for work */
+		if (25 < max_fds)
+			pack_max_fds = max_fds - 25;
+		else
+			pack_max_fds = 1;
+	}
+
+	while (pack_max_fds <= pack_open_fds && unuse_one_window(NULL, -1))
+		; /* nothing */
+
 	p->pack_fd = git_open_noatime(p->pack_name, p);
 	if (p->pack_fd < 0 || fstat(p->pack_fd, &st))
 		return -1;
+	pack_open_fds++;
 
 	/* If we created the struct before we had the pack we lack size. */
 	if (!p->pack_size) {
@@ -761,6 +786,7 @@ static int open_packed_git(struct packed_git *p)
 		return 0;
 	if (p->pack_fd != -1) {
 		close(p->pack_fd);
+		pack_open_fds--;
 		p->pack_fd = -1;
 	}
 	return -1;
@@ -918,6 +944,9 @@ struct packed_git *parse_pack_index(unsigned char *sha1, const char *idx_path)
 
 void install_packed_git(struct packed_git *pack)
 {
+	if (pack->pack_fd != -1)
+		pack_open_fds++;
+
 	pack->next = packed_git;
 	packed_git = pack;
 }
@@ -935,8 +964,6 @@ static void prepare_packed_git_one(char *objdir, int local)
 	sprintf(path, "%s/pack", objdir);
 	len = strlen(path);
 	dir = opendir(path);
-	while (!dir && errno == EMFILE && unuse_one_window(NULL, -1))
-		dir = opendir(path);
 	if (!dir) {
 		if (errno != ENOENT)
 			error("unable to open object pack directory: %s: %s",
@@ -1091,14 +1118,6 @@ static int git_open_noatime(const char *name, struct packed_git *p)
 		int fd = open(name, O_RDONLY | sha1_file_open_flag);
 		if (fd >= 0)
 			return fd;
-
-		/* Might the failure be insufficient file descriptors? */
-		if (errno == EMFILE) {
-			if (unuse_one_window(p, -1))
-				continue;
-			else
-				return -1;
-		}
 
 		/* Might the failure be due to O_NOATIME? */
 		if (errno != ENOENT && sha1_file_open_flag) {
@@ -2359,8 +2378,6 @@ static int write_loose_object(const unsigned char *sha1, char *hdr, int hdrlen,
 
 	filename = sha1_file_name(sha1);
 	fd = create_tmpfile(tmpfile, sizeof(tmpfile), filename);
-	while (fd < 0 && errno == EMFILE && unuse_one_window(NULL, -1))
-		fd = create_tmpfile(tmpfile, sizeof(tmpfile), filename);
 	if (fd < 0) {
 		if (errno == EACCES)
 			return error("insufficient permission for adding an object to repository database %s\n", get_object_directory());
