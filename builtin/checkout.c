@@ -30,6 +30,7 @@ struct checkout_opts {
 	int quiet;
 	int merge;
 	int force;
+	int force_detach;
 	int writeout_stage;
 	int writeout_error;
 
@@ -541,7 +542,17 @@ static void update_refs_for_switch(struct checkout_opts *opts,
 	strbuf_addf(&msg, "checkout: moving from %s to %s",
 		    old_desc ? old_desc : "(invalid)", new->name);
 
-	if (new->path) {
+	if (!strcmp(new->name, "HEAD") && !new->path && !opts->force_detach) {
+		/* Nothing to do. */
+	} else if (opts->force_detach || !new->path) {	/* No longer on any branch. */
+		update_ref(msg.buf, "HEAD", new->commit->object.sha1, NULL,
+			   REF_NODEREF, DIE_ON_ERR);
+		if (!opts->quiet) {
+			if (old->path && advice_detached_head)
+				detach_advice(old->path, new->name);
+			describe_detached_head("HEAD is now at", new->commit);
+		}
+	} else if (new->path) {	/* Switch branches. */
 		create_symref("HEAD", new->path, msg.buf);
 		if (!opts->quiet) {
 			if (old->path && !strcmp(new->path, old->path))
@@ -563,18 +574,11 @@ static void update_refs_for_switch(struct checkout_opts *opts,
 			if (!file_exists(ref_file) && file_exists(log_file))
 				remove_path(log_file);
 		}
-	} else if (strcmp(new->name, "HEAD")) {
-		update_ref(msg.buf, "HEAD", new->commit->object.sha1, NULL,
-			   REF_NODEREF, DIE_ON_ERR);
-		if (!opts->quiet) {
-			if (old->path && advice_detached_head)
-				detach_advice(old->path, new->name);
-			describe_detached_head("HEAD is now at", new->commit);
-		}
 	}
 	remove_branch_state();
 	strbuf_release(&msg);
-	if (!opts->quiet && (new->path || !strcmp(new->name, "HEAD")))
+	if (!opts->quiet &&
+	    (new->path || (!opts->force_detach && !strcmp(new->name, "HEAD"))))
 		report_tracking(new);
 }
 
@@ -675,11 +679,123 @@ static const char *unique_tracking_name(const char *name)
 	return NULL;
 }
 
+static int parse_branchname_arg(int argc, const char **argv,
+				int dwim_new_local_branch_ok,
+				struct branch_info *new,
+				struct tree **source_tree,
+				unsigned char rev[20],
+				const char **new_branch)
+{
+	int argcount = 0;
+	unsigned char branch_rev[20];
+	const char *arg;
+	int has_dash_dash;
+
+	/*
+	 * case 1: git checkout <ref> -- [<paths>]
+	 *
+	 *   <ref> must be a valid tree, everything after the '--' must be
+	 *   a path.
+	 *
+	 * case 2: git checkout -- [<paths>]
+	 *
+	 *   everything after the '--' must be paths.
+	 *
+	 * case 3: git checkout <something> [<paths>]
+	 *
+	 *   With no paths, if <something> is a commit, that is to
+	 *   switch to the branch or detach HEAD at it.  As a special case,
+	 *   if <something> is A...B (missing A or B means HEAD but you can
+	 *   omit at most one side), and if there is a unique merge base
+	 *   between A and B, A...B names that merge base.
+	 *
+	 *   With no paths, if <something> is _not_ a commit, no -t nor -b
+	 *   was given, and there is a tracking branch whose name is
+	 *   <something> in one and only one remote, then this is a short-hand
+	 *   to fork local <something> from that remote-tracking branch.
+	 *
+	 *   Otherwise <something> shall not be ambiguous.
+	 *   - If it's *only* a reference, treat it like case (1).
+	 *   - If it's only a path, treat it like case (2).
+	 *   - else: fail.
+	 *
+	 */
+	if (!argc)
+		return 0;
+
+	if (!strcmp(argv[0], "--"))	/* case (2) */
+		return 1;
+
+	arg = argv[0];
+	has_dash_dash = (argc > 1) && !strcmp(argv[1], "--");
+
+	if (!strcmp(arg, "-"))
+		arg = "@{-1}";
+
+	if (get_sha1_mb(arg, rev)) {
+		if (has_dash_dash)          /* case (1) */
+			die("invalid reference: %s", arg);
+		if (dwim_new_local_branch_ok &&
+		    !check_filename(NULL, arg) &&
+		    argc == 1) {
+			const char *remote = unique_tracking_name(arg);
+			if (!remote || get_sha1(remote, rev))
+				return argcount;
+			*new_branch = arg;
+			arg = remote;
+			/* DWIMmed to create local branch */
+		} else {
+			return argcount;
+		}
+	}
+
+	/* we can't end up being in (2) anymore, eat the argument */
+	argcount++;
+	argv++;
+	argc--;
+
+	new->name = arg;
+	setup_branch_path(new);
+
+	if (check_ref_format(new->path) == CHECK_REF_FORMAT_OK &&
+	    resolve_ref(new->path, branch_rev, 1, NULL))
+		hashcpy(rev, branch_rev);
+	else
+		new->path = NULL; /* not an existing branch */
+
+	new->commit = lookup_commit_reference_gently(rev, 1);
+	if (!new->commit) {
+		/* not a commit */
+		*source_tree = parse_tree_indirect(rev);
+	} else {
+		parse_commit(new->commit);
+		*source_tree = new->commit->tree;
+	}
+
+	if (!*source_tree)                   /* case (1): want a tree */
+		die("reference is not a tree: %s", arg);
+	if (!has_dash_dash) {/* case (3 -> 1) */
+		/*
+		 * Do not complain the most common case
+		 *	git checkout branch
+		 * even if there happen to be a file called 'branch';
+		 * it would be extremely annoying.
+		 */
+		if (argc)
+			verify_non_filename(NULL, arg);
+	} else {
+		argcount++;
+		argv++;
+		argc--;
+	}
+
+	return argcount;
+}
+
 int cmd_checkout(int argc, const char **argv, const char *prefix)
 {
 	struct checkout_opts opts;
 	unsigned char rev[20];
-	const char *arg;
 	struct branch_info new;
 	struct tree *source_tree = NULL;
 	char *conflict_style = NULL;
@@ -692,6 +808,7 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 		OPT_STRING('B', NULL, &opts.new_branch_force, "branch",
 			   "create/reset and checkout a branch"),
 		OPT_BOOLEAN('l', NULL, &opts.new_branch_log, "create reflog for new branch"),
+		OPT_BOOLEAN(0, "detach", &opts.force_detach, "detach the HEAD at named commit"),
 		OPT_SET_INT('t', "track",  &opts.track, "set upstream info for new branch",
 			BRANCH_TRACK_EXPLICIT),
 		OPT_STRING(0, "orphan", &opts.new_orphan_branch, "new branch", "new unparented branch"),
@@ -709,7 +826,6 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 		  PARSE_OPT_NOARG | PARSE_OPT_HIDDEN },
 		OPT_END(),
 	};
-	int has_dash_dash;
 
 	memset(&opts, 0, sizeof(opts));
 	memset(&new, 0, sizeof(new));
@@ -731,8 +847,14 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 		opts.new_branch = opts.new_branch_force;
 
 	if (patch_mode && (opts.track > 0 || opts.new_branch
-			   || opts.new_branch_log || opts.merge || opts.force))
+			   || opts.new_branch_log || opts.merge || opts.force
+			   || opts.force_detach))
 		die ("--patch is incompatible with all other options");
+
+	if (opts.force_detach && (opts.new_branch || opts.new_orphan_branch))
+		die("--detach cannot be used with -b/-B/--orphan");
+	if (opts.force_detach && 0 < opts.track)
+		die("--detach cannot be used with -t");
 
 	/* --track without -b should DWIM */
 	if (0 < opts.track && !opts.new_branch) {
@@ -766,104 +888,29 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 		die("git checkout: -f and -m are incompatible");
 
 	/*
-	 * case 1: git checkout <ref> -- [<paths>]
+	 * Extract branch name from command line arguments, so
+	 * all that is left is pathspecs.
 	 *
-	 *   <ref> must be a valid tree, everything after the '--' must be
-	 *   a path.
+	 * Handle
 	 *
-	 * case 2: git checkout -- [<paths>]
+	 *  1) git checkout <tree> -- [<paths>]
+	 *  2) git checkout -- [<paths>]
+	 *  3) git checkout <something> [<paths>]
 	 *
-	 *   everything after the '--' must be paths.
-	 *
-	 * case 3: git checkout <something> [<paths>]
-	 *
-	 *   With no paths, if <something> is a commit, that is to
-	 *   switch to the branch or detach HEAD at it.  As a special case,
-	 *   if <something> is A...B (missing A or B means HEAD but you can
-	 *   omit at most one side), and if there is a unique merge base
-	 *   between A and B, A...B names that merge base.
-	 *
-	 *   With no paths, if <something> is _not_ a commit, no -t nor -b
-	 *   was given, and there is a remote-tracking branch whose name is
-	 *   <something> in one and only one remote, then this is a short-hand
-	 *   to fork local <something> from that remote-tracking branch.
-	 *
-	 *   Otherwise <something> shall not be ambiguous.
-	 *   - If it's *only* a reference, treat it like case (1).
-	 *   - If it's only a path, treat it like case (2).
-	 *   - else: fail.
-	 *
+	 * including "last branch" syntax and DWIM-ery for names of
+	 * remote branches, erroring out for invalid or ambiguous cases.
 	 */
 	if (argc) {
-		if (!strcmp(argv[0], "--")) {       /* case (2) */
-			argv++;
-			argc--;
-			goto no_reference;
-		}
-
-		arg = argv[0];
-		has_dash_dash = (argc > 1) && !strcmp(argv[1], "--");
-
-		if (!strcmp(arg, "-"))
-			arg = "@{-1}";
-
-		if (get_sha1_mb(arg, rev)) {
-			if (has_dash_dash)          /* case (1) */
-				die("invalid reference: %s", arg);
-			if (!patch_mode &&
-			    dwim_new_local_branch &&
-			    opts.track == BRANCH_TRACK_UNSPECIFIED &&
-			    !opts.new_branch &&
-			    !check_filename(NULL, arg) &&
-			    argc == 1) {
-				const char *remote = unique_tracking_name(arg);
-				if (!remote || get_sha1(remote, rev))
-					goto no_reference;
-				opts.new_branch = arg;
-				arg = remote;
-				/* DWIMmed to create local branch */
-			}
-			else
-				goto no_reference;
-		}
-
-		/* we can't end up being in (2) anymore, eat the argument */
-		argv++;
-		argc--;
-
-		new.name = arg;
-		if ((new.commit = lookup_commit_reference_gently(rev, 1))) {
-			setup_branch_path(&new);
-
-			if ((check_ref_format(new.path) == CHECK_REF_FORMAT_OK) &&
-			    resolve_ref(new.path, rev, 1, NULL))
-				;
-			else
-				new.path = NULL;
-			parse_commit(new.commit);
-			source_tree = new.commit->tree;
-		} else
-			source_tree = parse_tree_indirect(rev);
-
-		if (!source_tree)                   /* case (1): want a tree */
-			die("reference is not a tree: %s", arg);
-		if (!has_dash_dash) {/* case (3 -> 1) */
-			/*
-			 * Do not complain the most common case
-			 *	git checkout branch
-			 * even if there happen to be a file called 'branch';
-			 * it would be extremely annoying.
-			 */
-			if (argc)
-				verify_non_filename(NULL, arg);
-		}
-		else {
-			argv++;
-			argc--;
-		}
+		int dwim_ok =
+			!patch_mode &&
+			dwim_new_local_branch &&
+			opts.track == BRANCH_TRACK_UNSPECIFIED &&
+			!opts.new_branch;
+		int n = parse_branchname_arg(argc, argv, dwim_ok,
+				&new, &source_tree, rev, &opts.new_branch);
+		argv += n;
+		argc -= n;
 	}
-
-no_reference:
 
 	if (opts.track == BRANCH_TRACK_UNSPECIFIED)
 		opts.track = git_branch_track;
@@ -885,6 +932,9 @@ no_reference:
 				die("git checkout: updating paths is incompatible with switching branches.");
 			}
 		}
+
+		if (opts.force_detach)
+			die("git checkout: --detach does not take a path argument");
 
 		if (1 < !!opts.writeout_stage + !!opts.force + !!opts.merge)
 			die("git checkout: --ours/--theirs, --force and --merge are incompatible when\nchecking out of the index.");
