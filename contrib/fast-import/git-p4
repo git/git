@@ -834,6 +834,8 @@ class P4Submit(Command):
         return True
 
 class P4Sync(Command):
+    delete_actions = ( "delete", "move/delete", "purge" )
+
     def __init__(self):
         Command.__init__(self)
         self.options = [
@@ -881,6 +883,23 @@ class P4Sync(Command):
 
         if gitConfig("git-p4.syncFromOrigin") == "false":
             self.syncWithOrigin = False
+
+    #
+    # P4 wildcards are not allowed in filenames.  P4 complains
+    # if you simply add them, but you can force it with "-f", in
+    # which case it translates them into %xx encoding internally.
+    # Search for and fix just these four characters.  Do % last so
+    # that fixing it does not inadvertently create new %-escapes.
+    #
+    def wildcard_decode(self, path):
+        # Cannot have * in a filename in windows; untested as to
+        # what p4 would do in such a case.
+        if not self.isWindows:
+            path = path.replace("%2A", "*")
+        path = path.replace("%23", "#") \
+                   .replace("%40", "@") \
+                   .replace("%25", "%")
+        return path
 
     def extractFilesFromCommit(self, commit):
         self.cloneExclude = [re.sub(r"\.\.\.$", "", path)
@@ -976,6 +995,7 @@ class P4Sync(Command):
 	    return
 
         relPath = self.stripRepoPath(file['depotFile'], self.branchPrefixes)
+        relPath = self.wildcard_decode(relPath)
         if verbose:
             sys.stderr.write("%s\n" % relPath)
 
@@ -1054,10 +1074,10 @@ class P4Sync(Command):
 
             if includeFile:
                 filesForCommit.append(f)
-                if f['action'] not in ('delete', 'move/delete', 'purge'):
-                    filesToRead.append(f)
-                else:
+                if f['action'] in self.delete_actions:
                     filesToDelete.append(f)
+                else:
+                    filesToRead.append(f)
 
         # deleted files...
         for f in filesToDelete:
@@ -1143,7 +1163,7 @@ class P4Sync(Command):
 
                 cleanedFiles = {}
                 for info in files:
-                    if info["action"] in ("delete", "purge"):
+                    if info["action"] in self.delete_actions:
                         continue
                     cleanedFiles[info["depotFile"]] = info["rev"]
 
@@ -1445,7 +1465,7 @@ class P4Sync(Command):
         print "Doing initial import of %s from revision %s into %s" % (' '.join(self.depotPaths), revision, self.branch)
 
         details = { "user" : "git perforce import user", "time" : int(time.time()) }
-        details["desc"] = ("Initial import of %s from the state at revision %s"
+        details["desc"] = ("Initial import of %s from the state at revision %s\n"
                            % (' '.join(self.depotPaths), revision))
         details["change"] = revision
         newestRevision = 0
@@ -1456,9 +1476,16 @@ class P4Sync(Command):
                                            % (p, revision)
                                            for p in self.depotPaths])):
 
-            if info['code'] == 'error':
+            if 'code' in info and info['code'] == 'error':
                 sys.stderr.write("p4 returned an error: %s\n"
                                  % info['data'])
+                if info['data'].find("must refer to client") >= 0:
+                    sys.stderr.write("This particular p4 error is misleading.\n")
+                    sys.stderr.write("Perhaps the depot path was misspelled.\n");
+                    sys.stderr.write("Depot path:  %s\n" % " ".join(self.depotPaths))
+                sys.exit(1)
+            if 'p4ExitCode' in info:
+                sys.stderr.write("p4 exitcode: %s\n" % info['p4ExitCode'])
                 sys.exit(1)
 
 
@@ -1466,7 +1493,7 @@ class P4Sync(Command):
             if change > newestRevision:
                 newestRevision = change
 
-            if info["action"] in ("delete", "purge"):
+            if info["action"] in self.delete_actions:
                 # don't increase the file cnt, otherwise details["depotFile123"] will have gaps!
                 #fileCnt = fileCnt + 1
                 continue
@@ -1709,6 +1736,8 @@ class P4Sync(Command):
 
                 changes.sort()
             else:
+                if not self.p4BranchesInGit:
+                    die("No remote p4 branches.  Perhaps you never did \"git p4 clone\" in here.");
                 if self.verbose:
                     print "Getting p4 changes for %s...%s" % (', '.join(self.depotPaths),
                                                               self.changeRange)
@@ -1789,10 +1818,13 @@ class P4Clone(P4Sync):
                                  help="where to leave result of the clone"),
             optparse.make_option("-/", dest="cloneExclude",
                                  action="append", type="string",
-                                 help="exclude depot path")
+                                 help="exclude depot path"),
+            optparse.make_option("--bare", dest="cloneBare",
+                                 action="store_true", default=False),
         ]
         self.cloneDestination = None
         self.needsGit = False
+        self.cloneBare = False
 
     # This is required for the "append" cloneExclude action
     def ensure_value(self, attr, value):
@@ -1832,11 +1864,16 @@ class P4Clone(P4Sync):
             self.cloneDestination = self.defaultDestination(args)
 
         print "Importing from %s into %s" % (', '.join(depotPaths), self.cloneDestination)
+
         if not os.path.exists(self.cloneDestination):
             os.makedirs(self.cloneDestination)
         chdir(self.cloneDestination)
-        system("git init")
-        self.gitdir = os.getcwd() + "/.git"
+
+        init_cmd = [ "git", "init" ]
+        if self.cloneBare:
+            init_cmd.append("--bare")
+        subprocess.check_call(init_cmd)
+
         if not P4Sync.run(self, depotPaths):
             return False
         if self.branch != "master":
@@ -1846,7 +1883,8 @@ class P4Clone(P4Sync):
                 masterbranch = "refs/heads/p4/master"
             if gitBranchExists(masterbranch):
                 system("git branch master %s" % masterbranch)
-                system("git checkout -f")
+                if not self.cloneBare:
+                    system("git checkout -f")
             else:
                 print "Could not detect main branch. No checkout/master branch created."
 
