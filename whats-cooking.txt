@@ -1,18 +1,220 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Feb 2011, #05; Wed, 23)
-X-master-at: 046613c5465e4fc0611f93a5ef31d3815fb50c22
-X-next-at: 426d48db1a78ffd5f2b882725c32f266e617529e
+Subject: What's cooking in git.git (Feb 2011, #06; Sun, 27)
+X-master-at: 8978166e531e0941811099d4117574ebbbcf35d8
+X-next-at: 4aa7278540f2c67a375cee26edfb39164695d3e8
 
-What's cooking in git.git (Feb 2011, #05; Wed, 23)
+What's cooking in git.git (Feb 2011, #06; Sun, 27)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' while commits prefixed with '+' are in 'next'.
 
 --------------------------------------------------
+[Graduated to "master"]
+
+* en/object-list-with-pathspec (2010-09-20) 2 commits
+  (merged to 'next' on 2011-02-09 at ccf6c6a)
+ + Add testcases showing how pathspecs are handled with rev-list --objects
+ + Make rev-list --objects work together with pathspecs
+ (this branch uses nd/struct-pathspec; is tangled with jc/grep--no-index-pathspec-fix.)
+
+* hv/mingw-fs-funnies (2011-02-07) 5 commits
+  (merged to 'next' on 2011-02-09 at 3d0bb1a)
+ + mingw_rmdir: set errno=ENOTEMPTY when appropriate
+ + mingw: add fallback for rmdir in case directory is in use
+ + mingw: make failures to unlink or move raise a question
+ + mingw: work around irregular failures of unlink on windows
+ + mingw: move unlink wrapper to mingw.c
+
+* jh/push-default-upstream-configname (2011-02-16) 1 commit
+  (merged to 'next' on 2011-02-23 at b5c25fa)
+ + push.default: Rename 'tracking' to 'upstream'
+
+* js/detach-doc (2011-02-20) 1 commit
+  (merged to 'next' on 2011-02-21 at c384c3c)
+ + git-checkout.txt: improve detached HEAD documentation
+
+* js/maint-merge-use-prepare-commit-msg-hook (2011-02-14) 1 commit
+  (merged to 'next' on 2011-02-22 at 6458c4b)
+ + merge: honor prepare-commit-msg hook
+
+* lp/config-vername-check (2011-02-01) 2 commits
+  (merged to 'next' on 2011-02-23 at 426d48d)
+ + Disallow empty section and variable names
+ + Sanity-check config variable names
+
+* mg/patch-id (2011-02-17) 2 commits
+  (merged to 'next' on 2011-02-22 at 6f4acd8)
+ + git-patch-id: do not trip over "no newline" markers
+ + git-patch-id: test for "no newline" markers
+
+* mg/placeholders-are-lowercase (2011-02-17) 5 commits
+  (merged to 'next' on 2011-02-22 at 2754e21)
+ + Make <identifier> lowercase in Documentation
+ + Make <identifier> lowercase as per CodingGuidelines
+ + Make <identifier> lowercase as per CodingGuidelines
+ + Make <identifier> lowercase as per CodingGuidelines
+ + CodingGuidelines: downcase placeholders in usage messages
+
+* mo/perl-bidi-pipe-envfix (2011-02-15) 1 commit
+  (merged to 'next' on 2011-02-15 at c36e816)
+ + perl: command_bidi_pipe() method should set-up git environmens
+
+* mz/rerere-remaining (2011-02-16) 2 commits
+  (merged to 'next' on 2011-02-22 at fa2d5ab)
+ + mergetool: don't skip modify/remove conflicts
+ + rerere "remaining"
+
+* nd/hash-object-sanity (2011-02-05) 1 commit
+  (merged to 'next' on 2011-02-22 at 09acf6f)
+ + Make hash-object more robust against malformed objects
+
+* nd/sorted-builtin-command-list (2011-02-15) 1 commit
+  (merged to 'next' on 2011-02-22 at 91fccd1)
+ + git.c: reorder builtin command list
+
+* nd/struct-pathspec (2011-01-31) 22 commits
+  (merged to 'next' on 2011-02-09 at b1e64ee)
+ + t6004: add pathspec globbing test for log family
+ + t7810: overlapping pathspecs and depth limit
+ + grep: drop pathspec_matches() in favor of tree_entry_interesting()
+ + grep: use writable strbuf from caller for grep_tree()
+ + grep: use match_pathspec_depth() for cache/worktree grepping
+ + grep: convert to use struct pathspec
+ + Convert ce_path_match() to use match_pathspec_depth()
+ + Convert ce_path_match() to use struct pathspec
+ + struct rev_info: convert prune_data to struct pathspec
+ + pathspec: add match_pathspec_depth()
+ + tree_entry_interesting(): optimize wildcard matching when base is matched
+ + tree_entry_interesting(): support wildcard matching
+ + tree_entry_interesting(): fix depth limit with overlapping pathspecs
+ + tree_entry_interesting(): support depth limit
+ + tree_entry_interesting(): refactor into separate smaller functions
+ + diff-tree: convert base+baselen to writable strbuf
+ + glossary: define pathspec
+ + Move tree_entry_interesting() to tree-walk.c and export it
+ + tree_entry_interesting(): remove dependency on struct diff_options
+ + Convert struct diff_options to use struct pathspec
+ + diff-no-index: use diff_tree_setup_paths()
+ + Add struct pathspec
+ (this branch is used by en/object-list-with-pathspec and jc/grep--no-index-pathspec-fix.)
+
+* pw/p4 (2011-02-19) 8 commits
+  (merged to 'next' on 2011-02-21 at 1a7b7d2)
+ + git-p4: support clone --bare
+ + git-p4: decode p4 wildcard characters
+ + git-p4: better message for "git-p4 sync" when not cloned
+ + git-p4: reinterpret confusing p4 message
+ + git-p4: accommodate new move/delete type in p4
+ + git-p4: add missing newline in initial import message
+ + git-p4: fix key error for p4 problem
+ + git-p4: test script
+
+* sp/maint-smart-http-sans-100-continue (2011-02-15) 1 commit
+  (merged to 'next' on 2011-02-15 at 553e3e5)
+ + smart-http: Don't use Expect: 100-Continue
+
+* uk/checkout-ambiguous-ref (2011-02-15) 5 commits
+  (merged to 'next' on 2011-02-15 at 645dad6)
+ + Rename t2019 with typo "amiguous" that meant "ambiguous"
+ + checkout: rearrange update_refs_for_switch for clarity
+ + checkout: introduce --detach synonym for "git checkout foo^{commit}"
+ + checkout: split off a function to peel away branchname arg
+  (merged to 'next' on 2011-02-03 at 9044724)
+ + checkout: fix bug with ambiguous refs
+
+* va/p4 (2011-02-20) 2 commits
+  (merged to 'next' on 2011-02-21 at d981b23)
+ + git-p4: Add copy detection support
+ + git-p4: Improve rename detection support
+
+--------------------------------------------------
 [New Topics]
 
-* ab/i18n (2011-02-22) 73 commits
+* jn/maint-commit-missing-template (2011-02-25) 1 commit
+  (merged to 'next' on 2011-02-25 at c95589d)
+ + commit: error out for missing commit message template
+
+* mg/maint-difftool-vim-readonly (2011-02-25) 1 commit
+  (merged to 'next' on 2011-02-25 at 990579c)
+ + mergetool-lib: call vim in readonly mode for diffs
+
+* fk/maint-cvsimport-early-failure (2011-01-31) 1 commit
+ - git-cvsimport.perl: Bail out right away when reading from the server fails
+
+* jk/strbuf-vaddf (2011-02-25) 2 commits
+ - strbuf: add strbuf_vaddf
+ - compat: provide a fallback va_copy definition
+ (this branch is used by ab/i18n-st, jk/trace-sifter and jn/status-translatable.)
+
+* jk/trace-sifter (2011-02-24) 6 commits
+ - trace: give repo_setup trace its own key
+ - add packet tracing debug code
+ - trace: add trace_strbuf
+ - trace: factor out "do we want to trace" logic
+ - trace: refactor to support multiple env variables
+ - trace: add trace_vprintf
+ (this branch uses jk/strbuf-vaddf; is tangled with ab/i18n-st and jn/status-translatable.)
+
+* jn/maint-instaweb-plack-fix (2011-02-26) 1 commit
+ - git-instaweb: Change how gitweb.psgi is made runnable as standalone app
+
+* jn/status-translatable (2011-02-25) 3 commits
+ - commit, status: use status_printf{,_ln,_more} helpers
+ - commit: refer to commit template as s->fp
+ - wt-status: add helpers for printing wt-status lines
+ (this branch is used by ab/i18n-st and ab/i18n-st; uses jk/strbuf-vaddf; is tangled with jk/trace-sifter.)
+
+* mh/p4 (2011-02-25) 1 commit
+  (merged to 'next' on 2011-02-26 at 1693331)
+ + git-p4 submit: prevent 'Jobs' section from being removed from p4 change log
+
+* nd/rfc-add-u-full-tree (2011-02-07) 1 commit
+ - add: make "add -u" update full tree without pathspec
+
+* ss/git-gui-mergetool (2011-02-26) 2 commits
+ - mergetool--lib: Add Beyond Compare 3 as a tool
+ - mergetool--lib: Sort tools alphabetically for easier lookup
+
+* ss/mergetool--lib (2011-02-27) 2 commits
+ - mergetool--lib: Add Beyond Compare 3 as a tool
+ - mergetool--lib: Sort tools alphabetically for easier lookup
+
+--------------------------------------------------
+[Stalled]
+
+* jh/merge-sans-branch (2011-02-10) 4 commits
+ . merge: add support for merging from upstream by default
+ - merge: introduce per-branch-configuration helper function
+ - merge: introduce setup_merge_commit helper function
+ - merge: update the usage information to be more modern
+
+There was an objection to the tip one that determines the upstream in a
+wrong way?
+
+* jk/tag-contains (2010-07-05) 4 commits
+ - Why is "git tag --contains" so slow?
+ - default core.clockskew variable to one day
+ - limit "contains" traversals based on commit timestamp
+ - tag: speed up --contains calculation
+
+The idea of the bottom one is probably Ok, except that the use of object
+flags needs to be rethought, or at least the helper needs to be moved to
+builtin/tag.c to make it clear that it should not be used outside the
+current usage context.
+
+* jc/rename-degrade-cc-to-c (2011-01-06) 3 commits
+ . diffcore-rename: fall back to -C when -C -C busts the rename limit
+ . diffcore-rename: record filepair for rename src
+ . diffcore-rename: refactor "too many candidates" logic
+
+--------------------------------------------------
+[Cooking]
+
+* nd/index-doc (2010-09-06) 1 commit
+ - doc: technical details about the index file format
+
+* ab/i18n-st (2011-02-22) 74 commits
  - i18n: git-shortlog basic messages
  - i18n: git-revert split up "could not revert/apply" message
  - i18n: git-revert literal "me" messages
@@ -82,18 +284,17 @@ only in 'pu' while commits prefixed with '+' are in 'next'.
  - i18n: git-clone basic messages
  - i18n: git-init "Initialized [...] repository" message
  - i18n: git-init basic messages
+ - i18n: "make distclean" should clean up after "make pot"
  - i18n: Makefile: "pot" target to extract messages marked for translation
  - i18n: do not poison translations unless GIT_GETTEXT_POISON envvar is set
- - i18n: add GETTEXT_POISON to simulate translated messages unfriendly translator
+ - i18n: add GETTEXT_POISON to simulate unfriendly translator
  - i18n: add no-op _() and N_() wrappers
+ (this branch uses jk/strbuf-vaddf, jn/status-translatable and jn/status-translatable; is tangled with jk/trace-sifter.)
 
-Re^4-roll, coordinated between Ævar and Jonathan.
-
-I'd like to fast-track the basics (especially the bottom 3 patches), and
-am even tempted to rebase other patches on 'pu' that are not yet in 'next'
-on top of them, to make the transition easier, so please lend extra sets
-of eyeballs on an earlier ones to make sure they are sane (I thought they
-were, but I am far from perfect).
+Rebased on other infrastructure adjustments (tentatively renamed the
+branch).  I'd like to fast-track the basics (especially the bottom 3
+patches), and am even tempted to rebase other patches on 'pu' that are not
+yet in 'next' on top of them, to make the transition easier.
 
 * gr/cvsimport-alternative-cvspass-location (2011-02-18) 1 commit
  - Look for password in both CVS and CVSNT password files.
@@ -105,8 +306,6 @@ Likes, dislikes?
 
 * jh/maint-do-not-track-non-branches (2011-02-17) 1 commit
  - branch/checkout --track: Ensure that upstream branch is indeed a branch
-
-This supersedes "do not track HEAD" from Thomas.
 
 * jk/diffstat-binary (2011-02-19) 2 commits
   (merged to 'next' on 2011-02-23 at 49da967)
@@ -138,10 +337,6 @@ The above three all seemed sensible improvements.
  + Introduce CHERRY_PICK_HEAD
  + t3507: introduce pristine-detach helper
 
-* js/detach-doc (2011-02-20) 1 commit
-  (merged to 'next' on 2011-02-21 at c384c3c)
- + git-checkout.txt: improve detached HEAD documentation
-
 * lt/rename-no-extra-copy-detection (2011-02-18) 3 commits
   (merged to 'next' on 2011-02-23 at 2c1f271)
  + diffcore-rename: improve estimate_similarity() heuristics
@@ -161,11 +356,6 @@ The above three all seemed sensible improvements.
  + t7406: "git submodule update {--merge|--rebase]" with new submodules
  + submodule: no [--merge|--rebase] when newly cloned
 
-* va/p4 (2011-02-20) 2 commits
-  (merged to 'next' on 2011-02-21 at d981b23)
- + git-p4: Add copy detection support
- + git-p4: Improve rename detection support
-
 * jc/complete-symmetric-diff (2011-02-23) 1 commit
  - completion: complete "git diff ...branc<TAB>"
 
@@ -177,100 +367,23 @@ The above three all seemed sensible improvements.
  - fetch/pull: Add the 'on-demand' value to the --recurse-submodules option
  - fetch/pull: recurse into submodules when necessary
 
-* jk/format-patch-multiline-header (2011-02-23) 2 commits
+* jk/format-patch-multiline-header (2011-02-23) 3 commits
+ - format-patch: rfc2047-encode newlines in headers
  - format-patch: wrap long header lines
  - strbuf: add fixed-length version of add_wrapped_text
-
-* cp/mergetool-beyondcompare (2011-02-18) 1 commit
- - mergetool--lib: add support for beyond compare
-
-May want to have an independent success report on Windows.
-
---------------------------------------------------
-[Stalled]
-
-* jk/tag-contains (2010-07-05) 4 commits
- - Why is "git tag --contains" so slow?
- - default core.clockskew variable to one day
- - limit "contains" traversals based on commit timestamp
- - tag: speed up --contains calculation
-
-The idea of the bottom one is probably Ok, except that the use of object
-flags needs to be rethought, or at least the helper needs to be moved to
-builtin/tag.c to make it clear that it should not be used outside the
-current usage context.
-
-* jc/rename-degrade-cc-to-c (2011-01-06) 3 commits
- . diffcore-rename: fall back to -C when -C -C busts the rename limit
- . diffcore-rename: record filepair for rename src
- . diffcore-rename: refactor "too many candidates" logic
-
-* nd/index-doc (2010-09-06) 1 commit
- . doc: technical details about the index file format
-
---------------------------------------------------
-[Cooking]
 
 * js/checkout-untracked-symlink (2011-02-20) 2 commits
   (merged to 'next' on 2011-02-23 at 52a35ce)
  + do not overwrite untracked symlinks
  + Demonstrate breakage: checkout overwrites untracked symlink with directory
 
-* pw/p4 (2011-02-19) 8 commits
-  (merged to 'next' on 2011-02-21 at 1a7b7d2)
- + git-p4: support clone --bare
- + git-p4: decode p4 wildcard characters
- + git-p4: better message for "git-p4 sync" when not cloned
- + git-p4: reinterpret confusing p4 message
- + git-p4: accommodate new move/delete type in p4
- + git-p4: add missing newline in initial import message
- + git-p4: fix key error for p4 problem
- + git-p4: test script
-
-* jh/push-default-upstream-configname (2011-02-16) 1 commit
-  (merged to 'next' on 2011-02-23 at b5c25fa)
- + push.default: Rename 'tracking' to 'upstream'
-
-This is not "renaming" in the sense that breaks existing practice, but
-giving a new official name and deprecating the existing one.
-
-* js/maint-merge-use-prepare-commit-msg-hook (2011-02-14) 1 commit
-  (merged to 'next' on 2011-02-22 at 6458c4b)
- + merge: honor prepare-commit-msg hook
-
-* mg/patch-id (2011-02-17) 2 commits
-  (merged to 'next' on 2011-02-22 at 6f4acd8)
- + git-patch-id: do not trip over "no newline" markers
- + git-patch-id: test for "no newline" markers
-
-* mg/placeholders-are-lowercase (2011-02-17) 5 commits
-  (merged to 'next' on 2011-02-22 at 2754e21)
- + Make <identifier> lowercase in Documentation
- + Make <identifier> lowercase as per CodingGuidelines
- + Make <identifier> lowercase as per CodingGuidelines
- + Make <identifier> lowercase as per CodingGuidelines
- + CodingGuidelines: downcase placeholders in usage messages
-
-* mo/perl-bidi-pipe-envfix (2011-02-15) 1 commit
-  (merged to 'next' on 2011-02-15 at c36e816)
- + perl: command_bidi_pipe() method should set-up git environmens
-
-Looked reasonable.
-
-* nd/sorted-builtin-command-list (2011-02-15) 1 commit
-  (merged to 'next' on 2011-02-22 at 91fccd1)
- + git.c: reorder builtin command list
-
-* sp/maint-smart-http-sans-100-continue (2011-02-15) 1 commit
-  (merged to 'next' on 2011-02-15 at 553e3e5)
- + smart-http: Don't use Expect: 100-Continue
-
 * jc/grep--no-index-pathspec-fix (2011-02-16) 1 commit
   (merged to 'next' on 2011-02-23 at 58b03b1)
  + grep --no-index: honor pathspecs correctly
- (this branch uses nd/struct-pathspec; is tangled with en/object-list-with-pathspec.)
 
-* mz/rebase (2011-02-09) 32 commits
+* mz/rebase (2011-02-24) 33 commits
+  (merged to 'next' on 2011-02-25 at 52caa7a)
+ + Makefile: do not install sourced rebase scripts
   (merged to 'next' on 2011-02-22 at 3219155)
  + rebase: use @{upstream} if no upstream specified
  + rebase -i: remove unnecessary state rebase-root
@@ -308,80 +421,10 @@ Looked reasonable.
 Minor UI regression was reported but otherwise it looked like that the
 topic is in a good shape.
 
-* jh/merge-sans-branch (2011-02-10) 4 commits
- . merge: add support for merging from upstream by default
- - merge: introduce per-branch-configuration helper function
- - merge: introduce setup_merge_commit helper function
- - merge: update the usage information to be more modern
+--------------------------------------------------
+[Discarded]
 
-There was an objection to the tip one that determines the upstream in a
-wrong way?
+* cp/mergetool-beyondcompare (2011-02-18) 1 commit
+ . mergetool--lib: add support for beyond compare
 
-* lp/config-vername-check (2011-02-01) 2 commits
-  (merged to 'next' on 2011-02-23 at 426d48d)
- + Disallow empty section and variable names
- + Sanity-check config variable names
-
-* mz/rerere-remaining (2011-02-16) 2 commits
-  (merged to 'next' on 2011-02-22 at fa2d5ab)
- + mergetool: don't skip modify/remove conflicts
- + rerere "remaining"
-
-Looked much better than my weatherbaloon patch.
-
-* nd/hash-object-sanity (2011-02-05) 1 commit
-  (merged to 'next' on 2011-02-22 at 09acf6f)
- + Make hash-object more robust against malformed objects
-
-* hv/mingw-fs-funnies (2011-02-07) 5 commits
-  (merged to 'next' on 2011-02-09 at 3d0bb1a)
- + mingw_rmdir: set errno=ENOTEMPTY when appropriate
- + mingw: add fallback for rmdir in case directory is in use
- + mingw: make failures to unlink or move raise a question
- + mingw: work around irregular failures of unlink on windows
- + mingw: move unlink wrapper to mingw.c
-
-Rerolled and seems ready to move forward.
-
-* nd/struct-pathspec (2011-01-31) 22 commits
-  (merged to 'next' on 2011-02-09 at b1e64ee)
- + t6004: add pathspec globbing test for log family
- + t7810: overlapping pathspecs and depth limit
- + grep: drop pathspec_matches() in favor of tree_entry_interesting()
- + grep: use writable strbuf from caller for grep_tree()
- + grep: use match_pathspec_depth() for cache/worktree grepping
- + grep: convert to use struct pathspec
- + Convert ce_path_match() to use match_pathspec_depth()
- + Convert ce_path_match() to use struct pathspec
- + struct rev_info: convert prune_data to struct pathspec
- + pathspec: add match_pathspec_depth()
- + tree_entry_interesting(): optimize wildcard matching when base is matched
- + tree_entry_interesting(): support wildcard matching
- + tree_entry_interesting(): fix depth limit with overlapping pathspecs
- + tree_entry_interesting(): support depth limit
- + tree_entry_interesting(): refactor into separate smaller functions
- + diff-tree: convert base+baselen to writable strbuf
- + glossary: define pathspec
- + Move tree_entry_interesting() to tree-walk.c and export it
- + tree_entry_interesting(): remove dependency on struct diff_options
- + Convert struct diff_options to use struct pathspec
- + diff-no-index: use diff_tree_setup_paths()
- + Add struct pathspec
- (this branch is used by en/object-list-with-pathspec and jc/grep--no-index-pathspec-fix.)
-
-* en/object-list-with-pathspec (2010-09-20) 2 commits
-  (merged to 'next' on 2011-02-09 at ccf6c6a)
- + Add testcases showing how pathspecs are handled with rev-list --objects
- + Make rev-list --objects work together with pathspecs
- (this branch uses nd/struct-pathspec; is tangled with jc/grep--no-index-pathspec-fix.)
-
-* uk/checkout-ambiguous-ref (2011-02-15) 5 commits
-  (merged to 'next' on 2011-02-15 at 645dad6)
- + Rename t2019 with typo "amiguous" that meant "ambiguous"
- + checkout: rearrange update_refs_for_switch for clarity
- + checkout: introduce --detach synonym for "git checkout foo^{commit}"
- + checkout: split off a function to peel away branchname arg
-  (merged to 'next' on 2011-02-03 at 9044724)
- + checkout: fix bug with ambiguous refs
-
-The topic has become about "checkout --detach" ;-).
+ss/mergetool--lib replaces this.
