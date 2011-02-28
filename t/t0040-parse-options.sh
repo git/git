@@ -19,7 +19,7 @@ usage: test-parse-options <options>
     --set23               set integer to 23
     -t <time>             get timestamp of <time>
     -L, --length <str>    get length of <str>
-    -F, --file <FILE>     set file to <FILE>
+    -F, --file <file>     set file to <file>
 
 String options
     -s, --string <string>

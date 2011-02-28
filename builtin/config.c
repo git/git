@@ -52,7 +52,7 @@ static struct option builtin_config_options[] = {
 	OPT_BOOLEAN(0, "global", &use_global_config, "use global config file"),
 	OPT_BOOLEAN(0, "system", &use_system_config, "use system config file"),
 	OPT_BOOLEAN(0, "local", &use_local_config, "use repository config file"),
-	OPT_STRING('f', "file", &given_config_file, "FILE", "use given config file"),
+	OPT_STRING('f', "file", &given_config_file, "file", "use given config file"),
 	OPT_GROUP("Action"),
 	OPT_BIT(0, "get", &actions, "get value: name [value-regex]", ACTION_GET),
 	OPT_BIT(0, "get-all", &actions, "get all values: key [value-regex]", ACTION_GET_ALL),

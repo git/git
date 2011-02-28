@@ -152,7 +152,7 @@ Writing Documentation:
  when writing or modifying command usage strings and synopsis sections
  in the manual pages:
 
- Placeholders are enclosed in angle brackets:
+ Placeholders are spelled in lowercase and enclosed in angle brackets:
    <file>
    --sort=<key>
    --abbrev[=<n>]
