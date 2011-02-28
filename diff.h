@@ -133,9 +133,7 @@ struct diff_options {
 	FILE *file;
 	int close_file;
 
-	int nr_paths;
-	const char **paths;
-	int *pathlens;
+	struct pathspec pathspec;
 	change_fn_t change;
 	add_remove_fn_t add_remove;
 	diff_format_fn_t format_callback;

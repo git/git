@@ -60,4 +60,6 @@ static inline int traverse_path_len(const struct traverse_info *info, const stru
 	return info->pathlen + tree_entry_len(n->path, n->sha1);
 }
 
+extern int tree_entry_interesting(const struct name_entry *, struct strbuf *, int, const struct pathspec *ps);
+
 #endif
