@@ -28,7 +28,39 @@ Example:       git-rebase master~1 topic
 '
 
 SUBDIRECTORY_OK=Yes
-OPTIONS_SPEC=
+OPTIONS_KEEPDASHDASH=
+OPTIONS_SPEC="\
+git rebase [-i] [options] [--onto <newbase>] [<upstream>] [<branch>]
+git rebase [-i] [options] --onto <newbase> --root [<branch>]
+git-rebase [-i] --continue | --abort | --skip
+--
+ Available options are
+v,verbose!         display a diffstat of what changed upstream
+q,quiet!           be quiet. implies --no-stat
+onto=!             rebase onto given branch instead of upstream
+p,preserve-merges! try to recreate merges instead of ignoring them
+s,strategy=!       use the given merge strategy
+no-ff!             cherry-pick all commits, even if unchanged
+m,merge!           use merging strategies to rebase
+i,interactive!     let the user edit the list of commits to rebase
+f,force-rebase!    force rebase even if branch is up to date
+X,strategy-option=! pass the argument through to the merge strategy
+stat!              display a diffstat of what changed upstream
+n,no-stat!         do not show diffstat of what changed upstream
+verify             allow pre-rebase hook to run
+rerere-autoupdate  allow rerere to update index with resolved conflicts
+root!              rebase all reachable commits up to the root(s)
+autosquash         move commits that begin with squash!/fixup! under -i
+committer-date-is-author-date! passed to 'git am'
+ignore-date!       passed to 'git am'
+whitespace=!       passed to 'git apply'
+ignore-whitespace! passed to 'git apply'
+C=!                passed to 'git apply'
+ Actions:
+continue!          continue rebasing process
+abort!             abort rebasing process and restore original branch
+skip!              skip current patch and continue rebasing process
+"
 . git-sh-setup
 set_reflog_action rebase
 require_work_tree
@@ -175,7 +207,7 @@ do
 		ok_to_skip_pre_rebase=
 		;;
 	--continue|--skip|--abort)
-		test $total_argc -eq 1 || usage
+		test $total_argc -eq 2 || usage
 		action=${1##--}
 		;;
 	--onto)
@@ -183,10 +215,10 @@ do
 		onto="$2"
 		shift
 		;;
-	-i|--interactive)
+	-i)
 		interactive_rebase=explicit
 		;;
-	-p|--preserve-merges)
+	-p)
 		preserve_merges=t
 		test -z "$interactive_rebase" && interactive_rebase=implied
 		;;
@@ -196,62 +228,42 @@ do
 	--no-autosquash)
 		autosquash=
 		;;
-	-M|-m|--m|--me|--mer|--merg|--merge)
+	-M|-m)
 		do_merge=t
 		;;
-	-X*|--strategy-option*)
-		case "$#,$1" in
-		1,-X|1,--strategy-option)
-			usage ;;
-		*,-X|*,--strategy-option)
-			newopt="$2"
-			shift ;;
-		*,--strategy-option=*)
-			newopt="$(expr " $1" : ' --strategy-option=\(.*\)')" ;;
-		*,-X*)
-			newopt="$(expr " $1" : ' -X\(.*\)')" ;;
-		1,*)
-			usage ;;
-		esac
-		strategy_opts="$strategy_opts $(git rev-parse --sq-quote "--$newopt")"
+	-X)
+		shift
+		strategy_opts="$strategy_opts $(git rev-parse --sq-quote "--$1")"
 		do_merge=t
 		test -z "$strategy" && strategy=recursive
 		;;
-	-s=*|--s=*|--st=*|--str=*|--stra=*|--strat=*|--strate=*|\
-		--strateg=*|--strategy=*|\
-	-s|--s|--st|--str|--stra|--strat|--strate|--strateg|--strategy)
-		case "$#,$1" in
-		*,*=*)
-			strategy=`expr "z$1" : 'z-[^=]*=\(.*\)'` ;;
-		1,*)
-			usage ;;
-		*)
-			strategy="$2"
-			shift ;;
-		esac
+	-s)
+		shift
+		strategy="$1"
 		do_merge=t
 		;;
-	-n|--no-stat)
+	-n)
 		diffstat=
 		;;
 	--stat)
 		diffstat=t
 		;;
-	-v|--verbose)
+	-v)
 		verbose=t
 		diffstat=t
 		GIT_QUIET=
 		;;
-	-q|--quiet)
+	-q)
 		GIT_QUIET=t
 		git_am_opt="$git_am_opt -q"
 		verbose=
 		diffstat=
 		;;
-	--whitespace=*)
-		git_am_opt="$git_am_opt $1"
+	--whitespace)
+		shift
+		git_am_opt="$git_am_opt --whitespace=$1"
 		case "$1" in
-		--whitespace=fix|--whitespace=strip)
+		fix|strip)
 			force_rebase=t
 			;;
 		esac
@@ -263,22 +275,21 @@ do
 		git_am_opt="$git_am_opt $1"
 		force_rebase=t
 		;;
-	-C*)
-		git_am_opt="$git_am_opt $1"
+	-C)
+		shift
+		git_am_opt="$git_am_opt -C$1"
 		;;
 	--root)
 		rebase_root=t
 		;;
-	-f|--f|--fo|--for|--forc|--force|--force-r|--force-re|--force-reb|--force-reba|--force-rebas|--force-rebase|--no-ff)
+	-f|--no-ff)
 		force_rebase=t
 		;;
 	--rerere-autoupdate|--no-rerere-autoupdate)
 		allow_rerere_autoupdate="$1"
 		;;
-	-*)
-		usage
-		;;
-	*)
+	--)
+		shift
 		break
 		;;
 	esac
