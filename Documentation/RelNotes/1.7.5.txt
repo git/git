@@ -1,0 +1,56 @@
+Git v1.7.5 Release Notes (draft)
+========================
+
+Updates since v1.7.4
+--------------------
+
+ * Various MinGW portability fixes.
+
+ * Various git-p4 enhancements (in contrib).
+
+ * "git config" used to be also known as "git repo-config", but the old
+   name is now officially deprecated.
+
+ * "git checkout --detach <commit>" is a more user friendly synonym for
+   "git checkout <commit>^0".
+
+ * "git cherry-pick" and "git revert" can be told to use custom merge
+   strategy, similar to "git rebase".
+
+ * "rev-list --objects $revs -- $pathspec" would limit the objects listed
+   in its output properly with the pathspec, in preparation for narrow
+   clones.
+
+ * "git log" family of commands now understand globbing pathspecs.  You
+   can say "git log -- '*.txt'" for example.
+
+ * "git rerere" learned a new subcommand "remaining", that is similar to
+   "status" that lists the paths that had conflicts that are known to
+   rerere, but excludes the paths that have already been marked as
+   resolved in the index from its output.  "git mergetool" has been
+   updated to use this facility.
+
+ * A possible value to the "push.default" configuration variable,
+   'tracking', gained a synonym that more naturally describes what it
+   does, 'upstream'.
+
+Also contains various documentation updates.
+
+
+Fixes since v1.7.4
+------------------
+
+All of the fixes in the v1.7.4.X maintenance series are included in this
+release, unless otherwise noted.
+
+ * "git merge" triggers prepare-commit-msg hook.  Earlier, only "git
+   commit" to conclude an interrupted merge triggered the hook, leading to
+   an inconsistent overall user experience (js/maint-merge-use-prepare-commit-msg-hook).
+
+
+---
+exec >/var/tmp/1
+O=v1.7.4
+O=v1.7.4.1-140-g8978166
+echo O=$(git describe 'master')
+git shortlog --no-merges ^maint ^$O master

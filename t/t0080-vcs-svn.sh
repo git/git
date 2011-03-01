@@ -76,60 +76,6 @@ test_expect_success 'obj pool: high-water mark' '
 	test_cmp expected actual
 '
 
-test_expect_success 'line buffer' '
-	echo HELLO >expected1 &&
-	printf "%s\n" "" HELLO >expected2 &&
-	echo >expected3 &&
-	printf "%s\n" "" Q | q_to_nul >expected4 &&
-	printf "%s\n" foo "" >expected5 &&
-	printf "%s\n" "" foo >expected6 &&
-
-	test-line-buffer <<-\EOF >actual1 &&
-	5
-	HELLO
-	EOF
-
-	test-line-buffer <<-\EOF >actual2 &&
-	0
-
-	5
-	HELLO
-	EOF
-
-	q_to_nul <<-\EOF |
-	1
-	Q
-	EOF
-	test-line-buffer >actual3 &&
-
-	q_to_nul <<-\EOF |
-	0
-
-	1
-	Q
-	EOF
-	test-line-buffer >actual4 &&
-
-	test-line-buffer <<-\EOF >actual5 &&
-	5
-	foo
-	EOF
-
-	test-line-buffer <<-\EOF >actual6 &&
-	0
-
-	5
-	foo
-	EOF
-
-	test_cmp expected1 actual1 &&
-	test_cmp expected2 actual2 &&
-	test_cmp expected3 actual3 &&
-	test_cmp expected4 actual4 &&
-	test_cmp expected5 actual5 &&
-	test_cmp expected6 actual6
-'
-
 test_expect_success 'string pool' '
 	echo a does not equal b >expected.differ &&
 	echo a equals a >expected.match &&
