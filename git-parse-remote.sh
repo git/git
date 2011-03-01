@@ -4,10 +4,6 @@
 # this would fail in that case and would issue an error message.
 GIT_DIR=$(git rev-parse -q --git-dir) || :;
 
-get_remote_url () {
-	git ls-remote --get-url "$1"
-}
-
 get_default_remote () {
 	curr_branch=$(git symbolic-ref -q HEAD | sed -e 's|^refs/heads/||')
 	origin=$(git config --get "branch.$curr_branch.remote")
