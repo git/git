@@ -104,6 +104,7 @@ struct diff_options {
 	int interhunkcontext;
 	int break_opt;
 	int detect_rename;
+	int irreversible_delete;
 	int skip_stat_unmatch;
 	int line_termination;
 	int output_format;
