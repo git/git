@@ -728,7 +728,7 @@ test_expect_success 'setup avoid unnecessary update, normal rename' '
 	git commit -m "Random, unrelated changes"
 '
 
-test_expect_failure 'avoid unnecessary update, normal rename' '
+test_expect_success 'avoid unnecessary update, normal rename' '
 	git checkout -q avoid-unnecessary-update-1^0 &&
 	test-chmtime =1000000000 rename &&
 	test-chmtime -v +0 rename >expect &&
