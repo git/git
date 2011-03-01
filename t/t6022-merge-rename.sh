@@ -707,4 +707,34 @@ test_expect_success 'check handling of differently renamed file with D/F conflic
 	! test -f original
 '
 
+test_expect_success 'setup avoid unnecessary update, normal rename' '
+	git reset --hard &&
+	git checkout --orphan avoid-unnecessary-update-1 &&
+	git rm -rf . &&
+	git clean -fdqx &&
+
+	printf "1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n" >original &&
+	git add -A &&
+	git commit -m "Common commmit" &&
+
+	git mv original rename &&
+	echo 11 >>rename &&
+	git add -u &&
+	git commit -m "Renamed and modified" &&
+
+	git checkout -b merge-branch-1 HEAD~1 &&
+	echo "random content" >random-file &&
+	git add -A &&
+	git commit -m "Random, unrelated changes"
+'
+
+test_expect_failure 'avoid unnecessary update, normal rename' '
+	git checkout -q avoid-unnecessary-update-1^0 &&
+	test-chmtime =1000000000 rename &&
+	test-chmtime -v +0 rename >expect &&
+	git merge merge-branch-1 &&
+	test-chmtime -v +0 rename >actual &&
+	test_cmp expect actual # "rename" should have stayed intact
+'
+
 test_done
