@@ -737,4 +737,37 @@ test_expect_failure 'avoid unnecessary update, normal rename' '
 	test_cmp expect actual # "rename" should have stayed intact
 '
 
+test_expect_success 'setup to test avoiding unnecessary update, with D/F conflict' '
+	git reset --hard &&
+	git checkout --orphan avoid-unnecessary-update-2 &&
+	git rm -rf . &&
+	git clean -fdqx &&
+
+	mkdir df &&
+	printf "1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n" >df/file &&
+	git add -A &&
+	git commit -m "Common commmit" &&
+
+	git mv df/file temp &&
+	rm -rf df &&
+	git mv temp df &&
+	echo 11 >>df &&
+	git add -u &&
+	git commit -m "Renamed and modified" &&
+
+	git checkout -b merge-branch-2 HEAD~1 &&
+	>unrelated-change &&
+	git add unrelated-change &&
+	git commit -m "Only unrelated changes"
+'
+
+test_expect_failure 'avoid unnecessary update, with D/F conflict' '
+	git checkout -q avoid-unnecessary-update-2^0 &&
+	test-chmtime =1000000000 df &&
+	test-chmtime -v +0 df >expect &&
+	git merge merge-branch-2 &&
+	test-chmtime -v +0 df >actual &&
+	test_cmp expect actual # "df" should have stayed intact
+'
+
 test_done
