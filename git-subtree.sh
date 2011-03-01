@@ -398,6 +398,7 @@ subtree_for_commit()
 	while read mode type tree name; do
 		assert [ "$name" = "$dir" ]
 		assert [ "$type" = "tree" -o "$type" = "commit" ]
+		[ "$type" = "commit" ] && continue  # ignore submodules
 		echo $tree
 		break
 	done
