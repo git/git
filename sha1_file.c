@@ -596,7 +596,8 @@ static int unuse_one_window(struct packed_git *current, int keep_fd)
 			lru_l->next = lru_w->next;
 		else {
 			lru_p->windows = lru_w->next;
-			if (!lru_p->windows && lru_p->pack_fd != keep_fd) {
+			if (!lru_p->windows && lru_p->pack_fd != -1
+				&& lru_p->pack_fd != keep_fd) {
 				close(lru_p->pack_fd);
 				pack_open_fds--;
 				lru_p->pack_fd = -1;
@@ -812,14 +813,13 @@ unsigned char *use_pack(struct packed_git *p,
 {
 	struct pack_window *win = *w_cursor;
 
-	if (p->pack_fd == -1 && open_packed_git(p))
-		die("packfile %s cannot be accessed", p->pack_name);
-
 	/* Since packfiles end in a hash of their content and it's
 	 * pointless to ask for an offset into the middle of that
 	 * hash, and the in_window function above wouldn't match
 	 * don't allow an offset too close to the end of the file.
 	 */
+	if (!p->pack_size && p->pack_fd == -1 && open_packed_git(p))
+		die("packfile %s cannot be accessed", p->pack_name);
 	if (offset > (p->pack_size - 20))
 		die("offset beyond end of packfile (truncated pack?)");
 
@@ -833,6 +833,10 @@ unsigned char *use_pack(struct packed_git *p,
 		if (!win) {
 			size_t window_align = packed_git_window_size / 2;
 			off_t len;
+
+			if (p->pack_fd == -1 && open_packed_git(p))
+				die("packfile %s cannot be accessed", p->pack_name);
+
 			win = xcalloc(1, sizeof(*win));
 			win->offset = (offset / window_align) * window_align;
 			len = p->pack_size - win->offset;
@@ -850,6 +854,12 @@ unsigned char *use_pack(struct packed_git *p,
 				die("packfile %s cannot be mapped: %s",
 					p->pack_name,
 					strerror(errno));
+			if (!win->offset && win->len == p->pack_size
+				&& !p->do_not_close) {
+				close(p->pack_fd);
+				pack_open_fds--;
+				p->pack_fd = -1;
+			}
 			pack_mmap_calls++;
 			pack_open_windows++;
 			if (pack_mapped > peak_pack_mapped)
@@ -1950,6 +1960,27 @@ off_t find_pack_entry_one(const unsigned char *sha1,
 	return 0;
 }
 
+static int is_pack_valid(struct packed_git *p)
+{
+	/* An already open pack is known to be valid. */
+	if (p->pack_fd != -1)
+		return 1;
+
+	/* If the pack has one window completely covering the
+	 * file size, the pack is known to be valid even if
+	 * the descriptor is not currently open.
+	 */
+	if (p->windows) {
+		struct pack_window *w = p->windows;
+
+		if (!w->offset && w->len == p->pack_size)
+			return 1;
+	}
+
+	/* Force the pack to open to prove its valid. */
+	return !open_packed_git(p);
+}
+
 static int find_pack_entry(const unsigned char *sha1, struct pack_entry *e)
 {
 	static struct packed_git *last_found = (void *)1;
@@ -1979,7 +2010,7 @@ static int find_pack_entry(const unsigned char *sha1, struct pack_entry *e)
 			 * it may have been deleted since the index
 			 * was loaded!
 			 */
-			if (p->pack_fd == -1 && open_packed_git(p)) {
+			if (!is_pack_valid(p)) {
 				error("packfile %s cannot be accessed", p->pack_name);
 				goto next;
 			}
