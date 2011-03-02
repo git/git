@@ -9,21 +9,21 @@ GIT index format
    - A 12-byte header consisting of
 
      4-byte signature:
-       The signature is { 'D', 'I', 'R', 'C' }
+       The signature is { 'D', 'I', 'R', 'C' } (stands for "dircache")
 
      4-byte version number:
        The current supported versions are 2 and 3.
 
      32-bit number of index entries.
 
-   - A number of sorted index entries
+   - A number of sorted index entries (see below).
 
    - Extensions
 
      Extensions are identified by signature. Optional extensions can
      be ignored if GIT does not understand them.
 
-     GIT currently supports tree cache and resolve undo extensions.
+     GIT currently supports cached tree and resolve undo extensions.
 
      4-byte extension signature. If the first byte is 'A'..'Z' the
      extension is optional and can be ignored.
@@ -38,8 +38,9 @@ GIT index format
 == Index entry
 
   Index entries are sorted in ascending order on the name field,
-  interpreted as a string of unsigned bytes. Entries with the same
-  name are sorted by their stage field.
+  interpreted as a string of unsigned bytes (i.e. memcmp() order, no
+  localization, no special casing of directory separator '/'). Entries
+  with the same name are sorted by their stage field.
 
   32-bit ctime seconds, the last time a file's metadata changed
     this is stat(2) data
@@ -62,12 +63,13 @@ GIT index format
   32-bit mode, split into (high to low bits)
 
     4-bit object type
-      valid values in binary are 1000 (blob), 1010 (symbolic link)
+      valid values in binary are 1000 (regular file), 1010 (symbolic link)
       and 1110 (gitlink)
 
     3-bit unused
 
-    9-bit unix permission (only 0755 and 0644 are valid)
+    9-bit unix permission. Only 0755 and 0644 are valid for regular files.
+    Symbolic links and gitlinks have value 0 in this field.
 
   32-bit uid
     this is stat(2) data
@@ -76,11 +78,11 @@ GIT index format
     this is stat(2) data
 
   32-bit file size
-    This is the on-disk size from stat(2)
+    This is the on-disk size from stat(2), truncated to 32-bit.
 
   160-bit SHA-1 for the represented object
 
-  A 16-bit field split into (high to low bits)
+  A 16-bit 'flags' field split into (high to low bits)
 
     1-bit assume-valid flag
 
@@ -88,7 +90,8 @@ GIT index format
 
     2-bit stage (during merge)
 
-    12-bit name length if the length is less than 0x0FFF
+    12-bit name length if the length is less than 0xFFF; otherwise 0xFFF
+    is stored in this field.
 
   (Version 3) A 16-bit field, only applicable if the "extended flag"
   above is 1, split into (high to low bits).
@@ -103,63 +106,80 @@ GIT index format
 
   Entry path name (variable length) relative to top level directory
     (without leading slash). '/' is used as path separator. The special
-    paths ".", ".." and ".git" (without quotes) are disallowed.
+    path components ".", ".." and ".git" (without quotes) are disallowed.
     Trailing slash is also disallowed.
 
     The exact encoding is undefined, but the '.' and '/' characters
-    are encoded in 7-bit ASCII and the encoding cannot contain a nul
-    byte. Generally a superset of ASCII.
+    are encoded in 7-bit ASCII and the encoding cannot contain a NUL
+    byte (iow, this is a UNIX pathname).
 
   1-8 nul bytes as necessary to pad the entry to a multiple of eight bytes
   while keeping the name NUL-terminated.
 
 == Extensions
 
-=== Tree cache
+=== Cached tree
 
-  Tree cache extension contains pre-computed hashes for trees that can
+  Cached tree extension contains pre-computed hashes for trees that can
   be derived from the index. It helps speed up tree object generation
   from index for a new commit.
 
   When a path is updated in index, the path must be invalidated and
   removed from tree cache.
 
-  - Extension tag { 'T', 'R', 'E', 'E' }
+  The signature for this extension is { 'T', 'R', 'E', 'E' }.
 
-  - 32-bit size
+  A series of entries fill the entire extension; each of which
+  consists of:
 
-  - A number of entries
+  - NUL-terminated path component (relative to its parent directory);
 
-     NUL-terminated tree name
+  - ASCII decimal number of entries in the index that is covered by the
+    tree this entry represents (entry_count);
 
-     Blank-terminated ASCII decimal number of entries in this tree
+  - A space (ASCII 32);
 
-     Newline-terminated position of this tree in the parent tree. 0 for
-     the root tree
+  - ASCII decimal number that represents the number of subtrees this
+    tree has;
 
-     160-bit SHA-1 for this tree and it's children
+  - A newline (ASCII 10); and
+
+  - 160-bit object name for the object that would result from writing
+    this span of index as a tree.
+
+  An entry can be in an invalidated state and is represented by having -1
+  in the entry_count field.
+
+  The entries are written out in the top-down, depth-first order.  The
+  first entry represents the root level of the repository, followed by the
+  first subtree---let's call this A---of the root level (with its name
+  relative to the root level), followed by the first subtree of A (with
+  its name relative to A), ...
 
 === Resolve undo
 
-  A conflict is represented in index as a set of higher stage entries.
+  A conflict is represented in the index as a set of higher stage entries.
   When a conflict is resolved (e.g. with "git add path"), these higher
-  stage entries will be removed and a stage-0 entry with proper
-  resoluton is added.
+  stage entries will be removed and a stage-0 entry with proper resoluton
+  is added.
 
-  Resolve undo extension saves these higher stage entries so that
-  conflicts can be recreated (e.g. with "git checkout -m"), in case
-  users want to redo a conflict resolution from scratch.
+  When these higher stage entries are removed, they are saved in the
+  resolve undo extension, so that conflicts can be recreated (e.g. with
+  "git checkout -m"), in case users want to redo a conflict resolution
+  from scratch.
 
-  - Extension tag { 'R', 'E', 'U', 'C' }
+  The signature for this extension is { 'R', 'E', 'U', 'C' }.
 
-  - 32-bit size
+  A series of entries fill the entire extension; each of which
+  consists of:
 
-  - A number of conflict entries
+  - NUL-terminated pathname the entry describes (relative to the root of
+    the repository, i.e. full pathname);
 
-    NUL-terminated conflict path
+  - Three NUL-terminated ASCII octal numbers, entry mode of entries in
+    stage 1 to 3 (a missing stage is represented by "0" in this field);
+    and
 
-    Three NUL-terminated ASCII octal numbers, entry mode of entries in
-    stage 1 to 3.
+  - At most three 160-bit object names of the entry in stages from 1 to 3
+    (nothing is written for a missing stage).
 
-    At most three 160-bit SHA-1s of the entry in three stages from 1
-    to 3. SHA-1 is not saved for any stage with entry mode zero.
