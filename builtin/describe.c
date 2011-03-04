@@ -63,7 +63,7 @@ static inline struct commit_name *find_commit_name(const unsigned char *peeled)
 	return n;
 }
 
-static int set_util(void *chain)
+static int set_util(void *chain, void *data)
 {
 	struct commit_name *n;
 	for (n = chain; n; n = n->next) {
@@ -289,7 +289,7 @@ static void describe(const char *arg, int last_one)
 		fprintf(stderr, "searching to describe %s\n", arg);
 
 	if (!have_util) {
-		for_each_hash(&names, set_util);
+		for_each_hash(&names, set_util, NULL);
 		have_util = 1;
 	}
 
