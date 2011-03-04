@@ -204,6 +204,7 @@ struct line {
 	unsigned hash : 24;
 	unsigned flag : 8;
 #define LINE_COMMON     1
+#define LINE_PATCHED	2
 };
 
 /*
@@ -2085,7 +2086,8 @@ static int match_fragment(struct image *img,
 
 	/* Quick hash check */
 	for (i = 0; i < preimage_limit; i++)
-		if (preimage->line[i].hash != img->line[try_lno + i].hash)
+		if ((img->line[try_lno + i].flag & LINE_PATCHED) ||
+		    (preimage->line[i].hash != img->line[try_lno + i].hash))
 			return 0;
 
 	if (preimage_limit == preimage->nr) {
@@ -2428,6 +2430,9 @@ static void update_image(struct image *img,
 	memcpy(img->line + applied_pos,
 	       postimage->line,
 	       postimage->nr * sizeof(*img->line));
+	for (i = 0; i < postimage->nr; i++)
+		img->line[applied_pos + i].flag |= LINE_PATCHED;
+
 	img->nr = nr;
 }
 
