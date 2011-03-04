@@ -498,13 +498,11 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 		is_bare_repository_cfg = guess_repository_type(git_dir);
 
 	if (!is_bare_repository_cfg) {
-		if (git_dir) {
-			const char *git_dir_parent = strrchr(git_dir, '/');
-			if (git_dir_parent) {
-				char *rel = xstrndup(git_dir, git_dir_parent - git_dir);
-				git_work_tree_cfg = xstrdup(make_absolute_path(rel));
-				free(rel);
-			}
+		const char *git_dir_parent = strrchr(git_dir, '/');
+		if (git_dir_parent) {
+			char *rel = xstrndup(git_dir, git_dir_parent - git_dir);
+			git_work_tree_cfg = xstrdup(make_absolute_path(rel));
+			free(rel);
 		}
 		if (!git_work_tree_cfg) {
 			git_work_tree_cfg = xcalloc(PATH_MAX, 1);
