@@ -570,7 +570,7 @@ class P4Submit(Command):
                 continue
 
             if inDescriptionSection:
-                if line.startswith("Files:"):
+                if line.startswith("Files:") or line.startswith("Jobs:"):
                     inDescriptionSection = False
                 else:
                     continue
