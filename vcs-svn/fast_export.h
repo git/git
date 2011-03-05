@@ -3,6 +3,10 @@
 
 #include "line_buffer.h"
 
+void fast_export_init(int fd);
+void fast_export_deinit(void);
+void fast_export_reset(void);
+
 void fast_export_delete(uint32_t depth, uint32_t *path);
 void fast_export_modify(uint32_t depth, uint32_t *path, uint32_t mode,
 			uint32_t mark);

@@ -12,6 +12,24 @@
 #define MAX_GITSVN_LINE_LEN 4096
 
 static uint32_t first_commit_done;
+static struct line_buffer report_buffer = LINE_BUFFER_INIT;
+
+void fast_export_init(int fd)
+{
+	if (buffer_fdinit(&report_buffer, fd))
+		die_errno("cannot read from file descriptor %d", fd);
+}
+
+void fast_export_deinit(void)
+{
+	if (buffer_deinit(&report_buffer))
+		die_errno("error closing fast-import feedback stream");
+}
+
+void fast_export_reset(void)
+{
+	buffer_reset(&report_buffer);
+}
 
 void fast_export_delete(uint32_t depth, uint32_t *path)
 {
@@ -61,6 +79,16 @@ void fast_export_commit(uint32_t revision, uint32_t author, char *log,
 	fputc('\n', stdout);
 
 	printf("progress Imported commit %"PRIu32".\n\n", revision);
+}
+
+static const char *get_response_line(void)
+{
+	const char *line = buffer_read_line(&report_buffer);
+	if (line)
+		return line;
+	if (buffer_ferror(&report_buffer))
+		die_errno("error reading from fast-import");
+	die("unexpected end of fast-import feedback");
 }
 
 void fast_export_blob(uint32_t mode, uint32_t mark, uint32_t len, struct line_buffer *input)

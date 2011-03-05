@@ -14,6 +14,8 @@
 #include "obj_pool.h"
 #include "string_pool.h"
 
+#define REPORT_FILENO 3
+
 #define NODEACT_REPLACE 4
 #define NODEACT_DELETE 3
 #define NODEACT_ADD 2
@@ -367,6 +369,7 @@ int svndump_init(const char *filename)
 	if (buffer_init(&input, filename))
 		return error("cannot open %s: %s", filename, strerror(errno));
 	repo_init();
+	fast_export_init(REPORT_FILENO);
 	reset_dump_ctx(~0);
 	reset_rev_ctx(0);
 	reset_node_ctx(NULL);
@@ -377,6 +380,7 @@ int svndump_init(const char *filename)
 void svndump_deinit(void)
 {
 	log_reset();
+	fast_export_deinit();
 	repo_reset();
 	reset_dump_ctx(~0);
 	reset_rev_ctx(0);
@@ -390,6 +394,7 @@ void svndump_deinit(void)
 void svndump_reset(void)
 {
 	log_reset();
+	fast_export_reset();
 	buffer_reset(&input);
 	repo_reset();
 	reset_dump_ctx(~0);
