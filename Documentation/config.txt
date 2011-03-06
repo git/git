@@ -1823,7 +1823,7 @@ submodule.<name>.update::
 	linkgit:git-submodule[1] and linkgit:gitmodules[5] for details.
 
 submodule.<name>.fetchRecurseSubmodules::
-	This option can be used to enable/disable recursive fetching of this
+	This option can be used to control recursive fetching of this
 	submodule. It can be overridden by using the --[no-]recurse-submodules
 	command line option to "git fetch" and "git pull".
 	This setting will override that from in the linkgit:gitmodules[5]

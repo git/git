@@ -113,7 +113,7 @@ int parse_submodule_config_option(const char *var, const char *value)
 		if (!config)
 			config = string_list_append(&config_fetch_recurse_submodules_for_name,
 						    strbuf_detach(&submodname, NULL));
-		config->util = git_config_bool(var, value) ? (void *)1 : NULL;
+		config->util = (void *)(intptr_t)parse_fetch_recurse_submodules_arg(var, value);
 		strbuf_release(&submodname);
 	} else if ((len > 7) && !strcmp(var + len - 7, ".ignore")) {
 		if (strcmp(value, "untracked") && strcmp(value, "dirty") &&
@@ -380,8 +380,13 @@ int fetch_populated_submodules(int num_options, const char **options,
 			struct string_list_item *fetch_recurse_submodules_option;
 			fetch_recurse_submodules_option = unsorted_string_list_lookup(&config_fetch_recurse_submodules_for_name, name);
 			if (fetch_recurse_submodules_option) {
-				if (!fetch_recurse_submodules_option->util)
+				if ((intptr_t)fetch_recurse_submodules_option->util == RECURSE_SUBMODULES_OFF)
 					continue;
+				if ((intptr_t)fetch_recurse_submodules_option->util == RECURSE_SUBMODULES_ON_DEMAND) {
+					if (!unsorted_string_list_lookup(&changed_submodule_paths, ce->name))
+						continue;
+					default_argv = "on-demand";
+				}
 			} else {
 				if (config_fetch_recurse_submodules == RECURSE_SUBMODULES_OFF)
 					continue;
