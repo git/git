@@ -73,7 +73,8 @@ ifndef::git-pull[]
 	'yes', which is the default when this option is used without any
 	value. Use 'on-demand' to only recurse into a populated submodule
 	when the superproject retrieves a commit that updates the submodule's
-	reference.
+	reference to a commit that isn't already in the local submodule
+	clone.
 
 --no-recurse-submodules::
 	Disable recursive fetching of submodules (this has the same effect as

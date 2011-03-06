@@ -428,4 +428,23 @@ test_expect_success "'submodule.<sub>.fetchRecurseSubmodules=on-demand' override
 	test_cmp expect.err.2 actual.err
 '
 
+test_expect_success "don't fetch submodule when newly recorded commits are already present" '
+	(
+		cd submodule &&
+		git checkout -q HEAD^^
+	) &&
+	head1=$(git rev-parse --short HEAD) &&
+	git add submodule &&
+	git commit -m "submodule rewound" &&
+	head2=$(git rev-parse --short HEAD) &&
+	echo "From $pwd/." > expect.err &&
+	echo "   $head1..$head2  master     -> origin/master" >> expect.err &&
+	(
+		cd downstream &&
+		git fetch >../actual.out 2>../actual.err
+	) &&
+	! test -s actual.out &&
+	test_cmp expect.err actual.err
+'
+
 test_done
