@@ -372,4 +372,32 @@ test_expect_success "'--recurse-submodules=on-demand' stops when no new submodul
 	test_cmp expect.err.file actual.err
 '
 
+test_expect_success "'fetch.recurseSubmodules=on-demand' overrides global config" '
+	(
+		cd downstream &&
+		git fetch --recurse-submodules
+	) &&
+	add_upstream_commit &&
+	git config --global fetch.recurseSubmodules false &&
+	head1=$(git rev-parse --short HEAD) &&
+	git add submodule &&
+	git commit -m "new submodule" &&
+	head2=$(git rev-parse --short HEAD) &&
+	echo "From $pwd/." > expect.err.2 &&
+	echo "   $head1..$head2  master     -> origin/master" >> expect.err.2
+	head -2 expect.err >> expect.err.2 &&
+	(
+		cd downstream &&
+		git config fetch.recurseSubmodules on-demand &&
+		git fetch >../actual.out 2>../actual.err
+	) &&
+	git config --global --unset fetch.recurseSubmodules &&
+	(
+		cd downstream &&
+		git config --unset fetch.recurseSubmodules
+	) &&
+	test_cmp expect.out.sub actual.out &&
+	test_cmp expect.err.2 actual.err
+'
+
 test_done

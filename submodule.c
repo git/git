@@ -71,7 +71,7 @@ int submodule_config(const char *var, const char *value, void *cb)
 	if (!prefixcmp(var, "submodule."))
 		return parse_submodule_config_option(var, value);
 	else if (!strcmp(var, "fetch.recursesubmodules")) {
-		config_fetch_recurse_submodules = git_config_bool(var, value);
+		config_fetch_recurse_submodules = parse_fetch_recurse_submodules_arg(var, value);
 		return 0;
 	}
 	return 0;
