@@ -28,12 +28,6 @@ enum {
 	TAGS_SET = 2
 };
 
-enum {
-	RECURSE_SUBMODULES_OFF = 0,
-	RECURSE_SUBMODULES_DEFAULT = 1,
-	RECURSE_SUBMODULES_ON = 2
-};
-
 static int all, append, dry_run, force, keep, multiple, prune, update_head_ok, verbosity;
 static int progress, recurse_submodules = RECURSE_SUBMODULES_DEFAULT;
 static int tags = TAGS_DEFAULT;
@@ -42,6 +36,7 @@ static const char *upload_pack;
 static struct strbuf default_rla = STRBUF_INIT;
 static struct transport *transport;
 static const char *submodule_prefix = "";
+static const char *recurse_submodules_default;
 
 static struct option builtin_fetch_options[] = {
 	OPT__VERBOSITY(&verbosity),
@@ -73,6 +68,9 @@ static struct option builtin_fetch_options[] = {
 		   "deepen history of shallow clone"),
 	{ OPTION_STRING, 0, "submodule-prefix", &submodule_prefix, "DIR",
 		   "prepend this to submodule path output", PARSE_OPT_HIDDEN },
+	{ OPTION_STRING, 0, "recurse-submodules-default",
+		   &recurse_submodules_default, NULL,
+		   "default mode for recursion", PARSE_OPT_HIDDEN },
 	OPT_END()
 };
 
@@ -284,6 +282,9 @@ static int update_local_ref(struct ref *ref,
 		else {
 			msg = "storing head";
 			what = "[new branch]";
+			if ((recurse_submodules != RECURSE_SUBMODULES_OFF) &&
+			    (recurse_submodules != RECURSE_SUBMODULES_ON))
+				check_for_new_submodule_commits(ref->new_sha1);
 		}
 
 		r = s_update_ref(msg, ref, 0);
@@ -299,6 +300,9 @@ static int update_local_ref(struct ref *ref,
 		strcpy(quickref, find_unique_abbrev(current->object.sha1, DEFAULT_ABBREV));
 		strcat(quickref, "..");
 		strcat(quickref, find_unique_abbrev(ref->new_sha1, DEFAULT_ABBREV));
+		if ((recurse_submodules != RECURSE_SUBMODULES_OFF) &&
+		    (recurse_submodules != RECURSE_SUBMODULES_ON))
+			check_for_new_submodule_commits(ref->new_sha1);
 		r = s_update_ref("fast-forward", ref, 1);
 		sprintf(display, "%c %-*s %-*s -> %s%s", r ? '!' : ' ',
 			TRANSPORT_SUMMARY_WIDTH, quickref, REFCOL_WIDTH, remote,
@@ -310,6 +314,9 @@ static int update_local_ref(struct ref *ref,
 		strcpy(quickref, find_unique_abbrev(current->object.sha1, DEFAULT_ABBREV));
 		strcat(quickref, "...");
 		strcat(quickref, find_unique_abbrev(ref->new_sha1, DEFAULT_ABBREV));
+		if ((recurse_submodules != RECURSE_SUBMODULES_OFF) &&
+		    (recurse_submodules != RECURSE_SUBMODULES_ON))
+			check_for_new_submodule_commits(ref->new_sha1);
 		r = s_update_ref("forced-update", ref, 1);
 		sprintf(display, "%c %-*s %-*s -> %s  (%s)", r ? '!' : '+',
 			TRANSPORT_SUMMARY_WIDTH, quickref, REFCOL_WIDTH, remote,
@@ -949,9 +956,10 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 	if (!result && (recurse_submodules != RECURSE_SUBMODULES_OFF)) {
 		const char *options[10];
 		int num_options = 0;
-		/* Set recursion as default when we already are recursing */
-		if (submodule_prefix[0])
-			set_config_fetch_recurse_submodules(1);
+		if (recurse_submodules_default) {
+			int arg = parse_fetch_recurse_submodules_arg("--recurse-submodules-default", recurse_submodules_default);
+			set_config_fetch_recurse_submodules(arg);
+		}
 		gitmodules_config();
 		git_config(submodule_config, NULL);
 		add_options_to_argv(&num_options, options);

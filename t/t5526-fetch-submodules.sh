@@ -192,4 +192,113 @@ test_expect_success "--no-recurse-submodules overrides config setting" '
 	! test -s actual.err
 '
 
+test_expect_success "Recursion doesn't happen when no new commits are fetched in the superproject" '
+	(
+		cd downstream &&
+		(
+			cd submodule &&
+			git config --unset fetch.recurseSubmodules
+		) &&
+		git config --unset fetch.recurseSubmodules
+		git fetch >../actual.out 2>../actual.err
+	) &&
+	! test -s actual.out &&
+	! test -s actual.err
+'
+
+test_expect_success "Recursion stops when no new submodule commits are fetched" '
+	head1=$(git rev-parse --short HEAD) &&
+	git add submodule &&
+	git commit -m "new submodule" &&
+	head2=$(git rev-parse --short HEAD) &&
+	echo "Fetching submodule submodule" > expect.out.sub &&
+	echo "From $pwd/." > expect.err.sub &&
+	echo "   $head1..$head2  master     -> origin/master" >> expect.err.sub
+	head -2 expect.err >> expect.err.sub &&
+	(
+		cd downstream &&
+		git fetch >../actual.out 2>../actual.err
+	) &&
+	test_cmp expect.err.sub actual.err &&
+	test_cmp expect.out.sub actual.out
+'
+
+test_expect_success "Recursion doesn't happen when new superproject commits don't change any submodules" '
+	add_upstream_commit &&
+	head1=$(git rev-parse --short HEAD) &&
+	echo a > file &&
+	git add file &&
+	git commit -m "new file" &&
+	head2=$(git rev-parse --short HEAD) &&
+	echo "From $pwd/." > expect.err.file &&
+	echo "   $head1..$head2  master     -> origin/master" >> expect.err.file &&
+	(
+		cd downstream &&
+		git fetch >../actual.out 2>../actual.err
+	) &&
+	! test -s actual.out &&
+	test_cmp expect.err.file actual.err
+'
+
+test_expect_success "Recursion picks up config in submodule" '
+	(
+		cd downstream &&
+		git fetch --recurse-submodules &&
+		(
+			cd submodule &&
+			git config fetch.recurseSubmodules true
+		)
+	) &&
+	add_upstream_commit &&
+	head1=$(git rev-parse --short HEAD) &&
+	git add submodule &&
+	git commit -m "new submodule" &&
+	head2=$(git rev-parse --short HEAD) &&
+	echo "From $pwd/." > expect.err.sub &&
+	echo "   $head1..$head2  master     -> origin/master" >> expect.err.sub &&
+	cat expect.err >> expect.err.sub &&
+	(
+		cd downstream &&
+		git fetch >../actual.out 2>../actual.err &&
+		(
+			cd submodule &&
+			git config --unset fetch.recurseSubmodules
+		)
+	) &&
+	test_cmp expect.err.sub actual.err &&
+	test_cmp expect.out actual.out
+'
+
+test_expect_success "Recursion picks up all submodules when necessary" '
+	add_upstream_commit &&
+	(
+		cd submodule &&
+		(
+			cd deepsubmodule &&
+			git fetch &&
+			git checkout -q FETCH_HEAD
+		) &&
+		head1=$(git rev-parse --short HEAD^) &&
+		git add deepsubmodule &&
+		git commit -m "new deepsubmodule"
+		head2=$(git rev-parse --short HEAD) &&
+		echo "From $pwd/submodule" > ../expect.err.sub &&
+		echo "   $head1..$head2  master     -> origin/master" >> ../expect.err.sub
+	) &&
+	head1=$(git rev-parse --short HEAD) &&
+	git add submodule &&
+	git commit -m "new submodule" &&
+	head2=$(git rev-parse --short HEAD) &&
+	echo "From $pwd/." > expect.err.2 &&
+	echo "   $head1..$head2  master     -> origin/master" >> expect.err.2 &&
+	cat expect.err.sub >> expect.err.2 &&
+	tail -2 expect.err >> expect.err.2 &&
+	(
+		cd downstream &&
+		git fetch >../actual.out 2>../actual.err
+	) &&
+	test_cmp expect.err.2 actual.err &&
+	test_cmp expect.out actual.out
+'
+
 test_done
