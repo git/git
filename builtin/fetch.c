@@ -38,6 +38,20 @@ static struct transport *transport;
 static const char *submodule_prefix = "";
 static const char *recurse_submodules_default;
 
+static int option_parse_recurse_submodules(const struct option *opt,
+				   const char *arg, int unset)
+{
+	if (unset) {
+		recurse_submodules = RECURSE_SUBMODULES_OFF;
+	} else {
+		if (arg)
+			recurse_submodules = parse_fetch_recurse_submodules_arg(opt->long_name, arg);
+		else
+			recurse_submodules = RECURSE_SUBMODULES_ON;
+	}
+	return 0;
+}
+
 static struct option builtin_fetch_options[] = {
 	OPT__VERBOSITY(&verbosity),
 	OPT_BOOLEAN(0, "all", &all,
@@ -55,9 +69,9 @@ static struct option builtin_fetch_options[] = {
 		    "do not fetch all tags (--no-tags)", TAGS_UNSET),
 	OPT_BOOLEAN('p', "prune", &prune,
 		    "prune remote-tracking branches no longer on remote"),
-	OPT_SET_INT(0, "recurse-submodules", &recurse_submodules,
+	{ OPTION_CALLBACK, 0, "recurse-submodules", NULL, "on-demand",
 		    "control recursive fetching of submodules",
-		    RECURSE_SUBMODULES_ON),
+		    PARSE_OPT_OPTARG, option_parse_recurse_submodules },
 	OPT_BOOLEAN(0, "dry-run", &dry_run,
 		    "dry run"),
 	OPT_BOOLEAN('k', "keep", &keep, "keep downloaded pack"),
@@ -817,6 +831,8 @@ static void add_options_to_argv(int *argc, const char **argv)
 		argv[(*argc)++] = "--keep";
 	if (recurse_submodules == RECURSE_SUBMODULES_ON)
 		argv[(*argc)++] = "--recurse-submodules";
+	else if (recurse_submodules == RECURSE_SUBMODULES_ON_DEMAND)
+		argv[(*argc)++] = "--recurse-submodules=on-demand";
 	if (verbosity >= 2)
 		argv[(*argc)++] = "-v";
 	if (verbosity >= 1)
@@ -965,7 +981,7 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 		add_options_to_argv(&num_options, options);
 		result = fetch_populated_submodules(num_options, options,
 						    submodule_prefix,
-						    recurse_submodules == RECURSE_SUBMODULES_ON,
+						    recurse_submodules,
 						    verbosity < 0);
 	}
 

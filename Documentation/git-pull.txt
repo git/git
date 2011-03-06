@@ -84,7 +84,7 @@ must be given before the options meant for 'git fetch'.
 --verbose::
 	Pass --verbose to git-fetch and git-merge.
 
---[no-]recurse-submodules::
+--[no-]recurse-submodules[=yes|on-demand|no]::
 	This option controls if new commits of all populated submodules should
 	be fetched too (see linkgit:git-config[1] and linkgit:gitmodules[5]).
 	That might be necessary to get the data needed for merging submodule

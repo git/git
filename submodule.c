@@ -330,7 +330,7 @@ void check_for_new_submodule_commits(unsigned char new_sha1[20])
 }
 
 int fetch_populated_submodules(int num_options, const char **options,
-			       const char *prefix, int ignore_config,
+			       const char *prefix, int command_line_option,
 			       int quiet)
 {
 	int i, result = 0, argc = 0, default_argc;
@@ -376,7 +376,7 @@ int fetch_populated_submodules(int num_options, const char **options,
 			name = name_for_path->util;
 
 		default_argv = "yes";
-		if (!ignore_config) {
+		if (command_line_option == RECURSE_SUBMODULES_DEFAULT) {
 			struct string_list_item *fetch_recurse_submodules_option;
 			fetch_recurse_submodules_option = unsorted_string_list_lookup(&config_fetch_recurse_submodules_for_name, name);
 			if (fetch_recurse_submodules_option) {
@@ -391,6 +391,10 @@ int fetch_populated_submodules(int num_options, const char **options,
 					default_argv = "on-demand";
 				}
 			}
+		} else if (command_line_option == RECURSE_SUBMODULES_ON_DEMAND) {
+			if (!unsorted_string_list_lookup(&changed_submodule_paths, ce->name))
+				continue;
+			default_argv = "on-demand";
 		}
 
 		strbuf_addf(&submodule_path, "%s/%s", work_tree, ce->name);

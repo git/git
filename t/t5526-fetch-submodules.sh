@@ -301,4 +301,75 @@ test_expect_success "Recursion picks up all submodules when necessary" '
 	test_cmp expect.out actual.out
 '
 
+test_expect_success "'--recurse-submodules=on-demand' doesn't recurse when no new commits are fetched in the superproject (and ignores config)" '
+	add_upstream_commit &&
+	(
+		cd submodule &&
+		(
+			cd deepsubmodule &&
+			git fetch &&
+			git checkout -q FETCH_HEAD
+		) &&
+		head1=$(git rev-parse --short HEAD^) &&
+		git add deepsubmodule &&
+		git commit -m "new deepsubmodule"
+		head2=$(git rev-parse --short HEAD) &&
+		echo "From $pwd/submodule" > ../expect.err.sub &&
+		echo "   $head1..$head2  master     -> origin/master" >> ../expect.err.sub
+	) &&
+	(
+		cd downstream &&
+		git config fetch.recurseSubmodules true &&
+		git fetch --recurse-submodules=on-demand >../actual.out 2>../actual.err &&
+		git config --unset fetch.recurseSubmodules
+	) &&
+	! test -s actual.out &&
+	! test -s actual.err
+'
+
+test_expect_success "'--recurse-submodules=on-demand' recurses as deep as necessary (and ignores config)" '
+	head1=$(git rev-parse --short HEAD) &&
+	git add submodule &&
+	git commit -m "new submodule" &&
+	head2=$(git rev-parse --short HEAD) &&
+	tail -2 expect.err > expect.err.deepsub &&
+	echo "From $pwd/." > expect.err &&
+	echo "   $head1..$head2  master     -> origin/master" >> expect.err
+	cat expect.err.sub >> expect.err &&
+	cat expect.err.deepsub >> expect.err &&
+	(
+		cd downstream &&
+		git config fetch.recurseSubmodules false &&
+		(
+			cd submodule &&
+			git config -f .gitmodules submodule.deepsubmodule.fetchRecursive false
+		) &&
+		git fetch --recurse-submodules=on-demand >../actual.out 2>../actual.err &&
+		git config --unset fetch.recurseSubmodules
+		(
+			cd submodule &&
+			git config --unset -f .gitmodules submodule.deepsubmodule.fetchRecursive
+		)
+	) &&
+	test_cmp expect.out actual.out &&
+	test_cmp expect.err actual.err
+'
+
+test_expect_success "'--recurse-submodules=on-demand' stops when no new submodule commits are found in the superproject (and ignores config)" '
+	add_upstream_commit &&
+	head1=$(git rev-parse --short HEAD) &&
+	echo a >> file &&
+	git add file &&
+	git commit -m "new file" &&
+	head2=$(git rev-parse --short HEAD) &&
+	echo "From $pwd/." > expect.err.file &&
+	echo "   $head1..$head2  master     -> origin/master" >> expect.err.file &&
+	(
+		cd downstream &&
+		git fetch --recurse-submodules=on-demand >../actual.out 2>../actual.err
+	) &&
+	! test -s actual.out &&
+	test_cmp expect.err.file actual.err
+'
+
 test_done
