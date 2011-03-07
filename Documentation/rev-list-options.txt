@@ -337,6 +337,14 @@ commits from `B` which are in `A` or are patch-equivalent to a commit in
 More precisely, `--cherry-pick --right-only --no-merges` gives the exact
 list.
 
+--cherry::
+
+	A synonym for `--right-only --cherry-mark --no-merges`; useful to
+	limit the output to the commits on our side and mark those that
+	have been applied to the other side of a forked history with
+	`git log --cherry upstream...mybranch`, similar to
+	`git cherry upstream mybranch`.
+
 -g::
 --walk-reflogs::
 
