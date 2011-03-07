@@ -33,6 +33,7 @@ SYNOPSIS
 	     [ \--left-right ]
 	     [ \--left-only ]
 	     [ \--right-only ]
+	     [ \--cherry-mark ]
 	     [ \--cherry-pick ]
 	     [ \--encoding[=<encoding>] ]
 	     [ \--(author|committer|grep)=<pattern> ]

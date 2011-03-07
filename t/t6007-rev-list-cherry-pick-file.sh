@@ -100,6 +100,34 @@ test_expect_success '--cherry-pick bar does not come up empty (II)' '
 '
 
 cat >expect <<EOF
++tags/F
+=tags/D
++tags/E
+=tags/C
+EOF
+
+test_expect_success '--cherry-mark' '
+	git rev-list --cherry-mark F...E -- bar > actual &&
+	git name-rev --stdin --name-only --refs="*tags/*" \
+		< actual > actual.named &&
+	test_cmp actual.named expect
+'
+
+cat >expect <<EOF
+<tags/F
+=tags/D
+>tags/E
+=tags/C
+EOF
+
+test_expect_success '--cherry-mark --left-right' '
+	git rev-list --cherry-mark --left-right F...E -- bar > actual &&
+	git name-rev --stdin --name-only --refs="*tags/*" \
+		< actual > actual.named &&
+	test_cmp actual.named expect
+'
+
+cat >expect <<EOF
 tags/E
 EOF
 

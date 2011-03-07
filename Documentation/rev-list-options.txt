@@ -305,6 +305,11 @@ ifdef::git-rev-list[]
 	to /dev/null as the output does not have to be formatted.
 endif::git-rev-list[]
 
+--cherry-mark::
+
+	Like `--cherry-pick` (see below) but mark equivalent commits
+	with `=` rather than omitting them, and inequivalent ones with `+`.
+
 --cherry-pick::
 
 	Omit any commit that introduces the same change as
