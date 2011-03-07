@@ -145,6 +145,18 @@ test_expect_success '--cherry-pick --left-only' '
 	test_cmp actual.named expect
 '
 
+cat >expect <<EOF
++tags/E
+=tags/C
+EOF
+
+test_expect_success '--cherry' '
+	git rev-list --cherry F...E -- bar > actual &&
+	git name-rev --stdin --name-only --refs="*tags/*" \
+		< actual > actual.named &&
+	test_cmp actual.named expect
+'
+
 test_expect_success '--cherry-pick with independent, but identical branches' '
 	git symbolic-ref HEAD refs/heads/independent &&
 	rm .git/index &&
