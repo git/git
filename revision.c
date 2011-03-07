@@ -2263,3 +2263,19 @@ struct commit *get_revision(struct rev_info *revs)
 		graph_update(revs->graph, c);
 	return c;
 }
+
+char *get_revision_mark(const struct rev_info *revs, const struct commit *commit)
+{
+	if (commit->object.flags & BOUNDARY)
+		return "-";
+	else if (commit->object.flags & UNINTERESTING)
+		return "^";
+	else if (!revs || revs->left_right) {
+		if (commit->object.flags & SYMMETRIC_LEFT)
+			return "<";
+		else
+			return ">";
+	} else if (revs->graph)
+		return "*";
+	return "";
+}
