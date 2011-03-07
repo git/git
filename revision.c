@@ -535,6 +535,7 @@ static void cherry_pick_list(struct commit_list *list, struct rev_info *revs)
 	int left_count = 0, right_count = 0;
 	int left_first;
 	struct patch_ids ids;
+	unsigned cherry_flag;
 
 	/* First count the commits on the left and on the right */
 	for (p = list; p; p = p->next) {
@@ -576,6 +577,9 @@ static void cherry_pick_list(struct commit_list *list, struct rev_info *revs)
 		commit->util = add_commit_patch_id(commit, &ids);
 	}
 
+	/* either cherry_mark or cherry_pick are true */
+	cherry_flag = revs->cherry_mark ? PATCHSAME : SHOWN;
+
 	/* Check the other side */
 	for (p = list; p; p = p->next) {
 		struct commit *commit = p->item;
@@ -598,7 +602,7 @@ static void cherry_pick_list(struct commit_list *list, struct rev_info *revs)
 		if (!id)
 			continue;
 		id->seen = 1;
-		commit->object.flags |= SHOWN;
+		commit->object.flags |= cherry_flag;
 	}
 
 	/* Now check the original side for seen ones */
@@ -610,7 +614,7 @@ static void cherry_pick_list(struct commit_list *list, struct rev_info *revs)
 		if (!ent)
 			continue;
 		if (ent->seen)
-			commit->object.flags |= SHOWN;
+			commit->object.flags |= cherry_flag;
 		commit->util = NULL;
 	}
 
@@ -802,7 +806,7 @@ static int limit_list(struct rev_info *revs)
 		show(revs, newlist);
 		show_early_output = NULL;
 	}
-	if (revs->cherry_pick)
+	if (revs->cherry_pick || revs->cherry_mark)
 		cherry_pick_list(newlist, revs);
 
 	if (revs->left_only || revs->right_only)
@@ -1293,7 +1297,14 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		revs->right_only = 1;
 	} else if (!strcmp(arg, "--count")) {
 		revs->count = 1;
+	} else if (!strcmp(arg, "--cherry-mark")) {
+		if (revs->cherry_pick)
+			die("--cherry-mark is incompatible with --cherry-pick");
+		revs->cherry_mark = 1;
+		revs->limited = 1; /* needs limit_list() */
 	} else if (!strcmp(arg, "--cherry-pick")) {
+		if (revs->cherry_mark)
+			die("--cherry-pick is incompatible with --cherry-mark");
 		revs->cherry_pick = 1;
 		revs->limited = 1;
 	} else if (!strcmp(arg, "--objects")) {
@@ -2270,6 +2281,8 @@ char *get_revision_mark(const struct rev_info *revs, const struct commit *commit
 		return "-";
 	else if (commit->object.flags & UNINTERESTING)
 		return "^";
+	else if (commit->object.flags & PATCHSAME)
+		return "=";
 	else if (!revs || revs->left_right) {
 		if (commit->object.flags & SYMMETRIC_LEFT)
 			return "<";
@@ -2277,5 +2290,7 @@ char *get_revision_mark(const struct rev_info *revs, const struct commit *commit
 			return ">";
 	} else if (revs->graph)
 		return "*";
+	else if (revs->cherry_mark)
+		return "+";
 	return "";
 }
