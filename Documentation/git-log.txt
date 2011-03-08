@@ -73,15 +73,15 @@ produced by --stat etc.
 	to be prefixed with "\-- " to separate them from options or
 	refnames.
 
-Common diff options
-~~~~~~~~~~~~~~~~~~~
-
-:git-log: 1
-include::diff-options.txt[]
-
 include::rev-list-options.txt[]
 
 include::pretty-formats.txt[]
+
+Common diff options
+-------------------
+
+:git-log: 1
+include::diff-options.txt[]
 
 include::diff-generate-patch.txt[]
 
