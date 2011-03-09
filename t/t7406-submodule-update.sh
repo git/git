@@ -203,4 +203,56 @@ test_expect_success 'submodule init picks up merge' '
 	)
 '
 
+test_expect_success 'submodule update --merge  - ignores --merge  for new submodules' '
+	(cd super &&
+	 rm -rf submodule &&
+	 git submodule update submodule &&
+	 git status -s submodule >expect &&
+	 rm -rf submodule &&
+	 git submodule update --merge submodule &&
+	 git status -s submodule >actual &&
+	 test_cmp expect actual
+	)
+'
+
+test_expect_success 'submodule update --rebase - ignores --rebase for new submodules' '
+	(cd super &&
+	 rm -rf submodule &&
+	 git submodule update submodule &&
+	 git status -s submodule >expect &&
+	 rm -rf submodule &&
+	 git submodule update --rebase submodule &&
+	 git status -s submodule >actual &&
+	 test_cmp expect actual
+	)
+'
+
+test_expect_success 'submodule update ignores update=merge config for new submodules' '
+	(cd super &&
+	 rm -rf submodule &&
+	 git submodule update submodule &&
+	 git status -s submodule >expect &&
+	 rm -rf submodule &&
+	 git config submodule.submodule.update merge &&
+	 git submodule update submodule &&
+	 git status -s submodule >actual &&
+	 git config --unset submodule.submodule.update &&
+	 test_cmp expect actual
+	)
+'
+
+test_expect_success 'submodule update ignores update=rebase config for new submodules' '
+	(cd super &&
+	 rm -rf submodule &&
+	 git submodule update submodule &&
+	 git status -s submodule >expect &&
+	 rm -rf submodule &&
+	 git config submodule.submodule.update rebase &&
+	 git submodule update submodule &&
+	 git status -s submodule >actual &&
+	 git config --unset submodule.submodule.update &&
+	 test_cmp expect actual
+	)
+'
+
 test_done
