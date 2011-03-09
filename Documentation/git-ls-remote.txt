@@ -10,7 +10,7 @@ SYNOPSIS
 --------
 [verse]
 'git ls-remote' [--heads] [--tags]  [-u <exec> | --upload-pack <exec>]
-	      <repository> <refs>...
+	      <repository> [<refs>...]
 
 DESCRIPTION
 -----------
