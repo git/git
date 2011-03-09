@@ -2652,7 +2652,7 @@ proc savestuff {w} {
     global viewname viewfiles viewargs viewargscmd viewperm nextviewnum
     global cmitmode wrapcomment datetimeformat limitdiffs
     global colors uicolor bgcolor fgcolor diffcolors diffcontext selectbgcolor
-    global autoselect extdifftool perfile_attrs markbgcolor use_ttk
+    global autoselect autosellen extdifftool perfile_attrs markbgcolor use_ttk
     global hideremotes want_ttk
 
     if {$stuffsaved} return
@@ -2673,6 +2673,7 @@ proc savestuff {w} {
 	puts $f [list set cmitmode $cmitmode]
 	puts $f [list set wrapcomment $wrapcomment]
 	puts $f [list set autoselect $autoselect]
+	puts $f [list set autosellen $autosellen]
 	puts $f [list set showneartags $showneartags]
 	puts $f [list set hideremotes $hideremotes]
 	puts $f [list set showlocalchanges $showlocalchanges]
@@ -6896,7 +6897,7 @@ proc selectline {l isnew {desired_loc {}}} {
     global mergemax numcommits pending_select
     global cmitmode showneartags allcommits
     global targetrow targetid lastscrollrows
-    global autoselect jump_to_here
+    global autoselect autosellen jump_to_here
 
     catch {unset pending_select}
     $canv delete hover
@@ -6958,7 +6959,7 @@ proc selectline {l isnew {desired_loc {}}} {
     $sha1entry delete 0 end
     $sha1entry insert 0 $id
     if {$autoselect} {
-	$sha1entry selection range 0 end
+	$sha1entry selection range 0 $autosellen
     }
     rhighlight_sel $id
 
@@ -10756,7 +10757,7 @@ proc doprefs {} {
     global maxwidth maxgraphpct use_ttk NS
     global oldprefs prefstop showneartags showlocalchanges
     global uicolor bgcolor fgcolor ctext diffcolors selectbgcolor markbgcolor
-    global tabstop limitdiffs autoselect extdifftool perfile_attrs
+    global tabstop limitdiffs autoselect autosellen extdifftool perfile_attrs
     global hideremotes want_ttk have_ttk
 
     set top .gitkprefs
@@ -10784,9 +10785,10 @@ proc doprefs {} {
     ${NS}::checkbutton $top.showlocal -text [mc "Show local changes"] \
 	-variable showlocalchanges
     grid x $top.showlocal -sticky w
-    ${NS}::checkbutton $top.autoselect -text [mc "Auto-select SHA1"] \
+    ${NS}::checkbutton $top.autoselect -text [mc "Auto-select SHA1 (length)"] \
 	-variable autoselect
-    grid x $top.autoselect -sticky w
+    spinbox $top.autosellen -from 1 -to 40 -width 4 -textvariable autosellen
+    grid x $top.autoselect $top.autosellen -sticky w
     ${NS}::checkbutton $top.hideremotes -text [mc "Hide remote refs"] \
 	-variable hideremotes
     grid x $top.hideremotes -sticky w
@@ -11428,6 +11430,7 @@ set showlocalchanges 1
 set limitdiffs 1
 set datetimeformat "%Y-%m-%d %H:%M:%S"
 set autoselect 1
+set autosellen 40
 set perfile_attrs 0
 set want_ttk 1
 
