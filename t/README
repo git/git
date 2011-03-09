@@ -328,7 +328,7 @@ Keep in mind:
 Skipping tests
 --------------
 
-If you need to skip tests you should do so be using the three-arg form
+If you need to skip tests you should do so by using the three-arg form
 of the test_* functions (see the "Test harness library" section
 below), e.g.:
 
