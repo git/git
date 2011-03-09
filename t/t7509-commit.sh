@@ -157,4 +157,33 @@ test_expect_success '--reset-author should be rejected without -c/-C/--amend' '
 	test_must_fail git commit -a --reset-author -m done
 '
 
+test_expect_success 'commit respects CHERRY_PICK_HEAD and MERGE_MSG' '
+	echo "cherry-pick 1a" >>foo &&
+	test_tick &&
+	git commit -am "cherry-pick 1" --author="Cherry <cherry@pick.er>" &&
+	git tag cherry-pick-head &&
+	git rev-parse cherry-pick-head >.git/CHERRY_PICK_HEAD &&
+	echo "This is a MERGE_MSG" >.git/MERGE_MSG &&
+	echo "cherry-pick 1b" >>foo &&
+	test_tick &&
+	git commit -a &&
+	author_header cherry-pick-head >expect &&
+	author_header HEAD >actual &&
+	test_cmp expect actual &&
+
+	echo "This is a MERGE_MSG" >expect &&
+	message_body HEAD >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--reset-author with CHERRY_PICK_HEAD' '
+	git rev-parse cherry-pick-head >.git/CHERRY_PICK_HEAD &&
+	echo "cherry-pick 2" >>foo &&
+	test_tick &&
+	git commit -am "cherry-pick 2" --reset-author &&
+	echo "author $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL> $GIT_AUTHOR_DATE" >expect &&
+	author_header HEAD >actual &&
+	test_cmp expect actual
+'
+
 test_done
