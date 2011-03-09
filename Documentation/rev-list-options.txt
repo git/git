@@ -165,7 +165,7 @@ limiting may be applied.
 -n 'number'::
 --max-count=<number>::
 
-	Limit the number of commits output.
+	Limit the number of commits to output.
 
 --skip=<number>::
 
