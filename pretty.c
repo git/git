@@ -216,36 +216,53 @@ static int is_rfc2047_special(char ch)
 static void add_rfc2047(struct strbuf *sb, const char *line, int len,
 		       const char *encoding)
 {
-	int i, last;
+	static const int max_length = 78; /* per rfc2822 */
+	int i;
+	int line_len;
+
+	/* How many bytes are already used on the current line? */
+	for (i = sb->len - 1; i >= 0; i--)
+		if (sb->buf[i] == '\n')
+			break;
+	line_len = sb->len - (i+1);
 
 	for (i = 0; i < len; i++) {
 		int ch = line[i];
-		if (non_ascii(ch))
+		if (non_ascii(ch) || ch == '\n')
 			goto needquote;
 		if ((i + 1 < len) && (ch == '=' && line[i+1] == '?'))
 			goto needquote;
 	}
-	strbuf_add(sb, line, len);
+	strbuf_add_wrapped_bytes(sb, line, len, 0, 1, max_length - line_len);
 	return;
 
 needquote:
 	strbuf_grow(sb, len * 3 + strlen(encoding) + 100);
 	strbuf_addf(sb, "=?%s?q?", encoding);
-	for (i = last = 0; i < len; i++) {
+	line_len += strlen(encoding) + 5; /* 5 for =??q? */
+	for (i = 0; i < len; i++) {
 		unsigned ch = line[i] & 0xFF;
+
+		if (line_len >= max_length - 2) {
+			strbuf_addf(sb, "?=\n =?%s?q?", encoding);
+			line_len = strlen(encoding) + 5 + 1; /* =??q? plus SP */
+		}
+
 		/*
 		 * We encode ' ' using '=20' even though rfc2047
 		 * allows using '_' for readability.  Unfortunately,
 		 * many programs do not understand this and just
 		 * leave the underscore in place.
 		 */
-		if (is_rfc2047_special(ch) || ch == ' ') {
-			strbuf_add(sb, line + last, i - last);
+		if (is_rfc2047_special(ch) || ch == ' ' || ch == '\n') {
 			strbuf_addf(sb, "=%02X", ch);
-			last = i + 1;
+			line_len += 3;
+		}
+		else {
+			strbuf_addch(sb, ch);
+			line_len++;
 		}
 	}
-	strbuf_add(sb, line + last, len - last);
 	strbuf_addstr(sb, "?=");
 }
 
@@ -1106,11 +1123,10 @@ void pp_title_line(enum cmit_fmt fmt,
 		   const char *encoding,
 		   int need_8bit_cte)
 {
-	const char *line_separator = (fmt == CMIT_FMT_EMAIL) ? "\n " : " ";
 	struct strbuf title;
 
 	strbuf_init(&title, 80);
-	*msg_p = format_subject(&title, *msg_p, line_separator);
+	*msg_p = format_subject(&title, *msg_p, " ");
 
 	strbuf_grow(sb, title.len + 1024);
 	if (subject) {
