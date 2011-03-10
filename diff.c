@@ -23,7 +23,7 @@
 #endif
 
 static int diff_detect_rename_default;
-static int diff_rename_limit_default = 200;
+static int diff_rename_limit_default = 400;
 static int diff_suppress_blank_empty;
 int diff_use_color_default = -1;
 static const char *diff_word_regex_cfg;
