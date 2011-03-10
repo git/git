@@ -680,7 +680,7 @@ __git_complete_file ()
 		*)
 			ls="$ref"
 			;;
-	    esac
+		esac
 
 		case "$COMP_WORDBREAKS" in
 		*:*) : great ;;
