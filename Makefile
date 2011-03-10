@@ -550,6 +550,7 @@ PROGRAM_OBJS += shell.o
 PROGRAM_OBJS += show-index.o
 PROGRAM_OBJS += upload-pack.o
 PROGRAM_OBJS += remote-testsvn.o
+PROGRAM_OBJS += packv4-create.o
 
 # Binary suffix, set to .exe for Windows builds
 X =

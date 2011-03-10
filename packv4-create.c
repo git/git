@@ -9,6 +9,8 @@
  */
 
 #include "cache.h"
+#include "object.h"
+#include "tree-walk.h"
 
 struct data_entry {
 	unsigned offset;
@@ -125,6 +127,22 @@ static void sort_dict_entries_by_hits(struct dict_table *t)
 	rehash_entries(t);
 }
 
+static struct dict_table *tree_path_table;
+
+static int add_tree_dict_entries(void *buf, unsigned long size)
+{
+	struct tree_desc desc;
+	struct name_entry name_entry;
+
+	if (!tree_path_table)
+		tree_path_table = create_dict_table();
+
+	init_tree_desc(&desc, buf, size);
+	while (tree_entry(&desc, &name_entry))
+		dict_add_entry(tree_path_table, name_entry.path);
+	return 0;
+}
+
 void dict_dump(struct dict_table *t)
 {
 	int i;
@@ -134,4 +152,123 @@ void dict_dump(struct dict_table *t)
 		printf("%d\t%s\n",
 			t->entry[i].hits,
 			t->data + t->entry[i].offset);
+}
+
+struct idx_entry
+{
+	off_t                offset;
+	const unsigned char *sha1;
+};
+
+static int sort_by_offset(const void *e1, const void *e2)
+{
+	const struct idx_entry *entry1 = e1;
+	const struct idx_entry *entry2 = e2;
+	if (entry1->offset < entry2->offset)
+		return -1;
+	if (entry1->offset > entry2->offset)
+		return 1;
+	return 0;
+}
+static int create_pack_dictionaries(struct packed_git *p)
+{
+	uint32_t nr_objects, i;
+	struct idx_entry *objects;
+
+	nr_objects = p->num_objects;
+	objects = xmalloc((nr_objects + 1) * sizeof(*objects));
+	objects[nr_objects].offset = p->index_size - 40;
+	for (i = 0; i < nr_objects; i++) {
+		objects[i].sha1 = nth_packed_object_sha1(p, i);
+		objects[i].offset = nth_packed_object_offset(p, i);
+	}
+	qsort(objects, nr_objects, sizeof(*objects), sort_by_offset);
+
+	for (i = 0; i < nr_objects; i++) {
+		void *data;
+		enum object_type type;
+		unsigned long size;
+		struct object_info oi = {};
+
+		oi.typep = &type;
+		oi.sizep = &size;
+		if (packed_object_info(p, objects[i].offset, &oi) < 0)
+			die("cannot get type of %s from %s",
+			    sha1_to_hex(objects[i].sha1), p->pack_name);
+
+		switch (type) {
+		case OBJ_TREE:
+			break;
+		default:
+			continue;
+		}
+		data = unpack_entry(p, objects[i].offset, &type, &size);
+		if (!data)
+			die("cannot unpack %s from %s",
+			    sha1_to_hex(objects[i].sha1), p->pack_name);
+		if (check_sha1_signature(objects[i].sha1, data, size, typename(type)))
+			die("packed %s from %s is corrupt",
+			    sha1_to_hex(objects[i].sha1), p->pack_name);
+		if (add_tree_dict_entries(data, size) < 0)
+			die("can't process %s object %s",
+				typename(type), sha1_to_hex(objects[i].sha1));
+		free(data);
+	}
+	free(objects);
+
+	return 0;
+}
+
+static int process_one_pack(const char *path)
+{
+	char arg[PATH_MAX];
+	int len;
+	struct packed_git *p;
+
+	len = strlcpy(arg, path, PATH_MAX);
+	if (len >= PATH_MAX)
+		return error("name too long: %s", path);
+
+	/*
+	 * In addition to "foo.idx" we accept "foo.pack" and "foo";
+	 * normalize these forms to "foo.idx" for add_packed_git().
+	 */
+	if (has_extension(arg, ".pack")) {
+		strcpy(arg + len - 5, ".idx");
+		len--;
+	} else if (!has_extension(arg, ".idx")) {
+		if (len + 4 >= PATH_MAX)
+			return error("name too long: %s.idx", arg);
+		strcpy(arg + len, ".idx");
+		len += 4;
+	}
+
+	/*
+	 * add_packed_git() uses our buffer (containing "foo.idx") to
+	 * build the pack filename ("foo.pack").  Make sure it fits.
+	 */
+	if (len + 1 >= PATH_MAX) {
+		arg[len - 4] = '\0';
+		return error("name too long: %s.pack", arg);
+	}
+
+	p = add_packed_git(arg, len, 1);
+	if (!p)
+		return error("packfile %s not found.", arg);
+
+	install_packed_git(p);
+	if (open_pack_index(p))
+		return error("packfile %s index not opened", p->pack_name);
+	return create_pack_dictionaries(p);
+}
+
+int main(int argc, char *argv[])
+{
+	if (argc != 2) {
+		fprintf(stderr, "Usage: %s <packfile>\n", argv[0]);
+		exit(1);
+	}
+	process_one_pack(argv[1]);
+	dict_dump(tree_path_table);
+	return 0;
 }
