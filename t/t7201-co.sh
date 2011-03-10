@@ -408,6 +408,15 @@ test_expect_success 'checkout w/--track from non-branch HEAD fails' '
     test "z$(git rev-parse master^0)" = "z$(git rev-parse HEAD)"
 '
 
+test_expect_success 'checkout w/--track from tag fails' '
+    git checkout master^0 &&
+    test_must_fail git symbolic-ref HEAD &&
+    test_must_fail git checkout --track -b track frotz &&
+    test_must_fail git rev-parse --verify track &&
+    test_must_fail git symbolic-ref HEAD &&
+    test "z$(git rev-parse master^0)" = "z$(git rev-parse HEAD)"
+'
+
 test_expect_success 'detach a symbolic link HEAD' '
     git checkout master &&
     git config --bool core.prefersymlinkrefs yes &&
@@ -423,7 +432,6 @@ test_expect_success 'detach a symbolic link HEAD' '
 test_expect_success \
     'checkout with --track fakes a sensible -b <name>' '
     git update-ref refs/remotes/origin/koala/bear renamer &&
-    git update-ref refs/new/koala/bear renamer &&
 
     git checkout --track origin/koala/bear &&
     test "refs/heads/koala/bear" = "$(git symbolic-ref HEAD)" &&
@@ -438,12 +446,6 @@ test_expect_success \
     git checkout master && git branch -D koala/bear &&
 
     git checkout --track remotes/origin/koala/bear &&
-    test "refs/heads/koala/bear" = "$(git symbolic-ref HEAD)" &&
-    test "$(git rev-parse HEAD)" = "$(git rev-parse renamer)" &&
-
-    git checkout master && git branch -D koala/bear &&
-
-    git checkout --track refs/new/koala/bear &&
     test "refs/heads/koala/bear" = "$(git symbolic-ref HEAD)" &&
     test "$(git rev-parse HEAD)" = "$(git rev-parse renamer)"
 '
