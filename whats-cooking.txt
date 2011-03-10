@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Feb 2011, #07; Mon, 28)
-X-master-at: f70f736bcbb22cfe434eaf20089d9713b991ee31
-X-next-at: 0b70480002217322d29f03aafa94d076d6e8c8d5
+Subject: What's cooking in git.git (Mar 2011, #01; Wed, 9)
+X-master-at: 83c3c6222a2331042c973a991572eafa37f25d1d
+X-next-at: 3762932566eb538e640deb32358f68ec4c28ad7f
 
-What's cooking in git.git (Feb 2011, #07; Mon, 28)
+What's cooking in git.git (Mar 2011, #01; Wed, 9)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -13,6 +13,102 @@ I started draft release notes for 1.7.5 on 'master' branch.
 
 --------------------------------------------------
 [New Topics]
+
+* en/merge-recursive (2011-02-28) 3 commits
+  (merged to 'next' on 2011-03-09 at 3762932)
+ + merge-recursive: When we detect we can skip an update, actually skip it
+ + t6022: New test checking for unnecessary updates of files in D/F conflicts
+ + t6022: New test checking for unnecessary updates of renamed+modified files
+
+* jc/maint-apply-no-double-patch (2011-03-04) 1 commit
+  (merged to 'next' on 2011-03-09 at 6ec48e7)
+ + apply: do not patch lines that were already patched
+
+* jc/maint-apply-report-offset (2011-03-04) 1 commit
+  (merged to 'next' on 2011-03-09 at 1bb74ef)
+ + apply -v: show offset count when patch did not apply exactly
+
+* jk/edit-notes-in-commit-log (2011-03-07) 2 commits
+ - [wip] commit: allow editing notes in commit message editor
+ - notes: make expand_notes_ref globally accessible
+
+* js/rerere-forget-always-take-pathspec (2011-03-01) 1 commit
+ - rerere forget: deprecate invocation without pathspec
+
+* mg/grep-full-tree (2011-03-01) 2 commits
+ - grep: make --full-tree work with pathspecs
+ - grep: --full-tree
+
+* mg/rev-list-n-reverse-doc (2011-03-08) 2 commits
+ - git-log.txt,rev-list-options.txt: put option blocks in proper order
+ - git-log.txt,rev-list-options.txt: -n/--max-count is commit limiting
+
+* mm/maint-log-n-with-diff-filtering (2011-03-09) 1 commit
+ - log: fix --max-count when used together with -S or -G
+
+* mr/hpux (2011-03-07) 2 commits
+  (merged to 'next' on 2011-03-09 at 8a5fe11)
+ + git-compat-util.h: Honor HP C's noreturn attribute
+ + Makefile: add NO_FNMATCH_CASEFOLD to HP-UX section
+
+* nd/init-gitdir (2011-03-03) 1 commit
+ - init, clone: support --real-git-dir for .git file
+
+--------------------------------------------------
+[Graduated to "master"]
+
+* jc/grep--no-index-pathspec-fix (2011-02-16) 1 commit
+ + grep --no-index: honor pathspecs correctly
+
+* jk/diffstat-binary (2011-02-19) 2 commits
+ + diff: don't retrieve binary blobs for diffstat
+ + diff: handle diffstat of rewritten binary files
+
+* jk/fail-null-clone (2011-02-17) 1 commit
+ + clone: die when trying to clone missing local path
+
+* jn/maint-commit-missing-template (2011-02-25) 1 commit
+ + commit: error out for missing commit message template
+
+* jn/test-terminal-punt-on-osx-breakage (2011-02-17) 1 commit
+ + tests: skip terminal output tests on OS X
+
+* js/checkout-untracked-symlink (2011-02-20) 2 commits
+ + do not overwrite untracked symlinks
+ + Demonstrate breakage: checkout overwrites untracked symlink with directory
+
+* js/cherry-pick-usability (2011-02-19) 4 commits
+ + Teach commit about CHERRY_PICK_HEAD
+ + bash: teach __git_ps1 about CHERRY_PICK_HEAD
+ + Introduce CHERRY_PICK_HEAD
+ + t3507: introduce pristine-detach helper
+
+* lt/rename-no-extra-copy-detection (2011-02-18) 3 commits
+ + diffcore-rename: improve estimate_similarity() heuristics
+ + diffcore-rename: properly honor the difference between -M and -C
+ + for_each_hash: allow passing a 'void *data' pointer to callback
+
+* mg/maint-difftool-vim-readonly (2011-02-25) 1 commit
+ + mergetool-lib: call vim in readonly mode for diffs
+
+* mh/p4 (2011-02-25) 1 commit
+ + git-p4 submit: prevent 'Jobs' section from being removed from p4 change log
+
+* so/submodule-no-update-first-time (2011-02-17) 2 commits
+ + t7406: "git submodule update {--merge|--rebase]" with new submodules
+ + submodule: no [--merge|--rebase] when newly cloned
+
+--------------------------------------------------
+[Stalled]
+
+* jh/merge-sans-branch (2011-02-10) 4 commits
+ . merge: add support for merging from upstream by default
+ - merge: introduce per-branch-configuration helper function
+ - merge: introduce setup_merge_commit helper function
+ - merge: update the usage information to be more modern
+
+There was an objection to the tip one that determines the upstream in a
+wrong way?
 
 * jc/diff-irreversible-delete (2011-02-28) 1 commit
  - git diff -D: omit the preimage of deletes
@@ -27,38 +123,6 @@ Just a POC.
  - index-pack: group the delta-base array entries also by type
 
 Still a WIP.
-
-* mm/push-default-advice (2011-02-28) 2 commits
- - push: better error messages for detached HEAD and "no destination"
- - push: better error message when push.default = tracking
-
-There were some rewording discussion I didn't roll into this, not because
-I had objections to, but because I was handling other topics.  I expect
-I'll see a reroll soonish so that we can merge this down soonish.
-
-* sp/maint-fd-limit (2011-02-28) 2 commits
- - mingw: add minimum getrlimit() compatibility stub
- - Limit file descriptors used by packs
-
-Erik, please check the made-up commit log message and sign it off.
-Will merge to 'next' after that.
-
-* uk/ls-remote-in-get-remote-url (2011-02-28) 1 commit
- - get_remote_url(): use the same data source as ls-remote to get remote urls
-
-Will merge to 'next'.
-
---------------------------------------------------
-[Stalled]
-
-* jh/merge-sans-branch (2011-02-10) 4 commits
- . merge: add support for merging from upstream by default
- - merge: introduce per-branch-configuration helper function
- - merge: introduce setup_merge_commit helper function
- - merge: update the usage information to be more modern
-
-There was an objection to the tip one that determines the upstream in a
-wrong way?
 
 * jc/complete-symmetric-diff (2011-02-23) 1 commit
  - completion: complete "git diff ...branc<TAB>"
@@ -93,43 +157,62 @@ Somebody said that this is an expensive no-op?
 --------------------------------------------------
 [Cooking]
 
-* jn/maint-commit-missing-template (2011-02-25) 1 commit
-  (merged to 'next' on 2011-02-25 at c95589d)
- + commit: error out for missing commit message template
+* jl/submodule-fetch-on-demand (2011-03-06) 7 commits
+ - fetch/pull: Describe --recurse-submodule restrictions in the BUGS section
+ - submodule update: Don't fetch when the submodule commit is already present
+ - fetch/pull: Don't recurse into a submodule when commits are already present
+ - Submodules: Add 'on-demand' value for the 'fetchRecurseSubmodule' option
+ - config: teach the fetch.recurseSubmodules option the 'on-demand' value
+ - fetch/pull: Add the 'on-demand' value to the --recurse-submodules option
+ - fetch/pull: recurse into submodules when necessary
 
-* mg/maint-difftool-vim-readonly (2011-02-25) 1 commit
-  (merged to 'next' on 2011-02-25 at 990579c)
- + mergetool-lib: call vim in readonly mode for diffs
+* mm/push-default-advice (2011-03-02) 2 commits
+  (merged to 'next' on 2011-03-09 at 160095b)
+ + push: better error message when no remote configured
+ + push: better error messages when push.default = tracking
+
+* sp/maint-fd-limit (2011-03-02) 3 commits
+  (merged to 'next' on 2011-03-09 at 389e97d)
+ + sha1_file.c: Don't retain open fds on small packs
+ + mingw: add minimum getrlimit() compatibility stub
+ + Limit file descriptors used by packs
+
+* uk/ls-remote-in-get-remote-url (2011-03-01) 2 commits
+  (merged to 'next' on 2011-03-09 at 09b570b)
+ + git-request-pull: open-code the only invocation of get_remote_url
+ + get_remote_url(): use the same data source as ls-remote to get remote urls
 
 * fk/maint-cvsimport-early-failure (2011-01-31) 1 commit
- - git-cvsimport.perl: Bail out right away when reading from the server fails
+  (merged to 'next' on 2011-03-09 at b4dee9e)
+ + git-cvsimport.perl: Bail out right away when reading from the server fails
 
-* jk/strbuf-vaddf (2011-02-25) 2 commits
- - strbuf: add strbuf_vaddf
- - compat: provide a fallback va_copy definition
+* jk/strbuf-vaddf (2011-03-08) 3 commits
+  (merged to 'next' on 2011-03-09 at 9651bc5)
+ + compat: fall back on __va_copy if available
+ + strbuf: add strbuf_vaddf
+ + compat: provide a fallback va_copy definition
  (this branch is used by ab/i18n-st, jk/trace-sifter and jn/status-translatable.)
 
 * jk/trace-sifter (2011-02-24) 6 commits
- - trace: give repo_setup trace its own key
- - add packet tracing debug code
- - trace: add trace_strbuf
- - trace: factor out "do we want to trace" logic
- - trace: refactor to support multiple env variables
- - trace: add trace_vprintf
+  (merged to 'next' on 2011-03-09 at 07841db)
+ + trace: give repo_setup trace its own key
+ + add packet tracing debug code
+ + trace: add trace_strbuf
+ + trace: factor out "do we want to trace" logic
+ + trace: refactor to support multiple env variables
+ + trace: add trace_vprintf
  (this branch uses jk/strbuf-vaddf; is tangled with ab/i18n-st and jn/status-translatable.)
 
 * jn/maint-instaweb-plack-fix (2011-02-26) 1 commit
- - git-instaweb: Change how gitweb.psgi is made runnable as standalone app
+  (merged to 'next' on 2011-03-09 at 3c9e14b)
+ + git-instaweb: Change how gitweb.psgi is made runnable as standalone app
 
 * jn/status-translatable (2011-02-25) 3 commits
- - commit, status: use status_printf{,_ln,_more} helpers
- - commit: refer to commit template as s->fp
- - wt-status: add helpers for printing wt-status lines
- (this branch is used by ab/i18n-st and ab/i18n-st; uses jk/strbuf-vaddf; is tangled with jk/trace-sifter.)
-
-* mh/p4 (2011-02-25) 1 commit
-  (merged to 'next' on 2011-02-26 at 1693331)
- + git-p4 submit: prevent 'Jobs' section from being removed from p4 change log
+  (merged to 'next' on 2011-03-09 at d00d23d)
+ + commit, status: use status_printf{,_ln,_more} helpers
+ + commit: refer to commit template as s->fp
+ + wt-status: add helpers for printing wt-status lines
+ (this branch uses jk/strbuf-vaddf; is tangled with ab/i18n-st and jk/trace-sifter.)
 
 * nd/rfc-add-u-full-tree (2011-02-07) 1 commit
  - add: make "add -u" update full tree without pathspec
@@ -139,17 +222,16 @@ Somebody said that this is an expensive no-op?
  - mergetool--lib: Sort tools alphabetically for easier lookup
 
 * ss/mergetool--lib (2011-02-27) 2 commits
- - mergetool--lib: Add Beyond Compare 3 as a tool
- - mergetool--lib: Sort tools alphabetically for easier lookup
-
-Will merge to 'next'.
+  (merged to 'next' on 2011-03-09 at 004fb9c)
+ + mergetool--lib: Add Beyond Compare 3 as a tool
+ + mergetool--lib: Sort tools alphabetically for easier lookup
 
 * nd/index-doc (2010-09-06) 1 commit
  - doc: technical details about the index file format
 
 I'll try to find time to fill in the details.
 
-* ab/i18n-st (2011-02-22) 74 commits
+* ab/i18n-st (2011-02-22) 79 commits
  - i18n: git-shortlog basic messages
  - i18n: git-revert split up "could not revert/apply" message
  - i18n: git-revert literal "me" messages
@@ -221,107 +303,57 @@ I'll try to find time to fill in the details.
  - i18n: git-init basic messages
  - i18n: "make distclean" should clean up after "make pot"
  - i18n: Makefile: "pot" target to extract messages marked for translation
+ - i18n: avoid conflict with ngettext from libintl
+ - i18n: add stub ngettext implementation
  - i18n: do not poison translations unless GIT_GETTEXT_POISON envvar is set
  - i18n: add GETTEXT_POISON to simulate unfriendly translator
  - i18n: add no-op _() and N_() wrappers
- (this branch uses jk/strbuf-vaddf, jn/status-translatable and jn/status-translatable; is tangled with jk/trace-sifter.)
+ - commit, status: use status_printf{,_ln,_more} helpers
+ - commit: refer to commit template as s->fp
+ - wt-status: add helpers for printing wt-status lines
+ (this branch uses jk/strbuf-vaddf; is tangled with jk/trace-sifter and jn/status-translatable.)
 
-Rebased on other infrastructure adjustments (tentatively renamed the
-branch).  I'd like to fast-track the basics (especially the bottom 3
-patches), and am even tempted to rebase other patches on 'pu' that are not
-yet in 'next' on top of them, to make the transition easier.
-
-Unless there is something glaringly wrong, I'd merge up to 9018b8a (i18n:
-git-clone "Cloning into" message) to 'next' soonish, possibly rebasing
-other 'pu'-only topics on top of that commit.
+Added ngettext() stuff to the base.
+Will merge early parts to 'next'.
 
 * jc/checkout-orphan-warning (2011-02-18) 1 commit
- - commit: give final warning when reattaching HEAD to leave commits behind
+  (merged to 'next' on 2011-03-09 at 765cf75)
+ + commit: give final warning when reattaching HEAD to leave commits behind
 
 * jh/maint-do-not-track-non-branches (2011-02-17) 1 commit
- - branch/checkout --track: Ensure that upstream branch is indeed a branch
-
-Will merge to 'next'.
-
-* jk/diffstat-binary (2011-02-19) 2 commits
-  (merged to 'next' on 2011-02-23 at 49da967)
- + diff: don't retrieve binary blobs for diffstat
- + diff: handle diffstat of rewritten binary files
-
-* jk/fail-null-clone (2011-02-17) 1 commit
-  (merged to 'next' on 2011-02-23 at a4217f5)
- + clone: die when trying to clone missing local path
+  (merged to 'next' on 2011-03-09 at 13a9328)
+ + branch/checkout --track: Ensure that upstream branch is indeed a branch
 
 * jk/merge-rename-ux (2011-02-20) 6 commits
- - pull: propagate --progress to merge
- - merge: enable progress reporting for rename detection
- - add inexact rename detection progress infrastructure
- - commit: stop setting rename limit
- - bump rename limit defaults (again)
- - merge: improve inexact rename limit warning
+  (merged to 'next' on 2011-03-09 at df1943a)
+ + pull: propagate --progress to merge
+ + merge: enable progress reporting for rename detection
+ + add inexact rename detection progress infrastructure
+ + commit: stop setting rename limit
+ + bump rename limit defaults (again)
+ + merge: improve inexact rename limit warning
 
-Will merge to 'next'.
-
-* jn/test-terminal-punt-on-osx-breakage (2011-02-17) 1 commit
-  (merged to 'next' on 2011-02-23 at d754139)
- + tests: skip terminal output tests on OS X
-
-* js/cherry-pick-usability (2011-02-19) 4 commits
-  (merged to 'next' on 2011-02-23 at 95db30e)
- + Teach commit about CHERRY_PICK_HEAD
- + bash: teach __git_ps1 about CHERRY_PICK_HEAD
- + Introduce CHERRY_PICK_HEAD
- + t3507: introduce pristine-detach helper
-
-* lt/rename-no-extra-copy-detection (2011-02-18) 3 commits
-  (merged to 'next' on 2011-02-23 at 2c1f271)
- + diffcore-rename: improve estimate_similarity() heuristics
- + diffcore-rename: properly honor the difference between -M and -C
- + for_each_hash: allow passing a 'void *data' pointer to callback
-
-* mg/rev-list-one-side-only (2011-02-22) 6 commits
+* mg/rev-list-one-side-only (2011-03-07) 9 commits
  - t6007: test rev-list --cherry
  - log --cherry: a synonym
+ - rev-list: documentation and test for --cherry-mark
+ - revision.c: introduce --cherry-mark
+ - rev-list/log: factor out revision mark generation
  - rev-list: --left/right-only are mutually exclusive
  - rev-list: documentation and test for --left/right-only
  - t6007: Make sure we test --cherry-pick
  - revlist.c: introduce --left/right-only for unsymmetric picking
 
-Will merge to 'next'; somebody may want to try losing many lines from
-format-patch before it hits 'master', though.  Hint, hint...
-
-* so/submodule-no-update-first-time (2011-02-17) 2 commits
-  (merged to 'next' on 2011-02-23 at 2c6e8c9)
- + t7406: "git submodule update {--merge|--rebase]" with new submodules
- + submodule: no [--merge|--rebase] when newly cloned
-
-* jh/submodule-fetch-on-demand (2011-02-23) 6 commits
- - submodule update: Don't fetch when the submodule commit is already present
- - fetch/pull: Don't recurse into a submodule when commits are already present
- - Submodules: Add 'on-demand' value for the 'fetchRecurseSubmodule' option
- - config: teach the fetch.recurseSubmodules option the 'on-demand' value
- - fetch/pull: Add the 'on-demand' value to the --recurse-submodules option
- - fetch/pull: recurse into submodules when necessary
-
-How well has this been cooked?
+Will merge to 'next'. Looked much nicer than the previous round.
 
 * jk/format-patch-multiline-header (2011-02-23) 3 commits
- - format-patch: rfc2047-encode newlines in headers
- - format-patch: wrap long header lines
- - strbuf: add fixed-length version of add_wrapped_text
+  (merged to 'next' on 2011-03-09 at f970fe3)
+ + format-patch: rfc2047-encode newlines in headers
+ + format-patch: wrap long header lines
+ + strbuf: add fixed-length version of add_wrapped_text
 
-Will merge to 'next'.
-
-* js/checkout-untracked-symlink (2011-02-20) 2 commits
-  (merged to 'next' on 2011-02-23 at 52a35ce)
- + do not overwrite untracked symlinks
- + Demonstrate breakage: checkout overwrites untracked symlink with directory
-
-* jc/grep--no-index-pathspec-fix (2011-02-16) 1 commit
-  (merged to 'next' on 2011-02-23 at 58b03b1)
- + grep --no-index: honor pathspecs correctly
-
-* mz/rebase (2011-02-24) 33 commits
+* mz/rebase (2011-02-28) 34 commits
+ - rebase: define options in OPTIONS_SPEC
   (merged to 'next' on 2011-02-25 at 52caa7a)
  + Makefile: do not install sourced rebase scripts
   (merged to 'next' on 2011-02-22 at 3219155)
@@ -357,6 +389,3 @@ Will merge to 'next'.
  + rebase: read state outside loop
  + rebase: refactor reading of state
  + rebase: clearer names for directory variables
-
-Minor UI regression was reported but otherwise it looked like that the
-topic is in a good shape.
