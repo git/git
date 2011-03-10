@@ -168,6 +168,7 @@ extern int handle_revision_arg(const char *arg, struct rev_info *revs,int flags,
 extern int prepare_revision_walk(struct rev_info *revs);
 extern struct commit *get_revision(struct rev_info *revs);
 extern char *get_revision_mark(const struct rev_info *revs, const struct commit *commit);
+extern void put_revision_mark(const struct rev_info *revs, const struct commit *commit);
 
 extern void mark_parents_uninteresting(struct commit *commit);
 extern void mark_tree_uninteresting(struct tree *tree);
