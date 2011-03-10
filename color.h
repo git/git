@@ -1,6 +1,8 @@
 #ifndef COLOR_H
 #define COLOR_H
 
+struct strbuf;
+
 /*  2 + (2 * num_attrs) + 8 + 1 + 8 + 'm' + NUL */
 /* "\033[1;2;4;5;7;38;5;2xx;48;5;2xxm\0" */
 /*
@@ -64,6 +66,7 @@ __attribute__((format (printf, 3, 4)))
 int color_fprintf(FILE *fp, const char *color, const char *fmt, ...);
 __attribute__((format (printf, 3, 4)))
 int color_fprintf_ln(FILE *fp, const char *color, const char *fmt, ...);
+void color_print_strbuf(FILE *fp, const char *color, const struct strbuf *sb);
 
 int color_is_nil(const char *color);
 
