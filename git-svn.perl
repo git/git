@@ -5734,7 +5734,7 @@ sub cmd_show_log {
 	my (@k, $c, $d, $stat);
 	my $esc_color = qr/(?:\033\[(?:(?:\d+;)*\d*)?m)*/;
 	while (<$log>) {
-		if (/^${esc_color}commit -?($::sha1_short)/o) {
+		if (/^${esc_color}commit (- )?($::sha1_short)/o) {
 			my $cmt = $1;
 			if ($c && cmt_showable($c) && $c->{r} != $r_last) {
 				$r_last = $c->{r};
