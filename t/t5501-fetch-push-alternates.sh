@@ -54,7 +54,7 @@ test_expect_success 'pushing into a repository with the same alternate' '
 	test_cmp one.count receiver.count
 '
 
-test_expect_failure 'fetching from a repository with the same alternate' '
+test_expect_success 'fetching from a repository with the same alternate' '
 	(
 		cd fetcher &&
 		git fetch ../one master:refs/heads/it &&
