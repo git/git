@@ -877,11 +877,3 @@ reset) branches-maxRev and/or tags-maxRev as appropriate.
 SEE ALSO
 --------
 linkgit:git-rebase[1]
-
-Author
-------
-Written by Eric Wong <normalperson@yhbt.net>.
-
-Documentation
--------------
-Written by Eric Wong <normalperson@yhbt.net>.

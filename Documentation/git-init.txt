@@ -134,15 +134,6 @@ $ git add .     <2>
 <1> prepare /path/to/my/codebase/.git directory
 <2> add all existing file to the index
 
-
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org>
-
-Documentation
---------------
-Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
-
 GIT
 ---
 Part of the linkgit:git[1] suite

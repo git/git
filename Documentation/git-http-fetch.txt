@@ -43,14 +43,6 @@ commit-id::
 	Verify that everything reachable from target is fetched.  Used after
 	an earlier fetch is interrupted.
 
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org>
-
-Documentation
---------------
-Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
-
 GIT
 ---
 Part of the linkgit:git[1] suite

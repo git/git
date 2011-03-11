@@ -745,16 +745,10 @@ unmerged version of a file when a merge is in progress.
 
 Authors
 -------
-* git's founding father is Linus Torvalds <torvalds@osdl.org>.
-* The current git nurse is Junio C Hamano <gitster@pobox.com>.
-* The git potty was written by Andreas Ericsson <ae@op5.se>.
-* General upbringing is handled by the git-list <git@vger.kernel.org>.
-
-Documentation
---------------
-The documentation for git suite was started by David Greaves
-<david@dgreaves.com>, and later enhanced greatly by the
-contributors on the git-list <git@vger.kernel.org>.
+Git was started by Linus Torvalds, and is currently maintained by Junio
+C Hamano. Numerous contributions have come from the git mailing list
+<git@vger.kernel.org>. For a complete list of contributors, see
+linkgit:git-shortlog[1] and linkgit:git-blame[1].
 
 Reporting Bugs
 --------------

@@ -105,14 +105,6 @@ git revert -n master{tilde}5..master{tilde}2::
 	changes. The revert only modifies the working tree and the
 	index.
 
-Author
-------
-Written by Junio C Hamano <gitster@pobox.com>
-
-Documentation
---------------
-Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
-
 SEE ALSO
 --------
 linkgit:git-cherry-pick[1]

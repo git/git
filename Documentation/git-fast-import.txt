@@ -1350,14 +1350,6 @@ operator can use this facility to peek at the objects and refs from an
 import in progress, at the cost of some added running time and worse
 compression.
 
-Author
-------
-Written by Shawn O. Pearce <spearce@spearce.org>.
-
-Documentation
---------------
-Documentation by Shawn O. Pearce <spearce@spearce.org>.
-
 GIT
 ---
 Part of the linkgit:git[1] suite

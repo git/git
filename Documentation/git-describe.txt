@@ -156,17 +156,6 @@ selected and output.  Here fewest commits different is defined as
 the number of commits which would be shown by `git log tag..input`
 will be the smallest number of commits possible.
 
-
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org>, but somewhat
-butchered by Junio C Hamano <gitster@pobox.com>.  Later significantly
-updated by Shawn Pearce <spearce@spearce.org>.
-
-Documentation
---------------
-Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
-
 GIT
 ---
 Part of the linkgit:git[1] suite

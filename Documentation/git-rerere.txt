@@ -205,11 +205,6 @@ would conflict the same way as the test merge you resolved earlier.
 'git rerere' will be run by 'git rebase' to help you resolve this
 conflict.
 
-
-Author
-------
-Written by Junio C Hamano <gitster@pobox.com>
-
 GIT
 ---
 Part of the linkgit:git[1] suite

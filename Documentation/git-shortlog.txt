@@ -68,15 +68,6 @@ spelled differently.
 
 include::mailmap.txt[]
 
-
-Author
-------
-Written by Jeff Garzik <jgarzik@pobox.com>
-
-Documentation
---------------
-Documentation by Junio C Hamano.
-
 GIT
 ---
 Part of the linkgit:git[1] suite

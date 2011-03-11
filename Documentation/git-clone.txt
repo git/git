@@ -236,17 +236,6 @@ $ git clone --bare -l -s /pub/scm/.../torvalds/linux-2.6.git \
     /pub/scm/.../me/subsys-2.6.git
 ------------
 
-
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org>
-
-
-Documentation
---------------
-Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
-
-
 GIT
 ---
 Part of the linkgit:git[1] suite

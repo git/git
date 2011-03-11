@@ -102,14 +102,6 @@ both '1' and '2' are merge-bases of A and B.  Neither one is better than
 the other (both are 'best' merge bases).  When the `--all` option is not given,
 it is unspecified which best one is output.
 
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org>
-
-Documentation
---------------
-Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
-
 See also
 --------
 linkgit:git-rev-list[1],

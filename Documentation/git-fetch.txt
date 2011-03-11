@@ -80,16 +80,6 @@ SEE ALSO
 --------
 linkgit:git-pull[1]
 
-
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org> and
-Junio C Hamano <gitster@pobox.com>
-
-Documentation
--------------
-Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
-
 GIT
 ---
 Part of the linkgit:git[1] suite

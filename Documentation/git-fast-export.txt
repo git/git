@@ -135,15 +135,6 @@ Since 'git fast-import' cannot tag trees, you will not be
 able to export the linux-2.6.git repository completely, as it contains
 a tag referencing a tree instead of a commit.
 
-
-Author
-------
-Written by Johannes E. Schindelin <johannes.schindelin@gmx.de>.
-
-Documentation
---------------
-Documentation by Johannes E. Schindelin <johannes.schindelin@gmx.de>.
-
 GIT
 ---
 Part of the linkgit:git[1] suite

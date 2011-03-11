@@ -219,15 +219,6 @@ self-contained. Use `git index-pack --fix-thin`
 	With this option, parents that are hidden by grafts are packed
 	nevertheless.
 
-
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org>
-
-Documentation
--------------
-Documentation by Junio C Hamano
-
 SEE ALSO
 --------
 linkgit:git-rev-list[1]

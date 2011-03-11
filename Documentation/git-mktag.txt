@@ -32,15 +32,6 @@ exists, is separated by a blank line from the header.  The
 message part may contain a signature that git itself doesn't
 care about, but that can be verified with gpg.
 
-
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org>
-
-Documentation
---------------
-Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
-
 GIT
 ---
 Part of the linkgit:git[1] suite

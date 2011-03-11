@@ -23,14 +23,6 @@ merge results outside of the index, and stuff the results back into the
 index.  For this reason, the output from the command omits
 entries that match the <branch1> tree.
 
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org>
-
-Documentation
---------------
-Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
-
 GIT
 ---
 Part of the linkgit:git[1] suite

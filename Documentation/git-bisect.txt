@@ -322,14 +322,6 @@ $ git bisect run sh -c "make || exit 125; ~/check_test_case.sh"
 +
 Does the same as the previous example, but on a single line.
 
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org>
-
-Documentation
--------------
-Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
-
 SEE ALSO
 --------
 link:git-bisect-lk2009.html[Fighting regressions with git bisect],

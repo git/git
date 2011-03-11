@@ -72,17 +72,6 @@ Discussion
 
 include::i18n.txt[]
 
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org> and
-Junio C Hamano <gitster@pobox.com>.  Significantly enhanced by
-Johannes Schindelin <Johannes.Schindelin@gmx.de>.
-
-
-Documentation
--------------
-Documentation by David Greaves, Petr Baudis and the git-list <git@vger.kernel.org>.
-
 GIT
 ---
 Part of the linkgit:git[1] suite
