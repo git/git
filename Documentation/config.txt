@@ -376,15 +376,6 @@ core.warnAmbiguousRefs::
 	If true, git will warn you if the ref name you passed it is ambiguous
 	and might match multiple refs in the .git/refs/ tree. True by default.
 
-core.abbrevguard::
-	Even though git makes sure that it uses enough hexdigits to show
-	an abbreviated object name unambiguously, as more objects are
-	added to the repository over time, a short name that used to be
-	unique will stop being unique.  Git uses this many extra hexdigits
-	that are more than necessary to make the object name currently
-	unique, in the hope that its output will stay unique a bit longer.
-	Defaults to 0.
-
 core.compression::
 	An integer -1..9, indicating a default compression level.
 	-1 is the zlib default. 0 means no compression,
