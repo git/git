@@ -166,4 +166,7 @@ int transport_refs_pushed(struct ref *ref);
 void transport_print_push_status(const char *dest, struct ref *refs,
 		  int verbose, int porcelain, int *nonfastforward);
 
+typedef void alternate_ref_fn(const struct ref *, void *);
+extern int refs_from_alternate_cb(struct alternate_object_database *e, void *cb);
+
 #endif
