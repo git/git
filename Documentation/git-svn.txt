@@ -877,3 +877,7 @@ reset) branches-maxRev and/or tags-maxRev as appropriate.
 SEE ALSO
 --------
 linkgit:git-rebase[1]
+
+GIT
+---
+Part of the linkgit:git[1] suite
