@@ -7,7 +7,7 @@ git-rerere - Reuse recorded resolution of conflicted merges
 
 SYNOPSIS
 --------
-'git rerere' ['clear'|'forget' [<pathspec>]|'diff'|'status'|'gc']
+'git rerere' ['clear'|'forget' <pathspec>|'diff'|'status'|'gc']
 
 DESCRIPTION
 -----------
@@ -43,7 +43,7 @@ will automatically invoke this command.
 'forget' <pathspec>::
 
 This resets the conflict resolutions which rerere has recorded for the current
-conflict in <pathspec>.  The <pathspec> is optional.
+conflict in <pathspec>.
 
 'diff'::
 
