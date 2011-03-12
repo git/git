@@ -37,11 +37,27 @@ test_expect_success 'add p4 files' '
 	echo file1 >file1 &&
 	p4 add file1 &&
 	p4 submit -d "file1" &&
+	echo file2 >file2 &&
+	p4 add file2 &&
+	p4 submit -d "file2" &&
 	cd "$TRASH_DIRECTORY"
 '
 
 test_expect_success 'basic git-p4 clone' '
 	"$GITP4" clone --dest="$git" //depot &&
+	cd "$git" &&
+	git log --oneline >lines &&
+	test_line_count = 1 lines &&
+	cd .. &&
+	rm -rf "$git" && mkdir "$git"
+'
+
+test_expect_success 'git-p4 clone @all' '
+	"$GITP4" clone --dest="$git" //depot@all &&
+	cd "$git" &&
+	git log --oneline >lines &&
+	test_line_count = 2 lines &&
+	cd .. &&
 	rm -rf "$git" && mkdir "$git"
 '
 
