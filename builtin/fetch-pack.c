@@ -379,6 +379,8 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 					retval = 0;
 					in_vain = 0;
 					got_continue = 1;
+					if (ack == ACK_ready)
+						rev_list = NULL;
 					break;
 					}
 				}
