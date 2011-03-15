@@ -160,7 +160,7 @@ static int get_value(const char *key_, const char *regex_)
 	if (!local) {
 		const char *home = getenv("HOME");
 		local = repo_config = git_pathdup("config");
-		if (git_config_global() && home)
+		if (home)
 			global = xstrdup(mkpath("%s/.gitconfig", home));
 		if (git_config_system())
 			system_wide = git_etc_gitconfig();

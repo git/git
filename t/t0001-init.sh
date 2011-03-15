@@ -47,7 +47,7 @@ test_expect_success 'plain nested in bare' '
 
 test_expect_success 'plain through aliased command, outside any git repo' '
 	(
-		sane_unset GIT_DIR GIT_WORK_TREE GIT_CONFIG_NOGLOBAL &&
+		sane_unset GIT_DIR GIT_WORK_TREE &&
 		HOME=$(pwd)/alias-config &&
 		export HOME &&
 		mkdir alias-config &&
@@ -231,7 +231,6 @@ test_expect_success 'init with init.templatedir set' '
 		git config -f "$test_config"  init.templatedir "${HOME}/templatedir-source" &&
 		mkdir templatedir-set &&
 		cd templatedir-set &&
-		sane_unset GIT_CONFIG_NOGLOBAL &&
 		sane_unset GIT_TEMPLATE_DIR &&
 		NO_SET_GIT_TEMPLATE_DIR=t &&
 		export NO_SET_GIT_TEMPLATE_DIR &&
@@ -243,7 +242,6 @@ test_expect_success 'init with init.templatedir set' '
 test_expect_success 'init --bare/--shared overrides system/global config' '
 	(
 		test_config="$HOME"/.gitconfig &&
-		sane_unset GIT_CONFIG_NOGLOBAL &&
 		git config -f "$test_config" core.bare false &&
 		git config -f "$test_config" core.sharedRepository 0640 &&
 		mkdir init-bare-shared-override &&
@@ -258,7 +256,6 @@ test_expect_success 'init --bare/--shared overrides system/global config' '
 test_expect_success 'init honors global core.sharedRepository' '
 	(
 		test_config="$HOME"/.gitconfig &&
-		sane_unset GIT_CONFIG_NOGLOBAL &&
 		git config -f "$test_config" core.sharedRepository 0666 &&
 		mkdir shared-honor-global &&
 		cd shared-honor-global &&
