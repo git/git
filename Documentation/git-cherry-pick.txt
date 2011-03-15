@@ -171,14 +171,6 @@ the working tree.
 spending extra time to avoid mistakes based on incorrectly matching
 context lines.
 
-Author
-------
-Written by Junio C Hamano <gitster@pobox.com>
-
-Documentation
---------------
-Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
-
 SEE ALSO
 --------
 linkgit:git-revert[1]

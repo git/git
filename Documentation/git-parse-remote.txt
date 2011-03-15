@@ -17,14 +17,6 @@ routines to parse files under $GIT_DIR/remotes/ and
 $GIT_DIR/branches/ and configuration variables that are related
 to fetching, pulling and pushing.
 
-Author
-------
-Written by Junio C Hamano.
-
-Documentation
---------------
-Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
-
 GIT
 ---
 Part of the linkgit:git[1] suite

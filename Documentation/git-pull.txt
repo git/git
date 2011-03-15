@@ -224,18 +224,6 @@ SEE ALSO
 --------
 linkgit:git-fetch[1], linkgit:git-merge[1], linkgit:git-config[1]
 
-
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org>
-and Junio C Hamano <gitster@pobox.com>
-
-Documentation
---------------
-Documentation by Jon Loeliger,
-David Greaves,
-Junio C Hamano and the git-list <git@vger.kernel.org>.
-
 GIT
 ---
 Part of the linkgit:git[1] suite

@@ -105,16 +105,6 @@ include::rev-list-options.txt[]
 
 include::pretty-formats.txt[]
 
-
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org>
-
-Documentation
---------------
-Documentation by David Greaves, Junio C Hamano, Jonas Fonseca
-and the git-list <git@vger.kernel.org>.
-
 GIT
 ---
 Part of the linkgit:git[1] suite

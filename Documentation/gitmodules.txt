@@ -90,10 +90,6 @@ SEE ALSO
 --------
 linkgit:git-submodule[1] linkgit:git-config[1]
 
-DOCUMENTATION
--------------
-Documentation by Lars Hjemli <hjemli@gmail.com>
-
 GIT
 ---
 Part of the linkgit:git[1] suite

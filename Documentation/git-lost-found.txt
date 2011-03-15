@@ -67,15 +67,6 @@ $ git rev-parse not-lost-anymore
 1ef2b196d909eed523d4f3c9bf54b78cdd6843c6
 ------------
 
-Author
-------
-Written by Junio C Hamano <gitster@pobox.com>
-
-Documentation
---------------
-Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
-
-
 GIT
 ---
 Part of the linkgit:git[1] suite

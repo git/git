@@ -91,15 +91,6 @@ With '--force', the fast-forward check is disabled for all refs.
 Optionally, a <ref> parameter can be prefixed with a plus '+' sign
 to disable the fast-forward check only on that ref.
 
-
-Author
-------
-Written by Nick Hengeveld <nickh@reactrix.com>
-
-Documentation
---------------
-Documentation by Nick Hengeveld
-
 GIT
 ---
 Part of the linkgit:git[1] suite

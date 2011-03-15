@@ -86,15 +86,6 @@ SEE ALSO
 --------
 linkgit:gitattributes[5].
 
-
-Author
-------
-Written by Junio C Hamano <gitster@pobox.com>
-
-Documentation
---------------
-Documentation by James Bowes.
-
 GIT
 ---
 Part of the linkgit:git[1] suite

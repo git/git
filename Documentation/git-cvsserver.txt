@@ -391,22 +391,6 @@ Dependencies
 ------------
 'git-cvsserver' depends on DBD::SQLite.
 
-Copyright and Authors
----------------------
-
-This program is copyright The Open University UK - 2006.
-
-Authors:
-
-- Martyn Smith    <martyn@catalyst.net.nz>
-- Martin Langhoff <martin@laptop.org>
-
-with ideas and patches from participants of the git-list <git@vger.kernel.org>.
-
-Documentation
---------------
-Documentation by Martyn Smith <martyn@catalyst.net.nz>, Martin Langhoff <martin@laptop.org>, and Matthias Urlichs <smurf@smurf.noris.de>.
-
 GIT
 ---
 Part of the linkgit:git[1] suite

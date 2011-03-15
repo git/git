@@ -29,14 +29,6 @@ OPTIONS
 <end>::
 	Commit to end at; defaults to HEAD.
 
-Author
-------
-Written by Ryan Anderson <ryan@michonline.com> and Junio C Hamano <gitster@pobox.com>
-
-Documentation
---------------
-Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
-
 GIT
 ---
 Part of the linkgit:git[1] suite

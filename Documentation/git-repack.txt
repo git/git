@@ -123,15 +123,6 @@ need to set the configuration variable `repack.UseDeltaBaseOffset` to
 is unaffected by this option as the conversion is performed on the fly
 as needed in that case.
 
-
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org>
-
-Documentation
---------------
-Documentation by Ryan Anderson <ryan@michonline.com>
-
 SEE ALSO
 --------
 linkgit:git-pack-objects[1]

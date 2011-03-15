@@ -336,15 +336,6 @@ echo "${WS}your whitespace color or blue reverse${RESET}"
 
 include::config.txt[]
 
-
-Author
-------
-Written by Johannes Schindelin <Johannes.Schindelin@gmx.de>
-
-Documentation
---------------
-Documentation by Johannes Schindelin, Petr Baudis and the git-list <git@vger.kernel.org>.
-
 GIT
 ---
 Part of the linkgit:git[1] suite

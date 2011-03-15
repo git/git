@@ -47,14 +47,6 @@ for objects that are not deltified in the pack, and
 
 for objects that are deltified.
 
-Author
-------
-Written by Junio C Hamano <gitster@pobox.com>
-
-Documentation
---------------
-Documentation by Junio C Hamano
-
 GIT
 ---
 Part of the linkgit:git[1] suite
