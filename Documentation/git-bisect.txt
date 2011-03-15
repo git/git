@@ -294,6 +294,39 @@ It is safer if both "test.sh" and "check_test_case.sh" are
 outside the repository to prevent interactions between the bisect,
 make and test processes and the scripts.
 
+* Automatically bisect with temporary modifications (hot-fix):
++
+------------
+$ cat ~/test.sh
+#!/bin/sh
+
+# tweak the working tree by merging the hot-fix branch
+# and then attempt a build
+if	git merge --no-commit hot-fix &&
+	make
+then
+	# run project specific test and report its status
+	~/check_test_case.sh
+	status=$?
+else
+	# tell the caller this is untestable
+	status=125
+fi
+
+# undo the tweak to allow clean flipping to the next commit
+git reset --hard
+
+# return control
+exit $status
+------------
++
+This applies modifications from a hot-fix branch before each test run,
+e.g. in case your build or test environment changed so that older
+revisions may need a fix which newer ones have already. (Make sure the
+hot-fix branch is based off a commit which is contained in all revisions
+which you are bisecting, so that the merge does not pull in too much, or
+use `git cherry-pick` instead of `git merge`.)
+
 * Automatically bisect a broken test case:
 +
 ------------
