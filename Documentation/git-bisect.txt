@@ -274,53 +274,35 @@ $ git bisect start HEAD origin --    # HEAD is bad, origin is good
 $ git bisect run make test           # "make test" builds and tests
 ------------
 
-* Automatically bisect a broken test suite:
-+
-------------
-$ cat ~/test.sh
-#!/bin/sh
-make || exit 125                   # this skips broken builds
-make test                          # "make test" runs the test suite
-$ git bisect start v1.3 v1.1 --    # v1.3 is bad, v1.1 is good
-$ git bisect run ~/test.sh
-------------
-+
-Here we use a "test.sh" custom script. In this script, if "make"
-fails, we skip the current commit.
-+
-It is safer to use a custom script outside the repository to prevent
-interactions between the bisect, make and test processes and the
-script.
-+
-"make test" should "exit 0", if the test suite passes, and
-"exit 1" otherwise.
-
 * Automatically bisect a broken test case:
 +
 ------------
 $ cat ~/test.sh
 #!/bin/sh
 make || exit 125                     # this skips broken builds
-~/check_test_case.sh                 # does the test case passes ?
+~/check_test_case.sh                 # does the test case pass?
 $ git bisect start HEAD HEAD~10 --   # culprit is among the last 10
 $ git bisect run ~/test.sh
 ------------
 +
-Here "check_test_case.sh" should "exit 0" if the test case passes,
+Here we use a "test.sh" custom script. In this script, if "make"
+fails, we skip the current commit.
+"check_test_case.sh" should "exit 0" if the test case passes,
 and "exit 1" otherwise.
 +
-It is safer if both "test.sh" and "check_test_case.sh" scripts are
+It is safer if both "test.sh" and "check_test_case.sh" are
 outside the repository to prevent interactions between the bisect,
 make and test processes and the scripts.
 
-* Automatically bisect a broken test suite:
+* Automatically bisect a broken test case:
 +
 ------------
 $ git bisect start HEAD HEAD~10 --   # culprit is among the last 10
 $ git bisect run sh -c "make || exit 125; ~/check_test_case.sh"
 ------------
 +
-Does the same as the previous example, but on a single line.
+This shows that you can do without a run script if you write the test
+on a single line.
 
 Author
 ------
