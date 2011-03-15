@@ -2437,7 +2437,8 @@ static void update_image(struct image *img,
 }
 
 static int apply_one_fragment(struct image *img, struct fragment *frag,
-			      int inaccurate_eof, unsigned ws_rule)
+			      int inaccurate_eof, unsigned ws_rule,
+			      int nth_fragment)
 {
 	int match_beginning, match_end;
 	const char *patch = frag->patch;
@@ -2643,6 +2644,15 @@ static int apply_one_fragment(struct image *img, struct fragment *frag,
 				apply = 0;
 		}
 
+		if (apply_verbosely && applied_pos != pos) {
+			int offset = applied_pos - pos;
+			if (apply_in_reverse)
+				offset = 0 - offset;
+			fprintf(stderr,
+				"Hunk #%d succeeded at %d (offset %d lines).\n",
+				nth_fragment, applied_pos + 1, offset);
+		}
+
 		/*
 		 * Warn if it was necessary to reduce the number
 		 * of context lines.
@@ -2790,12 +2800,14 @@ static int apply_fragments(struct image *img, struct patch *patch)
 	const char *name = patch->old_name ? patch->old_name : patch->new_name;
 	unsigned ws_rule = patch->ws_rule;
 	unsigned inaccurate_eof = patch->inaccurate_eof;
+	int nth = 0;
 
 	if (patch->is_binary)
 		return apply_binary(img, patch);
 
 	while (frag) {
-		if (apply_one_fragment(img, frag, inaccurate_eof, ws_rule)) {
+		nth++;
+		if (apply_one_fragment(img, frag, inaccurate_eof, ws_rule, nth)) {
 			error("patch failed: %s:%ld", name, frag->oldpos);
 			if (!apply_with_reject)
 				return -1;
