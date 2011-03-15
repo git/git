@@ -378,14 +378,6 @@ linkgit:git-mv[1]
 linkgit:git-commit[1]
 linkgit:git-update-index[1]
 
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org>
-
-Documentation
---------------
-Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
-
 GIT
 ---
 Part of the linkgit:git[1] suite

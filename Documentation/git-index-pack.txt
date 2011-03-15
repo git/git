@@ -85,15 +85,6 @@ new .keep file was successfully created. This is useful to remove a
 .keep file used as a lock to prevent the race with 'git repack'
 mentioned above.
 
-
-Author
-------
-Written by Sergey Vlasov <vsu@altlinux.ru>
-
-Documentation
--------------
-Documentation by Sergey Vlasov
-
 GIT
 ---
 Part of the linkgit:git[1] suite

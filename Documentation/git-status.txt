@@ -174,14 +174,6 @@ SEE ALSO
 --------
 linkgit:gitignore[5]
 
-Author
-------
-Written by Junio C Hamano <gitster@pobox.com>.
-
-Documentation
---------------
-Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
-
 GIT
 ---
 Part of the linkgit:git[1] suite

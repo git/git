@@ -246,19 +246,9 @@ If `--index` is not specified, then the submodule commits in the patch
 are ignored and only the absence or presence of the corresponding
 subdirectory is checked and (if possible) updated.
 
-
 SEE ALSO
 --------
 linkgit:git-am[1].
-
-
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org>
-
-Documentation
---------------
-Documentation by Junio C Hamano
 
 GIT
 ---

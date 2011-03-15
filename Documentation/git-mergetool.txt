@@ -82,14 +82,6 @@ Setting the `mergetool.keepBackup` configuration variable to `false`
 causes `git mergetool` to automatically remove the backup as files
 are successfully merged.
 
-Author
-------
-Written by Theodore Y Ts'o <tytso@mit.edu>
-
-Documentation
---------------
-Documentation by Theodore Y Ts'o.
-
 GIT
 ---
 Part of the linkgit:git[1] suite

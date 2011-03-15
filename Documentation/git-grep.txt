@@ -203,16 +203,6 @@ git grep --all-match -e NODE -e Unexpected::
 	Looks for a line that has `NODE` or `Unexpected` in
 	files that have lines that match both.
 
-Author
-------
-Originally written by Linus Torvalds <torvalds@osdl.org>, later
-revamped by Junio C Hamano.
-
-
-Documentation
---------------
-Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
-
 GIT
 ---
 Part of the linkgit:git[1] suite

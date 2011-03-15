@@ -156,11 +156,6 @@ SEE ALSO
 linkgit:git-rm[1], linkgit:git-update-index[1],
 linkgit:gitrepository-layout[5]
 
-Documentation
--------------
-Documentation by David Greaves, Junio C Hamano, Josh Triplett,
-Frank Lichtenheld, and the git-list <git@vger.kernel.org>.
-
 GIT
 ---
 Part of the linkgit:git[1] suite

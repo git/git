@@ -214,16 +214,6 @@ linkgit:git-fetch[1]
 linkgit:git-branch[1]
 linkgit:git-config[1]
 
-Author
-------
-Written by Junio Hamano
-
-
-Documentation
---------------
-Documentation by J. Bruce Fields and the git-list <git@vger.kernel.org>.
-
-
 GIT
 ---
 Part of the linkgit:git[1] suite

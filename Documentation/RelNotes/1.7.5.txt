@@ -10,11 +10,24 @@ Updates since v1.7.4
 
  * Various vcs-svn enhancements.
 
+ * Update to more modern HP-UX port.
+
+ * "git apply -v" reports offset lines when the patch does not apply at
+   the exact location recorded in the diff output.
+
+ * "git branch --track" (and "git checkout --track --branch") used to
+   allow setting up a random non-branch that does not make sense to follow
+   as the "upstream".  The command correctly diagnoses it as an error.
+
  * "git config" used to be also known as "git repo-config", but the old
    name is now officially deprecated.
 
  * "git checkout --detach <commit>" is a more user friendly synonym for
    "git checkout <commit>^0".
+
+ * "git checkout" performed on detached HEAD gives a warning and an
+   advice when the commit being left behind will become unreachable from
+   any branch or tag.
 
  * "git cherry-pick" and "git revert" can be told to use custom merge
    strategy, similar to "git rebase".
@@ -23,15 +36,23 @@ Updates since v1.7.4
    stopped by conflicts, making it unnecessary to use "commit -c $commit"
    to conclude it.
 
+ * "git cvsimport" bails out immediately when the cvs server cannot be
+   reached, without spewing unnecessary error messages that complain about
+   the server response it never got.
+
  * "git grep --no-index" did not honor pathspecs correctly, returning
    paths outside the specified area.
+
+ * "git log" family of commands now understand globbing pathspecs.  You
+   can say "git log -- '*.txt'" for example.
 
  * "git rev-list --objects $revs -- $pathspec" would limit the objects listed
    in its output properly with the pathspec, in preparation for narrow
    clones.
 
- * "git log" family of commands now understand globbing pathspecs.  You
-   can say "git log -- '*.txt'" for example.
+ * "git push" with no parameters gives better advice messages when
+   "tracking" is used as the push.default semantics or there is no remote
+   configured yet.
 
  * "git rerere" learned a new subcommand "remaining", that is similar to
    "status" that lists the paths that had conflicts that are known to
@@ -51,6 +72,15 @@ Fixes since v1.7.4
 
 All of the fixes in the v1.7.4.X maintenance series are included in this
 release, unless otherwise noted.
+
+ * We used to keep one file descriptor open for each and every packfile
+   that we have a mmap window on it (read: "in use"), even when for very
+   tiny packfiles.  We now close the file descriptor early when the entire
+   packfile fits inside one mmap window.
+
+ * "git apply" used to confuse lines updated by previous hunks as lines
+   that existed before when applying a hunk, contributing misapplication
+   of patches with offsets.
 
  * "git clone /no/such/path" did not fail correctly (jk/fail-null/clone).
 
@@ -75,6 +105,6 @@ release, unless otherwise noted.
 
 ---
 exec >/var/tmp/1
-O=v1.7.4.1-224-g66ecd2d
+O=v1.7.4.1-265-gd0ef5a7
 echo O=$(git describe 'master')
 git shortlog --no-merges ^maint ^$O master

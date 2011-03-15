@@ -171,17 +171,6 @@ $ git config --global web.browser firefox
 as they are probably more user specific than repository specific.
 See linkgit:git-config[1] for more information about this.
 
-Author
-------
-Written by Junio C Hamano <gitster@pobox.com> and the git-list
-<git@vger.kernel.org>.
-
-Documentation
--------------
-Initial documentation was part of the linkgit:git[1] man page.
-Christian Couder <chriscool@tuxfamily.org> extracted and rewrote it a
-little. Maintenance is done by the git-list <git@vger.kernel.org>.
-
 GIT
 ---
 Part of the linkgit:git[1] suite

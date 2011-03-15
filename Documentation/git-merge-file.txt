@@ -86,17 +86,6 @@ git merge-file -L a -L b -L c tmp/a123 tmp/b234 tmp/c345::
 	merges tmp/a123 and tmp/c345 with the base tmp/b234, but uses labels
 	`a` and `c` instead of `tmp/a123` and `tmp/c345`.
 
-
-Author
-------
-Written by Johannes Schindelin <johannes.schindelin@gmx.de>
-
-
-Documentation
---------------
-Documentation by Johannes Schindelin and the git-list <git@vger.kernel.org>,
-with parts copied from the original documentation of RCS 'merge'.
-
 GIT
 ---
 Part of the linkgit:git[1] suite

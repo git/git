@@ -397,12 +397,6 @@ linkgit:git-mv[1],
 linkgit:git-merge[1],
 linkgit:git-commit-tree[1]
 
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org> and
-Junio C Hamano <gitster@pobox.com>
-
-
 GIT
 ---
 Part of the linkgit:git[1] suite

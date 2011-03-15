@@ -348,7 +348,6 @@ sendemail.confirm::
 	one of 'always', 'never', 'cc', 'compose', or 'auto'. See '--confirm'
 	in the previous section for the meaning of these values.
 
-
 Use gmail as the smtp server
 ----------------------------
 
@@ -362,20 +361,6 @@ Add the following section to the config file:
 
 Note: the following perl modules are required
       Net::SMTP::SSL, MIME::Base64 and Authen::SASL
-
-
-Author
-------
-Written by Ryan Anderson <ryan@michonline.com>
-
-git-send-email is originally based upon
-send_lots_of_email.pl by Greg Kroah-Hartman.
-
-
-Documentation
---------------
-Documentation by Ryan Anderson
-
 
 GIT
 ---
