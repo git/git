@@ -98,6 +98,13 @@ appropriately before running "make".
 	not see any output, this option implies --verbose.  For
 	convenience, it also implies --tee.
 
+	Note that valgrind is run with the option --leak-check=no,
+	as the git process is short-lived and some errors are not
+	interesting. In order to run a single command under the same
+	conditions manually, you should set GIT_VALGRIND to point to
+	the 't/valgrind/' directory and use the commands under
+	't/valgrind/bin/'.
+
 --tee::
 	In addition to printing the test output to the terminal,
 	write it to files named 't/test-results/$TEST_NAME.out'.
