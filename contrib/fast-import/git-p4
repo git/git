@@ -333,9 +333,13 @@ def gitBranchExists(branch):
     return proc.wait() == 0;
 
 _gitConfig = {}
-def gitConfig(key):
+def gitConfig(key, args = None): # set args to "--bool", for instance
     if not _gitConfig.has_key(key):
-        _gitConfig[key] = read_pipe("git config %s" % key, ignore_error=True).strip()
+        argsFilter = ""
+        if args != None:
+            argsFilter = "%s " % args
+        cmd = "git config %s%s" % (argsFilter, key)
+        _gitConfig[key] = read_pipe(cmd, ignore_error=True).strip()
     return _gitConfig[key]
 
 def p4BranchesInGit(branchesAreInRemotes = True):
