@@ -73,6 +73,8 @@ int get_one_patchid(unsigned char *next_sha1, git_SHA_CTX *ctx)
 			p += 7;
 		else if (!memcmp(line, "From ", 5))
 			p += 5;
+		else if (!memcmp(line, "\\ ", 2) && 12 < strlen(line))
+			continue;
 
 		if (!get_sha1_hex(p, next_sha1)) {
 			found_next = 1;
