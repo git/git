@@ -40,8 +40,7 @@ enum work_type {WORK_SHA1, WORK_FILE};
  * threads. The producer adds struct work_items to 'todo' and the
  * consumers pick work items from the same array.
  */
-struct work_item
-{
+struct work_item {
 	enum work_type type;
 	char *name;
 

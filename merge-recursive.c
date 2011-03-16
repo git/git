@@ -83,10 +83,8 @@ struct rename_df_conflict_info {
  * Since we want to write the index eventually, we cannot reuse the index
  * for these (temporary) data.
  */
-struct stage_data
-{
-	struct
-	{
+struct stage_data {
+	struct {
 		unsigned mode;
 		unsigned char sha[20];
 	} stages[4];
@@ -403,8 +401,7 @@ static void make_room_for_directories_of_df_conflicts(struct merge_options *o,
 	}
 }
 
-struct rename
-{
+struct rename {
 	struct diff_filepair *pair;
 	struct stage_data *src_entry;
 	struct stage_data *dst_entry;
@@ -717,8 +714,7 @@ static void update_file(struct merge_options *o,
 
 /* Low level file merging, update and removal */
 
-struct merge_file_info
-{
+struct merge_file_info {
 	unsigned char sha[20];
 	unsigned mode;
 	unsigned clean:1,

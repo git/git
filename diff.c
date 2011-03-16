@@ -606,16 +606,14 @@ static void diff_words_append(char *line, unsigned long len,
 	buffer->text.ptr[buffer->text.size] = '\0';
 }
 
-struct diff_words_style_elem
-{
+struct diff_words_style_elem {
 	const char *prefix;
 	const char *suffix;
 	const char *color; /* NULL; filled in by the setup code if
 			    * color is enabled */
 };
 
-struct diff_words_style
-{
+struct diff_words_style {
 	enum diff_words_type type;
 	struct diff_words_style_elem new, old, ctx;
 	const char *newline;

@@ -2,8 +2,7 @@
 #include "pack.h"
 #include "pack-revindex.h"
 
-struct idx_entry
-{
+struct idx_entry {
 	off_t                offset;
 	const unsigned char *sha1;
 	unsigned int nr;

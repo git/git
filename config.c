@@ -20,8 +20,7 @@ static int zlib_compression_seen;
 
 const char *config_exclusive_filename = NULL;
 
-struct config_item
-{
+struct config_item {
 	struct config_item *next;
 	char *name;
 	char *value;
