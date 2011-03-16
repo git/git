@@ -25,11 +25,11 @@ Updates since v1.7.4
  * "git checkout --detach <commit>" is a more user friendly synonym for
    "git checkout <commit>^0".
 
- * "git checkout" performed on detached HEAD gives a warning and an
+ * "git checkout" performed on detached HEAD gives a warning and
    advice when the commit being left behind will become unreachable from
    any branch or tag.
 
- * "git cherry-pick" and "git revert" can be told to use custom merge
+ * "git cherry-pick" and "git revert" can be told to use a custom merge
    strategy, similar to "git rebase".
 
  * "git cherry-pick" remembers which commit failed to apply when it is
@@ -43,10 +43,10 @@ Updates since v1.7.4
  * "git grep --no-index" did not honor pathspecs correctly, returning
    paths outside the specified area.
 
- * "git log" family of commands now understand globbing pathspecs.  You
+ * "git log" type commands now understand globbing pathspecs.  You
    can say "git log -- '*.txt'" for example.
 
- * "git rev-list --objects $revs -- $pathspec" would limit the objects listed
+ * "git rev-list --objects $revs -- $pathspec" now limits the objects listed
    in its output properly with the pathspec, in preparation for narrow
    clones.
 
@@ -54,8 +54,8 @@ Updates since v1.7.4
    "tracking" is used as the push.default semantics or there is no remote
    configured yet.
 
- * "git rerere" learned a new subcommand "remaining", that is similar to
-   "status" that lists the paths that had conflicts that are known to
+ * "git rerere" learned a new subcommand "remaining" that is similar to
+   "status" and lists the paths that had conflicts which are known to
    rerere, but excludes the paths that have already been marked as
    resolved in the index from its output.  "git mergetool" has been
    updated to use this facility.
@@ -82,29 +82,16 @@ release, unless otherwise noted.
    that existed before when applying a hunk, contributing misapplication
    of patches with offsets.
 
- * "git clone /no/such/path" did not fail correctly (jk/fail-null/clone).
-
  * "git checkout $other_branch" silently removed untracked symbolic links
    in the working tree that are in the way in order to check out paths
    under it from the named branch (js/checkout-untracked-symlink).
 
- * "git diff --stat -B" ran on binary files counted the changes in lines,
-   which was nonsensical (jk/diffstat-binary).
-
- * "git diff -M" opportunisticly detected copies, which was not
-   necessarily a good thing, especially when it is internally run by
-   recursive merge.
-
- * "git merge" triggers prepare-commit-msg hook.  Earlier, only "git
-   commit" to conclude an interrupted merge triggered the hook, leading to
-   an inconsistent overall user experience (js/maint-merge-use-prepare-commit-msg-hook).
-
- * "git submodule update" used to honor --merge/--rebase option (or
+ * "git submodule update" used to honor the --merge/--rebase option (or
    corresponding configuration variables) even for a newly cloned
-   subprojects, which made no sense (so/submodule-no-update-first-time).
+   subproject, which made no sense (so/submodule-no-update-first-time).
 
 ---
 exec >/var/tmp/1
-O=v1.7.4.1-265-gd0ef5a7
+O=v1.7.4.1-291-g01de349
 echo O=$(git describe 'master')
 git shortlog --no-merges ^maint ^$O master
