@@ -42,14 +42,12 @@
 #define NO_CURL_IOCTL
 #endif
 
-struct slot_results
-{
+struct slot_results {
 	CURLcode curl_result;
 	long http_code;
 };
 
-struct active_request_slot
-{
+struct active_request_slot {
 	CURL *curl;
 	FILE *local;
 	int in_use;
@@ -62,8 +60,7 @@ struct active_request_slot
 	struct active_request_slot *next;
 };
 
-struct buffer
-{
+struct buffer {
 	struct strbuf buf;
 	size_t posn;
 };
@@ -149,8 +146,7 @@ extern int http_fetch_ref(const char *base, struct ref *ref);
 extern int http_get_info_packs(const char *base_url,
 	struct packed_git **packs_head);
 
-struct http_pack_request
-{
+struct http_pack_request {
 	char *url;
 	struct packed_git *target;
 	struct packed_git **lst;
@@ -166,8 +162,7 @@ extern int finish_http_pack_request(struct http_pack_request *preq);
 extern void release_http_pack_request(struct http_pack_request *preq);
 
 /* Helpers for fetching object */
-struct http_object_request
-{
+struct http_object_request {
 	char *url;
 	char tmpfile[PATH_MAX];
 	int localfile;

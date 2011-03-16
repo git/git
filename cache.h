@@ -585,7 +585,7 @@ extern enum safe_crlf safe_crlf;
 enum auto_crlf {
 	AUTO_CRLF_FALSE = 0,
 	AUTO_CRLF_TRUE = 1,
-	AUTO_CRLF_INPUT = -1,
+	AUTO_CRLF_INPUT = -1
 };
 
 extern enum auto_crlf auto_crlf;
