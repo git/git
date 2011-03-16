@@ -390,6 +390,30 @@ static int matches_merge_filter(struct commit *commit)
 	return (is_merged == (merge_filter == SHOW_MERGED));
 }
 
+static void add_verbose_info(struct strbuf *out, struct ref_item *item,
+			     int verbose, int abbrev)
+{
+	struct strbuf subject = STRBUF_INIT, stat = STRBUF_INIT;
+	const char *sub = " **** invalid ref ****";
+	struct commit *commit = item->commit;
+
+	if (commit && !parse_commit(commit)) {
+		struct pretty_print_context ctx = {0};
+		pretty_print_commit(CMIT_FMT_ONELINE, commit,
+				    &subject, &ctx);
+		sub = subject.buf;
+	}
+
+	if (item->kind == REF_LOCAL_BRANCH)
+		fill_tracking_info(&stat, item->name, verbose > 1);
+
+	strbuf_addf(out, " %s %s%s",
+		find_unique_abbrev(item->commit->object.sha1, abbrev),
+		stat.buf, sub);
+	strbuf_release(&stat);
+	strbuf_release(&subject);
+}
+
 static void print_ref_item(struct ref_item *item, int maxwidth, int verbose,
 			   int abbrev, int current, char *prefix)
 {
@@ -430,27 +454,9 @@ static void print_ref_item(struct ref_item *item, int maxwidth, int verbose,
 
 	if (item->dest)
 		strbuf_addf(&out, " -> %s", item->dest);
-	else if (verbose) {
-		struct strbuf subject = STRBUF_INIT, stat = STRBUF_INIT;
-		const char *sub = " **** invalid ref ****";
-
-		commit = item->commit;
-		if (commit && !parse_commit(commit)) {
-			struct pretty_print_context ctx = {0};
-			pretty_print_commit(CMIT_FMT_ONELINE, commit,
-					    &subject, &ctx);
-			sub = subject.buf;
-		}
-
-		if (item->kind == REF_LOCAL_BRANCH)
-			fill_tracking_info(&stat, item->name, verbose > 1);
-
-		strbuf_addf(&out, " %s %s%s",
-			find_unique_abbrev(item->commit->object.sha1, abbrev),
-			stat.buf, sub);
-		strbuf_release(&stat);
-		strbuf_release(&subject);
-	}
+	else if (verbose)
+		/* " f7c0c00 [ahead 58, behind 197] vcs-svn: drop obj_pool.h" */
+		add_verbose_info(&out, item, verbose, abbrev);
 	printf("%s\n", out.buf);
 	strbuf_release(&name);
 	strbuf_release(&out);
