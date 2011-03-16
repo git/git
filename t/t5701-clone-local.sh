@@ -144,4 +144,17 @@ test_expect_success 'clone empty repository, and then push should not segfault.'
 	test_must_fail git push)
 '
 
+test_expect_success 'cloning non-existent directory fails' '
+	cd "$D" &&
+	rm -rf does-not-exist &&
+	test_must_fail git clone does-not-exist
+'
+
+test_expect_success 'cloning non-git directory fails' '
+	cd "$D" &&
+	rm -rf not-a-git-repo not-a-git-repo-clone &&
+	mkdir not-a-git-repo &&
+	test_must_fail git clone not-a-git-repo not-a-git-repo-clone
+'
+
 test_done
