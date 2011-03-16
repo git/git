@@ -30,7 +30,7 @@ static int node_cmp(struct node *a, struct node *b)
 }
 
 /* Build a Treap from the node structure (a trp_node w/ offset) */
-trp_gen(static, tree_, struct node, children, node, node_cmp);
+trp_gen(static, tree_, struct node, children, node, node_cmp)
 
 const char *pool_fetch(uint32_t entry)
 {
