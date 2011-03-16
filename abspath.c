@@ -24,6 +24,10 @@ const char *make_absolute_path(const char *path)
 	char *last_elem = NULL;
 	struct stat st;
 
+	/* We've already done it */
+	if (path == buf || path == next_buf)
+		return path;
+
 	if (strlcpy(buf, path, PATH_MAX) >= PATH_MAX)
 		die ("Too long path: %.*s", 60, path);
 
