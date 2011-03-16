@@ -245,6 +245,15 @@ static int fill_mmfile(mmfile_t *mf, struct diff_filespec *one)
 	return 0;
 }
 
+/* like fill_mmfile, but only for size, so we can avoid retrieving blob */
+static unsigned long diff_filespec_size(struct diff_filespec *one)
+{
+	if (!DIFF_FILE_VALID(one))
+		return 0;
+	diff_populate_filespec(one, 1);
+	return one->size;
+}
+
 static int count_trailing_blank(mmfile_t *mf, unsigned ws_rule)
 {
 	char *ptr = mf->ptr;
@@ -2077,24 +2086,27 @@ static void builtin_diffstat(const char *name_a, const char *name_b,
 		data->is_unmerged = 1;
 		return;
 	}
-	if (complete_rewrite) {
+
+	if (diff_filespec_is_binary(one) || diff_filespec_is_binary(two)) {
+		data->is_binary = 1;
+		data->added = diff_filespec_size(two);
+		data->deleted = diff_filespec_size(one);
+	}
+
+	else if (complete_rewrite) {
 		diff_populate_filespec(one, 0);
 		diff_populate_filespec(two, 0);
 		data->deleted = count_lines(one->data, one->size);
 		data->added = count_lines(two->data, two->size);
-		goto free_and_return;
 	}
-	if (fill_mmfile(&mf1, one) < 0 || fill_mmfile(&mf2, two) < 0)
-		die("unable to read files to diff");
 
-	if (diff_filespec_is_binary(one) || diff_filespec_is_binary(two)) {
-		data->is_binary = 1;
-		data->added = mf2.size;
-		data->deleted = mf1.size;
-	} else {
+	else {
 		/* Crazy xdl interfaces.. */
 		xpparam_t xpp;
 		xdemitconf_t xecfg;
+
+		if (fill_mmfile(&mf1, one) < 0 || fill_mmfile(&mf2, two) < 0)
+			die("unable to read files to diff");
 
 		memset(&xpp, 0, sizeof(xpp));
 		memset(&xecfg, 0, sizeof(xecfg));
@@ -2103,7 +2115,6 @@ static void builtin_diffstat(const char *name_a, const char *name_b,
 			      &xpp, &xecfg);
 	}
 
- free_and_return:
 	diff_free_filespec_data(one);
 	diff_free_filespec_data(two);
 }
