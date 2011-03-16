@@ -67,21 +67,26 @@ static int child_notifier = -1;
 
 static void notify_parent(void)
 {
-	ssize_t unused;
-	unused = write(child_notifier, "", 1);
+	/*
+	 * execvp failed.  If possible, we'd like to let start_command
+	 * know, so failures like ENOENT can be handled right away; but
+	 * otherwise, finish_command will still report the error.
+	 */
+	if (write(child_notifier, "", 1))
+		; /* yes, dear gcc -D_FORTIFY_SOURCE, there was an error. */
 }
 
 static NORETURN void die_child(const char *err, va_list params)
 {
 	char msg[4096];
-	ssize_t unused;
 	int len = vsnprintf(msg, sizeof(msg), err, params);
 	if (len > sizeof(msg))
 		len = sizeof(msg);
 
-	unused = write(child_err, "fatal: ", 7);
-	unused = write(child_err, msg, len);
-	unused = write(child_err, "\n", 1);
+	if (write(child_err, "fatal: ", 7) ||
+	    write(child_err, msg, len) ||
+	    write(child_err, "\n", 1))
+		; /* yes, gcc -D_FORTIFY_SOURCE, we know there was an error. */
 	exit(128);
 }
 #endif
