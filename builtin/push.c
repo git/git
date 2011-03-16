@@ -64,17 +64,17 @@ static void set_refspecs(const char **refs, int nr)
 	}
 }
 
-static void setup_push_tracking(void)
+static void setup_push_upstream(void)
 {
 	struct strbuf refspec = STRBUF_INIT;
 	struct branch *branch = branch_get(NULL);
 	if (!branch)
 		die("You are not currently on a branch.");
 	if (!branch->merge_nr || !branch->merge)
-		die("The current branch %s is not tracking anything.",
+		die("The current branch %s has no upstream branch.",
 		    branch->name);
 	if (branch->merge_nr != 1)
-		die("The current branch %s is tracking multiple branches, "
+		die("The current branch %s has multiple upstream branches, "
 		    "refusing to push.", branch->name);
 	strbuf_addf(&refspec, "%s:%s", branch->name, branch->merge[0]->src);
 	add_refspec(refspec.buf);
@@ -88,8 +88,8 @@ static void setup_default_push_refspecs(void)
 		add_refspec(":");
 		break;
 
-	case PUSH_DEFAULT_TRACKING:
-		setup_push_tracking();
+	case PUSH_DEFAULT_UPSTREAM:
+		setup_push_upstream();
 		break;
 
 	case PUSH_DEFAULT_CURRENT:

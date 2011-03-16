@@ -1582,7 +1582,8 @@ push.default::
 * `matching` - push all matching branches.
   All branches having the same name in both ends are considered to be
   matching. This is the default.
-* `tracking` - push the current branch to its upstream branch.
+* `upstream` - push the current branch to its upstream branch.
+* `tracking` - deprecated synonym for `upstream`.
 * `current` - push the current branch to a branch of the same name.
 
 rebase.stat::
