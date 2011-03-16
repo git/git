@@ -43,3 +43,9 @@
 	fun:write_buffer
 	fun:write_loose_object
 }
+
+{
+	ignore-sse-strlen-invalid-read-size
+	Memcheck:Addr4
+	fun:copy_ref
+}
