@@ -503,13 +503,13 @@ extern int ie_modified(const struct index_state *, struct cache_entry *, struct 
 struct pathspec {
 	const char **raw; /* get_pathspec() result, not freed by free_pathspec() */
 	int nr;
-	int has_wildcard:1;
-	int recursive:1;
+	unsigned int has_wildcard:1;
+	unsigned int recursive:1;
 	int max_depth;
 	struct pathspec_item {
 		const char *match;
 		int len;
-		int has_wildcard:1;
+		unsigned int has_wildcard:1;
 	} *items;
 };
 
