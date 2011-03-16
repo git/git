@@ -170,7 +170,7 @@ static int estimate_similarity(struct diff_filespec *src,
 	 * and the final score computation below would not have a
 	 * divide-by-zero issue.
 	 */
-	if (base_size * (MAX_SCORE-minimum_score) < delta_size * MAX_SCORE)
+	if (max_size * (MAX_SCORE-minimum_score) < delta_size * MAX_SCORE)
 		return 0;
 
 	if (!src->cnt_data && diff_populate_filespec(src, 0))
@@ -247,7 +247,8 @@ struct file_similarity {
 };
 
 static int find_identical_files(struct file_similarity *src,
-				struct file_similarity *dst)
+				struct file_similarity *dst,
+				struct diff_options *options)
 {
 	int renames = 0;
 
@@ -277,6 +278,8 @@ static int find_identical_files(struct file_similarity *src,
 			}
 			/* Give higher scores to sources that haven't been used already */
 			score = !source->rename_used;
+			if (source->rename_used && options->detect_rename != DIFF_DETECT_COPY)
+				continue;
 			score += basename_same(source, target);
 			if (score > best_score) {
 				best = p;
@@ -306,11 +309,12 @@ static void free_similarity_list(struct file_similarity *p)
 	}
 }
 
-static int find_same_files(void *ptr)
+static int find_same_files(void *ptr, void *data)
 {
 	int ret;
 	struct file_similarity *p = ptr;
 	struct file_similarity *src = NULL, *dst = NULL;
+	struct diff_options *options = data;
 
 	/* Split the hash list up into sources and destinations */
 	do {
@@ -329,7 +333,7 @@ static int find_same_files(void *ptr)
 	 * If we have both sources *and* destinations, see if
 	 * we can match them up
 	 */
-	ret = (src && dst) ? find_identical_files(src, dst) : 0;
+	ret = (src && dst) ? find_identical_files(src, dst, options) : 0;
 
 	/* Free the hashes and return the number of renames found */
 	free_similarity_list(src);
@@ -377,7 +381,7 @@ static void insert_file_table(struct hash_table *table, int src_dst, int index, 
  * and then during the second round we try to match
  * cache-dirty entries as well.
  */
-static int find_exact_renames(void)
+static int find_exact_renames(struct diff_options *options)
 {
 	int i;
 	struct hash_table file_table;
@@ -390,7 +394,7 @@ static int find_exact_renames(void)
 		insert_file_table(&file_table, 1, i, rename_dst[i].two);
 
 	/* Find the renames */
-	i = for_each_hash(&file_table, find_same_files);
+	i = for_each_hash(&file_table, find_same_files, options);
 
 	/* .. and free the hash data structure */
 	free_hash(&file_table);
@@ -412,6 +416,27 @@ static void record_if_better(struct diff_score m[], struct diff_score *o)
 	/* is it better than the worst one? */
 	if (score_compare(&m[worst], o) > 0)
 		m[worst] = *o;
+}
+
+static int find_renames(struct diff_score *mx, int dst_cnt, int minimum_score, int copies)
+{
+	int count = 0, i;
+
+	for (i = 0; i < dst_cnt * NUM_CANDIDATE_PER_DST; i++) {
+		struct diff_rename_dst *dst;
+
+		if ((mx[i].dst < 0) ||
+		    (mx[i].score < minimum_score))
+			break; /* there is no more usable pair. */
+		dst = &rename_dst[mx[i].dst];
+		if (dst->pair)
+			continue; /* already done, either exact or fuzzy. */
+		if (!copies && rename_src[mx[i].src].one->rename_used)
+			continue;
+		record_rename_pair(mx[i].dst, mx[i].src, mx[i].score);
+		count++;
+	}
+	return count;
 }
 
 void diffcore_rename(struct diff_options *options)
@@ -467,7 +492,7 @@ void diffcore_rename(struct diff_options *options)
 	 * We really want to cull the candidates list early
 	 * with cheap tests in order to avoid doing deltas.
 	 */
-	rename_count = find_exact_renames();
+	rename_count = find_exact_renames(options);
 
 	/* Did we only want exact renames? */
 	if (minimum_score == MAX_SCORE)
@@ -536,33 +561,9 @@ void diffcore_rename(struct diff_options *options)
 	/* cost matrix sorted by most to least similar pair */
 	qsort(mx, dst_cnt * NUM_CANDIDATE_PER_DST, sizeof(*mx), score_compare);
 
-	for (i = 0; i < dst_cnt * NUM_CANDIDATE_PER_DST; i++) {
-		struct diff_rename_dst *dst;
-
-		if ((mx[i].dst < 0) ||
-		    (mx[i].score < minimum_score))
-			break; /* there is no more usable pair. */
-		dst = &rename_dst[mx[i].dst];
-		if (dst->pair)
-			continue; /* already done, either exact or fuzzy. */
-		if (rename_src[mx[i].src].one->rename_used)
-			continue;
-		record_rename_pair(mx[i].dst, mx[i].src, mx[i].score);
-		rename_count++;
-	}
-
-	for (i = 0; i < dst_cnt * NUM_CANDIDATE_PER_DST; i++) {
-		struct diff_rename_dst *dst;
-
-		if ((mx[i].dst < 0) ||
-		    (mx[i].score < minimum_score))
-			break; /* there is no more usable pair. */
-		dst = &rename_dst[mx[i].dst];
-		if (dst->pair)
-			continue; /* already done, either exact or fuzzy. */
-		record_rename_pair(mx[i].dst, mx[i].src, mx[i].score);
-		rename_count++;
-	}
+	rename_count += find_renames(mx, dst_cnt, minimum_score, 0);
+	if (detect_rename == DIFF_DETECT_COPY)
+		rename_count += find_renames(mx, dst_cnt, minimum_score, 1);
 	free(mx);
 
  cleanup:
