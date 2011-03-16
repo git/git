@@ -17,7 +17,7 @@ require_work_tree
 cd_to_toplevel
 
 TMP="$GIT_DIR/.git-stash.$$"
-trap 'rm -f "$TMP-*"' 0
+trap 'rm -f "$TMP-"*' 0
 
 ref_stash=refs/stash
 
