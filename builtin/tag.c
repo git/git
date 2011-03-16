@@ -376,7 +376,7 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 		OPT_GROUP("Tag creation options"),
 		OPT_BOOLEAN('a', NULL, &annotate,
 					"annotated tag, needs a message"),
-		OPT_CALLBACK('m', NULL, &msg, "MESSAGE",
+		OPT_CALLBACK('m', NULL, &msg, "message",
 			     "tag message", parse_msg_arg),
 		OPT_FILENAME('F', NULL, &msgfile, "read message from file"),
 		OPT_BOOLEAN('s', NULL, &sign, "annotated and GPG-signed tag"),

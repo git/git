@@ -194,7 +194,7 @@ static struct option builtin_merge_options[] = {
 		"merge strategy to use", option_parse_strategy),
 	OPT_CALLBACK('X', "strategy-option", &xopts, "option=value",
 		"option for selected merge strategy", option_parse_x),
-	OPT_CALLBACK('m', "message", &merge_msg, "MESSAGE",
+	OPT_CALLBACK('m', "message", &merge_msg, "message",
 		"merge commit message (for a non-fast-forward merge)",
 		option_parse_message),
 	OPT__VERBOSITY(&verbosity),
