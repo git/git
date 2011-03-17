@@ -173,7 +173,12 @@ void traverse_commit_list(struct rev_info *revs,
 
 	strbuf_init(&base, PATH_MAX);
 	while ((commit = get_revision(revs)) != NULL) {
-		add_pending_tree(revs, commit->tree);
+		/*
+		 * an uninteresting boundary commit may not have its tree
+		 * parsed yet, but we are not going to show them anyway
+		 */
+		if (commit->tree)
+			add_pending_tree(revs, commit->tree);
 		show_commit(commit, data);
 	}
 	for (i = 0; i < revs->pending.nr; i++) {
