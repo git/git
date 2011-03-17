@@ -501,7 +501,7 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 		const char *git_dir_parent = strrchr(git_dir, '/');
 		if (git_dir_parent) {
 			char *rel = xstrndup(git_dir, git_dir_parent - git_dir);
-			git_work_tree_cfg = xstrdup(make_absolute_path(rel));
+			git_work_tree_cfg = xstrdup(real_path(rel));
 			free(rel);
 		}
 		if (!git_work_tree_cfg) {
@@ -510,7 +510,7 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 				die_errno ("Cannot access current working directory");
 		}
 		if (work_tree)
-			set_git_work_tree(make_absolute_path(work_tree));
+			set_git_work_tree(real_path(work_tree));
 		else
 			set_git_work_tree(git_work_tree_cfg);
 		if (access(get_git_work_tree(), X_OK))
@@ -519,10 +519,10 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 	}
 	else {
 		if (work_tree)
-			set_git_work_tree(make_absolute_path(work_tree));
+			set_git_work_tree(real_path(work_tree));
 	}
 
-	set_git_dir(make_absolute_path(git_dir));
+	set_git_dir(real_path(git_dir));
 
 	return init_db(template_dir, flags);
 }

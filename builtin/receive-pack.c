@@ -740,7 +740,7 @@ static int add_refs_from_alternate(struct alternate_object_database *e, void *un
 	const struct ref *extra;
 
 	e->name[-1] = '\0';
-	other = xstrdup(make_absolute_path(e->base));
+	other = xstrdup(real_path(e->base));
 	e->name[-1] = '/';
 	len = strlen(other);
 

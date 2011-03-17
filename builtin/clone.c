@@ -100,7 +100,7 @@ static char *get_repo_path(const char *repo, int *is_bundle)
 		path = mkpath("%s%s", repo, suffix[i]);
 		if (is_directory(path)) {
 			*is_bundle = 0;
-			return xstrdup(make_nonrelative_path(path));
+			return xstrdup(absolute_path(path));
 		}
 	}
 
@@ -109,7 +109,7 @@ static char *get_repo_path(const char *repo, int *is_bundle)
 		path = mkpath("%s%s", repo, bundle_suffix[i]);
 		if (!stat(path, &st) && S_ISREG(st.st_mode)) {
 			*is_bundle = 1;
-			return xstrdup(make_nonrelative_path(path));
+			return xstrdup(absolute_path(path));
 		}
 	}
 
@@ -203,7 +203,7 @@ static void setup_reference(const char *repo)
 	struct transport *transport;
 	const struct ref *extra;
 
-	ref_git = make_absolute_path(option_reference);
+	ref_git = real_path(option_reference);
 
 	if (is_directory(mkpath("%s/.git/objects", ref_git)))
 		ref_git = mkpath("%s/.git", ref_git);
@@ -411,7 +411,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 
 	path = get_repo_path(repo_name, &is_bundle);
 	if (path)
-		repo = xstrdup(make_nonrelative_path(repo_name));
+		repo = xstrdup(absolute_path(repo_name));
 	else if (!strchr(repo_name, ':'))
 		die("repository '%s' does not exist", repo_name);
 	else
@@ -466,7 +466,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 
 	if (safe_create_leading_directories_const(git_dir) < 0)
 		die("could not create leading directories of '%s'", git_dir);
-	set_git_dir(make_absolute_path(git_dir));
+	set_git_dir(real_path(git_dir));
 
 	if (0 <= option_verbosity)
 		printf("Cloning into %s%s...\n",
