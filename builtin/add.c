@@ -21,8 +21,7 @@ static const char * const builtin_add_usage[] = {
 static int patch_interactive, add_interactive, edit_interactive;
 static int take_worktree_changes;
 
-struct update_callback_data
-{
+struct update_callback_data {
 	int flags;
 	int add_errors;
 };

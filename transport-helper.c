@@ -12,8 +12,7 @@
 
 static int debug;
 
-struct helper_data
-{
+struct helper_data {
 	const char *name;
 	struct child_process *helper;
 	FILE *out;

@@ -18,7 +18,7 @@ enum action {
 	CRLF_TEXT,
 	CRLF_INPUT,
 	CRLF_CRLF,
-	CRLF_AUTO,
+	CRLF_AUTO
 };
 
 struct text_stat {

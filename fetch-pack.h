@@ -1,8 +1,7 @@
 #ifndef FETCH_PACK_H
 #define FETCH_PACK_H
 
-struct fetch_pack_args
-{
+struct fetch_pack_args {
 	const char *uploadpack;
 	int unpacklimit;
 	int depth;

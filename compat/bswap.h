@@ -21,14 +21,16 @@ static inline uint32_t default_swab32(uint32_t val)
 
 #if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
 
-#define bswap32(x) ({ \
-	uint32_t __res; \
-	if (__builtin_constant_p(x)) { \
-		__res = default_swab32(x); \
-	} else { \
-		__asm__("bswap %0" : "=r" (__res) : "0" ((uint32_t)(x))); \
-	} \
-	__res; })
+#define bswap32 git_bswap32
+static inline uint32_t git_bswap32(uint32_t x)
+{
+	uint32_t result;
+	if (__builtin_constant_p(x))
+		result = default_swab32(x);
+	else
+		__asm__("bswap %0" : "=r" (result) : "0" (x));
+	return result;
+}
 
 #elif defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_X64))
 
