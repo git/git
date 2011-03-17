@@ -333,9 +333,13 @@ def gitBranchExists(branch):
     return proc.wait() == 0;
 
 _gitConfig = {}
-def gitConfig(key):
+def gitConfig(key, args = None): # set args to "--bool", for instance
     if not _gitConfig.has_key(key):
-        _gitConfig[key] = read_pipe("git config %s" % key, ignore_error=True).strip()
+        argsFilter = ""
+        if args != None:
+            argsFilter = "%s " % args
+        cmd = "git config %s%s" % (argsFilter, key)
+        _gitConfig[key] = read_pipe(cmd, ignore_error=True).strip()
     return _gitConfig[key]
 
 def p4BranchesInGit(branchesAreInRemotes = True):
@@ -451,6 +455,19 @@ def p4ChangesForPaths(depotPaths, changeRange):
     changelist = changes.keys()
     changelist.sort()
     return changelist
+
+def p4PathStartsWith(path, prefix):
+    # This method tries to remedy a potential mixed-case issue:
+    #
+    # If UserA adds  //depot/DirA/file1
+    # and UserB adds //depot/dira/file2
+    #
+    # we may or may not have a problem. If you have core.ignorecase=true,
+    # we treat DirA and dira as the same directory
+    ignorecase = gitConfig("core.ignorecase", "--bool") == "true"
+    if ignorecase:
+        return path.lower().startswith(prefix.lower())
+    return path.startswith(prefix)
 
 class Command:
     def __init__(self):
@@ -599,7 +616,7 @@ class P4Submit(Command):
                     lastTab = path.rfind("\t")
                     if lastTab != -1:
                         path = path[:lastTab]
-                        if not path.startswith(self.depotPath):
+                        if not p4PathStartsWith(path, self.depotPath):
                             continue
                 else:
                     inFilesSection = False
@@ -937,11 +954,11 @@ class P4Sync(Command):
             path =  commit["depotFile%s" % fnum]
 
             if [p for p in self.cloneExclude
-                if path.startswith (p)]:
+                if p4PathStartsWith(path, p)]:
                 found = False
             else:
                 found = [p for p in self.depotPaths
-                         if path.startswith (p)]
+                         if p4PathStartsWith(path, p)]
             if not found:
                 fnum = fnum + 1
                 continue
@@ -976,7 +993,7 @@ class P4Sync(Command):
             prefixes = [re.sub("^(//[^/]+/).*", r'\1', prefixes[0])]
 
         for p in prefixes:
-            if path.startswith(p):
+            if p4PathStartsWith(path, p):
                 path = path[len(p):]
 
         return path
@@ -987,7 +1004,7 @@ class P4Sync(Command):
         while commit.has_key("depotFile%s" % fnum):
             path =  commit["depotFile%s" % fnum]
             found = [p for p in self.depotPaths
-                     if path.startswith (p)]
+                     if p4PathStartsWith(path, p)]
             if not found:
                 fnum = fnum + 1
                 continue
@@ -1140,10 +1157,10 @@ class P4Sync(Command):
         # create a commit.
         new_files = []
         for f in files:
-            if [p for p in branchPrefixes if f['path'].startswith(p)]:
+            if [p for p in branchPrefixes if p4PathStartsWith(f['path'], p)]:
                 new_files.append (f)
             else:
-                sys.stderr.write("Ignoring file outside of prefix: %s\n" % path)
+                sys.stderr.write("Ignoring file outside of prefix: %s\n" % f['path'])
 
         self.gitStream.write("commit %s\n" % branch)
 #        gitStream.write("mark :%s\n" % details["change"])
@@ -1304,7 +1321,7 @@ class P4Sync(Command):
                 source = paths[0]
                 destination = paths[1]
                 ## HACK
-                if source.startswith(self.depotPaths[0]) and destination.startswith(self.depotPaths[0]):
+                if p4PathStartsWith(source, self.depotPaths[0]) and p4PathStartsWith(destination, self.depotPaths[0]):
                     source = source[len(self.depotPaths[0]):-4]
                     destination = destination[len(self.depotPaths[0]):-4]
 
