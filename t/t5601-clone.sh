@@ -164,7 +164,6 @@ test_expect_success 'clone a void' '
 test_expect_success 'clone respects global branch.autosetuprebase' '
 	(
 		test_config="$HOME/.gitconfig" &&
-		unset GIT_CONFIG_NOGLOBAL &&
 		git config -f "$test_config" branch.autosetuprebase remote &&
 		rm -fr dst &&
 		git clone src dst &&

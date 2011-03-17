@@ -478,11 +478,6 @@ int git_attr_system(void)
 	return !git_env_bool("GIT_ATTR_NOSYSTEM", 0);
 }
 
-int git_attr_global(void)
-{
-	return !git_env_bool("GIT_ATTR_NOGLOBAL", 0);
-}
-
 static int git_attr_config(const char *var, const char *value, void *dummy)
 {
 	if (!strcmp(var, "core.attributesfile"))
@@ -511,7 +506,7 @@ static void bootstrap_attr_stack(void)
 		}
 
 		git_config(git_attr_config, NULL);
-		if (git_attr_global() && attributes_file) {
+		if (attributes_file) {
 			elem = read_attr_from_file(attributes_file, 1);
 			if (elem) {
 				elem->origin = NULL;
