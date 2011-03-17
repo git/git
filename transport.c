@@ -1200,7 +1200,7 @@ int refs_from_alternate_cb(struct alternate_object_database *e, void *cb)
 	alternate_ref_fn *ref_fn = cb;
 
 	e->name[-1] = '\0';
-	other = xstrdup(make_absolute_path(e->base));
+	other = xstrdup(real_path(e->base));
 	e->name[-1] = '/';
 	len = strlen(other);
 

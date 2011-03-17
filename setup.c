@@ -9,7 +9,7 @@ char *prefix_path(const char *prefix, int len, const char *path)
 	const char *orig = path;
 	char *sanitized;
 	if (is_absolute_path(orig)) {
-		const char *temp = make_absolute_path(path);
+		const char *temp = real_path(path);
 		sanitized = xmalloc(len + strlen(temp) + 1);
 		strcpy(sanitized, temp);
 	} else {
@@ -221,7 +221,7 @@ void setup_work_tree(void)
 	work_tree = get_git_work_tree();
 	git_dir = get_git_dir();
 	if (!is_absolute_path(git_dir))
-		git_dir = make_absolute_path(git_dir);
+		git_dir = real_path(get_git_dir());
 	if (!work_tree || chdir(work_tree))
 		die("This operation must be run in a work tree");
 
@@ -232,7 +232,7 @@ void setup_work_tree(void)
 	if (getenv(GIT_WORK_TREE_ENVIRONMENT))
 		setenv(GIT_WORK_TREE_ENVIRONMENT, ".", 1);
 
-	set_git_dir(make_relative_path(git_dir, work_tree));
+	set_git_dir(relative_path(git_dir, work_tree));
 	initialized = 1;
 }
 
@@ -312,7 +312,7 @@ const char *read_gitfile_gently(const char *path)
 
 	if (!is_git_directory(dir))
 		die("Not a git repository: %s", dir);
-	path = make_absolute_path(dir);
+	path = real_path(dir);
 
 	free(buf);
 	return path;
@@ -392,7 +392,7 @@ static const char *setup_explicit_git_dir(const char *gitdirenv,
 
 	if (!prefixcmp(cwd, worktree) &&
 	    cwd[strlen(worktree)] == '/') { /* cwd inside worktree */
-		set_git_dir(make_absolute_path(gitdirenv));
+		set_git_dir(real_path(gitdirenv));
 		if (chdir(worktree))
 			die_errno("Could not chdir to '%s'", worktree);
 		cwd[len++] = '/';
@@ -417,7 +417,7 @@ static const char *setup_discovered_git_dir(const char *gitdir,
 	/* --work-tree is set without --git-dir; use discovered one */
 	if (getenv(GIT_WORK_TREE_ENVIRONMENT) || git_work_tree_cfg) {
 		if (offset != len && !is_absolute_path(gitdir))
-			gitdir = xstrdup(make_absolute_path(gitdir));
+			gitdir = xstrdup(real_path(gitdir));
 		if (chdir(cwd))
 			die_errno("Could not come back to cwd");
 		return setup_explicit_git_dir(gitdir, cwd, len, nongit_ok);
@@ -425,7 +425,7 @@ static const char *setup_discovered_git_dir(const char *gitdir,
 
 	/* #16.2, #17.2, #20.2, #21.2, #24, #25, #28, #29 (see t1510) */
 	if (is_bare_repository_cfg > 0) {
-		set_git_dir(offset == len ? gitdir : make_absolute_path(gitdir));
+		set_git_dir(offset == len ? gitdir : real_path(gitdir));
 		if (chdir(cwd))
 			die_errno("Could not come back to cwd");
 		return NULL;

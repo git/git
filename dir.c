@@ -1128,7 +1128,7 @@ char *get_relative_cwd(char *buffer, int size, const char *dir)
 		die_errno("can't find the current directory");
 
 	if (!is_absolute_path(dir))
-		dir = make_absolute_path(dir);
+		dir = real_path(dir);
 
 	while (*dir && *dir == *cwd) {
 		dir++;
