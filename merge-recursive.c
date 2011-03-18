@@ -370,6 +370,13 @@ static void make_room_for_directories_of_df_conflicts(struct merge_options *o,
 	struct stage_data *last_e;
 	int i;
 
+	/*
+	 * Do not do any of this crazyness during the recursive; we don't
+	 * even write anything to the working tree!
+	 */
+	if (o->call_depth)
+		return;
+
 	for (i = 0; i < entries->nr; i++) {
 		const char *path = entries->items[i].string;
 		int len = strlen(path);
@@ -1274,7 +1281,7 @@ static int merge_content(struct merge_options *o,
 
 	if (mfi.clean && !df_conflict_remains &&
 	    sha_eq(mfi.sha, a_sha) && mfi.mode == a.mode &&
-	    lstat(path, &st) == 0) {
+	    !o->call_depth && !lstat(path, &st)) {
 		output(o, 3, "Skipped %s (merged same as existing)", path);
 		add_cacheinfo(mfi.mode, mfi.sha, path,
 			      0 /*stage*/, 1 /*refresh*/, 0 /*options*/);
