@@ -632,7 +632,7 @@ Performing a three-way merge
 `merge`
 ^^^^^^^
 
-The attribute `merge` affects how three versions of a file is
+The attribute `merge` affects how three versions of a file are
 merged when a file-level merge is necessary during `git merge`,
 and other commands such as `git revert` and `git cherry-pick`.
 
@@ -646,15 +646,15 @@ Unset::
 
 	Take the version from the current branch as the
 	tentative merge result, and declare that the merge has
-	conflicts.  This is suitable for binary files that does
+	conflicts.  This is suitable for binary files that do
 	not have a well-defined merge semantics.
 
 Unspecified::
 
 	By default, this uses the same built-in 3-way merge
-	driver as is the case the `merge` attribute is set.
-	However, `merge.default` configuration variable can name
-	different merge driver to be used for paths to which the
+	driver as is the case when the `merge` attribute is set.
+	However, the `merge.default` configuration variable can name
+	different merge driver to be used with paths for which the
 	`merge` attribute is unspecified.
 
 String::
