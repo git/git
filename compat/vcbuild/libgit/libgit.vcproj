@@ -21,7 +21,7 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			OutputDirectory="$(SolutionDir)..\bin\$(ConfigurationName)\bin"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="4"
 			CharacterSet="0"
@@ -87,7 +87,7 @@
 		</Configuration>
 		<Configuration
 			Name="Debug|x64"
-			OutputDirectory="$(SolutionDir)\$(ConfigurationName)64"
+			OutputDirectory="$(SolutionDir)..\bin\$(ConfigurationName)64\bin"
 			IntermediateDirectory="$(ConfigurationName)64"
 			ConfigurationType="4"
 			CharacterSet="0"
@@ -153,7 +153,7 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			OutputDirectory="$(SolutionDir)..\bin\$(ConfigurationName)\bin"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="4"
 			CharacterSet="0"
@@ -219,7 +219,7 @@
 		</Configuration>
 		<Configuration
 			Name="Release|x64"
-			OutputDirectory="$(SolutionDir)\$(ConfigurationName)64"
+			OutputDirectory="$(SolutionDir)..\bin\$(ConfigurationName)64\bin"
 			IntermediateDirectory="$(ConfigurationName)64"
 			ConfigurationType="4"
 			CharacterSet="0"
