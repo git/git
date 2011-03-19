@@ -9,7 +9,7 @@ SYNOPSIS
 --------
 [verse]
 mkfifo backchannel &&
-svnadmin dump --incremental REPO |
+svnadmin dump --deltas REPO |
 	svn-fe [url] 3<backchannel |
 	git fast-import --cat-blob-fd=3 3>backchannel
 
@@ -31,9 +31,6 @@ Subversion's repository dump format is documented in full in
 `notes/dump-load-format.txt` from the Subversion source tree.
 Files in this format can be generated using the 'svnadmin dump' or
 'svk admin dump' command.
-
-Dumps produced with 'svnadmin dump --deltas' (dumpfile format v3)
-are not supported.
 
 OUTPUT FORMAT
 -------------
