@@ -659,11 +659,12 @@ static int context_callback(const struct option *opt, const char *arg,
 static int file_callback(const struct option *opt, const char *arg, int unset)
 {
 	struct grep_opt *grep_opt = opt->value;
+	int from_stdin = !strcmp(arg, "-");
 	FILE *patterns;
 	int lno = 0;
 	struct strbuf sb = STRBUF_INIT;
 
-	patterns = fopen(arg, "r");
+	patterns = from_stdin ? stdin : fopen(arg, "r");
 	if (!patterns)
 		die_errno("cannot open '%s'", arg);
 	while (strbuf_getline(&sb, patterns, '\n') == 0) {
@@ -677,7 +678,8 @@ static int file_callback(const struct option *opt, const char *arg, int unset)
 		s = strbuf_detach(&sb, &len);
 		append_grep_pat(grep_opt, s, len, arg, ++lno, GREP_PATTERN);
 	}
-	fclose(patterns);
+	if (!from_stdin)
+		fclose(patterns);
 	strbuf_release(&sb);
 	return 0;
 }
