@@ -11,6 +11,14 @@ check_not_detached () {
 	git symbolic-ref -q HEAD >/dev/null
 }
 
+ORPHAN_WARNING='you are leaving .* commit.*behind'
+check_orphan_warning() {
+	grep "$ORPHAN_WARNING" "$1"
+}
+check_no_orphan_warning() {
+	! grep "$ORPHAN_WARNING" "$1"
+}
+
 reset () {
 	git checkout master &&
 	check_not_detached
@@ -19,6 +27,8 @@ reset () {
 test_expect_success 'setup' '
 	test_commit one &&
 	test_commit two &&
+	test_commit three && git tag -d three &&
+	test_commit four && git tag -d four &&
 	git branch branch &&
 	git tag tag
 '
@@ -90,6 +100,30 @@ test_expect_success 'checkout --detach moves HEAD' '
 	git checkout --detach two &&
 	git diff --exit-code HEAD &&
 	git diff --exit-code two
+'
+
+test_expect_success 'checkout warns on orphan commits' '
+	reset &&
+	git checkout --detach two &&
+	echo content >orphan &&
+	git add orphan &&
+	git commit -a -m orphan &&
+	git checkout master 2>stderr &&
+	check_orphan_warning stderr
+'
+
+test_expect_success 'checkout does not warn leaving ref tip' '
+	reset &&
+	git checkout --detach two &&
+	git checkout master 2>stderr &&
+	check_no_orphan_warning stderr
+'
+
+test_expect_success 'checkout does not warn leaving reachable commit' '
+	reset &&
+	git checkout --detach HEAD^ &&
+	git checkout master 2>stderr &&
+	check_no_orphan_warning stderr
 '
 
 test_done
