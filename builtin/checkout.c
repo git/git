@@ -619,7 +619,10 @@ static void describe_one_orphan(struct strbuf *sb, struct commit *commit)
 	struct pretty_print_context ctx = { 0 };
 
 	parse_commit(commit);
-	strbuf_addstr(sb, " - ");
+	strbuf_addstr(sb, "  ");
+	strbuf_addstr(sb,
+		find_unique_abbrev(commit->object.sha1, DEFAULT_ABBREV));
+	strbuf_addch(sb, ' ');
 	pretty_print_commit(CMIT_FMT_ONELINE, commit, sb, &ctx);
 	strbuf_addch(sb, '\n');
 }
