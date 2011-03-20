@@ -303,6 +303,11 @@ test_expect_success 'grep -f, ignore empty lines' '
 	test_cmp expected actual
 '
 
+test_expect_success 'grep -f, ignore empty lines, read patterns from stdin' '
+	git grep -f - <patterns >actual &&
+	test_cmp expected actual
+'
+
 cat >expected <<EOF
 y:y yy
 --
