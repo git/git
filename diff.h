@@ -110,7 +110,8 @@ struct diff_options {
 	int pickaxe_opts;
 	int rename_score;
 	int rename_limit;
-	int warn_on_too_large_rename;
+	int needed_rename_limit;
+	int show_rename_progress;
 	int dirstat_percent;
 	int setup;
 	int abbrev;
