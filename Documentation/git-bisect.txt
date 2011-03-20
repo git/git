@@ -241,7 +241,12 @@ exit(3) manual page), as the value is chopped with "& 0377".
 
 The special exit code 125 should be used when the current source code
 cannot be tested. If the script exits with this code, the current
-revision will be skipped (see `git bisect skip` above).
+revision will be skipped (see `git bisect skip` above). 125 was chosen
+as the highest sensible value to use for this purpose, because 126 and 127
+are used by POSIX shells to signal specific error status (127 is for
+command not found, 126 is for command found but not executable---these
+details do not matter, as they are normal errors in the script, as far as
+"bisect run" is concerned).
 
 You may often find that during a bisect session you want to have
 temporary modifications (e.g. s/#define DEBUG 0/#define DEBUG 1/ in a
