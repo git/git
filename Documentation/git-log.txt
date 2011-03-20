@@ -25,6 +25,7 @@ OPTIONS
 
 -<n>::
 	Limits the number of commits to show.
+	Note that this is a commit limiting option, see below.
 
 <since>..<until>::
 	Show only commits between the named two commits.  When
@@ -72,15 +73,15 @@ produced by --stat etc.
 	to be prefixed with "\-- " to separate them from options or
 	refnames.
 
-Common diff options
-~~~~~~~~~~~~~~~~~~~
-
-:git-log: 1
-include::diff-options.txt[]
-
 include::rev-list-options.txt[]
 
 include::pretty-formats.txt[]
+
+Common diff options
+-------------------
+
+:git-log: 1
+include::diff-options.txt[]
 
 include::diff-generate-patch.txt[]
 
