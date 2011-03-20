@@ -682,6 +682,7 @@ int main(int argc, char **argv)
 	int i;
 	int strict = 0;
 
+	packet_trace_identity("upload-pack");
 	git_extract_argv0_path(argv[0]);
 	read_replace_refs = 0;
 

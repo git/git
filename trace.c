@@ -25,10 +25,10 @@
 #include "cache.h"
 #include "quote.h"
 
-/* Get a trace file descriptor from GIT_TRACE env variable. */
-static int get_trace_fd(int *need_close)
+/* Get a trace file descriptor from "key" env variable. */
+static int get_trace_fd(const char *key, int *need_close)
 {
-	char *trace = getenv("GIT_TRACE");
+	char *trace = getenv(key);
 
 	if (!trace || !strcmp(trace, "") ||
 	    !strcmp(trace, "0") || !strcasecmp(trace, "false"))
@@ -50,10 +50,10 @@ static int get_trace_fd(int *need_close)
 		return fd;
 	}
 
-	fprintf(stderr, "What does '%s' for GIT_TRACE mean?\n", trace);
+	fprintf(stderr, "What does '%s' for %s mean?\n", trace, key);
 	fprintf(stderr, "If you want to trace into a file, "
-		"then please set GIT_TRACE to an absolute pathname "
-		"(starting with /).\n");
+		"then please set %s to an absolute pathname "
+		"(starting with /).\n", key);
 	fprintf(stderr, "Defaulting to tracing on stderr...\n");
 
 	return STDERR_FILENO;
@@ -62,23 +62,44 @@ static int get_trace_fd(int *need_close)
 static const char err_msg[] = "Could not trace into fd given by "
 	"GIT_TRACE environment variable";
 
-void trace_printf(const char *fmt, ...)
+void trace_vprintf(const char *key, const char *fmt, va_list ap)
 {
 	struct strbuf buf = STRBUF_INIT;
-	va_list ap;
-	int fd, need_close = 0;
 
-	fd = get_trace_fd(&need_close);
-	if (!fd)
+	if (!trace_want(key))
 		return;
 
 	set_try_to_free_routine(NULL);	/* is never reset */
-	va_start(ap, fmt);
 	strbuf_vaddf(&buf, fmt, ap);
-	va_end(ap);
-
-	write_or_whine_pipe(fd, buf.buf, buf.len, err_msg);
+	trace_strbuf(key, &buf);
 	strbuf_release(&buf);
+}
+
+void trace_printf_key(const char *key, const char *fmt, ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	trace_vprintf(key, fmt, ap);
+	va_end(ap);
+}
+
+void trace_printf(const char *fmt, ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	trace_vprintf("GIT_TRACE", fmt, ap);
+	va_end(ap);
+}
+
+void trace_strbuf(const char *key, const struct strbuf *buf)
+{
+	int fd, need_close = 0;
+
+	fd = get_trace_fd(key, &need_close);
+	if (!fd)
+		return;
+
+	write_or_whine_pipe(fd, buf->buf, buf->len, err_msg);
 
 	if (need_close)
 		close(fd);
@@ -90,7 +111,7 @@ void trace_argv_printf(const char **argv, const char *fmt, ...)
 	va_list ap;
 	int fd, need_close = 0;
 
-	fd = get_trace_fd(&need_close);
+	fd = get_trace_fd("GIT_TRACE", &need_close);
 	if (!fd)
 		return;
 
@@ -134,12 +155,11 @@ static const char *quote_crnl(const char *path)
 /* FIXME: move prefix to startup_info struct and get rid of this arg */
 void trace_repo_setup(const char *prefix)
 {
+	static const char *key = "GIT_TRACE_SETUP";
 	const char *git_work_tree;
 	char cwd[PATH_MAX];
-	char *trace = getenv("GIT_TRACE");
 
-	if (!trace || !strcmp(trace, "") ||
-	    !strcmp(trace, "0") || !strcasecmp(trace, "false"))
+	if (!trace_want(key))
 		return;
 
 	if (!getcwd(cwd, PATH_MAX))
@@ -151,8 +171,18 @@ void trace_repo_setup(const char *prefix)
 	if (!prefix)
 		prefix = "(null)";
 
-	trace_printf("setup: git_dir: %s\n", quote_crnl(get_git_dir()));
-	trace_printf("setup: worktree: %s\n", quote_crnl(git_work_tree));
-	trace_printf("setup: cwd: %s\n", quote_crnl(cwd));
-	trace_printf("setup: prefix: %s\n", quote_crnl(prefix));
+	trace_printf_key(key, "setup: git_dir: %s\n", quote_crnl(get_git_dir()));
+	trace_printf_key(key, "setup: worktree: %s\n", quote_crnl(git_work_tree));
+	trace_printf_key(key, "setup: cwd: %s\n", quote_crnl(cwd));
+	trace_printf_key(key, "setup: prefix: %s\n", quote_crnl(prefix));
+}
+
+int trace_want(const char *key)
+{
+	const char *trace = getenv(key);
+
+	if (!trace || !strcmp(trace, "") ||
+	    !strcmp(trace, "0") || !strcasecmp(trace, "false"))
+		return 0;
+	return 1;
 }

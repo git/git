@@ -906,6 +906,8 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 	struct remote *remote;
 	int result = 0;
 
+	packet_trace_identity("fetch");
+
 	/* Record the command line for the reflog */
 	strbuf_addstr(&default_rla, "fetch");
 	for (i = 1; i < argc; i++)
