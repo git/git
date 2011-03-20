@@ -126,4 +126,17 @@ test_expect_success 'checkout does not warn leaving reachable commit' '
 	check_no_orphan_warning stderr
 '
 
+cat >expect <<'EOF'
+Your branch is behind 'master' by 1 commit, and can be fast-forwarded.
+EOF
+test_expect_success 'tracking count is accurate after orphan check' '
+	reset &&
+	git branch child master^ &&
+	git config branch.child.remote . &&
+	git config branch.child.merge refs/heads/master &&
+	git checkout child^ &&
+	git checkout child >stdout &&
+	test_cmp expect stdout
+'
+
 test_done
