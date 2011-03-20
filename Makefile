@@ -216,6 +216,11 @@ all::
 #
 # Define NO_REGEX if you have no or inferior regex support in your C library.
 #
+# Define GETTEXT_POISON if you are debugging the choice of strings marked
+# for translation.  In a GETTEXT_POISON build, you can turn all strings marked
+# for translation into gibberish by setting the GIT_GETTEXT_POISON variable
+# (to any value) in your environment.
+#
 # Define JSMIN to point to JavaScript minifier that functions as
 # a filter to have gitweb.js minified.
 #
@@ -316,6 +321,7 @@ INSTALL = install
 RPMBUILD = rpmbuild
 TCL_PATH = tclsh
 TCLTK_PATH = wish
+XGETTEXT = xgettext
 PTHREAD_LIBS = -lpthread
 PTHREAD_CFLAGS =
 GCOV = gcov
@@ -515,6 +521,7 @@ LIB_H += diff.h
 LIB_H += dir.h
 LIB_H += exec_cmd.h
 LIB_H += fsck.h
+LIB_H += gettext.h
 LIB_H += git-compat-util.h
 LIB_H += graph.h
 LIB_H += grep.h
@@ -1370,6 +1377,10 @@ endif
 ifdef NO_SYMLINK_HEAD
 	BASIC_CFLAGS += -DNO_SYMLINK_HEAD
 endif
+ifdef GETTEXT_POISON
+	LIB_OBJS += gettext.o
+	BASIC_CFLAGS += -DGETTEXT_POISON
+endif
 ifdef NO_STRCASESTR
 	COMPAT_CFLAGS += -DNO_STRCASESTR
 	COMPAT_OBJS += compat/strcasestr.o
@@ -1581,6 +1592,7 @@ ifndef V
 	QUIET_BUILT_IN = @echo '   ' BUILTIN $@;
 	QUIET_GEN      = @echo '   ' GEN $@;
 	QUIET_LNCP     = @echo '   ' LN/CP $@;
+	QUIET_XGETTEXT = @echo '   ' XGETTEXT $@;
 	QUIET_GCOV     = @echo '   ' GCOV $@;
 	QUIET_SUBDIR0  = +@subdir=
 	QUIET_SUBDIR1  = ;$(NO_SUBDIR) echo '   ' SUBDIR $$subdir; \
@@ -2048,6 +2060,20 @@ info:
 pdf:
 	$(MAKE) -C Documentation pdf
 
+XGETTEXT_FLAGS = \
+	--force-po \
+	--add-comments \
+	--msgid-bugs-address="Git Mailing List <git@vger.kernel.org>" \
+	--from-code=UTF-8
+XGETTEXT_FLAGS_C = $(XGETTEXT_FLAGS) --keyword=_ --keyword=N_ --language=C
+LOCALIZED_C := $(C_OBJ:o=c)
+
+po/git.pot: $(LOCALIZED_C)
+	$(QUIET_XGETTEXT)$(XGETTEXT) -o$@+ $(XGETTEXT_FLAGS_C) $(LOCALIZED_C) && \
+	mv $@+ $@
+
+pot: po/git.pot
+
 $(ETAGS_TARGET): FORCE
 	$(RM) $(ETAGS_TARGET)
 	$(FIND) . -name '*.[hcS]' -print | xargs etags -a -o $(ETAGS_TARGET)
@@ -2089,6 +2115,7 @@ endif
 ifdef GIT_TEST_CMP_USE_COPIED_CONTEXT
 	@echo GIT_TEST_CMP_USE_COPIED_CONTEXT=YesPlease >>$@
 endif
+	@echo GETTEXT_POISON=\''$(subst ','\'',$(subst ','\'',$(GETTEXT_POISON)))'\' >>$@
 
 ### Detect Tck/Tk interpreter path changes
 ifndef NO_TCLTK
@@ -2314,6 +2341,7 @@ dist-doc:
 
 distclean: clean
 	$(RM) configure
+	$(RM) po/git.pot
 
 clean:
 	$(RM) *.o block-sha1/*.o ppc/*.o compat/*.o compat/*/*.o xdiff/*.o vcs-svn/*.o \
