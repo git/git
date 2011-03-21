@@ -11,8 +11,8 @@
 #include "repo_tree.h"
 #include "fast_export.h"
 #include "line_buffer.h"
-#include "obj_pool.h"
 #include "string_pool.h"
+#include "strbuf.h"
 
 #define NODEACT_REPLACE 4
 #define NODEACT_DELETE 3
@@ -27,19 +27,7 @@
 #define LENGTH_UNKNOWN (~0)
 #define DATE_RFC2822_LEN 31
 
-/* Create memory pool for log messages */
-obj_pool_gen(log, char, 4096)
-
 static struct line_buffer input = LINE_BUFFER_INIT;
-
-static char *log_copy(uint32_t length, const char *log)
-{
-	char *buffer;
-	log_free(log_pool.size);
-	buffer = log_pointer(log_alloc(length));
-	strncpy(buffer, log, length);
-	return buffer;
-}
 
 static struct {
 	uint32_t action, propLength, textLength, srcRev, type;
@@ -50,7 +38,7 @@ static struct {
 static struct {
 	uint32_t revision, author;
 	unsigned long timestamp;
-	char *log;
+	struct strbuf log;
 } rev_ctx;
 
 static struct {
@@ -83,7 +71,7 @@ static void reset_rev_ctx(uint32_t revision)
 {
 	rev_ctx.revision = revision;
 	rev_ctx.timestamp = 0;
-	rev_ctx.log = NULL;
+	strbuf_reset(&rev_ctx.log);
 	rev_ctx.author = ~0;
 }
 
@@ -123,8 +111,8 @@ static void handle_property(uint32_t key, const char *val, uint32_t len,
 	if (key == keys.svn_log) {
 		if (!val)
 			die("invalid dump: unsets svn:log");
-		/* Value length excludes terminating nul. */
-		rev_ctx.log = log_copy(len + 1, val);
+		strbuf_reset(&rev_ctx.log);
+		strbuf_add(&rev_ctx.log, val, len);
 	} else if (key == keys.svn_author) {
 		rev_ctx.author = pool_intern(val);
 	} else if (key == keys.svn_date) {
@@ -286,7 +274,7 @@ static void handle_node(void)
 static void handle_revision(void)
 {
 	if (rev_ctx.revision)
-		repo_commit(rev_ctx.revision, rev_ctx.author, rev_ctx.log,
+		repo_commit(rev_ctx.revision, rev_ctx.author, rev_ctx.log.buf,
 			dump_ctx.uuid, dump_ctx.url, rev_ctx.timestamp);
 }
 
@@ -390,6 +378,7 @@ int svndump_init(const char *filename)
 	if (buffer_init(&input, filename))
 		return error("cannot open %s: %s", filename, strerror(errno));
 	repo_init();
+	strbuf_init(&rev_ctx.log, 4096);
 	reset_dump_ctx(~0);
 	reset_rev_ctx(0);
 	reset_node_ctx(NULL);
@@ -399,11 +388,11 @@ int svndump_init(const char *filename)
 
 void svndump_deinit(void)
 {
-	log_reset();
 	repo_reset();
 	reset_dump_ctx(~0);
 	reset_rev_ctx(0);
 	reset_node_ctx(NULL);
+	strbuf_release(&rev_ctx.log);
 	if (buffer_deinit(&input))
 		fprintf(stderr, "Input error\n");
 	if (ferror(stdout))
@@ -412,7 +401,6 @@ void svndump_deinit(void)
 
 void svndump_reset(void)
 {
-	log_reset();
 	buffer_reset(&input);
 	repo_reset();
 	reset_dump_ctx(~0);
