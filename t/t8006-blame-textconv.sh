@@ -25,7 +25,8 @@ test_expect_success 'setup ' '
 	echo "bin: test 1 version 2" >one.bin &&
 	echo "bin: test number 2 version 2" >>two.bin &&
 	if test_have_prereq SYMLINKS; then
-		ln -sf two.bin symlink.bin
+		rm symlink.bin &&
+		ln -s two.bin symlink.bin
 	fi &&
 	GIT_AUTHOR_NAME=Number2 git commit -a -m Second --date="2010-01-01 20:00:00"
 '
