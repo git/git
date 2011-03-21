@@ -197,12 +197,7 @@ static void refresh_index_quietly(void)
 	discard_cache();
 	read_cache();
 	refresh_cache(REFRESH_QUIET|REFRESH_UNMERGED);
-
-	if (active_cache_changed &&
-	    !write_cache(fd, active_cache, active_nr))
-		commit_locked_index(lock_file);
-
-	rollback_lock_file(lock_file);
+	update_index_if_able(&the_index, lock_file);
 }
 
 static int builtin_diff_files(struct rev_info *revs, int argc, const char **argv)

@@ -1090,13 +1090,8 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 	refresh_index(&the_index, REFRESH_QUIET|REFRESH_UNMERGED, s.pathspec, NULL, NULL);
 
 	fd = hold_locked_index(&index_lock, 0);
-	if (0 <= fd) {
-		if (active_cache_changed &&
-		    !write_cache(fd, active_cache, active_nr))
-			commit_locked_index(&index_lock);
-		else
-			rollback_lock_file(&index_lock);
-	}
+	if (0 <= fd)
+		update_index_if_able(&the_index, &index_lock);
 
 	s.is_initial = get_sha1(s.reference, sha1) ? 1 : 0;
 	s.in_merge = in_merge;

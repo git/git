@@ -1545,6 +1545,18 @@ static int ce_write_entry(git_SHA_CTX *c, int fd, struct cache_entry *ce)
 	return result;
 }
 
+/*
+ * Opportunisticly update the index but do not complain if we can't
+ */
+void update_index_if_able(struct index_state *istate, struct lock_file *lockfile)
+{
+	if (istate->cache_changed &&
+	    !write_index(istate, lockfile->fd))
+		commit_locked_index(lockfile);
+	else
+		rollback_lock_file(lockfile);
+}
+
 int write_index(struct index_state *istate, int newfd)
 {
 	git_SHA_CTX c;
