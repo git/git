@@ -2176,7 +2176,7 @@ check-sha1:: test-sha1$X
 check: common-cmds.h
 	if sparse; \
 	then \
-		for i in *.c; \
+		for i in $(patsubst %.o, %.c, $(GIT_OBJS)); \
 		do \
 			sparse $(ALL_CFLAGS) $(SPARSE_FLAGS) $$i || exit; \
 		done; \
