@@ -4,25 +4,18 @@ test_description='properly cull all ancestors'
 
 . ./test-lib.sh
 
-commit () {
-	test_tick &&
-	echo $1 >file &&
-	git commit -a -m $1 &&
-	git tag $1
-}
-
 test_expect_success setup '
 
 	touch file &&
 	git add file &&
 
-	commit one &&
+	test_commit one &&
 
 	test_tick=$(($test_tick - 2400)) &&
 
-	commit two &&
-	commit three &&
-	commit four &&
+	test_commit two &&
+	test_commit three &&
+	test_commit four &&
 
 	git log --pretty=oneline --abbrev-commit
 '
