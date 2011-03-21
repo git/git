@@ -218,11 +218,18 @@ static void send_request(int fd, struct strbuf *buf)
 		safe_write(fd, buf->buf, buf->len);
 }
 
+#define INITIAL_FLUSH 32
+
+static int next_flush(int count)
+{
+	return INITIAL_FLUSH + count;
+}
+
 static int find_common(int fd[2], unsigned char *result_sha1,
 		       struct ref *refs)
 {
 	int fetching;
-	int count = 0, flushes = 0, retval;
+	int count = 0, flushes = 0, flush_at = INITIAL_FLUSH, retval;
 	const unsigned char *sha1;
 	unsigned in_vain = 0;
 	int got_continue = 0;
@@ -335,19 +342,20 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 		if (args.verbose)
 			fprintf(stderr, "have %s\n", sha1_to_hex(sha1));
 		in_vain++;
-		if (!(31 & ++count)) {
+		if (flush_at <= ++count) {
 			int ack;
 
 			packet_buf_flush(&req_buf);
 			send_request(fd[1], &req_buf);
 			strbuf_setlen(&req_buf, state_len);
 			flushes++;
+			flush_at = next_flush(count);
 
 			/*
 			 * We keep one window "ahead" of the other side, and
 			 * will wait for an ACK only on the next one
 			 */
-			if (!args.stateless_rpc && count == 32)
+			if (!args.stateless_rpc && count == INITIAL_FLUSH)
 				continue;
 
 			consume_shallow_list(fd[0]);
