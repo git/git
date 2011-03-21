@@ -218,12 +218,14 @@ static void send_request(int fd, struct strbuf *buf)
 		safe_write(fd, buf->buf, buf->len);
 }
 
-#define INITIAL_FLUSH 32
+#define INITIAL_FLUSH 16
 #define LARGE_FLUSH 1024
 
 static int next_flush(int count)
 {
-	if (count < LARGE_FLUSH)
+	if (count < INITIAL_FLUSH * 2)
+		count += INITIAL_FLUSH;
+	else if (count < LARGE_FLUSH)
 		count <<= 1;
 	else
 		count += LARGE_FLUSH;
