@@ -12,6 +12,9 @@ Updates since v1.7.4
 
  * Update to more modern HP-UX port.
 
+ * The codebase is getting prepared for i18n/l10n; no translated/translatable
+   strings in the code yet.
+
  * "git apply -v" reports offset lines when the patch does not apply at
    the exact location recorded in the diff output.
 
@@ -40,11 +43,20 @@ Updates since v1.7.4
    reached, without spewing unnecessary error messages that complain about
    the server response it never got.
 
+ * "git grep -f <filename>" learned to treat "-" as "read from the
+   standard input stream".
+
  * "git grep --no-index" did not honor pathspecs correctly, returning
    paths outside the specified area.
 
  * "git log" type commands now understand globbing pathspecs.  You
    can say "git log -- '*.txt'" for example.
+
+ * "git mergetool" learned how to drive "beyond compare 3" as well.
+
+ * "git rerere forget" without pathspec used to forget all the saved
+   conflicts that relate to the current merge; it now requires you to
+   give it pathspecs.
 
  * "git rev-list --objects $revs -- $pathspec" now limits the objects listed
    in its output properly with the pathspec, in preparation for narrow
@@ -73,11 +85,6 @@ Fixes since v1.7.4
 All of the fixes in the v1.7.4.X maintenance series are included in this
 release, unless otherwise noted.
 
- * We used to keep one file descriptor open for each and every packfile
-   that we have a mmap window on it (read: "in use"), even when for very
-   tiny packfiles.  We now close the file descriptor early when the entire
-   packfile fits inside one mmap window.
-
  * "git apply" used to confuse lines updated by previous hunks as lines
    that existed before when applying a hunk, contributing misapplication
    of patches with offsets.
@@ -86,12 +93,8 @@ release, unless otherwise noted.
    in the working tree that are in the way in order to check out paths
    under it from the named branch (js/checkout-untracked-symlink).
 
- * "git submodule update" used to honor the --merge/--rebase option (or
-   corresponding configuration variables) even for a newly cloned
-   subproject, which made no sense (so/submodule-no-update-first-time).
-
 ---
 exec >/var/tmp/1
-O=v1.7.4.1-291-g01de349
+O=v1.7.4.1-352-gcdc3466
 echo O=$(git describe 'master')
 git shortlog --no-merges ^maint ^$O master
