@@ -41,8 +41,6 @@ struct rev_info {
 	/* Traversal flags */
 	unsigned int	dense:1,
 			prune:1,
-			no_merges:1,
-			merges_only:1,
 			no_walk:1,
 			show_all:1,
 			remove_empty_trees:1,
@@ -126,6 +124,8 @@ struct rev_info {
 	int max_count;
 	unsigned long max_age;
 	unsigned long min_age;
+	int min_parents;
+	int max_parents;
 
 	/* diff info for patches and for paths limiting */
 	struct diff_options diffopt;
