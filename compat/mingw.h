@@ -233,6 +233,22 @@ int mingw_getpagesize(void);
 #define getpagesize mingw_getpagesize
 #endif
 
+struct rlimit {
+	unsigned int rlim_cur;
+};
+#define RLIMIT_NOFILE 0
+
+static inline int getrlimit(int resource, struct rlimit *rlp)
+{
+	if (resource != RLIMIT_NOFILE) {
+		errno = EINVAL;
+		return -1;
+	}
+
+	rlp->rlim_cur = 2048;
+	return 0;
+}
+
 /* Use mingw_lstat() instead of lstat()/stat() and
  * mingw_fstat() instead of fstat() on Windows.
  */
