@@ -219,10 +219,15 @@ static void send_request(int fd, struct strbuf *buf)
 }
 
 #define INITIAL_FLUSH 32
+#define LARGE_FLUSH 1024
 
 static int next_flush(int count)
 {
-	return INITIAL_FLUSH + count;
+	if (count < LARGE_FLUSH)
+		count <<= 1;
+	else
+		count += LARGE_FLUSH;
+	return count;
 }
 
 static int find_common(int fd[2], unsigned char *result_sha1,
