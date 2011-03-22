@@ -121,15 +121,24 @@ static const char *get_response_line(void)
 	die("unexpected end of fast-import feedback");
 }
 
+static void die_short_read(struct line_buffer *input)
+{
+	if (buffer_ferror(input))
+		die_errno("error reading dump file");
+	die("invalid dump: unexpected end of file");
+}
+
 void fast_export_data(uint32_t mode, uint32_t len, struct line_buffer *input)
 {
 	if (mode == REPO_MODE_LNK) {
 		/* svn symlink blobs start with "link " */
-		buffer_skip_bytes(input, 5);
 		len -= 5;
+		if (buffer_skip_bytes(input, 5) != 5)
+			die_short_read(input);
 	}
 	printf("data %"PRIu32"\n", len);
-	buffer_copy_bytes(input, len);
+	if (buffer_copy_bytes(input, len) != len)
+		die_short_read(input);
 	fputc('\n', stdout);
 }
 

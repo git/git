@@ -76,7 +76,8 @@ Functions
 
 `buffer_skip_bytes`::
 	Discards `len` bytes from the input stream (stopping early
-	if necessary because of an error or eof).
+	if necessary because of an error or eof).  Return value is
+	the number of bytes successfully read.
 
 `buffer_reset`::
 	Deallocates non-static buffers.
