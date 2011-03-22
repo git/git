@@ -207,7 +207,6 @@ static void refresh_index_quietly(void)
 
 static int builtin_diff_files(struct rev_info *revs, int argc, const char **argv)
 {
-	int result;
 	unsigned int options = 0;
 
 	while (1 < argc && argv[1][0] == '-') {
@@ -241,8 +240,7 @@ static int builtin_diff_files(struct rev_info *revs, int argc, const char **argv
 		perror("read_cache_preload");
 		return -1;
 	}
-	result = run_diff_files(revs, options);
-	return diff_result_code(&revs->diffopt, result);
+	return run_diff_files(revs, options);
 }
 
 int cmd_diff(int argc, const char **argv, const char *prefix)
