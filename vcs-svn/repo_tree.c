@@ -278,8 +278,8 @@ void repo_diff(uint32_t r1, uint32_t r2)
 		    repo_commit_root_dir(commit_pointer(r2)));
 }
 
-void repo_commit(uint32_t revision, uint32_t author, char *log, uint32_t uuid,
-		 uint32_t url, unsigned long timestamp)
+void repo_commit(uint32_t revision, const char *author, char *log,
+		 const char *uuid, const char *url, unsigned long timestamp)
 {
 	fast_export_commit(revision, author, log, uuid, url, timestamp);
 	dent_commit();

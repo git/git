@@ -17,8 +17,9 @@ void repo_add(uint32_t *path, uint32_t mode, uint32_t blob_mark);
 uint32_t repo_read_path(const uint32_t *path);
 uint32_t repo_read_mode(const uint32_t *path);
 void repo_delete(uint32_t *path);
-void repo_commit(uint32_t revision, uint32_t author, char *log, uint32_t uuid,
-		 uint32_t url, long unsigned timestamp);
+void repo_commit(uint32_t revision, const char *author,
+		char *log, const char *uuid, const char *url,
+		long unsigned timestamp);
 void repo_diff(uint32_t r1, uint32_t r2);
 void repo_init(void);
 void repo_reset(void);

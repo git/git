@@ -36,13 +36,14 @@ static struct {
 } node_ctx;
 
 static struct {
-	uint32_t revision, author;
+	uint32_t revision;
 	unsigned long timestamp;
-	struct strbuf log;
+	struct strbuf log, author;
 } rev_ctx;
 
 static struct {
-	uint32_t version, uuid, url;
+	uint32_t version;
+	struct strbuf uuid, url;
 } dump_ctx;
 
 static struct {
@@ -72,14 +73,16 @@ static void reset_rev_ctx(uint32_t revision)
 	rev_ctx.revision = revision;
 	rev_ctx.timestamp = 0;
 	strbuf_reset(&rev_ctx.log);
-	rev_ctx.author = ~0;
+	strbuf_reset(&rev_ctx.author);
 }
 
-static void reset_dump_ctx(uint32_t url)
+static void reset_dump_ctx(const char *url)
 {
-	dump_ctx.url = url;
+	strbuf_reset(&dump_ctx.url);
+	if (url)
+		strbuf_addstr(&dump_ctx.url, url);
 	dump_ctx.version = 1;
-	dump_ctx.uuid = ~0;
+	strbuf_reset(&dump_ctx.uuid);
 }
 
 static void init_keys(void)
@@ -114,7 +117,9 @@ static void handle_property(uint32_t key, const char *val, uint32_t len,
 		strbuf_reset(&rev_ctx.log);
 		strbuf_add(&rev_ctx.log, val, len);
 	} else if (key == keys.svn_author) {
-		rev_ctx.author = pool_intern(val);
+		strbuf_reset(&rev_ctx.author);
+		if (val)
+			strbuf_add(&rev_ctx.author, val, len);
 	} else if (key == keys.svn_date) {
 		if (!val)
 			die("invalid dump: unsets svn:date");
@@ -274,8 +279,9 @@ static void handle_node(void)
 static void handle_revision(void)
 {
 	if (rev_ctx.revision)
-		repo_commit(rev_ctx.revision, rev_ctx.author, rev_ctx.log.buf,
-			dump_ctx.uuid, dump_ctx.url, rev_ctx.timestamp);
+		repo_commit(rev_ctx.revision, rev_ctx.author.buf,
+			rev_ctx.log.buf, dump_ctx.uuid.buf, dump_ctx.url.buf,
+			rev_ctx.timestamp);
 }
 
 void svndump_read(const char *url)
@@ -286,7 +292,7 @@ void svndump_read(const char *url)
 	uint32_t len;
 	uint32_t key;
 
-	reset_dump_ctx(pool_intern(url));
+	reset_dump_ctx(url);
 	while ((t = buffer_read_line(&input))) {
 		val = strstr(t, ": ");
 		if (!val)
@@ -301,7 +307,8 @@ void svndump_read(const char *url)
 				die("expected svn dump format version <= 3, found %"PRIu32,
 				    dump_ctx.version);
 		} else if (key == keys.uuid) {
-			dump_ctx.uuid = pool_intern(val);
+			strbuf_reset(&dump_ctx.uuid);
+			strbuf_addstr(&dump_ctx.uuid, val);
 		} else if (key == keys.revision_number) {
 			if (active_ctx == NODE_CTX)
 				handle_node();
@@ -378,8 +385,11 @@ int svndump_init(const char *filename)
 	if (buffer_init(&input, filename))
 		return error("cannot open %s: %s", filename, strerror(errno));
 	repo_init();
+	strbuf_init(&dump_ctx.uuid, 4096);
+	strbuf_init(&dump_ctx.url, 4096);
 	strbuf_init(&rev_ctx.log, 4096);
-	reset_dump_ctx(~0);
+	strbuf_init(&rev_ctx.author, 4096);
+	reset_dump_ctx(NULL);
 	reset_rev_ctx(0);
 	reset_node_ctx(NULL);
 	init_keys();
@@ -389,7 +399,7 @@ int svndump_init(const char *filename)
 void svndump_deinit(void)
 {
 	repo_reset();
-	reset_dump_ctx(~0);
+	reset_dump_ctx(NULL);
 	reset_rev_ctx(0);
 	reset_node_ctx(NULL);
 	strbuf_release(&rev_ctx.log);
@@ -403,7 +413,8 @@ void svndump_reset(void)
 {
 	buffer_reset(&input);
 	repo_reset();
-	reset_dump_ctx(~0);
-	reset_rev_ctx(0);
-	reset_node_ctx(NULL);
+	strbuf_release(&dump_ctx.uuid);
+	strbuf_release(&dump_ctx.url);
+	strbuf_release(&rev_ctx.log);
+	strbuf_release(&rev_ctx.author);
 }
