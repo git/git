@@ -17,7 +17,6 @@ static int compare_tree_entry(struct tree_desc *t1, struct tree_desc *t2,
 	const unsigned char *sha1, *sha2;
 	int cmp, pathlen1, pathlen2;
 	int old_baselen = base->len;
-	int retval = 0;
 
 	sha1 = tree_entry_extract(t1, &path1, &mode1);
 	sha2 = tree_entry_extract(t2, &path2, &mode2);
@@ -53,7 +52,7 @@ static int compare_tree_entry(struct tree_desc *t1, struct tree_desc *t2,
 				    sha1, sha2, base->buf, 0, 0);
 		}
 		strbuf_addch(base, '/');
-		retval = diff_tree_sha1(sha1, sha2, base->buf, opt);
+		diff_tree_sha1(sha1, sha2, base->buf, opt);
 	} else {
 		opt->change(opt, mode1, mode2, sha1, sha2, base->buf, 0, 0);
 	}
