@@ -351,7 +351,7 @@ static void merge_worktree(unsigned char *sha1)
 	if (is_bare_repository())
 		die ("denyCurrentBranch = updateInstead needs a worktree");
 
-	strbuf_addf(&git_env, "GIT_DIR=%s", make_absolute_path(get_git_dir()));
+	strbuf_addf(&git_env, "GIT_DIR=%s", absolute_path(get_git_dir()));
 	env[0] = git_env.buf;
 	env[1] = NULL;
 
