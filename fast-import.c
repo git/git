@@ -2939,7 +2939,7 @@ static void parse_ls(struct branch *b)
 {
 	const char *p;
 	struct tree_entry *root = NULL;
-	struct tree_entry leaf = {0};
+	struct tree_entry leaf = {NULL};
 
 	/* ls SP (<treeish> SP)? <path> */
 	p = command_buf.buf + strlen("ls ");

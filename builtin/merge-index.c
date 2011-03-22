@@ -1,6 +1,5 @@
-#include "cache.h"
+#include "builtin.h"
 #include "run-command.h"
-#include "exec_cmd.h"
 
 static const char *pgm;
 static int one_shot, quiet;

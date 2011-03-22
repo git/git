@@ -1,6 +1,4 @@
-#include "cache.h"
-#include "blob.h"
-#include "exec_cmd.h"
+#include "builtin.h"
 
 static char *create_temp_file(unsigned char *sha1)
 {

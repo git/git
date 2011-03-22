@@ -9,11 +9,11 @@
 #include "refs.h"
 #include "string-list.h"
 
-struct string_list config_name_for_path;
-struct string_list config_fetch_recurse_submodules_for_name;
-struct string_list config_ignore_for_name;
+static struct string_list config_name_for_path;
+static struct string_list config_fetch_recurse_submodules_for_name;
+static struct string_list config_ignore_for_name;
 static int config_fetch_recurse_submodules = RECURSE_SUBMODULES_ON_DEMAND;
-struct string_list changed_submodule_paths;
+static struct string_list changed_submodule_paths;
 
 static int add_submodule_odb(const char *path)
 {

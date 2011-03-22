@@ -207,7 +207,7 @@ static void parse_pack_header(void)
 static NORETURN void bad_object(unsigned long offset, const char *format,
 		       ...) __attribute__((format (printf, 2, 3)));
 
-static void bad_object(unsigned long offset, const char *format, ...)
+static NORETURN void bad_object(unsigned long offset, const char *format, ...)
 {
 	va_list params;
 	char buf[1024];
