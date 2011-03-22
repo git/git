@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "sha1-lookup.h"
 #include "refs.h"
+#include "commit.h"
 
 static struct replace_object {
 	unsigned char sha1[2][20];

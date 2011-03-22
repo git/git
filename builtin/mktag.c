@@ -1,6 +1,5 @@
-#include "cache.h"
+#include "builtin.h"
 #include "tag.h"
-#include "exec_cmd.h"
 
 /*
  * A signature file has a very simple fixed format: four lines

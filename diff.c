@@ -628,7 +628,7 @@ struct diff_words_style {
 	const char *newline;
 };
 
-struct diff_words_style diff_words_styles[] = {
+static struct diff_words_style diff_words_styles[] = {
 	{ DIFF_WORDS_PORCELAIN, {"+", "\n"}, {"-", "\n"}, {" ", "\n"}, "~\n" },
 	{ DIFF_WORDS_PLAIN, {"{+", "+}"}, {"[-", "-]"}, {"", ""}, "\n" },
 	{ DIFF_WORDS_COLOR, {"", ""}, {"", ""}, {"", ""}, "\n" }

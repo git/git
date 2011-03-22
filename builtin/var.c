@@ -3,8 +3,7 @@
  *
  * Copyright (C) Eric Biederman, 2005
  */
-#include "cache.h"
-#include "exec_cmd.h"
+#include "builtin.h"
 
 static const char var_usage[] = "git var (-l | <variable>)";
 
