@@ -58,7 +58,7 @@ static int compare_tree_entry(struct tree_desc *t1, struct tree_desc *t2,
 		opt->change(opt, mode1, mode2, sha1, sha2, base->buf, 0, 0);
 	}
 	strbuf_setlen(base, old_baselen);
-	return retval;
+	return 0;
 }
 
 /* A whole sub-tree went away or appeared */
