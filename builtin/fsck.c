@@ -140,11 +140,10 @@ static int traverse_reachable(void)
 	int result = 0;
 	while (pending.nr) {
 		struct object_array_entry *entry;
-		struct object *obj, *parent;
+		struct object *obj;
 
 		entry = pending.objects + --pending.nr;
 		obj = entry->item;
-		parent = (struct object *) entry->name;
 		result |= traverse_one_object(obj);
 	}
 	return !!result;
