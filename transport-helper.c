@@ -561,10 +561,9 @@ static int push_refs_with_push(struct transport *transport,
 	int mirror = flags & TRANSPORT_PUSH_MIRROR;
 	struct helper_data *data = transport->data;
 	struct strbuf buf = STRBUF_INIT;
-	struct child_process *helper;
 	struct ref *ref;
 
-	helper = get_helper(transport);
+	get_helper(transport);
 	if (!data->push)
 		return 1;
 
