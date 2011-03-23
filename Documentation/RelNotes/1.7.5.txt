@@ -15,6 +15,9 @@ Updates since v1.7.4
  * The codebase is getting prepared for i18n/l10n; no translated/translatable
    strings in the code yet.
 
+ * The bash completion script can now complete symmetric difference
+   for "git diff" command, e.g. "git diff ...bra<TAB>".
+
  * "git apply -v" reports offset lines when the patch does not apply at
    the exact location recorded in the diff output.
 
@@ -43,6 +46,11 @@ Updates since v1.7.4
    reached, without spewing unnecessary error messages that complain about
    the server response it never got.
 
+ * "git fetch" vs "git upload-pack" transfer learned 'no-done'
+   protocol extension to save one round-trip after the content
+   negotiation is done. This saves one HTTP RPC, reducing the overall
+   latency for a trivial fetch.
+
  * "git grep -f <filename>" learned to treat "-" as "read from the
    standard input stream".
 
@@ -51,6 +59,11 @@ Updates since v1.7.4
 
  * "git log" type commands now understand globbing pathspecs.  You
    can say "git log -- '*.txt'" for example.
+
+ * "git log" family of commands learned --cherry and --cherry-mark
+   options that can be used to view two diverged branches while omitting
+   or highlighting equivalent changes that appear on both sides of a
+   symmetric difference (e.g. "log --cherry A...B").
 
  * "git mergetool" learned how to drive "beyond compare 3" as well.
 
@@ -93,8 +106,22 @@ release, unless otherwise noted.
    in the working tree that are in the way in order to check out paths
    under it from the named branch (js/checkout-untracked-symlink).
 
+ * "git fetch" from a client that is mostly following the remote
+   needlessly told all of its refs to the server for both sides to
+   compute the set of objects that need to be transferred efficiently,
+   instead of stopping when the server heard enough. In a project with
+   many tags, this turns out to be extremely wasteful, especially over
+   the smart HTTP transport (sp/maint-{upload,fetch}-pack-stop-early~1).
+
+ * "git fetch" run from a repository that uses the same repository as
+   its alternate object store as the repository it is fetching from
+   did not tell the server that it already has access to objects
+   reachable from the refs in their common alternate object store,
+   causing it to fetch unnecessary objects (jc/maint-fetch-alt).
+
 ---
 exec >/var/tmp/1
 O=v1.7.4.1-352-gcdc3466
+O=v1.7.4.1-414-gaeb2aaa
 echo O=$(git describe 'master')
 git shortlog --no-merges ^maint ^$O master
