@@ -45,11 +45,6 @@ all::
 # Define NO_D_TYPE_IN_DIRENT if your platform defines DT_UNKNOWN but lacks
 # d_type in struct dirent (Cygwin 1.5, fixed in Cygwin 1.7).
 #
-# Define NO_C99_FORMAT if your formatted IO functions (printf/scanf et.al.)
-# do not support the 'size specifiers' introduced by C99, namely ll, hh,
-# j, z, t. (representing long long int, char, intmax_t, size_t, ptrdiff_t).
-# some C compilers supported these specifiers prior to C99 as an extension.
-#
 # Define NO_STRCASESTR if you don't have strcasestr.
 #
 # Define NO_MEMMEM if you don't have memmem.
@@ -878,7 +873,6 @@ ifeq ($(uname_S),SunOS)
 		NO_UNSETENV = YesPlease
 		NO_SETENV = YesPlease
 		NO_STRLCPY = YesPlease
-		NO_C99_FORMAT = YesPlease
 		NO_STRTOUMAX = YesPlease
 		GIT_TEST_CMP = cmp
 	endif
@@ -889,21 +883,18 @@ ifeq ($(uname_S),SunOS)
 		NO_UNSETENV = YesPlease
 		NO_SETENV = YesPlease
 		NO_STRLCPY = YesPlease
-		NO_C99_FORMAT = YesPlease
 		NO_STRTOUMAX = YesPlease
 		GIT_TEST_CMP = cmp
 	endif
 	ifeq ($(uname_R),5.8)
 		NO_UNSETENV = YesPlease
 		NO_SETENV = YesPlease
-		NO_C99_FORMAT = YesPlease
 		NO_STRTOUMAX = YesPlease
 		GIT_TEST_CMP = cmp
 	endif
 	ifeq ($(uname_R),5.9)
 		NO_UNSETENV = YesPlease
 		NO_SETENV = YesPlease
-		NO_C99_FORMAT = YesPlease
 		NO_STRTOUMAX = YesPlease
 		GIT_TEST_CMP = cmp
 	endif
@@ -1083,7 +1074,6 @@ ifeq ($(uname_S),Windows)
 	NO_MEMMEM = YesPlease
 	# NEEDS_LIBICONV = YesPlease
 	NO_ICONV = YesPlease
-	NO_C99_FORMAT = YesPlease
 	NO_STRTOUMAX = YesPlease
 	NO_STRTOULL = YesPlease
 	NO_MKDTEMP = YesPlease
@@ -1160,7 +1150,6 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	NO_MEMMEM = YesPlease
 	NEEDS_LIBICONV = YesPlease
 	OLD_ICONV = YesPlease
-	NO_C99_FORMAT = YesPlease
 	NO_STRTOUMAX = YesPlease
 	NO_MKDTEMP = YesPlease
 	NO_MKSTEMPS = YesPlease
@@ -1362,9 +1351,6 @@ ifdef USE_ST_TIMESPEC
 endif
 ifdef NO_NSEC
 	BASIC_CFLAGS += -DNO_NSEC
-endif
-ifdef NO_C99_FORMAT
-	BASIC_CFLAGS += -DNO_C99_FORMAT
 endif
 ifdef SNPRINTF_RETURNS_BOGUS
 	COMPAT_CFLAGS += -DSNPRINTF_RETURNS_BOGUS

@@ -26,13 +26,8 @@
 #endif
 #endif
 
-#ifdef NO_C99_FORMAT
-#define SZ_FMT "lu"
-static unsigned long sz_fmt(size_t s) { return (unsigned long)s; }
-#else
-#define SZ_FMT "zu"
-static size_t sz_fmt(size_t s) { return s; }
-#endif
+#define SZ_FMT PRIuMAX
+static inline uintmax_t sz_fmt(size_t s) { return s; }
 
 const unsigned char null_sha1[20];
 
