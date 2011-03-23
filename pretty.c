@@ -876,11 +876,7 @@ static size_t format_commit_one(struct strbuf *sb, const char *placeholder,
 		                              c->abbrev_parent_hashes.off;
 		return 1;
 	case 'm':		/* left/right/bottom */
-		strbuf_addch(sb, (commit->object.flags & BOUNDARY)
-		                 ? '-'
-		                 : (commit->object.flags & SYMMETRIC_LEFT)
-		                 ? '<'
-		                 : '>');
+		strbuf_addstr(sb, get_revision_mark(NULL, commit));
 		return 1;
 	case 'd':
 		format_decoration(sb, commit);
