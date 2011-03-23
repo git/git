@@ -12,6 +12,7 @@ USAGE="list [<options>]
 
 SUBDIRECTORY_OK=Yes
 OPTIONS_SPEC=
+START_DIR=`pwd`
 . git-sh-setup
 require_work_tree
 cd_to_toplevel
@@ -393,7 +394,7 @@ apply_stash () {
 		then
 			squelch='>/dev/null 2>&1'
 		fi
-		eval "git status $squelch" || :
+		(cd "$START_DIR" && eval "git status $squelch") || :
 	else
 		# Merge conflict; keep the exit status from merge-recursive
 		status=$?
