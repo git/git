@@ -941,6 +941,7 @@ void init_revisions(struct rev_info *revs, const char *prefix)
 	revs->min_age = -1;
 	revs->skip_count = -1;
 	revs->max_count = -1;
+	revs->max_parents = -1;
 
 	revs->commit_format = CMIT_FMT_DEFAULT;
 
@@ -1277,9 +1278,17 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 	} else if (!strcmp(arg, "--remove-empty")) {
 		revs->remove_empty_trees = 1;
 	} else if (!strcmp(arg, "--merges")) {
-		revs->merges_only = 1;
+		revs->min_parents = 2;
 	} else if (!strcmp(arg, "--no-merges")) {
-		revs->no_merges = 1;
+		revs->max_parents = 1;
+	} else if (!prefixcmp(arg, "--min-parents=")) {
+		revs->min_parents = atoi(arg+14);
+	} else if (!prefixcmp(arg, "--no-min-parents")) {
+		revs->min_parents = 0;
+	} else if (!prefixcmp(arg, "--max-parents=")) {
+		revs->max_parents = atoi(arg+14);
+	} else if (!prefixcmp(arg, "--no-max-parents")) {
+		revs->max_parents = -1;
 	} else if (!strcmp(arg, "--boundary")) {
 		revs->boundary = 1;
 	} else if (!strcmp(arg, "--left-right")) {
@@ -1298,7 +1307,7 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 			die("--cherry is incompatible with --left-only");
 		revs->cherry_mark = 1;
 		revs->right_only = 1;
-		revs->no_merges = 1;
+		revs->max_parents = 1;
 		revs->limited = 1;
 	} else if (!strcmp(arg, "--count")) {
 		revs->count = 1;
@@ -2029,10 +2038,15 @@ enum commit_action get_commit_action(struct rev_info *revs, struct commit *commi
 		return commit_ignore;
 	if (revs->min_age != -1 && (commit->date > revs->min_age))
 		return commit_ignore;
-	if (revs->no_merges && commit->parents && commit->parents->next)
-		return commit_ignore;
-	if (revs->merges_only && !(commit->parents && commit->parents->next))
-		return commit_ignore;
+	if (revs->min_parents || (revs->max_parents >= 0)) {
+		int n = 0;
+		struct commit_list *p;
+		for (p = commit->parents; p; p = p->next)
+			n++;
+		if ((n < revs->min_parents) ||
+		    ((revs->max_parents >= 0) && (n > revs->max_parents)))
+			return commit_ignore;
+	}
 	if (!commit_match(commit, revs))
 		return commit_ignore;
 	if (revs->prune && revs->dense) {
