@@ -226,11 +226,26 @@ endif::git-rev-list[]
 
 --merges::
 
-	Print only merge commits.
+	Print only merge commits. This is exactly the same as `--min-parents=2`.
 
 --no-merges::
 
-	Do not print commits with more than one parent.
+	Do not print commits with more than one parent. This is
+	exactly the same as `--max-parents=1`.
+
+--min-parents=<number>::
+--max-parents=<number>::
+--no-min-parents::
+--no-max-parents::
+
+	Show only commits which have at least (or at most) that many
+	commits. In particular, `--max-parents=1` is the same as `--no-merges`,
+	`--min-parents=2` is the same as `--merges`.  `--max-parents=0`
+	gives all root commits and `--min-parents=3` all octopus merges.
++
+`--no-min-parents` and `--no-max-parents` reset these limits (to no limit)
+again.  Equivalent forms are `--min-parents=0` (any commit has 0 or more
+parents) and `--max-parents=-1` (negative numbers denote no upper limit).
 
 --first-parent::
 	Follow only the first parent commit upon seeing a merge
