@@ -614,7 +614,7 @@ echo "fatal: --name-only does not make sense" > expect.name-only
 echo "fatal: --name-status does not make sense" > expect.name-status
 echo "fatal: --check does not make sense" > expect.check
 
-test_expect_success 'options no longer allowed for format-patch' '
+test_expect_success C_LOCALE_OUTPUT 'options no longer allowed for format-patch' '
 	test_must_fail git format-patch --name-only 2> output &&
 	test_cmp expect.name-only output &&
 	test_must_fail git format-patch --name-status 2> output &&

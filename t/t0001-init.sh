@@ -180,7 +180,7 @@ test_expect_success 'GIT_DIR & GIT_WORK_TREE (2)' '
 	fi
 '
 
-test_expect_success 'reinit' '
+test_expect_success C_LOCALE_OUTPUT 'reinit' '
 
 	(
 		sane_unset GIT_CONFIG GIT_WORK_TREE GIT_CONFIG &&

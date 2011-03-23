@@ -118,12 +118,12 @@ static int for_each_tag_name(const char **argv, each_tag_name_fn fn)
 	for (p = argv; *p; p++) {
 		if (snprintf(ref, sizeof(ref), "refs/tags/%s", *p)
 					>= sizeof(ref)) {
-			error("tag name too long: %.*s...", 50, *p);
+			error(_("tag name too long: %.*s..."), 50, *p);
 			had_error = 1;
 			continue;
 		}
 		if (!resolve_ref(ref, sha1, 1, NULL)) {
-			error("tag '%s' not found.", *p);
+			error(_("tag '%s' not found."), *p);
 			had_error = 1;
 			continue;
 		}
@@ -138,7 +138,7 @@ static int delete_tag(const char *name, const char *ref,
 {
 	if (delete_ref(ref, sha1, 0))
 		return 1;
-	printf("Deleted tag '%s' (was %s)\n", name, find_unique_abbrev(sha1, DEFAULT_ABBREV));
+	printf(_("Deleted tag '%s' (was %s)\n"), name, find_unique_abbrev(sha1, DEFAULT_ABBREV));
 	return 0;
 }
 
@@ -150,7 +150,7 @@ static int verify_tag(const char *name, const char *ref,
 	argv_verify_tag[2] = sha1_to_hex(sha1);
 
 	if (run_command_v_opt(argv_verify_tag, RUN_GIT_CMD))
-		return error("could not verify the tag '%s'", name);
+		return error(_("could not verify the tag '%s'"), name);
 	return 0;
 }
 
@@ -165,7 +165,7 @@ static int do_sign(struct strbuf *buffer)
 	if (!*signingkey) {
 		if (strlcpy(signingkey, git_committer_info(IDENT_ERROR_ON_NO_NAME),
 				sizeof(signingkey)) > sizeof(signingkey) - 1)
-			return error("committer info too long.");
+			return error(_("committer info too long."));
 		bracket = strchr(signingkey, '>');
 		if (bracket)
 			bracket[1] = '\0';
@@ -185,20 +185,20 @@ static int do_sign(struct strbuf *buffer)
 	args[3] = NULL;
 
 	if (start_command(&gpg))
-		return error("could not run gpg.");
+		return error(_("could not run gpg."));
 
 	if (write_in_full(gpg.in, buffer->buf, buffer->len) != buffer->len) {
 		close(gpg.in);
 		close(gpg.out);
 		finish_command(&gpg);
-		return error("gpg did not accept the tag data");
+		return error(_("gpg did not accept the tag data"));
 	}
 	close(gpg.in);
 	len = strbuf_read(buffer, gpg.out, 1024);
 	close(gpg.out);
 
 	if (finish_command(&gpg) || !len || len < 0)
-		return error("gpg failed to sign the tag");
+		return error(_("gpg failed to sign the tag"));
 
 	/* Strip CR from the line endings, in case we are on Windows. */
 	for (i = j = 0; i < buffer->len; i++)
@@ -213,15 +213,15 @@ static int do_sign(struct strbuf *buffer)
 }
 
 static const char tag_template[] =
-	"\n"
+	N_("\n"
 	"#\n"
 	"# Write a tag message\n"
-	"#\n";
+	"#\n");
 
 static void set_signingkey(const char *value)
 {
 	if (strlcpy(signingkey, value, sizeof(signingkey)) >= sizeof(signingkey))
-		die("signing key value too long (%.10s...)", value);
+		die(_("signing key value too long (%.10s...)"), value);
 }
 
 static int git_tag_config(const char *var, const char *value, void *cb)
@@ -261,9 +261,9 @@ static void write_tag_body(int fd, const unsigned char *sha1)
 static int build_tag_object(struct strbuf *buf, int sign, unsigned char *result)
 {
 	if (sign && do_sign(buf) < 0)
-		return error("unable to sign the tag");
+		return error(_("unable to sign the tag"));
 	if (write_sha1_file(buf->buf, buf->len, tag_type, result) < 0)
-		return error("unable to write tag file");
+		return error(_("unable to write tag file"));
 	return 0;
 }
 
@@ -278,7 +278,7 @@ static void create_tag(const unsigned char *object, const char *tag,
 
 	type = sha1_object_info(object, NULL);
 	if (type <= OBJ_NONE)
-	    die("bad object type.");
+	    die(_("bad object type."));
 
 	header_len = snprintf(header_buf, sizeof(header_buf),
 			  "object %s\n"
@@ -291,7 +291,7 @@ static void create_tag(const unsigned char *object, const char *tag,
 			  git_committer_info(IDENT_ERROR_ON_NO_NAME));
 
 	if (header_len > sizeof(header_buf) - 1)
-		die("tag header too big.");
+		die(_("tag header too big."));
 
 	if (!message) {
 		int fd;
@@ -300,17 +300,17 @@ static void create_tag(const unsigned char *object, const char *tag,
 		path = git_pathdup("TAG_EDITMSG");
 		fd = open(path, O_CREAT | O_TRUNC | O_WRONLY, 0600);
 		if (fd < 0)
-			die_errno("could not create file '%s'", path);
+			die_errno(_("could not create file '%s'"), path);
 
 		if (!is_null_sha1(prev))
 			write_tag_body(fd, prev);
 		else
-			write_or_die(fd, tag_template, strlen(tag_template));
+			write_or_die(fd, _(tag_template), strlen(_(tag_template)));
 		close(fd);
 
 		if (launch_editor(path, buf, NULL)) {
 			fprintf(stderr,
-			"Please supply the message using either -m or -F option.\n");
+			_("Please supply the message using either -m or -F option.\n"));
 			exit(1);
 		}
 	}
@@ -318,13 +318,13 @@ static void create_tag(const unsigned char *object, const char *tag,
 	stripspace(buf, 1);
 
 	if (!message && !buf->len)
-		die("no tag message?");
+		die(_("no tag message?"));
 
 	strbuf_insert(buf, 0, header_buf, header_len);
 
 	if (build_tag_object(buf, sign, result) < 0) {
 		if (path)
-			fprintf(stderr, "The tag message has been left in %s\n",
+			fprintf(stderr, _("The tag message has been left in %s\n"),
 				path);
 		exit(128);
 	}
@@ -417,9 +417,9 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 		return list_tags(argv[0], lines == -1 ? 0 : lines,
 				 with_commit);
 	if (lines != -1)
-		die("-n option is only allowed with -l.");
+		die(_("-n option is only allowed with -l."));
 	if (with_commit)
-		die("--contains option is only allowed with -l.");
+		die(_("--contains option is only allowed with -l."));
 	if (delete)
 		return for_each_tag_name(argv, delete_tag);
 	if (verify)
@@ -427,17 +427,17 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 
 	if (msg.given || msgfile) {
 		if (msg.given && msgfile)
-			die("only one -F or -m option is allowed.");
+			die(_("only one -F or -m option is allowed."));
 		annotate = 1;
 		if (msg.given)
 			strbuf_addbuf(&buf, &(msg.buf));
 		else {
 			if (!strcmp(msgfile, "-")) {
 				if (strbuf_read(&buf, 0, 1024) < 0)
-					die_errno("cannot read '%s'", msgfile);
+					die_errno(_("cannot read '%s'"), msgfile);
 			} else {
 				if (strbuf_read_file(&buf, msgfile, 1024) < 0)
-					die_errno("could not open or read '%s'",
+					die_errno(_("could not open or read '%s'"),
 						msgfile);
 			}
 		}
@@ -447,20 +447,20 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 
 	object_ref = argc == 2 ? argv[1] : "HEAD";
 	if (argc > 2)
-		die("too many params");
+		die(_("too many params"));
 
 	if (get_sha1(object_ref, object))
-		die("Failed to resolve '%s' as a valid ref.", object_ref);
+		die(_("Failed to resolve '%s' as a valid ref."), object_ref);
 
 	if (snprintf(ref, sizeof(ref), "refs/tags/%s", tag) > sizeof(ref) - 1)
-		die("tag name too long: %.*s...", 50, tag);
+		die(_("tag name too long: %.*s..."), 50, tag);
 	if (check_ref_format(ref))
-		die("'%s' is not a valid tag name.", tag);
+		die(_("'%s' is not a valid tag name."), tag);
 
 	if (!resolve_ref(ref, prev, 1, NULL))
 		hashclr(prev);
 	else if (!force)
-		die("tag '%s' already exists", tag);
+		die(_("tag '%s' already exists"), tag);
 
 	if (annotate)
 		create_tag(object, tag, &buf, msg.given || msgfile,
@@ -468,11 +468,11 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 
 	lock = lock_any_ref_for_update(ref, prev, 0);
 	if (!lock)
-		die("%s: cannot lock the ref", ref);
+		die(_("%s: cannot lock the ref"), ref);
 	if (write_ref_sha1(lock, object, NULL) < 0)
-		die("%s: cannot update the ref", ref);
+		die(_("%s: cannot update the ref"), ref);
 	if (force && hashcmp(prev, object))
-		printf("Updated tag '%s' (was %s)\n", tag, find_unique_abbrev(prev, DEFAULT_ABBREV));
+		printf(_("Updated tag '%s' (was %s)\n"), tag, find_unique_abbrev(prev, DEFAULT_ABBREV));
 
 	strbuf_release(&buf);
 	return 0;

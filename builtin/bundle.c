@@ -44,7 +44,7 @@ int cmd_bundle(int argc, const char **argv, const char *prefix)
 		close(bundle_fd);
 		if (verify_bundle(&header, 1))
 			return 1;
-		fprintf(stderr, "%s is okay\n", bundle_file);
+		fprintf(stderr, _("%s is okay\n"), bundle_file);
 		return 0;
 	}
 	if (!strcmp(cmd, "list-heads")) {
@@ -53,11 +53,11 @@ int cmd_bundle(int argc, const char **argv, const char *prefix)
 	}
 	if (!strcmp(cmd, "create")) {
 		if (!startup_info->have_repository)
-			die("Need a repository to create a bundle.");
+			die(_("Need a repository to create a bundle."));
 		return !!create_bundle(&header, bundle_file, argc, argv);
 	} else if (!strcmp(cmd, "unbundle")) {
 		if (!startup_info->have_repository)
-			die("Need a repository to unbundle.");
+			die(_("Need a repository to unbundle."));
 		return !!unbundle(&header, bundle_fd) ||
 			list_bundle_refs(&header, argc, argv);
 	} else

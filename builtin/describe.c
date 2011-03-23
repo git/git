@@ -231,13 +231,13 @@ static void display_name(struct commit_name *n)
 	if (n->prio == 2 && !n->tag) {
 		n->tag = lookup_tag(n->sha1);
 		if (!n->tag || parse_tag(n->tag))
-			die("annotated tag %s not available", n->path);
+			die(_("annotated tag %s not available"), n->path);
 	}
 	if (n->tag && !n->name_checked) {
 		if (!n->tag->tag)
-			die("annotated tag %s has no embedded name", n->path);
+			die(_("annotated tag %s has no embedded name"), n->path);
 		if (strcmp(n->tag->tag, all ? n->path + 5 : n->path))
-			warning("tag '%s' is really '%s' here", n->tag->tag, n->path);
+			warning(_("tag '%s' is really '%s' here"), n->tag->tag, n->path);
 		n->name_checked = 1;
 	}
 
@@ -264,10 +264,10 @@ static void describe(const char *arg, int last_one)
 	unsigned int unannotated_cnt = 0;
 
 	if (get_sha1(arg, sha1))
-		die("Not a valid object name %s", arg);
+		die(_("Not a valid object name %s"), arg);
 	cmit = lookup_commit_reference(sha1);
 	if (!cmit)
-		die("%s is not a valid '%s' object", arg, commit_type);
+		die(_("%s is not a valid '%s' object"), arg, commit_type);
 
 	n = find_commit_name(cmit->object.sha1);
 	if (n && (tags || all || n->prio == 2)) {
@@ -284,9 +284,9 @@ static void describe(const char *arg, int last_one)
 	}
 
 	if (!max_candidates)
-		die("no tag exactly matches '%s'", sha1_to_hex(cmit->object.sha1));
+		die(_("no tag exactly matches '%s'"), sha1_to_hex(cmit->object.sha1));
 	if (debug)
-		fprintf(stderr, "searching to describe %s\n", arg);
+		fprintf(stderr, _("searching to describe %s\n"), arg);
 
 	if (!have_util) {
 		for_each_hash(&names, set_util, NULL);
@@ -326,7 +326,7 @@ static void describe(const char *arg, int last_one)
 		}
 		if (annotated_cnt && !list) {
 			if (debug)
-				fprintf(stderr, "finished search at %s\n",
+				fprintf(stderr, _("finished search at %s\n"),
 					sha1_to_hex(c->object.sha1));
 			break;
 		}
@@ -350,12 +350,12 @@ static void describe(const char *arg, int last_one)
 			return;
 		}
 		if (unannotated_cnt)
-			die("No annotated tags can describe '%s'.\n"
-			    "However, there were unannotated tags: try --tags.",
+			die(_("No annotated tags can describe '%s'.\n"
+			    "However, there were unannotated tags: try --tags."),
 			    sha1_to_hex(sha1));
 		else
-			die("No tags can describe '%s'.\n"
-			    "Try --always, or create some tags.",
+			die(_("No tags can describe '%s'.\n"
+			    "Try --always, or create some tags."),
 			    sha1_to_hex(sha1));
 	}
 
@@ -375,11 +375,11 @@ static void describe(const char *arg, int last_one)
 				prio_names[t->name->prio],
 				t->depth, t->name->path);
 		}
-		fprintf(stderr, "traversed %lu commits\n", seen_commits);
+		fprintf(stderr, _("traversed %lu commits\n"), seen_commits);
 		if (gave_up_on) {
 			fprintf(stderr,
-				"more than %i tags found; listed %i most recent\n"
-				"gave up search at %s\n",
+				_("more than %i tags found; listed %i most recent\n"
+				"gave up search at %s\n"),
 				max_candidates, max_candidates,
 				sha1_to_hex(gave_up_on->object.sha1));
 		}
@@ -433,7 +433,7 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 	save_commit_buffer = 0;
 
 	if (longformat && abbrev == 0)
-		die("--long is incompatible with --abbrev=0");
+		die(_("--long is incompatible with --abbrev=0"));
 
 	if (contains) {
 		const char **args = xmalloc((7 + argc) * sizeof(char *));
@@ -459,14 +459,14 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 	init_hash(&names);
 	for_each_rawref(get_name, NULL);
 	if (!names.nr && !always)
-		die("No names found, cannot describe anything.");
+		die(_("No names found, cannot describe anything."));
 
 	if (argc == 0) {
 		if (dirty && !cmd_diff_index(ARRAY_SIZE(diff_index_args) - 1, diff_index_args, prefix))
 			dirty = NULL;
 		describe("HEAD", 1);
 	} else if (dirty) {
-		die("--dirty is incompatible with committishes");
+		die(_("--dirty is incompatible with committishes"));
 	} else {
 		while (argc-- > 0) {
 			describe(*argv++, argc == 0);

@@ -244,7 +244,7 @@ static void start_threads(struct grep_opt *opt)
 		err = pthread_create(&threads[i], NULL, run, o);
 
 		if (err)
-			die("grep: failed to create thread: %s",
+			die(_("grep: failed to create thread: %s"),
 			    strerror(err));
 	}
 }
@@ -349,7 +349,7 @@ static void *load_sha1(const unsigned char *sha1, unsigned long *size,
 	void *data = lock_and_read_sha1_file(sha1, &type, size);
 
 	if (!data)
-		error("'%s': unable to read %s", name, sha1_to_hex(sha1));
+		error(_("'%s': unable to read %s"), name, sha1_to_hex(sha1));
 
 	return data;
 }
@@ -400,7 +400,7 @@ static void *load_file(const char *filename, size_t *sz)
 	if (lstat(filename, &st) < 0) {
 	err_ret:
 		if (errno != ENOENT)
-			error("'%s': %s", filename, strerror(errno));
+			error(_("'%s': %s"), filename, strerror(errno));
 		return 0;
 	}
 	if (!S_ISREG(st.st_mode))
@@ -411,7 +411,7 @@ static void *load_file(const char *filename, size_t *sz)
 		goto err_ret;
 	data = xmalloc(*sz + 1);
 	if (st.st_size != read_in_full(i, data, *sz)) {
-		error("'%s': short read %s", filename, strerror(errno));
+		error(_("'%s': short read %s"), filename, strerror(errno));
 		close(i);
 		free(data);
 		return 0;
@@ -473,7 +473,7 @@ static void run_pager(struct grep_opt *opt, const char *prefix)
 	argv[path_list->nr] = NULL;
 
 	if (prefix && chdir(prefix))
-		die("Failed to chdir: %s", prefix);
+		die(_("Failed to chdir: %s"), prefix);
 	status = run_command_v_opt(argv, RUN_USING_SHELL);
 	if (status)
 		exit(status);
@@ -548,7 +548,7 @@ static int grep_tree(struct grep_opt *opt, const struct pathspec *pathspec,
 
 			data = lock_and_read_sha1_file(entry.sha1, &type, &size);
 			if (!data)
-				die("unable to read tree (%s)",
+				die(_("unable to read tree (%s)"),
 				    sha1_to_hex(entry.sha1));
 
 			strbuf_addch(base, '/');
@@ -579,7 +579,7 @@ static int grep_object(struct grep_opt *opt, const struct pathspec *pathspec,
 		data = read_object_with_reference(obj->sha1, tree_type,
 						  &size, NULL);
 		if (!data)
-			die("unable to read tree (%s)", sha1_to_hex(obj->sha1));
+			die(_("unable to read tree (%s)"), sha1_to_hex(obj->sha1));
 
 		len = name ? strlen(name) : 0;
 		strbuf_init(&base, PATH_MAX + len + 1);
@@ -593,7 +593,7 @@ static int grep_object(struct grep_opt *opt, const struct pathspec *pathspec,
 		free(data);
 		return hit;
 	}
-	die("unable to grep from object of type %s", typename(obj->type));
+	die(_("unable to grep from object of type %s"), typename(obj->type));
 }
 
 static int grep_objects(struct grep_opt *opt, const struct pathspec *pathspec,
@@ -649,7 +649,7 @@ static int context_callback(const struct option *opt, const char *arg,
 	}
 	value = strtol(arg, (char **)&endp, 10);
 	if (*endp) {
-		return error("switch `%c' expects a numerical value",
+		return error(_("switch `%c' expects a numerical value"),
 			     opt->short_name);
 	}
 	grep_opt->pre_context = grep_opt->post_context = value;
@@ -666,7 +666,7 @@ static int file_callback(const struct option *opt, const char *arg, int unset)
 
 	patterns = from_stdin ? stdin : fopen(arg, "r");
 	if (!patterns)
-		die_errno("cannot open '%s'", arg);
+		die_errno(_("cannot open '%s'"), arg);
 	while (strbuf_getline(&sb, patterns, '\n') == 0) {
 		char *s;
 		size_t len;
@@ -909,11 +909,11 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	}
 
 	if (!opt.pattern_list)
-		die("no pattern given.");
+		die(_("no pattern given."));
 	if (!opt.fixed && opt.ignore_case)
 		opt.regflags |= REG_ICASE;
 	if ((opt.regflags != REG_NEWLINE) && opt.fixed)
-		die("cannot mix --fixed-strings and regexp");
+		die(_("cannot mix --fixed-strings and regexp"));
 
 #ifndef NO_PTHREADS
 	if (online_cpus() == 1 || !grep_threads_ok(&opt))
@@ -938,7 +938,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		if (!get_sha1(arg, sha1)) {
 			struct object *object = parse_object(sha1);
 			if (!object)
-				die("bad object %s", arg);
+				die(_("bad object %s"), arg);
 			add_object_array(object, arg, &list);
 			continue;
 		}
@@ -968,7 +968,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	pathspec.recursive = 1;
 
 	if (show_in_pager && (cached || list.nr))
-		die("--open-files-in-pager only works on the worktree");
+		die(_("--open-files-in-pager only works on the worktree"));
 
 	if (show_in_pager && opt.pattern_list && !opt.pattern_list->next) {
 		const char *pager = path_list.items[0].string;
@@ -993,9 +993,9 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 
 	if (!use_index) {
 		if (cached)
-			die("--cached cannot be used with --no-index.");
+			die(_("--cached cannot be used with --no-index."));
 		if (list.nr)
-			die("--no-index cannot be used with revs.");
+			die(_("--no-index cannot be used with revs."));
 		hit = grep_directory(&opt, &pathspec);
 	} else if (!list.nr) {
 		if (!cached)
@@ -1004,7 +1004,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		hit = grep_cache(&opt, &pathspec, cached);
 	} else {
 		if (cached)
-			die("both --cached and trees are given.");
+			die(_("both --cached and trees are given."));
 		hit = grep_objects(&opt, &pathspec, &list);
 	}
 

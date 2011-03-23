@@ -133,12 +133,12 @@ static int branch_merged(int kind, const char *name,
 	if ((head_rev != reference_rev) &&
 	    in_merge_bases(rev, &head_rev, 1) != merged) {
 		if (merged)
-			warning("deleting branch '%s' that has been merged to\n"
-				"         '%s', but not yet been merged to HEAD.",
+			warning(_("deleting branch '%s' that has been merged to\n"
+				"         '%s', but not yet merged to HEAD."),
 				name, reference_name);
 		else
-			warning("not deleting branch '%s' that is not yet merged to\n"
-				"         '%s', even though it is merged to HEAD.",
+			warning(_("not deleting branch '%s' that is not yet merged to\n"
+				"         '%s', even though it is merged to HEAD."),
 				name, reference_name);
 	}
 	return merged;
@@ -157,7 +157,8 @@ static int delete_branches(int argc, const char **argv, int force, int kinds)
 	switch (kinds) {
 	case REF_REMOTE_BRANCH:
 		fmt = "refs/remotes/%s";
-		remote = "remote ";
+		/* TRANSLATORS: This is "remote " in "remote branch '%s' not found" */
+		remote = _("remote ");
 		force = 1;
 		break;
 	case REF_LOCAL_BRANCH:
@@ -165,19 +166,19 @@ static int delete_branches(int argc, const char **argv, int force, int kinds)
 		remote = "";
 		break;
 	default:
-		die("cannot use -a with -d");
+		die(_("cannot use -a with -d"));
 	}
 
 	if (!force) {
 		head_rev = lookup_commit_reference(head_sha1);
 		if (!head_rev)
-			die("Couldn't look up commit object for HEAD");
+			die(_("Couldn't look up commit object for HEAD"));
 	}
 	for (i = 0; i < argc; i++, strbuf_release(&bname)) {
 		strbuf_branchname(&bname, argv[i]);
 		if (kinds == REF_LOCAL_BRANCH && !strcmp(head, bname.buf)) {
-			error("Cannot delete the branch '%s' "
-			      "which you are currently on.", bname.buf);
+			error(_("Cannot delete the branch '%s' "
+			      "which you are currently on."), bname.buf);
 			ret = 1;
 			continue;
 		}
@@ -186,7 +187,7 @@ static int delete_branches(int argc, const char **argv, int force, int kinds)
 
 		name = xstrdup(mkpath(fmt, bname.buf));
 		if (!resolve_ref(name, sha1, 1, NULL)) {
-			error("%sbranch '%s' not found.",
+			error(_("%sbranch '%s' not found."),
 					remote, bname.buf);
 			ret = 1;
 			continue;
@@ -194,31 +195,31 @@ static int delete_branches(int argc, const char **argv, int force, int kinds)
 
 		rev = lookup_commit_reference(sha1);
 		if (!rev) {
-			error("Couldn't look up commit object for '%s'", name);
+			error(_("Couldn't look up commit object for '%s'"), name);
 			ret = 1;
 			continue;
 		}
 
 		if (!force && !branch_merged(kinds, bname.buf, rev, head_rev)) {
-			error("The branch '%s' is not fully merged.\n"
+			error(_("The branch '%s' is not fully merged.\n"
 			      "If you are sure you want to delete it, "
-			      "run 'git branch -D %s'.", bname.buf, bname.buf);
+			      "run 'git branch -D %s'."), bname.buf, bname.buf);
 			ret = 1;
 			continue;
 		}
 
 		if (delete_ref(name, sha1, 0)) {
-			error("Error deleting %sbranch '%s'", remote,
+			error(_("Error deleting %sbranch '%s'"), remote,
 			      bname.buf);
 			ret = 1;
 		} else {
 			struct strbuf buf = STRBUF_INIT;
-			printf("Deleted %sbranch %s (was %s).\n", remote,
+			printf(_("Deleted %sbranch %s (was %s).\n"), remote,
 			       bname.buf,
 			       find_unique_abbrev(sha1, DEFAULT_ABBREV));
 			strbuf_addf(&buf, "branch.%s", bname.buf);
 			if (git_config_rename_section(buf.buf, NULL) < 0)
-				warning("Update of config-file failed");
+				warning(_("Update of config-file failed"));
 			strbuf_release(&buf);
 		}
 	}
@@ -300,7 +301,7 @@ static int append_ref(const char *refname, const unsigned char *sha1, int flags,
 	if (ref_list->verbose || ref_list->with_commit || merge_filter != NO_FILTER) {
 		commit = lookup_commit_reference_gently(sha1, 1);
 		if (!commit) {
-			cb->ret = error("branch '%s' does not point at a commit", refname);
+			cb->ret = error(_("branch '%s' does not point at a commit"), refname);
 			return 0;
 		}
 
@@ -372,11 +373,11 @@ static void fill_tracking_info(struct strbuf *stat, const char *branch_name,
 		strbuf_addf(stat, "%s: ",
 			shorten_unambiguous_ref(branch->merge[0]->dst, 0));
 	if (!ours)
-		strbuf_addf(stat, "behind %d] ", theirs);
+		strbuf_addf(stat, _("behind %d] "), theirs);
 	else if (!theirs)
-		strbuf_addf(stat, "ahead %d] ", ours);
+		strbuf_addf(stat, _("ahead %d] "), ours);
 	else
-		strbuf_addf(stat, "ahead %d, behind %d] ", ours, theirs);
+		strbuf_addf(stat, _("ahead %d, behind %d] "), ours, theirs);
 }
 
 static int matches_merge_filter(struct commit *commit)
@@ -481,7 +482,7 @@ static void show_detached(struct ref_list *ref_list)
 
 	if (head_commit && is_descendant_of(head_commit, ref_list->with_commit)) {
 		struct ref_item item;
-		item.name = xstrdup("(no branch)");
+		item.name = xstrdup(_("(no branch)"));
 		item.len = strlen(item.name);
 		item.kind = REF_LOCAL_BRANCH;
 		item.dest = NULL;
@@ -541,7 +542,7 @@ static int print_ref_list(int kinds, int detached, int verbose, int abbrev, stru
 	free_ref_list(&ref_list);
 
 	if (cb.ret)
-		error("some refs could not be read");
+		error(_("some refs could not be read"));
 
 	return cb.ret;
 }
@@ -554,7 +555,7 @@ static void rename_branch(const char *oldname, const char *newname, int force)
 	int recovery = 0;
 
 	if (!oldname)
-		die("cannot rename the current branch while not on any.");
+		die(_("cannot rename the current branch while not on any."));
 
 	if (strbuf_check_branch_ref(&oldref, oldname)) {
 		/*
@@ -564,35 +565,35 @@ static void rename_branch(const char *oldname, const char *newname, int force)
 		if (resolve_ref(oldref.buf, sha1, 1, NULL))
 			recovery = 1;
 		else
-			die("Invalid branch name: '%s'", oldname);
+			die(_("Invalid branch name: '%s'"), oldname);
 	}
 
 	if (strbuf_check_branch_ref(&newref, newname))
-		die("Invalid branch name: '%s'", newname);
+		die(_("Invalid branch name: '%s'"), newname);
 
 	if (resolve_ref(newref.buf, sha1, 1, NULL) && !force)
-		die("A branch named '%s' already exists.", newref.buf + 11);
+		die(_("A branch named '%s' already exists."), newref.buf + 11);
 
 	strbuf_addf(&logmsg, "Branch: renamed %s to %s",
 		 oldref.buf, newref.buf);
 
 	if (rename_ref(oldref.buf, newref.buf, logmsg.buf))
-		die("Branch rename failed");
+		die(_("Branch rename failed"));
 	strbuf_release(&logmsg);
 
 	if (recovery)
-		warning("Renamed a misnamed branch '%s' away", oldref.buf + 11);
+		warning(_("Renamed a misnamed branch '%s' away"), oldref.buf + 11);
 
 	/* no need to pass logmsg here as HEAD didn't really move */
 	if (!strcmp(oldname, head) && create_symref("HEAD", newref.buf, NULL))
-		die("Branch renamed to %s, but HEAD is not updated!", newname);
+		die(_("Branch renamed to %s, but HEAD is not updated!"), newname);
 
 	strbuf_addf(&oldsection, "branch.%s", oldref.buf + 11);
 	strbuf_release(&oldref);
 	strbuf_addf(&newsection, "branch.%s", newref.buf + 11);
 	strbuf_release(&newref);
 	if (git_config_rename_section(oldsection.buf, newsection.buf) < 0)
-		die("Branch is renamed, but update of config-file failed");
+		die(_("Branch is renamed, but update of config-file failed"));
 	strbuf_release(&oldsection);
 	strbuf_release(&newsection);
 }
@@ -607,7 +608,7 @@ static int opt_parse_merge_filter(const struct option *opt, const char *arg, int
 	if (!arg)
 		arg = "HEAD";
 	if (get_sha1(arg, merge_filter_ref))
-		die("malformed object name %s", arg);
+		die(_("malformed object name %s"), arg);
 	return 0;
 }
 
@@ -681,13 +682,13 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 
 	head = resolve_ref("HEAD", head_sha1, 0, NULL);
 	if (!head)
-		die("Failed to resolve HEAD as a valid ref.");
+		die(_("Failed to resolve HEAD as a valid ref."));
 	head = xstrdup(head);
 	if (!strcmp(head, "HEAD")) {
 		detached = 1;
 	} else {
 		if (prefixcmp(head, "refs/heads/"))
-			die("HEAD not found below refs/heads!");
+			die(_("HEAD not found below refs/heads!"));
 		head += 11;
 	}
 	hashcpy(merge_filter_ref, head_sha1);
@@ -707,7 +708,7 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 		rename_branch(argv[0], argv[1], rename > 1);
 	else if (argc <= 2) {
 		if (kinds != REF_LOCAL_BRANCH)
-			die("-a and -r options to 'git branch' do not make sense with a branch name");
+			die(_("-a and -r options to 'git branch' do not make sense with a branch name"));
 		create_branch(head, argv[0], (argc == 2) ? argv[1] : head,
 			      force_create, reflog, track);
 	} else
