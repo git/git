@@ -61,6 +61,29 @@ test_expect_success 'git-p4 clone @all' '
 	rm -rf "$git" && mkdir "$git"
 '
 
+test_expect_success 'git-p4 sync uninitialized repo' '
+	test_create_repo "$git" &&
+	cd "$git" &&
+	test_must_fail "$GITP4" sync &&
+	rm -rf "$git" && mkdir "$git"
+'
+
+#
+# Create a git repo by hand.  Add a commit so that HEAD is valid.
+# Test imports a new p4 repository into a new git branch.
+#
+test_expect_success 'git-p4 sync new branch' '
+	test_create_repo "$git" &&
+	cd "$git" &&
+	test_commit head &&
+	"$GITP4" sync --branch=refs/remotes/p4/depot //depot@all &&
+	git log --oneline p4/depot >lines &&
+	cat lines &&
+	test_line_count = 2 lines &&
+	cd .. &&
+	rm -rf "$git" && mkdir "$git"
+'
+
 test_expect_success 'exit when p4 fails to produce marshaled output' '
 	badp4dir="$TRASH_DIRECTORY/badp4dir" &&
 	mkdir -p "$badp4dir" &&
