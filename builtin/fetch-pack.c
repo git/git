@@ -9,6 +9,7 @@
 #include "fetch-pack.h"
 #include "remote.h"
 #include "run-command.h"
+#include "transport.h"
 
 static int transfer_unpack_limit = -1;
 static int fetch_unpack_limit = -1;
@@ -217,6 +218,16 @@ static void send_request(int fd, struct strbuf *buf)
 		safe_write(fd, buf->buf, buf->len);
 }
 
+static void insert_one_alternate_ref(const struct ref *ref, void *unused)
+{
+	rev_list_insert_ref(NULL, ref->old_sha1, 0, NULL);
+}
+
+static void insert_alternate_refs(void)
+{
+	foreach_alt_odb(refs_from_alternate_cb, insert_one_alternate_ref);
+}
+
 static int find_common(int fd[2], unsigned char *result_sha1,
 		       struct ref *refs)
 {
@@ -235,6 +246,7 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 	marked = 1;
 
 	for_each_ref(rev_list_insert_ref, NULL);
+	insert_alternate_refs();
 
 	fetching = 0;
 	for ( ; refs ; refs = refs->next) {
