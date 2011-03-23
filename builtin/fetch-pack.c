@@ -15,6 +15,7 @@ static int transfer_unpack_limit = -1;
 static int fetch_unpack_limit = -1;
 static int unpack_limit = 100;
 static int prefer_ofs_delta = 1;
+static int no_done = 0;
 static struct fetch_pack_args args = {
 	/* .uploadpack = */ "git-upload-pack",
 };
@@ -236,6 +237,7 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 	const unsigned char *sha1;
 	unsigned in_vain = 0;
 	int got_continue = 0;
+	int got_ready = 0;
 	struct strbuf req_buf = STRBUF_INIT;
 	size_t state_len = 0;
 
@@ -274,6 +276,7 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 			struct strbuf c = STRBUF_INIT;
 			if (multi_ack == 2)     strbuf_addstr(&c, " multi_ack_detailed");
 			if (multi_ack == 1)     strbuf_addstr(&c, " multi_ack");
+			if (no_done)            strbuf_addstr(&c, " no-done");
 			if (use_sideband == 2)  strbuf_addstr(&c, " side-band-64k");
 			if (use_sideband == 1)  strbuf_addstr(&c, " side-band");
 			if (args.use_thin_pack) strbuf_addstr(&c, " thin-pack");
@@ -391,6 +394,10 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 					retval = 0;
 					in_vain = 0;
 					got_continue = 1;
+					if (ack == ACK_ready) {
+						rev_list = NULL;
+						got_ready = 1;
+					}
 					break;
 					}
 				}
@@ -404,8 +411,10 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 		}
 	}
 done:
-	packet_buf_write(&req_buf, "done\n");
-	send_request(fd[1], &req_buf);
+	if (!got_ready || !no_done) {
+		packet_buf_write(&req_buf, "done\n");
+		send_request(fd[1], &req_buf);
+	}
 	if (args.verbose)
 		fprintf(stderr, "done\n");
 	if (retval != 0) {
@@ -708,6 +717,11 @@ static struct ref *do_fetch_pack(int fd[2],
 		if (args.verbose)
 			fprintf(stderr, "Server supports multi_ack_detailed\n");
 		multi_ack = 2;
+		if (server_supports("no-done")) {
+			if (args.verbose)
+				fprintf(stderr, "Server supports no-done\n");
+			no_done = 1;
+		}
 	}
 	else if (server_supports("multi_ack")) {
 		if (args.verbose)
