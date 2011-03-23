@@ -1547,6 +1547,31 @@ static int ce_write_entry(git_SHA_CTX *c, int fd, struct cache_entry *ce)
 	return result;
 }
 
+static int has_racy_timestamp(struct index_state *istate)
+{
+	int entries = istate->cache_nr;
+	int i;
+
+	for (i = 0; i < entries; i++) {
+		struct cache_entry *ce = istate->cache[i];
+		if (is_racy_timestamp(istate, ce))
+			return 1;
+	}
+	return 0;
+}
+
+/*
+ * Opportunisticly update the index but do not complain if we can't
+ */
+void update_index_if_able(struct index_state *istate, struct lock_file *lockfile)
+{
+	if ((istate->cache_changed || has_racy_timestamp(istate)) &&
+	    !write_index(istate, lockfile->fd))
+		commit_locked_index(lockfile);
+	else
+		rollback_lock_file(lockfile);
+}
+
 int write_index(struct index_state *istate, int newfd)
 {
 	git_SHA_CTX c;
