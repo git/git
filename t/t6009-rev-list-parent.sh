@@ -112,20 +112,20 @@ test_expect_success 'rev-list override and infinities' '
 	check_revlist "--max-parents=0 --min-parents=1 --no-min-parents" one five
 '
 
-test_expect_success 'set up dodecapus' '
+test_expect_success 'dodecapus' '
 
+	roots= &&
 	for i in 1 2 3 4 5 6 7 8 9 10 11
 	do
-		git checkout -b root$i five || return
-		test_commit $i || return
+		git checkout -b root$i five &&
+		test_commit $i &&
+		roots="$roots root$i" ||
+		return
 	done &&
 	git checkout master &&
 	test_tick &&
-	git merge -m dodecapus root{1,2,3,4,5,6,7,8,9,10,11} &&
-	git tag dodecapus
-'
-
-test_expect_success 'test with dodecapus' '
+	git merge -m dodecapus $roots &&
+	git tag dodecapus &&
 
 	check_revlist "--min-parents=4" dodecapus tetrapus &&
 	check_revlist "--min-parents=8" dodecapus &&
