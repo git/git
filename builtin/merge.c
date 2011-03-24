@@ -25,6 +25,7 @@
 #include "help.h"
 #include "merge-recursive.h"
 #include "resolve-undo.h"
+#include "remote.h"
 
 #define DEFAULT_TWOHEAD (1<<0)
 #define DEFAULT_OCTOPUS (1<<1)
@@ -37,7 +38,7 @@ struct strategy {
 };
 
 static const char * const builtin_merge_usage[] = {
-	"git merge [options] <commit>...",
+	"git merge [options] [<commit>...]",
 	"git merge [options] <msg> HEAD <commit>",
 	"git merge --abort",
 	NULL
@@ -59,6 +60,7 @@ static int option_renormalize;
 static int verbosity;
 static int allow_rerere_auto;
 static int abort_current_merge;
+static int default_to_upstream;
 
 static struct strategy all_strategy[] = {
 	{ "recursive",  DEFAULT_TWOHEAD | NO_TRIVIAL },
@@ -537,6 +539,9 @@ static int git_merge_config(const char *k, const char *v, void *cb)
 		if (is_bool && shortlog_len)
 			shortlog_len = DEFAULT_MERGE_LOG_LEN;
 		return 0;
+	} else if (!strcmp(k, "merge.defaulttoupstream")) {
+		default_to_upstream = git_config_bool(k, v);
+		return 0;
 	}
 	return git_diff_ui_config(k, v, cb);
 }
@@ -912,6 +917,35 @@ static int evaluate_result(void)
 	return cnt;
 }
 
+/*
+ * Pretend as if the user told us to merge with the tracking
+ * branch we have for the upstream of the current branch
+ */
+static int setup_with_upstream(const char ***argv)
+{
+	struct branch *branch = branch_get(NULL);
+	int i;
+	const char **args;
+
+	if (!branch)
+		die("No current branch.");
+	if (!branch->remote)
+		die("No remote for the current branch.");
+	if (!branch->merge_nr)
+		die("No default upstream defined for the current branch.");
+
+	args = xcalloc(branch->merge_nr + 1, sizeof(char *));
+	for (i = 0; i < branch->merge_nr; i++) {
+		if (!branch->merge[i]->dst)
+			die("No remote tracking branch for %s from %s",
+			    branch->merge[i]->src, branch->remote_name);
+		args[i] = branch->merge[i]->dst;
+	}
+	args[i] = NULL;
+	*argv = args;
+	return i;
+}
+
 int cmd_merge(int argc, const char **argv, const char *prefix)
 {
 	unsigned char result_tree[20];
@@ -983,6 +1017,9 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 
 	if (!allow_fast_forward && fast_forward_only)
 		die("You cannot combine --no-ff with --ff-only.");
+
+	if (!argc && !abort_current_merge && default_to_upstream)
+		argc = setup_with_upstream(&argv);
 
 	if (!argc)
 		usage_with_options(builtin_merge_usage,
