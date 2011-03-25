@@ -712,6 +712,64 @@ static void update_file(struct merge_options *o,
 	update_file_flags(o, sha, mode, path, o->call_depth || clean, !o->call_depth);
 }
 
+static int update_or_remove(struct merge_options *o,
+			    const unsigned char *sha1, unsigned mode,
+			    const char *path, int update_wd)
+{
+	if (is_null_sha1(sha1))
+		return remove_file(o, 1, path, !update_wd);
+
+	update_file_flags(o, sha1, mode, path, 1, update_wd);
+	return 0;
+}
+
+static void merge_rename_source(struct merge_options *o,
+				       const char *path,
+				       struct stage_data *d)
+{
+	if (is_null_sha1(d->stages[2].sha)) {
+		/*
+		 * If both were real renames (not from a broken pair), we can
+		 * stop caring about the path. We don't touch the working
+		 * directory, though. The path must be gone in HEAD, so there
+		 * is no point (and anything we did delete would be an
+		 * untracked file).
+		 */
+		if (is_null_sha1(d->stages[3].sha)) {
+			remove_file(o, 1, path, 1);
+			return;
+		}
+
+		/*
+		 * If "ours" was a real rename, but the other side came
+		 * from a broken pair, then their version is the right
+		 * resolution (because we have no content, ours having been
+		 * renamed away, and they have new content).
+		 */
+		update_file_flags(o, d->stages[3].sha, d->stages[3].mode,
+				  path, 1, 1);
+		return;
+	}
+
+	/*
+	 * Now we have the opposite. "theirs" is a real rename, but ours
+	 * is from a broken pair. We resolve in favor of us, but we don't
+	 * need to touch the working directory.
+	 */
+	if (is_null_sha1(d->stages[3].sha)) {
+		update_file_flags(o, d->stages[2].sha, d->stages[2].mode,
+				  path, 1, 0);
+		return;
+	}
+
+	/*
+	 * Otherwise, both came from broken pairs. We need to do an actual
+	 * merge on the entries. We can just mark it as unprocessed and
+	 * the regular code will handle it.
+	 */
+	d->processed = 0;
+}
+
 /* Low level file merging, update and removal */
 
 struct merge_file_info {
@@ -1031,7 +1089,7 @@ static int process_renames(struct merge_options *o,
 							      ren1->dst_entry,
 							      ren2->dst_entry);
 			} else {
-				remove_file(o, 1, ren1_src, 1);
+				merge_rename_source(o, ren1_src, ren1->src_entry);
 				update_stages_and_entry(ren1_dst,
 							ren1->dst_entry,
 							ren1->pair->one,
@@ -1055,7 +1113,10 @@ static int process_renames(struct merge_options *o,
 			int renamed_stage = a_renames == renames1 ? 2 : 3;
 			int other_stage =   a_renames == renames1 ? 3 : 2;
 
-			remove_file(o, 1, ren1_src, o->call_depth || renamed_stage == 2);
+			update_or_remove(o,
+				ren1->src_entry->stages[renamed_stage].sha,
+				ren1->src_entry->stages[renamed_stage].mode,
+				ren1_src, renamed_stage == 3);
 
 			hashcpy(src_other.sha1, ren1->src_entry->stages[other_stage].sha);
 			src_other.mode = ren1->src_entry->stages[other_stage].mode;
