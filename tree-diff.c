@@ -65,23 +65,17 @@ static int compare_tree_entry(struct tree_desc *t1, struct tree_desc *t2,
 static void show_tree(struct diff_options *opt, const char *prefix,
 		      struct tree_desc *desc, struct strbuf *base)
 {
-	int all_interesting = 0;
-	while (desc->size) {
-		int show;
-
-		if (all_interesting)
-			show = 1;
-		else {
-			show = tree_entry_interesting(&desc->entry, base, 0,
-						      &opt->pathspec);
-			if (show == 2)
-				all_interesting = 1;
+	int match = 0;
+	for (; desc->size; update_tree_entry(desc)) {
+		if (match != 2) {
+			match = tree_entry_interesting(&desc->entry, base, 0,
+						       &opt->pathspec);
+			if (match < 0)
+				break;
+			if (match == 0)
+				continue;
 		}
-		if (show < 0)
-			break;
-		if (show)
-			show_entry(opt, prefix, desc, base);
-		update_tree_entry(desc);
+		show_entry(opt, prefix, desc, base);
 	}
 }
 
@@ -121,20 +115,16 @@ static void show_entry(struct diff_options *opt, const char *prefix,
 }
 
 static void skip_uninteresting(struct tree_desc *t, struct strbuf *base,
-			       struct diff_options *opt, int *all_interesting)
+			       struct diff_options *opt, int *match)
 {
 	while (t->size) {
-		int show = tree_entry_interesting(&t->entry, base, 0, &opt->pathspec);
-		if (show == 2)
-			*all_interesting = 1;
-		if (!show) {
-			update_tree_entry(t);
-			continue;
+		*match = tree_entry_interesting(&t->entry, base, 0, &opt->pathspec);
+		if (*match) {
+			if (*match < 0)
+				t->size = 0;
+			break;
 		}
-		/* Skip it all? */
-		if (show < 0)
-			t->size = 0;
-		return;
+		update_tree_entry(t);
 	}
 }
 
@@ -143,8 +133,7 @@ int diff_tree(struct tree_desc *t1, struct tree_desc *t2,
 {
 	struct strbuf base;
 	int baselen = strlen(base_str);
-	int all_t1_interesting = 0;
-	int all_t2_interesting = 0;
+	int t1_match = 0, t2_match = 0;
 
 	/* Enable recursion indefinitely */
 	opt->pathspec.recursive = DIFF_OPT_TST(opt, RECURSIVE);
@@ -158,10 +147,8 @@ int diff_tree(struct tree_desc *t1, struct tree_desc *t2,
 		    DIFF_OPT_TST(opt, HAS_CHANGES))
 			break;
 		if (opt->pathspec.nr) {
-			if (!all_t1_interesting)
-				skip_uninteresting(t1, &base, opt, &all_t1_interesting);
-			if (!all_t2_interesting)
-				skip_uninteresting(t2, &base, opt, &all_t2_interesting);
+			skip_uninteresting(t1, &base, opt, &t1_match);
+			skip_uninteresting(t2, &base, opt, &t2_match);
 		}
 		if (!t1->size) {
 			if (!t2->size)

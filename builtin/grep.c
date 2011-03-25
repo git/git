@@ -521,18 +521,18 @@ static int grep_cache(struct grep_opt *opt, const struct pathspec *pathspec, int
 static int grep_tree(struct grep_opt *opt, const struct pathspec *pathspec,
 		     struct tree_desc *tree, struct strbuf *base, int tn_len)
 {
-	int hit = 0, matched = 0;
+	int hit = 0, match = 0;
 	struct name_entry entry;
 	int old_baselen = base->len;
 
 	while (tree_entry(tree, &entry)) {
 		int te_len = tree_entry_len(entry.path, entry.sha1);
 
-		if (matched != 2) {
-			matched = tree_entry_interesting(&entry, base, tn_len, pathspec);
-			if (matched == -1)
-				break; /* no more matches */
-			if (!matched)
+		if (match != 2) {
+			match = tree_entry_interesting(&entry, base, tn_len, pathspec);
+			if (match < 0)
+				break;
+			if (match == 0)
 				continue;
 		}
 
