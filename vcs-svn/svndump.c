@@ -83,7 +83,7 @@ static void reset_dump_ctx(const char *url)
 }
 
 static void handle_property(const struct strbuf *key_buf,
-				const char *val, uint32_t len,
+				struct strbuf *val,
 				uint32_t *type_set)
 {
 	const char *key = key_buf->buf;
@@ -95,23 +95,23 @@ static void handle_property(const struct strbuf *key_buf,
 			break;
 		if (!val)
 			die("invalid dump: unsets svn:log");
-		strbuf_reset(&rev_ctx.log);
-		strbuf_add(&rev_ctx.log, val, len);
+		strbuf_swap(&rev_ctx.log, val);
 		break;
 	case sizeof("svn:author"):
 		if (constcmp(key, "svn:author"))
 			break;
-		strbuf_reset(&rev_ctx.author);
-		if (val)
-			strbuf_add(&rev_ctx.author, val, len);
+		if (!val)
+			strbuf_reset(&rev_ctx.author);
+		else
+			strbuf_swap(&rev_ctx.author, val);
 		break;
 	case sizeof("svn:date"):
 		if (constcmp(key, "svn:date"))
 			break;
 		if (!val)
 			die("invalid dump: unsets svn:date");
-		if (parse_date_basic(val, &rev_ctx.timestamp, NULL))
-			warning("invalid timestamp: %s", val);
+		if (parse_date_basic(val->buf, &rev_ctx.timestamp, NULL))
+			warning("invalid timestamp: %s", val->buf);
 		break;
 	case sizeof("svn:executable"):
 	case sizeof("svn:special"):
@@ -187,10 +187,10 @@ static void read_props(void)
 			strbuf_swap(&key, &val);
 			continue;
 		case 'D':
-			handle_property(&val, NULL, 0, &type_set);
+			handle_property(&val, NULL, &type_set);
 			continue;
 		case 'V':
-			handle_property(&key, val.buf, len, &type_set);
+			handle_property(&key, &val, &type_set);
 			strbuf_reset(&key);
 			continue;
 		default:
