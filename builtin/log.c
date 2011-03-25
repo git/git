@@ -390,6 +390,7 @@ int cmd_show(int argc, const char **argv, const char *prefix)
 	struct rev_info rev;
 	struct object_array_entry *objects;
 	struct setup_revision_opt opt;
+	struct pathspec match_all;
 	int i, count, ret = 0;
 
 	git_config(git_log_config, NULL);
@@ -397,6 +398,7 @@ int cmd_show(int argc, const char **argv, const char *prefix)
 	if (diff_use_color_default == -1)
 		diff_use_color_default = git_use_color_default;
 
+	init_pathspec(&match_all, NULL);
 	init_revisions(&rev, prefix);
 	rev.diff = 1;
 	rev.always_show_header = 1;
@@ -443,7 +445,7 @@ int cmd_show(int argc, const char **argv, const char *prefix)
 					diff_get_color_opt(&rev.diffopt, DIFF_COMMIT),
 					name,
 					diff_get_color_opt(&rev.diffopt, DIFF_RESET));
-			read_tree_recursive((struct tree *)o, "", 0, 0, NULL,
+			read_tree_recursive((struct tree *)o, "", 0, 0, &match_all,
 					show_tree_object, NULL);
 			rev.shown_one = 1;
 			break;

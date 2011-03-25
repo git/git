@@ -114,20 +114,15 @@ static int read_tree_1(struct tree *tree, struct strbuf *base,
 
 int read_tree_recursive(struct tree *tree,
 			const char *base, int baselen,
-			int stage, const char **match,
+			int stage, struct pathspec *pathspec,
 			read_tree_fn_t fn, void *context)
 {
 	struct strbuf sb = STRBUF_INIT;
-	struct pathspec pathspec;
-	int i, ret;
+	int ret;
 
-	init_pathspec(&pathspec, match);
-	for (i = 0; i < pathspec.nr; i++)
-		pathspec.items[i].has_wildcard = 0;
 	strbuf_add(&sb, base, baselen);
-	ret = read_tree_1(tree, &sb, stage, &pathspec, fn, context);
+	ret = read_tree_1(tree, &sb, stage, pathspec, fn, context);
 	strbuf_release(&sb);
-	free_pathspec(&pathspec);
 	return ret;
 }
 
@@ -141,7 +136,7 @@ static int cmp_cache_name_compare(const void *a_, const void *b_)
 				  ce2->name, ce2->ce_flags);
 }
 
-int read_tree(struct tree *tree, int stage, const char **match)
+int read_tree(struct tree *tree, int stage, struct pathspec *match)
 {
 	read_tree_fn_t fn = NULL;
 	int i, err;
