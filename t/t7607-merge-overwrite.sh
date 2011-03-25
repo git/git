@@ -122,7 +122,7 @@ test_expect_success 'will not overwrite untracked file in leading path' '
 	rm -f sub sub2
 '
 
-test_expect_failure SYMLINKS 'will not overwrite untracked symlink in leading path' '
+test_expect_success SYMLINKS 'will not overwrite untracked symlink in leading path' '
 	git reset --hard c0 &&
 	rm -rf sub &&
 	mkdir sub2 &&
