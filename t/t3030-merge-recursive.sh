@@ -267,7 +267,8 @@ test_expect_success 'setup 8' '
 		ln -s e a &&
 		git add a e &&
 		test_tick &&
-		git commit -m "rename a->e, symlink a->e"
+		git commit -m "rename a->e, symlink a->e" &&
+		oln=`printf e | git hash-object --stdin`
 	fi
 '
 
@@ -630,16 +631,18 @@ test_expect_success 'merge-recursive copy vs. rename' '
 
 if test_have_prereq SYMLINKS
 then
-	test_expect_success 'merge-recursive rename vs. rename/symlink' '
+	test_expect_failure 'merge-recursive rename vs. rename/symlink' '
 
 		git checkout -f rename &&
 		git merge rename-ln &&
 		( git ls-tree -r HEAD ; git ls-files -s ) >actual &&
 		(
+			echo "120000 blob $oln	a"
 			echo "100644 blob $o0	b"
 			echo "100644 blob $o0	c"
 			echo "100644 blob $o0	d/e"
 			echo "100644 blob $o0	e"
+			echo "120000 $oln 0	a"
 			echo "100644 $o0 0	b"
 			echo "100644 $o0 0	c"
 			echo "100644 $o0 0	d/e"
