@@ -53,7 +53,7 @@ long_read_test () {
 		} >input &
 	} &&
 	test-line-buffer input <<-EOF >output &&
-	read $readsize
+	binary $readsize
 	copy $copysize
 	EOF
 	kill $! &&
@@ -71,23 +71,23 @@ test_expect_success 'setup: have pipes?' '
 '
 
 test_expect_success 'hello world' '
-	echo HELLO >expect &&
+	echo ">HELLO" >expect &&
 	test-line-buffer <<-\EOF >actual &&
-	read 6
+	binary 6
 	HELLO
 	EOF
 	test_cmp expect actual
 '
 
 test_expect_success PIPE '0-length read, no input available' '
-	>expect &&
+	printf ">" >expect &&
 	rm -f input &&
 	mkfifo input &&
 	{
 		sleep 100 >input &
 	} &&
 	test-line-buffer input <<-\EOF >actual &&
-	read 0
+	binary 0
 	copy 0
 	EOF
 	kill $! &&
@@ -95,9 +95,9 @@ test_expect_success PIPE '0-length read, no input available' '
 '
 
 test_expect_success '0-length read, send along greeting' '
-	echo HELLO >expect &&
+	echo ">HELLO" >expect &&
 	test-line-buffer <<-\EOF >actual &&
-	read 0
+	binary 0
 	copy 6
 	HELLO
 	EOF
@@ -105,7 +105,7 @@ test_expect_success '0-length read, send along greeting' '
 '
 
 test_expect_success PIPE '1-byte read, no input available' '
-	printf "%s" ab >expect &&
+	printf ">%s" ab >expect &&
 	rm -f input &&
 	mkfifo input &&
 	{
@@ -116,7 +116,7 @@ test_expect_success PIPE '1-byte read, no input available' '
 		} >input &
 	} &&
 	test-line-buffer input <<-\EOF >actual &&
-	read 1
+	binary 1
 	copy 1
 	EOF
 	kill $! &&
@@ -137,15 +137,6 @@ test_expect_success 'read from file descriptor' '
 	echo hello >input &&
 	echo copy 6 |
 	test-line-buffer "&4" 4<input >actual &&
-	test_cmp expect actual
-'
-
-test_expect_success 'buffer_read_string copes with null byte' '
-	>expect &&
-	q_to_nul <<-\EOF | test-line-buffer >actual &&
-	read 2
-	Q
-	EOF
 	test_cmp expect actual
 '
 
@@ -170,18 +161,18 @@ test_expect_success 'read null byte' '
 '
 
 test_expect_success 'long reads are truncated' '
-	echo foo >expect &&
+	echo ">foo" >expect &&
 	test-line-buffer <<-\EOF >actual &&
-	read 5
+	binary 5
 	foo
 	EOF
 	test_cmp expect actual
 '
 
 test_expect_success 'long copies are truncated' '
-	printf "%s\n" "" foo >expect &&
+	printf "%s\n" ">" foo >expect &&
 	test-line-buffer <<-\EOF >actual &&
-	read 1
+	binary 1
 
 	copy 5
 	foo

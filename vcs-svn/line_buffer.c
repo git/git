@@ -91,13 +91,6 @@ char *buffer_read_line(struct line_buffer *buf)
 	return buf->line_buffer;
 }
 
-char *buffer_read_string(struct line_buffer *buf, uint32_t len)
-{
-	strbuf_reset(&buf->blob_buffer);
-	strbuf_fread(&buf->blob_buffer, len, buf->infile);
-	return ferror(buf->infile) ? NULL : buf->blob_buffer.buf;
-}
-
 void buffer_read_binary(struct line_buffer *buf,
 				struct strbuf *sb, uint32_t size)
 {
@@ -134,5 +127,4 @@ off_t buffer_skip_bytes(struct line_buffer *buf, off_t nbytes)
 
 void buffer_reset(struct line_buffer *buf)
 {
-	strbuf_release(&buf->blob_buffer);
 }
