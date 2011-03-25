@@ -150,6 +150,7 @@ test_expect_success 'will not overwrite untracked file on unborn branch' '
 	git rm -fr . &&
 	git checkout --orphan new &&
 	cp important c0.c &&
+	test_when_finished "rm c0.c" &&
 	test_must_fail git merge c0 2>out &&
 	test_cmp out expect &&
 	test_path_is_missing .git/MERGE_HEAD &&
@@ -164,7 +165,7 @@ test_expect_success 'set up unborn branch and content' '
 	echo bar > untracked-file
 '
 
-test_expect_failure 'will not clobber WT/index when merging into unborn' '
+test_expect_success 'will not clobber WT/index when merging into unborn' '
 	git merge master &&
 	grep foo tracked-file &&
 	git show :tracked-file >expect &&
