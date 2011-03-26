@@ -370,6 +370,33 @@ test_expect_failure 'change file mode but keep old content' '
 	test_cmp hello actual.target
 '
 
+test_expect_success 'NUL in property value' '
+	reinit_git &&
+	echo "commit message" >expect.message &&
+	{
+		properties \
+			unimportant "something with a NUL (Q)" \
+			svn:log "commit message"&&
+		echo PROPS-END
+	} |
+	q_to_nul >props &&
+	{
+		cat <<-\EOF &&
+		SVN-fs-dump-format-version: 3
+
+		Revision-number: 1
+		EOF
+		echo Prop-content-length: $(wc -c <props) &&
+		echo Content-length: $(wc -c <props) &&
+		echo &&
+		cat props
+	} >nulprop.dump &&
+	test-svn-fe nulprop.dump >stream &&
+	git fast-import <stream &&
+	git diff-tree --always -s --format=%s HEAD >actual.message &&
+	test_cmp expect.message actual.message
+'
+
 test_expect_success 'change file mode and reiterate content' '
 	reinit_git &&
 	cat >expect <<-\EOF &&
