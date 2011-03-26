@@ -12,6 +12,10 @@ Fixes since v1.7.4.1
    tiny packfiles.  We now close the file descriptor early when the entire
    packfile fits inside one mmap window.
 
+ * "git bisect visualize" tried to run "gitk" in windowing
+   environments even when "gitk" is not installed, resulting in a
+   strange error message.
+
  * "git clone /no/such/path" did not fail correctly.
 
  * "git commit" did not correctly error out when the user asked to use a
@@ -44,6 +48,9 @@ Fixes since v1.7.4.1
    subproject, which made no sense (so/submodule-no-update-first-time).
 
  * gitweb's "highlight" interface mishandled tabs.
+
+ * gitweb didn't understand timezones with GMT offset that is not
+   multiple of a whole hour.
 
  * gitweb had a few forward-incompatible syntactic constructs and
    also used incorrect variable when showing the file mode in a diff.
