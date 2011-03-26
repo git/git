@@ -31,12 +31,14 @@ void fast_export_modify(uint32_t depth, uint32_t *path, uint32_t mode,
 }
 
 static char gitsvnline[MAX_GITSVN_LINE_LEN];
-void fast_export_commit(uint32_t revision, const char *author, char *log,
+void fast_export_commit(uint32_t revision, const char *author,
+			const struct strbuf *log,
 			const char *uuid, const char *url,
 			unsigned long timestamp)
 {
+	static const struct strbuf empty = STRBUF_INIT;
 	if (!log)
-		log = "";
+		log = &empty;
 	if (*uuid && *url) {
 		snprintf(gitsvnline, MAX_GITSVN_LINE_LEN,
 				"\n\ngit-svn-id: %s@%"PRIu32" %s\n",
@@ -49,9 +51,9 @@ void fast_export_commit(uint32_t revision, const char *author, char *log,
 		   *author ? author : "nobody",
 		   *author ? author : "nobody",
 		   *uuid ? uuid : "local", timestamp);
-	printf("data %"PRIu32"\n%s%s\n",
-		   (uint32_t) (strlen(log) + strlen(gitsvnline)),
-		   log, gitsvnline);
+	printf("data %"PRIuMAX"\n", log->len + strlen(gitsvnline));
+	fwrite(log->buf, log->len, 1, stdout);
+	printf("%s\n", gitsvnline);
 	if (!first_commit_done) {
 		if (revision > 1)
 			printf("from refs/heads/master^0\n");
