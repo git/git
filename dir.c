@@ -1048,6 +1048,37 @@ char *get_relative_cwd(char *buffer, int size, const char *dir)
 	}
 }
 
+ * Given two normalized paths (a trailing slash is ok), if subdir is
+ * outside dir, return -1.  Otherwise return the offset in subdir that
+ * can be used as relative path to dir.
+ */
+int dir_inside_of(const char *subdir, const char *dir)
+{
+	int offset = 0;
+
+	assert(dir && subdir && *dir && *subdir);
+
+	while (*dir && *subdir && *dir == *subdir) {
+		dir++;
+		subdir++;
+		offset++;
+	}
+
+	/* hel[p]/me vs hel[l]/yeah */
+	if (*dir && *subdir)
+		return -1;
+
+	if (!*subdir)
+		return !*dir ? offset : -1; /* same dir */
+
+	/* foo/[b]ar vs foo/[] */
+	if (is_dir_sep(dir[-1]))
+		return is_dir_sep(subdir[-1]) ? offset : -1;
+
+	/* foo[/]bar vs foo[] */
+	return is_dir_sep(*subdir) ? offset + 1 : -1;
+}
+
 int is_inside_dir(const char *dir)
 {
 	char buffer[PATH_MAX];
