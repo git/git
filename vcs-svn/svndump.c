@@ -274,7 +274,7 @@ static void handle_revision(void)
 {
 	if (rev_ctx.revision)
 		repo_commit(rev_ctx.revision, rev_ctx.author.buf,
-			rev_ctx.log.buf, dump_ctx.uuid.buf, dump_ctx.url.buf,
+			&rev_ctx.log, dump_ctx.uuid.buf, dump_ctx.url.buf,
 			rev_ctx.timestamp);
 }
 

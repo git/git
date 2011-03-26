@@ -1,7 +1,7 @@
 #ifndef REPO_TREE_H_
 #define REPO_TREE_H_
 
-#include "git-compat-util.h"
+struct strbuf;
 
 #define REPO_MODE_DIR 0040000
 #define REPO_MODE_BLB 0100644
@@ -18,7 +18,7 @@ uint32_t repo_read_path(const uint32_t *path);
 uint32_t repo_read_mode(const uint32_t *path);
 void repo_delete(uint32_t *path);
 void repo_commit(uint32_t revision, const char *author,
-		char *log, const char *uuid, const char *url,
+		const struct strbuf *log, const char *uuid, const char *url,
 		long unsigned timestamp);
 void repo_diff(uint32_t r1, uint32_t r2);
 void repo_init(void);
