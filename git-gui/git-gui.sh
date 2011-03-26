@@ -93,6 +93,25 @@ if {![catch {set _verbose $env(GITGUI_VERBOSE)}]} {
 
 package require msgcat
 
+# Check for Windows 7 MUI language pack (missed by msgcat < 1.4.4)
+if {[tk windowingsystem] eq "win32"
+	&& [package vcompare [package provide msgcat] 1.4.4] < 0
+} then {
+	proc _mc_update_locale {} {
+		set key {HKEY_CURRENT_USER\Control Panel\Desktop}
+		if {![catch {
+			package require registry
+			set uilocale [registry get $key "PreferredUILanguages"]
+			msgcat::ConvertLocale [string map {- _} [lindex $uilocale 0]]
+		} uilocale]} {
+			if {[string length $uilocale] > 0} {
+				msgcat::mclocale $uilocale
+			}
+		}
+	}
+	_mc_update_locale
+}
+
 proc _mc_trim {fmt} {
 	set cmk [string first @@ $fmt]
 	if {$cmk > 0} {
@@ -138,6 +157,10 @@ if {$_trace >= 0} {
 } else {
 	set _trace 0
 }
+
+# variable for the last merged branch (useful for a default when deleting
+# branches).
+set _last_merged_branch {}
 
 proc shellpath {} {
 	global _shellpath env
@@ -1448,13 +1471,17 @@ proc rescan_stage2 {fd after} {
 		close $fd
 	}
 
-	set ls_others [list --exclude-per-directory=.gitignore]
-	if {[have_info_exclude]} {
-		lappend ls_others "--exclude-from=[gitdir info exclude]"
-	}
-	set user_exclude [get_config core.excludesfile]
-	if {$user_exclude ne {} && [file readable $user_exclude]} {
-		lappend ls_others "--exclude-from=$user_exclude"
+	if {[package vsatisfies $::_git_version 1.6.3]} {
+		set ls_others [list --exclude-standard]
+	} else {
+		set ls_others [list --exclude-per-directory=.gitignore]
+		if {[have_info_exclude]} {
+			lappend ls_others "--exclude-from=[gitdir info exclude]"
+		}
+		set user_exclude [get_config core.excludesfile]
+		if {$user_exclude ne {} && [file readable $user_exclude]} {
+			lappend ls_others "--exclude-from=[file normalize $user_exclude]"
+		}
 	}
 
 	set buf_rdi {}
@@ -1958,8 +1985,8 @@ static unsigned char file_merge_bits[] = {
 } -maskdata $filemask
 
 image create bitmap file_statechange -background white -foreground green -data {
-#define file_merge_width 14
-#define file_merge_height 15
+#define file_statechange_width 14
+#define file_statechange_height 15
 static unsigned char file_statechange_bits[] = {
    0xfe, 0x01, 0x02, 0x03, 0x02, 0x05, 0x02, 0x09, 0x02, 0x1f, 0x62, 0x10,
    0x62, 0x10, 0xba, 0x11, 0xba, 0x11, 0x62, 0x10, 0x62, 0x10, 0x02, 0x10,
@@ -1993,7 +2020,11 @@ foreach i {
 		{MD {mc "Staged for commit, missing"}}
 
 		{_T {mc "File type changed, not staged"}}
+		{MT {mc "File type changed, old type staged for commit"}}
+		{AT {mc "File type changed, old type staged for commit"}}
 		{T_ {mc "File type changed, staged"}}
+		{TM {mc "File type change staged, modification not staged"}}
+		{TD {mc "File type change staged, file missing"}}
 
 		{_O {mc "Untracked, not staged"}}
 		{A_ {mc "Staged for commit"}}
@@ -3331,6 +3362,8 @@ foreach {n c} {0 black 1 red4 2 green4 3 yellow4 4 blue4 5 magenta4 6 cyan4 7 gr
 }
 $ui_diff tag configure clr1 -font font_diffbold
 
+$ui_diff tag conf d_info -foreground blue -font font_diffbold
+
 $ui_diff tag conf d_cr -elide true
 $ui_diff tag conf d_@ -font font_diffbold
 $ui_diff tag conf d_+ -foreground {#00a000}
@@ -3351,13 +3384,13 @@ $ui_diff tag conf d_s- \
 	-foreground red \
 	-background ivory1
 
-$ui_diff tag conf d<<<<<<< \
+$ui_diff tag conf d< \
 	-foreground orange \
 	-font font_diffbold
-$ui_diff tag conf d======= \
+$ui_diff tag conf d= \
 	-foreground orange \
 	-font font_diffbold
-$ui_diff tag conf d>>>>>>> \
+$ui_diff tag conf d> \
 	-foreground orange \
 	-font font_diffbold
 
@@ -3533,8 +3566,8 @@ proc popup_diff_menu {ctxm ctxmmg ctxmsm x y X Y} {
 			|| $current_diff_path eq {}
 			|| {__} eq $state
 			|| {_O} eq $state
-			|| {_T} eq $state
-			|| {T_} eq $state
+			|| [string match {?T} $state]
+			|| [string match {T?} $state]
 			|| [has_textconv $current_diff_path]} {
 			set s disabled
 		} else {
