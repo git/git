@@ -229,11 +229,25 @@ static void insert_alternate_refs(void)
 	foreach_alt_odb(refs_from_alternate_cb, insert_one_alternate_ref);
 }
 
+#define INITIAL_FLUSH 16
+#define LARGE_FLUSH 1024
+
+static int next_flush(int count)
+{
+	if (count < INITIAL_FLUSH * 2)
+		count += INITIAL_FLUSH;
+	else if (count < LARGE_FLUSH)
+		count <<= 1;
+	else
+		count += LARGE_FLUSH;
+	return count;
+}
+
 static int find_common(int fd[2], unsigned char *result_sha1,
 		       struct ref *refs)
 {
 	int fetching;
-	int count = 0, flushes = 0, retval;
+	int count = 0, flushes = 0, flush_at = INITIAL_FLUSH, retval;
 	const unsigned char *sha1;
 	unsigned in_vain = 0;
 	int got_continue = 0;
@@ -347,19 +361,20 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 		if (args.verbose)
 			fprintf(stderr, "have %s\n", sha1_to_hex(sha1));
 		in_vain++;
-		if (!(31 & ++count)) {
+		if (flush_at <= ++count) {
 			int ack;
 
 			packet_buf_flush(&req_buf);
 			send_request(fd[1], &req_buf);
 			strbuf_setlen(&req_buf, state_len);
 			flushes++;
+			flush_at = next_flush(count);
 
 			/*
 			 * We keep one window "ahead" of the other side, and
 			 * will wait for an ACK only on the next one
 			 */
-			if (!args.stateless_rpc && count == 32)
+			if (!args.stateless_rpc && count == INITIAL_FLUSH)
 				continue;
 
 			consume_shallow_list(fd[0]);
