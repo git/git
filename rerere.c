@@ -590,8 +590,7 @@ static int is_rerere_enabled(void)
 	if (rerere_enabled < 0)
 		return rr_cache_exists;
 
-	if (!rr_cache_exists &&
-	    (mkdir(rr_cache, 0777) || adjust_shared_perm(rr_cache)))
+	if (!rr_cache_exists && mkdir_in_gitdir(rr_cache))
 		die("Could not create directory %s", rr_cache);
 	return 1;
 }
