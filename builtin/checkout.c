@@ -552,7 +552,7 @@ static void update_refs_for_switch(struct checkout_opts *opts,
 		if (!opts->quiet) {
 			if (old->path && advice_detached_head)
 				detach_advice(old->path, new->name);
-			describe_detached_head("HEAD is now at", new->commit);
+			describe_detached_head(_("HEAD is now at"), new->commit);
 		}
 	} else if (new->path) {	/* Switch branches. */
 		create_symref("HEAD", new->path, msg.buf);

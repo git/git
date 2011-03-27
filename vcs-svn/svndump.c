@@ -83,7 +83,7 @@ static void reset_dump_ctx(const char *url)
 }
 
 static void handle_property(const struct strbuf *key_buf,
-				const char *val, uint32_t len,
+				struct strbuf *val,
 				uint32_t *type_set)
 {
 	const char *key = key_buf->buf;
@@ -95,23 +95,23 @@ static void handle_property(const struct strbuf *key_buf,
 			break;
 		if (!val)
 			die("invalid dump: unsets svn:log");
-		strbuf_reset(&rev_ctx.log);
-		strbuf_add(&rev_ctx.log, val, len);
+		strbuf_swap(&rev_ctx.log, val);
 		break;
 	case sizeof("svn:author"):
 		if (constcmp(key, "svn:author"))
 			break;
-		strbuf_reset(&rev_ctx.author);
-		if (val)
-			strbuf_add(&rev_ctx.author, val, len);
+		if (!val)
+			strbuf_reset(&rev_ctx.author);
+		else
+			strbuf_swap(&rev_ctx.author, val);
 		break;
 	case sizeof("svn:date"):
 		if (constcmp(key, "svn:date"))
 			break;
 		if (!val)
 			die("invalid dump: unsets svn:date");
-		if (parse_date_basic(val, &rev_ctx.timestamp, NULL))
-			warning("invalid timestamp: %s", val);
+		if (parse_date_basic(val->buf, &rev_ctx.timestamp, NULL))
+			warning("invalid timestamp: %s", val->buf);
 		break;
 	case sizeof("svn:executable"):
 	case sizeof("svn:special"):
@@ -147,6 +147,7 @@ static void die_short_read(void)
 static void read_props(void)
 {
 	static struct strbuf key = STRBUF_INIT;
+	static struct strbuf val = STRBUF_INIT;
 	const char *t;
 	/*
 	 * NEEDSWORK: to support simple mode changes like
@@ -163,15 +164,15 @@ static void read_props(void)
 	uint32_t type_set = 0;
 	while ((t = buffer_read_line(&input)) && strcmp(t, "PROPS-END")) {
 		uint32_t len;
-		const char *val;
 		const char type = t[0];
 		int ch;
 
 		if (!type || t[1] != ' ')
 			die("invalid property line: %s\n", t);
 		len = atoi(&t[2]);
-		val = buffer_read_string(&input, len);
-		if (!val || strlen(val) != len)
+		strbuf_reset(&val);
+		buffer_read_binary(&input, &val, len);
+		if (val.len < len)
 			die_short_read();
 
 		/* Discard trailing newline. */
@@ -179,22 +180,17 @@ static void read_props(void)
 		if (ch == EOF)
 			die_short_read();
 		if (ch != '\n')
-			die("invalid dump: expected newline after %s", val);
+			die("invalid dump: expected newline after %s", val.buf);
 
 		switch (type) {
 		case 'K':
+			strbuf_swap(&key, &val);
+			continue;
 		case 'D':
-			strbuf_reset(&key);
-			if (val)
-				strbuf_add(&key, val, len);
-			if (type == 'K')
-				continue;
-			assert(type == 'D');
-			val = NULL;
-			len = 0;
-			/* fall through */
+			handle_property(&val, NULL, &type_set);
+			continue;
 		case 'V':
-			handle_property(&key, val, len, &type_set);
+			handle_property(&key, &val, &type_set);
 			strbuf_reset(&key);
 			continue;
 		default:
@@ -278,7 +274,7 @@ static void handle_revision(void)
 {
 	if (rev_ctx.revision)
 		repo_commit(rev_ctx.revision, rev_ctx.author.buf,
-			rev_ctx.log.buf, dump_ctx.uuid.buf, dump_ctx.url.buf,
+			&rev_ctx.log, dump_ctx.uuid.buf, dump_ctx.url.buf,
 			rev_ctx.timestamp);
 }
 

@@ -16,8 +16,8 @@ The calling program:
 
  - initializes a `struct line_buffer` to LINE_BUFFER_INIT
  - specifies a file to read with `buffer_init`
- - processes input with `buffer_read_line`, `buffer_read_string`,
-   `buffer_skip_bytes`, and `buffer_copy_bytes`
+ - processes input with `buffer_read_line`, `buffer_skip_bytes`,
+   and `buffer_copy_bytes`
  - closes the file with `buffer_deinit`, perhaps to start over and
    read another file.
 
@@ -37,7 +37,7 @@ the calling program.  A program
    the temporary file
  - declares writing is over with `buffer_tmpfile_prepare_to_read`
  - can re-read what was written with `buffer_read_line`,
-   `buffer_read_string`, and so on
+   `buffer_copy_bytes`, and so on
  - can reuse the temporary file by calling `buffer_tmpfile_rewind`
    again
  - removes the temporary file with `buffer_deinit`, perhaps to
@@ -63,12 +63,6 @@ Functions
 `buffer_read_line`::
 	Read a line and strip off the trailing newline.
 	On failure or end of file, returns NULL.
-
-`buffer_read_string`::
-	Read `len` characters of input or up to the end of the
-	file, whichever comes first.  Returns NULL on error.
-	Returns whatever characters were read (possibly "")
-	for end of file.
 
 `buffer_copy_bytes`::
 	Read `len` bytes of input and dump them to the standard output
