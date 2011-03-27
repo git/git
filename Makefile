@@ -341,6 +341,11 @@ BUILTIN_OBJS =
 BUILT_INS =
 COMPAT_CFLAGS =
 COMPAT_OBJS =
+XDIFF_H =
+XDIFF_OBJS =
+VCSSVN_H =
+VCSSVN_OBJS =
+VCSSVN_TEST_OBJS =
 EXTRA_CPPFLAGS =
 LIB_H =
 LIB_OBJS =
@@ -1836,12 +1841,25 @@ GIT_OBJS := $(LIB_OBJS) $(BUILTIN_OBJS) $(PROGRAM_OBJS) $(TEST_OBJS) \
 ifndef NO_CURL
 	GIT_OBJS += http.o http-walker.o remote-curl.o
 endif
-XDIFF_OBJS = xdiff/xdiffi.o xdiff/xprepare.o xdiff/xutils.o xdiff/xemit.o \
-	xdiff/xmerge.o xdiff/xpatience.o
-VCSSVN_OBJS = vcs-svn/string_pool.o vcs-svn/line_buffer.o \
-	vcs-svn/repo_tree.o vcs-svn/fast_export.o vcs-svn/svndump.o
-VCSSVN_TEST_OBJS = test-obj-pool.o test-string-pool.o \
-	test-line-buffer.o test-treap.o
+
+XDIFF_OBJS += xdiff/xdiffi.o
+XDIFF_OBJS += xdiff/xprepare.o
+XDIFF_OBJS += xdiff/xutils.o
+XDIFF_OBJS += xdiff/xemit.o
+XDIFF_OBJS += xdiff/xmerge.o
+XDIFF_OBJS += xdiff/xpatience.o
+
+VCSSVN_OBJS += vcs-svn/string_pool.o
+VCSSVN_OBJS += vcs-svn/line_buffer.o
+VCSSVN_OBJS += vcs-svn/repo_tree.o
+VCSSVN_OBJS += vcs-svn/fast_export.o
+VCSSVN_OBJS += vcs-svn/svndump.o
+
+VCSSVN_TEST_OBJS += test-obj-pool.o
+VCSSVN_TEST_OBJS += test-string-pool.o
+VCSSVN_TEST_OBJS += test-line-buffer.o
+VCSSVN_TEST_OBJS += test-treap.o
+
 OBJECTS := $(GIT_OBJS) $(XDIFF_OBJS) $(VCSSVN_OBJS)
 
 dep_files := $(foreach f,$(OBJECTS),$(dir $f).depend/$(notdir $f).d)
@@ -1960,16 +1978,26 @@ connect.o transport.o http-backend.o: url.h
 http-fetch.o http-walker.o remote-curl.o transport.o walker.o: walker.h
 http.o http-walker.o http-push.o http-fetch.o remote-curl.o: http.h url.h
 
-xdiff-interface.o $(XDIFF_OBJS): \
-	xdiff/xinclude.h xdiff/xmacros.h xdiff/xdiff.h xdiff/xtypes.h \
-	xdiff/xutils.h xdiff/xprepare.h xdiff/xdiffi.h xdiff/xemit.h
+XDIFF_H += xdiff/xinclude.h
+XDIFF_H += xdiff/xmacros.h
+XDIFF_H += xdiff/xdiff.h
+XDIFF_H += xdiff/xtypes.h
+XDIFF_H += xdiff/xutils.h
+XDIFF_H += xdiff/xprepare.h
+XDIFF_H += xdiff/xdiffi.h
+XDIFF_H += xdiff/xemit.h
 
-$(VCSSVN_OBJS) $(VCSSVN_TEST_OBJS): $(LIB_H) \
-	vcs-svn/obj_pool.h vcs-svn/trp.h vcs-svn/string_pool.h \
-	vcs-svn/line_buffer.h vcs-svn/repo_tree.h vcs-svn/fast_export.h \
-	vcs-svn/svndump.h
+xdiff-interface.o $(XDIFF_OBJS): $(XDIFF_H)
 
-test-svn-fe.o: vcs-svn/svndump.h
+VCSSVN_H += vcs-svn/obj_pool.h
+VCSSVN_H += vcs-svn/trp.h
+VCSSVN_H += vcs-svn/string_pool.h
+VCSSVN_H += vcs-svn/line_buffer.h
+VCSSVN_H += vcs-svn/repo_tree.h
+VCSSVN_H += vcs-svn/fast_export.h
+VCSSVN_H += vcs-svn/svndump.h
+
+$(VCSSVN_OBJS) $(VCSSVN_TEST_OBJS): $(LIB_H) $(VCSSVN_H)
 endif
 
 exec_cmd.s exec_cmd.o: EXTRA_CPPFLAGS = \
