@@ -10,6 +10,8 @@ Updates since v1.7.4
 
  * Various vcs-svn enhancements.
 
+ * Various git-gui updates (0.14.0).
+
  * Update to more modern HP-UX port.
 
  * The codebase is getting prepared for i18n/l10n; no translated/translatable
@@ -17,6 +19,10 @@ Updates since v1.7.4
 
  * The bash completion script can now complete symmetric difference
    for "git diff" command, e.g. "git diff ...bra<TAB>".
+
+ * The default minimum length of abbreviated and unique object names
+   can now be configured by setting the core.abbrev configuration
+   variable.
 
  * "git apply -v" reports offset lines when the patch does not apply at
    the exact location recorded in the diff output.
@@ -106,6 +112,9 @@ release, unless otherwise noted.
    in the working tree that are in the way in order to check out paths
    under it from the named branch (js/checkout-untracked-symlink).
 
+ * "git diff --quiet" did not work very well with the "--diff-filter"
+   option (jc/maint-diff-q-filter).
+
  * "git fetch" from a client that is mostly following the remote
    needlessly told all of its refs to the server for both sides to
    compute the set of objects that need to be transferred efficiently,
@@ -119,9 +128,13 @@ release, unless otherwise noted.
    reachable from the refs in their common alternate object store,
    causing it to fetch unnecessary objects (jc/maint-fetch-alt).
 
+ * "git stash apply" reported the result of its operation by running
+   "git status" from the top-level of the working tree; it should (and
+   now does) run it from the user's working directory
+   (pk/stash-apply-status-relative).
+
 ---
 exec >/var/tmp/1
-O=v1.7.4.1-352-gcdc3466
-O=v1.7.4.1-414-gaeb2aaa
+O=v1.7.4.2-405-gbf0c5bb
 echo O=$(git describe 'master')
 git shortlog --no-merges ^maint ^$O master
