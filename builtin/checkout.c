@@ -603,13 +603,26 @@ static int add_one_ref_to_rev_list_arg(const char *refname,
 	return 0;
 }
 
+static int clear_commit_marks_from_one_ref(const char *refname,
+				      const unsigned char *sha1,
+				      int flags,
+				      void *cb_data)
+{
+	struct commit *commit = lookup_commit_reference_gently(sha1, 1);
+	if (commit)
+		clear_commit_marks(commit, -1);
+	return 0;
+}
 
 static void describe_one_orphan(struct strbuf *sb, struct commit *commit)
 {
 	struct pretty_print_context ctx = { 0 };
 
 	parse_commit(commit);
-	strbuf_addstr(sb, " - ");
+	strbuf_addstr(sb, "  ");
+	strbuf_addstr(sb,
+		find_unique_abbrev(commit->object.sha1, DEFAULT_ABBREV));
+	strbuf_addch(sb, ' ');
 	pretty_print_commit(CMIT_FMT_ONELINE, commit, sb, &ctx);
 	strbuf_addch(sb, '\n');
 }
@@ -674,6 +687,9 @@ static void orphaned_commit_warning(struct commit *commit)
 		suggest_reattach(commit, &revs);
 	else
 		describe_detached_head("Previous HEAD position was", commit);
+
+	clear_commit_marks(commit, -1);
+	for_each_ref(clear_commit_marks_from_one_ref, NULL);
 }
 
 static int switch_branches(struct checkout_opts *opts, struct branch_info *new)
