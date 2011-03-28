@@ -93,6 +93,7 @@ OPTIONS
 	as a regex).
 
 -n::
+--line-number::
 	Prefix the line number to matching lines.
 
 -l::
