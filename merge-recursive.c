@@ -356,7 +356,6 @@ static void make_room_for_directories_of_df_conflicts(struct merge_options *o,
 	 */
 	const char *last_file = NULL;
 	int last_len = 0;
-	struct stage_data *last_e;
 	int i;
 
 	for (i = 0; i < entries->nr; i++) {
@@ -386,7 +385,6 @@ static void make_room_for_directories_of_df_conflicts(struct merge_options *o,
 		if (S_ISREG(e->stages[2].mode) || S_ISLNK(e->stages[2].mode)) {
 			last_file = path;
 			last_len = len;
-			last_e = e;
 		} else {
 			last_file = NULL;
 		}
@@ -961,7 +959,6 @@ static int process_renames(struct merge_options *o,
 	}
 
 	for (i = 0, j = 0; i < a_renames->nr || j < b_renames->nr;) {
-		char *src;
 		struct string_list *renames1, *renames2Dst;
 		struct rename *ren1 = NULL, *ren2 = NULL;
 		const char *branch1, *branch2;
@@ -996,7 +993,6 @@ static int process_renames(struct merge_options *o,
 			ren2 = ren1;
 			ren1 = tmp;
 		}
-		src = ren1->pair->one->path;
 
 		ren1->dst_entry->processed = 1;
 		ren1->src_entry->processed = 1;
