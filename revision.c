@@ -1374,13 +1374,8 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		revs->show_notes_given = 1;
 		if (!revs->notes_opt.extra_notes_refs)
 			revs->notes_opt.extra_notes_refs = xcalloc(1, sizeof(struct string_list));
-		if (!prefixcmp(arg+13, "refs/"))
-			/* happy */;
-		else if (!prefixcmp(arg+13, "notes/"))
-			strbuf_addstr(&buf, "refs/");
-		else
-			strbuf_addstr(&buf, "refs/notes/");
 		strbuf_addstr(&buf, arg+13);
+		expand_notes_ref(&buf);
 		string_list_append(revs->notes_opt.extra_notes_refs,
 				   strbuf_detach(&buf, NULL));
 	} else if (!strcmp(arg, "--no-notes")) {
