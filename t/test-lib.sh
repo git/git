@@ -46,7 +46,16 @@ unset VISUAL
 unset EMAIL
 unset $(perl -e '
 	my @env = keys %ENV;
-	my @vars = grep(/^GIT_/ && !/^GIT_(TRACE|DEBUG|USE_LOOKUP)/, @env);
+	my $ok = join("|", qw(
+		TRACE
+		DEBUG
+		USE_LOOKUP
+		TEST
+		.*_TEST
+		PROVE
+		VALGRIND
+	));
+	my @vars = grep(/^GIT_/ && !/^GIT_($ok)/o, @env);
 	print join("\n", @vars);
 ')
 GIT_AUTHOR_EMAIL=author@example.com

@@ -769,7 +769,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		OPT_BOOLEAN('F', "fixed-strings", &opt.fixed,
 			"interpret patterns as fixed strings"),
 		OPT_GROUP(""),
-		OPT_BOOLEAN('n', NULL, &opt.linenum, "show line numbers"),
+		OPT_BOOLEAN('n', "line-number", &opt.linenum, "show line numbers"),
 		OPT_NEGBIT('h', NULL, &opt.pathname, "don't show filenames", 1),
 		OPT_BIT('H', NULL, &opt.pathname, "show filenames", 1),
 		OPT_NEGBIT(0, "full-name", &opt.relative,
