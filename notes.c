@@ -1053,7 +1053,8 @@ void init_display_notes(struct display_notes_opt *opt)
 
 	assert(!display_notes_trees);
 
-	if (!opt || !opt->suppress_default_notes) {
+	if (!opt || opt->use_default_notes > 0 ||
+	    (opt->use_default_notes == -1 && !opt->extra_notes_refs.nr)) {
 		string_list_append(&display_notes_refs, default_notes_ref());
 		display_ref_env = getenv(GIT_NOTES_DISPLAY_REF_ENVIRONMENT);
 		if (display_ref_env) {

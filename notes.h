@@ -258,7 +258,7 @@ void format_note(struct notes_tree *t, const unsigned char *object_sha1,
 struct string_list;
 
 struct display_notes_opt {
-	unsigned int suppress_default_notes:1;
+	int use_default_notes;
 	struct string_list extra_notes_refs;
 };
 
