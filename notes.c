@@ -1066,9 +1066,9 @@ void init_display_notes(struct display_notes_opt *opt)
 
 	git_config(notes_display_config, &load_config_refs);
 
-	if (opt && opt->extra_notes_refs) {
+	if (opt) {
 		struct string_list_item *item;
-		for_each_string_list_item(item, opt->extra_notes_refs)
+		for_each_string_list_item(item, &opt->extra_notes_refs)
 			string_list_add_refs_by_glob(&display_notes_refs,
 						     item->string);
 	}

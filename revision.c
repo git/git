@@ -1372,11 +1372,9 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		struct strbuf buf = STRBUF_INIT;
 		revs->show_notes = 1;
 		revs->show_notes_given = 1;
-		if (!revs->notes_opt.extra_notes_refs)
-			revs->notes_opt.extra_notes_refs = xcalloc(1, sizeof(struct string_list));
 		strbuf_addstr(&buf, arg+13);
 		expand_notes_ref(&buf);
-		string_list_append(revs->notes_opt.extra_notes_refs,
+		string_list_append(&revs->notes_opt.extra_notes_refs,
 				   strbuf_detach(&buf, NULL));
 	} else if (!strcmp(arg, "--no-notes")) {
 		revs->show_notes = 0;
