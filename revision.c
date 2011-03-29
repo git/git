@@ -1367,17 +1367,22 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		revs->verbose_header = 1;
 		revs->pretty_given = 1;
 		get_commit_format(arg+9, revs);
-	} else if (!strcmp(arg, "--show-notes")) {
+	} else if (!strcmp(arg, "--show-notes") || !strcmp(arg, "--notes")) {
 		revs->show_notes = 1;
 		revs->show_notes_given = 1;
 		revs->notes_opt.use_default_notes = 1;
-	} else if (!prefixcmp(arg, "--show-notes=")) {
+	} else if (!prefixcmp(arg, "--show-notes=") ||
+		   !prefixcmp(arg, "--notes=")) {
 		struct strbuf buf = STRBUF_INIT;
 		revs->show_notes = 1;
 		revs->show_notes_given = 1;
-		if (revs->notes_opt.use_default_notes < 0)
-			revs->notes_opt.use_default_notes = 1;
-		strbuf_addstr(&buf, arg+13);
+		if (!prefixcmp(arg, "--show-notes")) {
+			if (revs->notes_opt.use_default_notes < 0)
+				revs->notes_opt.use_default_notes = 1;
+			strbuf_addstr(&buf, arg+13);
+		}
+		else
+			strbuf_addstr(&buf, arg+8);
 		expand_notes_ref(&buf);
 		string_list_append(&revs->notes_opt.extra_notes_refs,
 				   strbuf_detach(&buf, NULL));
