@@ -27,6 +27,7 @@ static const char upload_pack_usage[] = "git upload-pack [--strict] [--timeout=<
 static unsigned long oldest_have;
 
 static int multi_ack, nr_our_refs;
+static int no_done;
 static int use_thin_pack, use_ofs_delta, use_include_tag;
 static int no_progress, daemon_mode;
 static int shallow_nr;
@@ -431,6 +432,7 @@ static int get_common_commits(void)
 	char last_hex[41];
 	int got_common = 0;
 	int got_other = 0;
+	int sent_ready = 0;
 
 	save_commit_buffer = 0;
 
@@ -440,10 +442,17 @@ static int get_common_commits(void)
 
 		if (!len) {
 			if (multi_ack == 2 && got_common
-			    && !got_other && ok_to_give_up())
+			    && !got_other && ok_to_give_up()) {
+				sent_ready = 1;
 				packet_write(1, "ACK %s ready\n", last_hex);
+			}
 			if (have_obj.nr == 0 || multi_ack)
 				packet_write(1, "NAK\n");
+
+			if (no_done && sent_ready) {
+				packet_write(1, "ACK %s\n", last_hex);
+				return 0;
+			}
 			if (stateless_rpc)
 				exit(0);
 			got_common = 0;
@@ -457,9 +466,10 @@ static int get_common_commits(void)
 				got_other = 1;
 				if (multi_ack && ok_to_give_up()) {
 					const char *hex = sha1_to_hex(sha1);
-					if (multi_ack == 2)
+					if (multi_ack == 2) {
+						sent_ready = 1;
 						packet_write(1, "ACK %s ready\n", hex);
-					else
+					} else
 						packet_write(1, "ACK %s continue\n", hex);
 				}
 				break;
@@ -535,6 +545,8 @@ static void receive_needs(void)
 			multi_ack = 2;
 		else if (strstr(line+45, "multi_ack"))
 			multi_ack = 1;
+		if (strstr(line+45, "no-done"))
+			no_done = 1;
 		if (strstr(line+45, "thin-pack"))
 			use_thin_pack = 1;
 		if (strstr(line+45, "ofs-delta"))
@@ -628,7 +640,7 @@ static int send_ref(const char *refname, const unsigned char *sha1, int flag, vo
 {
 	static const char *capabilities = "multi_ack thin-pack side-band"
 		" side-band-64k ofs-delta shallow no-progress"
-		" include-tag multi_ack_detailed";
+		" include-tag multi_ack_detailed no-done";
 	struct object *o = parse_object(sha1);
 
 	if (!o)
