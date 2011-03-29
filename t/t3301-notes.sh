@@ -269,6 +269,22 @@ test_expect_success 'git log --notes --notes=X shows both' '
 	grep alternate output
 '
 
+test_expect_success 'git log --no-notes resets default state' '
+	git log -1 --notes --notes=alternate \
+		--no-notes --notes=alternate \
+		>output &&
+	! grep xyzzy output &&
+	grep alternate output
+'
+
+test_expect_success 'git log --no-notes resets ref list' '
+	git log -1 --notes --notes=alternate \
+		--no-notes --notes \
+		>output &&
+	grep xyzzy output &&
+	! grep alternate output
+'
+
 test_expect_success 'create -m notes (setup)' '
 	: > a5 &&
 	git add a5 &&
