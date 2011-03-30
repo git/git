@@ -190,9 +190,9 @@ self-contained. Use `git index-pack --fix-thin`
 (see linkgit:git-index-pack[1]) to restore the self-contained property.
 
 --delta-base-offset::
-	A packed archive can express base object of a delta as
-	either 20-byte object name or as an offset in the
-	stream, but older version of git does not understand the
+	A packed archive can express the base object of a delta as
+	either a 20-byte object name or as an offset in the
+	stream, but older versions of git don't understand the
 	latter.  By default, 'git pack-objects' only uses the
 	former format for better compatibility.  This option
 	allows the command to use the latter format for
