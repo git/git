@@ -75,10 +75,6 @@ because a fetch would overwrite any local commits.
 +
 When a push mirror is created with `\--mirror=push`, then `git push`
 will always behave as if `\--mirror` was passed.
-+
-The option `\--mirror` (with no type) sets up both push and fetch
-mirror configuration. It is kept for historical purposes, and is
-probably not what you want.
 
 'rename'::
 
