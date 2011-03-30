@@ -30,19 +30,34 @@ people using 80-column terminals.
 	preferred by the user.  For non plumbing commands this
 	defaults to UTF-8.
 
---no-notes::
---show-notes[=<ref>]::
+--notes[=<ref>]::
 	Show the notes (see linkgit:git-notes[1]) that annotate the
 	commit, when showing the commit log message.  This is the default
 	for `git log`, `git show` and `git whatchanged` commands when
-	there is no `--pretty`, `--format` nor `--oneline` option is
-	given on the command line.
+	there is no `--pretty`, `--format` nor `--oneline` option given
+	on the command line.
 +
-With an optional argument, add this ref to the list of notes.  The ref
-is taken to be in `refs/notes/` if it is not qualified.
+By default, the notes shown are from the notes refs listed in the
+'core.notesRef' and 'notes.displayRef' variables (or corresponding
+environment overrides). See linkgit:git-config[1] for more details.
++
+With an optional '<ref>' argument, show this notes ref instead of the
+default notes ref(s). The ref is taken to be in `refs/notes/` if it
+is not qualified.
++
+Multiple --notes options can be combined to control which notes are
+being displayed. Examples: "--notes=foo" will show only notes from
+"refs/notes/foo"; "--notes=foo --notes" will show both notes from
+"refs/notes/foo" and from the default notes ref(s).
 
+--no-notes::
+	Do not show notes. This negates the above `--notes` option, by
+	resetting the list of notes refs from which notes are shown.
+	Options are parsed in the order given on the command line, so e.g.
+	"--notes --notes=foo --no-notes --notes=bar" will only show notes
+	from "refs/notes/bar".
+
+--show-notes[=<ref>]::
 --[no-]standard-notes::
-	Enable or disable populating the notes ref list from the
-	'core.notesRef' and 'notes.displayRef' variables (or
-	corresponding environment overrides).  Enabled by default.
-	See linkgit:git-config[1].
+	These options are deprecated. Use the above --notes/--no-notes
+	options instead.
