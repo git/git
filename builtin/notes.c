@@ -527,6 +527,8 @@ static int list(int argc, const char **argv, const char *prefix)
 	return retval;
 }
 
+static int append_edit(int argc, const char **argv, const char *prefix);
+
 static int add(int argc, const char **argv, const char *prefix)
 {
 	int retval = 0, force = 0;
@@ -554,14 +556,14 @@ static int add(int argc, const char **argv, const char *prefix)
 	};
 
 	argc = parse_options(argc, argv, prefix, options, git_notes_add_usage,
-			     0);
+			     PARSE_OPT_KEEP_ARGV0);
 
-	if (1 < argc) {
+	if (2 < argc) {
 		error("too many parameters");
 		usage_with_options(git_notes_add_usage, options);
 	}
 
-	object_ref = argc ? argv[0] : "HEAD";
+	object_ref = argc > 1 ? argv[1] : "HEAD";
 
 	if (get_sha1(object_ref, object))
 		die("Failed to resolve '%s' as a valid ref.", object_ref);
@@ -571,6 +573,18 @@ static int add(int argc, const char **argv, const char *prefix)
 
 	if (note) {
 		if (!force) {
+			if (!msg.given) {
+				/*
+				 * Redirect to "edit" subcommand.
+				 *
+				 * We only end up here if none of -m/-F/-c/-C
+				 * or -f are given. The original args are
+				 * therefore still in argv[0-1].
+				 */
+				argv[0] = "edit";
+				free_notes(t);
+				return append_edit(argc, argv, prefix);
+			}
 			retval = error("Cannot add notes. Found existing notes "
 				       "for object %s. Use '-f' to overwrite "
 				       "existing notes", sha1_to_hex(object));

@@ -101,11 +101,29 @@ test_expect_success 'edit existing notes' '
 	test_must_fail git notes show HEAD^
 '
 
-test_expect_success 'cannot add note where one exists' '
-	! MSG=b2 git notes add &&
+test_expect_success 'cannot "git notes add -m" where notes already exists' '
+	test_must_fail git notes add -m "b2" &&
 	test ! -f .git/NOTES_EDITMSG &&
 	test 1 = $(git ls-tree refs/notes/commits | wc -l) &&
 	test b3 = $(git notes show) &&
+	git show HEAD^ &&
+	test_must_fail git notes show HEAD^
+'
+
+test_expect_success 'can overwrite existing note with "git notes add -f -m"' '
+	git notes add -f -m "b1" &&
+	test ! -f .git/NOTES_EDITMSG &&
+	test 1 = $(git ls-tree refs/notes/commits | wc -l) &&
+	test b1 = $(git notes show) &&
+	git show HEAD^ &&
+	test_must_fail git notes show HEAD^
+'
+
+test_expect_success 'add w/no options on existing note morphs into edit' '
+	MSG=b2 git notes add &&
+	test ! -f .git/NOTES_EDITMSG &&
+	test 1 = $(git ls-tree refs/notes/commits | wc -l) &&
+	test b2 = $(git notes show) &&
 	git show HEAD^ &&
 	test_must_fail git notes show HEAD^
 '
@@ -190,6 +208,13 @@ printf "\n" >> expect-F
 cat expect-multiline >> expect-F
 
 test_expect_success 'show -F notes' '
+	git log -3 > output &&
+	test_cmp expect-F output
+'
+
+test_expect_success 'Re-adding -F notes without -f fails' '
+	echo "zyxxy" > note5 &&
+	test_must_fail git notes add -F note5 &&
 	git log -3 > output &&
 	test_cmp expect-F output
 '
