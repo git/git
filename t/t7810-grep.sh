@@ -59,7 +59,29 @@ do
 			echo ${HC}file:4:foo mmap bar_mmap
 			echo ${HC}file:5:foo_mmap bar mmap baz
 		} >expected &&
-		git grep -n -w -e mmap $H >actual &&
+		git -c grep.linenumber=false grep -n -w -e mmap $H >actual &&
+		test_cmp expected actual
+	'
+
+	test_expect_success "grep -w $L" '
+		{
+			echo ${HC}file:1:foo mmap bar
+			echo ${HC}file:3:foo_mmap bar mmap
+			echo ${HC}file:4:foo mmap bar_mmap
+			echo ${HC}file:5:foo_mmap bar mmap baz
+		} >expected &&
+		git -c grep.linenumber=true grep -w -e mmap $H >actual &&
+		test_cmp expected actual
+	'
+
+	test_expect_success "grep -w $L" '
+		{
+			echo ${HC}file:foo mmap bar
+			echo ${HC}file:foo_mmap bar mmap
+			echo ${HC}file:foo mmap bar_mmap
+			echo ${HC}file:foo_mmap bar mmap baz
+		} >expected &&
+		git -c grep.linenumber=true grep --no-line-number -w -e mmap $H >actual &&
 		test_cmp expected actual
 	'
 
