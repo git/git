@@ -55,7 +55,8 @@ get_remote_url () {
 }
 
 get_default_remote () {
-	curr_branch=$(git symbolic-ref -q HEAD | sed -e 's|^refs/heads/||')
+	curr_branch=$(git symbolic-ref -q HEAD)
+	curr_branch="${cur_branch#refs/heads/}"
 	origin=$(git config --get "branch.$curr_branch.remote")
 	echo ${origin:-origin}
 }
