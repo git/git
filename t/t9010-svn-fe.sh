@@ -407,7 +407,7 @@ test_expect_success 'NUL in log message, file content, and property name' '
 	OBJID
 	:000000 100644 OBJID OBJID A	greeting
 	EOF
-	printf "\n%s" "something with an ASCII NUL (Q)" >expect.message &&
+	printf "\n%s\n" "something with an ASCII NUL (Q)" >expect.message &&
 	printf "%s\n" "helQo" >expect.hello1 &&
 	printf "%s\n" "link hello" >expect.hello2 &&
 	{
@@ -465,7 +465,11 @@ test_expect_success 'NUL in log message, file content, and property name' '
 		git diff-tree --root --stdin |
 		sed "s/$_x40/OBJID/g"
 	} >actual &&
-	git cat-file commit HEAD | nul_to_q | sed -ne "/^\$/,\$ p" >actual.message &&
+	{
+		git cat-file commit HEAD | nul_to_q &&
+		echo
+	} |
+	sed -ne "/^\$/,\$ p" >actual.message &&
 	git cat-file blob HEAD^:greeting | nul_to_q >actual.hello1 &&
 	git cat-file blob HEAD:greeting | nul_to_q >actual.hello2 &&
 	test_cmp expect actual &&

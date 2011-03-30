@@ -214,7 +214,8 @@ static void handle_node(void)
 		if (have_text || have_props || node_ctx.srcRev)
 			die("invalid dump: deletion node has "
 				"copyfrom info, text, or properties");
-		return repo_delete(node_ctx.dst);
+		repo_delete(node_ctx.dst);
+		return;
 	}
 	if (node_ctx.action == NODEACT_REPLACE) {
 		repo_delete(node_ctx.dst);
