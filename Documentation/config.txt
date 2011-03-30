@@ -62,7 +62,7 @@ Internal whitespace within a variable value is retained verbatim.
 
 The values following the equals sign in variable assign are all either
 a string, an integer, or a boolean.  Boolean values may be given as yes/no,
-0/1, true/false or on/off.  Case is not significant in boolean values, when
+1/0, true/false or on/off.  Case is not significant in boolean values, when
 converting value to the canonical form using '--bool' type specifier;
 'git config' will ensure that the output is "true" or "false".
 

@@ -47,10 +47,10 @@ long_read_test () {
 	rm -f input &&
 	mkfifo input &&
 	{
-		{
+		(
 			generate_tens_of_lines $tens_of_lines "$line" &&
-			sleep 100
-		} >input &
+			exec sleep 100
+		) >input &
 	} &&
 	test-line-buffer input <<-EOF >output &&
 	binary $readsize
@@ -109,11 +109,11 @@ test_expect_success PIPE '1-byte read, no input available' '
 	rm -f input &&
 	mkfifo input &&
 	{
-		{
+		(
 			printf "%s" a &&
 			printf "%s" b &&
-			sleep 100
-		} >input &
+			exec sleep 100
+		) >input &
 	} &&
 	test-line-buffer input <<-\EOF >actual &&
 	binary 1

@@ -201,7 +201,7 @@ we are testing.
 If you create files under t/ directory (i.e. here) that is not
 the top-level test script, never name the file to match the above
 pattern.  The Makefile here considers all such files as the
-top-level test script and tries to run all of them.  A care is
+top-level test script and tries to run all of them.  Care is
 especially needed if you are creating a common test library
 file, similar to test-lib.sh, because such a library file may
 not be suitable for standalone execution.
@@ -285,9 +285,8 @@ Do:
  - Check the test coverage for your tests. See the "Test coverage"
    below.
 
-   Don't blindly follow test coverage metrics, they're a good way to
-   spot if you've missed something. If a new function you added
-   doesn't have any coverage you're probably doing something wrong,
+   Don't blindly follow test coverage metrics; if a new function you added
+   doesn't have any coverage, then you're probably doing something wrong,
    but having 100% coverage doesn't necessarily mean that you tested
    everything.
 
@@ -431,7 +430,7 @@ library for your script to use.
  - test_tick
 
    Make commit and tag names consistent by setting the author and
-   committer times to defined stated.  Subsequent calls will
+   committer times to defined state.  Subsequent calls will
    advance the times by a fixed amount.
 
  - test_commit <message> [<filename> [<contents>]]
