@@ -1,150 +1,81 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Mar 2011, #05; Sun, 27)
-X-master-at: be919d50c08fbe3a0653d6ba778b73f4940705ca
-X-next-at: be8b495e51e5bd78849a4c79633fcb93d3959a48
+Subject: What's cooking in git.git (Mar 2011, #06; Thu, 31)
+X-master-at: 6acef043581d69597860f3343ec2691c72b0803c
+X-next-at: ae5b80d74263fcfbdcca7004dee1552cb35a2a9d
 
-What's cooking in git.git (Mar 2011, #05; Sun, 27)
+What's cooking in git.git (Mar 2011, #06; Thu, 31)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' while commits prefixed with '+' are in 'next'.
 
+It's been two months since v1.7.4 and -rc0 was way overdue.  I'll do a -rc1
+sometime next week, hoping that we can finish this cycle by mid April.
+
+Which means that from now on, we wouldn't be interested in topics that are
+mostly internal clean-ups, new features that is not already in 'master',
+nor fixes for nontrivial bugs that are not regressions.  A bug that
+existed since v1.7.0 is something we have lived with long enough that it
+is not worth the risk of introducing other new bugs by trying to fix it
+before 1.7.5 final).
+
+What we would want to see are regression fixes.  There are quite a few new
+topics that have already graduated in 'master', or have been cooking and
+should be in 'master' shortly.  If they introduce new bugs that didn't
+exist in v1.7.4, they need to be squashed before anything else.
+
+The criteria is a bit looser for documentation updates.  Simple grammar
+and spelling fixes are usually safe; changes in the structure and markups
+are riskier.
+
+In any case, please use your best judgement and help polishing v1.7.5
+release.
+
 --------------------------------------------------
 [New Topics]
 
-* jc/merge-sans-branch (2011-03-23) 2 commits
- - merge: merge with the default upstream branch without argument
- - merge: match the help text with the documentation
+* jh/notes-add-ui (2011-03-30) 1 commit
+ - Make "git notes add" more user-friendly when there are existing notes
 
-Allow running "git merge" without telling it what to merge.  It will merge
-with the "upstream" of the current branch if configured.
+* jk/maint-remote-mirror-safer (2011-03-30) 3 commits
+ - remote: deprecate --mirror
+ - remote: separate the concept of push and fetch mirrors
+ - remote: disallow some nonsensical option combinations
 
-* jh/gitweb-localtime (2011-03-23) 1 commit
- - gitweb: javascript ability to adjust time based on timezone
+* jk/notes-ui-updates (2011-03-30) 7 commits
+ - log/pretty-options: Document --[no-]notes and deprecate old notes options
+ - revision.c: make --no-notes reset --notes list
+ - revision.c: support --notes command-line option
+ - notes: refactor display notes default handling
+ - notes: refactor display notes extra refs field
+ - revision.c: refactor notes ref expansion
+ - notes: make expand_notes_ref globally accessible
 
-* jk/maint-merge-rename-create (2011-03-25) 3 commits
- - merge: turn on rewrite detection
- - merge: handle renames with replacement content
- - t3030: fix accidental success in symlink rename
+* jr/grep-en-config (2011-03-30) 1 commit
+  (merged to 'next' on 2011-03-31 at 2a73028)
+ + grep: allow -E and -n to be turned on by default via configuration
 
-* jk/pull-into-empty (2011-03-25) 2 commits
- - pull: do not clobber untracked files on initial pull
- - merge: merge unborn index before setting ref
+This is low impact, isolated, and has no risk of breaking the system as a
+whole. May merge by rc1.
 
-* mz/maint-rename-unmerged (2011-03-23) 1 commit
- - diffcore-rename: don't consider unmerged path as source
+* nd/maint-setup (2011-03-26) 2 commits
+  (merged to 'next' on 2011-03-31 at 2c36f6a)
+ + Kill off get_relative_cwd()
+ + setup: return correct prefix if worktree is '/'
 
-* nd/struct-pathspec (2011-03-25) 4 commits
- - Improve tree_entry_interesting() handling code
- - Convert read_tree{,_recursive} to support struct pathspec
- - Reimplement read_tree_recursive() using tree_entry_interesting()
- - Merge branch 'en/object-list-with-pathspec' into 'nd/struct-pathspec'
-
---------------------------------------------------
-[Graduated to "master"]
-
-* jc/fetch-progressive-stride (2011-03-20) 3 commits
-  (merged to 'next' on 2011-03-20 at 2917b19)
- + fetch-pack: use smaller handshake window for initial request
- + fetch-pack: progressively use larger handshake windows
- + fetch-pack: factor out hardcoded handshake window size
-
-* jc/index-update-if-able (2011-03-21) 2 commits
-  (merged to 'next' on 2011-03-23 at e7e071a)
- + update $GIT_INDEX_FILE when there are racily clean entries
- + diff/status: refactor opportunistic index update
-
-* jc/maint-rerere-in-workdir (2011-03-10) 1 commit
-  (merged to 'next' on 2011-03-23 at e5ef1a2)
- + rerere: make sure it works even in a workdir attached to a young repository
-
-Resurrected, as this was originally written with the explicit goal of
-helping contrib/workdir/git-new-workdir users, and it is good enough to
-only support absolute symbolic links for that purpose.
-
-* jk/checkout-orphan-warning (2011-03-20) 3 commits
-  (merged to 'next' on 2011-03-23 at 26adae6)
- + checkout: tweak detached-orphan warning format
- + checkout: clear commit marks after detached-orphan check
- + checkout: add basic tests for detached-orphan warning
-
-* jp/completion-help-alias (2011-03-21) 1 commit
-  (merged to 'next' on 2011-03-23 at e21fa7b)
- + git-completion: Add git help completion for aliases
-
-* js/remove-unused-variables (2011-03-22) 1 commit
-  (merged to 'next' on 2011-03-23 at 4630013)
- + Remove unused variables
-
-* mg/rev-list-n-parents (2011-03-23) 3 commits
-  (merged to 'next' on 2011-03-23 at 8baa059)
- + rev-list --min-parents,--max-parents: doc, test and completion
- + revision.c: introduce --min-parents and --max-parents options
- + t6009: use test_commit() from test-lib.sh
-
-Rerolled with --no-max-parents and the like.
-
-* nd/index-doc (2011-03-01) 2 commits
-  (merged to 'next' on 2011-03-23 at 316cafc)
- + doc: technical details about the index file format
- + doc: technical details about the index file format
-
-* ss/git-gui-mergetool (2011-02-26) 2 commits
-  (merged to 'next' on 2011-03-17 at a8fac18)
- + mergetool--lib: Add Beyond Compare 3 as a tool
- + mergetool--lib: Sort tools alphabetically for easier lookup
-
-Merged through Pat's git-gui tree.
+This benefits only the minority who use /.git at the root level of the
+filesystem, but the changed code is used from many codepaths; will not
+merge before 1.7.5.
 
 --------------------------------------------------
 [Stalled]
-
-* mz/rebase (2011-02-28) 34 commits
- - rebase: define options in OPTIONS_SPEC
-  (merged to 'next' on 2011-02-25 at 52caa7a)
- + Makefile: do not install sourced rebase scripts
-  (merged to 'next' on 2011-02-22 at 3219155)
- + rebase: use @{upstream} if no upstream specified
- + rebase -i: remove unnecessary state rebase-root
- + rebase -i: don't read unused variable preserve_merges
- + git-rebase--am: remove unnecessary --3way option
- + rebase -m: don't print exit code 2 when merge fails
- + rebase -m: remember allow_rerere_autoupdate option
- + rebase: remember strategy and strategy options
- + rebase: remember verbose option
- + rebase: extract code for writing basic state
- + rebase: factor out sub command handling
- + rebase: make -v a tiny bit more verbose
- + rebase -i: align variable names
- + rebase: show consistent conflict resolution hint
- + rebase: extract am code to new source file
- + rebase: extract merge code to new source file
- + rebase: remove $branch as synonym for $orig_head
- + rebase -i: support --stat
- + rebase: factor out call to pre-rebase hook
- + rebase: factor out clean work tree check
- + rebase: factor out reference parsing
- + rebase: reorder validation steps
- + rebase -i: remove now unnecessary directory checks
- + rebase: factor out command line option processing
- + rebase: align variable content
- + rebase: align variable names
- + rebase: stricter check of standalone sub command
- + rebase: act on command line outside parsing loop
- + rebase: improve detection of rebase in progress
- + rebase: remove unused rebase state 'prev_head'
- + rebase: read state outside loop
- + rebase: refactor reading of state
- + rebase: clearer names for directory variables
-
-I think the tip one is a response to J6t's regression concerns; it looked
-Ok to me.
 
 * jc/diff-irreversible-delete (2011-02-28) 1 commit
  - git diff -D: omit the preimage of deletes
 
 "diff -B -D" should omit the deleting half of a broken pair from the
-output.  Need documentation and tests.
+output.  This is low impact, isolated, and has no risk of breaking the
+system as a whole, but the topic needs documentation and tests.
 
 * gr/cvsimport-alternative-cvspass-location (2011-02-18) 1 commit
  - Look for password in both CVS and CVSNT password files.
@@ -187,13 +118,106 @@ pathspec that is relative to the root of the working tree.
 --------------------------------------------------
 [Cooking]
 
+* mz/rebase (2011-02-28) 34 commits
+  (merged to 'next' on 2011-03-31 at 3b1343c)
+ + rebase: define options in OPTIONS_SPEC
+  (merged to 'next' on 2011-02-25 at 52caa7a)
+ + Makefile: do not install sourced rebase scripts
+  (merged to 'next' on 2011-02-22 at 3219155)
+ + rebase: use @{upstream} if no upstream specified
+ + rebase -i: remove unnecessary state rebase-root
+ + rebase -i: don't read unused variable preserve_merges
+ + git-rebase--am: remove unnecessary --3way option
+ + rebase -m: don't print exit code 2 when merge fails
+ + rebase -m: remember allow_rerere_autoupdate option
+ + rebase: remember strategy and strategy options
+ + rebase: remember verbose option
+ + rebase: extract code for writing basic state
+ + rebase: factor out sub command handling
+ + rebase: make -v a tiny bit more verbose
+ + rebase -i: align variable names
+ + rebase: show consistent conflict resolution hint
+ + rebase: extract am code to new source file
+ + rebase: extract merge code to new source file
+ + rebase: remove $branch as synonym for $orig_head
+ + rebase -i: support --stat
+ + rebase: factor out call to pre-rebase hook
+ + rebase: factor out clean work tree check
+ + rebase: factor out reference parsing
+ + rebase: reorder validation steps
+ + rebase -i: remove now unnecessary directory checks
+ + rebase: factor out command line option processing
+ + rebase: align variable content
+ + rebase: align variable names
+ + rebase: stricter check of standalone sub command
+ + rebase: act on command line outside parsing loop
+ + rebase: improve detection of rebase in progress
+ + rebase: remove unused rebase state 'prev_head'
+ + rebase: read state outside loop
+ + rebase: refactor reading of state
+ + rebase: clearer names for directory variables
+
+I wanted to wait for an independent Ack or two for the tip one, which was
+a response to regression concerns raised by J6t, but ended up merging it
+after giving another look.  Will not merge before 1.7.5, as there is no
+user visible improvements up to this point.
+
+* jc/merge-sans-branch (2011-03-23) 2 commits
+  (merged to 'next' on 2011-03-31 at 754a6af)
+ + merge: merge with the default upstream branch without argument
+ + merge: match the help text with the documentation
+
+Allow running "git merge" without telling it what to merge.  It will merge
+with the "upstream" of the current branch if configured.  This is low
+impact, isolated, and has no risk of major regression.  May merge before
+rc1, but it is Ok to wait.
+
+* jh/gitweb-localtime (2011-03-23) 1 commit
+ - gitweb: javascript ability to adjust time based on timezone
+
+* jk/maint-merge-rename-create (2011-03-25) 3 commits
+  (merged to 'next' on 2011-03-31 at b9bc9f1)
+ + merge: turn on rewrite detection
+ + merge: handle renames with replacement content
+ + t3030: fix accidental success in symlink rename
+
+May merge before rc1, but it is Ok to wait.
+
+* jk/pull-into-empty (2011-03-25) 2 commits
+  (merged to 'next' on 2011-03-31 at d4dd598)
+ + pull: do not clobber untracked files on initial pull
+ + merge: merge unborn index before setting ref
+
+This is low impact, isolated, and has no risk of major regression. Will
+merge before rc1.
+
+* mz/maint-rename-unmerged (2011-03-23) 1 commit
+  (merged to 'next' on 2011-03-31 at c7b3d9a)
+ + diffcore-rename: don't consider unmerged path as source
+
+Will cook until 1.7.5 final.
+
+* nd/struct-pathspec (2011-03-25) 4 commits
+  (merged to 'next' on 2011-03-31 at 66cbb7d)
+ + Improve tree_entry_interesting() handling code
+ + Convert read_tree{,_recursive} to support struct pathspec
+ + Reimplement read_tree_recursive() using tree_entry_interesting()
+ + Merge branch 'en/object-list-with-pathspec' into 'nd/struct-pathspec'
+
+Will cook until 1.7.5 final.
+
 * jc/add-u-migration (2011-03-22) 3 commits
  - add: make "add -u/-A" update full tree without pathspec (step 3)
  - add: make "add -u/-A" update full tree without pathspec (step 2)
- - add: make "add -u/-A" update full tree without pathspec
+  (merged to 'next' on 2011-03-31 at 962e058)
+ + add: make "add -u/-A" update full tree without pathspec
 
-The message in the bottom one really needs proofreading to move this topic
-forward. Will merge to 'next' the bottom one, hopefully after that.
+The bottom one is a necessary first step toward the UI clean-up planned
+for 1.8.0 which we discussed in length in the earlier part of the cycle;
+the change is low impact, isolated, and has no risk of breaking the system
+as a whole, but I would wait until the ":/" magic pathspec materializes,
+as the advice message would have to become different, and the way to get
+more stable semantics will become more direct.
 
 * jk/progress-with-pager (2011-03-24) 4 commits
  - diff: turn on rename detection progress reporting
@@ -201,21 +225,22 @@ forward. Will merge to 'next' the bottom one, hopefully after that.
  - progress: use pager's original_stderr if available
  - pager: save the original stderr when redirecting to pager
 
+Will cook until 1.7.5 final.
+
 * sb/sparse-more (2011-03-21) 1 commit
   (merged to 'next' on 2011-03-23 at 4bec1d1)
  + Makefile: Cover more files with make check
 
-* jc/rename-degrade-cc-to-c (2011-01-06) 4 commits
- - diffcore-rename: fall back to -C when -C -C busts the rename limit
- - diffcore-rename: record filepair for rename src
- - diffcore-rename: refactor "too many candidates" logic
- - builtin/diff.c: remove duplicated call to diff_result_code()
+Will merge.
 
-Took another look and even wrote tests, but it turns out that it needed
-rebasing on bf0ab10 (merge: improve inexact rename limit warning,
-2011-02-19), as that commit didn't anticipate that we may want this
-warning outside merge-recursive codepath.  The top one ended up
-larger than it should have been as a result.
+* jc/rename-degrade-cc-to-c (2011-01-06) 4 commits
+  (merged to 'next' on 2011-03-31 at 8d685d7)
+ + diffcore-rename: fall back to -C when -C -C busts the rename limit
+ + diffcore-rename: record filepair for rename src
+ + diffcore-rename: refactor "too many candidates" logic
+ + builtin/diff.c: remove duplicated call to diff_result_code()
+
+Will hold.
 
 * cn/system-path-tweak (2011-03-17) 1 commit
  - system_path: use a static buffer
@@ -228,11 +253,14 @@ larger than it should have been as a result.
  + t6022: New test checking for unnecessary updates of files in D/F conflicts
  + t6022: New test checking for unnecessary updates of renamed+modified files
 
-I am not happy with these magic band aids.
+I am not happy with these magic band aids.  Will hold.
 
 * nd/init-gitdir (2011-03-19) 2 commits
- - init, clone: support --separate-git-dir for .git file
- - git-init.txt: move description section up
+  (merged to 'next' on 2011-03-31 at 3b8fb40)
+ + init, clone: support --separate-git-dir for .git file
+ + git-init.txt: move description section up
+
+Will merge.
 
 * jl/submodule-fetch-on-demand (2011-03-06) 7 commits
   (merged to 'next' on 2011-03-20 at a5e452d)
@@ -243,6 +271,8 @@ I am not happy with these magic band aids.
  + config: teach the fetch.recurseSubmodules option the 'on-demand' value
  + fetch/pull: Add the 'on-demand' value to the --recurse-submodules option
  + fetch/pull: recurse into submodules when necessary
+
+Will merge.
 
 * ab/i18n-st (2011-02-22) 69 commits
   (merged to 'next' on 2011-03-23 at e2732e2)
@@ -316,7 +346,7 @@ I am not happy with these magic band aids.
  + i18n: git-init "Initialized [...] repository" message
  + i18n: git-init basic messages
 
-Now in 'next'.
+Will merge.
 
 --------------------------------------------------
 [Discarded]
@@ -325,14 +355,15 @@ Now in 'next'.
  . warn use of "git diff A..B"
  . diff: remove dead code that flips arguments order
 
-This is 1/4 tongue-in-cheek. Now we seem to have at least two volunteer
-cluebat bearers, so I wouldn't have to worry about this topic very much.
+This was 1/4 tongue-in-cheek. Now we seem to have a handful of volunteer
+cluebat bearers, and I wouldn't have to worry about this topic very much.
 
 * jh/merge-sans-branch (2011-02-10) 4 commits
  . merge: add support for merging from upstream by default
- - merge: introduce per-branch-configuration helper function
- - merge: introduce setup_merge_commit helper function
- - merge: update the usage information to be more modern
+ . merge: introduce per-branch-configuration helper function
+ . merge: introduce setup_merge_commit helper function
+ . merge: update the usage information to be more modern
 
 I've been wanting to move this forward for quite some time but 
 ended up redoing it myself (see jc/merge-sans-branch)
+
