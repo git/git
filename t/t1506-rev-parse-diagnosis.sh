@@ -9,7 +9,7 @@ exec </dev/null
 test_did_you_mean ()
 {
 	printf "fatal: Path '$2$3' $4, but not ${5:-'$3'}.\n" >expected &&
-	printf "Did you mean '$1:$2$3'?\n" >>expected &&
+	printf "Did you mean '$1:$2$3'${2:+ aka '$1:./$3'}?\n" >>expected &&
 	test_cmp expected error
 }
 
