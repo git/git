@@ -325,9 +325,9 @@ __git_ps1 ()
 	local step=""
 	local total=""
 	if [ -d "$g/rebase-merge" ]; then
-		b="$(cat "$g/rebase-merge/head-name" 2>/dev/null)"
-		step=$(cat "$g/rebase-merge/msgnum" 2>/dev/null)
-		total=$(cat "$g/rebase-merge/end" 2>/dev/null)
+		read b 2>/dev/null <"$g/rebase-merge/head-name"
+		read step 2>/dev/null <"$g/rebase-merge/msgnum"
+		read total 2>/dev/null <"$g/rebase-merge/end"
 		if [ -f "$g/rebase-merge/interactive" ]; then
 			r="|REBASE-i"
 		else
@@ -335,10 +335,10 @@ __git_ps1 ()
 		fi
 	else
 		if [ -d "$g/rebase-apply" ]; then
-			step=$(cat "$g/rebase-apply/next" 2>/dev/null)
-			total=$(cat "$g/rebase-apply/last" 2>/dev/null)
+			read step 2>/dev/null <"$g/rebase-apply/next"
+			read total 2>/dev/null <"$g/rebase-apply/last"
 			if [ -f "$g/rebase-apply/rebasing" ]; then
-				b="$(cat "$g/rebase-apply/head-name" 2>/dev/null)"
+				read b 2>/dev/null <"$g/rebase-apply/head-name"
 				r="|REBASE"
 			elif [ -f "$g/rebase-apply/applying" ]; then
 				r="|AM"
