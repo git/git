@@ -310,6 +310,7 @@ N_("The following paths are ignored by one of your .gitignore files:\n");
 
 static int verbose = 0, show_only = 0, ignored_too = 0, refresh_only = 0;
 static int ignore_add_errors, addremove, intent_to_add, ignore_missing = 0;
+static int default_tree_wide_update = -1;
 
 static struct option builtin_add_options[] = {
 	OPT__DRY_RUN(&show_only, "dry run"),
@@ -333,6 +334,10 @@ static int add_config(const char *var, const char *value, void *cb)
 	if (!strcasecmp(var, "add.ignoreerrors") ||
 	    !strcasecmp(var, "add.ignore-errors")) {
 		ignore_add_errors = git_config_bool(var, value);
+		return 0;
+	}
+	if (!strcasecmp(var, "add.treewideupdate")) {
+		default_tree_wide_update = git_config_bool(var, value);
 		return 0;
 	}
 	return git_default_config(var, value, cb);
@@ -359,6 +364,29 @@ static int add_files(struct dir_struct *dir, int flags)
 	return exit_status;
 }
 
+static const char *warn_add_uA_180_migration_msg[] = {
+	"In release 1.8.0, running 'git add -u' (or 'git add -A') from",
+	"a subdirectory without giving any pathspec WILL take effect",
+	"on the whole working tree, not just the part under the current",
+	"directory. You can set add.treewideupdate configuration variable",
+	"to 'false' to keep the current behaviour.",
+	"You can set the configuration variable to 'true' to make the",
+	"'git add -u/-A' command without pathspec take effect on the whole",
+	"working tree now. If you do so, you can use '.' at the end of",
+	"the command, e.g. 'git add -u .' when you want to limit the",
+	"operation to the current directory.",
+	"This warning will be issued until you set the configuration variable",
+	"to either 'true' or 'false'."
+};
+
+static int warn_180_migration(void)
+{
+	int i;
+	for (i = 0; i < ARRAY_SIZE(warn_add_uA_180_migration_msg); i++)
+		warning("%s", warn_add_uA_180_migration_msg[i]);
+	return 0; /* default to "no" (not tree-wide, i.e. local) */
+}
+
 int cmd_add(int argc, const char **argv, const char *prefix)
 {
 	int exit_status = 0;
@@ -368,6 +396,7 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 	int flags;
 	int add_new_files;
 	int require_pathspec;
+	int whole_tree_add = 0;
 	char *seen = NULL;
 
 	git_config(add_config, NULL);
@@ -389,9 +418,13 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 	if (!show_only && ignore_missing)
 		die(_("Option --ignore-missing can only be used together with --dry-run"));
 	if ((addremove || take_worktree_changes) && !argc) {
-		static const char *here[2] = { ".", NULL };
-		argc = 1;
-		argv = here;
+		whole_tree_add = 1;
+		if (prefix) {
+			if (default_tree_wide_update < 0)
+				default_tree_wide_update = warn_180_migration();
+			if (!default_tree_wide_update)
+				whole_tree_add = 0;
+		}
 	}
 
 	add_new_files = !take_worktree_changes && !refresh_only;
@@ -406,12 +439,16 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 		 (!(addremove || take_worktree_changes)
 		  ? ADD_CACHE_IGNORE_REMOVAL : 0));
 
-	if (require_pathspec && argc == 0) {
+	if (require_pathspec && !(argc || whole_tree_add)) {
 		fprintf(stderr, _("Nothing specified, nothing added.\n"));
 		fprintf(stderr, _("Maybe you wanted to say 'git add .'?\n"));
 		return 0;
 	}
-	pathspec = validate_pathspec(argc, argv, prefix);
+
+	if (whole_tree_add)
+		pathspec = NULL;
+	else
+		pathspec = validate_pathspec(argc, argv, prefix);
 
 	if (read_cache() < 0)
 		die(_("index file corrupt"));
