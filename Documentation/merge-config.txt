@@ -6,6 +6,16 @@ merge.conflictstyle::
 	a `>>>>>>>` marker.  An alternate style, "diff3", adds a `|||||||`
 	marker and the original text before the `=======` marker.
 
+merge.defaultToUpstream::
+	If merge is called without any commit argument, merge the upstream
+	branches configured for the current branch by using their last
+	observed values stored in their remote tracking branches.
+	The values of the `branch.<current branch>.merge` that name the
+	branches at the remote named by `branch.<current branch>.remote`
+	are consulted, and then they are mapped via `remote.<remote>.fetch`
+	to their corresponding remote tracking branches, and the tips of
+	these tracking branches are merged.
+
 merge.log::
 	In addition to branch names, populate the log message with at
 	most the specified number of one-line descriptions from the
