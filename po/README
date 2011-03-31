@@ -18,28 +18,23 @@ specialized so-called "po file editors" (e.g. emacs po-mode, KBabel,
 poedit, GTranslator --- any of them would work well).  Please install
 them.
 
-You would then need to clone the git-gui internationalization project
-repository, so that you can work on it:
+You would then need to clone the git-gui project repository and create
+a feature branch to begin working:
 
-	$ git clone mob@repo.or.cz:/srv/git/git-gui/git-gui-i18n.git/
-	$ cd git-gui-i18n
-	$ git checkout --track -b mob origin/mob
-	$ git config remote.origin.push mob
+	$ git clone git://repo.or.cz/git-gui.git
+	$ cd git-gui.git
+	$ git checkout -b my-translation
 
-The "git checkout" command creates a 'mob' branch from upstream's
-corresponding branch and makes it your current branch.  You will be
-working on this branch.
-
-The "git config" command records in your repository configuration file
-that you would push "mob" branch to the upstream when you say "git
-push".
+The "git checkout" command creates a new branch to keep your work
+isolated and to make it simple to post your patch series when
+completed.  You will be working on this branch.
 
 
 2. Starting a new language.
 
-In the git-gui-i18n directory is a po/ subdirectory.  It has a
-handful files whose names end with ".po".  Is there a file that has
-messages in your language?
+In the git-gui directory is a po/ subdirectory.  It has a handful of
+files whose names end with ".po".  Is there a file that has messages
+in your language?
 
 If you do not know what your language should be named, you need to find
 it.  This currently follows ISO 639-1 two letter codes:
@@ -149,15 +144,18 @@ There is a trick to test your translation without first installing:
 	$ make
 	$ LANG=af ./git-gui.sh
 
-When you are satisfied with your translation, commit your changes, and
-push it back to the 'mob' branch:
+When you are satisfied with your translation, commit your changes then submit
+your patch series to the maintainer and the Git mailing list:
 
 	$ edit po/af.po
 	... be sure to update Last-Translator: and
 	... PO-Revision-Date: lines.
 	$ git add po/af.po
-	$ git commit -m 'Started Afrikaans translation.'
-	$ git push
+	$ git commit -s -m 'git-gui: added Afrikaans translation.'
+	$ git send-email --to 'git@vger.kernel.org' \
+	   --cc 'Pat Thoyts <patthoyts@users.sourceforge.net>' \
+	   --subject 'git-gui: Afrikaans translation' \
+	   master..
 
 
 3. Updating your translation.
@@ -169,6 +167,7 @@ itself was updated and there are new messages that need translation.
 
 In any case, make sure you are up-to-date before starting your work:
 
+	$ git checkout master
 	$ git pull
 
 In the former case, you will edit po/af.po (again, replace "af" with
