@@ -302,6 +302,19 @@ static int grep_config(const char *var, const char *value, void *cb)
 	default: return 0;
 	}
 
+	if (!strcmp(var, "grep.extendedregexp")) {
+		if (git_config_bool(var, value))
+			opt->regflags |= REG_EXTENDED;
+		else
+			opt->regflags &= ~REG_EXTENDED;
+		return 0;
+	}
+
+	if (!strcmp(var, "grep.linenumber")) {
+		opt->linenum = git_config_bool(var, value);
+		return 0;
+	}
+
 	if (!strcmp(var, "color.grep"))
 		opt->color = git_config_colorbool(var, value, -1);
 	else if (!strcmp(var, "color.grep.context"))
