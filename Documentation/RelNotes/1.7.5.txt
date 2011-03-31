@@ -135,6 +135,6 @@ release, unless otherwise noted.
 
 ---
 exec >/var/tmp/1
-O=v1.7.4.2-405-gbf0c5bb
+O=v1.7.5-rc0
 echo O=$(git describe 'master')
 git shortlog --no-merges ^maint ^$O master
