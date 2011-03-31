@@ -355,25 +355,40 @@ __git_ps1 ()
 			r="|BISECTING"
 		fi
 
-		test -n "$b" ||
-		b="$(git symbolic-ref HEAD 2>/dev/null)" || {
-			detached=yes
-			b="$(
-			case "${GIT_PS1_DESCRIBE_STYLE-}" in
-			(contains)
-				git describe --contains HEAD ;;
-			(branch)
-				git describe --contains --all HEAD ;;
-			(describe)
-				git describe HEAD ;;
-			(* | default)
-				git describe --tags --exact-match HEAD ;;
-			esac 2>/dev/null)" ||
+		if [ -n "$b" ]; then
+			:
+		elif [ -h "$g/HEAD" ]; then
+			# symlink symbolic ref
+			b="$(git symbolic-ref HEAD 2>/dev/null)"
+		else
+			local head=""
+			if ! read head 2>/dev/null <"$g/HEAD"; then
+				if [ $pcmode = yes ]; then
+					PS1="$ps1pc_start$ps1pc_end"
+				fi
+				return
+			fi
+			# is it a symbolic ref?
+			b="${head#ref: }"
+			if [ "$head" = "$b" ]; then
+				detached=yes
+				b="$(
+				case "${GIT_PS1_DESCRIBE_STYLE-}" in
+				(contains)
+					git describe --contains HEAD ;;
+				(branch)
+					git describe --contains --all HEAD ;;
+				(describe)
+					git describe HEAD ;;
+				(* | default)
+					git describe --tags --exact-match HEAD ;;
+				esac 2>/dev/null)" ||
 
-			b="$(git rev-parse --short HEAD 2>/dev/null)..." ||
-			b="unknown"
-			b="($b)"
-		}
+				b="$(git rev-parse --short HEAD 2>/dev/null)..." ||
+				b="unknown"
+				b="($b)"
+			fi
+		fi
 	fi
 
 	if [ -n "$step" ] && [ -n "$total" ]; then
