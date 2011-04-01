@@ -915,7 +915,10 @@ test_expect_success 'remote set-url --add bbb' '
 '
 
 test_expect_success 'remote set-url --delete .*' '
-	test_must_fail git remote set-url --delete someremote .\* &&
+	if test_have_prereq NOT_MINGW
+	then
+		test_must_fail git remote set-url --delete someremote .\*
+	fi &&
 	echo "YYY" >expect &&
 	echo baz >>expect &&
 	echo bbb >>expect &&
