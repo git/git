@@ -1088,7 +1088,7 @@ int remove_dir_recursively(struct strbuf *path, int flag)
 
 	dir = opendir(path->buf);
 	if (!dir)
-		return -1;
+		return rmdir(path->buf);
 	if (path->buf[original_len - 1] != '/')
 		strbuf_addch(path, '/');
 
