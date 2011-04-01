@@ -41,7 +41,7 @@ Author: A U Thor <author@example.com>
 
     one
 EOF
-test_expect_failure 'override reflog default format' '
+test_expect_success 'override reflog default format' '
 	git reflog --format=short -1 >actual &&
 	test_cmp expect actual
 '

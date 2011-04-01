@@ -489,16 +489,11 @@ int cmd_log_reflog(int argc, const char **argv, const char *prefix)
 	rev.verbose_header = 1;
 	memset(&opt, 0, sizeof(opt));
 	opt.def = "HEAD";
-	cmd_log_init(argc, argv, prefix, &rev, &opt);
-
-	/*
-	 * This means that we override whatever commit format the user gave
-	 * on the cmd line.  Sad, but cmd_log_init() currently doesn't
-	 * allow us to set a different default.
-	 */
+	cmd_log_init_defaults(&rev);
 	rev.commit_format = CMIT_FMT_ONELINE;
 	rev.use_terminator = 1;
 	rev.always_show_header = 1;
+	cmd_log_init_finish(argc, argv, prefix, &rev, &opt);
 
 	return cmd_log_walk(&rev);
 }
