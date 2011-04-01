@@ -74,6 +74,29 @@ test_expect_success 'submodule update detaching the HEAD ' '
 	)
 '
 
+test_expect_success 'submodule update should fail due to local changes' '
+	(cd super/submodule &&
+	 git reset --hard HEAD~1 &&
+	 echo "local change" > file
+	) &&
+	(cd super &&
+	 (cd submodule &&
+	  compare_head
+	 ) &&
+	 test_must_fail git submodule update submodule
+	)
+'
+test_expect_success 'submodule update should throw away changes with --force ' '
+	(cd super &&
+	 (cd submodule &&
+	  compare_head
+	 ) &&
+	 git submodule update --force submodule &&
+	 cd submodule &&
+	 ! compare_head
+	)
+'
+
 test_expect_success 'submodule update --rebase staying on master' '
 	(cd super/submodule &&
 	  git checkout master

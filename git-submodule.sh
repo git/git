@@ -8,7 +8,7 @@ dashless=$(basename "$0" | sed -e 's/-/ /')
 USAGE="[--quiet] add [-b branch] [-f|--force] [--reference <repository>] [--] <repository> [<path>]
    or: $dashless [--quiet] status [--cached] [--recursive] [--] [<path>...]
    or: $dashless [--quiet] init [--] [<path>...]
-   or: $dashless [--quiet] update [--init] [-N|--no-fetch] [--rebase] [--reference <repository>] [--merge] [--recursive] [--] [<path>...]
+   or: $dashless [--quiet] update [--init] [-N|--no-fetch] [-f|--force] [--rebase] [--reference <repository>] [--merge] [--recursive] [--] [<path>...]
    or: $dashless [--quiet] summary [--cached|--files] [--summary-limit <n>] [commit] [--] [<path>...]
    or: $dashless [--quiet] foreach [--recursive] <command>
    or: $dashless [--quiet] sync [--] [<path>...]"
@@ -385,6 +385,9 @@ cmd_update()
 		-N|--no-fetch)
 			nofetch=1
 			;;
+		-f|--force)
+			force=$1
+			;;
 		-r|--rebase)
 			update="rebase"
 			;;
@@ -458,10 +461,11 @@ cmd_update()
 
 		if test "$subsha1" != "$sha1"
 		then
-			force=
-			if test -z "$subsha1"
+			subforce=$force
+			# If we don't already have a -f flag and the submodule has never been checked out
+			if test -z "$subsha1" -a -z "$force"
 			then
-				force="-f"
+				subforce="-f"
 			fi
 
 			if test -z "$nofetch"
@@ -490,7 +494,7 @@ cmd_update()
 				msg="merged in"
 				;;
 			*)
-				command="git checkout $force -q"
+				command="git checkout $subforce -q"
 				action="checkout"
 				msg="checked out"
 				;;
