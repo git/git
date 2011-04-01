@@ -435,8 +435,9 @@ __git_ps1 ()
 				i="#"
 			fi
 		fi
-		if [ -n "${GIT_PS1_SHOWSTASHSTATE-}" ]; then
-			git rev-parse --verify refs/stash >/dev/null 2>&1 && s="$"
+		if [ -n "${GIT_PS1_SHOWSTASHSTATE-}" ] &&
+		   [ -r "$g/refs/stash" ]; then
+			s="$"
 		fi
 
 		if [ -n "${GIT_PS1_SHOWUNTRACKEDFILES-}" ] &&

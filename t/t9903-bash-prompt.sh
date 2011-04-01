@@ -328,6 +328,7 @@ test_expect_success 'prompt - stash status indicator - stash' '
 	echo 2 >file &&
 	git stash &&
 	test_when_finished "git stash drop" &&
+	git pack-refs --all &&
 	(
 		GIT_PS1_SHOWSTASHSTATE=y &&
 		__git_ps1 >"$actual"
