@@ -49,13 +49,8 @@ static int parse_decoration_style(const char *var, const char *value)
 	return -1;
 }
 
-static void cmd_log_init(int argc, const char **argv, const char *prefix,
-			 struct rev_info *rev, struct setup_revision_opt *opt)
+static void cmd_log_init_defaults(struct rev_info *rev)
 {
-	int i;
-	int decoration_given = 0;
-	struct userformat_want w;
-
 	rev->abbrev = DEFAULT_ABBREV;
 	rev->commit_format = CMIT_FMT_DEFAULT;
 	if (fmt_pretty)
@@ -68,7 +63,14 @@ static void cmd_log_init(int argc, const char **argv, const char *prefix,
 
 	if (default_date_mode)
 		rev->date_mode = parse_date_format(default_date_mode);
+}
 
+static void cmd_log_init_finish(int argc, const char **argv, const char *prefix,
+			 struct rev_info *rev, struct setup_revision_opt *opt)
+{
+	int i;
+	int decoration_given = 0;
+	struct userformat_want w;
 	/*
 	 * Check for -h before setup_revisions(), or "git log -h" will
 	 * fail when run without a git directory.
@@ -126,6 +128,13 @@ static void cmd_log_init(int argc, const char **argv, const char *prefix,
 		load_ref_decorations(decoration_style);
 	}
 	setup_pager();
+}
+
+static void cmd_log_init(int argc, const char **argv, const char *prefix,
+			 struct rev_info *rev, struct setup_revision_opt *opt)
+{
+	cmd_log_init_defaults(rev);
+	cmd_log_init_finish(argc, argv, prefix, rev, opt);
 }
 
 /*
