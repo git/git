@@ -29,7 +29,7 @@ test_expect_success '0-length read, send along greeting' '
 	test_cmp expect actual
 '
 
-test_expect_success 'read from file descriptor' '
+test_expect_success NOT_MINGW 'read from file descriptor' '
 	rm -f input &&
 	echo hello >expect &&
 	echo hello >input &&
