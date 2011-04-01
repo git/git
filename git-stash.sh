@@ -17,7 +17,8 @@ require_work_tree
 cd_to_toplevel
 
 TMP="$GIT_DIR/.git-stash.$$"
-trap 'rm -f "$TMP-*"' 0
+TMPindex=${GIT_INDEX_FILE-"$GIT_DIR/index"}.stash.$$
+trap 'rm -f "$TMP-"* "$TMPindex"' 0
 
 ref_stash=refs/stash
 
@@ -81,14 +82,12 @@ create_stash () {
 
 		# state of the working tree
 		w_tree=$( (
-			rm -f "$TMP-index" &&
-			cp -p ${GIT_INDEX_FILE-"$GIT_DIR/index"} "$TMP-index" &&
-			GIT_INDEX_FILE="$TMP-index" &&
+			git read-tree --index-output="$TMPindex" -m $i_tree &&
+			GIT_INDEX_FILE="$TMPindex" &&
 			export GIT_INDEX_FILE &&
-			git read-tree -m $i_tree &&
 			git diff --name-only -z HEAD | git update-index -z --add --remove --stdin &&
 			git write-tree &&
-			rm -f "$TMP-index"
+			rm -f "$TMPindex"
 		) ) ||
 			die "Cannot save the current worktree state"
 
