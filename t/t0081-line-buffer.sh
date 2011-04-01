@@ -131,7 +131,7 @@ test_expect_success PIPE,EXPENSIVE 'longer read (around 65536 bytes)' '
 	long_read_test 65536
 '
 
-test_expect_success 'read from file descriptor' '
+test_expect_success NOT_MINGW 'read from file descriptor' '
 	rm -f input &&
 	echo hello >expect &&
 	echo hello >input &&
