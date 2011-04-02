@@ -157,6 +157,10 @@ test_expect_success 'will not overwrite untracked file on unborn branch' '
 	test_cmp important c0.c
 '
 
+test_expect_success 'failed merge leaves unborn branch in the womb' '
+	test_must_fail git rev-parse --verify HEAD
+'
+
 test_expect_success 'set up unborn branch and content' '
 	git symbolic-ref HEAD refs/heads/unborn &&
 	rm -f .git/index &&
