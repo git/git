@@ -31,6 +31,16 @@ Look for specified patterns in the tracked files in the work tree, blobs
 registered in the index file, or blobs in given tree objects.
 
 
+CONFIGURATION
+-------------
+
+grep.lineNumber::
+	If set to true, enable '-n' option by default.
+
+grep.extendedRegexp::
+	If set to true, enable '--extended-regexp' option by default.
+
+
 OPTIONS
 -------
 --cached::
