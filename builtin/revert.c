@@ -95,7 +95,7 @@ static void parse_args(int argc, const char **argv)
 			OPT_END(),
 		};
 		if (parse_options_concat(options, ARRAY_SIZE(options), cp_extra))
-			die("program error");
+			die(_("program error"));
 	}
 
 	commit_argc = parse_options(argc, argv, NULL, options, usage_str,
@@ -167,7 +167,7 @@ static char *get_encoding(const char *message)
 	const char *p = message, *eol;
 
 	if (!p)
-		die ("Could not read commit message of %s",
+		die (_("Could not read commit message of %s"),
 				sha1_to_hex(commit->object.sha1));
 	while (*p && *p != '\n') {
 		for (eol = p + 1; *eol && *eol != '\n'; eol++)
@@ -206,10 +206,10 @@ static void write_cherry_pick_head(void)
 
 	fd = open(git_path("CHERRY_PICK_HEAD"), O_WRONLY | O_CREAT, 0666);
 	if (fd < 0)
-		die_errno("Could not open '%s' for writing",
+		die_errno(_("Could not open '%s' for writing"),
 			  git_path("CHERRY_PICK_HEAD"));
 	if (write_in_full(fd, buf.buf, buf.len) != buf.len || close(fd))
-		die_errno("Could not write to '%s'", git_path("CHERRY_PICK_HEAD"));
+		die_errno(_("Could not write to '%s'"), git_path("CHERRY_PICK_HEAD"));
 	strbuf_release(&buf);
 }
 
@@ -249,10 +249,10 @@ static void write_message(struct strbuf *msgbuf, const char *filename)
 	int msg_fd = hold_lock_file_for_update(&msg_file, filename,
 					       LOCK_DIE_ON_ERROR);
 	if (write_in_full(msg_fd, msgbuf->buf, msgbuf->len) < 0)
-		die_errno("Could not write to %s.", filename);
+		die_errno(_("Could not write to %s."), filename);
 	strbuf_release(msgbuf);
 	if (commit_lock_file(&msg_file) < 0)
-		die("Error wrapping up %s", filename);
+		die(_("Error wrapping up %s"), filename);
 }
 
 static struct tree *empty_tree(void)
@@ -270,11 +270,19 @@ static NORETURN void die_dirty_index(const char *me)
 	if (read_cache_unmerged()) {
 		die_resolve_conflict(me);
 	} else {
-		if (advice_commit_before_merge)
-			die("Your local changes would be overwritten by %s.\n"
-			    "Please, commit your changes or stash them to proceed.", me);
-		else
-			die("Your local changes would be overwritten by %s.\n", me);
+		if (advice_commit_before_merge) {
+			if (action == REVERT)
+				die(_("Your local changes would be overwritten by revert.\n"
+					  "Please, commit your changes or stash them to proceed."));
+			else
+				die(_("Your local changes would be overwritten by cherry-pick.\n"
+					  "Please, commit your changes or stash them to proceed."));
+		} else {
+			if (action == REVERT)
+				die(_("Your local changes would be overwritten by revert.\n"));
+			else
+				die(_("Your local changes would be overwritten by cherry-pick.\n"));
+		}
 	}
 }
 
@@ -322,7 +330,8 @@ static int do_recursive_merge(struct commit *base, struct commit *next,
 	if (active_cache_changed &&
 	    (write_cache(index_fd, active_cache, active_nr) ||
 	     commit_locked_index(&index_lock)))
-		die("%s: Unable to write new index file", me);
+		/* TRANSLATORS: %s will be "revert" or "cherry-pick" */
+		die(_("%s: Unable to write new index file"), me);
 	rollback_lock_file(&index_lock);
 
 	if (!clean) {
@@ -388,10 +397,10 @@ static int do_pick_commit(void)
 		 * to work on.
 		 */
 		if (write_cache_as_tree(head, 0, NULL))
-			die ("Your index file is unmerged.");
+			die (_("Your index file is unmerged."));
 	} else {
 		if (get_sha1("HEAD", head))
-			die ("You do not have a valid HEAD");
+			die (_("You do not have a valid HEAD"));
 		if (index_differs_from("HEAD", 0))
 			die_dirty_index(me);
 	}
@@ -399,7 +408,7 @@ static int do_pick_commit(void)
 
 	if (!commit->parents) {
 		if (action == REVERT)
-			die ("Cannot revert a root commit");
+			die (_("Cannot revert a root commit"));
 		parent = NULL;
 	}
 	else if (commit->parents->next) {
@@ -408,7 +417,7 @@ static int do_pick_commit(void)
 		struct commit_list *p;
 
 		if (!mainline)
-			die("Commit %s is a merge but no -m option was given.",
+			die(_("Commit %s is a merge but no -m option was given."),
 			    sha1_to_hex(commit->object.sha1));
 
 		for (cnt = 1, p = commit->parents;
@@ -416,11 +425,11 @@ static int do_pick_commit(void)
 		     cnt++)
 			p = p->next;
 		if (cnt != mainline || !p)
-			die("Commit %s does not have parent %d",
+			die(_("Commit %s does not have parent %d"),
 			    sha1_to_hex(commit->object.sha1), mainline);
 		parent = p->item;
 	} else if (0 < mainline)
-		die("Mainline was specified but commit %s is not a merge.",
+		die(_("Mainline was specified but commit %s is not a merge."),
 		    sha1_to_hex(commit->object.sha1));
 	else
 		parent = commit->parents->item;
@@ -429,11 +438,13 @@ static int do_pick_commit(void)
 		return fast_forward_to(commit->object.sha1, head);
 
 	if (parent && parse_commit(parent) < 0)
-		die("%s: cannot parse parent commit %s",
+		/* TRANSLATORS: The first %s will be "revert" or
+		   "cherry-pick", the second %s a SHA1 */
+		die(_("%s: cannot parse parent commit %s"),
 		    me, sha1_to_hex(parent->object.sha1));
 
 	if (get_message(commit->buffer, &msg) != 0)
-		die("Cannot get commit message for %s",
+		die(_("Cannot get commit message for %s"),
 				sha1_to_hex(commit->object.sha1));
 
 	/*
@@ -494,8 +505,9 @@ static int do_pick_commit(void)
 	}
 
 	if (res) {
-		error("could not %s %s... %s",
-		      action == REVERT ? "revert" : "apply",
+		error(action == REVERT
+		      ? _("could not revert %s... %s")
+		      : _("could not apply %s... %s"),
 		      find_unique_abbrev(commit->object.sha1, DEFAULT_ABBREV),
 		      msg.subject);
 		print_advice();
@@ -525,10 +537,10 @@ static void prepare_revs(struct rev_info *revs)
 		usage(*revert_or_cherry_pick_usage());
 
 	if (prepare_revision_walk(revs))
-		die("revision walk setup failed");
+		die(_("revision walk setup failed"));
 
 	if (!revs->commits)
-		die("empty commit set passed");
+		die(_("empty commit set passed"));
 }
 
 static void read_and_refresh_cache(const char *me)
@@ -536,12 +548,12 @@ static void read_and_refresh_cache(const char *me)
 	static struct lock_file index_lock;
 	int index_fd = hold_locked_index(&index_lock, 0);
 	if (read_index_preload(&the_index, NULL) < 0)
-		die("git %s: failed to read the index", me);
+		die(_("git %s: failed to read the index"), me);
 	refresh_index(&the_index, REFRESH_QUIET|REFRESH_UNMERGED, NULL, NULL, NULL);
 	if (the_index.cache_changed) {
 		if (write_index(&the_index, index_fd) ||
 		    commit_locked_index(&index_lock))
-			die("git %s: failed to refresh the index", me);
+			die(_("git %s: failed to refresh the index"), me);
 	}
 	rollback_lock_file(&index_lock);
 }
@@ -557,13 +569,13 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 
 	if (allow_ff) {
 		if (signoff)
-			die("cherry-pick --ff cannot be used with --signoff");
+			die(_("cherry-pick --ff cannot be used with --signoff"));
 		if (no_commit)
-			die("cherry-pick --ff cannot be used with --no-commit");
+			die(_("cherry-pick --ff cannot be used with --no-commit"));
 		if (no_replay)
-			die("cherry-pick --ff cannot be used with -x");
+			die(_("cherry-pick --ff cannot be used with -x"));
 		if (edit)
-			die("cherry-pick --ff cannot be used with --edit");
+			die(_("cherry-pick --ff cannot be used with --edit"));
 	}
 
 	read_and_refresh_cache(me);

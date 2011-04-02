@@ -71,9 +71,9 @@ static int builtin_diff_b_f(struct rev_info *revs,
 		usage(builtin_diff_usage);
 
 	if (lstat(path, &st))
-		die_errno("failed to stat '%s'", path);
+		die_errno(_("failed to stat '%s'"), path);
 	if (!(S_ISREG(st.st_mode) || S_ISLNK(st.st_mode)))
-		die("'%s': not a regular file or symlink", path);
+		die(_("'%s': not a regular file or symlink"), path);
 
 	diff_set_mnemonic_prefix(&revs->diffopt, "o/", "w/");
 
@@ -217,7 +217,7 @@ static int builtin_diff_files(struct rev_info *revs, int argc, const char **argv
 		else if (!strcmp(argv[1], "-h"))
 			usage(builtin_diff_usage);
 		else
-			return error("invalid option: %s", argv[1]);
+			return error(_("invalid option: %s"), argv[1]);
 		argv++; argc--;
 	}
 
@@ -294,12 +294,12 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 	DIFF_OPT_SET(&rev.diffopt, ALLOW_TEXTCONV);
 
 	if (nongit)
-		die("Not a git repository");
+		die(_("Not a git repository"));
 	argc = setup_revisions(argc, argv, &rev, NULL);
 	if (!rev.diffopt.output_format) {
 		rev.diffopt.output_format = DIFF_FORMAT_PATCH;
 		if (diff_setup_done(&rev.diffopt) < 0)
-			die("diff_setup_done failed");
+			die(_("diff_setup_done failed"));
 	}
 
 	DIFF_OPT_SET(&rev.diffopt, RECURSIVE);
@@ -344,12 +344,12 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 			obj = parse_object(obj->sha1);
 		obj = deref_tag(obj, NULL, 0);
 		if (!obj)
-			die("invalid object '%s' given.", name);
+			die(_("invalid object '%s' given."), name);
 		if (obj->type == OBJ_COMMIT)
 			obj = &((struct commit *)obj)->tree->object;
 		if (obj->type == OBJ_TREE) {
 			if (ARRAY_SIZE(ent) <= ents)
-				die("more than %d trees given: '%s'",
+				die(_("more than %d trees given: '%s'"),
 				    (int) ARRAY_SIZE(ent), name);
 			obj->flags |= flags;
 			ent[ents].item = obj;
@@ -359,7 +359,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 		}
 		if (obj->type == OBJ_BLOB) {
 			if (2 <= blobs)
-				die("more than two blobs given: '%s'", name);
+				die(_("more than two blobs given: '%s'"), name);
 			hashcpy(blob[blobs].sha1, obj->sha1);
 			blob[blobs].name = name;
 			blob[blobs].mode = list->mode;
@@ -367,7 +367,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 			continue;
 
 		}
-		die("unhandled object '%s' given.", name);
+		die(_("unhandled object '%s' given."), name);
 	}
 	if (rev.prune_data.nr) {
 		if (!path)

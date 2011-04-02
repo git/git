@@ -31,7 +31,7 @@ static void safe_create_dir(const char *dir, int share)
 		}
 	}
 	else if (share && adjust_shared_perm(dir))
-		die("Could not make %s writable by group", dir);
+		die(_("Could not make %s writable by group"), dir);
 }
 
 static void copy_templates_1(char *path, int baselen,
@@ -58,25 +58,25 @@ static void copy_templates_1(char *path, int baselen,
 		namelen = strlen(de->d_name);
 		if ((PATH_MAX <= baselen + namelen) ||
 		    (PATH_MAX <= template_baselen + namelen))
-			die("insanely long template name %s", de->d_name);
+			die(_("insanely long template name %s"), de->d_name);
 		memcpy(path + baselen, de->d_name, namelen+1);
 		memcpy(template + template_baselen, de->d_name, namelen+1);
 		if (lstat(path, &st_git)) {
 			if (errno != ENOENT)
-				die_errno("cannot stat '%s'", path);
+				die_errno(_("cannot stat '%s'"), path);
 		}
 		else
 			exists = 1;
 
 		if (lstat(template, &st_template))
-			die_errno("cannot stat template '%s'", template);
+			die_errno(_("cannot stat template '%s'"), template);
 
 		if (S_ISDIR(st_template.st_mode)) {
 			DIR *subdir = opendir(template);
 			int baselen_sub = baselen + namelen;
 			int template_baselen_sub = template_baselen + namelen;
 			if (!subdir)
-				die_errno("cannot opendir '%s'", template);
+				die_errno(_("cannot opendir '%s'"), template);
 			path[baselen_sub++] =
 				template[template_baselen_sub++] = '/';
 			path[baselen_sub] =
@@ -93,20 +93,20 @@ static void copy_templates_1(char *path, int baselen,
 			int len;
 			len = readlink(template, lnk, sizeof(lnk));
 			if (len < 0)
-				die_errno("cannot readlink '%s'", template);
+				die_errno(_("cannot readlink '%s'"), template);
 			if (sizeof(lnk) <= len)
-				die("insanely long symlink %s", template);
+				die(_("insanely long symlink %s"), template);
 			lnk[len] = 0;
 			if (symlink(lnk, path))
-				die_errno("cannot symlink '%s' '%s'", lnk, path);
+				die_errno(_("cannot symlink '%s' '%s'"), lnk, path);
 		}
 		else if (S_ISREG(st_template.st_mode)) {
 			if (copy_file(path, template, st_template.st_mode))
-				die_errno("cannot copy '%s' to '%s'", template,
+				die_errno(_("cannot copy '%s' to '%s'"), template,
 					  path);
 		}
 		else
-			error("ignoring template %s", template);
+			error(_("ignoring template %s"), template);
 	}
 }
 
@@ -129,7 +129,7 @@ static void copy_templates(const char *template_dir)
 		return;
 	template_len = strlen(template_dir);
 	if (PATH_MAX <= (template_len+strlen("/config")))
-		die("insanely long template path %s", template_dir);
+		die(_("insanely long template path %s"), template_dir);
 	strcpy(template_path, template_dir);
 	if (template_path[template_len-1] != '/') {
 		template_path[template_len++] = '/';
@@ -137,7 +137,7 @@ static void copy_templates(const char *template_dir)
 	}
 	dir = opendir(template_path);
 	if (!dir) {
-		warning("templates not found %s", template_dir);
+		warning(_("templates not found %s"), template_dir);
 		return;
 	}
 
@@ -150,8 +150,8 @@ static void copy_templates(const char *template_dir)
 
 	if (repository_format_version &&
 	    repository_format_version != GIT_REPO_VERSION) {
-		warning("not copying templates of "
-			"a wrong format version %d from '%s'",
+		warning(_("not copying templates of "
+			"a wrong format version %d from '%s'"),
 			repository_format_version,
 			template_dir);
 		closedir(dir);
@@ -188,7 +188,7 @@ static int create_default_files(const char *template_path)
 	int filemode;
 
 	if (len > sizeof(path)-50)
-		die("insane git directory %s", git_dir);
+		die(_("insane git directory %s"), git_dir);
 	memcpy(path, git_dir, len);
 
 	if (len && path[len-1] != '/')
@@ -354,9 +354,15 @@ int init_db(const char *template_dir, unsigned int flags)
 	if (!(flags & INIT_DB_QUIET)) {
 		const char *git_dir = get_git_dir();
 		int len = strlen(git_dir);
-		printf("%s%s Git repository in %s%s\n",
-		       reinit ? "Reinitialized existing" : "Initialized empty",
-		       shared_repository ? " shared" : "",
+
+		/*
+		 * TRANSLATORS: The first '%s' is either "Reinitialized
+		 * existing" or "Initialized empty", the second " shared" or
+		 * "", and the last '%s%s' is the verbatim directory name.
+		 */
+		printf(_("%s%s Git repository in %s%s\n"),
+		       reinit ? _("Reinitialized existing") : _("Initialized empty"),
+		       shared_repository ? _(" shared") : "",
 		       git_dir, len && git_dir[len-1] != '/' ? "/" : "");
 	}
 
@@ -375,7 +381,7 @@ static int guess_repository_type(const char *git_dir)
 	if (!strcmp(".", git_dir))
 		return 1;
 	if (!getcwd(cwd, sizeof(cwd)))
-		die_errno("cannot tell cwd");
+		die_errno(_("cannot tell cwd"));
 	if (!strcmp(git_dir, cwd))
 		return 1;
 	/*
@@ -450,18 +456,18 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 					errno = EEXIST;
 					/* fallthru */
 				case -1:
-					die_errno("cannot mkdir %s", argv[0]);
+					die_errno(_("cannot mkdir %s"), argv[0]);
 					break;
 				default:
 					break;
 				}
 				shared_repository = saved;
 				if (mkdir(argv[0], 0777) < 0)
-					die_errno("cannot mkdir %s", argv[0]);
+					die_errno(_("cannot mkdir %s"), argv[0]);
 				mkdir_tried = 1;
 				goto retry;
 			}
-			die_errno("cannot chdir to %s", argv[0]);
+			die_errno(_("cannot chdir to %s"), argv[0]);
 		}
 	} else if (0 < argc) {
 		usage(init_db_usage[0]);
@@ -483,8 +489,8 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 	git_dir = getenv(GIT_DIR_ENVIRONMENT);
 	work_tree = getenv(GIT_WORK_TREE_ENVIRONMENT);
 	if ((!git_dir || is_bare_repository_cfg == 1) && work_tree)
-		die("%s (or --work-tree=<directory>) not allowed without "
-		    "specifying %s (or --git-dir=<directory>)",
+		die(_("%s (or --work-tree=<directory>) not allowed without "
+			  "specifying %s (or --git-dir=<directory>)"),
 		    GIT_WORK_TREE_ENVIRONMENT,
 		    GIT_DIR_ENVIRONMENT);
 
@@ -507,14 +513,14 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 		if (!git_work_tree_cfg) {
 			git_work_tree_cfg = xcalloc(PATH_MAX, 1);
 			if (!getcwd(git_work_tree_cfg, PATH_MAX))
-				die_errno ("Cannot access current working directory");
+				die_errno (_("Cannot access current working directory"));
 		}
 		if (work_tree)
 			set_git_work_tree(real_path(work_tree));
 		else
 			set_git_work_tree(git_work_tree_cfg);
 		if (access(get_git_work_tree(), X_OK))
-			die_errno ("Cannot access work tree '%s'",
+			die_errno (_("Cannot access work tree '%s'"),
 				   get_git_work_tree());
 	}
 	else {

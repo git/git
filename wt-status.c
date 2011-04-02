@@ -131,16 +131,16 @@ static void wt_status_print_unmerged_header(struct wt_status *s)
 {
 	const char *c = color(WT_STATUS_HEADER, s);
 
-	status_printf_ln(s, c, "Unmerged paths:");
+	status_printf_ln(s, c, _("Unmerged paths:"));
 	if (!advice_status_hints)
 		return;
 	if (s->whence != FROM_COMMIT)
 		;
 	else if (!s->is_initial)
-		status_printf_ln(s, c, "  (use \"git reset %s <file>...\" to unstage)", s->reference);
+		status_printf_ln(s, c, _("  (use \"git reset %s <file>...\" to unstage)"), s->reference);
 	else
-		status_printf_ln(s, c, "  (use \"git rm --cached <file>...\" to unstage)");
-	status_printf_ln(s, c, "  (use \"git add/rm <file>...\" as appropriate to mark resolution)");
+		status_printf_ln(s, c, _("  (use \"git rm --cached <file>...\" to unstage)"));
+	status_printf_ln(s, c, _("  (use \"git add/rm <file>...\" as appropriate to mark resolution)"));
 	status_printf_ln(s, c, "");
 }
 
@@ -148,15 +148,15 @@ static void wt_status_print_cached_header(struct wt_status *s)
 {
 	const char *c = color(WT_STATUS_HEADER, s);
 
-	status_printf_ln(s, c, "Changes to be committed:");
+	status_printf_ln(s, c, _("Changes to be committed:"));
 	if (!advice_status_hints)
 		return;
 	if (s->whence != FROM_COMMIT)
 		; /* NEEDSWORK: use "git reset --unresolve"??? */
 	else if (!s->is_initial)
-		status_printf_ln(s, c, "  (use \"git reset %s <file>...\" to unstage)", s->reference);
+		status_printf_ln(s, c, _("  (use \"git reset %s <file>...\" to unstage)"), s->reference);
 	else
-		status_printf_ln(s, c, "  (use \"git rm --cached <file>...\" to unstage)");
+		status_printf_ln(s, c, _("  (use \"git rm --cached <file>...\" to unstage)"));
 	status_printf_ln(s, c, "");
 }
 
@@ -166,16 +166,16 @@ static void wt_status_print_dirty_header(struct wt_status *s,
 {
 	const char *c = color(WT_STATUS_HEADER, s);
 
-	status_printf_ln(s, c, "Changes not staged for commit:");
+	status_printf_ln(s, c, _("Changes not staged for commit:"));
 	if (!advice_status_hints)
 		return;
 	if (!has_deleted)
-		status_printf_ln(s, c, "  (use \"git add <file>...\" to update what will be committed)");
+		status_printf_ln(s, c, _("  (use \"git add <file>...\" to update what will be committed)"));
 	else
-		status_printf_ln(s, c, "  (use \"git add/rm <file>...\" to update what will be committed)");
-	status_printf_ln(s, c, "  (use \"git checkout -- <file>...\" to discard changes in working directory)");
+		status_printf_ln(s, c, _("  (use \"git add/rm <file>...\" to update what will be committed)"));
+	status_printf_ln(s, c, _("  (use \"git checkout -- <file>...\" to discard changes in working directory)"));
 	if (has_dirty_submodules)
-		status_printf_ln(s, c, "  (commit or discard the untracked or modified content in submodules)");
+		status_printf_ln(s, c, _("  (commit or discard the untracked or modified content in submodules)"));
 	status_printf_ln(s, c, "");
 }
 
@@ -184,10 +184,10 @@ static void wt_status_print_other_header(struct wt_status *s,
 					 const char *how)
 {
 	const char *c = color(WT_STATUS_HEADER, s);
-	status_printf_ln(s, c, "%s files:", what);
+	status_printf_ln(s, c, _("%s files:"), what);
 	if (!advice_status_hints)
 		return;
-	status_printf_ln(s, c, "  (use \"git %s <file>...\" to include in what will be committed)", how);
+	status_printf_ln(s, c, _("  (use \"git %s <file>...\" to include in what will be committed)"), how);
 	status_printf_ln(s, c, "");
 }
 
@@ -204,18 +204,18 @@ static void wt_status_print_unmerged_data(struct wt_status *s,
 	const char *c = color(WT_STATUS_UNMERGED, s);
 	struct wt_status_change_data *d = it->util;
 	struct strbuf onebuf = STRBUF_INIT;
-	const char *one, *how = "bug";
+	const char *one, *how = _("bug");
 
 	one = quote_path(it->string, -1, &onebuf, s->prefix);
 	status_printf(s, color(WT_STATUS_HEADER, s), "\t");
 	switch (d->stagemask) {
-	case 1: how = "both deleted:"; break;
-	case 2: how = "added by us:"; break;
-	case 3: how = "deleted by them:"; break;
-	case 4: how = "added by them:"; break;
-	case 5: how = "deleted by us:"; break;
-	case 6: how = "both added:"; break;
-	case 7: how = "both modified:"; break;
+	case 1: how = _("both deleted:"); break;
+	case 2: how = _("added by us:"); break;
+	case 3: how = _("deleted by them:"); break;
+	case 4: how = _("added by them:"); break;
+	case 5: how = _("deleted by us:"); break;
+	case 6: how = _("both added:"); break;
+	case 7: how = _("both modified:"); break;
 	}
 	status_printf_more(s, c, "%-20s%s\n", how, one);
 	strbuf_release(&onebuf);
@@ -245,11 +245,11 @@ static void wt_status_print_change_data(struct wt_status *s,
 		if (d->new_submodule_commits || d->dirty_submodule) {
 			strbuf_addstr(&extra, " (");
 			if (d->new_submodule_commits)
-				strbuf_addf(&extra, "new commits, ");
+				strbuf_addf(&extra, _("new commits, "));
 			if (d->dirty_submodule & DIRTY_SUBMODULE_MODIFIED)
-				strbuf_addf(&extra, "modified content, ");
+				strbuf_addf(&extra, _("modified content, "));
 			if (d->dirty_submodule & DIRTY_SUBMODULE_UNTRACKED)
-				strbuf_addf(&extra, "untracked content, ");
+				strbuf_addf(&extra, _("untracked content, "));
 			strbuf_setlen(&extra, extra.len - 2);
 			strbuf_addch(&extra, ')');
 		}
@@ -263,31 +263,31 @@ static void wt_status_print_change_data(struct wt_status *s,
 	status_printf(s, color(WT_STATUS_HEADER, s), "\t");
 	switch (status) {
 	case DIFF_STATUS_ADDED:
-		status_printf_more(s, c, "new file:   %s", one);
+		status_printf_more(s, c, _("new file:   %s"), one);
 		break;
 	case DIFF_STATUS_COPIED:
-		status_printf_more(s, c, "copied:     %s -> %s", one, two);
+		status_printf_more(s, c, _("copied:     %s -> %s"), one, two);
 		break;
 	case DIFF_STATUS_DELETED:
-		status_printf_more(s, c, "deleted:    %s", one);
+		status_printf_more(s, c, _("deleted:    %s"), one);
 		break;
 	case DIFF_STATUS_MODIFIED:
-		status_printf_more(s, c, "modified:   %s", one);
+		status_printf_more(s, c, _("modified:   %s"), one);
 		break;
 	case DIFF_STATUS_RENAMED:
-		status_printf_more(s, c, "renamed:    %s -> %s", one, two);
+		status_printf_more(s, c, _("renamed:    %s -> %s"), one, two);
 		break;
 	case DIFF_STATUS_TYPE_CHANGED:
-		status_printf_more(s, c, "typechange: %s", one);
+		status_printf_more(s, c, _("typechange: %s"), one);
 		break;
 	case DIFF_STATUS_UNKNOWN:
-		status_printf_more(s, c, "unknown:    %s", one);
+		status_printf_more(s, c, _("unknown:    %s"), one);
 		break;
 	case DIFF_STATUS_UNMERGED:
-		status_printf_more(s, c, "unmerged:   %s", one);
+		status_printf_more(s, c, _("unmerged:   %s"), one);
 		break;
 	default:
-		die("bug: unhandled diff status %c", status);
+		die(_("bug: unhandled diff status %c"), status);
 	}
 	if (extra.len) {
 		status_printf_more(s, color(WT_STATUS_HEADER, s), "%s", extra.buf);
@@ -710,14 +710,14 @@ void wt_status_print(struct wt_status *s)
 	const char *branch_status_color = color(WT_STATUS_HEADER, s);
 
 	if (s->branch) {
-		const char *on_what = "On branch ";
+		const char *on_what = _("On branch ");
 		const char *branch_name = s->branch;
 		if (!prefixcmp(branch_name, "refs/heads/"))
 			branch_name += 11;
 		else if (!strcmp(branch_name, "HEAD")) {
 			branch_name = "";
 			branch_status_color = color(WT_STATUS_NOBRANCH, s);
-			on_what = "Not currently on any branch.";
+			on_what = _("Not currently on any branch.");
 		}
 		status_printf(s, color(WT_STATUS_HEADER, s), "");
 		status_printf_more(s, branch_status_color, "%s", on_what);
@@ -728,7 +728,7 @@ void wt_status_print(struct wt_status *s)
 
 	if (s->is_initial) {
 		status_printf_ln(s, color(WT_STATUS_HEADER, s), "");
-		status_printf_ln(s, color(WT_STATUS_HEADER, s), "Initial commit");
+		status_printf_ln(s, color(WT_STATUS_HEADER, s), _("Initial commit"));
 		status_printf_ln(s, color(WT_STATUS_HEADER, s), "");
 	}
 
@@ -742,38 +742,38 @@ void wt_status_print(struct wt_status *s)
 		wt_status_print_submodule_summary(s, 1);  /* unstaged */
 	}
 	if (s->show_untracked_files) {
-		wt_status_print_other(s, &s->untracked, "Untracked", "add");
+		wt_status_print_other(s, &s->untracked, _("Untracked"), "add");
 		if (s->show_ignored_files)
-			wt_status_print_other(s, &s->ignored, "Ignored", "add -f");
+			wt_status_print_other(s, &s->ignored, _("Ignored"), "add -f");
 	} else if (s->commitable)
-		status_printf_ln(s, GIT_COLOR_NORMAL, "Untracked files not listed%s",
+		status_printf_ln(s, GIT_COLOR_NORMAL, _("Untracked files not listed%s"),
 			advice_status_hints
-			? " (use -u option to show untracked files)" : "");
+			? _(" (use -u option to show untracked files)") : "");
 
 	if (s->verbose)
 		wt_status_print_verbose(s);
 	if (!s->commitable) {
 		if (s->amend)
-			status_printf_ln(s, GIT_COLOR_NORMAL, "No changes");
+			status_printf_ln(s, GIT_COLOR_NORMAL, _("No changes"));
 		else if (s->nowarn)
 			; /* nothing */
 		else if (s->workdir_dirty)
-			printf("no changes added to commit%s\n",
+			printf(_("no changes added to commit%s\n"),
 				advice_status_hints
-				? " (use \"git add\" and/or \"git commit -a\")" : "");
+				? _(" (use \"git add\" and/or \"git commit -a\")") : "");
 		else if (s->untracked.nr)
-			printf("nothing added to commit but untracked files present%s\n",
+			printf(_("nothing added to commit but untracked files present%s\n"),
 				advice_status_hints
-				? " (use \"git add\" to track)" : "");
+				? _(" (use \"git add\" to track)") : "");
 		else if (s->is_initial)
-			printf("nothing to commit%s\n", advice_status_hints
-				? " (create/copy files and use \"git add\" to track)" : "");
+			printf(_("nothing to commit%s\n"), advice_status_hints
+				? _(" (create/copy files and use \"git add\" to track)") : "");
 		else if (!s->show_untracked_files)
-			printf("nothing to commit%s\n", advice_status_hints
-				? " (use -u to show untracked files)" : "");
+			printf(_("nothing to commit%s\n"), advice_status_hints
+				? _(" (use -u to show untracked files)") : "");
 		else
-			printf("nothing to commit%s\n", advice_status_hints
-				? " (working directory clean)" : "");
+			printf(_("nothing to commit%s\n"), advice_status_hints
+				? _(" (working directory clean)") : "");
 	}
 }
 
@@ -881,13 +881,13 @@ static void wt_shortstatus_print_tracking(struct wt_status *s)
 	if (!prefixcmp(branch_name, "refs/heads/"))
 		branch_name += 11;
 	else if (!strcmp(branch_name, "HEAD")) {
-		branch_name = "HEAD (no branch)";
+		branch_name = _("HEAD (no branch)");
 		branch_color_local = color(WT_STATUS_NOBRANCH, s);
 	}
 
 	branch = branch_get(s->branch + 11);
 	if (s->is_initial)
-		color_fprintf(s->fp, header_color, "Initial commit on ");
+		color_fprintf(s->fp, header_color, _("Initial commit on "));
 	if (!stat_tracking_info(branch, &num_ours, &num_theirs)) {
 		color_fprintf_ln(s->fp, branch_color_local,
 			"%s", branch_name);
@@ -902,15 +902,15 @@ static void wt_shortstatus_print_tracking(struct wt_status *s)
 
 	color_fprintf(s->fp, header_color, " [");
 	if (!num_ours) {
-		color_fprintf(s->fp, header_color, "behind ");
+		color_fprintf(s->fp, header_color, _("behind "));
 		color_fprintf(s->fp, branch_color_remote, "%d", num_theirs);
 	} else if (!num_theirs) {
-		color_fprintf(s->fp, header_color, "ahead ");
+		color_fprintf(s->fp, header_color, _("ahead "));
 		color_fprintf(s->fp, branch_color_local, "%d", num_ours);
 	} else {
-		color_fprintf(s->fp, header_color, "ahead ");
+		color_fprintf(s->fp, header_color, _("ahead "));
 		color_fprintf(s->fp, branch_color_local, "%d", num_ours);
-		color_fprintf(s->fp, header_color, ", behind ");
+		color_fprintf(s->fp, header_color, _(", behind "));
 		color_fprintf(s->fp, branch_color_remote, "%d", num_theirs);
 	}
 
