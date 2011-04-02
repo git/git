@@ -42,6 +42,7 @@ static int option_local, option_no_hardlinks, option_shared, option_recursive;
 static char *option_template, *option_reference, *option_depth;
 static char *option_origin = NULL;
 static char *option_branch = NULL;
+static const char *real_git_dir;
 static char *option_upload_pack = "git-upload-pack";
 static int option_verbosity;
 static int option_progress;
@@ -80,6 +81,8 @@ static struct option builtin_clone_options[] = {
 		   "path to git-upload-pack on the remote"),
 	OPT_STRING(0, "depth", &option_depth, "depth",
 		    "create a shallow clone of that depth"),
+	OPT_STRING('L', "separate-git-dir", &real_git_dir, "gitdir",
+		   "separate git dir from working tree"),
 
 	OPT_END()
 };
@@ -467,7 +470,10 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 
 	if (safe_create_leading_directories_const(git_dir) < 0)
 		die(_("could not create leading directories of '%s'"), git_dir);
-	set_git_dir(real_path(git_dir));
+
+	set_git_dir_init(git_dir, real_git_dir, 0);
+	if (real_git_dir)
+		git_dir = real_git_dir;
 
 	if (0 <= option_verbosity) {
 		if (option_bare)

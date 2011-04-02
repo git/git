@@ -21,6 +21,7 @@
 static int init_is_bare_repository = 0;
 static int init_shared_repository = -1;
 static const char *init_db_template_dir;
+static const char *git_link;
 
 static void safe_create_dir(const char *dir, int share)
 {
@@ -311,11 +312,67 @@ static void create_object_directory(void)
 	free(path);
 }
 
+int set_git_dir_init(const char *git_dir, const char *real_git_dir,
+		     int exist_ok)
+{
+	if (real_git_dir) {
+		struct stat st;
+
+		if (!exist_ok && !stat(git_dir, &st))
+			die("%s already exists", git_dir);
+
+		if (!exist_ok && !stat(real_git_dir, &st))
+			die("%s already exists", real_git_dir);
+
+		/*
+		 * make sure symlinks are resolved because we'll be
+		 * moving the target repo later on in separate_git_dir()
+		 */
+		git_link = xstrdup(real_path(git_dir));
+	}
+	else {
+		real_git_dir = real_path(git_dir);
+		git_link = NULL;
+	}
+	set_git_dir(real_path(real_git_dir));
+	return 0;
+}
+
+static void separate_git_dir(const char *git_dir)
+{
+	struct stat st;
+	FILE *fp;
+
+	if (!stat(git_link, &st)) {
+		const char *src;
+
+		if (S_ISREG(st.st_mode))
+			src = read_gitfile_gently(git_link);
+		else if (S_ISDIR(st.st_mode))
+			src = git_link;
+		else
+			die("unable to handle file type %d", st.st_mode);
+
+		if (rename(src, git_dir))
+			die_errno("unable to move %s to %s", src, git_dir);
+	}
+
+	fp = fopen(git_link, "w");
+	if (!fp)
+		die("Could not create git link %s", git_link);
+	fprintf(fp, "gitdir: %s\n", git_dir);
+	fclose(fp);
+}
+
 int init_db(const char *template_dir, unsigned int flags)
 {
 	int reinit;
+	const char *git_dir = get_git_dir();
 
-	safe_create_dir(get_git_dir(), 0);
+	if (git_link)
+		separate_git_dir(git_dir);
+
+	safe_create_dir(git_dir, 0);
 
 	init_is_bare_repository = is_bare_repository();
 
@@ -352,7 +409,6 @@ int init_db(const char *template_dir, unsigned int flags)
 	}
 
 	if (!(flags & INIT_DB_QUIET)) {
-		const char *git_dir = get_git_dir();
 		int len = strlen(git_dir);
 
 		/*
@@ -420,6 +476,7 @@ static const char *const init_db_usage[] = {
 int cmd_init_db(int argc, const char **argv, const char *prefix)
 {
 	const char *git_dir;
+	const char *real_git_dir = NULL;
 	const char *work_tree;
 	const char *template_dir = NULL;
 	unsigned int flags = 0;
@@ -433,10 +490,15 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 			"specify that the git repository is to be shared amongst several users",
 			PARSE_OPT_OPTARG | PARSE_OPT_NONEG, shared_callback, 0},
 		OPT_BIT('q', "quiet", &flags, "be quiet", INIT_DB_QUIET),
+		OPT_STRING('L', "separate-git-dir", &real_git_dir, "gitdir",
+			   "separate git dir from working tree"),
 		OPT_END()
 	};
 
 	argc = parse_options(argc, argv, prefix, init_db_options, init_db_usage, 0);
+
+	if (real_git_dir && !is_absolute_path(real_git_dir))
+		real_git_dir = xstrdup(real_path(real_git_dir));
 
 	if (argc == 1) {
 		int mkdir_tried = 0;
@@ -528,7 +590,7 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 			set_git_work_tree(real_path(work_tree));
 	}
 
-	set_git_dir(real_path(git_dir));
+	set_git_dir_init(git_dir, real_git_dir, 1);
 
 	return init_db(template_dir, flags);
 }

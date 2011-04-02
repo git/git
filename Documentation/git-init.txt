@@ -8,8 +8,31 @@ git-init - Create an empty git repository or reinitialize an existing one
 
 SYNOPSIS
 --------
-'git init' [-q | --quiet] [--bare] [--template=<template_directory>] [--shared[=<permissions>]] [directory]
+'git init' [-q | --quiet] [--bare] [--template=<template_directory>]
+	  [--separate-git-dir|-L <git dir>]
+	  [--shared[=<permissions>]] [directory]
 
+
+DESCRIPTION
+-----------
+
+This command creates an empty git repository - basically a `.git`
+directory with subdirectories for `objects`, `refs/heads`,
+`refs/tags`, and template files.  An initial `HEAD` file that
+references the HEAD of the master branch is also created.
+
+If the `$GIT_DIR` environment variable is set then it specifies a path
+to use instead of `./.git` for the base of the repository.
+
+If the object storage directory is specified via the
+`$GIT_OBJECT_DIRECTORY` environment variable then the sha1 directories
+are created underneath - otherwise the default `$GIT_DIR/objects`
+directory is used.
+
+Running 'git init' in an existing repository is safe. It will not
+overwrite things that are already there. The primary reason for
+rerunning 'git init' is to pick up newly added templates (or to move
+the repository to another place if --separate-git-dir is given).
 
 OPTIONS
 -------
@@ -30,6 +53,16 @@ current working directory.
 
 Specify the directory from which templates will be used.  (See the "TEMPLATE
 DIRECTORY" section below.)
+
+-L=<git dir>::
+--separate-git-dir=<git dir>::
+
+Instead of initializing the repository where it is supposed to be,
+place a filesytem-agnostic git symbolic link there, pointing to the
+specified git path, and initialize a git repository at the path. The
+result is git repository can be separated from working tree. If this
+is reinitialization, the repository will be moved to the specified
+path.
 
 --shared[=(false|true|umask|group|all|world|everybody|0xxx)]::
 
@@ -73,32 +106,6 @@ line, the command is run inside the directory (possibly after creating it).
 
 --
 
-
-DESCRIPTION
------------
-This command creates an empty git repository - basically a `.git` directory
-with subdirectories for `objects`, `refs/heads`, `refs/tags`, and
-template files.
-An initial `HEAD` file that references the HEAD of the master branch
-is also created.
-
-If the `$GIT_DIR` environment variable is set then it specifies a path
-to use instead of `./.git` for the base of the repository.
-
-If the object storage directory is specified via the `$GIT_OBJECT_DIRECTORY`
-environment variable then the sha1 directories are created underneath -
-otherwise the default `$GIT_DIR/objects` directory is used.
-
-Running 'git init' in an existing repository is safe. It will not overwrite
-things that are already there. The primary reason for rerunning 'git init'
-is to pick up newly added templates.
-
-Note that 'git init' is the same as 'git init-db'.  The command
-was primarily meant to initialize the object database, but over
-time it has become responsible for setting up the other aspects
-of the repository, such as installing the default hooks and
-setting the configuration variables.  The old name is retained
-for backward compatibility reasons.
 
 TEMPLATE DIRECTORY
 ------------------
