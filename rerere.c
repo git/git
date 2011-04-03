@@ -438,7 +438,7 @@ static int merge(const char *name, const char *path)
 		ret = 1;
 		goto out;
 	}
-	ret = ll_merge(&result, path, &base, NULL, &cur, "", &other, "", 0);
+	ret = ll_merge(&result, path, &base, NULL, &cur, "", &other, "", NULL);
 	if (!ret) {
 		FILE *f;
 

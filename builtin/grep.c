@@ -414,10 +414,10 @@ static void *load_file(const char *filename, size_t *sz)
 	err_ret:
 		if (errno != ENOENT)
 			error(_("'%s': %s"), filename, strerror(errno));
-		return 0;
+		return NULL;
 	}
 	if (!S_ISREG(st.st_mode))
-		return 0;
+		return NULL;
 	*sz = xsize_t(st.st_size);
 	i = open(filename, O_RDONLY);
 	if (i < 0)
@@ -427,7 +427,7 @@ static void *load_file(const char *filename, size_t *sz)
 		error(_("'%s': short read %s"), filename, strerror(errno));
 		close(i);
 		free(data);
-		return 0;
+		return NULL;
 	}
 	close(i);
 	data[*sz] = 0;
