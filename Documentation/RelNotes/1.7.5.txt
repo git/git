@@ -14,8 +14,9 @@ Updates since v1.7.4
 
  * Update to more modern HP-UX port.
 
- * The codebase is getting prepared for i18n/l10n; no translated/translatable
-   strings in the code yet.
+ * The codebase is getting prepared for i18n/l10n; no translated
+   strings nor translation mechanism in the code yet, but the strings
+   are being marked for l10n.
 
  * The bash completion script can now complete symmetric difference
    for "git diff" command, e.g. "git diff ...bra<TAB>".
@@ -26,10 +27,6 @@ Updates since v1.7.4
 
  * "git apply -v" reports offset lines when the patch does not apply at
    the exact location recorded in the diff output.
-
- * "git branch --track" (and "git checkout --track --branch") used to
-   allow setting up a random non-branch that does not make sense to follow
-   as the "upstream".  The command correctly diagnoses it as an error.
 
  * "git config" used to be also known as "git repo-config", but the old
    name is now officially deprecated.
@@ -63,6 +60,12 @@ Updates since v1.7.4
  * "git grep --no-index" did not honor pathspecs correctly, returning
    paths outside the specified area.
 
+ * "git init" learned the --separate-git-dir option to allow the git
+   directory for a new repository created elsewhere and linked via the
+   gitdir mechanism. This is primarily to help submodule support later
+   to switch between a branch of superproject that has the submodule
+   and another that does not.
+
  * "git log" type commands now understand globbing pathspecs.  You
    can say "git log -- '*.txt'" for example.
 
@@ -70,6 +73,10 @@ Updates since v1.7.4
    options that can be used to view two diverged branches while omitting
    or highlighting equivalent changes that appear on both sides of a
    symmetric difference (e.g. "log --cherry A...B").
+
+ * A lazy "git merge" that didn't say what to merge used to be an error.
+   When run on a branch that has an upstream defined, however, the command
+   now merges from the configured upstream.
 
  * "git mergetool" learned how to drive "beyond compare 3" as well.
 
@@ -104,17 +111,6 @@ Fixes since v1.7.4
 All of the fixes in the v1.7.4.X maintenance series are included in this
 release, unless otherwise noted.
 
- * "git apply" used to confuse lines updated by previous hunks as lines
-   that existed before when applying a hunk, contributing misapplication
-   of patches with offsets.
-
- * "git checkout $other_branch" silently removed untracked symbolic links
-   in the working tree that are in the way in order to check out paths
-   under it from the named branch (js/checkout-untracked-symlink).
-
- * "git diff --quiet" did not work very well with the "--diff-filter"
-   option (jc/maint-diff-q-filter).
-
  * "git fetch" from a client that is mostly following the remote
    needlessly told all of its refs to the server for both sides to
    compute the set of objects that need to be transferred efficiently,
@@ -128,13 +124,13 @@ release, unless otherwise noted.
    reachable from the refs in their common alternate object store,
    causing it to fetch unnecessary objects (jc/maint-fetch-alt).
 
- * "git stash apply" reported the result of its operation by running
-   "git status" from the top-level of the working tree; it should (and
-   now does) run it from the user's working directory
-   (pk/stash-apply-status-relative).
+ * "git pull" into an empty branch should have behaved as if
+   fast-forwarding from emptiness to the version being pulled, with
+   the usual protection against overwriting untracked files (need to
+   cherry-pick 4b3ffe5).
 
 ---
 exec >/var/tmp/1
-O=v1.7.5-rc0
+O=v1.7.5-rc0-99-g8f84c95
 echo O=$(git describe 'master')
 git shortlog --no-merges ^maint ^$O master
