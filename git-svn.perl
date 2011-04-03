@@ -781,6 +781,15 @@ sub cmd_find_rev {
 	print "$result\n" if $result;
 }
 
+sub auto_create_empty_directories {
+	my ($gs) = @_;
+	my $var = eval { command_oneline('config', '--get', '--bool',
+					 "svn-remote.$gs->{repo_id}.automkdirs") };
+	# By default, create empty directories by consulting the unhandled log,
+	# but allow setting it to 'false' to skip it.
+	return !($var && $var eq 'false');
+}
+
 sub cmd_rebase {
 	command_noisy(qw/update-index --refresh/);
 	my ($url, $rev, $uuid, $gs) = working_head_info('HEAD');
@@ -804,7 +813,9 @@ sub cmd_rebase {
 		$_fetch_all ? $gs->fetch_all : $gs->fetch;
 	}
 	command_noisy(rebase_cmd(), $gs->refname);
-	$gs->mkemptydirs;
+	if (auto_create_empty_directories($gs)) {
+		$gs->mkemptydirs;
+	}
 }
 
 sub cmd_show_ignore {
@@ -1242,7 +1253,9 @@ sub post_fetch_checkout {
 	command_noisy(qw/read-tree -m -u -v HEAD HEAD/);
 	print STDERR "Checked out HEAD:\n  ",
 	             $gs->full_url, " r", $gs->last_rev, "\n";
-	$gs->mkemptydirs($gs->last_rev);
+	if (auto_create_empty_directories($gs)) {
+		$gs->mkemptydirs($gs->last_rev);
+	}
 }
 
 sub complete_svn_url {
