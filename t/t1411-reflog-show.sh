@@ -28,6 +28,24 @@ test_expect_success 'oneline reflog format' '
 	test_cmp expect actual
 '
 
+test_expect_success 'reflog default format' '
+	git reflog -1 >actual &&
+	test_cmp expect actual
+'
+
+cat >expect <<'EOF'
+commit e46513e
+Reflog: HEAD@{0} (C O Mitter <committer@example.com>)
+Reflog message: commit (initial): one
+Author: A U Thor <author@example.com>
+
+    one
+EOF
+test_expect_success 'override reflog default format' '
+	git reflog --format=short -1 >actual &&
+	test_cmp expect actual
+'
+
 cat >expect <<'EOF'
 Reflog: HEAD@{Thu Apr 7 15:13:13 2005 -0700} (C O Mitter <committer@example.com>)
 Reflog message: commit (initial): one
