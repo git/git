@@ -29,7 +29,7 @@ test_expect_success 'checkout chooses branch over tag' '
 	test_cmp expect file
 '
 
-test_expect_success 'checkout reports switch to branch' '
+test_expect_success C_LOCALE_OUTPUT 'checkout reports switch to branch' '
 	grep "Switched to branch" stderr &&
 	! grep "^HEAD is now at" stderr
 '
@@ -51,7 +51,7 @@ test_expect_success VAGUENESS_SUCCESS 'checkout chooses branch over tag' '
 	test_cmp expect file
 '
 
-test_expect_success VAGUENESS_SUCCESS 'checkout reports switch to branch' '
+test_expect_success VAGUENESS_SUCCESS,C_LOCALE_OUTPUT 'checkout reports switch to branch' '
 	grep "Switched to branch" stderr &&
 	! grep "^HEAD is now at" stderr
 '
