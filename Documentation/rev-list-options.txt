@@ -179,8 +179,8 @@ endif::git-rev-list[]
 +
 For example, if you have two branches, `A` and `B`, a usual way
 to list all commits on only one side of them is with
-`--left-right`, like the example above in the description of
-that option.  It however shows the commits that were cherry-picked
+`--left-right` (see the example below in the description of
+the `--left-right` option).  It however shows the commits that were cherry-picked
 from the other branch (for example, "3rd on b" may be cherry-picked
 from branch A).  With this option, such pairs of commits are
 excluded from the output.
