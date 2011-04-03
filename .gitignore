@@ -43,7 +43,6 @@
 /git-fast-export
 /git-fast-import
 /git-fetch
-/git-fetch--tool
 /git-fetch-pack
 /git-filter-branch
 /git-fmt-merge-msg
@@ -109,7 +108,6 @@
 /git-reflog
 /git-relink
 /git-remote
-/git-remote-curl
 /git-remote-http
 /git-remote-https
 /git-remote-ftp

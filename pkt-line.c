@@ -1,7 +1,7 @@
 #include "cache.h"
 #include "pkt-line.h"
 
-const char *packet_trace_prefix = "git";
+static const char *packet_trace_prefix = "git";
 static const char trace_key[] = "GIT_TRACE_PACKET";
 
 void packet_trace_identity(const char *prog)
