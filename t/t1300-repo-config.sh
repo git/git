@@ -876,11 +876,25 @@ test_expect_success 'check split_cmdline return' "
 	"
 
 test_expect_success 'git -c "key=value" support' '
-	test "z$(git -c name=value config name)" = zvalue &&
 	test "z$(git -c core.name=value config core.name)" = zvalue &&
-	test "z$(git -c CamelCase=value config camelcase)" = zvalue &&
-	test "z$(git -c flag config --bool flag)" = ztrue &&
-	test_must_fail git -c core.name=value config name
+	test "z$(git -c foo.CamelCase=value config foo.camelcase)" = zvalue &&
+	test "z$(git -c foo.flag config --bool foo.flag)" = ztrue &&
+	test_must_fail git -c name=value config core.name
+'
+
+test_expect_success 'key sanity-checking' '
+	test_must_fail git config foo=bar &&
+	test_must_fail git config foo=.bar &&
+	test_must_fail git config foo.ba=r &&
+	test_must_fail git config foo.1bar &&
+	test_must_fail git config foo."ba
+				z".bar &&
+	test_must_fail git config . false &&
+	test_must_fail git config .foo false &&
+	test_must_fail git config foo. false &&
+	test_must_fail git config .foo. false &&
+	git config foo.bar true &&
+	git config foo."ba =z".bar false
 '
 
 test_done
