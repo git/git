@@ -540,6 +540,7 @@ extern int trust_executable_bit;
 extern int trust_ctime;
 extern int quote_path_fully;
 extern int has_symlinks;
+extern int minimum_abbrev, default_abbrev;
 extern int ignore_case;
 extern int assume_unchanged;
 extern int prefer_symlink_refs;
@@ -759,8 +760,8 @@ static inline unsigned int hexval(unsigned char c)
 }
 
 /* Convert to/from hex/sha1 representation */
-#define MINIMUM_ABBREV 4
-#define DEFAULT_ABBREV 7
+#define MINIMUM_ABBREV minimum_abbrev
+#define DEFAULT_ABBREV default_abbrev
 
 struct object_context {
 	unsigned char tree[20];

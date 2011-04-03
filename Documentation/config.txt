@@ -558,6 +558,12 @@ core.sparseCheckout::
 	Enable "sparse checkout" feature. See section "Sparse checkout" in
 	linkgit:git-read-tree[1] for more information.
 
+core.abbrev::
+	Set the length object names are abbreviated to.  If unspecified,
+	many commands abbreviate to 7 hexdigits, which may not be enough
+	for abbreviated object names to stay unique for sufficiently long
+	time.
+
 add.ignore-errors::
 add.ignoreErrors::
 	Tells 'git add' to continue adding files when some files cannot be

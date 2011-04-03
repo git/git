@@ -523,6 +523,14 @@ static int git_default_core_config(const char *var, const char *value)
 		return 0;
 	}
 
+	if (!strcmp(var, "core.abbrev")) {
+		int abbrev = git_config_int(var, value);
+		if (abbrev < minimum_abbrev || abbrev > 40)
+			return -1;
+		default_abbrev = abbrev;
+		return 0;
+	}
+
 	if (!strcmp(var, "core.loosecompression")) {
 		int level = git_config_int(var, value);
 		if (level == -1)
