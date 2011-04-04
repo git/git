@@ -59,6 +59,7 @@ use File::Find;
 use Getopt::Long qw/:config gnu_getopt no_ignore_case auto_abbrev/;
 use IPC::Open3;
 use Git;
+use Memoize;  # core since 5.8.0, Jul 2002
 
 BEGIN {
 	# import functions from Git into our packages, en masse
@@ -72,6 +73,8 @@ BEGIN {
 			*{"${package}::$_"} = \&{"Git::$_"};
 		}
 	}
+	Memoize::memoize 'Git::config';
+	Memoize::memoize 'Git::config_bool';
 }
 
 my ($SVN);
@@ -3210,6 +3213,8 @@ sub has_no_changes {
 		Memoize::unmemoize 'check_cherry_pick';
 		Memoize::unmemoize 'has_no_changes';
 	}
+
+	Memoize::memoize 'Git::SVN::repos_root';
 }
 
 END {
