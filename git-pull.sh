@@ -110,6 +110,9 @@ do
 	--recurse-submodules)
 		recurse_submodules=--recurse-submodules
 		;;
+	--recurse-submodules=*)
+		recurse_submodules="$1"
+		;;
 	--no-recurse-submodules)
 		recurse_submodules=--no-recurse-submodules
 		;;

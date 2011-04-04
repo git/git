@@ -74,6 +74,26 @@ test_expect_success 'submodule update detaching the HEAD ' '
 	)
 '
 
+apos="'";
+test_expect_success 'submodule update does not fetch already present commits' '
+	(cd submodule &&
+	  echo line3 >> file &&
+	  git add file &&
+	  test_tick &&
+	  git commit -m "upstream line3"
+	) &&
+	(cd super/submodule &&
+	  head=$(git rev-parse --verify HEAD) &&
+	  echo "Submodule path ${apos}submodule$apos: checked out $apos$head$apos" > ../../expected &&
+	  git reset --hard HEAD~1
+	) &&
+	(cd super &&
+	  git submodule update > ../actual 2> ../actual.err
+	) &&
+	test_cmp expected actual &&
+	! test -s actual.err
+'
+
 test_expect_success 'submodule update --rebase staying on master' '
 	(cd super/submodule &&
 	  git checkout master
