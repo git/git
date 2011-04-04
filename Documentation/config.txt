@@ -320,7 +320,7 @@ core.worktree::
 	Set the path to the root of the working tree.
 	This can be overridden by the GIT_WORK_TREE environment
 	variable and the '--work-tree' command line option.
-	The value can an absolute path or relative to the path to
+	The value can be an absolute path or relative to the path to
 	the .git directory, which is either specified by --git-dir
 	or GIT_DIR, or automatically discovered.
 	If --git-dir or GIT_DIR is specified but none of

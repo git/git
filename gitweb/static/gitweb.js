@@ -399,7 +399,24 @@ function fixColorsAndGroups() {
  * used to extract hours and minutes from timezone info, e.g '-0900'
  * @constant
  */
-var tzRe = /^([+-][0-9][0-9])([0-9][0-9])$/;
+var tzRe = /^([+-])([0-9][0-9])([0-9][0-9])$/;
+
+/**
+ * convert numeric timezone +/-ZZZZ to offset from UTC in seconds
+ *
+ * @param {String} timezoneInfo: numeric timezone '(+|-)HHMM'
+ * @returns {Number} offset from UTC in seconds for timezone
+ *
+ * @globals tzRe
+ */
+function timezoneOffset(timezoneInfo) {
+	var match = tzRe.exec(timezoneInfo);
+	var tz_sign = (match[1] === '-' ? -1 : +1);
+	var tz_hour = parseInt(match[2],10);
+	var tz_min  = parseInt(match[3],10);
+
+	return tz_sign*(((tz_hour*60) + tz_min)*60);
+}
 
 /**
  * return date in local time formatted in iso-8601 like format
@@ -408,14 +425,11 @@ var tzRe = /^([+-][0-9][0-9])([0-9][0-9])$/;
  * @param {Number} epoch: seconds since '00:00:00 1970-01-01 UTC'
  * @param {String} timezoneInfo: numeric timezone '(+|-)HHMM'
  * @returns {String} date in local time in iso-8601 like format
- *
- * @globals tzRe
  */
 function formatDateISOLocal(epoch, timezoneInfo) {
-	var match = tzRe.exec(timezoneInfo);
 	// date corrected by timezone
 	var localDate = new Date(1000 * (epoch +
-		(parseInt(match[1],10)*3600 + parseInt(match[2],10)*60)));
+		timezoneOffset(timezoneInfo)));
 	var localDateStr = // e.g. '2005-08-07'
 		localDate.getUTCFullYear()                 + '-' +
 		padLeft(localDate.getUTCMonth()+1, 2, '0') + '-' +
