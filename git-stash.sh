@@ -344,9 +344,7 @@ apply_stash () {
 
 	assert_stash_like "$@"
 
-	git update-index -q --refresh &&
-	git diff-files --quiet --ignore-submodules ||
-		die 'Cannot apply to a dirty working tree, please stage your changes'
+	git update-index -q --refresh || die 'unable to refresh index'
 
 	# current index state
 	c_tree=$(git write-tree) ||
