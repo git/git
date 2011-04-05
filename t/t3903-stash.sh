@@ -37,6 +37,12 @@ test_expect_success 'parents of stash' '
 	test_cmp output expect
 '
 
+test_expect_success 'applying bogus stash does nothing' '
+	test_must_fail git stash apply stash@{1} &&
+	echo 1 >expect &&
+	test_cmp expect file
+'
+
 test_expect_success 'apply needs clean working directory' '
 	echo 4 > other-file &&
 	git add other-file &&
