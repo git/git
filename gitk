@@ -9059,6 +9059,7 @@ proc exec_citool {tool_args {baseid {}}} {
 proc cherrypick {} {
     global rowmenuid curview
     global mainhead mainheadid
+    global gitdir
 
     set oldhead [exec git rev-parse HEAD]
     set dheads [descheads $rowmenuid]
@@ -9087,7 +9088,7 @@ proc cherrypick {} {
 			conflict.\nDo you wish to run git citool to\
 			resolve it?"]]} {
 		# Force citool to read MERGE_MSG
-		file delete [file join [gitdir] "GITGUI_MSG"]
+		file delete [file join $gitdir "GITGUI_MSG"]
 		exec_citool {} $rowmenuid
 	    }
 	} else {
@@ -9453,6 +9454,7 @@ proc refill_reflist {} {
 proc getallcommits {} {
     global allcommits nextarc seeds allccache allcwait cachedarcs allcupdate
     global idheads idtags idotherrefs allparents tagobjid
+    global gitdir
 
     if {![info exists allcommits]} {
 	set nextarc 0
@@ -9460,7 +9462,7 @@ proc getallcommits {} {
 	set seeds {}
 	set allcwait 0
 	set cachedarcs 0
-	set allccache [file join [gitdir] "gitk.cache"]
+	set allccache [file join $gitdir "gitk.cache"]
 	if {![catch {
 	    set f [open $allccache r]
 	    set allcwait 1
