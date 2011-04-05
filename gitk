@@ -3331,8 +3331,7 @@ proc gitknewtmpdir {} {
     global diffnum gitktmpdir gitdir
 
     if {![info exists gitktmpdir]} {
-	set gitktmpdir [file join [file dirname $gitdir] \
-			    [format ".gitk-tmp.%s" [pid]]]
+	set gitktmpdir [file join $gitdir [format ".gitk-tmp.%s" [pid]]]
 	if {[catch {file mkdir $gitktmpdir} err]} {
 	    error_popup "[mc "Error creating temporary directory %s:" $gitktmpdir] $err"
 	    unset gitktmpdir
