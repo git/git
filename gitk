@@ -4527,12 +4527,17 @@ proc makepatterns {l} {
 
 proc do_file_hl {serial} {
     global highlight_files filehighlight highlight_paths gdttype fhl_list
+    global cdup
 
     if {$gdttype eq [mc "touching paths:"]} {
 	if {[catch {set paths [shellsplit $highlight_files]}]} return
 	set highlight_paths [makepatterns $paths]
 	highlight_filelist
-	set gdtargs [concat -- $paths]
+	set relative_paths {}
+	foreach path $paths {
+	    lappend relative_paths [file join $cdup $path]
+	}
+	set gdtargs [concat -- $relative_paths]
     } elseif {$gdttype eq [mc "adding/removing string:"]} {
 	set gdtargs [list "-S$highlight_files"]
     } else {
@@ -11641,6 +11646,10 @@ set stuffsaved 0
 set patchnum 0
 set lserial 0
 set isworktree [expr {[exec git rev-parse --is-inside-work-tree] == "true"}]
+set cdup {}
+if {$isworktree} {
+    set cdup [exec git rev-parse --show-cdup]
+}
 setcoords
 makewindow
 catch {
