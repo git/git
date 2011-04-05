@@ -168,7 +168,8 @@ int cmd_ls_tree(int argc, const char **argv, const char *prefix)
 
 	init_pathspec(&pathspec, get_pathspec(prefix, argv + 1));
 	for (i = 0; i < pathspec.nr; i++)
-		pathspec.items[i].has_wildcard = 0;
+		pathspec.items[i].use_wildcard = 0;
+	pathspec.has_wildcard = 0;
 	tree = parse_tree_indirect(sha1);
 	if (!tree)
 		die("not a tree object");
