@@ -3557,7 +3557,7 @@ proc make_relative {f} {
 }
 
 proc external_blame {parent_idx {line {}}} {
-    global flist_menu_file gitdir
+    global flist_menu_file cdup
     global nullid nullid2
     global parentlist selectedline currentid
 
@@ -3576,7 +3576,7 @@ proc external_blame {parent_idx {line {}}} {
     if {$line ne {} && $line > 1} {
 	lappend cmdline "--line=$line"
     }
-    set f [file join [file dirname $gitdir] $flist_menu_file]
+    set f [file join $cdup $flist_menu_file]
     # Unfortunately it seems git gui blame doesn't like
     # being given an absolute path...
     set f [make_relative $f]
