@@ -3589,7 +3589,7 @@ proc external_blame {parent_idx {line {}}} {
 proc show_line_source {} {
     global cmitmode currentid parents curview blamestuff blameinst
     global diff_menu_line diff_menu_filebase flist_menu_file
-    global nullid nullid2 gitdir
+    global nullid nullid2 gitdir cdup
 
     set from_index {}
     if {$cmitmode eq "tree"} {
@@ -3642,7 +3642,7 @@ proc show_line_source {} {
     } else {
 	lappend blameargs $id
     }
-    lappend blameargs -- [file join [file dirname $gitdir] $flist_menu_file]
+    lappend blameargs -- [file join $cdup $flist_menu_file]
     if {[catch {
 	set f [open $blameargs r]
     } err]} {
