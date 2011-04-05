@@ -543,11 +543,11 @@ test_expect_success 'invalid ref of the form stash@{n}, n >= N' '
 	echo bar6 > file2 &&
 	git add file2 &&
 	git stash &&
-	test_must_fail git drop stash@{1} &&
-	test_must_fail git pop stash@{1} &&
-	test_must_fail git apply stash@{1} &&
-	test_must_fail git show stash@{1} &&
-	test_must_fail git branch tmp stash@{1} &&
+	test_must_fail git stash drop stash@{1} &&
+	test_must_fail git stash pop stash@{1} &&
+	test_must_fail git stash apply stash@{1} &&
+	test_must_fail git stash show stash@{1} &&
+	test_must_fail git stash branch tmp stash@{1} &&
 	git stash drop
 '
 
