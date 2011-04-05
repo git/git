@@ -284,7 +284,6 @@ struct recent_command
 /* Configured limits on output */
 static unsigned long max_depth = 10;
 static off_t max_packsize;
-static uintmax_t big_file_threshold = 512 * 1024 * 1024;
 static int force_update;
 static int pack_compression_level = Z_DEFAULT_COMPRESSION;
 static int pack_compression_seen;
@@ -3052,10 +3051,6 @@ static int git_pack_config(const char *k, const char *v, void *cb)
 	if (!strcmp(k, "pack.packsizelimit")) {
 		max_packsize = git_config_ulong(k, v);
 		return 0;
-	}
-	if (!strcmp(k, "core.bigfilethreshold")) {
-		long n = git_config_int(k, v);
-		big_file_threshold = 0 < n ? n : 0;
 	}
 	return git_default_config(k, v, cb);
 }
