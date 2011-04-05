@@ -3364,10 +3364,10 @@ proc save_file_from_commit {filename output what} {
 
 proc external_diff_get_one_file {diffid filename diffdir} {
     global nullid nullid2 nullfile
-    global gitdir
+    global worktree
 
     if {$diffid == $nullid} {
-        set difffile [file join [file dirname $gitdir] $filename]
+        set difffile [file join $worktree $filename]
 	if {[file exists $difffile]} {
 	    return $difffile
 	}
@@ -11650,6 +11650,7 @@ set cdup {}
 if {$isworktree} {
     set cdup [exec git rev-parse --show-cdup]
 }
+set worktree [exec git rev-parse --show-toplevel]
 setcoords
 makewindow
 catch {
