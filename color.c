@@ -3,6 +3,28 @@
 
 int git_use_color_default = 0;
 
+/*
+ * The list of available column colors.
+ */
+const char *column_colors_ansi[] = {
+	GIT_COLOR_RED,
+	GIT_COLOR_GREEN,
+	GIT_COLOR_YELLOW,
+	GIT_COLOR_BLUE,
+	GIT_COLOR_MAGENTA,
+	GIT_COLOR_CYAN,
+	GIT_COLOR_BOLD_RED,
+	GIT_COLOR_BOLD_GREEN,
+	GIT_COLOR_BOLD_YELLOW,
+	GIT_COLOR_BOLD_BLUE,
+	GIT_COLOR_BOLD_MAGENTA,
+	GIT_COLOR_BOLD_CYAN,
+	GIT_COLOR_RESET,
+};
+
+/* Ignore the RESET at the end when giving the size */
+const int column_colors_ansi_max = ARRAY_SIZE(column_colors_ansi) - 1;
+
 static int parse_color(const char *name, int len)
 {
 	static const char * const color_names[] = {
