@@ -9,15 +9,6 @@ exec wish "$0" -- "$@"
 
 package require Tk
 
-proc gitdir {} {
-    global env
-    if {[info exists env(GIT_DIR)]} {
-	return $env(GIT_DIR)
-    } else {
-	return [exec git rev-parse --git-dir]
-    }
-}
-
 # A simple scheduler for compute-intensive stuff.
 # The aim is to make sure that event handlers for GUI actions can
 # run at least every 50-100 ms.  Unfortunately fileevent handlers are
@@ -11523,12 +11514,8 @@ setui $uicolor
 setoptions
 
 # check that we can find a .git directory somewhere...
-if {[catch {set gitdir [gitdir]}]} {
+if {[catch {set gitdir [exec git rev-parse --git-dir]}]} {
     show_error {} . [mc "Cannot find a git repository here."]
-    exit 1
-}
-if {![file isdirectory $gitdir]} {
-    show_error {} . [mc "Cannot find the git directory \"%s\"." $gitdir]
     exit 1
 }
 
