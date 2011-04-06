@@ -973,6 +973,16 @@ format.signoff::
     the rights to submit this work under the same open source license.
     Please see the 'SubmittingPatches' document for further discussion.
 
+filter.<driver>.clean::
+	The command which is used to convert the content of a worktree
+	file to a blob upon checkin.  See linkgit:gitattributes[5] for
+	details.
+
+filter.<driver>.smudge::
+	The command which is used to convert the content of a blob
+	object to a worktree file upon checkout.  See
+	linkgit:gitattributes[5] for details.
+
 gc.aggressiveWindow::
 	The window size parameter used in the delta compression
 	algorithm used by 'git gc --aggressive'.  This defaults
