@@ -60,3 +60,31 @@ diff.tool::
 	`merge.tool` when used by linkgit:git-difftool[1] and has
 	the same valid values as `merge.tool` minus "tortoisemerge"
 	and plus "kompare".
+
+diff.<driver>.command::
+	The custom diff driver command.  See linkgit:gitattributes[5]
+	for details.
+
+diff.<driver>.xfuncname::
+	The regular expression that the diff driver should use to
+	recognize the hunk header.  A built-in pattern may also be used.
+	See linkgit:gitattributes[5] for details.
+
+diff.<driver>.binary::
+	Set this option to true to make the diff driver treat files as
+	binary.  See linkgit:gitattributes[5] for details.
+
+diff.<driver>.textconv::
+	The command that the diff driver should call to generate the
+	text-converted version of a file.  The result of the
+	conversion is used to generate a human-readable diff.  See
+	linkgit:gitattributes[5] for details.
+
+diff.<driver>.wordregex::
+	The regular expression that the diff driver should use to
+	split words in a line.  See linkgit:gitattributes[5] for
+	details.
+
+diff.<driver>.cachetextconv::
+	Set this option to true to make the diff driver cache the text
+	conversion outputs.  See linkgit:gitattributes[5] for details.
