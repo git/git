@@ -54,6 +54,8 @@ Updates since v1.7.4
    negotiation is done. This saves one HTTP RPC, reducing the overall
    latency for a trivial fetch.
 
+ * "git fetch" can be told to recursively fetch submodules on-demand.
+
  * "git grep -f <filename>" learned to treat "-" as "read from the
    standard input stream".
 
@@ -92,15 +94,15 @@ Updates since v1.7.4
    "tracking" is used as the push.default semantics or there is no remote
    configured yet.
 
+ * A possible value to the "push.default" configuration variable,
+   'tracking', gained a synonym that more naturally describes what it
+   does, 'upstream'.
+
  * "git rerere" learned a new subcommand "remaining" that is similar to
    "status" and lists the paths that had conflicts which are known to
    rerere, but excludes the paths that have already been marked as
    resolved in the index from its output.  "git mergetool" has been
    updated to use this facility.
-
- * A possible value to the "push.default" configuration variable,
-   'tracking', gained a synonym that more naturally describes what it
-   does, 'upstream'.
 
 Also contains various documentation updates.
 
@@ -124,13 +126,13 @@ release, unless otherwise noted.
    reachable from the refs in their common alternate object store,
    causing it to fetch unnecessary objects (jc/maint-fetch-alt).
 
- * "git pull" into an empty branch should have behaved as if
-   fast-forwarding from emptiness to the version being pulled, with
-   the usual protection against overwriting untracked files (need to
-   cherry-pick 4b3ffe5).
+ * "git remote add --mirror" created a configuration that is suitable for
+   doing both a mirror fetch and a mirror push at the same time, which
+   made little sense.  We now warn and require the command line to specify
+   either --mirror=fetch or --mirror=push.
 
 ---
 exec >/var/tmp/1
-O=v1.7.5-rc0-99-g8f84c95
+O=v1.7.5-rc1
 echo O=$(git describe 'master')
 git shortlog --no-merges ^maint ^$O master
