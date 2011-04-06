@@ -24,14 +24,12 @@ Fixes since v1.7.4.3
    fast-forwarding from emptiness to the version being pulled, with
    the usual protection against overwriting untracked files.
 
+ * "git submodule" that is run while a merge in the superproject is in
+   conflicted state tried to process each conflicted submodule up to
+   three times.
+
  * "git status" spent all the effort to notice racily-clean index entries
    but didn't update the index file to help later operations go faster in
    some cases.
 
 And other minor fixes and documentation updates.
-
----
-exec >/var/tmp/1
-O=v1.7.4.3-22-g8c8674f
-echo O=$(git describe maint)
-git shortlog --no-merges $O..maint
