@@ -705,7 +705,7 @@ sub add_untracked_cmd {
 sub run_git_apply {
 	my $cmd = shift;
 	my $fh;
-	open $fh, '| git ' . $cmd;
+	open $fh, '| git ' . $cmd . " --recount";
 	print $fh @_;
 	return close $fh;
 }
@@ -1050,7 +1050,7 @@ EOF
 
 sub diff_applies {
 	my $fh;
-	return run_git_apply($patch_mode_flavour{APPLY_CHECK} . ' --recount --check',
+	return run_git_apply($patch_mode_flavour{APPLY_CHECK} . ' --check',
 			     map { @{$_->{TEXT}} } @_);
 }
 
@@ -1139,7 +1139,7 @@ EOF
 
 sub apply_patch {
 	my $cmd = shift;
-	my $ret = run_git_apply $cmd . ' --recount', @_;
+	my $ret = run_git_apply $cmd, @_;
 	if (!$ret) {
 		print STDERR @_;
 	}
@@ -1148,17 +1148,17 @@ sub apply_patch {
 
 sub apply_patch_for_checkout_commit {
 	my $reverse = shift;
-	my $applies_index = run_git_apply 'apply '.$reverse.' --cached --recount --check', @_;
-	my $applies_worktree = run_git_apply 'apply '.$reverse.' --recount --check', @_;
+	my $applies_index = run_git_apply 'apply '.$reverse.' --cached --check', @_;
+	my $applies_worktree = run_git_apply 'apply '.$reverse.' --check', @_;
 
 	if ($applies_worktree && $applies_index) {
-		run_git_apply 'apply '.$reverse.' --cached --recount', @_;
-		run_git_apply 'apply '.$reverse.' --recount', @_;
+		run_git_apply 'apply '.$reverse.' --cached', @_;
+		run_git_apply 'apply '.$reverse, @_;
 		return 1;
 	} elsif (!$applies_index) {
 		print colored $error_color, "The selected hunks do not apply to the index!\n";
 		if (prompt_yesno "Apply them to the worktree anyway? ") {
-			return run_git_apply 'apply '.$reverse.' --recount', @_;
+			return run_git_apply 'apply '.$reverse, @_;
 		} else {
 			print colored $error_color, "Nothing was applied.\n";
 			return 0;
