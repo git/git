@@ -55,12 +55,6 @@ diff.suppressBlankEmpty::
 	A boolean to inhibit the standard behavior of printing a space
 	before each empty output line. Defaults to false.
 
-diff.tool::
-	Controls which diff tool is used.  `diff.tool` overrides
-	`merge.tool` when used by linkgit:git-difftool[1] and has
-	the same valid values as `merge.tool` minus "tortoisemerge"
-	and plus "kompare".
-
 diff.<driver>.command::
 	The custom diff driver command.  See linkgit:gitattributes[5]
 	for details.
@@ -88,3 +82,11 @@ diff.<driver>.wordregex::
 diff.<driver>.cachetextconv::
 	Set this option to true to make the diff driver cache the text
 	conversion outputs.  See linkgit:gitattributes[5] for details.
+
+diff.tool::
+	The diff tool to be used by linkgit:git-difftool[1].  This
+	option overrides `merge.tool`, and has the same valid built-in
+	values as `merge.tool` minus "tortoisemerge" and plus
+	"kompare".  Any other value is treated as a custom diff tool,
+	and there must be a corresponding `difftool.<tool>.cmd`
+	option.
