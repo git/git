@@ -80,10 +80,9 @@ test_expect_success 'change gets noticed' '
 
 '
 
-test_expect_success 'update from a subdirectory without pathspec (no config)' '
+test_expect_success 'update from a subdirectory without pathspec' '
 	# This test needs to be updated to expect the whole tree
 	# update after 1.8.0 migration.
-	test_might_fail git config --remove add.treewideupdate &&
 	test_might_fail git reset check dir1 &&
 	echo changed >check &&
 	(
@@ -97,15 +96,13 @@ test_expect_success 'update from a subdirectory without pathspec (no config)' '
 	grep warning expect.warning
 '
 
-test_expect_success 'update from a subdirectory without pathspec (local)' '
-	test_when_finished "git config --remove add.treewideupdate; :" &&
-	git config add.treewideupdate false &&
+test_expect_success 'update from a subdirectory with local pathspec' '
 	test_might_fail git reset check dir1 &&
 	echo changed >check &&
 	(
 		cd dir1 &&
 		echo even more >sub2 &&
-		git add -u 2>../expect.warning
+		git add -u . 2>../expect.warning
 	) &&
 	git diff-files --name-only dir1 check >actual &&
 	echo check >expect &&
@@ -113,15 +110,27 @@ test_expect_success 'update from a subdirectory without pathspec (local)' '
 	! grep warning expect.warning
 '
 
-test_expect_success 'update from a subdirectory without pathspec (global)' '
-	test_when_finished "git config --remove add.treewideupdate; :" &&
-	git config add.treewideupdate true &&
+test_expect_success 'update from a subdirectory with magic pathspec (mnemonic)' '
 	test_might_fail git reset check dir1 &&
 	echo changed >check &&
 	(
 		cd dir1 &&
 		echo even more >sub2 &&
-		git add -u 2>../expect.warning
+		git add -u :/ 2>../expect.warning
+	) &&
+	git diff-files --name-only dir1 check >actual &&
+	: >expect &&
+	test_cmp expect actual &&
+	! grep warning expect.warning
+'
+
+test_expect_success 'update from a subdirectory with magic pathspec (longhand)' '
+	test_might_fail git reset check dir1 &&
+	echo changed >check &&
+	(
+		cd dir1 &&
+		echo even more >sub2 &&
+		git add -u ":(top)" 2>../expect.warning
 	) &&
 	git diff-files --name-only dir1 check >actual &&
 	: >expect &&
