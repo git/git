@@ -323,9 +323,7 @@ GCOV = gcov
 
 export TCL_PATH TCLTK_PATH
 
-# sparse is architecture-neutral, which means that we need to tell it
-# explicitly what architecture to check for. Fix this up for yours..
-SPARSE_FLAGS = -D__BIG_ENDIAN__ -D__powerpc__
+SPARSE_FLAGS =
 
 
 
@@ -924,6 +922,7 @@ ifeq ($(uname_O),Cygwin)
 	X = .exe
 	COMPAT_OBJS += compat/cygwin.o
 	UNRELIABLE_FSTAT = UnfortunatelyYes
+	SPARSE_FLAGS = -isystem /usr/include/w32api -Wno-one-bit-signed-bitfield
 endif
 ifeq ($(uname_S),FreeBSD)
 	NEEDS_LIBICONV = YesPlease
@@ -1177,6 +1176,7 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	EXTLIBS += -lws2_32
 	PTHREAD_LIBS =
 	X = .exe
+	SPARSE_FLAGS = -Wno-one-bit-signed-bitfield
 ifneq (,$(wildcard ../THIS_IS_MSYSGIT))
 	htmldir=doc/git/html/
 	prefix =
@@ -2161,11 +2161,12 @@ check-sha1:: test-sha1$X
 	./test-sha1.sh
 
 check: common-cmds.h
-	if sparse; \
+	@if sparse; \
 	then \
 		for i in $(patsubst %.o, %.c, $(GIT_OBJS)); \
 		do \
-			sparse $(ALL_CFLAGS) $(SPARSE_FLAGS) $$i || exit; \
+			echo '   ' SP $$i; \
+			cgcc -no-compile $(ALL_CFLAGS) $(SPARSE_FLAGS) $$i || exit; \
 		done; \
 	else \
 		echo 2>&1 "Did you mean 'make test'?"; \
