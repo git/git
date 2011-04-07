@@ -35,6 +35,6 @@ const char *Q_(const char *msgid, const char *plu, unsigned long n)
 }
 
 /* Mark msgid for translation but do not translate it. */
-#define N_(msgid) (msgid)
+#define N_(msgid) msgid
 
 #endif
