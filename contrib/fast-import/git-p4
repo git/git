@@ -222,10 +222,10 @@ def p4CmdList(cmd, stdin=None, stdin_mode='w+b', cb=None):
     try:
         while True:
             entry = marshal.load(p4.stdout)
-	    if cb is not None:
-		cb(entry)
-	    else:
-		result.append(entry)
+            if cb is not None:
+                cb(entry)
+            else:
+                result.append(entry)
     except EOFError:
         pass
     exitCode = p4.wait()
@@ -449,8 +449,8 @@ def p4ChangesForPaths(depotPaths, changeRange):
 
     changes = {}
     for line in output:
-	changeNum = int(line.split(" ")[1])
-	changes[changeNum] = True
+        changeNum = int(line.split(" ")[1])
+        changes[changeNum] = True
 
     changelist = changes.keys()
     changelist.sort()
@@ -1033,10 +1033,10 @@ class P4Sync(Command):
     # - helper for streamP4Files
 
     def streamOneP4File(self, file, contents):
-	if file["type"] == "apple":
-	    print "\nfile %s is a strange apple file that forks. Ignoring" % \
-		file['depotFile']
-	    return
+        if file["type"] == "apple":
+            print "\nfile %s is a strange apple file that forks. Ignoring" % \
+                file['depotFile']
+            return
 
         relPath = self.stripRepoPath(file['depotFile'], self.branchPrefixes)
         relPath = self.wildcard_decode(relPath)
@@ -1085,22 +1085,22 @@ class P4Sync(Command):
     # handle another chunk of streaming data
     def streamP4FilesCb(self, marshalled):
 
-	if marshalled.has_key('depotFile') and self.stream_have_file_info:
-	    # start of a new file - output the old one first
-	    self.streamOneP4File(self.stream_file, self.stream_contents)
-	    self.stream_file = {}
-	    self.stream_contents = []
-	    self.stream_have_file_info = False
+        if marshalled.has_key('depotFile') and self.stream_have_file_info:
+            # start of a new file - output the old one first
+            self.streamOneP4File(self.stream_file, self.stream_contents)
+            self.stream_file = {}
+            self.stream_contents = []
+            self.stream_have_file_info = False
 
-	# pick up the new file information... for the
-	# 'data' field we need to append to our array
-	for k in marshalled.keys():
-	    if k == 'data':
-		self.stream_contents.append(marshalled['data'])
-	    else:
-		self.stream_file[k] = marshalled[k]
+        # pick up the new file information... for the
+        # 'data' field we need to append to our array
+        for k in marshalled.keys():
+            if k == 'data':
+                self.stream_contents.append(marshalled['data'])
+            else:
+                self.stream_file[k] = marshalled[k]
 
-	self.stream_have_file_info = True
+        self.stream_have_file_info = True
 
     # Stream directly from "p4 files" into "git fast-import"
     def streamP4Files(self, files):
@@ -1132,14 +1132,14 @@ class P4Sync(Command):
             self.stream_contents = []
             self.stream_have_file_info = False
 
-	    # curry self argument
-	    def streamP4FilesCbSelf(entry):
-		self.streamP4FilesCb(entry)
+            # curry self argument
+            def streamP4FilesCbSelf(entry):
+                self.streamP4FilesCb(entry)
 
-	    p4CmdList("-x - print",
-		'\n'.join(['%s#%s' % (f['path'], f['rev'])
+            p4CmdList("-x - print",
+                '\n'.join(['%s#%s' % (f['path'], f['rev'])
                                                   for f in filesToRead]),
-	        cb=streamP4FilesCbSelf)
+                cb=streamP4FilesCbSelf)
 
             # do the last chunk
             if self.stream_file.has_key('depotFile'):
@@ -1148,7 +1148,7 @@ class P4Sync(Command):
     def commit(self, details, files, branch, branchPrefixes, parent = ""):
         epoch = details["time"]
         author = details["user"]
-	self.branchPrefixes = branchPrefixes
+        self.branchPrefixes = branchPrefixes
 
         if self.verbose:
             print "commit into %s" % branch
@@ -1253,7 +1253,7 @@ class P4Sync(Command):
 
         s = ''
         for (key, val) in self.users.items():
-	    s += "%s\t%s\n" % (key.expandtabs(1), val.expandtabs(1))
+            s += "%s\t%s\n" % (key.expandtabs(1), val.expandtabs(1))
 
         open(self.getUserCacheFilename(), "wb").write(s)
         self.userMapFromPerforceServer = True
