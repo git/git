@@ -48,7 +48,7 @@ test_expect_success PERL 'git stash -p --no-keep-index' '
 	verify_state bar dummy bar_index
 '
 
-test_expect_failure PERL 'git stash --no-keep-index -p' '
+test_expect_success PERL 'git stash --no-keep-index -p' '
 	set_state dir/foo work index &&
 	set_state bar bar_work bar_index &&
 	(echo n; echo y) | git stash save --no-keep-index -p &&

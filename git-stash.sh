@@ -136,11 +136,12 @@ save_stash () {
 			keep_index=t
 			;;
 		--no-keep-index)
-			keep_index=
+			keep_index=n
 			;;
 		-p|--patch)
 			patch_mode=t
-			keep_index=t
+			# only default to keep if we don't already have an override
+			test -z "$keep_index" && keep_index=t
 			;;
 		-q|--quiet)
 			GIT_QUIET=t
@@ -185,7 +186,7 @@ save_stash () {
 	then
 		git reset --hard ${GIT_QUIET:+-q}
 
-		if test -n "$keep_index" && test -n $i_tree
+		if test "$keep_index" = "t" && test -n $i_tree
 		then
 			git read-tree --reset -u $i_tree
 		fi
@@ -193,7 +194,7 @@ save_stash () {
 		git apply -R < "$TMP-patch" ||
 		die "Cannot remove worktree changes"
 
-		if test -z "$keep_index"
+		if test "$keep_index" != "t"
 		then
 			git reset
 		fi
