@@ -136,12 +136,12 @@ void verify_non_filename(const char *prefix, const char *arg)
  * Possible future magic semantics include stuff like:
  *
  *	{ PATHSPEC_NOGLOB, '!', "noglob" },
- *	{ PATHSPEC_ICASE, '\0', "icase" },
  *	{ PATHSPEC_RECURSIVE, '*', "recursive" },
  *	{ PATHSPEC_REGEXP, '\0', "regexp" },
  *
  */
 #define PATHSPEC_FROMTOP    (1<<0)
+#define PATHSPEC_ICASE      (1<<1)
 
 struct pathspec_magic {
 	unsigned bit;
@@ -149,6 +149,7 @@ struct pathspec_magic {
 	const char *name;
 } pathspec_magic[] = {
 	{ PATHSPEC_FROMTOP, '/', "top" },
+	{ PATHSPEC_ICASE, '\0', "icase" },
 };
 
 /*
@@ -168,7 +169,8 @@ const char *prefix_pathspec(const char *prefix, int prefixlen, const char *elt)
 {
 	unsigned magic = 0;
 	const char *copyfrom = elt;
-	int i;
+	const char *retval;
+	int i, free_source = 0;
 
 	if (elt[0] != ':') {
 		; /* nothing to do */
@@ -222,10 +224,31 @@ const char *prefix_pathspec(const char *prefix, int prefixlen, const char *elt)
 			copyfrom++;
 	}
 
+	if (magic & PATHSPEC_ICASE) {
+		struct strbuf sb = STRBUF_INIT;
+		for (i = 0; copyfrom[i]; i++) {
+			int ch = copyfrom[i];
+			if (('a' <= ch && ch <= 'z') ||
+			    ('A' <= ch && ch <= 'Z')) {
+				strbuf_addf(&sb, "[%c%c]",
+					    tolower(ch), toupper(ch));
+			} else {
+				strbuf_addch(&sb, ch);
+			}
+		}
+		if (sb.len) {
+			free_source = 1;
+			copyfrom = strbuf_detach(&sb, NULL);
+		}
+	}
+
 	if (magic & PATHSPEC_FROMTOP)
-		return xstrdup(copyfrom);
+		retval = xstrdup(copyfrom);
 	else
-		return prefix_path(prefix, prefixlen, copyfrom);
+		retval = prefix_path(prefix, prefixlen, copyfrom);
+	if (free_source)
+		free((char *)copyfrom);
+	return retval;
 }
 
 const char **get_pathspec(const char *prefix, const char **pathspec)
