@@ -80,64 +80,6 @@ test_expect_success 'change gets noticed' '
 
 '
 
-test_expect_success 'update from a subdirectory without pathspec' '
-	# This test needs to be updated to expect the whole tree
-	# update after 1.8.0 migration.
-	test_might_fail git reset check dir1 &&
-	echo changed >check &&
-	(
-		cd dir1 &&
-		echo even more >sub2 &&
-		git add -u 2>../expect.warning
-	) &&
-	git diff-files --name-only dir1 check >actual &&
-	echo check >expect &&
-	test_cmp expect actual &&
-	grep warning expect.warning
-'
-
-test_expect_success 'update from a subdirectory with local pathspec' '
-	test_might_fail git reset check dir1 &&
-	echo changed >check &&
-	(
-		cd dir1 &&
-		echo even more >sub2 &&
-		git add -u . 2>../expect.warning
-	) &&
-	git diff-files --name-only dir1 check >actual &&
-	echo check >expect &&
-	test_cmp expect actual &&
-	! grep warning expect.warning
-'
-
-test_expect_success 'update from a subdirectory with magic pathspec (mnemonic)' '
-	test_might_fail git reset check dir1 &&
-	echo changed >check &&
-	(
-		cd dir1 &&
-		echo even more >sub2 &&
-		git add -u :/ 2>../expect.warning
-	) &&
-	git diff-files --name-only dir1 check >actual &&
-	: >expect &&
-	test_cmp expect actual &&
-	! grep warning expect.warning
-'
-
-test_expect_success 'update from a subdirectory with magic pathspec (longhand)' '
-	test_might_fail git reset check dir1 &&
-	echo changed >check &&
-	(
-		cd dir1 &&
-		echo even more >sub2 &&
-		git add -u ":(top)" 2>../expect.warning
-	) &&
-	git diff-files --name-only dir1 check >actual &&
-	: >expect &&
-	test_cmp expect actual &&
-	! grep warning expect.warning
-'
-
 test_expect_success SYMLINKS 'replace a file with a symlink' '
 
 	rm foo &&
