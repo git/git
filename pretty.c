@@ -208,6 +208,58 @@ int has_non_ascii(const char *s)
 	return 0;
 }
 
+static int is_rfc822_special(char ch)
+{
+	switch (ch) {
+	case '(':
+	case ')':
+	case '<':
+	case '>':
+	case '[':
+	case ']':
+	case ':':
+	case ';':
+	case '@':
+	case ',':
+	case '.':
+	case '"':
+	case '\\':
+		return 1;
+	default:
+		return 0;
+	}
+}
+
+static int has_rfc822_specials(const char *s, int len)
+{
+	int i;
+	for (i = 0; i < len; i++)
+		if (is_rfc822_special(s[i]))
+			return 1;
+	return 0;
+}
+
+static void add_rfc822_quoted(struct strbuf *out, const char *s, int len)
+{
+	int i;
+
+	/* just a guess, we may have to also backslash-quote */
+	strbuf_grow(out, len + 2);
+
+	strbuf_addch(out, '"');
+	for (i = 0; i < len; i++) {
+		switch (s[i]) {
+		case '"':
+		case '\\':
+			strbuf_addch(out, '\\');
+			/* fall through */
+		default:
+			strbuf_addch(out, s[i]);
+		}
+	}
+	strbuf_addch(out, '"');
+}
+
 static int is_rfc2047_special(char ch)
 {
 	return (non_ascii(ch) || (ch == '=') || (ch == '?') || (ch == '_'));
@@ -293,7 +345,14 @@ void pp_user_info(const char *what, enum cmit_fmt fmt, struct strbuf *sb,
 			name_tail--;
 		display_name_length = name_tail - line;
 		strbuf_addstr(sb, "From: ");
-		add_rfc2047(sb, line, display_name_length, encoding);
+		if (!has_rfc822_specials(line, display_name_length)) {
+			add_rfc2047(sb, line, display_name_length, encoding);
+		} else {
+			struct strbuf quoted = STRBUF_INIT;
+			add_rfc822_quoted(&quoted, line, display_name_length);
+			add_rfc2047(sb, quoted.buf, quoted.len, encoding);
+			strbuf_release(&quoted);
+		}
 		strbuf_add(sb, name_tail, namelen - display_name_length);
 		strbuf_addch(sb, '\n');
 	} else {
