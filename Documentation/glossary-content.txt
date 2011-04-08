@@ -319,10 +319,13 @@ top `/`;;
 	The magic word `top` (mnemonic: `/`) makes the pattern match
 	from the root of the working tree, even when you are running
 	the command from inside a subdirectory.
+icase;;
+	The magic word `icase` (there is no mnemonic for it) makes the
+	pattern match case insensitively.  E.g. `:(icase)makefile` matches
+	both `Makefile` and `makefile`.
 --
 +
-Currently only the slash `/` is recognized as the "magic signature",
-but it is envisioned that we will support more types of magic in later
+It is envisioned that we will support more types of magic in later
 versions of git.
 
 [[def_parent]]parent::
