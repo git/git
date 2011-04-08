@@ -359,24 +359,6 @@ static int add_files(struct dir_struct *dir, int flags)
 	return exit_status;
 }
 
-static const char *warn_add_uA_180_migration_msg[] = {
-	"In release 1.8.0, running 'git add -u' (or 'git add -A') from",
-	"a subdirectory without giving any pathspec WILL take effect",
-	"on the whole working tree, not just the part under the current",
-	"directory. Please make it a habit to add '.' when you want to",
-	"limit the operation to the current directory and below.",
-	"You can use ':/' at the end of the command to affect the operation",
-	"on the whole working tree.",
-};
-
-static int warn_180_migration(void)
-{
-	int i;
-	for (i = 0; i < ARRAY_SIZE(warn_add_uA_180_migration_msg); i++)
-		warning("%s", warn_add_uA_180_migration_msg[i]);
-	return 0; /* default to "no" (not tree-wide, i.e. local) */
-}
-
 int cmd_add(int argc, const char **argv, const char *prefix)
 {
 	int exit_status = 0;
@@ -386,7 +368,6 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 	int flags;
 	int add_new_files;
 	int require_pathspec;
-	int whole_tree_add = 0;
 	char *seen = NULL;
 
 	git_config(add_config, NULL);
@@ -408,9 +389,9 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 	if (!show_only && ignore_missing)
 		die("Option --ignore-missing can only be used together with --dry-run");
 	if ((addremove || take_worktree_changes) && !argc) {
-		whole_tree_add = 1;
-		if (prefix)
-			whole_tree_add = warn_180_migration();
+		static const char *here[2] = { ".", NULL };
+		argc = 1;
+		argv = here;
 	}
 
 	add_new_files = !take_worktree_changes && !refresh_only;
@@ -425,16 +406,12 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 		 (!(addremove || take_worktree_changes)
 		  ? ADD_CACHE_IGNORE_REMOVAL : 0));
 
-	if (require_pathspec && !(argc || whole_tree_add)) {
+	if (require_pathspec && argc == 0) {
 		fprintf(stderr, "Nothing specified, nothing added.\n");
 		fprintf(stderr, "Maybe you wanted to say 'git add .'?\n");
 		return 0;
 	}
-
-	if (whole_tree_add)
-		pathspec = NULL;
-	else
-		pathspec = validate_pathspec(argc, argv, prefix);
+	pathspec = validate_pathspec(argc, argv, prefix);
 
 	if (read_cache() < 0)
 		die("index file corrupt");
