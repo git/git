@@ -528,7 +528,7 @@ sub cmd_dcommit {
 		$url = eval { command_oneline('config', '--get',
 			      "svn-remote.$gs->{repo_id}.commiturl") };
 		if (!$url) {
-			$url = $gs->full_url
+			$url = $gs->full_pushurl
 		}
 	}
 
@@ -676,7 +676,7 @@ sub cmd_branch {
 	$head ||= 'HEAD';
 
 	my (undef, $rev, undef, $gs) = working_head_info($head);
-	my $src = $gs->full_url;
+	my $src = $gs->full_pushurl;
 
 	my $remote = Git::SVN::read_all_remotes()->{$gs->{repo_id}};
 	my $allglobs = $remote->{ $_tag ? 'tags' : 'branches' };
@@ -727,7 +727,7 @@ sub cmd_branch {
 		$url = eval { command_oneline('config', '--get',
 			"svn-remote.$gs->{repo_id}.commiturl") };
 		if (!$url) {
-			$url = $remote->{url};
+			$url = $remote->{pushurl} || $remote->{url};
 		}
 	}
 	my $dst = join '/', $url, $lft, $branch_name, ($rgt || ());
@@ -1831,6 +1831,8 @@ sub read_all_remotes {
 			$r->{$1}->{svm} = {};
 		} elsif (m!^(.+)\.url=\s*(.*)\s*$!) {
 			$r->{$1}->{url} = $2;
+		} elsif (m!^(.+)\.pushurl=\s*(.*)\s*$!) {
+			$r->{$1}->{pushurl} = $2;
 		} elsif (m!^(.+)\.(branches|tags)=$svn_refspec$!) {
 			my ($remote, $t, $local_ref, $remote_ref) =
 			                                     ($1, $2, $3, $4);
@@ -2068,6 +2070,8 @@ sub new {
 	$self->{url} = command_oneline('config', '--get',
 	                               "svn-remote.$repo_id.url") or
                   die "Failed to read \"svn-remote.$repo_id.url\" in config\n";
+	$self->{pushurl} = eval { command_oneline('config', '--get',
+	                          "svn-remote.$repo_id.pushurl") };
 	$self->rebuild;
 	$self;
 }
@@ -2545,6 +2549,15 @@ sub full_url {
 	$self->{url} . (length $self->{path} ? '/' . $self->{path} : '');
 }
 
+sub full_pushurl {
+	my ($self) = @_;
+	if ($self->{pushurl}) {
+		return $self->{pushurl} . (length $self->{path} ? '/' .
+		       $self->{path} : '');
+	} else {
+		return $self->full_url;
+	}
+}
 
 sub set_commit_header_env {
 	my ($log_entry) = @_;
