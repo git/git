@@ -8,37 +8,14 @@ The latest copy of this document is found at
 
 ----------------------------------------------------------------
 
-* Haiku port
+* "git status" on intent-to-add index entries (say "I" in the first
+  column instead of "A" for short status, add "(needs 'git add')" at the
+  end of "new file: $path " in long status).
 
-  Andreas Färber ($gmane/92582)
-
-* ksh "trap foo EXIT" triggers on function return, loses exit status
-
-  Brandon Casey ($gmane/92873)
-
-* document webdav debugging tip with davfs2
-
-  Giovanni Funchal ($gmane/92745)
-
-* Make attributes apply to trees, not just working tree.
-
-* "git checkout treeish -- path" from a treeish that does not contain
-  path when the index does.  It should error out but it doesn't.
-
-  #git, http://colabti.org/irclogger/irclogger_log/git?date=2008-08-03#l1318
-
-* Safer handling of grafts (Linus, me)
-  $gmane/37744/focus=37866.  Partially in 'pu' but stalled due to breakage in
-  "shallow clone".
+  $gmane/170658
 
 * synopsys: use {} instead of () for grouping alternatives (Jari Aalto)
   $gmane/72243
 
 * "[alias] st = status" and "cd .git && git st" (Jeff King)
   $gmane/72327
-
-* zlib abstraction (Marco)
-  $gmane/72262
-
-* git --index-file=<foo> <cmd> (Linus)
-  $gmane/77332
