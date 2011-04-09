@@ -1,77 +1,44 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Apr 2011, #02; Wed, 6)
-X-master-at: 6be0559183ac0b40680df314748141d1bdf28e41
-X-next-at: 00b8c7c14947fdc050aa2896ceffcc245873ec3e
+Subject: What's cooking in git.git (Apr 2011, #03; Fri, 8)
+X-master-at: c3f6163b0b6e2cfae1422050c9607db1130cded0
+X-next-at: 86d60b025fb96d44086c93b52801c971999e0b0f
 
-What's cooking in git.git (Apr 2011, #02; Wed, 6)
+What's cooking in git.git (Apr 2011, #03; Fri, 8)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' while commits prefixed with '+' are in 'next'.
 
-The tip of 'master' is at 1.7.5-rc1 now.
-
 --------------------------------------------------
 [New Topics]
 
-* dm/http-cleanup (2011-03-30) 2 commits
- - http-push: refactor curl_easy_setup madness
- - http: make curl callbacks match contracts from curl header
+* dm/stash-k-i-p (2011-04-07) 2 commits
+ - stash: ensure --no-keep-index and --patch can be used in any order
+ - stash: add two more tests for --no-keep-index
 
-* jc/pack-objects-bigfile (2011-04-05) 1 commit
- - Teach core.bigfilethreashold to pack-objects
+* jc/magic-pathspec (2011-04-06) 3 commits
+  (merged to 'next' on 2011-04-08 at c5247ce)
+ + magic pathspec: add ":(icase)path" to match case insensitively
+ + magic pathspec: futureproof shorthand form
+ + magic pathspec: add tentative ":/path/from/top/level" pathspec support
+ (this branch is tangled with jc/add-u-migration-2.)
 
-* jk/maint-stash-oob (2011-04-06) 2 commits
- - stash: fix false positive in the invalid ref test.
- - stash: fix accidental apply of non-existent stashes
+Thanks to Peff, Duy, and Michael for helping to whip the syntax and
+the basic semantics into a not-so-horrible shape.  Will not merge until
+the 1.7.5 ships, though.
 
-* nk/blame-abbrev (2011-04-06) 1 commit
- - blame: add --abbrev command line option and make it honor core.abbrev
+* jc/maint-add-p-overlapping-hunks (2011-04-06) 2 commits
+ - "add -p": work-around an old laziness that does not coalesce hunks
+ - add--interactive.perl: factor out repeated --recount option
 
-* nm/submodule-update-force (2011-04-01) 1 commit
- - submodule: Add --force option for git submodule update
+* jc/merge-dash-previous (2011-04-07) 1 commit
+ - merge: allow "-" as a short-hand for "previous branch"
 
-* jk/maint-upload-pack-shallow (2011-04-04) 1 commit
- - [REVISIT] upload-pack deadlock during a shallow clone
-
-* jk/stash-loosen-safety (2011-04-05) 1 commit
- - stash: drop dirty worktree check on apply
-
---------------------------------------------------
-[Graduated to "master"]
-
-* jc/rev-list-options-fix (2011-04-01) 1 commit
-  (merged to 'next' on 2011-04-03 at 91f19de)
- + "log --cherry-pick" documentation regression fix
-
-* jk/maint-remote-mirror-safer (2011-03-30) 3 commits
-  (merged to 'next' on 2011-04-03 at ccc9c1a)
- + remote: deprecate --mirror
- + remote: separate the concept of push and fetch mirrors
- + remote: disallow some nonsensical option combinations
-
-This avoids a nonsense configuration to be created to confuse unsuspecting
-users.
-
-* jl/submodule-fetch-on-demand (2011-03-06) 7 commits
-  (merged to 'next' on 2011-03-20 at a5e452d)
- + fetch/pull: Describe --recurse-submodule restrictions in the BUGS section
- + submodule update: Don't fetch when the submodule commit is already present
- + fetch/pull: Don't recurse into a submodule when commits are already present
- + Submodules: Add 'on-demand' value for the 'fetchRecurseSubmodule' option
- + config: teach the fetch.recurseSubmodules option the 'on-demand' value
- + fetch/pull: Add the 'on-demand' value to the --recurse-submodules option
- + fetch/pull: recurse into submodules when necessary
-
-* mg/doc-revisions-txt (2011-04-04) 3 commits
-  (merged to 'next' on 2011-04-04 at ebf3612)
- + revisions.txt: language improvements
- + revisions.txt: structure with a labelled list
- + revisions.txt: consistent use of quotes
-
-* nm/maint-conflicted-submodule-entries (2011-03-30) 1 commit
-  (merged to 'next' on 2011-04-03 at 40c5094)
- + submodule: process conflicting submodules only once
+* rr/doc-content-type (2011-04-07) 4 commits
+ - Documentation: Allow custom diff tools to be specified in 'diff.tool'
+ - Documentation: Add diff.<driver>.* to config
+ - Documentation: Move diff.<driver>.* from config.txt to diff-config.txt
+ - Documentation: Add filter.<driver>.* to config
 
 --------------------------------------------------
 [Stalled]
@@ -114,6 +81,29 @@ current usage context.
 
 --------------------------------------------------
 [Cooking]
+
+* dm/http-cleanup (2011-03-30) 2 commits
+ - http-push: refactor curl_easy_setup madness
+ - http: make curl callbacks match contracts from curl header
+
+* jc/pack-objects-bigfile (2011-04-05) 1 commit
+ - Teach core.bigfilethreashold to pack-objects
+
+* jk/maint-stash-oob (2011-04-06) 2 commits
+ - stash: fix false positive in the invalid ref test.
+ - stash: fix accidental apply of non-existent stashes
+
+* nk/blame-abbrev (2011-04-06) 1 commit
+ - blame: add --abbrev command line option and make it honor core.abbrev
+
+* nm/submodule-update-force (2011-04-01) 1 commit
+ - submodule: Add --force option for git submodule update
+
+* jk/maint-upload-pack-shallow (2011-04-06) 1 commit
+ - upload-pack: start pack-objects before async rev-list
+
+* jk/stash-loosen-safety (2011-04-05) 1 commit
+ - stash: drop dirty worktree check on apply
 
 * dm/color-palette (2011-04-05) 1 commit
   (merged to 'next' on 2011-04-04 at 0244ef9)
@@ -250,15 +240,6 @@ Will cook until 1.7.5 final.
 
 Will cook until 1.7.5 final.
 
-* jc/add-u-migration (2011-03-22) 3 commits
- - add: make "add -u/-A" update full tree without pathspec (step 3)
- - add: make "add -u/-A" update full tree without pathspec (step 2)
-  (merged to 'next' on 2011-03-31 at 962e058)
- + add: make "add -u/-A" update full tree without pathspec
-
-Need to redo the advice after the "this is from root of the working tree"
-magic pathspec.
-
 * jc/rename-degrade-cc-to-c (2011-01-06) 4 commits
   (merged to 'next' on 2011-03-31 at 8d685d7)
  + diffcore-rename: fall back to -C when -C -C busts the rename limit
@@ -282,3 +263,27 @@ Don't see much point in this itself. Probably will drop.
  + t6022: New test checking for unnecessary updates of renamed+modified files
 
 I am not happy with these magic band aids.  Will hold.
+
+--------------------------------------------------
+[Discarded]
+
+* jc/add-u-migration (2011-03-22) 3 commits
+ . add: make "add -u/-A" update full tree without pathspec (step 3)
+ . add: make "add -u/-A" update full tree without pathspec (step 2)
+  (merged to 'next' on 2011-03-31 at 962e058)
+ + add: make "add -u/-A" update full tree without pathspec
+ (this branch is tangled with jc/add-u-migration-2.)
+
+* jc/add-u-migration-2 (2011-04-08) 5 commits
+  (merged to 'next' on 2011-04-08 at 524e365)
+ + Revert "add -u" default change plans
+  (merged to 'next' on 2011-04-06 at 4a6bb82)
+ + add -u: get rid of "treewideupdate" configuration
+ + Merge branch 'jc/magic-pathspec' into early parts of jc/add-u-migration
+ + magic pathspec: add tentative ":/path/from/top/level" pathspec support
+  (merged to 'next' on 2011-03-31 at 962e058)
+ + add: make "add -u/-A" update full tree without pathspec
+ (this branch is tangled with jc/add-u-migration and jc/magic-pathspec.)
+
+These attempt "add -u" migration plans (two versions), but then revert
+both of them at the end where they are merged to 'next'.
