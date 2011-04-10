@@ -1539,8 +1539,26 @@ static void show_dirstat(struct diff_options *options)
 		struct diff_filepair *p = q->queue[i];
 		const char *name;
 		unsigned long copied, added, damage;
+		int content_changed;
 
 		name = p->one->path ? p->one->path : p->two->path;
+
+		if (p->one->sha1_valid && p->two->sha1_valid)
+			content_changed = hashcmp(p->one->sha1, p->two->sha1);
+		else
+			content_changed = 1;
+
+		if (DIFF_OPT_TST(options, DIRSTAT_BY_FILE)) {
+			/*
+			 * In --dirstat-by-file mode, we don't really need to
+			 * look at the actual file contents at all.
+			 * The fact that the SHA1 changed is enough for us to
+			 * add this file to the list of results
+			 * (with each file contributing equal damage).
+			 */
+			damage = content_changed ? 1 : 0;
+			goto found_damage;
+		}
 
 		if (DIFF_FILE_VALID(p->one) && DIFF_FILE_VALID(p->two)) {
 			diff_populate_filespec(p->one, 0);
@@ -1564,14 +1582,11 @@ static void show_dirstat(struct diff_options *options)
 		/*
 		 * Original minus copied is the removed material,
 		 * added is the new material.  They are both damages
-		 * made to the preimage. In --dirstat-by-file mode, count
-		 * damaged files, not damaged lines. This is done by
-		 * counting only a single damaged line per file.
+		 * made to the preimage.
 		 */
 		damage = (p->one->size - copied) + added;
-		if (DIFF_OPT_TST(options, DIRSTAT_BY_FILE) && damage > 0)
-			damage = 1;
 
+found_damage:
 		ALLOC_GROW(dir.files, dir.nr + 1, dir.alloc);
 		dir.files[dir.nr].name = name;
 		dir.files[dir.nr].changed = damage;
