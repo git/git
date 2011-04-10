@@ -961,9 +961,9 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 		die (_("--patch is incompatible with all other options"));
 
 	if (opts.force_detach && (opts.new_branch || opts.new_orphan_branch))
-		die("--detach cannot be used with -b/-B/--orphan");
+		die(_("--detach cannot be used with -b/-B/--orphan"));
 	if (opts.force_detach && 0 < opts.track)
-		die("--detach cannot be used with -t");
+		die(_("--detach cannot be used with -t"));
 
 	/* --track without -b should DWIM */
 	if (0 < opts.track && !opts.new_branch) {
@@ -1043,7 +1043,7 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 		}
 
 		if (opts.force_detach)
-			die("git checkout: --detach does not take a path argument");
+			die(_("git checkout: --detach does not take a path argument"));
 
 		if (1 < !!opts.writeout_stage + !!opts.force + !!opts.merge)
 			die(_("git checkout: --ours/--theirs, --force and --merge are incompatible when\nchecking out of the index."));
