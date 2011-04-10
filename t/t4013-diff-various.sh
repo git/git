@@ -300,9 +300,7 @@ diff --no-index --name-status -- dir2 dir
 diff --no-index dir dir3
 diff master master^ side
 diff --dirstat master~1 master~2
-# --dirstat doesn't notice changes that simply rearrange existing lines
 diff --dirstat initial rearrange
-# ...but --dirstat-by-file does notice changes that only rearrange lines
 diff --dirstat-by-file initial rearrange
 EOF
 

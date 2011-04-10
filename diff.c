@@ -1548,6 +1548,16 @@ static void show_dirstat(struct diff_options *options)
 		else
 			content_changed = 1;
 
+		if (!content_changed) {
+			/*
+			 * The SHA1 has not changed, so pre-/post-content is
+			 * identical. We can therefore skip looking at the
+			 * file contents altogether.
+			 */
+			damage = 0;
+			goto found_damage;
+		}
+
 		if (DIFF_OPT_TST(options, DIRSTAT_BY_FILE)) {
 			/*
 			 * In --dirstat-by-file mode, we don't really need to
@@ -1556,7 +1566,7 @@ static void show_dirstat(struct diff_options *options)
 			 * add this file to the list of results
 			 * (with each file contributing equal damage).
 			 */
-			damage = content_changed ? 1 : 0;
+			damage = 1;
 			goto found_damage;
 		}
 
@@ -1583,8 +1593,15 @@ static void show_dirstat(struct diff_options *options)
 		 * Original minus copied is the removed material,
 		 * added is the new material.  They are both damages
 		 * made to the preimage.
+		 * If the resulting damage is zero, we know that
+		 * diffcore_count_changes() considers the two entries to
+		 * be identical, but since content_changed is true, we
+		 * know that there must have been _some_ kind of change,
+		 * so we force all entries to have damage > 0.
 		 */
 		damage = (p->one->size - copied) + added;
+		if (!damage)
+			damage = 1;
 
 found_damage:
 		ALLOC_GROW(dir.files, dir.nr + 1, dir.alloc);

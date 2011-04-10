@@ -74,8 +74,8 @@ endif::git-format-patch[]
 	counted for the parent directory, unless `--cumulative` is used.
 +
 Note that the `--dirstat` option computes the changes while ignoring
-pure code movements within a file.  In other words, rearranging lines
-in a file is not counted as a change.
+the amount of pure code movements within a file.  In other words,
+rearranging lines in a file is not counted as much as other changes.
 
 --dirstat-by-file[=<limit>]::
 	Same as `--dirstat`, but counts changed files instead of lines.
