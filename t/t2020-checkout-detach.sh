@@ -108,21 +108,30 @@ test_expect_success 'checkout warns on orphan commits' '
 	echo content >orphan &&
 	git add orphan &&
 	git commit -a -m orphan &&
-	git checkout master 2>stderr &&
+	git checkout master 2>stderr
+'
+
+test_expect_success C_LOCALE_OUTPUT 'checkout warns on orphan commits: output' '
 	check_orphan_warning stderr
 '
 
 test_expect_success 'checkout does not warn leaving ref tip' '
 	reset &&
 	git checkout --detach two &&
-	git checkout master 2>stderr &&
+	git checkout master 2>stderr
+'
+
+test_expect_success C_LOCALE_OUTPUT 'checkout does not warn leaving ref tip' '
 	check_no_orphan_warning stderr
 '
 
 test_expect_success 'checkout does not warn leaving reachable commit' '
 	reset &&
 	git checkout --detach HEAD^ &&
-	git checkout master 2>stderr &&
+	git checkout master 2>stderr
+'
+
+test_expect_success C_LOCALE_OUTPUT 'checkout does not warn leaving reachable commit' '
 	check_no_orphan_warning stderr
 '
 
