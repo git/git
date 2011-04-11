@@ -648,6 +648,16 @@ svn-remote.<name>.rewriteUUID::
 	where the original UUID is not available via either useSvmProps
 	or useSvnsyncProps.
 
+svn-remote.<name>.pushurl::
+
+	Similar to git's 'remote.<name>.pushurl', this key is designed
+	to be used in cases where 'url' points to an SVN repository
+	via a read-only transport, to provide an alternate read/write
+	transport. It is assumed that both keys point to the same
+	repository. Unlike 'commiturl', 'pushurl' is a base path. If
+	either 'commiturl' or 'pushurl' could be used, 'commiturl'
+	takes precedence.
+
 svn.brokenSymlinkWorkaround::
 	This disables potentially expensive checks to workaround
 	broken symlinks checked into SVN by broken clients.  Set this
