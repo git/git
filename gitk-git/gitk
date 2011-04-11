@@ -2652,7 +2652,7 @@ proc savestuff {w} {
     global viewname viewfiles viewargs viewargscmd viewperm nextviewnum
     global cmitmode wrapcomment datetimeformat limitdiffs
     global colors uicolor bgcolor fgcolor diffcolors diffcontext selectbgcolor
-    global autoselect extdifftool perfile_attrs markbgcolor use_ttk
+    global autoselect autosellen extdifftool perfile_attrs markbgcolor use_ttk
     global hideremotes want_ttk
 
     if {$stuffsaved} return
@@ -2673,6 +2673,7 @@ proc savestuff {w} {
 	puts $f [list set cmitmode $cmitmode]
 	puts $f [list set wrapcomment $wrapcomment]
 	puts $f [list set autoselect $autoselect]
+	puts $f [list set autosellen $autosellen]
 	puts $f [list set showneartags $showneartags]
 	puts $f [list set hideremotes $hideremotes]
 	puts $f [list set showlocalchanges $showlocalchanges]
@@ -6300,6 +6301,7 @@ proc drawtags {id x xt y1} {
 	       -width $lthickness -fill black -tags tag.$id]
     $canv lower $t
     foreach tag $marks x $xvals wid $wvals {
+	set tag_quoted [string map {% %%} $tag]
 	set xl [expr {$x + $delta}]
 	set xr [expr {$x + $delta + $wid + $lthickness}]
 	set font mainfont
@@ -6308,7 +6310,7 @@ proc drawtags {id x xt y1} {
 	    set t [$canv create polygon $x [expr {$yt + $delta}] $xl $yt \
 		       $xr $yt $xr $yb $xl $yb $x [expr {$yb - $delta}] \
 		       -width 1 -outline black -fill yellow -tags tag.$id]
-	    $canv bind $t <1> [list showtag $tag 1]
+	    $canv bind $t <1> [list showtag $tag_quoted 1]
 	    set rowtextx([rowofcommit $id]) [expr {$xr + $linespc}]
 	} else {
 	    # draw a head or other ref
@@ -6335,9 +6337,9 @@ proc drawtags {id x xt y1} {
 	set t [$canv create text $xl $y1 -anchor w -text $tag -fill $fgcolor \
 		   -font $font -tags [list tag.$id text]]
 	if {$ntags >= 0} {
-	    $canv bind $t <1> [list showtag $tag 1]
+	    $canv bind $t <1> [list showtag $tag_quoted 1]
 	} elseif {$nheads >= 0} {
-	    $canv bind $t $ctxbut [list headmenu %X %Y $id $tag]
+	    $canv bind $t $ctxbut [list headmenu %X %Y $id $tag_quoted]
 	}
     }
     return $xt
@@ -6896,7 +6898,7 @@ proc selectline {l isnew {desired_loc {}}} {
     global mergemax numcommits pending_select
     global cmitmode showneartags allcommits
     global targetrow targetid lastscrollrows
-    global autoselect jump_to_here
+    global autoselect autosellen jump_to_here
 
     catch {unset pending_select}
     $canv delete hover
@@ -6958,7 +6960,7 @@ proc selectline {l isnew {desired_loc {}}} {
     $sha1entry delete 0 end
     $sha1entry insert 0 $id
     if {$autoselect} {
-	$sha1entry selection range 0 end
+	$sha1entry selection range 0 $autosellen
     }
     rhighlight_sel $id
 
@@ -9063,7 +9065,7 @@ proc cherrypick {} {
 			to file '%s'.\nPlease commit, reset or stash\
 			your changes and try again." $fname]
 	} elseif {[regexp -line \
-		       {^(CONFLICT \(.*\):|Automatic cherry-pick failed)} \
+		       {^(CONFLICT \(.*\):|Automatic cherry-pick failed|error: could not apply)} \
 		       $err]} {
 	    if {[confirm_popup [mc "Cherry-pick failed because of merge\
 			conflict.\nDo you wish to run git citool to\
@@ -10756,7 +10758,7 @@ proc doprefs {} {
     global maxwidth maxgraphpct use_ttk NS
     global oldprefs prefstop showneartags showlocalchanges
     global uicolor bgcolor fgcolor ctext diffcolors selectbgcolor markbgcolor
-    global tabstop limitdiffs autoselect extdifftool perfile_attrs
+    global tabstop limitdiffs autoselect autosellen extdifftool perfile_attrs
     global hideremotes want_ttk have_ttk
 
     set top .gitkprefs
@@ -10784,9 +10786,10 @@ proc doprefs {} {
     ${NS}::checkbutton $top.showlocal -text [mc "Show local changes"] \
 	-variable showlocalchanges
     grid x $top.showlocal -sticky w
-    ${NS}::checkbutton $top.autoselect -text [mc "Auto-select SHA1"] \
+    ${NS}::checkbutton $top.autoselect -text [mc "Auto-select SHA1 (length)"] \
 	-variable autoselect
-    grid x $top.autoselect -sticky w
+    spinbox $top.autosellen -from 1 -to 40 -width 4 -textvariable autosellen
+    grid x $top.autoselect $top.autosellen -sticky w
     ${NS}::checkbutton $top.hideremotes -text [mc "Hide remote refs"] \
 	-variable hideremotes
     grid x $top.hideremotes -sticky w
@@ -11428,6 +11431,7 @@ set showlocalchanges 1
 set limitdiffs 1
 set datetimeformat "%Y-%m-%d %H:%M:%S"
 set autoselect 1
+set autosellen 40
 set perfile_attrs 0
 set want_ttk 1
 
@@ -11581,7 +11585,7 @@ if {![info exists have_ttk]} {
 set use_ttk [expr {$have_ttk && $want_ttk}]
 set NS [expr {$use_ttk ? "ttk" : ""}]
 
-set git_version [join [lrange [split [lindex [exec git version] end] .] 0 2] .]
+regexp {^git version ([\d.]*\d)} [exec git version] _ git_version
 
 set show_notes {}
 if {[package vcompare $git_version "1.6.6.2"] >= 0} {
