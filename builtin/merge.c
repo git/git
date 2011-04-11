@@ -1062,9 +1062,12 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 	if (!allow_fast_forward && fast_forward_only)
 		die(_("You cannot combine --no-ff with --ff-only."));
 
-	if (!argc && !abort_current_merge && default_to_upstream)
-		argc = setup_with_upstream(&argv);
-
+	if (!abort_current_merge) {
+		if (!argc && default_to_upstream)
+			argc = setup_with_upstream(&argv);
+		else if (argc == 1 && !strcmp(argv[0], "-"))
+			argv[0] = "@{-1}";
+	}
 	if (!argc)
 		usage_with_options(builtin_merge_usage,
 			builtin_merge_options);
