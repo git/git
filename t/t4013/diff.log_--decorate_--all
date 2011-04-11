@@ -1,4 +1,10 @@
 $ git log --decorate --all
+commit cd4e72fd96faed3f0ba949dc42967430374e2290 (rearrange)
+Author: A U Thor <author@example.com>
+Date:   Mon Jun 26 00:06:00 2006 +0000
+
+    Rearranged lines in dir/sub
+
 commit 59d314ad6f356dd08601a4cd5e530381da3e3c64 (HEAD, master)
 Merge: 9a6d494 c7a2ab9
 Author: A U Thor <author@example.com>
