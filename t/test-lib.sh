@@ -1077,6 +1077,14 @@ else
 	test_set_prereq C_LOCALE_OUTPUT
 fi
 
+# Use this instead of test_cmp to compare files that contain expected and
+# actual output from git commands that can be translated.  When running
+# under GETTEXT_POISON this pretends that the command produced expected
+# results.
+test_i18ncmp () {
+	test -n "$GETTEXT_POISON" || test_cmp "$@"
+}
+
 # test whether the filesystem supports symbolic links
 ln -s x y 2>/dev/null && test -h y 2>/dev/null && test_set_prereq SYMLINKS
 rm -f y
