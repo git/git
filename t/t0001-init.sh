@@ -405,7 +405,7 @@ test_expect_success 're-init to move gitdir' '
 	test -d realgitdir/refs
 '
 
-test_expect_success 're-init to move gitdir symlink' '
+test_expect_success SYMLINKS 're-init to move gitdir symlink' '
 	rm -rf newdir realgitdir &&
 	git init newdir &&
 	(
