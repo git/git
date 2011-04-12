@@ -39,7 +39,7 @@ test_expect_success SYMLINKS 'create a commit where dir a/b changed to symlink' 
 	git commit -m "dir to symlink"
 '
 
-test_expect_failure SYMLINKS 'checkout commit with dir must not remove untracked a/b' '
+test_expect_success SYMLINKS 'checkout commit with dir must not remove untracked a/b' '
 
 	git rm --cached a/b &&
 	git commit -m "un-track the symlink" &&
