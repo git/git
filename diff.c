@@ -1541,7 +1541,7 @@ static void show_dirstat(struct diff_options *options)
 		unsigned long copied, added, damage;
 		int content_changed;
 
-		name = p->one->path ? p->one->path : p->two->path;
+		name = p->two->path ? p->two->path : p->one->path;
 
 		if (p->one->sha1_valid && p->two->sha1_valid)
 			content_changed = hashcmp(p->one->sha1, p->two->sha1);
