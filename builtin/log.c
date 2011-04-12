@@ -623,7 +623,7 @@ static FILE *realstdout = NULL;
 static const char *output_directory = NULL;
 static int outdir_offset;
 
-static int reopen_stdout(struct commit *commit, struct rev_info *rev)
+static int reopen_stdout(struct commit *commit, struct rev_info *rev, int quiet)
 {
 	struct strbuf filename = STRBUF_INIT;
 	int suffix_len = strlen(fmt_patch_suffix) + 1;
@@ -639,7 +639,7 @@ static int reopen_stdout(struct commit *commit, struct rev_info *rev)
 
 	get_patch_filename(commit, rev->nr, fmt_patch_suffix, &filename);
 
-	if (!DIFF_OPT_TST(&rev->diffopt, QUICK))
+	if (!quiet)
 		fprintf(realstdout, "%s\n", filename.buf + outdir_offset);
 
 	if (freopen(filename.buf, "w", stdout) == NULL)
@@ -718,7 +718,8 @@ static void print_signature(void)
 static void make_cover_letter(struct rev_info *rev, int use_stdout,
 			      int numbered, int numbered_files,
 			      struct commit *origin,
-			      int nr, struct commit **list, struct commit *head)
+			      int nr, struct commit **list, struct commit *head,
+			      int quiet)
 {
 	const char *committer;
 	const char *subject_start = NULL;
@@ -754,7 +755,7 @@ static void make_cover_letter(struct rev_info *rev, int use_stdout,
 			sha1_to_hex(head->object.sha1), committer, committer);
 	}
 
-	if (!use_stdout && reopen_stdout(commit, rev))
+	if (!use_stdout && reopen_stdout(commit, rev, quiet))
 		return;
 
 	if (commit) {
@@ -995,6 +996,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	char *add_signoff = NULL;
 	struct strbuf buf = STRBUF_INIT;
 	int use_patch_format = 0;
+	int quiet = 0;
 	const struct option builtin_format_patch_options[] = {
 		{ OPTION_CALLBACK, 'n', "numbered", &numbered, NULL,
 			    "use [PATCH n/m] even with a single patch",
@@ -1050,6 +1052,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			    PARSE_OPT_OPTARG, thread_callback },
 		OPT_STRING(0, "signature", &signature, "signature",
 			    "add a signature"),
+		OPT_BOOLEAN(0, "quiet", &quiet,
+			    "don't print the patch filenames"),
 		OPT_END()
 	};
 
@@ -1259,7 +1263,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		if (thread)
 			gen_message_id(&rev, "cover");
 		make_cover_letter(&rev, use_stdout, numbered, numbered_files,
-				  origin, nr, list, head);
+				  origin, nr, list, head, quiet);
 		total++;
 		start_number--;
 	}
@@ -1305,7 +1309,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		}
 
 		if (!use_stdout && reopen_stdout(numbered_files ? NULL : commit,
-						 &rev))
+						 &rev, quiet))
 			die(_("Failed to create output files"));
 		shown = log_tree_commit(&rev, commit);
 		free(commit->buffer);
