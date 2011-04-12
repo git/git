@@ -197,7 +197,7 @@ test_expect_success 'clone separate gitdir' '
 	test -d realgitdir/refs
 '
 
-test_expect_success C_LOCALE_OUTPUT 'clone separate gitdir: output' '
+test_expect_success 'clone separate gitdir: output' '
 	echo "gitdir: `pwd`/realgitdir" >expected &&
 	test_cmp expected dst/.git
 '
