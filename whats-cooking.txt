@@ -1,50 +1,94 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Apr 2011, #03; Fri, 8)
-X-master-at: c3f6163b0b6e2cfae1422050c9607db1130cded0
-X-next-at: 86d60b025fb96d44086c93b52801c971999e0b0f
+Subject: What's cooking in git.git (Apr 2011, #04; Tue, 12)
+X-master-at: 9db19414582fdb154384ff1ca457cbf9095fef48
+X-next-at: d93e7e3f2508f46a0fb8be7796d959f6c18e83bb
 
-What's cooking in git.git (Apr 2011, #03; Fri, 8)
+What's cooking in git.git (Apr 2011, #04; Tue, 12)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' while commits prefixed with '+' are in 'next'.
 
+As we are already in pre-release feature freeze, some of the trivially
+correct features and fixes to non-regression bugs are only queued to
+'next' but not in 'master'.  They are marked as post 1.7.5 candidates in
+this list.
+
 --------------------------------------------------
 [New Topics]
 
-* dm/stash-k-i-p (2011-04-07) 2 commits
- - stash: ensure --no-keep-index and --patch can be used in any order
- - stash: add two more tests for --no-keep-index
+* ef/maint-strbuf-init (2011-04-10) 2 commits
+  (merged to 'next' on 2011-04-11 at 1dd34d9)
+ + config: support values longer than 1023 bytes
+ + strbuf: make sure buffer is zero-terminated
 
-* jc/magic-pathspec (2011-04-06) 3 commits
-  (merged to 'next' on 2011-04-08 at c5247ce)
- + magic pathspec: add ":(icase)path" to match case insensitively
- + magic pathspec: futureproof shorthand form
- + magic pathspec: add tentative ":/path/from/top/level" pathspec support
- (this branch is tangled with jc/add-u-migration-2.)
+Should graduate soon after 1.7.5 ships and merged to 1.7.4.X and 1.7.5.1
+release.
 
-Thanks to Peff, Duy, and Michael for helping to whip the syntax and
-the basic semantics into a not-so-horrible shape.  Will not merge until
-the 1.7.5 ships, though.
+* jh/dirstat (2011-04-12) 4 commits
+  (merged to 'next' on 2011-04-12 at dd2c308)
+ + --dirstat: In case of renames, use target filename instead of source filename
+  (merged to 'next' on 2011-04-11 at 33d0417)
+ + Teach --dirstat not to completely ignore rearranged lines within a file
+ + --dirstat-by-file: Make it faster and more correct
+ + --dirstat: Describe non-obvious differences relative to --stat or regular diff
+
+Should graduate soon after 1.7.5 ships and merged to 1.7.4.X and 1.7.5.1
+releases.
+
+* jm/mergetool-submodules (2011-04-08) 1 commit
+ - mergetool: Teach about submodules
+
+Looked sane if inefficient when both branches have the submodule but was
+dubious in delete/modify conflict case. Awaiting response and possibly a
+reroll.
+
+* rj/sparse (2011-04-07) 7 commits
+ - sparse: Fix some "symbol not declared" warnings
+ - sparse: Fix errors due to missing target-specific variables
+ - sparse: Fix an "symbol 'merge_file' not decared" warning
+ - sparse: Fix an "symbol 'format_subject' not declared" warning
+ - sparse: Fix some "Using plain integer as NULL pointer" warnings
+ - sparse: Fix an "symbol 'cmd_index_pack' not declared" warning
+ - Makefile: Use cgcc rather than sparse in the check target
+
+* ab/i18n-fixup (2011-04-12) 8 commits
+  (merged to 'next' on 2011-04-12 at a94aa85)
+ + i18n: do not overuse C_LOCALE_OUTPUT
+ + i18n: mark init-db messages for translation
+ + i18n: mark checkout plural warning for translation
+ + i18n: mark checkout --detach messages for translation
+ + i18n: mark clone nonexistent repository message for translation
+ + i18n: mark merge CHERRY_PICK_HEAD messages for translation
+ + i18n: mark merge "upstream" messages for translation
+ + i18n: mark merge "Could not read from" message for translation
+
+It would be nice to have this before 1.7.5 final; even if we didn't, we
+would have to force people to build on top of this, not on 1.7.5, which
+would essentially mean that we would commit to this series anyway.
+
+* cn/format-patch-quiet (2011-04-12) 2 commits
+  (merged to 'next' on 2011-04-12 at 915a915)
+ + format-patch: document --quiet option
+ + format-patch: don't pass on the --quiet flag
+
+Should graduate soon after 1.7.5 ships and merged to 1.7.4.X and 1.7.5.1
+release.
+
+--------------------------------------------------
+[Stalled]
 
 * jc/maint-add-p-overlapping-hunks (2011-04-06) 2 commits
  - "add -p": work-around an old laziness that does not coalesce hunks
  - add--interactive.perl: factor out repeated --recount option
 
-* jc/merge-dash-previous (2011-04-07) 1 commit
- - merge: allow "-" as a short-hand for "previous branch"
-
-* rr/doc-content-type (2011-04-07) 4 commits
- - Documentation: Allow custom diff tools to be specified in 'diff.tool'
- - Documentation: Add diff.<driver>.* to config
- - Documentation: Move diff.<driver>.* from config.txt to diff-config.txt
- - Documentation: Add filter.<driver>.* to config
-
---------------------------------------------------
-[Stalled]
+This came from http://thread.gmane.org/gmane.comp.version-control.git/170685/focus=171000;
+we may want to add tests before moving it forward.
 
 * jh/gitweb-localtime (2011-03-23) 1 commit
  - gitweb: javascript ability to adjust time based on timezone
+
+Re-roll posted on the list, but I haven't picked it up.
 
 * mg/show-without-prune (2011-04-01) 1 commit
  - builtin/show: do not prune by pathspec
@@ -82,41 +126,112 @@ current usage context.
 --------------------------------------------------
 [Cooking]
 
+* dm/stash-k-i-p (2011-04-07) 2 commits
+  (merged to 'next' on 2011-04-11 at 8349531)
+ + stash: ensure --no-keep-index and --patch can be used in any order
+ + stash: add two more tests for --no-keep-index
+
+Should graduate soon after 1.7.5 ships and merged to 1.7.4.X and 1.7.5.1
+releases.
+
+* jc/magic-pathspec (2011-04-06) 3 commits
+  (merged to 'next' on 2011-04-08 at c5247ce)
+ + magic pathspec: add ":(icase)path" to match case insensitively
+ + magic pathspec: futureproof shorthand form
+ + magic pathspec: add tentative ":/path/from/top/level" pathspec support
+ (this branch is tangled with jc/add-u-migration-2.)
+
+Thanks to Peff, Duy, and Michael for helping to whip the syntax and
+the basic semantics into a not-so-horrible shape.  Will not merge until
+the 1.7.5 ships, though.
+
+* jc/merge-dash-previous (2011-04-07) 1 commit
+  (merged to 'next' on 2011-04-11 at 06480d1)
+ + merge: allow "-" as a short-hand for "previous branch"
+
+Should graduate soon after 1.7.5 ships.
+
+* rr/doc-content-type (2011-04-07) 4 commits
+  (merged to 'next' on 2011-04-11 at dca8914)
+ + Documentation: Allow custom diff tools to be specified in 'diff.tool'
+ + Documentation: Add diff.<driver>.* to config
+ + Documentation: Move diff.<driver>.* from config.txt to diff-config.txt
+ + Documentation: Add filter.<driver>.* to config
+
+Is everybody happy with the new wording?
+
+Should graduate soon after 1.7.5 ships and merged to 1.7.4.X and 1.7.5.1
+releases.
+
 * dm/http-cleanup (2011-03-30) 2 commits
  - http-push: refactor curl_easy_setup madness
  - http: make curl callbacks match contracts from curl header
 
+I didn't see anything glaringly wrong with this, but I would appreciate
+extra sets of eyeballs from people who have worked on HTTP transports to
+double check.
+
 * jc/pack-objects-bigfile (2011-04-05) 1 commit
- - Teach core.bigfilethreashold to pack-objects
+  (merged to 'next' on 2011-04-11 at 86c52b1)
+ + Teach core.bigfilethreashold to pack-objects
+
+Should graduate soon after 1.7.5 ships and merged to 1.7.4.X and 1.7.5.1
+releases.
 
 * jk/maint-stash-oob (2011-04-06) 2 commits
- - stash: fix false positive in the invalid ref test.
- - stash: fix accidental apply of non-existent stashes
+  (merged to 'next' on 2011-04-11 at d882935)
+ + stash: fix false positive in the invalid ref test.
+ + stash: fix accidental apply of non-existent stashes
+
+Should graduate soon after 1.7.5 ships and merged to 1.7.4.X and 1.7.5.1
+releases.
 
 * nk/blame-abbrev (2011-04-06) 1 commit
- - blame: add --abbrev command line option and make it honor core.abbrev
+  (merged to 'next' on 2011-04-11 at 19e8676)
+ + blame: add --abbrev command line option and make it honor core.abbrev
+
+Should graduate soon after 1.7.5 ships.
 
 * nm/submodule-update-force (2011-04-01) 1 commit
- - submodule: Add --force option for git submodule update
+  (merged to 'next' on 2011-04-11 at d94f6f3)
+ + submodule: Add --force option for git submodule update
+
+Are submodule users happy with this change?
+
+Should graduate soon after 1.7.5 ships.
 
 * jk/maint-upload-pack-shallow (2011-04-06) 1 commit
- - upload-pack: start pack-objects before async rev-list
+  (merged to 'next' on 2011-04-11 at 9104545)
+ + upload-pack: start pack-objects before async rev-list
+
+A sensible and low-impact fix.  Should graduate soon after 1.7.5 ships
+and merged to 1.7.4.X and 1.7.5.1 releases.
 
 * jk/stash-loosen-safety (2011-04-05) 1 commit
- - stash: drop dirty worktree check on apply
+  (merged to 'next' on 2011-04-11 at b59c533)
+ + stash: drop dirty worktree check on apply
+
+Should graduate soon after 1.7.5 ships.
 
 * dm/color-palette (2011-04-05) 1 commit
   (merged to 'next' on 2011-04-04 at 0244ef9)
  + Share color list between graph and show-branch
+
+Should graduate soon after 1.7.5 ships.
 
 * mg/sha1-path-advise (2011-03-31) 2 commits
   (merged to 'next' on 2011-04-04 at e429e0c)
  + sha1_name: Suggest commit:./file for path in subdir
  + t1506: factor out test for "Did you mean..."
 
+Should graduate soon after 1.7.5 ships and merged to 1.7.5.1 release.
+
 * ar/clean-rmdir-empty (2011-04-01) 1 commit
   (merged to 'next' on 2011-04-03 at c63fac8)
  + clean: unreadable directory may still be rmdir-able if it is empty
+
+Should graduate soon after 1.7.5 ships and merged to 1.7.4.X and 1.7.5.1
+releases.
 
 * jk/maint-push-async-hang (2011-03-31) 4 commits
  - send-pack: abort sideband demuxer on pack-objects error
@@ -130,6 +245,9 @@ current usage context.
  - Merge branch 'jk/maint-push-async-hang' into jk/maint-push-async-hang-threads
  (this branch uses jk/maint-push-async-hang.)
 
+These two series aim for a good goal, but needs reroll after 1.7.5 with
+sign-offs.
+
 * mg/reflog-with-options (2011-04-01) 3 commits
   (merged to 'next' on 2011-04-03 at e69a95c)
  + reflog: fix overriding of command line options
@@ -137,7 +255,7 @@ current usage context.
  + builtin/log.c: separate default and setup of cmd_log_init()
  (this branch is used by mg/show-without-prune.)
 
-Reasonable, but can wait.
+Should graduate soon after 1.7.5 ships and merged to 1.7.5.1 release.
 
 * mh/git-svn-automkdirs (2011-04-01) 1 commit
   (merged to 'next' on 2011-04-03 at 7fa4978)
@@ -149,21 +267,25 @@ Should be safe, but I'd like an Ack from git-svn folks.
   (merged to 'next' on 2011-04-03 at 5a23b23)
  + git diff -D: omit the preimage of deletes
 
-Unstuck, thanks to Michael J Gruber.
+Should graduate soon after 1.7.5 ships.
 
 * jh/notes-add-ui (2011-03-30) 1 commit
- - Make "git notes add" more user-friendly when there are existing notes
+  (merged to 'next' on 2011-04-11 at 72e7c39)
+ + Make "git notes add" more user-friendly when there are existing notes
+
+Should graduate soon after 1.7.5 ships and merged to 1.7.5.1 release.
 
 * jk/notes-ui-updates (2011-03-30) 7 commits
- - log/pretty-options: Document --[no-]notes and deprecate old notes options
- - revision.c: make --no-notes reset --notes list
- - revision.c: support --notes command-line option
- - notes: refactor display notes default handling
- - notes: refactor display notes extra refs field
- - revision.c: refactor notes ref expansion
- - notes: make expand_notes_ref globally accessible
+  (merged to 'next' on 2011-04-11 at 313d6c4)
+ + log/pretty-options: Document --[no-]notes and deprecate old notes options
+ + revision.c: make --no-notes reset --notes list
+ + revision.c: support --notes command-line option
+ + notes: refactor display notes default handling
+ + notes: refactor display notes extra refs field
+ + revision.c: refactor notes ref expansion
+ + notes: make expand_notes_ref globally accessible
 
-I like what this does, but it probably can wait.
+Should graduate soon after 1.7.5 ships.
 
 * nd/maint-setup (2011-03-26) 2 commits
   (merged to 'next' on 2011-03-31 at 2c36f6a)
@@ -171,8 +293,9 @@ I like what this does, but it probably can wait.
  + setup: return correct prefix if worktree is '/'
 
 This benefits only the minority who use /.git at the root level of the
-filesystem, but the changed code is used from many codepaths; will not
-merge before 1.7.5.
+filesystem, but the changed code is used from many codepaths.
+
+Should graduate soon after 1.7.5 ships and merged to 1.7.5.1 release.
 
 * mz/rebase (2011-02-28) 34 commits
   (merged to 'next' on 2011-03-31 at 3b1343c)
@@ -224,6 +347,8 @@ there is no user visible improvements up to this point.
  + merge: handle renames with replacement content
  + t3030: fix accidental success in symlink rename
 
+Peff wanted to reroll this.
+
 * mz/maint-rename-unmerged (2011-03-23) 1 commit
   (merged to 'next' on 2011-03-31 at c7b3d9a)
  + diffcore-rename: don't consider unmerged path as source
@@ -231,7 +356,8 @@ there is no user visible improvements up to this point.
 Will cook until 1.7.5 final.
 
 * nd/struct-pathspec (2011-04-05) 5 commits
- - pathspec: rename per-item field has_wildcard to use_wildcard
+  (merged to 'next' on 2011-04-11 at ee794a5)
+ + pathspec: rename per-item field has_wildcard to use_wildcard
   (merged to 'next' on 2011-03-31 at 66cbb7d)
  + Improve tree_entry_interesting() handling code
  + Convert read_tree{,_recursive} to support struct pathspec
@@ -247,7 +373,7 @@ Will cook until 1.7.5 final.
  + diffcore-rename: refactor "too many candidates" logic
  + builtin/diff.c: remove duplicated call to diff_result_code()
 
-Will hold.
+Should graduate soon after 1.7.5 ships.
 
 * cn/system-path-tweak (2011-03-17) 1 commit
  - system_path: use a static buffer
