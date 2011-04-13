@@ -1534,7 +1534,7 @@ static int unpack_object_header(struct packed_git *p,
 	enum object_type type;
 
 	/* use_pack() assures us we have [base, base + 20) available
-	 * as a range that we can look at at.  (Its actually the hash
+	 * as a range that we can look at.  (Its actually the hash
 	 * size that is assured.)  With our object header encoding
 	 * the maximum deflated object size is 2^137, which is just
 	 * insane, so we know won't exceed what we have been given.
