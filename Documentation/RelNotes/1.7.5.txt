@@ -8,7 +8,7 @@ Updates since v1.7.4
 
  * Various git-p4 enhancements (in contrib).
 
- * Various vcs-svn enhancements.
+ * Various vcs-svn, git-svn and gitk enhancements and fixes.
 
  * Various git-gui updates (0.14.0).
 
@@ -133,6 +133,6 @@ release, unless otherwise noted.
 
 ---
 exec >/var/tmp/1
-O=v1.7.5-rc1
+O=v1.7.5-rc2
 echo O=$(git describe 'master')
 git shortlog --no-merges ^maint ^$O master

@@ -34,7 +34,7 @@ pointed by remote tags that it does not yet have, then fetch
 those missing tags.  If the other end has tags that point at
 branches you are not interested in, you will not get them.
 
-'git fetch' can fetch from either a single named repository, or
+'git fetch' can fetch from either a single named repository,
 or from several repositories at once if <group> is given and
 there is a remotes.<group> entry in the configuration file.
 (See linkgit:git-config[1]).

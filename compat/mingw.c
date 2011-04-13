@@ -1130,7 +1130,7 @@ char **make_augmented_environ(const char *const *vars)
 
 /*
  * Note, this isn't a complete replacement for getaddrinfo. It assumes
- * that service contains a numerical port, or that it it is null. It
+ * that service contains a numerical port, or that it is null. It
  * does a simple search using gethostbyname, and returns one IPv4 host
  * if one was found.
  */
