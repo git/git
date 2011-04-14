@@ -1584,7 +1584,7 @@ __git_log_common_options="
 __git_log_gitk_options="
 	--dense --sparse --full-history
 	--simplify-merges --simplify-by-decoration
-	--left-right
+	--left-right --notes --no-notes
 "
 # Options that go well for log and shortlog (not gitk)
 __git_log_shortlog_options="
