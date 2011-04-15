@@ -9,7 +9,8 @@ git-merge-base - Find as good common ancestors as possible for a merge
 SYNOPSIS
 --------
 [verse]
-'git merge-base' [-a|--all] [--octopus] <commit> <commit>...
+'git merge-base' [-a|--all] <commit> <commit>...
+'git merge-base' [-a|--all] --octopus <commit>...
 'git merge-base' --independent <commit>...
 
 DESCRIPTION
@@ -88,6 +89,9 @@ equivalent topology with a merge commit 'M' between 'B' and 'C' is:
 and the result of `git merge-base A M` is '1'.  Commit '2' is also a
 common ancestor between 'A' and 'M', but '1' is a better common ancestor,
 because '2' is an ancestor of '1'.  Hence, '2' is not a merge base.
+
+The result of `git merge-base --octopus A B C` is '2', because '2' is
+the best common ancestor of all commits.
 
 When the history involves criss-cross merges, there can be more than one
 'best' common ancestor for two commits.  For example, with this topology:
