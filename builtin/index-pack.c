@@ -207,7 +207,7 @@ static void parse_pack_header(void)
 static NORETURN void bad_object(unsigned long offset, const char *format,
 		       ...) __attribute__((format (printf, 2, 3)));
 
-static void bad_object(unsigned long offset, const char *format, ...)
+static NORETURN void bad_object(unsigned long offset, const char *format, ...)
 {
 	va_list params;
 	char buf[1024];
@@ -294,7 +294,7 @@ static void *unpack_raw_entry(struct object_entry *obj, union delta_base *delta_
 	void *data;
 
 	obj->idx.offset = consumed_bytes;
-	input_crc32 = crc32(0, Z_NULL, 0);
+	input_crc32 = crc32(0, NULL, 0);
 
 	p = fill(1);
 	c = *p;

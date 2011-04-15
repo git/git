@@ -56,11 +56,6 @@ a repository with many branches of historical interests.
 The command usually removes loose refs under `$GIT_DIR/refs`
 hierarchy after packing them.  This option tells it not to.
 
-
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org>
-
 GIT
 ---
 Part of the linkgit:git[1] suite

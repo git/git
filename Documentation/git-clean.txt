@@ -61,12 +61,6 @@ OPTIONS
 	Remove only files ignored by git.  This may be useful to rebuild
 	everything from scratch, but keep manually created files.
 
-
-Author
-------
-Written by Pavel Roskin <proski@gnu.org>
-
-
 GIT
 ---
 Part of the linkgit:git[1] suite

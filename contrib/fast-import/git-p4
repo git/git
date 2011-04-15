@@ -222,10 +222,10 @@ def p4CmdList(cmd, stdin=None, stdin_mode='w+b', cb=None):
     try:
         while True:
             entry = marshal.load(p4.stdout)
-	    if cb is not None:
-		cb(entry)
-	    else:
-		result.append(entry)
+            if cb is not None:
+                cb(entry)
+            else:
+                result.append(entry)
     except EOFError:
         pass
     exitCode = p4.wait()
@@ -333,9 +333,13 @@ def gitBranchExists(branch):
     return proc.wait() == 0;
 
 _gitConfig = {}
-def gitConfig(key):
+def gitConfig(key, args = None): # set args to "--bool", for instance
     if not _gitConfig.has_key(key):
-        _gitConfig[key] = read_pipe("git config %s" % key, ignore_error=True).strip()
+        argsFilter = ""
+        if args != None:
+            argsFilter = "%s " % args
+        cmd = "git config %s%s" % (argsFilter, key)
+        _gitConfig[key] = read_pipe(cmd, ignore_error=True).strip()
     return _gitConfig[key]
 
 def p4BranchesInGit(branchesAreInRemotes = True):
@@ -445,12 +449,25 @@ def p4ChangesForPaths(depotPaths, changeRange):
 
     changes = {}
     for line in output:
-	changeNum = int(line.split(" ")[1])
-	changes[changeNum] = True
+        changeNum = int(line.split(" ")[1])
+        changes[changeNum] = True
 
     changelist = changes.keys()
     changelist.sort()
     return changelist
+
+def p4PathStartsWith(path, prefix):
+    # This method tries to remedy a potential mixed-case issue:
+    #
+    # If UserA adds  //depot/DirA/file1
+    # and UserB adds //depot/dira/file2
+    #
+    # we may or may not have a problem. If you have core.ignorecase=true,
+    # we treat DirA and dira as the same directory
+    ignorecase = gitConfig("core.ignorecase", "--bool") == "true"
+    if ignorecase:
+        return path.lower().startswith(prefix.lower())
+    return path.startswith(prefix)
 
 class Command:
     def __init__(self):
@@ -543,13 +560,13 @@ class P4Submit(Command):
         self.options = [
                 optparse.make_option("--verbose", dest="verbose", action="store_true"),
                 optparse.make_option("--origin", dest="origin"),
-                optparse.make_option("-M", dest="detectRename", action="store_true"),
+                optparse.make_option("-M", dest="detectRenames", action="store_true"),
         ]
         self.description = "Submit changes from git to the perforce depot."
         self.usage += " [name of git branch to submit into perforce depot]"
         self.interactive = True
         self.origin = ""
-        self.detectRename = False
+        self.detectRenames = False
         self.verbose = False
         self.isWindows = (platform.system() == "Windows")
 
@@ -570,7 +587,7 @@ class P4Submit(Command):
                 continue
 
             if inDescriptionSection:
-                if line.startswith("Files:"):
+                if line.startswith("Files:") or line.startswith("Jobs:"):
                     inDescriptionSection = False
                 else:
                     continue
@@ -599,7 +616,7 @@ class P4Submit(Command):
                     lastTab = path.rfind("\t")
                     if lastTab != -1:
                         path = path[:lastTab]
-                        if not path.startswith(self.depotPath):
+                        if not p4PathStartsWith(path, self.depotPath):
                             continue
                 else:
                     inFilesSection = False
@@ -613,7 +630,22 @@ class P4Submit(Command):
 
     def applyCommit(self, id):
         print "Applying %s" % (read_pipe("git log --max-count=1 --pretty=oneline %s" % id))
-        diffOpts = ("", "-M")[self.detectRename]
+
+        if not self.detectRenames:
+            # If not explicitly set check the config variable
+            self.detectRenames = gitConfig("git-p4.detectRenames").lower() == "true"
+
+        if self.detectRenames:
+            diffOpts = "-M"
+        else:
+            diffOpts = ""
+
+        if gitConfig("git-p4.detectCopies").lower() == "true":
+            diffOpts += " -C"
+
+        if gitConfig("git-p4.detectCopiesHarder").lower() == "true":
+            diffOpts += " --find-copies-harder"
+
         diff = read_pipe_lines("git diff-tree -r %s \"%s^\" \"%s\"" % (diffOpts, id, id))
         filesToAdd = set()
         filesToDelete = set()
@@ -637,11 +669,23 @@ class P4Submit(Command):
                 filesToDelete.add(path)
                 if path in filesToAdd:
                     filesToAdd.remove(path)
+            elif modifier == "C":
+                src, dest = diff['src'], diff['dst']
+                p4_system("integrate -Dt \"%s\" \"%s\"" % (src, dest))
+                if diff['src_sha1'] != diff['dst_sha1']:
+                    p4_system("edit \"%s\"" % (dest))
+                if isModeExecChanged(diff['src_mode'], diff['dst_mode']):
+                    p4_system("edit \"%s\"" % (dest))
+                    filesToChangeExecBit[dest] = diff['dst_mode']
+                os.unlink(dest)
+                editedFiles.add(dest)
             elif modifier == "R":
                 src, dest = diff['src'], diff['dst']
                 p4_system("integrate -Dt \"%s\" \"%s\"" % (src, dest))
-                p4_system("edit \"%s\"" % (dest))
+                if diff['src_sha1'] != diff['dst_sha1']:
+                    p4_system("edit \"%s\"" % (dest))
                 if isModeExecChanged(diff['src_mode'], diff['dst_mode']):
+                    p4_system("edit \"%s\"" % (dest))
                     filesToChangeExecBit[dest] = diff['dst_mode']
                 os.unlink(dest)
                 editedFiles.add(dest)
@@ -834,6 +878,8 @@ class P4Submit(Command):
         return True
 
 class P4Sync(Command):
+    delete_actions = ( "delete", "move/delete", "purge" )
+
     def __init__(self):
         Command.__init__(self)
         self.options = [
@@ -882,6 +928,23 @@ class P4Sync(Command):
         if gitConfig("git-p4.syncFromOrigin") == "false":
             self.syncWithOrigin = False
 
+    #
+    # P4 wildcards are not allowed in filenames.  P4 complains
+    # if you simply add them, but you can force it with "-f", in
+    # which case it translates them into %xx encoding internally.
+    # Search for and fix just these four characters.  Do % last so
+    # that fixing it does not inadvertently create new %-escapes.
+    #
+    def wildcard_decode(self, path):
+        # Cannot have * in a filename in windows; untested as to
+        # what p4 would do in such a case.
+        if not self.isWindows:
+            path = path.replace("%2A", "*")
+        path = path.replace("%23", "#") \
+                   .replace("%40", "@") \
+                   .replace("%25", "%")
+        return path
+
     def extractFilesFromCommit(self, commit):
         self.cloneExclude = [re.sub(r"\.\.\.$", "", path)
                              for path in self.cloneExclude]
@@ -891,11 +954,11 @@ class P4Sync(Command):
             path =  commit["depotFile%s" % fnum]
 
             if [p for p in self.cloneExclude
-                if path.startswith (p)]:
+                if p4PathStartsWith(path, p)]:
                 found = False
             else:
                 found = [p for p in self.depotPaths
-                         if path.startswith (p)]
+                         if p4PathStartsWith(path, p)]
             if not found:
                 fnum = fnum + 1
                 continue
@@ -910,11 +973,27 @@ class P4Sync(Command):
         return files
 
     def stripRepoPath(self, path, prefixes):
+        if self.useClientSpec:
+
+            # if using the client spec, we use the output directory
+            # specified in the client.  For example, a view
+            #   //depot/foo/branch/... //client/branch/foo/...
+            # will end up putting all foo/branch files into
+            #  branch/foo/
+            for val in self.clientSpecDirs:
+                if path.startswith(val[0]):
+                    # replace the depot path with the client path
+                    path = path.replace(val[0], val[1][1])
+                    # now strip out the client (//client/...)
+                    path = re.sub("^(//[^/]+/)", '', path)
+                    # the rest is all path
+                    return path
+
         if self.keepRepoPath:
             prefixes = [re.sub("^(//[^/]+/).*", r'\1', prefixes[0])]
 
         for p in prefixes:
-            if path.startswith(p):
+            if p4PathStartsWith(path, p):
                 path = path[len(p):]
 
         return path
@@ -925,7 +1004,7 @@ class P4Sync(Command):
         while commit.has_key("depotFile%s" % fnum):
             path =  commit["depotFile%s" % fnum]
             found = [p for p in self.depotPaths
-                     if path.startswith (p)]
+                     if p4PathStartsWith(path, p)]
             if not found:
                 fnum = fnum + 1
                 continue
@@ -954,12 +1033,13 @@ class P4Sync(Command):
     # - helper for streamP4Files
 
     def streamOneP4File(self, file, contents):
-	if file["type"] == "apple":
-	    print "\nfile %s is a strange apple file that forks. Ignoring" % \
-		file['depotFile']
-	    return
+        if file["type"] == "apple":
+            print "\nfile %s is a strange apple file that forks. Ignoring" % \
+                file['depotFile']
+            return
 
         relPath = self.stripRepoPath(file['depotFile'], self.branchPrefixes)
+        relPath = self.wildcard_decode(relPath)
         if verbose:
             sys.stderr.write("%s\n" % relPath)
 
@@ -1005,22 +1085,22 @@ class P4Sync(Command):
     # handle another chunk of streaming data
     def streamP4FilesCb(self, marshalled):
 
-	if marshalled.has_key('depotFile') and self.stream_have_file_info:
-	    # start of a new file - output the old one first
-	    self.streamOneP4File(self.stream_file, self.stream_contents)
-	    self.stream_file = {}
-	    self.stream_contents = []
-	    self.stream_have_file_info = False
+        if marshalled.has_key('depotFile') and self.stream_have_file_info:
+            # start of a new file - output the old one first
+            self.streamOneP4File(self.stream_file, self.stream_contents)
+            self.stream_file = {}
+            self.stream_contents = []
+            self.stream_have_file_info = False
 
-	# pick up the new file information... for the
-	# 'data' field we need to append to our array
-	for k in marshalled.keys():
-	    if k == 'data':
-		self.stream_contents.append(marshalled['data'])
-	    else:
-		self.stream_file[k] = marshalled[k]
+        # pick up the new file information... for the
+        # 'data' field we need to append to our array
+        for k in marshalled.keys():
+            if k == 'data':
+                self.stream_contents.append(marshalled['data'])
+            else:
+                self.stream_file[k] = marshalled[k]
 
-	self.stream_have_file_info = True
+        self.stream_have_file_info = True
 
     # Stream directly from "p4 files" into "git fast-import"
     def streamP4Files(self, files):
@@ -1032,16 +1112,16 @@ class P4Sync(Command):
             includeFile = True
             for val in self.clientSpecDirs:
                 if f['path'].startswith(val[0]):
-                    if val[1] <= 0:
+                    if val[1][0] <= 0:
                         includeFile = False
                     break
 
             if includeFile:
                 filesForCommit.append(f)
-                if f['action'] not in ('delete', 'move/delete', 'purge'):
-                    filesToRead.append(f)
-                else:
+                if f['action'] in self.delete_actions:
                     filesToDelete.append(f)
+                else:
+                    filesToRead.append(f)
 
         # deleted files...
         for f in filesToDelete:
@@ -1052,14 +1132,14 @@ class P4Sync(Command):
             self.stream_contents = []
             self.stream_have_file_info = False
 
-	    # curry self argument
-	    def streamP4FilesCbSelf(entry):
-		self.streamP4FilesCb(entry)
+            # curry self argument
+            def streamP4FilesCbSelf(entry):
+                self.streamP4FilesCb(entry)
 
-	    p4CmdList("-x - print",
-		'\n'.join(['%s#%s' % (f['path'], f['rev'])
+            p4CmdList("-x - print",
+                '\n'.join(['%s#%s' % (f['path'], f['rev'])
                                                   for f in filesToRead]),
-	        cb=streamP4FilesCbSelf)
+                cb=streamP4FilesCbSelf)
 
             # do the last chunk
             if self.stream_file.has_key('depotFile'):
@@ -1068,7 +1148,7 @@ class P4Sync(Command):
     def commit(self, details, files, branch, branchPrefixes, parent = ""):
         epoch = details["time"]
         author = details["user"]
-	self.branchPrefixes = branchPrefixes
+        self.branchPrefixes = branchPrefixes
 
         if self.verbose:
             print "commit into %s" % branch
@@ -1077,10 +1157,10 @@ class P4Sync(Command):
         # create a commit.
         new_files = []
         for f in files:
-            if [p for p in branchPrefixes if f['path'].startswith(p)]:
+            if [p for p in branchPrefixes if p4PathStartsWith(f['path'], p)]:
                 new_files.append (f)
             else:
-                sys.stderr.write("Ignoring file outside of prefix: %s\n" % path)
+                sys.stderr.write("Ignoring file outside of prefix: %s\n" % f['path'])
 
         self.gitStream.write("commit %s\n" % branch)
 #        gitStream.write("mark :%s\n" % details["change"])
@@ -1127,7 +1207,7 @@ class P4Sync(Command):
 
                 cleanedFiles = {}
                 for info in files:
-                    if info["action"] in ("delete", "purge"):
+                    if info["action"] in self.delete_actions:
                         continue
                     cleanedFiles[info["depotFile"]] = info["rev"]
 
@@ -1173,7 +1253,7 @@ class P4Sync(Command):
 
         s = ''
         for (key, val) in self.users.items():
-	    s += "%s\t%s\n" % (key.expandtabs(1), val.expandtabs(1))
+            s += "%s\t%s\n" % (key.expandtabs(1), val.expandtabs(1))
 
         open(self.getUserCacheFilename(), "wb").write(s)
         self.userMapFromPerforceServer = True
@@ -1241,7 +1321,7 @@ class P4Sync(Command):
                 source = paths[0]
                 destination = paths[1]
                 ## HACK
-                if source.startswith(self.depotPaths[0]) and destination.startswith(self.depotPaths[0]):
+                if p4PathStartsWith(source, self.depotPaths[0]) and p4PathStartsWith(destination, self.depotPaths[0]):
                     source = source[len(self.depotPaths[0]):-4]
                     destination = destination[len(self.depotPaths[0]):-4]
 
@@ -1429,7 +1509,7 @@ class P4Sync(Command):
         print "Doing initial import of %s from revision %s into %s" % (' '.join(self.depotPaths), revision, self.branch)
 
         details = { "user" : "git perforce import user", "time" : int(time.time()) }
-        details["desc"] = ("Initial import of %s from the state at revision %s"
+        details["desc"] = ("Initial import of %s from the state at revision %s\n"
                            % (' '.join(self.depotPaths), revision))
         details["change"] = revision
         newestRevision = 0
@@ -1440,9 +1520,16 @@ class P4Sync(Command):
                                            % (p, revision)
                                            for p in self.depotPaths])):
 
-            if info['code'] == 'error':
+            if 'code' in info and info['code'] == 'error':
                 sys.stderr.write("p4 returned an error: %s\n"
                                  % info['data'])
+                if info['data'].find("must refer to client") >= 0:
+                    sys.stderr.write("This particular p4 error is misleading.\n")
+                    sys.stderr.write("Perhaps the depot path was misspelled.\n");
+                    sys.stderr.write("Depot path:  %s\n" % " ".join(self.depotPaths))
+                sys.exit(1)
+            if 'p4ExitCode' in info:
+                sys.stderr.write("p4 exitcode: %s\n" % info['p4ExitCode'])
                 sys.exit(1)
 
 
@@ -1450,7 +1537,7 @@ class P4Sync(Command):
             if change > newestRevision:
                 newestRevision = change
 
-            if info["action"] in ("delete", "purge"):
+            if info["action"] in self.delete_actions:
                 # don't increase the file cnt, otherwise details["depotFile123"] will have gaps!
                 #fileCnt = fileCnt + 1
                 continue
@@ -1475,19 +1562,45 @@ class P4Sync(Command):
         for entry in specList:
             for k,v in entry.iteritems():
                 if k.startswith("View"):
+
+                    # p4 has these %%1 to %%9 arguments in specs to
+                    # reorder paths; which we can't handle (yet :)
+                    if re.match('%%\d', v) != None:
+                        print "Sorry, can't handle %%n arguments in client specs"
+                        sys.exit(1)
+
                     if v.startswith('"'):
                         start = 1
                     else:
                         start = 0
                     index = v.find("...")
+
+                    # save the "client view"; i.e the RHS of the view
+                    # line that tells the client where to put the
+                    # files for this view.
+                    cv = v[index+3:].strip() # +3 to remove previous '...'
+
+                    # if the client view doesn't end with a
+                    # ... wildcard, then we're going to mess up the
+                    # output directory, so fail gracefully.
+                    if not cv.endswith('...'):
+                        print 'Sorry, client view in "%s" needs to end with wildcard' % (k)
+                        sys.exit(1)
+                    cv=cv[:-3]
+
+                    # now save the view; +index means included, -index
+                    # means it should be filtered out.
                     v = v[start:index]
                     if v.startswith("-"):
                         v = v[1:]
-                        temp[v] = -len(v)
+                        include = -len(v)
                     else:
-                        temp[v] = len(v)
+                        include = len(v)
+
+                    temp[v] = (include, cv)
+
         self.clientSpecDirs = temp.items()
-        self.clientSpecDirs.sort( lambda x, y: abs( y[1] ) - abs( x[1] ) )
+        self.clientSpecDirs.sort( lambda x, y: abs( y[1][0] ) - abs( x[1][0] ) )
 
     def run(self, args):
         self.depotPaths = []
@@ -1667,6 +1780,10 @@ class P4Sync(Command):
 
                 changes.sort()
             else:
+                # catch "git-p4 sync" with no new branches, in a repo that
+                # does not have any existing git-p4 branches
+                if len(args) == 0 and not self.p4BranchesInGit:
+                    die("No remote p4 branches.  Perhaps you never did \"git p4 clone\" in here.");
                 if self.verbose:
                     print "Getting p4 changes for %s...%s" % (', '.join(self.depotPaths),
                                                               self.changeRange)
@@ -1747,10 +1864,13 @@ class P4Clone(P4Sync):
                                  help="where to leave result of the clone"),
             optparse.make_option("-/", dest="cloneExclude",
                                  action="append", type="string",
-                                 help="exclude depot path")
+                                 help="exclude depot path"),
+            optparse.make_option("--bare", dest="cloneBare",
+                                 action="store_true", default=False),
         ]
         self.cloneDestination = None
         self.needsGit = False
+        self.cloneBare = False
 
     # This is required for the "append" cloneExclude action
     def ensure_value(self, attr, value):
@@ -1790,11 +1910,16 @@ class P4Clone(P4Sync):
             self.cloneDestination = self.defaultDestination(args)
 
         print "Importing from %s into %s" % (', '.join(depotPaths), self.cloneDestination)
+
         if not os.path.exists(self.cloneDestination):
             os.makedirs(self.cloneDestination)
         chdir(self.cloneDestination)
-        system("git init")
-        self.gitdir = os.getcwd() + "/.git"
+
+        init_cmd = [ "git", "init" ]
+        if self.cloneBare:
+            init_cmd.append("--bare")
+        subprocess.check_call(init_cmd)
+
         if not P4Sync.run(self, depotPaths):
             return False
         if self.branch != "master":
@@ -1804,7 +1929,8 @@ class P4Clone(P4Sync):
                 masterbranch = "refs/heads/p4/master"
             if gitBranchExists(masterbranch):
                 system("git branch master %s" % masterbranch)
-                system("git checkout -f")
+                if not self.cloneBare:
+                    system("git checkout -f")
             else:
                 print "Could not detect main branch. No checkout/master branch created."
 

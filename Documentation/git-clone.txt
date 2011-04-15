@@ -12,6 +12,7 @@ SYNOPSIS
 'git clone' [--template=<template_directory>]
 	  [-l] [-s] [--no-hardlinks] [-q] [-n] [--bare] [--mirror]
 	  [-o <name>] [-b <name>] [-u <upload-pack>] [--reference <repository>]
+	  [--separate-git-dir|-L <git dir>]
 	  [--depth <depth>] [--recursive|--recurse-submodules] [--] <repository>
 	  [<directory>]
 
@@ -176,6 +177,15 @@ objects from the source repository into a pack in the cloned repository.
 	repository does not have a worktree/checkout (i.e. if any of
 	`--no-checkout`/`-n`, `--bare`, or `--mirror` is given)
 
+-L=<git dir>::
+--separate-git-dir=<git dir>::
+	Instead of placing the cloned repository where it is supposed
+	to be, place the cloned repository at the specified directory,
+	then make a filesytem-agnostic git symbolic link to there.
+	The result is git repository can be separated from working
+	tree.
+
+
 <repository>::
 	The (possibly remote) repository to clone from.  See the
 	<<URLS,URLS>> section below for more information on specifying
@@ -235,17 +245,6 @@ $ git clone --bare -l /home/proj/.git /pub/scm/proj.git
 $ git clone --bare -l -s /pub/scm/.../torvalds/linux-2.6.git \
     /pub/scm/.../me/subsys-2.6.git
 ------------
-
-
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org>
-
-
-Documentation
---------------
-Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
-
 
 GIT
 ---

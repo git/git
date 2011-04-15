@@ -107,7 +107,7 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 		    DIFF_OPT_TST(&revs->diffopt, HAS_CHANGES))
 			break;
 
-		if (!ce_path_match(ce, revs->prune_data))
+		if (!ce_path_match(ce, &revs->prune_data))
 			continue;
 
 		if (ce_stage(ce)) {
@@ -428,7 +428,7 @@ static int oneway_diff(struct cache_entry **src, struct unpack_trees_options *o)
 	if (tree == o->df_conflict_entry)
 		tree = NULL;
 
-	if (ce_path_match(idx ? idx : tree, revs->prune_data))
+	if (ce_path_match(idx ? idx : tree, &revs->prune_data))
 		do_oneway_diff(o, idx, tree);
 
 	return 0;
@@ -502,7 +502,7 @@ int do_diff_cache(const unsigned char *tree_sha1, struct diff_options *opt)
 	active_nr = dst - active_cache;
 
 	init_revisions(&revs, NULL);
-	revs.prune_data = opt->paths;
+	init_pathspec(&revs.prune_data, opt->pathspec.raw);
 	tree = parse_tree_indirect(tree_sha1);
 	if (!tree)
 		die("bad tree object %s", sha1_to_hex(tree_sha1));

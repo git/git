@@ -7,7 +7,7 @@ git-rerere - Reuse recorded resolution of conflicted merges
 
 SYNOPSIS
 --------
-'git rerere' ['clear'|'forget' [<pathspec>]|'diff'|'status'|'gc']
+'git rerere' ['clear'|'forget' <pathspec>|'diff'|'status'|'gc']
 
 DESCRIPTION
 -----------
@@ -43,7 +43,7 @@ will automatically invoke this command.
 'forget' <pathspec>::
 
 This resets the conflict resolutions which rerere has recorded for the current
-conflict in <pathspec>.  The <pathspec> is optional.
+conflict in <pathspec>.
 
 'diff'::
 
@@ -204,11 +204,6 @@ This would result in falling back to a three-way merge, and it
 would conflict the same way as the test merge you resolved earlier.
 'git rerere' will be run by 'git rebase' to help you resolve this
 conflict.
-
-
-Author
-------
-Written by Junio C Hamano <gitster@pobox.com>
 
 GIT
 ---

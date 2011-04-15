@@ -92,7 +92,7 @@ static int ce_compare_data(struct cache_entry *ce, struct stat *st)
 
 	if (fd >= 0) {
 		unsigned char sha1[20];
-		if (!index_fd(sha1, fd, st, 0, OBJ_BLOB, ce->name))
+		if (!index_fd(sha1, fd, st, 0, OBJ_BLOB, ce->name, 0))
 			match = hashcmp(sha1, ce->sha1);
 		/* index_fd() closed the file descriptor already */
 	}
@@ -706,30 +706,9 @@ int ce_same_name(struct cache_entry *a, struct cache_entry *b)
 	return ce_namelen(b) == len && !memcmp(a->name, b->name, len);
 }
 
-int ce_path_match(const struct cache_entry *ce, const char **pathspec)
+int ce_path_match(const struct cache_entry *ce, const struct pathspec *pathspec)
 {
-	const char *match, *name;
-	int len;
-
-	if (!pathspec)
-		return 1;
-
-	len = ce_namelen(ce);
-	name = ce->name;
-	while ((match = *pathspec++) != NULL) {
-		int matchlen = strlen(match);
-		if (matchlen > len)
-			continue;
-		if (memcmp(name, match, matchlen))
-			continue;
-		if (matchlen && name[matchlen-1] == '/')
-			return 1;
-		if (name[matchlen] == '/' || !name[matchlen])
-			return 1;
-		if (!matchlen)
-			return 1;
-	}
-	return 0;
+	return match_pathspec_depth(pathspec, ce->name, ce_namelen(ce), 0, NULL);
 }
 
 /*
@@ -1104,7 +1083,7 @@ static struct cache_entry *refresh_cache_ent(struct index_state *istate,
 }
 
 static void show_file(const char * fmt, const char * name, int in_porcelain,
-		      int * first, char *header_msg)
+		      int * first, const char *header_msg)
 {
 	if (in_porcelain && *first && header_msg) {
 		printf("%s\n", header_msg);
@@ -1114,7 +1093,7 @@ static void show_file(const char * fmt, const char * name, int in_porcelain,
 }
 
 int refresh_index(struct index_state *istate, unsigned int flags, const char **pathspec,
-		  char *seen, char *header_msg)
+		  char *seen, const char *header_msg)
 {
 	int i;
 	int has_errors = 0;

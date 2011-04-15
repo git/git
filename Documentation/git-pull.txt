@@ -84,7 +84,7 @@ must be given before the options meant for 'git fetch'.
 --verbose::
 	Pass --verbose to git-fetch and git-merge.
 
---[no-]recurse-submodules::
+--[no-]recurse-submodules[=yes|on-demand|no]::
 	This option controls if new commits of all populated submodules should
 	be fetched too (see linkgit:git-config[1] and linkgit:gitmodules[5]).
 	That might be necessary to get the data needed for merging submodule
@@ -220,21 +220,18 @@ If you tried a pull which resulted in a complex conflicts and
 would want to start over, you can recover with 'git reset'.
 
 
+BUGS
+----
+Using --recurse-submodules can only fetch new commits in already checked
+out submodules right now. When e.g. upstream added a new submodule in the
+just fetched commits of the superproject the submodule itself can not be
+fetched, making it impossible to check out that submodule later without
+having to do a fetch again. This is expected to be fixed in a future git
+version.
+
 SEE ALSO
 --------
 linkgit:git-fetch[1], linkgit:git-merge[1], linkgit:git-config[1]
-
-
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org>
-and Junio C Hamano <gitster@pobox.com>
-
-Documentation
---------------
-Documentation by Jon Loeliger,
-David Greaves,
-Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---

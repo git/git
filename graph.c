@@ -798,22 +798,9 @@ static void graph_output_commit_char(struct git_graph *graph, struct strbuf *sb)
 	}
 
 	/*
-	 * If revs->left_right is set, print '<' for commits that
-	 * come from the left side, and '>' for commits from the right
-	 * side.
+	 * get_revision_mark() handles all other cases without assert()
 	 */
-	if (graph->revs && graph->revs->left_right) {
-		if (graph->commit->object.flags & SYMMETRIC_LEFT)
-			strbuf_addch(sb, '<');
-		else
-			strbuf_addch(sb, '>');
-		return;
-	}
-
-	/*
-	 * Print '*' in all other cases
-	 */
-	strbuf_addch(sb, '*');
+	strbuf_addstr(sb, get_revision_mark(graph->revs, graph->commit));
 }
 
 /*

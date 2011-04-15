@@ -60,7 +60,7 @@ static int gc_config(const char *var, const char *value, void *cb)
 		if (value && strcmp(value, "now")) {
 			unsigned long now = approxidate("now");
 			if (approxidate(value) >= now)
-				return error("Invalid %s: '%s'", var, value);
+				return error(_("Invalid %s: '%s'"), var, value);
 		}
 		return git_config_string(&prune_expire, var, value);
 	}
@@ -75,7 +75,7 @@ static void append_option(const char **cmd, const char *opt, int max_length)
 		;
 
 	if (i + 2 >= max_length)
-		die("Too many options specified");
+		die(_("Too many options specified"));
 	cmd[i++] = opt;
 	cmd[i] = NULL;
 }
@@ -100,7 +100,7 @@ static int too_many_loose_objects(void)
 		return 0;
 
 	if (sizeof(path) <= snprintf(path, sizeof(path), "%s/17", objdir)) {
-		warning("insanely long object directory %.*s", 50, objdir);
+		warning(_("insanely long object directory %.*s"), 50, objdir);
 		return 0;
 	}
 	dir = opendir(path);
@@ -219,13 +219,13 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 		 */
 		if (!need_to_gc())
 			return 0;
-		fprintf(stderr,
-			"Auto packing the repository for optimum performance.%s\n",
-			quiet
-			? ""
-			: (" You may also\n"
-			   "run \"git gc\" manually. See "
-			   "\"git help gc\" for more information."));
+		if (quiet)
+			fprintf(stderr, _("Auto packing the repository for optimum performance.\n"));
+		else
+			fprintf(stderr,
+					_("Auto packing the repository for optimum performance. You may also\n"
+					"run \"git gc\" manually. See "
+					"\"git help gc\" for more information."));
 	} else
 		append_option(argv_repack,
 			      prune_expire && !strcmp(prune_expire, "now")
@@ -251,8 +251,8 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 		return error(FAILED_RUN, argv_rerere[0]);
 
 	if (auto_gc && too_many_loose_objects())
-		warning("There are too many unreachable loose objects; "
-			"run 'git prune' to remove them.");
+		warning(_("There are too many unreachable loose objects; "
+			"run 'git prune' to remove them."));
 
 	return 0;
 }

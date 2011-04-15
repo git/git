@@ -1,4 +1,4 @@
-#include "cache.h"
+#include "builtin.h"
 #include "parse-options.h"
 #include "transport.h"
 #include "remote.h"
@@ -9,7 +9,7 @@
 
 static const char * const builtin_remote_usage[] = {
 	"git remote [-v | --verbose]",
-	"git remote add [-t <branch>] [-m <master>] [-f] [--mirror] <name> <url>",
+	"git remote add [-t <branch>] [-m <master>] [-f] [--mirror=<fetch|push>] <name> <url>",
 	"git remote rename <old> <new>",
 	"git remote rm <name>",
 	"git remote set-head <name> (-a | -d | <branch>)",
@@ -117,6 +117,11 @@ enum {
 	TAGS_SET = 2
 };
 
+#define MIRROR_NONE 0
+#define MIRROR_FETCH 1
+#define MIRROR_PUSH 2
+#define MIRROR_BOTH (MIRROR_FETCH|MIRROR_PUSH)
+
 static int add_branch(const char *key, const char *branchname,
 		const char *remotename, int mirror, struct strbuf *tmp)
 {
@@ -131,9 +136,32 @@ static int add_branch(const char *key, const char *branchname,
 	return git_config_set_multivar(key, tmp->buf, "^$", 0);
 }
 
+static const char mirror_advice[] =
+"--mirror is dangerous and deprecated; please\n"
+"\t use --mirror=fetch or --mirror=push instead";
+
+static int parse_mirror_opt(const struct option *opt, const char *arg, int not)
+{
+	unsigned *mirror = opt->value;
+	if (not)
+		*mirror = MIRROR_NONE;
+	else if (!arg) {
+		warning("%s", mirror_advice);
+		*mirror = MIRROR_BOTH;
+	}
+	else if (!strcmp(arg, "fetch"))
+		*mirror = MIRROR_FETCH;
+	else if (!strcmp(arg, "push"))
+		*mirror = MIRROR_PUSH;
+	else
+		return error("unknown mirror argument: %s", arg);
+	return 0;
+}
+
 static int add(int argc, const char **argv)
 {
-	int fetch = 0, mirror = 0, fetch_tags = TAGS_DEFAULT;
+	int fetch = 0, fetch_tags = TAGS_DEFAULT;
+	unsigned mirror = MIRROR_NONE;
 	struct string_list track = STRING_LIST_INIT_NODUP;
 	const char *master = NULL;
 	struct remote *remote;
@@ -151,7 +179,9 @@ static int add(int argc, const char **argv)
 		OPT_CALLBACK('t', "track", &track, "branch",
 			"branch(es) to track", opt_parse_track),
 		OPT_STRING('m', "master", &master, "branch", "master branch"),
-		OPT_BOOLEAN(0, "mirror", &mirror, "no separate remotes"),
+		{ OPTION_CALLBACK, 0, "mirror", &mirror, "push|fetch",
+			"set up remote as a mirror to push to or fetch from",
+			PARSE_OPT_OPTARG, parse_mirror_opt },
 		OPT_END()
 	};
 
@@ -160,6 +190,11 @@ static int add(int argc, const char **argv)
 
 	if (argc < 2)
 		usage_with_options(builtin_remote_add_usage, options);
+
+	if (mirror && master)
+		die("specifying a master branch makes no sense with --mirror");
+	if (mirror && track.nr)
+		die("specifying branches to track makes no sense with --mirror");
 
 	name = argv[0];
 	url = argv[1];
@@ -177,18 +212,19 @@ static int add(int argc, const char **argv)
 	if (git_config_set(buf.buf, url))
 		return 1;
 
-	strbuf_reset(&buf);
-	strbuf_addf(&buf, "remote.%s.fetch", name);
-
-	if (track.nr == 0)
-		string_list_append(&track, "*");
-	for (i = 0; i < track.nr; i++) {
-		if (add_branch(buf.buf, track.items[i].string,
-				name, mirror, &buf2))
-			return 1;
+	if (!mirror || mirror & MIRROR_FETCH) {
+		strbuf_reset(&buf);
+		strbuf_addf(&buf, "remote.%s.fetch", name);
+		if (track.nr == 0)
+			string_list_append(&track, "*");
+		for (i = 0; i < track.nr; i++) {
+			if (add_branch(buf.buf, track.items[i].string,
+				       name, mirror, &buf2))
+				return 1;
+		}
 	}
 
-	if (mirror) {
+	if (mirror & MIRROR_PUSH) {
 		strbuf_reset(&buf);
 		strbuf_addf(&buf, "remote.%s.mirror", name);
 		if (git_config_set(buf.buf, "true"))

@@ -239,10 +239,6 @@ SEE ALSO
 --------
 linkgit:git-remote[1]
 
-Documentation
--------------
-Documentation by Daniel Barkalow and Ilari Liusvaara
-
 GIT
 ---
 Part of the linkgit:git[1] suite

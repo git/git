@@ -80,6 +80,16 @@ effect to your index in a row.
 --signoff::
 	Add Signed-off-by line at the end of the commit message.
 
+--strategy=<strategy>::
+	Use the given merge strategy.  Should only be used once.
+	See the MERGE STRATEGIES section in linkgit:git-merge[1]
+	for details.
+
+-X<option>::
+--strategy-option=<option>::
+	Pass the merge strategy-specific option through to the
+	merge strategy.  See linkgit:git-merge[1] for details.
+
 EXAMPLES
 --------
 git revert HEAD~3::
@@ -94,14 +104,6 @@ git revert -n master{tilde}5..master{tilde}2::
 	(included), but do not create any commit with the reverted
 	changes. The revert only modifies the working tree and the
 	index.
-
-Author
-------
-Written by Junio C Hamano <gitster@pobox.com>
-
-Documentation
---------------
-Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 SEE ALSO
 --------

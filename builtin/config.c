@@ -160,7 +160,7 @@ static int get_value(const char *key_, const char *regex_)
 	if (!local) {
 		const char *home = getenv("HOME");
 		local = repo_config = git_pathdup("config");
-		if (git_config_global() && home)
+		if (home)
 			global = xstrdup(mkpath("%s/.gitconfig", home));
 		if (git_config_system())
 			system_wide = git_etc_gitconfig();
@@ -512,4 +512,10 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 	}
 
 	return 0;
+}
+
+int cmd_repo_config(int argc, const char **argv, const char *prefix)
+{
+	fprintf(stderr, "WARNING: git repo-config is deprecated in favor of git config.\n");
+	return cmd_config(argc, argv, prefix);
 }

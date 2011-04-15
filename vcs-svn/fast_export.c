@@ -31,27 +31,30 @@ void fast_export_modify(uint32_t depth, uint32_t *path, uint32_t mode,
 }
 
 static char gitsvnline[MAX_GITSVN_LINE_LEN];
-void fast_export_commit(uint32_t revision, uint32_t author, char *log,
-			uint32_t uuid, uint32_t url,
+void fast_export_commit(uint32_t revision, const char *author,
+			const struct strbuf *log,
+			const char *uuid, const char *url,
 			unsigned long timestamp)
 {
+	static const struct strbuf empty = STRBUF_INIT;
 	if (!log)
-		log = "";
-	if (~uuid && ~url) {
+		log = &empty;
+	if (*uuid && *url) {
 		snprintf(gitsvnline, MAX_GITSVN_LINE_LEN,
 				"\n\ngit-svn-id: %s@%"PRIu32" %s\n",
-				 pool_fetch(url), revision, pool_fetch(uuid));
+				 url, revision, uuid);
 	} else {
 		*gitsvnline = '\0';
 	}
 	printf("commit refs/heads/master\n");
 	printf("committer %s <%s@%s> %ld +0000\n",
-		   ~author ? pool_fetch(author) : "nobody",
-		   ~author ? pool_fetch(author) : "nobody",
-		   ~uuid ? pool_fetch(uuid) : "local", timestamp);
-	printf("data %"PRIu32"\n%s%s\n",
-		   (uint32_t) (strlen(log) + strlen(gitsvnline)),
-		   log, gitsvnline);
+		   *author ? author : "nobody",
+		   *author ? author : "nobody",
+		   *uuid ? uuid : "local", timestamp);
+	printf("data %"PRIuMAX"\n",
+		(uintmax_t) (log->len + strlen(gitsvnline)));
+	fwrite(log->buf, log->len, 1, stdout);
+	printf("%s\n", gitsvnline);
 	if (!first_commit_done) {
 		if (revision > 1)
 			printf("from refs/heads/master^0\n");
@@ -63,14 +66,23 @@ void fast_export_commit(uint32_t revision, uint32_t author, char *log,
 	printf("progress Imported commit %"PRIu32".\n\n", revision);
 }
 
-void fast_export_blob(uint32_t mode, uint32_t mark, uint32_t len)
+static void die_short_read(struct line_buffer *input)
+{
+	if (buffer_ferror(input))
+		die_errno("error reading dump file");
+	die("invalid dump: unexpected end of file");
+}
+
+void fast_export_blob(uint32_t mode, uint32_t mark, uint32_t len, struct line_buffer *input)
 {
 	if (mode == REPO_MODE_LNK) {
 		/* svn symlink blobs start with "link " */
-		buffer_skip_bytes(5);
 		len -= 5;
+		if (buffer_skip_bytes(input, 5) != 5)
+			die_short_read(input);
 	}
 	printf("blob\nmark :%"PRIu32"\ndata %"PRIu32"\n", mark, len);
-	buffer_copy_bytes(len);
+	if (buffer_copy_bytes(input, len) != len)
+		die_short_read(input);
 	fputc('\n', stdout);
 }

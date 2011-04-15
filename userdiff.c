@@ -8,9 +8,11 @@ static int ndrivers;
 static int drivers_alloc;
 
 #define PATTERNS(name, pattern, word_regex)			\
-	{ name, NULL, -1, { pattern, REG_EXTENDED }, word_regex }
+	{ name, NULL, -1, { pattern, REG_EXTENDED },		\
+	  word_regex "|[^[:space:]]|[\xc0-\xff][\x80-\xbf]+" }
 #define IPATTERN(name, pattern, word_regex)			\
-	{ name, NULL, -1, { pattern, REG_EXTENDED | REG_ICASE }, word_regex }
+	{ name, NULL, -1, { pattern, REG_EXTENDED | REG_ICASE }, \
+	  word_regex "|[^[:space:]]|[\xc0-\xff][\x80-\xbf]+" }
 static struct userdiff_driver builtin_drivers[] = {
 IPATTERN("fortran",
 	 "!^([C*]|[ \t]*!)\n"
@@ -24,10 +26,9 @@ IPATTERN("fortran",
 	  * Don't worry about format statements without leading digits since
 	  * they would have been matched above as a variable anyway. */
 	 "|[-+]?[0-9.]+([AaIiDdEeFfLlTtXx][Ss]?[-+]?[0-9.]*)?(_[a-zA-Z0-9][a-zA-Z0-9_]*)?"
-	 "|//|\\*\\*|::|[/<>=]="
-	 "|[^[:space:]]|[\x80-\xff]+"),
+	 "|//|\\*\\*|::|[/<>=]="),
 PATTERNS("html", "^[ \t]*(<[Hh][1-6][ \t].*>.*)$",
-	 "[^<>= \t]+|[^[:space:]]|[\x80-\xff]+"),
+	 "[^<>= \t]+"),
 PATTERNS("java",
 	 "!^[ \t]*(catch|do|for|if|instanceof|new|return|switch|throw|while)\n"
 	 "^[ \t]*(([A-Za-z_][A-Za-z_0-9]*[ \t]+)+[A-Za-z_][A-Za-z_0-9]*[ \t]*\\([^;]*)$",
@@ -35,8 +36,7 @@ PATTERNS("java",
 	 "[a-zA-Z_][a-zA-Z0-9_]*"
 	 "|[-+0-9.e]+[fFlL]?|0[xXbB]?[0-9a-fA-F]+[lL]?"
 	 "|[-+*/<>%&^|=!]="
-	 "|--|\\+\\+|<<=?|>>>?=?|&&|\\|\\|"
-	 "|[^[:space:]]|[\x80-\xff]+"),
+	 "|--|\\+\\+|<<=?|>>>?=?|&&|\\|\\|"),
 PATTERNS("objc",
 	 /* Negate C statements that can look like functions */
 	 "!^[ \t]*(do|for|if|else|return|switch|while)\n"
@@ -49,8 +49,7 @@ PATTERNS("objc",
 	 /* -- */
 	 "[a-zA-Z_][a-zA-Z0-9_]*"
 	 "|[-+0-9.e]+[fFlL]?|0[xXbB]?[0-9a-fA-F]+[lL]?"
-	 "|[-+*/<>%&^|=!]=|--|\\+\\+|<<=?|>>=?|&&|\\|\\||::|->"
-	 "|[^[:space:]]|[\x80-\xff]+"),
+	 "|[-+*/<>%&^|=!]=|--|\\+\\+|<<=?|>>=?|&&|\\|\\||::|->"),
 PATTERNS("pascal",
 	 "^(((class[ \t]+)?(procedure|function)|constructor|destructor|interface|"
 		"implementation|initialization|finalization)[ \t]*.*)$"
@@ -59,8 +58,7 @@ PATTERNS("pascal",
 	 /* -- */
 	 "[a-zA-Z_][a-zA-Z0-9_]*"
 	 "|[-+0-9.e]+|0[xXbB]?[0-9a-fA-F]+"
-	 "|<>|<=|>=|:=|\\.\\."
-	 "|[^[:space:]]|[\x80-\xff]+"),
+	 "|<>|<=|>=|:=|\\.\\."),
 PATTERNS("perl",
 	 "^[ \t]*package .*;\n"
 	 "^[ \t]*sub .* \\{\n"
@@ -76,33 +74,29 @@ PATTERNS("perl",
 	 "|&&|\\|\\||//|\\+\\+|--|\\*\\*|\\.\\.\\.?"
 	 "|[-+*/%.^&<>=!|]="
 	 "|=~|!~"
-	 "|<<|<>|<=>|>>"
-	 "|[^[:space:]]"),
+	 "|<<|<>|<=>|>>"),
 PATTERNS("php",
 	 "^[\t ]*(((public|protected|private|static)[\t ]+)*function.*)$\n"
 	 "^[\t ]*(class.*)$",
 	 /* -- */
 	 "[a-zA-Z_][a-zA-Z0-9_]*"
 	 "|[-+0-9.e]+|0[xXbB]?[0-9a-fA-F]+"
-	 "|[-+*/<>%&^|=!.]=|--|\\+\\+|<<=?|>>=?|===|&&|\\|\\||::|->"
-	 "|[^[:space:]]|[\x80-\xff]+"),
+	 "|[-+*/<>%&^|=!.]=|--|\\+\\+|<<=?|>>=?|===|&&|\\|\\||::|->"),
 PATTERNS("python", "^[ \t]*((class|def)[ \t].*)$",
 	 /* -- */
 	 "[a-zA-Z_][a-zA-Z0-9_]*"
 	 "|[-+0-9.e]+[jJlL]?|0[xX]?[0-9a-fA-F]+[lL]?"
-	 "|[-+*/<>%&^|=!]=|//=?|<<=?|>>=?|\\*\\*=?"
-	 "|[^[:space:]]|[\x80-\xff]+"),
+	 "|[-+*/<>%&^|=!]=|//=?|<<=?|>>=?|\\*\\*=?"),
 	 /* -- */
 PATTERNS("ruby", "^[ \t]*((class|module|def)[ \t].*)$",
 	 /* -- */
 	 "(@|@@|\\$)?[a-zA-Z_][a-zA-Z0-9_]*"
 	 "|[-+0-9.e]+|0[xXbB]?[0-9a-fA-F]+|\\?(\\\\C-)?(\\\\M-)?."
-	 "|//=?|[-+*/<>%&^|=!]=|<<=?|>>=?|===|\\.{1,3}|::|[!=]~"
-	 "|[^[:space:]]|[\x80-\xff]+"),
+	 "|//=?|[-+*/<>%&^|=!]=|<<=?|>>=?|===|\\.{1,3}|::|[!=]~"),
 PATTERNS("bibtex", "(@[a-zA-Z]{1,}[ \t]*\\{{0,1}[ \t]*[^ \t\"@',\\#}{~%]*).*$",
 	 "[={}\"]|[^={}\" \t]+"),
 PATTERNS("tex", "^(\\\\((sub)*section|chapter|part)\\*{0,1}\\{.*)$",
-	 "\\\\[a-zA-Z@]+|\\\\.|[a-zA-Z0-9\x80-\xff]+|[^[:space:]]"),
+	 "\\\\[a-zA-Z@]+|\\\\.|[a-zA-Z0-9\x80-\xff]+"),
 PATTERNS("cpp",
 	 /* Jump targets or access declarations */
 	 "!^[ \t]*[A-Za-z_][A-Za-z_0-9]*:.*$\n"
@@ -113,8 +107,7 @@ PATTERNS("cpp",
 	 /* -- */
 	 "[a-zA-Z_][a-zA-Z0-9_]*"
 	 "|[-+0-9.e]+[fFlL]?|0[xXbB]?[0-9a-fA-F]+[lL]?"
-	 "|[-+*/<>%&^|=!]=|--|\\+\\+|<<=?|>>=?|&&|\\|\\||::|->"
-	 "|[^[:space:]]|[\x80-\xff]+"),
+	 "|[-+*/<>%&^|=!]=|--|\\+\\+|<<=?|>>=?|&&|\\|\\||::|->"),
 PATTERNS("csharp",
 	 /* Keywords */
 	 "!^[ \t]*(do|while|for|if|else|instanceof|new|return|switch|case|throw|catch|using)\n"
@@ -129,8 +122,7 @@ PATTERNS("csharp",
 	 /* -- */
 	 "[a-zA-Z_][a-zA-Z0-9_]*"
 	 "|[-+0-9.e]+[fFlL]?|0[xXbB]?[0-9a-fA-F]+[lL]?"
-	 "|[-+*/<>%&^|=!]=|--|\\+\\+|<<=?|>>=?|&&|\\|\\||::|->"
-	 "|[^[:space:]]|[\x80-\xff]+"),
+	 "|[-+*/<>%&^|=!]=|--|\\+\\+|<<=?|>>=?|&&|\\|\\||::|->"),
 { "default", NULL, -1, { NULL, 0 } },
 };
 #undef PATTERNS

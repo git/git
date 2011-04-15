@@ -897,9 +897,13 @@ diff.wordRegex::
 	characters are *ignorable* whitespace.
 
 fetch.recurseSubmodules::
-	A boolean value which changes the behavior for fetch and pull, the
-	default is to not recursively fetch populated submodules unless
-	configured otherwise.
+	This option can be either set to a boolean value or to 'on-demand'.
+	Setting it to a boolean changes the behavior of fetch and pull to
+	unconditionally recurse into submodules when set to true or to not
+	recurse at all when set to false. When set to 'on-demand' (the default
+	value), fetch and pull will only recurse into a populated submodule
+	when its superproject retrieves a commit that updates the submodule's
+	reference.
 
 fetch.unpackLimit::
 	If the number of objects fetched over the git native
@@ -1097,6 +1101,12 @@ All gitcvs variables except for 'gitcvs.usecrlfattr' and
 'gitcvs.<access_method>.<varname>' (where 'access_method'
 is one of "ext" and "pserver") to make them apply only for the given
 access method.
+
+grep.lineNumber::
+	If set to true, enable '-n' option by default.
+
+grep.extendedRegexp::
+	If set to true, enable '--extended-regexp' option by default.
 
 gui.commitmsgwidth::
 	Defines how wide the commit message window is in the
@@ -1817,7 +1827,7 @@ submodule.<name>.update::
 	linkgit:git-submodule[1] and linkgit:gitmodules[5] for details.
 
 submodule.<name>.fetchRecurseSubmodules::
-	This option can be used to enable/disable recursive fetching of this
+	This option can be used to control recursive fetching of this
 	submodule. It can be overridden by using the --[no-]recurse-submodules
 	command line option to "git fetch" and "git pull".
 	This setting will override that from in the linkgit:gitmodules[5]

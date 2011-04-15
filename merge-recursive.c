@@ -22,6 +22,11 @@
 #include "dir.h"
 #include "submodule.h"
 
+static const char rename_limit_advice[] =
+"inexact rename detection was skipped because there were too many\n"
+"  files. You may want to set your merge.renamelimit variable to at least\n"
+"  %d and retry this merge.";
+
 static struct tree *shift_tree_object(struct tree *one, struct tree *two,
 				      const char *subtree_shift)
 {
@@ -135,7 +140,6 @@ static void flush_output(struct merge_options *o)
 __attribute__((format (printf, 3, 4)))
 static void output(struct merge_options *o, int v, const char *fmt, ...)
 {
-	int len;
 	va_list ap;
 
 	if (!show(o, v))
@@ -146,21 +150,9 @@ static void output(struct merge_options *o, int v, const char *fmt, ...)
 	strbuf_setlen(&o->obuf, o->obuf.len + o->call_depth * 2);
 
 	va_start(ap, fmt);
-	len = vsnprintf(o->obuf.buf + o->obuf.len, strbuf_avail(&o->obuf), fmt, ap);
+	strbuf_vaddf(&o->obuf, fmt, ap);
 	va_end(ap);
 
-	if (len < 0)
-		len = 0;
-	if (len >= strbuf_avail(&o->obuf)) {
-		strbuf_grow(&o->obuf, len + 2);
-		va_start(ap, fmt);
-		len = vsnprintf(o->obuf.buf + o->obuf.len, strbuf_avail(&o->obuf), fmt, ap);
-		va_end(ap);
-		if (len >= strbuf_avail(&o->obuf)) {
-			die("this should not happen, your snprintf is broken");
-		}
-	}
-	strbuf_setlen(&o->obuf, o->obuf.len + len);
 	strbuf_add(&o->obuf, "\n", 1);
 	if (!o->buffer_output)
 		flush_output(o);
@@ -364,7 +356,6 @@ static void make_room_for_directories_of_df_conflicts(struct merge_options *o,
 	 */
 	const char *last_file = NULL;
 	int last_len = 0;
-	struct stage_data *last_e;
 	int i;
 
 	for (i = 0; i < entries->nr; i++) {
@@ -394,7 +385,6 @@ static void make_room_for_directories_of_df_conflicts(struct merge_options *o,
 		if (S_ISREG(e->stages[2].mode) || S_ISLNK(e->stages[2].mode)) {
 			last_file = path;
 			last_len = len;
-			last_e = e;
 		} else {
 			last_file = NULL;
 		}
@@ -431,14 +421,16 @@ static struct string_list *get_renames(struct merge_options *o,
 	opts.detect_rename = DIFF_DETECT_RENAME;
 	opts.rename_limit = o->merge_rename_limit >= 0 ? o->merge_rename_limit :
 			    o->diff_rename_limit >= 0 ? o->diff_rename_limit :
-			    500;
+			    1000;
 	opts.rename_score = o->rename_score;
-	opts.warn_on_too_large_rename = 1;
+	opts.show_rename_progress = o->show_rename_progress;
 	opts.output_format = DIFF_FORMAT_NO_OUTPUT;
 	if (diff_setup_done(&opts) < 0)
 		die("diff setup failed");
 	diff_tree_sha1(o_tree->object.sha1, tree->object.sha1, "", &opts);
 	diffcore_std(&opts);
+	if (opts.needed_rename_limit > o->needed_rename_limit)
+		o->needed_rename_limit = opts.needed_rename_limit;
 	for (i = 0; i < diff_queued_diff.nr; ++i) {
 		struct string_list_item *item;
 		struct rename *re;
@@ -967,7 +959,6 @@ static int process_renames(struct merge_options *o,
 	}
 
 	for (i = 0, j = 0; i < a_renames->nr || j < b_renames->nr;) {
-		char *src;
 		struct string_list *renames1, *renames2Dst;
 		struct rename *ren1 = NULL, *ren2 = NULL;
 		const char *branch1, *branch2;
@@ -1002,7 +993,6 @@ static int process_renames(struct merge_options *o,
 			ren2 = ren1;
 			ren1 = tmp;
 		}
-		src = ren1->pair->one->path;
 
 		ren1->dst_entry->processed = 1;
 		ren1->src_entry->processed = 1;
@@ -1662,6 +1652,8 @@ int merge_recursive(struct merge_options *o,
 		commit_list_insert(h2, &(*result)->parents->next);
 	}
 	flush_output(o);
+	if (o->needed_rename_limit)
+		warning(rename_limit_advice, o->needed_rename_limit);
 	return clean;
 }
 

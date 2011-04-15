@@ -175,48 +175,23 @@ proc merge_resolve_tool2 {} {
 
 	# Build the command line
 	switch -- $tool {
-	kdiff3 {
+	araxis {
 		if {$base_stage ne {}} {
-			set cmdline [list "$merge_tool_path" --auto --L1 "$MERGED (Base)" \
-				--L2 "$MERGED (Local)" --L3 "$MERGED (Remote)" -o "$MERGED" "$BASE" "$LOCAL" "$REMOTE"]
+			set cmdline [list "$merge_tool_path" -wait -merge -3 -a1 \
+				-title1:"'$MERGED (Base)'" -title2:"'$MERGED (Local)'" \
+				-title3:"'$MERGED (Remote)'" \
+				"$BASE" "$LOCAL" "$REMOTE" "$MERGED"]
 		} else {
-			set cmdline [list "$merge_tool_path" --auto --L1 "$MERGED (Local)" \
-				--L2 "$MERGED (Remote)" -o "$MERGED" "$LOCAL" "$REMOTE"]
+			set cmdline [list "$merge_tool_path" -wait -2 \
+				 -title1:"'$MERGED (Local)'" -title2:"'$MERGED (Remote)'" \
+				 "$LOCAL" "$REMOTE" "$MERGED"]
 		}
 	}
-	tkdiff {
+	bc3 {
 		if {$base_stage ne {}} {
-			set cmdline [list "$merge_tool_path" -a "$BASE" -o "$MERGED" "$LOCAL" "$REMOTE"]
+			set cmdline [list "$merge_tool_path" "$LOCAL" "$REMOTE" "$BASE" -mergeoutput="$MERGED"]
 		} else {
-			set cmdline [list "$merge_tool_path" -o "$MERGED" "$LOCAL" "$REMOTE"]
-		}
-	}
-	meld {
-		set cmdline [list "$merge_tool_path" "$LOCAL" "$MERGED" "$REMOTE"]
-	}
-	gvimdiff {
-		set cmdline [list "$merge_tool_path" -f "$LOCAL" "$MERGED" "$REMOTE"]
-	}
-	xxdiff {
-		if {$base_stage ne {}} {
-			set cmdline [list "$merge_tool_path" -X --show-merged-pane \
-					    -R {Accel.SaveAsMerged: "Ctrl-S"} \
-					    -R {Accel.Search: "Ctrl+F"} \
-					    -R {Accel.SearchForward: "Ctrl-G"} \
-					    --merged-file "$MERGED" "$LOCAL" "$BASE" "$REMOTE"]
-		} else {
-			set cmdline [list "$merge_tool_path" -X --show-merged-pane \
-					    -R {Accel.SaveAsMerged: "Ctrl-S"} \
-					    -R {Accel.Search: "Ctrl+F"} \
-					    -R {Accel.SearchForward: "Ctrl-G"} \
-					    --merged-file "$MERGED" "$LOCAL" "$REMOTE"]
-		}
-	}
-	opendiff {
-		if {$base_stage ne {}} {
-			set cmdline [list "$merge_tool_path" "$LOCAL" "$REMOTE" -ancestor "$BASE" -merge "$MERGED"]
-		} else {
-			set cmdline [list "$merge_tool_path" "$LOCAL" "$REMOTE" -merge "$MERGED"]
+			set cmdline [list "$merge_tool_path" "$LOCAL" "$REMOTE" -mergeoutput="$MERGED"]
 		}
 	}
 	ecmerge {
@@ -235,6 +210,42 @@ proc merge_resolve_tool2 {} {
 					"$LOCAL" "$REMOTE" "$basename"]
 		}
 	}
+	gvimdiff {
+		set cmdline [list "$merge_tool_path" -f "$LOCAL" "$MERGED" "$REMOTE"]
+	}
+	kdiff3 {
+		if {$base_stage ne {}} {
+			set cmdline [list "$merge_tool_path" --auto --L1 "$MERGED (Base)" \
+				--L2 "$MERGED (Local)" --L3 "$MERGED (Remote)" -o "$MERGED" "$BASE" "$LOCAL" "$REMOTE"]
+		} else {
+			set cmdline [list "$merge_tool_path" --auto --L1 "$MERGED (Local)" \
+				--L2 "$MERGED (Remote)" -o "$MERGED" "$LOCAL" "$REMOTE"]
+		}
+	}
+	meld {
+		set cmdline [list "$merge_tool_path" "$LOCAL" "$MERGED" "$REMOTE"]
+	}
+	opendiff {
+		if {$base_stage ne {}} {
+			set cmdline [list "$merge_tool_path" "$LOCAL" "$REMOTE" -ancestor "$BASE" -merge "$MERGED"]
+		} else {
+			set cmdline [list "$merge_tool_path" "$LOCAL" "$REMOTE" -merge "$MERGED"]
+		}
+	}
+	p4merge {
+		set cmdline [list "$merge_tool_path" "$BASE" "$REMOTE" "$LOCAL" "$MERGED"]
+	}
+	tkdiff {
+		if {$base_stage ne {}} {
+			set cmdline [list "$merge_tool_path" -a "$BASE" -o "$MERGED" "$LOCAL" "$REMOTE"]
+		} else {
+			set cmdline [list "$merge_tool_path" -o "$MERGED" "$LOCAL" "$REMOTE"]
+		}
+	}
+	vimdiff {
+		error_popup [mc "Not a GUI merge tool: '%s'" $tool]
+		return
+	}
 	winmerge {
 		if {$base_stage ne {}} {
 			# This tool does not support 3-way merges.
@@ -245,24 +256,20 @@ proc merge_resolve_tool2 {} {
 				-dl "Theirs File" -dr "Mine File" "$REMOTE" "$LOCAL" "$MERGED"]
 		}
 	}
-	araxis {
+	xxdiff {
 		if {$base_stage ne {}} {
-			set cmdline [list "$merge_tool_path" -wait -merge -3 -a1 \
-				-title1:"'$MERGED (Base)'" -title2:"'$MERGED (Local)'" \
-				-title3:"'$MERGED (Remote)'" \
-				"$BASE" "$LOCAL" "$REMOTE" "$MERGED"]
+			set cmdline [list "$merge_tool_path" -X --show-merged-pane \
+					    -R {Accel.SaveAsMerged: "Ctrl-S"} \
+					    -R {Accel.Search: "Ctrl+F"} \
+					    -R {Accel.SearchForward: "Ctrl-G"} \
+					    --merged-file "$MERGED" "$LOCAL" "$BASE" "$REMOTE"]
 		} else {
-			set cmdline [list "$merge_tool_path" -wait -2 \
-				 -title1:"'$MERGED (Local)'" -title2:"'$MERGED (Remote)'" \
-				 "$LOCAL" "$REMOTE" "$MERGED"]
+			set cmdline [list "$merge_tool_path" -X --show-merged-pane \
+					    -R {Accel.SaveAsMerged: "Ctrl-S"} \
+					    -R {Accel.Search: "Ctrl+F"} \
+					    -R {Accel.SearchForward: "Ctrl-G"} \
+					    --merged-file "$MERGED" "$LOCAL" "$REMOTE"]
 		}
-	}
-	p4merge {
-		set cmdline [list "$merge_tool_path" "$BASE" "$REMOTE" "$LOCAL" "$MERGED"]
-	}
-	vimdiff {
-		error_popup [mc "Not a GUI merge tool: '%s'" $tool]
-		return
 	}
 	default {
 		error_popup [mc "Unsupported merge tool '%s'" $tool]

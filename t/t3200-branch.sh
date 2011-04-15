@@ -203,7 +203,7 @@ test_expect_success 'test deleting branch deletes branch config' \
      test -z "$(git config branch.my7.remote)" &&
      test -z "$(git config branch.my7.merge)"'
 
-test_expect_success 'test deleting branch without config' \
+test_expect_success C_LOCALE_OUTPUT 'test deleting branch without config' \
     'git branch my7 s &&
      sha1=$(git rev-parse my7 | cut -c 1-7) &&
      test "$(git branch -d my7 2>&1)" = "Deleted branch my7 (was $sha1)."'

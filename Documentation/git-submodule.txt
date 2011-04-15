@@ -258,11 +258,6 @@ This file should be formatted in the same way as `$GIT_DIR/config`. The key
 to each submodule url is "submodule.$name.url".  See linkgit:gitmodules[5]
 for details.
 
-
-AUTHOR
-------
-Written by Lars Hjemli <hjemli@gmail.com>
-
 GIT
 ---
 Part of the linkgit:git[1] suite

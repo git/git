@@ -16,7 +16,7 @@
  * situation better.  See how "git checkout" and "git merge" replaces
  * them using setup_unpack_trees_porcelain(), for example.
  */
-const char *unpack_plumbing_errors[NB_UNPACK_TREES_ERROR_TYPES] = {
+static const char *unpack_plumbing_errors[NB_UNPACK_TREES_ERROR_TYPES] = {
 	/* ERROR_WOULD_OVERWRITE */
 	"Entry '%s' would be overwritten by merge. Cannot merge.",
 
@@ -381,7 +381,7 @@ static void add_same_unmerged(struct cache_entry *ce,
 static int unpack_index_entry(struct cache_entry *ce,
 			      struct unpack_trees_options *o)
 {
-	struct cache_entry *src[5] = { NULL };
+	struct cache_entry *src[MAX_UNPACK_TREES + 1] = { NULL, };
 	int ret;
 
 	src[0] = ce;
@@ -427,7 +427,10 @@ static int switch_cache_bottom(struct traverse_info *info)
 	return ret;
 }
 
-static int traverse_trees_recursive(int n, unsigned long dirmask, unsigned long df_conflicts, struct name_entry *names, struct traverse_info *info)
+static int traverse_trees_recursive(int n, unsigned long dirmask,
+				    unsigned long df_conflicts,
+				    struct name_entry *names,
+				    struct traverse_info *info)
 {
 	int i, ret, bottom;
 	struct tree_desc t[MAX_UNPACK_TREES];
@@ -1105,6 +1108,7 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 
 		}
 		if (o->result.cache_nr && empty_worktree) {
+			/* dubious---why should this fail??? */
 			ret = unpack_failed(o, "Sparse checkout leaves no entry on working directory");
 			goto done;
 		}
@@ -1374,16 +1378,22 @@ static int verify_absent_1(struct cache_entry *ce,
 		char path[PATH_MAX + 1];
 		memcpy(path, ce->name, len);
 		path[len] = 0;
-		lstat(path, &st);
+		if (lstat(path, &st))
+			return error("cannot stat '%s': %s", path,
+					strerror(errno));
 
 		return check_ok_to_remove(path, len, DT_UNKNOWN, NULL, &st,
 				error_type, o);
-	} else if (!lstat(ce->name, &st))
+	} else if (lstat(ce->name, &st)) {
+		if (errno != ENOENT)
+			return error("cannot stat '%s': %s", ce->name,
+				     strerror(errno));
+		return 0;
+	} else {
 		return check_ok_to_remove(ce->name, ce_namelen(ce),
-				ce_to_dtype(ce), ce, &st,
-				error_type, o);
-
-	return 0;
+					  ce_to_dtype(ce), ce, &st,
+					  error_type, o);
+	}
 }
 
 static int verify_absent(struct cache_entry *ce,

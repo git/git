@@ -78,6 +78,10 @@ OPTIONS
 	set of marks.  If a mark is defined to different values,
 	the last file wins.
 
+--import-marks-if-exists=<file>::
+	Like --import-marks but instead of erroring out, silently
+	skips the file if it does not exist.
+
 --relative-marks::
 	After specifying --relative-marks= the paths specified
 	with --import-marks= and --export-marks= are relative
@@ -192,7 +196,8 @@ especially when a higher level language such as Perl, Python or
 Ruby is being used.
 
 fast-import is very strict about its input.  Where we say SP below we mean
-*exactly* one space.  Likewise LF means one (and only one) linefeed.
+*exactly* one space.  Likewise LF means one (and only one) linefeed
+and HT one (and only one) horizontal tab.
 Supplying additional whitespace characters will cause unexpected
 results, such as branch names or file names with leading or trailing
 spaces in their name, or early termination of fast-import when it encounters
@@ -329,6 +334,11 @@ and control the current import process.  More detailed discussion
 	Causes fast-import to print a blob in 'cat-file --batch'
 	format to the file descriptor set with `--cat-blob-fd` or
 	`stdout` if unspecified.
+
+`ls`::
+	Causes fast-import to print a line describing a directory
+	entry in 'ls-tree' format to the file descriptor set with
+	`--cat-blob-fd` or `stdout` if unspecified.
 
 `feature`::
 	Require that fast-import supports the specified feature, or
@@ -915,6 +925,55 @@ This command can be used anywhere in the stream that comments are
 accepted.  In particular, the `cat-blob` command can be used in the
 middle of a commit but not in the middle of a `data` command.
 
+`ls`
+~~~~
+Prints information about the object at a path to a file descriptor
+previously arranged with the `--cat-blob-fd` argument.  This allows
+printing a blob from the active commit (with `cat-blob`) or copying a
+blob or tree from a previous commit for use in the current one (with
+`filemodify`).
+
+The `ls` command can be used anywhere in the stream that comments are
+accepted, including the middle of a commit.
+
+Reading from the active commit::
+	This form can only be used in the middle of a `commit`.
+	The path names a directory entry within fast-import's
+	active commit.  The path must be quoted in this case.
++
+....
+	'ls' SP <path> LF
+....
+
+Reading from a named tree::
+	The `<dataref>` can be a mark reference (`:<idnum>`) or the
+	full 40-byte SHA-1 of a Git tag, commit, or tree object,
+	preexisting or waiting to be written.
+	The path is relative to the top level of the tree
+	named by `<dataref>`.
++
+....
+	'ls' SP <dataref> SP <path> LF
+....
+
+See `filemodify` above for a detailed description of `<path>`.
+
+Output uses the same format as `git ls-tree <tree> {litdd} <path>`:
+
+====
+	<mode> SP ('blob' | 'tree' | 'commit') SP <dataref> HT <path> LF
+====
+
+The <dataref> represents the blob, tree, or commit object at <path>
+and can be used in later 'cat-blob', 'filemodify', or 'ls' commands.
+
+If there is no file or subtree at that path, 'git fast-import' will
+instead report
+
+====
+	missing SP <path> LF
+====
+
 `feature`
 ~~~~~~~~~
 Require that fast-import supports the specified feature, or abort if
@@ -942,8 +1001,10 @@ import-marks::
 	any "feature import-marks" command in the stream.
 
 cat-blob::
-	Ignored.  Versions of fast-import not supporting the
-	"cat-blob" command will exit with a message indicating so.
+ls::
+	Require that the backend support the 'cat-blob' or 'ls' command.
+	Versions of fast-import not supporting the specified command
+	will exit with a message indicating so.
 	This lets the import error out early with a clear message,
 	rather than wasting time on the early part of an import
 	before the unsupported command is detected.
@@ -1288,14 +1349,6 @@ packfile early, simulating a `checkpoint` command.  The impatient
 operator can use this facility to peek at the objects and refs from an
 import in progress, at the cost of some added running time and worse
 compression.
-
-Author
-------
-Written by Shawn O. Pearce <spearce@spearce.org>.
-
-Documentation
---------------
-Documentation by Shawn O. Pearce <spearce@spearce.org>.
 
 GIT
 ---

@@ -405,16 +405,6 @@ warned.
   (or if your git-gc is not new enough to support arguments to
   `\--prune`, use `git repack -ad; git prune` instead).
 
-
-Author
-------
-Written by Petr "Pasky" Baudis <pasky@suse.cz>,
-and the git list <git@vger.kernel.org>
-
-Documentation
---------------
-Documentation by Petr Baudis and the git list.
-
 GIT
 ---
 Part of the linkgit:git[1] suite

@@ -84,9 +84,10 @@ OPTIONS
 	linkgit:git-rebase[1] for details.
 
 --reset-author::
-	When used with -C/-c/--amend options, declare that the
-	authorship of the resulting commit now belongs of the committer.
-	This also renews the author timestamp.
+	When used with -C/-c/--amend options, or when committing after a
+	a conflicting cherry-pick, declare that the authorship of the
+	resulting commit now belongs of the committer. This also renews
+	the author timestamp.
 
 --short::
 	When doing a dry-run, give the output in the short-format. See
@@ -395,12 +396,6 @@ linkgit:git-rm[1],
 linkgit:git-mv[1],
 linkgit:git-merge[1],
 linkgit:git-commit-tree[1]
-
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org> and
-Junio C Hamano <gitster@pobox.com>
-
 
 GIT
 ---

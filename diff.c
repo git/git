@@ -23,7 +23,7 @@
 #endif
 
 static int diff_detect_rename_default;
-static int diff_rename_limit_default = 200;
+static int diff_rename_limit_default = 400;
 static int diff_suppress_blank_empty;
 int diff_use_color_default = -1;
 static const char *diff_word_regex_cfg;
@@ -628,7 +628,7 @@ struct diff_words_style {
 	const char *newline;
 };
 
-struct diff_words_style diff_words_styles[] = {
+static struct diff_words_style diff_words_styles[] = {
 	{ DIFF_WORDS_PORCELAIN, {"+", "\n"}, {"-", "\n"}, {" ", "\n"}, "~\n" },
 	{ DIFF_WORDS_PLAIN, {"{+", "+}"}, {"[-", "-]"}, {"", ""}, "\n" },
 	{ DIFF_WORDS_COLOR, {"", ""}, {"", ""}, {"", ""}, "\n" }
@@ -1242,7 +1242,7 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 	uintmax_t max_change = 0, max_len = 0;
 	int total_files = data->nr;
 	int width, name_width;
-	const char *reset, *set, *add_c, *del_c;
+	const char *reset, *add_c, *del_c;
 	const char *line_prefix = "";
 	struct strbuf *msg = NULL;
 
@@ -1269,7 +1269,6 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 
 	/* Find the longest filename and max number of changes */
 	reset = diff_get_color_opt(options, DIFF_RESET);
-	set   = diff_get_color_opt(options, DIFF_PLAIN);
 	add_c = diff_get_color_opt(options, DIFF_FILE_NEW);
 	del_c = diff_get_color_opt(options, DIFF_FILE_OLD);
 

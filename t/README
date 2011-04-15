@@ -79,6 +79,10 @@ appropriately before running "make".
 --debug::
 	This may help the person who is developing a new test.
 	It causes the command defined with test_debug to run.
+	The "trash" directory (used to store all temporary data
+	during testing) is not deleted even if there are no
+	failed tests so that you can inspect its contents after
+	the test finished.
 
 --immediate::
 	This causes the test to immediately exit upon the first

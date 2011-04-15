@@ -31,7 +31,7 @@ test_expect_success 'clone with excess parameters (2)' '
 
 '
 
-test_expect_success 'output from clone' '
+test_expect_success C_LOCALE_OUTPUT 'output from clone' '
 	rm -fr dst &&
 	git clone -n "file://$(pwd)/src" dst >output &&
 	test $(grep Clon output | wc -l) = 1
@@ -164,7 +164,6 @@ test_expect_success 'clone a void' '
 test_expect_success 'clone respects global branch.autosetuprebase' '
 	(
 		test_config="$HOME/.gitconfig" &&
-		unset GIT_CONFIG_NOGLOBAL &&
 		git config -f "$test_config" branch.autosetuprebase remote &&
 		rm -fr dst &&
 		git clone src dst &&
@@ -190,6 +189,19 @@ test_expect_success 'do not respect url-encoding of non-url path' '
 	git init x+y &&
 	test_must_fail git clone x%2By xy-regular &&
 	git clone x+y xy-regular
+'
+
+test_expect_success 'clone separate gitdir' '
+	rm -rf dst &&
+	git clone --separate-git-dir realgitdir src dst &&
+	echo "gitdir: `pwd`/realgitdir" >expected &&
+	test_cmp expected dst/.git &&
+	test -d realgitdir/refs
+'
+
+test_expect_success 'clone separate gitdir where target already exists' '
+	rm -rf dst &&
+	test_must_fail git clone --separate-git-dir realgitdir src dst
 '
 
 test_done

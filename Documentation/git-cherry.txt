@@ -63,14 +63,6 @@ SEE ALSO
 --------
 linkgit:git-patch-id[1]
 
-Author
-------
-Written by Junio C Hamano <gitster@pobox.com>
-
-Documentation
---------------
-Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
-
 GIT
 ---
 Part of the linkgit:git[1] suite

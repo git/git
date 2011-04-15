@@ -42,7 +42,7 @@ b3 behind 1
 b4 ahead 2
 EOF
 
-test_expect_success 'branch -v' '
+test_expect_success C_LOCALE_OUTPUT 'branch -v' '
 	(
 		cd test &&
 		git branch -v

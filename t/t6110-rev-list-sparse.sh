@@ -3,13 +3,6 @@
 test_description='operations that cull histories in unusual ways'
 . ./test-lib.sh
 
-test_commit () {
-	echo "$1" >"$1.file" &&
-	git add "$1.file" &&
-	test_tick &&
-	git commit -m "$1"
-}
-
 test_expect_success setup '
 	test_commit A &&
 	test_commit B &&

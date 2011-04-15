@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "url.h"
 
 int is_urlschemechar(int first_flag, int ch)
 {

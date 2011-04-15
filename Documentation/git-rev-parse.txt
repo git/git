@@ -308,16 +308,6 @@ $ git rev-parse --default master --verify $REV
 +
 but if $REV is empty, the commit object name from master will be printed.
 
-
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org> .
-Junio C Hamano <gitster@pobox.com> and Pierre Habouzit <madcoder@debian.org>
-
-Documentation
---------------
-Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
-
 GIT
 ---
 Part of the linkgit:git[1] suite

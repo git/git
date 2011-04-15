@@ -20,6 +20,8 @@ struct merge_options {
 	int diff_rename_limit;
 	int merge_rename_limit;
 	int rename_score;
+	int needed_rename_limit;
+	int show_rename_progress;
 	int call_depth;
 	struct strbuf obuf;
 	struct string_list current_file_set;
@@ -57,6 +59,8 @@ struct tree *write_tree_from_memory(struct merge_options *o);
 int parse_merge_opt(struct merge_options *out, const char *s);
 
 /* builtin/merge.c */
-int try_merge_command(const char *strategy, struct commit_list *common, const char *head_arg, struct commit_list *remotes);
+int try_merge_command(const char *strategy, size_t xopts_nr,
+		const char **xopts, struct commit_list *common,
+		const char *head_arg, struct commit_list *remotes);
 
 #endif

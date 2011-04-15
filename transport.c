@@ -192,7 +192,7 @@ static const char *rsync_url(const char *url)
 static struct ref *get_refs_via_rsync(struct transport *transport, int for_push)
 {
 	struct strbuf buf = STRBUF_INIT, temp_dir = STRBUF_INIT;
-	struct ref dummy = {0}, *tail = &dummy;
+	struct ref dummy = {NULL}, *tail = &dummy;
 	struct child_process rsync;
 	const char *args[5];
 	int temp_dir_len;
@@ -1188,4 +1188,38 @@ char *transport_anonymize_url(const char *url)
 	return anon_url;
 literal_copy:
 	return xstrdup(url);
+}
+
+int refs_from_alternate_cb(struct alternate_object_database *e, void *cb)
+{
+	char *other;
+	size_t len;
+	struct remote *remote;
+	struct transport *transport;
+	const struct ref *extra;
+	alternate_ref_fn *ref_fn = cb;
+
+	e->name[-1] = '\0';
+	other = xstrdup(real_path(e->base));
+	e->name[-1] = '/';
+	len = strlen(other);
+
+	while (other[len-1] == '/')
+		other[--len] = '\0';
+	if (len < 8 || memcmp(other + len - 8, "/objects", 8))
+		return 0;
+	/* Is this a git repository with refs? */
+	memcpy(other + len - 8, "/refs", 6);
+	if (!is_directory(other))
+		return 0;
+	other[len - 8] = '\0';
+	remote = remote_get(other);
+	transport = transport_get(remote, other);
+	for (extra = transport_get_remote_refs(transport);
+	     extra;
+	     extra = extra->next)
+		ref_fn(extra, NULL);
+	transport_disconnect(transport);
+	free(other);
+	return 0;
 }

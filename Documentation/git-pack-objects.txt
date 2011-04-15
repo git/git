@@ -115,7 +115,7 @@ base-name::
 
 --honor-pack-keep::
 	This flag causes an object already in a local pack that
-	has a .keep file to be ignored, even if it it would have
+	has a .keep file to be ignored, even if it would have
 	otherwise been packed.
 
 --incremental::
@@ -223,15 +223,6 @@ So does `git bundle` (see linkgit:git-bundle[1]) when it creates a bundle.
 --keep-true-parents::
 	With this option, parents that are hidden by grafts are packed
 	nevertheless.
-
-
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org>
-
-Documentation
--------------
-Documentation by Junio C Hamano
 
 SEE ALSO
 --------

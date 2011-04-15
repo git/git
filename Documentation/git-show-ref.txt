@@ -177,11 +177,6 @@ linkgit:git-ls-remote[1],
 linkgit:git-update-ref[1],
 linkgit:gitrepository-layout[5]
 
-AUTHORS
--------
-Written by Linus Torvalds <torvalds@osdl.org>.
-Man page by Jonas Fonseca <fonseca@diku.dk>.
-
 GIT
 ---
 Part of the linkgit:git[1] suite

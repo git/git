@@ -1199,10 +1199,14 @@ if (defined caller) {
 # -full => 0|1      - use absolute/full URL ($my_uri/$my_url as base)
 # -replay => 1      - start from a current view (replay with modifications)
 # -path_info => 0|1 - don't use/use path_info URL (if possible)
+# -anchor => ANCHOR - add #ANCHOR to end of URL, implies -replay if used alone
 sub href {
 	my %params = @_;
 	# default is to use -absolute url() i.e. $my_uri
 	my $href = $params{-full} ? $my_url : $my_uri;
+
+	# implicit -replay, must be first of implicit params
+	$params{-replay} = 1 if (keys %params == 1 && $params{-anchor});
 
 	$params{'project'} = $project unless exists $params{'project'};
 
@@ -1313,6 +1317,10 @@ sub href {
 
 	# final transformation: trailing spaces must be escaped (URI-encoded)
 	$href =~ s/(\s+)$/CGI::escape($1)/e;
+
+	if ($params{-anchor}) {
+		$href .= "#".esc_param($params{-anchor});
+	}
 
 	return $href;
 }
@@ -4337,7 +4345,8 @@ sub git_difftree_body {
 				# link to patch
 				$patchno++;
 				print "<td class=\"link\">" .
-				      $cgi->a({-href => "#patch$patchno"}, "patch") .
+				      $cgi->a({-href => href(-anchor=>"patch$patchno")},
+				              "patch") .
 				      " | " .
 				      "</td>\n";
 			}
@@ -4434,8 +4443,9 @@ sub git_difftree_body {
 			if ($action eq 'commitdiff') {
 				# link to patch
 				$patchno++;
-				print $cgi->a({-href => "#patch$patchno"}, "patch");
-				print " | ";
+				print $cgi->a({-href => href(-anchor=>"patch$patchno")},
+				              "patch") .
+				      " | ";
 			}
 			print $cgi->a({-href => href(action=>"blob", hash=>$diff->{'to_id'},
 			                             hash_base=>$hash, file_name=>$diff->{'file'})},
@@ -4454,8 +4464,9 @@ sub git_difftree_body {
 			if ($action eq 'commitdiff') {
 				# link to patch
 				$patchno++;
-				print $cgi->a({-href => "#patch$patchno"}, "patch");
-				print " | ";
+				print $cgi->a({-href => href(-anchor=>"patch$patchno")},
+				              "patch") .
+				      " | ";
 			}
 			print $cgi->a({-href => href(action=>"blob", hash=>$diff->{'from_id'},
 			                             hash_base=>$parent, file_name=>$diff->{'file'})},
@@ -4496,7 +4507,8 @@ sub git_difftree_body {
 			if ($action eq 'commitdiff') {
 				# link to patch
 				$patchno++;
-				print $cgi->a({-href => "#patch$patchno"}, "patch") .
+				print $cgi->a({-href => href(-anchor=>"patch$patchno")},
+				              "patch") .
 				      " | ";
 			} elsif ($diff->{'to_id'} ne $diff->{'from_id'}) {
 				# "commit" view and modified file (not onlu mode changed)
@@ -4541,7 +4553,8 @@ sub git_difftree_body {
 			if ($action eq 'commitdiff') {
 				# link to patch
 				$patchno++;
-				print $cgi->a({-href => "#patch$patchno"}, "patch") .
+				print $cgi->a({-href => href(-anchor=>"patch$patchno")},
+				              "patch") .
 				      " | ";
 			} elsif ($diff->{'to_id'} ne $diff->{'from_id'}) {
 				# "commit" view and modified file (not only pure rename or copy)

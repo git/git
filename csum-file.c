@@ -116,7 +116,7 @@ struct sha1file *sha1fd_throughput(int fd, const char *name, struct progress *tp
 
 void crc32_begin(struct sha1file *f)
 {
-	f->crc32 = crc32(0, Z_NULL, 0);
+	f->crc32 = crc32(0, NULL, 0);
 	f->do_crc = 1;
 }
 

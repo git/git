@@ -217,15 +217,6 @@ more stable in practice:
 * cvs2git (part of cvs2svn), `http://cvs2svn.tigris.org`
 * parsecvs, `http://cgit.freedesktop.org/~keithp/parsecvs`
 
-Author
-------
-Written by Matthias Urlichs <smurf@smurf.noris.de>, with help from
-various participants of the git-list <git@vger.kernel.org>.
-
-Documentation
---------------
-Documentation by Matthias Urlichs <smurf@smurf.noris.de>.
-
 GIT
 ---
 Part of the linkgit:git[1] suite

@@ -539,6 +539,19 @@ void git_qsort(void *base, size_t nmemb, size_t size,
 #define fstat_is_reliable() 1
 #endif
 
+#ifndef va_copy
+/*
+ * Since an obvious implementation of va_list would be to make it a
+ * pointer into the stack frame, a simple assignment will work on
+ * many systems.  But let's try to be more portable.
+ */
+#ifdef __va_copy
+#define va_copy(dst, src) __va_copy(dst, src)
+#else
+#define va_copy(dst, src) ((dst) = (src))
+#endif
+#endif
+
 /*
  * Preserves errno, prints a message, but gives no warning for ENOENT.
  * Always returns the return value of unlink(2).

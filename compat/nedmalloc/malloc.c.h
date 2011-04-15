@@ -100,7 +100,7 @@
 
        If you don't like either of these options, you can define
        CORRUPTION_ERROR_ACTION and USAGE_ERROR_ACTION to do anything
-       else. And if if you are sure that your program using malloc has
+       else. And if you are sure that your program using malloc has
        no errors or vulnerabilities, you can define INSECURE to 1,
        which might (or might not) provide a small performance improvement.
 
@@ -2279,12 +2279,12 @@ nextchunk-> +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
   of the same size are arranged in a circularly-linked list, with only
   the oldest chunk (the next to be used, in our FIFO ordering)
   actually in the tree.  (Tree members are distinguished by a non-null
-  parent pointer.)  If a chunk with the same size an an existing node
+  parent pointer.)  If a chunk with the same size as an existing node
   is inserted, it is linked off the existing node using pointers that
   work in the same way as fd/bk pointers of small chunks.
 
   Each tree contains a power of 2 sized range of chunk sizes (the
-  smallest is 0x100 <= x < 0x180), which is is divided in half at each
+  smallest is 0x100 <= x < 0x180), which is divided in half at each
   tree level, with the chunks in the smaller half of the range (0x100
   <= x < 0x140 for the top nose) in the left subtree and the larger
   half (0x140 <= x < 0x180) in the right subtree.  This is, of course,
@@ -3943,7 +3943,7 @@ static void* sys_alloc(mstate m, size_t nb) {
     least-preferred order):
     1. A call to MORECORE that can normally contiguously extend memory.
        (disabled if not MORECORE_CONTIGUOUS or not HAVE_MORECORE or
-       or main space is mmapped or a previous contiguous call failed)
+       main space is mmapped or a previous contiguous call failed)
     2. A call to MMAP new space (disabled if not HAVE_MMAP).
        Note that under the default settings, if MORECORE is unable to
        fulfill a request, and HAVE_MMAP is true, then mmap is
@@ -5748,5 +5748,3 @@ History:
 	 structure of old version,  but most details differ.)
 
 */
-
-

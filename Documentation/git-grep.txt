@@ -31,6 +31,16 @@ Look for specified patterns in the tracked files in the work tree, blobs
 registered in the index file, or blobs in given tree objects.
 
 
+CONFIGURATION
+-------------
+
+grep.lineNumber::
+	If set to true, enable '-n' option by default.
+
+grep.extendedRegexp::
+	If set to true, enable '--extended-regexp' option by default.
+
+
 OPTIONS
 -------
 --cached::
@@ -203,16 +213,6 @@ git grep -e {apostrophe}#define{apostrophe} --and \( -e MAX_PATH -e PATH_MAX \):
 git grep --all-match -e NODE -e Unexpected::
 	Looks for a line that has `NODE` or `Unexpected` in
 	files that have lines that match both.
-
-Author
-------
-Originally written by Linus Torvalds <torvalds@osdl.org>, later
-revamped by Junio C Hamano.
-
-
-Documentation
---------------
-Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---

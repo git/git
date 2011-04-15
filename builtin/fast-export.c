@@ -651,7 +651,7 @@ int cmd_fast_export(int argc, const char **argv, const char *prefix)
 	if (import_filename)
 		import_marks(import_filename);
 
-	if (import_filename && revs.prune_data)
+	if (import_filename && revs.prune_data.nr)
 		full_tree = 1;
 
 	get_tags_and_duplicates(&revs.pending, &extra_refs);

@@ -42,6 +42,14 @@ echo "$@"'
 
 >empty
 
+test_expect_success 'setup: have pipes?' '
+	rm -f frob &&
+	if mkfifo frob
+	then
+		test_set_prereq PIPE
+	fi
+'
+
 ###
 ### series A
 ###
@@ -898,6 +906,77 @@ test_expect_success \
 	 git diff-tree -C --find-copies-harder -r N4^ N4 >actual &&
 	 compare_diff_raw expect actual'
 
+test_expect_success PIPE 'N: read and copy directory' '
+	cat >expect <<-\EOF
+	:100755 100755 f1fb5da718392694d0076d677d6d0e364c79b0bc f1fb5da718392694d0076d677d6d0e364c79b0bc C100	file2/newf	file3/newf
+	:100644 100644 7123f7f44e39be127c5eb701e5968176ee9d78b1 7123f7f44e39be127c5eb701e5968176ee9d78b1 C100	file2/oldf	file3/oldf
+	EOF
+	git update-ref -d refs/heads/N4 &&
+	rm -f backflow &&
+	mkfifo backflow &&
+	(
+		exec <backflow &&
+		cat <<-EOF &&
+		commit refs/heads/N4
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+		data <<COMMIT
+		copy by tree hash, part 2
+		COMMIT
+
+		from refs/heads/branch^0
+		ls "file2"
+		EOF
+		read mode type tree filename &&
+		echo "M 040000 $tree file3"
+	) |
+	git fast-import --cat-blob-fd=3 3>backflow &&
+	git diff-tree -C --find-copies-harder -r N4^ N4 >actual &&
+	compare_diff_raw expect actual
+'
+
+test_expect_success PIPE 'N: empty directory reads as missing' '
+	cat <<-\EOF >expect &&
+	OBJNAME
+	:000000 100644 OBJNAME OBJNAME A	unrelated
+	EOF
+	echo "missing src" >expect.response &&
+	git update-ref -d refs/heads/read-empty &&
+	rm -f backflow &&
+	mkfifo backflow &&
+	(
+		exec <backflow &&
+		cat <<-EOF &&
+		commit refs/heads/read-empty
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+		data <<COMMIT
+		read "empty" (missing) directory
+		COMMIT
+
+		M 100644 inline src/greeting
+		data <<BLOB
+		hello
+		BLOB
+		C src/greeting dst1/non-greeting
+		C src/greeting unrelated
+		# leave behind "empty" src directory
+		D src/greeting
+		ls "src"
+		EOF
+		read -r line &&
+		printf "%s\n" "$line" >response &&
+		cat <<-\EOF
+		D dst1
+		D dst2
+		EOF
+	) |
+	git fast-import --cat-blob-fd=3 3>backflow &&
+	test_cmp expect.response response &&
+	git rev-list read-empty |
+	git diff-tree -r --root --stdin |
+	sed "s/$_x40/OBJNAME/g" >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success \
 	'N: copy root directory by tree hash' \
 	'cat >expect <<-\EOF &&
@@ -1748,6 +1827,61 @@ test_expect_success \
     'cat input | git fast-import --export-marks=other.marks &&
     grep :1 other.marks'
 
+test_expect_success 'R: catch typo in marks file name' '
+	test_must_fail git fast-import --import-marks=nonexistent.marks </dev/null &&
+	echo "feature import-marks=nonexistent.marks" |
+	test_must_fail git fast-import
+'
+
+test_expect_success 'R: import and output marks can be the same file' '
+	rm -f io.marks &&
+	blob=$(echo hi | git hash-object --stdin) &&
+	cat >expect <<-EOF &&
+	:1 $blob
+	:2 $blob
+	EOF
+	git fast-import --export-marks=io.marks <<-\EOF &&
+	blob
+	mark :1
+	data 3
+	hi
+
+	EOF
+	git fast-import --import-marks=io.marks --export-marks=io.marks <<-\EOF &&
+	blob
+	mark :2
+	data 3
+	hi
+
+	EOF
+	test_cmp expect io.marks
+'
+
+test_expect_success 'R: --import-marks=foo --output-marks=foo to create foo fails' '
+	rm -f io.marks &&
+	test_must_fail git fast-import --import-marks=io.marks --export-marks=io.marks <<-\EOF
+	blob
+	mark :1
+	data 3
+	hi
+
+	EOF
+'
+
+test_expect_success 'R: --import-marks-if-exists' '
+	rm -f io.marks &&
+	blob=$(echo hi | git hash-object --stdin) &&
+	echo ":1 $blob" >expect &&
+	git fast-import --import-marks-if-exists=io.marks --export-marks=io.marks <<-\EOF &&
+	blob
+	mark :1
+	data 3
+	hi
+
+	EOF
+	test_cmp expect io.marks
+'
+
 cat >input << EOF
 feature import-marks=marks.out
 feature export-marks=marks.new
@@ -1804,6 +1938,11 @@ EOF
 test_expect_success 'R: feature no-relative-marks should be honoured' '
     git fast-import <input &&
     test_cmp marks.new non-relative.out
+'
+
+test_expect_success 'R: feature ls supported' '
+	echo "feature ls" |
+	git fast-import
 '
 
 test_expect_success 'R: feature cat-blob supported' '
@@ -1929,14 +2068,6 @@ test_expect_success 'R: print two blobs to stdout' '
 	} |
 	git fast-import >actual &&
 	test_cmp expect actual
-'
-
-test_expect_success 'setup: have pipes?' '
-	rm -f frob &&
-	if mkfifo frob
-	then
-		test_set_prereq PIPE
-	fi
 '
 
 test_expect_success PIPE 'R: copy using cat-file' '

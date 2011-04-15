@@ -11,8 +11,14 @@
 #include "repo_tree.h"
 #include "fast_export.h"
 #include "line_buffer.h"
-#include "obj_pool.h"
 #include "string_pool.h"
+#include "strbuf.h"
+
+/*
+ * Compare start of string to literal of equal length;
+ * must be guarded by length test.
+ */
+#define constcmp(s, ref) memcmp(s, ref, sizeof(ref) - 1)
 
 #define NODEACT_REPLACE 4
 #define NODEACT_DELETE 3
@@ -27,39 +33,24 @@
 #define LENGTH_UNKNOWN (~0)
 #define DATE_RFC2822_LEN 31
 
-/* Create memory pool for log messages */
-obj_pool_gen(log, char, 4096)
-
-static char* log_copy(uint32_t length, char *log)
-{
-	char *buffer;
-	log_free(log_pool.size);
-	buffer = log_pointer(log_alloc(length));
-	strncpy(buffer, log, length);
-	return buffer;
-}
+static struct line_buffer input = LINE_BUFFER_INIT;
 
 static struct {
-	uint32_t action, propLength, textLength, srcRev, srcMode, mark, type;
+	uint32_t action, propLength, textLength, srcRev, type;
 	uint32_t src[REPO_MAX_PATH_DEPTH], dst[REPO_MAX_PATH_DEPTH];
+	uint32_t text_delta, prop_delta;
 } node_ctx;
 
 static struct {
-	uint32_t revision, author;
+	uint32_t revision;
 	unsigned long timestamp;
-	char *log;
+	struct strbuf log, author;
 } rev_ctx;
 
 static struct {
-	uint32_t version, uuid, url;
+	uint32_t version;
+	struct strbuf uuid, url;
 } dump_ctx;
-
-static struct {
-	uint32_t svn_log, svn_author, svn_date, svn_executable, svn_special, uuid,
-		revision_number, node_path, node_kind, node_action,
-		node_copyfrom_path, node_copyfrom_rev, text_content_length,
-		prop_content_length, content_length, svn_fs_dump_format_version;
-} keys;
 
 static void reset_node_ctx(char *fname)
 {
@@ -69,126 +60,223 @@ static void reset_node_ctx(char *fname)
 	node_ctx.textLength = LENGTH_UNKNOWN;
 	node_ctx.src[0] = ~0;
 	node_ctx.srcRev = 0;
-	node_ctx.srcMode = 0;
 	pool_tok_seq(REPO_MAX_PATH_DEPTH, node_ctx.dst, "/", fname);
-	node_ctx.mark = 0;
+	node_ctx.text_delta = 0;
+	node_ctx.prop_delta = 0;
 }
 
 static void reset_rev_ctx(uint32_t revision)
 {
 	rev_ctx.revision = revision;
 	rev_ctx.timestamp = 0;
-	rev_ctx.log = NULL;
-	rev_ctx.author = ~0;
+	strbuf_reset(&rev_ctx.log);
+	strbuf_reset(&rev_ctx.author);
 }
 
-static void reset_dump_ctx(uint32_t url)
+static void reset_dump_ctx(const char *url)
 {
-	dump_ctx.url = url;
+	strbuf_reset(&dump_ctx.url);
+	if (url)
+		strbuf_addstr(&dump_ctx.url, url);
 	dump_ctx.version = 1;
-	dump_ctx.uuid = ~0;
+	strbuf_reset(&dump_ctx.uuid);
 }
 
-static void init_keys(void)
+static void handle_property(const struct strbuf *key_buf,
+				struct strbuf *val,
+				uint32_t *type_set)
 {
-	keys.svn_log = pool_intern("svn:log");
-	keys.svn_author = pool_intern("svn:author");
-	keys.svn_date = pool_intern("svn:date");
-	keys.svn_executable = pool_intern("svn:executable");
-	keys.svn_special = pool_intern("svn:special");
-	keys.uuid = pool_intern("UUID");
-	keys.revision_number = pool_intern("Revision-number");
-	keys.node_path = pool_intern("Node-path");
-	keys.node_kind = pool_intern("Node-kind");
-	keys.node_action = pool_intern("Node-action");
-	keys.node_copyfrom_path = pool_intern("Node-copyfrom-path");
-	keys.node_copyfrom_rev = pool_intern("Node-copyfrom-rev");
-	keys.text_content_length = pool_intern("Text-content-length");
-	keys.prop_content_length = pool_intern("Prop-content-length");
-	keys.content_length = pool_intern("Content-length");
-	keys.svn_fs_dump_format_version = pool_intern("SVN-fs-dump-format-version");
+	const char *key = key_buf->buf;
+	size_t keylen = key_buf->len;
+
+	switch (keylen + 1) {
+	case sizeof("svn:log"):
+		if (constcmp(key, "svn:log"))
+			break;
+		if (!val)
+			die("invalid dump: unsets svn:log");
+		strbuf_swap(&rev_ctx.log, val);
+		break;
+	case sizeof("svn:author"):
+		if (constcmp(key, "svn:author"))
+			break;
+		if (!val)
+			strbuf_reset(&rev_ctx.author);
+		else
+			strbuf_swap(&rev_ctx.author, val);
+		break;
+	case sizeof("svn:date"):
+		if (constcmp(key, "svn:date"))
+			break;
+		if (!val)
+			die("invalid dump: unsets svn:date");
+		if (parse_date_basic(val->buf, &rev_ctx.timestamp, NULL))
+			warning("invalid timestamp: %s", val->buf);
+		break;
+	case sizeof("svn:executable"):
+	case sizeof("svn:special"):
+		if (keylen == strlen("svn:executable") &&
+		    constcmp(key, "svn:executable"))
+			break;
+		if (keylen == strlen("svn:special") &&
+		    constcmp(key, "svn:special"))
+			break;
+		if (*type_set) {
+			if (!val)
+				return;
+			die("invalid dump: sets type twice");
+		}
+		if (!val) {
+			node_ctx.type = REPO_MODE_BLB;
+			return;
+		}
+		*type_set = 1;
+		node_ctx.type = keylen == strlen("svn:executable") ?
+				REPO_MODE_EXE :
+				REPO_MODE_LNK;
+	}
+}
+
+static void die_short_read(void)
+{
+	if (buffer_ferror(&input))
+		die_errno("error reading dump file");
+	die("invalid dump: unexpected end of file");
 }
 
 static void read_props(void)
 {
-	uint32_t len;
-	uint32_t key = ~0;
-	char *val = NULL;
-	char *t;
-	while ((t = buffer_read_line()) && strcmp(t, "PROPS-END")) {
-		if (!strncmp(t, "K ", 2)) {
-			len = atoi(&t[2]);
-			key = pool_intern(buffer_read_string(len));
-			buffer_read_line();
-		} else if (!strncmp(t, "V ", 2)) {
-			len = atoi(&t[2]);
-			val = buffer_read_string(len);
-			if (key == keys.svn_log) {
-				/* Value length excludes terminating nul. */
-				rev_ctx.log = log_copy(len + 1, val);
-			} else if (key == keys.svn_author) {
-				rev_ctx.author = pool_intern(val);
-			} else if (key == keys.svn_date) {
-				if (parse_date_basic(val, &rev_ctx.timestamp, NULL))
-					fprintf(stderr, "Invalid timestamp: %s\n", val);
-			} else if (key == keys.svn_executable) {
-				node_ctx.type = REPO_MODE_EXE;
-			} else if (key == keys.svn_special) {
-				node_ctx.type = REPO_MODE_LNK;
-			}
-			key = ~0;
-			buffer_read_line();
+	static struct strbuf key = STRBUF_INIT;
+	static struct strbuf val = STRBUF_INIT;
+	const char *t;
+	/*
+	 * NEEDSWORK: to support simple mode changes like
+	 *	K 11
+	 *	svn:special
+	 *	V 1
+	 *	*
+	 *	D 14
+	 *	svn:executable
+	 * we keep track of whether a mode has been set and reset to
+	 * plain file only if not.  We should be keeping track of the
+	 * symlink and executable bits separately instead.
+	 */
+	uint32_t type_set = 0;
+	while ((t = buffer_read_line(&input)) && strcmp(t, "PROPS-END")) {
+		uint32_t len;
+		const char type = t[0];
+		int ch;
+
+		if (!type || t[1] != ' ')
+			die("invalid property line: %s\n", t);
+		len = atoi(&t[2]);
+		strbuf_reset(&val);
+		buffer_read_binary(&input, &val, len);
+		if (val.len < len)
+			die_short_read();
+
+		/* Discard trailing newline. */
+		ch = buffer_read_char(&input);
+		if (ch == EOF)
+			die_short_read();
+		if (ch != '\n')
+			die("invalid dump: expected newline after %s", val.buf);
+
+		switch (type) {
+		case 'K':
+			strbuf_swap(&key, &val);
+			continue;
+		case 'D':
+			handle_property(&val, NULL, &type_set);
+			continue;
+		case 'V':
+			handle_property(&key, &val, &type_set);
+			strbuf_reset(&key);
+			continue;
+		default:
+			die("invalid property line: %s\n", t);
 		}
 	}
 }
 
 static void handle_node(void)
 {
-	if (node_ctx.propLength != LENGTH_UNKNOWN && node_ctx.propLength)
-		read_props();
+	uint32_t mark = 0;
+	const uint32_t type = node_ctx.type;
+	const int have_props = node_ctx.propLength != LENGTH_UNKNOWN;
+	const int have_text = node_ctx.textLength != LENGTH_UNKNOWN;
 
-	if (node_ctx.srcRev)
-		node_ctx.srcMode = repo_copy(node_ctx.srcRev, node_ctx.src, node_ctx.dst);
-
-	if (node_ctx.textLength != LENGTH_UNKNOWN &&
-	    node_ctx.type != REPO_MODE_DIR)
-		node_ctx.mark = next_blob_mark();
-
+	if (node_ctx.text_delta)
+		die("text deltas not supported");
+	if (have_text)
+		mark = next_blob_mark();
 	if (node_ctx.action == NODEACT_DELETE) {
+		if (have_text || have_props || node_ctx.srcRev)
+			die("invalid dump: deletion node has "
+				"copyfrom info, text, or properties");
 		repo_delete(node_ctx.dst);
-	} else if (node_ctx.action == NODEACT_CHANGE ||
-			   node_ctx.action == NODEACT_REPLACE) {
-		if (node_ctx.action == NODEACT_REPLACE &&
-		    node_ctx.type == REPO_MODE_DIR)
-			repo_replace(node_ctx.dst, node_ctx.mark);
-		else if (node_ctx.propLength != LENGTH_UNKNOWN)
-			repo_modify(node_ctx.dst, node_ctx.type, node_ctx.mark);
-		else if (node_ctx.textLength != LENGTH_UNKNOWN)
-			node_ctx.srcMode = repo_replace(node_ctx.dst, node_ctx.mark);
+		return;
+	}
+	if (node_ctx.action == NODEACT_REPLACE) {
+		repo_delete(node_ctx.dst);
+		node_ctx.action = NODEACT_ADD;
+	}
+	if (node_ctx.srcRev) {
+		repo_copy(node_ctx.srcRev, node_ctx.src, node_ctx.dst);
+		if (node_ctx.action == NODEACT_ADD)
+			node_ctx.action = NODEACT_CHANGE;
+	}
+	if (have_text && type == REPO_MODE_DIR)
+		die("invalid dump: directories cannot have text attached");
+
+	/*
+	 * Decide on the new content (mark) and mode (node_ctx.type).
+	 */
+	if (node_ctx.action == NODEACT_CHANGE && !~*node_ctx.dst) {
+		if (type != REPO_MODE_DIR)
+			die("invalid dump: root of tree is not a regular file");
+	} else if (node_ctx.action == NODEACT_CHANGE) {
+		uint32_t mode;
+		if (!have_text)
+			mark = repo_read_path(node_ctx.dst);
+		mode = repo_read_mode(node_ctx.dst);
+		if (mode == REPO_MODE_DIR && type != REPO_MODE_DIR)
+			die("invalid dump: cannot modify a directory into a file");
+		if (mode != REPO_MODE_DIR && type == REPO_MODE_DIR)
+			die("invalid dump: cannot modify a file into a directory");
+		node_ctx.type = mode;
 	} else if (node_ctx.action == NODEACT_ADD) {
-		if (node_ctx.srcRev && node_ctx.propLength != LENGTH_UNKNOWN)
-			repo_modify(node_ctx.dst, node_ctx.type, node_ctx.mark);
-		else if (node_ctx.srcRev && node_ctx.textLength != LENGTH_UNKNOWN)
-			node_ctx.srcMode = repo_replace(node_ctx.dst, node_ctx.mark);
-		else if ((node_ctx.type == REPO_MODE_DIR && !node_ctx.srcRev) ||
-			 node_ctx.textLength != LENGTH_UNKNOWN)
-			repo_add(node_ctx.dst, node_ctx.type, node_ctx.mark);
+		if (!have_text && type != REPO_MODE_DIR)
+			die("invalid dump: adds node without text");
+	} else {
+		die("invalid dump: Node-path block lacks Node-action");
 	}
 
-	if (node_ctx.propLength == LENGTH_UNKNOWN && node_ctx.srcMode)
-		node_ctx.type = node_ctx.srcMode;
+	/*
+	 * Adjust mode to reflect properties.
+	 */
+	if (have_props) {
+		if (!node_ctx.prop_delta)
+			node_ctx.type = type;
+		if (node_ctx.propLength)
+			read_props();
+	}
 
-	if (node_ctx.mark)
-		fast_export_blob(node_ctx.type, node_ctx.mark, node_ctx.textLength);
-	else if (node_ctx.textLength != LENGTH_UNKNOWN)
-		buffer_skip_bytes(node_ctx.textLength);
+	/*
+	 * Save the result.
+	 */
+	repo_add(node_ctx.dst, node_ctx.type, mark);
+	if (have_text)
+		fast_export_blob(node_ctx.type, mark,
+				 node_ctx.textLength, &input);
 }
 
 static void handle_revision(void)
 {
 	if (rev_ctx.revision)
-		repo_commit(rev_ctx.revision, rev_ctx.author, rev_ctx.log,
-			dump_ctx.uuid, dump_ctx.url, rev_ctx.timestamp);
+		repo_commit(rev_ctx.revision, rev_ctx.author.buf,
+			&rev_ctx.log, dump_ctx.uuid.buf, dump_ctx.url.buf,
+			rev_ctx.timestamp);
 }
 
 void svndump_read(const char *url)
@@ -197,44 +285,65 @@ void svndump_read(const char *url)
 	char *t;
 	uint32_t active_ctx = DUMP_CTX;
 	uint32_t len;
-	uint32_t key;
 
-	reset_dump_ctx(pool_intern(url));
-	while ((t = buffer_read_line())) {
-		val = strstr(t, ": ");
+	reset_dump_ctx(url);
+	while ((t = buffer_read_line(&input))) {
+		val = strchr(t, ':');
 		if (!val)
 			continue;
-		*val++ = '\0';
-		*val++ = '\0';
-		key = pool_intern(t);
+		val++;
+		if (*val != ' ')
+			continue;
+		val++;
 
-		if (key == keys.svn_fs_dump_format_version) {
+		/* strlen(key) + 1 */
+		switch (val - t - 1) {
+		case sizeof("SVN-fs-dump-format-version"):
+			if (constcmp(t, "SVN-fs-dump-format-version"))
+				continue;
 			dump_ctx.version = atoi(val);
-			if (dump_ctx.version > 2)
-				die("expected svn dump format version <= 2, found %"PRIu32,
+			if (dump_ctx.version > 3)
+				die("expected svn dump format version <= 3, found %"PRIu32,
 				    dump_ctx.version);
-		} else if (key == keys.uuid) {
-			dump_ctx.uuid = pool_intern(val);
-		} else if (key == keys.revision_number) {
+			break;
+		case sizeof("UUID"):
+			if (constcmp(t, "UUID"))
+				continue;
+			strbuf_reset(&dump_ctx.uuid);
+			strbuf_addstr(&dump_ctx.uuid, val);
+			break;
+		case sizeof("Revision-number"):
+			if (constcmp(t, "Revision-number"))
+				continue;
 			if (active_ctx == NODE_CTX)
 				handle_node();
 			if (active_ctx != DUMP_CTX)
 				handle_revision();
 			active_ctx = REV_CTX;
 			reset_rev_ctx(atoi(val));
-		} else if (key == keys.node_path) {
-			if (active_ctx == NODE_CTX)
-				handle_node();
-			active_ctx = NODE_CTX;
-			reset_node_ctx(val);
-		} else if (key == keys.node_kind) {
+			break;
+		case sizeof("Node-path"):
+			if (prefixcmp(t, "Node-"))
+				continue;
+			if (!constcmp(t + strlen("Node-"), "path")) {
+				if (active_ctx == NODE_CTX)
+					handle_node();
+				active_ctx = NODE_CTX;
+				reset_node_ctx(val);
+				break;
+			}
+			if (constcmp(t + strlen("Node-"), "kind"))
+				continue;
 			if (!strcmp(val, "dir"))
 				node_ctx.type = REPO_MODE_DIR;
 			else if (!strcmp(val, "file"))
 				node_ctx.type = REPO_MODE_BLB;
 			else
 				fprintf(stderr, "Unknown node-kind: %s\n", val);
-		} else if (key == keys.node_action) {
+			break;
+		case sizeof("Node-action"):
+			if (constcmp(t, "Node-action"))
+				continue;
 			if (!strcmp(val, "delete")) {
 				node_ctx.action = NODEACT_DELETE;
 			} else if (!strcmp(val, "add")) {
@@ -247,17 +356,44 @@ void svndump_read(const char *url)
 				fprintf(stderr, "Unknown node-action: %s\n", val);
 				node_ctx.action = NODEACT_UNKNOWN;
 			}
-		} else if (key == keys.node_copyfrom_path) {
+			break;
+		case sizeof("Node-copyfrom-path"):
+			if (constcmp(t, "Node-copyfrom-path"))
+				continue;
 			pool_tok_seq(REPO_MAX_PATH_DEPTH, node_ctx.src, "/", val);
-		} else if (key == keys.node_copyfrom_rev) {
+			break;
+		case sizeof("Node-copyfrom-rev"):
+			if (constcmp(t, "Node-copyfrom-rev"))
+				continue;
 			node_ctx.srcRev = atoi(val);
-		} else if (key == keys.text_content_length) {
-			node_ctx.textLength = atoi(val);
-		} else if (key == keys.prop_content_length) {
+			break;
+		case sizeof("Text-content-length"):
+			if (!constcmp(t, "Text-content-length")) {
+				node_ctx.textLength = atoi(val);
+				break;
+			}
+			if (constcmp(t, "Prop-content-length"))
+				continue;
 			node_ctx.propLength = atoi(val);
-		} else if (key == keys.content_length) {
+			break;
+		case sizeof("Text-delta"):
+			if (!constcmp(t, "Text-delta")) {
+				node_ctx.text_delta = !strcmp(val, "true");
+				break;
+			}
+			if (constcmp(t, "Prop-delta"))
+				continue;
+			node_ctx.prop_delta = !strcmp(val, "true");
+			break;
+		case sizeof("Content-length"):
+			if (constcmp(t, "Content-length"))
+				continue;
 			len = atoi(val);
-			buffer_read_line();
+			t = buffer_read_line(&input);
+			if (!t)
+				die_short_read();
+			if (*t)
+				die("invalid dump: expected blank line after content length header");
 			if (active_ctx == REV_CTX) {
 				read_props();
 			} else if (active_ctx == NODE_CTX) {
@@ -265,34 +401,42 @@ void svndump_read(const char *url)
 				active_ctx = REV_CTX;
 			} else {
 				fprintf(stderr, "Unexpected content length header: %"PRIu32"\n", len);
-				buffer_skip_bytes(len);
+				if (buffer_skip_bytes(&input, len) != len)
+					die_short_read();
 			}
 		}
 	}
+	if (buffer_ferror(&input))
+		die_short_read();
 	if (active_ctx == NODE_CTX)
 		handle_node();
 	if (active_ctx != DUMP_CTX)
 		handle_revision();
 }
 
-void svndump_init(const char *filename)
+int svndump_init(const char *filename)
 {
-	buffer_init(filename);
+	if (buffer_init(&input, filename))
+		return error("cannot open %s: %s", filename, strerror(errno));
 	repo_init();
-	reset_dump_ctx(~0);
+	strbuf_init(&dump_ctx.uuid, 4096);
+	strbuf_init(&dump_ctx.url, 4096);
+	strbuf_init(&rev_ctx.log, 4096);
+	strbuf_init(&rev_ctx.author, 4096);
+	reset_dump_ctx(NULL);
 	reset_rev_ctx(0);
 	reset_node_ctx(NULL);
-	init_keys();
+	return 0;
 }
 
 void svndump_deinit(void)
 {
-	log_reset();
 	repo_reset();
-	reset_dump_ctx(~0);
+	reset_dump_ctx(NULL);
 	reset_rev_ctx(0);
 	reset_node_ctx(NULL);
-	if (buffer_deinit())
+	strbuf_release(&rev_ctx.log);
+	if (buffer_deinit(&input))
 		fprintf(stderr, "Input error\n");
 	if (ferror(stdout))
 		fprintf(stderr, "Output error\n");
@@ -300,10 +444,10 @@ void svndump_deinit(void)
 
 void svndump_reset(void)
 {
-	log_reset();
-	buffer_reset();
+	buffer_reset(&input);
 	repo_reset();
-	reset_dump_ctx(~0);
-	reset_rev_ctx(0);
-	reset_node_ctx(NULL);
+	strbuf_release(&dump_ctx.uuid);
+	strbuf_release(&dump_ctx.url);
+	strbuf_release(&rev_ctx.log);
+	strbuf_release(&rev_ctx.author);
 }

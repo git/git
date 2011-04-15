@@ -154,14 +154,6 @@ SEE ALSO
 --------
 linkgit:gitattributes[5]
 
-Author
-------
-Written by Franck Bui-Huu and Rene Scharfe.
-
-Documentation
---------------
-Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
-
 GIT
 ---
 Part of the linkgit:git[1] suite
