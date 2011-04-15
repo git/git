@@ -337,6 +337,20 @@ MUA-SPECIFIC HINTS
 Here are some hints on how to successfully submit patches inline using
 various mailers.
 
+GMail
+~~~~~
+GMail does not have any way to turn off line wrapping in the web
+interface, so it will mangle any emails that you send.  You can however
+use "git send-email" and send your patches through the GMail SMTP server, or
+use any IMAP email client to connect to the google IMAP server and forward
+the emails through that.
+
+For hints on using 'git send-email' to send your patches through the
+GMail SMTP server, see the EXAMPLE section of linkgit:git-send-email[1].
+
+For hints on submission using the IMAP interface, see the EXAMPLE
+section of linkgit:git-imap-send[1].
+
 Thunderbird
 ~~~~~~~~~~~
 By default, Thunderbird will both wrap emails as well as flag
