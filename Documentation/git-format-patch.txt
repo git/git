@@ -415,6 +415,22 @@ There is a script in contrib/thunderbird-patch-inline which can help
 you include patches with Thunderbird in an easy way. To use it, do the
 steps above and then use the script as the external editor.
 
+KMail
+~~~~~
+This should help you to submit patches inline using KMail.
+
+1. Prepare the patch as a text file.
+
+2. Click on New Mail.
+
+3. Go under "Options" in the Composer window and be sure that
+   "Word wrap" is not set.
+
+4. Use Message -> Insert file... and insert the patch.
+
+5. Back in the compose window: add whatever other text you wish to the
+   message, complete the addressing and subject fields, and press send.
+
 
 EXAMPLES
 --------
