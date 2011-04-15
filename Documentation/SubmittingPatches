@@ -344,50 +344,20 @@ MUA specific hints
 
 Some of patches I receive or pick up from the list share common
 patterns of breakage.  Please make sure your MUA is set up
-properly not to corrupt whitespaces.  Here are two common ones
-I have seen:
+properly not to corrupt whitespaces.
 
-* Empty context lines that do not have _any_ whitespace.
+See the DISCUSSION section of git-format-patch(1) for hints on
+checking your patch by mailing it to yourself and applying with
+git-am(1).
 
-* Non empty context lines that have one extra whitespace at the
-  beginning.
-
-One test you could do yourself if your MUA is set up correctly is:
-
-* Send the patch to yourself, exactly the way you would, except
-  To: and Cc: lines, which would not contain the list and
-  maintainer address.
-
-* Save that patch to a file in UNIX mailbox format.  Call it say
-  a.patch.
-
-* Try to apply to the tip of the "master" branch from the
-  git.git public repository:
-
-    $ git fetch http://kernel.org/pub/scm/git/git.git master:test-apply
-    $ git checkout test-apply
-    $ git reset --hard
-    $ git am a.patch
-
-If it does not apply correctly, there can be various reasons.
-
-* Your patch itself does not apply cleanly.  That is _bad_ but
-  does not have much to do with your MUA.  Please rebase the
-  patch appropriately.
-
-* Your MUA corrupted your patch; "am" would complain that
-  the patch does not apply.  Look at .git/rebase-apply/ subdirectory and
-  see what 'patch' file contains and check for the common
-  corruption patterns mentioned above.
-
-* While you are at it, check what are in 'info' and
-  'final-commit' files as well.  If what is in 'final-commit' is
-  not exactly what you would want to see in the commit log
-  message, it is very likely that your maintainer would end up
-  hand editing the log message when he applies your patch.
-  Things like "Hi, this is my first patch.\n", if you really
-  want to put in the patch e-mail, should come after the
-  three-dash line that signals the end of the commit message.
+While you are at it, check the resulting commit log message from
+a trial run of applying the patch.  If what is in the resulting
+commit is not exactly what you would want to see, it is very
+likely that your maintainer would end up hand editing the log
+message when he applies your patch.  Things like "Hi, this is my
+first patch.\n", if you really want to put in the patch e-mail,
+should come after the three-dash line that signals the end of the
+commit message.
 
 
 Pine
