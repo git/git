@@ -357,11 +357,21 @@ By default, Thunderbird will both wrap emails as well as flag
 them as being 'format=flowed', both of which will make the
 resulting email unusable by git.
 
-There are two different approaches.  One approach is to configure
-Thunderbird to not mangle patches.  The second approach is to use
+There are three different approaches: use an add-on to turn off line wraps,
+configure Thunderbird to not mangle patches, or use
 an external editor to keep Thunderbird from mangling the patches.
 
-Approach #1 (configuration)
+Approach #1 (add-on)
+^^^^^^^^^^^^^^^^^^^^
+
+Install the Toggle Word Wrap add-on that is available from
+https://addons.mozilla.org/thunderbird/addon/toggle-word-wrap/
+It adds a menu entry "Enable Word Wrap" in the composer's "Options" menu
+that you can tick off. Now you can compose the message as you otherwise do
+(cut + paste, 'git format-patch' | 'git imap-send', etc), but you have to
+insert line breaks manually in any text that you type.
+
+Approach #2 (configuration)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Three steps:
 
@@ -388,7 +398,7 @@ After that is done, you should be able to compose email as you
 otherwise would (cut + paste, 'git format-patch' | 'git imap-send', etc),
 and the patches will not be mangled.
 
-Approach #2 (external editor)
+Approach #3 (external editor)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The following Thunderbird extensions are needed:
