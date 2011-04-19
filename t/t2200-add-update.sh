@@ -150,9 +150,9 @@ test_expect_success 'add -u resolves unmerged paths' '
 	echo 2 >path3 &&
 	echo 2 >path5 &&
 
-	# Explicit resolving by adding removed paths should fail
-	test_must_fail git add path4 &&
-	test_must_fail git add path6 &&
+	# Fail to explicitly resolve removed paths with "git add"
+	test_must_fail git add --no-all path4 &&
+	test_must_fail git add --no-all path6 &&
 
 	# "add -u" should notice removals no matter what stages
 	# the index entries are in.

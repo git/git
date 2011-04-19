@@ -271,7 +271,11 @@ static const char ignore_error[] =
 N_("The following paths are ignored by one of your .gitignore files:\n");
 
 static int verbose, show_only, ignored_too, refresh_only;
-static int ignore_add_errors, addremove, intent_to_add, ignore_missing;
+static int ignore_add_errors, intent_to_add, ignore_missing;
+
+#define ADDREMOVE_DEFAULT 0 /* Change to 1 in Git 2.0 */
+static int addremove = ADDREMOVE_DEFAULT;
+static int addremove_explicit = -1; /* unspecified */
 
 static struct option builtin_add_options[] = {
 	OPT__DRY_RUN(&show_only, N_("dry run")),
@@ -283,7 +287,7 @@ static struct option builtin_add_options[] = {
 	OPT__FORCE(&ignored_too, N_("allow adding otherwise ignored files")),
 	OPT_BOOL('u', "update", &take_worktree_changes, N_("update tracked files")),
 	OPT_BOOL('N', "intent-to-add", &intent_to_add, N_("record only the fact that the path will be added later")),
-	OPT_BOOL('A', "all", &addremove, N_("add changes from all tracked and untracked files")),
+	OPT_BOOL('A', "all", &addremove_explicit, N_("add changes from all tracked and untracked files")),
 	OPT_BOOL( 0 , "refresh", &refresh_only, N_("don't add, only refresh the index")),
 	OPT_BOOL( 0 , "ignore-errors", &ignore_add_errors, N_("just skip files which cannot be added because of errors")),
 	OPT_BOOL( 0 , "ignore-missing", &ignore_missing, N_("check if - even missing - files are ignored in dry run")),
@@ -350,6 +354,18 @@ static void warn_pathless_add(const char *option_name, const char *short_name) {
 		option_name, short_name);
 }
 
+static int directory_given(int argc, const char **argv)
+{
+	struct stat st;
+
+	while (argc--) {
+		if (!lstat(*argv, &st) && S_ISDIR(st.st_mode))
+			return 1;
+		argv++;
+	}
+	return 0;
+}
+
 int cmd_add(int argc, const char **argv, const char *prefix)
 {
 	int exit_status = 0;
@@ -377,8 +393,33 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 	argc--;
 	argv++;
 
+	if (0 <= addremove_explicit)
+		addremove = addremove_explicit;
+	else if (take_worktree_changes && ADDREMOVE_DEFAULT)
+		addremove = 0; /* "-u" was given but not "-A" */
+
 	if (addremove && take_worktree_changes)
 		die(_("-A and -u are mutually incompatible"));
+
+	/*
+	 * Warn when "git add pathspec..." was given without "-u" or "-A"
+	 * and pathspec... contains a directory name.
+	 */
+	if (!take_worktree_changes && addremove_explicit < 0 &&
+	    directory_given(argc, argv))
+		warning(_("In Git 2.0, 'git add <pathspec>...' will also update the\n"
+			  "index for paths removed from the working tree that match\n"
+			  "the given pathspec. If you want to 'add' only changed\n"
+			  "or newly created paths, say 'git add --no-all <pathspec>...'"
+			  " instead."));
+
+	if (!take_worktree_changes && addremove_explicit < 0 && argc)
+		/*
+		 * Turn "git add pathspec..." to "git add -A pathspec..."
+		 * in Git 2.0 but not yet
+		 */
+		; /* addremove = 1; */
+
 	if (!show_only && ignore_missing)
 		die(_("Option --ignore-missing can only be used together with --dry-run"));
 	if (addremove) {
