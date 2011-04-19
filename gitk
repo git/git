@@ -1671,8 +1671,9 @@ proc parsecommit {id contents listed} {
 	}
 	set comment $newcomment
     }
+    set hasnote [string first "\nNotes:\n" $contents]
     set commitinfo($id) [list $headline $auname $audate \
-			     $comname $comdate $comment]
+			     $comname $comdate $comment $hasnote]
 }
 
 proc getcommit {id} {
@@ -5896,6 +5897,9 @@ proc drawcmittext {id row col} {
 	|| [info exists idotherrefs($id)]} {
 	set xt [drawtags $id $x $xt $y]
     }
+    if {[lindex $commitinfo($id) 6] > 0} {
+	set xt [drawnotesign $xt $y]
+    }
     set headline [lindex $commitinfo($id) 0]
     set name [lindex $commitinfo($id) 1]
     set date [lindex $commitinfo($id) 2]
@@ -6339,6 +6343,17 @@ proc drawtags {id x xt y1} {
 	    $canv bind $t $ctxbut [list headmenu %X %Y $id $tag_quoted]
 	}
     }
+    return $xt
+}
+
+proc drawnotesign {xt y} {
+    global linespc canv fgcolor
+
+    set orad [expr {$linespc / 3}]
+    set t [$canv create rectangle [expr {$xt - $orad}] [expr {$y - $orad}] \
+	       [expr {$xt + $orad - 1}] [expr {$y + $orad - 1}] \
+	       -fill yellow -outline $fgcolor -width 1 -tags circle]
+    set xt [expr {$xt + $orad * 3}]
     return $xt
 }
 
