@@ -217,6 +217,13 @@ config key: svn.commiturl (overwrites all svn-remote.<name>.commiturl options)
 Using this option for any other purpose (don't ask) is very strongly
 discouraged.
 
+--mergeinfo=<mergeinfo>;;
+	Add the given merge information during the dcommit
+	(e.g. `--mergeinfo="/branches/foo:1-10"`). All svn server versions can
+	store this information (as a property), and svn clients starting from
+	version 1.5 can make use of it. 'git svn' currently does not use it
+	and does not set it automatically.
+
 'branch'::
 	Create a branch in the SVN repository.
 
