@@ -1,4 +1,4 @@
-Git v1.7.5 Release Notes (draft)
+Git v1.7.5 Release Notes
 ========================
 
 Updates since v1.7.4
@@ -130,9 +130,3 @@ release, unless otherwise noted.
    doing both a mirror fetch and a mirror push at the same time, which
    made little sense.  We now warn and require the command line to specify
    either --mirror=fetch or --mirror=push.
-
----
-exec >/var/tmp/1
-O=v1.7.5-rc2
-echo O=$(git describe 'master')
-git shortlog --no-merges ^maint ^$O master
