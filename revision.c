@@ -1526,6 +1526,59 @@ static void append_prune_data(const char ***prune_data, const char **av)
 	*prune_data = prune;
 }
 
+static int handle_revision_pseudo_opt(const char *submodule,
+				struct rev_info *revs,
+				int argc, const char **argv, int *flags)
+{
+	const char *arg = argv[0];
+	const char *optarg;
+	int argcount;
+
+	if (!strcmp(arg, "--all")) {
+		handle_refs(submodule, revs, *flags, for_each_ref_submodule);
+		handle_refs(submodule, revs, *flags, head_ref_submodule);
+	} else if (!strcmp(arg, "--branches")) {
+		handle_refs(submodule, revs, *flags, for_each_branch_ref_submodule);
+	} else if (!strcmp(arg, "--bisect")) {
+		handle_refs(submodule, revs, *flags, for_each_bad_bisect_ref);
+		handle_refs(submodule, revs, *flags ^ UNINTERESTING, for_each_good_bisect_ref);
+		revs->bisect = 1;
+	} else if (!strcmp(arg, "--tags")) {
+		handle_refs(submodule, revs, *flags, for_each_tag_ref_submodule);
+	} else if (!strcmp(arg, "--remotes")) {
+		handle_refs(submodule, revs, *flags, for_each_remote_ref_submodule);
+	} else if ((argcount = parse_long_opt("glob", argv, &optarg))) {
+		struct all_refs_cb cb;
+		init_all_refs_cb(&cb, revs, *flags);
+		for_each_glob_ref(handle_one_ref, optarg, &cb);
+		return argcount;
+	} else if (!prefixcmp(arg, "--branches=")) {
+		struct all_refs_cb cb;
+		init_all_refs_cb(&cb, revs, *flags);
+		for_each_glob_ref_in(handle_one_ref, arg + 11, "refs/heads/", &cb);
+	} else if (!prefixcmp(arg, "--tags=")) {
+		struct all_refs_cb cb;
+		init_all_refs_cb(&cb, revs, *flags);
+		for_each_glob_ref_in(handle_one_ref, arg + 7, "refs/tags/", &cb);
+	} else if (!prefixcmp(arg, "--remotes=")) {
+		struct all_refs_cb cb;
+		init_all_refs_cb(&cb, revs, *flags);
+		for_each_glob_ref_in(handle_one_ref, arg + 10, "refs/remotes/", &cb);
+	} else if (!strcmp(arg, "--reflog")) {
+		handle_reflog(revs, *flags);
+	} else if (!strcmp(arg, "--not")) {
+		*flags ^= UNINTERESTING;
+	} else if (!strcmp(arg, "--no-walk")) {
+		revs->no_walk = 1;
+	} else if (!strcmp(arg, "--do-walk")) {
+		revs->no_walk = 0;
+	} else {
+		return 0;
+	}
+
+	return 1;
+}
+
 /*
  * Parse revision information, filling in the "rev_info" structure,
  * and removing the used arguments from the argument list.
@@ -1538,8 +1591,6 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 	int i, flags, left, seen_dashdash, read_from_stdin, got_rev_arg = 0;
 	const char **prune_data = NULL;
 	const char *submodule = NULL;
-	const char *optarg;
-	int argcount;
 
 	if (opt)
 		submodule = opt->submodule;
@@ -1566,70 +1617,14 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 		if (*arg == '-') {
 			int opts;
 
-			if (!strcmp(arg, "--all")) {
-				handle_refs(submodule, revs, flags, for_each_ref_submodule);
-				handle_refs(submodule, revs, flags, head_ref_submodule);
+			opts = handle_revision_pseudo_opt(submodule,
+						revs, argc - i, argv + i,
+						&flags);
+			if (opts > 0) {
+				i += opts - 1;
 				continue;
 			}
-			if (!strcmp(arg, "--branches")) {
-				handle_refs(submodule, revs, flags, for_each_branch_ref_submodule);
-				continue;
-			}
-			if (!strcmp(arg, "--bisect")) {
-				handle_refs(submodule, revs, flags, for_each_bad_bisect_ref);
-				handle_refs(submodule, revs, flags ^ UNINTERESTING, for_each_good_bisect_ref);
-				revs->bisect = 1;
-				continue;
-			}
-			if (!strcmp(arg, "--tags")) {
-				handle_refs(submodule, revs, flags, for_each_tag_ref_submodule);
-				continue;
-			}
-			if (!strcmp(arg, "--remotes")) {
-				handle_refs(submodule, revs, flags, for_each_remote_ref_submodule);
-				continue;
-			}
-			if ((argcount = parse_long_opt("glob", argv + i, &optarg))) {
-				struct all_refs_cb cb;
-				i += argcount - 1;
-				init_all_refs_cb(&cb, revs, flags);
-				for_each_glob_ref(handle_one_ref, optarg, &cb);
-				continue;
-			}
-			if (!prefixcmp(arg, "--branches=")) {
-				struct all_refs_cb cb;
-				init_all_refs_cb(&cb, revs, flags);
-				for_each_glob_ref_in(handle_one_ref, arg + 11, "refs/heads/", &cb);
-				continue;
-			}
-			if (!prefixcmp(arg, "--tags=")) {
-				struct all_refs_cb cb;
-				init_all_refs_cb(&cb, revs, flags);
-				for_each_glob_ref_in(handle_one_ref, arg + 7, "refs/tags/", &cb);
-				continue;
-			}
-			if (!prefixcmp(arg, "--remotes=")) {
-				struct all_refs_cb cb;
-				init_all_refs_cb(&cb, revs, flags);
-				for_each_glob_ref_in(handle_one_ref, arg + 10, "refs/remotes/", &cb);
-				continue;
-			}
-			if (!strcmp(arg, "--reflog")) {
-				handle_reflog(revs, flags);
-				continue;
-			}
-			if (!strcmp(arg, "--not")) {
-				flags ^= UNINTERESTING;
-				continue;
-			}
-			if (!strcmp(arg, "--no-walk")) {
-				revs->no_walk = 1;
-				continue;
-			}
-			if (!strcmp(arg, "--do-walk")) {
-				revs->no_walk = 0;
-				continue;
-			}
+
 			if (!strcmp(arg, "--stdin")) {
 				if (revs->disable_stdin) {
 					argv[left++] = arg;
