@@ -1178,7 +1178,9 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 	    !strcmp(arg, "--tags") || !strcmp(arg, "--remotes") ||
 	    !strcmp(arg, "--reflog") || !strcmp(arg, "--not") ||
 	    !strcmp(arg, "--no-walk") || !strcmp(arg, "--do-walk") ||
-	    !strcmp(arg, "--bisect"))
+	    !strcmp(arg, "--bisect") || !prefixcmp(arg, "--glob=") ||
+	    !prefixcmp(arg, "--branches=") || !prefixcmp(arg, "--tags=") ||
+	    !prefixcmp(arg, "--remotes="))
 	{
 		unkv[(*unkc)++] = arg;
 		return 1;
@@ -1534,6 +1536,16 @@ static int handle_revision_pseudo_opt(const char *submodule,
 	const char *optarg;
 	int argcount;
 
+	/*
+	 * NOTE!
+	 *
+	 * Commands like "git shortlog" will not accept the options below
+	 * unless parse_revision_opt queues them (as opposed to erroring
+	 * out).
+	 *
+	 * When implementing your new pseudo-option, remember to
+	 * register it in the list at the top of handle_revision_opt.
+	 */
 	if (!strcmp(arg, "--all")) {
 		handle_refs(submodule, revs, *flags, for_each_ref_submodule);
 		handle_refs(submodule, revs, *flags, head_ref_submodule);
