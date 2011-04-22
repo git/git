@@ -183,7 +183,7 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 			 * Show the diff for the 'ce' if we found the one
 			 * from the desired stage.
 			 */
-			diff_unmerge(&revs->diffopt, ce->name, 0, null_sha1);
+			diff_unmerge(&revs->diffopt, ce->name);
 			if (ce_stage(ce) != diff_unmerged_stage)
 				continue;
 		}
@@ -372,8 +372,9 @@ static void do_oneway_diff(struct unpack_trees_options *o,
 	match_missing = !revs->ignore_merges;
 
 	if (cached && idx && ce_stage(idx)) {
-		diff_unmerge(&revs->diffopt, idx->name, idx->ce_mode,
-			     idx->sha1);
+		struct diff_filepair *pair;
+		pair = diff_unmerge(&revs->diffopt, idx->name);
+		fill_filespec(pair->one, idx->sha1, idx->ce_mode);
 		return;
 	}
 
