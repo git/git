@@ -15,7 +15,7 @@ commit_msg_is () {
 
 	printf "%s" "$(git log --pretty=format:%s%b -1)" >$expect &&
 	printf "%s" "$1" >$actual &&
-	test_cmp $expect $actual
+	test_i18ncmp $expect $actual
 }
 
 # A sanity check to see if commit is working at all.
@@ -72,7 +72,7 @@ test_expect_success 'adding comments to a template should not commit' '
 	)
 '
 
-test_expect_success C_LOCALE_OUTPUT 'adding real content to a template should commit' '
+test_expect_success 'adding real content to a template should commit' '
 	(
 		test_set_editor "$TEST_DIRECTORY"/t7500/add-content &&
 		git commit --template "$TEMPLATE"
@@ -80,7 +80,7 @@ test_expect_success C_LOCALE_OUTPUT 'adding real content to a template should co
 	commit_msg_is "template linecommit message"
 '
 
-test_expect_success C_LOCALE_OUTPUT '-t option should be short for --template' '
+test_expect_success '-t option should be short for --template' '
 	echo "short template" > "$TEMPLATE" &&
 	echo "new content" >> foo &&
 	git add foo &&
@@ -91,7 +91,7 @@ test_expect_success C_LOCALE_OUTPUT '-t option should be short for --template' '
 	commit_msg_is "short templatecommit message"
 '
 
-test_expect_success C_LOCALE_OUTPUT 'config-specified template should commit' '
+test_expect_success 'config-specified template should commit' '
 	echo "new template" > "$TEMPLATE" &&
 	git config commit.template "$TEMPLATE" &&
 	echo "more content" >> foo &&
@@ -290,7 +290,7 @@ test_expect_success 'commit --squash works with -c for same commit' '
 	commit_msg_is "squash! edited commit"
 '
 
-test_expect_success C_LOCALE_OUTPUT 'commit --squash works with editor' '
+test_expect_success 'commit --squash works with editor' '
 	commit_for_rebase_autosquash_setup &&
 	test_set_editor "$TEST_DIRECTORY"/t7500/add-content &&
 	git commit --squash HEAD~1 &&

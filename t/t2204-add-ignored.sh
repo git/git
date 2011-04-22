@@ -34,8 +34,8 @@ do
 		! test -s out
 	'
 
-	test_expect_success C_LOCALE_OUTPUT "complaints for ignored $i output" '
-		grep -e "Use -f if" err
+	test_expect_success "complaints for ignored $i output" '
+		test_i18ngrep -e "Use -f if" err
 	'
 
 	test_expect_success "complaints for ignored $i with unignored file" '
@@ -44,8 +44,8 @@ do
 		git ls-files "$i" >out &&
 		! test -s out
 	'
-	test_expect_success C_LOCALE_OUTPUT "complaints for ignored $i with unignored file output" '
-		grep -e "Use -f if" err
+	test_expect_success "complaints for ignored $i with unignored file output" '
+		test_i18ngrep -e "Use -f if" err
 	'
 done
 
@@ -61,10 +61,10 @@ do
 		)
 	'
 
-	test_expect_success C_LOCALE_OUTPUT "complaints for ignored $i in dir output" '
+	test_expect_success "complaints for ignored $i in dir output" '
 		(
 			cd dir &&
-			grep -e "Use -f if" err
+			test_i18ngrep -e "Use -f if" err
 		)
 	'
 done
@@ -81,10 +81,10 @@ do
 		)
 	'
 
-	test_expect_success C_LOCALE_OUTPUT "complaints for ignored $i in sub output" '
+	test_expect_success "complaints for ignored $i in sub output" '
 		(
 			cd sub &&
-			grep -e "Use -f if" err
+			test_i18ngrep -e "Use -f if" err
 		)
 	'
 done

@@ -1085,6 +1085,24 @@ test_i18ncmp () {
 	test -n "$GETTEXT_POISON" || test_cmp "$@"
 }
 
+# Use this instead of "grep expected-string actual" to see if the
+# output from a git command that can be translated either contains an
+# expected string, or does not contain an unwanted one.  When running
+# under GETTEXT_POISON this pretends that the command produced expected
+# results.
+test_i18ngrep () {
+	if test -n "$GETTEXT_POISON"
+	then
+	    : # pretend success
+	elif test "x!" = "x$1"
+	then
+		shift
+		! grep "$@"
+	else
+		grep "$@"
+	fi
+}
+
 # test whether the filesystem supports symbolic links
 ln -s x y 2>/dev/null && test -h y 2>/dev/null && test_set_prereq SYMLINKS
 rm -f y

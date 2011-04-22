@@ -16,9 +16,10 @@ test_expect_success \
 	"echo 'bongo bongo' >file &&
 	 git add file"
 
-test_expect_success C_LOCALE_OUTPUT \
-	"Constructing initial commit" \
-	"git status | grep 'Initial commit'"
+test_expect_success "Constructing initial commit" '
+	git status >actual &&
+	test_i18ngrep "Initial commit" actual
+'
 
 test_expect_success \
 	"fail initial amend" \
