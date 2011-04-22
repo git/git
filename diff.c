@@ -4308,20 +4308,23 @@ void diff_change(struct diff_options *options,
 		DIFF_OPT_SET(options, HAS_CHANGES);
 }
 
-void diff_unmerge(struct diff_options *options,
-		  const char *path,
-		  unsigned mode, const unsigned char *sha1)
+struct diff_filepair *diff_unmerge(struct diff_options *options,
+				   const char *path,
+				   unsigned mode, const unsigned char *sha1)
 {
+	struct diff_filepair *pair;
 	struct diff_filespec *one, *two;
 
 	if (options->prefix &&
 	    strncmp(path, options->prefix, options->prefix_length))
-		return;
+		return NULL;
 
 	one = alloc_filespec(path);
 	two = alloc_filespec(path);
 	fill_filespec(one, sha1, mode);
-	diff_queue(&diff_queued_diff, one, two)->is_unmerged = 1;
+	pair = diff_queue(&diff_queued_diff, one, two);
+	pair->is_unmerged = 1;
+	return pair;
 }
 
 static char *run_textconv(const char *pgm, struct diff_filespec *spec,
