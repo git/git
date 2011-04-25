@@ -1282,6 +1282,12 @@ char **make_augmented_environ(const char *const *vars)
 	return env;
 }
 
+int mingw_putenv(const char *namevalue)
+{
+	environ = env_setenv(environ, namevalue);
+	return 0;
+}
+
 /*
  * Note, this isn't a complete replacement for getaddrinfo. It assumes
  * that service contains a numerical port, or that it is null. It
@@ -2064,6 +2070,11 @@ void mingw_startup()
 	maxlen = wcslen(_wpgmptr);
 	for (i = 1; i < argc; i++)
 		maxlen = max(maxlen, wcslen(wargv[i]));
+	for (i = 0; wenv[i]; i++)
+		maxlen = max(maxlen, wcslen(wenv[i]));
+
+	/* nedmalloc can't free CRT memory, allocate resizable environment list */
+	environ = xcalloc(i + 1, sizeof(char*));
 
 	/* allocate buffer (wchar_t encodes to max 3 UTF-8 bytes) */
 	maxlen = 3 * maxlen + 1;
@@ -2075,6 +2086,10 @@ void mingw_startup()
 	for (i = 1; i < argc; i++) {
 		len = xwcstoutf(buffer, wargv[i], maxlen);
 		__argv[i] = xmemdupz(buffer, len);
+	}
+	for (i = 0; wenv[i]; i++) {
+		len = xwcstoutf(buffer, wenv[i], maxlen);
+		environ[i] = xmemdupz(buffer, len);
 	}
 	free(buffer);
 
