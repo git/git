@@ -163,6 +163,9 @@ int cmd_diff_tree(int argc, const char **argv, const char *prefix)
 	}
 
 	if (read_stdin) {
+		int saved_nrl = 0;
+		int saved_dcctc = 0;
+
 		if (opt->diffopt.detect_rename)
 			opt->diffopt.setup |= (DIFF_SETUP_USE_SIZE_CACHE |
 					       DIFF_SETUP_USE_CACHE);
@@ -173,9 +176,16 @@ int cmd_diff_tree(int argc, const char **argv, const char *prefix)
 				fputs(line, stdout);
 				fflush(stdout);
 			}
-			else
+			else {
 				diff_tree_stdin(line);
+				if (saved_nrl < opt->diffopt.needed_rename_limit)
+					saved_nrl = opt->diffopt.needed_rename_limit;
+				if (opt->diffopt.degraded_cc_to_c)
+					saved_dcctc = 1;
+			}
 		}
+		opt->diffopt.degraded_cc_to_c = saved_dcctc;
+		opt->diffopt.needed_rename_limit = saved_nrl;
 	}
 
 	return diff_result_code(&opt->diffopt, 0);
