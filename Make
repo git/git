@@ -87,7 +87,7 @@ do
 		?*)	;;
 		'')
 			O="$O -Werror $o -std=c99 -Wno-pointer-to-int-cast"
-			O="$O -Wpointer-arith"
+			O="$O -Wpointer-arith -Woverflow -Wunused"
 			;;
 		esac
 		# -Wvla
