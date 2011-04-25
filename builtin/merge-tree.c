@@ -3,6 +3,7 @@
 #include "xdiff-interface.h"
 #include "blob.h"
 #include "exec_cmd.h"
+#include "merge-file.h"
 
 static const char merge_tree_usage[] = "git merge-tree <base-tree> <branch1> <branch2>";
 static int resolve_directories = 1;
@@ -53,8 +54,6 @@ static const char *explanation(struct merge_list *entry)
 		return "removed in local";
 	return "removed in remote";
 }
-
-extern void *merge_file(const char *, struct blob *, struct blob *, struct blob *, unsigned long *);
 
 static void *result(struct merge_list *entry, unsigned long *size)
 {
