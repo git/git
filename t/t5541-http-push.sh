@@ -135,8 +135,8 @@ test_expect_success 'push fails for non-fast-forward refs unmatched by remote he
 	grep "^ ! \[rejected\] *master -> retsam (non-fast-forward)$" output
 '
 
-test_expect_success C_LOCALE_OUTPUT 'push fails for non-fast-forward refs unmatched by remote helper: our output' '
-	grep "To prevent you from losing history, non-fast-forward updates were rejected" \
+test_expect_success 'push fails for non-fast-forward refs unmatched by remote helper: our output' '
+	test_i18ngrep "To prevent you from losing history, non-fast-forward updates were rejected" \
 		output
 '
 

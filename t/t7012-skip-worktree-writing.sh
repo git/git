@@ -124,16 +124,16 @@ cat >expected <<EOF
 Would remove expected
 Would remove result
 EOF
-test_expect_success C_LOCALE_OUTPUT 'git-clean, absent case' '
+test_expect_success 'git-clean, absent case' '
 	setup_absent &&
 	git clean -n > result &&
-	test_cmp expected result
+	test_i18ncmp expected result
 '
 
-test_expect_success C_LOCALE_OUTPUT 'git-clean, dirty case' '
+test_expect_success 'git-clean, dirty case' '
 	setup_dirty &&
 	git clean -n > result &&
-	test_cmp expected result
+	test_i18ncmp expected result
 '
 
 #TODO test_expect_failure 'git-apply adds file' false

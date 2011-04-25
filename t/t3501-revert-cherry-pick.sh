@@ -91,12 +91,12 @@ test_expect_success 'cherry-pick on stat-dirty working tree' '
 	)
 '
 
-test_expect_success C_LOCALE_OUTPUT 'revert forbidden on dirty working tree' '
+test_expect_success 'revert forbidden on dirty working tree' '
 
 	echo content >extra_file &&
 	git add extra_file &&
 	test_must_fail git revert HEAD 2>errors &&
-	grep "Your local changes would be overwritten by " errors
+	test_i18ngrep "Your local changes would be overwritten by " errors
 
 '
 
