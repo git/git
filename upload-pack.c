@@ -157,15 +157,8 @@ static void create_pack_file(void)
 	const char *argv[10];
 	int arg = 0;
 
-	if (shallow_nr) {
-		memset(&rev_list, 0, sizeof(rev_list));
-		rev_list.proc = do_rev_list;
-		rev_list.out = -1;
-		if (start_async(&rev_list))
-			die("git upload-pack: unable to fork git-rev-list");
-		argv[arg++] = "pack-objects";
-	} else {
-		argv[arg++] = "pack-objects";
+	argv[arg++] = "pack-objects";
+	if (!shallow_nr) {
 		argv[arg++] = "--revs";
 		if (create_full_pack)
 			argv[arg++] = "--all";
@@ -183,7 +176,7 @@ static void create_pack_file(void)
 	argv[arg++] = NULL;
 
 	memset(&pack_objects, 0, sizeof(pack_objects));
-	pack_objects.in = shallow_nr ? rev_list.out : -1;
+	pack_objects.in = -1;
 	pack_objects.out = -1;
 	pack_objects.err = -1;
 	pack_objects.git_cmd = 1;
@@ -192,8 +185,14 @@ static void create_pack_file(void)
 	if (start_command(&pack_objects))
 		die("git upload-pack: unable to fork git-pack-objects");
 
-	/* pass on revisions we (don't) want */
-	if (!shallow_nr) {
+	if (shallow_nr) {
+		memset(&rev_list, 0, sizeof(rev_list));
+		rev_list.proc = do_rev_list;
+		rev_list.out = pack_objects.in;
+		if (start_async(&rev_list))
+			die("git upload-pack: unable to fork git-rev-list");
+	}
+	else {
 		FILE *pipe_fd = xfdopen(pack_objects.in, "w");
 		if (!create_full_pack) {
 			int i;
