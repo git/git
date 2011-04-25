@@ -44,7 +44,7 @@ LONG_VALUE=$(printf "x%01021dx a" 7)
 test_expect_success 'do not crash on special long config line' '
 	setup &&
 	git config section.key "$LONG_VALUE" &&
-	check section.key "fatal: bad config file line 2 in .git/config"
+	check section.key "$LONG_VALUE"
 '
 
 test_done
