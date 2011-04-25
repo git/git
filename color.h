@@ -53,6 +53,9 @@ struct strbuf;
  */
 extern int git_use_color_default;
 
+/* A default list of colors to use for commit graphs and show-branch output */
+extern const char *column_colors_ansi[];
+extern const int column_colors_ansi_max;
 
 /*
  * Use this instead of git_default_config if you need the value of color.ui.
