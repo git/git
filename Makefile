@@ -368,7 +368,6 @@ SCRIPT_SH += git-merge-resolve.sh
 SCRIPT_SH += git-mergetool.sh
 SCRIPT_SH += git-pull.sh
 SCRIPT_SH += git-quiltimport.sh
-SCRIPT_SH += git-rebase--interactive.sh
 SCRIPT_SH += git-rebase.sh
 SCRIPT_SH += git-repack.sh
 SCRIPT_SH += git-request-pull.sh
@@ -378,6 +377,9 @@ SCRIPT_SH += git-web--browse.sh
 
 SCRIPT_LIB += git-mergetool--lib
 SCRIPT_LIB += git-parse-remote
+SCRIPT_LIB += git-rebase--am
+SCRIPT_LIB += git-rebase--interactive
+SCRIPT_LIB += git-rebase--merge
 SCRIPT_LIB += git-sh-setup
 
 SCRIPT_PERL += git-add--interactive.perl

@@ -9,7 +9,7 @@ SYNOPSIS
 --------
 [verse]
 'git rebase' [-i | --interactive] [options] [--onto <newbase>]
-	<upstream> [<branch>]
+	[<upstream>] [<branch>]
 'git rebase' [-i | --interactive] [options] --onto <newbase>
 	--root [<branch>]
 
@@ -20,6 +20,12 @@ DESCRIPTION
 If <branch> is specified, 'git rebase' will perform an automatic
 `git checkout <branch>` before doing anything else.  Otherwise
 it remains on the current branch.
+
+If <upstream> is not specified, the upstream configured in
+branch.<name>.remote and branch.<name>.merge options will be used; see
+linkgit:git-config[1] for details.  If you are currently not on any
+branch or if the current branch does not have a configured upstream,
+the rebase will abort.
 
 All changes made by commits in the current branch but that are not
 in <upstream> are saved to a temporary area.  This is the same set
@@ -217,7 +223,8 @@ leave out at most one of A and B, in which case it defaults to HEAD.
 
 <upstream>::
 	Upstream branch to compare against.  May be any valid commit,
-	not just an existing branch name.
+	not just an existing branch name. Defaults to the configured
+	upstream for the current branch.
 
 <branch>::
 	Working branch; defaults to HEAD.

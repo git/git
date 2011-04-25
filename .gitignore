@@ -101,7 +101,9 @@
 /git-quiltimport
 /git-read-tree
 /git-rebase
+/git-rebase--am
 /git-rebase--interactive
+/git-rebase--merge
 /git-receive-pack
 /git-reflog
 /git-relink
