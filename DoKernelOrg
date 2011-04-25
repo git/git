@@ -97,6 +97,7 @@ then
 	) || exit
 	make clean
 	echo >&2 "Done -- move RPMS to the master machine."
+	(cd $HOME/rpms && sha1sum TARPIT/$V.$arch.$dist.tar) >&2
 	echo >&2 "scp $HOME/rpms/TARPIT/$V.$arch.$dist.tar master.kernel.org:rpms/TARPIT"
 	exit
 fi
