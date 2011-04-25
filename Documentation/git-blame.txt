@@ -9,7 +9,7 @@ SYNOPSIS
 --------
 [verse]
 'git blame' [-c] [-b] [-l] [--root] [-t] [-f] [-n] [-s] [-e] [-p] [-w] [--incremental] [-L n,m]
-	    [-S <revs-file>] [-M] [-C] [-C] [-C] [--since=<date>]
+	    [-S <revs-file>] [-M] [-C] [-C] [-C] [--since=<date>] [--abbrev=<n>]
 	    [<rev> | --contents <file> | --reverse <rev>] [--] <file>
 
 DESCRIPTION
@@ -72,6 +72,11 @@ include::blame-options.txt[]
 -w::
 	Ignore whitespace when comparing the parent's version and
 	the child's to find where the lines came from.
+
+--abbrev=<n>::
+	Instead of using the default 7+1 hexadecimal digits as the
+	abbreviated object name, use <n>+1 digits. Note that 1 column
+	is used for a caret to mark the boundary commit.
 
 
 THE PORCELAIN FORMAT
