@@ -98,6 +98,7 @@ static int pack_objects(int fd, struct ref *refs, struct extra_have_objects *ext
 		free(buf);
 		close(po.out);
 		po.out = -1;
+		close(fd);
 	}
 
 	if (finish_command(&po))
@@ -226,6 +227,9 @@ static void print_helper_status(struct ref *ref)
 static int sideband_demux(int in, int out, void *data)
 {
 	int *fd = data;
+#ifdef NO_PTHREADS
+	close(fd[1]);
+#endif
 	int ret = recv_sideband("send-pack", fd[0], out);
 	close(out);
 	return ret;
