@@ -186,8 +186,10 @@ OPTIONS
 
 -f::
 --force::
-	This option is only valid for the add command.
-	Allow adding an otherwise ignored submodule path.
+	This option is only valid for add and update commands.
+	When running add, allow adding an otherwise ignored submodule path.
+	When running update, throw away local changes in submodules when
+	switching to a different commit.
 
 --cached::
 	This option is only valid for status and summary commands.  These
