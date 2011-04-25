@@ -7,7 +7,7 @@ Release checklist.
 
  - "git shortlog -s v$PREV..maint" and update .mailmap
 
- - Update Documentation/RelNotes-$THIS.txt, make sure RelNotes
+ - Update Documentation/RelNotes/$THIS.txt, make sure RelNotes
    points to it, update GIT-VERSION-GEN.
 
  - Proofread RelNotes.
