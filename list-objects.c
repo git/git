@@ -68,7 +68,7 @@ static void process_tree(struct rev_info *revs,
 	struct tree_desc desc;
 	struct name_entry entry;
 	struct name_path me;
-	int all_interesting = (revs->diffopt.pathspec.nr == 0);
+	int match = revs->diffopt.pathspec.nr == 0 ? 2 : 0;
 	int baselen = base->len;
 
 	if (!revs->tree_objects)
@@ -85,7 +85,7 @@ static void process_tree(struct rev_info *revs,
 	me.elem = name;
 	me.elem_len = strlen(name);
 
-	if (!all_interesting) {
+	if (!match) {
 		strbuf_addstr(base, name);
 		if (base->len)
 			strbuf_addch(base, '/');
@@ -94,17 +94,13 @@ static void process_tree(struct rev_info *revs,
 	init_tree_desc(&desc, tree->buffer, tree->size);
 
 	while (tree_entry(&desc, &entry)) {
-		if (!all_interesting) {
-			int showit = tree_entry_interesting(&entry,
-							    base, 0,
-							    &revs->diffopt.pathspec);
-
-			if (showit < 0)
+		if (match != 2) {
+			match = tree_entry_interesting(&entry, base, 0,
+						       &revs->diffopt.pathspec);
+			if (match < 0)
 				break;
-			else if (!showit)
+			if (match == 0)
 				continue;
-			else if (showit == 2)
-				all_interesting = 1;
 		}
 
 		if (S_ISDIR(entry.mode))

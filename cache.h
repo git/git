@@ -511,7 +511,7 @@ struct pathspec {
 	struct pathspec_item {
 		const char *match;
 		int len;
-		unsigned int has_wildcard:1;
+		unsigned int use_wildcard:1;
 	} *items;
 };
 
