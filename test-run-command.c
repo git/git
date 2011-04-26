@@ -29,6 +29,8 @@ int main(int argc, char **argv)
 		fprintf(stderr, "FAIL %s\n", argv[1]);
 		return 1;
 	}
+	if (!strcmp(argv[1], "run-command"))
+		exit(run_command(&proc));
 
 	fprintf(stderr, "check usage\n");
 	return 1;
