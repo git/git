@@ -562,14 +562,14 @@ For 'branch' and 'tag', display the urls that will be used for copying when
 creating the branch or tag.
 
 --use-log-author::
-	When retrieving svn commits into git (as part of fetch, rebase, or
-	dcommit operations), look for the first From: or Signed-off-by: line
+	When retrieving svn commits into git (as part of 'fetch', 'rebase', or
+	'dcommit' operations), look for the first `From:` or `Signed-off-by:` line
 	in the log message and use that as the author string.
 --add-author-from::
 	When committing to svn from git (as part of 'commit-diff', 'set-tree' or 'dcommit'
 	operations), if the existing log message doesn't already have a
-	From: or Signed-off-by: line, append a From: line based on the
-	git commit's author string.  If you use this, then --use-log-author
+	`From:` or `Signed-off-by:` line, append a `From:` line based on the
+	git commit's author string.  If you use this, then `--use-log-author`
 	will retrieve a valid author string for all commits.
 
 
