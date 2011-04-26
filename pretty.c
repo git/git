@@ -287,6 +287,7 @@ void pp_user_info(const char *what, enum cmit_fmt fmt, struct strbuf *sb,
 	if (fmt == CMIT_FMT_EMAIL) {
 		char *name_tail = strchr(line, '<');
 		int display_name_length;
+		int final_line;
 		if (!name_tail)
 			return;
 		while (line < name_tail && isspace(name_tail[-1]))
@@ -294,6 +295,14 @@ void pp_user_info(const char *what, enum cmit_fmt fmt, struct strbuf *sb,
 		display_name_length = name_tail - line;
 		strbuf_addstr(sb, "From: ");
 		add_rfc2047(sb, line, display_name_length, encoding);
+		for (final_line = 0; final_line < sb->len; final_line++)
+			if (sb->buf[sb->len - final_line - 1] == '\n')
+				break;
+		if (namelen - display_name_length + final_line > 78) {
+			strbuf_addch(sb, '\n');
+			if (!isspace(name_tail[0]))
+				strbuf_addch(sb, ' ');
+		}
 		strbuf_add(sb, name_tail, namelen - display_name_length);
 		strbuf_addch(sb, '\n');
 	} else {
