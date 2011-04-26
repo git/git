@@ -9,7 +9,8 @@ git-merge-base - Find as good common ancestors as possible for a merge
 SYNOPSIS
 --------
 [verse]
-'git merge-base' [-a|--all] [--octopus] <commit> <commit>...
+'git merge-base' [-a|--all] <commit> <commit>...
+'git merge-base' [-a|--all] --octopus <commit>...
 'git merge-base' --independent <commit>...
 
 DESCRIPTION
@@ -22,22 +23,20 @@ that does not have any better common ancestor is a 'best common
 ancestor', i.e. a 'merge base'.  Note that there can be more than one
 merge base for a pair of commits.
 
-Unless `--octopus` is given, among the two commits to compute the merge
-base from, one is specified by the first commit argument on the command
-line; the other commit is a (possibly hypothetical) commit that is a merge
-across all the remaining commits on the command line.  As the most common
-special case, specifying only two commits on the command line means
-computing the merge base between the given two commits.
+OPERATION MODE
+--------------
+
+As the most common special case, specifying only two commits on the
+command line means computing the merge base between the given two commits.
+
+More generally, among the two commits to compute the merge base from,
+one is specified by the first commit argument on the command line;
+the other commit is a (possibly hypothetical) commit that is a merge
+across all the remaining commits on the command line.
 
 As a consequence, the 'merge base' is not necessarily contained in each of the
 commit arguments if more than two commits are specified. This is different
 from linkgit:git-show-branch[1] when used with the `--merge-base` option.
-
-OPTIONS
--------
--a::
---all::
-	Output all merge bases for the commits, instead of just one.
 
 --octopus::
 	Compute the best common ancestors of all supplied commits,
@@ -50,6 +49,12 @@ OPTIONS
 	among the commits given, list those which cannot be reached
 	from any other.  This mimics the behavior of 'git show-branch
 	--independent'.
+
+OPTIONS
+-------
+-a::
+--all::
+	Output all merge bases for the commits, instead of just one.
 
 DISCUSSION
 ----------
@@ -88,6 +93,9 @@ equivalent topology with a merge commit 'M' between 'B' and 'C' is:
 and the result of `git merge-base A M` is '1'.  Commit '2' is also a
 common ancestor between 'A' and 'M', but '1' is a better common ancestor,
 because '2' is an ancestor of '1'.  Hence, '2' is not a merge base.
+
+The result of `git merge-base --octopus A B C` is '2', because '2' is
+the best common ancestor of all commits.
 
 When the history involves criss-cross merges, there can be more than one
 'best' common ancestor for two commits.  For example, with this topology:
