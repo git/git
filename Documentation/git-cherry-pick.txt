@@ -51,9 +51,10 @@ OPTIONS
 	message prior to committing.
 
 -x::
-	When recording the commit, append to the original commit
-	message a note that indicates which commit this change
-	was cherry-picked from.  Append the note only for cherry
+	When recording the commit, append a line that says
+	"(cherry picked from commit ...)" to the original commit
+	message in order to indicate which commit this change was
+	cherry-picked from.  This is done only for cherry
 	picks without conflicts.  Do not use this option if
 	you are cherry-picking from your private branch because
 	the information is useless to the recipient.  If on the
