@@ -157,6 +157,33 @@ test_expect_success '--cherry' '
 	test_cmp actual.named expect
 '
 
+cat >expect <<EOF
+1	1
+EOF
+
+test_expect_success '--cherry --count' '
+	git rev-list --cherry --count F...E -- bar > actual &&
+	test_cmp actual expect
+'
+
+cat >expect <<EOF
+2	2
+EOF
+
+test_expect_success '--cherry-mark --count' '
+	git rev-list --cherry-mark --count F...E -- bar > actual &&
+	test_cmp actual expect
+'
+
+cat >expect <<EOF
+1	1	2
+EOF
+
+test_expect_success '--cherry-mark --left-right --count' '
+	git rev-list --cherry-mark --left-right --count F...E -- bar > actual &&
+	test_cmp actual expect
+'
+
 test_expect_success '--cherry-pick with independent, but identical branches' '
 	git symbolic-ref HEAD refs/heads/independent &&
 	rm .git/index &&
