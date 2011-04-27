@@ -129,6 +129,16 @@ test_expect_success '!alias expansion' '
 	test_cmp expect actual
 '
 
+test_expect_success 'GIT_PREFIX for !alias' '
+	printf "dir/" >expect &&
+	(
+		git config alias.test "!sh -c \"printf \$GIT_PREFIX\"" &&
+		cd dir &&
+		git test >../actual
+	) &&
+	test_cmp expect actual
+'
+
 test_expect_success 'no file/rev ambiguity check inside .git' '
 	git commit -a -m 1 &&
 	(
