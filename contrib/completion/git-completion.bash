@@ -1,6 +1,6 @@
 #!bash
 #
-# bash completion support for core Git.
+# bash/zsh completion support for core Git.
 #
 # Copyright (C) 2006,2007 Shawn O. Pearce <spearce@spearce.org>
 # Conceptually based on gitcompletion (http://gitweb.hawaga.org.uk/).
@@ -18,16 +18,12 @@
 # To use these routines:
 #
 #    1) Copy this file to somewhere (e.g. ~/.git-completion.sh).
-#    2) Added the following line to your .bashrc:
-#        source ~/.git-completion.sh
-#
-#       Or, add the following lines to your .zshrc:
-#        autoload bashcompinit
-#        bashcompinit
+#    2) Add the following line to your .bashrc/.zshrc:
 #        source ~/.git-completion.sh
 #
 #    3) Consider changing your PS1 to also show the current branch:
-#        PS1='[\u@\h \W$(__git_ps1 " (%s)")]\$ '
+#         Bash: PS1='[\u@\h \W$(__git_ps1 " (%s)")]\$ '
+#         ZSH:  PS1='[%n@%m %c$(__git_ps1 " (%s)")]\$ '
 #
 #       The argument to __git_ps1 will be displayed only if you
 #       are currently in a git repository.  The %s token will be
@@ -76,6 +72,10 @@
 #
 #       git@vger.kernel.org
 #
+
+if [[ -n ${ZSH_VERSION-} ]]; then
+	autoload -U +X bashcompinit && bashcompinit
+fi
 
 case "$COMP_WORDBREAKS" in
 *:*) : great ;;
