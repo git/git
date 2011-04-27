@@ -29,9 +29,6 @@ static int compare_by_number(const void *a1, const void *a2)
 		return -1;
 }
 
-const char *format_subject(struct strbuf *sb, const char *msg,
-			   const char *line_separator);
-
 static void insert_one_record(struct shortlog *log,
 			      const char *author,
 			      const char *oneline)
