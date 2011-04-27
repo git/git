@@ -742,12 +742,16 @@ cmd_summary() {
 	done |
 	if test -n "$for_status"; then
 		if [ -n "$files" ]; then
-			echo "# Submodules changed but not updated:"
+			status_msg="# Submodules changed but not updated:"
 		else
-			echo "# Submodule changes to be committed:"
+			status_msg="# Submodule changes to be committed:"
 		fi
-		echo "#"
-		sed -e 's|^|# |' -e 's|^# $|#|'
+		status_sed=$(sed -e 's|^|# |' -e 's|^# $|#|')
+		cat <<EOF
+$status_msg
+#
+$status_sed
+EOF
 	else
 		cat
 	fi
