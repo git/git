@@ -5,18 +5,6 @@ use strict;
 
 my %reverts = ('next' => {
 	map { $_ => 1 } qw(
-		c9bb83f
-		8f6d1e2
-		477e5a8
-		cc17e9f
-		07b74a9
-		e4b5259
-		76c7727
-		7e7b4f7
-		44d3770
-		107880a
-		02f9c7c
-		a9ef3e3
 	    ) });
 
 %reverts = ();
@@ -601,9 +589,69 @@ sub merge_cooking {
 }
 
 ################################################################
+# WilDo
+sub wildo {
+	my (%what, $topic, $last_merge_to_next);
+	my $too_recent = '9999-99-99';
+	while (<>) {
+		chomp;
+		if (/^\* (?:\S+) \(([-0-9]+)\) \d+ commits?$/) {
+			$topic = [$1, $too_recent, $_]; # tip-date, next-date, line
+		}
+		if (defined $topic &&
+		    ($topic->[1] eq $too_recent) &&
+		    (/^  \(merged to 'next' on ([-0-9]+)/)) {
+			$topic->[1] = $1;
+		}
+		next if (/^ /);
+		if (defined $topic &&
+		    /Will (?:\S+ )?merge /i) {
+			if (!exists $what{$_}) {
+				$what{$_} = [];
+			}
+			push @{$what{$_}}, $topic;
+			$topic = undef;
+		}
+	}
+	my $ipbl = "";
+	for my $what (sort keys %what) {
+		print "$ipbl$what\n";
+		for $topic (map { $_->[2] }
+			    sort { (($a->[1] cmp $b->[1]) ||
+				    ($a->[0] cmp $b->[0])) }
+			    @{$what{$what}}) {
+			print " $topic\n";
+		}
+		$ipbl = "\n";
+	}
+}
+
+################################################################
+# WhatsCooking
+
+sub doit {
+	my $topic = get_commit();
+	my $cooking = read_previous('Meta/whats-cooking.txt');
+	merge_cooking($cooking, $topic);
+	write_cooking('Meta/whats-cooking.txt', $cooking);
+}
+
+################################################################
 # Main
 
-my $topic = get_commit();
-my $cooking = read_previous('Meta/whats-cooking.txt');
-merge_cooking($cooking, $topic);
-write_cooking('Meta/whats-cooking.txt', $cooking);
+use Getopt::Long;
+
+my $wildo;
+if (!GetOptions("wildo" => \$wildo)) {
+	print STDERR "$0 [--wildo]";
+	exit 1;
+}
+
+if ($wildo) {
+	if (!@ARGV) {
+		push @ARGV, "Meta/whats-cooking.txt";
+	}
+	wildo();
+} else {
+	doit();
+}
