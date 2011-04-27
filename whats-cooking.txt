@@ -1,55 +1,197 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Apr 2011, #06; Mon, 25)
-X-master-at: ec014eac0e9e6f30cbbca616090fa2ecf74797e7
-X-next-at: 4216d33f893e8855ed345bfc97625e82433e569c
+Subject: What's cooking in git.git (Apr 2011, #07; Wed, 27)
+X-master-at: e839fe6c1206292aeb4518939b8f124ae5068619
+X-next-at: f5ef3c22908b68d63e56ce32f4234438cd775f22
 
-What's cooking in git.git (Apr 2011, #06; Mon, 25)
+What's cooking in git.git (Apr 2011, #07; Wed, 27)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' while commits prefixed with '+' are in 'next'.
 
 The main part of this cycle is expected to run thru May, aiming for a
-feature freeze in early June.  We are at the beginning of week #1 of this
+feature freeze in early June.  We are in the middle of week #1 of this
 cycle and week #2 starts on May 2nd.
 
 --------------------------------------------------
-[New Topics]
+[Graduated to "master"]
 
-* jn/setup-revisions-glob-and-friends-passthru (2011-04-21) 2 commits
- - revisions: allow --glob and friends in parse_options-enabled commands
- - revisions: split out handle_revision_pseudo_opt function
+* ar/clean-rmdir-empty (2011-04-01) 1 commit
+  (merged to 'next' on 2011-04-25 at 5a71fdb)
+ + clean: unreadable directory may still be rmdir-able if it is empty
+
+* cn/format-patch-quiet (2011-04-12) 2 commits
+  (merged to 'next' on 2011-04-25 at 40e2d1c)
+ + format-patch: document --quiet option
+ + format-patch: don't pass on the --quiet flag
+
+* dm/color-palette (2011-04-05) 1 commit
+  (merged to 'next' on 2011-04-25 at 839b17b)
+ + Share color list between graph and show-branch
+
+* dm/stash-k-i-p (2011-04-07) 2 commits
+  (merged to 'next' on 2011-04-25 at 01a207c)
+ + stash: ensure --no-keep-index and --patch can be used in any order
+ + stash: add two more tests for --no-keep-index
+
+* ef/maint-strbuf-init (2011-04-10) 2 commits
+  (merged to 'next' on 2011-04-25 at 6a45422)
+ + config: support values longer than 1023 bytes
+ + strbuf: make sure buffer is zero-terminated
+
+* jc/merge-dash-previous (2011-04-07) 1 commit
+  (merged to 'next' on 2011-04-25 at 512faf4)
+ + merge: allow "-" as a short-hand for "previous branch"
+
+* jc/pack-objects-bigfile (2011-04-05) 1 commit
+  (merged to 'next' on 2011-04-25 at 621035c)
+ + Teach core.bigfilethreashold to pack-objects
+
+* jk/maint-stash-oob (2011-04-06) 2 commits
+  (merged to 'next' on 2011-04-25 at 8478a92)
+ + stash: fix false positive in the invalid ref test.
+ + stash: fix accidental apply of non-existent stashes
+
+* jk/maint-upload-pack-shallow (2011-04-06) 1 commit
+  (merged to 'next' on 2011-04-25 at 073dac4)
+ + upload-pack: start pack-objects before async rev-list
+
+* jk/stash-loosen-safety (2011-04-05) 1 commit
+  (merged to 'next' on 2011-04-25 at cdc549f)
+ + stash: drop dirty worktree check on apply
+
+* mg/reflog-with-options (2011-04-01) 3 commits
+  (merged to 'next' on 2011-04-25 at 1ab8b78)
+ + reflog: fix overriding of command line options
+ + t/t1411: test reflog with formats
+ + builtin/log.c: separate default and setup of cmd_log_init()
+ (this branch is used by mg/show-without-prune.)
+
+* mg/sha1-path-advise (2011-03-31) 2 commits
+  (merged to 'next' on 2011-04-25 at 8b094f5)
+ + sha1_name: Suggest commit:./file for path in subdir
+ + t1506: factor out test for "Did you mean..."
 
 * mg/x-years-12-months (2011-04-20) 1 commit
   (merged to 'next' on 2011-04-25 at 74ba83b)
  + date: avoid "X years, 12 months" in relative dates
 
+* mh/git-svn-automkdirs (2011-04-01) 1 commit
+  (merged to 'next' on 2011-04-25 at 2e95357)
+ + git-svn: add an option to skip the creation of empty directories
+
+* nk/blame-abbrev (2011-04-06) 1 commit
+  (merged to 'next' on 2011-04-25 at 59a4281)
+ + blame: add --abbrev command line option and make it honor core.abbrev
+
+* rj/sparse (2011-04-07) 7 commits
+  (merged to 'next' on 2011-04-25 at e1af2af)
+ + sparse: Fix some "symbol not declared" warnings
+ + sparse: Fix errors due to missing target-specific variables
+ + sparse: Fix an "symbol 'merge_file' not decared" warning
+ + sparse: Fix an "symbol 'format_subject' not declared" warning
+ + sparse: Fix some "Using plain integer as NULL pointer" warnings
+ + sparse: Fix an "symbol 'cmd_index_pack' not declared" warning
+ + Makefile: Use cgcc rather than sparse in the check target
+
+* rr/doc-content-type (2011-04-07) 4 commits
+  (merged to 'next' on 2011-04-25 at 83c41e4)
+ + Documentation: Allow custom diff tools to be specified in 'diff.tool'
+ + Documentation: Add diff.<driver>.* to config
+ + Documentation: Move diff.<driver>.* from config.txt to diff-config.txt
+ + Documentation: Add filter.<driver>.* to config
+
+--------------------------------------------------
+[New Topics]
+
+* aw/maint-rebase-i-p-no-ff (2011-04-20) 1 commit
+ - git-rebase--interactive.sh: preserve-merges fails on merges created with no-ff
+
+* mg/alias-expose-prefix (2011-04-27) 2 commits
+ - handle_alias: provide GIT_PREFIX to !alias
+ - t1020: test !alias in subdirectory
+
+* mg/diff-uiconfig-doc (2011-04-27) 1 commit
+ - config.txt,diff-options.txt: porcelain vs. plumbing for color.diff
+
+With tentative rewording.
+
+* ld/p4-preserve-user-names (2011-04-21) 1 commit
+ - git-p4: add option to preserve user names
+
+Pete acked and told Luke to wait and then resend; I just picked it up so
+that the patch is not lost.
+
+* mg/rev-list-count-cherry (2011-04-26) 1 commit
+  (merged to 'next' on 2011-04-26 at dc3e80a)
+ + rev-list --count: separate count for --cherry-mark
+
+Will merge to "master" by the end of week #2.
+
+* ft/gitweb-tar-with-gzip-n (2011-04-26) 1 commit
+  (merged to 'next' on 2011-04-26 at 8e59a0e)
+ + gitweb: supply '-n' to gzip for identical output
+
+Will merge to "master" by the end of week #2.
+
+* ml/test-readme (2011-04-26) 1 commit
+  (merged to 'next' on 2011-04-26 at d1efe84)
+ + t/README: unify documentation of test function args
+
+Will merge to "master" by the end of week #2.
+
+* sp/maint-clear-postfields (2011-04-26) 1 commit
+  (merged to 'next' on 2011-04-26 at 0082503)
+ + http: clear POSTFIELDS when initializing a slot
+
+Fixes a rather nasty bug we had since the beginning of smart-HTTP
+but has become a lot easier to trigger since 1.7.5, introducing a
+regression.
+
 Will merge to "master" by the end of week #1.
 
-* jc/fix-add-u-unmerged (2011-04-20) 1 commit
- - Fix "add -u" that sometimes fails to resolve unmerged paths
- (this branch uses jc/fix-diff-files-unmerged.)
+* jk/format-patch-quote-special-in-from (2011-04-08) 1 commit
+ - pretty: quote rfc822 specials in email addresses
 
-* jc/fix-diff-files-unmerged (2011-04-22) 4 commits
- - diff-files: show unmerged entries correctly
- - diff: remove often unused parameters from diff_unmerge()
- - diff.c: return filepair from diff_unmerge()
- - test: use $_z40 from test-lib
- (this branch is used by jc/fix-add-u-unmerged.)
+Will merge to "next".
 
-* js/maint-1.6.6-send-pack-stateless-rpc-deadlock-fix (2011-04-25) 1 commit
- - send-pack: avoid deadlock when pack-object dies early
- (this branch is used by js/maint-send-pack-stateless-rpc-deadlock-fix.)
+* rs/strbuf-setlen-assert (2011-04-27) 1 commit
+ - strbuf: clarify assertion in strbuf_setlen()
 
-* js/maint-send-pack-stateless-rpc-deadlock-fix (2011-04-25) 1 commit
- - Merge branch 'js/maint-1.6.6-send-pack-stateless-rpc-deadlock-fix' into js/maint-send-pack-stateless-rpc-deadlock-fix
- (this branch uses js/maint-1.6.6-send-pack-stateless-rpc-deadlock-fix.)
+Will merge to "next".
 
-* vh/git-svn-doc (2011-04-25) 1 commit
- - git-svn.txt: fix usage of --add-author-from
+* jh/dirstat-lines (2011-04-27) 7 commits
+ - diff --dirstat: tighten and clean-up parsing.
+ - New --dirstat=lines mode, doing dirstat analysis based on diffstat
+ - Allow specifying --dirstat cut-off percentage as a floating point number
+ - Add config variable for specifying default --dirstat behavior
+ - Refactor --dirstat parsing; deprecate --cumulative and --dirstat-by-file
+ - Make --dirstat=0 output directories that contribute < 0.1% of changes
+ - Add several testcases for --dirstat and friends
+ (this branch uses jh/dirstat.)
+
+This is v3/v4 that is still being discussed.
 
 --------------------------------------------------
 [Stalled]
+
+* jn/gitweb-js (2011-04-15) 13 commits
+ - gitweb: Make JavaScript ability to adjust timezones configurable
+ - gitweb.js: Add UI for selecting common timezone to display dates
+ - gitweb: JavaScript ability to adjust time based on timezone
+ - gitweb: Unify the way long timestamp is displayed
+ - gitweb: Refactor generating of long dates into format_timestamp_html
+ - gitweb.js: Provide getElementsByClassName method (if it not exists)
+ - gitweb.js: Introduce gitweb/static/js/lib/cookies.js
+ - gitweb.js: Extract and improve datetime handling
+ - gitweb.js: Provide default values for padding in padLeftStr and padLeft
+ - gitweb.js: Update and improve comments in JavaScript files
+ - gitweb: Split JavaScript for maintability, combining on build
+ - Remove gitweb/gitweb.cgi and other legacy targets from main Makefile
+ - git-instaweb: Simplify build dependency on gitweb
+
+I do not recall seeing this series much reviewed. Is everybody happy with
+this series?
 
 * jk/maint-merge-rename-create (2011-03-25) 3 commits
  - merge: turn on rewrite detection
@@ -62,24 +204,8 @@ Peff wanted to reroll this, so this is taken out of "next".
  - http-push: refactor curl_easy_setup madness
  - http: make curl callbacks match contracts from curl header
 
-I didn't see anything glaringly wrong with this, but I would appreciate
-extra sets of eyeballs from people who have worked on HTTP transports to
-double check.
-
-* jk/maint-push-async-hang (2011-03-31) 4 commits
- - send-pack: abort sideband demuxer on pack-objects error
- - run-command: allow aborting async code prematurely
- - finish_async: be quiet when waiting for async process
- - teach wait_or_whine a "quiet" mode
- (this branch is used by jk/maint-push-async-hang-threads.)
-
-* jk/maint-push-async-hang-threads (2011-03-31) 2 commits
- - run-command: implement abort_async for pthreads
- - Merge branch 'jk/maint-push-async-hang' into jk/maint-push-async-hang-threads
- (this branch uses jk/maint-push-async-hang.)
-
-These two series aim for a good goal, but needs reroll after 1.7.5 with
-sign-offs.
+The second one will probably need re-rolling after
+sp/maint-clear-postfields settles.
 
 * rr/rerere-clear-libify (2011-04-13) 1 commit
  - rerere: Expose an API corresponding to 'clear' functionality
@@ -96,7 +222,6 @@ we may want to add tests before moving it forward.
 
 * mg/show-without-prune (2011-04-01) 1 commit
  - builtin/show: do not prune by pathspec
- (this branch uses mg/reflog-with-options.)
 
 I wanted to like this, but it still feels like too much magic.  Will drop
 and wait for the topic to resurface.
@@ -131,74 +256,99 @@ current usage context.
 --------------------------------------------------
 [Cooking]
 
+* jn/setup-revisions-glob-and-friends-passthru (2011-04-21) 2 commits
+ - revisions: allow --glob and friends in parse_options-enabled commands
+ - revisions: split out handle_revision_pseudo_opt function
+
+Will merge to "next".
+
 * cn/log-parse-opt (2011-04-14) 1 commit
  - log: convert to parse-options
 
-* jk/format-patch-multiline-header (2011-04-14) 1 commit
- - format-patch: wrap email addresses after long names
+Will merge to "next".
+
+* jc/fix-add-u-unmerged (2011-04-20) 1 commit
+ - Fix "add -u" that sometimes fails to resolve unmerged paths
+ (this branch uses jc/fix-diff-files-unmerged.)
 
 Will merge to "next".
+
+* jc/fix-diff-files-unmerged (2011-04-22) 4 commits
+ - diff-files: show unmerged entries correctly
+ - diff: remove often unused parameters from diff_unmerge()
+ - diff.c: return filepair from diff_unmerge()
+ - test: use $_z40 from test-lib
+ (this branch is used by jc/fix-add-u-unmerged.)
+
+Will merge to "next".
+
+* js/maint-1.6.6-send-pack-stateless-rpc-deadlock-fix (2011-04-25) 1 commit
+ - send-pack: avoid deadlock when pack-object dies early
+ (this branch is used by js/maint-send-pack-stateless-rpc-deadlock-fix.)
+
+* js/maint-send-pack-stateless-rpc-deadlock-fix (2011-04-25) 1 commit
+ - Merge branch 'js/maint-1.6.6-send-pack-stateless-rpc-deadlock-fix' into js/maint-send-pack-stateless-rpc-deadlock-fix
+ (this branch uses js/maint-1.6.6-send-pack-stateless-rpc-deadlock-fix.)
+
+Will merge to "next".
+
+* vh/git-svn-doc (2011-04-26) 3 commits
+ - git-svn.txt: small typeface improvements
+ - git-svn.txt: move option descriptions
+ - git-svn.txt: fix usage of --add-author-from
+
+Will merge to "next".
+
+* jk/format-patch-multiline-header (2011-04-14) 1 commit
+  (merged to 'next' on 2011-04-26 at 3d5eda3)
+ + format-patch: wrap email addresses after long names
+
+Will merge to "master" by the end of week #2.
 
 * jn/maint-format-patch-doc (2011-04-14) 1 commit
- - Documentation: describe the format of messages with inline patches
+  (merged to 'next' on 2011-04-26 at 400cf42)
+ + Documentation: describe the format of messages with inline patches
  (this branch is used by jn/format-patch-doc.)
 
-Will merge to "next".
+Will merge to "master" by the end of week #2.
 
 * jn/format-patch-doc (2011-04-18) 6 commits
- - Documentation/format-patch: suggest Toggle Word Wrap add-on for Thunderbird
- - Documentation: publicize hints for sending patches with GMail
- - Documentation: publicize KMail hints for sending patches inline
- - Documentation: hints for sending patches inline with Thunderbird
- - Documentation: explain how to check for patch corruption
- - Merge v1.7.5-rc2 into jn/format-patch-doc
+  (merged to 'next' on 2011-04-26 at 3f64325)
+ + Documentation/format-patch: suggest Toggle Word Wrap add-on for Thunderbird
+ + Documentation: publicize hints for sending patches with GMail
+ + Documentation: publicize KMail hints for sending patches inline
+ + Documentation: hints for sending patches inline with Thunderbird
+ + Documentation: explain how to check for patch corruption
+ + Merge v1.7.5-rc2 into jn/format-patch-doc
  (this branch uses jn/maint-format-patch-doc.)
 
-Will merge to "next".
-
-* jn/gitweb-js (2011-04-15) 13 commits
- - gitweb: Make JavaScript ability to adjust timezones configurable
- - gitweb.js: Add UI for selecting common timezone to display dates
- - gitweb: JavaScript ability to adjust time based on timezone
- - gitweb: Unify the way long timestamp is displayed
- - gitweb: Refactor generating of long dates into format_timestamp_html
- - gitweb.js: Provide getElementsByClassName method (if it not exists)
- - gitweb.js: Introduce gitweb/static/js/lib/cookies.js
- - gitweb.js: Extract and improve datetime handling
- - gitweb.js: Provide default values for padding in padLeftStr and padLeft
- - gitweb.js: Update and improve comments in JavaScript files
- - gitweb: Split JavaScript for maintability, combining on build
- - Remove gitweb/gitweb.cgi and other legacy targets from main Makefile
- - git-instaweb: Simplify build dependency on gitweb
+Will merge to "master" by the end of week #2.
 
 * jn/run-command-error-failure (2011-04-20) 2 commits
- - run-command: handle short writes and EINTR in die_child
- - tests: check error message from run_command
+  (merged to 'next' on 2011-04-26 at a1f171e)
+ + run-command: handle short writes and EINTR in die_child
+ + tests: check error message from run_command
 
-Will merge to "next".
+Will merge to "master" by the end of week #2.
 
 * ss/cherry-pick-x-doc (2011-04-15) 1 commit
- - doc: Clarify that "cherry-pick -x" does not use "git notes"
+  (merged to 'next' on 2011-04-26 at c9a6f83)
+ + doc: Clarify that "cherry-pick -x" does not use "git notes"
 
-Will merge to "next".
+Will merge to "master" by the end of week #2.
 
 * ss/doc-svn (2011-04-19) 1 commit
- - remove noise and inaccuracies from git-svn docs
+  (merged to 'next' on 2011-04-26 at a723b91)
+ + remove noise and inaccuracies from git-svn docs
 
-Will merge to "next".
+Will merge to "master" by the end of week #2.
 
 * vr/merge-base-doc (2011-04-15) 2 commits
- - Restructure documentation for git-merge-base.
- - Documentation: update to git-merge-base --octopus
+  (merged to 'next' on 2011-04-26 at e906ba3)
+ + Restructure documentation for git-merge-base.
+ + Documentation: update to git-merge-base --octopus
 
-Will merge to "next".
-
-* ef/maint-strbuf-init (2011-04-10) 2 commits
-  (merged to 'next' on 2011-04-25 at 6a45422)
- + config: support values longer than 1023 bytes
- + strbuf: make sure buffer is zero-terminated
-
-Will merge to "master" by the end of week #1.
+Will merge to "master" by the end of week #2.
 
 * jh/dirstat (2011-04-12) 4 commits
   (merged to 'next' on 2011-04-25 at cb277e6)
@@ -206,119 +356,15 @@ Will merge to "master" by the end of week #1.
  + Teach --dirstat not to completely ignore rearranged lines within a file
  + --dirstat-by-file: Make it faster and more correct
  + --dirstat: Describe non-obvious differences relative to --stat or regular diff
+ (this branch is used by jh/dirstat-lines.)
 
 Will merge to "master" by the end of week #1.
 
 * jm/mergetool-submodules (2011-04-13) 1 commit
- - mergetool: Teach about submodules
+  (merged to 'next' on 2011-04-26 at 40892cf)
+ + mergetool: Teach about submodules
 
-Will merge to "next".
-
-* rj/sparse (2011-04-07) 7 commits
-  (merged to 'next' on 2011-04-25 at e1af2af)
- + sparse: Fix some "symbol not declared" warnings
- + sparse: Fix errors due to missing target-specific variables
- + sparse: Fix an "symbol 'merge_file' not decared" warning
- + sparse: Fix an "symbol 'format_subject' not declared" warning
- + sparse: Fix some "Using plain integer as NULL pointer" warnings
- + sparse: Fix an "symbol 'cmd_index_pack' not declared" warning
- + Makefile: Use cgcc rather than sparse in the check target
-
-Will merge to "master" by the end of week #1.
-
-* cn/format-patch-quiet (2011-04-12) 2 commits
-  (merged to 'next' on 2011-04-25 at 40e2d1c)
- + format-patch: document --quiet option
- + format-patch: don't pass on the --quiet flag
-
-Will merge to "master" by the end of week #1.
-
-* dm/stash-k-i-p (2011-04-07) 2 commits
-  (merged to 'next' on 2011-04-25 at 01a207c)
- + stash: ensure --no-keep-index and --patch can be used in any order
- + stash: add two more tests for --no-keep-index
-
-Will merge to "master" by the end of week #1.
-
-* jc/merge-dash-previous (2011-04-07) 1 commit
-  (merged to 'next' on 2011-04-25 at 512faf4)
- + merge: allow "-" as a short-hand for "previous branch"
-
-Will merge to "master" by the end of week #1.
-
-* rr/doc-content-type (2011-04-07) 4 commits
-  (merged to 'next' on 2011-04-25 at 83c41e4)
- + Documentation: Allow custom diff tools to be specified in 'diff.tool'
- + Documentation: Add diff.<driver>.* to config
- + Documentation: Move diff.<driver>.* from config.txt to diff-config.txt
- + Documentation: Add filter.<driver>.* to config
-
-Will merge to "master" by the end of week #1.
-
-* jc/pack-objects-bigfile (2011-04-05) 1 commit
-  (merged to 'next' on 2011-04-25 at 621035c)
- + Teach core.bigfilethreashold to pack-objects
-
-Will merge to "master" by the end of week #1.
-
-* jk/maint-stash-oob (2011-04-06) 2 commits
-  (merged to 'next' on 2011-04-25 at 8478a92)
- + stash: fix false positive in the invalid ref test.
- + stash: fix accidental apply of non-existent stashes
-
-Will merge to "master" by the end of week #1.
-
-* nk/blame-abbrev (2011-04-06) 1 commit
-  (merged to 'next' on 2011-04-25 at 59a4281)
- + blame: add --abbrev command line option and make it honor core.abbrev
-
-Will merge to "master" by the end of week #1.
-
-* jk/maint-upload-pack-shallow (2011-04-06) 1 commit
-  (merged to 'next' on 2011-04-25 at 073dac4)
- + upload-pack: start pack-objects before async rev-list
-
-Will merge to "master" by the end of week #1.
-
-* jk/stash-loosen-safety (2011-04-05) 1 commit
-  (merged to 'next' on 2011-04-25 at cdc549f)
- + stash: drop dirty worktree check on apply
-
-Will merge to "master" by the end of week #1.
-
-* dm/color-palette (2011-04-05) 1 commit
-  (merged to 'next' on 2011-04-25 at 839b17b)
- + Share color list between graph and show-branch
-
-Will merge to "master" by the end of week #1.
-
-* mg/sha1-path-advise (2011-03-31) 2 commits
-  (merged to 'next' on 2011-04-25 at 8b094f5)
- + sha1_name: Suggest commit:./file for path in subdir
- + t1506: factor out test for "Did you mean..."
-
-Will merge to "master" by the end of week #1.
-
-* ar/clean-rmdir-empty (2011-04-01) 1 commit
-  (merged to 'next' on 2011-04-25 at 5a71fdb)
- + clean: unreadable directory may still be rmdir-able if it is empty
-
-Will merge to "master" by the end of week #1.
-
-* mg/reflog-with-options (2011-04-01) 3 commits
-  (merged to 'next' on 2011-04-25 at 1ab8b78)
- + reflog: fix overriding of command line options
- + t/t1411: test reflog with formats
- + builtin/log.c: separate default and setup of cmd_log_init()
- (this branch is used by mg/show-without-prune.)
-
-Will merge to "master" by the end of week #1.
-
-* mh/git-svn-automkdirs (2011-04-01) 1 commit
-  (merged to 'next' on 2011-04-25 at 2e95357)
- + git-svn: add an option to skip the creation of empty directories
-
-Will merge to "master" by the end of week #1.
+Will merge to "master" by the end of week #2.
 
 * ab/i18n-fixup (2011-04-14) 24 commits
   (merged to 'next' on 2011-04-25 at 32fef07)
@@ -474,8 +520,14 @@ Will merge to "master" by the end of week #2.
 --------------------------------------------------
 [Discarded]
 
-* cn/system-path-tweak (2011-03-17) 1 commit
- . system_path: use a static buffer
+* jk/maint-push-async-hang (2011-03-31) 4 commits
+ . send-pack: abort sideband demuxer on pack-objects error
+ . run-command: allow aborting async code prematurely
+ . finish_async: be quiet when waiting for async process
+ . teach wait_or_whine a "quiet" mode
+ (this branch is used by jk/maint-push-async-hang-threads.)
 
-* jh/gitweb-localtime (2011-03-23) 1 commit
- . gitweb: javascript ability to adjust time based on timezone
+* jk/maint-push-async-hang-threads (2011-03-31) 2 commits
+ . run-command: implement abort_async for pthreads
+ . Merge branch 'jk/maint-push-async-hang' into jk/maint-push-async-hang-threads
+ (this branch uses jk/maint-push-async-hang.)
