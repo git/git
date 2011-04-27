@@ -228,10 +228,6 @@ EOF
 
 test_expect_success '--for-status' "
     git submodule summary --for-status HEAD^ >actual &&
-    if test_have_prereq MINGW
-    then
-	dos2unix actual
-    fi &&
     test_cmp actual - <<EOF
 # Submodule changes to be committed:
 #

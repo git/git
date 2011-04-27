@@ -719,10 +719,6 @@ EOF
 test_expect_success 'status submodule summary' '
 	git config status.submodulesummary 10 &&
 	git status >output &&
-	if test_have_prereq MINGW
-	then
-		dos2unix output
-	fi &&
 	test_i18ncmp expect output
 '
 
@@ -739,10 +735,6 @@ A  sm
 EOF
 test_expect_success 'status -s submodule summary' '
 	git status -s >output &&
-	if test_have_prereq MINGW
-	then
-		dos2unix output
-	fi &&
 	test_cmp expect output
 '
 
@@ -769,16 +761,8 @@ test_expect_success 'status submodule summary (clean submodule): commit' '
 	git commit -m "commit submodule" &&
 	git config status.submodulesummary 10 &&
 	test_must_fail git commit --dry-run >output &&
-	if test_have_prereq MINGW
-	then
-		dos2unix output
-	fi &&
 	test_i18ncmp expect output &&
 	git status >output &&
-	if test_have_prereq MINGW
-	then
-		dos2unix output
-	fi &&
 	test_i18ncmp expect output
 '
 
@@ -793,10 +777,6 @@ cat >expect <<EOF
 EOF
 test_expect_success 'status -s submodule summary (clean submodule)' '
 	git status -s >output &&
-	if test_have_prereq MINGW
-	then
-		dos2unix output
-	fi &&
 	test_cmp expect output
 '
 
@@ -832,10 +812,6 @@ EOF
 test_expect_success 'commit --dry-run submodule summary (--amend)' '
 	git config status.submodulesummary 10 &&
 	git commit --dry-run --amend >output &&
-	if test_have_prereq MINGW
-	then
-		dos2unix output
-	fi &&
 	test_i18ncmp expect output
 '
 
