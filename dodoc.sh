@@ -86,6 +86,9 @@ case "$NID" in
 	;;
 esac
 
+DIFF=diff
+export DIFF
+
 make >./:html.log 2>&1 \
 	-C Documentation -j 2 $dd \
 	WEBDOC_DEST="$DOCREPO/doc-html-inst" install-webdoc || exit
