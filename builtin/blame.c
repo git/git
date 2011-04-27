@@ -41,6 +41,7 @@ static int reverse;
 static int blank_boundary;
 static int incremental;
 static int xdl_opts;
+static int abbrev = -1;
 
 static enum date_mode blame_date_mode = DATE_ISO8601;
 static size_t blame_date_width;
@@ -1670,7 +1671,7 @@ static void emit_other(struct scoreboard *sb, struct blame_entry *ent, int opt)
 	cp = nth_line(sb, ent->lno);
 	for (cnt = 0; cnt < ent->num_lines; cnt++) {
 		char ch;
-		int length = (opt & OUTPUT_LONG_OBJECT_NAME) ? 40 : 8;
+		int length = (opt & OUTPUT_LONG_OBJECT_NAME) ? 40 : abbrev;
 
 		if (suspect->commit->object.flags & UNINTERESTING) {
 			if (blank_boundary)
@@ -2310,6 +2311,7 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 		{ OPTION_CALLBACK, 'C', NULL, &opt, "score", "Find line copies within and across files", PARSE_OPT_OPTARG, blame_copy_callback },
 		{ OPTION_CALLBACK, 'M', NULL, &opt, "score", "Find line movements within and across files", PARSE_OPT_OPTARG, blame_move_callback },
 		OPT_CALLBACK('L', NULL, &bottomtop, "n,m", "Process only line range n,m, counting from 1", blame_bottomtop_callback),
+		OPT__ABBREV(&abbrev),
 		OPT_END()
 	};
 
@@ -2344,6 +2346,11 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 	}
 parse_done:
 	argc = parse_options_end(&ctx);
+
+	if (abbrev == -1)
+		abbrev = default_abbrev;
+	/* one more abbrev length is needed for the boundary commit */
+	abbrev++;
 
 	if (revs_file && read_ancestry(revs_file))
 		die_errno("reading graft file '%s' failed", revs_file);
