@@ -158,6 +158,7 @@
 /gitk-git/gitk-wish
 /gitweb/GITWEB-BUILD-OPTIONS
 /gitweb/gitweb.cgi
+/gitweb/static/gitweb.js
 /gitweb/static/gitweb.min.*
 /test-chmtime
 /test-ctype
