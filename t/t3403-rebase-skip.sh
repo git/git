@@ -35,6 +35,11 @@ test_expect_success 'rebase with git am -3 (default)' '
 	test_must_fail git rebase master
 '
 
+test_expect_success 'rebase --skip can not be used with other options' '
+	test_must_fail git rebase -v --skip &&
+	test_must_fail git rebase --skip -v
+'
+
 test_expect_success 'rebase --skip with am -3' '
 	git rebase --skip
 	'
