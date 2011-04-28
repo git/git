@@ -80,18 +80,31 @@ test_expect_success setup '
 
 	git config log.showroot false &&
 	git commit --amend &&
+
+	GIT_AUTHOR_DATE="2006-06-26 00:06:00 +0000" &&
+	GIT_COMMITTER_DATE="2006-06-26 00:06:00 +0000" &&
+	export GIT_AUTHOR_DATE GIT_COMMITTER_DATE &&
+	git checkout -b rearrange initial &&
+	for i in B A; do echo $i; done >dir/sub &&
+	git add dir/sub &&
+	git commit -m "Rearranged lines in dir/sub" &&
+	git checkout master &&
+
 	git show-branch
 '
 
 : <<\EOF
 ! [initial] Initial
  * [master] Merge branch 'side'
-  ! [side] Side
----
- -  [master] Merge branch 'side'
- *+ [side] Side
- *  [master^] Second
-+*+ [initial] Initial
+  ! [rearrange] Rearranged lines in dir/sub
+   ! [side] Side
+----
+  +  [rearrange] Rearranged lines in dir/sub
+ -   [master] Merge branch 'side'
+ * + [side] Side
+ *   [master^] Third
+ *   [master~2] Second
++*++ [initial] Initial
 EOF
 
 V=`git version | sed -e 's/^git version //' -e 's/\./\\./g'`
@@ -287,6 +300,8 @@ diff --no-index --name-status -- dir2 dir
 diff --no-index dir dir3
 diff master master^ side
 diff --dirstat master~1 master~2
+diff --dirstat initial rearrange
+diff --dirstat-by-file initial rearrange
 EOF
 
 test_expect_success 'log -S requires an argument' '

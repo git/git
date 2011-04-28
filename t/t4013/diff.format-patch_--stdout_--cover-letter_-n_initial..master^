@@ -1,7 +1,7 @@
 $ git format-patch --stdout --cover-letter -n initial..master^
 From 9a6d4949b6b76956d9d5e26f2791ec2ceff5fdc0 Mon Sep 17 00:00:00 2001
 From: C O Mitter <committer@example.com>
-Date: Mon, 26 Jun 2006 00:05:00 +0000
+Date: Mon, 26 Jun 2006 00:06:00 +0000
 Subject: [DIFFERENT_PREFIX 0/2] *** SUBJECT HERE ***
 
 *** BLURB HERE ***
