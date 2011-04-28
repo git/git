@@ -149,31 +149,21 @@ test_expect_success 'add -u resolves unmerged paths' '
 	echo 3 >path1 &&
 	echo 2 >path3 &&
 	echo 2 >path5 &&
+
+	# Explicit resolving by adding removed paths should fail
+	test_must_fail git add path4 &&
+	test_must_fail git add path6 &&
+
+	# "add -u" should notice removals no matter what stages
+	# the index entries are in.
 	git add -u &&
 	git ls-files -s path1 path2 path3 path4 path5 path6 >actual &&
 	{
 		echo "100644 $three 0	path1"
-		echo "100644 $one 1	path3"
-		echo "100644 $one 1	path4"
-		echo "100644 $one 3	path5"
-		echo "100644 $one 3	path6"
-	} >expect &&
-	test_cmp expect actual &&
-
-	# Bonus tests.  Explicit resolving
-	git add path3 path5 &&
-	test_must_fail git add path4 &&
-	test_must_fail git add path6 &&
-	git rm path4 &&
-	git rm path6 &&
-
-	git ls-files -s "path?" >actual &&
-	{
-		echo "100644 $three 0	path1"
 		echo "100644 $two 0	path3"
 		echo "100644 $two 0	path5"
-	} >expect
-
+	} >expect &&
+	test_cmp expect actual
 '
 
 test_expect_success '"add -u non-existent" should fail' '
