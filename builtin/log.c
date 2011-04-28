@@ -25,12 +25,15 @@ static const char *default_date_mode = NULL;
 
 static int default_show_root = 1;
 static int decoration_style;
+static int decoration_given;
 static const char *fmt_patch_subject_prefix = "PATCH";
 static const char *fmt_pretty;
 
-static const char * const builtin_log_usage =
+static const char * const builtin_log_usage[] = {
 	"git log [<options>] [<since>..<until>] [[--] <path>...]\n"
-	"   or: git show [options] <object>...";
+	"   or: git show [options] <object>...",
+	NULL
+};
 
 static int parse_decoration_style(const char *var, const char *value)
 {
@@ -47,6 +50,23 @@ static int parse_decoration_style(const char *var, const char *value)
 	else if (!strcmp(value, "short"))
 		return DECORATE_SHORT_REFS;
 	return -1;
+}
+
+static int decorate_callback(const struct option *opt, const char *arg, int unset)
+{
+	if (unset)
+		decoration_style = 0;
+	else if (arg)
+		decoration_style = parse_decoration_style("command line", arg);
+	else
+		decoration_style = DECORATE_SHORT_REFS;
+
+	if (decoration_style < 0)
+		die("invalid --decorate option: %s", arg);
+
+	decoration_given = 1;
+
+	return 0;
 }
 
 static void cmd_log_init_defaults(struct rev_info *rev)
@@ -68,16 +88,27 @@ static void cmd_log_init_defaults(struct rev_info *rev)
 static void cmd_log_init_finish(int argc, const char **argv, const char *prefix,
 			 struct rev_info *rev, struct setup_revision_opt *opt)
 {
-	int i;
-	int decoration_given = 0;
 	struct userformat_want w;
-	/*
-	 * Check for -h before setup_revisions(), or "git log -h" will
-	 * fail when run without a git directory.
-	 */
-	if (argc == 2 && !strcmp(argv[1], "-h"))
-		usage(builtin_log_usage);
+	int quiet = 0, source = 0;
+
+	const struct option builtin_log_options[] = {
+		OPT_BOOLEAN(0, "quiet", &quiet, "supress diff output"),
+		OPT_BOOLEAN(0, "source", &source, "show source"),
+		{ OPTION_CALLBACK, 0, "decorate", NULL, NULL, "decorate options",
+		  PARSE_OPT_OPTARG, decorate_callback},
+		OPT_END()
+	};
+
+	argc = parse_options(argc, argv, prefix,
+			     builtin_log_options, builtin_log_usage,
+			     PARSE_OPT_KEEP_ARGV0 | PARSE_OPT_KEEP_UNKNOWN |
+			     PARSE_OPT_KEEP_DASHDASH);
+
 	argc = setup_revisions(argc, argv, rev, opt);
+
+	/* Any arguments at this point are not recognized */
+	if (argc > 1)
+		die("unrecognized argument: %s", argv[1]);
 
 	memset(&w, 0, sizeof(w));
 	userformat_find_requirements(NULL, &w);
@@ -94,26 +125,9 @@ static void cmd_log_init_finish(int argc, const char **argv, const char *prefix,
 		if (rev->diffopt.pathspec.nr != 1)
 			usage("git logs can only follow renames on one pathname at a time");
 	}
-	for (i = 1; i < argc; i++) {
-		const char *arg = argv[i];
-		if (!strcmp(arg, "--decorate")) {
-			decoration_style = DECORATE_SHORT_REFS;
-			decoration_given = 1;
-		} else if (!prefixcmp(arg, "--decorate=")) {
-			const char *v = skip_prefix(arg, "--decorate=");
-			decoration_style = parse_decoration_style(arg, v);
-			if (decoration_style < 0)
-				die(_("invalid --decorate option: %s"), arg);
-			decoration_given = 1;
-		} else if (!strcmp(arg, "--no-decorate")) {
-			decoration_style = 0;
-		} else if (!strcmp(arg, "--source")) {
-			rev->show_source = 1;
-		} else if (!strcmp(arg, "-h")) {
-			usage(builtin_log_usage);
-		} else
-			die(_("unrecognized argument: %s"), arg);
-	}
+
+	if (source)
+		rev->show_source = 1;
 
 	/*
 	 * defeat log.decorate configuration interacting with --pretty=raw
