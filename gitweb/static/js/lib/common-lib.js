@@ -22,11 +22,14 @@
  *
  * @param {Number|String} input: number to pad
  * @param {Number} width: visible width of output
- * @param {String} str: string to prefix to string, e.g. '\u00A0'
+ * @param {String} str: string to prefix to string, defaults to '\u00A0'
  * @returns {String} INPUT prefixed with STR x (WIDTH - INPUT.length)
  */
 function padLeftStr(input, width, str) {
 	var prefix = '';
+	if (typeof str === 'undefined') {
+		ch = '\u00A0'; // using '&nbsp;' doesn't work in all browsers
+	}
 
 	width -= input.toString().length;
 	while (width > 0) {
@@ -38,16 +41,21 @@ function padLeftStr(input, width, str) {
 
 /**
  * Pad INPUT on the left to WIDTH, using given padding character CH,
- * for example padLeft('a', 3, '_') is '__a'.
+ * for example padLeft('a', 3, '_') is '__a'
+ *             padLeft(4, 2) is '04' (same as padLeft(4, 2, '0'))
  *
  * @param {String} input: input value converted to string.
  * @param {Number} width: desired length of output.
- * @param {String} ch: single character to prefix to string.
+ * @param {String} ch: single character to prefix to string, defaults to '0'.
  *
  * @returns {String} Modified string, at least SIZE length.
  */
 function padLeft(input, width, ch) {
 	var s = input + "";
+	if (typeof ch === 'undefined') {
+		ch = '0';
+	}
+
 	while (s.length < width) {
 		s = ch + s;
 	}
