@@ -3938,22 +3938,21 @@ sub git_print_section {
 	print $cgi->end_div;
 }
 
-sub print_local_time {
-	print format_local_time(@_);
-}
+sub format_timestamp_html {
+	my ($date, %opts) = @_;
+	my $strtime = $date->{'rfc2822'};
 
-sub format_local_time {
-	my $localtime = '';
-	my %date = @_;
-	if ($date{'hour_local'} < 6) {
-		$localtime .= sprintf(" (<span class=\"atnight\">%02d:%02d</span> %s)",
-			$date{'hour_local'}, $date{'minute_local'}, $date{'tz_local'});
-	} else {
-		$localtime .= sprintf(" (%02d:%02d %s)",
-			$date{'hour_local'}, $date{'minute_local'}, $date{'tz_local'});
+	return $strtime unless $opts{'-localtime'};
+
+	my $localtime_format = '(%02d:%02d %s)';
+	if ($date->{'hour_local'} < 6) {
+		$localtime_format = '(<span class="atnight">%02d:%02d</span> %s)';
 	}
+	$strtime .= ' ' .
+	            sprintf($localtime_format,
+	                    $date->{'hour_local'}, $date->{'minute_local'}, $date->{'tz_local'});
 
-	return $localtime;
+	return $strtime;
 }
 
 # Outputs the author name and date in long form
@@ -3966,10 +3965,9 @@ sub git_print_authorship {
 	my %ad = parse_date($co->{'author_epoch'}, $co->{'author_tz'});
 	print "<$tag class=\"author_date\">" .
 	      format_search_author($author, "author", esc_html($author)) .
-	      " [$ad{'rfc2822'}";
-	print_local_time(%ad) if ($opts{-localtime});
-	print "]" . git_get_avatar($co->{'author_email'}, -pad_before => 1)
-		  . "</$tag>\n";
+	      " [".format_timestamp_html(\%ad, %opts)."]".
+	      git_get_avatar($co->{'author_email'}, -pad_before => 1) .
+	      "</$tag>\n";
 }
 
 # Outputs table rows containing the full author or committer information,
@@ -3986,16 +3984,16 @@ sub git_print_authorship_rows {
 		my %wd = parse_date($co->{"${who}_epoch"}, $co->{"${who}_tz"});
 		print "<tr><td>$who</td><td>" .
 		      format_search_author($co->{"${who}_name"}, $who,
-			       esc_html($co->{"${who}_name"})) . " " .
+		                           esc_html($co->{"${who}_name"})) . " " .
 		      format_search_author($co->{"${who}_email"}, $who,
-			       esc_html("<" . $co->{"${who}_email"} . ">")) .
+		                           esc_html("<" . $co->{"${who}_email"} . ">")) .
 		      "</td><td rowspan=\"2\">" .
 		      git_get_avatar($co->{"${who}_email"}, -size => 'double') .
 		      "</td></tr>\n" .
 		      "<tr>" .
-		      "<td></td><td> $wd{'rfc2822'}";
-		print_local_time(%wd);
-		print "</td>" .
+		      "<td></td><td>" .
+		      format_timestamp_html(\%wd, -localtime=>1) .
+		      "</td>" .
 		      "</tr>\n";
 	}
 }
@@ -5410,7 +5408,8 @@ sub git_summary {
 	      "<tr id=\"metadata_desc\"><td>description</td><td>" . esc_html($descr) . "</td></tr>\n" .
 	      "<tr id=\"metadata_owner\"><td>owner</td><td>" . esc_html($owner) . "</td></tr>\n";
 	if (defined $cd{'rfc2822'}) {
-		print "<tr id=\"metadata_lchange\"><td>last change</td><td>$cd{'rfc2822'}</td></tr>\n";
+		print "<tr id=\"metadata_lchange\"><td>last change</td>" .
+		      "<td>".format_timestamp_html(\%cd)."</td></tr>\n";
 	}
 
 	# use per project git URL list in $projectroot/$project/cloneurl
