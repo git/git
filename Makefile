@@ -291,15 +291,8 @@ sharedir = $(prefix)/share
 gitwebdir = $(sharedir)/gitweb
 template_dir = share/git-core/templates
 htmldir = share/doc/git-doc
-ifeq ($(prefix),/usr)
-sysconfdir = /etc
-ETC_GITCONFIG = $(sysconfdir)/gitconfig
-ETC_GITATTRIBUTES = $(sysconfdir)/gitattributes
-else
-sysconfdir = $(prefix)/etc
-ETC_GITCONFIG = etc/gitconfig
-ETC_GITATTRIBUTES = etc/gitattributes
-endif
+ETC_GITCONFIG = $(git_etcdir)/gitconfig
+ETC_GITATTRIBUTES = $(git_etcdir)/gitattributes
 lib = lib
 # DESTDIR=
 pathsep = :
@@ -1195,6 +1188,14 @@ endif
 
 -include config.mak.autogen
 -include config.mak
+
+ifeq ($(prefix),/usr)
+sysconfdir = /etc
+git_etcdir = /etc
+else
+sysconfdir = $(prefix)/etc
+git_etcdir = etc
+endif
 
 ifdef CHECK_HEADER_DEPENDENCIES
 COMPUTE_HEADER_DEPENDENCIES =
