@@ -1,0 +1,219 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use Getopt::Long;
+use Time::Local;
+
+sub seconds_in_a_week () {
+	return 7 * 24 * 3600;
+}
+
+my $verbose = 0;
+my $week;
+my $cycles;
+my $bow = 0;
+
+sub bow {
+	my ($week) = @_;
+	my (@time, $time);
+
+	if (!defined $week) {
+		$time = time;
+	} elsif ($week =~ /^\d+$/) {
+		$time = time - seconds_in_a_week * $week;
+	} else {
+		my ($year, $mon, $mday) = ($week =~ /^(\d{4})-(\d{2})-(\d{2})$/);
+		unless (defined $year && defined $mon && defined $mday &&
+			1 <= $mon && $mon <= 12 &&
+			1 <= $mday && $mday <= 31) {
+			die "Bad week specification: $week";
+		}
+		$time = timelocal(0, 0, 0, $mday, $mon - 1, $year - 1900);
+	}
+
+	@time = localtime($time);
+	if ($time[6] <= $bow) {
+		$time -= seconds_in_a_week;
+		@time = localtime($time);
+	}
+	$time -= $time[0] + 60 * ($time[1] + 60 * ($time[2] + 24 * ($time[6] - $bow)));
+	return $time;
+}
+
+if (!GetOptions(
+	     "verbose!" => \$verbose,
+	     "week=s" => \$week,
+	     "cycles=i" => \$cycles,
+	     "bow=i" => \$bow,
+    )) {
+	print STDERR "$0 [-v]\n";
+	exit 1;
+}
+
+if (defined $cycles && !defined $week) {
+	$week = bow($week);
+	$week -= ($cycles - 1) * seconds_in_a_week;
+} else {
+	$week = bow($week);
+}
+if (!defined $cycles) {
+	my $ends = time();
+	my $clock = $week;
+	for ($cycles = 0; $clock < $ends; $cycles++) {
+		$clock += seconds_in_a_week;
+	}
+}
+
+my $cull_old = "--since=" . $week;
+
+sub plural {
+	my ($number, $singular, $plural) = @_;
+	return ($number == 1) ? "$number $singular": "$number $plural";
+}
+
+sub fmt_join {
+	my ($leader, $limit, $joiner, @ary) = @_;
+	my @result = ();
+	my $width = 0;
+	my $wj = length($joiner);
+	my $wl = length($leader);
+
+	for my $item (@ary) {
+		my $need_joiner;
+		if ($width == 0) {
+			$width += $wl;
+			push @result, $leader;
+			$need_joiner = 0;
+		} else {
+			$need_joiner = 1;
+		}
+		my $len = length($item);
+		if (($need_joiner ? $wj : 0) + $len + $width < $limit) {
+			if ($need_joiner) {
+				$width += $wj;
+				push @result, $joiner;
+			}
+			$width += $len;
+			push @result, $item;
+		} else {
+			if ($width) {
+				push @result, "\n";
+				$width = 0;
+			}
+			$width += $wl;
+			push @result, $leader;
+			$width += $len;
+			push @result, $item;
+		}
+	}
+	push @result, "\n" unless ($result[-1] eq "\n");
+	return join("", @result);
+}
+
+my %patch;
+my %dates;
+my %patch_by_date;
+my %merge_by_branch_date;
+my @integrate = (['master', ', to include in the next release'],
+		 ['next', ' for public testing'],
+		 ['maint', ', to include in the maintenance release'],
+);
+
+open I, "-|", ("git", "log", "--pretty=%ci %H %an <%ae>\001%s",
+	       $cull_old, "--glob=refs/heads",
+	       "--no-merges") or die;
+while (<I>) {
+	my ($date, $sha1, $rest) = /^([-0-9]+) [:0-9]+ [-+][0-9]{4} ([0-9a-f]+) (.*)$/;
+	$patch_by_date{$date} ||= [];
+	push @{$patch_by_date{$date}}, $sha1;
+	my ($name, $subject) = split(/\001/, $rest, 2);
+	$patch{$sha1} = [$sha1, $name, $subject];
+	$dates{$date}++;
+}
+close (I) or die;
+
+for my $branch (map { $_->[0] } @integrate) {
+	open I, "-|", ("git", "log", "--pretty=%ci %H %s",
+		       $cull_old,
+		       "--first-parent",
+		       "--merges",
+		       $branch) or die;
+	while (<I>) {
+		my ($date, $sha1, $rest) = /^([-0-9]+) [:0-9]+ [-+][0-9]{4} ([0-9a-f]+) (.*)$/;
+		my $msg = $rest;
+		$msg =~ s/^Merge branch //;
+		$msg =~ s/ into \Q$branch\E$//;
+		$msg =~ s/^'(.*)'$/$1/;
+
+		next if (grep { $_ eq $msg } map { $_->[0] } @integrate);
+
+		$merge_by_branch_date{$branch} ||= {};
+		$merge_by_branch_date{$branch}{$date} ||= [];
+		push @{$merge_by_branch_date{$branch}{$date}}, $sha1;
+		$patch{$sha1} = [$sha1, undef, $msg];
+		$dates{$date}++;
+	}
+	close (I) or die;
+}
+
+my $sep = ""; 
+my %total_names = ();
+my %total_merges = ();
+my $total_patch = 0;
+my @dates = sort keys %dates;
+
+for my $date (@dates) {
+	print "$sep$date\n";
+	if (exists $patch_by_date{$date}) {
+		my $count = scalar @{$patch_by_date{$date}};
+		my %names = ();
+		for my $patch (map { $patch{$_} } (@{$patch_by_date{$date}})) {
+			my $name = $patch->[1];
+			$names{$name}++;
+			$total_names{$name}++;
+		}
+		my $people = scalar @{[keys %names]};
+		$total_patch += $count;
+
+		$count = plural($count, "patch", "patches");
+		$people = plural($people, "person", "people");
+		print "Queued $count from $people.\n";
+		if ($verbose) {
+			for my $patch (map { $patch{$_} } @{$patch_by_date{$date}}) {
+				print " $patch->[2]\n";
+			}
+		}
+	}
+	for my $branch_data (@integrate) {
+		my ($branch, $purpose) = @{$branch_data};
+		next unless (exists $merge_by_branch_date{$branch}{$date});
+		my $merges = $merge_by_branch_date{$branch}{$date};
+		my $count = scalar @$merges;
+		next unless $count;
+
+		$total_merges{$branch} ||= 0;
+		$total_merges{$branch} += $count;
+		$count = plural($count, "topic", "topics");
+		print "Merged $count to '$branch' branch$purpose.\n";
+		if ($verbose) {
+			print fmt_join(" ", 72, " ", (map { $patch{$_}->[2] } @$merges));
+		}
+	}
+	$sep = "\n";
+}
+
+if (1 < @dates) {
+	print "${sep}Between $dates[0]..$dates[-1]\n";
+
+	my $people = plural(scalar @{[keys %total_names]}, "person", "people");
+	my $count = plural($total_patch, "patch", "patches");
+	print "Queued $count from $people.\n";
+
+	for my $branch_data (@integrate) {
+		my ($branch, $purpose) = @{$branch_data};
+		next unless $total_merges{$branch};
+		my $count = plural($total_merges{$branch}, "merge", "merges");
+		print "Made $count to '$branch' branch$purpose.\n";
+	}
+}
