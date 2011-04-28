@@ -4,8 +4,6 @@ test_description='more git add -u'
 
 . ./test-lib.sh
 
-_z40=0000000000000000000000000000000000000000
-
 test_expect_success setup '
 	>xyzzy &&
 	_empty=$(git hash-object --stdin <xyzzy) &&

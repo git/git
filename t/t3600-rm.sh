@@ -240,11 +240,10 @@ test_expect_success 'refresh index before checking if it is up-to-date' '
 
 test_expect_success 'choking "git rm" should not let it die with cruft' '
 	git reset -q --hard &&
-	H=0000000000000000000000000000000000000000 &&
 	i=0 &&
 	while test $i -lt 12000
 	do
-	    echo "100644 $H 0	some-file-$i"
+	    echo "100644 $_z40 0	some-file-$i"
 	    i=$(( $i + 1 ))
 	done | git update-index --index-info &&
 	git rm -n "some-file-*" | :;

@@ -46,7 +46,7 @@ test_expect_success \
     'git branch a/b/c && test -f .git/refs/heads/a/b/c'
 
 cat >expect <<EOF
-0000000000000000000000000000000000000000 $HEAD $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150200 +0000	branch: Created from master
+$_z40 $HEAD $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150200 +0000	branch: Created from master
 EOF
 test_expect_success \
     'git branch -l d/e/f should create a branch and a log' \
@@ -232,7 +232,7 @@ test_expect_success \
 
 # Keep this test last, as it changes the current branch
 cat >expect <<EOF
-0000000000000000000000000000000000000000 $HEAD $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150200 +0000	branch: Created from master
+$_z40 $HEAD $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150200 +0000	branch: Created from master
 EOF
 test_expect_success \
     'git checkout -b g/h/i -l should create a branch and a log' \
