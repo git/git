@@ -89,6 +89,57 @@ function createRequestObject() {
 
 
 /* ............................................................ */
+/* Support for legacy browsers */
+
+/**
+ * Provides getElementsByClassName method, if there is no native
+ * implementation of this method.
+ *
+ * NOTE that there are limits and differences compared to native
+ * getElementsByClassName as defined by e.g.:
+ *   https://developer.mozilla.org/en/DOM/document.getElementsByClassName
+ *   http://www.whatwg.org/specs/web-apps/current-work/multipage/dom.html#dom-getelementsbyclassname
+ *   http://www.whatwg.org/specs/web-apps/current-work/multipage/dom.html#dom-document-getelementsbyclassname
+ *
+ * Namely, this implementation supports only single class name as
+ * argument and not set of space-separated tokens representing classes,
+ * it returns Array of nodes rather than live NodeList, and has
+ * additional optional argument where you can limit search to given tags
+ * (via getElementsByTagName).
+ *
+ * Based on
+ *   http://code.google.com/p/getelementsbyclassname/
+ *   http://www.dustindiaz.com/getelementsbyclass/
+ *   http://stackoverflow.com/questions/1818865/do-we-have-getelementsbyclassname-in-javascript
+ *
+ * See also http://ejohn.org/blog/getelementsbyclassname-speed-comparison/
+ *
+ * @param {String} class: name of _single_ class to find
+ * @param {String} [taghint] limit search to given tags
+ * @returns {Node[]} array of matching elements
+ */
+if (!('getElementsByClassName' in document)) {
+	document.getElementsByClassName = function (classname, taghint) {
+		taghint = taghint || "*";
+		var elements = (taghint === "*" && document.all) ?
+		               document.all :
+		               document.getElementsByTagName(taghint);
+		var pattern = new RegExp("(^|\\s)" + classname + "(\\s|$)");
+		var matches= [];
+		for (var i = 0, j = 0, n = elements.length; i < n; i++) {
+			var el= elements[i];
+			if (el.className && pattern.test(el.className)) {
+				// matches.push(el);
+				matches[j] = el;
+				j++;
+			}
+		}
+		return matches;
+	};
+} // end if
+
+
+/* ............................................................ */
 /* unquoting/unescaping filenames */
 
 /**#@+
