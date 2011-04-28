@@ -3738,7 +3738,8 @@ sub git_footer_html {
 		      (gitweb_check_feature('javascript-actions') ?
 		      qq!	fixLinks();\n! : '').
 		      # last parameter to onloadTZSetup must be CSS class used by format_timestamp_html
-		      qq!	onloadTZSetup('local', 'gitweb_tz', 'datetime');\n!.
+		      qq!	var tz_cookie = { name: 'gitweb_tz', expires: 14, path: '/' };\n!. # in days
+		      qq!	onloadTZSetup('local', tz_cookie, 'datetime');\n!.
 		      qq!};\n!.
 		      qq!</script>\n!;
 	}
