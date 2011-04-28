@@ -3939,10 +3939,8 @@ sub git_print_section {
 }
 
 sub format_timestamp_html {
-	my ($date, %opts) = @_;
+	my $date = shift;
 	my $strtime = $date->{'rfc2822'};
-
-	return $strtime unless $opts{'-localtime'};
 
 	my $localtime_format = '(%02d:%02d %s)';
 	if ($date->{'hour_local'} < 6) {
@@ -3965,7 +3963,7 @@ sub git_print_authorship {
 	my %ad = parse_date($co->{'author_epoch'}, $co->{'author_tz'});
 	print "<$tag class=\"author_date\">" .
 	      format_search_author($author, "author", esc_html($author)) .
-	      " [".format_timestamp_html(\%ad, %opts)."]".
+	      " [".format_timestamp_html(\%ad)."]".
 	      git_get_avatar($co->{'author_email'}, -pad_before => 1) .
 	      "</$tag>\n";
 }
@@ -3992,7 +3990,7 @@ sub git_print_authorship_rows {
 		      "</td></tr>\n" .
 		      "<tr>" .
 		      "<td></td><td>" .
-		      format_timestamp_html(\%wd, -localtime=>1) .
+		      format_timestamp_html(\%wd) .
 		      "</td>" .
 		      "</tr>\n";
 	}
