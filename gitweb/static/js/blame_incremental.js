@@ -7,7 +7,7 @@
  * @license GPLv2 or later
  */
 
-
+/* ============================================================ */
 /*
  * This code uses DOM methods instead of (nonstandard) innerHTML
  * to modify page.
@@ -26,7 +26,7 @@
  */
 
 
-/* ============================================================ */
+/* ............................................................ */
 /* utility/helper functions (and variables) */
 
 var xhr;        // XMLHttpRequest object
@@ -132,7 +132,7 @@ function writeTimeInterval() {
 }
 
 /**
- * show an error message alert to user within page (in prohress info area)
+ * show an error message alert to user within page (in progress info area)
  * @param {String} str: plain text error message (no HTML)
  *
  * @globals div_progress_info
@@ -182,7 +182,7 @@ function getColorNo(tr) {
 
 var colorsFreq = [0, 0, 0];
 /**
- * return one of given possible colors (curently least used one)
+ * return one of given possible colors (currently least used one)
  * example: chooseColorNoFrom(2, 3) returns 2 or 3
  *
  * @param {Number[]} arguments: one or more numbers
@@ -203,8 +203,8 @@ function chooseColorNoFrom() {
 }
 
 /**
- * given two neigbour <tr> elements, find color which would be different
- * from color of both of neighbours; used to 3-color blame table
+ * given two neighbor <tr> elements, find color which would be different
+ * from color of both of neighbors; used to 3-color blame table
  *
  * @param {HTMLElement} tr_prev
  * @param {HTMLElement} tr_next
@@ -216,14 +216,14 @@ function findColorNo(tr_prev, tr_next) {
 	var color_next = getColorNo(tr_next);
 
 
-	// neither of neighbours has color set
+	// neither of neighbors has color set
 	// THEN we can use any of 3 possible colors
 	if (!color_prev && !color_next) {
 		return chooseColorNoFrom(1,2,3);
 	}
 
-	// either both neighbours have the same color,
-	// or only one of neighbours have color set
+	// either both neighbors have the same color,
+	// or only one of neighbors have color set
 	// THEN we can use any color except given
 	var color;
 	if (color_prev === color_next) {
@@ -237,7 +237,7 @@ function findColorNo(tr_prev, tr_next) {
 		return chooseColorNoFrom((color % 3) + 1, ((color+1) % 3) + 1);
 	}
 
-	// neighbours have different colors
+	// neighbors have different colors
 	// THEN there is only one color left
 	return (3 - ((color_prev + color_next) % 3));
 }
@@ -258,7 +258,7 @@ function isStartOfGroup(tr) {
 
 /**
  * change colors to use zebra coloring (2 colors) instead of 3 colors
- * concatenate neighbour commit groups belonging to the same commit
+ * concatenate neighbor commit groups belonging to the same commit
  *
  * @globals colorRe
  */

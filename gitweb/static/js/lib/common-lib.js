@@ -13,14 +13,17 @@
 /* Padding */
 
 /**
- * pad number N with nonbreakable spaces on the left, to WIDTH characters
+ * pad INPUT on the left with STR that is assumed to have visible
+ * width of single character (for example nonbreakable spaces),
+ * to WIDTH characters
+ *
  * example: padLeftStr(12, 3, '\u00A0') == '\u00A012'
  *          ('\u00A0' is nonbreakable space)
  *
  * @param {Number|String} input: number to pad
  * @param {Number} width: visible width of output
  * @param {String} str: string to prefix to string, e.g. '\u00A0'
- * @returns {String} INPUT prefixed with (WIDTH - INPUT.length) x STR
+ * @returns {String} INPUT prefixed with STR x (WIDTH - INPUT.length)
  */
 function padLeftStr(input, width, str) {
 	var prefix = '';
@@ -34,7 +37,7 @@ function padLeftStr(input, width, str) {
 }
 
 /**
- * Pad INPUT on the left to SIZE width, using given padding character CH,
+ * Pad INPUT on the left to WIDTH, using given padding character CH,
  * for example padLeft('a', 3, '_') is '__a'.
  *
  * @param {String} input: input value converted to string.
@@ -140,7 +143,8 @@ var maybeQuotedRe = /^\"(.*)\"$/;
 /**#@-*/
 
 /**
- * unquote maybe git-quoted filename
+ * unquote maybe C-quoted filename (as used by git, i.e. it is
+ * in double quotes '"' if there is any escape character used)
  * e.g. 'aa' -> 'aa', '"a\ta"' -> 'a	a'
  *
  * @param {String} str: git-quoted string
