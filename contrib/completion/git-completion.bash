@@ -491,10 +491,12 @@ __gitcomp ()
 {
 	local cur
 	_get_comp_words_by_ref -n =: cur
+	local cur_="$cur"
+
 	if [ $# -gt 2 ]; then
-		cur="$3"
+		cur_="$3"
 	fi
-	case "$cur" in
+	case "$cur_" in
 	--*=)
 		COMPREPLY=()
 		;;
@@ -502,7 +504,7 @@ __gitcomp ()
 		local IFS=$'\n'
 		COMPREPLY=($(compgen -P "${2-}" \
 			-W "$(__gitcomp_1 "${1-}" "${4-}")" \
-			-- "$cur"))
+			-- "$cur_"))
 		;;
 	esac
 }
@@ -668,17 +670,18 @@ __git_complete_revlist_file ()
 {
 	local pfx ls ref cur
 	_get_comp_words_by_ref -n =: cur
-	case "$cur" in
+	local cur_="$cur"
+	case "$cur_" in
 	*..?*:*)
 		return
 		;;
 	?*:*)
-		ref="${cur%%:*}"
-		cur="${cur#*:}"
-		case "$cur" in
+		ref="${cur_%%:*}"
+		cur_="${cur_#*:}"
+		case "$cur_" in
 		?*/*)
-			pfx="${cur%/*}"
-			cur="${cur##*/}"
+			pfx="${cur_%/*}"
+			cur_="${cur_##*/}"
 			ls="$ref:$pfx"
 			pfx="$pfx/"
 			;;
@@ -708,17 +711,17 @@ __git_complete_revlist_file ()
 				           s,$,/,
 				       }
 				       s/^.*	//')" \
-			-- "$cur"))
+			-- "$cur_"))
 		;;
 	*...*)
-		pfx="${cur%...*}..."
-		cur="${cur#*...}"
-		__gitcomp "$(__git_refs)" "$pfx" "$cur"
+		pfx="${cur_%...*}..."
+		cur_="${cur_#*...}"
+		__gitcomp "$(__git_refs)" "$pfx" "$cur_"
 		;;
 	*..*)
-		pfx="${cur%..*}.."
-		cur="${cur#*..}"
-		__gitcomp "$(__git_refs)" "$pfx" "$cur"
+		pfx="${cur_%..*}.."
+		cur_="${cur_#*..}"
+		__gitcomp "$(__git_refs)" "$pfx" "$cur_"
 		;;
 	*)
 		__gitcomp "$(__git_refs)"
@@ -741,7 +744,7 @@ __git_complete_remote_or_refspec ()
 {
 	local cur words cword
 	_get_comp_words_by_ref -n =: cur words cword
-	local cmd="${words[1]}"
+	local cur_="$cur" cmd="${words[1]}"
 	local i c=2 remote="" pfx="" lhs=1 no_complete_refspec=0
 	while [ $c -lt $cword ]; do
 		i="${words[c]}"
@@ -771,40 +774,40 @@ __git_complete_remote_or_refspec ()
 		return
 	fi
 	[ "$remote" = "." ] && remote=
-	case "$cur" in
+	case "$cur_" in
 	*:*)
 		case "$COMP_WORDBREAKS" in
 		*:*) : great ;;
-		*)   pfx="${cur%%:*}:" ;;
+		*)   pfx="${cur_%%:*}:" ;;
 		esac
-		cur="${cur#*:}"
+		cur_="${cur_#*:}"
 		lhs=0
 		;;
 	+*)
 		pfx="+"
-		cur="${cur#+}"
+		cur_="${cur_#+}"
 		;;
 	esac
 	case "$cmd" in
 	fetch)
 		if [ $lhs = 1 ]; then
-			__gitcomp "$(__git_refs2 "$remote")" "$pfx" "$cur"
+			__gitcomp "$(__git_refs2 "$remote")" "$pfx" "$cur_"
 		else
-			__gitcomp "$(__git_refs)" "$pfx" "$cur"
+			__gitcomp "$(__git_refs)" "$pfx" "$cur_"
 		fi
 		;;
 	pull)
 		if [ $lhs = 1 ]; then
-			__gitcomp "$(__git_refs "$remote")" "$pfx" "$cur"
+			__gitcomp "$(__git_refs "$remote")" "$pfx" "$cur_"
 		else
-			__gitcomp "$(__git_refs)" "$pfx" "$cur"
+			__gitcomp "$(__git_refs)" "$pfx" "$cur_"
 		fi
 		;;
 	push)
 		if [ $lhs = 1 ]; then
-			__gitcomp "$(__git_refs)" "$pfx" "$cur"
+			__gitcomp "$(__git_refs)" "$pfx" "$cur_"
 		else
-			__gitcomp "$(__git_refs "$remote")" "$pfx" "$cur"
+			__gitcomp "$(__git_refs "$remote")" "$pfx" "$cur_"
 		fi
 		;;
 	esac
@@ -2012,70 +2015,60 @@ _git_config ()
 		return
 		;;
 	branch.*.*)
-		local pfx="${cur%.*}."
-		cur="${cur##*.}"
-		__gitcomp "remote merge mergeoptions rebase" "$pfx" "$cur"
+		local pfx="${cur%.*}." cur_="${cur##*.}"
+		__gitcomp "remote merge mergeoptions rebase" "$pfx" "$cur_"
 		return
 		;;
 	branch.*)
-		local pfx="${cur%.*}."
-		cur="${cur#*.}"
-		__gitcomp "$(__git_heads)" "$pfx" "$cur" "."
+		local pfx="${cur%.*}." cur_="${cur#*.}"
+		__gitcomp "$(__git_heads)" "$pfx" "$cur_" "."
 		return
 		;;
 	guitool.*.*)
-		local pfx="${cur%.*}."
-		cur="${cur##*.}"
+		local pfx="${cur%.*}." cur_="${cur##*.}"
 		__gitcomp "
 			argprompt cmd confirm needsfile noconsole norescan
 			prompt revprompt revunmerged title
-			" "$pfx" "$cur"
+			" "$pfx" "$cur_"
 		return
 		;;
 	difftool.*.*)
-		local pfx="${cur%.*}."
-		cur="${cur##*.}"
-		__gitcomp "cmd path" "$pfx" "$cur"
+		local pfx="${cur%.*}." cur_="${cur##*.}"
+		__gitcomp "cmd path" "$pfx" "$cur_"
 		return
 		;;
 	man.*.*)
-		local pfx="${cur%.*}."
-		cur="${cur##*.}"
-		__gitcomp "cmd path" "$pfx" "$cur"
+		local pfx="${cur%.*}." cur_="${cur##*.}"
+		__gitcomp "cmd path" "$pfx" "$cur_"
 		return
 		;;
 	mergetool.*.*)
-		local pfx="${cur%.*}."
-		cur="${cur##*.}"
-		__gitcomp "cmd path trustExitCode" "$pfx" "$cur"
+		local pfx="${cur%.*}." cur_="${cur##*.}"
+		__gitcomp "cmd path trustExitCode" "$pfx" "$cur_"
 		return
 		;;
 	pager.*)
-		local pfx="${cur%.*}."
-		cur="${cur#*.}"
+		local pfx="${cur%.*}." cur_="${cur#*.}"
 		__git_compute_all_commands
-		__gitcomp "$__git_all_commands" "$pfx" "$cur"
+		__gitcomp "$__git_all_commands" "$pfx" "$cur_"
 		return
 		;;
 	remote.*.*)
-		local pfx="${cur%.*}."
-		cur="${cur##*.}"
+		local pfx="${cur%.*}." cur_="${cur##*.}"
 		__gitcomp "
 			url proxy fetch push mirror skipDefaultUpdate
 			receivepack uploadpack tagopt pushurl
-			" "$pfx" "$cur"
+			" "$pfx" "$cur_"
 		return
 		;;
 	remote.*)
-		local pfx="${cur%.*}."
-		cur="${cur#*.}"
-		__gitcomp "$(__git_remotes)" "$pfx" "$cur" "."
+		local pfx="${cur%.*}." cur_="${cur#*.}"
+		__gitcomp "$(__git_remotes)" "$pfx" "$cur_" "."
 		return
 		;;
 	url.*.*)
-		local pfx="${cur%.*}."
-		cur="${cur##*.}"
-		__gitcomp "insteadOf pushInsteadOf" "$pfx" "$cur"
+		local pfx="${cur%.*}." cur_="${cur##*.}"
+		__gitcomp "insteadOf pushInsteadOf" "$pfx" "$cur_"
 		return
 		;;
 	esac
