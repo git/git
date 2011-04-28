@@ -105,6 +105,21 @@ function formatTimezoneInfo(hours, minutes, sep) {
 }
 
 /**
+ * translate 'utc' and 'local' to numerical timezone
+ * @param {String} timezoneInfo: might be 'utc' or 'local' (browser)
+ */
+function normalizeTimezoneInfo(timezoneInfo) {
+	switch (timezoneInfo) {
+	case 'utc':
+		return '+0000';
+	case 'local': // 'local' is browser timezone
+		return localTimezoneInfo();
+	}
+	return timezoneInfo;
+}
+
+
+/**
  * return date in local time formatted in iso-8601 like format
  * 'yyyy-mm-dd HH:MM:SS +/-ZZZZ' e.g. '2005-08-07 21:49:46 +0200'
  *

@@ -3732,9 +3732,14 @@ sub git_footer_html {
 		      qq!startBlame("!. href(action=>"blame_data", -replay=>1) .qq!",\n!.
 		      qq!           "!. href() .qq!");\n!.
 		      qq!</script>\n!;
-	} elsif (gitweb_check_feature('javascript-actions')) {
+	} else {
 		print qq!<script type="text/javascript">\n!.
-		      qq!window.onload = fixLinks;\n!.
+		      qq!window.onload = function () {\n!.
+		      (gitweb_check_feature('javascript-actions') ?
+		      qq!	fixLinks();\n! : '').
+		      # last parameter to onloadTZSetup must be CSS class used by format_timestamp_html
+		      qq!	onloadTZSetup('local', 'gitweb_tz', 'datetime');\n!.
+		      qq!};\n!.
 		      qq!</script>\n!;
 	}
 
@@ -3940,7 +3945,7 @@ sub git_print_section {
 
 sub format_timestamp_html {
 	my $date = shift;
-	my $strtime = $date->{'rfc2822'};
+	my $strtime = '<span class="datetime">'.$date->{'rfc2822'}.'</span>';
 
 	my $localtime_format = '(%02d:%02d %s)';
 	if ($date->{'hour_local'} < 6) {
