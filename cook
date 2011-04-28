@@ -590,13 +590,30 @@ sub merge_cooking {
 
 ################################################################
 # WilDo
+sub wildo_queue {
+	my ($what, $action, $topic) = @_;
+	if (!exists $what->{$action}) {
+		$what->{$action} = [];
+	}
+	push @{$what->{$action}}, $topic;
+}
+
 sub wildo {
 	my (%what, $topic, $last_merge_to_next);
 	my $too_recent = '9999-99-99';
 	while (<>) {
 		chomp;
-		if (/^\* (?:\S+) \(([-0-9]+)\) \d+ commits?$/) {
-			$topic = [$1, $too_recent, $_]; # tip-date, next-date, line
+
+		next if (/^\[Graduated to/../^-{20,}$/);
+		next if (/^\[Stalled\]/../^-{20,}$/);
+		next if (/^\[Discarded\]/../^-{20,}$/);
+
+		if (/^\* (\S+) \(([-0-9]+)\) (\d+) commits?$/) {
+			if (defined $topic) {
+				wildo_queue(\%what, "Undecided", $topic);
+			}
+			# tip-date, next-date, topic, count
+			$topic = [$2, $too_recent, $1, $3];
 		}
 		if (defined $topic &&
 		    ($topic->[1] eq $too_recent) &&
@@ -606,21 +623,28 @@ sub wildo {
 		next if (/^ /);
 		if (defined $topic &&
 		    /Will (?:\S+ )?merge /i) {
-			if (!exists $what{$_}) {
-				$what{$_} = [];
-			}
-			push @{$what{$_}}, $topic;
+			wildo_queue(\%what, $_, $topic);
 			$topic = undef;
 		}
 	}
 	my $ipbl = "";
 	for my $what (sort keys %what) {
 		print "$ipbl$what\n";
-		for $topic (map { $_->[2] }
-			    sort { (($a->[1] cmp $b->[1]) ||
+		for $topic (sort { (($a->[1] cmp $b->[1]) ||
 				    ($a->[0] cmp $b->[0])) }
 			    @{$what{$what}}) {
-			print " $topic\n";
+			my ($tip, $next, $name, $count) = @$topic;
+			my ($sign);
+			$tip =~ s/^\d{4}-//;
+			if ($next eq $too_recent) {
+				$sign = "-";
+				$next = " " x 6;
+			} else {
+				$sign = "+";
+				$next =~ s|^\d{4}-|/|;
+			}
+			$count = "#$count";
+			printf " %s %-60s %s%s %5s\n", $sign, $name, $tip, $next, $count;
 		}
 		$ipbl = "\n";
 	}
