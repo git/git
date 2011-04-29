@@ -67,52 +67,56 @@ static int parse_diff_color_slot(const char *var, int ofs)
 	return -1;
 }
 
-static int parse_dirstat_params(struct diff_options *options, const char *params)
+static int parse_dirstat_params(struct diff_options *options, const char *params,
+				struct strbuf *errmsg)
 {
 	const char *p = params;
+	int p_len, ret = 0;
+
 	while (*p) {
-		if (!prefixcmp(p, "changes")) {
-			p += 7;
+		p_len = strchrnul(p, ',') - p;
+		if (!memcmp(p, "changes", p_len)) {
 			DIFF_OPT_CLR(options, DIRSTAT_BY_LINE);
 			DIFF_OPT_CLR(options, DIRSTAT_BY_FILE);
-		} else if (!prefixcmp(p, "lines")) {
-			p += 5;
+		} else if (!memcmp(p, "lines", p_len)) {
 			DIFF_OPT_SET(options, DIRSTAT_BY_LINE);
 			DIFF_OPT_CLR(options, DIRSTAT_BY_FILE);
-		} else if (!prefixcmp(p, "files")) {
-			p += 5;
+		} else if (!memcmp(p, "files", p_len)) {
 			DIFF_OPT_CLR(options, DIRSTAT_BY_LINE);
 			DIFF_OPT_SET(options, DIRSTAT_BY_FILE);
-		} else if (!prefixcmp(p, "noncumulative")) {
-			p += 13;
+		} else if (!memcmp(p, "noncumulative", p_len)) {
 			DIFF_OPT_CLR(options, DIRSTAT_CUMULATIVE);
-		} else if (!prefixcmp(p, "cumulative")) {
-			p += 10;
+		} else if (!memcmp(p, "cumulative", p_len)) {
 			DIFF_OPT_SET(options, DIRSTAT_CUMULATIVE);
 		} else if (isdigit(*p)) {
 			char *end;
-			options->dirstat_permille = strtoul(p, &end, 10) * 10;
-			p = end;
-			if (*p == '.' && isdigit(*++p)) {
+			int permille = strtoul(p, &end, 10) * 10;
+			if (*end == '.' && isdigit(*++end)) {
 				/* only use first digit */
-				options->dirstat_permille += *p - '0';
+				permille += *end - '0';
 				/* .. and ignore any further digits */
-				while (isdigit(*++p))
+				while (isdigit(*++end))
 					; /* nothing */
 			}
-		} else
-			return error("Unknown --dirstat parameter '%s'", p);
-
-		if (*p) {
-			/* more parameters, swallow separator */
-			if (*p != ',')
-				return error("Missing comma separator at char "
-					"%"PRIuMAX" of '%s'",
-					(uintmax_t) (p - params), params);
-			p++;
+			if (end - p == p_len)
+				options->dirstat_permille = permille;
+			else {
+				strbuf_addf(errmsg, "  Failed to parse dirstat cut-off percentage '%.*s'\n",
+					    p_len, p);
+				ret++;
+			}
+		} else {
+			strbuf_addf(errmsg, "  Unknown dirstat parameter '%.*s'\n",
+				    p_len, p);
+			ret++;
 		}
+
+		p += p_len;
+
+		if (*p)
+			p++; /* more parameters, swallow separator */
 	}
-	return 0;
+	return ret;
 }
 
 static int git_config_rename(const char *var, const char *value)
@@ -195,8 +199,12 @@ int git_diff_basic_config(const char *var, const char *value, void *cb)
 	}
 
 	if (!strcmp(var, "diff.dirstat")) {
+		struct strbuf errmsg = STRBUF_INIT;
 		default_diff_options.dirstat_permille = diff_dirstat_permille_default;
-		(void) parse_dirstat_params(&default_diff_options, value);
+		if (parse_dirstat_params(&default_diff_options, value, &errmsg))
+			warning("Found errors in 'diff.dirstat' config variable:\n%s",
+				errmsg.buf);
+		strbuf_release(&errmsg);
 		diff_dirstat_permille_default = default_diff_options.dirstat_permille;
 		return 0;
 	}
@@ -3250,8 +3258,11 @@ static int stat_opt(struct diff_options *options, const char **av)
 
 static int parse_dirstat_opt(struct diff_options *options, const char *params)
 {
-	if (parse_dirstat_params(options, params))
-		die("Failed to parse --dirstat/-X option parameter");
+	struct strbuf errmsg = STRBUF_INIT;
+	if (parse_dirstat_params(options, params, &errmsg))
+		die("Failed to parse --dirstat/-X option parameter:\n%s",
+		    errmsg.buf);
+	strbuf_release(&errmsg);
 	/*
 	 * The caller knows a dirstat-related option is given from the command
 	 * line; allow it to say "return this_function();"
