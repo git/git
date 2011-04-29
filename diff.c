@@ -73,9 +73,15 @@ static int parse_dirstat_params(struct diff_options *options, const char *params
 	while (*p) {
 		if (!prefixcmp(p, "changes")) {
 			p += 7;
+			DIFF_OPT_CLR(options, DIRSTAT_BY_LINE);
+			DIFF_OPT_CLR(options, DIRSTAT_BY_FILE);
+		} else if (!prefixcmp(p, "lines")) {
+			p += 5;
+			DIFF_OPT_SET(options, DIRSTAT_BY_LINE);
 			DIFF_OPT_CLR(options, DIRSTAT_BY_FILE);
 		} else if (!prefixcmp(p, "files")) {
 			p += 5;
+			DIFF_OPT_CLR(options, DIRSTAT_BY_LINE);
 			DIFF_OPT_SET(options, DIRSTAT_BY_FILE);
 		} else if (!prefixcmp(p, "noncumulative")) {
 			p += 13;
@@ -1657,6 +1663,50 @@ static void show_dirstat(struct diff_options *options)
 found_damage:
 		ALLOC_GROW(dir.files, dir.nr + 1, dir.alloc);
 		dir.files[dir.nr].name = name;
+		dir.files[dir.nr].changed = damage;
+		changed += damage;
+		dir.nr++;
+	}
+
+	/* This can happen even with many files, if everything was renames */
+	if (!changed)
+		return;
+
+	/* Show all directories with more than x% of the changes */
+	qsort(dir.files, dir.nr, sizeof(dir.files[0]), dirstat_compare);
+	gather_dirstat(options, &dir, changed, "", 0);
+}
+
+static void show_dirstat_by_line(struct diffstat_t *data, struct diff_options *options)
+{
+	int i;
+	unsigned long changed;
+	struct dirstat_dir dir;
+
+	if (data->nr == 0)
+		return;
+
+	dir.files = NULL;
+	dir.alloc = 0;
+	dir.nr = 0;
+	dir.permille = options->dirstat_permille;
+	dir.cumulative = DIFF_OPT_TST(options, DIRSTAT_CUMULATIVE);
+
+	changed = 0;
+	for (i = 0; i < data->nr; i++) {
+		struct diffstat_file *file = data->files[i];
+		unsigned long damage = file->added + file->deleted;
+		if (file->is_binary)
+			/*
+			 * binary files counts bytes, not lines. Must find some
+			 * way to normalize binary bytes vs. textual lines.
+			 * The following heuristic assumes that there are 64
+			 * bytes per "line".
+			 * This is stupid and ugly, but very cheap...
+			 */
+			damage = (damage + 63) / 64;
+		ALLOC_GROW(dir.files, dir.nr + 1, dir.alloc);
+		dir.files[dir.nr].name = file->name;
 		dir.files[dir.nr].changed = damage;
 		changed += damage;
 		dir.nr++;
@@ -4088,6 +4138,7 @@ void diff_flush(struct diff_options *options)
 	struct diff_queue_struct *q = &diff_queued_diff;
 	int i, output_format = options->output_format;
 	int separator = 0;
+	int dirstat_by_line = 0;
 
 	/*
 	 * Order: raw, stat, summary, patch
@@ -4108,7 +4159,11 @@ void diff_flush(struct diff_options *options)
 		separator++;
 	}
 
-	if (output_format & (DIFF_FORMAT_DIFFSTAT|DIFF_FORMAT_SHORTSTAT|DIFF_FORMAT_NUMSTAT)) {
+	if (output_format & DIFF_FORMAT_DIRSTAT && DIFF_OPT_TST(options, DIRSTAT_BY_LINE))
+		dirstat_by_line = 1;
+
+	if (output_format & (DIFF_FORMAT_DIFFSTAT|DIFF_FORMAT_SHORTSTAT|DIFF_FORMAT_NUMSTAT) ||
+	    dirstat_by_line) {
 		struct diffstat_t diffstat;
 
 		memset(&diffstat, 0, sizeof(struct diffstat_t));
@@ -4123,10 +4178,12 @@ void diff_flush(struct diff_options *options)
 			show_stats(&diffstat, options);
 		if (output_format & DIFF_FORMAT_SHORTSTAT)
 			show_shortstats(&diffstat, options);
+		if (output_format & DIFF_FORMAT_DIRSTAT)
+			show_dirstat_by_line(&diffstat, options);
 		free_diffstat_info(&diffstat);
 		separator++;
 	}
-	if (output_format & DIFF_FORMAT_DIRSTAT)
+	if ((output_format & DIFF_FORMAT_DIRSTAT) && !dirstat_by_line)
 		show_dirstat(options);
 
 	if (output_format & DIFF_FORMAT_SUMMARY && !is_summary_empty(q)) {

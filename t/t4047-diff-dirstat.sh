@@ -839,4 +839,104 @@ test_expect_success '--dirstat=files,cumulative,27.09' '
 	test_cmp expect_diff_dirstat_CC actual_diff_dirstat_CC
 '
 
+cat <<EOF >expect_diff_dirstat
+  10.6% dst/copy/changed/
+  10.6% dst/copy/rearranged/
+  10.6% dst/copy/unchanged/
+  10.6% dst/move/changed/
+  10.6% dst/move/rearranged/
+  10.6% dst/move/unchanged/
+  10.6% src/move/changed/
+  10.6% src/move/rearranged/
+  10.6% src/move/unchanged/
+EOF
+
+cat <<EOF >expect_diff_dirstat_M
+   5.2% changed/
+  26.3% dst/copy/changed/
+  26.3% dst/copy/rearranged/
+  26.3% dst/copy/unchanged/
+   5.2% dst/move/changed/
+   5.2% dst/move/rearranged/
+   5.2% rearranged/
+EOF
+
+cat <<EOF >expect_diff_dirstat_CC
+  16.6% changed/
+  16.6% dst/copy/changed/
+  16.6% dst/copy/rearranged/
+  16.6% dst/move/changed/
+  16.6% dst/move/rearranged/
+  16.6% rearranged/
+EOF
+
+test_expect_success '--dirstat=lines' '
+	git diff --dirstat=lines HEAD^..HEAD >actual_diff_dirstat &&
+	test_cmp expect_diff_dirstat actual_diff_dirstat &&
+	git diff --dirstat=lines -M HEAD^..HEAD >actual_diff_dirstat_M &&
+	test_cmp expect_diff_dirstat_M actual_diff_dirstat_M &&
+	git diff --dirstat=lines -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
+	test_cmp expect_diff_dirstat_CC actual_diff_dirstat_CC
+'
+
+test_expect_success 'diff.dirstat=lines' '
+	git -c diff.dirstat=lines diff --dirstat HEAD^..HEAD >actual_diff_dirstat &&
+	test_cmp expect_diff_dirstat actual_diff_dirstat &&
+	git -c diff.dirstat=lines diff --dirstat -M HEAD^..HEAD >actual_diff_dirstat_M &&
+	test_cmp expect_diff_dirstat_M actual_diff_dirstat_M &&
+	git -c diff.dirstat=lines diff --dirstat -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
+	test_cmp expect_diff_dirstat_CC actual_diff_dirstat_CC
+'
+
+cat <<EOF >expect_diff_dirstat
+   2.1% changed/
+  10.6% dst/copy/changed/
+  10.6% dst/copy/rearranged/
+  10.6% dst/copy/unchanged/
+  10.6% dst/move/changed/
+  10.6% dst/move/rearranged/
+  10.6% dst/move/unchanged/
+   2.1% rearranged/
+  10.6% src/move/changed/
+  10.6% src/move/rearranged/
+  10.6% src/move/unchanged/
+EOF
+
+cat <<EOF >expect_diff_dirstat_M
+   5.2% changed/
+  26.3% dst/copy/changed/
+  26.3% dst/copy/rearranged/
+  26.3% dst/copy/unchanged/
+   5.2% dst/move/changed/
+   5.2% dst/move/rearranged/
+   5.2% rearranged/
+EOF
+
+cat <<EOF >expect_diff_dirstat_CC
+  16.6% changed/
+  16.6% dst/copy/changed/
+  16.6% dst/copy/rearranged/
+  16.6% dst/move/changed/
+  16.6% dst/move/rearranged/
+  16.6% rearranged/
+EOF
+
+test_expect_success '--dirstat=lines,0' '
+	git diff --dirstat=lines,0 HEAD^..HEAD >actual_diff_dirstat &&
+	test_cmp expect_diff_dirstat actual_diff_dirstat &&
+	git diff --dirstat=lines,0 -M HEAD^..HEAD >actual_diff_dirstat_M &&
+	test_cmp expect_diff_dirstat_M actual_diff_dirstat_M &&
+	git diff --dirstat=lines,0 -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
+	test_cmp expect_diff_dirstat_CC actual_diff_dirstat_CC
+'
+
+test_expect_success 'diff.dirstat=0,lines' '
+	git -c diff.dirstat=0,lines diff --dirstat HEAD^..HEAD >actual_diff_dirstat &&
+	test_cmp expect_diff_dirstat actual_diff_dirstat &&
+	git -c diff.dirstat=0,lines diff --dirstat -M HEAD^..HEAD >actual_diff_dirstat_M &&
+	test_cmp expect_diff_dirstat_M actual_diff_dirstat_M &&
+	git -c diff.dirstat=0,lines diff --dirstat -C -C HEAD^..HEAD >actual_diff_dirstat_CC &&
+	test_cmp expect_diff_dirstat_CC actual_diff_dirstat_CC
+'
+
 test_done
