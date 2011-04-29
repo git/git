@@ -1,0 +1,14 @@
+Git v1.7.5.1 Release Notes
+==========================
+
+Fixes since v1.7.5
+------------------
+
+ * The "--date=relative" output format used to say "X years, 12 months"
+   when it should have said "X+1 years".
+
+ * An error message from "git send-email" to diagnose a broken SMTP
+   connection configuration lacked a space between "hello=<smtp-domain>"
+   and "port=<smtp-server-port>".
+
+And other minor fixes and documentation updates.
