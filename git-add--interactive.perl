@@ -1366,14 +1366,13 @@ sub patch_update_file {
 				next;
 			}
 			elsif ($line =~ /^q/i) {
-				while ($ix < $num) {
-					if (!defined $hunk[$ix]{USE}) {
-						$hunk[$ix]{USE} = 0;
+				for ($i = 0; $i < $num; $i++) {
+					if (!defined $hunk[$i]{USE}) {
+						$hunk[$i]{USE} = 0;
 					}
-					$ix++;
 				}
 				$quit = 1;
-				next;
+				last;
 			}
 			elsif ($line =~ m|^/(.*)|) {
 				my $regex = $1;
