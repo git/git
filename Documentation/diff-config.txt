@@ -8,6 +8,50 @@ diff.autorefreshindex::
 	affects only 'git diff' Porcelain, and not lower level
 	'diff' commands such as 'git diff-files'.
 
+diff.dirstat::
+	A comma separated list of `--dirstat` parameters specifying the
+	default behavior of the `--dirstat` option to linkgit:git-diff[1]`
+	and friends. The defaults can be overridden on the command line
+	(using `--dirstat=<param1,param2,...>`). The fallback defaults
+	(when not changed by `diff.dirstat`) are `changes,noncumulative,3`.
+	The following parameters are available:
++
+--
+`changes`;;
+	Compute the dirstat numbers by counting the lines that have been
+	removed from the source, or added to the destination. This ignores
+	the amount of pure code movements within a file.  In other words,
+	rearranging lines in a file is not counted as much as other changes.
+	This is the default behavior when no parameter is given.
+`lines`;;
+	Compute the dirstat numbers by doing the regular line-based diff
+	analysis, and summing the removed/added line counts. (For binary
+	files, count 64-byte chunks instead, since binary files have no
+	natural concept of lines). This is a more expensive `--dirstat`
+	behavior than the `changes` behavior, but it does count rearranged
+	lines within a file as much as other changes. The resulting output
+	is consistent with what you get from the other `--*stat` options.
+`files`;;
+	Compute the dirstat numbers by counting the number of files changed.
+	Each changed file counts equally in the dirstat analysis. This is
+	the computationally cheapest `--dirstat` behavior, since it does
+	not have to look at the file contents at all.
+`cumulative`;;
+	Count changes in a child directory for the parent directory as well.
+	Note that when using `cumulative`, the sum of the percentages
+	reported may exceed 100%. The default (non-cumulative) behavior can
+	be specified with the `noncumulative` parameter.
+<limit>;;
+	An integer parameter specifies a cut-off percent (3% by default).
+	Directories contributing less than this percentage of the changes
+	are not shown in the output.
+--
++
+Example: The following will count changed files, while ignoring
+directories with less than 10% of the total amount of changed files,
+and accumulating child directory counts in the parent directories:
+`files,10,cumulative`.
+
 diff.external::
 	If this config variable is set, diff generation is not
 	performed using the internal diff machinery, but using the
