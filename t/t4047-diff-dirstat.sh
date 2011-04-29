@@ -943,37 +943,37 @@ test_expect_success '--dirstat=future_param,lines,0 should fail loudly' '
 	test_must_fail git diff --dirstat=future_param,lines,0 HEAD^..HEAD >actual_diff_dirstat 2>actual_error &&
 	test_debug "cat actual_error" &&
 	test_cmp /dev/null actual_diff_dirstat &&
-	grep -q "future_param" actual_error &&
-	grep -q "\--dirstat" actual_error
+	test_i18ngrep -q "future_param" actual_error &&
+	test_i18ngrep -q "\--dirstat" actual_error
 '
 
 test_expect_success '--dirstat=dummy1,cumulative,2dummy should report both unrecognized parameters' '
 	test_must_fail git diff --dirstat=dummy1,cumulative,2dummy HEAD^..HEAD >actual_diff_dirstat 2>actual_error &&
 	test_debug "cat actual_error" &&
 	test_cmp /dev/null actual_diff_dirstat &&
-	grep -q "dummy1" actual_error &&
-	grep -q "2dummy" actual_error &&
-	grep -q "\--dirstat" actual_error
+	test_i18ngrep -q "dummy1" actual_error &&
+	test_i18ngrep -q "2dummy" actual_error &&
+	test_i18ngrep -q "\--dirstat" actual_error
 '
 
 test_expect_success 'diff.dirstat=future_param,0,lines should warn, but still work' '
 	git -c diff.dirstat=future_param,0,lines diff --dirstat HEAD^..HEAD >actual_diff_dirstat 2>actual_error &&
 	test_debug "cat actual_error" &&
 	test_cmp expect_diff_dirstat actual_diff_dirstat &&
-	grep -q "future_param" actual_error &&
-	grep -q "diff\\.dirstat" actual_error &&
+	test_i18ngrep -q "future_param" actual_error &&
+	test_i18ngrep -q "diff\\.dirstat" actual_error &&
 
 	git -c diff.dirstat=future_param,0,lines diff --dirstat -M HEAD^..HEAD >actual_diff_dirstat_M 2>actual_error &&
 	test_debug "cat actual_error" &&
 	test_cmp expect_diff_dirstat_M actual_diff_dirstat_M &&
-	grep -q "future_param" actual_error &&
-	grep -q "diff\\.dirstat" actual_error &&
+	test_i18ngrep -q "future_param" actual_error &&
+	test_i18ngrep -q "diff\\.dirstat" actual_error &&
 
 	git -c diff.dirstat=future_param,0,lines diff --dirstat -C -C HEAD^..HEAD >actual_diff_dirstat_CC 2>actual_error &&
 	test_debug "cat actual_error" &&
 	test_cmp expect_diff_dirstat_CC actual_diff_dirstat_CC &&
-	grep -q "future_param" actual_error &&
-	grep -q "diff\\.dirstat" actual_error
+	test_i18ngrep -q "future_param" actual_error &&
+	test_i18ngrep -q "diff\\.dirstat" actual_error
 '
 
 test_done

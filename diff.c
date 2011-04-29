@@ -101,12 +101,12 @@ static int parse_dirstat_params(struct diff_options *options, const char *params
 			if (end - p == p_len)
 				options->dirstat_permille = permille;
 			else {
-				strbuf_addf(errmsg, "  Failed to parse dirstat cut-off percentage '%.*s'\n",
+				strbuf_addf(errmsg, _("  Failed to parse dirstat cut-off percentage '%.*s'\n"),
 					    p_len, p);
 				ret++;
 			}
 		} else {
-			strbuf_addf(errmsg, "  Unknown dirstat parameter '%.*s'\n",
+			strbuf_addf(errmsg, _("  Unknown dirstat parameter '%.*s'\n"),
 				    p_len, p);
 			ret++;
 		}
@@ -202,7 +202,7 @@ int git_diff_basic_config(const char *var, const char *value, void *cb)
 		struct strbuf errmsg = STRBUF_INIT;
 		default_diff_options.dirstat_permille = diff_dirstat_permille_default;
 		if (parse_dirstat_params(&default_diff_options, value, &errmsg))
-			warning("Found errors in 'diff.dirstat' config variable:\n%s",
+			warning(_("Found errors in 'diff.dirstat' config variable:\n%s"),
 				errmsg.buf);
 		strbuf_release(&errmsg);
 		diff_dirstat_permille_default = default_diff_options.dirstat_permille;
@@ -3260,7 +3260,7 @@ static int parse_dirstat_opt(struct diff_options *options, const char *params)
 {
 	struct strbuf errmsg = STRBUF_INIT;
 	if (parse_dirstat_params(options, params, &errmsg))
-		die("Failed to parse --dirstat/-X option parameter:\n%s",
+		die(_("Failed to parse --dirstat/-X option parameter:\n%s"),
 		    errmsg.buf);
 	strbuf_release(&errmsg);
 	/*
