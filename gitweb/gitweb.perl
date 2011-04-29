@@ -115,6 +115,14 @@ our $projects_list = "++GITWEB_LIST++";
 # the width (in characters) of the projects list "Description" column
 our $projects_list_description_width = 25;
 
+# group projects by category on the projects list
+# (enabled if this variable evaluates to true)
+our $projects_list_group_categories = 0;
+
+# default category if none specified
+# (leave the empty string for no category)
+our $project_list_default_category = "";
+
 # default order of projects list
 # valid values are none, project, descr, owner, and age
 our $default_projects_order = "project";
@@ -2584,6 +2592,12 @@ sub git_get_project_description {
 	return git_get_file_or_project_config($path, 'description');
 }
 
+sub git_get_project_category {
+	my $path = shift;
+	return git_get_file_or_project_config($path, 'category');
+}
+
+
 # supported formats:
 # * $GIT_DIR/ctags/<tagname> file (in 'ctags' subdirectory)
 #   - if its contents is a number, use it as tag weight,
@@ -4877,8 +4891,9 @@ sub git_patchset_body {
 
 # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
 
-# fills project list info (age, description, owner, forks) for each
-# project in the list, removing invalid projects from returned list
+# fills project list info (age, description, owner, category, forks)
+# for each project in the list, removing invalid projects from
+# returned list
 # NOTE: modifies $projlist, but does not remove entries from it
 sub fill_project_list_info {
 	my $projlist = shift;
@@ -4904,6 +4919,12 @@ sub fill_project_list_info {
 		if ($show_ctags) {
 			$pr->{'ctags'} = git_get_project_ctags($pr->{'path'});
 		}
+		if ($projects_list_group_categories && !defined $pr->{'category'}) {
+			my $cat = git_get_project_category($pr->{'path'}) ||
+			                                   $project_list_default_category;
+			$pr->{'category'} = to_utf8($cat);
+		}
+
 		push @projects, $pr;
 	}
 
@@ -4929,6 +4950,23 @@ sub sort_projects_list {
 	}
 
 	return @projects;
+}
+
+# returns a hash of categories, containing the list of project
+# belonging to each category
+sub build_projlist_by_category {
+	my ($projlist, $from, $to) = @_;
+	my %categories;
+
+	$from = 0 unless defined $from;
+	$to = $#$projlist if (!defined $to || $#$projlist < $to);
+
+	for (my $i = $from; $i <= $to; $i++) {
+		my $pr = $projlist->[$i];
+		push @{$categories{ $pr->{'category'} }}, $pr;
+	}
+
+	return wantarray ? %categories : \%categories;
 }
 
 # print 'sort by' <th> element, generating 'sort by $name' replay link
@@ -5059,7 +5097,25 @@ sub git_project_list_body {
 		      "</tr>\n";
 	}
 
-	git_project_list_rows(\@projects, $from, $to, $check_forks);
+	if ($projects_list_group_categories) {
+		# only display categories with projects in the $from-$to window
+		@projects = sort {$a->{'category'} cmp $b->{'category'}} @projects[$from..$to];
+		my %categories = build_projlist_by_category(\@projects, $from, $to);
+		foreach my $cat (sort keys %categories) {
+			unless ($cat eq "") {
+				print "<tr>\n";
+				if ($check_forks) {
+					print "<td></td>\n";
+				}
+				print "<td class=\"category\" colspan=\"5\">".esc_html($cat)."</td>\n";
+				print "</tr>\n";
+			}
+
+			git_project_list_rows($categories{$cat}, undef, undef, $check_forks);
+		}
+	} else {
+		git_project_list_rows(\@projects, $from, $to, $check_forks);
+	}
 
 	if (defined $extra) {
 		print "<tr>\n";

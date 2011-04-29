@@ -644,4 +644,12 @@ test_expect_success \
 	'ctags: search projects by non existent tag' \
 	'gitweb_run "by_tag=non-existent"'
 
+# ----------------------------------------------------------------------
+# categories
+
+test_expect_success \
+	'categories: projects list, only default category' \
+	'echo "\$projects_list_group_categories = 1;" >>gitweb_config.perl &&
+	 gitweb_run'
+
 test_done
