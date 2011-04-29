@@ -351,7 +351,6 @@ test_expect_success 'vanilla -X' '
 	test_cmp expect_diff_dirstat_CC actual_diff_dirstat_CC
 '
 
-# rearranged/text falls below 0% threshold (1 / (240 * 9 + 48 + 1) ~= 0.045 %)
 cat <<EOF >expect_diff_dirstat
    2.1% changed/
   10.8% dst/copy/changed/
@@ -360,6 +359,7 @@ cat <<EOF >expect_diff_dirstat
   10.8% dst/move/changed/
   10.8% dst/move/rearranged/
   10.8% dst/move/unchanged/
+   0.0% rearranged/
   10.8% src/move/changed/
   10.8% src/move/rearranged/
   10.8% src/move/unchanged/
@@ -402,7 +402,6 @@ test_expect_success '-X0' '
 	test_cmp expect_diff_dirstat_CC actual_diff_dirstat_CC
 '
 
-# rearranged/text falls below 0% threshold (1 / (240 * 9 + 48 + 1) ~= 0.045 %)
 cat <<EOF >expect_diff_dirstat
    2.1% changed/
   10.8% dst/copy/changed/
@@ -414,6 +413,7 @@ cat <<EOF >expect_diff_dirstat
   10.8% dst/move/unchanged/
   32.5% dst/move/
   65.1% dst/
+   0.0% rearranged/
   10.8% src/move/changed/
   10.8% src/move/rearranged/
   10.8% src/move/unchanged/

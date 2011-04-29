@@ -1502,8 +1502,8 @@ static long gather_dirstat(struct diff_options *opt, struct dirstat_dir *dir,
 	 *    under this directory (sources == 1).
 	 */
 	if (baselen && sources != 1) {
-		int permille = this_dir * 1000 / changed;
-		if (permille) {
+		if (this_dir) {
+			int permille = this_dir * 1000 / changed;
 			int percent = permille / 10;
 			if (percent >= dir->percent) {
 				fprintf(opt->file, "%s%4d.%01d%% %.*s\n", line_prefix,
