@@ -575,7 +575,7 @@ test_external () {
 test_external_without_stderr () {
 	# The temporary file has no (and must have no) security
 	# implications.
-	tmp="$TMPDIR"; if [ -z "$tmp" ]; then tmp=/tmp; fi
+	tmp=${TMPDIR:-/tmp}
 	stderr="$tmp/git-external-stderr.$$.tmp"
 	test_external "$@" 4> "$stderr"
 	[ -f "$stderr" ] || error "Internal error: $stderr disappeared."
@@ -801,12 +801,14 @@ test_done () {
 		mkdir -p "$test_results_dir"
 		test_results_path="$test_results_dir/${0%.sh}-$$.counts"
 
-		echo "total $test_count" >> $test_results_path
-		echo "success $test_success" >> $test_results_path
-		echo "fixed $test_fixed" >> $test_results_path
-		echo "broken $test_broken" >> $test_results_path
-		echo "failed $test_failure" >> $test_results_path
-		echo "" >> $test_results_path
+		cat >>"$test_results_path" <<-EOF
+		total $test_count
+		success $test_success
+		fixed $test_fixed
+		broken $test_broken
+		failed $test_failure
+
+		EOF
 	fi
 
 	if test "$test_fixed" != 0
