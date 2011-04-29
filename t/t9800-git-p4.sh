@@ -12,6 +12,8 @@ test_description='git-p4 tests'
 GITP4=$GIT_BUILD_DIR/contrib/fast-import/git-p4
 P4DPORT=10669
 
+export P4PORT=localhost:$P4DPORT
+
 db="$TRASH_DIRECTORY/db"
 cli="$TRASH_DIRECTORY/cli"
 git="$TRASH_DIRECTORY/git"
@@ -125,6 +127,88 @@ test_expect_success 'clone bare' '
 	test ! -d .git &&
 	bare=`git config --get core.bare` &&
 	test "$bare" = true &&
+	cd "$TRASH_DIRECTORY" &&
+	rm -rf "$git" && mkdir "$git"
+'
+
+p4_add_user() {
+    name=$1
+    fullname=$2
+    p4 user -f -i <<EOF &&
+User: $name
+Email: $name@localhost
+FullName: $fullname
+EOF
+    p4 passwd -P secret $name
+}
+
+p4_grant_admin() {
+    name=$1
+    p4 protect -o |\
+	awk "{print}END{print \"    admin user $name * //depot/...\"}" |\
+	p4 protect -i
+}
+
+p4_check_commit_author() {
+    file=$1
+    user=$2
+    if p4 changes -m 1 //depot/$file | grep $user > /dev/null ; then
+	return 0
+    else
+	echo "file $file not modified by user $user" 1>&2
+	return 1
+    fi
+}
+
+# Test username support, submitting as user 'alice'
+test_expect_success 'preserve users' '
+	p4_add_user alice Alice &&
+	p4_add_user bob Bob &&
+	p4_grant_admin alice &&
+	"$GITP4" clone --dest="$git" //depot &&
+	cd "$git" &&
+	echo "username: a change by alice" >> file1 &&
+	echo "username: a change by bob" >> file2 &&
+	git commit --author "Alice <alice@localhost>" -m "a change by alice" file1 &&
+	git commit --author "Bob <bob@localhost>" -m "a change by bob" file2 &&
+	git config git-p4.skipSubmitEditCheck true &&
+	P4EDITOR=touch P4USER=alice P4PASSWD=secret "$GITP4" commit --preserve-user &&
+	p4_check_commit_author file1 alice &&
+	p4_check_commit_author file2 bob &&
+	cd "$TRASH_DIRECTORY" &&
+	rm -rf "$git" && mkdir "$git"
+'
+
+# Test username support, submitting as bob, who lacks admin rights. Should
+# not submit change to p4 (git diff should show deltas).
+test_expect_success 'refuse to preserve users without perms' '
+	"$GITP4" clone --dest="$git" //depot &&
+	cd "$git" &&
+	echo "username-noperms: a change by alice" >> file1 &&
+	git commit --author "Alice <alice@localhost>" -m "perms: a change by alice" file1 &&
+	! P4EDITOR=touch P4USER=bob P4PASSWD=secret "$GITP4" commit --preserve-user &&
+	! git diff --exit-code HEAD..p4/master > /dev/null &&
+	cd "$TRASH_DIRECTORY" &&
+	rm -rf "$git" && mkdir "$git"
+'
+
+# What happens with unknown author? Without allowMissingP4Users it should fail.
+test_expect_success 'preserve user where author is unknown to p4' '
+	"$GITP4" clone --dest="$git" //depot &&
+	cd "$git" &&
+	git config git-p4.skipSubmitEditCheck true
+	echo "username-bob: a change by bob" >> file1 &&
+	git commit --author "Bob <bob@localhost>" -m "preserve: a change by bob" file1 &&
+	echo "username-unknown: a change by charlie" >> file1 &&
+	git commit --author "Charlie <charlie@localhost>" -m "preserve: a change by charlie" file1 &&
+	! P4EDITOR=touch P4USER=alice P4PASSWD=secret "$GITP4" commit --preserve-user &&
+	! git diff --exit-code HEAD..p4/master > /dev/null &&
+	echo "$0: repeat with allowMissingP4Users enabled" &&
+	git config git-p4.allowMissingP4Users true &&
+	git config git-p4.preserveUser true &&
+	P4EDITOR=touch P4USER=alice P4PASSWD=secret "$GITP4" commit &&
+	git diff --exit-code HEAD..p4/master > /dev/null &&
+	p4_check_commit_author file1 alice &&
 	cd "$TRASH_DIRECTORY" &&
 	rm -rf "$git" && mkdir "$git"
 '
