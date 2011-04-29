@@ -1091,7 +1091,7 @@ X-Mailer: git-send-email $gitversion
 			    "VALUES: server=$smtp_server ",
 			    "encryption=$smtp_encryption ",
 			    "hello=$smtp_domain",
-			    defined $smtp_server_port ? "port=$smtp_server_port" : "";
+			    defined $smtp_server_port ? " port=$smtp_server_port" : "";
 		}
 
 		if (defined $smtp_authuser) {
