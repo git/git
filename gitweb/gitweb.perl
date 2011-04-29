@@ -2653,6 +2653,7 @@ sub git_populate_project_tagcloud {
 	}
 
 	my $cloud;
+	my $matched = $cgi->param('by_tag');
 	if (eval { require HTML::TagCloud; 1; }) {
 		$cloud = HTML::TagCloud->new;
 		foreach my $ctag (sort keys %ctags_lc) {
@@ -2662,17 +2663,22 @@ sub git_populate_project_tagcloud {
 			$title =~ s/ /&nbsp;/g;
 			$title =~ s/^/&nbsp;/g;
 			$title =~ s/$/&nbsp;/g;
+			if (defined $matched && $matched eq $ctag) {
+				$title = qq(<span class="match">$title</span>);
+			}
 			$cloud->add($title, href(project=>undef, ctag=>$ctag),
 			            $ctags_lc{$ctag}->{count});
 		}
 	} else {
 		$cloud = {};
 		foreach my $ctag (keys %ctags_lc) {
-			my $title = $ctags_lc{$ctag}->{topname};
+			my $title = esc_html($ctags_lc{$ctag}->{topname}, -nbsp=>1);
+			if (defined $matched && $matched eq $ctag) {
+				$title = qq(<span class="match">$title</span>);
+			}
 			$cloud->{$ctag}{count} = $ctags_lc{$ctag}->{count};
 			$cloud->{$ctag}{ctag} =
-				$cgi->a({-href=>href(project=>undef, ctag=>$ctag)},
-			          esc_html($title, -nbsp=>1));
+				$cgi->a({-href=>href(project=>undef, ctag=>$ctag)}, $title);
 		}
 	}
 	return $cloud;
