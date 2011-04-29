@@ -412,20 +412,23 @@ our %feature = (
 		'override' => 0,
 		'default' => []},
 
-	# Allow gitweb scan project content tags described in ctags/
-	# of project repository, and display the popular Web 2.0-ish
-	# "tag cloud" near the project list. Note that this is something
-	# COMPLETELY different from the normal Git tags.
+	# Allow gitweb scan project content tags of project repository,
+	# and display the popular Web 2.0-ish "tag cloud" near the projects
+	# list.  Note that this is something COMPLETELY different from the
+	# normal Git tags.
 
 	# gitweb by itself can show existing tags, but it does not handle
-	# tagging itself; you need an external application for that.
-	# For an example script, check Girocco's cgi/tagproj.cgi.
+	# tagging itself; you need to do it externally, outside gitweb.
+	# The format is described in git_get_project_ctags() subroutine.
 	# You may want to install the HTML::TagCloud Perl module to get
 	# a pretty tag cloud instead of just a list of tags.
 
 	# To enable system wide have in $GITWEB_CONFIG
-	# $feature{'ctags'}{'default'} = ['path_to_tag_script'];
+	# $feature{'ctags'}{'default'} = [1];
 	# Project specific override is not supported.
+
+	# In the future whether ctags editing is enabled might depend
+	# on the value, but using 1 should always mean no editing of ctags.
 	'ctags' => {
 		'override' => 0,
 		'default' => [0]},
@@ -703,6 +706,7 @@ our @cgi_param_mapping = (
 	snapshot_format => "sf",
 	extra_options => "opt",
 	search_use_regexp => "sr",
+	ctag => "by_tag",
 	# this must be last entry (for manipulation from JavaScript)
 	javascript => "js"
 );
@@ -2572,23 +2576,66 @@ sub git_get_project_description {
 	return $descr;
 }
 
+# supported formats:
+# * $GIT_DIR/ctags/<tagname> file (in 'ctags' subdirectory)
+#   - if its contents is a number, use it as tag weight,
+#   - otherwise add a tag with weight 1
+# * $GIT_DIR/ctags file, each line is a tag (with weight 1)
+#   the same value multiple times increases tag weight
+# * `gitweb.ctag' multi-valued repo config variable
 sub git_get_project_ctags {
-	my $path = shift;
+	my $project = shift;
 	my $ctags = {};
 
-	$git_dir = "$projectroot/$path";
-	opendir my $dh, "$git_dir/ctags"
-		or return $ctags;
-	foreach (grep { -f $_ } map { "$git_dir/ctags/$_" } readdir($dh)) {
-		open my $ct, '<', $_ or next;
-		my $val = <$ct>;
-		chomp $val;
-		close $ct;
-		my $ctag = $_; $ctag =~ s#.*/##;
-		$ctags->{$ctag} = $val;
+	$git_dir = "$projectroot/$project";
+	if (opendir my $dh, "$git_dir/ctags") {
+		my @files = grep { -f $_ } map { "$git_dir/ctags/$_" } readdir($dh);
+		foreach my $tagfile (@files) {
+			open my $ct, '<', $tagfile
+				or next;
+			my $val = <$ct>;
+			chomp $val if $val;
+			close $ct;
+
+			(my $ctag = $tagfile) =~ s#.*/##;
+			if ($val =~ /\d+/) {
+				$ctags->{$ctag} = $val;
+			} else {
+				$ctags->{$ctag} = 1;
+			}
+		}
+		closedir $dh;
+
+	} elsif (open my $fh, '<', "$git_dir/ctags") {
+		while (my $line = <$fh>) {
+			chomp $line;
+			$ctags->{$line}++ if $line;
+		}
+		close $fh;
+
+	} else {
+		my $taglist = config_to_multi(git_get_project_config('ctag'));
+		foreach my $tag (@$taglist) {
+			$ctags->{$tag}++;
+		}
 	}
-	closedir $dh;
-	$ctags;
+
+	return $ctags;
+}
+
+# return hash, where keys are content tags ('ctags'),
+# and values are sum of weights of given tag in every project
+sub git_gather_all_ctags {
+	my $projects = shift;
+	my $ctags = {};
+
+	foreach my $p (@$projects) {
+		foreach my $ct (keys %{$p->{'ctags'}}) {
+			$ctags->{$ct} += $p->{'ctags'}->{$ct};
+		}
+	}
+
+	return $ctags;
 }
 
 sub git_populate_project_tagcloud {
@@ -2608,31 +2655,41 @@ sub git_populate_project_tagcloud {
 	my $cloud;
 	if (eval { require HTML::TagCloud; 1; }) {
 		$cloud = HTML::TagCloud->new;
-		foreach (sort keys %ctags_lc) {
+		foreach my $ctag (sort keys %ctags_lc) {
 			# Pad the title with spaces so that the cloud looks
 			# less crammed.
-			my $title = $ctags_lc{$_}->{topname};
+			my $title = esc_html($ctags_lc{$ctag}->{topname});
 			$title =~ s/ /&nbsp;/g;
 			$title =~ s/^/&nbsp;/g;
 			$title =~ s/$/&nbsp;/g;
-			$cloud->add($title, $home_link."?by_tag=".$_, $ctags_lc{$_}->{count});
+			$cloud->add($title, href(project=>undef, ctag=>$ctag),
+			            $ctags_lc{$ctag}->{count});
 		}
 	} else {
-		$cloud = \%ctags_lc;
+		$cloud = {};
+		foreach my $ctag (keys %ctags_lc) {
+			my $title = $ctags_lc{$ctag}->{topname};
+			$cloud->{$ctag}{count} = $ctags_lc{$ctag}->{count};
+			$cloud->{$ctag}{ctag} =
+				$cgi->a({-href=>href(project=>undef, ctag=>$ctag)},
+			          esc_html($title, -nbsp=>1));
+		}
 	}
-	$cloud;
+	return $cloud;
 }
 
 sub git_show_project_tagcloud {
 	my ($cloud, $count) = @_;
-	print STDERR ref($cloud)."..\n";
 	if (ref $cloud eq 'HTML::TagCloud') {
 		return $cloud->html_and_css($count);
 	} else {
-		my @tags = sort { $cloud->{$a}->{count} <=> $cloud->{$b}->{count} } keys %$cloud;
-		return '<p align="center">' . join (', ', map {
-			$cgi->a({-href=>"$home_link?by_tag=$_"}, $cloud->{$_}->{topname})
-		} splice(@tags, 0, $count)) . '</p>';
+		my @tags = sort { $cloud->{$a}->{'count'} <=> $cloud->{$b}->{'count'} } keys %$cloud;
+		return
+			'<div id="htmltagcloud"'.($project ? '' : ' align="center"').'>' .
+			join (', ', map {
+				$cloud->{$_}->{'ctag'}
+			} splice(@tags, 0, $count)) .
+			'</div>';
 	}
 }
 
@@ -4920,13 +4977,8 @@ sub git_project_list_body {
 	@projects = sort_projects_list(\@projects, $order);
 
 	if ($show_ctags) {
-		my %ctags;
-		foreach my $p (@projects) {
-			foreach my $ct (keys %{$p->{'ctags'}}) {
-				$ctags{$ct} += $p->{'ctags'}->{$ct};
-			}
-		}
-		my $cloud = git_populate_project_tagcloud(\%ctags);
+		my $ctags = git_gather_all_ctags(\@projects);
+		my $cloud = git_populate_project_tagcloud($ctags);
 		print git_show_project_tagcloud($cloud, 64);
 	}
 
@@ -5521,13 +5573,14 @@ sub git_summary {
 	my $show_ctags = gitweb_check_feature('ctags');
 	if ($show_ctags) {
 		my $ctags = git_get_project_ctags($project);
-		my $cloud = git_populate_project_tagcloud($ctags);
-		print "<tr id=\"metadata_ctags\"><td>Content tags:<br />";
-		print "</td>\n<td>" unless %$ctags;
-		print "<form action=\"$show_ctags\" method=\"post\"><input type=\"hidden\" name=\"p\" value=\"$project\" />Add: <input type=\"text\" name=\"t\" size=\"8\" /></form>";
-		print "</td>\n<td>" if %$ctags;
-		print git_show_project_tagcloud($cloud, 48);
-		print "</td></tr>";
+		if (%$ctags) {
+			# without ability to add tags, don't show if there are none
+			my $cloud = git_populate_project_tagcloud($ctags);
+			print "<tr id=\"metadata_ctags\">" .
+			      "<td>content tags</td>" .
+			      "<td>".git_show_project_tagcloud($cloud, 48)."</td>" .
+			      "</tr>\n";
+		}
 	}
 
 	print "</table>\n";
