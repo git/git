@@ -68,7 +68,7 @@ test_expect_success 'merge-one-file fails without a work tree' '
 	)
 '
 
-test_expect_failure 'merge-one-file respects GIT_WORK_TREE' '
+test_expect_success 'merge-one-file respects GIT_WORK_TREE' '
 	(cd bare.git &&
 	 mkdir work &&
 	 GIT_WORK_TREE=$PWD/work &&
@@ -82,7 +82,7 @@ test_expect_failure 'merge-one-file respects GIT_WORK_TREE' '
 	test_cmp expect-merged bare.git/work/file-index
 '
 
-test_expect_failure 'merge-one-file respects core.worktree' '
+test_expect_success 'merge-one-file respects core.worktree' '
 	mkdir subdir &&
 	git clone . subdir/child &&
 	(cd subdir &&
