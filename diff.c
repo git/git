@@ -31,7 +31,7 @@ static const char *external_diff_cmd_cfg;
 int diff_auto_refresh_index = 1;
 static int diff_mnemonic_prefix;
 static int diff_no_prefix;
-static int diff_dirstat_percent_default = 3;
+static int diff_dirstat_permille_default = 30;
 static struct diff_options default_diff_options;
 
 static char diff_colors[][COLOR_MAXLEN] = {
@@ -85,8 +85,15 @@ static int parse_dirstat_params(struct diff_options *options, const char *params
 			DIFF_OPT_SET(options, DIRSTAT_CUMULATIVE);
 		} else if (isdigit(*p)) {
 			char *end;
-			options->dirstat_percent = strtoul(p, &end, 10);
+			options->dirstat_permille = strtoul(p, &end, 10) * 10;
 			p = end;
+			if (*p == '.' && isdigit(*++p)) {
+				/* only use first digit */
+				options->dirstat_permille += *p - '0';
+				/* .. and ignore any further digits */
+				while (isdigit(*++p))
+					; /* nothing */
+			}
 		} else
 			return error("Unknown --dirstat parameter '%s'", p);
 
@@ -182,9 +189,9 @@ int git_diff_basic_config(const char *var, const char *value, void *cb)
 	}
 
 	if (!strcmp(var, "diff.dirstat")) {
-		default_diff_options.dirstat_percent = diff_dirstat_percent_default;
+		default_diff_options.dirstat_permille = diff_dirstat_permille_default;
 		(void) parse_dirstat_params(&default_diff_options, value);
-		diff_dirstat_percent_default = default_diff_options.dirstat_percent;
+		diff_dirstat_permille_default = default_diff_options.dirstat_permille;
 		return 0;
 	}
 
@@ -1498,7 +1505,7 @@ struct dirstat_file {
 
 struct dirstat_dir {
 	struct dirstat_file *files;
-	int alloc, nr, percent, cumulative;
+	int alloc, nr, permille, cumulative;
 };
 
 static long gather_dirstat(struct diff_options *opt, struct dirstat_dir *dir,
@@ -1547,10 +1554,9 @@ static long gather_dirstat(struct diff_options *opt, struct dirstat_dir *dir,
 	if (baselen && sources != 1) {
 		if (this_dir) {
 			int permille = this_dir * 1000 / changed;
-			int percent = permille / 10;
-			if (percent >= dir->percent) {
+			if (permille >= dir->permille) {
 				fprintf(opt->file, "%s%4d.%01d%% %.*s\n", line_prefix,
-					percent, permille % 10, baselen, base);
+					permille / 10, permille % 10, baselen, base);
 				if (!dir->cumulative)
 					return 0;
 			}
@@ -1576,7 +1582,7 @@ static void show_dirstat(struct diff_options *options)
 	dir.files = NULL;
 	dir.alloc = 0;
 	dir.nr = 0;
-	dir.percent = options->dirstat_percent;
+	dir.permille = options->dirstat_permille;
 	dir.cumulative = DIFF_OPT_TST(options, DIRSTAT_CUMULATIVE);
 
 	changed = 0;
@@ -2934,7 +2940,7 @@ void diff_setup(struct diff_options *options)
 	options->line_termination = '\n';
 	options->break_opt = -1;
 	options->rename_limit = -1;
-	options->dirstat_percent = diff_dirstat_percent_default;
+	options->dirstat_permille = diff_dirstat_permille_default;
 	options->context = 3;
 
 	options->change = diff_change;

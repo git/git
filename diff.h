@@ -114,7 +114,7 @@ struct diff_options {
 	int needed_rename_limit;
 	int degraded_cc_to_c;
 	int show_rename_progress;
-	int dirstat_percent;
+	int dirstat_permille;
 	int setup;
 	int abbrev;
 	const char *prefix;
