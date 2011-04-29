@@ -66,6 +66,41 @@ static int parse_diff_color_slot(const char *var, int ofs)
 	return -1;
 }
 
+static int parse_dirstat_params(struct diff_options *options, const char *params)
+{
+	const char *p = params;
+	while (*p) {
+		if (!prefixcmp(p, "changes")) {
+			p += 7;
+			DIFF_OPT_CLR(options, DIRSTAT_BY_FILE);
+		} else if (!prefixcmp(p, "files")) {
+			p += 5;
+			DIFF_OPT_SET(options, DIRSTAT_BY_FILE);
+		} else if (!prefixcmp(p, "noncumulative")) {
+			p += 13;
+			DIFF_OPT_CLR(options, DIRSTAT_CUMULATIVE);
+		} else if (!prefixcmp(p, "cumulative")) {
+			p += 10;
+			DIFF_OPT_SET(options, DIRSTAT_CUMULATIVE);
+		} else if (isdigit(*p)) {
+			char *end;
+			options->dirstat_percent = strtoul(p, &end, 10);
+			p = end;
+		} else
+			return error("Unknown --dirstat parameter '%s'", p);
+
+		if (*p) {
+			/* more parameters, swallow separator */
+			if (*p != ',')
+				return error("Missing comma separator at char "
+					"%"PRIuMAX" of '%s'",
+					(uintmax_t) (p - params), params);
+			p++;
+		}
+	}
+	return 0;
+}
+
 static int git_config_rename(const char *var, const char *value)
 {
 	if (!value)
@@ -3149,6 +3184,18 @@ static int stat_opt(struct diff_options *options, const char **av)
 	return argcount;
 }
 
+static int parse_dirstat_opt(struct diff_options *options, const char *params)
+{
+	if (parse_dirstat_params(options, params))
+		die("Failed to parse --dirstat/-X option parameter");
+	/*
+	 * The caller knows a dirstat-related option is given from the command
+	 * line; allow it to say "return this_function();"
+	 */
+	options->output_format |= DIFF_FORMAT_DIRSTAT;
+	return 1;
+}
+
 int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 {
 	const char *arg = av[0];
@@ -3168,15 +3215,19 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 		options->output_format |= DIFF_FORMAT_NUMSTAT;
 	else if (!strcmp(arg, "--shortstat"))
 		options->output_format |= DIFF_FORMAT_SHORTSTAT;
-	else if (opt_arg(arg, 'X', "dirstat", &options->dirstat_percent))
-		options->output_format |= DIFF_FORMAT_DIRSTAT;
-	else if (!strcmp(arg, "--cumulative")) {
-		options->output_format |= DIFF_FORMAT_DIRSTAT;
-		DIFF_OPT_SET(options, DIRSTAT_CUMULATIVE);
-	} else if (opt_arg(arg, 0, "dirstat-by-file",
-			   &options->dirstat_percent)) {
-		options->output_format |= DIFF_FORMAT_DIRSTAT;
-		DIFF_OPT_SET(options, DIRSTAT_BY_FILE);
+	else if (!strcmp(arg, "-X") || !strcmp(arg, "--dirstat"))
+		return parse_dirstat_opt(options, "");
+	else if (!prefixcmp(arg, "-X"))
+		return parse_dirstat_opt(options, arg + 2);
+	else if (!prefixcmp(arg, "--dirstat="))
+		return parse_dirstat_opt(options, arg + 10);
+	else if (!strcmp(arg, "--cumulative"))
+		return parse_dirstat_opt(options, "cumulative");
+	else if (!strcmp(arg, "--dirstat-by-file"))
+		return parse_dirstat_opt(options, "files");
+	else if (!prefixcmp(arg, "--dirstat-by-file=")) {
+		parse_dirstat_opt(options, "files");
+		return parse_dirstat_opt(options, arg + 18);
 	}
 	else if (!strcmp(arg, "--check"))
 		options->output_format |= DIFF_FORMAT_CHECKDIFF;

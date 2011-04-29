@@ -66,19 +66,39 @@ endif::git-format-patch[]
 	number of modified files, as well as number of added and deleted
 	lines.
 
---dirstat[=<limit>]::
-	Output the distribution of relative amount of changes (number of lines added or
-	removed) for each sub-directory. Directories with changes below
-	a cut-off percent (3% by default) are not shown. The cut-off percent
-	can be set with `--dirstat=<limit>`. Changes in a child directory are not
-	counted for the parent directory, unless `--cumulative` is used.
+--dirstat[=<param1,param2,...>]::
+	Output the distribution of relative amount of changes for each
+	sub-directory. The behavior of `--dirstat` can be customized by
+	passing it a comma separated list of parameters.
+	The following parameters are available:
 +
-Note that the `--dirstat` option computes the changes while ignoring
-the amount of pure code movements within a file.  In other words,
-rearranging lines in a file is not counted as much as other changes.
-
---dirstat-by-file[=<limit>]::
-	Same as `--dirstat`, but counts changed files instead of lines.
+--
+`changes`;;
+	Compute the dirstat numbers by counting the lines that have been
+	removed from the source, or added to the destination. This ignores
+	the amount of pure code movements within a file.  In other words,
+	rearranging lines in a file is not counted as much as other changes.
+	This is the default behavior when no parameter is given.
+`files`;;
+	Compute the dirstat numbers by counting the number of files changed.
+	Each changed file counts equally in the dirstat analysis. This is
+	the computationally cheapest `--dirstat` behavior, since it does
+	not have to look at the file contents at all.
+`cumulative`;;
+	Count changes in a child directory for the parent directory as well.
+	Note that when using `cumulative`, the sum of the percentages
+	reported may exceed 100%. The default (non-cumulative) behavior can
+	be specified with the `noncumulative` parameter.
+<limit>;;
+	An integer parameter specifies a cut-off percent (3% by default).
+	Directories contributing less than this percentage of the changes
+	are not shown in the output.
+--
++
+Example: The following will count changed files, while ignoring
+directories with less than 10% of the total amount of changed files,
+and accumulating child directory counts in the parent directories:
+`--dirstat=files,10,cumulative`.
 
 --summary::
 	Output a condensed summary of extended header information
