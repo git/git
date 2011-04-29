@@ -70,6 +70,8 @@ endif::git-format-patch[]
 	Output the distribution of relative amount of changes for each
 	sub-directory. The behavior of `--dirstat` can be customized by
 	passing it a comma separated list of parameters.
+	The defaults are controlled by the `diff.dirstat` configuration
+	variable (see linkgit:git-config[1]).
 	The following parameters are available:
 +
 --

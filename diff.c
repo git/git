@@ -31,6 +31,7 @@ static const char *external_diff_cmd_cfg;
 int diff_auto_refresh_index = 1;
 static int diff_mnemonic_prefix;
 static int diff_no_prefix;
+static int diff_dirstat_percent_default = 3;
 static struct diff_options default_diff_options;
 
 static char diff_colors[][COLOR_MAXLEN] = {
@@ -177,6 +178,13 @@ int git_diff_basic_config(const char *var, const char *value, void *cb)
 			/* for backwards compatibility */
 			!strcmp(var, "diff.suppress-blank-empty")) {
 		diff_suppress_blank_empty = git_config_bool(var, value);
+		return 0;
+	}
+
+	if (!strcmp(var, "diff.dirstat")) {
+		default_diff_options.dirstat_percent = diff_dirstat_percent_default;
+		(void) parse_dirstat_params(&default_diff_options, value);
+		diff_dirstat_percent_default = default_diff_options.dirstat_percent;
 		return 0;
 	}
 
@@ -2926,7 +2934,7 @@ void diff_setup(struct diff_options *options)
 	options->line_termination = '\n';
 	options->break_opt = -1;
 	options->rename_limit = -1;
-	options->dirstat_percent = 3;
+	options->dirstat_percent = diff_dirstat_percent_default;
 	options->context = 3;
 
 	options->change = diff_change;
