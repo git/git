@@ -20,9 +20,13 @@ test_expect_success 'setup' '
 mkdir .git/hooks
 
 cat >.git/hooks/post-rewrite <<EOF
-#!/bin/sh
-echo \$@ > "$TRASH_DIRECTORY"/post-rewrite.args
-cat > "$TRASH_DIRECTORY"/post-rewrite.data
+#!/usr/bin/perl
+open (AR, ">$TRASH_DIRECTORY/post-rewrite.args");
+print AR \$_,"\n" foreach @ARGV;
+open (DAT, ">$TRASH_DIRECTORY/post-rewrite.data");
+while(<STDIN>) {
+       print DAT;
+}
 EOF
 chmod u+x .git/hooks/post-rewrite
 
