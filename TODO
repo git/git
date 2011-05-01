@@ -8,6 +8,12 @@ The latest copy of this document is found at
 
 ----------------------------------------------------------------
 
+* Audit use of symbolic-ref without -m in our scripts and for each
+  case decide if leaving a reflog entry for the HEAD is desirable.
+  If so, add them.
+
+  $gmane/172516
+
 * "git status" on intent-to-add index entries (say "I" in the first
   column instead of "A" for short status, add "(needs 'git add')" at the
   end of "new file: $path " in long status).
