@@ -1,144 +1,140 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Apr 2011, #07; Wed, 27)
-X-master-at: e839fe6c1206292aeb4518939b8f124ae5068619
-X-next-at: f5ef3c22908b68d63e56ce32f4234438cd775f22
+Subject: What's cooking in git.git (May 2011, #01; Sun, 1)
+X-master-at: 791a765e54b9b4c8d2cf4f069222e31cef8aa24e
+X-next-at: b50356093b95c296fb375196ef0251da18b66448
 
-What's cooking in git.git (Apr 2011, #07; Wed, 27)
+What's cooking in git.git (May 2011, #01; Sun, 1)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' while commits prefixed with '+' are in 'next'.
 
 The main part of this cycle is expected to run thru May, aiming for a
-feature freeze in early June.  We are in the middle of week #1 of this
-cycle and week #2 starts on May 2nd.
+feature freeze in early June.
 
---------------------------------------------------
-[Graduated to "master"]
-
-* ar/clean-rmdir-empty (2011-04-01) 1 commit
-  (merged to 'next' on 2011-04-25 at 5a71fdb)
- + clean: unreadable directory may still be rmdir-able if it is empty
-
-* cn/format-patch-quiet (2011-04-12) 2 commits
-  (merged to 'next' on 2011-04-25 at 40e2d1c)
- + format-patch: document --quiet option
- + format-patch: don't pass on the --quiet flag
-
-* dm/color-palette (2011-04-05) 1 commit
-  (merged to 'next' on 2011-04-25 at 839b17b)
- + Share color list between graph and show-branch
-
-* dm/stash-k-i-p (2011-04-07) 2 commits
-  (merged to 'next' on 2011-04-25 at 01a207c)
- + stash: ensure --no-keep-index and --patch can be used in any order
- + stash: add two more tests for --no-keep-index
-
-* ef/maint-strbuf-init (2011-04-10) 2 commits
-  (merged to 'next' on 2011-04-25 at 6a45422)
- + config: support values longer than 1023 bytes
- + strbuf: make sure buffer is zero-terminated
-
-* jc/merge-dash-previous (2011-04-07) 1 commit
-  (merged to 'next' on 2011-04-25 at 512faf4)
- + merge: allow "-" as a short-hand for "previous branch"
-
-* jc/pack-objects-bigfile (2011-04-05) 1 commit
-  (merged to 'next' on 2011-04-25 at 621035c)
- + Teach core.bigfilethreashold to pack-objects
-
-* jk/maint-stash-oob (2011-04-06) 2 commits
-  (merged to 'next' on 2011-04-25 at 8478a92)
- + stash: fix false positive in the invalid ref test.
- + stash: fix accidental apply of non-existent stashes
-
-* jk/maint-upload-pack-shallow (2011-04-06) 1 commit
-  (merged to 'next' on 2011-04-25 at 073dac4)
- + upload-pack: start pack-objects before async rev-list
-
-* jk/stash-loosen-safety (2011-04-05) 1 commit
-  (merged to 'next' on 2011-04-25 at cdc549f)
- + stash: drop dirty worktree check on apply
-
-* mg/reflog-with-options (2011-04-01) 3 commits
-  (merged to 'next' on 2011-04-25 at 1ab8b78)
- + reflog: fix overriding of command line options
- + t/t1411: test reflog with formats
- + builtin/log.c: separate default and setup of cmd_log_init()
- (this branch is used by mg/show-without-prune.)
-
-* mg/sha1-path-advise (2011-03-31) 2 commits
-  (merged to 'next' on 2011-04-25 at 8b094f5)
- + sha1_name: Suggest commit:./file for path in subdir
- + t1506: factor out test for "Did you mean..."
-
-* mg/x-years-12-months (2011-04-20) 1 commit
-  (merged to 'next' on 2011-04-25 at 74ba83b)
- + date: avoid "X years, 12 months" in relative dates
-
-* mh/git-svn-automkdirs (2011-04-01) 1 commit
-  (merged to 'next' on 2011-04-25 at 2e95357)
- + git-svn: add an option to skip the creation of empty directories
-
-* nk/blame-abbrev (2011-04-06) 1 commit
-  (merged to 'next' on 2011-04-25 at 59a4281)
- + blame: add --abbrev command line option and make it honor core.abbrev
-
-* rj/sparse (2011-04-07) 7 commits
-  (merged to 'next' on 2011-04-25 at e1af2af)
- + sparse: Fix some "symbol not declared" warnings
- + sparse: Fix errors due to missing target-specific variables
- + sparse: Fix an "symbol 'merge_file' not decared" warning
- + sparse: Fix an "symbol 'format_subject' not declared" warning
- + sparse: Fix some "Using plain integer as NULL pointer" warnings
- + sparse: Fix an "symbol 'cmd_index_pack' not declared" warning
- + Makefile: Use cgcc rather than sparse in the check target
-
-* rr/doc-content-type (2011-04-07) 4 commits
-  (merged to 'next' on 2011-04-25 at 83c41e4)
- + Documentation: Allow custom diff tools to be specified in 'diff.tool'
- + Documentation: Add diff.<driver>.* to config
- + Documentation: Move diff.<driver>.* from config.txt to diff-config.txt
- + Documentation: Add filter.<driver>.* to config
+The week #2 of this cycle starts on May 2nd.
 
 --------------------------------------------------
 [New Topics]
 
-* aw/maint-rebase-i-p-no-ff (2011-04-20) 1 commit
- - git-rebase--interactive.sh: preserve-merges fails on merges created with no-ff
+* im/hashcmp-optim (2011-04-28) 1 commit
+ - hashcmp(): inline memcmp() by hand to optimize
 
-* mg/alias-expose-prefix (2011-04-27) 2 commits
- - handle_alias: provide GIT_PREFIX to !alias
- - t1020: test !alias in subdirectory
+Will merge to "next".
 
-* mg/diff-uiconfig-doc (2011-04-27) 1 commit
- - config.txt,diff-options.txt: porcelain vs. plumbing for color.diff
+* jc/add-delete-default (2011-04-19) 1 commit
+ - git add: notice removal of tracked paths by default
+ (this branch uses jc/fix-add-u-unmerged, jc/fix-add-u-unmerged and jc/fix-diff-files-unmerged.)
 
-With tentative rewording.
+* kk/maint-prefix-in-config-mak (2011-04-28) 1 commit
+ - Honor $(prefix) set in config.mak* when defining ETC_GIT* and sysconfdir
 
-* ld/p4-preserve-user-names (2011-04-21) 1 commit
- - git-p4: add option to preserve user names
+Wait for msysgit folks to Ack, and then merge to "next".
 
-Pete acked and told Luke to wait and then resend; I just picked it up so
-that the patch is not lost.
+* sg/completion-updates (2011-04-28) 3 commits
+ - completion: don't declare 'local words' to make zsh happy
+ - completion: remove unnecessary _get_comp_words_by_ref() invocations
+ - completion: don't modify the $cur variable in completion functions
 
-* mg/rev-list-count-cherry (2011-04-26) 1 commit
-  (merged to 'next' on 2011-04-26 at dc3e80a)
- + rev-list --count: separate count for --cherry-mark
+Will merge to "next".
 
-Will merge to "master" by the end of week #2.
+* jk/merge-one-file-working-tree (2011-04-29) 2 commits
+ - merge-one-file: fix broken merges with alternate work trees
+ - add tests for merge-index / merge-one-file
 
-* ft/gitweb-tar-with-gzip-n (2011-04-26) 1 commit
-  (merged to 'next' on 2011-04-26 at 8e59a0e)
- + gitweb: supply '-n' to gzip for identical output
+Will merge to "next".
 
-Will merge to "master" by the end of week #2.
-
-* ml/test-readme (2011-04-26) 1 commit
-  (merged to 'next' on 2011-04-26 at d1efe84)
- + t/README: unify documentation of test function args
+* js/blame-parsename (2011-04-21) 1 commit
+  (merged to 'next' on 2011-04-29 at 5fde945)
+ + blame: tolerate bogus e-mail addresses a bit better
 
 Will merge to "master" by the end of week #2.
+
+* jn/ctags (2011-04-29) 6 commits
+ - gitweb: Optional grouping of projects by category
+ - gitweb: Modularized git_get_project_description to be more generic
+ - gitweb: Split git_project_list_body in two functions
+ - gitweb: Mark matched 'ctag' / contents tag (?by_tag=foo)
+ - gitweb: Change the way "content tags" ('ctags') are handled
+ - gitweb: Restructure projects list generation
+
+* js/info-man-path (2011-05-01) 1 commit
+ - git: add --info-path and --man-path options
+
+* cj/p4merge (2011-05-01) 1 commit
+ - Pass empty file to p4merge where no base is suitable.
+
+--------------------------------------------------
+[Graduated to "master"]
+
+* en/merge-recursive (2011-03-17) 4 commits
+  (merged to 'next' on 2011-04-25 at 8027acd)
+ + merge-recursive: tweak magic band-aid
+ + merge-recursive: When we detect we can skip an update, actually skip it
+ + t6022: New test checking for unnecessary updates of files in D/F conflicts
+ + t6022: New test checking for unnecessary updates of renamed+modified files
+
+* jc/diff-irreversible-delete (2011-02-28) 1 commit
+  (merged to 'next' on 2011-04-25 at c37610d)
+ + git diff -D: omit the preimage of deletes
+
+* jc/rename-degrade-cc-to-c (2011-01-06) 4 commits
+  (merged to 'next' on 2011-04-25 at 25c195e)
+ + diffcore-rename: fall back to -C when -C -C busts the rename limit
+ + diffcore-rename: record filepair for rename src
+ + diffcore-rename: refactor "too many candidates" logic
+ + builtin/diff.c: remove duplicated call to diff_result_code()
+
+* jh/dirstat (2011-04-12) 4 commits
+  (merged to 'next' on 2011-04-25 at cb277e6)
+ + --dirstat: In case of renames, use target filename instead of source filename
+ + Teach --dirstat not to completely ignore rearranged lines within a file
+ + --dirstat-by-file: Make it faster and more correct
+ + --dirstat: Describe non-obvious differences relative to --stat or regular diff
+ (this branch is used by jh/dirstat-lines.)
+
+* mz/rebase (2011-02-28) 34 commits
+  (merged to 'next' on 2011-04-25 at 4bbed46)
+ + rebase: define options in OPTIONS_SPEC
+ + Makefile: do not install sourced rebase scripts
+ + rebase: use @{upstream} if no upstream specified
+ + rebase -i: remove unnecessary state rebase-root
+ + rebase -i: don't read unused variable preserve_merges
+ + git-rebase--am: remove unnecessary --3way option
+ + rebase -m: don't print exit code 2 when merge fails
+ + rebase -m: remember allow_rerere_autoupdate option
+ + rebase: remember strategy and strategy options
+ + rebase: remember verbose option
+ + rebase: extract code for writing basic state
+ + rebase: factor out sub command handling
+ + rebase: make -v a tiny bit more verbose
+ + rebase -i: align variable names
+ + rebase: show consistent conflict resolution hint
+ + rebase: extract am code to new source file
+ + rebase: extract merge code to new source file
+ + rebase: remove $branch as synonym for $orig_head
+ + rebase -i: support --stat
+ + rebase: factor out call to pre-rebase hook
+ + rebase: factor out clean work tree check
+ + rebase: factor out reference parsing
+ + rebase: reorder validation steps
+ + rebase -i: remove now unnecessary directory checks
+ + rebase: factor out command line option processing
+ + rebase: align variable content
+ + rebase: align variable names
+ + rebase: stricter check of standalone sub command
+ + rebase: act on command line outside parsing loop
+ + rebase: improve detection of rebase in progress
+ + rebase: remove unused rebase state 'prev_head'
+ + rebase: read state outside loop
+ + rebase: refactor reading of state
+ + rebase: clearer names for directory variables
+
+* rs/strbuf-setlen-assert (2011-04-27) 1 commit
+  (merged to 'next' on 2011-04-28 at d1e8d0d)
+ + strbuf: clarify assertion in strbuf_setlen()
+
+Will merge to "master" by the end of week #1.
 
 * sp/maint-clear-postfields (2011-04-26) 1 commit
   (merged to 'next' on 2011-04-26 at 0082503)
@@ -148,41 +144,25 @@ Fixes a rather nasty bug we had since the beginning of smart-HTTP
 but has become a lot easier to trigger since 1.7.5, introducing a
 regression.
 
+* vh/git-svn-doc (2011-04-26) 3 commits
+  (merged to 'next' on 2011-04-28 at 5556e8c)
+ + git-svn.txt: small typeface improvements
+ + git-svn.txt: move option descriptions
+ + git-svn.txt: fix usage of --add-author-from
+
 Will merge to "master" by the end of week #1.
-
-* jk/format-patch-quote-special-in-from (2011-04-08) 1 commit
- - pretty: quote rfc822 specials in email addresses
-
-Will merge to "next".
-
-* rs/strbuf-setlen-assert (2011-04-27) 1 commit
- - strbuf: clarify assertion in strbuf_setlen()
-
-Will merge to "next".
-
-* jh/dirstat-lines (2011-04-27) 7 commits
- - diff --dirstat: tighten and clean-up parsing.
- - New --dirstat=lines mode, doing dirstat analysis based on diffstat
- - Allow specifying --dirstat cut-off percentage as a floating point number
- - Add config variable for specifying default --dirstat behavior
- - Refactor --dirstat parsing; deprecate --cumulative and --dirstat-by-file
- - Make --dirstat=0 output directories that contribute < 0.1% of changes
- - Add several testcases for --dirstat and friends
- (this branch uses jh/dirstat.)
-
-This is v3/v4 that is still being discussed.
 
 --------------------------------------------------
 [Stalled]
 
-* jn/gitweb-js (2011-04-15) 13 commits
+* jn/gitweb-js (2011-04-28) 13 commits
  - gitweb: Make JavaScript ability to adjust timezones configurable
  - gitweb.js: Add UI for selecting common timezone to display dates
  - gitweb: JavaScript ability to adjust time based on timezone
  - gitweb: Unify the way long timestamp is displayed
  - gitweb: Refactor generating of long dates into format_timestamp_html
  - gitweb.js: Provide getElementsByClassName method (if it not exists)
- - gitweb.js: Introduce gitweb/static/js/lib/cookies.js
+ - gitweb.js: Introduce code to handle cookies from JavaScript
  - gitweb.js: Extract and improve datetime handling
  - gitweb.js: Provide default values for padding in padLeftStr and padLeft
  - gitweb.js: Update and improve comments in JavaScript files
@@ -190,8 +170,7 @@ This is v3/v4 that is still being discussed.
  - Remove gitweb/gitweb.cgi and other legacy targets from main Makefile
  - git-instaweb: Simplify build dependency on gitweb
 
-I do not recall seeing this series much reviewed. Is everybody happy with
-this series?
+Rerolled.  Waiting for comments.
 
 * jk/maint-merge-rename-create (2011-03-25) 3 commits
  - merge: turn on rewrite detection
@@ -204,33 +183,14 @@ Peff wanted to reroll this, so this is taken out of "next".
  - http-push: refactor curl_easy_setup madness
  - http: make curl callbacks match contracts from curl header
 
-The second one will probably need re-rolling after
-sp/maint-clear-postfields settles.
+The second one will probably need re-rolling on top of
+sp/maint-clear-postfields after it settles.
 
 * rr/rerere-clear-libify (2011-04-13) 1 commit
  - rerere: Expose an API corresponding to 'clear' functionality
 
 Jonathan had good comments on moving the garbage collection interface as
 well. Perhaps needs a re-roll.
-
-* jc/maint-add-p-overlapping-hunks (2011-04-06) 2 commits
- - "add -p": work-around an old laziness that does not coalesce hunks
- - add--interactive.perl: factor out repeated --recount option
-
-This came from http://thread.gmane.org/gmane.comp.version-control.git/170685/focus=171000;
-we may want to add tests before moving it forward.
-
-* mg/show-without-prune (2011-04-01) 1 commit
- - builtin/show: do not prune by pathspec
-
-I wanted to like this, but it still feels like too much magic.  Will drop
-and wait for the topic to resurface.
-
-* gr/cvsimport-alternative-cvspass-location (2011-02-18) 1 commit
- - Look for password in both CVS and CVSNT password files.
-
-It seems that we need separate parsers for these two formats in order not
-to regress the users of the original cvs.
 
 * jc/index-pack (2011-02-25) 5 commits
  - index-pack --verify: read anomalous offsets from v2 idx file
@@ -256,48 +216,106 @@ current usage context.
 --------------------------------------------------
 [Cooking]
 
-* jn/setup-revisions-glob-and-friends-passthru (2011-04-21) 2 commits
- - revisions: allow --glob and friends in parse_options-enabled commands
- - revisions: split out handle_revision_pseudo_opt function
+* gr/cvsimport-alternative-cvspass-location (2011-05-01) 1 commit
+ - Look for password in both CVS and CVSNT password files.
+
+* jc/maint-add-p-overlapping-hunks (2011-04-06) 4 commits
+ - "add -p": work-around an old laziness that does not coalesce hunks
+ - add--interactive.perl: factor out repeated --recount option
+ - t3701: Editing a split hunk in an "add -p" session
+ - add -p: 'q' should really quit
+
+Now out of "Stalled" category with tests.
+
+* ld/p4-preserve-user-names (2011-04-21) 1 commit
+  (merged to 'next' on 2011-04-29 at 25116c8)
+ + git-p4: add option to preserve user names
+
+Will merge to "master" by the end of week #2.
+
+* jh/dirstat-lines (2011-04-29) 8 commits
+  (merged to 'next' on 2011-04-29 at a302674)
+ + Mark dirstat error messages for translation
+ + Improve error handling when parsing dirstat parameters
+ + New --dirstat=lines mode, doing dirstat analysis based on diffstat
+ + Allow specifying --dirstat cut-off percentage as a floating point number
+ + Add config variable for specifying default --dirstat behavior
+ + Refactor --dirstat parsing; deprecate --cumulative and --dirstat-by-file
+ + Make --dirstat=0 output directories that contribute < 0.1% of changes
+ + Add several testcases for --dirstat and friends
+
+* aw/maint-rebase-i-p-no-ff (2011-04-28) 1 commit
+ - git-rebase--interactive.sh: preserve-merges fails on merges created with no-ff
 
 Will merge to "next".
+
+* mg/alias-expose-prefix (2011-04-27) 2 commits
+ - handle_alias: provide GIT_PREFIX to !alias
+ - t1020: test !alias in subdirectory
+
+Will merge to "next".
+
+* mg/diff-uiconfig-doc (2011-04-27) 1 commit
+ - config.txt,diff-options.txt: porcelain vs. plumbing for color.diff
+
+Will merge to "next".
+
+* mg/rev-list-count-cherry (2011-04-26) 1 commit
+  (merged to 'next' on 2011-04-26 at dc3e80a)
+ + rev-list --count: separate count for --cherry-mark
+
+Will merge to "master" by the end of week #2.
+
+* ft/gitweb-tar-with-gzip-n (2011-04-26) 1 commit
+  (merged to 'next' on 2011-04-26 at 8e59a0e)
+ + gitweb: supply '-n' to gzip for identical output
+
+Will merge to "master" by the end of week #2.
+
+* ml/test-readme (2011-04-26) 1 commit
+  (merged to 'next' on 2011-04-26 at d1efe84)
+ + t/README: unify documentation of test function args
+
+Will merge to "master" by the end of week #2.
+
+* jk/format-patch-quote-special-in-from (2011-04-08) 1 commit
+  (merged to 'next' on 2011-04-28 at 587f2d4)
+ + pretty: quote rfc822 specials in email addresses
+
+Will merge to "master" by the end of week #2.
+
+* jn/setup-revisions-glob-and-friends-passthru (2011-04-21) 2 commits
+  (merged to 'next' on 2011-04-28 at 6006cc4)
+ + revisions: allow --glob and friends in parse_options-enabled commands
+ + revisions: split out handle_revision_pseudo_opt function
 
 * cn/log-parse-opt (2011-04-14) 1 commit
- - log: convert to parse-options
-
-Will merge to "next".
+  (merged to 'next' on 2011-04-28 at 02f2eac)
+ + log: convert to parse-options
 
 * jc/fix-add-u-unmerged (2011-04-20) 1 commit
- - Fix "add -u" that sometimes fails to resolve unmerged paths
- (this branch uses jc/fix-diff-files-unmerged.)
-
-Will merge to "next".
+  (merged to 'next' on 2011-04-28 at f7ed821)
+ + Fix "add -u" that sometimes fails to resolve unmerged paths
+ (this branch is used by jc/add-delete-default and jc/add-delete-default; uses jc/fix-diff-files-unmerged.)
 
 * jc/fix-diff-files-unmerged (2011-04-22) 4 commits
- - diff-files: show unmerged entries correctly
- - diff: remove often unused parameters from diff_unmerge()
- - diff.c: return filepair from diff_unmerge()
- - test: use $_z40 from test-lib
- (this branch is used by jc/fix-add-u-unmerged.)
-
-Will merge to "next".
+  (merged to 'next' on 2011-04-28 at f1f837c)
+ + diff-files: show unmerged entries correctly
+ + diff: remove often unused parameters from diff_unmerge()
+ + diff.c: return filepair from diff_unmerge()
+ + test: use $_z40 from test-lib
+ (this branch is used by jc/add-delete-default and jc/fix-add-u-unmerged.)
 
 * js/maint-1.6.6-send-pack-stateless-rpc-deadlock-fix (2011-04-25) 1 commit
- - send-pack: avoid deadlock when pack-object dies early
+ + send-pack: avoid deadlock when pack-object dies early
  (this branch is used by js/maint-send-pack-stateless-rpc-deadlock-fix.)
 
 * js/maint-send-pack-stateless-rpc-deadlock-fix (2011-04-25) 1 commit
- - Merge branch 'js/maint-1.6.6-send-pack-stateless-rpc-deadlock-fix' into js/maint-send-pack-stateless-rpc-deadlock-fix
+  (merged to 'next' on 2011-04-28 at db7e04a)
+ + Merge branch 'js/maint-1.6.6-send-pack-stateless-rpc-deadlock-fix' into js/maint-send-pack-stateless-rpc-deadlock-fix
  (this branch uses js/maint-1.6.6-send-pack-stateless-rpc-deadlock-fix.)
 
-Will merge to "next".
-
-* vh/git-svn-doc (2011-04-26) 3 commits
- - git-svn.txt: small typeface improvements
- - git-svn.txt: move option descriptions
- - git-svn.txt: fix usage of --add-author-from
-
-Will merge to "next".
+Will merge to "master" by the end of week #2.
 
 * jk/format-patch-multiline-header (2011-04-14) 1 commit
   (merged to 'next' on 2011-04-26 at 3d5eda3)
@@ -350,16 +368,6 @@ Will merge to "master" by the end of week #2.
 
 Will merge to "master" by the end of week #2.
 
-* jh/dirstat (2011-04-12) 4 commits
-  (merged to 'next' on 2011-04-25 at cb277e6)
- + --dirstat: In case of renames, use target filename instead of source filename
- + Teach --dirstat not to completely ignore rearranged lines within a file
- + --dirstat-by-file: Make it faster and more correct
- + --dirstat: Describe non-obvious differences relative to --stat or regular diff
- (this branch is used by jh/dirstat-lines.)
-
-Will merge to "master" by the end of week #1.
-
 * jm/mergetool-submodules (2011-04-13) 1 commit
   (merged to 'next' on 2011-04-26 at 40892cf)
  + mergetool: Teach about submodules
@@ -401,12 +409,6 @@ Will merge to "master" by the end of week #2.
 
 Will merge to "master" by the end of week #2.
 
-* jc/diff-irreversible-delete (2011-02-28) 1 commit
-  (merged to 'next' on 2011-04-25 at c37610d)
- + git diff -D: omit the preimage of deletes
-
-Will merge to "master" by the end of week #2.
-
 * jh/notes-add-ui (2011-03-30) 1 commit
   (merged to 'next' on 2011-04-25 at 4fb1ac2)
  + Make "git notes add" more user-friendly when there are existing notes
@@ -430,45 +432,6 @@ Will merge to "master" by the end of week #2.
   (merged to 'next' on 2011-04-25 at fd45c63)
  + Kill off get_relative_cwd()
  + setup: return correct prefix if worktree is '/'
-
-Will merge to "master" by the end of week #2.
-
-* mz/rebase (2011-02-28) 34 commits
-  (merged to 'next' on 2011-04-25 at 4bbed46)
- + rebase: define options in OPTIONS_SPEC
- + Makefile: do not install sourced rebase scripts
- + rebase: use @{upstream} if no upstream specified
- + rebase -i: remove unnecessary state rebase-root
- + rebase -i: don't read unused variable preserve_merges
- + git-rebase--am: remove unnecessary --3way option
- + rebase -m: don't print exit code 2 when merge fails
- + rebase -m: remember allow_rerere_autoupdate option
- + rebase: remember strategy and strategy options
- + rebase: remember verbose option
- + rebase: extract code for writing basic state
- + rebase: factor out sub command handling
- + rebase: make -v a tiny bit more verbose
- + rebase -i: align variable names
- + rebase: show consistent conflict resolution hint
- + rebase: extract am code to new source file
- + rebase: extract merge code to new source file
- + rebase: remove $branch as synonym for $orig_head
- + rebase -i: support --stat
- + rebase: factor out call to pre-rebase hook
- + rebase: factor out clean work tree check
- + rebase: factor out reference parsing
- + rebase: reorder validation steps
- + rebase -i: remove now unnecessary directory checks
- + rebase: factor out command line option processing
- + rebase: align variable content
- + rebase: align variable names
- + rebase: stricter check of standalone sub command
- + rebase: act on command line outside parsing loop
- + rebase: improve detection of rebase in progress
- + rebase: remove unused rebase state 'prev_head'
- + rebase: read state outside loop
- + rebase: refactor reading of state
- + rebase: clearer names for directory variables
 
 Will merge to "master" by the end of week #2.
 
@@ -499,35 +462,11 @@ basic semantics into a not-so-horrible shape.
 
 Will merge to "master" by the end of week #2.
 
-* jc/rename-degrade-cc-to-c (2011-01-06) 4 commits
-  (merged to 'next' on 2011-04-25 at 25c195e)
- + diffcore-rename: fall back to -C when -C -C busts the rename limit
- + diffcore-rename: record filepair for rename src
- + diffcore-rename: refactor "too many candidates" logic
- + builtin/diff.c: remove duplicated call to diff_result_code()
-
-Will merge to "master" by the end of week #2.
-
-* en/merge-recursive (2011-03-17) 4 commits
-  (merged to 'next' on 2011-04-25 at 8027acd)
- + merge-recursive: tweak magic band-aid
- + merge-recursive: When we detect we can skip an update, actually skip it
- + t6022: New test checking for unnecessary updates of files in D/F conflicts
- + t6022: New test checking for unnecessary updates of renamed+modified files
-
-Will merge to "master" by the end of week #2.
-
 --------------------------------------------------
 [Discarded]
 
-* jk/maint-push-async-hang (2011-03-31) 4 commits
- . send-pack: abort sideband demuxer on pack-objects error
- . run-command: allow aborting async code prematurely
- . finish_async: be quiet when waiting for async process
- . teach wait_or_whine a "quiet" mode
- (this branch is used by jk/maint-push-async-hang-threads.)
+* mg/show-without-prune (2011-04-01) 1 commit
+ . builtin/show: do not prune by pathspec
 
-* jk/maint-push-async-hang-threads (2011-03-31) 2 commits
- . run-command: implement abort_async for pthreads
- . Merge branch 'jk/maint-push-async-hang' into jk/maint-push-async-hang-threads
- (this branch uses jk/maint-push-async-hang.)
+I wanted to like this, but it still feels like too much magic.  Will wait
+for the topic to resurface.
