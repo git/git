@@ -1,4 +1,4 @@
-Git v1.7.5 Release Notes (draft)
+Git v1.7.6 Release Notes (draft)
 ========================
 
 Updates since v1.7.5
@@ -17,6 +17,11 @@ Updates since v1.7.5
  * "git clean" used to fail on an empty directory that is not readable,
    even though rmdir(2) could remove such a directory.  Now we attempt it
    as the last resort.
+
+ * "git diff -C -C" used to disable the rename detection entirely when
+   there are too many copy candidate paths in the tree; now it falls
+   back to "-C" when doing so would keep the copy candidate paths
+   under the rename detection limit.
 
  * "git format-patch" learned "--quiet" option to suppress the output of
    the names of generated files.
@@ -75,5 +80,5 @@ included in this release.
 ---
 exec >/var/tmp/1
 echo O=$(git describe master)
-O=v1.7.5
+O=v1.7.5-140-g5ae6f5c
 git shortlog --no-merges ^maint ^$O master
