@@ -1105,57 +1105,45 @@ int file_exists(const char *f)
 }
 
 /*
- * get_relative_cwd() gets the prefix of the current working directory
- * relative to 'dir'.  If we are not inside 'dir', it returns NULL.
- *
- * As a convenience, it also returns NULL if 'dir' is already NULL.  The
- * reason for this behaviour is that it is natural for functions returning
- * directory names to return NULL to say "this directory does not exist"
- * or "this directory is invalid".  These cases are usually handled the
- * same as if the cwd is not inside 'dir' at all, so get_relative_cwd()
- * returns NULL for both of them.
- *
- * Most notably, get_relative_cwd(buffer, size, get_git_work_tree())
- * unifies the handling of "outside work tree" with "no work tree at all".
+ * Given two normalized paths (a trailing slash is ok), if subdir is
+ * outside dir, return -1.  Otherwise return the offset in subdir that
+ * can be used as relative path to dir.
  */
-char *get_relative_cwd(char *buffer, int size, const char *dir)
+int dir_inside_of(const char *subdir, const char *dir)
 {
-	char *cwd = buffer;
+	int offset = 0;
 
-	if (!dir)
-		return NULL;
-	if (!getcwd(buffer, size))
-		die_errno("can't find the current directory");
+	assert(dir && subdir && *dir && *subdir);
 
-	if (!is_absolute_path(dir))
-		dir = real_path(dir);
-
-	while (*dir && *dir == *cwd) {
+	while (*dir && *subdir && *dir == *subdir) {
 		dir++;
-		cwd++;
+		subdir++;
+		offset++;
 	}
-	if (*dir)
-		return NULL;
-	switch (*cwd) {
-	case '\0':
-		return cwd;
-	case '/':
-		return cwd + 1;
-	default:
-		/*
-		 * dir can end with a path separator when it's root
-		 * directory. Return proper prefix in that case.
-		 */
-		if (dir[-1] == '/')
-			return cwd;
-		return NULL;
-	}
+
+	/* hel[p]/me vs hel[l]/yeah */
+	if (*dir && *subdir)
+		return -1;
+
+	if (!*subdir)
+		return !*dir ? offset : -1; /* same dir */
+
+	/* foo/[b]ar vs foo/[] */
+	if (is_dir_sep(dir[-1]))
+		return is_dir_sep(subdir[-1]) ? offset : -1;
+
+	/* foo[/]bar vs foo[] */
+	return is_dir_sep(*subdir) ? offset + 1 : -1;
 }
 
 int is_inside_dir(const char *dir)
 {
-	char buffer[PATH_MAX];
-	return get_relative_cwd(buffer, sizeof(buffer), dir) != NULL;
+	char cwd[PATH_MAX];
+	if (!dir)
+		return 0;
+	if (!getcwd(cwd, sizeof(cwd)))
+		die_errno("can't find the current directory");
+	return dir_inside_of(cwd, dir) >= 0;
 }
 
 int is_empty_dir(const char *path)

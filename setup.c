@@ -325,6 +325,7 @@ static const char *setup_explicit_git_dir(const char *gitdirenv,
 	const char *work_tree_env = getenv(GIT_WORK_TREE_ENVIRONMENT);
 	const char *worktree;
 	char *gitfile;
+	int offset;
 
 	if (PATH_MAX - 40 < strlen(gitdirenv))
 		die("'$%s' too big", GIT_DIR_ENVIRONMENT);
@@ -390,15 +391,15 @@ static const char *setup_explicit_git_dir(const char *gitdirenv,
 		return NULL;
 	}
 
-	if (!prefixcmp(cwd, worktree) &&
-	    cwd[strlen(worktree)] == '/') { /* cwd inside worktree */
+	offset = dir_inside_of(cwd, worktree);
+	if (offset >= 0) {	/* cwd inside worktree? */
 		set_git_dir(real_path(gitdirenv));
 		if (chdir(worktree))
 			die_errno("Could not chdir to '%s'", worktree);
 		cwd[len++] = '/';
 		cwd[len] = '\0';
 		free(gitfile);
-		return cwd + strlen(worktree) + 1;
+		return cwd + offset;
 	}
 
 	/* cwd outside worktree */
