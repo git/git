@@ -676,14 +676,24 @@ extern char *sha1_pack_name(const unsigned char *sha1);
 extern char *sha1_pack_index_name(const unsigned char *sha1);
 extern const char *find_unique_abbrev(const unsigned char *sha1, int);
 extern const unsigned char null_sha1[20];
-static inline int is_null_sha1(const unsigned char *sha1)
-{
-	return !memcmp(sha1, null_sha1, 20);
-}
+
 static inline int hashcmp(const unsigned char *sha1, const unsigned char *sha2)
 {
-	return memcmp(sha1, sha2, 20);
+	int i;
+
+	for (i = 0; i < 20; i++, sha1++, sha2++) {
+		if (*sha1 != *sha2)
+			return *sha1 - *sha2;
+	}
+
+	return 0;
 }
+
+static inline int is_null_sha1(const unsigned char *sha1)
+{
+	return !hashcmp(sha1, null_sha1);
+}
+
 static inline void hashcpy(unsigned char *sha_dst, const unsigned char *sha_src)
 {
 	memcpy(sha_dst, sha_src, 20);
