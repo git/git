@@ -270,7 +270,7 @@ pick_one_preserving_merges () {
 			# No point in merging the first parent, that's HEAD
 			new_parents=${new_parents# $first_parent}
 			if ! do_with_author output \
-				git merge ${strategy:+-s $strategy} -m \
+				git merge --no-ff ${strategy:+-s $strategy} -m \
 					"$msg_content" $new_parents
 			then
 				printf "%s\n" "$msg_content" > "$GIT_DIR"/MERGE_MSG
