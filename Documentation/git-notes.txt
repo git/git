@@ -57,8 +57,11 @@ list::
 
 add::
 	Add notes for a given object (defaults to HEAD). Abort if the
-	object already has notes (use `-f` to overwrite an
-	existing note).
+	object already has notes (use `-f` to overwrite existing notes).
+	However, if you're using `add` interactively (using an editor
+	to supply the notes contents), then - instead of aborting -
+	the existing notes will be opened in the editor (like the `edit`
+	subcommand).
 
 copy::
 	Copy the notes for the first object onto the second object.
