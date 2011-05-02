@@ -271,9 +271,9 @@ test_expect_success 'git add --dry-run of non-existing file' "
 	test_must_fail git add --dry-run track-this ignored-file >actual 2>&1
 "
 
-test_expect_success C_LOCALE_OUTPUT 'git add --dry-run of an existing file output' "
+test_expect_success 'git add --dry-run of an existing file output' "
 	echo \"fatal: pathspec 'ignored-file' did not match any files\" >expect &&
-	test_cmp expect actual
+	test_i18ncmp expect actual
 "
 
 cat >expect.err <<\EOF
@@ -290,9 +290,9 @@ test_expect_success 'git add --dry-run --ignore-missing of non-existing file' '
 	test_must_fail git add --dry-run --ignore-missing track-this ignored-file >actual.out 2>actual.err
 '
 
-test_expect_success C_LOCALE_OUTPUT 'git add --dry-run --ignore-missing of non-existing file output' '
-	test_cmp expect.out actual.out &&
-	test_cmp expect.err actual.err
+test_expect_success 'git add --dry-run --ignore-missing of non-existing file output' '
+	test_i18ncmp expect.out actual.out &&
+	test_i18ncmp expect.err actual.err
 '
 
 test_done

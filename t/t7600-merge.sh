@@ -495,10 +495,10 @@ test_expect_success 'merge fast-forward in a dirty tree' '
 
 test_debug 'git log --graph --decorate --oneline --all'
 
-test_expect_success C_LOCALE_OUTPUT 'in-index merge' '
+test_expect_success 'in-index merge' '
 	git reset --hard c0 &&
 	git merge --no-ff -s resolve c1 >out &&
-	grep "Wonderful." out &&
+	test_i18ngrep "Wonderful." out &&
 	verify_parents $c0 $c1
 '
 
