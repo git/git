@@ -287,16 +287,16 @@ help ...`.
 	the current setting and then exit.
 
 --html-path::
-	Print the path to wherever your git HTML documentation is installed
-	and exit.
+	Print the path, without trailing slash, where git's HTML
+	documentation is installed and exit.
 
 --man-path::
-	Print the path to wherever your git man pages are installed
-	and exit.
+	Print the manpath (see `man(1)`) for the man pages for
+	this version of git and exit.
 
 --info-path::
-	Print the path to wherever your git Info files are installed
-	and exit.
+	Print the path where the Info files documenting this
+	version of git are installed and exit.
 
 -p::
 --paginate::
