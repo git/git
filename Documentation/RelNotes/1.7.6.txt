@@ -6,6 +6,9 @@ Updates since v1.7.5
 
  * Various git-svn updates.
 
+ * Clean-up of the C part of i18n (but not l10n---please wait)
+   continues.
+
  * When an object "$tree:$path" does not exist, if $path does exist in the
    subtree of $tree that corresponds to the subdirectory the user is in,
    git now suggests using "$tree:./$path" in addition to the advice to use
@@ -26,6 +29,10 @@ Updates since v1.7.5
  * "git format-patch" learned "--quiet" option to suppress the output of
    the names of generated files.
 
+ * "git log" and friends learned a new "--notes" option to replace the
+   "--show-notes" option.  Unlike "--show-notes", "--notes=<ref>" does
+   not imply showing the default notes.
+
  * "git merge" learned "-" as a short-hand for "the previous branch", just
    like the way "git checkout -" works.
 
@@ -36,6 +43,9 @@ Updates since v1.7.5
 
  * "git stash apply" can now apply to a working tree with changes as long
    as there is no overlapping change as the stash being applied.
+
+ * "git submodule update" learned "--force" option to get rid of local
+   changes in submodules and replace them with the up-to-date version.
 
  * "git stash apply @{99999}" now is diagnosed as an error, unless you
    really have that many stash entries.
@@ -49,10 +59,6 @@ Fixes since v1.7.5
 Unless otherwise noted, all the fixes in 1.7.5.X maintenance track are
 included in this release.
 
- * The "--date=relative" output format used to say "X years, 12 months"
-   when it should have said "X+1 years".
-   (merge mg/x-years-12-months later)
-
  * "git config" used to choke with an insanely long line.
    (merge ef/maint-strbuf-init later)
 
@@ -64,6 +70,10 @@ included in this release.
    pathname in the original, instead of the pathname in the result,
    when renames are involved.
    (merge jh/dirstat for the above two later)
+
+ * "diff -M --cached" used to use unmerged path as a possible rename
+   source candidate, which made no sense.
+   (merge mz/maint-rename-unmerged later)
 
  * "git format-patch" when run with "--quiet" option used to produce a
    nonsense result that consists of alternating empty output.
@@ -80,5 +90,5 @@ included in this release.
 ---
 exec >/var/tmp/1
 echo O=$(git describe master)
-O=v1.7.5-140-g5ae6f5c
+O=v1.7.5-184-g23f536c
 git shortlog --no-merges ^maint ^$O master
