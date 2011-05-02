@@ -213,6 +213,13 @@ of 'r1' and 'r2' and is defined as
 It is the set of commits that are reachable from either one of
 'r1' or 'r2' but not from both.
 
+In these two shorthands, you can omit one end and let it default to HEAD.
+For example, 'origin..' is a shorthand for 'origin..HEAD' and asks "What
+did I do since I forked from the origin branch?"  Similarly, '..origin'
+is a shorthand for 'HEAD..origin' and asks "What did the origin do since
+I forked from them?"  Note that '..' would mean 'HEAD..HEAD' which is an
+empty range that is both reachable and unreachable from HEAD.
+
 Two other shorthands for naming a set that is formed by a commit
 and its parent commits exist.  The 'r1{caret}@' notation means all
 parents of 'r1'.  'r1{caret}!' includes commit 'r1' but excludes
