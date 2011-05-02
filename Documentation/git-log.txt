@@ -178,9 +178,9 @@ May be an unabbreviated ref name or a glob and may be specified
 multiple times.  A warning will be issued for refs that do not exist,
 but a glob that does not match any refs is silently ignored.
 +
-This setting can be disabled by the `--no-standard-notes` option,
+This setting can be disabled by the `--no-notes` option,
 overridden by the 'GIT_NOTES_DISPLAY_REF' environment variable,
-and supplemented by the `--show-notes` option.
+and overridden by the `--notes=<ref>` option.
 
 GIT
 ---

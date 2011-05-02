@@ -1053,7 +1053,8 @@ void init_display_notes(struct display_notes_opt *opt)
 
 	assert(!display_notes_trees);
 
-	if (!opt || !opt->suppress_default_notes) {
+	if (!opt || opt->use_default_notes > 0 ||
+	    (opt->use_default_notes == -1 && !opt->extra_notes_refs.nr)) {
 		string_list_append(&display_notes_refs, default_notes_ref());
 		display_ref_env = getenv(GIT_NOTES_DISPLAY_REF_ENVIRONMENT);
 		if (display_ref_env) {
@@ -1066,9 +1067,9 @@ void init_display_notes(struct display_notes_opt *opt)
 
 	git_config(notes_display_config, &load_config_refs);
 
-	if (opt && opt->extra_notes_refs) {
+	if (opt) {
 		struct string_list_item *item;
-		for_each_string_list_item(item, opt->extra_notes_refs)
+		for_each_string_list_item(item, &opt->extra_notes_refs)
 			string_list_add_refs_by_glob(&display_notes_refs,
 						     item->string);
 	}
@@ -1284,4 +1285,14 @@ int copy_note(struct notes_tree *t,
 		return add_note(t, to_obj, null_sha1, combine_notes);
 
 	return 0;
+}
+
+void expand_notes_ref(struct strbuf *sb)
+{
+	if (!prefixcmp(sb->buf, "refs/notes/"))
+		return; /* we're happy */
+	else if (!prefixcmp(sb->buf, "notes/"))
+		strbuf_insert(sb, 0, "refs/", 5);
+	else
+		strbuf_insert(sb, 0, "refs/notes/", 11);
 }
