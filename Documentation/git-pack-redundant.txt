@@ -38,14 +38,6 @@ OPTIONS
 --verbose::
 	Outputs some statistics to stderr. Has a small performance penalty.
 
-Author
-------
-Written by Lukas Sandström <lukass@etek.chalmers.se>
-
-Documentation
---------------
-Documentation by Lukas Sandström <lukass@etek.chalmers.se>
-
 SEE ALSO
 --------
 linkgit:git-pack-objects[1]

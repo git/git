@@ -214,14 +214,6 @@ constructor pick {} {
 	}
 }
 
-proc _home {} {
-	if {[catch {set h $::env(HOME)}]
-		|| ![file isdirectory $h]} {
-		set h .
-	}
-	return $h
-}
-
 method _center {} {
 	set nx [winfo reqwidth $top]
 	set ny [winfo reqheight $top]
@@ -420,7 +412,7 @@ method _new_local_path {} {
 	if {$local_path ne {}} {
 		set p [file dirname $local_path]
 	} else {
-		set p [_home]
+		set p [pwd]
 	}
 
 	set p [tk_chooseDirectory \
@@ -541,7 +533,7 @@ method _open_origin {} {
 	if {$origin_url ne {} && [file isdirectory $origin_url]} {
 		set p $origin_url
 	} else {
-		set p [_home]
+		set p [pwd]
 	}
 
 	set p [tk_chooseDirectory \
@@ -1042,7 +1034,7 @@ method _open_local_path {} {
 	if {$local_path ne {}} {
 		set p $local_path
 	} else {
-		set p [_home]
+		set p [pwd]
 	}
 
 	set p [tk_chooseDirectory \

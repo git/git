@@ -62,7 +62,7 @@ Internal whitespace within a variable value is retained verbatim.
 
 The values following the equals sign in variable assign are all either
 a string, an integer, or a boolean.  Boolean values may be given as yes/no,
-0/1, true/false or on/off.  Case is not significant in boolean values, when
+1/0, true/false or on/off.  Case is not significant in boolean values, when
 converting value to the canonical form using '--bool' type specifier;
 'git config' will ensure that the output is "true" or "false".
 
@@ -320,7 +320,7 @@ core.worktree::
 	Set the path to the root of the working tree.
 	This can be overridden by the GIT_WORK_TREE environment
 	variable and the '--work-tree' command line option.
-	The value can an absolute path or relative to the path to
+	The value can be an absolute path or relative to the path to
 	the .git directory, which is either specified by --git-dir
 	or GIT_DIR, or automatically discovered.
 	If --git-dir or GIT_DIR is specified but none of
@@ -375,15 +375,6 @@ core.sharedRepository::
 core.warnAmbiguousRefs::
 	If true, git will warn you if the ref name you passed it is ambiguous
 	and might match multiple refs in the .git/refs/ tree. True by default.
-
-core.abbrevguard::
-	Even though git makes sure that it uses enough hexdigits to show
-	an abbreviated object name unambiguously, as more objects are
-	added to the repository over time, a short name that used to be
-	unique will stop being unique.  Git uses this many extra hexdigits
-	that are more than necessary to make the object name currently
-	unique, in the hope that its output will stay unique a bit longer.
-	Defaults to 0.
 
 core.compression::
 	An integer -1..9, indicating a default compression level.
@@ -566,6 +557,12 @@ the 'GIT_NOTES_REF' environment variable.  See linkgit:git-notes[1].
 core.sparseCheckout::
 	Enable "sparse checkout" feature. See section "Sparse checkout" in
 	linkgit:git-read-tree[1] for more information.
+
+core.abbrev::
+	Set the length object names are abbreviated to.  If unspecified,
+	many commands abbreviate to 7 hexdigits, which may not be enough
+	for abbreviated object names to stay unique for sufficiently long
+	time.
 
 add.ignore-errors::
 add.ignoreErrors::
@@ -900,9 +897,13 @@ diff.wordRegex::
 	characters are *ignorable* whitespace.
 
 fetch.recurseSubmodules::
-	A boolean value which changes the behavior for fetch and pull, the
-	default is to not recursively fetch populated submodules unless
-	configured otherwise.
+	This option can be either set to a boolean value or to 'on-demand'.
+	Setting it to a boolean changes the behavior of fetch and pull to
+	unconditionally recurse into submodules when set to true or to not
+	recurse at all when set to false. When set to 'on-demand' (the default
+	value), fetch and pull will only recurse into a populated submodule
+	when its superproject retrieves a commit that updates the submodule's
+	reference.
 
 fetch.unpackLimit::
 	If the number of objects fetched over the git native
@@ -1100,6 +1101,12 @@ All gitcvs variables except for 'gitcvs.usecrlfattr' and
 'gitcvs.<access_method>.<varname>' (where 'access_method'
 is one of "ext" and "pserver") to make them apply only for the given
 access method.
+
+grep.lineNumber::
+	If set to true, enable '-n' option by default.
+
+grep.extendedRegexp::
+	If set to true, enable '--extended-regexp' option by default.
 
 gui.commitmsgwidth::
 	Defines how wide the commit message window is in the
@@ -1591,7 +1598,8 @@ push.default::
 * `matching` - push all matching branches.
   All branches having the same name in both ends are considered to be
   matching. This is the default.
-* `tracking` - push the current branch to its upstream branch.
+* `upstream` - push the current branch to its upstream branch.
+* `tracking` - deprecated synonym for `upstream`.
 * `current` - push the current branch to a branch of the same name.
 
 rebase.stat::
@@ -1819,7 +1827,7 @@ submodule.<name>.update::
 	linkgit:git-submodule[1] and linkgit:gitmodules[5] for details.
 
 submodule.<name>.fetchRecurseSubmodules::
-	This option can be used to enable/disable recursive fetching of this
+	This option can be used to control recursive fetching of this
 	submodule. It can be overridden by using the --[no-]recurse-submodules
 	command line option to "git fetch" and "git pull".
 	This setting will override that from in the linkgit:gitmodules[5]

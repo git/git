@@ -158,7 +158,7 @@ void shortlog_add_commit(struct shortlog *log, struct commit *commit)
 		buffer = eol;
 	}
 	if (!author)
-		die("Missing author: %s",
+		die(_("Missing author: %s"),
 		    sha1_to_hex(commit->object.sha1));
 	if (log->user_format) {
 		struct pretty_print_context ctx = {0};
@@ -181,7 +181,7 @@ static void get_from_rev(struct rev_info *rev, struct shortlog *log)
 	struct commit *commit;
 
 	if (prepare_revision_walk(rev))
-		die("revision walk setup failed");
+		die(_("revision walk setup failed"));
 	while ((commit = get_revision(rev)) != NULL)
 		shortlog_add_commit(log, commit);
 }
@@ -284,7 +284,7 @@ parse_done:
 	argc = parse_options_end(&ctx);
 
 	if (setup_revisions(argc, argv, &rev, NULL) != 1) {
-		error("unrecognized argument: %s", argv[1]);
+		error(_("unrecognized argument: %s"), argv[1]);
 		usage_with_options(shortlog_usage, options);
 	}
 
@@ -296,7 +296,7 @@ parse_done:
 		add_head_to_pending(&rev);
 	if (rev.pending.nr == 0) {
 		if (isatty(0))
-			fprintf(stderr, "(reading log message from standard input)\n");
+			fprintf(stderr, _("(reading log message from standard input)\n"));
 		read_from_stdin(&log);
 	}
 	else

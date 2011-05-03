@@ -14,7 +14,8 @@ add_blob() {
 	BLOB=$(echo aleph_0 | git hash-object -w --stdin) &&
 	BLOB_FILE=.git/objects/$(echo $BLOB | sed "s/^../&\//") &&
 	test $((1 + $before)) = $(git count-objects | sed "s/ .*//") &&
-	test -f $BLOB_FILE
+	test -f $BLOB_FILE &&
+	test-chmtime =+0 $BLOB_FILE
 }
 
 test_expect_success setup '

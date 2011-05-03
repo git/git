@@ -446,6 +446,8 @@ test_expect_success \
 test_expect_success \
 	'encode(commit): utf8' \
 	'. "$TEST_DIRECTORY"/t3901-utf8.txt &&
+	 test_when_finished "GIT_AUTHOR_NAME=\"A U Thor\"" &&
+	 test_when_finished "GIT_COMMITTER_NAME=\"C O Mitter\"" &&
 	 echo "UTF-8" >> file &&
 	 git add file &&
 	 git commit -F "$TEST_DIRECTORY"/t3900/1-UTF-8.txt &&
@@ -454,11 +456,13 @@ test_expect_success \
 test_expect_success \
 	'encode(commit): iso-8859-1' \
 	'. "$TEST_DIRECTORY"/t3901-8859-1.txt &&
+	 test_when_finished "GIT_AUTHOR_NAME=\"A U Thor\"" &&
+	 test_when_finished "GIT_COMMITTER_NAME=\"C O Mitter\"" &&
 	 echo "ISO-8859-1" >> file &&
 	 git add file &&
 	 git config i18n.commitencoding ISO-8859-1 &&
+	 test_when_finished "git config --unset i18n.commitencoding" &&
 	 git commit -F "$TEST_DIRECTORY"/t3900/ISO8859-1.txt &&
-	 git config --unset i18n.commitencoding &&
 	 gitweb_run "p=.git;a=commit"'
 
 test_expect_success \

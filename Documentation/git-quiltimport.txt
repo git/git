@@ -49,14 +49,6 @@ The default for the patch directory is patches
 or the value of the $QUILT_PATCHES environment
 variable.
 
-Author
-------
-Written by Eric Biederman <ebiederm@lnxi.com>
-
-Documentation
---------------
-Documentation by Eric Biederman <ebiederm@lnxi.com>
-
 GIT
 ---
 Part of the linkgit:git[1] suite

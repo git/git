@@ -116,16 +116,6 @@ $ git config --global web.browser firefox
 as they are probably more user specific than repository specific.
 See linkgit:git-config[1] for more information about this.
 
-Author
-------
-Written by Christian Couder <chriscool@tuxfamily.org> and the git-list
-<git@vger.kernel.org>, based on 'git mergetool' by Theodore Y. Ts'o.
-
-Documentation
--------------
-Documentation by Christian Couder <chriscool@tuxfamily.org> and the
-git-list <git@vger.kernel.org>.
-
 GIT
 ---
 Part of the linkgit:git[1] suite

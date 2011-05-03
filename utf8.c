@@ -405,6 +405,15 @@ new_line:
 	}
 }
 
+int strbuf_add_wrapped_bytes(struct strbuf *buf, const char *data, int len,
+			     int indent, int indent2, int width)
+{
+	char *tmp = xstrndup(data, len);
+	int r = strbuf_add_wrapped_text(buf, tmp, indent, indent2, width);
+	free(tmp);
+	return r;
+}
+
 int is_encoding_utf8(const char *name)
 {
 	if (!name)

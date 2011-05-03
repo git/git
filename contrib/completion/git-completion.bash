@@ -246,6 +246,8 @@ __git_ps1 ()
 				fi
 			elif [ -f "$g/MERGE_HEAD" ]; then
 				r="|MERGING"
+			elif [ -f "$g/CHERRY_PICK_HEAD" ]; then
+				r="|CHERRY-PICKING"
 			elif [ -f "$g/BISECT_LOG" ]; then
 				r="|BISECTING"
 			fi
@@ -662,11 +664,14 @@ __git_compute_merge_strategies ()
 	: ${__git_merge_strategies:=$(__git_list_merge_strategies)}
 }
 
-__git_complete_file ()
+__git_complete_revlist_file ()
 {
 	local pfx ls ref cur
 	_get_comp_words_by_ref -n =: cur
 	case "$cur" in
+	*..?*:*)
+		return
+		;;
 	?*:*)
 		ref="${cur%%:*}"
 		cur="${cur#*:}"
@@ -680,7 +685,7 @@ __git_complete_file ()
 		*)
 			ls="$ref"
 			;;
-	    esac
+		esac
 
 		case "$COMP_WORDBREAKS" in
 		*:*) : great ;;
@@ -705,17 +710,6 @@ __git_complete_file ()
 				       s/^.*	//')" \
 			-- "$cur"))
 		;;
-	*)
-		__gitcomp "$(__git_refs)"
-		;;
-	esac
-}
-
-__git_complete_revlist ()
-{
-	local pfx cur
-	_get_comp_words_by_ref -n =: cur
-	case "$cur" in
 	*...*)
 		pfx="${cur%...*}..."
 		cur="${cur#*...}"
@@ -730,6 +724,17 @@ __git_complete_revlist ()
 		__gitcomp "$(__git_refs)"
 		;;
 	esac
+}
+
+
+__git_complete_file ()
+{
+	__git_complete_revlist_file
+}
+
+__git_complete_revlist ()
+{
+	__git_complete_revlist_file
 }
 
 __git_complete_remote_or_refspec ()
@@ -1354,11 +1359,11 @@ _git_diff ()
 		return
 		;;
 	esac
-	__git_complete_file
+	__git_complete_revlist_file
 }
 
 __git_mergetools_common="diffuse ecmerge emerge kdiff3 meld opendiff
-			tkdiff vimdiff gvimdiff xxdiff araxis p4merge
+			tkdiff vimdiff gvimdiff xxdiff araxis p4merge bc3
 "
 
 _git_difftool ()
@@ -1506,7 +1511,7 @@ _git_help ()
 		;;
 	esac
 	__git_compute_all_commands
-	__gitcomp "$__git_all_commands
+	__gitcomp "$__git_all_commands $(__git_aliases)
 		attributes cli core-tutorial cvs-migration
 		diffcore gitk glossary hooks ignore modules
 		repository-layout tutorial tutorial-2
@@ -1572,6 +1577,8 @@ __git_log_common_options="
 	--max-count=
 	--max-age= --since= --after=
 	--min-age= --until= --before=
+	--min-parents= --max-parents=
+	--no-min-parents --no-max-parents
 "
 # Options that go well for log and gitk (not shortlog)
 __git_log_gitk_options="

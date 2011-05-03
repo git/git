@@ -31,18 +31,21 @@ do
 		rm -f .git/index &&
 		test_must_fail git add "$i" 2>err &&
 		git ls-files "$i" >out &&
-		! test -s out &&
-		grep -e "Use -f if" err &&
-		cat err
+		! test -s out
+	'
+
+	test_expect_success C_LOCALE_OUTPUT "complaints for ignored $i output" '
+		grep -e "Use -f if" err
 	'
 
 	test_expect_success "complaints for ignored $i with unignored file" '
 		rm -f .git/index &&
 		test_must_fail git add "$i" file 2>err &&
 		git ls-files "$i" >out &&
-		! test -s out &&
-		grep -e "Use -f if" err &&
-		cat err
+		! test -s out
+	'
+	test_expect_success C_LOCALE_OUTPUT "complaints for ignored $i with unignored file output" '
+		grep -e "Use -f if" err
 	'
 done
 
@@ -54,9 +57,14 @@ do
 			cd dir &&
 			test_must_fail git add "$i" 2>err &&
 			git ls-files "$i" >out &&
-			! test -s out &&
-			grep -e "Use -f if" err &&
-			cat err
+			! test -s out
+		)
+	'
+
+	test_expect_success C_LOCALE_OUTPUT "complaints for ignored $i in dir output" '
+		(
+			cd dir &&
+			grep -e "Use -f if" err
 		)
 	'
 done
@@ -69,9 +77,14 @@ do
 			cd sub &&
 			test_must_fail git add "$i" 2>err &&
 			git ls-files "$i" >out &&
-			! test -s out &&
-			grep -e "Use -f if" err &&
-			cat err
+			! test -s out
+		)
+	'
+
+	test_expect_success C_LOCALE_OUTPUT "complaints for ignored $i in sub output" '
+		(
+			cd sub &&
+			grep -e "Use -f if" err
 		)
 	'
 done

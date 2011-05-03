@@ -79,6 +79,10 @@ appropriately before running "make".
 --debug::
 	This may help the person who is developing a new test.
 	It causes the command defined with test_debug to run.
+	The "trash" directory (used to store all temporary data
+	during testing) is not deleted even if there are no
+	failed tests so that you can inspect its contents after
+	the test finished.
 
 --immediate::
 	This causes the test to immediately exit upon the first
@@ -97,6 +101,13 @@ appropriately before running "make".
 	Since it makes no sense to run the tests with --valgrind and
 	not see any output, this option implies --verbose.  For
 	convenience, it also implies --tee.
+
+	Note that valgrind is run with the option --leak-check=no,
+	as the git process is short-lived and some errors are not
+	interesting. In order to run a single command under the same
+	conditions manually, you should set GIT_VALGRIND to point to
+	the 't/valgrind/' directory and use the commands under
+	't/valgrind/bin/'.
 
 --tee::
 	In addition to printing the test output to the terminal,
@@ -190,7 +201,7 @@ we are testing.
 If you create files under t/ directory (i.e. here) that is not
 the top-level test script, never name the file to match the above
 pattern.  The Makefile here considers all such files as the
-top-level test script and tries to run all of them.  A care is
+top-level test script and tries to run all of them.  Care is
 especially needed if you are creating a common test library
 file, similar to test-lib.sh, because such a library file may
 not be suitable for standalone execution.
@@ -274,9 +285,8 @@ Do:
  - Check the test coverage for your tests. See the "Test coverage"
    below.
 
-   Don't blindly follow test coverage metrics, they're a good way to
-   spot if you've missed something. If a new function you added
-   doesn't have any coverage you're probably doing something wrong,
+   Don't blindly follow test coverage metrics; if a new function you added
+   doesn't have any coverage, then you're probably doing something wrong,
    but having 100% coverage doesn't necessarily mean that you tested
    everything.
 
@@ -328,7 +338,7 @@ Keep in mind:
 Skipping tests
 --------------
 
-If you need to skip tests you should do so be using the three-arg form
+If you need to skip tests you should do so by using the three-arg form
 of the test_* functions (see the "Test harness library" section
 below), e.g.:
 
@@ -420,7 +430,7 @@ library for your script to use.
  - test_tick
 
    Make commit and tag names consistent by setting the author and
-   committer times to defined stated.  Subsequent calls will
+   committer times to defined state.  Subsequent calls will
    advance the times by a fixed amount.
 
  - test_commit <message> [<filename> [<contents>]]

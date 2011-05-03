@@ -53,14 +53,6 @@ OPTIONS
 	conversion. If the file is read from standard input then this
 	is always implied, unless the --path option is given.
 
-Author
-------
-Written by Junio C Hamano <gitster@pobox.com>
-
-Documentation
---------------
-Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
-
 GIT
 ---
 Part of the linkgit:git[1] suite

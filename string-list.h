@@ -5,8 +5,7 @@ struct string_list_item {
 	char *string;
 	void *util;
 };
-struct string_list
-{
+struct string_list {
 	struct string_list_item *items;
 	unsigned int nr, alloc;
 	unsigned int strdup_strings:1;

@@ -42,7 +42,7 @@ b3 behind 1
 b4 ahead 2
 EOF
 
-test_expect_success 'branch -v' '
+test_expect_success C_LOCALE_OUTPUT 'branch -v' '
 	(
 		cd test &&
 		git branch -v
@@ -74,20 +74,20 @@ test_expect_success 'status' '
 	grep "have 1 and 1 different" actual
 '
 
-test_expect_success 'status when tracking lightweight tags' '
+test_expect_success 'fail to track lightweight tags' '
 	git checkout master &&
 	git tag light &&
-	git branch --track lighttrack light >actual &&
-	grep "set up to track" actual &&
-	git checkout lighttrack
+	test_must_fail git branch --track lighttrack light >actual &&
+	test_must_fail grep "set up to track" actual &&
+	test_must_fail git checkout lighttrack
 '
 
-test_expect_success 'status when tracking annotated tags' '
+test_expect_success 'fail to track annotated tags' '
 	git checkout master &&
 	git tag -m heavy heavy &&
-	git branch --track heavytrack heavy >actual &&
-	grep "set up to track" actual &&
-	git checkout heavytrack
+	test_must_fail git branch --track heavytrack heavy >actual &&
+	test_must_fail grep "set up to track" actual &&
+	test_must_fail git checkout heavytrack
 '
 
 test_expect_success 'setup tracking with branch --set-upstream on existing branch' '

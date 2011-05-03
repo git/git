@@ -33,6 +33,7 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 	int i;
 	const char *dest = NULL;
 	unsigned flags = 0;
+	int get_url = 0;
 	int quiet = 0;
 	const char *uploadpack = NULL;
 	const char **pattern = NULL;
@@ -69,6 +70,10 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 				quiet = 1;
 				continue;
 			}
+			if (!strcmp("--get-url", arg)) {
+				get_url = 1;
+				continue;
+			}
 			usage(ls_remote_usage);
 		}
 		dest = arg;
@@ -94,6 +99,12 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 	}
 	if (!remote->url_nr)
 		die("remote %s has no configured URL", dest);
+
+	if (get_url) {
+		printf("%s\n", *remote->url);
+		return 0;
+	}
+
 	transport = transport_get(remote, NULL);
 	if (uploadpack != NULL)
 		transport_set_option(transport, TRANS_OPT_UPLOADPACK, uploadpack);

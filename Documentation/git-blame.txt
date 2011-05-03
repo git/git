@@ -198,10 +198,6 @@ SEE ALSO
 --------
 linkgit:git-annotate[1]
 
-AUTHOR
-------
-Written by Junio C Hamano <gitster@pobox.com>
-
 GIT
 ---
 Part of the linkgit:git[1] suite

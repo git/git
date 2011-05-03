@@ -3,8 +3,7 @@
 #include "walker.h"
 #include "http.h"
 
-struct alt_base
-{
+struct alt_base {
 	char *base;
 	int got_indices;
 	struct packed_git *packs;
@@ -18,8 +17,7 @@ enum object_request_state {
 	COMPLETE
 };
 
-struct object_request
-{
+struct object_request {
 	struct walker *walker;
 	unsigned char sha1[20];
 	struct alt_base *repo;

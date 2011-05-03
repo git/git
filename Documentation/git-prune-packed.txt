@@ -36,14 +36,6 @@ OPTIONS
 --quiet::
 	Squelch the progress indicator.
 
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org>
-
-Documentation
---------------
-Documentation by Ryan Anderson <ryan@michonline.com>
-
 SEE ALSO
 --------
 linkgit:git-pack-objects[1]

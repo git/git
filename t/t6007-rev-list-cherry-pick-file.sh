@@ -4,13 +4,14 @@ test_description='test git rev-list --cherry-pick -- file'
 
 . ./test-lib.sh
 
-# A---B
+# A---B---D---F
 #  \
 #   \
-#    C
+#    C---E
 #
 # B changes a file foo.c, adding a line of text.  C changes foo.c as
 # well as bar.c, but the change in foo.c was identical to change B.
+# D and C change bar in the same way, E and F differently.
 
 test_expect_success setup '
 	echo Hallo > foo &&
@@ -25,11 +26,26 @@ test_expect_success setup '
 	test_tick &&
 	git commit -m "C" &&
 	git tag C &&
+	echo Dello > bar &&
+	git add bar &&
+	test_tick &&
+	git commit -m "E" &&
+	git tag E &&
 	git checkout master &&
 	git checkout branch foo &&
 	test_tick &&
 	git commit -m "B" &&
-	git tag B
+	git tag B &&
+	echo Cello > bar &&
+	git add bar &&
+	test_tick &&
+	git commit -m "D" &&
+	git tag D &&
+	echo Nello > bar &&
+	git add bar &&
+	test_tick &&
+	git commit -m "F" &&
+	git tag F
 '
 
 cat >expect <<EOF
@@ -53,8 +69,92 @@ test_expect_success '--cherry-pick foo comes up empty' '
 	test -z "$(git rev-list --left-right --cherry-pick B...C -- foo)"
 '
 
+cat >expect <<EOF
+>tags/C
+EOF
+
 test_expect_success '--cherry-pick bar does not come up empty' '
-	! test -z "$(git rev-list --left-right --cherry-pick B...C -- bar)"
+	git rev-list --left-right --cherry-pick B...C -- bar > actual &&
+	git name-rev --stdin --name-only --refs="*tags/*" \
+		< actual > actual.named &&
+	test_cmp actual.named expect
+'
+
+test_expect_success 'bar does not come up empty' '
+	git rev-list --left-right B...C -- bar > actual &&
+	git name-rev --stdin --name-only --refs="*tags/*" \
+		< actual > actual.named &&
+	test_cmp actual.named expect
+'
+
+cat >expect <<EOF
+<tags/F
+>tags/E
+EOF
+
+test_expect_success '--cherry-pick bar does not come up empty (II)' '
+	git rev-list --left-right --cherry-pick F...E -- bar > actual &&
+	git name-rev --stdin --name-only --refs="*tags/*" \
+		< actual > actual.named &&
+	test_cmp actual.named expect
+'
+
+cat >expect <<EOF
++tags/F
+=tags/D
++tags/E
+=tags/C
+EOF
+
+test_expect_success '--cherry-mark' '
+	git rev-list --cherry-mark F...E -- bar > actual &&
+	git name-rev --stdin --name-only --refs="*tags/*" \
+		< actual > actual.named &&
+	test_cmp actual.named expect
+'
+
+cat >expect <<EOF
+<tags/F
+=tags/D
+>tags/E
+=tags/C
+EOF
+
+test_expect_success '--cherry-mark --left-right' '
+	git rev-list --cherry-mark --left-right F...E -- bar > actual &&
+	git name-rev --stdin --name-only --refs="*tags/*" \
+		< actual > actual.named &&
+	test_cmp actual.named expect
+'
+
+cat >expect <<EOF
+tags/E
+EOF
+
+test_expect_success '--cherry-pick --right-only' '
+	git rev-list --cherry-pick --right-only F...E -- bar > actual &&
+	git name-rev --stdin --name-only --refs="*tags/*" \
+		< actual > actual.named &&
+	test_cmp actual.named expect
+'
+
+test_expect_success '--cherry-pick --left-only' '
+	git rev-list --cherry-pick --left-only E...F -- bar > actual &&
+	git name-rev --stdin --name-only --refs="*tags/*" \
+		< actual > actual.named &&
+	test_cmp actual.named expect
+'
+
+cat >expect <<EOF
++tags/E
+=tags/C
+EOF
+
+test_expect_success '--cherry' '
+	git rev-list --cherry F...E -- bar > actual &&
+	git name-rev --stdin --name-only --refs="*tags/*" \
+		< actual > actual.named &&
+	test_cmp actual.named expect
 '
 
 test_expect_success '--cherry-pick with independent, but identical branches' '
@@ -75,11 +175,8 @@ cat >expect <<EOF
 1	2
 EOF
 
-# Insert an extra commit to break the symmetry
 test_expect_success '--count --left-right' '
-	git checkout branch &&
-	test_commit D &&
-	git rev-list --count --left-right B...D > actual &&
+	git rev-list --count --left-right C...D > actual &&
 	test_cmp expect actual
 '
 

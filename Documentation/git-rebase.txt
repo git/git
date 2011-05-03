@@ -66,8 +66,9 @@ would be:
     D---E---F---G master
 ------------
 
-The latter form is just a short-hand of `git checkout topic`
-followed by `git rebase master`.
+*NOTE:* The latter form is just a short-hand of `git checkout topic`
+followed by `git rebase master`. When rebase exits `topic` will
+remain the checked-out branch.
 
 If the upstream branch already contains a change you have made (e.g.,
 because you mailed a patch which was applied upstream), then that commit
@@ -658,7 +659,6 @@ The ripple effect of a "hard case" recovery is especially bad:
 'everyone' downstream from 'topic' will now have to perform a "hard
 case" recovery too!
 
-
 BUGS
 ----
 The todo list presented by `--preserve-merges --interactive` does not
@@ -680,15 +680,6 @@ by moving the "pick 4" line will result in the following history:
        /
 1 --- 2 --- 4 --- 5
 ------------
-
-Authors
-------
-Written by Junio C Hamano <gitster@pobox.com> and
-Johannes E. Schindelin <johannes.schindelin@gmx.de>
-
-Documentation
---------------
-Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---

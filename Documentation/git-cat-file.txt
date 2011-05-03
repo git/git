@@ -100,14 +100,6 @@ for each object specified on stdin that does not exist in the repository:
 <object> SP missing LF
 ------------
 
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org>
-
-Documentation
---------------
-Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
-
 GIT
 ---
 Part of the linkgit:git[1] suite

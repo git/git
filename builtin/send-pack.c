@@ -1,4 +1,4 @@
-#include "cache.h"
+#include "builtin.h"
 #include "commit.h"
 #include "refs.h"
 #include "pkt-line.h"

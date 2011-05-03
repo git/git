@@ -1312,8 +1312,7 @@ static void pass_blame(struct scoreboard *sb, struct origin *origin, int opt)
 /*
  * Information on commits, used for output.
  */
-struct commit_info
-{
+struct commit_info {
 	const char *author;
 	const char *author_mail;
 	unsigned long author_time;

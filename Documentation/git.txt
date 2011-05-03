@@ -44,9 +44,18 @@ unreleased) version of git, that is available from 'master'
 branch of the `git.git` repository.
 Documentation for older releases are available here:
 
-* link:v1.7.4.1/git.html[documentation for release 1.7.4.1]
+* link:v1.7.5/git.html[documentation for release 1.7.5]
 
 * release notes for
+  link:RelNotes/1.7.5.txt[1.7.5].
+
+* link:v1.7.4.5/git.html[documentation for release 1.7.4.5]
+
+* release notes for
+  link:RelNotes/1.7.4.5.txt[1.7.4.5],
+  link:RelNotes/1.7.4.4.txt[1.7.4.4],
+  link:RelNotes/1.7.4.3.txt[1.7.4.3],
+  link:RelNotes/1.7.4.2.txt[1.7.4.2],
   link:RelNotes/1.7.4.1.txt[1.7.4.1],
   link:RelNotes/1.7.4.txt[1.7.4].
 
@@ -619,7 +628,6 @@ where:
                          contents of <old|new>,
 	<old|new>-hex:: are the 40-hexdigit SHA1 hashes,
 	<old|new>-mode:: are the octal representation of the file modes.
-
 +
 The file parameters can point at the user's working file
 (e.g. `new-file` in "git-diff-files"), `/dev/null` (e.g. `old-file`
@@ -745,16 +753,12 @@ unmerged version of a file when a merge is in progress.
 
 Authors
 -------
-* git's founding father is Linus Torvalds <torvalds@osdl.org>.
-* The current git nurse is Junio C Hamano <gitster@pobox.com>.
-* The git potty was written by Andreas Ericsson <ae@op5.se>.
-* General upbringing is handled by the git-list <git@vger.kernel.org>.
-
-Documentation
---------------
-The documentation for git suite was started by David Greaves
-<david@dgreaves.com>, and later enhanced greatly by the
-contributors on the git-list <git@vger.kernel.org>.
+Git was started by Linus Torvalds, and is currently maintained by Junio
+C Hamano. Numerous contributions have come from the git mailing list
+<git@vger.kernel.org>. For a more complete list of contributors, see
+http://git-scm.com/about. If you have a clone of git.git itself, the
+output of linkgit:git-shortlog[1] and linkgit:git-blame[1] can show you
+the authors for specific parts of the project.
 
 Reporting Bugs
 --------------

@@ -96,7 +96,7 @@ node_type *foo_search(struct trp_root \*treap, node_type \*key)::
 
 node_type *foo_nsearch(struct trp_root \*treap, node_type \*key)::
 
-	Like `foo_search`, but if if the key is missing return what
+	Like `foo_search`, but if the key is missing return what
 	would be key's successor, were key in treap (NULL if no
 	successor).
 

@@ -56,11 +56,11 @@ test_expect_success setup '
 
 # History setup
 #
-#      b
-#    /   \
-#   a     d
-#    \   /
-#      c
+#             b
+#           /   \
+#  init -- a     d
+#    \      \   /
+#     g       c
 #
 # a in the main repository records to sub-a in the submodule and
 # analogous b and c. d should be automatically found by merging c into
@@ -76,6 +76,8 @@ test_expect_success 'setup for merge search' '
 	 git add file-a &&
 	 git commit -m "sub-a" &&
 	 git branch sub-a) &&
+	git commit --allow-empty -m init &&
+	git branch init &&
 	git add sub &&
 	git commit -m "a" &&
 	git branch a &&
@@ -101,7 +103,13 @@ test_expect_success 'setup for merge search' '
 	 git checkout -b sub-d sub-b &&
 	 git merge sub-c) &&
 	git commit -a -m "d" &&
-	git branch test b)
+	git branch test b &&
+
+	git checkout -b g init &&
+	(cd sub &&
+	 git checkout -b sub-g sub-c) &&
+	git add sub &&
+	git commit -a -m "g")
 '
 
 test_expect_success 'merge with one side as a fast-forward of the other' '
@@ -175,6 +183,44 @@ test_expect_success 'merging should fail for changes that are backwards' '
 	git checkout -b test-backward e &&
 	test_must_fail git merge f)
 '
+
+
+# Check that the conflicting submodule is detected when it is
+# in the common ancestor. status should be 'U00...00"
+test_expect_success 'git submodule status should display the merge conflict properly with merge base' '
+       (cd merge-search &&
+       cat >.gitmodules <<EOF &&
+[submodule "sub"]
+       path = sub
+       url = $TRASH_DIRECTORY/sub
+EOF
+       cat >expect <<EOF &&
+U0000000000000000000000000000000000000000 sub
+EOF
+       git submodule status > actual &&
+       test_cmp expect actual &&
+	git reset --hard)
+'
+
+# Check that the conflicting submodule is detected when it is
+# not in the common ancestor. status should be 'U00...00"
+test_expect_success 'git submodule status should display the merge conflict properly without merge-base' '
+       (cd merge-search &&
+	git checkout -b test-no-merge-base g &&
+	test_must_fail git merge b &&
+       cat >.gitmodules <<EOF &&
+[submodule "sub"]
+       path = sub
+       url = $TRASH_DIRECTORY/sub
+EOF
+       cat >expect <<EOF &&
+U0000000000000000000000000000000000000000 sub
+EOF
+       git submodule status > actual &&
+       test_cmp expect actual &&
+       git reset --hard)
+'
+
 
 test_expect_success 'merging with a modify/modify conflict between merge bases' '
 	git reset --hard HEAD &&

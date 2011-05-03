@@ -359,7 +359,7 @@ static int ll_merge_in_worktree(struct notes_merge_options *o,
 	read_mmblob(&remote, p->remote);
 
 	status = ll_merge(&result_buf, sha1_to_hex(p->obj), &base, NULL,
-			  &local, o->local_ref, &remote, o->remote_ref, 0);
+			  &local, o->local_ref, &remote, o->remote_ref, NULL);
 
 	free(base.ptr);
 	free(local.ptr);

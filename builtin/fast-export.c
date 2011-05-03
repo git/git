@@ -619,9 +619,9 @@ int cmd_fast_export(int argc, const char **argv, const char *prefix)
 		OPT_CALLBACK(0, "tag-of-filtered-object", &tag_of_filtered_mode, "mode",
 			     "select handling of tags that tag filtered objects",
 			     parse_opt_tag_of_filtered_mode),
-		OPT_STRING(0, "export-marks", &export_filename, "FILE",
+		OPT_STRING(0, "export-marks", &export_filename, "file",
 			     "Dump marks to this file"),
-		OPT_STRING(0, "import-marks", &import_filename, "FILE",
+		OPT_STRING(0, "import-marks", &import_filename, "file",
 			     "Import marks from this file"),
 		OPT_BOOLEAN(0, "fake-missing-tagger", &fake_missing_tagger,
 			     "Fake a tagger when tags lack one"),
@@ -651,7 +651,7 @@ int cmd_fast_export(int argc, const char **argv, const char *prefix)
 	if (import_filename)
 		import_marks(import_filename);
 
-	if (import_filename && revs.prune_data)
+	if (import_filename && revs.prune_data.nr)
 		full_tree = 1;
 
 	get_tags_and_duplicates(&revs.pending, &extra_refs);

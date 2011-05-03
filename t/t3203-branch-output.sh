@@ -72,7 +72,7 @@ cat >expect <<'EOF'
   branch-two
   master
 EOF
-test_expect_success 'git branch shows detached HEAD properly' '
+test_expect_success C_LOCALE_OUTPUT 'git branch shows detached HEAD properly' '
 	git checkout HEAD^0 &&
 	git branch >actual &&
 	test_cmp expect actual

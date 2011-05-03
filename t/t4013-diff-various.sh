@@ -210,6 +210,9 @@ log -m -p master
 log -SF master
 log -S F master
 log -SF -p master
+log -SF master --max-count=0
+log -SF master --max-count=1
+log -SF master --max-count=2
 log -GF master
 log -GF -p master
 log -GF -p --pickaxe-all master

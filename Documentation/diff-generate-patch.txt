@@ -74,10 +74,13 @@ separate lines indicate the old and the new mode.
 combined diff format
 --------------------
 
-"git-diff-tree", "git-diff-files" and "git-diff" can take '-c' or
-'--cc' option to produce 'combined diff'.  For showing a merge commit
-with "git log -p", this is the default format; you can force showing
-full diff with the '-m' option.
+Any diff-generating command can take the `-c` or `--cc` option to
+produce a 'combined diff' when showing a merge. This is the default
+format when showing merges with linkgit:git-diff[1] or
+linkgit:git-show[1]. Note also that you can give the `-m' option to any
+of these commands to force generation of diffs with individual parents
+of a merge.
+
 A 'combined diff' format looks like this:
 
 ------------

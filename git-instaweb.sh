@@ -558,12 +558,14 @@ my \$app = builder {
 
 # make it runnable as standalone app,
 # like it would be run via 'plackup' utility
-if (__FILE__ eq \$0) {
+if (caller) {
+	return \$app;
+} else {
 	require Plack::Runner;
 
 	my \$runner = Plack::Runner->new();
 	\$runner->parse_options(qw(--env deployment --port $port),
-			       "$local" ? qw(--host 127.0.0.1) : ());
+				"$local" ? qw(--host 127.0.0.1) : ());
 	\$runner->run(\$app);
 }
 __END__

@@ -4,7 +4,7 @@
  * Copyright (C) Linus Torvalds, 2005
  * Copyright (C) Junio C Hamano, 2005
  */
-#include "cache.h"
+#include "builtin.h"
 #include "blob.h"
 #include "quote.h"
 #include "parse-options.h"
@@ -15,7 +15,7 @@ static void hash_fd(int fd, const char *type, int write_object, const char *path
 	struct stat st;
 	unsigned char sha1[20];
 	if (fstat(fd, &st) < 0 ||
-	    index_fd(sha1, fd, &st, write_object, type_from_string(type), path))
+	    index_fd(sha1, fd, &st, write_object, type_from_string(type), path, 1))
 		die(write_object
 		    ? "Unable to add %s to database"
 		    : "Unable to hash %s", path);

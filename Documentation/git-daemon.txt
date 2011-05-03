@@ -279,17 +279,6 @@ that connected to it, if the IP address is available. REMOTE_ADDR will
 be available in the environment of hooks called when
 services are performed.
 
-
-
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org>, YOSHIFUJI Hideaki
-<yoshfuji@linux-ipv6.org> and the git-list <git@vger.kernel.org>
-
-Documentation
---------------
-Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
-
 GIT
 ---
 Part of the linkgit:git[1] suite

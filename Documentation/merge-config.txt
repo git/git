@@ -6,6 +6,16 @@ merge.conflictstyle::
 	a `>>>>>>>` marker.  An alternate style, "diff3", adds a `|||||||`
 	marker and the original text before the `=======` marker.
 
+merge.defaultToUpstream::
+	If merge is called without any commit argument, merge the upstream
+	branches configured for the current branch by using their last
+	observed values stored in their remote tracking branches.
+	The values of the `branch.<current branch>.merge` that name the
+	branches at the remote named by `branch.<current branch>.remote`
+	are consulted, and then they are mapped via `remote.<remote>.fetch`
+	to their corresponding remote tracking branches, and the tips of
+	these tracking branches are merged.
+
 merge.log::
 	In addition to branch names, populate the log message with at
 	most the specified number of one-line descriptions from the
@@ -33,10 +43,10 @@ merge.stat::
 
 merge.tool::
 	Controls which merge resolution program is used by
-	linkgit:git-mergetool[1].  Valid built-in values are: "kdiff3",
-	"tkdiff", "meld", "xxdiff", "emerge", "vimdiff", "gvimdiff",
-	"diffuse", "ecmerge", "tortoisemerge", "p4merge", "araxis" and
-	"opendiff".  Any other value is treated is custom merge tool
+	linkgit:git-mergetool[1].  Valid built-in values are: "araxis",
+	"bc3", "diffuse", "ecmerge", "emerge", "gvimdiff", "kdiff3", "meld",
+	"opendiff", "p4merge", "tkdiff", "tortoisemerge", "vimdiff"
+	and "xxdiff".  Any other value is treated is custom merge tool
 	and there must be a corresponding mergetool.<tool>.cmd option.
 
 merge.verbosity::

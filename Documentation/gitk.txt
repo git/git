@@ -113,15 +113,6 @@ SEE ALSO
 	A minimal repository browser and git tool output highlighter written
 	in C using Ncurses.
 
-Author
-------
-Written by Paul Mackerras <paulus@samba.org>.
-
-Documentation
---------------
-Documentation by Junio C Hamano, Jonas Fonseca, and the git-list
-<git@vger.kernel.org>.
-
 GIT
 ---
 Part of the linkgit:git[1] suite

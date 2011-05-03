@@ -8,7 +8,6 @@ static const char http_fetch_usage[] = "git http-fetch "
 
 int main(int argc, const char **argv)
 {
-	const char *prefix;
 	struct walker *walker;
 	int commits_on_stdin = 0;
 	int commits;
@@ -60,7 +59,7 @@ int main(int argc, const char **argv)
 	if (argv[arg])
 		str_end_url_with_slash(argv[arg], &url);
 
-	prefix = setup_git_directory();
+	setup_git_directory();
 
 	git_config(git_default_config, NULL);
 

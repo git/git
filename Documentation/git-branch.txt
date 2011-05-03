@@ -232,14 +232,6 @@ linkgit:git-remote[1],
 link:user-manual.html#what-is-a-branch[``Understanding history: What is
 a branch?''] in the Git User's Manual.
 
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org> and Junio C Hamano <gitster@pobox.com>
-
-Documentation
---------------
-Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
-
 GIT
 ---
 Part of the linkgit:git[1] suite

@@ -686,30 +686,6 @@ AC_CHECK_TYPE([struct addrinfo],[
 ])
 AC_SUBST(NO_IPV6)
 #
-# Define NO_C99_FORMAT if your formatted IO functions (printf/scanf et.al.)
-# do not support the 'size specifiers' introduced by C99, namely ll, hh,
-# j, z, t. (representing long long int, char, intmax_t, size_t, ptrdiff_t).
-# some C compilers supported these specifiers prior to C99 as an extension.
-AC_CACHE_CHECK([whether formatted IO functions support C99 size specifiers],
- [ac_cv_c_c99_format],
-[# Actually git uses only %z (%zu) in alloc.c, and %t (%td) in mktag.c
-AC_RUN_IFELSE(
-	[AC_LANG_PROGRAM([AC_INCLUDES_DEFAULT],
-		[[char buf[64];
-		if (sprintf(buf, "%lld%hhd%jd%zd%td", (long long int)1, (char)2, (intmax_t)3, (size_t)4, (ptrdiff_t)5) != 5)
-		  return 1;
-		else if (strcmp(buf, "12345"))
-		  return 2;]])],
-	[ac_cv_c_c99_format=yes],
-	[ac_cv_c_c99_format=no])
-])
-if test $ac_cv_c_c99_format = no; then
-	NO_C99_FORMAT=YesPlease
-else
-	NO_C99_FORMAT=
-fi
-AC_SUBST(NO_C99_FORMAT)
-#
 # Define NO_REGEX if you have no or inferior regex support in your C library.
 AC_CACHE_CHECK([whether the platform regex can handle null bytes],
  [ac_cv_c_excellent_regex], [
@@ -919,7 +895,9 @@ AC_LANG_PROGRAM([[
 #include <pthread.h>
 ]], [[
 	pthread_mutex_t test_mutex;
+	pthread_key_t test_key;
 	int retcode = 0;
+	retcode |= pthread_key_create(&test_key, (void *)0);
 	retcode |= pthread_mutex_init(&test_mutex,(void *)0);
 	retcode |= pthread_mutex_lock(&test_mutex);
 	retcode |= pthread_mutex_unlock(&test_mutex);

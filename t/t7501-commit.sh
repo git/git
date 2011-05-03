@@ -14,8 +14,11 @@ test_tick
 test_expect_success \
 	"initial status" \
 	"echo 'bongo bongo' >file &&
-	 git add file && \
-	 git status | grep 'Initial commit'"
+	 git add file"
+
+test_expect_success C_LOCALE_OUTPUT \
+	"Constructing initial commit" \
+	"git status | grep 'Initial commit'"
 
 test_expect_success \
 	"fail initial amend" \

@@ -20,8 +20,7 @@ static int zlib_compression_seen;
 
 const char *config_exclusive_filename = NULL;
 
-struct config_item
-{
+struct config_item {
 	struct config_item *next;
 	char *name;
 	char *value;
@@ -499,13 +498,6 @@ static int git_default_core_config(const char *var, const char *value)
 		return 0;
 	}
 
-	if (!strcmp(var, "core.abbrevguard")) {
-		unique_abbrev_extra_length = git_config_int(var, value);
-		if (unique_abbrev_extra_length < 0)
-			unique_abbrev_extra_length = 0;
-		return 0;
-	}
-
 	if (!strcmp(var, "core.bare")) {
 		is_bare_repository_cfg = git_config_bool(var, value);
 		return 0;
@@ -528,6 +520,14 @@ static int git_default_core_config(const char *var, const char *value)
 
 	if (!strcmp(var, "core.warnambiguousrefs")) {
 		warn_ambiguous_refs = git_config_bool(var, value);
+		return 0;
+	}
+
+	if (!strcmp(var, "core.abbrev")) {
+		int abbrev = git_config_int(var, value);
+		if (abbrev < minimum_abbrev || abbrev > 40)
+			return -1;
+		default_abbrev = abbrev;
 		return 0;
 	}
 
@@ -737,8 +737,10 @@ static int git_default_push_config(const char *var, const char *value)
 			push_default = PUSH_DEFAULT_NOTHING;
 		else if (!strcmp(value, "matching"))
 			push_default = PUSH_DEFAULT_MATCHING;
-		else if (!strcmp(value, "tracking"))
-			push_default = PUSH_DEFAULT_TRACKING;
+		else if (!strcmp(value, "upstream"))
+			push_default = PUSH_DEFAULT_UPSTREAM;
+		else if (!strcmp(value, "tracking")) /* deprecated */
+			push_default = PUSH_DEFAULT_UPSTREAM;
 		else if (!strcmp(value, "current"))
 			push_default = PUSH_DEFAULT_CURRENT;
 		else {
@@ -831,11 +833,6 @@ int git_config_system(void)
 	return !git_env_bool("GIT_CONFIG_NOSYSTEM", 0);
 }
 
-int git_config_global(void)
-{
-	return !git_env_bool("GIT_CONFIG_NOGLOBAL", 0);
-}
-
 int git_config_from_parameters(config_fn_t fn, void *data)
 {
 	static int loaded_environment;
@@ -867,7 +864,7 @@ int git_config_early(config_fn_t fn, void *data, const char *repo_config)
 	}
 
 	home = getenv("HOME");
-	if (git_config_global() && home) {
+	if (home) {
 		char *user_config = xstrdup(mkpath("%s/.gitconfig", home));
 		if (!access(user_config, R_OK)) {
 			ret += git_config_from_file(fn, user_config, data);
@@ -1099,6 +1096,75 @@ int git_config_set(const char *key, const char *value)
 }
 
 /*
+ * Auxiliary function to sanity-check and split the key into the section
+ * identifier and variable name.
+ *
+ * Returns 0 on success, -1 when there is an invalid character in the key and
+ * -2 if there is no section name in the key.
+ *
+ * store_key - pointer to char* which will hold a copy of the key with
+ *             lowercase section and variable name
+ * baselen - pointer to int which will hold the length of the
+ *           section + subsection part, can be NULL
+ */
+int git_config_parse_key(const char *key, char **store_key, int *baselen_)
+{
+	int i, dot, baselen;
+	const char *last_dot = strrchr(key, '.');
+
+	/*
+	 * Since "key" actually contains the section name and the real
+	 * key name separated by a dot, we have to know where the dot is.
+	 */
+
+	if (last_dot == NULL || last_dot == key) {
+		error("key does not contain a section: %s", key);
+		return -2;
+	}
+
+	if (!last_dot[1]) {
+		error("key does not contain variable name: %s", key);
+		return -2;
+	}
+
+	baselen = last_dot - key;
+	if (baselen_)
+		*baselen_ = baselen;
+
+	/*
+	 * Validate the key and while at it, lower case it for matching.
+	 */
+	*store_key = xmalloc(strlen(key) + 1);
+
+	dot = 0;
+	for (i = 0; key[i]; i++) {
+		unsigned char c = key[i];
+		if (c == '.')
+			dot = 1;
+		/* Leave the extended basename untouched.. */
+		if (!dot || i > baselen) {
+			if (!iskeychar(c) ||
+			    (i == baselen + 1 && !isalpha(c))) {
+				error("invalid key: %s", key);
+				goto out_free_ret_1;
+			}
+			c = tolower(c);
+		} else if (c == '\n') {
+			error("invalid key (newline): %s", key);
+			goto out_free_ret_1;
+		}
+		(*store_key)[i] = c;
+	}
+	(*store_key)[i] = 0;
+
+	return 0;
+
+out_free_ret_1:
+	free(*store_key);
+	return -1;
+}
+
+/*
  * If value==NULL, unset in (remove from) config,
  * if value_regex!=NULL, disregard key/value pairs where value does not match.
  * if multi_replace==0, nothing, or only one matching key/value is replaced,
@@ -1124,59 +1190,23 @@ int git_config_set(const char *key, const char *value)
 int git_config_set_multivar(const char *key, const char *value,
 	const char *value_regex, int multi_replace)
 {
-	int i, dot;
 	int fd = -1, in_fd;
 	int ret;
 	char *config_filename;
 	struct lock_file *lock = NULL;
-	const char *last_dot = strrchr(key, '.');
 
 	if (config_exclusive_filename)
 		config_filename = xstrdup(config_exclusive_filename);
 	else
 		config_filename = git_pathdup("config");
 
-	/*
-	 * Since "key" actually contains the section name and the real
-	 * key name separated by a dot, we have to know where the dot is.
-	 */
-
-	if (last_dot == NULL) {
-		error("key does not contain a section: %s", key);
-		ret = 2;
+	/* parse-key returns negative; flip the sign to feed exit(3) */
+	ret = 0 - git_config_parse_key(key, &store.key, &store.baselen);
+	if (ret)
 		goto out_free;
-	}
-	store.baselen = last_dot - key;
 
 	store.multi_replace = multi_replace;
 
-	/*
-	 * Validate the key and while at it, lower case it for matching.
-	 */
-	store.key = xmalloc(strlen(key) + 1);
-	dot = 0;
-	for (i = 0; key[i]; i++) {
-		unsigned char c = key[i];
-		if (c == '.')
-			dot = 1;
-		/* Leave the extended basename untouched.. */
-		if (!dot || i > store.baselen) {
-			if (!iskeychar(c) || (i == store.baselen+1 && !isalpha(c))) {
-				error("invalid key: %s", key);
-				free(store.key);
-				ret = 1;
-				goto out_free;
-			}
-			c = tolower(c);
-		} else if (c == '\n') {
-			error("invalid key (newline): %s", key);
-			free(store.key);
-			ret = 1;
-			goto out_free;
-		}
-		store.key[i] = c;
-	}
-	store.key[i] = 0;
 
 	/*
 	 * The lock serves a purpose in addition to locking: the new

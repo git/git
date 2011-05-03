@@ -59,7 +59,29 @@ do
 			echo ${HC}file:4:foo mmap bar_mmap
 			echo ${HC}file:5:foo_mmap bar mmap baz
 		} >expected &&
-		git grep -n -w -e mmap $H >actual &&
+		git -c grep.linenumber=false grep -n -w -e mmap $H >actual &&
+		test_cmp expected actual
+	'
+
+	test_expect_success "grep -w $L" '
+		{
+			echo ${HC}file:1:foo mmap bar
+			echo ${HC}file:3:foo_mmap bar mmap
+			echo ${HC}file:4:foo mmap bar_mmap
+			echo ${HC}file:5:foo_mmap bar mmap baz
+		} >expected &&
+		git -c grep.linenumber=true grep -w -e mmap $H >actual &&
+		test_cmp expected actual
+	'
+
+	test_expect_success "grep -w $L" '
+		{
+			echo ${HC}file:foo mmap bar
+			echo ${HC}file:foo_mmap bar mmap
+			echo ${HC}file:foo mmap bar_mmap
+			echo ${HC}file:foo_mmap bar mmap baz
+		} >expected &&
+		git -c grep.linenumber=true grep --no-line-number -w -e mmap $H >actual &&
 		test_cmp expected actual
 	'
 
@@ -182,6 +204,24 @@ do
 		test_cmp expected actual
 	'
 
+	test_expect_success "grep --max-depth 0 -- . t $L" '
+		{
+			echo ${HC}t/v:1:vvv
+			echo ${HC}v:1:vvv
+		} >expected &&
+		git grep --max-depth 0 -n -e vvv $H -- . t >actual &&
+		test_cmp expected actual
+	'
+
+	test_expect_success "grep --max-depth 0 -- t . $L" '
+		{
+			echo ${HC}t/v:1:vvv
+			echo ${HC}v:1:vvv
+		} >expected &&
+		git grep --max-depth 0 -n -e vvv $H -- t . >actual &&
+		test_cmp expected actual
+	'
+
 done
 
 cat >expected <<EOF
@@ -282,6 +322,11 @@ EOF
 
 test_expect_success 'grep -f, ignore empty lines' '
 	git grep -f patterns >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'grep -f, ignore empty lines, read patterns from stdin' '
+	git grep -f - <patterns >actual &&
 	test_cmp expected actual
 '
 

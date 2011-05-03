@@ -82,8 +82,7 @@ static int helper_status;
 
 static struct object_list *objects;
 
-struct repo
-{
+struct repo {
 	char *url;
 	char *path;
 	int path_len;
@@ -108,8 +107,7 @@ enum transfer_state {
 	COMPLETE
 };
 
-struct transfer_request
-{
+struct transfer_request {
 	struct object *obj;
 	char *url;
 	char *dest;
@@ -127,8 +125,7 @@ struct transfer_request
 
 static struct transfer_request *request_queue_head;
 
-struct xml_ctx
-{
+struct xml_ctx {
 	char *name;
 	int len;
 	char *cdata;
@@ -136,8 +133,7 @@ struct xml_ctx
 	void *userData;
 };
 
-struct remote_lock
-{
+struct remote_lock {
 	char *url;
 	char *owner;
 	char *token;
@@ -156,8 +152,7 @@ struct remote_lock
 /* Flags that remote_ls passes to callback functions */
 #define IS_DIR (1u << 0)
 
-struct remote_ls_ctx
-{
+struct remote_ls_ctx {
 	char *path;
 	void (*userFunc)(struct remote_ls_ctx *ls);
 	void *userData;

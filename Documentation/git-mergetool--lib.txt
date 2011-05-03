@@ -41,14 +41,6 @@ run_merge_tool::
 	'$MERGED', '$LOCAL', '$REMOTE', and '$BASE' must be defined
 	for use by the merge tool.
 
-Author
-------
-Written by David Aguilar <davvid@gmail.com>
-
-Documentation
---------------
-Documentation by David Aguilar and the git-list <git@vger.kernel.org>.
-
 GIT
 ---
 Part of the linkgit:git[1] suite

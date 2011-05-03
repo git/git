@@ -46,6 +46,17 @@ test_expect_success 'pulling into void using master:master' '
 	test_cmp file cloned-uho/file
 '
 
+test_expect_success 'pulling into void does not overwrite untracked files' '
+	git init cloned-untracked &&
+	(
+		cd cloned-untracked &&
+		echo untracked >file &&
+		test_must_fail git pull .. master &&
+		echo untracked >expect &&
+		test_cmp expect file
+	)
+'
+
 test_expect_success 'test . as a remote' '
 
 	git branch copy master &&

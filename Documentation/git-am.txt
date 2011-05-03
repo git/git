@@ -173,9 +173,9 @@ aborts in the middle.  You can recover from this in one of two ways:
   the index file to bring it into a state that the patch should
   have produced.  Then run the command with the '--resolved' option.
 
-The command refuses to process new mailboxes while the `.git/rebase-apply`
-directory exists, so if you decide to start over from scratch,
-run `rm -f -r .git/rebase-apply` before running the command with mailbox
+The command refuses to process new mailboxes until the current
+operation is finished, so if you decide to start over from scratch,
+run `git am --abort` before running the command with mailbox
 names.
 
 Before any patches are applied, ORIG_HEAD is set to the tip of the
@@ -188,15 +188,6 @@ errors in the "From:" lines).
 SEE ALSO
 --------
 linkgit:git-apply[1].
-
-
-Author
-------
-Written by Junio C Hamano <gitster@pobox.com>
-
-Documentation
---------------
-Documentation by Petr Baudis, Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---

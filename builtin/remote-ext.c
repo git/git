@@ -1,4 +1,4 @@
-#include "git-compat-util.h"
+#include "builtin.h"
 #include "transport.h"
 #include "run-command.h"
 
@@ -30,16 +30,12 @@ static char *strip_escapes(const char *str, const char *service,
 	size_t rpos = 0;
 	int escape = 0;
 	char special = 0;
-	size_t pslen = 0;
-	size_t pSlen = 0;
 	size_t psoff = 0;
 	struct strbuf ret = STRBUF_INIT;
 
 	/* Calculate prefix length for \s and lengths for \s and \S */
 	if (!strncmp(service, "git-", 4))
 		psoff = 4;
-	pSlen = strlen(service);
-	pslen = pSlen - psoff;
 
 	/* Pass the service to command. */
 	setenv("GIT_EXT_SERVICE", service, 1);

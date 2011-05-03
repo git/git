@@ -28,14 +28,6 @@ read and execute permissions to the directory in order to execute the
 programs in it. The programs are executed with a cwd of $HOME, and
 <argument> is parsed as a command-line string.
 
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org>
-
-Documentation
---------------
-Documentation by Petr Baudis and the git-list <git@vger.kernel.org>.
-
 GIT
 ---
 Part of the linkgit:git[1] suite

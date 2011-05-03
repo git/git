@@ -68,8 +68,7 @@ enum cmit_fmt {
 	CMIT_FMT_UNSPECIFIED
 };
 
-struct pretty_print_context
-{
+struct pretty_print_context {
 	int abbrev;
 	const char *subject;
 	const char *after_subject;

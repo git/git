@@ -140,14 +140,6 @@ GIT_INDEX_FILE::
 GIT_ALTERNATE_OBJECT_DIRECTORIES::
 	used to specify additional object database roots (usually unset)
 
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org>
-
-Documentation
---------------
-Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
-
 GIT
 ---
 Part of the linkgit:git[1] suite

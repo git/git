@@ -38,7 +38,7 @@ static uint32_t mark;
 static int repo_dirent_name_cmp(const void *a, const void *b);
 
 /* Treap for directory entries */
-trp_gen(static, dent_, struct repo_dirent, children, dent, repo_dirent_name_cmp);
+trp_gen(static, dent_, struct repo_dirent, children, dent, repo_dirent_name_cmp)
 
 uint32_t next_blob_mark(void)
 {

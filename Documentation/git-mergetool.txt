@@ -26,8 +26,8 @@ OPTIONS
 --tool=<tool>::
 	Use the merge resolution program specified by <tool>.
 	Valid merge tools are:
-	kdiff3, tkdiff, meld, xxdiff, emerge, vimdiff, gvimdiff, ecmerge,
-	diffuse, tortoisemerge, opendiff, p4merge and araxis.
+	araxis, bc3, diffuse, ecmerge, emerge, gvimdiff, kdiff3,
+	meld, opendiff, p4merge, tkdiff, tortoisemerge, vimdiff and xxdiff.
 +
 If a merge resolution program is not specified, 'git mergetool'
 will use the configuration variable `merge.tool`.  If the
@@ -81,14 +81,6 @@ These are safe to remove once a file has been merged and its
 Setting the `mergetool.keepBackup` configuration variable to `false`
 causes `git mergetool` to automatically remove the backup as files
 are successfully merged.
-
-Author
-------
-Written by Theodore Y Ts'o <tytso@mit.edu>
-
-Documentation
---------------
-Documentation by Theodore Y Ts'o.
 
 GIT
 ---

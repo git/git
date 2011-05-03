@@ -40,7 +40,7 @@ static void set_refspecs(const char **refs, int nr)
 			char *tag;
 			int len;
 			if (nr <= ++i)
-				die("tag shorthand without <tag>");
+				die(_("tag shorthand without <tag>"));
 			len = strlen(refs[i]) + 11;
 			if (deleterefs) {
 				tag = xmalloc(len+1);
@@ -59,28 +59,38 @@ static void set_refspecs(const char **refs, int nr)
 			strcat(delref, ref);
 			ref = delref;
 		} else if (deleterefs)
-			die("--delete only accepts plain target ref names");
+			die(_("--delete only accepts plain target ref names"));
 		add_refspec(ref);
 	}
 }
 
-static void setup_push_tracking(void)
+static void setup_push_upstream(struct remote *remote)
 {
 	struct strbuf refspec = STRBUF_INIT;
 	struct branch *branch = branch_get(NULL);
 	if (!branch)
-		die("You are not currently on a branch.");
+		die(_("You are not currently on a branch.\n"
+		    "To push the history leading to the current (detached HEAD)\n"
+		    "state now, use\n"
+		    "\n"
+		    "    git push %s HEAD:<name-of-remote-branch>\n"),
+		    remote->name);
 	if (!branch->merge_nr || !branch->merge)
-		die("The current branch %s is not tracking anything.",
+		die(_("The current branch %s has no upstream branch.\n"
+		    "To push the current branch and set the remote as upstream, use\n"
+		    "\n"
+		    "    git push --set-upstream %s %s\n"),
+		    branch->name,
+		    remote->name,
 		    branch->name);
 	if (branch->merge_nr != 1)
-		die("The current branch %s is tracking multiple branches, "
-		    "refusing to push.", branch->name);
+		die(_("The current branch %s has multiple upstream branches, "
+		    "refusing to push."), branch->name);
 	strbuf_addf(&refspec, "%s:%s", branch->name, branch->merge[0]->src);
 	add_refspec(refspec.buf);
 }
 
-static void setup_default_push_refspecs(void)
+static void setup_default_push_refspecs(struct remote *remote)
 {
 	switch (push_default) {
 	default:
@@ -88,8 +98,8 @@ static void setup_default_push_refspecs(void)
 		add_refspec(":");
 		break;
 
-	case PUSH_DEFAULT_TRACKING:
-		setup_push_tracking();
+	case PUSH_DEFAULT_UPSTREAM:
+		setup_push_upstream(remote);
 		break;
 
 	case PUSH_DEFAULT_CURRENT:
@@ -97,8 +107,8 @@ static void setup_default_push_refspecs(void)
 		break;
 
 	case PUSH_DEFAULT_NOTHING:
-		die("You didn't specify any refspecs to push, and "
-		    "push.default is \"nothing\".");
+		die(_("You didn't specify any refspecs to push, and "
+		    "push.default is \"nothing\"."));
 		break;
 	}
 }
@@ -117,11 +127,11 @@ static int push_with_options(struct transport *transport, int flags)
 		transport_set_option(transport, TRANS_OPT_THIN, "yes");
 
 	if (verbosity > 0)
-		fprintf(stderr, "Pushing to %s\n", transport->url);
+		fprintf(stderr, _("Pushing to %s\n"), transport->url);
 	err = transport_push(transport, refspec_nr, refspec, flags,
 			     &nonfastforward);
 	if (err != 0)
-		error("failed to push some refs to '%s'", transport->url);
+		error(_("failed to push some refs to '%s'"), transport->url);
 
 	err |= transport_disconnect(transport);
 
@@ -129,9 +139,9 @@ static int push_with_options(struct transport *transport, int flags)
 		return 0;
 
 	if (nonfastforward && advice_push_nonfastforward) {
-		fprintf(stderr, "To prevent you from losing history, non-fast-forward updates were rejected\n"
+		fprintf(stderr, _("To prevent you from losing history, non-fast-forward updates were rejected\n"
 				"Merge the remote changes (e.g. 'git pull') before pushing again.  See the\n"
-				"'Note about fast-forwards' section of 'git push --help' for details.\n");
+				"'Note about fast-forwards' section of 'git push --help' for details.\n"));
 	}
 
 	return 1;
@@ -146,8 +156,15 @@ static int do_push(const char *repo, int flags)
 
 	if (!remote) {
 		if (repo)
-			die("bad repository '%s'", repo);
-		die("No destination configured to push to.");
+			die(_("bad repository '%s'"), repo);
+		die(_("No configured push destination.\n"
+		    "Either specify the URL from the command-line or configure a remote repository using\n"
+		    "\n"
+		    "    git remote add <name> <url>\n"
+		    "\n"
+		    "and then push using the remote name\n"
+		    "\n"
+		    "    git push <name>\n"));
 	}
 
 	if (remote->mirror)
@@ -155,19 +172,19 @@ static int do_push(const char *repo, int flags)
 
 	if ((flags & TRANSPORT_PUSH_ALL) && refspec) {
 		if (!strcmp(*refspec, "refs/tags/*"))
-			return error("--all and --tags are incompatible");
-		return error("--all can't be combined with refspecs");
+			return error(_("--all and --tags are incompatible"));
+		return error(_("--all can't be combined with refspecs"));
 	}
 
 	if ((flags & TRANSPORT_PUSH_MIRROR) && refspec) {
 		if (!strcmp(*refspec, "refs/tags/*"))
-			return error("--mirror and --tags are incompatible");
-		return error("--mirror can't be combined with refspecs");
+			return error(_("--mirror and --tags are incompatible"));
+		return error(_("--mirror can't be combined with refspecs"));
 	}
 
 	if ((flags & (TRANSPORT_PUSH_ALL|TRANSPORT_PUSH_MIRROR)) ==
 				(TRANSPORT_PUSH_ALL|TRANSPORT_PUSH_MIRROR)) {
-		return error("--all and --mirror are incompatible");
+		return error(_("--all and --mirror are incompatible"));
 	}
 
 	if (!refspec && !(flags & TRANSPORT_PUSH_ALL)) {
@@ -175,7 +192,7 @@ static int do_push(const char *repo, int flags)
 			refspec = remote->push_refspec;
 			refspec_nr = remote->push_refspec_nr;
 		} else if (!(flags & TRANSPORT_PUSH_MIRROR))
-			setup_default_push_refspecs();
+			setup_default_push_refspecs(remote);
 	}
 	errs = 0;
 	if (remote->pushurl_nr) {
@@ -228,13 +245,14 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 		OPT_END()
 	};
 
+	packet_trace_identity("push");
 	git_config(git_default_config, NULL);
 	argc = parse_options(argc, argv, prefix, options, push_usage, 0);
 
 	if (deleterefs && (tags || (flags & (TRANSPORT_PUSH_ALL | TRANSPORT_PUSH_MIRROR))))
-		die("--delete is incompatible with --all, --mirror and --tags");
+		die(_("--delete is incompatible with --all, --mirror and --tags"));
 	if (deleterefs && argc < 2)
-		die("--delete doesn't make sense without any refs");
+		die(_("--delete doesn't make sense without any refs"));
 
 	if (tags)
 		add_refspec("refs/tags/*");

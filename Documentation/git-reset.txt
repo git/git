@@ -397,15 +397,6 @@ entries:
 
 X means any state and U means an unmerged index.
 
-
-Author
-------
-Written by Junio C Hamano <gitster@pobox.com> and Linus Torvalds <torvalds@osdl.org>
-
-Documentation
---------------
-Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
-
 GIT
 ---
 Part of the linkgit:git[1] suite

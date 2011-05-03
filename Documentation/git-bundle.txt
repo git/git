@@ -201,10 +201,6 @@ You can also see what references it offers:
 $ git ls-remote mybundle
 ----------------
 
-Author
-------
-Written by Mark Levedahl <mdl123@verizon.net>
-
 GIT
 ---
 Part of the linkgit:git[1] suite

@@ -98,7 +98,8 @@ tar.umask::
 	tar archive entries.  The default is 0002, which turns off the
 	world write bit.  The special value "user" indicates that the
 	archiving user's umask will be used instead.  See umask(2) for
-	details.
+	details.  If `--remote` is used then only the configuration of
+	the remote repository takes effect.
 
 ATTRIBUTES
 ----------
@@ -152,14 +153,6 @@ git archive -o latest.zip HEAD::
 SEE ALSO
 --------
 linkgit:gitattributes[5]
-
-Author
-------
-Written by Franck Bui-Huu and Rene Scharfe.
-
-Documentation
---------------
-Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---

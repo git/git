@@ -116,15 +116,6 @@ tell which file is in which state, since the "has been updated" ones
 show a valid sha1, and the "not in sync with the index" ones will
 always have the special all-zero sha1.
 
-
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org>
-
-Documentation
---------------
-Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
-
 GIT
 ---
 Part of the linkgit:git[1] suite

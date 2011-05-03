@@ -119,14 +119,6 @@ static inline int mingw_mkdir(const char *path, int mode)
 }
 #define mkdir mingw_mkdir
 
-static inline int mingw_unlink(const char *pathname)
-{
-	/* read-only files cannot be removed */
-	chmod(pathname, 0666);
-	return unlink(pathname);
-}
-#define unlink mingw_unlink
-
 #define WNOHANG 1
 pid_t waitpid(pid_t pid, int *status, unsigned options);
 
@@ -173,6 +165,12 @@ int link(const char *oldpath, const char *newpath);
 /*
  * replacements of existing functions
  */
+
+int mingw_unlink(const char *pathname);
+#define unlink mingw_unlink
+
+int mingw_rmdir(const char *path);
+#define rmdir mingw_rmdir
 
 int mingw_open (const char *filename, int oflags, ...);
 #define open mingw_open
@@ -232,6 +230,22 @@ int mingw_rename(const char*, const char*);
 int mingw_getpagesize(void);
 #define getpagesize mingw_getpagesize
 #endif
+
+struct rlimit {
+	unsigned int rlim_cur;
+};
+#define RLIMIT_NOFILE 0
+
+static inline int getrlimit(int resource, struct rlimit *rlp)
+{
+	if (resource != RLIMIT_NOFILE) {
+		errno = EINVAL;
+		return -1;
+	}
+
+	rlp->rlim_cur = 2048;
+	return 0;
+}
 
 /* Use mingw_lstat() instead of lstat()/stat() and
  * mingw_fstat() instead of fstat() on Windows.

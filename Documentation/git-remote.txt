@@ -10,7 +10,7 @@ SYNOPSIS
 --------
 [verse]
 'git remote' [-v | --verbose]
-'git remote add' [-t <branch>] [-m <master>] [-f] [--tags|--no-tags] [--mirror] <name> <url>
+'git remote add' [-t <branch>] [-m <master>] [-f] [--tags|--no-tags] [--mirror=<fetch|push>] <name> <url>
 'git remote rename' <old> <new>
 'git remote rm' <name>
 'git remote set-head' <name> (-a | -d | <branch>)
@@ -67,11 +67,14 @@ multiple branches without grabbing all branches.
 With `-m <master>` option, `$GIT_DIR/remotes/<name>/HEAD` is set
 up to point at remote's `<master>` branch. See also the set-head command.
 +
-In mirror mode, enabled with `\--mirror`, the refs will not be stored
-in the 'refs/remotes/' namespace, but in 'refs/heads/'.  This option
-only makes sense in bare repositories.  If a remote uses mirror
-mode, furthermore, `git push` will always behave as if `\--mirror`
-was passed.
+When a fetch mirror is created with `\--mirror=fetch`, the refs will not
+be stored in the 'refs/remotes/' namespace, but rather everything in
+'refs/' on the remote will be directly mirrored into 'refs/' in the
+local repository. This option only makes sense in bare repositories,
+because a fetch would overwrite any local commits.
++
+When a push mirror is created with `\--mirror=push`, then `git push`
+will always behave as if `\--mirror` was passed.
 
 'rename'::
 
@@ -213,16 +216,6 @@ SEE ALSO
 linkgit:git-fetch[1]
 linkgit:git-branch[1]
 linkgit:git-config[1]
-
-Author
-------
-Written by Junio Hamano
-
-
-Documentation
---------------
-Documentation by J. Bruce Fields and the git-list <git@vger.kernel.org>.
-
 
 GIT
 ---

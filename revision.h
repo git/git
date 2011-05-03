@@ -14,7 +14,8 @@
 #define CHILD_SHOWN	(1u<<6)
 #define ADDED		(1u<<7)	/* Parents already parsed and added? */
 #define SYMMETRIC_LEFT	(1u<<8)
-#define ALL_REV_FLAGS	((1u<<9)-1)
+#define PATCHSAME	(1u<<9)
+#define ALL_REV_FLAGS	((1u<<10)-1)
 
 #define DECORATE_SHORT_REFS	1
 #define DECORATE_FULL_REFS	2
@@ -34,14 +35,12 @@ struct rev_info {
 	/* Basic information */
 	const char *prefix;
 	const char *def;
-	void *prune_data;
+	struct pathspec prune_data;
 	unsigned int early_output;
 
 	/* Traversal flags */
 	unsigned int	dense:1,
 			prune:1,
-			no_merges:1,
-			merges_only:1,
 			no_walk:1,
 			show_all:1,
 			remove_empty_trees:1,
@@ -59,6 +58,8 @@ struct rev_info {
 			boundary:2,
 			count:1,
 			left_right:1,
+			left_only:1,
+			right_only:1,
 			rewrite_parents:1,
 			print_parents:1,
 			show_source:1,
@@ -66,6 +67,7 @@ struct rev_info {
 			reverse:1,
 			reverse_output_stage:1,
 			cherry_pick:1,
+			cherry_mark:1,
 			bisect:1,
 			ancestry_path:1,
 			first_parent_only:1;
@@ -122,6 +124,8 @@ struct rev_info {
 	int max_count;
 	unsigned long max_age;
 	unsigned long min_age;
+	int min_parents;
+	int max_parents;
 
 	/* diff info for patches and for paths limiting */
 	struct diff_options diffopt;
@@ -163,6 +167,8 @@ extern int handle_revision_arg(const char *arg, struct rev_info *revs,int flags,
 
 extern int prepare_revision_walk(struct rev_info *revs);
 extern struct commit *get_revision(struct rev_info *revs);
+extern char *get_revision_mark(const struct rev_info *revs, const struct commit *commit);
+extern void put_revision_mark(const struct rev_info *revs, const struct commit *commit);
 
 extern void mark_parents_uninteresting(struct commit *commit);
 extern void mark_tree_uninteresting(struct tree *tree);

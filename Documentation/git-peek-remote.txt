@@ -37,14 +37,6 @@ OPTIONS
 	The repository to sync from.
 
 
-Author
-------
-Written by Junio C Hamano <gitster@pobox.com>
-
-Documentation
---------------
-Documentation by Junio C Hamano.
-
 GIT
 ---
 Part of the linkgit:git[1] suite

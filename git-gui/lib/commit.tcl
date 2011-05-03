@@ -161,11 +161,12 @@ The rescan will be automatically started now.
 	#
 	set files_ready 0
 	foreach path [array names file_states] {
-		switch -glob -- [lindex $file_states($path) 0] {
+		set s $file_states($path)
+		switch -glob -- [lindex $s 0] {
 		_? {continue}
 		A? -
 		D? -
-		T_ -
+		T? -
 		M? {set files_ready 1}
 		_U -
 		U? {
@@ -452,7 +453,11 @@ A rescan will be automatically started now.
 		}
 		AM -
 		AD -
+		AT -
+		TM -
+		TD -
 		MM -
+		MT -
 		MD {
 			set file_states($path) [list \
 				_[string index $m 1] \

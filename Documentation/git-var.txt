@@ -65,14 +65,6 @@ linkgit:git-commit-tree[1]
 linkgit:git-tag[1]
 linkgit:git-config[1]
 
-Author
-------
-Written by Eric Biederman <ebiederm@xmission.com>
-
-Documentation
---------------
-Documentation by Eric Biederman and the git-list <git@vger.kernel.org>.
-
 GIT
 ---
 Part of the linkgit:git[1] suite

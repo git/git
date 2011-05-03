@@ -46,16 +46,6 @@ OPTIONS
 --keep-cr::
 	Do not remove `\r` from lines ending with `\r\n`.
 
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org>
-and Junio C Hamano <gitster@pobox.com>
-
-
-Documentation
---------------
-Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
-
 GIT
 ---
 Part of the linkgit:git[1] suite

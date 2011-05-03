@@ -78,14 +78,6 @@ linkgit:git-fsck[1],
 linkgit:git-gc[1],
 linkgit:git-reflog[1]
 
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org>
-
-Documentation
---------------
-Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
-
 GIT
 ---
 Part of the linkgit:git[1] suite

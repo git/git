@@ -24,14 +24,6 @@ OPTIONS
 <dir>::
 	Directories containing a .git/objects/ subdirectory.
 
-Author
-------
-Written by Ryan Anderson <ryan@michonline.com>
-
-Documentation
---------------
-Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
-
 GIT
 ---
 Part of the linkgit:git[1] suite

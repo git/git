@@ -201,12 +201,12 @@ REF LIST ATTRIBUTES
 
 OPTIONS
 -------
-'option verbosity' <N>::
+'option verbosity' <n>::
 	Changes the verbosity of messages displayed by the helper.
-	A value of 0 for N means that processes operate
+	A value of 0 for <n> means that processes operate
 	quietly, and the helper produces only error output.
 	1 is the default level of verbosity, and higher values
-	of N correspond to the number of -v flags passed on the
+	of <n> correspond to the number of -v flags passed on the
 	command line.
 
 'option progress' \{'true'|'false'\}::
@@ -238,10 +238,6 @@ OPTIONS
 SEE ALSO
 --------
 linkgit:git-remote[1]
-
-Documentation
--------------
-Documentation by Daniel Barkalow and Ilari Liusvaara
 
 GIT
 ---

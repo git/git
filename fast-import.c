@@ -170,8 +170,7 @@ Format of STDIN stream:
 #define DEPTH_BITS 13
 #define MAX_DEPTH ((1<<DEPTH_BITS)-1)
 
-struct object_entry
-{
+struct object_entry {
 	struct pack_idx_entry idx;
 	struct object_entry *next;
 	uint32_t type : TYPE_BITS,
@@ -179,16 +178,14 @@ struct object_entry
 		depth : DEPTH_BITS;
 };
 
-struct object_entry_pool
-{
+struct object_entry_pool {
 	struct object_entry_pool *next_pool;
 	struct object_entry *next_free;
 	struct object_entry *end;
 	struct object_entry entries[FLEX_ARRAY]; /* more */
 };
 
-struct mark_set
-{
+struct mark_set {
 	union {
 		struct object_entry *marked[1024];
 		struct mark_set *sets[1024];
@@ -196,57 +193,49 @@ struct mark_set
 	unsigned int shift;
 };
 
-struct last_object
-{
+struct last_object {
 	struct strbuf data;
 	off_t offset;
 	unsigned int depth;
 	unsigned no_swap : 1;
 };
 
-struct mem_pool
-{
+struct mem_pool {
 	struct mem_pool *next_pool;
 	char *next_free;
 	char *end;
 	uintmax_t space[FLEX_ARRAY]; /* more */
 };
 
-struct atom_str
-{
+struct atom_str {
 	struct atom_str *next_atom;
 	unsigned short str_len;
 	char str_dat[FLEX_ARRAY]; /* more */
 };
 
 struct tree_content;
-struct tree_entry
-{
+struct tree_entry {
 	struct tree_content *tree;
 	struct atom_str *name;
-	struct tree_entry_ms
-	{
+	struct tree_entry_ms {
 		uint16_t mode;
 		unsigned char sha1[20];
 	} versions[2];
 };
 
-struct tree_content
-{
+struct tree_content {
 	unsigned int entry_capacity; /* must match avail_tree_content */
 	unsigned int entry_count;
 	unsigned int delta_depth;
 	struct tree_entry *entries[FLEX_ARRAY]; /* more */
 };
 
-struct avail_tree_content
-{
+struct avail_tree_content {
 	unsigned int entry_capacity; /* must match tree_content */
 	struct avail_tree_content *next_avail;
 };
 
-struct branch
-{
+struct branch {
 	struct branch *table_next_branch;
 	struct branch *active_next_branch;
 	const char *name;
@@ -258,16 +247,14 @@ struct branch
 	unsigned char sha1[20];
 };
 
-struct tag
-{
+struct tag {
 	struct tag *next_tag;
 	const char *name;
 	unsigned int pack_id;
 	unsigned char sha1[20];
 };
 
-struct hash_list
-{
+struct hash_list {
 	struct hash_list *next;
 	unsigned char sha1[20];
 };
@@ -278,8 +265,7 @@ typedef enum {
 	WHENSPEC_NOW
 } whenspec_type;
 
-struct recent_command
-{
+struct recent_command {
 	struct recent_command *prev;
 	struct recent_command *next;
 	char *buf;
@@ -877,6 +863,7 @@ static void start_packfile(void)
 	p = xcalloc(1, sizeof(*p) + strlen(tmpfile) + 2);
 	strcpy(p->pack_name, tmpfile);
 	p->pack_fd = pack_fd;
+	p->do_not_close = 1;
 	pack_file = sha1fd(pack_fd, p->pack_name);
 
 	hdr.hdr_signature = htonl(PACK_SIGNATURE);
@@ -2952,7 +2939,7 @@ static void parse_ls(struct branch *b)
 {
 	const char *p;
 	struct tree_entry *root = NULL;
-	struct tree_entry leaf = {0};
+	struct tree_entry leaf = {NULL};
 
 	/* ls SP (<treeish> SP)? <path> */
 	p = command_buf.buf + strlen("ls ");

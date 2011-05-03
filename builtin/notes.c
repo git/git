@@ -146,13 +146,13 @@ static void write_commented_object(int fd, const unsigned char *object)
 	show.err = 0;
 	show.git_cmd = 1;
 	if (start_command(&show))
-		die("unable to start 'show' for object '%s'",
+		die(_("unable to start 'show' for object '%s'"),
 		    sha1_to_hex(object));
 
 	/* Open the output as FILE* so strbuf_getline() can be used. */
 	show_out = xfdopen(show.out, "r");
 	if (show_out == NULL)
-		die_errno("can't fdopen 'show' output fd");
+		die_errno(_("can't fdopen 'show' output fd"));
 
 	/* Prepend "# " to each output line and write result to 'fd' */
 	while (strbuf_getline(&buf, show_out, '\n') != EOF) {
@@ -162,10 +162,10 @@ static void write_commented_object(int fd, const unsigned char *object)
 	}
 	strbuf_release(&buf);
 	if (fclose(show_out))
-		die_errno("failed to close pipe to 'show' for object '%s'",
+		die_errno(_("failed to close pipe to 'show' for object '%s'"),
 			  sha1_to_hex(object));
 	if (finish_command(&show))
-		die("failed to finish 'show' for object '%s'",
+		die(_("failed to finish 'show' for object '%s'"),
 		    sha1_to_hex(object));
 }
 
@@ -182,7 +182,7 @@ static void create_note(const unsigned char *object, struct msg_arg *msg,
 		path = git_pathdup("NOTES_EDITMSG");
 		fd = open(path, O_CREAT | O_TRUNC | O_WRONLY, 0600);
 		if (fd < 0)
-			die_errno("could not create file '%s'", path);
+			die_errno(_("could not create file '%s'"), path);
 
 		if (msg->given)
 			write_or_die(fd, msg->buf.buf, msg->buf.len);
@@ -196,8 +196,8 @@ static void create_note(const unsigned char *object, struct msg_arg *msg,
 		strbuf_reset(&(msg->buf));
 
 		if (launch_editor(path, &(msg->buf), NULL)) {
-			die("Please supply the note contents using either -m" \
-			    " or -F option");
+			die(_("Please supply the note contents using either -m" \
+			    " or -F option"));
 		}
 		stripspace(&(msg->buf), 1);
 	}
@@ -217,14 +217,14 @@ static void create_note(const unsigned char *object, struct msg_arg *msg,
 	}
 
 	if (!msg->buf.len) {
-		fprintf(stderr, "Removing note for object %s\n",
+		fprintf(stderr, _("Removing note for object %s\n"),
 			sha1_to_hex(object));
 		hashclr(result);
 	} else {
 		if (write_sha1_file(msg->buf.buf, msg->buf.len, blob_type, result)) {
-			error("unable to write note object");
+			error(_("unable to write note object"));
 			if (path)
-				error("The note contents has been left in %s",
+				error(_("The note contents has been left in %s"),
 				      path);
 			exit(128);
 		}
@@ -258,9 +258,9 @@ static int parse_file_arg(const struct option *opt, const char *arg, int unset)
 		strbuf_addch(&(msg->buf), '\n');
 	if (!strcmp(arg, "-")) {
 		if (strbuf_read(&(msg->buf), 0, 1024) < 0)
-			die_errno("cannot read '%s'", arg);
+			die_errno(_("cannot read '%s'"), arg);
 	} else if (strbuf_read_file(&(msg->buf), arg, 1024) < 0)
-		die_errno("could not open or read '%s'", arg);
+		die_errno(_("could not open or read '%s'"), arg);
 	stripspace(&(msg->buf), 0);
 
 	msg->given = 1;
@@ -279,10 +279,10 @@ static int parse_reuse_arg(const struct option *opt, const char *arg, int unset)
 		strbuf_addch(&(msg->buf), '\n');
 
 	if (get_sha1(arg, object))
-		die("Failed to resolve '%s' as a valid ref.", arg);
+		die(_("Failed to resolve '%s' as a valid ref."), arg);
 	if (!(buf = read_sha1_file(object, &type, &len)) || !len) {
 		free(buf);
-		die("Failed to read object '%s'.", arg);;
+		die(_("Failed to read object '%s'."), arg);;
 	}
 	strbuf_add(&(msg->buf), buf, len);
 	free(buf);
@@ -306,7 +306,7 @@ void commit_notes(struct notes_tree *t, const char *msg)
 	if (!t)
 		t = &default_notes_tree;
 	if (!t->initialized || !t->ref || !*t->ref)
-		die("Cannot commit uninitialized/unreferenced notes tree");
+		die(_("Cannot commit uninitialized/unreferenced notes tree"));
 	if (!t->dirty)
 		return; /* don't have to commit an unchanged tree */
 
@@ -347,7 +347,7 @@ static int notes_rewrite_config(const char *k, const char *v, void *cb)
 			config_error_nonbool(k);
 		c->combine = parse_combine_notes_fn(v);
 		if (!c->combine) {
-			error("Bad notes.rewriteMode value: '%s'", v);
+			error(_("Bad notes.rewriteMode value: '%s'"), v);
 			return 1;
 		}
 		return 0;
@@ -357,8 +357,8 @@ static int notes_rewrite_config(const char *k, const char *v, void *cb)
 		if (!prefixcmp(v, "refs/notes/"))
 			string_list_add_refs_by_glob(c->refs, v);
 		else
-			warning("Refusing to rewrite notes in %s"
-				" (outside of refs/notes/)", v);
+			warning(_("Refusing to rewrite notes in %s"
+				" (outside of refs/notes/)"), v);
 		return 0;
 	}
 
@@ -382,8 +382,10 @@ struct notes_rewrite_cfg *init_copy_notes_for_rewrite(const char *cmd)
 		c->mode_from_env = 1;
 		c->combine = parse_combine_notes_fn(rewrite_mode_env);
 		if (!c->combine)
-			error("Bad " GIT_NOTES_REWRITE_MODE_ENVIRONMENT
-			      " value: '%s'", rewrite_mode_env);
+			/* TRANSLATORS: The first %s is the name of the
+			   environment variable, the second %s is its value */
+			error(_("Bad %s value: '%s'"), GIT_NOTES_REWRITE_MODE_ENVIRONMENT,
+					rewrite_mode_env);
 	}
 	if (rewrite_refs_env) {
 		c->refs_from_env = 1;
@@ -423,7 +425,7 @@ void finish_copy_notes_for_rewrite(struct notes_rewrite_cfg *c)
 	free(c);
 }
 
-int notes_copy_from_stdin(int force, const char *rewrite_cmd)
+static int notes_copy_from_stdin(int force, const char *rewrite_cmd)
 {
 	struct strbuf buf = STRBUF_INIT;
 	struct notes_rewrite_cfg *c = NULL;
@@ -446,13 +448,13 @@ int notes_copy_from_stdin(int force, const char *rewrite_cmd)
 
 		split = strbuf_split(&buf, ' ');
 		if (!split[0] || !split[1])
-			die("Malformed input line: '%s'.", buf.buf);
+			die(_("Malformed input line: '%s'."), buf.buf);
 		strbuf_rtrim(split[0]);
 		strbuf_rtrim(split[1]);
 		if (get_sha1(split[0]->buf, from_obj))
-			die("Failed to resolve '%s' as a valid ref.", split[0]->buf);
+			die(_("Failed to resolve '%s' as a valid ref."), split[0]->buf);
 		if (get_sha1(split[1]->buf, to_obj))
-			die("Failed to resolve '%s' as a valid ref.", split[1]->buf);
+			die(_("Failed to resolve '%s' as a valid ref."), split[1]->buf);
 
 		if (rewrite_cmd)
 			err = copy_note_for_rewrite(c, from_obj, to_obj);
@@ -461,7 +463,7 @@ int notes_copy_from_stdin(int force, const char *rewrite_cmd)
 					combine_notes_overwrite);
 
 		if (err) {
-			error("Failed to copy notes from '%s' to '%s'",
+			error(_("Failed to copy notes from '%s' to '%s'"),
 			      split[0]->buf, split[1]->buf);
 			ret = 1;
 		}
@@ -505,20 +507,20 @@ static int list(int argc, const char **argv, const char *prefix)
 				     git_notes_list_usage, 0);
 
 	if (1 < argc) {
-		error("too many parameters");
+		error(_("too many parameters"));
 		usage_with_options(git_notes_list_usage, options);
 	}
 
 	t = init_notes_check("list");
 	if (argc) {
 		if (get_sha1(argv[0], object))
-			die("Failed to resolve '%s' as a valid ref.", argv[0]);
+			die(_("Failed to resolve '%s' as a valid ref."), argv[0]);
 		note = get_note(t, object);
 		if (note) {
 			puts(sha1_to_hex(note));
 			retval = 0;
 		} else
-			retval = error("No note found for object %s.",
+			retval = error(_("No note found for object %s."),
 				       sha1_to_hex(object));
 	} else
 		retval = for_each_note(t, 0, list_each_note, NULL);
@@ -537,16 +539,16 @@ static int add(int argc, const char **argv, const char *prefix)
 	const unsigned char *note;
 	struct msg_arg msg = { 0, 0, STRBUF_INIT };
 	struct option options[] = {
-		{ OPTION_CALLBACK, 'm', "message", &msg, "MSG",
+		{ OPTION_CALLBACK, 'm', "message", &msg, "msg",
 			"note contents as a string", PARSE_OPT_NONEG,
 			parse_msg_arg},
-		{ OPTION_CALLBACK, 'F', "file", &msg, "FILE",
+		{ OPTION_CALLBACK, 'F', "file", &msg, "file",
 			"note contents in a file", PARSE_OPT_NONEG,
 			parse_file_arg},
-		{ OPTION_CALLBACK, 'c', "reedit-message", &msg, "OBJECT",
+		{ OPTION_CALLBACK, 'c', "reedit-message", &msg, "object",
 			"reuse and edit specified note object", PARSE_OPT_NONEG,
 			parse_reedit_arg},
-		{ OPTION_CALLBACK, 'C', "reuse-message", &msg, "OBJECT",
+		{ OPTION_CALLBACK, 'C', "reuse-message", &msg, "object",
 			"reuse specified note object", PARSE_OPT_NONEG,
 			parse_reuse_arg},
 		OPT__FORCE(&force, "replace existing notes"),
@@ -557,26 +559,26 @@ static int add(int argc, const char **argv, const char *prefix)
 			     0);
 
 	if (1 < argc) {
-		error("too many parameters");
+		error(_("too many parameters"));
 		usage_with_options(git_notes_add_usage, options);
 	}
 
 	object_ref = argc ? argv[0] : "HEAD";
 
 	if (get_sha1(object_ref, object))
-		die("Failed to resolve '%s' as a valid ref.", object_ref);
+		die(_("Failed to resolve '%s' as a valid ref."), object_ref);
 
 	t = init_notes_check("add");
 	note = get_note(t, object);
 
 	if (note) {
 		if (!force) {
-			retval = error("Cannot add notes. Found existing notes "
+			retval = error(_("Cannot add notes. Found existing notes "
 				       "for object %s. Use '-f' to overwrite "
-				       "existing notes", sha1_to_hex(object));
+				       "existing notes"), sha1_to_hex(object));
 			goto out;
 		}
-		fprintf(stderr, "Overwriting existing notes for object %s\n",
+		fprintf(stderr, _("Overwriting existing notes for object %s\n"),
 			sha1_to_hex(object));
 	}
 
@@ -618,7 +620,7 @@ static int copy(int argc, const char **argv, const char *prefix)
 
 	if (from_stdin || rewrite_cmd) {
 		if (argc) {
-			error("too many parameters");
+			error(_("too many parameters"));
 			usage_with_options(git_notes_copy_usage, options);
 		} else {
 			return notes_copy_from_stdin(force, rewrite_cmd);
@@ -626,41 +628,41 @@ static int copy(int argc, const char **argv, const char *prefix)
 	}
 
 	if (argc < 2) {
-		error("too few parameters");
+		error(_("too few parameters"));
 		usage_with_options(git_notes_copy_usage, options);
 	}
 	if (2 < argc) {
-		error("too many parameters");
+		error(_("too many parameters"));
 		usage_with_options(git_notes_copy_usage, options);
 	}
 
 	if (get_sha1(argv[0], from_obj))
-		die("Failed to resolve '%s' as a valid ref.", argv[0]);
+		die(_("Failed to resolve '%s' as a valid ref."), argv[0]);
 
 	object_ref = 1 < argc ? argv[1] : "HEAD";
 
 	if (get_sha1(object_ref, object))
-		die("Failed to resolve '%s' as a valid ref.", object_ref);
+		die(_("Failed to resolve '%s' as a valid ref."), object_ref);
 
 	t = init_notes_check("copy");
 	note = get_note(t, object);
 
 	if (note) {
 		if (!force) {
-			retval = error("Cannot copy notes. Found existing "
+			retval = error(_("Cannot copy notes. Found existing "
 				       "notes for object %s. Use '-f' to "
-				       "overwrite existing notes",
+				       "overwrite existing notes"),
 				       sha1_to_hex(object));
 			goto out;
 		}
-		fprintf(stderr, "Overwriting existing notes for object %s\n",
+		fprintf(stderr, _("Overwriting existing notes for object %s\n"),
 			sha1_to_hex(object));
 	}
 
 	from_note = get_note(t, from_obj);
 	if (!from_note) {
-		retval = error("Missing notes on source object %s. Cannot "
-			       "copy.", sha1_to_hex(from_obj));
+		retval = error(_("Missing notes on source object %s. Cannot "
+			       "copy."), sha1_to_hex(from_obj));
 		goto out;
 	}
 
@@ -682,16 +684,16 @@ static int append_edit(int argc, const char **argv, const char *prefix)
 	const char * const *usage;
 	struct msg_arg msg = { 0, 0, STRBUF_INIT };
 	struct option options[] = {
-		{ OPTION_CALLBACK, 'm', "message", &msg, "MSG",
+		{ OPTION_CALLBACK, 'm', "message", &msg, "msg",
 			"note contents as a string", PARSE_OPT_NONEG,
 			parse_msg_arg},
-		{ OPTION_CALLBACK, 'F', "file", &msg, "FILE",
+		{ OPTION_CALLBACK, 'F', "file", &msg, "file",
 			"note contents in a file", PARSE_OPT_NONEG,
 			parse_file_arg},
-		{ OPTION_CALLBACK, 'c', "reedit-message", &msg, "OBJECT",
+		{ OPTION_CALLBACK, 'c', "reedit-message", &msg, "object",
 			"reuse and edit specified note object", PARSE_OPT_NONEG,
 			parse_reedit_arg},
-		{ OPTION_CALLBACK, 'C', "reuse-message", &msg, "OBJECT",
+		{ OPTION_CALLBACK, 'C', "reuse-message", &msg, "object",
 			"reuse specified note object", PARSE_OPT_NONEG,
 			parse_reuse_arg},
 		OPT_END()
@@ -703,19 +705,19 @@ static int append_edit(int argc, const char **argv, const char *prefix)
 			     PARSE_OPT_KEEP_ARGV0);
 
 	if (2 < argc) {
-		error("too many parameters");
+		error(_("too many parameters"));
 		usage_with_options(usage, options);
 	}
 
 	if (msg.given && edit)
-		fprintf(stderr, "The -m/-F/-c/-C options have been deprecated "
+		fprintf(stderr, _("The -m/-F/-c/-C options have been deprecated "
 			"for the 'edit' subcommand.\n"
-			"Please use 'git notes add -f -m/-F/-c/-C' instead.\n");
+			"Please use 'git notes add -f -m/-F/-c/-C' instead.\n"));
 
 	object_ref = 1 < argc ? argv[1] : "HEAD";
 
 	if (get_sha1(object_ref, object))
-		die("Failed to resolve '%s' as a valid ref.", object_ref);
+		die(_("Failed to resolve '%s' as a valid ref."), object_ref);
 
 	t = init_notes_check(argv[0]);
 	note = get_note(t, object);
@@ -750,20 +752,20 @@ static int show(int argc, const char **argv, const char *prefix)
 			     0);
 
 	if (1 < argc) {
-		error("too many parameters");
+		error(_("too many parameters"));
 		usage_with_options(git_notes_show_usage, options);
 	}
 
 	object_ref = argc ? argv[0] : "HEAD";
 
 	if (get_sha1(object_ref, object))
-		die("Failed to resolve '%s' as a valid ref.", object_ref);
+		die(_("Failed to resolve '%s' as a valid ref."), object_ref);
 
 	t = init_notes_check("show");
 	note = get_note(t, object);
 
 	if (!note)
-		retval = error("No note found for object %s.",
+		retval = error(_("No note found for object %s."),
 			       sha1_to_hex(object));
 	else {
 		const char *show_args[3] = {"show", sha1_to_hex(note), NULL};
@@ -819,7 +821,7 @@ static int merge_commit(struct notes_merge_options *o)
 	t = xcalloc(1, sizeof(struct notes_tree));
 	init_notes(t, "NOTES_MERGE_PARTIAL", combine_notes_overwrite, 0);
 
-	o->local_ref = resolve_ref("NOTES_MERGE_REF", sha1, 0, 0);
+	o->local_ref = resolve_ref("NOTES_MERGE_REF", sha1, 0, NULL);
 	if (!o->local_ref)
 		die("Failed to resolve NOTES_MERGE_REF");
 
@@ -961,22 +963,22 @@ static int remove_cmd(int argc, const char **argv, const char *prefix)
 			     git_notes_remove_usage, 0);
 
 	if (1 < argc) {
-		error("too many parameters");
+		error(_("too many parameters"));
 		usage_with_options(git_notes_remove_usage, options);
 	}
 
 	object_ref = argc ? argv[0] : "HEAD";
 
 	if (get_sha1(object_ref, object))
-		die("Failed to resolve '%s' as a valid ref.", object_ref);
+		die(_("Failed to resolve '%s' as a valid ref."), object_ref);
 
 	t = init_notes_check("remove");
 
 	retval = remove_note(t, object);
 	if (retval)
-		fprintf(stderr, "Object %s has no note\n", sha1_to_hex(object));
+		fprintf(stderr, _("Object %s has no note\n"), sha1_to_hex(object));
 	else {
-		fprintf(stderr, "Removing note for object %s\n",
+		fprintf(stderr, _("Removing note for object %s\n"),
 			sha1_to_hex(object));
 
 		commit_notes(t, "Notes removed by 'git notes remove'");
@@ -999,7 +1001,7 @@ static int prune(int argc, const char **argv, const char *prefix)
 			     0);
 
 	if (argc) {
-		error("too many parameters");
+		error(_("too many parameters"));
 		usage_with_options(git_notes_prune_usage, options);
 	}
 
@@ -1069,7 +1071,7 @@ int cmd_notes(int argc, const char **argv, const char *prefix)
 	else if (!strcmp(argv[0], "get-ref"))
 		result = get_ref(argc, argv, prefix);
 	else {
-		result = error("Unknown subcommand: %s", argv[0]);
+		result = error(_("Unknown subcommand: %s"), argv[0]);
 		usage_with_options(git_notes_usage, options);
 	}
 

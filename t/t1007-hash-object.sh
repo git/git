@@ -188,4 +188,17 @@ for args in "-w --stdin-paths" "--stdin-paths -w"; do
 	pop_repo
 done
 
+test_expect_success 'corrupt tree' '
+	echo abc >malformed-tree
+	test_must_fail git hash-object -t tree malformed-tree
+'
+
+test_expect_success 'corrupt commit' '
+	test_must_fail git hash-object -t commit --stdin </dev/null
+'
+
+test_expect_success 'corrupt tag' '
+	test_must_fail git hash-object -t tag --stdin </dev/null
+'
+
 test_done

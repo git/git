@@ -15,7 +15,6 @@ p    show patch text as well
 '
 
 . git-sh-setup
-. git-parse-remote
 
 GIT_PAGER=
 export GIT_PAGER
@@ -55,7 +54,7 @@ branch=$(git ls-remote "$url" \
 		p
 		q
 	}")
-url=$(get_remote_url "$url")
+url=$(git ls-remote --get-url "$url")
 if [ -z "$branch" ]; then
 	echo "warn: No branch of $url is at:" >&2
 	git log --max-count=1 --pretty='tformat:warn:   %h: %s' $headrev >&2

@@ -257,10 +257,6 @@ linkgit:git-commit[1],
 linkgit:git-reflog[1],
 linkgit:git-reset[1]
 
-AUTHOR
-------
-Written by Nanako Shiraishi <nanako3@bluebottle.com>
-
 GIT
 ---
 Part of the linkgit:git[1] suite

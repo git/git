@@ -17,13 +17,21 @@ test_expect_success SYMLINKS 'create a commit where dir a/b changed to symlink' 
 	git commit -m "dir to symlink"
 '
 
-test_expect_success SYMLINKS 'keep a/b-2/c/d across checkout' '
+test_expect_success SYMLINKS 'checkout does not clobber untracked symlink' '
 	git checkout HEAD^0 &&
 	git reset --hard master &&
 	git rm --cached a/b &&
 	git commit -m "untracked symlink remains" &&
-	 git checkout start^0 &&
-	 test -f a/b-2/c/d
+	test_must_fail git checkout start^0
+'
+
+test_expect_success SYMLINKS 'a/b-2/c/d is kept when clobbering symlink b' '
+	git checkout HEAD^0 &&
+	git reset --hard master &&
+	git rm --cached a/b &&
+	git commit -m "untracked symlink remains" &&
+	git checkout -f start^0 &&
+	test -f a/b-2/c/d
 '
 
 test_expect_success SYMLINKS 'checkout should not have deleted a/b-2/c/d' '

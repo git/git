@@ -361,7 +361,7 @@ git filter-branch --index-filter \
 	'git ls-files -s | sed "s-\t\"*-&newsubdir/-" |
 		GIT_INDEX_FILE=$GIT_INDEX_FILE.new \
 			git update-index --index-info &&
-	 mv $GIT_INDEX_FILE.new $GIT_INDEX_FILE' HEAD
+	 mv "$GIT_INDEX_FILE.new" "$GIT_INDEX_FILE"' HEAD
 ---------------------------------------------------------------
 
 
@@ -404,16 +404,6 @@ warned.
 * Garbage collect all unreferenced objects with `git gc \--prune=now`
   (or if your git-gc is not new enough to support arguments to
   `\--prune`, use `git repack -ad; git prune` instead).
-
-
-Author
-------
-Written by Petr "Pasky" Baudis <pasky@suse.cz>,
-and the git list <git@vger.kernel.org>
-
-Documentation
---------------
-Documentation by Petr Baudis and the git list.
 
 GIT
 ---

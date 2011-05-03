@@ -80,17 +80,6 @@ linkgit:git-tag[1]
 linkgit:git-branch[1]
 linkgit:git[1]
 
-Author
-------
-Written by Christian Couder <chriscool@tuxfamily.org> and Junio C
-Hamano <gitster@pobox.com>, based on 'git tag' by Kristian Hogsberg
-<krh@redhat.com> and Carlos Rica <jasampler@gmail.com>.
-
-Documentation
---------------
-Documentation by Christian Couder <chriscool@tuxfamily.org> and the
-git-list <git@vger.kernel.org>, based on 'git tag' documentation.
-
 GIT
 ---
 Part of the linkgit:git[1] suite

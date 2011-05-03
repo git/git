@@ -200,17 +200,6 @@ shows 10 reflog entries going back from the tip as of 1 hour ago.
 Without `--list`, the output also shows how these tips are
 topologically related with each other.
 
-
-Author
-------
-Written by Junio C Hamano <gitster@pobox.com>
-
-
-Documentation
---------------
-Documentation by Junio C Hamano.
-
-
 GIT
 ---
 Part of the linkgit:git[1] suite

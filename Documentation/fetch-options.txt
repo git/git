@@ -65,14 +65,33 @@ ifndef::git-pull[]
 	specified with the remote.<name>.tagopt setting. See
 	linkgit:git-config[1].
 
---[no-]recurse-submodules::
-	This option controls if new commits of all populated submodules should
-	be fetched too (see linkgit:git-config[1] and linkgit:gitmodules[5]).
+--recurse-submodules[=yes|on-demand|no]::
+	This option controls if and under what conditions new commits of
+	populated submodules should be fetched too. It can be used as a
+	boolean option to completely disable recursion when set to 'no' or to
+	unconditionally recurse into all populated submodules when set to
+	'yes', which is the default when this option is used without any
+	value. Use 'on-demand' to only recurse into a populated submodule
+	when the superproject retrieves a commit that updates the submodule's
+	reference to a commit that isn't already in the local submodule
+	clone.
+
+--no-recurse-submodules::
+	Disable recursive fetching of submodules (this has the same effect as
+	using the '--recurse-submodules=no' option).
 
 --submodule-prefix=<path>::
 	Prepend <path> to paths printed in informative messages
 	such as "Fetching submodule foo".  This option is used
 	internally when recursing over submodules.
+
+--recurse-submodules-default=[yes|on-demand]::
+	This option is used internally to temporarily provide a
+	non-negative default value for the --recurse-submodules
+	option.  All other methods of configuring fetch's submodule
+	recursion (such as settings in linkgit:gitmodules[5] and
+	linkgit:git-config[1]) override this option, as does
+	specifying --[no-]recurse-submodules directly.
 endif::git-pull[]
 
 -u::

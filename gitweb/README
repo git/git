@@ -29,7 +29,7 @@ You can specify the following configuration variables when building GIT:
    The filesystem traversing limit for getting the project list; the number
    is taken as depth relative to the projectroot.  It is used when
    GITWEB_LIST is a directory (or is not set; then project root is used).
-   Is is meant to speed up project listing on large work trees by limiting
+   This is meant to speed up project listing on large work trees by limiting
    search depth.  [Default: 2007]
  * GITWEB_LIST
    Points to a directory to scan for projects (defaults to project root

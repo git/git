@@ -110,7 +110,7 @@ test_expect_success 'git clean with prefix' '
 
 '
 
-test_expect_success 'git clean with relative prefix' '
+test_expect_success C_LOCALE_OUTPUT 'git clean with relative prefix' '
 
 	mkdir -p build docs &&
 	touch a.out src/part3.c docs/manual.txt obj.o build/lib.so &&
@@ -125,7 +125,7 @@ test_expect_success 'git clean with relative prefix' '
 	}
 '
 
-test_expect_success 'git clean with absolute path' '
+test_expect_success C_LOCALE_OUTPUT 'git clean with absolute path' '
 
 	mkdir -p build docs &&
 	touch a.out src/part3.c docs/manual.txt obj.o build/lib.so &&
@@ -377,7 +377,7 @@ test_expect_success 'clean.requireForce and -f' '
 
 '
 
-test_expect_success 'core.excludesfile' '
+test_expect_success C_LOCALE_OUTPUT 'core.excludesfile' '
 
 	echo excludes >excludes &&
 	echo included >included &&

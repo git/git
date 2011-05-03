@@ -1310,6 +1310,13 @@ The FILES list must be sorted."
       (when sign-off (git-append-sign-off committer-name committer-email)))
     buffer))
 
+(define-derived-mode git-log-edit-mode log-edit-mode "Git-Log-Edit"
+  "Major mode for editing git log messages.
+
+Set up git-specific `font-lock-keywords' for `log-edit-mode'."
+  (set (make-local-variable 'font-lock-defaults)
+       '(git-log-edit-font-lock-keywords t t)))
+
 (defun git-commit-file ()
   "Commit the marked file(s), asking for a commit message."
   (interactive)
@@ -1335,9 +1342,9 @@ The FILES list must be sorted."
         (git-setup-log-buffer buffer (git-get-merge-heads) author-name author-email subject date))
       (if (boundp 'log-edit-diff-function)
 	  (log-edit 'git-do-commit nil '((log-edit-listfun . git-log-edit-files)
-					 (log-edit-diff-function . git-log-edit-diff)) buffer)
-	(log-edit 'git-do-commit nil 'git-log-edit-files buffer))
-      (setq font-lock-keywords (font-lock-compile-keywords git-log-edit-font-lock-keywords))
+					 (log-edit-diff-function . git-log-edit-diff)) buffer 'git-log-edit-mode)
+	(log-edit 'git-do-commit nil 'git-log-edit-files buffer
+                  'git-log-edit-mode))
       (setq paragraph-separate (concat (regexp-quote git-log-msg-separator) "$\\|Author: \\|Date: \\|Merge: \\|Signed-off-by: \\|\f\\|[ 	]*$"))
       (setq buffer-file-coding-system coding-system)
       (re-search-forward (regexp-quote (concat git-log-msg-separator "\n")) nil t))))

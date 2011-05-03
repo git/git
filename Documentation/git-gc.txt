@@ -151,10 +151,6 @@ linkgit:git-reflog[1]
 linkgit:git-repack[1]
 linkgit:git-rerere[1]
 
-Author
-------
-Written by Shawn O. Pearce <spearce@spearce.org>
-
 GIT
 ---
 Part of the linkgit:git[1] suite

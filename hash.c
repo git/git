@@ -81,7 +81,7 @@ void **insert_hash(unsigned int hash, void *ptr, struct hash_table *table)
 	return insert_hash_entry(hash, ptr, table);
 }
 
-int for_each_hash(const struct hash_table *table, int (*fn)(void *))
+int for_each_hash(const struct hash_table *table, int (*fn)(void *, void *), void *data)
 {
 	int sum = 0;
 	unsigned int i;
@@ -92,7 +92,7 @@ int for_each_hash(const struct hash_table *table, int (*fn)(void *))
 		void *ptr = array->ptr;
 		array++;
 		if (ptr) {
-			int val = fn(ptr);
+			int val = fn(ptr, data);
 			if (val < 0)
 				return val;
 			sum += val;

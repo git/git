@@ -121,7 +121,7 @@ method _parent {} {
 		if {$browser_stack eq {}} {
 			regsub {:.*$} $browser_path {:} browser_path
 		} else {
-			regsub {/[^/]+$} $browser_path {} browser_path
+			regsub {/[^/]+/$} $browser_path {/} browser_path
 		}
 		set browser_status [mc "Loading %s..." $browser_path]
 		_ls $this [lindex $parent 0] [lindex $parent 1]

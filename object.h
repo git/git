@@ -6,11 +6,6 @@ struct object_list {
 	struct object_list *next;
 };
 
-struct object_refs {
-	unsigned count;
-	struct object *ref[FLEX_ARRAY]; /* more */
-};
-
 struct object_array {
 	unsigned int nr;
 	unsigned int alloc;

@@ -204,6 +204,7 @@ struct line {
 	unsigned hash : 24;
 	unsigned flag : 8;
 #define LINE_COMMON     1
+#define LINE_PATCHED	2
 };
 
 /*
@@ -2085,7 +2086,8 @@ static int match_fragment(struct image *img,
 
 	/* Quick hash check */
 	for (i = 0; i < preimage_limit; i++)
-		if (preimage->line[i].hash != img->line[try_lno + i].hash)
+		if ((img->line[try_lno + i].flag & LINE_PATCHED) ||
+		    (preimage->line[i].hash != img->line[try_lno + i].hash))
 			return 0;
 
 	if (preimage_limit == preimage->nr) {
@@ -2428,11 +2430,15 @@ static void update_image(struct image *img,
 	memcpy(img->line + applied_pos,
 	       postimage->line,
 	       postimage->nr * sizeof(*img->line));
+	for (i = 0; i < postimage->nr; i++)
+		img->line[applied_pos + i].flag |= LINE_PATCHED;
+
 	img->nr = nr;
 }
 
 static int apply_one_fragment(struct image *img, struct fragment *frag,
-			      int inaccurate_eof, unsigned ws_rule)
+			      int inaccurate_eof, unsigned ws_rule,
+			      int nth_fragment)
 {
 	int match_beginning, match_end;
 	const char *patch = frag->patch;
@@ -2638,6 +2644,15 @@ static int apply_one_fragment(struct image *img, struct fragment *frag,
 				apply = 0;
 		}
 
+		if (apply_verbosely && applied_pos != pos) {
+			int offset = applied_pos - pos;
+			if (apply_in_reverse)
+				offset = 0 - offset;
+			fprintf(stderr,
+				"Hunk #%d succeeded at %d (offset %d lines).\n",
+				nth_fragment, applied_pos + 1, offset);
+		}
+
 		/*
 		 * Warn if it was necessary to reduce the number
 		 * of context lines.
@@ -2785,12 +2800,14 @@ static int apply_fragments(struct image *img, struct patch *patch)
 	const char *name = patch->old_name ? patch->old_name : patch->new_name;
 	unsigned ws_rule = patch->ws_rule;
 	unsigned inaccurate_eof = patch->inaccurate_eof;
+	int nth = 0;
 
 	if (patch->is_binary)
 		return apply_binary(img, patch);
 
 	while (frag) {
-		if (apply_one_fragment(img, frag, inaccurate_eof, ws_rule)) {
+		nth++;
+		if (apply_one_fragment(img, frag, inaccurate_eof, ws_rule, nth)) {
 			error("patch failed: %s:%ld", name, frag->oldpos);
 			if (!apply_with_reject)
 				return -1;

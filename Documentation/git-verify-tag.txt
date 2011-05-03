@@ -22,14 +22,6 @@ OPTIONS
 <tag>...::
 	SHA1 identifiers of git tag objects.
 
-Author
-------
-Written by Jan Harkes <jaharkes@cs.cmu.edu> and Eric W. Biederman <ebiederm@xmission.com>
-
-Documentation
---------------
-Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
-
 GIT
 ---
 Part of the linkgit:git[1] suite

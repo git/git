@@ -10,10 +10,18 @@ Checklist (and a short version for the impatient):
 	  description (50 characters is the soft limit, see DISCUSSION
 	  in git-commit(1)), and should skip the full stop
 	- the body should provide a meaningful commit message, which:
-		- uses the imperative, present tense: "change",
-		  not "changed" or "changes".
-		- includes motivation for the change, and contrasts
-		  its implementation with previous behaviour
+	  . explains the problem the change tries to solve, iow, what
+	    is wrong with the current code without the change.
+	  . justifies the way the change solves the problem, iow, why
+	    the result with the change is better.
+	  . alternate solutions considered but discarded, if any.
+	- describe changes in imperative mood, e.g. "make xyzzy do frotz"
+	  instead of "[This patch] makes xyzzy do frotz" or "[I] changed
+	  xyzzy to do frotz", as if you are giving orders to the codebase
+	  to change its behaviour.
+	- try to make sure your explanation can be understood without
+	  external resources. Instead of giving a URL to a mailing list
+	  archive, summarize the relevant points of the discussion.
 	- add a "Signed-off-by: Your Name <you@example.com>" line to the
 	  commit message (or just use the option "-s" when committing)
 	  to confirm that you agree to the Developer's Certificate of Origin
@@ -90,7 +98,10 @@ your commit head.  Instead, always make a commit with complete
 commit message and generate a series of patches from your
 repository.  It is a good discipline.
 
-Describe the technical detail of the change(s).
+Give an explanation for the change(s) that is detailed enough so
+that people can judge if it is good thing to do, without reading
+the actual patch text to determine how well the code does what
+the explanation promises to do.
 
 If your description starts to get too long, that's a sign that you
 probably need to split up your commit to finer grained pieces.
@@ -99,9 +110,8 @@ help reviewers check the patch, and future maintainers understand
 the code, are the most beautiful patches.  Descriptions that summarise
 the point in the subject well, and describe the motivation for the
 change, the approach taken by the change, and if relevant how this
-differs substantially from the prior version, can be found on Usenet
-archives back into the late 80's.  Consider it like good Netiquette,
-but for code.
+differs substantially from the prior version, are all good things
+to have.
 
 Oh, another thing.  I am picky about whitespaces.  Make sure your
 changes do not trigger errors with the sample pre-commit hook shipped
@@ -266,7 +276,7 @@ don't hide your real name.
 
 If you like, you can put extra tags at the end:
 
-1. "Reported-by:" is used to to credit someone who found the bug that
+1. "Reported-by:" is used to credit someone who found the bug that
    the patch attempts to fix.
 2. "Acked-by:" says that the person who is more familiar with the area
    the patch attempts to modify liked the patch.
@@ -598,4 +608,3 @@ following commands:
 Just make sure to disable line wrapping in the email client (GMail web
 interface will line wrap no matter what, so you need to use a real
 IMAP client).
-

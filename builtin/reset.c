@@ -7,7 +7,7 @@
  *
  * Copyright (c) 2005, 2006 Linus Torvalds and Junio C Hamano
  */
-#include "cache.h"
+#include "builtin.h"
 #include "tag.h"
 #include "object.h"
 #include "commit.h"
@@ -30,7 +30,7 @@ static const char * const git_reset_usage[] = {
 
 enum reset_type { MIXED, SOFT, HARD, MERGE, KEEP, NONE };
 static const char *reset_type_names[] = {
-	"mixed", "soft", "hard", "merge", "keep", NULL
+	N_("mixed"), N_("soft"), N_("hard"), N_("merge"), N_("keep"), NULL
 };
 
 static char *args_to_str(const char **argv)
@@ -92,20 +92,20 @@ static int reset_index_file(const unsigned char *sha1, int reset_type, int quiet
 	if (reset_type == KEEP) {
 		unsigned char head_sha1[20];
 		if (get_sha1("HEAD", head_sha1))
-			return error("You do not have a valid HEAD.");
+			return error(_("You do not have a valid HEAD."));
 		if (!fill_tree_descriptor(desc, head_sha1))
-			return error("Failed to find tree of HEAD.");
+			return error(_("Failed to find tree of HEAD."));
 		nr++;
 		opts.fn = twoway_merge;
 	}
 
 	if (!fill_tree_descriptor(desc + nr - 1, sha1))
-		return error("Failed to find tree of %s.", sha1_to_hex(sha1));
+		return error(_("Failed to find tree of %s."), sha1_to_hex(sha1));
 	if (unpack_trees(nr, desc, &opts))
 		return -1;
 	if (write_cache(newfd, active_cache, active_nr) ||
 	    commit_locked_index(lock))
-		return error("Could not write new index file.");
+		return error(_("Could not write new index file."));
 
 	return 0;
 }
@@ -115,7 +115,7 @@ static void print_new_head_line(struct commit *commit)
 	const char *hex, *body;
 
 	hex = find_unique_abbrev(commit->object.sha1, DEFAULT_ABBREV);
-	printf("HEAD is now at %s", hex);
+	printf(_("HEAD is now at %s"), hex);
 	body = strstr(commit->buffer, "\n\n");
 	if (body) {
 		const char *eol;
@@ -139,10 +139,10 @@ static int update_index_refresh(int fd, struct lock_file *index_lock, int flags)
 	}
 
 	if (read_cache() < 0)
-		return error("Could not read index");
+		return error(_("Could not read index"));
 
 	result = refresh_index(&the_index, (flags), NULL, NULL,
-			       "Unstaged changes after reset:") ? 1 : 0;
+			       _("Unstaged changes after reset:")) ? 1 : 0;
 	if (write_cache(fd, active_cache, active_nr) ||
 			commit_locked_index(index_lock))
 		return error ("Could not refresh index");
@@ -167,7 +167,7 @@ static void update_index_from_diff(struct diff_queue_struct *q,
 			ce = make_cache_entry(one->mode, one->sha1, one->path,
 				0, 0);
 			if (!ce)
-				die("make_cache_entry failed for path '%s'",
+				die(_("make_cache_entry failed for path '%s'"),
 				    one->path);
 			add_cache_entry(ce, ADD_CACHE_OK_TO_ADD |
 				ADD_CACHE_OK_TO_REPLACE);
@@ -222,14 +222,14 @@ static void prepend_reflog_action(const char *action, char *buf, size_t size)
 	if (!rla)
 		rla = sep = "";
 	if (snprintf(buf, size, "%s%s%s", rla, sep, action) >= size)
-		warning("Reflog action message too long: %.*s...", 50, buf);
+		warning(_("Reflog action message too long: %.*s..."), 50, buf);
 }
 
 static void die_if_unmerged_cache(int reset_type)
 {
 	if (is_merge() || read_cache() < 0 || unmerged_cache())
-		die("Cannot do a %s reset in the middle of a merge.",
-		    reset_type_names[reset_type]);
+		die(_("Cannot do a %s reset in the middle of a merge."),
+		    _(reset_type_names[reset_type]));
 
 }
 
@@ -300,16 +300,16 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 	}
 
 	if (get_sha1(rev, sha1))
-		die("Failed to resolve '%s' as a valid ref.", rev);
+		die(_("Failed to resolve '%s' as a valid ref."), rev);
 
 	commit = lookup_commit_reference(sha1);
 	if (!commit)
-		die("Could not parse object '%s'.", rev);
+		die(_("Could not parse object '%s'."), rev);
 	hashcpy(sha1, commit->object.sha1);
 
 	if (patch_mode) {
 		if (reset_type != NONE)
-			die("--patch is incompatible with --{hard,mixed,soft}");
+			die(_("--patch is incompatible with --{hard,mixed,soft}"));
 		return interactive_reset(rev, argv + i, prefix);
 	}
 
@@ -318,10 +318,10 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 	 * affecting the working tree nor HEAD. */
 	if (i < argc) {
 		if (reset_type == MIXED)
-			warning("--mixed with paths is deprecated; use 'git reset -- <paths>' instead.");
+			warning(_("--mixed with paths is deprecated; use 'git reset -- <paths>' instead."));
 		else if (reset_type != NONE)
-			die("Cannot do %s reset with paths.",
-					reset_type_names[reset_type]);
+			die(_("Cannot do %s reset with paths."),
+					_(reset_type_names[reset_type]));
 		return read_from_tree(prefix, argv + i, sha1,
 				quiet ? REFRESH_QUIET : REFRESH_IN_PORCELAIN);
 	}
@@ -332,8 +332,8 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 		setup_work_tree();
 
 	if (reset_type == MIXED && is_bare_repository())
-		die("%s reset is not allowed in a bare repository",
-		    reset_type_names[reset_type]);
+		die(_("%s reset is not allowed in a bare repository"),
+		    _(reset_type_names[reset_type]));
 
 	/* Soft reset does not touch the index file nor the working tree
 	 * at all, but requires them in a good order.  Other resets reset
@@ -348,7 +348,7 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 		if (reset_type == KEEP)
 			err = err || reset_index_file(sha1, MIXED, quiet);
 		if (err)
-			die("Could not reset index file to revision '%s'.", rev);
+			die(_("Could not reset index file to revision '%s'."), rev);
 	}
 
 	/* Any resets update HEAD to the head being switched to,

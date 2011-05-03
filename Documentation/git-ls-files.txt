@@ -209,15 +209,6 @@ SEE ALSO
 --------
 linkgit:git-read-tree[1], linkgit:gitignore[5]
 
-
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org>
-
-Documentation
---------------
-Documentation by David Greaves, Junio C Hamano, Josh Triplett, and the git-list <git@vger.kernel.org>.
-
 GIT
 ---
 Part of the linkgit:git[1] suite

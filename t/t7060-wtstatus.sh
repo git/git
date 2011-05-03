@@ -38,7 +38,7 @@ cat >expect <<EOF
 no changes added to commit (use "git add" and/or "git commit -a")
 EOF
 
-test_expect_success 'M/D conflict does not segfault' '
+test_expect_success C_LOCALE_OUTPUT 'M/D conflict does not segfault' '
 	mkdir mdconflict &&
 	(
 		cd mdconflict &&

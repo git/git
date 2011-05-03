@@ -151,15 +151,6 @@ SEE ALSO
 --------
 linkgit:git-send-pack[1]
 
-
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org>
-
-Documentation
---------------
-Documentation by Junio C Hamano.
-
 GIT
 ---
 Part of the linkgit:git[1] suite

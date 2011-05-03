@@ -95,18 +95,6 @@ Object size identified by <object> is given in bytes, and right-justified
 with minimum width of 7 characters.  Object size is given only for blobs
 (file) entries; for other entries `-` character is used in place of size.
 
-
-Author
-------
-Written by Petr Baudis <pasky@suse.cz>
-Completely rewritten from scratch by Junio C Hamano <gitster@pobox.com>,
-another major rewrite by Linus Torvalds <torvalds@osdl.org>
-
-Documentation
---------------
-Documentation by David Greaves, Junio C Hamano and the git-list
-<git@vger.kernel.org>.
-
 GIT
 ---
 Part of the linkgit:git[1] suite

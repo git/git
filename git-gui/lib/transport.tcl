@@ -20,6 +20,35 @@ proc prune_from {remote} {
 	console::exec $w [list git remote prune $remote]
 }
 
+proc fetch_from_all {} {
+	set w [console::new \
+		[mc "fetch all remotes"] \
+		[mc "Fetching new changes from all remotes"]]
+
+	set cmd [list git fetch --all]
+	if {[is_config_true gui.pruneduringfetch]} {
+		lappend cmd --prune
+	}
+
+	console::exec $w $cmd
+}
+
+proc prune_from_all {} {
+	global all_remotes
+
+	set w [console::new \
+		[mc "remote prune all remotes"] \
+		[mc "Pruning tracking branches deleted from all remotes"]]
+
+	set cmd [list git remote prune]
+
+	foreach r $all_remotes {
+		lappend cmd $r
+	}
+
+	console::exec $w $cmd
+}
+
 proc push_to {remote} {
 	set w [console::new \
 		[mc "push %s" $remote] \
@@ -123,6 +152,7 @@ proc do_push_anywhere {} {
 		$w.source.l insert end $h
 		if {$h eq $current_branch} {
 			$w.source.l select set end
+			$w.source.l yview end
 		}
 	}
 	pack $w.source.l -side left -fill both -expand 1
@@ -135,7 +165,9 @@ proc do_push_anywhere {} {
 			-value remote \
 			-variable push_urltype
 		if {$use_ttk} {
-			ttk::combobox $w.dest.remote_m -textvariable push_remote \
+			ttk::combobox $w.dest.remote_m -state readonly \
+				-exportselection false \
+				-textvariable push_remote \
 				-values $all_remotes
 		} else {
 			eval tk_optionMenu $w.dest.remote_m push_remote $all_remotes

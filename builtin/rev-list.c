@@ -16,6 +16,10 @@ static const char rev_list_usage[] =
 "    --min-age=<epoch>\n"
 "    --sparse\n"
 "    --no-merges\n"
+"    --min-parents=<n>\n"
+"    --no-min-parents\n"
+"    --max-parents=<n>\n"
+"    --no-max-parents\n"
 "    --remove-empty\n"
 "    --all\n"
 "    --branches\n"
@@ -64,18 +68,8 @@ static void show_commit(struct commit *commit, void *data)
 	if (info->header_prefix)
 		fputs(info->header_prefix, stdout);
 
-	if (!revs->graph) {
-		if (commit->object.flags & BOUNDARY)
-			putchar('-');
-		else if (commit->object.flags & UNINTERESTING)
-			putchar('^');
-		else if (revs->left_right) {
-			if (commit->object.flags & SYMMETRIC_LEFT)
-				putchar('<');
-			else
-				putchar('>');
-		}
-	}
+	if (!revs->graph)
+		fputs(get_revision_mark(revs, commit), stdout);
 	if (revs->abbrev_commit && revs->abbrev)
 		fputs(find_unique_abbrev(commit->object.sha1, revs->abbrev),
 		      stdout);

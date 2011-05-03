@@ -24,6 +24,13 @@ enum untracked_status_type {
 	SHOW_ALL_UNTRACKED_FILES
 };
 
+/* from where does this commit originate */
+enum commit_whence {
+	FROM_COMMIT,     /* normal */
+	FROM_MERGE,      /* commit came from merge */
+	FROM_CHERRY_PICK /* commit came from cherry-pick */
+};
+
 struct wt_status_change_data {
 	int worktree_status;
 	int index_status;
@@ -40,7 +47,7 @@ struct wt_status {
 	const char **pathspec;
 	int verbose;
 	int amend;
-	int in_merge;
+	enum commit_whence whence;
 	int nowarn;
 	int use_color;
 	int relative_paths;
@@ -67,5 +74,12 @@ void wt_status_collect(struct wt_status *s);
 
 void wt_shortstatus_print(struct wt_status *s, int null_termination, int show_branch);
 void wt_porcelain_print(struct wt_status *s, int null_termination);
+
+void status_printf_ln(struct wt_status *s, const char *color, const char *fmt, ...)
+	;
+void status_printf(struct wt_status *s, const char *color, const char *fmt, ...)
+	;
+void status_printf_more(struct wt_status *s, const char *color, const char *fmt, ...)
+	__attribute__((format(printf, 3, 4)));
 
 #endif /* STATUS_H */

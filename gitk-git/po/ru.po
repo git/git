@@ -24,7 +24,7 @@ msgstr "Ошибка в идентификаторе версии:"
 
 #: gitk:323
 msgid "Error executing --argscmd command:"
-msgstr "Ошибка выполнения команды заданой --argscmd:"
+msgstr "Ошибка выполнения команды заданной --argscmd:"
 
 #: gitk:336
 msgid "No files selected: --merge specified but no files are unmerged."
@@ -37,7 +37,7 @@ msgid ""
 "No files selected: --merge specified but no unmerged files are within file "
 "limit."
 msgstr ""
-"Файлы не выбраны: указан --merge, но в рамках указаного "
+"Файлы не выбраны: указан --merge, но в рамках указанного "
 "ограничения на имена файлов нет ни одного "
 "где эта операция должна быть завершена."
 
@@ -246,11 +246,11 @@ msgstr "Файлы"
 
 #: gitk:2326 gitk:2339
 msgid "Diff this -> selected"
-msgstr "Сравнить это состояние с выделеным"
+msgstr "Сравнить это состояние с выделенным"
 
 #: gitk:2327 gitk:2340
 msgid "Diff selected -> this"
-msgstr "Сравнить выделеное с этим состоянием"
+msgstr "Сравнить выделенное с этим состоянием"
 
 #: gitk:2328 gitk:2341
 msgid "Make patch"
@@ -440,11 +440,11 @@ msgstr "<%s-F>\t\tПоиск"
 #: gitk:2666
 #, tcl-format
 msgid "<%s-G>\t\tMove to next find hit"
-msgstr "<%s-G>\t\tПерейти к следующему найденому состоянию"
+msgstr "<%s-G>\t\tПерейти к следующему найденному состоянию"
 
 #: gitk:2667
 msgid "<Return>\tMove to next find hit"
-msgstr "<Return>\tПерейти к следующему найденому состоянию"
+msgstr "<Return>\tПерейти к следующему найденному состоянию"
 
 #: gitk:2668
 msgid "/\t\tFocus the search box"
@@ -452,7 +452,7 @@ msgstr "/\t\tПерейти к полю поиска"
 
 #: gitk:2669
 msgid "?\t\tMove to previous find hit"
-msgstr "?\t\tПерейти к предыдущему найденому состоянию"
+msgstr "?\t\tПерейти к предыдущему найденному состоянию"
 
 #: gitk:2670
 msgid "f\t\tScroll diff view to next file"
@@ -466,7 +466,7 @@ msgstr "<%s-S>\t\tПродолжить поиск в списке изменен
 #: gitk:2672
 #, tcl-format
 msgid "<%s-R>\t\tSearch for previous hit in diff view"
-msgstr "<%s-R>\t\tПерейти к предыдущему найденому тексту в списке изменений"
+msgstr "<%s-R>\t\tПерейти к предыдущему найденному тексту в списке изменений"
 
 #: gitk:2673
 #, tcl-format
@@ -855,7 +855,7 @@ msgstr "Лёгкий: оставить рабочий каталог и инде
 #: gitk:8472
 msgid "Mixed: Leave working tree untouched, reset index"
 msgstr ""
-"Смешаный: оставить рабочий каталог неизменным, установить индекс"
+"Смешанный: оставить рабочий каталог неизменным, установить индекс"
 
 #: gitk:8475
 msgid ""
@@ -962,7 +962,7 @@ msgstr "Показывать близкие метки"
 
 #: gitk:10126
 msgid "Limit diffs to listed paths"
-msgstr "Ограничить показ изменений выбраными файлами"
+msgstr "Ограничить показ изменений выбранными файлами"
 
 #: gitk:10129
 msgid "Support per-file encodings"
@@ -1022,11 +1022,11 @@ msgstr "заголовок блока изменений"
 
 #: gitk:10169
 msgid "Marked line bg"
-msgstr "Фон выбраной строки"
+msgstr "Фон выбранной строки"
 
 #: gitk:10171
 msgid "marked line background"
-msgstr "фон выбраной строки"
+msgstr "фон выбранной строки"
 
 #: gitk:10175
 msgid "Select bg"

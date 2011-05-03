@@ -107,14 +107,6 @@ OPTIONS
 	Archive/branch identifier in a format that `tla log` understands.
 
 
-Author
-------
-Written by Martin Langhoff <martin@laptop.org>.
-
-Documentation
---------------
-Documentation by Junio C Hamano, Martin Langhoff and the git-list <git@vger.kernel.org>.
-
 GIT
 ---
 Part of the linkgit:git[1] suite

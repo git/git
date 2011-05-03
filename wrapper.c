@@ -209,7 +209,7 @@ int xmkstemp(char *template)
 		if (!template[0])
 			template = origtemplate;
 
-		nonrelative_template = make_nonrelative_path(template);
+		nonrelative_template = absolute_path(template);
 		errno = saved_errno;
 		die_errno("Unable to create temporary file '%s'",
 			nonrelative_template);
@@ -344,7 +344,7 @@ int xmkstemp_mode(char *template, int mode)
 		if (!template[0])
 			template = origtemplate;
 
-		nonrelative_template = make_nonrelative_path(template);
+		nonrelative_template = absolute_path(template);
 		errno = saved_errno;
 		die_errno("Unable to create temporary file '%s'",
 			nonrelative_template);

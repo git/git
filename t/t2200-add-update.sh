@@ -111,7 +111,7 @@ test_expect_success 'touch and then add explicitly' '
 
 '
 
-test_expect_success 'add -n -u should not add but just report' '
+test_expect_success C_LOCALE_OUTPUT 'add -n -u should not add but just report' '
 
 	(
 		echo "add '\''check'\''" &&

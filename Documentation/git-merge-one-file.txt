@@ -15,15 +15,6 @@ DESCRIPTION
 This is the standard helper program to use with 'git merge-index'
 to resolve a merge after the trivial merge done with 'git read-tree -m'.
 
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org>,
-Junio C Hamano <gitster@pobox.com> and Petr Baudis <pasky@suse.cz>.
-
-Documentation
---------------
-Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
-
 GIT
 ---
 Part of the linkgit:git[1] suite

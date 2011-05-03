@@ -118,6 +118,7 @@
 #endif
 #ifndef __MINGW32__
 #include <sys/wait.h>
+#include <sys/resource.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <termios.h>
@@ -214,7 +215,10 @@ extern char *gitbasename(char *);
 #define is_dir_sep(c) ((c) == '/')
 #endif
 
-#ifdef __GNUC__
+#if __HP_cc >= 61000
+#define NORETURN __attribute__((noreturn))
+#define NORETURN_PTR
+#elif defined(__GNUC__)
 #define NORETURN __attribute__((__noreturn__))
 #define NORETURN_PTR __attribute__((__noreturn__))
 #elif defined(_MSC_VER)
@@ -533,6 +537,19 @@ void git_qsort(void *base, size_t nmemb, size_t size,
 #define fstat_is_reliable() 0
 #else
 #define fstat_is_reliable() 1
+#endif
+
+#ifndef va_copy
+/*
+ * Since an obvious implementation of va_list would be to make it a
+ * pointer into the stack frame, a simple assignment will work on
+ * many systems.  But let's try to be more portable.
+ */
+#ifdef __va_copy
+#define va_copy(dst, src) __va_copy(dst, src)
+#else
+#define va_copy(dst, src) ((dst) = (src))
+#endif
 #endif
 
 /*

@@ -14,10 +14,10 @@ static void create_output_file(const char *output_file)
 {
 	int output_fd = open(output_file, O_CREAT | O_WRONLY | O_TRUNC, 0666);
 	if (output_fd < 0)
-		die_errno("could not create archive file '%s'", output_file);
+		die_errno(_("could not create archive file '%s'"), output_file);
 	if (output_fd != 1) {
 		if (dup2(output_fd, 1) < 0)
-			die_errno("could not redirect output");
+			die_errno(_("could not redirect output"));
 		else
 			close(output_fd);
 	}
@@ -33,7 +33,7 @@ static int run_remote_archiver(int argc, const char **argv,
 
 	_remote = remote_get(remote);
 	if (!_remote->url[0])
-		die("git archive: Remote with no URL");
+		die(_("git archive: Remote with no URL"));
 	transport = transport_get(_remote, _remote->url[0]);
 	transport_connect(transport, "git-upload-archive", exec, fd);
 
@@ -43,18 +43,18 @@ static int run_remote_archiver(int argc, const char **argv,
 
 	len = packet_read_line(fd[0], buf, sizeof(buf));
 	if (!len)
-		die("git archive: expected ACK/NAK, got EOF");
+		die(_("git archive: expected ACK/NAK, got EOF"));
 	if (buf[len-1] == '\n')
 		buf[--len] = 0;
 	if (strcmp(buf, "ACK")) {
 		if (len > 5 && !prefixcmp(buf, "NACK "))
-			die("git archive: NACK %s", buf + 5);
-		die("git archive: protocol error");
+			die(_("git archive: NACK %s"), buf + 5);
+		die(_("git archive: protocol error"));
 	}
 
 	len = packet_read_line(fd[0], buf, sizeof(buf));
 	if (len)
-		die("git archive: expected a flush");
+		die(_("git archive: expected a flush"));
 
 	/* Now, start reading from fd[0] and spit it out to stdout */
 	rv = recv_sideband("archive", fd[0], 1);
