@@ -72,6 +72,10 @@ endif::git-format-patch[]
 	a cut-off percent (3% by default) are not shown. The cut-off percent
 	can be set with `--dirstat=<limit>`. Changes in a child directory are not
 	counted for the parent directory, unless `--cumulative` is used.
++
+Note that the `--dirstat` option computes the changes while ignoring
+the amount of pure code movements within a file.  In other words,
+rearranging lines in a file is not counted as much as other changes.
 
 --dirstat-by-file[=<limit>]::
 	Same as `--dirstat`, but counts changed files instead of lines.
