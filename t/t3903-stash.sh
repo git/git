@@ -37,6 +37,12 @@ test_expect_success 'parents of stash' '
 	test_cmp output expect
 '
 
+test_expect_success 'applying bogus stash does nothing' '
+	test_must_fail git stash apply stash@{1} &&
+	echo 1 >expect &&
+	test_cmp expect file
+'
+
 test_expect_success 'apply does not need clean working directory' '
 	echo 4 >other-file &&
 	git add other-file &&
@@ -557,11 +563,11 @@ test_expect_success 'invalid ref of the form stash@{n}, n >= N' '
 	echo bar6 > file2 &&
 	git add file2 &&
 	git stash &&
-	test_must_fail git drop stash@{1} &&
-	test_must_fail git pop stash@{1} &&
-	test_must_fail git apply stash@{1} &&
-	test_must_fail git show stash@{1} &&
-	test_must_fail git branch tmp stash@{1} &&
+	test_must_fail git stash drop stash@{1} &&
+	test_must_fail git stash pop stash@{1} &&
+	test_must_fail git stash apply stash@{1} &&
+	test_must_fail git stash show stash@{1} &&
+	test_must_fail git stash branch tmp stash@{1} &&
 	git stash drop
 '
 
