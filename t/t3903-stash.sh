@@ -37,14 +37,26 @@ test_expect_success 'parents of stash' '
 	test_cmp output expect
 '
 
-test_expect_success 'apply needs clean working directory' '
-	echo 4 > other-file &&
+test_expect_success 'apply does not need clean working directory' '
+	echo 4 >other-file &&
 	git add other-file &&
-	echo 5 > other-file &&
-	test_must_fail git stash apply
+	echo 5 >other-file &&
+	git stash apply &&
+	echo 3 >expect &&
+	test_cmp expect file
+'
+
+test_expect_success 'apply does not clobber working directory changes' '
+	git reset --hard &&
+	echo 4 >file &&
+	test_must_fail git stash apply &&
+	echo 4 >expect &&
+	test_cmp expect file
 '
 
 test_expect_success 'apply stashed changes' '
+	git reset --hard &&
+	echo 5 >other-file &&
 	git add other-file &&
 	test_tick &&
 	git commit -m other-file &&
