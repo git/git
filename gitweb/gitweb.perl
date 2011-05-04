@@ -186,7 +186,7 @@ our %known_snapshot_formats = (
 		'type' => 'application/x-gzip',
 		'suffix' => '.tar.gz',
 		'format' => 'tar',
-		'compressor' => ['gzip']},
+		'compressor' => ['gzip', '-n']},
 
 	'tbz2' => {
 		'display' => 'tar.bz2',
