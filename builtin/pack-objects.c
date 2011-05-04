@@ -1142,8 +1142,12 @@ static void get_object_details(void)
 		sorted_by_offset[i] = objects + i;
 	qsort(sorted_by_offset, nr_objects, sizeof(*sorted_by_offset), pack_offset_sort);
 
-	for (i = 0; i < nr_objects; i++)
-		check_object(sorted_by_offset[i]);
+	for (i = 0; i < nr_objects; i++) {
+		struct object_entry *entry = sorted_by_offset[i];
+		check_object(entry);
+		if (big_file_threshold <= entry->size)
+			entry->no_try_delta = 1;
+	}
 
 	free(sorted_by_offset);
 }

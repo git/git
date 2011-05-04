@@ -442,8 +442,6 @@ for most projects as source code and other text files can still
 be delta compressed, but larger binary media files won't be.
 +
 Common unit suffixes of 'k', 'm', or 'g' are supported.
-+
-Currently only linkgit:git-fast-import[1] honors this setting.
 
 core.excludesfile::
 	In addition to '.gitignore' (per-directory) and

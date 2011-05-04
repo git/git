@@ -567,6 +567,12 @@ static int git_default_core_config(const char *var, const char *value)
 		return 0;
 	}
 
+	if (!strcmp(var, "core.bigfilethreshold")) {
+		long n = git_config_int(var, value);
+		big_file_threshold = 0 < n ? n : 0;
+		return 0;
+	}
+
 	if (!strcmp(var, "core.packedgitlimit")) {
 		packed_git_limit = git_config_int(var, value);
 		return 0;
