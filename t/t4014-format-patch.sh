@@ -793,4 +793,19 @@ test_expect_success 'format-patch wraps extremely long headers (rfc2047)' '
 	test_cmp expect subject
 '
 
+M8="foo_bar_"
+M64=$M8$M8$M8$M8$M8$M8$M8$M8
+cat >expect <<EOF
+From: $M64
+ <foobar@foo.bar>
+EOF
+test_expect_success 'format-patch wraps non-quotable headers' '
+	rm -rf patches/ &&
+	echo content >>file &&
+	git add file &&
+	git commit -mfoo --author "$M64 <foobar@foo.bar>" &&
+	git format-patch --stdout -1 >patch &&
+	sed -n "/^From: /p; /^ /p; /^$/q" <patch >from &&
+	test_cmp expect from
+'
 test_done
