@@ -348,10 +348,12 @@ sendemail.confirm::
 	one of 'always', 'never', 'cc', 'compose', or 'auto'. See '--confirm'
 	in the previous section for the meaning of these values.
 
+EXAMPLE
+-------
 Use gmail as the smtp server
-----------------------------
-
-Add the following section to the config file:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+To use 'git send-email' to send your patches through the GMail SMTP server,
+edit ~/.gitconfig to specify your account settings:
 
 	[sendemail]
 		smtpencryption = tls
@@ -359,8 +361,19 @@ Add the following section to the config file:
 		smtpuser = yourname@gmail.com
 		smtpserverport = 587
 
+Once your commits are ready to be sent to the mailing list, run the
+following commands:
+
+	$ git format-patch --cover-letter -M origin/master -o outgoing/
+	$ edit outgoing/0000-*
+	$ git send-email outgoing/*
+
 Note: the following perl modules are required
       Net::SMTP::SSL, MIME::Base64 and Authen::SASL
+
+SEE ALSO
+--------
+linkgit:git-format-patch[1], linkgit:git-imap-send[1], mbox(5)
 
 GIT
 ---
