@@ -230,6 +230,14 @@ test_expect_success 'stash -k' '
 	test bar,bar4 = $(cat file),$(cat file2)
 '
 
+test_expect_success 'stash --no-keep-index' '
+	echo bar33 > file &&
+	echo bar44 > file2 &&
+	git add file2 &&
+	git stash --no-keep-index &&
+	test bar,bar2 = $(cat file),$(cat file2)
+'
+
 test_expect_success 'stash --invalid-option' '
 	echo bar5 > file &&
 	echo bar6 > file2 &&
