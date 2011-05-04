@@ -9,17 +9,8 @@ Updates since v1.7.5
  * Clean-up of the C part of i18n (but not l10n---please wait)
    continues.
 
- * When an object "$tree:$path" does not exist, if $path does exist in the
-   subtree of $tree that corresponds to the subdirectory the user is in,
-   git now suggests using "$tree:./$path" in addition to the advice to use
-   the full path from the root of the working tree.
-
  * "git blame" learned "--abbrev[=<n>]" option to control the minimum
    number of hexdigits shown for commit object names.
-
- * "git clean" used to fail on an empty directory that is not readable,
-   even though rmdir(2) could remove such a directory.  Now we attempt it
-   as the last resort.
 
  * "git diff -C -C" used to disable the rename detection entirely when
    there are too many copy candidate paths in the tree; now it falls
@@ -36,19 +27,15 @@ Updates since v1.7.5
  * "git merge" learned "-" as a short-hand for "the previous branch", just
    like the way "git checkout -" works.
 
- * "git pack-object" now takes core.bigfilethreashold into account, just
-   like fast-imoprt does.
-
- * "git reflog" allows options like "--format=.." to be given.
-
- * "git stash apply" can now apply to a working tree with changes as long
-   as there is no overlapping change as the stash being applied.
+ * "git rev-list --count" used with "--cherry-mark" counts the cherry-picked
+   commits separately, producing more a useful output.
 
  * "git submodule update" learned "--force" option to get rid of local
    changes in submodules and replace them with the up-to-date version.
 
- * "git stash apply @{99999}" now is diagnosed as an error, unless you
-   really have that many stash entries.
+ * Compressed tarball gitweb generates is made without the timestamp of
+   the tarball generation; snapshot from the same tree should result in
+   a same tarball.
 
 Also contains various documentation updates.
 
@@ -62,15 +49,6 @@ included in this release.
  * "git config" used to choke with an insanely long line.
    (merge ef/maint-strbuf-init later)
 
- * The "--dirstat" option of "diff" family of commands used to totally
-   ignore a change that only rearranged lines within a file.  Such a
-   change now counts as at least a minimum but non zero change.
-
- * The "--dirstat" option of "diff" family of commands used to use the
-   pathname in the original, instead of the pathname in the result,
-   when renames are involved.
-   (merge jh/dirstat for the above two later)
-
  * "diff -M --cached" used to use unmerged path as a possible rename
    source candidate, which made no sense.
    (merge mz/maint-rename-unmerged later)
@@ -78,6 +56,14 @@ included in this release.
  * "git format-patch" when run with "--quiet" option used to produce a
    nonsense result that consists of alternating empty output.
    (merge early part of cn/format-patch-quiet later)
+
+ * "git format-patch" did not quote RFC822 special characters in the
+   email address (e.g From: Junio C. Hamano <jch@example.com>, not
+   From: "Junio C. Hamano" <jch@example.com>).
+   (merge jk/format-patch-quote-special-in-from later)
+
+ * "git mergetool" did not handle conflicted submoudules gracefully.
+   (merge jm/mergetool-submodules later)
 
  * "git stash -p --no-keep-index" and "git stash --no-keep-index -p" now
    mean the same thing.
