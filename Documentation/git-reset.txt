@@ -9,7 +9,7 @@ SYNOPSIS
 --------
 [verse]
 'git reset' [-q] [<commit>] [--] <paths>...
-'git reset' --patch [<commit>] [--] [<paths>...]
+'git reset' [--patch|-p] [<commit>] [--] [<paths>...]
 'git reset' [--soft | --mixed | --hard | --merge | --keep] [-q] [<commit>]
 
 DESCRIPTION
@@ -39,8 +39,9 @@ working tree in one go.
 	and <commit> (defaults to HEAD).  The chosen hunks are applied
 	in reverse to the index.
 +
-This means that `git reset -p` is the opposite of `git add -p` (see
-linkgit:git-add[1]).
+This means that `git reset -p` is the opposite of `git add -p`, i.e.
+you can use it to selectively reset hunks. See the ``Interactive Mode''
+section of linkgit:git-add[1] to learn how to operate the `\--patch` mode.
 
 'git reset' [--<mode>] [<commit>]::
 	This form resets the current branch head to <commit> and
