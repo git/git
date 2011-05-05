@@ -82,10 +82,9 @@ EOF
 '
 
 test_expect_success PERL 'setup fake editor' '
-	cat >fake_editor.sh <<EOF
-	EOF
+	>fake_editor.sh &&
 	chmod a+x fake_editor.sh &&
-	test_set_editor "$(pwd)/fake_editor.sh" &&
+	test_set_editor "$(pwd)/fake_editor.sh"
 '
 
 test_expect_success PERL 'dummy edit works' '
