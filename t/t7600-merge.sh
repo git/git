@@ -372,6 +372,38 @@ test_expect_success 'merge c1 with c2 (no-commit in config)' '
 
 test_debug 'gitk --all'
 
+test_expect_success 'merge c1 with c2 (log in config)' '
+	git config branch.master.mergeoptions "" &&
+	git reset --hard c1 &&
+	git merge --log c2 &&
+	git show -s --pretty=tformat:%s%n%b >expect &&
+
+	git config branch.master.mergeoptions --log &&
+	git reset --hard c1 &&
+	git merge c2 &&
+	git show -s --pretty=tformat:%s%n%b >actual &&
+
+	test_cmp expect actual
+'
+
+test_expect_success 'merge c1 with c2 (log in config gets overridden)' '
+	(
+		git config --remove-section branch.master
+		git config --remove-section merge
+	)
+	git reset --hard c1 &&
+	git merge c2 &&
+	git show -s --pretty=tformat:%s%n%b >expect &&
+
+	git config branch.master.mergeoptions "--no-log" &&
+	git config merge.log true &&
+	git reset --hard c1 &&
+	git merge c2 &&
+	git show -s --pretty=tformat:%s%n%b >actual &&
+
+	test_cmp expect actual
+'
+
 test_expect_success 'merge c1 with c2 (squash in config)' '
 	git reset --hard c1 &&
 	git config branch.master.mergeoptions "--squash" &&
