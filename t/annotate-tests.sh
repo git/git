@@ -127,7 +127,8 @@ test_expect_success \
 
 test_expect_success \
     'an obfuscated email added' \
-    'sed -e "1i No robots allowed" < file > file.new &&
+    'echo "No robots allowed" > file.new &&
+     cat file >> file.new &&
      mv file.new file &&
      GIT_AUTHOR_NAME="E" GIT_AUTHOR_EMAIL="E at test dot git" git commit -a -m "norobots"'
 
