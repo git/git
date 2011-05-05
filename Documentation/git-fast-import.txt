@@ -83,7 +83,7 @@ OPTIONS
 	skips the file if it does not exist.
 
 --relative-marks::
-	After specifying --relative-marks= the paths specified
+	After specifying --relative-marks the paths specified
 	with --import-marks= and --export-marks= are relative
 	to an internal directory in the current repository.
 	In git-fast-import this means that the paths are relative
@@ -93,7 +93,7 @@ OPTIONS
 --no-relative-marks::
 	Negates a previous --relative-marks. Allows for combining
 	relative and non-relative marks by interweaving
-	--(no-)-relative-marks= with the --(import|export)-marks=
+	--(no-)-relative-marks with the --(import|export)-marks=
 	options.
 
 --cat-blob-fd=<fd>::

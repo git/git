@@ -137,6 +137,8 @@ int main(int argc, char **argv)
 	int devnull_fd;
 	int count;
 
+	git_extract_argv0_path(argv[0]);
+
 	/*
 	 * Always open file descriptors 0/1/2 to avoid clobbering files
 	 * in die().  It also avoids not messing up when the pipes are
