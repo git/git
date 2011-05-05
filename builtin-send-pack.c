@@ -98,7 +98,6 @@ static int pack_objects(int fd, struct ref *refs, struct extra_have_objects *ext
 		free(buf);
 		close(po.out);
 		po.out = -1;
-		close(fd);
 	}
 
 	if (finish_command(&po))
@@ -340,6 +339,8 @@ int send_pack(struct send_pack_args *args,
 		if (pack_objects(out, remote_refs, extra_have, args) < 0) {
 			for (ref = remote_refs; ref; ref = ref->next)
 				ref->status = REF_STATUS_NONE;
+			if (args->stateless_rpc)
+				close(out);
 			if (use_sideband)
 				finish_async(&demux);
 			return -1;
