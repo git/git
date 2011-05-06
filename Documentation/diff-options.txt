@@ -124,12 +124,19 @@ any of those replacements occurred.
 
 --color[=<when>]::
 	Show colored diff.
-	The value must be always (the default), never, or auto.
+	The value must be `always` (the default for `<when>`), `never`, or `auto`.
+	The default value is `never`.
+ifdef::git-diff[]
+	It can be changed by the `color.ui` and `color.diff`
+	configuration settings.
+endif::git-diff[]
 
 --no-color::
-	Turn off colored diff, even when the configuration file
-	gives the default to color output.
-	Same as `--color=never`.
+	Turn off colored diff.
+ifdef::git-diff[]
+	This can be used to override configuration settings.
+endif::git-diff[]
+	It is the same as `--color=never`.
 
 --word-diff[=<mode>]::
 	Show a word diff, using the <mode> to delimit changed words.
