@@ -126,15 +126,12 @@ cat >.test-recursive-AB <<\EOF
 :100644 100644 3fdbe17fd013303a2e981e1ca1c6cd6e72789087 7e09d6a3a14bd630913e8c75693cea32157b606d M	Z/NM
 EOF
 
-x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
-x40="$x40$x40$x40$x40$x40$x40$x40$x40"
-z40='0000000000000000000000000000000000000000'
 cmp_diff_files_output () {
     # diff-files never reports additions.  Also it does not fill in the
     # object ID for the changed files because it wants you to look at the
     # filesystem.
     sed <"$2" >.test-tmp \
-	-e '/^:000000 /d;s/'$x40'\( [MCRNDU][0-9]*\)	/'$z40'\1	/' &&
+	-e '/^:000000 /d;s/'$_x40'\( [MCRNDU][0-9]*\)	/'$_z40'\1	/' &&
     test_cmp "$1" .test-tmp
 }
 

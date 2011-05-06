@@ -6,7 +6,7 @@
 test_description='Test git update-ref and basic ref logging'
 . ./test-lib.sh
 
-Z=0000000000000000000000000000000000000000
+Z=$_z40
 
 test_expect_success setup '
 
