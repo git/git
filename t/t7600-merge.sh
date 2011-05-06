@@ -36,6 +36,7 @@ test_expect_success 'set up test data and helpers' '
 	printf "%s\n" "1 X" 2 3 4 5 6 7 8 9 >result.1 &&
 	printf "%s\n" "1 X" 2 3 4 "5 X" 6 7 8 9 >result.1-5 &&
 	printf "%s\n" "1 X" 2 3 4 "5 X" 6 7 8 "9 X" >result.1-5-9 &&
+	>empty &&
 
 	create_merge_msgs() {
 		echo "Merge commit '\''c2'\''" >msg.1-5 &&
@@ -477,8 +478,8 @@ test_debug 'git log --graph --decorate --oneline --all'
 
 test_expect_success 'combine branch.master.mergeoptions with merge.ff' '
 	git reset --hard c0 &&
-	git config branch.master.mergeoptions --ff
-	git config merge.ff false
+	git config branch.master.mergeoptions --ff &&
+	git config merge.ff false &&
 	test_tick &&
 	git merge c1 &&
 	git config --remove-section "branch.master" &&
@@ -487,7 +488,18 @@ test_expect_success 'combine branch.master.mergeoptions with merge.ff' '
 	verify_parents "$c0"
 '
 
+test_expect_success 'tolerate unknown values for merge.ff' '
+	git reset --hard c0 &&
+	git config merge.ff something-new &&
+	test_tick &&
+	git merge c1 2>message &&
+	git config --remove-section "merge" &&
+	verify_head "$c1" &&
+	test_cmp empty message
+'
+
 test_expect_success 'combining --squash and --no-ff is refused' '
+	git reset --hard c0 &&
 	test_must_fail git merge --squash --no-ff c1 &&
 	test_must_fail git merge --no-ff --squash c1
 '
