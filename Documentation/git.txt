@@ -9,7 +9,7 @@ git - the stupid content tracker
 SYNOPSIS
 --------
 [verse]
-'git' [--version] [--exec-path[=<path>]] [--html-path]
+'git' [--version] [--exec-path[=<path>]] [--html-path] [--man-path] [--info-path]
     [-p|--paginate|--no-pager] [--no-replace-objects]
     [--bare] [--git-dir=<path>] [--work-tree=<path>]
     [-c <name>=<value>]
@@ -288,8 +288,16 @@ help ...`.
 	the current setting and then exit.
 
 --html-path::
-	Print the path to wherever your git HTML documentation is installed
-	and exit.
+	Print the path, without trailing slash, where git's HTML
+	documentation is installed and exit.
+
+--man-path::
+	Print the manpath (see `man(1)`) for the man pages for
+	this version of git and exit.
+
+--info-path::
+	Print the path where the Info files documenting this
+	version of git are installed and exit.
 
 -p::
 --paginate::
