@@ -808,4 +808,47 @@ test_expect_success 'format-patch wraps non-quotable headers' '
 	sed -n "/^From: /p; /^ /p; /^$/q" <patch >from &&
 	test_cmp expect from
 '
+
+check_author() {
+	echo content >>file &&
+	git add file &&
+	GIT_AUTHOR_NAME=$1 git commit -m author-check &&
+	git format-patch --stdout -1 >patch &&
+	grep ^From: patch >actual &&
+	test_cmp expect actual
+}
+
+cat >expect <<'EOF'
+From: "Foo B. Bar" <author@example.com>
+EOF
+test_expect_success 'format-patch quotes dot in headers' '
+	check_author "Foo B. Bar"
+'
+
+cat >expect <<'EOF'
+From: "Foo \"The Baz\" Bar" <author@example.com>
+EOF
+test_expect_success 'format-patch quotes double-quote in headers' '
+	check_author "Foo \"The Baz\" Bar"
+'
+
+cat >expect <<'EOF'
+From: =?UTF-8?q?"F=C3=B6o=20B.=20Bar"?= <author@example.com>
+EOF
+test_expect_success 'rfc2047-encoded headers also double-quote 822 specials' '
+	check_author "Föo B. Bar"
+'
+
+cat >expect <<'EOF'
+Subject: header with . in it
+EOF
+test_expect_success 'subject lines do not have 822 atom-quoting' '
+	echo content >>file &&
+	git add file &&
+	git commit -m "header with . in it" &&
+	git format-patch -k -1 --stdout >patch &&
+	grep ^Subject: patch >actual &&
+	test_cmp expect actual
+'
+
 test_done
