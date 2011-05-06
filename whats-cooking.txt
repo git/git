@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (May 2011, #02; Wed, 4)
-X-master-at: 505a138cbd5c45d890d180383c8bd808ee8105aa
-X-next-at: 76e37e21d4a31e0ad0e9ef50ca7dc8e2402a26b1
+Subject: What's cooking in git.git (May 2011, #03; Fri, 6)
+X-master-at: 4e3aa87d13b339fa678cd3cb7f23664d3a48fb21
+X-next-at: 711ff7850102428a21459848c6ae899101e93bc6
 
-What's cooking in git.git (May 2011, #02; Wed, 4)
+What's cooking in git.git (May 2011, #03; Fri, 6)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -12,156 +12,112 @@ only in 'pu' while commits prefixed with '+' are in 'next'.
 The main part of this cycle is expected to run thru May, aiming for a
 feature freeze in early June.
 
-We are in the middle of week #2 of this cycle.
-
---------------------------------------------------
-[New Topics]
-
-* jc/dotdot-is-parent-directory (2011-05-02) 1 commit
- - specifying ranges: we did not mean to make ".." an empty set
-
-Updated documentation.
-
-* mg/diff-stat-count (2011-05-03) 2 commits
- - diff-options.txt: describe --stat-{width,name-width,count}
- - diff: introduce --stat-count to limit the stat lines
-
-There was a miscounting spotted.  Need another round.
-
-* mk/grep-pcre (2011-05-03) 3 commits
- - git-grep: Learn PCRE
- - Documentation: Add --line-number to git-grep synopsis
- - [Missing sign-off and justification] grep: Put calls to fixmatch() and regmatch() into patmatch()
-
-There was a re-roll but I haven't picked it up yet.
-
-* vh/config-interactive-singlekey-doc (2011-05-02) 1 commit
- - config.txt: 'interactive.singlekey; is used by...
-
-Will merge to 'next' but I recall we discussed the need for more cross
-references and description of the configuration variable in Patch mode
-documentation.
-
-* jc/maint-branch-mergeoptions (2011-05-04) 1 commit
- - merge: fix branch.<name>.mergeoptions
-
-Fix branch.<name>.mergeoptions that does not override merge.<option>
-
-* jc/require-work-tree-exists (2011-05-04) 1 commit
- - require-work-tree wants more than what its name says
-
-Make "git pull" run from a random place work as long as GIT_DIR and
-GIT_WORK_TREE are set up correctly.  I am not absolutely sure if that
-is a sane use case, though.
+We are late in the week #2 of this cycle.
 
 --------------------------------------------------
 [Graduated to "master"]
 
-* ab/i18n-fixup (2011-04-14) 24 commits
-  (merged to 'next' on 2011-04-25 at 32fef07)
- + i18n: use test_i18n{cmp,grep} in t7600, t7607, t7611 and t7811
- + i18n: use test_i18n{grep,cmp} in t7508
- + i18n: use test_i18ngrep in t7506
- + i18n: use test_i18ngrep and test_i18ncmp in t7502
- + i18n: use test_i18ngrep in t7501
- + i18n: use test_i18ncmp in t7500
- + i18n: use test_i18ngrep in t7201
- + i18n: use test_i18ncmp and test_i18ngrep in t7102 and t7110
- + i18n: use test_i18ncmp and test_i18ngrep in t5541, t6040, t6120, t7004, t7012 and t7060
- + i18n: use test_i18ncmp and test_i18ngrep in t3700, t4001 and t4014
- + i18n: use test_i18ncmp and test_i18ngrep in t3203, t3501 and t3507
- + i18n: use test_i18ngrep in t2020, t2204, t3030, and t3200
- + i18n: use test_i18ngrep in lib-httpd and t2019
- + i18n: do not overuse C_LOCALE_OUTPUT (grep)
- + i18n: use test_i18ncmp in t1200 and t2200
- + i18n: .git file is not a human readable message (t5601)
- + i18n: do not overuse C_LOCALE_OUTPUT
- + i18n: mark init-db messages for translation
- + i18n: mark checkout plural warning for translation
- + i18n: mark checkout --detach messages for translation
- + i18n: mark clone nonexistent repository message for translation
- + i18n: mark merge CHERRY_PICK_HEAD messages for translation
- + i18n: mark merge "upstream" messages for translation
- + i18n: mark merge "Could not read from" message for translation
+* aw/maint-rebase-i-p-no-ff (2011-04-28) 1 commit
+  (merged to 'next' on 2011-05-02 at 9a159a5)
+ + git-rebase--interactive.sh: preserve-merges fails on merges created with no-ff
 
-* ft/gitweb-tar-with-gzip-n (2011-04-26) 1 commit
-  (merged to 'next' on 2011-04-26 at 8e59a0e)
- + gitweb: supply '-n' to gzip for identical output
+* cj/p4merge (2011-05-01) 1 commit
+  (merged to 'next' on 2011-05-02 at 7197ef3)
+ + Pass empty file to p4merge where no base is suitable.
 
-* jh/notes-add-ui (2011-03-30) 1 commit
-  (merged to 'next' on 2011-04-25 at 4fb1ac2)
- + Make "git notes add" more user-friendly when there are existing notes
+* gr/cvsimport-alternative-cvspass-location (2011-05-01) 1 commit
+  (merged to 'next' on 2011-05-02 at 5a89e3e)
+ + Look for password in both CVS and CVSNT password files.
 
-* jk/format-patch-multiline-header (2011-04-14) 1 commit
-  (merged to 'next' on 2011-04-26 at 3d5eda3)
- + format-patch: wrap email addresses after long names
+* im/hashcmp-optim (2011-04-28) 1 commit
+  (merged to 'next' on 2011-05-02 at f131195)
+ + hashcmp(): inline memcmp() by hand to optimize
 
-* jk/notes-ui-updates (2011-04-14) 8 commits
-  (merged to 'next' on 2011-04-25 at 4216d33)
- + contrib/completion: --notes, --no-notes
- + log/pretty-options: Document --[no-]notes and deprecate old notes options
- + revision.c: make --no-notes reset --notes list
- + revision.c: support --notes command-line option
- + notes: refactor display notes default handling
- + notes: refactor display notes extra refs field
- + revision.c: refactor notes ref expansion
- + notes: make expand_notes_ref globally accessible
+* jc/fix-diff-files-unmerged (2011-04-22) 4 commits
+  (merged to 'next' on 2011-04-28 at f1f837c)
+ + diff-files: show unmerged entries correctly
+ + diff: remove often unused parameters from diff_unmerge()
+ + diff.c: return filepair from diff_unmerge()
+ + test: use $_z40 from test-lib
+ (this branch is used by jc/add-delete-default and jc/fix-add-u-unmerged.)
 
-* jm/mergetool-submodules (2011-04-13) 1 commit
-  (merged to 'next' on 2011-04-26 at 40892cf)
- + mergetool: Teach about submodules
+* jk/format-patch-quote-special-in-from (2011-04-08) 1 commit
+  (merged to 'next' on 2011-04-28 at 587f2d4)
+ + pretty: quote rfc822 specials in email addresses
 
-* jn/format-patch-doc (2011-04-18) 6 commits
-  (merged to 'next' on 2011-04-26 at 3f64325)
- + Documentation/format-patch: suggest Toggle Word Wrap add-on for Thunderbird
- + Documentation: publicize hints for sending patches with GMail
- + Documentation: publicize KMail hints for sending patches inline
- + Documentation: hints for sending patches inline with Thunderbird
- + Documentation: explain how to check for patch corruption
- + Merge v1.7.5-rc2 into jn/format-patch-doc
- (this branch uses jn/maint-format-patch-doc.)
+* jk/merge-one-file-working-tree (2011-04-29) 2 commits
+  (merged to 'next' on 2011-05-02 at 308fe21)
+ + merge-one-file: fix broken merges with alternate work trees
+ + add tests for merge-index / merge-one-file
 
-* jn/maint-format-patch-doc (2011-04-14) 1 commit
-  (merged to 'next' on 2011-04-26 at 400cf42)
- + Documentation: describe the format of messages with inline patches
- (this branch is used by jn/format-patch-doc.)
+* jn/run-command-error-failure (2011-04-20) 2 commits
+  (merged to 'next' on 2011-04-26 at a1f171e)
+ + run-command: handle short writes and EINTR in die_child
+ + tests: check error message from run_command
 
-* mg/rev-list-count-cherry (2011-04-26) 1 commit
-  (merged to 'next' on 2011-04-26 at dc3e80a)
- + rev-list --count: separate count for --cherry-mark
+* js/blame-parsename (2011-05-05) 2 commits
+  (merged to 'next' on 2011-05-05 at 1d5e505)
+ + t/annotate-tests: Use echo & cat instead of sed
+  (merged to 'next' on 2011-04-29 at 5fde945)
+ + blame: tolerate bogus e-mail addresses a bit better
 
-* ml/test-readme (2011-04-26) 1 commit
-  (merged to 'next' on 2011-04-26 at d1efe84)
- + t/README: unify documentation of test function args
+* js/info-man-path (2011-05-02) 2 commits
+  (merged to 'next' on 2011-05-02 at 20a15dd)
+ + Documentation: clarify meaning of --html-path, --man-path, and --info-path
+ + git: add --info-path and --man-path options
 
-* mz/maint-rename-unmerged (2011-03-23) 1 commit
-  (merged to 'next' on 2011-04-25 at 038a8c3)
- + diffcore-rename: don't consider unmerged path as source
+* mg/alias-expose-prefix (2011-04-27) 2 commits
+  (merged to 'next' on 2011-05-02 at 1c01d3a)
+ + handle_alias: provide GIT_PREFIX to !alias
+ + t1020: test !alias in subdirectory
 
-* nd/maint-setup (2011-03-26) 2 commits
-  (merged to 'next' on 2011-04-25 at fd45c63)
- + Kill off get_relative_cwd()
- + setup: return correct prefix if worktree is '/'
+* mg/diff-uiconfig-doc (2011-04-27) 1 commit
+  (merged to 'next' on 2011-05-02 at 579a515)
+ + config.txt,diff-options.txt: porcelain vs. plumbing for color.diff
 
-* nm/submodule-update-force (2011-04-01) 1 commit
-  (merged to 'next' on 2011-04-25 at 270fffc)
- + submodule: Add --force option for git submodule update
+* nd/struct-pathspec (2011-04-05) 5 commits
+  (merged to 'next' on 2011-04-25 at 65dbe80)
+ + pathspec: rename per-item field has_wildcard to use_wildcard
+ + Improve tree_entry_interesting() handling code
+ + Convert read_tree{,_recursive} to support struct pathspec
+ + Reimplement read_tree_recursive() using tree_entry_interesting()
+ + Merge branch 'en/object-list-with-pathspec' into 'nd/struct-pathspec'
 
-* ss/cherry-pick-x-doc (2011-04-15) 1 commit
-  (merged to 'next' on 2011-04-26 at c9a6f83)
- + doc: Clarify that "cherry-pick -x" does not use "git notes"
+* sg/completion-cleanup (2011-04-28) 2 commits
+ + completion: remove unnecessary _get_comp_words_by_ref() invocations
+ + completion: don't modify the $cur variable in completion functions
+ (this branch is used by sg/completion-updates.)
 
-* ss/doc-svn (2011-04-19) 1 commit
-  (merged to 'next' on 2011-04-26 at a723b91)
- + remove noise and inaccuracies from git-svn docs
+--------------------------------------------------
+[New Topics]
 
-* vr/merge-base-doc (2011-04-15) 2 commits
-  (merged to 'next' on 2011-04-26 at e906ba3)
- + Restructure documentation for git-merge-base.
- + Documentation: update to git-merge-base --octopus
+* sr/maint-fast-import-tighten-option-parsing (2011-05-05) 1 commit
+ - fast-import: fix option parser for no-arg options
+
+Will merge to "next".
+
+* jc/advice-about-to-lose-commit (2011-05-06) 1 commit
+ - checkout: honor advice.detachedHead when reattaching to a branch
+
+A weather-balloon.
+
+* mg/merge-ff-config (2011-05-06) 2 commits
+ - merge: introduce merge.ff configuration variable
+ - Merge branch 'jc/maint-branch-mergeoptions' into mg/merge-ff-config
+ (this branch uses jc/maint-branch-mergeoptions.)
 
 --------------------------------------------------
 [Stalled]
+
+* kk/maint-prefix-in-config-mak (2011-05-04) 3 commits
+ - config.mak.in: allow "configure --sysconfdir=/else/where"
+ - Makefile: allow sysconfdir to be used from configure
+  (merged to 'next' on 2011-05-02 at c747ba3)
+ + Honor $(prefix) set in config.mak* when defining ETC_GIT* and sysconfdir
+
+J6t is unhappy that sysconfdir is ignored in relocatable case. Although I
+personally do not think that is a problem, as it has never been an issue,
+let's see what others think.
 
 * jn/gitweb-js (2011-04-28) 13 commits
  - gitweb: Make JavaScript ability to adjust timezones configurable
@@ -180,22 +136,42 @@ is a sane use case, though.
 
 Rerolled.  Waiting for comments.
 
-* jn/ctags (2011-04-29) 6 commits
+* jn/ctags-more (2011-04-29) 3 commits
  - gitweb: Optional grouping of projects by category
  - gitweb: Modularized git_get_project_description to be more generic
  - gitweb: Split git_project_list_body in two functions
- - gitweb: Mark matched 'ctag' / contents tag (?by_tag=foo)
- - gitweb: Change the way "content tags" ('ctags') are handled
- - gitweb: Restructure projects list generation
+ (this branch uses jn/ctags.)
 
 Waiting for comments.
+
+* jc/dotdot-is-parent-directory (2011-05-02) 1 commit
+ - specifying ranges: we did not mean to make ".." an empty set
+
+Updated documentation.
+
+* mg/diff-stat-count (2011-05-03) 2 commits
+ - diff-options.txt: describe --stat-{width,name-width,count}
+ - diff: introduce --stat-count to limit the stat lines
+
+There was a miscounting spotted.  Need another round.
+
+* jc/require-work-tree-exists (2011-05-04) 1 commit
+ - require-work-tree wants more than what its name says
+
+Make "git pull" run from a random place work as long as GIT_DIR and
+GIT_WORK_TREE are set up correctly.  I am not absolutely sure if that
+is a sane use case, though.
+
+* jc/add-delete-default (2011-04-19) 1 commit
+ - git add: notice removal of tracked paths by default
+ (this branch uses jc/fix-add-u-unmerged.)
 
 * jk/maint-merge-rename-create (2011-03-25) 3 commits
  - merge: turn on rewrite detection
  - merge: handle renames with replacement content
  - t3030: fix accidental success in symlink rename
 
-Peff wanted to reroll this, so this is taken out of "next".
+Peff wanted to reroll this.
 
 * rr/rerere-clear-libify (2011-04-13) 1 commit
  - rerere: Expose an API corresponding to 'clear' functionality
@@ -227,59 +203,48 @@ current usage context.
 --------------------------------------------------
 [Cooking]
 
+* mk/grep-pcre (2011-05-05) 3 commits
+ - grep: Put calls to fixmatch() and regmatch() into patmatch()
+ - contrib/completion: --line-number to git grep
+ - Documentation: Add --line-number to git-grep synopsis
+
+This is without the real PCRE integration.  The above three looked
+reasonable clean-ups regardless.
+
+Will merge to "next".
+
+* vh/config-interactive-singlekey-doc (2011-05-05) 5 commits
+  (merged to 'next' on 2011-05-06 at 46b522c)
+ + git-reset.txt: better docs for '--patch'
+ + git-checkout.txt: better docs for '--patch'
+ + git-stash.txt: better docs for '--patch'
+ + git-add.txt: document 'interactive.singlekey'
+ + config.txt: 'interactive.singlekey; is used by...
+
+* jc/maint-branch-mergeoptions (2011-05-04) 1 commit
+ - merge: fix branch.<name>.mergeoptions
+ (this branch is used by mg/merge-ff-config.)
+
+Fix branch.<name>.mergeoptions that does not override merge.<option>; this
+is needed for the "merge.ff" configuration topic to correctly work.
+
+* jn/ctags (2011-04-29) 3 commits
+  (merged to 'next' on 2011-05-06 at 5c574ff)
+ + gitweb: Mark matched 'ctag' / contents tag (?by_tag=foo)
+ + gitweb: Change the way "content tags" ('ctags') are handled
+ + gitweb: Restructure projects list generation
+ (this branch is used by jn/ctags-more.)
+
 * dm/http-cleanup (2011-05-05) 4 commits
- - t5541-http-push: add test for chunked
- - http-push: refactor curl_easy_setup madness
- - http-push: use const for strings in signatures
- - http: make curl callbacks match contracts from curl header
+  (merged to 'next' on 2011-05-06 at 711ff78)
+ + t5541-http-push: add test for chunked
+ + http-push: refactor curl_easy_setup madness
+ + http-push: use const for strings in signatures
+ + http: make curl callbacks match contracts from curl header
 
-* im/hashcmp-optim (2011-04-28) 1 commit
-  (merged to 'next' on 2011-05-02 at f131195)
- + hashcmp(): inline memcmp() by hand to optimize
-
-* jc/add-delete-default (2011-04-19) 1 commit
- - git add: notice removal of tracked paths by default
- (this branch uses jc/fix-add-u-unmerged, jc/fix-add-u-unmerged and jc/fix-diff-files-unmerged.)
-
-* kk/maint-prefix-in-config-mak (2011-05-04) 3 commits
- - config.mak.in: allow "configure --sysconfdir=/else/where"
- - Makefile: allow sysconfdir to be used from configure
-  (merged to 'next' on 2011-05-02 at c747ba3)
- + Honor $(prefix) set in config.mak* when defining ETC_GIT* and sysconfdir
-
-Fixed up after hitting 'next'.
-
-* sg/completion-updates (2011-04-28) 3 commits
+* sg/completion-updates (2011-04-28) 1 commit
   (merged to 'next' on 2011-05-02 at 0fd443a)
  + completion: don't declare 'local words' to make zsh happy
- + completion: remove unnecessary _get_comp_words_by_ref() invocations
- + completion: don't modify the $cur variable in completion functions
-
-Has this one settled?
-
-* jk/merge-one-file-working-tree (2011-04-29) 2 commits
-  (merged to 'next' on 2011-05-02 at 308fe21)
- + merge-one-file: fix broken merges with alternate work trees
- + add tests for merge-index / merge-one-file
-
-* js/blame-parsename (2011-04-21) 1 commit
-  (merged to 'next' on 2011-04-29 at 5fde945)
- + blame: tolerate bogus e-mail addresses a bit better
-
-Will merge to "master" by the end of week #2.
-
-* js/info-man-path (2011-05-02) 2 commits
-  (merged to 'next' on 2011-05-02 at 20a15dd)
- + Documentation: clarify meaning of --html-path, --man-path, and --info-path
- + git: add --info-path and --man-path options
-
-* cj/p4merge (2011-05-01) 1 commit
-  (merged to 'next' on 2011-05-02 at 7197ef3)
- + Pass empty file to p4merge where no base is suitable.
-
-* gr/cvsimport-alternative-cvspass-location (2011-05-01) 1 commit
-  (merged to 'next' on 2011-05-02 at 5a89e3e)
- + Look for password in both CVS and CVSNT password files.
 
 * jc/maint-add-p-overlapping-hunks (2011-04-06) 4 commits
   (merged to 'next' on 2011-05-02 at e57b66f)
@@ -288,11 +253,14 @@ Will merge to "master" by the end of week #2.
  + t3701: Editing a split hunk in an "add -p" session
  + add -p: 'q' should really quit
 
+Probably needs tests.
+
 * ld/p4-preserve-user-names (2011-04-21) 1 commit
   (merged to 'next' on 2011-04-29 at 25116c8)
  + git-p4: add option to preserve user names
 
-Will merge to "master" by the end of week #2.
+Luke wants to update this, so will not be merging to "master" until the
+update settles down.
 
 * jh/dirstat-lines (2011-04-29) 8 commits
   (merged to 'next' on 2011-04-29 at a302674)
@@ -305,76 +273,43 @@ Will merge to "master" by the end of week #2.
  + Make --dirstat=0 output directories that contribute < 0.1% of changes
  + Add several testcases for --dirstat and friends
 
-* aw/maint-rebase-i-p-no-ff (2011-04-28) 1 commit
-  (merged to 'next' on 2011-05-02 at 9a159a5)
- + git-rebase--interactive.sh: preserve-merges fails on merges created with no-ff
-
-* mg/alias-expose-prefix (2011-04-27) 2 commits
-  (merged to 'next' on 2011-05-02 at 1c01d3a)
- + handle_alias: provide GIT_PREFIX to !alias
- + t1020: test !alias in subdirectory
-
-* mg/diff-uiconfig-doc (2011-04-27) 1 commit
-  (merged to 'next' on 2011-05-02 at 579a515)
- + config.txt,diff-options.txt: porcelain vs. plumbing for color.diff
-
-* jk/format-patch-quote-special-in-from (2011-04-08) 1 commit
-  (merged to 'next' on 2011-04-28 at 587f2d4)
- + pretty: quote rfc822 specials in email addresses
-
-Will merge to "master" by the end of week #2.
+Will merge to "master" by the end of week #3.
 
 * jn/setup-revisions-glob-and-friends-passthru (2011-04-21) 2 commits
   (merged to 'next' on 2011-04-28 at 6006cc4)
  + revisions: allow --glob and friends in parse_options-enabled commands
  + revisions: split out handle_revision_pseudo_opt function
 
+Will merge to "master" by the end of week #3.
+
 * cn/log-parse-opt (2011-04-14) 1 commit
   (merged to 'next' on 2011-04-28 at 02f2eac)
  + log: convert to parse-options
 
+Will merge to "master" by the end of week #3.
+
 * jc/fix-add-u-unmerged (2011-04-20) 1 commit
   (merged to 'next' on 2011-04-28 at f7ed821)
  + Fix "add -u" that sometimes fails to resolve unmerged paths
- (this branch is used by jc/add-delete-default and jc/add-delete-default; uses jc/fix-diff-files-unmerged.)
+ (this branch is used by jc/add-delete-default.)
 
-* jc/fix-diff-files-unmerged (2011-04-22) 4 commits
-  (merged to 'next' on 2011-04-28 at f1f837c)
- + diff-files: show unmerged entries correctly
- + diff: remove often unused parameters from diff_unmerge()
- + diff.c: return filepair from diff_unmerge()
- + test: use $_z40 from test-lib
- (this branch is used by jc/add-delete-default and jc/fix-add-u-unmerged.)
+Will merge to "master" by the end of week #3.
 
-* js/maint-1.6.6-send-pack-stateless-rpc-deadlock-fix (2011-04-25) 1 commit
+* js/maint-1.6.6-send-pack-stateless-rpc-deadlock-fix (2011-05-05) 2 commits
+ + send-pack: unbreak push over stateless rpc
  + send-pack: avoid deadlock when pack-object dies early
  (this branch is used by js/maint-send-pack-stateless-rpc-deadlock-fix.)
 
-Will merge to "master" by the end of week #2.
+Will merge to "master" by the end of week #3.
 
-* js/maint-send-pack-stateless-rpc-deadlock-fix (2011-04-25) 1 commit
+* js/maint-send-pack-stateless-rpc-deadlock-fix (2011-05-05) 2 commits
+  (merged to 'next' on 2011-05-05 at 3f4ffb9)
+ + Merge branch 'js/maint-1.6.6-send-pack-stateless-rpc-deadlock-fix' into js/maint-send-pack-stateless-rpc-deadlock-fix
   (merged to 'next' on 2011-04-28 at db7e04a)
  + Merge branch 'js/maint-1.6.6-send-pack-stateless-rpc-deadlock-fix' into js/maint-send-pack-stateless-rpc-deadlock-fix
  (this branch uses js/maint-1.6.6-send-pack-stateless-rpc-deadlock-fix.)
 
-Will merge to "master" by the end of week #2.
-
-* jn/run-command-error-failure (2011-04-20) 2 commits
-  (merged to 'next' on 2011-04-26 at a1f171e)
- + run-command: handle short writes and EINTR in die_child
- + tests: check error message from run_command
-
-Will merge to "master" by the end of week #2.
-
-* nd/struct-pathspec (2011-04-05) 5 commits
-  (merged to 'next' on 2011-04-25 at 65dbe80)
- + pathspec: rename per-item field has_wildcard to use_wildcard
- + Improve tree_entry_interesting() handling code
- + Convert read_tree{,_recursive} to support struct pathspec
- + Reimplement read_tree_recursive() using tree_entry_interesting()
- + Merge branch 'en/object-list-with-pathspec' into 'nd/struct-pathspec'
-
-Will merge to "master" by the end of week #2.
+Will merge to "master" by the end of week #3.
 
 * jc/magic-pathspec (2011-04-06) 3 commits
   (merged to 'next' on 2011-04-25 at 788cd46)
@@ -383,16 +318,6 @@ Will merge to "master" by the end of week #2.
  + magic pathspec: add tentative ":/path/from/top/level" pathspec support
 
 Thanks to Peff, Duy, and Michael for helping to whip the syntax and the
-basic semantics into a not-so-horrible shape.
+basic semantics into a not-so-horrible shape.  Duy wanted to add tests.
 
-Will merge to "master" by the end of week #2.
-
-----------------------------------------------------------------
-[Discarded]
-
-* mg/branch-wildcard-config (2011-05-02) 1 commit
- - Add default merge options for all branches
-
-It seems a separate merge.ff configuration would be more favourable
-than this approach.
-
+Will merge to "master" by the end of week #3.
