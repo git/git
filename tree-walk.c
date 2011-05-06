@@ -598,7 +598,7 @@ int tree_entry_interesting(const struct name_entry *entry,
 					&never_interesting))
 				return 1;
 
-			if (ps->items[i].has_wildcard) {
+			if (ps->items[i].use_wildcard) {
 				if (!fnmatch(match + baselen, entry->path, 0))
 					return 1;
 
@@ -614,7 +614,7 @@ int tree_entry_interesting(const struct name_entry *entry,
 		}
 
 match_wildcards:
-		if (!ps->items[i].has_wildcard)
+		if (!ps->items[i].use_wildcard)
 			continue;
 
 		/*

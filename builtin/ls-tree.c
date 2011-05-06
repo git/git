@@ -19,7 +19,7 @@ static int line_termination = '\n';
 #define LS_SHOW_SIZE 16
 static int abbrev;
 static int ls_options;
-static const char **pathspec;
+static struct pathspec pathspec;
 static int chomp_prefix;
 static const char *ls_tree_prefix;
 
@@ -35,7 +35,7 @@ static int show_recursive(const char *base, int baselen, const char *pathname)
 	if (ls_options & LS_RECURSIVE)
 		return 1;
 
-	s = pathspec;
+	s = pathspec.raw;
 	if (!s)
 		return 0;
 
@@ -120,7 +120,7 @@ int cmd_ls_tree(int argc, const char **argv, const char *prefix)
 {
 	unsigned char sha1[20];
 	struct tree *tree;
-	int full_tree = 0;
+	int i, full_tree = 0;
 	const struct option ls_tree_options[] = {
 		OPT_BIT('d', NULL, &ls_options, "only show trees",
 			LS_TREE_ONLY),
@@ -166,11 +166,14 @@ int cmd_ls_tree(int argc, const char **argv, const char *prefix)
 	if (get_sha1(argv[0], sha1))
 		die("Not a valid object name %s", argv[0]);
 
-	pathspec = get_pathspec(prefix, argv + 1);
+	init_pathspec(&pathspec, get_pathspec(prefix, argv + 1));
+	for (i = 0; i < pathspec.nr; i++)
+		pathspec.items[i].use_wildcard = 0;
+	pathspec.has_wildcard = 0;
 	tree = parse_tree_indirect(sha1);
 	if (!tree)
 		die("not a tree object");
-	read_tree_recursive(tree, "", 0, 0, pathspec, show_tree, NULL);
+	read_tree_recursive(tree, "", 0, 0, &pathspec, show_tree, NULL);
 
 	return 0;
 }
