@@ -28,80 +28,78 @@ Testing basic merge operations/option parsing.
 
 . ./test-lib.sh
 
-test_expect_success 'set up test data and helpers' '
-	printf "%s\n" 1 2 3 4 5 6 7 8 9 >file &&
-	printf "%s\n" "1 X" 2 3 4 5 6 7 8 9 >file.1 &&
-	printf "%s\n" 1 2 3 4 "5 X" 6 7 8 9 >file.5 &&
-	printf "%s\n" 1 2 3 4 5 6 7 8 "9 X" >file.9 &&
-	printf "%s\n" "1 X" 2 3 4 5 6 7 8 9 >result.1 &&
-	printf "%s\n" "1 X" 2 3 4 "5 X" 6 7 8 9 >result.1-5 &&
-	printf "%s\n" "1 X" 2 3 4 "5 X" 6 7 8 "9 X" >result.1-5-9 &&
+printf '%s\n' 1 2 3 4 5 6 7 8 9 >file
+printf '%s\n' '1 X' 2 3 4 5 6 7 8 9 >file.1
+printf '%s\n' 1 2 3 4 '5 X' 6 7 8 9 >file.5
+printf '%s\n' 1 2 3 4 5 6 7 8 '9 X' >file.9
+printf '%s\n' '1 X' 2 3 4 5 6 7 8 9 >result.1
+printf '%s\n' '1 X' 2 3 4 '5 X' 6 7 8 9 >result.1-5
+printf '%s\n' '1 X' 2 3 4 '5 X' 6 7 8 '9 X' >result.1-5-9
 
-	create_merge_msgs() {
-		echo "Merge commit '\''c2'\''" >msg.1-5 &&
-		echo "Merge commit '\''c2'\''; commit '\''c3'\''" >msg.1-5-9 &&
-		{
-			echo "Squashed commit of the following:" &&
-			echo &&
-			git log --no-merges ^HEAD c1
-		} >squash.1 &&
-		{
-			echo "Squashed commit of the following:" &&
-			echo &&
-			git log --no-merges ^HEAD c2
-		} >squash.1-5 &&
-		{
-			echo "Squashed commit of the following:" &&
-			echo &&
-			git log --no-merges ^HEAD c2 c3
-		} >squash.1-5-9 &&
-		echo >msg.nolog &&
-		{
-			echo "* commit '\''c3'\'':" &&
-			echo "  commit 3" &&
-			echo
-		} >msg.log
-	} &&
+create_merge_msgs () {
+	echo "Merge commit 'c2'" >msg.1-5 &&
+	echo "Merge commit 'c2'; commit 'c3'" >msg.1-5-9 &&
+	{
+		echo "Squashed commit of the following:" &&
+		echo &&
+		git log --no-merges ^HEAD c1
+	} >squash.1 &&
+	{
+		echo "Squashed commit of the following:" &&
+		echo &&
+		git log --no-merges ^HEAD c2
+	} >squash.1-5 &&
+	{
+		echo "Squashed commit of the following:" &&
+		echo &&
+		git log --no-merges ^HEAD c2 c3
+	} >squash.1-5-9 &&
+	echo >msg.nolog &&
+	{
+		echo "* commit 'c3':" &&
+		echo "  commit 3" &&
+		echo
+	} >msg.log
+}
 
-	verify_merge() {
-		test_cmp "$2" "$1" &&
-		git update-index --refresh &&
-		git diff --exit-code &&
-		if test -n "$3"
-		then
-			git show -s --pretty=format:%s HEAD >msg.act &&
-			test_cmp "$3" msg.act
-		fi
-	} &&
+verify_merge () {
+	test_cmp "$2" "$1" &&
+	git update-index --refresh &&
+	git diff --exit-code &&
+	if test -n "$3"
+	then
+		git show -s --pretty=format:%s HEAD >msg.act &&
+		test_cmp "$3" msg.act
+	fi
+}
 
-	verify_head() {
-		echo "$1" >head.expected &&
-		git rev-parse HEAD >head.actual &&
-		test_cmp head.expected head.actual
-	} &&
+verify_head () {
+	echo "$1" >head.expected &&
+	git rev-parse HEAD >head.actual &&
+	test_cmp head.expected head.actual
+}
 
-	verify_parents() {
-		printf "%s\n" "$@" >parents.expected &&
-		>parents.actual &&
-		i=1 &&
-		while test $i -le $#
-		do
-			git rev-parse HEAD^$i >>parents.actual &&
-			i=$(expr $i + 1) ||
-			return 1
-		done &&
-		test_cmp parents.expected parents.actual
-	} &&
+verify_parents () {
+	printf '%s\n' "$@" >parents.expected &&
+	>parents.actual &&
+	i=1 &&
+	while test $i -le $#
+	do
+		git rev-parse HEAD^$i >>parents.actual &&
+		i=$(expr $i + 1) ||
+		return 1
+	done &&
+	test_cmp parents.expected parents.actual
+}
 
-	verify_mergeheads() {
-		printf "%s\n" "$@" >mergehead.expected &&
-		test_cmp mergehead.expected .git/MERGE_HEAD
-	} &&
+verify_mergeheads () {
+	printf '%s\n' "$@" >mergehead.expected &&
+	test_cmp mergehead.expected .git/MERGE_HEAD
+}
 
-	verify_no_mergehead() {
-		! test -e .git/MERGE_HEAD
-	}
-'
+verify_no_mergehead () {
+	! test -e .git/MERGE_HEAD
+}
 
 test_expect_success 'setup' '
 	git add file &&
