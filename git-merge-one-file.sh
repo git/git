@@ -22,6 +22,11 @@ LONG_USAGE="Usage: git merge-one-file $USAGE
 
 Blob ids and modes should be empty for missing files."
 
+SUBDIRECTORY_OK=Yes
+. git-sh-setup
+cd_to_toplevel
+require_work_tree
+
 if ! test "$#" -eq 7
 then
 	echo "$LONG_USAGE"
@@ -132,7 +137,7 @@ case "${1:-.}${2:-.}${3:-.}" in
 
 	# Create the working tree file, using "our tree" version from the
 	# index, and then store the result of the merge.
-	git checkout-index -f --stage=2 -- "$4" && cat "$src1" >"$4"
+	git checkout-index -f --stage=2 -- "$4" && cat "$src1" >"$4" || exit 1
 	rm -f -- "$orig" "$src1" "$src2"
 
 	if [ "$6" != "$7" ]; then
