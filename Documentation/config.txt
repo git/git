@@ -587,6 +587,8 @@ it will be treated as a shell command.  For example, defining
 "gitk --all --not ORIG_HEAD".  Note that shell commands will be
 executed from the top-level directory of a repository, which may
 not necessarily be the current directory.
+'GIT_PREFIX' is set as returned by running 'git rev-parse --show-prefix'
+from the original current directory. See linkgit:git-rev-parse[1].
 
 am.keepcr::
 	If true, git-am will call git-mailsplit for patches in mbox format
