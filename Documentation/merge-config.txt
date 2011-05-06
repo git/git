@@ -16,6 +16,16 @@ merge.defaultToUpstream::
 	to their corresponding remote tracking branches, and the tips of
 	these tracking branches are merged.
 
+merge.ff::
+	By default, git does not create an extra merge commit when merging
+	a commit that is a descendant of the current commit. Instead, the
+	tip of the current branch is fast-forwarded. When set to `false`,
+	this variable tells git to create an extra merge commit in such
+	a case (equivalent to giving the `--no-ff` option from the command
+	line). When set to `only`, only such fast-forward merges are
+	allowed (equivalent to giving the `--ff-only` option from the
+	command line).
+
 merge.log::
 	In addition to branch names, populate the log message with at
 	most the specified number of one-line descriptions from the

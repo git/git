@@ -550,6 +550,15 @@ static int git_merge_config(const char *k, const char *v, void *cb)
 		if (is_bool && shortlog_len)
 			shortlog_len = DEFAULT_MERGE_LOG_LEN;
 		return 0;
+	} else if (!strcmp(k, "merge.ff")) {
+		int boolval = git_config_maybe_bool(k, v);
+		if (0 <= boolval) {
+			allow_fast_forward = boolval;
+		} else if (v && !strcmp(v, "only")) {
+			allow_fast_forward = 1;
+			fast_forward_only = 1;
+		} /* do not barf on values from future versions of git */
+		return 0;
 	} else if (!strcmp(k, "merge.defaulttoupstream")) {
 		default_to_upstream = git_config_bool(k, v);
 		return 0;

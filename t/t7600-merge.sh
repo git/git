@@ -225,12 +225,28 @@ test_expect_success 'merge c1 with c2 and c3' '
 
 test_debug 'git log --graph --decorate --oneline --all'
 
-test_expect_success 'failing merges with --ff-only' '
+test_expect_success 'merges with --ff-only' '
 	git reset --hard c1 &&
 	test_tick &&
 	test_must_fail git merge --ff-only c2 &&
 	test_must_fail git merge --ff-only c3 &&
-	test_must_fail git merge --ff-only c2 c3
+	test_must_fail git merge --ff-only c2 c3 &&
+	git reset --hard c0 &&
+	git merge c3 &&
+	verify_head $c3
+'
+
+test_expect_success 'merges with merge.ff=only' '
+	git reset --hard c1 &&
+	test_tick &&
+	test_when_finished "git config --unset merge.ff" &&
+	git config merge.ff only &&
+	test_must_fail git merge c2 &&
+	test_must_fail git merge c3 &&
+	test_must_fail git merge c2 c3 &&
+	git reset --hard c0 &&
+	git merge c3 &&
+	verify_head $c3
 '
 
 test_expect_success 'merge c0 with c1 (no-commit)' '
@@ -447,6 +463,29 @@ test_expect_success 'merge c0 with c1 (no-ff)' '
 '
 
 test_debug 'git log --graph --decorate --oneline --all'
+
+test_expect_success 'merge c0 with c1 (merge.ff=false)' '
+	git reset --hard c0 &&
+	git config merge.ff false &&
+	test_tick &&
+	git merge c1 &&
+	git config --remove-section merge &&
+	verify_merge file result.1 &&
+	verify_parents $c0 $c1
+'
+test_debug 'git log --graph --decorate --oneline --all'
+
+test_expect_success 'combine branch.master.mergeoptions with merge.ff' '
+	git reset --hard c0 &&
+	git config branch.master.mergeoptions --ff
+	git config merge.ff false
+	test_tick &&
+	git merge c1 &&
+	git config --remove-section "branch.master" &&
+	git config --remove-section "merge" &&
+	verify_merge file result.1 &&
+	verify_parents "$c0"
+'
 
 test_expect_success 'combining --squash and --no-ff is refused' '
 	test_must_fail git merge --squash --no-ff c1 &&
