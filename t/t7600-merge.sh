@@ -89,6 +89,7 @@ verify_parents () {
 		i=$(expr $i + 1) ||
 		return 1
 	done &&
+	test_must_fail git rev-parse --verify "HEAD^$i" &&
 	test_cmp parents.expected parents.actual
 }
 
