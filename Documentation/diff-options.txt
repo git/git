@@ -243,7 +243,7 @@ ifdef::git-log[]
 	For following files across renames while traversing history, see
 	`--follow`.
 endif::git-log[]
-	If `n` is specified, it is a is a threshold on the similarity
+	If `n` is specified, it is a threshold on the similarity
 	index (i.e. amount of addition/deletions compared to the
 	file's size). For example, `-M90%` means git should consider a
 	delete/add pair to be a rename if more than 90% of the file
