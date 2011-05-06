@@ -489,12 +489,12 @@ fi
 # generates completion reply with compgen
 __gitcomp ()
 {
-	local cur
-	_get_comp_words_by_ref -n =: cur
+	local cur_="$cur"
+
 	if [ $# -gt 2 ]; then
-		cur="$3"
+		cur_="$3"
 	fi
-	case "$cur" in
+	case "$cur_" in
 	--*=)
 		COMPREPLY=()
 		;;
@@ -502,7 +502,7 @@ __gitcomp ()
 		local IFS=$'\n'
 		COMPREPLY=($(compgen -P "${2-}" \
 			-W "$(__gitcomp_1 "${1-}" "${4-}")" \
-			-- "$cur"))
+			-- "$cur_"))
 		;;
 	esac
 }
@@ -551,8 +551,7 @@ __git_tags ()
 __git_refs ()
 {
 	local i is_hash=y dir="$(__gitdir "${1-}")" track="${2-}"
-	local cur format refs
-	_get_comp_words_by_ref -n =: cur
+	local format refs
 	if [ -d "$dir" ]; then
 		case "$cur" in
 		refs|refs/*)
@@ -666,19 +665,18 @@ __git_compute_merge_strategies ()
 
 __git_complete_revlist_file ()
 {
-	local pfx ls ref cur
-	_get_comp_words_by_ref -n =: cur
-	case "$cur" in
+	local pfx ls ref cur_="$cur"
+	case "$cur_" in
 	*..?*:*)
 		return
 		;;
 	?*:*)
-		ref="${cur%%:*}"
-		cur="${cur#*:}"
-		case "$cur" in
+		ref="${cur_%%:*}"
+		cur_="${cur_#*:}"
+		case "$cur_" in
 		?*/*)
-			pfx="${cur%/*}"
-			cur="${cur##*/}"
+			pfx="${cur_%/*}"
+			cur_="${cur_##*/}"
 			ls="$ref:$pfx"
 			pfx="$pfx/"
 			;;
@@ -708,17 +706,17 @@ __git_complete_revlist_file ()
 				           s,$,/,
 				       }
 				       s/^.*	//')" \
-			-- "$cur"))
+			-- "$cur_"))
 		;;
 	*...*)
-		pfx="${cur%...*}..."
-		cur="${cur#*...}"
-		__gitcomp "$(__git_refs)" "$pfx" "$cur"
+		pfx="${cur_%...*}..."
+		cur_="${cur_#*...}"
+		__gitcomp "$(__git_refs)" "$pfx" "$cur_"
 		;;
 	*..*)
-		pfx="${cur%..*}.."
-		cur="${cur#*..}"
-		__gitcomp "$(__git_refs)" "$pfx" "$cur"
+		pfx="${cur_%..*}.."
+		cur_="${cur_#*..}"
+		__gitcomp "$(__git_refs)" "$pfx" "$cur_"
 		;;
 	*)
 		__gitcomp "$(__git_refs)"
@@ -739,9 +737,7 @@ __git_complete_revlist ()
 
 __git_complete_remote_or_refspec ()
 {
-	local cur words cword
-	_get_comp_words_by_ref -n =: cur words cword
-	local cmd="${words[1]}"
+	local cur_="$cur" cmd="${words[1]}"
 	local i c=2 remote="" pfx="" lhs=1 no_complete_refspec=0
 	while [ $c -lt $cword ]; do
 		i="${words[c]}"
@@ -771,40 +767,40 @@ __git_complete_remote_or_refspec ()
 		return
 	fi
 	[ "$remote" = "." ] && remote=
-	case "$cur" in
+	case "$cur_" in
 	*:*)
 		case "$COMP_WORDBREAKS" in
 		*:*) : great ;;
-		*)   pfx="${cur%%:*}:" ;;
+		*)   pfx="${cur_%%:*}:" ;;
 		esac
-		cur="${cur#*:}"
+		cur_="${cur_#*:}"
 		lhs=0
 		;;
 	+*)
 		pfx="+"
-		cur="${cur#+}"
+		cur_="${cur_#+}"
 		;;
 	esac
 	case "$cmd" in
 	fetch)
 		if [ $lhs = 1 ]; then
-			__gitcomp "$(__git_refs2 "$remote")" "$pfx" "$cur"
+			__gitcomp "$(__git_refs2 "$remote")" "$pfx" "$cur_"
 		else
-			__gitcomp "$(__git_refs)" "$pfx" "$cur"
+			__gitcomp "$(__git_refs)" "$pfx" "$cur_"
 		fi
 		;;
 	pull)
 		if [ $lhs = 1 ]; then
-			__gitcomp "$(__git_refs "$remote")" "$pfx" "$cur"
+			__gitcomp "$(__git_refs "$remote")" "$pfx" "$cur_"
 		else
-			__gitcomp "$(__git_refs)" "$pfx" "$cur"
+			__gitcomp "$(__git_refs)" "$pfx" "$cur_"
 		fi
 		;;
 	push)
 		if [ $lhs = 1 ]; then
-			__gitcomp "$(__git_refs)" "$pfx" "$cur"
+			__gitcomp "$(__git_refs)" "$pfx" "$cur_"
 		else
-			__gitcomp "$(__git_refs "$remote")" "$pfx" "$cur"
+			__gitcomp "$(__git_refs "$remote")" "$pfx" "$cur_"
 		fi
 		;;
 	esac
@@ -812,8 +808,6 @@ __git_complete_remote_or_refspec ()
 
 __git_complete_strategy ()
 {
-	local cur prev
-	_get_comp_words_by_ref -n =: cur prev
 	__git_compute_merge_strategies
 	case "$prev" in
 	-s|--strategy)
@@ -991,8 +985,7 @@ __git_aliased_command ()
 # __git_find_on_cmdline requires 1 argument
 __git_find_on_cmdline ()
 {
-	local word subcommand c=1 words cword
-	_get_comp_words_by_ref -n =: words cword
+	local word subcommand c=1
 	while [ $c -lt $cword ]; do
 		word="${words[c]}"
 		for subcommand in $1; do
@@ -1007,8 +1000,7 @@ __git_find_on_cmdline ()
 
 __git_has_doubledash ()
 {
-	local c=1 words cword
-	_get_comp_words_by_ref -n =: words cword
+	local c=1
 	while [ $c -lt $cword ]; do
 		if [ "--" = "${words[c]}" ]; then
 			return 0
@@ -1022,8 +1014,7 @@ __git_whitespacelist="nowarn warn error error-all fix"
 
 _git_am ()
 {
-	local cur dir="$(__gitdir)"
-	_get_comp_words_by_ref -n =: cur
+	local dir="$(__gitdir)"
 	if [ -d "$dir"/rebase-apply ]; then
 		__gitcomp "--skip --continue --resolved --abort"
 		return
@@ -1047,8 +1038,6 @@ _git_am ()
 
 _git_apply ()
 {
-	local cur
-	_get_comp_words_by_ref -n =: cur
 	case "$cur" in
 	--whitespace=*)
 		__gitcomp "$__git_whitespacelist" "" "${cur##--whitespace=}"
@@ -1071,8 +1060,6 @@ _git_add ()
 {
 	__git_has_doubledash && return
 
-	local cur
-	_get_comp_words_by_ref -n =: cur
 	case "$cur" in
 	--*)
 		__gitcomp "
@@ -1086,8 +1073,6 @@ _git_add ()
 
 _git_archive ()
 {
-	local cur
-	_get_comp_words_by_ref -n =: cur
 	case "$cur" in
 	--format=*)
 		__gitcomp "$(git archive --list)" "" "${cur##--format=}"
@@ -1135,9 +1120,8 @@ _git_bisect ()
 
 _git_branch ()
 {
-	local i c=1 only_local_ref="n" has_r="n" cur words cword
+	local i c=1 only_local_ref="n" has_r="n"
 
-	_get_comp_words_by_ref -n =: cur words cword
 	while [ $c -lt $cword ]; do
 		i="${words[c]}"
 		case "$i" in
@@ -1167,8 +1151,6 @@ _git_branch ()
 
 _git_bundle ()
 {
-	local words cword
-	_get_comp_words_by_ref -n =: words cword
 	local cmd="${words[2]}"
 	case "$cword" in
 	2)
@@ -1191,8 +1173,6 @@ _git_checkout ()
 {
 	__git_has_doubledash && return
 
-	local cur
-	_get_comp_words_by_ref -n =: cur
 	case "$cur" in
 	--conflict=*)
 		__gitcomp "diff3 merge" "" "${cur##--conflict=}"
@@ -1222,8 +1202,6 @@ _git_cherry ()
 
 _git_cherry_pick ()
 {
-	local cur
-	_get_comp_words_by_ref -n =: cur
 	case "$cur" in
 	--*)
 		__gitcomp "--edit --no-commit"
@@ -1238,8 +1216,6 @@ _git_clean ()
 {
 	__git_has_doubledash && return
 
-	local cur
-	_get_comp_words_by_ref -n =: cur
 	case "$cur" in
 	--*)
 		__gitcomp "--dry-run --quiet"
@@ -1251,8 +1227,6 @@ _git_clean ()
 
 _git_clone ()
 {
-	local cur
-	_get_comp_words_by_ref -n =: cur
 	case "$cur" in
 	--*)
 		__gitcomp "
@@ -1279,8 +1253,6 @@ _git_commit ()
 {
 	__git_has_doubledash && return
 
-	local cur
-	_get_comp_words_by_ref -n =: cur
 	case "$cur" in
 	--cleanup=*)
 		__gitcomp "default strip verbatim whitespace
@@ -1315,8 +1287,6 @@ _git_commit ()
 
 _git_describe ()
 {
-	local cur
-	_get_comp_words_by_ref -n =: cur
 	case "$cur" in
 	--*)
 		__gitcomp "
@@ -1348,8 +1318,6 @@ _git_diff ()
 {
 	__git_has_doubledash && return
 
-	local cur
-	_get_comp_words_by_ref -n =: cur
 	case "$cur" in
 	--*)
 		__gitcomp "--cached --staged --pickaxe-all --pickaxe-regex
@@ -1370,8 +1338,6 @@ _git_difftool ()
 {
 	__git_has_doubledash && return
 
-	local cur
-	_get_comp_words_by_ref -n =: cur
 	case "$cur" in
 	--tool=*)
 		__gitcomp "$__git_mergetools_common kompare" "" "${cur##--tool=}"
@@ -1396,8 +1362,6 @@ __git_fetch_options="
 
 _git_fetch ()
 {
-	local cur
-	_get_comp_words_by_ref -n =: cur
 	case "$cur" in
 	--*)
 		__gitcomp "$__git_fetch_options"
@@ -1409,8 +1373,6 @@ _git_fetch ()
 
 _git_format_patch ()
 {
-	local cur
-	_get_comp_words_by_ref -n =: cur
 	case "$cur" in
 	--thread=*)
 		__gitcomp "
@@ -1442,8 +1404,6 @@ _git_format_patch ()
 
 _git_fsck ()
 {
-	local cur
-	_get_comp_words_by_ref -n =: cur
 	case "$cur" in
 	--*)
 		__gitcomp "
@@ -1458,8 +1418,6 @@ _git_fsck ()
 
 _git_gc ()
 {
-	local cur
-	_get_comp_words_by_ref -n =: cur
 	case "$cur" in
 	--*)
 		__gitcomp "--prune --aggressive"
@@ -1478,8 +1436,6 @@ _git_grep ()
 {
 	__git_has_doubledash && return
 
-	local cur
-	_get_comp_words_by_ref -n =: cur
 	case "$cur" in
 	--*)
 		__gitcomp "
@@ -1502,8 +1458,6 @@ _git_grep ()
 
 _git_help ()
 {
-	local cur
-	_get_comp_words_by_ref -n =: cur
 	case "$cur" in
 	--*)
 		__gitcomp "--all --info --man --web"
@@ -1521,8 +1475,6 @@ _git_help ()
 
 _git_init ()
 {
-	local cur
-	_get_comp_words_by_ref -n =: cur
 	case "$cur" in
 	--shared=*)
 		__gitcomp "
@@ -1542,8 +1494,6 @@ _git_ls_files ()
 {
 	__git_has_doubledash && return
 
-	local cur
-	_get_comp_words_by_ref -n =: cur
 	case "$cur" in
 	--*)
 		__gitcomp "--cached --deleted --modified --others --ignored
@@ -1604,8 +1554,6 @@ _git_log ()
 	if [ -f "$g/MERGE_HEAD" ]; then
 		merge="--merge"
 	fi
-	local cur
-	_get_comp_words_by_ref -n =: cur
 	case "$cur" in
 	--pretty=*)
 		__gitcomp "$__git_log_pretty_formats $(__git_pretty_aliases)
@@ -1659,8 +1607,6 @@ _git_merge ()
 {
 	__git_complete_strategy && return
 
-	local cur
-	_get_comp_words_by_ref -n =: cur
 	case "$cur" in
 	--*)
 		__gitcomp "$__git_merge_options"
@@ -1671,8 +1617,6 @@ _git_merge ()
 
 _git_mergetool ()
 {
-	local cur
-	_get_comp_words_by_ref -n =: cur
 	case "$cur" in
 	--tool=*)
 		__gitcomp "$__git_mergetools_common tortoisemerge" "" "${cur##--tool=}"
@@ -1693,8 +1637,6 @@ _git_merge_base ()
 
 _git_mv ()
 {
-	local cur
-	_get_comp_words_by_ref -n =: cur
 	case "$cur" in
 	--*)
 		__gitcomp "--dry-run"
@@ -1713,8 +1655,6 @@ _git_notes ()
 {
 	local subcommands='add append copy edit list prune remove show'
 	local subcommand="$(__git_find_on_cmdline "$subcommands")"
-	local cur words cword
-	_get_comp_words_by_ref -n =: cur words cword
 
 	case "$subcommand,$cur" in
 	,--*)
@@ -1764,8 +1704,6 @@ _git_pull ()
 {
 	__git_complete_strategy && return
 
-	local cur
-	_get_comp_words_by_ref -n =: cur
 	case "$cur" in
 	--*)
 		__gitcomp "
@@ -1781,8 +1719,6 @@ _git_pull ()
 
 _git_push ()
 {
-	local cur prev
-	_get_comp_words_by_ref -n =: cur prev
 	case "$prev" in
 	--repo)
 		__gitcomp "$(__git_remotes)"
@@ -1807,8 +1743,6 @@ _git_push ()
 _git_rebase ()
 {
 	local dir="$(__gitdir)"
-	local cur
-	_get_comp_words_by_ref -n =: cur
 	if [ -d "$dir"/rebase-apply ] || [ -d "$dir"/rebase-merge ]; then
 		__gitcomp "--continue --skip --abort"
 		return
@@ -1850,8 +1784,6 @@ __git_send_email_suppresscc_options="author self cc bodycc sob cccmd body all"
 
 _git_send_email ()
 {
-	local cur
-	_get_comp_words_by_ref -n =: cur
 	case "$cur" in
 	--confirm=*)
 		__gitcomp "
@@ -1893,8 +1825,6 @@ _git_stage ()
 
 __git_config_get_set_variables ()
 {
-	local words cword
-	_get_comp_words_by_ref -n =: words cword
 	local prevword word config_file= c=$cword
 	while [ $c -gt 1 ]; do
 		word="${words[c]}"
@@ -1925,8 +1855,6 @@ __git_config_get_set_variables ()
 
 _git_config ()
 {
-	local cur prev
-	_get_comp_words_by_ref -n =: cur prev
 	case "$prev" in
 	branch.*.remote)
 		__gitcomp "$(__git_remotes)"
@@ -2012,70 +1940,60 @@ _git_config ()
 		return
 		;;
 	branch.*.*)
-		local pfx="${cur%.*}."
-		cur="${cur##*.}"
-		__gitcomp "remote merge mergeoptions rebase" "$pfx" "$cur"
+		local pfx="${cur%.*}." cur_="${cur##*.}"
+		__gitcomp "remote merge mergeoptions rebase" "$pfx" "$cur_"
 		return
 		;;
 	branch.*)
-		local pfx="${cur%.*}."
-		cur="${cur#*.}"
-		__gitcomp "$(__git_heads)" "$pfx" "$cur" "."
+		local pfx="${cur%.*}." cur_="${cur#*.}"
+		__gitcomp "$(__git_heads)" "$pfx" "$cur_" "."
 		return
 		;;
 	guitool.*.*)
-		local pfx="${cur%.*}."
-		cur="${cur##*.}"
+		local pfx="${cur%.*}." cur_="${cur##*.}"
 		__gitcomp "
 			argprompt cmd confirm needsfile noconsole norescan
 			prompt revprompt revunmerged title
-			" "$pfx" "$cur"
+			" "$pfx" "$cur_"
 		return
 		;;
 	difftool.*.*)
-		local pfx="${cur%.*}."
-		cur="${cur##*.}"
-		__gitcomp "cmd path" "$pfx" "$cur"
+		local pfx="${cur%.*}." cur_="${cur##*.}"
+		__gitcomp "cmd path" "$pfx" "$cur_"
 		return
 		;;
 	man.*.*)
-		local pfx="${cur%.*}."
-		cur="${cur##*.}"
-		__gitcomp "cmd path" "$pfx" "$cur"
+		local pfx="${cur%.*}." cur_="${cur##*.}"
+		__gitcomp "cmd path" "$pfx" "$cur_"
 		return
 		;;
 	mergetool.*.*)
-		local pfx="${cur%.*}."
-		cur="${cur##*.}"
-		__gitcomp "cmd path trustExitCode" "$pfx" "$cur"
+		local pfx="${cur%.*}." cur_="${cur##*.}"
+		__gitcomp "cmd path trustExitCode" "$pfx" "$cur_"
 		return
 		;;
 	pager.*)
-		local pfx="${cur%.*}."
-		cur="${cur#*.}"
+		local pfx="${cur%.*}." cur_="${cur#*.}"
 		__git_compute_all_commands
-		__gitcomp "$__git_all_commands" "$pfx" "$cur"
+		__gitcomp "$__git_all_commands" "$pfx" "$cur_"
 		return
 		;;
 	remote.*.*)
-		local pfx="${cur%.*}."
-		cur="${cur##*.}"
+		local pfx="${cur%.*}." cur_="${cur##*.}"
 		__gitcomp "
 			url proxy fetch push mirror skipDefaultUpdate
 			receivepack uploadpack tagopt pushurl
-			" "$pfx" "$cur"
+			" "$pfx" "$cur_"
 		return
 		;;
 	remote.*)
-		local pfx="${cur%.*}."
-		cur="${cur#*.}"
-		__gitcomp "$(__git_remotes)" "$pfx" "$cur" "."
+		local pfx="${cur%.*}." cur_="${cur#*.}"
+		__gitcomp "$(__git_remotes)" "$pfx" "$cur_" "."
 		return
 		;;
 	url.*.*)
-		local pfx="${cur%.*}."
-		cur="${cur##*.}"
-		__gitcomp "insteadOf pushInsteadOf" "$pfx" "$cur"
+		local pfx="${cur%.*}." cur_="${cur##*.}"
+		__gitcomp "insteadOf pushInsteadOf" "$pfx" "$cur_"
 		return
 		;;
 	esac
@@ -2396,8 +2314,6 @@ _git_reset ()
 {
 	__git_has_doubledash && return
 
-	local cur
-	_get_comp_words_by_ref -n =: cur
 	case "$cur" in
 	--*)
 		__gitcomp "--merge --mixed --hard --soft --patch"
@@ -2409,8 +2325,6 @@ _git_reset ()
 
 _git_revert ()
 {
-	local cur
-	_get_comp_words_by_ref -n =: cur
 	case "$cur" in
 	--*)
 		__gitcomp "--edit --mainline --no-edit --no-commit --signoff"
@@ -2424,8 +2338,6 @@ _git_rm ()
 {
 	__git_has_doubledash && return
 
-	local cur
-	_get_comp_words_by_ref -n =: cur
 	case "$cur" in
 	--*)
 		__gitcomp "--cached --dry-run --ignore-unmatch --quiet"
@@ -2439,8 +2351,6 @@ _git_shortlog ()
 {
 	__git_has_doubledash && return
 
-	local cur
-	_get_comp_words_by_ref -n =: cur
 	case "$cur" in
 	--*)
 		__gitcomp "
@@ -2458,8 +2368,6 @@ _git_show ()
 {
 	__git_has_doubledash && return
 
-	local cur
-	_get_comp_words_by_ref -n =: cur
 	case "$cur" in
 	--pretty=*)
 		__gitcomp "$__git_log_pretty_formats $(__git_pretty_aliases)
@@ -2483,8 +2391,6 @@ _git_show ()
 
 _git_show_branch ()
 {
-	local cur
-	_get_comp_words_by_ref -n =: cur
 	case "$cur" in
 	--*)
 		__gitcomp "
@@ -2501,8 +2407,6 @@ _git_show_branch ()
 
 _git_stash ()
 {
-	local cur
-	_get_comp_words_by_ref -n =: cur
 	local save_opts='--keep-index --no-keep-index --quiet --patch'
 	local subcommands='save list show apply clear drop pop create branch'
 	local subcommand="$(__git_find_on_cmdline "$subcommands")"
@@ -2547,8 +2451,6 @@ _git_submodule ()
 
 	local subcommands="add status init update summary foreach sync"
 	if [ -z "$(__git_find_on_cmdline "$subcommands")" ]; then
-		local cur
-		_get_comp_words_by_ref -n =: cur
 		case "$cur" in
 		--*)
 			__gitcomp "--quiet --cached"
@@ -2592,8 +2494,6 @@ _git_svn ()
 			--edit --rmdir --find-copies-harder --copy-similarity=
 			"
 
-		local cur
-		_get_comp_words_by_ref -n =: cur
 		case "$subcommand,$cur" in
 		fetch,--*)
 			__gitcomp "--revision= --fetch-all $fc_opts"
@@ -2665,8 +2565,6 @@ _git_svn ()
 _git_tag ()
 {
 	local i c=1 f=0
-	local words cword prev
-	_get_comp_words_by_ref -n =: words cword prev
 	while [ $c -lt $cword ]; do
 		i="${words[c]}"
 		case "$i" in
@@ -2712,8 +2610,8 @@ _git ()
 		setopt KSH_TYPESET
 	fi
 
-	local cur words cword
-	_get_comp_words_by_ref -n =: cur words cword
+	local cur words cword prev
+	_get_comp_words_by_ref -n =: cur words cword prev
 	while [ $c -lt $cword ]; do
 		i="${words[c]}"
 		case "$i" in
@@ -2763,15 +2661,16 @@ _gitk ()
 		setopt KSH_TYPESET
 	fi
 
+	local cur words cword prev
+	_get_comp_words_by_ref -n =: cur words cword prev
+
 	__git_has_doubledash && return
 
-	local cur
 	local g="$(__gitdir)"
 	local merge=""
 	if [ -f "$g/MERGE_HEAD" ]; then
 		merge="--merge"
 	fi
-	_get_comp_words_by_ref -n =: cur
 	case "$cur" in
 	--*)
 		__gitcomp "
