@@ -41,7 +41,8 @@ The content to be added can be specified in several ways:
 
 5. by using the --interactive switch with the 'commit' command to decide one
    by one which files should be part of the commit, before finalizing the
-   operation.  Currently, this is done by invoking 'git add --interactive'.
+   operation.  Currently, this is done by invoking 'git add --interactive'
+   on a temporary index.
 
 The `--dry-run` option can be used to obtain a
 summary of what is included by any of the above for the next

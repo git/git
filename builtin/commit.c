@@ -336,24 +336,44 @@ static char *prepare_index(int argc, const char **argv, const char *prefix, int 
 	int fd;
 	struct string_list partial;
 	const char **pathspec = NULL;
+	char *old_index_env = NULL;
 	int refresh_flags = REFRESH_QUIET;
 
 	if (is_status)
 		refresh_flags |= REFRESH_UNMERGED;
-	if (interactive) {
-		if (interactive_add(argc, argv, prefix) != 0)
-			die(_("interactive add failed"));
-		if (read_cache_preload(NULL) < 0)
-			die(_("index file corrupt"));
-		commit_style = COMMIT_AS_IS;
-		return get_index_file();
-	}
 
 	if (*argv)
 		pathspec = get_pathspec(prefix, argv);
 
 	if (read_cache_preload(pathspec) < 0)
 		die(_("index file corrupt"));
+
+	if (interactive) {
+		fd = hold_locked_index(&index_lock, 1);
+
+		refresh_cache_or_die(refresh_flags);
+
+		if (write_cache(fd, active_cache, active_nr) ||
+		    close_lock_file(&index_lock))
+			die(_("unable to create temporary index"));
+
+		old_index_env = getenv(INDEX_ENVIRONMENT);
+		setenv(INDEX_ENVIRONMENT, index_lock.filename, 1);
+
+		if (interactive_add(argc, argv, prefix) != 0)
+			die(_("interactive add failed"));
+
+		if (old_index_env && *old_index_env)
+			setenv(INDEX_ENVIRONMENT, old_index_env, 1);
+		else
+			unsetenv(INDEX_ENVIRONMENT);
+
+		discard_cache();
+		read_cache_from(index_lock.filename);
+
+		commit_style = COMMIT_NORMAL;
+		return index_lock.filename;
+	}
 
 	/*
 	 * Non partial, non as-is commit.
