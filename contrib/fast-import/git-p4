@@ -690,10 +690,15 @@ class P4Submit(Command, P4UserMap):
     def modifyChangelistUser(self, changelist, newUser):
         # fixup the user field of a changelist after it has been submitted.
         changes = p4CmdList("change -o %s" % changelist)
-        for c in changes:
-            if c.has_key('User'):
-                c['User'] = newUser
-        input = marshal.dumps(changes[0])
+        if len(changes) != 1:
+            die("Bad output from p4 change modifying %s to user %s" %
+                (changelist, newUser))
+
+        c = changes[0]
+        if c['User'] == newUser: return   # nothing to do
+        c['User'] = newUser
+        input = marshal.dumps(c)
+
         result = p4CmdList("change -f -i", stdin=input)
         for r in result:
             if r.has_key('code'):
@@ -707,7 +712,7 @@ class P4Submit(Command, P4UserMap):
     def canChangeChangelists(self):
         # check to see if we have p4 admin or super-user permissions, either of
         # which are required to modify changelists.
-        results = p4CmdList("-G protects %s" % self.depotPath)
+        results = p4CmdList("protects %s" % self.depotPath)
         for r in results:
             if r.has_key('perm'):
                 if r['perm'] == 'admin':
@@ -865,6 +870,10 @@ class P4Submit(Command, P4UserMap):
 
         if self.interactive:
             submitTemplate = self.prepareLogMessage(template, logMessage)
+
+            if self.preserveUser:
+               submitTemplate = submitTemplate + ("\n######## Actual user %s, modified after commit\n" % p4User)
+
             if os.environ.has_key("P4DIFF"):
                 del(os.environ["P4DIFF"])
             diff = ""
