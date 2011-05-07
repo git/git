@@ -41,11 +41,12 @@ test_expect_success \
 	"echo King of the bongo >file &&
 	test_must_fail git commit -m foo -a file"
 
-test_expect_success PERL 'cannot use paths with --interactive' '
+test_expect_success PERL 'can use paths with --interactive' '
 	echo bong-o-bong >file &&
 	# 2: update, 1:st path, that is all, 7: quit
 	( echo 2; echo 1; echo; echo 7 ) |
-	test_must_fail git commit -m foo --interactive file
+	git commit -m foo --interactive file &&
+	git reset --hard HEAD^
 '
 
 test_expect_success \

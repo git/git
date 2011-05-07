@@ -1084,8 +1084,6 @@ static int parse_and_validate_options(int argc, const char *argv[],
 
 	if (all && argc > 0)
 		die(_("Paths with -a does not make sense."));
-	else if (interactive && argc > 0)
-		die(_("Paths with --interactive does not make sense."));
 
 	if (null_termination && status_format == STATUS_FORMAT_LONG)
 		status_format = STATUS_FORMAT_PORCELAIN;
