@@ -12,74 +12,6 @@ static const char * const rerere_usage[] = {
 	NULL,
 };
 
-/* these values are days */
-static int cutoff_noresolve = 15;
-static int cutoff_resolve = 60;
-
-static time_t rerere_created_at(const char *name)
-{
-	struct stat st;
-	return stat(rerere_path(name, "preimage"), &st) ? (time_t) 0 : st.st_mtime;
-}
-
-static time_t rerere_last_used_at(const char *name)
-{
-	struct stat st;
-	return stat(rerere_path(name, "postimage"), &st) ? (time_t) 0 : st.st_mtime;
-}
-
-static void unlink_rr_item(const char *name)
-{
-	unlink(rerere_path(name, "thisimage"));
-	unlink(rerere_path(name, "preimage"));
-	unlink(rerere_path(name, "postimage"));
-	rmdir(git_path("rr-cache/%s", name));
-}
-
-static int git_rerere_gc_config(const char *var, const char *value, void *cb)
-{
-	if (!strcmp(var, "gc.rerereresolved"))
-		cutoff_resolve = git_config_int(var, value);
-	else if (!strcmp(var, "gc.rerereunresolved"))
-		cutoff_noresolve = git_config_int(var, value);
-	else
-		return git_default_config(var, value, cb);
-	return 0;
-}
-
-static void garbage_collect(struct string_list *rr)
-{
-	struct string_list to_remove = STRING_LIST_INIT_DUP;
-	DIR *dir;
-	struct dirent *e;
-	int i, cutoff;
-	time_t now = time(NULL), then;
-
-	git_config(git_rerere_gc_config, NULL);
-	dir = opendir(git_path("rr-cache"));
-	if (!dir)
-		die_errno("unable to open rr-cache directory");
-	while ((e = readdir(dir))) {
-		if (is_dot_or_dotdot(e->d_name))
-			continue;
-
-		then = rerere_last_used_at(e->d_name);
-		if (then) {
-			cutoff = cutoff_resolve;
-		} else {
-			then = rerere_created_at(e->d_name);
-			if (!then)
-				continue;
-			cutoff = cutoff_noresolve;
-		}
-		if (then < now - cutoff * 86400)
-			string_list_append(&to_remove, e->d_name);
-	}
-	for (i = 0; i < to_remove.nr; i++)
-		unlink_rr_item(to_remove.items[i].string);
-	string_list_clear(&to_remove, 0);
-}
-
 static int outf(void *dummy, mmbuffer_t *ptr, int nbuf)
 {
 	int i;
@@ -148,14 +80,9 @@ int cmd_rerere(int argc, const char **argv, const char *prefix)
 		return 0;
 
 	if (!strcmp(argv[0], "clear")) {
-		for (i = 0; i < merge_rr.nr; i++) {
-			const char *name = (const char *)merge_rr.items[i].util;
-			if (!has_rerere_resolution(name))
-				unlink_rr_item(name);
-		}
-		unlink_or_warn(git_path("MERGE_RR"));
+		rerere_clear(&merge_rr);
 	} else if (!strcmp(argv[0], "gc"))
-		garbage_collect(&merge_rr);
+		rerere_gc(&merge_rr);
 	else if (!strcmp(argv[0], "status"))
 		for (i = 0; i < merge_rr.nr; i++)
 			printf("%s\n", merge_rr.items[i].string);
