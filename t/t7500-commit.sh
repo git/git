@@ -123,6 +123,20 @@ test_expect_success 'commit message from file should override template' '
 	commit_msg_is "standard input msg"
 '
 
+cat >"$TEMPLATE" <<\EOF
+
+
+### template
+
+EOF
+test_expect_success 'commit message from template with whitespace issue' '
+	echo "content galore" >>foo &&
+	git add foo &&
+	GIT_EDITOR="$TEST_DIRECTORY"/t7500/add-whitespaced-content git commit \
+		--template "$TEMPLATE" &&
+	commit_msg_is "commit message"
+'
+
 test_expect_success 'using alternate GIT_INDEX_FILE (1)' '
 
 	cp .git/index saved-index &&
