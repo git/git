@@ -324,6 +324,9 @@ top `/`;;
 Currently only the slash `/` is recognized as the "magic signature",
 but it is envisioned that we will support more types of magic in later
 versions of git.
++
+A pathspec with only a colon means "there is no pathspec". This form
+should not be combined with other pathspec.
 
 [[def_parent]]parent::
 	A <<def_commit_object,commit object>> contains a (possibly empty) list
