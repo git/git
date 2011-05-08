@@ -311,7 +311,7 @@ test_expect_success PERL 'split hunk setup' '
 	done >test
 '
 
-test_expect_failure PERL 'split hunk "add -p (edit)"' '
+test_expect_success PERL 'split hunk "add -p (edit)"' '
 	# Split, say Edit and do nothing.  Then:
 	#
 	# 1. Broken version results in a patch that does not apply and
