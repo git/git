@@ -2619,22 +2619,29 @@ static int index_mem(unsigned char *sha1, void *buf, size_t size,
 	return ret;
 }
 
+static int index_pipe(unsigned char *sha1, int fd, enum object_type type,
+		      const char *path, unsigned flags)
+{
+	struct strbuf sbuf = STRBUF_INIT;
+	int ret;
+
+	if (strbuf_read(&sbuf, fd, 4096) >= 0)
+		ret = index_mem(sha1, sbuf.buf, sbuf.len, type,	path, flags);
+	else
+		ret = -1;
+	strbuf_release(&sbuf);
+	return ret;
+}
+
 #define SMALL_FILE_SIZE (32*1024)
 
-int index_fd(unsigned char *sha1, int fd, struct stat *st,
-	     enum object_type type, const char *path, unsigned flags)
+static int index_core(unsigned char *sha1, int fd, size_t size,
+		      enum object_type type, const char *path,
+		      unsigned flags)
 {
 	int ret;
-	size_t size = xsize_t(st->st_size);
 
-	if (!S_ISREG(st->st_mode)) {
-		struct strbuf sbuf = STRBUF_INIT;
-		if (strbuf_read(&sbuf, fd, 4096) >= 0)
-			ret = index_mem(sha1, sbuf.buf, sbuf.len, type,	path, flags);
-		else
-			ret = -1;
-		strbuf_release(&sbuf);
-	} else if (!size) {
+	if (!size) {
 		ret = index_mem(sha1, NULL, size, type, path, flags);
 	} else if (size <= SMALL_FILE_SIZE) {
 		char *buf = xmalloc(size);
@@ -2648,6 +2655,19 @@ int index_fd(unsigned char *sha1, int fd, struct stat *st,
 		ret = index_mem(sha1, buf, size, type, path, flags);
 		munmap(buf, size);
 	}
+	return ret;
+}
+
+int index_fd(unsigned char *sha1, int fd, struct stat *st,
+	     enum object_type type, const char *path, unsigned flags)
+{
+	int ret;
+	size_t size = xsize_t(st->st_size);
+
+	if (!S_ISREG(st->st_mode))
+		ret = index_pipe(sha1, fd, type, path, flags);
+	else
+		ret = index_core(sha1, fd, size, type, path, flags);
 	close(fd);
 	return ret;
 }
