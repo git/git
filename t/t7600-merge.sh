@@ -35,6 +35,7 @@ printf '%s\n' 1 2 3 4 5 6 7 8 '9 X' >file.9
 printf '%s\n' '1 X' 2 3 4 5 6 7 8 9 >result.1
 printf '%s\n' '1 X' 2 3 4 '5 X' 6 7 8 9 >result.1-5
 printf '%s\n' '1 X' 2 3 4 '5 X' 6 7 8 '9 X' >result.1-5-9
+>empty
 
 create_merge_msgs () {
 	echo "Merge commit 'c2'" >msg.1-5 &&
@@ -224,12 +225,28 @@ test_expect_success 'merge c1 with c2 and c3' '
 
 test_debug 'git log --graph --decorate --oneline --all'
 
-test_expect_success 'failing merges with --ff-only' '
+test_expect_success 'merges with --ff-only' '
 	git reset --hard c1 &&
 	test_tick &&
 	test_must_fail git merge --ff-only c2 &&
 	test_must_fail git merge --ff-only c3 &&
-	test_must_fail git merge --ff-only c2 c3
+	test_must_fail git merge --ff-only c2 c3 &&
+	git reset --hard c0 &&
+	git merge c3 &&
+	verify_head $c3
+'
+
+test_expect_success 'merges with merge.ff=only' '
+	git reset --hard c1 &&
+	test_tick &&
+	test_when_finished "git config --unset merge.ff" &&
+	git config merge.ff only &&
+	test_must_fail git merge c2 &&
+	test_must_fail git merge c3 &&
+	test_must_fail git merge c2 c3 &&
+	git reset --hard c0 &&
+	git merge c3 &&
+	verify_head $c3
 '
 
 test_expect_success 'merge c0 with c1 (no-commit)' '
@@ -338,10 +355,11 @@ test_expect_success 'merge c1 with c2 (log in config)' '
 '
 
 test_expect_success 'merge c1 with c2 (log in config gets overridden)' '
-	(
-		git config --remove-section branch.master
-		git config --remove-section merge
-	)
+	test_when_finished "git config --remove-section branch.master" &&
+	test_when_finished "git config --remove-section merge" &&
+	test_might_fail git config --remove-section branch.master &&
+	test_might_fail git config --remove-section merge &&
+
 	git reset --hard c1 &&
 	git merge c2 &&
 	git show -s --pretty=tformat:%s%n%b >expect &&
@@ -446,7 +464,41 @@ test_expect_success 'merge c0 with c1 (no-ff)' '
 
 test_debug 'git log --graph --decorate --oneline --all'
 
+test_expect_success 'merge c0 with c1 (merge.ff=false)' '
+	git reset --hard c0 &&
+	git config merge.ff false &&
+	test_tick &&
+	git merge c1 &&
+	git config --remove-section merge &&
+	verify_merge file result.1 &&
+	verify_parents $c0 $c1
+'
+test_debug 'git log --graph --decorate --oneline --all'
+
+test_expect_success 'combine branch.master.mergeoptions with merge.ff' '
+	git reset --hard c0 &&
+	git config branch.master.mergeoptions --ff &&
+	git config merge.ff false &&
+	test_tick &&
+	git merge c1 &&
+	git config --remove-section "branch.master" &&
+	git config --remove-section "merge" &&
+	verify_merge file result.1 &&
+	verify_parents "$c0"
+'
+
+test_expect_success 'tolerate unknown values for merge.ff' '
+	git reset --hard c0 &&
+	git config merge.ff something-new &&
+	test_tick &&
+	git merge c1 2>message &&
+	git config --remove-section "merge" &&
+	verify_head "$c1" &&
+	test_cmp empty message
+'
+
 test_expect_success 'combining --squash and --no-ff is refused' '
+	git reset --hard c0 &&
 	test_must_fail git merge --squash --no-ff c1 &&
 	test_must_fail git merge --no-ff --squash c1
 '
