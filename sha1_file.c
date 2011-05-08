@@ -2581,10 +2581,11 @@ static void check_tag(const void *buf, size_t size)
 }
 
 static int index_mem(unsigned char *sha1, void *buf, size_t size,
-		     int write_object, enum object_type type,
-		     const char *path, int format_check)
+		     enum object_type type,
+		     const char *path, unsigned flags)
 {
 	int ret, re_allocated = 0;
+	int write_object = flags & HASH_WRITE_OBJECT;
 
 	if (!type)
 		type = OBJ_BLOB;
@@ -2600,7 +2601,7 @@ static int index_mem(unsigned char *sha1, void *buf, size_t size,
 			re_allocated = 1;
 		}
 	}
-	if (format_check) {
+	if (flags & HASH_FORMAT_CHECK) {
 		if (type == OBJ_TREE)
 			check_tree(buf, size);
 		if (type == OBJ_COMMIT)
@@ -2620,8 +2621,8 @@ static int index_mem(unsigned char *sha1, void *buf, size_t size,
 
 #define SMALL_FILE_SIZE (32*1024)
 
-int index_fd(unsigned char *sha1, int fd, struct stat *st, int write_object,
-	     enum object_type type, const char *path, int format_check)
+int index_fd(unsigned char *sha1, int fd, struct stat *st,
+	     enum object_type type, const char *path, unsigned flags)
 {
 	int ret;
 	size_t size = xsize_t(st->st_size);
@@ -2629,33 +2630,29 @@ int index_fd(unsigned char *sha1, int fd, struct stat *st, int write_object,
 	if (!S_ISREG(st->st_mode)) {
 		struct strbuf sbuf = STRBUF_INIT;
 		if (strbuf_read(&sbuf, fd, 4096) >= 0)
-			ret = index_mem(sha1, sbuf.buf, sbuf.len, write_object,
-					type, path, format_check);
+			ret = index_mem(sha1, sbuf.buf, sbuf.len, type,	path, flags);
 		else
 			ret = -1;
 		strbuf_release(&sbuf);
 	} else if (!size) {
-		ret = index_mem(sha1, NULL, size, write_object, type, path,
-				format_check);
+		ret = index_mem(sha1, NULL, size, type, path, flags);
 	} else if (size <= SMALL_FILE_SIZE) {
 		char *buf = xmalloc(size);
 		if (size == read_in_full(fd, buf, size))
-			ret = index_mem(sha1, buf, size, write_object, type,
-					path, format_check);
+			ret = index_mem(sha1, buf, size, type, path, flags);
 		else
 			ret = error("short read %s", strerror(errno));
 		free(buf);
 	} else {
 		void *buf = xmmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
-		ret = index_mem(sha1, buf, size, write_object, type, path,
-				format_check);
+		ret = index_mem(sha1, buf, size, type, path, flags);
 		munmap(buf, size);
 	}
 	close(fd);
 	return ret;
 }
 
-int index_path(unsigned char *sha1, const char *path, struct stat *st, int write_object)
+int index_path(unsigned char *sha1, const char *path, struct stat *st, unsigned flags)
 {
 	int fd;
 	struct strbuf sb = STRBUF_INIT;
@@ -2666,7 +2663,7 @@ int index_path(unsigned char *sha1, const char *path, struct stat *st, int write
 		if (fd < 0)
 			return error("open(\"%s\"): %s", path,
 				     strerror(errno));
-		if (index_fd(sha1, fd, st, write_object, OBJ_BLOB, path, 0) < 0)
+		if (index_fd(sha1, fd, st, OBJ_BLOB, path, flags) < 0)
 			return error("%s: failed to insert into database",
 				     path);
 		break;
@@ -2676,7 +2673,7 @@ int index_path(unsigned char *sha1, const char *path, struct stat *st, int write
 			return error("readlink(\"%s\"): %s", path,
 			             errstr);
 		}
-		if (!write_object)
+		if (!(flags & HASH_WRITE_OBJECT))
 			hash_sha1_file(sb.buf, sb.len, blob_type, sha1);
 		else if (write_sha1_file(sb.buf, sb.len, blob_type, sha1))
 			return error("%s: failed to insert into database",
