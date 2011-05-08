@@ -412,6 +412,19 @@ static int regmatch(const regex_t *preg, char *line, char *eol,
 	return regexec(preg, line, 1, match, eflags);
 }
 
+static int patmatch(struct grep_pat *p, char *line, char *eol,
+		    regmatch_t *match, int eflags)
+{
+	int hit;
+
+	if (p->fixed)
+		hit = !fixmatch(p, line, eol, match);
+	else
+		hit = !regmatch(&p->regexp, line, eol, match, eflags);
+
+	return hit;
+}
+
 static int strip_timestamp(char *bol, char **eol_p)
 {
 	char *eol = *eol_p;
@@ -461,10 +474,7 @@ static int match_one_pattern(struct grep_pat *p, char *bol, char *eol,
 	}
 
  again:
-	if (p->fixed)
-		hit = !fixmatch(p, bol, eol, pmatch);
-	else
-		hit = !regmatch(&p->regexp, bol, eol, pmatch, eflags);
+	hit = patmatch(p, bol, eol, pmatch, eflags);
 
 	if (hit && p->word_regexp) {
 		if ((pmatch[0].rm_so < 0) ||
@@ -791,10 +801,7 @@ static int look_ahead(struct grep_opt *opt,
 		int hit;
 		regmatch_t m;
 
-		if (p->fixed)
-			hit = !fixmatch(p, bol, bol + *left_p, &m);
-		else
-			hit = !regmatch(&p->regexp, bol, bol + *left_p, &m, 0);
+		hit = patmatch(p, bol, bol + *left_p, &m, 0);
 		if (!hit || m.rm_so < 0 || m.rm_eo < 0)
 			continue;
 		if (earliest < 0 || m.rm_so < earliest)
