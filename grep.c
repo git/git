@@ -898,7 +898,7 @@ static int grep_buffer_1(struct grep_opt *opt, const char *name,
 		int hit;
 
 		/*
-		 * look_ahead() skips quicly to the line that possibly
+		 * look_ahead() skips quickly to the line that possibly
 		 * has the next hit; don't call it if we need to do
 		 * something more than just skipping the current line
 		 * in response to an unmatch for the current line.  E.g.
