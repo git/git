@@ -606,7 +606,7 @@ enum eol {
 #endif
 };
 
-extern enum eol eol;
+extern enum eol core_eol;
 
 enum branch_track {
 	BRANCH_TRACK_UNSPECIFIED = -1,

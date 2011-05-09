@@ -113,10 +113,10 @@ static enum eol determine_output_conversion(enum action action)
 			return EOL_CRLF;
 		else if (auto_crlf == AUTO_CRLF_INPUT)
 			return EOL_LF;
-		else if (eol == EOL_UNSET)
+		else if (core_eol == EOL_UNSET)
 			return EOL_NATIVE;
 	}
-	return eol;
+	return core_eol;
 }
 
 static void check_safe_crlf(const char *path, enum action action,
