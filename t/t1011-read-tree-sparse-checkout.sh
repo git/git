@@ -106,6 +106,47 @@ test_expect_success 'match directories without trailing slash' '
 	test -f sub/added
 '
 
+test_expect_success 'match directories with negated patterns' '
+	cat >expected.swt-negation <<\EOF &&
+S init.t
+S sub/added
+H sub/addedtoo
+S subsub/added
+EOF
+
+	cat >.git/info/sparse-checkout <<\EOF &&
+sub
+!sub/added
+EOF
+	git read-tree -m -u HEAD &&
+	git ls-files -t >result &&
+	test_cmp expected.swt-negation result &&
+	test ! -f init.t &&
+	test ! -f sub/added &&
+	test -f sub/addedtoo
+'
+
+test_expect_success 'match directories with negated patterns (2)' '
+	cat >expected.swt-negation2 <<\EOF &&
+H init.t
+H sub/added
+S sub/addedtoo
+H subsub/added
+EOF
+
+	cat >.git/info/sparse-checkout <<\EOF &&
+/*
+!sub
+sub/added
+EOF
+	git read-tree -m -u HEAD &&
+	git ls-files -t >result &&
+	test_cmp expected.swt-negation2 result &&
+	test -f init.t &&
+	test -f sub/added &&
+	test ! -f sub/addedtoo
+'
+
 test_expect_success 'match directory pattern' '
 	echo "s?b" >.git/info/sparse-checkout &&
 	git read-tree -m -u HEAD &&
