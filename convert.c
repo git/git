@@ -703,12 +703,19 @@ static enum crlf_action input_crlf_action(enum crlf_action text_attr, enum eol e
 	return text_attr;
 }
 
+struct conv_attrs {
+	struct convert_driver *drv;
+	enum crlf_action crlf_action;
+	enum eol eol_attr;
+	int ident;
+};
+
 static const char *conv_attr_name[] = {
 	"crlf", "ident", "filter", "eol", "text",
 };
 #define NUM_CONV_ATTRS ARRAY_SIZE(conv_attr_name)
 
-static void setup_convert_check(struct git_attr_check *check)
+static void convert_attrs(struct conv_attrs *ca, const char *path)
 {
 	int i;
 	static struct git_attr_check ccheck[NUM_CONV_ATTRS];
@@ -719,70 +726,60 @@ static void setup_convert_check(struct git_attr_check *check)
 		user_convert_tail = &user_convert;
 		git_config(read_convert_config, NULL);
 	}
-	for (i = 0; i < NUM_CONV_ATTRS; i++)
-		check[i].attr = ccheck[i].attr;
+
+	if (!git_checkattr(path, NUM_CONV_ATTRS, ccheck)) {
+		ca->crlf_action = git_path_check_crlf(path, ccheck + 4);
+		if (ca->crlf_action == CRLF_GUESS)
+			ca->crlf_action = git_path_check_crlf(path, ccheck + 0);
+		ca->ident = git_path_check_ident(path, ccheck + 1);
+		ca->drv = git_path_check_convert(path, ccheck + 2);
+		ca->eol_attr = git_path_check_eol(path, ccheck + 3);
+	} else {
+		ca->drv = NULL;
+		ca->crlf_action = CRLF_GUESS;
+		ca->eol_attr = EOL_UNSET;
+		ca->ident = 0;
+	}
 }
 
 int convert_to_git(const char *path, const char *src, size_t len,
                    struct strbuf *dst, enum safe_crlf checksafe)
 {
-	struct git_attr_check check[NUM_CONV_ATTRS];
-	enum crlf_action crlf_action = CRLF_GUESS;
-	enum eol eol_attr = EOL_UNSET;
-	int ident = 0, ret = 0;
+	int ret = 0;
 	const char *filter = NULL;
+	struct conv_attrs ca;
 
-	setup_convert_check(check);
-	if (!git_checkattr(path, ARRAY_SIZE(check), check)) {
-		struct convert_driver *drv;
-		crlf_action = git_path_check_crlf(path, check + 4);
-		if (crlf_action == CRLF_GUESS)
-			crlf_action = git_path_check_crlf(path, check + 0);
-		ident = git_path_check_ident(path, check + 1);
-		drv = git_path_check_convert(path, check + 2);
-		eol_attr = git_path_check_eol(path, check + 3);
-		if (drv && drv->clean)
-			filter = drv->clean;
-	}
+	convert_attrs(&ca, path);
+	if (ca.drv)
+		filter = ca.drv->clean;
 
 	ret |= apply_filter(path, src, len, dst, filter);
 	if (ret) {
 		src = dst->buf;
 		len = dst->len;
 	}
-	crlf_action = input_crlf_action(crlf_action, eol_attr);
-	ret |= crlf_to_git(path, src, len, dst, crlf_action, checksafe);
+	ca.crlf_action = input_crlf_action(ca.crlf_action, ca.eol_attr);
+	ret |= crlf_to_git(path, src, len, dst, ca.crlf_action, checksafe);
 	if (ret) {
 		src = dst->buf;
 		len = dst->len;
 	}
-	return ret | ident_to_git(path, src, len, dst, ident);
+	return ret | ident_to_git(path, src, len, dst, ca.ident);
 }
 
 static int convert_to_working_tree_internal(const char *path, const char *src,
 					    size_t len, struct strbuf *dst,
 					    int normalizing)
 {
-	struct git_attr_check check[NUM_CONV_ATTRS];
-	enum crlf_action crlf_action = CRLF_GUESS;
-	enum eol eol_attr = EOL_UNSET;
-	int ident = 0, ret = 0;
+	int ret = 0;
 	const char *filter = NULL;
+	struct conv_attrs ca;
 
-	setup_convert_check(check);
-	if (!git_checkattr(path, ARRAY_SIZE(check), check)) {
-		struct convert_driver *drv;
-		crlf_action = git_path_check_crlf(path, check + 4);
-		if (crlf_action == CRLF_GUESS)
-			crlf_action = git_path_check_crlf(path, check + 0);
-		ident = git_path_check_ident(path, check + 1);
-		drv = git_path_check_convert(path, check + 2);
-		eol_attr = git_path_check_eol(path, check + 3);
-		if (drv && drv->smudge)
-			filter = drv->smudge;
-	}
+	convert_attrs(&ca, path);
+	if (ca.drv)
+		filter = ca.drv->smudge;
 
-	ret |= ident_to_worktree(path, src, len, dst, ident);
+	ret |= ident_to_worktree(path, src, len, dst, ca.ident);
 	if (ret) {
 		src = dst->buf;
 		len = dst->len;
@@ -792,8 +789,8 @@ static int convert_to_working_tree_internal(const char *path, const char *src,
 	 * is a smudge filter.  The filter might expect CRLFs.
 	 */
 	if (filter || !normalizing) {
-		crlf_action = input_crlf_action(crlf_action, eol_attr);
-		ret |= crlf_to_worktree(path, src, len, dst, crlf_action);
+		ca.crlf_action = input_crlf_action(ca.crlf_action, ca.eol_attr);
+		ret |= crlf_to_worktree(path, src, len, dst, ca.crlf_action);
 		if (ret) {
 			src = dst->buf;
 			len = dst->len;
