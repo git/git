@@ -59,6 +59,21 @@ struct grep_opt *grep_opt_dup(const struct grep_opt *opt)
 	return ret;
 }
 
+static NORETURN void compile_regexp_failed(const struct grep_pat *p,
+		const char *error)
+{
+	char where[1024];
+
+	if (p->no)
+		sprintf(where, "In '%s' at %d, ", p->origin, p->no);
+	else if (p->origin)
+		sprintf(where, "%s, ", p->origin);
+	else
+		where[0] = 0;
+
+	die("%s'%s': %s", where, p->pattern, error);
+}
+
 static void compile_regexp(struct grep_pat *p, struct grep_opt *opt)
 {
 	int err;
@@ -73,17 +88,9 @@ static void compile_regexp(struct grep_pat *p, struct grep_opt *opt)
 	err = regcomp(&p->regexp, p->pattern, opt->regflags);
 	if (err) {
 		char errbuf[1024];
-		char where[1024];
-		if (p->no)
-			sprintf(where, "In '%s' at %d, ",
-				p->origin, p->no);
-		else if (p->origin)
-			sprintf(where, "%s, ", p->origin);
-		else
-			where[0] = 0;
 		regerror(err, &p->regexp, errbuf, 1024);
 		regfree(&p->regexp);
-		die("%s'%s': %s", where, p->pattern, errbuf);
+		compile_regexp_failed(p, errbuf);
 	}
 }
 
