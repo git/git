@@ -26,6 +26,12 @@ test_expect_success setup '
 		echo foo mmap bar_mmap
 		echo foo_mmap bar mmap baz
 	} >file &&
+	{
+		echo Hello world
+		echo HeLLo world
+		echo Hello_world
+		echo HeLLo_world
+	} >hello_world &&
 	echo vvv >v &&
 	echo ww w >w &&
 	echo x x xx x >x &&
@@ -596,6 +602,38 @@ double-dash:--
 EOF
 test_expect_success 'grep -e -- -- path' '
 	git grep -e -- -- double-dash >actual &&
+	test_cmp expected actual
+'
+
+cat >expected <<EOF
+hello.c:int main(int argc, const char **argv)
+hello.c:	printf("Hello world.\n");
+EOF
+
+test_expect_success LIBPCRE 'grep --perl-regexp pattern' '
+	git grep --perl-regexp "\p{Ps}.*?\p{Pe}" hello.c >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success LIBPCRE 'grep -P pattern' '
+	git grep -P "\p{Ps}.*?\p{Pe}" hello.c >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success LIBPCRE 'grep -P -i pattern' '
+	{
+		echo "hello.c:	printf(\"Hello world.\n\");"
+	} >expected &&
+	git grep -P -i "PRINTF\([^\d]+\)" hello.c >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success LIBPCRE 'grep -P -w pattern' '
+	{
+		echo "hello_world:Hello world"
+		echo "hello_world:HeLLo world"
+	} >expected &&
+	git grep -P -w "He((?i)ll)o" hello_world >actual &&
 	test_cmp expected actual
 '
 

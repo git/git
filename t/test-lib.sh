@@ -1067,6 +1067,7 @@ esac
 
 test -z "$NO_PERL" && test_set_prereq PERL
 test -z "$NO_PYTHON" && test_set_prereq PYTHON
+test -n "$USE_LIBPCRE" && test_set_prereq LIBPCRE
 
 # Can we rely on git's output in the C locale?
 if test -n "$GETTEXT_POISON"
