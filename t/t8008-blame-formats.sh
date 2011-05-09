@@ -68,4 +68,23 @@ test_expect_success 'blame --porcelain output' '
 	test_cmp expect actual
 '
 
+cat >expect <<EOF
+$ID1 1 1 1
+$COMMIT1
+	a
+$ID2 2 2 3
+$COMMIT2
+	b
+$ID2 3 3
+$COMMIT2
+	c
+$ID2 4 4
+$COMMIT2
+	d
+EOF
+test_expect_success 'blame --line-porcelain output' '
+	git blame --line-porcelain file >actual &&
+	test_cmp expect actual
+'
+
 test_done

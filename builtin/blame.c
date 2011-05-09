@@ -1619,6 +1619,7 @@ static const char *format_time(unsigned long time, const char *tz_str,
 #define OUTPUT_SHOW_SCORE      0100
 #define OUTPUT_NO_AUTHOR       0200
 #define OUTPUT_SHOW_EMAIL	0400
+#define OUTPUT_LINE_PORCELAIN 01000
 
 static void emit_porcelain_details(struct origin *suspect, int repeat)
 {
@@ -1630,6 +1631,7 @@ static void emit_porcelain_details(struct origin *suspect, int repeat)
 static void emit_porcelain(struct scoreboard *sb, struct blame_entry *ent,
 			   int opt)
 {
+	int repeat = opt & OUTPUT_LINE_PORCELAIN;
 	int cnt;
 	const char *cp;
 	struct origin *suspect = ent->suspect;
@@ -1642,15 +1644,18 @@ static void emit_porcelain(struct scoreboard *sb, struct blame_entry *ent,
 	       ent->s_lno + 1,
 	       ent->lno + 1,
 	       ent->num_lines);
-	emit_porcelain_details(suspect, 0);
+	emit_porcelain_details(suspect, repeat);
 
 	cp = nth_line(sb, ent->lno);
 	for (cnt = 0; cnt < ent->num_lines; cnt++) {
 		char ch;
-		if (cnt)
+		if (cnt) {
 			printf("%s %d %d\n", hex,
 			       ent->s_lno + 1 + cnt,
 			       ent->lno + 1 + cnt);
+			if (repeat)
+				emit_porcelain_details(suspect, 1);
+		}
 		putchar('\t');
 		do {
 			ch = *cp++;
@@ -2307,6 +2312,7 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 		OPT_BIT('f', "show-name", &output_option, "Show original filename (Default: auto)", OUTPUT_SHOW_NAME),
 		OPT_BIT('n', "show-number", &output_option, "Show original linenumber (Default: off)", OUTPUT_SHOW_NUMBER),
 		OPT_BIT('p', "porcelain", &output_option, "Show in a format designed for machine consumption", OUTPUT_PORCELAIN),
+		OPT_BIT(0, "line-porcelain", &output_option, "Show porcelain format with per-line commit information", OUTPUT_PORCELAIN|OUTPUT_LINE_PORCELAIN),
 		OPT_BIT('c', NULL, &output_option, "Use the same output mode as git-annotate (Default: off)", OUTPUT_ANNOTATE_COMPAT),
 		OPT_BIT('t', NULL, &output_option, "Show raw timestamp (Default: off)", OUTPUT_RAW_TIMESTAMP),
 		OPT_BIT('l', NULL, &output_option, "Show long commit SHA1 (Default: off)", OUTPUT_LONG_OBJECT_NAME),

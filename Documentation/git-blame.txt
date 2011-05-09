@@ -105,6 +105,19 @@ The contents of the actual line is output after the above
 header, prefixed by a TAB. This is to allow adding more
 header elements later.
 
+The porcelain format generally suppresses commit information that has
+already been seen. For example, two lines that are blamed to the same
+commit will both be shown, but the details for that commit will be shown
+only once. This is more efficient, but may require more state be kept by
+the reader. The `--line-porcelain` option can be used to output full
+commit information for each line, allowing simpler (but less efficient)
+usage like:
+
+	# count the number of lines attributed to each author
+	git blame --line-porcelain file |
+	sed -n 's/^author //p' |
+	sort | uniq -c | sort -rn
+
 
 SPECIFYING RANGES
 -----------------
