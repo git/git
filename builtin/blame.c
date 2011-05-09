@@ -1484,13 +1484,14 @@ static void write_filename_info(const char *path)
 /*
  * Porcelain/Incremental format wants to show a lot of details per
  * commit.  Instead of repeating this every line, emit it only once,
- * the first time each commit appears in the output.
+ * the first time each commit appears in the output (unless the
+ * user has specifically asked for us to repeat).
  */
-static int emit_one_suspect_detail(struct origin *suspect)
+static int emit_one_suspect_detail(struct origin *suspect, int repeat)
 {
 	struct commit_info ci;
 
-	if (suspect->commit->object.flags & METAINFO_SHOWN)
+	if (!repeat && (suspect->commit->object.flags & METAINFO_SHOWN))
 		return 0;
 
 	suspect->commit->object.flags |= METAINFO_SHOWN;
@@ -1529,7 +1530,7 @@ static void found_guilty_entry(struct blame_entry *ent)
 		printf("%s %d %d %d\n",
 		       sha1_to_hex(suspect->commit->object.sha1),
 		       ent->s_lno + 1, ent->lno + 1, ent->num_lines);
-		emit_one_suspect_detail(suspect);
+		emit_one_suspect_detail(suspect, 0);
 		write_filename_info(suspect->path);
 		maybe_flush_or_die(stdout, "stdout");
 	}
@@ -1619,7 +1620,15 @@ static const char *format_time(unsigned long time, const char *tz_str,
 #define OUTPUT_NO_AUTHOR       0200
 #define OUTPUT_SHOW_EMAIL	0400
 
-static void emit_porcelain(struct scoreboard *sb, struct blame_entry *ent)
+static void emit_porcelain_details(struct origin *suspect, int repeat)
+{
+	if (emit_one_suspect_detail(suspect, repeat) ||
+	    (suspect->commit->object.flags & MORE_THAN_ONE_PATH))
+		write_filename_info(suspect->path);
+}
+
+static void emit_porcelain(struct scoreboard *sb, struct blame_entry *ent,
+			   int opt)
 {
 	int cnt;
 	const char *cp;
@@ -1633,9 +1642,7 @@ static void emit_porcelain(struct scoreboard *sb, struct blame_entry *ent)
 	       ent->s_lno + 1,
 	       ent->lno + 1,
 	       ent->num_lines);
-	if (emit_one_suspect_detail(suspect) ||
-	    (suspect->commit->object.flags & MORE_THAN_ONE_PATH))
-		write_filename_info(suspect->path);
+	emit_porcelain_details(suspect, 0);
 
 	cp = nth_line(sb, ent->lno);
 	for (cnt = 0; cnt < ent->num_lines; cnt++) {
@@ -1756,7 +1763,7 @@ static void output(struct scoreboard *sb, int option)
 
 	for (ent = sb->ent; ent; ent = ent->next) {
 		if (option & OUTPUT_PORCELAIN)
-			emit_porcelain(sb, ent);
+			emit_porcelain(sb, ent, option);
 		else {
 			emit_other(sb, ent, option);
 		}
