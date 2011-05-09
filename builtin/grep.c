@@ -925,9 +925,11 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 
 	if (!opt.pattern_list)
 		die(_("no pattern given."));
+	if (opt.regflags != REG_NEWLINE && opt.pcre)
+		die(_("cannot mix --extended-regexp and --perl-regexp"));
 	if (!opt.fixed && opt.ignore_case)
 		opt.regflags |= REG_ICASE;
-	if ((opt.regflags != REG_NEWLINE) && opt.fixed)
+	if ((opt.regflags != REG_NEWLINE || opt.pcre) && opt.fixed)
 		die(_("cannot mix --fixed-strings and regexp"));
 
 #ifndef NO_PTHREADS
