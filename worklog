@@ -276,7 +276,7 @@ sub day_summary {
 
 		$count = plural($count, "patch", "patches");
 		$people = plural($people, "person", "people");
-		print " * Queued $count from $people.\n" if (!$quiet);
+		print "Queued $count from $people.\n" if (!$quiet);
 		if ($verbose) {
 			for my $patch (map { $patch{$_} } @{$patch_by_date{$date}}) {
 				print "  $patch->[2]\n";
@@ -294,7 +294,7 @@ sub day_summary {
 		$total_merges->{$branch} ||= 0;
 		$total_merges->{$branch} += $count;
 		$count = plural($count, "topic", "topics");
-		print " Merged $count to '$branch' branch$purpose.\n" if (!$quiet);
+		print "Merged $count to '$branch' branch$purpose.\n" if (!$quiet);
 		if ($verbose) {
 			my @pieces = map { $patch{$_}->[2] . "," } @$merges;
 			$pieces[-1] =~ s/,$/./;
@@ -312,18 +312,18 @@ sub range_summary {
 
 	if ($total_t) {
 		my $count = plural($total_t, "release", "releases");
-		print " Tagged $count.\n";
+		print "Tagged $count.\n";
 	}
 	if ($total_p) {
 		my $people = plural(scalar @{[keys %{$total_n}]}, "person", "people");
 		my$count = plural($total_p, "patch", "patches");
-		print " * Queued $count from $people.\n";
+		print "Queued $count from $people.\n";
 	}
 	for my $branch_data (@integrate) {
 		my ($branch, $purpose) = @{$branch_data};
 		next unless $total_m->{$branch};
 		my $count = plural($total_m->{$branch}, "merge", "merges");
-		print " * Made $count to '$branch' branch$purpose.\n";
+		print "Made $count to '$branch' branch$purpose.\n";
 	}
 	$sep = "\n";
 }
