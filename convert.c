@@ -475,30 +475,6 @@ static int read_convert_config(const char *var, const char *value, void *cb)
 	return 0;
 }
 
-static void setup_convert_check(struct git_attr_check *check)
-{
-	static struct git_attr *attr_text;
-	static struct git_attr *attr_crlf;
-	static struct git_attr *attr_eol;
-	static struct git_attr *attr_ident;
-	static struct git_attr *attr_filter;
-
-	if (!attr_text) {
-		attr_text = git_attr("text");
-		attr_crlf = git_attr("crlf");
-		attr_eol = git_attr("eol");
-		attr_ident = git_attr("ident");
-		attr_filter = git_attr("filter");
-		user_convert_tail = &user_convert;
-		git_config(read_convert_config, NULL);
-	}
-	check[0].attr = attr_crlf;
-	check[1].attr = attr_ident;
-	check[2].attr = attr_filter;
-	check[3].attr = attr_eol;
-	check[4].attr = attr_text;
-}
-
 static int count_ident(const char *cp, unsigned long size)
 {
 	/*
@@ -727,10 +703,30 @@ static enum crlf_action input_crlf_action(enum crlf_action text_attr, enum eol e
 	return text_attr;
 }
 
+static const char *conv_attr_name[] = {
+	"crlf", "ident", "filter", "eol", "text",
+};
+#define NUM_CONV_ATTRS ARRAY_SIZE(conv_attr_name)
+
+static void setup_convert_check(struct git_attr_check *check)
+{
+	int i;
+	static struct git_attr_check ccheck[NUM_CONV_ATTRS];
+
+	if (!ccheck[0].attr) {
+		for (i = 0; i < NUM_CONV_ATTRS; i++)
+			ccheck[i].attr = git_attr(conv_attr_name[i]);
+		user_convert_tail = &user_convert;
+		git_config(read_convert_config, NULL);
+	}
+	for (i = 0; i < NUM_CONV_ATTRS; i++)
+		check[i].attr = ccheck[i].attr;
+}
+
 int convert_to_git(const char *path, const char *src, size_t len,
                    struct strbuf *dst, enum safe_crlf checksafe)
 {
-	struct git_attr_check check[5];
+	struct git_attr_check check[NUM_CONV_ATTRS];
 	enum crlf_action crlf_action = CRLF_GUESS;
 	enum eol eol_attr = EOL_UNSET;
 	int ident = 0, ret = 0;
@@ -767,7 +763,7 @@ static int convert_to_working_tree_internal(const char *path, const char *src,
 					    size_t len, struct strbuf *dst,
 					    int normalizing)
 {
-	struct git_attr_check check[5];
+	struct git_attr_check check[NUM_CONV_ATTRS];
 	enum crlf_action crlf_action = CRLF_GUESS;
 	enum eol eol_attr = EOL_UNSET;
 	int ident = 0, ret = 0;
