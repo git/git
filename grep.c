@@ -74,6 +74,69 @@ static NORETURN void compile_regexp_failed(const struct grep_pat *p,
 	die("%s'%s': %s", where, p->pattern, error);
 }
 
+#ifdef USE_LIBPCRE
+static void compile_pcre_regexp(struct grep_pat *p, const struct grep_opt *opt)
+{
+	const char *error;
+	int erroffset;
+	int options = 0;
+
+	if (opt->ignore_case)
+		options |= PCRE_CASELESS;
+
+	p->pcre_regexp = pcre_compile(p->pattern, options, &error, &erroffset,
+			NULL);
+	if (!p->pcre_regexp)
+		compile_regexp_failed(p, error);
+
+	p->pcre_extra_info = pcre_study(p->pcre_regexp, 0, &error);
+	if (!p->pcre_extra_info && error)
+		die("%s", error);
+}
+
+static int pcrematch(struct grep_pat *p, const char *line, const char *eol,
+		regmatch_t *match, int eflags)
+{
+	int ovector[30], ret, flags = 0;
+
+	if (eflags & REG_NOTBOL)
+		flags |= PCRE_NOTBOL;
+
+	ret = pcre_exec(p->pcre_regexp, p->pcre_extra_info, line, eol - line,
+			0, flags, ovector, ARRAY_SIZE(ovector));
+	if (ret < 0 && ret != PCRE_ERROR_NOMATCH)
+		die("pcre_exec failed with error code %d", ret);
+	if (ret > 0) {
+		ret = 0;
+		match->rm_so = ovector[0];
+		match->rm_eo = ovector[1];
+	}
+
+	return ret;
+}
+
+static void free_pcre_regexp(struct grep_pat *p)
+{
+	pcre_free(p->pcre_regexp);
+	pcre_free(p->pcre_extra_info);
+}
+#else /* !USE_LIBPCRE */
+static void compile_pcre_regexp(struct grep_pat *p, const struct grep_opt *opt)
+{
+	die("cannot use Perl-compatible regexes when not compiled with USE_LIBPCRE");
+}
+
+static int pcrematch(struct grep_pat *p, const char *line, const char *eol,
+		regmatch_t *match, int eflags)
+{
+	return 1;
+}
+
+static void free_pcre_regexp(struct grep_pat *p)
+{
+}
+#endif /* !USE_LIBPCRE */
+
 static void compile_regexp(struct grep_pat *p, struct grep_opt *opt)
 {
 	int err;
@@ -84,6 +147,11 @@ static void compile_regexp(struct grep_pat *p, struct grep_opt *opt)
 
 	if (p->fixed)
 		return;
+
+	if (opt->pcre) {
+		compile_pcre_regexp(p, opt);
+		return;
+	}
 
 	err = regcomp(&p->regexp, p->pattern, opt->regflags);
 	if (err) {
@@ -327,7 +395,10 @@ void free_grep_patterns(struct grep_opt *opt)
 		case GREP_PATTERN: /* atom */
 		case GREP_PATTERN_HEAD:
 		case GREP_PATTERN_BODY:
-			regfree(&p->regexp);
+			if (p->pcre_regexp)
+				free_pcre_regexp(p);
+			else
+				regfree(&p->regexp);
 			break;
 		default:
 			break;
@@ -426,6 +497,8 @@ static int patmatch(struct grep_pat *p, char *line, char *eol,
 
 	if (p->fixed)
 		hit = !fixmatch(p, line, eol, match);
+	else if (p->pcre_regexp)
+		hit = !pcrematch(p, line, eol, match, eflags);
 	else
 		hit = !regmatch(&p->regexp, line, eol, match, eflags);
 

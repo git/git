@@ -781,6 +781,8 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 			REG_EXTENDED),
 		OPT_BOOLEAN('F', "fixed-strings", &opt.fixed,
 			"interpret patterns as fixed strings"),
+		OPT_BOOLEAN('P', "perl-regexp", &opt.pcre,
+				"use Perl-compatible regular expressions"),
 		OPT_GROUP(""),
 		OPT_BOOLEAN('n', "line-number", &opt.linenum, "show line numbers"),
 		OPT_NEGBIT('h', NULL, &opt.pathname, "don't show filenames", 1),
