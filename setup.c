@@ -197,9 +197,6 @@ const char *prefix_pathspec(const char *prefix, int prefixlen, const char *elt)
 		}
 		if (*copyfrom == ')')
 			copyfrom++;
-	} else if (!elt[1]) {
-		/* Just ':' -- no element! */
-		return NULL;
 	} else {
 		/* shorthand */
 		for (copyfrom = elt + 1;
