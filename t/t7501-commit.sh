@@ -133,6 +133,16 @@ test_expect_success PERL \
 	"interactive add" \
 	"echo 7 | git commit --interactive | grep 'What now'"
 
+test_expect_success PERL \
+	"commit --interactive doesn't change index if editor aborts" \
+	"echo zoo >file &&
+	test_must_fail git diff --exit-code >diff1 &&
+	(echo u ; echo '*' ; echo q) |
+	(EDITOR=: && export EDITOR &&
+	 test_must_fail git commit --interactive) &&
+	git diff >diff2 &&
+	test_cmp diff1 diff2"
+
 test_expect_success \
 	"showing committed revisions" \
 	"git rev-list HEAD >current"
