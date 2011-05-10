@@ -1173,7 +1173,7 @@ int get_sha1_with_context_1(const char *name, unsigned char *sha1,
 			}
 			pos++;
 		}
-		if (!gently)
+		if (!gently && name[1] && name[1] != '/')
 			diagnose_invalid_index_path(stage, prefix, cp);
 		free(new_path);
 		return -1;
