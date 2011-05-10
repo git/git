@@ -2608,11 +2608,9 @@ _git ()
 	if [[ -n ${ZSH_VERSION-} ]]; then
 		emulate -L bash
 		setopt KSH_TYPESET
-	else
-		local words
 	fi
 
-	local cur cword prev
+	local cur words cword prev
 	_get_comp_words_by_ref -n =: cur words cword prev
 	while [ $c -lt $cword ]; do
 		i="${words[c]}"
@@ -2661,11 +2659,9 @@ _gitk ()
 	if [[ -n ${ZSH_VERSION-} ]]; then
 		emulate -L bash
 		setopt KSH_TYPESET
-	else
-		local words
 	fi
 
-	local cur cword prev
+	local cur words cword prev
 	_get_comp_words_by_ref -n =: cur words cword prev
 
 	__git_has_doubledash && return
