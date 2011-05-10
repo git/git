@@ -85,8 +85,17 @@ static void NORETURN die_verify_filename(const char *prefix, const char *arg)
 {
 	unsigned char sha1[20];
 	unsigned mode;
-	/* try a detailed diagnostic ... */
-	get_sha1_with_mode_1(arg, sha1, &mode, 1, prefix);
+
+	/*
+	 * Saying "'(icase)foo' does not exist in the index" when the
+	 * user gave us ":(icase)foo" is just stupid.  A magic pathspec
+	 * begins with a colon and is followed by a non-alnum; do not
+	 * let get_sha1_with_mode_1(only_to_die=1) to even trigger.
+	 */
+	if (!(arg[0] == ':' && !isalnum(arg[1])))
+		/* try a detailed diagnostic ... */
+		get_sha1_with_mode_1(arg, sha1, &mode, 1, prefix);
+
 	/* ... or fall back the most general message. */
 	die("ambiguous argument '%s': unknown revision or path not in the working tree.\n"
 	    "Use '--' to separate paths from revisions", arg);
