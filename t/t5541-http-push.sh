@@ -65,14 +65,16 @@ test_expect_success 'clone remote repository' '
 	git clone $HTTPD_URL/smart/test_repo.git test_repo_clone
 '
 
-test_expect_success 'push to remote repository' '
+test_expect_success 'push to remote repository (standard)' '
 	cd "$ROOT_PATH"/test_repo_clone &&
 	: >path2 &&
 	git add path2 &&
 	test_tick &&
 	git commit -m path2 &&
 	HEAD=$(git rev-parse --verify HEAD) &&
-	git push &&
+	GIT_CURL_VERBOSE=1 git push -v -v 2>err &&
+	! grep "Expect: 100-continue" err &&
+	grep "POST git-receive-pack ([0-9]* bytes)" err &&
 	(cd "$HTTPD_DOCUMENT_ROOT_PATH"/test_repo.git &&
 	 test $HEAD = $(git rev-parse --verify HEAD))
 '
@@ -138,6 +140,18 @@ test_expect_success 'push fails for non-fast-forward refs unmatched by remote he
 test_expect_success 'push fails for non-fast-forward refs unmatched by remote helper: our output' '
 	test_i18ngrep "To prevent you from losing history, non-fast-forward updates were rejected" \
 		output
+'
+
+test_expect_success 'push (chunked)' '
+	git checkout master &&
+	test_commit commit path3 &&
+	HEAD=$(git rev-parse --verify HEAD) &&
+	git config http.postbuffer 4 &&
+	test_when_finished "git config --unset http.postbuffer" &&
+	git push -v -v origin $BRANCH 2>err &&
+	grep "POST git-receive-pack (chunked)" err &&
+	(cd "$HTTPD_DOCUMENT_ROOT_PATH"/test_repo.git &&
+	 test $HEAD = $(git rev-parse --verify HEAD))
 '
 
 stop_httpd

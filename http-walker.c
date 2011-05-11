@@ -185,7 +185,7 @@ static void process_alternates_response(void *callback_data)
 	struct active_request_slot *slot = alt_req->slot;
 	struct alt_base *tail = cdata->alt;
 	const char *base = alt_req->base;
-	static const char null_byte = '\0';
+	const char null_byte = '\0';
 	char *data;
 	int i = 0;
 
@@ -218,7 +218,7 @@ static void process_alternates_response(void *callback_data)
 		}
 	}
 
-	fwrite_buffer(&null_byte, 1, 1, alt_req->buffer);
+	fwrite_buffer((char *)&null_byte, 1, 1, alt_req->buffer);
 	alt_req->buffer->len--;
 	data = alt_req->buffer->buf;
 
