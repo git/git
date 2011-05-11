@@ -595,4 +595,53 @@ test_expect_success HIGHLIGHT \
 	 git commit -m "Add test.sh" &&
 	 gitweb_run "p=.git;a=blob;f=test.sh"'
 
+# ----------------------------------------------------------------------
+# forks of projects
+
+cat >>gitweb_config.perl <<\EOF &&
+$feature{'forks'}{'default'} = [1];
+EOF
+
+test_expect_success \
+	'forks: prepare' \
+	'git init --bare foo.git &&
+	 git --git-dir=foo.git --work-tree=. add file &&
+	 git --git-dir=foo.git --work-tree=. commit -m "Initial commit" &&
+	 echo "foo" > foo.git/description &&
+	 mkdir -p foo &&
+	 (cd foo &&
+	  git clone --shared --bare ../foo.git foo-forked.git &&
+	  echo "fork of foo" > foo-forked.git/description)'
+
+test_expect_success \
+	'forks: projects list' \
+	'gitweb_run'
+
+test_expect_success \
+	'forks: forks action' \
+	'gitweb_run "p=foo.git;a=forks"'
+
+# ----------------------------------------------------------------------
+# content tags (tag cloud)
+
+cat >>gitweb_config.perl <<-\EOF &&
+# we don't test _setting_ content tags, so any true value is good
+$feature{'ctags'}{'default'} = ['ctags_script.cgi'];
+EOF
+
+test_expect_success \
+	'ctags: tag cloud in projects list' \
+	'mkdir .git/ctags &&
+	 echo "2" > .git/ctags/foo &&
+	 echo "1" > .git/ctags/bar &&
+	gitweb_run'
+
+test_expect_success \
+	'ctags: search projects by existing tag' \
+	'gitweb_run "by_tag=foo"'
+
+test_expect_success \
+	'ctags: search projects by non existent tag' \
+	'gitweb_run "by_tag=non-existent"'
+
 test_done
