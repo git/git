@@ -110,7 +110,7 @@ sub get_commit {
 	my $fh;
 	open($fh, '-|',
 	     qw(git for-each-ref),
-	     "--format=%(refname:short) %(authordate:iso8601)",
+	     "--format=%(refname:short) %(committerdate:iso8601)",
 	     "refs/heads/??/*")
 	    or die "$!: open for-each-ref";
 	my @topic;
@@ -612,13 +612,18 @@ sub wildo {
 			if (defined $topic) {
 				wildo_queue(\%what, "Undecided", $topic);
 			}
-			# tip-date, next-date, topic, count
-			$topic = [$2, $too_recent, $1, $3];
+			# tip-date, next-date, topic, count, pu-count
+			$topic = [$2, $too_recent, $1, $3, 0];
+			next;
 		}
 		if (defined $topic &&
 		    ($topic->[1] eq $too_recent) &&
+		    ($topic->[4] == 0) &&
 		    (/^  \(merged to 'next' on ([-0-9]+)/)) {
 			$topic->[1] = $1;
+		}
+		if (defined $topic && /^ - /) {
+			$topic->[4]++;
 		}
 		next if (/^ /);
 		if (defined $topic &&
@@ -633,10 +638,10 @@ sub wildo {
 		for $topic (sort { (($a->[1] cmp $b->[1]) ||
 				    ($a->[0] cmp $b->[0])) }
 			    @{$what{$what}}) {
-			my ($tip, $next, $name, $count) = @$topic;
+			my ($tip, $next, $name, $count, $pu) = @$topic;
 			my ($sign);
 			$tip =~ s/^\d{4}-//;
-			if ($next eq $too_recent) {
+			if (($next eq $too_recent) || (0 < $pu)) {
 				$sign = "-";
 				$next = " " x 6;
 			} else {
