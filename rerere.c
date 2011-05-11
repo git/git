@@ -671,3 +671,87 @@ int rerere_forget(const char **pathspec)
 	}
 	return write_rr(&merge_rr, fd);
 }
+
+static time_t rerere_created_at(const char *name)
+{
+	struct stat st;
+	return stat(rerere_path(name, "preimage"), &st) ? (time_t) 0 : st.st_mtime;
+}
+
+static time_t rerere_last_used_at(const char *name)
+{
+	struct stat st;
+	return stat(rerere_path(name, "postimage"), &st) ? (time_t) 0 : st.st_mtime;
+}
+
+static void unlink_rr_item(const char *name)
+{
+	unlink(rerere_path(name, "thisimage"));
+	unlink(rerere_path(name, "preimage"));
+	unlink(rerere_path(name, "postimage"));
+	rmdir(git_path("rr-cache/%s", name));
+}
+
+struct rerere_gc_config_cb {
+	int cutoff_noresolve;
+	int cutoff_resolve;
+};
+
+static int git_rerere_gc_config(const char *var, const char *value, void *cb)
+{
+	struct rerere_gc_config_cb *cf = cb;
+
+	if (!strcmp(var, "gc.rerereresolved"))
+		cf->cutoff_resolve = git_config_int(var, value);
+	else if (!strcmp(var, "gc.rerereunresolved"))
+		cf->cutoff_noresolve = git_config_int(var, value);
+	else
+		return git_default_config(var, value, cb);
+	return 0;
+}
+
+void rerere_gc(struct string_list *rr)
+{
+	struct string_list to_remove = STRING_LIST_INIT_DUP;
+	DIR *dir;
+	struct dirent *e;
+	int i, cutoff;
+	time_t now = time(NULL), then;
+	struct rerere_gc_config_cb cf = { 15, 60 };
+
+	git_config(git_rerere_gc_config, &cf);
+	dir = opendir(git_path("rr-cache"));
+	if (!dir)
+		die_errno("unable to open rr-cache directory");
+	while ((e = readdir(dir))) {
+		if (is_dot_or_dotdot(e->d_name))
+			continue;
+
+		then = rerere_last_used_at(e->d_name);
+		if (then) {
+			cutoff = cf.cutoff_resolve;
+		} else {
+			then = rerere_created_at(e->d_name);
+			if (!then)
+				continue;
+			cutoff = cf.cutoff_noresolve;
+		}
+		if (then < now - cutoff * 86400)
+			string_list_append(&to_remove, e->d_name);
+	}
+	for (i = 0; i < to_remove.nr; i++)
+		unlink_rr_item(to_remove.items[i].string);
+	string_list_clear(&to_remove, 0);
+}
+
+void rerere_clear(struct string_list *merge_rr)
+{
+	int i;
+
+	for (i = 0; i < merge_rr->nr; i++) {
+		const char *name = (const char *)merge_rr->items[i].util;
+		if (!has_rerere_resolution(name))
+			unlink_rr_item(name);
+	}
+	unlink_or_warn(git_path("MERGE_RR"));
+}
