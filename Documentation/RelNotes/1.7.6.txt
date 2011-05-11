@@ -6,6 +6,8 @@ Updates since v1.7.5
 
  * Various git-svn updates.
 
+ * Updates the way content tags are handled in gitweb.
+
  * Clean-up of the C part of i18n (but not l10n---please wait)
    continues.
 
@@ -38,8 +40,8 @@ Updates since v1.7.5
  * "git merge" learned "-" as a short-hand for "the previous branch", just
    like the way "git checkout -" works.
 
- * "git merge-one-file" learned to honor GIT_WORK_TREE settings when
-   handling "both sides added, differently" conflict.
+ * "git rebase" that does not specify on top of which branch to rebase
+   the current branch now uses @{upstream} of the current branch.
 
  * "git rev-list --count" used with "--cherry-mark" counts the cherry-picked
    commits separately, producing more a useful output.
@@ -64,6 +66,10 @@ Fixes since v1.7.5
 Unless otherwise noted, all the fixes in 1.7.5.X maintenance track are
 included in this release.
 
+ * "git add -p" did not work correctly when a hunk is split and then
+   one of them was given to the editor.
+   (merge jc/maint-add-p-overlapping-hunks later)
+
  * "git config" used to choke with an insanely long line.
    (merge ef/maint-strbuf-init later)
 
@@ -84,6 +90,15 @@ included in this release.
    From: "Junio C. Hamano" <jch@example.com>).
    (merge jk/format-patch-quote-special-in-from later)
 
+ * In "git merge", per-branch branch.<name>.mergeoptions configuration
+   variables did not override the fallback default merge.<option>
+   configuration variables such as merge.ff, merge.log, etc.
+   (merge jc/maint-branch-mergeoptions later)
+
+ * "git merge-one-file" did not honor GIT_WORK_TREE settings when
+   handling a "both sides added, differently" conflict.
+   (merge jk/merge-one-file-working-tree later)
+
  * "git mergetool" did not handle conflicted submoudules gracefully.
    (merge jm/mergetool-submodules later)
 
@@ -102,5 +117,5 @@ included in this release.
 ---
 exec >/var/tmp/1
 echo O=$(git describe master)
-O=v1.7.5.1-216-g3970fc5
+O=v1.7.5.1-248-ga579498
 git shortlog --no-merges ^maint ^$O master
