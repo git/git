@@ -58,4 +58,21 @@ check side-3 ^side-4 -- file-3
 check side-3 ^side-2
 check side-3 ^side-2 -- file-1
 
+test_expect_success 'not only --stdin' '
+	cat >expect <<-EOF &&
+	7
+
+	file-1
+	file-2
+	EOF
+	cat >input <<-EOF &&
+	^master^
+	--
+	file-2
+	EOF
+	git log --pretty=tformat:%s --name-only --stdin master -- file-1 \
+		<input >actual &&
+	test_cmp expect actual
+'
+
 test_done

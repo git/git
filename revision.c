@@ -953,35 +953,34 @@ int handle_revision_arg(const char *arg, struct rev_info *revs,
 	return 0;
 }
 
-static void read_pathspec_from_stdin(struct rev_info *revs, struct strbuf *sb, const char ***prune_data)
+struct cmdline_pathspec {
+	int alloc;
+	int nr;
+	const char **path;
+};
+
+static void append_prune_data(struct cmdline_pathspec *prune, const char **av)
 {
-	const char **prune = *prune_data;
-	int prune_nr;
-	int prune_alloc;
+	while (*av) {
+		ALLOC_GROW(prune->path, prune->nr+1, prune->alloc);
+		prune->path[prune->nr++] = *(av++);
+	}
+}
 
-	/* count existing ones */
-	if (!prune)
-		prune_nr = 0;
-	else
-		for (prune_nr = 0; prune[prune_nr]; prune_nr++)
-			;
-	prune_alloc = prune_nr; /* not really, but we do not know */
-
+static void read_pathspec_from_stdin(struct rev_info *revs, struct strbuf *sb,
+				     struct cmdline_pathspec *prune)
+{
 	while (strbuf_getwholeline(sb, stdin, '\n') != EOF) {
 		int len = sb->len;
 		if (len && sb->buf[len - 1] == '\n')
 			sb->buf[--len] = '\0';
-		ALLOC_GROW(prune, prune_nr+1, prune_alloc);
-		prune[prune_nr++] = xstrdup(sb->buf);
+		ALLOC_GROW(prune->path, prune->nr+1, prune->alloc);
+		prune->path[prune->nr++] = xstrdup(sb->buf);
 	}
-	if (prune) {
-		ALLOC_GROW(prune, prune_nr+1, prune_alloc);
-		prune[prune_nr] = NULL;
-	}
-	*prune_data = prune;
 }
 
-static void read_revisions_from_stdin(struct rev_info *revs, const char ***prune)
+static void read_revisions_from_stdin(struct rev_info *revs,
+				      struct cmdline_pathspec *prune)
 {
 	struct strbuf sb;
 	int seen_dashdash = 0;
@@ -1267,34 +1266,6 @@ static int for_each_good_bisect_ref(each_ref_fn fn, void *cb_data)
 	return for_each_ref_in("refs/bisect/good", fn, cb_data);
 }
 
-static void append_prune_data(const char ***prune_data, const char **av)
-{
-	const char **prune = *prune_data;
-	int prune_nr;
-	int prune_alloc;
-
-	if (!prune) {
-		*prune_data = av;
-		return;
-	}
-
-	/* count existing ones */
-	for (prune_nr = 0; prune[prune_nr]; prune_nr++)
-		;
-	prune_alloc = prune_nr; /* not really, but we do not know */
-
-	while (*av) {
-		ALLOC_GROW(prune, prune_nr+1, prune_alloc);
-		prune[prune_nr++] = *av;
-		av++;
-	}
-	if (prune) {
-		ALLOC_GROW(prune, prune_nr+1, prune_alloc);
-		prune[prune_nr] = NULL;
-	}
-	*prune_data = prune;
-}
-
 /*
  * Parse revision information, filling in the "rev_info" structure,
  * and removing the used arguments from the argument list.
@@ -1305,7 +1276,9 @@ static void append_prune_data(const char ***prune_data, const char **av)
 int setup_revisions(int argc, const char **argv, struct rev_info *revs, const char *def)
 {
 	int i, flags, left, seen_dashdash, read_from_stdin;
-	const char **prune_data = NULL;
+	struct cmdline_pathspec prune_data;
+
+	memset(&prune_data, 0, sizeof(prune_data));
 
 	/* First, search for "--" */
 	seen_dashdash = 0;
@@ -1316,7 +1289,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 		argv[i] = NULL;
 		argc = i;
 		if (argv[i + 1])
-			prune_data = argv + i + 1;
+			append_prune_data(&prune_data, argv + i + 1);
 		seen_dashdash = 1;
 		break;
 	}
@@ -1408,8 +1381,11 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 		}
 	}
 
-	if (prune_data)
-		revs->prune_data = get_pathspec(revs->prefix, prune_data);
+	if (prune_data.nr) {
+		ALLOC_GROW(prune_data.path, prune_data.nr+1, prune_data.alloc);
+		prune_data.path[prune_data.nr++] = NULL;
+		revs->prune_data = get_pathspec(revs->prefix, prune_data.path);
+	}
 
 	if (revs->def == NULL)
 		revs->def = def;
