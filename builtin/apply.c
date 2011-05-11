@@ -43,6 +43,7 @@ static int apply = 1;
 static int apply_in_reverse;
 static int apply_with_reject;
 static int apply_verbosely;
+static int allow_overlap;
 static int no_add;
 static const char *fake_ancestor;
 static int line_termination = '\n';
@@ -2430,9 +2431,9 @@ static void update_image(struct image *img,
 	memcpy(img->line + applied_pos,
 	       postimage->line,
 	       postimage->nr * sizeof(*img->line));
-	for (i = 0; i < postimage->nr; i++)
-		img->line[applied_pos + i].flag |= LINE_PATCHED;
-
+	if (!allow_overlap)
+		for (i = 0; i < postimage->nr; i++)
+			img->line[applied_pos + i].flag |= LINE_PATCHED;
 	img->nr = nr;
 }
 
@@ -3889,6 +3890,8 @@ int cmd_apply(int argc, const char **argv, const char *prefix_)
 			"don't expect at least one line of context"),
 		OPT_BOOLEAN(0, "reject", &apply_with_reject,
 			"leave the rejected hunks in corresponding *.rej files"),
+		OPT_BOOLEAN(0, "allow-overlap", &allow_overlap,
+			"allow overlapping hunks"),
 		OPT__VERBOSE(&apply_verbosely, "be verbose"),
 		OPT_BIT(0, "inaccurate-eof", &options,
 			"tolerate incorrectly detected missing new-line at the end of file",
