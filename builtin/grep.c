@@ -969,13 +969,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 			verify_filename(prefix, argv[j]);
 	}
 
-	if (i < argc)
-		paths = get_pathspec(prefix, argv + i);
-	else if (prefix) {
-		paths = xcalloc(2, sizeof(const char *));
-		paths[0] = prefix;
-		paths[1] = NULL;
-	}
+	paths = get_pathspec(prefix, argv + i);
 	init_pathspec(&pathspec, paths);
 	pathspec.max_depth = opt.max_depth;
 	pathspec.recursive = 1;
