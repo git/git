@@ -1589,6 +1589,20 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 	}
 
 	if (prune_data.nr) {
+		/*
+		 * If we need to introduce the magic "a lone ':' means no
+		 * pathspec whatsoever", here is the place to do so.
+		 *
+		 * if (prune_data.nr == 1 && !strcmp(prune_data[0], ":")) {
+		 *	prune_data.nr = 0;
+		 *	prune_data.alloc = 0;
+		 *	free(prune_data.path);
+		 *	prune_data.path = NULL;
+		 * } else {
+		 *	terminate prune_data.alloc with NULL and
+		 *	call init_pathspec() to set revs->prune_data here.
+		 * }
+		 */
 		ALLOC_GROW(prune_data.path, prune_data.nr+1, prune_data.alloc);
 		prune_data.path[prune_data.nr++] = NULL;
 		init_pathspec(&revs->prune_data,
