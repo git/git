@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='test cherry-picking a root commit'
+test_description='test cherry-picking (and reverting) a root commit'
 
 . ./test-lib.sh
 
@@ -23,7 +23,30 @@ test_expect_success setup '
 test_expect_success 'cherry-pick a root commit' '
 
 	git cherry-pick master &&
-	test first = $(cat file1)
+	echo first >expect &&
+	test_cmp expect file1
+
+'
+
+test_expect_success 'revert a root commit' '
+
+	git revert master &&
+	test_path_is_missing file1
+
+'
+
+test_expect_success 'cherry-pick a root commit with an external strategy' '
+
+	git cherry-pick --strategy=resolve master &&
+	echo first >expect &&
+	test_cmp expect file1
+
+'
+
+test_expect_success 'revert a root commit with an external strategy' '
+
+	git revert --strategy=resolve master &&
+	test_path_is_missing file1
 
 '
 
