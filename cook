@@ -632,6 +632,9 @@ sub wildo {
 			$topic = undef;
 		}
 	}
+	if (defined $topic) {
+		wildo_queue(\%what, "Undecided", $topic);
+	}
 	my $ipbl = "";
 	for my $what (sort keys %what) {
 		print "$ipbl$what\n";
