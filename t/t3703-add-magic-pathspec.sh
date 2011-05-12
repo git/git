@@ -44,8 +44,12 @@ test_expect_success 'a file with the same (long) magic name exists' '
 	git add -n "./:(icase)ha"
 '
 
-test_expect_success 'a file with the same (short) magic name exists' '
-	mkdir ":" &&
+if mkdir ":" 2>/dev/null
+then
+	test_set_prereq COLON_DIR
+fi
+
+test_expect_success COLON_DIR 'a file with the same (short) magic name exists' '
 	: >":/bar" &&
 	test_must_fail git add -n :/bar &&
 	git add -n "./:/bar"
