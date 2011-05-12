@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "blob.h"
 #include "dir.h"
+#include "streaming.h"
 
 static void create_directories(const char *path, int path_len,
 			       const struct checkout *state)
@@ -114,6 +115,50 @@ static int fstat_output(int fd, const struct checkout *state, struct stat *st)
 	return 0;
 }
 
+static int streaming_write_entry(struct cache_entry *ce, char *path,
+				 const struct checkout *state, int to_tempfile,
+				 int *fstat_done, struct stat *statbuf)
+{
+	struct git_istream *st;
+	enum object_type type;
+	unsigned long sz;
+	int result = -1;
+	int fd = -1;
+
+	st = open_istream(ce->sha1, &type, &sz);
+	if (!st)
+		return -1;
+	if (type != OBJ_BLOB)
+		goto close_and_exit;
+
+	fd = open_output_fd(path, ce, to_tempfile);
+	if (fd < 0)
+		goto close_and_exit;
+
+	for (;;) {
+		char buf[10240];
+		ssize_t wrote;
+		ssize_t readlen = read_istream(st, buf, sizeof(buf));
+
+		if (!readlen)
+			break;
+
+		wrote = write_in_full(fd, buf, readlen);
+
+		if (wrote != readlen)
+			goto close_and_exit;
+	}
+	*fstat_done = fstat_output(fd, state, statbuf);
+
+close_and_exit:
+	close_istream(st);
+	if (0 <= fd)
+		result = close(fd);
+	if (result && 0 <= fd)
+		unlink(path);
+	return result;
+}
+
 static int write_entry(struct cache_entry *ce, char *path, const struct checkout *state, int to_tempfile)
 {
 	unsigned int ce_mode_s_ifmt = ce->ce_mode & S_IFMT;
@@ -123,6 +168,12 @@ static int write_entry(struct cache_entry *ce, char *path, const struct checkout
 	unsigned long size;
 	size_t wrote, newsize = 0;
 	struct stat st;
+
+	if ((ce_mode_s_ifmt == S_IFREG) &&
+	    can_bypass_conversion(path) &&
+	    !streaming_write_entry(ce, path, state, to_tempfile,
+				   &fstat_done, &st))
+		goto finish;
 
 	switch (ce_mode_s_ifmt) {
 	case S_IFREG:
@@ -176,6 +227,7 @@ static int write_entry(struct cache_entry *ce, char *path, const struct checkout
 		return error("unknown file mode for %s in index", path);
 	}
 
+finish:
 	if (state->refresh_cache) {
 		if (!fstat_done)
 			lstat(ce->name, &st);
