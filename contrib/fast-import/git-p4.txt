@@ -225,6 +225,13 @@ stop. With allowMissingPerforceUsers set to true, git-p4 will use the
 current user (i.e. the behavior without --preserve-user) and carry on with
 the perforce commit.
 
+git-p4.skipUserNameCheck
+
+  git config [--global] git-p4.skipUserNameCheck false
+
+When submitting, git-p4 checks that the git commits are authored by the current
+p4 user, and warns if they are not. This disables the check.
+
 Implementation Details...
 =========================
 

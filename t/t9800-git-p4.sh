@@ -160,6 +160,13 @@ p4_check_commit_author() {
     fi
 }
 
+make_change_by_user() {
+	file=$1 name=$2 email=$3 &&
+	echo "username: a change by $name" >>"$file" &&
+	git add "$file" &&
+	git commit --author "$name <$email>" -m "a change by $name"
+}
+
 # Test username support, submitting as user 'alice'
 test_expect_success 'preserve users' '
 	p4_add_user alice Alice &&
@@ -212,6 +219,40 @@ test_expect_success 'preserve user where author is unknown to p4' '
 	cd "$TRASH_DIRECTORY" &&
 	rm -rf "$git" && mkdir "$git"
 '
+
+# If we're *not* using --preserve-user, git-p4 should warn if we're submitting
+# changes that are not all ours.
+# Test: user in p4 and user unknown to p4.
+# Test: warning disabled and user is the same.
+test_expect_success 'not preserving user with mixed authorship' '
+	"$GITP4" clone --dest="$git" //depot &&
+	(
+		cd "$git" &&
+		git config git-p4.skipSubmitEditCheck true &&
+		p4_add_user derek Derek &&
+
+		make_change_by_user usernamefile3 Derek derek@localhost &&
+		P4EDITOR=cat P4USER=alice P4PASSWD=secret "$GITP4" commit >actual &&
+		grep "git author derek@localhost does not match" actual &&
+
+		make_change_by_user usernamefile3 Charlie charlie@localhost &&
+		P4EDITOR=cat P4USER=alice P4PASSWD=secret "$GITP4" commit >actual &&
+		grep "git author charlie@localhost does not match" actual &&
+
+		make_change_by_user usernamefile3 alice alice@localhost &&
+		P4EDITOR=cat P4USER=alice P4PASSWD=secret "$GITP4" commit >actual &&
+		! grep "git author.*does not match" actual &&
+
+		git config git-p4.skipUserNameCheck true &&
+		make_change_by_user usernamefile3 Charlie charlie@localhost &&
+		P4EDITOR=cat P4USER=alice P4PASSWD=secret "$GITP4" commit >actual &&
+		! grep "git author.*does not match" actual &&
+
+		p4_check_commit_author usernamefile3 alice
+	) &&
+	rm -rf "$git" && mkdir "$git"
+'
+
 
 test_expect_success 'shutdown' '
 	pid=`pgrep -f p4d` &&

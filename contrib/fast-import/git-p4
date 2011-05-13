@@ -614,6 +614,7 @@ class P4Submit(Command, P4UserMap):
         self.verbose = False
         self.preserveUser = gitConfig("git-p4.preserveUser").lower() == "true"
         self.isWindows = (platform.system() == "Windows")
+        self.myP4UserId = None
 
     def check(self):
         if len(p4CmdList("opened ...")) > 0:
@@ -721,6 +722,25 @@ class P4Submit(Command, P4UserMap):
                     return 1
         return 0
 
+    def p4UserId(self):
+        if self.myP4UserId:
+            return self.myP4UserId
+
+        results = p4CmdList("user -o")
+        for r in results:
+            if r.has_key('User'):
+                self.myP4UserId = r['User']
+                return r['User']
+        die("Could not find your p4 user id")
+
+    def p4UserIsMe(self, p4User):
+        # return True if the given p4 user is actually me
+        me = self.p4UserId()
+        if not p4User or p4User != me:
+            return False
+        else:
+            return True
+
     def prepareSubmitTemplate(self):
         # remove lines in the Files section that show changes to files outside the depot path we're committing into
         template = ""
@@ -750,8 +770,7 @@ class P4Submit(Command, P4UserMap):
     def applyCommit(self, id):
         print "Applying %s" % (read_pipe("git log --max-count=1 --pretty=oneline %s" % id))
 
-        if self.preserveUser:
-            (p4User, gitEmail) = self.p4UserForCommit(id)
+        (p4User, gitEmail) = self.p4UserForCommit(id)
 
         if not self.detectRenames:
             # If not explicitly set check the config variable
@@ -890,6 +909,11 @@ class P4Submit(Command, P4UserMap):
                     newdiff += "+" + line
                 f.close()
 
+            if self.checkAuthorship and not self.p4UserIsMe(p4User):
+                submitTemplate += "######## git author %s does not match your p4 account.\n" % gitEmail
+                submitTemplate += "######## Use git-p4 option --preserve-user to modify authorship\n"
+                submitTemplate += "######## Use git-p4 config git-p4.skipUserNameCheck hides this message.\n"
+
             separatorLine = "######## everything below this line is just the diff #######\n"
 
             [handle, fileName] = tempfile.mkstemp()
@@ -1000,6 +1024,11 @@ class P4Submit(Command, P4UserMap):
         for line in read_pipe_lines("git rev-list --no-merges %s..%s" % (self.origin, self.master)):
             commits.append(line.strip())
         commits.reverse()
+
+        if self.preserveUser or (gitConfig("git-p4.skipUserNameCheck") == "true"):
+            self.checkAuthorship = False
+        else:
+            self.checkAuthorship = True
 
         if self.preserveUser:
             self.checkValidP4Users(commits)
