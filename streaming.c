@@ -51,6 +51,8 @@ static open_istream_fn open_istream_tbl[] = {
 struct git_istream {
 	const struct stream_vtbl *vtbl;
 	unsigned long size; /* inflated size of full object */
+	z_stream z;
+	enum { z_unused, z_used, z_done, z_error } z_state;
 
 	union {
 		struct {
@@ -64,8 +66,8 @@ struct git_istream {
 		} loose;
 
 		struct {
-			int fd; /* open for reading */
-			/* NEEDSWORK: what else? */
+			struct packed_git *pack;
+			off_t pos;
 		} in_pack;
 	} u;
 };
@@ -128,6 +130,20 @@ struct git_istream *open_istream(const unsigned char *sha1,
 	return st;
 }
 
+
+/*****************************************************************
+ *
+ * Common helpers
+ *
+ *****************************************************************/
+
+static void close_deflated_stream(struct git_istream *st)
+{
+	if (st->z_state == z_used)
+		git_inflate_end(&st->z);
+}
+
+
 /*****************************************************************
  *
  * Loose object stream
@@ -146,9 +162,92 @@ static open_method_decl(loose)
  *
  *****************************************************************/
 
+static read_method_decl(pack_non_delta)
+{
+	size_t total_read = 0;
+
+	switch (st->z_state) {
+	case z_unused:
+		memset(&st->z, 0, sizeof(st->z));
+		git_inflate_init(&st->z);
+		st->z_state = z_used;
+		break;
+	case z_done:
+		return 0;
+	case z_error:
+		return -1;
+	case z_used:
+		break;
+	}
+
+	while (total_read < sz) {
+		int status;
+		struct pack_window *window = NULL;
+		unsigned char *mapped;
+
+		mapped = use_pack(st->u.in_pack.pack, &window,
+				  st->u.in_pack.pos, &st->z.avail_in);
+
+		st->z.next_out = (unsigned char *)buf + total_read;
+		st->z.avail_out = sz - total_read;
+		st->z.next_in = mapped;
+		status = git_inflate(&st->z, Z_FINISH);
+
+		st->u.in_pack.pos += st->z.next_in - mapped;
+		total_read = st->z.next_out - (unsigned char *)buf;
+		unuse_pack(&window);
+
+		if (status == Z_STREAM_END) {
+			git_inflate_end(&st->z);
+			st->z_state = z_done;
+			break;
+		}
+		if (status != Z_OK && status != Z_BUF_ERROR) {
+			git_inflate_end(&st->z);
+			st->z_state = z_error;
+			return -1;
+		}
+	}
+	return total_read;
+}
+
+static close_method_decl(pack_non_delta)
+{
+	close_deflated_stream(st);
+	return 0;
+}
+
+static struct stream_vtbl pack_non_delta_vtbl = {
+	close_istream_pack_non_delta,
+	read_istream_pack_non_delta,
+};
+
 static open_method_decl(pack_non_delta)
 {
-	return -1; /* for now */
+	struct pack_window *window;
+	enum object_type in_pack_type;
+
+	st->u.in_pack.pack = oi->u.packed.pack;
+	st->u.in_pack.pos = oi->u.packed.offset;
+	window = NULL;
+
+	in_pack_type = unpack_object_header(st->u.in_pack.pack,
+					    &window,
+					    &st->u.in_pack.pos,
+					    &st->size);
+	unuse_pack(&window);
+	switch (in_pack_type) {
+	default:
+		return -1; /* we do not do deltas for now */
+	case OBJ_COMMIT:
+	case OBJ_TREE:
+	case OBJ_BLOB:
+	case OBJ_TAG:
+		break;
+	}
+	st->z_state = z_unused;
+	st->vtbl = &pack_non_delta_vtbl;
+	return 0;
 }
 
 
