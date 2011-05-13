@@ -1030,7 +1030,8 @@ struct object_info {
 	enum {
 		OI_CACHED,
 		OI_LOOSE,
-		OI_PACKED
+		OI_PACKED,
+		OI_DBCACHED
 	} whence;
 	union {
 		/*
