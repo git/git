@@ -1523,10 +1523,10 @@ static int packed_delta_info(struct packed_git *p,
 	return type;
 }
 
-static int unpack_object_header(struct packed_git *p,
-				struct pack_window **w_curs,
-				off_t *curpos,
-				unsigned long *sizep)
+int unpack_object_header(struct packed_git *p,
+			 struct pack_window **w_curs,
+			 off_t *curpos,
+			 unsigned long *sizep)
 {
 	unsigned char *base;
 	unsigned int left;
