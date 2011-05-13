@@ -258,12 +258,9 @@ run_merge_tool () {
 		;;
 	p4merge)
 		if merge_mode; then
-		    touch "$BACKUP"
-			if $base_present; then
-				"$merge_tool_path" "$BASE" "$LOCAL" "$REMOTE" "$MERGED"
-			else
-				"$merge_tool_path" "$LOCAL" "$LOCAL" "$REMOTE" "$MERGED"
-			fi
+			touch "$BACKUP"
+			$base_present || >"$BASE"
+			"$merge_tool_path" "$BASE" "$LOCAL" "$REMOTE" "$MERGED"
 			check_unchanged
 		else
 			"$merge_tool_path" "$LOCAL" "$REMOTE"
