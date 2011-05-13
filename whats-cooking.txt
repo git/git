@@ -1,115 +1,113 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (May 2011, #05; Wed, 11)
-X-master-at: dbe9c5adf95e99c35dd728af2114fccfb9117c65
-X-next-at: 5aaf5cf1a3addf544db48634fb8abc1aec4e8174
+Subject: What's cooking in git.git (May 2011, #06; Fri, 13)
+X-master-at: 2de58b398b5a1f81bf74a385e41cfc2fcd9cb427
+X-next-at: fcbf71a2ac7af454bec14832c8dfba57e793dda7
 
-What's cooking in git.git (May 2011, #05; Wed, 11)
+What's cooking in git.git (May 2011, #06; Fri, 13)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' while commits prefixed with '+' are in 'next'.
 
+I am somewhat frustrated that I so almost no reviews on gitweb
+patches. Does this mean nobody is interested in viewing the projects
+on gitweb? How can we improve this lack of review bandwidth situation?
+
 The main part of this cycle is expected to run thru May, aiming for a
 feature freeze in early June.
 
-We are in the middle of week #3.
+We are about to finish the week #3 of this cycle.
 
 --------------------------------------------------
 [Graduated to "master"]
 
-* dm/http-cleanup (2011-05-04) 4 commits
-  (merged to 'next' on 2011-05-06 at 711ff78)
- + t5541-http-push: add test for chunked
- + http-push: refactor curl_easy_setup madness
- + http-push: use const for strings in signatures
- + http: make curl callbacks match contracts from curl header
+* bf/commit-template-no-cleanup (2011-05-11) 1 commit
+  (merged to 'next' on 2011-05-11 at 01fde0d)
+ + Do not strip empty lines / trailing spaces from a commit message template
 
-* jc/maint-add-p-overlapping-hunks (2011-05-08) 5 commits
-  (merged to 'next' on 2011-05-08 at bcf9228)
- + t3701: add-p-fix makes the last test to pass
-  (merged to 'next' on 2011-05-02 at e57b66f)
- + "add -p": work-around an old laziness that does not coalesce hunks
- + add--interactive.perl: factor out repeated --recount option
- + t3701: Editing a split hunk in an "add -p" session
- + add -p: 'q' should really quit
+* cn/log-parse-opt (2011-04-14) 1 commit
+  (merged to 'next' on 2011-04-28 at 02f2eac)
+ + log: convert to parse-options
 
-* jc/maint-branch-mergeoptions (2011-05-06) 1 commit
-  (merged to 'next' on 2011-05-08 at fa6b154)
- + merge: make branch.<name>.mergeoptions correctly override merge.<option>
- (this branch is used by mg/merge-ff-config.)
+* jc/fix-add-u-unmerged (2011-04-23) 1 commit
+  (merged to 'next' on 2011-04-28 at f7ed821)
+ + Fix "add -u" that sometimes fails to resolve unmerged paths
+ (this branch is used by jc/add-delete-default.)
 
-* jn/ctags (2011-04-29) 3 commits
-  (merged to 'next' on 2011-05-06 at 5c574ff)
- + gitweb: Mark matched 'ctag' / contents tag (?by_tag=foo)
- + gitweb: Change the way "content tags" ('ctags') are handled
- + gitweb: Restructure projects list generation
- (this branch is used by jn/ctags-more.)
+* jc/t1506-shell-param-expansion-gotcha (2011-05-09) 1 commit
+  (merged to 'next' on 2011-05-11 at 6c8619e)
+ + t1507: avoid "${parameter<op>'word'}" inside double-quotes
 
-* jn/gitweb-dependency (2011-05-08) 2 commits
-  (merged to 'next' on 2011-05-08 at 9101342)
- + Remove gitweb/gitweb.cgi and other legacy targets from main Makefile
- + git-instaweb: Simplify build dependency on gitweb
+* jh/dirstat-lines (2011-04-29) 8 commits
+  (merged to 'next' on 2011-04-29 at a302674)
+ + Mark dirstat error messages for translation
+ + Improve error handling when parsing dirstat parameters
+ + New --dirstat=lines mode, doing dirstat analysis based on diffstat
+ + Allow specifying --dirstat cut-off percentage as a floating point number
+ + Add config variable for specifying default --dirstat behavior
+ + Refactor --dirstat parsing; deprecate --cumulative and --dirstat-by-file
+ + Make --dirstat=0 output directories that contribute < 0.1% of changes
+ + Add several testcases for --dirstat and friends
 
-* jn/maint-test-merge-verify-parents (2011-05-06) 2 commits
-  (merged to 'next' on 2011-05-08 at 35a7c66)
- + tests: teach verify_parents to check for extra parents
- + tests: eliminate unnecessary setup test assertions
+* jn/setup-revisions-glob-and-friends-passthru (2011-04-21) 2 commits
+  (merged to 'next' on 2011-04-28 at 6006cc4)
+ + revisions: allow --glob and friends in parse_options-enabled commands
+ + revisions: split out handle_revision_pseudo_opt function
 
-* sr/maint-fast-import-tighten-option-parsing (2011-05-05) 1 commit
-  (merged to 'next' on 2011-05-08 at 367b148)
- + fast-import: fix option parser for no-arg options
+* js/maint-1.6.6-send-pack-stateless-rpc-deadlock-fix (2011-05-05) 2 commits
+ + send-pack: unbreak push over stateless rpc
+ + send-pack: avoid deadlock when pack-object dies early
+ (this branch is used by js/maint-send-pack-stateless-rpc-deadlock-fix.)
 
-* vh/config-interactive-singlekey-doc (2011-05-05) 5 commits
-  (merged to 'next' on 2011-05-06 at 46b522c)
- + git-reset.txt: better docs for '--patch'
- + git-checkout.txt: better docs for '--patch'
- + git-stash.txt: better docs for '--patch'
- + git-add.txt: document 'interactive.singlekey'
- + config.txt: 'interactive.singlekey; is used by...
- (this branch is used by ci/commit--interactive-atomic.)
+* js/maint-send-pack-stateless-rpc-deadlock-fix (2011-05-05) 2 commits
+  (merged to 'next' on 2011-05-05 at 3f4ffb9)
+ + Merge branch 'js/maint-1.6.6-send-pack-stateless-rpc-deadlock-fix' into js/maint-send-pack-stateless-rpc-deadlock-fix
+  (merged to 'next' on 2011-04-28 at db7e04a)
+ + Merge branch 'js/maint-1.6.6-send-pack-stateless-rpc-deadlock-fix' into js/maint-send-pack-stateless-rpc-deadlock-fix
+ (this branch uses js/maint-1.6.6-send-pack-stateless-rpc-deadlock-fix.)
+
+* rr/rerere-libify-clear-gc (2011-05-08) 1 commit
+  (merged to 'next' on 2011-05-11 at b1d8c88)
+ + rerere: libify rerere_clear() and rerere_gc()
+
+This is pure code movement.  Changing them to suit the need of other
+callers can be built on it as separate patches.
 
 --------------------------------------------------
 [New Topics]
 
-* jc/bigfile (2011-05-09) 3 commits
- - Bigfile: teach "git add" to send a large file straight to a pack
- - index_fd(): split into two helper functions
- - index_fd(): turn write_object and format_check arguments into one flag
+* jc/maint-1.6.6-pathspec-stdin-and-cmdline (2011-05-11) 1 commit
+ + setup_revisions(): take pathspec from command line and --stdin correctly
+ (this branch is used by jc/magic-pathspec, jc/maint-1.7.4-pathspec-stdin-and-cmdline and jc/maint-pathspec-stdin-and-cmdline.)
 
-This covers the entry point for a big file to the system. Other parts that
-need to know about them are the exit point (i.e. write_entry()), packing
-and repacking (as long as bigfilethreshold is sane this should work),
-diffs and status (avoid slurping large binary in core only to do nothing,
-which we already should), and transport (receive-pack/fetch-pack call
-either unpack-objects or index-pack, which still want to hold the full
-object in-core and need to be fixed).
+* jc/maint-1.7.4-pathspec-stdin-and-cmdline (2011-05-11) 1 commit
+ - Merge branch 'jc/maint-1.6.6-pathspec-stdin-and-cmdline'
+ (this branch uses jc/maint-1.6.6-pathspec-stdin-and-cmdline; is tangled with jc/magic-pathspec and jc/maint-pathspec-stdin-and-cmdline.)
 
-* jc/convert (2011-05-09) 4 commits
- - convert: make it harder to screw up adding a conversion attribute
- - convert: make it safer to add conversion attributes
- - convert: give saner names to crlf/eol variables, types and functions
- - convert: rename the "eol" global variable to "core_eol"
+* jc/maint-pathspec-stdin-and-cmdline (2011-05-11) 2 commits
+ - Merge branch 'jc/maint-1.7.4-pathspec-stdin-and-cmdline'
+ - Merge branch 'jc/maint-1.6.6-pathspec-stdin-and-cmdline'
+ (this branch uses jc/maint-1.6.6-pathspec-stdin-and-cmdline; is tangled with jc/magic-pathspec and jc/maint-1.7.4-pathspec-stdin-and-cmdline.)
 
-Just a clean-up.
-Will merge to "next" by the end of week #3.
+These are to fix an ancient bug where feeding "git log --stdin path" with
+an input that also has additional pathspec corrupted memory.
 
-* jk/blame-line-porcelain (2011-05-09) 3 commits
- - blame: add --line-porcelain output format
- - blame: refactor porcelain output
- - add tests for various blame formats
+* jl/read-tree-m-dry-run (2011-05-11) 1 commit
+ - Teach read-tree the -n|--dry-run option
 
-* ms/tagname-does-not-begin-with-dash (2011-05-10) 1 commit
- - tag: disallow '-' as tag name
+Looked good. We _might_ want to make -n simply ignore -u, though.
 
-Will merge to "next" by the end of week #3.
+* jc/streaming (2011-05-12) 5 commits
+ - write_entry(): use streaming API for writing working tree files
+ - stream: a streaming interface to read from the object store
+ - sha1_object_info_extended(): expose a bit more information from object-info
+ - write_entry(): separate two helper functions out
+ - packed_object_info_detail(): do not return a string
+ (this branch uses jc/convert.)
 
-* fc/completion-zsh (2011-05-10) 1 commit
- + git-completion: fix regression in zsh support
- (this branch is used by sg/completion-updates.)
-
-* nd/sparse-co-fix (2011-05-10) 2 commits
- - sparse checkout: do not eagerly decide the fate for whole directory
- - t1011: fix sparse-checkout initialization and add new file
+The counterpart to jc/bigfile to cover the write-out codepath. This does
+not yet have "read directly from pack or loose object without slurping the
+whole thing in memory" yet, which is still work in progress.
 
 --------------------------------------------------
 [Stalled]
@@ -153,7 +151,6 @@ is a sane use case, though. May drop.
 
 * jc/add-delete-default (2011-04-27) 1 commit
  - git add: notice removal of tracked paths by default
- (this branch uses jc/fix-add-u-unmerged.)
 
 * jk/maint-merge-rename-create (2011-03-25) 3 commits
  - merge: turn on rewrite detection
@@ -197,6 +194,47 @@ Needs to tighten the advice to only govern the generic How-to part.
 --------------------------------------------------
 [Cooking]
 
+* jc/bigfile (2011-05-12) 3 commits
+ - Bigfile: teach "git add" to send a large file straight to a pack
+ - index_fd(): split into two helper functions
+ - index_fd(): turn write_object and format_check arguments into one flag
+
+This covers the entry point for a big file to the system. Other parts that
+need to know about them are the exit point (i.e. write_entry()), packing
+and repacking (as long as bigfilethreshold is sane this should work),
+diffs and status (avoid slurping large binary in core only to do nothing,
+which we already should), and transport (receive-pack/fetch-pack call
+either unpack-objects or index-pack, which still want to hold the full
+object in-core and need to be fixed).
+
+* jc/convert (2011-05-09) 4 commits
+ - convert: make it harder to screw up adding a conversion attribute
+ - convert: make it safer to add conversion attributes
+ - convert: give saner names to crlf/eol variables, types and functions
+ - convert: rename the "eol" global variable to "core_eol"
+ (this branch is used by jc/streaming.)
+
+Just a clean-up.
+Will merge to "next" by the end of week #3.
+
+* jk/blame-line-porcelain (2011-05-09) 3 commits
+ - blame: add --line-porcelain output format
+ - blame: refactor porcelain output
+ - add tests for various blame formats
+
+* ms/tagname-does-not-begin-with-dash (2011-05-10) 1 commit
+ - tag: disallow '-' as tag name
+
+Will merge to "next" by the end of week #3.
+
+* fc/completion-zsh (2011-05-10) 1 commit
+ + git-completion: fix regression in zsh support
+ (this branch is used by sg/completion-updates.)
+
+* nd/sparse-co-fix (2011-05-10) 2 commits
+ - sparse checkout: do not eagerly decide the fate for whole directory
+ - t1011: fix sparse-checkout initialization and add new file
+
 * kk/maint-prefix-in-config-mak (2011-05-09) 3 commits
   (merged to 'next' on 2011-05-09 at 267a3aa)
  + Honor $(prefix) set in config.mak* when defining ETC_GIT*
@@ -209,12 +247,6 @@ reasonable.
 
 Will merge to "master" by the end of week #4.
 
-* bf/commit-template-no-cleanup (2011-05-11) 1 commit
-  (merged to 'next' on 2011-05-11 at 01fde0d)
- + Do not strip empty lines / trailing spaces from a commit message template
-
-Will merge to "master" by the end of week #3.
-
 * ci/commit--interactive-atomic (2011-05-10) 6 commits
   (merged to 'next' on 2011-05-11 at 7f36fd8)
  + Test atomic git-commit --interactive
@@ -225,15 +257,6 @@ Will merge to "master" by the end of week #3.
  + Use a temporary index for git commit --interactive
 
 Will merge to "master" by the end of week #4.
-
-* rr/rerere-libify-clear-gc (2011-05-08) 1 commit
-  (merged to 'next' on 2011-05-11 at b1d8c88)
- + rerere: libify rerere_clear() and rerere_gc()
-
-This is pure code movement.  Changing them to suit the need of other
-callers can be built on it as separate patches.
-
-Will merge to "master" by the end of week #3.
 
 * ab/i18n-scripts (2011-05-08) 48 commits
  - i18n: git-bisect bisect_next_check "You need to" message
@@ -293,13 +316,8 @@ Will merge to "master" by the end of week #3.
  - git-sh-i18n--envsubst: our own envsubst(1) for eval_gettext()
  (this branch is used by ab/i18n-scripts.)
 
-Will merge to "next" by the end of week #4.
-
-* jc/t1506-shell-param-expansion-gotcha (2011-05-09) 1 commit
-  (merged to 'next' on 2011-05-11 at 6c8619e)
- + t1507: avoid "${parameter<op>'word'}" inside double-quotes
-
-Will merge to "master" by the end of week #3.
+Will be re-rolled to work around systems whose environment variable names
+are case insensitive.
 
 * mg/merge-ff-config (2011-05-06) 3 commits
   (merged to 'next' on 2011-05-08 at 977b432)
@@ -321,8 +339,6 @@ Will merge to "master" by the end of week #4.
  + grep: Put calls to fixmatch() and regmatch() into patmatch()
  + contrib/completion: --line-number to git grep
  + Documentation: Add --line-number to git-grep synopsis
-
-The tip is my "how about this" fix-up for the "Bail out" one.
 
 Will merge to "next" by the end of week #3.
 
@@ -350,56 +366,12 @@ Will merge to "master" by the end of week #4.
 
 The tip one will be re-rolled.
 
-* jh/dirstat-lines (2011-04-29) 8 commits
-  (merged to 'next' on 2011-04-29 at a302674)
- + Mark dirstat error messages for translation
- + Improve error handling when parsing dirstat parameters
- + New --dirstat=lines mode, doing dirstat analysis based on diffstat
- + Allow specifying --dirstat cut-off percentage as a floating point number
- + Add config variable for specifying default --dirstat behavior
- + Refactor --dirstat parsing; deprecate --cumulative and --dirstat-by-file
- + Make --dirstat=0 output directories that contribute < 0.1% of changes
- + Add several testcases for --dirstat and friends
-
-Will merge to "master" by the end of week #3.
-
-* jn/setup-revisions-glob-and-friends-passthru (2011-04-21) 2 commits
-  (merged to 'next' on 2011-04-28 at 6006cc4)
- + revisions: allow --glob and friends in parse_options-enabled commands
- + revisions: split out handle_revision_pseudo_opt function
-
-Will merge to "master" by the end of week #3.
-
-* cn/log-parse-opt (2011-04-14) 1 commit
-  (merged to 'next' on 2011-04-28 at 02f2eac)
- + log: convert to parse-options
-
-Will merge to "master" by the end of week #3.
-
-* jc/fix-add-u-unmerged (2011-04-23) 1 commit
-  (merged to 'next' on 2011-04-28 at f7ed821)
- + Fix "add -u" that sometimes fails to resolve unmerged paths
- (this branch is used by jc/add-delete-default.)
-
-Will merge to "master" by the end of week #3.
-
-* js/maint-1.6.6-send-pack-stateless-rpc-deadlock-fix (2011-05-05) 2 commits
- + send-pack: unbreak push over stateless rpc
- + send-pack: avoid deadlock when pack-object dies early
- (this branch is used by js/maint-send-pack-stateless-rpc-deadlock-fix.)
-
-Will merge to "master" by the end of week #3.
-
-* js/maint-send-pack-stateless-rpc-deadlock-fix (2011-05-05) 2 commits
-  (merged to 'next' on 2011-05-05 at 3f4ffb9)
- + Merge branch 'js/maint-1.6.6-send-pack-stateless-rpc-deadlock-fix' into js/maint-send-pack-stateless-rpc-deadlock-fix
-  (merged to 'next' on 2011-04-28 at db7e04a)
- + Merge branch 'js/maint-1.6.6-send-pack-stateless-rpc-deadlock-fix' into js/maint-send-pack-stateless-rpc-deadlock-fix
- (this branch uses js/maint-1.6.6-send-pack-stateless-rpc-deadlock-fix.)
-
-Will merge to "master" by the end of week #3.
-
-* jc/magic-pathspec (2011-05-10) 10 commits
+* jc/magic-pathspec (2011-05-12) 13 commits
+  (merged to 'next' on 2011-05-12 at 656c8b5)
+ + t3703: Skip tests using directory name ":" on Windows
+  (merged to 'next' on 2011-05-11 at 86d1d6d)
+ + revision.c: leave a note for "a lone :" enhancement
+ + Merge branch 'jc/maint-1.6.6-pathspec-stdin-and-cmdline'
   (merged to 'next' on 2011-05-11 at aaad95e)
  + t3703, t4208: add test cases for magic pathspec
  + rev/path disambiguation: further restrict "misspelled index entry" diag
@@ -412,5 +384,6 @@ Will merge to "master" by the end of week #3.
  + magic pathspec: add ":(icase)path" to match case insensitively
  + magic pathspec: futureproof shorthand form
  + magic pathspec: add tentative ":/path/from/top/level" pathspec support
+ (this branch uses jc/maint-1.6.6-pathspec-stdin-and-cmdline; is tangled with jc/maint-1.7.4-pathspec-stdin-and-cmdline and jc/maint-pathspec-stdin-and-cmdline.)
 
 This seems to need more time to mature than I expected.
