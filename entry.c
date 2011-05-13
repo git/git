@@ -123,6 +123,7 @@ static int streaming_write_entry(struct cache_entry *ce, char *path,
 	enum object_type type;
 	unsigned long sz;
 	int result = -1;
+	ssize_t kept = 0;
 	int fd = -1;
 
 	st = open_istream(ce->sha1, &type, &sz);
@@ -136,18 +137,34 @@ static int streaming_write_entry(struct cache_entry *ce, char *path,
 		goto close_and_exit;
 
 	for (;;) {
-		char buf[10240];
-		ssize_t wrote;
+		char buf[1024 * 16];
+		ssize_t wrote, holeto;
 		ssize_t readlen = read_istream(st, buf, sizeof(buf));
 
 		if (!readlen)
 			break;
+		if (sizeof(buf) == readlen) {
+			for (holeto = 0; holeto < readlen; holeto++)
+				if (buf[holeto])
+					break;
+			if (readlen == holeto) {
+				kept += holeto;
+				continue;
+			}
+		}
 
+		if (kept && lseek(fd, kept, SEEK_CUR) == (off_t) -1)
+			goto close_and_exit;
+		else
+			kept = 0;
 		wrote = write_in_full(fd, buf, readlen);
 
 		if (wrote != readlen)
 			goto close_and_exit;
 	}
+	if (kept && (lseek(fd, kept - 1, SEEK_CUR) == (off_t) -1 ||
+		     write(fd, "", 1) != 1))
+		goto close_and_exit;
 	*fstat_done = fstat_output(fd, state, statbuf);
 
 close_and_exit:
