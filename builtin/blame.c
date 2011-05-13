@@ -1377,7 +1377,7 @@ static void get_ac_line(const char *inbuf, const char *what,
 	timepos = tmp;
 
 	*tmp = 0;
-	while (person < tmp && *tmp != ' ')
+	while (person < tmp && !(*tmp == ' ' && tmp[1] == '<'))
 		tmp--;
 	if (tmp <= person)
 		return;
