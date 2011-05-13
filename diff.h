@@ -208,10 +208,7 @@ extern void diff_change(struct diff_options *,
 			const char *fullpath,
 			unsigned dirty_submodule1, unsigned dirty_submodule2);
 
-extern void diff_unmerge(struct diff_options *,
-			 const char *path,
-			 unsigned mode,
-			 const unsigned char *sha1);
+extern struct diff_filepair *diff_unmerge(struct diff_options *, const char *path);
 
 #define DIFF_SETUP_REVERSE      	1
 #define DIFF_SETUP_USE_CACHE		2

@@ -5,7 +5,6 @@ test_description='difference in submodules'
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/diff-lib.sh
 
-_z40=0000000000000000000000000000000000000000
 test_expect_success setup '
 	test_tick &&
 	test_create_repo sub &&

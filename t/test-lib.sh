@@ -89,6 +89,9 @@ esac
 _x05='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
 _x40="$_x05$_x05$_x05$_x05$_x05$_x05$_x05$_x05"
 
+# Zero SHA-1
+_z40=0000000000000000000000000000000000000000
+
 # Each test should start with something like this, after copyright notices:
 #
 # test_description='Description of this test...
