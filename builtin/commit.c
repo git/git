@@ -615,6 +615,7 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 	const char *hook_arg1 = NULL;
 	const char *hook_arg2 = NULL;
 	int ident_shown = 0;
+	int clean_message_contents = (cleanup_mode != CLEANUP_NONE);
 
 	if (!no_verify && run_hook(index_file, "pre-commit", NULL))
 		return 0;
@@ -681,6 +682,7 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		if (strbuf_read_file(&sb, template_file, 0) < 0)
 			die_errno(_("could not read '%s'"), template_file);
 		hook_arg1 = "template";
+		clean_message_contents = 0;
 	}
 
 	/*
@@ -708,7 +710,7 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 	if (s->fp == NULL)
 		die_errno(_("could not open '%s'"), git_path(commit_editmsg));
 
-	if (cleanup_mode != CLEANUP_NONE)
+	if (clean_message_contents)
 		stripspace(&sb, 0);
 
 	if (signoff) {
