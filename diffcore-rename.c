@@ -466,7 +466,7 @@ void diffcore_rename(struct diff_options *options)
 			else
 				locate_rename_dst(p->two, 1);
 		}
-		else if (!DIFF_FILE_VALID(p->two)) {
+		else if (!DIFF_PAIR_UNMERGED(p) && !DIFF_FILE_VALID(p->two)) {
 			/*
 			 * If the source is a broken "delete", and
 			 * they did not really want to get broken,
@@ -586,7 +586,10 @@ void diffcore_rename(struct diff_options *options)
 		struct diff_filepair *p = q->queue[i];
 		struct diff_filepair *pair_to_free = NULL;
 
-		if (!DIFF_FILE_VALID(p->one) && DIFF_FILE_VALID(p->two)) {
+		if (DIFF_PAIR_UNMERGED(p)) {
+			diff_q(&outq, p);
+		}
+		else if (!DIFF_FILE_VALID(p->one) && DIFF_FILE_VALID(p->two)) {
 			/*
 			 * Creation
 			 *
