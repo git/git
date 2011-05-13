@@ -18,13 +18,17 @@ Updates since v1.7.5
  * "git blame" learned "--abbrev[=<n>]" option to control the minimum
    number of hexdigits shown for commit object names.
 
- * "git cvsimport" learned that CVSNT stores its password file in a
-   location different from the traditional CVS.
-
  * "git diff -C -C" used to disable the rename detection entirely when
    there are too many copy candidate paths in the tree; now it falls
    back to "-C" when doing so would keep the copy candidate paths
    under the rename detection limit.
+
+ * "git diff" and its family of commands learned --dirstat=0 to show
+   directories that contribute less than 0.1% of changes.
+
+ * "git diff" and its family of commands learned --dirstat=lines mode to
+   assess damage to the directory based on number of lines in the patch
+   output, not based on the similarity numbers.
 
  * "git format-patch" learned "--quiet" option to suppress the output of
    the names of generated files.
@@ -53,9 +57,6 @@ Updates since v1.7.5
    the tarball generation; snapshot from the same tree should result in
    a same tarball.
 
- * "git-p4" (in contrib) learned to merge a file that was added on both
-   branches differently by using 2-way merge.
-
 Also contains various documentation updates and minor miscellaneous
 changes.
 
@@ -70,16 +71,13 @@ included in this release.
    one of them was given to the editor.
    (merge jc/maint-add-p-overlapping-hunks later)
 
+ * "git add -u" did not resolve a conflict where our history deleted and
+   their history modified the same file, and the working tree resolved to
+   keep a file.
+   (merge jc/fix-add-u-unmerged later)
+
  * "git config" used to choke with an insanely long line.
    (merge ef/maint-strbuf-init later)
-
- * "git diff-files" did not show the mode information from the working
-   tree side of an unmerged path correctly.
-   (merge jc/fix-diff-files-unmerged later)
-
- * "git diff -M --cached" used to use unmerged path as a possible rename
-   source candidate, which made no sense.
-   (merge mz/maint-rename-unmerged later)
 
  * "git format-patch" when run with "--quiet" option used to produce a
    nonsense result that consists of alternating empty output.
@@ -95,27 +93,15 @@ included in this release.
    configuration variables such as merge.ff, merge.log, etc.
    (merge jc/maint-branch-mergeoptions later)
 
- * "git merge-one-file" did not honor GIT_WORK_TREE settings when
-   handling a "both sides added, differently" conflict.
-   (merge jk/merge-one-file-working-tree later)
-
  * "git mergetool" did not handle conflicted submoudules gracefully.
    (merge jm/mergetool-submodules later)
 
- * "git rebase -i -p" failed to preserve the history when there is a
-   redundant merge created with the --no-ff option.
-   (merge aw/maint-rebase-i-p-no-ff later)
-
- * "git stash -p --no-keep-index" and "git stash --no-keep-index -p" now
-   mean the same thing.
-   (merge dm/stash-k-i-p later)
-
- * "git upload-pack" (hence "git push" over git native protocol) had a
-   subtle race condition that could lead to a deadlock.
-   (merge jk/maint-upload-pack-shallow later)
+ * "git send-pack" (hence "git push") over smalt-HTTP protocol could
+   deadlock when the client side pack-object died early.
+   (merge js/maint-send-pack-stateless-rpc-deadlock-fix later)
 
 ---
 exec >/var/tmp/1
 echo O=$(git describe master)
-O=v1.7.5.1-248-ga579498
+O=v1.7.5.1-288-ge4ae6ef
 git shortlog --no-merges ^maint ^$O master

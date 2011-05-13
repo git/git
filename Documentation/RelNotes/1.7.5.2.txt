@@ -1,0 +1,33 @@
+Git v1.7.5.2 Release Notes
+==========================
+
+The release notes to 1.7.5.1 forgot to mention:
+
+ * "git stash -p --no-keep-index" and "git stash --no-keep-index -p" now
+   mean the same thing.
+
+ * "git upload-pack" (hence "git push" over git native protocol) had a
+   subtle race condition that could lead to a deadlock.
+
+Fixes since v1.7.5.1
+--------------------
+
+ * "git cvsimport" did not know that CVSNT stores its password file in a
+   location different from the traditional CVS.
+
+ * "git diff-files" did not show the mode information from the working
+   tree side of an unmerged path correctly.
+
+ * "git diff -M --cached" used to use unmerged path as a possible rename
+   source candidate, which made no sense.
+
+ * "git merge-one-file" did not honor GIT_WORK_TREE settings when
+   handling a "both sides added, differently" conflict.
+
+ * "git-p4" (in contrib) used a wrong base image while merge a file that
+   was added on both branches differently.
+
+ * "git rebase -i -p" failed to preserve the history when there is a
+   redundant merge created with the --no-ff option.
+
+And other minor fixes and documentation updates.
