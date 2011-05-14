@@ -330,8 +330,8 @@ static struct option builtin_add_options[] = {
 
 static int add_config(const char *var, const char *value, void *cb)
 {
-	if (!strcasecmp(var, "add.ignoreerrors") ||
-	    !strcasecmp(var, "add.ignore-errors")) {
+	if (!strcmp(var, "add.ignoreerrors") ||
+	    !strcmp(var, "add.ignore-errors")) {
 		ignore_add_errors = git_config_bool(var, value);
 		return 0;
 	}

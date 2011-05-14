@@ -347,7 +347,7 @@ int git_xmerge_style = -1;
 
 int git_xmerge_config(const char *var, const char *value, void *cb)
 {
-	if (!strcasecmp(var, "merge.conflictstyle")) {
+	if (!strcmp(var, "merge.conflictstyle")) {
 		if (!value)
 			die("'%s' is not a boolean", var);
 		if (!strcmp(value, "diff3"))
