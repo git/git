@@ -2065,10 +2065,14 @@ XGETTEXT_FLAGS = \
 	--from-code=UTF-8
 XGETTEXT_FLAGS_C = $(XGETTEXT_FLAGS) --language=C \
 	--keyword=_ --keyword=N_ --keyword="Q_:1,2"
+XGETTEXT_FLAGS_SH = $(XGETTEXT_FLAGS) --language=Shell
 LOCALIZED_C := $(C_OBJ:o=c)
+LOCALIZED_SH := $(SCRIPT_SH)
 
 po/git.pot: $(LOCALIZED_C)
-	$(QUIET_XGETTEXT)$(XGETTEXT) -o$@+ $(XGETTEXT_FLAGS_C) $(LOCALIZED_C) && \
+	$(QUIET_XGETTEXT)$(XGETTEXT) -o$@+ $(XGETTEXT_FLAGS_C) $(LOCALIZED_C)
+	$(QUIET_XGETTEXT)$(XGETTEXT) -o$@+ --join-existing $(XGETTEXT_FLAGS_SH) \
+		$(LOCALIZED_SH)
 	mv $@+ $@
 
 pot: po/git.pot
