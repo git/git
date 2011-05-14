@@ -130,6 +130,7 @@
 /git-sh-i18n
 /git-sh-i18n--envsubst
 /git-sh-setup
+/git-sh-i18n
 /git-shell
 /git-shortlog
 /git-show
