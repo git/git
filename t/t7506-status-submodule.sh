@@ -196,7 +196,7 @@ AA .gitmodules
 A  sub1
 EOF
 
-test_expect_failure 'status with merge conflict in .gitmodules' '
+test_expect_success 'status with merge conflict in .gitmodules' '
 	git clone . super &&
 	test_create_repo_with_commit sub1 &&
 	test_tick &&
@@ -255,7 +255,7 @@ index badaa4c,44f999a..0000000
 ++>>>>>>> add_sub1
 EOF
 
-test_expect_failure 'diff with merge conflict in .gitmodules' '
+test_expect_success 'diff with merge conflict in .gitmodules' '
 	(
 		cd super &&
 		git diff >../diff_actual 2>&1
@@ -263,7 +263,7 @@ test_expect_failure 'diff with merge conflict in .gitmodules' '
 	test_cmp diff_actual diff_expect
 '
 
-test_expect_failure 'diff --submodule with merge conflict in .gitmodules' '
+test_expect_success 'diff --submodule with merge conflict in .gitmodules' '
 	(
 		cd super &&
 		git diff --submodule >../diff_submodule_actual 2>&1
