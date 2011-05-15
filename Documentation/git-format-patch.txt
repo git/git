@@ -20,7 +20,7 @@ SYNOPSIS
 		   [--ignore-if-in-upstream]
 		   [--subject-prefix=Subject-Prefix]
 		   [--to=<email>] [--cc=<email>]
-		   [--cover-letter]
+		   [--cover-letter] [--quiet]
 		   [<common diff options>]
 		   [ <since> | <revision range> ]
 
@@ -195,6 +195,9 @@ will want to ensure that threading is disabled for `git send-email`.
 +
 Note that the leading character does not have to be a dot; for example,
 you can use `--suffix=-patch` to get `0001-description-of-my-change-patch`.
+
+--quiet::
+	Do not print the names of the generated files to standard output.
 
 --no-binary::
 	Do not output contents of changes in binary files, instead
