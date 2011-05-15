@@ -2206,14 +2206,16 @@ static void *read_object(const unsigned char *sha1, enum object_type *type,
  * deal with them should arrange to call read_object() and give error
  * messages themselves.
  */
-void *read_sha1_file(const unsigned char *sha1,
-		     enum object_type *type,
-		     unsigned long *size)
+void *read_sha1_file_extended(const unsigned char *sha1,
+			      enum object_type *type,
+			      unsigned long *size,
+			      unsigned flag)
 {
-	const unsigned char *repl = lookup_replace_object(sha1);
 	void *data;
 	char *path;
 	const struct packed_git *p;
+	const unsigned char *repl = (flag & READ_SHA1_FILE_REPLACE)
+		? lookup_replace_object(sha1) : sha1;
 
 	errno = 0;
 	data = read_object(repl, type, size);
