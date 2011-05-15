@@ -79,22 +79,10 @@ included in this release.
  * "git config" used to choke with an insanely long line.
    (merge ef/maint-strbuf-init later)
 
- * "git format-patch" when run with "--quiet" option used to produce a
-   nonsense result that consists of alternating empty output.
-   (merge early part of cn/format-patch-quiet later)
-
- * "git format-patch" did not quote RFC822 special characters in the
-   email address (e.g From: Junio C. Hamano <jch@example.com>, not
-   From: "Junio C. Hamano" <jch@example.com>).
-   (merge jk/format-patch-quote-special-in-from later)
-
  * In "git merge", per-branch branch.<name>.mergeoptions configuration
    variables did not override the fallback default merge.<option>
    configuration variables such as merge.ff, merge.log, etc.
    (merge jc/maint-branch-mergeoptions later)
-
- * "git mergetool" did not handle conflicted submoudules gracefully.
-   (merge jm/mergetool-submodules later)
 
  * "git send-pack" (hence "git push") over smalt-HTTP protocol could
    deadlock when the client side pack-object died early.
