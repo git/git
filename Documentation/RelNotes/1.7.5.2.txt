@@ -21,8 +21,17 @@ Fixes since v1.7.5.1
  * "git diff -M --cached" used to use unmerged path as a possible rename
    source candidate, which made no sense.
 
+ * "git format-patch" did not quote RFC822 special characters in the
+   email address (e.g From: Junio C. Hamano <jch@example.com>, not
+   From: "Junio C. Hamano" <jch@example.com>).
+
+ * "git format-patch" when run with "--quiet" option used to produce a
+   nonsense result that consists of alternating empty output.
+
  * "git merge-one-file" did not honor GIT_WORK_TREE settings when
    handling a "both sides added, differently" conflict.
+
+ * "git mergetool" did not handle conflicted submoudules gracefully.
 
  * "git-p4" (in contrib) used a wrong base image while merge a file that
    was added on both branches differently.
