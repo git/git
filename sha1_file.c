@@ -31,8 +31,6 @@ static inline uintmax_t sz_fmt(size_t s) { return s; }
 
 const unsigned char null_sha1[20];
 
-static int git_open_noatime(const char *name, struct packed_git *p);
-
 /*
  * This is meant to hold a *small* number of objects that you would
  * want read_sha1_file() to be able to return, but yet you do not want
@@ -227,6 +225,7 @@ struct alternate_object_database *alt_odb_list;
 static struct alternate_object_database **alt_odb_tail;
 
 static void read_info_alternates(const char * alternates, int depth);
+static int git_open_noatime(const char *name);
 
 /*
  * Prepare alternate object database registry.
@@ -360,7 +359,7 @@ static void read_info_alternates(const char * relative_base, int depth)
 	int fd;
 
 	sprintf(path, "%s/%s", relative_base, alt_file_name);
-	fd = git_open_noatime(path, NULL);
+	fd = git_open_noatime(path);
 	if (fd < 0)
 		return;
 	if (fstat(fd, &st) || (st.st_size == 0)) {
@@ -475,7 +474,7 @@ static int check_packed_git_idx(const char *path,  struct packed_git *p)
 	struct pack_idx_header *hdr;
 	size_t idx_size;
 	uint32_t version, nr, i, *index;
-	int fd = git_open_noatime(path, p);
+	int fd = git_open_noatime(path);
 	struct stat st;
 
 	if (fd < 0)
@@ -757,7 +756,7 @@ static int open_packed_git_1(struct packed_git *p)
 	while (pack_max_fds <= pack_open_fds && unuse_one_window(NULL, -1))
 		; /* nothing */
 
-	p->pack_fd = git_open_noatime(p->pack_name, p);
+	p->pack_fd = git_open_noatime(p->pack_name);
 	if (p->pack_fd < 0 || fstat(p->pack_fd, &st))
 		return -1;
 	pack_open_fds++;
@@ -1145,7 +1144,7 @@ int check_sha1_signature(const unsigned char *sha1, void *map, unsigned long siz
 	return hashcmp(sha1, real_sha1) ? -1 : 0;
 }
 
-static int git_open_noatime(const char *name, struct packed_git *p)
+static int git_open_noatime(const char *name)
 {
 	static int sha1_file_open_flag = O_NOATIME;
 
@@ -1170,7 +1169,7 @@ static int open_sha1_file(const unsigned char *sha1)
 	char *name = sha1_file_name(sha1);
 	struct alternate_object_database *alt;
 
-	fd = git_open_noatime(name, NULL);
+	fd = git_open_noatime(name);
 	if (fd >= 0)
 		return fd;
 
@@ -1179,7 +1178,7 @@ static int open_sha1_file(const unsigned char *sha1)
 	for (alt = alt_odb_list; alt; alt = alt->next) {
 		name = alt->name;
 		fill_sha1_path(name, sha1);
-		fd = git_open_noatime(alt->base, NULL);
+		fd = git_open_noatime(alt->base);
 		if (fd >= 0)
 			return fd;
 	}
