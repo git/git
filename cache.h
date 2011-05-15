@@ -518,8 +518,11 @@ struct pathspec {
 extern int init_pathspec(struct pathspec *, const char **);
 extern void free_pathspec(struct pathspec *);
 extern int ce_path_match(const struct cache_entry *ce, const struct pathspec *pathspec);
-extern int index_fd(unsigned char *sha1, int fd, struct stat *st, int write_object, enum object_type type, const char *path, int format_check);
-extern int index_path(unsigned char *sha1, const char *path, struct stat *st, int write_object);
+
+#define HASH_WRITE_OBJECT 1
+#define HASH_FORMAT_CHECK 2
+extern int index_fd(unsigned char *sha1, int fd, struct stat *st, enum object_type type, const char *path, unsigned flags);
+extern int index_path(unsigned char *sha1, const char *path, struct stat *st, unsigned flags);
 extern void fill_stat_cache_info(struct cache_entry *ce, struct stat *st);
 
 #define REFRESH_REALLY		0x0001	/* ignore_valid */
@@ -606,7 +609,7 @@ enum eol {
 #endif
 };
 
-extern enum eol eol;
+extern enum eol core_eol;
 
 enum branch_track {
 	BRANCH_TRACK_UNSPECIFIED = -1,
@@ -756,13 +759,23 @@ char *strip_path_suffix(const char *path, const char *suffix);
 int daemon_avoid_alias(const char *path);
 int offset_1st_component(const char *path);
 
-/* Read and unpack a sha1 file into memory, write memory to a sha1 file */
-extern int sha1_object_info(const unsigned char *, unsigned long *);
-extern void *read_sha1_file_repl(const unsigned char *sha1, enum object_type *type, unsigned long *size, const unsigned char **replacement);
+/* object replacement */
+#define READ_SHA1_FILE_REPLACE 1
+extern void *read_sha1_file_extended(const unsigned char *sha1, enum object_type *type, unsigned long *size, unsigned flag);
 static inline void *read_sha1_file(const unsigned char *sha1, enum object_type *type, unsigned long *size)
 {
-	return read_sha1_file_repl(sha1, type, size, NULL);
+	return read_sha1_file_extended(sha1, type, size, READ_SHA1_FILE_REPLACE);
 }
+extern const unsigned char *do_lookup_replace_object(const unsigned char *sha1);
+static inline const unsigned char *lookup_replace_object(const unsigned char *sha1)
+{
+	if (!read_replace_refs)
+		return sha1;
+	return do_lookup_replace_object(sha1);
+}
+
+/* Read and unpack a sha1 file into memory, write memory to a sha1 file */
+extern int sha1_object_info(const unsigned char *, unsigned long *);
 extern int hash_sha1_file(const void *buf, unsigned long len, const char *type, unsigned char *sha1);
 extern int write_sha1_file(const void *buf, unsigned long len, const char *type, unsigned char *return_sha1);
 extern int pretend_sha1_file(void *, unsigned long, enum object_type, unsigned char *);
