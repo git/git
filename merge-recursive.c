@@ -1721,15 +1721,15 @@ int merge_recursive_generic(struct merge_options *o,
 static int merge_recursive_config(const char *var, const char *value, void *cb)
 {
 	struct merge_options *o = cb;
-	if (!strcasecmp(var, "merge.verbosity")) {
+	if (!strcmp(var, "merge.verbosity")) {
 		o->verbosity = git_config_int(var, value);
 		return 0;
 	}
-	if (!strcasecmp(var, "diff.renamelimit")) {
+	if (!strcmp(var, "diff.renamelimit")) {
 		o->diff_rename_limit = git_config_int(var, value);
 		return 0;
 	}
-	if (!strcasecmp(var, "merge.renamelimit")) {
+	if (!strcmp(var, "merge.renamelimit")) {
 		o->merge_rename_limit = git_config_int(var, value);
 		return 0;
 	}
