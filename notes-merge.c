@@ -707,7 +707,7 @@ int notes_merge_commit(struct notes_merge_options *o,
 		/* write file as blob, and add to partial_tree */
 		if (stat(ent->name, &st))
 			die_errno("Failed to stat '%s'", ent->name);
-		if (index_path(blob_sha1, ent->name, &st, 1))
+		if (index_path(blob_sha1, ent->name, &st, HASH_WRITE_OBJECT))
 			die("Failed to write blob object from '%s'", ent->name);
 		if (add_note(partial_tree, obj_sha1, blob_sha1, NULL))
 			die("Failed to add resolved note '%s' to notes tree",
