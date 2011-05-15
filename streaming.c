@@ -61,8 +61,11 @@ struct git_istream {
 		} incore;
 
 		struct {
-			int fd; /* open for reading */
-			/* NEEDSWORK: what else? */
+			void *mapped;
+			unsigned long mapsize;
+			char hdr[32];
+			int hdr_avail;
+			int hdr_used;
 		} loose;
 
 		struct {
@@ -150,9 +153,85 @@ static void close_deflated_stream(struct git_istream *st)
  *
  *****************************************************************/
 
+static read_method_decl(loose)
+{
+	size_t total_read = 0;
+
+	switch (st->z_state) {
+	case z_done:
+		return 0;
+	case z_error:
+		return -1;
+	default:
+		break;
+	}
+
+	if (st->u.loose.hdr_used < st->u.loose.hdr_avail) {
+		size_t to_copy = st->u.loose.hdr_avail - st->u.loose.hdr_used;
+		if (sz < to_copy)
+			to_copy = sz;
+		memcpy(buf, st->u.loose.hdr + st->u.loose.hdr_used, to_copy);
+		st->u.loose.hdr_used += to_copy;
+		total_read += to_copy;
+	}
+
+	while (total_read < sz) {
+		int status;
+
+		st->z.next_out = (unsigned char *)buf + total_read;
+		st->z.avail_out = sz - total_read;
+		status = git_inflate(&st->z, Z_FINISH);
+
+		total_read = st->z.next_out - (unsigned char *)buf;
+
+		if (status == Z_STREAM_END) {
+			git_inflate_end(&st->z);
+			st->z_state = z_done;
+			break;
+		}
+		if (status != Z_OK && status != Z_BUF_ERROR) {
+			git_inflate_end(&st->z);
+			st->z_state = z_error;
+			return -1;
+		}
+	}
+	return total_read;
+}
+
+static close_method_decl(loose)
+{
+	close_deflated_stream(st);
+	munmap(st->u.loose.mapped, st->u.loose.mapsize);
+	return 0;
+}
+
+static struct stream_vtbl loose_vtbl = {
+	close_istream_loose,
+	read_istream_loose,
+};
+
 static open_method_decl(loose)
 {
-	return -1; /* for now */
+	st->u.loose.mapped = map_sha1_file(sha1, &st->u.loose.mapsize);
+	if (!st->u.loose.mapped)
+		return -1;
+	if (unpack_sha1_header(&st->z,
+			       st->u.loose.mapped,
+			       st->u.loose.mapsize,
+			       st->u.loose.hdr,
+			       sizeof(st->u.loose.hdr)) < 0) {
+		git_inflate_end(&st->z);
+		munmap(st->u.loose.mapped, st->u.loose.mapsize);
+		return -1;
+	}
+
+	parse_sha1_header(st->u.loose.hdr, &st->size);
+	st->u.loose.hdr_used = strlen(st->u.loose.hdr) + 1;
+	st->u.loose.hdr_avail = st->z.total_out;
+	st->z_state = z_used;
+
+	st->vtbl = &loose_vtbl;
+	return 0;
 }
 
 
