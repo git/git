@@ -2206,10 +2206,9 @@ static void *read_object(const unsigned char *sha1, enum object_type *type,
  * deal with them should arrange to call read_object() and give error
  * messages themselves.
  */
-void *read_sha1_file_repl(const unsigned char *sha1,
-			  enum object_type *type,
-			  unsigned long *size,
-			  const unsigned char **replacement)
+void *read_sha1_file(const unsigned char *sha1,
+		     enum object_type *type,
+		     unsigned long *size)
 {
 	const unsigned char *repl = lookup_replace_object(sha1);
 	void *data;
@@ -2218,11 +2217,8 @@ void *read_sha1_file_repl(const unsigned char *sha1,
 
 	errno = 0;
 	data = read_object(repl, type, size);
-	if (data) {
-		if (replacement)
-			*replacement = repl;
+	if (data)
 		return data;
-	}
 
 	if (errno && errno != ENOENT)
 		die_errno("failed to read object %s", sha1_to_hex(sha1));
