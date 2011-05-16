@@ -633,10 +633,15 @@ struct child_process *git_connect(int fd[2], const char *url_orig,
 	return conn;
 }
 
+int git_connection_is_socket(struct child_process *conn)
+{
+	return conn == &no_fork;
+}
+
 int finish_connect(struct child_process *conn)
 {
 	int code;
-	if (!conn || conn == &no_fork)
+	if (!conn || git_connection_is_socket(conn))
 		return 0;
 
 	code = finish_command(conn);
