@@ -17,19 +17,21 @@ test_expect_success 'setup' '
 	cat >expected <<-\EOF &&
 	100644 77f0ba1734ed79d12881f81b36ee134de6a3327b 0	init.t
 	100644 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 0	sub/added
+	100644 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 0	sub/addedtoo
 	100644 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 0	subsub/added
 	EOF
 	cat >expected.swt <<-\EOF &&
 	H init.t
 	H sub/added
+	H sub/addedtoo
 	H subsub/added
 	EOF
 
 	test_commit init &&
 	echo modified >>init.t &&
 	mkdir sub subsub &&
-	touch sub/added subsub/added &&
-	git add init.t sub/added subsub/added &&
+	touch sub/added sub/addedtoo subsub/added &&
+	git add init.t sub/added sub/addedtoo subsub/added &&
 	git commit -m "modified and added" &&
 	git tag top &&
 	git rm sub/added &&
@@ -83,6 +85,7 @@ test_expect_success 'match directories with trailing slash' '
 	cat >expected.swt-noinit <<-\EOF &&
 	S init.t
 	H sub/added
+	H sub/addedtoo
 	S subsub/added
 	EOF
 
@@ -95,7 +98,7 @@ test_expect_success 'match directories with trailing slash' '
 '
 
 test_expect_success 'match directories without trailing slash' '
-	echo sub >>.git/info/sparse-checkout &&
+	echo sub >.git/info/sparse-checkout &&
 	git read-tree -m -u HEAD &&
 	git ls-files -t >result &&
 	test_cmp expected.swt-noinit result &&
@@ -103,8 +106,49 @@ test_expect_success 'match directories without trailing slash' '
 	test -f sub/added
 '
 
+test_expect_success 'match directories with negated patterns' '
+	cat >expected.swt-negation <<\EOF &&
+S init.t
+S sub/added
+H sub/addedtoo
+S subsub/added
+EOF
+
+	cat >.git/info/sparse-checkout <<\EOF &&
+sub
+!sub/added
+EOF
+	git read-tree -m -u HEAD &&
+	git ls-files -t >result &&
+	test_cmp expected.swt-negation result &&
+	test ! -f init.t &&
+	test ! -f sub/added &&
+	test -f sub/addedtoo
+'
+
+test_expect_success 'match directories with negated patterns (2)' '
+	cat >expected.swt-negation2 <<\EOF &&
+H init.t
+H sub/added
+S sub/addedtoo
+H subsub/added
+EOF
+
+	cat >.git/info/sparse-checkout <<\EOF &&
+/*
+!sub
+sub/added
+EOF
+	git read-tree -m -u HEAD &&
+	git ls-files -t >result &&
+	test_cmp expected.swt-negation2 result &&
+	test -f init.t &&
+	test -f sub/added &&
+	test ! -f sub/addedtoo
+'
+
 test_expect_success 'match directory pattern' '
-	echo "s?b" >>.git/info/sparse-checkout &&
+	echo "s?b" >.git/info/sparse-checkout &&
 	git read-tree -m -u HEAD &&
 	git ls-files -t >result &&
 	test_cmp expected.swt-noinit result &&
@@ -116,6 +160,7 @@ test_expect_success 'checkout area changes' '
 	cat >expected.swt-nosub <<-\EOF &&
 	H init.t
 	S sub/added
+	S sub/addedtoo
 	S subsub/added
 	EOF
 

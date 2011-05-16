@@ -814,43 +814,45 @@ static int unpack_callback(int n, unsigned long mask, unsigned long dirmask, str
 	return mask;
 }
 
+static int clear_ce_flags_1(struct cache_entry **cache, int nr,
+			    char *prefix, int prefix_len,
+			    int select_mask, int clear_mask,
+			    struct exclude_list *el, int defval);
+
 /* Whole directory matching */
 static int clear_ce_flags_dir(struct cache_entry **cache, int nr,
 			      char *prefix, int prefix_len,
 			      char *basename,
 			      int select_mask, int clear_mask,
-			      struct exclude_list *el)
+			      struct exclude_list *el, int defval)
 {
-	struct cache_entry **cache_end = cache + nr;
+	struct cache_entry **cache_end;
 	int dtype = DT_DIR;
 	int ret = excluded_from_list(prefix, prefix_len, basename, &dtype, el);
 
 	prefix[prefix_len++] = '/';
 
-	/* included, no clearing for any entries under this directory */
-	if (!ret) {
-		for (; cache != cache_end; cache++) {
-			struct cache_entry *ce = *cache;
-			if (strncmp(ce->name, prefix, prefix_len))
-				break;
-		}
-		return nr - (cache_end - cache);
+	/* If undecided, use matching result of parent dir in defval */
+	if (ret < 0)
+		ret = defval;
+
+	for (cache_end = cache; cache_end != cache + nr; cache_end++) {
+		struct cache_entry *ce = *cache_end;
+		if (strncmp(ce->name, prefix, prefix_len))
+			break;
 	}
 
-	/* excluded, clear all selected entries under this directory. */
-	if (ret == 1) {
-		for (; cache != cache_end; cache++) {
-			struct cache_entry *ce = *cache;
-			if (select_mask && !(ce->ce_flags & select_mask))
-				continue;
-			if (strncmp(ce->name, prefix, prefix_len))
-				break;
-			ce->ce_flags &= ~clear_mask;
-		}
-		return nr - (cache_end - cache);
-	}
-
-	return 0;
+	/*
+	 * TODO: check el, if there are no patterns that may conflict
+	 * with ret (iow, we know in advance the incl/excl
+	 * decision for the entire directory), clear flag here without
+	 * calling clear_ce_flags_1(). That function will call
+	 * the expensive excluded_from_list() on every entry.
+	 */
+	return clear_ce_flags_1(cache, cache_end - cache,
+				prefix, prefix_len,
+				select_mask, clear_mask,
+				el, ret);
 }
 
 /*
@@ -871,7 +873,7 @@ static int clear_ce_flags_dir(struct cache_entry **cache, int nr,
 static int clear_ce_flags_1(struct cache_entry **cache, int nr,
 			    char *prefix, int prefix_len,
 			    int select_mask, int clear_mask,
-			    struct exclude_list *el)
+			    struct exclude_list *el, int defval)
 {
 	struct cache_entry **cache_end = cache + nr;
 
@@ -882,7 +884,7 @@ static int clear_ce_flags_1(struct cache_entry **cache, int nr,
 	while(cache != cache_end) {
 		struct cache_entry *ce = *cache;
 		const char *name, *slash;
-		int len, dtype;
+		int len, dtype, ret;
 
 		if (select_mask && !(ce->ce_flags & select_mask)) {
 			cache++;
@@ -911,7 +913,7 @@ static int clear_ce_flags_1(struct cache_entry **cache, int nr,
 						       prefix, prefix_len + len,
 						       prefix + prefix_len,
 						       select_mask, clear_mask,
-						       el);
+						       el, defval);
 
 			/* clear_c_f_dir eats a whole dir already? */
 			if (processed) {
@@ -922,13 +924,16 @@ static int clear_ce_flags_1(struct cache_entry **cache, int nr,
 			prefix[prefix_len + len++] = '/';
 			cache += clear_ce_flags_1(cache, cache_end - cache,
 						  prefix, prefix_len + len,
-						  select_mask, clear_mask, el);
+						  select_mask, clear_mask, el, defval);
 			continue;
 		}
 
 		/* Non-directory */
 		dtype = ce_to_dtype(ce);
-		if (excluded_from_list(ce->name, ce_namelen(ce), name, &dtype, el) > 0)
+		ret = excluded_from_list(ce->name, ce_namelen(ce), name, &dtype, el);
+		if (ret < 0)
+			ret = defval;
+		if (ret > 0)
 			ce->ce_flags &= ~clear_mask;
 		cache++;
 	}
@@ -943,7 +948,7 @@ static int clear_ce_flags(struct cache_entry **cache, int nr,
 	return clear_ce_flags_1(cache, nr,
 				prefix, 0,
 				select_mask, clear_mask,
-				el);
+				el, 0);
 }
 
 /*
