@@ -18,6 +18,12 @@ Updates since v1.7.5
  * "git blame" learned "--abbrev[=<n>]" option to control the minimum
    number of hexdigits shown for commit object names.
 
+ * Aborting "git commit --interactive" discards updates to the index
+   made during the interctive session.
+
+ * "git commit" learned a "--patch" option to directly jump to the
+   per-hunk selection UI of the interactive mode.
+
  * "git diff -C -C" used to disable the rename detection entirely when
    there are too many copy candidate paths in the tree; now it falls
    back to "-C" when doing so would keep the copy candidate paths
@@ -44,6 +50,12 @@ Updates since v1.7.5
  * "git merge" learned "-" as a short-hand for "the previous branch", just
    like the way "git checkout -" works.
 
+ * "git merge" uses "merge.ff" configuration variable to decide to always
+   create a merge commit (i.e. --no-ff, aka merge.ff=no), refuse to create
+   a merge commit (i.e. --ff-only, aka merge.ff=only). Setting merge.ff=yes
+   (or not setting it at all) restores the default behaviour of allowing
+   fast-forward to happen when possible.
+
  * "git rebase" that does not specify on top of which branch to rebase
    the current branch now uses @{upstream} of the current branch.
 
@@ -67,22 +79,17 @@ Fixes since v1.7.5
 Unless otherwise noted, all the fixes in 1.7.5.X maintenance track are
 included in this release.
 
- * "git add -p" did not work correctly when a hunk is split and then
-   one of them was given to the editor.
-   (merge jc/maint-add-p-overlapping-hunks later)
+ * Setting $(prefix) in config.mak did not affect where etc/gitconfig
+   file is read from, even though passing it from the command line of
+   $(MAKE) did.
+   (merge kk/maint-prefix-in-config-mak later)
 
- * "git add -u" did not resolve a conflict where our history deleted and
-   their history modified the same file, and the working tree resolved to
-   keep a file.
-   (merge jc/fix-add-u-unmerged later)
+ * The bash completion scripts should correctly work using zsh's bash
+   completion emulation layer now.
+   (merge either fc/completion-zsh later)
 
  * "git config" used to choke with an insanely long line.
    (merge ef/maint-strbuf-init later)
-
- * In "git merge", per-branch branch.<name>.mergeoptions configuration
-   variables did not override the fallback default merge.<option>
-   configuration variables such as merge.ff, merge.log, etc.
-   (merge jc/maint-branch-mergeoptions later)
 
  * "git send-pack" (hence "git push") over smalt-HTTP protocol could
    deadlock when the client side pack-object died early.
@@ -91,5 +98,5 @@ included in this release.
 ---
 exec >/var/tmp/1
 echo O=$(git describe master)
-O=v1.7.5.1-288-ge4ae6ef
+O=v1.7.5.1-339-g254fd97
 git shortlog --no-merges ^maint ^$O master
