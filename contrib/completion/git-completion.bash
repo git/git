@@ -628,12 +628,12 @@ __git_refs_remotes ()
 __git_remotes ()
 {
 	local i ngoff IFS=$'\n' d="$(__gitdir)"
-	shopt -q nullglob || ngoff=1
-	shopt -s nullglob
+	__git_shopt -q nullglob || ngoff=1
+	__git_shopt -s nullglob
 	for i in "$d/remotes"/*; do
 		echo ${i#$d/remotes/}
 	done
-	[ "$ngoff" ] && shopt -u nullglob
+	[ "$ngoff" ] && __git_shopt -u nullglob
 	for i in $(git --git-dir="$d" config --get-regexp 'remote\..*\.url' 2>/dev/null); do
 		i="${i#remote.}"
 		echo "${i/.url*/}"
@@ -2608,6 +2608,10 @@ _git ()
 	if [[ -n ${ZSH_VERSION-} ]]; then
 		emulate -L bash
 		setopt KSH_TYPESET
+
+		# workaround zsh's bug that leaves 'words' as a special
+		# variable in versions < 4.3.12
+		typeset -h words
 	fi
 
 	local cur words cword prev
@@ -2659,6 +2663,10 @@ _gitk ()
 	if [[ -n ${ZSH_VERSION-} ]]; then
 		emulate -L bash
 		setopt KSH_TYPESET
+
+		# workaround zsh's bug that leaves 'words' as a special
+		# variable in versions < 4.3.12
+		typeset -h words
 	fi
 
 	local cur words cword prev
@@ -2699,7 +2707,7 @@ complete -o bashdefault -o default -o nospace -F _git git.exe 2>/dev/null \
 fi
 
 if [[ -n ${ZSH_VERSION-} ]]; then
-	shopt () {
+	__git_shopt () {
 		local option
 		if [ $# -ne 2 ]; then
 			echo "USAGE: $0 (-q|-s|-u) <option>" >&2
@@ -2721,5 +2729,9 @@ if [[ -n ${ZSH_VERSION-} ]]; then
 			echo "$0: invalid flag: $1" >&2
 			return 1
 		esac
+	}
+else
+	__git_shopt () {
+		shopt "$@"
 	}
 fi
