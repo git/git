@@ -403,12 +403,12 @@ static int git_use_proxy(const char *host)
 	return (git_proxy_command && *git_proxy_command);
 }
 
-static void git_proxy_connect(int fd[2], char *host)
+static struct child_process *git_proxy_connect(int fd[2], char *host)
 {
 	const char *port = STR(DEFAULT_GIT_PORT);
 	char *colon, *end;
-	const char *argv[4];
-	struct child_process proxy;
+	const char **argv;
+	struct child_process *proxy;
 
 	if (host[0] == '[') {
 		end = strchr(host + 1, ']');
@@ -427,18 +427,20 @@ static void git_proxy_connect(int fd[2], char *host)
 		port = colon + 1;
 	}
 
+	argv = xmalloc(sizeof(*argv) * 4);
 	argv[0] = git_proxy_command;
 	argv[1] = host;
 	argv[2] = port;
 	argv[3] = NULL;
-	memset(&proxy, 0, sizeof(proxy));
-	proxy.argv = argv;
-	proxy.in = -1;
-	proxy.out = -1;
-	if (start_command(&proxy))
+	proxy = xcalloc(1, sizeof(*proxy));
+	proxy->argv = argv;
+	proxy->in = -1;
+	proxy->out = -1;
+	if (start_command(proxy))
 		die("cannot start proxy %s", argv[0]);
-	fd[0] = proxy.out; /* read from proxy stdout */
-	fd[1] = proxy.in;  /* write to proxy stdin */
+	fd[0] = proxy->out; /* read from proxy stdout */
+	fd[1] = proxy->in;  /* write to proxy stdin */
+	return proxy;
 }
 
 #define MAX_CMD_LEN 1024
@@ -479,7 +481,7 @@ struct child_process *git_connect(int fd[2], const char *url_orig,
 	char *host, *path;
 	char *end;
 	int c;
-	struct child_process *conn;
+	struct child_process *conn = &no_fork;
 	enum protocol protocol = PROTO_LOCAL;
 	int free_path = 0;
 	char *port = NULL;
@@ -553,7 +555,7 @@ struct child_process *git_connect(int fd[2], const char *url_orig,
 		 */
 		char *target_host = xstrdup(host);
 		if (git_use_proxy(host))
-			git_proxy_connect(fd, host);
+			conn = git_proxy_connect(fd, host);
 		else
 			git_tcp_connect(fd, host, flags);
 		/*
@@ -571,7 +573,7 @@ struct child_process *git_connect(int fd[2], const char *url_orig,
 		free(url);
 		if (free_path)
 			free(path);
-		return &no_fork;
+		return conn;
 	}
 
 	conn = xcalloc(1, sizeof(*conn));
