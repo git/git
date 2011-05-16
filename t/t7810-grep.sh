@@ -637,20 +637,4 @@ test_expect_success LIBPCRE 'grep -P -w pattern' '
 	test_cmp expected actual
 '
 
-test_expect_success LIBPCRE 'grep -P -F returns error' '
-	test_expect_code 128 git grep -P -F main
-'
-
-test_expect_success LIBPCRE 'grep -P -E returns error' '
-	test_expect_code 128 git grep -P -E main
-'
-
-test_expect_failure LIBPCRE 'grep -P -G returns error' '
-	test_expect_code 128 git grep -P -G main
-'
-
-test_expect_failure LIBPCRE 'grep -P -E -G returns error' '
-	test_expect_code 128 git grep -P -E -G main
-'
-
 test_done
