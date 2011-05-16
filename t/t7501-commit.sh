@@ -42,10 +42,13 @@ test_expect_success \
 	"echo King of the bongo >file &&
 	test_must_fail git commit -m foo -a file"
 
-test_expect_success PERL \
-	"using paths with --interactive" \
-	"echo bong-o-bong >file &&
-	! (echo 7 | git commit -m foo --interactive file)"
+test_expect_success PERL 'can use paths with --interactive' '
+	echo bong-o-bong >file &&
+	# 2: update, 1:st path, that is all, 7: quit
+	( echo 2; echo 1; echo; echo 7 ) |
+	git commit -m foo --interactive file &&
+	git reset --hard HEAD^
+'
 
 test_expect_success \
 	"using invalid commit with -C" \
@@ -130,6 +133,16 @@ test_expect_success \
 test_expect_success PERL \
 	"interactive add" \
 	"echo 7 | git commit --interactive | grep 'What now'"
+
+test_expect_success PERL \
+	"commit --interactive doesn't change index if editor aborts" \
+	"echo zoo >file &&
+	test_must_fail git diff --exit-code >diff1 &&
+	(echo u ; echo '*' ; echo q) |
+	(EDITOR=: && export EDITOR &&
+	 test_must_fail git commit --interactive) &&
+	git diff >diff2 &&
+	test_cmp diff1 diff2"
 
 test_expect_success \
 	"showing committed revisions" \

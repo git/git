@@ -83,7 +83,7 @@ static const char *template_file;
 static const char *author_message, *author_message_buffer;
 static char *edit_message, *use_message;
 static char *fixup_message, *squash_message;
-static int all, edit_flag, also, interactive, only, amend, signoff;
+static int all, edit_flag, also, interactive, patch_interactive, only, amend, signoff;
 static int quiet, verbose, no_verify, allow_empty, dry_run, renew_authorship;
 static int no_post_rewrite, allow_empty_message;
 static char *untracked_files_arg, *force_date, *ignore_submodule_arg;
@@ -152,6 +152,7 @@ static struct option builtin_commit_options[] = {
 	OPT_BOOLEAN('a', "all", &all, "commit all changed files"),
 	OPT_BOOLEAN('i', "include", &also, "add specified files to index for commit"),
 	OPT_BOOLEAN(0, "interactive", &interactive, "interactively add files"),
+	OPT_BOOLEAN('p', "patch", &patch_interactive, "interactively add changes"),
 	OPT_BOOLEAN('o', "only", &only, "commit only specified files"),
 	OPT_BOOLEAN('n', "no-verify", &no_verify, "bypass pre-commit hook"),
 	OPT_BOOLEAN(0, "dry-run", &dry_run, "show what would be committed"),
@@ -336,24 +337,44 @@ static char *prepare_index(int argc, const char **argv, const char *prefix, int 
 	int fd;
 	struct string_list partial;
 	const char **pathspec = NULL;
+	char *old_index_env = NULL;
 	int refresh_flags = REFRESH_QUIET;
 
 	if (is_status)
 		refresh_flags |= REFRESH_UNMERGED;
-	if (interactive) {
-		if (interactive_add(argc, argv, prefix) != 0)
-			die(_("interactive add failed"));
-		if (read_cache_preload(NULL) < 0)
-			die(_("index file corrupt"));
-		commit_style = COMMIT_AS_IS;
-		return get_index_file();
-	}
 
 	if (*argv)
 		pathspec = get_pathspec(prefix, argv);
 
 	if (read_cache_preload(pathspec) < 0)
 		die(_("index file corrupt"));
+
+	if (interactive) {
+		fd = hold_locked_index(&index_lock, 1);
+
+		refresh_cache_or_die(refresh_flags);
+
+		if (write_cache(fd, active_cache, active_nr) ||
+		    close_lock_file(&index_lock))
+			die(_("unable to create temporary index"));
+
+		old_index_env = getenv(INDEX_ENVIRONMENT);
+		setenv(INDEX_ENVIRONMENT, index_lock.filename, 1);
+
+		if (interactive_add(argc, argv, prefix, patch_interactive) != 0)
+			die(_("interactive add failed"));
+
+		if (old_index_env && *old_index_env)
+			setenv(INDEX_ENVIRONMENT, old_index_env, 1);
+		else
+			unsetenv(INDEX_ENVIRONMENT);
+
+		discard_cache();
+		read_cache_from(index_lock.filename);
+
+		commit_style = COMMIT_NORMAL;
+		return index_lock.filename;
+	}
 
 	/*
 	 * Non partial, non as-is commit.
@@ -1043,8 +1064,11 @@ static int parse_and_validate_options(int argc, const char *argv[],
 		author_message_buffer = read_commit_message(author_message);
 	}
 
+	if (patch_interactive)
+		interactive = 1;
+
 	if (!!also + !!only + !!all + !!interactive > 1)
-		die(_("Only one of --include/--only/--all/--interactive can be used."));
+		die(_("Only one of --include/--only/--all/--interactive/--patch can be used."));
 	if (argc == 0 && (also || (only && !amend)))
 		die(_("No paths with --include/--only does not make sense."));
 	if (argc == 0 && only && amend)
@@ -1066,8 +1090,6 @@ static int parse_and_validate_options(int argc, const char *argv[],
 
 	if (all && argc > 0)
 		die(_("Paths with -a does not make sense."));
-	else if (interactive && argc > 0)
-		die(_("Paths with --interactive does not make sense."));
 
 	if (null_termination && status_format == STATUS_FORMAT_LONG)
 		status_format = STATUS_FORMAT_PORCELAIN;
