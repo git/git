@@ -1714,7 +1714,7 @@ msgstr ""
 
 #: lib/index.tcl:30
 msgid "Continue"
-msgstr "Forstätt"
+msgstr "Fortsätt"
 
 #: lib/index.tcl:33
 msgid "Unlock Index"
