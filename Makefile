@@ -274,8 +274,7 @@ STRIP ?= strip
 #   mandir
 #   infodir
 #   htmldir
-#   ETC_GITCONFIG (but not sysconfdir)
-#   ETC_GITATTRIBUTES
+#   sysconfdir
 # can be specified as a relative path some/where/else;
 # this is interpreted as relative to $(prefix) and "git" at
 # runtime figures out where they are based on the path to the executable.
@@ -291,15 +290,8 @@ sharedir = $(prefix)/share
 gitwebdir = $(sharedir)/gitweb
 template_dir = share/git-core/templates
 htmldir = share/doc/git-doc
-ifeq ($(prefix),/usr)
-sysconfdir = /etc
 ETC_GITCONFIG = $(sysconfdir)/gitconfig
 ETC_GITATTRIBUTES = $(sysconfdir)/gitattributes
-else
-sysconfdir = $(prefix)/etc
-ETC_GITCONFIG = etc/gitconfig
-ETC_GITATTRIBUTES = etc/gitattributes
-endif
 lib = lib
 # DESTDIR=
 pathsep = :
@@ -1194,6 +1186,14 @@ endif
 
 -include config.mak.autogen
 -include config.mak
+
+ifndef sysconfdir
+ifeq ($(prefix),/usr)
+sysconfdir = /etc
+else
+sysconfdir = etc
+endif
+endif
 
 ifdef CHECK_HEADER_DEPENDENCIES
 COMPUTE_HEADER_DEPENDENCIES =
