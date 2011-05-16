@@ -34,6 +34,7 @@ static void copy_gecos(const struct passwd *w, char *name, size_t sz)
 			*dst++ = toupper(*w->pw_name);
 			memcpy(dst, w->pw_name + 1, nlen - 1);
 			dst += nlen - 1;
+			len += nlen;
 		}
 	}
 	if (len < sz)
