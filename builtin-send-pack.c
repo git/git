@@ -520,6 +520,8 @@ int send_pack(struct send_pack_args *args,
 				ref->status = REF_STATUS_NONE;
 			if (args->stateless_rpc)
 				close(out);
+			if (git_connection_is_socket(conn))
+				shutdown(fd[0], SHUT_WR);
 			if (use_sideband)
 				finish_async(&demux);
 			return -1;
