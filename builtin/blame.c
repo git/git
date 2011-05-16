@@ -1484,13 +1484,14 @@ static void write_filename_info(const char *path)
 /*
  * Porcelain/Incremental format wants to show a lot of details per
  * commit.  Instead of repeating this every line, emit it only once,
- * the first time each commit appears in the output.
+ * the first time each commit appears in the output (unless the
+ * user has specifically asked for us to repeat).
  */
-static int emit_one_suspect_detail(struct origin *suspect)
+static int emit_one_suspect_detail(struct origin *suspect, int repeat)
 {
 	struct commit_info ci;
 
-	if (suspect->commit->object.flags & METAINFO_SHOWN)
+	if (!repeat && (suspect->commit->object.flags & METAINFO_SHOWN))
 		return 0;
 
 	suspect->commit->object.flags |= METAINFO_SHOWN;
@@ -1529,7 +1530,7 @@ static void found_guilty_entry(struct blame_entry *ent)
 		printf("%s %d %d %d\n",
 		       sha1_to_hex(suspect->commit->object.sha1),
 		       ent->s_lno + 1, ent->lno + 1, ent->num_lines);
-		emit_one_suspect_detail(suspect);
+		emit_one_suspect_detail(suspect, 0);
 		write_filename_info(suspect->path);
 		maybe_flush_or_die(stdout, "stdout");
 	}
@@ -1618,9 +1619,19 @@ static const char *format_time(unsigned long time, const char *tz_str,
 #define OUTPUT_SHOW_SCORE      0100
 #define OUTPUT_NO_AUTHOR       0200
 #define OUTPUT_SHOW_EMAIL	0400
+#define OUTPUT_LINE_PORCELAIN 01000
 
-static void emit_porcelain(struct scoreboard *sb, struct blame_entry *ent)
+static void emit_porcelain_details(struct origin *suspect, int repeat)
 {
+	if (emit_one_suspect_detail(suspect, repeat) ||
+	    (suspect->commit->object.flags & MORE_THAN_ONE_PATH))
+		write_filename_info(suspect->path);
+}
+
+static void emit_porcelain(struct scoreboard *sb, struct blame_entry *ent,
+			   int opt)
+{
+	int repeat = opt & OUTPUT_LINE_PORCELAIN;
 	int cnt;
 	const char *cp;
 	struct origin *suspect = ent->suspect;
@@ -1633,17 +1644,18 @@ static void emit_porcelain(struct scoreboard *sb, struct blame_entry *ent)
 	       ent->s_lno + 1,
 	       ent->lno + 1,
 	       ent->num_lines);
-	if (emit_one_suspect_detail(suspect) ||
-	    (suspect->commit->object.flags & MORE_THAN_ONE_PATH))
-		write_filename_info(suspect->path);
+	emit_porcelain_details(suspect, repeat);
 
 	cp = nth_line(sb, ent->lno);
 	for (cnt = 0; cnt < ent->num_lines; cnt++) {
 		char ch;
-		if (cnt)
+		if (cnt) {
 			printf("%s %d %d\n", hex,
 			       ent->s_lno + 1 + cnt,
 			       ent->lno + 1 + cnt);
+			if (repeat)
+				emit_porcelain_details(suspect, 1);
+		}
 		putchar('\t');
 		do {
 			ch = *cp++;
@@ -1756,7 +1768,7 @@ static void output(struct scoreboard *sb, int option)
 
 	for (ent = sb->ent; ent; ent = ent->next) {
 		if (option & OUTPUT_PORCELAIN)
-			emit_porcelain(sb, ent);
+			emit_porcelain(sb, ent, option);
 		else {
 			emit_other(sb, ent, option);
 		}
@@ -2300,6 +2312,7 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 		OPT_BIT('f', "show-name", &output_option, "Show original filename (Default: auto)", OUTPUT_SHOW_NAME),
 		OPT_BIT('n', "show-number", &output_option, "Show original linenumber (Default: off)", OUTPUT_SHOW_NUMBER),
 		OPT_BIT('p', "porcelain", &output_option, "Show in a format designed for machine consumption", OUTPUT_PORCELAIN),
+		OPT_BIT(0, "line-porcelain", &output_option, "Show porcelain format with per-line commit information", OUTPUT_PORCELAIN|OUTPUT_LINE_PORCELAIN),
 		OPT_BIT('c', NULL, &output_option, "Use the same output mode as git-annotate (Default: off)", OUTPUT_ANNOTATE_COMPAT),
 		OPT_BIT('t', NULL, &output_option, "Show raw timestamp (Default: off)", OUTPUT_RAW_TIMESTAMP),
 		OPT_BIT('l', NULL, &output_option, "Show long commit SHA1 (Default: off)", OUTPUT_LONG_OBJECT_NAME),
