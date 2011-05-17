@@ -152,7 +152,7 @@ void verify_non_filename(const char *prefix, const char *arg)
  */
 #define PATHSPEC_FROMTOP    (1<<0)
 
-struct pathspec_magic {
+static struct pathspec_magic {
 	unsigned bit;
 	char mnemonic; /* this cannot be ':'! */
 	const char *name;
@@ -173,7 +173,7 @@ struct pathspec_magic {
  * the prefix part must always match literally, and a single stupid
  * string cannot express such a case.
  */
-const char *prefix_pathspec(const char *prefix, int prefixlen, const char *elt)
+static const char *prefix_pathspec(const char *prefix, int prefixlen, const char *elt)
 {
 	unsigned magic = 0;
 	const char *copyfrom = elt;
