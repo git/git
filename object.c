@@ -188,8 +188,8 @@ struct object *parse_object(const unsigned char *sha1)
 	unsigned long size;
 	enum object_type type;
 	int eaten;
-	const unsigned char *repl;
-	void *buffer = read_sha1_file_repl(sha1, &type, &size, &repl);
+	const unsigned char *repl = lookup_replace_object(sha1);
+	void *buffer = read_sha1_file(sha1, &type, &size);
 
 	if (buffer) {
 		struct object *obj;
