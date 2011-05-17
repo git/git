@@ -1,44 +1,91 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (May 2011, #07; Sun, 15)
-X-master-at: c565cb452c1e20babe4d0632c58e0f11a9af30c4
-X-next-at: 1a857915d643622bb71b1f0683f43acb1ddb48df
+Subject: What's cooking in git.git (May 2011, #08; Mon, 16)
+X-master-at: b602ed7dea968d72c5b3f61ca016de7f285d80ef
+X-next-at: cc6c7e82981e91501dc98f94e565f15ae4591a0c
 
-What's cooking in git.git (May 2011, #07; Sun, 15)
+What's cooking in git.git (May 2011, #08; Mon, 16)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' while commits prefixed with '+' are in 'next'.
 
-I am somewhat frustrated that I so almost no reviews on gitweb
-patches. Does this mean nobody is interested in viewing the projects
-on gitweb? How can we improve this lack of review bandwidth situation?
-
 The main part of this cycle is expected to run thru May, aiming for a
 feature freeze in early June.
 
-We are about to finish the week #3 of this cycle.
+We are at the beginning of week #4 of this cycle.
 
 --------------------------------------------------
 [New Topics]
 
-* jc/replacing (2011-05-15) 5 commits
- - read_sha1_file(): allow selective bypassing of replacement mechanism
- - inline lookup_replace_object() calls
- - read_sha1_file(): get rid of read_sha1_file_repl() madness
- - t6050: make sure we test not just commit replacement
- - Declare lookup_replace_object() in cache.h, not in commit.h
+* jk/cherry-pick-root-with-resolve (2011-05-16) 3 commits
+  (merged to 'next' on 2011-05-16 at 2a63845)
+ + t3503: test cherry picking and reverting root commits
+ + revert: allow reverting a root commit
+ + cherry-pick: handle root commits with external strategies
+
+Will merge to "master" soonish, to merge further to "maint" later.
+
+* jk/git-connection-deadlock-fix (2011-05-16) 3 commits
+  (merged to 'next' on 2011-05-16 at 33e6c11)
+ + send-pack: avoid deadlock on git:// push with failed pack-objects
+ + connect: let callers know if connection is a socket
+ + connect: treat generic proxy processes like ssh processes
+ (this branch uses js/maint-1.6.6-send-pack-stateless-rpc-deadlock-fix; is tangled with js/maint-send-pack-stateless-rpc-deadlock-fix.)
+
+Will merge to "master" soonish, to merge further to "maint" later.
+
+--------------------------------------------------
+[Graduated to "master"]
+
+* ci/commit--interactive-atomic (2011-05-10) 6 commits
+  (merged to 'next' on 2011-05-11 at 7f36fd8)
+ + Test atomic git-commit --interactive
+ + Add commit to list of config.singlekey commands
+ + Add support for -p/--patch to git-commit
+ + Allow git commit --interactive with paths
+ + t7501.8: feed a meaningful command
+ + Use a temporary index for git commit --interactive
+
+* fc/completion-zsh (2011-05-10) 1 commit
+ + git-completion: fix regression in zsh support
+ (this branch is used by sg/completion-updates.)
+
+* jc/convert (2011-05-09) 4 commits
+  (merged to 'next' on 2011-05-15 at 9d35a6e)
+ + convert: make it harder to screw up adding a conversion attribute
+ + convert: make it safer to add conversion attributes
+ + convert: give saner names to crlf/eol variables, types and functions
+ + convert: rename the "eol" global variable to "core_eol"
  (this branch is used by jc/streaming.)
 
-Will merge to "next" by the middle of week #4.
+* kk/maint-prefix-in-config-mak (2011-05-09) 3 commits
+  (merged to 'next' on 2011-05-09 at 267a3aa)
+ + Honor $(prefix) set in config.mak* when defining ETC_GIT*
+ + Revert "Honor $(prefix) set in config.mak* when defining ETC_GIT* and sysconfdir"
+  (merged to 'next' on 2011-05-02 at c747ba3)
+ + Honor $(prefix) set in config.mak* when defining ETC_GIT* and sysconfdir
 
-* jh/receive-count-limit (2011-05-14) 1 commit
- - receive-pack: Add receive.objectCountLimit to refuse push with too many objects
+One revert and replace the whole thing from J6t. The end result looked
+reasonable.
 
-* jl/submodule-conflicted-gitmodules (2011-05-14) 2 commits
- - Submodules: Don't parse .gitmodules when it contains, merge conflicts
- - test that git status works with merge conflict in, .gitmodules
+* mg/merge-ff-config (2011-05-06) 3 commits
+  (merged to 'next' on 2011-05-08 at 977b432)
+ + tests: check git does not barf on merge.ff values for future versions of git
+ + merge: introduce merge.ff configuration variable
+ + Merge branch 'jc/maint-branch-mergeoptions' into mg/merge-ff-config
 
-Will merge to "next" by the middle of week #4.
+* sg/completion-updates (2011-05-10) 4 commits
+  (merged to 'next' on 2011-05-10 at eaf5398)
+ + Merge branch 'fc/completion-zsh' into sg/completion-updates
+ + Revert "completion: don't declare 'local words' to make zsh happy"
+  (merged to 'next' on 2011-05-08 at 761178c)
+ + completion: move private shopt shim for zsh to __git_ namespace
+  (merged to 'next' on 2011-05-02 at 0fd443a)
+ + completion: don't declare 'local words' to make zsh happy
+ (this branch uses fc/completion-zsh.)
+
+This reverts the "local words only on bash" thingy and uses the
+workaround blessed by zsh folks instead.
 
 --------------------------------------------------
 [Stalled]
@@ -125,13 +172,54 @@ Needs to tighten the advice to only govern the generic How-to part.
 --------------------------------------------------
 [Cooking]
 
+* jc/replacing (2011-05-15) 5 commits
+  (merged to 'next' on 2011-05-16 at 5d0b584)
+ + read_sha1_file(): allow selective bypassing of replacement mechanism
+ + inline lookup_replace_object() calls
+ + read_sha1_file(): get rid of read_sha1_file_repl() madness
+ + t6050: make sure we test not just commit replacement
+ + Declare lookup_replace_object() in cache.h, not in commit.h
+ (this branch is used by jc/streaming.)
+
+Code restructuring without much new feature.
+Will merge to "master" by the end of week #4.
+
+* jh/receive-count-limit (2011-05-14) 1 commit
+ - receive-pack: Add receive.objectCountLimit to refuse push with too many objects
+
+Being rerolled.
+
+* jl/submodule-conflicted-gitmodules (2011-05-14) 2 commits
+  (merged to 'next' on 2011-05-16 at cc6c7e8)
+ + Submodules: Don't parse .gitmodules when it contains, merge conflicts
+ + test that git status works with merge conflict in, .gitmodules
+
+Will merge to "master" by the end of week #4.
+
+* js/maint-1.6.6-send-pack-stateless-rpc-deadlock-fix (2011-05-16) 1 commit
+ + sideband_demux(): fix decl-after-stmt
+ (this branch is used by jk/git-connection-deadlock-fix and js/maint-send-pack-stateless-rpc-deadlock-fix.)
+
+Will merge to "master" soonish, to merge further to "maint" later.
+
+* js/maint-send-pack-stateless-rpc-deadlock-fix (2011-05-16) 1 commit
+  (merged to 'next' on 2011-05-16 at ad83470)
+ + Merge branch 'js/maint-1.6.6-send-pack-stateless-rpc-deadlock-fix' into js/maint-send-pack-stateless-rpc-deadlock-fix
+ (this branch uses js/maint-1.6.6-send-pack-stateless-rpc-deadlock-fix; is tangled with jk/git-connection-deadlock-fix.)
+
+Will merge to "master" soonish, to merge further to "maint" later.
+
 * jc/maint-1.6.6-pathspec-stdin-and-cmdline (2011-05-11) 1 commit
  + setup_revisions(): take pathspec from command line and --stdin correctly
  (this branch is used by jc/magic-pathspec, jc/maint-1.7.4-pathspec-stdin-and-cmdline and jc/maint-pathspec-stdin-and-cmdline.)
 
+Will merge to "master" soonish, to merge further to "maint" later.
+
 * jc/maint-1.7.4-pathspec-stdin-and-cmdline (2011-05-11) 1 commit
  - Merge branch 'jc/maint-1.6.6-pathspec-stdin-and-cmdline'
  (this branch uses jc/maint-1.6.6-pathspec-stdin-and-cmdline; is tangled with jc/magic-pathspec and jc/maint-pathspec-stdin-and-cmdline.)
+
+Will merge to "master" soonish, to merge further to "maint" later.
 
 * jc/maint-pathspec-stdin-and-cmdline (2011-05-11) 2 commits
   (merged to 'next' on 2011-05-15 at b4e3a75)
@@ -142,12 +230,15 @@ Needs to tighten the advice to only govern the generic How-to part.
 These are to fix an ancient bug where feeding "git log --stdin path" with
 an input that also has additional pathspec corrupted memory.
 
+Will merge to "master" soonish, to merge further to "maint" later.
+
 * jl/read-tree-m-dry-run (2011-05-11) 1 commit
  - Teach read-tree the -n|--dry-run option
 
 Looked good. We _might_ want to make -n simply ignore -u, though.
+Waiting for a reroll.
 
-* jc/streaming (2011-05-15) 12 commits
+* jc/streaming (2011-05-16) 12 commits
  - streaming: read loose objects incrementally
  - sha1_file.c: expose helpers to read loose objects
  - streaming: read non-delta incrementally from a pack
@@ -160,7 +251,11 @@ Looked good. We _might_ want to make -n simply ignore -u, though.
  - sha1_object_info_extended(): expose a bit more info
  - packed_object_info_detail(): do not return a string
  - Merge branches 'jc/convert', 'jc/bigfile' and 'jc/replacing' into jc/streaming
- (this branch uses jc/bigfile, jc/convert and jc/replacing.)
+ (this branch uses jc/bigfile and jc/replacing.)
+
+I _think_ the "hole" one does a reasonable job to avoid excessible and
+pointless seeks (it operates on 10k chunks and coalesces continuous chunks
+full of NULs), which was the concern raised in the review.
 
 * jc/bigfile (2011-05-13) 3 commits
   (merged to 'next' on 2011-05-15 at 0ee7144)
@@ -177,15 +272,7 @@ which we already should), and transport (receive-pack/fetch-pack call
 either unpack-objects or index-pack, which still want to hold the full
 object in-core and need to be fixed).
 
-* jc/convert (2011-05-09) 4 commits
-  (merged to 'next' on 2011-05-15 at 9d35a6e)
- + convert: make it harder to screw up adding a conversion attribute
- + convert: make it safer to add conversion attributes
- + convert: give saner names to crlf/eol variables, types and functions
- + convert: rename the "eol" global variable to "core_eol"
- (this branch is used by jc/streaming.)
-
-Will merge to "master" by the middle of week #4.
+Will merge to "master" by the middle of week #5.
 
 * jk/blame-line-porcelain (2011-05-09) 3 commits
   (merged to 'next' on 2011-05-15 at 93232b3)
@@ -205,29 +292,6 @@ Will merge to "master" by the end of week #4.
   (merged to 'next' on 2011-05-15 at 1a85791)
  + sparse checkout: do not eagerly decide the fate for whole directory
  + t1011: fix sparse-checkout initialization and add new file
-
-Will merge to "master" by the end of week #4.
-
-* kk/maint-prefix-in-config-mak (2011-05-09) 3 commits
-  (merged to 'next' on 2011-05-09 at 267a3aa)
- + Honor $(prefix) set in config.mak* when defining ETC_GIT*
- + Revert "Honor $(prefix) set in config.mak* when defining ETC_GIT* and sysconfdir"
-  (merged to 'next' on 2011-05-02 at c747ba3)
- + Honor $(prefix) set in config.mak* when defining ETC_GIT* and sysconfdir
-
-One revert and replace the whole thing from J6t. The end result looked
-reasonable.
-
-Will merge to "master" by the end of week #4.
-
-* ci/commit--interactive-atomic (2011-05-10) 6 commits
-  (merged to 'next' on 2011-05-11 at 7f36fd8)
- + Test atomic git-commit --interactive
- + Add commit to list of config.singlekey commands
- + Add support for -p/--patch to git-commit
- + Allow git commit --interactive with paths
- + t7501.8: feed a meaningful command
- + Use a temporary index for git commit --interactive
 
 Will merge to "master" by the end of week #4.
 
@@ -292,15 +356,12 @@ Will merge to "master" by the end of week #4.
 Re-rolled to drop credits from the individual documentation pages
 and update the documentation.
 
-* mg/merge-ff-config (2011-05-06) 3 commits
-  (merged to 'next' on 2011-05-08 at 977b432)
- + tests: check git does not barf on merge.ff values for future versions of git
- + merge: introduce merge.ff configuration variable
- + Merge branch 'jc/maint-branch-mergeoptions' into mg/merge-ff-config
+Will merge to "next" by the end of week #4.
 
-Will merge to "master" by the end of week #4.
-
-* mk/grep-pcre (2011-05-09) 10 commits
+* mk/grep-pcre (2011-05-16) 12 commits
+  (merged to 'next' on 2011-05-16 at 0c6c25e)
+ + Makefile: Pass USE_LIBPCRE down in GIT-BUILD-OPTIONS
+ + git-grep: update tests now regexp type is "last one wins"
   (merged to 'next' on 2011-05-15 at d110135)
  + git-grep: do not die upon -F/-P when grep.extendedRegexp is set.
  + git-grep: Bail out when -P is used with -F or -E
@@ -314,24 +375,8 @@ Will merge to "master" by the end of week #4.
  + contrib/completion: --line-number to git grep
  + Documentation: Add --line-number to git-grep synopsis
 
-* fc/completion-zsh (2011-05-10) 1 commit
- + git-completion: fix regression in zsh support
- (this branch is used by sg/completion-updates.)
-
-* sg/completion-updates (2011-05-10) 4 commits
-  (merged to 'next' on 2011-05-10 at eaf5398)
- + Merge branch 'fc/completion-zsh' into sg/completion-updates
- + Revert "completion: don't declare 'local words' to make zsh happy"
-  (merged to 'next' on 2011-05-08 at 761178c)
- + completion: move private shopt shim for zsh to __git_ namespace
-  (merged to 'next' on 2011-05-02 at 0fd443a)
- + completion: don't declare 'local words' to make zsh happy
- (this branch uses fc/completion-zsh.)
-
-This reverts the "local words only on bash" thingy and uses the
-workaround blessed by zsh folks instead.
-
-Will merge to "master" by the end of week #4.
+Fixed up the build procedure that did not update GIT-BUILD-OPTIONS.
+Will merge to "master" by the middle of week #5.
 
 * ld/p4-preserve-user-names (2011-05-13) 3 commits
   (merged to 'next' on 2011-05-15 at bdedb60)
