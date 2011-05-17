@@ -225,11 +225,11 @@ static void print_helper_status(struct ref *ref)
 
 static int sideband_demux(int in, int out, void *data)
 {
-	int *fd = data;
+	int *fd = data, ret;
 #ifdef NO_PTHREADS
 	close(fd[1]);
 #endif
-	int ret = recv_sideband("send-pack", fd[0], out);
+	ret = recv_sideband("send-pack", fd[0], out);
 	close(out);
 	return ret;
 }
