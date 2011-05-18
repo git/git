@@ -219,6 +219,9 @@ int mingw_bind(int sockfd, struct sockaddr *sa, size_t sz);
 int mingw_setsockopt(int sockfd, int lvl, int optname, void *optval, int optlen);
 #define setsockopt mingw_setsockopt
 
+int mingw_shutdown(int sockfd, int how);
+#define shutdown mingw_shutdown
+
 int mingw_listen(int sockfd, int backlog);
 #define listen mingw_listen
 
