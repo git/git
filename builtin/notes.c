@@ -953,7 +953,7 @@ static int merge(int argc, const char **argv, const char *prefix)
 	return result < 0; /* return non-zero on conflicts */
 }
 
-#define MISSING_OK 1
+#define IGNORE_MISSING 1
 
 static int remove_one_note(struct notes_tree *t, const char *name, unsigned flag)
 {
@@ -966,16 +966,19 @@ static int remove_one_note(struct notes_tree *t, const char *name, unsigned flag
 		fprintf(stderr, _("Object %s has no note\n"), name);
 	else
 		fprintf(stderr, _("Removing note for object %s\n"), name);
-	return (flag & MISSING_OK) ? 0 : status;
+	return (flag & IGNORE_MISSING) ? 0 : status;
 }
 
 static int remove_cmd(int argc, const char **argv, const char *prefix)
 {
 	unsigned flag = 0;
+	int from_stdin = 0;
 	struct option options[] = {
 		OPT_BIT(0, "ignore-missing", &flag,
 			"attempt to remove non-existent note is not an error",
-			MISSING_OK),
+			IGNORE_MISSING),
+		OPT_BOOLEAN(0, "stdin", &from_stdin,
+			    "read object names from the standard input"),
 		OPT_END()
 	};
 	struct notes_tree *t;
@@ -986,13 +989,21 @@ static int remove_cmd(int argc, const char **argv, const char *prefix)
 
 	t = init_notes_check("remove");
 
-	if (!argc) {
+	if (!argc && !from_stdin) {
 		retval = remove_one_note(t, "HEAD", flag);
 	} else {
 		while (*argv) {
 			retval |= remove_one_note(t, *argv, flag);
 			argv++;
 		}
+	}
+	if (from_stdin) {
+		struct strbuf sb = STRBUF_INIT;
+		while (strbuf_getwholeline(&sb, stdin, '\n') != EOF) {
+			strbuf_rtrim(&sb);
+			retval |= remove_one_note(t, sb.buf, flag);
+		}
+		strbuf_release(&sb);
 	}
 	if (!retval)
 		commit_notes(t, "Notes removed by 'git notes remove'");

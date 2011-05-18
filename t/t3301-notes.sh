@@ -475,6 +475,41 @@ test_expect_success 'removing with --ignore-missing but bogus ref' '
 	test "$before" = "$after"
 '
 
+test_expect_success 'remove reads from --stdin' '
+	before=$(git rev-parse --verify refs/notes/commits) &&
+	test_when_finished "git update-ref refs/notes/commits $before" &&
+
+	# We have only two -- add another and make sure it stays
+	git notes add -m "extra" &&
+	git notes list HEAD >after-removal-expect &&
+	git rev-parse HEAD^^ HEAD^^^ >input &&
+	git notes remove --stdin <input &&
+	git notes list | sed -e "s/ .*//" >actual &&
+	test_cmp after-removal-expect actual
+'
+
+test_expect_success 'remove --stdin is also atomic' '
+	before=$(git rev-parse --verify refs/notes/commits) &&
+	test_when_finished "git update-ref refs/notes/commits $before" &&
+	git rev-parse HEAD^^ HEAD^^^ HEAD^ >input &&
+	test_must_fail git notes remove --stdin <input &&
+	after=$(git rev-parse --verify refs/notes/commits) &&
+	test "$before" = "$after"
+'
+
+test_expect_success 'removing with --stdin --ignore-missing' '
+	before=$(git rev-parse --verify refs/notes/commits) &&
+	test_when_finished "git update-ref refs/notes/commits $before" &&
+
+	# We have only two -- add another and make sure it stays
+	git notes add -m "extra" &&
+	git notes list HEAD >after-removal-expect &&
+	git rev-parse HEAD^^ HEAD^^^ HEAD^ >input &&
+	git notes remove --ignore-missing --stdin <input &&
+	git notes list | sed -e "s/ .*//" >actual &&
+	test_cmp after-removal-expect actual
+'
+
 test_expect_success 'list notes with "git notes list"' '
 	git notes list > output &&
 	test_cmp expect output
