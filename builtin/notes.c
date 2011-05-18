@@ -29,7 +29,7 @@ static const char * const git_notes_usage[] = {
 	"git notes [--ref <notes_ref>] merge [-v | -q] [-s <strategy> ] <notes_ref>",
 	"git notes merge --commit [-v | -q]",
 	"git notes merge --abort [-v | -q]",
-	"git notes [--ref <notes_ref>] remove [<object>]",
+	"git notes [--ref <notes_ref>] remove [<object>...]",
 	"git notes [--ref <notes_ref>] prune [-n | -v]",
 	"git notes [--ref <notes_ref>] get-ref",
 	NULL
@@ -953,40 +953,43 @@ static int merge(int argc, const char **argv, const char *prefix)
 	return result < 0; /* return non-zero on conflicts */
 }
 
+static int remove_one_note(struct notes_tree *t, const char *name)
+{
+	int status;
+	unsigned char sha1[20];
+	if (get_sha1(name, sha1))
+		return error(_("Failed to resolve '%s' as a valid ref."), name);
+	status = remove_note(t, sha1);
+	if (status)
+		fprintf(stderr, _("Object %s has no note\n"), name);
+	else
+		fprintf(stderr, _("Removing note for object %s\n"), name);
+	return status;
+}
+
 static int remove_cmd(int argc, const char **argv, const char *prefix)
 {
 	struct option options[] = {
 		OPT_END()
 	};
-	const char *object_ref;
 	struct notes_tree *t;
-	unsigned char object[20];
-	int retval;
+	int retval = 0;
 
 	argc = parse_options(argc, argv, prefix, options,
 			     git_notes_remove_usage, 0);
 
-	if (1 < argc) {
-		error(_("too many parameters"));
-		usage_with_options(git_notes_remove_usage, options);
-	}
-
-	object_ref = argc ? argv[0] : "HEAD";
-
-	if (get_sha1(object_ref, object))
-		die(_("Failed to resolve '%s' as a valid ref."), object_ref);
-
 	t = init_notes_check("remove");
 
-	retval = remove_note(t, object);
-	if (retval)
-		fprintf(stderr, _("Object %s has no note\n"), sha1_to_hex(object));
-	else {
-		fprintf(stderr, _("Removing note for object %s\n"),
-			sha1_to_hex(object));
-
-		commit_notes(t, "Notes removed by 'git notes remove'");
+	if (!argc) {
+		retval = remove_one_note(t, "HEAD");
+	} else {
+		while (*argv) {
+			retval |= remove_one_note(t, *argv);
+			argv++;
+		}
 	}
+	if (!retval)
+		commit_notes(t, "Notes removed by 'git notes remove'");
 	free_notes(t);
 	return retval;
 }
