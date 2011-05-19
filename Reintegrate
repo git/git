@@ -152,7 +152,7 @@ then
 	then
 		echo >&2 "No changes."
 	else
-		echo >&2 -n "Update [Y/n]? "
+		echo >&2 -n "Update [y/N]? "
 		read yesno
 		case "$yesno" in
 		[Yy]*)
