@@ -133,6 +133,8 @@ void mark_parents_uninteresting(struct commit *commit)
 
 static void add_pending_object_with_mode(struct rev_info *revs, struct object *obj, const char *name, unsigned mode)
 {
+	if (!obj)
+		return;
 	if (revs->no_walk && (obj->flags & UNINTERESTING))
 		revs->no_walk = 0;
 	if (revs->reflog_info && obj->type == OBJ_COMMIT) {
@@ -174,8 +176,11 @@ static struct object *get_reference(struct rev_info *revs, const char *name, con
 	struct object *object;
 
 	object = parse_object(sha1);
-	if (!object)
+	if (!object) {
+		if (revs->ignore_missing)
+			return object;
 		die("bad object %s", name);
+	}
 	object->flags |= flags;
 	return object;
 }
@@ -906,6 +911,8 @@ static int add_parents_only(struct rev_info *revs, const char *arg, int flags)
 		return 0;
 	while (1) {
 		it = get_reference(revs, arg, sha1, 0);
+		if (!it && revs->ignore_missing)
+			return 0;
 		if (it->type != OBJ_TAG)
 			break;
 		if (!((struct tag*)it)->tagged)
@@ -1044,6 +1051,8 @@ int handle_revision_arg(const char *arg, struct rev_info *revs,
 			a = lookup_commit_reference(from_sha1);
 			b = lookup_commit_reference(sha1);
 			if (!a || !b) {
+				if (revs->ignore_missing)
+					return 0;
 				die(symmetric ?
 				    "Invalid symmetric difference expression %s...%s" :
 				    "Invalid revision range %s..%s",
@@ -1090,7 +1099,7 @@ int handle_revision_arg(const char *arg, struct rev_info *revs,
 		arg++;
 	}
 	if (get_sha1_with_mode(arg, sha1, &mode))
-		return -1;
+		return revs->ignore_missing ? 0 : -1;
 	if (!cant_be_filename)
 		verify_non_filename(revs->prefix, arg);
 	object = get_reference(revs, arg, sha1, flags ^ local_flags);
@@ -1475,6 +1484,8 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 	} else if (!strcmp(arg, "--children")) {
 		revs->children.name = "children";
 		revs->limited = 1;
+	} else if (!strcmp(arg, "--ignore-missing")) {
+		revs->ignore_missing = 1;
 	} else {
 		int opts = diff_opt_parse(&revs->diffopt, argv, argc);
 		if (!opts)

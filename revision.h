@@ -36,7 +36,8 @@ struct rev_info {
 	const char *prefix;
 	const char *def;
 	struct pathspec prune_data;
-	unsigned int early_output;
+	unsigned int	early_output:1,
+			ignore_missing:1;
 
 	/* Traversal flags */
 	unsigned int	dense:1,
