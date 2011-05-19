@@ -738,7 +738,7 @@ static void add_one_alternate_ref(const struct ref *ref, void *unused)
 
 static void add_alternate_refs(void)
 {
-	foreach_alt_odb(refs_from_alternate_cb, add_one_alternate_ref);
+	for_each_alternate_ref(add_one_alternate_ref, NULL);
 }
 
 int cmd_receive_pack(int argc, const char **argv, const char *prefix)
