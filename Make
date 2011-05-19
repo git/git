@@ -54,6 +54,11 @@ do
 done
 
 Wall='-Wall -Wdeclaration-after-statement' tests= jobs=
+case `hostname` in
+fc13i386)
+	GIT_SKIP_TESTS="t9??? $GIT_SKIP_TESTS"; export GIT_SKIP_TESTS
+	;;
+esac
 case `uname` in
 OpenBSD)
 	NEEDS_CRYPTO_WITH_SSL=YesPlease ; export NEEDS_CRYPTO_WITH_SSL
