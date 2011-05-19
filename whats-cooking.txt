@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (May 2011, #08; Mon, 16)
+Subject: What's cooking in git.git (May 2011, #09; Wed, 18)
 X-master-at: b602ed7dea968d72c5b3f61ca016de7f285d80ef
-X-next-at: cc6c7e82981e91501dc98f94e565f15ae4591a0c
+X-next-at: d7180b92680b81e5de1cd29156f51a7371d65fe1
 
-What's cooking in git.git (May 2011, #08; Mon, 16)
+What's cooking in git.git (May 2011, #09; Wed, 18)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -17,75 +17,38 @@ We are at the beginning of week #4 of this cycle.
 --------------------------------------------------
 [New Topics]
 
-* jk/cherry-pick-root-with-resolve (2011-05-16) 3 commits
-  (merged to 'next' on 2011-05-16 at 2a63845)
- + t3503: test cherry picking and reverting root commits
- + revert: allow reverting a root commit
- + cherry-pick: handle root commits with external strategies
+* hg/add-i-qq (2011-05-17) 1 commit
+ - add-interactive: add 'Quit' shortcut to add hunk and quit
 
-Will merge to "master" soonish, to merge further to "maint" later.
+The question "why is y+q any more deserving for a short-cut than d+q" was
+raised late in the discussion, and I think it a very valid concern.
 
-* jk/git-connection-deadlock-fix (2011-05-16) 3 commits
-  (merged to 'next' on 2011-05-16 at 33e6c11)
- + send-pack: avoid deadlock on git:// push with failed pack-objects
- + connect: let callers know if connection is a socket
- + connect: treat generic proxy processes like ssh processes
- (this branch uses js/maint-1.6.6-send-pack-stateless-rpc-deadlock-fix; is tangled with js/maint-send-pack-stateless-rpc-deadlock-fix.)
+May drop.
 
-Will merge to "master" soonish, to merge further to "maint" later.
+* js/log-abbrev-commit-config (2011-05-18) 2 commits
+ - Add log.abbrevCommit config variable
+ - "git log -h": typofix misspelled 'suppress'
 
---------------------------------------------------
-[Graduated to "master"]
+* js/mingw-shutdown (2011-05-18) 1 commit
+ - Windows: add a wrapper for the shutdown() system call
 
-* ci/commit--interactive-atomic (2011-05-10) 6 commits
-  (merged to 'next' on 2011-05-11 at 7f36fd8)
- + Test atomic git-commit --interactive
- + Add commit to list of config.singlekey commands
- + Add support for -p/--patch to git-commit
- + Allow git commit --interactive with paths
- + t7501.8: feed a meaningful command
- + Use a temporary index for git commit --interactive
+Meant for maint-1.7.4 and later.
 
-* fc/completion-zsh (2011-05-10) 1 commit
- + git-completion: fix regression in zsh support
- (this branch is used by sg/completion-updates.)
+* mg/config-symbolic-constants (2011-05-17) 2 commits
+ - config: Give error message when not changing a multivar
+ - config: define and document exit codes
 
-* jc/convert (2011-05-09) 4 commits
-  (merged to 'next' on 2011-05-15 at 9d35a6e)
- + convert: make it harder to screw up adding a conversion attribute
- + convert: make it safer to add conversion attributes
- + convert: give saner names to crlf/eol variables, types and functions
- + convert: rename the "eol" global variable to "core_eol"
- (this branch is used by jc/streaming.)
+* ms/ls-remote-exit-with-status (2011-05-18) 1 commit
+ - ls-remote: the --exit-code option reports "no matching refs"
 
-* kk/maint-prefix-in-config-mak (2011-05-09) 3 commits
-  (merged to 'next' on 2011-05-09 at 267a3aa)
- + Honor $(prefix) set in config.mak* when defining ETC_GIT*
- + Revert "Honor $(prefix) set in config.mak* when defining ETC_GIT* and sysconfdir"
-  (merged to 'next' on 2011-05-02 at c747ba3)
- + Honor $(prefix) set in config.mak* when defining ETC_GIT* and sysconfdir
+* rg/copy-gecos-username (2011-05-17) 1 commit
+  (merged to 'next' on 2011-05-17 at 6080944)
+ + copy_gecos: fix not adding nlen to len when processing "&"
 
-One revert and replace the whole thing from J6t. The end result looked
-reasonable.
+* tr/add-i-no-escape (2011-05-17) 1 commit
+ - add -i: ignore terminal escape sequences
 
-* mg/merge-ff-config (2011-05-06) 3 commits
-  (merged to 'next' on 2011-05-08 at 977b432)
- + tests: check git does not barf on merge.ff values for future versions of git
- + merge: introduce merge.ff configuration variable
- + Merge branch 'jc/maint-branch-mergeoptions' into mg/merge-ff-config
-
-* sg/completion-updates (2011-05-10) 4 commits
-  (merged to 'next' on 2011-05-10 at eaf5398)
- + Merge branch 'fc/completion-zsh' into sg/completion-updates
- + Revert "completion: don't declare 'local words' to make zsh happy"
-  (merged to 'next' on 2011-05-08 at 761178c)
- + completion: move private shopt shim for zsh to __git_ namespace
-  (merged to 'next' on 2011-05-02 at 0fd443a)
- + completion: don't declare 'local words' to make zsh happy
- (this branch uses fc/completion-zsh.)
-
-This reverts the "local words only on bash" thingy and uses the
-workaround blessed by zsh folks instead.
+Will merge to "next".
 
 --------------------------------------------------
 [Stalled]
@@ -172,6 +135,31 @@ Needs to tighten the advice to only govern the generic How-to part.
 --------------------------------------------------
 [Cooking]
 
+* jh/receive-count-limit (2011-05-14) 1 commit
+ - receive-pack: Add receive.objectCountLimit to refuse push with too many objects
+
+Re-rolled but decided not to pick it up while it is still being
+discussed.
+
+* jk/cherry-pick-root-with-resolve (2011-05-16) 3 commits
+  (merged to 'next' on 2011-05-16 at 2a63845)
+ + t3503: test cherry picking and reverting root commits
+ + revert: allow reverting a root commit
+ + cherry-pick: handle root commits with external strategies
+
+Will merge to "master" soonish, to merge further to "maint" later.
+
+* jk/git-connection-deadlock-fix (2011-05-18) 4 commits
+  (merged to 'next' on 2011-05-18 at d4567da)
+ + test core.gitproxy configuration
+  (merged to 'next' on 2011-05-16 at 33e6c11)
+ + send-pack: avoid deadlock on git:// push with failed pack-objects
+ + connect: let callers know if connection is a socket
+ + connect: treat generic proxy processes like ssh processes
+ (this branch uses js/maint-1.6.6-send-pack-stateless-rpc-deadlock-fix; is tangled with js/maint-send-pack-stateless-rpc-deadlock-fix.)
+
+Will merge to "master" soonish, to merge further to "maint" later.
+
 * jc/replacing (2011-05-15) 5 commits
   (merged to 'next' on 2011-05-16 at 5d0b584)
  + read_sha1_file(): allow selective bypassing of replacement mechanism
@@ -183,11 +171,6 @@ Needs to tighten the advice to only govern the generic How-to part.
 
 Code restructuring without much new feature.
 Will merge to "master" by the end of week #4.
-
-* jh/receive-count-limit (2011-05-14) 1 commit
- - receive-pack: Add receive.objectCountLimit to refuse push with too many objects
-
-Being rerolled.
 
 * jl/submodule-conflicted-gitmodules (2011-05-14) 2 commits
   (merged to 'next' on 2011-05-16 at cc6c7e8)
@@ -238,7 +221,7 @@ Will merge to "master" soonish, to merge further to "maint" later.
 Looked good. We _might_ want to make -n simply ignore -u, though.
 Waiting for a reroll.
 
-* jc/streaming (2011-05-16) 12 commits
+* jc/streaming (2011-05-18) 12 commits
  - streaming: read loose objects incrementally
  - sha1_file.c: expose helpers to read loose objects
  - streaming: read non-delta incrementally from a pack
@@ -253,9 +236,8 @@ Waiting for a reroll.
  - Merge branches 'jc/convert', 'jc/bigfile' and 'jc/replacing' into jc/streaming
  (this branch uses jc/bigfile and jc/replacing.)
 
-I _think_ the "hole" one does a reasonable job to avoid excessible and
-pointless seeks (it operates on 10k chunks and coalesces continuous chunks
-full of NULs), which was the concern raised in the review.
+Thanks to Peff, it has become clear that sha1_object_info_extended()
+change was not paying enough attention to the performance.
 
 * jc/bigfile (2011-05-13) 3 commits
   (merged to 'next' on 2011-05-15 at 0ee7144)
@@ -347,16 +329,12 @@ Will merge to "master" by the end of week #4.
  (this branch uses ab/i18n-scripts-basic.)
 
 * ab/i18n-scripts-basic (2011-05-14) 4 commits
- - Makefile: add xgettext target for *.sh files
- - git-sh-i18n.sh: add GIT_GETTEXT_POISON support
- - git-sh-i18n.sh: add no-op gettext() and eval_gettext() wrappers
- - git-sh-i18n--envsubst: our own envsubst(1) for eval_gettext()
+  (merged to 'next' on 2011-05-18 at 3dc69f0)
+ + Makefile: add xgettext target for *.sh files
+ + git-sh-i18n.sh: add GIT_GETTEXT_POISON support
+ + git-sh-i18n.sh: add no-op gettext() and eval_gettext() wrappers
+ + git-sh-i18n--envsubst: our own envsubst(1) for eval_gettext()
  (this branch is used by ab/i18n-scripts.)
-
-Re-rolled to drop credits from the individual documentation pages
-and update the documentation.
-
-Will merge to "next" by the end of week #4.
 
 * mk/grep-pcre (2011-05-16) 12 commits
   (merged to 'next' on 2011-05-16 at 0c6c25e)
@@ -388,7 +366,9 @@ Will merge to "master" by the middle of week #5.
 
 Will merge to "master" by the end of week #4.
 
-* jc/magic-pathspec (2011-05-12) 13 commits
+* jc/magic-pathspec (2011-05-17) 14 commits
+  (merged to 'next' on 2011-05-18 at d7180b9)
+ + setup.c: Fix some "symbol not declared" sparse warnings
   (merged to 'next' on 2011-05-12 at 656c8b5)
  + t3703: Skip tests using directory name ":" on Windows
   (merged to 'next' on 2011-05-11 at 86d1d6d)
