@@ -1,0 +1,116 @@
+#!/bin/sh
+# Usage:
+# Meta/amlook <mbox (for single message from MUA) or
+# Meta/amlook id1 id2... (from the command line)
+# Meta/amlook --gc
+
+find_commit () {
+	in=
+	# I know I know there should be "notes grep" command...
+	commits=$(
+		git grep -l -e "$1" notes/amlog |
+		sed -e 's|^notes/amlog:||' -e 's|/||g'
+	)
+	if test -z "$commits"
+	then
+		echo "Never applied"
+		return
+	fi
+	found=$(
+		echo "$commits" |
+		while read commit
+		do
+			git branch --with $commit
+		done | sed -e 's|^..||' |
+		sort -u |
+		tr '\012' ' '
+	)
+	if test -z "$found"
+	then
+		echo "Not merged ($commits)"
+		return
+	fi
+	case " $found " in
+	*' maint '*) in=maint ;;
+	*' master '*) in=master ;;
+	*' next '*) in=next ;;
+	esac
+	if test -n "$in"
+	then
+		echo "Found in $in"
+	else
+		echo "Found in $found"
+	fi
+}
+
+garbage_collect () {
+	cutoff_days=${1-"180"} &&
+	git notes --ref amlog list |
+	sed -e 's/.* //' |
+	xargs -n 1 git show -s --format="%ci %H" 2>/dev/null |
+	perl -e '
+		my @time = localtime(time() - $ARGV[0] * 24 * 3600);
+		my $cutoff = sprintf("%04d-%02d-%02d 00:00:00",
+				$time[5]+1900, $time[4]+1, $time[3]);
+		while (<STDIN>) {
+			if ($_ le $cutoff) {
+				s/.* //;
+				print;
+			}
+		}
+	' "$cutoff_days" >..gcinput
+
+: <<\INVALID
+	: (
+		GIT_INDEX_FILE=/tmp/amlook.$$.tmp &&
+		export GIT_INDEX_FILE &&
+		rm -f "$GIT_INDEX_FILE" &&
+		git read-tree refs/notes/amlog &&
+		xargs git rm -f &&
+		T=$(git write-tree) &&
+		C=$(echo Prune amlog | git commit-tree $T -p refs/notes/amlog) &&
+		git update-ref -m "Prune amlog" refs/notes/amlog $C
+	)
+INVALID
+}
+
+if test $# = 0
+then
+	msg=$(sed -ne '
+		/^[ 	]/{
+			# Append continuation line
+			H
+			x
+			s/\n//
+			x
+			n
+		}
+		# Hold this new line, and look at what is in the hold space
+		x
+		# Is it the Message-ID line?  If so, spit out and finish.
+		/^[Mm][Ee][Ss][Ss][Aa][Gg][Ee]-[Ii][Dd]:[ 	]*/{
+			s///p
+			q
+		}
+		# Otherwise, check if this new line is empty
+		x
+		# Is it?  Then we are done with the header
+		/^$/b end
+		# Otherwise we need to hold onto this header line
+		x
+		# And start the next cycle
+		b
+	: end
+		q
+	') &&
+	find_commit "$msg"
+elif test "$1" = "--gc"
+then
+	shift
+	garbage_collect "$@"
+else
+	for msg
+	do
+		find_commit "$msg"
+	done
+fi
