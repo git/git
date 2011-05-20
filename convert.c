@@ -831,7 +831,7 @@ int can_bypass_conversion(const char *path)
 		return 0;
 
 	crlf_action = input_crlf_action(ca.crlf_action, ca.eol_attr);
-	if ((crlf_action == CRLF_BINARY) ||
+	if ((crlf_action == CRLF_BINARY) || (crlf_action == CRLF_INPUT) ||
 	    (crlf_action == CRLF_GUESS && auto_crlf == AUTO_CRLF_FALSE))
 		return 1;
 	return 0;
