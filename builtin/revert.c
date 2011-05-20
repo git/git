@@ -408,8 +408,6 @@ static int do_pick_commit(void)
 	discard_cache();
 
 	if (!commit->parents) {
-		if (action == REVERT)
-			die (_("Cannot revert a root commit"));
 		parent = NULL;
 	}
 	else if (commit->parents->next) {
@@ -467,7 +465,7 @@ static int do_pick_commit(void)
 		strbuf_addstr(&msgbuf, "\"\n\nThis reverts commit ");
 		strbuf_addstr(&msgbuf, sha1_to_hex(commit->object.sha1));
 
-		if (commit->parents->next) {
+		if (commit->parents && commit->parents->next) {
 			strbuf_addstr(&msgbuf, ", reversing\nchanges made to ");
 			strbuf_addstr(&msgbuf, sha1_to_hex(parent->object.sha1));
 		}
