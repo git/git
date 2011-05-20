@@ -110,6 +110,12 @@ is not your current git branch you can also pass that as an argument:
 
 You can override the reference branch with the --origin=mysourcebranch option.
 
+The Perforce changelists will be created with the user who ran git-p4. If you
+use --preserve-user then git-p4 will attempt to create Perforce changelists
+with the Perforce user corresponding to the git commit author. You need to
+have sufficient permissions within Perforce, and the git users need to have
+Perforce accounts. Permissions can be granted using 'p4 protect'.
+
 If a submit fails you may have to "p4 resolve" and submit manually. You can
 continue importing the remaining changes with
 
@@ -195,6 +201,36 @@ The P4CLIENT environment variable should be correctly set for p4 to be
 able to find the relevant client.  This client spec will be used to
 both filter the files cloned by git and set the directory layout as
 specified in the client (this implies --keep-path style semantics).
+
+git-p4.skipSubmitModTimeCheck
+
+  git config [--global] git-p4.skipSubmitModTimeCheck false
+
+If true, submit will not check if the p4 change template has been modified.
+
+git-p4.preserveUser
+
+  git config [--global] git-p4.preserveUser false
+
+If true, attempt to preserve user names by modifying the p4 changelists. See
+the "--preserve-user" submit option.
+
+git-p4.allowMissingPerforceUsers
+
+  git config [--global] git-p4.allowMissingP4Users false
+
+If git-p4 is setting the perforce user for a commit (--preserve-user) then
+if there is no perforce user corresponding to the git author, git-p4 will
+stop. With allowMissingPerforceUsers set to true, git-p4 will use the
+current user (i.e. the behavior without --preserve-user) and carry on with
+the perforce commit.
+
+git-p4.skipUserNameCheck
+
+  git config [--global] git-p4.skipUserNameCheck false
+
+When submitting, git-p4 checks that the git commits are authored by the current
+p4 user, and warns if they are not. This disables the check.
 
 Implementation Details...
 =========================
