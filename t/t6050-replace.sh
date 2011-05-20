@@ -236,6 +236,20 @@ test_expect_success 'index-pack and replacements' '
 	git index-pack test-*.pack
 '
 
-#
-#
+test_expect_success 'not just commits' '
+	echo replaced >file &&
+	git add file &&
+	REPLACED=$(git rev-parse :file) &&
+	mv file file.replaced &&
+
+	echo original >file &&
+	git add file &&
+	ORIGINAL=$(git rev-parse :file) &&
+	git update-ref refs/replace/$ORIGINAL $REPLACED &&
+	mv file file.original &&
+
+	git checkout file &&
+	test_cmp file.replaced file
+'
+
 test_done
