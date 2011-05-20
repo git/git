@@ -814,12 +814,69 @@ int renormalize_buffer(const char *path, const char *src, size_t len, struct str
 	return ret | convert_to_git(path, src, len, dst, 0);
 }
 
+/*****************************************************************
+ *
+ * Streaming converison support
+ *
+ *****************************************************************/
+
+typedef int (*filter_fn)(struct stream_filter *,
+			 const char *input, size_t *isize_p,
+			 char *output, size_t *osize_p);
+typedef void (*free_fn)(struct stream_filter *);
+
+struct stream_filter_vtbl {
+	filter_fn filter;
+	free_fn free;
+};
+
+struct stream_filter {
+	struct stream_filter_vtbl *vtbl;
+};
+
+static int null_filter_fn(struct stream_filter *filter,
+			  const char *input, size_t *isize_p,
+			  char *output, size_t *osize_p)
+{
+	size_t count = *isize_p;
+	if (*osize_p < count)
+		count = *osize_p;
+	if (count) {
+		memmove(output, input, count);
+		*isize_p -= count;
+		*osize_p -= count;
+	}
+	return 0;
+}
+
+static void null_free_fn(struct stream_filter *filter)
+{
+	; /* nothing -- null instances are shared */
+}
+
+static struct stream_filter_vtbl null_vtbl = {
+	null_filter_fn,
+	null_free_fn,
+};
+
+static struct stream_filter null_filter_singleton = {
+	&null_vtbl,
+};
+
+int is_null_stream_filter(struct stream_filter *filter)
+{
+	return filter == &null_filter_singleton;
+}
+
 /*
- * You would be crazy to set CRLF, smuge/clean or ident to
- * a large binary blob you would want us not to slurp into
- * the memory!
+ * Return an appropriately constructed filter for the path, or NULL if
+ * the contents cannot be filtered without reading the whole thing
+ * in-core.
+ *
+ * Note that you would be crazy to set CRLF, smuge/clean or ident to a
+ * large binary blob you would want us not to slurp into the memory!
  */
-int can_bypass_conversion(const char *path)
+struct stream_filter *get_stream_filter(const char *path, const unsigned char *sha1)
 {
 	struct conv_attrs ca;
 	enum crlf_action crlf_action;
@@ -828,11 +885,24 @@ int can_bypass_conversion(const char *path)
 
 	if (ca.ident ||
 	    (ca.drv && (ca.drv->smudge || ca.drv->clean)))
-		return 0;
+		return NULL;
 
 	crlf_action = input_crlf_action(ca.crlf_action, ca.eol_attr);
 	if ((crlf_action == CRLF_BINARY) || (crlf_action == CRLF_INPUT) ||
 	    (crlf_action == CRLF_GUESS && auto_crlf == AUTO_CRLF_FALSE))
-		return 1;
-	return 0;
+		return &null_filter_singleton;
+
+	return NULL;
+}
+
+void free_stream_filter(struct stream_filter *filter)
+{
+	filter->vtbl->free(filter);
+}
+
+int stream_filter(struct stream_filter *filter,
+		  const char *input, size_t *isize_p,
+		  char *output, size_t *osize_p)
+{
+	return filter->vtbl->filter(filter, input, isize_p, output, osize_p);
 }

@@ -40,5 +40,26 @@ extern int convert_to_working_tree(const char *path, const char *src,
 				   size_t len, struct strbuf *dst);
 extern int renormalize_buffer(const char *path, const char *src, size_t len,
 			      struct strbuf *dst);
-extern int can_bypass_conversion(const char *path);
+
+/*****************************************************************
+ *
+ * Streaming converison support
+ *
+ *****************************************************************/
+
+struct stream_filter; /* opaque */
+
+extern struct stream_filter *get_stream_filter(const char *path, const unsigned char *);
+extern void free_stream_filter(struct stream_filter *);
+extern int is_null_stream_filter(struct stream_filter *);
+
+/*
+ * Use as much input up to *isize_p and fill output up to *osize_p;
+ * update isize_p and osize_p to indicate how much buffer space was
+ * consumed and filled. Return 0 on success, non-zero on error.
+ */
+extern int stream_filter(struct stream_filter *,
+			 const char *input, size_t *isize_p,
+			 char *output, size_t *osize_p);
+
 #endif /* CONVERT_H */
