@@ -1381,6 +1381,13 @@ int mingw_setsockopt(int sockfd, int lvl, int optname, void *optval, int optlen)
 	return setsockopt(s, lvl, optname, (const char*)optval, optlen);
 }
 
+#undef shutdown
+int mingw_shutdown(int sockfd, int how)
+{
+	SOCKET s = (SOCKET)_get_osfhandle(sockfd);
+	return shutdown(s, how);
+}
+
 #undef listen
 int mingw_listen(int sockfd, int backlog)
 {
