@@ -1123,12 +1123,12 @@ int git_config_parse_key(const char *key, char **store_key, int *baselen_)
 
 	if (last_dot == NULL || last_dot == key) {
 		error("key does not contain a section: %s", key);
-		return -2;
+		return -CONFIG_NO_SECTION_OR_NAME;
 	}
 
 	if (!last_dot[1]) {
 		error("key does not contain variable name: %s", key);
-		return -2;
+		return -CONFIG_NO_SECTION_OR_NAME;
 	}
 
 	baselen = last_dot - key;
@@ -1165,7 +1165,7 @@ int git_config_parse_key(const char *key, char **store_key, int *baselen_)
 
 out_free_ret_1:
 	free(*store_key);
-	return -1;
+	return -CONFIG_INVALID_KEY;
 }
 
 /*
@@ -1221,7 +1221,7 @@ int git_config_set_multivar(const char *key, const char *value,
 	if (fd < 0) {
 		error("could not lock config file %s: %s", config_filename, strerror(errno));
 		free(store.key);
-		ret = -1;
+		ret = CONFIG_NO_LOCK;
 		goto out_free;
 	}
 
@@ -1235,12 +1235,12 @@ int git_config_set_multivar(const char *key, const char *value,
 		if ( ENOENT != errno ) {
 			error("opening %s: %s", config_filename,
 			      strerror(errno));
-			ret = 3; /* same as "invalid config file" */
+			ret = CONFIG_INVALID_FILE; /* same as "invalid config file" */
 			goto out_free;
 		}
 		/* if nothing to unset, error out */
 		if (value == NULL) {
-			ret = 5;
+			ret = CONFIG_NOTHING_SET;
 			goto out_free;
 		}
 
@@ -1268,7 +1268,7 @@ int git_config_set_multivar(const char *key, const char *value,
 					REG_EXTENDED)) {
 				error("invalid pattern: %s", value_regex);
 				free(store.value_regex);
-				ret = 6;
+				ret = CONFIG_INVALID_PATTERN;
 				goto out_free;
 			}
 		}
@@ -1290,7 +1290,7 @@ int git_config_set_multivar(const char *key, const char *value,
 				regfree(store.value_regex);
 				free(store.value_regex);
 			}
-			ret = 3;
+			ret = CONFIG_INVALID_FILE;
 			goto out_free;
 		}
 
@@ -1303,7 +1303,7 @@ int git_config_set_multivar(const char *key, const char *value,
 		/* if nothing to unset, or too many matches, error out */
 		if ((store.seen == 0 && value == NULL) ||
 				(store.seen > 1 && multi_replace == 0)) {
-			ret = 5;
+			ret = CONFIG_NOTHING_SET;
 			goto out_free;
 		}
 
@@ -1364,7 +1364,7 @@ int git_config_set_multivar(const char *key, const char *value,
 
 	if (commit_lock_file(lock) < 0) {
 		error("could not commit config file %s", config_filename);
-		ret = 4;
+		ret = CONFIG_NO_WRITE;
 		goto out_free;
 	}
 

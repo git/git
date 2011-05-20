@@ -50,16 +50,18 @@ The default is to assume the config file of the current repository,
 .git/config unless defined otherwise with GIT_DIR and GIT_CONFIG
 (see <<FILES>>).
 
-This command will fail if:
+This command will fail (with exit code ret) if:
 
-. The config file is invalid,
-. Can not write to the config file,
-. no section was provided,
-. the section or key is invalid,
-. you try to unset an option which does not exist,
-. you try to unset/set an option for which multiple lines match, or
-. you use '--global' option without $HOME being properly set.
+. The config file is invalid (ret=3),
+. can not write to the config file (ret=4),
+. no section or name was provided (ret=2),
+. the section or key is invalid (ret=1),
+. you try to unset an option which does not exist (ret=5),
+. you try to unset/set an option for which multiple lines match (ret=5),
+. you try to use an invalid regexp (ret=6), or
+. you use '--global' option without $HOME being properly set (ret=128).
 
+On success, the command returns the exit code 0.
 
 OPTIONS
 -------
