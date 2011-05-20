@@ -872,6 +872,43 @@ int is_null_stream_filter(struct stream_filter *filter)
 	return filter == &null_filter_singleton;
 }
 
+static int lf_to_crlf_filter_fn(struct stream_filter *filter,
+				const char *input, size_t *isize_p,
+				char *output, size_t *osize_p)
+{
+	size_t count;
+
+	if (!input)
+		return 0; /* we do not keep any states */
+	count = *isize_p;
+	if (count) {
+		size_t i, o;
+		for (i = o = 0; o < *osize_p && i < count; i++) {
+			char ch = input[i];
+			if (ch == '\n') {
+				if (o + 1 < *osize_p)
+					output[o++] = '\r';
+				else
+					break;
+			}
+			output[o++] = ch;
+		}
+
+		*osize_p -= o;
+		*isize_p -= i;
+	}
+	return 0;
+}
+
+static struct stream_filter_vtbl lf_to_crlf_vtbl = {
+	lf_to_crlf_filter_fn,
+	null_free_fn,
+};
+
+static struct stream_filter lf_to_crlf_filter_singleton = {
+	&lf_to_crlf_vtbl,
+};
+
 /*
  * Return an appropriately constructed filter for the path, or NULL if
  * the contents cannot be filtered without reading the whole thing
@@ -895,6 +932,10 @@ struct stream_filter *get_stream_filter(const char *path, const unsigned char *s
 	if ((crlf_action == CRLF_BINARY) || (crlf_action == CRLF_INPUT) ||
 	    (crlf_action == CRLF_GUESS && auto_crlf == AUTO_CRLF_FALSE))
 		return &null_filter_singleton;
+
+	if (output_eol(crlf_action) == EOL_CRLF &&
+	    !(crlf_action == CRLF_AUTO || crlf_action == CRLF_GUESS))
+		return &lf_to_crlf_filter_singleton;
 
 	return NULL;
 }
