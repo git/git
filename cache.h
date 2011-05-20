@@ -6,6 +6,7 @@
 #include "hash.h"
 #include "advice.h"
 #include "gettext.h"
+#include "convert.h"
 
 #include SHA1_HEADER
 #ifndef git_SHA_CTX
@@ -582,35 +583,6 @@ extern int fsync_object_files;
 extern int core_preload_index;
 extern int core_apply_sparse_checkout;
 
-enum safe_crlf {
-	SAFE_CRLF_FALSE = 0,
-	SAFE_CRLF_FAIL = 1,
-	SAFE_CRLF_WARN = 2
-};
-
-extern enum safe_crlf safe_crlf;
-
-enum auto_crlf {
-	AUTO_CRLF_FALSE = 0,
-	AUTO_CRLF_TRUE = 1,
-	AUTO_CRLF_INPUT = -1
-};
-
-extern enum auto_crlf auto_crlf;
-
-enum eol {
-	EOL_UNSET,
-	EOL_CRLF,
-	EOL_LF,
-#ifdef NATIVE_CRLF
-	EOL_NATIVE = EOL_CRLF
-#else
-	EOL_NATIVE = EOL_LF
-#endif
-};
-
-extern enum eol core_eol;
-
 enum branch_track {
 	BRANCH_TRACK_UNSPECIFIED = -1,
 	BRANCH_TRACK_NEVER = 0,
@@ -1152,14 +1124,6 @@ extern int trace_want(const char *key);
 extern void trace_strbuf(const char *key, const struct strbuf *buf);
 
 void packet_trace_identity(const char *prog);
-
-/* convert.c */
-/* returns 1 if *dst was used */
-extern int convert_to_git(const char *path, const char *src, size_t len,
-                          struct strbuf *dst, enum safe_crlf checksafe);
-extern int convert_to_working_tree(const char *path, const char *src, size_t len, struct strbuf *dst);
-extern int renormalize_buffer(const char *path, const char *src, size_t len, struct strbuf *dst);
-extern int can_bypass_conversion(const char *path);
 
 /* add */
 /*
