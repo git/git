@@ -9,6 +9,7 @@ LONG_USAGE='Fetch one or more remote refs and merge it/them into the current HEA
 SUBDIRECTORY_OK=Yes
 OPTIONS_SPEC=
 . git-sh-setup
+. git-sh-i18n
 set_reflog_action "pull $*"
 require_work_tree
 cd_to_toplevel
