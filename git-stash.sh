@@ -152,8 +152,19 @@ save_stash () {
 			break
 			;;
 		-*)
-			echo "error: unknown option for 'stash save': $1"
-			echo "       To provide a message, use git stash save -- '$1'"
+			option="$1"
+			# TRANSLATORS: $option is an invalid option, like
+			# `--blah-blah'. The 7 spaces at the beginning of the
+			# second line correspond to "error: ". So you should line
+			# up the second line with however many characters the
+			# translation of "error: " takes in your language. E.g. in
+			# English this is:
+			#
+			#    $ git stash save --blah-blah 2>&1 | head -n 2
+			#    error: unknown option for 'stash save': --blah-blah
+			#           To provide a message, use git stash save -- '--blah-blah'
+			eval_gettext "$("error: unknown option for 'stash save': \$option
+       To provide a message, use git stash save -- '\$option'")"; echo
 			usage
 			;;
 		*)
