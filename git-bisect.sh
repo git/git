@@ -380,14 +380,18 @@ bisect_run () {
 
     while true
     do
-      echo "running $@"
+      command="$@"
+      eval_gettext "running \$command"; echo
       "$@"
       res=$?
 
       # Check for really bad run error.
       if [ $res -lt 0 -o $res -ge 128 ]; then
-	  echo >&2 "bisect run failed:"
-	  echo >&2 "exit code $res from '$@' is < 0 or >= 128"
+	  (
+	    eval_gettext "bisect run failed:
+exit code \$res from '\$command' is < 0 or >= 128" &&
+	    echo
+	  ) >&2
 	  exit $res
       fi
 
