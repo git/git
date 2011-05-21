@@ -151,7 +151,7 @@ It does not apply to blobs recorded in its index.")"
     orig_tree=$(cat "$dotest/patch-merge-base") &&
     rm -fr "$dotest"/patch-merge-* || exit 1
 
-    say Falling back to patching base and 3-way merge...
+    say "$(gettext "Falling back to patching base and 3-way merge...")"
 
     # This is not so wrong.  Depending on which base we picked,
     # orig_tree may be wildly different from ours, but his_tree
