@@ -878,7 +878,7 @@ cmd_sync()
 			;;
 		esac
 
-		say "Synchronizing submodule url for '$name'"
+		say "$(eval_gettext "Synchronizing submodule url for '\$name'")"
 		git config submodule."$name".url "$url"
 
 		if test -e "$path"/.git
