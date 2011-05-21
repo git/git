@@ -417,8 +417,11 @@ bisect_run () {
       fi
 
       if [ $res -ne 0 ]; then
-	  echo >&2 "bisect run failed:"
-	  echo >&2 "'bisect_state $state' exited with error code $res"
+	  (
+	      eval_gettext "bisect run failed:
+'bisect_state \$state' exited with error code \$res" &&
+	      echo
+	  ) >&2
 	  exit $res
       fi
 
