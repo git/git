@@ -357,7 +357,7 @@ test_expect_success 'update --init' '
 
 	git submodule update init > update.out &&
 	cat update.out &&
-	grep "not initialized" update.out &&
+	test_i18ngrep "not initialized" update.out &&
 	! test -d init/.git &&
 
 	git submodule update --init init &&
