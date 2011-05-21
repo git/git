@@ -99,7 +99,7 @@ test_expect_success 'submodule add to .gitignored path fails' '
 		git add --force .gitignore &&
 		git commit -m"Ignore everything" &&
 		! git submodule add "$submodurl" submod >actual 2>&1 &&
-		test_cmp expect actual
+		test_i18ncmp expect actual
 	)
 '
 

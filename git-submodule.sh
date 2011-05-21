@@ -223,9 +223,12 @@ cmd_add()
 
 	if test -z "$force" && ! git add --dry-run --ignore-missing "$path" > /dev/null 2>&1
 	then
-		echo >&2 "The following path is ignored by one of your .gitignore files:" &&
-		echo >&2 $path &&
-		echo >&2 "Use -f if you really want to add it."
+		(
+			eval_gettext "The following path is ignored by one of your .gitignore files:
+\$path
+Use -f if you really want to add it." &&
+			echo
+		) >&2
 		exit 1
 	fi
 
