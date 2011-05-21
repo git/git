@@ -222,9 +222,11 @@ cmd_add()
 
 	if test -z "$force" && ! git add --dry-run --ignore-missing "$path" > /dev/null 2>&1
 	then
-		echo >&2 "The following path is ignored by one of your .gitignore files:" &&
-		echo >&2 $path &&
-		echo >&2 "Use -f if you really want to add it."
+		cat >&2 <<EOF
+The following path is ignored by one of your .gitignore files:
+$path
+Use -f if you really want to add it.
+EOF
 		exit 1
 	fi
 
@@ -742,12 +744,16 @@ cmd_summary() {
 	done |
 	if test -n "$for_status"; then
 		if [ -n "$files" ]; then
-			echo "# Submodules changed but not updated:"
+			status_msg="# Submodules changed but not updated:"
 		else
-			echo "# Submodule changes to be committed:"
+			status_msg="# Submodule changes to be committed:"
 		fi
-		echo "#"
-		sed -e 's|^|# |' -e 's|^# $|#|'
+		status_sed=$(sed -e 's|^|# |' -e 's|^# $|#|')
+		cat <<EOF
+$status_msg
+#
+$status_sed
+EOF
 	else
 		cat
 	fi

@@ -13,6 +13,7 @@
 #include "line_buffer.h"
 #include "string_pool.h"
 #include "strbuf.h"
+#include "svndump.h"
 
 /*
  * Compare start of string to literal of equal length;

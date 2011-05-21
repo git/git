@@ -13,10 +13,10 @@ check_not_detached () {
 
 ORPHAN_WARNING='you are leaving .* commit.*behind'
 check_orphan_warning() {
-	grep "$ORPHAN_WARNING" "$1"
+	test_i18ngrep "$ORPHAN_WARNING" "$1"
 }
 check_no_orphan_warning() {
-	! grep "$ORPHAN_WARNING" "$1"
+	test_i18ngrep ! "$ORPHAN_WARNING" "$1"
 }
 
 reset () {
@@ -111,7 +111,7 @@ test_expect_success 'checkout warns on orphan commits' '
 	git checkout master 2>stderr
 '
 
-test_expect_success C_LOCALE_OUTPUT 'checkout warns on orphan commits: output' '
+test_expect_success 'checkout warns on orphan commits: output' '
 	check_orphan_warning stderr
 '
 
@@ -121,7 +121,7 @@ test_expect_success 'checkout does not warn leaving ref tip' '
 	git checkout master 2>stderr
 '
 
-test_expect_success C_LOCALE_OUTPUT 'checkout does not warn leaving ref tip' '
+test_expect_success 'checkout does not warn leaving ref tip' '
 	check_no_orphan_warning stderr
 '
 
@@ -131,7 +131,7 @@ test_expect_success 'checkout does not warn leaving reachable commit' '
 	git checkout master 2>stderr
 '
 
-test_expect_success C_LOCALE_OUTPUT 'checkout does not warn leaving reachable commit' '
+test_expect_success 'checkout does not warn leaving reachable commit' '
 	check_no_orphan_warning stderr
 '
 

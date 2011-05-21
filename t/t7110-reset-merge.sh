@@ -233,11 +233,11 @@ test_expect_success '"reset --merge HEAD^" is ok with pending merge' '
 #           working index HEAD target         working index HEAD
 #           ----------------------------------------------------
 # file1:     X       U     B    C     --keep   (disallowed)
-test_expect_success C_LOCALE_OUTPUT '"reset --keep HEAD^" fails with pending merge' '
+test_expect_success '"reset --keep HEAD^" fails with pending merge' '
     git reset --hard third &&
     test_must_fail git merge branch1 &&
     test_must_fail git reset --keep HEAD^ 2>err.log &&
-    grep "middle of a merge" err.log
+    test_i18ngrep "middle of a merge" err.log
 '
 
 # The next test will test the following:
@@ -259,11 +259,11 @@ test_expect_success '"reset --merge HEAD" is ok with pending merge' '
 #           working index HEAD target         working index HEAD
 #           ----------------------------------------------------
 # file1:     X       U     B    B     --keep   (disallowed)
-test_expect_success C_LOCALE_OUTPUT '"reset --keep HEAD" fails with pending merge' '
+test_expect_success '"reset --keep HEAD" fails with pending merge' '
     git reset --hard third &&
     test_must_fail git merge branch1 &&
     test_must_fail git reset --keep HEAD 2>err.log &&
-    grep "middle of a merge" err.log
+    test_i18ngrep "middle of a merge" err.log
 '
 
 test_expect_success '--merge is ok with added/deleted merge' '
@@ -280,7 +280,7 @@ test_expect_success '--merge is ok with added/deleted merge' '
     git diff --exit-code --cached
 '
 
-test_expect_success C_LOCALE_OUTPUT '--keep fails with added/deleted merge' '
+test_expect_success '--keep fails with added/deleted merge' '
     git reset --hard third &&
     rm -f file2 &&
     test_must_fail git merge branch3 &&
@@ -289,7 +289,7 @@ test_expect_success C_LOCALE_OUTPUT '--keep fails with added/deleted merge' '
     git diff --exit-code file3 &&
     git diff --exit-code branch3 file3 &&
     test_must_fail git reset --keep HEAD 2>err.log &&
-    grep "middle of a merge" err.log
+    test_i18ngrep "middle of a merge" err.log
 '
 
 test_done

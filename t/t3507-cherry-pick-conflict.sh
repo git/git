@@ -44,7 +44,7 @@ test_expect_success 'failed cherry-pick does not advance HEAD' '
 	test "$head" = "$newhead"
 '
 
-test_expect_success C_LOCALE_OUTPUT 'advice from failed cherry-pick' "
+test_expect_success 'advice from failed cherry-pick' "
 	pristine_detach initial &&
 
 	picked=\$(git rev-parse --short picked) &&
@@ -56,7 +56,7 @@ test_expect_success C_LOCALE_OUTPUT 'advice from failed cherry-pick' "
 	EOF
 	test_must_fail git cherry-pick picked 2>actual &&
 
-	test_cmp expected actual
+	test_i18ncmp expected actual
 "
 
 test_expect_success 'failed cherry-pick sets CHERRY_PICK_HEAD' '

@@ -90,6 +90,8 @@ extern char *logmsg_reencode(const struct commit *commit,
 extern char *reencode_commit_message(const struct commit *commit,
 				     const char **encoding_p);
 extern void get_commit_format(const char *arg, struct rev_info *);
+extern const char *format_subject(struct strbuf *sb, const char *msg,
+				  const char *line_separator);
 extern void userformat_find_requirements(const char *fmt, struct userformat_want *w);
 extern void format_commit_message(const struct commit *commit,
 				  const char *format, struct strbuf *sb,

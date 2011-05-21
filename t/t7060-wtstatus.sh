@@ -38,7 +38,7 @@ cat >expect <<EOF
 no changes added to commit (use "git add" and/or "git commit -a")
 EOF
 
-test_expect_success C_LOCALE_OUTPUT 'M/D conflict does not segfault' '
+test_expect_success 'M/D conflict does not segfault' '
 	mkdir mdconflict &&
 	(
 		cd mdconflict &&
@@ -50,9 +50,9 @@ test_expect_success C_LOCALE_OUTPUT 'M/D conflict does not segfault' '
 		git commit -m delete &&
 		test_must_fail git merge master &&
 		test_must_fail git commit --dry-run >../actual &&
-		test_cmp ../expect ../actual &&
+		test_i18ncmp ../expect ../actual &&
 		git status >../actual &&
-		test_cmp ../expect ../actual
+		test_i18ncmp ../expect ../actual
 	)
 '
 
