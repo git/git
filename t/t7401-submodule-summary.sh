@@ -228,7 +228,7 @@ EOF
 
 test_expect_success '--for-status' "
     git submodule summary --for-status HEAD^ >actual &&
-    test_cmp actual - <<EOF
+    test_i18ncmp actual - <<EOF
 # Submodule changes to be committed:
 #
 # * sm1 $head6...0000000:
