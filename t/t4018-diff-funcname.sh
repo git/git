@@ -9,8 +9,7 @@ test_description='Test custom diff function name patterns'
 
 LF='
 '
-
-cat > Beer.java << EOF
+cat >Beer.java <<\EOF
 public class Beer
 {
 	int special;
@@ -29,34 +28,40 @@ public class Beer
 	}
 }
 EOF
-
-sed 's/beer\\/beer,\\/' < Beer.java > Beer-correct.java
+sed 's/beer\\/beer,\\/' <Beer.java >Beer-correct.java
 
 test_config () {
 	git config "$1" "$2" &&
 	test_when_finished "git config --unset $1"
 }
 
-builtin_patterns="bibtex cpp csharp fortran html java objc pascal perl php python ruby tex"
-for p in $builtin_patterns
+test_expect_funcname () {
+	test_expect_code 1 git diff --no-index \
+		Beer.java Beer-correct.java >diff &&
+	grep "^@@.*@@ $1" diff
+}
+
+for p in bibtex cpp csharp fortran html java objc pascal perl php python ruby tex
 do
 	test_expect_success "builtin $p pattern compiles" '
 		echo "*.java diff=$p" >.gitattributes &&
-		! { git diff --no-index Beer.java Beer-correct.java 2>&1 |
-			grep "fatal" > /dev/null; }
+		test_expect_code 1 git diff --no-index \
+			Beer.java Beer-correct.java 2>msg &&
+		! grep fatal msg &&
+		! grep error msg
 	'
 	test_expect_success "builtin $p wordRegex pattern compiles" '
 		echo "*.java diff=$p" >.gitattributes &&
-		! { git diff --no-index --word-diff \
-			Beer.java Beer-correct.java 2>&1 |
-			grep "fatal" > /dev/null; }
+		test_expect_code 1 git diff --no-index --word-diff \
+			Beer.java Beer-correct.java 2>msg &&
+		! grep fatal msg &&
+		! grep error msg
 	'
 done
 
 test_expect_success 'default behaviour' '
 	rm -f .gitattributes &&
-	git diff --no-index Beer.java Beer-correct.java |
-	grep "^@@.*@@ public class Beer"
+	test_expect_funcname "public class Beer\$"
 '
 
 test_expect_success 'set up .gitattributes declaring drivers to test' '
@@ -64,35 +69,31 @@ test_expect_success 'set up .gitattributes declaring drivers to test' '
 '
 
 test_expect_success 'preset java pattern' '
-	git diff --no-index Beer.java Beer-correct.java |
-	grep "^@@.*@@ public static void main("
+	test_expect_funcname "public static void main("
 '
 
 test_expect_success 'custom pattern' '
 	test_config diff.java.funcname "!static
 !String
 [^ 	].*s.*" &&
-	git diff --no-index Beer.java Beer-correct.java |
-	grep "^@@.*@@ int special;$"
+	test_expect_funcname "int special;\$"
 '
 
 test_expect_success 'last regexp must not be negated' '
 	test_config diff.java.funcname "!static" &&
-	git diff --no-index Beer.java Beer-correct.java 2>&1 |
-	grep "fatal: Last expression must not be negated:"
+	test_expect_code 128 git diff --no-index Beer.java Beer-correct.java 2>msg &&
+	grep ": Last expression must not be negated:" msg
 '
 
 test_expect_success 'pattern which matches to end of line' '
-	test_config diff.java.funcname "Beer$" &&
-	git diff --no-index Beer.java Beer-correct.java |
-	grep "^@@.*@@ Beer"
+	test_config diff.java.funcname "Beer\$" &&
+	test_expect_funcname "Beer\$"
 '
 
 test_expect_success 'alternation in pattern' '
 	test_config diff.java.funcname "Beer$" &&
 	test_config diff.java.xfuncname "^[ 	]*((public|static).*)$" &&
-	git diff --no-index Beer.java Beer-correct.java |
-	grep "^@@.*@@ public static void main("
+	test_expect_funcname "public static void main("
 '
 
 test_done
