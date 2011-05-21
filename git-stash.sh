@@ -299,7 +299,10 @@ parse_flags_and_rev()
 		;;
 	esac
 
-	REV=$(git rev-parse --quiet --symbolic --verify $1 2>/dev/null) || die "$1 is not valid reference"
+	REV=$(git rev-parse --quiet --symbolic --verify $1 2>/dev/null) || {
+		reference="$1"
+		die "$(eval_gettext "\$reference is not valid reference")"
+	}
 
 	i_commit=$(git rev-parse --quiet --verify $REV^2 2>/dev/null) &&
 	set -- $(git rev-parse $REV $REV^1 $REV: $REV^1: $REV^2: 2>/dev/null) &&
