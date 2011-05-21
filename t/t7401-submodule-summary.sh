@@ -162,7 +162,7 @@ test_expect_success 'nonexistent commit' "
   Warn: sm1 doesn't contain commit $head4_full
 
 EOF
-    test_cmp actual expected
+    test_i18ncmp actual expected
 "
 
 commit_file

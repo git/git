@@ -678,13 +678,13 @@ cmd_summary() {
 		total_commits=
 		case "$missing_src,$missing_dst" in
 		t,)
-			errmsg="  Warn: $name doesn't contain commit $sha1_src"
+			errmsg="$(eval_gettext "  Warn: \$name doesn't contain commit \$sha1_src")"
 			;;
 		,t)
-			errmsg="  Warn: $name doesn't contain commit $sha1_dst"
+			errmsg="$(eval_gettext "  Warn: \$name doesn't contain commit \$sha1_dst")"
 			;;
 		t,t)
-			errmsg="  Warn: $name doesn't contain commits $sha1_src and $sha1_dst"
+			errmsg="$(eval_gettext "  Warn: \$name doesn't contain commits \$sha1_src and \$sha1_dst")"
 			;;
 		*)
 			errmsg=
