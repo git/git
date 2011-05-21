@@ -36,11 +36,12 @@ builtin_patterns="bibtex cpp csharp fortran html java objc pascal perl php pytho
 for p in $builtin_patterns
 do
 	test_expect_success "builtin $p pattern compiles" '
-		echo "*.java diff=$p" > .gitattributes &&
+		echo "*.java diff=$p" >.gitattributes &&
 		! { git diff --no-index Beer.java Beer-correct.java 2>&1 |
 			grep "fatal" > /dev/null; }
 	'
 	test_expect_success "builtin $p wordRegex pattern compiles" '
+		echo "*.java diff=$p" >.gitattributes &&
 		! { git diff --no-index --word-diff \
 			Beer.java Beer-correct.java 2>&1 |
 			grep "fatal" > /dev/null; }
@@ -53,8 +54,11 @@ test_expect_success 'default behaviour' '
 	grep "^@@.*@@ public class Beer"
 '
 
+test_expect_success 'set up .gitattributes declaring drivers to test' '
+	echo "*.java diff=java" >.gitattributes
+'
+
 test_expect_success 'preset java pattern' '
-	echo "*.java diff=java" >.gitattributes &&
 	git diff --no-index Beer.java Beer-correct.java |
 	grep "^@@.*@@ public static void main("
 '
