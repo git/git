@@ -32,6 +32,11 @@ EOF
 
 sed 's/beer\\/beer,\\/' < Beer.java > Beer-correct.java
 
+test_config () {
+	git config "$1" "$2" &&
+	test_when_finished "git config --unset $1"
+}
+
 builtin_patterns="bibtex cpp csharp fortran html java objc pascal perl php python ruby tex"
 for p in $builtin_patterns
 do
@@ -63,29 +68,29 @@ test_expect_success 'preset java pattern' '
 	grep "^@@.*@@ public static void main("
 '
 
-git config diff.java.funcname '!static
-!String
-[^ 	].*s.*'
-
 test_expect_success 'custom pattern' '
+	test_config diff.java.funcname "!static
+!String
+[^ 	].*s.*" &&
 	git diff --no-index Beer.java Beer-correct.java |
 	grep "^@@.*@@ int special;$"
 '
 
 test_expect_success 'last regexp must not be negated' '
-	git config diff.java.funcname "!static" &&
+	test_config diff.java.funcname "!static" &&
 	git diff --no-index Beer.java Beer-correct.java 2>&1 |
 	grep "fatal: Last expression must not be negated:"
 '
 
 test_expect_success 'pattern which matches to end of line' '
-	git config diff.java.funcname "Beer$" &&
+	test_config diff.java.funcname "Beer$" &&
 	git diff --no-index Beer.java Beer-correct.java |
 	grep "^@@.*@@ Beer"
 '
 
 test_expect_success 'alternation in pattern' '
-	git config diff.java.xfuncname "^[ 	]*((public|static).*)$" &&
+	test_config diff.java.funcname "Beer$" &&
+	test_config diff.java.xfuncname "^[ 	]*((public|static).*)$" &&
 	git diff --no-index Beer.java Beer-correct.java |
 	grep "^@@.*@@ public static void main("
 '
