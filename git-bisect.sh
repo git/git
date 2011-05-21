@@ -42,7 +42,10 @@ bisect_autostart() {
 		) >&2
 		if test -t 0
 		then
-			echo >&2 -n 'Do you want me to do it for you [Y/n]? '
+			# TRANSLATORS: Make sure to include [Y] and [n] in your
+			# translation. The program will only accept English input
+			# at this point.
+	    gettext "Do you want me to do it for you [Y/n]? " >&2
 			read yesno
 			case "$yesno" in
 			[Nn]*)
@@ -248,7 +251,10 @@ bisect_next_check() {
 		) >&2
 		if test -t 0
 		then
-			printf >&2 'Are you sure [Y/n]? '
+			# TRANSLATORS: Make sure to include [Y] and [n] in your
+			# translation. The program will only accept English input
+			# at this point.
+			gettext "Are you sure [Y/n]? " >&2
 			read yesno
 			case "$yesno" in [Nn]*) exit 1 ;; esac
 		fi
