@@ -61,7 +61,7 @@ bisect_start() {
 	#
 	head=$(GIT_DIR="$GIT_DIR" git symbolic-ref -q HEAD) ||
 	head=$(GIT_DIR="$GIT_DIR" git rev-parse --verify HEAD) ||
-	die "Bad HEAD - I need a HEAD"
+	die "$(gettext "Bad HEAD - I need a HEAD")"
 
 	#
 	# Check if we are bisecting.
@@ -80,11 +80,11 @@ bisect_start() {
 			# cogito usage, and cogito users should understand
 			# it relates to cg-seek.
 			[ -s "$GIT_DIR/head-name" ] &&
-				die "won't bisect on seeked tree"
+				die "$(gettext "won't bisect on seeked tree")"
 			start_head="${head#refs/heads/}"
 			;;
 		*)
-			die "Bad HEAD - strange symbolic ref"
+			die "$(gettext "Bad HEAD - strange symbolic ref")"
 			;;
 		esac
 	fi
@@ -201,10 +201,10 @@ bisect_state() {
 	state=$1
 	case "$#,$state" in
 	0,*)
-		die "Please call 'bisect_state' with at least one argument." ;;
+		die "$(gettext "Please call 'bisect_state' with at least one argument.")" ;;
 	1,bad|1,good|1,skip)
 		rev=$(git rev-parse --verify HEAD) ||
-			die "Bad rev input: HEAD"
+			die "$(gettext "Bad rev input: HEAD")"
 		bisect_write "$state" "$rev"
 		check_expected_revs "$rev" ;;
 	2,bad|*,good|*,skip)
@@ -219,7 +219,7 @@ bisect_state() {
 		eval "$eval"
 		check_expected_revs "$@" ;;
 	*,bad)
-		die "'git bisect bad' can take only one argument." ;;
+		die "$(gettext "'git bisect bad' can take only one argument.")" ;;
 	*)
 		usage ;;
 	esac
@@ -369,7 +369,7 @@ bisect_replay () {
 		good|bad|skip)
 			bisect_write "$command" "$rev" ;;
 		*)
-			die "?? what are you talking about?" ;;
+			die "$(gettext "?? what are you talking about?")" ;;
 		esac
 	done <"$1"
 	bisect_auto_next
@@ -434,7 +434,7 @@ bisect_run () {
 }
 
 bisect_log () {
-	test -s "$GIT_DIR/BISECT_LOG" || die "We are not bisecting."
+	test -s "$GIT_DIR/BISECT_LOG" || die "$(gettext "We are not bisecting.")"
 	cat "$GIT_DIR/BISECT_LOG"
 }
 
