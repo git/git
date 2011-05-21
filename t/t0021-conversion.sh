@@ -66,24 +66,25 @@ test_expect_success expanded_in_repo '
 		echo "\$Id:NoSpaceAtEitherEnd\$"
 		echo "\$Id: NoTerminatingSymbol"
 		echo "\$Id: Foreign Commit With Spaces \$"
-		echo "\$Id: NoTerminatingSymbolAtEOF"
+		printf "\$Id: NoTerminatingSymbolAtEOF"
 	} > expanded-keywords &&
-
-	{
-		echo "File with expanded keywords"
-		echo "\$Id: fd0478f5f1486f3d5177d4c3f6eb2765e8fc56b9 \$"
-		echo "\$Id: fd0478f5f1486f3d5177d4c3f6eb2765e8fc56b9 \$"
-		echo "\$Id: fd0478f5f1486f3d5177d4c3f6eb2765e8fc56b9 \$"
-		echo "\$Id: fd0478f5f1486f3d5177d4c3f6eb2765e8fc56b9 \$"
-		echo "\$Id: fd0478f5f1486f3d5177d4c3f6eb2765e8fc56b9 \$"
-		echo "\$Id: fd0478f5f1486f3d5177d4c3f6eb2765e8fc56b9 \$"
-		echo "\$Id: NoTerminatingSymbol"
-		echo "\$Id: Foreign Commit With Spaces \$"
-		echo "\$Id: NoTerminatingSymbolAtEOF"
-	} > expected-output &&
 
 	git add expanded-keywords &&
 	git commit -m "File with keywords expanded" &&
+	id=$(git rev-parse --verify :expanded-keywords) &&
+
+	{
+		echo "File with expanded keywords"
+		echo "\$Id: $id \$"
+		echo "\$Id: $id \$"
+		echo "\$Id: $id \$"
+		echo "\$Id: $id \$"
+		echo "\$Id: $id \$"
+		echo "\$Id: $id \$"
+		echo "\$Id: NoTerminatingSymbol"
+		echo "\$Id: Foreign Commit With Spaces \$"
+		printf "\$Id: NoTerminatingSymbolAtEOF"
+	} > expected-output &&
 
 	echo "expanded-keywords ident" >> .gitattributes &&
 
