@@ -60,9 +60,23 @@ PATTERNS("pascal",
 	 "|[-+0-9.e]+|0[xXbB]?[0-9a-fA-F]+"
 	 "|<>|<=|>=|:=|\\.\\."),
 PATTERNS("perl",
-	 "^package .*;\n"
-	 "^sub .* \\{\n"
-	 "^[A-Z]+ \\{\n"	/* BEGIN, END, ... */
+	 "^package .*\n"
+	 "^sub [[:alnum:]_':]+[ \t]*"
+		"(\\([^)]*\\)[ \t]*)?" /* prototype */
+		/*
+		 * Attributes.  A regex can't count nested parentheses,
+		 * so just slurp up whatever we see, taking care not
+		 * to accept lines like "sub foo; # defined elsewhere".
+		 *
+		 * An attribute could contain a semicolon, but at that
+		 * point it seems reasonable enough to give up.
+		 */
+		"(:[^;#]*)?"
+		"(\\{[ \t]*)?" /* brace can come here or on the next line */
+		"(#.*)?$\n" /* comment */
+	 "^[A-Z]+[ \t]*"	/* BEGIN, END, ... */
+		"(\\{[ \t]*)?" /* brace can come here or on the next line */
+		"(#.*)?$\n"
 	 "^=head[0-9] .*",	/* POD */
 	 /* -- */
 	 "[[:alpha:]_'][[:alnum:]_']*"

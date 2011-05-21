@@ -35,7 +35,11 @@ package Beer;
 use strict;
 use warnings;
 use parent qw(Exporter);
-our @EXPORT_OK = qw(round);
+our @EXPORT_OK = qw(round finalround);
+
+sub other; # forward declaration
+
+# hello
 
 sub round {
 	my ($n) = @_;
@@ -46,6 +50,12 @@ sub round {
 	print "$n bottles of beer on the wall.\n";
 }
 
+sub finalround
+{
+	print "Go to the store, buy some more\n";
+	print "99 bottles of beer on the wall.\n");
+}
+
 __END__
 
 =head1 NAME
@@ -54,12 +64,13 @@ Beer - subroutine to output fragment of a drinking song
 
 =head1 SYNOPSIS
 
-	use Beer qw(round);
+	use Beer qw(round finalround);
 
 	sub song {
 		for (my $i = 99; $i > 0; $i--) {
 			round $i;
 		}
+		finalround;
 	}
 
 	song;
@@ -67,7 +78,9 @@ Beer - subroutine to output fragment of a drinking song
 =cut
 EOF
 sed -e '
+	s/hello/goodbye/
 	s/beer\\/beer,\\/
+	s/more\\/more,\\/
 	s/song;/song();/
 ' <Beer.perl >Beer-correct.perl
 
@@ -121,12 +134,20 @@ test_expect_success 'preset perl pattern' '
 	test_expect_funcname "sub round {\$" perl
 '
 
+test_expect_success 'perl pattern accepts K&R style brace placement, too' '
+	test_expect_funcname "sub finalround\$" perl
+'
+
 test_expect_success 'perl pattern is not distracted by sub within POD' '
 	test_expect_funcname "=head" perl
 '
 
 test_expect_success 'perl pattern gets full line of POD header' '
 	test_expect_funcname "=head1 SYNOPSIS\$" perl
+'
+
+test_expect_success 'perl pattern is not distracted by forward declaration' '
+	test_expect_funcname "package Beer;\$" perl
 '
 
 test_expect_success 'custom pattern' '
