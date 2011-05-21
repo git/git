@@ -63,7 +63,7 @@ PATTERNS("perl",
 	 "^package .*;\n"
 	 "^sub .* \\{\n"
 	 "^[A-Z]+ \\{\n"	/* BEGIN, END, ... */
-	 "^=head[0-9] ",	/* POD */
+	 "^=head[0-9] .*",	/* POD */
 	 /* -- */
 	 "[[:alpha:]_'][[:alnum:]_']*"
 	 "|0[xb]?[0-9a-fA-F_]*"

@@ -125,6 +125,10 @@ test_expect_success 'perl pattern is not distracted by sub within POD' '
 	test_expect_funcname "=head" perl
 '
 
+test_expect_success 'perl pattern gets full line of POD header' '
+	test_expect_funcname "=head1 SYNOPSIS\$" perl
+'
+
 test_expect_success 'custom pattern' '
 	test_config diff.java.funcname "!static
 !String
