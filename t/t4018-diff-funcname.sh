@@ -29,6 +29,47 @@ public class Beer
 }
 EOF
 sed 's/beer\\/beer,\\/' <Beer.java >Beer-correct.java
+cat >Beer.perl <<\EOF
+package Beer;
+
+use strict;
+use warnings;
+use parent qw(Exporter);
+our @EXPORT_OK = qw(round);
+
+sub round {
+	my ($n) = @_;
+	print "$n bottles of beer on the wall ";
+	print "$n bottles of beer\n";
+	print "Take one down, pass it around, ";
+	$n = $n - 1;
+	print "$n bottles of beer on the wall.\n";
+}
+
+__END__
+
+=head1 NAME
+
+Beer - subroutine to output fragment of a drinking song
+
+=head1 SYNOPSIS
+
+	use Beer qw(round);
+
+	sub song {
+		for (my $i = 99; $i > 0; $i--) {
+			round $i;
+		}
+	}
+
+	song;
+
+=cut
+EOF
+sed -e '
+	s/beer\\/beer,\\/
+	s/song;/song();/
+' <Beer.perl >Beer-correct.perl
 
 test_config () {
 	git config "$1" "$2" &&
@@ -36,8 +77,9 @@ test_config () {
 }
 
 test_expect_funcname () {
-	test_expect_code 1 git diff --no-index \
-		Beer.java Beer-correct.java >diff &&
+	lang=${2-java}
+	test_expect_code 1 git diff --no-index -U1 \
+		"Beer.$lang" "Beer-correct.$lang" >diff &&
 	grep "^@@.*@@ $1" diff
 }
 
@@ -65,11 +107,22 @@ test_expect_success 'default behaviour' '
 '
 
 test_expect_success 'set up .gitattributes declaring drivers to test' '
-	echo "*.java diff=java" >.gitattributes
+	cat >.gitattributes <<-\EOF
+	*.java diff=java
+	*.perl diff=perl
+	EOF
 '
 
 test_expect_success 'preset java pattern' '
 	test_expect_funcname "public static void main("
+'
+
+test_expect_success 'preset perl pattern' '
+	test_expect_funcname "sub round {\$" perl
+'
+
+test_expect_success 'perl pattern is not distracted by sub within POD' '
+	test_expect_funcname "=head" perl
 '
 
 test_expect_success 'custom pattern' '
