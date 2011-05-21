@@ -295,7 +295,7 @@ parse_flags_and_rev()
 			:
 		;;
 		*)
-			die "Too many revisions specified: $REV"
+			die "$(eval_gettext "Too many revisions specified: \$REV")"
 		;;
 	esac
 
