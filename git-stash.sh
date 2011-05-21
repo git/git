@@ -14,6 +14,7 @@ SUBDIRECTORY_OK=Yes
 OPTIONS_SPEC=
 START_DIR=`pwd`
 . git-sh-setup
+. git-sh-i18n
 require_work_tree
 cd_to_toplevel
 
