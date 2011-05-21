@@ -222,12 +222,12 @@ then
 	echo >&2 "Warning: commit $orig_head."
 	git update-index -q --refresh
 	git read-tree -u -m "$orig_head" "$curr_head" ||
-		die 'Cannot fast-forward your working tree.
+		die "$(eval_gettext "Cannot fast-forward your working tree.
 After making sure that you saved anything precious from
-$ git diff '$orig_head'
+$ git diff \$orig_head
 output, run
 $ git reset --hard
-to recover.'
+to recover.")"
 
 fi
 
