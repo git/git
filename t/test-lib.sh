@@ -731,12 +731,11 @@ test_expect_code () {
 	exit_code=$?
 	if test $exit_code = $want_code
 	then
-		echo >&2 "test_expect_code: command exited with $exit_code: $*"
 		return 0
-	else
-		echo >&2 "test_expect_code: command exited with $exit_code, we wanted $want_code $*"
-		return 1
 	fi
+
+	echo >&2 "test_expect_code: command exited with $exit_code, we wanted $want_code $*"
+	return 1
 }
 
 # test_cmp is a helper function to compare actual and expected output.
