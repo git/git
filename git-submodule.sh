@@ -14,6 +14,7 @@ USAGE="[--quiet] add [-b branch] [-f|--force] [--reference <repository>] [--] <r
    or: $dashless [--quiet] sync [--] [<path>...]"
 OPTIONS_SPEC=
 . git-sh-setup
+. git-sh-i18n
 . git-parse-remote
 require_work_tree
 
