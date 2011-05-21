@@ -872,6 +872,10 @@ int is_null_stream_filter(struct stream_filter *filter)
 	return filter == &null_filter_singleton;
 }
 
+
+/*
+ * LF-to-CRLF filter
+ */
 static int lf_to_crlf_filter_fn(struct stream_filter *filter,
 				const char *input, size_t *isize_p,
 				char *output, size_t *osize_p)
@@ -909,6 +913,151 @@ static struct stream_filter lf_to_crlf_filter_singleton = {
 	&lf_to_crlf_vtbl,
 };
 
+
+/*
+ * ident filter
+ */
+#define IDENT_DRAINING (-1)
+#define IDENT_SKIPPING (-2)
+struct ident_filter {
+	struct stream_filter filter;
+	struct strbuf left;
+	int state;
+	char ident[45]; /* ": x40 $" */
+};
+
+static int is_foreign_ident(const char *str)
+{
+	int i;
+
+	if (prefixcmp(str, "$Id: "))
+		return 0;
+	for (i = 5; str[i]; i++) {
+		if (isspace(str[i]) && str[i+1] != '$')
+			return 1;
+	}
+	return 0;
+}
+
+static void ident_drain(struct ident_filter *ident, char **output_p, size_t *osize_p)
+{
+	size_t to_drain = ident->left.len;
+
+	if (*osize_p < to_drain)
+		to_drain = *osize_p;
+	if (to_drain) {
+		memcpy(*output_p, ident->left.buf, to_drain);
+		strbuf_remove(&ident->left, 0, to_drain);
+		*output_p += to_drain;
+		*osize_p -= to_drain;
+	}
+	if (!ident->left.len)
+		ident->state = 0;
+}
+
+static int ident_filter_fn(struct stream_filter *filter,
+			   const char *input, size_t *isize_p,
+			   char *output, size_t *osize_p)
+{
+	struct ident_filter *ident = (struct ident_filter *)filter;
+	static const char head[] = "$Id";
+
+	if (!input) {
+		/* drain upon eof */
+		switch (ident->state) {
+		default:
+			strbuf_add(&ident->left, head, ident->state);
+		case IDENT_SKIPPING:
+			/* fallthru */
+		case IDENT_DRAINING:
+			ident_drain(ident, &output, osize_p);
+		}
+		return 0;
+	}
+
+	while (*isize_p || (ident->state == IDENT_DRAINING)) {
+		int ch;
+
+		if (ident->state == IDENT_DRAINING) {
+			ident_drain(ident, &output, osize_p);
+			if (!*osize_p)
+				break;
+			continue;
+		}
+
+		ch = *(input++);
+		(*isize_p)--;
+
+		if (ident->state == IDENT_SKIPPING) {
+			/*
+			 * Skipping until '$' or LF, but keeping them
+			 * in case it is a foreign ident.
+			 */
+			strbuf_addch(&ident->left, ch);
+			if (ch != '\n' && ch != '$')
+				continue;
+			if (ch == '$' && !is_foreign_ident(ident->left.buf)) {
+				strbuf_setlen(&ident->left, sizeof(head) - 1);
+				strbuf_addstr(&ident->left, ident->ident);
+			}
+			ident->state = IDENT_DRAINING;
+			continue;
+		}
+
+		if (ident->state < sizeof(head) &&
+		    head[ident->state] == ch) {
+			ident->state++;
+			continue;
+		}
+
+		if (ident->state)
+			strbuf_add(&ident->left, head, ident->state);
+		if (ident->state == sizeof(head) - 1) {
+			if (ch != ':' && ch != '$') {
+				strbuf_addch(&ident->left, ch);
+				ident->state = 0;
+				continue;
+			}
+
+			if (ch == ':') {
+				strbuf_addch(&ident->left, ch);
+				ident->state = IDENT_SKIPPING;
+			} else {
+				strbuf_addstr(&ident->left, ident->ident);
+				ident->state = IDENT_DRAINING;
+			}
+			continue;
+		}
+
+		strbuf_addch(&ident->left, ch);
+		ident->state = IDENT_DRAINING;
+	}
+	return 0;
+}
+
+static void ident_free_fn(struct stream_filter *filter)
+{
+	struct ident_filter *ident = (struct ident_filter *)filter;
+	strbuf_release(&ident->left);
+	free(filter);
+}
+
+static struct stream_filter_vtbl ident_vtbl = {
+	ident_filter_fn,
+	ident_free_fn,
+};
+
+static struct stream_filter *ident_filter(const unsigned char *sha1)
+{
+	struct ident_filter *ident = xmalloc(sizeof(*ident));
+
+	sprintf(ident->ident, ": %s $", sha1_to_hex(sha1));
+	strbuf_init(&ident->left, 0);
+	ident->filter.vtbl = &ident_vtbl;
+	ident->state = 0;
+	return (struct stream_filter *)ident;
+}
+
 /*
  * Return an appropriately constructed filter for the path, or NULL if
  * the contents cannot be filtered without reading the whole thing
@@ -921,23 +1070,35 @@ struct stream_filter *get_stream_filter(const char *path, const unsigned char *s
 {
 	struct conv_attrs ca;
 	enum crlf_action crlf_action;
+	struct stream_filter *filter = NULL;
 
 	convert_attrs(&ca, path);
 
-	if (ca.ident ||
-	    (ca.drv && (ca.drv->smudge || ca.drv->clean)))
-		return NULL;
+	if (ca.drv && (ca.drv->smudge || ca.drv->clean))
+		return filter;
+
+	if (ca.ident)
+		filter = ident_filter(sha1);
 
 	crlf_action = input_crlf_action(ca.crlf_action, ca.eol_attr);
+
 	if ((crlf_action == CRLF_BINARY) || (crlf_action == CRLF_INPUT) ||
-	    (crlf_action == CRLF_GUESS && auto_crlf == AUTO_CRLF_FALSE))
+	    (crlf_action == CRLF_GUESS && auto_crlf == AUTO_CRLF_FALSE)) {
+		if (filter) {
+			free_stream_filter(filter);
+			return NULL;
+		}
 		return &null_filter_singleton;
-
-	if (output_eol(crlf_action) == EOL_CRLF &&
-	    !(crlf_action == CRLF_AUTO || crlf_action == CRLF_GUESS))
+	} else if (output_eol(crlf_action) == EOL_CRLF &&
+		   !(crlf_action == CRLF_AUTO || crlf_action == CRLF_GUESS)) {
+		if (filter) {
+			free_stream_filter(filter);
+			return NULL;
+		}
 		return &lf_to_crlf_filter_singleton;
+	}
 
-	return NULL;
+	return filter;
 }
 
 void free_stream_filter(struct stream_filter *filter)
