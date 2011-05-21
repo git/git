@@ -37,6 +37,7 @@ rerere-autoupdate update the index with reused conflict resolution if possible
 rebasing*       (internal use for git-rebase)"
 
 . git-sh-setup
+. git-sh-i18n
 prefix=$(git rev-parse --show-prefix)
 set_reflog_action am
 require_work_tree
