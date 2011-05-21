@@ -128,7 +128,7 @@ test_expect_success 'typechanged submodule(submodule->blob), --cached' "
   < Add foo5
 
 EOF
-	test_cmp actual expected
+	test_i18ncmp actual expected
 "
 
 test_expect_success 'typechanged submodule(submodule->blob), --files' "
@@ -138,7 +138,7 @@ test_expect_success 'typechanged submodule(submodule->blob), --files' "
   > Add foo5
 
 EOF
-    test_cmp actual expected
+    test_i18ncmp actual expected
 "
 
 rm -rf sm1 &&
@@ -149,7 +149,7 @@ test_expect_success 'typechanged submodule(submodule->blob)' "
 * sm1 $head4(submodule)->$head5(blob):
 
 EOF
-    test_cmp actual expected
+    test_i18ncmp actual expected
 "
 
 rm -f sm1 &&
@@ -173,7 +173,7 @@ test_expect_success 'typechanged submodule(blob->submodule)' "
   > Add foo7
 
 EOF
-    test_cmp expected actual
+    test_i18ncmp expected actual
 "
 
 commit_file sm1 &&
