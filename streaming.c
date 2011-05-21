@@ -60,6 +60,7 @@ struct filtered_istream {
 	char obuf[FILTER_BUFFER];
 	int i_end, i_ptr;
 	int o_end, o_ptr;
+	int input_finished;
 };
 
 struct git_istream {
@@ -215,12 +216,30 @@ static read_method_decl(filtered)
 			fs->o_end = FILTER_BUFFER - to_receive;
 			continue;
 		}
+
+		/* tell the filter to drain upon no more input */
+		if (fs->input_finished) {
+			size_t to_receive = FILTER_BUFFER;
+			if (stream_filter(fs->filter,
+					  NULL, NULL,
+					  fs->obuf, &to_receive))
+				return -1;
+			fs->o_end = FILTER_BUFFER - to_receive;
+			if (!fs->o_end)
+				break;
+			continue;
+		}
 		fs->i_end = fs->i_ptr = 0;
 
 		/* refill the input from the upstream */
-		fs->i_end = read_istream(fs->upstream, fs->ibuf, FILTER_BUFFER);
-		if (fs->i_end <= 0)
-			break;
+		if (!fs->input_finished) {
+			fs->i_end = read_istream(fs->upstream, fs->ibuf, FILTER_BUFFER);
+			if (fs->i_end < 0)
+				break;
+			if (fs->i_end)
+				continue;
+		}
+		fs->input_finished = 1;
 	}
 	return filled;
 }
@@ -241,6 +260,7 @@ static struct git_istream *attach_stream_filter(struct git_istream *st,
 	fs->filter = filter;
 	fs->i_end = fs->i_ptr = 0;
 	fs->o_end = fs->o_ptr = 0;
+	fs->input_finished = 0;
 	ifs->size = -1; /* unknown */
 	return ifs;
 }
