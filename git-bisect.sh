@@ -319,8 +319,10 @@ bisect_reset() {
 	}
 	case "$#" in
 	0) branch=$(cat "$GIT_DIR/BISECT_START") ;;
-	1) git rev-parse --quiet --verify "$1^{commit}" > /dev/null ||
-	       die "'$1' is not a valid commit"
+	1) git rev-parse --quiet --verify "$1^{commit}" > /dev/null || {
+	       invalid="$1"
+	       die "$(eval_gettext "'\$invalid' is not a valid commit")"
+	   }
 	   branch="$1" ;;
 	*)
 	    usage ;;
