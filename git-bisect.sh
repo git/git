@@ -114,7 +114,7 @@ bisect_start() {
 	    *)
 		rev=$(git rev-parse -q --verify "$arg^{commit}") || {
 		    test $has_double_dash -eq 1 &&
-		        die "'$arg' does not appear to be a valid revision"
+			die "$(eval_gettext "'\$arg' does not appear to be a valid revision")"
 		    break
 		}
 		case $bad_seen in
@@ -159,7 +159,7 @@ bisect_write() {
 	case "$state" in
 		bad)		tag="$state" ;;
 		good|skip)	tag="$state"-"$rev" ;;
-		*)		die "Bad bisect_write argument: $state" ;;
+		*)		die "$(eval_gettext "Bad bisect_write argument: \$state")" ;;
 	esac
 	git update-ref "refs/bisect/$tag" "$rev" || exit
 	echo "# $state: $(git show-branch $rev)" >>"$GIT_DIR/BISECT_LOG"
@@ -187,7 +187,7 @@ bisect_skip() {
 	do
 	    case "$arg" in
             *..*)
-                revs=$(git rev-list "$arg") || die "Bad rev input: $arg" ;;
+		revs=$(git rev-list "$arg") || die "$(eval_gettext "Bad rev input: \$arg")" ;;
             *)
                 revs=$(git rev-parse --sq-quote "$arg") ;;
 	    esac
@@ -213,7 +213,7 @@ bisect_state() {
 		for rev in "$@"
 		do
 			sha=$(git rev-parse --verify "$rev^{commit}") ||
-				die "Bad rev input: $rev"
+				die "$(eval_gettext "Bad rev input: \$rev")"
 			eval="$eval bisect_write '$state' '$sha'; "
 		done
 		eval "$eval"
@@ -328,8 +328,8 @@ bisect_reset() {
 	if git checkout "$branch" -- ; then
 		bisect_clean_state
 	else
-		die "Could not check out original HEAD '$branch'." \
-				"Try 'git bisect reset <commit>'."
+		die "$(eval_gettext "Could not check out original HEAD '\$branch'.
+Try 'git bisect reset <commit>'.")"
 	fi
 }
 
