@@ -742,7 +742,7 @@ To restore the original branch and stop patching run \"\$cmdline --abort\"."; ec
 		stop_here $this
 	fi
 
-	say "Applying: $FIRSTLINE"
+	say "$(eval_gettext "Applying: \$FIRSTLINE")"
 
 	case "$resolved" in
 	'')
@@ -787,7 +787,7 @@ did you forget to use 'git add'?"; echo
 		    # Applying the patch to an earlier tree and merging the
 		    # result may have produced the same tree as ours.
 		    git diff-index --quiet --cached HEAD -- && {
-			say No changes -- Patch already applied.
+			say "$(gettext "No changes -- Patch already applied.")"
 			go_next
 			continue
 		    }
@@ -813,7 +813,7 @@ did you forget to use 'git add'?"; echo
 			GIT_AUTHOR_DATE=
 		fi
 		parent=$(git rev-parse --verify -q HEAD) ||
-		say >&2 "applying to an empty history"
+		say >&2 "$(gettext "applying to an empty history")"
 
 		if test -n "$committer_date_is_author_date"
 		then

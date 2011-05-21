@@ -45,8 +45,9 @@ do
 
 	test_expect_success "am$with3 --skip continue after failed am$with3" '
 		test_must_fail git am$with3 --skip >output &&
-		test "$(grep "^Applying" output)" = "Applying: 6" &&
-		test_cmp file-2-expect file-2 &&
+		test_i18ngrep "^Applying" output >output.applying &&
+		test_i18ngrep "^Applying: 6$" output.applying &&
+		test_i18ncmp file-2-expect file-2 &&
 		test ! -f .git/MERGE_RR
 	'
 
