@@ -308,7 +308,7 @@ bisect_visualize() {
 
 bisect_reset() {
 	test -s "$GIT_DIR/BISECT_START" || {
-		echo "We are not bisecting."
+		gettext "We are not bisecting."; echo
 		return
 	}
 	case "$#" in
@@ -414,7 +414,7 @@ bisect_run () {
       fi
 
       if sane_grep "is the first bad commit" "$GIT_DIR/BISECT_RUN" > /dev/null; then
-	  echo "bisect run success"
+	  gettext "bisect run success"; echo
 	  exit 0;
       fi
 
