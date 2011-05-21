@@ -321,7 +321,10 @@ is_stash_like()
 }
 
 assert_stash_like() {
-	is_stash_like "$@" || die "'$*' is not a stash-like commit"
+	is_stash_like "$@" || {
+		args="$*"
+		die "$(eval_gettext "'\$args' is not a stash-like commit")"
+	}
 }
 
 is_stash_ref() {
@@ -329,7 +332,10 @@ is_stash_ref() {
 }
 
 assert_stash_ref() {
-	is_stash_ref "$@" || die "'$*' is not a stash reference"
+	is_stash_ref "$@" || {
+		args="$*"
+		die "$(eval_gettext "'\$args' is not a stash reference")"
+	}
 }
 
 apply_stash () {
