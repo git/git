@@ -511,24 +511,23 @@ cmd_update()
 			case "$update_module" in
 			rebase)
 				command="git rebase"
-				action="rebase"
-				msg="rebased onto"
+				die_msg="$(eval_gettext "Unable to rebase '\$sha1' in submodule path '\$path'")"
+				say_msg="$(eval_gettext "Submodule path '\$path': rebased into '\$sha1'")"
 				;;
 			merge)
 				command="git merge"
-				action="merge"
-				msg="merged in"
+				die_msg="$(eval_gettext "Unable to merge '\$sha1' in submodule path '\$path'")"
+				say_msg="$(eval_gettext "Submodule path '\$path': merged in '\$sha1'")"
 				;;
 			*)
 				command="git checkout $subforce -q"
-				action="checkout"
-				msg="checked out"
+				die_msg="$(eval_gettext "Unable to checkout '\$sha1' in submodule path '\$path'")"
+				say_msg="$(eval_gettext "Submodule path '\$path': checked out '\$sha1'")"
 				;;
 			esac
 
-			(clear_local_git_env; cd "$path" && $command "$sha1") ||
-			die "Unable to $action '$sha1' in submodule path '$path'"
-			say "Submodule path '$path': $msg '$sha1'"
+			(clear_local_git_env; cd "$path" && $command "$sha1") || die $die_msg
+			say $say_msg
 		fi
 
 		if test -n "$recursive"
