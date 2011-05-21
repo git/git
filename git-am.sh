@@ -797,7 +797,7 @@ did you forget to use 'git add'?"; echo
 	fi
 	if test $apply_status != 0
 	then
-		printf 'Patch failed at %s %s\n' "$msgnum" "$FIRSTLINE"
+		eval_gettext 'Patch failed at $msgnum $FIRSTLINE'; echo
 		stop_here_user_resolve $this
 	fi
 
