@@ -44,7 +44,7 @@ require_work_tree
 cd_to_toplevel
 
 git var GIT_COMMITTER_IDENT >/dev/null ||
-	die "You need to set your committer info first"
+	die "$(gettext "You need to set your committer info first")"
 
 if git rev-parse --verify -q HEAD >/dev/null
 then
@@ -362,7 +362,7 @@ do
 	--rebasing)
 		rebasing=t threeway=t keep=t scissors=f no_inbody_headers=t ;;
 	-d|--dotest)
-		die "-d option is no longer supported.  Do not use."
+		die "$(gettext "-d option is no longer supported.  Do not use.")"
 		;;
 	--resolvemsg)
 		shift; resolvemsg=$1 ;;
@@ -425,12 +425,12 @@ then
 		false
 		;;
 	esac ||
-	die "previous rebase directory $dotest still exists but mbox given."
+	die "$(eval_gettext "previous rebase directory \$dotest still exists but mbox given.")"
 	resume=yes
 
 	case "$skip,$abort" in
 	t,t)
-		die "Please make up your mind. --skip or --abort?"
+		die "$(gettext "Please make up your mind. --skip or --abort?")"
 		;;
 	t,)
 		git rerere clear
@@ -457,7 +457,7 @@ then
 else
 	# Make sure we are not given --skip, --resolved, nor --abort
 	test "$skip$resolved$abort" = "" ||
-		die "Resolve operation not in progress, we are not resuming."
+		die "$(gettext "Resolve operation not in progress, we are not resuming.")"
 
 	# Start afresh.
 	mkdir -p "$dotest" || exit
@@ -522,7 +522,7 @@ case "$resolved" in
 	if test "$files"
 	then
 		test -n "$HAS_HEAD" && : >"$dotest/dirtyindex"
-		die "Dirty index: cannot apply patches (dirty: $files)"
+		die "$(eval_gettext "Dirty index: cannot apply patches (dirty: \$files)")"
 	fi
 esac
 
@@ -695,7 +695,7 @@ To restore the original branch and stop patching run \"\$cmdline --abort\"."; ec
 	if test "$interactive" = t
 	then
 	    test -t 0 ||
-	    die "cannot be interactive without stdin connected to a terminal."
+	    die "$(gettext "cannot be interactive without stdin connected to a terminal.")"
 	    action=again
 	    while test "$action" = again
 	    do
