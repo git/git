@@ -915,6 +915,112 @@ static struct stream_filter lf_to_crlf_filter_singleton = {
 
 
 /*
+ * Cascade filter
+ */
+#define FILTER_BUFFER 1024
+struct cascade_filter {
+	struct stream_filter filter;
+	struct stream_filter *one;
+	struct stream_filter *two;
+	char buf[FILTER_BUFFER];
+	int end, ptr;
+};
+
+static int cascade_filter_fn(struct stream_filter *filter,
+			     const char *input, size_t *isize_p,
+			     char *output, size_t *osize_p)
+{
+	struct cascade_filter *cas = (struct cascade_filter *) filter;
+	size_t filled = 0;
+	size_t sz = *osize_p;
+	size_t to_feed, remaining;
+
+	/*
+	 * input -- (one) --> buf -- (two) --> output
+	 */
+	while (filled < sz) {
+		remaining = sz - filled;
+
+		/* do we already have something to feed two with? */
+		if (cas->ptr < cas->end) {
+			to_feed = cas->end - cas->ptr;
+			if (stream_filter(cas->two,
+					  cas->buf + cas->ptr, &to_feed,
+					  output + filled, &remaining))
+				return -1;
+			cas->ptr += (cas->end - cas->ptr) - to_feed;
+			filled = sz - remaining;
+			continue;
+		}
+
+		/* feed one from upstream and have it emit into our buffer */
+		to_feed = input ? *isize_p : 0;
+		if (input && !to_feed)
+			break;
+		remaining = sizeof(cas->buf);
+		if (stream_filter(cas->one,
+				  input, &to_feed,
+				  cas->buf, &remaining))
+			return -1;
+		cas->end = sizeof(cas->buf) - remaining;
+		cas->ptr = 0;
+		if (input) {
+			size_t fed = *isize_p - to_feed;
+			*isize_p -= fed;
+			input += fed;
+		}
+
+		/* do we know that we drained one completely? */
+		if (input || cas->end)
+			continue;
+
+		/* tell two to drain; we have nothing more to give it */
+		to_feed = 0;
+		remaining = sz - filled;
+		if (stream_filter(cas->two,
+				  NULL, &to_feed,
+				  output + filled, &remaining))
+			return -1;
+		if (remaining == (sz - filled))
+			break; /* completely drained two */
+		filled = sz - remaining;
+	}
+	*osize_p -= filled;
+	return 0;
+}
+
+static void cascade_free_fn(struct stream_filter *filter)
+{
+	struct cascade_filter *cas = (struct cascade_filter *)filter;
+	free_stream_filter(cas->one);
+	free_stream_filter(cas->two);
+	free(filter);
+}
+
+static struct stream_filter_vtbl cascade_vtbl = {
+	cascade_filter_fn,
+	cascade_free_fn,
+};
+
+static struct stream_filter *cascade_filter(struct stream_filter *one,
+					    struct stream_filter *two)
+{
+	struct cascade_filter *cascade;
+
+	if (!one || is_null_stream_filter(one))
+		return two;
+	if (!two || is_null_stream_filter(two))
+		return one;
+
+	cascade = xmalloc(sizeof(*cascade));
+	cascade->one = one;
+	cascade->two = two;
+	cascade->end = cascade->ptr = 0;
+	cascade->filter.vtbl = &cascade_vtbl;
+	return (struct stream_filter *)cascade;
+}
+
+/*
  * ident filter
  */
 #define IDENT_DRAINING (-1)
@@ -1083,20 +1189,12 @@ struct stream_filter *get_stream_filter(const char *path, const unsigned char *s
 	crlf_action = input_crlf_action(ca.crlf_action, ca.eol_attr);
 
 	if ((crlf_action == CRLF_BINARY) || (crlf_action == CRLF_INPUT) ||
-	    (crlf_action == CRLF_GUESS && auto_crlf == AUTO_CRLF_FALSE)) {
-		if (filter) {
-			free_stream_filter(filter);
-			return NULL;
-		}
-		return &null_filter_singleton;
-	} else if (output_eol(crlf_action) == EOL_CRLF &&
-		   !(crlf_action == CRLF_AUTO || crlf_action == CRLF_GUESS)) {
-		if (filter) {
-			free_stream_filter(filter);
-			return NULL;
-		}
-		return &lf_to_crlf_filter_singleton;
-	}
+	    (crlf_action == CRLF_GUESS && auto_crlf == AUTO_CRLF_FALSE))
+		filter = cascade_filter(filter, &null_filter_singleton);
+
+	else if (output_eol(crlf_action) == EOL_CRLF &&
+		 !(crlf_action == CRLF_AUTO || crlf_action == CRLF_GUESS))
+		filter = cascade_filter(filter, &lf_to_crlf_filter_singleton);
 
 	return filter;
 }
