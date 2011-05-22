@@ -74,7 +74,7 @@ PATTERNS("perl",
 		"(:[^;#]*)?"
 		"(\\{[ \t]*)?" /* brace can come here or on the next line */
 		"(#.*)?$\n" /* comment */
-	 "^[A-Z]+[ \t]*"	/* BEGIN, END, ... */
+	 "^(BEGIN|END|INIT|CHECK|UNITCHECK|AUTOLOAD|DESTROY)[ \t]*"
 		"(\\{[ \t]*)?" /* brace can come here or on the next line */
 		"(#.*)?$\n"
 	 "^=head[0-9] .*",	/* POD */

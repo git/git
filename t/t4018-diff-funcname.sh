@@ -29,7 +29,7 @@ public class Beer
 }
 EOF
 sed 's/beer\\/beer,\\/' <Beer.java >Beer-correct.java
-cat >Beer.perl <<\EOF
+cat >Beer.perl <<\EOT
 package Beer;
 
 use strict;
@@ -56,6 +56,15 @@ sub finalround
 	print "99 bottles of beer on the wall.\n");
 }
 
+sub withheredocument {
+	print <<"EOF"
+decoy here-doc
+EOF
+	# some lines of context
+	# to pad it out
+	print "hello\n";
+}
+
 __END__
 
 =head1 NAME
@@ -76,7 +85,7 @@ Beer - subroutine to output fragment of a drinking song
 	song;
 
 =cut
-EOF
+EOT
 sed -e '
 	s/hello/goodbye/
 	s/beer\\/beer,\\/
@@ -136,6 +145,10 @@ test_expect_success 'preset perl pattern' '
 
 test_expect_success 'perl pattern accepts K&R style brace placement, too' '
 	test_expect_funcname "sub finalround\$" perl
+'
+
+test_expect_success 'but is not distracted by end of <<here document' '
+	test_expect_funcname "sub withheredocument {\$" perl
 '
 
 test_expect_success 'perl pattern is not distracted by sub within POD' '
