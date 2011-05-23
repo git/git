@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "blob.h"
 #include "dir.h"
+#include "streaming.h"
 
 static void create_directories(const char *path, int path_len,
 			       const struct checkout *state)
@@ -91,6 +92,90 @@ static void *read_blob_entry(struct cache_entry *ce, unsigned long *size)
 	return NULL;
 }
 
+static int open_output_fd(char *path, struct cache_entry *ce, int to_tempfile)
+{
+	int symlink = (ce->ce_mode & S_IFMT) != S_IFREG;
+	if (to_tempfile) {
+		strcpy(path, symlink
+		       ? ".merge_link_XXXXXX" : ".merge_file_XXXXXX");
+		return mkstemp(path);
+	} else {
+		return create_file(path, !symlink ? ce->ce_mode : 0666);
+	}
+}
+
+static int fstat_output(int fd, const struct checkout *state, struct stat *st)
+{
+	/* use fstat() only when path == ce->name */
+	if (fstat_is_reliable() &&
+	    state->refresh_cache && !state->base_dir_len) {
+		fstat(fd, st);
+		return 1;
+	}
+	return 0;
+}
+
+static int streaming_write_entry(struct cache_entry *ce, char *path,
+				 const struct checkout *state, int to_tempfile,
+				 int *fstat_done, struct stat *statbuf)
+{
+	struct git_istream *st;
+	enum object_type type;
+	unsigned long sz;
+	int result = -1;
+	ssize_t kept = 0;
+	int fd = -1;
+
+	st = open_istream(ce->sha1, &type, &sz);
+	if (!st)
+		return -1;
+	if (type != OBJ_BLOB)
+		goto close_and_exit;
+
+	fd = open_output_fd(path, ce, to_tempfile);
+	if (fd < 0)
+		goto close_and_exit;
+
+	for (;;) {
+		char buf[1024 * 16];
+		ssize_t wrote, holeto;
+		ssize_t readlen = read_istream(st, buf, sizeof(buf));
+
+		if (!readlen)
+			break;
+		if (sizeof(buf) == readlen) {
+			for (holeto = 0; holeto < readlen; holeto++)
+				if (buf[holeto])
+					break;
+			if (readlen == holeto) {
+				kept += holeto;
+				continue;
+			}
+		}
+
+		if (kept && lseek(fd, kept, SEEK_CUR) == (off_t) -1)
+			goto close_and_exit;
+		else
+			kept = 0;
+		wrote = write_in_full(fd, buf, readlen);
+
+		if (wrote != readlen)
+			goto close_and_exit;
+	}
+	if (kept && (lseek(fd, kept - 1, SEEK_CUR) == (off_t) -1 ||
+		     write(fd, "", 1) != 1))
+		goto close_and_exit;
+	*fstat_done = fstat_output(fd, state, statbuf);
+
+close_and_exit:
+	close_istream(st);
+	if (0 <= fd)
+		result = close(fd);
+	if (result && 0 <= fd)
+		unlink(path);
+	return result;
+}
+
 static int write_entry(struct cache_entry *ce, char *path, const struct checkout *state, int to_tempfile)
 {
 	unsigned int ce_mode_s_ifmt = ce->ce_mode & S_IFMT;
@@ -100,6 +185,12 @@ static int write_entry(struct cache_entry *ce, char *path, const struct checkout
 	unsigned long size;
 	size_t wrote, newsize = 0;
 	struct stat st;
+
+	if ((ce_mode_s_ifmt == S_IFREG) &&
+	    can_bypass_conversion(path) &&
+	    !streaming_write_entry(ce, path, state, to_tempfile,
+				   &fstat_done, &st))
+		goto finish;
 
 	switch (ce_mode_s_ifmt) {
 	case S_IFREG:
@@ -128,17 +219,7 @@ static int write_entry(struct cache_entry *ce, char *path, const struct checkout
 			size = newsize;
 		}
 
-		if (to_tempfile) {
-			if (ce_mode_s_ifmt == S_IFREG)
-				strcpy(path, ".merge_file_XXXXXX");
-			else
-				strcpy(path, ".merge_link_XXXXXX");
-			fd = mkstemp(path);
-		} else if (ce_mode_s_ifmt == S_IFREG) {
-			fd = create_file(path, ce->ce_mode);
-		} else {
-			fd = create_file(path, 0666);
-		}
+		fd = open_output_fd(path, ce, to_tempfile);
 		if (fd < 0) {
 			free(new);
 			return error("unable to create file %s (%s)",
@@ -146,12 +227,8 @@ static int write_entry(struct cache_entry *ce, char *path, const struct checkout
 		}
 
 		wrote = write_in_full(fd, new, size);
-		/* use fstat() only when path == ce->name */
-		if (fstat_is_reliable() &&
-		    state->refresh_cache && !to_tempfile && !state->base_dir_len) {
-			fstat(fd, &st);
-			fstat_done = 1;
-		}
+		if (!to_tempfile)
+			fstat_done = fstat_output(fd, state, &st);
 		close(fd);
 		free(new);
 		if (wrote != size)
@@ -167,6 +244,7 @@ static int write_entry(struct cache_entry *ce, char *path, const struct checkout
 		return error("unknown file mode for %s in index", path);
 	}
 
+finish:
 	if (state->refresh_cache) {
 		if (!fstat_done)
 			lstat(ce->name, &st);

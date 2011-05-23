@@ -813,3 +813,26 @@ int renormalize_buffer(const char *path, const char *src, size_t len, struct str
 	}
 	return ret | convert_to_git(path, src, len, dst, 0);
 }
+
+/*
+ * You would be crazy to set CRLF, smuge/clean or ident to
+ * a large binary blob you would want us not to slurp into
+ * the memory!
+ */
+int can_bypass_conversion(const char *path)
+{
+	struct conv_attrs ca;
+	enum crlf_action crlf_action;
+
+	convert_attrs(&ca, path);
+
+	if (ca.ident ||
+	    (ca.drv && (ca.drv->smudge || ca.drv->clean)))
+		return 0;
+
+	crlf_action = input_crlf_action(ca.crlf_action, ca.eol_attr);
+	if ((crlf_action == CRLF_BINARY) || (crlf_action == CRLF_INPUT) ||
+	    (crlf_action == CRLF_GUESS && auto_crlf == AUTO_CRLF_FALSE))
+		return 1;
+	return 0;
+}
