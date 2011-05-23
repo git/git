@@ -1976,19 +1976,7 @@ struct userdiff_driver *get_textconv(struct diff_filespec *one)
 		return NULL;
 
 	diff_filespec_load_driver(one);
-	if (!one->driver->textconv)
-		return NULL;
-
-	if (one->driver->textconv_want_cache && !one->driver->textconv_cache) {
-		struct notes_cache *c = xmalloc(sizeof(*c));
-		struct strbuf name = STRBUF_INIT;
-
-		strbuf_addf(&name, "textconv/%s", one->driver->name);
-		notes_cache_init(c, name.buf, one->driver->textconv);
-		one->driver->textconv_cache = c;
-	}
-
-	return one->driver;
+	return userdiff_get_textconv(one->driver);
 }
 
 static void builtin_diff(const char *name_a,
