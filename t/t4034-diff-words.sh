@@ -307,4 +307,30 @@ test_language_driver python
 test_language_driver ruby
 test_language_driver tex
 
+test_expect_success 'word-diff with diff.sbe' '
+	cat >expect <<-\EOF &&
+	diff --git a/pre b/post
+	index a1a53b5..bc8fe6d 100644
+	--- a/pre
+	+++ b/post
+	@@ -1,3 +1,3 @@
+	a
+
+	[-b-]{+c+}
+	EOF
+	cat >pre <<-\EOF &&
+	a
+
+	b
+	EOF
+	cat >post <<-\EOF &&
+	a
+
+	c
+	EOF
+	test_when_finished "git config --unset diff.suppress-blank-empty" &&
+	git config diff.suppress-blank-empty true &&
+	word_diff --word-diff=plain
+'
+
 test_done
