@@ -32,6 +32,11 @@ test_expect_success setup '
 		echo Hello_world
 		echo HeLLo_world
 	} >hello_world &&
+	{
+		echo aab
+		echo a+b
+		echo a\\+b
+	} >ab &&
 	echo vvv >v &&
 	echo ww w >w &&
 	echo x x xx x >x &&
@@ -227,7 +232,17 @@ do
 		git grep --max-depth 0 -n -e vvv $H -- t . >actual &&
 		test_cmp expected actual
 	'
+	test_expect_success "grep $L with grep.extendedRegexp=false" '
+		echo "ab:a+b" >expected &&
+		git -c grep.extendedRegexp=false grep "a+b" >actual &&
+		test_cmp expected actual
+	'
 
+	test_expect_success "grep $L with grep.extendedRegexp=true" '
+		echo "ab:aab" >expected &&
+		git -c grep.extendedRegexp=true grep "a+b" >actual &&
+		test_cmp expected actual
+	'
 done
 
 cat >expected <<EOF
@@ -620,6 +635,28 @@ test_expect_success LIBPCRE 'grep -P pattern' '
 	test_cmp expected actual
 '
 
+test_expect_success 'grep pattern with grep.extendedRegexp=true' '
+	:>empty &&
+	test_must_fail git -c grep.extendedregexp=true \
+		grep "\p{Ps}.*?\p{Pe}" hello.c >actual &&
+	test_cmp empty actual
+'
+
+test_expect_success LIBPCRE 'grep -P pattern with grep.extendedRegexp=true' '
+	git -c grep.extendedregexp=true \
+		grep -P "\p{Ps}.*?\p{Pe}" hello.c >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success LIBPCRE 'grep -P -v pattern' '
+	{
+		echo ab:a+b
+		echo ab:a\\+b
+	} >expected &&
+	git grep -P -v "aab" ab >actual &&
+	test_cmp expected actual
+'
+
 test_expect_success LIBPCRE 'grep -P -i pattern' '
 	{
 		echo "hello.c:	printf(\"Hello world.\n\");"
@@ -634,6 +671,54 @@ test_expect_success LIBPCRE 'grep -P -w pattern' '
 		echo "hello_world:HeLLo world"
 	} >expected &&
 	git grep -P -w "He((?i)ll)o" hello_world >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'grep -G invalidpattern properly dies ' '
+	test_must_fail git grep -G "a["
+'
+
+test_expect_success 'grep -E invalidpattern properly dies ' '
+	test_must_fail git grep -E "a["
+'
+
+test_expect_success LIBPCRE 'grep -P invalidpattern properly dies ' '
+	test_must_fail git grep -P "a["
+'
+
+test_expect_success 'grep -F -E -G pattern' '
+	echo ab:a+b >expected &&
+	git grep -F -E -G a+b >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'grep -F -G -E pattern' '
+	echo ab:aab >expected &&
+	git grep -F -G -E a+b >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'grep -E -F -G pattern' '
+	echo ab:aab >expected &&
+	git grep -E -F -G a\\+b >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'grep -E -G -F pattern' '
+	echo ab:a\\+b >expected &&
+	git grep -E -G -F a\\+b >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'grep -G -F -E pattern' '
+	echo ab:a+b >expected &&
+	git grep -G -F -E a\\+b >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success LIBPCRE 'grep -E -G -F -P pattern' '
+	echo ab:a+b >expected &&
+	git grep -E -G -F -P a\\+b >actual &&
 	test_cmp expected actual
 '
 
