@@ -29,6 +29,7 @@ SYNOPSIS
 	     [ \--tags[=<pattern>] ]
 	     [ \--remotes[=<pattern>] ]
 	     [ \--glob=<glob-pattern> ]
+	     [ \--ignore-missing ]
 	     [ \--stdin ]
 	     [ \--quiet ]
 	     [ \--topo-order ]
