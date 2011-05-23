@@ -436,9 +436,14 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 			      NULL, NULL);
 	}
 	else if (actions == ACTION_SET) {
+		int ret;
 		check_argc(argc, 2, 2);
 		value = normalize_value(argv[0], argv[1]);
-		return git_config_set(argv[0], value);
+		ret = git_config_set(argv[0], value);
+		if (ret == CONFIG_NOTHING_SET)
+			error("cannot overwrite multiple values with a single value\n"
+			"       Use a regexp, --add or --set-all to change %s.", argv[0]);
+		return ret;
 	}
 	else if (actions == ACTION_SET_ALL) {
 		check_argc(argc, 2, 3);
