@@ -472,8 +472,10 @@ static int mark_complete(const char *path, const unsigned char *sha1, int flag, 
 	}
 	if (o && o->type == OBJ_COMMIT) {
 		struct commit *commit = (struct commit *)o;
-		commit->object.flags |= COMPLETE;
-		commit_list_insert_by_date(commit, &complete);
+		if (!(commit->object.flags & COMPLETE)) {
+			commit->object.flags |= COMPLETE;
+			commit_list_insert_by_date(commit, &complete);
+		}
 	}
 	return 0;
 }
