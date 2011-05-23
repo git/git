@@ -681,6 +681,78 @@ static void dump_quoted_path(const char *head,
 	puts(buf.buf);
 }
 
+static void show_combined_header(struct combine_diff_path *elem,
+				 int num_parent,
+				 int dense,
+				 struct rev_info *rev,
+				 int mode_differs)
+{
+	struct diff_options *opt = &rev->diffopt;
+	int abbrev = DIFF_OPT_TST(opt, FULL_INDEX) ? 40 : DEFAULT_ABBREV;
+	const char *a_prefix = opt->a_prefix ? opt->a_prefix : "a/";
+	const char *b_prefix = opt->b_prefix ? opt->b_prefix : "b/";
+	int use_color = DIFF_OPT_TST(opt, COLOR_DIFF);
+	const char *c_meta = diff_get_color(use_color, DIFF_METAINFO);
+	const char *c_reset = diff_get_color(use_color, DIFF_RESET);
+	const char *abb;
+	int added = 0;
+	int deleted = 0;
+	int i;
+
+	if (rev->loginfo && !rev->no_commit_id)
+		show_log(rev);
+
+	dump_quoted_path(dense ? "diff --cc " : "diff --combined ",
+			 "", elem->path, c_meta, c_reset);
+	printf("%sindex ", c_meta);
+	for (i = 0; i < num_parent; i++) {
+		abb = find_unique_abbrev(elem->parent[i].sha1,
+					 abbrev);
+		printf("%s%s", i ? "," : "", abb);
+	}
+	abb = find_unique_abbrev(elem->sha1, abbrev);
+	printf("..%s%s\n", abb, c_reset);
+
+	if (mode_differs) {
+		deleted = !elem->mode;
+
+		/* We say it was added if nobody had it */
+		added = !deleted;
+		for (i = 0; added && i < num_parent; i++)
+			if (elem->parent[i].status !=
+			    DIFF_STATUS_ADDED)
+				added = 0;
+		if (added)
+			printf("%snew file mode %06o",
+			       c_meta, elem->mode);
+		else {
+			if (deleted)
+				printf("%sdeleted file ", c_meta);
+			printf("mode ");
+			for (i = 0; i < num_parent; i++) {
+				printf("%s%06o", i ? "," : "",
+				       elem->parent[i].mode);
+			}
+			if (elem->mode)
+				printf("..%06o", elem->mode);
+		}
+		printf("%s\n", c_reset);
+	}
+
+	if (added)
+		dump_quoted_path("--- ", "", "/dev/null",
+				 c_meta, c_reset);
+	else
+		dump_quoted_path("--- ", a_prefix, elem->path,
+				 c_meta, c_reset);
+	if (deleted)
+		dump_quoted_path("+++ ", "", "/dev/null",
+				 c_meta, c_reset);
+	else
+		dump_quoted_path("+++ ", b_prefix, elem->path,
+				 c_meta, c_reset);
+}
+
 static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 			    int dense, struct rev_info *rev)
 {
@@ -692,13 +764,9 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 	int mode_differs = 0;
 	int i, show_hunks;
 	int working_tree_file = is_null_sha1(elem->sha1);
-	int abbrev = DIFF_OPT_TST(opt, FULL_INDEX) ? 40 : DEFAULT_ABBREV;
-	const char *a_prefix, *b_prefix;
 	mmfile_t result_file;
 
 	context = opt->context;
-	a_prefix = opt->a_prefix ? opt->a_prefix : "a/";
-	b_prefix = opt->b_prefix ? opt->b_prefix : "b/";
 
 	/* Read the result of merge first */
 	if (!working_tree_file)
@@ -832,63 +900,8 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 	show_hunks = make_hunks(sline, cnt, num_parent, dense);
 
 	if (show_hunks || mode_differs || working_tree_file) {
-		const char *abb;
-		int use_color = DIFF_OPT_TST(opt, COLOR_DIFF);
-		const char *c_meta = diff_get_color(use_color, DIFF_METAINFO);
-		const char *c_reset = diff_get_color(use_color, DIFF_RESET);
-		int added = 0;
-		int deleted = 0;
-
-		if (rev->loginfo && !rev->no_commit_id)
-			show_log(rev);
-		dump_quoted_path(dense ? "diff --cc " : "diff --combined ",
-				 "", elem->path, c_meta, c_reset);
-		printf("%sindex ", c_meta);
-		for (i = 0; i < num_parent; i++) {
-			abb = find_unique_abbrev(elem->parent[i].sha1,
-						 abbrev);
-			printf("%s%s", i ? "," : "", abb);
-		}
-		abb = find_unique_abbrev(elem->sha1, abbrev);
-		printf("..%s%s\n", abb, c_reset);
-
-		if (mode_differs) {
-			deleted = !elem->mode;
-
-			/* We say it was added if nobody had it */
-			added = !deleted;
-			for (i = 0; added && i < num_parent; i++)
-				if (elem->parent[i].status !=
-				    DIFF_STATUS_ADDED)
-					added = 0;
-			if (added)
-				printf("%snew file mode %06o",
-				       c_meta, elem->mode);
-			else {
-				if (deleted)
-					printf("%sdeleted file ", c_meta);
-				printf("mode ");
-				for (i = 0; i < num_parent; i++) {
-					printf("%s%06o", i ? "," : "",
-					       elem->parent[i].mode);
-				}
-				if (elem->mode)
-					printf("..%06o", elem->mode);
-			}
-			printf("%s\n", c_reset);
-		}
-		if (added)
-			dump_quoted_path("--- ", "", "/dev/null",
-					 c_meta, c_reset);
-		else
-			dump_quoted_path("--- ", a_prefix, elem->path,
-					 c_meta, c_reset);
-		if (deleted)
-			dump_quoted_path("+++ ", "", "/dev/null",
-					 c_meta, c_reset);
-		else
-			dump_quoted_path("+++ ", b_prefix, elem->path,
-					 c_meta, c_reset);
+		show_combined_header(elem, num_parent, dense, rev,
+				     mode_differs);
 		dump_sline(sline, cnt, num_parent,
 			   DIFF_OPT_TST(opt, COLOR_DIFF), result_deleted);
 	}
