@@ -14,12 +14,28 @@ Updates since v1.7.5
  * Clean-up of the C part of i18n (but not l10n---please wait)
    continues.
 
+ * The scripting part of the codebase is getting prepared for i18n/l10n.
+
  * Processes spawned by "[alias] <name> = !process" in the configuration
    can inspect GIT_PREFIX environment variable to learn where in the
    working tree the original command was invoked.
 
+ * A magic pathspec ":/" tells a command that limits its operation to
+   the current directory when ran from a subdirectory to work on the
+   entire working tree. In general, ":/path/to/file" would be relative
+   to the root of the working tree hierarchy.
+
+   After "git reset --hard; edit Makefile; cd t/", "git add -u" would
+   be a no-op, but "git add -u :/" would add the updated contents of
+   the Makefile at the top level. If you want to name a path in the
+   current subdirectory whose unusual name begins with ":/", you can
+   name it by "./:/that/path" or by "\:/that/path".
+
  * "git blame" learned "--abbrev[=<n>]" option to control the minimum
    number of hexdigits shown for commit object names.
+
+ * "git blame" learned "--line-porcelain" that is less efficient but is
+   easier to parse.
 
  * Aborting "git commit --interactive" discards updates to the index
    made during the interctive session.
@@ -49,6 +65,9 @@ Updates since v1.7.5
  * "git log" and friends learned a new "--notes" option to replace the
    "--show-notes" option.  Unlike "--show-notes", "--notes=<ref>" does
    not imply showing the default notes.
+
+ * "git ls-remote" learned "--exit-code" option to consider it a
+   different kind of error when no remote ref to be shown.
 
  * "git merge" learned "-" as a short-hand for "the previous branch", just
    like the way "git checkout -" works.
@@ -101,11 +120,20 @@ included in this release.
    miscounted the length of the name it formatted.
    (merge rg/copy-gecos-username later)
 
+ * The single-key mode of "git add -p" was easily fooled into thinking
+   that it was told to add everthing ('a') when up-arrow was pressed by
+   mistake.
+   (merge tr/add-i-no-escape later)
+
  * "git cherry-pick -s resolve" failed to cherry-pick a root commit.
    (merge jk/cherry-pick-root-with-resolve later)
 
  * "git config" used to choke with an insanely long line.
    (merge ef/maint-strbuf-init later)
+
+ * "git diff --word-diff" misbehaved when diff.suppress-blank-empty was
+   in effect.
+   (merge jm/maint-diff-words-with-sbe later)
 
  * "git log --stdin path" with an input that has additional pathspec
    used to corrupt memory.
@@ -119,5 +147,5 @@ included in this release.
 ---
 exec >/var/tmp/1
 echo O=$(git describe master)
-O=v1.7.5.1-339-g254fd97
+O=v1.7.5.2-352-g4961210
 git shortlog --no-merges ^maint ^$O master
