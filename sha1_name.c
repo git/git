@@ -1083,11 +1083,12 @@ static void diagnose_invalid_index_path(int stage,
 }
 
 
-int get_sha1_with_mode_1(const char *name, unsigned char *sha1, unsigned *mode, int gently, const char *prefix)
+int get_sha1_with_mode_1(const char *name, unsigned char *sha1, unsigned *mode,
+			 int only_to_die, const char *prefix)
 {
 	struct object_context oc;
 	int ret;
-	ret = get_sha1_with_context_1(name, sha1, &oc, gently, prefix);
+	ret = get_sha1_with_context_1(name, sha1, &oc, only_to_die, prefix);
 	*mode = oc.mode;
 	return ret;
 }
@@ -1111,7 +1112,7 @@ static char *resolve_relative_path(const char *rel)
 
 int get_sha1_with_context_1(const char *name, unsigned char *sha1,
 			    struct object_context *oc,
-			    int gently, const char *prefix)
+			    int only_to_die, const char *prefix)
 {
 	int ret, bracket_depth;
 	int namelen = strlen(name);
@@ -1133,7 +1134,7 @@ int get_sha1_with_context_1(const char *name, unsigned char *sha1,
 		struct cache_entry *ce;
 		char *new_path = NULL;
 		int pos;
-		if (namelen > 2 && name[1] == '/') {
+		if (!only_to_die && namelen > 2 && name[1] == '/') {
 			struct commit_list *list = NULL;
 			for_each_ref(handle_one_ref, &list);
 			return get_sha1_oneline(name + 2, sha1, list);
@@ -1176,7 +1177,7 @@ int get_sha1_with_context_1(const char *name, unsigned char *sha1,
 			}
 			pos++;
 		}
-		if (!gently)
+		if (only_to_die && name[1] && name[1] != '/')
 			diagnose_invalid_index_path(stage, prefix, cp);
 		free(new_path);
 		return -1;
@@ -1192,7 +1193,7 @@ int get_sha1_with_context_1(const char *name, unsigned char *sha1,
 	if (*cp == ':') {
 		unsigned char tree_sha1[20];
 		char *object_name = NULL;
-		if (!gently) {
+		if (only_to_die) {
 			object_name = xmalloc(cp-name+1);
 			strncpy(object_name, name, cp-name);
 			object_name[cp-name] = '\0';
@@ -1205,7 +1206,7 @@ int get_sha1_with_context_1(const char *name, unsigned char *sha1,
 			if (new_filename)
 				filename = new_filename;
 			ret = get_tree_entry(tree_sha1, filename, sha1, &oc->mode);
-			if (!gently) {
+			if (only_to_die) {
 				diagnose_invalid_sha1_path(prefix, filename,
 							   tree_sha1, object_name);
 				free(object_name);
@@ -1218,7 +1219,7 @@ int get_sha1_with_context_1(const char *name, unsigned char *sha1,
 			free(new_filename);
 			return ret;
 		} else {
-			if (!gently)
+			if (only_to_die)
 				die("Invalid object name '%s'.", object_name);
 		}
 	}

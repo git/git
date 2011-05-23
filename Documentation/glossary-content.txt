@@ -277,7 +277,8 @@ This commit is referred to as a "merge commit", or sometimes just a
        Pattern used to specify paths.
 +
 Pathspecs are used on the command line of "git ls-files", "git
-ls-tree", "git grep", "git checkout", and many other commands to
+ls-tree", "git add", "git grep", "git diff", "git checkout",
+and many other commands to
 limit the scope of operations to some subset of the tree or
 worktree.  See the documentation of each command for whether
 paths are relative to the current directory or toplevel.  The
@@ -295,6 +296,37 @@ pathspec syntax is as follows:
 For example, Documentation/*.jpg will match all .jpg files
 in the Documentation subtree,
 including Documentation/chapter_1/figure_1.jpg.
+
++
+A pathspec that begins with a colon `:` has special meaning.  In the
+short form, the leading colon `:` is followed by zero or more "magic
+signature" letters (which optionally is terminated by another colon `:`),
+and the remainder is the pattern to match against the path. The optional
+colon that terminates the "magic signature" can be omitted if the pattern
+begins with a character that cannot be a "magic signature" and is not a
+colon.
++
+In the long form, the leading colon `:` is followed by a open
+parenthesis `(`, a comma-separated list of zero or more "magic words",
+and a close parentheses `)`, and the remainder is the pattern to match
+against the path.
++
+The "magic signature" consists of an ASCII symbol that is not
+alphanumeric.
++
+--
+top `/`;;
+	The magic word `top` (mnemonic: `/`) makes the pattern match
+	from the root of the working tree, even when you are running
+	the command from inside a subdirectory.
+--
++
+Currently only the slash `/` is recognized as the "magic signature",
+but it is envisioned that we will support more types of magic in later
+versions of git.
++
+A pathspec with only a colon means "there is no pathspec". This form
+should not be combined with other pathspec.
 
 [[def_parent]]parent::
 	A <<def_commit_object,commit object>> contains a (possibly empty) list
