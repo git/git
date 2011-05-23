@@ -90,7 +90,7 @@ test_expect_success 'submodule update does not fetch already present commits' '
 	(cd super &&
 	  git submodule update > ../actual 2> ../actual.err
 	) &&
-	test_cmp expected actual &&
+	test_i18ncmp expected actual &&
 	! test -s actual.err
 '
 
