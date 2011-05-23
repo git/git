@@ -123,4 +123,28 @@ test_expect_success 'confuses pattern as remote when no remote specified' '
 
 '
 
+test_expect_success 'die with non-2 for wrong repository even with --exit-code' '
+	git ls-remote --exit-code ./no-such-repository ;# not &&
+	status=$? &&
+	test $status != 2 && test $status != 0
+'
+
+test_expect_success 'Report success even when nothing matches' '
+	git ls-remote other.git "refs/nsn/*" >actual &&
+	>expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'Report no-match with --exit-code' '
+	test_expect_code 2 git ls-remote --exit-code other.git "refs/nsn/*" >actual &&
+	>expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'Report match with --exit-code' '
+	git ls-remote --exit-code other.git "refs/tags/*" >actual &&
+	git ls-remote . tags/mark >expect &&
+	test_cmp expect actual
+'
+
 test_done
