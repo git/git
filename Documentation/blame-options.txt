@@ -52,6 +52,11 @@ of lines before or after the line given by <start>.
 --porcelain::
 	Show in a format designed for machine consumption.
 
+--line-porcelain::
+	Show the porcelain format, but output commit information for
+	each line, not just the first time a commit is referenced.
+	Implies --porcelain.
+
 --incremental::
 	Show the result incrementally in a format designed for
 	machine consumption.
