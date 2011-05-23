@@ -93,7 +93,9 @@ struct sline {
 	unsigned long *p_lno;
 };
 
-static char *grab_blob(const unsigned char *sha1, unsigned int mode, unsigned long *size)
+static char *grab_blob(const unsigned char *sha1, unsigned int mode,
+		       unsigned long *size, struct userdiff_driver *textconv,
+		       const char *path)
 {
 	char *blob;
 	enum object_type type;
@@ -106,6 +108,11 @@ static char *grab_blob(const unsigned char *sha1, unsigned int mode, unsigned lo
 		/* deleted blob */
 		*size = 0;
 		return xcalloc(1, 1);
+	} else if (textconv) {
+		struct diff_filespec *df = alloc_filespec(path);
+		fill_filespec(df, sha1, mode);
+		*size = fill_textconv(textconv, df, &blob);
+		free_filespec(df);
 	} else {
 		blob = read_sha1_file(sha1, &type, size);
 		if (type != OBJ_BLOB)
@@ -205,7 +212,9 @@ static void consume_line(void *state_, char *line, unsigned long len)
 static void combine_diff(const unsigned char *parent, unsigned int mode,
 			 mmfile_t *result_file,
 			 struct sline *sline, unsigned int cnt, int n,
-			 int num_parent, int result_deleted)
+			 int num_parent, int result_deleted,
+			 struct userdiff_driver *textconv,
+			 const char *path)
 {
 	unsigned int p_lno, lno;
 	unsigned long nmask = (1UL << n);
@@ -218,7 +227,7 @@ static void combine_diff(const unsigned char *parent, unsigned int mode,
 	if (result_deleted)
 		return; /* result deleted */
 
-	parent_file.ptr = grab_blob(parent, mode, &sz);
+	parent_file.ptr = grab_blob(parent, mode, &sz, textconv, path);
 	parent_file.size = sz;
 	memset(&xpp, 0, sizeof(xpp));
 	xpp.flags = 0;
@@ -771,16 +780,20 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 	int working_tree_file = is_null_sha1(elem->sha1);
 	mmfile_t result_file;
 	struct userdiff_driver *userdiff;
+	struct userdiff_driver *textconv = NULL;
 	int is_binary;
 
 	context = opt->context;
 	userdiff = userdiff_find_by_path(elem->path);
 	if (!userdiff)
 		userdiff = userdiff_find_by_name("default");
+	if (DIFF_OPT_TST(opt, ALLOW_TEXTCONV))
+		textconv = userdiff_get_textconv(userdiff);
 
 	/* Read the result of merge first */
 	if (!working_tree_file)
-		result = grab_blob(elem->sha1, elem->mode, &result_size);
+		result = grab_blob(elem->sha1, elem->mode, &result_size,
+				   textconv, elem->path);
 	else {
 		/* Used by diff-tree to read from the working tree */
 		struct stat st;
@@ -803,9 +816,16 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 		} else if (S_ISDIR(st.st_mode)) {
 			unsigned char sha1[20];
 			if (resolve_gitlink_ref(elem->path, "HEAD", sha1) < 0)
-				result = grab_blob(elem->sha1, elem->mode, &result_size);
+				result = grab_blob(elem->sha1, elem->mode,
+						   &result_size, NULL, NULL);
 			else
-				result = grab_blob(sha1, elem->mode, &result_size);
+				result = grab_blob(sha1, elem->mode,
+						   &result_size, NULL, NULL);
+		} else if (textconv) {
+			struct diff_filespec *df = alloc_filespec(elem->path);
+			fill_filespec(df, null_sha1, st.st_mode);
+			result_size = fill_textconv(textconv, df, &result);
+			free_filespec(df);
 		} else if (0 <= (fd = open(elem->path, O_RDONLY))) {
 			size_t len = xsize_t(st.st_size);
 			ssize_t done;
@@ -862,7 +882,9 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 		}
 	}
 
-	if (userdiff->binary != -1)
+	if (textconv)
+		is_binary = 0;
+	else if (userdiff->binary != -1)
 		is_binary = userdiff->binary;
 	else {
 		is_binary = buffer_is_binary(result, result_size);
@@ -871,7 +893,7 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 			unsigned long size;
 			buf = grab_blob(elem->parent[i].sha1,
 					elem->parent[i].mode,
-					&size);
+					&size, NULL, NULL);
 			if (buffer_is_binary(buf, size))
 				is_binary = 1;
 			free(buf);
@@ -932,7 +954,8 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 			combine_diff(elem->parent[i].sha1,
 				     elem->parent[i].mode,
 				     &result_file, sline,
-				     cnt, i, num_parent, result_deleted);
+				     cnt, i, num_parent, result_deleted,
+				     textconv, elem->path);
 	}
 
 	show_hunks = make_hunks(sline, cnt, num_parent, dense);

@@ -110,4 +110,103 @@ test_expect_success 'diff --cc respects binary attribute' '
 	test_cmp expect actual
 '
 
+test_expect_success 'setup textconv attribute' '
+	echo "text diff=upcase" >.gitattributes &&
+	git config diff.upcase.textconv "tr a-z A-Z <"
+'
+
+cat >expect <<'EOF'
+resolved
+
+diff --git a/text b/text
+index 2bdf67a..2ab19ae 100644
+--- a/text
++++ b/text
+@@ -1 +1 @@
+-THREE
++RESOLVED
+resolved
+
+diff --git a/text b/text
+index f719efd..2ab19ae 100644
+--- a/text
++++ b/text
+@@ -1 +1 @@
+-TWO
++RESOLVED
+EOF
+test_expect_success 'diff -m respects textconv attribute' '
+	git show --format=%s -m >actual &&
+	test_cmp expect actual
+'
+
+cat >expect <<'EOF'
+resolved
+
+diff --combined text
+index 2bdf67a,f719efd..2ab19ae
+--- a/text
++++ b/text
+@@@ -1,1 -1,1 +1,1 @@@
+- THREE
+ -TWO
+++RESOLVED
+EOF
+test_expect_success 'diff -c respects textconv attribute' '
+	git show --format=%s -c >actual &&
+	test_cmp expect actual
+'
+
+cat >expect <<'EOF'
+resolved
+
+diff --cc text
+index 2bdf67a,f719efd..2ab19ae
+--- a/text
++++ b/text
+@@@ -1,1 -1,1 +1,1 @@@
+- THREE
+ -TWO
+++RESOLVED
+EOF
+test_expect_success 'diff --cc respects textconv attribute' '
+	git show --format=%s --cc >actual &&
+	test_cmp expect actual
+'
+
+cat >expect <<'EOF'
+diff --combined text
+index 2bdf67a,f719efd..2ab19ae
+--- a/text
++++ b/text
+@@@ -1,1 -1,1 +1,1 @@@
+- three
+ -two
+++resolved
+EOF
+test_expect_success 'diff-tree plumbing does not respect textconv' '
+	git diff-tree HEAD -c -p >full &&
+	tail -n +2 full >actual &&
+	test_cmp expect actual
+'
+
+cat >expect <<'EOF'
+diff --cc text
+index 2bdf67a,f719efd..0000000
+--- a/text
++++ b/text
+@@@ -1,1 -1,1 +1,5 @@@
+++<<<<<<< HEAD
+ +THREE
+++=======
++ TWO
+++>>>>>>> MASTER
+EOF
+test_expect_success 'diff --cc respects textconv on worktree file' '
+	git reset --hard HEAD^ &&
+	test_must_fail git merge master &&
+	git diff >actual &&
+	test_cmp expect actual
+'
+
 test_done
