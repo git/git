@@ -226,7 +226,7 @@ static void insert_one_alternate_ref(const struct ref *ref, void *unused)
 
 static void insert_alternate_refs(void)
 {
-	foreach_alt_odb(refs_from_alternate_cb, insert_one_alternate_ref);
+	for_each_alternate_ref(insert_one_alternate_ref, NULL);
 }
 
 #define INITIAL_FLUSH 16
