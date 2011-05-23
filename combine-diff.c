@@ -7,6 +7,7 @@
 #include "xdiff-interface.h"
 #include "log-tree.h"
 #include "refs.h"
+#include "userdiff.h"
 
 static struct combine_diff_path *intersect_paths(struct combine_diff_path *curr, int n, int num_parent)
 {
@@ -685,7 +686,8 @@ static void show_combined_header(struct combine_diff_path *elem,
 				 int num_parent,
 				 int dense,
 				 struct rev_info *rev,
-				 int mode_differs)
+				 int mode_differs,
+				 int show_file_header)
 {
 	struct diff_options *opt = &rev->diffopt;
 	int abbrev = DIFF_OPT_TST(opt, FULL_INDEX) ? 40 : DEFAULT_ABBREV;
@@ -739,6 +741,9 @@ static void show_combined_header(struct combine_diff_path *elem,
 		printf("%s\n", c_reset);
 	}
 
+	if (!show_file_header)
+		return;
+
 	if (added)
 		dump_quoted_path("--- ", "", "/dev/null",
 				 c_meta, c_reset);
@@ -765,8 +770,13 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 	int i, show_hunks;
 	int working_tree_file = is_null_sha1(elem->sha1);
 	mmfile_t result_file;
+	struct userdiff_driver *userdiff;
+	int is_binary;
 
 	context = opt->context;
+	userdiff = userdiff_find_by_path(elem->path);
+	if (!userdiff)
+		userdiff = userdiff_find_by_name("default");
 
 	/* Read the result of merge first */
 	if (!working_tree_file)
@@ -852,6 +862,29 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 		}
 	}
 
+	if (userdiff->binary != -1)
+		is_binary = userdiff->binary;
+	else {
+		is_binary = buffer_is_binary(result, result_size);
+		for (i = 0; !is_binary && i < num_parent; i++) {
+			char *buf;
+			unsigned long size;
+			buf = grab_blob(elem->parent[i].sha1,
+					elem->parent[i].mode,
+					&size);
+			if (buffer_is_binary(buf, size))
+				is_binary = 1;
+			free(buf);
+		}
+	}
+	if (is_binary) {
+		show_combined_header(elem, num_parent, dense, rev,
+				     mode_differs, 0);
+		printf("Binary files differ\n");
+		free(result);
+		return;
+	}
+
 	for (cnt = 0, cp = result; cp < result + result_size; cp++) {
 		if (*cp == '\n')
 			cnt++;
@@ -906,7 +939,7 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 
 	if (show_hunks || mode_differs || working_tree_file) {
 		show_combined_header(elem, num_parent, dense, rev,
-				     mode_differs);
+				     mode_differs, 1);
 		dump_sline(sline, cnt, num_parent,
 			   DIFF_OPT_TST(opt, COLOR_DIFF), result_deleted);
 	}
