@@ -845,6 +845,13 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 			close(fd);
 	}
 
+	for (i = 0; i < num_parent; i++) {
+		if (elem->parent[i].mode != elem->mode) {
+			mode_differs = 1;
+			break;
+		}
+	}
+
 	for (cnt = 0, cp = result; cp < result + result_size; cp++) {
 		if (*cp == '\n')
 			cnt++;
@@ -893,8 +900,6 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 				     elem->parent[i].mode,
 				     &result_file, sline,
 				     cnt, i, num_parent, result_deleted);
-		if (elem->parent[i].mode != elem->mode)
-			mode_differs = 1;
 	}
 
 	show_hunks = make_hunks(sline, cnt, num_parent, dense);
