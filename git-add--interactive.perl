@@ -45,6 +45,9 @@ my ($diff_new_color) =
 my $normal_color = $repo->get_color("", "reset");
 
 my $use_readkey = 0;
+my $use_termcap = 0;
+my %term_escapes;
+
 sub ReadMode;
 sub ReadKey;
 if ($repo->config_bool("interactive.singlekey")) {
@@ -52,6 +55,14 @@ if ($repo->config_bool("interactive.singlekey")) {
 		require Term::ReadKey;
 		Term::ReadKey->import;
 		$use_readkey = 1;
+	};
+	eval {
+		require Term::Cap;
+		my $termcap = Term::Cap->Tgetent;
+		foreach (values %$termcap) {
+			$term_escapes{$_} = 1 if /^\e/;
+		}
+		$use_termcap = 1;
 	};
 }
 
@@ -1067,6 +1078,14 @@ sub prompt_single_character {
 		ReadMode 'cbreak';
 		my $key = ReadKey 0;
 		ReadMode 'restore';
+		if ($use_termcap and $key eq "\e") {
+			while (!defined $term_escapes{$key}) {
+				my $next = ReadKey 0.5;
+				last if (!defined $next);
+				$key .= $next;
+			}
+			$key =~ s/\e/^[/;
+		}
 		print "$key" if defined $key;
 		print "\n";
 		return $key;
