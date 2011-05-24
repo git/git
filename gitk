@@ -9,6 +9,11 @@ exec wish "$0" -- "$@"
 
 package require Tk
 
+proc hasworktree {} {
+    return [expr {[exec git rev-parse --is-bare-repository] == "false" &&
+		  [exec git rev-parse --is-inside-git-dir] == "false"}]
+}
+
 # A simple scheduler for compute-intensive stuff.
 # The aim is to make sure that event handlers for GUI actions can
 # run at least every 50-100 ms.  Unfortunately fileevent handlers are
@@ -459,11 +464,11 @@ proc updatecommits {} {
     global viewactive viewcomplete tclencoding
     global startmsecs showneartags showlocalchanges
     global mainheadid viewmainheadid viewmainheadid_orig pending_select
-    global isworktree
+    global hasworktree
     global varcid vposids vnegids vflags vrevs
     global show_notes
 
-    set isworktree [expr {[exec git rev-parse --is-inside-work-tree] == "true"}]
+    set hasworktree [hasworktree]
     rereadrefs
     set view $curview
     if {$mainheadid ne $viewmainheadid_orig($view)} {
@@ -5024,9 +5029,9 @@ proc dohidelocalchanges {} {
 # spawn off a process to do git diff-index --cached HEAD
 proc dodiffindex {} {
     global lserial showlocalchanges vfilelimit curview
-    global isworktree
+    global hasworktree
 
-    if {!$showlocalchanges || !$isworktree} return
+    if {!$showlocalchanges || !$hasworktree} return
     incr lserial
     set cmd "|git diff-index --cached HEAD"
     if {$vfilelimit($curview) ne {}} {
@@ -11633,9 +11638,9 @@ set stopped 0
 set stuffsaved 0
 set patchnum 0
 set lserial 0
-set isworktree [expr {[exec git rev-parse --is-inside-work-tree] == "true"}]
+set hasworktree [hasworktree]
 set cdup {}
-if {$isworktree} {
+if {[expr {[exec git rev-parse --is-inside-work-tree] == "true"}]} {
     set cdup [exec git rev-parse --show-cdup]
 }
 set worktree [exec git rev-parse --show-toplevel]
