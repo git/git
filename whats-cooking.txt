@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (May 2011, #10; Mon, 23)
+Subject: What's cooking in git.git (May 2011, #11; Tue, 24)
 X-master-at: 5df3e2b3ca5ebe8123927a81d682993ad597a584
-X-next-at: fbd4877f301a9ed26bffbebd340b19d5a18c8573
+X-next-at: 6dbbf00d8c08050a919971f0006f4045e4fec9f1
 
-What's cooking in git.git (May 2011, #10; Mon, 23)
+What's cooking in git.git (May 2011, #11; Tue, 24)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -17,6 +17,116 @@ with what is in 'master' at the end of the month.
 
 --------------------------------------------------
 [New Topics]
+
+* jc/fix-config-environment-passing (2011-05-24) 1 commit
+ - Allow built-ins to also use -c var=val via alias
+
+--------------------------------------------------
+[Stalled]
+
+* jl/read-tree-m-dry-run (2011-05-11) 1 commit
+ - Teach read-tree the -n|--dry-run option
+
+Waiting for a reroll.
+
+* mg/diff-stat-count (2011-05-03) 2 commits
+ - diff-options.txt: describe --stat-{width,name-width,count}
+ - diff: introduce --stat-count to limit the stat lines
+
+There was a miscounting spotted.  Need another round.
+
+* jk/maint-merge-rename-create (2011-03-25) 3 commits
+ - merge: turn on rewrite detection
+ - merge: handle renames with replacement content
+ - t3030: fix accidental success in symlink rename
+
+Peff wanted to reroll this.
+
+* jc/index-pack (2011-02-27) 5 commits
+ - index-pack --verify: read anomalous offsets from v2 idx file
+ - write_idx_file: need_large_offset() helper function
+ - index-pack: --verify
+ - write_idx_file: introduce a struct to hold idx customization options
+ - index-pack: group the delta-base array entries also by type
+
+Still a WIP. Need to put histogram output into index-pack --verify to
+really kill verify-pack.
+
+* jk/tag-contains (2010-07-05) 4 commits
+ - Why is "git tag --contains" so slow?
+ - default core.clockskew variable to one day
+ - limit "contains" traversals based on commit timestamp
+ - tag: speed up --contains calculation
+
+The idea of the bottom one is probably Ok, except that the use of object
+flags needs to be rethought, or at least the helper needs to be moved to
+builtin/tag.c to make it clear that it should not be used outside the
+current usage context.
+
+--------------------------------------------------
+[Cooking]
+
+* da/git-prefix-everywhere (2011-05-23) 3 commits
+ - git-mergetool--lib: Make vimdiff retain the current directory
+ - git: Remove handling for GIT_PREFIX
+ - setup: Provide GIT_PREFIX to built-ins
+
+Is everybody happy with this?
+Will merge to "next".
+
+* jh/receive-count-limit (2011-05-23) 10 commits
+ - receive-pack: Allow server to refuse pushes with too many objects
+ - pack-objects: Estimate pack size; abort early if pack size limit is exceeded
+ - send-pack/receive-pack: Allow server to refuse pushing too large packs
+ - pack-objects: Allow --max-pack-size to be used together with --stdout
+ - send-pack/receive-pack: Allow server to refuse pushes with too many commits
+ - pack-objects: Teach new option --max-commit-count, limiting #commits in pack
+ - receive-pack: Prepare for addition of the new 'limit-*' family of capabilities
+ - Tighten rules for matching server capabilities in server_supports()
+ - send-pack: Attempt to retrieve remote status even if pack-objects fails
+ - Update technical docs to reflect side-band-64k capability in receive-pack
+
+Would need another round to separate per-pack and per-session limits.
+
+* jc/require-work-tree-exists (2011-05-24) 1 commit
+  (merged to 'next' on 2011-05-24 at 6dbbf00)
+ + require-work-tree wants more than what its name says
+
+Rerolled _without_ any in-tree users, just to make sure that we can easily
+adapt scripts when necessary in the future.
+
+Will merge to "master" by the end of week #5.
+
+* jn/gitweb-js (2011-05-24) 11 commits
+  (merged to 'next' on 2011-05-24 at c385b9d)
+ + gitweb: Make JavaScript ability to adjust timezones configurable
+ + gitweb.js: Add UI for selecting common timezone to display dates
+ + gitweb: JavaScript ability to adjust time based on timezone
+ + gitweb: Unify the way long timestamp is displayed
+ + gitweb: Refactor generating of long dates into format_timestamp_html
+ + gitweb.js: Provide getElementsByClassName method (if it not exists)
+ + gitweb.js: Introduce code to handle cookies from JavaScript
+ + gitweb.js: Extract and improve datetime handling
+ + gitweb.js: Provide default values for padding in padLeftStr and padLeft
+ + gitweb.js: Update and improve comments in JavaScript files
+ + gitweb: Split JavaScript for maintability, combining on build
+
+Rebased on top of a more recent "master" that already has the two bottom
+commits in the previous round of series.
+
+Will merge to "master" by the end of week #5.
+
+* jn/ctags-more (2011-04-29) 3 commits
+  (merged to 'next' on 2011-05-24 at 41b50be)
+ + gitweb: Optional grouping of projects by category
+ + gitweb: Modularized git_get_project_description to be more generic
+ + gitweb: Split git_project_list_body in two functions
+
+As nobody seems to be helping gitweb maintenance, I'll merge the above two
+series to "master" and see if anybody screams. That seems to be the only
+way to make any progress.
+
+Will merge to "master" by the end of week #5.
 
 * jc/notes-batch-removal (2011-05-19) 4 commits
   (merged to 'next' on 2011-05-23 at 5bd78a6)
@@ -75,266 +185,27 @@ merge before 1.7.6.
 
 Will merge to "master" by the end of week #5.
 
-* da/git-prefix-everywhere (2011-05-23) 3 commits
- - git-mergetool--lib: Make vimdiff retain the current directory
- - git: Remove handling for GIT_PREFIX
- - setup: Provide GIT_PREFIX to built-ins
-
-* jc/git-handle-options-miscount (2011-05-23) 1 commit
+* jc/git-handle-options-miscount (2011-05-24) 1 commit
  - handle_options(): do not miscount how many arguments were used
 
-* jk/combine-diff-binary-etc (2011-05-23) 5 commits
- - combine-diff: respect textconv attributes
- - refactor get_textconv to not require diff_filespec
- - combine-diff: handle binary files as binary
- - combine-diff: calculate mode_differs earlier
- - combine-diff: split header printing into its own function
+Updated with a trivial test, which turned out to uncover an unrelated bug
+(see jc/fix-config-environment-passing topic).
 
---------------------------------------------------
-[Graduated to "master"]
+* jk/combine-diff-binary-etc (2011-05-24) 5 commits
+  (merged to 'next' on 2011-05-24 at 07cf180)
+ + combine-diff: respect textconv attributes
+ + refactor get_textconv to not require diff_filespec
+ + combine-diff: handle binary files as binary
+ + combine-diff: calculate mode_differs earlier
+ + combine-diff: split header printing into its own function
 
-* ab/i18n-scripts-basic (2011-05-14) 4 commits
-  (merged to 'next' on 2011-05-18 at 3dc69f0)
- + Makefile: add xgettext target for *.sh files
- + git-sh-i18n.sh: add GIT_GETTEXT_POISON support
- + git-sh-i18n.sh: add no-op gettext() and eval_gettext() wrappers
- + git-sh-i18n--envsubst: our own envsubst(1) for eval_gettext()
- (this branch is used by ab/i18n-scripts.)
+Will merge to "master" by the end of month.
 
-* jc/magic-pathspec (2011-05-17) 14 commits
-  (merged to 'next' on 2011-05-18 at d7180b9)
- + setup.c: Fix some "symbol not declared" sparse warnings
-  (merged to 'next' on 2011-05-12 at 656c8b5)
- + t3703: Skip tests using directory name ":" on Windows
-  (merged to 'next' on 2011-05-11 at 86d1d6d)
- + revision.c: leave a note for "a lone :" enhancement
- + Merge branch 'jc/maint-1.6.6-pathspec-stdin-and-cmdline'
-  (merged to 'next' on 2011-05-11 at aaad95e)
- + t3703, t4208: add test cases for magic pathspec
- + rev/path disambiguation: further restrict "misspelled index entry" diag
- + fix overslow :/no-such-string-ever-existed diagnostics
- + fix overstrict :<path> diagnosis
- + grep: use get_pathspec() correctly
- + pathspec: drop "lone : means no pathspec" from get_pathspec()
- + Revert "magic pathspec: add ":(icase)path" to match case insensitively"
-  (merged to 'next' on 2011-04-25 at 788cd46)
- + magic pathspec: add ":(icase)path" to match case insensitively
- + magic pathspec: futureproof shorthand form
- + magic pathspec: add tentative ":/path/from/top/level" pathspec support
+* jc/advice-about-to-lose-commit (2011-05-24) 1 commit
+ - checkout: make advice when reattaching the HEAD less loud
 
-* jc/maint-1.6.6-pathspec-stdin-and-cmdline (2011-05-11) 1 commit
- + setup_revisions(): take pathspec from command line and --stdin correctly
- (this branch is used by jc/magic-pathspec, jc/maint-1.7.4-pathspec-stdin-and-cmdline and jc/maint-pathspec-stdin-and-cmdline.)
-
-* jc/maint-1.7.4-pathspec-stdin-and-cmdline (2011-05-11) 1 commit
- + Merge branch 'jc/maint-1.6.6-pathspec-stdin-and-cmdline'
-
-* jc/maint-pathspec-stdin-and-cmdline (2011-05-11) 2 commits
-  (merged to 'next' on 2011-05-15 at b4e3a75)
- + Merge branch 'jc/maint-1.7.4-pathspec-stdin-and-cmdline'
- + Merge branch 'jc/maint-1.6.6-pathspec-stdin-and-cmdline'
- (this branch uses jc/maint-1.6.6-pathspec-stdin-and-cmdline; is tangled with jc/magic-pathspec and jc/maint-1.7.4-pathspec-stdin-and-cmdline.)
-
-These are to fix an ancient bug where feeding "git log --stdin path" with
-an input that also has additional pathspec corrupted memory.
-
-* jc/replacing (2011-05-15) 5 commits
-  (merged to 'next' on 2011-05-16 at 5d0b584)
- + read_sha1_file(): allow selective bypassing of replacement mechanism
- + inline lookup_replace_object() calls
- + read_sha1_file(): get rid of read_sha1_file_repl() madness
- + t6050: make sure we test not just commit replacement
- + Declare lookup_replace_object() in cache.h, not in commit.h
- (this branch is used by jc/streaming.)
-
-Code restructuring without much new feature.
-
-* jk/blame-line-porcelain (2011-05-09) 3 commits
-  (merged to 'next' on 2011-05-15 at 93232b3)
- + blame: add --line-porcelain output format
- + blame: refactor porcelain output
- + add tests for various blame formats
-
-* jk/cherry-pick-root-with-resolve (2011-05-16) 3 commits
-  (merged to 'next' on 2011-05-16 at 2a63845)
- + t3503: test cherry picking and reverting root commits
- + revert: allow reverting a root commit
- + cherry-pick: handle root commits with external strategies
-
-* jk/git-connection-deadlock-fix (2011-05-18) 4 commits
-  (merged to 'next' on 2011-05-18 at d4567da)
- + test core.gitproxy configuration
-  (merged to 'next' on 2011-05-16 at 33e6c11)
- + send-pack: avoid deadlock on git:// push with failed pack-objects
- + connect: let callers know if connection is a socket
- + connect: treat generic proxy processes like ssh processes
- (this branch uses js/maint-1.6.6-send-pack-stateless-rpc-deadlock-fix; is tangled with js/maint-send-pack-stateless-rpc-deadlock-fix.)
-
-* jl/submodule-conflicted-gitmodules (2011-05-14) 2 commits
-  (merged to 'next' on 2011-05-16 at cc6c7e8)
- + Submodules: Don't parse .gitmodules when it contains, merge conflicts
- + test that git status works with merge conflict in, .gitmodules
-
-* jm/maint-diff-words-with-sbe (2011-05-20) 1 commit
-  (merged to 'next' on 2011-05-20 at c0db85c)
- + do not read beyond end of malloc'd buffer
-
-* js/maint-1.6.6-send-pack-stateless-rpc-deadlock-fix (2011-05-16) 1 commit
- + sideband_demux(): fix decl-after-stmt
- (this branch is used by jk/git-connection-deadlock-fix and js/maint-send-pack-stateless-rpc-deadlock-fix.)
-
-* js/maint-send-pack-stateless-rpc-deadlock-fix (2011-05-16) 1 commit
-  (merged to 'next' on 2011-05-16 at ad83470)
- + Merge branch 'js/maint-1.6.6-send-pack-stateless-rpc-deadlock-fix' into js/maint-send-pack-stateless-rpc-deadlock-fix
- (this branch uses js/maint-1.6.6-send-pack-stateless-rpc-deadlock-fix; is tangled with jk/git-connection-deadlock-fix.)
-
-* js/mingw-shutdown (2011-05-18) 1 commit
-  (merged to 'next' on 2011-05-19 at c085b22)
- + Windows: add a wrapper for the shutdown() system call
-
-* ld/p4-preserve-user-names (2011-05-13) 3 commits
-  (merged to 'next' on 2011-05-15 at bdedb60)
- + git-p4: warn if git authorship won't be retained
-  (merged to 'next' on 2011-05-11 at bc14314)
- + git-p4: small improvements to user-preservation
-  (merged to 'next' on 2011-04-29 at 25116c8)
- + git-p4: add option to preserve user names
-
-* mg/config-symbolic-constants (2011-05-17) 2 commits
-  (merged to 'next' on 2011-05-19 at ac538c0)
- + config: Give error message when not changing a multivar
- + config: define and document exit codes
-
-* ms/ls-remote-exit-with-status (2011-05-18) 1 commit
-  (merged to 'next' on 2011-05-19 at c4238ce)
- + ls-remote: the --exit-code option reports "no matching refs"
-
-* ms/tagname-does-not-begin-with-dash (2011-05-10) 1 commit
-  (merged to 'next' on 2011-05-15 at 7df0461)
- + tag: disallow '-' as tag name
-
-* nd/sparse-co-fix (2011-05-10) 2 commits
-  (merged to 'next' on 2011-05-15 at 1a85791)
- + sparse checkout: do not eagerly decide the fate for whole directory
- + t1011: fix sparse-checkout initialization and add new file
-
-* rg/copy-gecos-username (2011-05-17) 1 commit
-  (merged to 'next' on 2011-05-17 at 6080944)
- + copy_gecos: fix not adding nlen to len when processing "&"
-
-* tr/add-i-no-escape (2011-05-17) 1 commit
-  (merged to 'next' on 2011-05-19 at d1c7a10)
- + add -i: ignore terminal escape sequences
-
---------------------------------------------------
-[Stalled]
-
-* hg/add-i-qq (2011-05-17) 1 commit
- - add-interactive: add 'Quit' shortcut to add hunk and quit
-
-The question "why is y+q any more deserving for a short-cut than d+q" was
-raised late in the discussion, and I think it a very valid concern.
-
-May drop.
-
-* jl/read-tree-m-dry-run (2011-05-11) 1 commit
- - Teach read-tree the -n|--dry-run option
-
-Waiting for a reroll.
-
-* mg/diff-stat-count (2011-05-03) 2 commits
- - diff-options.txt: describe --stat-{width,name-width,count}
- - diff: introduce --stat-count to limit the stat lines
-
-There was a miscounting spotted.  Need another round.
-
-* jn/gitweb-js (2011-04-28) 13 commits
- - gitweb: Make JavaScript ability to adjust timezones configurable
- - gitweb.js: Add UI for selecting common timezone to display dates
- - gitweb: JavaScript ability to adjust time based on timezone
- - gitweb: Unify the way long timestamp is displayed
- - gitweb: Refactor generating of long dates into format_timestamp_html
- - gitweb.js: Provide getElementsByClassName method (if it not exists)
- - gitweb.js: Introduce code to handle cookies from JavaScript
- - gitweb.js: Extract and improve datetime handling
- - gitweb.js: Provide default values for padding in padLeftStr and padLeft
- - gitweb.js: Update and improve comments in JavaScript files
- - gitweb: Split JavaScript for maintability, combining on build
- - Remove gitweb/gitweb.cgi and other legacy targets from main Makefile
- - git-instaweb: Simplify build dependency on gitweb
-
-Rerolled.  Waiting for comments.
-
-* jn/ctags-more (2011-04-29) 3 commits
- - gitweb: Optional grouping of projects by category
- - gitweb: Modularized git_get_project_description to be more generic
- - gitweb: Split git_project_list_body in two functions
-
-Waiting for comments.
-
-* jc/require-work-tree-exists (2011-05-08) 1 commit
- - require-work-tree wants more than what its name says
-
-Make "git pull" run from a random place work as long as GIT_DIR and
-GIT_WORK_TREE are set up correctly.  I am not absolutely sure if that
-is a sane use case, though. May drop.
-
-* jc/add-delete-default (2011-04-27) 1 commit
- - git add: notice removal of tracked paths by default
-
-* jk/maint-merge-rename-create (2011-03-25) 3 commits
- - merge: turn on rewrite detection
- - merge: handle renames with replacement content
- - t3030: fix accidental success in symlink rename
-
-Peff wanted to reroll this.
-
-* jc/index-pack (2011-02-27) 5 commits
- - index-pack --verify: read anomalous offsets from v2 idx file
- - write_idx_file: need_large_offset() helper function
- - index-pack: --verify
- - write_idx_file: introduce a struct to hold idx customization options
- - index-pack: group the delta-base array entries also by type
-
-Still a WIP. Need to put histogram output into index-pack --verify to
-really kill verify-pack.
-
-* jc/dotdot-is-parent-directory (2011-05-04) 1 commit
- - specifying ranges: we did not mean to make ".." an empty set
-
-Updated documentation, but I do not feel a strong enough annoyance to push
-this forward. May drop.
-
-* jk/tag-contains (2010-07-05) 4 commits
- - Why is "git tag --contains" so slow?
- - default core.clockskew variable to one day
- - limit "contains" traversals based on commit timestamp
- - tag: speed up --contains calculation
-
-The idea of the bottom one is probably Ok, except that the use of object
-flags needs to be rethought, or at least the helper needs to be moved to
-builtin/tag.c to make it clear that it should not be used outside the
-current usage context.
-
-* jc/advice-about-to-lose-commit (2011-05-06) 1 commit
- - checkout: honor advice.detachedHead when reattaching to a branch
-
-Needs to tighten the advice to only govern the generic How-to part.
-
---------------------------------------------------
-[Cooking]
-
-* jh/receive-count-limit (2011-05-23) 10 commits
- - receive-pack: Allow server to refuse pushes with too many objects
- - pack-objects: Estimate pack size; abort early if pack size limit is exceeded
- - send-pack/receive-pack: Allow server to refuse pushing too large packs
- - pack-objects: Allow --max-pack-size to be used together with --stdout
- - send-pack/receive-pack: Allow server to refuse pushes with too many commits
- - pack-objects: Teach new option --max-commit-count, limiting #commits in pack
- - receive-pack: Prepare for addition of the new 'limit-*' family of capabilities
- - Tighten rules for matching server capabilities in server_supports()
- - send-pack: Attempt to retrieve remote status even if pack-objects fails
- - Update technical docs to reflect side-band-64k capability in receive-pack
+Re-rolled and resurrected from "Stalled" status.
+Will merge to "next".
 
 * js/log-abbrev-commit-config (2011-05-18) 2 commits
   (merged to 'next' on 2011-05-23 at 4e7e932)
@@ -451,3 +322,24 @@ Rerolled.
  + Documentation: Add --line-number to git-grep synopsis
 
 Will merge to "master" by the middle of week #5.
+
+--------------------------------------------------
+[Discarded]
+
+* hg/add-i-qq (2011-05-17) 1 commit
+ . add-interactive: add 'Quit' shortcut to add hunk and quit
+
+The question "why is y+q any more deserving for a short-cut than d+q" was
+raised late in the discussion, and I think it a very valid concern.
+
+* jc/add-delete-default (2011-04-27) 1 commit
+ . git add: notice removal of tracked paths by default
+
+This is ill-thought out. When the user does want to say "take all changes
+into account, not just addition", they can easily say "add -u" (update).
+
+* jc/dotdot-is-parent-directory (2011-05-04) 1 commit
+ . specifying ranges: we did not mean to make ".." an empty set
+
+Updated documentation, but I do not feel a strong enough annoyance to push
+this forward.
