@@ -140,6 +140,13 @@ cd_to_toplevel () {
 	}
 }
 
+require_work_tree_exists () {
+	if test "z$(git rev-parse --is-bare-repository)" != zfalse
+	then
+		die "fatal: $0 cannot be used without a working tree."
+	fi
+}
+
 require_work_tree () {
 	test "$(git rev-parse --is-inside-work-tree 2>/dev/null)" = true ||
 	die "fatal: $0 cannot be used without a working tree."
