@@ -832,7 +832,7 @@ int git_config_from_parameters(config_fn_t fn, void *data)
 	for (ct = config_parameters; ct; ct = ct->next)
 		if (fn(ct->name, ct->value, data) < 0)
 			return -1;
-	return 0;
+	return config_parameters != NULL;
 }
 
 int git_config_early(config_fn_t fn, void *data, const char *repo_config)
@@ -864,9 +864,16 @@ int git_config_early(config_fn_t fn, void *data, const char *repo_config)
 		found += 1;
 	}
 
-	ret += git_config_from_parameters(fn, data);
-	if (config_parameters)
-		found += 1;
+	switch (git_config_from_parameters(fn, data)) {
+	case -1: /* error */
+		ret--;
+		break;
+	case 0: /* found nothing */
+		break;
+	default: /* found at least one item */
+		found++;
+		break;
+	}
 
 	if (found == 0)
 		return -1;
