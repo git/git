@@ -81,7 +81,7 @@ static struct option builtin_clone_options[] = {
 		   "path to git-upload-pack on the remote"),
 	OPT_STRING(0, "depth", &option_depth, "depth",
 		    "create a shallow clone of that depth"),
-	OPT_STRING('L', "separate-git-dir", &real_git_dir, "gitdir",
+	OPT_STRING(0, "separate-git-dir", &real_git_dir, "gitdir",
 		   "separate git dir from working tree"),
 
 	OPT_END()

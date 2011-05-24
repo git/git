@@ -409,7 +409,7 @@ test_expect_success SYMLINKS 're-init to move gitdir symlink' '
 	cd newdir &&
 	mv .git here &&
 	ln -s here .git &&
-	git init -L ../realgitdir
+	git init --separate-git-dir ../realgitdir
 	) &&
 	echo "gitdir: `pwd`/realgitdir" >expected &&
 	test_cmp expected newdir/.git &&
