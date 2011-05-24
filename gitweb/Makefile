@@ -86,7 +86,7 @@ ifndef V
 endif
 endif
 
-all:: gitweb.cgi
+all:: gitweb.cgi static/gitweb.js
 
 GITWEB_PROGRAMS = gitweb.cgi
 
@@ -111,6 +111,18 @@ GITWEB_FILES += static/gitweb.css
 endif
 
 GITWEB_FILES += static/git-logo.png static/git-favicon.png
+
+# JavaScript files that are composed (concatenated) to form gitweb.js
+#
+# js/lib/common-lib.js should be always first, then js/lib/*.js,
+# then the rest of files; js/gitweb.js should be last (if it exists)
+GITWEB_JSLIB_FILES += static/js/lib/common-lib.js
+GITWEB_JSLIB_FILES += static/js/lib/datetime.js
+GITWEB_JSLIB_FILES += static/js/lib/cookies.js
+GITWEB_JSLIB_FILES += static/js/javascript-detection.js
+GITWEB_JSLIB_FILES += static/js/adjust-timezone.js
+GITWEB_JSLIB_FILES += static/js/blame_incremental.js
+
 
 GITWEB_REPLACE = \
 	-e 's|++GIT_VERSION++|$(GIT_VERSION)|g' \
@@ -144,6 +156,11 @@ gitweb.cgi: gitweb.perl GITWEB-BUILD-OPTIONS
 	sed -e '1s|#!.*perl|#!$(PERL_PATH_SQ)|' \
 		$(GITWEB_REPLACE) $< >$@+ && \
 	chmod +x $@+ && \
+	mv $@+ $@
+
+static/gitweb.js: $(GITWEB_JSLIB_FILES)
+	$(QUIET_GEN)$(RM) $@ $@+ && \
+	cat $^ >$@+ && \
 	mv $@+ $@
 
 ### Testing rules
