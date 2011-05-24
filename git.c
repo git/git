@@ -55,7 +55,7 @@ static void commit_pager_choice(void) {
 
 static int handle_options(const char ***argv, int *argc, int *envchanged)
 {
-	int handled = 0;
+	const char **orig_argv = *argv;
 
 	while (*argc > 0) {
 		const char *cmd = (*argv)[0];
@@ -105,7 +105,6 @@ static int handle_options(const char ***argv, int *argc, int *envchanged)
 				*envchanged = 1;
 			(*argv)++;
 			(*argc)--;
-			handled++;
 		} else if (!prefixcmp(cmd, "--git-dir=")) {
 			setenv(GIT_DIR_ENVIRONMENT, cmd + 10, 1);
 			if (envchanged)
@@ -145,9 +144,8 @@ static int handle_options(const char ***argv, int *argc, int *envchanged)
 
 		(*argv)++;
 		(*argc)--;
-		handled++;
 	}
-	return handled;
+	return (*argv) - orig_argv;
 }
 
 static int handle_alias(int *argcp, const char ***argv)

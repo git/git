@@ -854,7 +854,7 @@ test_expect_success 'git -c "key=value" support' '
 	test_must_fail git -c core.name=value config name
 '
 
-test_expect_failure 'git -c works with aliases of builtins' '
+test_expect_success 'git -c works with aliases of builtins' '
 	git config alias.checkconfig "-c foo.check=bar config foo.check" &&
 	echo bar >expect &&
 	git checkconfig >actual &&
