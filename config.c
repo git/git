@@ -48,7 +48,7 @@ void git_config_push_parameter(const char *text)
 	strbuf_release(&env);
 }
 
-int git_config_parse_parameter(const char *text)
+static int git_config_parse_parameter(const char *text)
 {
 	struct config_item *ct;
 	struct strbuf tmp = STRBUF_INIT;
@@ -75,7 +75,7 @@ int git_config_parse_parameter(const char *text)
 	return 0;
 }
 
-int git_config_parse_environment(void) {
+static int git_config_parse_environment(void) {
 	const char *env = getenv(CONFIG_DATA_ENVIRONMENT);
 	char *envw;
 	const char **argv = NULL;
