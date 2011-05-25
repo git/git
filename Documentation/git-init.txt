@@ -9,7 +9,7 @@ git-init - Create an empty git repository or reinitialize an existing one
 SYNOPSIS
 --------
 'git init' [-q | --quiet] [--bare] [--template=<template_directory>]
-	  [--separate-git-dir|-L <git dir>]
+	  [--separate-git-dir <git dir>]
 	  [--shared[=<permissions>]] [directory]
 
 
@@ -54,7 +54,6 @@ current working directory.
 Specify the directory from which templates will be used.  (See the "TEMPLATE
 DIRECTORY" section below.)
 
--L=<git dir>::
 --separate-git-dir=<git dir>::
 
 Instead of initializing the repository where it is supposed to be,

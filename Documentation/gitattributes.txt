@@ -593,6 +593,37 @@ and now produces better output), you can remove the cache
 manually with `git update-ref -d refs/notes/textconv/jpg` (where
 "jpg" is the name of the diff driver, as in the example above).
 
+Choosing textconv versus external diff
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If you want to show differences between binary or specially-formatted
+blobs in your repository, you can choose to use either an external diff
+command, or to use textconv to convert them to a diff-able text format.
+Which method you choose depends on your exact situation.
+
+The advantage of using an external diff command is flexibility. You are
+not bound to find line-oriented changes, nor is it necessary for the
+output to resemble unified diff. You are free to locate and report
+changes in the most appropriate way for your data format.
+
+A textconv, by comparison, is much more limiting. You provide a
+transformation of the data into a line-oriented text format, and git
+uses its regular diff tools to generate the output. There are several
+advantages to choosing this method:
+
+1. Ease of use. It is often much simpler to write a binary to text
+   transformation than it is to perform your own diff. In many cases,
+   existing programs can be used as textconv filters (e.g., exif,
+   odt2txt).
+
+2. Git diff features. By performing only the transformation step
+   yourself, you can still utilize many of git's diff features,
+   including colorization, word-diff, and combined diffs for merges.
+
+3. Caching. Textconv caching can speed up repeated diffs, such as those
+   you might trigger by running `git log -p`.
+
+
 Marking files as binary
 ^^^^^^^^^^^^^^^^^^^^^^^
 

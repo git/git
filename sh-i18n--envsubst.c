@@ -68,7 +68,7 @@ int
 main (int argc, char *argv[])
 {
   /* Default values for command line options.  */
-  unsigned short int show_variables = 0;
+  /* unsigned short int show_variables = 0; */
 
   switch (argc)
 	{
@@ -88,7 +88,7 @@ main (int argc, char *argv[])
 	  /* git sh-i18n--envsubst --variables '$foo and $bar' */
 	  if (strcmp(argv[1], "--variables"))
 		error ("first argument must be --variables when two are given");
-	  show_variables = 1;
+	  /* show_variables = 1; */
       print_variables (argv[2]);
 	  break;
 	default:
