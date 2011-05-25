@@ -66,10 +66,14 @@ test_expect_success expanded_in_repo '
 		echo "\$Id:NoSpaceAtEitherEnd\$"
 		echo "\$Id: NoTerminatingSymbol"
 		echo "\$Id: Foreign Commit With Spaces \$"
-		printf "\$Id: NoTerminatingSymbolAtEOF"
-	} > expanded-keywords &&
+	} >expanded-keywords.0 &&
 
-	git add expanded-keywords &&
+	{
+		cat expanded-keywords.0 &&
+		printf "\$Id: NoTerminatingSymbolAtEOF"
+	} >expanded-keywords &&
+	cat expanded-keywords >expanded-keywords-crlf &&
+	git add expanded-keywords expanded-keywords-crlf &&
 	git commit -m "File with keywords expanded" &&
 	id=$(git rev-parse --verify :expanded-keywords) &&
 
@@ -83,15 +87,27 @@ test_expect_success expanded_in_repo '
 		echo "\$Id: $id \$"
 		echo "\$Id: NoTerminatingSymbol"
 		echo "\$Id: Foreign Commit With Spaces \$"
+	} >expected-output.0 &&
+	{
+		cat expected-output.0 &&
 		printf "\$Id: NoTerminatingSymbolAtEOF"
-	} > expected-output &&
+	} >expected-output &&
+	{
+		append_cr <expected-output.0 &&
+		printf "\$Id: NoTerminatingSymbolAtEOF"
+	} >expected-output-crlf &&
+	{
+		echo "expanded-keywords ident"
+		echo "expanded-keywords-crlf ident text eol=crlf"
+	} >>.gitattributes &&
 
-	echo "expanded-keywords ident" >> .gitattributes &&
+	rm -f expanded-keywords expanded-keywords-crlf &&
 
-	rm -f expanded-keywords &&
 	git checkout -- expanded-keywords &&
-	cat expanded-keywords &&
-	cmp expanded-keywords expected-output
+	test_cmp expanded-keywords expected-output &&
+
+	git checkout -- expanded-keywords-crlf &&
+	test_cmp expanded-keywords-crlf expected-output-crlf
 '
 
 # The use of %f in a filter definition is expanded to the path to
