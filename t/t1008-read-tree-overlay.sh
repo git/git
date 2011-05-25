@@ -3,6 +3,7 @@
 test_description='test multi-tree read-tree without merging'
 
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/lib-read-tree.sh
 
 test_expect_success setup '
 	echo one >a &&
@@ -21,7 +22,7 @@ test_expect_success setup '
 '
 
 test_expect_success 'multi-read' '
-	git read-tree initial master side &&
+	read_tree_must_succeed initial master side &&
 	(echo a; echo b/c) >expect &&
 	git ls-files >actual &&
 	test_cmp expect actual
