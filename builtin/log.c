@@ -23,6 +23,7 @@
 /* Set a default date-time format for git log ("log.date" config variable) */
 static const char *default_date_mode = NULL;
 
+static int default_abbrev_commit;
 static int default_show_root = 1;
 static int decoration_style;
 static int decoration_given;
@@ -77,6 +78,7 @@ static void cmd_log_init_defaults(struct rev_info *rev)
 		get_commit_format(fmt_pretty, rev);
 	rev->verbose_header = 1;
 	DIFF_OPT_SET(&rev->diffopt, RECURSIVE);
+	rev->abbrev_commit = default_abbrev_commit;
 	rev->show_root_diff = default_show_root;
 	rev->subject_prefix = fmt_patch_subject_prefix;
 	DIFF_OPT_SET(&rev->diffopt, ALLOW_TEXTCONV);
@@ -92,7 +94,7 @@ static void cmd_log_init_finish(int argc, const char **argv, const char *prefix,
 	int quiet = 0, source = 0;
 
 	const struct option builtin_log_options[] = {
-		OPT_BOOLEAN(0, "quiet", &quiet, "supress diff output"),
+		OPT_BOOLEAN(0, "quiet", &quiet, "suppress diff output"),
 		OPT_BOOLEAN(0, "source", &source, "show source"),
 		{ OPTION_CALLBACK, 0, "decorate", NULL, NULL, "decorate options",
 		  PARSE_OPT_OPTARG, decorate_callback},
@@ -129,13 +131,16 @@ static void cmd_log_init_finish(int argc, const char **argv, const char *prefix,
 	if (source)
 		rev->show_source = 1;
 
-	/*
-	 * defeat log.decorate configuration interacting with --pretty=raw
-	 * from the command line.
-	 */
-	if (!decoration_given && rev->pretty_given
-	    && rev->commit_format == CMIT_FMT_RAW)
-		decoration_style = 0;
+	if (rev->pretty_given && rev->commit_format == CMIT_FMT_RAW) {
+		/*
+		 * "log --pretty=raw" is special; ignore UI oriented
+		 * configuration variables such as decoration.
+		 */
+		if (!decoration_given)
+			decoration_style = 0;
+		if (!rev->abbrev_commit_given)
+			rev->abbrev_commit = 0;
+	}
 
 	if (decoration_style) {
 		rev->show_decorations = 1;
@@ -323,6 +328,10 @@ static int git_log_config(const char *var, const char *value, void *cb)
 		return git_config_string(&fmt_pretty, var, value);
 	if (!strcmp(var, "format.subjectprefix"))
 		return git_config_string(&fmt_patch_subject_prefix, var, value);
+	if (!strcmp(var, "log.abbrevcommit")) {
+		default_abbrev_commit = git_config_bool(var, value);
+		return 0;
+	}
 	if (!strcmp(var, "log.date"))
 		return git_config_string(&default_date_mode, var, value);
 	if (!strcmp(var, "log.decorate")) {
@@ -516,11 +525,11 @@ int cmd_log_reflog(int argc, const char **argv, const char *prefix)
 
 	init_revisions(&rev, prefix);
 	init_reflog_walk(&rev.reflog_info);
-	rev.abbrev_commit = 1;
 	rev.verbose_header = 1;
 	memset(&opt, 0, sizeof(opt));
 	opt.def = "HEAD";
 	cmd_log_init_defaults(&rev);
+	rev.abbrev_commit = 1;
 	rev.commit_format = CMIT_FMT_ONELINE;
 	rev.use_terminator = 1;
 	rev.always_show_header = 1;

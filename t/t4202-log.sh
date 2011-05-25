@@ -448,6 +448,59 @@ test_expect_success 'log.decorate configuration' '
 	git log --oneline --decorate >actual &&
 	test_cmp expect.short actual
 
+	git config --unset-all log.decorate &&
+	git log --pretty=raw >expect.raw &&
+	git config log.decorate full &&
+	git log --pretty=raw >actual &&
+	test_cmp expect.raw actual
+
+'
+
+test_expect_success 'reflog is expected format' '
+	test_might_fail git config --remove-section log &&
+	git log -g --abbrev-commit --pretty=oneline >expect &&
+	git reflog >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'whatchanged is expected format' '
+	git log --no-merges --raw >expect &&
+	git whatchanged >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'log.abbrevCommit configuration' '
+	test_when_finished "git config --unset log.abbrevCommit" &&
+
+	test_might_fail git config --unset log.abbrevCommit &&
+
+	git log --abbrev-commit >expect.log.abbrev &&
+	git log --no-abbrev-commit >expect.log.full &&
+	git log --pretty=raw >expect.log.raw &&
+	git reflog --abbrev-commit >expect.reflog.abbrev &&
+	git reflog --no-abbrev-commit >expect.reflog.full &&
+	git whatchanged --abbrev-commit >expect.whatchanged.abbrev &&
+	git whatchanged --no-abbrev-commit >expect.whatchanged.full &&
+
+	git config log.abbrevCommit true &&
+
+	git log >actual &&
+	test_cmp expect.log.abbrev actual &&
+	git log --no-abbrev-commit >actual &&
+	test_cmp expect.log.full actual &&
+
+	git log --pretty=raw >actual &&
+	test_cmp expect.log.raw actual &&
+
+	git reflog >actual &&
+	test_cmp expect.reflog.abbrev actual &&
+	git reflog --no-abbrev-commit >actual &&
+	test_cmp expect.reflog.full actual &&
+
+	git whatchanged >actual &&
+	test_cmp expect.whatchanged.abbrev actual &&
+	git whatchanged --no-abbrev-commit >actual &&
+	test_cmp expect.whatchanged.full actual
 '
 
 test_expect_success 'show added path under "--follow -M"' '
