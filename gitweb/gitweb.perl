@@ -623,18 +623,30 @@ sub filter_snapshot_fmts {
 # if it is true then gitweb config would be run for each request.
 our $per_request_config = 1;
 
+# read and parse gitweb config file given by its parameter.
+# returns true on success, false on recoverable error, allowing
+# to chain this subroutine, using first file that exists.
+# dies on errors during parsing config file, as it is unrecoverable.
+sub read_config_file {
+	my $filename = shift;
+	return unless defined $filename;
+	# die if there are errors parsing config file
+	if (-e $filename) {
+		do $filename;
+		die $@ if $@;
+		return 1;
+	}
+	return;
+}
+
 our ($GITWEB_CONFIG, $GITWEB_CONFIG_SYSTEM);
 sub evaluate_gitweb_config {
 	our $GITWEB_CONFIG = $ENV{'GITWEB_CONFIG'} || "++GITWEB_CONFIG++";
 	our $GITWEB_CONFIG_SYSTEM = $ENV{'GITWEB_CONFIG_SYSTEM'} || "++GITWEB_CONFIG_SYSTEM++";
-	# die if there are errors parsing config file
-	if (-e $GITWEB_CONFIG) {
-		do $GITWEB_CONFIG;
-		die $@ if $@;
-	} elsif (-e $GITWEB_CONFIG_SYSTEM) {
-		do $GITWEB_CONFIG_SYSTEM;
-		die $@ if $@;
-	}
+
+	# use first config file that exists
+	read_config_file($GITWEB_CONFIG) or
+	read_config_file($GITWEB_CONFIG_SYSTEM);
 }
 
 # Get loadavg of system, to compare against $maxload.
