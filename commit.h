@@ -74,6 +74,7 @@ struct pretty_print_context
 	int abbrev;
 	const char *subject;
 	const char *after_subject;
+	int preserve_subject;
 	enum date_mode date_mode;
 	int need_8bit_cte;
 	int show_notes;

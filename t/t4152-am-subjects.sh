@@ -70,7 +70,7 @@ test_expect_success 'multiline subject unwrapped (format-patch -k | am)' '
 	check_subject multiline-k
 '
 echo "$MULTILINE_SUBJECT" >expect
-test_expect_failure 'multiline subject preserved (format-patch -k | am -k)' '
+test_expect_success 'multiline subject preserved (format-patch -k | am -k)' '
 	check_subject multiline-k -k
 '
 

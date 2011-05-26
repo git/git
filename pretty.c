@@ -1131,7 +1131,8 @@ void pp_title_line(const struct pretty_print_context *pp,
 	struct strbuf title;
 
 	strbuf_init(&title, 80);
-	*msg_p = format_subject(&title, *msg_p, " ");
+	*msg_p = format_subject(&title, *msg_p,
+				pp->preserve_subject ? "\n" : " ");
 
 	strbuf_grow(sb, title.len + 1024);
 	if (pp->subject) {
