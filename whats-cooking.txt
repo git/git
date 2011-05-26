@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (May 2011, #11; Tue, 24)
-X-master-at: 5df3e2b3ca5ebe8123927a81d682993ad597a584
-X-next-at: 6dbbf00d8c08050a919971f0006f4045e4fec9f1
+Subject: What's cooking in git.git (May 2011, #12; Thu, 26)
+X-master-at: 5cfe4256d98af22a570c78c5e3048391a90f5f98
+X-next-at: 9f46ca0aec6956294992cda67b91c2fc82a8efa6
 
-What's cooking in git.git (May 2011, #11; Tue, 24)
+What's cooking in git.git (May 2011, #12; Thu, 26)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -12,28 +12,54 @@ only in 'pu' while commits prefixed with '+' are in 'next'.
 The main part of this cycle is expected to run thru May, aiming for a
 feature freeze in early June.
 
-We are at the beginning of week #5 of this cycle. Let's plan to tag -rc0
-with what is in 'master' at the end of the month.
+We are in the middle of week #5 of this cycle. Let's plan to tag -rc0 with
+what is in 'master' at the end of the month.
 
 --------------------------------------------------
 [New Topics]
 
-* jc/fix-config-environment-passing (2011-05-24) 1 commit
- - Allow built-ins to also use -c var=val via alias
+* jc/fmt-req-fix (2011-05-25) 1 commit
+  (merged to 'next' on 2011-05-25 at 9f46ca0)
+ + userformat_find_requirements(): find requirement for the correct format
+
+* jk/maint-config-alias-fix (2011-05-24) 4 commits
+  (merged to 'next' on 2011-05-25 at 25b86e4)
+ + handle_options(): do not miscount how many arguments were used
+ + config: always parse GIT_CONFIG_PARAMETERS during git_config
+ + git_config: don't peek at global config_parameters
+ + config: make environment parsing routines static
+
+--------------------------------------------------
+[Graduated to "master"]
+
+* jc/bigfile (2011-05-13) 3 commits
+  (merged to 'next' on 2011-05-15 at 0ee7144)
+ + Bigfile: teach "git add" to send a large file straight to a pack
+ + index_fd(): split into two helper functions
+ + index_fd(): turn write_object and format_check arguments into one flag
+ (this branch is used by jc/streaming and jc/streaming-filter.)
+
+This covers the entry point for a big file to the system. Other parts that
+need to know about them are the exit point (i.e. write_entry()), packing
+and repacking (as long as bigfilethreshold is sane this should work),
+diffs and status (avoid slurping large binary in core only to do nothing,
+which we already should), and transport (receive-pack/fetch-pack call
+either unpack-objects or index-pack, which still want to hold the full
+object in-core and need to be fixed).
+
+* js/log-abbrev-commit-config (2011-05-18) 2 commits
+  (merged to 'next' on 2011-05-23 at 4e7e932)
+ + Add log.abbrevCommit config variable
+ + "git log -h": typofix misspelled 'suppress'
 
 --------------------------------------------------
 [Stalled]
-
-* jl/read-tree-m-dry-run (2011-05-11) 1 commit
- - Teach read-tree the -n|--dry-run option
-
-Waiting for a reroll.
 
 * mg/diff-stat-count (2011-05-03) 2 commits
  - diff-options.txt: describe --stat-{width,name-width,count}
  - diff: introduce --stat-count to limit the stat lines
 
-There was a miscounting spotted.  Need another round.
+There was a miscounting spotted.  Needs another round.
 
 * jk/maint-merge-rename-create (2011-03-25) 3 commits
  - merge: turn on rewrite detection
@@ -65,6 +91,12 @@ current usage context.
 
 --------------------------------------------------
 [Cooking]
+
+* jl/read-tree-m-dry-run (2011-05-25) 2 commits
+ - Teach read-tree the -n|--dry-run option
+ - unpack-trees: add the dry_run flag to unpack_trees_options
+
+Will merge to "next".
 
 * da/git-prefix-everywhere (2011-05-23) 3 commits
  - git-mergetool--lib: Make vimdiff retain the current directory
@@ -159,18 +191,20 @@ Will merge to "master" by the end of week #5.
 Trivially correct and not intrusive, but the real value unknown.
 Will merge to "master" by the end of week #5.
 
-* jc/streaming-filter (2011-05-21) 6 commits
+* jc/streaming-filter (2011-05-24) 8 commits
+ - t0021: test application of both crlf and ident
+ - t0021-conversion.sh: fix NoTerminatingSymbolAtEOF test
  - streaming: filter cascading
  - streaming filter: ident filter
  - Add LF-to-CRLF streaming conversion
  - stream filter: add "no more input" to the filters
  - Add streaming filter API
  - convert.h: move declarations for conversion from cache.h
- (this branch uses jc/bigfile, jc/streaming and jc/streaming.)
+ (this branch uses jc/streaming.)
 
 Trivial lf-to-crlf and ident conversions can be performed without reading
-everything in-core first. Cascading is probably still broken.  Will not
-merge before 1.7.6.
+everything in-core first.
+Not urgent. Will not merge before 1.7.6.
 
 * jn/userdiff-perl-updates (2011-05-23) 8 commits
   (merged to 'next' on 2011-05-23 at 2595ae1)
@@ -184,12 +218,6 @@ merge before 1.7.6.
  + t4018 (funcname patterns): make .gitattributes state easier to track
 
 Will merge to "master" by the end of week #5.
-
-* jc/git-handle-options-miscount (2011-05-24) 1 commit
- - handle_options(): do not miscount how many arguments were used
-
-Updated with a trivial test, which turned out to uncover an unrelated bug
-(see jc/fix-config-environment-passing topic).
 
 * jk/combine-diff-binary-etc (2011-05-24) 5 commits
   (merged to 'next' on 2011-05-24 at 07cf180)
@@ -207,14 +235,6 @@ Will merge to "master" by the end of month.
 Re-rolled and resurrected from "Stalled" status.
 Will merge to "next".
 
-* js/log-abbrev-commit-config (2011-05-18) 2 commits
-  (merged to 'next' on 2011-05-23 at 4e7e932)
- + Add log.abbrevCommit config variable
- + "git log -h": typofix misspelled 'suppress'
-
-Should be fine after several rounds of reviews.
-Will merge to "master" by the middle of week #5.
-
 * jc/streaming (2011-05-20) 13 commits
   (merged to 'next' on 2011-05-23 at 7fd0b52)
  + streaming: read loose objects incrementally
@@ -230,24 +250,9 @@ Will merge to "master" by the middle of week #5.
  + sha1_object_info_extended(): expose a bit more info
  + packed_object_info_detail(): do not return a string
  + Merge branches 'jc/convert', 'jc/bigfile' and 'jc/replacing' into jc/streaming
- (this branch is used by jc/streaming-filter and jc/streaming-filter; uses jc/bigfile.)
+ (this branch is used by jc/streaming-filter.)
 
-* jc/bigfile (2011-05-13) 3 commits
-  (merged to 'next' on 2011-05-15 at 0ee7144)
- + Bigfile: teach "git add" to send a large file straight to a pack
- + index_fd(): split into two helper functions
- + index_fd(): turn write_object and format_check arguments into one flag
- (this branch is used by jc/streaming and jc/streaming-filter.)
-
-This covers the entry point for a big file to the system. Other parts that
-need to know about them are the exit point (i.e. write_entry()), packing
-and repacking (as long as bigfilethreshold is sane this should work),
-diffs and status (avoid slurping large binary in core only to do nothing,
-which we already should), and transport (receive-pack/fetch-pack call
-either unpack-objects or index-pack, which still want to hold the full
-object in-core and need to be fixed).
-
-Will merge to "master" by the middle of week #5.
+Not urgent. Will not merge before 1.7.6.
 
 * ab/i18n-scripts (2011-05-21) 48 commits
   (merged to 'next' on 2011-05-23 at 69164a3)
@@ -321,6 +326,9 @@ Rerolled.
  + contrib/completion: --line-number to git grep
  + Documentation: Add --line-number to git-grep synopsis
 
+There was a confused test around BRE caused by GNU extension people so
+used to use without even realizing it is GNU extension.
+
 Will merge to "master" by the middle of week #5.
 
 --------------------------------------------------
@@ -343,3 +351,11 @@ into account, not just addition", they can easily say "add -u" (update).
 
 Updated documentation, but I do not feel a strong enough annoyance to push
 this forward.
+
+* jc/fix-config-environment-passing (2011-05-24) 1 commit
+ . Allow built-ins to also use -c var=val via alias
+
+* jc/git-handle-options-miscount (2011-05-24) 1 commit
+ . handle_options(): do not miscount how many arguments were used
+
+These two have been discarded; jk/maint-config-alias-fix replaces them.
