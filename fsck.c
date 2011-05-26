@@ -350,7 +350,7 @@ int fsck_error_function(struct object *obj, int type, const char *fmt, ...)
 	int len;
 	struct strbuf sb = STRBUF_INIT;
 
-	strbuf_addf(&sb, "object %s:", obj->sha1?sha1_to_hex(obj->sha1):"(null)");
+	strbuf_addf(&sb, "object %s:", sha1_to_hex(obj->sha1));
 
 	va_start(ap, fmt);
 	len = vsnprintf(sb.buf + sb.len, strbuf_avail(&sb), fmt, ap);

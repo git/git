@@ -156,7 +156,7 @@ static void set_upstreams(struct transport *transport, struct ref *refs,
 			continue;
 		if (!ref->peer_ref)
 			continue;
-		if (!ref->new_sha1 || is_null_sha1(ref->new_sha1))
+		if (is_null_sha1(ref->new_sha1))
 			continue;
 
 		/* Follow symbolic refs (mainly for HEAD). */
