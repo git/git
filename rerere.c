@@ -739,6 +739,7 @@ void rerere_gc(struct string_list *rr)
 		if (then < now - cutoff * 86400)
 			string_list_append(&to_remove, e->d_name);
 	}
+	closedir(dir);
 	for (i = 0; i < to_remove.nr; i++)
 		unlink_rr_item(to_remove.items[i].string);
 	string_list_clear(&to_remove, 0);
