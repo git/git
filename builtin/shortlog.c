@@ -141,9 +141,8 @@ void shortlog_add_commit(struct shortlog *log, struct commit *commit)
 	const char *author = NULL, *buffer;
 	struct strbuf buf = STRBUF_INIT;
 	struct strbuf ufbuf = STRBUF_INIT;
-	struct pretty_print_context ctx = {0};
 
-	pretty_print_commit(CMIT_FMT_RAW, commit, &buf, &ctx);
+	pp_commit_easy(CMIT_FMT_RAW, commit, &buf);
 	buffer = buf.buf;
 	while (*buffer && *buffer != '\n') {
 		const char *eol = strchr(buffer, '\n');

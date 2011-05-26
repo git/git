@@ -98,6 +98,8 @@ extern void format_commit_message(const struct commit *commit,
 extern void pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit,
 				struct strbuf *sb,
 				const struct pretty_print_context *context);
+extern void pp_commit_easy(enum cmit_fmt fmt, const struct commit *commit,
+			   struct strbuf *sb);
 void pp_user_info(const char *what, enum cmit_fmt fmt, struct strbuf *sb,
 		   const char *line, enum date_mode dmode,
 		   const char *encoding);

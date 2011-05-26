@@ -1288,3 +1288,10 @@ void pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit,
 
 	free(reencoded);
 }
+
+void pp_commit_easy(enum cmit_fmt fmt, const struct commit *commit,
+		    struct strbuf *sb)
+{
+	struct pretty_print_context pp = {0};
+	pretty_print_commit(fmt, commit, sb, &pp);
+}
