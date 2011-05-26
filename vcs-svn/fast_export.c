@@ -4,10 +4,11 @@
  */
 
 #include "git-compat-util.h"
+#include "strbuf.h"
+#include "quote.h"
 #include "fast_export.h"
 #include "line_buffer.h"
 #include "repo_tree.h"
-#include "string_pool.h"
 #include "strbuf.h"
 
 #define MAX_GITSVN_LINE_LEN 4096
@@ -32,30 +33,30 @@ void fast_export_reset(void)
 	buffer_reset(&report_buffer);
 }
 
-void fast_export_delete(uint32_t depth, const uint32_t *path)
+void fast_export_delete(const char *path)
 {
-	printf("D \"");
-	pool_print_seq_q(depth, path, '/', stdout);
-	printf("\"\n");
+	putchar('D');
+	putchar(' ');
+	quote_c_style(path, NULL, stdout, 0);
+	putchar('\n');
 }
 
-static void fast_export_truncate(uint32_t depth, const uint32_t *path, uint32_t mode)
+static void fast_export_truncate(const char *path, uint32_t mode)
 {
-	fast_export_modify(depth, path, mode, "inline");
+	fast_export_modify(path, mode, "inline");
 	printf("data 0\n\n");
 }
 
-void fast_export_modify(uint32_t depth, const uint32_t *path, uint32_t mode,
-			const char *dataref)
+void fast_export_modify(const char *path, uint32_t mode, const char *dataref)
 {
 	/* Mode must be 100644, 100755, 120000, or 160000. */
 	if (!dataref) {
-		fast_export_truncate(depth, path, mode);
+		fast_export_truncate(path, mode);
 		return;
 	}
-	printf("M %06"PRIo32" %s \"", mode, dataref);
-	pool_print_seq_q(depth, path, '/', stdout);
-	printf("\"\n");
+	printf("M %06"PRIo32" %s ", mode, dataref);
+	quote_c_style(path, NULL, stdout, 0);
+	putchar('\n');
 }
 
 static char gitsvnline[MAX_GITSVN_LINE_LEN];
@@ -96,20 +97,20 @@ void fast_export_end_commit(uint32_t revision)
 	printf("progress Imported commit %"PRIu32".\n\n", revision);
 }
 
-static void ls_from_rev(uint32_t rev, uint32_t depth, const uint32_t *path)
+static void ls_from_rev(uint32_t rev, const char *path)
 {
 	/* ls :5 path/to/old/file */
-	printf("ls :%"PRIu32" \"", rev);
-	pool_print_seq_q(depth, path, '/', stdout);
-	printf("\"\n");
+	printf("ls :%"PRIu32" ", rev);
+	quote_c_style(path, NULL, stdout, 0);
+	putchar('\n');
 	fflush(stdout);
 }
 
-static void ls_from_active_commit(uint32_t depth, const uint32_t *path)
+static void ls_from_active_commit(const char *path)
 {
 	/* ls "path/to/file" */
 	printf("ls \"");
-	pool_print_seq_q(depth, path, '/', stdout);
+	quote_c_style(path, NULL, stdout, 1);
 	printf("\"\n");
 	fflush(stdout);
 }
@@ -186,16 +187,15 @@ static int parse_ls_response(const char *response, uint32_t *mode,
 	return 0;
 }
 
-int fast_export_ls_rev(uint32_t rev, uint32_t depth, const uint32_t *path,
+int fast_export_ls_rev(uint32_t rev, const char *path,
 				uint32_t *mode, struct strbuf *dataref)
 {
-	ls_from_rev(rev, depth, path);
+	ls_from_rev(rev, path);
 	return parse_ls_response(get_response_line(), mode, dataref);
 }
 
-int fast_export_ls(uint32_t depth, const uint32_t *path,
-				uint32_t *mode, struct strbuf *dataref)
+int fast_export_ls(const char *path, uint32_t *mode, struct strbuf *dataref)
 {
-	ls_from_active_commit(depth, path);
+	ls_from_active_commit(path);
 	return parse_ls_response(get_response_line(), mode, dataref);
 }
