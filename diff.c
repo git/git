@@ -1050,8 +1050,16 @@ static void fn_out_consume(void *priv, char *line, unsigned long len)
 			emit_line(ecbdata->opt, plain, reset, line, len);
 			fputs("~\n", ecbdata->opt->file);
 		} else {
-			/* don't print the prefix character */
-			emit_line(ecbdata->opt, plain, reset, line+1, len-1);
+			/*
+			 * Skip the prefix character, if any.  With
+			 * diff_suppress_blank_empty, there may be
+			 * none.
+			 */
+			if (line[0] != '\n') {
+			      line++;
+			      len--;
+			}
+			emit_line(ecbdata->opt, plain, reset, line, len);
 		}
 		return;
 	}
