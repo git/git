@@ -289,6 +289,175 @@ title is likely to be different from the subject of the discussion the
 patch is in response to, so it is likely that you would want to keep
 the Subject: line, like the example above.
 
+Checking for patch corruption
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Many mailers if not set up properly will corrupt whitespace.  Here are
+two common types of corruption:
+
+* Empty context lines that do not have _any_ whitespace.
+
+* Non-empty context lines that have one extra whitespace at the
+  beginning.
+
+One way to test if your MUA is set up correctly is:
+
+* Send the patch to yourself, exactly the way you would, except
+  with To: and Cc: lines that do not contain the list and
+  maintainer address.
+
+* Save that patch to a file in UNIX mailbox format.  Call it a.patch,
+  say.
+
+* Apply it:
+
+    $ git fetch <project> master:test-apply
+    $ git checkout test-apply
+    $ git reset --hard
+    $ git am a.patch
+
+If it does not apply correctly, there can be various reasons.
+
+* The patch itself does not apply cleanly.  That is _bad_ but
+  does not have much to do with your MUA.  You might want to rebase
+  the patch with linkgit:git-rebase[1] before regenerating it in
+  this case.
+
+* The MUA corrupted your patch; "am" would complain that
+  the patch does not apply.  Look in the .git/rebase-apply/ subdirectory and
+  see what 'patch' file contains and check for the common
+  corruption patterns mentioned above.
+
+* While at it, check the 'info' and 'final-commit' files as well.
+  If what is in 'final-commit' is not exactly what you would want to
+  see in the commit log message, it is very likely that the
+  receiver would end up hand editing the log message when applying
+  your patch.  Things like "Hi, this is my first patch.\n" in the
+  patch e-mail should come after the three-dash line that signals
+  the end of the commit message.
+
+MUA-SPECIFIC HINTS
+------------------
+Here are some hints on how to successfully submit patches inline using
+various mailers.
+
+GMail
+~~~~~
+GMail does not have any way to turn off line wrapping in the web
+interface, so it will mangle any emails that you send.  You can however
+use "git send-email" and send your patches through the GMail SMTP server, or
+use any IMAP email client to connect to the google IMAP server and forward
+the emails through that.
+
+For hints on using 'git send-email' to send your patches through the
+GMail SMTP server, see the EXAMPLE section of linkgit:git-send-email[1].
+
+For hints on submission using the IMAP interface, see the EXAMPLE
+section of linkgit:git-imap-send[1].
+
+Thunderbird
+~~~~~~~~~~~
+By default, Thunderbird will both wrap emails as well as flag
+them as being 'format=flowed', both of which will make the
+resulting email unusable by git.
+
+There are three different approaches: use an add-on to turn off line wraps,
+configure Thunderbird to not mangle patches, or use
+an external editor to keep Thunderbird from mangling the patches.
+
+Approach #1 (add-on)
+^^^^^^^^^^^^^^^^^^^^
+
+Install the Toggle Word Wrap add-on that is available from
+https://addons.mozilla.org/thunderbird/addon/toggle-word-wrap/
+It adds a menu entry "Enable Word Wrap" in the composer's "Options" menu
+that you can tick off. Now you can compose the message as you otherwise do
+(cut + paste, 'git format-patch' | 'git imap-send', etc), but you have to
+insert line breaks manually in any text that you type.
+
+Approach #2 (configuration)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Three steps:
+
+1. Configure your mail server composition as plain text:
+   Edit...Account Settings...Composition & Addressing,
+   uncheck "Compose Messages in HTML".
+
+2. Configure your general composition window to not wrap.
++
+In Thunderbird 2:
+Edit..Preferences..Composition, wrap plain text messages at 0
++
+In Thunderbird 3:
+Edit..Preferences..Advanced..Config Editor.  Search for
+"mail.wrap_long_lines".
+Toggle it to make sure it is set to `false`.
+
+3. Disable the use of format=flowed:
+Edit..Preferences..Advanced..Config Editor.  Search for
+"mailnews.send_plaintext_flowed".
+Toggle it to make sure it is set to `false`.
+
+After that is done, you should be able to compose email as you
+otherwise would (cut + paste, 'git format-patch' | 'git imap-send', etc),
+and the patches will not be mangled.
+
+Approach #3 (external editor)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The following Thunderbird extensions are needed:
+AboutConfig from http://aboutconfig.mozdev.org/ and
+External Editor from http://globs.org/articles.php?lng=en&pg=8
+
+1. Prepare the patch as a text file using your method of choice.
+
+2. Before opening a compose window, use Edit->Account Settings to
+   uncheck the "Compose messages in HTML format" setting in the
+   "Composition & Addressing" panel of the account to be used to
+   send the patch.
+
+3. In the main Thunderbird window, 'before' you open the compose
+   window for the patch, use Tools->about:config to set the
+   following to the indicated values:
++
+----------
+	mailnews.send_plaintext_flowed  => false
+	mailnews.wraplength             => 0
+----------
+
+4. Open a compose window and click the external editor icon.
+
+5. In the external editor window, read in the patch file and exit
+   the editor normally.
+
+Side note: it may be possible to do step 2 with
+about:config and the following settings but no one's tried yet.
+
+----------
+	mail.html_compose                       => false
+	mail.identity.default.compose_html      => false
+	mail.identity.id?.compose_html          => false
+----------
+
+There is a script in contrib/thunderbird-patch-inline which can help
+you include patches with Thunderbird in an easy way. To use it, do the
+steps above and then use the script as the external editor.
+
+KMail
+~~~~~
+This should help you to submit patches inline using KMail.
+
+1. Prepare the patch as a text file.
+
+2. Click on New Mail.
+
+3. Go under "Options" in the Composer window and be sure that
+   "Word wrap" is not set.
+
+4. Use Message -> Insert file... and insert the patch.
+
+5. Back in the compose window: add whatever other text you wish to the
+   message, complete the addressing and subject fields, and press send.
+
 
 EXAMPLES
 --------
