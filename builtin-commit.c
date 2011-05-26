@@ -1039,14 +1039,15 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 		OPT_END(),
 	};
 
-	if (null_termination && status_format == STATUS_FORMAT_LONG)
-		status_format = STATUS_FORMAT_PORCELAIN;
-
 	wt_status_prepare(&s);
 	git_config(git_status_config, &s);
 	argc = parse_options(argc, argv, prefix,
 			     builtin_status_options,
 			     builtin_status_usage, 0);
+
+	if (null_termination && status_format == STATUS_FORMAT_LONG)
+		status_format = STATUS_FORMAT_PORCELAIN;
+
 	handle_untracked_files_arg(&s);
 
 	if (*argv)
