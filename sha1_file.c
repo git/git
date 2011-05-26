@@ -2733,7 +2733,7 @@ static int index_stream(unsigned char *sha1, int fd, size_t size,
 	while (size) {
 		char buf[10240];
 		size_t sz = size < sizeof(buf) ? size : sizeof(buf);
-		size_t actual;
+		ssize_t actual;
 
 		actual = read_in_full(fd, buf, sz);
 		if (actual < 0)
