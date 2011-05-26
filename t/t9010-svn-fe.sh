@@ -5,8 +5,26 @@ test_description='check svn dumpfile importer'
 . ./test-lib.sh
 
 reinit_git () {
+	if ! test_declared_prereq PIPE
+	then
+		echo >&4 "reinit_git: need to declare PIPE prerequisite"
+		return 127
+	fi
 	rm -fr .git &&
-	git init
+	rm -f stream backflow &&
+	git init &&
+	mkfifo stream backflow
+}
+
+try_dump () {
+	input=$1 &&
+	maybe_fail=${2:+test_$2} &&
+
+	{
+		$maybe_fail test-svn-fe "$input" >stream 3<backflow &
+	} &&
+	git fast-import --cat-blob-fd=3 <stream 3>backflow &&
+	wait $!
 }
 
 properties () {
@@ -35,21 +53,27 @@ text_no_props () {
 
 >empty
 
-test_expect_success 'empty dump' '
+test_expect_success 'setup: have pipes?' '
+	rm -f frob &&
+	if mkfifo frob
+	then
+		test_set_prereq PIPE
+	fi
+'
+
+test_expect_success PIPE 'empty dump' '
 	reinit_git &&
 	echo "SVN-fs-dump-format-version: 2" >input &&
-	test-svn-fe input >stream &&
-	git fast-import <stream
+	try_dump input
 '
 
-test_expect_success 'v4 dumps not supported' '
+test_expect_success PIPE 'v4 dumps not supported' '
 	reinit_git &&
 	echo "SVN-fs-dump-format-version: 4" >v4.dump &&
-	test_must_fail test-svn-fe v4.dump >stream &&
-	test_cmp empty stream
+	try_dump v4.dump must_fail
 '
 
-test_expect_failure 'empty revision' '
+test_expect_failure PIPE 'empty revision' '
 	reinit_git &&
 	printf "rev <nobody, nobody@local>: %s\n" "" "" >expect &&
 	cat >emptyrev.dump <<-\EOF &&
@@ -64,13 +88,12 @@ test_expect_failure 'empty revision' '
 	Content-length: 0
 
 	EOF
-	test-svn-fe emptyrev.dump >stream &&
-	git fast-import <stream &&
+	try_dump emptyrev.dump &&
 	git log -p --format="rev <%an, %ae>: %s" HEAD >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success 'empty properties' '
+test_expect_success PIPE 'empty properties' '
 	reinit_git &&
 	printf "rev <nobody, nobody@local>: %s\n" "" "" >expect &&
 	cat >emptyprop.dump <<-\EOF &&
@@ -88,13 +111,12 @@ test_expect_success 'empty properties' '
 
 	PROPS-END
 	EOF
-	test-svn-fe emptyprop.dump >stream &&
-	git fast-import <stream &&
+	try_dump emptyprop.dump &&
 	git log -p --format="rev <%an, %ae>: %s" HEAD >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success 'author name and commit message' '
+test_expect_success PIPE 'author name and commit message' '
 	reinit_git &&
 	echo "<author@example.com, author@example.com@local>" >expect.author &&
 	cat >message <<-\EOF &&
@@ -121,15 +143,14 @@ test_expect_success 'author name and commit message' '
 		echo &&
 		cat props
 	} >log.dump &&
-	test-svn-fe log.dump >stream &&
-	git fast-import <stream &&
+	try_dump log.dump &&
 	git log -p --format="%B" HEAD >actual.log &&
 	git log --format="<%an, %ae>" >actual.author &&
 	test_cmp message actual.log &&
 	test_cmp expect.author actual.author
 '
 
-test_expect_success 'unsupported properties are ignored' '
+test_expect_success PIPE 'unsupported properties are ignored' '
 	reinit_git &&
 	echo author >expect &&
 	cat >extraprop.dump <<-\EOF &&
@@ -149,13 +170,12 @@ test_expect_success 'unsupported properties are ignored' '
 	author
 	PROPS-END
 	EOF
-	test-svn-fe extraprop.dump >stream &&
-	git fast-import <stream &&
+	try_dump extraprop.dump &&
 	git log -p --format=%an HEAD >actual &&
 	test_cmp expect actual
 '
 
-test_expect_failure 'timestamp and empty file' '
+test_expect_failure PIPE 'timestamp and empty file' '
 	echo author@example.com >expect.author &&
 	echo 1999-01-01 >expect.date &&
 	echo file >expect.files &&
@@ -186,8 +206,7 @@ test_expect_failure 'timestamp and empty file' '
 
 		EOF
 	} >emptyfile.dump &&
-	test-svn-fe emptyfile.dump >stream &&
-	git fast-import <stream &&
+	try_dump emptyfile.dump &&
 	git log --format=%an HEAD >actual.author &&
 	git log --date=short --format=%ad HEAD >actual.date &&
 	git ls-tree -r --name-only HEAD >actual.files &&
@@ -198,7 +217,7 @@ test_expect_failure 'timestamp and empty file' '
 	test_cmp empty file
 '
 
-test_expect_success 'directory with files' '
+test_expect_success PIPE 'directory with files' '
 	reinit_git &&
 	printf "%s\n" directory/file1 directory/file2 >expect.files &&
 	echo hi >hi &&
@@ -242,8 +261,7 @@ test_expect_success 'directory with files' '
 		EOF
 		text_no_props hi
 	} >directory.dump &&
-	test-svn-fe directory.dump >stream &&
-	git fast-import <stream &&
+	try_dump directory.dump &&
 
 	git ls-tree -r --name-only HEAD >actual.files &&
 	git checkout HEAD directory &&
@@ -252,7 +270,107 @@ test_expect_success 'directory with files' '
 	test_cmp hi directory/file2
 '
 
-test_expect_success 'node without action' '
+test_expect_success PIPE 'branch name with backslash' '
+	reinit_git &&
+	sort <<-\EOF >expect.branch-files &&
+	trunk/file1
+	trunk/file2
+	"branches/UpdateFOPto094\\/file1"
+	"branches/UpdateFOPto094\\/file2"
+	EOF
+
+	echo hi >hi &&
+	echo hello >hello &&
+	{
+		properties \
+			svn:author author@example.com \
+			svn:date "1999-02-02T00:01:02.000000Z" \
+			svn:log "add directory with some files in it" &&
+		echo PROPS-END
+	} >props.setup &&
+	{
+		properties \
+			svn:author brancher@example.com \
+			svn:date "2007-12-06T21:38:34.000000Z" \
+			svn:log "Updating fop to .94 and adjust fo-stylesheets" &&
+		echo PROPS-END
+	} >props.branch &&
+	{
+		cat <<-EOF &&
+		SVN-fs-dump-format-version: 3
+
+		Revision-number: 1
+		EOF
+		echo Prop-content-length: $(wc -c <props.setup) &&
+		echo Content-length: $(wc -c <props.setup) &&
+		echo &&
+		cat props.setup &&
+		cat <<-\EOF &&
+
+		Node-path: trunk
+		Node-kind: dir
+		Node-action: add
+		Prop-content-length: 10
+		Content-length: 10
+
+		PROPS-END
+
+		Node-path: branches
+		Node-kind: dir
+		Node-action: add
+		Prop-content-length: 10
+		Content-length: 10
+
+		PROPS-END
+
+		Node-path: trunk/file1
+		Node-kind: file
+		Node-action: add
+		EOF
+		text_no_props hello &&
+		cat <<-\EOF &&
+		Node-path: trunk/file2
+		Node-kind: file
+		Node-action: add
+		EOF
+		text_no_props hi &&
+		cat <<-\EOF &&
+
+		Revision-number: 2
+		EOF
+		echo Prop-content-length: $(wc -c <props.branch) &&
+		echo Content-length: $(wc -c <props.branch) &&
+		echo &&
+		cat props.branch &&
+		cat <<-\EOF
+
+		Node-path: branches/UpdateFOPto094\
+		Node-kind: dir
+		Node-action: add
+		Node-copyfrom-rev: 1
+		Node-copyfrom-path: trunk
+
+		Node-kind: dir
+		Node-action: add
+		Prop-content-length: 34
+		Content-length: 34
+
+		K 13
+		svn:mergeinfo
+		V 0
+
+		PROPS-END
+		EOF
+	} >branch.dump &&
+	try_dump branch.dump &&
+
+	git ls-tree -r --name-only HEAD |
+	sort >actual.branch-files &&
+	test_cmp expect.branch-files actual.branch-files
+'
+
+test_expect_success PIPE 'node without action' '
+	reinit_git &&
 	cat >inaction.dump <<-\EOF &&
 	SVN-fs-dump-format-version: 3
 
@@ -269,10 +387,11 @@ test_expect_success 'node without action' '
 
 	PROPS-END
 	EOF
-	test_must_fail test-svn-fe inaction.dump
+	try_dump inaction.dump must_fail
 '
 
-test_expect_success 'action: add node without text' '
+test_expect_success PIPE 'action: add node without text' '
+	reinit_git &&
 	cat >textless.dump <<-\EOF &&
 	SVN-fs-dump-format-version: 3
 
@@ -290,10 +409,10 @@ test_expect_success 'action: add node without text' '
 
 	PROPS-END
 	EOF
-	test_must_fail test-svn-fe textless.dump
+	try_dump textless.dump must_fail
 '
 
-test_expect_failure 'change file mode but keep old content' '
+test_expect_failure PIPE 'change file mode but keep old content' '
 	reinit_git &&
 	cat >expect <<-\EOF &&
 	OBJID
@@ -356,8 +475,7 @@ test_expect_failure 'change file mode but keep old content' '
 
 	PROPS-END
 	EOF
-	test-svn-fe filemode.dump >stream &&
-	git fast-import <stream &&
+	try_dump filemode.dump &&
 	{
 		git rev-list HEAD |
 		git diff-tree --root --stdin |
@@ -370,7 +488,7 @@ test_expect_failure 'change file mode but keep old content' '
 	test_cmp hello actual.target
 '
 
-test_expect_success 'NUL in property value' '
+test_expect_success PIPE 'NUL in property value' '
 	reinit_git &&
 	echo "commit message" >expect.message &&
 	{
@@ -391,13 +509,12 @@ test_expect_success 'NUL in property value' '
 		echo &&
 		cat props
 	} >nulprop.dump &&
-	test-svn-fe nulprop.dump >stream &&
-	git fast-import <stream &&
+	try_dump nulprop.dump &&
 	git diff-tree --always -s --format=%s HEAD >actual.message &&
 	test_cmp expect.message actual.message
 '
 
-test_expect_success 'NUL in log message, file content, and property name' '
+test_expect_success PIPE 'NUL in log message, file content, and property name' '
 	# Caveat: svnadmin 1.6.16 (r1073529) truncates at \0 in the
 	# svn:specialQnotreally example.
 	reinit_git &&
@@ -458,8 +575,7 @@ test_expect_success 'NUL in log message, file content, and property name' '
 		link hello
 		EOF
 	} >8bitclean.dump &&
-	test-svn-fe 8bitclean.dump >stream &&
-	git fast-import <stream &&
+	try_dump 8bitclean.dump &&
 	{
 		git rev-list HEAD |
 		git diff-tree --root --stdin |
@@ -478,7 +594,7 @@ test_expect_success 'NUL in log message, file content, and property name' '
 	test_cmp expect.hello2 actual.hello2
 '
 
-test_expect_success 'change file mode and reiterate content' '
+test_expect_success PIPE 'change file mode and reiterate content' '
 	reinit_git &&
 	cat >expect <<-\EOF &&
 	OBJID
@@ -490,7 +606,7 @@ test_expect_success 'change file mode and reiterate content' '
 	EOF
 	echo "link hello" >expect.blob &&
 	echo hello >hello &&
-	cat >filemode.dump <<-\EOF &&
+	cat >filemode2.dump <<-\EOF &&
 	SVN-fs-dump-format-version: 3
 
 	Revision-number: 1
@@ -545,8 +661,7 @@ test_expect_success 'change file mode and reiterate content' '
 	PROPS-END
 	link hello
 	EOF
-	test-svn-fe filemode.dump >stream &&
-	git fast-import <stream &&
+	try_dump filemode2.dump &&
 	{
 		git rev-list HEAD |
 		git diff-tree --root --stdin |
@@ -559,7 +674,8 @@ test_expect_success 'change file mode and reiterate content' '
 	test_cmp hello actual.target
 '
 
-test_expect_success 'deltas not supported' '
+test_expect_success PIPE 'deltas not supported' '
+	reinit_git &&
 	{
 		# (old) h + (inline) ello + (old) \n
 		printf "SVNQ%b%b%s" "Q\003\006\005\004" "\001Q\0204\001\002" "ello" |
@@ -619,10 +735,10 @@ test_expect_success 'deltas not supported' '
 		echo PROPS-END &&
 		cat delta
 	} >delta.dump &&
-	test_must_fail test-svn-fe delta.dump
+	test_must_fail try_dump delta.dump
 '
 
-test_expect_success 'property deltas supported' '
+test_expect_success PIPE 'property deltas supported' '
 	reinit_git &&
 	cat >expect <<-\EOF &&
 	OBJID
@@ -678,8 +794,7 @@ test_expect_success 'property deltas supported' '
 		PROPS-END
 		EOF
 	} >propdelta.dump &&
-	test-svn-fe propdelta.dump >stream &&
-	git fast-import <stream &&
+	try_dump propdelta.dump &&
 	{
 		git rev-list HEAD |
 		git diff-tree --stdin |
@@ -688,7 +803,7 @@ test_expect_success 'property deltas supported' '
 	test_cmp expect actual
 '
 
-test_expect_success 'properties on /' '
+test_expect_success PIPE 'properties on /' '
 	reinit_git &&
 	cat <<-\EOF >expect &&
 	OBJID
@@ -733,8 +848,7 @@ test_expect_success 'properties on /' '
 
 	PROPS-END
 	EOF
-	test-svn-fe changeroot.dump >stream &&
-	git fast-import <stream &&
+	try_dump changeroot.dump &&
 	{
 		git rev-list HEAD |
 		git diff-tree --root --always --stdin |
@@ -743,7 +857,7 @@ test_expect_success 'properties on /' '
 	test_cmp expect actual
 '
 
-test_expect_success 'deltas for typechange' '
+test_expect_success PIPE 'deltas for typechange' '
 	reinit_git &&
 	cat >expect <<-\EOF &&
 	OBJID
@@ -819,8 +933,7 @@ test_expect_success 'deltas for typechange' '
 	PROPS-END
 	link testing 321
 	EOF
-	test-svn-fe deleteprop.dump >stream &&
-	git fast-import <stream &&
+	try_dump deleteprop.dump &&
 	{
 		git rev-list HEAD |
 		git diff-tree --root --stdin |
@@ -844,12 +957,12 @@ test_expect_success 'set up svn repo' '
 	fi
 '
 
-test_expect_success SVNREPO 't9135/svn.dump' '
-	git init simple-git &&
-	test-svn-fe "$TEST_DIRECTORY/t9135/svn.dump" >simple.fe &&
+test_expect_success SVNREPO,PIPE 't9135/svn.dump' '
+	mkdir -p simple-git &&
 	(
 		cd simple-git &&
-		git fast-import <../simple.fe
+		reinit_git &&
+		try_dump "$TEST_DIRECTORY/t9135/svn.dump"
 	) &&
 	(
 		cd simple-svnco &&

@@ -14,8 +14,7 @@ struct strbuf;
 uint32_t next_blob_mark(void);
 void repo_copy(uint32_t revision, const uint32_t *src, const uint32_t *dst);
 void repo_add(uint32_t *path, uint32_t mode, uint32_t blob_mark);
-uint32_t repo_read_path(const uint32_t *path);
-uint32_t repo_read_mode(const uint32_t *path);
+const char *repo_read_path(const uint32_t *path, uint32_t *mode_out);
 void repo_delete(uint32_t *path);
 void repo_commit(uint32_t revision, const char *author,
 		const struct strbuf *log, const char *uuid, const char *url,

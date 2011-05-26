@@ -4,6 +4,7 @@
  */
 
 #include "git-compat-util.h"
+#include "quote.h"
 #include "trp.h"
 #include "obj_pool.h"
 #include "string_pool.h"
@@ -65,11 +66,21 @@ uint32_t pool_tok_r(char *str, const char *delim, char **saveptr)
 	return token ? pool_intern(token) : ~0;
 }
 
-void pool_print_seq(uint32_t len, uint32_t *seq, char delim, FILE *stream)
+void pool_print_seq(uint32_t len, const uint32_t *seq, char delim, FILE *stream)
 {
 	uint32_t i;
 	for (i = 0; i < len && ~seq[i]; i++) {
 		fputs(pool_fetch(seq[i]), stream);
+		if (i < len - 1 && ~seq[i + 1])
+			fputc(delim, stream);
+	}
+}
+
+void pool_print_seq_q(uint32_t len, const uint32_t *seq, char delim, FILE *stream)
+{
+	uint32_t i;
+	for (i = 0; i < len && ~seq[i]; i++) {
+		quote_c_style(pool_fetch(seq[i]), NULL, stream, 1);
 		if (i < len - 1 && ~seq[i + 1])
 			fputc(delim, stream);
 	}
