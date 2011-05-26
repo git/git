@@ -33,9 +33,9 @@ test_expect_success setup '
 		echo HeLLo_world
 	} >hello_world &&
 	{
-		echo aab
-		echo a+b
-		echo a\\+b
+		echo "a+b*c"
+		echo "a+bc"
+		echo "abc"
 	} >ab &&
 	echo vvv >v &&
 	echo ww w >w &&
@@ -233,14 +233,14 @@ do
 		test_cmp expected actual
 	'
 	test_expect_success "grep $L with grep.extendedRegexp=false" '
-		echo "ab:a+b" >expected &&
-		git -c grep.extendedRegexp=false grep "a+b" >actual &&
+		echo "ab:a+bc" >expected &&
+		git -c grep.extendedRegexp=false grep "a+b*c" ab >actual &&
 		test_cmp expected actual
 	'
 
 	test_expect_success "grep $L with grep.extendedRegexp=true" '
-		echo "ab:aab" >expected &&
-		git -c grep.extendedRegexp=true grep "a+b" >actual &&
+		echo "ab:abc" >expected &&
+		git -c grep.extendedRegexp=true grep "a+b*c" ab >actual &&
 		test_cmp expected actual
 	'
 done
@@ -636,7 +636,7 @@ test_expect_success LIBPCRE 'grep -P pattern' '
 '
 
 test_expect_success 'grep pattern with grep.extendedRegexp=true' '
-	:>empty &&
+	>empty &&
 	test_must_fail git -c grep.extendedregexp=true \
 		grep "\p{Ps}.*?\p{Pe}" hello.c >actual &&
 	test_cmp empty actual
@@ -650,10 +650,10 @@ test_expect_success LIBPCRE 'grep -P pattern with grep.extendedRegexp=true' '
 
 test_expect_success LIBPCRE 'grep -P -v pattern' '
 	{
-		echo ab:a+b
-		echo ab:a\\+b
+		echo "ab:a+b*c"
+		echo "ab:a+bc"
 	} >expected &&
-	git grep -P -v "aab" ab >actual &&
+	git grep -P -v "abc" ab >actual &&
 	test_cmp expected actual
 '
 
@@ -686,39 +686,33 @@ test_expect_success LIBPCRE 'grep -P invalidpattern properly dies ' '
 	test_must_fail git grep -P "a["
 '
 
-test_expect_success 'grep -F -E -G pattern' '
-	echo ab:a+b >expected &&
-	git grep -F -E -G a+b >actual &&
-	test_cmp expected actual
-'
-
-test_expect_success 'grep -F -G -E pattern' '
-	echo ab:aab >expected &&
-	git grep -F -G -E a+b >actual &&
+test_expect_success 'grep -G -E -F pattern' '
+	echo "ab:a+b*c" >expected &&
+	git grep -G -E -F "a+b*c" ab >actual &&
 	test_cmp expected actual
 '
 
 test_expect_success 'grep -E -F -G pattern' '
-	echo ab:aab >expected &&
-	git grep -E -F -G a\\+b >actual &&
+	echo "ab:a+bc" >expected &&
+	git grep -E -F -G "a+b*c" ab >actual &&
 	test_cmp expected actual
 '
 
-test_expect_success 'grep -E -G -F pattern' '
-	echo ab:a\\+b >expected &&
-	git grep -E -G -F a\\+b >actual &&
+test_expect_success 'grep -F -G -E pattern' '
+	echo "ab:abc" >expected &&
+	git grep -F -G -E "a+b*c" ab >actual &&
 	test_cmp expected actual
 '
 
-test_expect_success 'grep -G -F -E pattern' '
-	echo ab:a+b >expected &&
-	git grep -G -F -E a\\+b >actual &&
-	test_cmp expected actual
+test_expect_success 'grep -G -F -P -E pattern' '
+	>empty &&
+	test_must_fail git grep -G -F -P -E "a\x{2b}b\x{2a}c" ab >actual &&
+	test_cmp empty actual
 '
 
-test_expect_success LIBPCRE 'grep -E -G -F -P pattern' '
-	echo ab:a+b >expected &&
-	git grep -E -G -F -P a\\+b >actual &&
+test_expect_success LIBPCRE 'grep -G -F -E -P pattern' '
+	echo "ab:a+b*c" >expected &&
+	git grep -G -F -E -P "a\x{2b}b\x{2a}c" ab >actual &&
 	test_cmp expected actual
 '
 
