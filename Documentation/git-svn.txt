@@ -774,10 +774,9 @@ use `git svn rebase` to update your work branch instead of `git pull` or
 when committing into SVN, which can lead to merge commits reversing
 previous commits in SVN.
 
-DESIGN PHILOSOPHY
------------------
-Merge tracking in Subversion is lacking and doing branched development
-with Subversion can be cumbersome as a result.  While 'git svn' can track
+MERGE TRACKING
+--------------
+While 'git svn' can track
 copy history (including branches and tags) for repositories adopting a
 standard layout, it cannot yet represent merge history that happened
 inside git back upstream to SVN users.  Therefore it is advised that
@@ -787,16 +786,15 @@ compatibility with SVN (see the CAVEATS section below).
 CAVEATS
 -------
 
-For the sake of simplicity and interoperating with a less-capable system
-(SVN), it is recommended that all 'git svn' users clone, fetch and dcommit
+For the sake of simplicity and interoperating with Subversion,
+it is recommended that all 'git svn' users clone, fetch and dcommit
 directly from the SVN server, and avoid all 'git clone'/'pull'/'merge'/'push'
 operations between git repositories and branches.  The recommended
 method of exchanging code between git branches and users is
 'git format-patch' and 'git am', or just 'dcommit'ing to the SVN repository.
 
 Running 'git merge' or 'git pull' is NOT recommended on a branch you
-plan to 'dcommit' from.  Subversion does not represent merges in any
-reasonable or useful fashion; so users using Subversion cannot see any
+plan to 'dcommit' from because Subversion users cannot see any
 merges you've made.  Furthermore, if you merge or pull from a git branch
 that is a mirror of an SVN branch, 'dcommit' may commit to the wrong
 branch.
@@ -846,7 +844,7 @@ Renamed and copied directories are not detected by git and hence not
 tracked when committing to SVN.  I do not plan on adding support for
 this as it's quite difficult and time-consuming to get working for all
 the possible corner cases (git doesn't do it, either).  Committing
-renamed and copied files are fully supported if they're similar enough
+renamed and copied files is fully supported if they're similar enough
 for git to detect them.
 
 CONFIGURATION
