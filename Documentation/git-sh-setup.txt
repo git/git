@@ -58,9 +58,14 @@ cd_to_toplevel::
 	runs chdir to the toplevel of the working tree.
 
 require_work_tree::
-	checks if the repository is a bare repository, and dies
-	if so.  Used by scripts that require working tree
-	(e.g. `checkout`).
+	checks if the current directory is within the working tree
+	of the repository, and otherwise dies.
+
+require_work_tree_exists::
+	checks if the working tree associated with the repository
+	exists, and otherwise dies.  Often done before calling
+	cd_to_toplevel, which is impossible to do if there is no
+	working tree.
 
 get_author_ident_from_commit::
 	outputs code for use with eval to set the GIT_AUTHOR_NAME,
