@@ -400,7 +400,7 @@ static int read_one_header_line(struct strbuf *line, FILE *in)
 			break;
 		if (strbuf_getline(&continuation, in, '\n'))
 			break;
-		continuation.buf[0] = '\n';
+		continuation.buf[0] = ' ';
 		strbuf_rtrim(&continuation);
 		strbuf_addbuf(line, &continuation);
 	}

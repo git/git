@@ -58,7 +58,7 @@ test_expect_success 'long subject preserved (format-patch | am)' '
 test_expect_success 'long subject preserved (format-patch -k | am)' '
 	check_subject long-k
 '
-test_expect_failure 'long subject preserved (format-patch -k | am -k)' '
+test_expect_success 'long subject preserved (format-patch -k | am -k)' '
 	check_subject long-k -k
 '
 
