@@ -161,11 +161,12 @@ void shortlog_add_commit(struct shortlog *log, struct commit *commit)
 		    sha1_to_hex(commit->object.sha1));
 	if (log->user_format) {
 		struct pretty_print_context ctx = {0};
+		ctx.fmt = CMIT_FMT_USERFORMAT;
 		ctx.abbrev = log->abbrev;
 		ctx.subject = "";
 		ctx.after_subject = "";
 		ctx.date_mode = DATE_NORMAL;
-		pretty_print_commit(CMIT_FMT_USERFORMAT, commit, &ufbuf, &ctx);
+		pretty_print_commit(&ctx, commit, &ufbuf);
 		buffer = ufbuf.buf;
 	} else if (*buffer) {
 		buffer++;

@@ -327,9 +327,11 @@ int cmd_whatchanged(int argc, const char **argv, const char *prefix)
 static void show_tagger(char *buf, int len, struct rev_info *rev)
 {
 	struct strbuf out = STRBUF_INIT;
+	struct pretty_print_context pp = {0};
 
-	pp_user_info("Tagger", rev->commit_format, &out, buf, rev->date_mode,
-		get_log_output_encoding());
+	pp.fmt = rev->commit_format;
+	pp.date_mode = rev->date_mode;
+	pp_user_info(&pp, "Tagger", &out, buf, get_log_output_encoding());
 	printf("%s", out.buf);
 	strbuf_release(&out);
 }
@@ -715,10 +717,8 @@ static void make_cover_letter(struct rev_info *rev, int use_stdout,
 			      int nr, struct commit **list, struct commit *head)
 {
 	const char *committer;
-	const char *subject_start = NULL;
 	const char *body = "*** SUBJECT HERE ***\n\n*** BLURB HERE ***\n";
 	const char *msg;
-	const char *extra_headers = rev->extra_headers;
 	struct shortlog log;
 	struct strbuf sb = STRBUF_INIT;
 	int i;
@@ -726,6 +726,7 @@ static void make_cover_letter(struct rev_info *rev, int use_stdout,
 	struct diff_options opts;
 	int need_8bit_cte = 0;
 	struct commit *commit = NULL;
+	struct pretty_print_context pp = {0};
 
 	if (rev->commit_format != CMIT_FMT_EMAIL)
 		die("Cover letter needs email format");
@@ -757,7 +758,7 @@ static void make_cover_letter(struct rev_info *rev, int use_stdout,
 		free(commit);
 	}
 
-	log_write_email_headers(rev, head, &subject_start, &extra_headers,
+	log_write_email_headers(rev, head, &pp.subject, &pp.after_subject,
 				&need_8bit_cte);
 
 	for (i = 0; !need_8bit_cte && i < nr; i++)
@@ -765,11 +766,11 @@ static void make_cover_letter(struct rev_info *rev, int use_stdout,
 			need_8bit_cte = 1;
 
 	msg = body;
-	pp_user_info(NULL, CMIT_FMT_EMAIL, &sb, committer, DATE_RFC2822,
-		     encoding);
-	pp_title_line(CMIT_FMT_EMAIL, &msg, &sb, subject_start, extra_headers,
-		      encoding, need_8bit_cte);
-	pp_remainder(CMIT_FMT_EMAIL, &msg, &sb, 0);
+	pp.fmt = CMIT_FMT_EMAIL;
+	pp.date_mode = DATE_RFC2822;
+	pp_user_info(&pp, NULL, &sb, committer, encoding);
+	pp_title_line(&pp, &msg, &sb, encoding, need_8bit_cte);
+	pp_remainder(&pp, &msg, &sb, 0);
 	printf("%s\n", sb.buf);
 
 	strbuf_release(&sb);

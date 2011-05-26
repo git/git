@@ -505,7 +505,8 @@ void show_log(struct rev_info *opt)
 	ctx.abbrev = opt->diffopt.abbrev;
 	ctx.after_subject = extra_headers;
 	ctx.reflog_info = opt->reflog_info;
-	pretty_print_commit(opt->commit_format, commit, &msgbuf, &ctx);
+	ctx.fmt = opt->commit_format;
+	pretty_print_commit(&ctx, commit, &msgbuf);
 
 	if (opt->add_signoff)
 		append_signoff(&msgbuf, opt->add_signoff);
