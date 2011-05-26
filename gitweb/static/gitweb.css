@@ -295,6 +295,13 @@ td.current_head {
 	text-decoration: underline;
 }
 
+td.category {
+	background-color: #d9d8d1;
+	border-top: 1px solid #000000;
+	border-left: 1px solid #000000;
+	font-weight: bold;
+}
+
 table.diff_tree span.file_status.new {
 	color: #008000;
 }
