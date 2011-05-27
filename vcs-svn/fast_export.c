@@ -166,6 +166,7 @@ static int ends_with(const char *s, size_t len, const char *suffix)
 static int parse_cat_response_line(const char *header, off_t *len)
 {
 	size_t headerlen = strlen(header);
+	uintmax_t n;
 	const char *type;
 	const char *end;
 
@@ -174,12 +175,23 @@ static int parse_cat_response_line(const char *header, off_t *len)
 	type = memmem(header, headerlen, " blob ", strlen(" blob "));
 	if (!type)
 		return error("cat-blob header has wrong object type: %s", header);
-	*len = strtoumax(type + strlen(" blob "), (char **) &end, 10);
+	n = strtoumax(type + strlen(" blob "), (char **) &end, 10);
 	if (end == type + strlen(" blob "))
 		return error("cat-blob header does not contain length: %s", header);
+	if (memchr(type + strlen(" blob "), '-', end - type - strlen(" blob ")))
+		return error("cat-blob header contains negative length: %s", header);
+	if (n == UINTMAX_MAX || n > maximum_signed_value_of_type(off_t))
+		return error("blob too large for current definition of off_t");
+	*len = n;
 	if (*end)
 		return error("cat-blob header contains garbage after length: %s", header);
 	return 0;
+}
+
+static void check_preimage_overflow(off_t a, off_t b)
+{
+	if (signed_add_overflows(a, b))
+		die("blob too large for current definition of off_t");
 }
 
 static long apply_delta(off_t len, struct line_buffer *input,
@@ -204,6 +216,7 @@ static long apply_delta(off_t len, struct line_buffer *input,
 	}
 	if (old_mode == REPO_MODE_LNK) {
 		strbuf_addstr(&preimage.buf, "link ");
+		check_preimage_overflow(preimage_len, strlen("link "));
 		preimage_len += strlen("link ");
 	}
 	if (svndiff0_apply(input, len, &preimage, out))
