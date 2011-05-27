@@ -56,6 +56,9 @@ endif::git-format-patch[]
 	By giving a third parameter `<count>`, you can limit the
 	output to the first `<count>` lines, followed by
 	`...` if there are more.
++
+These parameters can also be set individually with `--stat-width=<width>`,
+`--stat-name-width=<name-width>` and `--stat-count=<count>`.
 
 --numstat::
 	Similar to `\--stat`, but shows number of added and
