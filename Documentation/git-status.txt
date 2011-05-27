@@ -78,18 +78,19 @@ OUTPUT
 The output from this command is designed to be used as a commit
 template comment, and all the output lines are prefixed with '#'.
 The default, long format, is designed to be human readable,
-verbose and descriptive.  They are subject to change in any time.
+verbose and descriptive.  Its contents and format are subject to change
+at any time.
 
 The paths mentioned in the output, unlike many other git commands, are
 made relative to the current directory if you are working in a
 subdirectory (this is on purpose, to help cutting and pasting). See
 the status.relativePaths config option below.
 
-In short-format, the status of each path is shown as
+In the short-format, the status of each path is shown as
 
 	XY PATH1 -> PATH2
 
-where `PATH1` is the path in the `HEAD`, and ` -> PATH2` part is
+where `PATH1` is the path in the `HEAD`, and the ` -> PATH2` part is
 shown only when `PATH1` corresponds to a different path in the
 index/worktree (i.e. the file is renamed). The 'XY' is a two-letter
 status code.
