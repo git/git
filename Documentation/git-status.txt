@@ -32,9 +32,10 @@ OPTIONS
 	Show the branch and tracking info even in short-format.
 
 --porcelain::
-	Give the output in a stable, easy-to-parse format for scripts.
-	Currently this is identical to --short output, but is guaranteed
-	not to change in the future, making it safe for scripts.
+	Give the output in an easy-to-parse format for scripts.
+	This is similar to the short output, but will remain stable
+	across git versions and regardless of user configuration. See
+	below for details.
 
 -u[<mode>]::
 --untracked-files[=<mode>]::
@@ -85,6 +86,9 @@ The paths mentioned in the output, unlike many other git commands, are
 made relative to the current directory if you are working in a
 subdirectory (this is on purpose, to help cutting and pasting). See
 the status.relativePaths config option below.
+
+Short Format
+~~~~~~~~~~~~
 
 In the short-format, the status of each path is shown as
 
@@ -144,7 +148,22 @@ If -b is used the short-format status is preceded by a line
 
 ## branchname tracking info
 
-There is an alternate -z format recommended for machine parsing.  In
+Porcelain Format
+~~~~~~~~~~~~~~~~
+
+The porcelain format is similar to the short format, but is guaranteed
+not to change in a backwards-incompatible way between git versions or
+based on user configuration. This makes it ideal for parsing by scripts.
+The description of the short format above also describes the porcelain
+format, with a few exceptions:
+
+1. The user's color.status configuration is not respected; color will
+   always be off.
+
+2. The user's status.relativePaths configuration is not respected; paths
+   shown will always be relative to the repository root.
+
+There is also an alternate -z format recommended for machine parsing. In
 that format, the status field is the same, but some other things
 change.  First, the '->' is omitted from rename entries and the field
 order is reversed (e.g 'from -> to' becomes 'to from'). Second, a NUL
