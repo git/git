@@ -15,7 +15,7 @@ static int apply_delta(int argc, char *argv[])
 {
 	struct line_buffer preimage = LINE_BUFFER_INIT;
 	struct line_buffer delta = LINE_BUFFER_INIT;
-	struct sliding_view preimage_view = SLIDING_VIEW_INIT(&preimage);
+	struct sliding_view preimage_view = SLIDING_VIEW_INIT(&preimage, -1);
 
 	if (argc != 5)
 		usage(test_svnfe_usage);
