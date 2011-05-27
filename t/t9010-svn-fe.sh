@@ -18,12 +18,13 @@ reinit_git () {
 
 try_dump () {
 	input=$1 &&
-	maybe_fail=${2:+test_$2} &&
+	maybe_fail_svnfe=${2:+test_$2} &&
+	maybe_fail_fi=${3:+test_$3} &&
 
 	{
-		$maybe_fail test-svn-fe "$input" >stream 3<backflow &
+		$maybe_fail_svnfe test-svn-fe "$input" >stream 3<backflow &
 	} &&
-	git fast-import --cat-blob-fd=3 <stream 3>backflow &&
+	$maybe_fail_fi git fast-import --cat-blob-fd=3 <stream 3>backflow &&
 	wait $!
 }
 
@@ -1045,6 +1046,39 @@ test_expect_success PIPE 'deltas need not consume the whole preimage' '
 	test_cmp expect.1 actual.1 &&
 	test_cmp expect.2 actual.2 &&
 	test_cmp expect.3 actual.3
+'
+
+test_expect_success PIPE 'no hang for delta trying to read past end of preimage' '
+	reinit_git &&
+	{
+		# COPY 1
+		printf "SVNQ%b%b" "Q\001\001\002Q" "\001Q" |
+		q_to_nul
+	} >greedy.delta &&
+	{
+		cat <<-\EOF &&
+		SVN-fs-dump-format-version: 3
+
+		Revision-number: 1
+		Prop-content-length: 10
+		Content-length: 10
+
+		PROPS-END
+
+		Node-path: bootstrap
+		Node-kind: file
+		Node-action: add
+		Text-delta: true
+		Prop-content-length: 10
+		EOF
+		echo Text-content-length: $(wc -c <greedy.delta) &&
+		echo Content-length: $((10 + $(wc -c <greedy.delta))) &&
+		echo &&
+		echo PROPS-END &&
+		cat greedy.delta &&
+		echo
+	} >greedydelta.dump &&
+	try_dump greedydelta.dump must_fail might_fail
 '
 
 test_expect_success 'set up svn repo' '
