@@ -774,11 +774,14 @@ int verify_path(const char *path)
 {
 	char c;
 
+	if (has_dos_drive_prefix(path))
+		return 0;
+
 	goto inside;
 	for (;;) {
 		if (!c)
 			return 1;
-		if (c == '/') {
+		if (is_dir_sep(c)) {
 inside:
 			c = *path++;
 			switch (c) {
