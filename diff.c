@@ -1278,6 +1278,10 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 	for (i = 0; i < data->nr; i++) {
 		struct diffstat_file *file = data->files[i];
 		uintmax_t change = file->added + file->deleted;
+		if (!data->files[i]->is_renamed &&
+			 (change == 0)) {
+			continue;
+		}
 		fill_print_name(file);
 		len = strlen(file->print_name);
 		if (max_len < len)
@@ -1309,6 +1313,11 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 		uintmax_t deleted = data->files[i]->deleted;
 		int name_len;
 
+		if (!data->files[i]->is_renamed &&
+			 (added + deleted == 0)) {
+			total_files--;
+			continue;
+		}
 		/*
 		 * "scale" the filename
 		 */
@@ -1341,11 +1350,6 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 			fprintf(options->file, "%s", line_prefix);
 			show_name(options->file, prefix, name, len);
 			fprintf(options->file, "  Unmerged\n");
-			continue;
-		}
-		else if (!data->files[i]->is_renamed &&
-			 (added + deleted == 0)) {
-			total_files--;
 			continue;
 		}
 
