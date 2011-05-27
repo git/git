@@ -332,7 +332,7 @@ abort)
 	read_basic_state
 	case "$head_name" in
 	refs/*)
-		git symbolic-ref HEAD $head_name ||
+		git symbolic-ref -m "rebase: aborting" HEAD $head_name ||
 		die "Could not move back to $head_name"
 		;;
 	esac
