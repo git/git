@@ -603,21 +603,16 @@ function handleResponse() {
 		return;
 	}
 
-	// extract new whole (complete) lines, and process them
-	while (xhr.prevDataLength !== xhr.responseText.length) {
-		if (xhr.readyState === 4 &&
-		    xhr.prevDataLength === xhr.responseText.length) {
-			break;
-		}
 
+	// extract new whole (complete) lines, and process them
+	if (xhr.prevDataLength !== xhr.responseText.length) {
 		xhr.prevDataLength = xhr.responseText.length;
 		var unprocessed = xhr.responseText.substring(xhr.nextReadPos);
 		xhr.nextReadPos = processData(unprocessed, xhr.nextReadPos);
-	} // end while
+	}
 
 	// did we finish work?
-	if (xhr.readyState === 4 &&
-	    xhr.prevDataLength === xhr.responseText.length) {
+	if (xhr.readyState === 4) {
 		responseLoaded(xhr);
 	}
 }
