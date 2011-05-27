@@ -420,8 +420,6 @@ function handleLine(commit, group) {
 
 // ----------------------------------------------------------------------
 
-var inProgress = false;   // are we processing response
-
 /**#@+
  * @constant
  */
@@ -536,7 +534,7 @@ function processData(unprocessed, nextReadPos) {
  *
  * @param {XMLHttpRequest} xhr: XMLHttpRequest object
  *
- * @globals pollTimer, commits, inProgress
+ * @globals pollTimer, commits
  */
 function handleError(xhr) {
 	errorInfo('Server error: ' +
@@ -544,8 +542,6 @@ function handleError(xhr) {
 
 	clearInterval(pollTimer);
 	commits = {}; // free memory
-
-	inProgress = false;
 }
 
 /**
@@ -553,7 +549,7 @@ function handleError(xhr) {
  *
  * @param {XMLHttpRequest} xhr: XMLHttpRequest object (unused)
  *
- * @globals pollTimer, commits, inProgress
+ * @globals pollTimer, commits
  */
 function responseLoaded(xhr) {
 	clearInterval(pollTimer);
@@ -561,15 +557,13 @@ function responseLoaded(xhr) {
 	fixColorsAndGroups();
 	writeTimeInterval();
 	commits = {}; // free memory
-
-	inProgress = false;
 }
 
 /**
  * handler for XMLHttpRequest onreadystatechange event
  * @see startBlame
  *
- * @globals xhr, inProgress
+ * @globals xhr
  */
 function handleResponse() {
 
@@ -609,13 +603,6 @@ function handleResponse() {
 		return;
 	}
 
-	// in case we were called before finished processing
-	if (inProgress) {
-		return;
-	} else {
-		inProgress = true;
-	}
-
 	// extract new whole (complete) lines, and process them
 	while (xhr.prevDataLength !== xhr.responseText.length) {
 		if (xhr.readyState === 4 &&
@@ -633,8 +620,6 @@ function handleResponse() {
 	    xhr.prevDataLength === xhr.responseText.length) {
 		responseLoaded(xhr);
 	}
-
-	inProgress = false;
 }
 
 // ============================================================
