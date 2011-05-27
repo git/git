@@ -715,7 +715,7 @@ extern char *expand_user_path(const char *path);
 char *enter_repo(char *path, int strict);
 static inline int is_absolute_path(const char *path)
 {
-	return path[0] == '/' || has_dos_drive_prefix(path);
+	return is_dir_sep(path[0]) || has_dos_drive_prefix(path);
 }
 int is_directory(const char *);
 const char *make_absolute_path(const char *path);
