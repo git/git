@@ -1247,6 +1247,7 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 	int width, name_width, count;
 	const char *reset, *add_c, *del_c;
 	const char *line_prefix = "";
+	int extra_shown = 0;
 	struct strbuf *msg = NULL;
 
 	if (data->nr == 0)
@@ -1376,8 +1377,6 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 		show_graph(options->file, '-', del, del_c, reset);
 		fprintf(options->file, "\n");
 	}
-	if (count < data->nr)
-		fprintf(options->file, "%s ...\n", line_prefix);
 	for (i = count; i < data->nr; i++) {
 		uintmax_t added = data->files[i]->added;
 		uintmax_t deleted = data->files[i]->deleted;
@@ -1388,6 +1387,9 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 		}
 		adds += added;
 		dels += deleted;
+		if (!extra_shown)
+			fprintf(options->file, "%s ...\n", line_prefix);
+		extra_shown = 1;
 	}
 	fprintf(options->file, "%s", line_prefix);
 	fprintf(options->file,
