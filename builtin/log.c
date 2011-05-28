@@ -102,6 +102,8 @@ static void cmd_log_init(int argc, const char **argv, const char *prefix,
 		rev->date_mode = parse_date_format(default_date_mode);
 
 	argc = setup_revisions(argc, argv, rev, opt);
+	if (quiet)
+		rev->diffopt.output_format |= DIFF_FORMAT_NO_OUTPUT;
 
 	/* Any arguments at this point are not recognized */
 	if (argc > 1)
