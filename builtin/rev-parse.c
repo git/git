@@ -44,6 +44,7 @@ static int is_rev_argument(const char *arg)
 		"--branches=",
 		"--branches",
 		"--header",
+		"--ignore-missing",
 		"--max-age=",
 		"--max-count=",
 		"--min-age=",
