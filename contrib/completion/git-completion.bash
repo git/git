@@ -1441,8 +1441,9 @@ _git_grep ()
 		__gitcomp "
 			--cached
 			--text --ignore-case --word-regexp --invert-match
-			--full-name
+			--full-name --line-number
 			--extended-regexp --basic-regexp --fixed-strings
+			--perl-regexp
 			--files-with-matches --name-only
 			--files-without-match
 			--max-depth

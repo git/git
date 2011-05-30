@@ -59,6 +59,84 @@ struct grep_opt *grep_opt_dup(const struct grep_opt *opt)
 	return ret;
 }
 
+static NORETURN void compile_regexp_failed(const struct grep_pat *p,
+		const char *error)
+{
+	char where[1024];
+
+	if (p->no)
+		sprintf(where, "In '%s' at %d, ", p->origin, p->no);
+	else if (p->origin)
+		sprintf(where, "%s, ", p->origin);
+	else
+		where[0] = 0;
+
+	die("%s'%s': %s", where, p->pattern, error);
+}
+
+#ifdef USE_LIBPCRE
+static void compile_pcre_regexp(struct grep_pat *p, const struct grep_opt *opt)
+{
+	const char *error;
+	int erroffset;
+	int options = 0;
+
+	if (opt->ignore_case)
+		options |= PCRE_CASELESS;
+
+	p->pcre_regexp = pcre_compile(p->pattern, options, &error, &erroffset,
+			NULL);
+	if (!p->pcre_regexp)
+		compile_regexp_failed(p, error);
+
+	p->pcre_extra_info = pcre_study(p->pcre_regexp, 0, &error);
+	if (!p->pcre_extra_info && error)
+		die("%s", error);
+}
+
+static int pcrematch(struct grep_pat *p, const char *line, const char *eol,
+		regmatch_t *match, int eflags)
+{
+	int ovector[30], ret, flags = 0;
+
+	if (eflags & REG_NOTBOL)
+		flags |= PCRE_NOTBOL;
+
+	ret = pcre_exec(p->pcre_regexp, p->pcre_extra_info, line, eol - line,
+			0, flags, ovector, ARRAY_SIZE(ovector));
+	if (ret < 0 && ret != PCRE_ERROR_NOMATCH)
+		die("pcre_exec failed with error code %d", ret);
+	if (ret > 0) {
+		ret = 0;
+		match->rm_so = ovector[0];
+		match->rm_eo = ovector[1];
+	}
+
+	return ret;
+}
+
+static void free_pcre_regexp(struct grep_pat *p)
+{
+	pcre_free(p->pcre_regexp);
+	pcre_free(p->pcre_extra_info);
+}
+#else /* !USE_LIBPCRE */
+static void compile_pcre_regexp(struct grep_pat *p, const struct grep_opt *opt)
+{
+	die("cannot use Perl-compatible regexes when not compiled with USE_LIBPCRE");
+}
+
+static int pcrematch(struct grep_pat *p, const char *line, const char *eol,
+		regmatch_t *match, int eflags)
+{
+	return 1;
+}
+
+static void free_pcre_regexp(struct grep_pat *p)
+{
+}
+#endif /* !USE_LIBPCRE */
+
 static void compile_regexp(struct grep_pat *p, struct grep_opt *opt)
 {
 	int err;
@@ -70,20 +148,17 @@ static void compile_regexp(struct grep_pat *p, struct grep_opt *opt)
 	if (p->fixed)
 		return;
 
+	if (opt->pcre) {
+		compile_pcre_regexp(p, opt);
+		return;
+	}
+
 	err = regcomp(&p->regexp, p->pattern, opt->regflags);
 	if (err) {
 		char errbuf[1024];
-		char where[1024];
-		if (p->no)
-			sprintf(where, "In '%s' at %d, ",
-				p->origin, p->no);
-		else if (p->origin)
-			sprintf(where, "%s, ", p->origin);
-		else
-			where[0] = 0;
 		regerror(err, &p->regexp, errbuf, 1024);
 		regfree(&p->regexp);
-		die("%s'%s': %s", where, p->pattern, errbuf);
+		compile_regexp_failed(p, errbuf);
 	}
 }
 
@@ -320,7 +395,10 @@ void free_grep_patterns(struct grep_opt *opt)
 		case GREP_PATTERN: /* atom */
 		case GREP_PATTERN_HEAD:
 		case GREP_PATTERN_BODY:
-			regfree(&p->regexp);
+			if (p->pcre_regexp)
+				free_pcre_regexp(p);
+			else
+				regfree(&p->regexp);
 			break;
 		default:
 			break;
@@ -412,6 +490,21 @@ static int regmatch(const regex_t *preg, char *line, char *eol,
 	return regexec(preg, line, 1, match, eflags);
 }
 
+static int patmatch(struct grep_pat *p, char *line, char *eol,
+		    regmatch_t *match, int eflags)
+{
+	int hit;
+
+	if (p->fixed)
+		hit = !fixmatch(p, line, eol, match);
+	else if (p->pcre_regexp)
+		hit = !pcrematch(p, line, eol, match, eflags);
+	else
+		hit = !regmatch(&p->regexp, line, eol, match, eflags);
+
+	return hit;
+}
+
 static int strip_timestamp(char *bol, char **eol_p)
 {
 	char *eol = *eol_p;
@@ -461,10 +554,7 @@ static int match_one_pattern(struct grep_pat *p, char *bol, char *eol,
 	}
 
  again:
-	if (p->fixed)
-		hit = !fixmatch(p, bol, eol, pmatch);
-	else
-		hit = !regmatch(&p->regexp, bol, eol, pmatch, eflags);
+	hit = patmatch(p, bol, eol, pmatch, eflags);
 
 	if (hit && p->word_regexp) {
 		if ((pmatch[0].rm_so < 0) ||
@@ -791,10 +881,7 @@ static int look_ahead(struct grep_opt *opt,
 		int hit;
 		regmatch_t m;
 
-		if (p->fixed)
-			hit = !fixmatch(p, bol, bol + *left_p, &m);
-		else
-			hit = !regmatch(&p->regexp, bol, bol + *left_p, &m, 0);
+		hit = patmatch(p, bol, bol + *left_p, &m, 0);
 		if (!hit || m.rm_so < 0 || m.rm_eo < 0)
 			continue;
 		if (earliest < 0 || m.rm_so < earliest)
@@ -891,7 +978,7 @@ static int grep_buffer_1(struct grep_opt *opt, const char *name,
 		int hit;
 
 		/*
-		 * look_ahead() skips quicly to the line that possibly
+		 * look_ahead() skips quickly to the line that possibly
 		 * has the next hit; don't call it if we need to do
 		 * something more than just skipping the current line
 		 * in response to an unmatch for the current line.  E.g.

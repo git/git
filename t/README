@@ -588,6 +588,11 @@ use these, and "test_set_prereq" for how to define your own.
    Test is not run by root user, and an attempt to write to an
    unwritable file is expected to fail correctly.
 
+ - LIBPCRE
+
+   Git was compiled with USE_LIBPCRE=YesPlease. Wrap any tests
+   that use git-grep --perl-regexp or git-grep -P in these.
+
 Tips for Writing Tests
 ----------------------
 

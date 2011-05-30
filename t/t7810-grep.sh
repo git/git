@@ -26,6 +26,17 @@ test_expect_success setup '
 		echo foo mmap bar_mmap
 		echo foo_mmap bar mmap baz
 	} >file &&
+	{
+		echo Hello world
+		echo HeLLo world
+		echo Hello_world
+		echo HeLLo_world
+	} >hello_world &&
+	{
+		echo "a+b*c"
+		echo "a+bc"
+		echo "abc"
+	} >ab &&
 	echo vvv >v &&
 	echo ww w >w &&
 	echo x x xx x >x &&
@@ -221,7 +232,17 @@ do
 		git grep --max-depth 0 -n -e vvv $H -- t . >actual &&
 		test_cmp expected actual
 	'
+	test_expect_success "grep $L with grep.extendedRegexp=false" '
+		echo "ab:a+bc" >expected &&
+		git -c grep.extendedRegexp=false grep "a+b*c" ab >actual &&
+		test_cmp expected actual
+	'
 
+	test_expect_success "grep $L with grep.extendedRegexp=true" '
+		echo "ab:abc" >expected &&
+		git -c grep.extendedRegexp=true grep "a+b*c" ab >actual &&
+		test_cmp expected actual
+	'
 done
 
 cat >expected <<EOF
@@ -596,6 +617,102 @@ double-dash:--
 EOF
 test_expect_success 'grep -e -- -- path' '
 	git grep -e -- -- double-dash >actual &&
+	test_cmp expected actual
+'
+
+cat >expected <<EOF
+hello.c:int main(int argc, const char **argv)
+hello.c:	printf("Hello world.\n");
+EOF
+
+test_expect_success LIBPCRE 'grep --perl-regexp pattern' '
+	git grep --perl-regexp "\p{Ps}.*?\p{Pe}" hello.c >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success LIBPCRE 'grep -P pattern' '
+	git grep -P "\p{Ps}.*?\p{Pe}" hello.c >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'grep pattern with grep.extendedRegexp=true' '
+	>empty &&
+	test_must_fail git -c grep.extendedregexp=true \
+		grep "\p{Ps}.*?\p{Pe}" hello.c >actual &&
+	test_cmp empty actual
+'
+
+test_expect_success LIBPCRE 'grep -P pattern with grep.extendedRegexp=true' '
+	git -c grep.extendedregexp=true \
+		grep -P "\p{Ps}.*?\p{Pe}" hello.c >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success LIBPCRE 'grep -P -v pattern' '
+	{
+		echo "ab:a+b*c"
+		echo "ab:a+bc"
+	} >expected &&
+	git grep -P -v "abc" ab >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success LIBPCRE 'grep -P -i pattern' '
+	{
+		echo "hello.c:	printf(\"Hello world.\n\");"
+	} >expected &&
+	git grep -P -i "PRINTF\([^\d]+\)" hello.c >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success LIBPCRE 'grep -P -w pattern' '
+	{
+		echo "hello_world:Hello world"
+		echo "hello_world:HeLLo world"
+	} >expected &&
+	git grep -P -w "He((?i)ll)o" hello_world >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'grep -G invalidpattern properly dies ' '
+	test_must_fail git grep -G "a["
+'
+
+test_expect_success 'grep -E invalidpattern properly dies ' '
+	test_must_fail git grep -E "a["
+'
+
+test_expect_success LIBPCRE 'grep -P invalidpattern properly dies ' '
+	test_must_fail git grep -P "a["
+'
+
+test_expect_success 'grep -G -E -F pattern' '
+	echo "ab:a+b*c" >expected &&
+	git grep -G -E -F "a+b*c" ab >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'grep -E -F -G pattern' '
+	echo "ab:a+bc" >expected &&
+	git grep -E -F -G "a+b*c" ab >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'grep -F -G -E pattern' '
+	echo "ab:abc" >expected &&
+	git grep -F -G -E "a+b*c" ab >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'grep -G -F -P -E pattern' '
+	>empty &&
+	test_must_fail git grep -G -F -P -E "a\x{2b}b\x{2a}c" ab >actual &&
+	test_cmp empty actual
+'
+
+test_expect_success LIBPCRE 'grep -G -F -E -P pattern' '
+	echo "ab:a+b*c" >expected &&
+	git grep -G -F -E -P "a\x{2b}b\x{2a}c" ab >actual &&
 	test_cmp expected actual
 '
 
