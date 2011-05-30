@@ -86,6 +86,11 @@ get_merge_tool_cmd () {
 }
 
 run_merge_tool () {
+	# If GIT_PREFIX is empty then we cannot use it in tools
+	# that expect to be able to chdir() to its value.
+	GIT_PREFIX=${GIT_PREFIX:-.}
+	export GIT_PREFIX
+
 	merge_tool_path="$(get_merge_tool_path "$1")" || exit
 	base_present="$2"
 	status=0
@@ -188,6 +193,7 @@ run_merge_tool () {
 			check_unchanged
 		else
 			"$merge_tool_path" -R -f -d -c "wincmd l" \
+				-c 'cd $GIT_PREFIX' \
 				"$LOCAL" "$REMOTE"
 		fi
 		;;
@@ -199,6 +205,7 @@ run_merge_tool () {
 			check_unchanged
 		else
 			"$merge_tool_path" -R -f -d -c "wincmd l" \
+				-c 'cd $GIT_PREFIX' \
 				"$LOCAL" "$REMOTE"
 		fi
 		;;

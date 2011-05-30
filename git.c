@@ -183,8 +183,6 @@ static int handle_alias(int *argcp, const char ***argv)
 		if (alias_string[0] == '!') {
 			const char **alias_argv;
 			int argc = *argcp, i;
-			struct strbuf sb = STRBUF_INIT;
-			const char *env[2];
 
 			commit_pager_choice();
 
@@ -195,13 +193,7 @@ static int handle_alias(int *argcp, const char ***argv)
 				alias_argv[i] = (*argv)[i];
 			alias_argv[argc] = NULL;
 
-			strbuf_addstr(&sb, "GIT_PREFIX=");
-			if (subdir)
-				strbuf_addstr(&sb, subdir);
-			env[0] = sb.buf;
-			env[1] = NULL;
-			ret = run_command_v_opt_cd_env(alias_argv, RUN_USING_SHELL, NULL, env);
-			strbuf_release(&sb);
+			ret = run_command_v_opt(alias_argv, RUN_USING_SHELL);
 			if (ret >= 0)   /* normal exit */
 				exit(ret);
 

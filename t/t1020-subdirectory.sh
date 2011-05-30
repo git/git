@@ -140,6 +140,22 @@ test_expect_success 'GIT_PREFIX for !alias' '
 	test_cmp expect actual
 '
 
+test_expect_success 'GIT_PREFIX for built-ins' '
+	# Use GIT_EXTERNAL_DIFF to test that the "diff" built-in
+	# receives the GIT_PREFIX variable.
+	printf "dir/" >expect &&
+	printf "#!/bin/sh\n" >diff &&
+	printf "printf \"\$GIT_PREFIX\"" >>diff &&
+	chmod +x diff &&
+	(
+		cd dir &&
+		printf "change" >two &&
+		env GIT_EXTERNAL_DIFF=./diff git diff >../actual
+		git checkout -- two
+	) &&
+	test_cmp expect actual
+'
+
 test_expect_success 'no file/rev ambiguity check inside .git' '
 	git commit -a -m 1 &&
 	(
