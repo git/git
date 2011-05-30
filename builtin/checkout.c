@@ -306,9 +306,8 @@ static void show_local_changes(struct object *head, struct diff_options *opts)
 static void describe_detached_head(const char *msg, struct commit *commit)
 {
 	struct strbuf sb = STRBUF_INIT;
-	struct pretty_print_context ctx = {0};
 	parse_commit(commit);
-	pretty_print_commit(CMIT_FMT_ONELINE, commit, &sb, &ctx);
+	pp_commit_easy(CMIT_FMT_ONELINE, commit, &sb);
 	fprintf(stderr, "%s %s... %s\n", msg,
 		find_unique_abbrev(commit->object.sha1, DEFAULT_ABBREV), sb.buf);
 	strbuf_release(&sb);
@@ -623,14 +622,12 @@ static int clear_commit_marks_from_one_ref(const char *refname,
 
 static void describe_one_orphan(struct strbuf *sb, struct commit *commit)
 {
-	struct pretty_print_context ctx = { 0 };
-
 	parse_commit(commit);
 	strbuf_addstr(sb, "  ");
 	strbuf_addstr(sb,
 		find_unique_abbrev(commit->object.sha1, DEFAULT_ABBREV));
 	strbuf_addch(sb, ' ');
-	pretty_print_commit(CMIT_FMT_ONELINE, commit, sb, &ctx);
+	pp_commit_easy(CMIT_FMT_ONELINE, commit, sb);
 	strbuf_addch(sb, '\n');
 }
 

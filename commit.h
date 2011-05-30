@@ -69,9 +69,11 @@ enum cmit_fmt {
 };
 
 struct pretty_print_context {
+	enum cmit_fmt fmt;
 	int abbrev;
 	const char *subject;
 	const char *after_subject;
+	int preserve_subject;
 	enum date_mode date_mode;
 	int need_8bit_cte;
 	int show_notes;
@@ -96,20 +98,20 @@ extern void userformat_find_requirements(const char *fmt, struct userformat_want
 extern void format_commit_message(const struct commit *commit,
 				  const char *format, struct strbuf *sb,
 				  const struct pretty_print_context *context);
-extern void pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit,
-				struct strbuf *sb,
-				const struct pretty_print_context *context);
-void pp_user_info(const char *what, enum cmit_fmt fmt, struct strbuf *sb,
-		   const char *line, enum date_mode dmode,
-		   const char *encoding);
-void pp_title_line(enum cmit_fmt fmt,
+extern void pretty_print_commit(const struct pretty_print_context *pp,
+				const struct commit *commit,
+				struct strbuf *sb);
+extern void pp_commit_easy(enum cmit_fmt fmt, const struct commit *commit,
+			   struct strbuf *sb);
+void pp_user_info(const struct pretty_print_context *pp,
+		  const char *what, struct strbuf *sb,
+		  const char *line, const char *encoding);
+void pp_title_line(const struct pretty_print_context *pp,
 		   const char **msg_p,
 		   struct strbuf *sb,
-		   const char *subject,
-		   const char *after_subject,
 		   const char *encoding,
 		   int need_8bit_cte);
-void pp_remainder(enum cmit_fmt fmt,
+void pp_remainder(const struct pretty_print_context *pp,
 		  const char **msg_p,
 		  struct strbuf *sb,
 		  int indent);

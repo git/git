@@ -318,16 +318,16 @@ needquote:
 	strbuf_addstr(sb, "?=");
 }
 
-void pp_user_info(const char *what, enum cmit_fmt fmt, struct strbuf *sb,
-		  const char *line, enum date_mode dmode,
-		  const char *encoding)
+void pp_user_info(const struct pretty_print_context *pp,
+		  const char *what, struct strbuf *sb,
+		  const char *line, const char *encoding)
 {
 	char *date;
 	int namelen;
 	unsigned long time;
 	int tz;
 
-	if (fmt == CMIT_FMT_ONELINE)
+	if (pp->fmt == CMIT_FMT_ONELINE)
 		return;
 	date = strchr(line, '>');
 	if (!date)
@@ -336,7 +336,7 @@ void pp_user_info(const char *what, enum cmit_fmt fmt, struct strbuf *sb,
 	time = strtoul(date, &date, 10);
 	tz = strtol(date, NULL, 10);
 
-	if (fmt == CMIT_FMT_EMAIL) {
+	if (pp->fmt == CMIT_FMT_EMAIL) {
 		char *name_tail = strchr(line, '<');
 		int display_name_length;
 		int final_line;
@@ -366,18 +366,18 @@ void pp_user_info(const char *what, enum cmit_fmt fmt, struct strbuf *sb,
 		strbuf_addch(sb, '\n');
 	} else {
 		strbuf_addf(sb, "%s: %.*s%.*s\n", what,
-			      (fmt == CMIT_FMT_FULLER) ? 4 : 0,
+			      (pp->fmt == CMIT_FMT_FULLER) ? 4 : 0,
 			      "    ", namelen, line);
 	}
-	switch (fmt) {
+	switch (pp->fmt) {
 	case CMIT_FMT_MEDIUM:
-		strbuf_addf(sb, "Date:   %s\n", show_date(time, tz, dmode));
+		strbuf_addf(sb, "Date:   %s\n", show_date(time, tz, pp->date_mode));
 		break;
 	case CMIT_FMT_EMAIL:
 		strbuf_addf(sb, "Date: %s\n", show_date(time, tz, DATE_RFC2822));
 		break;
 	case CMIT_FMT_FULLER:
-		strbuf_addf(sb, "%sDate: %s\n", what, show_date(time, tz, dmode));
+		strbuf_addf(sb, "%sDate: %s\n", what, show_date(time, tz, pp->date_mode));
 		break;
 	default:
 		/* notin' */
@@ -408,12 +408,12 @@ static const char *skip_empty_lines(const char *msg)
 	return msg;
 }
 
-static void add_merge_info(enum cmit_fmt fmt, struct strbuf *sb,
-			const struct commit *commit, int abbrev)
+static void add_merge_info(const struct pretty_print_context *pp,
+			   struct strbuf *sb, const struct commit *commit)
 {
 	struct commit_list *parent = commit->parents;
 
-	if ((fmt == CMIT_FMT_ONELINE) || (fmt == CMIT_FMT_EMAIL) ||
+	if ((pp->fmt == CMIT_FMT_ONELINE) || (pp->fmt == CMIT_FMT_EMAIL) ||
 	    !parent || !parent->next)
 		return;
 
@@ -422,8 +422,8 @@ static void add_merge_info(enum cmit_fmt fmt, struct strbuf *sb,
 	while (parent) {
 		struct commit *p = parent->item;
 		const char *hex = NULL;
-		if (abbrev)
-			hex = find_unique_abbrev(p->object.sha1, abbrev);
+		if (pp->abbrev)
+			hex = find_unique_abbrev(p->object.sha1, pp->abbrev);
 		if (!hex)
 			hex = sha1_to_hex(p->object.sha1);
 		parent = parent->next;
@@ -1116,9 +1116,7 @@ void format_commit_message(const struct commit *commit,
 		free(context.message);
 }
 
-static void pp_header(enum cmit_fmt fmt,
-		      int abbrev,
-		      enum date_mode dmode,
+static void pp_header(const struct pretty_print_context *pp,
 		      const char *encoding,
 		      const struct commit *commit,
 		      const char **msg_p,
@@ -1138,7 +1136,7 @@ static void pp_header(enum cmit_fmt fmt,
 			/* End of header */
 			return;
 
-		if (fmt == CMIT_FMT_RAW) {
+		if (pp->fmt == CMIT_FMT_RAW) {
 			strbuf_add(sb, line, linelen);
 			continue;
 		}
@@ -1158,7 +1156,7 @@ static void pp_header(enum cmit_fmt fmt,
 				;
 			/* with enough slop */
 			strbuf_grow(sb, num * 50 + 20);
-			add_merge_info(fmt, sb, commit, abbrev);
+			add_merge_info(pp, sb, commit);
 			parents_shown = 1;
 		}
 
@@ -1169,32 +1167,31 @@ static void pp_header(enum cmit_fmt fmt,
 		 */
 		if (!memcmp(line, "author ", 7)) {
 			strbuf_grow(sb, linelen + 80);
-			pp_user_info("Author", fmt, sb, line + 7, dmode, encoding);
+			pp_user_info(pp, "Author", sb, line + 7, encoding);
 		}
 		if (!memcmp(line, "committer ", 10) &&
-		    (fmt == CMIT_FMT_FULL || fmt == CMIT_FMT_FULLER)) {
+		    (pp->fmt == CMIT_FMT_FULL || pp->fmt == CMIT_FMT_FULLER)) {
 			strbuf_grow(sb, linelen + 80);
-			pp_user_info("Commit", fmt, sb, line + 10, dmode, encoding);
+			pp_user_info(pp, "Commit", sb, line + 10, encoding);
 		}
 	}
 }
 
-void pp_title_line(enum cmit_fmt fmt,
+void pp_title_line(const struct pretty_print_context *pp,
 		   const char **msg_p,
 		   struct strbuf *sb,
-		   const char *subject,
-		   const char *after_subject,
 		   const char *encoding,
 		   int need_8bit_cte)
 {
 	struct strbuf title;
 
 	strbuf_init(&title, 80);
-	*msg_p = format_subject(&title, *msg_p, " ");
+	*msg_p = format_subject(&title, *msg_p,
+				pp->preserve_subject ? "\n" : " ");
 
 	strbuf_grow(sb, title.len + 1024);
-	if (subject) {
-		strbuf_addstr(sb, subject);
+	if (pp->subject) {
+		strbuf_addstr(sb, pp->subject);
 		add_rfc2047(sb, title.buf, title.len, encoding);
 	} else {
 		strbuf_addbuf(sb, &title);
@@ -1208,16 +1205,16 @@ void pp_title_line(enum cmit_fmt fmt,
 			"Content-Transfer-Encoding: 8bit\n";
 		strbuf_addf(sb, header_fmt, encoding);
 	}
-	if (after_subject) {
-		strbuf_addstr(sb, after_subject);
+	if (pp->after_subject) {
+		strbuf_addstr(sb, pp->after_subject);
 	}
-	if (fmt == CMIT_FMT_EMAIL) {
+	if (pp->fmt == CMIT_FMT_EMAIL) {
 		strbuf_addch(sb, '\n');
 	}
 	strbuf_release(&title);
 }
 
-void pp_remainder(enum cmit_fmt fmt,
+void pp_remainder(const struct pretty_print_context *pp,
 		  const char **msg_p,
 		  struct strbuf *sb,
 		  int indent)
@@ -1234,7 +1231,7 @@ void pp_remainder(enum cmit_fmt fmt,
 		if (is_empty_line(line, &linelen)) {
 			if (first)
 				continue;
-			if (fmt == CMIT_FMT_SHORT)
+			if (pp->fmt == CMIT_FMT_SHORT)
 				break;
 		}
 		first = 0;
@@ -1259,19 +1256,19 @@ char *reencode_commit_message(const struct commit *commit, const char **encoding
 	return logmsg_reencode(commit, encoding);
 }
 
-void pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit,
-			 struct strbuf *sb,
-			 const struct pretty_print_context *context)
+void pretty_print_commit(const struct pretty_print_context *pp,
+			 const struct commit *commit,
+			 struct strbuf *sb)
 {
 	unsigned long beginning_of_body;
 	int indent = 4;
 	const char *msg = commit->buffer;
 	char *reencoded;
 	const char *encoding;
-	int need_8bit_cte = context->need_8bit_cte;
+	int need_8bit_cte = pp->need_8bit_cte;
 
-	if (fmt == CMIT_FMT_USERFORMAT) {
-		format_commit_message(commit, user_format, sb, context);
+	if (pp->fmt == CMIT_FMT_USERFORMAT) {
+		format_commit_message(commit, user_format, sb, pp);
 		return;
 	}
 
@@ -1280,14 +1277,14 @@ void pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit,
 		msg = reencoded;
 	}
 
-	if (fmt == CMIT_FMT_ONELINE || fmt == CMIT_FMT_EMAIL)
+	if (pp->fmt == CMIT_FMT_ONELINE || pp->fmt == CMIT_FMT_EMAIL)
 		indent = 0;
 
 	/*
 	 * We need to check and emit Content-type: to mark it
 	 * as 8-bit if we haven't done so.
 	 */
-	if (fmt == CMIT_FMT_EMAIL && need_8bit_cte == 0) {
+	if (pp->fmt == CMIT_FMT_EMAIL && need_8bit_cte == 0) {
 		int i, ch, in_body;
 
 		for (in_body = i = 0; (ch = msg[i]); i++) {
@@ -1306,9 +1303,8 @@ void pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit,
 		}
 	}
 
-	pp_header(fmt, context->abbrev, context->date_mode, encoding,
-		  commit, &msg, sb);
-	if (fmt != CMIT_FMT_ONELINE && !context->subject) {
+	pp_header(pp, encoding, commit, &msg, sb);
+	if (pp->fmt != CMIT_FMT_ONELINE && !pp->subject) {
 		strbuf_addch(sb, '\n');
 	}
 
@@ -1316,17 +1312,16 @@ void pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit,
 	msg = skip_empty_lines(msg);
 
 	/* These formats treat the title line specially. */
-	if (fmt == CMIT_FMT_ONELINE || fmt == CMIT_FMT_EMAIL)
-		pp_title_line(fmt, &msg, sb, context->subject,
-			      context->after_subject, encoding, need_8bit_cte);
+	if (pp->fmt == CMIT_FMT_ONELINE || pp->fmt == CMIT_FMT_EMAIL)
+		pp_title_line(pp, &msg, sb, encoding, need_8bit_cte);
 
 	beginning_of_body = sb->len;
-	if (fmt != CMIT_FMT_ONELINE)
-		pp_remainder(fmt, &msg, sb, indent);
+	if (pp->fmt != CMIT_FMT_ONELINE)
+		pp_remainder(pp, &msg, sb, indent);
 	strbuf_rtrim(sb);
 
 	/* Make sure there is an EOLN for the non-oneline case */
-	if (fmt != CMIT_FMT_ONELINE)
+	if (pp->fmt != CMIT_FMT_ONELINE)
 		strbuf_addch(sb, '\n');
 
 	/*
@@ -1334,12 +1329,20 @@ void pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit,
 	 * format.  Make sure we did not strip the blank line
 	 * between the header and the body.
 	 */
-	if (fmt == CMIT_FMT_EMAIL && sb->len <= beginning_of_body)
+	if (pp->fmt == CMIT_FMT_EMAIL && sb->len <= beginning_of_body)
 		strbuf_addch(sb, '\n');
 
-	if (context->show_notes)
+	if (pp->show_notes)
 		format_display_notes(commit->object.sha1, sb, encoding,
 				     NOTES_SHOW_HEADER | NOTES_INDENT);
 
 	free(reencoded);
+}
+
+void pp_commit_easy(enum cmit_fmt fmt, const struct commit *commit,
+		    struct strbuf *sb)
+{
+	struct pretty_print_context pp = {0};
+	pp.fmt = fmt;
+	pretty_print_commit(&pp, commit, sb);
 }
