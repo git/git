@@ -12,6 +12,7 @@ test_description='sparse checkout tests
 '
 
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/lib-read-tree.sh
 
 test_expect_success 'setup' '
 	cat >expected <<-\EOF &&
@@ -43,7 +44,7 @@ test_expect_success 'setup' '
 '
 
 test_expect_success 'read-tree without .git/info/sparse-checkout' '
-	git read-tree -m -u HEAD &&
+	read_tree_u_must_succeed -m -u HEAD &&
 	git ls-files --stage >result &&
 	test_cmp expected result &&
 	git ls-files -t >result &&
@@ -52,7 +53,7 @@ test_expect_success 'read-tree without .git/info/sparse-checkout' '
 
 test_expect_success 'read-tree with .git/info/sparse-checkout but disabled' '
 	echo >.git/info/sparse-checkout &&
-	git read-tree -m -u HEAD &&
+	read_tree_u_must_succeed -m -u HEAD &&
 	git ls-files -t >result &&
 	test_cmp expected.swt result &&
 	test -f init.t &&
@@ -62,7 +63,7 @@ test_expect_success 'read-tree with .git/info/sparse-checkout but disabled' '
 test_expect_success 'read-tree --no-sparse-checkout with empty .git/info/sparse-checkout and enabled' '
 	git config core.sparsecheckout true &&
 	echo >.git/info/sparse-checkout &&
-	git read-tree --no-sparse-checkout -m -u HEAD &&
+	read_tree_u_must_succeed --no-sparse-checkout -m -u HEAD &&
 	git ls-files -t >result &&
 	test_cmp expected.swt result &&
 	test -f init.t &&
@@ -72,7 +73,7 @@ test_expect_success 'read-tree --no-sparse-checkout with empty .git/info/sparse-
 test_expect_success 'read-tree with empty .git/info/sparse-checkout' '
 	git config core.sparsecheckout true &&
 	echo >.git/info/sparse-checkout &&
-	test_must_fail git read-tree -m -u HEAD &&
+	read_tree_u_must_fail -m -u HEAD &&
 	git ls-files --stage >result &&
 	test_cmp expected result &&
 	git ls-files -t >result &&
@@ -90,7 +91,7 @@ test_expect_success 'match directories with trailing slash' '
 	EOF
 
 	echo sub/ > .git/info/sparse-checkout &&
-	git read-tree -m -u HEAD &&
+	read_tree_u_must_succeed -m -u HEAD &&
 	git ls-files -t > result &&
 	test_cmp expected.swt-noinit result &&
 	test ! -f init.t &&
@@ -99,7 +100,7 @@ test_expect_success 'match directories with trailing slash' '
 
 test_expect_success 'match directories without trailing slash' '
 	echo sub >.git/info/sparse-checkout &&
-	git read-tree -m -u HEAD &&
+	read_tree_u_must_succeed -m -u HEAD &&
 	git ls-files -t >result &&
 	test_cmp expected.swt-noinit result &&
 	test ! -f init.t &&
@@ -149,7 +150,7 @@ EOF
 
 test_expect_success 'match directory pattern' '
 	echo "s?b" >.git/info/sparse-checkout &&
-	git read-tree -m -u HEAD &&
+	read_tree_u_must_succeed -m -u HEAD &&
 	git ls-files -t >result &&
 	test_cmp expected.swt-noinit result &&
 	test ! -f init.t &&
@@ -165,7 +166,7 @@ test_expect_success 'checkout area changes' '
 	EOF
 
 	echo init.t >.git/info/sparse-checkout &&
-	git read-tree -m -u HEAD &&
+	read_tree_u_must_succeed -m -u HEAD &&
 	git ls-files -t >result &&
 	test_cmp expected.swt-nosub result &&
 	test -f init.t &&
@@ -175,7 +176,7 @@ test_expect_success 'checkout area changes' '
 test_expect_success 'read-tree updates worktree, absent case' '
 	echo sub/added >.git/info/sparse-checkout &&
 	git checkout -f top &&
-	git read-tree -m -u HEAD^ &&
+	read_tree_u_must_succeed -m -u HEAD^ &&
 	test ! -f init.t
 '
 
@@ -183,7 +184,7 @@ test_expect_success 'read-tree updates worktree, dirty case' '
 	echo sub/added >.git/info/sparse-checkout &&
 	git checkout -f top &&
 	echo dirty >init.t &&
-	git read-tree -m -u HEAD^ &&
+	read_tree_u_must_succeed -m -u HEAD^ &&
 	grep -q dirty init.t &&
 	rm init.t
 '
@@ -192,14 +193,14 @@ test_expect_success 'read-tree removes worktree, dirty case' '
 	echo init.t >.git/info/sparse-checkout &&
 	git checkout -f top &&
 	echo dirty >added &&
-	git read-tree -m -u HEAD^ &&
+	read_tree_u_must_succeed -m -u HEAD^ &&
 	grep -q dirty added
 '
 
 test_expect_success 'read-tree adds to worktree, absent case' '
 	echo init.t >.git/info/sparse-checkout &&
 	git checkout -f removed &&
-	git read-tree -u -m HEAD^ &&
+	read_tree_u_must_succeed -u -m HEAD^ &&
 	test ! -f sub/added
 '
 
@@ -208,7 +209,7 @@ test_expect_success 'read-tree adds to worktree, dirty case' '
 	git checkout -f removed &&
 	mkdir sub &&
 	echo dirty >sub/added &&
-	git read-tree -u -m HEAD^ &&
+	read_tree_u_must_succeed -u -m HEAD^ &&
 	grep -q dirty sub/added
 '
 

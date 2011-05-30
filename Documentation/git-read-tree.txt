@@ -53,6 +53,11 @@ OPTIONS
 	trees that are not directly related to the current
 	working tree status into a temporary index file.
 
+-n::
+--dry-run::
+	Check if the command would error out, without updating the index
+	nor the files in the working tree for real.
+
 -v::
 	Show the progress of checking files out.
 

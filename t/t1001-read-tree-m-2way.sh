@@ -21,6 +21,7 @@ In the test, these paths are used:
         yomin   - not in H nor M
 '
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/lib-read-tree.sh
 
 read_tree_twoway () {
     git read-tree -m "$1" "$2" && git ls-files --stage
@@ -94,7 +95,7 @@ echo '+100644 X 0	yomin' >expected
 test_expect_success \
     '4 - carry forward local addition.' \
     'rm -f .git/index &&
-     git read-tree $treeH &&
+     read_tree_must_succeed $treeH &&
      git checkout-index -u -f -q -a &&
      git update-index --add yomin &&
      read_tree_twoway $treeH $treeM &&
@@ -106,7 +107,7 @@ test_expect_success \
 test_expect_success \
     '5 - carry forward local addition.' \
     'rm -f .git/index &&
-     git read-tree $treeH &&
+     read_tree_must_succeed $treeH &&
      git checkout-index -u -f -q -a &&
      echo yomin >yomin &&
      git update-index --add yomin &&
@@ -120,7 +121,7 @@ test_expect_success \
 test_expect_success \
     '6 - local addition already has the same.' \
     'rm -f .git/index &&
-     git read-tree $treeH &&
+     read_tree_must_succeed $treeH &&
      git checkout-index -u -f -q -a &&
      git update-index --add frotz &&
      read_tree_twoway $treeH $treeM &&
@@ -131,7 +132,7 @@ test_expect_success \
 test_expect_success \
     '7 - local addition already has the same.' \
     'rm -f .git/index &&
-     git read-tree $treeH &&
+     read_tree_must_succeed $treeH &&
      git checkout-index -u -f -q -a &&
      echo frotz >frotz &&
      git update-index --add frotz &&
@@ -144,7 +145,7 @@ test_expect_success \
 test_expect_success \
     '8 - conflicting addition.' \
     'rm -f .git/index &&
-     git read-tree $treeH &&
+     read_tree_must_succeed $treeH &&
      git checkout-index -u -f -q -a &&
      echo frotz frotz >frotz &&
      git update-index --add frotz &&
@@ -153,7 +154,7 @@ test_expect_success \
 test_expect_success \
     '9 - conflicting addition.' \
     'rm -f .git/index &&
-     git read-tree $treeH &&
+     read_tree_must_succeed $treeH &&
      git checkout-index -u -f -q -a &&
      echo frotz frotz >frotz &&
      git update-index --add frotz &&
@@ -163,7 +164,7 @@ test_expect_success \
 test_expect_success \
     '10 - path removed.' \
     'rm -f .git/index &&
-     git read-tree $treeH &&
+     read_tree_must_succeed $treeH &&
      git checkout-index -u -f -q -a &&
      echo rezrov >rezrov &&
      git update-index --add rezrov &&
@@ -174,7 +175,7 @@ test_expect_success \
 test_expect_success \
     '11 - dirty path removed.' \
     'rm -f .git/index &&
-     git read-tree $treeH &&
+     read_tree_must_succeed $treeH &&
      git checkout-index -u -f -q -a &&
      echo rezrov >rezrov &&
      git update-index --add rezrov &&
@@ -184,7 +185,7 @@ test_expect_success \
 test_expect_success \
     '12 - unmatching local changes being removed.' \
     'rm -f .git/index &&
-     git read-tree $treeH &&
+     read_tree_must_succeed $treeH &&
      git checkout-index -u -f -q -a &&
      echo rezrov rezrov >rezrov &&
      git update-index --add rezrov &&
@@ -193,7 +194,7 @@ test_expect_success \
 test_expect_success \
     '13 - unmatching local changes being removed.' \
     'rm -f .git/index &&
-     git read-tree $treeH &&
+     read_tree_must_succeed $treeH &&
      git checkout-index -u -f -q -a &&
      echo rezrov rezrov >rezrov &&
      git update-index --add rezrov &&
@@ -208,7 +209,7 @@ EOF
 test_expect_success \
     '14 - unchanged in two heads.' \
     'rm -f .git/index &&
-     git read-tree $treeH &&
+     read_tree_must_succeed $treeH &&
      git checkout-index -u -f -q -a &&
      echo nitfol nitfol >nitfol &&
      git update-index --add nitfol &&
@@ -221,7 +222,7 @@ test_expect_success \
 test_expect_success \
     '15 - unchanged in two heads.' \
     'rm -f .git/index &&
-     git read-tree $treeH &&
+     read_tree_must_succeed $treeH &&
      git checkout-index -u -f -q -a &&
      echo nitfol nitfol >nitfol &&
      git update-index --add nitfol &&
@@ -235,7 +236,7 @@ test_expect_success \
 test_expect_success \
     '16 - conflicting local change.' \
     'rm -f .git/index &&
-     git read-tree $treeH &&
+     read_tree_must_succeed $treeH &&
      git checkout-index -u -f -q -a &&
      echo bozbar bozbar >bozbar &&
      git update-index --add bozbar &&
@@ -244,7 +245,7 @@ test_expect_success \
 test_expect_success \
     '17 - conflicting local change.' \
     'rm -f .git/index &&
-     git read-tree $treeH &&
+     read_tree_must_succeed $treeH &&
      git checkout-index -u -f -q -a &&
      echo bozbar bozbar >bozbar &&
      git update-index --add bozbar &&
@@ -254,7 +255,7 @@ test_expect_success \
 test_expect_success \
     '18 - local change already having a good result.' \
     'rm -f .git/index &&
-     git read-tree $treeH &&
+     read_tree_must_succeed $treeH &&
      git checkout-index -u -f -q -a &&
      cat bozbar-new >bozbar &&
      git update-index --add bozbar &&
@@ -266,7 +267,7 @@ test_expect_success \
 test_expect_success \
     '19 - local change already having a good result, further modified.' \
     'rm -f .git/index &&
-     git read-tree $treeH &&
+     read_tree_must_succeed $treeH &&
      git checkout-index -u -f -q -a &&
      cat bozbar-new >bozbar &&
      git update-index --add bozbar &&
@@ -279,7 +280,7 @@ test_expect_success \
 test_expect_success \
     '20 - no local change, use new tree.' \
     'rm -f .git/index &&
-     git read-tree $treeH &&
+     read_tree_must_succeed $treeH &&
      git checkout-index -u -f -q -a &&
      cat bozbar-old >bozbar &&
      git update-index --add bozbar &&
@@ -291,7 +292,7 @@ test_expect_success \
 test_expect_success \
     '21 - no local change, dirty cache.' \
     'rm -f .git/index &&
-     git read-tree $treeH &&
+     read_tree_must_succeed $treeH &&
      git checkout-index -u -f -q -a &&
      cat bozbar-old >bozbar &&
      git update-index --add bozbar &&
@@ -302,7 +303,7 @@ test_expect_success \
 test_expect_success \
     '22 - local change cache updated.' \
     'rm -f .git/index &&
-     git read-tree $treeH &&
+     read_tree_must_succeed $treeH &&
      git checkout-index -u -f -q -a &&
      sed -e "s/such as/SUCH AS/" bozbar-old >bozbar &&
      git update-index --add bozbar &&
@@ -359,7 +360,7 @@ test_expect_success \
 
 test_expect_success \
     'a/b (untracked) vs a, plus c/d case test.' \
-    'test_must_fail git read-tree -u -m "$treeH" "$treeM" &&
+    'read_tree_u_must_fail -u -m "$treeH" "$treeM" &&
      git ls-files --stage &&
      test -f a/b'
 
@@ -386,7 +387,7 @@ test_expect_success \
 
 test_expect_success \
     'a/b vs a, plus c/d case test.' \
-    'git read-tree -u -m "$treeH" "$treeM" &&
+    'read_tree_u_must_succeed -u -m "$treeH" "$treeM" &&
      git ls-files --stage | tee >treeMcheck.out &&
      test_cmp treeM.out treeMcheck.out'
 
@@ -401,7 +402,7 @@ test_expect_success '-m references the correct modified tree' '
 	echo a >file-a &&
 	git add file-a &&
 	git ls-tree $(git write-tree) file-a >expect &&
-	git read-tree -m HEAD initial-mod &&
+	read_tree_must_succeed -m HEAD initial-mod &&
 	git ls-tree $(git write-tree) file-a >actual &&
 	test_cmp expect actual
 '
