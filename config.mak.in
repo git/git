@@ -18,6 +18,7 @@ bindir = @bindir@
 gitexecdir = @libexecdir@/git-core
 datarootdir = @datarootdir@
 template_dir = @datadir@/git-core/templates
+sysconfdir = @sysconfdir@
 
 mandir=@mandir@
 
