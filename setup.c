@@ -275,7 +275,7 @@ const char *read_gitfile_gently(const char *path)
 	const char *slash;
 	struct stat st;
 	int fd;
-	size_t len;
+	ssize_t len;
 
 	if (stat(path, &st))
 		return NULL;
