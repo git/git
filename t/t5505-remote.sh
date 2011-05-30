@@ -347,6 +347,21 @@ test_expect_success 'fetch mirrors do not act as mirrors during push' '
 	)
 '
 
+test_expect_success 'add fetch mirror with specific branches' '
+	git init --bare mirror-fetch/track &&
+	(cd mirror-fetch/track &&
+	 git remote add --mirror=fetch -t heads/new parent ../parent
+	)
+'
+
+test_expect_success 'fetch mirror respects specific branches' '
+	(cd mirror-fetch/track &&
+	 git fetch parent &&
+	 git rev-parse --verify refs/heads/new &&
+	 test_must_fail git rev-parse --verify refs/heads/renamed
+	)
+'
+
 test_expect_success 'add --mirror=push' '
 	mkdir mirror-push &&
 	git init --bare mirror-push/public &&
@@ -379,6 +394,13 @@ test_expect_success 'push mirrors do not act as mirrors during fetch' '
 	 git fetch public &&
 	 git rev-parse --verify refs/heads/renamed &&
 	 test_must_fail git rev-parse --verify refs/heads/renamed2
+	)
+'
+
+test_expect_success 'push mirrors do not allow you to specify refs' '
+	git init mirror-push/track &&
+	(cd mirror-push/track &&
+	 test_must_fail git remote add --mirror=push -t new public ../public
 	)
 '
 
