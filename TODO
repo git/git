@@ -8,6 +8,19 @@ The latest copy of this document is found at
 
 ----------------------------------------------------------------
 
+gmane=http://thread.gmane.org/gmane.comp.version-control.git/
+
+* Teach pack protocol to transfer estimated pack size and history
+  depth to allow receiving end make more intelligent decision between
+  unpack-objects and index-pack.
+
+  $gmane/173610
+
+* The "combined" diff always assumes it deals with text files. Teach it
+  to punt on binary and also use the textconv.
+
+  $gname/171613
+
 * Audit use of symbolic-ref without -m in our scripts and for each
   case decide if leaving a reflog entry for the HEAD is desirable.
   If so, add them.

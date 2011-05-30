@@ -259,7 +259,7 @@ sub day_summary {
 	if (exists $tag_by_date{$date}) {
 		for my $tagname (@{$tag_by_date{$date}}) {
 			$$total_tags++;
-			print " Tagged $tagname.\n" if (!$quiet);
+			print "Tagged $tagname.\n" if (!$quiet);
 		}
 	}
 

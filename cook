@@ -627,7 +627,7 @@ sub wildo {
 		}
 		next if (/^ /);
 		if (defined $topic &&
-		    /Will (?:\S+ )?merge /i) {
+		    /Will (?:\S+ )?(merge|drop|discard|cook)[. ]/i) {
 			wildo_queue(\%what, $_, $topic);
 			$topic = undef;
 		}
