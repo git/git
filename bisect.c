@@ -9,13 +9,7 @@
 #include "run-command.h"
 #include "log-tree.h"
 #include "bisect.h"
-
-struct sha1_array {
-	unsigned char (*sha1)[20];
-	int sha1_nr;
-	int sha1_alloc;
-	int sorted;
-};
+#include "sha1-array.h"
 
 static struct sha1_array good_revs;
 static struct sha1_array skipped_revs;
@@ -425,22 +419,15 @@ static void argv_array_push_sha1(struct argv_array *array,
 	argv_array_push(array, strbuf_detach(&buf, NULL));
 }
 
-static void sha1_array_push(struct sha1_array *array,
-			    const unsigned char *sha1)
-{
-	ALLOC_GROW(array->sha1, array->sha1_nr + 1, array->sha1_alloc);
-	hashcpy(array->sha1[array->sha1_nr++], sha1);
-}
-
 static int register_ref(const char *refname, const unsigned char *sha1,
 			int flags, void *cb_data)
 {
 	if (!strcmp(refname, "bad")) {
 		current_bad_sha1 = sha1;
 	} else if (!prefixcmp(refname, "good-")) {
-		sha1_array_push(&good_revs, sha1);
+		sha1_array_append(&good_revs, sha1);
 	} else if (!prefixcmp(refname, "skip-")) {
-		sha1_array_push(&skipped_revs, sha1);
+		sha1_array_append(&skipped_revs, sha1);
 	}
 
 	return 0;
@@ -477,41 +464,14 @@ static void read_bisect_paths(struct argv_array *array)
 	fclose(fp);
 }
 
-static int array_cmp(const void *a, const void *b)
-{
-	return hashcmp(a, b);
-}
-
-static void sort_sha1_array(struct sha1_array *array)
-{
-	qsort(array->sha1, array->sha1_nr, sizeof(*array->sha1), array_cmp);
-
-	array->sorted = 1;
-}
-
-static const unsigned char *sha1_access(size_t index, void *table)
-{
-	unsigned char (*array)[20] = table;
-	return array[index];
-}
-
-static int lookup_sha1_array(struct sha1_array *array,
-			     const unsigned char *sha1)
-{
-	if (!array->sorted)
-		sort_sha1_array(array);
-
-	return sha1_pos(sha1, array->sha1, array->sha1_nr, sha1_access);
-}
-
 static char *join_sha1_array_hex(struct sha1_array *array, char delim)
 {
 	struct strbuf joined_hexs = STRBUF_INIT;
 	int i;
 
-	for (i = 0; i < array->sha1_nr; i++) {
+	for (i = 0; i < array->nr; i++) {
 		strbuf_addstr(&joined_hexs, sha1_to_hex(array->sha1[i]));
-		if (i + 1 < array->sha1_nr)
+		if (i + 1 < array->nr)
 			strbuf_addch(&joined_hexs, delim);
 	}
 
@@ -546,13 +506,13 @@ struct commit_list *filter_skipped(struct commit_list *list,
 	if (count)
 		*count = 0;
 
-	if (!skipped_revs.sha1_nr)
+	if (!skipped_revs.nr)
 		return list;
 
 	while (list) {
 		struct commit_list *next = list->next;
 		list->next = NULL;
-		if (0 <= lookup_sha1_array(&skipped_revs,
+		if (0 <= sha1_array_lookup(&skipped_revs,
 					   list->item->object.sha1)) {
 			if (skipped_first && !*skipped_first)
 				*skipped_first = 1;
@@ -647,7 +607,7 @@ static struct commit_list *managed_skipped(struct commit_list *list,
 
 	*tried = NULL;
 
-	if (!skipped_revs.sha1_nr)
+	if (!skipped_revs.nr)
 		return list;
 
 	list = filter_skipped(list, tried, 0, &count, &skipped_first);
@@ -672,7 +632,7 @@ static void bisect_rev_setup(struct rev_info *revs, const char *prefix,
 	/* rev_argv.argv[0] will be ignored by setup_revisions */
 	argv_array_push(&rev_argv, xstrdup("bisect_rev_setup"));
 	argv_array_push_sha1(&rev_argv, current_bad_sha1, bad_format);
-	for (i = 0; i < good_revs.sha1_nr; i++)
+	for (i = 0; i < good_revs.nr; i++)
 		argv_array_push_sha1(&rev_argv, good_revs.sha1[i],
 				     good_format);
 	argv_array_push(&rev_argv, xstrdup("--"));
@@ -772,12 +732,12 @@ static struct commit *get_commit_reference(const unsigned char *sha1)
 
 static struct commit **get_bad_and_good_commits(int *rev_nr)
 {
-	int len = 1 + good_revs.sha1_nr;
+	int len = 1 + good_revs.nr;
 	struct commit **rev = xmalloc(len * sizeof(*rev));
 	int i, n = 0;
 
 	rev[n++] = get_commit_reference(current_bad_sha1);
-	for (i = 0; i < good_revs.sha1_nr; i++)
+	for (i = 0; i < good_revs.nr; i++)
 		rev[n++] = get_commit_reference(good_revs.sha1[i]);
 	*rev_nr = n;
 
@@ -840,9 +800,9 @@ static void check_merge_bases(void)
 		const unsigned char *mb = result->item->object.sha1;
 		if (!hashcmp(mb, current_bad_sha1)) {
 			handle_bad_merge_base();
-		} else if (0 <= lookup_sha1_array(&good_revs, mb)) {
+		} else if (0 <= sha1_array_lookup(&good_revs, mb)) {
 			continue;
-		} else if (0 <= lookup_sha1_array(&skipped_revs, mb)) {
+		} else if (0 <= sha1_array_lookup(&skipped_revs, mb)) {
 			handle_skipped_merge_base(mb);
 		} else {
 			printf("Bisecting: a merge base must be tested\n");
@@ -903,7 +863,7 @@ static void check_good_are_ancestors_of_bad(const char *prefix)
 		return;
 
 	/* Bisecting with no good rev is ok. */
-	if (good_revs.sha1_nr == 0)
+	if (good_revs.nr == 0)
 		return;
 
 	/* Check if all good revs are ancestor of the bad rev. */
@@ -968,7 +928,7 @@ int bisect_next_all(const char *prefix)
 	bisect_common(&revs);
 
 	revs.commits = find_bisection(revs.commits, &reaches, &all,
-				       !!skipped_revs.sha1_nr);
+				       !!skipped_revs.nr);
 	revs.commits = managed_skipped(revs.commits, &tried);
 
 	if (!revs.commits) {

@@ -10,6 +10,7 @@
 #include "remote.h"
 #include "transport.h"
 #include "string-list.h"
+#include "sha1-array.h"
 
 static const char receive_pack_usage[] = "git receive-pack <git-dir>";
 
@@ -731,14 +732,23 @@ static int delete_only(struct command *commands)
 	return 1;
 }
 
-static void add_one_alternate_ref(const struct ref *ref, void *unused)
+static void add_one_alternate_sha1(const unsigned char sha1[20], void *unused)
 {
-	add_extra_ref(".have", ref->old_sha1, 0);
+	add_extra_ref(".have", sha1, 0);
+}
+
+static void collect_one_alternate_ref(const struct ref *ref, void *data)
+{
+	struct sha1_array *sa = data;
+	sha1_array_append(sa, ref->old_sha1);
 }
 
 static void add_alternate_refs(void)
 {
-	foreach_alt_odb(refs_from_alternate_cb, add_one_alternate_ref);
+	struct sha1_array sa = SHA1_ARRAY_INIT;
+	for_each_alternate_ref(collect_one_alternate_ref, &sa);
+	sha1_array_for_each_unique(&sa, add_one_alternate_sha1, NULL);
+	sha1_array_clear(&sa);
 }
 
 int cmd_receive_pack(int argc, const char **argv, const char *prefix)
