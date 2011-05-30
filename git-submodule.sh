@@ -495,7 +495,7 @@ cmd_update()
 				# Run fetch only if $sha1 isn't present or it
 				# is not reachable from a ref.
 				(clear_local_git_env; cd "$path" &&
-					((rev=$(git rev-list -n 1 $sha1 --not --all 2>/dev/null) &&
+					( (rev=$(git rev-list -n 1 $sha1 --not --all 2>/dev/null) &&
 					 test -z "$rev") || git-fetch)) ||
 				die "Unable to fetch in submodule path '$path'"
 			fi
