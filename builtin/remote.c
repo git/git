@@ -193,8 +193,8 @@ static int add(int argc, const char **argv)
 
 	if (mirror && master)
 		die("specifying a master branch makes no sense with --mirror");
-	if (mirror && track.nr)
-		die("specifying branches to track makes no sense with --mirror");
+	if (mirror && !(mirror & MIRROR_FETCH) && track.nr)
+		die("specifying branches to track makes sense only with fetch mirrors");
 
 	name = argv[0];
 	url = argv[1];
