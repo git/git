@@ -5,6 +5,7 @@
 # same person appearing not to be so.
 #
 
+Alex Bennée <kernel-hacker@bennee.com>
 Alexander Gavrilov <angavrilov@gmail.com>
 Aneesh Kumar K.V <aneesh.kumar@gmail.com>
 Brian M. Carlson <sandals@crustytoothpaste.ath.cx>
@@ -15,6 +16,7 @@ Daniel Barkalow <barkalow@iabervon.org>
 David D. Kilzer <ddkilzer@kilzer.net>
 David Kågedal <davidk@lysator.liu.se>
 David S. Miller <davem@davemloft.net>
+Deskin Miller <deskinm@umich.edu>
 Dirk Süsserott <newsletter@dirk.my1.cc>
 Fredrik Kuivinen <freku045@student.liu.se>
 H. Peter Anvin <hpa@bonde.sc.orionmulti.com>
@@ -34,13 +36,15 @@ Lars Doelle <lars.doelle@on-line ! de>
 Lars Doelle <lars.doelle@on-line.de>
 Li Hong <leehong@pku.edu.cn>
 Lukas Sandström <lukass@etek.chalmers.se>
-Martin Langhoff <martin@catalyst.net.nz>
+Martin Langhoff <martin@laptop.org>
 Michael Coleman <tutufan@gmail.com>
+Michael J Gruber <git@drmicha.warpmail.net> <michaeljgruber+gmane@fastmail.fm>
 Michael W. Olson <mwolson@gnu.org>
 Michele Ballabio <barra_cuda@katamail.com>
 Nanako Shiraishi <nanako3@bluebottle.com>
 Nanako Shiraishi <nanako3@lavabit.com>
 Nguyễn Thái Ngọc Duy <pclouds@gmail.com>
+<nico@fluxnic.net> <nico@cam.org>
 Philippe Bruhat <book@cpan.org>
 Ramsay Allan Jones <ramsay@ramsay1.demon.co.uk>
 René Scharfe <rene.scharfe@lsrfire.ath.cx>
@@ -58,6 +62,7 @@ Uwe Kleine-König <ukleinek@informatik.uni-freiburg.de>
 Uwe Kleine-König <uzeisberger@io.fsforth.de>
 Uwe Kleine-König <zeisberg@informatik.uni-freiburg.de>
 Ville Skyttä <scop@xemacs.org>
+Vitaly "_Vi" Shukela <public_vi@tut.by>
 William Pursell <bill.pursell@gmail.com>
 YOSHIFUJI Hideaki <yoshfuji@linux-ipv6.org>
 anonymous <linux@horizon.com>

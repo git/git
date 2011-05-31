@@ -42,7 +42,7 @@ then
 fi
 
 # don't link to a workdir
-if test -L "$git_dir/config"
+if test -h "$git_dir/config"
 then
 	die "\"$orig_git\" is a working directory only, please specify" \
 		"a complete repository."
@@ -54,13 +54,13 @@ then
 	die "destination directory '$new_workdir' already exists."
 fi
 
-# make sure the the links use full paths
+# make sure the links use full paths
 git_dir=$(cd "$git_dir"; pwd)
 
 # create the workdir
 mkdir -p "$new_workdir/.git" || die "unable to create \"$new_workdir\"!"
 
-# create the links to the original repo.  explictly exclude index, HEAD and
+# create the links to the original repo.  explicitly exclude index, HEAD and
 # logs/HEAD from the list since they are purely related to the current working
 # directory, and should not be shared.
 for x in config refs logs/refs objects info hooks packed-refs remotes rr-cache svn

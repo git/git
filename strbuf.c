@@ -10,6 +10,15 @@ int prefixcmp(const char *str, const char *prefix)
 			return (unsigned char)*prefix - (unsigned char)*str;
 }
 
+int suffixcmp(const char *str, const char *suffix)
+{
+	int len = strlen(str), suflen = strlen(suffix);
+	if (len < suflen)
+		return -1;
+	else
+		return strcmp(str + len - suflen, suffix);
+}
+
 /*
  * Used as the default ->buf value, so that people can always assume
  * buf is non NULL and ->buf is NUL terminated even for a freshly
@@ -54,7 +63,8 @@ void strbuf_attach(struct strbuf *sb, void *buf, size_t len, size_t alloc)
 
 void strbuf_grow(struct strbuf *sb, size_t extra)
 {
-	if (sb->len + extra + 1 <= sb->len)
+	if (unsigned_add_overflows(extra, 1) ||
+	    unsigned_add_overflows(sb->len, extra + 1))
 		die("you want to use way too much memory");
 	if (!sb->alloc)
 		sb->buf = NULL;
@@ -89,13 +99,6 @@ void strbuf_ltrim(struct strbuf *sb)
 	}
 	memmove(sb->buf, b, sb->len);
 	sb->buf[sb->len] = '\0';
-}
-
-void strbuf_tolower(struct strbuf *sb)
-{
-	int i;
-	for (i = 0; i < sb->len; i++)
-		sb->buf[i] = tolower(sb->buf[i]);
 }
 
 struct strbuf **strbuf_split(const struct strbuf *sb, int delim)
@@ -150,7 +153,7 @@ int strbuf_cmp(const struct strbuf *a, const struct strbuf *b)
 void strbuf_splice(struct strbuf *sb, size_t pos, size_t len,
 				   const void *data, size_t dlen)
 {
-	if (pos + len < pos)
+	if (unsigned_add_overflows(pos, len))
 		die("you want to use way too much memory");
 	if (pos > sb->len)
 		die("`pos' is too far after the end of the buffer");
@@ -192,24 +195,29 @@ void strbuf_adddup(struct strbuf *sb, size_t pos, size_t len)
 
 void strbuf_addf(struct strbuf *sb, const char *fmt, ...)
 {
-	int len;
 	va_list ap;
+	va_start(ap, fmt);
+	strbuf_vaddf(sb, fmt, ap);
+	va_end(ap);
+}
+
+void strbuf_vaddf(struct strbuf *sb, const char *fmt, va_list ap)
+{
+	int len;
+	va_list cp;
 
 	if (!strbuf_avail(sb))
 		strbuf_grow(sb, 64);
-	va_start(ap, fmt);
-	len = vsnprintf(sb->buf + sb->len, sb->alloc - sb->len, fmt, ap);
-	va_end(ap);
+	va_copy(cp, ap);
+	len = vsnprintf(sb->buf + sb->len, sb->alloc - sb->len, fmt, cp);
+	va_end(cp);
 	if (len < 0)
-		die("your vsnprintf is broken");
+		die("BUG: your vsnprintf is broken (returned %d)", len);
 	if (len > strbuf_avail(sb)) {
 		strbuf_grow(sb, len);
-		va_start(ap, fmt);
 		len = vsnprintf(sb->buf + sb->len, sb->alloc - sb->len, fmt, ap);
-		va_end(ap);
-		if (len > strbuf_avail(sb)) {
-			die("this should not happen, your snprintf is broken");
-		}
+		if (len > strbuf_avail(sb))
+			die("BUG: your vsnprintf is broken (insatiable)");
 	}
 	strbuf_setlen(sb, sb->len + len);
 }
@@ -226,6 +234,12 @@ void strbuf_expand(struct strbuf *sb, const char *format, expand_fn_t fn,
 		if (!*percent)
 			break;
 		format = percent + 1;
+
+		if (*format == '%') {
+			strbuf_addch(sb, '%');
+			format++;
+			continue;
+		}
 
 		consumed = fn(sb, format, context);
 		if (consumed)
@@ -249,6 +263,17 @@ size_t strbuf_expand_dict_cb(struct strbuf *sb, const char *placeholder,
 		}
 	}
 	return 0;
+}
+
+void strbuf_addbuf_percentquote(struct strbuf *dst, const struct strbuf *src)
+{
+	int i, len = src->len;
+
+	for (i = 0; i < len; i++) {
+		if (src->buf[i] == '%')
+			strbuf_addch(dst, '%');
+		strbuf_addch(dst, src->buf[i]);
+	}
 }
 
 size_t strbuf_fread(struct strbuf *sb, size_t size, FILE *f)
@@ -322,7 +347,7 @@ int strbuf_readlink(struct strbuf *sb, const char *path, size_t hint)
 	return -1;
 }
 
-int strbuf_getline(struct strbuf *sb, FILE *fp, int term)
+int strbuf_getwholeline(struct strbuf *sb, FILE *fp, int term)
 {
 	int ch;
 
@@ -332,15 +357,24 @@ int strbuf_getline(struct strbuf *sb, FILE *fp, int term)
 
 	strbuf_reset(sb);
 	while ((ch = fgetc(fp)) != EOF) {
-		if (ch == term)
-			break;
 		strbuf_grow(sb, 1);
 		sb->buf[sb->len++] = ch;
+		if (ch == term)
+			break;
 	}
 	if (ch == EOF && sb->len == 0)
 		return EOF;
 
 	sb->buf[sb->len] = '\0';
+	return 0;
+}
+
+int strbuf_getline(struct strbuf *sb, FILE *fp, int term)
+{
+	if (strbuf_getwholeline(sb, fp, term))
+		return EOF;
+	if (sb->buf[sb->len-1] == term)
+		strbuf_setlen(sb, sb->len-1);
 	return 0;
 }
 
@@ -357,20 +391,4 @@ int strbuf_read_file(struct strbuf *sb, const char *path, size_t hint)
 		return -1;
 
 	return len;
-}
-
-int strbuf_branchname(struct strbuf *sb, const char *name)
-{
-	int len = strlen(name);
-	if (interpret_branch_name(name, sb) == len)
-		return 0;
-	strbuf_add(sb, name, len);
-	return len;
-}
-
-int strbuf_check_branch_ref(struct strbuf *sb, const char *name)
-{
-	strbuf_branchname(sb, name);
-	strbuf_splice(sb, 0, 0, "refs/heads/", 11);
-	return check_ref_format(sb->buf);
 }

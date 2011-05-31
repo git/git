@@ -93,8 +93,6 @@ git diff > out
 test_expect_success 'another test, without options' 'test_cmp expect out'
 
 cat << EOF > expect
-diff --git a/x b/x
-index d99af23..8b32fb5 100644
 EOF
 git diff -w > out
 test_expect_success 'another test, with -w' 'test_cmp expect out'
@@ -332,7 +330,7 @@ test_expect_success 'check space before tab in indent (space-before-tab: on)' '
 
 test_expect_success 'check spaces as indentation (indent-with-non-tab: off)' '
 
-	git config core.whitespace "-indent-with-non-tab"
+	git config core.whitespace "-indent-with-non-tab" &&
 	echo "        foo ();" > x &&
 	git diff --check
 
@@ -346,11 +344,81 @@ test_expect_success 'check spaces as indentation (indent-with-non-tab: on)' '
 
 '
 
+test_expect_success 'ditto, but tabwidth=9' '
+
+	git config core.whitespace "indent-with-non-tab,tabwidth=9" &&
+	git diff --check
+
+'
+
 test_expect_success 'check tabs and spaces as indentation (indent-with-non-tab: on)' '
 
 	git config core.whitespace "indent-with-non-tab" &&
 	echo "	                foo ();" > x &&
 	test_must_fail git diff --check
+
+'
+
+test_expect_success 'ditto, but tabwidth=10' '
+
+	git config core.whitespace "indent-with-non-tab,tabwidth=10" &&
+	test_must_fail git diff --check
+
+'
+
+test_expect_success 'ditto, but tabwidth=20' '
+
+	git config core.whitespace "indent-with-non-tab,tabwidth=20" &&
+	git diff --check
+
+'
+
+test_expect_success 'check tabs as indentation (tab-in-indent: off)' '
+
+	git config core.whitespace "-tab-in-indent" &&
+	echo "	foo ();" > x &&
+	git diff --check
+
+'
+
+test_expect_success 'check tabs as indentation (tab-in-indent: on)' '
+
+	git config core.whitespace "tab-in-indent" &&
+	echo "	foo ();" > x &&
+	test_must_fail git diff --check
+
+'
+
+test_expect_success 'check tabs and spaces as indentation (tab-in-indent: on)' '
+
+	git config core.whitespace "tab-in-indent" &&
+	echo "	                foo ();" > x &&
+	test_must_fail git diff --check
+
+'
+
+test_expect_success 'ditto, but tabwidth=1 (must be irrelevant)' '
+
+	git config core.whitespace "tab-in-indent,tabwidth=1" &&
+	test_must_fail git diff --check
+
+'
+
+test_expect_success 'check tab-in-indent and indent-with-non-tab conflict' '
+
+	git config core.whitespace "tab-in-indent,indent-with-non-tab" &&
+	echo "foo ();" > x &&
+	test_must_fail git diff --check
+
+'
+
+test_expect_success 'check tab-in-indent excluded from wildcard whitespace attribute' '
+
+	git config --unset core.whitespace &&
+	echo "x whitespace" > .gitattributes &&
+	echo "	  foo ();" > x &&
+	git diff --check &&
+	rm -f .gitattributes
 
 '
 
@@ -362,10 +430,17 @@ test_expect_success 'line numbers in --check output are correct' '
 
 '
 
-test_expect_success 'checkdiff detects trailing blank lines' '
+test_expect_success 'checkdiff detects new trailing blank lines (1)' '
 	echo "foo();" >x &&
 	echo "" >>x &&
-	git diff --check | grep "ends with blank"
+	git diff --check | grep "new blank line"
+'
+
+test_expect_success 'checkdiff detects new trailing blank lines (2)' '
+	{ echo a; echo b; echo; echo; } >x &&
+	git add x &&
+	{ echo a; echo; echo; echo; echo; } >x &&
+	git diff --check | grep "new blank line"
 '
 
 test_expect_success 'checkdiff allows new blank lines' '
@@ -377,6 +452,55 @@ test_expect_success 'checkdiff allows new blank lines' '
 		cat y
 	) >x &&
 	git diff --check
+'
+
+cat <<EOF >expect
+EOF
+test_expect_success 'whitespace-only changes not reported' '
+	git reset --hard &&
+	echo >x "hello world" &&
+	git add x &&
+	git commit -m "hello 1" &&
+	echo >x "hello  world" &&
+	git diff -b >actual &&
+	test_cmp expect actual
+'
+
+cat <<EOF >expect
+diff --git a/x b/z
+similarity index NUM%
+rename from x
+rename to z
+index 380c32a..a97b785 100644
+EOF
+test_expect_success 'whitespace-only changes reported across renames' '
+	git reset --hard &&
+	for i in 1 2 3 4 5 6 7 8 9; do echo "$i$i$i$i$i$i"; done >x &&
+	git add x &&
+	git commit -m "base" &&
+	sed -e "5s/^/ /" x >z &&
+	git rm x &&
+	git add z &&
+	git diff -w -M --cached |
+	sed -e "/^similarity index /s/[0-9][0-9]*/NUM/" >actual &&
+	test_cmp expect actual
+'
+
+cat >expected <<\EOF
+diff --git a/empty b/void
+similarity index 100%
+rename from empty
+rename to void
+EOF
+
+test_expect_success 'rename empty' '
+	git reset --hard &&
+	>empty &&
+	git add empty &&
+	git commit -m empty &&
+	git mv empty void &&
+	git diff -w --cached -M >current &&
+	test_cmp expected current
 '
 
 test_expect_success 'combined diff with autocrlf conversion' '
@@ -393,6 +517,43 @@ test_expect_success 'combined diff with autocrlf conversion' '
 	git diff | sed -e "1,/^@@@/d" >actual &&
 	! grep "^-" actual
 
+'
+
+# Start testing the colored format for whitespace checks
+
+test_expect_success 'setup diff colors' '
+	git config color.diff always &&
+	git config color.diff.plain normal &&
+	git config color.diff.meta bold &&
+	git config color.diff.frag cyan &&
+	git config color.diff.func normal &&
+	git config color.diff.old red &&
+	git config color.diff.new green &&
+	git config color.diff.commit yellow &&
+	git config color.diff.whitespace "normal red" &&
+
+	git config core.autocrlf false
+'
+cat >expected <<\EOF
+<BOLD>diff --git a/x b/x<RESET>
+<BOLD>index 9daeafb..2874b91 100644<RESET>
+<BOLD>--- a/x<RESET>
+<BOLD>+++ b/x<RESET>
+<CYAN>@@ -1 +1,4 @@<RESET>
+ test<RESET>
+<GREEN>+<RESET><GREEN>{<RESET>
+<GREEN>+<RESET><BRED>	<RESET>
+<GREEN>+<RESET><GREEN>}<RESET>
+EOF
+
+test_expect_success 'diff that introduces a line with only tabs' '
+	git config core.whitespace blank-at-eol &&
+	git reset --hard &&
+	echo "test" > x &&
+	git commit -m "initial" x &&
+	echo "{NTN}" | tr "NT" "\n\t" >> x &&
+	git -c color.diff=always diff | test_decode_color >current &&
+	test_cmp expected current
 '
 
 test_done

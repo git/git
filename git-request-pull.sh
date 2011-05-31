@@ -1,4 +1,4 @@
-#!/bin/sh -e
+#!/bin/sh
 # Copyright 2005, Ryan Anderson <ryan@michonline.com>
 #
 # This file is licensed under the GPL v2, or a later version
@@ -8,12 +8,32 @@ USAGE='<start> <url> [<end>]'
 LONG_USAGE='Summarizes the changes between two commits to the standard output,
 and includes the given URL in the generated summary.'
 SUBDIRECTORY_OK='Yes'
-OPTIONS_SPEC=
+OPTIONS_KEEPDASHDASH=
+OPTIONS_SPEC='git request-pull [options] start url [end]
+--
+p    show patch text as well
+'
+
 . git-sh-setup
-. git-parse-remote
 
 GIT_PAGER=
 export GIT_PAGER
+
+patch=
+while	case "$#" in 0) break ;; esac
+do
+	case "$1" in
+	-p)
+		patch=-p ;;
+	--)
+		shift; break ;;
+	-*)
+		usage ;;
+	*)
+		break ;;
+	esac
+	shift
+done
 
 base=$1
 url=$2
@@ -34,7 +54,7 @@ branch=$(git ls-remote "$url" \
 		p
 		q
 	}")
-url=$(get_remote_url "$url")
+url=$(git ls-remote --get-url "$url")
 if [ -z "$branch" ]; then
 	echo "warn: No branch of $url is at:" >&2
 	git log --max-count=1 --pretty='tformat:warn:   %h: %s' $headrev >&2
@@ -45,14 +65,14 @@ if [ -z "$branch" ]; then
 	status=1
 fi
 
-echo "The following changes since commit $baserev:"
-git shortlog --max-count=1 $baserev | sed -e 's/^\(.\)/  \1/'
+git show -s --format='The following changes since commit %H:
 
-echo "are available in the git repository at:"
-echo
-echo "  $url $branch"
-echo
+  %s (%ci)
 
-git shortlog ^$baserev $headrev
-git diff -M --stat --summary $merge_base $headrev
+are available in the git repository at:' $baserev &&
+echo "  $url $branch" &&
+echo &&
+
+git shortlog ^$baserev $headrev &&
+git diff -M --stat --summary $patch $merge_base..$headrev || exit
 exit $status

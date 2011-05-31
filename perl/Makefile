@@ -29,16 +29,16 @@ $(makfile): ../GIT-CFLAGS Makefile
 	'$(PERL_PATH_SQ)' -MError -e 'exit($$Error::VERSION < 0.15009)' || \
 	echo '	cp private-Error.pm blib/lib/Error.pm' >> $@
 	echo install: >> $@
-	echo '	mkdir -p "$(instdir_SQ)"' >> $@
-	echo '	$(RM) "$(instdir_SQ)/Git.pm"; cp Git.pm "$(instdir_SQ)"' >> $@
-	echo '	$(RM) "$(instdir_SQ)/Error.pm"' >> $@
+	echo '	mkdir -p "$$(DESTDIR)$(instdir_SQ)"' >> $@
+	echo '	$(RM) "$$(DESTDIR)$(instdir_SQ)/Git.pm"; cp Git.pm "$$(DESTDIR)$(instdir_SQ)"' >> $@
+	echo '	$(RM) "$$(DESTDIR)$(instdir_SQ)/Error.pm"' >> $@
 	'$(PERL_PATH_SQ)' -MError -e 'exit($$Error::VERSION < 0.15009)' || \
-	echo '	cp private-Error.pm "$(instdir_SQ)/Error.pm"' >> $@
+	echo '	cp private-Error.pm "$$(DESTDIR)$(instdir_SQ)/Error.pm"' >> $@
 	echo instlibdir: >> $@
 	echo '	echo $(instdir_SQ)' >> $@
 else
 $(makfile): Makefile.PL ../GIT-CFLAGS
-	$(PERL_PATH) $< PREFIX='$(prefix_SQ)'
+	$(PERL_PATH) $< PREFIX='$(prefix_SQ)' INSTALL_BASE=''
 endif
 
 # this is just added comfort for calling make directly in perl dir

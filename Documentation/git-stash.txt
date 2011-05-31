@@ -13,14 +13,14 @@ SYNOPSIS
 'git stash' drop [-q|--quiet] [<stash>]
 'git stash' ( pop | apply ) [--index] [-q|--quiet] [<stash>]
 'git stash' branch <branchname> [<stash>]
-'git stash' [save [--keep-index] [-q|--quiet] [<message>]]
+'git stash' [save [--patch] [-k|--[no-]keep-index] [-q|--quiet] [<message>]]
 'git stash' clear
 'git stash' create
 
 DESCRIPTION
 -----------
 
-Use 'git stash' when you want to record the current state of the
+Use `git stash` when you want to record the current state of the
 working directory and the index, but want to go back to a clean
 working directory.  The command saves your local modifications away
 and reverts the working directory to match the `HEAD` commit.
@@ -33,7 +33,7 @@ A stash is by default listed as "WIP on 'branchname' ...", but
 you can give a more descriptive message on the command line when
 you create one.
 
-The latest stash you created is stored in `$GIT_DIR/refs/stash`; older
+The latest stash you created is stored in `refs/stash`; older
 stashes are found in the reflog of this reference and can be named using
 the usual reflog syntax (e.g. `stash@\{0}` is the most recently
 created stash, `stash@\{1}` is the one before it, `stash@\{2.hours.ago}`
@@ -42,15 +42,27 @@ is also possible).
 OPTIONS
 -------
 
-save [--keep-index] [-q|--quiet] [<message>]::
+save [--patch] [--[no-]keep-index] [-q|--quiet] [<message>]::
 
 	Save your local modifications to a new 'stash', and run `git reset
-	--hard` to revert them.  This is the default action when no
-	subcommand is given. The <message> part is optional and gives
-	the description along with the stashed state.
+	--hard` to revert them.  The <message> part is optional and gives
+	the description along with the stashed state.  For quickly making
+	a snapshot, you can omit _both_ "save" and <message>, but giving
+	only <message> does not trigger this action to prevent a misspelled
+	subcommand from making an unwanted stash.
 +
 If the `--keep-index` option is used, all changes already added to the
 index are left intact.
++
+With `--patch`, you can interactively select hunks from in the diff
+between HEAD and the working tree to be stashed.  The stash entry is
+constructed such that its index state is the same as the index state
+of your repository, and its worktree contains only the changes you
+selected interactively.  The selected changes are then rolled back
+from your worktree.
++
+The `--patch` option implies `--keep-index`.  You can use
+`--no-keep-index` to override this.
 
 list [<options>]::
 
@@ -65,7 +77,7 @@ stash@{0}: WIP on submit: 6ebd0e2... Update git-stash documentation
 stash@{1}: On master: 9cc0589... Add git-stash
 ----------------------------------------------------------------
 +
-The command takes options applicable to the 'git-log'
+The command takes options applicable to the 'git log'
 command to control what is shown and how. See linkgit:git-log[1].
 
 show [<stash>]::
@@ -73,7 +85,7 @@ show [<stash>]::
 	Show the changes recorded in the stash as a diff between the
 	stashed state and its original parent. When no `<stash>` is given,
 	shows the latest one. By default, the command shows the diffstat, but
-	it will accept any format known to 'git-diff' (e.g., `git stash show
+	it will accept any format known to 'git diff' (e.g., `git stash show
 	-p stash@\{1}` to view the second most recent stash in patch form).
 
 pop [--index] [-q|--quiet] [<stash>]::
@@ -92,18 +104,22 @@ tree's changes, but also the index's ones. However, this can fail, when you
 have conflicts (which are stored in the index, where you therefore can no
 longer apply the changes as they were originally).
 +
-When no `<stash>` is given, `stash@\{0}` is assumed.
+When no `<stash>` is given, `stash@\{0}` is assumed, otherwise `<stash>` must
+be a reference of the form `stash@\{<revision>}`.
 
 apply [--index] [-q|--quiet] [<stash>]::
 
-	Like `pop`, but do not remove the state from the stash list.
+	Like `pop`, but do not remove the state from the stash list. Unlike `pop`,
+	`<stash>` may be any commit that looks like a commit created by
+	`stash save` or `stash create`.
 
 branch <branchname> [<stash>]::
 
 	Creates and checks out a new branch named `<branchname>` starting from
 	the commit at which the `<stash>` was originally created, applies the
-	changes recorded in `<stash>` to the new working tree and index, then
-	drops the `<stash>` if that completes successfully. When no `<stash>`
+	changes recorded in `<stash>` to the new working tree and index.
+	If that succeeds, and `<stash>` is a reference of the form
+	`stash@{<revision>}`, it then drops the `<stash>`. When no `<stash>`
 	is given, applies the latest one.
 +
 This is useful if the branch on which you ran `git stash save` has
@@ -114,12 +130,15 @@ no conflicts.
 
 clear::
 	Remove all the stashed states. Note that those states will then
-	be subject to pruning, and may be difficult or impossible to recover.
+	be subject to pruning, and may be impossible to recover (see
+	'Examples' below for a possible strategy).
 
 drop [-q|--quiet] [<stash>]::
 
 	Remove a single stashed state from the stash list. When no `<stash>`
-	is given, it removes the latest one. i.e. `stash@\{0}`
+	is given, it removes the latest one. i.e. `stash@\{0}`, otherwise
+	`<stash>` must a valid stash log reference of the form
+	`stash@\{<revision>}`.
 
 create::
 
@@ -188,7 +207,7 @@ $ git reset --soft HEAD^
 # ... continue hacking ...
 ----------------------------------------------------------------
 +
-You can use 'git-stash' to simplify the above, like this:
+You can use 'git stash' to simplify the above, like this:
 +
 ----------------------------------------------------------------
 # ... hack hack hack ...
@@ -217,16 +236,26 @@ $ edit/build/test remaining parts
 $ git commit foo -m 'Remaining parts'
 ----------------------------------------------------------------
 
+Recovering stashes that were cleared/dropped erroneously::
+
+If you mistakenly drop or clear stashes, they cannot be recovered
+through the normal safety mechanisms.  However, you can try the
+following incantation to get a list of stashes that are still in your
+repository, but not reachable any more:
++
+----------------------------------------------------------------
+git fsck --unreachable |
+grep commit | cut -d\  -f3 |
+xargs git log --merges --no-walk --grep=WIP
+----------------------------------------------------------------
+
+
 SEE ALSO
 --------
 linkgit:git-checkout[1],
 linkgit:git-commit[1],
 linkgit:git-reflog[1],
 linkgit:git-reset[1]
-
-AUTHOR
-------
-Written by Nanako Shiraishi <nanako3@bluebottle.com>
 
 GIT
 ---

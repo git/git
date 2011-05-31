@@ -10,6 +10,7 @@
 #include "cache-tree.h"
 #include "unpack-trees.h"
 #include "refs.h"
+#include "submodule.h"
 
 /*
  * diff-files
@@ -54,6 +55,33 @@ static int check_removed(const struct cache_entry *ce, struct stat *st)
 	return 0;
 }
 
+/*
+ * Has a file changed or has a submodule new commits or a dirty work tree?
+ *
+ * Return 1 when changes are detected, 0 otherwise. If the DIRTY_SUBMODULES
+ * option is set, the caller does not only want to know if a submodule is
+ * modified at all but wants to know all the conditions that are met (new
+ * commits, untracked content and/or modified content).
+ */
+static int match_stat_with_submodule(struct diff_options *diffopt,
+				      struct cache_entry *ce, struct stat *st,
+				      unsigned ce_option, unsigned *dirty_submodule)
+{
+	int changed = ce_match_stat(ce, st, ce_option);
+	if (S_ISGITLINK(ce->ce_mode)) {
+		unsigned orig_flags = diffopt->flags;
+		if (!DIFF_OPT_TST(diffopt, OVERRIDE_SUBMODULE_CONFIG))
+			set_diffopt_flags_from_submodule_config(diffopt, ce->name);
+		if (DIFF_OPT_TST(diffopt, IGNORE_SUBMODULES))
+			changed = 0;
+		else if (!DIFF_OPT_TST(diffopt, IGNORE_DIRTY_SUBMODULES)
+		    && (!changed || DIFF_OPT_TST(diffopt, DIRTY_SUBMODULES)))
+			*dirty_submodule = is_submodule_modified(ce->name, DIFF_OPT_TST(diffopt, IGNORE_UNTRACKED_IN_SUBMODULES));
+		diffopt->flags = orig_flags;
+	}
+	return changed;
+}
+
 int run_diff_files(struct rev_info *revs, unsigned int option)
 {
 	int entries, i;
@@ -72,15 +100,18 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 		unsigned int oldmode, newmode;
 		struct cache_entry *ce = active_cache[i];
 		int changed;
+		unsigned dirty_submodule = 0;
 
 		if (diff_can_quit_early(&revs->diffopt))
 			break;
 
-		if (!ce_path_match(ce, revs->prune_data))
+		if (!ce_path_match(ce, &revs->prune_data))
 			continue;
 
 		if (ce_stage(ce)) {
 			struct combine_diff_path *dpath;
+			struct diff_filepair *pair;
+			unsigned int wt_mode = 0;
 			int num_compare_stages = 0;
 			size_t path_len;
 
@@ -99,7 +130,7 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 
 			changed = check_removed(ce, &st);
 			if (!changed)
-				dpath->mode = ce_mode_from_stat(ce, st.st_mode);
+				wt_mode = ce_mode_from_stat(ce, st.st_mode);
 			else {
 				if (changed < 0) {
 					perror(ce->name);
@@ -107,7 +138,9 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 				}
 				if (silent_on_removed)
 					continue;
+				wt_mode = 0;
 			}
+			dpath->mode = wt_mode;
 
 			while (i < entries) {
 				struct cache_entry *nce = active_cache[i];
@@ -153,15 +186,18 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 			 * Show the diff for the 'ce' if we found the one
 			 * from the desired stage.
 			 */
-			diff_unmerge(&revs->diffopt, ce->name, 0, null_sha1);
+			pair = diff_unmerge(&revs->diffopt, ce->name);
+			if (wt_mode)
+				pair->two->mode = wt_mode;
 			if (ce_stage(ce) != diff_unmerged_stage)
 				continue;
 		}
 
-		if (ce_uptodate(ce))
+		if (ce_uptodate(ce) || ce_skip_worktree(ce))
 			continue;
 
-		changed = check_removed(ce, &st);
+		/* If CE_VALID is set, don't look at workdir for file removal */
+		changed = (ce->ce_flags & CE_VALID) ? 0 : check_removed(ce, &st);
 		if (changed) {
 			if (changed < 0) {
 				perror(ce->name);
@@ -170,11 +206,12 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 			if (silent_on_removed)
 				continue;
 			diff_addremove(&revs->diffopt, '-', ce->ce_mode,
-				       ce->sha1, ce->name);
+				       ce->sha1, ce->name, 0);
 			continue;
 		}
-		changed = ce_match_stat(ce, &st, ce_option);
-		if (!changed) {
+		changed = match_stat_with_submodule(&revs->diffopt, ce, &st,
+						    ce_option, &dirty_submodule);
+		if (!changed && !dirty_submodule) {
 			ce_mark_uptodate(ce);
 			if (!DIFF_OPT_TST(&revs->diffopt, FIND_COPIES_HARDER))
 				continue;
@@ -183,7 +220,7 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 		newmode = ce_mode_from_stat(ce, st.st_mode);
 		diff_change(&revs->diffopt, oldmode, newmode,
 			    ce->sha1, (changed ? null_sha1 : ce->sha1),
-			    ce->name);
+			    ce->name, 0, dirty_submodule);
 
 	}
 	diffcore_std(&revs->diffopt);
@@ -199,16 +236,18 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 static void diff_index_show_file(struct rev_info *revs,
 				 const char *prefix,
 				 struct cache_entry *ce,
-				 const unsigned char *sha1, unsigned int mode)
+				 const unsigned char *sha1, unsigned int mode,
+				 unsigned dirty_submodule)
 {
 	diff_addremove(&revs->diffopt, prefix[0], mode,
-		       sha1, ce->name);
+		       sha1, ce->name, dirty_submodule);
 }
 
 static int get_stat_data(struct cache_entry *ce,
 			 const unsigned char **sha1p,
 			 unsigned int *modep,
-			 int cached, int match_missing)
+			 int cached, int match_missing,
+			 unsigned *dirty_submodule, struct diff_options *diffopt)
 {
 	const unsigned char *sha1 = ce->sha1;
 	unsigned int mode = ce->ce_mode;
@@ -227,7 +266,8 @@ static int get_stat_data(struct cache_entry *ce,
 			}
 			return -1;
 		}
-		changed = ce_match_stat(ce, &st, 0);
+		changed = match_stat_with_submodule(diffopt, ce, &st,
+						    0, dirty_submodule);
 		if (changed) {
 			mode = ce_mode_from_stat(ce, st.st_mode);
 			sha1 = null_sha1;
@@ -245,15 +285,17 @@ static void show_new_file(struct rev_info *revs,
 {
 	const unsigned char *sha1;
 	unsigned int mode;
+	unsigned dirty_submodule = 0;
 
 	/*
 	 * New file in the index: it might actually be different in
 	 * the working copy.
 	 */
-	if (get_stat_data(new, &sha1, &mode, cached, match_missing) < 0)
+	if (get_stat_data(new, &sha1, &mode, cached, match_missing,
+	    &dirty_submodule, &revs->diffopt) < 0)
 		return;
 
-	diff_index_show_file(revs, "+", new, sha1, mode);
+	diff_index_show_file(revs, "+", new, sha1, mode, dirty_submodule);
 }
 
 static int show_modified(struct rev_info *revs,
@@ -264,11 +306,13 @@ static int show_modified(struct rev_info *revs,
 {
 	unsigned int mode, oldmode;
 	const unsigned char *sha1;
+	unsigned dirty_submodule = 0;
 
-	if (get_stat_data(new, &sha1, &mode, cached, match_missing) < 0) {
+	if (get_stat_data(new, &sha1, &mode, cached, match_missing,
+			  &dirty_submodule, &revs->diffopt) < 0) {
 		if (report_missing)
 			diff_index_show_file(revs, "-", old,
-					     old->sha1, old->ce_mode);
+					     old->sha1, old->ce_mode, 0);
 		return -1;
 	}
 
@@ -298,29 +342,13 @@ static int show_modified(struct rev_info *revs,
 	}
 
 	oldmode = old->ce_mode;
-	if (mode == oldmode && !hashcmp(sha1, old->sha1) &&
+	if (mode == oldmode && !hashcmp(sha1, old->sha1) && !dirty_submodule &&
 	    !DIFF_OPT_TST(&revs->diffopt, FIND_COPIES_HARDER))
 		return 0;
 
 	diff_change(&revs->diffopt, oldmode, mode,
-		    old->sha1, sha1, old->name);
+		    old->sha1, sha1, old->name, 0, dirty_submodule);
 	return 0;
-}
-
-/*
- * This turns all merge entries into "stage 3". That guarantees that
- * when we read in the new tree (into "stage 1"), we won't lose sight
- * of the fact that we had unmerged entries.
- */
-static void mark_merge_entries(void)
-{
-	int i;
-	for (i = 0; i < active_nr; i++) {
-		struct cache_entry *ce = active_cache[i];
-		if (!ce_stage(ce))
-			continue;
-		ce->ce_flags |= CE_STAGEMASK;
-	}
 }
 
 /*
@@ -336,6 +364,9 @@ static void do_oneway_diff(struct unpack_trees_options *o,
 	struct rev_info *revs = o->unpack_data;
 	int match_missing, cached;
 
+	/* if the entry is not checked out, don't examine work tree */
+	cached = o->index_only ||
+		(idx && ((idx->ce_flags & CE_VALID) || ce_skip_worktree(idx)));
 	/*
 	 * Backward compatibility wart - "diff-index -m" does
 	 * not mean "do not ignore merges", but "match_missing".
@@ -343,12 +374,12 @@ static void do_oneway_diff(struct unpack_trees_options *o,
 	 * But with the revision flag parsing, that's found in
 	 * "!revs->ignore_merges".
 	 */
-	cached = o->index_only;
 	match_missing = !revs->ignore_merges;
 
 	if (cached && idx && ce_stage(idx)) {
-		if (tree)
-			diff_unmerge(&revs->diffopt, idx->name, idx->ce_mode, idx->sha1);
+		struct diff_filepair *pair;
+		pair = diff_unmerge(&revs->diffopt, idx->name);
+		fill_filespec(pair->one, idx->sha1, idx->ce_mode);
 		return;
 	}
 
@@ -364,27 +395,12 @@ static void do_oneway_diff(struct unpack_trees_options *o,
 	 * Something removed from the tree?
 	 */
 	if (!idx) {
-		diff_index_show_file(revs, "-", tree, tree->sha1, tree->ce_mode);
+		diff_index_show_file(revs, "-", tree, tree->sha1, tree->ce_mode, 0);
 		return;
 	}
 
 	/* Show difference between old and new */
 	show_modified(revs, tree, idx, 1, cached, match_missing);
-}
-
-static inline void skip_same_name(struct cache_entry *ce, struct unpack_trees_options *o)
-{
-	int len = ce_namelen(ce);
-	const struct index_state *index = o->src_index;
-
-	while (o->pos < index->cache_nr) {
-		struct cache_entry *next = index->cache[o->pos];
-		if (len != ce_namelen(next))
-			break;
-		if (memcmp(ce->name, next->name, len))
-			break;
-		o->pos++;
-	}
 }
 
 /*
@@ -396,7 +412,7 @@ static inline void skip_same_name(struct cache_entry *ce, struct unpack_trees_op
  * For diffing, the index is more important, and we only have a
  * single tree.
  *
- * We're supposed to return how many index entries we want to skip.
+ * We're supposed to advance o->pos to skip what we have already processed.
  *
  * This wrapper makes it all more readable, and takes care of all
  * the fairly complex unpack_trees() semantic requirements, including
@@ -408,9 +424,6 @@ static int oneway_diff(struct cache_entry **src, struct unpack_trees_options *o)
 	struct cache_entry *tree = src[1];
 	struct rev_info *revs = o->unpack_data;
 
-	if (idx && ce_stage(idx))
-		skip_same_name(idx, o);
-
 	/*
 	 * Unpack-trees generates a DF/conflict entry if
 	 * there was a directory in the index and a tree
@@ -420,7 +433,7 @@ static int oneway_diff(struct cache_entry **src, struct unpack_trees_options *o)
 	if (tree == o->df_conflict_entry)
 		tree = NULL;
 
-	if (ce_path_match(idx ? idx : tree, revs->prune_data))
+	if (ce_path_match(idx ? idx : tree, &revs->prune_data))
 		do_oneway_diff(o, idx, tree);
 
 	return 0;
@@ -433,8 +446,6 @@ int run_diff_index(struct rev_info *revs, int cached)
 	const char *tree_name;
 	struct unpack_trees_options opts;
 	struct tree_desc t;
-
-	mark_merge_entries();
 
 	ent = revs->pending.objects[0].item;
 	tree_name = revs->pending.objects[0].name;
@@ -458,6 +469,7 @@ int run_diff_index(struct rev_info *revs, int cached)
 		exit(128);
 
 	diff_set_mnemonic_prefix(&revs->diffopt, "c/", cached ? "i/" : "w/");
+	diffcore_fix_diff_index(&revs->diffopt);
 	diffcore_std(&revs->diffopt);
 	diff_flush(&revs->diffopt);
 	return 0;
@@ -495,7 +507,7 @@ int do_diff_cache(const unsigned char *tree_sha1, struct diff_options *opt)
 	active_nr = dst - active_cache;
 
 	init_revisions(&revs, NULL);
-	revs.prune_data = opt->paths;
+	init_pathspec(&revs.prune_data, opt->pathspec.raw);
 	tree = parse_tree_indirect(tree_sha1);
 	if (!tree)
 		die("bad tree object %s", sha1_to_hex(tree_sha1));
@@ -519,9 +531,12 @@ int do_diff_cache(const unsigned char *tree_sha1, struct diff_options *opt)
 int index_differs_from(const char *def, int diff_flags)
 {
 	struct rev_info rev;
+	struct setup_revision_opt opt;
 
 	init_revisions(&rev, NULL);
-	setup_revisions(0, NULL, &rev, def);
+	memset(&opt, 0, sizeof(opt));
+	opt.def = def;
+	setup_revisions(0, NULL, &rev, &opt);
 	DIFF_OPT_SET(&rev.diffopt, QUICK);
 	DIFF_OPT_SET(&rev.diffopt, EXIT_WITH_STATUS);
 	rev.diffopt.flags |= diff_flags;

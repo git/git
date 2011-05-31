@@ -13,6 +13,10 @@ that uses $prefix, the built results have some paths encoded,
 which are derived from $prefix, so "make all; make prefix=/usr
 install" would not work.
 
+The beginning of the Makefile documents many variables that affect the way
+git is built.  You can override them either from the command line, or in a
+config.mak file.
+
 Alternatively you can use autoconf generated ./configure script to
 set up install paths (via config.mak.autogen), so you can write instead
 
@@ -34,13 +38,17 @@ Issues of note:
    Interactive Tools package still can install "git", but you can build it
    with --disable-transition option to avoid this.
 
- - You can use git after building but without installing if you
-   wanted to.  Various git commands need to find other git
-   commands and scripts to do their work, so you would need to
-   arrange a few environment variables to tell them that their
-   friends will be found in your built source area instead of at
-   their standard installation area.  Something like this works
-   for me:
+ - You can use git after building but without installing if you want
+   to test drive it.  Simply run git found in bin-wrappers directory
+   in the build directory, or prepend that directory to your $PATH.
+   This however is less efficient than running an installed git, as
+   you always need an extra fork+exec to run any git subcommand.
+
+   It is still possible to use git without installing by setting a few
+   environment variables, which was the way this was done
+   traditionally.  But using git found in bin-wrappers directory in
+   the build directory is far simpler.  As a historical reference, the
+   old way went like this:
 
 	GIT_EXEC_PATH=`pwd`
 	PATH=`pwd`:$PATH
@@ -48,32 +56,42 @@ Issues of note:
 	export GIT_EXEC_PATH PATH GITPERLLIB
 
  - Git is reasonably self-sufficient, but does depend on a few external
-   programs and libraries:
+   programs and libraries.  Git can be used without most of them by adding
+   the approriate "NO_<LIBRARY>=YesPlease" to the make command line or
+   config.mak file.
 
 	- "zlib", the compression library. Git won't build without it.
 
-	- "openssl".  Unless you specify otherwise, you'll get the SHA1
-	  library from here.
+	- "ssh" is used to push and pull over the net.
 
-	  If you don't have openssl, you can use one of the SHA1 libraries
-	  that come with git (git includes the one from Mozilla, and has
-	  its own PowerPC and ARM optimized ones too - see the Makefile).
+	- A POSIX-compliant shell is required to run many scripts needed
+	  for everyday use (e.g. "bisect", "pull").
 
-	- libcurl library; git-http-fetch and git-fetch use them.  You
+	- "Perl" version 5.8 or later is needed to use some of the
+	  features (e.g. preparing a partial commit using "git add -i/-p",
+	  interacting with svn repositories with "git svn").  If you can
+	  live without these, use NO_PERL.
+
+	- "openssl" library is used by git-imap-send to use IMAP over SSL.
+	  If you don't need it, use NO_OPENSSL.
+
+	  By default, git uses OpenSSL for SHA1 but it will use it's own
+	  library (inspired by Mozilla's) with either NO_OPENSSL or
+	  BLK_SHA1.  Also included is a version optimized for PowerPC
+	  (PPC_SHA1).
+
+	- "libcurl" library is used by git-http-fetch and git-fetch.  You
 	  might also want the "curl" executable for debugging purposes.
-	  If you do not use http transfer, you are probably OK if you
-	  do not have them.
+	  If you do not use http:// or https:// repositories, you do not
+	  have to have them (use NO_CURL).
 
-	- expat library; git-http-push uses it for remote lock
-	  management over DAV.  Similar to "curl" above, this is optional.
+	- "expat" library; git-http-push uses it for remote lock
+	  management over DAV.  Similar to "curl" above, this is optional
+	  (with NO_EXPAT).
 
-        - "wish", the Tcl/Tk windowing shell is used in gitk to show the
-          history graphically, and in git-gui.
-
-	- "ssh" is used to push and pull over the net
-
-	- "perl" and POSIX-compliant shells are needed to use most of
-	  the bare-bones Porcelainish scripts.
+	- "wish", the Tcl/Tk windowing shell is used in gitk to show the
+	  history graphically, and in git-gui.  If you don't want gitk or
+	  git-gui, you can use NO_TCLTK.
 
  - Some platform specific issues are dealt with Makefile rules,
    but depending on your specific installation, you may not
@@ -104,8 +122,9 @@ Issues of note:
    Building and installing the pdf file additionally requires
    dblatex.  Version 0.2.7 with asciidoc >= 8.2.7 is known to work.
 
-   The documentation is written for AsciiDoc 7, but "make
-   ASCIIDOC8=YesPlease doc" will let you format with AsciiDoc 8.
+   The documentation is written for AsciiDoc 7, but by default
+   uses some compatibility wrappers to work on AsciiDoc 8. If you have
+   AsciiDoc 7, try "make ASCIIDOC7=YesPlease".
 
    Alternatively, pre-formatted documentation is available in
    "html" and "man" branches of the git repository itself.  For
@@ -139,3 +158,36 @@ Issues of note:
    It has been reported that docbook-xsl version 1.72 and 1.73 are
    buggy; 1.72 misformats manual pages for callouts, and 1.73 needs
    the patch in contrib/patches/docbook-xsl-manpages-charmap.patch
+
+   Users attempting to build the documentation on Cygwin may need to ensure
+   that the /etc/xml/catalog file looks something like this:
+
+   <?xml version="1.0"?>
+   <!DOCTYPE catalog PUBLIC
+      "-//OASIS//DTD Entity Resolution XML Catalog V1.0//EN"
+      "http://www.oasis-open.org/committees/entity/release/1.0/catalog.dtd"
+   >
+   <catalog xmlns="urn:oasis:names:tc:entity:xmlns:xml:catalog">
+     <rewriteURI
+       uriStartString = "http://docbook.sourceforge.net/release/xsl/current"
+       rewritePrefix = "/usr/share/sgml/docbook/xsl-stylesheets"
+     />
+     <rewriteURI
+       uriStartString="http://www.oasis-open.org/docbook/xml/4.5"
+       rewritePrefix="/usr/share/sgml/docbook/xml-dtd-4.5"
+     />
+  </catalog>
+
+  This can be achieved with the following two xmlcatalog commands:
+
+  xmlcatalog --noout \
+     --add rewriteURI \
+        http://docbook.sourceforge.net/release/xsl/current \
+        /usr/share/sgml/docbook/xsl-stylesheets \
+     /etc/xml/catalog
+
+  xmlcatalog --noout \
+     --add rewriteURI \
+         http://www.oasis-open.org/docbook/xml/4.5/xsl/current \
+         /usr/share/sgml/docbook/xml-dtd-4.5 \
+     /etc/xml/catalog

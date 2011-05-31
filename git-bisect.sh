@@ -13,8 +13,8 @@ git bisect skip [(<rev>|<range>)...]
         mark <rev>... untestable revisions.
 git bisect next
         find next bisection to test and check it out.
-git bisect reset [<branch>]
-        finish bisection search and go back to branch.
+git bisect reset [<commit>]
+        finish bisection search and go back to commit.
 git bisect visualize
         show bisect status in gitk.
 git bisect replay <logfile>
@@ -288,10 +288,12 @@ bisect_visualize() {
 
 	if test $# = 0
 	then
-		case "${DISPLAY+set}${SESSIONNAME+set}${MSYSTEM+set}${SECURITYSESSIONID+set}" in
-		'')	set git log ;;
-		set*)	set gitk ;;
-		esac
+		if test -n "${DISPLAY+set}${SESSIONNAME+set}${MSYSTEM+set}${SECURITYSESSIONID+set}" &&
+		   type gitk >/dev/null 2>&1; then
+			set gitk
+		else
+			set git log
+		fi
 	else
 		case "$1" in
 		git*|tig) ;;
@@ -300,8 +302,7 @@ bisect_visualize() {
 		esac
 	fi
 
-	not=$(git for-each-ref --format='%(refname)' "refs/bisect/good-*")
-	eval '"$@"' refs/bisect/bad --not $not -- $(cat "$GIT_DIR/BISECT_NAMES")
+	eval '"$@"' --bisect -- $(cat "$GIT_DIR/BISECT_NAMES")
 }
 
 bisect_reset() {
@@ -311,13 +312,18 @@ bisect_reset() {
 	}
 	case "$#" in
 	0) branch=$(cat "$GIT_DIR/BISECT_START") ;;
-	1) git show-ref --verify --quiet -- "refs/heads/$1" ||
-	       die "$1 does not seem to be a valid branch"
+	1) git rev-parse --quiet --verify "$1^{commit}" > /dev/null ||
+	       die "'$1' is not a valid commit"
 	   branch="$1" ;;
 	*)
 	    usage ;;
 	esac
-	git checkout "$branch" -- && bisect_clean_state
+	if git checkout "$branch" -- ; then
+		bisect_clean_state
+	else
+		die "Could not check out original HEAD '$branch'." \
+				"Try 'git bisect reset <commit>'."
+	fi
 }
 
 bisect_clean_state() {
@@ -339,6 +345,7 @@ bisect_clean_state() {
 }
 
 bisect_replay () {
+	test "$#" -eq 1 || die "No logfile given"
 	test -r "$1" || die "cannot read $1 for replaying"
 	bisect_reset
 	while read git bisect command rev
@@ -393,7 +400,7 @@ bisect_run () {
 
       cat "$GIT_DIR/BISECT_RUN"
 
-      if grep "first bad commit could be any of" "$GIT_DIR/BISECT_RUN" \
+      if sane_grep "first bad commit could be any of" "$GIT_DIR/BISECT_RUN" \
 		> /dev/null; then
 	  echo >&2 "bisect run cannot continue any more"
 	  exit $res
@@ -405,7 +412,7 @@ bisect_run () {
 	  exit $res
       fi
 
-      if grep "is first bad commit" "$GIT_DIR/BISECT_RUN" > /dev/null; then
+      if sane_grep "is the first bad commit" "$GIT_DIR/BISECT_RUN" > /dev/null; then
 	  echo "bisect run success"
 	  exit 0;
       fi
@@ -413,6 +420,10 @@ bisect_run () {
     done
 }
 
+bisect_log () {
+	test -s "$GIT_DIR/BISECT_LOG" || die "We are not bisecting."
+	cat "$GIT_DIR/BISECT_LOG"
+}
 
 case "$#" in
 0)
@@ -439,7 +450,7 @@ case "$#" in
     replay)
 	bisect_replay "$@" ;;
     log)
-	cat "$GIT_DIR/BISECT_LOG" ;;
+	bisect_log ;;
     run)
         bisect_run "$@" ;;
     *)

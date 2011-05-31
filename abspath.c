@@ -14,15 +14,26 @@ int is_directory(const char *path)
 /* We allow "recursive" symbolic links. Only within reason, though. */
 #define MAXDEPTH 5
 
-const char *make_absolute_path(const char *path)
+/*
+ * Use this to get the real path, i.e. resolve links. If you want an
+ * absolute path but don't mind links, use absolute_path.
+ *
+ * If path is our buffer, then return path, as it's already what the
+ * user wants.
+ */
+const char *real_path(const char *path)
 {
 	static char bufs[2][PATH_MAX + 1], *buf = bufs[0], *next_buf = bufs[1];
 	char cwd[1024] = "";
-	int buf_index = 1, len;
+	int buf_index = 1;
 
 	int depth = MAXDEPTH;
 	char *last_elem = NULL;
 	struct stat st;
+
+	/* We've already done it */
+	if (path == buf || path == next_buf)
+		return path;
 
 	if (strlcpy(buf, path, PATH_MAX) >= PATH_MAX)
 		die ("Too long path: %.*s", 60, path);
@@ -50,18 +61,19 @@ const char *make_absolute_path(const char *path)
 			die_errno ("Could not get current working directory");
 
 		if (last_elem) {
-			int len = strlen(buf);
+			size_t len = strlen(buf);
 			if (len + strlen(last_elem) + 2 > PATH_MAX)
 				die ("Too long path name: '%s/%s'",
 						buf, last_elem);
-			buf[len] = '/';
-			strcpy(buf + len + 1, last_elem);
+			if (len && buf[len-1] != '/')
+				buf[len++] = '/';
+			strcpy(buf + len, last_elem);
 			free(last_elem);
 			last_elem = NULL;
 		}
 
 		if (!lstat(buf, &st) && S_ISLNK(st.st_mode)) {
-			len = readlink(buf, next_buf, PATH_MAX);
+			ssize_t len = readlink(buf, next_buf, PATH_MAX);
 			if (len < 0)
 				die_errno ("Invalid symlink '%s'", buf);
 			if (PATH_MAX <= len)
@@ -99,7 +111,14 @@ static const char *get_pwd_cwd(void)
 	return cwd;
 }
 
-const char *make_nonrelative_path(const char *path)
+/*
+ * Use this to get an absolute path from a relative one. If you want
+ * to resolve links, you should use real_path.
+ *
+ * If the path is already absolute, then return path. As the user is
+ * never meant to free the return value, we're safe.
+ */
+const char *absolute_path(const char *path)
 {
 	static char buf[PATH_MAX + 1];
 
@@ -107,10 +126,14 @@ const char *make_nonrelative_path(const char *path)
 		if (strlcpy(buf, path, PATH_MAX) >= PATH_MAX)
 			die("Too long path: %.*s", 60, path);
 	} else {
+		size_t len;
+		const char *fmt;
 		const char *cwd = get_pwd_cwd();
 		if (!cwd)
 			die_errno("Cannot determine the current working directory");
-		if (snprintf(buf, PATH_MAX, "%s/%s", cwd, path) >= PATH_MAX)
+		len = strlen(cwd);
+		fmt = (len > 0 && is_dir_sep(cwd[len-1])) ? "%s%s" : "%s/%s";
+		if (snprintf(buf, PATH_MAX, fmt, cwd, path) >= PATH_MAX)
 			die("Too long path: %.*s", 60, path);
 	}
 	return buf;

@@ -28,26 +28,24 @@ test_expect_success 'Setup repo' 'git svn init "$svnrepo"'
 test_expect_success 'Fetch repo' 'git svn fetch'
 
 test_expect_success 'make backup copy of unhandled.log' '
-	 cp .git/svn/git-svn/unhandled.log tmp
+	 cp .git/svn/refs/remotes/git-svn/unhandled.log tmp
 	'
 
-test_expect_success 'create leftover index' '> .git/svn/git-svn/index'
+test_expect_success 'create leftover index' '> .git/svn/refs/remotes/git-svn/index'
 
 test_expect_success 'git svn gc runs' 'git svn gc'
 
-test_expect_success 'git svn index removed' '! test -f .git/svn/git-svn/index'
+test_expect_success 'git svn index removed' '! test -f .git/svn/refs/remotes/git-svn/index'
 
-if perl -MCompress::Zlib -e 0 2>/dev/null
+if test -r .git/svn/refs/remotes/git-svn/unhandled.log.gz
 then
 	test_expect_success 'git svn gc produces a valid gzip file' '
-		 gunzip .git/svn/git-svn/unhandled.log.gz
+		 gunzip .git/svn/refs/remotes/git-svn/unhandled.log.gz
 		'
-else
-	say "Perl Compress::Zlib unavailable, skipping gunzip test"
 fi
 
 test_expect_success 'git svn gc does not change unhandled.log files' '
-	 test_cmp .git/svn/git-svn/unhandled.log tmp/unhandled.log
+	 test_cmp .git/svn/refs/remotes/git-svn/unhandled.log tmp/unhandled.log
 	'
 
 test_done

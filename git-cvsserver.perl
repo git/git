@@ -8,13 +8,14 @@
 #### Copyright The Open University UK - 2006.
 ####
 #### Authors: Martyn Smith    <martyn@catalyst.net.nz>
-####          Martin Langhoff <martin@catalyst.net.nz>
+####          Martin Langhoff <martin@laptop.org>
 ####
 ####
 #### Released under the GNU Public License, version 2.
 ####
 ####
 
+use 5.008;
 use strict;
 use warnings;
 use bytes;
@@ -104,6 +105,7 @@ $log->info("--------------- STARTING -----------------");
 my $usage =
     "Usage: git cvsserver [options] [pserver|server] [<directory> ...]\n".
     "    --base-path <path>  : Prepend to requested CVSROOT\n".
+    "                          Can be read from GIT_CVSSERVER_BASE_PATH\n".
     "    --strict-paths      : Don't allow recursing into subdirectories\n".
     "    --export-all        : Don't check for gitcvs.enabled in config\n".
     "    --version, -V       : Print version information and exit\n".
@@ -111,7 +113,8 @@ my $usage =
     "\n".
     "<directory> ... is a list of allowed directories. If no directories\n".
     "are given, all are allowed. This is an additional restriction, gitcvs\n".
-    "access still needs to be enabled by the gitcvs.enabled config option.\n";
+    "access still needs to be enabled by the gitcvs.enabled config option.\n".
+    "Alternately, one directory may be specified in GIT_CVSSERVER_ROOT.\n";
 
 my @opts = ( 'help|h|H', 'version|V',
 	     'base-path=s', 'strict-paths', 'export-all' );
@@ -148,6 +151,24 @@ if ($state->{'export-all'} && !@{$state->{allowed_roots}}) {
     die "--export-all can only be used together with an explicit whitelist\n";
 }
 
+# Environment handling for running under git-shell
+if (exists $ENV{GIT_CVSSERVER_BASE_PATH}) {
+    if ($state->{'base-path'}) {
+	die "Cannot specify base path both ways.\n";
+    }
+    my $base_path = $ENV{GIT_CVSSERVER_BASE_PATH};
+    $state->{'base-path'} = $base_path;
+    $log->debug("Picked up base path '$base_path' from environment.\n");
+}
+if (exists $ENV{GIT_CVSSERVER_ROOT}) {
+    if (@{$state->{allowed_roots}}) {
+	die "Cannot specify roots both ways: @ARGV\n";
+    }
+    my $allowed_root = $ENV{GIT_CVSSERVER_ROOT};
+    $state->{allowed_roots} = [ $allowed_root ];
+    $log->debug("Picked up allowed root '$allowed_root' from environment.\n");
+}
+
 # if we are called with a pserver argument,
 # deal with the authentication cat before entering the
 # main loop
@@ -163,12 +184,58 @@ if ($state->{method} eq 'pserver') {
        exit 1;
     }
     $line = <STDIN>; chomp $line;
-    unless ($line eq 'anonymous') {
-       print "E Only anonymous user allowed via pserver\n";
-       print "I HATE YOU\n";
-       exit 1;
+    my $user = $line;
+    $line = <STDIN>; chomp $line;
+    my $password = $line;
+
+    if ($user eq 'anonymous') {
+        # "A" will be 1 byte, use length instead in case the
+        # encryption method ever changes (yeah, right!)
+        if (length($password) > 1 ) {
+            print "E Don't supply a password for the `anonymous' user\n";
+            print "I HATE YOU\n";
+            exit 1;
+        }
+
+        # Fall through to LOVE
+    } else {
+        # Trying to authenticate a user
+        if (not exists $cfg->{gitcvs}->{authdb}) {
+            print "E the repo config file needs a [gitcvs] section with an 'authdb' parameter set to the filename of the authentication database\n";
+            print "I HATE YOU\n";
+            exit 1;
+        }
+
+        my $authdb = $cfg->{gitcvs}->{authdb};
+
+        unless (-e $authdb) {
+            print "E The authentication database specified in [gitcvs.authdb] does not exist\n";
+            print "I HATE YOU\n";
+            exit 1;
+        }
+
+        my $auth_ok;
+        open my $passwd, "<", $authdb or die $!;
+        while (<$passwd>) {
+            if (m{^\Q$user\E:(.*)}) {
+                if (crypt($user, descramble($password)) eq $1) {
+                    $auth_ok = 1;
+                }
+            };
+        }
+        close $passwd;
+
+        unless ($auth_ok) {
+            print "I HATE YOU\n";
+            exit 1;
+        }
+
+        # Fall through to LOVE
     }
-    $line = <STDIN>; chomp $line;    # validate the password?
+
+    # For checking whether the user is anonymous on commit
+    $state->{user} = $user;
+
     $line = <STDIN>; chomp $line;
     unless ($line eq "END $request REQUEST") {
        die "E Do not understand $line -- expecting END $request REQUEST\n";
@@ -285,7 +352,7 @@ sub req_Root
        return 0;
     }
 
-    my @gitvars = `git-config -l`;
+    my @gitvars = `git config -l`;
     if ($?) {
        print "E problems executing git-config on the server -- this is not a git repository or the PATH is not set correctly.\n";
         print "E \n";
@@ -388,7 +455,7 @@ sub req_Directory
     $state->{localdir} = $data;
     $state->{repository} = $repository;
     $state->{path} = $repository;
-    $state->{path} =~ s/^$state->{CVSROOT}\///;
+    $state->{path} =~ s/^\Q$state->{CVSROOT}\E\///;
     $state->{module} = $1 if ($state->{path} =~ s/^(.*?)(\/|$)//);
     $state->{path} .= "/" if ( $state->{path} =~ /\S/ );
 
@@ -702,7 +769,7 @@ sub req_Modified
     # Save the file data in $state
     $state->{entries}{$state->{directory}.$data}{modified_filename} = $filename;
     $state->{entries}{$state->{directory}.$data}{modified_mode} = $mode;
-    $state->{entries}{$state->{directory}.$data}{modified_hash} = `git-hash-object $filename`;
+    $state->{entries}{$state->{directory}.$data}{modified_hash} = `git hash-object $filename`;
     $state->{entries}{$state->{directory}.$data}{modified_hash} =~ s/\s.*$//s;
 
     #$log->debug("req_Modified : file=$data mode=$mode size=$size");
@@ -981,12 +1048,28 @@ sub req_update
 
     #$log->debug("update state : " . Dumper($state));
 
+    my $last_dirname = "///";
+
     # foreach file specified on the command line ...
     foreach my $filename ( @{$state->{args}} )
     {
         $filename = filecleanup($filename);
 
         $log->debug("Processing file $filename");
+
+        unless ( $state->{globaloptions}{-Q} || $state->{globaloptions}{-q} )
+        {
+            my $cur_dirname = dirname($filename);
+            if ( $cur_dirname ne $last_dirname )
+            {
+                $last_dirname = $cur_dirname;
+                if ( $cur_dirname eq "" )
+                {
+                    $cur_dirname = ".";
+                }
+                print "E cvs update: Updating $cur_dirname\n";
+            }
+        }
 
         # if we have a -C we should pretend we never saw modified stuff
         if ( exists ( $state->{opt}{C} ) )
@@ -1235,9 +1318,9 @@ sub req_ci
 
     $log->info("req_ci : " . ( defined($data) ? $data : "[NULL]" ));
 
-    if ( $state->{method} eq 'pserver')
+    if ( $state->{method} eq 'pserver' and $state->{user} eq 'anonymous' )
     {
-        print "error 1 pserver access cannot commit\n";
+        print "error 1 anonymous user cannot commit via pserver\n";
         cleanupWorkTree();
         exit;
     }
@@ -1289,7 +1372,7 @@ sub req_ci
 
 	# do a checkout of the file if it is part of this tree
         if ($wrev) {
-            system('git-checkout-index', '-f', '-u', $filename);
+            system('git', 'checkout-index', '-f', '-u', $filename);
             unless ($? == 0) {
                 die "Error running git-checkout-index -f -u $filename : $!";
             }
@@ -1331,15 +1414,15 @@ sub req_ci
         {
             $log->info("Removing file '$filename'");
             unlink($filename);
-            system("git-update-index", "--remove", $filename);
+            system("git", "update-index", "--remove", $filename);
         }
         elsif ( $addflag )
         {
             $log->info("Adding file '$filename'");
-            system("git-update-index", "--add", $filename);
+            system("git", "update-index", "--add", $filename);
         } else {
             $log->info("Updating file '$filename'");
-            system("git-update-index", $filename);
+            system("git", "update-index", $filename);
         }
     }
 
@@ -1351,7 +1434,7 @@ sub req_ci
         return;
     }
 
-    my $treehash = `git-write-tree`;
+    my $treehash = `git write-tree`;
     chomp $treehash;
 
     $log->debug("Treehash : $treehash, Parenthash : $parenthash");
@@ -1368,7 +1451,7 @@ sub req_ci
     }
     close $msg_fh;
 
-    my $commithash = `git-commit-tree $treehash -p $parenthash < $msg_filename`;
+    my $commithash = `git commit-tree $treehash -p $parenthash < $msg_filename`;
     chomp($commithash);
     $log->info("Commit hash : $commithash");
 
@@ -1821,7 +1904,7 @@ sub req_annotate
 	# TODO: if we got a revision from the client, use that instead
 	# to look up the commithash in sqlite (still good to default to
 	# the current head as we do now)
-	system("git-read-tree", $lastseenin);
+	system("git", "read-tree", $lastseenin);
 	unless ($? == 0)
 	{
 	    print "E error running git-read-tree $lastseenin $ENV{GIT_INDEX_FILE} $!\n";
@@ -1830,7 +1913,7 @@ sub req_annotate
 	$log->info("Created index '$ENV{GIT_INDEX_FILE}' with commit $lastseenin - exit status $?");
 
         # do a checkout of the file
-        system('git-checkout-index', '-f', '-u', $filename);
+        system('git', 'checkout-index', '-f', '-u', $filename);
         unless ($? == 0) {
             print "E error running git-checkout-index -f -u $filename : $!\n";
             return;
@@ -1861,7 +1944,7 @@ sub req_annotate
         close ANNOTATEHINTS
             or (print "E failed to write $a_hints: $!\n"), return;
 
-        my @cmd = (qw(git-annotate -l -S), $a_hints, $filename);
+        my @cmd = (qw(git annotate -l -S), $a_hints, $filename);
         if (!open(ANNOTATE, "-|", @cmd)) {
             print "E error invoking ". join(' ',@cmd) .": $!\n";
             return;
@@ -2078,17 +2161,17 @@ sub transmitfile
 
     die "Need filehash" unless ( defined ( $filehash ) and $filehash =~ /^[a-zA-Z0-9]{40}$/ );
 
-    my $type = `git-cat-file -t $filehash`;
+    my $type = `git cat-file -t $filehash`;
     chomp $type;
 
     die ( "Invalid type '$type' (expected 'blob')" ) unless ( defined ( $type ) and $type eq "blob" );
 
-    my $size = `git-cat-file -s $filehash`;
+    my $size = `git cat-file -s $filehash`;
     chomp $size;
 
     $log->debug("transmitfile($filehash) size=$size, type=$type");
 
-    if ( open my $fh, '-|', "git-cat-file", "blob", $filehash )
+    if ( open my $fh, '-|', "git", "cat-file", "blob", $filehash )
     {
         if ( defined ( $options->{targetfile} ) )
         {
@@ -2333,14 +2416,19 @@ sub kopts_from_path
     if ( defined ( $cfg->{gitcvs}{usecrlfattr} ) and
          $cfg->{gitcvs}{usecrlfattr} =~ /\s*(1|true|yes)\s*$/i )
     {
-        my ($val) = check_attr( "crlf", $path );
-        if ( $val eq "set" )
+        my ($val) = check_attr( "text", $path );
+        if ( $val eq "unspecified" )
         {
-            return "";
+            $val = check_attr( "crlf", $path );
         }
-        elsif ( $val eq "unset" )
+        if ( $val eq "unset" )
         {
             return "-kb"
+        }
+        elsif ( check_attr( "eol", $path ) ne "unspecified" ||
+                $val eq "set" || $val eq "input" )
+        {
+            return "";
         }
         else
         {
@@ -2550,13 +2638,50 @@ sub cvs_author
     $author;
 }
 
+
+sub descramble
+{
+    # This table is from src/scramble.c in the CVS source
+    my @SHIFTS = (
+        0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
+        16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
+        114,120, 53, 79, 96,109, 72,108, 70, 64, 76, 67,116, 74, 68, 87,
+        111, 52, 75,119, 49, 34, 82, 81, 95, 65,112, 86,118,110,122,105,
+        41, 57, 83, 43, 46,102, 40, 89, 38,103, 45, 50, 42,123, 91, 35,
+        125, 55, 54, 66,124,126, 59, 47, 92, 71,115, 78, 88,107,106, 56,
+        36,121,117,104,101,100, 69, 73, 99, 63, 94, 93, 39, 37, 61, 48,
+        58,113, 32, 90, 44, 98, 60, 51, 33, 97, 62, 77, 84, 80, 85,223,
+        225,216,187,166,229,189,222,188,141,249,148,200,184,136,248,190,
+        199,170,181,204,138,232,218,183,255,234,220,247,213,203,226,193,
+        174,172,228,252,217,201,131,230,197,211,145,238,161,179,160,212,
+        207,221,254,173,202,146,224,151,140,196,205,130,135,133,143,246,
+        192,159,244,239,185,168,215,144,139,165,180,157,147,186,214,176,
+        227,231,219,169,175,156,206,198,129,164,150,210,154,177,134,127,
+        182,128,158,208,162,132,167,209,149,241,153,251,237,236,171,195,
+        243,233,253,240,194,250,191,155,142,137,245,235,163,242,178,152
+    );
+    my ($str) = @_;
+
+    # This should never happen, the same password format (A) has been
+    # used by CVS since the beginning of time
+    {
+        my $fmt = substr($str, 0, 1);
+        die "invalid password format `$fmt'" unless $fmt eq 'A';
+    }
+
+    my @str = unpack "C*", substr($str, 1);
+    my $ret = join '', map { chr $SHIFTS[$_] } @str;
+    return $ret;
+}
+
+
 package GITCVS::log;
 
 ####
 #### Copyright The Open University UK - 2006.
 ####
 #### Authors: Martyn Smith    <martyn@catalyst.net.nz>
-####          Martin Langhoff <martin@catalyst.net.nz>
+####          Martin Langhoff <martin@laptop.org>
 ####
 ####
 
@@ -2723,7 +2848,7 @@ package GITCVS::updater;
 #### Copyright The Open University UK - 2006.
 ####
 #### Authors: Martyn Smith    <martyn@catalyst.net.nz>
-####          Martin Langhoff <martin@catalyst.net.nz>
+####          Martin Langhoff <martin@laptop.org>
 ####
 ####
 
@@ -2935,7 +3060,7 @@ sub update
         push @git_log_params, $self->{module};
     }
     # git-rev-list is the backend / plumbing version of git-log
-    open(GITLOG, '-|', 'git-rev-list', @git_log_params) or die "Cannot call git-rev-list: $!";
+    open(GITLOG, '-|', 'git', 'rev-list', @git_log_params) or die "Cannot call git-rev-list: $!";
 
     my @commits;
 
@@ -3021,7 +3146,7 @@ sub update
                         next;
                     }
 		    my $base = eval {
-			    safe_pipe_capture('git-merge-base',
+			    safe_pipe_capture('git', 'merge-base',
 						 $lastpicked, $parent);
 		    };
 		    # The two branches may not be related at all,
@@ -3033,7 +3158,7 @@ sub update
                     if ($base) {
                         my @merged;
                         # print "want to log between  $base $parent \n";
-                        open(GITLOG, '-|', 'git-log', '--pretty=medium', "$base..$parent")
+                        open(GITLOG, '-|', 'git', 'log', '--pretty=medium', "$base..$parent")
 			  or die "Cannot call git-log: $!";
                         my $mergedhash;
                         while (<GITLOG>) {
@@ -3075,7 +3200,7 @@ sub update
 
         if ( defined ( $lastpicked ) )
         {
-            my $filepipe = open(FILELIST, '-|', 'git-diff-tree', '-z', '-r', $lastpicked, $commit->{hash}) or die("Cannot call git-diff-tree : $!");
+            my $filepipe = open(FILELIST, '-|', 'git', 'diff-tree', '-z', '-r', $lastpicked, $commit->{hash}) or die("Cannot call git-diff-tree : $!");
 	    local ($/) = "\0";
             while ( <FILELIST> )
             {
@@ -3149,7 +3274,7 @@ sub update
             # this is used to detect files removed from the repo
             my $seen_files = {};
 
-            my $filepipe = open(FILELIST, '-|', 'git-ls-tree', '-z', '-r', $commit->{hash}) or die("Cannot call git-ls-tree : $!");
+            my $filepipe = open(FILELIST, '-|', 'git', 'ls-tree', '-z', '-r', $commit->{hash}) or die("Cannot call git-ls-tree : $!");
 	    local $/ = "\0";
             while ( <FILELIST> )
             {
@@ -3451,7 +3576,7 @@ sub commitmessage
         return $message;
     }
 
-    my @lines = safe_pipe_capture("git-cat-file", "commit", $commithash);
+    my @lines = safe_pipe_capture("git", "cat-file", "commit", $commithash);
     shift @lines while ( $lines[0] =~ /\S/ );
     $message = join("",@lines);
     $message .= " " if ( $message =~ /\n$/ );

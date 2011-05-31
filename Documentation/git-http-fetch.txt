@@ -35,21 +35,13 @@ commit-id::
 
 --stdin::
 	Instead of a commit id on the command line (which is not expected in this
-	case), 'git-http-fetch' expects lines on stdin in the format
+	case), 'git http-fetch' expects lines on stdin in the format
 
 		<commit-id>['\t'<filename-as-in--w>]
 
 --recover::
 	Verify that everything reachable from target is fetched.  Used after
 	an earlier fetch is interrupted.
-
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org>
-
-Documentation
---------------
-Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---

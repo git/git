@@ -69,7 +69,7 @@ static int should_break(struct diff_filespec *src,
 		return 0; /* we do not break too small filepair */
 
 	if (diffcore_count_changes(src, dst,
-				   NULL, NULL,
+				   &src->cnt_data, &dst->cnt_data,
 				   0,
 				   &src_copied, &literal_added))
 		return 0;
@@ -162,8 +162,7 @@ void diffcore_break(int break_score)
 	if (!merge_score)
 		merge_score = DEFAULT_MERGE_SCORE;
 
-	outq.nr = outq.alloc = 0;
-	outq.queue = NULL;
+	DIFF_QUEUE_CLEAR(&outq);
 
 	for (i = 0; i < q->nr; i++) {
 		struct diff_filepair *p = q->queue[i];
@@ -204,12 +203,16 @@ void diffcore_break(int break_score)
 				dp->score = score;
 				dp->broken_pair = 1;
 
+				diff_free_filespec_blob(p->one);
+				diff_free_filespec_blob(p->two);
 				free(p); /* not diff_free_filepair(), we are
 					  * reusing one and two here.
 					  */
 				continue;
 			}
 		}
+		diff_free_filespec_data(p->one);
+		diff_free_filespec_data(p->two);
 		diff_q(&outq, p);
 	}
 	free(q->queue);
@@ -252,8 +255,7 @@ void diffcore_merge_broken(void)
 	struct diff_queue_struct outq;
 	int i, j;
 
-	outq.nr = outq.alloc = 0;
-	outq.queue = NULL;
+	DIFF_QUEUE_CLEAR(&outq);
 
 	for (i = 0; i < q->nr; i++) {
 		struct diff_filepair *p = q->queue[i];

@@ -11,16 +11,19 @@ SYNOPSIS
 [verse]
 'git clone' [--template=<template_directory>]
 	  [-l] [-s] [--no-hardlinks] [-q] [-n] [--bare] [--mirror]
-	  [-o <name>] [-u <upload-pack>] [--reference <repository>]
-	  [--depth <depth>] [--] <repository> [<directory>]
+	  [-o <name>] [-b <name>] [-u <upload-pack>] [--reference <repository>]
+	  [--separate-git-dir <git dir>]
+	  [--depth <depth>] [--recursive|--recurse-submodules] [--] <repository>
+	  [<directory>]
 
 DESCRIPTION
 -----------
 
 Clones a repository into a newly created directory, creates
 remote-tracking branches for each branch in the cloned repository
-(visible using `git branch -r`), and creates and checks out an initial
-branch equal to the cloned repository's currently active branch.
+(visible using `git branch -r`), and creates and checks out an
+initial branch that is forked from the cloned repository's
+currently active branch.
 
 After the clone, a plain `git fetch` without arguments will update
 all the remote-tracking branches, and a `git pull` without
@@ -28,7 +31,7 @@ arguments will in addition merge the remote master branch into the
 current master branch, if any.
 
 This default configuration is achieved by creating references to
-the remote branch heads under `$GIT_DIR/refs/remotes/origin` and
+the remote branch heads under `refs/remotes/origin` and
 by initializing `remote.origin.url` and `remote.origin.fetch`
 configuration variables.
 
@@ -38,7 +41,7 @@ OPTIONS
 --local::
 -l::
 	When the repository to clone from is on a local machine,
-	this flag bypasses normal "git aware" transport
+	this flag bypasses the normal "git aware" transport
 	mechanism and clones the repository by making a copy of
 	HEAD and everything under objects and refs directories.
 	The files under `.git/objects/` directory are hardlinked
@@ -59,7 +62,7 @@ OPTIONS
 -s::
 	When the repository to clone is on the local machine,
 	instead of using hard links, automatically setup
-	.git/objects/info/alternates to share the objects
+	`.git/objects/info/alternates` to share the objects
 	with the source repository.  The resulting repository
 	starts out without any object of its own.
 +
@@ -68,32 +71,47 @@ it unless you understand what it does. If you clone your
 repository using this option and then delete branches (or use any
 other git command that makes any existing commit unreferenced) in the
 source repository, some objects may become unreferenced (or dangling).
-These objects may be removed by normal git operations (such as 'git-commit')
+These objects may be removed by normal git operations (such as `git commit`)
 which automatically call `git gc --auto`. (See linkgit:git-gc[1].)
 If these objects are removed and were referenced by the cloned repository,
 then the cloned repository will become corrupt.
-
-
++
+Note that running `git repack` without the `-l` option in a repository
+cloned with `-s` will copy objects from the source repository into a pack
+in the cloned repository, removing the disk space savings of `clone -s`.
+It is safe, however, to run `git gc`, which uses the `-l` option by
+default.
++
+If you want to break the dependency of a repository cloned with `-s` on
+its source repository, you can simply run `git repack -a` to copy all
+objects from the source repository into a pack in the cloned repository.
 
 --reference <repository>::
-	If the reference repository is on the local machine
-	automatically setup .git/objects/info/alternates to
+	If the reference repository is on the local machine,
+	automatically setup `.git/objects/info/alternates` to
 	obtain objects from the reference repository.  Using
 	an already existing repository as an alternate will
 	require fewer objects to be copied from the repository
 	being cloned, reducing network and local storage costs.
 +
-*NOTE*: see NOTE to --shared option.
+*NOTE*: see the NOTE for the `--shared` option.
 
 --quiet::
 -q::
-	Operate quietly.  This flag is also passed to the `rsync'
+	Operate quietly.  Progress is not reported to the standard
+	error stream. This flag is also passed to the `rsync'
 	command when given.
 
 --verbose::
 -v::
-	Display the progressbar, even in case the standard output is not
-	a terminal.
+	Run verbosely. Does not affect the reporting of progress status
+	to the standard error stream.
+
+--progress::
+	Progress status is reported on the standard error stream
+	by default when it is attached to a terminal, unless -q
+	is specified. This flag forces progress status even if the
+	standard error stream is not directed to a terminal.
 
 --no-checkout::
 -n::
@@ -112,12 +130,24 @@ then the cloned repository will become corrupt.
 	configuration variables are created.
 
 --mirror::
-	Set up a mirror of the remote repository.  This implies --bare.
+	Set up a mirror of the source repository.  This implies `--bare`.
+	Compared to `--bare`, `--mirror` not only maps local branches of the
+	source to local branches of the target, it maps all refs (including
+	remote-tracking branches, notes etc.) and sets up a refspec configuration such
+	that all these refs are overwritten by a `git remote update` in the
+	target repository.
 
 --origin <name>::
 -o <name>::
-	Instead of using the remote name 'origin' to keep track
-	of the upstream repository, use <name>.
+	Instead of using the remote name `origin` to keep track
+	of the upstream repository, use `<name>`.
+
+--branch <name>::
+-b <name>::
+	Instead of pointing the newly created HEAD to the branch pointed
+	to by the cloned repository's HEAD, point to `<name>` branch
+	instead. In a non-bare repository, this is the branch that will
+	be checked out.
 
 --upload-pack <upload-pack>::
 -u <upload-pack>::
@@ -127,8 +157,7 @@ then the cloned repository will become corrupt.
 
 --template=<template_directory>::
 	Specify the directory from which templates will be used;
-	if unset the templates are taken from the installation
-	defined default, typically `/usr/share/git-core/templates`.
+	(See the "TEMPLATE DIRECTORY" section of linkgit:git-init[1].)
 
 --depth <depth>::
 	Create a 'shallow' clone with a history truncated to the
@@ -139,6 +168,23 @@ then the cloned repository will become corrupt.
 	with a long history, and would want to send in fixes
 	as patches.
 
+--recursive::
+--recurse-submodules::
+	After the clone is created, initialize all submodules within,
+	using their default settings. This is equivalent to running
+	`git submodule update --init --recursive` immediately after
+	the clone is finished. This option is ignored if the cloned
+	repository does not have a worktree/checkout (i.e. if any of
+	`--no-checkout`/`-n`, `--bare`, or `--mirror` is given)
+
+--separate-git-dir=<git dir>::
+	Instead of placing the cloned repository where it is supposed
+	to be, place the cloned repository at the specified directory,
+	then make a filesytem-agnostic git symbolic link to there.
+	The result is git repository can be separated from working
+	tree.
+
+
 <repository>::
 	The (possibly remote) repository to clone from.  See the
 	<<URLS,URLS>> section below for more information on specifying
@@ -147,8 +193,8 @@ then the cloned repository will become corrupt.
 <directory>::
 	The name of a new directory to clone into.  The "humanish"
 	part of the source repository is used if no directory is
-	explicitly given ("repo" for "/path/to/repo.git" and "foo"
-	for "host.xz:foo/.git").  Cloning into an existing directory
+	explicitly given (`repo` for `/path/to/repo.git` and `foo`
+	for `host.xz:foo/.git`).  Cloning into an existing directory
 	is only allowed if the directory is empty.
 
 :git-clone: 1
@@ -157,7 +203,7 @@ include::urls.txt[]
 Examples
 --------
 
-Clone from upstream::
+* Clone from upstream:
 +
 ------------
 $ git clone git://git.kernel.org/pub/scm/.../linux-2.6 my2.6
@@ -166,7 +212,7 @@ $ make
 ------------
 
 
-Make a local clone that borrows from the current directory, without checking things out::
+* Make a local clone that borrows from the current directory, without checking things out:
 +
 ------------
 $ git clone -l -s -n . ../copy
@@ -175,7 +221,7 @@ $ git show-branch
 ------------
 
 
-Clone from upstream while borrowing from an existing local directory::
+* Clone from upstream while borrowing from an existing local directory:
 +
 ------------
 $ git clone --reference my2.6 \
@@ -185,30 +231,19 @@ $ cd my2.7
 ------------
 
 
-Create a bare repository to publish your changes to the public::
+* Create a bare repository to publish your changes to the public:
 +
 ------------
 $ git clone --bare -l /home/proj/.git /pub/scm/proj.git
 ------------
 
 
-Create a repository on the kernel.org machine that borrows from Linus::
+* Create a repository on the kernel.org machine that borrows from Linus:
 +
 ------------
 $ git clone --bare -l -s /pub/scm/.../torvalds/linux-2.6.git \
     /pub/scm/.../me/subsys-2.6.git
 ------------
-
-
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org>
-
-
-Documentation
---------------
-Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
-
 
 GIT
 ---

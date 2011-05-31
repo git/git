@@ -2,21 +2,33 @@
 
 # After setting the fake editor with this function, you can
 #
-# - override the commit message with $FAKE_COMMIT_MESSAGE,
+# - override the commit message with $FAKE_COMMIT_MESSAGE
 # - amend the commit message with $FAKE_COMMIT_AMEND
 # - check that non-commit messages have a certain line count with $EXPECT_COUNT
-# - rewrite a rebase -i script with $FAKE_LINES in the form
+# - check the commit count in the commit message header with $EXPECT_HEADER_COUNT
+# - rewrite a rebase -i script as directed by $FAKE_LINES.
+#   $FAKE_LINES consists of a sequence of words separated by spaces.
+#   The following word combinations are possible:
 #
-#	"[<lineno1>] [<lineno2>]..."
+#   "<lineno>" -- add a "pick" line with the SHA1 taken from the
+#       specified line.
 #
-#   If a line number is prefixed with "squash" or "edit", the respective line's
-#   command will be replaced with the specified one.
+#   "<cmd> <lineno>" -- add a line with the specified command
+#       ("squash", "fixup", "edit", or "reword") and the SHA1 taken
+#       from the specified line.
+#
+#   "#" -- Add a comment line.
+#
+#   ">" -- Add a blank line.
 
 set_fake_editor () {
 	echo "#!$SHELL_PATH" >fake-editor.sh
 	cat >> fake-editor.sh <<\EOF
 case "$1" in
 */COMMIT_EDITMSG)
+	test -z "$EXPECT_HEADER_COUNT" ||
+		test "$EXPECT_HEADER_COUNT" = "$(sed -n '1s/^# This is a combination of \(.*\) commits\./\1/p' < "$1")" ||
+		exit
 	test -z "$FAKE_COMMIT_MESSAGE" || echo "$FAKE_COMMIT_MESSAGE" > "$1"
 	test -z "$FAKE_COMMIT_AMEND" || echo "$FAKE_COMMIT_AMEND" >> "$1"
 	exit
@@ -28,19 +40,26 @@ test -z "$EXPECT_COUNT" ||
 test -z "$FAKE_LINES" && exit
 grep -v '^#' < "$1" > "$1".tmp
 rm -f "$1"
+echo 'rebase -i script before editing:'
 cat "$1".tmp
 action=pick
 for line in $FAKE_LINES; do
 	case $line in
-	squash|edit)
+	squash|fixup|edit|reword)
 		action="$line";;
+	exec*)
+		echo "$line" | sed 's/_/ /g' >> "$1";;
+	"#")
+		echo '# comment' >> "$1";;
+	">")
+		echo >> "$1";;
 	*)
-		echo sed -n "${line}s/^pick/$action/p"
-		sed -n "${line}p" < "$1".tmp
 		sed -n "${line}s/^pick/$action/p" < "$1".tmp >> "$1"
 		action=pick;;
 	esac
 done
+echo 'rebase -i script after editing:'
+cat "$1"
 EOF
 
 	test_set_editor "$(pwd)/fake-editor.sh"

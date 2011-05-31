@@ -6,19 +6,19 @@ test_description='git svn metadata migrations from previous versions'
 test_expect_success 'setup old-looking metadata' '
 	cp "$GIT_DIR"/config "$GIT_DIR"/config-old-git-svn &&
 	mkdir import &&
-	cd import &&
-		for i in trunk branches/a branches/b \
-		         tags/0.1 tags/0.2 tags/0.3; do
-			mkdir -p $i && \
-			echo hello >> $i/README || exit 1
-		done && \
+	(
+		cd import &&
+		for i in trunk branches/a branches/b tags/0.1 tags/0.2 tags/0.3
+		do
+			mkdir -p $i &&
+			echo hello >>$i/README ||
+			exit 1
+		done &&
 		svn_cmd import -m test . "$svnrepo"
-		cd .. &&
+	) &&
 	git svn init "$svnrepo" &&
 	git svn fetch &&
-	mv "$GIT_DIR"/svn/* "$GIT_DIR"/ &&
-	mv "$GIT_DIR"/svn/.metadata "$GIT_DIR"/ &&
-	rmdir "$GIT_DIR"/svn &&
+	rm -rf "$GIT_DIR"/svn &&
 	git update-ref refs/heads/git-svn-HEAD refs/${remotes_git_svn} &&
 	git update-ref refs/heads/svn-HEAD refs/${remotes_git_svn} &&
 	git update-ref -d refs/${remotes_git_svn} refs/${remotes_git_svn}
@@ -56,7 +56,15 @@ test_expect_success 'initialize a multi-repository repo' '
 	git config --add svn-remote.svn.fetch "branches/b:refs/remotes/b" &&
 	for i in tags/0.1 tags/0.2 tags/0.3; do
 		git config --add svn-remote.svn.fetch \
-		                 $i:refs/remotes/$i || exit 1; done
+		                 $i:refs/remotes/$i || exit 1; done &&
+	git config --get-all svn-remote.svn.fetch > fetch.out &&
+	grep "^trunk:refs/remotes/trunk$" fetch.out &&
+	grep "^branches/a:refs/remotes/a$" fetch.out &&
+	grep "^branches/b:refs/remotes/b$" fetch.out &&
+	grep "^tags/0\.1:refs/remotes/tags/0\.1$" fetch.out &&
+	grep "^tags/0\.2:refs/remotes/tags/0\.2$" fetch.out &&
+	grep "^tags/0\.3:refs/remotes/tags/0\.3$" fetch.out &&
+	grep "^:refs/${remotes_git_svn}" fetch.out
 	'
 
 # refs should all be different, but the trees should all be the same:
@@ -79,36 +87,36 @@ test_expect_success 'migrate --minimize on old inited layout' '
 	rm -rf "$GIT_DIR"/svn &&
 	for i in `cat fetch.out`; do
 		path=`expr $i : "\([^:]*\):.*$"`
-		ref=`expr $i : "[^:]*:refs/remotes/\(.*\)$"`
+		ref=`expr $i : "[^:]*:\(refs/remotes/.*\)$"`
 		if test -z "$ref"; then continue; fi
 		if test -n "$path"; then path="/$path"; fi
 		( mkdir -p "$GIT_DIR"/svn/$ref/info/ &&
 		echo "$svnrepo"$path > "$GIT_DIR"/svn/$ref/info/url ) || exit 1;
 	done &&
 	git svn migrate --minimize &&
-	test -z "`git config -l |grep -v "^svn-remote\.git-svn\."`" &&
+	test -z "`git config -l | grep "^svn-remote\.git-svn\."`" &&
 	git config --get-all svn-remote.svn.fetch > fetch.out &&
 	grep "^trunk:refs/remotes/trunk$" fetch.out &&
 	grep "^branches/a:refs/remotes/a$" fetch.out &&
 	grep "^branches/b:refs/remotes/b$" fetch.out &&
 	grep "^tags/0\.1:refs/remotes/tags/0\.1$" fetch.out &&
 	grep "^tags/0\.2:refs/remotes/tags/0\.2$" fetch.out &&
-	grep "^tags/0\.3:refs/remotes/tags/0\.3$" fetch.out
+	grep "^tags/0\.3:refs/remotes/tags/0\.3$" fetch.out &&
 	grep "^:refs/${remotes_git_svn}" fetch.out
 	'
 
 test_expect_success  ".rev_db auto-converted to .rev_map.UUID" '
 	git svn fetch -i trunk &&
-	test -z "$(ls "$GIT_DIR"/svn/trunk/.rev_db.* 2>/dev/null)" &&
-	expect="$(ls "$GIT_DIR"/svn/trunk/.rev_map.*)" &&
+	test -z "$(ls "$GIT_DIR"/svn/refs/remotes/trunk/.rev_db.* 2>/dev/null)" &&
+	expect="$(ls "$GIT_DIR"/svn/refs/remotes/trunk/.rev_map.*)" &&
 	test -n "$expect" &&
 	rev_db="$(echo $expect | sed -e "s,_map,_db,")" &&
 	convert_to_rev_db "$expect" "$rev_db" &&
 	rm -f "$expect" &&
 	test -f "$rev_db" &&
 	git svn fetch -i trunk &&
-	test -z "$(ls "$GIT_DIR"/svn/trunk/.rev_db.* 2>/dev/null)" &&
-	test ! -e "$GIT_DIR"/svn/trunk/.rev_db &&
+	test -z "$(ls "$GIT_DIR"/svn/refs/remotes/trunk/.rev_db.* 2>/dev/null)" &&
+	test ! -e "$GIT_DIR"/svn/refs/remotes/trunk/.rev_db &&
 	test -f "$expect"
 	'
 

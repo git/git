@@ -13,8 +13,8 @@ SYNOPSIS
 DESCRIPTION
 -----------
 Shows commit logs and diff output each commit introduces.  The
-command internally invokes 'git-rev-list' piped to
-'git-diff-tree', and takes command line options for both of
+command internally invokes 'git rev-list' piped to
+'git diff-tree', and takes command line options for both of
 these commands.
 
 This manual page describes only the most frequently used options.
@@ -62,17 +62,6 @@ git whatchanged --since="2 weeks ago" \-- gitk::
 	Show the changes during the last two weeks to the file 'gitk'.
 	The "--" is necessary to avoid confusion with the *branch* named
 	'gitk'
-
-
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org> and
-Junio C Hamano <gitster@pobox.com>
-
-
-Documentation
---------------
-Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---

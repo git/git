@@ -1,4 +1,5 @@
 #include "git-compat-util.h"
+#include "strbuf.h"
 #include "utf8.h"
 
 /* This code is originally from http://www.cl.cam.ac.uk/~mgk25/ucs/ */
@@ -162,7 +163,7 @@ static int git_wcwidth(ucs_char_t ch)
  * If the string was not a valid UTF-8, *start pointer is set to NULL
  * and the return value is undefined.
  */
-ucs_char_t pick_one_utf8_char(const char **start, size_t *remainder_p)
+static ucs_char_t pick_one_utf8_char(const char **start, size_t *remainder_p)
 {
 	unsigned char *s = (unsigned char *)*start;
 	ucs_char_t ch;
@@ -279,14 +280,41 @@ int is_utf8(const char *text)
 	return 1;
 }
 
-static void print_spaces(int count)
+static void strbuf_addchars(struct strbuf *sb, int c, size_t n)
 {
-	static const char s[] = "                    ";
-	while (count >= sizeof(s)) {
-		fwrite(s, sizeof(s) - 1, 1, stdout);
-		count -= sizeof(s) - 1;
+	strbuf_grow(sb, n);
+	memset(sb->buf + sb->len, c, n);
+	strbuf_setlen(sb, sb->len + n);
+}
+
+static void strbuf_add_indented_text(struct strbuf *buf, const char *text,
+				     int indent, int indent2)
+{
+	if (indent < 0)
+		indent = 0;
+	while (*text) {
+		const char *eol = strchrnul(text, '\n');
+		if (*eol == '\n')
+			eol++;
+		strbuf_addchars(buf, ' ', indent);
+		strbuf_add(buf, text, eol - text);
+		text = eol;
+		indent = indent2;
 	}
-	fwrite(s, count, 1, stdout);
+}
+
+static size_t display_mode_esc_sequence_len(const char *s)
+{
+	const char *p = s;
+	if (*p++ != '\033')
+		return 0;
+	if (*p++ != '[')
+		return 0;
+	while (isdigit(*p) || *p == ';')
+		p++;
+	if (*p++ != 'm')
+		return 0;
+	return p - s;
 }
 
 /*
@@ -295,49 +323,95 @@ static void print_spaces(int count)
  * If indent is negative, assume that already -indent columns have been
  * consumed (and no extra indent is necessary for the first line).
  */
-int print_wrapped_text(const char *text, int indent, int indent2, int width)
+int strbuf_add_wrapped_text(struct strbuf *buf,
+		const char *text, int indent1, int indent2, int width)
 {
-	int w = indent, assume_utf8 = is_utf8(text);
-	const char *bol = text, *space = NULL;
+	int indent, w, assume_utf8 = 1;
+	const char *bol, *space, *start = text;
+	size_t orig_len = buf->len;
 
+	if (width <= 0) {
+		strbuf_add_indented_text(buf, text, indent1, indent2);
+		return 1;
+	}
+
+retry:
+	bol = text;
+	w = indent = indent1;
+	space = NULL;
 	if (indent < 0) {
 		w = -indent;
 		space = text;
 	}
 
 	for (;;) {
-		char c = *text;
+		char c;
+		size_t skip;
+
+		while ((skip = display_mode_esc_sequence_len(text)))
+			text += skip;
+
+		c = *text;
 		if (!c || isspace(c)) {
 			if (w < width || !space) {
 				const char *start = bol;
+				if (!c && text == start)
+					return w;
 				if (space)
 					start = space;
 				else
-					print_spaces(indent);
-				fwrite(start, text - start, 1, stdout);
+					strbuf_addchars(buf, ' ', indent);
+				strbuf_add(buf, start, text - start);
 				if (!c)
 					return w;
-				else if (c == '\t')
-					w |= 0x07;
 				space = text;
+				if (c == '\t')
+					w |= 0x07;
+				else if (c == '\n') {
+					space++;
+					if (*space == '\n') {
+						strbuf_addch(buf, '\n');
+						goto new_line;
+					}
+					else if (!isalnum(*space))
+						goto new_line;
+					else
+						strbuf_addch(buf, ' ');
+				}
 				w++;
 				text++;
 			}
 			else {
-				putchar('\n');
+new_line:
+				strbuf_addch(buf, '\n');
 				text = bol = space + isspace(*space);
 				space = NULL;
 				w = indent = indent2;
 			}
 			continue;
 		}
-		if (assume_utf8)
+		if (assume_utf8) {
 			w += utf8_width(&text, NULL);
-		else {
+			if (!text) {
+				assume_utf8 = 0;
+				text = start;
+				strbuf_setlen(buf, orig_len);
+				goto retry;
+			}
+		} else {
 			w++;
 			text++;
 		}
 	}
+}
+
+int strbuf_add_wrapped_bytes(struct strbuf *buf, const char *data, int len,
+			     int indent, int indent2, int width)
+{
+	char *tmp = xstrndup(data, len);
+	int r = strbuf_add_wrapped_text(buf, tmp, indent, indent2, width);
+	free(tmp);
+	return r;
 }
 
 int is_encoding_utf8(const char *name)

@@ -1,10 +1,11 @@
---pretty[='<format>']::
---format[='<format>']::
+--pretty[=<format>]::
+--format=<format>::
 
 	Pretty-print the contents of the commit logs in a given format,
 	where '<format>' can be one of 'oneline', 'short', 'medium',
-	'full', 'fuller', 'email', 'raw' and 'format:<string>'.
-	When omitted, the format defaults to 'medium'.
+	'full', 'fuller', 'email', 'raw' and 'format:<string>'.  See
+	the "PRETTY FORMATS" section for some additional details for each
+	format.  When omitted, the format defaults to 'medium'.
 +
 Note: you can specify the default pretty format in the repository
 configuration (see linkgit:git-config[1]).
@@ -28,3 +29,20 @@ people using 80-column terminals.
 	command to re-code the commit log message in the encoding
 	preferred by the user.  For non plumbing commands this
 	defaults to UTF-8.
+
+--no-notes::
+--show-notes[=<ref>]::
+	Show the notes (see linkgit:git-notes[1]) that annotate the
+	commit, when showing the commit log message.  This is the default
+	for `git log`, `git show` and `git whatchanged` commands when
+	there is no `--pretty`, `--format` nor `--oneline` option is
+	given on the command line.
++
+With an optional argument, add this ref to the list of notes.  The ref
+is taken to be in `refs/notes/` if it is not qualified.
+
+--[no-]standard-notes::
+	Enable or disable populating the notes ref list from the
+	'core.notesRef' and 'notes.displayRef' variables (or
+	corresponding environment overrides).  Enabled by default.
+	See linkgit:git-config[1].

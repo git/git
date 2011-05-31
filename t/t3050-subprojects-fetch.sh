@@ -10,10 +10,10 @@ test_expect_success setup '
 		cd sub &&
 		git init &&
 		>subfile &&
-		git add subfile
+		git add subfile &&
 		git commit -m "subproject commit #1"
 	) &&
-	>mainfile
+	>mainfile &&
 	git add sub mainfile &&
 	test_tick &&
 	git commit -m "superproject commit #1"

@@ -13,14 +13,16 @@ field units   {}; # unit of progress
 field meter   {}; # current core git progress meter (if active)
 
 constructor new {path} {
+	global use_ttk NS
 	set w $path
 	set w_l $w.l
 	set w_c $w.c
 
-	frame $w \
-		-borderwidth 1 \
-		-relief sunken
-	label $w_l \
+	${NS}::frame $w
+	if {!$use_ttk} {
+		$w configure -borderwidth 1 -relief sunken
+	}
+	${NS}::label $w_l \
 		-textvariable @status \
 		-anchor w \
 		-justify left
@@ -37,12 +39,13 @@ method _oneline_pack {} {
 }
 
 constructor two_line {path} {
+	global NS
 	set w $path
 	set w_l $w.l
 	set w_c $w.c
 
-	frame $w
-	label $w_l \
+	${NS}::frame $w
+	${NS}::label $w_l \
 		-textvariable @status \
 		-anchor w \
 		-justify left

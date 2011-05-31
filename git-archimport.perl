@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
 #
 # This tool is copyright (c) 2005, Martin Langhoff.
 # It is released under the Gnu Public License, version 2.
@@ -54,6 +54,7 @@ and can contain multiple, unrelated branches.
 
 =cut
 
+use 5.008;
 use strict;
 use warnings;
 use Getopt::Std;

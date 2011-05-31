@@ -12,6 +12,7 @@ SYNOPSIS
 	[--index-filter <command>] [--parent-filter <command>]
 	[--msg-filter <command>] [--commit-filter <command>]
 	[--tag-name-filter <command>] [--subdirectory-filter <directory>]
+	[--prune-empty]
 	[--original <namespace>] [-d <directory>] [-f | --force]
 	[--] [<rev-list options>...]
 
@@ -80,7 +81,7 @@ OPTIONS
 	This filter may be used if you only need to modify the environment
 	in which the commit will be performed.  Specifically, you might
 	want to rewrite the author/committer name/email/time environment
-	variables (see linkgit:git-commit[1] for details).  Do not forget
+	variables (see linkgit:git-commit-tree[1] for details).  Do not forget
 	to re-export the variables.
 
 --tree-filter <command>::
@@ -115,8 +116,8 @@ OPTIONS
 --commit-filter <command>::
 	This is the filter for performing the commit.
 	If this filter is specified, it will be called instead of the
-	'git-commit-tree' command, with arguments of the form
-	"<TREE_ID> [-p <PARENT_COMMIT_ID>]..." and the log message on
+	'git commit-tree' command, with arguments of the form
+	"<TREE_ID> [(-p <PARENT_COMMIT_ID>)...]" and the log message on
 	stdin.  The commit id is expected on stdout.
 +
 As a special extension, the commit filter may emit multiple
@@ -126,10 +127,10 @@ have all of them as parents.
 You can use the 'map' convenience function in this filter, and other
 convenience functions, too.  For example, calling 'skip_commit "$@"'
 will leave out the current commit (but not its changes! If you want
-that, use 'git-rebase' instead).
+that, use 'git rebase' instead).
 +
-You can also use the 'git_commit_non_empty_tree "$@"' instead of
-'git commit-tree "$@"' if you don't wish to keep commits with a single parent
+You can also use the `git_commit_non_empty_tree "$@"` instead of
+`git commit-tree "$@"` if you don't wish to keep commits with a single parent
 and that makes no change to the tree.
 
 --tag-name-filter <command>::
@@ -158,7 +159,7 @@ to other tags will be rewritten to point to the underlying commit.
 --subdirectory-filter <directory>::
 	Only look at the history which touches the given subdirectory.
 	The result will contain that directory (and only that) as its
-	project root.
+	project root. Implies <<Remap_to_ancestor>>.
 
 --prune-empty::
 	Some kind of filters will generate empty commits, that left the tree
@@ -167,7 +168,7 @@ to other tags will be rewritten to point to the underlying commit.
 	and only one parent, it will hence keep merges points. Also, this
 	option is not compatible with the use of '--commit-filter'. Though you
 	just need to use the function 'git_commit_non_empty_tree "$@"' instead
-	of the 'git commit-tree "$@"' idiom in your commit filter to make that
+	of the `git commit-tree "$@"` idiom in your commit filter to make that
 	happen.
 
 --original <namespace>::
@@ -184,15 +185,26 @@ to other tags will be rewritten to point to the underlying commit.
 
 -f::
 --force::
-	'git-filter-branch' refuses to start with an existing temporary
+	'git filter-branch' refuses to start with an existing temporary
 	directory or when there are already refs starting with
 	'refs/original/', unless forced.
 
 <rev-list options>...::
-	Arguments for 'git-rev-list'.  All positive refs included by
+	Arguments for 'git rev-list'.  All positive refs included by
 	these options are rewritten.  You may also specify options
 	such as '--all', but you must use '--' to separate them from
-	the 'git-filter-branch' options.
+	the 'git filter-branch' options. Implies <<Remap_to_ancestor>>.
+
+
+[[Remap_to_ancestor]]
+Remap to ancestor
+~~~~~~~~~~~~~~~~~
+
+By using linkgit:rev-list[1] arguments, e.g., path limiters, you can limit the
+set of revisions which get rewritten. However, positive refs on the command
+line are distinguished: we don't let them be excluded by such limiters. For
+this purpose, they are instead rewritten to point at the nearest ancestor that
+was not excluded.
 
 
 Examples
@@ -209,7 +221,7 @@ However, if the file is absent from the tree of some commit,
 a simple `rm filename` will fail for that tree and commit.
 Thus you may instead want to use `rm -f filename` as the script.
 
-Using `\--index-filter` with 'git-rm' yields a significantly faster
+Using `\--index-filter` with 'git rm' yields a significantly faster
 version.  Like with using `rm filename`, `git rm --cached filename`
 will fail if the file is absent from the tree of a commit.  If you
 want to "completely forget" a file, it does not matter when it entered
@@ -291,7 +303,7 @@ and all children of the merge will become merge commits with P1,P2
 as their parents instead of the merge commit.
 
 You can rewrite the commit log messages using `--msg-filter`.  For
-example, 'git-svn-id' strings in a repository created by 'git-svn' can
+example, 'git svn-id' strings in a repository created by 'git svn' can
 be removed this way:
 
 -------------------------------------------------------
@@ -302,13 +314,23 @@ git filter-branch --msg-filter '
 
 To restrict rewriting to only part of the history, specify a revision
 range in addition to the new branch name.  The new branch name will
-point to the top-most revision that a 'git-rev-list' of this range
+point to the top-most revision that a 'git rev-list' of this range
 will print.
+
+If you need to add 'Acked-by' lines to, say, the last 10 commits (none
+of which is a merge), use this command:
+
+--------------------------------------------------------
+git filter-branch --msg-filter '
+	cat &&
+	echo "Acked-by: Bugs Bunny <bunny@bugzilla.org>"
+' HEAD~10..HEAD
+--------------------------------------------------------
 
 *NOTE* the changes introduced by the commits, and which are not reverted
 by subsequent commits, will still be in the rewritten branch. If you want
 to throw out _changes_ together with the commits, you should use the
-interactive mode of 'git-rebase'.
+interactive mode of 'git rebase'.
 
 
 Consider this history:
@@ -336,10 +358,10 @@ To move the whole tree into a subdirectory, or remove it from there:
 
 ---------------------------------------------------------------
 git filter-branch --index-filter \
-	'git ls-files -s | sed "s-\t-&newsubdir/-" |
+	'git ls-files -s | sed "s-\t\"*-&newsubdir/-" |
 		GIT_INDEX_FILE=$GIT_INDEX_FILE.new \
 			git update-index --index-info &&
-	 mv $GIT_INDEX_FILE.new $GIT_INDEX_FILE' HEAD
+	 mv "$GIT_INDEX_FILE.new" "$GIT_INDEX_FILE"' HEAD
 ---------------------------------------------------------------
 
 
@@ -382,16 +404,6 @@ warned.
 * Garbage collect all unreferenced objects with `git gc \--prune=now`
   (or if your git-gc is not new enough to support arguments to
   `\--prune`, use `git repack -ad; git prune` instead).
-
-
-Author
-------
-Written by Petr "Pasky" Baudis <pasky@suse.cz>,
-and the git list <git@vger.kernel.org>
-
-Documentation
---------------
-Documentation by Petr Baudis and the git list.
 
 GIT
 ---

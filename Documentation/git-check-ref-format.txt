@@ -9,7 +9,8 @@ SYNOPSIS
 --------
 [verse]
 'git check-ref-format' <refname>
-'git check-ref-format' [--branch] <branchname-shorthand>
+'git check-ref-format' --print <refname>
+'git check-ref-format' --branch <branchname-shorthand>
 
 DESCRIPTION
 -----------
@@ -18,8 +19,9 @@ status if it is not.
 
 A reference is used in git to specify branches and tags.  A
 branch head is stored under the `$GIT_DIR/refs/heads` directory, and
-a tag is stored under the `$GIT_DIR/refs/tags` directory.  git
-imposes the following rules on how references are named:
+a tag is stored under the `$GIT_DIR/refs/tags` directory (or, if refs
+are packed by `git gc`, as entries in the `$GIT_DIR/packed-refs` file).
+git imposes the following rules on how references are named:
 
 . They can include slash `/` for hierarchical (directory)
   grouping, but no slash-separated component can begin with a
@@ -42,12 +44,12 @@ imposes the following rules on how references are named:
 
 . They cannot contain a sequence `@{`.
 
-- They cannot contain a `\\`.
+. They cannot contain a `\`.
 
 These rules make it easy for shell script based tools to parse
 reference names, pathname expansion by the shell when a reference name is used
 unquoted (by mistake), and also avoids ambiguities in certain
-reference name expressions (see linkgit:git-rev-parse[1]):
+reference name expressions (see linkgit:gitrevisions[7]):
 
 . A double-dot `..` is often used as in `ref1..ref2`, and in some
   contexts this notation means `{caret}ref1 ref2` (i.e. not in
@@ -59,20 +61,35 @@ reference name expressions (see linkgit:git-rev-parse[1]):
 . A colon `:` is used as in `srcref:dstref` to mean "use srcref\'s
   value and store it in dstref" in fetch and push operations.
   It may also be used to select a specific object such as with
-  'git-cat-file': "git cat-file blob v1.3.3:refs.c".
+  'git cat-file': "git cat-file blob v1.3.3:refs.c".
 
 . at-open-brace `@{` is used as a notation to access a reflog entry.
 
-With the `--branch` option, it expands a branch name shorthand and
-prints the name of the branch the shorthand refers to.
+With the `--print` option, if 'refname' is acceptable, it prints the
+canonicalized name of a hypothetical reference with that name.  That is,
+it prints 'refname' with any extra `/` characters removed.
 
-EXAMPLE
--------
+With the `--branch` option, it expands the ``previous branch syntax''
+`@{-n}`.  For example, `@{-1}` is a way to refer the last branch you
+were on.  This option should be used by porcelains to accept this
+syntax anywhere a branch name is expected, so they can act as if you
+typed the branch name.
 
-git check-ref-format --branch @{-1}::
+EXAMPLES
+--------
 
-Print the name of the previous branch.
+* Print the name of the previous branch:
++
+------------
+$ git check-ref-format --branch @{-1}
+------------
 
+* Determine the reference name to use for a new branch:
++
+------------
+$ ref=$(git check-ref-format --print "refs/heads/$newbranch") ||
+die "we do not like '$newbranch' as a branch name."
+------------
 
 GIT
 ---

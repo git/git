@@ -12,6 +12,7 @@ mk_empty () {
 	(
 		cd testrepo &&
 		git init &&
+		git config receive.denyCurrentBranch warn &&
 		mv .git/hooks .git/hooks-disabled
 	)
 }
@@ -63,13 +64,13 @@ check_push_result () {
 
 test_expect_success setup '
 
-	: >path1 &&
+	>path1 &&
 	git add path1 &&
 	test_tick &&
 	git commit -a -m repo &&
 	the_first_commit=$(git show-ref -s --verify refs/heads/master) &&
 
-	: >path2 &&
+	>path2 &&
 	git add path2 &&
 	test_tick &&
 	git commit -a -m second &&
@@ -122,6 +123,23 @@ test_expect_success 'fetch with insteadOf' '
 	)
 '
 
+test_expect_success 'fetch with pushInsteadOf (should not rewrite)' '
+	mk_empty &&
+	(
+		TRASH=$(pwd)/ &&
+		cd testrepo &&
+		git config "url.trash/.pushInsteadOf" "$TRASH" &&
+		git config remote.up.url "$TRASH." &&
+		git config remote.up.fetch "refs/heads/*:refs/remotes/origin/*" &&
+		git fetch up &&
+
+		r=$(git show-ref -s --verify refs/remotes/origin/master) &&
+		test "z$r" = "z$the_commit" &&
+
+		test 1 = $(git for-each-ref refs/remotes/origin | wc -l)
+	)
+'
+
 test_expect_success 'push without wildcard' '
 	mk_empty &&
 
@@ -153,6 +171,36 @@ test_expect_success 'push with insteadOf' '
 	TRASH="$(pwd)/" &&
 	git config "url.$TRASH.insteadOf" trash/ &&
 	git push trash/testrepo refs/heads/master:refs/remotes/origin/master &&
+	(
+		cd testrepo &&
+		r=$(git show-ref -s --verify refs/remotes/origin/master) &&
+		test "z$r" = "z$the_commit" &&
+
+		test 1 = $(git for-each-ref refs/remotes/origin | wc -l)
+	)
+'
+
+test_expect_success 'push with pushInsteadOf' '
+	mk_empty &&
+	TRASH="$(pwd)/" &&
+	git config "url.$TRASH.pushInsteadOf" trash/ &&
+	git push trash/testrepo refs/heads/master:refs/remotes/origin/master &&
+	(
+		cd testrepo &&
+		r=$(git show-ref -s --verify refs/remotes/origin/master) &&
+		test "z$r" = "z$the_commit" &&
+
+		test 1 = $(git for-each-ref refs/remotes/origin | wc -l)
+	)
+'
+
+test_expect_success 'push with pushInsteadOf and explicit pushurl (pushInsteadOf should not rewrite)' '
+	mk_empty &&
+	TRASH="$(pwd)/" &&
+	git config "url.trash2/.pushInsteadOf" trash/ &&
+	git config remote.r.url trash/wrong &&
+	git config remote.r.pushurl "$TRASH/testrepo" &&
+	git push r refs/heads/master:refs/remotes/origin/master &&
 	(
 		cd testrepo &&
 		r=$(git show-ref -s --verify refs/remotes/origin/master) &&
@@ -435,8 +483,10 @@ git config --remove-section remote.there
 test_expect_success 'push with dry-run' '
 
 	mk_test heads/master &&
-	(cd testrepo &&
-	 old_commit=$(git show-ref -s --verify refs/heads/master)) &&
+	(
+		cd testrepo &&
+		old_commit=$(git show-ref -s --verify refs/heads/master)
+	) &&
 	git push --dry-run testrepo &&
 	check_push_result $old_commit heads/master
 '
@@ -445,10 +495,13 @@ test_expect_success 'push updates local refs' '
 
 	mk_test heads/master &&
 	mk_child child &&
-	(cd child &&
+	(
+		cd child &&
 		git pull .. master &&
 		git push &&
-	test $(git rev-parse master) = $(git rev-parse remotes/origin/master))
+		test $(git rev-parse master) = \
+			$(git rev-parse remotes/origin/master)
+	)
 
 '
 
@@ -458,10 +511,13 @@ test_expect_success 'push updates up-to-date local refs' '
 	mk_child child1 &&
 	mk_child child2 &&
 	(cd child1 && git pull .. master && git push) &&
-	(cd child2 &&
+	(
+		cd child2 &&
 		git pull ../child1 master &&
 		git push &&
-	test $(git rev-parse master) = $(git rev-parse remotes/origin/master))
+		test $(git rev-parse master) = \
+			$(git rev-parse remotes/origin/master)
+	)
 
 '
 
@@ -469,9 +525,11 @@ test_expect_success 'push preserves up-to-date packed refs' '
 
 	mk_test heads/master &&
 	mk_child child &&
-	(cd child &&
+	(
+		cd child &&
 		git push &&
-	! test -f .git/refs/remotes/origin/master)
+		! test -f .git/refs/remotes/origin/master
+	)
 
 '
 
@@ -480,13 +538,15 @@ test_expect_success 'push does not update local refs on failure' '
 	mk_test heads/master &&
 	mk_child child &&
 	mkdir testrepo/.git/hooks &&
-	echo exit 1 >testrepo/.git/hooks/pre-receive &&
+	echo "#!/no/frobnication/today" >testrepo/.git/hooks/pre-receive &&
 	chmod +x testrepo/.git/hooks/pre-receive &&
-	(cd child &&
+	(
+		cd child &&
 		git pull .. master
 		test_must_fail git push &&
 		test $(git rev-parse master) != \
-			$(git rev-parse remotes/origin/master))
+			$(git rev-parse remotes/origin/master)
+	)
 
 '
 
@@ -499,36 +559,69 @@ test_expect_success 'allow deleting an invalid remote ref' '
 
 '
 
+test_expect_success 'allow deleting a ref using --delete' '
+	mk_test heads/master &&
+	(cd testrepo && git config receive.denyDeleteCurrent warn) &&
+	git push testrepo --delete master &&
+	(cd testrepo && test_must_fail git rev-parse --verify refs/heads/master)
+'
+
+test_expect_success 'allow deleting a tag using --delete' '
+	mk_test heads/master &&
+	git tag -a -m dummy_message deltag heads/master &&
+	git push testrepo --tags &&
+	(cd testrepo && git rev-parse --verify -q refs/tags/deltag) &&
+	git push testrepo --delete tag deltag &&
+	(cd testrepo && test_must_fail git rev-parse --verify refs/tags/deltag)
+'
+
+test_expect_success 'push --delete without args aborts' '
+	mk_test heads/master &&
+	test_must_fail git push testrepo --delete
+'
+
+test_expect_success 'push --delete refuses src:dest refspecs' '
+	mk_test heads/master &&
+	test_must_fail git push testrepo --delete master:foo
+'
+
 test_expect_success 'warn on push to HEAD of non-bare repository' '
-	mk_test heads/master
-	(cd testrepo &&
+	mk_test heads/master &&
+	(
+		cd testrepo &&
 		git checkout master &&
-		git config receive.denyCurrentBranch warn) &&
+		git config receive.denyCurrentBranch warn
+	) &&
 	git push testrepo master 2>stderr &&
 	grep "warning: updating the current branch" stderr
 '
 
 test_expect_success 'deny push to HEAD of non-bare repository' '
-	mk_test heads/master
-	(cd testrepo &&
+	mk_test heads/master &&
+	(
+		cd testrepo &&
 		git checkout master &&
-		git config receive.denyCurrentBranch true) &&
+		git config receive.denyCurrentBranch true
+	) &&
 	test_must_fail git push testrepo master
 '
 
 test_expect_success 'allow push to HEAD of bare repository (bare)' '
-	mk_test heads/master
-	(cd testrepo &&
+	mk_test heads/master &&
+	(
+		cd testrepo &&
 		git checkout master &&
 		git config receive.denyCurrentBranch true &&
-		git config core.bare true) &&
+		git config core.bare true
+	) &&
 	git push testrepo master 2>stderr &&
 	! grep "warning: updating the current branch" stderr
 '
 
 test_expect_success 'allow push to HEAD of non-bare repository (config)' '
-	mk_test heads/master
-	(cd testrepo &&
+	mk_test heads/master &&
+	(
+		cd testrepo &&
 		git checkout master &&
 		git config receive.denyCurrentBranch false
 	) &&
@@ -541,7 +634,8 @@ test_expect_success 'fetch with branches' '
 	git branch second $the_first_commit &&
 	git checkout second &&
 	echo ".." > testrepo/.git/branches/branch1 &&
-	(cd testrepo &&
+	(
+		cd testrepo &&
 		git fetch branch1 &&
 		r=$(git show-ref -s --verify refs/heads/branch1) &&
 		test "z$r" = "z$the_commit" &&
@@ -553,7 +647,8 @@ test_expect_success 'fetch with branches' '
 test_expect_success 'fetch with branches containing #' '
 	mk_empty &&
 	echo "..#second" > testrepo/.git/branches/branch2 &&
-	(cd testrepo &&
+	(
+		cd testrepo &&
 		git fetch branch2 &&
 		r=$(git show-ref -s --verify refs/heads/branch2) &&
 		test "z$r" = "z$the_first_commit" &&
@@ -567,7 +662,8 @@ test_expect_success 'push with branches' '
 	git checkout second &&
 	echo "testrepo" > .git/branches/branch1 &&
 	git push branch1 &&
-	(cd testrepo &&
+	(
+		cd testrepo &&
 		r=$(git show-ref -s --verify refs/heads/master) &&
 		test "z$r" = "z$the_first_commit" &&
 		test 1 = $(git for-each-ref refs/heads | wc -l)
@@ -578,12 +674,112 @@ test_expect_success 'push with branches containing #' '
 	mk_empty &&
 	echo "testrepo#branch3" > .git/branches/branch2 &&
 	git push branch2 &&
-	(cd testrepo &&
+	(
+		cd testrepo &&
 		r=$(git show-ref -s --verify refs/heads/branch3) &&
 		test "z$r" = "z$the_first_commit" &&
 		test 1 = $(git for-each-ref refs/heads | wc -l)
 	) &&
 	git checkout master
+'
+
+test_expect_success 'push into aliased refs (consistent)' '
+	mk_test heads/master &&
+	mk_child child1 &&
+	mk_child child2 &&
+	(
+		cd child1 &&
+		git branch foo &&
+		git symbolic-ref refs/heads/bar refs/heads/foo
+		git config receive.denyCurrentBranch false
+	) &&
+	(
+		cd child2 &&
+		>path2 &&
+		git add path2 &&
+		test_tick &&
+		git commit -a -m child2 &&
+		git branch foo &&
+		git branch bar &&
+		git push ../child1 foo bar
+	)
+'
+
+test_expect_success 'push into aliased refs (inconsistent)' '
+	mk_test heads/master &&
+	mk_child child1 &&
+	mk_child child2 &&
+	(
+		cd child1 &&
+		git branch foo &&
+		git symbolic-ref refs/heads/bar refs/heads/foo
+		git config receive.denyCurrentBranch false
+	) &&
+	(
+		cd child2 &&
+		>path2 &&
+		git add path2 &&
+		test_tick &&
+		git commit -a -m child2 &&
+		git branch foo &&
+		>path3 &&
+		git add path3 &&
+		test_tick &&
+		git commit -a -m child2 &&
+		git branch bar &&
+		test_must_fail git push ../child1 foo bar 2>stderr &&
+		grep "refusing inconsistent update" stderr
+	)
+'
+
+test_expect_success 'push --porcelain' '
+	mk_empty &&
+	echo >.git/foo  "To testrepo" &&
+	echo >>.git/foo "*	refs/heads/master:refs/remotes/origin/master	[new branch]"  &&
+	echo >>.git/foo "Done" &&
+	git push >.git/bar --porcelain  testrepo refs/heads/master:refs/remotes/origin/master &&
+	(
+		cd testrepo &&
+		r=$(git show-ref -s --verify refs/remotes/origin/master) &&
+		test "z$r" = "z$the_commit" &&
+		test 1 = $(git for-each-ref refs/remotes/origin | wc -l)
+	) &&
+	test_cmp .git/foo .git/bar
+'
+
+test_expect_success 'push --porcelain bad url' '
+	mk_empty &&
+	test_must_fail git push >.git/bar --porcelain asdfasdfasd refs/heads/master:refs/remotes/origin/master &&
+	test_must_fail grep -q Done .git/bar
+'
+
+test_expect_success 'push --porcelain rejected' '
+	mk_empty &&
+	git push testrepo refs/heads/master:refs/remotes/origin/master &&
+	(cd testrepo &&
+		git reset --hard origin/master^
+		git config receive.denyCurrentBranch true) &&
+
+	echo >.git/foo  "To testrepo"  &&
+	echo >>.git/foo "!	refs/heads/master:refs/heads/master	[remote rejected] (branch is currently checked out)" &&
+
+	test_must_fail git push >.git/bar --porcelain  testrepo refs/heads/master:refs/heads/master &&
+	test_cmp .git/foo .git/bar
+'
+
+test_expect_success 'push --porcelain --dry-run rejected' '
+	mk_empty &&
+	git push testrepo refs/heads/master:refs/remotes/origin/master &&
+	(cd testrepo &&
+		git reset --hard origin/master
+		git config receive.denyCurrentBranch true) &&
+
+	echo >.git/foo  "To testrepo"  &&
+	echo >>.git/foo "!	refs/heads/master^:refs/heads/master	[rejected] (non-fast-forward)" &&
+	echo >>.git/foo "Done" &&
+
+	test_must_fail git push >.git/bar --porcelain  --dry-run testrepo refs/heads/master^:refs/heads/master &&
+	test_cmp .git/foo .git/bar
 '
 
 test_done

@@ -76,9 +76,17 @@ test_expect_success 'check combined output (1)' '
 	verify_helper sidewithone
 '
 
-test_expect_failure 'check combined output (2)' '
+test_expect_success 'check combined output (2)' '
 	git show sidesansone -- >sidesansone &&
 	verify_helper sidesansone
+'
+
+test_expect_success 'diagnose truncated file' '
+	>file &&
+	git add file &&
+	git commit --amend -C HEAD &&
+	git show >out &&
+	grep "diff --cc file" out
 '
 
 test_done

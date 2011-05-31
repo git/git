@@ -32,13 +32,18 @@ EOF
 
 sed 's/beer\\/beer,\\/' < Beer.java > Beer-correct.java
 
-builtin_patterns="bibtex cpp html java objc pascal php python ruby tex"
+builtin_patterns="bibtex cpp csharp fortran html java objc pascal perl php python ruby tex"
 for p in $builtin_patterns
 do
 	test_expect_success "builtin $p pattern compiles" '
 		echo "*.java diff=$p" > .gitattributes &&
-		! ( git diff --no-index Beer.java Beer-correct.java 2>&1 |
-			grep "fatal" > /dev/null )
+		! { git diff --no-index Beer.java Beer-correct.java 2>&1 |
+			grep "fatal" > /dev/null; }
+	'
+	test_expect_success "builtin $p wordRegex pattern compiles" '
+		! { git diff --no-index --word-diff \
+			Beer.java Beer-correct.java 2>&1 |
+			grep "fatal" > /dev/null; }
 	'
 done
 

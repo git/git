@@ -3,21 +3,26 @@ git-shortlog(1)
 
 NAME
 ----
-git-shortlog - Summarize 'git-log' output
+git-shortlog - Summarize 'git log' output
 
 SYNOPSIS
 --------
 [verse]
 git log --pretty=short | 'git shortlog' [-h] [-n] [-s] [-e] [-w]
-git shortlog [-n|--numbered] [-s|--summary] [-e|--email] [-w[<width>[,<indent1>[,<indent2>]]]] [<committish>...]
+'git shortlog' [-n|--numbered] [-s|--summary] [-e|--email] [-w[<width>[,<indent1>[,<indent2>]]]] <commit>...
 
 DESCRIPTION
 -----------
-Summarizes 'git-log' output in a format suitable for inclusion
+Summarizes 'git log' output in a format suitable for inclusion
 in release announcements. Each commit will be grouped by author and
 the first line of the commit message will be shown.
 
 Additionally, "[PATCH]" will be stripped from the commit description.
+
+If no revisions are passed on the command line and either standard input
+is not a terminal or there is no current branch, 'git shortlog' will
+output a summary of the log read from standard input, without
+reference to the current repository.
 
 OPTIONS
 -------
@@ -39,6 +44,14 @@ OPTIONS
 --email::
 	Show the email address of each author.
 
+--format[=<format>]::
+	Instead of the commit subject, use some other information to
+	describe each commit.  '<format>' can be any string accepted
+	by the `--format` option of 'git log', such as '{asterisk} [%h] %s'.
+	(See the "PRETTY FORMATS" section of linkgit:git-log[1].)
+
+	Each pretty-printed commit will be rewrapped before it is shown.
+
 -w[<width>[,<indent1>[,<indent2>]]]::
 	Linewrap the output by wrapping each line at `width`.  The first
 	line of each entry is indented by `indent1` spaces, and the second
@@ -54,15 +67,6 @@ person in the shortlog, where their name and/or email address was
 spelled differently.
 
 include::mailmap.txt[]
-
-
-Author
-------
-Written by Jeff Garzik <jgarzik@pobox.com>
-
-Documentation
---------------
-Documentation by Junio C Hamano.
 
 GIT
 ---

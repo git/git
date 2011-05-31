@@ -275,4 +275,13 @@ test_expect_success \
      git cat-file blob $blob_2 > /dev/null &&
      git cat-file blob $blob_3 > /dev/null'
 
+test_expect_success \
+    'corrupting header to have too small output buffer fails unpack' \
+    'create_new_pack &&
+     git prune-packed &&
+     printf "\262\001" | do_corrupt_object $blob_1 0 &&
+     test_must_fail git cat-file blob $blob_1 > /dev/null &&
+     test_must_fail git cat-file blob $blob_2 > /dev/null &&
+     test_must_fail git cat-file blob $blob_3 > /dev/null'
+
 test_done

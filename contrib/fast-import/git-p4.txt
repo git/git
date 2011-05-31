@@ -191,6 +191,11 @@ git-p4.useclientspec
 
   git config [--global] git-p4.useclientspec false
 
+The P4CLIENT environment variable should be correctly set for p4 to be
+able to find the relevant client.  This client spec will be used to
+both filter the files cloned by git and set the directory layout as
+specified in the client (this implies --keep-path style semantics).
+
 Implementation Details...
 =========================
 

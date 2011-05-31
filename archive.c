@@ -7,9 +7,9 @@
 #include "unpack-trees.h"
 
 static char const * const archive_usage[] = {
-	"git archive [options] <tree-ish> [path...]",
+	"git archive [options] <tree-ish> [<path>...]",
 	"git archive --list",
-	"git archive --remote <repo> [--exec <cmd>] [options] <tree-ish> [path...]",
+	"git archive --remote <repo> [--exec <cmd>] [options] <tree-ish> [<path>...]",
 	"git archive --remote <repo> [--exec <cmd>] --list",
 	NULL
 };
@@ -31,6 +31,9 @@ static void format_subst(const struct commit *commit,
 {
 	char *to_free = NULL;
 	struct strbuf fmt = STRBUF_INIT;
+	struct pretty_print_context ctx = {0};
+	ctx.date_mode = DATE_NORMAL;
+	ctx.abbrev = DEFAULT_ABBREV;
 
 	if (src == buf->buf)
 		to_free = strbuf_detach(buf, NULL);
@@ -48,7 +51,7 @@ static void format_subst(const struct commit *commit,
 		strbuf_add(&fmt, b + 8, c - b - 8);
 
 		strbuf_add(buf, src, b - src);
-		format_commit_message(commit, fmt.buf, buf, DATE_NORMAL);
+		format_commit_message(commit, fmt.buf, buf, &ctx);
 		len -= c + 1 - src;
 		src  = c + 1;
 	}
@@ -85,8 +88,8 @@ static void setup_archive_check(struct git_attr_check *check)
 	static struct git_attr *attr_export_subst;
 
 	if (!attr_export_ignore) {
-		attr_export_ignore = git_attr("export-ignore", 13);
-		attr_export_subst = git_attr("export-subst", 12);
+		attr_export_ignore = git_attr("export-ignore");
+		attr_export_subst = git_attr("export-subst");
 	}
 	check[0].attr = attr_export_ignore;
 	check[1].attr = attr_export_subst;
@@ -115,6 +118,7 @@ static int write_archive_entry(const unsigned char *sha1, const char *base,
 
 	strbuf_reset(&path);
 	strbuf_grow(&path, PATH_MAX);
+	strbuf_add(&path, args->base, args->baselen);
 	strbuf_add(&path, base, baselen);
 	strbuf_addstr(&path, filename);
 	path_without_prefix = path.buf + args->baselen;
@@ -187,8 +191,8 @@ int write_archive_entries(struct archiver_args *args,
 		git_attr_set_direction(GIT_ATTR_INDEX, &the_index);
 	}
 
-	err =  read_tree_recursive(args->tree, args->base, args->baselen, 0,
-			args->pathspec, write_archive_entry, &context);
+	err = read_tree_recursive(args->tree, "", 0, 0, args->pathspec,
+				  write_archive_entry, &context);
 	if (err == READ_TREE_RECURSIVE)
 		err = 0;
 	return err;
@@ -208,10 +212,33 @@ static const struct archiver *lookup_archiver(const char *name)
 	return NULL;
 }
 
+static int reject_entry(const unsigned char *sha1, const char *base,
+			int baselen, const char *filename, unsigned mode,
+			int stage, void *context)
+{
+	return -1;
+}
+
+static int path_exists(struct tree *tree, const char *path)
+{
+	const char *pathspec[] = { path, NULL };
+
+	if (read_tree_recursive(tree, "", 0, 0, pathspec, reject_entry, NULL))
+		return 1;
+	return 0;
+}
+
 static void parse_pathspec_arg(const char **pathspec,
 		struct archiver_args *ar_args)
 {
-	ar_args->pathspec = get_pathspec(ar_args->base, pathspec);
+	ar_args->pathspec = pathspec = get_pathspec("", pathspec);
+	if (pathspec) {
+		while (*pathspec) {
+			if (!path_exists(ar_args->tree, *pathspec))
+				die("path not found: %s", *pathspec);
+			pathspec++;
+		}
+	}
 }
 
 static void parse_treeish_arg(const char **argv,
@@ -283,11 +310,11 @@ static int parse_archive_args(int argc, const char **argv,
 		OPT_STRING(0, "format", &format, "fmt", "archive format"),
 		OPT_STRING(0, "prefix", &base, "prefix",
 			"prepend prefix to each pathname in the archive"),
-		OPT_STRING(0, "output", &output, "file",
+		OPT_STRING('o', "output", &output, "file",
 			"write the archive to this file"),
 		OPT_BOOLEAN(0, "worktree-attributes", &worktree_attributes,
 			"read .gitattributes in working directory"),
-		OPT__VERBOSE(&verbose),
+		OPT__VERBOSE(&verbose, "report archived files on stderr"),
 		OPT__COMPR('0', &compression_level, "store only", 0),
 		OPT__COMPR('1', &compression_level, "compress faster", 1),
 		OPT__COMPR_HIDDEN('2', &compression_level, 2),

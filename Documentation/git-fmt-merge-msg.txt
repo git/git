@@ -9,25 +9,27 @@ git-fmt-merge-msg - Produce a merge commit message
 SYNOPSIS
 --------
 [verse]
-'git fmt-merge-msg' [--log | --no-log] <$GIT_DIR/FETCH_HEAD
-'git fmt-merge-msg' [--log | --no-log] -F <file>
+'git fmt-merge-msg' [-m <message>] [--log[=<n>] | --no-log] <$GIT_DIR/FETCH_HEAD
+'git fmt-merge-msg' [-m <message>] [--log[=<n>] | --no-log] -F <file>
 
 DESCRIPTION
 -----------
 Takes the list of merged objects on stdin and produces a suitable
 commit message to be used for the merge commit, usually to be
-passed as the '<merge-message>' argument of 'git-merge'.
+passed as the '<merge-message>' argument of 'git merge'.
 
-This script is intended mostly for internal use by scripts
-automatically invoking 'git-merge'.
+This command is intended mostly for internal use by scripts
+automatically invoking 'git merge'.
 
 OPTIONS
 -------
 
---log::
+--log[=<n>]::
 	In addition to branch names, populate the log message with
 	one-line descriptions from the actual commits that are being
-	merged.
+	merged.  At most <n> commits from each merge parent will be
+	used (20 if <n> is omitted).  This overrides the `merge.log`
+	configuration variable.
 
 --no-log::
 	Do not list one-line descriptions from the actual commits being
@@ -38,6 +40,11 @@ OPTIONS
 	Synonyms to --log and --no-log; these are deprecated and will be
 	removed in the future.
 
+-m <message>::
+--message <message>::
+	Use <message> instead of the branch names for the first line
+	of the log message.  For use with `--log`.
+
 -F <file>::
 --file <file>::
 	Take the list of merged objects from <file> instead of
@@ -47,8 +54,10 @@ CONFIGURATION
 -------------
 
 merge.log::
-	Whether to include summaries of merged commits in newly
-	merge commit messages. False by default.
+	In addition to branch names, populate the log message with at
+	most the specified number of one-line descriptions from the
+	actual commits that are being merged.  Defaults to false, and
+	true is a synonym for 20.
 
 merge.summary::
 	Synonym to `merge.log`; this is deprecated and will be removed in
@@ -57,15 +66,6 @@ merge.summary::
 SEE ALSO
 --------
 linkgit:git-merge[1]
-
-
-Author
-------
-Written by Junio C Hamano <gitster@pobox.com>
-
-Documentation
---------------
-Documentation by Petr Baudis, Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---

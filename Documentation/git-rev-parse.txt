@@ -15,16 +15,16 @@ DESCRIPTION
 
 Many git porcelainish commands take mixture of flags
 (i.e. parameters that begin with a dash '-') and parameters
-meant for the underlying 'git-rev-list' command they use internally
+meant for the underlying 'git rev-list' command they use internally
 and flags and parameters for the other commands they use
-downstream of 'git-rev-list'.  This command is used to
+downstream of 'git rev-list'.  This command is used to
 distinguish between them.
 
 
 OPTIONS
 -------
 --parseopt::
-	Use 'git-rev-parse' in option parsing mode (see PARSEOPT section below).
+	Use 'git rev-parse' in option parsing mode (see PARSEOPT section below).
 
 --keep-dashdash::
 	Only meaningful in `--parseopt` mode. Tells the option parser to echo
@@ -33,20 +33,20 @@ OPTIONS
 --stop-at-non-option::
 	Only meaningful in `--parseopt` mode.  Lets the option parser stop at
 	the first non-option argument.  This can be used to parse sub-commands
-	that take options themself.
+	that take options themselves.
 
 --sq-quote::
-	Use 'git-rev-parse' in shell quoting mode (see SQ-QUOTE
+	Use 'git rev-parse' in shell quoting mode (see SQ-QUOTE
 	section below). In contrast to the `--sq` option below, this
 	mode does only quoting. Nothing else is done to command input.
 
 --revs-only::
 	Do not output flags and parameters not meant for
-	'git-rev-list' command.
+	'git rev-list' command.
 
 --no-revs::
 	Do not output flags and parameters meant for
-	'git-rev-list' command.
+	'git rev-list' command.
 
 --flags::
 	Do not output non-flag parameters.
@@ -74,7 +74,7 @@ OPTIONS
 	properly quoted for consumption by shell.  Useful when
 	you expect your parameter to contain whitespaces and
 	newlines (e.g. when using pickaxe `-S` with
-	'git-diff-\*'). In contrast to the `--sq-quote` option,
+	'git diff-{asterisk}'). In contrast to the `--sq-quote` option,
 	the command input is still interpreted as usual.
 
 --not::
@@ -95,22 +95,35 @@ OPTIONS
 	unfortunately named tag "master"), and show them as full
 	refnames (e.g. "refs/heads/master").
 
---abbrev-ref[={strict|loose}]::
+--abbrev-ref[=(strict|loose)]::
 	A non-ambiguous short name of the objects name.
 	The option core.warnAmbiguousRefs is used to select the strict
 	abbreviation mode.
 
 --all::
-	Show all refs found in `$GIT_DIR/refs`.
+	Show all refs found in `refs/`.
 
---branches::
-	Show branch refs found in `$GIT_DIR/refs/heads`.
+--branches[=pattern]::
+--tags[=pattern]::
+--remotes[=pattern]::
+	Show all branches, tags, or remote-tracking branches,
+	respectively (i.e., refs found in `refs/heads`,
+	`refs/tags`, or `refs/remotes`, respectively).
++
+If a `pattern` is given, only refs matching the given shell glob are
+shown.  If the pattern does not contain a globbing character (`?`,
+`{asterisk}`, or `[`), it is turned into a prefix match by
+appending `/{asterisk}`.
 
---tags::
-	Show tag refs found in `$GIT_DIR/refs/tags`.
+--glob=pattern::
+	Show all refs matching the shell glob pattern `pattern`. If
+	the pattern does not start with `refs/`, this is automatically
+	prepended.  If the pattern does not contain a globbing
+	character (`?`, `{asterisk}`, or `[`), it is turned into a prefix
+	match by appending `/{asterisk}`.
 
---remotes::
-	Show tag refs found in `$GIT_DIR/refs/remotes`.
+--show-toplevel::
+	Show the absolute path of the top-level directory.
 
 --show-prefix::
 	When the command is invoked from a subdirectory, show the
@@ -123,7 +136,12 @@ OPTIONS
 	directory (typically a sequence of "../", or an empty string).
 
 --git-dir::
-	Show `$GIT_DIR` if defined else show the path to the .git directory.
+	Show `$GIT_DIR` if defined. Otherwise show the path to
+	the .git directory, relative to the current directory.
++
+If `$GIT_DIR` is not defined and the current directory
+is not detected to lie in a git repository or work tree
+print a message to stderr and exit with nonzero status.
 
 --is-inside-git-dir::
 	When the current working directory is below the repository
@@ -136,6 +154,12 @@ OPTIONS
 --is-bare-repository::
 	When the repository is bare print "true", otherwise "false".
 
+--local-env-vars::
+	List the GIT_* environment variables that are local to the
+	repository (e.g. GIT_DIR or GIT_WORK_TREE, but not GIT_EDITOR).
+	Only the names of the variables are listed, not their value,
+	even if they are set.
+
 --short::
 --short=number::
 	Instead of outputting the full SHA1 values of object names try to
@@ -145,223 +169,38 @@ OPTIONS
 --since=datestring::
 --after=datestring::
 	Parse the date string, and output the corresponding
-	--max-age= parameter for 'git-rev-list'.
+	--max-age= parameter for 'git rev-list'.
 
 --until=datestring::
 --before=datestring::
 	Parse the date string, and output the corresponding
-	--min-age= parameter for 'git-rev-list'.
+	--min-age= parameter for 'git rev-list'.
 
 <args>...::
 	Flags and parameters to be parsed.
 
 
-SPECIFYING REVISIONS
---------------------
-
-A revision parameter typically, but not necessarily, names a
-commit object.  They use what is called an 'extended SHA1'
-syntax.  Here are various ways to spell object names.  The
-ones listed near the end of this list are to name trees and
-blobs contained in a commit.
-
-* The full SHA1 object name (40-byte hexadecimal string), or
-  a substring of such that is unique within the repository.
-  E.g. dae86e1950b1277e545cee180551750029cfe735 and dae86e both
-  name the same commit object if there are no other object in
-  your repository whose object name starts with dae86e.
-
-* An output from 'git-describe'; i.e. a closest tag, optionally
-  followed by a dash and a number of commits, followed by a dash, a
-  `g`, and an abbreviated object name.
-
-* A symbolic ref name.  E.g. 'master' typically means the commit
-  object referenced by $GIT_DIR/refs/heads/master.  If you
-  happen to have both heads/master and tags/master, you can
-  explicitly say 'heads/master' to tell git which one you mean.
-  When ambiguous, a `<name>` is disambiguated by taking the
-  first match in the following rules:
-
-  . if `$GIT_DIR/<name>` exists, that is what you mean (this is usually
-    useful only for `HEAD`, `FETCH_HEAD`, `ORIG_HEAD` and `MERGE_HEAD`);
-
-  . otherwise, `$GIT_DIR/refs/<name>` if exists;
-
-  . otherwise, `$GIT_DIR/refs/tags/<name>` if exists;
-
-  . otherwise, `$GIT_DIR/refs/heads/<name>` if exists;
-
-  . otherwise, `$GIT_DIR/refs/remotes/<name>` if exists;
-
-  . otherwise, `$GIT_DIR/refs/remotes/<name>/HEAD` if exists.
-+
-HEAD names the commit your changes in the working tree is based on.
-FETCH_HEAD records the branch you fetched from a remote repository
-with your last 'git-fetch' invocation.
-ORIG_HEAD is created by commands that moves your HEAD in a drastic
-way, to record the position of the HEAD before their operation, so that
-you can change the tip of the branch back to the state before you ran
-them easily.
-MERGE_HEAD records the commit(s) you are merging into your branch
-when you run 'git-merge'.
-
-* A ref followed by the suffix '@' with a date specification
-  enclosed in a brace
-  pair (e.g. '\{yesterday\}', '\{1 month 2 weeks 3 days 1 hour 1
-  second ago\}' or '\{1979-02-26 18:30:00\}') to specify the value
-  of the ref at a prior point in time.  This suffix may only be
-  used immediately following a ref name and the ref must have an
-  existing log ($GIT_DIR/logs/<ref>). Note that this looks up the state
-  of your *local* ref at a given time; e.g., what was in your local
-  `master` branch last week. If you want to look at commits made during
-  certain times, see `--since` and `--until`.
-
-* A ref followed by the suffix '@' with an ordinal specification
-  enclosed in a brace pair (e.g. '\{1\}', '\{15\}') to specify
-  the n-th prior value of that ref.  For example 'master@\{1\}'
-  is the immediate prior value of 'master' while 'master@\{5\}'
-  is the 5th prior value of 'master'. This suffix may only be used
-  immediately following a ref name and the ref must have an existing
-  log ($GIT_DIR/logs/<ref>).
-
-* You can use the '@' construct with an empty ref part to get at a
-  reflog of the current branch. For example, if you are on the
-  branch 'blabla', then '@\{1\}' means the same as 'blabla@\{1\}'.
-
-* The special construct '@\{-<n>\}' means the <n>th branch checked out
-  before the current one.
-
-* A suffix '{caret}' to a revision parameter means the first parent of
-  that commit object.  '{caret}<n>' means the <n>th parent (i.e.
-  'rev{caret}'
-  is equivalent to 'rev{caret}1').  As a special rule,
-  'rev{caret}0' means the commit itself and is used when 'rev' is the
-  object name of a tag object that refers to a commit object.
-
-* A suffix '{tilde}<n>' to a revision parameter means the commit
-  object that is the <n>th generation grand-parent of the named
-  commit object, following only the first parent.  I.e. rev~3 is
-  equivalent to rev{caret}{caret}{caret} which is equivalent to
-  rev{caret}1{caret}1{caret}1.  See below for a illustration of
-  the usage of this form.
-
-* A suffix '{caret}' followed by an object type name enclosed in
-  brace pair (e.g. `v0.99.8{caret}\{commit\}`) means the object
-  could be a tag, and dereference the tag recursively until an
-  object of that type is found or the object cannot be
-  dereferenced anymore (in which case, barf).  `rev{caret}0`
-  introduced earlier is a short-hand for `rev{caret}\{commit\}`.
-
-* A suffix '{caret}' followed by an empty brace pair
-  (e.g. `v0.99.8{caret}\{\}`) means the object could be a tag,
-  and dereference the tag recursively until a non-tag object is
-  found.
-
-* A colon, followed by a slash, followed by a text: this names
-  a commit whose commit message starts with the specified text.
-  This name returns the youngest matching commit which is
-  reachable from any ref.  If the commit message starts with a
-  '!', you have to repeat that;  the special sequence ':/!',
-  followed by something else than '!' is reserved for now.
-
-* A suffix ':' followed by a path; this names the blob or tree
-  at the given path in the tree-ish object named by the part
-  before the colon.
-
-* A colon, optionally followed by a stage number (0 to 3) and a
-  colon, followed by a path; this names a blob object in the
-  index at the given path.  Missing stage number (and the colon
-  that follows it) names a stage 0 entry. During a merge, stage
-  1 is the common ancestor, stage 2 is the target branch's version
-  (typically the current branch), and stage 3 is the version from
-  the branch being merged.
-
-Here is an illustration, by Jon Loeliger.  Both commit nodes B
-and C are parents of commit node A.  Parent commits are ordered
-left-to-right.
-
-........................................
-G   H   I   J
- \ /     \ /
-  D   E   F
-   \  |  / \
-    \ | /   |
-     \|/    |
-      B     C
-       \   /
-        \ /
-         A
-........................................
-
-    A =      = A^0
-    B = A^   = A^1     = A~1
-    C = A^2  = A^2
-    D = A^^  = A^1^1   = A~2
-    E = B^2  = A^^2
-    F = B^3  = A^^3
-    G = A^^^ = A^1^1^1 = A~3
-    H = D^2  = B^^2    = A^^^2  = A~2^2
-    I = F^   = B^3^    = A^^3^
-    J = F^2  = B^3^2   = A^^3^2
-
-
-SPECIFYING RANGES
------------------
-
-History traversing commands such as 'git-log' operate on a set
-of commits, not just a single commit.  To these commands,
-specifying a single revision with the notation described in the
-previous section means the set of commits reachable from that
-commit, following the commit ancestry chain.
-
-To exclude commits reachable from a commit, a prefix `{caret}`
-notation is used.  E.g. `{caret}r1 r2` means commits reachable
-from `r2` but exclude the ones reachable from `r1`.
-
-This set operation appears so often that there is a shorthand
-for it.  When you have two commits `r1` and `r2` (named according
-to the syntax explained in SPECIFYING REVISIONS above), you can ask
-for commits that are reachable from r2 excluding those that are reachable
-from r1 by `{caret}r1 r2` and it can be written as `r1..r2`.
-
-A similar notation `r1\...r2` is called symmetric difference
-of `r1` and `r2` and is defined as
-`r1 r2 --not $(git merge-base --all r1 r2)`.
-It is the set of commits that are reachable from either one of
-`r1` or `r2` but not from both.
-
-Two other shorthands for naming a set that is formed by a commit
-and its parent commits exist.  The `r1{caret}@` notation means all
-parents of `r1`.  `r1{caret}!` includes commit `r1` but excludes
-all of its parents.
-
-Here are a handful of examples:
-
-   D                G H D
-   D F              G H I J D F
-   ^G D             H D
-   ^D B             E I J F B
-   B...C            G H D E B C
-   ^D B C           E I J F B C
-   C^@              I J F
-   F^! D            G H D F
+include::revisions.txt[]
 
 PARSEOPT
 --------
 
-In `--parseopt` mode, 'git-rev-parse' helps massaging options to bring to shell
+In `--parseopt` mode, 'git rev-parse' helps massaging options to bring to shell
 scripts the same facilities C builtins have. It works as an option normalizer
 (e.g. splits single switches aggregate values), a bit like `getopt(1)` does.
 
 It takes on the standard input the specification of the options to parse and
-understand, and echoes on the standard output a line suitable for `sh(1)` `eval`
+understand, and echoes on the standard output a string suitable for `sh(1)` `eval`
 to replace the arguments with normalized ones.  In case of error, it outputs
 usage on the standard error stream, and exits with code 129.
+
+Note: Make sure you quote the result when passing it to `eval`.  See
+below for an example.
 
 Input Format
 ~~~~~~~~~~~~
 
-'git-rev-parse --parseopt' input format is fully text based. It has two parts,
+'git rev-parse --parseopt' input format is fully text based. It has two parts,
 separated by a line that contains only `--`. The lines before the separator
 (should be more than one) are used for the usage.
 The lines after the separator describe the options.
@@ -414,19 +253,19 @@ bar=      some cool option --bar with an argument
   An option group Header
 C?        option C with an optional argument"
 
-eval `echo "$OPTS_SPEC" | git rev-parse --parseopt -- "$@" || echo exit $?`
+eval "$(echo "$OPTS_SPEC" | git rev-parse --parseopt -- "$@" || echo exit $?)"
 ------------
 
 SQ-QUOTE
 --------
 
-In `--sq-quote` mode, 'git-rev-parse' echoes on the standard output a
+In `--sq-quote` mode, 'git rev-parse' echoes on the standard output a
 single line suitable for `sh(1)` `eval`. This line is made by
 normalizing the arguments following `--sq-quote`. Nothing other than
 quoting the arguments is done.
 
 If you want command input to still be interpreted as usual by
-'git-rev-parse' before the output is shell quoted, see the `--sq`
+'git rev-parse' before the output is shell quoted, see the `--sq`
 option.
 
 Example
@@ -468,16 +307,6 @@ $ git rev-parse --default master --verify $REV
 ------------
 +
 but if $REV is empty, the commit object name from master will be printed.
-
-
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org> .
-Junio C Hamano <gitster@pobox.com> and Pierre Habouzit <madcoder@debian.org>
-
-Documentation
---------------
-Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---

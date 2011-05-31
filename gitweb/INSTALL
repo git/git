@@ -2,12 +2,13 @@ GIT web Interface (gitweb) Installation
 =======================================
 
 First you have to generate gitweb.cgi from gitweb.perl using
-"make gitweb/gitweb.cgi", then copy appropriate files (gitweb.cgi,
-gitweb.css, git-logo.png and git-favicon.png) to their destination.
-For example if git was (or is) installed with /usr prefix, you can do
+"make gitweb", then "make install-gitweb" appropriate files
+(gitweb.cgi, gitweb.js, gitweb.css, git-logo.png and git-favicon.png)
+to their destination. For example if git was (or is) installed with
+/usr prefix and gitwebdir is /var/www/cgi-bin, you can do
 
-	$ make prefix=/usr gitweb/gitweb.cgi  ;# as yourself
-	# cp gitweb/git* /var/www/cgi-bin/    ;# as root
+	$ make prefix=/usr gitweb                            ;# as yourself
+	# make gitwebdir=/var/www/cgi-bin install-gitweb     ;# as root
 
 Alternatively you can use autoconf generated ./configure script to
 set up path to git binaries (via config.mak.autogen), so you can write
@@ -15,8 +16,9 @@ instead
 
 	$ make configure                     ;# as yourself
 	$ ./configure --prefix=/usr          ;# as yourself
-	$ make gitweb/gitweb.cgi             ;# as yourself
-	# cp gitweb/git* /var/www/cgi-bin/   ;# as root
+	$ make gitweb                        ;# as yourself
+	# make gitwebdir=/var/www/cgi-bin \
+	       install-gitweb                ;# as root
 
 The above example assumes that your web server is configured to run
 [executable] files in /var/www/cgi-bin/ as server scripts (as CGI
@@ -31,8 +33,7 @@ file for gitweb (in gitweb/README).
 
 - There are many configuration variables which affect building of
   gitweb.cgi; see "default configuration for gitweb" section in main
-  (top dir) Makefile, and instructions for building gitweb/gitweb.cgi
-  target.
+  (top dir) Makefile, and instructions for building gitweb target.
 
   One of the most important is where to find the git wrapper binary. Gitweb
   tries to find the git wrapper at $(bindir)/git, so you have to set $bindir
@@ -62,27 +63,33 @@ file for gitweb (in gitweb/README).
   a suggestion).
 
 - You can control where gitweb tries to find its main CSS style file,
-  its favicon and logo with the GITWEB_CSS, GITWEB_FAVICON and GITWEB_LOGO
-  build configuration variables. By default gitweb tries to find them
-  in the same directory as gitweb.cgi script.
+  its JavaScript file, its favicon and logo with the GITWEB_CSS, GITWEB_JS
+  GITWEB_FAVICON and GITWEB_LOGO build configuration variables. By default
+  gitweb tries to find them in the same directory as gitweb.cgi script.
+
+- You can optionally generate minified versions of gitweb.js and gitweb.css
+  by defining the JSMIN and CSSMIN build configuration variables. By default
+  the non-minified versions will be used. NOTE: if you enable this option,
+  substitute gitweb.min.js and gitweb.min.css for all uses of gitweb.js and
+  gitweb.css in the help files.
 
 Build example
 ~~~~~~~~~~~~~
 
-- To install gitweb to /var/www/cgi-bin/gitweb/ when git wrapper
-  is installed at /usr/local/bin/git and the repositories (projects)
-  we want to display are under /home/local/scm, you can do
+- To install gitweb to /var/www/cgi-bin/gitweb/, when git wrapper
+  is installed at /usr/local/bin/git, the repositories (projects)
+  we want to display are under /home/local/scm, and you do not use
+  minifiers, you can do
 
 	make GITWEB_PROJECTROOT="/home/local/scm" \
-	     GITWEB_CSS="/gitweb/gitweb.css" \
-	     GITWEB_LOGO="/gitweb/git-logo.png" \
-	     GITWEB_FAVICON="/gitweb/git-favicon.png" \
+	     GITWEB_JS="gitweb/static/gitweb.js" \
+	     GITWEB_CSS="gitweb/static/gitweb.css" \
+	     GITWEB_LOGO="gitweb/static/git-logo.png" \
+	     GITWEB_FAVICON="gitweb/static/git-favicon.png" \
 	     bindir=/usr/local/bin \
-	     gitweb/gitweb.cgi
+	     gitweb
 
-	cp -fv ~/git/gitweb/gitweb.{cgi,css} \
-	       ~/git/gitweb/git-{favicon,logo}.png \
-	     /var/www/cgi-bin/gitweb/
+	make gitwebdir=/var/www/cgi-bin/gitweb install-gitweb
 
 
 Gitweb config file
@@ -122,6 +129,15 @@ GITWEB_CONFIG file:
 
 	$feature{'snapshot'}{'default'} = ['zip', 'tgz'];
 	$feature{'snapshot'}{'override'} = 1;
+
+If you allow overriding for the snapshot feature, you can specify which
+snapshot formats are globally disabled. You can also add any command line
+options you want (such as setting the compression level). For instance,
+you can disable Zip compressed snapshots and set GZip to run at level 6 by
+adding the following lines to your $GITWEB_CONFIG:
+
+	$known_snapshot_formats{'zip'}{'disabled'} = 1;
+	$known_snapshot_formats{'tgz'}{'compressor'} = ['gzip','-6'];
 
 
 Gitweb repositories
@@ -220,6 +236,12 @@ Requirements
  - Perl
  - Perl modules: CGI, Encode, Fcntl, File::Find, File::Basename.
  - web server
+
+The following optional Perl modules are required for extra features
+ - Digest::MD5 - for gravatar support
+ - CGI::Fast and FCGI - for running gitweb as FastCGI script
+ - HTML::TagCloud - for fancy tag cloud in project list view
+ - HTTP::Date or Time::ParseDate - to support If-Modified-Since for feeds
 
 
 Example web server configuration

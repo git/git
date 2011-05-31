@@ -10,7 +10,12 @@ test_expect_success 'load svn dumpfile'  '
 test_expect_success 'clone using git svn' 'git svn clone -s "$svnrepo" x'
 
 test_expect_success 'test that b1 exists and is empty' '
-	(cd x && test -f b1 && ! test -s b1)
+	(
+		cd x &&
+		git reset --hard branch-c &&
+		test -f b1 &&
+		! test -s b1
+	)
 	'
 
 test_done

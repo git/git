@@ -8,36 +8,41 @@ proc _delete_indexlock {} {
 }
 
 proc _close_updateindex {fd after} {
+	global use_ttk NS
 	fconfigure $fd -blocking 1
 	if {[catch {close $fd} err]} {
 		set w .indexfried
-		toplevel $w
+		Dialog $w
+		wm withdraw $w
 		wm title $w [strcat "[appname] ([reponame]): " [mc "Index Error"]]
 		wm geometry $w "+[winfo rootx .]+[winfo rooty .]"
-		pack [label $w.msg \
-			-justify left \
-			-anchor w \
-			-text [strcat \
-				[mc "Updating the Git index failed.  A rescan will be automatically started to resynchronize git-gui."] \
-				"\n\n$err"] \
-			] -anchor w
+		set s [mc "Updating the Git index failed.  A rescan will be automatically started to resynchronize git-gui."]
+		text $w.msg -yscrollcommand [list $w.vs set] \
+			-width [string length $s] -relief flat \
+			-borderwidth 0 -highlightthickness 0 \
+			-background [get_bg_color $w]
+		$w.msg tag configure bold -font font_uibold -justify center
+		${NS}::scrollbar $w.vs -command [list $w.msg yview]
+		$w.msg insert end $s bold \n\n$err {}
+		$w.msg configure -state disabled
 
-		frame $w.buttons
-		button $w.buttons.continue \
+		${NS}::button $w.continue \
 			-text [mc "Continue"] \
 			-command [list destroy $w]
-		pack $w.buttons.continue -side right -padx 5
-		button $w.buttons.unlock \
+		${NS}::button $w.unlock \
 			-text [mc "Unlock Index"] \
 			-command "destroy $w; _delete_indexlock"
-		pack $w.buttons.unlock -side right
-		pack $w.buttons -side bottom -fill x -pady 10 -padx 10
+		grid $w.msg - $w.vs -sticky news
+		grid $w.unlock $w.continue - -sticky se -padx 2 -pady 2
+		grid columnconfigure $w 0 -weight 1
+		grid rowconfigure $w 0 -weight 1
 
 		wm protocol $w WM_DELETE_WINDOW update
-		bind $w.buttons.continue <Visibility> "
+		bind $w.continue <Visibility> "
 			grab $w
-			focus $w.buttons.continue
+			focus %W
 		"
+		wm deiconify $w
 		tkwait window $w
 
 		$::main_status stop
@@ -98,8 +103,11 @@ proc write_update_indexinfo {fd pathList totalCnt batch after} {
 		set s $file_states($path)
 		switch -glob -- [lindex $s 0] {
 		A? {set new _O}
-		M? {set new _M}
+		MT -
+		TM -
 		T_ {set new _T}
+		M? {set new _M}
+		TD -
 		D_ {set new _D}
 		D? {set new _?}
 		?? {continue}
@@ -162,7 +170,10 @@ proc write_update_index {fd pathList totalCnt batch after} {
 		AD {set new __}
 		?D {set new D_}
 		_O -
+		AT -
 		AM {set new A_}
+		TM -
+		MT -
 		_T {set new T_}
 		_U -
 		U? {
@@ -256,7 +267,7 @@ proc unstage_helper {txt paths} {
 		switch -glob -- [lindex $file_states($path) 0] {
 		A? -
 		M? -
-		T_ -
+		T? -
 		D? {
 			lappend pathList $path
 			if {$path eq $current_diff_path} {

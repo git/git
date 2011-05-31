@@ -188,13 +188,14 @@ struct object *parse_object(const unsigned char *sha1)
 	unsigned long size;
 	enum object_type type;
 	int eaten;
-	void *buffer = read_sha1_file(sha1, &type, &size);
+	const unsigned char *repl;
+	void *buffer = read_sha1_file_repl(sha1, &type, &size, &repl);
 
 	if (buffer) {
 		struct object *obj;
-		if (check_sha1_signature(sha1, buffer, size, typename(type)) < 0) {
+		if (check_sha1_signature(repl, buffer, size, typename(type)) < 0) {
 			free(buffer);
-			error("sha1 mismatch %s\n", sha1_to_hex(sha1));
+			error("sha1 mismatch %s\n", sha1_to_hex(repl));
 			return NULL;
 		}
 
@@ -210,31 +211,10 @@ struct object_list *object_list_insert(struct object *item,
 				       struct object_list **list_p)
 {
 	struct object_list *new_list = xmalloc(sizeof(struct object_list));
-        new_list->item = item;
-        new_list->next = *list_p;
-        *list_p = new_list;
-        return new_list;
-}
-
-void object_list_append(struct object *item,
-			struct object_list **list_p)
-{
-	while (*list_p) {
-		list_p = &((*list_p)->next);
-	}
-	*list_p = xmalloc(sizeof(struct object_list));
-	(*list_p)->next = NULL;
-	(*list_p)->item = item;
-}
-
-unsigned object_list_length(struct object_list *list)
-{
-	unsigned ret = 0;
-	while (list) {
-		list = list->next;
-		ret++;
-	}
-	return ret;
+	new_list->item = item;
+	new_list->next = *list_p;
+	*list_p = new_list;
+	return new_list;
 }
 
 int object_list_contains(struct object_list *list, struct object *obj)
@@ -272,10 +252,10 @@ void add_object_array_with_mode(struct object *obj, const char *name, struct obj
 
 void object_array_remove_duplicates(struct object_array *array)
 {
-	int ref, src, dst;
+	unsigned int ref, src, dst;
 	struct object_array_entry *objects = array->objects;
 
-	for (ref = 0; ref < array->nr - 1; ref++) {
+	for (ref = 0; ref + 1 < array->nr; ref++) {
 		for (src = ref + 1, dst = src;
 		     src < array->nr;
 		     src++) {

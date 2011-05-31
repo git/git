@@ -138,19 +138,20 @@ int xdi_diff(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp, xdemitconf_t co
 
 int xdi_diff_outf(mmfile_t *mf1, mmfile_t *mf2,
 		  xdiff_emit_consume_fn fn, void *consume_callback_data,
-		  xpparam_t const *xpp,
-		  xdemitconf_t const *xecfg, xdemitcb_t *xecb)
+		  xpparam_t const *xpp, xdemitconf_t const *xecfg)
 {
 	int ret;
 	struct xdiff_emit_state state;
+	xdemitcb_t ecb;
 
 	memset(&state, 0, sizeof(state));
 	state.consume = fn;
 	state.consume_callback_data = consume_callback_data;
-	xecb->outf = xdiff_outf;
-	xecb->priv = &state;
+	memset(&ecb, 0, sizeof(ecb));
+	ecb.outf = xdiff_outf;
+	ecb.priv = &state;
 	strbuf_init(&state.remainder, 0);
-	ret = xdi_diff(mf1, mf2, xpp, xecfg, xecb);
+	ret = xdi_diff(mf1, mf2, xpp, xecfg, &ecb);
 	strbuf_release(&state.remainder);
 	return ret;
 }
@@ -211,11 +212,30 @@ int read_mmfile(mmfile_t *ptr, const char *filename)
 		return error("Could not open %s", filename);
 	sz = xsize_t(st.st_size);
 	ptr->ptr = xmalloc(sz ? sz : 1);
-	if (sz && fread(ptr->ptr, sz, 1, f) != 1)
+	if (sz && fread(ptr->ptr, sz, 1, f) != 1) {
+		fclose(f);
 		return error("Could not read %s", filename);
+	}
 	fclose(f);
 	ptr->size = sz;
 	return 0;
+}
+
+void read_mmblob(mmfile_t *ptr, const unsigned char *sha1)
+{
+	unsigned long size;
+	enum object_type type;
+
+	if (!hashcmp(sha1, null_sha1)) {
+		ptr->ptr = xstrdup("");
+		ptr->size = 0;
+		return;
+	}
+
+	ptr->ptr = read_sha1_file(sha1, &type, &size);
+	if (!ptr->ptr || type != OBJ_BLOB)
+		die("unable to read blob object %s", sha1_to_hex(sha1));
+	ptr->size = size;
 }
 
 #define FIRST_FEW_BYTES 8000
@@ -268,9 +288,8 @@ static long ff_regexp(const char *line, long len,
 	result = pmatch[i].rm_eo - pmatch[i].rm_so;
 	if (result > buffer_size)
 		result = buffer_size;
-	else
-		while (result > 0 && (isspace(line[result - 1])))
-			result--;
+	while (result > 0 && (isspace(line[result - 1])))
+		result--;
 	memcpy(buffer, line, result);
  fail:
 	free(line_buffer);
@@ -328,7 +347,7 @@ int git_xmerge_style = -1;
 
 int git_xmerge_config(const char *var, const char *value, void *cb)
 {
-	if (!strcasecmp(var, "merge.conflictstyle")) {
+	if (!strcmp(var, "merge.conflictstyle")) {
 		if (!value)
 			die("'%s' is not a boolean", var);
 		if (!strcmp(value, "diff3"))

@@ -65,14 +65,24 @@ struct dir_struct {
 #define MATCHED_FNMATCH 2
 #define MATCHED_EXACTLY 3
 extern int match_pathspec(const char **pathspec, const char *name, int namelen, int prefix, char *seen);
+extern int match_pathspec_depth(const struct pathspec *pathspec,
+				const char *name, int namelen,
+				int prefix, char *seen);
+extern int within_depth(const char *name, int namelen, int depth, int max_depth);
 
 extern int fill_directory(struct dir_struct *dir, const char **pathspec);
 extern int read_directory(struct dir_struct *, const char *path, int len, const char **pathspec);
 
+extern int excluded_from_list(const char *pathname, int pathlen, const char *basename,
+			      int *dtype, struct exclude_list *el);
 extern int excluded(struct dir_struct *, const char *, int *);
+struct dir_entry *dir_add_ignored(struct dir_struct *dir, const char *pathname, int len);
+extern int add_excludes_from_file_to_list(const char *fname, const char *base, int baselen,
+					  char **buf_p, struct exclude_list *which, int check_index);
 extern void add_excludes_from_file(struct dir_struct *, const char *fname);
 extern void add_exclude(const char *string, const char *base,
 			int baselen, struct exclude_list *which);
+extern void free_excludes(struct exclude_list *el);
 extern int file_exists(const char *);
 
 extern char *get_relative_cwd(char *buffer, int size, const char *dir);
@@ -88,9 +98,16 @@ static inline int is_dot_or_dotdot(const char *name)
 extern int is_empty_dir(const char *dir);
 
 extern void setup_standard_excludes(struct dir_struct *dir);
-extern int remove_dir_recursively(struct strbuf *path, int only_empty);
+
+#define REMOVE_DIR_EMPTY_ONLY 01
+#define REMOVE_DIR_KEEP_NESTED_GIT 02
+extern int remove_dir_recursively(struct strbuf *path, int flag);
 
 /* tries to remove the path with empty directories along it, ignores ENOENT */
 extern int remove_path(const char *path);
+
+extern int strcmp_icase(const char *a, const char *b);
+extern int strncmp_icase(const char *a, const char *b, size_t count);
+extern int fnmatch_icase(const char *pattern, const char *string, int flags);
 
 #endif

@@ -44,6 +44,13 @@ test_expect_success 'rewrite diff can show binary patch' '
 	grep "GIT binary patch" diff
 '
 
+test_expect_success 'rewrite diff --stat shows binary changes' '
+	git diff -B --stat --summary >diff &&
+	grep "Bin" diff &&
+	grep "0 insertions.*0 deletions" diff &&
+	grep " rewrite file" diff
+'
+
 {
 	echo "#!$SHELL_PATH"
 	cat <<'EOF'
@@ -54,7 +61,7 @@ chmod +x dump
 
 test_expect_success 'setup textconv' '
 	echo file diff=foo >.gitattributes &&
-	git config diff.foo.textconv "$PWD"/dump
+	git config diff.foo.textconv "\"$(pwd)\""/dump
 '
 
 test_expect_success 'rewrite diff respects textconv' '

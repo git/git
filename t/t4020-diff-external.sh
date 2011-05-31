@@ -4,8 +4,6 @@ test_description='external diff interface test'
 
 . ./test-lib.sh
 
-_z40=0000000000000000000000000000000000000000
-
 test_expect_success setup '
 
 	test_tick &&
@@ -166,7 +164,7 @@ test_expect_success 'diff --cached' '
 	git update-index --assume-unchanged file &&
 	echo second >file &&
 	git diff --cached >actual &&
-	test_cmp ../t4020/diff.NUL actual
+	test_cmp "$TEST_DIRECTORY"/t4020/diff.NUL actual
 '
 
 test_done

@@ -12,13 +12,13 @@ SYNOPSIS
 DESCRIPTION
 -----------
 Remove files from the index, or from the working tree and the index.
-'git-rm' will not remove a file from just your working directory.
-(There is no option to remove a file only from the work tree
+`git rm` will not remove a file from just your working directory.
+(There is no option to remove a file only from the working tree
 and yet keep it in the index; use `/bin/rm` if you want to do that.)
 The files being removed have to be identical to the tip of the branch,
 and no updates to their contents can be staged in the index,
 though that default behavior can be overridden with the `-f` option.
-When '--cached' is given, the staged content has to
+When `--cached` is given, the staged content has to
 match either the tip of the branch or the file on disk,
 allowing the file to be removed from just the index.
 
@@ -64,7 +64,7 @@ OPTIONS
 
 -q::
 --quiet::
-	'git-rm' normally outputs one line (in the form of an "rm" command)
+	`git rm` normally outputs one line (in the form of an `rm` command)
 	for each file removed. This option suppresses that output.
 
 
@@ -78,16 +78,69 @@ a file that you have not told git about does not remove that file.
 
 File globbing matches across directory boundaries.  Thus, given
 two directories `d` and `d2`, there is a difference between
-using `git rm \'d\*\'` and `git rm \'d/\*\'`, as the former will
+using `git rm {apostrophe}d{asterisk}{apostrophe}` and
+`git rm {apostrophe}d/{asterisk}{apostrophe}`, as the former will
 also remove all of directory `d2`.
+
+REMOVING FILES THAT HAVE DISAPPEARED FROM THE FILESYSTEM
+--------------------------------------------------------
+There is no option for `git rm` to remove from the index only
+the paths that have disappeared from the filesystem. However,
+depending on the use case, there are several ways that can be
+done.
+
+Using ``git commit -a''
+~~~~~~~~~~~~~~~~~~~~~~~
+If you intend that your next commit should record all modifications
+of tracked files in the working tree and record all removals of
+files that have been removed from the working tree with `rm`
+(as opposed to `git rm`), use `git commit -a`, as it will
+automatically notice and record all removals.  You can also have a
+similar effect without committing by using `git add -u`.
+
+Using ``git add -A''
+~~~~~~~~~~~~~~~~~~~~
+When accepting a new code drop for a vendor branch, you probably
+want to record both the removal of paths and additions of new paths
+as well as modifications of existing paths.
+
+Typically you would first remove all tracked files from the working
+tree using this command:
+
+----------------
+git ls-files -z | xargs -0 rm -f
+----------------
+
+and then untar the new code in the working tree. Alternately
+you could 'rsync' the changes into the working tree.
+
+After that, the easiest way to record all removals, additions, and
+modifications in the working tree is:
+
+----------------
+git add -A
+----------------
+
+See linkgit:git-add[1].
+
+Other ways
+~~~~~~~~~~
+If all you really want to do is to remove from the index the files
+that are no longer present in the working tree (perhaps because
+your working tree is dirty so that you cannot use `git commit -a`),
+use the following command:
+
+----------------
+git diff --name-only --diff-filter=D -z | xargs -0 git rm --cached
+----------------
 
 EXAMPLES
 --------
-git rm Documentation/\\*.txt::
-	Removes all `\*.txt` files from the index that are under the
+git rm Documentation/\*.txt::
+	Removes all `*.txt` files from the index that are under the
 	`Documentation` directory and any of its subdirectories.
 +
-Note that the asterisk `\*` is quoted from the shell in this
+Note that the asterisk `*` is quoted from the shell in this
 example; this lets git, and not the shell, expand the pathnames
 of files and subdirectories under the `Documentation/` directory.
 
@@ -99,14 +152,6 @@ git rm -f git-*.sh::
 SEE ALSO
 --------
 linkgit:git-add[1]
-
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org>
-
-Documentation
---------------
-Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---

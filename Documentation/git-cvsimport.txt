@@ -13,7 +13,7 @@ SYNOPSIS
 	      [-A <author-conv-file>] [-p <options-for-cvsps>] [-P <file>]
 	      [-C <git_repository>] [-z <fuzz>] [-i] [-k] [-u] [-s <subst>]
 	      [-a] [-m] [-M <regex>] [-S <regex>] [-L <commitlimit>]
-	      [-r <remote>] [<CVS_module>]
+	      [-r <remote>] [-R] [<CVS_module>]
 
 
 DESCRIPTION
@@ -28,9 +28,9 @@ At least version 2.1 is required.
 Please see the section <<issues,ISSUES>> for further reference.
 
 You should *never* do any work of your own on the branches that are
-created by 'git-cvsimport'.  By default initial import will create and populate a
+created by 'git cvsimport'.  By default initial import will create and populate a
 "master" branch from the CVS repository's main branch which you're free
-to work with; after that, you need to 'git-merge' incremental imports, or
+to work with; after that, you need to 'git merge' incremental imports, or
 any CVS branches, yourself.  It is advisable to specify a named remote via
 -r to separate and protect the incoming branches.
 
@@ -49,13 +49,13 @@ OPTIONS
 -d <CVSROOT>::
 	The root of the CVS archive. May be local (a simple path) or remote;
 	currently, only the :local:, :ext: and :pserver: access methods
-	are supported. If not given, 'git-cvsimport' will try to read it
+	are supported. If not given, 'git cvsimport' will try to read it
 	from `CVS/Root`. If no such file exists, it checks for the
 	`CVSROOT` environment variable.
 
 <CVS_module>::
 	The CVS module you want to import. Relative to <CVSROOT>.
-	If not given, 'git-cvsimport' tries to read it from
+	If not given, 'git cvsimport' tries to read it from
 	`CVS/Repository`.
 
 -C <target-dir>::
@@ -65,14 +65,14 @@ OPTIONS
 -r <remote>::
 	The git remote to import this CVS repository into.
 	Moves all CVS branches into remotes/<remote>/<branch>
-	akin to the way 'git-clone' uses 'origin' by default.
+	akin to the way 'git clone' uses 'origin' by default.
 
 -o <branch-for-HEAD>::
 	When no remote is specified (via -r) the 'HEAD' branch
 	from CVS is imported to the 'origin' branch within the git
 	repository, as 'HEAD' already has a special meaning for git.
 	When a remote is specified the 'HEAD' branch is named
-	remotes/<remote>/master mirroring 'git-clone' behaviour.
+	remotes/<remote>/master mirroring 'git clone' behaviour.
 	Use this option if you want to import into a different
 	branch.
 +
@@ -145,17 +145,33 @@ This option can be used several times to provide several detection regexes.
 
 ---------
 +
-'git-cvsimport' will make it appear as those authors had
+'git cvsimport' will make it appear as those authors had
 their GIT_AUTHOR_NAME and GIT_AUTHOR_EMAIL set properly
 all along.
 +
 For convenience, this data is saved to `$GIT_DIR/cvs-authors`
 each time the '-A' option is provided and read from that same
-file each time 'git-cvsimport' is run.
+file each time 'git cvsimport' is run.
 +
 It is not recommended to use this feature if you intend to
 export changes back to CVS again later with
-'git-cvsexportcommit'.
+'git cvsexportcommit'.
+
+-R::
+	Generate a `$GIT_DIR/cvs-revisions` file containing a mapping from CVS
+	revision numbers to newly-created Git commit IDs.  The generated file
+	will contain one line for each (filename, revision) pair imported;
+	each line will look like
++
+---------
+src/widget.c 1.1 1d862f173cdc7325b6fa6d2ae1cfd61fd1b512b7
+---------
++
+The revision data is appended to the file if it already exists, for use when
+doing incremental imports.
++
+This option may be useful if you have CVS revision numbers stored in commit
+messages, bug-tracking systems, email archives, and the like.
 
 -h::
 	Print a short usage message and exit.
@@ -172,7 +188,7 @@ ISSUES
 ------
 Problems related to timestamps:
 
- * If timestamps of commits in the cvs repository are not stable enough
+ * If timestamps of commits in the CVS repository are not stable enough
    to be used for ordering commits changes may show up in the wrong
    order.
  * If any files were ever "cvs import"ed more than once (e.g., import of
@@ -185,7 +201,7 @@ Problems related to branches:
 
  * Branches on which no commits have been made are not imported.
  * All files from the branching point are added to a branch even if
-   never added in cvs.
+   never added in CVS.
  * This applies to files added to the source branch *after* a daughter
    branch was created: if previously no commit was made on the daughter
    branch they will erroneously be added to the daughter branch in git.
@@ -200,15 +216,6 @@ more stable in practice:
 
 * cvs2git (part of cvs2svn), `http://cvs2svn.tigris.org`
 * parsecvs, `http://cgit.freedesktop.org/~keithp/parsecvs`
-
-Author
-------
-Written by Matthias Urlichs <smurf@smurf.noris.de>, with help from
-various participants of the git-list <git@vger.kernel.org>.
-
-Documentation
---------------
-Documentation by Matthias Urlichs <smurf@smurf.noris.de>.
 
 GIT
 ---

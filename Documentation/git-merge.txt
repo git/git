@@ -9,18 +9,56 @@ git-merge - Join two or more development histories together
 SYNOPSIS
 --------
 [verse]
-'git merge' [-n] [--stat] [--no-commit] [--squash] [-s <strategy>]...
-	[-m <msg>] <remote> <remote>...
-'git merge' <msg> HEAD <remote>...
+'git merge' [-n] [--stat] [--no-commit] [--squash]
+	[-s <strategy>] [-X <strategy-option>]
+	[--[no-]rerere-autoupdate] [-m <msg>] [<commit>...]
+'git merge' <msg> HEAD <commit>...
+'git merge' --abort
 
 DESCRIPTION
 -----------
-This is the top-level interface to the merge machinery
-which drives multiple merge strategy scripts.
+Incorporates changes from the named commits (since the time their
+histories diverged from the current branch) into the current
+branch.  This command is used by 'git pull' to incorporate changes
+from another repository and can be used by hand to merge changes
+from one branch into another.
 
-The second syntax (<msg> `HEAD` <remote>) is supported for
+Assume the following history exists and the current branch is
+"`master`":
+
+------------
+	  A---B---C topic
+	 /
+    D---E---F---G master
+------------
+
+Then "`git merge topic`" will replay the changes made on the
+`topic` branch since it diverged from `master` (i.e., `E`) until
+its current commit (`C`) on top of `master`, and record the result
+in a new commit along with the names of the two parent commits and
+a log message from the user describing the changes.
+
+------------
+	  A---B---C topic
+	 /         \
+    D---E---F---G---H master
+------------
+
+The second syntax (<msg> `HEAD` <commit>...) is supported for
 historical reasons.  Do not use it from the command line or in
-new scripts.  It is the same as `git merge -m <msg> <remote>`.
+new scripts.  It is the same as `git merge -m <msg> <commit>...`.
+
+The third syntax ("`git merge --abort`") can only be run after the
+merge has resulted in conflicts. 'git merge --abort' will abort the
+merge process and try to reconstruct the pre-merge state. However,
+if there were uncommitted changes when the merge started (and
+especially if those changes were further modified after the merge
+was started), 'git merge --abort' will in some cases be unable to
+reconstruct the original (pre-merge) changes. Therefore:
+
+*Warning*: Running 'git merge' with uncommitted changes is
+discouraged: while possible, it leaves you in a state that is hard to
+back out of in the case of a conflict.
 
 
 OPTIONS
@@ -28,96 +66,109 @@ OPTIONS
 include::merge-options.txt[]
 
 -m <msg>::
-	The commit message to be used for the merge commit (in case
-	it is created). The 'git-fmt-merge-msg' script can be used
-	to give a good default for automated 'git-merge' invocations.
+	Set the commit message to be used for the merge commit (in
+	case one is created).
++
+If `--log` is specified, a shortlog of the commits being merged
+will be appended to the specified message.
++
+The 'git fmt-merge-msg' command can be
+used to give a good default for automated 'git merge'
+invocations.
 
-<remote>...::
-	Other branch heads to merge into our branch.  You need at
-	least one <remote>.  Specifying more than one <remote>
-	obviously means you are trying an Octopus.
+--rerere-autoupdate::
+--no-rerere-autoupdate::
+	Allow the rerere mechanism to update the index with the
+	result of auto-conflict resolution if possible.
 
-include::merge-strategies.txt[]
+--abort::
+	Abort the current conflict resolution process, and
+	try to reconstruct the pre-merge state.
++
+If there were uncommitted worktree changes present when the merge
+started, 'git merge --abort' will in some cases be unable to
+reconstruct these changes. It is therefore recommended to always
+commit or stash your changes before running 'git merge'.
++
+'git merge --abort' is equivalent to 'git reset --merge' when
+`MERGE_HEAD` is present.
+
+<commit>...::
+	Commits, usually other branch heads, to merge into our branch.
+	Specifying more than one commit will create a merge with
+	more than two parents (affectionately called an Octopus merge).
++
+If no commit is given from the command line, and if `merge.defaultToUpstream`
+configuration variable is set, merge the remote tracking branches
+that the current branch is configured to use as its upstream.
+See also the configuration section of this manual page.
 
 
-If you tried a merge which resulted in complex conflicts and
-want to start over, you can recover with 'git-reset'.
+PRE-MERGE CHECKS
+----------------
 
-CONFIGURATION
--------------
-include::merge-config.txt[]
+Before applying outside changes, you should get your own work in
+good shape and committed locally, so it will not be clobbered if
+there are conflicts.  See also linkgit:git-stash[1].
+'git pull' and 'git merge' will stop without doing anything when
+local uncommitted changes overlap with files that 'git pull'/'git
+merge' may need to update.
 
-branch.<name>.mergeoptions::
-	Sets default options for merging into branch <name>. The syntax and
-	supported options are equal to that of 'git-merge', but option values
-	containing whitespace characters are currently not supported.
+To avoid recording unrelated changes in the merge commit,
+'git pull' and 'git merge' will also abort if there are any changes
+registered in the index relative to the `HEAD` commit.  (One
+exception is when the changed index entries are in the state that
+would result from the merge already.)
 
-HOW MERGE WORKS
----------------
+If all named commits are already ancestors of `HEAD`, 'git merge'
+will exit early with the message "Already up-to-date."
 
-A merge is always between the current `HEAD` and one or more
-commits (usually, branch head or tag), and the index file must
-match the tree of `HEAD` commit (i.e. the contents of the last commit)
-when it starts out.  In other words, `git diff --cached HEAD` must
-report no changes.  (One exception is when the changed index
-entries are already in the same state that would result from
-the merge anyway.)
+FAST-FORWARD MERGE
+------------------
 
-Three kinds of merge can happen:
+Often the current branch head is an ancestor of the named commit.
+This is the most common case especially when invoked from 'git
+pull': you are tracking an upstream repository, you have committed
+no local changes, and now you want to update to a newer upstream
+revision.  In this case, a new commit is not needed to store the
+combined history; instead, the `HEAD` (along with the index) is
+updated to point at the named commit, without creating an extra
+merge commit.
 
-* The merged commit is already contained in `HEAD`. This is the
-  simplest case, called "Already up-to-date."
+This behavior can be suppressed with the `--no-ff` option.
 
-* `HEAD` is already contained in the merged commit. This is the
-  most common case especially when invoked from 'git pull':
-  you are tracking an upstream repository, have committed no local
-  changes and now you want to update to a newer upstream revision.
-  Your `HEAD` (and the index) is updated to point at the merged
-  commit, without creating an extra merge commit.  This is
-  called "Fast-forward".
+TRUE MERGE
+----------
 
-* Both the merged commit and `HEAD` are independent and must be
-  tied together by a merge commit that has both of them as its parents.
-  The rest of this section describes this "True merge" case.
+Except in a fast-forward merge (see above), the branches to be
+merged must be tied together by a merge commit that has both of them
+as its parents.
 
-The chosen merge strategy merges the two commits into a single
-new source tree.
-When things merge cleanly, this is what happens:
+A merged version reconciling the changes from all branches to be
+merged is committed, and your `HEAD`, index, and working tree are
+updated to it.  It is possible to have modifications in the working
+tree as long as they do not overlap; the update will preserve them.
 
-1. The results are updated both in the index file and in your
-   working tree;
-2. Index file is written out as a tree;
-3. The tree gets committed; and
-4. The `HEAD` pointer gets advanced.
+When it is not obvious how to reconcile the changes, the following
+happens:
 
-Because of 2., we require that the original state of the index
-file matches exactly the current `HEAD` commit; otherwise we
-will write out your local changes already registered in your
-index file along with the merge result, which is not good.
-Because 1. involves only those paths differing between your
-branch and the remote branch you are pulling from during the
-merge (which is typically a fraction of the whole tree), you can
-have local modifications in your working tree as long as they do
-not overlap with what the merge updates.
-
-When there are conflicts, the following happens:
-
-1. `HEAD` stays the same.
-
-2. Cleanly merged paths are updated both in the index file and
+1. The `HEAD` pointer stays the same.
+2. The `MERGE_HEAD` ref is set to point to the other branch head.
+3. Paths that merged cleanly are updated both in the index file and
    in your working tree.
-
-3. For conflicting paths, the index file records up to three
-   versions; stage1 stores the version from the common ancestor,
-   stage2 from `HEAD`, and stage3 from the remote branch (you
+4. For conflicting paths, the index file records up to three
+   versions: stage 1 stores the version from the common ancestor,
+   stage 2 from `HEAD`, and stage 3 from `MERGE_HEAD` (you
    can inspect the stages with `git ls-files -u`).  The working
    tree files contain the result of the "merge" program; i.e. 3-way
-   merge results with familiar conflict markers `<<< === >>>`.
-
-4. No other changes are done.  In particular, the local
+   merge results with familiar conflict markers `<<<` `===` `>>>`.
+5. No other changes are made.  In particular, the local
    modifications you had before you started merge will stay the
    same and the index entries for them stay as they were,
    i.e. matching `HEAD`.
+
+If you tried a merge which resulted in complex conflicts and
+want to start over, you can recover with `git merge --abort`.
 
 HOW CONFLICTS ARE PRESENTED
 ---------------------------
@@ -188,28 +239,74 @@ After seeing a conflict, you can do two things:
 
  * Decide not to merge.  The only clean-ups you need are to reset
    the index file to the `HEAD` commit to reverse 2. and to clean
-   up working tree changes made by 2. and 3.; 'git-reset --hard' can
-   be used for this.
+   up working tree changes made by 2. and 3.; `git merge --abort`
+   can be used for this.
 
  * Resolve the conflicts.  Git will mark the conflicts in
    the working tree.  Edit the files into shape and
-   'git-add' them to the index.  Use 'git-commit' to seal the deal.
+   'git add' them to the index.  Use 'git commit' to seal the deal.
 
 You can work through the conflict with a number of tools:
 
- * Use a mergetool.  'git mergetool' to launch a graphical
+ * Use a mergetool.  `git mergetool` to launch a graphical
    mergetool which will work you through the merge.
 
- * Look at the diffs.  'git diff' will show a three-way diff,
-   highlighting changes from both the HEAD and remote versions.
+ * Look at the diffs.  `git diff` will show a three-way diff,
+   highlighting changes from both the `HEAD` and `MERGE_HEAD`
+   versions.
 
- * Look at the diffs on their own. 'git log --merge -p <path>'
-   will show diffs first for the HEAD version and then the
-   remote version.
+ * Look at the diffs from each branch. `git log --merge -p <path>`
+   will show diffs first for the `HEAD` version and then the
+   `MERGE_HEAD` version.
 
- * Look at the originals.  'git show :1:filename' shows the
-   common ancestor, 'git show :2:filename' shows the HEAD
-   version and 'git show :3:filename' shows the remote version.
+ * Look at the originals.  `git show :1:filename` shows the
+   common ancestor, `git show :2:filename` shows the `HEAD`
+   version, and `git show :3:filename` shows the `MERGE_HEAD`
+   version.
+
+
+EXAMPLES
+--------
+
+* Merge branches `fixes` and `enhancements` on top of
+  the current branch, making an octopus merge:
++
+------------------------------------------------
+$ git merge fixes enhancements
+------------------------------------------------
+
+* Merge branch `obsolete` into the current branch, using `ours`
+  merge strategy:
++
+------------------------------------------------
+$ git merge -s ours obsolete
+------------------------------------------------
+
+* Merge branch `maint` into the current branch, but do not make
+  a new commit automatically:
++
+------------------------------------------------
+$ git merge --no-commit maint
+------------------------------------------------
++
+This can be used when you want to include further changes to the
+merge, or want to write your own merge commit message.
++
+You should refrain from abusing this option to sneak substantial
+changes into a merge commit.  Small fixups like bumping
+release/version name would be acceptable.
+
+
+include::merge-strategies.txt[]
+
+CONFIGURATION
+-------------
+include::merge-config.txt[]
+
+branch.<name>.mergeoptions::
+	Sets default options for merging into branch <name>. The syntax and
+	supported options are the same as those of 'git merge', but option
+	values containing whitespace characters are currently not supported.
 
 SEE ALSO
 --------
@@ -219,15 +316,6 @@ linkgit:git-reset[1],
 linkgit:git-diff[1], linkgit:git-ls-files[1],
 linkgit:git-add[1], linkgit:git-rm[1],
 linkgit:git-mergetool[1]
-
-Author
-------
-Written by Junio C Hamano <gitster@pobox.com>
-
-
-Documentation
---------------
-Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---

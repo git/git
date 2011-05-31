@@ -23,21 +23,32 @@ AC_DEFUN([GIT_CONF_APPEND_LINE],
 # GIT_ARG_SET_PATH(PROGRAM)
 # -------------------------
 # Provide --with-PROGRAM=PATH option to set PATH to PROGRAM
+# Optional second argument allows setting NO_PROGRAM=YesPlease if
+# --without-PROGRAM version used.
 AC_DEFUN([GIT_ARG_SET_PATH],
 [AC_ARG_WITH([$1],
  [AS_HELP_STRING([--with-$1=PATH],
                  [provide PATH to $1])],
- [GIT_CONF_APPEND_PATH($1)],[])
+ [GIT_CONF_APPEND_PATH($1,$2)],[])
 ])# GIT_ARG_SET_PATH
 #
 # GIT_CONF_APPEND_PATH(PROGRAM)
 # ------------------------------
 # Parse --with-PROGRAM=PATH option to set PROGRAM_PATH=PATH
 # Used by GIT_ARG_SET_PATH(PROGRAM)
+# Optional second argument allows setting NO_PROGRAM=YesPlease if
+# --without-PROGRAM is used.
 AC_DEFUN([GIT_CONF_APPEND_PATH],
 [PROGRAM=m4_toupper($1); \
 if test "$withval" = "no"; then \
-	AC_MSG_ERROR([You cannot use git without $1]); \
+	if test -n "$2"; then \
+		m4_toupper($1)_PATH=$withval; \
+		AC_MSG_NOTICE([Disabling use of ${PROGRAM}]); \
+		GIT_CONF_APPEND_LINE(NO_${PROGRAM}=YesPlease); \
+		GIT_CONF_APPEND_LINE(${PROGRAM}_PATH=); \
+	else \
+		AC_MSG_ERROR([You cannot use git without $1]); \
+	fi; \
 else \
 	if test "$withval" = "yes"; then \
 		AC_MSG_WARN([You should provide path for --with-$1=PATH]); \
@@ -68,6 +79,26 @@ else \
 	GIT_CONF_APPEND_LINE(${PACKAGE}DIR=$withval); \
 fi \
 ])# GIT_PARSE_WITH
+#
+# GIT_PARSE_WITH_SET_MAKE_VAR(WITHNAME, VAR, HELP_TEXT)
+# ---------------------
+# Set VAR to the value specied by --with-WITHNAME.
+# No verification of arguments is performed, but warnings are issued
+# if either 'yes' or 'no' is specified.
+# HELP_TEXT is presented when --help is called.
+# This is a direct way to allow setting variables in the Makefile.
+AC_DEFUN([GIT_PARSE_WITH_SET_MAKE_VAR],
+[AC_ARG_WITH([$1],
+ [AS_HELP_STRING([--with-$1=VALUE], $3)],
+ if test -n "$withval"; then \
+  if test "$withval" = "yes" -o "$withval" = "no"; then \
+    AC_MSG_WARN([You likely do not want either 'yes' or 'no' as]
+		     [a value for $1 ($2).  Maybe you do...?]); \
+  fi; \
+  \
+  AC_MSG_NOTICE([Setting $2 to $withval]); \
+  GIT_CONF_APPEND_LINE($2=$withval); \
+ fi)])# GIT_PARSE_WITH_SET_MAKE_VAR
 
 dnl
 dnl GIT_CHECK_FUNC(FUNCTION, IFTRUE, IFFALSE)
@@ -148,6 +179,26 @@ fi],
    AC_MSG_NOTICE([Will try -pthread then -lpthread to enable POSIX Threads.])
 ])
 
+# Define option to enable JavaScript minification
+AC_ARG_ENABLE([jsmin],
+[AS_HELP_STRING([--enable-jsmin=PATH],
+  [PATH is the name of a JavaScript minifier or the absolute path to one.])],
+[
+  JSMIN=$enableval;
+  AC_MSG_NOTICE([Setting JSMIN to '$JSMIN' to enable JavaScript minifying])
+  GIT_CONF_APPEND_LINE(JSMIN=$enableval);
+])
+
+# Define option to enable CSS minification
+AC_ARG_ENABLE([cssmin],
+[AS_HELP_STRING([--enable-cssmin=PATH],
+  [PATH is the name of a CSS minifier or the absolute path to one.])],
+[
+  CSSMIN=$enableval;
+  AC_MSG_NOTICE([Setting CSSMIN to '$CSSMIN' to enable CSS minifying])
+  GIT_CONF_APPEND_LINE(CSSMIN=$enableval);
+])
+
 ## Site configuration (override autodetection)
 ## --with-PACKAGE[=ARG] and --without-PACKAGE
 AC_MSG_NOTICE([CHECKS for site configuration])
@@ -156,19 +207,11 @@ AC_MSG_NOTICE([CHECKS for site configuration])
 # tests.  These tests take up a significant amount of the total test time
 # but are not needed unless you plan to talk to SVN repos.
 #
-# Define MOZILLA_SHA1 environment variable when running make to make use of
-# a bundled SHA1 routine coming from Mozilla. It is GPL'd and should be fast
-# on non-x86 architectures (e.g. PowerPC), while the OpenSSL version (default
-# choice) has very fast version optimized for i586.
-#
 # Define PPC_SHA1 environment variable when running make to make use of
 # a bundled SHA1 routine optimized for PowerPC.
 #
-# Define ARM_SHA1 environment variable when running make to make use of
-# a bundled SHA1 routine optimized for ARM.
-#
 # Define NO_OPENSSL environment variable if you do not have OpenSSL.
-# This also implies MOZILLA_SHA1.
+# This also implies BLK_SHA1.
 #
 # Define OPENSSLDIR=/foo/bar if your openssl header and library files are in
 # /foo/bar/include and /foo/bar/lib directories.
@@ -235,11 +278,45 @@ GIT_PARSE_WITH(iconv))
 # change being considered an inode change from the update-index perspective.
 
 #
+# Allow user to set ETC_GITCONFIG variable
+GIT_PARSE_WITH_SET_MAKE_VAR(gitconfig, ETC_GITCONFIG,
+			Use VALUE instead of /etc/gitconfig as the
+			global git configuration file.
+			If VALUE is not fully qualified it will be interpreted
+			as a path relative to the computed prefix at runtime.)
+
+#
+# Allow user to set ETC_GITATTRIBUTES variable
+GIT_PARSE_WITH_SET_MAKE_VAR(gitattributes, ETC_GITATTRIBUTES,
+			Use VALUE instead of /etc/gitattributes as the
+			global git attributes file.
+			If VALUE is not fully qualified it will be interpreted
+			as a path relative to the computed prefix at runtime.)
+
+#
+# Allow user to set the default pager
+GIT_PARSE_WITH_SET_MAKE_VAR(pager, DEFAULT_PAGER,
+			Use VALUE as the fall-back pager instead of 'less'.
+			This is used by things like 'git log' when the user
+			does not specify a pager to use through alternate
+			methods. eg: /usr/bin/pager)
+#
+# Allow user to set the default editor
+GIT_PARSE_WITH_SET_MAKE_VAR(editor, DEFAULT_EDITOR,
+			Use VALUE as the fall-back editor instead of 'vi'.
+			This is used by things like 'git commit' when the user
+			does not specify a preferred editor through other
+			methods. eg: /usr/bin/editor)
+
+#
 # Define SHELL_PATH to provide path to shell.
 GIT_ARG_SET_PATH(shell)
 #
 # Define PERL_PATH to provide path to Perl.
 GIT_ARG_SET_PATH(perl)
+#
+# Define PYTHON_PATH to provide path to Python.
+GIT_ARG_SET_PATH(python, allow-without)
 #
 # Define ZLIB_PATH to provide path to zlib.
 GIT_ARG_SET_PATH(zlib)
@@ -258,11 +335,17 @@ GIT_PARSE_WITH(tcltk))
 AC_MSG_NOTICE([CHECKS for programs])
 #
 AC_PROG_CC([cc gcc])
+AC_C_INLINE
+case $ac_cv_c_inline in
+  inline | yes | no)	;;
+  *)			AC_SUBST([INLINE], [$ac_cv_c_inline]) ;;
+esac
+
 # which switch to pass runtime path to dynamic libraries to the linker
 AC_CACHE_CHECK([if linker supports -R], git_cv_ld_dashr, [
    SAVE_LDFLAGS="${LDFLAGS}"
    LDFLAGS="${SAVE_LDFLAGS} -R /"
-   AC_LINK_IFELSE(AC_LANG_PROGRAM([], []), [git_cv_ld_dashr=yes], [git_cv_ld_dashr=no])
+   AC_LINK_IFELSE([AC_LANG_PROGRAM([], [])], [git_cv_ld_dashr=yes], [git_cv_ld_dashr=no])
    LDFLAGS="${SAVE_LDFLAGS}"
 ])
 if test "$git_cv_ld_dashr" = "yes"; then
@@ -271,7 +354,7 @@ else
    AC_CACHE_CHECK([if linker supports -Wl,-rpath,], git_cv_ld_wl_rpath, [
       SAVE_LDFLAGS="${LDFLAGS}"
       LDFLAGS="${SAVE_LDFLAGS} -Wl,-rpath,/"
-      AC_LINK_IFELSE(AC_LANG_PROGRAM([], []), [git_cv_ld_wl_rpath=yes], [git_cv_ld_wl_rpath=no])
+      AC_LINK_IFELSE([AC_LANG_PROGRAM([], [])], [git_cv_ld_wl_rpath=yes], [git_cv_ld_wl_rpath=no])
       LDFLAGS="${SAVE_LDFLAGS}"
    ])
    if test "$git_cv_ld_wl_rpath" = "yes"; then
@@ -280,7 +363,7 @@ else
       AC_CACHE_CHECK([if linker supports -rpath], git_cv_ld_rpath, [
          SAVE_LDFLAGS="${LDFLAGS}"
          LDFLAGS="${SAVE_LDFLAGS} -rpath /"
-         AC_LINK_IFELSE(AC_LANG_PROGRAM([], []), [git_cv_ld_rpath=yes], [git_cv_ld_rpath=no])
+         AC_LINK_IFELSE([AC_LANG_PROGRAM([], [])], [git_cv_ld_rpath=yes], [git_cv_ld_rpath=no])
          LDFLAGS="${SAVE_LDFLAGS}"
       ])
       if test "$git_cv_ld_rpath" = "yes"; then
@@ -293,6 +376,7 @@ fi
 #AC_PROG_INSTALL		# needs install-sh or install.sh in sources
 AC_CHECK_TOOLS(AR, [gar ar], :)
 AC_CHECK_PROGS(TAR, [gtar tar])
+AC_CHECK_PROGS(DIFF, [gnudiff gdiff diff])
 # TCLTK_PATH will be set to some value if we want Tcl/Tk
 # or will be empty otherwise.
 if test -z "$NO_TCLTK"; then
@@ -314,21 +398,21 @@ if test -n "$ASCIIDOC"; then
 	AC_MSG_CHECKING([for asciidoc version])
 	asciidoc_version=`$ASCIIDOC --version 2>/dev/null`
 	case "${asciidoc_version}" in
-	asciidoc' '8*)
-		ASCIIDOC8=YesPlease
+	asciidoc' '7*)
+		ASCIIDOC7=YesPlease
 		AC_MSG_RESULT([${asciidoc_version} > 7])
 		;;
-	asciidoc' '7*)
-		ASCIIDOC8=
+	asciidoc' '8*)
+		ASCIIDOC7=
 		AC_MSG_RESULT([${asciidoc_version}])
 		;;
 	*)
-		ASCIIDOC8=
+		ASCIIDOC7=
 		AC_MSG_RESULT([${asciidoc_version} (unknown)])
 		;;
 	esac
 fi
-AC_SUBST(ASCIIDOC8)
+AC_SUBST(ASCIIDOC7)
 
 
 ## Checks for libraries.
@@ -388,15 +472,9 @@ if test -z "$NO_ICONV"; then
 
 GIT_STASH_FLAGS($ICONVDIR)
 
-AC_DEFUN([ICONVTEST_SRC], [
-#include <iconv.h>
-
-int main(void)
-{
-	iconv_open("", "");
-	return 0;
-}
-])
+AC_DEFUN([ICONVTEST_SRC],
+[AC_LANG_PROGRAM([#include <iconv.h>],
+ [iconv_open("", "");])])
 
 if test -n "$ICONVDIR"; then
    lib_order="-liconv -lc"
@@ -416,7 +494,7 @@ for l in $lib_order; do
     old_LIBS="$LIBS"
     LIBS="$LIBS $l"
     AC_MSG_CHECKING([for iconv in $l])
-    AC_LINK_IFELSE(ICONVTEST_SRC,
+    AC_LINK_IFELSE([ICONVTEST_SRC],
 	[AC_MSG_RESULT([yes])
 	NO_ICONV=
 	break],
@@ -444,18 +522,12 @@ fi
 GIT_STASH_FLAGS($ZLIB_PATH)
 
 AC_DEFUN([ZLIBTEST_SRC], [
-#include <zlib.h>
-
-int main(void)
-{
-	deflateBound(0, 0);
-	return 0;
-}
-])
+AC_LANG_PROGRAM([#include <zlib.h>],
+ [deflateBound(0, 0);])])
 AC_MSG_CHECKING([for deflateBound in -lz])
 old_LIBS="$LIBS"
 LIBS="$LIBS -lz"
-AC_LINK_IFELSE(ZLIBTEST_SRC,
+AC_LINK_IFELSE([ZLIBTEST_SRC],
 	[AC_MSG_RESULT([yes])],
 	[AC_MSG_RESULT([no])
 	NO_DEFLATE_BOUND=yes])
@@ -475,13 +547,47 @@ AC_SUBST(NEEDS_SOCKET)
 test -n "$NEEDS_SOCKET" && LIBS="$LIBS -lsocket"
 
 #
-# Define NEEDS_RESOLV if linking with -lnsl and/or -lsocket is not enough.
-# Notably on Solaris hstrerror resides in libresolv and on Solaris 7
-# inet_ntop and inet_pton additionally reside there.
-AC_CHECK_LIB([c], [hstrerror],
-[NEEDS_RESOLV=],
-[NEEDS_RESOLV=YesPlease])
+# The next few tests will define NEEDS_RESOLV if linking with
+# libresolv provides some of the functions we would normally get
+# from libc.
+NEEDS_RESOLV=
 AC_SUBST(NEEDS_RESOLV)
+#
+# Define NO_INET_NTOP if linking with -lresolv is not enough.
+# Solaris 2.7 in particular hos inet_ntop in -lresolv.
+NO_INET_NTOP=
+AC_SUBST(NO_INET_NTOP)
+AC_CHECK_FUNC([inet_ntop],
+	[],
+    [AC_CHECK_LIB([resolv], [inet_ntop],
+	    [NEEDS_RESOLV=YesPlease],
+	[NO_INET_NTOP=YesPlease])
+])
+#
+# Define NO_INET_PTON if linking with -lresolv is not enough.
+# Solaris 2.7 in particular hos inet_pton in -lresolv.
+NO_INET_PTON=
+AC_SUBST(NO_INET_PTON)
+AC_CHECK_FUNC([inet_pton],
+	[],
+    [AC_CHECK_LIB([resolv], [inet_pton],
+	    [NEEDS_RESOLV=YesPlease],
+	[NO_INET_PTON=YesPlease])
+])
+#
+# Define NO_HSTRERROR if linking with -lresolv is not enough.
+# Solaris 2.6 in particular has no hstrerror, even in -lresolv.
+NO_HSTRERROR=
+AC_CHECK_FUNC([hstrerror],
+	[],
+    [AC_CHECK_LIB([resolv], [hstrerror],
+	    [NEEDS_RESOLV=YesPlease],
+	[NO_HSTRERROR=YesPlease])
+])
+AC_SUBST(NO_HSTRERROR)
+#
+# If any of the above tests determined that -lresolv is needed at
+# build-time, also set it here for remaining configure-time checks.
 test -n "$NEEDS_RESOLV" && LIBS="$LIBS -lresolv"
 
 AC_CHECK_LIB([c], [basename],
@@ -499,25 +605,33 @@ AC_CHECK_HEADER([sys/select.h],
 [NO_SYS_SELECT_H=UnfortunatelyYes])
 AC_SUBST(NO_SYS_SELECT_H)
 #
+# Define NO_SYS_POLL_H if you don't have sys/poll.h
+AC_CHECK_HEADER([sys/poll.h],
+[NO_SYS_POLL_H=],
+[NO_SYS_POLL_H=UnfortunatelyYes])
+AC_SUBST(NO_SYS_POLL_H)
+#
+# Define NO_INTTYPES_H if you don't have inttypes.h
+AC_CHECK_HEADER([inttypes.h],
+[NO_INTTYPES_H=],
+[NO_INTTYPES_H=UnfortunatelyYes])
+AC_SUBST(NO_INTTYPES_H)
+#
 # Define OLD_ICONV if your library has an old iconv(), where the second
 # (input buffer pointer) parameter is declared with type (const char **).
-AC_DEFUN([OLDICONVTEST_SRC], [[
+AC_DEFUN([OLDICONVTEST_SRC], [
+AC_LANG_PROGRAM([[
 #include <iconv.h>
 
 extern size_t iconv(iconv_t cd,
 		    char **inbuf, size_t *inbytesleft,
 		    char **outbuf, size_t *outbytesleft);
-
-int main(void)
-{
-	return 0;
-}
-]])
+]], [])])
 
 GIT_STASH_FLAGS($ICONVDIR)
 
 AC_MSG_CHECKING([for old iconv()])
-AC_COMPILE_IFELSE(OLDICONVTEST_SRC,
+AC_COMPILE_IFELSE([OLDICONVTEST_SRC],
 	[AC_MSG_RESULT([no])],
 	[AC_MSG_RESULT([yes])
 	OLD_ICONV=UnfortunatelyYes])
@@ -529,6 +643,12 @@ AC_SUBST(OLD_ICONV)
 ## Checks for typedefs, structures, and compiler characteristics.
 AC_MSG_NOTICE([CHECKS for typedefs, structures, and compiler characteristics])
 #
+TYPE_SOCKLEN_T
+case $ac_cv_type_socklen_t in
+  yes)	;;
+  *)  	AC_SUBST([SOCKLEN_T], [$git_cv_socklen_t_equiv]) ;;
+esac
+
 # Define NO_D_INO_IN_DIRENT if you don't have d_ino in your struct dirent.
 AC_CHECK_MEMBER(struct dirent.d_ino,
 [NO_D_INO_IN_DIRENT=],
@@ -566,29 +686,26 @@ AC_CHECK_TYPE([struct addrinfo],[
 ])
 AC_SUBST(NO_IPV6)
 #
-# Define NO_C99_FORMAT if your formatted IO functions (printf/scanf et.al.)
-# do not support the 'size specifiers' introduced by C99, namely ll, hh,
-# j, z, t. (representing long long int, char, intmax_t, size_t, ptrdiff_t).
-# some C compilers supported these specifiers prior to C99 as an extension.
-AC_CACHE_CHECK([whether formatted IO functions support C99 size specifiers],
- [ac_cv_c_c99_format],
-[# Actually git uses only %z (%zu) in alloc.c, and %t (%td) in mktag.c
-AC_RUN_IFELSE(
-	[AC_LANG_PROGRAM([AC_INCLUDES_DEFAULT],
-		[[char buf[64];
-		if (sprintf(buf, "%lld%hhd%jd%zd%td", (long long int)1, (char)2, (intmax_t)3, (size_t)4, (ptrdiff_t)5) != 5)
-		  return 1;
-		else if (strcmp(buf, "12345"))
-		  return 2;]])],
-	[ac_cv_c_c99_format=yes],
-	[ac_cv_c_c99_format=no])
+# Define NO_REGEX if you have no or inferior regex support in your C library.
+AC_CACHE_CHECK([whether the platform regex can handle null bytes],
+ [ac_cv_c_excellent_regex], [
+AC_EGREP_CPP(yippeeyeswehaveit,
+	AC_LANG_PROGRAM([AC_INCLUDES_DEFAULT
+#include <regex.h>
+],
+[#ifdef REG_STARTEND
+yippeeyeswehaveit
+#endif
+]),
+	[ac_cv_c_excellent_regex=yes],
+	[ac_cv_c_excellent_regex=no])
 ])
-if test $ac_cv_c_c99_format = no; then
-	NO_C99_FORMAT=YesPlease
+if test $ac_cv_c_excellent_regex = yes; then
+	NO_REGEX=
 else
-	NO_C99_FORMAT=
+	NO_REGEX=YesPlease
 fi
-AC_SUBST(NO_C99_FORMAT)
+AC_SUBST(NO_REGEX)
 #
 # Define FREAD_READS_DIRECTORIES if your are on a system which succeeds
 # when attempting to read from an fopen'ed directory.
@@ -655,11 +772,51 @@ AC_CHECK_HEADER([libgen.h],
 [NO_LIBGEN_H=YesPlease])
 AC_SUBST(NO_LIBGEN_H)
 #
+# Define HAVE_PATHS_H if you have paths.h.
+AC_CHECK_HEADER([paths.h],
+[HAVE_PATHS_H=YesPlease],
+[HAVE_PATHS_H=])
+AC_SUBST(HAVE_PATHS_H)
+#
 # Define NO_STRCASESTR if you don't have strcasestr.
 GIT_CHECK_FUNC(strcasestr,
 [NO_STRCASESTR=],
 [NO_STRCASESTR=YesPlease])
 AC_SUBST(NO_STRCASESTR)
+#
+# Define NO_STRTOK_R if you don't have strtok_r
+GIT_CHECK_FUNC(strtok_r,
+[NO_STRTOK_R=],
+[NO_STRTOK_R=YesPlease])
+AC_SUBST(NO_STRTOK_R)
+#
+# Define NO_FNMATCH if you don't have fnmatch
+GIT_CHECK_FUNC(fnmatch,
+[NO_FNMATCH=],
+[NO_FNMATCH=YesPlease])
+AC_SUBST(NO_FNMATCH)
+#
+# Define NO_FNMATCH_CASEFOLD if your fnmatch function doesn't have the
+# FNM_CASEFOLD GNU extension.
+AC_CACHE_CHECK([whether the fnmatch function supports the FNMATCH_CASEFOLD GNU extension],
+ [ac_cv_c_excellent_fnmatch], [
+AC_EGREP_CPP(yippeeyeswehaveit,
+	AC_LANG_PROGRAM([
+#include <fnmatch.h>
+],
+[#ifdef FNM_CASEFOLD
+yippeeyeswehaveit
+#endif
+]),
+	[ac_cv_c_excellent_fnmatch=yes],
+	[ac_cv_c_excellent_fnmatch=no])
+])
+if test $ac_cv_c_excellent_fnmatch = yes; then
+	NO_FNMATCH_CASEFOLD=
+else
+	NO_FNMATCH_CASEFOLD=YesPlease
+fi
+AC_SUBST(NO_FNMATCH_CASEFOLD)
 #
 # Define NO_MEMMEM if you don't have memmem.
 GIT_CHECK_FUNC(memmem,
@@ -711,6 +868,12 @@ GIT_CHECK_FUNC(mkstemps,
 [NO_MKSTEMPS=YesPlease])
 AC_SUBST(NO_MKSTEMPS)
 #
+# Define NO_INITGROUPS if you don't have initgroups in the C library.
+GIT_CHECK_FUNC(initgroups,
+[NO_INITGROUPS=],
+[NO_INITGROUPS=YesPlease])
+AC_SUBST(NO_INITGROUPS)
+#
 #
 # Define NO_MMAP if you want to avoid mmap.
 #
@@ -724,19 +887,22 @@ AC_SUBST(NO_MKSTEMPS)
 # Define NO_SYMLINK_HEAD if you never want .git/HEAD to be a symbolic link.
 # Enable it on Windows.  By default, symrefs are still used.
 #
-# Define NO_PTHREADS if we do not have pthreads
+# Define NO_PTHREADS if we do not have pthreads.
 #
-# Define PTHREAD_LIBS to the linker flag used for Pthread support and define
-# THREADED_DELTA_SEARCH if Pthreads are available.
+# Define PTHREAD_LIBS to the linker flag used for Pthread support.
 AC_DEFUN([PTHREADTEST_SRC], [
+AC_LANG_PROGRAM([[
 #include <pthread.h>
-
-int main(void)
-{
+]], [[
 	pthread_mutex_t test_mutex;
-	return (0);
-}
-])
+	pthread_key_t test_key;
+	int retcode = 0;
+	retcode |= pthread_key_create(&test_key, (void *)0);
+	retcode |= pthread_mutex_init(&test_mutex,(void *)0);
+	retcode |= pthread_mutex_lock(&test_mutex);
+	retcode |= pthread_mutex_unlock(&test_mutex);
+	return retcode;
+]])])
 
 dnl AC_LANG_CONFTEST([AC_LANG_PROGRAM(
 dnl   [[#include <pthread.h>]],
@@ -744,7 +910,6 @@ dnl   [[pthread_mutex_t test_mutex;]]
 dnl )])
 
 NO_PTHREADS=UnfortunatelyYes
-THREADED_DELTA_SEARCH=
 PTHREAD_LIBS=
 
 if test -n "$USER_NOPTHREAD"; then
@@ -752,29 +917,35 @@ if test -n "$USER_NOPTHREAD"; then
 # handle these separately since PTHREAD_CFLAGS could be '-lpthreads
 # -D_REENTRANT' or some such.
 elif test -z "$PTHREAD_CFLAGS"; then
-  for opt in -pthread -lpthread; do
+  threads_found=no
+  for opt in -mt -pthread -lpthread; do
      old_CFLAGS="$CFLAGS"
      CFLAGS="$opt $CFLAGS"
      AC_MSG_CHECKING([Checking for POSIX Threads with '$opt'])
-     AC_LINK_IFELSE(PTHREADTEST_SRC,
+     AC_LINK_IFELSE([PTHREADTEST_SRC],
 	[AC_MSG_RESULT([yes])
 		NO_PTHREADS=
 		PTHREAD_LIBS="$opt"
-		THREADED_DELTA_SEARCH=YesPlease
+		PTHREAD_CFLAGS="$opt"
+		threads_found=yes
 		break
 	],
 	[AC_MSG_RESULT([no])])
       CFLAGS="$old_CFLAGS"
   done
+  if test $threads_found != yes; then
+    AC_CHECK_LIB([pthread], [pthread_create],
+	[PTHREAD_LIBS="-lpthread"],
+	[NO_PTHREADS=UnfortunatelyYes])
+  fi
 else
   old_CFLAGS="$CFLAGS"
   CFLAGS="$PTHREAD_CFLAGS $CFLAGS"
   AC_MSG_CHECKING([Checking for POSIX Threads with '$PTHREAD_CFLAGS'])
-  AC_LINK_IFELSE(PTHREADTEST_SRC,
+  AC_LINK_IFELSE([PTHREADTEST_SRC],
 	[AC_MSG_RESULT([yes])
 		NO_PTHREADS=
 		PTHREAD_LIBS="$PTHREAD_CFLAGS"
-		THREADED_DELTA_SEARCH=YesPlease
 	],
 	[AC_MSG_RESULT([no])])
 
@@ -783,9 +954,9 @@ fi
 
 CFLAGS="$old_CFLAGS"
 
+AC_SUBST(PTHREAD_CFLAGS)
 AC_SUBST(PTHREAD_LIBS)
 AC_SUBST(NO_PTHREADS)
-AC_SUBST(THREADED_DELTA_SEARCH)
 
 ## Output files
 AC_CONFIG_FILES(["${config_file}":"${config_in}":"${config_append}"])

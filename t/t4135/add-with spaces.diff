@@ -1,0 +1,5 @@
+diff -pruN a/post image.txt b/post image.txt
+--- a/post image.txt	1969-12-31 18:00:00.000000000 -0600
++++ b/post image.txt	2010-08-18 20:13:31.556002255 -0500
+@@ -0,0 +1 @@
++postimage

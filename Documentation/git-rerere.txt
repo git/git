@@ -7,7 +7,7 @@ git-rerere - Reuse recorded resolution of conflicted merges
 
 SYNOPSIS
 --------
-'git rerere' ['clear'|'diff'|'status'|'gc']
+'git rerere' ['clear'|'forget' <pathspec>|'diff'|'status'|'gc']
 
 DESCRIPTION
 -----------
@@ -30,15 +30,20 @@ enable this command.
 COMMANDS
 --------
 
-Normally, 'git-rerere' is run without arguments or user-intervention.
+Normally, 'git rerere' is run without arguments or user-intervention.
 However, it has several commands that allow it to interact with
 its working state.
 
 'clear'::
 
 This resets the metadata used by rerere if a merge resolution is to be
-aborted.  Calling 'git-am [--skip|--abort]' or 'git-rebase [--skip|--abort]'
+aborted.  Calling 'git am [--skip|--abort]' or 'git rebase [--skip|--abort]'
 will automatically invoke this command.
+
+'forget' <pathspec>::
+
+This resets the conflict resolutions which rerere has recorded for the current
+conflict in <pathspec>.
 
 'diff'::
 
@@ -142,32 +147,32 @@ finally ready and merged into the master branch.  This merge
 would require you to resolve the conflict, introduced by the
 commits marked with `*`.  However, this conflict is often the
 same conflict you resolved when you created the test merge you
-blew away.  'git-rerere' helps you resolve this final
+blew away.  'git rerere' helps you resolve this final
 conflicted merge using the information from your earlier hand
 resolve.
 
-Running the 'git-rerere' command immediately after a conflicted
+Running the 'git rerere' command immediately after a conflicted
 automerge records the conflicted working tree files, with the
 usual conflict markers `<<<<<<<`, `=======`, and `>>>>>>>` in
 them.  Later, after you are done resolving the conflicts,
-running 'git-rerere' again will record the resolved state of these
+running 'git rerere' again will record the resolved state of these
 files.  Suppose you did this when you created the test merge of
 master into the topic branch.
 
 Next time, after seeing the same conflicted automerge,
-running 'git-rerere' will perform a three-way merge between the
+running 'git rerere' will perform a three-way merge between the
 earlier conflicted automerge, the earlier manual resolution, and
 the current conflicted automerge.
 If this three-way merge resolves cleanly, the result is written
 out to your working tree file, so you do not have to manually
-resolve it.  Note that 'git-rerere' leaves the index file alone,
+resolve it.  Note that 'git rerere' leaves the index file alone,
 so you still need to do the final sanity checks with `git diff`
-(or `git diff -c`) and 'git-add' when you are satisfied.
+(or `git diff -c`) and 'git add' when you are satisfied.
 
-As a convenience measure, 'git-merge' automatically invokes
-'git-rerere' upon exiting with a failed automerge and 'git-rerere'
+As a convenience measure, 'git merge' automatically invokes
+'git rerere' upon exiting with a failed automerge and 'git rerere'
 records the hand resolve when it is a new conflict, or reuses the earlier hand
-resolve when it is not.  'git-commit' also invokes 'git-rerere'
+resolve when it is not.  'git commit' also invokes 'git rerere'
 when committing a merge result.  What this means is that you do
 not have to do anything special yourself (besides enabling
 the rerere.enabled config variable).
@@ -177,8 +182,8 @@ resolution is recorded, and it will be reused when you do the
 actual merge later with the updated master and topic branch, as long
 as the recorded resolution is still applicable.
 
-The information 'git-rerere' records is also used when running
-'git-rebase'.  After blowing away the test merge and continuing
+The information 'git rerere' records is also used when running
+'git rebase'.  After blowing away the test merge and continuing
 development on the topic branch:
 
 ------------
@@ -197,13 +202,8 @@ you could run `git rebase master topic`, to bring yourself
 up-to-date before your topic is ready to be sent upstream.
 This would result in falling back to a three-way merge, and it
 would conflict the same way as the test merge you resolved earlier.
-'git-rerere' will be run by 'git-rebase' to help you resolve this
+'git rerere' will be run by 'git rebase' to help you resolve this
 conflict.
-
-
-Author
-------
-Written by Junio C Hamano <gitster@pobox.com>
 
 GIT
 ---

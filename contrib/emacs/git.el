@@ -429,16 +429,19 @@ Each entry is a cons of (SHORT-NAME . FULL-NAME)."
     (git-get-string-sha1
      (git-call-process-string-display-error "write-tree"))))
 
-(defun git-commit-tree (buffer tree head)
-  "Call git-commit-tree with buffer as input and return the resulting commit SHA1."
+(defun git-commit-tree (buffer tree parent)
+  "Create a commit and possibly update HEAD.
+Create a commit with the message in BUFFER using the tree with hash TREE.
+Use PARENT as the parent of the new commit. If PARENT is the current \"HEAD\",
+update the \"HEAD\" reference to the new commit."
   (let ((author-name (git-get-committer-name))
         (author-email (git-get-committer-email))
         (subject "commit (initial): ")
         author-date log-start log-end args coding-system-for-write)
-    (when head
+    (when parent
       (setq subject "commit: ")
       (push "-p" args)
-      (push head args))
+      (push parent args))
     (with-current-buffer buffer
       (goto-char (point-min))
       (if
@@ -474,7 +477,7 @@ Each entry is a cons of (SHORT-NAME . FULL-NAME)."
               (apply #'git-run-command-region
                      buffer log-start log-end env
                      "commit-tree" tree (nreverse args))))))
-      (when commit (git-update-ref "HEAD" commit head subject))
+      (when commit (git-update-ref "HEAD" commit parent subject))
       commit)))
 
 (defun git-empty-db-p ()
@@ -1043,7 +1046,7 @@ The FILES list must be sorted."
 (defun git-add-file ()
   "Add marked file(s) to the index cache."
   (interactive)
-  (let ((files (git-get-filenames (git-marked-files-state 'unknown 'ignored))))
+  (let ((files (git-get-filenames (git-marked-files-state 'unknown 'ignored 'unmerged))))
     ;; FIXME: add support for directories
     (unless files
       (push (file-relative-name (read-file-name "File to add: " nil nil t)) files))
@@ -1115,15 +1118,6 @@ The FILES list must be sorted."
             (let ((buffer (get-file-buffer file)))
               (when buffer (with-current-buffer buffer (revert-buffer t t t)))))
           (git-success-message "Reverted" names))))))
-
-(defun git-resolve-file ()
-  "Resolve conflicts in marked file(s)."
-  (interactive)
-  (let ((files (git-get-filenames (git-marked-files-state 'unmerged))))
-    (when files
-      (when (apply 'git-call-process-display-error "update-index" "--" files)
-        (git-update-status-files files)
-        (git-success-message "Resolved" files)))))
 
 (defun git-remove-handled ()
   "Remove handled files from the status list."
@@ -1316,6 +1310,13 @@ The FILES list must be sorted."
       (when sign-off (git-append-sign-off committer-name committer-email)))
     buffer))
 
+(define-derived-mode git-log-edit-mode log-edit-mode "Git-Log-Edit"
+  "Major mode for editing git log messages.
+
+Set up git-specific `font-lock-keywords' for `log-edit-mode'."
+  (set (make-local-variable 'font-lock-defaults)
+       '(git-log-edit-font-lock-keywords t t)))
+
 (defun git-commit-file ()
   "Commit the marked file(s), asking for a commit message."
   (interactive)
@@ -1341,9 +1342,9 @@ The FILES list must be sorted."
         (git-setup-log-buffer buffer (git-get-merge-heads) author-name author-email subject date))
       (if (boundp 'log-edit-diff-function)
 	  (log-edit 'git-do-commit nil '((log-edit-listfun . git-log-edit-files)
-					 (log-edit-diff-function . git-log-edit-diff)) buffer)
-	(log-edit 'git-do-commit nil 'git-log-edit-files buffer))
-      (setq font-lock-keywords (font-lock-compile-keywords git-log-edit-font-lock-keywords))
+					 (log-edit-diff-function . git-log-edit-diff)) buffer 'git-log-edit-mode)
+	(log-edit 'git-do-commit nil 'git-log-edit-files buffer
+                  'git-log-edit-mode))
       (setq paragraph-separate (concat (regexp-quote git-log-msg-separator) "$\\|Author: \\|Date: \\|Merge: \\|Signed-off-by: \\|\f\\|[ 	]*$"))
       (setq buffer-file-coding-system coding-system)
       (re-search-forward (regexp-quote (concat git-log-msg-separator "\n")) nil t))))
@@ -1553,7 +1554,6 @@ amended version of it."
     (define-key map "P"   'git-prev-unmerged-file)
     (define-key map "q"   'git-status-quit)
     (define-key map "r"   'git-remove-file)
-    (define-key map "R"   'git-resolve-file)
     (define-key map "t"    toggle-map)
     (define-key map "T"   'git-toggle-all-marks)
     (define-key map "u"   'git-unmark-file)
@@ -1595,7 +1595,6 @@ amended version of it."
       ("Merge"
 	["Next Unmerged File" git-next-unmerged-file t]
 	["Prev Unmerged File" git-prev-unmerged-file t]
-	["Mark as Resolved" git-resolve-file t]
 	["Interactive Merge File" git-find-file-imerge t]
 	["Diff Against Common Base File" git-diff-file-base t]
 	["Diff Combined" git-diff-file-combined t]

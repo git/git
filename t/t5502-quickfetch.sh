@@ -57,7 +57,7 @@ test_expect_success 'copy commit and tree but not blob by hand' '
 		cd cloned &&
 		git count-objects | sed -e "s/ *objects,.*//"
 	) ) &&
-	test $cnt -eq 6
+	test $cnt -eq 6 &&
 
 	blob=$(git rev-parse HEAD:file | sed -e "s|..|&/|") &&
 	test -f "cloned/.git/objects/$blob" &&

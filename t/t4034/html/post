@@ -1,0 +1,3 @@
+<tag newattr="newvalue">added content</tag>
+<tag attr="newvalue">changed</tag>
+<newtag>content &newentity;</newtag>

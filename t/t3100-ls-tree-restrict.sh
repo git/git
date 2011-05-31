@@ -43,8 +43,6 @@ test_expect_success \
      tree=`git write-tree` &&
      echo $tree'
 
-_x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
-_x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
 test_output () {
     sed -e "s/ $_x40	/ X	/" <current >check
     test_cmp expected check
@@ -164,6 +162,15 @@ test_expect_success \
     'git ls-tree -t $tree path2/bak >current &&
      make_expected <<\EOF &&
 040000 tree X	path2
+EOF
+     test_output'
+
+test_expect_success \
+    'ls-tree with one path a prefix of the other' \
+    'git ls-tree $tree path2/baz path2/bazbo >current &&
+     make_expected <<\EOF &&
+040000 tree X	path2/baz
+120000 blob X	path2/bazbo
 EOF
      test_output'
 

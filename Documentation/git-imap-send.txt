@@ -13,10 +13,12 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-This command uploads a mailbox generated with 'git-format-patch'
+This command uploads a mailbox generated with 'git format-patch'
 into an IMAP drafts folder.  This allows patches to be sent as
 other email is when using mail clients that cannot read mailbox
-files directly.
+files directly. The command also works with any general mailbox
+in which emails have the fields "From", "Date", and "Subject" in
+that order.
 
 Typical usage is something like:
 
@@ -71,6 +73,10 @@ imap.preformattedHTML::
 	option causes Thunderbird to send the patch as a plain/text,
 	format=fixed email.  Default is `false`.
 
+imap.authMethod::
+	Specify authenticate method for authentication with IMAP server.
+	Current supported method is 'CRAM-MD5' only.
+
 Examples
 ~~~~~~~~
 
@@ -105,6 +111,31 @@ Using direct mode with SSL:
 ..........................
 
 
+EXAMPLE
+-------
+To submit patches using GMail's IMAP interface, first, edit your ~/.gitconfig
+to specify your account settings:
+
+---------
+[imap]
+	folder = "[Gmail]/Drafts"
+	host = imaps://imap.gmail.com
+	user = user@gmail.com
+	port = 993
+	sslverify = false
+---------
+
+You might need to instead use: folder = "[Google Mail]/Drafts" if you get an error
+that the "Folder doesn't exist".
+
+Once the commits are ready to be sent, run the following command:
+
+  $ git format-patch --cover-letter -M --stdout origin/master | git imap-send
+
+Just make sure to disable line wrapping in the email client (GMail's web
+interface will wrap lines no matter what, so you need to use a real
+IMAP client).
+
 CAUTION
 -------
 It is still your responsibility to make sure that the email message
@@ -118,19 +149,9 @@ Thunderbird in particular is known to be problematic.  Thunderbird
 users may wish to visit this web page for more information:
   http://kb.mozillazine.org/Plain_text_e-mail_-_Thunderbird#Completely_plain_email
 
-
-BUGS
-----
-Doesn't handle lines starting with "From " in the message body.
-
-
-Author
-------
-Derived from isync 1.0.1 by Mike McCormack.
-
-Documentation
---------------
-Documentation by Mike McCormack
+SEE ALSO
+--------
+linkgit:git-format-patch[1], linkgit:git-send-email[1], mbox(5)
 
 GIT
 ---

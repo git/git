@@ -31,10 +31,10 @@ test_expect_success 'clone with excess parameters (2)' '
 
 '
 
-test_expect_success 'output from clone' '
+test_expect_success C_LOCALE_OUTPUT 'output from clone' '
 	rm -fr dst &&
 	git clone -n "file://$(pwd)/src" dst >output &&
-	test $(grep Initialized output | wc -l) = 1
+	test $(grep Clon output | wc -l) = 1
 '
 
 test_expect_success 'clone does not keep pack' '
@@ -149,11 +149,13 @@ test_expect_success 'clone a void' '
 	(
 		cd src-0 && git init
 	) &&
-	git clone src-0 target-6 &&
+	git clone "file://$(pwd)/src-0" target-6 2>err-6 &&
+	! grep "fatal:" err-6 &&
 	(
 		cd src-0 && test_commit A
 	) &&
-	git clone src-0 target-7 &&
+	git clone "file://$(pwd)/src-0" target-7 2>err-7 &&
+	! grep "fatal:" err-7 &&
 	# There is no reason to insist they are bit-for-bit
 	# identical, but this test should suffice for now.
 	test_cmp target-6/.git/config target-7/.git/config
@@ -161,10 +163,7 @@ test_expect_success 'clone a void' '
 
 test_expect_success 'clone respects global branch.autosetuprebase' '
 	(
-		HOME=$(pwd) &&
-		export HOME &&
 		test_config="$HOME/.gitconfig" &&
-		unset GIT_CONFIG_NOGLOBAL &&
 		git config -f "$test_config" branch.autosetuprebase remote &&
 		rm -fr dst &&
 		git clone src dst &&
@@ -172,6 +171,37 @@ test_expect_success 'clone respects global branch.autosetuprebase' '
 		actual="z$(git config branch.master.rebase)" &&
 		test ztrue = $actual
 	)
+'
+
+test_expect_success 'respect url-encoding of file://' '
+	git init x+y &&
+	git clone "file://$PWD/x+y" xy-url-1 &&
+	git clone "file://$PWD/x%2By" xy-url-2
+'
+
+test_expect_success 'do not query-string-decode + in URLs' '
+	rm -rf x+y &&
+	git init "x y" &&
+	test_must_fail git clone "file://$PWD/x+y" xy-no-plus
+'
+
+test_expect_success 'do not respect url-encoding of non-url path' '
+	git init x+y &&
+	test_must_fail git clone x%2By xy-regular &&
+	git clone x+y xy-regular
+'
+
+test_expect_success 'clone separate gitdir' '
+	rm -rf dst &&
+	git clone --separate-git-dir realgitdir src dst &&
+	echo "gitdir: `pwd`/realgitdir" >expected &&
+	test_cmp expected dst/.git &&
+	test -d realgitdir/refs
+'
+
+test_expect_success 'clone separate gitdir where target already exists' '
+	rm -rf dst &&
+	test_must_fail git clone --separate-git-dir realgitdir src dst
 '
 
 test_done

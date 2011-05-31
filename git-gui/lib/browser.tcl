@@ -21,23 +21,23 @@ field browser_busy   1
 field ls_buf     {}; # Buffered record output from ls-tree
 
 constructor new {commit {path {}}} {
-	global cursor_ptr M1B
-	make_toplevel top w
+	global cursor_ptr M1B use_ttk NS
+	make_dialog top w
+	wm withdraw $top
 	wm title $top [append "[appname] ([reponame]): " [mc "File Browser"]]
 
 	set browser_commit $commit
 	set browser_path $browser_commit:$path
 
-	label $w.path \
+	${NS}::label $w.path \
 		-textvariable @browser_path \
 		-anchor w \
 		-justify left \
-		-borderwidth 1 \
-		-relief sunken \
 		-font font_uibold
+	if {!$use_ttk} { $w.path configure -borderwidth 1 -relief sunken}
 	pack $w.path -anchor w -side top -fill x
 
-	frame $w.list
+	${NS}::frame $w.list
 	set w_list $w.list.l
 	text $w_list -background white -foreground black \
 		-borderwidth 0 \
@@ -49,19 +49,18 @@ constructor new {commit {path {}}} {
 		-xscrollcommand [list $w.list.sbx set] \
 		-yscrollcommand [list $w.list.sby set]
 	rmsel_tag $w_list
-	scrollbar $w.list.sbx -orient h -command [list $w_list xview]
-	scrollbar $w.list.sby -orient v -command [list $w_list yview]
+	${NS}::scrollbar $w.list.sbx -orient h -command [list $w_list xview]
+	${NS}::scrollbar $w.list.sby -orient v -command [list $w_list yview]
 	pack $w.list.sbx -side bottom -fill x
 	pack $w.list.sby -side right -fill y
 	pack $w_list -side left -fill both -expand 1
 	pack $w.list -side top -fill both -expand 1
 
-	label $w.status \
+	${NS}::label $w.status \
 		-textvariable @browser_status \
 		-anchor w \
-		-justify left \
-		-borderwidth 1 \
-		-relief sunken
+		-justify left
+	if {!$use_ttk} { $w.status configure -borderwidth 1 -relief sunken}
 	pack $w.status -anchor w -side bottom -fill x
 
 	bind $w_list <Button-1>        "[cb _click 0 @%x,%y];break"
@@ -78,6 +77,7 @@ constructor new {commit {path {}}} {
 	bind $w_list <Right>           break
 
 	bind $w_list <Visibility> [list focus $w_list]
+	wm deiconify $top
 	set w $w_list
 	if {$path ne {}} {
 		_ls $this $browser_commit:$path $path
@@ -121,7 +121,7 @@ method _parent {} {
 		if {$browser_stack eq {}} {
 			regsub {:.*$} $browser_path {:} browser_path
 		} else {
-			regsub {/[^/]+$} $browser_path {} browser_path
+			regsub {/[^/]+/$} $browser_path {/} browser_path
 		}
 		set browser_status [mc "Loading %s..." $browser_path]
 		_ls $this [lindex $parent 0] [lindex $parent 1]
@@ -263,23 +263,27 @@ field w              ; # widget path
 field w_rev          ; # mega-widget to pick the initial revision
 
 constructor dialog {} {
-	make_toplevel top w
+	global use_ttk NS
+	make_dialog top w
+	wm withdraw $top
 	wm title $top [append "[appname] ([reponame]): " [mc "Browse Branch Files"]]
 	if {$top ne {.}} {
 		wm geometry $top "+[winfo rootx .]+[winfo rooty .]"
+		wm transient $top .
 	}
 
-	label $w.header \
+	${NS}::label $w.header \
 		-text [mc "Browse Branch Files"] \
-		-font font_uibold
+		-font font_uibold \
+		-anchor center
 	pack $w.header -side top -fill x
 
-	frame $w.buttons
-	button $w.buttons.browse -text [mc Browse] \
+	${NS}::frame $w.buttons
+	${NS}::button $w.buttons.browse -text [mc Browse] \
 		-default active \
 		-command [cb _open]
 	pack $w.buttons.browse -side right
-	button $w.buttons.cancel -text [mc Cancel] \
+	${NS}::button $w.buttons.cancel -text [mc Cancel] \
 		-command [list destroy $w]
 	pack $w.buttons.cancel -side right -padx 5
 	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
@@ -291,6 +295,7 @@ constructor dialog {} {
 	bind $w <Visibility> [cb _visible]
 	bind $w <Key-Escape> [list destroy $w]
 	bind $w <Key-Return> [cb _open]\;break
+	wm deiconify $top
 	tkwait window $w
 }
 

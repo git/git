@@ -67,7 +67,7 @@ You've now initialized the working directory--you may notice a new
 directory created, named ".git".
 
 Next, tell git to take a snapshot of the contents of all files under the
-current directory (note the '.'), with 'git-add':
+current directory (note the '.'), with 'git add':
 
 ------------------------------------------------
 $ git add .
@@ -75,7 +75,7 @@ $ git add .
 
 This snapshot is now stored in a temporary staging area which git calls
 the "index".  You can permanently store the contents of the index in the
-repository with 'git-commit':
+repository with 'git commit':
 
 ------------------------------------------------
 $ git commit
@@ -94,15 +94,15 @@ $ git add file1 file2 file3
 ------------------------------------------------
 
 You are now ready to commit.  You can see what is about to be committed
-using 'git-diff' with the --cached option:
+using 'git diff' with the --cached option:
 
 ------------------------------------------------
 $ git diff --cached
 ------------------------------------------------
 
-(Without --cached, 'git-diff' will show you any changes that
+(Without --cached, 'git diff' will show you any changes that
 you've made but not yet added to the index.)  You can also get a brief
-summary of the situation with 'git-status':
+summary of the situation with 'git status':
 
 ------------------------------------------------
 $ git status
@@ -126,7 +126,7 @@ $ git commit
 This will again prompt you for a message describing the change, and then
 record a new version of the project.
 
-Alternatively, instead of running 'git-add' beforehand, you can use
+Alternatively, instead of running 'git add' beforehand, you can use
 
 ------------------------------------------------
 $ git commit -a
@@ -147,7 +147,7 @@ Git tracks content not files
 
 Many revision control systems provide an `add` command that tells the
 system to start tracking changes to a new file.  Git's `add` command
-does something simpler and more powerful: 'git-add' is used both for new
+does something simpler and more powerful: 'git add' is used both for new
 and newly modified files, and in both cases it takes a snapshot of the
 given files and stages that content in the index, ready for inclusion in
 the next commit.
@@ -376,7 +376,7 @@ alice$ git remote add bob /home/bob/myrepo
 ------------------------------------------------
 
 With this, Alice can perform the first part of the "pull" operation
-alone using the 'git-fetch' command without merging them with her own
+alone using the 'git fetch' command without merging them with her own
 branch, using:
 
 -------------------------------------
@@ -384,8 +384,8 @@ alice$ git fetch bob
 -------------------------------------
 
 Unlike the longhand form, when Alice fetches from Bob using a
-remote repository shorthand set up with 'git-remote', what was
-fetched is stored in a remote tracking branch, in this case
+remote repository shorthand set up with 'git remote', what was
+fetched is stored in a remote-tracking branch, in this case
 `bob/master`.  So after this:
 
 -------------------------------------
@@ -402,8 +402,8 @@ could merge the changes into her master branch:
 alice$ git merge bob/master
 -------------------------------------
 
-This `merge` can also be done by 'pulling from her own remote
-tracking branch', like this:
+This `merge` can also be done by 'pulling from her own remote-tracking
+branch', like this:
 
 -------------------------------------
 alice$ git pull . remotes/bob/master
@@ -428,7 +428,7 @@ bob$ git config --get remote.origin.url
 /home/alice/project
 -------------------------------------
 
-(The complete configuration created by 'git-clone' is visible using
+(The complete configuration created by 'git clone' is visible using
 `git config -l`, and the linkgit:git-config[1] man page
 explains the meaning of each option.)
 
@@ -458,7 +458,7 @@ Exploring history
 -----------------
 
 Git history is represented as a series of interrelated commits.  We
-have already seen that the 'git-log' command can list those commits.
+have already seen that the 'git log' command can list those commits.
 Note that first line of each git log entry also gives a name for the
 commit:
 
@@ -471,7 +471,7 @@ Date:   Tue May 16 17:18:22 2006 -0700
     merge-base: Clarify the comments on post processing.
 -------------------------------------
 
-We can give this name to 'git-show' to see the details about this
+We can give this name to 'git show' to see the details about this
 commit.
 
 -------------------------------------
@@ -529,13 +529,13 @@ $ git reset --hard HEAD^ # reset your current branch and working
 Be careful with that last command: in addition to losing any changes
 in the working directory, it will also remove all later commits from
 this branch.  If this branch is the only branch containing those
-commits, they will be lost.  Also, don't use 'git-reset' on a
+commits, they will be lost.  Also, don't use 'git reset' on a
 publicly-visible branch that other developers pull from, as it will
 force needless merges on other developers to clean up the history.
-If you need to undo changes that you have pushed, use 'git-revert'
+If you need to undo changes that you have pushed, use 'git revert'
 instead.
 
-The 'git-grep' command can search for strings in any version of your
+The 'git grep' command can search for strings in any version of your
 project, so
 
 -------------------------------------
@@ -544,7 +544,7 @@ $ git grep "hello" v2.5
 
 searches for all occurrences of "hello" in v2.5.
 
-If you leave out the commit name, 'git-grep' will search any of the
+If you leave out the commit name, 'git grep' will search any of the
 files it manages in your current directory.  So
 
 -------------------------------------
@@ -554,7 +554,7 @@ $ git grep "hello"
 is a quick way to search just the files that are tracked by git.
 
 Many git commands also take sets of commits, which can be specified
-in a number of ways.  Here are some examples with 'git-log':
+in a number of ways.  Here are some examples with 'git log':
 
 -------------------------------------
 $ git log v2.5..v2.6            # commits between v2.5 and v2.6
@@ -564,7 +564,7 @@ $ git log v2.5.. Makefile       # commits since v2.5 which modify
 				# Makefile
 -------------------------------------
 
-You can also give 'git-log' a "range" of commits where the first is not
+You can also give 'git log' a "range" of commits where the first is not
 necessarily an ancestor of the second; for example, if the tips of
 the branches "stable" and "master" diverged from a common
 commit some time ago, then
@@ -583,9 +583,9 @@ $ git log master..stable
 will show the list of commits made on the stable branch but not
 the master branch.
 
-The 'git-log' command has a weakness: it must present commits in a
+The 'git log' command has a weakness: it must present commits in a
 list.  When the history has lines of development that diverged and
-then merged back together, the order in which 'git-log' presents
+then merged back together, the order in which 'git log' presents
 those commits is meaningless.
 
 Most projects with multiple contributors (such as the Linux kernel,
@@ -609,7 +609,7 @@ of the file:
 $ git diff v2.5:Makefile HEAD:Makefile.in
 -------------------------------------
 
-You can also use 'git-show' to see any such file:
+You can also use 'git show' to see any such file:
 
 -------------------------------------
 $ git show v2.5:Makefile

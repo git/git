@@ -1,0 +1,96 @@
+Git v1.7.1.1 Release Notes
+==========================
+
+Fixes since v1.7.1
+------------------
+
+ * Authentication over http transport can now be made lazily, in that the
+   request can first go to a URL without username, get a 401 response and
+   then the client will ask for the username to use.
+
+ * We used to mistakenly think "../work" is a subdirectory of the current
+   directory when we are in "../work-xyz".
+
+ * The attribute mechanism now allows an entry that uses an attribute
+   macro that set/unset one attribute, immediately followed by an
+   overriding setting; this makes attribute macros much easier to use.
+
+ * We didn't recognize timezone "Z" as a synonym for "UTC" (75b37e70).
+
+ * In 1.7.0, read-tree and user commands that use the mechanism such as
+   checkout and merge were fixed to handle switching between branches one
+   of which has a file while the other has a directory at the same path
+   correctly even when there are some "confusing" pathnames in them.  But
+   the algorithm used for this fix was suboptimal and had a terrible
+   performance degradation especially in larger trees.
+
+ * "git am -3" did not show diagnosis when the patch in the message was corrupt.
+
+ * After "git apply --whitespace=fix" removed trailing blank lines in an
+   patch in a patch series, it failed to apply later patches that depend
+   on the presence of such blank lines.
+
+ * "git bundle --stdin" segfaulted.
+
+ * "git checkout" and "git rebase" overwrote paths that are marked "assume
+   unchanged".
+
+ * "git commit --amend" on a commit with an invalid author-name line that
+   lacks the display name didn't work.
+
+ * "git describe" did not tie-break tags that point at the same commit
+   correctly; newer ones are preferred by paying attention to the
+   tagger date now.
+
+ * "git diff" used to tell underlying xdiff machinery to work very hard to
+   minimize the output, but this often was spending too many extra cycles
+   for very little gain.
+
+ * "git diff --color" did not paint extended diff headers per line
+   (i.e. the coloring escape sequence didn't end at the end of line),
+   which confused "less -R".
+
+ * "git fetch" over HTTP verifies the downloaded packfiles more robustly.
+
+ * The memory usage by "git index-pack" (run during "git fetch" and "git
+   push") got leaner.
+
+ * "GIT_DIR=foo.git git init --bare bar.git" created foo.git instead of bar.git.
+
+ * "git log --abbrev=$num --format='%h' ignored --abbrev=$num.
+
+ * "git ls-files ../out/side/cwd" refused to work.
+
+ * "git merge --log" used to replace the custom message given by "-m" with
+   the shortlog, instead of appending to it.
+
+ * "git notes copy" without any other argument segfaulted.
+
+ * "git pull" accepted "--dry-run", gave it to underlying "git fetch" but
+   ignored the option itself, resulting in a bogus attempt to merge
+   unrelated commit.
+
+ * "git rebase" did not faithfully reproduce a malformed author ident, that
+   is often seen in a repository converted from foreign SCMs.
+
+ * "git reset --hard" started from a wrong directory and a working tree in
+   a nonstandard location is in use got confused.
+
+ * "git send-email" lacked a way to specify the domainname used in the
+   EHLO/HELO exchange, causing rejected connection from picky servers.
+   It learned --smtp-domain option to solve this issue.
+
+ * "git send-email" did not declare a content-transfer-encoding and
+   content-type even when its payload needs to be sent in 8-bit.
+
+ * "git show -C -C" and other corner cases lost diff metainfo output
+   in 1.7.0.
+
+ * "git stash" incorrectly lost paths in the working tree that were
+   previously removed from the index.
+
+ * "git status" stopped refreshing the index by mistake in 1.7.1.
+
+ * "git status" showed excess "hints" even when advice.statusHints is set to false.
+
+And other minor fixes and documentation updates.

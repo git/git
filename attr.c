@@ -1,5 +1,6 @@
 #define NO_THE_INDEX_COMPATIBILITY_MACROS
 #include "cache.h"
+#include "exec_cmd.h"
 #include "attr.h"
 
 const char git_attr__true[] = "(builtin)true";
@@ -9,6 +10,8 @@ static const char git_attr__unknown[] = "(builtin)unknown";
 #define ATTR__FALSE git_attr__false
 #define ATTR__UNSET NULL
 #define ATTR__UNKNOWN git_attr__unknown
+
+static const char *attributes_file;
 
 /*
  * The basic design decision here is that we are not going to have
@@ -65,7 +68,7 @@ static int invalid_attr_name(const char *name, int namelen)
 	return 0;
 }
 
-struct git_attr *git_attr(const char *name, int len)
+static struct git_attr *git_attr_internal(const char *name, int len)
 {
 	unsigned hval = hash_name(name, len);
 	unsigned pos = hval % HASHSIZE;
@@ -93,6 +96,11 @@ struct git_attr *git_attr(const char *name, int len)
 	check_all_attr[a->attr_nr].attr = a;
 	check_all_attr[a->attr_nr].value = ATTR__UNKNOWN;
 	return a;
+}
+
+struct git_attr *git_attr(const char *name)
+{
+	return git_attr_internal(name, strlen(name));
 }
 
 /*
@@ -162,7 +170,7 @@ static const char *parse_attr(const char *src, int lineno, const char *cp,
 		else {
 			e->setto = xmemdupz(equals + 1, ep - equals - 1);
 		}
-		e->attr = git_attr(cp, len);
+		e->attr = git_attr_internal(cp, len);
 	}
 	(*num_attr)++;
 	return ep + strspn(ep, blank);
@@ -221,7 +229,7 @@ static struct match_attr *parse_attr_line(const char *line, const char *src,
 			      sizeof(struct attr_state) * num_attr +
 			      (is_macro ? 0 : namelen + 1));
 		if (is_macro)
-			res->u.attr = git_attr(name, namelen);
+			res->u.attr = git_attr_internal(name, namelen);
 		else {
 			res->u.pattern = (char *)&(res->state[num_attr]);
 			memcpy(res->u.pattern, name, namelen);
@@ -282,7 +290,7 @@ static void free_attr_elem(struct attr_stack *e)
 }
 
 static const char *builtin_attr[] = {
-	"[attr]binary -diff -crlf",
+	"[attr]binary -diff -text",
 	NULL,
 };
 
@@ -457,6 +465,27 @@ static void drop_attr_stack(void)
 	}
 }
 
+const char *git_etc_gitattributes(void)
+{
+	static const char *system_wide;
+	if (!system_wide)
+		system_wide = system_path(ETC_GITATTRIBUTES);
+	return system_wide;
+}
+
+int git_attr_system(void)
+{
+	return !git_env_bool("GIT_ATTR_NOSYSTEM", 0);
+}
+
+static int git_attr_config(const char *var, const char *value, void *dummy)
+{
+	if (!strcmp(var, "core.attributesfile"))
+		return git_config_pathname(&attributes_file, var, value);
+
+	return 0;
+}
+
 static void bootstrap_attr_stack(void)
 {
 	if (!attr_stack) {
@@ -466,6 +495,25 @@ static void bootstrap_attr_stack(void)
 		elem->origin = NULL;
 		elem->prev = attr_stack;
 		attr_stack = elem;
+
+		if (git_attr_system()) {
+			elem = read_attr_from_file(git_etc_gitattributes(), 1);
+			if (elem) {
+				elem->origin = NULL;
+				elem->prev = attr_stack;
+				attr_stack = elem;
+			}
+		}
+
+		git_config(git_attr_config, NULL);
+		if (attributes_file) {
+			elem = read_attr_from_file(attributes_file, 1);
+			if (elem) {
+				elem->origin = NULL;
+				elem->prev = attr_stack;
+				attr_stack = elem;
+			}
+		}
 
 		if (!is_bare_repository() || direction == GIT_ATTR_INDEX) {
 			elem = read_attr(GITATTRIBUTES_FILE, 1);
@@ -494,7 +542,9 @@ static void prepare_attr_stack(const char *path, int dirlen)
 
 	/*
 	 * At the bottom of the attribute stack is the built-in
-	 * set of attribute definitions.  Then, contents from
+	 * set of attribute definitions, followed by the contents
+	 * of $(prefix)/etc/gitattributes and a file specified by
+	 * core.attributesfile.  Then, contents from
 	 * .gitattribute files from directories closer to the
 	 * root to the ones in deeper directories are pushed
 	 * to the stack.  Finally, at the very top of the stack
@@ -589,20 +639,25 @@ static int path_matches(const char *pathname, int pathlen,
 	return fnmatch(pattern, pathname + baselen, FNM_PATHNAME) == 0;
 }
 
+static int macroexpand_one(int attr_nr, int rem);
+
 static int fill_one(const char *what, struct match_attr *a, int rem)
 {
 	struct git_attr_check *check = check_all_attr;
 	int i;
 
-	for (i = 0; 0 < rem && i < a->num_attr; i++) {
+	for (i = a->num_attr - 1; 0 < rem && 0 <= i; i--) {
 		struct git_attr *attr = a->state[i].attr;
 		const char **n = &(check[attr->attr_nr].value);
 		const char *v = a->state[i].setto;
 
 		if (*n == ATTR__UNKNOWN) {
-			debug_set(what, a->u.pattern, attr, v);
+			debug_set(what,
+				  a->is_macro ? a->u.attr->name : a->u.pattern,
+				  attr, v);
 			*n = v;
 			rem--;
+			rem = macroexpand_one(attr->attr_nr, rem);
 		}
 	}
 	return rem;
@@ -624,19 +679,27 @@ static int fill(const char *path, int pathlen, struct attr_stack *stk, int rem)
 	return rem;
 }
 
-static int macroexpand(struct attr_stack *stk, int rem)
+static int macroexpand_one(int attr_nr, int rem)
 {
+	struct attr_stack *stk;
+	struct match_attr *a = NULL;
 	int i;
-	struct git_attr_check *check = check_all_attr;
 
-	for (i = stk->num_matches - 1; 0 < rem && 0 <= i; i--) {
-		struct match_attr *a = stk->attrs[i];
-		if (!a->is_macro)
-			continue;
-		if (check[a->u.attr->attr_nr].value != ATTR__TRUE)
-			continue;
+	if (check_all_attr[attr_nr].value != ATTR__TRUE)
+		return rem;
+
+	for (stk = attr_stack; !a && stk; stk = stk->prev)
+		for (i = stk->num_matches - 1; !a && 0 <= i; i--) {
+			struct match_attr *ma = stk->attrs[i];
+			if (!ma->is_macro)
+				continue;
+			if (ma->u.attr->attr_nr == attr_nr)
+				a = ma;
+		}
+
+	if (a)
 		rem = fill_one("expand", a, rem);
-	}
+
 	return rem;
 }
 
@@ -660,9 +723,6 @@ int git_checkattr(const char *path, int num, struct git_attr_check *check)
 	rem = attr_nr;
 	for (stk = attr_stack; 0 < rem && stk; stk = stk->prev)
 		rem = fill(path, pathlen, stk, rem);
-
-	for (stk = attr_stack; 0 < rem && stk; stk = stk->prev)
-		rem = macroexpand(stk, rem);
 
 	for (i = 0; i < num; i++) {
 		const char *value = check_all_attr[check[i].attr->attr_nr].value;

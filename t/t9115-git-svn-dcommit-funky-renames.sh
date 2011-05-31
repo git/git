@@ -19,7 +19,7 @@ test_expect_success 'init and fetch repository' '
 	'
 
 test_expect_success 'create file in existing ugly and empty dir' '
-	mkdir "#{bad_directory_name}" &&
+	mkdir -p "#{bad_directory_name}" &&
 	echo hi > "#{bad_directory_name}/ foo" &&
 	git update-index --add "#{bad_directory_name}/ foo" &&
 	git commit -m "new file in ugly parent" &&
@@ -37,7 +37,7 @@ test_expect_success 'rename pretty file' '
 	git update-index --add pretty &&
 	git commit -m "pretty :x" &&
 	git svn dcommit &&
-	mkdir regular_dir_name &&
+	mkdir -p regular_dir_name &&
 	git mv pretty regular_dir_name/pretty &&
 	git commit -m "moved pretty file" &&
 	git svn dcommit
@@ -61,11 +61,12 @@ test_expect_success 'add a file with plus signs' '
 
 test_expect_success 'clone the repository to test rebase' '
 	git svn clone "$svnrepo" test-rebase &&
-	cd test-rebase &&
-		echo test-rebase > test-rebase &&
+	(
+		cd test-rebase &&
+		echo test-rebase >test-rebase &&
 		git add test-rebase &&
-		git commit -m test-rebase &&
-		cd ..
+		git commit -m test-rebase
+	)
 	'
 
 test_expect_success 'make a commit to test rebase' '

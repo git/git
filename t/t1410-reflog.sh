@@ -186,8 +186,8 @@ test_expect_success 'delete' '
 	test_tick &&
 	git commit -m tiger C &&
 
-	HEAD_entry_count=$(git reflog | wc -l)
-	master_entry_count=$(git reflog show master | wc -l)
+	HEAD_entry_count=$(git reflog | wc -l) &&
+	master_entry_count=$(git reflog show master | wc -l) &&
 
 	test $HEAD_entry_count = 5 &&
 	test $master_entry_count = 5 &&
@@ -199,18 +199,59 @@ test_expect_success 'delete' '
 	test $HEAD_entry_count = $(git reflog | wc -l) &&
 	! grep ox < output &&
 
-	master_entry_count=$(wc -l < output)
+	master_entry_count=$(wc -l < output) &&
 
 	git reflog delete HEAD@{1} &&
 	test $(($HEAD_entry_count -1)) = $(git reflog | wc -l) &&
 	test $master_entry_count = $(git reflog show master | wc -l) &&
 
-	HEAD_entry_count=$(git reflog | wc -l)
+	HEAD_entry_count=$(git reflog | wc -l) &&
 
 	git reflog delete master@{07.04.2005.15:15:00.-0700} &&
 	git reflog show master > output &&
 	test $(($master_entry_count - 1)) = $(wc -l < output) &&
 	! grep dragon < output
+
+'
+
+test_expect_success 'rewind2' '
+
+	test_tick && git reset --hard HEAD~2 &&
+	loglen=$(wc -l <.git/logs/refs/heads/master) &&
+	test $loglen = 4
+
+'
+
+test_expect_success '--expire=never' '
+
+	git reflog expire --verbose \
+		--expire=never \
+		--expire-unreachable=never \
+		--all &&
+	loglen=$(wc -l <.git/logs/refs/heads/master) &&
+	test $loglen = 4
+
+'
+
+test_expect_success 'gc.reflogexpire=never' '
+
+	git config gc.reflogexpire never &&
+	git config gc.reflogexpireunreachable never &&
+	git reflog expire --verbose --all &&
+	loglen=$(wc -l <.git/logs/refs/heads/master) &&
+	test $loglen = 4
+'
+
+test_expect_success 'gc.reflogexpire=false' '
+
+	git config gc.reflogexpire false &&
+	git config gc.reflogexpireunreachable false &&
+	git reflog expire --verbose --all &&
+	loglen=$(wc -l <.git/logs/refs/heads/master) &&
+	test $loglen = 4 &&
+
+	git config --unset gc.reflogexpire &&
+	git config --unset gc.reflogexpireunreachable
 
 '
 

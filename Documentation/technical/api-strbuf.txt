@@ -12,7 +12,7 @@ strbuf API actually relies on the string being free of NULs.
 
 strbufs has some invariants that are very important to keep in mind:
 
-. The `buf` member is never NULL, so you it can be used in any usual C
+. The `buf` member is never NULL, so it can be used in any usual C
 string operations safely. strbuf's _have_ to be initialized either by
 `strbuf_init()` or by `= STRBUF_INIT` before the invariants, though.
 +
@@ -55,7 +55,7 @@ Data structures
 
 * `struct strbuf`
 
-This is string buffer structure. The `len` member can be used to
+This is the string buffer structure. The `len` member can be used to
 determine the current length of the string, and `buf` member provides access to
 the string itself.
 
@@ -199,6 +199,10 @@ character if the letter `n` appears after a `%`.  The function returns
 the length of the placeholder recognized and `strbuf_expand()` skips
 over it.
 +
+The format `%%` is automatically expanded to a single `%` as a quoting
+mechanism; callers do not need to handle the `%` placeholder themselves,
+and the callback function will not be invoked for this placeholder.
++
 All other characters (non-percent and not skipped ones) are copied
 verbatim to the strbuf.  If the callback returned zero, meaning that the
 placeholder is unknown, then the percent sign is copied, too.
@@ -213,6 +217,13 @@ which can be used by the programmer of the callback as she sees fit.
 	struct strbuf_expand_dict_entry as context, i.e. pairs of
 	placeholder and replacement string.  The array needs to be
 	terminated by an entry with placeholder set to NULL.
+
+`strbuf_addbuf_percentquote`::
+
+	Append the contents of one strbuf to another, quoting any
+	percent signs ("%") into double-percents ("%%") in the
+	destination. This is useful for literal data to be fed to either
+	strbuf_expand or to the *printf family of functions.
 
 `strbuf_addf`::
 
@@ -253,3 +264,9 @@ same behaviour as well.
 	comments are considered contents to be removed or not.
 
 `launch_editor`::
+
+	Launch the user preferred editor to edit a file and fill the buffer
+	with the file's contents upon the user completing their editing. The
+	third argument can be used to set the environment which the editor is
+	run in. If the buffer is NULL the editor is launched as usual but the
+	file's contents are not read into the buffer upon completion.

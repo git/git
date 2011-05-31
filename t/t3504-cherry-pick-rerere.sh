@@ -23,7 +23,7 @@ test_expect_success 'conflicting merge' '
 test_expect_success 'fixup' '
 	echo foo-dev >foo &&
 	git add foo && test_tick && git commit -q -m 4 &&
-	git reset --hard HEAD^
+	git reset --hard HEAD^ &&
 	echo foo-dev >expect
 '
 
@@ -33,7 +33,7 @@ test_expect_success 'cherry-pick conflict' '
 '
 
 test_expect_success 'reconfigure' '
-	git config rerere.enabled false
+	git config rerere.enabled false &&
 	git reset --hard
 '
 

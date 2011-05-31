@@ -289,6 +289,14 @@ test_expect_success 'working --list' \
 	'git config --list > output && cmp output expect'
 
 cat > expect << EOF
+EOF
+
+test_expect_success '--list without repo produces empty output' '
+	git --git-dir=nonexistent config --list >output &&
+	test_cmp expect output
+'
+
+cat > expect << EOF
 beta.noindent sillyValue
 nextsection.nonewline wow2 for me
 EOF
@@ -397,6 +405,17 @@ test_expect_success 'alternative GIT_CONFIG' 'cmp output expect'
 
 test_expect_success 'alternative GIT_CONFIG (--file)' \
 	'git config --file other-config -l > output && cmp output expect'
+
+test_expect_success 'refer config from subdirectory' '
+	mkdir x &&
+	(
+		cd x &&
+		echo strasse >expect
+		git config --get --file ../other-config ein.bahn >actual &&
+		test_cmp expect actual
+	)
+
+'
 
 GIT_CONFIG=other-config git config anwohner.park ausweis
 
@@ -683,6 +702,56 @@ test_expect_success 'set --bool-or-int' '
 
 rm .git/config
 
+cat >expect <<\EOF
+[path]
+	home = ~/
+	normal = /dev/null
+	trailingtilde = foo~
+EOF
+
+test_expect_success NOT_MINGW 'set --path' '
+	git config --path path.home "~/" &&
+	git config --path path.normal "/dev/null" &&
+	git config --path path.trailingtilde "foo~" &&
+	test_cmp expect .git/config'
+
+if test_have_prereq NOT_MINGW && test "${HOME+set}"
+then
+	test_set_prereq HOMEVAR
+fi
+
+cat >expect <<EOF
+$HOME/
+/dev/null
+foo~
+EOF
+
+test_expect_success HOMEVAR 'get --path' '
+	git config --get --path path.home > result &&
+	git config --get --path path.normal >> result &&
+	git config --get --path path.trailingtilde >> result &&
+	test_cmp expect result
+'
+
+cat >expect <<\EOF
+/dev/null
+foo~
+EOF
+
+test_expect_success NOT_MINGW 'get --path copes with unset $HOME' '
+	(
+		unset HOME;
+		test_must_fail git config --get --path path.home \
+			>result 2>msg &&
+		git config --get --path path.normal >>result &&
+		git config --get --path path.trailingtilde >>result
+	) &&
+	grep "[Ff]ailed to expand.*~/" msg &&
+	test_cmp expect result
+'
+
+rm .git/config
+
 git config quote.leading " test"
 git config quote.ending "test "
 git config quote.semicolon "test;test"
@@ -755,6 +824,11 @@ echo >>result
 
 test_expect_success '--null --get-regexp' 'cmp result expect'
 
+test_expect_success 'inner whitespace kept verbatim' '
+	git config section.val "foo 	  bar" &&
+	test "z$(git config section.val)" = "zfoo 	  bar"
+'
+
 test_expect_success SYMLINKS 'symlinked configuration' '
 
 	ln -s notyet myconfig &&
@@ -770,6 +844,27 @@ test_expect_success SYMLINKS 'symlinked configuration' '
 
 '
 
+test_expect_success 'nonexistent configuration' '
+	(
+		GIT_CONFIG=doesnotexist &&
+		export GIT_CONFIG &&
+		test_must_fail git config --list &&
+		test_must_fail git config test.xyzzy
+	)
+'
+
+test_expect_success SYMLINKS 'symlink to nonexistent configuration' '
+	ln -s doesnotexist linktonada &&
+	ln -s linktonada linktolinktonada &&
+	(
+		GIT_CONFIG=linktonada &&
+		export GIT_CONFIG &&
+		test_must_fail git config --list &&
+		GIT_CONFIG=linktolinktonada &&
+		test_must_fail git config --list
+	)
+'
+
 test_expect_success 'check split_cmdline return' "
 	git config alias.split-cmdline-fix 'echo \"' &&
 	test_must_fail git split-cmdline-fix &&
@@ -779,5 +874,27 @@ test_expect_success 'check split_cmdline return' "
 	git config branch.master.mergeoptions 'echo \"' &&
 	test_must_fail git merge master
 	"
+
+test_expect_success 'git -c "key=value" support' '
+	test "z$(git -c core.name=value config core.name)" = zvalue &&
+	test "z$(git -c foo.CamelCase=value config foo.camelcase)" = zvalue &&
+	test "z$(git -c foo.flag config --bool foo.flag)" = ztrue &&
+	test_must_fail git -c name=value config core.name
+'
+
+test_expect_success 'key sanity-checking' '
+	test_must_fail git config foo=bar &&
+	test_must_fail git config foo=.bar &&
+	test_must_fail git config foo.ba=r &&
+	test_must_fail git config foo.1bar &&
+	test_must_fail git config foo."ba
+				z".bar &&
+	test_must_fail git config . false &&
+	test_must_fail git config .foo false &&
+	test_must_fail git config foo. false &&
+	test_must_fail git config .foo. false &&
+	git config foo.bar true &&
+	git config foo."ba =z".bar false
+'
 
 test_done

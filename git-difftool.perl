@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Copyright (c) 2009 David Aguilar
+# Copyright (c) 2009, 2010 David Aguilar
 #
 # This is a wrapper around the GIT_EXTERNAL_DIFF-compatible
 # git-difftool--helper script.
@@ -10,10 +10,13 @@
 #
 # Any arguments that are unknown to this script are forwarded to 'git diff'.
 
+use 5.008;
 use strict;
 use warnings;
 use Cwd qw(abs_path);
 use File::Basename qw(dirname);
+
+require Git;
 
 my $DIR = abs_path(dirname($0));
 
@@ -21,7 +24,9 @@ my $DIR = abs_path(dirname($0));
 sub usage
 {
 	print << 'USAGE';
-usage: git difftool [--tool=<tool>] [-y|--no-prompt] ["git diff" options]
+usage: git difftool [-t|--tool=<tool>] [-x|--extcmd=<cmd>]
+                    [-y|--no-prompt]   [-g|--gui]
+                    ['git diff' options]
 USAGE
 	exit 1;
 }
@@ -47,6 +52,7 @@ sub generate_command
 	my @command = (exe('git'), 'diff');
 	my $skip_next = 0;
 	my $idx = -1;
+	my $prompt = '';
 	for my $arg (@ARGV) {
 		$idx++;
 		if ($skip_next) {
@@ -63,20 +69,43 @@ sub generate_command
 			$ENV{GIT_DIFF_TOOL} = substr($arg, 7);
 			next;
 		}
+		if ($arg eq '-x' || $arg eq '--extcmd') {
+			usage() if $#ARGV <= $idx;
+			$ENV{GIT_DIFFTOOL_EXTCMD} = $ARGV[$idx + 1];
+			$skip_next = 1;
+			next;
+		}
+		if ($arg =~ /^--extcmd=/) {
+			$ENV{GIT_DIFFTOOL_EXTCMD} = substr($arg, 9);
+			next;
+		}
+		if ($arg eq '-g' || $arg eq '--gui') {
+			eval {
+				my $tool = Git::command_oneline('config',
+				                                'diff.guitool');
+				if (length($tool)) {
+					$ENV{GIT_DIFF_TOOL} = $tool;
+				}
+			};
+			next;
+		}
 		if ($arg eq '-y' || $arg eq '--no-prompt') {
-			$ENV{GIT_DIFFTOOL_NO_PROMPT} = 'true';
-			delete $ENV{GIT_DIFFTOOL_PROMPT};
+			$prompt = 'no';
 			next;
 		}
 		if ($arg eq '--prompt') {
-			$ENV{GIT_DIFFTOOL_PROMPT} = 'true';
-			delete $ENV{GIT_DIFFTOOL_NO_PROMPT};
+			$prompt = 'yes';
 			next;
 		}
 		if ($arg eq '-h' || $arg eq '--help') {
 			usage();
 		}
 		push @command, $arg;
+	}
+	if ($prompt eq 'yes') {
+		$ENV{GIT_DIFFTOOL_PROMPT} = 'true';
+	} elsif ($prompt eq 'no') {
+		$ENV{GIT_DIFFTOOL_NO_PROMPT} = 'true';
 	}
 	return @command
 }

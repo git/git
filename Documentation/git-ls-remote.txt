@@ -10,7 +10,7 @@ SYNOPSIS
 --------
 [verse]
 'git ls-remote' [--heads] [--tags]  [-u <exec> | --upload-pack <exec>]
-	      <repository> <refs>...
+	      <repository> [<refs>...]
 
 DESCRIPTION
 -----------
@@ -66,10 +66,6 @@ EXAMPLES
 	f25a265a342aed6041ab0cc484224d9ca54b6f41	refs/tags/v0.99.1
 	c5db5456ae3b0873fc659c19fafdde22313cc441	refs/tags/v0.99.2
 	7ceca275d047c90c0c7d5afb13ab97efdf51bd6e	refs/tags/v0.99.3
-
-Author
-------
-Written by Junio C Hamano <gitster@pobox.com>
 
 GIT
 ---

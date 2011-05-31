@@ -28,7 +28,10 @@ static inline int tree_entry_len(const char *name, const unsigned char *sha1)
 void update_tree_entry(struct tree_desc *);
 void init_tree_desc(struct tree_desc *desc, const void *buf, unsigned long size);
 
-/* Helper function that does both of the above and returns true for success */
+/*
+ * Helper function that does both tree_entry_extract() and update_tree_entry()
+ * and returns true for success
+ */
 int tree_entry(struct tree_desc *, struct name_entry *);
 
 void *fill_tree_descriptor(struct tree_desc *desc, const unsigned char *sha1);
@@ -45,6 +48,7 @@ struct traverse_info {
 	unsigned long conflicts;
 	traverse_callback_t fn;
 	void *data;
+	int show_all_errors;
 };
 
 int get_tree_entry(const unsigned char *, const char *, unsigned char *, unsigned *);
@@ -55,5 +59,7 @@ static inline int traverse_path_len(const struct traverse_info *info, const stru
 {
 	return info->pathlen + tree_entry_len(n->path, n->sha1);
 }
+
+extern int tree_entry_interesting(const struct name_entry *, struct strbuf *, int, const struct pathspec *ps);
 
 #endif

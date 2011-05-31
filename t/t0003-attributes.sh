@@ -20,8 +20,12 @@ test_expect_success 'setup' '
 
 	mkdir -p a/b/d a/c &&
 	(
+		echo "[attr]notest !test"
 		echo "f	test=f"
 		echo "a/i test=a/i"
+		echo "onoff test -test"
+		echo "offon -test test"
+		echo "no notest"
 	) >.gitattributes &&
 	(
 		echo "g test=a/g" &&
@@ -30,7 +34,11 @@ test_expect_success 'setup' '
 	(
 		echo "h test=a/b/h" &&
 		echo "d/* test=a/b/d/*"
+		echo "d/yes notest"
 	) >a/b/.gitattributes
+	(
+		echo "global test=global"
+	) >"$HOME"/global-gitattributes
 
 '
 
@@ -43,13 +51,28 @@ test_expect_success 'attribute test' '
 	attr_check a/b/g a/b/g &&
 	attr_check b/g unspecified &&
 	attr_check a/b/h a/b/h &&
-	attr_check a/b/d/g "a/b/d/*"
+	attr_check a/b/d/g "a/b/d/*" &&
+	attr_check onoff unset &&
+	attr_check offon set &&
+	attr_check no unspecified &&
+	attr_check a/b/d/no "a/b/d/*" &&
+	attr_check a/b/d/yes unspecified
 
+'
+
+test_expect_success 'core.attributesfile' '
+	attr_check global unspecified &&
+	git config core.attributesfile "$HOME/global-gitattributes" &&
+	attr_check global global &&
+	git config core.attributesfile "~/global-gitattributes" &&
+	attr_check global global &&
+	echo "global test=precedence" >> .gitattributes &&
+	attr_check global precedence
 '
 
 test_expect_success 'attribute test: read paths from stdin' '
 
-	cat <<EOF > expect
+	cat <<EOF > expect &&
 f: test: f
 a/f: test: f
 a/c/f: test: f
@@ -58,6 +81,11 @@ a/b/g: test: a/b/g
 b/g: test: unspecified
 a/b/h: test: a/b/h
 a/b/d/g: test: a/b/d/*
+onoff: test: unset
+offon: test: set
+no: test: unspecified
+a/b/d/no: test: a/b/d/*
+a/b/d/yes: test: unspecified
 EOF
 
 	sed -e "s/:.*//" < expect | git check-attr --stdin test > actual &&

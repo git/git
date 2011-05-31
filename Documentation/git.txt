@@ -9,10 +9,11 @@ git - the stupid content tracker
 SYNOPSIS
 --------
 [verse]
-'git' [--version] [--exec-path[=GIT_EXEC_PATH]] [--html-path]
-    [-p|--paginate|--no-pager]
-    [--bare] [--git-dir=GIT_DIR] [--work-tree=GIT_WORK_TREE]
-    [--help] COMMAND [ARGS]
+'git' [--version] [--exec-path[=<path>]] [--html-path]
+    [-p|--paginate|--no-pager] [--no-replace-objects]
+    [--bare] [--git-dir=<path>] [--work-tree=<path>]
+    [-c <name>=<value>]
+    [--help] <command> [<args>]
 
 DESCRIPTION
 -----------
@@ -27,7 +28,7 @@ also want to read linkgit:gitcvs-migration[7].  See
 the link:user-manual.html[Git User's Manual] for a more in-depth
 introduction.
 
-The COMMAND is either a name of a Git command (see below) or an alias
+The '<command>' is either a name of a Git command (see below) or an alias
 as defined in the configuration file (see linkgit:git-config[1]).
 
 Formatted and hyperlinked version of the latest git
@@ -43,125 +44,213 @@ unreleased) version of git, that is available from 'master'
 branch of the `git.git` repository.
 Documentation for older releases are available here:
 
-* link:v1.6.4/git.html[documentation for release 1.6.4]
+* link:v1.7.5.3/git.html[documentation for release 1.7.5.3]
 
 * release notes for
-  link:RelNotes-1.6.4.txt[1.6.4].
+  link:RelNotes/1.7.5.3.txt[1.7.5.3],
+  link:RelNotes/1.7.5.2.txt[1.7.5.2],
+  link:RelNotes/1.7.5.1.txt[1.7.5.1],
+  link:RelNotes/1.7.5.txt[1.7.5].
+
+* link:v1.7.4.5/git.html[documentation for release 1.7.4.5]
+
+* release notes for
+  link:RelNotes/1.7.4.5.txt[1.7.4.5],
+  link:RelNotes/1.7.4.4.txt[1.7.4.4],
+  link:RelNotes/1.7.4.3.txt[1.7.4.3],
+  link:RelNotes/1.7.4.2.txt[1.7.4.2],
+  link:RelNotes/1.7.4.1.txt[1.7.4.1],
+  link:RelNotes/1.7.4.txt[1.7.4].
+
+* link:v1.7.3.5/git.html[documentation for release 1.7.3.5]
+
+* release notes for
+  link:RelNotes/1.7.3.5.txt[1.7.3.5],
+  link:RelNotes/1.7.3.4.txt[1.7.3.4],
+  link:RelNotes/1.7.3.3.txt[1.7.3.3],
+  link:RelNotes/1.7.3.2.txt[1.7.3.2],
+  link:RelNotes/1.7.3.1.txt[1.7.3.1],
+  link:RelNotes/1.7.3.txt[1.7.3].
+
+* link:v1.7.2.5/git.html[documentation for release 1.7.2.5]
+
+* release notes for
+  link:RelNotes/1.7.2.5.txt[1.7.2.5],
+  link:RelNotes/1.7.2.4.txt[1.7.2.4],
+  link:RelNotes/1.7.2.3.txt[1.7.2.3],
+  link:RelNotes/1.7.2.2.txt[1.7.2.2],
+  link:RelNotes/1.7.2.1.txt[1.7.2.1],
+  link:RelNotes/1.7.2.txt[1.7.2].
+
+* link:v1.7.1.4/git.html[documentation for release 1.7.1.4]
+
+* release notes for
+  link:RelNotes/1.7.1.4.txt[1.7.1.4],
+  link:RelNotes/1.7.1.3.txt[1.7.1.3],
+  link:RelNotes/1.7.1.2.txt[1.7.1.2],
+  link:RelNotes/1.7.1.1.txt[1.7.1.1],
+  link:RelNotes/1.7.1.txt[1.7.1].
+
+* link:v1.7.0.9/git.html[documentation for release 1.7.0.9]
+
+* release notes for
+  link:RelNotes/1.7.0.9.txt[1.7.0.9],
+  link:RelNotes/1.7.0.8.txt[1.7.0.8],
+  link:RelNotes/1.7.0.7.txt[1.7.0.7],
+  link:RelNotes/1.7.0.6.txt[1.7.0.6],
+  link:RelNotes/1.7.0.5.txt[1.7.0.5],
+  link:RelNotes/1.7.0.4.txt[1.7.0.4],
+  link:RelNotes/1.7.0.3.txt[1.7.0.3],
+  link:RelNotes/1.7.0.2.txt[1.7.0.2],
+  link:RelNotes/1.7.0.1.txt[1.7.0.1],
+  link:RelNotes/1.7.0.txt[1.7.0].
+
+* link:v1.6.6.3/git.html[documentation for release 1.6.6.3]
+
+* release notes for
+  link:RelNotes/1.6.6.3.txt[1.6.6.3],
+  link:RelNotes/1.6.6.2.txt[1.6.6.2],
+  link:RelNotes/1.6.6.1.txt[1.6.6.1],
+  link:RelNotes/1.6.6.txt[1.6.6].
+
+* link:v1.6.5.9/git.html[documentation for release 1.6.5.9]
+
+* release notes for
+  link:RelNotes/1.6.5.9.txt[1.6.5.9],
+  link:RelNotes/1.6.5.8.txt[1.6.5.8],
+  link:RelNotes/1.6.5.7.txt[1.6.5.7],
+  link:RelNotes/1.6.5.6.txt[1.6.5.6],
+  link:RelNotes/1.6.5.5.txt[1.6.5.5],
+  link:RelNotes/1.6.5.4.txt[1.6.5.4],
+  link:RelNotes/1.6.5.3.txt[1.6.5.3],
+  link:RelNotes/1.6.5.2.txt[1.6.5.2],
+  link:RelNotes/1.6.5.1.txt[1.6.5.1],
+  link:RelNotes/1.6.5.txt[1.6.5].
+
+* link:v1.6.4.5/git.html[documentation for release 1.6.4.5]
+
+* release notes for
+  link:RelNotes/1.6.4.5.txt[1.6.4.5],
+  link:RelNotes/1.6.4.4.txt[1.6.4.4],
+  link:RelNotes/1.6.4.3.txt[1.6.4.3],
+  link:RelNotes/1.6.4.2.txt[1.6.4.2],
+  link:RelNotes/1.6.4.1.txt[1.6.4.1],
+  link:RelNotes/1.6.4.txt[1.6.4].
 
 * link:v1.6.3.4/git.html[documentation for release 1.6.3.4]
 
 * release notes for
-  link:RelNotes-1.6.3.4.txt[1.6.3.4],
-  link:RelNotes-1.6.3.3.txt[1.6.3.3],
-  link:RelNotes-1.6.3.2.txt[1.6.3.2],
-  link:RelNotes-1.6.3.1.txt[1.6.3.1],
-  link:RelNotes-1.6.3.txt[1.6.3].
+  link:RelNotes/1.6.3.4.txt[1.6.3.4],
+  link:RelNotes/1.6.3.3.txt[1.6.3.3],
+  link:RelNotes/1.6.3.2.txt[1.6.3.2],
+  link:RelNotes/1.6.3.1.txt[1.6.3.1],
+  link:RelNotes/1.6.3.txt[1.6.3].
 
 * release notes for
-  link:RelNotes-1.6.2.5.txt[1.6.2.5],
-  link:RelNotes-1.6.2.4.txt[1.6.2.4],
-  link:RelNotes-1.6.2.3.txt[1.6.2.3],
-  link:RelNotes-1.6.2.2.txt[1.6.2.2],
-  link:RelNotes-1.6.2.1.txt[1.6.2.1],
-  link:RelNotes-1.6.2.txt[1.6.2].
+  link:RelNotes/1.6.2.5.txt[1.6.2.5],
+  link:RelNotes/1.6.2.4.txt[1.6.2.4],
+  link:RelNotes/1.6.2.3.txt[1.6.2.3],
+  link:RelNotes/1.6.2.2.txt[1.6.2.2],
+  link:RelNotes/1.6.2.1.txt[1.6.2.1],
+  link:RelNotes/1.6.2.txt[1.6.2].
 
 * link:v1.6.1.3/git.html[documentation for release 1.6.1.3]
 
 * release notes for
-  link:RelNotes-1.6.1.3.txt[1.6.1.3],
-  link:RelNotes-1.6.1.2.txt[1.6.1.2],
-  link:RelNotes-1.6.1.1.txt[1.6.1.1],
-  link:RelNotes-1.6.1.txt[1.6.1].
+  link:RelNotes/1.6.1.3.txt[1.6.1.3],
+  link:RelNotes/1.6.1.2.txt[1.6.1.2],
+  link:RelNotes/1.6.1.1.txt[1.6.1.1],
+  link:RelNotes/1.6.1.txt[1.6.1].
 
 * link:v1.6.0.6/git.html[documentation for release 1.6.0.6]
 
 * release notes for
-  link:RelNotes-1.6.0.6.txt[1.6.0.6],
-  link:RelNotes-1.6.0.5.txt[1.6.0.5],
-  link:RelNotes-1.6.0.4.txt[1.6.0.4],
-  link:RelNotes-1.6.0.3.txt[1.6.0.3],
-  link:RelNotes-1.6.0.2.txt[1.6.0.2],
-  link:RelNotes-1.6.0.1.txt[1.6.0.1],
-  link:RelNotes-1.6.0.txt[1.6.0].
+  link:RelNotes/1.6.0.6.txt[1.6.0.6],
+  link:RelNotes/1.6.0.5.txt[1.6.0.5],
+  link:RelNotes/1.6.0.4.txt[1.6.0.4],
+  link:RelNotes/1.6.0.3.txt[1.6.0.3],
+  link:RelNotes/1.6.0.2.txt[1.6.0.2],
+  link:RelNotes/1.6.0.1.txt[1.6.0.1],
+  link:RelNotes/1.6.0.txt[1.6.0].
 
 * link:v1.5.6.6/git.html[documentation for release 1.5.6.6]
 
 * release notes for
-  link:RelNotes-1.5.6.6.txt[1.5.6.6],
-  link:RelNotes-1.5.6.5.txt[1.5.6.5],
-  link:RelNotes-1.5.6.4.txt[1.5.6.4],
-  link:RelNotes-1.5.6.3.txt[1.5.6.3],
-  link:RelNotes-1.5.6.2.txt[1.5.6.2],
-  link:RelNotes-1.5.6.1.txt[1.5.6.1],
-  link:RelNotes-1.5.6.txt[1.5.6].
+  link:RelNotes/1.5.6.6.txt[1.5.6.6],
+  link:RelNotes/1.5.6.5.txt[1.5.6.5],
+  link:RelNotes/1.5.6.4.txt[1.5.6.4],
+  link:RelNotes/1.5.6.3.txt[1.5.6.3],
+  link:RelNotes/1.5.6.2.txt[1.5.6.2],
+  link:RelNotes/1.5.6.1.txt[1.5.6.1],
+  link:RelNotes/1.5.6.txt[1.5.6].
 
 * link:v1.5.5.6/git.html[documentation for release 1.5.5.6]
 
 * release notes for
-  link:RelNotes-1.5.5.6.txt[1.5.5.6],
-  link:RelNotes-1.5.5.5.txt[1.5.5.5],
-  link:RelNotes-1.5.5.4.txt[1.5.5.4],
-  link:RelNotes-1.5.5.3.txt[1.5.5.3],
-  link:RelNotes-1.5.5.2.txt[1.5.5.2],
-  link:RelNotes-1.5.5.1.txt[1.5.5.1],
-  link:RelNotes-1.5.5.txt[1.5.5].
+  link:RelNotes/1.5.5.6.txt[1.5.5.6],
+  link:RelNotes/1.5.5.5.txt[1.5.5.5],
+  link:RelNotes/1.5.5.4.txt[1.5.5.4],
+  link:RelNotes/1.5.5.3.txt[1.5.5.3],
+  link:RelNotes/1.5.5.2.txt[1.5.5.2],
+  link:RelNotes/1.5.5.1.txt[1.5.5.1],
+  link:RelNotes/1.5.5.txt[1.5.5].
 
 * link:v1.5.4.7/git.html[documentation for release 1.5.4.7]
 
 * release notes for
-  link:RelNotes-1.5.4.7.txt[1.5.4.7],
-  link:RelNotes-1.5.4.6.txt[1.5.4.6],
-  link:RelNotes-1.5.4.5.txt[1.5.4.5],
-  link:RelNotes-1.5.4.4.txt[1.5.4.4],
-  link:RelNotes-1.5.4.3.txt[1.5.4.3],
-  link:RelNotes-1.5.4.2.txt[1.5.4.2],
-  link:RelNotes-1.5.4.1.txt[1.5.4.1],
-  link:RelNotes-1.5.4.txt[1.5.4].
+  link:RelNotes/1.5.4.7.txt[1.5.4.7],
+  link:RelNotes/1.5.4.6.txt[1.5.4.6],
+  link:RelNotes/1.5.4.5.txt[1.5.4.5],
+  link:RelNotes/1.5.4.4.txt[1.5.4.4],
+  link:RelNotes/1.5.4.3.txt[1.5.4.3],
+  link:RelNotes/1.5.4.2.txt[1.5.4.2],
+  link:RelNotes/1.5.4.1.txt[1.5.4.1],
+  link:RelNotes/1.5.4.txt[1.5.4].
 
 * link:v1.5.3.8/git.html[documentation for release 1.5.3.8]
 
 * release notes for
-  link:RelNotes-1.5.3.8.txt[1.5.3.8],
-  link:RelNotes-1.5.3.7.txt[1.5.3.7],
-  link:RelNotes-1.5.3.6.txt[1.5.3.6],
-  link:RelNotes-1.5.3.5.txt[1.5.3.5],
-  link:RelNotes-1.5.3.4.txt[1.5.3.4],
-  link:RelNotes-1.5.3.3.txt[1.5.3.3],
-  link:RelNotes-1.5.3.2.txt[1.5.3.2],
-  link:RelNotes-1.5.3.1.txt[1.5.3.1],
-  link:RelNotes-1.5.3.txt[1.5.3].
+  link:RelNotes/1.5.3.8.txt[1.5.3.8],
+  link:RelNotes/1.5.3.7.txt[1.5.3.7],
+  link:RelNotes/1.5.3.6.txt[1.5.3.6],
+  link:RelNotes/1.5.3.5.txt[1.5.3.5],
+  link:RelNotes/1.5.3.4.txt[1.5.3.4],
+  link:RelNotes/1.5.3.3.txt[1.5.3.3],
+  link:RelNotes/1.5.3.2.txt[1.5.3.2],
+  link:RelNotes/1.5.3.1.txt[1.5.3.1],
+  link:RelNotes/1.5.3.txt[1.5.3].
 
 * link:v1.5.2.5/git.html[documentation for release 1.5.2.5]
 
 * release notes for
-  link:RelNotes-1.5.2.5.txt[1.5.2.5],
-  link:RelNotes-1.5.2.4.txt[1.5.2.4],
-  link:RelNotes-1.5.2.3.txt[1.5.2.3],
-  link:RelNotes-1.5.2.2.txt[1.5.2.2],
-  link:RelNotes-1.5.2.1.txt[1.5.2.1],
-  link:RelNotes-1.5.2.txt[1.5.2].
+  link:RelNotes/1.5.2.5.txt[1.5.2.5],
+  link:RelNotes/1.5.2.4.txt[1.5.2.4],
+  link:RelNotes/1.5.2.3.txt[1.5.2.3],
+  link:RelNotes/1.5.2.2.txt[1.5.2.2],
+  link:RelNotes/1.5.2.1.txt[1.5.2.1],
+  link:RelNotes/1.5.2.txt[1.5.2].
 
 * link:v1.5.1.6/git.html[documentation for release 1.5.1.6]
 
 * release notes for
-  link:RelNotes-1.5.1.6.txt[1.5.1.6],
-  link:RelNotes-1.5.1.5.txt[1.5.1.5],
-  link:RelNotes-1.5.1.4.txt[1.5.1.4],
-  link:RelNotes-1.5.1.3.txt[1.5.1.3],
-  link:RelNotes-1.5.1.2.txt[1.5.1.2],
-  link:RelNotes-1.5.1.1.txt[1.5.1.1],
-  link:RelNotes-1.5.1.txt[1.5.1].
+  link:RelNotes/1.5.1.6.txt[1.5.1.6],
+  link:RelNotes/1.5.1.5.txt[1.5.1.5],
+  link:RelNotes/1.5.1.4.txt[1.5.1.4],
+  link:RelNotes/1.5.1.3.txt[1.5.1.3],
+  link:RelNotes/1.5.1.2.txt[1.5.1.2],
+  link:RelNotes/1.5.1.1.txt[1.5.1.1],
+  link:RelNotes/1.5.1.txt[1.5.1].
 
 * link:v1.5.0.7/git.html[documentation for release 1.5.0.7]
 
 * release notes for
-  link:RelNotes-1.5.0.7.txt[1.5.0.7],
-  link:RelNotes-1.5.0.6.txt[1.5.0.6],
-  link:RelNotes-1.5.0.5.txt[1.5.0.5],
-  link:RelNotes-1.5.0.3.txt[1.5.0.3],
-  link:RelNotes-1.5.0.2.txt[1.5.0.2],
-  link:RelNotes-1.5.0.1.txt[1.5.0.1],
-  link:RelNotes-1.5.0.txt[1.5.0].
+  link:RelNotes/1.5.0.7.txt[1.5.0.7],
+  link:RelNotes/1.5.0.6.txt[1.5.0.6],
+  link:RelNotes/1.5.0.5.txt[1.5.0.5],
+  link:RelNotes/1.5.0.3.txt[1.5.0.3],
+  link:RelNotes/1.5.0.2.txt[1.5.0.2],
+  link:RelNotes/1.5.0.1.txt[1.5.0.1],
+  link:RelNotes/1.5.0.txt[1.5.0].
 
 * documentation for release link:v1.4.4.4/git.html[1.4.4.4],
   link:v1.3.3/git.html[1.3.3],
@@ -188,7 +277,13 @@ displayed. See linkgit:git-help[1] for more information,
 because `git --help ...` is converted internally into `git
 help ...`.
 
---exec-path::
+-c <name>=<value>::
+	Pass a configuration parameter to the command. The value
+	given will override values from configuration files.
+	The <name> is expected in the same format as listed by
+	'git config' (subkeys separated by dots).
+
+--exec-path[=<path>]::
 	Path to wherever your core git programs are installed.
 	This can also be controlled by setting the GIT_EXEC_PATH
 	environment variable. If no path is given, 'git' will print
@@ -200,7 +295,10 @@ help ...`.
 
 -p::
 --paginate::
-	Pipe all output into 'less' (or if set, $PAGER).
+	Pipe all output into 'less' (or if set, $PAGER) if standard
+	output is a terminal.  This overrides the `pager.<cmd>`
+	configuration options (see the "Configuration Mechanism" section
+	below).
 
 --no-pager::
 	Do not pipe git output into a pager.
@@ -211,22 +309,21 @@ help ...`.
 	path or relative path to current working directory.
 
 --work-tree=<path>::
-	Set the path to the working tree.  The value will not be
-	used in combination with repositories found automatically in
-	a .git directory (i.e. $GIT_DIR is not set).
+	Set the path to the working tree. It can be an absolute path
+	or a path relative to the current working directory.
 	This can also be controlled by setting the GIT_WORK_TREE
 	environment variable and the core.worktree configuration
-	variable. It can be an absolute path or relative path to
-	the directory specified by --git-dir or GIT_DIR.
-	Note: If --git-dir or GIT_DIR are specified but none of
-	--work-tree, GIT_WORK_TREE and core.worktree is specified,
-	the current working directory is regarded as the top directory
-	of your working tree.
+	variable (see core.worktree in linkgit:git-config[1] for a
+	more detailed discussion).
 
 --bare::
 	Treat the repository as a bare repository.  If GIT_DIR
 	environment is not set, it is set to the current working
 	directory.
+
+--no-replace-objects::
+	Do not use replacement refs to replace git objects. See
+	linkgit:git-replace[1] for more information.
 
 
 FURTHER DOCUMENTATION
@@ -327,7 +424,7 @@ Synching repositories
 
 include::cmds-synchingrepositories.txt[]
 
-The following are helper programs used by the above; end users
+The following are helper commands used by the above; end users
 typically do not use them directly.
 
 include::cmds-synchelpers.txt[]
@@ -368,7 +465,8 @@ people.  Here is an example:
 ------------
 
 Various commands read from the configuration file and adjust
-their operation accordingly.
+their operation accordingly.  See linkgit:git-config[1] for a
+list.
 
 
 Identifier Terminology
@@ -423,7 +521,7 @@ HEAD::
 	(i.e. the contents of `$GIT_DIR/refs/heads/<head>`).
 
 For a more complete list of ways to spell object names, see
-"SPECIFYING REVISIONS" section in linkgit:git-rev-parse[1].
+"SPECIFYING REVISIONS" section in linkgit:gitrevisions[7].
 
 
 File/Directory Structure
@@ -490,6 +588,16 @@ git so take care if using Cogito etc.
 	a GIT_DIR set on the command line or in the environment.
 	(Useful for excluding slow-loading network directories.)
 
+'GIT_DISCOVERY_ACROSS_FILESYSTEM'::
+	When run in a directory that does not have ".git" repository
+	directory, git tries to find such a directory in the parent
+	directories to find the top of the working tree, but by default it
+	does not cross filesystem boundaries.  This environment variable
+	can be set to true to tell git not to stop at filesystem
+	boundaries.  Like 'GIT_CEILING_DIRECTORIES', this will not affect
+	an explicit repository directory set via 'GIT_DIR' or on the
+	command line.
+
 git Commits
 ~~~~~~~~~~~
 'GIT_AUTHOR_NAME'::
@@ -523,7 +631,6 @@ where:
                          contents of <old|new>,
 	<old|new>-hex:: are the 40-hexdigit SHA1 hashes,
 	<old|new>-mode:: are the octal representation of the file modes.
-
 +
 The file parameters can point at the user's working file
 (e.g. `new-file` in "git-diff-files"), `/dev/null` (e.g. `old-file`
@@ -548,8 +655,8 @@ other
 	linkgit:git-config[1].
 
 'GIT_SSH'::
-	If this environment variable is set then 'git-fetch'
-	and 'git-push' will use this command instead
+	If this environment variable is set then 'git fetch'
+	and 'git push' will use this command instead
 	of 'ssh' when they need to connect to a remote system.
 	The '$GIT_SSH' command will be given exactly two arguments:
 	the 'username@host' (or just 'host') from the URL and the
@@ -563,10 +670,17 @@ Usually it is easier to configure any desired options through your
 personal `.ssh/config` file.  Please consult your ssh documentation
 for further details.
 
+'GIT_ASKPASS'::
+	If this environment variable is set, then git commands which need to
+	acquire passwords or passphrases (e.g. for HTTP or IMAP authentication)
+	will call this program with a suitable prompt as command line argument
+	and read the password from its STDOUT. See also the 'core.askpass'
+	option in linkgit:git-config[1].
+
 'GIT_FLUSH'::
 	If this environment variable is set to "1", then commands such
-	as 'git-blame' (in incremental mode), 'git-rev-list', 'git-log',
-	and 'git-whatchanged' will force a flush of the output stream
+	as 'git blame' (in incremental mode), 'git rev-list', 'git log',
+	and 'git whatchanged' will force a flush of the output stream
 	after each commit-oriented record have been flushed.   If this
 	variable is set to "0", the output of these commands will be done
 	using completely buffered I/O.   If this environment variable is
@@ -642,16 +756,19 @@ unmerged version of a file when a merge is in progress.
 
 Authors
 -------
-* git's founding father is Linus Torvalds <torvalds@osdl.org>.
-* The current git nurse is Junio C Hamano <gitster@pobox.com>.
-* The git potty was written by Andreas Ericsson <ae@op5.se>.
-* General upbringing is handled by the git-list <git@vger.kernel.org>.
+Git was started by Linus Torvalds, and is currently maintained by Junio
+C Hamano. Numerous contributions have come from the git mailing list
+<git@vger.kernel.org>. For a more complete list of contributors, see
+http://git-scm.com/about. If you have a clone of git.git itself, the
+output of linkgit:git-shortlog[1] and linkgit:git-blame[1] can show you
+the authors for specific parts of the project.
 
-Documentation
+Reporting Bugs
 --------------
-The documentation for git suite was started by David Greaves
-<david@dgreaves.com>, and later enhanced greatly by the
-contributors on the git-list <git@vger.kernel.org>.
+
+Report bugs to the Git mailing list <git@vger.kernel.org> where the
+development and maintenance is primarily done.  You do not have to be
+subscribed to the list to send a message there.
 
 SEE ALSO
 --------

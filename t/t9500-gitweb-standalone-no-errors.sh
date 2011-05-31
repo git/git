@@ -9,73 +9,8 @@ This test runs gitweb (git web interface) as CGI script from
 commandline, and checks that it would not write any errors
 or warnings to log.'
 
-gitweb_init () {
-	safe_pwd="$(perl -MPOSIX=getcwd -e 'print quotemeta(getcwd)')"
-	cat >gitweb_config.perl <<EOF
-#!/usr/bin/perl
 
-# gitweb configuration for tests
-
-our \$version = "current";
-our \$GIT = "git";
-our \$projectroot = "$safe_pwd";
-our \$project_maxdepth = 8;
-our \$home_link_str = "projects";
-our \$site_name = "[localhost]";
-our \$site_header = "";
-our \$site_footer = "";
-our \$home_text = "indextext.html";
-our @stylesheets = ("file:///$TEST_DIRECTORY/../gitweb/gitweb.css");
-our \$logo = "file:///$TEST_DIRECTORY/../gitweb/git-logo.png";
-our \$favicon = "file:///$TEST_DIRECTORY/../gitweb/git-favicon.png";
-our \$projects_list = "";
-our \$export_ok = "";
-our \$strict_export = "";
-
-EOF
-
-	cat >.git/description <<EOF
-$0 test repository
-EOF
-}
-
-gitweb_run () {
-	GATEWAY_INTERFACE="CGI/1.1"
-	HTTP_ACCEPT="*/*"
-	REQUEST_METHOD="GET"
-	SCRIPT_NAME="$TEST_DIRECTORY/../gitweb/gitweb.perl"
-	QUERY_STRING=""$1""
-	PATH_INFO=""$2""
-	export GATEWAY_INTERFACE HTTP_ACCEPT REQUEST_METHOD \
-		SCRIPT_NAME QUERY_STRING PATH_INFO
-
-	GITWEB_CONFIG=$(pwd)/gitweb_config.perl
-	export GITWEB_CONFIG
-
-	# some of git commands write to STDERR on error, but this is not
-	# written to web server logs, so we are not interested in that:
-	# we are interested only in properly formatted errors/warnings
-	rm -f gitweb.log &&
-	perl -- "$SCRIPT_NAME" \
-		>/dev/null 2>gitweb.log &&
-	if grep "^[[]" gitweb.log >/dev/null 2>&1; then false; else true; fi
-
-	# gitweb.log is left for debugging
-}
-
-. ./test-lib.sh
-
-if ! test_have_prereq PERL; then
-	say 'skipping gitweb tests, perl not available'
-	test_done
-fi
-
-perl -MEncode -e 'decode_utf8("", Encode::FB_CROAK)' >/dev/null 2>&1 || {
-    say 'skipping gitweb tests, perl version is too old'
-    test_done
-}
-
-gitweb_init
+. ./gitweb-lib.sh
 
 # ----------------------------------------------------------------------
 # no commits (empty, just initialized repository)
@@ -83,42 +18,34 @@ gitweb_init
 test_expect_success \
 	'no commits: projects_list (implicit)' \
 	'gitweb_run'
-test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'no commits: projects_index' \
 	'gitweb_run "a=project_index"'
-test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'no commits: .git summary (implicit)' \
 	'gitweb_run "p=.git"'
-test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'no commits: .git commit (implicit HEAD)' \
 	'gitweb_run "p=.git;a=commit"'
-test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'no commits: .git commitdiff (implicit HEAD)' \
 	'gitweb_run "p=.git;a=commitdiff"'
-test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'no commits: .git tree (implicit HEAD)' \
 	'gitweb_run "p=.git;a=tree"'
-test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'no commits: .git heads' \
 	'gitweb_run "p=.git;a=heads"'
-test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'no commits: .git tags' \
 	'gitweb_run "p=.git;a=tags"'
-test_debug 'cat gitweb.log'
 
 
 # ----------------------------------------------------------------------
@@ -134,52 +61,42 @@ test_expect_success \
 test_expect_success \
 	'projects_list (implicit)' \
 	'gitweb_run'
-test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'projects_index' \
 	'gitweb_run "a=project_index"'
-test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'.git summary (implicit)' \
 	'gitweb_run "p=.git"'
-test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'.git commit (implicit HEAD)' \
 	'gitweb_run "p=.git;a=commit"'
-test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'.git commitdiff (implicit HEAD, root commit)' \
 	'gitweb_run "p=.git;a=commitdiff"'
-test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'.git commitdiff_plain (implicit HEAD, root commit)' \
 	'gitweb_run "p=.git;a=commitdiff_plain"'
-test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'.git commit (HEAD)' \
 	'gitweb_run "p=.git;a=commit;h=HEAD"'
-test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'.git tree (implicit HEAD)' \
 	'gitweb_run "p=.git;a=tree"'
-test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'.git blob (file)' \
 	'gitweb_run "p=.git;a=blob;f=file"'
-test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'.git blob_plain (file)' \
 	'gitweb_run "p=.git;a=blob_plain;f=file"'
-test_debug 'cat gitweb.log'
 
 # ----------------------------------------------------------------------
 # nonexistent objects
@@ -187,37 +104,30 @@ test_debug 'cat gitweb.log'
 test_expect_success \
 	'.git commit (non-existent)' \
 	'gitweb_run "p=.git;a=commit;h=non-existent"'
-test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'.git commitdiff (non-existent)' \
 	'gitweb_run "p=.git;a=commitdiff;h=non-existent"'
-test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'.git commitdiff (non-existent vs HEAD)' \
 	'gitweb_run "p=.git;a=commitdiff;hp=non-existent;h=HEAD"'
-test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'.git tree (0000000000000000000000000000000000000000)' \
 	'gitweb_run "p=.git;a=tree;h=0000000000000000000000000000000000000000"'
-test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'.git tag (0000000000000000000000000000000000000000)' \
 	'gitweb_run "p=.git;a=tag;h=0000000000000000000000000000000000000000"'
-test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'.git blob (non-existent)' \
 	'gitweb_run "p=.git;a=blob;f=non-existent"'
-test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'.git blob_plain (non-existent)' \
 	'gitweb_run "p=.git;a=blob_plain;f=non-existent"'
-test_debug 'cat gitweb.log'
 
 
 # ----------------------------------------------------------------------
@@ -226,7 +136,6 @@ test_debug 'cat gitweb.log'
 test_expect_success \
 	'commitdiff(0): root' \
 	'gitweb_run "p=.git;a=commitdiff"'
-test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'commitdiff(0): file added' \
@@ -234,21 +143,18 @@ test_expect_success \
 	 git add new_file &&
 	 git commit -a -m "File added." &&
 	 gitweb_run "p=.git;a=commitdiff"'
-test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'commitdiff(0): mode change' \
 	'test_chmod +x new_file &&
 	 git commit -a -m "Mode changed." &&
 	 gitweb_run "p=.git;a=commitdiff"'
-test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'commitdiff(0): file renamed' \
 	'git mv new_file renamed_file &&
 	 git commit -a -m "File renamed." &&
 	 gitweb_run "p=.git;a=commitdiff"'
-test_debug 'cat gitweb.log'
 
 test_expect_success SYMLINKS \
 	'commitdiff(0): file to symlink' \
@@ -256,7 +162,6 @@ test_expect_success SYMLINKS \
 	 ln -s file renamed_file &&
 	 git commit -a -m "File to symlink." &&
 	 gitweb_run "p=.git;a=commitdiff"'
-test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'commitdiff(0): file deleted' \
@@ -264,7 +169,6 @@ test_expect_success \
 	 rm -f renamed_file &&
 	 git commit -a -m "File removed." &&
 	 gitweb_run "p=.git;a=commitdiff"'
-test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'commitdiff(0): file copied / new file' \
@@ -272,7 +176,6 @@ test_expect_success \
 	 git add file2 &&
 	 git commit -a -m "File copied." &&
 	 gitweb_run "p=.git;a=commitdiff"'
-test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'commitdiff(0): mode change and modified' \
@@ -280,7 +183,6 @@ test_expect_success \
 	 test_chmod +x file2 &&
 	 git commit -a -m "Mode change and modification." &&
 	 gitweb_run "p=.git;a=commitdiff"'
-test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'commitdiff(0): renamed and modified' \
@@ -298,7 +200,6 @@ EOF
 	 echo "Propter nomen suum." >> file3 &&
 	 git commit -a -m "File rename and modification." &&
 	 gitweb_run "p=.git;a=commitdiff"'
-test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'commitdiff(0): renamed, mode change and modified' \
@@ -307,7 +208,6 @@ test_expect_success \
 	 test_chmod +x file2 &&
 	 git commit -a -m "File rename, mode change and modification." &&
 	 gitweb_run "p=.git;a=commitdiff"'
-test_debug 'cat gitweb.log'
 
 # ----------------------------------------------------------------------
 # commitdiff testing (taken from t4114-apply-typechange.sh)
@@ -344,42 +244,34 @@ test_expect_success SYMLINKS 'setup typechange commits' '
 test_expect_success \
 	'commitdiff(2): file renamed from foo to foo/baz' \
 	'gitweb_run "p=.git;a=commitdiff;hp=initial;h=foo-baz-renamed-from-foo"'
-test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'commitdiff(2): file renamed from foo/baz to foo' \
 	'gitweb_run "p=.git;a=commitdiff;hp=foo-baz-renamed-from-foo;h=initial"'
-test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'commitdiff(2): directory becomes file' \
 	'gitweb_run "p=.git;a=commitdiff;hp=foo-becomes-a-directory;h=initial"'
-test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'commitdiff(2): file becomes directory' \
 	'gitweb_run "p=.git;a=commitdiff;hp=initial;h=foo-becomes-a-directory"'
-test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'commitdiff(2): file becomes symlink' \
 	'gitweb_run "p=.git;a=commitdiff;hp=initial;h=foo-symlinked-to-bar"'
-test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'commitdiff(2): symlink becomes file' \
 	'gitweb_run "p=.git;a=commitdiff;hp=foo-symlinked-to-bar;h=foo-back-to-file"'
-test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'commitdiff(2): symlink becomes directory' \
 	'gitweb_run "p=.git;a=commitdiff;hp=foo-symlinked-to-bar;h=foo-becomes-a-directory"'
-test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'commitdiff(2): directory becomes symlink' \
 	'gitweb_run "p=.git;a=commitdiff;hp=foo-becomes-a-directory;h=foo-symlinked-to-bar"'
-test_debug 'cat gitweb.log'
 
 # ----------------------------------------------------------------------
 # commit, commitdiff: merge, large
@@ -395,12 +287,10 @@ test_expect_success \
 test_expect_success \
 	'commit(0): merge commit' \
 	'gitweb_run "p=.git;a=commit"'
-test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'commitdiff(0): merge commit' \
 	'gitweb_run "p=.git;a=commitdiff"'
-test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'Prepare large commit' \
@@ -436,12 +326,10 @@ test_expect_success \
 test_expect_success \
 	'commit(1): large commit' \
 	'gitweb_run "p=.git;a=commit;h=b"'
-test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'commitdiff(1): large commit' \
 	'gitweb_run "p=.git;a=commitdiff;h=b"'
-test_debug 'cat gitweb.log'
 
 # ----------------------------------------------------------------------
 # tags testing
@@ -459,17 +347,14 @@ test_expect_success \
 	 git tag lightweight/tag-tree HEAD^{tree} &&
 	 git tag lightweight/tag-blob HEAD:file &&
 	 gitweb_run "p=.git;a=tags"'
-test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'tag: Tag to commit object' \
 	'gitweb_run "p=.git;a=tag;h=tag-commit"'
-test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'tag: on lightweight tag (invalid)' \
 	'gitweb_run "p=.git;a=tag;h=lightweight/tag-commit"'
-test_debug 'cat gitweb.log'
 
 # ----------------------------------------------------------------------
 # logs
@@ -477,22 +362,18 @@ test_debug 'cat gitweb.log'
 test_expect_success \
 	'logs: log (implicit HEAD)' \
 	'gitweb_run "p=.git;a=log"'
-test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'logs: shortlog (implicit HEAD)' \
 	'gitweb_run "p=.git;a=shortlog"'
-test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'logs: history (implicit HEAD, file)' \
 	'gitweb_run "p=.git;a=history;f=file"'
-test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'logs: history (implicit HEAD, non-existent file)' \
 	'gitweb_run "p=.git;a=history;f=non-existent"'
-test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'logs: history (implicit HEAD, deleted file)' \
@@ -503,55 +384,45 @@ test_expect_success \
 	 git rm deleted_file &&
 	 git commit -m "Delete file" &&
 	 gitweb_run "p=.git;a=history;f=deleted_file"'
-test_debug 'cat gitweb.log'
 
 # ----------------------------------------------------------------------
 # path_info links
 test_expect_success \
 	'path_info: project' \
 	'gitweb_run "" "/.git"'
-test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'path_info: project/branch' \
 	'gitweb_run "" "/.git/b"'
-test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'path_info: project/branch:file' \
 	'gitweb_run "" "/.git/master:file"'
-test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'path_info: project/branch:dir/' \
 	'gitweb_run "" "/.git/master:foo/"'
-test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'path_info: project/branch:file (non-existent)' \
 	'gitweb_run "" "/.git/master:non-existent"'
-test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'path_info: project/branch:dir/ (non-existent)' \
 	'gitweb_run "" "/.git/master:non-existent/"'
-test_debug 'cat gitweb.log'
 
 
 test_expect_success \
 	'path_info: project/branch:/file' \
 	'gitweb_run "" "/.git/master:/file"'
-test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'path_info: project/:/file (implicit HEAD)' \
 	'gitweb_run "" "/.git/:/file"'
-test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'path_info: project/:/ (implicit HEAD, top tree)' \
 	'gitweb_run "" "/.git/:/"'
-test_debug 'cat gitweb.log'
 
 
 # ----------------------------------------------------------------------
@@ -560,17 +431,14 @@ test_debug 'cat gitweb.log'
 test_expect_success \
 	'feeds: OPML' \
 	'gitweb_run "a=opml"'
-test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'feed: RSS' \
 	'gitweb_run "p=.git;a=rss"'
-test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'feed: Atom' \
 	'gitweb_run "p=.git;a=atom"'
-test_debug 'cat gitweb.log'
 
 # ----------------------------------------------------------------------
 # encoding/decoding
@@ -578,27 +446,28 @@ test_debug 'cat gitweb.log'
 test_expect_success \
 	'encode(commit): utf8' \
 	'. "$TEST_DIRECTORY"/t3901-utf8.txt &&
+	 test_when_finished "GIT_AUTHOR_NAME=\"A U Thor\"" &&
+	 test_when_finished "GIT_COMMITTER_NAME=\"C O Mitter\"" &&
 	 echo "UTF-8" >> file &&
 	 git add file &&
 	 git commit -F "$TEST_DIRECTORY"/t3900/1-UTF-8.txt &&
 	 gitweb_run "p=.git;a=commit"'
-test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'encode(commit): iso-8859-1' \
 	'. "$TEST_DIRECTORY"/t3901-8859-1.txt &&
+	 test_when_finished "GIT_AUTHOR_NAME=\"A U Thor\"" &&
+	 test_when_finished "GIT_COMMITTER_NAME=\"C O Mitter\"" &&
 	 echo "ISO-8859-1" >> file &&
 	 git add file &&
 	 git config i18n.commitencoding ISO-8859-1 &&
+	 test_when_finished "git config --unset i18n.commitencoding" &&
 	 git commit -F "$TEST_DIRECTORY"/t3900/ISO8859-1.txt &&
-	 git config --unset i18n.commitencoding &&
 	 gitweb_run "p=.git;a=commit"'
-test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'encode(log): utf-8 and iso-8859-1' \
 	'gitweb_run "p=.git;a=log"'
-test_debug 'cat gitweb.log'
 
 # ----------------------------------------------------------------------
 # extra options
@@ -606,27 +475,22 @@ test_debug 'cat gitweb.log'
 test_expect_success \
 	'opt: log --no-merges' \
 	'gitweb_run "p=.git;a=log;opt=--no-merges"'
-test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'opt: atom --no-merges' \
 	'gitweb_run "p=.git;a=log;opt=--no-merges"'
-test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'opt: "file" history --no-merges' \
 	'gitweb_run "p=.git;a=history;f=file;opt=--no-merges"'
-test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'opt: log --no-such-option (invalid option)' \
 	'gitweb_run "p=.git;a=log;opt=--no-such-option"'
-test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'opt: tree --no-merges (invalid option for action)' \
 	'gitweb_run "p=.git;a=tree;opt=--no-merges"'
-test_debug 'cat gitweb.log'
 
 # ----------------------------------------------------------------------
 # testing config_to_multi / cloneurl
@@ -634,14 +498,12 @@ test_debug 'cat gitweb.log'
 test_expect_success \
        'URL: no project URLs, no base URL' \
        'gitweb_run "p=.git;a=summary"'
-test_debug 'cat gitweb.log'
 
 test_expect_success \
        'URL: project URLs via gitweb.url' \
        'git config --add gitweb.url git://example.com/git/trash.git &&
         git config --add gitweb.url http://example.com/git/trash.git &&
         gitweb_run "p=.git;a=summary"'
-test_debug 'cat gitweb.log'
 
 cat >.git/cloneurl <<\EOF
 git://example.com/git/trash.git
@@ -651,22 +513,27 @@ EOF
 test_expect_success \
        'URL: project URLs via cloneurl file' \
        'gitweb_run "p=.git;a=summary"'
-test_debug 'cat gitweb.log'
 
 # ----------------------------------------------------------------------
 # gitweb config and repo config
 
-cat >>gitweb_config.perl <<EOF
+cat >>gitweb_config.perl <<\EOF
 
-\$feature{'blame'}{'override'} = 1;
-\$feature{'snapshot'}{'override'} = 1;
-\$feature{'avatar'}{'override'} = 1;
+# turn on override for each overridable feature
+foreach my $key (keys %feature) {
+	if ($feature{$key}{'sub'}) {
+		$feature{$key}{'override'} = 1;
+	}
+}
 EOF
+
+test_expect_success \
+	'config override: projects list (implicit)' \
+	'gitweb_run'
 
 test_expect_success \
 	'config override: tree view, features not overridden in repo config' \
 	'gitweb_run "p=.git;a=tree"'
-test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'config override: tree view, features disabled in repo config' \
@@ -674,14 +541,12 @@ test_expect_success \
 	 git config gitweb.snapshot none &&
 	 git config gitweb.avatar gravatar &&
 	 gitweb_run "p=.git;a=tree"'
-test_debug 'cat gitweb.log'
 
 test_expect_success \
 	'config override: tree view, features enabled in repo config (1)' \
 	'git config gitweb.blame yes &&
 	 git config gitweb.snapshot "zip,tgz, tbz2" &&
 	 gitweb_run "p=.git;a=tree"'
-test_debug 'cat gitweb.log'
 
 cat >.git/config <<\EOF
 # testing noval and alternate separator
@@ -692,7 +557,6 @@ EOF
 test_expect_success \
 	'config override: tree view, features enabled in repo config (2)' \
 	'gitweb_run "p=.git;a=tree"'
-test_debug 'cat gitweb.log'
 
 # ----------------------------------------------------------------------
 # non-ASCII in README.html
@@ -702,6 +566,33 @@ test_expect_success \
 	'echo "<b>UTF-8 example:</b><br />" > .git/README.html &&
 	 cat "$TEST_DIRECTORY"/t3900/1-UTF-8.txt >> .git/README.html &&
 	 gitweb_run "p=.git;a=summary"'
-test_debug 'cat gitweb.log'
+
+# ----------------------------------------------------------------------
+# syntax highlighting
+
+
+highlight --version >/dev/null 2>&1
+if [ $? -eq 127 ]; then
+	say "Skipping syntax highlighting test, because 'highlight' was not found"
+else
+	test_set_prereq HIGHLIGHT
+	cat >>gitweb_config.perl <<-\EOF
+	our $highlight_bin = "highlight";
+	$feature{'highlight'}{'override'} = 1;
+	EOF
+fi
+
+test_expect_success HIGHLIGHT \
+	'syntax highlighting (no highlight, unknown syntax)' \
+	'git config gitweb.highlight yes &&
+	 gitweb_run "p=.git;a=blob;f=file"'
+
+test_expect_success HIGHLIGHT \
+	'syntax highlighting (highlighted, shell script)' \
+	'git config gitweb.highlight yes &&
+	 echo "#!/usr/bin/sh" > test.sh &&
+	 git add test.sh &&
+	 git commit -m "Add test.sh" &&
+	 gitweb_run "p=.git;a=blob;f=test.sh"'
 
 test_done

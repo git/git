@@ -8,10 +8,10 @@ git-branch - List, create, or delete branches
 SYNOPSIS
 --------
 [verse]
-'git branch' [--color | --no-color] [-r | -a]
+'git branch' [--color[=<when>] | --no-color] [-r | -a]
 	[-v [--abbrev=<length> | --no-abbrev]]
 	[(--merged | --no-merged | --contains) [<commit>]]
-'git branch' [--track | --no-track] [-l] [-f] <branchname> [<start-point>]
+'git branch' [--set-upstream | --track | --no-track] [-l] [-f] <branchname> [<start-point>]
 'git branch' (-m | -M) [<oldbranch>] <newbranch>
 'git branch' (-d | -D) [-r] <branchname>...
 
@@ -30,20 +30,19 @@ commit) will be listed.  With `--no-merged` only branches not merged into
 the named commit will be listed.  If the <commit> argument is missing it
 defaults to 'HEAD' (i.e. the tip of the current branch).
 
-In the command's second form, a new branch named <branchname> will be created.
-It will start out with a head equal to the one given as <start-point>.
-If no <start-point> is given, the branch will be created with a head
-equal to that of the currently checked out branch.
+The command's second form creates a new branch head named <branchname>
+which points to the current 'HEAD', or <start-point> if given.
 
 Note that this will create the new branch, but it will not switch the
 working tree to it; use "git checkout <newbranch>" to switch to the
 new branch.
 
-When a local branch is started off a remote branch, git sets up the
-branch so that 'git-pull' will appropriately merge from
-the remote branch. This behavior may be changed via the global
+When a local branch is started off a remote-tracking branch, git sets up the
+branch so that 'git pull' will appropriately merge from
+the remote-tracking branch. This behavior may be changed via the global
 `branch.autosetupmerge` configuration flag. That setting can be
-overridden by using the `--track` and `--no-track` options.
+overridden by using the `--track` and `--no-track` options, and
+changed later using `git branch --set-upstream`.
 
 With a '-m' or '-M' option, <oldbranch> will be renamed to <newbranch>.
 If <oldbranch> had a corresponding reflog, it is renamed to match
@@ -57,7 +56,7 @@ has a reflog then the reflog will also be deleted.
 
 Use -r together with -d to delete remote-tracking branches. Note, that it
 only makes sense to delete remote-tracking branches if they no longer exist
-in the remote repository or if 'git-fetch' was configured not to fetch
+in the remote repository or if 'git fetch' was configured not to fetch
 them again. See also the 'prune' subcommand of linkgit:git-remote[1] for a
 way to clean up all obsolete remote-tracking branches.
 
@@ -65,7 +64,9 @@ way to clean up all obsolete remote-tracking branches.
 OPTIONS
 -------
 -d::
-	Delete a branch. The branch must be fully merged in HEAD.
+	Delete a branch. The branch must be fully merged in its
+	upstream branch, or in `HEAD` if no upstream was set with
+	`--track` or `--set-upstream`.
 
 -D::
 	Delete a branch irrespective of its merged status.
@@ -74,10 +75,13 @@ OPTIONS
 	Create the branch's reflog.  This activates recording of
 	all changes made to the branch ref, enabling use of date
 	based sha1 expressions such as "<branchname>@\{yesterday}".
+	Note that in non-bare repositories, reflogs are usually
+	enabled by default by the `core.logallrefupdates` config option.
 
 -f::
+--force::
 	Reset <branchname> to <startpoint> if <branchname> exists
-	already. Without `-f` 'git-branch' refuses to change an existing branch.
+	already. Without `-f` 'git branch' refuses to change an existing branch.
 
 -m::
 	Move/rename a branch and the corresponding reflog.
@@ -85,12 +89,15 @@ OPTIONS
 -M::
 	Move/rename a branch even if the new branch name already exists.
 
---color::
-	Color branches to highlight current, local, and remote branches.
+--color[=<when>]::
+	Color branches to highlight current, local, and
+	remote-tracking branches.
+	The value must be always (the default), never, or auto.
 
 --no-color::
 	Turn off branch colors, even when the configuration file gives the
 	default to color output.
+	Same as `--color=never`.
 
 -r::
 	List or delete (if used with -d) the remote-tracking branches.
@@ -120,24 +127,32 @@ OPTIONS
 	it directs `git pull` without arguments to pull from the
 	upstream when the new branch is checked out.
 +
-This behavior is the default when the start point is a remote branch.
+This behavior is the default when the start point is a remote-tracking branch.
 Set the branch.autosetupmerge configuration variable to `false` if you
 want `git checkout` and `git branch` to always behave as if '--no-track'
 were given. Set it to `always` if you want this behavior when the
-start-point is either a local or remote branch.
+start-point is either a local or remote-tracking branch.
 
 --no-track::
 	Do not set up "upstream" configuration, even if the
 	branch.autosetupmerge configuration variable is true.
 
+--set-upstream::
+	If specified branch does not exist yet or if '--force' has been
+	given, acts exactly like '--track'. Otherwise sets up configuration
+	like '--track' would when creating the branch, except that where
+	branch points to is not changed.
+
 --contains <commit>::
 	Only list branches which contain the specified commit.
 
---merged::
-	Only list branches which are fully contained by HEAD.
+--merged [<commit>]::
+	Only list branches whose tips are reachable from the
+	specified commit (HEAD if not specified).
 
---no-merged::
-	Do not list branches which are fully contained by HEAD.
+--no-merged [<commit>]::
+	Only list branches whose tips are not reachable from the
+	specified commit (HEAD if not specified).
 
 <branchname>::
 	The name of the branch to create or delete.
@@ -146,9 +161,9 @@ start-point is either a local or remote branch.
 	may restrict the characters allowed in a branch name.
 
 <start-point>::
-	The new branch will be created with a HEAD equal to this.  It may
-	be given as a branch name, a commit-id, or a tag.  If this option
-	is omitted, the current branch is assumed.
+	The new branch head will point to this commit.  It may be
+	given as a branch name, a commit-id, or a tag.  If this
+	option is omitted, the current HEAD will be used instead.
 
 <oldbranch>::
 	The name of an existing branch to rename.
@@ -209,13 +224,13 @@ but different purposes:
 - `--no-merged` is used to find branches which are candidates for merging
   into HEAD, since those branches are not fully contained by HEAD.
 
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org> and Junio C Hamano <gitster@pobox.com>
-
-Documentation
---------------
-Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
+SEE ALSO
+--------
+linkgit:git-check-ref-format[1],
+linkgit:git-fetch[1],
+linkgit:git-remote[1],
+link:user-manual.html#what-is-a-branch[``Understanding history: What is
+a branch?''] in the Git User's Manual.
 
 GIT
 ---

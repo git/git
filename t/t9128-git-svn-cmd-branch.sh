@@ -9,19 +9,19 @@ test_description='git svn partial-rebuild tests'
 test_expect_success 'initialize svnrepo' '
 	mkdir import &&
 	(
-		cd import &&
+		(cd import &&
 		mkdir trunk branches tags &&
-		cd trunk &&
-		echo foo > foo &&
-		cd .. &&
-		svn_cmd import -m "import for git-svn" . "$svnrepo" >/dev/null &&
-		cd .. &&
+		(cd trunk &&
+		echo foo > foo
+		) &&
+		svn_cmd import -m "import for git-svn" . "$svnrepo" >/dev/null
+		) &&
 		rm -rf import &&
 		svn_cmd co "$svnrepo"/trunk trunk &&
-		cd trunk &&
+		(cd trunk &&
 		echo bar >> foo &&
-		svn_cmd ci -m "updated trunk" &&
-		cd .. &&
+		svn_cmd ci -m "updated trunk"
+		) &&
 		rm -rf trunk
 	)
 '

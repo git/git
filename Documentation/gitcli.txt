@@ -81,7 +81,7 @@ couple of magic command line options:
 +
 ---------------------------------------------
 $ git describe -h
-usage: git-describe [options] <committish>*
+usage: git describe [options] <committish>*
 
     --contains            find the tag that comes after the commit
     --debug               debug search strategy on stderr
@@ -168,10 +168,6 @@ entries.
 See also http://marc.info/?l=git&m=116563135620359 and
 http://marc.info/?l=git&m=119150393620273 for further
 information.
-
-Documentation
--------------
-Documentation by Pierre Habouzit and the git-list <git@vger.kernel.org>.
 
 GIT
 ---

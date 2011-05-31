@@ -1,42 +1,7 @@
 #ifndef STRBUF_H
 #define STRBUF_H
 
-/*
- * Strbuf's can be use in many ways: as a byte array, or to store arbitrary
- * long, overflow safe strings.
- *
- * Strbufs has some invariants that are very important to keep in mind:
- *
- * 1. the ->buf member is always malloc-ed, hence strbuf's can be used to
- *    build complex strings/buffers whose final size isn't easily known.
- *
- *    It is NOT legal to copy the ->buf pointer away.
- *    `strbuf_detach' is the operation that detaches a buffer from its shell
- *    while keeping the shell valid wrt its invariants.
- *
- * 2. the ->buf member is a byte array that has at least ->len + 1 bytes
- *    allocated. The extra byte is used to store a '\0', allowing the ->buf
- *    member to be a valid C-string. Every strbuf function ensure this
- *    invariant is preserved.
- *
- *    Note that it is OK to "play" with the buffer directly if you work it
- *    that way:
- *
- *    strbuf_grow(sb, SOME_SIZE);
- *       ... Here, the memory array starting at sb->buf, and of length
- *       ... strbuf_avail(sb) is all yours, and you are sure that
- *       ... strbuf_avail(sb) is at least SOME_SIZE.
- *    strbuf_setlen(sb, sb->len + SOME_OTHER_SIZE);
- *
- *    Of course, SOME_OTHER_SIZE must be smaller or equal to strbuf_avail(sb).
- *
- *    Doing so is safe, though if it has to be done in many places, adding the
- *    missing API to the strbuf module is the way to go.
- *
- *    XXX: do _not_ assume that the area that is yours is of size ->alloc - 1
- *         even if it's true in the current implementation. Alloc is somehow a
- *         "private" member that should not be messed with.
- */
+/* See Documentation/technical/api-strbuf.txt */
 
 #include <assert.h>
 
@@ -81,7 +46,6 @@ extern void strbuf_trim(struct strbuf *);
 extern void strbuf_rtrim(struct strbuf *);
 extern void strbuf_ltrim(struct strbuf *);
 extern int strbuf_cmp(const struct strbuf *, const struct strbuf *);
-extern void strbuf_tolower(struct strbuf *);
 
 extern struct strbuf **strbuf_split(const struct strbuf *, int delim);
 extern void strbuf_list_free(struct strbuf **);
@@ -105,6 +69,7 @@ static inline void strbuf_addstr(struct strbuf *sb, const char *s) {
 	strbuf_add(sb, s, strlen(s));
 }
 static inline void strbuf_addbuf(struct strbuf *sb, const struct strbuf *sb2) {
+	strbuf_grow(sb, sb2->len);
 	strbuf_add(sb, sb2->buf, sb2->len);
 }
 extern void strbuf_adddup(struct strbuf *sb, size_t pos, size_t len);
@@ -116,9 +81,12 @@ struct strbuf_expand_dict_entry {
 	const char *value;
 };
 extern size_t strbuf_expand_dict_cb(struct strbuf *sb, const char *placeholder, void *context);
+extern void strbuf_addbuf_percentquote(struct strbuf *dst, const struct strbuf *src);
 
-__attribute__((format(printf,2,3)))
+__attribute__((format (printf,2,3)))
 extern void strbuf_addf(struct strbuf *sb, const char *fmt, ...);
+__attribute__((format (printf,2,0)))
+extern void strbuf_vaddf(struct strbuf *sb, const char *fmt, va_list ap);
 
 extern size_t strbuf_fread(struct strbuf *, size_t, FILE *);
 /* XXX: if read fails, any partial read is undone */
@@ -126,6 +94,7 @@ extern ssize_t strbuf_read(struct strbuf *, int fd, size_t hint);
 extern int strbuf_read_file(struct strbuf *sb, const char *path, size_t hint);
 extern int strbuf_readlink(struct strbuf *sb, const char *path, size_t hint);
 
+extern int strbuf_getwholeline(struct strbuf *, FILE *, int);
 extern int strbuf_getline(struct strbuf *, FILE *, int);
 
 extern void stripspace(struct strbuf *buf, int skip_comments);

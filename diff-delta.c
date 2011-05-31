@@ -4,7 +4,7 @@
  * This code was greatly inspired by parts of LibXDiff from Davide Libenzi
  * http://www.xmailserver.org/xdiff-lib.html
  *
- * Rewritten for GIT by Nicolas Pitre <nico@cam.org>, (C) 2005-2007
+ * Rewritten for GIT by Nicolas Pitre <nico@fluxnic.net>, (C) 2005-2007
  *
  * This code is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -146,7 +146,14 @@ struct delta_index * create_delta_index(const void *buf, unsigned long bufsize)
 	/* Determine index hash size.  Note that indexing skips the
 	   first byte to allow for optimizing the Rabin's polynomial
 	   initialization in create_delta(). */
-	entries = (bufsize - 1)  / RABIN_WINDOW;
+	entries = (bufsize - 1) / RABIN_WINDOW;
+	if (bufsize >= 0xffffffffUL) {
+		/*
+		 * Current delta format can't encode offsets into
+		 * reference buffer with more than 32 bits.
+		 */
+		entries = 0xfffffffeU / RABIN_WINDOW;
+	}
 	hsize = entries / 4;
 	for (i = 4; (1u << i) < hsize && i < 31; i++);
 	hsize = 1 << i;

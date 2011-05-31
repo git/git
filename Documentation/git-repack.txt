@@ -8,7 +8,7 @@ git-repack - Pack unpacked objects in a repository
 
 SYNOPSIS
 --------
-'git repack' [-a] [-A] [-d] [-f] [-l] [-n] [-q] [--window=N] [--depth=N]
+'git repack' [-a] [-A] [-d] [-f] [-F] [-l] [-n] [-q] [--window=<n>] [--depth=<n>]
 
 DESCRIPTION
 -----------
@@ -49,35 +49,39 @@ other objects in that pack they already have locally.
 	deleted by way of being left in the old pack and then
 	removed.  Instead, the loose unreachable objects
 	will be pruned according to normal expiry rules
-	with the next 'git-gc' invocation. See linkgit:git-gc[1].
+	with the next 'git gc' invocation. See linkgit:git-gc[1].
 
 -d::
 	After packing, if the newly created packs make some
 	existing packs redundant, remove the redundant packs.
-	Also run  'git-prune-packed' to remove redundant
+	Also run  'git prune-packed' to remove redundant
 	loose object files.
 
 -l::
-	Pass the `--local` option to 'git-pack-objects'. See
+	Pass the `--local` option to 'git pack-objects'. See
 	linkgit:git-pack-objects[1].
 
 -f::
+	Pass the `--no-reuse-delta` option to `git-pack-objects`, see
+	linkgit:git-pack-objects[1].
+
+-F::
 	Pass the `--no-reuse-object` option to `git-pack-objects`, see
 	linkgit:git-pack-objects[1].
 
 -q::
-	Pass the `-q` option to 'git-pack-objects'. See
+	Pass the `-q` option to 'git pack-objects'. See
 	linkgit:git-pack-objects[1].
 
 -n::
 	Do not update the server information with
-	'git-update-server-info'.  This option skips
+	'git update-server-info'.  This option skips
 	updating local catalog files needed to publish
 	this repository (or a direct copy of it)
 	over HTTP or FTP.  See linkgit:git-update-server-info[1].
 
---window=[N]::
---depth=[N]::
+--window=<n>::
+--depth=<n>::
 	These two options affect how the objects contained in the pack are
 	stored using delta compression. The objects are first internally
 	sorted by type, size and optionally names and compared against the
@@ -87,10 +91,10 @@ other objects in that pack they already have locally.
 	to be applied that many times to get to the necessary object.
 	The default value for --window is 10 and --depth is 50.
 
---window-memory=[N]::
+--window-memory=<n>::
 	This option provides an additional limit on top of `--window`;
 	the window size will dynamically scale down so as to not take
-	up more than N bytes in memory.  This is useful in
+	up more than '<n>' bytes in memory.  This is useful in
 	repositories with a mix of large and small objects to not run
 	out of memory with a large window, but still be able to take
 	advantage of the large window for the smaller objects.  The
@@ -99,32 +103,25 @@ other objects in that pack they already have locally.
 	default.
 
 --max-pack-size=<n>::
-	Maximum size of each output packfile, expressed in MiB.
+	Maximum size of each output pack file. The size can be suffixed with
+	"k", "m", or "g". The minimum size allowed is limited to 1 MiB.
 	If specified,  multiple packfiles may be created.
-	The default is unlimited.
+	The default is unlimited, unless the config variable
+	`pack.packSizeLimit` is set.
 
 
 Configuration
 -------------
 
-When configuration variable `repack.UseDeltaBaseOffset` is set
-for the repository, the command passes `--delta-base-offset`
-option to 'git-pack-objects'; this typically results in slightly
-smaller packs, but the generated packs are incompatible with
-versions of git older than (and including) v1.4.3; do not set
-the variable in a repository that older version of git needs to
-be able to read (this includes repositories from which packs can
-be copied out over http or rsync, and people who obtained packs
-that way can try to use older git with it).
-
-
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org>
-
-Documentation
---------------
-Documentation by Ryan Anderson <ryan@michonline.com>
+By default, the command passes `--delta-base-offset` option to
+'git pack-objects'; this typically results in slightly smaller packs,
+but the generated packs are incompatible with versions of Git older than
+version 1.4.4. If you need to share your repository with such ancient Git
+versions, either directly or via the dumb http or rsync protocol, then you
+need to set the configuration variable `repack.UseDeltaBaseOffset` to
+"false" and repack. Access from old Git versions over the native protocol
+is unaffected by this option as the conversion is performed on the fly
+as needed in that case.
 
 SEE ALSO
 --------

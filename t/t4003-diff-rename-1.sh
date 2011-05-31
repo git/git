@@ -29,7 +29,7 @@ test_expect_success \
 # copy-and-edit one, and rename-and-edit the other.  We do not say
 # anything about rezrov.
 
-GIT_DIFF_OPTS=--unified=0 git diff-index -M -p $tree >current
+GIT_DIFF_OPTS=--unified=0 git diff-index -C -p $tree >current
 cat >expected <<\EOF
 diff --git a/COPYING b/COPYING.1
 copy from COPYING

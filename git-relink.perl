@@ -6,7 +6,7 @@
 #
 # Scan two git object-trees, and hardlink any common objects between them.
 
-use 5.006;
+use 5.008;
 use strict;
 use warnings;
 use Getopt::Long;
@@ -163,7 +163,7 @@ sub link_two_files($$) {
 
 
 sub usage() {
-	print("Usage: git relink [--safe] <dir> [<dir> ...] <master_dir> \n");
+	print("Usage: git relink [--safe] <dir>... <master_dir> \n");
 	print("All directories should contain a .git/objects/ subdirectory.\n");
 	print("Options\n");
 	print("\t--safe\t" .

@@ -14,10 +14,22 @@ compare_git_head_with () {
 	test_cmp current "$1"
 }
 
+a_utf8_locale=$(locale -a | sed -n '/\.[uU][tT][fF]-*8$/{
+	p
+	q
+}')
+
+if test -n "$a_utf8_locale"
+then
+	test_set_prereq UTF8
+else
+	say "# UTF-8 locale not available, some tests are skipped"
+fi
+
 compare_svn_head_with () {
 	# extract just the log message and strip out committer info.
 	# don't use --limit here since svn 1.1.x doesn't have it,
-	LC_ALL=en_US.UTF-8 svn log `git svn info --url` | perl -w -e '
+	LC_ALL="$a_utf8_locale" svn log `git svn info --url` | perl -w -e '
 		use bytes;
 		$/ = ("-"x72) . "\n";
 		my @x = <STDIN>;
@@ -68,12 +80,6 @@ do
 	)
 	'
 done
-
-if locale -a |grep -q en_US.utf8; then
-	test_set_prereq UTF8
-else
-	say "UTF-8 locale not available, test skipped"
-fi
 
 test_expect_success UTF8 'ISO-8859-1 should match UTF-8 in svn' '
 	(

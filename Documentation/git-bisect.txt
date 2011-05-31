@@ -20,7 +20,7 @@ on the subcommand:
  git bisect bad [<rev>]
  git bisect good [<rev>...]
  git bisect skip [(<rev>|<range>)...]
- git bisect reset [<branch>]
+ git bisect reset [<commit>]
  git bisect visualize
  git bisect replay <logfile>
  git bisect log
@@ -81,16 +81,27 @@ will have been left with the first bad kernel revision in "refs/bisect/bad".
 Bisect reset
 ~~~~~~~~~~~~
 
-To return to the original head after a bisect session, issue the
-following command:
+After a bisect session, to clean up the bisection state and return to
+the original HEAD, issue the following command:
 
 ------------------------------------------------
 $ git bisect reset
 ------------------------------------------------
 
-This resets the tree to the original branch instead of being on the
-bisection commit ("git bisect start" will also do that, as it resets
-the bisection state).
+By default, this will return your tree to the commit that was checked
+out before `git bisect start`.  (A new `git bisect start` will also do
+that, as it cleans up the old bisection state.)
+
+With an optional argument, you can return to a different commit
+instead:
+
+------------------------------------------------
+$ git bisect reset <commit>
+------------------------------------------------
+
+For example, `git bisect reset HEAD` will leave you on the current
+bisection commit and avoid switching commits at all, while `git bisect
+reset bisect/bad` will check out the first bad revision.
 
 Bisect visualize
 ~~~~~~~~~~~~~~~~
@@ -230,7 +241,12 @@ exit(3) manual page), as the value is chopped with "& 0377".
 
 The special exit code 125 should be used when the current source code
 cannot be tested. If the script exits with this code, the current
-revision will be skipped (see `git bisect skip` above).
+revision will be skipped (see `git bisect skip` above). 125 was chosen
+as the highest sensible value to use for this purpose, because 126 and 127
+are used by POSIX shells to signal specific error status (127 is for
+command not found, 126 is for command found but not executable---these
+details do not matter, as they are normal errors in the script, as far as
+"bisect run" is concerned).
 
 You may often find that during a bisect session you want to have
 temporary modifications (e.g. s/#define DEBUG 0/#define DEBUG 1/ in a
@@ -263,61 +279,73 @@ $ git bisect start HEAD origin --    # HEAD is bad, origin is good
 $ git bisect run make test           # "make test" builds and tests
 ------------
 
-* Automatically bisect a broken test suite:
-+
-------------
-$ cat ~/test.sh
-#!/bin/sh
-make || exit 125                   # this skips broken builds
-make test                          # "make test" runs the test suite
-$ git bisect start v1.3 v1.1 --    # v1.3 is bad, v1.1 is good
-$ git bisect run ~/test.sh
-------------
-+
-Here we use a "test.sh" custom script. In this script, if "make"
-fails, we skip the current commit.
-+
-It is safer to use a custom script outside the repository to prevent
-interactions between the bisect, make and test processes and the
-script.
-+
-"make test" should "exit 0", if the test suite passes, and
-"exit 1" otherwise.
-
 * Automatically bisect a broken test case:
 +
 ------------
 $ cat ~/test.sh
 #!/bin/sh
 make || exit 125                     # this skips broken builds
-~/check_test_case.sh                 # does the test case passes ?
+~/check_test_case.sh                 # does the test case pass?
 $ git bisect start HEAD HEAD~10 --   # culprit is among the last 10
 $ git bisect run ~/test.sh
 ------------
 +
-Here "check_test_case.sh" should "exit 0" if the test case passes,
+Here we use a "test.sh" custom script. In this script, if "make"
+fails, we skip the current commit.
+"check_test_case.sh" should "exit 0" if the test case passes,
 and "exit 1" otherwise.
 +
-It is safer if both "test.sh" and "check_test_case.sh" scripts are
+It is safer if both "test.sh" and "check_test_case.sh" are
 outside the repository to prevent interactions between the bisect,
 make and test processes and the scripts.
 
-* Automatically bisect a broken test suite:
+* Automatically bisect with temporary modifications (hot-fix):
++
+------------
+$ cat ~/test.sh
+#!/bin/sh
+
+# tweak the working tree by merging the hot-fix branch
+# and then attempt a build
+if	git merge --no-commit hot-fix &&
+	make
+then
+	# run project specific test and report its status
+	~/check_test_case.sh
+	status=$?
+else
+	# tell the caller this is untestable
+	status=125
+fi
+
+# undo the tweak to allow clean flipping to the next commit
+git reset --hard
+
+# return control
+exit $status
+------------
++
+This applies modifications from a hot-fix branch before each test run,
+e.g. in case your build or test environment changed so that older
+revisions may need a fix which newer ones have already. (Make sure the
+hot-fix branch is based off a commit which is contained in all revisions
+which you are bisecting, so that the merge does not pull in too much, or
+use `git cherry-pick` instead of `git merge`.)
+
+* Automatically bisect a broken test case:
 +
 ------------
 $ git bisect start HEAD HEAD~10 --   # culprit is among the last 10
 $ git bisect run sh -c "make || exit 125; ~/check_test_case.sh"
 ------------
 +
-Does the same as the previous example, but on a single line.
+This shows that you can do without a run script if you write the test
+on a single line.
 
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org>
-
-Documentation
--------------
-Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
+SEE ALSO
+--------
+link:git-bisect-lk2009.html[Fighting regressions with git bisect],
+linkgit:git-blame[1].
 
 GIT
 ---

@@ -34,6 +34,7 @@ static void copy_gecos(const struct passwd *w, char *name, size_t sz)
 			*dst++ = toupper(*w->pw_name);
 			memcpy(dst, w->pw_name + 1, nlen - 1);
 			dst += nlen - 1;
+			len += nlen;
 		}
 	}
 	if (len < sz)
@@ -85,10 +86,11 @@ static void setup_ident(void)
 	if (!git_default_email[0]) {
 		const char *email = getenv("EMAIL");
 
-		if (email && email[0])
+		if (email && email[0]) {
 			strlcpy(git_default_email, email,
 				sizeof(git_default_email));
-		else {
+			user_ident_explicitly_given |= IDENT_MAIL_GIVEN;
+		} else {
 			if (!pw)
 				pw = getpwuid(getuid());
 			if (!pw)
@@ -168,8 +170,6 @@ static int copy(char *buf, size_t size, int offset, const char *src)
 	return offset;
 }
 
-static const char au_env[] = "GIT_AUTHOR_NAME";
-static const char co_env[] = "GIT_COMMITTER_NAME";
 static const char *env_hint =
 "\n"
 "*** Please tell me who you are.\n"
@@ -204,8 +204,8 @@ const char *fmt_ident(const char *name, const char *email,
 
 		if ((warn_on_no_name || error_on_no_name) &&
 		    name == git_default_name && env_hint) {
-			fprintf(stderr, env_hint, au_env, co_env);
-			env_hint = NULL; /* warn only once, for "git var -l" */
+			fputs(env_hint, stderr);
+			env_hint = NULL; /* warn only once */
 		}
 		if (error_on_no_name)
 			die("empty ident %s <%s> not allowed", name, email);
@@ -218,8 +218,10 @@ const char *fmt_ident(const char *name, const char *email,
 	}
 
 	strcpy(date, git_default_date);
-	if (!name_addr_only && date_str)
-		parse_date(date_str, date, sizeof(date));
+	if (!name_addr_only && date_str && date_str[0]) {
+		if (parse_date(date_str, date, sizeof(date)) < 0)
+			die("invalid date format: %s", date_str);
+	}
 
 	i = copy(buffer, sizeof(buffer), 0, name);
 	i = add_raw(buffer, sizeof(buffer), i, " <");
@@ -251,11 +253,21 @@ const char *git_author_info(int flag)
 
 const char *git_committer_info(int flag)
 {
-	if (getenv("GIT_COMMITTER_NAME") &&
-	    getenv("GIT_COMMITTER_EMAIL"))
-		user_ident_explicitly_given = 1;
+	if (getenv("GIT_COMMITTER_NAME"))
+		user_ident_explicitly_given |= IDENT_NAME_GIVEN;
+	if (getenv("GIT_COMMITTER_EMAIL"))
+		user_ident_explicitly_given |= IDENT_MAIL_GIVEN;
 	return fmt_ident(getenv("GIT_COMMITTER_NAME"),
 			 getenv("GIT_COMMITTER_EMAIL"),
 			 getenv("GIT_COMMITTER_DATE"),
 			 flag);
+}
+
+int user_ident_sufficiently_given(void)
+{
+#ifndef WINDOWS
+	return (user_ident_explicitly_given & IDENT_MAIL_GIVEN);
+#else
+	return (user_ident_explicitly_given == IDENT_ALL_GIVEN);
+#endif
 }

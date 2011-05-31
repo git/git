@@ -60,8 +60,8 @@ The --bcc option must be repeated for each user you want on the bcc list.
 The --cc option must be repeated for each user you want on the cc list.
 
 --compose::
-	Use $GIT_EDITOR, core.editor, $VISUAL, or $EDITOR to edit an
-	introductory message for the patch series.
+	Invoke a text editor (see GIT_EDITOR in linkgit:git-var[1])
+	to edit an introductory message for the patch series.
 +
 When '--compose' is used, git send-email will use the From, Subject, and
 In-Reply-To headers specified in the message. If the body of the message
@@ -82,11 +82,26 @@ See the CONFIGURATION section for 'sendemail.multiedit'.
 	set, as returned by "git var -l".
 
 --in-reply-to=<identifier>::
-	Specify the contents of the first In-Reply-To header.
-	Subsequent emails will refer to the previous email
-	instead of this if --chain-reply-to is set (the default)
-	Only necessary if --compose is also set.  If --compose
-	is not set, this will be prompted for.
+	Make the first mail (or all the mails with `--no-thread`) appear as a
+	reply to the given Message-Id, which avoids breaking threads to
+	provide a new patch series.
+	The second and subsequent emails will be sent as replies according to
+	the `--[no]-chain-reply-to` setting.
++
+So for example when `--thread` and `--no-chain-reply-to` are specified, the
+second and subsequent patches will be replies to the first one like in the
+illustration below where `[PATCH v2 0/3]` is in reply to `[PATCH 0/2]`:
++
+  [PATCH 0/2] Here is what I did...
+    [PATCH 1/2] Clean up and tests
+    [PATCH 2/2] Implementation
+    [PATCH v2 0/3] Here is a reroll
+      [PATCH v2 1/3] Clean up
+      [PATCH v2 2/3] New tests
+      [PATCH v2 3/3] Implementation
++
+Only necessary if --compose is also set.  If --compose
+is not set, this will be prompted for.
 
 --subject=<string>::
 	Specify the initial subject of the email thread.
@@ -97,9 +112,18 @@ See the CONFIGURATION section for 'sendemail.multiedit'.
 	Specify the primary recipient of the emails generated. Generally, this
 	will be the upstream maintainer of the project involved. Default is the
 	value of the 'sendemail.to' configuration value; if that is unspecified,
-	this will be prompted for.
+	and --to-cmd is not specified, this will be prompted for.
 +
 The --to option must be repeated for each user you want on the to list.
+
+--8bit-encoding=<encoding>::
+	When encountering a non-ASCII message or subject that does not
+	declare its encoding, add headers/quoting to indicate it is
+	encoded in <encoding>.  Default is the value of the
+	'sendemail.assume8bitEncoding'; if that is unspecified, this
+	will be prompted for if any non-ASCII files are encountered.
++
+Note that no attempts whatsoever are made to validate the encoding.
 
 
 Sending
@@ -108,15 +132,23 @@ Sending
 --envelope-sender=<address>::
 	Specify the envelope sender used to send the emails.
 	This is useful if your default address is not the address that is
-	subscribed to a list. If you use the sendmail binary, you must have
-	suitable privileges for the -f parameter. Default is the value of
-	the 'sendemail.envelopesender' configuration variable; if that is
+	subscribed to a list. In order to use the 'From' address, set the
+	value to "auto". If you use the sendmail binary, you must have
+	suitable privileges for the -f parameter.  Default is the value of the
+	'sendemail.envelopesender' configuration variable; if that is
 	unspecified, choosing the envelope sender is left to your MTA.
 
 --smtp-encryption=<encryption>::
 	Specify the encryption to use, either 'ssl' or 'tls'.  Any other
 	value reverts to plain SMTP.  Default is the value of
 	'sendemail.smtpencryption'.
+
+--smtp-domain=<FQDN>::
+	Specifies the Fully Qualified Domain Name (FQDN) used in the
+	HELO/EHLO command to the SMTP server.  Some servers require the
+	FQDN to match your IP address.  If not set, git send-email attempts
+	to determine your FQDN automatically.  Default is the value of
+	'sendemail.smtpdomain'.
 
 --smtp-pass[=<password>]::
 	Password for SMTP-AUTH. The argument is optional: If no
@@ -142,10 +174,20 @@ user is prompted for a password while the input is masked for privacy.
 
 --smtp-server-port=<port>::
 	Specifies a port different from the default port (SMTP
-	servers typically listen to smtp port 25 and ssmtp port
-	465); symbolic port names (e.g. "submission" instead of 465)
+	servers typically listen to smtp port 25, but may also listen to
+	submission port 587, or the common SSL smtp port 465);
+	symbolic port names (e.g. "submission" instead of 587)
 	are also accepted. The port can also be set with the
 	'sendemail.smtpserverport' configuration variable.
+
+--smtp-server-option=<option>::
+	If set, specifies the outgoing SMTP server option to use.
+	Default value can be specified by the 'sendemail.smtpserveroption'
+	configuration option.
++
+The --smtp-server-option option must be repeated for each option you want
+to pass to the server. Likewise, different lines in the configuration files
+must be used for each option.
 
 --smtp-ssl::
 	Legacy alias for '--smtp-encryption ssl'.
@@ -159,6 +201,12 @@ user is prompted for a password while the input is masked for privacy.
 Automating
 ~~~~~~~~~~
 
+--to-cmd=<command>::
+	Specify a command to execute once per patch file which
+	should generate patch file specific "To:" entries.
+	Output of this command must be single email address per line.
+	Default is the value of 'sendemail.tocmd' configuration value.
+
 --cc-cmd=<command>::
 	Specify a command to execute once per patch file which
 	should generate patch file specific "Cc:" entries.
@@ -170,8 +218,8 @@ Automating
 	email sent.  If disabled with "--no-chain-reply-to", all emails after
 	the first will be sent as replies to the first email sent.  When using
 	this, it is recommended that the first file given be an overview of the
-	entire patch series. Default is the value of the 'sendemail.chainreplyto'
-	configuration value; if that is unspecified, default to --chain-reply-to.
+	entire patch series. Disabled by default, but the 'sendemail.chainreplyto'
+	configuration variable can be used to enable it.
 
 --identity=<identity>::
 	A configuration identity. When given, causes values in the
@@ -274,6 +322,9 @@ have been specified, in which case default to 'compose'.
 Default is the value of 'sendemail.validate'; if this is not set,
 default to '--validate'.
 
+--force::
+	Send emails even if safety checks would prevent it.
+
 
 CONFIGURATION
 -------------
@@ -297,19 +348,32 @@ sendemail.confirm::
 	one of 'always', 'never', 'cc', 'compose', or 'auto'. See '--confirm'
 	in the previous section for the meaning of these values.
 
+EXAMPLE
+-------
+Use gmail as the smtp server
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+To use 'git send-email' to send your patches through the GMail SMTP server,
+edit ~/.gitconfig to specify your account settings:
 
-Author
-------
-Written by Ryan Anderson <ryan@michonline.com>
+	[sendemail]
+		smtpencryption = tls
+		smtpserver = smtp.gmail.com
+		smtpuser = yourname@gmail.com
+		smtpserverport = 587
 
-git-send-email is originally based upon
-send_lots_of_email.pl by Greg Kroah-Hartman.
+Once your commits are ready to be sent to the mailing list, run the
+following commands:
 
+	$ git format-patch --cover-letter -M origin/master -o outgoing/
+	$ edit outgoing/0000-*
+	$ git send-email outgoing/*
 
-Documentation
---------------
-Documentation by Ryan Anderson
+Note: the following perl modules are required
+      Net::SMTP::SSL, MIME::Base64 and Authen::SASL
 
+SEE ALSO
+--------
+linkgit:git-format-patch[1], linkgit:git-imap-send[1], mbox(5)
 
 GIT
 ---

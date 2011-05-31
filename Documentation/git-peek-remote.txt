@@ -12,7 +12,7 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-This command is deprecated; use 'git-ls-remote' instead.
+This command is deprecated; use 'git ls-remote' instead.
 
 OPTIONS
 -------
@@ -36,14 +36,6 @@ OPTIONS
 <directory>::
 	The repository to sync from.
 
-
-Author
-------
-Written by Junio C Hamano <gitster@pobox.com>
-
-Documentation
---------------
-Documentation by Junio C Hamano.
 
 GIT
 ---

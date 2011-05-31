@@ -2,8 +2,7 @@
 #include "pack.h"
 #include "pack-revindex.h"
 
-struct idx_entry
-{
+struct idx_entry {
 	off_t                offset;
 	const unsigned char *sha1;
 	unsigned int nr;
@@ -24,7 +23,7 @@ int check_pack_crc(struct packed_git *p, struct pack_window **w_curs,
 		   off_t offset, off_t len, unsigned int nr)
 {
 	const uint32_t *index_crc;
-	uint32_t data_crc = crc32(0, Z_NULL, 0);
+	uint32_t data_crc = crc32(0, NULL, 0);
 
 	do {
 		unsigned int avail;
@@ -77,7 +76,7 @@ static int verify_packfile(struct packed_git *p,
 		err = error("%s SHA1 checksum mismatch",
 			    p->pack_name);
 	if (hashcmp(index_base + index_size - 40, pack_sig))
-		err = error("%s SHA1 does not match its inddex",
+		err = error("%s SHA1 does not match its index",
 			    p->pack_name);
 	unuse_pack(w_curs);
 
@@ -133,14 +132,13 @@ static int verify_packfile(struct packed_git *p,
 	return err;
 }
 
-int verify_pack(struct packed_git *p)
+int verify_pack_index(struct packed_git *p)
 {
 	off_t index_size;
 	const unsigned char *index_base;
 	git_SHA_CTX ctx;
 	unsigned char sha1[20];
 	int err = 0;
-	struct pack_window *w_curs = NULL;
 
 	if (open_pack_index(p))
 		return error("packfile %s index not opened", p->pack_name);
@@ -154,8 +152,18 @@ int verify_pack(struct packed_git *p)
 	if (hashcmp(sha1, index_base + index_size - 20))
 		err = error("Packfile index for %s SHA1 mismatch",
 			    p->pack_name);
+	return err;
+}
 
-	/* Verify pack file */
+int verify_pack(struct packed_git *p)
+{
+	int err = 0;
+	struct pack_window *w_curs = NULL;
+
+	err |= verify_pack_index(p);
+	if (!p->index_data)
+		return -1;
+
 	err |= verify_packfile(p, &w_curs);
 	unuse_pack(&w_curs);
 

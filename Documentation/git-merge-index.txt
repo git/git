@@ -8,7 +8,7 @@ git-merge-index - Run a merge for files needing merging
 
 SYNOPSIS
 --------
-'git merge-index' [-o] [-q] <merge-program> (-a | [--] <file>\*)
+'git merge-index' [-o] [-q] <merge-program> (-a | [--] <file>*)
 
 DESCRIPTION
 -----------
@@ -36,14 +36,14 @@ OPTIONS
 	failure usually indicates conflicts during the merge). This is for
 	porcelains which might want to emit custom messages.
 
-If 'git-merge-index' is called with multiple <file>s (or -a) then it
+If 'git merge-index' is called with multiple <file>s (or -a) then it
 processes them in turn only stopping if merge returns a non-zero exit
 code.
 
 Typically this is run with a script calling git's imitation of
 the 'merge' command from the RCS package.
 
-A sample script called 'git-merge-one-file' is included in the
+A sample script called 'git merge-one-file' is included in the
 distribution.
 
 ALERT ALERT ALERT! The git "merge object order" is different from the
@@ -68,19 +68,10 @@ or
   This is added AA in the branch B.
   fatal: merge program failed
 
-where the latter example shows how 'git-merge-index' will stop trying to
+where the latter example shows how 'git merge-index' will stop trying to
 merge once anything has returned an error (i.e., `cat` returned an error
 for the AA file, because it didn't exist in the original, and thus
-'git-merge-index' didn't even try to merge the MM thing).
-
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org>
-One-shot merge by Petr Baudis <pasky@ucw.cz>
-
-Documentation
---------------
-Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
+'git merge-index' didn't even try to merge the MM thing).
 
 GIT
 ---

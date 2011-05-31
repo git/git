@@ -7,7 +7,7 @@ test_description='our own option parser'
 
 . ./test-lib.sh
 
-cat > expect.err << EOF
+cat > expect << EOF
 usage: test-parse-options <options>
 
     -b, --boolean         get a boolean
@@ -19,7 +19,7 @@ usage: test-parse-options <options>
     --set23               set integer to 23
     -t <time>             get timestamp of <time>
     -L, --length <str>    get length of <str>
-    -F, --file <FILE>     set file to <FILE>
+    -F, --file <file>     set file to <file>
 
 String options
     -s, --string <string>
@@ -33,6 +33,8 @@ Magic arguments
     --quux                means --quux
     -NUM                  set integer to NUM
     +                     same as -b
+    --ambiguous           positive ambiguity
+    --no-ambiguous        negative ambiguity
 
 Standard options
     --abbrev[=<n>]        use <n> digits to display SHA-1s
@@ -44,9 +46,11 @@ EOF
 
 test_expect_success 'test help' '
 	test_must_fail test-parse-options -h > output 2> output.err &&
-	test ! -s output &&
-	test_cmp expect.err output.err
+	test ! -s output.err &&
+	test_cmp expect output
 '
+
+mv expect expect.err
 
 cat > expect << EOF
 boolean: 2
@@ -311,6 +315,24 @@ EOF
 
 test_expect_success 'OPT_NUMBER_CALLBACK() works' '
 	test-parse-options -12345 > output 2> output.err &&
+	test ! -s output.err &&
+	test_cmp expect output
+'
+
+cat >expect <<EOF
+boolean: 0
+integer: 0
+timestamp: 0
+string: (not set)
+abbrev: 7
+verbose: 0
+quiet: no
+dry run: no
+file: (not set)
+EOF
+
+test_expect_success 'negation of OPT_NONEG flags is not ambiguous' '
+	test-parse-options --no-ambig >output 2>output.err &&
 	test ! -s output.err &&
 	test_cmp expect output
 '

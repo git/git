@@ -25,7 +25,7 @@ test_expect_success setup '
 	echo initial >dir1/sub2 &&
 	echo initial >dir2/sub3 &&
 	git add check dir1 dir2 top foo &&
-	test_tick
+	test_tick &&
 	git commit -m initial &&
 
 	echo changed >check &&
@@ -111,7 +111,7 @@ test_expect_success 'touch and then add explicitly' '
 
 '
 
-test_expect_success 'add -n -u should not add but just report' '
+test_expect_success C_LOCALE_OUTPUT 'add -n -u should not add but just report' '
 
 	(
 		echo "add '\''check'\''" &&
@@ -149,31 +149,26 @@ test_expect_success 'add -u resolves unmerged paths' '
 	echo 3 >path1 &&
 	echo 2 >path3 &&
 	echo 2 >path5 &&
+
+	# Explicit resolving by adding removed paths should fail
+	test_must_fail git add path4 &&
+	test_must_fail git add path6 &&
+
+	# "add -u" should notice removals no matter what stages
+	# the index entries are in.
 	git add -u &&
 	git ls-files -s path1 path2 path3 path4 path5 path6 >actual &&
 	{
 		echo "100644 $three 0	path1"
-		echo "100644 $one 1	path3"
-		echo "100644 $one 1	path4"
-		echo "100644 $one 3	path5"
-		echo "100644 $one 3	path6"
-	} >expect &&
-	test_cmp expect actual &&
-
-	# Bonus tests.  Explicit resolving
-	git add path3 path5 &&
-	test_must_fail git add path4 &&
-	test_must_fail git add path6 &&
-	git rm path4 &&
-	git rm path6 &&
-
-	git ls-files -s "path?" >actual &&
-	{
-		echo "100644 $three 0	path1"
 		echo "100644 $two 0	path3"
 		echo "100644 $two 0	path5"
-	} >expect
+	} >expect &&
+	test_cmp expect actual
+'
 
+test_expect_success '"add -u non-existent" should fail' '
+	test_must_fail git add -u non-existent &&
+	! (git ls-files | grep "non-existent")
 '
 
 test_done

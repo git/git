@@ -43,15 +43,6 @@ OPTIONS
 --strict::
 	Don't write objects with broken content or links.
 
-
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org>
-
-Documentation
--------------
-Documentation by Junio C Hamano
-
 GIT
 ---
 Part of the linkgit:git[1] suite

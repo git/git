@@ -10,28 +10,30 @@ SYNOPSIS
 --------
 [verse]
 'git tag' [-a | -s | -u <key-id>] [-f] [-m <msg> | -F <file>]
-	<name> [<commit> | <object>]
-'git tag' -d <name>...
+	<tagname> [<commit> | <object>]
+'git tag' -d <tagname>...
 'git tag' [-n[<num>]] -l [--contains <commit>] [<pattern>]
-'git tag' -v <name>...
+'git tag' -v <tagname>...
 
 DESCRIPTION
 -----------
-Adds a 'tag' reference in `.git/refs/tags/`
 
-Unless `-f` is given, the tag must not yet exist in
+Add a tag reference in `.git/refs/tags/`, unless `-d/-l/-v` is given
+to delete, list or verify tags.
+
+Unless `-f` is given, the tag to be created must not yet exist in the
 `.git/refs/tags/` directory.
 
 If one of `-a`, `-s`, or `-u <key-id>` is passed, the command
-creates a 'tag' object, and requires the tag message.  Unless
+creates a 'tag' object, and requires a tag message.  Unless
 `-m <msg>` or `-F <file>` is given, an editor is started for the user to type
 in the tag message.
 
 If `-m <msg>` or `-F <file>` is given and `-a`, `-s`, and `-u <key-id>`
 are absent, `-a` is implied.
 
-Otherwise just the SHA1 object name of the commit object is
-written (i.e. a lightweight tag).
+Otherwise just a tag reference for the SHA1 object name of the commit object is
+created (i.e. a lightweight tag).
 
 A GnuPG signed tag object will be created when `-s` or `-u
 <key-id>` is used.  When `-u <key-id>` is not used, the
@@ -50,6 +52,7 @@ OPTIONS
 	Make a GPG-signed tag, using the given key
 
 -f::
+--force::
 	Replace an existing tag with the given name (instead of failing)
 
 -d::
@@ -85,9 +88,15 @@ OPTIONS
 	Implies `-a` if none of `-a`, `-s`, or `-u <key-id>`
 	is given.
 
+<tagname>::
+	The name of the tag to create, delete, or describe.
+	The new tag name must pass all checks defined by
+	linkgit:git-check-ref-format[1].  Some of these checks
+	may restrict the characters allowed in a tag name.
+
 CONFIGURATION
 -------------
-By default, 'git-tag' in sign-with-default mode (-s) will use your
+By default, 'git tag' in sign-with-default mode (-s) will use your
 committer identity (of the form "Your Name <your@email.address>") to
 find a key.  If you want to use a different default key, you can specify
 it in the repository configuration as follows:
@@ -123,12 +132,12 @@ and be done with it.
 
 . The insane thing.
 You really want to call the new version "X" too, 'even though'
-others have already seen the old one. So just use 'git-tag -f'
+others have already seen the old one. So just use 'git tag -f'
 again, as if you hadn't already published the old one.
 
 However, Git does *not* (and it should not) change tags behind
 users back. So if somebody already got the old tag, doing a
-'git-pull' on your tree shouldn't just make them overwrite the old
+'git pull' on your tree shouldn't just make them overwrite the old
 one.
 
 If somebody got a release tag from you, you cannot just change
@@ -156,20 +165,19 @@ You can test which tag you have by doing
 
 which should return 0123456789abcdef.. if you have the new version.
 
-Sorry for inconvenience.
+Sorry for the inconvenience.
 ------------
 
 Does this seem a bit complicated?  It *should* be. There is no
-way that it would be correct to just "fix" it behind peoples
-backs. People need to know that their tags might have been
-changed.
+way that it would be correct to just "fix" it automatically.
+People need to know that their tags might have been changed.
 
 
 On Automatic following
 ~~~~~~~~~~~~~~~~~~~~~~
 
 If you are following somebody else's tree, you are most likely
-using tracking branches (`refs/heads/origin` in traditional
+using remote-tracking branches (`refs/heads/origin` in traditional
 layout, or `refs/remotes/origin/master` in the separate-remote
 layout).  You usually want the tags from the other end.
 
@@ -180,9 +188,10 @@ the toplevel but not limited to them.  Mere mortals when pulling
 from each other do not necessarily want to automatically get
 private anchor point tags from the other person.
 
-You would notice "please pull" messages on the mailing list says
-repo URL and branch name alone.  This is designed to be easily
-cut&pasted to a 'git-fetch' command line:
+Often, "please pull" messages on the mailing list just provide
+two pieces of information: a repo URL and a branch name; this
+is designed to be easily cut&pasted at the end of a 'git fetch'
+command line:
 
 ------------
 Linus, please pull from
@@ -198,14 +207,14 @@ becomes:
 $ git pull git://git..../proj.git master
 ------------
 
-In such a case, you do not want to automatically follow other's
-tags.
+In such a case, you do not want to automatically follow the other
+person's tags.
 
-One important aspect of git is it is distributed, and being
-distributed largely means there is no inherent "upstream" or
+One important aspect of git is its distributed nature, which
+largely means there is no inherent "upstream" or
 "downstream" in the system.  On the face of it, the above
 example might seem to indicate that the tag namespace is owned
-by upper echelon of people and tags only flow downwards, but
+by the upper echelon of people and that tags only flow downwards, but
 that is not the case.  It only shows that the usage pattern
 determines who are interested in whose tags.
 
@@ -223,8 +232,8 @@ this case.
 
 It may well be that among networking people, they may want to
 exchange the tags internal to their group, but in that workflow
-they are most likely tracking with each other's progress by
-having tracking branches.  Again, the heuristic to automatically
+they are most likely tracking each other's progress by
+having remote-tracking branches.  Again, the heuristic to automatically
 follow such tags is a good thing.
 
 
@@ -233,30 +242,25 @@ On Backdating Tags
 
 If you have imported some changes from another VCS and would like
 to add tags for major releases of your work, it is useful to be able
-to specify the date to embed inside of the tag object.  The data in
+to specify the date to embed inside of the tag object; such data in
 the tag object affects, for example, the ordering of tags in the
 gitweb interface.
 
 To set the date used in future tag objects, set the environment
-variable GIT_COMMITTER_DATE to one or more of the date and time.  The
-date and time can be specified in a number of ways; the most common
-is "YYYY-MM-DD HH:MM".
+variable GIT_COMMITTER_DATE (see the later discussion of possible
+values; the most common form is "YYYY-MM-DD HH:MM").
 
-An example follows.
+For example:
 
 ------------
 $ GIT_COMMITTER_DATE="2006-10-02 10:31" git tag -s v1.0.1
 ------------
 
+include::date-formats.txt[]
 
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org>,
-Junio C Hamano <gitster@pobox.com> and Chris Wright <chrisw@osdl.org>.
-
-Documentation
---------------
-Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
+SEE ALSO
+--------
+linkgit:git-check-ref-format[1].
 
 GIT
 ---

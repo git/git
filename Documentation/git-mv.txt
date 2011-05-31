@@ -28,6 +28,7 @@ committed.
 OPTIONS
 -------
 -f::
+--force::
 	Force renaming or moving of a file even if the target exists
 -k::
         Skip move or rename actions which would lead to an error
@@ -37,17 +38,6 @@ OPTIONS
 -n::
 --dry-run::
 	Do nothing; only show what would happen
-
-
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org>
-Rewritten by Ryan Anderson <ryan@michonline.com>
-Move functionality added by Josef Weidendorfer <Josef.Weidendorfer@gmx.de>
-
-Documentation
---------------
-Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---

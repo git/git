@@ -64,7 +64,7 @@ test_expect_success \
     'validate the output.' \
     'compare_diff_patch current expected'
 
-test_expect_success 'favour same basenames over different ones' '
+test_expect_success C_LOCALE_OUTPUT 'favour same basenames over different ones' '
 	cp path1 another-path &&
 	git add another-path &&
 	git commit -m 1 &&
@@ -73,7 +73,7 @@ test_expect_success 'favour same basenames over different ones' '
 	git mv another-path subdir/path1 &&
 	git status | grep "renamed: .*path1 -> subdir/path1"'
 
-test_expect_success  'favour same basenames even with minor differences' '
+test_expect_success C_LOCALE_OUTPUT  'favour same basenames even with minor differences' '
 	git show HEAD:path1 | sed "s/15/16/" > subdir/path1 &&
 	git status | grep "renamed: .*path1 -> subdir/path1"'
 

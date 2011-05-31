@@ -1,9 +1,7 @@
 #include "cache.h"
+#include "thread-utils.h"
 
-#ifdef _WIN32
-#  define WIN32_LEAN_AND_MEAN
-#  include <windows.h>
-#elif defined(hpux) || defined(__hpux) || defined(_hpux)
+#if defined(hpux) || defined(__hpux) || defined(_hpux)
 #  include <sys/pstat.h>
 #endif
 
@@ -45,4 +43,19 @@ int online_cpus(void)
 #endif
 
 	return 1;
+}
+
+int init_recursive_mutex(pthread_mutex_t *m)
+{
+	pthread_mutexattr_t a;
+	int ret;
+
+	ret = pthread_mutexattr_init(&a);
+	if (!ret) {
+		ret = pthread_mutexattr_settype(&a, PTHREAD_MUTEX_RECURSIVE);
+		if (!ret)
+			ret = pthread_mutex_init(m, &a);
+		pthread_mutexattr_destroy(&a);
+	}
+	return ret;
 }

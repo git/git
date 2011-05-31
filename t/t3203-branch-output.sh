@@ -12,13 +12,13 @@ test_expect_success 'make commits' '
 '
 
 test_expect_success 'make branches' '
-	git branch branch-one
+	git branch branch-one &&
 	git branch branch-two HEAD^
 '
 
 test_expect_success 'make remote branches' '
-	git update-ref refs/remotes/origin/branch-one branch-one
-	git update-ref refs/remotes/origin/branch-two branch-two
+	git update-ref refs/remotes/origin/branch-one branch-one &&
+	git update-ref refs/remotes/origin/branch-two branch-two &&
 	git symbolic-ref refs/remotes/origin/HEAD refs/remotes/origin/branch-one
 '
 
@@ -72,7 +72,7 @@ cat >expect <<'EOF'
   branch-two
   master
 EOF
-test_expect_success 'git branch shows detached HEAD properly' '
+test_expect_success C_LOCALE_OUTPUT 'git branch shows detached HEAD properly' '
 	git checkout HEAD^0 &&
 	git branch >actual &&
 	test_cmp expect actual

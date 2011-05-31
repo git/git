@@ -1,10 +1,20 @@
 #include "http.h"
 #include "pack.h"
+#include "sideband.h"
+#include "run-command.h"
+#include "url.h"
 
 int data_received;
 int active_requests;
 int http_is_verbose;
+size_t http_post_buffer = 16 * LARGE_PACKET_MAX;
 
+#if LIBCURL_VERSION_NUM >= 0x070a06
+#define LIBCURL_CAN_HANDLE_AUTH_ANY
+#endif
+
+static int min_curl_sessions = 1;
+static int curl_session_count;
 #ifdef USE_CURL_MULTI
 static int max_requests = -1;
 static CURLM *curlm;
@@ -32,6 +42,7 @@ static long curl_low_speed_time = -1;
 static int curl_ftp_no_epsv;
 static const char *curl_http_proxy;
 static char *user_name, *user_pass;
+static const char *user_agent;
 
 #if LIBCURL_VERSION_NUM >= 0x071700
 /* Use CURLOPT_KEYPASSWD as is */
@@ -97,8 +108,6 @@ size_t fwrite_null(const void *ptr, size_t eltsize, size_t nmemb, void *strbuf)
 	return eltsize * nmemb;
 }
 
-static void finish_active_slot(struct active_request_slot *slot);
-
 #ifdef USE_CURL_MULTI
 static void process_curl_messages(void)
 {
@@ -152,6 +161,14 @@ static int http_options(const char *var, const char *value, void *cb)
 			ssl_cert_password_required = 1;
 		return 0;
 	}
+	if (!strcmp("http.minsessions", var)) {
+		min_curl_sessions = git_config_int(var, value);
+#ifndef USE_CURL_MULTI
+		if (min_curl_sessions > 1)
+			min_curl_sessions = 1;
+#endif
+		return 0;
+	}
 #ifdef USE_CURL_MULTI
 	if (!strcmp("http.maxrequests", var)) {
 		max_requests = git_config_int(var, value);
@@ -174,6 +191,16 @@ static int http_options(const char *var, const char *value, void *cb)
 	if (!strcmp("http.proxy", var))
 		return git_config_string(&curl_http_proxy, var, value);
 
+	if (!strcmp("http.postbuffer", var)) {
+		http_post_buffer = git_config_int(var, value);
+		if (http_post_buffer < LARGE_PACKET_MAX)
+			http_post_buffer = LARGE_PACKET_MAX;
+		return 0;
+	}
+
+	if (!strcmp("http.useragent", var))
+		return git_config_string(&user_agent, var, value);
+
 	/* Fall back on the default ones */
 	return git_default_config(var, value, cb);
 }
@@ -183,7 +210,7 @@ static void init_curl_http_auth(CURL *result)
 	if (user_name) {
 		struct strbuf up = STRBUF_INIT;
 		if (!user_pass)
-			user_pass = xstrdup(getpass("Password: "));
+			user_pass = xstrdup(git_getpass("Password: "));
 		strbuf_addf(&up, "%s:%s", user_name, user_pass);
 		curl_easy_setopt(result, CURLOPT_USERPWD,
 				 strbuf_detach(&up, NULL));
@@ -198,7 +225,7 @@ static int has_cert_password(void)
 		return 0;
 	/* Only prompt the user once. */
 	ssl_cert_password_required = -1;
-	ssl_cert_password = getpass("Certificate Password: ");
+	ssl_cert_password = git_getpass("Certificate Password: ");
 	if (ssl_cert_password != NULL) {
 		ssl_cert_password = xstrdup(ssl_cert_password);
 		return 1;
@@ -222,6 +249,9 @@ static CURL *get_curl_handle(void)
 
 #if LIBCURL_VERSION_NUM >= 0x070907
 	curl_easy_setopt(result, CURLOPT_NETRC, CURL_NETRC_OPTIONAL);
+#endif
+#ifdef LIBCURL_CAN_HANDLE_AUTH_ANY
+	curl_easy_setopt(result, CURLOPT_HTTPAUTH, CURLAUTH_ANY);
 #endif
 
 	init_curl_http_auth(result);
@@ -250,11 +280,17 @@ static CURL *get_curl_handle(void)
 	}
 
 	curl_easy_setopt(result, CURLOPT_FOLLOWLOCATION, 1);
+#if LIBCURL_VERSION_NUM >= 0x071301
+	curl_easy_setopt(result, CURLOPT_POSTREDIR, CURL_REDIR_POST_ALL);
+#elif LIBCURL_VERSION_NUM >= 0x071101
+	curl_easy_setopt(result, CURLOPT_POST301, 1);
+#endif
 
 	if (getenv("GIT_CURL_VERBOSE"))
 		curl_easy_setopt(result, CURLOPT_VERBOSE, 1);
 
-	curl_easy_setopt(result, CURLOPT_USERAGENT, GIT_USER_AGENT);
+	curl_easy_setopt(result, CURLOPT_USERAGENT,
+		user_agent ? user_agent : GIT_HTTP_USER_AGENT);
 
 	if (curl_ftp_no_epsv)
 		curl_easy_setopt(result, CURLOPT_FTP_USE_EPSV, 0);
@@ -267,7 +303,7 @@ static CURL *get_curl_handle(void)
 
 static void http_auth_init(const char *url)
 {
-	char *at, *colon, *cp, *slash;
+	char *at, *colon, *cp, *slash, *decoded;
 	int len;
 
 	cp = strstr(url, "://");
@@ -292,16 +328,25 @@ static void http_auth_init(const char *url)
 		user_name = xmalloc(len + 1);
 		memcpy(user_name, cp, len);
 		user_name[len] = '\0';
+		decoded = url_decode(user_name);
+		free(user_name);
+		user_name = decoded;
 		user_pass = NULL;
 	} else {
 		len = colon - cp;
 		user_name = xmalloc(len + 1);
 		memcpy(user_name, cp, len);
 		user_name[len] = '\0';
+		decoded = url_decode(user_name);
+		free(user_name);
+		user_name = decoded;
 		len = at - (colon + 1);
 		user_pass = xmalloc(len + 1);
 		memcpy(user_pass, colon + 1, len);
 		user_pass[len] = '\0';
+		decoded = url_decode(user_pass);
+		free(user_pass);
+		user_pass = decoded;
 	}
 }
 
@@ -355,6 +400,8 @@ void http_init(struct remote *remote)
 #endif
 	set_from_env(&ssl_cainfo, "GIT_SSL_CAINFO");
 
+	set_from_env(&user_agent, "GIT_HTTP_USER_AGENT");
+
 	low_speed_limit = getenv("GIT_HTTP_LOW_SPEED_LIMIT");
 	if (low_speed_limit != NULL)
 		curl_low_speed_limit = strtol(low_speed_limit, NULL, 10);
@@ -365,6 +412,7 @@ void http_init(struct remote *remote)
 	if (curl_ssl_verify == -1)
 		curl_ssl_verify = 1;
 
+	curl_session_count = 0;
 #ifdef USE_CURL_MULTI
 	if (max_requests < 1)
 		max_requests = DEFAULT_MAX_REQUESTS;
@@ -473,6 +521,7 @@ struct active_request_slot *get_active_slot(void)
 #else
 		slot->curl = curl_easy_duphandle(curl_default);
 #endif
+		curl_session_count++;
 	}
 
 	active_requests++;
@@ -487,6 +536,7 @@ struct active_request_slot *get_active_slot(void)
 	curl_easy_setopt(slot->curl, CURLOPT_CUSTOMREQUEST, NULL);
 	curl_easy_setopt(slot->curl, CURLOPT_READFUNCTION, NULL);
 	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, NULL);
+	curl_easy_setopt(slot->curl, CURLOPT_POSTFIELDS, NULL);
 	curl_easy_setopt(slot->curl, CURLOPT_UPLOAD, 0);
 	curl_easy_setopt(slot->curl, CURLOPT_HTTPGET, 1);
 
@@ -551,9 +601,11 @@ void fill_active_slots(void)
 	}
 
 	while (slot != NULL) {
-		if (!slot->in_use && slot->curl != NULL) {
+		if (!slot->in_use && slot->curl != NULL
+			&& curl_session_count > min_curl_sessions) {
 			curl_easy_cleanup(slot->curl);
 			slot->curl = NULL;
+			curl_session_count--;
 		}
 		slot = slot->next;
 	}
@@ -623,22 +675,23 @@ static void closedown_active_slot(struct active_request_slot *slot)
 	slot->in_use = 0;
 }
 
-void release_active_slot(struct active_request_slot *slot)
+static void release_active_slot(struct active_request_slot *slot)
 {
 	closedown_active_slot(slot);
-	if (slot->curl) {
+	if (slot->curl && curl_session_count > min_curl_sessions) {
 #ifdef USE_CURL_MULTI
 		curl_multi_remove_handle(curlm, slot->curl);
 #endif
 		curl_easy_cleanup(slot->curl);
 		slot->curl = NULL;
+		curl_session_count--;
 	}
 #ifdef USE_CURL_MULTI
 	fill_active_slots();
 #endif
 }
 
-static void finish_active_slot(struct active_request_slot *slot)
+void finish_active_slot(struct active_request_slot *slot)
 {
 	closedown_active_slot(slot);
 	curl_easy_getinfo(slot->curl, CURLINFO_HTTP_CODE, &slot->http_code);
@@ -691,13 +744,6 @@ static inline int hex(int v)
 		return 'A' + v - 10;
 }
 
-static void end_url_with_slash(struct strbuf *buf, const char *url)
-{
-	strbuf_addstr(buf, url);
-	if (buf->len && buf->buf[buf->len - 1] != '/')
-		strbuf_addstr(buf, "/");
-}
-
 static char *quote_ref_url(const char *base, const char *ref)
 {
 	struct strbuf buf = STRBUF_INIT;
@@ -719,7 +765,9 @@ void append_remote_object_url(struct strbuf *buf, const char *url,
 			      const char *hex,
 			      int only_two_digit_prefix)
 {
-	strbuf_addf(buf, "%s/objects/%.*s/", url, 2, hex);
+	end_url_with_slash(buf, url);
+
+	strbuf_addf(buf, "objects/%.*s/", 2, hex);
 	if (!only_two_digit_prefix)
 		strbuf_addf(buf, "%s", hex+2);
 }
@@ -784,7 +832,21 @@ static int http_request(const char *url, void *result, int target, int options)
 			ret = HTTP_OK;
 		else if (missing_target(&results))
 			ret = HTTP_MISSING_TARGET;
-		else
+		else if (results.http_code == 401) {
+			if (user_name) {
+				ret = HTTP_NOAUTH;
+			} else {
+				/*
+				 * git_getpass is needed here because its very likely stdin/stdout are
+				 * pipes to our parent process.  So we instead need to use /dev/tty,
+				 * but that is non-portable.  Using git_getpass() can at least be stubbed
+				 * on other platforms with a different implementation if/when necessary.
+				 */
+				user_name = xstrdup(git_getpass("Username: "));
+				init_curl_http_auth(slot->curl);
+				ret = HTTP_REAUTH;
+			}
+		} else
 			ret = HTTP_ERROR;
 	} else {
 		error("Unable to start HTTP request for %s", url);
@@ -800,10 +862,20 @@ static int http_request(const char *url, void *result, int target, int options)
 
 int http_get_strbuf(const char *url, struct strbuf *result, int options)
 {
-	return http_request(url, result, HTTP_REQUEST_STRBUF, options);
+	int http_ret = http_request(url, result, HTTP_REQUEST_STRBUF, options);
+	if (http_ret == HTTP_REAUTH) {
+		http_ret = http_request(url, result, HTTP_REQUEST_STRBUF, options);
+	}
+	return http_ret;
 }
 
-int http_get_file(const char *url, const char *filename, int options)
+/*
+ * Downloads an url and stores the result in the given file.
+ *
+ * If a previous interrupted download is detected (i.e. a previous temporary
+ * file is still around) the download is resumed.
+ */
+static int http_get_file(const char *url, const char *filename, int options)
 {
 	int ret;
 	struct strbuf tmpfile = STRBUF_INIT;
@@ -859,58 +931,67 @@ int http_fetch_ref(const char *base, struct ref *ref)
 }
 
 /* Helpers for fetching packs */
-static int fetch_pack_index(unsigned char *sha1, const char *base_url)
+static char *fetch_pack_index(unsigned char *sha1, const char *base_url)
 {
-	int ret = 0;
-	char *hex = xstrdup(sha1_to_hex(sha1));
-	char *filename;
-	char *url;
+	char *url, *tmp;
 	struct strbuf buf = STRBUF_INIT;
 
-	/* Don't use the index if the pack isn't there */
-	end_url_with_slash(&buf, base_url);
-	strbuf_addf(&buf, "objects/pack/pack-%s.pack", hex);
-	url = strbuf_detach(&buf, 0);
-
-	if (http_get_strbuf(url, NULL, 0)) {
-		ret = error("Unable to verify pack %s is available",
-			    hex);
-		goto cleanup;
-	}
-
-	if (has_pack_index(sha1)) {
-		ret = 0;
-		goto cleanup;
-	}
-
 	if (http_is_verbose)
-		fprintf(stderr, "Getting index for pack %s\n", hex);
+		fprintf(stderr, "Getting index for pack %s\n", sha1_to_hex(sha1));
 
 	end_url_with_slash(&buf, base_url);
-	strbuf_addf(&buf, "objects/pack/pack-%s.idx", hex);
+	strbuf_addf(&buf, "objects/pack/pack-%s.idx", sha1_to_hex(sha1));
 	url = strbuf_detach(&buf, NULL);
 
-	filename = sha1_pack_index_name(sha1);
-	if (http_get_file(url, filename, 0) != HTTP_OK)
-		ret = error("Unable to get pack index %s\n", url);
+	strbuf_addf(&buf, "%s.temp", sha1_pack_index_name(sha1));
+	tmp = strbuf_detach(&buf, NULL);
 
-cleanup:
-	free(hex);
+	if (http_get_file(url, tmp, 0) != HTTP_OK) {
+		error("Unable to get pack index %s\n", url);
+		free(tmp);
+		tmp = NULL;
+	}
+
 	free(url);
-	return ret;
+	return tmp;
 }
 
 static int fetch_and_setup_pack_index(struct packed_git **packs_head,
 	unsigned char *sha1, const char *base_url)
 {
 	struct packed_git *new_pack;
+	char *tmp_idx = NULL;
+	int ret;
 
-	if (fetch_pack_index(sha1, base_url))
+	if (has_pack_index(sha1)) {
+		new_pack = parse_pack_index(sha1, NULL);
+		if (!new_pack)
+			return -1; /* parse_pack_index() already issued error message */
+		goto add_pack;
+	}
+
+	tmp_idx = fetch_pack_index(sha1, base_url);
+	if (!tmp_idx)
 		return -1;
 
-	new_pack = parse_pack_index(sha1);
-	if (!new_pack)
+	new_pack = parse_pack_index(sha1, tmp_idx);
+	if (!new_pack) {
+		unlink(tmp_idx);
+		free(tmp_idx);
+
 		return -1; /* parse_pack_index() already issued error message */
+	}
+
+	ret = verify_pack_index(new_pack);
+	if (!ret) {
+		close_pack_index(new_pack);
+		ret = move_temp_to_file(tmp_idx, sha1_pack_index_name(sha1));
+	}
+	free(tmp_idx);
+	if (ret)
+		return -1;
+
+add_pack:
 	new_pack->next = *packs_head;
 	*packs_head = new_pack;
 	return 0;
@@ -974,38 +1055,62 @@ void release_http_pack_request(struct http_pack_request *preq)
 
 int finish_http_pack_request(struct http_pack_request *preq)
 {
-	int ret;
 	struct packed_git **lst;
+	struct packed_git *p = preq->target;
+	char *tmp_idx;
+	struct child_process ip;
+	const char *ip_argv[8];
 
-	preq->target->pack_size = ftell(preq->packfile);
+	close_pack_index(p);
 
-	if (preq->packfile != NULL) {
-		fclose(preq->packfile);
-		preq->packfile = NULL;
-		preq->slot->local = NULL;
-	}
-
-	ret = move_temp_to_file(preq->tmpfile, preq->filename);
-	if (ret)
-		return ret;
+	fclose(preq->packfile);
+	preq->packfile = NULL;
+	preq->slot->local = NULL;
 
 	lst = preq->lst;
-	while (*lst != preq->target)
+	while (*lst != p)
 		lst = &((*lst)->next);
 	*lst = (*lst)->next;
 
-	if (verify_pack(preq->target))
-		return -1;
-	install_packed_git(preq->target);
+	tmp_idx = xstrdup(preq->tmpfile);
+	strcpy(tmp_idx + strlen(tmp_idx) - strlen(".pack.temp"),
+	       ".idx.temp");
 
+	ip_argv[0] = "index-pack";
+	ip_argv[1] = "-o";
+	ip_argv[2] = tmp_idx;
+	ip_argv[3] = preq->tmpfile;
+	ip_argv[4] = NULL;
+
+	memset(&ip, 0, sizeof(ip));
+	ip.argv = ip_argv;
+	ip.git_cmd = 1;
+	ip.no_stdin = 1;
+	ip.no_stdout = 1;
+
+	if (run_command(&ip)) {
+		unlink(preq->tmpfile);
+		unlink(tmp_idx);
+		free(tmp_idx);
+		return -1;
+	}
+
+	unlink(sha1_pack_index_name(p->sha1));
+
+	if (move_temp_to_file(preq->tmpfile, sha1_pack_name(p->sha1))
+	 || move_temp_to_file(tmp_idx, sha1_pack_index_name(p->sha1))) {
+		free(tmp_idx);
+		return -1;
+	}
+
+	install_packed_git(p);
+	free(tmp_idx);
 	return 0;
 }
 
 struct http_pack_request *new_http_pack_request(
 	struct packed_git *target, const char *base_url)
 {
-	char *url;
-	char *filename;
 	long prev_posn = 0;
 	char range[RANGE_HEADER_SIZE];
 	struct strbuf buf = STRBUF_INIT;
@@ -1018,12 +1123,10 @@ struct http_pack_request *new_http_pack_request(
 	end_url_with_slash(&buf, base_url);
 	strbuf_addf(&buf, "objects/pack/pack-%s.pack",
 		sha1_to_hex(target->sha1));
-	url = strbuf_detach(&buf, NULL);
-	preq->url = xstrdup(url);
+	preq->url = strbuf_detach(&buf, NULL);
 
-	filename = sha1_pack_name(target->sha1);
-	snprintf(preq->filename, sizeof(preq->filename), "%s", filename);
-	snprintf(preq->tmpfile, sizeof(preq->tmpfile), "%s.temp", filename);
+	snprintf(preq->tmpfile, sizeof(preq->tmpfile), "%s.temp",
+		sha1_pack_name(target->sha1));
 	preq->packfile = fopen(preq->tmpfile, "a");
 	if (!preq->packfile) {
 		error("Unable to open local file %s for pack",
@@ -1035,7 +1138,7 @@ struct http_pack_request *new_http_pack_request(
 	preq->slot->local = preq->packfile;
 	curl_easy_setopt(preq->slot->curl, CURLOPT_FILE, preq->packfile);
 	curl_easy_setopt(preq->slot->curl, CURLOPT_WRITEFUNCTION, fwrite);
-	curl_easy_setopt(preq->slot->curl, CURLOPT_URL, url);
+	curl_easy_setopt(preq->slot->curl, CURLOPT_URL, preq->url);
 	curl_easy_setopt(preq->slot->curl, CURLOPT_HTTPHEADER,
 		no_pragma_header);
 
@@ -1058,7 +1161,8 @@ struct http_pack_request *new_http_pack_request(
 	return preq;
 
 abort:
-	free(filename);
+	free(preq->url);
+	free(preq);
 	return NULL;
 }
 
@@ -1098,7 +1202,6 @@ struct http_object_request *new_http_object_request(const char *base_url,
 	char *hex = sha1_to_hex(sha1);
 	char *filename;
 	char prevfile[PATH_MAX];
-	char *url;
 	int prevlocal;
 	unsigned char prev_buf[PREV_BUF_SIZE];
 	ssize_t prev_read = 0;
@@ -1112,7 +1215,6 @@ struct http_object_request *new_http_object_request(const char *base_url,
 	freq->localfile = -1;
 
 	filename = sha1_file_name(sha1);
-	snprintf(freq->filename, sizeof(freq->filename), "%s", filename);
 	snprintf(freq->tmpfile, sizeof(freq->tmpfile),
 		 "%s.temp", filename);
 
@@ -1141,8 +1243,8 @@ struct http_object_request *new_http_object_request(const char *base_url,
 	}
 
 	if (freq->localfile < 0) {
-		error("Couldn't create temporary file %s for %s: %s",
-		      freq->tmpfile, freq->filename, strerror(errno));
+		error("Couldn't create temporary file %s: %s",
+		      freq->tmpfile, strerror(errno));
 		goto abort;
 	}
 
@@ -1152,8 +1254,7 @@ struct http_object_request *new_http_object_request(const char *base_url,
 
 	git_SHA1_Init(&freq->c);
 
-	url = get_remote_object_url(base_url, hex, 0);
-	freq->url = xstrdup(url);
+	freq->url = get_remote_object_url(base_url, hex, 0);
 
 	/*
 	 * If a previous temp file is present, process what was already
@@ -1189,7 +1290,11 @@ struct http_object_request *new_http_object_request(const char *base_url,
 		if (prev_posn>0) {
 			prev_posn = 0;
 			lseek(freq->localfile, 0, SEEK_SET);
-			ftruncate(freq->localfile, 0);
+			if (ftruncate(freq->localfile, 0) < 0) {
+				error("Couldn't truncate temporary file %s: %s",
+					  freq->tmpfile, strerror(errno));
+				goto abort;
+			}
 		}
 	}
 
@@ -1198,7 +1303,7 @@ struct http_object_request *new_http_object_request(const char *base_url,
 	curl_easy_setopt(freq->slot->curl, CURLOPT_FILE, freq);
 	curl_easy_setopt(freq->slot->curl, CURLOPT_WRITEFUNCTION, fwrite_sha1_file);
 	curl_easy_setopt(freq->slot->curl, CURLOPT_ERRORBUFFER, freq->errorstr);
-	curl_easy_setopt(freq->slot->curl, CURLOPT_URL, url);
+	curl_easy_setopt(freq->slot->curl, CURLOPT_URL, freq->url);
 	curl_easy_setopt(freq->slot->curl, CURLOPT_HTTPHEADER, no_pragma_header);
 
 	/*
@@ -1218,9 +1323,9 @@ struct http_object_request *new_http_object_request(const char *base_url,
 
 	return freq;
 
-	free(url);
 abort:
 	free(filename);
+	free(freq->url);
 	free(freq);
 	return NULL;
 }
@@ -1244,7 +1349,7 @@ int finish_http_object_request(struct http_object_request *freq)
 	process_http_object_request(freq);
 
 	if (freq->http_code == 416) {
-		fprintf(stderr, "Warning: requested range invalid; we may already have all the data.\n");
+		warning("requested range invalid; we may already have all the data.");
 	} else if (freq->curl_result != CURLE_OK) {
 		if (stat(freq->tmpfile, &st) == 0)
 			if (st.st_size == 0)
@@ -1263,7 +1368,7 @@ int finish_http_object_request(struct http_object_request *freq)
 		return -1;
 	}
 	freq->rename =
-		move_temp_to_file(freq->tmpfile, freq->filename);
+		move_temp_to_file(freq->tmpfile, sha1_file_name(freq->sha1));
 
 	return freq->rename;
 }
@@ -1285,5 +1390,10 @@ void release_http_object_request(struct http_object_request *freq)
 		free(freq->url);
 		freq->url = NULL;
 	}
-	freq->slot = NULL;
+	if (freq->slot != NULL) {
+		freq->slot->callback_func = NULL;
+		freq->slot->callback_data = NULL;
+		release_active_slot(freq->slot);
+		freq->slot = NULL;
+	}
 }

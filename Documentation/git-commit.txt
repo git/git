@@ -8,10 +8,11 @@ git-commit - Record changes to the repository
 SYNOPSIS
 --------
 [verse]
-'git commit' [-a | --interactive] [-s] [-v] [-u<mode>] [--amend]
-	   [(-c | -C) <commit>] [-F <file> | -m <msg>]
-	   [--allow-empty] [--no-verify] [-e] [--author=<author>]
-	   [--cleanup=<mode>] [--] [[-i | -o ]<file>...]
+'git commit' [-a | --interactive] [-s] [-v] [-u<mode>] [--amend] [--dry-run]
+	   [(-c | -C | --fixup | --squash) <commit>] [-F <file> | -m <msg>]
+	   [--reset-author] [--allow-empty] [--allow-empty-message] [--no-verify]
+	   [-e] [--author=<author>] [--date=<date>] [--cleanup=<mode>]
+	   [--status | --no-status] [-i | -o] [--] [<file>...]
 
 DESCRIPTION
 -----------
@@ -20,11 +21,11 @@ with a log message from the user describing the changes.
 
 The content to be added can be specified in several ways:
 
-1. by using 'git-add' to incrementally "add" changes to the
+1. by using 'git add' to incrementally "add" changes to the
    index before using the 'commit' command (Note: even modified
    files must be "added");
 
-2. by using 'git-rm' to remove files from the working tree
+2. by using 'git rm' to remove files from the working tree
    and the index, again before using the 'commit' command;
 
 3. by listing files as arguments to the 'commit' command, in which
@@ -40,15 +41,14 @@ The content to be added can be specified in several ways:
 
 5. by using the --interactive switch with the 'commit' command to decide one
    by one which files should be part of the commit, before finalizing the
-   operation.  Currently, this is done by invoking 'git-add --interactive'.
+   operation.  Currently, this is done by invoking 'git add --interactive'.
 
-The 'git-status' command can be used to obtain a
+The `--dry-run` option can be used to obtain a
 summary of what is included by any of the above for the next
-commit by giving the same set of parameters you would give to
-this command.
+commit by giving the same set of parameters (options and paths).
 
 If you make a commit and then find a mistake immediately after
-that, you can recover from it with 'git-reset'.
+that, you can recover from it with 'git reset'.
 
 
 OPTIONS
@@ -70,16 +70,53 @@ OPTIONS
 	Like '-C', but with '-c' the editor is invoked, so that
 	the user can further edit the commit message.
 
+--fixup=<commit>::
+	Construct a commit message for use with `rebase --autosquash`.
+	The commit message will be the subject line from the specified
+	commit with a prefix of "fixup! ".  See linkgit:git-rebase[1]
+	for details.
+
+--squash=<commit>::
+	Construct a commit message for use with `rebase --autosquash`.
+	The commit message subject line is taken from the specified
+	commit with a prefix of "squash! ".  Can be used with additional
+	commit message options (`-m`/`-c`/`-C`/`-F`). See
+	linkgit:git-rebase[1] for details.
+
+--reset-author::
+	When used with -C/-c/--amend options, or when committing after a
+	a conflicting cherry-pick, declare that the authorship of the
+	resulting commit now belongs of the committer. This also renews
+	the author timestamp.
+
+--short::
+	When doing a dry-run, give the output in the short-format. See
+	linkgit:git-status[1] for details. Implies `--dry-run`.
+
+--porcelain::
+	When doing a dry-run, give the output in a porcelain-ready
+	format. See linkgit:git-status[1] for details. Implies
+	`--dry-run`.
+
+-z::
+	When showing `short` or `porcelain` status output, terminate
+	entries in the status output with NUL, instead of LF. If no
+	format is given, implies the `--porcelain` output format.
+
 -F <file>::
 --file=<file>::
 	Take the commit message from the given file.  Use '-' to
 	read the message from the standard input.
 
 --author=<author>::
-	Override the author name used in the commit.  You can use the
-	standard `A U Thor <author@example.com>` format.  Otherwise,
-	an existing commit that matches the given string and its author
-	name is used.
+	Override the commit author. Specify an explicit author using the
+	standard `A U Thor <author@example.com>` format. Otherwise <author>
+	is assumed to be a pattern and is used to search for an existing
+	commit by that author (i.e. rev-list --all -i --author=<author>);
+	the commit author is then copied from the first such commit found.
+
+--date=<date>::
+	Override the author date used in the commit.
 
 -m <msg>::
 --message=<msg>::
@@ -107,7 +144,13 @@ OPTIONS
 	Usually recording a commit that has the exact same tree as its
 	sole parent commit is a mistake, and the command prevents you
 	from making such a commit.  This option bypasses the safety, and
-	is primarily for use by foreign scm interface scripts.
+	is primarily for use by foreign SCM interface scripts.
+
+--allow-empty-message::
+       Like --allow-empty this command is primarily for use by foreign
+       SCM interface scripts. It allows you to create a commit with an
+       empty commit message without using plumbing commands like
+       linkgit:git-commit-tree[1].
 
 --cleanup=<mode>::
 	This option sets how the commit message is cleaned up.
@@ -163,7 +206,7 @@ FROM UPSTREAM REBASE" section in linkgit:git-rebase[1].)
 	Make a commit only from the paths specified on the
 	command line, disregarding any contents that have been
 	staged so far. This is the default mode of operation of
-	'git-commit' if any paths are given on the command line,
+	'git commit' if any paths are given on the command line,
 	in which case this option can be omitted.
 	If this option is specified together with '--amend', then
 	no paths need to be specified, which can be used to amend
@@ -172,20 +215,20 @@ FROM UPSTREAM REBASE" section in linkgit:git-rebase[1].)
 
 -u[<mode>]::
 --untracked-files[=<mode>]::
-	Show untracked files (Default: 'all').
+	Show untracked files.
 +
-The mode parameter is optional, and is used to specify
-the handling of untracked files. The possible options are:
+The mode parameter is optional (defaults to 'all'), and is used to
+specify the handling of untracked files; when -u is not used, the
+default is 'normal', i.e. show untracked files and directories.
 +
---
+The possible options are:
++
 	- 'no'     - Show no untracked files
 	- 'normal' - Shows untracked files and directories
 	- 'all'    - Also shows individual files in untracked directories.
---
 +
-See linkgit:git-config[1] for configuration variable
-used to change the default for when the option is not
-specified.
+The default can be changed using the status.showUntrackedFiles
+configuration variable documented in linkgit:git-config[1].
 
 -v::
 --verbose::
@@ -198,6 +241,22 @@ specified.
 --quiet::
 	Suppress commit summary message.
 
+--dry-run::
+	Do not create a commit, but show a list of paths that are
+	to be committed, paths with local changes that will be left
+	uncommitted and paths that are untracked.
+
+--status::
+	Include the output of linkgit:git-status[1] in the commit
+	message template when using an editor to prepare the commit
+	message.  Defaults to on, but can be used to override
+	configuration variable commit.status.
+
+--no-status::
+	Do not include the output of linkgit:git-status[1] in the
+	commit message template when using an editor to prepare the
+	default commit message.
+
 \--::
 	Do not interpret any more arguments as options.
 
@@ -208,15 +267,17 @@ specified.
 	these files are also staged for the next commit on top
 	of what have been staged before.
 
+:git-commit: 1
+include::date-formats.txt[]
 
 EXAMPLES
 --------
 When recording your own work, the contents of modified files in
 your working tree are temporarily stored to a staging area
-called the "index" with 'git-add'.  A file can be
+called the "index" with 'git add'.  A file can be
 reverted back, only in the index but not in the working tree,
 to that of the last commit with `git reset HEAD -- <file>`,
-which effectively reverts 'git-add' and prevents the changes to
+which effectively reverts 'git add' and prevents the changes to
 this file from participating in the next commit.  After building
 the state to be committed incrementally with these commands,
 `git commit` (without any pathname parameter) is used to record what
@@ -272,13 +333,13 @@ $ git commit
 this second commit would record the changes to `hello.c` and
 `hello.h` as expected.
 
-After a merge (initiated by 'git-merge' or 'git-pull') stops
+After a merge (initiated by 'git merge' or 'git pull') stops
 because of conflicts, cleanly merged
 paths are already staged to be committed for you, and paths that
 conflicted are left in unmerged state.  You would have to first
-check which paths are conflicting with 'git-status'
+check which paths are conflicting with 'git status'
 and after fixing them manually in your working tree, you would
-stage the result as usual with 'git-add':
+stage the result as usual with 'git add':
 
 ------------
 $ git status | grep unmerged
@@ -319,7 +380,7 @@ ENVIRONMENT AND CONFIGURATION VARIABLES
 The editor used to edit the commit log message will be chosen from the
 GIT_EDITOR environment variable, the core.editor configuration variable, the
 VISUAL environment variable, or the EDITOR environment variable (in that
-order).
+order).  See linkgit:git-var[1] for details.
 
 HOOKS
 -----
@@ -335,12 +396,6 @@ linkgit:git-rm[1],
 linkgit:git-mv[1],
 linkgit:git-merge[1],
 linkgit:git-commit-tree[1]
-
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org> and
-Junio C Hamano <gitster@pobox.com>
-
 
 GIT
 ---

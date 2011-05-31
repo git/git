@@ -14,12 +14,14 @@ endif::git-format-patch[]
 
 ifdef::git-format-patch[]
 -p::
-	Generate patches without diffstat.
+--no-stat::
+	Generate plain patches without any diffstats.
 endif::git-format-patch[]
 
 ifndef::git-format-patch[]
 -p::
 -u::
+--patch::
 	Generate patch (see section on generating patches).
 	{git-diff? This is the default.}
 endif::git-format-patch[]
@@ -27,58 +29,84 @@ endif::git-format-patch[]
 -U<n>::
 --unified=<n>::
 	Generate diffs with <n> lines of context instead of
-	the usual three. Implies "-p".
+	the usual three.
+ifndef::git-format-patch[]
+	Implies `-p`.
+endif::git-format-patch[]
 
+ifndef::git-format-patch[]
 --raw::
 	Generate the raw format.
 	{git-diff-core? This is the default.}
+endif::git-format-patch[]
 
+ifndef::git-format-patch[]
 --patch-with-raw::
-	Synonym for "-p --raw".
+	Synonym for `-p --raw`.
+endif::git-format-patch[]
 
 --patience::
 	Generate a diff using the "patience diff" algorithm.
 
---stat[=width[,name-width]]::
+--stat[=<width>[,<name-width>]]::
 	Generate a diffstat.  You can override the default
-	output width for 80-column terminal by "--stat=width".
+	output width for 80-column terminal by `--stat=<width>`.
 	The width of the filename part can be controlled by
 	giving another width to it separated by a comma.
 
 --numstat::
-	Similar to \--stat, but shows number of added and
+	Similar to `\--stat`, but shows number of added and
 	deleted lines in decimal notation and pathname without
 	abbreviation, to make it more machine friendly.  For
 	binary files, outputs two `-` instead of saying
 	`0 0`.
 
 --shortstat::
-	Output only the last line of the --stat format containing total
+	Output only the last line of the `--stat` format containing total
 	number of modified files, as well as number of added and deleted
 	lines.
 
---dirstat[=limit]::
+--dirstat[=<limit>]::
 	Output the distribution of relative amount of changes (number of lines added or
 	removed) for each sub-directory. Directories with changes below
 	a cut-off percent (3% by default) are not shown. The cut-off percent
-	can be set with "--dirstat=limit". Changes in a child directory is not
-	counted for the parent directory, unless "--cumulative" is used.
+	can be set with `--dirstat=<limit>`. Changes in a child directory are not
+	counted for the parent directory, unless `--cumulative` is used.
++
+Note that the `--dirstat` option computes the changes while ignoring
+the amount of pure code movements within a file.  In other words,
+rearranging lines in a file is not counted as much as other changes.
 
---dirstat-by-file[=limit]::
-	Same as --dirstat, but counts changed files instead of lines.
+--dirstat-by-file[=<limit>]::
+	Same as `--dirstat`, but counts changed files instead of lines.
 
 --summary::
 	Output a condensed summary of extended header information
 	such as creations, renames and mode changes.
 
+ifndef::git-format-patch[]
 --patch-with-stat::
-	Synonym for "-p --stat".
-	{git-format-patch? This is the default.}
+	Synonym for `-p --stat`.
+endif::git-format-patch[]
+
+ifndef::git-format-patch[]
 
 -z::
-	NUL-line termination on output.  This affects the --raw
-	output field terminator.  Also output from commands such
-	as "git-log" will be delimited with NUL between commits.
+ifdef::git-log[]
+	Separate the commits with NULs instead of with new newlines.
++
+Also, when `--raw` or `--numstat` has been given, do not munge
+pathnames and use NULs as output field terminators.
+endif::git-log[]
+ifndef::git-log[]
+	When `--raw`, `--numstat`, `--name-only` or `--name-status` has been
+	given, do not munge pathnames and use NULs as output field terminators.
+endif::git-log[]
++
+Without this option, each pathname output will have TAB, LF, double quotes,
+and backslash characters replaced with `\t`, `\n`, `\"`, and `\\`,
+respectively, and the pathname will be enclosed in double quotes if
+any of those replacements occurred.
 
 --name-only::
 	Show only names of changed files.
@@ -87,18 +115,62 @@ endif::git-format-patch[]
 	Show only names and status of changed files. See the description
 	of the `--diff-filter` option on what the status letters mean.
 
---color::
+--submodule[=<format>]::
+	Chose the output format for submodule differences. <format> can be one of
+	'short' and 'log'. 'short' just shows pairs of commit names, this format
+	is used when this option is not given. 'log' is the default value for this
+	option and lists the commits in that commit range like the 'summary'
+	option of linkgit:git-submodule[1] does.
+
+--color[=<when>]::
 	Show colored diff.
+	The value must be `always` (the default for `<when>`), `never`, or `auto`.
+	The default value is `never`.
+ifdef::git-diff[]
+	It can be changed by the `color.ui` and `color.diff`
+	configuration settings.
+endif::git-diff[]
 
 --no-color::
-	Turn off colored diff, even when the configuration file
-	gives the default to color output.
+	Turn off colored diff.
+ifdef::git-diff[]
+	This can be used to override configuration settings.
+endif::git-diff[]
+	It is the same as `--color=never`.
 
---color-words[=<regex>]::
-	Show colored word diff, i.e., color words which have changed.
-	By default, words are separated by whitespace.
+--word-diff[=<mode>]::
+	Show a word diff, using the <mode> to delimit changed words.
+	By default, words are delimited by whitespace; see
+	`--word-diff-regex` below.  The <mode> defaults to 'plain', and
+	must be one of:
 +
-When a <regex> is specified, every non-overlapping match of the
+--
+color::
+	Highlight changed words using only colors.  Implies `--color`.
+plain::
+	Show words as `[-removed-]` and `{+added+}`.  Makes no
+	attempts to escape the delimiters if they appear in the input,
+	so the output may be ambiguous.
+porcelain::
+	Use a special line-based format intended for script
+	consumption.  Added/removed/unchanged runs are printed in the
+	usual unified diff format, starting with a `+`/`-`/` `
+	character at the beginning of the line and extending to the
+	end of the line.  Newlines in the input are represented by a
+	tilde `~` on a line of its own.
+none::
+	Disable word diff again.
+--
++
+Note that despite the name of the first mode, color is used to
+highlight the changed parts in all modes if enabled.
+
+--word-diff-regex=<regex>::
+	Use <regex> to decide what a word is, instead of considering
+	runs of non-whitespace to be a word.  Also implies
+	`--word-diff` unless it was already enabled.
++
+Every non-overlapping match of the
 <regex> is considered a word.  Anything between these matches is
 considered whitespace and ignored(!) for the purposes of finding
 differences.  You may want to append `|[^[:space:]]` to your regular
@@ -111,15 +183,22 @@ linkgit:gitattributes[1] or linkgit:git-config[1].  Giving it explicitly
 overrides any diff driver or configuration setting.  Diff drivers
 override configuration settings.
 
+--color-words[=<regex>]::
+	Equivalent to `--word-diff=color` plus (if a regex was
+	specified) `--word-diff-regex=<regex>`.
+endif::git-format-patch[]
+
 --no-renames::
 	Turn off rename detection, even when the configuration
 	file gives the default to do so.
 
+ifndef::git-format-patch[]
 --check::
 	Warn if changes introduce trailing whitespace
 	or an indent that uses a space before a tab. Exits with
 	non-zero status if problems are found. Not compatible with
 	--exit-code.
+endif::git-format-patch[]
 
 --full-index::
 	Instead of the first handful of characters, show the full
@@ -127,37 +206,60 @@ override configuration settings.
 	line when generating patch format output.
 
 --binary::
-	In addition to --full-index, output "binary diff" that
-	can be applied with "git apply".
+	In addition to `--full-index`, output a binary diff that
+	can be applied with `git-apply`.
 
 --abbrev[=<n>]::
 	Instead of showing the full 40-byte hexadecimal object
 	name in diff-raw format output and diff-tree header
 	lines, show only a partial prefix.  This is
-	independent of --full-index option above, which controls
+	independent of the `--full-index` option above, which controls
 	the diff-patch output format.  Non default number of
-	digits can be specified with --abbrev=<n>.
+	digits can be specified with `--abbrev=<n>`.
 
--B::
-	Break complete rewrite changes into pairs of delete and create.
+-B[<n>][/<m>]::
+--break-rewrites[=[<n>][/<m>]]::
+	Break complete rewrite changes into pairs of delete and
+	create. This serves two purposes:
++
+It affects the way a change that amounts to a total rewrite of a file
+not as a series of deletion and insertion mixed together with a very
+few lines that happen to match textually as the context, but as a
+single deletion of everything old followed by a single insertion of
+everything new, and the number `m` controls this aspect of the -B
+option (defaults to 60%). `-B/70%` specifies that less than 30% of the
+original should remain in the result for git to consider it a total
+rewrite (i.e. otherwise the resulting patch will be a series of
+deletion and insertion mixed together with context lines).
++
+When used with -M, a totally-rewritten file is also considered as the
+source of a rename (usually -M only considers a file that disappeared
+as the source of a rename), and the number `n` controls this aspect of
+the -B option (defaults to 50%). `-B20%` specifies that a change with
+addition and deletion compared to 20% or more of the file's size are
+eligible for being picked up as a possible source of a rename to
+another file.
 
--M::
+-M[<n>]::
+--find-renames[=<n>]::
+ifndef::git-log[]
 	Detect renames.
+endif::git-log[]
+ifdef::git-log[]
+	If generating diffs, detect and report renames for each commit.
+	For following files across renames while traversing history, see
+	`--follow`.
+endif::git-log[]
+	If `n` is specified, it is a threshold on the similarity
+	index (i.e. amount of addition/deletions compared to the
+	file's size). For example, `-M90%` means git should consider a
+	delete/add pair to be a rename if more than 90% of the file
+	hasn't changed.
 
--C::
+-C[<n>]::
+--find-copies[=<n>]::
 	Detect copies as well as renames.  See also `--find-copies-harder`.
-
---diff-filter=[ACDMRTUXB*]::
-	Select only files that are Added (`A`), Copied (`C`),
-	Deleted (`D`), Modified (`M`), Renamed (`R`), have their
-	type (i.e. regular file, symlink, submodule, ...) changed (`T`),
-	are Unmerged (`U`), are
-	Unknown (`X`), or have had their pairing Broken (`B`).
-	Any combination of the filter characters may be used.
-	When `*` (All-or-none) is added to the combination, all
-	paths are selected if there is any file that matches
-	other criteria in the comparison; if there is no file
-	that matches other criteria, nothing is selected.
+	If `n` is specified, it has the same meaning as for `-M<n>`.
 
 --find-copies-harder::
 	For performance reasons, by default, `-C` option finds copies only
@@ -169,11 +271,24 @@ override configuration settings.
 	`-C` option has the same effect.
 
 -l<num>::
-	-M and -C options require O(n^2) processing time where n
+	The `-M` and `-C` options require O(n^2) processing time where n
 	is the number of potential rename/copy targets.  This
 	option prevents rename/copy detection from running if
 	the number of rename/copy targets exceeds the specified
 	number.
+
+ifndef::git-format-patch[]
+--diff-filter=[(A|C|D|M|R|T|U|X|B)...[*]]::
+	Select only files that are Added (`A`), Copied (`C`),
+	Deleted (`D`), Modified (`M`), Renamed (`R`), have their
+	type (i.e. regular file, symlink, submodule, ...) changed (`T`),
+	are Unmerged (`U`), are
+	Unknown (`X`), or have had their pairing Broken (`B`).
+	Any combination of the filter characters (including none) can be used.
+	When `*` (All-or-none) is added to the combination, all
+	paths are selected if there is any file that matches
+	other criteria in the comparison; if there is no file
+	that matches other criteria, nothing is selected.
 
 -S<string>::
 	Look for differences that introduce or remove an instance of
@@ -181,19 +296,25 @@ override configuration settings.
 	appearing in diff output; see the 'pickaxe' entry in
 	linkgit:gitdiffcore[7] for more details.
 
+-G<regex>::
+	Look for differences whose added or removed line matches
+	the given <regex>.
+
 --pickaxe-all::
-	When -S finds a change, show all the changes in that
+	When `-S` or `-G` finds a change, show all the changes in that
 	changeset, not just the files that contain the change
 	in <string>.
 
 --pickaxe-regex::
 	Make the <string> not a plain string but an extended POSIX
 	regex to match.
+endif::git-format-patch[]
 
 -O<orderfile>::
 	Output the patch in the order specified in the
 	<orderfile>, which has one shell glob pattern per line.
 
+ifndef::git-format-patch[]
 -R::
 	Swap two inputs; that is, show differences from index or
 	on-disk file to tree contents.
@@ -205,6 +326,7 @@ override configuration settings.
 	not in a subdirectory (e.g. in a bare repository), you
 	can name which subdirectory to make the output relative
 	to by giving a <path> as an argument.
+endif::git-format-patch[]
 
 -a::
 --text::
@@ -229,13 +351,15 @@ override configuration settings.
 	Show the context between diff hunks, up to the specified number
 	of lines, thereby fusing hunks that are close to each other.
 
+ifndef::git-format-patch[]
 --exit-code::
 	Make the program exit with codes similar to diff(1).
 	That is, it exits with 1 if there were differences and
 	0 means no differences.
 
 --quiet::
-	Disable all output of the program. Implies --exit-code.
+	Disable all output of the program. Implies `--exit-code`.
+endif::git-format-patch[]
 
 --ext-diff::
 	Allow an external diff helper to be executed. If you set an
@@ -245,8 +369,18 @@ override configuration settings.
 --no-ext-diff::
 	Disallow external diff drivers.
 
---ignore-submodules::
-	Ignore changes to submodules in the diff generation.
+--ignore-submodules[=<when>]::
+	Ignore changes to submodules in the diff generation. <when> can be
+	either "none", "untracked", "dirty" or "all", which is the default
+	Using "none" will consider the submodule modified when it either contains
+	untracked or modified files or its HEAD differs from the commit recorded
+	in the superproject and can be used to override any settings of the
+	'ignore' option in linkgit:git-config[1] or linkgit:gitmodules[5]. When
+	"untracked" is used submodules are not considered dirty when they only
+	contain untracked content (but they are still scanned for modified
+	content). Using "dirty" ignores all changes to the work tree of submodules,
+	only changes to the commits stored in the superproject are shown (this was
+	the behavior until 1.7.0). Using "all" hides all changes to submodules.
 
 --src-prefix=<prefix>::
 	Show the given source prefix instead of "a/".

@@ -32,6 +32,42 @@ static unsigned int hash_name(const char *name, int namelen)
 	return hash;
 }
 
+static void hash_index_entry_directories(struct index_state *istate, struct cache_entry *ce)
+{
+	/*
+	 * Throw each directory component in the hash for quick lookup
+	 * during a git status. Directory components are stored with their
+	 * closing slash.  Despite submodules being a directory, they never
+	 * reach this point, because they are stored without a closing slash
+	 * in the cache.
+	 *
+	 * Note that the cache_entry stored with the directory does not
+	 * represent the directory itself.  It is a pointer to an existing
+	 * filename, and its only purpose is to represent existence of the
+	 * directory in the cache.  It is very possible multiple directory
+	 * hash entries may point to the same cache_entry.
+	 */
+	unsigned int hash;
+	void **pos;
+
+	const char *ptr = ce->name;
+	while (*ptr) {
+		while (*ptr && *ptr != '/')
+			++ptr;
+		if (*ptr == '/') {
+			++ptr;
+			hash = hash_name(ce->name, ptr - ce->name);
+			if (!lookup_hash(hash, &istate->name_hash)) {
+				pos = insert_hash(hash, ce, &istate->name_hash);
+				if (pos) {
+					ce->next = *pos;
+					*pos = ce;
+				}
+			}
+		}
+	}
+}
+
 static void hash_index_entry(struct index_state *istate, struct cache_entry *ce)
 {
 	void **pos;
@@ -47,6 +83,9 @@ static void hash_index_entry(struct index_state *istate, struct cache_entry *ce)
 		ce->next = *pos;
 		*pos = ce;
 	}
+
+	if (ignore_case)
+		hash_index_entry_directories(istate, ce);
 }
 
 static void lazy_init_name_hash(struct index_state *istate)
@@ -97,7 +136,21 @@ static int same_name(const struct cache_entry *ce, const char *name, int namelen
 	if (len == namelen && !cache_name_compare(name, namelen, ce->name, len))
 		return 1;
 
-	return icase && slow_same_name(name, namelen, ce->name, len);
+	if (!icase)
+		return 0;
+
+	/*
+	 * If the entry we're comparing is a filename (no trailing slash), then compare
+	 * the lengths exactly.
+	 */
+	if (name[namelen - 1] != '/')
+		return slow_same_name(name, namelen, ce->name, len);
+
+	/*
+	 * For a directory, we point to an arbitrary cache_entry filename.  Just
+	 * make sure the directory portion matches.
+	 */
+	return slow_same_name(name, namelen, ce->name, namelen < len ? namelen : len);
 }
 
 struct cache_entry *index_name_exists(struct index_state *istate, const char *name, int namelen, int icase)
@@ -114,6 +167,23 @@ struct cache_entry *index_name_exists(struct index_state *istate, const char *na
 				return ce;
 		}
 		ce = ce->next;
+	}
+
+	/*
+	 * Might be a submodule.  Despite submodules being directories,
+	 * they are stored in the name hash without a closing slash.
+	 * When ignore_case is 1, directories are stored in the name hash
+	 * with their closing slash.
+	 *
+	 * The side effect of this storage technique is we have need to
+	 * remove the slash from name and perform the lookup again without
+	 * the slash.  If a match is made, S_ISGITLINK(ce->mode) will be
+	 * true.
+	 */
+	if (icase && name[namelen - 1] == '/') {
+		ce = index_name_exists(istate, name, namelen - 1, icase);
+		if (ce && S_ISGITLINK(ce->ce_mode))
+			return ce;
 	}
 	return NULL;
 }

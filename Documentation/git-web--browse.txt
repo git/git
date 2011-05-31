@@ -1,5 +1,5 @@
-git-web--browse(1)
-==================
+git-web{litdd}browse(1)
+=======================
 
 NAME
 ----
@@ -7,7 +7,7 @@ git-web--browse - git helper script to launch a web browser
 
 SYNOPSIS
 --------
-'git web--browse' [OPTIONS] URL/FILE ...
+'git web{litdd}browse' [OPTIONS] URL/FILE ...
 
 DESCRIPTION
 -----------
@@ -20,8 +20,14 @@ The following browsers (or commands) are currently supported:
 
 * firefox (this is the default under X Window when not using KDE)
 * iceweasel
+* seamonkey
+* iceape
+* chromium (also supported as chromium-browser)
+* google-chrome (also supported as chrome)
 * konqueror (this is the default under KDE, see 'Note about konqueror' below)
+* opera
 * w3m (this is the default outside graphical environments)
+* elinks
 * links
 * lynx
 * dillo
@@ -32,19 +38,19 @@ Custom commands may also be specified.
 
 OPTIONS
 -------
--b BROWSER::
---browser=BROWSER::
-	Use the specified BROWSER. It must be in the list of supported
+-b <browser>::
+--browser=<browser>::
+	Use the specified browser. It must be in the list of supported
 	browsers.
 
--t BROWSER::
---tool=BROWSER::
+-t <browser>::
+--tool=<browser>::
 	Same as above.
 
--c CONF.VAR::
---config=CONF.VAR::
+-c <conf.var>::
+--config=<conf.var>::
 	CONF.VAR is looked up in the git config files. If it's set,
-	then its value specify the browser that should be used.
+	then its value specifies the browser that should be used.
 
 CONFIGURATION VARIABLES
 -----------------------
@@ -62,7 +68,7 @@ browser.<tool>.path
 You can explicitly provide a full path to your preferred browser by
 setting the configuration variable 'browser.<tool>.path'. For example,
 you can configure the absolute path to firefox by setting
-'browser.firefox.path'. Otherwise, 'git-web--browse' assumes the tool
+'browser.firefox.path'. Otherwise, 'git web--browse' assumes the tool
 is available in PATH.
 
 browser.<tool>.cmd
@@ -71,7 +77,7 @@ browser.<tool>.cmd
 When the browser, specified by options or configuration variables, is
 not among the supported ones, then the corresponding
 'browser.<tool>.cmd' configuration variable will be looked up. If this
-variable exists then 'git-web--browse' will treat the specified tool
+variable exists then 'git web{litdd}browse' will treat the specified tool
 as a custom command and will use a shell eval to run the command with
 the URLs passed as arguments.
 
@@ -109,16 +115,6 @@ $ git config --global web.browser firefox
 
 as they are probably more user specific than repository specific.
 See linkgit:git-config[1] for more information about this.
-
-Author
-------
-Written by Christian Couder <chriscool@tuxfamily.org> and the git-list
-<git@vger.kernel.org>, based on 'git-mergetool' by Theodore Y. Ts'o.
-
-Documentation
--------------
-Documentation by Christian Couder <chriscool@tuxfamily.org> and the
-git-list <git@vger.kernel.org>.
 
 GIT
 ---

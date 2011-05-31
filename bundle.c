@@ -200,11 +200,10 @@ int create_bundle(struct bundle_header *header, const char *path,
 	int bundle_fd = -1;
 	int bundle_to_stdout;
 	const char **argv_boundary = xmalloc((argc + 4) * sizeof(const char *));
-	const char **argv_pack = xmalloc(5 * sizeof(const char *));
+	const char **argv_pack = xmalloc(6 * sizeof(const char *));
 	int i, ref_count = 0;
 	char buffer[1024];
 	struct rev_info revs;
-	int read_from_stdin = 0;
 	struct child_process rls;
 	FILE *rls_fout;
 
@@ -234,7 +233,7 @@ int create_bundle(struct bundle_header *header, const char *path,
 	rls.git_cmd = 1;
 	if (start_command(&rls))
 		return -1;
-	rls_fout = fdopen(rls.out, "r");
+	rls_fout = xfdopen(rls.out, "r");
 	while (fgets(buffer, sizeof(buffer), rls_fout)) {
 		unsigned char sha1[20];
 		if (buffer[0] == '-') {
@@ -256,15 +255,8 @@ int create_bundle(struct bundle_header *header, const char *path,
 	/* write references */
 	argc = setup_revisions(argc, argv, &revs, NULL);
 
-	for (i = 1; i < argc; i++) {
-		if (!strcmp(argv[i], "--stdin")) {
-			if (read_from_stdin++)
-				die("--stdin given twice?");
-			read_revisions_from_stdin(&revs);
-			continue;
-		}
-		return error("unrecognized argument: %s'", argv[i]);
-	}
+	if (argc > 1)
+		return error("unrecognized argument: %s'", argv[1]);
 
 	object_array_remove_duplicates(&revs.pending);
 
@@ -351,10 +343,11 @@ int create_bundle(struct bundle_header *header, const char *path,
 
 	/* write pack */
 	argv_pack[0] = "pack-objects";
-	argv_pack[1] = "--all-progress";
+	argv_pack[1] = "--all-progress-implied";
 	argv_pack[2] = "--stdout";
 	argv_pack[3] = "--thin";
-	argv_pack[4] = NULL;
+	argv_pack[4] = "--delta-base-offset";
+	argv_pack[5] = NULL;
 	memset(&rls, 0, sizeof(rls));
 	rls.argv = argv_pack;
 	rls.in = -1;
@@ -380,8 +373,10 @@ int create_bundle(struct bundle_header *header, const char *path,
 	close(rls.in);
 	if (finish_command(&rls))
 		return error ("pack-objects died");
-	if (!bundle_to_stdout)
-		commit_lock_file(&lock);
+	if (!bundle_to_stdout) {
+		if (commit_lock_file(&lock))
+			die_errno("cannot create '%s'", path);
+	}
 	return 0;
 }
 

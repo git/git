@@ -3,31 +3,34 @@
 test_description='git filter-branch'
 . ./test-lib.sh
 
-make_commit () {
-	lower=$(echo $1 | tr '[A-Z]' '[a-z]')
-	echo $lower > $lower
-	git add $lower
-	test_tick
-	git commit -m $1
-	git tag $1
-}
-
 test_expect_success 'setup' '
-	make_commit A
-	make_commit B
-	git checkout -b branch B
-	make_commit D
-	mkdir dir
-	make_commit dir/D
-	make_commit E
-	git checkout master
-	make_commit C
-	git checkout branch
-	git merge C
-	git tag F
-	make_commit G
-	make_commit H
+	test_commit A &&
+	test_commit B &&
+	git checkout -b branch B &&
+	test_commit D &&
+	mkdir dir &&
+	test_commit dir/D &&
+	test_commit E &&
+	git checkout master &&
+	test_commit C &&
+	git checkout branch &&
+	git merge C &&
+	git tag F &&
+	test_commit G &&
+	test_commit H
 '
+# * (HEAD, branch) H
+# * G
+# *   Merge commit 'C' into branch
+# |\
+# | * (master) C
+# * | E
+# * | dir/D
+# * | D
+# |/
+# * B
+# * A
+
 
 H=$(git rev-parse H)
 
@@ -65,14 +68,14 @@ test_expect_success 'Fail if commit filter fails' '
 '
 
 test_expect_success 'rewrite, renaming a specific file' '
-	git filter-branch -f --tree-filter "mv d doh || :" HEAD
+	git filter-branch -f --tree-filter "mv D.t doh || :" HEAD
 '
 
 test_expect_success 'test that the file was renamed' '
-	test d = "$(git show HEAD:doh --)" &&
-	! test -f d &&
+	test D = "$(git show HEAD:doh --)" &&
+	! test -f D.t &&
 	test -f doh &&
-	test d = "$(cat doh)"
+	test D = "$(cat doh)"
 '
 
 test_expect_success 'rewrite, renaming a specific directory' '
@@ -80,18 +83,18 @@ test_expect_success 'rewrite, renaming a specific directory' '
 '
 
 test_expect_success 'test that the directory was renamed' '
-	test dir/d = "$(git show HEAD:diroh/d --)" &&
+	test dir/D = "$(git show HEAD:diroh/D.t --)" &&
 	! test -d dir &&
 	test -d diroh &&
 	! test -d diroh/dir &&
-	test -f diroh/d &&
-	test dir/d = "$(cat diroh/d)"
+	test -f diroh/D.t &&
+	test dir/D = "$(cat diroh/D.t)"
 '
 
 git tag oldD HEAD~4
 test_expect_success 'rewrite one branch, keeping a side branch' '
 	git branch modD oldD &&
-	git filter-branch -f --tree-filter "mv b boh || :" D..modD
+	git filter-branch -f --tree-filter "mv B.t boh || :" D..modD
 '
 
 test_expect_success 'common ancestor is still common (unchanged)' '
@@ -104,13 +107,13 @@ test_expect_success 'filter subdirectory only' '
 	git add subdir/new &&
 	test_tick &&
 	git commit -m "subdir" &&
-	echo H > a &&
+	echo H > A.t &&
 	test_tick &&
-	git commit -m "not subdir" a &&
+	git commit -m "not subdir" A.t &&
 	echo A > subdir/new &&
 	test_tick &&
 	git commit -m "again subdir" subdir/new &&
-	git rm a &&
+	git rm A.t &&
 	test_tick &&
 	git commit -m "again not subdir" &&
 	git branch sub &&
@@ -134,7 +137,7 @@ test_expect_success 'more setup' '
 	git add subdir/new &&
 	test_tick &&
 	git commit -m "subdir on master" subdir/new &&
-	git rm a &&
+	git rm A.t &&
 	test_tick &&
 	git commit -m "again subdir on master" &&
 	git merge branch
@@ -143,11 +146,12 @@ test_expect_success 'more setup' '
 test_expect_success 'use index-filter to move into a subdirectory' '
 	git branch directorymoved &&
 	git filter-branch -f --index-filter \
-		 "git ls-files -s | sed \"s-\\t-&newsubdir/-\" |
+		 "git ls-files -s | sed \"s-	-&newsubdir/-\" |
 	          GIT_INDEX_FILE=\$GIT_INDEX_FILE.new \
 			git update-index --index-info &&
 		  mv \"\$GIT_INDEX_FILE.new\" \"\$GIT_INDEX_FILE\"" directorymoved &&
-	test -z "$(git diff HEAD directorymoved:newsubdir)"'
+	git diff --exit-code HEAD directorymoved:newsubdir
+'
 
 test_expect_success 'stops when msg filter fails' '
 	old=$(git rev-parse HEAD) &&
@@ -282,10 +286,85 @@ test_expect_success 'Tag name filtering allows slashes in tag names' '
 
 test_expect_success 'Prune empty commits' '
 	git rev-list HEAD > expect &&
-	make_commit to_remove &&
-	git filter-branch -f --index-filter "git update-index --remove to_remove" --prune-empty HEAD &&
+	test_commit to_remove &&
+	git filter-branch -f --index-filter "git update-index --remove to_remove.t" --prune-empty HEAD &&
 	git rev-list HEAD > actual &&
 	test_cmp expect actual
+'
+
+test_expect_success '--remap-to-ancestor with filename filters' '
+	git checkout master &&
+	git reset --hard A &&
+	test_commit add-foo foo 1 &&
+	git branch moved-foo &&
+	test_commit add-bar bar a &&
+	git branch invariant &&
+	orig_invariant=$(git rev-parse invariant) &&
+	git branch moved-bar &&
+	test_commit change-foo foo 2 &&
+	git filter-branch -f --remap-to-ancestor \
+		moved-foo moved-bar A..master \
+		-- -- foo &&
+	test $(git rev-parse moved-foo) = $(git rev-parse moved-bar) &&
+	test $(git rev-parse moved-foo) = $(git rev-parse master^) &&
+	test $orig_invariant = $(git rev-parse invariant)
+'
+
+test_expect_success 'automatic remapping to ancestor with filename filters' '
+	git checkout master &&
+	git reset --hard A &&
+	test_commit add-foo2 foo 1 &&
+	git branch moved-foo2 &&
+	test_commit add-bar2 bar a &&
+	git branch invariant2 &&
+	orig_invariant=$(git rev-parse invariant2) &&
+	git branch moved-bar2 &&
+	test_commit change-foo2 foo 2 &&
+	git filter-branch -f \
+		moved-foo2 moved-bar2 A..master \
+		-- -- foo &&
+	test $(git rev-parse moved-foo2) = $(git rev-parse moved-bar2) &&
+	test $(git rev-parse moved-foo2) = $(git rev-parse master^) &&
+	test $orig_invariant = $(git rev-parse invariant2)
+'
+
+test_expect_success 'setup submodule' '
+	rm -fr ?* .git &&
+	git init &&
+	test_commit file &&
+	mkdir submod &&
+	submodurl="$PWD/submod" &&
+	( cd submod &&
+	  git init &&
+	  test_commit file-in-submod ) &&
+	git submodule add "$submodurl" &&
+	git commit -m "added submodule" &&
+	test_commit add-file &&
+	( cd submod && test_commit add-in-submodule ) &&
+	git add submod &&
+	git commit -m "changed submodule" &&
+	git branch original HEAD
+'
+
+orig_head=`git show-ref --hash --head HEAD`
+
+test_expect_success 'rewrite submodule with another content' '
+	git filter-branch --tree-filter "test -d submod && {
+					 rm -rf submod &&
+					 git rm -rf --quiet submod &&
+					 mkdir submod &&
+					 : > submod/file
+					 } || :" HEAD &&
+	test $orig_head != `git show-ref --hash --head HEAD`
+'
+
+test_expect_success 'replace submodule revision' '
+	git reset --hard original &&
+	git filter-branch -f --tree-filter \
+	    "if git ls-files --error-unmatch -- submod > /dev/null 2>&1
+	     then git update-index --cacheinfo 160000 0123456789012345678901234567890123456789 submod
+	     fi" HEAD &&
+	test $orig_head != `git show-ref --hash --head HEAD`
 '
 
 test_done

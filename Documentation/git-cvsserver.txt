@@ -22,7 +22,7 @@ cvspserver stream tcp nowait nobody /usr/bin/git-cvsserver git-cvsserver pserver
 Usage:
 
 [verse]
-'git cvsserver' [options] [pserver|server] [<directory> ...]
+'git-cvsserver' [options] [pserver|server] [<directory> ...]
 
 OPTIONS
 -------
@@ -72,9 +72,6 @@ plugin. Most functionality works fine with both of these clients.
 LIMITATIONS
 -----------
 
-Currently cvsserver works over SSH connections for read/write clients, and
-over pserver for anonymous CVS access.
-
 CVS clients cannot tag, branch or perform GIT merges.
 
 'git-cvsserver' maps GIT branches to CVS modules. This is very different
@@ -84,7 +81,7 @@ one or more directories.
 INSTALLATION
 ------------
 
-1. If you are going to offer anonymous CVS access via pserver, add a line in
+1. If you are going to offer CVS access via pserver, add a line in
    /etc/inetd.conf like
 +
 --
@@ -100,6 +97,38 @@ looks like
 ------
    cvspserver stream tcp nowait nobody /usr/bin/git-cvsserver git-cvsserver pserver
 
+------
+
+Only anonymous access is provided by pserve by default. To commit you
+will have to create pserver accounts, simply add a gitcvs.authdb
+setting in the config file of the repositories you want the cvsserver
+to allow writes to, for example:
+
+------
+
+   [gitcvs]
+	authdb = /etc/cvsserver/passwd
+
+------
+The format of these files is username followed by the crypted password,
+for example:
+
+------
+   myuser:$1Oyx5r9mdGZ2
+   myuser:$1$BA)@$vbnMJMDym7tA32AamXrm./
+------
+You can use the 'htpasswd' facility that comes with Apache to make these
+files, but Apache's MD5 crypt method differs from the one used by most C
+library's crypt() function, so don't use the -m option.
+
+Alternatively you can produce the password with perl's crypt() operator:
+-----
+   perl -e 'my ($user, $pass) = @ARGV; printf "%s:%s\n", $user, crypt($user, $pass)' $USER password
+-----
+
+Then provide your password via the pserver method, for example:
+------
+   cvs -d:pserver:someuser:somepassword <at> server/path/repo.git co <HEAD_name>
 ------
 No special setup is needed for SSH access, other than having GIT tools
 in the PATH. If you have clients that do not accept the CVS_SERVER
@@ -182,10 +211,9 @@ Database Backend
 ----------------
 
 'git-cvsserver' uses one database per git head (i.e. CVS module) to
-store information about the repository for faster access. The
-database doesn't contain any persistent data and can be completely
-regenerated from the git repository at any time. The database
-needs to be updated (i.e. written to) after every commit.
+store information about the repository to maintain consistent
+CVS revision numbers. The database needs to be
+updated (i.e. written to) after every commit.
 
 If the commit is done directly by using `git` (as opposed to
 using 'git-cvsserver') the update will need to happen on the
@@ -203,6 +231,18 @@ temporary files in the same directory as the database file on
 write so it might not be enough to grant the users using
 'git-cvsserver' write access to the database file without granting
 them write access to the directory, too.
+
+The database can not be reliably regenerated in a
+consistent form after the branch it is tracking has changed.
+Example: For merged branches, 'git-cvsserver' only tracks
+one branch of development, and after a 'git merge' an
+incrementally updated database may track a different branch
+than a database regenerated from scratch, causing inconsistent
+CVS revision numbers. `git-cvsserver` has no way of knowing which
+branch it would have picked if it had been run incrementally
+pre-merge. So if you have to fully or partially (from old
+backup) regenerate the database, you should be suspicious
+of pre-existing CVS sandboxes.
 
 You can configure the database backend with the following
 configuration variables:
@@ -266,6 +306,21 @@ In `dbdriver` and `dbuser` you can use the following variables:
 	If no name can be determined, the
 	numeric uid is used.
 
+ENVIRONMENT
+-----------
+
+These variables obviate the need for command-line options in some
+circumstances, allowing easier restricted usage through git-shell.
+
+GIT_CVSSERVER_BASE_PATH takes the place of the argument to --base-path.
+
+GIT_CVSSERVER_ROOT specifies a single-directory whitelist. The
+repository must still be configured to allow access through
+git-cvsserver, as described above.
+
+When these environment variables are set, the corresponding
+command-line arguments may not be used.
+
 Eclipse CVS Client Notes
 ------------------------
 
@@ -283,7 +338,7 @@ To get a checkout with the Eclipse CVS client:
 Protocol notes: If you are using anonymous access via pserver, just select that.
 Those using SSH access should choose the 'ext' protocol, and configure 'ext'
 access on the Preferences->Team->CVS->ExtConnection pane. Set CVS_SERVER to
-"'git cvsserver'". Note that password support is not good when using 'ext',
+"`git cvsserver`". Note that password support is not good when using 'ext',
 you will definitely want to have SSH keys setup.
 
 Alternatively, you can just use the non-standard extssh protocol that Eclipse
@@ -311,19 +366,16 @@ CRLF Line Ending Conversions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 By default the server leaves the '-k' mode blank for all files,
-which causes the cvs client to treat them as a text files, subject
-to crlf conversion on some platforms.
+which causes the CVS client to treat them as a text files, subject
+to end-of-line conversion on some platforms.
 
-You can make the server use `crlf` attributes to set the '-k' modes
-for files by setting the `gitcvs.usecrlfattr` config variable.
-In this case, if `crlf` is explicitly unset ('-crlf'), then the
-server will set '-kb' mode for binary files. If `crlf` is set,
-then the '-k' mode will explicitly be left blank.  See
-also linkgit:gitattributes[5] for more information about the `crlf`
-attribute.
+You can make the server use the end-of-line conversion attributes to
+set the '-k' modes for files by setting the `gitcvs.usecrlfattr`
+config variable.  See linkgit:gitattributes[5] for more information
+about end-of-line conversion.
 
 Alternatively, if `gitcvs.usecrlfattr` config is not enabled
-or if the `crlf` attribute is unspecified for a filename, then
+or the attributes do not allow automatic detection for a filename, then
 the server uses the `gitcvs.allbinary` config for the default setting.
 If `gitcvs.allbinary` is set, then file not otherwise
 specified will default to '-kb' mode. Otherwise the '-k' mode
@@ -338,22 +390,6 @@ and `gitcvs.allbinary` to "guess".
 Dependencies
 ------------
 'git-cvsserver' depends on DBD::SQLite.
-
-Copyright and Authors
----------------------
-
-This program is copyright The Open University UK - 2006.
-
-Authors:
-
-- Martyn Smith    <martyn@catalyst.net.nz>
-- Martin Langhoff <martin@catalyst.net.nz>
-
-with ideas and patches from participants of the git-list <git@vger.kernel.org>.
-
-Documentation
---------------
-Documentation by Martyn Smith <martyn@catalyst.net.nz>, Martin Langhoff <martin@catalyst.net.nz>, and Matthias Urlichs <smurf@smurf.noris.de>.
 
 GIT
 ---

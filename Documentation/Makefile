@@ -6,7 +6,7 @@ MAN5_TXT=gitattributes.txt gitignore.txt gitmodules.txt githooks.txt \
 	gitrepository-layout.txt
 MAN7_TXT=gitcli.txt gittutorial.txt gittutorial-2.txt \
 	gitcvs-migration.txt gitcore-tutorial.txt gitglossary.txt \
-	gitdiffcore.txt gitworkflows.txt
+	gitdiffcore.txt gitrevisions.txt gitworkflows.txt
 
 MAN_TXT = $(MAN1_TXT) $(MAN5_TXT) $(MAN7_TXT)
 MAN_XML=$(patsubst %.txt,%.xml,$(MAN_TXT))
@@ -17,6 +17,7 @@ DOC_HTML=$(MAN_HTML)
 ARTICLES = howto-index
 ARTICLES += everyday
 ARTICLES += git-tools
+ARTICLES += git-bisect-lk2009
 # with their own formatting rules.
 SP_ARTICLES = howto/revert-branch-rebase howto/using-merge-subtree user-manual
 API_DOCS = $(patsubst %.txt,%,$(filter-out technical/api-index-skel.txt technical/api-index.txt, $(wildcard technical/api-*.txt)))
@@ -62,35 +63,28 @@ endif
 
 #
 # For asciidoc ...
-#	-7.1.2,	no extra settings are needed.
-#	8.0-,	set ASCIIDOC8.
+#	-7.1.2,	set ASCIIDOC7
+#	8.0-,	no extra settings are needed
 #
 
 #
 # For docbook-xsl ...
-#	-1.68.1,	set ASCIIDOC_NO_ROFF? (based on changelog from 1.73.0)
-#	1.69.0,		no extra settings are needed?
+#	-1.68.1,	no extra settings are needed?
+#	1.69.0,		set ASCIIDOC_ROFF?
 #	1.69.1-1.71.0,	set DOCBOOK_SUPPRESS_SP?
-#	1.71.1,		no extra settings are needed?
+#	1.71.1,		set ASCIIDOC_ROFF?
 #	1.72.0,		set DOCBOOK_XSL_172.
-#	1.73.0-,	set ASCIIDOC_NO_ROFF
+#	1.73.0-,	no extra settings are needed
 #
 
-#
-# If you had been using DOCBOOK_XSL_172 in an attempt to get rid
-# of 'the ".ft C" problem' in your generated manpages, and you
-# instead ended up with weird characters around callouts, try
-# using ASCIIDOC_NO_ROFF instead (it works fine with ASCIIDOC8).
-#
-
-ifdef ASCIIDOC8
+ifndef ASCIIDOC7
 ASCIIDOC_EXTRA += -a asciidoc7compatible -a no-inline-literal
 endif
 ifdef DOCBOOK_XSL_172
 ASCIIDOC_EXTRA += -a git-asciidoc-no-roff
 MANPAGE_XSL = manpage-1.72.xsl
 else
-	ifdef ASCIIDOC_NO_ROFF
+	ifndef ASCIIDOC_ROFF
 	# docbook-xsl after 1.72 needs the regular XSL, but will not
 	# pass-thru raw roff codes from asciidoc.conf, so turn them off.
 	ASCIIDOC_EXTRA += -a git-asciidoc-no-roff
@@ -101,6 +95,25 @@ XMLTO_EXTRA += -m manpage-bold-literal.xsl
 endif
 ifdef DOCBOOK_SUPPRESS_SP
 XMLTO_EXTRA += -m manpage-suppress-sp.xsl
+endif
+
+# Newer DocBook stylesheet emits warning cruft in the output when
+# this is not set, and if set it shows an absolute link.  Older
+# stylesheets simply ignore this parameter.
+#
+# Distros may want to use MAN_BASE_URL=file:///path/to/git/docs/
+# or similar.
+ifndef MAN_BASE_URL
+MAN_BASE_URL = file://$(htmldir)/
+endif
+XMLTO_EXTRA += -m manpage-base-url.xsl
+
+# If your target system uses GNU groff, it may try to render
+# apostrophes as a "pretty" apostrophe using unicode.  This breaks
+# cut&paste, so you should set GNU_ROFF to force them to be ASCII
+# apostrophes.  Unfortunately does not work with non-GNU roff.
+ifdef GNU_ROFF
+XMLTO_EXTRA += -m manpage-quote-apos.xsl
 endif
 
 SHELL_PATH ?= $(SHELL)
@@ -184,7 +197,7 @@ install-pdf: pdf
 install-html: html
 	'$(SHELL_PATH_SQ)' ./install-webdoc.sh $(DESTDIR)$(htmldir)
 
-../GIT-VERSION-FILE: .FORCE-GIT-VERSION-FILE
+../GIT-VERSION-FILE: FORCE
 	$(QUIET_SUBDIR0)../ $(QUIET_SUBDIR1) GIT-VERSION-FILE
 
 -include ../GIT-VERSION-FILE
@@ -222,6 +235,7 @@ clean:
 	$(RM) howto-index.txt howto/*.html doc.dep
 	$(RM) technical/api-*.html technical/api-index.txt
 	$(RM) $(cmds_txt) *.made
+	$(RM) manpage-base-url.xsl
 
 $(MAN_HTML): %.html : %.txt
 	$(QUIET_ASCIIDOC)$(RM) $@+ $@ && \
@@ -229,7 +243,10 @@ $(MAN_HTML): %.html : %.txt
 		$(ASCIIDOC_EXTRA) -agit_version=$(GIT_VERSION) -o $@+ $< && \
 	mv $@+ $@
 
-%.1 %.5 %.7 : %.xml
+manpage-base-url.xsl: manpage-base-url.xsl.in
+	sed "s|@@MAN_BASE_URL@@|$(MAN_BASE_URL)|" $< > $@
+
+%.1 %.5 %.7 : %.xml manpage-base-url.xsl
 	$(QUIET_XMLTO)$(RM) $@ && \
 	xmlto -m $(MANPAGE_XSL) $(XMLTO_EXTRA) man $<
 
@@ -240,7 +257,9 @@ $(MAN_HTML): %.html : %.txt
 	mv $@+ $@
 
 user-manual.xml: user-manual.txt user-manual.conf
-	$(QUIET_ASCIIDOC)$(ASCIIDOC) $(ASCIIDOC_EXTRA) -b docbook -d book $<
+	$(QUIET_ASCIIDOC)$(RM) $@+ $@ && \
+	$(ASCIIDOC) $(ASCIIDOC_EXTRA) -b docbook -d book -o $@+ $< && \
+	mv $@+ $@
 
 technical/api-index.txt: technical/api-index-skel.txt \
 	technical/api-index.sh $(patsubst %,%.txt,$(API_DOCS))
@@ -253,8 +272,10 @@ $(patsubst %,%.html,$(API_DOCS) technical/api-index): %.html : %.txt
 XSLT = docbook.xsl
 XSLTOPTS = --xinclude --stringparam html.stylesheet docbook-xsl.css
 
-user-manual.html: user-manual.xml
-	$(QUIET_XSLTPROC)xsltproc $(XSLTOPTS) -o $@ $(XSLT) $<
+user-manual.html: user-manual.xml $(XSLT)
+	$(QUIET_XSLTPROC)$(RM) $@+ $@ && \
+	xsltproc $(XSLTOPTS) -o $@+ $(XSLT) $< && \
+	mv $@+ $@
 
 git.info: user-manual.texi
 	$(QUIET_MAKEINFO)$(MAKEINFO) --no-split -o $@ user-manual.texi
@@ -313,4 +334,4 @@ quick-install-man:
 quick-install-html:
 	'$(SHELL_PATH_SQ)' ./install-doc-quick.sh $(HTML_REF) $(DESTDIR)$(htmldir)
 
-.PHONY: .FORCE-GIT-VERSION-FILE
+.PHONY: FORCE

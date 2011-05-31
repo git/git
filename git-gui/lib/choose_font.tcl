@@ -17,6 +17,7 @@ variable all_families [list]  ; # All fonts known to Tk
 
 constructor pick {path title a_family a_size} {
 	variable all_families
+	global use_ttk NS
 
 	set v_family $a_family
 	set v_size $a_size
@@ -27,29 +28,30 @@ constructor pick {path title a_family a_size} {
 	set f_family $pv_family
 	set f_size $pv_size
 
-	make_toplevel top w
+	make_dialog top w
+	wm withdraw $top
 	wm title $top "[appname] ([reponame]): $title"
 	wm geometry $top "+[winfo rootx $path]+[winfo rooty $path]"
 
-	label $w.header -text $title -font font_uibold
+	${NS}::label $w.header -text $title -font font_uibold -anchor center
 	pack $w.header -side top -fill x
 
-	frame $w.buttons
-	button $w.buttons.select \
+	${NS}::frame $w.buttons
+	${NS}::button $w.buttons.select \
 		-text [mc Select] \
 		-default active \
 		-command [cb _select]
-	button $w.buttons.cancel \
+	${NS}::button $w.buttons.cancel \
 		-text [mc Cancel] \
 		-command [list destroy $w]
 	pack $w.buttons.select -side right
 	pack $w.buttons.cancel -side right -padx 5
 	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
 
-	frame $w.inner
+	${NS}::frame $w.inner
 
-	frame $w.inner.family
-	label $w.inner.family.l \
+	${NS}::frame $w.inner.family
+	${NS}::label $w.inner.family.l \
 		-text [mc "Font Family"] \
 		-anchor w
 	set w_family $w.inner.family.v
@@ -64,16 +66,16 @@ constructor pick {path title a_family a_size} {
 		-height 10 \
 		-yscrollcommand [list $w.inner.family.sby set]
 	rmsel_tag $w_family
-	scrollbar $w.inner.family.sby -command [list $w_family yview]
+	${NS}::scrollbar $w.inner.family.sby -command [list $w_family yview]
 	pack $w.inner.family.l -side top -fill x
 	pack $w.inner.family.sby -side right -fill y
 	pack $w_family -fill both -expand 1
 
-	frame $w.inner.size
-	label $w.inner.size.l \
+	${NS}::frame $w.inner.size
+	${NS}::label $w.inner.size.l \
 		-text [mc "Font Size"] \
 		-anchor w
-	spinbox $w.inner.size.v \
+	tspinbox $w.inner.size.v \
 		-textvariable @f_size \
 		-from 2 -to 80 -increment 1 \
 		-width 3
@@ -86,8 +88,8 @@ constructor pick {path title a_family a_size} {
 	grid columnconfigure $w.inner 0 -weight 1
 	pack $w.inner -fill both -expand 1 -padx 5 -pady 5
 
-	frame $w.example
-	label $w.example.l \
+	${NS}::frame $w.example
+	${NS}::label $w.example.l \
 		-text [mc "Font Example"] \
 		-anchor w
 	set w_example $w.example.t
@@ -129,6 +131,7 @@ constructor pick {path title a_family a_size} {
 		grab $w
 		focus $w
 	"
+	wm deiconify $w
 	tkwait window $w
 }
 

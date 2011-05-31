@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "run-command.h"
 #include "xdiff-interface.h"
+#include "ll-merge.h"
 #include "blob.h"
 
 static int fill_mmfile_blob(mmfile_t *f, struct blob *obj)
@@ -24,16 +25,19 @@ static void free_mmfile(mmfile_t *f)
 	free(f->ptr);
 }
 
-static void *three_way_filemerge(mmfile_t *base, mmfile_t *our, mmfile_t *their, unsigned long *size)
+static void *three_way_filemerge(const char *path, mmfile_t *base, mmfile_t *our, mmfile_t *their, unsigned long *size)
 {
-	mmbuffer_t res;
-	xpparam_t xpp;
 	int merge_status;
+	mmbuffer_t res;
 
-	memset(&xpp, 0, sizeof(xpp));
-	merge_status = xdl_merge(base, our, ".our", their, ".their",
-		&xpp, XDL_MERGE_ZEALOUS, &res);
-
+	/*
+	 * This function is only used by cmd_merge_tree, which
+	 * does not respect the merge.conflictstyle option.
+	 * There is no need to worry about a label for the
+	 * common ancestor.
+	 */
+	merge_status = ll_merge(&res, path, base, NULL,
+				our, ".our", their, ".their", NULL);
 	if (merge_status < 0)
 		return NULL;
 
@@ -62,7 +66,7 @@ static int generate_common_file(mmfile_t *res, mmfile_t *f1, mmfile_t *f2)
 	xdemitcb_t ecb;
 
 	memset(&xpp, 0, sizeof(xpp));
-	xpp.flags = XDF_NEED_MINIMAL;
+	xpp.flags = 0;
 	memset(&xecfg, 0, sizeof(xecfg));
 	xecfg.ctxlen = 3;
 	xecfg.flags = XDL_EMIT_COMMON;
@@ -75,7 +79,7 @@ static int generate_common_file(mmfile_t *res, mmfile_t *f1, mmfile_t *f2)
 	return xdi_diff(f1, f2, &xpp, &xecfg, &ecb);
 }
 
-void *merge_file(struct blob *base, struct blob *our, struct blob *their, unsigned long *size)
+void *merge_file(const char *path, struct blob *base, struct blob *our, struct blob *their, unsigned long *size)
 {
 	void *res = NULL;
 	mmfile_t f1, f2, common;
@@ -108,7 +112,7 @@ void *merge_file(struct blob *base, struct blob *our, struct blob *their, unsign
 		if (generate_common_file(&common, &f1, &f2) < 0)
 			goto out_free_f2_f1;
 	}
-	res = three_way_filemerge(&common, &f1, &f2, size);
+	res = three_way_filemerge(path, &common, &f1, &f2, size);
 	free_mmfile(&common);
 out_free_f2_f1:
 	free_mmfile(&f2);

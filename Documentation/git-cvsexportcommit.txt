@@ -27,7 +27,7 @@ by default.
 
 Supports file additions, removals, and commits that affect binary files.
 
-If the commit is a merge commit, you must tell 'git-cvsexportcommit' what
+If the commit is a merge commit, you must tell 'git cvsexportcommit' what
 parent the changeset should be done against.
 
 OPTIONS
@@ -111,14 +111,6 @@ $ export GIT_DIR=~/project/.git
 $ cd ~/project_cvs_checkout
 $ git cherry cvshead myhead | sed -n 's/^+ //p' | xargs -l1 git cvsexportcommit -c -p -v
 ------------
-
-Author
-------
-Written by Martin Langhoff <martin@catalyst.net.nz> and others.
-
-Documentation
---------------
-Documentation by Martin Langhoff <martin@catalyst.net.nz> and others.
 
 GIT
 ---

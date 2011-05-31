@@ -344,7 +344,8 @@ Examining branches from a remote repository
 The "master" branch that was created at the time you cloned is a copy
 of the HEAD in the repository that you cloned from.  That repository
 may also have had other branches, though, and your local repository
-keeps branches which track each of those remote branches, which you
+keeps branches which track each of those remote branches, called
+remote-tracking branches, which you
 can view using the "-r" option to linkgit:git-branch[1]:
 
 ------------------------------------------------
@@ -359,12 +360,22 @@ $ git branch -r
   origin/todo
 ------------------------------------------------
 
-You cannot check out these remote-tracking branches, but you can
-examine them on a branch of your own, just as you would a tag:
+In this example, "origin" is called a remote repository, or "remote"
+for short. The branches of this repository are called "remote
+branches" from our point of view. The remote-tracking branches listed
+above were created based on the remote branches at clone time and will
+be updated by "git fetch" (hence "git pull") and "git push". See
+<<Updating-a-repository-With-git-fetch>> for details.
+
+You might want to build on one of these remote-tracking branches
+on a branch of your own, just as you would for a tag:
 
 ------------------------------------------------
 $ git checkout -b my-todo-copy origin/todo
 ------------------------------------------------
+
+You can also check out "origin/todo" directly to examine it or
+write a one-off patch.  See <<detached-head,detached head>>.
 
 Note that the name "origin" is just the name that git uses by default
 to refer to the repository that you cloned from.
@@ -397,7 +408,7 @@ is usually a shortcut for the HEAD branch in the repository "origin".
 For the complete list of paths which git checks for references, and
 the order it uses to decide which to choose when there are multiple
 references with the same shorthand name, see the "SPECIFYING
-REVISIONS" section of linkgit:git-rev-parse[1].
+REVISIONS" section of linkgit:gitrevisions[7].
 
 [[Updating-a-repository-With-git-fetch]]
 Updating a repository with git fetch
@@ -435,7 +446,7 @@ linux-nfs/master
 origin/master
 -------------------------------------------------
 
-If you run "git fetch <remote>" later, the tracking branches for the
+If you run "git fetch <remote>" later, the remote-tracking branches for the
 named <remote> will be updated.
 
 If you examine the file .git/config, you will see that git has added
@@ -568,7 +579,7 @@ We have seen several ways of naming commits already:
 	- HEAD: refers to the head of the current branch
 
 There are many more; see the "SPECIFYING REVISIONS" section of the
-linkgit:git-rev-parse[1] man page for the complete list of ways to
+linkgit:gitrevisions[7] man page for the complete list of ways to
 name revisions.  Some examples:
 
 -------------------------------------------------
@@ -909,7 +920,7 @@ commits reachable from some head but not from any tag in the repository:
 $ gitk $( git show-ref --heads ) --not  $( git show-ref --tags )
 -------------------------------------------------
 
-(See linkgit:git-rev-parse[1] for explanations of commit-selecting
+(See linkgit:gitrevisions[7] for explanations of commit-selecting
 syntax such as `--not`.)
 
 [[making-a-release]]
@@ -955,7 +966,7 @@ echo "git diff --stat --summary -M v$last v$new > ../diffstat-$new"
 and then he just cut-and-pastes the output commands after verifying that
 they look OK.
 
-[[Finding-comments-With-given-Content]]
+[[Finding-commits-With-given-Content]]
 Finding commits referencing a file with given content
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -1183,7 +1194,23 @@ $ git merge branchname
 -------------------------------------------------
 
 merges the development in the branch "branchname" into the current
-branch.  If there are conflicts--for example, if the same file is
+branch.
+
+A merge is made by combining the changes made in "branchname" and the
+changes made up to the latest commit in your current branch since
+their histories forked. The work tree is overwritten by the result of
+the merge when this combining is done cleanly, or overwritten by a
+half-merged results when this combining results in conflicts.
+Therefore, if you have uncommitted changes touching the same files as
+the ones impacted by the merge, Git will refuse to proceed. Most of
+the time, you will want to commit your changes before you can merge,
+and if you don't, then linkgit:git-stash[1] can take these changes
+away while you're doing the merge, and reapply them afterwards.
+
+If the changes are independent enough, Git will automatically complete
+the merge and commit the result (or reuse an existing commit in case
+of <<fast-forwards,fast-forward>>, see below). On the other hand,
+if there are conflicts--for example, if the same file is
 modified in two different ways in the remote branch and the local
 branch--then you are warned; the output may look something like this:
 
@@ -1384,7 +1411,7 @@ were merged.
 
 However, if the current branch is a descendant of the other--so every
 commit present in the one is already contained in the other--then git
-just performs a "fast forward"; the head of the current branch is moved
+just performs a "fast-forward"; the head of the current branch is moved
 forward to point at the head of the merged-in branch, without any new
 commits being created.
 
@@ -1619,7 +1646,7 @@ you've checked out.
 The reflogs are kept by default for 30 days, after which they may be
 pruned.  See linkgit:git-reflog[1] and linkgit:git-gc[1] to learn
 how to control this pruning, and see the "SPECIFYING REVISIONS"
-section of linkgit:git-rev-parse[1] for details.
+section of linkgit:gitrevisions[7] for details.
 
 Note that the reflog history is very different from normal git history.
 While normal history is shared by every repository that works on the
@@ -1679,12 +1706,12 @@ Sharing development with others
 Getting updates with git pull
 -----------------------------
 
-After you clone a repository and make a few changes of your own, you
+After you clone a repository and commit a few changes of your own, you
 may wish to check the original repository for updates and merge them
 into your own work.
 
 We have already seen <<Updating-a-repository-With-git-fetch,how to
-keep remote tracking branches up to date>> with linkgit:git-fetch[1],
+keep remote-tracking branches up to date>> with linkgit:git-fetch[1],
 and how to merge two branches.  So you can merge in changes from the
 original repository's master branch with:
 
@@ -1700,15 +1727,21 @@ one step:
 $ git pull origin master
 -------------------------------------------------
 
-In fact, if you have "master" checked out, then by default "git pull"
-merges from the HEAD branch of the origin repository.  So often you can
+In fact, if you have "master" checked out, then this branch has been
+configured by "git clone" to get changes from the HEAD branch of the
+origin repository.  So often you can
 accomplish the above with just a simple
 
 -------------------------------------------------
 $ git pull
 -------------------------------------------------
 
-More generally, a branch that is created from a remote branch will pull
+This command will fetch changes from the remote branches to your
+remote-tracking branches `origin/*`, and merge the default branch into
+the current branch.
+
+More generally, a branch that is created from a remote-tracking branch
+will pull
 by default from that branch.  See the descriptions of the
 branch.<name>.remote and branch.<name>.merge options in
 linkgit:git-config[1], and the discussion of the `--track` option in
@@ -1719,7 +1752,7 @@ producing a default commit message documenting the branch and
 repository that you pulled from.
 
 (But note that no such commit will be created in the case of a
-<<fast-forwards,fast forward>>; instead, your branch will just be
+<<fast-forwards,fast-forward>>; instead, your branch will just be
 updated to point to the latest commit from the upstream branch.)
 
 The `git pull` command can also be given "." as the "remote" repository,
@@ -1943,7 +1976,7 @@ $ git push ssh://yourserver.com/~you/proj.git master
 -------------------------------------------------
 
 As with `git fetch`, `git push` will complain if this does not result in a
-<<fast-forwards,fast forward>>; see the following section for details on
+<<fast-forwards,fast-forward>>; see the following section for details on
 handling this case.
 
 Note that the target of a "push" is normally a
@@ -1976,7 +2009,7 @@ details.
 What to do when a push fails
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If a push would not result in a <<fast-forwards,fast forward>> of the
+If a push would not result in a <<fast-forwards,fast-forward>> of the
 remote branch, then it will fail with an error like:
 
 -------------------------------------------------
@@ -2090,7 +2123,7 @@ $ git clone git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux-2.6.git
 $ cd work
 -------------------------------------------------
 
-Linus's tree will be stored in the remote branch named origin/master,
+Linus's tree will be stored in the remote-tracking branch named origin/master,
 and can be updated using linkgit:git-fetch[1]; you can track other
 public trees using linkgit:git-remote[1] to set up a "remote" and
 linkgit:git-fetch[1] to keep them up-to-date; see
@@ -2115,7 +2148,7 @@ $ git checkout release && git pull
 
 Important note!  If you have any local changes in these branches, then
 this merge will create a commit object in the history (with no local
-changes git will simply do a "Fast forward" merge).  Many people dislike
+changes git will simply do a "fast-forward" merge).  Many people dislike
 the "noise" that this creates in the Linux history, so you should avoid
 doing this capriciously in the "release" branch, as these noisy commits
 will become part of the permanent history when you ask Linus to pull
@@ -2155,11 +2188,14 @@ $ git push mytree release
 
 Now to apply some patches from the community.  Think of a short
 snappy name for a branch to hold this patch (or related group of
-patches), and create a new branch from the current tip of Linus's
-branch:
+patches), and create a new branch from a recent stable tag of
+Linus's branch. Picking a stable base for your branch will:
+1) help you: by avoiding inclusion of unrelated and perhaps lightly
+tested changes
+2) help future bug hunters that use "git bisect" to find problems
 
 -------------------------------------------------
-$ git checkout -b speed-up-spinlocks origin
+$ git checkout -b speed-up-spinlocks v2.6.35
 -------------------------------------------------
 
 Now you apply the patch(es), run some tests, and commit the change(s).  If
@@ -2423,9 +2459,9 @@ You have performed no merges into mywork, so it is just a simple linear
 sequence of patches on top of "origin":
 
 ................................................
- o--o--o <-- origin
+ o--o--O <-- origin
         \
-         o--o--o <-- mywork
+	 a--b--c <-- mywork
 ................................................
 
 Some more interesting work has been done in the upstream project, and
@@ -2569,7 +2605,7 @@ them again with linkgit:git-am[1].
 Other tools
 -----------
 
-There are numerous other tools, such as StGIT, which exist for the
+There are numerous other tools, such as StGit, which exist for the
 purpose of maintaining a patch series.  These are outside of the scope of
 this manual.
 
@@ -2729,9 +2765,9 @@ In the previous example, when updating an existing branch, "git fetch"
 checks to make sure that the most recent commit on the remote
 branch is a descendant of the most recent commit on your copy of the
 branch before updating your copy of the branch to point at the new
-commit.  Git calls this process a <<fast-forwards,fast forward>>.
+commit.  Git calls this process a <<fast-forwards,fast-forward>>.
 
-A fast forward looks something like this:
+A fast-forward looks something like this:
 
 ................................................
  o--o--o--o <-- old head of the branch
@@ -2781,8 +2817,8 @@ Be aware that commits that the old version of example/master pointed at
 may be lost, as we saw in the previous section.
 
 [[remote-branch-configuration]]
-Configuring remote branches
----------------------------
+Configuring remote-tracking branches
+------------------------------------
 
 We saw above that "origin" is just a shortcut to refer to the
 repository that you originally cloned from.  This information is
@@ -3624,6 +3660,26 @@ Did you forget to 'git add'?
 Unable to checkout '261dfac35cb99d380eb966e102c1197139f7fa24' in submodule path 'a'
 -------------------------------------------------
 
+In older git versions it could be easily forgotten to commit new or modified
+files in a submodule, which silently leads to similar problems as not pushing
+the submodule changes. Starting with git 1.7.0 both "git status" and "git diff"
+in the superproject show submodules as modified when they contain new or
+modified files to protect against accidentally committing such a state. "git
+diff" will also add a "-dirty" to the work tree side when generating patch
+output or used with the --submodule option:
+
+-------------------------------------------------
+$ git diff
+diff --git a/sub b/sub
+--- a/sub
++++ b/sub
+@@ -1 +1 @@
+-Subproject commit 3f356705649b5d566d97ff843cf193359229a453
++Subproject commit 3f356705649b5d566d97ff843cf193359229a453-dirty
+$ git diff --submodule
+Submodule sub 3f35670..3f35670-dirty:
+-------------------------------------------------
+
 You also should not rewind branches in a submodule beyond commits that were
 ever recorded in any superproject.
 
@@ -3814,7 +3870,7 @@ You create a commit object by giving it the tree that describes the
 state at the time of the commit, and a list of parents:
 
 -------------------------------------------------
-$ git commit-tree <tree> -p <parent> [-p <parent2> ..]
+$ git commit-tree <tree> -p <parent> [(-p <parent2>)...]
 -------------------------------------------------
 
 and then giving the reason for the commit on stdin (either through
@@ -4131,7 +4187,7 @@ What does this mean?
 
 `git rev-list` is the original version of the revision walker, which
 _always_ printed a list of revisions to stdout.  It is still functional,
-and needs to, since most new Git programs start out as scripts using
+and needs to, since most new Git commands start out as scripts using
 `git rev-list`.
 
 `git rev-parse` is not as important any more; it was only used to filter out
@@ -4215,9 +4271,9 @@ Two things are interesting here:
   negative numbers in case of different errors--and 0 on success.
 
 - the variable `sha1` in the function signature of `get_sha1()` is `unsigned
-  char \*`, but is actually expected to be a pointer to `unsigned
+  char {asterisk}`, but is actually expected to be a pointer to `unsigned
   char[20]`.  This variable will contain the 160-bit SHA-1 of the given
-  commit.  Note that whenever a SHA-1 is passed as `unsigned char \*`, it
+  commit.  Note that whenever a SHA-1 is passed as `unsigned char {asterisk}`, it
   is the binary representation, as opposed to the ASCII representation in
   hex characters, which is passed as `char *`.
 
@@ -4275,7 +4331,7 @@ You see, Git is actually the best tool to find out about the source of Git
 itself!
 
 [[glossary]]
-GIT Glossary
+Git Glossary
 ============
 
 include::glossary-content.txt[]

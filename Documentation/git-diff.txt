@@ -8,12 +8,17 @@ git-diff - Show changes between commits, commit and working tree, etc
 
 SYNOPSIS
 --------
-'git diff' [<common diff options>] <commit>{0,2} [--] [<path>...]
+[verse]
+'git diff' [options] [<commit>] [--] [<path>...]
+'git diff' [options] --cached [<commit>] [--] [<path>...]
+'git diff' [options] <commit> <commit> [--] [<path>...]
+'git diff' [options] [--no-index] [--] <path> <path>
 
 DESCRIPTION
 -----------
-Show changes between two trees, a tree and the working tree, a
-tree and the index file, or the index file and the working tree.
+Show changes between the working tree and the index or a tree, changes
+between the index and a tree, changes between two trees, or changes
+between two files on disk.
 
 'git diff' [--options] [--] [<path>...]::
 
@@ -23,9 +28,9 @@ tree and the index file, or the index file and the working tree.
 	further add to the index but you still haven't.  You can
 	stage these changes by using linkgit:git-add[1].
 +
-If exactly two paths are given, and at least one is untracked,
-compare the two files / directories. This behavior can be
-forced by --no-index.
+If exactly two paths are given and at least one points outside
+the current repository, 'git diff' will compare the two files /
+directories. This behavior can be forced by --no-index.
 
 'git diff' [--options] --cached [<commit>] [--] [<path>...]::
 
@@ -33,6 +38,8 @@ forced by --no-index.
 	commit relative to the named <commit>.  Typically you
 	would want comparison with the latest commit, so if you
 	do not give <commit>, it defaults to HEAD.
+	If HEAD does not exist (e.g. unborned branches) and
+	<commit> is not given, it shows all staged changes.
 	--staged is a synonym of --cached.
 
 'git diff' [--options] <commit> [--] [<path>...]::
@@ -64,15 +71,16 @@ forced by --no-index.
 
 Just in case if you are doing something exotic, it should be
 noted that all of the <commit> in the above description, except
-for the last two forms that use ".." notations, can be any
-<tree-ish>.
+in the last two forms that use ".." notations, can be any
+<tree>.  The third form ('git diff <commit> <commit>') can also
+be used to compare two <blob> objects.
 
 For a more complete list of ways to spell <commit>, see
-"SPECIFYING REVISIONS" section in linkgit:git-rev-parse[1].
+"SPECIFYING REVISIONS" section in linkgit:gitrevisions[7].
 However, "diff" is about comparing two _endpoints_, not ranges,
 and the range notations ("<commit>..<commit>" and
 "<commit>\...<commit>") do not mean a range as defined in the
-"SPECIFYING RANGES" section in linkgit:git-rev-parse[1].
+"SPECIFYING RANGES" section in linkgit:gitrevisions[7].
 
 OPTIONS
 -------
@@ -157,14 +165,14 @@ $ git diff -R                          <2>
 rewrites (very expensive).
 <2> Output diff in reverse.
 
-
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org>
-
-Documentation
---------------
-Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
+SEE ALSO
+--------
+diff(1),
+linkgit:git-difftool[1],
+linkgit:git-log[1],
+linkgit:gitdiffcore[7],
+linkgit:git-format-patch[1],
+linkgit:git-apply[1]
 
 GIT
 ---

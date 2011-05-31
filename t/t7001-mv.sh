@@ -61,7 +61,7 @@ test_expect_success \
 test_expect_success \
     'checking -f on untracked file with existing target' \
     'touch path0/untracked1 &&
-     git mv -f untracked1 path0
+     test_must_fail git mv -f untracked1 path0 &&
      test ! -f .git/index.lock &&
      test -f untracked1 &&
      test -f path0/untracked1'
@@ -189,13 +189,25 @@ test_expect_success 'absolute pathname outside should fail' '(
 
 )'
 
+test_expect_success 'git mv to move multiple sources into a directory' '
+	rm -fr .git && git init &&
+	mkdir dir other &&
+	>dir/a.txt &&
+	>dir/b.txt &&
+	git add dir/?.txt &&
+	git mv dir/a.txt dir/b.txt other &&
+	git ls-files >actual &&
+	{ echo other/a.txt; echo other/b.txt; } >expect &&
+	test_cmp expect actual
+'
+
 test_expect_success 'git mv should not change sha1 of moved cache entry' '
 
 	rm -fr .git &&
 	git init &&
 	echo 1 >dirty &&
 	git add dirty &&
-	entry="$(git ls-files --stage dirty | cut -f 1)"
+	entry="$(git ls-files --stage dirty | cut -f 1)" &&
 	git mv dirty dirty2 &&
 	[ "$entry" = "$(git ls-files --stage dirty2 | cut -f 1)" ] &&
 	echo 2 >dirty2 &&

@@ -8,17 +8,6 @@
 /* Internal API */
 
 /*
- * Output the next line for a graph.
- * This formats the next graph line into the specified strbuf.  It is not
- * terminated with a newline.
- *
- * Returns 1 if the line includes the current commit, and 0 otherwise.
- * graph_next_line() will return 1 exactly once for each time
- * graph_update() is called.
- */
-static int graph_next_line(struct git_graph *graph, struct strbuf *sb);
-
-/*
  * Output a padding line in the graph.
  * This is similar to graph_next_line().  However, it is guaranteed to
  * never print the current commit line.  Instead, if the commit line is
@@ -73,36 +62,46 @@ enum graph_state {
 /*
  * The list of available column colors.
  */
-static char column_colors[][COLOR_MAXLEN] = {
+static const char *column_colors_ansi[] = {
 	GIT_COLOR_RED,
 	GIT_COLOR_GREEN,
 	GIT_COLOR_YELLOW,
 	GIT_COLOR_BLUE,
 	GIT_COLOR_MAGENTA,
 	GIT_COLOR_CYAN,
-	GIT_COLOR_BOLD GIT_COLOR_RED,
-	GIT_COLOR_BOLD GIT_COLOR_GREEN,
-	GIT_COLOR_BOLD GIT_COLOR_YELLOW,
-	GIT_COLOR_BOLD GIT_COLOR_BLUE,
-	GIT_COLOR_BOLD GIT_COLOR_MAGENTA,
-	GIT_COLOR_BOLD GIT_COLOR_CYAN,
+	GIT_COLOR_BOLD_RED,
+	GIT_COLOR_BOLD_GREEN,
+	GIT_COLOR_BOLD_YELLOW,
+	GIT_COLOR_BOLD_BLUE,
+	GIT_COLOR_BOLD_MAGENTA,
+	GIT_COLOR_BOLD_CYAN,
+	GIT_COLOR_RESET,
 };
 
-#define COLUMN_COLORS_MAX (ARRAY_SIZE(column_colors))
+#define COLUMN_COLORS_ANSI_MAX (ARRAY_SIZE(column_colors_ansi) - 1)
 
-static const char *column_get_color_code(const struct column *c)
+static const char **column_colors;
+static unsigned short column_colors_max;
+
+void graph_set_column_colors(const char **colors, unsigned short colors_max)
 {
-	return column_colors[c->color];
+	column_colors = colors;
+	column_colors_max = colors_max;
+}
+
+static const char *column_get_color_code(unsigned short color)
+{
+	return column_colors[color];
 }
 
 static void strbuf_write_column(struct strbuf *sb, const struct column *c,
 				char col_char)
 {
-	if (c->color < COLUMN_COLORS_MAX)
-		strbuf_addstr(sb, column_get_color_code(c));
+	if (c->color < column_colors_max)
+		strbuf_addstr(sb, column_get_color_code(c->color));
 	strbuf_addch(sb, col_char);
-	if (c->color < COLUMN_COLORS_MAX)
-		strbuf_addstr(sb, GIT_COLOR_RESET);
+	if (c->color < column_colors_max)
+		strbuf_addstr(sb, column_get_color_code(column_colors_max));
 }
 
 struct git_graph {
@@ -211,9 +210,26 @@ struct git_graph {
 	unsigned short default_column_color;
 };
 
+static struct strbuf *diff_output_prefix_callback(struct diff_options *opt, void *data)
+{
+	struct git_graph *graph = data;
+	static struct strbuf msgbuf = STRBUF_INIT;
+
+	assert(graph);
+
+	strbuf_reset(&msgbuf);
+	graph_padding_line(graph, &msgbuf);
+	return &msgbuf;
+}
+
 struct git_graph *graph_init(struct rev_info *opt)
 {
 	struct git_graph *graph = xmalloc(sizeof(struct git_graph));
+
+	if (!column_colors)
+		graph_set_column_colors(column_colors_ansi,
+					COLUMN_COLORS_ANSI_MAX);
+
 	graph->commit = NULL;
 	graph->revs = opt;
 	graph->num_parents = 0;
@@ -225,7 +241,12 @@ struct git_graph *graph_init(struct rev_info *opt)
 	graph->num_columns = 0;
 	graph->num_new_columns = 0;
 	graph->mapping_size = 0;
-	graph->default_column_color = 0;
+	/*
+	 * Start the column color at the maximum value, since we'll
+	 * always increment it for the first commit we output.
+	 * This way we start at 0 for the first commit.
+	 */
+	graph->default_column_color = column_colors_max - 1;
 
 	/*
 	 * Allocate a reasonably large default number of columns
@@ -238,6 +259,13 @@ struct git_graph *graph_init(struct rev_info *opt)
 				     graph->column_capacity);
 	graph->mapping = xmalloc(sizeof(int) * 2 * graph->column_capacity);
 	graph->new_mapping = xmalloc(sizeof(int) * 2 * graph->column_capacity);
+
+	/*
+	 * The diff output prefix callback, with this we can make
+	 * all the diff output to align with the graph lines.
+	 */
+	opt->diffopt.output_prefix = diff_output_prefix_callback;
+	opt->diffopt.output_prefix_data = graph;
 
 	return graph;
 }
@@ -286,9 +314,10 @@ static int graph_is_interesting(struct git_graph *graph, struct commit *commit)
 	}
 
 	/*
-	 * Uninteresting and pruned commits won't be printed
+	 * Otherwise, use get_commit_action() to see if this commit is
+	 * interesting
 	 */
-	return (commit->object.flags & (UNINTERESTING | TREESAME)) ? 0 : 1;
+	return get_commit_action(graph->revs, commit) == commit_show;
 }
 
 static struct commit_list *next_interesting_parent(struct git_graph *graph,
@@ -340,7 +369,7 @@ static struct commit_list *first_interesting_parent(struct git_graph *graph)
 static unsigned short graph_get_current_column_color(const struct git_graph *graph)
 {
 	if (!DIFF_OPT_TST(&graph->revs->diffopt, COLOR_DIFF))
-		return COLUMN_COLORS_MAX;
+		return column_colors_max;
 	return graph->default_column_color;
 }
 
@@ -350,7 +379,7 @@ static unsigned short graph_get_current_column_color(const struct git_graph *gra
 static void graph_increment_column_color(struct git_graph *graph)
 {
 	graph->default_column_color = (graph->default_column_color + 1) %
-		COLUMN_COLORS_MAX;
+		column_colors_max;
 }
 
 static unsigned short graph_find_commit_color(const struct git_graph *graph,
@@ -414,7 +443,7 @@ static void graph_update_width(struct git_graph *graph,
 		max_cols++;
 
 	/*
-	 * We added a column for the the current commit as part of
+	 * We added a column for the current commit as part of
 	 * graph->num_parents.  If the current commit was already in
 	 * graph->columns, then we have double counted it.
 	 */
@@ -499,11 +528,14 @@ static void graph_update_columns(struct git_graph *graph)
 			     parent;
 			     parent = next_interesting_parent(graph, parent)) {
 				/*
-				 * If this is a merge increment the current
+				 * If this is a merge, or the start of a new
+				 * childless column, increment the current
 				 * color.
 				 */
-				if (graph->num_parents > 1)
+				if (graph->num_parents > 1 ||
+				    !is_commit_in_columns) {
 					graph_increment_column_color(graph);
+				}
 				graph_insert_into_new_columns(graph,
 							      parent->item,
 							      &mapping_idx);
@@ -766,22 +798,9 @@ static void graph_output_commit_char(struct git_graph *graph, struct strbuf *sb)
 	}
 
 	/*
-	 * If revs->left_right is set, print '<' for commits that
-	 * come from the left side, and '>' for commits from the right
-	 * side.
+	 * get_revision_mark() handles all other cases without assert()
 	 */
-	if (graph->revs && graph->revs->left_right) {
-		if (graph->commit->object.flags & SYMMETRIC_LEFT)
-			strbuf_addch(sb, '<');
-		else
-			strbuf_addch(sb, '>');
-		return;
-	}
-
-	/*
-	 * Print '*' in all other cases
-	 */
-	strbuf_addch(sb, '*');
+	strbuf_addstr(sb, get_revision_mark(graph->revs, graph->commit));
 }
 
 /*
@@ -1115,7 +1134,7 @@ static void graph_output_collapsing_line(struct git_graph *graph, struct strbuf 
 		graph_update_state(graph, GRAPH_PADDING);
 }
 
-static int graph_next_line(struct git_graph *graph, struct strbuf *sb)
+int graph_next_line(struct git_graph *graph, struct strbuf *sb)
 {
 	switch (graph->state) {
 	case GRAPH_PADDING:

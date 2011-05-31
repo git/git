@@ -9,8 +9,7 @@ typedef void (*xdiff_emit_hunk_consume_fn)(void *, long, long, long);
 int xdi_diff(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp, xdemitconf_t const *xecfg, xdemitcb_t *ecb);
 int xdi_diff_outf(mmfile_t *mf1, mmfile_t *mf2,
 		  xdiff_emit_consume_fn fn, void *consume_callback_data,
-		  xpparam_t const *xpp,
-		  xdemitconf_t const *xecfg, xdemitcb_t *xecb);
+		  xpparam_t const *xpp, xdemitconf_t const *xecfg);
 int xdi_diff_hunks(mmfile_t *mf1, mmfile_t *mf2,
 		   xdiff_emit_hunk_consume_fn fn, void *consume_callback_data,
 		   xpparam_t const *xpp, xdemitconf_t *xecfg);
@@ -18,6 +17,7 @@ int parse_hunk_header(char *line, int len,
 		      int *ob, int *on,
 		      int *nb, int *nn);
 int read_mmfile(mmfile_t *ptr, const char *filename);
+void read_mmblob(mmfile_t *ptr, const unsigned char *sha1);
 int buffer_is_binary(const char *ptr, unsigned long size);
 
 extern void xdiff_set_find_func(xdemitconf_t *xecfg, const char *line, int cflags);

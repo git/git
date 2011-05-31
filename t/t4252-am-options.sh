@@ -59,7 +59,7 @@ test_expect_success 'interrupted am --directory="frotz nitfol"' '
 '
 
 test_expect_success 'apply to a funny path' '
-	with_sq="with'\''sq"
+	with_sq="with'\''sq" &&
 	rm -fr .git/rebase-apply &&
 	git reset --hard initial &&
 	git am --directory="$with_sq" "$tm"/am-test-5-2 &&

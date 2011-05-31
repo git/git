@@ -11,19 +11,19 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-A Tcl/Tk based graphical user interface to Git.  'git-gui' focuses
+A Tcl/Tk based graphical user interface to Git.  'git gui' focuses
 on allowing users to make changes to their repository by making
 new commits, amending existing ones, creating branches, performing
 local merges, and fetching/pushing to remote repositories.
 
-Unlike 'gitk', 'git-gui' focuses on commit generation
+Unlike 'gitk', 'git gui' focuses on commit generation
 and single file annotation and does not show project history.
 It does however supply menu actions to start a 'gitk' session from
-within 'git-gui'.
+within 'git gui'.
 
-'git-gui' is known to work on all popular UNIX systems, Mac OS X,
+'git gui' is known to work on all popular UNIX systems, Mac OS X,
 and Windows (under both Cygwin and MSYS).  To the extent possible
-OS specific user interface guidelines are followed, making 'git-gui'
+OS specific user interface guidelines are followed, making 'git gui'
 a fairly native interface for users.
 
 COMMANDS
@@ -38,13 +38,13 @@ browser::
 	browser are opened in the blame viewer.
 
 citool::
-	Start 'git-gui' and arrange to make exactly one commit before
+	Start 'git gui' and arrange to make exactly one commit before
 	exiting and returning to the shell.  The interface is limited
 	to only commit actions, slightly reducing the application's
 	startup time and simplifying the menubar.
 
 version::
-	Display the currently running version of 'git-gui'.
+	Display the currently running version of 'git gui'.
 
 
 Examples
@@ -103,15 +103,15 @@ SEE ALSO
 linkgit:gitk[1]::
 	The git repository browser.  Shows branches, commit history
 	and file differences.  gitk is the utility started by
-	'git-gui''s Repository Visualize actions.
+	'git gui''s Repository Visualize actions.
 
 Other
 -----
-'git-gui' is actually maintained as an independent project, but stable
+'git gui' is actually maintained as an independent project, but stable
 versions are distributed as part of the Git suite for the convenience
 of end users.
 
-A 'git-gui' development repository can be obtained from:
+A 'git gui' development repository can be obtained from:
 
   git clone git://repo.or.cz/git-gui.git
 
@@ -120,14 +120,6 @@ or
   git clone http://repo.or.cz/r/git-gui.git
 
 or browsed online at http://repo.or.cz/w/git-gui.git/[].
-
-Author
-------
-Written by Shawn O. Pearce <spearce@spearce.org>.
-
-Documentation
---------------
-Documentation by Shawn O. Pearce <spearce@spearce.org>.
 
 GIT
 ---

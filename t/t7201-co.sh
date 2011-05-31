@@ -11,10 +11,12 @@ Test switching across them.
   ! [master] Initial A one, A two
    * [renamer] Renamer R one->uno, M two
     ! [side] Side M one, D two, A three
-  ---
-    + [side] Side M one, D two, A three
-   *  [renamer] Renamer R one->uno, M two
-  +*+ [master] Initial A one, A two
+     ! [simple] Simple D one, M two
+  ----
+     + [simple] Simple D one, M two
+    +  [side] Side M one, D two, A three
+   *   [renamer] Renamer R one->uno, M two
+  +*++ [master] Initial A one, A two
 
 '
 
@@ -51,6 +53,11 @@ test_expect_success setup '
 	rm -f two &&
 	git update-index --add --remove one two three &&
 	git commit -m "Side M one, D two, A three" &&
+
+	git checkout -b simple master &&
+	rm -f one &&
+	fill a c e > two &&
+	git commit -a -m "Simple D one, M two" &&
 
 	git checkout master
 '
@@ -166,19 +173,63 @@ test_expect_success 'checkout -m with merge conflict' '
 	! test -s current
 '
 
-test_expect_success 'checkout to detach HEAD' '
+test_expect_success 'format of merge conflict from checkout -m' '
 
+	git checkout -f master && git clean -f &&
+
+	fill b d > two &&
+	git checkout -m simple &&
+
+	git ls-files >current &&
+	fill same two two two >expect &&
+	test_cmp current expect &&
+
+	cat <<-EOF >expect &&
+	<<<<<<< simple
+	a
+	c
+	e
+	=======
+	b
+	d
+	>>>>>>> local
+	EOF
+	test_cmp two expect
+'
+
+test_expect_success 'checkout --merge --conflict=diff3 <branch>' '
+
+	git checkout -f master && git reset --hard && git clean -f &&
+
+	fill b d > two &&
+	git checkout --merge --conflict=diff3 simple &&
+
+	cat <<-EOF >expect &&
+	<<<<<<< simple
+	a
+	c
+	e
+	||||||| master
+	a
+	b
+	c
+	d
+	e
+	=======
+	b
+	d
+	>>>>>>> local
+	EOF
+	test_cmp two expect
+'
+
+test_expect_success C_LOCALE_OUTPUT 'checkout to detach HEAD (with advice declined)' '
+
+	git config advice.detachedHead false &&
 	git checkout -f renamer && git clean -f &&
 	git checkout renamer^ 2>messages &&
-	(cat >messages.expect <<EOF
-Note: moving to '\''renamer^'\'' which isn'\''t a local branch
-If you want to create a new branch from this checkout, you may do so
-(now or later) by using -b with the checkout command again. Example:
-  git checkout -b <new_branch_name>
-HEAD is now at 7329388... Initial A one, A two
-EOF
-) &&
-	test_cmp messages.expect messages &&
+	grep "HEAD is now at 7329388" messages &&
+	test 1 -eq $(wc -l <messages) &&
 	H=$(git rev-parse --verify HEAD) &&
 	M=$(git show-ref -s --verify refs/heads/master) &&
 	test "z$H" = "z$M" &&
@@ -191,7 +242,25 @@ EOF
 	fi
 '
 
-test_expect_success 'checkout to detach HEAD with branchname^' '
+test_expect_success C_LOCALE_OUTPUT 'checkout to detach HEAD' '
+	git config advice.detachedHead true &&
+	git checkout -f renamer && git clean -f &&
+	git checkout renamer^ 2>messages &&
+	grep "HEAD is now at 7329388" messages &&
+	test 1 -lt $(wc -l <messages) &&
+	H=$(git rev-parse --verify HEAD) &&
+	M=$(git show-ref -s --verify refs/heads/master) &&
+	test "z$H" = "z$M" &&
+	if git symbolic-ref HEAD >/dev/null 2>&1
+	then
+		echo "OOPS, HEAD is still symbolic???"
+		false
+	else
+		: happy
+	fi
+'
+
+test_expect_success C_LOCALE_OUTPUT 'checkout to detach HEAD with branchname^' '
 
 	git checkout -f master && git clean -f &&
 	git checkout renamer^ &&
@@ -207,7 +276,7 @@ test_expect_success 'checkout to detach HEAD with branchname^' '
 	fi
 '
 
-test_expect_success 'checkout to detach HEAD with :/message' '
+test_expect_success C_LOCALE_OUTPUT 'checkout to detach HEAD with :/message' '
 
 	git checkout -f master && git clean -f &&
 	git checkout ":/Initial" &&
@@ -223,7 +292,7 @@ test_expect_success 'checkout to detach HEAD with :/message' '
 	fi
 '
 
-test_expect_success 'checkout to detach HEAD with HEAD^0' '
+test_expect_success C_LOCALE_OUTPUT 'checkout to detach HEAD with HEAD^0' '
 
 	git checkout -f master && git clean -f &&
 	git checkout HEAD^0 &&
@@ -339,6 +408,15 @@ test_expect_success 'checkout w/--track from non-branch HEAD fails' '
     test "z$(git rev-parse master^0)" = "z$(git rev-parse HEAD)"
 '
 
+test_expect_success 'checkout w/--track from tag fails' '
+    git checkout master^0 &&
+    test_must_fail git symbolic-ref HEAD &&
+    test_must_fail git checkout --track -b track frotz &&
+    test_must_fail git rev-parse --verify track &&
+    test_must_fail git symbolic-ref HEAD &&
+    test "z$(git rev-parse master^0)" = "z$(git rev-parse HEAD)"
+'
+
 test_expect_success 'detach a symbolic link HEAD' '
     git checkout master &&
     git config --bool core.prefersymlinkrefs yes &&
@@ -354,7 +432,6 @@ test_expect_success 'detach a symbolic link HEAD' '
 test_expect_success \
     'checkout with --track fakes a sensible -b <name>' '
     git update-ref refs/remotes/origin/koala/bear renamer &&
-    git update-ref refs/new/koala/bear renamer &&
 
     git checkout --track origin/koala/bear &&
     test "refs/heads/koala/bear" = "$(git symbolic-ref HEAD)" &&
@@ -369,12 +446,6 @@ test_expect_success \
     git checkout master && git branch -D koala/bear &&
 
     git checkout --track remotes/origin/koala/bear &&
-    test "refs/heads/koala/bear" = "$(git symbolic-ref HEAD)" &&
-    test "$(git rev-parse HEAD)" = "$(git rev-parse renamer)" &&
-
-    git checkout master && git branch -D koala/bear &&
-
-    git checkout --track refs/new/koala/bear &&
     test "refs/heads/koala/bear" = "$(git symbolic-ref HEAD)" &&
     test "$(git rev-parse HEAD)" = "$(git rev-parse renamer)"
 '
@@ -469,7 +540,7 @@ test_expect_success 'checkout with --merge, in diff3 -m style' '
 	(
 		echo "<<<<<<< ours"
 		echo ourside
-		echo "|||||||"
+		echo "||||||| base"
 		echo original
 		echo "======="
 		echo theirside
@@ -513,7 +584,7 @@ test_expect_success 'checkout --conflict=diff3' '
 	(
 		echo "<<<<<<< ours"
 		echo ourside
-		echo "|||||||"
+		echo "||||||| base"
 		echo original
 		echo "======="
 		echo theirside
@@ -540,6 +611,63 @@ test_expect_success 'switch out of non-branch' '
 	echo modified >one &&
 	test_must_fail git checkout renamer 2>error.log &&
 	! grep "^Previous HEAD" error.log
+'
+
+(
+ echo "#!$SHELL_PATH"
+ cat <<\EOF
+O=$1 A=$2 B=$3
+cat "$A" >.tmp
+exec >"$A"
+echo '<<<<<<< filfre-theirs'
+cat "$B"
+echo '||||||| filfre-common'
+cat "$O"
+echo '======='
+cat ".tmp"
+echo '>>>>>>> filfre-ours'
+rm -f .tmp
+exit 1
+EOF
+) >filfre.sh
+chmod +x filfre.sh
+
+test_expect_success 'custom merge driver with checkout -m' '
+	git reset --hard &&
+
+	git config merge.filfre.driver "./filfre.sh %O %A %B" &&
+	git config merge.filfre.name "Feel-free merge driver" &&
+	git config merge.filfre.recursive binary &&
+	echo "arm merge=filfre" >.gitattributes &&
+
+	git checkout -b left &&
+	echo neutral >arm &&
+	git add arm .gitattributes &&
+	test_tick &&
+	git commit -m neutral &&
+	git branch right &&
+
+	echo left >arm &&
+	test_tick &&
+	git commit -a -m left &&
+	git checkout right &&
+
+	echo right >arm &&
+	test_tick &&
+	git commit -a -m right &&
+
+	test_must_fail git merge left &&
+	(
+		for t in filfre-common left right
+		do
+			grep $t arm || exit 1
+		done
+		exit 0
+	) &&
+
+	mv arm expect &&
+	git checkout -m arm &&
+	test_cmp expect arm
 '
 
 test_done

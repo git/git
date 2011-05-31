@@ -91,7 +91,7 @@ test_expect_success 'setup' '
 		prev=$cur &&
 		cur=$(($cur+1))
 	done &&
-	add B1 $A1
+	add B1 $A1 &&
 	echo $ATIP > .git/refs/heads/A &&
 	echo $BTIP > .git/refs/heads/B &&
 	git symbolic-ref HEAD refs/heads/B
@@ -137,6 +137,36 @@ test_expect_success 'fsck in shallow repo' '
 		cd shallow &&
 		git fsck --full
 	)
+'
+
+test_expect_success 'simple fetch in shallow repo' '
+	(
+		cd shallow &&
+		git fetch
+	)
+'
+
+test_expect_success 'no changes expected' '
+	(
+		cd shallow &&
+		git count-objects -v
+	) > count.shallow.2 &&
+	cmp count.shallow count.shallow.2
+'
+
+test_expect_success 'fetch same depth in shallow repo' '
+	(
+		cd shallow &&
+		git fetch --depth=2
+	)
+'
+
+test_expect_success 'no changes expected' '
+	(
+		cd shallow &&
+		git count-objects -v
+	) > count.shallow.3 &&
+	cmp count.shallow count.shallow.3
 '
 
 test_expect_success 'add two more' '
@@ -199,6 +229,23 @@ test_expect_success 'pull in shallow repo with missing merge base' '
 		cd shallow &&
 		test_must_fail git pull --depth 4 .. A
 	)
+'
+
+test_expect_success 'additional simple shallow deepenings' '
+	(
+		cd shallow &&
+		git fetch --depth=8 &&
+		git fetch --depth=10 &&
+		git fetch --depth=11
+	)
+'
+
+test_expect_success 'clone shallow object count' '
+	(
+		cd shallow &&
+		git count-objects -v
+	) > count.shallow &&
+	grep "^count: 52" count.shallow
 '
 
 test_done

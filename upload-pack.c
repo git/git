@@ -11,7 +11,7 @@
 #include "list-objects.h"
 #include "run-command.h"
 
-static const char upload_pack_usage[] = "git upload-pack [--strict] [--timeout=nn] <dir>";
+static const char upload_pack_usage[] = "git upload-pack [--strict] [--timeout=<n>] <dir>";
 
 /* bits #0..7 in revision.h, #8..10 in commit.c */
 #define THEY_HAVE	(1u << 11)
@@ -27,16 +27,21 @@ static const char upload_pack_usage[] = "git upload-pack [--strict] [--timeout=n
 static unsigned long oldest_have;
 
 static int multi_ack, nr_our_refs;
+static int no_done;
 static int use_thin_pack, use_ofs_delta, use_include_tag;
 static int no_progress, daemon_mode;
+static int shallow_nr;
 static struct object_array have_obj;
 static struct object_array want_obj;
+static struct object_array extra_edge_obj;
 static unsigned int timeout;
 /* 0 for no sideband,
  * otherwise maximum packet size (up to 65520 bytes).
  */
 static int use_sideband;
 static int debug_fd;
+static int advertise_refs;
+static int stateless_rpc;
 
 static void reset_timeout(void)
 {
@@ -101,14 +106,12 @@ static void show_edge(struct commit *commit)
 	fprintf(pack_pipe, "-%s\n", sha1_to_hex(commit->object.sha1));
 }
 
-static int do_rev_list(int fd, void *create_full_pack)
+static int do_rev_list(int in, int out, void *user_data)
 {
 	int i;
 	struct rev_info revs;
 
-	pack_pipe = fdopen(fd, "w");
-	if (create_full_pack)
-		use_thin_pack = 0; /* no point doing it */
+	pack_pipe = xfdopen(out, "w");
 	init_revisions(&revs, NULL);
 	revs.tag_objects = 1;
 	revs.tree_objects = 1;
@@ -116,26 +119,25 @@ static int do_rev_list(int fd, void *create_full_pack)
 	if (use_thin_pack)
 		revs.edge_hint = 1;
 
-	if (create_full_pack) {
-		const char *args[] = {"rev-list", "--all", NULL};
-		setup_revisions(2, args, &revs, NULL);
-	} else {
-		for (i = 0; i < want_obj.nr; i++) {
-			struct object *o = want_obj.objects[i].item;
-			/* why??? */
-			o->flags &= ~UNINTERESTING;
-			add_pending_object(&revs, o, NULL);
-		}
-		for (i = 0; i < have_obj.nr; i++) {
-			struct object *o = have_obj.objects[i].item;
-			o->flags |= UNINTERESTING;
-			add_pending_object(&revs, o, NULL);
-		}
-		setup_revisions(0, NULL, &revs, NULL);
+	for (i = 0; i < want_obj.nr; i++) {
+		struct object *o = want_obj.objects[i].item;
+		/* why??? */
+		o->flags &= ~UNINTERESTING;
+		add_pending_object(&revs, o, NULL);
 	}
+	for (i = 0; i < have_obj.nr; i++) {
+		struct object *o = have_obj.objects[i].item;
+		o->flags |= UNINTERESTING;
+		add_pending_object(&revs, o, NULL);
+	}
+	setup_revisions(0, NULL, &revs, NULL);
 	if (prepare_revision_walk(&revs))
 		die("revision walk setup failed");
 	mark_edges_uninteresting(revs.commits, &revs, show_edge);
+	if (use_thin_pack)
+		for (i = 0; i < extra_edge_obj.nr; i++)
+			fprintf(pack_pipe, "-%s\n", sha1_to_hex(
+					extra_edge_obj.objects[i].item->sha1));
 	traverse_commit_list(&revs, show_commit, show_object, NULL);
 	fflush(pack_pipe);
 	fclose(pack_pipe);
@@ -155,13 +157,15 @@ static void create_pack_file(void)
 	const char *argv[10];
 	int arg = 0;
 
-	rev_list.proc = do_rev_list;
-	/* .data is just a boolean: any non-NULL value will do */
-	rev_list.data = create_full_pack ? &rev_list : NULL;
-	if (start_async(&rev_list))
-		die("git upload-pack: unable to fork git-rev-list");
-
 	argv[arg++] = "pack-objects";
+	if (!shallow_nr) {
+		argv[arg++] = "--revs";
+		if (create_full_pack)
+			argv[arg++] = "--all";
+		else if (use_thin_pack)
+			argv[arg++] = "--thin";
+	}
+
 	argv[arg++] = "--stdout";
 	if (!no_progress)
 		argv[arg++] = "--progress";
@@ -172,7 +176,7 @@ static void create_pack_file(void)
 	argv[arg++] = NULL;
 
 	memset(&pack_objects, 0, sizeof(pack_objects));
-	pack_objects.in = rev_list.out;	/* start_command closes it */
+	pack_objects.in = -1;
 	pack_objects.out = -1;
 	pack_objects.err = -1;
 	pack_objects.git_cmd = 1;
@@ -180,6 +184,30 @@ static void create_pack_file(void)
 
 	if (start_command(&pack_objects))
 		die("git upload-pack: unable to fork git-pack-objects");
+
+	if (shallow_nr) {
+		memset(&rev_list, 0, sizeof(rev_list));
+		rev_list.proc = do_rev_list;
+		rev_list.out = pack_objects.in;
+		if (start_async(&rev_list))
+			die("git upload-pack: unable to fork git-rev-list");
+	}
+	else {
+		FILE *pipe_fd = xfdopen(pack_objects.in, "w");
+		if (!create_full_pack) {
+			int i;
+			for (i = 0; i < want_obj.nr; i++)
+				fprintf(pipe_fd, "%s\n", sha1_to_hex(want_obj.objects[i].item->sha1));
+			fprintf(pipe_fd, "--not\n");
+			for (i = 0; i < have_obj.nr; i++)
+				fprintf(pipe_fd, "%s\n", sha1_to_hex(have_obj.objects[i].item->sha1));
+		}
+
+		fprintf(pipe_fd, "\n");
+		fflush(pipe_fd);
+		fclose(pipe_fd);
+	}
+
 
 	/* We read from pack_objects.err to capture stderr output for
 	 * progress bar, and pack_objects.out to capture the pack data.
@@ -218,6 +246,23 @@ static void create_pack_file(void)
 			}
 			continue;
 		}
+		if (0 <= pe && (pfd[pe].revents & (POLLIN|POLLHUP))) {
+			/* Status ready; we ship that in the side-band
+			 * or dump to the standard error.
+			 */
+			sz = xread(pack_objects.err, progress,
+				  sizeof(progress));
+			if (0 < sz)
+				send_client_data(2, progress, sz);
+			else if (sz == 0) {
+				close(pack_objects.err);
+				pack_objects.err = -1;
+			}
+			else
+				goto fail;
+			/* give priority to status messages */
+			continue;
+		}
 		if (0 <= pu && (pfd[pu].revents & (POLLIN|POLLHUP))) {
 			/* Data ready; we keep the last byte to ourselves
 			 * in case we detect broken rev-list, so that we
@@ -237,7 +282,7 @@ static void create_pack_file(void)
 			sz = xread(pack_objects.out, cp,
 				  sizeof(data) - outsz);
 			if (0 < sz)
-					;
+				;
 			else if (sz == 0) {
 				close(pack_objects.out);
 				pack_objects.out = -1;
@@ -255,28 +300,13 @@ static void create_pack_file(void)
 			if (sz < 0)
 				goto fail;
 		}
-		if (0 <= pe && (pfd[pe].revents & (POLLIN|POLLHUP))) {
-			/* Status ready; we ship that in the side-band
-			 * or dump to the standard error.
-			 */
-			sz = xread(pack_objects.err, progress,
-				  sizeof(progress));
-			if (0 < sz)
-				send_client_data(2, progress, sz);
-			else if (sz == 0) {
-				close(pack_objects.err);
-				pack_objects.err = -1;
-			}
-			else
-				goto fail;
-		}
 	}
 
 	if (finish_command(&pack_objects)) {
 		error("git upload-pack: git-pack-objects died with error.");
 		goto fail;
 	}
-	if (finish_async(&rev_list))
+	if (shallow_nr && finish_async(&rev_list))
 		goto fail;	/* error was already reported */
 
 	/* flush the data */
@@ -336,7 +366,7 @@ static int reachable(struct commit *want)
 {
 	struct commit_list *work = NULL;
 
-	insert_by_date(want, &work);
+	commit_list_insert_by_date(want, &work);
 	while (work) {
 		struct commit_list *list = work->next;
 		struct commit *commit = work->item;
@@ -357,7 +387,7 @@ static int reachable(struct commit *want)
 		for (list = commit->parents; list; list = list->next) {
 			struct commit *parent = list->item;
 			if (!(parent->object.flags & REACHABLE))
-				insert_by_date(parent, &work);
+				commit_list_insert_by_date(parent, &work);
 		}
 	}
 	want->object.flags |= REACHABLE;
@@ -398,36 +428,59 @@ static int get_common_commits(void)
 {
 	static char line[1000];
 	unsigned char sha1[20];
-	char hex[41], last_hex[41];
+	char last_hex[41];
+	int got_common = 0;
+	int got_other = 0;
+	int sent_ready = 0;
 
 	save_commit_buffer = 0;
 
-	for(;;) {
+	for (;;) {
 		int len = packet_read_line(0, line, sizeof(line));
 		reset_timeout();
 
 		if (!len) {
+			if (multi_ack == 2 && got_common
+			    && !got_other && ok_to_give_up()) {
+				sent_ready = 1;
+				packet_write(1, "ACK %s ready\n", last_hex);
+			}
 			if (have_obj.nr == 0 || multi_ack)
 				packet_write(1, "NAK\n");
+
+			if (no_done && sent_ready) {
+				packet_write(1, "ACK %s\n", last_hex);
+				return 0;
+			}
+			if (stateless_rpc)
+				exit(0);
+			got_common = 0;
+			got_other = 0;
 			continue;
 		}
 		strip(line, len);
 		if (!prefixcmp(line, "have ")) {
 			switch (got_sha1(line+5, sha1)) {
 			case -1: /* they have what we do not */
-				if (multi_ack && ok_to_give_up())
-					packet_write(1, "ACK %s continue\n",
-						     sha1_to_hex(sha1));
+				got_other = 1;
+				if (multi_ack && ok_to_give_up()) {
+					const char *hex = sha1_to_hex(sha1);
+					if (multi_ack == 2) {
+						sent_ready = 1;
+						packet_write(1, "ACK %s ready\n", hex);
+					} else
+						packet_write(1, "ACK %s continue\n", hex);
+				}
 				break;
 			default:
-				memcpy(hex, sha1_to_hex(sha1), 41);
-				if (multi_ack) {
-					const char *msg = "ACK %s continue\n";
-					packet_write(1, msg, hex);
-					memcpy(last_hex, hex, 41);
-				}
+				got_common = 1;
+				memcpy(last_hex, sha1_to_hex(sha1), 41);
+				if (multi_ack == 2)
+					packet_write(1, "ACK %s common\n", last_hex);
+				else if (multi_ack)
+					packet_write(1, "ACK %s continue\n", last_hex);
 				else if (have_obj.nr == 1)
-					packet_write(1, "ACK %s\n", hex);
+					packet_write(1, "ACK %s\n", last_hex);
 				break;
 			}
 			continue;
@@ -447,12 +500,13 @@ static int get_common_commits(void)
 
 static void receive_needs(void)
 {
-	struct object_array shallows = {0, 0, NULL};
+	struct object_array shallows = OBJECT_ARRAY_INIT;
 	static char line[1000];
 	int len, depth = 0;
 
+	shallow_nr = 0;
 	if (debug_fd)
-		write_in_full(debug_fd, "#S\n", 3);
+		write_str_in_full(debug_fd, "#S\n");
 	for (;;) {
 		struct object *o;
 		unsigned char sha1_buf[20];
@@ -466,7 +520,6 @@ static void receive_needs(void)
 		if (!prefixcmp(line, "shallow ")) {
 			unsigned char sha1[20];
 			struct object *object;
-			use_thin_pack = 0;
 			if (get_sha1(line + 8, sha1))
 				die("invalid shallow line: %s", line);
 			object = parse_object(sha1);
@@ -478,7 +531,6 @@ static void receive_needs(void)
 		}
 		if (!prefixcmp(line, "deepen ")) {
 			char *end;
-			use_thin_pack = 0;
 			depth = strtol(line + 7, &end, 0);
 			if (end == line + 7 || depth <= 0)
 				die("Invalid deepen: %s", line);
@@ -488,8 +540,12 @@ static void receive_needs(void)
 		    get_sha1_hex(line+5, sha1_buf))
 			die("git upload-pack: protocol error, "
 			    "expected to get sha, not '%s'", line);
-		if (strstr(line+45, "multi_ack"))
+		if (strstr(line+45, "multi_ack_detailed"))
+			multi_ack = 2;
+		else if (strstr(line+45, "multi_ack"))
 			multi_ack = 1;
+		if (strstr(line+45, "no-done"))
+			no_done = 1;
 		if (strstr(line+45, "thin-pack"))
 			use_thin_pack = 1;
 		if (strstr(line+45, "ofs-delta"))
@@ -513,14 +569,15 @@ static void receive_needs(void)
 		 */
 		o = lookup_object(sha1_buf);
 		if (!o || !(o->flags & OUR_REF))
-			die("git upload-pack: not our ref %s", line+5);
+			die("git upload-pack: not our ref %s",
+			    sha1_to_hex(sha1_buf));
 		if (!(o->flags & WANTED)) {
 			o->flags |= WANTED;
 			add_object_array(o, NULL, &want_obj);
 		}
 	}
 	if (debug_fd)
-		write_in_full(debug_fd, "#E\n", 3);
+		write_str_in_full(debug_fd, "#E\n");
 
 	if (!use_sideband && daemon_mode)
 		no_progress = 1;
@@ -538,6 +595,7 @@ static void receive_needs(void)
 				packet_write(1, "shallow %s",
 						sha1_to_hex(object->sha1));
 				register_shallow(object->sha1);
+				shallow_nr++;
 			}
 			result = result->next;
 		}
@@ -560,6 +618,7 @@ static void receive_needs(void)
 							NULL, &want_obj);
 					parents = parents->next;
 				}
+				add_object_array(object, NULL, &extra_edge_obj);
 			}
 			/* make sure commit traversal conforms to client */
 			register_shallow(object->sha1);
@@ -571,6 +630,8 @@ static void receive_needs(void)
 			for (i = 0; i < shallows.nr; i++)
 				register_shallow(shallows.objects[i].item->sha1);
 		}
+
+	shallow_nr += shallows.nr;
 	free(shallows.objects);
 }
 
@@ -578,15 +639,16 @@ static int send_ref(const char *refname, const unsigned char *sha1, int flag, vo
 {
 	static const char *capabilities = "multi_ack thin-pack side-band"
 		" side-band-64k ofs-delta shallow no-progress"
-		" include-tag";
+		" include-tag multi_ack_detailed";
 	struct object *o = parse_object(sha1);
 
 	if (!o)
 		die("git upload-pack: cannot find object %s:", sha1_to_hex(sha1));
 
 	if (capabilities)
-		packet_write(1, "%s %s%c%s\n", sha1_to_hex(sha1), refname,
-			0, capabilities);
+		packet_write(1, "%s %s%c%s%s\n", sha1_to_hex(sha1), refname,
+			     0, capabilities,
+			     stateless_rpc ? " no-done" : "");
 	else
 		packet_write(1, "%s %s\n", sha1_to_hex(sha1), refname);
 	capabilities = NULL;
@@ -602,12 +664,32 @@ static int send_ref(const char *refname, const unsigned char *sha1, int flag, vo
 	return 0;
 }
 
+static int mark_our_ref(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
+{
+	struct object *o = parse_object(sha1);
+	if (!o)
+		die("git upload-pack: cannot find object %s:", sha1_to_hex(sha1));
+	if (!(o->flags & OUR_REF)) {
+		o->flags |= OUR_REF;
+		nr_our_refs++;
+	}
+	return 0;
+}
+
 static void upload_pack(void)
 {
-	reset_timeout();
-	head_ref(send_ref, NULL);
-	for_each_ref(send_ref, NULL);
-	packet_flush(1);
+	if (advertise_refs || !stateless_rpc) {
+		reset_timeout();
+		head_ref(send_ref, NULL);
+		for_each_ref(send_ref, NULL);
+		packet_flush(1);
+	} else {
+		head_ref(mark_our_ref, NULL);
+		for_each_ref(mark_our_ref, NULL);
+	}
+	if (advertise_refs)
+		return;
+
 	receive_needs();
 	if (want_obj.nr) {
 		get_common_commits();
@@ -621,13 +703,23 @@ int main(int argc, char **argv)
 	int i;
 	int strict = 0;
 
+	packet_trace_identity("upload-pack");
 	git_extract_argv0_path(argv[0]);
+	read_replace_refs = 0;
 
 	for (i = 1; i < argc; i++) {
 		char *arg = argv[i];
 
 		if (arg[0] != '-')
 			break;
+		if (!strcmp(arg, "--advertise-refs")) {
+			advertise_refs = 1;
+			continue;
+		}
+		if (!strcmp(arg, "--stateless-rpc")) {
+			stateless_rpc = 1;
+			continue;
+		}
 		if (!strcmp(arg, "--strict")) {
 			strict = 1;
 			continue;

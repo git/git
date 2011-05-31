@@ -56,13 +56,17 @@ COMMANDS
 	as well, they take precedence.
 --no-metadata;;
 	Set the 'noMetadata' option in the [svn-remote] config.
+	This option is not recommended, please read the 'svn.noMetadata'
+	section of this manpage before using this option.
 --use-svm-props;;
 	Set the 'useSvmProps' option in the [svn-remote] config.
 --use-svnsync-props;;
 	Set the 'useSvnsyncProps' option in the [svn-remote] config.
 --rewrite-root=<URL>;;
 	Set the 'rewriteRoot' option in the [svn-remote] config.
---username=<USER>;;
+--rewrite-uuid=<UUID>;;
+	Set the 'rewriteUUID' option in the [svn-remote] config.
+--username=<user>;;
 	For transports that SVN handles authentication for (http,
 	https, and plain svn), specify the username.  For other
 	transports (eg svn+ssh://), you must include the username in
@@ -102,15 +106,15 @@ COMMANDS
 	Store Git commit times in the local timezone instead of UTC.  This
 	makes 'git log' (even without --date=local) show the same times
 	that `svn log` would in the local timezone.
-
---parent;;
-	Fetch only from the SVN parent of the current HEAD.
 +
 This doesn't interfere with interoperating with the Subversion
 repository you cloned from, but if you wish for your local Git
 repository to be able to interoperate with someone else's local Git
 repository, either don't use this option or you should both use it in
 the same local timezone.
+
+--parent;;
+	Fetch only from the SVN parent of the current HEAD.
 
 --ignore-paths=<regex>;;
 	This allows one to specify a Perl regular expression that will
@@ -140,17 +144,6 @@ Skip "branches" and "tags" of first level directories;;
 --ignore-paths="^[^/]+/(?:branches|tags)"
 ------------------------------------------------------------------------
 --
-
---use-log-author;;
-	When retrieving svn commits into git (as part of fetch, rebase, or
-	dcommit operations), look for the first From: or Signed-off-by: line
-	in the log message and use that as the author string.
---add-author-from;;
-	When committing to svn from git (as part of commit or dcommit
-	operations), if the existing log message doesn't already have a
-	From: or Signed-off-by: line, append a From: line based on the
-	git commit's author string.  If you use this, then --use-log-author
-	will retrieve a valid author string for all commits.
 
 'clone'::
 	Runs 'init' and 'fetch'.  It will automatically create a
@@ -213,6 +206,13 @@ config key: svn.commiturl (overwrites all svn-remote.<name>.commiturl options)
 Using this option for any other purpose (don't ask) is very strongly
 discouraged.
 
+--mergeinfo=<mergeinfo>;;
+	Add the given merge information during the dcommit
+	(e.g. `--mergeinfo="/branches/foo:1-10"`). All svn server versions can
+	store this information (as a property), and svn clients starting from
+	version 1.5 can make use of it. 'git svn' currently does not use it
+	and does not set it automatically.
+
 'branch'::
 	Create a branch in the SVN repository.
 
@@ -238,6 +238,19 @@ discouraged.
 +
 where <name> is the name of the SVN repository as specified by the -R option to
 'init' (or "svn" by default).
+
+--username;;
+	Specify the SVN username to perform the commit as.  This option overrides
+	the 'username' configuration property.
+
+--commit-url;;
+	Use the specified URL to connect to the destination Subversion
+	repository.  This is useful in cases where the source SVN
+	repository is read-only.  This option overrides configuration
+	property 'commiturl'.
++
+	git config --get-all svn-remote.<name>.commiturl
++
 
 'tag'::
 	Create a tag in the SVN repository. This is a shorthand for
@@ -319,6 +332,13 @@ Any other arguments are passed directly to 'git log'
 	Recursively finds and lists the svn:ignore property on
 	directories.  The output is suitable for appending to
 	the $GIT_DIR/info/exclude file.
+
+'mkdirs'::
+	Attempts to recreate empty directories that core git cannot track
+	based on information in $GIT_DIR/svn/<refname>/unhandled.log files.
+	Empty directories are automatically recreated when using
+	"git svn clone" and "git svn rebase", so "mkdirs" is intended
+	for use after commands like "git checkout" or "git reset".
 
 'commit-diff'::
 	Commits the diff of two tree-ish arguments from the
@@ -414,13 +434,13 @@ git rebase --onto remotes/git-svn A^ master
 OPTIONS
 -------
 
---shared[={false|true|umask|group|all|world|everybody}]::
+--shared[=(false|true|umask|group|all|world|everybody)]::
 --template=<template_directory>::
 	Only used with the 'init' command.
 	These are passed directly to 'git init'.
 
--r <ARG>::
---revision <ARG>::
+-r <arg>::
+--revision <arg>::
 	   Used with the 'fetch' command.
 +
 This allows revision ranges for partial/cauterized history
@@ -541,6 +561,17 @@ repository that will be fetched from.
 For 'branch' and 'tag', display the urls that will be used for copying when
 creating the branch or tag.
 
+--use-log-author::
+	When retrieving svn commits into git (as part of 'fetch', 'rebase', or
+	'dcommit' operations), look for the first `From:` or `Signed-off-by:` line
+	in the log message and use that as the author string.
+--add-author-from::
+	When committing to svn from git (as part of 'commit-diff', 'set-tree' or 'dcommit'
+	operations), if the existing log message doesn't already have a
+	`From:` or `Signed-off-by:` line, append a `From:` line based on the
+	git commit's author string.  If you use this, then `--use-log-author`
+	will retrieve a valid author string for all commits.
+
 
 ADVANCED OPTIONS
 ----------------
@@ -575,13 +606,22 @@ svn.noMetadata::
 svn-remote.<name>.noMetadata::
 	This gets rid of the 'git-svn-id:' lines at the end of every commit.
 +
-If you lose your .git/svn/git-svn/.rev_db file, 'git svn' will not
-be able to rebuild it and you won't be able to fetch again,
-either.  This is fine for one-shot imports.
+This option can only be used for one-shot imports as 'git svn'
+will not be able to fetch again without metadata. Additionally,
+if you lose your .git/svn/**/.rev_map.* files, 'git svn' will not
+be able to rebuild them.
 +
 The 'git svn log' command will not work on repositories using
 this, either.  Using this conflicts with the 'useSvmProps'
 option for (hopefully) obvious reasons.
++
+This option is NOT recommended as it makes it difficult to track down
+old references to SVN revision numbers in existing documentation, bug
+reports and archives.  If you plan to eventually migrate from SVN to git
+and are certain about dropping SVN history, consider
+linkgit:git-filter-branch[1] instead.  filter-branch also allows
+reformatting of metadata for ease-of-reading and rewriting authorship
+info for non-"svn.authorsFile" users.
 
 svn.useSvmProps::
 svn-remote.<name>.useSvmProps::
@@ -609,6 +649,22 @@ svn-remote.<name>.rewriteRoot::
 	the repository with a public http:// or svn:// URL in the
 	metadata so users of it will see the public URL.
 
+svn-remote.<name>.rewriteUUID::
+	Similar to the useSvmProps option; this is for users who need
+	to remap the UUID manually. This may be useful in situations
+	where the original UUID is not available via either useSvmProps
+	or useSvnsyncProps.
+
+svn-remote.<name>.pushurl::
+
+	Similar to git's 'remote.<name>.pushurl', this key is designed
+	to be used in cases where 'url' points to an SVN repository
+	via a read-only transport, to provide an alternate read/write
+	transport. It is assumed that both keys point to the same
+	repository. Unlike 'commiturl', 'pushurl' is a base path. If
+	either 'commiturl' or 'pushurl' could be used, 'commiturl'
+	takes precedence.
+
 svn.brokenSymlinkWorkaround::
 	This disables potentially expensive checks to workaround
 	broken symlinks checked into SVN by broken clients.  Set this
@@ -618,13 +674,20 @@ svn.brokenSymlinkWorkaround::
 	revision fetched.  If unset, 'git svn' assumes this option to
 	be "true".
 
-Since the noMetadata, rewriteRoot, useSvnsyncProps and useSvmProps
+svn.pathnameencoding::
+	This instructs git svn to recode pathnames to a given encoding.
+	It can be used by windows users and by those who work in non-utf8
+	locales to avoid corrupted file names with non-ASCII characters.
+	Valid encodings are the ones supported by Perl's Encode module.
+
+Since the noMetadata, rewriteRoot, rewriteUUID, useSvnsyncProps and useSvmProps
 options all affect the metadata generated and used by 'git svn'; they
 *must* be set in the configuration file before any history is imported
 and these settings should never be changed once they are set.
 
-Additionally, only one of these four options can be used per-svn-remote
-section because they affect the 'git-svn-id:' metadata line.
+Additionally, only one of these options can be used per svn-remote
+section because they affect the 'git-svn-id:' metadata line, except
+for rewriteRoot and rewriteUUID which can be used together.
 
 
 BASIC EXAMPLES
@@ -683,8 +746,11 @@ have each person clone that repository with 'git clone':
 	cd project
 	git init
 	git remote add origin server:/pub/project
-	git config --add remote.origin.fetch '+refs/remotes/*:refs/remotes/*'
+	git config --replace-all remote.origin.fetch '+refs/remotes/*:refs/remotes/*'
 	git fetch
+# Prevent fetch/pull from remote git server in the future,
+# we only want to use git svn for future updates
+	git config --remove-section remote.origin
 # Create a local branch from one of the branches just fetched
 	git checkout -b master FETCH_HEAD
 # Initialize 'git svn' locally (be sure to use the same URL and -T/-b/-t options as were used on server)
@@ -708,10 +774,9 @@ use `git svn rebase` to update your work branch instead of `git pull` or
 when committing into SVN, which can lead to merge commits reversing
 previous commits in SVN.
 
-DESIGN PHILOSOPHY
------------------
-Merge tracking in Subversion is lacking and doing branched development
-with Subversion can be cumbersome as a result.  While 'git svn' can track
+MERGE TRACKING
+--------------
+While 'git svn' can track
 copy history (including branches and tags) for repositories adopting a
 standard layout, it cannot yet represent merge history that happened
 inside git back upstream to SVN users.  Therefore it is advised that
@@ -721,19 +786,28 @@ compatibility with SVN (see the CAVEATS section below).
 CAVEATS
 -------
 
-For the sake of simplicity and interoperating with a less-capable system
-(SVN), it is recommended that all 'git svn' users clone, fetch and dcommit
+For the sake of simplicity and interoperating with Subversion,
+it is recommended that all 'git svn' users clone, fetch and dcommit
 directly from the SVN server, and avoid all 'git clone'/'pull'/'merge'/'push'
 operations between git repositories and branches.  The recommended
 method of exchanging code between git branches and users is
 'git format-patch' and 'git am', or just 'dcommit'ing to the SVN repository.
 
 Running 'git merge' or 'git pull' is NOT recommended on a branch you
-plan to 'dcommit' from.  Subversion does not represent merges in any
-reasonable or useful fashion; so users using Subversion cannot see any
+plan to 'dcommit' from because Subversion users cannot see any
 merges you've made.  Furthermore, if you merge or pull from a git branch
 that is a mirror of an SVN branch, 'dcommit' may commit to the wrong
 branch.
+
+If you do merge, note the following rule: 'git svn dcommit' will
+attempt to commit on top of the SVN commit named in
+------------------------------------------------------------------------
+git log --grep=^git-svn-id: --first-parent -1
+------------------------------------------------------------------------
+You 'must' therefore ensure that the most recent commit of the branch
+you want to dcommit to is the 'first' parent of the merge.  Chaos will
+ensue otherwise, especially if the first parent is an older commit on
+the same SVN branch.
 
 'git clone' does not clone branches under the refs/remotes/ hierarchy or
 any 'git svn' metadata, or config.  So repositories created and managed with
@@ -770,7 +844,7 @@ Renamed and copied directories are not detected by git and hence not
 tracked when committing to SVN.  I do not plan on adding support for
 this as it's quite difficult and time-consuming to get working for all
 the possible corner cases (git doesn't do it, either).  Committing
-renamed and copied files are fully supported if they're similar enough
+renamed and copied files is fully supported if they're similar enough
 for git to detect them.
 
 CONFIGURATION
@@ -799,14 +873,26 @@ independent path component (surrounded by '/' or EOL).   This
 type of configuration is not automatically created by 'init' and
 should be manually entered with a text-editor or using 'git config'.
 
+It is also possible to fetch a subset of branches or tags by using a
+comma-separated list of names within braces. For example:
+
+------------------------------------------------------------------------
+[svn-remote "huge-project"]
+	url = http://server.org/svn
+	fetch = trunk/src:refs/remotes/trunk
+	branches = branches/{red,green}/src:refs/remotes/branches/*
+	tags = tags/{1.0,2.0}/src:refs/remotes/tags/*
+------------------------------------------------------------------------
+
+Note that git-svn keeps track of the highest revision in which a branch
+or tag has appeared. If the subset of branches or tags is changed after
+fetching, then .git/svn/.metadata must be manually edited to remove (or
+reset) branches-maxRev and/or tags-maxRev as appropriate.
+
 SEE ALSO
 --------
 linkgit:git-rebase[1]
 
-Author
-------
-Written by Eric Wong <normalperson@yhbt.net>.
-
-Documentation
--------------
-Written by Eric Wong <normalperson@yhbt.net>.
+GIT
+---
+Part of the linkgit:git[1] suite

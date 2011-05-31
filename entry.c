@@ -106,14 +106,14 @@ static int write_entry(struct cache_entry *ce, char *path, const struct checkout
 	case S_IFLNK:
 		new = read_blob_entry(ce, &size);
 		if (!new)
-			return error("git checkout-index: unable to read sha1 file of %s (%s)",
+			return error("unable to read sha1 file of %s (%s)",
 				path, sha1_to_hex(ce->sha1));
 
 		if (ce_mode_s_ifmt == S_IFLNK && has_symlinks && !to_tempfile) {
 			ret = symlink(new, path);
 			free(new);
 			if (ret)
-				return error("git checkout-index: unable to create symlink %s (%s)",
+				return error("unable to create symlink %s (%s)",
 					     path, strerror(errno));
 			break;
 		}
@@ -141,7 +141,7 @@ static int write_entry(struct cache_entry *ce, char *path, const struct checkout
 		}
 		if (fd < 0) {
 			free(new);
-			return error("git checkout-index: unable to create file %s (%s)",
+			return error("unable to create file %s (%s)",
 				path, strerror(errno));
 		}
 
@@ -155,16 +155,16 @@ static int write_entry(struct cache_entry *ce, char *path, const struct checkout
 		close(fd);
 		free(new);
 		if (wrote != size)
-			return error("git checkout-index: unable to write file %s", path);
+			return error("unable to write file %s", path);
 		break;
 	case S_IFGITLINK:
 		if (to_tempfile)
-			return error("git checkout-index: cannot create temporary subproject %s", path);
+			return error("cannot create temporary subproject %s", path);
 		if (mkdir(path, 0777) < 0)
-			return error("git checkout-index: cannot create subproject directory %s", path);
+			return error("cannot create subproject directory %s", path);
 		break;
 	default:
-		return error("git checkout-index: unknown file mode for %s", path);
+		return error("unknown file mode for %s in index", path);
 	}
 
 	if (state->refresh_cache) {
@@ -173,6 +173,23 @@ static int write_entry(struct cache_entry *ce, char *path, const struct checkout
 		fill_stat_cache_info(ce, &st);
 	}
 	return 0;
+}
+
+/*
+ * This is like 'lstat()', except it refuses to follow symlinks
+ * in the path, after skipping "skiplen".
+ */
+static int check_path(const char *path, int len, struct stat *st, int skiplen)
+{
+	const char *slash = path + len;
+
+	while (path < slash && *slash != '/')
+		slash--;
+	if (!has_dirs_only_path(path, slash - path, skiplen)) {
+		errno = ENOENT;
+		return -1;
+	}
+	return lstat(path, st);
 }
 
 int checkout_entry(struct cache_entry *ce, const struct checkout *state, char *topath)
@@ -188,13 +205,13 @@ int checkout_entry(struct cache_entry *ce, const struct checkout *state, char *t
 	strcpy(path + len, ce->name);
 	len += ce_namelen(ce);
 
-	if (!lstat(path, &st)) {
-		unsigned changed = ce_match_stat(ce, &st, CE_MATCH_IGNORE_VALID);
+	if (!check_path(path, len, &st, state->base_dir_len)) {
+		unsigned changed = ce_match_stat(ce, &st, CE_MATCH_IGNORE_VALID|CE_MATCH_IGNORE_SKIP_WORKTREE);
 		if (!changed)
 			return 0;
 		if (!state->force) {
 			if (!state->quiet)
-				fprintf(stderr, "git-checkout-index: %s already exists\n", path);
+				fprintf(stderr, "%s already exists, no checkout\n", path);
 			return -1;
 		}
 

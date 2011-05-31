@@ -7,19 +7,29 @@ USAGE="list [<options>]
    or: $dashless drop [-q|--quiet] [<stash>]
    or: $dashless ( pop | apply ) [--index] [-q|--quiet] [<stash>]
    or: $dashless branch <branchname> [<stash>]
-   or: $dashless [save [--keep-index] [-q|--quiet] [<message>]]
+   or: $dashless [save [--patch] [-k|--[no-]keep-index] [-q|--quiet] [<message>]]
    or: $dashless clear"
 
 SUBDIRECTORY_OK=Yes
 OPTIONS_SPEC=
+START_DIR=`pwd`
 . git-sh-setup
 require_work_tree
 cd_to_toplevel
 
 TMP="$GIT_DIR/.git-stash.$$"
-trap 'rm -f "$TMP-*"' 0
+TMPindex=${GIT_INDEX_FILE-"$GIT_DIR/index"}.stash.$$
+trap 'rm -f "$TMP-"* "$TMPindex"' 0
 
 ref_stash=refs/stash
+
+if git config --get-colorbool color.interactive; then
+       help_color="$(git config --get-color color.interactive.help 'red bold')"
+       reset_color="$(git config --get-color '' reset)"
+else
+       help_color=
+       reset_color=
+fi
 
 no_changes () {
 	git diff-index --quiet --cached HEAD --ignore-submodules -- &&
@@ -49,7 +59,7 @@ create_stash () {
 	# state of the base commit
 	if b_commit=$(git rev-parse --verify HEAD)
 	then
-		head=$(git log --no-color --abbrev-commit --pretty=oneline -n 1 HEAD --)
+		head=$(git rev-list --oneline -n 1 HEAD --)
 	else
 		die "You do not have the initial commit yet"
 	fi
@@ -68,18 +78,41 @@ create_stash () {
 		git commit-tree $i_tree -p $b_commit) ||
 		die "Cannot save the current index state"
 
-	# state of the working tree
-	w_tree=$( (
+	if test -z "$patch_mode"
+	then
+
+		# state of the working tree
+		w_tree=$( (
+			git read-tree --index-output="$TMPindex" -m $i_tree &&
+			GIT_INDEX_FILE="$TMPindex" &&
+			export GIT_INDEX_FILE &&
+			git diff --name-only -z HEAD | git update-index -z --add --remove --stdin &&
+			git write-tree &&
+			rm -f "$TMPindex"
+		) ) ||
+			die "Cannot save the current worktree state"
+
+	else
+
 		rm -f "$TMP-index" &&
-		cp -p ${GIT_INDEX_FILE-"$GIT_DIR/index"} "$TMP-index" &&
-		GIT_INDEX_FILE="$TMP-index" &&
-		export GIT_INDEX_FILE &&
-		git read-tree -m $i_tree &&
-		git add -u &&
-		git write-tree &&
-		rm -f "$TMP-index"
-	) ) ||
+		GIT_INDEX_FILE="$TMP-index" git read-tree HEAD &&
+
+		# find out what the user wants
+		GIT_INDEX_FILE="$TMP-index" \
+			git add--interactive --patch=stash -- &&
+
+		# state of the working tree
+		w_tree=$(GIT_INDEX_FILE="$TMP-index" git write-tree) ||
 		die "Cannot save the current worktree state"
+
+		git diff-tree -p HEAD $w_tree > "$TMP-patch" &&
+		test -s "$TMP-patch" ||
+		die "No changes selected"
+
+		rm -f "$TMP-index" ||
+		die "Cannot remove temporary index (can't happen)"
+
+	fi
 
 	# create the stash
 	if test -z "$stash_msg"
@@ -95,14 +128,32 @@ create_stash () {
 
 save_stash () {
 	keep_index=
+	patch_mode=
 	while test $# != 0
 	do
 		case "$1" in
-		--keep-index)
+		-k|--keep-index)
 			keep_index=t
+			;;
+		--no-keep-index)
+			keep_index=n
+			;;
+		-p|--patch)
+			patch_mode=t
+			# only default to keep if we don't already have an override
+			test -z "$keep_index" && keep_index=t
 			;;
 		-q|--quiet)
 			GIT_QUIET=t
+			;;
+		--)
+			shift
+			break
+			;;
+		-*)
+			echo "error: unknown option for 'stash save': $1"
+			echo "       To provide a message, use git stash save -- '$1'"
+			usage
 			;;
 		*)
 			break
@@ -131,11 +182,22 @@ save_stash () {
 		die "Cannot save the current status"
 	say Saved working directory and index state "$stash_msg"
 
-	git reset --hard ${GIT_QUIET:+-q}
-
-	if test -n "$keep_index" && test -n $i_tree
+	if test -z "$patch_mode"
 	then
-		git read-tree --reset -u $i_tree
+		git reset --hard ${GIT_QUIET:+-q}
+
+		if test "$keep_index" = "t" && test -n $i_tree
+		then
+			git read-tree --reset -u $i_tree
+		fi
+	else
+		git apply -R < "$TMP-patch" ||
+		die "Cannot remove worktree changes"
+
+		if test "$keep_index" != "t"
+		then
+			git reset
+		fi
 	fi
 }
 
@@ -145,59 +207,142 @@ have_stash () {
 
 list_stash () {
 	have_stash || return 0
-	git log --no-color --pretty=oneline -g "$@" $ref_stash -- |
-	sed -n -e 's/^[.0-9a-f]* refs\///p'
+	git log --format="%gd: %gs" -g "$@" $ref_stash --
 }
 
 show_stash () {
-	flags=$(git rev-parse --no-revs --flags "$@")
-	if test -z "$flags"
-	then
-		flags=--stat
-	fi
+	assert_stash_like "$@"
 
-	w_commit=$(git rev-parse --verify --default $ref_stash "$@") &&
-	b_commit=$(git rev-parse --verify "$w_commit^") &&
-	git diff $flags $b_commit $w_commit
+	git diff ${FLAGS:---stat} $b_commit $w_commit
+}
+
+#
+# Parses the remaining options looking for flags and
+# at most one revision defaulting to ${ref_stash}@{0}
+# if none found.
+#
+# Derives related tree and commit objects from the
+# revision, if one is found.
+#
+# stash records the work tree, and is a merge between the
+# base commit (first parent) and the index tree (second parent).
+#
+#   REV is set to the symbolic version of the specified stash-like commit
+#   IS_STASH_LIKE is non-blank if ${REV} looks like a stash
+#   IS_STASH_REF is non-blank if the ${REV} looks like a stash ref
+#   s is set to the SHA1 of the stash commit
+#   w_commit is set to the commit containing the working tree
+#   b_commit is set to the base commit
+#   i_commit is set to the commit containing the index tree
+#   w_tree is set to the working tree
+#   b_tree is set to the base tree
+#   i_tree is set to the index tree
+#
+#   GIT_QUIET is set to t if -q is specified
+#   INDEX_OPTION is set to --index if --index is specified.
+#   FLAGS is set to the remaining flags
+#
+# dies if:
+#   * too many revisions specified
+#   * no revision is specified and there is no stash stack
+#   * a revision is specified which cannot be resolve to a SHA1
+#   * a non-existent stash reference is specified
+#
+
+parse_flags_and_rev()
+{
+	test "$PARSE_CACHE" = "$*" && return 0 # optimisation
+	PARSE_CACHE="$*"
+
+	IS_STASH_LIKE=
+	IS_STASH_REF=
+	INDEX_OPTION=
+	s=
+	w_commit=
+	b_commit=
+	i_commit=
+	w_tree=
+	b_tree=
+	i_tree=
+
+	REV=$(git rev-parse --no-flags --symbolic "$@") || exit 1
+
+	FLAGS=
+	for opt
+	do
+		case "$opt" in
+			-q|--quiet)
+				GIT_QUIET=-t
+			;;
+			--index)
+				INDEX_OPTION=--index
+			;;
+			-*)
+				FLAGS="${FLAGS}${FLAGS:+ }$opt"
+			;;
+		esac
+	done
+
+	set -- $REV
+
+	case $# in
+		0)
+			have_stash || die "No stash found."
+			set -- ${ref_stash}@{0}
+		;;
+		1)
+			:
+		;;
+		*)
+			die "Too many revisions specified: $REV"
+		;;
+	esac
+
+	REV=$(git rev-parse --quiet --symbolic --verify $1 2>/dev/null) || die "$1 is not valid reference"
+
+	i_commit=$(git rev-parse --quiet --verify $REV^2 2>/dev/null) &&
+	set -- $(git rev-parse $REV $REV^1 $REV: $REV^1: $REV^2: 2>/dev/null) &&
+	s=$1 &&
+	w_commit=$1 &&
+	b_commit=$2 &&
+	w_tree=$3 &&
+	b_tree=$4 &&
+	i_tree=$5 &&
+	IS_STASH_LIKE=t &&
+	test "$ref_stash" = "$(git rev-parse --symbolic-full-name "${REV%@*}")" &&
+	IS_STASH_REF=t
+}
+
+is_stash_like()
+{
+	parse_flags_and_rev "$@"
+	test -n "$IS_STASH_LIKE"
+}
+
+assert_stash_like() {
+	is_stash_like "$@" || die "'$*' is not a stash-like commit"
+}
+
+is_stash_ref() {
+	is_stash_like "$@" && test -n "$IS_STASH_REF"
+}
+
+assert_stash_ref() {
+	is_stash_ref "$@" || die "'$*' is not a stash reference"
 }
 
 apply_stash () {
-	git update-index -q --refresh &&
-	git diff-files --quiet --ignore-submodules ||
-		die 'Cannot apply to a dirty working tree, please stage your changes'
 
-	unstash_index=
+	assert_stash_like "$@"
 
-	while test $# != 0
-	do
-		case "$1" in
-		--index)
-			unstash_index=t
-			;;
-		-q|--quiet)
-			GIT_QUIET=t
-			;;
-		*)
-			break
-			;;
-		esac
-		shift
-	done
+	git update-index -q --refresh || die 'unable to refresh index'
 
 	# current index state
 	c_tree=$(git write-tree) ||
 		die 'Cannot apply a stash in the middle of a merge'
 
-	# stash records the work tree, and is a merge between the
-	# base commit (first parent) and the index tree (second parent).
-	s=$(git rev-parse --verify --default $ref_stash "$@") &&
-	w_tree=$(git rev-parse --verify "$s:") &&
-	b_tree=$(git rev-parse --verify "$s^1:") &&
-	i_tree=$(git rev-parse --verify "$s^2:") ||
-		die "$*: no valid stashed state found"
-
 	unstashed_index_tree=
-	if test -n "$unstash_index" && test "$b_tree" != "$i_tree" &&
+	if test -n "$INDEX_OPTION" && test "$b_tree" != "$i_tree" &&
 			test "$c_tree" != "$i_tree"
 	then
 		git diff-tree --binary $s^2^..$s^2 | git apply --cached
@@ -217,7 +362,7 @@ apply_stash () {
 
 	if test -n "$GIT_QUIET"
 	then
-		export GIT_MERGE_VERBOSITY=0
+		GIT_MERGE_VERBOSITY=0 && export GIT_MERGE_VERBOSITY
 	fi
 	if git merge-recursive $b_tree -- $c_tree $w_tree
 	then
@@ -238,11 +383,11 @@ apply_stash () {
 		then
 			squelch='>/dev/null 2>&1'
 		fi
-		eval "git status $squelch" || :
+		(cd "$START_DIR" && eval "git status $squelch") || :
 	else
 		# Merge conflict; keep the exit status from merge-recursive
 		status=$?
-		if test -n "$unstash_index"
+		if test -n "$INDEX_OPTION"
 		then
 			echo >&2 'Index was not unstashed.'
 		fi
@@ -250,67 +395,54 @@ apply_stash () {
 	fi
 }
 
+pop_stash() {
+	assert_stash_ref "$@"
+
+	apply_stash "$@" &&
+	drop_stash "$@"
+}
+
 drop_stash () {
-	have_stash || die 'No stash entries to drop'
+	assert_stash_ref "$@"
 
-	while test $# != 0
-	do
-		case "$1" in
-		-q|--quiet)
-			GIT_QUIET=t
-			;;
-		*)
-			break
-			;;
-		esac
-		shift
-	done
-
-	if test $# = 0
-	then
-		set x "$ref_stash@{0}"
-		shift
-	fi
-	# Verify supplied argument looks like a stash entry
-	s=$(git rev-parse --verify "$@") &&
-	git rev-parse --verify "$s:"   > /dev/null 2>&1 &&
-	git rev-parse --verify "$s^1:" > /dev/null 2>&1 &&
-	git rev-parse --verify "$s^2:" > /dev/null 2>&1 ||
-		die "$*: not a valid stashed state"
-
-	git reflog delete --updateref --rewrite "$@" &&
-		say "Dropped $* ($s)" || die "$*: Could not drop stash entry"
+	git reflog delete --updateref --rewrite "${REV}" &&
+		say "Dropped ${REV} ($s)" || die "${REV}: Could not drop stash entry"
 
 	# clear_stash if we just dropped the last stash entry
 	git rev-parse --verify "$ref_stash@{0}" > /dev/null 2>&1 || clear_stash
 }
 
 apply_to_branch () {
-	have_stash || die 'Nothing to apply'
-
 	test -n "$1" || die 'No branch name specified'
 	branch=$1
+	shift 1
 
-	if test -z "$2"
-	then
-		set x "$ref_stash@{0}"
-	fi
-	stash=$2
+	set -- --index "$@"
+	assert_stash_like "$@"
 
-	git checkout -b $branch $stash^ &&
-	apply_stash --index $stash &&
-	drop_stash $stash
+	git checkout -b $branch $REV^ &&
+	apply_stash "$@" && {
+		test -z "$IS_STASH_REF" || drop_stash "$@"
+	}
 }
+
+PARSE_CACHE='--not-parsed'
+# The default command is "save" if nothing but options are given
+seen_non_option=
+for opt
+do
+	case "$opt" in
+	-*) ;;
+	*) seen_non_option=t; break ;;
+	esac
+done
+
+test -n "$seen_non_option" || set "save" "$@"
 
 # Main command set
 case "$1" in
 list)
 	shift
-	if test $# = 0
-	then
-		set x -n 10
-		shift
-	fi
 	list_stash "$@"
 	;;
 show)
@@ -342,23 +474,20 @@ drop)
 	;;
 pop)
 	shift
-	if apply_stash "$@"
-	then
-		test -z "$unstash_index" || shift
-		drop_stash "$@"
-	fi
+	pop_stash "$@"
 	;;
 branch)
 	shift
 	apply_to_branch "$@"
 	;;
 *)
-	if test $# -eq 0
-	then
+	case $# in
+	0)
 		save_stash &&
 		say '(To restore them type "git stash apply")'
-	else
+		;;
+	*)
 		usage
-	fi
+	esac
 	;;
 esac

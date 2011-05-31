@@ -10,13 +10,17 @@ SYNOPSIS
 --------
 [verse]
 'git remote' [-v | --verbose]
-'git remote add' [-t <branch>] [-m <master>] [-f] [--mirror] <name> <url>
+'git remote add' [-t <branch>] [-m <master>] [-f] [--tags|--no-tags] [--mirror=<fetch|push>] <name> <url>
 'git remote rename' <old> <new>
 'git remote rm' <name>
-'git remote set-head' <name> [-a | -d | <branch>]
-'git remote show' [-n] <name>
+'git remote set-head' <name> (-a | -d | <branch>)
+'git remote set-branches' <name> [--add] <branch>...
+'git remote set-url' [--push] <name> <newurl> [<oldurl>]
+'git remote set-url --add' [--push] <name> <newurl>
+'git remote set-url --delete' [--push] <name> <url>
+'git remote' [-v | --verbose] 'show' [-n] <name>
 'git remote prune' [-n | --dry-run] <name>
-'git remote update' [-p | --prune] [group | remote]...
+'git remote' [-v | --verbose] 'update' [-p | --prune] [(<group> | <remote>)...]
 
 DESCRIPTION
 -----------
@@ -30,6 +34,7 @@ OPTIONS
 -v::
 --verbose::
 	Be a little more verbose and show remote url after name.
+	NOTE: This must be placed between `remote` and `subcommand`.
 
 
 COMMANDS
@@ -47,6 +52,12 @@ update remote-tracking branches <name>/<branch>.
 With `-f` option, `git fetch <name>` is run immediately after
 the remote information is set up.
 +
+With `--tags` option, `git fetch <name>` imports every tag from the
+remote repository.
++
+With `--no-tags` option, `git fetch <name>` does not import tags from
+the remote repository.
++
 With `-t <branch>` option, instead of the default glob
 refspec for the remote to track all branches under
 `$GIT_DIR/remotes/<name>/`, a refspec to track only `<branch>`
@@ -56,15 +67,18 @@ multiple branches without grabbing all branches.
 With `-m <master>` option, `$GIT_DIR/remotes/<name>/HEAD` is set
 up to point at remote's `<master>` branch. See also the set-head command.
 +
-In mirror mode, enabled with `\--mirror`, the refs will not be stored
-in the 'refs/remotes/' namespace, but in 'refs/heads/'.  This option
-only makes sense in bare repositories.  If a remote uses mirror
-mode, furthermore, `git push` will always behave as if `\--mirror`
-was passed.
+When a fetch mirror is created with `\--mirror=fetch`, the refs will not
+be stored in the 'refs/remotes/' namespace, but rather everything in
+'refs/' on the remote will be directly mirrored into 'refs/' in the
+local repository. This option only makes sense in bare repositories,
+because a fetch would overwrite any local commits.
++
+When a push mirror is created with `\--mirror=push`, then `git push`
+will always behave as if `\--mirror` was passed.
 
 'rename'::
 
-Rename the remote named <old> to <new>. All remote tracking branches and
+Rename the remote named <old> to <new>. All remote-tracking branches and
 configuration settings for the remote are updated.
 +
 In case <old> and <new> are the same, and <old> is a file under
@@ -73,7 +87,7 @@ the configuration file format.
 
 'rm'::
 
-Remove the remote named <name>. All remote tracking branches and
+Remove the remote named <name>. All remote-tracking branches and
 configuration settings for the remote are removed.
 
 'set-head'::
@@ -100,6 +114,32 @@ remote set-head origin master" will set `$GIT_DIR/refs/remotes/origin/HEAD` to
 `refs/remotes/origin/master` already exists; if not it must be fetched first.
 +
 
+'set-branches'::
+
+Changes the list of branches tracked by the named remote.
+This can be used to track a subset of the available remote branches
+after the initial setup for a remote.
++
+The named branches will be interpreted as if specified with the
+`-t` option on the 'git remote add' command line.
++
+With `--add`, instead of replacing the list of currently tracked
+branches, adds to that list.
+
+'set-url'::
+
+Changes URL remote points to. Sets first URL remote points to matching
+regex <oldurl> (first URL if no <oldurl> is given) to <newurl>. If
+<oldurl> doesn't match any URL, error occurs and nothing is changed.
++
+With '--push', push URLs are manipulated instead of fetch URLs.
++
+With '--add', instead of changing some URL, new URL is added.
++
+With '--delete', instead of changing some URL, all URLs matching
+regex <url> are deleted. Trying to delete all non-push URLs is an
+error.
+
 'show'::
 
 Gives some information about the remote <name>.
@@ -109,19 +149,19 @@ With `-n` option, the remote heads are not queried first with
 
 'prune'::
 
-Deletes all stale tracking branches under <name>.
+Deletes all stale remote-tracking branches under <name>.
 These stale branches have already been removed from the remote repository
 referenced by <name>, but are still locally available in
 "remotes/<name>".
 +
-With `--dry-run` option, report what branches will be pruned, but do no
+With `--dry-run` option, report what branches will be pruned, but do not
 actually prune them.
 
 'update'::
 
 Fetch updates for a named set of remotes in the repository as defined by
 remotes.<group>.  If a named group is not specified on the command line,
-the configuration parameter remotes.default will get used; if
+the configuration parameter remotes.default will be used; if
 remotes.default is not defined, all remotes which do not have the
 configuration parameter remote.<name>.skipDefaultUpdate set to true will
 be updated.  (See linkgit:git-config[1]).
@@ -160,7 +200,7 @@ $ git checkout -b nfs linux-nfs/master
 ...
 ------------
 
-* Imitate 'git-clone' but track only selected branches
+* Imitate 'git clone' but track only selected branches
 +
 ------------
 $ mkdir project.git
@@ -176,16 +216,6 @@ SEE ALSO
 linkgit:git-fetch[1]
 linkgit:git-branch[1]
 linkgit:git-config[1]
-
-Author
-------
-Written by Junio Hamano
-
-
-Documentation
---------------
-Documentation by J. Bruce Fields and the git-list <git@vger.kernel.org>.
-
 
 GIT
 ---

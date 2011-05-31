@@ -1,6 +1,8 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
 
+use 5.008;
 use strict;
+use warnings;
 use Getopt::Std;
 use File::Temp qw(tempdir);
 use Data::Dumper;

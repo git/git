@@ -10,7 +10,7 @@ aren'"'"'t on top of $ONTO, even if they are on top of $UPSTREAM.
 '
 . ./test-lib.sh
 
-. ../lib-rebase.sh
+. "$TEST_DIRECTORY"/lib-rebase.sh
 
 # Set up branches like this:
 # A1---B1---E1---F1---G1

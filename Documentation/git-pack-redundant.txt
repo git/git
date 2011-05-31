@@ -16,7 +16,7 @@ This program computes which packs in your repository
 are redundant. The output is suitable for piping to
 `xargs rm` if you are in the root of the repository.
 
-'git-pack-redundant' accepts a list of objects on standard input. Any objects
+'git pack-redundant' accepts a list of objects on standard input. Any objects
 given will be ignored when checking which packs are required. This makes the
 following command useful when wanting to remove packs which contain unreachable
 objects.
@@ -37,14 +37,6 @@ OPTIONS
 
 --verbose::
 	Outputs some statistics to stderr. Has a small performance penalty.
-
-Author
-------
-Written by Lukas Sandström <lukass@etek.chalmers.se>
-
-Documentation
---------------
-Documentation by Lukas Sandström <lukass@etek.chalmers.se>
 
 SEE ALSO
 --------

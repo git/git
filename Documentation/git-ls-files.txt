@@ -10,14 +10,14 @@ SYNOPSIS
 --------
 [verse]
 'git ls-files' [-z] [-t] [-v]
-		(--[cached|deleted|others|ignored|stage|unmerged|killed|modified])\*
-		(-[c|d|o|i|s|u|k|m])\*
+		(--[cached|deleted|others|ignored|stage|unmerged|killed|modified])*
+		(-[c|d|o|i|s|u|k|m])*
 		[-x <pattern>|--exclude=<pattern>]
 		[-X <file>|--exclude-from=<file>]
 		[--exclude-per-directory=<file>]
 		[--exclude-standard]
 		[--error-unmatch] [--with-tree=<tree-ish>]
-		[--full-name] [--abbrev] [--] [<file>]\*
+		[--full-name] [--abbrev] [--] [<file>...]
 
 DESCRIPTION
 -----------
@@ -44,12 +44,14 @@ OPTIONS
 
 -o::
 --others::
-	Show other files in the output
+	Show other (i.e. untracked) files in the output
 
 -i::
 --ignored::
-	Show ignored files in the output.
-	Note that this also reverses any exclude list present.
+	Show only ignored files in the output. When showing files in the
+	index, print only those matched by an exclude pattern. When
+	showing "other" files, show only those matched by an exclude
+	pattern.
 
 -s::
 --stage::
@@ -77,15 +79,16 @@ OPTIONS
 
 -x <pattern>::
 --exclude=<pattern>::
-	Skips files matching pattern.
-	Note that pattern is a shell wildcard pattern.
+	Skip untracked files matching pattern.
+	Note that pattern is a shell wildcard pattern. See EXCLUDE PATTERNS
+	below for more information.
 
 -X <file>::
 --exclude-from=<file>::
-	exclude patterns are read from <file>; 1 per line.
+	Read exclude patterns from <file>; 1 per line.
 
 --exclude-per-directory=<file>::
-	read additional exclude patterns that apply only to the
+	Read additional exclude patterns that apply only to the
 	directory and its subdirectories in <file>.
 
 --exclude-standard::
@@ -104,9 +107,18 @@ OPTIONS
 	with `-s` or `-u` options does not make any sense.
 
 -t::
-	Identify the file status with the following tags (followed by
-	a space) at the start of each line:
+	This feature is semi-deprecated. For scripting purpose,
+	linkgit:git-status[1] `--porcelain` and
+	linkgit:git-diff-files[1] `--name-status` are almost always
+	superior alternatives, and users should look at
+	linkgit:git-status[1] `--short` or linkgit:git-diff[1]
+	`--name-status` for more user-friendly alternatives.
++
+This option identifies the file status with the following tags (followed by
+a space) at the start of each line:
+
 	H::	cached
+	S::	skip-worktree
 	M::	unmerged
 	R::	removed/deleted
 	C::	modified/changed
@@ -129,6 +141,12 @@ OPTIONS
 	lines, show only a partial prefix.
 	Non default number of digits can be specified with --abbrev=<n>.
 
+--debug::
+	After each line that describes a file, add more data about its
+	cache entry.  This is intended to show as much information as
+	possible for manual inspection; the exact format may change at
+	any time.
+
 \--::
 	Do not interpret any more arguments as options.
 
@@ -138,12 +156,12 @@ OPTIONS
 
 Output
 ------
-show files just outputs the filename unless '--stage' is specified in
+'git ls-files' just outputs the filenames unless '--stage' is specified in
 which case it outputs:
 
         [<tag> ]<mode> <object> <stage> <file>
 
-'git-ls-files --unmerged' and 'git-ls-files --stage' can be used to examine
+'git ls-files --unmerged' and 'git ls-files --stage' can be used to examine
 detailed information on unmerged paths.
 
 For an unmerged path, instead of recording a single mode/SHA1 pair,
@@ -160,7 +178,7 @@ respectively.
 Exclude Patterns
 ----------------
 
-'git-ls-files' can use a list of "exclude patterns" when
+'git ls-files' can use a list of "exclude patterns" when
 traversing the directory tree and finding files to show when the
 flags --others or --ignored are specified.  linkgit:gitignore[5]
 specifies the format of exclude patterns.
@@ -175,8 +193,8 @@ These exclude patterns come from these places, in order:
      file containing a list of patterns.  Patterns are ordered
      in the same order they appear in the file.
 
-  3. command line flag --exclude-per-directory=<name> specifies
-     a name of the file in each directory 'git-ls-files'
+  3. The command line flag --exclude-per-directory=<name> specifies
+     a name of the file in each directory 'git ls-files'
      examines, normally `.gitignore`.  Files in deeper
      directories take precedence.  Patterns are ordered in the
      same order they appear in the files.
@@ -190,15 +208,6 @@ pattern file appears in.
 SEE ALSO
 --------
 linkgit:git-read-tree[1], linkgit:gitignore[5]
-
-
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org>
-
-Documentation
---------------
-Documentation by David Greaves, Junio C Hamano, Josh Triplett, and the git-list <git@vger.kernel.org>.
 
 GIT
 ---

@@ -6,34 +6,17 @@
 #include "diffcore.h"
 #include "tree.h"
 
-static char *malloc_base(const char *base, int baselen, const char *path, int pathlen)
-{
-	char *newbase = xmalloc(baselen + pathlen + 2);
-	memcpy(newbase, base, baselen);
-	memcpy(newbase + baselen, path, pathlen);
-	memcpy(newbase + baselen + pathlen, "/", 2);
-	return newbase;
-}
+static void show_entry(struct diff_options *opt, const char *prefix,
+		       struct tree_desc *desc, struct strbuf *base);
 
-static char *malloc_fullname(const char *base, int baselen, const char *path, int pathlen)
-{
-	char *fullname = xmalloc(baselen + pathlen + 1);
-	memcpy(fullname, base, baselen);
-	memcpy(fullname + baselen, path, pathlen);
-	fullname[baselen + pathlen] = 0;
-	return fullname;
-}
-
-static void show_entry(struct diff_options *opt, const char *prefix, struct tree_desc *desc,
-		       const char *base, int baselen);
-
-static int compare_tree_entry(struct tree_desc *t1, struct tree_desc *t2, const char *base, int baselen, struct diff_options *opt)
+static int compare_tree_entry(struct tree_desc *t1, struct tree_desc *t2,
+			      struct strbuf *base, struct diff_options *opt)
 {
 	unsigned mode1, mode2;
 	const char *path1, *path2;
 	const unsigned char *sha1, *sha2;
 	int cmp, pathlen1, pathlen2;
-	char *fullname;
+	int old_baselen = base->len;
 
 	sha1 = tree_entry_extract(t1, &path1, &mode1);
 	sha2 = tree_entry_extract(t2, &path2, &mode2);
@@ -42,11 +25,11 @@ static int compare_tree_entry(struct tree_desc *t1, struct tree_desc *t2, const 
 	pathlen2 = tree_entry_len(path2, sha2);
 	cmp = base_name_compare(path1, pathlen1, mode1, path2, pathlen2, mode2);
 	if (cmp < 0) {
-		show_entry(opt, "-", t1, base, baselen);
+		show_entry(opt, "-", t1, base);
 		return -1;
 	}
 	if (cmp > 0) {
-		show_entry(opt, "+", t2, base, baselen);
+		show_entry(opt, "+", t2, base);
 		return 1;
 	}
 	if (!DIFF_OPT_TST(opt, FIND_COPIES_HARDER) && !hashcmp(sha1, sha2) && mode1 == mode2)
@@ -57,147 +40,29 @@ static int compare_tree_entry(struct tree_desc *t1, struct tree_desc *t2, const 
 	 * file, we need to consider it a remove and an add.
 	 */
 	if (S_ISDIR(mode1) != S_ISDIR(mode2)) {
-		show_entry(opt, "-", t1, base, baselen);
-		show_entry(opt, "+", t2, base, baselen);
+		show_entry(opt, "-", t1, base);
+		show_entry(opt, "+", t2, base);
 		return 0;
 	}
 
+	strbuf_add(base, path1, pathlen1);
 	if (DIFF_OPT_TST(opt, RECURSIVE) && S_ISDIR(mode1)) {
-		int retval;
-		char *newbase = malloc_base(base, baselen, path1, pathlen1);
 		if (DIFF_OPT_TST(opt, TREE_IN_RECURSIVE)) {
-			newbase[baselen + pathlen1] = 0;
 			opt->change(opt, mode1, mode2,
-				    sha1, sha2, newbase);
-			newbase[baselen + pathlen1] = '/';
+				    sha1, sha2, base->buf, 0, 0);
 		}
-		retval = diff_tree_sha1(sha1, sha2, newbase, opt);
-		free(newbase);
-		return retval;
+		strbuf_addch(base, '/');
+		diff_tree_sha1(sha1, sha2, base->buf, opt);
+	} else {
+		opt->change(opt, mode1, mode2, sha1, sha2, base->buf, 0, 0);
 	}
-
-	fullname = malloc_fullname(base, baselen, path1, pathlen1);
-	opt->change(opt, mode1, mode2, sha1, sha2, fullname);
-	free(fullname);
+	strbuf_setlen(base, old_baselen);
 	return 0;
 }
 
-/*
- * Is a tree entry interesting given the pathspec we have?
- *
- * Return:
- *  - 2 for "yes, and all subsequent entries will be"
- *  - 1 for yes
- *  - zero for no
- *  - negative for "no, and no subsequent entries will be either"
- */
-static int tree_entry_interesting(struct tree_desc *desc, const char *base, int baselen, struct diff_options *opt)
-{
-	const char *path;
-	const unsigned char *sha1;
-	unsigned mode;
-	int i;
-	int pathlen;
-	int never_interesting = -1;
-
-	if (!opt->nr_paths)
-		return 1;
-
-	sha1 = tree_entry_extract(desc, &path, &mode);
-
-	pathlen = tree_entry_len(path, sha1);
-
-	for (i = 0; i < opt->nr_paths; i++) {
-		const char *match = opt->paths[i];
-		int matchlen = opt->pathlens[i];
-		int m = -1; /* signals that we haven't called strncmp() */
-
-		if (baselen >= matchlen) {
-			/* If it doesn't match, move along... */
-			if (strncmp(base, match, matchlen))
-				continue;
-
-			/*
-			 * If the base is a subdirectory of a path which
-			 * was specified, all of them are interesting.
-			 */
-			if (!matchlen ||
-			    base[matchlen] == '/' ||
-			    match[matchlen - 1] == '/')
-				return 2;
-
-			/* Just a random prefix match */
-			continue;
-		}
-
-		/* Does the base match? */
-		if (strncmp(base, match, baselen))
-			continue;
-
-		match += baselen;
-		matchlen -= baselen;
-
-		if (never_interesting) {
-			/*
-			 * We have not seen any match that sorts later
-			 * than the current path.
-			 */
-
-			/*
-			 * Does match sort strictly earlier than path
-			 * with their common parts?
-			 */
-			m = strncmp(match, path,
-				    (matchlen < pathlen) ? matchlen : pathlen);
-			if (m < 0)
-				continue;
-
-			/*
-			 * If we come here even once, that means there is at
-			 * least one pathspec that would sort equal to or
-			 * later than the path we are currently looking at.
-			 * In other words, if we have never reached this point
-			 * after iterating all pathspecs, it means all
-			 * pathspecs are either outside of base, or inside the
-			 * base but sorts strictly earlier than the current
-			 * one.  In either case, they will never match the
-			 * subsequent entries.  In such a case, we initialized
-			 * the variable to -1 and that is what will be
-			 * returned, allowing the caller to terminate early.
-			 */
-			never_interesting = 0;
-		}
-
-		if (pathlen > matchlen)
-			continue;
-
-		if (matchlen > pathlen) {
-			if (match[pathlen] != '/')
-				continue;
-			if (!S_ISDIR(mode))
-				continue;
-		}
-
-		if (m == -1)
-			/*
-			 * we cheated and did not do strncmp(), so we do
-			 * that here.
-			 */
-			m = strncmp(match, path, pathlen);
-
-		/*
-		 * If common part matched earlier then it is a hit,
-		 * because we rejected the case where path is not a
-		 * leading directory and is shorter than match.
-		 */
-		if (!m)
-			return 1;
-	}
-	return never_interesting; /* No matches */
-}
-
 /* A whole sub-tree went away or appeared */
-static void show_tree(struct diff_options *opt, const char *prefix, struct tree_desc *desc, const char *base, int baselen)
+static void show_tree(struct diff_options *opt, const char *prefix,
+		      struct tree_desc *desc, struct strbuf *base)
 {
 	int all_interesting = 0;
 	while (desc->size) {
@@ -206,31 +71,32 @@ static void show_tree(struct diff_options *opt, const char *prefix, struct tree_
 		if (all_interesting)
 			show = 1;
 		else {
-			show = tree_entry_interesting(desc, base, baselen,
-						      opt);
+			show = tree_entry_interesting(&desc->entry, base, 0,
+						      &opt->pathspec);
 			if (show == 2)
 				all_interesting = 1;
 		}
 		if (show < 0)
 			break;
 		if (show)
-			show_entry(opt, prefix, desc, base, baselen);
+			show_entry(opt, prefix, desc, base);
 		update_tree_entry(desc);
 	}
 }
 
 /* A file entry went away or appeared */
-static void show_entry(struct diff_options *opt, const char *prefix, struct tree_desc *desc,
-		       const char *base, int baselen)
+static void show_entry(struct diff_options *opt, const char *prefix,
+		       struct tree_desc *desc, struct strbuf *base)
 {
 	unsigned mode;
 	const char *path;
 	const unsigned char *sha1 = tree_entry_extract(desc, &path, &mode);
 	int pathlen = tree_entry_len(path, sha1);
+	int old_baselen = base->len;
 
+	strbuf_add(base, path, pathlen);
 	if (DIFF_OPT_TST(opt, RECURSIVE) && S_ISDIR(mode)) {
 		enum object_type type;
-		char *newbase = malloc_base(base, baselen, path, pathlen);
 		struct tree_desc inner;
 		void *tree;
 		unsigned long size;
@@ -239,37 +105,27 @@ static void show_entry(struct diff_options *opt, const char *prefix, struct tree
 		if (!tree || type != OBJ_TREE)
 			die("corrupt tree sha %s", sha1_to_hex(sha1));
 
-		if (DIFF_OPT_TST(opt, TREE_IN_RECURSIVE)) {
-			newbase[baselen + pathlen] = 0;
-			opt->add_remove(opt, *prefix, mode, sha1, newbase);
-			newbase[baselen + pathlen] = '/';
-		}
+		if (DIFF_OPT_TST(opt, TREE_IN_RECURSIVE))
+			opt->add_remove(opt, *prefix, mode, sha1, base->buf, 0);
+
+		strbuf_addch(base, '/');
 
 		init_tree_desc(&inner, tree, size);
-		show_tree(opt, prefix, &inner, newbase, baselen + 1 + pathlen);
-
+		show_tree(opt, prefix, &inner, base);
 		free(tree);
-		free(newbase);
-	} else {
-		char *fullname = malloc_fullname(base, baselen, path, pathlen);
-		opt->add_remove(opt, prefix[0], mode, sha1, fullname);
-		free(fullname);
-	}
+	} else
+		opt->add_remove(opt, prefix[0], mode, sha1, base->buf, 0);
+
+	strbuf_setlen(base, old_baselen);
 }
 
-static void skip_uninteresting(struct tree_desc *t, const char *base, int baselen, struct diff_options *opt)
+static void skip_uninteresting(struct tree_desc *t, struct strbuf *base,
+			       struct diff_options *opt, int *all_interesting)
 {
-	int all_interesting = 0;
 	while (t->size) {
-		int show;
-
-		if (all_interesting)
-			show = 1;
-		else {
-			show = tree_entry_interesting(t, base, baselen, opt);
-			if (show == 2)
-				all_interesting = 1;
-		}
+		int show = tree_entry_interesting(&t->entry, base, 0, &opt->pathspec);
+		if (show == 2)
+			*all_interesting = 1;
 		if (!show) {
 			update_tree_entry(t);
 			continue;
@@ -281,30 +137,43 @@ static void skip_uninteresting(struct tree_desc *t, const char *base, int basele
 	}
 }
 
-int diff_tree(struct tree_desc *t1, struct tree_desc *t2, const char *base, struct diff_options *opt)
+int diff_tree(struct tree_desc *t1, struct tree_desc *t2,
+	      const char *base_str, struct diff_options *opt)
 {
-	int baselen = strlen(base);
+	struct strbuf base;
+	int baselen = strlen(base_str);
+	int all_t1_interesting = 0;
+	int all_t2_interesting = 0;
+
+	/* Enable recursion indefinitely */
+	opt->pathspec.recursive = DIFF_OPT_TST(opt, RECURSIVE);
+	opt->pathspec.max_depth = -1;
+
+	strbuf_init(&base, PATH_MAX);
+	strbuf_add(&base, base_str, baselen);
 
 	for (;;) {
 		if (diff_can_quit_early(opt))
 			break;
-		if (opt->nr_paths) {
-			skip_uninteresting(t1, base, baselen, opt);
-			skip_uninteresting(t2, base, baselen, opt);
+		if (opt->pathspec.nr) {
+			if (!all_t1_interesting)
+				skip_uninteresting(t1, &base, opt, &all_t1_interesting);
+			if (!all_t2_interesting)
+				skip_uninteresting(t2, &base, opt, &all_t2_interesting);
 		}
 		if (!t1->size) {
 			if (!t2->size)
 				break;
-			show_entry(opt, "+", t2, base, baselen);
+			show_entry(opt, "+", t2, &base);
 			update_tree_entry(t2);
 			continue;
 		}
 		if (!t2->size) {
-			show_entry(opt, "-", t1, base, baselen);
+			show_entry(opt, "-", t1, &base);
 			update_tree_entry(t1);
 			continue;
 		}
-		switch (compare_tree_entry(t1, t2, base, baselen, opt)) {
+		switch (compare_tree_entry(t1, t2, &base, opt)) {
 		case -1:
 			update_tree_entry(t1);
 			continue;
@@ -317,6 +186,8 @@ int diff_tree(struct tree_desc *t1, struct tree_desc *t2, const char *base, stru
 		}
 		die("git diff-tree: internal error");
 	}
+
+	strbuf_release(&base);
 	return 0;
 }
 
@@ -345,9 +216,9 @@ static void try_to_follow_renames(struct tree_desc *t1, struct tree_desc *t2, co
 
 	diff_setup(&diff_opts);
 	DIFF_OPT_SET(&diff_opts, RECURSIVE);
-	diff_opts.detect_rename = DIFF_DETECT_RENAME;
+	DIFF_OPT_SET(&diff_opts, FIND_COPIES_HARDER);
 	diff_opts.output_format = DIFF_FORMAT_NO_OUTPUT;
-	diff_opts.single_follow = opt->paths[0];
+	diff_opts.single_follow = opt->pathspec.raw[0];
 	diff_opts.break_opt = opt->break_opt;
 	paths[0] = NULL;
 	diff_tree_setup_paths(paths, &diff_opts);
@@ -358,6 +229,7 @@ static void try_to_follow_renames(struct tree_desc *t1, struct tree_desc *t2, co
 	diff_tree_release_paths(&diff_opts);
 
 	/* Go through the new set of filepairing, and see if we find a more interesting one */
+	opt->found_follow = 0;
 	for (i = 0; i < q->nr; i++) {
 		struct diff_filepair *p = q->queue[i];
 
@@ -366,15 +238,26 @@ static void try_to_follow_renames(struct tree_desc *t1, struct tree_desc *t2, co
 		 * diff_queued_diff, we will also use that as the path in
 		 * the future!
 		 */
-		if ((p->status == 'R' || p->status == 'C') && !strcmp(p->two->path, opt->paths[0])) {
+		if ((p->status == 'R' || p->status == 'C') &&
+		    !strcmp(p->two->path, opt->pathspec.raw[0])) {
 			/* Switch the file-pairs around */
 			q->queue[i] = choice;
 			choice = p;
 
 			/* Update the path we use from now on.. */
 			diff_tree_release_paths(opt);
-			opt->paths[0] = xstrdup(p->one->path);
-			diff_tree_setup_paths(opt->paths, opt);
+			opt->pathspec.raw[0] = xstrdup(p->one->path);
+			diff_tree_setup_paths(opt->pathspec.raw, opt);
+
+			/*
+			 * The caller expects us to return a set of vanilla
+			 * filepairs to let a later call to diffcore_std()
+			 * it makes to sort the renames out (among other
+			 * things), but we already have found renames
+			 * ourselves; signal diffcore_std() not to muck with
+			 * rename information.
+			 */
+			opt->found_follow = 1;
 			break;
 		}
 	}
@@ -411,7 +294,7 @@ int diff_tree_sha1(const unsigned char *old, const unsigned char *new, const cha
 	init_tree_desc(&t1, tree1, size1);
 	init_tree_desc(&t2, tree2, size2);
 	retval = diff_tree(&t1, &t2, base, opt);
-	if (DIFF_OPT_TST(opt, FOLLOW_RENAMES) && diff_might_be_rename()) {
+	if (!*base && DIFF_OPT_TST(opt, FOLLOW_RENAMES) && diff_might_be_rename()) {
 		init_tree_desc(&t1, tree1, size1);
 		init_tree_desc(&t2, tree2, size2);
 		try_to_follow_renames(&t1, &t2, base, opt);
@@ -439,36 +322,12 @@ int diff_root_tree_sha1(const unsigned char *new, const char *base, struct diff_
 	return retval;
 }
 
-static int count_paths(const char **paths)
-{
-	int i = 0;
-	while (*paths++)
-		i++;
-	return i;
-}
-
 void diff_tree_release_paths(struct diff_options *opt)
 {
-	free(opt->pathlens);
+	free_pathspec(&opt->pathspec);
 }
 
 void diff_tree_setup_paths(const char **p, struct diff_options *opt)
 {
-	opt->nr_paths = 0;
-	opt->pathlens = NULL;
-	opt->paths = NULL;
-
-	if (p) {
-		int i;
-
-		opt->paths = p;
-		opt->nr_paths = count_paths(p);
-		if (opt->nr_paths == 0) {
-			opt->pathlens = NULL;
-			return;
-		}
-		opt->pathlens = xmalloc(opt->nr_paths * sizeof(int));
-		for (i=0; i < opt->nr_paths; i++)
-			opt->pathlens[i] = strlen(p[i]);
-	}
+	init_pathspec(&opt->pathspec, p);
 }

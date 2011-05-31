@@ -23,34 +23,40 @@ field full_cache
 field cached
 
 constructor dialog {} {
-	global all_remotes M1B
+	global all_remotes M1B use_ttk NS
 
-	make_toplevel top w
+	make_dialog top w
 	wm title $top [append "[appname] ([reponame]): " [mc "Delete Branch Remotely"]]
 	if {$top ne {.}} {
 		wm geometry $top "+[winfo rootx .]+[winfo rooty .]"
 	}
 
-	label $w.header -text [mc "Delete Branch Remotely"] -font font_uibold
+	${NS}::label $w.header -text [mc "Delete Branch Remotely"] \
+		-font font_uibold -anchor center
 	pack $w.header -side top -fill x
 
-	frame $w.buttons
-	button $w.buttons.delete -text [mc Delete] \
+	${NS}::frame $w.buttons
+	${NS}::button $w.buttons.delete -text [mc Delete] \
 		-default active \
 		-command [cb _delete]
 	pack $w.buttons.delete -side right
-	button $w.buttons.cancel -text [mc "Cancel"] \
+	${NS}::button $w.buttons.cancel -text [mc "Cancel"] \
 		-command [list destroy $w]
 	pack $w.buttons.cancel -side right -padx 5
 	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
 
-	labelframe $w.dest -text [mc "From Repository"]
+	${NS}::labelframe $w.dest -text [mc "From Repository"]
 	if {$all_remotes ne {}} {
-		radiobutton $w.dest.remote_r \
+		${NS}::radiobutton $w.dest.remote_r \
 			-text [mc "Remote:"] \
 			-value remote \
 			-variable @urltype
-		eval tk_optionMenu $w.dest.remote_m @remote $all_remotes
+		if {$use_ttk} {
+			ttk::combobox $w.dest.remote_m -textvariable @remote \
+				-values $all_remotes -state readonly
+		} else {
+			eval tk_optionMenu $w.dest.remote_m @remote $all_remotes
+		}
 		grid $w.dest.remote_r $w.dest.remote_m -sticky w
 		if {[lsearch -sorted -exact $all_remotes origin] != -1} {
 			set remote origin
@@ -62,13 +68,11 @@ constructor dialog {} {
 	} else {
 		set urltype url
 	}
-	radiobutton $w.dest.url_r \
+	${NS}::radiobutton $w.dest.url_r \
 		-text [mc "Arbitrary Location:"] \
 		-value url \
 		-variable @urltype
-	entry $w.dest.url_t \
-		-borderwidth 1 \
-		-relief sunken \
+	${NS}::entry $w.dest.url_t \
 		-width 50 \
 		-textvariable @url \
 		-validate key \
@@ -81,33 +85,30 @@ constructor dialog {} {
 	grid columnconfigure $w.dest 1 -weight 1
 	pack $w.dest -anchor nw -fill x -pady 5 -padx 5
 
-	labelframe $w.heads -text [mc "Branches"]
-	listbox $w.heads.l \
+	${NS}::labelframe $w.heads -text [mc "Branches"]
+	slistbox $w.heads.l \
 		-height 10 \
 		-width 70 \
 		-listvariable @head_list \
-		-selectmode extended \
-		-yscrollcommand [list $w.heads.sby set]
-	scrollbar $w.heads.sby -command [list $w.heads.l yview]
+		-selectmode extended
 
-	frame $w.heads.footer
-	label $w.heads.footer.status \
+	${NS}::frame $w.heads.footer
+	${NS}::label $w.heads.footer.status \
 		-textvariable @status \
 		-anchor w \
 		-justify left
-	button $w.heads.footer.rescan \
+	${NS}::button $w.heads.footer.rescan \
 		-text [mc "Rescan"] \
 		-command [cb _rescan]
 	pack $w.heads.footer.status -side left -fill x
 	pack $w.heads.footer.rescan -side right
 
 	pack $w.heads.footer -side bottom -fill x
-	pack $w.heads.sby -side right -fill y
 	pack $w.heads.l -side left -fill both -expand 1
 	pack $w.heads -fill both -expand 1 -pady 5 -padx 5
 
-	labelframe $w.validate -text [mc "Delete Only If"]
-	radiobutton $w.validate.head_r \
+	${NS}::labelframe $w.validate -text [mc "Delete Only If"]
+	${NS}::radiobutton $w.validate.head_r \
 		-text [mc "Merged Into:"] \
 		-value head \
 		-variable @checktype
@@ -115,7 +116,7 @@ constructor dialog {} {
 	trace add variable @head_list write [cb _write_head_list]
 	trace add variable @check_head write [cb _write_check_head]
 	grid $w.validate.head_r $w.validate.head_m -sticky w
-	radiobutton $w.validate.always_r \
+	${NS}::radiobutton $w.validate.always_r \
 		-text [mc "Always (Do not perform merge checks)"] \
 		-value always \
 		-variable @checktype
@@ -208,13 +209,15 @@ method _delete {} {
 		return
 	}
 
-	if {[tk_messageBox \
-		-icon warning \
-		-type yesno \
-		-title [wm title $w] \
-		-parent $w \
-		-message [mc "Recovering deleted branches is difficult.\n\nDelete the selected branches?"]] ne yes} {
-		return
+	if {$checktype ne {head}} {
+		if {[tk_messageBox \
+			-icon warning \
+			-type yesno \
+			-title [wm title $w] \
+			-parent $w \
+			-message [mc "Recovering deleted branches is difficult.\n\nDelete the selected branches?"]] ne yes} {
+			return
+		}
 	}
 
 	destroy $w
@@ -248,6 +251,8 @@ method _write_url        {args} { set urltype url    }
 method _write_check_head {args} { set checktype head }
 
 method _write_head_list {args} {
+	global current_branch _last_merged_branch
+
 	$head_m delete 0 end
 	foreach abr $head_list {
 		$head_m insert end radiobutton \
@@ -256,7 +261,18 @@ method _write_head_list {args} {
 			-variable @check_head
 	}
 	if {[lsearch -exact -sorted $head_list $check_head] < 0} {
-		set check_head {}
+		if {[lsearch -exact -sorted $head_list $current_branch] < 0} {
+			set check_head {}
+		} else {
+			set check_head $current_branch
+		}
+	}
+	set lmb [lsearch -exact -sorted $head_list $_last_merged_branch]
+	if {$lmb >= 0} {
+		$w.heads.l conf -state normal
+		$w.heads.l select set $lmb
+		$w.heads.l yview $lmb
+		$w.heads.l conf -state disabled
 	}
 }
 

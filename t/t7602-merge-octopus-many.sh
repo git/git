@@ -31,7 +31,7 @@ test_expect_success 'merge c1 with c2, c3, c4, ... c29' '
 	do
 		refs="$refs c$i"
 		i=`expr $i + 1`
-	done
+	done &&
 	git merge $refs &&
 	test "$(git rev-parse c1)" != "$(git rev-parse HEAD)" &&
 	i=1 &&
@@ -47,6 +47,57 @@ test_expect_success 'merge c1 with c2, c3, c4, ... c29' '
 		test -f c$i.c &&
 		i=`expr $i + 1` || return 1
 	done
+'
+
+cat >expected <<\EOF
+Trying simple merge with c2
+Trying simple merge with c3
+Trying simple merge with c4
+Merge made by octopus.
+ c2.c |    1 +
+ c3.c |    1 +
+ c4.c |    1 +
+ 3 files changed, 3 insertions(+), 0 deletions(-)
+ create mode 100644 c2.c
+ create mode 100644 c3.c
+ create mode 100644 c4.c
+EOF
+
+test_expect_success 'merge output uses pretty names' '
+	git reset --hard c1 &&
+	git merge c2 c3 c4 >actual &&
+	test_cmp actual expected
+'
+
+cat >expected <<\EOF
+Already up-to-date with c4
+Trying simple merge with c5
+Merge made by octopus.
+ c5.c |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
+ create mode 100644 c5.c
+EOF
+
+test_expect_success 'merge up-to-date output uses pretty names' '
+	git merge c4 c5 >actual &&
+	test_cmp actual expected
+'
+
+cat >expected <<\EOF
+Fast-forwarding to: c1
+Trying simple merge with c2
+Merge made by octopus.
+ c1.c |    1 +
+ c2.c |    1 +
+ 2 files changed, 2 insertions(+), 0 deletions(-)
+ create mode 100644 c1.c
+ create mode 100644 c2.c
+EOF
+
+test_expect_success 'merge fast-forward output uses pretty names' '
+	git reset --hard c0 &&
+	git merge c1 c2 >actual &&
+	test_cmp actual expected
 '
 
 test_done

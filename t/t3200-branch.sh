@@ -26,6 +26,17 @@ test_expect_success \
      ! test -f .git/refs/heads/--help
 '
 
+test_expect_success 'branch -h in broken repository' '
+	mkdir broken &&
+	(
+		cd broken &&
+		git init &&
+		>.git/refs/heads/master &&
+		test_expect_code 129 git branch -h >usage 2>&1
+	) &&
+	grep "[Uu]sage" broken/usage
+'
+
 test_expect_success \
     'git branch abc should create a branch' \
     'git branch abc && test -f .git/refs/heads/abc'
@@ -35,7 +46,7 @@ test_expect_success \
     'git branch a/b/c && test -f .git/refs/heads/a/b/c'
 
 cat >expect <<EOF
-0000000000000000000000000000000000000000 $HEAD $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150200 +0000	branch: Created from master
+$_z40 $HEAD $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150200 +0000	branch: Created from master
 EOF
 test_expect_success \
     'git branch -l d/e/f should create a branch and a log' \
@@ -43,7 +54,7 @@ test_expect_success \
      git branch -l d/e/f &&
 	 test -f .git/refs/heads/d/e/f &&
 	 test -f .git/logs/refs/heads/d/e/f &&
-	 diff expect .git/logs/refs/heads/d/e/f'
+	 test_cmp expect .git/logs/refs/heads/d/e/f'
 
 test_expect_success \
     'git branch -d d/e/f should delete a branch and a log' \
@@ -192,7 +203,7 @@ test_expect_success 'test deleting branch deletes branch config' \
      test -z "$(git config branch.my7.remote)" &&
      test -z "$(git config branch.my7.merge)"'
 
-test_expect_success 'test deleting branch without config' \
+test_expect_success C_LOCALE_OUTPUT 'test deleting branch without config' \
     'git branch my7 s &&
      sha1=$(git rev-parse my7 | cut -c 1-7) &&
      test "$(git branch -d my7 2>&1)" = "Deleted branch my7 (was $sha1)."'
@@ -212,9 +223,14 @@ test_expect_success \
     'branch from non-branch HEAD w/--track causes failure' \
     'test_must_fail git branch --track my10 HEAD^'
 
+test_expect_success \
+    'branch from tag w/--track causes failure' \
+    'git tag foobar &&
+     test_must_fail git branch --track my11 foobar'
+
 # Keep this test last, as it changes the current branch
 cat >expect <<EOF
-0000000000000000000000000000000000000000 $HEAD $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150200 +0000	branch: Created from master
+$_z40 $HEAD $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150200 +0000	branch: Created from master
 EOF
 test_expect_success \
     'git checkout -b g/h/i -l should create a branch and a log' \
@@ -222,7 +238,28 @@ test_expect_success \
      git checkout -b g/h/i -l master &&
 	 test -f .git/refs/heads/g/h/i &&
 	 test -f .git/logs/refs/heads/g/h/i &&
-	 diff expect .git/logs/refs/heads/g/h/i'
+	 test_cmp expect .git/logs/refs/heads/g/h/i'
+
+test_expect_success 'checkout -b makes reflog by default' '
+	git checkout master &&
+	git config --unset core.logAllRefUpdates &&
+	git checkout -b alpha &&
+	git rev-parse --verify alpha@{0}
+'
+
+test_expect_success 'checkout -b does not make reflog when core.logAllRefUpdates = false' '
+	git checkout master &&
+	git config core.logAllRefUpdates false &&
+	git checkout -b beta &&
+	test_must_fail git rev-parse --verify beta@{0}
+'
+
+test_expect_success 'checkout -b with -l makes reflog when core.logAllRefUpdates = false' '
+	git checkout master &&
+	git checkout -lb gamma &&
+	git config --unset core.logAllRefUpdates &&
+	git rev-parse --verify gamma@{0}
+'
 
 test_expect_success 'avoid ambiguous track' '
 	git config branch.autosetupmerge true &&
@@ -456,6 +493,15 @@ test_expect_success 'autosetuprebase always on an untracked remote branch' '
 	test "z$(git config branch.myr20.rebase)" = z
 '
 
+test_expect_success 'autosetuprebase always on detached HEAD' '
+	git config branch.autosetupmerge always &&
+	test_when_finished git checkout master &&
+	git checkout HEAD^0 &&
+	git branch my11 &&
+	test -z "$(git config branch.my11.remote)" &&
+	test -z "$(git config branch.my11.merge)"
+'
+
 test_expect_success 'detect misconfigured autosetuprebase (bad value)' '
 	git config branch.autosetuprebase garbage &&
 	test_must_fail git branch
@@ -466,6 +512,32 @@ test_expect_success 'detect misconfigured autosetuprebase (no value)' '
 	echo "[branch] autosetuprebase" >> .git/config &&
 	test_must_fail git branch &&
 	git config --unset branch.autosetuprebase
+'
+
+test_expect_success 'attempt to delete a branch without base and unmerged to HEAD' '
+	git checkout my9 &&
+	git config --unset branch.my8.merge &&
+	test_must_fail git branch -d my8
+'
+
+test_expect_success 'attempt to delete a branch merged to its base' '
+	# we are on my9 which is the initial commit; traditionally
+	# we would not have allowed deleting my8 that is not merged
+	# to my9, but it is set to track master that already has my8
+	git config branch.my8.merge refs/heads/master &&
+	git branch -d my8
+'
+
+test_expect_success 'attempt to delete a branch merged to its base' '
+	git checkout master &&
+	echo Third >>A &&
+	git commit -m "Third commit" A &&
+	git branch -t my10 my9 &&
+	git branch -f my10 HEAD^ &&
+	# we are on master which is at the third commit, and my10
+	# is behind us, so traditionally we would have allowed deleting
+	# it; but my10 is set to track my9 that is further behind.
+	test_must_fail git branch -d my10
 '
 
 test_done

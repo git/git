@@ -94,7 +94,7 @@ test_expect_success 'git archive with --output' \
     'git archive --output=b4.tar HEAD &&
     test_cmp b.tar b4.tar'
 
-test_expect_success 'git archive --remote' \
+test_expect_success NOT_MINGW 'git archive --remote' \
     'git archive --remote=. HEAD >b5.tar &&
     test_cmp b.tar b5.tar'
 
@@ -189,6 +189,16 @@ test_expect_success 'git archive --format=zip with --output' \
     'git archive --format=zip --output=d2.zip HEAD &&
     test_cmp d.zip d2.zip'
 
+test_expect_success 'git archive with --output, inferring format' '
+	git archive --output=d3.zip HEAD &&
+	test_cmp d.zip d3.zip
+'
+
+test_expect_success 'git archive with --output, override inferred format' '
+	git archive --format=tar --output=d4.zip HEAD &&
+	test_cmp b.tar d4.zip
+'
+
 $UNZIP -v >/dev/null 2>&1
 if [ $? -eq 127 ]; then
 	say "Skipping ZIP tests, because unzip was not found"
@@ -229,5 +239,17 @@ test_expect_success UNZIP \
 test_expect_success \
     'git archive --list outside of a git repo' \
     'GIT_DIR=some/non-existing/directory git archive --list'
+
+test_expect_success 'git-archive --prefix=olde-' '
+	git archive --prefix=olde- >h.tar HEAD &&
+	(
+		mkdir h &&
+		cd h &&
+		"$TAR" xf - <../h.tar
+	) &&
+	test -d h/olde-a &&
+	test -d h/olde-a/bin &&
+	test -f h/olde-a/bin/sh
+'
 
 test_done

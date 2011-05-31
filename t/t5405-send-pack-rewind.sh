@@ -8,6 +8,7 @@ test_expect_success setup '
 
 	>file1 && git add file1 && test_tick &&
 	git commit -m Initial &&
+	git config receive.denyCurrentBranch warn &&
 
 	mkdir another && (
 		cd another &&

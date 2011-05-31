@@ -124,14 +124,14 @@ to point at the new commit.
 	An evil merge is a <<def_merge,merge>> that introduces changes that
 	do not appear in any <<def_parent,parent>>.
 
-[[def_fast_forward]]fast forward::
+[[def_fast_forward]]fast-forward::
 	A fast-forward is a special type of <<def_merge,merge>> where you have a
 	<<def_revision,revision>> and you are "merging" another
 	<<def_branch,branch>>'s changes that happen to be a descendant of what
 	you have. In such these cases, you do not make a new <<def_merge,merge>>
 	<<def_commit,commit>> but instead just update to his
 	revision. This will happen frequently on a
-	<<def_tracking_branch,tracking branch>> of a remote
+	<<def_remote_tracking_branch,remote-tracking branch>> of a remote
 	<<def_repository,repository>>.
 
 [[def_fetch]]fetch::
@@ -220,7 +220,7 @@ to point at the new commit.
 	conflict, manual intervention may be required to complete the
 	merge.
 +
-As a noun: unless it is a <<def_fast_forward,fast forward>>, a
+As a noun: unless it is a <<def_fast_forward,fast-forward>>, a
 successful merge results in the creation of a new <<def_commit,commit>>
 representing the result of the merge, and having as
 <<def_parent,parents>> the tips of the merged <<def_branch,branches>>.
@@ -260,7 +260,7 @@ This commit is referred to as a "merge commit", or sometimes just a
 	The default upstream <<def_repository,repository>>. Most projects have
 	at least one upstream project which they track. By default
 	'origin' is used for that purpose. New upstream updates
-	will be fetched into remote <<def_tracking_branch,tracking branches>> named
+	will be fetched into remote <<def_remote_tracking_branch,remote-tracking branches>> named
 	origin/name-of-upstream-branch, which you can see using
 	`git branch -r`.
 
@@ -272,6 +272,29 @@ This commit is referred to as a "merge commit", or sometimes just a
 	The list of identifiers, and other information, of the objects in a
 	<<def_pack,pack>>, to assist in efficiently accessing the contents of a
 	pack.
+
+[[def_pathspec]]pathspec::
+       Pattern used to specify paths.
++
+Pathspecs are used on the command line of "git ls-files", "git
+ls-tree", "git grep", "git checkout", and many other commands to
+limit the scope of operations to some subset of the tree or
+worktree.  See the documentation of each command for whether
+paths are relative to the current directory or toplevel.  The
+pathspec syntax is as follows:
+
+* any path matches itself
+* the pathspec up to the last slash represents a
+  directory prefix.  The scope of that pathspec is
+  limited to that subtree.
+* the rest of the pathspec is a pattern for the remainder
+  of the pathname.  Paths relative to the directory
+  prefix will be matched against that pattern using fnmatch(3);
+  in particular, '*' and '?' _can_ match directory separators.
++
+For example, Documentation/*.jpg will match all .jpg files
+in the Documentation subtree,
+including Documentation/chapter_1/figure_1.jpg.
 
 [[def_parent]]parent::
 	A <<def_commit_object,commit object>> contains a (possibly empty) list
@@ -349,6 +372,14 @@ This commit is referred to as a "merge commit", or sometimes just a
 	master branch head as to-upstream branch at $URL". See also
 	linkgit:git-push[1].
 
+[[def_remote_tracking_branch]]remote-tracking branch::
+	A regular git <<def_branch,branch>> that is used to follow changes from
+	another <<def_repository,repository>>. A remote-tracking
+	branch should not contain direct modifications or have local commits
+	made to it. A remote-tracking branch can usually be
+	identified as the right-hand-side <<def_ref,ref>> in a Pull:
+	<<def_refspec,refspec>>.
+
 [[def_repository]]repository::
 	A collection of <<def_ref,refs>> together with an
 	<<def_object_database,object database>> containing all objects
@@ -418,14 +449,6 @@ This commit is referred to as a "merge commit", or sometimes just a
 	that each contain very well defined concepts or small incremental yet
 	related changes.
 
-[[def_tracking_branch]]tracking branch::
-	A regular git <<def_branch,branch>> that is used to follow changes from
-	another <<def_repository,repository>>. A tracking
-	branch should not contain direct modifications or have local commits
-	made to it. A tracking branch can usually be
-	identified as the right-hand-side <<def_ref,ref>> in a Pull:
-	<<def_refspec,refspec>>.
-
 [[def_tree]]tree::
 	Either a <<def_working_tree,working tree>>, or a <<def_tree_object,tree
 	object>> together with the dependent <<def_blob_object,blob>> and tree objects
@@ -456,6 +479,6 @@ This commit is referred to as a "merge commit", or sometimes just a
 	of 'A' is 'origin/B' sometimes we say "'A' is tracking 'origin/B'".
 
 [[def_working_tree]]working tree::
-	The tree of actual checked out files.  The working tree is
-	normally equal to the <<def_HEAD,HEAD>> plus any local changes
-	that you have made but not yet committed.
+	The tree of actual checked out files.  The working tree normally
+	contains the contents of the <<def_HEAD,HEAD>> commit's tree,
+	plus any local changes that you have made but not yet committed.

@@ -126,9 +126,6 @@ cat >expected <<\EOF
 100644 X 0	Z/NN
 EOF
 
-_x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
-_x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
-
 check_result () {
     git ls-files --stage | sed -e 's/ '"$_x40"' / X /' >current &&
     test_cmp expected current
@@ -312,7 +309,7 @@ test_expect_success \
 test_expect_success \
     '6 - must not exist in O && !A && !B case' "
      rm -f .git/index DD &&
-     echo DD >DD
+     echo DD >DD &&
      git update-index --add DD &&
      test_must_fail git read-tree -m $tree_O $tree_A $tree_B
 "

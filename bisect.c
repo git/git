@@ -141,7 +141,8 @@ static void show_list(const char *debug, int counted, int nr,
 		enum object_type type;
 		unsigned long size;
 		char *buf = read_sha1_file(commit->object.sha1, &type, &size);
-		char *ep, *sp;
+		const char *subject_start;
+		int subject_len;
 
 		fprintf(stderr, "%c%c%c ",
 			(flags & TREESAME) ? ' ' : 'T',
@@ -156,13 +157,9 @@ static void show_list(const char *debug, int counted, int nr,
 			fprintf(stderr, " %.*s", 8,
 				sha1_to_hex(pp->item->object.sha1));
 
-		sp = strstr(buf, "\n\n");
-		if (sp) {
-			sp += 2;
-			for (ep = sp; *ep && *ep != '\n'; ep++)
-				;
-			fprintf(stderr, " %.*s", (int)(ep - sp), sp);
-		}
+		subject_len = find_commit_subject(buf, &subject_start);
+		if (subject_len)
+			fprintf(stderr, " %.*s", subject_len, subject_start);
 		fprintf(stderr, "\n");
 	}
 }
@@ -593,7 +590,7 @@ struct commit_list *filter_skipped(struct commit_list *list,
  * is increased by one between each call, but that should not matter
  * for this application.
  */
-int get_prn(int count) {
+static int get_prn(int count) {
 	count = count * 1103515245 + 12345;
 	return ((unsigned)(count/65536) % PRN_MODULO);
 }
@@ -813,11 +810,11 @@ static void handle_skipped_merge_base(const unsigned char *mb)
 	char *bad_hex = sha1_to_hex(current_bad_sha1);
 	char *good_hex = join_sha1_array_hex(&good_revs, ' ');
 
-	fprintf(stderr, "Warning: the merge base between %s and [%s] "
+	warning("the merge base between %s and [%s] "
 		"must be skipped.\n"
 		"So we cannot be sure the first bad commit is "
 		"between %s and %s.\n"
-		"We continue anyway.\n",
+		"We continue anyway.",
 		bad_hex, good_hex, mb_hex, bad_hex);
 	free(good_hex);
 }
@@ -956,7 +953,7 @@ int bisect_next_all(const char *prefix)
 {
 	struct rev_info revs;
 	struct commit_list *tried;
-	int reaches = 0, all = 0, nr;
+	int reaches = 0, all = 0, nr, steps;
 	const unsigned char *bisect_rev;
 	char bisect_rev_hex[41];
 
@@ -986,20 +983,28 @@ int bisect_next_all(const char *prefix)
 		exit(1);
 	}
 
+	if (!all) {
+		fprintf(stderr, "No testable commit found.\n"
+			"Maybe you started with bad path parameters?\n");
+		exit(4);
+	}
+
 	bisect_rev = revs.commits->item->object.sha1;
 	memcpy(bisect_rev_hex, sha1_to_hex(bisect_rev), 41);
 
 	if (!hashcmp(bisect_rev, current_bad_sha1)) {
 		exit_if_skipped_commits(tried, current_bad_sha1);
-		printf("%s is first bad commit\n", bisect_rev_hex);
+		printf("%s is the first bad commit\n", bisect_rev_hex);
 		show_diff_tree(prefix, revs.commits->item);
 		/* This means the bisection process succeeded. */
 		exit(10);
 	}
 
 	nr = all - reaches - 1;
-	printf("Bisecting: %d revisions left to test after this "
-	       "(roughly %d steps)\n", nr, estimate_bisect_steps(all));
+	steps = estimate_bisect_steps(all);
+	printf("Bisecting: %d revision%s left to test after this "
+	       "(roughly %d step%s)\n", nr, (nr == 1 ? "" : "s"),
+	       steps, (steps == 1 ? "" : "s"));
 
 	return bisect_checkout(bisect_rev_hex);
 }

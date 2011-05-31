@@ -10,8 +10,8 @@ SYNOPSIS
 --------
 [verse]
 'git ls-tree' [-d] [-r] [-t] [-l] [-z]
-	    [--name-only] [--name-status] [--full-name] [--full-tree] [--abbrev=[<n>]]
-	    <tree-ish> [paths...]
+	    [--name-only] [--name-status] [--full-name] [--full-tree] [--abbrev[=<n>]]
+	    <tree-ish> [<path>...]
 
 DESCRIPTION
 -----------
@@ -19,16 +19,16 @@ Lists the contents of a given tree object, like what "/bin/ls -a" does
 in the current working directory.  Note that:
 
  - the behaviour is slightly different from that of "/bin/ls" in that the
-   'paths' denote just a list of patterns to match, e.g. so specifying
+   '<path>' denotes just a list of patterns to match, e.g. so specifying
    directory name (without '-r') will behave differently, and order of the
    arguments does not matter.
 
- - the behaviour is similar to that of "/bin/ls" in that the 'paths' is
+ - the behaviour is similar to that of "/bin/ls" in that the '<path>' is
    taken as relative to the current working directory.  E.g. when you are
    in a directory 'sub' that has a directory 'dir', you can run 'git
    ls-tree -r HEAD dir' to list the contents of the tree (that is
    'sub/dir' in 'HEAD').  You don't want to give a tree that is not at the
-   root level (e.g. 'git ls-tree -r HEAD:sub dir') in this case, as that
+   root level (e.g. `git ls-tree -r HEAD:sub dir`) in this case, as that
    would result in asking for 'sub/sub/dir' in the 'HEAD' commit.
    However, the current working directory can be ignored by passing
    --full-tree option.
@@ -72,7 +72,7 @@ OPTIONS
 	Do not limit the listing to the current working directory.
 	Implies --full-name.
 
-paths::
+[<path>...]::
 	When paths are given, show them (note that this isn't really raw
 	pathnames, but rather a list of patterns to match).  Otherwise
 	implicitly uses the root level of the tree as the sole path argument.
@@ -84,7 +84,7 @@ Output Format
 
 Unless the `-z` option is used, TAB, LF, and backslash characters
 in pathnames are represented as `\t`, `\n`, and `\\`, respectively.
-This output format is compatible with what '--index-info --stdin' of
+This output format is compatible with what `--index-info --stdin` of
 'git update-index' expects.
 
 When the `-l` option is used, format changes to
@@ -94,18 +94,6 @@ When the `-l` option is used, format changes to
 Object size identified by <object> is given in bytes, and right-justified
 with minimum width of 7 characters.  Object size is given only for blobs
 (file) entries; for other entries `-` character is used in place of size.
-
-
-Author
-------
-Written by Petr Baudis <pasky@suse.cz>
-Completely rewritten from scratch by Junio C Hamano <gitster@pobox.com>,
-another major rewrite by Linus Torvalds <torvalds@osdl.org>
-
-Documentation
---------------
-Documentation by David Greaves, Junio C Hamano and the git-list
-<git@vger.kernel.org>.
 
 GIT
 ---

@@ -22,8 +22,10 @@ void cache_tree_free(struct cache_tree **it_p)
 	if (!it)
 		return;
 	for (i = 0; i < it->subtree_nr; i++)
-		if (it->down[i])
+		if (it->down[i]) {
 			cache_tree_free(&it->down[i]->cache_tree);
+			free(it->down[i]);
+		}
 	free(it->down);
 	free(it);
 	*it_p = NULL;
@@ -328,9 +330,11 @@ static int update_one(struct cache_tree *it,
 			mode = ce->ce_mode;
 			entlen = pathlen - baselen;
 		}
-		if (mode != S_IFGITLINK && !missing_ok && !has_sha1_file(sha1))
+		if (mode != S_IFGITLINK && !missing_ok && !has_sha1_file(sha1)) {
+			strbuf_release(&buffer);
 			return error("invalid object %06o %s for '%.*s'",
 				mode, sha1_to_hex(sha1), entlen+baselen, path);
+		}
 
 		if (ce->ce_flags & CE_REMOVE)
 			continue; /* entry being removed */

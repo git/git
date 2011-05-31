@@ -8,7 +8,7 @@ test_description='test describe
  o----o----o----o----o----.    /
        \        A    c        /
         .------------o---o---o
-                     D   e
+                   D,R   e
 '
 . ./test-lib.sh
 
@@ -33,6 +33,8 @@ test_expect_success setup '
 	test_tick &&
 	echo one >file && git add file && git commit -m initial &&
 	one=$(git rev-parse HEAD) &&
+
+	git describe --always HEAD &&
 
 	test_tick &&
 	echo two >file && git add file && git commit -m second &&
@@ -66,6 +68,8 @@ test_expect_success setup '
 	echo D >another && git add another && git commit -m D &&
 	test_tick &&
 	git tag -a -m D D &&
+	test_tick &&
+	git tag -a -m R R &&
 
 	test_tick &&
 	echo DD >another && git commit -a -m another &&
@@ -87,15 +91,21 @@ test_expect_success setup '
 
 check_describe A-* HEAD
 check_describe A-* HEAD^
-check_describe D-* HEAD^^
+check_describe R-* HEAD^^
 check_describe A-* HEAD^^2
 check_describe B HEAD^^2^
+check_describe R-* HEAD^^^
 
 check_describe c-* --tags HEAD
 check_describe c-* --tags HEAD^
 check_describe e-* --tags HEAD^^
 check_describe c-* --tags HEAD^^2
 check_describe B --tags HEAD^^2^
+check_describe e --tags HEAD^^^
+
+check_describe heads/master --all HEAD
+check_describe tags/c-* --all HEAD^
+check_describe tags/e --all HEAD^^^
 
 check_describe B-0-* --long HEAD^^2^
 check_describe A-3-* --long HEAD^^2
@@ -113,7 +123,7 @@ cat - >err.expect <<EOF
 warning: tag 'A' is really 'Q' here
 EOF
 check_describe A-* HEAD
-test_expect_success 'warning was displayed for Q' '
+test_expect_success C_LOCALE_OUTPUT 'warning was displayed for Q' '
 	test_cmp err.expect err.actual
 '
 test_expect_success 'rename tag Q back to A' '
@@ -122,6 +132,20 @@ test_expect_success 'rename tag Q back to A' '
 
 test_expect_success 'pack tag refs' 'git pack-refs'
 check_describe A-* HEAD
+
+check_describe "A-*[0-9a-f]" --dirty
+
+test_expect_success 'set-up dirty work tree' '
+	echo >>file
+'
+
+check_describe "A-*[0-9a-f]-dirty" --dirty
+
+check_describe "A-*[0-9a-f].mod" --dirty=.mod
+
+test_expect_success 'describe --dirty HEAD' '
+	test_must_fail git describe --dirty HEAD
+'
 
 test_expect_success 'set-up matching pattern tests' '
 	git tag -a -m test-annotated test-annotated &&

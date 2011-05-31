@@ -15,7 +15,7 @@ DESCRIPTION
 This program is usually not what the end user wants to run directly.
 Most end users want to use one of the existing frontend programs,
 which parses a specific type of foreign source and feeds the contents
-stored there to 'git-fast-import'.
+stored there to 'git fast-import'.
 
 fast-import reads a mixed command/data stream from standard input and
 writes one or more packfiles directly into the current repository.
@@ -24,7 +24,7 @@ updated branch and tag refs, fully updating the current repository
 with the newly imported data.
 
 The fast-import backend itself can import into an empty repository (one that
-has already been initialized by 'git-init') or incrementally
+has already been initialized by 'git init') or incrementally
 update an existing populated repository.  Whether or not incremental
 imports are supported from a particular foreign source depends on
 the frontend program in use.
@@ -44,11 +44,14 @@ OPTIONS
 	not contain the old commit).
 
 --max-pack-size=<n>::
-	Maximum size of each output packfile, expressed in MiB.
-	The default is 4096 (4 GiB) as that is the maximum allowed
-	packfile size (due to file format limitations). Some
-	importers may wish to lower this, such as to ensure the
-	resulting packfiles fit on CDs.
+	Maximum size of each output packfile.
+	The default is unlimited.
+
+--big-file-threshold=<n>::
+	Maximum size of a blob that fast-import will attempt to
+	create a delta for, expressed in bytes.  The default is 512m
+	(512 MiB).  Some importers may wish to lower this on systems
+	with constrained memory.
 
 --depth=<n>::
 	Maximum delta depth, for blob and tree deltification.
@@ -75,6 +78,29 @@ OPTIONS
 	set of marks.  If a mark is defined to different values,
 	the last file wins.
 
+--import-marks-if-exists=<file>::
+	Like --import-marks but instead of erroring out, silently
+	skips the file if it does not exist.
+
+--relative-marks::
+	After specifying --relative-marks the paths specified
+	with --import-marks= and --export-marks= are relative
+	to an internal directory in the current repository.
+	In git-fast-import this means that the paths are relative
+	to the .git/info/fast-import directory. However, other
+	importers may use a different location.
+
+--no-relative-marks::
+	Negates a previous --relative-marks. Allows for combining
+	relative and non-relative marks by interweaving
+	--(no-)-relative-marks with the --(import|export)-marks=
+	options.
+
+--cat-blob-fd=<fd>::
+	Specify the file descriptor that will be written to
+	when the `cat-blob` command is encountered in the stream.
+	The default behaviour is to write to `stdout`.
+
 --export-pack-edges=<file>::
 	After creating a packfile, print a line of data to
 	<file> listing the filename of the packfile and the last
@@ -82,7 +108,7 @@ OPTIONS
 	This information may be useful after importing projects
 	whose total object set exceeds the 4 GiB packfile limit,
 	as these commits can be used as edge points during calls
-	to 'git-pack-objects'.
+	to 'git pack-objects'.
 
 --quiet::
 	Disable all non-fatal output, making fast-import silent when it
@@ -124,9 +150,9 @@ an ideal situation, given that most conversion tools are throw-away
 
 Parallel Operation
 ------------------
-Like 'git-push' or 'git-fetch', imports handled by fast-import are safe to
+Like 'git push' or 'git fetch', imports handled by fast-import are safe to
 run alongside parallel `git repack -a -d` or `git gc` invocations,
-or any other Git operation (including 'git-prune', as loose objects
+or any other Git operation (including 'git prune', as loose objects
 are never used by fast-import).
 
 fast-import does not lock the branch or tag refs it is actively importing.
@@ -138,7 +164,7 @@ fast-forward update, fast-import will skip updating that ref and instead
 prints a warning message.  fast-import will always attempt to update all
 branch refs, and does not stop on the first failure.
 
-Branch updates can be forced with \--force, but its recommended that
+Branch updates can be forced with \--force, but it's recommended that
 this only be used on an otherwise quiet repository.  Using \--force
 is not necessary for an initial import into an empty repository.
 
@@ -170,7 +196,8 @@ especially when a higher level language such as Perl, Python or
 Ruby is being used.
 
 fast-import is very strict about its input.  Where we say SP below we mean
-*exactly* one space.  Likewise LF means one (and only one) linefeed.
+*exactly* one space.  Likewise LF means one (and only one) linefeed
+and HT one (and only one) horizontal tab.
 Supplying additional whitespace characters will cause unexpected
 results, such as branch names or file names with leading or trailing
 spaces in their name, or early termination of fast-import when it encounters
@@ -220,7 +247,7 @@ variation in formatting will cause fast-import to reject the value.
 +
 An example value is ``Tue Feb 6 11:22:18 2007 -0500''.  The Git
 parser is accurate, but a little on the lenient side.  It is the
-same parser used by 'git-am' when applying patches
+same parser used by 'git am' when applying patches
 received from email.
 +
 Some malformed strings may be accepted as valid dates.  In some of
@@ -253,10 +280,10 @@ is always copied into the identity string at the time it is being
 created by fast-import.  There is no way to specify a different time or
 timezone.
 +
-This particular format is supplied as its short to implement and
+This particular format is supplied as it's short to implement and
 may be useful to a process that wants to create a new commit
 right now, without needing to use a working directory or
-'git-update-index'.
+'git update-index'.
 +
 If separate `author` and `committer` commands are used in a `commit`
 the timestamps may not match, as the system clock will be polled
@@ -303,6 +330,25 @@ and control the current import process.  More detailed discussion
 	standard output.  This command is optional and is not needed
 	to perform an import.
 
+`cat-blob`::
+	Causes fast-import to print a blob in 'cat-file --batch'
+	format to the file descriptor set with `--cat-blob-fd` or
+	`stdout` if unspecified.
+
+`ls`::
+	Causes fast-import to print a line describing a directory
+	entry in 'ls-tree' format to the file descriptor set with
+	`--cat-blob-fd` or `stdout` if unspecified.
+
+`feature`::
+	Require that fast-import supports the specified feature, or
+	abort if it does not.
+
+`option`::
+	Specify any of the options listed under OPTIONS that do not
+	change stream semantic to suit the frontend's needs. This
+	command is optional and is not needed to perform an import.
+
 `commit`
 ~~~~~~~~
 Create or update a branch with a new commit, recording one logical
@@ -311,12 +357,12 @@ change to the project.
 ....
 	'commit' SP <ref> LF
 	mark?
-	('author' SP <name> SP LT <email> GT SP <when> LF)?
-	'committer' SP <name> SP LT <email> GT SP <when> LF
+	('author' (SP <name>)? SP LT <email> GT SP <when> LF)?
+	'committer' (SP <name>)? SP LT <email> GT SP <when> LF
 	data
 	('from' SP <committish> LF)?
 	('merge' SP <committish> LF)?
-	(filemodify | filedelete | filecopy | filerename | filedeleteall)*
+	(filemodify | filedelete | filecopy | filerename | filedeleteall | notemodify)*
 	LF?
 ....
 
@@ -339,14 +385,13 @@ commit message use a 0 length data.  Commit messages are free-form
 and are not interpreted by Git.  Currently they must be encoded in
 UTF-8, as fast-import does not permit other encodings to be specified.
 
-Zero or more `filemodify`, `filedelete`, `filecopy`, `filerename`
-and `filedeleteall` commands
+Zero or more `filemodify`, `filedelete`, `filecopy`, `filerename`,
+`filedeleteall` and `notemodify` commands
 may be included to update the contents of the branch prior to
 creating the commit.  These commands may be supplied in any order.
 However it is recommended that a `filedeleteall` command precede
-all `filemodify`, `filecopy` and `filerename` commands in the same
-commit, as `filedeleteall`
-wipes the branch clean (see below).
+all `filemodify`, `filecopy`, `filerename` and `notemodify` commands in
+the same commit, as `filedeleteall` wipes the branch clean (see below).
 
 The `LF` after the command is optional (it used to be required).
 
@@ -398,7 +443,7 @@ quoting or escaping syntax is supported within `<committish>`.
 Here `<committish>` is any of the following:
 
 * The name of an existing branch already in fast-import's internal branch
-  table.  If fast-import doesn't know the name, its treated as a SHA-1
+  table.  If fast-import doesn't know the name, it's treated as a SHA-1
   expression.
 
 * A mark reference, `:<idnum>`, where `<idnum>` is the mark number.
@@ -414,7 +459,7 @@ Marks must be declared (via `mark`) before they can be used.
 * A complete 40 byte or abbreviated commit SHA-1 in hex.
 
 * Any valid Git SHA-1 expression that resolves to a commit.  See
-  ``SPECIFYING REVISIONS'' in linkgit:git-rev-parse[1] for details.
+  ``SPECIFYING REVISIONS'' in linkgit:gitrevisions[7] for details.
 
 The special case of restarting an incremental import from the
 current branch value should be written as:
@@ -457,9 +502,11 @@ External data format::
 	'M' SP <mode> SP <dataref> SP <path> LF
 ....
 +
-Here `<dataref>` can be either a mark reference (`:<idnum>`)
+Here usually `<dataref>` must be either a mark reference (`:<idnum>`)
 set by a prior `blob` command, or a full 40-byte SHA-1 of an
-existing Git blob object.
+existing Git blob object.  If `<mode>` is `040000`` then
+`<dataref>` must be the full 40-byte SHA-1 of an existing
+Git tree object or a mark reference set with `--import-marks`.
 
 Inline data format::
 	The data content for the file has not been supplied yet.
@@ -484,6 +531,8 @@ in octal.  Git only supports the following modes:
 * `160000`: A gitlink, SHA-1 of the object refers to a commit in
   another repository. Git links can only be specified by SHA or through
   a commit mark. They are used to implement submodules.
+* `040000`: A subdirectory.  Subdirectories can only be specified by
+  SHA or through a tree mark set with `--import-marks`.
 
 In both formats `<path>` is the complete path of the file to be added
 (if not already existing) or modified (if already existing).
@@ -502,6 +551,8 @@ The value of `<path>` must be in canonical form. That is it must not:
 * start with a directory separator (e.g. `/foo` is invalid),
 * contain the special component `.` or `..` (e.g. `foo/./bar` and
   `foo/../bar` are invalid).
+
+The root of the tree can be represented by an empty string as `<path>`.
 
 It is recommended that `<path>` always be encoded using UTF-8.
 
@@ -595,6 +646,40 @@ more memory per active branch (less than 1 MiB for even most large
 projects); so frontends that can easily obtain only the affected
 paths for a commit are encouraged to do so.
 
+`notemodify`
+^^^^^^^^^^^^
+Included in a `commit` command to add a new note (annotating a given
+commit) or change the content of an existing note.  This command has
+two different means of specifying the content of the note.
+
+External data format::
+	The data content for the note was already supplied by a prior
+	`blob` command.  The frontend just needs to connect it to the
+	commit that is to be annotated.
++
+....
+	'N' SP <dataref> SP <committish> LF
+....
++
+Here `<dataref>` can be either a mark reference (`:<idnum>`)
+set by a prior `blob` command, or a full 40-byte SHA-1 of an
+existing Git blob object.
+
+Inline data format::
+	The data content for the note has not been supplied yet.
+	The frontend wants to supply it as part of this modify
+	command.
++
+....
+	'N' SP 'inline' SP <committish> LF
+	data
+....
++
+See below for a detailed description of the `data` command.
+
+In both formats `<committish>` is any of the commit specification
+expressions also accepted by `from` (see above).
+
 `mark`
 ~~~~~~
 Arranges for fast-import to save a reference to the current object, allowing
@@ -624,7 +709,7 @@ lightweight (non-annotated) tags see the `reset` command below.
 ....
 	'tag' SP <name> LF
 	'from' SP <committish> LF
-	'tagger' SP <name> SP LT <email> GT SP <when> LF
+	'tagger' (SP <name>)? SP LT <email> GT SP <when> LF
 	data
 ....
 
@@ -657,7 +742,7 @@ recommended, as the frontend does not (easily) have access to the
 complete set of bytes which normally goes into such a signature.
 If signing is required, create lightweight tags from within fast-import with
 `reset`, then create the annotated versions of those tags offline
-with the standard 'git-tag' process.
+with the standard 'git tag' process.
 
 `reset`
 ~~~~~~~
@@ -703,7 +788,7 @@ assigned mark.
 
 The mark command is optional here as some frontends have chosen
 to generate the Git SHA-1 for the blob on their own, and feed that
-directly to `commit`.  This is typically more work than its worth
+directly to `commit`.  This is typically more work than it's worth
 however, as marks are inexpensive to store and easy to use.
 
 `data`
@@ -812,6 +897,152 @@ remove the leading part of the line, for example:
 Placing a `progress` command immediately after a `checkpoint` will
 inform the reader when the `checkpoint` has been completed and it
 can safely access the refs that fast-import updated.
+
+`cat-blob`
+~~~~~~~~~~
+Causes fast-import to print a blob to a file descriptor previously
+arranged with the `--cat-blob-fd` argument.  The command otherwise
+has no impact on the current import; its main purpose is to
+retrieve blobs that may be in fast-import's memory but not
+accessible from the target repository.
+
+....
+	'cat-blob' SP <dataref> LF
+....
+
+The `<dataref>` can be either a mark reference (`:<idnum>`)
+set previously or a full 40-byte SHA-1 of a Git blob, preexisting or
+ready to be written.
+
+Output uses the same format as `git cat-file --batch`:
+
+====
+	<sha1> SP 'blob' SP <size> LF
+	<contents> LF
+====
+
+This command can be used anywhere in the stream that comments are
+accepted.  In particular, the `cat-blob` command can be used in the
+middle of a commit but not in the middle of a `data` command.
+
+`ls`
+~~~~
+Prints information about the object at a path to a file descriptor
+previously arranged with the `--cat-blob-fd` argument.  This allows
+printing a blob from the active commit (with `cat-blob`) or copying a
+blob or tree from a previous commit for use in the current one (with
+`filemodify`).
+
+The `ls` command can be used anywhere in the stream that comments are
+accepted, including the middle of a commit.
+
+Reading from the active commit::
+	This form can only be used in the middle of a `commit`.
+	The path names a directory entry within fast-import's
+	active commit.  The path must be quoted in this case.
++
+....
+	'ls' SP <path> LF
+....
+
+Reading from a named tree::
+	The `<dataref>` can be a mark reference (`:<idnum>`) or the
+	full 40-byte SHA-1 of a Git tag, commit, or tree object,
+	preexisting or waiting to be written.
+	The path is relative to the top level of the tree
+	named by `<dataref>`.
++
+....
+	'ls' SP <dataref> SP <path> LF
+....
+
+See `filemodify` above for a detailed description of `<path>`.
+
+Output uses the same format as `git ls-tree <tree> {litdd} <path>`:
+
+====
+	<mode> SP ('blob' | 'tree' | 'commit') SP <dataref> HT <path> LF
+====
+
+The <dataref> represents the blob, tree, or commit object at <path>
+and can be used in later 'cat-blob', 'filemodify', or 'ls' commands.
+
+If there is no file or subtree at that path, 'git fast-import' will
+instead report
+
+====
+	missing SP <path> LF
+====
+
+`feature`
+~~~~~~~~~
+Require that fast-import supports the specified feature, or abort if
+it does not.
+
+....
+	'feature' SP <feature> ('=' <argument>)? LF
+....
+
+The <feature> part of the command may be any one of the following:
+
+date-format::
+export-marks::
+relative-marks::
+no-relative-marks::
+force::
+	Act as though the corresponding command-line option with
+	a leading '--' was passed on the command line
+	(see OPTIONS, above).
+
+import-marks::
+	Like --import-marks except in two respects: first, only one
+	"feature import-marks" command is allowed per stream;
+	second, an --import-marks= command-line option overrides
+	any "feature import-marks" command in the stream.
+
+cat-blob::
+ls::
+	Require that the backend support the 'cat-blob' or 'ls' command.
+	Versions of fast-import not supporting the specified command
+	will exit with a message indicating so.
+	This lets the import error out early with a clear message,
+	rather than wasting time on the early part of an import
+	before the unsupported command is detected.
+
+notes::
+	Require that the backend support the 'notemodify' (N)
+	subcommand to the 'commit' command.
+	Versions of fast-import not supporting notes will exit
+	with a message indicating so.
+
+
+`option`
+~~~~~~~~
+Processes the specified option so that git fast-import behaves in a
+way that suits the frontend's needs.
+Note that options specified by the frontend are overridden by any
+options the user may specify to git fast-import itself.
+
+....
+    'option' SP <option> LF
+....
+
+The `<option>` part of the command may contain any of the options
+listed in the OPTIONS section that do not change import semantics,
+without the leading '--' and is treated in the same way.
+
+Option commands must be the first commands on the input (not counting
+feature commands), to give an option command after any non-option
+command is an error.
+
+The following commandline options change import semantics and may therefore
+not be passed as option:
+
+* date-format
+* import-marks
+* export-marks
+* cat-blob-fd
+* force
 
 Crash Reports
 -------------
@@ -958,7 +1189,7 @@ is not `refs/heads/TAG_FIXUP`).
 
 When committing fixups, consider using `merge` to connect the
 commit(s) which are supplying file revisions to the fixup branch.
-Doing so will allow tools such as 'git-blame' to track
+Doing so will allow tools such as 'git blame' to track
 through the real commit history and properly annotate the source
 files.
 
@@ -987,7 +1218,7 @@ Repacking Historical Data
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 If you are repacking very old imported data (e.g. older than the
 last year), consider expending some extra CPU time and supplying
-\--window=50 (or higher) when you run 'git-repack'.
+\--window=50 (or higher) when you run 'git repack'.
 This will take longer, but will also produce a smaller packfile.
 You only need to expend the effort once, and everyone using your
 project will benefit from the smaller repository.
@@ -1111,14 +1342,13 @@ and lazy loading of subtrees, allows fast-import to efficiently import
 projects with 2,000+ branches and 45,114+ files in a very limited
 memory footprint (less than 2.7 MiB per active branch).
 
-
-Author
-------
-Written by Shawn O. Pearce <spearce@spearce.org>.
-
-Documentation
---------------
-Documentation by Shawn O. Pearce <spearce@spearce.org>.
+Signals
+-------
+Sending *SIGUSR1* to the 'git fast-import' process ends the current
+packfile early, simulating a `checkpoint` command.  The impatient
+operator can use this facility to peek at the objects and refs from an
+import in progress, at the cost of some added running time and worse
+compression.
 
 GIT
 ---

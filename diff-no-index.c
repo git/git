@@ -26,7 +26,7 @@ static int read_directory(const char *path, struct string_list *list)
 
 	while ((e = readdir(dir)))
 		if (strcmp(".", e->d_name) && strcmp("..", e->d_name))
-			string_list_insert(e->d_name, list);
+			string_list_insert(list, e->d_name);
 
 	closedir(dir);
 	return 0;
@@ -64,7 +64,8 @@ static int queue_diff(struct diff_options *o,
 
 	if (S_ISDIR(mode1) || S_ISDIR(mode2)) {
 		char buffer1[PATH_MAX], buffer2[PATH_MAX];
-		struct string_list p1 = {NULL, 0, 0, 1}, p2 = {NULL, 0, 0, 1};
+		struct string_list p1 = STRING_LIST_INIT_DUP;
+		struct string_list p2 = STRING_LIST_INIT_DUP;
 		int len1 = 0, len2 = 0, i1, i2, ret = 0;
 
 		if (name1 && read_directory(name1, &p1))
@@ -150,16 +151,14 @@ static int queue_diff(struct diff_options *o,
 
 static int path_outside_repo(const char *path)
 {
-	/*
-	 * We have already done setup_git_directory_gently() so we
-	 * know we are inside a git work tree already.
-	 */
 	const char *work_tree;
 	size_t len;
 
 	if (!is_absolute_path(path))
 		return 0;
 	work_tree = get_git_work_tree();
+	if (!work_tree)
+		return 1;
 	len = strlen(work_tree);
 	if (strncmp(path, work_tree, len) ||
 	    (path[len] != '\0' && path[len] != '/'))
@@ -201,8 +200,8 @@ void diff_no_index(struct rev_info *revs,
 			return;
 	}
 	if (argc != i + 2)
-		die("git diff %s takes two paths",
-		    no_index ? "--no-index" : "[--no-index]");
+		usagef("git diff %s <path> <path>",
+		       no_index ? "--no-index" : "[--no-index]");
 
 	diff_setup(&revs->diffopt);
 	for (i = 1; i < argc - 2; ) {
@@ -232,8 +231,9 @@ void diff_no_index(struct rev_info *revs,
 
 	if (prefix) {
 		int len = strlen(prefix);
+		const char *paths[3];
+		memset(paths, 0, sizeof(paths));
 
-		revs->diffopt.paths = xcalloc(2, sizeof(char *));
 		for (i = 0; i < 2; i++) {
 			const char *p = argv[argc - 2 + i];
 			/*
@@ -243,12 +243,12 @@ void diff_no_index(struct rev_info *revs,
 			p = (strcmp(p, "-")
 			     ? xstrdup(prefix_filename(prefix, len, p))
 			     : p);
-			revs->diffopt.paths[i] = p;
+			paths[i] = p;
 		}
+		diff_tree_setup_paths(paths, &revs->diffopt);
 	}
 	else
-		revs->diffopt.paths = argv + argc - 2;
-	revs->diffopt.nr_paths = 2;
+		diff_tree_setup_paths(argv + argc - 2, &revs->diffopt);
 	revs->diffopt.skip_stat_unmatch = 1;
 	if (!revs->diffopt.output_format)
 		revs->diffopt.output_format = DIFF_FORMAT_PATCH;
@@ -260,8 +260,8 @@ void diff_no_index(struct rev_info *revs,
 	if (diff_setup_done(&revs->diffopt) < 0)
 		die("diff_setup_done failed");
 
-	if (queue_diff(&revs->diffopt, revs->diffopt.paths[0],
-		       revs->diffopt.paths[1]))
+	if (queue_diff(&revs->diffopt, revs->diffopt.pathspec.raw[0],
+		       revs->diffopt.pathspec.raw[1]))
 		exit(1);
 	diff_set_mnemonic_prefix(&revs->diffopt, "1/", "2/");
 	diffcore_std(&revs->diffopt);

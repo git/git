@@ -30,11 +30,12 @@ test_expect_success 'fsck fails' '
 	test_must_fail git fsck
 '
 
-test_expect_success 'upload-pack fails due to error in pack-objects' '
+test_expect_success 'upload-pack fails due to error in pack-objects packing' '
 
-	! echo "0032want $(git rev-parse HEAD)
-00000009done
-0000" | git upload-pack . > /dev/null 2> output.err &&
+	printf "0032want %s\n00000009done\n0000" \
+		$(git rev-parse HEAD) >input &&
+	test_must_fail git upload-pack . <input >/dev/null 2>output.err &&
+	grep "unable to read" output.err &&
 	grep "pack-objects died" output.err
 '
 
@@ -50,10 +51,31 @@ test_expect_success 'fsck fails' '
 '
 test_expect_success 'upload-pack fails due to error in rev-list' '
 
-	! echo "0032want $(git rev-parse HEAD)
-00000009done
-0000" | git upload-pack . > /dev/null 2> output.err &&
-	grep "waitpid (async) failed" output.err
+	printf "0032want %s\n0034shallow %s00000009done\n0000" \
+		$(git rev-parse HEAD) $(git rev-parse HEAD^) >input &&
+	test_must_fail git upload-pack . <input >/dev/null 2>output.err &&
+	# pack-objects survived
+	grep "Total.*, reused" output.err &&
+	# but there was an error, which must have been in rev-list
+	grep "bad tree object" output.err
+'
+
+test_expect_success 'upload-pack error message when bad ref requested' '
+
+	printf "0045want %s multi_ack_detailed\n00000009done\n0000" \
+		"deadbeefdeadbeefdeadbeefdeadbeefdeadbeef" >input &&
+	test_must_fail git upload-pack . <input >output 2>output.err &&
+	grep -q "not our ref" output.err &&
+	! grep -q multi_ack_detailed output.err
+'
+
+test_expect_success 'upload-pack fails due to error in pack-objects enumeration' '
+
+	printf "0032want %s\n00000009done\n0000" \
+		$(git rev-parse HEAD) >input &&
+	test_must_fail git upload-pack . <input >/dev/null 2>output.err &&
+	grep "bad tree object" output.err &&
+	grep "pack-objects died" output.err
 '
 
 test_expect_success 'create empty repository' '

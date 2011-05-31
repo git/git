@@ -6,6 +6,7 @@
 
 /* ISSYMREF=01 and ISPACKED=02 are public interfaces */
 #define REF_KNOWS_PEELED 04
+#define REF_BROKEN 010
 
 struct ref_list {
 	struct ref_list *next;
@@ -156,7 +157,7 @@ static struct cached_refs {
 	char did_packed;
 	struct ref_list *loose;
 	struct ref_list *packed;
-} cached_refs;
+} cached_refs, submodule_refs;
 static struct ref_list *current_ref;
 
 static struct ref_list *extra_refs;
@@ -228,23 +229,45 @@ void clear_extra_refs(void)
 	extra_refs = NULL;
 }
 
-static struct ref_list *get_packed_refs(void)
+static struct ref_list *get_packed_refs(const char *submodule)
 {
-	if (!cached_refs.did_packed) {
-		FILE *f = fopen(git_path("packed-refs"), "r");
-		cached_refs.packed = NULL;
+	const char *packed_refs_file;
+	struct cached_refs *refs;
+
+	if (submodule) {
+		packed_refs_file = git_path_submodule(submodule, "packed-refs");
+		refs = &submodule_refs;
+		free_ref_list(refs->packed);
+	} else {
+		packed_refs_file = git_path("packed-refs");
+		refs = &cached_refs;
+	}
+
+	if (!refs->did_packed || submodule) {
+		FILE *f = fopen(packed_refs_file, "r");
+		refs->packed = NULL;
 		if (f) {
-			read_packed_refs(f, &cached_refs);
+			read_packed_refs(f, refs);
 			fclose(f);
 		}
-		cached_refs.did_packed = 1;
+		refs->did_packed = 1;
 	}
-	return cached_refs.packed;
+	return refs->packed;
 }
 
-static struct ref_list *get_ref_dir(const char *base, struct ref_list *list)
+static struct ref_list *get_ref_dir(const char *submodule, const char *base,
+				    struct ref_list *list)
 {
-	DIR *dir = opendir(git_path("%s", base));
+	DIR *dir;
+	const char *path;
+
+	if (submodule)
+		path = git_path_submodule(submodule, "%s", base);
+	else
+		path = git_path("%s", base);
+
+
+	dir = opendir(path);
 
 	if (dir) {
 		struct dirent *de;
@@ -260,6 +283,7 @@ static struct ref_list *get_ref_dir(const char *base, struct ref_list *list)
 			struct stat st;
 			int flag;
 			int namelen;
+			const char *refdir;
 
 			if (de->d_name[0] == '.')
 				continue;
@@ -269,14 +293,27 @@ static struct ref_list *get_ref_dir(const char *base, struct ref_list *list)
 			if (has_extension(de->d_name, ".lock"))
 				continue;
 			memcpy(ref + baselen, de->d_name, namelen+1);
-			if (stat(git_path("%s", ref), &st) < 0)
+			refdir = submodule
+				? git_path_submodule(submodule, "%s", ref)
+				: git_path("%s", ref);
+			if (stat(refdir, &st) < 0)
 				continue;
 			if (S_ISDIR(st.st_mode)) {
-				list = get_ref_dir(ref, list);
+				list = get_ref_dir(submodule, ref, list);
 				continue;
 			}
-			if (!resolve_ref(ref, sha1, 1, &flag))
+			if (submodule) {
 				hashclr(sha1);
+				flag = 0;
+				if (resolve_gitlink_ref(submodule, ref, sha1) < 0) {
+					hashclr(sha1);
+					flag |= REF_BROKEN;
+				}
+			} else
+				if (!resolve_ref(ref, sha1, 1, &flag)) {
+					hashclr(sha1);
+					flag |= REF_BROKEN;
+				}
 			list = add_ref(ref, sha1, flag, list, NULL);
 		}
 		free(ref);
@@ -286,6 +323,7 @@ static struct ref_list *get_ref_dir(const char *base, struct ref_list *list)
 }
 
 struct warn_if_dangling_data {
+	FILE *fp;
 	const char *refname;
 	const char *msg_fmt;
 };
@@ -304,20 +342,30 @@ static int warn_if_dangling_symref(const char *refname, const unsigned char *sha
 	if (!resolves_to || strcmp(resolves_to, d->refname))
 		return 0;
 
-	printf(d->msg_fmt, refname);
+	fprintf(d->fp, d->msg_fmt, refname);
 	return 0;
 }
 
-void warn_dangling_symref(const char *msg_fmt, const char *refname)
+void warn_dangling_symref(FILE *fp, const char *msg_fmt, const char *refname)
 {
-	struct warn_if_dangling_data data = { refname, msg_fmt };
+	struct warn_if_dangling_data data;
+
+	data.fp = fp;
+	data.refname = refname;
+	data.msg_fmt = msg_fmt;
 	for_each_rawref(warn_if_dangling_symref, &data);
 }
 
-static struct ref_list *get_loose_refs(void)
+static struct ref_list *get_loose_refs(const char *submodule)
 {
+	if (submodule) {
+		free_ref_list(submodule_refs.loose);
+		submodule_refs.loose = get_ref_dir(submodule, "refs", NULL);
+		return submodule_refs.loose;
+	}
+
 	if (!cached_refs.did_loose) {
-		cached_refs.loose = get_ref_dir("refs", NULL);
+		cached_refs.loose = get_ref_dir(NULL, "refs", NULL);
 		cached_refs.did_loose = 1;
 	}
 	return cached_refs.loose;
@@ -451,7 +499,7 @@ const char *resolve_ref(const char *ref, unsigned char *sha1, int reading, int *
 		git_snpath(path, sizeof(path), "%s", ref);
 		/* Special case: non-existing file. */
 		if (lstat(path, &st) < 0) {
-			struct ref_list *list = get_packed_refs();
+			struct ref_list *list = get_packed_refs(NULL);
 			while (list) {
 				if (!strcmp(ref, list->name)) {
 					hashcpy(sha1, list->sha1);
@@ -518,6 +566,13 @@ const char *resolve_ref(const char *ref, unsigned char *sha1, int reading, int *
 	return ref;
 }
 
+/* The argument to filter_refs */
+struct ref_filter {
+	const char *pattern;
+	each_ref_fn *fn;
+	void *cb_data;
+};
+
 int read_ref(const char *ref, unsigned char *sha1)
 {
 	if (resolve_ref(ref, sha1, 1, NULL))
@@ -531,10 +586,10 @@ static int do_one_ref(const char *base, each_ref_fn fn, int trim,
 {
 	if (strncmp(base, entry->name, trim))
 		return 0;
-	/* Is this a "negative ref" that represents a deleted ref? */
-	if (is_null_sha1(entry->sha1))
-		return 0;
+
 	if (!(flags & DO_FOR_EACH_INCLUDE_BROKEN)) {
+		if (entry->flag & REF_BROKEN)
+			return 0; /* ignore dangling symref */
 		if (!has_sha1_file(entry->sha1)) {
 			error("%s does not point to a valid object!", entry->name);
 			return 0;
@@ -542,6 +597,15 @@ static int do_one_ref(const char *base, each_ref_fn fn, int trim,
 	}
 	current_ref = entry;
 	return fn(entry->name + trim, entry->sha1, entry->flag, cb_data);
+}
+
+static int filter_refs(const char *ref, const unsigned char *sha, int flags,
+	void *data)
+{
+	struct ref_filter *filter = (struct ref_filter *)data;
+	if (fnmatch(filter->pattern, ref, 0))
+		return 0;
+	return filter->fn(ref, sha, flags, filter->cb_data);
 }
 
 int peel_ref(const char *ref, unsigned char *sha1)
@@ -564,7 +628,7 @@ int peel_ref(const char *ref, unsigned char *sha1)
 		return -1;
 
 	if ((flag & REF_ISPACKED)) {
-		struct ref_list *list = get_packed_refs();
+		struct ref_list *list = get_packed_refs(NULL);
 
 		while (list) {
 			if (!strcmp(list->name, ref)) {
@@ -591,12 +655,12 @@ fallback:
 	return -1;
 }
 
-static int do_for_each_ref(const char *base, each_ref_fn fn, int trim,
-			   int flags, void *cb_data)
+static int do_for_each_ref(const char *submodule, const char *base, each_ref_fn fn,
+			   int trim, int flags, void *cb_data)
 {
 	int retval = 0;
-	struct ref_list *packed = get_packed_refs();
-	struct ref_list *loose = get_loose_refs();
+	struct ref_list *packed = get_packed_refs(submodule);
+	struct ref_list *loose = get_loose_refs(submodule);
 
 	struct ref_list *extra;
 
@@ -633,24 +697,54 @@ end_each:
 	return retval;
 }
 
-int head_ref(each_ref_fn fn, void *cb_data)
+
+static int do_head_ref(const char *submodule, each_ref_fn fn, void *cb_data)
 {
 	unsigned char sha1[20];
 	int flag;
 
+	if (submodule) {
+		if (resolve_gitlink_ref(submodule, "HEAD", sha1) == 0)
+			return fn("HEAD", sha1, 0, cb_data);
+
+		return 0;
+	}
+
 	if (resolve_ref("HEAD", sha1, 1, &flag))
 		return fn("HEAD", sha1, flag, cb_data);
+
 	return 0;
+}
+
+int head_ref(each_ref_fn fn, void *cb_data)
+{
+	return do_head_ref(NULL, fn, cb_data);
+}
+
+int head_ref_submodule(const char *submodule, each_ref_fn fn, void *cb_data)
+{
+	return do_head_ref(submodule, fn, cb_data);
 }
 
 int for_each_ref(each_ref_fn fn, void *cb_data)
 {
-	return do_for_each_ref("refs/", fn, 0, 0, cb_data);
+	return do_for_each_ref(NULL, "refs/", fn, 0, 0, cb_data);
+}
+
+int for_each_ref_submodule(const char *submodule, each_ref_fn fn, void *cb_data)
+{
+	return do_for_each_ref(submodule, "refs/", fn, 0, 0, cb_data);
 }
 
 int for_each_ref_in(const char *prefix, each_ref_fn fn, void *cb_data)
 {
-	return do_for_each_ref(prefix, fn, strlen(prefix), 0, cb_data);
+	return do_for_each_ref(NULL, prefix, fn, strlen(prefix), 0, cb_data);
+}
+
+int for_each_ref_in_submodule(const char *submodule, const char *prefix,
+		each_ref_fn fn, void *cb_data)
+{
+	return do_for_each_ref(submodule, prefix, fn, strlen(prefix), 0, cb_data);
 }
 
 int for_each_tag_ref(each_ref_fn fn, void *cb_data)
@@ -658,9 +752,19 @@ int for_each_tag_ref(each_ref_fn fn, void *cb_data)
 	return for_each_ref_in("refs/tags/", fn, cb_data);
 }
 
+int for_each_tag_ref_submodule(const char *submodule, each_ref_fn fn, void *cb_data)
+{
+	return for_each_ref_in_submodule(submodule, "refs/tags/", fn, cb_data);
+}
+
 int for_each_branch_ref(each_ref_fn fn, void *cb_data)
 {
 	return for_each_ref_in("refs/heads/", fn, cb_data);
+}
+
+int for_each_branch_ref_submodule(const char *submodule, each_ref_fn fn, void *cb_data)
+{
+	return for_each_ref_in_submodule(submodule, "refs/heads/", fn, cb_data);
 }
 
 int for_each_remote_ref(each_ref_fn fn, void *cb_data)
@@ -668,9 +772,54 @@ int for_each_remote_ref(each_ref_fn fn, void *cb_data)
 	return for_each_ref_in("refs/remotes/", fn, cb_data);
 }
 
+int for_each_remote_ref_submodule(const char *submodule, each_ref_fn fn, void *cb_data)
+{
+	return for_each_ref_in_submodule(submodule, "refs/remotes/", fn, cb_data);
+}
+
+int for_each_replace_ref(each_ref_fn fn, void *cb_data)
+{
+	return do_for_each_ref(NULL, "refs/replace/", fn, 13, 0, cb_data);
+}
+
+int for_each_glob_ref_in(each_ref_fn fn, const char *pattern,
+	const char *prefix, void *cb_data)
+{
+	struct strbuf real_pattern = STRBUF_INIT;
+	struct ref_filter filter;
+	int ret;
+
+	if (!prefix && prefixcmp(pattern, "refs/"))
+		strbuf_addstr(&real_pattern, "refs/");
+	else if (prefix)
+		strbuf_addstr(&real_pattern, prefix);
+	strbuf_addstr(&real_pattern, pattern);
+
+	if (!has_glob_specials(pattern)) {
+		/* Append implied '/' '*' if not present. */
+		if (real_pattern.buf[real_pattern.len - 1] != '/')
+			strbuf_addch(&real_pattern, '/');
+		/* No need to check for '*', there is none. */
+		strbuf_addch(&real_pattern, '*');
+	}
+
+	filter.pattern = real_pattern.buf;
+	filter.fn = fn;
+	filter.cb_data = cb_data;
+	ret = for_each_ref(filter_refs, &filter);
+
+	strbuf_release(&real_pattern);
+	return ret;
+}
+
+int for_each_glob_ref(each_ref_fn fn, const char *pattern, void *cb_data)
+{
+	return for_each_glob_ref_in(fn, pattern, NULL, cb_data);
+}
+
 int for_each_rawref(each_ref_fn fn, void *cb_data)
 {
-	return do_for_each_ref("refs/", fn, 0,
+	return do_for_each_ref(NULL, "refs/", fn, 0,
 			       DO_FOR_EACH_INCLUDE_BROKEN, cb_data);
 }
 
@@ -821,7 +970,7 @@ static int remove_empty_directories(const char *file)
 	strbuf_init(&path, 20);
 	strbuf_addstr(&path, file);
 
-	result = remove_dir_recursively(&path, 1);
+	result = remove_dir_recursively(&path, REMOVE_DIR_EMPTY_ONLY);
 
 	strbuf_release(&path);
 
@@ -894,7 +1043,7 @@ static struct ref_lock *lock_ref_sha1_basic(const char *ref, const unsigned char
 	 * name is a proper prefix of our refname.
 	 */
 	if (missing &&
-	     !is_refname_available(ref, NULL, get_packed_refs(), 0)) {
+	     !is_refname_available(ref, NULL, get_packed_refs(NULL), 0)) {
 		last_errno = ENOTDIR;
 		goto error_return;
 	}
@@ -957,7 +1106,7 @@ static int repack_without_ref(const char *refname)
 	int fd;
 	int found = 0;
 
-	packed_ref_list = get_packed_refs();
+	packed_ref_list = get_packed_refs(NULL);
 	for (list = packed_ref_list; list; list = list->next) {
 		if (!strcmp(refname, list->name)) {
 			found = 1;
@@ -967,8 +1116,10 @@ static int repack_without_ref(const char *refname)
 	if (!found)
 		return 0;
 	fd = hold_lock_file_for_update(&packlock, git_path("packed-refs"), 0);
-	if (fd < 0)
+	if (fd < 0) {
+		unable_to_lock_error(git_path("packed-refs"), errno);
 		return error("cannot delete '%s' from packed refs", refname);
+	}
 
 	for (list = packed_ref_list; list; list = list->next) {
 		char line[PATH_MAX + 100];
@@ -1024,6 +1175,15 @@ int delete_ref(const char *refname, const unsigned char *sha1, int delopt)
 	return ret;
 }
 
+/*
+ * People using contrib's git-new-workdir have .git/logs/refs ->
+ * /some/other/path/.git/logs/refs, and that may live on another device.
+ *
+ * IOW, to avoid cross device rename errors, the temporary renamed log must
+ * live into logs/refs.
+ */
+#define TMP_RENAMED_LOG  "logs/refs/.tmp-renamed-log"
+
 int rename_ref(const char *oldref, const char *newref, const char *logmsg)
 {
 	static const char renamed_ref[] = "RENAMED-REF";
@@ -1044,10 +1204,10 @@ int rename_ref(const char *oldref, const char *newref, const char *logmsg)
 	if (!symref)
 		return error("refname %s not found", oldref);
 
-	if (!is_refname_available(newref, oldref, get_packed_refs(), 0))
+	if (!is_refname_available(newref, oldref, get_packed_refs(NULL), 0))
 		return 1;
 
-	if (!is_refname_available(newref, oldref, get_loose_refs(), 0))
+	if (!is_refname_available(newref, oldref, get_loose_refs(NULL), 0))
 		return 1;
 
 	lock = lock_ref_sha1_basic(renamed_ref, NULL, 0, NULL);
@@ -1057,8 +1217,8 @@ int rename_ref(const char *oldref, const char *newref, const char *logmsg)
 	if (write_ref_sha1(lock, orig_sha1, logmsg))
 		return error("unable to save current sha1 in %s", renamed_ref);
 
-	if (log && rename(git_path("logs/%s", oldref), git_path("tmp-renamed-log")))
-		return error("unable to move logfile logs/%s to tmp-renamed-log: %s",
+	if (log && rename(git_path("logs/%s", oldref), git_path(TMP_RENAMED_LOG)))
+		return error("unable to move logfile logs/%s to "TMP_RENAMED_LOG": %s",
 			oldref, strerror(errno));
 
 	if (delete_ref(oldref, orig_sha1, REF_NODEREF)) {
@@ -1084,7 +1244,7 @@ int rename_ref(const char *oldref, const char *newref, const char *logmsg)
 	}
 
  retry:
-	if (log && rename(git_path("tmp-renamed-log"), git_path("logs/%s", newref))) {
+	if (log && rename(git_path(TMP_RENAMED_LOG), git_path("logs/%s", newref))) {
 		if (errno==EISDIR || errno==ENOTDIR) {
 			/*
 			 * rename(a, b) when b is an existing
@@ -1097,7 +1257,7 @@ int rename_ref(const char *oldref, const char *newref, const char *logmsg)
 			}
 			goto retry;
 		} else {
-			error("unable to move logfile tmp-renamed-log to logs/%s: %s",
+			error("unable to move logfile "TMP_RENAMED_LOG" to logs/%s: %s",
 				newref, strerror(errno));
 			goto rollback;
 		}
@@ -1137,8 +1297,8 @@ int rename_ref(const char *oldref, const char *newref, const char *logmsg)
 		error("unable to restore logfile %s from %s: %s",
 			oldref, newref, strerror(errno));
 	if (!logmoved && log &&
-	    rename(git_path("tmp-renamed-log"), git_path("logs/%s", oldref)))
-		error("unable to restore logfile %s from tmp-renamed-log: %s",
+	    rename(git_path(TMP_RENAMED_LOG), git_path("logs/%s", oldref)))
+		error("unable to restore logfile %s from "TMP_RENAMED_LOG": %s",
 			oldref, strerror(errno));
 
 	return 1;
@@ -1196,10 +1356,49 @@ static int copy_msg(char *buf, const char *msg)
 	return cp - buf;
 }
 
+int log_ref_setup(const char *ref_name, char *logfile, int bufsize)
+{
+	int logfd, oflags = O_APPEND | O_WRONLY;
+
+	git_snpath(logfile, bufsize, "logs/%s", ref_name);
+	if (log_all_ref_updates &&
+	    (!prefixcmp(ref_name, "refs/heads/") ||
+	     !prefixcmp(ref_name, "refs/remotes/") ||
+	     !prefixcmp(ref_name, "refs/notes/") ||
+	     !strcmp(ref_name, "HEAD"))) {
+		if (safe_create_leading_directories(logfile) < 0)
+			return error("unable to create directory for %s",
+				     logfile);
+		oflags |= O_CREAT;
+	}
+
+	logfd = open(logfile, oflags, 0666);
+	if (logfd < 0) {
+		if (!(oflags & O_CREAT) && errno == ENOENT)
+			return 0;
+
+		if ((oflags & O_CREAT) && errno == EISDIR) {
+			if (remove_empty_directories(logfile)) {
+				return error("There are still logs under '%s'",
+					     logfile);
+			}
+			logfd = open(logfile, oflags, 0666);
+		}
+
+		if (logfd < 0)
+			return error("Unable to append to %s: %s",
+				     logfile, strerror(errno));
+	}
+
+	adjust_shared_perm(logfile);
+	close(logfd);
+	return 0;
+}
+
 static int log_ref_write(const char *ref_name, const unsigned char *old_sha1,
 			 const unsigned char *new_sha1, const char *msg)
 {
-	int logfd, written, oflags = O_APPEND | O_WRONLY;
+	int logfd, result, written, oflags = O_APPEND | O_WRONLY;
 	unsigned maxlen, len;
 	int msglen;
 	char log_file[PATH_MAX];
@@ -1209,38 +1408,13 @@ static int log_ref_write(const char *ref_name, const unsigned char *old_sha1,
 	if (log_all_ref_updates < 0)
 		log_all_ref_updates = !is_bare_repository();
 
-	git_snpath(log_file, sizeof(log_file), "logs/%s", ref_name);
+	result = log_ref_setup(ref_name, log_file, sizeof(log_file));
+	if (result)
+		return result;
 
-	if (log_all_ref_updates &&
-	    (!prefixcmp(ref_name, "refs/heads/") ||
-	     !prefixcmp(ref_name, "refs/remotes/") ||
-	     !strcmp(ref_name, "HEAD"))) {
-		if (safe_create_leading_directories(log_file) < 0)
-			return error("unable to create directory for %s",
-				     log_file);
-		oflags |= O_CREAT;
-	}
-
-	logfd = open(log_file, oflags, 0666);
-	if (logfd < 0) {
-		if (!(oflags & O_CREAT) && errno == ENOENT)
-			return 0;
-
-		if ((oflags & O_CREAT) && errno == EISDIR) {
-			if (remove_empty_directories(log_file)) {
-				return error("There are still logs under '%s'",
-					     log_file);
-			}
-			logfd = open(log_file, oflags, 0666);
-		}
-
-		if (logfd < 0)
-			return error("Unable to append to %s: %s",
-				     log_file, strerror(errno));
-	}
-
-	adjust_shared_perm(log_file);
-
+	logfd = open(log_file, oflags);
+	if (logfd < 0)
+		return 0;
 	msglen = msg ? strlen(msg) : 0;
 	committer = git_committer_info(0);
 	maxlen = strlen(committer) + msglen + 100;
@@ -1513,7 +1687,7 @@ int for_each_recent_reflog_ent(const char *ref, each_reflog_ent_fn fn, long ofs,
 {
 	const char *logfile;
 	FILE *logfp;
-	char buf[1024];
+	struct strbuf sb = STRBUF_INIT;
 	int ret = 0;
 
 	logfile = git_path("logs/%s", ref);
@@ -1526,24 +1700,24 @@ int for_each_recent_reflog_ent(const char *ref, each_reflog_ent_fn fn, long ofs,
 		if (fstat(fileno(logfp), &statbuf) ||
 		    statbuf.st_size < ofs ||
 		    fseek(logfp, -ofs, SEEK_END) ||
-		    fgets(buf, sizeof(buf), logfp)) {
+		    strbuf_getwholeline(&sb, logfp, '\n')) {
 			fclose(logfp);
+			strbuf_release(&sb);
 			return -1;
 		}
 	}
 
-	while (fgets(buf, sizeof(buf), logfp)) {
+	while (!strbuf_getwholeline(&sb, logfp, '\n')) {
 		unsigned char osha1[20], nsha1[20];
 		char *email_end, *message;
 		unsigned long timestamp;
-		int len, tz;
+		int tz;
 
 		/* old SP new SP name <email> SP time TAB msg LF */
-		len = strlen(buf);
-		if (len < 83 || buf[len-1] != '\n' ||
-		    get_sha1_hex(buf, osha1) || buf[40] != ' ' ||
-		    get_sha1_hex(buf + 41, nsha1) || buf[81] != ' ' ||
-		    !(email_end = strchr(buf + 82, '>')) ||
+		if (sb.len < 83 || sb.buf[sb.len - 1] != '\n' ||
+		    get_sha1_hex(sb.buf, osha1) || sb.buf[40] != ' ' ||
+		    get_sha1_hex(sb.buf + 41, nsha1) || sb.buf[81] != ' ' ||
+		    !(email_end = strchr(sb.buf + 82, '>')) ||
 		    email_end[1] != ' ' ||
 		    !(timestamp = strtoul(email_end + 2, &message, 10)) ||
 		    !message || message[0] != ' ' ||
@@ -1557,11 +1731,13 @@ int for_each_recent_reflog_ent(const char *ref, each_reflog_ent_fn fn, long ofs,
 			message += 6;
 		else
 			message += 7;
-		ret = fn(osha1, nsha1, buf+82, timestamp, tz, message, cb_data);
+		ret = fn(osha1, nsha1, sb.buf + 82, timestamp, tz, message,
+			 cb_data);
 		if (ret)
 			break;
 	}
 	fclose(logfp);
+	strbuf_release(&sb);
 	return ret;
 }
 

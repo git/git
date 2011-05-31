@@ -177,7 +177,7 @@ test_expect_success SYMLINKS 'funny symlink in work tree' '
 
 '
 
-test_expect_success SYMLINKS 'funny symlink in work tree, un-unlink-able' '
+test_expect_success SYMLINKS,SANITY 'funny symlink in work tree, un-unlink-able' '
 
 	rm -fr a b &&
 	git reset --hard &&

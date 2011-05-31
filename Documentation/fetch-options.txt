@@ -1,11 +1,5 @@
--q::
---quiet::
-	Pass --quiet to git-fetch-pack and silence any other internally
-	used programs.
-
--v::
---verbose::
-	Be verbose.
+--all::
+	Fetch all remotes.
 
 -a::
 --append::
@@ -13,19 +7,38 @@
 	existing contents of `.git/FETCH_HEAD`.  Without this
 	option old data in `.git/FETCH_HEAD` will be overwritten.
 
---upload-pack <upload-pack>::
-	When given, and the repository to fetch from is handled
-	by 'git-fetch-pack', '--exec=<upload-pack>' is passed to
-	the command to specify non-default path for the command
-	run on the other end.
+--depth=<depth>::
+	Deepen the history of a 'shallow' repository created by
+	`git clone` with `--depth=<depth>` option (see linkgit:git-clone[1])
+	by the specified number of commits.
+
+ifndef::git-pull[]
+--dry-run::
+	Show what would be done, without making any changes.
+endif::git-pull[]
 
 -f::
 --force::
-	When 'git-fetch' is used with `<rbranch>:<lbranch>`
+	When 'git fetch' is used with `<rbranch>:<lbranch>`
 	refspec, it refuses to update the local branch
 	`<lbranch>` unless the remote branch `<rbranch>` it
 	fetches is a descendant of `<lbranch>`.  This option
 	overrides that check.
+
+-k::
+--keep::
+	Keep downloaded pack.
+
+ifndef::git-pull[]
+--multiple::
+	Allow several <repository> and <group> arguments to be
+	specified. No <refspec>s may be specified.
+
+-p::
+--prune::
+	After fetching, remove any remote-tracking branches which
+	no longer exist	on the remote.
+endif::git-pull[]
 
 ifdef::git-pull[]
 --no-tags::
@@ -36,8 +49,11 @@ ifndef::git-pull[]
 endif::git-pull[]
 	By default, tags that point at objects that are downloaded
 	from the remote repository are fetched and stored locally.
-	This option disables this automatic tag following.
+	This option disables this automatic tag following. The default
+	behavior for a remote may be specified with the remote.<name>.tagopt
+	setting. See linkgit:git-config[1].
 
+ifndef::git-pull[]
 -t::
 --tags::
 	Most of the tags are fetched automatically as branch
@@ -45,22 +61,68 @@ endif::git-pull[]
 	objects reachable from the branch heads that are being
 	tracked will not be fetched by this mechanism.  This
 	flag lets all tags and their associated objects be
-	downloaded.
+	downloaded. The default behavior for a remote may be
+	specified with the remote.<name>.tagopt setting. See
+	linkgit:git-config[1].
 
--k::
---keep::
-	Keep downloaded pack.
+--recurse-submodules[=yes|on-demand|no]::
+	This option controls if and under what conditions new commits of
+	populated submodules should be fetched too. It can be used as a
+	boolean option to completely disable recursion when set to 'no' or to
+	unconditionally recurse into all populated submodules when set to
+	'yes', which is the default when this option is used without any
+	value. Use 'on-demand' to only recurse into a populated submodule
+	when the superproject retrieves a commit that updates the submodule's
+	reference to a commit that isn't already in the local submodule
+	clone.
+
+--no-recurse-submodules::
+	Disable recursive fetching of submodules (this has the same effect as
+	using the '--recurse-submodules=no' option).
+
+--submodule-prefix=<path>::
+	Prepend <path> to paths printed in informative messages
+	such as "Fetching submodule foo".  This option is used
+	internally when recursing over submodules.
+
+--recurse-submodules-default=[yes|on-demand]::
+	This option is used internally to temporarily provide a
+	non-negative default value for the --recurse-submodules
+	option.  All other methods of configuring fetch's submodule
+	recursion (such as settings in linkgit:gitmodules[5] and
+	linkgit:git-config[1]) override this option, as does
+	specifying --[no-]recurse-submodules directly.
+endif::git-pull[]
 
 -u::
 --update-head-ok::
-	By default 'git-fetch' refuses to update the head which
+	By default 'git fetch' refuses to update the head which
 	corresponds to the current branch.  This flag disables the
-	check.  This is purely for the internal use for 'git-pull'
-	to communicate with 'git-fetch', and unless you are
+	check.  This is purely for the internal use for 'git pull'
+	to communicate with 'git fetch', and unless you are
 	implementing your own Porcelain you are not supposed to
 	use it.
 
---depth=<depth>::
-	Deepen the history of a 'shallow' repository created by
-	`git clone` with `--depth=<depth>` option (see linkgit:git-clone[1])
-	by the specified number of commits.
+--upload-pack <upload-pack>::
+	When given, and the repository to fetch from is handled
+	by 'git fetch-pack', '--exec=<upload-pack>' is passed to
+	the command to specify non-default path for the command
+	run on the other end.
+
+ifndef::git-pull[]
+-q::
+--quiet::
+	Pass --quiet to git-fetch-pack and silence any other internally
+	used git commands. Progress is not reported to the standard error
+	stream.
+
+-v::
+--verbose::
+	Be verbose.
+endif::git-pull[]
+
+--progress::
+	Progress status is reported on the standard error stream
+	by default when it is attached to a terminal, unless -q
+	is specified. This flag forces progress status even if the
+	standard error stream is not directed to a terminal.

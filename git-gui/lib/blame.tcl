@@ -61,7 +61,7 @@ field tooltip_timer     {} ; # Current timer event for our tooltip
 field tooltip_commit    {} ; # Commit(s) in tooltip
 
 constructor new {i_commit i_path i_jump} {
-	global cursor_ptr M1B M1T have_tk85
+	global cursor_ptr M1B M1T have_tk85 use_ttk NS
 	variable active_color
 	variable group_colors
 
@@ -73,15 +73,15 @@ constructor new {i_commit i_path i_jump} {
 
 	set font_w [font measure font_diff "0"]
 
-	frame $w.header -background gold
-	label $w.header.commit_l \
+	gold_frame $w.header
+	tlabel $w.header.commit_l \
 		-text [mc "Commit:"] \
 		-background gold \
 		-foreground black \
 		-anchor w \
 		-justify left
 	set w_back $w.header.commit_b
-	label $w_back \
+	tlabel $w_back \
 		-image ::blame::img_back_arrow \
 		-borderwidth 0 \
 		-relief flat \
@@ -94,20 +94,20 @@ constructor new {i_commit i_path i_jump} {
 			[cb _history_menu]
 		}
 		"
-	label $w.header.commit \
+	tlabel $w.header.commit \
 		-textvariable @commit \
 		-background gold \
 		-foreground black \
 		-anchor w \
 		-justify left
-	label $w.header.path_l \
+	tlabel $w.header.path_l \
 		-text [mc "File:"] \
 		-background gold \
 		-foreground black \
 		-anchor w \
 		-justify left
 	set w_path $w.header.path
-	label $w_path \
+	tlabel $w_path \
 		-background gold \
 		-foreground black \
 		-anchor w \
@@ -209,10 +209,10 @@ constructor new {i_commit i_path i_jump} {
 
 	set w_columns [list $w_amov $w_asim $w_line $w_file]
 
-	scrollbar $w.file_pane.out.sbx \
+	${NS}::scrollbar $w.file_pane.out.sbx \
 		-orient h \
 		-command [list $w_file xview]
-	scrollbar $w.file_pane.out.sby \
+	${NS}::scrollbar $w.file_pane.out.sby \
 		-orient v \
 		-command [list scrollbar2many $w_columns yview]
 	eval grid $w_columns $w.file_pane.out.sby -sticky nsew
@@ -254,10 +254,10 @@ constructor new {i_commit i_path i_jump} {
 		-background $active_color \
 		-font font_ui
 	$w_cviewer tag raise sel
-	scrollbar $w.file_pane.cm.sbx \
+	${NS}::scrollbar $w.file_pane.cm.sbx \
 		-orient h \
 		-command [list $w_cviewer xview]
-	scrollbar $w.file_pane.cm.sby \
+	${NS}::scrollbar $w.file_pane.cm.sby \
 		-orient v \
 		-command [list $w_cviewer yview]
 	pack $w.file_pane.cm.sby -side right -fill y
@@ -449,11 +449,35 @@ method _load {jump} {
 
 	$status show [mc "Reading %s..." "$commit:[escape_path $path]"]
 	$w_path conf -text [escape_path $path]
+
+	set do_textconv 0
+	if {![is_config_false gui.textconv] && [git-version >= 1.7.2]} {
+		set filter [gitattr $path diff set]
+		set textconv [get_config [join [list diff $filter textconv] .]]
+		if {$filter ne {set} && $textconv ne {}} {
+			set do_textconv 1
+		}
+	}
 	if {$commit eq {}} {
-		set fd [open $path r]
+		if {$do_textconv ne 0} {
+			# Run textconv with sh -c "..." to allow it to
+			# contain command + arguments. On windows, just
+			# call the filter command.
+			if {![file executable [shellpath]]} {
+				set fd [open |[linsert $textconv end $path] r]
+			} else {
+				set fd [open |[list [shellpath] -c "$textconv \"\$0\"" $path] r]
+			}
+		} else {
+			set fd [open $path r]
+		}
 		fconfigure $fd -eofchar {}
 	} else {
-		set fd [git_read cat-file blob "$commit:$path"]
+		if {$do_textconv ne 0} {
+			set fd [git_read cat-file --textconv "$commit:$path"]
+		} else {
+			set fd [git_read cat-file blob "$commit:$path"]
+		}
 	}
 	fconfigure $fd \
 		-blocking 0 \
@@ -1245,6 +1269,18 @@ method _open_tooltip {cur_w} {
 
 	$tooltip_t conf -state disabled
 	_position_tooltip $this
+
+	# On MacOS raising a window causes it to acquire focus.
+	# Tk 8.5 on MacOS seems to properly support wm transient,
+	# so we can safely counter the effect there.
+	if {$::have_tk85 && [is_MacOSX]} {
+		update
+		if {$w eq {}} {
+			raise .
+		} else {
+			raise $w
+		}
+	}
 }
 
 method _position_tooltip {} {
@@ -1268,7 +1304,9 @@ method _position_tooltip {} {
 	append g $pos_y
 
 	wm geometry $tooltip_wm $g
-	raise $tooltip_wm
+	if {![is_MacOSX]} {
+		raise $tooltip_wm
+	}
 }
 
 method _hide_tooltip {} {

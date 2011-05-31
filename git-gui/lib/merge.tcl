@@ -83,6 +83,7 @@ method _visualize {} {
 
 method _start {} {
 	global HEAD current_branch remote_url
+	global _last_merged_branch
 
 	set name [_rev $this]
 	if {$name eq {}} {
@@ -109,6 +110,7 @@ method _start {} {
 	regsub ^refs/heads/ $branch {} branch
 	puts $fh "$cmit\t\tbranch '$branch' of $remote"
 	close $fh
+	set _last_merged_branch $branch
 
 	set cmd [list git]
 	lappend cmd merge
@@ -139,14 +141,14 @@ method _finish {cons ok} {
 
 constructor dialog {} {
 	global current_branch
-	global M1B
+	global M1B use_ttk NS
 
 	if {![_can_merge $this]} {
 		delete_this
 		return
 	}
 
-	make_toplevel top w
+	make_dialog top w
 	wm title $top [append "[appname] ([reponame]): " [mc "Merge"]]
 	if {$top ne {.}} {
 		wm geometry $top "+[winfo rootx .]+[winfo rooty .]"
@@ -154,21 +156,21 @@ constructor dialog {} {
 
 	set _start [cb _start]
 
-	label $w.header \
+	${NS}::label $w.header \
 		-text [mc "Merge Into %s" $current_branch] \
 		-font font_uibold
 	pack $w.header -side top -fill x
 
-	frame $w.buttons
-	button $w.buttons.visualize \
+	${NS}::frame $w.buttons
+	${NS}::button $w.buttons.visualize \
 		-text [mc Visualize] \
 		-command [cb _visualize]
 	pack $w.buttons.visualize -side left
-	button $w.buttons.merge \
+	${NS}::button $w.buttons.merge \
 		-text [mc Merge] \
 		-command $_start
 	pack $w.buttons.merge -side right
-	button $w.buttons.cancel \
+	${NS}::button $w.buttons.cancel \
 		-text [mc "Cancel"] \
 		-command [cb _cancel]
 	pack $w.buttons.cancel -side right -padx 5

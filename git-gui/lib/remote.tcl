@@ -157,22 +157,7 @@ proc add_fetch_entry {r} {
 	}
 
 	if {$enable} {
-		if {![winfo exists $fetch_m]} {
-			menu $remove_m
-			$remote_m insert 0 cascade \
-				-label [mc "Remove Remote"] \
-				-menu $remove_m
-
-			menu $prune_m
-			$remote_m insert 0 cascade \
-				-label [mc "Prune from"] \
-				-menu $prune_m
-
-			menu $fetch_m
-			$remote_m insert 0 cascade \
-				-label [mc "Fetch from"] \
-				-menu $fetch_m
-		}
+		make_sure_remote_submenues_exist $remote_m
 
 		$fetch_m add command \
 			-label $r \
@@ -222,6 +207,70 @@ proc add_push_entry {r} {
 	}
 }
 
+proc make_sure_remote_submenues_exist {remote_m} {
+	set fetch_m $remote_m.fetch
+	set prune_m $remote_m.prune
+	set remove_m $remote_m.remove
+
+	if {![winfo exists $fetch_m]} {
+		menu $remove_m
+		$remote_m insert 0 cascade \
+			-label [mc "Remove Remote"] \
+			-menu $remove_m
+
+		menu $prune_m
+		$remote_m insert 0 cascade \
+			-label [mc "Prune from"] \
+			-menu $prune_m
+
+		menu $fetch_m
+		$remote_m insert 0 cascade \
+			-label [mc "Fetch from"] \
+			-menu $fetch_m
+	}
+}
+
+proc update_all_remotes_menu_entry {} {
+	global all_remotes
+
+	if {[git-version < 1.6.6]} { return }
+
+	set have_remote 0
+	foreach r $all_remotes {
+		incr have_remote
+	}
+
+	set remote_m .mbar.remote
+	set fetch_m $remote_m.fetch
+	set prune_m $remote_m.prune
+	if {$have_remote > 1} {
+		make_sure_remote_submenues_exist $remote_m
+		if {[$fetch_m entrycget end -label] ne "All"} {
+
+			$fetch_m insert end separator
+			$fetch_m insert end command \
+				-label "All" \
+				-command fetch_from_all
+
+			$prune_m insert end separator
+			$prune_m insert end command \
+				-label "All" \
+				-command prune_from_all
+		}
+	} else {
+		if {[winfo exists $fetch_m]} {
+			if {[$fetch_m entrycget end -label] eq "All"} {
+
+				delete_from_menu $fetch_m end
+				delete_from_menu $fetch_m end
+
+				delete_from_menu $prune_m end
+				delete_from_menu $prune_m end
+			}
+		}
+	}
+}
+
 proc populate_remotes_menu {} {
 	global all_remotes
 
@@ -229,6 +278,8 @@ proc populate_remotes_menu {} {
 		add_fetch_entry $r
 		add_push_entry $r
 	}
+
+	update_all_remotes_menu_entry
 }
 
 proc add_single_remote {name location} {
@@ -244,6 +295,8 @@ proc add_single_remote {name location} {
 
 	add_fetch_entry $name
 	add_push_entry $name
+
+	update_all_remotes_menu_entry
 }
 
 proc delete_from_menu {menu name} {
@@ -264,8 +317,8 @@ proc remove_remote {name} {
 		unset repo_config(remote.$name.push)
 	}
 
-	set i [lsearch -exact all_remotes $name]
-	lreplace all_remotes $i $i
+	set i [lsearch -exact $all_remotes $name]
+	set all_remotes [lreplace $all_remotes $i $i]
 
 	set remote_m .mbar.remote
 	delete_from_menu $remote_m.fetch $name
@@ -273,4 +326,6 @@ proc remove_remote {name} {
 	delete_from_menu $remote_m.remove $name
 	# Not all remotes are in the push menu
 	catch { delete_from_menu $remote_m.push $name }
+
+	update_all_remotes_menu_entry
 }

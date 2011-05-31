@@ -1,0 +1,1255 @@
+# Japanese translations for gitk package.
+# Copyright (C) 2005-2009 Paul Mackerras
+# This file is distributed under the same license as the gitk package.
+#
+# Mizar <mizar.jp@gmail.com>, 2009.
+# Junio C Hamano <gitster@pobox.com>, 2009.
+msgid ""
+msgstr ""
+"Project-Id-Version: gitk\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2009-11-04 00:08+0900\n"
+"PO-Revision-Date: 2009-11-06 01:45+0900\n"
+"Last-Translator: Mizar <mizar.jp@gmail.com>\n"
+"Language-Team: Japanese\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: gitk:113
+msgid "Couldn't get list of unmerged files:"
+msgstr "マージされていないファイルのリストを取得できません:"
+
+#: gitk:269
+msgid "Error parsing revisions:"
+msgstr "リビジョン解析エラー:"
+
+#: gitk:324
+msgid "Error executing --argscmd command:"
+msgstr "--argscmd コマンド実行エラー:"
+
+#: gitk:337
+msgid "No files selected: --merge specified but no files are unmerged."
+msgstr ""
+"ファイル未選択: --merge が指定されましたが、マージされていないファイルはあり"
+"ません。"
+
+#: gitk:340
+msgid ""
+"No files selected: --merge specified but no unmerged files are within file "
+"limit."
+msgstr ""
+"ファイル未選択: --merge が指定されましたが、ファイル制限内にマージされていな"
+"いファイルはありません。"
+
+#: gitk:362 gitk:509
+msgid "Error executing git log:"
+msgstr "git log 実行エラー:"
+
+#: gitk:380 gitk:525
+msgid "Reading"
+msgstr "読み込み中"
+
+#: gitk:440 gitk:4132
+msgid "Reading commits..."
+msgstr "コミット読み込み中..."
+
+#: gitk:443 gitk:1561 gitk:4135
+msgid "No commits selected"
+msgstr "コミットが選択されていません"
+
+#: gitk:1437
+msgid "Can't parse git log output:"
+msgstr "git log の出力を解析できません:"
+
+#: gitk:1657
+msgid "No commit information available"
+msgstr "有効なコミットの情報がありません"
+
+#: gitk:1790
+msgid "mc"
+msgstr "mc"
+
+#: gitk:1817 gitk:3925 gitk:8842 gitk:10378 gitk:10558
+msgid "OK"
+msgstr "OK"
+
+#: gitk:1819 gitk:3927 gitk:8439 gitk:8513 gitk:8623 gitk:8672 gitk:8844
+#: gitk:10379 gitk:10559
+msgid "Cancel"
+msgstr "キャンセル"
+
+#: gitk:1919
+msgid "Update"
+msgstr "更新"
+
+#: gitk:1920
+msgid "Reload"
+msgstr "リロード"
+
+#: gitk:1921
+msgid "Reread references"
+msgstr "リファレンスを再読み込み"
+
+#: gitk:1922
+msgid "List references"
+msgstr "リファレンスリストを表示"
+
+#: gitk:1924
+msgid "Start git gui"
+msgstr "git gui の開始"
+
+#: gitk:1926
+msgid "Quit"
+msgstr "終了"
+
+#: gitk:1918
+msgid "File"
+msgstr "ファイル"
+
+#: gitk:1930
+msgid "Preferences"
+msgstr "設定"
+
+#: gitk:1929
+msgid "Edit"
+msgstr "編集"
+
+#: gitk:1934
+msgid "New view..."
+msgstr "新規ビュー..."
+
+#: gitk:1935
+msgid "Edit view..."
+msgstr "ビュー編集..."
+
+#: gitk:1936
+msgid "Delete view"
+msgstr "ビュー削除"
+
+#: gitk:1938
+msgid "All files"
+msgstr "全てのファイル"
+
+#: gitk:1933 gitk:3679
+msgid "View"
+msgstr "ビュー"
+
+#: gitk:1943 gitk:1953 gitk:2656
+msgid "About gitk"
+msgstr "gitk について"
+
+#: gitk:1944 gitk:1958
+msgid "Key bindings"
+msgstr "キーバインディング"
+
+#: gitk:1942 gitk:1957
+msgid "Help"
+msgstr "ヘルプ"
+
+#: gitk:2018
+msgid "SHA1 ID: "
+msgstr "SHA1 ID: "
+
+#: gitk:2049
+msgid "Row"
+msgstr "行"
+
+#: gitk:2080
+msgid "Find"
+msgstr "検索"
+
+#: gitk:2081
+msgid "next"
+msgstr "次"
+
+#: gitk:2082
+msgid "prev"
+msgstr "前"
+
+#: gitk:2083
+msgid "commit"
+msgstr "コミット"
+
+#: gitk:2086 gitk:2088 gitk:4293 gitk:4316 gitk:4340 gitk:6281 gitk:6353
+#: gitk:6437
+msgid "containing:"
+msgstr "含む:"
+
+#: gitk:2089 gitk:3164 gitk:3169 gitk:4368
+msgid "touching paths:"
+msgstr "パスの一部:"
+
+#: gitk:2090 gitk:4373
+msgid "adding/removing string:"
+msgstr "追加/除去する文字列:"
+
+#: gitk:2099 gitk:2101
+msgid "Exact"
+msgstr "英字の大小を区別する"
+
+#: gitk:2101 gitk:4448 gitk:6249
+msgid "IgnCase"
+msgstr "英字の大小を区別しない"
+
+#: gitk:2101 gitk:4342 gitk:4446 gitk:6245
+msgid "Regexp"
+msgstr "正規表現"
+
+#: gitk:2103 gitk:2104 gitk:4467 gitk:4497 gitk:4504 gitk:6373 gitk:6441
+msgid "All fields"
+msgstr "全ての項目"
+
+#: gitk:2104 gitk:4465 gitk:4497 gitk:6312
+msgid "Headline"
+msgstr "ヘッドライン"
+
+#: gitk:2105 gitk:4465 gitk:6312 gitk:6441 gitk:6875
+msgid "Comments"
+msgstr "コメント"
+
+#: gitk:2105 gitk:4465 gitk:4469 gitk:4504 gitk:6312 gitk:6810 gitk:8091
+#: gitk:8106
+msgid "Author"
+msgstr "作者"
+
+#: gitk:2105 gitk:4465 gitk:6312 gitk:6812
+msgid "Committer"
+msgstr "コミット者"
+
+#: gitk:2134
+msgid "Search"
+msgstr "検索"
+
+#: gitk:2141
+msgid "Diff"
+msgstr "Diff"
+
+#: gitk:2143
+msgid "Old version"
+msgstr "旧バージョン"
+
+#: gitk:2145
+msgid "New version"
+msgstr "新バージョン"
+
+#: gitk:2147
+msgid "Lines of context"
+msgstr "文脈行数"
+
+#: gitk:2157
+msgid "Ignore space change"
+msgstr "空白の違いを無視"
+
+#: gitk:2215
+msgid "Patch"
+msgstr "パッチ"
+
+#: gitk:2217
+msgid "Tree"
+msgstr "ツリー"
+
+#: gitk:2361 gitk:2378
+msgid "Diff this -> selected"
+msgstr "これと選択したコミットのdiffを見る"
+
+#: gitk:2362 gitk:2379
+msgid "Diff selected -> this"
+msgstr "選択したコミットとこれのdiffを見る"
+
+#: gitk:2363 gitk:2380
+msgid "Make patch"
+msgstr "パッチ作成"
+
+#: gitk:2364 gitk:8497
+msgid "Create tag"
+msgstr "タグ生成"
+
+#: gitk:2365 gitk:8603
+msgid "Write commit to file"
+msgstr "コミットをファイルに書き出す"
+
+#: gitk:2366 gitk:8660
+msgid "Create new branch"
+msgstr "新規ブランチ生成"
+
+#: gitk:2367
+msgid "Cherry-pick this commit"
+msgstr "このコミットをチェリーピックする"
+
+#: gitk:2368
+msgid "Reset HEAD branch to here"
+msgstr "ブランチのHEADをここにリセットする"
+
+#: gitk:2369
+msgid "Mark this commit"
+msgstr "このコミットにマークをつける"
+
+#: gitk:2370
+msgid "Return to mark"
+msgstr "マークを付けた所に戻る"
+
+#: gitk:2371
+msgid "Find descendant of this and mark"
+msgstr "これとマークをつけた所との子孫を見つける"
+
+#: gitk:2372
+msgid "Compare with marked commit"
+msgstr "マークを付けたコミットと比較する"
+
+#: gitk:2386
+msgid "Check out this branch"
+msgstr "このブランチをチェックアウトする"
+
+#: gitk:2387
+msgid "Remove this branch"
+msgstr "このブランチを除去する"
+
+#: gitk:2394
+msgid "Highlight this too"
+msgstr "これもハイライトさせる"
+
+#: gitk:2395
+msgid "Highlight this only"
+msgstr "これだけをハイライトさせる"
+
+#: gitk:2396
+msgid "External diff"
+msgstr "外部diffツール"
+
+#: gitk:2397
+msgid "Blame parent commit"
+msgstr "親コミットから blame をかける"
+
+#: gitk:2404
+msgid "Show origin of this line"
+msgstr "この行の出自を表示する"
+
+#: gitk:2405
+msgid "Run git gui blame on this line"
+msgstr "この行に git gui で blame をかける"
+
+#: gitk:2658
+msgid ""
+"\n"
+"Gitk - a commit viewer for git\n"
+"\n"
+"Copyright \\u00a9 2005-2010 Paul Mackerras\n"
+"\n"
+"Use and redistribute under the terms of the GNU General Public License"
+msgstr ""
+"\n"
+"Gitk - gitコミットビューア\n"
+"\n"
+"Copyright \\u00a9 2005-2010 Paul Mackerras\n"
+"\n"
+"使用および再配布は GNU General Public License に従ってください"
+
+#: gitk:2666 gitk:2728 gitk:9025
+msgid "Close"
+msgstr "閉じる"
+
+#: gitk:2685
+msgid "Gitk key bindings"
+msgstr "Gitk キーバインディング"
+
+#: gitk:2688
+msgid "Gitk key bindings:"
+msgstr "Gitk キーバインディング:"
+
+#: gitk:2690
+#, tcl-format
+msgid "<%s-Q>\t\tQuit"
+msgstr "<%s-Q>\t\t終了"
+
+#: gitk:2691
+msgid "<Home>\t\tMove to first commit"
+msgstr "<Home>\t\t最初のコミットに移動"
+
+#: gitk:2692
+msgid "<End>\t\tMove to last commit"
+msgstr "<End>\t\t最後のコミットに移動"
+
+#: gitk:2693
+msgid "<Up>, p, i\tMove up one commit"
+msgstr "<Up>, p, i\t一つ上のコミットに移動"
+
+#: gitk:2694
+msgid "<Down>, n, k\tMove down one commit"
+msgstr "<Down>, n, k\t一つ下のコミットに移動"
+
+#: gitk:2695
+msgid "<Left>, z, j\tGo back in history list"
+msgstr "<Left>, z, j\t履歴の前に戻る"
+
+#: gitk:2696
+msgid "<Right>, x, l\tGo forward in history list"
+msgstr "<Right>, x, l\t履歴の次へ進む"
+
+#: gitk:2697
+msgid "<PageUp>\tMove up one page in commit list"
+msgstr "<PageUp>\tコミットリストの一つ上のページに移動"
+
+#: gitk:2698
+msgid "<PageDown>\tMove down one page in commit list"
+msgstr "<PageDown>\tコミットリストの一つ下のページに移動"
+
+#: gitk:2699
+#, tcl-format
+msgid "<%s-Home>\tScroll to top of commit list"
+msgstr "<%s-Home>\tコミットリストの一番上にスクロールする"
+
+#: gitk:2700
+#, tcl-format
+msgid "<%s-End>\tScroll to bottom of commit list"
+msgstr "<%s-End>\tコミットリストの一番下にスクロールする"
+
+#: gitk:2701
+#, tcl-format
+msgid "<%s-Up>\tScroll commit list up one line"
+msgstr "<%s-Up>\tコミットリストの一つ下の行にスクロールする"
+
+#: gitk:2702
+#, tcl-format
+msgid "<%s-Down>\tScroll commit list down one line"
+msgstr "<%s-Down>\tコミットリストの一つ下の行にスクロールする"
+
+#: gitk:2703
+#, tcl-format
+msgid "<%s-PageUp>\tScroll commit list up one page"
+msgstr "<%s-PageUp>\tコミットリストの上のページにスクロールする"
+
+#: gitk:2704
+#, tcl-format
+msgid "<%s-PageDown>\tScroll commit list down one page"
+msgstr "<%s-PageDown>\tコミットリストの下のページにスクロールする"
+
+#: gitk:2705
+msgid "<Shift-Up>\tFind backwards (upwards, later commits)"
+msgstr "<Shift-Up>\t後方を検索 (上方の・新しいコミット)"
+
+#: gitk:2706
+msgid "<Shift-Down>\tFind forwards (downwards, earlier commits)"
+msgstr "<Shift-Down>\t前方を検索（下方の・古いコミット）"
+
+#: gitk:2707
+msgid "<Delete>, b\tScroll diff view up one page"
+msgstr "<Delete>, b\tdiff画面を上のページにスクロールする"
+
+#: gitk:2708
+msgid "<Backspace>\tScroll diff view up one page"
+msgstr "<Backspace>\tdiff画面を上のページにスクロールする"
+
+#: gitk:2709
+msgid "<Space>\t\tScroll diff view down one page"
+msgstr "<Space>\t\tdiff画面を下のページにスクロールする"
+
+#: gitk:2710
+msgid "u\t\tScroll diff view up 18 lines"
+msgstr "u\t\tdiff画面を上に18行スクロールする"
+
+#: gitk:2711
+msgid "d\t\tScroll diff view down 18 lines"
+msgstr "d\t\tdiff画面を下に18行スクロールする"
+
+#: gitk:2712
+#, tcl-format
+msgid "<%s-F>\t\tFind"
+msgstr "<%s-F>\t\t検索"
+
+#: gitk:2713
+#, tcl-format
+msgid "<%s-G>\t\tMove to next find hit"
+msgstr "<%s-G>\t\t次を検索して移動"
+
+#: gitk:2714
+msgid "<Return>\tMove to next find hit"
+msgstr "<Return>\t次を検索して移動"
+
+#: gitk:2715
+msgid "/\t\tFocus the search box"
+msgstr "/\t\t検索ボックスにフォーカス"
+
+#: gitk:2716
+msgid "?\t\tMove to previous find hit"
+msgstr "?\t\t前を検索して移動"
+
+#: gitk:2717
+msgid "f\t\tScroll diff view to next file"
+msgstr "f\t\t次のファイルにdiff画面をスクロールする"
+
+#: gitk:2718
+#, tcl-format
+msgid "<%s-S>\t\tSearch for next hit in diff view"
+msgstr "<%s-S>\t\tdiff画面の次を検索"
+
+#: gitk:2719
+#, tcl-format
+msgid "<%s-R>\t\tSearch for previous hit in diff view"
+msgstr "<%s-R>\t\tdiff画面の前を検索"
+
+#: gitk:2720
+#, tcl-format
+msgid "<%s-KP+>\tIncrease font size"
+msgstr "<%s-KP+>\t文字サイズを拡大"
+
+#: gitk:2721
+#, tcl-format
+msgid "<%s-plus>\tIncrease font size"
+msgstr "<%s-plus>\t文字サイズを拡大"
+
+#: gitk:2722
+#, tcl-format
+msgid "<%s-KP->\tDecrease font size"
+msgstr "<%s-KP->\t文字サイズを縮小"
+
+#: gitk:2723
+#, tcl-format
+msgid "<%s-minus>\tDecrease font size"
+msgstr "<%s-minus>\t文字サイズを縮小"
+
+#: gitk:2724
+msgid "<F5>\t\tUpdate"
+msgstr "<F5>\t\t更新"
+
+#: gitk:3179 gitk:3188
+#, tcl-format
+msgid "Error creating temporary directory %s:"
+msgstr "一時ディレクトリ %s 生成時エラー:"
+
+#: gitk:3201
+#, tcl-format
+msgid "Error getting \"%s\" from %s:"
+msgstr "\"%s\" のエラーが %s に発生:"
+
+#: gitk:3264
+msgid "command failed:"
+msgstr "コマンド失敗:"
+
+#: gitk:3410
+msgid "No such commit"
+msgstr "そのようなコミットはありません"
+
+#: gitk:3424
+msgid "git gui blame: command failed:"
+msgstr "git gui blame: コマンド失敗:"
+
+#: gitk:3455
+#, tcl-format
+msgid "Couldn't read merge head: %s"
+msgstr "マージする HEAD を読み込めません: %s"
+
+#: gitk:3463
+#, tcl-format
+msgid "Error reading index: %s"
+msgstr "インデックス読み込みエラー: %s"
+
+#: gitk:3488
+#, tcl-format
+msgid "Couldn't start git blame: %s"
+msgstr "git blame を始められません: %s"
+
+#: gitk:3491 gitk:6280
+msgid "Searching"
+msgstr "検索中"
+
+#: gitk:3523
+#, tcl-format
+msgid "Error running git blame: %s"
+msgstr "git blame 実行エラー: %s"
+
+#: gitk:3551
+#, tcl-format
+msgid "That line comes from commit %s,  which is not in this view"
+msgstr "コミット %s に由来するその行は、このビューに表示されていません"
+
+#: gitk:3565
+msgid "External diff viewer failed:"
+msgstr "外部diffビューアが失敗:"
+
+#: gitk:3683
+msgid "Gitk view definition"
+msgstr "Gitk ビュー定義"
+
+#: gitk:3687
+msgid "Remember this view"
+msgstr "このビューを記憶する"
+
+#: gitk:3688
+msgid "References (space separated list):"
+msgstr "リファレンス（スペース区切りのリスト）:"
+
+#: gitk:3689
+msgid "Branches & tags:"
+msgstr "ブランチ＆タグ:"
+
+#: gitk:3690
+msgid "All refs"
+msgstr "全てのリファレンス"
+
+#: gitk:3691
+msgid "All (local) branches"
+msgstr "全ての（ローカルな）ブランチ"
+
+#: gitk:3692
+msgid "All tags"
+msgstr "全てのタグ"
+
+#: gitk:3693
+msgid "All remote-tracking branches"
+msgstr "全てのリモート追跡ブランチ"
+
+#: gitk:3694
+msgid "Commit Info (regular expressions):"
+msgstr "コミット情報（正規表現）:"
+
+#: gitk:3695
+msgid "Author:"
+msgstr "作者:"
+
+#: gitk:3696
+msgid "Committer:"
+msgstr "コミット者:"
+
+#: gitk:3697
+msgid "Commit Message:"
+msgstr "コミットメッセージ:"
+
+#: gitk:3698
+msgid "Matches all Commit Info criteria"
+msgstr "コミット情報の全ての条件に一致"
+
+#: gitk:3699
+msgid "Changes to Files:"
+msgstr "変更したファイル:"
+
+#: gitk:3700
+msgid "Fixed String"
+msgstr "固定文字列"
+
+#: gitk:3701
+msgid "Regular Expression"
+msgstr "正規表現"
+
+#: gitk:3702
+msgid "Search string:"
+msgstr "検索文字列:"
+
+#: gitk:3703
+msgid ""
+"Commit Dates (\"2 weeks ago\", \"2009-03-17 15:27:38\", \"March 17, 2009 "
+"15:27:38\"):"
+msgstr ""
+"コミット日時 (\"2 weeks ago\", \"2009-03-17 15:27:38\", \"March 17, 2009 "
+"15:27:38\"):"
+
+#: gitk:3704
+msgid "Since:"
+msgstr "期間の始め:"
+
+#: gitk:3705
+msgid "Until:"
+msgstr "期間の終わり:"
+
+#: gitk:3706
+msgid "Limit and/or skip a number of revisions (positive integer):"
+msgstr "制限・省略するリビジョンの数（正の整数）:"
+
+#: gitk:3707
+msgid "Number to show:"
+msgstr "表示する数:"
+
+#: gitk:3708
+msgid "Number to skip:"
+msgstr "省略する数:"
+
+#: gitk:3709
+msgid "Miscellaneous options:"
+msgstr "その他のオプション:"
+
+#: gitk:3710
+msgid "Strictly sort by date"
+msgstr "厳密に日付順で並び替え"
+
+#: gitk:3711
+msgid "Mark branch sides"
+msgstr "側枝マーク"
+
+#: gitk:3712
+msgid "Limit to first parent"
+msgstr "最初の親に制限"
+
+#: gitk:3713
+msgid "Simple history"
+msgstr "簡易な履歴"
+
+#: gitk:3714
+msgid "Additional arguments to git log:"
+msgstr "git log への追加の引数:"
+
+#: gitk:3715
+msgid "Enter files and directories to include, one per line:"
+msgstr "含まれるファイル・ディレクトリを一行ごとに入力:"
+
+#: gitk:3716
+msgid "Command to generate more commits to include:"
+msgstr "コミット追加コマンド:"
+
+#: gitk:3838
+msgid "Gitk: edit view"
+msgstr "Gitk: ビュー編集"
+
+#: gitk:3846
+msgid "-- criteria for selecting revisions"
+msgstr "― リビジョンの選択条件"
+
+#: gitk:3851
+msgid "View Name:"
+msgstr "ビュー名:"
+
+#: gitk:3926
+msgid "Apply (F5)"
+msgstr "適用 (F5)"
+
+#: gitk:3964
+msgid "Error in commit selection arguments:"
+msgstr "コミット選択引数のエラー:"
+
+#: gitk:4017 gitk:4069 gitk:4517 gitk:4531 gitk:5792 gitk:11263 gitk:11264
+msgid "None"
+msgstr "無し"
+
+#: gitk:4465 gitk:6312 gitk:8093 gitk:8108
+msgid "Date"
+msgstr "日付"
+
+#: gitk:4465 gitk:6312
+msgid "CDate"
+msgstr "作成日"
+
+#: gitk:4614 gitk:4619
+msgid "Descendant"
+msgstr "子孫"
+
+#: gitk:4615
+msgid "Not descendant"
+msgstr "非子孫"
+
+#: gitk:4622 gitk:4627
+msgid "Ancestor"
+msgstr "祖先"
+
+#: gitk:4623
+msgid "Not ancestor"
+msgstr "非祖先"
+
+#: gitk:4913
+msgid "Local changes checked in to index but not committed"
+msgstr "ステージされた、コミット前のローカルな変更"
+
+#: gitk:4949
+msgid "Local uncommitted changes, not checked in to index"
+msgstr "ステージされていない、コミット前のローカルな変更"
+
+#: gitk:6630
+msgid "many"
+msgstr "多数"
+
+#: gitk:6814
+msgid "Tags:"
+msgstr "タグ:"
+
+#: gitk:6831 gitk:6837 gitk:8086
+msgid "Parent"
+msgstr "親"
+
+#: gitk:6842
+msgid "Child"
+msgstr "子"
+
+#: gitk:6851
+msgid "Branch"
+msgstr "ブランチ"
+
+#: gitk:6854
+msgid "Follows"
+msgstr "下位"
+
+#: gitk:6857
+msgid "Precedes"
+msgstr "上位"
+
+#: gitk:7359
+#, tcl-format
+msgid "Error getting diffs: %s"
+msgstr "diff取得エラー: %s"
+
+#: gitk:7914
+msgid "Goto:"
+msgstr "Goto:"
+
+#: gitk:7916
+msgid "SHA1 ID:"
+msgstr "SHA1 ID:"
+
+#: gitk:7935
+#, tcl-format
+msgid "Short SHA1 id %s is ambiguous"
+msgstr "%s を含む SHA1 ID は複数存在します"
+
+#: gitk:7942
+#, tcl-format
+msgid "Revision %s is not known"
+msgstr "リビジョン %s は不明です"
+
+#: gitk:7952
+#, tcl-format
+msgid "SHA1 id %s is not known"
+msgstr "SHA1 id %s は不明です"
+
+#: gitk:7954
+#, tcl-format
+msgid "Revision %s is not in the current view"
+msgstr "リビジョン %s は現在のビューにはありません"
+
+#: gitk:8096
+msgid "Children"
+msgstr "子"
+
+#: gitk:8153
+#, tcl-format
+msgid "Reset %s branch to here"
+msgstr "%s ブランチをここにリセットする"
+
+#: gitk:8155
+msgid "Detached head: can't reset"
+msgstr "切り離されたHEAD: リセットできません"
+
+#: gitk:8264 gitk:8270
+msgid "Skipping merge commit "
+msgstr "コミットマージをスキップ: "
+
+#: gitk:8279 gitk:8284
+msgid "Error getting patch ID for "
+msgstr "パッチ取得エラー: ID "
+
+#: gitk:8280 gitk:8285
+msgid " - stopping\n"
+msgstr " - 停止\n"
+
+#: gitk:8290 gitk:8293 gitk:8301 gitk:8314 gitk:8323
+msgid "Commit "
+msgstr "コミット "
+
+#: gitk:8294
+msgid ""
+" is the same patch as\n"
+"       "
+msgstr ""
+" は下記のパッチと同等\n"
+"       "
+
+#: gitk:8302
+msgid ""
+" differs from\n"
+"       "
+msgstr ""
+" 下記からのdiff\n"
+"       "
+
+#: gitk:8304
+msgid ""
+"Diff of commits:\n"
+"\n"
+msgstr ""
+"コミットのdiff:\n"
+"\n"
+
+#: gitk:8315 gitk:8324
+#, tcl-format
+msgid " has %s children - stopping\n"
+msgstr " には %s の子があります - 停止\n"
+
+#: gitk:8344
+#, tcl-format
+msgid "Error writing commit to file: %s"
+msgstr "ファイルへのコミット書き出しエラー: %s"
+
+#: gitk:8350
+#, tcl-format
+msgid "Error diffing commits: %s"
+msgstr "コミットのdiff実行エラー: %s"
+
+#: gitk:8380
+msgid "Top"
+msgstr "Top"
+
+#: gitk:8381
+msgid "From"
+msgstr "From"
+
+#: gitk:8386
+msgid "To"
+msgstr "To"
+
+#: gitk:8410
+msgid "Generate patch"
+msgstr "パッチ生成"
+
+#: gitk:8412
+msgid "From:"
+msgstr "From:"
+
+#: gitk:8421
+msgid "To:"
+msgstr "To:"
+
+#: gitk:8430
+msgid "Reverse"
+msgstr "逆"
+
+#: gitk:8432 gitk:8617
+msgid "Output file:"
+msgstr "出力ファイル:"
+
+#: gitk:8438
+msgid "Generate"
+msgstr "生成"
+
+#: gitk:8476
+msgid "Error creating patch:"
+msgstr "パッチ生成エラー:"
+
+#: gitk:8499 gitk:8605 gitk:8662
+msgid "ID:"
+msgstr "ID:"
+
+#: gitk:8508
+msgid "Tag name:"
+msgstr "タグ名:"
+
+#: gitk:8512 gitk:8671
+msgid "Create"
+msgstr "生成"
+
+#: gitk:8529
+msgid "No tag name specified"
+msgstr "タグの名称が指定されていません"
+
+#: gitk:8533
+#, tcl-format
+msgid "Tag \"%s\" already exists"
+msgstr "タグ \"%s\" は既に存在します"
+
+#: gitk:8539
+msgid "Error creating tag:"
+msgstr "タグ生成エラー:"
+
+#: gitk:8614
+msgid "Command:"
+msgstr "コマンド:"
+
+#: gitk:8622
+msgid "Write"
+msgstr "書き出し"
+
+#: gitk:8640
+msgid "Error writing commit:"
+msgstr "コミット書き出しエラー:"
+
+#: gitk:8667
+msgid "Name:"
+msgstr "名前:"
+
+#: gitk:8690
+msgid "Please specify a name for the new branch"
+msgstr "新しいブランチの名前を指定してください"
+
+#: gitk:8695
+#, tcl-format
+msgid "Branch '%s' already exists. Overwrite?"
+msgstr "ブランチ '%s' は既に存在します。上書きしますか？"
+
+#: gitk:8761
+#, tcl-format
+msgid "Commit %s is already included in branch %s -- really re-apply it?"
+msgstr ""
+"コミット %s は既にブランチ %s に含まれています ― 本当にこれを再適用しますか？"
+
+#: gitk:8766
+msgid "Cherry-picking"
+msgstr "チェリーピック中"
+
+#: gitk:8775
+#, tcl-format
+msgid ""
+"Cherry-pick failed because of local changes to file '%s'.\n"
+"Please commit, reset or stash your changes and try again."
+msgstr ""
+"ファイル '%s' のローカルな変更のためにチェリーピックは失敗しました。\n"
+"あなたの変更に commit, reset, stash のいずれかを行ってからやり直してくださ"
+"い。"
+
+#: gitk:8781
+msgid ""
+"Cherry-pick failed because of merge conflict.\n"
+"Do you wish to run git citool to resolve it?"
+msgstr ""
+"マージの衝突によってチェリーピックは失敗しました。\n"
+"この解決のために git citool を実行したいですか？"
+
+#: gitk:8797
+msgid "No changes committed"
+msgstr "何の変更もコミットされていません"
+
+#: gitk:8823
+msgid "Confirm reset"
+msgstr "確認を取り消す"
+
+#: gitk:8825
+#, tcl-format
+msgid "Reset branch %s to %s?"
+msgstr "ブランチ %s を %s にリセットしますか？"
+
+#: gitk:8829
+msgid "Reset type:"
+msgstr "Reset タイプ:"
+
+#: gitk:8833
+msgid "Soft: Leave working tree and index untouched"
+msgstr "Soft: 作業ツリーもインデックスもそのままにする"
+
+#: gitk:8836
+msgid "Mixed: Leave working tree untouched, reset index"
+msgstr "Mixed: 作業ツリーをそのままにして、インデックスをリセット"
+
+#: gitk:8839
+msgid ""
+"Hard: Reset working tree and index\n"
+"(discard ALL local changes)"
+msgstr ""
+"Hard: 作業ツリーやインデックスをリセット\n"
+"（「全ての」ローカルな変更を破棄）"
+
+#: gitk:8856
+msgid "Resetting"
+msgstr "リセット中"
+
+#: gitk:8913
+msgid "Checking out"
+msgstr "チェックアウト"
+
+#: gitk:8966
+msgid "Cannot delete the currently checked-out branch"
+msgstr "現在チェックアウトされているブランチを削除することはできません"
+
+#: gitk:8972
+#, tcl-format
+msgid ""
+"The commits on branch %s aren't on any other branch.\n"
+"Really delete branch %s?"
+msgstr ""
+"ブランチ %s には他のブランチに存在しないコミットがあります。\n"
+"本当にブランチ %s を削除しますか？"
+
+#: gitk:9003
+#, tcl-format
+msgid "Tags and heads: %s"
+msgstr "タグとHEAD: %s"
+
+#: gitk:9018
+msgid "Filter"
+msgstr "フィルター"
+
+#: gitk:9313
+msgid ""
+"Error reading commit topology information; branch and preceding/following "
+"tag information will be incomplete."
+msgstr ""
+"コミット構造情報読み込みエラー; ブランチ及び上位/下位のタグ情報が不完全である"
+"ようです。"
+
+#: gitk:10299
+msgid "Tag"
+msgstr "タグ"
+
+#: gitk:10299
+msgid "Id"
+msgstr "ID"
+
+#: gitk:10347
+msgid "Gitk font chooser"
+msgstr "Gitk フォント選択"
+
+#: gitk:10364
+msgid "B"
+msgstr "B"
+
+#: gitk:10367
+msgid "I"
+msgstr "I"
+
+#: gitk:10463
+msgid "Gitk preferences"
+msgstr "Gitk 設定"
+
+#: gitk:10465
+msgid "Commit list display options"
+msgstr "コミットリスト表示オプション"
+
+#: gitk:10468
+msgid "Maximum graph width (lines)"
+msgstr "最大グラフ幅（線の本数）"
+
+#: gitk:10472
+#, tcl-format
+msgid "Maximum graph width (% of pane)"
+msgstr "最大グラフ幅（ペインに対する％）"
+
+#: gitk:10476
+msgid "Show local changes"
+msgstr "ローカルな変更を表示"
+
+#: gitk:10479
+msgid "Auto-select SHA1"
+msgstr "SHA1 の自動選択"
+
+#: gitk:10483
+msgid "Diff display options"
+msgstr "diff表示オプション"
+
+#: gitk:10485
+msgid "Tab spacing"
+msgstr "タブ空白幅"
+
+#: gitk:10488
+msgid "Display nearby tags"
+msgstr "近くのタグを表示する"
+
+#: gitk:10491
+msgid "Hide remote refs"
+msgstr "リモートリファレンスを隠す"
+
+#: gitk:10494
+msgid "Limit diffs to listed paths"
+msgstr "diff をリストのパスに制限"
+
+#: gitk:10497
+msgid "Support per-file encodings"
+msgstr "ファイルごとのエンコーディングのサポート"
+
+#: gitk:10503 gitk:10572
+msgid "External diff tool"
+msgstr "外部diffツール"
+
+#: gitk:10505
+msgid "Choose..."
+msgstr "選択..."
+
+#: gitk:10510
+msgid "Colors: press to choose"
+msgstr "色: ボタンを押して選択"
+
+#: gitk:10513
+msgid "Interface"
+msgstr "インターフェイス"
+
+#: gitk:10514
+msgid "interface"
+msgstr "インターフェイス"
+
+#: gitk:10517
+msgid "Background"
+msgstr "背景"
+
+#: gitk:10518 gitk:10548
+msgid "background"
+msgstr "背景"
+
+#: gitk:10521
+msgid "Foreground"
+msgstr "前景"
+
+#: gitk:10522
+msgid "foreground"
+msgstr "前景"
+
+#: gitk:10525
+msgid "Diff: old lines"
+msgstr "Diff: 旧バージョン"
+
+#: gitk:10526
+msgid "diff old lines"
+msgstr "diff 旧バージョン"
+
+#: gitk:10530
+msgid "Diff: new lines"
+msgstr "Diff: 新バージョン"
+
+#: gitk:10531
+msgid "diff new lines"
+msgstr "diff 新バージョン"
+
+#: gitk:10535
+msgid "Diff: hunk header"
+msgstr "Diff: hunkヘッダ"
+
+#: gitk:10537
+msgid "diff hunk header"
+msgstr "diff hunkヘッダ"
+
+#: gitk:10541
+msgid "Marked line bg"
+msgstr "マーク行の背景"
+
+#: gitk:10543
+msgid "marked line background"
+msgstr "マーク行の背景"
+
+#: gitk:10547
+msgid "Select bg"
+msgstr "選択の背景"
+
+#: gitk:10551
+msgid "Fonts: press to choose"
+msgstr "フォント: ボタンを押して選択"
+
+#: gitk:10553
+msgid "Main font"
+msgstr "主フォント"
+
+#: gitk:10554
+msgid "Diff display font"
+msgstr "Diff表示用フォント"
+
+#: gitk:10555
+msgid "User interface font"
+msgstr "UI用フォント"
+
+#: gitk:10582
+#, tcl-format
+msgid "Gitk: choose color for %s"
+msgstr "Gitk: 「%s」 の色を選択"
+
+#: gitk:11168
+msgid "Cannot find a git repository here."
+msgstr "ここにはgitリポジトリがありません。"
+
+#: gitk:11172
+#, tcl-format
+msgid "Cannot find the git directory \"%s\"."
+msgstr "gitディレクトリ \"%s\" を見つけられません。"
+
+#: gitk:11219
+#, tcl-format
+msgid "Ambiguous argument '%s': both revision and filename"
+msgstr "あいまいな引数 '%s': リビジョンとファイル名の両方に解釈できます"
+
+#: gitk:11231
+msgid "Bad arguments to gitk:"
+msgstr "gitkへの不正な引数:"
+
+#: gitk:11316
+msgid "Command line"
+msgstr "コマンド行"

@@ -64,11 +64,13 @@ static inline void reset_lstat_cache(struct cache_def *cache)
  * of the prefix, where the cache should use the stat() function
  * instead of the lstat() function to test each path component.
  */
-static int lstat_cache(struct cache_def *cache, const char *name, int len,
-		       int track_flags, int prefix_len_stat_func)
+static int lstat_cache_matchlen(struct cache_def *cache,
+				const char *name, int len,
+				int *ret_flags, int track_flags,
+				int prefix_len_stat_func)
 {
 	int match_len, last_slash, last_slash_dir, previous_slash;
-	int match_flags, ret_flags, save_flags, max_len, ret;
+	int save_flags, max_len, ret;
 	struct stat st;
 
 	if (cache->track_flags != track_flags ||
@@ -90,9 +92,13 @@ static int lstat_cache(struct cache_def *cache, const char *name, int len,
 		match_len = last_slash =
 			longest_path_match(name, len, cache->path, cache->len,
 					   &previous_slash);
-		match_flags = cache->flags & track_flags & (FL_NOENT|FL_SYMLINK);
-		if (match_flags && match_len == cache->len)
-			return match_flags;
+		*ret_flags = cache->flags & track_flags & (FL_NOENT|FL_SYMLINK);
+
+		if (!(track_flags & FL_FULLPATH) && match_len == len)
+			match_len = last_slash = previous_slash;
+
+		if (*ret_flags && match_len == cache->len)
+			return match_len;
 		/*
 		 * If we now have match_len > 0, we would know that
 		 * the matched part will always be a directory.
@@ -101,16 +107,16 @@ static int lstat_cache(struct cache_def *cache, const char *name, int len,
 		 * a substring of the cache on a path component basis,
 		 * we can return immediately.
 		 */
-		match_flags = track_flags & FL_DIR;
-		if (match_flags && len == match_len)
-			return match_flags;
+		*ret_flags = track_flags & FL_DIR;
+		if (*ret_flags && len == match_len)
+			return match_len;
 	}
 
 	/*
 	 * Okay, no match from the cache so far, so now we have to
 	 * check the rest of the path components.
 	 */
-	ret_flags = FL_DIR;
+	*ret_flags = FL_DIR;
 	last_slash_dir = last_slash;
 	max_len = len < PATH_MAX ? len : PATH_MAX;
 	while (match_len < max_len) {
@@ -129,16 +135,16 @@ static int lstat_cache(struct cache_def *cache, const char *name, int len,
 			ret = lstat(cache->path, &st);
 
 		if (ret) {
-			ret_flags = FL_LSTATERR;
+			*ret_flags = FL_LSTATERR;
 			if (errno == ENOENT)
-				ret_flags |= FL_NOENT;
+				*ret_flags |= FL_NOENT;
 		} else if (S_ISDIR(st.st_mode)) {
 			last_slash_dir = last_slash;
 			continue;
 		} else if (S_ISLNK(st.st_mode)) {
-			ret_flags = FL_SYMLINK;
+			*ret_flags = FL_SYMLINK;
 		} else {
-			ret_flags = FL_ERR;
+			*ret_flags = FL_ERR;
 		}
 		break;
 	}
@@ -148,7 +154,7 @@ static int lstat_cache(struct cache_def *cache, const char *name, int len,
 	 * path types, FL_NOENT, FL_SYMLINK and FL_DIR, can be cached
 	 * for the moment!
 	 */
-	save_flags = ret_flags & track_flags & (FL_NOENT|FL_SYMLINK);
+	save_flags = *ret_flags & track_flags & (FL_NOENT|FL_SYMLINK);
 	if (save_flags && last_slash > 0 && last_slash <= PATH_MAX) {
 		cache->path[last_slash] = '\0';
 		cache->len = last_slash;
@@ -172,38 +178,16 @@ static int lstat_cache(struct cache_def *cache, const char *name, int len,
 	} else {
 		reset_lstat_cache(cache);
 	}
-	return ret_flags;
+	return match_len;
 }
 
-/*
- * Invalidate the given 'name' from the cache, if 'name' matches
- * completely with the cache.
- */
-void invalidate_lstat_cache(const char *name, int len)
+static int lstat_cache(struct cache_def *cache, const char *name, int len,
+		       int track_flags, int prefix_len_stat_func)
 {
-	int match_len, previous_slash;
-	struct cache_def *cache = &default_cache;	/* FIXME */
-
-	match_len = longest_path_match(name, len, cache->path, cache->len,
-				       &previous_slash);
-	if (len == match_len) {
-		if ((cache->track_flags & FL_DIR) && previous_slash > 0) {
-			cache->path[previous_slash] = '\0';
-			cache->len = previous_slash;
-			cache->flags = FL_DIR;
-		} else {
-			reset_lstat_cache(cache);
-		}
-	}
-}
-
-/*
- * Completely clear the contents of the cache
- */
-void clear_lstat_cache(void)
-{
-	struct cache_def *cache = &default_cache;	/* FIXME */
-	reset_lstat_cache(cache);
+	int flags;
+	(void)lstat_cache_matchlen(cache, name, len, &flags, track_flags,
+			prefix_len_stat_func);
+	return flags;
 }
 
 #define USE_ONLY_LSTAT  0
@@ -225,15 +209,26 @@ int has_symlink_leading_path(const char *name, int len)
 }
 
 /*
- * Return non-zero if path 'name' has a leading symlink component or
+ * Return zero if path 'name' has a leading symlink component or
  * if some leading path component does not exists.
+ *
+ * Return -1 if leading path exists and is a directory.
+ *
+ * Return path length if leading path exists and is neither a
+ * directory nor a symlink.
  */
-int has_symlink_or_noent_leading_path(const char *name, int len)
+int check_leading_path(const char *name, int len)
 {
 	struct cache_def *cache = &default_cache;	/* FIXME */
-	return lstat_cache(cache, name, len,
-			   FL_SYMLINK|FL_NOENT|FL_DIR, USE_ONLY_LSTAT) &
-		(FL_SYMLINK|FL_NOENT);
+	int flags;
+	int match_len = lstat_cache_matchlen(cache, name, len, &flags,
+			   FL_SYMLINK|FL_NOENT|FL_DIR, USE_ONLY_LSTAT);
+	if (flags & FL_NOENT)
+		return 0;
+	else if (flags & FL_DIR)
+		return -1;
+	else
+		return match_len;
 }
 
 /*
