@@ -5,6 +5,16 @@ NAME
 ----
 git-sh-i18n--envsubst - Git's own envsubst(1) for i18n fallbacks
 
+SYNOPSIS
+--------
+[verse]
+eval_gettext () {
+	printf "%s" "$1" | (
+		export PATH $('git sh-i18n--envsubst' --variables "$1");
+		'git sh-i18n--envsubst' "$1"
+	)
+}
+
 DESCRIPTION
 -----------
 
