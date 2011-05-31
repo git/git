@@ -825,11 +825,6 @@ int git_config_system(void)
 	return !git_env_bool("GIT_CONFIG_NOSYSTEM", 0);
 }
 
-int git_config_global(void)
-{
-	return !git_env_bool("GIT_CONFIG_NOGLOBAL", 0);
-}
-
 int git_config_early(config_fn_t fn, void *data, const char *repo_config)
 {
 	int ret = 0, found = 0;
