@@ -317,7 +317,7 @@ test_expect_success '--continue tries to commit' '
 '
 
 test_expect_success 'verbose flag is heeded, even after --continue' '
-	git reset --hard HEAD@{1} &&
+	git reset --hard master@{1} &&
 	test_tick &&
 	test_must_fail git rebase -v -i --onto new-branch1 HEAD^ &&
 	echo resolved > file1 &&

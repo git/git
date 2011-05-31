@@ -510,7 +510,9 @@ do_next () {
 	refs/*)
 		message="$GIT_REFLOG_ACTION: $head_name onto $shortonto" &&
 		git update-ref -m "$message" $head_name $newhead $orig_head &&
-		git symbolic-ref HEAD $head_name
+		git symbolic-ref \
+		  -m "$GIT_REFLOG_ACTION: returning to $head_name" \
+		  HEAD $head_name
 		;;
 	esac && {
 		test ! -f "$state_dir"/verbose ||
