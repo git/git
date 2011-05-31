@@ -111,6 +111,7 @@ struct diff_options {
 	int rename_score;
 	int rename_limit;
 	int needed_rename_limit;
+	int degraded_cc_to_c;
 	int show_rename_progress;
 	int dirstat_percent;
 	int setup;
@@ -270,6 +271,7 @@ extern void diffcore_fix_diff_index(struct diff_options *);
 
 extern int diff_queue_is_empty(void);
 extern void diff_flush(struct diff_options*);
+extern void diff_warn_rename_limit(const char *varname, int needed, int degraded_cc);
 
 /* diff-raw status letters */
 #define DIFF_STATUS_ADDED		'A'
