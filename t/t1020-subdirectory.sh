@@ -7,6 +7,7 @@ test_description='Try various core-level commands in subdirectory.
 '
 
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/lib-read-tree.sh
 
 test_expect_success setup '
 	long="a b c d e f g h i j k l m n o p q r s t u v w x y z" &&
@@ -98,13 +99,13 @@ test_expect_success 'checkout-index' '
 test_expect_success 'read-tree' '
 	rm -f one dir/two &&
 	tree=`git write-tree` &&
-	git read-tree --reset -u "$tree" &&
+	read_tree_u_must_succeed --reset -u "$tree" &&
 	cmp one original.one &&
 	cmp dir/two original.two &&
 	(
 		cd dir &&
 		rm -f two &&
-		git read-tree --reset -u "$tree" &&
+		read_tree_u_must_succeed --reset -u "$tree" &&
 		cmp two ../original.two &&
 		cmp ../one ../original.one
 	)
