@@ -42,13 +42,13 @@ b3 behind 1
 b4 ahead 2
 EOF
 
-test_expect_success C_LOCALE_OUTPUT 'branch -v' '
+test_expect_success 'branch -v' '
 	(
 		cd test &&
 		git branch -v
 	) |
 	sed -n -e "$script" >actual &&
-	test_cmp expect actual
+	test_i18ncmp expect actual
 '
 
 test_expect_success 'checkout' '

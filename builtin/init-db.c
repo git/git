@@ -319,10 +319,10 @@ int set_git_dir_init(const char *git_dir, const char *real_git_dir,
 		struct stat st;
 
 		if (!exist_ok && !stat(git_dir, &st))
-			die("%s already exists", git_dir);
+			die(_("%s already exists"), git_dir);
 
 		if (!exist_ok && !stat(real_git_dir, &st))
-			die("%s already exists", real_git_dir);
+			die(_("%s already exists"), real_git_dir);
 
 		/*
 		 * make sure symlinks are resolved because we'll be
@@ -351,15 +351,15 @@ static void separate_git_dir(const char *git_dir)
 		else if (S_ISDIR(st.st_mode))
 			src = git_link;
 		else
-			die("unable to handle file type %d", st.st_mode);
+			die(_("unable to handle file type %d"), st.st_mode);
 
 		if (rename(src, git_dir))
-			die_errno("unable to move %s to %s", src, git_dir);
+			die_errno(_("unable to move %s to %s"), src, git_dir);
 	}
 
 	fp = fopen(git_link, "w");
 	if (!fp)
-		die("Could not create git link %s", git_link);
+		die(_("Could not create git link %s"), git_link);
 	fprintf(fp, "gitdir: %s\n", git_dir);
 	fclose(fp);
 }

@@ -194,9 +194,12 @@ test_expect_success 'do not respect url-encoding of non-url path' '
 test_expect_success 'clone separate gitdir' '
 	rm -rf dst &&
 	git clone --separate-git-dir realgitdir src dst &&
-	echo "gitdir: `pwd`/realgitdir" >expected &&
-	test_cmp expected dst/.git &&
 	test -d realgitdir/refs
+'
+
+test_expect_success 'clone separate gitdir: output' '
+	echo "gitdir: `pwd`/realgitdir" >expected &&
+	test_cmp expected dst/.git
 '
 
 test_expect_success 'clone separate gitdir where target already exists' '

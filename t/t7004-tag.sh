@@ -1120,13 +1120,11 @@ test_expect_success \
 	! (GIT_EDITOR=cat git tag -a initial-comment > actual)
 '
 
-test_expect_success \
-	C_LOCALE_OUTPUT \
-	'message in editor has initial comment: first line' '
+test_expect_success 'message in editor has initial comment: first line' '
 	# check the first line --- should be empty
 	echo >first.expect &&
 	sed -e 1q <actual >first.actual &&
-	test_cmp first.expect first.actual
+	test_i18ncmp first.expect first.actual
 '
 
 test_expect_success \

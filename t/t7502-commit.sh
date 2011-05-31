@@ -22,10 +22,7 @@ check_summary_oneline() {
 	SUMMARY_POSTFIX="$(git log -1 --pretty='format:%h')"
 	echo "[$SUMMARY_PREFIX $SUMMARY_POSTFIX] $2" >exp &&
 
-	if test_have_prereq C_LOCALE_OUTPUT
-	then
-		test_cmp exp act
-	fi
+	test_i18ncmp exp act
 }
 
 test_expect_success 'output summary format' '
@@ -234,23 +231,19 @@ echo "sample
 # Please enter the commit message for your changes. Lines starting
 # with '#' will be ignored, and an empty message aborts the commit." >expect
 
-test_expect_success C_LOCALE_OUTPUT 'cleanup commit messages (strip,-F,-e): output' '
-	test_cmp expect actual
+test_expect_success 'cleanup commit messages (strip,-F,-e): output' '
+	test_i18ncmp expect actual
 '
 
 echo "#
 # Author:    $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL>
 #" >> expect
 
-test_expect_success C_LOCALE_OUTPUT 'author different from committer' '
-
+test_expect_success 'author different from committer' '
 	echo >>negative &&
-	git commit -e -m "sample"
-	head -n 7 .git/COMMIT_EDITMSG >actual
-'
-
-test_expect_success C_LOCALE_OUTPUT 'author different from committer: output' '
-	test_cmp expect actual
+	test_might_fail git commit -e -m "sample" &&
+	head -n 7 .git/COMMIT_EDITMSG >actual &&
+	test_i18ncmp expect actual
 '
 
 mv expect expect.tmp
@@ -259,7 +252,7 @@ rm -f expect.tmp
 echo "# Committer:
 #" >> expect
 
-test_expect_success C_LOCALE_OUTPUT 'committer is automatic' '
+test_expect_success 'committer is automatic' '
 
 	echo >>negative &&
 	(
@@ -270,10 +263,7 @@ test_expect_success C_LOCALE_OUTPUT 'committer is automatic' '
 	) &&
 	head -n 8 .git/COMMIT_EDITMSG |	\
 	sed "s/^# Committer: .*/# Committer:/" >actual
-'
-
-test_expect_success C_LOCALE_OUTPUT 'committer is automatic: output' '
-	test_cmp expect actual
+	test_i18ncmp expect actual
 '
 
 pwd=`pwd`
@@ -376,78 +366,78 @@ try_commit () {
 	GIT_EDITOR=.git/FAKE_EDITOR git commit -a $* $use_template &&
 	case "$use_template" in
 	'')
-		! grep "^## Custom template" .git/COMMIT_EDITMSG ;;
+		test_i18ngrep ! "^## Custom template" .git/COMMIT_EDITMSG ;;
 	*)
-		grep "^## Custom template" .git/COMMIT_EDITMSG ;;
+		test_i18ngrep "^## Custom template" .git/COMMIT_EDITMSG ;;
 	esac
 }
 
 try_commit_status_combo () {
 
-	test_expect_success C_LOCALE_OUTPUT 'commit' '
+	test_expect_success 'commit' '
 		clear_config commit.status &&
 		try_commit "" &&
-		grep "^# Changes to be committed:" .git/COMMIT_EDITMSG
+		test_i18ngrep "^# Changes to be committed:" .git/COMMIT_EDITMSG
 	'
 
-	test_expect_success C_LOCALE_OUTPUT 'commit' '
+	test_expect_success 'commit' '
 		clear_config commit.status &&
 		try_commit "" &&
-		grep "^# Changes to be committed:" .git/COMMIT_EDITMSG
+		test_i18ngrep "^# Changes to be committed:" .git/COMMIT_EDITMSG
 	'
 
-	test_expect_success C_LOCALE_OUTPUT 'commit --status' '
+	test_expect_success 'commit --status' '
 		clear_config commit.status &&
 		try_commit --status &&
-		grep "^# Changes to be committed:" .git/COMMIT_EDITMSG
+		test_i18ngrep "^# Changes to be committed:" .git/COMMIT_EDITMSG
 	'
 
-	test_expect_success C_LOCALE_OUTPUT 'commit --no-status' '
+	test_expect_success 'commit --no-status' '
 		clear_config commit.status &&
 		try_commit --no-status &&
-		! grep "^# Changes to be committed:" .git/COMMIT_EDITMSG
+		test_i18ngrep ! "^# Changes to be committed:" .git/COMMIT_EDITMSG
 	'
 
-	test_expect_success C_LOCALE_OUTPUT 'commit with commit.status = yes' '
+	test_expect_success 'commit with commit.status = yes' '
 		clear_config commit.status &&
 		git config commit.status yes &&
 		try_commit "" &&
-		grep "^# Changes to be committed:" .git/COMMIT_EDITMSG
+		test_i18ngrep "^# Changes to be committed:" .git/COMMIT_EDITMSG
 	'
 
-	test_expect_success C_LOCALE_OUTPUT 'commit with commit.status = no' '
+	test_expect_success 'commit with commit.status = no' '
 		clear_config commit.status &&
 		git config commit.status no &&
 		try_commit "" &&
-		! grep "^# Changes to be committed:" .git/COMMIT_EDITMSG
+		test_i18ngrep ! "^# Changes to be committed:" .git/COMMIT_EDITMSG
 	'
 
-	test_expect_success C_LOCALE_OUTPUT 'commit --status with commit.status = yes' '
+	test_expect_success 'commit --status with commit.status = yes' '
 		clear_config commit.status &&
 		git config commit.status yes &&
 		try_commit --status &&
-		grep "^# Changes to be committed:" .git/COMMIT_EDITMSG
+		test_i18ngrep "^# Changes to be committed:" .git/COMMIT_EDITMSG
 	'
 
-	test_expect_success C_LOCALE_OUTPUT 'commit --no-status with commit.status = yes' '
+	test_expect_success 'commit --no-status with commit.status = yes' '
 		clear_config commit.status &&
 		git config commit.status yes &&
 		try_commit --no-status &&
-		! grep "^# Changes to be committed:" .git/COMMIT_EDITMSG
+		test_i18ngrep ! "^# Changes to be committed:" .git/COMMIT_EDITMSG
 	'
 
-	test_expect_success C_LOCALE_OUTPUT 'commit --status with commit.status = no' '
+	test_expect_success 'commit --status with commit.status = no' '
 		clear_config commit.status &&
 		git config commit.status no &&
 		try_commit --status &&
-		grep "^# Changes to be committed:" .git/COMMIT_EDITMSG
+		test_i18ngrep "^# Changes to be committed:" .git/COMMIT_EDITMSG
 	'
 
-	test_expect_success C_LOCALE_OUTPUT 'commit --no-status with commit.status = no' '
+	test_expect_success 'commit --no-status with commit.status = no' '
 		clear_config commit.status &&
 		git config commit.status no &&
 		try_commit --no-status &&
-		! grep "^# Changes to be committed:" .git/COMMIT_EDITMSG
+		test_i18ngrep ! "^# Changes to be committed:" .git/COMMIT_EDITMSG
 	'
 
 }

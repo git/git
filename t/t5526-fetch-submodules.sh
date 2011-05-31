@@ -66,12 +66,9 @@ test_expect_success "fetch --recurse-submodules recurses into submodules" '
 	(
 		cd downstream &&
 		git fetch --recurse-submodules >../actual.out 2>../actual.err
-	)
-'
-
-test_expect_success C_LOCALE_OUTPUT "fetch --recurse-submodules recurses into submodules: output" '
-	test_cmp expect.out actual.out &&
-	test_cmp expect.err actual.err
+	) &&
+	test_i18ncmp expect.out actual.out &&
+	test_i18ncmp expect.err actual.err
 '
 
 test_expect_success "fetch alone only fetches superproject" '
@@ -98,12 +95,9 @@ test_expect_success "using fetchRecurseSubmodules=true in .gitmodules recurses i
 		cd downstream &&
 		git config -f .gitmodules submodule.submodule.fetchRecurseSubmodules true &&
 		git fetch >../actual.out 2>../actual.err
-	)
-'
-
-test_expect_success C_LOCALE_OUTPUT "using fetchRecurseSubmodules=true in .gitmodules recurses into submodules" '
-	test_cmp expect.out actual.out &&
-	test_cmp expect.err actual.err
+	) &&
+	test_i18ncmp expect.out actual.out &&
+	test_i18ncmp expect.err actual.err
 '
 
 test_expect_success "--no-recurse-submodules overrides .gitmodules config" '
@@ -132,12 +126,9 @@ test_expect_success "--recurse-submodules overrides fetchRecurseSubmodules setti
 		git fetch --recurse-submodules >../actual.out 2>../actual.err &&
 		git config --unset -f .gitmodules submodule.submodule.fetchRecurseSubmodules &&
 		git config --unset submodule.submodule.fetchRecurseSubmodules
-	)
-'
-
-test_expect_success C_LOCALE_OUTPUT "--recurse-submodules overrides fetchRecurseSubmodules setting from .git/config: output" '
-	test_cmp expect.out actual.out &&
-	test_cmp expect.err actual.err
+	) &&
+	test_i18ncmp expect.out actual.out &&
+	test_i18ncmp expect.err actual.err
 '
 
 test_expect_success "--quiet propagates to submodules" '
@@ -154,24 +145,18 @@ test_expect_success "--dry-run propagates to submodules" '
 	(
 		cd downstream &&
 		git fetch --recurse-submodules --dry-run >../actual.out 2>../actual.err
-	)
-'
-
-test_expect_success C_LOCALE_OUTPUT "--dry-run propagates to submodules: output" '
-	test_cmp expect.out actual.out &&
-	test_cmp expect.err actual.err
+	) &&
+	test_i18ncmp expect.out actual.out &&
+	test_i18ncmp expect.err actual.err
 '
 
 test_expect_success "Without --dry-run propagates to submodules" '
 	(
 		cd downstream &&
 		git fetch --recurse-submodules >../actual.out 2>../actual.err
-	)
-'
-
-test_expect_success C_LOCALE_OUTPUT "Without --dry-run propagates to submodules: output" '
-	test_cmp expect.out actual.out &&
-	test_cmp expect.err actual.err
+	) &&
+	test_i18ncmp expect.out actual.out &&
+	test_i18ncmp expect.err actual.err
 '
 
 test_expect_success "recurseSubmodules=true propagates into submodules" '
@@ -180,12 +165,9 @@ test_expect_success "recurseSubmodules=true propagates into submodules" '
 		cd downstream &&
 		git config fetch.recurseSubmodules true
 		git fetch >../actual.out 2>../actual.err
-	)
-'
-
-test_expect_success C_LOCALE_OUTPUT "recurseSubmodules=true propagates into submodules: output" '
-	test_cmp expect.out actual.out &&
-	test_cmp expect.err actual.err
+	) &&
+	test_i18ncmp expect.out actual.out &&
+	test_i18ncmp expect.err actual.err
 '
 
 test_expect_success "--recurse-submodules overrides config in submodule" '
@@ -197,12 +179,9 @@ test_expect_success "--recurse-submodules overrides config in submodule" '
 			git config fetch.recurseSubmodules false
 		) &&
 		git fetch --recurse-submodules >../actual.out 2>../actual.err
-	)
-'
-
-test_expect_success C_LOCALE_OUTPUT "--recurse-submodules overrides config in submodule: output" '
-	test_cmp expect.out actual.out &&
-	test_cmp expect.err actual.err
+	) &&
+	test_i18ncmp expect.out actual.out &&
+	test_i18ncmp expect.err actual.err
 '
 
 test_expect_success "--no-recurse-submodules overrides config setting" '
@@ -243,8 +222,8 @@ test_expect_success "Recursion stops when no new submodule commits are fetched" 
 		cd downstream &&
 		git fetch >../actual.out 2>../actual.err
 	) &&
-	test_cmp expect.err.sub actual.err &&
-	test_cmp expect.out.sub actual.out
+	test_i18ncmp expect.err.sub actual.err &&
+	test_i18ncmp expect.out.sub actual.out
 '
 
 test_expect_success "Recursion doesn't happen when new superproject commits don't change any submodules" '
@@ -261,7 +240,7 @@ test_expect_success "Recursion doesn't happen when new superproject commits don'
 		git fetch >../actual.out 2>../actual.err
 	) &&
 	! test -s actual.out &&
-	test_cmp expect.err.file actual.err
+	test_i18ncmp expect.err.file actual.err
 '
 
 test_expect_success "Recursion picks up config in submodule" '
@@ -289,8 +268,8 @@ test_expect_success "Recursion picks up config in submodule" '
 			git config --unset fetch.recurseSubmodules
 		)
 	) &&
-	test_cmp expect.err.sub actual.err &&
-	test_cmp expect.out actual.out
+	test_i18ncmp expect.err.sub actual.err &&
+	test_i18ncmp expect.out actual.out
 '
 
 test_expect_success "Recursion picks up all submodules when necessary" '
@@ -321,8 +300,8 @@ test_expect_success "Recursion picks up all submodules when necessary" '
 		cd downstream &&
 		git fetch >../actual.out 2>../actual.err
 	) &&
-	test_cmp expect.err.2 actual.err &&
-	test_cmp expect.out actual.out
+	test_i18ncmp expect.err.2 actual.err &&
+	test_i18ncmp expect.out actual.out
 '
 
 test_expect_success "'--recurse-submodules=on-demand' doesn't recurse when no new commits are fetched in the superproject (and ignores config)" '
@@ -375,8 +354,8 @@ test_expect_success "'--recurse-submodules=on-demand' recurses as deep as necess
 			git config --unset -f .gitmodules submodule.deepsubmodule.fetchRecursive
 		)
 	) &&
-	test_cmp expect.out actual.out &&
-	test_cmp expect.err actual.err
+	test_i18ncmp expect.out actual.out &&
+	test_i18ncmp expect.err actual.err
 '
 
 test_expect_success "'--recurse-submodules=on-demand' stops when no new submodule commits are found in the superproject (and ignores config)" '
@@ -393,7 +372,7 @@ test_expect_success "'--recurse-submodules=on-demand' stops when no new submodul
 		git fetch --recurse-submodules=on-demand >../actual.out 2>../actual.err
 	) &&
 	! test -s actual.out &&
-	test_cmp expect.err.file actual.err
+	test_i18ncmp expect.err.file actual.err
 '
 
 test_expect_success "'fetch.recurseSubmodules=on-demand' overrides global config" '
@@ -420,8 +399,8 @@ test_expect_success "'fetch.recurseSubmodules=on-demand' overrides global config
 		cd downstream &&
 		git config --unset fetch.recurseSubmodules
 	) &&
-	test_cmp expect.out.sub actual.out &&
-	test_cmp expect.err.2 actual.err
+	test_i18ncmp expect.out.sub actual.out &&
+	test_i18ncmp expect.err.2 actual.err
 '
 
 test_expect_success "'submodule.<sub>.fetchRecurseSubmodules=on-demand' overrides fetch.recurseSubmodules" '
@@ -448,8 +427,8 @@ test_expect_success "'submodule.<sub>.fetchRecurseSubmodules=on-demand' override
 		cd downstream &&
 		git config --unset submodule.submodule.fetchRecurseSubmodules
 	) &&
-	test_cmp expect.out.sub actual.out &&
-	test_cmp expect.err.2 actual.err
+	test_i18ncmp expect.out.sub actual.out &&
+	test_i18ncmp expect.err.2 actual.err
 '
 
 test_expect_success "don't fetch submodule when newly recorded commits are already present" '
@@ -468,7 +447,7 @@ test_expect_success "don't fetch submodule when newly recorded commits are alrea
 		git fetch >../actual.out 2>../actual.err
 	) &&
 	! test -s actual.out &&
-	test_cmp expect.err actual.err
+	test_i18ncmp expect.err actual.err
 '
 
 test_done

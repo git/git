@@ -839,7 +839,7 @@ static void read_merge_msg(void)
 {
 	strbuf_reset(&merge_msg);
 	if (strbuf_read_file(&merge_msg, git_path("MERGE_MSG"), 0) < 0)
-		die_errno("Could not read from '%s'", git_path("MERGE_MSG"));
+		die_errno(_("Could not read from '%s'"), git_path("MERGE_MSG"));
 }
 
 static void run_prepare_commit_msg(void)
@@ -979,16 +979,16 @@ static int setup_with_upstream(const char ***argv)
 	const char **args;
 
 	if (!branch)
-		die("No current branch.");
+		die(_("No current branch."));
 	if (!branch->remote)
-		die("No remote for the current branch.");
+		die(_("No remote for the current branch."));
 	if (!branch->merge_nr)
-		die("No default upstream defined for the current branch.");
+		die(_("No default upstream defined for the current branch."));
 
 	args = xcalloc(branch->merge_nr + 1, sizeof(char *));
 	for (i = 0; i < branch->merge_nr; i++) {
 		if (!branch->merge[i]->dst)
-			die("No remote tracking branch for %s from %s",
+			die(_("No remote tracking branch for %s from %s"),
 			    branch->merge[i]->src, branch->remote_name);
 		args[i] = branch->merge[i]->dst;
 	}
@@ -1062,10 +1062,10 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 	}
 	if (file_exists(git_path("CHERRY_PICK_HEAD"))) {
 		if (advice_resolve_conflict)
-			die("You have not concluded your cherry-pick (CHERRY_PICK_HEAD exists).\n"
-			    "Please, commit your changes before you can merge.");
+			die(_("You have not concluded your cherry-pick (CHERRY_PICK_HEAD exists).\n"
+			    "Please, commit your changes before you can merge."));
 		else
-			die("You have not concluded your cherry-pick (CHERRY_PICK_HEAD exists).");
+			die(_("You have not concluded your cherry-pick (CHERRY_PICK_HEAD exists)."));
 	}
 	resolve_undo_clear();
 
