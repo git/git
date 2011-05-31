@@ -9,11 +9,15 @@ msgnum=$(printf "%0${prec}d" $this) &&
 test -f "$dotest/$msgnum" &&
 message_id=$(sed -ne '
 	/^[ 	]/{
-		# Append continuation line
+		# Append continuation line to hold space
 		H
+		# Swap hold and pattern
 		x
+		# Remove the LF, making it a single line
 		s/\n//
+		# Swap hold and pattern back
 		x
+		# Discard the pattern and go on
 		n
 	}
 	# Hold this new line, and look at what is in the hold space
@@ -35,9 +39,11 @@ message_id=$(sed -ne '
 	q
 ' "$dotest/$msgnum") &&
 
-test -n "$message_id" &&
-head=$(git rev-parse --verify HEAD 2>/dev/null) &&
+if	test -n "$message_id" &&
+	head=$(git rev-parse --verify HEAD 2>/dev/null)
+then
+	echo "$head $message_id" >>"$GIT_DIR"/am.log &&
+	GIT_NOTES_REF=refs/notes/amlog \
+		git notes add -f -m "Message-Id: $message_id" "$head"
+fi
 
-echo "$head $message_id" >>"$GIT_DIR"/am.log &&
-GIT_NOTES_REF=refs/notes/amlog \
-	git notes add -f -m "Message-Id: $message_id" "$head"
