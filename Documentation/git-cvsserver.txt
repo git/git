@@ -252,7 +252,7 @@ Configuring database backend
 
 'git-cvsserver' uses the Perl DBI module. Please also read
 its documentation if changing these variables, especially
-about `DBI->connect()`.
+about `DBI\->connect()`.
 
 gitcvs.dbname::
 	Database name. The exact meaning depends on the
