@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (May 2011, #13; Mon, 30)
-X-master-at: fb674d767180354d9ad3e69f1d41bee98df6bfe9
-X-next-at: 35b875275a07d8eae7e77225fb415fea6f2c0be7
+Subject: What's cooking in git.git (May 2011, #14; Tue, 31)
+X-master-at: 090a1a5d95c7b4380e6a52f42add41ead9215ed3
+X-next-at: 1dff92d3ec7495803f594a4b47d1663bac6d103a
 
-What's cooking in git.git (May 2011, #13; Mon, 30)
+What's cooking in git.git (May 2011, #14; Tue, 31)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -12,16 +12,35 @@ only in 'pu' while commits prefixed with '+' are in 'next'.
 The main part of this cycle is expected to run thru May, aiming for a
 feature freeze in early June.
 
-Week #6 of this cycle is just about to begin.
+We are in week #6 of this cycle. Feature freeze is imminent.
 
 --------------------------------------------------
 [New Topics]
 
-* bc/maint-status-z-to-use-porcelain (2011-05-29) 2 commits
- - builtin/commit.c: set status_format _after_ option parsing
- - t7508: demonstrate status's failure to use --porcelain format with -z
+* jc/diff-index-quick-exit-early (2011-05-31) 2 commits
+ - diff-index --quiet: learn the "stop feeding the backend early" logic
+ - Merge remote-tracking branch 'ko/maint' into jc/diff-index-quick-exit-early
+ (this branch uses jk/diff-not-so-quick.)
 
-Will cook a bit longer.
+* jk/diff-not-so-quick (2011-05-31) 2 commits
+ - diff: futureproof "stop feeding the backend early" logic
+ - diff_tree: disable QUICK optimization with diff filter
+ (this branch is used by jc/diff-index-quick-exit-early.)
+
+--------------------------------------------------
+[Graduated to "master"]
+
+* ab/i18n-envsubst-doc-fix (2011-05-30) 1 commit
+  (merged to 'next' on 2011-05-30 at 25ef758)
+ + git-sh-i18n--envsubst: add SYNOPSIS section to the documentation
+
+* jc/fmt-req-fix (2011-05-25) 1 commit
+  (merged to 'next' on 2011-05-25 at 9f46ca0)
+ + userformat_find_requirements(): find requirement for the correct format
+
+* jc/log-quiet-fix (2011-05-28) 1 commit
+  (merged to 'next' on 2011-05-30 at dcbdbc0)
+ + log: --quiet should serve as synonym to -s
 
 * jk/format-patch-am (2011-05-26) 5 commits
   (merged to 'next' on 2011-05-30 at 29d5dac)
@@ -31,41 +50,15 @@ Will cook a bit longer.
  + mailinfo: always clean up rfc822 header folding
  + t: test subject handling in format-patch / am pipeline
 
-Will cook a bit longer.
+* jk/format-patch-empty-prefix (2011-05-30) 1 commit
+ - format-patch: make zero-length subject prefixes prettier
 
-* jk/maint-remote-mirror-safer (2011-05-26) 1 commit
-  (merged to 'next' on 2011-05-30 at dc260ff)
- + remote: allow "-t" with fetch mirrors
-
-Will merge to "master".
-
-* jk/read-in-full-stops-on-error (2011-05-26) 1 commit
-  (merged to 'next' on 2011-05-30 at 102a220)
- + read_in_full: always report errors
-
-Will merge to "master".
-
-* ef/maint-win-verify-path (2011-05-27) 3 commits
- - verify_path: consider dos drive prefix
- - real_path: do not assume '/' is the path seperator
- - A Windows path starting with a backslash is absolute
-
-J6t had a reasonable question in the discussion.
-
-* jc/apply-nsbp (2011-05-27) 4 commits
- - War on nbsp: teach "git apply" to check and fix nbsp
- - War on nbsp: Add "nbsp" whitespace breakage class
- - War on nbsp: a bit of retreat
- - ws.c: add a helper to format comma separated messages
-
-Will probably drop.
-It was fun to write, though.
-
-* jc/log-quiet-fix (2011-05-28) 1 commit
-  (merged to 'next' on 2011-05-30 at dcbdbc0)
- + log: --quiet should serve as synonym to -s
-
-Will merge to "master".
+* jk/maint-config-alias-fix (2011-05-24) 4 commits
+  (merged to 'next' on 2011-05-25 at 25b86e4)
+ + handle_options(): do not miscount how many arguments were used
+ + config: always parse GIT_CONFIG_PARAMETERS during git_config
+ + git_config: don't peek at global config_parameters
+ + config: make environment parsing routines static
 
 * jk/maint-docs (2011-05-26) 4 commits
   (merged to 'next' on 2011-05-30 at 0ed19d6)
@@ -74,133 +67,30 @@ Will merge to "master".
  + docs: update status --porcelain format
  + docs: minor grammar fixes to git-status
 
-Will merge to "master".
+* jk/maint-remote-mirror-safer (2011-05-26) 1 commit
+  (merged to 'next' on 2011-05-30 at dc260ff)
+ + remote: allow "-t" with fetch mirrors
+
+* jk/read-in-full-stops-on-error (2011-05-26) 1 commit
+  (merged to 'next' on 2011-05-30 at 102a220)
+ + read_in_full: always report errors
 
 * jk/rebase-head-reflog (2011-05-27) 2 commits
   (merged to 'next' on 2011-05-30 at 97f02df)
  + rebase: write a reflog entry when finishing
  + rebase: create HEAD reflog entry when aborting
 
-Will merge to "master".
+* jl/read-tree-m-dry-run (2011-05-25) 2 commits
+  (merged to 'next' on 2011-05-30 at 42febaf)
+ + Teach read-tree the -n|--dry-run option
+ + unpack-trees: add the dry_run flag to unpack_trees_options
 
-* jn/gitweb-js-blame (2011-05-27) 3 commits
- - gitweb.js: use setTimeout rather than setInterval in blame_incremental.js
- - gitweb.js: No need for loop in blame_incremental's handleResponse()
- - gitweb.js: No need for inProgress in blame_incremental.js
-
-Will cook a bit longer.
+* jn/doc-remote-helpers (2011-05-30) 1 commit
+ - Documentation: do not misinterpret refspecs as bold text
 
 * kk/maint-prefix-in-config-mak (2011-05-27) 1 commit
   (merged to 'next' on 2011-05-30 at 35b8752)
  + config.mak.in: allow "configure --sysconfdir=/else/where"
-
-Will merge to "master".
-
-* ab/i18n-envsubst-doc-fix (2011-05-30) 1 commit
- - git-sh-i18n--envsubst: add SYNOPSIS section to the documentation
-
-Will merge to "next" and then soon to "master".
-
---------------------------------------------------
-[Graduated to "master"]
-
-* bc/maint-api-doc-parked (2011-05-26) 1 commit
- + Documentation/technical/api-diff.txt: correct name of diff_unmerge()
-
-* bc/maint-submodule-fix-parked (2011-05-26) 1 commit
- + git-submodule.sh: separate parens by a space to avoid confusing some shells
-
-* jc/notes-batch-removal (2011-05-19) 4 commits
-  (merged to 'next' on 2011-05-23 at 5bd78a6)
- + show: --ignore-missing
- + notes remove: --stdin reads from the standard input
- + notes remove: --ignore-missing
- + notes remove: allow removing more than one
-
-* jc/require-work-tree-exists (2011-05-24) 1 commit
-  (merged to 'next' on 2011-05-24 at 6dbbf00)
- + require-work-tree wants more than what its name says
-
-Rerolled _without_ any in-tree users, just to make sure that we can easily
-adapt scripts when necessary in the future.
-
-* jk/fetch-mark-complete-optimization (2011-05-19) 1 commit
-  (merged to 'next' on 2011-05-23 at b56fb81)
- + fetch: avoid repeated commits in mark_complete
-
-Trivially correct.
-
-* jk/haves-from-alternate-odb (2011-05-19) 3 commits
-  (merged to 'next' on 2011-05-23 at 53b4735)
- + receive-pack: eliminate duplicate .have refs
- + bisect: refactor sha1_array into a generic sha1 list
- + refactor refs_from_alternate_cb to allow passing extra data
-
-* jm/maint-misc-fix (2011-05-26) 3 commits
- + read_gitfile_gently: use ssize_t to hold read result
- + remove tests of always-false condition
- + rerere.c: diagnose a corrupt MERGE_RR when hitting EOF between TAB and '\0'
-
-* jn/ctags-more (2011-04-29) 3 commits
-  (merged to 'next' on 2011-05-24 at 41b50be)
- + gitweb: Optional grouping of projects by category
- + gitweb: Modularized git_get_project_description to be more generic
- + gitweb: Split git_project_list_body in two functions
-
-* jn/gitweb-js (2011-05-24) 11 commits
-  (merged to 'next' on 2011-05-24 at c385b9d)
- + gitweb: Make JavaScript ability to adjust timezones configurable
- + gitweb.js: Add UI for selecting common timezone to display dates
- + gitweb: JavaScript ability to adjust time based on timezone
- + gitweb: Unify the way long timestamp is displayed
- + gitweb: Refactor generating of long dates into format_timestamp_html
- + gitweb.js: Provide getElementsByClassName method (if it not exists)
- + gitweb.js: Introduce code to handle cookies from JavaScript
- + gitweb.js: Extract and improve datetime handling
- + gitweb.js: Provide default values for padding in padLeftStr and padLeft
- + gitweb.js: Update and improve comments in JavaScript files
- + gitweb: Split JavaScript for maintability, combining on build
-
-Rebased on top of a more recent "master" that already has the two bottom
-commits in the previous round of series.
-
-As nobody seems to be helping gitweb maintenance, I'll merge the above two
-series to "master" and see if anybody screams. That seems to be the only
-way to make any progress.
-
-* jn/userdiff-perl-updates (2011-05-23) 8 commits
-  (merged to 'next' on 2011-05-23 at 2595ae1)
- + userdiff/perl: tighten BEGIN/END block pattern to reject here-doc delimiters
- + tests: make test_expect_code quieter on success
- + userdiff/perl: catch sub with brace on second line
- + userdiff/perl: match full line of POD headers
- + userdiff/perl: anchor "sub" and "package" patterns on the left
- + t4018 (funcname patterns): minor cleanups
- + t4018 (funcname patterns): make configuration easier to track
- + t4018 (funcname patterns): make .gitattributes state easier to track
-
-* mk/grep-pcre (2011-05-23) 13 commits
-  (merged to 'next' on 2011-05-23 at fbd4877)
- + git-grep: Update tests (mainly for -P)
-  (merged to 'next' on 2011-05-16 at 0c6c25e)
- + Makefile: Pass USE_LIBPCRE down in GIT-BUILD-OPTIONS
- + git-grep: update tests now regexp type is "last one wins"
-  (merged to 'next' on 2011-05-15 at d110135)
- + git-grep: do not die upon -F/-P when grep.extendedRegexp is set.
- + git-grep: Bail out when -P is used with -F or -E
- + grep: Add basic tests
- + configure: Check for libpcre
- + git-grep: Learn PCRE
- + grep: Extract compile_regexp_failed() from compile_regexp()
- + grep: Fix a typo in a comment
-  (merged to 'next' on 2011-05-08 at 5d3bede)
- + grep: Put calls to fixmatch() and regmatch() into patmatch()
- + contrib/completion: --line-number to git grep
- + Documentation: Add --line-number to git-grep synopsis
-
-* rg/no-gecos-in-pwent (2011-05-19) 1 commit
-  (merged to 'next' on 2011-05-23 at d2c4c33)
- + ident: add NO_GECOS_IN_PWENT for systems without pw_gecos in struct passwd
 
 --------------------------------------------------
 [Stalled]
@@ -222,58 +112,6 @@ Peff wanted to reroll this.
 Still a WIP. Need to put histogram output into index-pack --verify to
 really kill verify-pack.
 
-* jk/tag-contains (2010-07-05) 4 commits
- - Why is "git tag --contains" so slow?
- - default core.clockskew variable to one day
- - limit "contains" traversals based on commit timestamp
- - tag: speed up --contains calculation
-
-The idea of the bottom one is probably Ok, except that the use of object
-flags needs to be rethought, or at least the helper needs to be moved to
-builtin/tag.c to make it clear that it should not be used outside the
-current usage context.
-
---------------------------------------------------
-[Cooking]
-
-* mg/diff-stat-count (2011-05-27) 4 commits
- - diff --stat-count: finishing touches
- - diff-options.txt: describe --stat-{width,name-width,count}
- - diff: introduce --stat-lines to limit the stat lines
- - diff.c: omit hidden entries from namelen calculation with --stat
-
-Will cook a bit longer.
-
-* jc/fmt-req-fix (2011-05-25) 1 commit
-  (merged to 'next' on 2011-05-25 at 9f46ca0)
- + userformat_find_requirements(): find requirement for the correct format
-
-Will merge to "master".
-
-* jk/maint-config-alias-fix (2011-05-24) 4 commits
-  (merged to 'next' on 2011-05-25 at 25b86e4)
- + handle_options(): do not miscount how many arguments were used
- + config: always parse GIT_CONFIG_PARAMETERS during git_config
- + git_config: don't peek at global config_parameters
- + config: make environment parsing routines static
-
-Will merge to "master".
-
-* jl/read-tree-m-dry-run (2011-05-25) 2 commits
-  (merged to 'next' on 2011-05-30 at 42febaf)
- + Teach read-tree the -n|--dry-run option
- + unpack-trees: add the dry_run flag to unpack_trees_options
-
-Will merge to "master".
-
-* da/git-prefix-everywhere (2011-05-26) 3 commits
-  (merged to 'next' on 2011-05-30 at 9480900)
- + git-mergetool--lib: Make vimdiff retain the current directory
- + git: Remove handling for GIT_PREFIX
- + setup: Provide GIT_PREFIX to built-ins
-
-Will cook a bit longer.
-
 * jh/receive-count-limit (2011-05-23) 10 commits
  - receive-pack: Allow server to refuse pushes with too many objects
  - pack-objects: Estimate pack size; abort early if pack size limit is exceeded
@@ -288,6 +126,65 @@ Will cook a bit longer.
 
 Would need another round to separate per-pack and per-session limits.
 Not urgent. Will not merge before 1.7.6.
+
+* jk/tag-contains (2010-07-05) 4 commits
+ - Why is "git tag --contains" so slow?
+ - default core.clockskew variable to one day
+ - limit "contains" traversals based on commit timestamp
+ - tag: speed up --contains calculation
+
+The idea of the bottom one is probably Ok, except that the use of object
+flags needs to be rethought, or at least the helper needs to be moved to
+builtin/tag.c to make it clear that it should not be used outside the
+current usage context.
+
+--------------------------------------------------
+[Cooking]
+
+* bc/maint-status-z-to-use-porcelain (2011-05-29) 2 commits
+ - builtin/commit.c: set status_format _after_ option parsing
+ - t7508: demonstrate status's failure to use --porcelain format with -z
+
+Will merge to "next".
+
+* ef/maint-win-verify-path (2011-05-27) 3 commits
+ - verify_path: consider dos drive prefix
+ - real_path: do not assume '/' is the path seperator
+ - A Windows path starting with a backslash is absolute
+
+J6t had a reasonable question in the discussion; has it been resolved?
+
+* jc/apply-nsbp (2011-05-27) 4 commits
+ - War on nbsp: teach "git apply" to check and fix nbsp
+ - War on nbsp: Add "nbsp" whitespace breakage class
+ - War on nbsp: a bit of retreat
+ - ws.c: add a helper to format comma separated messages
+
+Will probably drop.
+It was fun to write, though.
+
+* jn/gitweb-js-blame (2011-05-27) 3 commits
+ - gitweb.js: use setTimeout rather than setInterval in blame_incremental.js
+ - gitweb.js: No need for loop in blame_incremental's handleResponse()
+ - gitweb.js: No need for inProgress in blame_incremental.js
+
+Will cook a bit longer.
+
+* mg/diff-stat-count (2011-05-27) 4 commits
+ - diff --stat-count: finishing touches
+ - diff-options.txt: describe --stat-{width,name-width,count}
+ - diff: introduce --stat-lines to limit the stat lines
+ - diff.c: omit hidden entries from namelen calculation with --stat
+
+Will merge to "next".
+
+* da/git-prefix-everywhere (2011-05-26) 3 commits
+  (merged to 'next' on 2011-05-30 at 9480900)
+ + git-mergetool--lib: Make vimdiff retain the current directory
+ + git: Remove handling for GIT_PREFIX
+ + setup: Provide GIT_PREFIX to built-ins
+
+Will cook a bit longer.
 
 * jc/streaming-filter (2011-05-26) 8 commits
  - t0021: test application of both crlf and ident
