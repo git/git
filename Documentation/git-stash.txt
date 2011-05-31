@@ -13,7 +13,7 @@ SYNOPSIS
 'git stash' drop [-q|--quiet] [<stash>]
 'git stash' ( pop | apply ) [--index] [-q|--quiet] [<stash>]
 'git stash' branch <branchname> [<stash>]
-'git stash' [save [--patch] [-k|--[no-]keep-index] [-q|--quiet] [<message>]]
+'git stash' [save [-p|--patch] [-k|--[no-]keep-index] [-q|--quiet] [<message>]]
 'git stash' clear
 'git stash' create
 
@@ -42,7 +42,7 @@ is also possible).
 OPTIONS
 -------
 
-save [--patch] [--[no-]keep-index] [-q|--quiet] [<message>]::
+save [-p|--patch] [--[no-]keep-index] [-q|--quiet] [<message>]::
 
 	Save your local modifications to a new 'stash', and run `git reset
 	--hard` to revert them.  The <message> part is optional and gives
@@ -54,12 +54,13 @@ save [--patch] [--[no-]keep-index] [-q|--quiet] [<message>]::
 If the `--keep-index` option is used, all changes already added to the
 index are left intact.
 +
-With `--patch`, you can interactively select hunks from in the diff
+With `--patch`, you can interactively select hunks from the diff
 between HEAD and the working tree to be stashed.  The stash entry is
 constructed such that its index state is the same as the index state
 of your repository, and its worktree contains only the changes you
 selected interactively.  The selected changes are then rolled back
-from your worktree.
+from your worktree. See the ``Interactive Mode'' section of
+linkgit:git-add[1] to learn how to operate the `\--patch` mode.
 +
 The `--patch` option implies `--keep-index`.  You can use
 `--no-keep-index` to override this.
