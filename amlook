@@ -6,11 +6,15 @@
 
 find_commit () {
 	in=
-	# I know I know there should be "notes grep" command...
-	commits=$(
-		git grep -l -e "$1" notes/amlog |
-		sed -e 's|^notes/amlog:||' -e 's|/||g'
-	)
+	commits=$(sed -ne "s|^\([0-9a-f]\{40\}\) $1|\1|p" .git/am.log)
+	if test -z "$commits"
+	then
+		# I know I know there should be "notes grep" command...
+		commits=$(
+			git grep -l -e "$1" notes/amlog |
+			sed -e 's|^notes/amlog:||' -e 's|/||g'
+		)
+	fi
 	if test -z "$commits"
 	then
 		echo "Never applied"
