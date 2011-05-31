@@ -104,7 +104,8 @@ static void show_commit(struct commit *commit, void *data)
 		struct pretty_print_context ctx = {0};
 		ctx.abbrev = revs->abbrev;
 		ctx.date_mode = revs->date_mode;
-		pretty_print_commit(revs->commit_format, commit, &buf, &ctx);
+		ctx.fmt = revs->commit_format;
+		pretty_print_commit(&ctx, commit, &buf);
 		if (revs->graph) {
 			if (buf.len) {
 				if (revs->commit_format != CMIT_FMT_ONELINE)

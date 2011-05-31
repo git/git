@@ -283,8 +283,7 @@ static void show_one_commit(struct commit *commit, int no_name)
 	struct commit_name *name = commit->util;
 
 	if (commit->object.parsed) {
-		struct pretty_print_context ctx = {0};
-		pretty_print_commit(CMIT_FMT_ONELINE, commit, &pretty, &ctx);
+		pp_commit_easy(CMIT_FMT_ONELINE, commit, &pretty);
 		pretty_str = pretty.buf;
 	}
 	if (!prefixcmp(pretty_str, "[PATCH] "))

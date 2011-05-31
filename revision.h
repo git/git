@@ -94,7 +94,8 @@ struct rev_info {
 			abbrev_commit_given:1,
 			use_terminator:1,
 			missing_newline:1,
-			date_mode_explicit:1;
+			date_mode_explicit:1,
+			preserve_subject:1;
 	unsigned int	disable_stdin:1;
 
 	enum date_mode date_mode;
