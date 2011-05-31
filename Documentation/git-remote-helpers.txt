@@ -181,11 +181,11 @@ CAPABILITIES
 	When using the import command, expect the source ref to have
 	been written to the destination ref. The earliest applicable
 	refspec takes precedence. For example
-	"refs/heads/*:refs/svn/origin/branches/*" means that, after an
-	"import refs/heads/name", the script has written to
+	"refs/heads/{asterisk}:refs/svn/origin/branches/{asterisk}" means
+	that, after an "import refs/heads/name", the script has written to
 	refs/svn/origin/branches/name. If this capability is used at
 	all, it must cover all refs reported by the list command; if
-	it is not used, it is effectively "*:*"
+	it is not used, it is effectively "{asterisk}:{asterisk}"
 
 REF LIST ATTRIBUTES
 -------------------

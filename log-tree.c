@@ -294,8 +294,9 @@ void log_write_email_headers(struct rev_info *opt, struct commit *commit,
 	if (opt->total > 0) {
 		static char buffer[64];
 		snprintf(buffer, sizeof(buffer),
-			 "Subject: [%s %0*d/%d] ",
+			 "Subject: [%s%s%0*d/%d] ",
 			 opt->subject_prefix,
+			 *opt->subject_prefix ? " " : "",
 			 digits_in_number(opt->total),
 			 opt->nr, opt->total);
 		subject = buffer;
