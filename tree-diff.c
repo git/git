@@ -287,6 +287,7 @@ int diff_tree(struct tree_desc *t1, struct tree_desc *t2, const char *base, stru
 
 	for (;;) {
 		if (DIFF_OPT_TST(opt, QUICK) &&
+		    !opt->filter &&
 		    DIFF_OPT_TST(opt, HAS_CHANGES))
 			break;
 		if (opt->nr_paths) {
