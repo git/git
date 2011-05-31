@@ -54,11 +54,6 @@ do
 done
 
 Wall='-Wall -Wdeclaration-after-statement' tests= jobs= skip=
-case `hostname` in
-fc13i386 | fc15i686)
-	skip="t9???"
-	;;
-esac
 case `uname` in
 OpenBSD)
 	NEEDS_CRYPTO_WITH_SSL=YesPlease ; export NEEDS_CRYPTO_WITH_SSL
