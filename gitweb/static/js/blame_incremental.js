@@ -29,7 +29,6 @@
 /* ............................................................ */
 /* utility/helper functions (and variables) */
 
-var xhr;        // XMLHttpRequest object
 var projectUrl; // partial query + separator ('?' or ';')
 
 // 'commits' is an associative map. It maps SHA1s to Commit objects.
@@ -420,8 +419,6 @@ function handleLine(commit, group) {
 
 // ----------------------------------------------------------------------
 
-var inProgress = false;   // are we processing response
-
 /**#@+
  * @constant
  */
@@ -432,8 +429,6 @@ var endRe  = /^END ?([^ ]*) ?(.*)/;
 
 var curCommit = new Commit();
 var curGroup  = {};
-
-var pollTimer = null;
 
 /**
  * Parse output from 'git blame --incremental [...]', received via
@@ -535,43 +530,51 @@ function processData(unprocessed, nextReadPos) {
  * Handle XMLHttpRequest errors
  *
  * @param {XMLHttpRequest} xhr: XMLHttpRequest object
+ * @param {Number} [xhr.pollTimer] ID of the timeout to clear
  *
- * @globals pollTimer, commits, inProgress
+ * @globals commits
  */
 function handleError(xhr) {
 	errorInfo('Server error: ' +
 		xhr.status + ' - ' + (xhr.statusText || 'Error contacting server'));
 
-	clearInterval(pollTimer);
+	if (typeof xhr.pollTimer === "number") {
+		clearTimeout(xhr.pollTimer);
+		delete xhr.pollTimer;
+	}
 	commits = {}; // free memory
-
-	inProgress = false;
 }
 
 /**
  * Called after XMLHttpRequest finishes (loads)
  *
- * @param {XMLHttpRequest} xhr: XMLHttpRequest object (unused)
+ * @param {XMLHttpRequest} xhr: XMLHttpRequest object
+ * @param {Number} [xhr.pollTimer] ID of the timeout to clear
  *
- * @globals pollTimer, commits, inProgress
+ * @globals commits
  */
 function responseLoaded(xhr) {
-	clearInterval(pollTimer);
+	if (typeof xhr.pollTimer === "number") {
+		clearTimeout(xhr.pollTimer);
+		delete xhr.pollTimer;
+	}
 
 	fixColorsAndGroups();
 	writeTimeInterval();
 	commits = {}; // free memory
-
-	inProgress = false;
 }
 
 /**
  * handler for XMLHttpRequest onreadystatechange event
  * @see startBlame
  *
- * @globals xhr, inProgress
+ * @param {XMLHttpRequest} xhr: XMLHttpRequest object
+ * @param {Number} xhr.prevDataLength: previous value of xhr.responseText.length
+ * @param {Number} xhr.nextReadPos: start of unread part of xhr.responseText
+ * @param {Number} [xhr.pollTimer] ID of the timeout (to reset or cancel)
+ * @param {Boolean} fromTimer: if handler was called from timer
  */
-function handleResponse() {
+function handleResponse(xhr, fromTimer) {
 
 	/*
 	 * xhr.readyState
@@ -609,32 +612,31 @@ function handleResponse() {
 		return;
 	}
 
-	// in case we were called before finished processing
-	if (inProgress) {
-		return;
-	} else {
-		inProgress = true;
-	}
 
 	// extract new whole (complete) lines, and process them
-	while (xhr.prevDataLength !== xhr.responseText.length) {
-		if (xhr.readyState === 4 &&
-		    xhr.prevDataLength === xhr.responseText.length) {
-			break;
-		}
-
+	if (xhr.prevDataLength !== xhr.responseText.length) {
 		xhr.prevDataLength = xhr.responseText.length;
 		var unprocessed = xhr.responseText.substring(xhr.nextReadPos);
 		xhr.nextReadPos = processData(unprocessed, xhr.nextReadPos);
-	} // end while
-
-	// did we finish work?
-	if (xhr.readyState === 4 &&
-	    xhr.prevDataLength === xhr.responseText.length) {
-		responseLoaded(xhr);
 	}
 
-	inProgress = false;
+	// did we finish work?
+	if (xhr.readyState === 4) {
+		responseLoaded(xhr);
+		return;
+	}
+
+	// if we get from timer, we have to restart it
+	// otherwise onreadystatechange gives us partial response, timer not needed
+	if (fromTimer) {
+		setTimeout(function () {
+			handleResponse(xhr, true);
+		}, 1000);
+
+	} else if (typeof xhr.pollTimer === "number") {
+		clearTimeout(xhr.pollTimer);
+		delete xhr.pollTimer;
+	}
 }
 
 // ============================================================
@@ -649,11 +651,11 @@ function handleResponse() {
  * Called from 'blame_incremental' view after loading table with
  * file contents, a base for blame view.
  *
- * @globals xhr, t0, projectUrl, div_progress_bar, totalLines, pollTimer
+ * @globals t0, projectUrl, div_progress_bar, totalLines
 */
 function startBlame(blamedataUrl, bUrl) {
 
-	xhr = createRequestObject();
+	var xhr = createRequestObject();
 	if (!xhr) {
 		errorInfo('ERROR: XMLHttpRequest not supported');
 		return;
@@ -672,8 +674,9 @@ function startBlame(blamedataUrl, bUrl) {
 	xhr.prevDataLength = -1;  // used to detect if we have new data
 	xhr.nextReadPos = 0;      // where unread part of response starts
 
-	xhr.onreadystatechange = handleResponse;
-	//xhr.onreadystatechange = function () { handleResponse(xhr); };
+	xhr.onreadystatechange = function () {
+		handleResponse(xhr, false);
+	};
 
 	xhr.open('GET', blamedataUrl);
 	xhr.setRequestHeader('Accept', 'text/plain');
@@ -681,7 +684,9 @@ function startBlame(blamedataUrl, bUrl) {
 
 	// not all browsers call onreadystatechange event on each server flush
 	// poll response using timer every second to handle this issue
-	pollTimer = setInterval(xhr.onreadystatechange, 1000);
+	xhr.pollTimer = setTimeout(function () {
+		handleResponse(xhr, true);
+	}, 1000);
 }
 
 /* end of blame_incremental.js */
