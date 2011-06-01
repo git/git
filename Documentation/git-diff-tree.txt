@@ -138,8 +138,8 @@ so it can be used to name subdirectories.
 
 An example of normal usage is:
 
-  torvalds@ppc970:~/git> git diff-tree 5319e4......
-  *100664->100664 blob    ac348b.......->a01513.......      git-fsck-objects.c
+  torvalds@ppc970:~/git> git diff-tree --abbrev 5319e4
+  :100664 100664 ac348b... a01513...	git-fsck-objects.c
 
 which tells you that the last commit changed just one file (it's from
 this one:

@@ -96,8 +96,8 @@ show that. So let's say that you have edited `kernel/sched.c`, but
 have not actually done a 'git update-index' on it yet - there is no
 "object" associated with the new state, and you get:
 
-  torvalds@ppc970:~/v2.6/linux> git diff-index HEAD
-  *100644->100664 blob    7476bb......->000000......      kernel/sched.c
+  torvalds@ppc970:~/v2.6/linux> git diff-index --abbrev HEAD
+  :100644 100664 7476bb... 000000...      kernel/sched.c
 
 i.e., it shows that the tree has changed, and that `kernel/sched.c` has is
 not up-to-date and may contain new stuff. The all-zero sha1 means that to
