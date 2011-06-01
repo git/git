@@ -40,7 +40,7 @@ const char *real_path(const char *path)
 
 	while (depth--) {
 		if (!is_directory(buf)) {
-			char *last_slash = strrchr(buf, '/');
+			char *last_slash = find_last_dir_sep(buf);
 			if (last_slash) {
 				*last_slash = '\0';
 				last_elem = xstrdup(last_slash + 1);
@@ -65,7 +65,7 @@ const char *real_path(const char *path)
 			if (len + strlen(last_elem) + 2 > PATH_MAX)
 				die ("Too long path name: '%s/%s'",
 						buf, last_elem);
-			if (len && buf[len-1] != '/')
+			if (len && !is_dir_sep(buf[len-1]))
 				buf[len++] = '/';
 			strcpy(buf + len, last_elem);
 			free(last_elem);
