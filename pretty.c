@@ -1075,7 +1075,7 @@ void userformat_find_requirements(const char *fmt, struct userformat_want *w)
 			return;
 		fmt = user_format;
 	}
-	strbuf_expand(&dummy, user_format, userformat_want_item, w);
+	strbuf_expand(&dummy, fmt, userformat_want_item, w);
 	strbuf_release(&dummy);
 }
 
