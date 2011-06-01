@@ -897,4 +897,11 @@ test_expect_success 'key sanity-checking' '
 	git config foo."ba =z".bar false
 '
 
+test_expect_success 'git -c works with aliases of builtins' '
+	git config alias.checkconfig "-c foo.check=bar config foo.check" &&
+	echo bar >expect &&
+	git checkconfig >actual &&
+	test_cmp expect actual
+'
+
 test_done

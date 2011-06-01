@@ -20,14 +20,6 @@ static int zlib_compression_seen;
 
 const char *config_exclusive_filename = NULL;
 
-struct config_item {
-	struct config_item *next;
-	char *name;
-	char *value;
-};
-static struct config_item *config_parameters;
-static struct config_item **config_parameters_tail = &config_parameters;
-
 static void lowercase(char *p)
 {
 	for (; *p; p++)
@@ -47,9 +39,9 @@ void git_config_push_parameter(const char *text)
 	strbuf_release(&env);
 }
 
-int git_config_parse_parameter(const char *text)
+static int git_config_parse_parameter(const char *text,
+				      config_fn_t fn, void *data)
 {
-	struct config_item *ct;
 	struct strbuf tmp = STRBUF_INIT;
 	struct strbuf **pair;
 	strbuf_addstr(&tmp, text);
@@ -59,22 +51,19 @@ int git_config_parse_parameter(const char *text)
 	strbuf_trim(pair[0]);
 	if (!pair[0]->len) {
 		strbuf_list_free(pair);
+		return error("bogus config parameter: %s", text);
+	}
+	lowercase(pair[0]->buf);
+	if (fn(pair[0]->buf, pair[1] ? pair[1]->buf : NULL, data) < 0) {
+		strbuf_list_free(pair);
 		return -1;
 	}
-	ct = xcalloc(1, sizeof(struct config_item));
-	ct->name = strbuf_detach(pair[0], NULL);
-	if (pair[1]) {
-		strbuf_trim(pair[1]);
-		ct->value = strbuf_detach(pair[1], NULL);
-	}
 	strbuf_list_free(pair);
-	lowercase(ct->name);
-	*config_parameters_tail = ct;
-	config_parameters_tail = &ct->next;
 	return 0;
 }
 
-int git_config_parse_environment(void) {
+int git_config_from_parameters(config_fn_t fn, void *data)
+{
 	const char *env = getenv(CONFIG_DATA_ENVIRONMENT);
 	char *envw;
 	const char **argv = NULL;
@@ -92,8 +81,7 @@ int git_config_parse_environment(void) {
 	}
 
 	for (i = 0; i < nr; i++) {
-		if (git_config_parse_parameter(argv[i]) < 0) {
-			error("bogus config parameter: %s", argv[i]);
+		if (git_config_parse_parameter(argv[i], fn, data) < 0) {
 			free(argv);
 			free(envw);
 			return -1;
@@ -102,7 +90,7 @@ int git_config_parse_environment(void) {
 
 	free(argv);
 	free(envw);
-	return 0;
+	return nr > 0;
 }
 
 static int get_next_char(void)
@@ -839,22 +827,6 @@ int git_config_system(void)
 	return !git_env_bool("GIT_CONFIG_NOSYSTEM", 0);
 }
 
-int git_config_from_parameters(config_fn_t fn, void *data)
-{
-	static int loaded_environment;
-	const struct config_item *ct;
-
-	if (!loaded_environment) {
-		if (git_config_parse_environment() < 0)
-			return -1;
-		loaded_environment = 1;
-	}
-	for (ct = config_parameters; ct; ct = ct->next)
-		if (fn(ct->name, ct->value, data) < 0)
-			return -1;
-	return 0;
-}
-
 int git_config_early(config_fn_t fn, void *data, const char *repo_config)
 {
 	int ret = 0, found = 0;
@@ -884,9 +856,16 @@ int git_config_early(config_fn_t fn, void *data, const char *repo_config)
 		found += 1;
 	}
 
-	ret += git_config_from_parameters(fn, data);
-	if (config_parameters)
-		found += 1;
+	switch (git_config_from_parameters(fn, data)) {
+	case -1: /* error */
+		ret--;
+		break;
+	case 0: /* found nothing */
+		break;
+	default: /* found at least one item */
+		found++;
+		break;
+	}
 
 	return ret == 0 ? found : ret;
 }
