@@ -84,5 +84,38 @@ test_expect_success POSIXPERM '--no-verify with non-executable hook' '
 	git commit --no-verify -m "more content"
 
 '
+chmod +x "$HOOK"
+
+# a hook that checks $GIT_PREFIX and succeeds inside the
+# success/ subdirectory only
+cat > "$HOOK" <<EOF
+#!/bin/sh
+test \$GIT_PREFIX = success/
+EOF
+
+test_expect_success 'with hook requiring GIT_PREFIX' '
+
+	echo "more content" >> file &&
+	git add file &&
+	mkdir success &&
+	(
+		cd success &&
+		git commit -m "hook requires GIT_PREFIX = success/"
+	) &&
+	rmdir success
+'
+
+test_expect_success 'with failing hook requiring GIT_PREFIX' '
+
+	echo "more content" >> file &&
+	git add file &&
+	mkdir fail &&
+	(
+		cd fail &&
+		test_must_fail git commit -m "hook must fail"
+	) &&
+	rmdir fail &&
+	git checkout -- file
+'
 
 test_done
