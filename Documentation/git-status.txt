@@ -49,6 +49,9 @@ See linkgit:git-config[1] for configuration variable
 used to change the default for when the option is not
 specified.
 
+--ignored::
+	Show ignored files as well.
+
 -z::
 	Terminate entries with NUL, instead of LF.  This implies
 	the `--porcelain` output format if no other format is given.
@@ -80,6 +83,8 @@ shows the status of stage #3 (i.e. theirs).
 For entries that do not have conflicts, `X` shows the status of the index,
 and `Y` shows the status of the work tree.  For untracked paths, `XY` are
 `??`.
+For ignored paths, `XY` are `!!`; they are shown only when the `--ignored`
+option is in effect.
 
     X          Y     Meaning
     -------------------------------------------------
@@ -102,6 +107,7 @@ and `Y` shows the status of the work tree.  For untracked paths, `XY` are
     U           U    unmerged, both modified
     -------------------------------------------------
     ?           ?    untracked
+    !           !    ignored
     -------------------------------------------------
 
 
