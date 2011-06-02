@@ -1196,6 +1196,14 @@ http.proxy::
 	environment variable (see linkgit:curl[1]).  This can be overridden
 	on a per-remote basis; see remote.<name>.proxy
 
+http.cookiefile::
+	File containing previously stored cookie lines which should be used
+	in the git http session, if they match the server. The file format
+	of the file to read cookies from should be plain HTTP headers or
+	the Netscape/Mozilla cookie file format (see linkgit:curl[1]).
+	NOTE that the file specified with http.cookiefile is only used as
+	input. No cookies will be stored in the file.
+
 http.sslVerify::
 	Whether to verify the SSL certificate when fetching or pushing
 	over HTTPS. Can be overridden by the 'GIT_SSL_NO_VERIFY' environment
