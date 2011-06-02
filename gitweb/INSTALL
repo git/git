@@ -147,6 +147,19 @@ You can specify the following configuration variables when building GIT:
    the gitweb config file.  [Default: static/gitweb.css (or
    static/gitweb.min.css if the CSSMIN variable is defined / CSS minifier
    is used)]
+ * GITWEB_JS
+   Points to the location where you put gitweb.js on your web server
+   (or to be more generic URI of JavaScript code used by gitweb).
+   Relative to base URI of gitweb.  [Default: static/gitweb.js (or
+   static/gitweb.min.js if JSMIN build variable is defined / JavaScript
+   minifier is used)]
+ * CSSMIN, JSMIN
+   Invocation of a CSS minifier or a JavaScript minifier, respectively,
+   working as a filter (source on standard input, minified result on
+   standard output).  If set, it is used to generate a minified version of
+   'static/gitweb.css' or 'static/gitweb.js', respectively.  *Note* that
+   minified files would have *.min.css and *.min.js extension, which is
+   important if you also set GITWEB_CSS and/or GITWEB_JS.  [No default]
  * GITWEB_LOGO
    Points to the location where you put git-logo.png on your web server
    (or to be more generic URI of logo, 72x27 size, displayed in top right
@@ -158,12 +171,6 @@ You can specify the following configuration variables when building GIT:
    web browsers that support favicons (website icons) may display them
    in the browser's URL bar and next to site name in bookmarks).  Relative
    to base URI of gitweb.  [Default: static/git-favicon.png]
- * GITWEB_JS
-   Points to the location where you put gitweb.js on your web server
-   (or to be more generic URI of JavaScript code used by gitweb).
-   Relative to base URI of gitweb.  [Default: static/gitweb.js (or
-   static/gitweb.min.js if JSMIN build variable is defined / JavaScript
-   minifier is used)]
  * GITWEB_CONFIG
    This Perl file will be loaded using 'do' and can be used to override any
    of the options above as well as some other options -- see the "Runtime
