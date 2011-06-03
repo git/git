@@ -226,9 +226,8 @@ test_expect_success \
      ( while read obj
        do git cat-file -p $obj >/dev/null || exit 1
        done <obj-list ) &&
-     err=$(test_must_fail git verify-pack \
-       ".git/objects/pack/pack-${pack1}.pack" 2>&1) &&
-     echo "$err" | grep "CRC mismatch"'
+     test_must_fail git verify-pack ".git/objects/pack/pack-${pack1}.pack"
+'
 
 test_expect_success 'running index-pack in the object store' '
     rm -f .git/objects/pack/* &&
