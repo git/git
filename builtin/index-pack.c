@@ -498,12 +498,17 @@ static void sha1_object(const void *data, unsigned long size,
 	}
 }
 
+static int is_delta_type(enum object_type type)
+{
+	return (type == OBJ_REF_DELTA || type == OBJ_OFS_DELTA);
+}
+
 static void *get_base_data(struct base_data *c)
 {
 	if (!c->data) {
 		struct object_entry *obj = c->obj;
 
-		if (obj->type == OBJ_REF_DELTA || obj->type == OBJ_OFS_DELTA) {
+		if (is_delta_type(obj->type)) {
 			void *base = get_base_data(c->base);
 			void *raw = get_data_from_pack(obj);
 			c->data = patch_delta(
@@ -629,7 +634,7 @@ static void parse_pack_objects(unsigned char *sha1)
 		struct object_entry *obj = &objects[i];
 		void *data = unpack_raw_entry(obj, &delta->base);
 		obj->real_type = obj->type;
-		if (obj->type == OBJ_REF_DELTA || obj->type == OBJ_OFS_DELTA) {
+		if (is_delta_type(obj->type)) {
 			nr_deltas++;
 			delta->obj_no = i;
 			delta++;
@@ -676,7 +681,7 @@ static void parse_pack_objects(unsigned char *sha1)
 		struct object_entry *obj = &objects[i];
 		struct base_data base_obj;
 
-		if (obj->type == OBJ_REF_DELTA || obj->type == OBJ_OFS_DELTA)
+		if (is_delta_type(obj->type))
 			continue;
 		base_obj.obj = obj;
 		base_obj.data = NULL;
