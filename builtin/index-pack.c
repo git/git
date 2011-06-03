@@ -20,6 +20,8 @@ struct object_entry
 	unsigned int hdr_size;
 	enum object_type type;
 	enum object_type real_type;
+	unsigned delta_depth;
+	int base_object_no;
 };
 
 union delta_base {
@@ -535,6 +537,8 @@ static void resolve_delta(struct object_entry *delta_obj,
 	void *base_data, *delta_data;
 
 	delta_obj->real_type = base->obj->real_type;
+	delta_obj->delta_depth = base->obj->delta_depth + 1;
+	delta_obj->base_object_no = base->obj - objects;
 	delta_data = get_data_from_pack(delta_obj);
 	base_data = get_base_data(base);
 	result->obj = delta_obj;
@@ -967,9 +971,32 @@ static void read_idx_option(struct pack_idx_option *opts, const char *pack_name)
 	free(p);
 }
 
+static void show_pack_info(int stat_only)
+{
+	int i;
+	for (i = 0; i < nr_objects; i++) {
+		struct object_entry *obj = &objects[i];
+
+		/* NEEDSWORK: Compute data necessary for the "histogram" here */
+
+		if (stat_only)
+			continue;
+		printf("%s %-6s %lu %lu %"PRIuMAX,
+		       sha1_to_hex(obj->idx.sha1),
+		       typename(obj->real_type), obj->size,
+		       (unsigned long)(obj[1].idx.offset - obj->idx.offset),
+		       (uintmax_t)obj->idx.offset);
+		if (is_delta_type(obj->type)) {
+			struct object_entry *bobj = &objects[obj->base_object_no];
+			printf(" %u %s", obj->delta_depth, sha1_to_hex(bobj->idx.sha1));
+		}
+		putchar('\n');
+	}
+}
+
 int cmd_index_pack(int argc, const char **argv, const char *prefix)
 {
-	int i, fix_thin_pack = 0, verify = 0;
+	int i, fix_thin_pack = 0, verify = 0, stat_only = 0, stat = 0;
 	const char *curr_pack, *curr_index;
 	const char *index_name = NULL, *pack_name = NULL;
 	const char *keep_name = NULL, *keep_msg = NULL;
@@ -1000,6 +1027,13 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 				strict = 1;
 			} else if (!strcmp(arg, "--verify")) {
 				verify = 1;
+			} else if (!strcmp(arg, "--verify-stat")) {
+				verify = 1;
+				stat = 1;
+			} else if (!strcmp(arg, "--verify-stat-only")) {
+				verify = 1;
+				stat = 1;
+				stat_only = 1;
 			} else if (!strcmp(arg, "--keep")) {
 				keep_msg = "";
 			} else if (!prefixcmp(arg, "--keep=")) {
@@ -1075,8 +1109,8 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 
 	curr_pack = open_pack_file(pack_name);
 	parse_pack_header();
-	objects = xmalloc((nr_objects + 1) * sizeof(struct object_entry));
-	deltas = xmalloc(nr_objects * sizeof(struct delta_entry));
+	objects = xcalloc(nr_objects + 1, sizeof(struct object_entry));
+	deltas = xcalloc(nr_objects, sizeof(struct delta_entry));
 	parse_pack_objects(pack_sha1);
 	if (nr_deltas == nr_resolved_deltas) {
 		stop_progress(&progress);
@@ -1115,6 +1149,9 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 	free(deltas);
 	if (strict)
 		check_objects();
+
+	if (stat)
+		show_pack_info(stat_only);
 
 	idx_objects = xmalloc((nr_objects) * sizeof(struct pack_idx_entry *));
 	for (i = 0; i < nr_objects; i++)
