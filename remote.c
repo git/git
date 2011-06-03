@@ -1667,7 +1667,9 @@ struct ref *guess_remote_head(const struct ref *head,
 
 	/* Look for another ref that points there */
 	for (r = refs; r; r = r->next) {
-		if (r != head && !hashcmp(r->old_sha1, head->old_sha1)) {
+		if (r != head &&
+		    !prefixcmp(r->name, "refs/heads/") &&
+		    !hashcmp(r->old_sha1, head->old_sha1)) {
 			*tail = copy_ref(r);
 			tail = &((*tail)->next);
 			if (!all)

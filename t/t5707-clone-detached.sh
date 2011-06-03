@@ -41,7 +41,7 @@ test_expect_success 'cloned HEAD matches' '
 	git --git-dir=detached-tag/.git log -1 --format=%s >actual &&
 	test_cmp expect actual
 '
-test_expect_failure 'cloned HEAD is detached' '
+test_expect_success 'cloned HEAD is detached' '
 	head_is_detached detached-tag
 '
 
