@@ -70,6 +70,7 @@ static struct progress *progress;
 static unsigned char input_buffer[4096];
 static unsigned int input_offset, input_len;
 static off_t consumed_bytes;
+static unsigned deepest_delta;
 static git_SHA_CTX input_ctx;
 static uint32_t input_crc32;
 static int input_fd, output_fd, pack_fd;
@@ -538,6 +539,8 @@ static void resolve_delta(struct object_entry *delta_obj,
 
 	delta_obj->real_type = base->obj->real_type;
 	delta_obj->delta_depth = base->obj->delta_depth + 1;
+	if (deepest_delta < delta_obj->delta_depth)
+		deepest_delta = delta_obj->delta_depth;
 	delta_obj->base_object_no = base->obj - objects;
 	delta_data = get_data_from_pack(delta_obj);
 	base_data = get_base_data(base);
@@ -973,12 +976,17 @@ static void read_idx_option(struct pack_idx_option *opts, const char *pack_name)
 
 static void show_pack_info(int stat_only)
 {
-	int i;
+	int i, baseobjects = nr_objects - nr_deltas;
+	unsigned long *chain_histogram = NULL;
+
+	if (deepest_delta)
+		chain_histogram = xcalloc(deepest_delta, sizeof(unsigned long));
+
 	for (i = 0; i < nr_objects; i++) {
 		struct object_entry *obj = &objects[i];
 
-		/* NEEDSWORK: Compute data necessary for the "histogram" here */
-
+		if (is_delta_type(obj->type))
+			chain_histogram[obj->delta_depth - 1]++;
 		if (stat_only)
 			continue;
 		printf("%s %-6s %lu %lu %"PRIuMAX,
@@ -991,6 +999,18 @@ static void show_pack_info(int stat_only)
 			printf(" %u %s", obj->delta_depth, sha1_to_hex(bobj->idx.sha1));
 		}
 		putchar('\n');
+	}
+
+	if (baseobjects)
+		printf("non delta: %d object%s\n",
+		       baseobjects, baseobjects > 1 ? "s" : "");
+	for (i = 0; i < deepest_delta; i++) {
+		if (!chain_histogram[i])
+			continue;
+		printf("chain length = %d: %lu object%s\n",
+		       i + 1,
+		       chain_histogram[i],
+		       chain_histogram[i] > 1 ? "s" : "");
 	}
 }
 
