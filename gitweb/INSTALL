@@ -25,6 +25,21 @@ The above example assumes that your web server is configured to run
 scripts).
 
 
+Requirements
+------------
+
+ - Core git tools
+ - Perl
+ - Perl modules: CGI, Encode, Fcntl, File::Find, File::Basename.
+ - web server
+
+The following optional Perl modules are required for extra features
+ - Digest::MD5 - for gravatar support
+ - CGI::Fast and FCGI - for running gitweb as FastCGI script
+ - HTML::TagCloud - for fancy tag cloud in project list view
+ - HTTP::Date or Time::ParseDate - to support If-Modified-Since for feeds
+
+
 Build time configuration
 ------------------------
 
@@ -345,21 +360,6 @@ $projects_list variable in gitweb config):
 	export QUERY_STRING="a=project_index"
 
 	perl -- /var/www/cgi-bin/gitweb.cgi
-
-
-Requirements
-------------
-
- - Core git tools
- - Perl
- - Perl modules: CGI, Encode, Fcntl, File::Find, File::Basename.
- - web server
-
-The following optional Perl modules are required for extra features
- - Digest::MD5 - for gravatar support
- - CGI::Fast and FCGI - for running gitweb as FastCGI script
- - HTML::TagCloud - for fancy tag cloud in project list view
- - HTTP::Date or Time::ParseDate - to support If-Modified-Since for feeds
 
 
 Example web server configuration
