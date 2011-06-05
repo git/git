@@ -721,7 +721,10 @@ static void show_line(struct grep_opt *opt, char *bol, char *eol,
 	int rest = eol - bol;
 	char *line_color = NULL;
 
-	if (opt->pre_context || opt->post_context) {
+	if (opt->file_break && opt->last_shown == 0) {
+		if (opt->show_hunk_mark)
+			opt->output(opt, "\n", 1);
+	} else if (opt->pre_context || opt->post_context) {
 		if (opt->last_shown == 0) {
 			if (opt->show_hunk_mark) {
 				output_color(opt, "--", 2, opt->color_sep);
@@ -941,7 +944,7 @@ static int grep_buffer_1(struct grep_opt *opt, const char *name,
 	if (!opt->output)
 		opt->output = std_output;
 
-	if (opt->pre_context || opt->post_context) {
+	if (opt->pre_context || opt->post_context || opt->file_break) {
 		/* Show hunk marks, except for the first file. */
 		if (opt->last_shown)
 			opt->show_hunk_mark = 1;

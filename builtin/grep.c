@@ -822,6 +822,8 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		OPT_BOOLEAN('c', "count", &opt.count,
 			"show the number of matches instead of matching lines"),
 		OPT__COLOR(&opt.color, "highlight matches"),
+		OPT_BOOLEAN(0, "break", &opt.file_break,
+			"print empty line between matches from different files"),
 		OPT_GROUP(""),
 		OPT_CALLBACK('C', NULL, &opt, "n",
 			"show <n> context lines before and after matches",
@@ -976,7 +978,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		use_threads = 0;
 
 	if (use_threads) {
-		if (opt.pre_context || opt.post_context)
+		if (opt.pre_context || opt.post_context || opt.file_break)
 			skip_first_line = 1;
 		start_threads(&opt);
 	}

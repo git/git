@@ -746,4 +746,32 @@ test_expect_success 'grep --color, separator' '
 	test_cmp expected actual
 '
 
+cat >expected <<EOF
+hello.c:int main(int argc, const char **argv)
+hello.c:	/* char ?? */
+
+hello_world:Hello_world
+EOF
+
+test_expect_success 'grep --break' '
+	git grep --break -e char -e lo_w hello.c hello_world >actual &&
+	test_cmp expected actual
+'
+
+cat >expected <<EOF
+hello.c:int main(int argc, const char **argv)
+hello.c-{
+--
+hello.c:	/* char ?? */
+hello.c-}
+
+hello_world:Hello_world
+hello_world-HeLLo_world
+EOF
+
+test_expect_success 'grep --break with context' '
+	git grep --break -A1 -e char -e lo_w hello.c hello_world >actual &&
+	test_cmp expected actual
+'
+
 test_done
