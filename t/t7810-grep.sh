@@ -716,4 +716,34 @@ test_expect_success LIBPCRE 'grep -G -F -E -P pattern' '
 	test_cmp expected actual
 '
 
+test_config() {
+	git config "$1" "$2" &&
+	test_when_finished "git config --unset $1"
+}
+
+cat >expected <<EOF
+hello.c<RED>:<RESET>int main(int argc, const char **argv)
+hello.c<RED>-<RESET>{
+<RED>--<RESET>
+hello.c<RED>:<RESET>	/* char ?? */
+hello.c<RED>-<RESET>}
+<RED>--<RESET>
+hello_world<RED>:<RESET>Hello_world
+hello_world<RED>-<RESET>HeLLo_world
+EOF
+
+test_expect_success 'grep --color, separator' '
+	test_config color.grep.context		normal &&
+	test_config color.grep.filename		normal &&
+	test_config color.grep.function		normal &&
+	test_config color.grep.linenumber	normal &&
+	test_config color.grep.match		normal &&
+	test_config color.grep.selected		normal &&
+	test_config color.grep.separator	red &&
+
+	git grep --color=always -A1 -e char -e lo_w hello.c hello_world |
+	test_decode_color >actual &&
+	test_cmp expected actual
+'
+
 test_done
