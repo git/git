@@ -824,6 +824,8 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		OPT__COLOR(&opt.color, "highlight matches"),
 		OPT_BOOLEAN(0, "break", &opt.file_break,
 			"print empty line between matches from different files"),
+		OPT_BOOLEAN(0, "heading", &opt.heading,
+			"show filename only once above matches from same file"),
 		OPT_GROUP(""),
 		OPT_CALLBACK('C', NULL, &opt, "n",
 			"show <n> context lines before and after matches",

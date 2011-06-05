@@ -151,6 +151,10 @@ OPTIONS
 --break::
 	Print an empty line between matches from different files.
 
+--heading::
+	Show the filename above the matches in that file instead of
+	at the start of each shown line.
+
 -[ABC] <context>::
 	Show `context` trailing (`A` -- after), or leading (`B`
 	-- before), or both (`C` -- context) lines, and place a

@@ -774,4 +774,41 @@ test_expect_success 'grep --break with context' '
 	test_cmp expected actual
 '
 
+cat >expected <<EOF
+hello.c
+int main(int argc, const char **argv)
+	/* char ?? */
+hello_world
+Hello_world
+EOF
+
+test_expect_success 'grep --heading' '
+	git grep --heading -e char -e lo_w hello.c hello_world >actual &&
+	test_cmp expected actual
+'
+
+cat >expected <<EOF
+<BOLD;GREEN>hello.c<RESET>
+2:int main(int argc, const <BLACK;BYELLOW>char<RESET> **argv)
+6:	/* <BLACK;BYELLOW>char<RESET> ?? */
+
+<BOLD;GREEN>hello_world<RESET>
+3:Hel<BLACK;BYELLOW>lo_w<RESET>orld
+EOF
+
+test_expect_success 'mimic ack-grep --group' '
+	test_config color.grep.context		normal &&
+	test_config color.grep.filename		"bold green" &&
+	test_config color.grep.function		normal &&
+	test_config color.grep.linenumber	normal &&
+	test_config color.grep.match		"black yellow" &&
+	test_config color.grep.selected		normal &&
+	test_config color.grep.separator	normal &&
+
+	git grep --break --heading -n --color \
+		-e char -e lo_w hello.c hello_world |
+	test_decode_color >actual &&
+	test_cmp expected actual
+'
+
 test_done
