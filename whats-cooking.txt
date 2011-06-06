@@ -1,96 +1,94 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (May 2011, #14; Tue, 31)
-X-master-at: 090a1a5d95c7b4380e6a52f42add41ead9215ed3
-X-next-at: 1dff92d3ec7495803f594a4b47d1663bac6d103a
+Subject: What's cooking in git.git (Jun 2011, #01; Sun, 5)
+X-master-at: a6605d76cdad37ed3c55a7be4d2e0af0f4721bb2
+X-next-at: 697f9d23c6a32d612282fa77d5a526ad9a9ae192
 
-What's cooking in git.git (May 2011, #14; Tue, 31)
+What's cooking in git.git (Jun 2011, #01; Sun, 5)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' while commits prefixed with '+' are in 'next'.
 
-The main part of this cycle is expected to run thru May, aiming for a
-feature freeze in early June.
+We will be in the feature freeze, and 1.7.6-rc1 will be tagged in a few
+days. Unless it is a very obviously correct fix to trivial bug (either
+code or documentation), nothing other than regression fixes will graduate
+to "master".
 
-We are in week #6 of this cycle. Feature freeze is imminent.
+Subsystem people are asked to kindly give pull requests to me.
 
 --------------------------------------------------
 [New Topics]
 
-* jc/diff-index-quick-exit-early (2011-05-31) 2 commits
- - diff-index --quiet: learn the "stop feeding the backend early" logic
- - Merge remote-tracking branch 'ko/maint' into jc/diff-index-quick-exit-early
- (this branch uses jk/diff-not-so-quick.)
+* js/ref-namespaces (2011-06-05) 4 commits
+ - ref namespaces: documentation
+ - ref namespaces: support remote repositories via upload-pack and receive-pack
+ - ref namespaces: infrastructure
+ - Fix prefix handling in ref iteration functions
 
-* jk/diff-not-so-quick (2011-05-31) 2 commits
- - diff: futureproof "stop feeding the backend early" logic
- - diff_tree: disable QUICK optimization with diff filter
- (this branch is used by jc/diff-index-quick-exit-early.)
+Fairly involved feature enhancement, and breaks tests when merged to 'pu'.
+Not urgent. Will not merge before 1.7.6.
 
---------------------------------------------------
-[Graduated to "master"]
+* db/http-cookies (2011-06-03) 1 commit
+ - http: pass http.cookiefile using CURLOPT_COOKIEFILE
 
-* ab/i18n-envsubst-doc-fix (2011-05-30) 1 commit
-  (merged to 'next' on 2011-05-30 at 25ef758)
- + git-sh-i18n--envsubst: add SYNOPSIS section to the documentation
+Fairly trivial enhancement.
+Not urgent. Will not merge before 1.7.6.
 
-* jc/fmt-req-fix (2011-05-25) 1 commit
-  (merged to 'next' on 2011-05-25 at 9f46ca0)
- + userformat_find_requirements(): find requirement for the correct format
+* jc/maint-1.7.3-checkout-describe (2011-06-05) 1 commit
+ - checkout -b <name>: correctly detect existing branch
 
-* jc/log-quiet-fix (2011-05-28) 1 commit
-  (merged to 'next' on 2011-05-30 at dcbdbc0)
- + log: --quiet should serve as synonym to -s
+Fairly trivial bugfix.
+Not urgent. Will not merge before 1.7.6.
 
-* jk/format-patch-am (2011-05-26) 5 commits
-  (merged to 'next' on 2011-05-30 at 29d5dac)
- + format-patch: preserve subject newlines with -k
- + clean up calling conventions for pretty.c functions
- + pretty: add pp_commit_easy function for simple callers
- + mailinfo: always clean up rfc822 header folding
- + t: test subject handling in format-patch / am pipeline
+* jk/clone-detached (2011-06-05) 4 commits
+ - remote-testgit: short-term fix to allow t5800 pass
+ - clone: always fetch remote HEAD
+ - consider only branches in guess_remote_head
+ - t: add tests for cloning remotes with detached HEAD
 
-* jk/format-patch-empty-prefix (2011-05-30) 1 commit
- - format-patch: make zero-length subject prefixes prettier
+Somewhat involved bugfix.
+Not urgent. Will not merge before 1.7.6.
 
-* jk/maint-config-alias-fix (2011-05-24) 4 commits
-  (merged to 'next' on 2011-05-25 at 25b86e4)
- + handle_options(): do not miscount how many arguments were used
- + config: always parse GIT_CONFIG_PARAMETERS during git_config
- + git_config: don't peek at global config_parameters
- + config: make environment parsing routines static
+* jk/maint-1.7.2-status-ignored (2011-06-02) 2 commits
+  (merged to 'next' on 2011-06-02 at 8626cc6)
+ + git status --ignored: tests and docs
+ + status: fix bug with missing --ignore files
 
-* jk/maint-docs (2011-05-26) 4 commits
-  (merged to 'next' on 2011-05-30 at 0ed19d6)
- + docs: fix some antique example output
- + docs: make sure literal "->" isn't converted to arrow
- + docs: update status --porcelain format
- + docs: minor grammar fixes to git-status
+Fairly trivial bugfix.
+Not urgent. Will not merge before 1.7.6.
 
-* jk/maint-remote-mirror-safer (2011-05-26) 1 commit
-  (merged to 'next' on 2011-05-30 at dc260ff)
- + remote: allow "-t" with fetch mirrors
+* jl/submodule-add-relurl-wo-upstream (2011-06-05) 1 commit
+ - submodule add: improve message when resolving a relative url fails
 
-* jk/read-in-full-stops-on-error (2011-05-26) 1 commit
-  (merged to 'next' on 2011-05-30 at 102a220)
- + read_in_full: always report errors
+This is just a message change without loosening a seemingly overtight
+restriction in the code. It might turn out to be a good idea to loosen
+the check.
 
-* jk/rebase-head-reflog (2011-05-27) 2 commits
-  (merged to 'next' on 2011-05-30 at 97f02df)
- + rebase: write a reflog entry when finishing
- + rebase: create HEAD reflog entry when aborting
+Not urgent. Will not merge before 1.7.6.
 
-* jl/read-tree-m-dry-run (2011-05-25) 2 commits
-  (merged to 'next' on 2011-05-30 at 42febaf)
- + Teach read-tree the -n|--dry-run option
- + unpack-trees: add the dry_run flag to unpack_trees_options
+* jn/gitweb-docs (2011-06-03) 3 commits
+  (merged to 'next' on 2011-06-05 at 691c7e6)
+ + gitweb: Move "Requirements" up in gitweb/INSTALL
+  (merged to 'next' on 2011-06-02 at 56cba41)
+ + gitweb: Describe CSSMIN and JSMIN in gitweb/INSTALL
+ + gitweb: Move information about installation from README to INSTALL
 
-* jn/doc-remote-helpers (2011-05-30) 1 commit
- - Documentation: do not misinterpret refspecs as bold text
+Should be safe.
+Will merge to "master" before 1.7.6-rc1.
 
-* kk/maint-prefix-in-config-mak (2011-05-27) 1 commit
-  (merged to 'next' on 2011-05-30 at 35b8752)
- + config.mak.in: allow "configure --sysconfdir=/else/where"
+* jn/mime-type-with-params (2011-06-05) 1 commit
+  (merged to 'next' on 2011-06-05 at 697f9d2)
+ + gitweb: Fix usability of $prevent_xss
+
+Will merge to "master" before 1.7.6-rc1.
+
+* rs/grep-color (2011-06-05) 3 commits
+ - grep: add --heading
+ - grep: add --break
+ - grep: fix coloring of hunk marks between files
+
+Fairly straightforward feature enhancement.
+Not urgent. Will not merge before 1.7.6.
 
 --------------------------------------------------
 [Stalled]
@@ -102,15 +100,21 @@ We are in week #6 of this cycle. Feature freeze is imminent.
 
 Peff wanted to reroll this.
 
-* jc/index-pack (2011-02-27) 5 commits
+* jc/index-pack (2011-06-05) 9 commits
+ - verify-pack: use index-pack --verify
+ - index-pack: show histogram when emulating "verify-pack -v"
+ - index-pack: start learning to emulate "verify-pack -v"
+ - index-pack: a miniscule refactor
  - index-pack --verify: read anomalous offsets from v2 idx file
  - write_idx_file: need_large_offset() helper function
  - index-pack: --verify
  - write_idx_file: introduce a struct to hold idx customization options
  - index-pack: group the delta-base array entries also by type
 
-Still a WIP. Need to put histogram output into index-pack --verify to
-really kill verify-pack.
+Killed "verify-pack" ;-) The next will be to update fsck, which would be a
+bigger task.
+
+Not urgent. Will not merge before 1.7.6.
 
 * jh/receive-count-limit (2011-05-23) 10 commits
  - receive-pack: Allow server to refuse pushes with too many objects
@@ -141,18 +145,36 @@ current usage context.
 --------------------------------------------------
 [Cooking]
 
-* bc/maint-status-z-to-use-porcelain (2011-05-29) 2 commits
- - builtin/commit.c: set status_format _after_ option parsing
- - t7508: demonstrate status's failure to use --porcelain format with -z
+* jc/diff-index-quick-exit-early (2011-05-31) 2 commits
+  (merged to 'next' on 2011-06-01 at 79d868a)
+ + diff-index --quiet: learn the "stop feeding the backend early" logic
+ + Merge remote-tracking branch 'ko/maint' into jc/diff-index-quick-exit-early
+ (this branch uses jk/diff-not-so-quick.)
 
-Will merge to "next".
+Not urgent. Will not merge before 1.7.6.
+
+* jk/diff-not-so-quick (2011-05-31) 2 commits
+  (merged to 'next' on 2011-06-01 at 5f66784)
+ + diff: futureproof "stop feeding the backend early" logic
+ + diff_tree: disable QUICK optimization with diff filter
+ (this branch is used by jc/diff-index-quick-exit-early.)
+
+Will merge to "master" before 1.7.6-rc1.
+
+* bc/maint-status-z-to-use-porcelain (2011-05-29) 2 commits
+  (merged to 'next' on 2011-06-01 at 4f44a91)
+ + builtin/commit.c: set status_format _after_ option parsing
+ + t7508: demonstrate status's failure to use --porcelain format with -z
+
+Will merge to "master" before 1.7.6-rc1.
 
 * ef/maint-win-verify-path (2011-05-27) 3 commits
- - verify_path: consider dos drive prefix
- - real_path: do not assume '/' is the path seperator
- - A Windows path starting with a backslash is absolute
+  (merged to 'next' on 2011-06-01 at f316f68)
+ + verify_path: consider dos drive prefix
+ + real_path: do not assume '/' is the path seperator
+ + A Windows path starting with a backslash is absolute
 
-J6t had a reasonable question in the discussion; has it been resolved?
+Will cook a bit longer.
 
 * jc/apply-nsbp (2011-05-27) 4 commits
  - War on nbsp: teach "git apply" to check and fix nbsp
@@ -164,27 +186,31 @@ Will probably drop.
 It was fun to write, though.
 
 * jn/gitweb-js-blame (2011-05-27) 3 commits
- - gitweb.js: use setTimeout rather than setInterval in blame_incremental.js
- - gitweb.js: No need for loop in blame_incremental's handleResponse()
- - gitweb.js: No need for inProgress in blame_incremental.js
+  (merged to 'next' on 2011-06-01 at a984a1b)
+ + gitweb.js: use setTimeout rather than setInterval in blame_incremental.js
+ + gitweb.js: No need for loop in blame_incremental's handleResponse()
+ + gitweb.js: No need for inProgress in blame_incremental.js
 
 Will cook a bit longer.
 
 * mg/diff-stat-count (2011-05-27) 4 commits
- - diff --stat-count: finishing touches
- - diff-options.txt: describe --stat-{width,name-width,count}
- - diff: introduce --stat-lines to limit the stat lines
- - diff.c: omit hidden entries from namelen calculation with --stat
+  (merged to 'next' on 2011-06-01 at 5cdb776)
+ + diff --stat-count: finishing touches
+ + diff-options.txt: describe --stat-{width,name-width,count}
+ + diff: introduce --stat-lines to limit the stat lines
+ + diff.c: omit hidden entries from namelen calculation with --stat
 
-Will merge to "next".
+Not urgent. Will not merge before 1.7.6.
 
-* da/git-prefix-everywhere (2011-05-26) 3 commits
+* da/git-prefix-everywhere (2011-06-02) 4 commits
+  (merged to 'next' on 2011-06-02 at 2ab66e7)
+ + t/t7503-pre-commit-hook.sh: Add GIT_PREFIX tests
   (merged to 'next' on 2011-05-30 at 9480900)
  + git-mergetool--lib: Make vimdiff retain the current directory
  + git: Remove handling for GIT_PREFIX
  + setup: Provide GIT_PREFIX to built-ins
 
-Will cook a bit longer.
+Not urgent. Will not merge before 1.7.6.
 
 * jc/streaming-filter (2011-05-26) 8 commits
  - t0021: test application of both crlf and ident
