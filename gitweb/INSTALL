@@ -25,11 +25,25 @@ The above example assumes that your web server is configured to run
 scripts).
 
 
+Requirements
+------------
+
+ - Core git tools
+ - Perl
+ - Perl modules: CGI, Encode, Fcntl, File::Find, File::Basename.
+ - web server
+
+The following optional Perl modules are required for extra features
+ - Digest::MD5 - for gravatar support
+ - CGI::Fast and FCGI - for running gitweb as FastCGI script
+ - HTML::TagCloud - for fancy tag cloud in project list view
+ - HTTP::Date or Time::ParseDate - to support If-Modified-Since for feeds
+
+
 Build time configuration
 ------------------------
 
-See also "How to configure gitweb for your local system" in README
-file for gitweb (in gitweb/README).
+See also "How to configure gitweb for your local system" section below.
 
 - There are many configuration variables which affect building of
   gitweb.cgi; see "default configuration for gitweb" section in main
@@ -72,6 +86,125 @@ file for gitweb (in gitweb/README).
   the non-minified versions will be used. NOTE: if you enable this option,
   substitute gitweb.min.js and gitweb.min.css for all uses of gitweb.js and
   gitweb.css in the help files.
+
+
+How to configure gitweb for your local system
+---------------------------------------------
+
+You can specify the following configuration variables when building GIT:
+
+ * GIT_BINDIR
+   Points where to find the git executable.  You should set it up to
+   the place where the git binary was installed (usually /usr/bin) if you
+   don't install git from sources together with gitweb.  [Default: $(bindir)]
+ * GITWEB_SITENAME
+   Shown in the title of all generated pages, defaults to the server name
+   (SERVER_NAME CGI environment variable) if not set. [No default]
+ * GITWEB_PROJECTROOT
+   The root directory for all projects shown by gitweb. Must be set
+   correctly for gitweb to find repositories to display.  See also
+   "Gitweb repositories" in the INSTALL file for gitweb.  [Default: /pub/git]
+ * GITWEB_PROJECT_MAXDEPTH
+   The filesystem traversing limit for getting the project list; the number
+   is taken as depth relative to the projectroot.  It is used when
+   GITWEB_LIST is a directory (or is not set; then project root is used).
+   This is meant to speed up project listing on large work trees by limiting
+   search depth.  [Default: 2007]
+ * GITWEB_LIST
+   Points to a directory to scan for projects (defaults to project root
+   if not set / if empty) or to a file with explicit listing of projects
+   (together with projects' ownership). See "Generating projects list
+   using gitweb" in INSTALL file for gitweb to find out how to generate
+   such file from scan of a directory. [No default, which means use root
+   directory for projects]
+ * GITWEB_EXPORT_OK
+   Show repository only if this file exists (in repository).  Only
+   effective if this variable evaluates to true.  [No default / Not set]
+ * GITWEB_STRICT_EXPORT
+   Only allow viewing of repositories also shown on the overview page.
+   This for example makes GITWEB_EXPORT_OK to decide if repository is
+   available and not only if it is shown.  If GITWEB_LIST points to
+   file with list of project, only those repositories listed would be
+   available for gitweb.  [No default]
+ * GITWEB_HOMETEXT
+   Points to an .html file which is included on the gitweb project
+   overview page ('projects_list' view), if it exists.  Relative to
+   gitweb.cgi script.  [Default: indextext.html]
+ * GITWEB_SITE_HEADER
+   Filename of html text to include at top of each page.  Relative to
+   gitweb.cgi script.  [No default]
+ * GITWEB_SITE_FOOTER
+   Filename of html text to include at bottom of each page.  Relative to
+   gitweb.cgi script.  [No default]
+ * GITWEB_HOME_LINK_STR
+   String of the home link on top of all pages, leading to $home_link
+   (usually main gitweb page, which means projects list).  Used as first
+   part of gitweb view "breadcrumb trail": <home> / <project> / <view>.
+   [Default: projects]
+ * GITWEB_SITENAME
+   Name of your site or organization to appear in page titles.  Set it
+   to something descriptive for clearer bookmarks etc.  If not set
+   (if empty) gitweb uses "$SERVER_NAME Git", or "Untitled Git" if
+   SERVER_NAME CGI environment variable is not set (e.g. if running
+   gitweb as standalone script).  [No default]
+ * GITWEB_BASE_URL
+   Git base URLs used for URL to where fetch project from, i.e. full
+   URL is "$git_base_url/$project".  Shown on projects summary page.
+   Repository URL for project can be also configured per repository; this
+   takes precedence over URLs composed from base URL and a project name.
+   Note that you can setup multiple base URLs (for example one for
+   git:// protocol access, another for http:// access) from the gitweb
+   config file.  [No default]
+ * GITWEB_CSS
+   Points to the location where you put gitweb.css on your web server
+   (or to be more generic, the URI of gitweb stylesheet).  Relative to the
+   base URI of gitweb.  Note that you can setup multiple stylesheets from
+   the gitweb config file.  [Default: static/gitweb.css (or
+   static/gitweb.min.css if the CSSMIN variable is defined / CSS minifier
+   is used)]
+ * GITWEB_JS
+   Points to the location where you put gitweb.js on your web server
+   (or to be more generic URI of JavaScript code used by gitweb).
+   Relative to base URI of gitweb.  [Default: static/gitweb.js (or
+   static/gitweb.min.js if JSMIN build variable is defined / JavaScript
+   minifier is used)]
+ * CSSMIN, JSMIN
+   Invocation of a CSS minifier or a JavaScript minifier, respectively,
+   working as a filter (source on standard input, minified result on
+   standard output).  If set, it is used to generate a minified version of
+   'static/gitweb.css' or 'static/gitweb.js', respectively.  *Note* that
+   minified files would have *.min.css and *.min.js extension, which is
+   important if you also set GITWEB_CSS and/or GITWEB_JS.  [No default]
+ * GITWEB_LOGO
+   Points to the location where you put git-logo.png on your web server
+   (or to be more generic URI of logo, 72x27 size, displayed in top right
+   corner of each gitweb page, and used as logo for Atom feed).  Relative
+   to base URI of gitweb.  [Default: static/git-logo.png]
+ * GITWEB_FAVICON
+   Points to the location where you put git-favicon.png on your web server
+   (or to be more generic URI of favicon, assumed to be image/png type;
+   web browsers that support favicons (website icons) may display them
+   in the browser's URL bar and next to site name in bookmarks).  Relative
+   to base URI of gitweb.  [Default: static/git-favicon.png]
+ * GITWEB_CONFIG
+   This Perl file will be loaded using 'do' and can be used to override any
+   of the options above as well as some other options -- see the "Runtime
+   gitweb configuration" section below, and top of 'gitweb.cgi' for their
+   full list and description.  If the environment variable GITWEB_CONFIG
+   is set when gitweb.cgi is executed, then the file specified in the
+   environment variable will be loaded instead of the file specified
+   when gitweb.cgi was created.  [Default: gitweb_config.perl]
+ * GITWEB_CONFIG_SYSTEM
+   This Perl file will be loaded using 'do' as a fallback if GITWEB_CONFIG
+   does not exist.  If the environment variable GITWEB_CONFIG_SYSTEM is set
+   when gitweb.cgi is executed, then the file specified in the environment
+   variable will be loaded instead of the file specified when gitweb.cgi was
+   created.  [Default: /etc/gitweb.conf]
+ * HIGHLIGHT_BIN
+   Path to the highlight executable to use (must be the one from
+   http://www.andre-simon.de due to assumptions about parameters and output).
+   Useful if highlight is not installed on your webserver's PATH.
+   [Default: highlight]
 
 Build example
 ~~~~~~~~~~~~~
@@ -227,21 +360,6 @@ $projects_list variable in gitweb config):
 	export QUERY_STRING="a=project_index"
 
 	perl -- /var/www/cgi-bin/gitweb.cgi
-
-
-Requirements
-------------
-
- - Core git tools
- - Perl
- - Perl modules: CGI, Encode, Fcntl, File::Find, File::Basename.
- - web server
-
-The following optional Perl modules are required for extra features
- - Digest::MD5 - for gravatar support
- - CGI::Fast and FCGI - for running gitweb as FastCGI script
- - HTML::TagCloud - for fancy tag cloud in project list view
- - HTTP::Date or Time::ParseDate - to support If-Modified-Since for feeds
 
 
 Example web server configuration
