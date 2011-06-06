@@ -102,9 +102,7 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 		int changed;
 		unsigned dirty_submodule = 0;
 
-		if (DIFF_OPT_TST(&revs->diffopt, QUICK) &&
-		    !revs->diffopt.filter &&
-		    DIFF_OPT_TST(&revs->diffopt, HAS_CHANGES))
+		if (diff_can_quit_early(&revs->diffopt))
 			break;
 
 		if (!ce_path_match(ce, &revs->prune_data))

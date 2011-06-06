@@ -4456,6 +4456,13 @@ int diff_result_code(struct diff_options *opt, int status)
 	return result;
 }
 
+int diff_can_quit_early(struct diff_options *opt)
+{
+	return (DIFF_OPT_TST(opt, QUICK) &&
+		!opt->filter &&
+		DIFF_OPT_TST(opt, HAS_CHANGES));
+}
+
 /*
  * Shall changes to this submodule be ignored?
  *

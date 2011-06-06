@@ -67,4 +67,9 @@ test_expect_success 'diff-files --diff-filter --quiet' '
 	test_must_fail git diff-files --diff-filter=M --quiet
 '
 
+test_expect_success 'diff-tree --diff-filter --quiet' '
+	git commit -a -m "worktree state" &&
+	test_must_fail git diff-tree --diff-filter=M --quiet HEAD^ HEAD
+'
+
 test_done
