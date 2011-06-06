@@ -446,6 +446,13 @@ test_expect_success 'add should fail when path is used by an existing directory'
 	)
 '
 
+test_expect_success 'add should fail when path is relative but no url is set in the superproject' '
+	(
+		cd addtest &&
+		test_must_fail git submodule add ../repo relative
+	)
+'
+
 test_expect_success 'set up for relative path tests' '
 	mkdir reltest &&
 	(
