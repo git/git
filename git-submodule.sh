@@ -34,7 +34,7 @@ resolve_relative_url ()
 {
 	remote=$(get_default_remote)
 	remoteurl=$(git config "remote.$remote.url") ||
-		die "remote ($remote) does not have a url defined in .git/config"
+		remoteurl=$(pwd) # the repository is its own authoritative upstream
 	url="$1"
 	remoteurl=${remoteurl%/}
 	sep=/

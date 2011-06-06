@@ -78,7 +78,9 @@ to exist in the superproject. If <path> is not given, the
 <repository> is the URL of the new submodule's origin repository.
 This may be either an absolute URL, or (if it begins with ./
 or ../), the location relative to the superproject's origin
-repository.
+repository. If the superproject doesn't have an origin configured
+the superproject is its own authoritative upstream and the current
+working directory is used instead.
 +
 <path> is the relative location for the cloned submodule to
 exist in the superproject. If <path> does not exist, then the
