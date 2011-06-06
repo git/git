@@ -1116,14 +1116,31 @@ char **make_augmented_environ(const char *const *vars)
 }
 
 #undef getenv
+
+/*
+ * The system's getenv looks up the name in a case-insensitive manner.
+ * This version tries a case-sensitive lookup and falls back to
+ * case-insensitive if nothing was found.  This is necessary because,
+ * as a prominent example, CMD sets 'Path', but not 'PATH'.
+ * Warning: not thread-safe.
+ */
+static char *getenv_cs(const char *name)
+{
+	size_t len = strlen(name);
+	int i = lookup_env(environ, name, len);
+	if (i >= 0)
+		return environ[i] + len + 1;	/* skip past name and '=' */
+	return getenv(name);
+}
+
 char *mingw_getenv(const char *name)
 {
-	char *result = getenv(name);
+	char *result = getenv_cs(name);
 	if (!result && !strcmp(name, "TMPDIR")) {
 		/* on Windows it is TMP and TEMP */
-		result = getenv("TMP");
+		result = getenv_cs("TMP");
 		if (!result)
-			result = getenv("TEMP");
+			result = getenv_cs("TEMP");
 	}
 	return result;
 }
