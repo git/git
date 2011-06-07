@@ -896,7 +896,7 @@ struct ref *alloc_ref(const char *name)
 	return alloc_ref_with_prefix("", 0, name);
 }
 
-static struct ref *copy_ref(const struct ref *ref)
+struct ref *copy_ref(const struct ref *ref)
 {
 	struct ref *cpy;
 	size_t len;
