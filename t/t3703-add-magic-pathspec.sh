@@ -38,16 +38,16 @@ cat >expected <<EOF
 add 'sub/foo'
 EOF
 
-test_expect_success 'a file with the same (long) magic name exists' '
-	: >":(icase)ha" &&
-	test_must_fail git add -n ":(icase)ha" &&
-	git add -n "./:(icase)ha"
-'
-
 if mkdir ":" 2>/dev/null
 then
 	test_set_prereq COLON_DIR
 fi
+
+test_expect_success COLON_DIR 'a file with the same (long) magic name exists' '
+	: >":(icase)ha" &&
+	test_must_fail git add -n ":(icase)ha" &&
+	git add -n "./:(icase)ha"
+'
 
 test_expect_success COLON_DIR 'a file with the same (short) magic name exists' '
 	: >":/bar" &&
