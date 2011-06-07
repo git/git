@@ -58,18 +58,18 @@ test_expect_success 'cloned HEAD is detached' '
 	head_is_detached detached-history
 '
 
-test_expect_failure 'clone repo (orphan detached HEAD)' '
+test_expect_success 'clone repo (orphan detached HEAD)' '
 	git checkout master^0 &&
 	echo four >file &&
 	git commit -a -m four &&
 	git clone "file://$PWD" detached-orphan
 '
-test_expect_failure 'cloned HEAD matches' '
+test_expect_success 'cloned HEAD matches' '
 	echo four >expect &&
 	git --git-dir=detached-orphan/.git log -1 --format=%s >actual &&
 	test_cmp expect actual
 '
-test_expect_failure 'cloned HEAD is detached' '
+test_expect_success 'cloned HEAD is detached' '
 	head_is_detached detached-orphan
 '
 
