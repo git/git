@@ -784,16 +784,9 @@ int verify_path(const char *path)
 		if (is_dir_sep(c)) {
 inside:
 			c = *path++;
-			switch (c) {
-			default:
-				continue;
-			case '/': case '\0':
-				break;
-			case '.':
-				if (verify_dotfile(path))
-					continue;
-			}
-			return 0;
+			if ((c == '.' && !verify_dotfile(path)) ||
+			    is_dir_sep(c) || c == '\0')
+				return 0;
 		}
 		c = *path++;
 	}
