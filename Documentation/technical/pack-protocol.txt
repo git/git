@@ -179,18 +179,19 @@ and descriptions.
 
 Packfile Negotiation
 --------------------
-After reference and capabilities discovery, the client can decide
-to terminate the connection by sending a flush-pkt, telling the
-server it can now gracefully terminate (as happens with the ls-remote
-command) or it can enter the negotiation phase, where the client and
-server determine what the minimal packfile necessary for transport is.
+After reference and capabilities discovery, the client can decide to
+terminate the connection by sending a flush-pkt, telling the server it can
+now gracefully terminate, and disconnect, when it does not need any pack
+data. This can happen with the ls-remote command, and also can happen when
+the client already is up-to-date.
 
-Once the client has the initial list of references that the server
-has, as well as the list of capabilities, it will begin telling the
-server what objects it wants and what objects it has, so the server
-can make a packfile that only contains the objects that the client needs.
-The client will also send a list of the capabilities it wants to be in
-effect, out of what the server said it could do with the first 'want' line.
+Otherwise, it enters the negotiation phase, where the client and
+server determine what the minimal packfile necessary for transport is,
+by telling the server what objects it wants and what objects it has,
+so the server can make a packfile that only contains the objects that the
+client needs.  The client will also send a list of the capabilities it
+wants to be in effect, out of what the server said it could do with the
+first 'want' line.
 
 ----
   upload-request    =  want-list
@@ -219,8 +220,8 @@ If client is requesting a shallow clone, it will now send a 'deepen'
 line with the depth it is requesting.
 
 Once all the "want"s (and optional 'deepen') are transferred,
-clients MUST send a flush-pkt. If the client has all the references
-on the server, client flushes and disconnects.
+clients MUST send a flush-pkt, to tell the server side that it is
+done sending the list.
 
 TODO: shallow/unshallow response and document the deepen command in the ABNF.
 
