@@ -48,7 +48,7 @@ Updates since v1.7.5
    easier to parse.
 
  * Aborting "git commit --interactive" discards updates to the index
-   made during the interctive session.
+   made during the interactive session.
 
  * "git commit" learned a "--patch" option to directly jump to the
    per-hunk selection UI of the interactive mode.
@@ -68,6 +68,8 @@ Updates since v1.7.5
    it was up to the user to do this when using its output.
 
  * "git format-patch" can take an empty --subject-prefix now.
+
+ * "git grep" learned the "-P" option to take pcre regular expressions.
 
  * "git log" and friends learned a new "--notes" option to replace the
    "--show-notes" option.  Unlike "--show-notes", "--notes=<ref>" does
@@ -127,8 +129,14 @@ included in this release.
  * "git config" used to choke with an insanely long line.
    (merge ef/maint-strbuf-init later)
 
+ * "git diff --quiet" did not work well with --diff-filter.
+   (merge jk/diff-not-so-quick later)
+
+ * "git status -z" did not default to --porcelain output format.
+   (merge bc/maint-status-z-to-use-porcelain later)
+
 ---
 exec >/var/tmp/1
 echo O=$(git describe master)
-O=v1.7.5.3-365-g7eacc2b
+O=v1.7.6-rc1
 git shortlog --no-merges ^maint ^$O master
