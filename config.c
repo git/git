@@ -42,10 +42,8 @@ void git_config_push_parameter(const char *text)
 static int git_config_parse_parameter(const char *text,
 				      config_fn_t fn, void *data)
 {
-	struct strbuf tmp = STRBUF_INIT;
 	struct strbuf **pair;
-	strbuf_addstr(&tmp, text);
-	pair = strbuf_split_max(&tmp, '=', 2);
+	pair = strbuf_split_str(text, '=', 2);
 	if (!pair[0])
 		return error("bogus config parameter: %s", text);
 	if (pair[0]->len && pair[0]->buf[pair[0]->len - 1] == '=')
