@@ -875,6 +875,7 @@ static int fetch_one(struct remote *remote, int argc, const char **argv)
 {
 	int i;
 	static const char **refs = NULL;
+	struct refspec *refspec;
 	int ref_nr = 0;
 	int exit_code;
 
@@ -915,8 +916,9 @@ static int fetch_one(struct remote *remote, int argc, const char **argv)
 
 	sigchain_push_common(unlock_pack_on_signal);
 	atexit(unlock_pack);
-	exit_code = do_fetch(transport,
-			parse_fetch_refspec(ref_nr, refs), ref_nr);
+	refspec = parse_fetch_refspec(ref_nr, refs);
+	exit_code = do_fetch(transport, refspec, ref_nr);
+	free(refspec);
 	transport_disconnect(transport);
 	transport = NULL;
 	return exit_code;
