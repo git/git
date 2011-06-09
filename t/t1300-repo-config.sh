@@ -904,4 +904,10 @@ test_expect_success 'git -c works with aliases of builtins' '
 	test_cmp expect actual
 '
 
+test_expect_success 'git -c does not split values on equals' '
+	echo "value with = in it" >expect &&
+	git -c core.foo="value with = in it" config core.foo >actual &&
+	test_cmp expect actual
+'
+
 test_done
