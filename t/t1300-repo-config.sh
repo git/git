@@ -918,4 +918,8 @@ test_expect_success 'git -c complains about empty key' '
 	test_must_fail git -c "=foo" rev-parse
 '
 
+test_expect_success 'git -c complains about empty key and value' '
+	test_must_fail git -c "" rev-parse
+'
+
 test_done

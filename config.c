@@ -46,6 +46,8 @@ static int git_config_parse_parameter(const char *text,
 	struct strbuf **pair;
 	strbuf_addstr(&tmp, text);
 	pair = strbuf_split_max(&tmp, '=', 2);
+	if (!pair[0])
+		return error("bogus config parameter: %s", text);
 	if (pair[0]->len && pair[0]->buf[pair[0]->len - 1] == '=')
 		strbuf_setlen(pair[0], pair[0]->len - 1);
 	strbuf_trim(pair[0]);
