@@ -2644,7 +2644,7 @@ sub git_get_project_ctags {
 			close $ct;
 
 			(my $ctag = $tagfile) =~ s#.*/##;
-			if ($val =~ /\d+/) {
+			if ($val =~ /^\d+$/) {
 				$ctags->{$ctag} = $val;
 			} else {
 				$ctags->{$ctag} = 1;

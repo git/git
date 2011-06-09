@@ -644,6 +644,14 @@ test_expect_success \
 	'ctags: search projects by non existent tag' \
 	'gitweb_run "by_tag=non-existent"'
 
+test_expect_success \
+	'ctags: malformed tag weights' \
+	'mkdir -p .git/ctags &&
+	 echo "not-a-number" > .git/ctags/nan &&
+	 echo "not-a-number-2" > .git/ctags/nan2 &&
+	 echo "0.1" >.git/ctags/floating-point &&
+	 gitweb_run'
+
 # ----------------------------------------------------------------------
 # categories
 
