@@ -101,7 +101,7 @@ void strbuf_ltrim(struct strbuf *sb)
 	sb->buf[sb->len] = '\0';
 }
 
-struct strbuf **strbuf_split(const struct strbuf *sb, int delim)
+struct strbuf **strbuf_split_max(const struct strbuf *sb, int delim, int max)
 {
 	int alloc = 2, pos = 0;
 	char *n, *p;
@@ -112,7 +112,10 @@ struct strbuf **strbuf_split(const struct strbuf *sb, int delim)
 	p = n = sb->buf;
 	while (n < sb->buf + sb->len) {
 		int len;
-		n = memchr(n, delim, sb->len - (n - sb->buf));
+		if (max <= 0 || pos + 1 < max)
+			n = memchr(n, delim, sb->len - (n - sb->buf));
+		else
+			n = NULL;
 		if (pos + 1 >= alloc) {
 			alloc = alloc * 2;
 			ret = xrealloc(ret, sizeof(struct strbuf *) * alloc);
