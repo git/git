@@ -858,7 +858,7 @@ int git_config_early(config_fn_t fn, void *data, const char *repo_config)
 
 	switch (git_config_from_parameters(fn, data)) {
 	case -1: /* error */
-		ret--;
+		die("unable to parse command-line config");
 		break;
 	case 0: /* found nothing */
 		break;

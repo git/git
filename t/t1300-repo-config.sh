@@ -910,4 +910,12 @@ test_expect_success 'git -c does not split values on equals' '
 	test_cmp expect actual
 '
 
+test_expect_success 'git -c dies on bogus config' '
+	test_must_fail git -c core.bare=foo rev-parse
+'
+
+test_expect_success 'git -c complains about empty key' '
+	test_must_fail git -c "=foo" rev-parse
+'
+
 test_done
