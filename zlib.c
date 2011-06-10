@@ -4,58 +4,61 @@
  */
 #include "cache.h"
 
+static const char *zerr_to_string(int status)
+{
+	switch (status) {
+	case Z_MEM_ERROR:
+		return "out of memory";
+	case Z_VERSION_ERROR:
+		return "wrong version";
+	case Z_NEED_DICT:
+		return "needs dictionary";
+	case Z_DATA_ERROR:
+		return "data stream error";
+	case Z_STREAM_ERROR:
+		return "stream consistency error";
+	default:
+		return "unknown error";
+	}
+}
+
 void git_inflate_init(z_streamp strm)
 {
-	const char *err;
+	int status = inflateInit(strm);
 
-	switch (inflateInit(strm)) {
-	case Z_OK:
+	if (status == Z_OK)
 		return;
-
-	case Z_MEM_ERROR:
-		err = "out of memory";
-		break;
-	case Z_VERSION_ERROR:
-		err = "wrong version";
-		break;
-	default:
-		err = "error";
-	}
-	die("inflateInit: %s (%s)", err, strm->msg ? strm->msg : "no message");
+	die("inflateInit: %s (%s)", zerr_to_string(status),
+	    strm->msg ? strm->msg : "no message");
 }
 
 void git_inflate_end(z_streamp strm)
 {
-	if (inflateEnd(strm) != Z_OK)
-		error("inflateEnd: %s", strm->msg ? strm->msg : "failed");
+	int status = inflateEnd(strm);
+
+	if (status == Z_OK)
+		return;
+	error("inflateEnd: %s (%s)", zerr_to_string(status),
+	      strm->msg ? strm->msg : "no message");
 }
 
 int git_inflate(z_streamp strm, int flush)
 {
-	int ret = inflate(strm, flush);
-	const char *err;
+	int status = inflate(strm, flush);
 
-	switch (ret) {
-	/* Out of memory is fatal. */
-	case Z_MEM_ERROR:
-		die("inflate: out of memory");
-
-	/* Data corruption errors: we may want to recover from them (fsck) */
-	case Z_NEED_DICT:
-		err = "needs dictionary"; break;
-	case Z_DATA_ERROR:
-		err = "data stream error"; break;
-	case Z_STREAM_ERROR:
-		err = "stream consistency error"; break;
-	default:
-		err = "unknown error"; break;
-
+	switch (status) {
 	/* Z_BUF_ERROR: normal, needs more space in the output buffer */
 	case Z_BUF_ERROR:
 	case Z_OK:
 	case Z_STREAM_END:
-		return ret;
+		return status;
+
+	case Z_MEM_ERROR:
+		die("inflate: out of memory");
+	default:
+		break;
 	}
-	error("inflate: %s (%s)", err, strm->msg ? strm->msg : "no message");
-	return ret;
+	error("inflate: %s (%s)", zerr_to_string(status),
+	      strm->msg ? strm->msg : "no message");
+	return status;
 }
