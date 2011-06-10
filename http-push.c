@@ -360,7 +360,7 @@ static void start_put(struct transfer_request *request)
 	/* Set it up */
 	memset(&stream, 0, sizeof(stream));
 	git_deflate_init(&stream, zlib_compression_level);
-	size = deflateBound(&stream, len + hdrlen);
+	size = git_deflate_bound(&stream, len + hdrlen);
 	strbuf_init(&request->buffer.buf, size);
 	request->buffer.posn = 0;
 

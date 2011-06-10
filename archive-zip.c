@@ -97,7 +97,7 @@ static void *zlib_deflate(void *data, unsigned long size,
 
 	memset(&stream, 0, sizeof(stream));
 	git_deflate_init(&stream, compression_level);
-	maxsize = deflateBound(&stream, size);
+	maxsize = git_deflate_bound(&stream, size);
 	buffer = xmalloc(maxsize);
 
 	stream.next_in = data;

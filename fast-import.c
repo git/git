@@ -1058,7 +1058,7 @@ static int store_object(
 		s.next_in = (void *)dat->buf;
 		s.avail_in = dat->len;
 	}
-	s.avail_out = deflateBound(&s, s.avail_in);
+	s.avail_out = git_deflate_bound(&s, s.avail_in);
 	s.next_out = out = xmalloc(s.avail_out);
 	while (git_deflate(&s, Z_FINISH) == Z_OK)
 		; /* nothing */
@@ -1081,7 +1081,7 @@ static int store_object(
 			git_deflate_init(&s, pack_compression_level);
 			s.next_in = (void *)dat->buf;
 			s.avail_in = dat->len;
-			s.avail_out = deflateBound(&s, s.avail_in);
+			s.avail_out = git_deflate_bound(&s, s.avail_in);
 			s.next_out = out = xrealloc(out, s.avail_out);
 			while (git_deflate(&s, Z_FINISH) == Z_OK)
 				; /* nothing */

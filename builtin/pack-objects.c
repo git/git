@@ -132,7 +132,7 @@ static unsigned long do_compress(void **pptr, unsigned long size)
 
 	memset(&stream, 0, sizeof(stream));
 	git_deflate_init(&stream, pack_compression_level);
-	maxsize = deflateBound(&stream, size);
+	maxsize = git_deflate_bound(&stream, size);
 
 	in = *pptr;
 	out = xmalloc(maxsize);

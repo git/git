@@ -476,7 +476,7 @@ static int post_rpc(struct rpc_state *rpc)
 
 		memset(&stream, 0, sizeof(stream));
 		git_deflate_init_gzip(&stream, Z_BEST_COMPRESSION);
-		size = deflateBound(&stream, rpc->len);
+		size = git_deflate_bound(&stream, rpc->len);
 		gzip_body = xmalloc(size);
 
 		stream.next_in = (unsigned char *)rpc->buf;

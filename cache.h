@@ -16,9 +16,6 @@
 #endif
 
 #include <zlib.h>
-#if defined(NO_DEFLATE_BOUND) || ZLIB_VERNUM < 0x1200
-#define deflateBound(c,s)  ((s) + (((s) + 7) >> 3) + (((s) + 63) >> 6) + 11)
-#endif
 
 void git_inflate_init(z_streamp strm);
 void git_inflate_init_gzip_only(z_streamp strm);
@@ -30,6 +27,7 @@ void git_deflate_init_gzip(z_streamp strm, int level);
 void git_deflate_end(z_streamp strm);
 int git_deflate_end_gently(z_streamp strm);
 int git_deflate(z_streamp strm, int flush);
+unsigned long git_deflate_bound(z_streamp, unsigned long);
 
 #if defined(DT_UNKNOWN) && !defined(NO_D_TYPE_IN_DIRENT)
 #define DTYPE(de)	((de)->d_type)

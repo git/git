@@ -78,6 +78,15 @@ int git_inflate(z_streamp strm, int flush)
 	return status;
 }
 
+#if defined(NO_DEFLATE_BOUND) || ZLIB_VERNUM < 0x1200
+#define deflateBound(c,s)  ((s) + (((s) + 7) >> 3) + (((s) + 63) >> 6) + 11)
+#endif
+
+unsigned long git_deflate_bound(z_streamp strm, unsigned long size)
+{
+	return deflateBound(strm, size);
+}
+
 void git_deflate_init(z_streamp strm, int level)
 {
 	int status = deflateInit(strm, level);
