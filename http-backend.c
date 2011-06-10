@@ -296,7 +296,7 @@ static void inflate_request(const char *prog_name, int out)
 			stream.next_out = out_buf;
 			stream.avail_out = sizeof(out_buf);
 
-			ret = inflate(&stream, Z_NO_FLUSH);
+			ret = git_inflate(&stream, Z_NO_FLUSH);
 			if (ret != Z_OK && ret != Z_STREAM_END)
 				die("zlib error inflating request, result %d", ret);
 
@@ -311,7 +311,7 @@ static void inflate_request(const char *prog_name, int out)
 	}
 
 done:
-	inflateEnd(&stream);
+	git_inflate_end(&stream);
 	close(out);
 }
 
