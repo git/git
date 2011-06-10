@@ -27,12 +27,11 @@ static const char *zerr_to_string(int status)
  * limits the size of the buffer we can use to 4GB when interacting
  * with zlib in a single call to inflate/deflate.
  */
-#define ZLIB_BUF_MAX ((uInt)-1)
+/* #define ZLIB_BUF_MAX ((uInt)-1) */
+#define ZLIB_BUF_MAX ((uInt) 1024 * 1024 * 1024) /* 1GB */
 static inline uInt zlib_buf_cap(unsigned long len)
 {
-	if (ZLIB_BUF_MAX < len)
-		die("working buffer for zlib too large");
-	return len;
+	return (ZLIB_BUF_MAX < len) ? ZLIB_BUF_MAX : len;
 }
 
 static void zlib_pre_call(git_zstream *s)
@@ -47,12 +46,22 @@ static void zlib_pre_call(git_zstream *s)
 
 static void zlib_post_call(git_zstream *s)
 {
+	unsigned long bytes_consumed;
+	unsigned long bytes_produced;
+
+	bytes_consumed = s->z.next_in - s->next_in;
+	bytes_produced = s->z.next_out - s->next_out;
+	if (s->z.total_out != s->total_out + bytes_produced)
+		die("BUG: total_out mismatch");
+	if (s->z.total_in != s->total_in + bytes_consumed)
+		die("BUG: total_in mismatch");
+
+	s->total_out = s->z.total_out;
+	s->total_in = s->z.total_in;
 	s->next_in = s->z.next_in;
 	s->next_out = s->z.next_out;
-	s->total_in = s->z.total_in;
-	s->total_out = s->z.total_out;
-	s->avail_in = s->z.avail_in;
-	s->avail_out = s->z.avail_out;
+	s->avail_in -= bytes_consumed;
+	s->avail_out -= bytes_produced;
 }
 
 void git_inflate_init(git_zstream *strm)
@@ -103,18 +112,32 @@ int git_inflate(git_zstream *strm, int flush)
 {
 	int status;
 
-	zlib_pre_call(strm);
-	status = inflate(&strm->z, flush);
-	zlib_post_call(strm);
+	for (;;) {
+		zlib_pre_call(strm);
+		/* Never say Z_FINISH unless we are feeding everything */
+		status = inflate(&strm->z,
+				 (strm->z.avail_in != strm->avail_in)
+				 ? 0 : flush);
+		if (status == Z_MEM_ERROR)
+			die("inflate: out of memory");
+		zlib_post_call(strm);
+
+		/*
+		 * Let zlib work another round, while we can still
+		 * make progress.
+		 */
+		if ((strm->avail_out && !strm->z.avail_out) &&
+		    (status == Z_OK || status == Z_BUF_ERROR))
+			continue;
+		break;
+	}
+
 	switch (status) {
 	/* Z_BUF_ERROR: normal, needs more space in the output buffer */
 	case Z_BUF_ERROR:
 	case Z_OK:
 	case Z_STREAM_END:
 		return status;
-
-	case Z_MEM_ERROR:
-		die("inflate: out of memory");
 	default:
 		break;
 	}
@@ -192,18 +215,33 @@ int git_deflate(git_zstream *strm, int flush)
 {
 	int status;
 
-	zlib_pre_call(strm);
-	status = deflate(&strm->z, flush);
-	zlib_post_call(strm);
+	for (;;) {
+		zlib_pre_call(strm);
+
+		/* Never say Z_FINISH unless we are feeding everything */
+		status = deflate(&strm->z,
+				 (strm->z.avail_in != strm->avail_in)
+				 ? 0 : flush);
+		if (status == Z_MEM_ERROR)
+			die("deflate: out of memory");
+		zlib_post_call(strm);
+
+		/*
+		 * Let zlib work another round, while we can still
+		 * make progress.
+		 */
+		if ((strm->avail_out && !strm->z.avail_out) &&
+		    (status == Z_OK || status == Z_BUF_ERROR))
+			continue;
+		break;
+	}
+
 	switch (status) {
 	/* Z_BUF_ERROR: normal, needs more space in the output buffer */
 	case Z_BUF_ERROR:
 	case Z_OK:
 	case Z_STREAM_END:
 		return status;
-
-	case Z_MEM_ERROR:
-		die("deflate: out of memory");
 	default:
 		break;
 	}
