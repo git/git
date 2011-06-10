@@ -21,6 +21,7 @@
 #endif
 
 void git_inflate_init(z_streamp strm);
+void git_inflate_init_gzip_only(z_streamp strm);
 void git_inflate_end(z_streamp strm);
 int git_inflate(z_streamp strm, int flush);
 

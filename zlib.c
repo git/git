@@ -32,6 +32,21 @@ void git_inflate_init(z_streamp strm)
 	    strm->msg ? strm->msg : "no message");
 }
 
+void git_inflate_init_gzip_only(z_streamp strm)
+{
+	/*
+	 * Use default 15 bits, +16 is to accept only gzip and to
+	 * yield Z_DATA_ERROR when fed zlib format.
+	 */
+	const int windowBits = 15 + 16;
+	int status = inflateInit2(strm, windowBits);
+
+	if (status == Z_OK)
+		return;
+	die("inflateInit2: %s (%s)", zerr_to_string(status),
+	    strm->msg ? strm->msg : "no message");
+}
+
 void git_inflate_end(z_streamp strm)
 {
 	int status = inflateEnd(strm);
