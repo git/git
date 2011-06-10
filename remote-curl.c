@@ -471,7 +471,7 @@ static int post_rpc(struct rpc_state *rpc)
 		 * the transfer time.
 		 */
 		size_t size;
-		z_stream stream;
+		git_zstream stream;
 		int ret;
 
 		memset(&stream, 0, sizeof(stream));

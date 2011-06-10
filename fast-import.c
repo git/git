@@ -1017,7 +1017,7 @@ static int store_object(
 	unsigned char sha1[20];
 	unsigned long hdrlen, deltalen;
 	git_SHA_CTX c;
-	z_stream s;
+	git_zstream s;
 
 	hdrlen = sprintf((char *)hdr,"%s %lu", typename(type),
 		(unsigned long)dat->len) + 1;
@@ -1163,7 +1163,7 @@ static void stream_blob(uintmax_t len, unsigned char *sha1out, uintmax_t mark)
 	off_t offset;
 	git_SHA_CTX c;
 	git_SHA_CTX pack_file_ctx;
-	z_stream s;
+	git_zstream s;
 	int status = Z_OK;
 
 	/* Determine if we should auto-checkpoint. */

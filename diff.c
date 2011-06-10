@@ -1729,7 +1729,7 @@ static unsigned char *deflate_it(char *data,
 {
 	int bound;
 	unsigned char *deflated;
-	z_stream stream;
+	git_zstream stream;
 
 	memset(&stream, 0, sizeof(stream));
 	git_deflate_init(&stream, zlib_compression_level);

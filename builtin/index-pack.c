@@ -265,7 +265,7 @@ static void unlink_base_data(struct base_data *c)
 static void *unpack_entry_data(unsigned long offset, unsigned long size)
 {
 	int status;
-	z_stream stream;
+	git_zstream stream;
 	void *buf = xmalloc(size);
 
 	memset(&stream, 0, sizeof(stream));
@@ -355,7 +355,7 @@ static void *get_data_from_pack(struct object_entry *obj)
 	off_t from = obj[0].idx.offset + obj[0].hdr_size;
 	unsigned long len = obj[1].idx.offset - from;
 	unsigned char *data, *inbuf;
-	z_stream stream;
+	git_zstream stream;
 	int status;
 
 	data = xmalloc(obj->size);
@@ -666,7 +666,7 @@ static void parse_pack_objects(unsigned char *sha1)
 
 static int write_compressed(struct sha1file *f, void *in, unsigned int size)
 {
-	z_stream stream;
+	git_zstream stream;
 	int status;
 	unsigned char outbuf[4096];
 

@@ -352,7 +352,7 @@ static void start_put(struct transfer_request *request)
 	unsigned long len;
 	int hdrlen;
 	ssize_t size;
-	z_stream stream;
+	git_zstream stream;
 
 	unpacked = read_sha1_file(request->obj->sha1, &type, &len);
 	hdrlen = sprintf(hdr, "%s %lu", typename(type), len) + 1;

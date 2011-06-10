@@ -833,7 +833,7 @@ static int in_window(struct pack_window *win, off_t offset)
 unsigned char *use_pack(struct packed_git *p,
 		struct pack_window **w_cursor,
 		off_t offset,
-		unsigned int *left)
+		unsigned long *left)
 {
 	struct pack_window *win = *w_cursor;
 
@@ -1244,7 +1244,7 @@ unsigned long unpack_object_header_buffer(const unsigned char *buf,
 	return used;
 }
 
-static int unpack_sha1_header(z_stream *stream, unsigned char *map, unsigned long mapsize, void *buffer, unsigned long bufsiz)
+static int unpack_sha1_header(git_zstream *stream, unsigned char *map, unsigned long mapsize, void *buffer, unsigned long bufsiz)
 {
 	unsigned long size, used;
 	static const char valid_loose_object_type[8] = {
@@ -1291,7 +1291,7 @@ static int unpack_sha1_header(z_stream *stream, unsigned char *map, unsigned lon
 	return 0;
 }
 
-static void *unpack_sha1_rest(z_stream *stream, void *buffer, unsigned long size, const unsigned char *sha1)
+static void *unpack_sha1_rest(git_zstream *stream, void *buffer, unsigned long size, const unsigned char *sha1)
 {
 	int bytes = strlen(buffer) + 1;
 	unsigned char *buf = xmallocz(size);
@@ -1390,7 +1390,7 @@ static int parse_sha1_header(const char *hdr, unsigned long *sizep)
 static void *unpack_sha1_file(void *map, unsigned long mapsize, enum object_type *type, unsigned long *size, const unsigned char *sha1)
 {
 	int ret;
-	z_stream stream;
+	git_zstream stream;
 	char hdr[8192];
 
 	ret = unpack_sha1_header(&stream, map, mapsize, hdr, sizeof(hdr));
@@ -1406,7 +1406,7 @@ unsigned long get_size_from_delta(struct packed_git *p,
 {
 	const unsigned char *data;
 	unsigned char delta_head[20], *in;
-	z_stream stream;
+	git_zstream stream;
 	int st;
 
 	memset(&stream, 0, sizeof(stream));
@@ -1528,7 +1528,7 @@ static int unpack_object_header(struct packed_git *p,
 				unsigned long *sizep)
 {
 	unsigned char *base;
-	unsigned int left;
+	unsigned long left;
 	unsigned long used;
 	enum object_type type;
 
@@ -1641,7 +1641,7 @@ static void *unpack_compressed_entry(struct packed_git *p,
 				    unsigned long size)
 {
 	int st;
-	z_stream stream;
+	git_zstream stream;
 	unsigned char *buffer, *in;
 
 	buffer = xmallocz(size);
@@ -2074,7 +2074,7 @@ static int sha1_loose_object_info(const unsigned char *sha1, unsigned long *size
 	int status;
 	unsigned long mapsize, size;
 	void *map;
-	z_stream stream;
+	git_zstream stream;
 	char hdr[32];
 
 	map = map_sha1_file(sha1, &mapsize);
@@ -2425,7 +2425,7 @@ static int write_loose_object(const unsigned char *sha1, char *hdr, int hdrlen,
 {
 	int fd, ret;
 	unsigned char compressed[4096];
-	z_stream stream;
+	git_zstream stream;
 	git_SHA_CTX c;
 	unsigned char parano_sha1[20];
 	char *filename;

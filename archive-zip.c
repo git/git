@@ -90,7 +90,7 @@ static void copy_le32(unsigned char *dest, unsigned int n)
 static void *zlib_deflate(void *data, unsigned long size,
 		int compression_level, unsigned long *compressed_size)
 {
-	z_stream stream;
+	git_zstream stream;
 	unsigned long maxsize;
 	void *buffer;
 	int result;
