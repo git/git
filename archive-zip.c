@@ -96,7 +96,7 @@ static void *zlib_deflate(void *data, unsigned long size,
 	int result;
 
 	memset(&stream, 0, sizeof(stream));
-	deflateInit(&stream, compression_level);
+	git_deflate_init(&stream, compression_level);
 	maxsize = deflateBound(&stream, size);
 	buffer = xmalloc(maxsize);
 
@@ -106,7 +106,7 @@ static void *zlib_deflate(void *data, unsigned long size,
 	stream.avail_out = maxsize;
 
 	do {
-		result = deflate(&stream, Z_FINISH);
+		result = git_deflate(&stream, Z_FINISH);
 	} while (result == Z_OK);
 
 	if (result != Z_STREAM_END) {
@@ -114,7 +114,7 @@ static void *zlib_deflate(void *data, unsigned long size,
 		return NULL;
 	}
 
-	deflateEnd(&stream);
+	git_deflate_end(&stream);
 	*compressed_size = stream.total_out;
 
 	return buffer;

@@ -25,6 +25,12 @@ void git_inflate_init_gzip_only(z_streamp strm);
 void git_inflate_end(z_streamp strm);
 int git_inflate(z_streamp strm, int flush);
 
+void git_deflate_init(z_streamp strm, int level);
+void git_deflate_init_gzip(z_streamp strm, int level);
+void git_deflate_end(z_streamp strm);
+int git_deflate_end_gently(z_streamp strm);
+int git_deflate(z_streamp strm, int flush);
+
 #if defined(DT_UNKNOWN) && !defined(NO_D_TYPE_IN_DIRENT)
 #define DTYPE(de)	((de)->d_type)
 #else

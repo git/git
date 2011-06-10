@@ -359,7 +359,7 @@ static void start_put(struct transfer_request *request)
 
 	/* Set it up */
 	memset(&stream, 0, sizeof(stream));
-	deflateInit(&stream, zlib_compression_level);
+	git_deflate_init(&stream, zlib_compression_level);
 	size = deflateBound(&stream, len + hdrlen);
 	strbuf_init(&request->buffer.buf, size);
 	request->buffer.posn = 0;
@@ -371,15 +371,15 @@ static void start_put(struct transfer_request *request)
 	/* First header.. */
 	stream.next_in = (void *)hdr;
 	stream.avail_in = hdrlen;
-	while (deflate(&stream, 0) == Z_OK)
-		/* nothing */;
+	while (git_deflate(&stream, 0) == Z_OK)
+		; /* nothing */
 
 	/* Then the data itself.. */
 	stream.next_in = unpacked;
 	stream.avail_in = len;
-	while (deflate(&stream, Z_FINISH) == Z_OK)
-		/* nothing */;
-	deflateEnd(&stream);
+	while (git_deflate(&stream, Z_FINISH) == Z_OK)
+		; /* nothing */
+	git_deflate_end(&stream);
 	free(unpacked);
 
 	request->buffer.buf.len = stream.total_out;

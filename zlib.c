@@ -77,3 +77,65 @@ int git_inflate(z_streamp strm, int flush)
 	      strm->msg ? strm->msg : "no message");
 	return status;
 }
+
+void git_deflate_init(z_streamp strm, int level)
+{
+	int status = deflateInit(strm, level);
+
+	if (status == Z_OK)
+		return;
+	die("deflateInit: %s (%s)", zerr_to_string(status),
+	    strm->msg ? strm->msg : "no message");
+}
+
+void git_deflate_init_gzip(z_streamp strm, int level)
+{
+	/*
+	 * Use default 15 bits, +16 is to generate gzip header/trailer
+	 * instead of the zlib wrapper.
+	 */
+	const int windowBits = 15 + 16;
+	int status = deflateInit2(strm, level,
+				  Z_DEFLATED, windowBits,
+				  8, Z_DEFAULT_STRATEGY);
+	if (status == Z_OK)
+		return;
+	die("deflateInit2: %s (%s)", zerr_to_string(status),
+	    strm->msg ? strm->msg : "no message");
+}
+
+void git_deflate_end(z_streamp strm)
+{
+	int status = deflateEnd(strm);
+
+	if (status == Z_OK)
+		return;
+	error("deflateEnd: %s (%s)", zerr_to_string(status),
+	      strm->msg ? strm->msg : "no message");
+}
+
+int git_deflate_end_gently(z_streamp strm)
+{
+	return deflateEnd(strm);
+}
+
+int git_deflate(z_streamp strm, int flush)
+{
+	int status = deflate(strm, flush);
+
+	switch (status) {
+	/* Z_BUF_ERROR: normal, needs more space in the output buffer */
+	case Z_BUF_ERROR:
+	case Z_OK:
+	case Z_STREAM_END:
+		return status;
+
+	case Z_MEM_ERROR:
+		die("deflate: out of memory");
+	default:
+		break;
+	}
+	error("deflate: %s (%s)", zerr_to_string(status),
+	      strm->msg ? strm->msg : "no message");
+	return status;
+}

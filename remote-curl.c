@@ -475,11 +475,7 @@ static int post_rpc(struct rpc_state *rpc)
 		int ret;
 
 		memset(&stream, 0, sizeof(stream));
-		ret = deflateInit2(&stream, Z_BEST_COMPRESSION,
-				Z_DEFLATED, (15 + 16),
-				8, Z_DEFAULT_STRATEGY);
-		if (ret != Z_OK)
-			die("cannot deflate request; zlib init error %d", ret);
+		git_deflate_init_gzip(&stream, Z_BEST_COMPRESSION);
 		size = deflateBound(&stream, rpc->len);
 		gzip_body = xmalloc(size);
 
@@ -488,11 +484,11 @@ static int post_rpc(struct rpc_state *rpc)
 		stream.next_out = (unsigned char *)gzip_body;
 		stream.avail_out = size;
 
-		ret = deflate(&stream, Z_FINISH);
+		ret = git_deflate(&stream, Z_FINISH);
 		if (ret != Z_STREAM_END)
 			die("cannot deflate request; zlib deflate error %d", ret);
 
-		ret = deflateEnd(&stream);
+		ret = git_deflate_end_gently(&stream);
 		if (ret != Z_OK)
 			die("cannot deflate request; zlib end error %d", ret);
 

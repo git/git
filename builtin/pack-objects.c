@@ -131,7 +131,7 @@ static unsigned long do_compress(void **pptr, unsigned long size)
 	unsigned long maxsize;
 
 	memset(&stream, 0, sizeof(stream));
-	deflateInit(&stream, pack_compression_level);
+	git_deflate_init(&stream, pack_compression_level);
 	maxsize = deflateBound(&stream, size);
 
 	in = *pptr;
@@ -142,9 +142,9 @@ static unsigned long do_compress(void **pptr, unsigned long size)
 	stream.avail_in = size;
 	stream.next_out = out;
 	stream.avail_out = maxsize;
-	while (deflate(&stream, Z_FINISH) == Z_OK)
+	while (git_deflate(&stream, Z_FINISH) == Z_OK)
 		; /* nothing */
-	deflateEnd(&stream);
+	git_deflate_end(&stream);
 
 	free(in);
 	return stream.total_out;
