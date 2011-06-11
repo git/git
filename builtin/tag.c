@@ -25,6 +25,8 @@ static const char * const git_tag_usage[] = {
 
 static char signingkey[1000];
 
+static int core_clock_skew = -1;
+
 struct tag_filter {
 	const char *pattern;
 	int lines;
@@ -42,7 +44,8 @@ static int in_commit_list(const struct commit_list *want, struct commit *c)
 }
 
 static int contains_recurse(struct commit *candidate,
-			    const struct commit_list *want)
+			    const struct commit_list *want,
+			    unsigned long cutoff)
 {
 	struct commit_list *p;
 
@@ -59,9 +62,13 @@ static int contains_recurse(struct commit *candidate,
 	if (parse_commit(candidate) < 0)
 		return 0;
 
+	/* stop searching if we go too far back in time */
+	if (candidate->date < cutoff)
+		return 0;
+
 	/* Otherwise recurse and mark ourselves for future traversals. */
 	for (p = candidate->parents; p; p = p->next) {
-		if (contains_recurse(p->item, want)) {
+		if (contains_recurse(p->item, want, cutoff)) {
 			candidate->object.flags |= TMP_MARK;
 			return 1;
 		}
@@ -72,7 +79,22 @@ static int contains_recurse(struct commit *candidate,
 
 static int contains(struct commit *candidate, const struct commit_list *want)
 {
-	return contains_recurse(candidate, want);
+	unsigned long cutoff = 0;
+
+	if (core_clock_skew >= 0) {
+		const struct commit_list *c;
+		unsigned long min_date = ULONG_MAX;
+		for (c = want; c; c = c->next) {
+			if (parse_commit(c->item) < 0)
+				continue;
+			if (c->item->date < min_date)
+				min_date = c->item->date;
+		}
+		if (min_date > core_clock_skew)
+			cutoff = min_date - core_clock_skew;
+	}
+
+	return contains_recurse(candidate, want, cutoff);
 }
 
 static int show_reference(const char *refname, const unsigned char *sha1,
@@ -276,6 +298,14 @@ static int git_tag_config(const char *var, const char *value, void *cb)
 		if (!value)
 			return config_error_nonbool(var);
 		set_signingkey(value);
+		return 0;
+	}
+
+	if (!strcmp(var, "core.clockskew")) {
+		if (!value || !strcmp(value, "none"))
+			core_clock_skew = -1;
+		else
+			core_clock_skew = git_config_int(var, value);
 		return 0;
 	}
 
