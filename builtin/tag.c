@@ -25,7 +25,7 @@ static const char * const git_tag_usage[] = {
 
 static char signingkey[1000];
 
-static int core_clock_skew = -1;
+static int core_clock_skew = 86400;
 
 struct tag_filter {
 	const char *pattern;
