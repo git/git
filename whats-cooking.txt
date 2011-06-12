@@ -1,70 +1,90 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jun 2011, #01; Sun, 5)
-X-master-at: a6605d76cdad37ed3c55a7be4d2e0af0f4721bb2
-X-next-at: 697f9d23c6a32d612282fa77d5a526ad9a9ae192
+Subject: What's cooking in git.git (Jun 2011, #02; Sat, 11)
+X-master-at: 2c162b56f370f5c33e6a945e6922d598006c5ec4
+X-next-at: 195f74cadbc9ad92fd15cd612a02206a4353fa30
 
-What's cooking in git.git (Jun 2011, #01; Sun, 5)
+What's cooking in git.git (Jun 2011, #02; Sat, 11)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' while commits prefixed with '+' are in 'next'.
 
-We will be in the feature freeze, and 1.7.6-rc1 will be tagged in a few
-days. Unless it is a very obviously correct fix to trivial bug (either
-code or documentation), nothing other than regression fixes will graduate
-to "master".
-
-Subsystem people are asked to kindly give pull requests to me.
+Will tag 1.7.6-rc2 sometime next week.
 
 --------------------------------------------------
 [New Topics]
 
-* js/ref-namespaces (2011-06-05) 4 commits
- - ref namespaces: documentation
- - ref namespaces: support remote repositories via upload-pack and receive-pack
- - ref namespaces: infrastructure
- - Fix prefix handling in ref iteration functions
+* js/i18n-windows (2011-06-06) 3 commits
+  (merged to 'next' on 2011-06-06 at d8c4ba3)
+ + Windows: teach getenv to do a case-sensitive search
+ + mingw.c: move definition of mingw_getenv down
+ + sh-i18n--envsubst: do not crash when no arguments are given
 
-Fairly involved feature enhancement, and breaks tests when merged to 'pu'.
+Looked sane but will wait for msysgit folks to take a look.
 Not urgent. Will not merge before 1.7.6.
 
-* db/http-cookies (2011-06-03) 1 commit
- - http: pass http.cookiefile using CURLOPT_COOKIEFILE
+* an/shallow-doc (2011-06-08) 2 commits
+ - Document the underlying protocol used by shallow repositories and --depth commands.
+ - Fix documentation of fetch-pack that implies that the client can disconnect after sending wants.
 
-Fairly trivial enhancement.
-Not urgent. Will not merge before 1.7.6.
+Waiting for a review, but looked sensible.
 
-* jc/maint-1.7.3-checkout-describe (2011-06-05) 1 commit
- - checkout -b <name>: correctly detect existing branch
+* jc/legacy-loose-object (2011-06-08) 1 commit
+ - sha1_file.c: "legacy" is really the current format
 
-Fairly trivial bugfix.
-Not urgent. Will not merge before 1.7.6.
+* jc/zlib-wrap (2011-06-10) 7 commits
+ - zlib: allow feeding more than 4GB in one go
+ - zlib: zlib can only process 4GB at a time
+ - zlib: wrap deflateBound() too
+ - zlib: wrap deflate side of the API
+ - zlib: wrap inflateInit2 used to accept only for gzip format
+ - zlib: wrap remaining calls to direct inflate/inflateEnd
+ - zlib wrapper: refactor error message formatter
 
-* jk/clone-detached (2011-06-05) 4 commits
- - remote-testgit: short-term fix to allow t5800 pass
- - clone: always fetch remote HEAD
- - consider only branches in guess_remote_head
- - t: add tests for cloning remotes with detached HEAD
+This replaces the earlier attempt to deal with the mismatch between our
+expectation and what zlib API actually offers piecemeal.
 
-Somewhat involved bugfix.
-Not urgent. Will not merge before 1.7.6.
+* jk/clone-cmdline-config (2011-06-11) 10 commits
+ - clone: accept config options on the command line
+ - config: make git_config_parse_parameter a public function
+ - remote: use new OPT_STRING_LIST
+ - parse-options: add OPT_STRING_LIST helper
+ - config: use strbuf_split_str instead of a temporary strbuf
+ - strbuf: allow strbuf_split to work on non-strbufs
+ - config: avoid segfault when parsing command-line config
+ - config: die on error in command-line config
+ - fix "git -c" parsing of values with equals signs
+ - strbuf_split: add a max parameter
 
-* jk/maint-1.7.2-status-ignored (2011-06-02) 2 commits
-  (merged to 'next' on 2011-06-02 at 8626cc6)
- + git status --ignored: tests and docs
- + status: fix bug with missing --ignore files
+* jk/tag-contains-ab (2011-06-11) 4 commits
+ - Why is "git tag --contains" so slow?
+ - default core.clockskew variable to one day
+ - limit "contains" traversals based on commit timestamp
+ - tag: speed up --contains calculation
 
-Fairly trivial bugfix.
-Not urgent. Will not merge before 1.7.6.
+* jk/transport-helper-fix (2011-06-07) 8 commits
+ - git_remote_helpers: push all refs during a non-local export
+ - transport-helper: don't feed bogus refs to export push
+ - teach remote-testgit to import multiple refs
+ - teach remote-testgit to import non-HEAD refs
+ - t5800: document some non-functional parts of remote helpers
+ - t5800: factor out some ref tests
+ - git-remote-testgit: exit gracefully after push
+ - transport-helper: fix minor leak in push_refs_with_export
 
-* jl/submodule-add-relurl-wo-upstream (2011-06-05) 1 commit
- - submodule add: improve message when resolving a relative url fails
+--------------------------------------------------
+[Graduated to "master"]
 
-This is just a message change without loosening a seemingly overtight
-restriction in the code. It might turn out to be a good idea to loosen
-the check.
+* bc/maint-status-z-to-use-porcelain (2011-05-29) 2 commits
+  (merged to 'next' on 2011-06-01 at 4f44a91)
+ + builtin/commit.c: set status_format _after_ option parsing
+ + t7508: demonstrate status's failure to use --porcelain format with -z
 
-Not urgent. Will not merge before 1.7.6.
+* jk/diff-not-so-quick (2011-05-31) 2 commits
+  (merged to 'next' on 2011-06-01 at 5f66784)
+ + diff: futureproof "stop feeding the backend early" logic
+ + diff_tree: disable QUICK optimization with diff filter
+ (this branch is used by jc/diff-index-quick-exit-early.)
 
 * jn/gitweb-docs (2011-06-03) 3 commits
   (merged to 'next' on 2011-06-05 at 691c7e6)
@@ -73,32 +93,29 @@ Not urgent. Will not merge before 1.7.6.
  + gitweb: Describe CSSMIN and JSMIN in gitweb/INSTALL
  + gitweb: Move information about installation from README to INSTALL
 
-Should be safe.
-Will merge to "master" before 1.7.6-rc1.
-
 * jn/mime-type-with-params (2011-06-05) 1 commit
   (merged to 'next' on 2011-06-05 at 697f9d2)
  + gitweb: Fix usability of $prevent_xss
 
-Will merge to "master" before 1.7.6-rc1.
-
-* rs/grep-color (2011-06-05) 3 commits
- - grep: add --heading
- - grep: add --break
- - grep: fix coloring of hunk marks between files
-
-Fairly straightforward feature enhancement.
-Not urgent. Will not merge before 1.7.6.
-
 --------------------------------------------------
 [Stalled]
+
+* js/ref-namespaces (2011-06-07) 4 commits
+ . ref namespaces: documentation
+ . ref namespaces: support remote repositories via upload-pack and receive-pack
+ . ref namespaces: infrastructure
+ . Fix prefix handling in ref iteration functions
+
+Fairly involved feature enhancement, and breaks tests when merged to 'pu'.
+Not urgent. Will not merge before 1.7.6.
 
 * jk/maint-merge-rename-create (2011-03-25) 3 commits
  - merge: turn on rewrite detection
  - merge: handle renames with replacement content
  - t3030: fix accidental success in symlink rename
 
-Peff wanted to reroll this.
+Peff wanted to reroll this. Perhaps will discard to make room for Elijah's
+merge-recursive series in the meantime.
 
 * jc/index-pack (2011-06-05) 9 commits
  - verify-pack: use index-pack --verify
@@ -131,59 +148,74 @@ Not urgent. Will not merge before 1.7.6.
 Would need another round to separate per-pack and per-session limits.
 Not urgent. Will not merge before 1.7.6.
 
-* jk/tag-contains (2010-07-05) 4 commits
- - Why is "git tag --contains" so slow?
- - default core.clockskew variable to one day
- - limit "contains" traversals based on commit timestamp
- - tag: speed up --contains calculation
-
-The idea of the bottom one is probably Ok, except that the use of object
-flags needs to be rethought, or at least the helper needs to be moved to
-builtin/tag.c to make it clear that it should not be used outside the
-current usage context.
-
 --------------------------------------------------
 [Cooking]
+
+* db/http-cookies (2011-06-03) 1 commit
+  (merged to 'next' on 2011-06-06 at 90d736a)
+ + http: pass http.cookiefile using CURLOPT_COOKIEFILE
+
+Fairly trivial enhancement.
+Not urgent. Will not merge before 1.7.6.
+
+* jc/maint-1.7.3-checkout-describe (2011-06-05) 1 commit
+  (merged to 'next' on 2011-06-06 at 6a59bb7)
+ + checkout -b <name>: correctly detect existing branch
+
+Fairly trivial bugfix.
+Not urgent. Will not merge before 1.7.6.
+
+* jk/clone-detached (2011-06-07) 5 commits
+ . remote-testgit: short-term fix to allow t5800 pass
+ - clone: always fetch remote HEAD
+ - make copy_ref globally available
+ - consider only branches in guess_remote_head
+ - t: add tests for cloning remotes with detached HEAD
+
+Somewhat involved bugfix.
+Not urgent. Will not merge before 1.7.6.
+
+* jk/maint-1.7.2-status-ignored (2011-06-02) 2 commits
+  (merged to 'next' on 2011-06-02 at 8626cc6)
+ + git status --ignored: tests and docs
+ + status: fix bug with missing --ignore files
+
+Fairly trivial bugfix.
+Not urgent. Will not merge before 1.7.6.
+
+* jl/submodule-add-relurl-wo-upstream (2011-06-06) 3 commits
+ - submodule add: clean up duplicated code
+ - submodule add: allow relative repository path even when no url is set
+ - submodule add: test failure when url is not configured in superproject
+
+Not urgent. Will not merge before 1.7.6.
+
+* rs/grep-color (2011-06-05) 3 commits
+  (merged to 'next' on 2011-06-06 at fd6bae1)
+ + grep: add --heading
+ + grep: add --break
+ + grep: fix coloring of hunk marks between files
+
+Fairly straightforward feature enhancement.
+Not urgent. Will not merge before 1.7.6.
 
 * jc/diff-index-quick-exit-early (2011-05-31) 2 commits
   (merged to 'next' on 2011-06-01 at 79d868a)
  + diff-index --quiet: learn the "stop feeding the backend early" logic
  + Merge remote-tracking branch 'ko/maint' into jc/diff-index-quick-exit-early
- (this branch uses jk/diff-not-so-quick.)
 
 Not urgent. Will not merge before 1.7.6.
 
-* jk/diff-not-so-quick (2011-05-31) 2 commits
-  (merged to 'next' on 2011-06-01 at 5f66784)
- + diff: futureproof "stop feeding the backend early" logic
- + diff_tree: disable QUICK optimization with diff filter
- (this branch is used by jc/diff-index-quick-exit-early.)
-
-Will merge to "master" before 1.7.6-rc1.
-
-* bc/maint-status-z-to-use-porcelain (2011-05-29) 2 commits
-  (merged to 'next' on 2011-06-01 at 4f44a91)
- + builtin/commit.c: set status_format _after_ option parsing
- + t7508: demonstrate status's failure to use --porcelain format with -z
-
-Will merge to "master" before 1.7.6-rc1.
-
-* ef/maint-win-verify-path (2011-05-27) 3 commits
+* ef/maint-win-verify-path (2011-06-08) 5 commits
+ - verify_dotfile(): do not assume '/' is the path seperator
+  (merged to 'next' on 2011-06-07 at b418e05)
+ + verify_path(): simplify check at the directory boundary
   (merged to 'next' on 2011-06-01 at f316f68)
  + verify_path: consider dos drive prefix
  + real_path: do not assume '/' is the path seperator
  + A Windows path starting with a backslash is absolute
 
-Will cook a bit longer.
-
-* jc/apply-nsbp (2011-05-27) 4 commits
- - War on nbsp: teach "git apply" to check and fix nbsp
- - War on nbsp: Add "nbsp" whitespace breakage class
- - War on nbsp: a bit of retreat
- - ws.c: add a helper to format comma separated messages
-
-Will probably drop.
-It was fun to write, though.
+Not urgent, but is sane. Will not merge before 1.7.6.
 
 * jn/gitweb-js-blame (2011-05-27) 3 commits
   (merged to 'next' on 2011-06-01 at a984a1b)
@@ -213,19 +245,19 @@ Not urgent. Will not merge before 1.7.6.
 Not urgent. Will not merge before 1.7.6.
 
 * jc/streaming-filter (2011-05-26) 8 commits
- - t0021: test application of both crlf and ident
- - t0021-conversion.sh: fix NoTerminatingSymbolAtEOF test
- - streaming: filter cascading
- - streaming filter: ident filter
- - Add LF-to-CRLF streaming conversion
- - stream filter: add "no more input" to the filters
- - Add streaming filter API
- - convert.h: move declarations for conversion from cache.h
+  (merged to 'next' on 2011-06-06 at 8ed6b3d)
+ + t0021: test application of both crlf and ident
+ + t0021-conversion.sh: fix NoTerminatingSymbolAtEOF test
+ + streaming: filter cascading
+ + streaming filter: ident filter
+ + Add LF-to-CRLF streaming conversion
+ + stream filter: add "no more input" to the filters
+ + Add streaming filter API
+ + convert.h: move declarations for conversion from cache.h
  (this branch uses jc/streaming.)
 
 Trivial lf-to-crlf and ident conversions can be performed without reading
 everything in-core first.
-
 Not urgent. Will not merge before 1.7.6.
 
 * jk/combine-diff-binary-etc (2011-05-24) 5 commits
@@ -318,3 +350,23 @@ Not urgent. Will not merge before 1.7.6.
 
 Rerolled.
 Will cook a bit longer.
+
+--------------------------------------------------
+[Discarded]
+
+* jc/apply-nsbp (2011-05-27) 4 commits
+ . War on nbsp: teach "git apply" to check and fix nbsp
+ . War on nbsp: Add "nbsp" whitespace breakage class
+ . War on nbsp: a bit of retreat
+ . ws.c: add a helper to format comma separated messages
+
+It was fun to write, though.
+
+* jk/tag-contains (2010-07-05) 4 commits
+ . Why is "git tag --contains" so slow?
+ . default core.clockskew variable to one day
+ . limit "contains" traversals based on commit timestamp
+ . tag: speed up --contains calculation
+
+This was re-rolled as jk/tag-contans-ab with help from Ævar.
+
