@@ -444,7 +444,8 @@ cmd_update()
 	fi
 
 	cloned_modules=
-	module_list "$@" |
+	module_list "$@" | {
+	err=
 	while read mode sha1 stage path
 	do
 		if test "$stage" = U
@@ -525,17 +526,54 @@ cmd_update()
 				;;
 			esac
 
-			(clear_local_git_env; cd "$path" && $command "$sha1") ||
-			die "Unable to $action '$sha1' in submodule path '$path'"
-			say "Submodule path '$path': $msg '$sha1'"
+			if (clear_local_git_env; cd "$path" && $command "$sha1")
+			then
+				say "Submodule path '$path': $msg '$sha1'"
+			else
+				case $action in
+				rebase|merge)
+					die_with_status 2 "Unable to $action '$sha1' in submodule path '$path'"
+					;;
+				*)
+					err="${err};Failed to $action in submodule path '$path'"
+					continue
+					;;
+				esac
+			fi
 		fi
 
 		if test -n "$recursive"
 		then
-			(clear_local_git_env; cd "$path" && eval cmd_update "$orig_flags") ||
-			die "Failed to recurse into submodule path '$path'"
+			(clear_local_git_env; cd "$path" && eval cmd_update "$orig_flags")
+			res=$?
+			if test $res -gt 0
+			then
+				if test $res -eq 1
+				then
+					err="${err};Failed to recurse into submodule path '$path'"
+					continue
+				else
+					die_with_status $res "Failed to recurse into submodule path '$path'"
+				fi
+			fi
 		fi
 	done
+
+	if test -n "$err"
+	then
+		OIFS=$IFS
+		IFS=';'
+		for e in $err
+		do
+			if test -n "$e"
+			then
+				echo >&2 "$e"
+			fi
+		done
+		IFS=$OIFS
+		exit 1
+	fi
+	}
 }
 
 set_name_rev () {
