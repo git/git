@@ -508,16 +508,19 @@ cmd_update()
 				update_module= ;;
 			esac
 
+			must_die_on_failure=
 			case "$update_module" in
 			rebase)
 				command="git rebase"
 				action="rebase"
 				msg="rebased onto"
+				must_die_on_failure=yes
 				;;
 			merge)
 				command="git merge"
 				action="merge"
 				msg="merged in"
+				must_die_on_failure=yes
 				;;
 			*)
 				command="git checkout $subforce -q"
@@ -529,16 +532,12 @@ cmd_update()
 			if (clear_local_git_env; cd "$path" && $command "$sha1")
 			then
 				say "Submodule path '$path': $msg '$sha1'"
+			elif test -n "$must_die_on_failure"
+			then
+				die_with_status 2 "Unable to $action '$sha1' in submodule path '$path'"
 			else
-				case $action in
-				rebase|merge)
-					die_with_status 2 "Unable to $action '$sha1' in submodule path '$path'"
-					;;
-				*)
-					err="${err};Failed to $action in submodule path '$path'"
-					continue
-					;;
-				esac
+				err="${err};Failed to $action in submodule path '$path'"
+				continue
 			fi
 		fi
 
