@@ -18,12 +18,13 @@ reinit_git () {
 
 try_dump () {
 	input=$1 &&
-	maybe_fail=${2:+test_$2} &&
+	maybe_fail_svnfe=${2:+test_$2} &&
+	maybe_fail_fi=${3:+test_$3} &&
 
 	{
-		$maybe_fail test-svn-fe "$input" >stream 3<backflow &
+		$maybe_fail_svnfe test-svn-fe "$input" >stream 3<backflow &
 	} &&
-	git fast-import --cat-blob-fd=3 <stream 3>backflow &&
+	$maybe_fail_fi git fast-import --cat-blob-fd=3 <stream 3>backflow &&
 	wait $!
 }
 
@@ -674,7 +675,7 @@ test_expect_success PIPE 'change file mode and reiterate content' '
 	test_cmp hello actual.target
 '
 
-test_expect_success PIPE 'deltas not supported' '
+test_expect_success PIPE 'deltas supported' '
 	reinit_git &&
 	{
 		# (old) h + (inline) ello + (old) \n
@@ -735,7 +736,7 @@ test_expect_success PIPE 'deltas not supported' '
 		echo PROPS-END &&
 		cat delta
 	} >delta.dump &&
-	test_must_fail try_dump delta.dump
+	try_dump delta.dump
 '
 
 test_expect_success PIPE 'property deltas supported' '
@@ -942,6 +943,143 @@ test_expect_success PIPE 'deltas for typechange' '
 	test_cmp expect actual
 '
 
+test_expect_success PIPE 'deltas need not consume the whole preimage' '
+	reinit_git &&
+	cat >expect <<-\EOF &&
+	OBJID
+	:120000 100644 OBJID OBJID T	postimage
+	OBJID
+	:100644 120000 OBJID OBJID T	postimage
+	OBJID
+	:000000 100644 OBJID OBJID A	postimage
+	EOF
+	echo "first preimage" >expect.1 &&
+	printf target >expect.2 &&
+	printf lnk >expect.3 &&
+	{
+		printf "SVNQ%b%b%b" "QQ\017\001\017" "\0217" "first preimage\n" |
+		q_to_nul
+	} >delta.1 &&
+	{
+		properties svn:special "*" &&
+		echo PROPS-END
+	} >symlink.props &&
+	{
+		printf "SVNQ%b%b%b" "Q\002\013\004\012" "\0201\001\001\0211" "lnk target" |
+		q_to_nul
+	} >delta.2 &&
+	{
+		printf "SVNQ%b%b" "Q\004\003\004Q" "\001Q\002\002" |
+		q_to_nul
+	} >delta.3 &&
+	{
+		cat <<-\EOF &&
+		SVN-fs-dump-format-version: 3
+
+		Revision-number: 1
+		Prop-content-length: 10
+		Content-length: 10
+
+		PROPS-END
+
+		Node-path: postimage
+		Node-kind: file
+		Node-action: add
+		Text-delta: true
+		Prop-content-length: 10
+		EOF
+		echo Text-content-length: $(wc -c <delta.1) &&
+		echo Content-length: $((10 + $(wc -c <delta.1))) &&
+		echo &&
+		echo PROPS-END &&
+		cat delta.1 &&
+		cat <<-\EOF &&
+
+		Revision-number: 2
+		Prop-content-length: 10
+		Content-length: 10
+
+		PROPS-END
+
+		Node-path: postimage
+		Node-kind: file
+		Node-action: change
+		Text-delta: true
+		EOF
+		echo Prop-content-length: $(wc -c <symlink.props) &&
+		echo Text-content-length: $(wc -c <delta.2) &&
+		echo Content-length: $(($(wc -c <symlink.props) + $(wc -c <delta.2))) &&
+		echo &&
+		cat symlink.props &&
+		cat delta.2 &&
+		cat <<-\EOF &&
+
+		Revision-number: 3
+		Prop-content-length: 10
+		Content-length: 10
+
+		PROPS-END
+
+		Node-path: postimage
+		Node-kind: file
+		Node-action: change
+		Text-delta: true
+		Prop-content-length: 10
+		EOF
+		echo Text-content-length: $(wc -c <delta.3) &&
+		echo Content-length: $((10 + $(wc -c <delta.3))) &&
+		echo &&
+		echo PROPS-END &&
+		cat delta.3 &&
+		echo
+	} >deltapartial.dump &&
+	try_dump deltapartial.dump &&
+	{
+		git rev-list HEAD |
+		git diff-tree --root --stdin |
+		sed "s/$_x40/OBJID/g"
+	} >actual &&
+	test_cmp expect actual &&
+	git show HEAD:postimage >actual.3 &&
+	git show HEAD^:postimage >actual.2 &&
+	git show HEAD^^:postimage >actual.1 &&
+	test_cmp expect.1 actual.1 &&
+	test_cmp expect.2 actual.2 &&
+	test_cmp expect.3 actual.3
+'
+
+test_expect_success PIPE 'no hang for delta trying to read past end of preimage' '
+	reinit_git &&
+	{
+		# COPY 1
+		printf "SVNQ%b%b" "Q\001\001\002Q" "\001Q" |
+		q_to_nul
+	} >greedy.delta &&
+	{
+		cat <<-\EOF &&
+		SVN-fs-dump-format-version: 3
+
+		Revision-number: 1
+		Prop-content-length: 10
+		Content-length: 10
+
+		PROPS-END
+
+		Node-path: bootstrap
+		Node-kind: file
+		Node-action: add
+		Text-delta: true
+		Prop-content-length: 10
+		EOF
+		echo Text-content-length: $(wc -c <greedy.delta) &&
+		echo Content-length: $((10 + $(wc -c <greedy.delta))) &&
+		echo &&
+		echo PROPS-END &&
+		cat greedy.delta &&
+		echo
+	} >greedydelta.dump &&
+	try_dump greedydelta.dump must_fail might_fail
+'
 
 test_expect_success 'set up svn repo' '
 	svnconf=$PWD/svnconf &&
