@@ -187,7 +187,7 @@ static long apply_delta(off_t len, struct line_buffer *input,
 {
 	long ret;
 	off_t preimage_len = 0;
-	struct sliding_view preimage = SLIDING_VIEW_INIT(&report_buffer);
+	struct sliding_view preimage = SLIDING_VIEW_INIT(&report_buffer, -1);
 	FILE *out;
 
 	if (init_postimage() || !(out = buffer_tmpfile_rewind(&postimage)))
