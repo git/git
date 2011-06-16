@@ -1527,7 +1527,7 @@ proc run_prepare_commit_msg_hook {} {
 
 	# prepare-commit-msg requires PREPARE_COMMIT_MSG exist.  From git-gui
 	# it will be .git/MERGE_MSG (merge), .git/SQUASH_MSG (squash), or an
-	# empty file but existant file.
+	# empty file but existent file.
 
 	set fd_pcm [open [gitdir PREPARE_COMMIT_MSG] a]
 
