@@ -43,10 +43,10 @@ test_expect_success 'no group updates all' '
 	repo_fetched two
 '
 
-test_expect_success 'nonexistant group produces error' '
-	mark nonexistant &&
+test_expect_success 'nonexistent group produces error' '
+	mark nonexistent &&
 	update_repos &&
-	test_must_fail git remote update nonexistant &&
+	test_must_fail git remote update nonexistent &&
 	! repo_fetched one &&
 	! repo_fetched two
 '

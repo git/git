@@ -536,7 +536,7 @@ test_expect_success 'stash pop - fail early if specified stash is not a stash re
 	git reset --hard HEAD
 '
 
-test_expect_success 'ref with non-existant reflog' '
+test_expect_success 'ref with non-existent reflog' '
 	git stash clear &&
 	echo bar5 > file &&
 	echo bar6 > file2 &&

@@ -94,7 +94,7 @@ nick1 (1):
 
 EOF
 
-test_expect_success 'mailmap.file non-existant' '
+test_expect_success 'mailmap.file non-existent' '
 	rm internal_mailmap/.mailmap &&
 	rmdir internal_mailmap &&
 	git shortlog HEAD >actual &&

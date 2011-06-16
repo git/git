@@ -1893,7 +1893,7 @@ test_expect_success \
     test_cmp marks.out marks.new'
 
 cat >input <<EOF
-feature import-marks=nonexistant.marks
+feature import-marks=nonexistent.marks
 feature export-marks=marks.new
 EOF
 
@@ -1904,7 +1904,7 @@ test_expect_success \
 
 
 cat >input <<EOF
-feature import-marks=nonexistant.marks
+feature import-marks=nonexistent.marks
 feature export-marks=combined.marks
 EOF
 
