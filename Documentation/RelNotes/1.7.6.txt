@@ -138,5 +138,5 @@ included in this release.
 ---
 exec >/var/tmp/1
 echo O=$(git describe master)
-O=v1.7.6-rc1
+O=v1.7.6-rc2
 git shortlog --no-merges ^maint ^$O master
