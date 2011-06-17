@@ -1,18 +1,153 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jun 2011, #02; Sat, 11)
-X-master-at: 2c162b56f370f5c33e6a945e6922d598006c5ec4
-X-next-at: 195f74cadbc9ad92fd15cd612a02206a4353fa30
+Subject: What's cooking in git.git (Jun 2011, #03; Fri, 17)
+X-master-at: 36bfb0e5f6004e4c4ac9334107dc185c316839a7
+X-next-at: a2eb42042a14044c35525779dcf76ee92f3305a7
 
-What's cooking in git.git (Jun 2011, #02; Sat, 11)
+What's cooking in git.git (Jun 2011, #03; Fri, 17)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' while commits prefixed with '+' are in 'next'.
 
-Will tag 1.7.6-rc2 sometime next week.
+We have passed v1.7.6-rc2 and it seems things are really in releaseable
+form, so I am tempted to skip -rc3 and tag the final sometime next week.
 
 --------------------------------------------------
 [New Topics]
+
+* aw/rebase-i-p (2011-06-13) 1 commit
+ - rebase -i -p: doesn't pick certain merge commits that are children of "upstream"
+
+* en/merge-recursive (2011-06-13) 49 commits
+ - t3030: fix accidental success in symlink rename
+ - merge-recursive: Fix working copy handling for rename/rename/add/add
+ - merge-recursive: add handling for rename/rename/add-dest/add-dest
+ - merge-recursive: Have conflict_rename_delete reuse modify/delete code
+ - merge-recursive: Make modify/delete handling code reusable
+ - merge-recursive: Consider modifications in rename/rename(2to1) conflicts
+ - merge-recursive: Create function for merging with branchname:file markers
+ - merge-recursive: Record more data needed for merging with dual renames
+ - merge-recursive: Defer rename/rename(2to1) handling until process_entry
+ - merge-recursive: Small cleanups for conflict_rename_rename_1to2
+ - merge-recursive: Fix rename/rename(1to2) resolution for virtual merge base
+ - merge-recursive: Introduce a merge_file convenience function
+ - merge-recursive: Fix modify/delete resolution in the recursive case
+ - merge-recursive: Provide more info in conflict markers with file renames
+ - merge-recursive: Cleanup and consolidation of rename_conflict_info
+ - merge-recursive: Consolidate process_entry() and process_df_entry()
+ - merge-recursive: Improve handling of rename target vs. directory addition
+ - merge-recursive: Add comments about handling rename/add-source cases
+ - merge-recursive: Make dead code for rename/rename(2to1) conflicts undead
+ - merge-recursive: Fix deletion of untracked file in rename/delete conflicts
+ - merge-recursive: When we detect we can skip an update, actually skip it
+ - merge-recursive: Split update_stages_and_entry; only update stages at end
+ - merge-recursive: Consolidate different update_stages functions
+ - merge-recursive: Allow make_room_for_path() to remove D/F entries
+ - merge-recursive: Split was_tracked() out of would_lose_untracked()
+ - merge-recursive: Save D/F conflict filenames instead of unlinking them
+ - merge-recursive: Fix code checking for D/F conflicts still being present
+ - merge-recursive: Fix sorting order and directory change assumptions
+ - merge-recursive: Fix recursive case with D/F conflict via add/add conflict
+ - merge-recursive: Avoid working directory changes during recursive case
+ - merge-recursive: Remember to free generated unique path names
+ - merge-recursive: Mark some diff_filespec struct arguments const
+ - merge-recursive: Correct a comment
+ - merge-recursive: Make BUG message more legible by adding a newline
+ - t6022: Add testcase for merging a renamed file with a simple change
+ - t6022: New tests checking for unnecessary updates of files
+ - t6022: Remove unnecessary untracked files to make test cleaner
+ - t6036: criss-cross + rename/rename(1to2)/add-source + modify/modify
+ - t6036: criss-cross w/ rename/rename(1to2)/modify+rename/rename(2to1)/modify
+ - t6036: tests for criss-cross merges with various directory/file conflicts
+ - t6036: criss-cross with weird content can fool git into clean merge
+ - t6036: Add differently resolved modify/delete conflict in criss-cross test
+ - t6042: Ensure rename/rename conflicts leave index and workdir in sane state
+ - t6042: Add failing testcases for rename/rename/add-{source,dest} conflicts
+ - t6042: Add tests for content issues with modify/rename/directory conflicts
+ - t6042: Add a testcase where undetected rename causes silent file deletion
+ - t6042: Add a pair of cases where undetected renames cause issues
+ - t6042: Add failing testcase for rename/modify/add-source conflict
+ - t6042: Add a testcase where git deletes an untracked file
+
+* fg/submodule-keep-updating (2011-06-13) 3 commits
+ - git-submodule.sh: clarify the "should we die now" logic
+ - submodule update: continue when a checkout fails
+ - git-sh-setup: add die_with_status
+
+* jc/no-gitweb-test-without-cgi-etc (2011-06-15) 1 commit
+ - t/gitweb-lib.sh: skip gitweb tests when perl dependencies are not met
+
+* jn/mime-type-with-params (2011-06-13) 1 commit
+ - gitweb: Make $prevent_xss protection for 'blob_plain' more usable
+
+* ln/gitweb-mime-types-split-at-blank (2011-06-15) 1 commit
+ - gitweb: allow space as delimiter in mime.types
+
+* md/interix-update (2011-06-15) 1 commit
+ - Update the Interix default build configuration.
+
+* rj/config-cygwin (2011-06-16) 3 commits
+ - config.c: Make git_config() work correctly when called recursively
+ - t1301-*.sh: Fix the 'forced modes' test on cygwin
+ - help.c: Fix detection of custom merge strategy on cygwin
+
+* di/no-no-existant (2011-06-16) 1 commit
+ - Fix typo: existant->existent
+
+* jk/archive-tar-filter (2011-06-15) 7 commits
+ - archive: provide builtin .tar.gz filter
+ - archive: match extensions from user-configured formats
+ - archive: refactor format-guessing from filename
+ - archive: advertise user tar-filters in --list
+ - archive: support user tar-filters via --format
+ - archive: add user-configurable tar-filter infrastructure
+ - archive: reorder option parsing and config reading
+
+--------------------------------------------------
+[Stalled]
+
+* js/ref-namespaces (2011-06-07) 4 commits
+ . ref namespaces: documentation
+ . ref namespaces: support remote repositories via upload-pack and receive-pack
+ . ref namespaces: infrastructure
+ . Fix prefix handling in ref iteration functions
+
+Fairly involved feature enhancement, and breaks tests when merged to 'pu'.
+Not urgent. Will not merge before 1.7.6.
+
+* jh/receive-count-limit (2011-05-23) 10 commits
+ - receive-pack: Allow server to refuse pushes with too many objects
+ - pack-objects: Estimate pack size; abort early if pack size limit is exceeded
+ - send-pack/receive-pack: Allow server to refuse pushing too large packs
+ - pack-objects: Allow --max-pack-size to be used together with --stdout
+ - send-pack/receive-pack: Allow server to refuse pushes with too many commits
+ - pack-objects: Teach new option --max-commit-count, limiting #commits in pack
+ - receive-pack: Prepare for addition of the new 'limit-*' family of capabilities
+ - Tighten rules for matching server capabilities in server_supports()
+ - send-pack: Attempt to retrieve remote status even if pack-objects fails
+ - Update technical docs to reflect side-band-64k capability in receive-pack
+
+Would need another round to separate per-pack and per-session limits.
+Not urgent. Will not merge before 1.7.6.
+
+--------------------------------------------------
+[Cooking]
+
+* jc/index-pack (2011-06-05) 9 commits
+ - verify-pack: use index-pack --verify
+ - index-pack: show histogram when emulating "verify-pack -v"
+ - index-pack: start learning to emulate "verify-pack -v"
+ - index-pack: a miniscule refactor
+ - index-pack --verify: read anomalous offsets from v2 idx file
+ - write_idx_file: need_large_offset() helper function
+ - index-pack: --verify
+ - write_idx_file: introduce a struct to hold idx customization options
+ - index-pack: group the delta-base array entries also by type
+
+Killed "verify-pack" ;-) The next will be to update fsck, which would be a
+bigger task.
+
+Not urgent. Will not merge before 1.7.6.
 
 * js/i18n-windows (2011-06-06) 3 commits
   (merged to 'next' on 2011-06-06 at d8c4ba3)
@@ -71,85 +206,6 @@ expectation and what zlib API actually offers piecemeal.
  - t5800: factor out some ref tests
  - git-remote-testgit: exit gracefully after push
  - transport-helper: fix minor leak in push_refs_with_export
-
---------------------------------------------------
-[Graduated to "master"]
-
-* bc/maint-status-z-to-use-porcelain (2011-05-29) 2 commits
-  (merged to 'next' on 2011-06-01 at 4f44a91)
- + builtin/commit.c: set status_format _after_ option parsing
- + t7508: demonstrate status's failure to use --porcelain format with -z
-
-* jk/diff-not-so-quick (2011-05-31) 2 commits
-  (merged to 'next' on 2011-06-01 at 5f66784)
- + diff: futureproof "stop feeding the backend early" logic
- + diff_tree: disable QUICK optimization with diff filter
- (this branch is used by jc/diff-index-quick-exit-early.)
-
-* jn/gitweb-docs (2011-06-03) 3 commits
-  (merged to 'next' on 2011-06-05 at 691c7e6)
- + gitweb: Move "Requirements" up in gitweb/INSTALL
-  (merged to 'next' on 2011-06-02 at 56cba41)
- + gitweb: Describe CSSMIN and JSMIN in gitweb/INSTALL
- + gitweb: Move information about installation from README to INSTALL
-
-* jn/mime-type-with-params (2011-06-05) 1 commit
-  (merged to 'next' on 2011-06-05 at 697f9d2)
- + gitweb: Fix usability of $prevent_xss
-
---------------------------------------------------
-[Stalled]
-
-* js/ref-namespaces (2011-06-07) 4 commits
- . ref namespaces: documentation
- . ref namespaces: support remote repositories via upload-pack and receive-pack
- . ref namespaces: infrastructure
- . Fix prefix handling in ref iteration functions
-
-Fairly involved feature enhancement, and breaks tests when merged to 'pu'.
-Not urgent. Will not merge before 1.7.6.
-
-* jk/maint-merge-rename-create (2011-03-25) 3 commits
- - merge: turn on rewrite detection
- - merge: handle renames with replacement content
- - t3030: fix accidental success in symlink rename
-
-Peff wanted to reroll this. Perhaps will discard to make room for Elijah's
-merge-recursive series in the meantime.
-
-* jc/index-pack (2011-06-05) 9 commits
- - verify-pack: use index-pack --verify
- - index-pack: show histogram when emulating "verify-pack -v"
- - index-pack: start learning to emulate "verify-pack -v"
- - index-pack: a miniscule refactor
- - index-pack --verify: read anomalous offsets from v2 idx file
- - write_idx_file: need_large_offset() helper function
- - index-pack: --verify
- - write_idx_file: introduce a struct to hold idx customization options
- - index-pack: group the delta-base array entries also by type
-
-Killed "verify-pack" ;-) The next will be to update fsck, which would be a
-bigger task.
-
-Not urgent. Will not merge before 1.7.6.
-
-* jh/receive-count-limit (2011-05-23) 10 commits
- - receive-pack: Allow server to refuse pushes with too many objects
- - pack-objects: Estimate pack size; abort early if pack size limit is exceeded
- - send-pack/receive-pack: Allow server to refuse pushing too large packs
- - pack-objects: Allow --max-pack-size to be used together with --stdout
- - send-pack/receive-pack: Allow server to refuse pushes with too many commits
- - pack-objects: Teach new option --max-commit-count, limiting #commits in pack
- - receive-pack: Prepare for addition of the new 'limit-*' family of capabilities
- - Tighten rules for matching server capabilities in server_supports()
- - send-pack: Attempt to retrieve remote status even if pack-objects fails
- - Update technical docs to reflect side-band-64k capability in receive-pack
-
-Would need another round to separate per-pack and per-session limits.
-Not urgent. Will not merge before 1.7.6.
-
---------------------------------------------------
-[Cooking]
 
 * db/http-cookies (2011-06-03) 1 commit
   (merged to 'next' on 2011-06-06 at 90d736a)
@@ -350,23 +406,3 @@ Not urgent. Will not merge before 1.7.6.
 
 Rerolled.
 Will cook a bit longer.
-
---------------------------------------------------
-[Discarded]
-
-* jc/apply-nsbp (2011-05-27) 4 commits
- . War on nbsp: teach "git apply" to check and fix nbsp
- . War on nbsp: Add "nbsp" whitespace breakage class
- . War on nbsp: a bit of retreat
- . ws.c: add a helper to format comma separated messages
-
-It was fun to write, though.
-
-* jk/tag-contains (2010-07-05) 4 commits
- . Why is "git tag --contains" so slow?
- . default core.clockskew variable to one day
- . limit "contains" traversals based on commit timestamp
- . tag: speed up --contains calculation
-
-This was re-rolled as jk/tag-contans-ab with help from Ævar.
-
