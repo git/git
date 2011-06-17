@@ -71,7 +71,7 @@ gitweb-test:
 	$(MAKE) $(TGITWEB)
 
 valgrind:
-	GIT_TEST_OPTS=--valgrind $(MAKE)
+	$(MAKE) GIT_TEST_OPTS="$(GIT_TEST_OPTS) --valgrind"
 
 # Smoke testing targets
 -include ../GIT-VERSION-FILE
