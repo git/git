@@ -316,7 +316,7 @@ There is another common situation where you may encounter non-fast-forward
 rejection when you try to push, and it is possible even when you are
 pushing into a repository nobody else pushes into. After you push commit
 A yourself (in the first picture in this section), replace it with "git
-commit --amend" to produce commit B, and you try to push it out, because
+commit --amend" to produce commit B, and you try to push it out, because you
 forgot that you have pushed A out already. In such a case, and only if
 you are certain that nobody in the meantime fetched your earlier commit A
 (and started building on top of it), you can run "git push --force" to
