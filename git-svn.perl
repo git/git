@@ -3124,8 +3124,12 @@ sub lookup_svn_merge {
 			next;
 		}
 
-		push @merged_commit_ranges,
-			"$bottom_commit^..$top_commit";
+		if (scalar(command('rev-parse', "$bottom_commit^@"))) {
+			push @merged_commit_ranges,
+			     "$bottom_commit^..$top_commit";
+		} else {
+			push @merged_commit_ranges, "$top_commit";
+		}
 
 		if ( !defined $tip or $top > $tip ) {
 			$tip = $top;

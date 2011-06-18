@@ -2,7 +2,7 @@
 test_description='git svn handling of root commits in merge ranges'
 . ./lib-git-svn.sh
 
-test_expect_failure 'test handling of root commits in merge ranges' '
+test_expect_success 'test handling of root commits in merge ranges' '
 	mkdir -p init/trunk init/branches init/tags &&
 	echo "r1" > init/trunk/file.txt &&
 	svn_cmd import -m "initial import" init "$svnrepo" &&
