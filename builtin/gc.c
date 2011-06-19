@@ -225,7 +225,7 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 			fprintf(stderr,
 					_("Auto packing the repository for optimum performance. You may also\n"
 					"run \"git gc\" manually. See "
-					"\"git help gc\" for more information."));
+					"\"git help gc\" for more information.\n"));
 	} else
 		append_option(argv_repack,
 			      prune_expire && !strcmp(prune_expire, "now")
