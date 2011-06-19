@@ -1451,7 +1451,7 @@ int write_ref_sha1(struct ref_lock *lock,
 	}
 	o = parse_object(sha1);
 	if (!o) {
-		error("Trying to write ref %s with nonexistant object %s",
+		error("Trying to write ref %s with nonexistent object %s",
 			lock->ref_name, sha1_to_hex(sha1));
 		unlock_ref(lock);
 		return -1;

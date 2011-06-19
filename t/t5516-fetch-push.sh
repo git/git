@@ -367,7 +367,7 @@ test_expect_success 'push with colon-less refspec (4)' '
 
 '
 
-test_expect_success 'push head with non-existant, incomplete dest' '
+test_expect_success 'push head with non-existent, incomplete dest' '
 
 	mk_test &&
 	git push testrepo master:branch &&
@@ -375,7 +375,7 @@ test_expect_success 'push head with non-existant, incomplete dest' '
 
 '
 
-test_expect_success 'push tag with non-existant, incomplete dest' '
+test_expect_success 'push tag with non-existent, incomplete dest' '
 
 	mk_test &&
 	git tag -f v1.0 &&
@@ -384,14 +384,14 @@ test_expect_success 'push tag with non-existant, incomplete dest' '
 
 '
 
-test_expect_success 'push sha1 with non-existant, incomplete dest' '
+test_expect_success 'push sha1 with non-existent, incomplete dest' '
 
 	mk_test &&
 	test_must_fail git push testrepo `git rev-parse master`:foo
 
 '
 
-test_expect_success 'push ref expression with non-existant, incomplete dest' '
+test_expect_success 'push ref expression with non-existent, incomplete dest' '
 
 	mk_test &&
 	test_must_fail git push testrepo master^:branch
@@ -436,7 +436,7 @@ test_expect_success 'push with +HEAD' '
 
 '
 
-test_expect_success 'push HEAD with non-existant, incomplete dest' '
+test_expect_success 'push HEAD with non-existent, incomplete dest' '
 
 	mk_test &&
 	git checkout master &&

@@ -45,7 +45,7 @@ test_expect_success 'alias user-defined tformat' '
 	test_cmp expected actual
 '
 
-test_expect_success 'alias non-existant format' '
+test_expect_success 'alias non-existent format' '
 	git config pretty.test-alias format-that-will-never-exist &&
 	test_must_fail git log --pretty=test-alias
 '
