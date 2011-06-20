@@ -658,9 +658,9 @@ test_expect_success LIBPCRE 'grep -P -v pattern' '
 '
 
 test_expect_success LIBPCRE 'grep -P -i pattern' '
-	{
-		echo "hello.c:	printf(\"Hello world.\n\");"
-	} >expected &&
+	cat >expected <<-EOF &&
+	hello.c:	printf("Hello world.\n");
+	EOF
 	git grep -P -i "PRINTF\([^\d]+\)" hello.c >actual &&
 	test_cmp expected actual
 '
