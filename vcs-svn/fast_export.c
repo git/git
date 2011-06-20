@@ -14,7 +14,6 @@
 #include "line_buffer.h"
 
 #define MAX_GITSVN_LINE_LEN 4096
-#define REPORT_FILENO 3
 
 static uint32_t first_commit_done;
 static struct line_buffer postimage = LINE_BUFFER_INIT;
@@ -28,15 +27,6 @@ static int init_postimage(void)
 		return 0;
 	postimage_initialized = 1;
 	return buffer_tmpfile_init(&postimage);
-}
-
-static int init_report_buffer(int fd)
-{
-	static int report_buffer_initialized;
-	if (report_buffer_initialized)
-		return 0;
-	report_buffer_initialized = 1;
-	return buffer_fdinit(&report_buffer, fd);
 }
 
 void fast_export_init(int fd)
@@ -203,8 +193,6 @@ static long apply_delta(off_t len, struct line_buffer *input,
 
 	if (init_postimage() || !(out = buffer_tmpfile_rewind(&postimage)))
 		die("cannot open temporary file for blob retrieval");
-	if (init_report_buffer(REPORT_FILENO))
-		die("cannot open fd 3 for feedback from fast-import");
 	if (old_data) {
 		const char *response;
 		printf("cat-blob %s\n", old_data);
