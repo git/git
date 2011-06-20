@@ -811,19 +811,21 @@ static void parse_push(struct strbuf *buf)
 
 		strbuf_reset(buf);
 		if (strbuf_getline(buf, stdin, '\n') == EOF)
-			return;
+			goto free_specs;
 		if (!*buf->buf)
 			break;
 	} while (1);
 
 	if (push(nr_spec, specs))
 		exit(128); /* error already reported */
-	for (i = 0; i < nr_spec; i++)
-		free(specs[i]);
-	free(specs);
 
 	printf("\n");
 	fflush(stdout);
+
+ free_specs:
+	for (i = 0; i < nr_spec; i++)
+		free(specs[i]);
+	free(specs);
 }
 
 int main(int argc, const char **argv)

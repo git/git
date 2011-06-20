@@ -187,6 +187,8 @@ static int batch_one_object(const char *obj_name, int print_contents)
 	if (type <= 0) {
 		printf("%s missing\n", obj_name);
 		fflush(stdout);
+		if (print_contents == BATCH)
+			free(contents);
 		return 0;
 	}
 

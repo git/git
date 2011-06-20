@@ -100,8 +100,10 @@ static int add_one_path(struct cache_entry *old, const char *path, int len, stru
 	ce->ce_mode = ce_mode_from_stat(old, st->st_mode);
 
 	if (index_path(ce->sha1, path, st,
-		       info_only ? 0 : HASH_WRITE_OBJECT))
+		       info_only ? 0 : HASH_WRITE_OBJECT)) {
+		free(ce);
 		return -1;
+	}
 	option = allow_add ? ADD_CACHE_OK_TO_ADD : 0;
 	option |= allow_replace ? ADD_CACHE_OK_TO_REPLACE : 0;
 	if (add_cache_entry(ce, option))
