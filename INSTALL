@@ -25,6 +25,19 @@ set up install paths (via config.mak.autogen), so you can write instead
 	$ make all doc ;# as yourself
 	# make install install-doc install-html;# as root
 
+If you're willing to trade off (much) longer build time for a later
+faster git you can also do a profile feedback build with
+
+	$ make profile-all
+	# make prefix=... install
+
+This will run the complete test suite as training workload and then
+rebuild git with the generated profile feedback. This results in a git
+which is a few percent faster on CPU intensive workloads.  This
+may be a good tradeoff for distribution packagers.
+
+Note that the profile feedback build stage currently generates
+a lot of additional compiler warnings.
 
 Issues of note:
 
