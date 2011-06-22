@@ -231,7 +231,7 @@ static int git_tar_config(const char *var, const char *value, void *cb)
 		}
 		return 0;
 	}
-	return git_default_config(var, value, cb);
+	return 0;
 }
 
 int write_tar_archive(struct archiver_args *args)
