@@ -5291,6 +5291,8 @@ sub git_search_message {
 		$paging_nav .= " &sdot; next";
 	}
 
+	git_header_html();
+
 	git_print_page_nav('','', $hash,$co{'tree'},$hash, $paging_nav);
 	git_print_header_div('commit', esc_html($co{'title'}), $hash);
 	if ($page == 0 && !@commitlist) {
@@ -5298,20 +5300,26 @@ sub git_search_message {
 	} else {
 		git_search_grep_body(\@commitlist, 0, 99, $next_link);
 	}
+
+	git_footer_html();
 }
 
 sub git_search_changes {
 	my %co = @_;
+
+	local $/ = "\n";
+	open my $fd, '-|', git_cmd(), '--no-pager', 'log', @diff_opts,
+		'--pretty=format:%H', '--no-abbrev', '--raw', "-S$searchtext",
+		($search_use_regexp ? '--pickaxe-regex' : ())
+			or die_error(500, "Open git-log failed");
+
+	git_header_html();
 
 	git_print_page_nav('','', $hash,$co{'tree'},$hash);
 	git_print_header_div('commit', esc_html($co{'title'}), $hash);
 
 	print "<table class=\"pickaxe search\">\n";
 	my $alternate = 1;
-	local $/ = "\n";
-	open my $fd, '-|', git_cmd(), '--no-pager', 'log', @diff_opts,
-		'--pretty=format:%H', '--no-abbrev', '--raw', "-S$searchtext",
-		($search_use_regexp ? '--pickaxe-regex' : ());
 	undef %co;
 	my @files;
 	while (my $line = <$fd>) {
@@ -5375,10 +5383,20 @@ sub git_search_changes {
 	}
 
 	print "</table>\n";
+
+	git_footer_html();
 }
 
 sub git_search_files {
 	my %co = @_;
+
+	local $/ = "\n";
+	open my $fd, "-|", git_cmd(), 'grep', '-n',
+		$search_use_regexp ? ('-E', '-i') : '-F',
+		$searchtext, $co{'tree'}
+			or die_error(500, "Open git-grep failed");
+
+	git_header_html();
 
 	git_print_page_nav('','', $hash,$co{'tree'},$hash);
 	git_print_header_div('commit', esc_html($co{'title'}), $hash);
@@ -5386,10 +5404,6 @@ sub git_search_files {
 	print "<table class=\"grep_search\">\n";
 	my $alternate = 1;
 	my $matches = 0;
-	local $/ = "\n";
-	open my $fd, "-|", git_cmd(), 'grep', '-n',
-		$search_use_regexp ? ('-E', '-i') : '-F',
-		$searchtext, $co{'tree'};
 	my $lastfile = '';
 	while (my $line = <$fd>) {
 		chomp $line;
@@ -5446,6 +5460,8 @@ sub git_search_files {
 	close $fd;
 
 	print "</table>\n";
+
+	git_footer_html();
 }
 
 sub git_search_grep_body {
@@ -7016,8 +7032,6 @@ sub git_search {
 		$page = 0;
 	}
 
-	git_header_html();
-
 	if ($searchtype eq 'commit' ||
 	    $searchtype eq 'author' ||
 	    $searchtype eq 'committer') {
@@ -7026,9 +7040,9 @@ sub git_search {
 		git_search_changes(%co);
 	} elsif ($searchtype eq 'grep') {
 		git_search_files(%co);
+	} else {
+		die_error(400, "Unknown search type");
 	}
-
-	git_footer_html();
 }
 
 sub git_search_help {
