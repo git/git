@@ -106,5 +106,5 @@ int cmd_archive(int argc, const char **argv, const char *prefix)
 
 	setvbuf(stderr, NULL, _IOLBF, BUFSIZ);
 
-	return write_archive(argc, argv, prefix, 1, output);
+	return write_archive(argc, argv, prefix, 1, output, 0);
 }

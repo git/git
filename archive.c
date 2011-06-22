@@ -299,7 +299,7 @@ static void parse_treeish_arg(const char **argv,
 
 static int parse_archive_args(int argc, const char **argv,
 		const struct archiver **ar, struct archiver_args *args,
-		const char *name_hint)
+		const char *name_hint, int is_remote)
 {
 	const char *format = NULL;
 	const char *base = NULL;
@@ -356,7 +356,8 @@ static int parse_archive_args(int argc, const char **argv,
 
 	if (list) {
 		for (i = 0; i < nr_archivers; i++)
-			printf("%s\n", archivers[i]->name);
+			if (!is_remote || archivers[i]->flags & ARCHIVER_REMOTE)
+				printf("%s\n", archivers[i]->name);
 		exit(0);
 	}
 
@@ -369,7 +370,7 @@ static int parse_archive_args(int argc, const char **argv,
 	if (argc < 1)
 		usage_with_options(archive_usage, opts);
 	*ar = lookup_archiver(format);
-	if (!*ar)
+	if (!*ar || (is_remote && !((*ar)->flags & ARCHIVER_REMOTE)))
 		die("Unknown archive format '%s'", format);
 
 	args->compression_level = Z_DEFAULT_COMPRESSION;
@@ -390,7 +391,7 @@ static int parse_archive_args(int argc, const char **argv,
 }
 
 int write_archive(int argc, const char **argv, const char *prefix,
-		  int setup_prefix, const char *name_hint)
+		  int setup_prefix, const char *name_hint, int remote)
 {
 	int nongit = 0;
 	const struct archiver *ar = NULL;
@@ -403,7 +404,7 @@ int write_archive(int argc, const char **argv, const char *prefix,
 	init_tar_archiver();
 	init_zip_archiver();
 
-	argc = parse_archive_args(argc, argv, &ar, &args, name_hint);
+	argc = parse_archive_args(argc, argv, &ar, &args, name_hint, remote);
 	if (nongit) {
 		/*
 		 * We know this will die() with an error, so we could just

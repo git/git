@@ -283,7 +283,7 @@ static int write_zip_archive(const struct archiver *ar,
 static struct archiver zip_archiver = {
 	"zip",
 	write_zip_archive,
-	ARCHIVER_WANT_COMPRESSION_LEVELS
+	ARCHIVER_WANT_COMPRESSION_LEVELS|ARCHIVER_REMOTE
 };
 
 void init_zip_archiver(void)

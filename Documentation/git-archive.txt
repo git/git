@@ -114,6 +114,12 @@ tar.<format>.command::
 The "tar.gz" and "tgz" formats are defined automatically and default to
 `gzip -cn`. You may override them with custom commands.
 
+tar.<format>.remote::
+	If true, enable `<format>` for use by remote clients via
+	linkgit:git-upload-archive[1]. Defaults to false for
+	user-defined formats, but true for the "tar.gz" and "tgz"
+	formats.
+
 ATTRIBUTES
 ----------
 

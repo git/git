@@ -256,7 +256,8 @@ test_expect_success 'git-archive --prefix=olde-' '
 
 test_expect_success 'setup tar filters' '
 	git config tar.tar.foo.command "tr ab ba" &&
-	git config tar.bar.command "tr ab ba"
+	git config tar.bar.command "tr ab ba" &&
+	git config tar.bar.remote true
 '
 
 test_expect_success 'archive --list mentions user filter' '
@@ -265,9 +266,9 @@ test_expect_success 'archive --list mentions user filter' '
 	grep "^bar\$" output
 '
 
-test_expect_success 'archive --list shows remote user filters' '
+test_expect_success 'archive --list shows only enabled remote filters' '
 	git archive --list --remote=. >output &&
-	grep "^tar\.foo\$" output &&
+	! grep "^tar\.foo\$" output &&
 	grep "^bar\$" output
 '
 
@@ -295,6 +296,13 @@ test_expect_success 'default output format remains tar' '
 test_expect_success 'extension matching requires dot' '
 	git archive -o config-implicittar.foo HEAD &&
 	test_cmp b.tar config-implicittar.foo
+'
+
+test_expect_success 'only enabled filters are available remotely' '
+	test_must_fail git archive --remote=. --format=tar.foo HEAD \
+		>remote.tar.foo &&
+	git archive --remote=. --format=bar >remote.bar HEAD &&
+	test_cmp remote.bar config.bar
 '
 
 if $GZIP --version >/dev/null 2>&1; then
@@ -331,6 +339,17 @@ fi
 test_expect_success GZIP,GUNZIP 'extract tgz file' '
 	$GUNZIP -c <j.tgz >j.tar &&
 	test_cmp b.tar j.tar
+'
+
+test_expect_success GZIP 'remote tar.gz is allowed by default' '
+	git archive --remote=. --format=tar.gz HEAD >remote.tar.gz &&
+	test_cmp j.tgz remote.tar.gz
+'
+
+test_expect_success GZIP 'remote tar.gz can be disabled' '
+	git config tar.tar.gz.remote false &&
+	test_must_fail git archive --remote=. --format=tar.gz HEAD \
+		>remote.tar.gz
 '
 
 test_done

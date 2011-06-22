@@ -274,6 +274,13 @@ static int tar_filter_config(const char *var, const char *value, void *data)
 		ar->data = xstrdup(value);
 		return 0;
 	}
+	if (!strcmp(type, "remote")) {
+		if (git_config_bool(var, value))
+			ar->flags |= ARCHIVER_REMOTE;
+		else
+			ar->flags &= ~ARCHIVER_REMOTE;
+		return 0;
+	}
 
 	return 0;
 }
@@ -349,7 +356,7 @@ static int write_tar_filter_archive(const struct archiver *ar,
 static struct archiver tar_archiver = {
 	"tar",
 	write_tar_archive,
-	0
+	ARCHIVER_REMOTE
 };
 
 void init_tar_archiver(void)
@@ -358,7 +365,9 @@ void init_tar_archiver(void)
 	register_archiver(&tar_archiver);
 
 	tar_filter_config("tar.tgz.command", "gzip -cn", NULL);
+	tar_filter_config("tar.tgz.remote", "true", NULL);
 	tar_filter_config("tar.tar.gz.command", "gzip -cn", NULL);
+	tar_filter_config("tar.tar.gz.remote", "true", NULL);
 	git_config(git_tar_config, NULL);
 	for (i = 0; i < nr_tar_filters; i++) {
 		/* omit any filters that never had a command configured */
