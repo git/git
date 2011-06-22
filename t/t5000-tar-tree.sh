@@ -252,4 +252,47 @@ test_expect_success 'git-archive --prefix=olde-' '
 	test -f h/olde-a/bin/sh
 '
 
+test_expect_success 'setup tar filters' '
+	git config tar.tar.foo.command "tr ab ba" &&
+	git config tar.bar.command "tr ab ba"
+'
+
+test_expect_success 'archive --list mentions user filter' '
+	git archive --list >output &&
+	grep "^tar\.foo\$" output &&
+	grep "^bar\$" output
+'
+
+test_expect_success 'archive --list shows remote user filters' '
+	git archive --list --remote=. >output &&
+	grep "^tar\.foo\$" output &&
+	grep "^bar\$" output
+'
+
+test_expect_success 'invoke tar filter by format' '
+	git archive --format=tar.foo HEAD >config.tar.foo &&
+	tr ab ba <config.tar.foo >config.tar &&
+	test_cmp b.tar config.tar &&
+	git archive --format=bar HEAD >config.bar &&
+	tr ab ba <config.bar >config.tar &&
+	test_cmp b.tar config.tar
+'
+
+test_expect_success 'invoke tar filter by extension' '
+	git archive -o config-implicit.tar.foo HEAD &&
+	test_cmp config.tar.foo config-implicit.tar.foo &&
+	git archive -o config-implicit.bar HEAD &&
+	test_cmp config.tar.foo config-implicit.bar
+'
+
+test_expect_success 'default output format remains tar' '
+	git archive -o config-implicit.baz HEAD &&
+	test_cmp b.tar config-implicit.baz
+'
+
+test_expect_success 'extension matching requires dot' '
+	git archive -o config-implicittar.foo HEAD &&
+	test_cmp b.tar config-implicittar.foo
+'
+
 test_done
