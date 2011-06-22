@@ -26,6 +26,8 @@ commit id embedding:
 
 . ./test-lib.sh
 UNZIP=${UNZIP:-unzip}
+GZIP=${GZIP:-gzip}
+GUNZIP=${GUNZIP:-gzip -d}
 
 SUBSTFORMAT=%H%n
 
@@ -293,6 +295,42 @@ test_expect_success 'default output format remains tar' '
 test_expect_success 'extension matching requires dot' '
 	git archive -o config-implicittar.foo HEAD &&
 	test_cmp b.tar config-implicittar.foo
+'
+
+if $GZIP --version >/dev/null 2>&1; then
+	test_set_prereq GZIP
+else
+	say "Skipping some tar.gz tests because gzip not found"
+fi
+
+test_expect_success GZIP 'git archive --format=tgz' '
+	git archive --format=tgz HEAD >j.tgz
+'
+
+test_expect_success GZIP 'git archive --format=tar.gz' '
+	git archive --format=tar.gz HEAD >j1.tar.gz &&
+	test_cmp j.tgz j1.tar.gz
+'
+
+test_expect_success GZIP 'infer tgz from .tgz filename' '
+	git archive --output=j2.tgz HEAD &&
+	test_cmp j.tgz j2.tgz
+'
+
+test_expect_success GZIP 'infer tgz from .tar.gz filename' '
+	git archive --output=j3.tar.gz HEAD &&
+	test_cmp j.tgz j3.tar.gz
+'
+
+if $GUNZIP --version >/dev/null 2>&1; then
+	test_set_prereq GUNZIP
+else
+	say "Skipping some tar.gz tests because gunzip was not found"
+fi
+
+test_expect_success GZIP,GUNZIP 'extract tgz file' '
+	$GUNZIP -c <j.tgz >j.tar &&
+	test_cmp b.tar j.tar
 '
 
 test_done

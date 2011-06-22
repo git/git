@@ -110,6 +110,9 @@ tar.<format>.command::
 	to the command (e.g., "-9"). An output file with the same
 	extension as `<format>` will be use this format if no other
 	format is given.
++
+The "tar.gz" and "tgz" formats are defined automatically and default to
+`gzip -cn`. You may override them with custom commands.
 
 ATTRIBUTES
 ----------
@@ -142,6 +145,14 @@ git archive --format=tar --prefix=junk/ HEAD | (cd /var/tmp/ && tar xf -)::
 git archive --format=tar --prefix=git-1.4.0/ v1.4.0 | gzip >git-1.4.0.tar.gz::
 
 	Create a compressed tarball for v1.4.0 release.
+
+git archive --format=tar.gz --prefix=git-1.4.0/ v1.4.0 >git-1.4.0.tar.gz::
+
+	Same as above, but using the builtin tar.gz handling.
+
+git archive --prefix=git-1.4.0/ -o git-1.4.0.tar.gz v1.4.0::
+
+	Same as above, but the format is inferred from the output file.
 
 git archive --format=tar --prefix=git-1.4.0/ v1.4.0{caret}\{tree\} | gzip >git-1.4.0.tar.gz::
 
