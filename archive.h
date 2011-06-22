@@ -17,8 +17,9 @@ struct archiver_args {
 #define ARCHIVER_WANT_COMPRESSION_LEVELS 1
 struct archiver {
 	const char *name;
-	int (*write_archive)(struct archiver_args *);
+	int (*write_archive)(const struct archiver *, struct archiver_args *);
 	unsigned flags;
+	void *data;
 };
 extern void register_archiver(struct archiver *);
 

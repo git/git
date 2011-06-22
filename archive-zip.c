@@ -261,7 +261,8 @@ static void dos_time(time_t *time, int *dos_date, int *dos_time)
 	*dos_time = t->tm_sec / 2 + t->tm_min * 32 + t->tm_hour * 2048;
 }
 
-static int write_zip_archive(struct archiver_args *args)
+static int write_zip_archive(const struct archiver *ar,
+			     struct archiver_args *args)
 {
 	int err;
 

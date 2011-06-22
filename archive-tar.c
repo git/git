@@ -234,7 +234,8 @@ static int git_tar_config(const char *var, const char *value, void *cb)
 	return 0;
 }
 
-static int write_tar_archive(struct archiver_args *args)
+static int write_tar_archive(const struct archiver *ar,
+			     struct archiver_args *args)
 {
 	int err = 0;
 
