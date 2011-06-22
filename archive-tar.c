@@ -234,11 +234,9 @@ static int git_tar_config(const char *var, const char *value, void *cb)
 	return 0;
 }
 
-int write_tar_archive(struct archiver_args *args)
+static int write_tar_archive(struct archiver_args *args)
 {
 	int err = 0;
-
-	git_config(git_tar_config, NULL);
 
 	if (args->commit_sha1)
 		err = write_global_extended_header(args);
@@ -247,4 +245,16 @@ int write_tar_archive(struct archiver_args *args)
 	if (!err)
 		write_trailer();
 	return err;
+}
+
+static struct archiver tar_archiver = {
+	"tar",
+	write_tar_archive,
+	0
+};
+
+void init_tar_archiver(void)
+{
+	register_archiver(&tar_archiver);
+	git_config(git_tar_config, NULL);
 }

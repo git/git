@@ -14,16 +14,15 @@ static char const * const archive_usage[] = {
 	NULL
 };
 
-#define USES_ZLIB_COMPRESSION 1
+static const struct archiver **archivers;
+static int nr_archivers;
+static int alloc_archivers;
 
-static const struct archiver {
-	const char *name;
-	write_archive_fn_t write_archive;
-	unsigned int flags;
-} archivers[] = {
-	{ "tar", write_tar_archive },
-	{ "zip", write_zip_archive, USES_ZLIB_COMPRESSION },
-};
+void register_archiver(struct archiver *ar)
+{
+	ALLOC_GROW(archivers, nr_archivers + 1, alloc_archivers);
+	archivers[nr_archivers++] = ar;
+}
 
 static void format_subst(const struct commit *commit,
                          const char *src, size_t len,
@@ -208,9 +207,9 @@ static const struct archiver *lookup_archiver(const char *name)
 	if (!name)
 		return NULL;
 
-	for (i = 0; i < ARRAY_SIZE(archivers); i++) {
-		if (!strcmp(name, archivers[i].name))
-			return &archivers[i];
+	for (i = 0; i < nr_archivers; i++) {
+		if (!strcmp(name, archivers[i]->name))
+			return archivers[i];
 	}
 	return NULL;
 }
@@ -355,8 +354,8 @@ static int parse_archive_args(int argc, const char **argv,
 		base = "";
 
 	if (list) {
-		for (i = 0; i < ARRAY_SIZE(archivers); i++)
-			printf("%s\n", archivers[i].name);
+		for (i = 0; i < nr_archivers; i++)
+			printf("%s\n", archivers[i]->name);
 		exit(0);
 	}
 
@@ -369,7 +368,7 @@ static int parse_archive_args(int argc, const char **argv,
 
 	args->compression_level = Z_DEFAULT_COMPRESSION;
 	if (compression_level != -1) {
-		if ((*ar)->flags & USES_ZLIB_COMPRESSION)
+		if ((*ar)->flags & ARCHIVER_WANT_COMPRESSION_LEVELS)
 			args->compression_level = compression_level;
 		else {
 			die("Argument not supported for format '%s': -%d",
@@ -395,6 +394,8 @@ int write_archive(int argc, const char **argv, const char *prefix,
 		prefix = setup_git_directory_gently(&nongit);
 
 	git_config(git_default_config, NULL);
+	init_tar_archiver();
+	init_zip_archiver();
 
 	argc = parse_archive_args(argc, argv, &ar, &args);
 	if (nongit) {
