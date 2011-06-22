@@ -298,9 +298,10 @@ static void parse_treeish_arg(const char **argv,
 	  PARSE_OPT_NOARG | PARSE_OPT_NONEG | PARSE_OPT_HIDDEN, NULL, (p) }
 
 static int parse_archive_args(int argc, const char **argv,
-		const struct archiver **ar, struct archiver_args *args)
+		const struct archiver **ar, struct archiver_args *args,
+		const char *name_hint)
 {
-	const char *format = "tar";
+	const char *format = NULL;
 	const char *base = NULL;
 	const char *remote = NULL;
 	const char *exec = NULL;
@@ -359,6 +360,11 @@ static int parse_archive_args(int argc, const char **argv,
 		exit(0);
 	}
 
+	if (!format && name_hint)
+		format = archive_format_from_filename(name_hint);
+	if (!format)
+		format = "tar";
+
 	/* We need at least one parameter -- tree-ish */
 	if (argc < 1)
 		usage_with_options(archive_usage, opts);
@@ -384,7 +390,7 @@ static int parse_archive_args(int argc, const char **argv,
 }
 
 int write_archive(int argc, const char **argv, const char *prefix,
-		int setup_prefix)
+		  int setup_prefix, const char *name_hint)
 {
 	int nongit = 0;
 	const struct archiver *ar = NULL;
@@ -397,7 +403,7 @@ int write_archive(int argc, const char **argv, const char *prefix,
 	init_tar_archiver();
 	init_zip_archiver();
 
-	argc = parse_archive_args(argc, argv, &ar, &args);
+	argc = parse_archive_args(argc, argv, &ar, &args, name_hint);
 	if (nongit) {
 		/*
 		 * We know this will die() with an error, so we could just
@@ -411,4 +417,15 @@ int write_archive(int argc, const char **argv, const char *prefix,
 	parse_pathspec_arg(argv + 1, &args);
 
 	return ar->write_archive(ar, &args);
+}
+
+const char *archive_format_from_filename(const char *filename)
+{
+	const char *ext = strrchr(filename, '.');
+	if (!ext)
+		return NULL;
+	ext++;
+	if (!strcasecmp(ext, "zip"))
+		return "zip";
+	return NULL;
 }
