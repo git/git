@@ -5273,16 +5273,13 @@ sub git_search_message {
 	my $paging_nav = '';
 	if ($page > 0) {
 		$paging_nav .=
-			$cgi->a({-href => href(action=>"search", hash=>$hash,
-			                       searchtext=>$searchtext,
-			                       searchtype=>$searchtype)},
-			        "first");
-		$paging_nav .= " &sdot; " .
+			$cgi->a({-href => href(-replay=>1, page=>undef)},
+			        "first") .
+			" &sdot; " .
 			$cgi->a({-href => href(-replay=>1, page=>$page-1),
 			         -accesskey => "p", -title => "Alt-p"}, "prev");
 	} else {
-		$paging_nav .= "first";
-		$paging_nav .= " &sdot; prev";
+		$paging_nav .= "first &sdot; prev";
 	}
 	my $next_link = '';
 	if ($#commitlist >= 100) {
@@ -5327,10 +5324,13 @@ sub git_search_changes {
 			if (%co) {
 				print "</td>\n" .
 				      "<td class=\"link\">" .
-				      $cgi->a({-href => href(action=>"commit", hash=>$co{'id'})}, "commit") .
+				      $cgi->a({-href => href(action=>"commit", hash=>$co{'id'})},
+				              "commit") .
 				      " | " .
-				      $cgi->a({-href => href(action=>"tree", hash=>$co{'tree'}, hash_base=>$co{'id'})}, "tree");
-				print "</td>\n" .
+				      $cgi->a({-href => href(action=>"tree", hash=>$co{'tree'},
+				                             hash_base=>$co{'id'})},
+				              "tree") .
+				      "</td>\n" .
 				      "</tr>\n";
 			}
 
@@ -5364,10 +5364,13 @@ sub git_search_changes {
 	if (%co) {
 		print "</td>\n" .
 		      "<td class=\"link\">" .
-		      $cgi->a({-href => href(action=>"commit", hash=>$co{'id'})}, "commit") .
+		      $cgi->a({-href => href(action=>"commit", hash=>$co{'id'})},
+		              "commit") .
 		      " | " .
-		      $cgi->a({-href => href(action=>"tree", hash=>$co{'tree'}, hash_base=>$co{'id'})}, "tree");
-		print "</td>\n" .
+		      $cgi->a({-href => href(action=>"tree", hash=>$co{'tree'},
+		                             hash_base=>$co{'id'})},
+		              "tree") .
+		      "</td>\n" .
 		      "</tr>\n";
 	}
 
