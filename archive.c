@@ -419,13 +419,26 @@ int write_archive(int argc, const char **argv, const char *prefix,
 	return ar->write_archive(ar, &args);
 }
 
+static int match_extension(const char *filename, const char *ext)
+{
+	int prefixlen = strlen(filename) - strlen(ext);
+
+	/*
+	 * We need 1 character for the '.', and 1 character to ensure that the
+	 * prefix is non-empty (k.e., we don't match .tar.gz with no actual
+	 * filename).
+	 */
+	if (prefixlen < 2 || filename[prefixlen-1] != '.')
+		return 0;
+	return !strcmp(filename + prefixlen, ext);
+}
+
 const char *archive_format_from_filename(const char *filename)
 {
-	const char *ext = strrchr(filename, '.');
-	if (!ext)
-		return NULL;
-	ext++;
-	if (!strcasecmp(ext, "zip"))
-		return "zip";
+	int i;
+
+	for (i = 0; i < nr_archivers; i++)
+		if (match_extension(filename, archivers[i]->name))
+			return archivers[i]->name;
 	return NULL;
 }
