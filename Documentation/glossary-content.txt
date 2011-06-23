@@ -170,8 +170,8 @@ to point at the new commit.
 	working tree>> is normally derived from the state of the tree
 	referred to by HEAD.  HEAD is a reference to one of the
 	<<def_head,heads>> in your repository, except when using a
-	<<def_detached_HEAD,detached HEAD>>, in which case it may
-	reference an arbitrary commit.
+	<<def_detached_HEAD,detached HEAD>>, in which case it directly
+	references an arbitrary commit.
 
 [[def_head_ref]]head ref::
 	A synonym for <<def_head,head>>.
