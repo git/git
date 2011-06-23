@@ -99,6 +99,12 @@ start_httpd () {
 
 	# here $httpd should have a meaningful value
 	resolve_full_httpd
+	mkdir -p "$fqgitdir/gitweb/$httpd_only"
+	conf="$fqgitdir/gitweb/$httpd_only.conf"
+
+	# generate correct config file if it doesn't exist
+	test -f "$conf" || configure_httpd
+	test -f "$fqgitdir/gitweb/gitweb_config.perl" || gitweb_conf
 
 	# don't quote $full_httpd, there can be arguments to it (-f)
 	case "$httpd" in
@@ -628,6 +634,7 @@ gitweb_conf
 
 resolve_full_httpd
 mkdir -p "$fqgitdir/gitweb/$httpd_only"
+conf="$fqgitdir/gitweb/$httpd_only.conf"
 
 configure_httpd
 
