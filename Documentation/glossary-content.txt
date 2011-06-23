@@ -161,8 +161,8 @@ to point at the new commit.
 
 [[def_head]]head::
 	A <<def_ref,named reference>> to the <<def_commit,commit>> at the tip of a
-	<<def_branch,branch>>.  Heads are stored in
-	`$GIT_DIR/refs/heads/`, except when using packed refs. (See
+	<<def_branch,branch>>.  Heads are stored in a file in
+	`$GIT_DIR/refs/heads/` directory, except when using packed refs. (See
 	linkgit:git-pack-refs[1].)
 
 [[def_HEAD]]HEAD::
@@ -350,8 +350,9 @@ including Documentation/chapter_1/figure_1.jpg.
 
 [[def_ref]]ref::
 	A 40-byte hex representation of a <<def_SHA1,SHA1>> or a name that
-	denotes a particular <<def_object,object>>. These may be stored in
-	`$GIT_DIR/refs/`.
+	denotes a particular <<def_object,object>>. They may be stored in
+	a file under `$GIT_DIR/refs/` directory, or
+	in the `$GIT_DIR/packed-refs` file.
 
 [[def_reflog]]reflog::
 	A reflog shows the local "history" of a ref.  In other words,
