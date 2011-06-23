@@ -1,22 +1,127 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jun 2011, #03; Fri, 17)
-X-master-at: 36bfb0e5f6004e4c4ac9334107dc185c316839a7
-X-next-at: a2eb42042a14044c35525779dcf76ee92f3305a7
+Subject: What's cooking in git.git (Jun 2011, #04; Wed, 22)
+X-master-at: 7af4fc9cf3e3538a9bfb8b14feeacdeb7f6db7d5
+X-next-at: cb7154dc1f1bd87d1e3d1944b736c15bdbae1d91
 
-What's cooking in git.git (Jun 2011, #03; Fri, 17)
+What's cooking in git.git (Jun 2011, #04; Wed, 22)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' while commits prefixed with '+' are in 'next'.
 
-We have passed v1.7.6-rc2 and it seems things are really in releaseable
-form, so I am tempted to skip -rc3 and tag the final sometime next week.
+I ended up tagging 1.7.6-rc3; please test it well. The final expected to
+be at around the end of the week.
 
 --------------------------------------------------
 [New Topics]
 
-* aw/rebase-i-p (2011-06-13) 1 commit
- - rebase -i -p: doesn't pick certain merge commits that are children of "upstream"
+* ak/gcc46-profile-feedback (2011-06-20) 3 commits
+ - Add explanation of the profile feedback build to the README
+ - Add profile feedback build to git
+ - Add option to disable NORETURN
+
+* sr/transport-helper-fix (2011-06-19) 20 commits
+ - transport-helper: implement marks location as capability
+ - transport-helper: Use capname for gitdir capability too
+ - transport-helper: export is no longer always the last command
+ - transport-helper: change import semantics
+ - transport-helper: update ref status after push with export
+ - transport-helper: use the new done feature where possible
+ - transport-helper: check status code of finish_command
+ - transport-helper: factor out push_update_refs_status
+ - fast-export: support done feature
+ - fast-import: introduce 'done' command
+ - git-remote-testgit: fix error handling
+ - git-remote-testgit: only push for non-local repositories
+ - remote-curl: accept empty line as terminator
+ - git_remote_helpers: push all refs during a non-local export
+ - transport-helper: don't feed bogus refs to export push
+ - teach remote-testgit to import non-HEAD refs
+ - t5800: document some non-functional parts of remote helpers
+ - t5800: use skip_all instead of prereq
+ - t5800: factor out some ref tests
+ - transport-helper: fix minor leak in push_refs_with_export
+
+At least Patch 10/20 (git-remote-testgit: fix error handling) and Patch
+15/20 (transport-helper: use the new done feature where possible) need a
+reroll.
+
+* jc/maint-cygwin-trust-executable-bit-default (2011-06-20) 1 commit
+ - cygwin: trust executable bit by default
+
+Fix for an ancient regression.
+
+* jk/tag-list-multiple-patterns (2011-06-20) 1 commit
+ - tag: accept multiple patterns for --list
+
+* jl/maint-fetch-recursive-fix (2011-06-20) 1 commit
+ - fetch: Also fetch submodules in subdirectories in on-demand mode
+
+* rr/revert-cherry-pick-continue (2011-06-21) 13 commits
+ - revert: Introduce --continue to continue the operation
+ - revert: Introduce skip-all to cleanup sequencer data
+ - revert: Introduce a layer of indirection over pick_commits
+ - revert: Persist data for continuation
+ - revert: Catch incompatible command-line options early
+ - revert: Separate cmdline parsing from functional code
+ - revert: Introduce struct to keep command-line options
+ - revert: Rename no_replay to record_origin
+ - revert: Eliminate global "commit" variable
+ - revert: Propogate errors upwards from do_pick_commit
+ - revert: Don't check lone argument in get_encoding
+ - revert: Factor out add_message_to_msg function
+ - advice: Introduce error_resolve_conflict
+
+Under discussion, just queued here so that it is not lost.
+
+* fk/relink-upon-ldflags-update (2011-06-22) 1 commit
+ - Makefile: Track changes to LDFLAGS and relink when necessary
+
+* jk/maint-config-param (2011-06-22) 6 commits
+ - config: use strbuf_split_str instead of a temporary strbuf
+ - strbuf: allow strbuf_split to work on non-strbufs
+ - config: avoid segfault when parsing command-line config
+ - config: die on error in command-line config
+ - fix "git -c" parsing of values with equals signs
+ - strbuf_split: add a max parameter
+ (this branch is used by jk/clone-cmdline-config.)
+
+Separated earlier parts of jk/clone-cmdline-config for maint.
+
+* jm/mergetool-pathspec (2011-06-22) 2 commits
+ - mergetool: Don't assume paths are unmerged
+ - mergetool: Add tests for filename with whitespace
+
+I think this is a good idea, but it probably needs a re-roll.
+
+* jn/gitweb-split-header-html (2011-06-22) 1 commit
+ - gitweb: Refactor git_header_html
+
+--------------------------------------------------
+[Stalled]
+
+* jh/receive-count-limit (2011-05-23) 10 commits
+ - receive-pack: Allow server to refuse pushes with too many objects
+ - pack-objects: Estimate pack size; abort early if pack size limit is exceeded
+ - send-pack/receive-pack: Allow server to refuse pushing too large packs
+ - pack-objects: Allow --max-pack-size to be used together with --stdout
+ - send-pack/receive-pack: Allow server to refuse pushes with too many commits
+ - pack-objects: Teach new option --max-commit-count, limiting #commits in pack
+ - receive-pack: Prepare for addition of the new 'limit-*' family of capabilities
+ - Tighten rules for matching server capabilities in server_supports()
+ - send-pack: Attempt to retrieve remote status even if pack-objects fails
+ - Update technical docs to reflect side-band-64k capability in receive-pack
+
+Would need another round to separate per-pack and per-session limits.
+Not urgent. Will not merge before 1.7.6.
+
+--------------------------------------------------
+[Cooking]
+
+* aw/rebase-i-p (2011-06-19) 1 commit
+ - rebase -i -p: include non-first-parent commits in todo list
+
+Rerolled with a minor tweak.
 
 * en/merge-recursive (2011-06-13) 49 commits
  - t3030: fix accidental success in symlink rename
@@ -69,6 +174,8 @@ form, so I am tempted to skip -rc3 and tag the final sometime next week.
  - t6042: Add failing testcase for rename/modify/add-source conflict
  - t6042: Add a testcase where git deletes an untracked file
 
+Haven't looked at the whole series yet.
+
 * fg/submodule-keep-updating (2011-06-13) 3 commits
  - git-submodule.sh: clarify the "should we die now" logic
  - submodule update: continue when a checkout fails
@@ -91,47 +198,18 @@ form, so I am tempted to skip -rc3 and tag the final sometime next week.
  - t1301-*.sh: Fix the 'forced modes' test on cygwin
  - help.c: Fix detection of custom merge strategy on cygwin
 
-* di/no-no-existant (2011-06-16) 1 commit
- - Fix typo: existant->existent
-
-* jk/archive-tar-filter (2011-06-15) 7 commits
+* jk/archive-tar-filter (2011-06-22) 9 commits
+ - upload-archive: allow user to turn off filters
  - archive: provide builtin .tar.gz filter
- - archive: match extensions from user-configured formats
- - archive: refactor format-guessing from filename
- - archive: advertise user tar-filters in --list
- - archive: support user tar-filters via --format
- - archive: add user-configurable tar-filter infrastructure
+ - archive: implement configurable tar filters
+ - archive: refactor file extension format-guessing
+ - archive: move file extension format-guessing lower
+ - archive: pass archiver struct to write_archive callback
+ - archive: refactor list of archive formats
+ - archive-tar: don't reload default config options
  - archive: reorder option parsing and config reading
 
---------------------------------------------------
-[Stalled]
-
-* js/ref-namespaces (2011-06-07) 4 commits
- . ref namespaces: documentation
- . ref namespaces: support remote repositories via upload-pack and receive-pack
- . ref namespaces: infrastructure
- . Fix prefix handling in ref iteration functions
-
-Fairly involved feature enhancement, and breaks tests when merged to 'pu'.
-Not urgent. Will not merge before 1.7.6.
-
-* jh/receive-count-limit (2011-05-23) 10 commits
- - receive-pack: Allow server to refuse pushes with too many objects
- - pack-objects: Estimate pack size; abort early if pack size limit is exceeded
- - send-pack/receive-pack: Allow server to refuse pushing too large packs
- - pack-objects: Allow --max-pack-size to be used together with --stdout
- - send-pack/receive-pack: Allow server to refuse pushes with too many commits
- - pack-objects: Teach new option --max-commit-count, limiting #commits in pack
- - receive-pack: Prepare for addition of the new 'limit-*' family of capabilities
- - Tighten rules for matching server capabilities in server_supports()
- - send-pack: Attempt to retrieve remote status even if pack-objects fails
- - Update technical docs to reflect side-band-64k capability in receive-pack
-
-Would need another round to separate per-pack and per-session limits.
-Not urgent. Will not merge before 1.7.6.
-
---------------------------------------------------
-[Cooking]
+Rerolled.
 
 * jc/index-pack (2011-06-05) 9 commits
  - verify-pack: use index-pack --verify
@@ -155,14 +233,13 @@ Not urgent. Will not merge before 1.7.6.
  + mingw.c: move definition of mingw_getenv down
  + sh-i18n--envsubst: do not crash when no arguments are given
 
-Looked sane but will wait for msysgit folks to take a look.
 Not urgent. Will not merge before 1.7.6.
 
 * an/shallow-doc (2011-06-08) 2 commits
  - Document the underlying protocol used by shallow repositories and --depth commands.
  - Fix documentation of fetch-pack that implies that the client can disconnect after sending wants.
 
-Waiting for a review, but looked sensible.
+Not waiting for a review any longer; looked sensible.
 
 * jc/legacy-loose-object (2011-06-08) 1 commit
  - sha1_file.c: "legacy" is really the current format
@@ -179,33 +256,21 @@ Waiting for a review, but looked sensible.
 This replaces the earlier attempt to deal with the mismatch between our
 expectation and what zlib API actually offers piecemeal.
 
-* jk/clone-cmdline-config (2011-06-11) 10 commits
+* jk/clone-cmdline-config (2011-06-22) 4 commits
  - clone: accept config options on the command line
  - config: make git_config_parse_parameter a public function
  - remote: use new OPT_STRING_LIST
  - parse-options: add OPT_STRING_LIST helper
- - config: use strbuf_split_str instead of a temporary strbuf
- - strbuf: allow strbuf_split to work on non-strbufs
- - config: avoid segfault when parsing command-line config
- - config: die on error in command-line config
- - fix "git -c" parsing of values with equals signs
- - strbuf_split: add a max parameter
+ (this branch uses jk/maint-config-param.)
+
+Separated the earlier parts out to make it mergeable to the maintenance
+track.
 
 * jk/tag-contains-ab (2011-06-11) 4 commits
  - Why is "git tag --contains" so slow?
  - default core.clockskew variable to one day
  - limit "contains" traversals based on commit timestamp
  - tag: speed up --contains calculation
-
-* jk/transport-helper-fix (2011-06-07) 8 commits
- - git_remote_helpers: push all refs during a non-local export
- - transport-helper: don't feed bogus refs to export push
- - teach remote-testgit to import multiple refs
- - teach remote-testgit to import non-HEAD refs
- - t5800: document some non-functional parts of remote helpers
- - t5800: factor out some ref tests
- - git-remote-testgit: exit gracefully after push
- - transport-helper: fix minor leak in push_refs_with_export
 
 * db/http-cookies (2011-06-03) 1 commit
   (merged to 'next' on 2011-06-06 at 90d736a)
@@ -405,4 +470,26 @@ Not urgent. Will not merge before 1.7.6.
  + i18n: git-am add git-sh-i18n
 
 Rerolled.
-Will cook a bit longer.
+
+--------------------------------------------------
+[Discarded]
+
+* jk/transport-helper-fix (2011-06-07) 8 commits
+ . git_remote_helpers: push all refs during a non-local export
+ . transport-helper: don't feed bogus refs to export push
+ . teach remote-testgit to import multiple refs
+ . teach remote-testgit to import non-HEAD refs
+ . t5800: document some non-functional parts of remote helpers
+ . t5800: factor out some ref tests
+ . git-remote-testgit: exit gracefully after push
+ . transport-helper: fix minor leak in push_refs_with_export
+
+sr/transport-helper-fix is a superset of this.
+
+* js/ref-namespaces (2011-06-07) 4 commits
+ . ref namespaces: documentation
+ . ref namespaces: support remote repositories via upload-pack and receive-pack
+ . ref namespaces: infrastructure
+ . Fix prefix handling in ref iteration functions
+
+Fairly involved feature enhancement, and breaks tests when merged to 'pu'.
