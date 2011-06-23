@@ -103,7 +103,7 @@ start_httpd () {
 	case "$httpd" in
 	*mongoose*|*plackup*)
 		#These servers don't have a daemon mode so we'll have to fork it
-		$full_httpd "$fqgitdir/gitweb/httpd.conf" &
+		$full_httpd "$conf" &
 		#Save the pid before doing anything else (we'll print it later)
 		pid=$!
 
@@ -117,7 +117,7 @@ $pid
 EOF
 		;;
 	*)
-		$full_httpd "$fqgitdir/gitweb/httpd.conf"
+		$full_httpd "$conf"
 		if test $? != 0; then
 			echo "Could not execute http daemon $httpd."
 			exit 1
