@@ -427,14 +427,14 @@ including Documentation/chapter_1/figure_1.jpg.
 	command.
 
 [[def_tag]]tag::
-	A <<def_ref,ref>> pointing to a <<def_tag_object,tag>> or
-	<<def_commit_object,commit object>>. In contrast to a <<def_head,head>>,
-	a tag is not changed by a <<def_commit,commit>>. Tags (not
-	<<def_tag_object,tag objects>>) are stored in `$GIT_DIR/refs/tags/`. A
-	git tag has nothing to do with a Lisp tag (which would be
-	called an <<def_object_type,object type>> in git's context). A
-	tag is most typically used to mark a particular point in the
-	commit ancestry <<def_chain,chain>>.
+	A <<def_ref,ref>> under `refs/tags/` namespace that points to an
+	object of an arbitrary type (typically a tag points to either a
+	<<def_tag_object,tag>> or a <<def_commit_object,commit object>>).
+	In contrast to a <<def_head,head>>, a tag is not updated by
+	the `commit` command. A git tag has nothing to do with a Lisp
+	tag (which would be called an <<def_object_type,object type>>
+	in git's context). A tag is most typically used to mark a particular
+	point in the commit ancestry <<def_chain,chain>>.
 
 [[def_tag_object]]tag object::
 	An <<def_object,object>> containing a <<def_ref,ref>> pointing to
