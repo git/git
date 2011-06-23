@@ -587,32 +587,36 @@ our \$projects_list = \$projectroot;
 EOF
 }
 
+configure_httpd() {
+	case "$httpd" in
+	*lighttpd*)
+		lighttpd_conf
+		;;
+	*apache2*|*httpd*)
+		apache2_conf
+		;;
+	webrick)
+		webrick_conf
+		;;
+	*mongoose*)
+		mongoose_conf
+		;;
+	*plackup*)
+		plackup_conf
+		;;
+	*)
+		echo "Unknown httpd specified: $httpd"
+		exit 1
+		;;
+	esac
+}
+
 gitweb_conf
 
 resolve_full_httpd
 mkdir -p "$fqgitdir/gitweb/$httpd_only"
 
-case "$httpd" in
-*lighttpd*)
-	lighttpd_conf
-	;;
-*apache2*|*httpd*)
-	apache2_conf
-	;;
-webrick)
-	webrick_conf
-	;;
-*mongoose*)
-	mongoose_conf
-	;;
-*plackup*)
-	plackup_conf
-	;;
-*)
-	echo "Unknown httpd specified: $httpd"
-	exit 1
-	;;
-esac
+configure_httpd
 
 start_httpd
 url=http://127.0.0.1:$port
