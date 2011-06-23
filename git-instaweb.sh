@@ -27,6 +27,7 @@ httpd="$(git config --get instaweb.httpd)"
 root="$(git config --get instaweb.gitwebdir)"
 port=$(git config --get instaweb.port)
 module_path="$(git config --get instaweb.modulepath)"
+action="browse"
 
 conf="$GIT_DIR/gitweb/httpd.conf"
 
@@ -148,17 +149,13 @@ while test $# != 0
 do
 	case "$1" in
 	--stop|stop)
-		stop_httpd
-		exit 0
+		action="stop"
 		;;
 	--start|start)
-		start_httpd
-		exit 0
+		action="start"
 		;;
 	--restart|restart)
-		stop_httpd
-		start_httpd
-		exit 0
+		action="restart"
 		;;
 	-l|--local)
 		local=true
@@ -610,6 +607,22 @@ configure_httpd() {
 		;;
 	esac
 }
+
+case "$action" in
+stop)
+	stop_httpd
+	exit 0
+	;;
+start)
+	start_httpd
+	exit 0
+	;;
+restart)
+	stop_httpd
+	start_httpd
+	exit 0
+	;;
+esac
 
 gitweb_conf
 
