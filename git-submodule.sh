@@ -836,17 +836,20 @@ cmd_sync()
 			;;
 		esac
 
-		say "Synchronizing submodule url for '$name'"
-		git config submodule."$name".url "$url"
-
-		if test -e "$path"/.git
+		if git config "submodule.$name.url" >/dev/null 2>/dev/null
 		then
-		(
-			clear_local_git_env
-			cd "$path"
-			remote=$(get_default_remote)
-			git config remote."$remote".url "$url"
-		)
+			say "Synchronizing submodule url for '$name'"
+			git config submodule."$name".url "$url"
+
+			if test -e "$path"/.git
+			then
+			(
+				clear_local_git_env
+				cd "$path"
+				remote=$(get_default_remote)
+				git config remote."$remote".url "$url"
+			)
+			fi
 		fi
 	done
 }
