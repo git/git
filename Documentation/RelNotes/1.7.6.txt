@@ -1,4 +1,4 @@
-Git v1.7.6 Release Notes (draft)
+Git v1.7.6 Release Notes
 ========================
 
 Updates since v1.7.5
@@ -134,9 +134,3 @@ included in this release.
 
  * "git status -z" did not default to --porcelain output format.
    (merge bc/maint-status-z-to-use-porcelain later)
-
----
-exec >/var/tmp/1
-echo O=$(git describe master)
-O=v1.7.6-rc2
-git shortlog --no-merges ^maint ^$O master
