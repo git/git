@@ -2058,7 +2058,7 @@ _git_config ()
 		color.ui
 		commit.status
 		commit.template
-		core.abbrevguard
+		core.abbrev
 		core.askpass
 		core.attributesfile
 		core.autocrlf
