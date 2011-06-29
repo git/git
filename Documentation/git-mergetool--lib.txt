@@ -7,7 +7,7 @@ git-mergetool--lib - Common git merge tool shell scriptlets
 
 SYNOPSIS
 --------
-'TOOL_MODE=(diff|merge) . "$(git --exec-path)/git-mergetool--lib"'
+'TOOL_MODE=(diff|merge) . "$(git --exec-path)/git-mergetool{litdd}lib"'
 
 DESCRIPTION
 -----------

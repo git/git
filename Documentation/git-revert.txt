@@ -23,7 +23,7 @@ throw away all uncommitted changes in your working directory, you
 should see linkgit:git-reset[1], particularly the '--hard' option.  If
 you want to extract specific files as they were in another commit, you
 should see linkgit:git-checkout[1], specifically the `git checkout
-<commit> -- <filename>` syntax.  Take care with these alternatives as
+<commit> \-- <filename>` syntax.  Take care with these alternatives as
 both will discard uncommitted changes in your working directory.
 
 OPTIONS
