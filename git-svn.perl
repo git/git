@@ -3124,8 +3124,12 @@ sub lookup_svn_merge {
 			next;
 		}
 
-		push @merged_commit_ranges,
-			"$bottom_commit^..$top_commit";
+		if (scalar(command('rev-parse', "$bottom_commit^@"))) {
+			push @merged_commit_ranges,
+			     "$bottom_commit^..$top_commit";
+		} else {
+			push @merged_commit_ranges, "$top_commit";
+		}
 
 		if ( !defined $tip or $top > $tip ) {
 			$tip = $top;
@@ -3154,9 +3158,9 @@ sub check_cherry_pick {
 	my $parents = shift;
 	my @ranges = @_;
 	my %commits = map { $_ => 1 }
-		_rev_list("--no-merges", $tip, "--not", $base, @$parents);
+		_rev_list("--no-merges", $tip, "--not", $base, @$parents, "--");
 	for my $range ( @ranges ) {
-		delete @commits{_rev_list($range)};
+		delete @commits{_rev_list($range, "--")};
 	}
 	for my $commit (keys %commits) {
 		if (has_no_changes($commit)) {
