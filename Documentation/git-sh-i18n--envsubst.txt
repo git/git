@@ -1,5 +1,5 @@
-git-sh-i18n--envsubst(1)
-========================
+git-sh-i18n{litdd}envsubst(1)
+=============================
 
 NAME
 ----
@@ -10,8 +10,8 @@ SYNOPSIS
 [verse]
 eval_gettext () {
 	printf "%s" "$1" | (
-		export PATH $('git sh-i18n--envsubst' --variables "$1");
-		'git sh-i18n--envsubst' "$1"
+		export PATH $('git sh-i18n{litdd}envsubst' --variables "$1");
+		'git sh-i18n{litdd}envsubst' "$1"
 	)
 }
 
@@ -22,7 +22,7 @@ This is not a command the end user would want to run.  Ever.
 This documentation is meant for people who are studying the
 plumbing scripts and/or are writing new ones.
 
-git-sh-i18n--envsubst is Git's stripped-down copy of the GNU
+'git sh-i18n{litdd}envsubst' is Git's stripped-down copy of the GNU
 `envsubst(1)` program that comes with the GNU gettext package. It's
 used internally by linkgit:git-sh-i18n[1] to interpolate the variables
 passed to the the `eval_gettext` function.
