@@ -446,9 +446,14 @@ test_debug () {
 
 test_run_ () {
 	test_cleanup=:
+	expecting_failure=$2
 	eval >&3 2>&4 "$1"
 	eval_ret=$?
-	eval >&3 2>&4 "$test_cleanup"
+
+	if test -z "$immediate" || test $eval_ret = 0 || test -n "$expecting_failure"
+	then
+		eval >&3 2>&4 "$test_cleanup"
+	fi
 	if test "$verbose" = "t" && test -n "$HARNESS_ACTIVE"; then
 		echo ""
 	fi
@@ -497,7 +502,7 @@ test_expect_failure () {
 	if ! test_skip "$@"
 	then
 		say >&3 "checking known breakage: $2"
-		test_run_ "$2"
+		test_run_ "$2" expecting_failure
 		if [ "$?" = 0 -a "$eval_ret" = 0 ]
 		then
 			test_known_broken_ok_ "$1"
@@ -774,6 +779,9 @@ test_cmp() {
 #
 # except that the greeting and config --unset must both succeed for
 # the test to pass.
+#
+# Note that under --immediate mode, no clean-up is done to help diagnose
+# what went wrong.
 
 test_when_finished () {
 	test_cleanup="{ $*
