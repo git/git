@@ -169,4 +169,15 @@ test_expect_success 'checkout -f -B to an existing branch with mergeable changes
 	test_must_fail test_dirty_mergeable
 '
 
+test_expect_success 'checkout -b <describe>' '
+	git tag -f -m "First commit" initial initial &&
+	git checkout -f change1 &&
+	name=$(git describe) &&
+	git checkout -b $name &&
+	git diff --exit-code change1 &&
+	echo "refs/heads/$name" >expect &&
+	git symbolic-ref HEAD >actual &&
+	test_cmp expect actual
+'
+
 test_done

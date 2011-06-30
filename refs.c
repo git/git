@@ -1826,6 +1826,12 @@ int update_ref(const char *action, const char *refname,
 	return 0;
 }
 
+int ref_exists(char *refname)
+{
+	unsigned char sha1[20];
+	return !!resolve_ref(refname, sha1, 1, NULL);
+}
+
 struct ref *find_ref_by_name(const struct ref *list, const char *name)
 {
 	for ( ; list; list = list->next)
