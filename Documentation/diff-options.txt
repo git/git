@@ -48,11 +48,17 @@ endif::git-format-patch[]
 --patience::
 	Generate a diff using the "patience diff" algorithm.
 
---stat[=<width>[,<name-width>]]::
+--stat[=<width>[,<name-width>[,<count>]]]::
 	Generate a diffstat.  You can override the default
 	output width for 80-column terminal by `--stat=<width>`.
 	The width of the filename part can be controlled by
 	giving another width to it separated by a comma.
+	By giving a third parameter `<count>`, you can limit the
+	output to the first `<count>` lines, followed by
+	`...` if there are more.
++
+These parameters can also be set individually with `--stat-width=<width>`,
+`--stat-name-width=<name-width>` and `--stat-count=<count>`.
 
 --numstat::
 	Similar to `\--stat`, but shows number of added and
