@@ -73,6 +73,7 @@ main (int argc, char *argv[])
 	{
 	case 1:
 	  error ("we won't substitute all variables on stdin for you");
+	  break;
 	  /*
 	  all_variables = 1;
       subst_from_stdin ();

@@ -178,7 +178,7 @@ static int ask_yes_no_if_possible(const char *format, ...)
 	vsnprintf(question, sizeof(question), format, args);
 	va_end(args);
 
-	if ((retry_hook[0] = getenv("GIT_ASK_YESNO"))) {
+	if ((retry_hook[0] = mingw_getenv("GIT_ASK_YESNO"))) {
 		retry_hook[1] = question;
 		return !run_command_v_opt(retry_hook, 0);
 	}
@@ -599,19 +599,6 @@ char *mingw_getcwd(char *pointer, int len)
 	return ret;
 }
 
-#undef getenv
-char *mingw_getenv(const char *name)
-{
-	char *result = getenv(name);
-	if (!result && !strcmp(name, "TMPDIR")) {
-		/* on Windows it is TMP and TEMP */
-		result = getenv("TMP");
-		if (!result)
-			result = getenv("TEMP");
-	}
-	return result;
-}
-
 /*
  * See http://msdn2.microsoft.com/en-us/library/17w5ykft(vs.71).aspx
  * (Parsing C++ Command-Line Arguments)
@@ -711,7 +698,7 @@ static const char *parse_interpreter(const char *cmd)
  */
 static char **get_path_split(void)
 {
-	char *p, **path, *envpath = getenv("PATH");
+	char *p, **path, *envpath = mingw_getenv("PATH");
 	int i, n = 0;
 
 	if (!envpath || !*envpath)
@@ -1126,6 +1113,36 @@ char **make_augmented_environ(const char *const *vars)
 	while (*vars)
 		env = env_setenv(env, *vars++);
 	return env;
+}
+
+#undef getenv
+
+/*
+ * The system's getenv looks up the name in a case-insensitive manner.
+ * This version tries a case-sensitive lookup and falls back to
+ * case-insensitive if nothing was found.  This is necessary because,
+ * as a prominent example, CMD sets 'Path', but not 'PATH'.
+ * Warning: not thread-safe.
+ */
+static char *getenv_cs(const char *name)
+{
+	size_t len = strlen(name);
+	int i = lookup_env(environ, name, len);
+	if (i >= 0)
+		return environ[i] + len + 1;	/* skip past name and '=' */
+	return getenv(name);
+}
+
+char *mingw_getenv(const char *name)
+{
+	char *result = getenv_cs(name);
+	if (!result && !strcmp(name, "TMPDIR")) {
+		/* on Windows it is TMP and TEMP */
+		result = getenv_cs("TMP");
+		if (!result)
+			result = getenv_cs("TEMP");
+	}
+	return result;
 }
 
 /*
