@@ -110,6 +110,8 @@ struct grep_opt {
 	unsigned post_context;
 	unsigned last_shown;
 	int show_hunk_mark;
+	int file_break;
+	int heading;
 	void *priv;
 
 	void (*output)(struct grep_opt *opt, const void *data, size_t size);

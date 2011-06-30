@@ -721,7 +721,10 @@ static void show_line(struct grep_opt *opt, char *bol, char *eol,
 	int rest = eol - bol;
 	char *line_color = NULL;
 
-	if (opt->pre_context || opt->post_context) {
+	if (opt->file_break && opt->last_shown == 0) {
+		if (opt->show_hunk_mark)
+			opt->output(opt, "\n", 1);
+	} else if (opt->pre_context || opt->post_context) {
 		if (opt->last_shown == 0) {
 			if (opt->show_hunk_mark) {
 				output_color(opt, "--", 2, opt->color_sep);
@@ -732,9 +735,13 @@ static void show_line(struct grep_opt *opt, char *bol, char *eol,
 			opt->output(opt, "\n", 1);
 		}
 	}
+	if (opt->heading && opt->last_shown == 0) {
+		output_color(opt, name, strlen(name), opt->color_filename);
+		opt->output(opt, "\n", 1);
+	}
 	opt->last_shown = lno;
 
-	if (opt->pathname) {
+	if (!opt->heading && opt->pathname) {
 		output_color(opt, name, strlen(name), opt->color_filename);
 		output_sep(opt, sign);
 	}
@@ -941,9 +948,18 @@ static int grep_buffer_1(struct grep_opt *opt, const char *name,
 	if (!opt->output)
 		opt->output = std_output;
 
-	if (opt->last_shown && (opt->pre_context || opt->post_context) &&
-	    opt->output == std_output)
-		opt->show_hunk_mark = 1;
+	if (opt->pre_context || opt->post_context || opt->file_break) {
+		/* Show hunk marks, except for the first file. */
+		if (opt->last_shown)
+			opt->show_hunk_mark = 1;
+		/*
+		 * If we're using threads then we can't easily identify
+		 * the first file.  Always put hunk marks in that case
+		 * and skip the very first one later in work_done().
+		 */
+		if (opt->output != std_output)
+			opt->show_hunk_mark = 1;
+	}
 	opt->last_shown = 0;
 
 	switch (opt->binary) {

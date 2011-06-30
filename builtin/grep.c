@@ -93,8 +93,7 @@ static pthread_cond_t cond_write;
 /* Signalled when we are finished with everything. */
 static pthread_cond_t cond_result;
 
-static int print_hunk_marks_between_files;
-static int printed_something;
+static int skip_first_line;
 
 static void add_work(enum work_type type, char *name, void *id)
 {
@@ -160,10 +159,20 @@ static void work_done(struct work_item *w)
 	    todo_done = (todo_done+1) % ARRAY_SIZE(todo)) {
 		w = &todo[todo_done];
 		if (w->out.len) {
-			if (print_hunk_marks_between_files && printed_something)
-				write_or_die(1, "--\n", 3);
-			write_or_die(1, w->out.buf, w->out.len);
-			printed_something = 1;
+			const char *p = w->out.buf;
+			size_t len = w->out.len;
+
+			/* Skip the leading hunk mark of the first file. */
+			if (skip_first_line) {
+				while (len) {
+					len--;
+					if (*p++ == '\n')
+						break;
+				}
+				skip_first_line = 0;
+			}
+
+			write_or_die(1, p, len);
 		}
 		free(w->name);
 		free(w->identifier);
@@ -813,6 +822,10 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		OPT_BOOLEAN('c', "count", &opt.count,
 			"show the number of matches instead of matching lines"),
 		OPT__COLOR(&opt.color, "highlight matches"),
+		OPT_BOOLEAN(0, "break", &opt.file_break,
+			"print empty line between matches from different files"),
+		OPT_BOOLEAN(0, "heading", &opt.heading,
+			"show filename only once above matches from same file"),
 		OPT_GROUP(""),
 		OPT_CALLBACK('C', NULL, &opt, "n",
 			"show <n> context lines before and after matches",
@@ -967,8 +980,8 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		use_threads = 0;
 
 	if (use_threads) {
-		if (opt.pre_context || opt.post_context)
-			print_hunk_marks_between_files = 1;
+		if (opt.pre_context || opt.post_context || opt.file_break)
+			skip_first_line = 1;
 		start_threads(&opt);
 	}
 #else
