@@ -69,6 +69,9 @@ configuration variable documented in linkgit:git-config[1].
 	(and suppresses the output of submodule summaries when the config option
 	`status.submodulesummary` is set).
 
+--ignored::
+	Show ignored files as well.
+
 -z::
 	Terminate entries with NUL, instead of LF.  This implies
 	the `--porcelain` output format if no other format is given.
@@ -119,7 +122,8 @@ codes can be interpreted as follows:
 * 'C' = copied
 * 'U' = updated but unmerged
 
-Ignored files are not listed.
+Ignored files are not listed, unless `--ignored` option is in effect,
+in which case `XY` are `!!`.
 
     X          Y     Meaning
     -------------------------------------------------
@@ -142,6 +146,7 @@ Ignored files are not listed.
     U           U    unmerged, both modified
     -------------------------------------------------
     ?           ?    untracked
+    !           !    ignored
     -------------------------------------------------
 
 If -b is used the short-format status is preceded by a line

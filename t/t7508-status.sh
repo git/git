@@ -131,6 +131,127 @@ test_expect_success 'status -s' '
 
 '
 
+test_expect_success 'status with gitignore' '
+	{
+		echo ".gitignore" &&
+		echo "expect" &&
+		echo "output" &&
+		echo "untracked"
+	} >.gitignore &&
+
+	cat >expect <<-\EOF &&
+	 M dir1/modified
+	A  dir2/added
+	?? dir2/modified
+	EOF
+	git status -s >output &&
+	test_cmp expect output &&
+
+	cat >expect <<-\EOF &&
+	 M dir1/modified
+	A  dir2/added
+	?? dir2/modified
+	!! .gitignore
+	!! dir1/untracked
+	!! dir2/untracked
+	!! expect
+	!! output
+	!! untracked
+	EOF
+	git status -s --ignored >output &&
+	test_cmp expect output &&
+
+	cat >expect <<-\EOF &&
+	# On branch master
+	# Changes to be committed:
+	#   (use "git reset HEAD <file>..." to unstage)
+	#
+	#	new file:   dir2/added
+	#
+	# Changes not staged for commit:
+	#   (use "git add <file>..." to update what will be committed)
+	#   (use "git checkout -- <file>..." to discard changes in working directory)
+	#
+	#	modified:   dir1/modified
+	#
+	# Untracked files:
+	#   (use "git add <file>..." to include in what will be committed)
+	#
+	#	dir2/modified
+	# Ignored files:
+	#   (use "git add -f <file>..." to include in what will be committed)
+	#
+	#	.gitignore
+	#	dir1/untracked
+	#	dir2/untracked
+	#	expect
+	#	output
+	#	untracked
+	EOF
+	git status --ignored >output &&
+	test_cmp expect output
+'
+
+test_expect_success 'status with gitignore (nothing untracked)' '
+	{
+		echo ".gitignore" &&
+		echo "expect" &&
+		echo "dir2/modified" &&
+		echo "output" &&
+		echo "untracked"
+	} >.gitignore &&
+
+	cat >expect <<-\EOF &&
+	 M dir1/modified
+	A  dir2/added
+	EOF
+	git status -s >output &&
+	test_cmp expect output &&
+
+	cat >expect <<-\EOF &&
+	 M dir1/modified
+	A  dir2/added
+	!! .gitignore
+	!! dir1/untracked
+	!! dir2/modified
+	!! dir2/untracked
+	!! expect
+	!! output
+	!! untracked
+	EOF
+	git status -s --ignored >output &&
+	test_cmp expect output &&
+
+	cat >expect <<-\EOF &&
+	# On branch master
+	# Changes to be committed:
+	#   (use "git reset HEAD <file>..." to unstage)
+	#
+	#	new file:   dir2/added
+	#
+	# Changes not staged for commit:
+	#   (use "git add <file>..." to update what will be committed)
+	#   (use "git checkout -- <file>..." to discard changes in working directory)
+	#
+	#	modified:   dir1/modified
+	#
+	# Ignored files:
+	#   (use "git add -f <file>..." to include in what will be committed)
+	#
+	#	.gitignore
+	#	dir1/untracked
+	#	dir2/modified
+	#	dir2/untracked
+	#	expect
+	#	output
+	#	untracked
+	EOF
+	git status --ignored >output &&
+	test_cmp expect output
+'
+
+rm -f .gitignore
+
 cat >expect <<\EOF
 ## master
  M dir1/modified
