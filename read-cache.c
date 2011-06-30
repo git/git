@@ -726,11 +726,12 @@ static int verify_dotfile(const char *rest)
 	 * has already been discarded, we now test
 	 * the rest.
 	 */
-	switch (*rest) {
+
 	/* "." is not allowed */
-	case '\0': case '/':
+	if (*rest == '\0' || is_dir_sep(*rest))
 		return 0;
 
+	switch (*rest) {
 	/*
 	 * ".git" followed by  NUL or slash is bad. This
 	 * shares the path end test with the ".." case.
@@ -743,7 +744,7 @@ static int verify_dotfile(const char *rest)
 		rest += 2;
 	/* fallthrough */
 	case '.':
-		if (rest[1] == '\0' || rest[1] == '/')
+		if (rest[1] == '\0' || is_dir_sep(rest[1]))
 			return 0;
 	}
 	return 1;
@@ -753,23 +754,19 @@ int verify_path(const char *path)
 {
 	char c;
 
+	if (has_dos_drive_prefix(path))
+		return 0;
+
 	goto inside;
 	for (;;) {
 		if (!c)
 			return 1;
-		if (c == '/') {
+		if (is_dir_sep(c)) {
 inside:
 			c = *path++;
-			switch (c) {
-			default:
-				continue;
-			case '/': case '\0':
-				break;
-			case '.':
-				if (verify_dotfile(path))
-					continue;
-			}
-			return 0;
+			if ((c == '.' && !verify_dotfile(path)) ||
+			    is_dir_sep(c) || c == '\0')
+				return 0;
 		}
 		c = *path++;
 	}
