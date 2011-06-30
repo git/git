@@ -1186,7 +1186,7 @@ static int open_sha1_file(const unsigned char *sha1)
 	return -1;
 }
 
-static void *map_sha1_file(const unsigned char *sha1, unsigned long *size)
+void *map_sha1_file(const unsigned char *sha1, unsigned long *size)
 {
 	void *map;
 	int fd;
@@ -1245,7 +1245,7 @@ unsigned long unpack_object_header_buffer(const unsigned char *buf,
 	return used;
 }
 
-static int unpack_sha1_header(z_stream *stream, unsigned char *map, unsigned long mapsize, void *buffer, unsigned long bufsiz)
+int unpack_sha1_header(z_stream *stream, unsigned char *map, unsigned long mapsize, void *buffer, unsigned long bufsiz)
 {
 	unsigned long size, used;
 	static const char valid_loose_object_type[8] = {
@@ -1342,7 +1342,7 @@ static void *unpack_sha1_rest(z_stream *stream, void *buffer, unsigned long size
  * too permissive for what we want to check. So do an anal
  * object header parse by hand.
  */
-static int parse_sha1_header(const char *hdr, unsigned long *sizep)
+int parse_sha1_header(const char *hdr, unsigned long *sizep)
 {
 	char type[10];
 	int i;
@@ -1481,7 +1481,7 @@ static off_t get_delta_base(struct packed_git *p,
 
 /* forward declaration for a mutually recursive function */
 static int packed_object_info(struct packed_git *p, off_t offset,
-			      unsigned long *sizep);
+			      unsigned long *sizep, int *rtype);
 
 static int packed_delta_info(struct packed_git *p,
 			     struct pack_window **w_curs,
@@ -1495,7 +1495,7 @@ static int packed_delta_info(struct packed_git *p,
 	base_offset = get_delta_base(p, w_curs, &curpos, type, obj_offset);
 	if (!base_offset)
 		return OBJ_BAD;
-	type = packed_object_info(p, base_offset, NULL);
+	type = packed_object_info(p, base_offset, NULL, NULL);
 	if (type <= OBJ_NONE) {
 		struct revindex_entry *revidx;
 		const unsigned char *base_sha1;
@@ -1523,10 +1523,10 @@ static int packed_delta_info(struct packed_git *p,
 	return type;
 }
 
-static int unpack_object_header(struct packed_git *p,
-				struct pack_window **w_curs,
-				off_t *curpos,
-				unsigned long *sizep)
+int unpack_object_header(struct packed_git *p,
+			 struct pack_window **w_curs,
+			 off_t *curpos,
+			 unsigned long *sizep)
 {
 	unsigned char *base;
 	unsigned int left;
@@ -1549,7 +1549,7 @@ static int unpack_object_header(struct packed_git *p,
 	return type;
 }
 
-const char *packed_object_info_detail(struct packed_git *p,
+int packed_object_info_detail(struct packed_git *p,
 				      off_t obj_offset,
 				      unsigned long *size,
 				      unsigned long *store_size,
@@ -1580,7 +1580,7 @@ const char *packed_object_info_detail(struct packed_git *p,
 		case OBJ_BLOB:
 		case OBJ_TAG:
 			unuse_pack(&w_curs);
-			return typename(type);
+			return type;
 		case OBJ_OFS_DELTA:
 			obj_offset = get_delta_base(p, &w_curs, &curpos, type, obj_offset);
 			if (!obj_offset)
@@ -1605,7 +1605,7 @@ const char *packed_object_info_detail(struct packed_git *p,
 }
 
 static int packed_object_info(struct packed_git *p, off_t obj_offset,
-			      unsigned long *sizep)
+			      unsigned long *sizep, int *rtype)
 {
 	struct pack_window *w_curs = NULL;
 	unsigned long size;
@@ -1613,6 +1613,8 @@ static int packed_object_info(struct packed_git *p, off_t obj_offset,
 	enum object_type type;
 
 	type = unpack_object_header(p, &w_curs, &curpos, &size);
+	if (rtype)
+		*rtype = type; /* representation type */
 
 	switch (type) {
 	case OBJ_OFS_DELTA:
@@ -1693,6 +1695,13 @@ static unsigned long pack_entry_hash(struct packed_git *p, off_t base_offset)
 	hash = (unsigned long)p + (unsigned long)base_offset;
 	hash += (hash >> 8) + (hash >> 16);
 	return hash % MAX_DELTA_CACHE;
+}
+
+static int in_delta_base_cache(struct packed_git *p, off_t base_offset)
+{
+	unsigned long hash = pack_entry_hash(p, base_offset);
+	struct delta_base_cache_entry *ent = delta_base_cache + hash;
+	return (ent->data && ent->p == p && ent->base_offset == base_offset);
 }
 
 static void *cache_or_unpack_entry(struct packed_git *p, off_t base_offset,
@@ -2093,24 +2102,28 @@ static int sha1_loose_object_info(const unsigned char *sha1, unsigned long *size
 	return status;
 }
 
-int sha1_object_info(const unsigned char *sha1, unsigned long *sizep)
+/* returns enum object_type or negative */
+int sha1_object_info_extended(const unsigned char *sha1, struct object_info *oi)
 {
 	struct cached_object *co;
 	struct pack_entry e;
-	int status;
+	int status, rtype;
 
 	co = find_cached_object(sha1);
 	if (co) {
-		if (sizep)
-			*sizep = co->size;
+		if (oi->sizep)
+			*(oi->sizep) = co->size;
+		oi->whence = OI_CACHED;
 		return co->type;
 	}
 
 	if (!find_pack_entry(sha1, &e)) {
 		/* Most likely it's a loose object. */
-		status = sha1_loose_object_info(sha1, sizep);
-		if (status >= 0)
+		status = sha1_loose_object_info(sha1, oi->sizep);
+		if (status >= 0) {
+			oi->whence = OI_LOOSE;
 			return status;
+		}
 
 		/* Not a loose object; someone else may have just packed it. */
 		reprepare_packed_git();
@@ -2118,13 +2131,29 @@ int sha1_object_info(const unsigned char *sha1, unsigned long *sizep)
 			return status;
 	}
 
-	status = packed_object_info(e.p, e.offset, sizep);
+	status = packed_object_info(e.p, e.offset, oi->sizep, &rtype);
 	if (status < 0) {
 		mark_bad_packed_object(e.p, sha1);
-		status = sha1_object_info(sha1, sizep);
+		status = sha1_object_info_extended(sha1, oi);
+	} else if (in_delta_base_cache(e.p, e.offset)) {
+		oi->whence = OI_DBCACHED;
+	} else {
+		oi->whence = OI_PACKED;
+		oi->u.packed.offset = e.offset;
+		oi->u.packed.pack = e.p;
+		oi->u.packed.is_delta = (rtype == OBJ_REF_DELTA ||
+					 rtype == OBJ_OFS_DELTA);
 	}
 
 	return status;
+}
+
+int sha1_object_info(const unsigned char *sha1, unsigned long *sizep)
+{
+	struct object_info oi;
+
+	oi.sizep = sizep;
+	return sha1_object_info_extended(sha1, &oi);
 }
 
 static void *read_packed_sha1(const unsigned char *sha1,
@@ -2704,7 +2733,7 @@ static int index_stream(unsigned char *sha1, int fd, size_t size,
 	while (size) {
 		char buf[10240];
 		size_t sz = size < sizeof(buf) ? size : sizeof(buf);
-		size_t actual;
+		ssize_t actual;
 
 		actual = read_in_full(fd, buf, sz);
 		if (actual < 0)

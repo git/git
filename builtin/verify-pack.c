@@ -33,9 +33,9 @@ static void show_pack_info(struct packed_git *p, unsigned int flags)
 		if (!sha1)
 			die("internal error pack-check nth-packed-object");
 		offset = nth_packed_object_offset(p, i);
-		type = packed_object_info_detail(p, offset, &size, &store_size,
+		type = typename(packed_object_info_detail(p, offset, &size, &store_size,
 						 &delta_chain_length,
-						 base_sha1);
+						 base_sha1));
 		if (!stat_only)
 			printf("%s ", sha1_to_hex(sha1));
 		if (!delta_chain_length) {

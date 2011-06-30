@@ -780,6 +780,9 @@ extern int hash_sha1_file(const void *buf, unsigned long len, const char *type, 
 extern int write_sha1_file(const void *buf, unsigned long len, const char *type, unsigned char *return_sha1);
 extern int pretend_sha1_file(void *, unsigned long, enum object_type, unsigned char *);
 extern int force_object_loose(const unsigned char *sha1, time_t mtime);
+extern void *map_sha1_file(const unsigned char *sha1, unsigned long *size);
+extern int unpack_sha1_header(z_stream *stream, unsigned char *map, unsigned long mapsize, void *buffer, unsigned long bufsiz);
+extern int parse_sha1_header(const char *hdr, unsigned long *sizep);
 
 /* global flag to enable extra checks when accessing packed objects */
 extern int do_check_packed_object_crc;
@@ -1021,7 +1024,37 @@ extern off_t find_pack_entry_one(const unsigned char *, struct packed_git *);
 extern void *unpack_entry(struct packed_git *, off_t, enum object_type *, unsigned long *);
 extern unsigned long unpack_object_header_buffer(const unsigned char *buf, unsigned long len, enum object_type *type, unsigned long *sizep);
 extern unsigned long get_size_from_delta(struct packed_git *, struct pack_window **, off_t);
-extern const char *packed_object_info_detail(struct packed_git *, off_t, unsigned long *, unsigned long *, unsigned int *, unsigned char *);
+extern int packed_object_info_detail(struct packed_git *, off_t, unsigned long *, unsigned long *, unsigned int *, unsigned char *);
+extern int unpack_object_header(struct packed_git *, struct pack_window **, off_t *, unsigned long *);
+
+struct object_info {
+	/* Request */
+	unsigned long *sizep;
+
+	/* Response */
+	enum {
+		OI_CACHED,
+		OI_LOOSE,
+		OI_PACKED,
+		OI_DBCACHED
+	} whence;
+	union {
+		/*
+		 * struct {
+		 * 	... Nothing to expose in this case
+		 * } cached;
+		 * struct {
+		 * 	... Nothing to expose in this case
+		 * } loose;
+		 */
+		struct {
+			struct packed_git *pack;
+			off_t offset;
+			unsigned int is_delta;
+		} packed;
+	} u;
+};
+extern int sha1_object_info_extended(const unsigned char *, struct object_info *);
 
 /* Dumb servers support */
 extern int update_server_info(int);
@@ -1135,6 +1168,7 @@ extern int convert_to_git(const char *path, const char *src, size_t len,
                           struct strbuf *dst, enum safe_crlf checksafe);
 extern int convert_to_working_tree(const char *path, const char *src, size_t len, struct strbuf *dst);
 extern int renormalize_buffer(const char *path, const char *src, size_t len, struct strbuf *dst);
+extern int can_bypass_conversion(const char *path);
 
 /* add */
 /*
