@@ -41,11 +41,26 @@ struct stream_vtbl {
 static open_method_decl(incore);
 static open_method_decl(loose);
 static open_method_decl(pack_non_delta);
+static struct git_istream *attach_stream_filter(struct git_istream *st,
+						struct stream_filter *filter);
+
 
 static open_istream_fn open_istream_tbl[] = {
 	open_istream_incore,
 	open_istream_loose,
 	open_istream_pack_non_delta,
+};
+
+#define FILTER_BUFFER (1024*16)
+
+struct filtered_istream {
+	struct git_istream *upstream;
+	struct stream_filter *filter;
+	char ibuf[FILTER_BUFFER];
+	char obuf[FILTER_BUFFER];
+	int i_end, i_ptr;
+	int o_end, o_ptr;
+	int input_finished;
 };
 
 struct git_istream {
@@ -72,6 +87,8 @@ struct git_istream {
 			struct packed_git *pack;
 			off_t pos;
 		} in_pack;
+
+		struct filtered_istream filtered;
 	} u;
 };
 
@@ -112,7 +129,8 @@ static enum input_source istream_source(const unsigned char *sha1,
 
 struct git_istream *open_istream(const unsigned char *sha1,
 				 enum object_type *type,
-				 unsigned long *size)
+				 unsigned long *size,
+				 struct stream_filter *filter)
 {
 	struct git_istream *st;
 	struct object_info oi;
@@ -129,6 +147,14 @@ struct git_istream *open_istream(const unsigned char *sha1,
 			return NULL;
 		}
 	}
+	if (st && filter) {
+		/* Add "&& !is_null_stream_filter(filter)" for performance */
+		struct git_istream *nst = attach_stream_filter(st, filter);
+		if (!nst)
+			close_istream(st);
+		st = nst;
+	}
+
 	*size = st->size;
 	return st;
 }
@@ -146,6 +172,98 @@ static void close_deflated_stream(struct git_istream *st)
 		git_inflate_end(&st->z);
 }
 
+
+/*****************************************************************
+ *
+ * Filtered stream
+ *
+ *****************************************************************/
+
+static close_method_decl(filtered)
+{
+	free_stream_filter(st->u.filtered.filter);
+	return close_istream(st->u.filtered.upstream);
+}
+
+static read_method_decl(filtered)
+{
+	struct filtered_istream *fs = &(st->u.filtered);
+	size_t filled = 0;
+
+	while (sz) {
+		/* do we already have filtered output? */
+		if (fs->o_ptr < fs->o_end) {
+			size_t to_move = fs->o_end - fs->o_ptr;
+			if (sz < to_move)
+				to_move = sz;
+			memcpy(buf + filled, fs->obuf + fs->o_ptr, to_move);
+			fs->o_ptr += to_move;
+			sz -= to_move;
+			filled += to_move;
+			continue;
+		}
+		fs->o_end = fs->o_ptr = 0;
+
+		/* do we have anything to feed the filter with? */
+		if (fs->i_ptr < fs->i_end) {
+			size_t to_feed = fs->i_end - fs->i_ptr;
+			size_t to_receive = FILTER_BUFFER;
+			if (stream_filter(fs->filter,
+					  fs->ibuf + fs->i_ptr, &to_feed,
+					  fs->obuf, &to_receive))
+				return -1;
+			fs->i_ptr = fs->i_end - to_feed;
+			fs->o_end = FILTER_BUFFER - to_receive;
+			continue;
+		}
+
+		/* tell the filter to drain upon no more input */
+		if (fs->input_finished) {
+			size_t to_receive = FILTER_BUFFER;
+			if (stream_filter(fs->filter,
+					  NULL, NULL,
+					  fs->obuf, &to_receive))
+				return -1;
+			fs->o_end = FILTER_BUFFER - to_receive;
+			if (!fs->o_end)
+				break;
+			continue;
+		}
+		fs->i_end = fs->i_ptr = 0;
+
+		/* refill the input from the upstream */
+		if (!fs->input_finished) {
+			fs->i_end = read_istream(fs->upstream, fs->ibuf, FILTER_BUFFER);
+			if (fs->i_end < 0)
+				break;
+			if (fs->i_end)
+				continue;
+		}
+		fs->input_finished = 1;
+	}
+	return filled;
+}
+
+static struct stream_vtbl filtered_vtbl = {
+	close_istream_filtered,
+	read_istream_filtered,
+};
+
+static struct git_istream *attach_stream_filter(struct git_istream *st,
+						struct stream_filter *filter)
+{
+	struct git_istream *ifs = xmalloc(sizeof(*ifs));
+	struct filtered_istream *fs = &(ifs->u.filtered);
+
+	ifs->vtbl = &filtered_vtbl;
+	fs->upstream = st;
+	fs->filter = filter;
+	fs->i_end = fs->i_ptr = 0;
+	fs->o_end = fs->o_ptr = 0;
+	fs->input_finished = 0;
+	ifs->size = -1; /* unknown */
+	return ifs;
+}
 
 /*****************************************************************
  *

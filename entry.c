@@ -116,6 +116,7 @@ static int fstat_output(int fd, const struct checkout *state, struct stat *st)
 }
 
 static int streaming_write_entry(struct cache_entry *ce, char *path,
+				 struct stream_filter *filter,
 				 const struct checkout *state, int to_tempfile,
 				 int *fstat_done, struct stat *statbuf)
 {
@@ -126,7 +127,7 @@ static int streaming_write_entry(struct cache_entry *ce, char *path,
 	ssize_t kept = 0;
 	int fd = -1;
 
-	st = open_istream(ce->sha1, &type, &sz);
+	st = open_istream(ce->sha1, &type, &sz, filter);
 	if (!st)
 		return -1;
 	if (type != OBJ_BLOB)
@@ -186,11 +187,14 @@ static int write_entry(struct cache_entry *ce, char *path, const struct checkout
 	size_t wrote, newsize = 0;
 	struct stat st;
 
-	if ((ce_mode_s_ifmt == S_IFREG) &&
-	    can_bypass_conversion(path) &&
-	    !streaming_write_entry(ce, path, state, to_tempfile,
-				   &fstat_done, &st))
-		goto finish;
+	if (ce_mode_s_ifmt == S_IFREG) {
+		struct stream_filter *filter = get_stream_filter(path, ce->sha1);
+		if (filter &&
+		    !streaming_write_entry(ce, path, filter,
+					   state, to_tempfile,
+					   &fstat_done, &st))
+			goto finish;
+	}
 
 	switch (ce_mode_s_ifmt) {
 	case S_IFREG:

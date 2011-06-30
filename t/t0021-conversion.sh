@@ -66,31 +66,48 @@ test_expect_success expanded_in_repo '
 		echo "\$Id:NoSpaceAtEitherEnd\$"
 		echo "\$Id: NoTerminatingSymbol"
 		echo "\$Id: Foreign Commit With Spaces \$"
-		echo "\$Id: NoTerminatingSymbolAtEOF"
-	} > expanded-keywords &&
+	} >expanded-keywords.0 &&
+
+	{
+		cat expanded-keywords.0 &&
+		printf "\$Id: NoTerminatingSymbolAtEOF"
+	} >expanded-keywords &&
+	cat expanded-keywords >expanded-keywords-crlf &&
+	git add expanded-keywords expanded-keywords-crlf &&
+	git commit -m "File with keywords expanded" &&
+	id=$(git rev-parse --verify :expanded-keywords) &&
 
 	{
 		echo "File with expanded keywords"
-		echo "\$Id: fd0478f5f1486f3d5177d4c3f6eb2765e8fc56b9 \$"
-		echo "\$Id: fd0478f5f1486f3d5177d4c3f6eb2765e8fc56b9 \$"
-		echo "\$Id: fd0478f5f1486f3d5177d4c3f6eb2765e8fc56b9 \$"
-		echo "\$Id: fd0478f5f1486f3d5177d4c3f6eb2765e8fc56b9 \$"
-		echo "\$Id: fd0478f5f1486f3d5177d4c3f6eb2765e8fc56b9 \$"
-		echo "\$Id: fd0478f5f1486f3d5177d4c3f6eb2765e8fc56b9 \$"
+		echo "\$Id: $id \$"
+		echo "\$Id: $id \$"
+		echo "\$Id: $id \$"
+		echo "\$Id: $id \$"
+		echo "\$Id: $id \$"
+		echo "\$Id: $id \$"
 		echo "\$Id: NoTerminatingSymbol"
 		echo "\$Id: Foreign Commit With Spaces \$"
-		echo "\$Id: NoTerminatingSymbolAtEOF"
-	} > expected-output &&
+	} >expected-output.0 &&
+	{
+		cat expected-output.0 &&
+		printf "\$Id: NoTerminatingSymbolAtEOF"
+	} >expected-output &&
+	{
+		append_cr <expected-output.0 &&
+		printf "\$Id: NoTerminatingSymbolAtEOF"
+	} >expected-output-crlf &&
+	{
+		echo "expanded-keywords ident"
+		echo "expanded-keywords-crlf ident text eol=crlf"
+	} >>.gitattributes &&
 
-	git add expanded-keywords &&
-	git commit -m "File with keywords expanded" &&
+	rm -f expanded-keywords expanded-keywords-crlf &&
 
-	echo "expanded-keywords ident" >> .gitattributes &&
-
-	rm -f expanded-keywords &&
 	git checkout -- expanded-keywords &&
-	cat expanded-keywords &&
-	cmp expanded-keywords expected-output
+	test_cmp expanded-keywords expected-output &&
+
+	git checkout -- expanded-keywords-crlf &&
+	test_cmp expanded-keywords-crlf expected-output-crlf
 '
 
 # The use of %f in a filter definition is expanded to the path to
