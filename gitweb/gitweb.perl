@@ -4756,7 +4756,8 @@ sub git_blob_plain {
 
 	# serve text/* as text/plain
 	if ($prevent_xss &&
-	    $type =~ m!^text/[a-z]+\b(.*)$!) {
+	    ($type =~ m!^text/[a-z]+\b(.*)$! ||
+	     ($type =~ m!^[a-z]+/[a-z]\+xml\b(.*)$! && -T $fd))) {
 		my $rest = $1;
 		$rest = defined $rest ? $rest : '';
 		$type = "text/plain$rest";
