@@ -41,6 +41,7 @@ static long curl_low_speed_limit = -1;
 static long curl_low_speed_time = -1;
 static int curl_ftp_no_epsv;
 static const char *curl_http_proxy;
+static const char *curl_cookie_file;
 static char *user_name, *user_pass;
 static const char *user_agent;
 
@@ -190,6 +191,9 @@ static int http_options(const char *var, const char *value, void *cb)
 	}
 	if (!strcmp("http.proxy", var))
 		return git_config_string(&curl_http_proxy, var, value);
+
+	if (!strcmp("http.cookiefile", var))
+		return git_config_string(&curl_cookie_file, var, value);
 
 	if (!strcmp("http.postbuffer", var)) {
 		http_post_buffer = git_config_int(var, value);
@@ -531,6 +535,7 @@ struct active_request_slot *get_active_slot(void)
 	slot->finished = NULL;
 	slot->callback_data = NULL;
 	slot->callback_func = NULL;
+	curl_easy_setopt(slot->curl, CURLOPT_COOKIEFILE, curl_cookie_file);
 	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, pragma_header);
 	curl_easy_setopt(slot->curl, CURLOPT_ERRORBUFFER, curl_errorstr);
 	curl_easy_setopt(slot->curl, CURLOPT_CUSTOMREQUEST, NULL);
