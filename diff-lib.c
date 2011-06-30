@@ -433,8 +433,13 @@ static int oneway_diff(struct cache_entry **src, struct unpack_trees_options *o)
 	if (tree == o->df_conflict_entry)
 		tree = NULL;
 
-	if (ce_path_match(idx ? idx : tree, &revs->prune_data))
+	if (ce_path_match(idx ? idx : tree, &revs->prune_data)) {
 		do_oneway_diff(o, idx, tree);
+		if (diff_can_quit_early(&revs->diffopt)) {
+			o->exiting_early = 1;
+			return -1;
+		}
+	}
 
 	return 0;
 }

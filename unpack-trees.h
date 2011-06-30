@@ -46,6 +46,7 @@ struct unpack_trees_options {
 		     debug_unpack,
 		     skip_sparse_checkout,
 		     gently,
+		     exiting_early,
 		     show_all_errors,
 		     dry_run;
 	const char *prefix;
