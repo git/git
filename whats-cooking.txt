@@ -1,24 +1,165 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jun 2011, #04; Wed, 22)
-X-master-at: 7af4fc9cf3e3538a9bfb8b14feeacdeb7f6db7d5
-X-next-at: cb7154dc1f1bd87d1e3d1944b736c15bdbae1d91
+Subject: What's cooking in git.git (Jun 2011, #05; Thu, 30)
+X-master-at: 033c2dc4364042b9e6dbd44e82e1974f78a72567
+X-next-at: 9901923cf0994582592a34128a466c58735621fd
 
-What's cooking in git.git (Jun 2011, #04; Wed, 22)
+What's cooking in git.git (Jun 2011, #05; Thu, 30)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' while commits prefixed with '+' are in 'next'.
 
-I ended up tagging 1.7.6-rc3; please test it well. The final expected to
-be at around the end of the week.
+Now that 1.7.6 is out, 'next' has been rewound and rebuilt to make its
+history appear a bit cleaner.
+
+Also I updated the order of topics in 'pu' to have the ones that are
+scheduled for 'next' early in the sequence (and fixes and documentation
+updates come earlier than new features), and pushing the stalled ones down
+to the very end.
+
+The tip of 'pu' is broken with respect to t7610 as of today.
 
 --------------------------------------------------
 [New Topics]
 
-* ak/gcc46-profile-feedback (2011-06-20) 3 commits
- - Add explanation of the profile feedback build to the README
- - Add profile feedback build to git
- - Add option to disable NORETURN
+* bc/submodule-foreach-stdin-fix-1.7.4 (2011-06-29) 2 commits
+ - git-submodule.sh: preserve stdin for the command spawned by foreach
+ - t/t7407: demonstrate that the command called by 'submodule foreach' loses stdin
+
+Will merge to 'next'.
+
+* dc/stash-con-untracked (2011-06-26) 1 commit
+ - stash: Add --include-untracked option to stash and remove all untracked files
+
+* jn/doc-dashdash (2011-06-29) 2 commits
+ - Documentation/i18n: quote double-dash for AsciiDoc
+ - Merge branch 'jn/maint-doc-dashdash' into jn/doc-dashdash
+ (this branch uses jn/maint-doc-dashdash.)
+
+Will merge to 'next'.
+
+* jn/maint-doc-dashdash (2011-06-29) 1 commit
+ - Documentation: quote double-dash for AsciiDoc
+ (this branch is used by jn/doc-dashdash.)
+
+Will merge to 'next'.
+
+* js/rebase-typo-branch-squelch-usage (2011-06-29) 1 commit
+ - rebase: do not print lots of usage hints after an obvious error message
+
+Will merge to 'next'.
+
+* nk/ref-doc (2011-06-23) 7 commits
+ - glossary: clarify description of HEAD
+ - glossary: update description of head and ref
+ - glossary: update description of "tag"
+ - git.txt: de-emphasize the implementation detail of a ref
+ - check-ref-format doc: de-emphasize the implementation detail of a ref
+ - git-remote.txt: avoid sounding as if loose refs are the only ones in the world
+ - git-remote.txt: fix wrong remote refspec
+
+Will merge to 'next'.
+
+* jc/submodule-sync-no-auto-vivify (2011-06-26) 2 commits
+ - submodule add: always initialize .git/config entry
+ - submodule sync: do not auto-vivify uninteresting submodule
+
+* jn/gitweb-search (2011-06-22) 4 commits
+ - gitweb: Make git_search_* subroutines render whole pages
+ - gitweb: Clean up code in git_search_* subroutines
+ - gitweb: Split body of git_search into subroutines
+ - gitweb: Check permissions first in git_search
+
+--------------------------------------------------
+[Graduated to "master"]
+
+* db/http-cookies (2011-06-03) 1 commit
+  (merged to 'next' on 2011-06-06 at 90d736a)
+ + http: pass http.cookiefile using CURLOPT_COOKIEFILE
+
+* ef/maint-win-verify-path (2011-06-08) 5 commits
+ - verify_dotfile(): do not assume '/' is the path seperator
+  (merged to 'next' on 2011-06-07 at b418e05)
+ + verify_path(): simplify check at the directory boundary
+  (merged to 'next' on 2011-06-01 at f316f68)
+ + verify_path: consider dos drive prefix
+ + real_path: do not assume '/' is the path seperator
+ + A Windows path starting with a backslash is absolute
+
+* jc/advice-about-to-lose-commit (2011-05-24) 1 commit
+  (merged to 'next' on 2011-05-30 at 42385cc)
+ + checkout: make advice when reattaching the HEAD less loud
+
+* jc/diff-index-quick-exit-early (2011-05-31) 2 commits
+  (merged to 'next' on 2011-06-01 at 79d868a)
+ + diff-index --quiet: learn the "stop feeding the backend early" logic
+ + Merge remote-tracking branch 'ko/maint' into jc/diff-index-quick-exit-early
+
+* jc/maint-1.7.3-checkout-describe (2011-06-05) 1 commit
+  (merged to 'next' on 2011-06-06 at 6a59bb7)
+ + checkout -b <name>: correctly detect existing branch
+
+* jk/combine-diff-binary-etc (2011-05-24) 5 commits
+  (merged to 'next' on 2011-05-24 at 07cf180)
+ + combine-diff: respect textconv attributes
+ + refactor get_textconv to not require diff_filespec
+ + combine-diff: handle binary files as binary
+ + combine-diff: calculate mode_differs earlier
+ + combine-diff: split header printing into its own function
+
+* jk/maint-1.7.2-status-ignored (2011-06-02) 2 commits
+  (merged to 'next' on 2011-06-02 at 8626cc6)
+ + git status --ignored: tests and docs
+ + status: fix bug with missing --ignore files
+
+* jk/transport-helper-fix (2011-06-07) 8 commits
+ . git_remote_helpers: push all refs during a non-local export
+ . transport-helper: don't feed bogus refs to export push
+ . teach remote-testgit to import multiple refs
+ . teach remote-testgit to import non-HEAD refs
+ . t5800: document some non-functional parts of remote helpers
+ . t5800: factor out some ref tests
+ . git-remote-testgit: exit gracefully after push
+ . transport-helper: fix minor leak in push_refs_with_export
+
+sr/transport-helper-fix is a superset of this.
+
+* js/i18n-windows (2011-06-06) 3 commits
+  (merged to 'next' on 2011-06-06 at d8c4ba3)
+ + Windows: teach getenv to do a case-sensitive search
+ + mingw.c: move definition of mingw_getenv down
+ + sh-i18n--envsubst: do not crash when no arguments are given
+
+* mg/diff-stat-count (2011-05-27) 4 commits
+  (merged to 'next' on 2011-06-01 at 5cdb776)
+ + diff --stat-count: finishing touches
+ + diff-options.txt: describe --stat-{width,name-width,count}
+ + diff: introduce --stat-lines to limit the stat lines
+ + diff.c: omit hidden entries from namelen calculation with --stat
+
+* rs/grep-color (2011-06-05) 3 commits
+  (merged to 'next' on 2011-06-06 at fd6bae1)
+ + grep: add --heading
+ + grep: add --break
+ + grep: fix coloring of hunk marks between files
+
+--------------------------------------------------
+[Stalled]
+
+* jh/receive-count-limit (2011-05-23) 10 commits
+ - receive-pack: Allow server to refuse pushes with too many objects
+ - pack-objects: Estimate pack size; abort early if pack size limit is exceeded
+ - send-pack/receive-pack: Allow server to refuse pushing too large packs
+ - pack-objects: Allow --max-pack-size to be used together with --stdout
+ - send-pack/receive-pack: Allow server to refuse pushes with too many commits
+ - pack-objects: Teach new option --max-commit-count, limiting #commits in pack
+ - receive-pack: Prepare for addition of the new 'limit-*' family of capabilities
+ - Tighten rules for matching server capabilities in server_supports()
+ - send-pack: Attempt to retrieve remote status even if pack-objects fails
+ - Update technical docs to reflect side-band-64k capability in receive-pack
+
+Would need another round to separate per-pack and per-session limits.
+Not urgent. Will not merge before 1.7.6.
 
 * sr/transport-helper-fix (2011-06-19) 20 commits
  - transport-helper: implement marks location as capability
@@ -46,16 +187,37 @@ At least Patch 10/20 (git-remote-testgit: fix error handling) and Patch
 15/20 (transport-helper: use the new done feature where possible) need a
 reroll.
 
+* jm/mergetool-pathspec (2011-06-22) 2 commits
+ - mergetool: Don't assume paths are unmerged
+ - mergetool: Add tests for filename with whitespace
+
+I think this is a good idea, but it probably needs a re-roll.
+
+--------------------------------------------------
+[Cooking]
+
+* ak/gcc46-profile-feedback (2011-06-20) 3 commits
+ - Add explanation of the profile feedback build to the README
+ - Add profile feedback build to git
+ - Add option to disable NORETURN
+
+Will merge to 'next'.
+
 * jc/maint-cygwin-trust-executable-bit-default (2011-06-20) 1 commit
  - cygwin: trust executable bit by default
 
 Fix for an ancient regression.
+Will merge to 'next'.
 
 * jk/tag-list-multiple-patterns (2011-06-20) 1 commit
  - tag: accept multiple patterns for --list
 
+Will merge to 'next' later.
+
 * jl/maint-fetch-recursive-fix (2011-06-20) 1 commit
  - fetch: Also fetch submodules in subdirectories in on-demand mode
+
+Will merge to 'next'.
 
 * rr/revert-cherry-pick-continue (2011-06-21) 13 commits
  - revert: Introduce --continue to continue the operation
@@ -77,6 +239,8 @@ Under discussion, just queued here so that it is not lost.
 * fk/relink-upon-ldflags-update (2011-06-22) 1 commit
  - Makefile: Track changes to LDFLAGS and relink when necessary
 
+Will merge to 'next'.
+
 * jk/maint-config-param (2011-06-22) 6 commits
  - config: use strbuf_split_str instead of a temporary strbuf
  - strbuf: allow strbuf_split to work on non-strbufs
@@ -87,41 +251,18 @@ Under discussion, just queued here so that it is not lost.
  (this branch is used by jk/clone-cmdline-config.)
 
 Separated earlier parts of jk/clone-cmdline-config for maint.
-
-* jm/mergetool-pathspec (2011-06-22) 2 commits
- - mergetool: Don't assume paths are unmerged
- - mergetool: Add tests for filename with whitespace
-
-I think this is a good idea, but it probably needs a re-roll.
+Will merge to 'next' later.
 
 * jn/gitweb-split-header-html (2011-06-22) 1 commit
  - gitweb: Refactor git_header_html
 
---------------------------------------------------
-[Stalled]
-
-* jh/receive-count-limit (2011-05-23) 10 commits
- - receive-pack: Allow server to refuse pushes with too many objects
- - pack-objects: Estimate pack size; abort early if pack size limit is exceeded
- - send-pack/receive-pack: Allow server to refuse pushing too large packs
- - pack-objects: Allow --max-pack-size to be used together with --stdout
- - send-pack/receive-pack: Allow server to refuse pushes with too many commits
- - pack-objects: Teach new option --max-commit-count, limiting #commits in pack
- - receive-pack: Prepare for addition of the new 'limit-*' family of capabilities
- - Tighten rules for matching server capabilities in server_supports()
- - send-pack: Attempt to retrieve remote status even if pack-objects fails
- - Update technical docs to reflect side-band-64k capability in receive-pack
-
-Would need another round to separate per-pack and per-session limits.
-Not urgent. Will not merge before 1.7.6.
-
---------------------------------------------------
-[Cooking]
+Will merge to 'next' later.
 
 * aw/rebase-i-p (2011-06-19) 1 commit
  - rebase -i -p: include non-first-parent commits in todo list
 
 Rerolled with a minor tweak.
+Will merge to 'next'.
 
 * en/merge-recursive (2011-06-13) 49 commits
  - t3030: fix accidental success in symlink rename
@@ -181,22 +322,35 @@ Haven't looked at the whole series yet.
  - submodule update: continue when a checkout fails
  - git-sh-setup: add die_with_status
 
+Will merge to 'next'.
+
 * jc/no-gitweb-test-without-cgi-etc (2011-06-15) 1 commit
  - t/gitweb-lib.sh: skip gitweb tests when perl dependencies are not met
 
-* jn/mime-type-with-params (2011-06-13) 1 commit
- - gitweb: Make $prevent_xss protection for 'blob_plain' more usable
+Will merge to 'next'.
+
+* jn/mime-type-with-params (2011-06-30) 2 commits
+ - gitweb: Serve */*+xml 'blob_plain' as text/plain with $prevent_xss
+ - gitweb: Serve text/* 'blob_plain' as text/plain with $prevent_xss
+
+Will merge to 'next' later.
 
 * ln/gitweb-mime-types-split-at-blank (2011-06-15) 1 commit
  - gitweb: allow space as delimiter in mime.types
 
+Will merge to 'next'.
+
 * md/interix-update (2011-06-15) 1 commit
  - Update the Interix default build configuration.
+
+Will merge to 'next'.
 
 * rj/config-cygwin (2011-06-16) 3 commits
  - config.c: Make git_config() work correctly when called recursively
  - t1301-*.sh: Fix the 'forced modes' test on cygwin
  - help.c: Fix detection of custom merge strategy on cygwin
+
+Will merge to 'next'.
 
 * jk/archive-tar-filter (2011-06-22) 9 commits
  - upload-archive: allow user to turn off filters
@@ -210,6 +364,7 @@ Haven't looked at the whole series yet.
  - archive: reorder option parsing and config reading
 
 Rerolled.
+Will merge to 'next' later.
 
 * jc/index-pack (2011-06-05) 9 commits
  - verify-pack: use index-pack --verify
@@ -225,24 +380,18 @@ Rerolled.
 Killed "verify-pack" ;-) The next will be to update fsck, which would be a
 bigger task.
 
-Not urgent. Will not merge before 1.7.6.
-
-* js/i18n-windows (2011-06-06) 3 commits
-  (merged to 'next' on 2011-06-06 at d8c4ba3)
- + Windows: teach getenv to do a case-sensitive search
- + mingw.c: move definition of mingw_getenv down
- + sh-i18n--envsubst: do not crash when no arguments are given
-
-Not urgent. Will not merge before 1.7.6.
+Will merge to 'next' later.
 
 * an/shallow-doc (2011-06-08) 2 commits
  - Document the underlying protocol used by shallow repositories and --depth commands.
  - Fix documentation of fetch-pack that implies that the client can disconnect after sending wants.
 
-Not waiting for a review any longer; looked sensible.
+Will merge to 'next'.
 
 * jc/legacy-loose-object (2011-06-08) 1 commit
  - sha1_file.c: "legacy" is really the current format
+
+Will merge to 'next'.
 
 * jc/zlib-wrap (2011-06-10) 7 commits
  - zlib: allow feeding more than 4GB in one go
@@ -256,6 +405,8 @@ Not waiting for a review any longer; looked sensible.
 This replaces the earlier attempt to deal with the mismatch between our
 expectation and what zlib API actually offers piecemeal.
 
+Will merge to 'next' later.
+
 * jk/clone-cmdline-config (2011-06-22) 4 commits
  - clone: accept config options on the command line
  - config: make git_config_parse_parameter a public function
@@ -266,107 +417,53 @@ expectation and what zlib API actually offers piecemeal.
 Separated the earlier parts out to make it mergeable to the maintenance
 track.
 
-* jk/tag-contains-ab (2011-06-11) 4 commits
- - Why is "git tag --contains" so slow?
+Will merge to 'next' later.
+
+* jk/tag-contains-ab (2011-06-30) 4 commits
+ - git skew: a tool to find how big a clock skew exists in the history
  - default core.clockskew variable to one day
  - limit "contains" traversals based on commit timestamp
  - tag: speed up --contains calculation
 
-* db/http-cookies (2011-06-03) 1 commit
-  (merged to 'next' on 2011-06-06 at 90d736a)
- + http: pass http.cookiefile using CURLOPT_COOKIEFILE
+Will merge to 'next' later (at least the first three).
 
-Fairly trivial enhancement.
-Not urgent. Will not merge before 1.7.6.
-
-* jc/maint-1.7.3-checkout-describe (2011-06-05) 1 commit
-  (merged to 'next' on 2011-06-06 at 6a59bb7)
- + checkout -b <name>: correctly detect existing branch
-
-Fairly trivial bugfix.
-Not urgent. Will not merge before 1.7.6.
-
-* jk/clone-detached (2011-06-07) 5 commits
- . remote-testgit: short-term fix to allow t5800 pass
+* jk/clone-detached (2011-06-07) 4 commits
  - clone: always fetch remote HEAD
  - make copy_ref globally available
  - consider only branches in guess_remote_head
  - t: add tests for cloning remotes with detached HEAD
 
 Somewhat involved bugfix.
-Not urgent. Will not merge before 1.7.6.
-
-* jk/maint-1.7.2-status-ignored (2011-06-02) 2 commits
-  (merged to 'next' on 2011-06-02 at 8626cc6)
- + git status --ignored: tests and docs
- + status: fix bug with missing --ignore files
-
-Fairly trivial bugfix.
-Not urgent. Will not merge before 1.7.6.
+Seems to break 5800 when used with submodule-sync-no-auto-vivify fix.
 
 * jl/submodule-add-relurl-wo-upstream (2011-06-06) 3 commits
  - submodule add: clean up duplicated code
  - submodule add: allow relative repository path even when no url is set
  - submodule add: test failure when url is not configured in superproject
 
-Not urgent. Will not merge before 1.7.6.
-
-* rs/grep-color (2011-06-05) 3 commits
-  (merged to 'next' on 2011-06-06 at fd6bae1)
- + grep: add --heading
- + grep: add --break
- + grep: fix coloring of hunk marks between files
-
-Fairly straightforward feature enhancement.
-Not urgent. Will not merge before 1.7.6.
-
-* jc/diff-index-quick-exit-early (2011-05-31) 2 commits
-  (merged to 'next' on 2011-06-01 at 79d868a)
- + diff-index --quiet: learn the "stop feeding the backend early" logic
- + Merge remote-tracking branch 'ko/maint' into jc/diff-index-quick-exit-early
-
-Not urgent. Will not merge before 1.7.6.
-
-* ef/maint-win-verify-path (2011-06-08) 5 commits
- - verify_dotfile(): do not assume '/' is the path seperator
-  (merged to 'next' on 2011-06-07 at b418e05)
- + verify_path(): simplify check at the directory boundary
-  (merged to 'next' on 2011-06-01 at f316f68)
- + verify_path: consider dos drive prefix
- + real_path: do not assume '/' is the path seperator
- + A Windows path starting with a backslash is absolute
-
-Not urgent, but is sane. Will not merge before 1.7.6.
+When merged to pu, it seems to break 7610.
 
 * jn/gitweb-js-blame (2011-05-27) 3 commits
-  (merged to 'next' on 2011-06-01 at a984a1b)
+  (merged to 'next' on 2011-06-29 at cce347d)
  + gitweb.js: use setTimeout rather than setInterval in blame_incremental.js
  + gitweb.js: No need for loop in blame_incremental's handleResponse()
  + gitweb.js: No need for inProgress in blame_incremental.js
 
-Will cook a bit longer.
-
-* mg/diff-stat-count (2011-05-27) 4 commits
-  (merged to 'next' on 2011-06-01 at 5cdb776)
- + diff --stat-count: finishing touches
- + diff-options.txt: describe --stat-{width,name-width,count}
- + diff: introduce --stat-lines to limit the stat lines
- + diff.c: omit hidden entries from namelen calculation with --stat
-
-Not urgent. Will not merge before 1.7.6.
+Originally merged to 'next' on 2011-06-01.
+Will merge to 'master'.
 
 * da/git-prefix-everywhere (2011-06-02) 4 commits
-  (merged to 'next' on 2011-06-02 at 2ab66e7)
+  (merged to 'next' on 2011-06-29 at 4ed5461)
  + t/t7503-pre-commit-hook.sh: Add GIT_PREFIX tests
-  (merged to 'next' on 2011-05-30 at 9480900)
  + git-mergetool--lib: Make vimdiff retain the current directory
  + git: Remove handling for GIT_PREFIX
  + setup: Provide GIT_PREFIX to built-ins
 
-Not urgent. Will not merge before 1.7.6.
+Originally merged to 'next' on 2011-06-02.
+Will merge to 'master'.
 
 * jc/streaming-filter (2011-05-26) 8 commits
-  (merged to 'next' on 2011-06-06 at 8ed6b3d)
+  (merged to 'next' on 2011-06-29 at 9901923)
  + t0021: test application of both crlf and ident
  + t0021-conversion.sh: fix NoTerminatingSymbolAtEOF test
  + streaming: filter cascading
@@ -379,28 +476,13 @@ Not urgent. Will not merge before 1.7.6.
 
 Trivial lf-to-crlf and ident conversions can be performed without reading
 everything in-core first.
-Not urgent. Will not merge before 1.7.6.
 
-* jk/combine-diff-binary-etc (2011-05-24) 5 commits
-  (merged to 'next' on 2011-05-24 at 07cf180)
- + combine-diff: respect textconv attributes
- + refactor get_textconv to not require diff_filespec
- + combine-diff: handle binary files as binary
- + combine-diff: calculate mode_differs earlier
- + combine-diff: split header printing into its own function
-
-Not urgent. Will not merge before 1.7.6.
-
-* jc/advice-about-to-lose-commit (2011-05-24) 1 commit
-  (merged to 'next' on 2011-05-30 at 42385cc)
- + checkout: make advice when reattaching the HEAD less loud
-
-Not urgent. Will not merge before 1.7.6.
+Originally merged to 'next' on 2011-06-06.
+Will merge to 'master'.
 
 * jc/streaming (2011-05-26) 14 commits
-  (merged to 'next' on 2011-05-26 at 7fdda8d)
+  (merged to 'next' on 2011-06-29 at 55ac692)
  + sha1_file: use the correct type (ssize_t, not size_t) for read-style function
-  (merged to 'next' on 2011-05-23 at 7fd0b52)
  + streaming: read loose objects incrementally
  + sha1_file.c: expose helpers to read loose objects
  + streaming: read non-delta incrementally from a pack
@@ -416,10 +498,11 @@ Not urgent. Will not merge before 1.7.6.
  + Merge branches 'jc/convert', 'jc/bigfile' and 'jc/replacing' into jc/streaming
  (this branch is used by jc/streaming-filter.)
 
-Not urgent. Will not merge before 1.7.6.
+Originally merged to 'next' on 2011-05-26.
+Will merge to 'master'.
 
 * ab/i18n-scripts (2011-05-21) 48 commits
-  (merged to 'next' on 2011-05-23 at 69164a3)
+  (merged to 'next' on 2011-06-29 at 61f4472)
  + i18n: git-bisect bisect_next_check "You need to" message
  + i18n: git-bisect [Y/n] messages
  + i18n: git-bisect bisect_replay + $1 messages
@@ -469,22 +552,11 @@ Not urgent. Will not merge before 1.7.6.
  + i18n: git-am one-line gettext $msg; echo
  + i18n: git-am add git-sh-i18n
 
-Rerolled.
+Originally merged to 'next' on 2011-05-23.
+Will merge to 'master'.
 
 --------------------------------------------------
 [Discarded]
-
-* jk/transport-helper-fix (2011-06-07) 8 commits
- . git_remote_helpers: push all refs during a non-local export
- . transport-helper: don't feed bogus refs to export push
- . teach remote-testgit to import multiple refs
- . teach remote-testgit to import non-HEAD refs
- . t5800: document some non-functional parts of remote helpers
- . t5800: factor out some ref tests
- . git-remote-testgit: exit gracefully after push
- . transport-helper: fix minor leak in push_refs_with_export
-
-sr/transport-helper-fix is a superset of this.
 
 * js/ref-namespaces (2011-06-07) 4 commits
  . ref namespaces: documentation
