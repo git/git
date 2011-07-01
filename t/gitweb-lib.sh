@@ -107,4 +107,9 @@ perl -MEncode -e '$e="";decode_utf8($e, Encode::FB_CROAK)' >/dev/null 2>&1 || {
 	test_done
 }
 
+perl -MCGI -MCGI::Util -MCGI::Carp -e 0 >/dev/null 2>&1 || {
+	skip_all='skipping gitweb tests, CGI module unusable'
+	test_done
+}
+
 gitweb_init
