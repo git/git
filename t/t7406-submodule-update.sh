@@ -298,4 +298,148 @@ test_expect_success 'submodule update ignores update=rebase config for new submo
 	)
 '
 
+test_expect_success 'submodule update continues after checkout error' '
+	(cd super &&
+	 git reset --hard HEAD &&
+	 git submodule add ../submodule submodule2 &&
+	 git submodule init &&
+	 git commit -am "new_submodule" &&
+	 (cd submodule2 &&
+	  git rev-parse --max-count=1 HEAD > ../expect
+	 ) &&
+	 (cd submodule &&
+	  test_commit "update_submodule" file
+	 ) &&
+	 (cd submodule2 &&
+	  test_commit "update_submodule2" file
+	 ) &&
+	 git add submodule &&
+	 git add submodule2 &&
+	 git commit -m "two_new_submodule_commits" &&
+	 (cd submodule &&
+	  echo "" > file
+	 ) &&
+	 git checkout HEAD^ &&
+	 test_must_fail git submodule update &&
+	 (cd submodule2 &&
+	  git rev-parse --max-count=1 HEAD > ../actual
+	 ) &&
+	 test_cmp expect actual
+	)
+'
+test_expect_success 'submodule update continues after recursive checkout error' '
+	(cd super &&
+	 git reset --hard HEAD &&
+	 git checkout master &&
+	 git submodule update &&
+	 (cd submodule &&
+	  git submodule add ../submodule subsubmodule &&
+	  git submodule init &&
+	  git commit -m "new_subsubmodule"
+	 ) &&
+	 git add submodule &&
+	 git commit -m "update_submodule" &&
+	 (cd submodule &&
+	  (cd subsubmodule &&
+	   test_commit "update_subsubmodule" file
+	  ) &&
+	  git add subsubmodule &&
+	  test_commit "update_submodule_again" file &&
+	  (cd subsubmodule &&
+	   test_commit "update_subsubmodule_again" file
+	  ) &&
+	  test_commit "update_submodule_again_again" file
+	 ) &&
+	 (cd submodule2 &&
+	  git rev-parse --max-count=1 HEAD > ../expect &&
+	  test_commit "update_submodule2_again" file
+	 ) &&
+	 git add submodule &&
+	 git add submodule2 &&
+	 git commit -m "new_commits" &&
+	 git checkout HEAD^ &&
+	 (cd submodule &&
+	  git checkout HEAD^ &&
+	  (cd subsubmodule &&
+	   echo "" > file
+	  )
+	 ) &&
+	 test_must_fail git submodule update --recursive &&
+	 (cd submodule2 &&
+	  git rev-parse --max-count=1 HEAD > ../actual
+	 ) &&
+	 test_cmp expect actual
+	)
+'
+
+test_expect_success 'submodule update exit immediately in case of merge conflict' '
+	(cd super &&
+	 git checkout master &&
+	 git reset --hard HEAD &&
+	 (cd submodule &&
+	  (cd subsubmodule &&
+	   git reset --hard HEAD
+	  )
+	 ) &&
+	 git submodule update --recursive &&
+	 (cd submodule &&
+	  test_commit "update_submodule_2" file
+	 ) &&
+	 (cd submodule2 &&
+	  test_commit "update_submodule2_2" file
+	 ) &&
+	 git add submodule &&
+	 git add submodule2 &&
+	 git commit -m "two_new_submodule_commits" &&
+	 (cd submodule &&
+	  git checkout master &&
+	  test_commit "conflict" file &&
+	  echo "conflict" > file
+	 ) &&
+	 git checkout HEAD^ &&
+	 (cd submodule2 &&
+	  git rev-parse --max-count=1 HEAD > ../expect
+	 ) &&
+	 git config submodule.submodule.update merge &&
+	 test_must_fail git submodule update &&
+	 (cd submodule2 &&
+	  git rev-parse --max-count=1 HEAD > ../actual
+	 ) &&
+	 test_cmp expect actual
+	)
+'
+test_expect_success 'submodule update exit immediately after recursive rebase error' '
+	(cd super &&
+	 git checkout master &&
+	 git reset --hard HEAD &&
+	 (cd submodule &&
+	  git reset --hard HEAD &&
+	  git submodule update --recursive
+	 ) &&
+	 (cd submodule &&
+	  test_commit "update_submodule_3" file
+	 ) &&
+	 (cd submodule2 &&
+	  test_commit "update_submodule2_3" file
+	 ) &&
+	 git add submodule &&
+	 git add submodule2 &&
+	 git commit -m "two_new_submodule_commits" &&
+	 (cd submodule &&
+	  git checkout master &&
+	  test_commit "conflict2" file &&
+	  echo "conflict" > file
+	 ) &&
+	 git checkout HEAD^ &&
+	 (cd submodule2 &&
+	  git rev-parse --max-count=1 HEAD > ../expect
+	 ) &&
+	 git config submodule.submodule.update rebase &&
+	 test_must_fail git submodule update &&
+	 (cd submodule2 &&
+	  git rev-parse --max-count=1 HEAD > ../actual
+	 ) &&
+	 test_cmp expect actual
+	)
+'
 test_done

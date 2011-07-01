@@ -452,7 +452,8 @@ cmd_update()
 	fi
 
 	cloned_modules=
-	module_list "$@" |
+	module_list "$@" | {
+	err=
 	while read mode sha1 stage path
 	do
 		if test "$stage" = U
@@ -515,16 +516,19 @@ Maybe you want to use 'update --init'?")"
 				update_module= ;;
 			esac
 
+			must_die_on_failure=
 			case "$update_module" in
 			rebase)
 				command="git rebase"
 				die_msg="$(eval_gettext "Unable to rebase '\$sha1' in submodule path '\$path'")"
 				say_msg="$(eval_gettext "Submodule path '\$path': rebased into '\$sha1'")"
+				must_die_on_failure=yes
 				;;
 			merge)
 				command="git merge"
 				die_msg="$(eval_gettext "Unable to merge '\$sha1' in submodule path '\$path'")"
 				say_msg="$(eval_gettext "Submodule path '\$path': merged in '\$sha1'")"
+				must_die_on_failure=yes
 				;;
 			*)
 				command="git checkout $subforce -q"
@@ -533,16 +537,51 @@ Maybe you want to use 'update --init'?")"
 				;;
 			esac
 
-			(clear_local_git_env; cd "$path" && $command "$sha1") || die $die_msg
-			say $say_msg
+			if (clear_local_git_env; cd "$path" && $command "$sha1")
+			then
+				say "$say_msg"
+			elif test -n "$must_die_on_failure"
+			then
+				die_with_status 2 "$die_msg"
+			else
+				err="${err};$die_msg"
+				continue
+			fi
 		fi
 
 		if test -n "$recursive"
 		then
-			(clear_local_git_env; cd "$path" && eval cmd_update "$orig_flags") ||
-			die "$(eval_gettext "Failed to recurse into submodule path '\$path'")"
+			(clear_local_git_env; cd "$path" && eval cmd_update "$orig_flags")
+			res=$?
+			if test $res -gt 0
+			then
+				die_msg="$(eval_gettext "Failed to recurse into submodule path '\$path'")"
+				if test $res -eq 1
+				then
+					err="${err};$die_msg"
+					continue
+				else
+					die_with_status $res "$die_msg"
+				fi
+			fi
 		fi
 	done
+
+	if test -n "$err"
+	then
+		OIFS=$IFS
+		IFS=';'
+		for e in $err
+		do
+			if test -n "$e"
+			then
+				echo >&2 "$e"
+			fi
+		done
+		IFS=$OIFS
+		exit 1
+	fi
+	}
 }
 
 set_name_rev () {
