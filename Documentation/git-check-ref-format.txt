@@ -18,9 +18,12 @@ Checks if a given 'refname' is acceptable, and exits with a non-zero
 status if it is not.
 
 A reference is used in git to specify branches and tags.  A
-branch head is stored under the `$GIT_DIR/refs/heads` directory, and
-a tag is stored under the `$GIT_DIR/refs/tags` directory (or, if refs
-are packed by `git gc`, as entries in the `$GIT_DIR/packed-refs` file).
+branch head is stored in the `refs/heads` hierarchy, while
+a tag is stored in the `refs/tags` hierarchy of the ref namespace
+(typically in `$GIT_DIR/refs/heads` and `$GIT_DIR/refs/tags`
+directories or, as entries in file `$GIT_DIR/packed-refs`
+if refs are packed by `git gc`).
+
 git imposes the following rules on how references are named:
 
 . They can include slash `/` for hierarchical (directory)
