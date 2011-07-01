@@ -304,6 +304,10 @@ cmd_foreach()
 
 	toplevel=$(pwd)
 
+	# dup stdin so that it can be restored when running the external
+	# command in the subshell (and a recursive call to this function)
+	exec 3<&0
+
 	module_list |
 	while read mode sha1 stage path
 	do
@@ -320,7 +324,7 @@ cmd_foreach()
 				then
 					cmd_foreach "--recursive" "$@"
 				fi
-			) ||
+			) <&3 3<&- ||
 			die "$(eval_gettext "Stopping at '\$path'; script returned non-zero status.")"
 		fi
 	done
