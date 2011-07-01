@@ -676,7 +676,7 @@ branch.<name>.rebase::
 browser.<tool>.cmd::
 	Specify the command to invoke the specified browser. The
 	specified command is evaluated in shell with the URLs passed
-	as arguments. (See linkgit:git-web--browse[1].)
+	as arguments. (See linkgit:git-web{litdd}browse[1].)
 
 browser.<tool>.path::
 	Override the path for the given tool that may be used to

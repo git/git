@@ -68,7 +68,7 @@ browser.<tool>.path
 You can explicitly provide a full path to your preferred browser by
 setting the configuration variable 'browser.<tool>.path'. For example,
 you can configure the absolute path to firefox by setting
-'browser.firefox.path'. Otherwise, 'git web--browse' assumes the tool
+'browser.firefox.path'. Otherwise, 'git web{litdd}browse' assumes the tool
 is available in PATH.
 
 browser.<tool>.cmd

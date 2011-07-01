@@ -313,7 +313,7 @@ that you are filtering for a file `foo` in this commit graph:
 	 \   /   /   /   /
 	  `-------------'
 -----------------------------------------------------------------------
-The horizontal line of history A--P is taken to be the first parent of
+The horizontal line of history A---P is taken to be the first parent of
 each merge.  The commits are:
 
 * `I` is the initial commit, in which `foo` exists with contents
