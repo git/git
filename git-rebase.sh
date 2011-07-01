@@ -441,8 +441,7 @@ case "$#" in
 	then
 		head_name="detached HEAD"
 	else
-		echo >&2 "fatal: no such branch: $1"
-		usage
+		die "fatal: no such branch: $1"
 	fi
 	;;
 *)
