@@ -34,7 +34,7 @@ gettext::
 eval_gettext::
 	Currently a dummy fall-through function implemented as a wrapper
 	around `printf(1)` with variables expanded by the
-	linkgit:git-sh-i18n--envsubst[1] helper. Will be replaced by a
+	linkgit:git-sh-i18n{litdd}envsubst[1] helper. Will be replaced by a
 	real gettext implementation in a later version.
 
 GIT
