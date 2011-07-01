@@ -47,7 +47,7 @@ test_expect_success setup '
 		git init &&
 		echo subcontent > subfile &&
 		git add subfile &&
-		git submodule add "$pwd/deepsubmodule" deepsubmodule &&
+		git submodule add "$pwd/deepsubmodule" subdir/deepsubmodule &&
 		git commit -a -m new
 	) &&
 	git submodule add "$pwd/submodule" submodule &&
@@ -58,7 +58,7 @@ test_expect_success setup '
 		git submodule update --init --recursive
 	) &&
 	echo "Fetching submodule submodule" > expect.out &&
-	echo "Fetching submodule submodule/deepsubmodule" >> expect.out
+	echo "Fetching submodule submodule/subdir/deepsubmodule" >> expect.out
 '
 
 test_expect_success "fetch --recurse-submodules recurses into submodules" '
@@ -277,12 +277,12 @@ test_expect_success "Recursion picks up all submodules when necessary" '
 	(
 		cd submodule &&
 		(
-			cd deepsubmodule &&
+			cd subdir/deepsubmodule &&
 			git fetch &&
 			git checkout -q FETCH_HEAD
 		) &&
 		head1=$(git rev-parse --short HEAD^) &&
-		git add deepsubmodule &&
+		git add subdir/deepsubmodule &&
 		git commit -m "new deepsubmodule"
 		head2=$(git rev-parse --short HEAD) &&
 		echo "From $pwd/submodule" > ../expect.err.sub &&
@@ -309,12 +309,12 @@ test_expect_success "'--recurse-submodules=on-demand' doesn't recurse when no ne
 	(
 		cd submodule &&
 		(
-			cd deepsubmodule &&
+			cd subdir/deepsubmodule &&
 			git fetch &&
 			git checkout -q FETCH_HEAD
 		) &&
 		head1=$(git rev-parse --short HEAD^) &&
-		git add deepsubmodule &&
+		git add subdir/deepsubmodule &&
 		git commit -m "new deepsubmodule"
 		head2=$(git rev-parse --short HEAD) &&
 		echo "From $pwd/submodule" > ../expect.err.sub &&
@@ -345,13 +345,13 @@ test_expect_success "'--recurse-submodules=on-demand' recurses as deep as necess
 		git config fetch.recurseSubmodules false &&
 		(
 			cd submodule &&
-			git config -f .gitmodules submodule.deepsubmodule.fetchRecursive false
+			git config -f .gitmodules submodule.subdir/deepsubmodule.fetchRecursive false
 		) &&
 		git fetch --recurse-submodules=on-demand >../actual.out 2>../actual.err &&
 		git config --unset fetch.recurseSubmodules
 		(
 			cd submodule &&
-			git config --unset -f .gitmodules submodule.deepsubmodule.fetchRecursive
+			git config --unset -f .gitmodules submodule.subdir/deepsubmodule.fetchRecursive
 		)
 	) &&
 	test_i18ncmp expect.out actual.out &&
