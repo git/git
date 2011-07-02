@@ -7,6 +7,7 @@ git-web--browse - git helper script to launch a web browser
 
 SYNOPSIS
 --------
+[verse]
 'git web{litdd}browse' [OPTIONS] URL/FILE ...
 
 DESCRIPTION

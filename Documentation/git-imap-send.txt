@@ -8,6 +8,7 @@ git-imap-send - Send a collection of patches from stdin to an IMAP folder
 
 SYNOPSIS
 --------
+[verse]
 'git imap-send'
 
 

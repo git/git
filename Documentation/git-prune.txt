@@ -8,6 +8,7 @@ git-prune - Prune all unreachable objects from the object database
 
 SYNOPSIS
 --------
+[verse]
 'git prune' [-n] [-v] [--expire <expire>] [--] [<head>...]
 
 DESCRIPTION

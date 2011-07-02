@@ -7,6 +7,7 @@ git-remote-helpers - Helper programs to interact with remote repositories
 
 SYNOPSIS
 --------
+[verse]
 'git remote-<transport>' <repository> [<URL>]
 
 DESCRIPTION

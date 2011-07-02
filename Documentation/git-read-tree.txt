@@ -8,6 +8,7 @@ git-read-tree - Reads tree information into the index
 
 SYNOPSIS
 --------
+[verse]
 'git read-tree' [[-m [--trivial] [--aggressive] | --reset | --prefix=<prefix>]
 		[-u [--exclude-per-directory=<gitignore>] | -i]]
 		[--index-output=<file>] [--no-sparse-checkout]

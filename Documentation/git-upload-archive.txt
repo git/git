@@ -8,6 +8,7 @@ git-upload-archive - Send archive back to git-archive
 
 SYNOPSIS
 --------
+[verse]
 'git upload-archive' <directory>
 
 DESCRIPTION

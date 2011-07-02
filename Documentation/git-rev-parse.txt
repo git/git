@@ -8,6 +8,7 @@ git-rev-parse - Pick out and massage parameters
 
 SYNOPSIS
 --------
+[verse]
 'git rev-parse' [ --option ] <args>...
 
 DESCRIPTION

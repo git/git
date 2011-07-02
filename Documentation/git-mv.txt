@@ -8,6 +8,7 @@ git-mv - Move or rename a file, a directory, or a symlink
 
 SYNOPSIS
 --------
+[verse]
 'git mv' <options>... <args>...
 
 DESCRIPTION

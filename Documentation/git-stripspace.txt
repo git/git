@@ -8,6 +8,7 @@ git-stripspace - Filter out empty lines
 
 SYNOPSIS
 --------
+[verse]
 'git stripspace' [-s | --strip-comments] < <stream>
 
 DESCRIPTION

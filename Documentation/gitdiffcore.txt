@@ -7,6 +7,7 @@ gitdiffcore - Tweaking diff output
 
 SYNOPSIS
 --------
+[verse]
 'git diff' *
 
 DESCRIPTION

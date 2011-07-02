@@ -8,6 +8,7 @@ git-http-push - Push objects over HTTP/DAV to another repository
 
 SYNOPSIS
 --------
+[verse]
 'git http-push' [--all] [--dry-run] [--force] [--verbose] <url> <ref> [<ref>...]
 
 DESCRIPTION
