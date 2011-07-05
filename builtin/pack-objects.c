@@ -70,6 +70,7 @@ static int local;
 static int incremental;
 static int ignore_packed_keep;
 static int allow_ofs_delta;
+static struct pack_idx_option pack_idx_opts;
 static const char *base_name;
 static int progress = 1;
 static int window = 10;
@@ -493,8 +494,8 @@ static void write_pack_file(void)
 			const char *idx_tmp_name;
 			char tmpname[PATH_MAX];
 
-			idx_tmp_name = write_idx_file(NULL, written_list,
-						      nr_written, sha1);
+			idx_tmp_name = write_idx_file(NULL, written_list, nr_written,
+						      &pack_idx_opts, sha1);
 
 			snprintf(tmpname, sizeof(tmpname), "%s-%s.pack",
 				 base_name, sha1_to_hex(sha1));
@@ -1884,10 +1885,10 @@ static int git_pack_config(const char *k, const char *v, void *cb)
 		return 0;
 	}
 	if (!strcmp(k, "pack.indexversion")) {
-		pack_idx_default_version = git_config_int(k, v);
-		if (pack_idx_default_version > 2)
+		pack_idx_opts.version = git_config_int(k, v);
+		if (pack_idx_opts.version > 2)
 			die("bad pack.indexversion=%"PRIu32,
-				pack_idx_default_version);
+			    pack_idx_opts.version);
 		return 0;
 	}
 	if (!strcmp(k, "pack.packsizelimit")) {
@@ -2134,6 +2135,7 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 	rp_av[1] = "--objects"; /* --thin will make it --objects-edge */
 	rp_ac = 2;
 
+	reset_pack_idx_option(&pack_idx_opts);
 	git_config(git_pack_config, NULL);
 	if (!pack_compression_seen && core_compression_seen)
 		pack_compression_level = core_compression_level;
@@ -2278,12 +2280,12 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		}
 		if (!prefixcmp(arg, "--index-version=")) {
 			char *c;
-			pack_idx_default_version = strtoul(arg + 16, &c, 10);
-			if (pack_idx_default_version > 2)
+			pack_idx_opts.version = strtoul(arg + 16, &c, 10);
+			if (pack_idx_opts.version > 2)
 				die("bad %s", arg);
 			if (*c == ',')
-				pack_idx_off32_limit = strtoul(c+1, &c, 0);
-			if (*c || pack_idx_off32_limit & 0x80000000)
+				pack_idx_opts.off32_limit = strtoul(c+1, &c, 0);
+			if (*c || pack_idx_opts.off32_limit & 0x80000000)
 				die("bad %s", arg);
 			continue;
 		}

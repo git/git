@@ -2,8 +2,12 @@
 #include "pack.h"
 #include "csum-file.h"
 
-uint32_t pack_idx_default_version = 2;
-uint32_t pack_idx_off32_limit = 0x7fffffff;
+void reset_pack_idx_option(struct pack_idx_option *opts)
+{
+	memset(opts, 0, sizeof(*opts));
+	opts->version = 2;
+	opts->off32_limit = 0x7fffffff;
+}
 
 static int sha1_compare(const void *_a, const void *_b)
 {
@@ -12,13 +16,35 @@ static int sha1_compare(const void *_a, const void *_b)
 	return hashcmp(a->sha1, b->sha1);
 }
 
+static int cmp_uint32(const void *a_, const void *b_)
+{
+	uint32_t a = *((uint32_t *)a_);
+	uint32_t b = *((uint32_t *)b_);
+
+	return (a < b) ? -1 : (a != b);
+}
+
+static int need_large_offset(off_t offset, const struct pack_idx_option *opts)
+{
+	uint32_t ofsval;
+
+	if ((offset >> 31) || (opts->off32_limit < offset))
+		return 1;
+	if (!opts->anomaly_nr)
+		return 0;
+	ofsval = offset;
+	return !!bsearch(&ofsval, opts->anomaly, opts->anomaly_nr,
+			 sizeof(ofsval), cmp_uint32);
+}
+
 /*
  * On entry *sha1 contains the pack content SHA1 hash, on exit it is
  * the SHA1 hash of sorted object names. The objects array passed in
  * will be sorted by SHA1 on exit.
  */
 const char *write_idx_file(const char *index_name, struct pack_idx_entry **objects,
-			   int nr_objects, unsigned char *sha1)
+			   int nr_objects, const struct pack_idx_option *opts,
+			   unsigned char *sha1)
 {
 	struct sha1file *f;
 	struct pack_idx_entry **sorted_by_sha, **list, **last;
@@ -42,20 +68,25 @@ const char *write_idx_file(const char *index_name, struct pack_idx_entry **objec
 	else
 		sorted_by_sha = list = last = NULL;
 
-	if (!index_name) {
-		static char tmpfile[PATH_MAX];
-		fd = odb_mkstemp(tmpfile, sizeof(tmpfile), "pack/tmp_idx_XXXXXX");
-		index_name = xstrdup(tmpfile);
+	if (opts->flags & WRITE_IDX_VERIFY) {
+		assert(index_name);
+		f = sha1fd_check(index_name);
 	} else {
-		unlink(index_name);
-		fd = open(index_name, O_CREAT|O_EXCL|O_WRONLY, 0600);
+		if (!index_name) {
+			static char tmpfile[PATH_MAX];
+			fd = odb_mkstemp(tmpfile, sizeof(tmpfile), "pack/tmp_idx_XXXXXX");
+			index_name = xstrdup(tmpfile);
+		} else {
+			unlink(index_name);
+			fd = open(index_name, O_CREAT|O_EXCL|O_WRONLY, 0600);
+		}
+		if (fd < 0)
+			die_errno("unable to create '%s'", index_name);
+		f = sha1fd(fd, index_name);
 	}
-	if (fd < 0)
-		die_errno("unable to create '%s'", index_name);
-	f = sha1fd(fd, index_name);
 
 	/* if last object's offset is >= 2^31 we should use index V2 */
-	index_version = (last_obj_offset >> 31) ? 2 : pack_idx_default_version;
+	index_version = need_large_offset(last_obj_offset, opts) ? 2 : opts->version;
 
 	/* index versions 2 and above need a header */
 	if (index_version >= 2) {
@@ -115,8 +146,11 @@ const char *write_idx_file(const char *index_name, struct pack_idx_entry **objec
 		list = sorted_by_sha;
 		for (i = 0; i < nr_objects; i++) {
 			struct pack_idx_entry *obj = *list++;
-			uint32_t offset = (obj->offset <= pack_idx_off32_limit) ?
-				obj->offset : (0x80000000 | nr_large_offset++);
+			uint32_t offset;
+
+			offset = (need_large_offset(obj->offset, opts)
+				  ? (0x80000000 | nr_large_offset++)
+				  : obj->offset);
 			offset = htonl(offset);
 			sha1write(f, &offset, 4);
 		}
@@ -126,18 +160,20 @@ const char *write_idx_file(const char *index_name, struct pack_idx_entry **objec
 		while (nr_large_offset) {
 			struct pack_idx_entry *obj = *list++;
 			uint64_t offset = obj->offset;
-			if (offset > pack_idx_off32_limit) {
-				uint32_t split[2];
-				split[0] = htonl(offset >> 32);
-				split[1] = htonl(offset & 0xffffffff);
-				sha1write(f, split, 8);
-				nr_large_offset--;
-			}
+			uint32_t split[2];
+
+			if (!need_large_offset(offset, opts))
+				continue;
+			split[0] = htonl(offset >> 32);
+			split[1] = htonl(offset & 0xffffffff);
+			sha1write(f, split, 8);
+			nr_large_offset--;
 		}
 	}
 
 	sha1write(f, sha1, 20);
-	sha1close(f, NULL, CSUM_FSYNC);
+	sha1close(f, NULL, ((opts->flags & WRITE_IDX_VERIFY)
+			    ? CSUM_CLOSE : CSUM_FSYNC));
 	git_SHA1_Final(sha1, &ctx);
 	return index_name;
 }

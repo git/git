@@ -1553,61 +1553,6 @@ int unpack_object_header(struct packed_git *p,
 	return type;
 }
 
-int packed_object_info_detail(struct packed_git *p,
-				      off_t obj_offset,
-				      unsigned long *size,
-				      unsigned long *store_size,
-				      unsigned int *delta_chain_length,
-				      unsigned char *base_sha1)
-{
-	struct pack_window *w_curs = NULL;
-	off_t curpos;
-	unsigned long dummy;
-	unsigned char *next_sha1;
-	enum object_type type;
-	struct revindex_entry *revidx;
-
-	*delta_chain_length = 0;
-	curpos = obj_offset;
-	type = unpack_object_header(p, &w_curs, &curpos, size);
-
-	revidx = find_pack_revindex(p, obj_offset);
-	*store_size = revidx[1].offset - obj_offset;
-
-	for (;;) {
-		switch (type) {
-		default:
-			die("pack %s contains unknown object type %d",
-			    p->pack_name, type);
-		case OBJ_COMMIT:
-		case OBJ_TREE:
-		case OBJ_BLOB:
-		case OBJ_TAG:
-			unuse_pack(&w_curs);
-			return type;
-		case OBJ_OFS_DELTA:
-			obj_offset = get_delta_base(p, &w_curs, &curpos, type, obj_offset);
-			if (!obj_offset)
-				die("pack %s contains bad delta base reference of type %s",
-				    p->pack_name, typename(type));
-			if (*delta_chain_length == 0) {
-				revidx = find_pack_revindex(p, obj_offset);
-				hashcpy(base_sha1, nth_packed_object_sha1(p, revidx->nr));
-			}
-			break;
-		case OBJ_REF_DELTA:
-			next_sha1 = use_pack(p, &w_curs, curpos, NULL);
-			if (*delta_chain_length == 0)
-				hashcpy(base_sha1, next_sha1);
-			obj_offset = find_pack_entry_one(next_sha1, p);
-			break;
-		}
-		(*delta_chain_length)++;
-		curpos = obj_offset;
-		type = unpack_object_header(p, &w_curs, &curpos, &dummy);
-	}
-}
-
 static int packed_object_info(struct packed_git *p, off_t obj_offset,
 			      unsigned long *sizep, int *rtype)
 {

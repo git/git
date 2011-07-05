@@ -65,6 +65,14 @@ test_expect_success \
     'cmp "test-1-${pack1}.idx" "1.idx" &&
      cmp "test-2-${pack2}.idx" "2.idx"'
 
+test_expect_success 'index-pack --verify on index version 1' '
+	git index-pack --verify "test-1-${pack1}.pack"
+'
+
+test_expect_success 'index-pack --verify on index version 2' '
+	git index-pack --verify "test-2-${pack2}.pack"
+'
+
 test_expect_success \
     'index v2: force some 64-bit offsets with pack-objects' \
     'pack3=$(git pack-objects --index-version=2,0x40000 test-3 <obj-list)'
@@ -92,6 +100,16 @@ test_expect_success OFF64_T \
 test_expect_success OFF64_T \
     '64-bit offsets: index-pack result should match pack-objects one' \
     'cmp "test-3-${pack3}.idx" "3.idx"'
+
+test_expect_success OFF64_T 'index-pack --verify on 64-bit offset v2 (cheat)' '
+	# This cheats by knowing which lower offset should still be encoded
+	# in 64-bit representation.
+	git index-pack --verify --index-version=2,0x40000 "test-3-${pack3}.pack"
+'
+
+test_expect_success OFF64_T 'index-pack --verify on 64-bit offset v2' '
+	git index-pack --verify "test-3-${pack3}.pack"
+'
 
 # returns the object number for given object in given pack index
 index_obj_nr()
@@ -208,9 +226,8 @@ test_expect_success \
      ( while read obj
        do git cat-file -p $obj >/dev/null || exit 1
        done <obj-list ) &&
-     err=$(test_must_fail git verify-pack \
-       ".git/objects/pack/pack-${pack1}.pack" 2>&1) &&
-     echo "$err" | grep "CRC mismatch"'
+     test_must_fail git verify-pack ".git/objects/pack/pack-${pack1}.pack"
+'
 
 test_expect_success 'running index-pack in the object store' '
     rm -f .git/objects/pack/* &&
