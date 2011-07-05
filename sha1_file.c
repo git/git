@@ -834,7 +834,7 @@ static int in_window(struct pack_window *win, off_t offset)
 unsigned char *use_pack(struct packed_git *p,
 		struct pack_window **w_cursor,
 		off_t offset,
-		unsigned int *left)
+		unsigned long *left)
 {
 	struct pack_window *win = *w_cursor;
 
@@ -1254,7 +1254,7 @@ unsigned long unpack_object_header_buffer(const unsigned char *buf,
 	return used;
 }
 
-int unpack_sha1_header(z_stream *stream, unsigned char *map, unsigned long mapsize, void *buffer, unsigned long bufsiz)
+int unpack_sha1_header(git_zstream *stream, unsigned char *map, unsigned long mapsize, void *buffer, unsigned long bufsiz)
 {
 	unsigned long size, used;
 	static const char valid_loose_object_type[8] = {
@@ -1296,7 +1296,7 @@ int unpack_sha1_header(z_stream *stream, unsigned char *map, unsigned long mapsi
 	return git_inflate(stream, 0);
 }
 
-static void *unpack_sha1_rest(z_stream *stream, void *buffer, unsigned long size, const unsigned char *sha1)
+static void *unpack_sha1_rest(git_zstream *stream, void *buffer, unsigned long size, const unsigned char *sha1)
 {
 	int bytes = strlen(buffer) + 1;
 	unsigned char *buf = xmallocz(size);
@@ -1395,7 +1395,7 @@ int parse_sha1_header(const char *hdr, unsigned long *sizep)
 static void *unpack_sha1_file(void *map, unsigned long mapsize, enum object_type *type, unsigned long *size, const unsigned char *sha1)
 {
 	int ret;
-	z_stream stream;
+	git_zstream stream;
 	char hdr[8192];
 
 	ret = unpack_sha1_header(&stream, map, mapsize, hdr, sizeof(hdr));
@@ -1411,7 +1411,7 @@ unsigned long get_size_from_delta(struct packed_git *p,
 {
 	const unsigned char *data;
 	unsigned char delta_head[20], *in;
-	z_stream stream;
+	git_zstream stream;
 	int st;
 
 	memset(&stream, 0, sizeof(stream));
@@ -1533,7 +1533,7 @@ int unpack_object_header(struct packed_git *p,
 			 unsigned long *sizep)
 {
 	unsigned char *base;
-	unsigned int left;
+	unsigned long left;
 	unsigned long used;
 	enum object_type type;
 
@@ -1593,7 +1593,7 @@ static void *unpack_compressed_entry(struct packed_git *p,
 				    unsigned long size)
 {
 	int st;
-	z_stream stream;
+	git_zstream stream;
 	unsigned char *buffer, *in;
 
 	buffer = xmallocz(size);
@@ -2033,7 +2033,7 @@ static int sha1_loose_object_info(const unsigned char *sha1, unsigned long *size
 	int status;
 	unsigned long mapsize, size;
 	void *map;
-	z_stream stream;
+	git_zstream stream;
 	char hdr[32];
 
 	map = map_sha1_file(sha1, &mapsize);
@@ -2402,7 +2402,7 @@ static int write_loose_object(const unsigned char *sha1, char *hdr, int hdrlen,
 {
 	int fd, ret;
 	unsigned char compressed[4096];
-	z_stream stream;
+	git_zstream stream;
 	git_SHA_CTX c;
 	unsigned char parano_sha1[20];
 	char *filename;
@@ -2419,7 +2419,7 @@ static int write_loose_object(const unsigned char *sha1, char *hdr, int hdrlen,
 
 	/* Set it up */
 	memset(&stream, 0, sizeof(stream));
-	deflateInit(&stream, zlib_compression_level);
+	git_deflate_init(&stream, zlib_compression_level);
 	stream.next_out = compressed;
 	stream.avail_out = sizeof(compressed);
 	git_SHA1_Init(&c);
@@ -2427,8 +2427,8 @@ static int write_loose_object(const unsigned char *sha1, char *hdr, int hdrlen,
 	/* First header.. */
 	stream.next_in = (unsigned char *)hdr;
 	stream.avail_in = hdrlen;
-	while (deflate(&stream, 0) == Z_OK)
-		/* nothing */;
+	while (git_deflate(&stream, 0) == Z_OK)
+		; /* nothing */
 	git_SHA1_Update(&c, hdr, hdrlen);
 
 	/* Then the data itself.. */
@@ -2436,7 +2436,7 @@ static int write_loose_object(const unsigned char *sha1, char *hdr, int hdrlen,
 	stream.avail_in = len;
 	do {
 		unsigned char *in0 = stream.next_in;
-		ret = deflate(&stream, Z_FINISH);
+		ret = git_deflate(&stream, Z_FINISH);
 		git_SHA1_Update(&c, in0, stream.next_in - in0);
 		if (write_buffer(fd, compressed, stream.next_out - compressed) < 0)
 			die("unable to write sha1 file");
@@ -2446,7 +2446,7 @@ static int write_loose_object(const unsigned char *sha1, char *hdr, int hdrlen,
 
 	if (ret != Z_STREAM_END)
 		die("unable to deflate new object %s (%d)", sha1_to_hex(sha1), ret);
-	ret = deflateEnd(&stream);
+	ret = git_deflate_end_gently(&stream);
 	if (ret != Z_OK)
 		die("deflateEnd on object %s failed (%d)", sha1_to_hex(sha1), ret);
 	git_SHA1_Final(parano_sha1, &c);

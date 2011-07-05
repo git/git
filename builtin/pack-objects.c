@@ -127,13 +127,13 @@ static void *get_delta(struct object_entry *entry)
 
 static unsigned long do_compress(void **pptr, unsigned long size)
 {
-	z_stream stream;
+	git_zstream stream;
 	void *in, *out;
 	unsigned long maxsize;
 
 	memset(&stream, 0, sizeof(stream));
-	deflateInit(&stream, pack_compression_level);
-	maxsize = deflateBound(&stream, size);
+	git_deflate_init(&stream, pack_compression_level);
+	maxsize = git_deflate_bound(&stream, size);
 
 	in = *pptr;
 	out = xmalloc(maxsize);
@@ -143,9 +143,9 @@ static unsigned long do_compress(void **pptr, unsigned long size)
 	stream.avail_in = size;
 	stream.next_out = out;
 	stream.avail_out = maxsize;
-	while (deflate(&stream, Z_FINISH) == Z_OK)
+	while (git_deflate(&stream, Z_FINISH) == Z_OK)
 		; /* nothing */
-	deflateEnd(&stream);
+	git_deflate_end(&stream);
 
 	free(in);
 	return stream.total_out;
@@ -161,7 +161,7 @@ static int check_pack_inflate(struct packed_git *p,
 		off_t len,
 		unsigned long expect)
 {
-	z_stream stream;
+	git_zstream stream;
 	unsigned char fakebuf[4096], *in;
 	int st;
 
@@ -188,12 +188,12 @@ static void copy_pack_data(struct sha1file *f,
 		off_t len)
 {
 	unsigned char *in;
-	unsigned int avail;
+	unsigned long avail;
 
 	while (len) {
 		in = use_pack(p, w_curs, offset, &avail);
 		if (avail > len)
-			avail = (unsigned int)len;
+			avail = (unsigned long)len;
 		sha1write(f, in, avail);
 		offset += avail;
 		len -= avail;
@@ -995,7 +995,7 @@ static void check_object(struct object_entry *entry)
 		const unsigned char *base_ref = NULL;
 		struct object_entry *base_entry;
 		unsigned long used, used_0;
-		unsigned int avail;
+		unsigned long avail;
 		off_t ofs;
 		unsigned char *buf, c;
 

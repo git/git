@@ -1634,7 +1634,7 @@ static inline int metadata_changes(struct patch *patch)
 static char *inflate_it(const void *data, unsigned long size,
 			unsigned long inflated_size)
 {
-	z_stream stream;
+	git_zstream stream;
 	void *out;
 	int st;
 
