@@ -3,6 +3,7 @@
 #include "cache.h"
 #include "commit.h"
 #include "color.h"
+#include "string-list.h"
 
 static int parse_options_usage(struct parse_opt_ctx_t *ctx,
 			       const char * const *usagestr,
@@ -686,4 +687,20 @@ int parse_options_concat(struct option *dst, size_t dst_size, struct option *src
 			return 0;
 	}
 	return -1;
+}
+
+int parse_opt_string_list(const struct option *opt, const char *arg, int unset)
+{
+	struct string_list *v = opt->value;
+
+	if (unset) {
+		string_list_clear(v, 0);
+		return 0;
+	}
+
+	if (!arg)
+		return -1;
+
+	string_list_append(v, xstrdup(arg));
+	return 0;
 }

@@ -1081,6 +1081,8 @@ extern int config_error_nonbool(const char *);
 extern const char *get_log_output_encoding(void);
 extern const char *get_commit_output_encoding(void);
 
+extern int git_config_parse_parameter(const char *, config_fn_t fn, void *data);
+
 extern const char *config_exclusive_filename;
 
 #define MAX_GITNAME (1000)

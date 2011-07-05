@@ -28,6 +28,7 @@ String options
     --st <st>             get another string (pervert ordering)
     -o <str>              get another string
     --default-string      set string to default
+    --list <str>          add str to list
 
 Magic arguments
     --quux                means --quux
@@ -334,6 +335,22 @@ EOF
 test_expect_success 'negation of OPT_NONEG flags is not ambiguous' '
 	test-parse-options --no-ambig >output 2>output.err &&
 	test ! -s output.err &&
+	test_cmp expect output
+'
+
+cat >>expect <<'EOF'
+list: foo
+list: bar
+list: baz
+EOF
+test_expect_success '--list keeps list of strings' '
+	test-parse-options --list foo --list=bar --list=baz >output &&
+	test_cmp expect output
+'
+
+test_expect_success '--no-list resets list' '
+	test-parse-options --list=other --list=irrelevant --list=options \
+		--no-list --list=foo --list=bar --list=baz >output &&
 	test_cmp expect output
 '
 

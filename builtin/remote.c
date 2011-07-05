@@ -88,16 +88,6 @@ static inline int postfixcmp(const char *string, const char *postfix)
 	return strcmp(string + len1 - len2, postfix);
 }
 
-static int opt_parse_track(const struct option *opt, const char *arg, int not)
-{
-	struct string_list *list = opt->value;
-	if (not)
-		string_list_clear(list, 0);
-	else
-		string_list_append(list, arg);
-	return 0;
-}
-
 static int fetch_remote(const char *name)
 {
 	const char *argv[] = { "fetch", name, NULL, NULL };
@@ -176,8 +166,8 @@ static int add(int argc, const char **argv)
 			    TAGS_SET),
 		OPT_SET_INT(0, NULL, &fetch_tags,
 			    "or do not fetch any tag at all (--no-tags)", TAGS_UNSET),
-		OPT_CALLBACK('t', "track", &track, "branch",
-			"branch(es) to track", opt_parse_track),
+		OPT_STRING_LIST('t', "track", &track, "branch",
+				"branch(es) to track"),
 		OPT_STRING('m', "master", &master, "branch", "master branch"),
 		{ OPTION_CALLBACK, 0, "mirror", &mirror, "push|fetch",
 			"set up remote as a mirror to push to or fetch from",
