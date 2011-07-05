@@ -24,7 +24,8 @@ static void create_output_file(const char *output_file)
 }
 
 static int run_remote_archiver(int argc, const char **argv,
-			       const char *remote, const char *exec)
+			       const char *remote, const char *exec,
+			       const char *name_hint)
 {
 	char buf[LARGE_PACKET_MAX];
 	int fd[2], i, len, rv;
@@ -37,6 +38,17 @@ static int run_remote_archiver(int argc, const char **argv,
 	transport = transport_get(_remote, _remote->url[0]);
 	transport_connect(transport, "git-upload-archive", exec, fd);
 
+	/*
+	 * Inject a fake --format field at the beginning of the
+	 * arguments, with the format inferred from our output
+	 * filename. This way explicit --format options can override
+	 * it.
+	 */
+	if (name_hint) {
+		const char *format = archive_format_from_filename(name_hint);
+		if (format)
+			packet_write(fd[1], "argument --format=%s\n", format);
+	}
 	for (i = 1; i < argc; i++)
 		packet_write(fd[1], "argument %s\n", argv[i]);
 	packet_flush(fd[1]);
@@ -63,17 +75,6 @@ static int run_remote_archiver(int argc, const char **argv,
 	return !!rv;
 }
 
-static const char *format_from_name(const char *filename)
-{
-	const char *ext = strrchr(filename, '.');
-	if (!ext)
-		return NULL;
-	ext++;
-	if (!strcasecmp(ext, "zip"))
-		return "--format=zip";
-	return NULL;
-}
-
 #define PARSE_OPT_KEEP_ALL ( PARSE_OPT_KEEP_DASHDASH | 	\
 			     PARSE_OPT_KEEP_ARGV0 | 	\
 			     PARSE_OPT_KEEP_UNKNOWN |	\
@@ -84,7 +85,6 @@ int cmd_archive(int argc, const char **argv, const char *prefix)
 	const char *exec = "git-upload-archive";
 	const char *output = NULL;
 	const char *remote = NULL;
-	const char *format_option = NULL;
 	struct option local_opts[] = {
 		OPT_STRING('o', "output", &output, "file",
 			"write the archive to this file"),
@@ -98,32 +98,13 @@ int cmd_archive(int argc, const char **argv, const char *prefix)
 	argc = parse_options(argc, argv, prefix, local_opts, NULL,
 			     PARSE_OPT_KEEP_ALL);
 
-	if (output) {
+	if (output)
 		create_output_file(output);
-		format_option = format_from_name(output);
-	}
-
-	/*
-	 * We have enough room in argv[] to muck it in place, because
-	 * --output must have been given on the original command line
-	 * if we get to this point, and parse_options() must have eaten
-	 * it, i.e. we can add back one element to the array.
-	 *
-	 * We add a fake --format option at the beginning, with the
-	 * format inferred from our output filename.  This way explicit
-	 * --format options can override it, and the fake option is
-	 * inserted before any "--" that might have been given.
-	 */
-	if (format_option) {
-		memmove(argv + 2, argv + 1, sizeof(*argv) * argc);
-		argv[1] = format_option;
-		argv[++argc] = NULL;
-	}
 
 	if (remote)
-		return run_remote_archiver(argc, argv, remote, exec);
+		return run_remote_archiver(argc, argv, remote, exec, output);
 
 	setvbuf(stderr, NULL, _IOLBF, BUFSIZ);
 
-	return write_archive(argc, argv, prefix, 1);
+	return write_archive(argc, argv, prefix, 1, output, 0);
 }

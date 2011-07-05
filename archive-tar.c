@@ -4,6 +4,7 @@
 #include "cache.h"
 #include "tar.h"
 #include "archive.h"
+#include "run-command.h"
 
 #define RECORDSIZE	(512)
 #define BLOCKSIZE	(RECORDSIZE * 20)
@@ -12,6 +13,9 @@ static char block[BLOCKSIZE];
 static unsigned long offset;
 
 static int tar_umask = 002;
+
+static int write_tar_filter_archive(const struct archiver *ar,
+				    struct archiver_args *args);
 
 /* writes out the whole block, but only if it is full */
 static void write_if_needed(void)
@@ -220,6 +224,67 @@ static int write_global_extended_header(struct archiver_args *args)
 	return err;
 }
 
+static struct archiver **tar_filters;
+static int nr_tar_filters;
+static int alloc_tar_filters;
+
+static struct archiver *find_tar_filter(const char *name, int len)
+{
+	int i;
+	for (i = 0; i < nr_tar_filters; i++) {
+		struct archiver *ar = tar_filters[i];
+		if (!strncmp(ar->name, name, len) && !ar->name[len])
+			return ar;
+	}
+	return NULL;
+}
+
+static int tar_filter_config(const char *var, const char *value, void *data)
+{
+	struct archiver *ar;
+	const char *dot;
+	const char *name;
+	const char *type;
+	int namelen;
+
+	if (prefixcmp(var, "tar."))
+		return 0;
+	dot = strrchr(var, '.');
+	if (dot == var + 9)
+		return 0;
+
+	name = var + 4;
+	namelen = dot - name;
+	type = dot + 1;
+
+	ar = find_tar_filter(name, namelen);
+	if (!ar) {
+		ar = xcalloc(1, sizeof(*ar));
+		ar->name = xmemdupz(name, namelen);
+		ar->write_archive = write_tar_filter_archive;
+		ar->flags = ARCHIVER_WANT_COMPRESSION_LEVELS;
+		ALLOC_GROW(tar_filters, nr_tar_filters + 1, alloc_tar_filters);
+		tar_filters[nr_tar_filters++] = ar;
+	}
+
+	if (!strcmp(type, "command")) {
+		if (!value)
+			return config_error_nonbool(var);
+		free(ar->data);
+		ar->data = xstrdup(value);
+		return 0;
+	}
+	if (!strcmp(type, "remote")) {
+		if (git_config_bool(var, value))
+			ar->flags |= ARCHIVER_REMOTE;
+		else
+			ar->flags &= ~ARCHIVER_REMOTE;
+		return 0;
+	}
+
+	return 0;
+}
+
 static int git_tar_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, "tar.umask")) {
@@ -231,14 +296,14 @@ static int git_tar_config(const char *var, const char *value, void *cb)
 		}
 		return 0;
 	}
-	return git_default_config(var, value, cb);
+
+	return tar_filter_config(var, value, cb);
 }
 
-int write_tar_archive(struct archiver_args *args)
+static int write_tar_archive(const struct archiver *ar,
+			     struct archiver_args *args)
 {
 	int err = 0;
-
-	git_config(git_tar_config, NULL);
 
 	if (args->commit_sha1)
 		err = write_global_extended_header(args);
@@ -247,4 +312,66 @@ int write_tar_archive(struct archiver_args *args)
 	if (!err)
 		write_trailer();
 	return err;
+}
+
+static int write_tar_filter_archive(const struct archiver *ar,
+				    struct archiver_args *args)
+{
+	struct strbuf cmd = STRBUF_INIT;
+	struct child_process filter;
+	const char *argv[2];
+	int r;
+
+	if (!ar->data)
+		die("BUG: tar-filter archiver called with no filter defined");
+
+	strbuf_addstr(&cmd, ar->data);
+	if (args->compression_level >= 0)
+		strbuf_addf(&cmd, " -%d", args->compression_level);
+
+	memset(&filter, 0, sizeof(filter));
+	argv[0] = cmd.buf;
+	argv[1] = NULL;
+	filter.argv = argv;
+	filter.use_shell = 1;
+	filter.in = -1;
+
+	if (start_command(&filter) < 0)
+		die_errno("unable to start '%s' filter", argv[0]);
+	close(1);
+	if (dup2(filter.in, 1) < 0)
+		die_errno("unable to redirect descriptor");
+	close(filter.in);
+
+	r = write_tar_archive(ar, args);
+
+	close(1);
+	if (finish_command(&filter) != 0)
+		die("'%s' filter reported error", argv[0]);
+
+	strbuf_release(&cmd);
+	return r;
+}
+
+static struct archiver tar_archiver = {
+	"tar",
+	write_tar_archive,
+	ARCHIVER_REMOTE
+};
+
+void init_tar_archiver(void)
+{
+	int i;
+	register_archiver(&tar_archiver);
+
+	tar_filter_config("tar.tgz.command", "gzip -cn", NULL);
+	tar_filter_config("tar.tgz.remote", "true", NULL);
+	tar_filter_config("tar.tar.gz.command", "gzip -cn", NULL);
+	tar_filter_config("tar.tar.gz.remote", "true", NULL);
+	git_config(git_tar_config, NULL);
+	for (i = 0; i < nr_tar_filters; i++) {
+		/* omit any filters that never had a command configured */
+		if (tar_filters[i]->data)
+			register_archiver(tar_filters[i]);
+	}
 }
