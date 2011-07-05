@@ -36,6 +36,9 @@ extern int for_each_tag_ref_submodule(const char *submodule, each_ref_fn fn, voi
 extern int for_each_branch_ref_submodule(const char *submodule, each_ref_fn fn, void *cb_data);
 extern int for_each_remote_ref_submodule(const char *submodule, each_ref_fn fn, void *cb_data);
 
+extern int head_ref_namespaced(each_ref_fn fn, void *cb_data);
+extern int for_each_namespaced_ref(each_ref_fn fn, void *cb_data);
+
 static inline const char *has_glob_specials(const char *pattern)
 {
 	return strpbrk(pattern, "?*[");

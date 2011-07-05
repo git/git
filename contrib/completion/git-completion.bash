@@ -2639,6 +2639,7 @@ _git ()
 			--exec-path
 			--html-path
 			--work-tree=
+			--namespace=
 			--help
 			"
 			;;

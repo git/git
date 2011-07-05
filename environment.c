@@ -8,6 +8,7 @@
  * are.
  */
 #include "cache.h"
+#include "refs.h"
 
 char git_default_email[MAX_GITNAME];
 char git_default_name[MAX_GITNAME];
@@ -65,6 +66,9 @@ int core_preload_index = 0;
 char *git_work_tree_cfg;
 static char *work_tree;
 
+static const char *namespace;
+static size_t namespace_len;
+
 static const char *git_dir;
 static char *git_object_dir, *git_index_file, *git_graft_file;
 
@@ -85,6 +89,27 @@ const char * const local_repo_env[LOCAL_REPO_ENV_SIZE + 1] = {
 	NO_REPLACE_OBJECTS_ENVIRONMENT,
 	NULL
 };
+
+static char *expand_namespace(const char *raw_namespace)
+{
+	struct strbuf buf = STRBUF_INIT;
+	struct strbuf **components, **c;
+
+	if (!raw_namespace || !*raw_namespace)
+		return xstrdup("");
+
+	strbuf_addstr(&buf, raw_namespace);
+	components = strbuf_split(&buf, '/');
+	strbuf_reset(&buf);
+	for (c = components; *c; c++)
+		if (strcmp((*c)->buf, "/") != 0)
+			strbuf_addf(&buf, "refs/namespaces/%s", (*c)->buf);
+	strbuf_list_free(components);
+	if (check_ref_format(buf.buf) != CHECK_REF_FORMAT_OK)
+		die("bad git namespace path \"%s\"", raw_namespace);
+	strbuf_addch(&buf, '/');
+	return strbuf_detach(&buf, NULL);
+}
 
 static void setup_git_env(void)
 {
@@ -111,6 +136,8 @@ static void setup_git_env(void)
 		git_graft_file = git_pathdup("info/grafts");
 	if (getenv(NO_REPLACE_OBJECTS_ENVIRONMENT))
 		read_replace_refs = 0;
+	namespace = expand_namespace(getenv(GIT_NAMESPACE_ENVIRONMENT));
+	namespace_len = strlen(namespace);
 }
 
 int is_bare_repository(void)
@@ -129,6 +156,20 @@ const char *get_git_dir(void)
 	if (!git_dir)
 		setup_git_env();
 	return git_dir;
+}
+
+const char *get_git_namespace(void)
+{
+	if (!namespace)
+		setup_git_env();
+	return namespace;
+}
+
+const char *strip_namespace(const char *namespaced_ref)
+{
+	if (prefixcmp(namespaced_ref, get_git_namespace()) != 0)
+		return NULL;
+	return namespaced_ref + namespace_len;
 }
 
 static int git_work_tree_initialized;
