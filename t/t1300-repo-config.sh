@@ -904,4 +904,22 @@ test_expect_success 'git -c works with aliases of builtins' '
 	test_cmp expect actual
 '
 
+test_expect_success 'git -c does not split values on equals' '
+	echo "value with = in it" >expect &&
+	git -c core.foo="value with = in it" config core.foo >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'git -c dies on bogus config' '
+	test_must_fail git -c core.bare=foo rev-parse
+'
+
+test_expect_success 'git -c complains about empty key' '
+	test_must_fail git -c "=foo" rev-parse
+'
+
+test_expect_success 'git -c complains about empty key and value' '
+	test_must_fail git -c "" rev-parse
+'
+
 test_done
