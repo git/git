@@ -257,6 +257,11 @@ test_expect_success \
 	test_cmp expect actual
 '
 
+test_expect_success 'tag -l can accept multiple patterns' '
+	git tag -l "v1*" "v0*" >actual &&
+	test_cmp expect actual
+'
+
 # creating and verifying lightweight tags:
 
 test_expect_success \

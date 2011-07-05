@@ -12,7 +12,7 @@ SYNOPSIS
 'git tag' [-a | -s | -u <key-id>] [-f] [-m <msg> | -F <file>]
 	<tagname> [<commit> | <object>]
 'git tag' -d <tagname>...
-'git tag' [-n[<num>]] -l [--contains <commit>] [<pattern>]
+'git tag' [-n[<num>]] -l [--contains <commit>] [<pattern>...]
 'git tag' -v <tagname>...
 
 DESCRIPTION
@@ -69,8 +69,11 @@ OPTIONS
 	If the tag is not annotated, the commit message is displayed instead.
 
 -l <pattern>::
-	List tags with names that match the given pattern (or all if no pattern is given).
-	Typing "git tag" without arguments, also lists all tags.
+	List tags with names that match the given pattern (or all if no
+	pattern is given).  Running "git tag" without arguments also
+	lists all tags. The pattern is a shell wildcard (i.e., matched
+	using fnmatch(3)).  Multiple patterns may be given; if any of
+	them matches, the tag is shown.
 
 --contains <commit>::
 	Only list tags which contain the specified commit.
