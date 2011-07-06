@@ -416,6 +416,17 @@ endif::git-format-patch[]
 --no-ext-diff::
 	Disallow external diff drivers.
 
+--textconv::
+--no-textconv::
+	Allow (or disallow) external text conversion filters to be run
+	when comparing binary files. See linkgit:gitattributes[5] for
+	details. Because textconv filters are typically a one-way
+	conversion, the resulting diff is suitable for human
+	consumption, but cannot be applied. For this reason, textconv
+	filters are enabled by default only for linkgit:git-diff[1] and
+	linkgit:git-log[1], but not for linkgit:git-format-patch[1] or
+	diff plumbing commands.
+
 --ignore-submodules[=<when>]::
 	Ignore changes to submodules in the diff generation. <when> can be
 	either "none", "untracked", "dirty" or "all", which is the default
