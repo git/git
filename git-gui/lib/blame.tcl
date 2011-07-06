@@ -449,11 +449,35 @@ method _load {jump} {
 
 	$status show [mc "Reading %s..." "$commit:[escape_path $path]"]
 	$w_path conf -text [escape_path $path]
+
+	set do_textconv 0
+	if {![is_config_false gui.textconv] && [git-version >= 1.7.2]} {
+		set filter [gitattr $path diff set]
+		set textconv [get_config [join [list diff $filter textconv] .]]
+		if {$filter ne {set} && $textconv ne {}} {
+			set do_textconv 1
+		}
+	}
 	if {$commit eq {}} {
-		set fd [open $path r]
+		if {$do_textconv ne 0} {
+			# Run textconv with sh -c "..." to allow it to
+			# contain command + arguments. On windows, just
+			# call the filter command.
+			if {![file executable [shellpath]]} {
+				set fd [open |[linsert $textconv end $path] r]
+			} else {
+				set fd [open |[list [shellpath] -c "$textconv \"\$0\"" $path] r]
+			}
+		} else {
+			set fd [open $path r]
+		}
 		fconfigure $fd -eofchar {}
 	} else {
-		set fd [git_read cat-file blob "$commit:$path"]
+		if {$do_textconv ne 0} {
+			set fd [git_read cat-file --textconv "$commit:$path"]
+		} else {
+			set fd [git_read cat-file blob "$commit:$path"]
+		}
 	}
 	fconfigure $fd \
 		-blocking 0 \

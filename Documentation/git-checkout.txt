@@ -9,39 +9,60 @@ SYNOPSIS
 --------
 [verse]
 'git checkout' [-q] [-f] [-m] [<branch>]
-'git checkout' [-q] [-f] [-m] [-b <new_branch>] [<start_point>]
+'git checkout' [-q] [-f] [-m] [--detach] [<commit>]
+'git checkout' [-q] [-f] [-m] [[-b|-B|--orphan] <new_branch>] [<start_point>]
 'git checkout' [-f|--ours|--theirs|-m|--conflict=<style>] [<tree-ish>] [--] <paths>...
-'git checkout' --patch [<tree-ish>] [--] [<paths>...]
+'git checkout' [-p|--patch] [<tree-ish>] [--] [<paths>...]
 
 DESCRIPTION
 -----------
-
-When <paths> are not given, this command switches branches by
-updating the index, working tree, and HEAD to reflect the specified
+Updates files in the working tree to match the version in the index
+or the specified tree.  If no paths are given, 'git checkout' will
+also update `HEAD` to set the specified branch as the current
 branch.
 
-If `-b` is given, a new branch is created and checked out, as if
-linkgit:git-branch[1] were called; in this case you can
-use the --track or --no-track options, which will be passed to `git
-branch`.  As a convenience, --track without `-b` implies branch
-creation; see the description of --track below.
+'git checkout' [<branch>]::
+'git checkout' -b|-B <new_branch> [<start point>]::
+'git checkout' [--detach] [<commit>]::
 
-When <paths> or --patch are given, this command does *not* switch
-branches.  It updates the named paths in the working tree from
-the index file, or from a named <tree-ish> (most often a commit).  In
-this case, the `-b` and `--track` options are meaningless and giving
-either of them results in an error. The <tree-ish> argument can be
-used to specify a specific tree-ish (i.e. commit, tag or tree)
-to update the index for the given paths before updating the
-working tree.
+	This form switches branches by updating the index, working
+	tree, and HEAD to reflect the specified branch or commit.
++
+If `-b` is given, a new branch is created as if linkgit:git-branch[1]
+were called and then checked out; in this case you can
+use the `--track` or `--no-track` options, which will be passed to
+'git branch'.  As a convenience, `--track` without `-b` implies branch
+creation; see the description of `--track` below.
++
+If `-B` is given, <new_branch> is created if it doesn't exist; otherwise, it
+is reset. This is the transactional equivalent of
++
+------------
+$ git branch -f <branch> [<start point>]
+$ git checkout <branch>
+------------
++
+that is to say, the branch is not reset/created unless "git checkout" is
+successful.
 
-The index may contain unmerged entries after a failed merge.  By
-default, if you try to check out such an entry from the index, the
+'git checkout' [-p|--patch] [<tree-ish>] [--] <pathspec>...::
+
+	When <paths> or `--patch` are given, 'git checkout' does *not*
+	switch branches.  It updates the named paths in the working tree
+	from the index file or from a named <tree-ish> (most often a
+	commit).  In this case, the `-b` and `--track` options are
+	meaningless and giving either of them results in an error.  The
+	<tree-ish> argument can be used to specify a specific tree-ish
+	(i.e.  commit, tag or tree) to update the index for the given
+	paths before updating the working tree.
++
+The index may contain unmerged entries because of a previous failed merge.
+By default, if you try to check out such an entry from the index, the
 checkout operation will fail and nothing will be checked out.
-Using -f will ignore these unmerged entries.  The contents from a
+Using `-f` will ignore these unmerged entries.  The contents from a
 specific side of the merge can be checked out of the index by
-using --ours or --theirs.  With -m, changes made to the working tree
-file can be discarded to recreate the original conflicted merge result.
+using `--ours` or `--theirs`.  With `-m`, changes made to the working tree
+file can be discarded to re-create the original conflicted merge result.
 
 OPTIONS
 -------
@@ -67,13 +88,19 @@ entries; instead, unmerged entries are ignored.
 	Create a new branch named <new_branch> and start it at
 	<start_point>; see linkgit:git-branch[1] for details.
 
+-B::
+	Creates the branch <new_branch> and start it at <start_point>;
+	if it already exists, then reset it to <start_point>. This is
+	equivalent to running "git branch" with "-f"; see
+	linkgit:git-branch[1] for details.
+
 -t::
 --track::
 	When creating a new branch, set up "upstream" configuration. See
 	"--track" in linkgit:git-branch[1] for details.
 +
 If no '-b' option is given, the name of the new branch will be
-derived from the remote branch.  If "remotes/" or "refs/remotes/"
+derived from the remote-tracking branch.  If "remotes/" or "refs/remotes/"
 is prefixed it is stripped away, and then the part up to the
 next slash (which would be the nickname of the remote) is removed.
 This would tell us to use "hack" as the local branch when branching
@@ -89,6 +116,38 @@ explicitly give a name with '-b' in such a case.
 -l::
 	Create the new branch's reflog; see linkgit:git-branch[1] for
 	details.
+
+--detach::
+	Rather than checking out a branch to work on it, check out a
+	commit for inspection and discardable experiments.
+	This is the default behavior of "git checkout <commit>" when
+	<commit> is not a branch name.  See the "DETACHED HEAD" section
+	below for details.
+
+--orphan::
+	Create a new 'orphan' branch, named <new_branch>, started from
+	<start_point> and switch to it.  The first commit made on this
+	new branch will have no parents and it will be the root of a new
+	history totally disconnected from all the other branches and
+	commits.
++
+The index and the working tree are adjusted as if you had previously run
+"git checkout <start_point>".  This allows you to start a new history
+that records a set of paths similar to <start_point> by easily running
+"git commit -a" to make the root commit.
++
+This can be useful when you want to publish the tree from a commit
+without exposing its full history. You might want to do this to publish
+an open source branch of a project whose current tree is "clean", but
+whose full history contains proprietary or otherwise encumbered bits of
+code.
++
+If you want to start a disconnected history that records a set of paths
+that is totally different from the one of <start_point>, then you should
+clear the index and the working tree right after creating the orphan
+branch by running "git rm -rf ." from the top level of the working tree.
+Afterwards you will be ready to prepare your new files, repopulating the
+working tree, by copying them from elsewhere, extracting a tarball, etc.
 
 -m::
 --merge::
@@ -124,7 +183,8 @@ the conflicted merge in the specified paths.
 	working tree (and if a <tree-ish> was specified, the index).
 +
 This means that you can use `git checkout -p` to selectively discard
-edits from your current working tree.
+edits from your current working tree. See the ``Interactive Mode''
+section of linkgit:git-add[1] to learn how to operate the `\--patch` mode.
 
 <branch>::
 	Branch to checkout; if it refers to a branch (i.e., a name that,
@@ -136,6 +196,10 @@ edits from your current working tree.
 As a special case, the `"@\{-N\}"` syntax for the N-th last branch
 checks out the branch (instead of detaching).  You may also specify
 `-` which is synonymous with `"@\{-1\}"`.
++
+As a further special case, you may use `"A\...B"` as a shortcut for the
+merge base of `A` and `B` if there is exactly one merge base. You can
+leave out at most one of `A` and `B`, in which case it defaults to `HEAD`.
 
 <new_branch>::
 	Name for the new branch.
@@ -150,42 +214,140 @@ checks out the branch (instead of detaching).  You may also specify
 
 
 
-Detached HEAD
+DETACHED HEAD
 -------------
-
-It is sometimes useful to be able to 'checkout' a commit that is
-not at the tip of one of your branches.  The most obvious
-example is to check out the commit at a tagged official release
-point, like this:
+HEAD normally refers to a named branch (e.g. 'master'). Meanwhile, each
+branch refers to a specific commit. Let's look at a repo with three
+commits, one of them tagged, and with branch 'master' checked out:
 
 ------------
-$ git checkout v2.6.18
+	   HEAD (refers to branch 'master')
+	    |
+	    v
+a---b---c  branch 'master' (refers to commit 'c')
+    ^
+    |
+  tag 'v2.0' (refers to commit 'b')
 ------------
 
-Earlier versions of git did not allow this and asked you to
-create a temporary branch using the `-b` option, but starting from
-version 1.5.0, the above command 'detaches' your HEAD from the
-current branch and directly points at the commit named by the tag
-(`v2.6.18` in the example above).
-
-You can use all git commands while in this state.  You can use
-`git reset --hard $othercommit` to further move around, for
-example.  You can make changes and create a new commit on top of
-a detached HEAD.  You can even create a merge by using `git
-merge $othercommit`.
-
-The state you are in while your HEAD is detached is not recorded
-by any branch (which is natural --- you are not on any branch).
-What this means is that you can discard your temporary commits
-and merges by switching back to an existing branch (e.g. `git
-checkout master`), and a later `git prune` or `git gc` would
-garbage-collect them.  If you did this by mistake, you can ask
-the reflog for HEAD where you were, e.g.
+When a commit is created in this state, the branch is updated to refer to
+the new commit. Specifically, 'git commit' creates a new commit 'd', whose
+parent is commit 'c', and then updates branch 'master' to refer to new
+commit 'd'. HEAD still refers to branch 'master' and so indirectly now refers
+to commit 'd':
 
 ------------
+$ edit; git add; git commit
+
+	       HEAD (refers to branch 'master')
+		|
+		v
+a---b---c---d  branch 'master' (refers to commit 'd')
+    ^
+    |
+  tag 'v2.0' (refers to commit 'b')
+------------
+
+It is sometimes useful to be able to checkout a commit that is not at
+the tip of any named branch, or even to create a new commit that is not
+referenced by a named branch. Let's look at what happens when we
+checkout commit 'b' (here we show two ways this may be done):
+
+------------
+$ git checkout v2.0  # or
+$ git checkout master^^
+
+   HEAD (refers to commit 'b')
+    |
+    v
+a---b---c---d  branch 'master' (refers to commit 'd')
+    ^
+    |
+  tag 'v2.0' (refers to commit 'b')
+------------
+
+Notice that regardless of which checkout command we use, HEAD now refers
+directly to commit 'b'. This is known as being in detached HEAD state.
+It means simply that HEAD refers to a specific commit, as opposed to
+referring to a named branch. Let's see what happens when we create a commit:
+
+------------
+$ edit; git add; git commit
+
+     HEAD (refers to commit 'e')
+      |
+      v
+      e
+     /
+a---b---c---d  branch 'master' (refers to commit 'd')
+    ^
+    |
+  tag 'v2.0' (refers to commit 'b')
+------------
+
+There is now a new commit 'e', but it is referenced only by HEAD. We can
+of course add yet another commit in this state:
+
+------------
+$ edit; git add; git commit
+
+	 HEAD (refers to commit 'f')
+	  |
+	  v
+      e---f
+     /
+a---b---c---d  branch 'master' (refers to commit 'd')
+    ^
+    |
+  tag 'v2.0' (refers to commit 'b')
+------------
+
+In fact, we can perform all the normal git operations. But, let's look
+at what happens when we then checkout master:
+
+------------
+$ git checkout master
+
+	       HEAD (refers to branch 'master')
+      e---f     |
+     /          v
+a---b---c---d  branch 'master' (refers to commit 'd')
+    ^
+    |
+  tag 'v2.0' (refers to commit 'b')
+------------
+
+It is important to realize that at this point nothing refers to commit
+'f'. Eventually commit 'f' (and by extension commit 'e') will be deleted
+by the routine git garbage collection process, unless we create a reference
+before that happens. If we have not yet moved away from commit 'f',
+any of these will create a reference to it:
+
+------------
+$ git checkout -b foo   <1>
+$ git branch foo        <2>
+$ git tag foo           <3>
+------------
+
+<1> creates a new branch 'foo', which refers to commit 'f', and then
+updates HEAD to refer to branch 'foo'. In other words, we'll no longer
+be in detached HEAD state after this command.
+
+<2> similarly creates a new branch 'foo', which refers to commit 'f',
+but leaves HEAD detached.
+
+<3> creates a new tag 'foo', which refers to commit 'f',
+leaving HEAD detached.
+
+If we have moved away from commit 'f', then we must first recover its object
+name (typically by using git reflog), and then we can create a reference to
+it. For example, to see the last two commits to which HEAD referred, we
+can use either of these commands:
+
+------------
+$ git reflog -2 HEAD # or
 $ git log -g -2 HEAD
 ------------
-
 
 EXAMPLES
 --------
@@ -226,7 +388,7 @@ the above checkout would fail like this:
 +
 ------------
 $ git checkout mytopic
-fatal: Entry 'frotz' not uptodate. Cannot merge.
+error: You have local changes to 'frotz'; not switching branches.
 ------------
 +
 You can give the `-m` flag to the command, which would try a
@@ -260,15 +422,6 @@ files.  Edit and resolve the conflict and mark it resolved with
 $ edit frotz
 $ git add frotz
 ------------
-
-
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org>
-
-Documentation
---------------
-Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---

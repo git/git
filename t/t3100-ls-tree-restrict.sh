@@ -165,4 +165,13 @@ test_expect_success \
 EOF
      test_output'
 
+test_expect_success \
+    'ls-tree with one path a prefix of the other' \
+    'git ls-tree $tree path2/baz path2/bazbo >current &&
+     make_expected <<\EOF &&
+040000 tree X	path2/baz
+120000 blob X	path2/bazbo
+EOF
+     test_output'
+
 test_done

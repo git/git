@@ -288,10 +288,12 @@ bisect_visualize() {
 
 	if test $# = 0
 	then
-		case "${DISPLAY+set}${SESSIONNAME+set}${MSYSTEM+set}${SECURITYSESSIONID+set}" in
-		'')	set git log ;;
-		set*)	set gitk ;;
-		esac
+		if test -n "${DISPLAY+set}${SESSIONNAME+set}${MSYSTEM+set}${SECURITYSESSIONID+set}" &&
+		   type gitk >/dev/null 2>&1; then
+			set gitk
+		else
+			set git log
+		fi
 	else
 		case "$1" in
 		git*|tig) ;;
@@ -316,7 +318,12 @@ bisect_reset() {
 	*)
 	    usage ;;
 	esac
-	git checkout "$branch" -- && bisect_clean_state
+	if git checkout "$branch" -- ; then
+		bisect_clean_state
+	else
+		die "Could not check out original HEAD '$branch'." \
+				"Try 'git bisect reset <commit>'."
+	fi
 }
 
 bisect_clean_state() {
@@ -338,6 +345,7 @@ bisect_clean_state() {
 }
 
 bisect_replay () {
+	test "$#" -eq 1 || die "No logfile given"
 	test -r "$1" || die "cannot read $1 for replaying"
 	bisect_reset
 	while read git bisect command rev
@@ -412,6 +420,10 @@ bisect_run () {
     done
 }
 
+bisect_log () {
+	test -s "$GIT_DIR/BISECT_LOG" || die "We are not bisecting."
+	cat "$GIT_DIR/BISECT_LOG"
+}
 
 case "$#" in
 0)
@@ -438,7 +450,7 @@ case "$#" in
     replay)
 	bisect_replay "$@" ;;
     log)
-	cat "$GIT_DIR/BISECT_LOG" ;;
+	bisect_log ;;
     run)
         bisect_run "$@" ;;
     *)

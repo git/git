@@ -64,6 +64,18 @@ cp new1.txt test.txt
 test_expect_success "merge without conflict" \
 	"git merge-file test.txt orig.txt new2.txt"
 
+test_expect_success 'works in subdirectory' '
+	mkdir dir &&
+	cp new1.txt dir/a.txt &&
+	cp orig.txt dir/o.txt &&
+	cp new2.txt dir/b.txt &&
+	( cd dir && git merge-file a.txt o.txt b.txt )
+'
+
+cp new1.txt test.txt
+test_expect_success "merge without conflict (--quiet)" \
+	"git merge-file --quiet test.txt orig.txt new2.txt"
+
 cp new1.txt test2.txt
 test_expect_success "merge without conflict (missing LF at EOF)" \
 	"git merge-file test2.txt orig.txt new2.txt"
@@ -177,7 +189,7 @@ et nihil mihi deerit;
 
 In loco pascuae ibi me collocavit;
 super aquam refectionis educavit me.
-|||||||
+||||||| new5.txt
 et nihil mihi deerit.
 In loco pascuae ibi me collocavit,
 super aquam refectionis educavit me;
@@ -207,6 +219,43 @@ test_expect_success '"diff3 -m" style output (1)' '
 test_expect_success '"diff3 -m" style output (2)' '
 	git config merge.conflictstyle diff3 &&
 	test_must_fail git merge-file -p \
+		new8.txt new5.txt new9.txt >actual &&
+	test_cmp expect actual
+'
+
+cat >expect <<\EOF
+Dominus regit me,
+<<<<<<<<<< new8.txt
+et nihil mihi deerit;
+
+
+
+
+In loco pascuae ibi me collocavit;
+super aquam refectionis educavit me.
+|||||||||| new5.txt
+et nihil mihi deerit.
+In loco pascuae ibi me collocavit,
+super aquam refectionis educavit me;
+==========
+et nihil mihi deerit,
+
+
+
+
+In loco pascuae ibi me collocavit --
+super aquam refectionis educavit me,
+>>>>>>>>>> new9.txt
+animam meam convertit,
+deduxit me super semitas jusitiae,
+propter nomen suum.
+Nam et si ambulavero in medio umbrae mortis,
+non timebo mala, quoniam TU mecum es:
+virga tua et baculus tuus ipsa me consolata sunt.
+EOF
+
+test_expect_success 'marker size' '
+	test_must_fail git merge-file -p --marker-size=10 \
 		new8.txt new5.txt new9.txt >actual &&
 	test_cmp expect actual
 '

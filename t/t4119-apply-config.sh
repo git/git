@@ -73,7 +73,7 @@ D=`pwd`
 test_expect_success 'apply --whitespace=strip in subdir' '
 
 	cd "$D" &&
-	git config --unset-all apply.whitespace
+	git config --unset-all apply.whitespace &&
 	rm -f sub/file1 &&
 	cp saved sub/file1 &&
 	git update-index --refresh &&

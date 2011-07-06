@@ -9,9 +9,11 @@ git-merge - Join two or more development histories together
 SYNOPSIS
 --------
 [verse]
-'git merge' [-n] [--stat] [--no-commit] [--squash] [-s <strategy>]...
-	[--[no-]rerere-autoupdate] [-m <msg>] <commit>...
+'git merge' [-n] [--stat] [--no-commit] [--squash]
+	[-s <strategy>] [-X <strategy-option>]
+	[--[no-]rerere-autoupdate] [-m <msg>] [<commit>...]
 'git merge' <msg> HEAD <commit>...
+'git merge' --abort
 
 DESCRIPTION
 -----------
@@ -46,6 +48,14 @@ The second syntax (<msg> `HEAD` <commit>...) is supported for
 historical reasons.  Do not use it from the command line or in
 new scripts.  It is the same as `git merge -m <msg> <commit>...`.
 
+The third syntax ("`git merge --abort`") can only be run after the
+merge has resulted in conflicts. 'git merge --abort' will abort the
+merge process and try to reconstruct the pre-merge state. However,
+if there were uncommitted changes when the merge started (and
+especially if those changes were further modified after the merge
+was started), 'git merge --abort' will in some cases be unable to
+reconstruct the original (pre-merge) changes. Therefore:
+
 *Warning*: Running 'git merge' with uncommitted changes is
 discouraged: while possible, it leaves you in a state that is hard to
 back out of in the case of a conflict.
@@ -57,19 +67,41 @@ include::merge-options.txt[]
 
 -m <msg>::
 	Set the commit message to be used for the merge commit (in
-	case one is created). The 'git fmt-merge-msg' command can be
-	used to give a good default for automated 'git merge'
-	invocations.
+	case one is created).
++
+If `--log` is specified, a shortlog of the commits being merged
+will be appended to the specified message.
++
+The 'git fmt-merge-msg' command can be
+used to give a good default for automated 'git merge'
+invocations.
 
 --rerere-autoupdate::
 --no-rerere-autoupdate::
 	Allow the rerere mechanism to update the index with the
 	result of auto-conflict resolution if possible.
 
+--abort::
+	Abort the current conflict resolution process, and
+	try to reconstruct the pre-merge state.
++
+If there were uncommitted worktree changes present when the merge
+started, 'git merge --abort' will in some cases be unable to
+reconstruct these changes. It is therefore recommended to always
+commit or stash your changes before running 'git merge'.
++
+'git merge --abort' is equivalent to 'git reset --merge' when
+`MERGE_HEAD` is present.
+
 <commit>...::
 	Commits, usually other branch heads, to merge into our branch.
-	You need at least one <commit>.  Specifying more than one
-	<commit> obviously means you are trying an Octopus.
+	Specifying more than one commit will create a merge with
+	more than two parents (affectionately called an Octopus merge).
++
+If no commit is given from the command line, and if `merge.defaultToUpstream`
+configuration variable is set, merge the remote tracking branches
+that the current branch is configured to use as its upstream.
+See also the configuration section of this manual page.
 
 
 PRE-MERGE CHECKS
@@ -136,7 +168,7 @@ happens:
    i.e. matching `HEAD`.
 
 If you tried a merge which resulted in complex conflicts and
-want to start over, you can recover with `git reset --merge`.
+want to start over, you can recover with `git merge --abort`.
 
 HOW CONFLICTS ARE PRESENTED
 ---------------------------
@@ -207,8 +239,8 @@ After seeing a conflict, you can do two things:
 
  * Decide not to merge.  The only clean-ups you need are to reset
    the index file to the `HEAD` commit to reverse 2. and to clean
-   up working tree changes made by 2. and 3.; `git-reset --hard` can
-   be used for this.
+   up working tree changes made by 2. and 3.; `git merge --abort`
+   can be used for this.
 
  * Resolve the conflicts.  Git will mark the conflicts in
    the working tree.  Edit the files into shape and
@@ -284,15 +316,6 @@ linkgit:git-reset[1],
 linkgit:git-diff[1], linkgit:git-ls-files[1],
 linkgit:git-add[1], linkgit:git-rm[1],
 linkgit:git-mergetool[1]
-
-Author
-------
-Written by Junio C Hamano <gitster@pobox.com>
-
-
-Documentation
---------------
-Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---

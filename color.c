@@ -3,6 +3,28 @@
 
 int git_use_color_default = 0;
 
+/*
+ * The list of available column colors.
+ */
+const char *column_colors_ansi[] = {
+	GIT_COLOR_RED,
+	GIT_COLOR_GREEN,
+	GIT_COLOR_YELLOW,
+	GIT_COLOR_BLUE,
+	GIT_COLOR_MAGENTA,
+	GIT_COLOR_CYAN,
+	GIT_COLOR_BOLD_RED,
+	GIT_COLOR_BOLD_GREEN,
+	GIT_COLOR_BOLD_YELLOW,
+	GIT_COLOR_BOLD_BLUE,
+	GIT_COLOR_BOLD_MAGENTA,
+	GIT_COLOR_BOLD_CYAN,
+	GIT_COLOR_RESET,
+};
+
+/* Ignore the RESET at the end when giving the size */
+const int column_colors_ansi_max = ARRAY_SIZE(column_colors_ansi) - 1;
+
 static int parse_color(const char *name, int len)
 {
 	static const char * const color_names[] = {
@@ -47,7 +69,7 @@ void color_parse_mem(const char *value, int value_len, const char *var,
 {
 	const char *ptr = value;
 	int len = value_len;
-	int attr = -1;
+	unsigned int attr = 0;
 	int fg = -2;
 	int bg = -2;
 
@@ -56,7 +78,7 @@ void color_parse_mem(const char *value, int value_len, const char *var,
 		return;
 	}
 
-	/* [fg [bg]] [attr] */
+	/* [fg [bg]] [attr]... */
 	while (len > 0) {
 		const char *word = ptr;
 		int val, wordlen = 0;
@@ -85,19 +107,27 @@ void color_parse_mem(const char *value, int value_len, const char *var,
 			goto bad;
 		}
 		val = parse_attr(word, wordlen);
-		if (val < 0 || attr != -1)
+		if (0 <= val)
+			attr |= (1 << val);
+		else
 			goto bad;
-		attr = val;
 	}
 
-	if (attr >= 0 || fg >= 0 || bg >= 0) {
+	if (attr || fg >= 0 || bg >= 0) {
 		int sep = 0;
+		int i;
 
 		*dst++ = '\033';
 		*dst++ = '[';
-		if (attr >= 0) {
-			*dst++ = '0' + attr;
-			sep++;
+
+		for (i = 0; attr; i++) {
+			unsigned bit = (1 << i);
+			if (!(attr & bit))
+				continue;
+			attr &= ~bit;
+			if (sep++)
+				*dst++ = ';';
+			*dst++ = '0' + i;
 		}
 		if (fg >= 0) {
 			if (sep++)
@@ -138,6 +168,9 @@ int git_config_colorbool(const char *var, const char *value, int stdout_is_tty)
 			goto auto_color;
 	}
 
+	if (!var)
+		return -1;
+
 	/* Missing or explicit false to turn off colorization */
 	if (!git_config_bool(var, value))
 		return 0;
@@ -162,6 +195,15 @@ int git_color_default_config(const char *var, const char *value, void *cb)
 	}
 
 	return git_default_config(var, value, cb);
+}
+
+void color_print_strbuf(FILE *fp, const char *color, const struct strbuf *sb)
+{
+	if (*color)
+		fprintf(fp, "%s", color);
+	fprintf(fp, "%s", sb->buf);
+	if (*color)
+		fprintf(fp, "%s", GIT_COLOR_RESET);
 }
 
 static int color_vfprintf(FILE *fp, const char *color, const char *fmt,
@@ -201,30 +243,7 @@ int color_fprintf_ln(FILE *fp, const char *color, const char *fmt, ...)
 	return r;
 }
 
-/*
- * This function splits the buffer by newlines and colors the lines individually.
- *
- * Returns 0 on success.
- */
-int color_fwrite_lines(FILE *fp, const char *color,
-		size_t count, const char *buf)
+int color_is_nil(const char *c)
 {
-	if (!*color)
-		return fwrite(buf, count, 1, fp) != 1;
-	while (count) {
-		char *p = memchr(buf, '\n', count);
-		if (p != buf && (fputs(color, fp) < 0 ||
-				fwrite(buf, p ? p - buf : count, 1, fp) != 1 ||
-				fputs(GIT_COLOR_RESET, fp) < 0))
-			return -1;
-		if (!p)
-			return 0;
-		if (fputc('\n', fp) < 0)
-			return -1;
-		count -= p + 1 - buf;
-		buf = p + 1;
-	}
-	return 0;
+	return !strcmp(c, "NIL");
 }
-
-

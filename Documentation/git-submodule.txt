@@ -9,7 +9,7 @@ git-submodule - Initialize, update or inspect submodules
 SYNOPSIS
 --------
 [verse]
-'git submodule' [--quiet] add [-b branch]
+'git submodule' [--quiet] add [-b branch] [-f|--force]
 	      [--reference <repository>] [--] <repository> [<path>]
 'git submodule' [--quiet] status [--cached] [--recursive] [--] [<path>...]
 'git submodule' [--quiet] init [--] [<path>...]
@@ -101,9 +101,10 @@ status::
 	currently checked out commit for each submodule, along with the
 	submodule path and the output of 'git describe' for the
 	SHA-1. Each SHA-1 will be prefixed with `-` if the submodule is not
-	initialized and `+` if the currently checked out submodule commit
+	initialized, `+` if the currently checked out submodule commit
 	does not match the SHA-1 found in the index of the containing
-	repository. This command is the default command for 'git submodule'.
+	repository and `U` if the submodule has merge conflicts.
+	This command is the default command for 'git submodule'.
 +
 If '--recursive' is specified, this command will recurse into nested
 submodules, and show their status as well.
@@ -145,10 +146,12 @@ summary::
 
 foreach::
 	Evaluates an arbitrary shell command in each checked out submodule.
-	The command has access to the variables $name, $path and $sha1:
+	The command has access to the variables $name, $path, $sha1 and
+	$toplevel:
 	$name is the name of the relevant submodule section in .gitmodules,
 	$path is the name of the submodule directory relative to the
-	superproject, and $sha1 is the commit as recorded in the superproject.
+	superproject, $sha1 is the commit as recorded in the superproject,
+	and $toplevel is the absolute path to the top-level of the superproject.
 	Any submodules defined in the superproject but not checked out are
 	ignored by this command. Unless given --quiet, foreach prints the name
 	of each submodule before evaluating the command.
@@ -180,6 +183,13 @@ OPTIONS
 -b::
 --branch::
 	Branch of repository to add as submodule.
+
+-f::
+--force::
+	This option is only valid for add and update commands.
+	When running add, allow adding an otherwise ignored submodule path.
+	When running update, throw away local changes in submodules when
+	switching to a different commit.
 
 --cached::
 	This option is only valid for status and summary commands.  These
@@ -249,11 +259,6 @@ of the containing repository is used to find the url of each submodule.
 This file should be formatted in the same way as `$GIT_DIR/config`. The key
 to each submodule url is "submodule.$name.url".  See linkgit:gitmodules[5]
 for details.
-
-
-AUTHOR
-------
-Written by Lars Hjemli <hjemli@gmail.com>
 
 GIT
 ---

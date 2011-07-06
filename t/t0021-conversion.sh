@@ -65,17 +65,21 @@ test_expect_success expanded_in_repo '
 		echo "\$Id:NoSpaceAtFront \$"
 		echo "\$Id:NoSpaceAtEitherEnd\$"
 		echo "\$Id: NoTerminatingSymbol"
+		echo "\$Id: Foreign Commit With Spaces \$"
+		echo "\$Id: NoTerminatingSymbolAtEOF"
 	} > expanded-keywords &&
 
 	{
 		echo "File with expanded keywords"
-		echo "\$Id: 4f21723e7b15065df7de95bd46c8ba6fb1818f4c \$"
-		echo "\$Id: 4f21723e7b15065df7de95bd46c8ba6fb1818f4c \$"
-		echo "\$Id: 4f21723e7b15065df7de95bd46c8ba6fb1818f4c \$"
-		echo "\$Id: 4f21723e7b15065df7de95bd46c8ba6fb1818f4c \$"
-		echo "\$Id: 4f21723e7b15065df7de95bd46c8ba6fb1818f4c \$"
-		echo "\$Id: 4f21723e7b15065df7de95bd46c8ba6fb1818f4c \$"
+		echo "\$Id: fd0478f5f1486f3d5177d4c3f6eb2765e8fc56b9 \$"
+		echo "\$Id: fd0478f5f1486f3d5177d4c3f6eb2765e8fc56b9 \$"
+		echo "\$Id: fd0478f5f1486f3d5177d4c3f6eb2765e8fc56b9 \$"
+		echo "\$Id: fd0478f5f1486f3d5177d4c3f6eb2765e8fc56b9 \$"
+		echo "\$Id: fd0478f5f1486f3d5177d4c3f6eb2765e8fc56b9 \$"
+		echo "\$Id: fd0478f5f1486f3d5177d4c3f6eb2765e8fc56b9 \$"
 		echo "\$Id: NoTerminatingSymbol"
+		echo "\$Id: Foreign Commit With Spaces \$"
+		echo "\$Id: NoTerminatingSymbolAtEOF"
 	} > expected-output &&
 
 	git add expanded-keywords &&
@@ -87,6 +91,49 @@ test_expect_success expanded_in_repo '
 	git checkout -- expanded-keywords &&
 	cat expanded-keywords &&
 	cmp expanded-keywords expected-output
+'
+
+# The use of %f in a filter definition is expanded to the path to
+# the filename being smudged or cleaned.  It must be shell escaped.
+# First, set up some interesting file names and pet them in
+# .gitattributes.
+test_expect_success 'filter shell-escaped filenames' '
+	cat >argc.sh <<-EOF &&
+	#!$SHELL_PATH
+	cat >/dev/null
+	echo argc: \$# "\$@"
+	EOF
+	normal=name-no-magic &&
+	special="name  with '\''sq'\'' and \$x" &&
+	echo some test text >"$normal" &&
+	echo some test text >"$special" &&
+	git add "$normal" "$special" &&
+	git commit -q -m "add files" &&
+	echo "name* filter=argc" >.gitattributes &&
+
+	# delete the files and check them out again, using a smudge filter
+	# that will count the args and echo the command-line back to us
+	git config filter.argc.smudge "sh ./argc.sh %f" &&
+	rm "$normal" "$special" &&
+	git checkout -- "$normal" "$special" &&
+
+	# make sure argc.sh counted the right number of args
+	echo "argc: 1 $normal" >expect &&
+	test_cmp expect "$normal" &&
+	echo "argc: 1 $special" >expect &&
+	test_cmp expect "$special" &&
+
+	# do the same thing, but with more args in the filter expression
+	git config filter.argc.smudge "sh ./argc.sh %f --my-extra-arg" &&
+	rm "$normal" "$special" &&
+	git checkout -- "$normal" "$special" &&
+
+	# make sure argc.sh counted the right number of args
+	echo "argc: 2 $normal --my-extra-arg" >expect &&
+	test_cmp expect "$normal" &&
+	echo "argc: 2 $special --my-extra-arg" >expect &&
+	test_cmp expect "$special" &&
+	:
 '
 
 test_done

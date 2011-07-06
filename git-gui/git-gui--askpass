@@ -5,6 +5,8 @@ exec wish "$0" -- "$@"
 # This is a trivial implementation of an SSH_ASKPASS handler.
 # Git-gui uses this script if none are already configured.
 
+package require Tk
+
 set answer {}
 set yesno  0
 set rc     255
@@ -30,16 +32,20 @@ if {!$yesno} {
 
 frame .b
 button .b.ok     -text OK     -command finish
-button .b.cancel -text Cancel -command {destroy .}
+button .b.cancel -text Cancel -command cancel
 
 pack .b.ok -side left -expand 1
 pack .b.cancel -side right -expand 1
 pack .b -side bottom -fill x -padx 10 -pady 10
 
 bind . <Visibility> {focus -force .e}
-bind . <Key-Return> finish
-bind . <Key-Escape> {destroy .}
-bind . <Destroy>    {exit $rc}
+bind . <Key-Return> [list .b.ok invoke]
+bind . <Key-Escape> [list .b.cancel invoke]
+bind . <Destroy>    {set rc $rc}
+
+proc cancel {} {
+	set ::rc 255
+}
 
 proc finish {} {
 	if {$::yesno} {
@@ -50,10 +56,11 @@ proc finish {} {
 		}
 	}
 
-	set ::rc 0
 	puts $::answer
-	destroy .
+	set ::rc 0
 }
 
 wm title . "OpenSSH"
 tk::PlaceWindow .
+vwait rc
+exit $rc

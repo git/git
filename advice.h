@@ -8,6 +8,7 @@ extern int advice_status_hints;
 extern int advice_commit_before_merge;
 extern int advice_resolve_conflict;
 extern int advice_implicit_identity;
+extern int advice_detached_head;
 
 int git_default_advice_config(const char *var, const char *value);
 

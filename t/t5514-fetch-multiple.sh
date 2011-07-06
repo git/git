@@ -27,7 +27,7 @@ test_expect_success setup '
 	(
 		cd two && git branch another
 	) &&
-	git clone --mirror two three
+	git clone --mirror two three &&
 	git clone one test
 '
 

@@ -36,7 +36,7 @@ OPTIONS
 <object>...::
 	The names of objects to show.
 	For a more complete list of ways to spell object names, see
-	"SPECIFYING REVISIONS" section in linkgit:git-rev-parse[1].
+	"SPECIFYING REVISIONS" section in linkgit:gitrevisions[7].
 
 include::pretty-options.txt[]
 
@@ -54,6 +54,10 @@ git show v1.0.0::
 git show v1.0.0^\{tree\}::
 	Shows the tree pointed to by the tag `v1.0.0`.
 
+git show -s --format=%s v1.0.0^\{commit\}::
+	Shows the subject of the commit pointed to by the
+	tag `v1.0.0`.
+
 git show next~10:Documentation/README::
 	Shows the contents of the file `Documentation/README` as
 	they were current in the 10th last commit of the branch
@@ -67,17 +71,6 @@ Discussion
 ----------
 
 include::i18n.txt[]
-
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org> and
-Junio C Hamano <gitster@pobox.com>.  Significantly enhanced by
-Johannes Schindelin <Johannes.Schindelin@gmx.de>.
-
-
-Documentation
--------------
-Documentation by David Greaves, Petr Baudis and the git-list <git@vger.kernel.org>.
 
 GIT
 ---

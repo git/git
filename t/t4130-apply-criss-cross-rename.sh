@@ -44,7 +44,7 @@ test_expect_success 'criss-cross rename' '
 	git reset --hard &&
 	mv file1 tmp &&
 	mv file2 file1 &&
-	mv file3 file2
+	mv file3 file2 &&
 	mv tmp file3 &&
 	cp file1 file1-swapped &&
 	cp file2 file2-swapped &&

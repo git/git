@@ -6,7 +6,7 @@
 test_description='Test git update-ref and basic ref logging'
 . ./test-lib.sh
 
-Z=0000000000000000000000000000000000000000
+Z=$_z40
 
 test_expect_success setup '
 
@@ -52,9 +52,8 @@ rm -f .git/$m
 
 test_expect_success \
 	"fail to create $n" \
-	"touch .git/$n_dir
-	 git update-ref $n $A >out 2>err"'
-	 test $? != 0'
+	"touch .git/$n_dir &&
+	 test_must_fail git update-ref $n $A >out 2>err"
 rm -f .git/$n_dir out err
 
 test_expect_success \
@@ -185,55 +184,55 @@ gd="Thu, 26 May 2005 18:33:00 -0500"
 ld="Thu, 26 May 2005 18:43:00 -0500"
 test_expect_success \
 	'Query "master@{May 25 2005}" (before history)' \
-	'rm -f o e
+	'rm -f o e &&
 	 git rev-parse --verify "master@{May 25 2005}" >o 2>e &&
 	 test '"$C"' = $(cat o) &&
 	 test "warning: Log for '\'master\'' only goes back to $ed." = "$(cat e)"'
 test_expect_success \
 	"Query master@{2005-05-25} (before history)" \
-	'rm -f o e
+	'rm -f o e &&
 	 git rev-parse --verify master@{2005-05-25} >o 2>e &&
 	 test '"$C"' = $(cat o) &&
 	 echo test "warning: Log for '\'master\'' only goes back to $ed." = "$(cat e)"'
 test_expect_success \
 	'Query "master@{May 26 2005 23:31:59}" (1 second before history)' \
-	'rm -f o e
+	'rm -f o e &&
 	 git rev-parse --verify "master@{May 26 2005 23:31:59}" >o 2>e &&
 	 test '"$C"' = $(cat o) &&
 	 test "warning: Log for '\''master'\'' only goes back to $ed." = "$(cat e)"'
 test_expect_success \
 	'Query "master@{May 26 2005 23:32:00}" (exactly history start)' \
-	'rm -f o e
+	'rm -f o e &&
 	 git rev-parse --verify "master@{May 26 2005 23:32:00}" >o 2>e &&
 	 test '"$C"' = $(cat o) &&
 	 test "" = "$(cat e)"'
 test_expect_success \
 	'Query "master@{May 26 2005 23:32:30}" (first non-creation change)' \
-	'rm -f o e
+	'rm -f o e &&
 	 git rev-parse --verify "master@{May 26 2005 23:32:30}" >o 2>e &&
 	 test '"$A"' = $(cat o) &&
 	 test "" = "$(cat e)"'
 test_expect_success \
 	'Query "master@{2005-05-26 23:33:01}" (middle of history with gap)' \
-	'rm -f o e
+	'rm -f o e &&
 	 git rev-parse --verify "master@{2005-05-26 23:33:01}" >o 2>e &&
 	 test '"$B"' = $(cat o) &&
 	 test "warning: Log .git/logs/'"$m has gap after $gd"'." = "$(cat e)"'
 test_expect_success \
 	'Query "master@{2005-05-26 23:38:00}" (middle of history)' \
-	'rm -f o e
+	'rm -f o e &&
 	 git rev-parse --verify "master@{2005-05-26 23:38:00}" >o 2>e &&
 	 test '"$Z"' = $(cat o) &&
 	 test "" = "$(cat e)"'
 test_expect_success \
 	'Query "master@{2005-05-26 23:43:00}" (exact end of history)' \
-	'rm -f o e
+	'rm -f o e &&
 	 git rev-parse --verify "master@{2005-05-26 23:43:00}" >o 2>e &&
 	 test '"$E"' = $(cat o) &&
 	 test "" = "$(cat e)"'
 test_expect_success \
 	'Query "master@{2005-05-28}" (past end of history)' \
-	'rm -f o e
+	'rm -f o e &&
 	 git rev-parse --verify "master@{2005-05-28}" >o 2>e &&
 	 test '"$D"' = $(cat o) &&
 	 test "warning: Log .git/logs/'"$m unexpectedly ended on $ld"'." = "$(cat e)"'
@@ -247,7 +246,7 @@ test_expect_success \
      git add F &&
 	 GIT_AUTHOR_DATE="2005-05-26 23:30" \
 	 GIT_COMMITTER_DATE="2005-05-26 23:30" git commit -m add -a &&
-	 h_TEST=$(git rev-parse --verify HEAD)
+	 h_TEST=$(git rev-parse --verify HEAD) &&
 	 echo The other day this did not work. >M &&
 	 echo And then Bob told me how to fix it. >>M &&
 	 echo OTHER >F &&

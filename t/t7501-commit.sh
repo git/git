@@ -14,8 +14,12 @@ test_tick
 test_expect_success \
 	"initial status" \
 	"echo 'bongo bongo' >file &&
-	 git add file && \
-	 git status | grep 'Initial commit'"
+	 git add file"
+
+test_expect_success "Constructing initial commit" '
+	git status >actual &&
+	test_i18ngrep "Initial commit" actual
+'
 
 test_expect_success \
 	"fail initial amend" \
@@ -38,10 +42,13 @@ test_expect_success \
 	"echo King of the bongo >file &&
 	test_must_fail git commit -m foo -a file"
 
-test_expect_success PERL \
-	"using paths with --interactive" \
-	"echo bong-o-bong >file &&
-	! (echo 7 | git commit -m foo --interactive file)"
+test_expect_success PERL 'can use paths with --interactive' '
+	echo bong-o-bong >file &&
+	# 2: update, 1:st path, that is all, 7: quit
+	( echo 2; echo 1; echo; echo 7 ) |
+	git commit -m foo --interactive file &&
+	git reset --hard HEAD^
+'
 
 test_expect_success \
 	"using invalid commit with -C" \
@@ -126,6 +133,16 @@ test_expect_success \
 test_expect_success PERL \
 	"interactive add" \
 	"echo 7 | git commit --interactive | grep 'What now'"
+
+test_expect_success PERL \
+	"commit --interactive doesn't change index if editor aborts" \
+	"echo zoo >file &&
+	test_must_fail git diff --exit-code >diff1 &&
+	(echo u ; echo '*' ; echo q) |
+	(EDITOR=: && export EDITOR &&
+	 test_must_fail git commit --interactive) &&
+	git diff >diff2 &&
+	test_cmp diff1 diff2"
 
 test_expect_success \
 	"showing committed revisions" \
@@ -228,6 +245,10 @@ test_expect_success 'amend commit to fix date' '
 	git cat-file -p HEAD > current &&
 	test_cmp expected current
 
+'
+
+test_expect_success 'commit complains about bogus date' '
+	test_must_fail git commit --amend --date=10.11.2010
 '
 
 test_expect_success 'sign off (1)' '
@@ -422,6 +443,18 @@ test_expect_success 'amend using the message from a commit named with tag' '
 	git show --pretty="format:%ad %s" "$old" >expected &&
 	git show --pretty="format:%ad %s" HEAD >actual &&
 	test_cmp expected actual
+
+'
+
+test_expect_success 'amend can copy notes' '
+
+	git config notes.rewrite.amend true &&
+	git config notes.rewriteRef "refs/notes/*" &&
+	test_commit foo &&
+	git notes add -m"a note" &&
+	test_tick &&
+	git commit --amend -m"new foo" &&
+	test "$(git notes show)" = "a note"
 
 '
 

@@ -204,24 +204,23 @@ static void consume_line(void *state_, char *line, unsigned long len)
 static void combine_diff(const unsigned char *parent, unsigned int mode,
 			 mmfile_t *result_file,
 			 struct sline *sline, unsigned int cnt, int n,
-			 int num_parent)
+			 int num_parent, int result_deleted)
 {
 	unsigned int p_lno, lno;
 	unsigned long nmask = (1UL << n);
 	xpparam_t xpp;
 	xdemitconf_t xecfg;
 	mmfile_t parent_file;
-	xdemitcb_t ecb;
 	struct combine_diff_state state;
 	unsigned long sz;
 
-	if (!cnt)
+	if (result_deleted)
 		return; /* result deleted */
 
 	parent_file.ptr = grab_blob(parent, mode, &sz);
 	parent_file.size = sz;
 	memset(&xpp, 0, sizeof(xpp));
-	xpp.flags = XDF_NEED_MINIMAL;
+	xpp.flags = 0;
 	memset(&xecfg, 0, sizeof(xecfg));
 	memset(&state, 0, sizeof(state));
 	state.nmask = nmask;
@@ -231,7 +230,7 @@ static void combine_diff(const unsigned char *parent, unsigned int mode,
 	state.n = n;
 
 	xdi_diff_outf(&parent_file, result_file, consume_line, &state,
-		      &xpp, &xecfg, &ecb);
+		      &xpp, &xecfg);
 	free(parent_file.ptr);
 
 	/* Assign line numbers for this parent.
@@ -517,7 +516,7 @@ static void show_line_to_eol(const char *line, int len, const char *reset)
 }
 
 static void dump_sline(struct sline *sline, unsigned long cnt, int num_parent,
-		       int use_color)
+		       int use_color, int result_deleted)
 {
 	unsigned long mark = (1UL<<num_parent);
 	unsigned long no_pre_delete = (2UL<<num_parent);
@@ -530,7 +529,7 @@ static void dump_sline(struct sline *sline, unsigned long cnt, int num_parent,
 	const char *c_plain = diff_get_color(use_color, DIFF_PLAIN);
 	const char *c_reset = diff_get_color(use_color, DIFF_RESET);
 
-	if (!cnt)
+	if (result_deleted)
 		return; /* result deleted */
 
 	while (1) {
@@ -687,6 +686,7 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 {
 	struct diff_options *opt = &rev->diffopt;
 	unsigned long result_size, cnt, lno;
+	int result_deleted = 0;
 	char *result, *cp;
 	struct sline *sline; /* survived lines */
 	int mode_differs = 0;
@@ -767,6 +767,7 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 		}
 		else {
 		deleted_file:
+			result_deleted = 1;
 			result_size = 0;
 			elem->mode = 0;
 			result = xcalloc(1, 1);
@@ -823,7 +824,7 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 			combine_diff(elem->parent[i].sha1,
 				     elem->parent[i].mode,
 				     &result_file, sline,
-				     cnt, i, num_parent);
+				     cnt, i, num_parent, result_deleted);
 		if (elem->parent[i].mode != elem->mode)
 			mode_differs = 1;
 	}
@@ -889,7 +890,7 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 			dump_quoted_path("+++ ", b_prefix, elem->path,
 					 c_meta, c_reset);
 		dump_sline(sline, cnt, num_parent,
-			   DIFF_OPT_TST(opt, COLOR_DIFF));
+			   DIFF_OPT_TST(opt, COLOR_DIFF), result_deleted);
 	}
 	free(result);
 

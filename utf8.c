@@ -280,22 +280,11 @@ int is_utf8(const char *text)
 	return 1;
 }
 
-static inline void strbuf_write(struct strbuf *sb, const char *buf, int len)
+static void strbuf_addchars(struct strbuf *sb, int c, size_t n)
 {
-	if (sb)
-		strbuf_insert(sb, sb->len, buf, len);
-	else
-		fwrite(buf, len, 1, stdout);
-}
-
-static void print_spaces(struct strbuf *buf, int count)
-{
-	static const char s[] = "                    ";
-	while (count >= sizeof(s)) {
-		strbuf_write(buf, s, sizeof(s) - 1);
-		count -= sizeof(s) - 1;
-	}
-	strbuf_write(buf, s, count);
+	strbuf_grow(sb, n);
+	memset(sb->buf + sb->len, c, n);
+	strbuf_setlen(sb, sb->len + n);
 }
 
 static void strbuf_add_indented_text(struct strbuf *buf, const char *text,
@@ -307,8 +296,8 @@ static void strbuf_add_indented_text(struct strbuf *buf, const char *text,
 		const char *eol = strchrnul(text, '\n');
 		if (*eol == '\n')
 			eol++;
-		print_spaces(buf, indent);
-		strbuf_write(buf, text, eol - text);
+		strbuf_addchars(buf, ' ', indent);
+		strbuf_add(buf, text, eol - text);
 		text = eol;
 		indent = indent2;
 	}
@@ -335,16 +324,21 @@ static size_t display_mode_esc_sequence_len(const char *s)
  * consumed (and no extra indent is necessary for the first line).
  */
 int strbuf_add_wrapped_text(struct strbuf *buf,
-		const char *text, int indent, int indent2, int width)
+		const char *text, int indent1, int indent2, int width)
 {
-	int w = indent, assume_utf8 = is_utf8(text);
-	const char *bol = text, *space = NULL;
+	int indent, w, assume_utf8 = 1;
+	const char *bol, *space, *start = text;
+	size_t orig_len = buf->len;
 
 	if (width <= 0) {
-		strbuf_add_indented_text(buf, text, indent, indent2);
+		strbuf_add_indented_text(buf, text, indent1, indent2);
 		return 1;
 	}
 
+retry:
+	bol = text;
+	w = indent = indent1;
+	space = NULL;
 	if (indent < 0) {
 		w = -indent;
 		space = text;
@@ -366,8 +360,8 @@ int strbuf_add_wrapped_text(struct strbuf *buf,
 				if (space)
 					start = space;
 				else
-					print_spaces(buf, indent);
-				strbuf_write(buf, start, text - start);
+					strbuf_addchars(buf, ' ', indent);
+				strbuf_add(buf, start, text - start);
 				if (!c)
 					return w;
 				space = text;
@@ -376,38 +370,48 @@ int strbuf_add_wrapped_text(struct strbuf *buf,
 				else if (c == '\n') {
 					space++;
 					if (*space == '\n') {
-						strbuf_write(buf, "\n", 1);
+						strbuf_addch(buf, '\n');
 						goto new_line;
 					}
 					else if (!isalnum(*space))
 						goto new_line;
 					else
-						strbuf_write(buf, " ", 1);
+						strbuf_addch(buf, ' ');
 				}
 				w++;
 				text++;
 			}
 			else {
 new_line:
-				strbuf_write(buf, "\n", 1);
+				strbuf_addch(buf, '\n');
 				text = bol = space + isspace(*space);
 				space = NULL;
 				w = indent = indent2;
 			}
 			continue;
 		}
-		if (assume_utf8)
+		if (assume_utf8) {
 			w += utf8_width(&text, NULL);
-		else {
+			if (!text) {
+				assume_utf8 = 0;
+				text = start;
+				strbuf_setlen(buf, orig_len);
+				goto retry;
+			}
+		} else {
 			w++;
 			text++;
 		}
 	}
 }
 
-int print_wrapped_text(const char *text, int indent, int indent2, int width)
+int strbuf_add_wrapped_bytes(struct strbuf *buf, const char *data, int len,
+			     int indent, int indent2, int width)
 {
-	return strbuf_add_wrapped_text(NULL, text, indent, indent2, width);
+	char *tmp = xstrndup(data, len);
+	int r = strbuf_add_wrapped_text(buf, tmp, indent, indent2, width);
+	free(tmp);
+	return r;
 }
 
 int is_encoding_utf8(const char *name)

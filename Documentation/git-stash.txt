@@ -13,7 +13,7 @@ SYNOPSIS
 'git stash' drop [-q|--quiet] [<stash>]
 'git stash' ( pop | apply ) [--index] [-q|--quiet] [<stash>]
 'git stash' branch <branchname> [<stash>]
-'git stash' [save [--patch] [-k|--[no-]keep-index] [-q|--quiet] [<message>]]
+'git stash' [save [-p|--patch] [-k|--[no-]keep-index] [-q|--quiet] [<message>]]
 'git stash' clear
 'git stash' create
 
@@ -33,7 +33,7 @@ A stash is by default listed as "WIP on 'branchname' ...", but
 you can give a more descriptive message on the command line when
 you create one.
 
-The latest stash you created is stored in `$GIT_DIR/refs/stash`; older
+The latest stash you created is stored in `refs/stash`; older
 stashes are found in the reflog of this reference and can be named using
 the usual reflog syntax (e.g. `stash@\{0}` is the most recently
 created stash, `stash@\{1}` is the one before it, `stash@\{2.hours.ago}`
@@ -42,7 +42,7 @@ is also possible).
 OPTIONS
 -------
 
-save [--patch] [--[no-]keep-index] [-q|--quiet] [<message>]::
+save [-p|--patch] [--[no-]keep-index] [-q|--quiet] [<message>]::
 
 	Save your local modifications to a new 'stash', and run `git reset
 	--hard` to revert them.  The <message> part is optional and gives
@@ -54,12 +54,13 @@ save [--patch] [--[no-]keep-index] [-q|--quiet] [<message>]::
 If the `--keep-index` option is used, all changes already added to the
 index are left intact.
 +
-With `--patch`, you can interactively select hunks from in the diff
+With `--patch`, you can interactively select hunks from the diff
 between HEAD and the working tree to be stashed.  The stash entry is
 constructed such that its index state is the same as the index state
 of your repository, and its worktree contains only the changes you
 selected interactively.  The selected changes are then rolled back
-from your worktree.
+from your worktree. See the ``Interactive Mode'' section of
+linkgit:git-add[1] to learn how to operate the `\--patch` mode.
 +
 The `--patch` option implies `--keep-index`.  You can use
 `--no-keep-index` to override this.
@@ -104,18 +105,22 @@ tree's changes, but also the index's ones. However, this can fail, when you
 have conflicts (which are stored in the index, where you therefore can no
 longer apply the changes as they were originally).
 +
-When no `<stash>` is given, `stash@\{0}` is assumed.
+When no `<stash>` is given, `stash@\{0}` is assumed, otherwise `<stash>` must
+be a reference of the form `stash@\{<revision>}`.
 
 apply [--index] [-q|--quiet] [<stash>]::
 
-	Like `pop`, but do not remove the state from the stash list.
+	Like `pop`, but do not remove the state from the stash list. Unlike `pop`,
+	`<stash>` may be any commit that looks like a commit created by
+	`stash save` or `stash create`.
 
 branch <branchname> [<stash>]::
 
 	Creates and checks out a new branch named `<branchname>` starting from
 	the commit at which the `<stash>` was originally created, applies the
-	changes recorded in `<stash>` to the new working tree and index, then
-	drops the `<stash>` if that completes successfully. When no `<stash>`
+	changes recorded in `<stash>` to the new working tree and index.
+	If that succeeds, and `<stash>` is a reference of the form
+	`stash@{<revision>}`, it then drops the `<stash>`. When no `<stash>`
 	is given, applies the latest one.
 +
 This is useful if the branch on which you ran `git stash save` has
@@ -132,7 +137,9 @@ clear::
 drop [-q|--quiet] [<stash>]::
 
 	Remove a single stashed state from the stash list. When no `<stash>`
-	is given, it removes the latest one. i.e. `stash@\{0}`
+	is given, it removes the latest one. i.e. `stash@\{0}`, otherwise
+	`<stash>` must a valid stash log reference of the form
+	`stash@\{<revision>}`.
 
 create::
 
@@ -250,10 +257,6 @@ linkgit:git-checkout[1],
 linkgit:git-commit[1],
 linkgit:git-reflog[1],
 linkgit:git-reset[1]
-
-AUTHOR
-------
-Written by Nanako Shiraishi <nanako3@bluebottle.com>
 
 GIT
 ---

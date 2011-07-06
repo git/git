@@ -44,6 +44,13 @@ test_expect_success 'rewrite diff can show binary patch' '
 	grep "GIT binary patch" diff
 '
 
+test_expect_success 'rewrite diff --stat shows binary changes' '
+	git diff -B --stat --summary >diff &&
+	grep "Bin" diff &&
+	grep "0 insertions.*0 deletions" diff &&
+	grep " rewrite file" diff
+'
+
 {
 	echo "#!$SHELL_PATH"
 	cat <<'EOF'

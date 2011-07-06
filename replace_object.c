@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "sha1-lookup.h"
 #include "refs.h"
+#include "commit.h"
 
 static struct replace_object {
 	unsigned char sha1[2][20];
@@ -84,12 +85,14 @@ static void prepare_replace_object(void)
 
 	for_each_replace_ref(register_replace_ref, NULL);
 	replace_object_prepared = 1;
+	if (!replace_object_nr)
+		read_replace_refs = 0;
 }
 
 /* We allow "recursive" replacement. Only within reason, though */
 #define MAXREPLACEDEPTH 5
 
-const unsigned char *lookup_replace_object(const unsigned char *sha1)
+const unsigned char *do_lookup_replace_object(const unsigned char *sha1)
 {
 	int pos, depth = MAXREPLACEDEPTH;
 	const unsigned char *cur = sha1;

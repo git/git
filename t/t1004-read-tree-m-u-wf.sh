@@ -3,6 +3,7 @@
 test_description='read-tree -m -u checks working tree files'
 
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/lib-read-tree.sh
 
 # two-tree test
 
@@ -29,7 +30,7 @@ test_expect_success 'two-way not clobbering' '
 
 	echo >file2 master creates untracked file2 &&
 	echo >subdir/file2 master creates untracked subdir/file2 &&
-	if err=`git read-tree -m -u master side 2>&1`
+	if err=`read_tree_u_must_succeed -m -u master side 2>&1`
 	then
 		echo should have complained
 		false
@@ -42,7 +43,7 @@ echo file2 >.gitignore
 
 test_expect_success 'two-way with incorrect --exclude-per-directory (1)' '
 
-	if err=`git read-tree -m --exclude-per-directory=.gitignore master side 2>&1`
+	if err=`read_tree_u_must_succeed -m --exclude-per-directory=.gitignore master side 2>&1`
 	then
 		echo should have complained
 		false
@@ -53,7 +54,7 @@ test_expect_success 'two-way with incorrect --exclude-per-directory (1)' '
 
 test_expect_success 'two-way with incorrect --exclude-per-directory (2)' '
 
-	if err=`git read-tree -m -u --exclude-per-directory=foo --exclude-per-directory=.gitignore master side 2>&1`
+	if err=`read_tree_u_must_succeed -m -u --exclude-per-directory=foo --exclude-per-directory=.gitignore master side 2>&1`
 	then
 		echo should have complained
 		false
@@ -64,7 +65,7 @@ test_expect_success 'two-way with incorrect --exclude-per-directory (2)' '
 
 test_expect_success 'two-way clobbering a ignored file' '
 
-	git read-tree -m -u --exclude-per-directory=.gitignore master side
+	read_tree_u_must_succeed -m -u --exclude-per-directory=.gitignore master side
 '
 
 rm -f .gitignore
@@ -84,7 +85,7 @@ test_expect_success 'three-way not complaining on an untracked path in both' '
 	echo >file2 file two is untracked on the master side &&
 	echo >subdir/file2 file two is untracked on the master side &&
 
-	git read-tree -m -u branch-point master side
+	read_tree_u_must_succeed -m -u branch-point master side
 '
 
 test_expect_success 'three-way not clobbering a working tree file' '
@@ -94,7 +95,7 @@ test_expect_success 'three-way not clobbering a working tree file' '
 	git checkout master &&
 	echo >file3 file three created in master, untracked &&
 	echo >subdir/file3 file three created in master, untracked &&
-	if err=`git read-tree -m -u branch-point master side 2>&1`
+	if err=`read_tree_u_must_succeed -m -u branch-point master side 2>&1`
 	then
 		echo should have complained
 		false
@@ -113,7 +114,7 @@ test_expect_success 'three-way not complaining on an untracked file' '
 	echo >file3 file three created in master, untracked &&
 	echo >subdir/file3 file three created in master, untracked &&
 
-	git read-tree -m -u --exclude-per-directory=.gitignore branch-point master side
+	read_tree_u_must_succeed -m -u --exclude-per-directory=.gitignore branch-point master side
 '
 
 test_expect_success '3-way not overwriting local changes (setup)' '
@@ -137,7 +138,7 @@ test_expect_success '3-way not overwriting local changes (our side)' '
 	git reset --hard &&
 
 	echo >>file1 "local changes" &&
-	git read-tree -m -u branch-point side-a side-b &&
+	read_tree_u_must_succeed -m -u branch-point side-a side-b &&
 	grep "new line to be kept" file1 &&
 	grep "local changes" file1
 
@@ -151,7 +152,7 @@ test_expect_success '3-way not overwriting local changes (their side)' '
 	git reset --hard &&
 
 	echo >>file2 "local changes" &&
-	test_must_fail git read-tree -m -u branch-point side-a side-b &&
+	read_tree_u_must_fail -m -u branch-point side-a side-b &&
 	! grep "new line to be kept" file2 &&
 	grep "local changes" file2
 
@@ -173,11 +174,11 @@ test_expect_success SYMLINKS 'funny symlink in work tree' '
 	git add a/b &&
 	git commit -m "we add a/b" &&
 
-	git read-tree -m -u sym-a sym-a sym-b
+	read_tree_u_must_succeed -m -u sym-a sym-a sym-b
 
 '
 
-test_expect_success SYMLINKS 'funny symlink in work tree, un-unlink-able' '
+test_expect_success SYMLINKS,SANITY 'funny symlink in work tree, un-unlink-able' '
 
 	rm -fr a b &&
 	git reset --hard &&
@@ -209,7 +210,7 @@ test_expect_success 'D/F setup' '
 test_expect_success 'D/F' '
 
 	git checkout side-b &&
-	git read-tree -m -u branch-point side-b side-a &&
+	read_tree_u_must_succeed -m -u branch-point side-b side-a &&
 	git ls-files -u >actual &&
 	(
 		a=$(git rev-parse branch-point:subdir/file2)

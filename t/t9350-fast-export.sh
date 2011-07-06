@@ -26,7 +26,7 @@ test_expect_success 'setup' '
 	test_tick &&
 	git tag rein &&
 	git checkout -b wer HEAD^ &&
-	echo lange > file2
+	echo lange > file2 &&
 	test_tick &&
 	git commit -m sitzt file2 &&
 	test_tick &&
@@ -150,20 +150,22 @@ test_expect_success 'setup submodule' '
 
 	git checkout -f master &&
 	mkdir sub &&
-	cd sub &&
-	git init  &&
-	echo test file > file &&
-	git add file &&
-	git commit -m sub_initial &&
-	cd .. &&
+	(
+		cd sub &&
+		git init  &&
+		echo test file > file &&
+		git add file &&
+		git commit -m sub_initial
+	) &&
 	git submodule add "`pwd`/sub" sub &&
 	git commit -m initial &&
 	test_tick &&
-	cd sub &&
-	echo more data >> file &&
-	git add file &&
-	git commit -m sub_second &&
-	cd .. &&
+	(
+		cd sub &&
+		echo more data >> file &&
+		git add file &&
+		git commit -m sub_second
+	) &&
 	git add sub &&
 	git commit -m second
 
@@ -264,19 +266,20 @@ test_expect_success 'cope with tagger-less tags' '
 
 test_expect_success 'setup for limiting exports by PATH' '
 	mkdir limit-by-paths &&
-	cd limit-by-paths &&
-	git init &&
-	echo hi > there &&
-	git add there &&
-	git commit -m "First file" &&
-	echo foo > bar &&
-	git add bar &&
-	git commit -m "Second file" &&
-	git tag -a -m msg mytag &&
-	echo morefoo >> bar &&
-	git add bar &&
-	git commit -m "Change to second file" &&
-	cd ..
+	(
+		cd limit-by-paths &&
+		git init &&
+		echo hi > there &&
+		git add there &&
+		git commit -m "First file" &&
+		echo foo > bar &&
+		git add bar &&
+		git commit -m "Second file" &&
+		git tag -a -m msg mytag &&
+		echo morefoo >> bar &&
+		git add bar &&
+		git commit -m "Change to second file"
+	)
 '
 
 cat > limit-by-paths/expected << EOF
@@ -297,10 +300,11 @@ M 100644 :1 there
 EOF
 
 test_expect_success 'dropping tag of filtered out object' '
+(
 	cd limit-by-paths &&
 	git fast-export --tag-of-filtered-object=drop mytag -- there > output &&
-	test_cmp output expected &&
-	cd ..
+	test_cmp output expected
+)
 '
 
 cat >> limit-by-paths/expected << EOF
@@ -313,10 +317,11 @@ msg
 EOF
 
 test_expect_success 'rewriting tag of filtered out object' '
+(
 	cd limit-by-paths &&
 	git fast-export --tag-of-filtered-object=rewrite mytag -- there > output &&
-	test_cmp output expected &&
-	cd ..
+	test_cmp output expected
+)
 '
 
 cat > limit-by-paths/expected << EOF
@@ -343,12 +348,26 @@ M 100644 :2 there
 EOF
 
 test_expect_failure 'no exact-ref revisions included' '
-	cd limit-by-paths &&
-	git fast-export master~2..master~1 > output &&
-	test_cmp output expected &&
-	cd ..
+	(
+		cd limit-by-paths &&
+		git fast-export master~2..master~1 > output &&
+		test_cmp output expected
+	)
 '
 
+test_expect_success 'path limiting with import-marks does not lose unmodified files'        '
+	git checkout -b simple marks~2 &&
+	git fast-export --export-marks=marks simple -- file > /dev/null &&
+	echo more content >> file &&
+	test_tick &&
+	git commit -mnext file &&
+	git fast-export --import-marks=marks simple -- file file0 | grep file0
+'
+
+test_expect_success 'full-tree re-shows unmodified files'        '
+	git checkout -f simple &&
+	test $(git fast-export --full-tree simple | grep -c file0) -eq 3
+'
 
 test_expect_success 'set-up a few more tags for tag export tests' '
 	git checkout -f master &&
@@ -370,5 +389,29 @@ test_expect_success 'tree_tag'        '
 test_expect_success 'tree_tag-obj'    'git fast-export tree_tag-obj'
 test_expect_success 'tag-obj_tag'     'git fast-export tag-obj_tag'
 test_expect_success 'tag-obj_tag-obj' 'git fast-export tag-obj_tag-obj'
+
+test_expect_success SYMLINKS 'directory becomes symlink'        '
+	git init dirtosymlink &&
+	git init result &&
+	(
+		cd dirtosymlink &&
+		mkdir foo &&
+		mkdir bar &&
+		echo hello > foo/world &&
+		echo hello > bar/world &&
+		git add foo/world bar/world &&
+		git commit -q -mone &&
+		git rm -r foo &&
+		ln -s bar foo &&
+		git add foo &&
+		git commit -q -mtwo
+	) &&
+	(
+		cd dirtosymlink &&
+		git fast-export master -- foo |
+		(cd ../result && git fast-import --quiet)
+	) &&
+	(cd result && git show master:foo)
+'
 
 test_done

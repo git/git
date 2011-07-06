@@ -1,0 +1,27 @@
+Git v1.7.0.4 Release Notes
+==========================
+
+Fixes since v1.7.0.3
+--------------------
+
+ * Optimized ntohl/htonl on big-endian machines were broken.
+
+ * Color values given to "color.<cmd>.<slot>" configuration can now have
+   more than one attributes (e.g. "bold ul").
+
+ * "git add -u nonexistent-path" did not complain.
+
+ * "git apply --whitespace=fix" didn't work well when an early patch in
+   a patch series adds trailing blank lines and a later one depended on
+   such a block of blank lines at the end.
+
+ * "git fast-export" didn't check error status and stop when marks file
+   cannot be opened.
+
+ * "git format-patch --ignore-if-in-upstream" gave unwarranted errors
+   when the range was empty, instead of silently finishing.
+
+ * "git remote prune" did not detect remote tracking refs that became
+   dangling correctly.
+
+And other minor fixes and documentation updates.

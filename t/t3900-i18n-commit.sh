@@ -133,4 +133,33 @@ do
 	'
 done
 
+test_commit_autosquash_flags () {
+	H=$1
+	flag=$2
+	test_expect_success "commit --$flag with $H encoding" '
+		git config i18n.commitencoding $H &&
+		git checkout -b $H-$flag C0 &&
+		echo $H >>F &&
+		git commit -a -F "$TEST_DIRECTORY"/t3900/$H.txt &&
+		test_tick &&
+		echo intermediate stuff >>G &&
+		git add G &&
+		git commit -a -m "intermediate commit" &&
+		test_tick &&
+		echo $H $flag >>F &&
+		git commit -a --$flag HEAD~1 $3 &&
+		E=$(git cat-file commit '$H-$flag' |
+			sed -ne "s/^encoding //p") &&
+		test "z$E" = "z$H" &&
+		git config --unset-all i18n.commitencoding &&
+		git rebase --autosquash -i HEAD^^^ &&
+		git log --oneline >actual &&
+		test 3 = $(wc -l <actual)
+	'
+}
+
+test_commit_autosquash_flags eucJP fixup
+
+test_commit_autosquash_flags ISO-2022-JP squash '-m "squash message"'
+
 test_done

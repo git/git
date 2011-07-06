@@ -1,148 +1,17 @@
-Commit Formatting
-~~~~~~~~~~~~~~~~~
-
-ifdef::git-rev-list[]
-Using these options, linkgit:git-rev-list[1] will act similar to the
-more specialized family of commit log tools: linkgit:git-log[1],
-linkgit:git-show[1], and linkgit:git-whatchanged[1]
-endif::git-rev-list[]
-
-include::pretty-options.txt[]
-
---relative-date::
-
-	Synonym for `--date=relative`.
-
---date={relative,local,default,iso,rfc,short,raw}::
-
-	Only takes effect for dates shown in human-readable format, such
-	as when using "--pretty". `log.date` config variable sets a default
-	value for log command's --date option.
-+
-`--date=relative` shows dates relative to the current time,
-e.g. "2 hours ago".
-+
-`--date=local` shows timestamps in user's local timezone.
-+
-`--date=iso` (or `--date=iso8601`) shows timestamps in ISO 8601 format.
-+
-`--date=rfc` (or `--date=rfc2822`) shows timestamps in RFC 2822
-format, often found in E-mail messages.
-+
-`--date=short` shows only date but not time, in `YYYY-MM-DD` format.
-+
-`--date=raw` shows the date in the internal raw git format `%s %z` format.
-+
-`--date=default` shows timestamps in the original timezone
-(either committer's or author's).
-
-ifdef::git-rev-list[]
---header::
-
-	Print the contents of the commit in raw-format; each record is
-	separated with a NUL character.
-endif::git-rev-list[]
-
---parents::
-
-	Print the parents of the commit.  Also enables parent
-	rewriting, see 'History Simplification' below.
-
---children::
-
-	Print the children of the commit.  Also enables parent
-	rewriting, see 'History Simplification' below.
-
-ifdef::git-rev-list[]
---timestamp::
-	Print the raw commit timestamp.
-endif::git-rev-list[]
-
---left-right::
-
-	Mark which side of a symmetric diff a commit is reachable from.
-	Commits from the left side are prefixed with `<` and those from
-	the right with `>`.  If combined with `--boundary`, those
-	commits are prefixed with `-`.
-+
-For example, if you have this topology:
-+
------------------------------------------------------------------------
-             y---b---b  branch B
-            / \ /
-           /   .
-          /   / \
-         o---x---a---a  branch A
------------------------------------------------------------------------
-+
-you would get an output like this:
-+
------------------------------------------------------------------------
-	$ git rev-list --left-right --boundary --pretty=oneline A...B
-
-	>bbbbbbb... 3rd on b
-	>bbbbbbb... 2nd on b
-	<aaaaaaa... 3rd on a
-	<aaaaaaa... 2nd on a
-	-yyyyyyy... 1st on b
-	-xxxxxxx... 1st on a
------------------------------------------------------------------------
-
---graph::
-
-	Draw a text-based graphical representation of the commit history
-	on the left hand side of the output.  This may cause extra lines
-	to be printed in between commits, in order for the graph history
-	to be drawn properly.
-+
-This implies the '--topo-order' option by default, but the
-'--date-order' option may also be specified.
-
-ifndef::git-rev-list[]
-Diff Formatting
-~~~~~~~~~~~~~~~
-
-Below are listed options that control the formatting of diff output.
-Some of them are specific to linkgit:git-rev-list[1], however other diff
-options may be given. See linkgit:git-diff-files[1] for more options.
-
--c::
-
-	This flag changes the way a merge commit is displayed.  It shows
-	the differences from each of the parents to the merge result
-	simultaneously instead of showing pairwise diff between a parent
-	and the result one at a time. Furthermore, it lists only files
-	which were modified from all parents.
-
---cc::
-
-	This flag implies the '-c' options and further compresses the
-	patch output by omitting uninteresting hunks whose contents in
-	the parents have only two variants and the merge result picks
-	one of them without modification.
-
--r::
-
-	Show recursive diffs.
-
--t::
-
-	Show the tree objects in the diff output. This implies '-r'.
-endif::git-rev-list[]
-
 Commit Limiting
 ~~~~~~~~~~~~~~~
 
 Besides specifying a range of commits that should be listed using the
 special notations explained in the description, additional commit
-limiting may be applied.
+limiting may be applied. Note that they are applied before commit
+ordering and formatting options, such as '--reverse'.
 
 --
 
 -n 'number'::
 --max-count=<number>::
 
-	Limit the number of commits output.
+	Limit the number of commits to output.
 
 --skip=<number>::
 
@@ -203,11 +72,26 @@ endif::git-rev-list[]
 
 --merges::
 
-	Print only merge commits.
+	Print only merge commits. This is exactly the same as `--min-parents=2`.
 
 --no-merges::
 
-	Do not print commits with more than one parent.
+	Do not print commits with more than one parent. This is
+	exactly the same as `--max-parents=1`.
+
+--min-parents=<number>::
+--max-parents=<number>::
+--no-min-parents::
+--no-max-parents::
+
+	Show only commits which have at least (or at most) that many
+	commits. In particular, `--max-parents=1` is the same as `--no-merges`,
+	`--min-parents=2` is the same as `--merges`.  `--max-parents=0`
+	gives all root commits and `--min-parents=3` all octopus merges.
++
+`--no-min-parents` and `--no-max-parents` reset these limits (to no limit)
+again.  Equivalent forms are `--min-parents=0` (any commit has 0 or more
+parents) and `--max-parents=-1` (negative numbers denote no upper limit).
 
 --first-parent::
 	Follow only the first parent commit upon seeing a merge
@@ -225,43 +109,47 @@ endif::git-rev-list[]
 
 --all::
 
-	Pretend as if all the refs in `$GIT_DIR/refs/` are listed on the
+	Pretend as if all the refs in `refs/` are listed on the
 	command line as '<commit>'.
 
---branches[=pattern]::
+--branches[=<pattern>]::
 
-	Pretend as if all the refs in `$GIT_DIR/refs/heads` are listed
-	on the command line as '<commit>'. If `pattern` is given, limit
+	Pretend as if all the refs in `refs/heads` are listed
+	on the command line as '<commit>'. If '<pattern>' is given, limit
 	branches to ones matching given shell glob. If pattern lacks '?',
 	'*', or '[', '/*' at the end is implied.
 
---tags[=pattern]::
+--tags[=<pattern>]::
 
-	Pretend as if all the refs in `$GIT_DIR/refs/tags` are listed
-	on the command line as '<commit>'. If `pattern` is given, limit
+	Pretend as if all the refs in `refs/tags` are listed
+	on the command line as '<commit>'. If '<pattern>' is given, limit
 	tags to ones matching given shell glob. If pattern lacks '?', '*',
 	or '[', '/*' at the end is implied.
 
---remotes[=pattern]::
+--remotes[=<pattern>]::
 
-	Pretend as if all the refs in `$GIT_DIR/refs/remotes` are listed
-	on the command line as '<commit>'. If `pattern`is given, limit
-	remote tracking branches to ones matching given shell glob.
+	Pretend as if all the refs in `refs/remotes` are listed
+	on the command line as '<commit>'. If '<pattern>' is given, limit
+	remote-tracking branches to ones matching given shell glob.
 	If pattern lacks '?', '*', or '[', '/*' at the end is implied.
 
---glob=glob-pattern::
-	Pretend as if all the refs matching shell glob `glob-pattern`
+--glob=<glob-pattern>::
+	Pretend as if all the refs matching shell glob '<glob-pattern>'
 	are listed on the command line as '<commit>'. Leading 'refs/',
 	is automatically prepended if missing. If pattern lacks '?', '*',
 	or '[', '/*' at the end is implied.
 
+--ignore-missing::
+
+	Upon seeing an invalid object name in the input, pretend as if
+	the bad input was not given.
 
 ifndef::git-rev-list[]
 --bisect::
 
-	Pretend as if the bad bisection ref `$GIT_DIR/refs/bisect/bad`
+	Pretend as if the bad bisection ref `refs/bisect/bad`
 	was listed and as if it was followed by `--not` and the good
-	bisection refs `$GIT_DIR/refs/bisect/good-*` on the command
+	bisection refs `refs/bisect/good-*` on the command
 	line.
 endif::git-rev-list[]
 
@@ -282,6 +170,11 @@ ifdef::git-rev-list[]
 	to /dev/null as the output does not have to be formatted.
 endif::git-rev-list[]
 
+--cherry-mark::
+
+	Like `--cherry-pick` (see below) but mark equivalent commits
+	with `=` rather than omitting them, and inequivalent ones with `+`.
+
 --cherry-pick::
 
 	Omit any commit that introduces the same change as
@@ -290,11 +183,32 @@ endif::git-rev-list[]
 +
 For example, if you have two branches, `A` and `B`, a usual way
 to list all commits on only one side of them is with
-`--left-right`, like the example above in the description of
-that option.  It however shows the commits that were cherry-picked
+`--left-right` (see the example below in the description of
+the `--left-right` option).  It however shows the commits that were cherry-picked
 from the other branch (for example, "3rd on b" may be cherry-picked
 from branch A).  With this option, such pairs of commits are
 excluded from the output.
+
+--left-only::
+--right-only::
+
+	List only commits on the respective side of a symmetric range,
+	i.e. only those which would be marked `<` resp. `>` by
+	`--left-right`.
++
+For example, `--cherry-pick --right-only A...B` omits those
+commits from `B` which are in `A` or are patch-equivalent to a commit in
+`A`. In other words, this lists the `{plus}` commits from `git cherry A B`.
+More precisely, `--cherry-pick --right-only --no-merges` gives the exact
+list.
+
+--cherry::
+
+	A synonym for `--right-only --cherry-mark --no-merges`; useful to
+	limit the output to the commits on our side and mark those that
+	have been applied to the other side of a forked history with
+	`git log --cherry upstream...mybranch`, similar to
+	`git cherry upstream mybranch`.
 
 -g::
 --walk-reflogs::
@@ -303,7 +217,7 @@ excluded from the output.
 	reflog entries from the most recent one to older ones.
 	When this option is used you cannot specify commits to
 	exclude (that is, '{caret}commit', 'commit1..commit2',
-	nor 'commit1...commit2' notations cannot be used).
+	nor 'commit1\...commit2' notations cannot be used).
 +
 With '\--pretty' format other than oneline (for obvious reasons),
 this causes the output to have two extra lines of information
@@ -375,6 +289,14 @@ Default mode::
 	merges from the resulting history, as there are no selected
 	commits contributing to this merge.
 
+--ancestry-path::
+
+	When given a range of commits to display (e.g. 'commit1..commit2'
+	or 'commit2 {caret}commit1'), only display commits that exist
+	directly on the ancestry chain between the 'commit1' and
+	'commit2', i.e. commits that are both descendants of 'commit1',
+	and ancestors of 'commit2'.
+
 A more detailed explanation follows.
 
 Suppose you specified `foo` as the <paths>.  We shall call commits
@@ -431,7 +353,7 @@ This results in:
 +
 -----------------------------------------------------------------------
 	  .-A---N---O
-	 /         /
+	 /     /   /
 	I---------D
 -----------------------------------------------------------------------
 +
@@ -502,8 +424,6 @@ Note that without '\--full-history', this still simplifies merges: if
 one of the parents is TREESAME, we follow only that one, so the other
 sides of the merge are never walked.
 
-Finally, there is a fourth simplification mode available:
-
 --simplify-merges::
 
 	First, build a history graph in the same way that
@@ -545,6 +465,46 @@ Note the major differences in `N` and `P` over '\--full-history':
   removed completely, because it had one parent and is TREESAME.
 --
 
+Finally, there is a fifth simplification mode available:
+
+--ancestry-path::
+
+	Limit the displayed commits to those directly on the ancestry
+	chain between the "from" and "to" commits in the given commit
+	range. I.e. only display commits that are ancestor of the "to"
+	commit, and descendants of the "from" commit.
++
+As an example use case, consider the following commit history:
++
+-----------------------------------------------------------------------
+	    D---E-------F
+	   /     \       \
+	  B---C---G---H---I---J
+	 /                     \
+	A-------K---------------L--M
+-----------------------------------------------------------------------
++
+A regular 'D..M' computes the set of commits that are ancestors of `M`,
+but excludes the ones that are ancestors of `D`. This is useful to see
+what happened to the history leading to `M` since `D`, in the sense
+that "what does `M` have that did not exist in `D`". The result in this
+example would be all the commits, except `A` and `B` (and `D` itself,
+of course).
++
+When we want to find out what commits in `M` are contaminated with the
+bug introduced by `D` and need fixing, however, we might want to view
+only the subset of 'D..M' that are actually descendants of `D`, i.e.
+excluding `C` and `K`. This is exactly what the '\--ancestry-path'
+option does. Applied to the 'D..M' range, it results in:
++
+-----------------------------------------------------------------------
+		E-------F
+		 \       \
+		  G---H---I---J
+			       \
+				L--M
+-----------------------------------------------------------------------
+
 The '\--simplify-by-decoration' option allows you to view only the
 big picture of the topology of the history, by omitting commits
 that are not referenced by tags.  Commits are marked as !TREESAME
@@ -561,10 +521,10 @@ Bisection Helpers
 
 Limit output to the one commit object which is roughly halfway between
 included and excluded commits. Note that the bad bisection ref
-`$GIT_DIR/refs/bisect/bad` is added to the included commits (if it
-exists) and the good bisection refs `$GIT_DIR/refs/bisect/good-*` are
+`refs/bisect/bad` is added to the included commits (if it
+exists) and the good bisection refs `refs/bisect/good-*` are
 added to the excluded commits (if they exist). Thus, supposing there
-are no refs in `$GIT_DIR/refs/bisect/`, if
+are no refs in `refs/bisect/`, if
 
 -----------------------------------------------------------------------
 	$ git rev-list --bisect foo ^bar ^baz
@@ -585,7 +545,7 @@ one.
 --bisect-vars::
 
 This calculates the same as `--bisect`, except that refs in
-`$GIT_DIR/refs/bisect/` are not used, and except that this outputs
+`refs/bisect/` are not used, and except that this outputs
 text ready to be eval'ed by the shell. These lines will assign the
 name of the midpoint revision to the variable `bisect_rev`, and the
 expected number of commits to be tested after `bisect_rev` is tested
@@ -599,7 +559,7 @@ number of commits to be tested if `bisect_rev` turns out to be bad to
 
 This outputs all the commit objects between the included and excluded
 commits, ordered by their distance to the included and excluded
-commits. Refs in `$GIT_DIR/refs/bisect/` are not used. The farthest
+commits. Refs in `refs/bisect/` are not used. The farthest
 from them is displayed first. (This is the only one displayed by
 `--bisect`.)
 +
@@ -666,3 +626,161 @@ These options are mostly targeted for packing of git repositories.
 --do-walk::
 
 	Overrides a previous --no-walk.
+
+Commit Formatting
+~~~~~~~~~~~~~~~~~
+
+ifdef::git-rev-list[]
+Using these options, linkgit:git-rev-list[1] will act similar to the
+more specialized family of commit log tools: linkgit:git-log[1],
+linkgit:git-show[1], and linkgit:git-whatchanged[1]
+endif::git-rev-list[]
+
+include::pretty-options.txt[]
+
+--relative-date::
+
+	Synonym for `--date=relative`.
+
+--date=(relative|local|default|iso|rfc|short|raw)::
+
+	Only takes effect for dates shown in human-readable format, such
+	as when using "--pretty". `log.date` config variable sets a default
+	value for log command's --date option.
++
+`--date=relative` shows dates relative to the current time,
+e.g. "2 hours ago".
++
+`--date=local` shows timestamps in user's local timezone.
++
+`--date=iso` (or `--date=iso8601`) shows timestamps in ISO 8601 format.
++
+`--date=rfc` (or `--date=rfc2822`) shows timestamps in RFC 2822
+format, often found in E-mail messages.
++
+`--date=short` shows only date but not time, in `YYYY-MM-DD` format.
++
+`--date=raw` shows the date in the internal raw git format `%s %z` format.
++
+`--date=default` shows timestamps in the original timezone
+(either committer's or author's).
+
+ifdef::git-rev-list[]
+--header::
+
+	Print the contents of the commit in raw-format; each record is
+	separated with a NUL character.
+endif::git-rev-list[]
+
+--parents::
+
+	Print also the parents of the commit (in the form "commit parent...").
+	Also enables parent rewriting, see 'History Simplification' below.
+
+--children::
+
+	Print also the children of the commit (in the form "commit child...").
+	Also enables parent rewriting, see 'History Simplification' below.
+
+ifdef::git-rev-list[]
+--timestamp::
+	Print the raw commit timestamp.
+endif::git-rev-list[]
+
+--left-right::
+
+	Mark which side of a symmetric diff a commit is reachable from.
+	Commits from the left side are prefixed with `<` and those from
+	the right with `>`.  If combined with `--boundary`, those
+	commits are prefixed with `-`.
++
+For example, if you have this topology:
++
+-----------------------------------------------------------------------
+	     y---b---b  branch B
+	    / \ /
+	   /   .
+	  /   / \
+	 o---x---a---a  branch A
+-----------------------------------------------------------------------
++
+you would get an output like this:
++
+-----------------------------------------------------------------------
+	$ git rev-list --left-right --boundary --pretty=oneline A...B
+
+	>bbbbbbb... 3rd on b
+	>bbbbbbb... 2nd on b
+	<aaaaaaa... 3rd on a
+	<aaaaaaa... 2nd on a
+	-yyyyyyy... 1st on b
+	-xxxxxxx... 1st on a
+-----------------------------------------------------------------------
+
+--graph::
+
+	Draw a text-based graphical representation of the commit history
+	on the left hand side of the output.  This may cause extra lines
+	to be printed in between commits, in order for the graph history
+	to be drawn properly.
++
+This enables parent rewriting, see 'History Simplification' below.
++
+This implies the '--topo-order' option by default, but the
+'--date-order' option may also be specified.
+
+ifdef::git-rev-list[]
+--count::
+	Print a number stating how many commits would have been
+	listed, and suppress all other output.  When used together
+	with '--left-right', instead print the counts for left and
+	right commits, separated by a tab. When used together with
+	'--cherry-mark', omit patch equivalent commits from these
+	counts and print the count for equivalent commits separated
+	by a tab.
+endif::git-rev-list[]
+
+
+ifndef::git-rev-list[]
+Diff Formatting
+~~~~~~~~~~~~~~~
+
+Below are listed options that control the formatting of diff output.
+Some of them are specific to linkgit:git-rev-list[1], however other diff
+options may be given. See linkgit:git-diff-files[1] for more options.
+
+-c::
+
+	With this option, diff output for a merge commit
+	shows the differences from each of the parents to the merge result
+	simultaneously instead of showing pairwise diff between a parent
+	and the result one at a time. Furthermore, it lists only files
+	which were modified from all parents.
+
+--cc::
+
+	This flag implies the '-c' options and further compresses the
+	patch output by omitting uninteresting hunks whose contents in
+	the parents have only two variants and the merge result picks
+	one of them without modification.
+
+-m::
+
+	This flag makes the merge commits show the full diff like
+	regular commits; for each merge parent, a separate log entry
+	and diff is generated. An exception is that only diff against
+	the first parent is shown when '--first-parent' option is given;
+	in that case, the output represents the changes the merge
+	brought _into_ the then-current branch.
+
+-r::
+
+	Show recursive diffs.
+
+-t::
+
+	Show the tree objects in the diff output. This implies '-r'.
+
+-s::
+	Suppress diff output.
+endif::git-rev-list[]

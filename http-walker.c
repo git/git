@@ -3,8 +3,7 @@
 #include "walker.h"
 #include "http.h"
 
-struct alt_base
-{
+struct alt_base {
 	char *base;
 	int got_indices;
 	struct packed_git *packs;
@@ -15,11 +14,10 @@ enum object_request_state {
 	WAITING,
 	ABORTED,
 	ACTIVE,
-	COMPLETE,
+	COMPLETE
 };
 
-struct object_request
-{
+struct object_request {
 	struct walker *walker;
 	unsigned char sha1[20];
 	struct alt_base *repo;
@@ -187,7 +185,7 @@ static void process_alternates_response(void *callback_data)
 	struct active_request_slot *slot = alt_req->slot;
 	struct alt_base *tail = cdata->alt;
 	const char *base = alt_req->base;
-	static const char null_byte = '\0';
+	const char null_byte = '\0';
 	char *data;
 	int i = 0;
 
@@ -220,7 +218,7 @@ static void process_alternates_response(void *callback_data)
 		}
 	}
 
-	fwrite_buffer(&null_byte, 1, 1, alt_req->buffer);
+	fwrite_buffer((char *)&null_byte, 1, 1, alt_req->buffer);
 	alt_req->buffer->len--;
 	data = alt_req->buffer->buf;
 
@@ -510,7 +508,7 @@ static int fetch_object(struct walker *walker, struct alt_base *repo, unsigned c
 		ret = error("File %s has bad hash", hex);
 	} else if (req->rename < 0) {
 		ret = error("unable to write sha1 filename %s",
-			    req->filename);
+			    sha1_file_name(req->sha1));
 	}
 
 	release_http_object_request(req);
@@ -543,16 +541,29 @@ static int fetch_ref(struct walker *walker, struct ref *ref)
 
 static void cleanup(struct walker *walker)
 {
-	http_cleanup();
+	struct walker_data *data = walker->data;
+	struct alt_base *alt, *alt_next;
+
+	if (data) {
+		alt = data->alt;
+		while (alt) {
+			alt_next = alt->next;
+
+			free(alt->base);
+			free(alt);
+
+			alt = alt_next;
+		}
+		free(data);
+		walker->data = NULL;
+	}
 }
 
-struct walker *get_http_walker(const char *url, struct remote *remote)
+struct walker *get_http_walker(const char *url)
 {
 	char *s;
 	struct walker_data *data = xmalloc(sizeof(struct walker_data));
 	struct walker *walker = xmalloc(sizeof(struct walker));
-
-	http_init(remote);
 
 	data->alt = xmalloc(sizeof(*data->alt));
 	data->alt->base = xmalloc(strlen(url) + 1);

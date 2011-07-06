@@ -110,7 +110,7 @@ An 'object' is identified by its 160-bit SHA1 hash, aka 'object name',
 and a reference to an object is always the 40-byte hex
 representation of that SHA1 name. The files in the `refs`
 subdirectory are expected to contain these hex references
-(usually with a final `\'\n\'` at the end), and you should thus
+(usually with a final `\n` at the end), and you should thus
 expect to see a number of 41-byte files containing these
 references in these `refs` subdirectories when you actually start
 populating your tree.
@@ -310,7 +310,7 @@ and this will just output the name of the resulting tree, in this case
 ----------------
 
 which is another incomprehensible object name. Again, if you want to,
-you can use `git cat-file -t 8988d\...` to see that this time the object
+you can use `git cat-file -t 8988d...` to see that this time the object
 is not a "blob" object, but a "tree" object (you can also use
 `git cat-file` to actually output the raw object contents, but you'll see
 mainly a binary mess, so that's less interesting).
@@ -436,8 +436,8 @@ $ git update-index hello
 (note how we didn't need the `\--add` flag this time, since git knew
 about the file already).
 
-Note what happens to the different 'git diff-\*' versions here. After
-we've updated `hello` in the index, `git diff-files -p` now shows no
+Note what happens to the different 'git diff-{asterisk}' versions here.
+After we've updated `hello` in the index, `git diff-files -p` now shows no
 differences, but `git diff-index -p HEAD` still *does* show that the
 current state is different from the state we committed. In fact, now
 'git diff-index' shows the same difference whether we use the `--cached`
@@ -494,7 +494,7 @@ and it will show what the last commit (in `HEAD`) actually changed.
 [NOTE]
 ============
 Here is an ASCII art by Jon Loeliger that illustrates how
-various diff-\* commands compare things.
+various 'diff-{asterisk}' commands compare things.
 
                       diff-tree
                        +----+
@@ -958,11 +958,11 @@ $ git show-branch --topo-order --more=1 master mybranch
 The first two lines indicate that it is showing the two branches
 and the first line of the commit log message from their
 top-of-the-tree commits, you are currently on `master` branch
-(notice the asterisk `\*` character), and the first column for
+(notice the asterisk `{asterisk}` character), and the first column for
 the later output lines is used to show commits contained in the
 `master` branch, and the second column for the `mybranch`
 branch. Three commits are shown along with their log messages.
-All of them have non blank characters in the first column (`*`
+All of them have non blank characters in the first column (`{asterisk}`
 shows an ordinary commit on the current branch, `-` is a merge commit), which
 means they are now part of the `master` branch. Only the "Some
 work" commit has the plus `+` character in the second column,
@@ -971,7 +971,7 @@ commits from the master branch.  The string inside brackets
 before the commit log message is a short name you can use to
 name the commit.  In the above example, 'master' and 'mybranch'
 are branch heads.  'master^' is the first parent of 'master'
-branch head.  Please see linkgit:git-rev-parse[1] if you want to
+branch head.  Please see linkgit:gitrevisions[7] if you want to
 see more complex cases.
 
 [NOTE]
@@ -1092,7 +1092,7 @@ Downloader from http and https URL
 first obtains the topmost commit object name from the remote site
 by looking at the specified refname under `repo.git/refs/` directory,
 and then tries to obtain the
-commit object by downloading from `repo.git/objects/xx/xxx\...`
+commit object by downloading from `repo.git/objects/xx/xxx...`
 using the object name of that commit object.  Then it reads the
 commit object to find out its parent commits and the associate
 tree object; it repeats this process until it gets all the
@@ -1420,7 +1420,7 @@ packed, and stores the packed file in `.git/objects/pack`
 directory.
 
 [NOTE]
-You will see two files, `pack-\*.pack` and `pack-\*.idx`,
+You will see two files, `pack-{asterisk}.pack` and `pack-{asterisk}.idx`,
 in `.git/objects/pack` directory. They are closely related to
 each other, and if you ever copy them by hand to a different
 repository for whatever reason, you should make sure you copy

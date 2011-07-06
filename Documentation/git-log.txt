@@ -23,21 +23,23 @@ each commit introduces are shown.
 OPTIONS
 -------
 
-:git-log: 1
-include::diff-options.txt[]
-
 -<n>::
 	Limits the number of commits to show.
+	Note that this is a commit limiting option, see below.
 
 <since>..<until>::
 	Show only commits between the named two commits.  When
 	either <since> or <until> is omitted, it defaults to
 	`HEAD`, i.e. the tip of the current branch.
 	For a more complete list of ways to spell <since>
-	and <until>, see "SPECIFYING REVISIONS" section in
-	linkgit:git-rev-parse[1].
+	and <until>, see linkgit:gitrevisions[7].
 
---decorate[=short|full]::
+--follow::
+	Continue listing the history of a file beyond renames
+	(works only for a single file).
+
+--no-decorate::
+--decorate[=short|full|no]::
 	Print out the ref names of any commits that are shown. If 'short' is
 	specified, the ref name prefixes 'refs/heads/', 'refs/tags/' and
 	'refs/remotes/' will not be printed. If 'full' is specified, the
@@ -54,9 +56,9 @@ include::diff-options.txt[]
 	paths.  With this, the full diff is shown for commits that touch
 	the specified paths; this means that "<path>..." limits only
 	commits, and doesn't limit diff for those commits.
-
---follow::
-	Continue listing the history of a file beyond renames.
++
+Note that this affects all diff-based output types, e.g. those
+produced by --stat etc.
 
 --log-size::
 	Before the log message print out its size in bytes. Intended
@@ -71,10 +73,15 @@ include::diff-options.txt[]
 	to be prefixed with "\-- " to separate them from options or
 	refnames.
 
-
 include::rev-list-options.txt[]
 
 include::pretty-formats.txt[]
+
+Common diff options
+-------------------
+
+:git-log: 1
+include::diff-options.txt[]
 
 include::diff-generate-patch.txt[]
 
@@ -110,7 +117,7 @@ git log --follow builtin-rev-list.c::
 git log --branches --not --remotes=origin::
 
 	Shows all commits that are in any of local branches but not in
-	any of remote tracking branches for 'origin' (what you have that
+	any of remote-tracking branches for 'origin' (what you have that
 	origin doesn't).
 
 git log master --not --remotes=*/master::
@@ -118,19 +125,62 @@ git log master --not --remotes=*/master::
 	Shows all commits that are in local master but not in any remote
 	repository master branches.
 
+git log -p -m --first-parent::
+
+	Shows the history including change diffs, but only from the
+	"main branch" perspective, skipping commits that come from merged
+	branches, and showing full diffs of changes introduced by the merges.
+	This makes sense only when following a strict policy of merging all
+	topic branches when staying on a single integration branch.
+
+
 Discussion
 ----------
 
 include::i18n.txt[]
 
+Configuration
+-------------
 
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org>
+See linkgit:git-config[1] for core variables and linkgit:git-diff[1]
+for settings related to diff generation.
 
-Documentation
---------------
-Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
+format.pretty::
+	Default for the `--format` option.  (See "PRETTY FORMATS" above.)
+	Defaults to "medium".
+
+i18n.logOutputEncoding::
+	Encoding to use when displaying logs.  (See "Discussion", above.)
+	Defaults to the value of `i18n.commitEncoding` if set, UTF-8
+	otherwise.
+
+log.date::
+	Default format for human-readable dates.  (Compare the
+	`--date` option.)  Defaults to "default", which means to write
+	dates like `Sat May 8 19:35:34 2010 -0500`.
+
+log.showroot::
+	If `false`, 'git log' and related commands will not treat the
+	initial commit as a big creation event.  Any root commits in
+	`git log -p` output would be shown without a diff attached.
+	The default is `true`.
+
+mailmap.file::
+	See linkgit:git-shortlog[1].
+
+notes.displayRef::
+	Which refs, in addition to the default set by `core.notesRef`
+	or 'GIT_NOTES_REF', to read notes from when showing commit
+	messages with the 'log' family of commands.  See
+	linkgit:git-notes[1].
++
+May be an unabbreviated ref name or a glob and may be specified
+multiple times.  A warning will be issued for refs that do not exist,
+but a glob that does not match any refs is silently ignored.
++
+This setting can be disabled by the `--no-notes` option,
+overridden by the 'GIT_NOTES_DISPLAY_REF' environment variable,
+and overridden by the `--notes=<ref>` option.
 
 GIT
 ---

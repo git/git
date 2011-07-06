@@ -8,7 +8,7 @@ git-merge-index - Run a merge for files needing merging
 
 SYNOPSIS
 --------
-'git merge-index' [-o] [-q] <merge-program> (-a | [--] <file>\*)
+'git merge-index' [-o] [-q] <merge-program> (-a | [--] <file>*)
 
 DESCRIPTION
 -----------
@@ -72,15 +72,6 @@ where the latter example shows how 'git merge-index' will stop trying to
 merge once anything has returned an error (i.e., `cat` returned an error
 for the AA file, because it didn't exist in the original, and thus
 'git merge-index' didn't even try to merge the MM thing).
-
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org>
-One-shot merge by Petr Baudis <pasky@ucw.cz>
-
-Documentation
---------------
-Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---

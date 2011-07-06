@@ -146,7 +146,14 @@ struct delta_index * create_delta_index(const void *buf, unsigned long bufsize)
 	/* Determine index hash size.  Note that indexing skips the
 	   first byte to allow for optimizing the Rabin's polynomial
 	   initialization in create_delta(). */
-	entries = (bufsize - 1)  / RABIN_WINDOW;
+	entries = (bufsize - 1) / RABIN_WINDOW;
+	if (bufsize >= 0xffffffffUL) {
+		/*
+		 * Current delta format can't encode offsets into
+		 * reference buffer with more than 32 bits.
+		 */
+		entries = 0xfffffffeU / RABIN_WINDOW;
+	}
 	hsize = entries / 4;
 	for (i = 4; (1u << i) < hsize && i < 31; i++);
 	hsize = 1 << i;

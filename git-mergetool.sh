@@ -21,6 +21,10 @@ is_symlink () {
     test "$1" = 120000
 }
 
+is_submodule () {
+    test "$1" = 160000
+}
+
 local_present () {
     test -n "$local_mode"
 }
@@ -35,7 +39,8 @@ base_present () {
 
 cleanup_temp_files () {
     if test "$1" = --save-backup ; then
-	mv -- "$BACKUP" "$MERGED.orig"
+	rm -rf -- "$MERGED.orig"
+	test -e "$BACKUP" && mv -- "$BACKUP" "$MERGED.orig"
 	rm -f -- "$LOCAL" "$REMOTE" "$BASE"
     else
 	rm -f -- "$LOCAL" "$REMOTE" "$BASE" "$BACKUP"
@@ -52,11 +57,13 @@ describe_file () {
 	echo "deleted"
     elif is_symlink "$mode" ; then
 	echo "a symbolic link -> '$(cat "$file")'"
+    elif is_submodule "$mode" ; then
+	echo "submodule commit $file"
     else
 	if base_present; then
-	    echo "modified"
+	    echo "modified file"
 	else
-	    echo "created"
+	    echo "created file"
 	fi
     fi
 }
@@ -112,6 +119,67 @@ resolve_deleted_merge () {
 	done
 }
 
+resolve_submodule_merge () {
+    while true; do
+	printf "Use (l)ocal or (r)emote, or (a)bort? "
+	read ans
+	case "$ans" in
+	    [lL]*)
+		if ! local_present; then
+		    if test -n "$(git ls-tree HEAD -- "$MERGED")"; then
+			# Local isn't present, but it's a subdirectory
+			git ls-tree --full-name -r HEAD -- "$MERGED" | git update-index --index-info || exit $?
+		    else
+			test -e "$MERGED" && mv -- "$MERGED" "$BACKUP"
+			git update-index --force-remove "$MERGED"
+			cleanup_temp_files --save-backup
+		    fi
+		elif is_submodule "$local_mode"; then
+		    stage_submodule "$MERGED" "$local_sha1"
+		else
+		    git checkout-index -f --stage=2 -- "$MERGED"
+		    git add -- "$MERGED"
+		fi
+		return 0
+		;;
+	    [rR]*)
+		if ! remote_present; then
+		    if test -n "$(git ls-tree MERGE_HEAD -- "$MERGED")"; then
+			# Remote isn't present, but it's a subdirectory
+			git ls-tree --full-name -r MERGE_HEAD -- "$MERGED" | git update-index --index-info || exit $?
+		    else
+			test -e "$MERGED" && mv -- "$MERGED" "$BACKUP"
+			git update-index --force-remove "$MERGED"
+		    fi
+		elif is_submodule "$remote_mode"; then
+		    ! is_submodule "$local_mode" && test -e "$MERGED" && mv -- "$MERGED" "$BACKUP"
+		    stage_submodule "$MERGED" "$remote_sha1"
+		else
+		    test -e "$MERGED" && mv -- "$MERGED" "$BACKUP"
+		    git checkout-index -f --stage=3 -- "$MERGED"
+		    git add -- "$MERGED"
+		fi
+		cleanup_temp_files --save-backup
+		return 0
+		;;
+	    [aA]*)
+		return 1
+		;;
+	    esac
+	done
+}
+
+stage_submodule () {
+    path="$1"
+    submodule_sha1="$2"
+    mkdir -p "$path" || die "fatal: unable to create directory for module at $path"
+    # Find $path relative to work tree
+    work_tree_root=$(cd_to_toplevel && pwd)
+    work_rel_path=$(cd "$path" && GIT_WORK_TREE="${work_tree_root}" git rev-parse --show-prefix)
+    test -n "$work_rel_path" || die "fatal: unable to get path of module $path relative to work tree"
+    git update-index --add --replace --cacheinfo 160000 "$submodule_sha1" "${work_rel_path%/}" || die
+}
+
 checkout_staged_file () {
     tmpfile=$(expr "$(git checkout-index --temp --stage="$1" "$2")" : '\([^	]*\)	')
 
@@ -139,12 +207,22 @@ merge_file () {
     REMOTE="./$MERGED.REMOTE.$ext"
     BASE="./$MERGED.BASE.$ext"
 
-    mv -- "$MERGED" "$BACKUP"
-    cp -- "$BACKUP" "$MERGED"
-
     base_mode=$(git ls-files -u -- "$MERGED" | awk '{if ($3==1) print $1;}')
     local_mode=$(git ls-files -u -- "$MERGED" | awk '{if ($3==2) print $1;}')
     remote_mode=$(git ls-files -u -- "$MERGED" | awk '{if ($3==3) print $1;}')
+
+    if is_submodule "$local_mode" || is_submodule "$remote_mode"; then
+	echo "Submodule merge conflict for '$MERGED':"
+	local_sha1=$(git ls-files -u -- "$MERGED" | awk '{if ($3==2) print $2;}')
+	remote_sha1=$(git ls-files -u -- "$MERGED" | awk '{if ($3==3) print $2;}')
+	describe_file "$local_mode" "local" "$local_sha1"
+	describe_file "$remote_mode" "remote" "$remote_sha1"
+	resolve_submodule_merge
+	return
+    fi
+
+    mv -- "$MERGED" "$BACKUP"
+    cp -- "$BACKUP" "$MERGED"
 
     base_present   && checkout_staged_file 1 "$MERGED" "$BASE"
     local_present  && checkout_staged_file 2 "$MERGED" "$LOCAL"
@@ -264,24 +342,46 @@ merge_keep_temporaries="$(git config --bool mergetool.keepTemporaries || echo fa
 
 last_status=0
 rollup_status=0
+rerere=false
+
+files_to_merge() {
+    if test "$rerere" = true
+    then
+	git rerere remaining
+    else
+	git ls-files -u | sed -e 's/^[^	]*	//' | sort -u
+    fi
+}
+
 
 if test $# -eq 0 ; then
-    files=$(git ls-files -u | sed -e 's/^[^	]*	//' | sort -u)
+    cd_to_toplevel
+
+    if test -e "$GIT_DIR/MERGE_RR"
+    then
+	rerere=true
+    fi
+
+    files=$(files_to_merge)
     if test -z "$files" ; then
 	echo "No files need merging"
 	exit 0
     fi
-    echo Merging the files: "$files"
-    git ls-files -u |
-    sed -e 's/^[^	]*	//' |
-    sort -u |
+
+    # Save original stdin
+    exec 3<&0
+
+    printf "Merging:\n"
+    printf "$files\n"
+
+    files_to_merge |
     while IFS= read i
     do
 	if test $last_status -ne 0; then
-	    prompt_after_failed_merge < /dev/tty || exit 1
+	    prompt_after_failed_merge <&3 || exit 1
 	fi
 	printf "\n"
-	merge_file "$i" < /dev/tty > /dev/tty
+	merge_file "$i" <&3
 	last_status=$?
 	if test $last_status -ne 0; then
 	    rollup_status=1

@@ -7,7 +7,7 @@ test_description='our own option parser'
 
 . ./test-lib.sh
 
-cat > expect.err << EOF
+cat > expect << EOF
 usage: test-parse-options <options>
 
     -b, --boolean         get a boolean
@@ -19,7 +19,7 @@ usage: test-parse-options <options>
     --set23               set integer to 23
     -t <time>             get timestamp of <time>
     -L, --length <str>    get length of <str>
-    -F, --file <FILE>     set file to <FILE>
+    -F, --file <file>     set file to <file>
 
 String options
     -s, --string <string>
@@ -46,9 +46,11 @@ EOF
 
 test_expect_success 'test help' '
 	test_must_fail test-parse-options -h > output 2> output.err &&
-	test ! -s output &&
-	test_cmp expect.err output.err
+	test ! -s output.err &&
+	test_cmp expect output
 '
+
+mv expect expect.err
 
 cat > expect << EOF
 boolean: 2

@@ -48,11 +48,11 @@ static void wait_for_pager_signal(int signo)
 	raise(signo);
 }
 
-const char *git_pager(void)
+const char *git_pager(int stdout_is_tty)
 {
 	const char *pager;
 
-	if (!isatty(1))
+	if (!stdout_is_tty)
 		return NULL;
 
 	pager = getenv("GIT_PAGER");
@@ -73,7 +73,7 @@ const char *git_pager(void)
 
 void setup_pager(void)
 {
-	const char *pager = git_pager();
+	const char *pager = git_pager(isatty(1));
 
 	if (!pager)
 		return;

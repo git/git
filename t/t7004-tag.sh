@@ -583,7 +583,7 @@ test_expect_success \
 # subsequent tests require gpg; check if it is available
 gpg --version >/dev/null 2>/dev/null
 if [ $? -eq 127 ]; then
-	say "gpg not found - skipping tag signing and verification tests"
+	say "# gpg not found - skipping tag signing and verification tests"
 else
 	# As said here: http://www.gnupg.org/documentation/faqs.html#q6.19
 	# the gpg version 1.0.6 didn't parse trust packets correctly, so for
@@ -1030,6 +1030,72 @@ test_expect_success GPG \
 	test_cmp expect actual
 '
 
+# usage with rfc1991 signatures
+echo "rfc1991" > gpghome/gpg.conf
+get_tag_header rfc1991-signed-tag $commit commit $time >expect
+echo "RFC1991 signed tag" >>expect
+echo '-----BEGIN PGP MESSAGE-----' >>expect
+test_expect_success GPG \
+	'creating a signed tag with rfc1991' '
+	git tag -s -m "RFC1991 signed tag" rfc1991-signed-tag $commit &&
+	get_tag_msg rfc1991-signed-tag >actual &&
+	test_cmp expect actual
+'
+
+cat >fakeeditor <<'EOF'
+#!/bin/sh
+cp "$1" actual
+EOF
+chmod +x fakeeditor
+
+test_expect_success GPG \
+	'reediting a signed tag body omits signature' '
+	echo "RFC1991 signed tag" >expect &&
+	GIT_EDITOR=./fakeeditor git tag -f -s rfc1991-signed-tag $commit &&
+	test_cmp expect actual
+'
+
+test_expect_success GPG \
+	'verifying rfc1991 signature' '
+	git tag -v rfc1991-signed-tag
+'
+
+test_expect_success GPG \
+	'list tag with rfc1991 signature' '
+	echo "rfc1991-signed-tag RFC1991 signed tag" >expect &&
+	git tag -l -n1 rfc1991-signed-tag >actual &&
+	test_cmp expect actual &&
+	git tag -l -n2 rfc1991-signed-tag >actual &&
+	test_cmp expect actual &&
+	git tag -l -n999 rfc1991-signed-tag >actual &&
+	test_cmp expect actual
+'
+
+rm -f gpghome/gpg.conf
+
+test_expect_success GPG \
+	'verifying rfc1991 signature without --rfc1991' '
+	git tag -v rfc1991-signed-tag
+'
+
+test_expect_success GPG \
+	'list tag with rfc1991 signature without --rfc1991' '
+	echo "rfc1991-signed-tag RFC1991 signed tag" >expect &&
+	git tag -l -n1 rfc1991-signed-tag >actual &&
+	test_cmp expect actual &&
+	git tag -l -n2 rfc1991-signed-tag >actual &&
+	test_cmp expect actual &&
+	git tag -l -n999 rfc1991-signed-tag >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success GPG \
+	'reediting a signed tag body omits signature' '
+	echo "RFC1991 signed tag" >expect &&
+	GIT_EDITOR=./fakeeditor git tag -f -s rfc1991-signed-tag $commit &&
+	test_cmp expect actual
+'
+
 # try to sign with bad user.signingkey
 git config user.signingkey BobTheMouse
 test_expect_success GPG \
@@ -1051,13 +1117,22 @@ test_expect_success \
 
 test_expect_success \
 	'message in editor has initial comment' '
-	GIT_EDITOR=cat git tag -a initial-comment > actual
+	! (GIT_EDITOR=cat git tag -a initial-comment > actual)
+'
+
+test_expect_success 'message in editor has initial comment: first line' '
 	# check the first line --- should be empty
-	first=$(sed -e 1q <actual) &&
-	test -z "$first" &&
+	echo >first.expect &&
+	sed -e 1q <actual >first.actual &&
+	test_i18ncmp first.expect first.actual
+'
+
+test_expect_success \
+	'message in editor has initial comment: remainder' '
 	# remove commented lines from the remainder -- should be empty
-	rest=$(sed -e 1d -e '/^#/d' <actual) &&
-	test -z "$rest"
+	>rest.expect
+	sed -e 1d -e '/^#/d' <actual >rest.actual &&
+	test_cmp rest.expect rest.actual
 '
 
 get_tag_header reuse $commit commit $time >expect
@@ -1097,7 +1172,7 @@ hash1=$(git rev-parse HEAD)
 test_expect_success 'creating second commit and tag' '
 	echo foo-2.0 >foo &&
 	git add foo &&
-	git commit -m second
+	git commit -m second &&
 	git tag v2.0
 '
 
@@ -1122,18 +1197,18 @@ v2.0
 EOF
 
 test_expect_success 'checking that first commit is in all tags (hash)' "
-	git tag -l --contains $hash1 v* >actual
+	git tag -l --contains $hash1 v* >actual &&
 	test_cmp expected actual
 "
 
 # other ways of specifying the commit
 test_expect_success 'checking that first commit is in all tags (tag)' "
-	git tag -l --contains v1.0 v* >actual
+	git tag -l --contains v1.0 v* >actual &&
 	test_cmp expected actual
 "
 
 test_expect_success 'checking that first commit is in all tags (relative)' "
-	git tag -l --contains HEAD~2 v* >actual
+	git tag -l --contains HEAD~2 v* >actual &&
 	test_cmp expected actual
 "
 
@@ -1142,7 +1217,7 @@ v2.0
 EOF
 
 test_expect_success 'checking that second commit only has one tag' "
-	git tag -l --contains $hash2 v* >actual
+	git tag -l --contains $hash2 v* >actual &&
 	test_cmp expected actual
 "
 
@@ -1151,7 +1226,7 @@ cat > expected <<EOF
 EOF
 
 test_expect_success 'checking that third commit has no tags' "
-	git tag -l --contains $hash3 v* >actual
+	git tag -l --contains $hash3 v* >actual &&
 	test_cmp expected actual
 "
 
@@ -1161,7 +1236,7 @@ test_expect_success 'creating simple branch' '
 	git branch stable v2.0 &&
         git checkout stable &&
 	echo foo-3.0 > foo &&
-	git commit foo -m fourth
+	git commit foo -m fourth &&
 	git tag v3.0
 '
 
@@ -1172,7 +1247,7 @@ v3.0
 EOF
 
 test_expect_success 'checking that branch head only has one tag' "
-	git tag -l --contains $hash4 v* >actual
+	git tag -l --contains $hash4 v* >actual &&
 	test_cmp expected actual
 "
 
@@ -1186,7 +1261,7 @@ v4.0
 EOF
 
 test_expect_success 'checking that original branch head has one tag now' "
-	git tag -l --contains $hash3 v* >actual
+	git tag -l --contains $hash3 v* >actual &&
 	test_cmp expected actual
 "
 
@@ -1201,18 +1276,18 @@ v4.0
 EOF
 
 test_expect_success 'checking that initial commit is in all tags' "
-	git tag -l --contains $hash1 v* >actual
+	git tag -l --contains $hash1 v* >actual &&
 	test_cmp expected actual
 "
 
 # mixing modes and options:
 
 test_expect_success 'mixing incompatibles modes and options is forbidden' '
-	test_must_fail git tag -a
-	test_must_fail git tag -l -v
-	test_must_fail git tag -n 100
-	test_must_fail git tag -l -m msg
-	test_must_fail git tag -l -F some file
+	test_must_fail git tag -a &&
+	test_must_fail git tag -l -v &&
+	test_must_fail git tag -n 100 &&
+	test_must_fail git tag -l -m msg &&
+	test_must_fail git tag -l -F some file &&
 	test_must_fail git tag -v -s
 '
 

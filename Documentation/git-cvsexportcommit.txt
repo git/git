@@ -112,14 +112,6 @@ $ cd ~/project_cvs_checkout
 $ git cherry cvshead myhead | sed -n 's/^+ //p' | xargs -l1 git cvsexportcommit -c -p -v
 ------------
 
-Author
-------
-Written by Martin Langhoff <martin@catalyst.net.nz> and others.
-
-Documentation
---------------
-Documentation by Martin Langhoff <martin@catalyst.net.nz> and others.
-
 GIT
 ---
 Part of the linkgit:git[1] suite

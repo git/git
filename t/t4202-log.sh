@@ -100,13 +100,11 @@ test_expect_success 'oneline' '
 
 test_expect_success 'diff-filter=A' '
 
-	actual=$(git log --pretty="format:%s" --diff-filter=A HEAD) &&
-	expect=$(echo fifth ; echo fourth ; echo third ; echo initial) &&
-	test "$actual" = "$expect" || {
-		echo Oops
-		echo "Actual: $actual"
-		false
-	}
+	git log --pretty="format:%s" --diff-filter=A HEAD > actual &&
+	git log --pretty="format:%s" --diff-filter A HEAD > actual-separate &&
+	printf "fifth\nfourth\nthird\ninitial" > expect &&
+	test_cmp expect actual &&
+	test_cmp expect actual-separate
 
 '
 
@@ -193,7 +191,7 @@ test_expect_success 'git show <commits> leaves list of commits as given' '
 test_expect_success 'setup case sensitivity tests' '
 	echo case >one &&
 	test_tick &&
-	git add one
+	git add one &&
 	git commit -a -m Second
 '
 
@@ -201,6 +199,13 @@ test_expect_success 'log --grep' '
 	echo second >expect &&
 	git log -1 --pretty="tformat:%s" --grep=sec >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success 'log --grep option parsing' '
+	echo second >expect &&
+	git log -1 --pretty="tformat:%s" --grep sec >actual &&
+	test_cmp expect actual &&
+	test_must_fail git log -1 --pretty="tformat:%s" --grep
 '
 
 test_expect_success 'log -i --grep' '
@@ -336,7 +341,7 @@ test_expect_success 'set up more tangled history' '
 	test_commit octopus-b &&
 	git checkout master &&
 	test_commit seventh &&
-	git merge octopus-a octopus-b
+	git merge octopus-a octopus-b &&
 	git merge reach
 '
 
@@ -387,5 +392,128 @@ test_expect_success 'log --graph with merge' '
 	test_cmp expect actual
 '
 
-test_done
+test_expect_success 'log.decorate configuration' '
+	test_might_fail git config --unset-all log.decorate &&
 
+	git log --oneline >expect.none &&
+	git log --oneline --decorate >expect.short &&
+	git log --oneline --decorate=full >expect.full &&
+
+	echo "[log] decorate" >>.git/config &&
+	git log --oneline >actual &&
+	test_cmp expect.short actual &&
+
+	git config --unset-all log.decorate &&
+	git config log.decorate true &&
+	git log --oneline >actual &&
+	test_cmp expect.short actual &&
+	git log --oneline --decorate=full >actual &&
+	test_cmp expect.full actual &&
+	git log --oneline --decorate=no >actual &&
+	test_cmp expect.none actual &&
+
+	git config --unset-all log.decorate &&
+	git config log.decorate no &&
+	git log --oneline >actual &&
+	test_cmp expect.none actual &&
+	git log --oneline --decorate >actual &&
+	test_cmp expect.short actual &&
+	git log --oneline --decorate=full >actual &&
+	test_cmp expect.full actual &&
+
+	git config --unset-all log.decorate &&
+	git config log.decorate 1 &&
+	git log --oneline >actual &&
+	test_cmp expect.short actual &&
+	git log --oneline --decorate=full >actual &&
+	test_cmp expect.full actual &&
+	git log --oneline --decorate=no >actual &&
+	test_cmp expect.none actual &&
+
+	git config --unset-all log.decorate &&
+	git config log.decorate short &&
+	git log --oneline >actual &&
+	test_cmp expect.short actual &&
+	git log --oneline --no-decorate >actual &&
+	test_cmp expect.none actual &&
+	git log --oneline --decorate=full >actual &&
+	test_cmp expect.full actual &&
+
+	git config --unset-all log.decorate &&
+	git config log.decorate full &&
+	git log --oneline >actual &&
+	test_cmp expect.full actual &&
+	git log --oneline --no-decorate >actual &&
+	test_cmp expect.none actual &&
+	git log --oneline --decorate >actual &&
+	test_cmp expect.short actual
+
+	git config --unset-all log.decorate &&
+	git log --pretty=raw >expect.raw &&
+	git config log.decorate full &&
+	git log --pretty=raw >actual &&
+	test_cmp expect.raw actual
+
+'
+
+test_expect_success 'reflog is expected format' '
+	test_might_fail git config --remove-section log &&
+	git log -g --abbrev-commit --pretty=oneline >expect &&
+	git reflog >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'whatchanged is expected format' '
+	git log --no-merges --raw >expect &&
+	git whatchanged >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'log.abbrevCommit configuration' '
+	test_when_finished "git config --unset log.abbrevCommit" &&
+
+	test_might_fail git config --unset log.abbrevCommit &&
+
+	git log --abbrev-commit >expect.log.abbrev &&
+	git log --no-abbrev-commit >expect.log.full &&
+	git log --pretty=raw >expect.log.raw &&
+	git reflog --abbrev-commit >expect.reflog.abbrev &&
+	git reflog --no-abbrev-commit >expect.reflog.full &&
+	git whatchanged --abbrev-commit >expect.whatchanged.abbrev &&
+	git whatchanged --no-abbrev-commit >expect.whatchanged.full &&
+
+	git config log.abbrevCommit true &&
+
+	git log >actual &&
+	test_cmp expect.log.abbrev actual &&
+	git log --no-abbrev-commit >actual &&
+	test_cmp expect.log.full actual &&
+
+	git log --pretty=raw >actual &&
+	test_cmp expect.log.raw actual &&
+
+	git reflog >actual &&
+	test_cmp expect.reflog.abbrev actual &&
+	git reflog --no-abbrev-commit >actual &&
+	test_cmp expect.reflog.full actual &&
+
+	git whatchanged >actual &&
+	test_cmp expect.whatchanged.abbrev actual &&
+	git whatchanged --no-abbrev-commit >actual &&
+	test_cmp expect.whatchanged.full actual
+'
+
+test_expect_success 'show added path under "--follow -M"' '
+	# This tests for a regression introduced in v1.7.2-rc0~103^2~2
+	test_create_repo regression &&
+	(
+		cd regression &&
+		test_commit needs-another-commit &&
+		test_commit foo.bar &&
+		git log -M --follow -p foo.bar.t &&
+		git log -M --follow --stat foo.bar.t &&
+		git log -M --follow --name-only foo.bar.t
+	)
+'
+
+test_done

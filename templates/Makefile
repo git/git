@@ -11,6 +11,16 @@ prefix ?= $(HOME)
 template_instdir ?= $(prefix)/share/git-core/templates
 # DESTDIR=
 
+ifndef SHELL_PATH
+	SHELL_PATH = /bin/sh
+endif
+ifndef PERL_PATH
+	PERL_PATH = perl
+endif
+
+SHELL_PATH_SQ = $(subst ','\'',$(SHELL_PATH))
+PERL_PATH_SQ = $(subst ','\'',$(PERL_PATH))
+
 # Shell quote (do not use $(call) to accommodate ancient setups);
 DESTDIR_SQ = $(subst ','\'',$(DESTDIR))
 template_instdir_SQ = $(subst ','\'',$(template_instdir))
@@ -33,8 +43,11 @@ boilerplates.made : $(bpsrc)
 		case "$$boilerplate" in \
 		*--) continue;; \
 		esac && \
-		cp $$boilerplate blt/$$dst && \
-		if test -x "blt/$$dst"; then rx=rx; else rx=r; fi && \
+		sed -e '1s|#!.*/sh|#!$(SHELL_PATH_SQ)|' \
+		    -e 's|@SHELL_PATH@|$(SHELL_PATH_SQ)|' \
+		    -e 's|@PERL_PATH@|$(PERL_PATH_SQ)|g' $$boilerplate > \
+			blt/$$dst && \
+		if test -x "$$boilerplate"; then rx=rx; else rx=r; fi && \
 		chmod a+$$rx "blt/$$dst" || exit; \
 	done && \
 	date >$@

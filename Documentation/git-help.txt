@@ -55,9 +55,9 @@ other display programs (see below).
 +
 The web browser can be specified using the configuration variable
 'help.browser', or 'web.browser' if the former is not set. If none of
-these config variables is set, the 'git web--browse' helper script
+these config variables is set, the 'git web{litdd}browse' helper script
 (called by 'git help') will pick a suitable default. See
-linkgit:git-web--browse[1] for more information about this.
+linkgit:git-web{litdd}browse[1] for more information about this.
 
 CONFIGURATION VARIABLES
 -----------------------
@@ -80,7 +80,7 @@ help.browser, web.browser and browser.<tool>.path
 The 'help.browser', 'web.browser' and 'browser.<tool>.path' will also
 be checked if the 'web' format is chosen (either by command line
 option or configuration variable). See '-w|--web' in the OPTIONS
-section above and linkgit:git-web--browse[1].
+section above and linkgit:git-web{litdd}browse[1].
 
 man.viewer
 ~~~~~~~~~~
@@ -170,17 +170,6 @@ $ git config --global web.browser firefox
 
 as they are probably more user specific than repository specific.
 See linkgit:git-config[1] for more information about this.
-
-Author
-------
-Written by Junio C Hamano <gitster@pobox.com> and the git-list
-<git@vger.kernel.org>.
-
-Documentation
--------------
-Initial documentation was part of the linkgit:git[1] man page.
-Christian Couder <chriscool@tuxfamily.org> extracted and rewrote it a
-little. Maintenance is done by the git-list <git@vger.kernel.org>.
 
 GIT
 ---

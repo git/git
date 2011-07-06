@@ -11,7 +11,7 @@ This test runs various sanity checks on http-push.'
 
 if git http-push > /dev/null 2>&1 || [ $? -eq 128 ]
 then
-	say "skipping test, USE_CURL_MULTI is not defined"
+	skip_all="skipping test, USE_CURL_MULTI is not defined"
 	test_done
 fi
 
@@ -136,6 +136,9 @@ test_expect_success 'PUT and MOVE sends object to URLs with SHA-1 hash suffix' '
 	grep -e "\"OP .*/objects/$x2/${x38}_$x40 HTTP/[.0-9]*\" 20[0-9] "
 
 '
+
+test_http_push_nonff "$HTTPD_DOCUMENT_ROOT_PATH"/test_repo.git \
+	"$ROOT_PATH"/test_repo_clone master
 
 stop_httpd
 

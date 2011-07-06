@@ -113,11 +113,8 @@ static int read_pack_info_file(const char *infofile)
 				goto out_stale;
 			break;
 		case 'D': /* we used to emit D but that was misguided. */
-			goto out_stale;
-			break;
 		case 'T': /* we used to emit T but nobody uses it. */
 			goto out_stale;
-			break;
 		default:
 			error("unrecognized: %s", line);
 			break;

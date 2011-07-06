@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='fetch follows remote tracking branches correctly'
+test_description='fetch follows remote-tracking branches correctly'
 
 . ./test-lib.sh
 

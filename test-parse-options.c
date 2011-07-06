@@ -46,7 +46,7 @@ int main(int argc, const char **argv)
 		OPT_DATE('t', NULL, &timestamp, "get timestamp of <time>"),
 		OPT_CALLBACK('L', "length", &integer, "str",
 			"get length of <str>", length_callback),
-		OPT_FILENAME('F', "file", &file, "set file to <FILE>"),
+		OPT_FILENAME('F', "file", &file, "set file to <file>"),
 		OPT_GROUP("String options"),
 		OPT_STRING('s', "string", &string, "string", "get a string"),
 		OPT_STRING(0, "string2", &string, "str", "get another string"),
@@ -66,9 +66,9 @@ int main(int argc, const char **argv)
 		  "negative ambiguity", PARSE_OPT_NOARG | PARSE_OPT_NONEG },
 		OPT_GROUP("Standard options"),
 		OPT__ABBREV(&abbrev),
-		OPT__VERBOSE(&verbose),
-		OPT__DRY_RUN(&dry_run),
-		OPT__QUIET(&quiet),
+		OPT__VERBOSE(&verbose, "be verbose"),
+		OPT__DRY_RUN(&dry_run, "dry run"),
+		OPT__QUIET(&quiet, "be quiet"),
 		OPT_END(),
 	};
 	int i;

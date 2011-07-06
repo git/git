@@ -26,7 +26,7 @@ chmod +x .git/hooks/post-commit'
 
 test_expect_success 'post-commit hook used ordinarily' '
 echo initial >top &&
-git add top
+git add top &&
 git commit -m initial &&
 test -r "${COMMIT_FILE}"
 '
@@ -45,7 +45,7 @@ test -r "${COMMIT_FILE}"
 rm -rf "${COMMIT_FILE}"
 
 test_expect_success 'post-commit-hook from sub dir' '
-echo changed again >top
+echo changed again >top &&
 cd subdir &&
 git --git-dir .git --work-tree .. add ../top &&
 git --git-dir .git --work-tree .. commit -m subcommit &&

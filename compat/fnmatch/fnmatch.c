@@ -127,6 +127,10 @@ extern char *getenv ();
 extern int errno;
 # endif
 
+# ifndef NULL
+#  define NULL 0
+# endif
+
 /* This function doesn't exist on most systems.  */
 
 # if !defined HAVE___STRCHRNUL && !defined _LIBC

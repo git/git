@@ -40,16 +40,16 @@ OPTIONS
 -u::
 	The commit log message, author name and author email are
 	taken from the e-mail, and after minimally decoding MIME
-	transfer encoding, re-coded in UTF-8 by transliterating
+	transfer encoding, re-coded in the charset specified by
+	i18n.commitencoding (defaulting to UTF-8) by transliterating
 	them.  This used to be optional but now it is the default.
 +
 Note that the patch is always used as-is without charset
 conversion, even with this flag.
 
 --encoding=<encoding>::
-	Similar to -u but if the local convention is different
-	from what is specified by i18n.commitencoding, this flag
-	can be used to override it.
+	Similar to -u.  But when re-coding, the charset specified here is
+	used instead of the one specified by i18n.commitencoding or UTF-8.
 
 -n::
 	Disable all charset re-coding of the metadata.
@@ -79,17 +79,6 @@ This can enabled by default with the configuration option mailinfo.scissors.
 
 <patch>::
 	The patch extracted from e-mail.
-
-
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org> and
-Junio C Hamano <gitster@pobox.com>
-
-
-Documentation
---------------
-Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---

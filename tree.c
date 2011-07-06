@@ -45,62 +45,14 @@ static int read_one_entry_quick(const unsigned char *sha1, const char *base, int
 				  ADD_CACHE_JUST_APPEND);
 }
 
-static int match_tree_entry(const char *base, int baselen, const char *path, unsigned int mode, const char **paths)
-{
-	const char *match;
-	int pathlen;
-
-	if (!paths)
-		return 1;
-	pathlen = strlen(path);
-	while ((match = *paths++) != NULL) {
-		int matchlen = strlen(match);
-
-		if (baselen >= matchlen) {
-			/* If it doesn't match, move along... */
-			if (strncmp(base, match, matchlen))
-				continue;
-			/* pathspecs match only at the directory boundaries */
-			if (!matchlen ||
-			    baselen == matchlen ||
-			    base[matchlen] == '/' ||
-			    match[matchlen - 1] == '/')
-				return 1;
-			continue;
-		}
-
-		/* Does the base match? */
-		if (strncmp(base, match, baselen))
-			continue;
-
-		match += baselen;
-		matchlen -= baselen;
-
-		if (pathlen > matchlen)
-			continue;
-
-		if (matchlen > pathlen) {
-			if (match[pathlen] != '/')
-				continue;
-			if (!S_ISDIR(mode))
-				continue;
-		}
-
-		if (strncmp(path, match, pathlen))
-			continue;
-
-		return 1;
-	}
-	return 0;
-}
-
-int read_tree_recursive(struct tree *tree,
-			const char *base, int baselen,
-			int stage, const char **match,
-			read_tree_fn_t fn, void *context)
+static int read_tree_1(struct tree *tree, struct strbuf *base,
+		       int stage, struct pathspec *pathspec,
+		       read_tree_fn_t fn, void *context)
 {
 	struct tree_desc desc;
 	struct name_entry entry;
+	unsigned char sha1[20];
+	int len, retval = 0, oldlen = base->len;
 
 	if (parse_tree(tree))
 		return -1;
@@ -108,10 +60,16 @@ int read_tree_recursive(struct tree *tree,
 	init_tree_desc(&desc, tree->buffer, tree->size);
 
 	while (tree_entry(&desc, &entry)) {
-		if (!match_tree_entry(base, baselen, entry.path, entry.mode, match))
-			continue;
+		if (retval != 2) {
+			retval = tree_entry_interesting(&entry, base, 0, pathspec);
+			if (retval < 0)
+				break;
+			if (retval == 0)
+				continue;
+		}
 
-		switch (fn(entry.sha1, base, baselen, entry.path, entry.mode, stage, context)) {
+		switch (fn(entry.sha1, base->buf, base->len,
+			   entry.path, entry.mode, stage, context)) {
 		case 0:
 			continue;
 		case READ_TREE_RECURSIVE:
@@ -119,54 +77,53 @@ int read_tree_recursive(struct tree *tree,
 		default:
 			return -1;
 		}
-		if (S_ISDIR(entry.mode)) {
-			int retval;
-			char *newbase;
-			unsigned int pathlen = tree_entry_len(entry.path, entry.sha1);
 
-			newbase = xmalloc(baselen + 1 + pathlen);
-			memcpy(newbase, base, baselen);
-			memcpy(newbase + baselen, entry.path, pathlen);
-			newbase[baselen + pathlen] = '/';
-			retval = read_tree_recursive(lookup_tree(entry.sha1),
-						     newbase,
-						     baselen + pathlen + 1,
-						     stage, match, fn, context);
-			free(newbase);
-			if (retval)
-				return -1;
-			continue;
-		} else if (S_ISGITLINK(entry.mode)) {
-			int retval;
-			struct strbuf path;
-			unsigned int entrylen;
+		if (S_ISDIR(entry.mode))
+			hashcpy(sha1, entry.sha1);
+		else if (S_ISGITLINK(entry.mode)) {
 			struct commit *commit;
-
-			entrylen = tree_entry_len(entry.path, entry.sha1);
-			strbuf_init(&path, baselen + entrylen + 1);
-			strbuf_add(&path, base, baselen);
-			strbuf_add(&path, entry.path, entrylen);
-			strbuf_addch(&path, '/');
 
 			commit = lookup_commit(entry.sha1);
 			if (!commit)
-				die("Commit %s in submodule path %s not found",
-				    sha1_to_hex(entry.sha1), path.buf);
+				die("Commit %s in submodule path %s%s not found",
+				    sha1_to_hex(entry.sha1),
+				    base->buf, entry.path);
 
 			if (parse_commit(commit))
-				die("Invalid commit %s in submodule path %s",
-				    sha1_to_hex(entry.sha1), path.buf);
+				die("Invalid commit %s in submodule path %s%s",
+				    sha1_to_hex(entry.sha1),
+				    base->buf, entry.path);
 
-			retval = read_tree_recursive(commit->tree,
-						     path.buf, path.len,
-						     stage, match, fn, context);
-			strbuf_release(&path);
-			if (retval)
-				return -1;
-			continue;
+			hashcpy(sha1, commit->tree->object.sha1);
 		}
+		else
+			continue;
+
+		len = tree_entry_len(entry.path, entry.sha1);
+		strbuf_add(base, entry.path, len);
+		strbuf_addch(base, '/');
+		retval = read_tree_1(lookup_tree(sha1),
+				     base, stage, pathspec,
+				     fn, context);
+		strbuf_setlen(base, oldlen);
+		if (retval)
+			return -1;
 	}
 	return 0;
+}
+
+int read_tree_recursive(struct tree *tree,
+			const char *base, int baselen,
+			int stage, struct pathspec *pathspec,
+			read_tree_fn_t fn, void *context)
+{
+	struct strbuf sb = STRBUF_INIT;
+	int ret;
+
+	strbuf_add(&sb, base, baselen);
+	ret = read_tree_1(tree, &sb, stage, pathspec, fn, context);
+	strbuf_release(&sb);
+	return ret;
 }
 
 static int cmp_cache_name_compare(const void *a_, const void *b_)
@@ -179,7 +136,7 @@ static int cmp_cache_name_compare(const void *a_, const void *b_)
 				  ce2->name, ce2->ce_flags);
 }
 
-int read_tree(struct tree *tree, int stage, const char **match)
+int read_tree(struct tree *tree, int stage, struct pathspec *match)
 {
 	read_tree_fn_t fn = NULL;
 	int i, err;

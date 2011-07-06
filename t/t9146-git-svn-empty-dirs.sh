@@ -28,12 +28,29 @@ test_expect_success 'empty directories exist' '
 	)
 '
 
+test_expect_success 'option automkdirs set to false' '
+	(
+		git svn init "$svnrepo" cloned-no-mkdirs &&
+		cd cloned-no-mkdirs &&
+		git config svn-remote.svn.automkdirs false &&
+		git svn fetch &&
+		for i in a b c d d/e d/e/f "weird file name"
+		do
+			if test -d "$i"
+			then
+				echo >&2 "$i exists"
+				exit 1
+			fi
+		done
+	)
+'
+
 test_expect_success 'more emptiness' '
 	svn_cmd mkdir -m "bang bang"  "$svnrepo"/"! !"
 '
 
 test_expect_success 'git svn rebase creates empty directory' '
-	( cd cloned && git svn rebase )
+	( cd cloned && git svn rebase ) &&
 	test -d cloned/"! !"
 '
 

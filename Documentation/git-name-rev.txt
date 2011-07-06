@@ -70,15 +70,6 @@ Another nice thing you can do is:
 % git log | git name-rev --stdin
 ------------
 
-
-Author
-------
-Written by Johannes Schindelin <Johannes.Schindelin@gmx.de>
-
-Documentation
---------------
-Documentation by Johannes Schindelin.
-
 GIT
 ---
 Part of the linkgit:git[1] suite

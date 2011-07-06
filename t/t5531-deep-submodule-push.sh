@@ -6,7 +6,7 @@ test_description='unpack-objects'
 
 test_expect_success setup '
 	mkdir pub.git &&
-	GIT_DIR=pub.git git init --bare
+	GIT_DIR=pub.git git init --bare &&
 	GIT_DIR=pub.git git config receive.fsckobjects true &&
 	mkdir work &&
 	(

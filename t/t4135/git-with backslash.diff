@@ -1,0 +1,7 @@
+diff --git "a/post\\image.txt" "b/post\\image.txt"
+new file mode 100644
+index 0000000..eff0c54
+--- /dev/null
++++ "b/post\\image.txt"
+@@ -0,0 +1 @@
++postimage

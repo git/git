@@ -873,7 +873,7 @@ c * N * T + b * M * log2(M) tests
 where c is the number of rounds of test (so a small constant) and b is
 the ratio of bug per commit (hopefully a small constant too).
 
-So of course it's much better as it's O(N \* T) vs O(N \* T \* M) if
+So of course it's much better as it's O(N * T) vs O(N * T * M) if
 you would test everything after each commit.
 
 This means that test suites are good to prevent some bugs from being
@@ -971,7 +971,7 @@ logical change in each commit.
 The smaller the changes in your commit, the most effective "git
 bisect" will be. And you will probably need "git bisect" less in the
 first place, as small changes are easier to review even if they are
-only reviewed by the commiter.
+only reviewed by the committer.
 
 Another good idea is to have good commit messages. They can be very
 helpful to understand why some changes were made.

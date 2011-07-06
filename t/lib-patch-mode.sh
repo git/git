@@ -1,9 +1,6 @@
-. ./test-lib.sh
+: included from t2016 and others
 
-if ! test_have_prereq PERL; then
-	say 'skipping --patch tests, perl not available'
-	test_done
-fi
+. ./test-lib.sh
 
 set_state () {
 	echo "$3" > "$1" &&

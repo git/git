@@ -12,13 +12,7 @@ by an edit for them.
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/diff-lib.sh
 
-if ! test_have_prereq SYMLINKS
-then
-	say 'Symbolic links not supported, skipping tests.'
-	test_done
-fi
-
-test_expect_success \
+test_expect_success SYMLINKS \
     'prepare reference tree' \
     'echo xyzzy | tr -d '\\\\'012 >yomin &&
      ln -s xyzzy frotz &&
@@ -26,7 +20,7 @@ test_expect_success \
     tree=$(git write-tree) &&
     echo $tree'
 
-test_expect_success \
+test_expect_success SYMLINKS \
     'prepare work tree' \
     'mv frotz rezrov &&
      rm -f yomin &&
@@ -40,8 +34,9 @@ test_expect_success \
 # rezrov and nitfol are rename/copy of frotz and bozbar should be
 # a new creation.
 
-GIT_DIFF_OPTS=--unified=0 git diff-index -M -p $tree >current
-cat >expected <<\EOF
+test_expect_success SYMLINKS 'setup diff output' "
+    GIT_DIFF_OPTS=--unified=0 git diff-index -C -p $tree >current &&
+    cat >expected <<\EOF
 diff --git a/bozbar b/bozbar
 new file mode 120000
 --- /dev/null
@@ -65,8 +60,9 @@ deleted file mode 100644
 -xyzzy
 \ No newline at end of file
 EOF
+"
 
-test_expect_success \
+test_expect_success SYMLINKS \
     'validate diff output' \
     'compare_diff_patch current expected'
 

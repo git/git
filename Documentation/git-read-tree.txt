@@ -11,7 +11,7 @@ SYNOPSIS
 'git read-tree' [[-m [--trivial] [--aggressive] | --reset | --prefix=<prefix>]
 		[-u [--exclude-per-directory=<gitignore>] | -i]]
 		[--index-output=<file>] [--no-sparse-checkout]
-		<tree-ish1> [<tree-ish2> [<tree-ish3>]]
+		(--empty | <tree-ish1> [<tree-ish2> [<tree-ish3>]])
 
 
 DESCRIPTION
@@ -52,6 +52,11 @@ OPTIONS
 	tree and is meant to be used when creating a merge of
 	trees that are not directly related to the current
 	working tree status into a temporary index file.
+
+-n::
+--dry-run::
+	Check if the command would error out, without updating the index
+	nor the files in the working tree for real.
 
 -v::
 	Show the progress of checking files out.
@@ -114,6 +119,10 @@ OPTIONS
 	Disable sparse checkout support even if `core.sparseCheckout`
 	is true.
 
+--empty::
+	Instead of reading tree object(s) into the index, just empty
+	it.
+
 <tree-ish#>::
 	The id of the tree object(s) to be read/merged.
 
@@ -130,7 +139,7 @@ Single Tree Merge
 ~~~~~~~~~~~~~~~~~
 If only 1 tree is specified, 'git read-tree' operates as if the user did not
 specify `-m`, except that if the original index has an entry for a
-given pathname, and the contents of the path matches with the tree
+given pathname, and the contents of the path match with the tree
 being read, the stat info from the index is used. (In other words, the
 index's stat()s take precedence over the merged tree's).
 
@@ -154,40 +163,42 @@ When two trees are specified, the user is telling 'git read-tree'
 the following:
 
      1. The current index and work tree is derived from $H, but
-        the user may have local changes in them since $H;
+	the user may have local changes in them since $H.
 
      2. The user wants to fast-forward to $M.
 
 In this case, the `git read-tree -m $H $M` command makes sure
 that no local change is lost as the result of this "merge".
-Here are the "carry forward" rules:
+Here are the "carry forward" rules, where "I" denotes the index,
+"clean" means that index and work tree coincide, and "exists"/"nothing"
+refer to the presence of a path in the specified commit:
 
-        I (index)           H        M        Result
+	I                   H        M        Result
        -------------------------------------------------------
-      0 nothing             nothing  nothing  (does not happen)
-      1 nothing             nothing  exists   use M
-      2 nothing             exists   nothing  remove path from index
-      3 nothing             exists   exists,  use M if "initial checkout"
+     0  nothing             nothing  nothing  (does not happen)
+     1  nothing             nothing  exists   use M
+     2  nothing             exists   nothing  remove path from index
+     3  nothing             exists   exists,  use M if "initial checkout",
 				     H == M   keep index otherwise
-				     exists   fail
+				     exists,  fail
 				     H != M
 
         clean I==H  I==M
        ------------------
-      4 yes   N/A   N/A     nothing  nothing  keep index
-      5 no    N/A   N/A     nothing  nothing  keep index
+     4  yes   N/A   N/A     nothing  nothing  keep index
+     5  no    N/A   N/A     nothing  nothing  keep index
 
-      6 yes   N/A   yes     nothing  exists   keep index
-      7 no    N/A   yes     nothing  exists   keep index
-      8 yes   N/A   no      nothing  exists   fail
-      9 no    N/A   no      nothing  exists   fail
+     6  yes   N/A   yes     nothing  exists   keep index
+     7  no    N/A   yes     nothing  exists   keep index
+     8  yes   N/A   no      nothing  exists   fail
+     9  no    N/A   no      nothing  exists   fail
 
      10 yes   yes   N/A     exists   nothing  remove path from index
      11 no    yes   N/A     exists   nothing  fail
      12 yes   no    N/A     exists   nothing  fail
      13 no    no    N/A     exists   nothing  fail
 
-        clean (H=M)
+	clean (H==M)
        ------
      14 yes                 exists   exists   keep index
      15 no                  exists   exists   keep index
@@ -202,26 +213,26 @@ Here are the "carry forward" rules:
      21 no    yes   no      exists   exists   fail
 
 In all "keep index" cases, the index entry stays as in the
-original index file.  If the entry were not up to date,
+original index file.  If the entry is not up to date,
 'git read-tree' keeps the copy in the work tree intact when
 operating under the -u flag.
 
 When this form of 'git read-tree' returns successfully, you can
-see what "local changes" you made are carried forward by running
+see which of the "local changes" that you made were carried forward by running
 `git diff-index --cached $M`.  Note that this does not
-necessarily match `git diff-index --cached $H` would have
+necessarily match what `git diff-index --cached $H` would have
 produced before such a two tree merge.  This is because of cases
 18 and 19 --- if you already had the changes in $M (e.g. maybe
 you picked it up via e-mail in a patch form), `git diff-index
 --cached $H` would have told you about the change before this
 merge, but it would not show in `git diff-index --cached $M`
-output after two-tree merge.
+output after the two-tree merge.
 
-Case #3 is slightly tricky and needs explanation.  The result from this
+Case 3 is slightly tricky and needs explanation.  The result from this
 rule logically should be to remove the path if the user staged the removal
 of the path and then switching to a new branch.  That however will prevent
 the initial checkout from happening, so the rule is modified to use M (new
-tree) only when the contents of the index is empty.  Otherwise the removal
+tree) only when the content of the index is empty.  Otherwise the removal
 of the path is kept as long as $H and $M are the same.
 
 3-Way Merge
@@ -414,15 +425,6 @@ SEE ALSO
 --------
 linkgit:git-write-tree[1]; linkgit:git-ls-files[1];
 linkgit:gitignore[5]
-
-
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org>
-
-Documentation
---------------
-Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---

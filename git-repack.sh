@@ -10,7 +10,8 @@ git repack [options]
 a               pack everything in a single pack
 A               same as -a, and turn unreachable objects loose
 d               remove redundant packs, and run git-prune-packed
-f               pass --no-reuse-object to git-pack-objects
+f               pass --no-reuse-delta to git-pack-objects
+F               pass --no-reuse-object to git-pack-objects
 n               do not run git-update-server-info
 q,quiet         be quiet
 l               pass --local to git-pack-objects
@@ -34,7 +35,8 @@ do
 		unpack_unreachable=--unpack-unreachable ;;
 	-d)	remove_redundant=t ;;
 	-q)	GIT_QUIET=t ;;
-	-f)	no_reuse=--no-reuse-object ;;
+	-f)	no_reuse=--no-reuse-delta ;;
+	-F)	no_reuse=--no-reuse-object ;;
 	-l)	local=--local ;;
 	--max-pack-size|--window|--window-memory|--depth)
 		extra="$extra $1=$2"; shift ;;
@@ -50,7 +52,7 @@ true)
 esac
 
 PACKDIR="$GIT_OBJECT_DIRECTORY/pack"
-PACKTMP="$GIT_OBJECT_DIRECTORY/.tmp-$$-pack"
+PACKTMP="$PACKDIR/.tmp-$$-pack"
 rm -f "$PACKTMP"-*
 trap 'rm -f "$PACKTMP"-*' 0 1 2 3 15
 
@@ -80,6 +82,8 @@ case ",$all_into_one," in
 	;;
 esac
 
+mkdir -p "$PACKDIR" || exit
+
 args="$args $local ${GIT_QUIET:+-q} $no_reuse$extra"
 names=$(git pack-objects --keep-true-parents --honor-pack-keep --non-empty --all --reflog $args </dev/null "$PACKTMP") ||
 	exit 1
@@ -88,7 +92,6 @@ if [ -z "$names" ]; then
 fi
 
 # Ok we have prepared all new packfiles.
-mkdir -p "$PACKDIR" || exit
 
 # First see if there are packs of the same name and if so
 # if we can move them out of the way (this can happen if we

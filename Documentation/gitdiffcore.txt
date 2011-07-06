@@ -3,7 +3,7 @@ gitdiffcore(7)
 
 NAME
 ----
-gitdiffcore - Tweaking diff output (June 2005)
+gitdiffcore - Tweaking diff output
 
 SYNOPSIS
 --------
@@ -227,9 +227,9 @@ changes that touch a specified string, and is controlled by the
 commands.
 
 When diffcore-pickaxe is in use, it checks if there are
-filepairs whose "original" side has the specified string and
-whose "result" side does not.  Such a filepair represents "the
-string appeared in this changeset".  It also checks for the
+filepairs whose "result" side and whose "origin" side have
+different number of specified string.  Such a filepair represents
+"the string appeared in this changeset".  It also checks for the
 opposite case that loses the specified string.
 
 When `\--pickaxe-all` is not in effect, diffcore-pickaxe leaves

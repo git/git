@@ -39,7 +39,7 @@ do
 	(
 		cd $H &&
 		git config --unset i18n.commitencoding &&
-		! git svn dcommit
+		test_must_fail git svn dcommit
 	)
 	'
 done

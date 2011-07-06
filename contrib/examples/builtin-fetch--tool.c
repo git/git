@@ -148,7 +148,7 @@ static int append_fetch_head(FILE *fp,
 		what = remote_name + 10;
 	}
 	else if (!strncmp(remote_name, "refs/remotes/", 13)) {
-		kind = "remote branch";
+		kind = "remote-tracking branch";
 		what = remote_name + 13;
 	}
 	else {

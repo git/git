@@ -9,8 +9,7 @@
 #include "sideband.h"
 
 static struct remote *remote;
-static const char *url;
-static struct walker *walker;
+static const char *url; /* always ends with a trailing slash */
 
 struct options {
 	int verbosity;
@@ -21,12 +20,6 @@ struct options {
 		thin : 1;
 };
 static struct options options;
-
-static void init_walker(void)
-{
-	if (!walker)
-		walker = get_http_walker(url, remote);
-}
 
 static int set_option(const char *name, const char *value)
 {
@@ -108,7 +101,7 @@ static struct discovery* discover_refs(const char *service)
 		return last;
 	free_discovery(last);
 
-	strbuf_addf(&buffer, "%s/info/refs", url);
+	strbuf_addf(&buffer, "%sinfo/refs", url);
 	if (!prefixcmp(url, "http://") || !prefixcmp(url, "https://")) {
 		is_http = 1;
 		if (!strchr(url, '?'))
@@ -119,7 +112,6 @@ static struct discovery* discover_refs(const char *service)
 	}
 	refs_url = strbuf_detach(&buffer, NULL);
 
-	init_walker();
 	http_ret = http_get_strbuf(refs_url, &buffer, HTTP_NO_CACHE);
 
 	/* try again with "plain" url (no ? or & appended) */
@@ -128,7 +120,7 @@ static struct discovery* discover_refs(const char *service)
 		strbuf_reset(&buffer);
 
 		proto_git_candidate = 0;
-		strbuf_addf(&buffer, "%s/info/refs", url);
+		strbuf_addf(&buffer, "%sinfo/refs", url);
 		refs_url = strbuf_detach(&buffer, NULL);
 
 		http_ret = http_get_strbuf(refs_url, &buffer, HTTP_NO_CACHE);
@@ -140,6 +132,8 @@ static struct discovery* discover_refs(const char *service)
 	case HTTP_MISSING_TARGET:
 		die("%s not found: did you run git update-server-info on the"
 		    " server?", refs_url);
+	case HTTP_NOAUTH:
+		die("Authentication failed");
 	default:
 		http_error(refs_url, http_ret);
 		die("HTTP request failed");
@@ -184,13 +178,13 @@ static struct discovery* discover_refs(const char *service)
 	return last;
 }
 
-static int write_discovery(int fd, void *data)
+static int write_discovery(int in, int out, void *data)
 {
 	struct discovery *heads = data;
 	int err = 0;
-	if (write_in_full(fd, heads->buf, heads->len) != heads->len)
+	if (write_in_full(out, heads->buf, heads->len) != heads->len)
 		err = 1;
-	close(fd);
+	close(out);
 	return err;
 }
 
@@ -202,6 +196,7 @@ static struct ref *parse_git_refs(struct discovery *heads)
 	memset(&async, 0, sizeof(async));
 	async.proc = write_discovery;
 	async.data = heads;
+	async.out = -1;
 
 	if (start_async(&async))
 		die("cannot start thread to parse advertised refs");
@@ -249,9 +244,8 @@ static struct ref *parse_info_refs(struct discovery *heads)
 		i++;
 	}
 
-	init_walker();
 	ref = alloc_ref("HEAD");
-	if (!walker->fetch_ref(walker, ref) &&
+	if (!http_fetch_ref(url, ref) &&
 	    !resolve_remote_symref(ref, refs)) {
 		ref->next = refs;
 		refs = ref;
@@ -353,7 +347,7 @@ static curlioerr rpc_ioctl(CURL *handle, int cmd, void *clientp)
 }
 #endif
 
-static size_t rpc_in(const void *ptr, size_t eltsize,
+static size_t rpc_in(char *ptr, size_t eltsize,
 		size_t nmemb, void *buffer_)
 {
 	size_t size = eltsize * nmemb;
@@ -362,14 +356,59 @@ static size_t rpc_in(const void *ptr, size_t eltsize,
 	return size;
 }
 
+static int run_slot(struct active_request_slot *slot)
+{
+	int err = 0;
+	struct slot_results results;
+
+	slot->results = &results;
+	slot->curl_result = curl_easy_perform(slot->curl);
+	finish_active_slot(slot);
+
+	if (results.curl_result != CURLE_OK) {
+		err |= error("RPC failed; result=%d, HTTP code = %ld",
+			results.curl_result, results.http_code);
+	}
+
+	return err;
+}
+
+static int probe_rpc(struct rpc_state *rpc)
+{
+	struct active_request_slot *slot;
+	struct curl_slist *headers = NULL;
+	struct strbuf buf = STRBUF_INIT;
+	int err;
+
+	slot = get_active_slot();
+
+	headers = curl_slist_append(headers, rpc->hdr_content_type);
+	headers = curl_slist_append(headers, rpc->hdr_accept);
+
+	curl_easy_setopt(slot->curl, CURLOPT_NOBODY, 0);
+	curl_easy_setopt(slot->curl, CURLOPT_POST, 1);
+	curl_easy_setopt(slot->curl, CURLOPT_URL, rpc->service_url);
+	curl_easy_setopt(slot->curl, CURLOPT_ENCODING, "");
+	curl_easy_setopt(slot->curl, CURLOPT_POSTFIELDS, "0000");
+	curl_easy_setopt(slot->curl, CURLOPT_POSTFIELDSIZE, 4);
+	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, headers);
+	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, fwrite_buffer);
+	curl_easy_setopt(slot->curl, CURLOPT_FILE, &buf);
+
+	err = run_slot(slot);
+
+	curl_slist_free_all(headers);
+	strbuf_release(&buf);
+	return err;
+}
+
 static int post_rpc(struct rpc_state *rpc)
 {
 	struct active_request_slot *slot;
-	struct slot_results results;
 	struct curl_slist *headers = NULL;
 	int use_gzip = rpc->gzip_request;
 	char *gzip_body = NULL;
-	int err = 0, large_request = 0;
+	int err, large_request = 0;
 
 	/* Try to load the entire request, if we can fit it into the
 	 * allocated buffer space we can use HTTP/1.0 and avoid the
@@ -392,8 +431,13 @@ static int post_rpc(struct rpc_state *rpc)
 		rpc->len += n;
 	}
 
+	if (large_request) {
+		err = probe_rpc(rpc);
+		if (err)
+			return err;
+	}
+
 	slot = get_active_slot();
-	slot->results = &results;
 
 	curl_easy_setopt(slot->curl, CURLOPT_NOBODY, 0);
 	curl_easy_setopt(slot->curl, CURLOPT_POST, 1);
@@ -402,12 +446,12 @@ static int post_rpc(struct rpc_state *rpc)
 
 	headers = curl_slist_append(headers, rpc->hdr_content_type);
 	headers = curl_slist_append(headers, rpc->hdr_accept);
+	headers = curl_slist_append(headers, "Expect:");
 
 	if (large_request) {
 		/* The request body is large and the size cannot be predicted.
 		 * We must use chunked encoding to send it.
 		 */
-		headers = curl_slist_append(headers, "Expect: 100-continue");
 		headers = curl_slist_append(headers, "Transfer-Encoding: chunked");
 		rpc->initial_buffer = 1;
 		curl_easy_setopt(slot->curl, CURLOPT_READFUNCTION, rpc_out);
@@ -481,13 +525,7 @@ static int post_rpc(struct rpc_state *rpc)
 	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, rpc_in);
 	curl_easy_setopt(slot->curl, CURLOPT_FILE, rpc);
 
-	slot->curl_result = curl_easy_perform(slot->curl);
-	finish_active_slot(slot);
-
-	if (results.curl_result != CURLE_OK) {
-		err |= error("RPC failed; result=%d, HTTP code = %ld",
-			results.curl_result, results.http_code);
-	}
+	err = run_slot(slot);
 
 	curl_slist_free_all(headers);
 	free(gzip_body);
@@ -501,7 +539,6 @@ static int rpc_service(struct rpc_state *rpc, struct discovery *heads)
 	struct child_process client;
 	int err = 0;
 
-	init_walker();
 	memset(&client, 0, sizeof(client));
 	client.in = -1;
 	client.out = -1;
@@ -518,7 +555,7 @@ static int rpc_service(struct rpc_state *rpc, struct discovery *heads)
 	rpc->out = client.out;
 	strbuf_init(&rpc->result, 0);
 
-	strbuf_addf(&buf, "%s/%s", url, svc);
+	strbuf_addf(&buf, "%s%s", url, svc);
 	rpc->service_url = strbuf_detach(&buf, NULL);
 
 	strbuf_addf(&buf, "Content-Type: application/x-%s-request", svc);
@@ -535,11 +572,12 @@ static int rpc_service(struct rpc_state *rpc, struct discovery *heads)
 		rpc->len = n;
 		err |= post_rpc(rpc);
 	}
-	strbuf_read(&rpc->result, client.out, 0);
 
 	close(client.in);
-	close(client.out);
 	client.in = -1;
+	strbuf_read(&rpc->result, client.out, 0);
+
+	close(client.out);
 	client.out = -1;
 
 	err |= finish_command(&client);
@@ -553,6 +591,7 @@ static int rpc_service(struct rpc_state *rpc, struct discovery *heads)
 
 static int fetch_dumb(int nr_heads, struct ref **to_fetch)
 {
+	struct walker *walker;
 	char **targets = xmalloc(nr_heads * sizeof(char*));
 	int ret, i;
 
@@ -561,13 +600,14 @@ static int fetch_dumb(int nr_heads, struct ref **to_fetch)
 	for (i = 0; i < nr_heads; i++)
 		targets[i] = xstrdup(sha1_to_hex(to_fetch[i]->old_sha1));
 
-	init_walker();
+	walker = get_http_walker(url);
 	walker->get_all = 1;
 	walker->get_tree = 1;
 	walker->get_history = 1;
 	walker->get_verbosely = options.verbosity >= 3;
 	walker->get_recover = 0;
 	ret = walker_fetch(walker, nr_heads, targets, NULL, NULL);
+	walker_free(walker);
 
 	for (i = 0; i < nr_heads; i++)
 		free(targets[i]);
@@ -771,19 +811,21 @@ static void parse_push(struct strbuf *buf)
 
 		strbuf_reset(buf);
 		if (strbuf_getline(buf, stdin, '\n') == EOF)
-			return;
+			goto free_specs;
 		if (!*buf->buf)
 			break;
 	} while (1);
 
 	if (push(nr_spec, specs))
 		exit(128); /* error already reported */
-	for (i = 0; i < nr_spec; i++)
-		free(specs[i]);
-	free(specs);
 
 	printf("\n");
 	fflush(stdout);
+
+ free_specs:
+	for (i = 0; i < nr_spec; i++)
+		free(specs[i]);
+	free(specs);
 }
 
 int main(int argc, const char **argv)
@@ -805,10 +847,14 @@ int main(int argc, const char **argv)
 	remote = remote_get(argv[1]);
 
 	if (argc > 2) {
-		url = argv[2];
+		end_url_with_slash(&buf, argv[2]);
 	} else {
-		url = remote->url[0];
+		end_url_with_slash(&buf, remote->url[0]);
 	}
+
+	url = strbuf_detach(&buf, NULL);
+
+	http_init(remote);
 
 	do {
 		if (strbuf_getline(&buf, stdin, '\n') == EOF)
@@ -855,5 +901,8 @@ int main(int argc, const char **argv)
 		}
 		strbuf_reset(&buf);
 	} while (1);
+
+	http_cleanup();
+
 	return 0;
 }

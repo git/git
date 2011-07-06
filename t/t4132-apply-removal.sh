@@ -30,6 +30,7 @@ test_expect_success setup '
 	epocWest="1969-12-31 16:00:00.000000000 -0800" &&
 	 epocGMT="1970-01-01 00:00:00.000000000 +0000" &&
 	epocEast="1970-01-01 09:00:00.000000000 +0900" &&
+	epocWest2="1969-12-31 16:00:00 -08:00" &&
 
 	sed -e "s/TS0/$epocWest/" -e "s/TS1/$timeWest/" <c >createWest.patch &&
 	sed -e "s/TS0/$epocEast/" -e "s/TS1/$timeEast/" <c >createEast.patch &&
@@ -46,6 +47,7 @@ test_expect_success setup '
 	sed -e "s/TS0/$timeWest/" -e "s/TS1/$epocWest/" <d >removeWest.patch &&
 	sed -e "s/TS0/$timeEast/" -e "s/TS1/$epocEast/" <d >removeEast.patch &&
 	sed -e "s/TS0/$timeGMT/" -e "s/TS1/$epocGMT/" <d >removeGMT.patch &&
+	sed -e "s/TS0/$timeWest/" -e "s/TS1/$epocWest2/" <d >removeWest2.patch &&
 
 	echo something >something &&
 	>empty

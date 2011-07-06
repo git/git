@@ -90,10 +90,16 @@ marks the same across runs.
 	resulting stream can only be used by a repository which
 	already contains the necessary objects.
 
-[git-rev-list-args...]::
+--full-tree::
+	This option will cause fast-export to issue a "deleteall"
+	directive for each commit followed by a full list of all files
+	in the commit (as opposed to just listing the files which are
+	different from the commit's first parent).
+
+[<git-rev-list-args>...]::
        A list of arguments, acceptable to 'git rev-parse' and
        'git rev-list', that specifies the specific objects and references
-       to export.  For example, `master\~10..master` causes the
+       to export.  For example, `master{tilde}10..master` causes the
        current master reference to be exported along with all objects
        added since its 10th ancestor commit.
 
@@ -128,15 +134,6 @@ Limitations
 Since 'git fast-import' cannot tag trees, you will not be
 able to export the linux-2.6.git repository completely, as it contains
 a tag referencing a tree instead of a commit.
-
-
-Author
-------
-Written by Johannes E. Schindelin <johannes.schindelin@gmx.de>.
-
-Documentation
---------------
-Documentation by Johannes E. Schindelin <johannes.schindelin@gmx.de>.
 
 GIT
 ---

@@ -10,11 +10,11 @@ test_expect_success 'preparing origin repository' '
 	git clone --bare . a.git &&
 	git clone --bare . x &&
 	test "$(GIT_CONFIG=a.git/config git config --bool core.bare)" = true &&
-	test "$(GIT_CONFIG=x/config git config --bool core.bare)" = true
+	test "$(GIT_CONFIG=x/config git config --bool core.bare)" = true &&
 	git bundle create b1.bundle --all &&
 	git bundle create b2.bundle master &&
 	mkdir dir &&
-	cp b1.bundle dir/b3
+	cp b1.bundle dir/b3 &&
 	cp b1.bundle b4
 '
 
@@ -112,7 +112,7 @@ test_expect_success 'bundle clone with nonexistent HEAD' '
 	cd "$D" &&
 	git clone b2.bundle b2 &&
 	cd b2 &&
-	git fetch
+	git fetch &&
 	test ! -e .git/refs/heads/master
 '
 
@@ -142,6 +142,19 @@ test_expect_success 'clone empty repository, and then push should not segfault.'
 	git clone empty empty-clone &&
 	(cd empty-clone &&
 	test_must_fail git push)
+'
+
+test_expect_success 'cloning non-existent directory fails' '
+	cd "$D" &&
+	rm -rf does-not-exist &&
+	test_must_fail git clone does-not-exist
+'
+
+test_expect_success 'cloning non-git directory fails' '
+	cd "$D" &&
+	rm -rf not-a-git-repo not-a-git-repo-clone &&
+	mkdir not-a-git-repo &&
+	test_must_fail git clone not-a-git-repo not-a-git-repo-clone
 '
 
 test_done

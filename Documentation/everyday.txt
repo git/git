@@ -1,13 +1,8 @@
 Everyday GIT With 20 Commands Or So
 ===================================
 
-<<Basic Repository>> commands are needed by people who have a
-repository --- that is everybody, because every working tree of
-git is a repository.
-
-In addition, <<Individual Developer (Standalone)>> commands are
-essential for anybody who makes a commit, even for somebody who
-works alone.
+<<Individual Developer (Standalone)>> commands are essential for
+anybody who makes a commit, even for somebody who works alone.
 
 If you work with other people, you will need commands listed in
 the <<Individual Developer (Participant)>> section as well.
@@ -20,52 +15,14 @@ administrators who are responsible for the care and feeding
 of git repositories.
 
 
-Basic Repository[[Basic Repository]]
-------------------------------------
-
-Everybody uses these commands to maintain git repositories.
-
-  * linkgit:git-init[1] or linkgit:git-clone[1] to create a
-    new repository.
-
-  * linkgit:git-fsck[1] to check the repository for errors.
-
-  * linkgit:git-gc[1] to do common housekeeping tasks such as
-    repack and prune.
-
-Examples
-~~~~~~~~
-
-Check health and remove cruft.::
-+
-------------
-$ git fsck <1>
-$ git count-objects <2>
-$ git gc <3>
-------------
-+
-<1> running without `\--full` is usually cheap and assures the
-repository health reasonably well.
-<2> check how many loose objects there are and how much
-disk space is wasted by not repacking.
-<3> repacks the local repository and performs other housekeeping tasks.
-
-Repack a small project into single pack.::
-+
-------------
-$ git gc <1>
-------------
-+
-<1> pack all the objects reachable from the refs into one pack,
-then remove the other packs.
-
-
 Individual Developer (Standalone)[[Individual Developer (Standalone)]]
 ----------------------------------------------------------------------
 
 A standalone individual developer does not exchange patches with
 other people, and works alone in a single repository, using the
 following commands.
+
+  * linkgit:git-init[1] to create a new repository.
 
   * linkgit:git-show-branch[1] to see where you are.
 
@@ -223,12 +180,12 @@ directory; clone from it to start a repository on the satellite
 machine.
 <2> clone sets these configuration variables by default.
 It arranges `git pull` to fetch and store the branches of mothership
-machine to local `remotes/origin/*` tracking branches.
+machine to local `remotes/origin/*` remote-tracking branches.
 <3> arrange `git push` to push local `master` branch to
 `remotes/satellite/master` branch of the mothership machine.
 <4> push will stash our work away on `remotes/satellite/master`
-tracking branch on the mothership machine.  You could use this as
-a back-up method.
+remote-tracking branch on the mothership machine.  You could use this
+as a back-up method.
 <5> on mothership machine, merge the work done on the satellite
 machine into the master branch.
 

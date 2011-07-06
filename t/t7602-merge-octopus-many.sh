@@ -31,7 +31,7 @@ test_expect_success 'merge c1 with c2, c3, c4, ... c29' '
 	do
 		refs="$refs c$i"
 		i=`expr $i + 1`
-	done
+	done &&
 	git merge $refs &&
 	test "$(git rev-parse c1)" != "$(git rev-parse HEAD)" &&
 	i=1 &&

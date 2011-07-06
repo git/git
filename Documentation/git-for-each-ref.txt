@@ -9,7 +9,7 @@ SYNOPSIS
 --------
 [verse]
 'git for-each-ref' [--count=<count>] [--shell|--perl|--python|--tcl]
-		   [--sort=<key>]\* [--format=<format>] [<pattern>...]
+		   [(--sort=<key>)...] [--format=<format>] [<pattern>...]
 
 DESCRIPTION
 -----------
@@ -86,6 +86,7 @@ objectsize::
 
 objectname::
 	The object name (aka SHA-1).
+	For a non-ambiguous abbreviation of the object name append `:short`.
 
 upstream::
 	The name of a local ref which can be considered ``upstream''
@@ -122,7 +123,7 @@ EXAMPLES
 --------
 
 An example directly producing formatted text.  Show the most recent
-3 tagged commits::
+3 tagged commits:
 
 ------------
 #!/bin/sh
@@ -139,7 +140,7 @@ Ref: %(*refname)
 
 
 A simple example showing the use of shell eval on the output,
-demonstrating the use of --shell.  List the prefixes of all heads::
+demonstrating the use of --shell.  List the prefixes of all heads:
 ------------
 #!/bin/sh
 
@@ -153,7 +154,7 @@ done
 
 
 A bit more elaborate report on tags, demonstrating that the format
-may be an entire script::
+may be an entire script:
 ------------
 #!/bin/sh
 
@@ -203,3 +204,15 @@ eval=`git for-each-ref --shell --format="$fmt" \
 	refs/tags`
 eval "$eval"
 ------------
+
+Author
+------
+Written by Junio C Hamano <gitster@pobox.com>.
+
+Documentation
+-------------
+Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
+
+GIT
+---
+Part of the linkgit:git[1] suite

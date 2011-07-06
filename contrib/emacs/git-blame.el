@@ -79,6 +79,7 @@
 ;;; Code:
 
 (eval-when-compile (require 'cl))			      ; to use `push', `pop'
+(require 'format-spec)
 
 (defface git-blame-prefix-face
   '((((background dark)) (:foreground "gray"

@@ -439,7 +439,7 @@ test_expect_success 'checkout when deleting .gitattributes' '
 	git rm .gitattributes &&
 	echo "contentsQ" | q_to_cr > .file2 &&
 	git add .file2 &&
-	git commit -m third
+	git commit -m third &&
 
 	git checkout master~1 &&
 	git checkout master &&
@@ -452,6 +452,58 @@ test_expect_success 'invalid .gitattributes (must not crash)' '
 	echo "three +crlf" >>.gitattributes &&
 	git diff
 
+'
+# Some more tests here to add new autocrlf functionality.
+# We want to have a known state here, so start a bit from scratch
+
+test_expect_success 'setting up for new autocrlf tests' '
+	git config core.autocrlf false &&
+	git config core.safecrlf false &&
+	rm -rf .????* * &&
+	for w in I am all LF; do echo $w; done >alllf &&
+	for w in Oh here is CRLFQ in text; do echo $w; done | q_to_cr >mixed &&
+	for w in I am all CRLF; do echo $w; done | append_cr >allcrlf &&
+	git add -A . &&
+	git commit -m "alllf, allcrlf and mixed only" &&
+	git tag -a -m "message" autocrlf-checkpoint
+'
+
+test_expect_success 'report no change after setting autocrlf' '
+	git config core.autocrlf true &&
+	touch * &&
+	git diff --exit-code
+'
+
+test_expect_success 'files are clean after checkout' '
+	rm * &&
+	git checkout -f &&
+	git diff --exit-code
+'
+
+cr_to_Q_no_NL () {
+    tr '\015' Q | tr -d '\012'
+}
+
+test_expect_success 'LF only file gets CRLF with autocrlf' '
+	test "$(cr_to_Q_no_NL < alllf)" = "IQamQallQLFQ"
+'
+
+test_expect_success 'Mixed file is still mixed with autocrlf' '
+	test "$(cr_to_Q_no_NL < mixed)" = "OhhereisCRLFQintext"
+'
+
+test_expect_success 'CRLF only file has CRLF with autocrlf' '
+	test "$(cr_to_Q_no_NL < allcrlf)" = "IQamQallQCRLFQ"
+'
+
+test_expect_success 'New CRLF file gets LF in repo' '
+	tr -d "\015" < alllf | append_cr > alllf2 &&
+	git add alllf2 &&
+	git commit -m "alllf2 added" &&
+	git config core.autocrlf false &&
+	rm * &&
+	git checkout -f &&
+	test_cmp alllf alllf2
 '
 
 test_done

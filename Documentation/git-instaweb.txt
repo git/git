@@ -29,7 +29,7 @@ OPTIONS
 	The HTTP daemon command-line that will be executed.
 	Command-line options may be specified here, and the
 	configuration file will be added at the end of the command-line.
-	Currently apache2, lighttpd, mongoose and webrick are supported.
+	Currently apache2, lighttpd, mongoose, plackup and webrick are supported.
 	(Default: lighttpd)
 
 -m::
@@ -44,20 +44,23 @@ OPTIONS
 -b::
 --browser::
 	The web browser that should be used to view the gitweb
-	page. This will be passed to the 'git web--browse' helper
+	page. This will be passed to the 'git web{litdd}browse' helper
 	script along with the URL of the gitweb instance. See
-	linkgit:git-web--browse[1] for more information about this. If
+	linkgit:git-web{litdd}browse[1] for more information about this. If
 	the script fails, the URL will be printed to stdout.
 
+start::
 --start::
 	Start the httpd instance and exit.  This does not generate
 	any of the configuration files for spawning a new instance.
 
+stop::
 --stop::
 	Stop the httpd instance and exit.  This does not generate
 	any of the configuration files for spawning a new instance,
 	nor does it close the browser.
 
+restart::
 --restart::
 	Restart the httpd instance and exit.  This does not generate
 	any of the configuration files for spawning a new instance.
@@ -79,15 +82,7 @@ You may specify configuration in your .git/config
 
 If the configuration variable 'instaweb.browser' is not set,
 'web.browser' will be used instead if it is defined. See
-linkgit:git-web--browse[1] for more information about this.
-
-Author
-------
-Written by Eric Wong <normalperson@yhbt.net>
-
-Documentation
---------------
-Documentation by Eric Wong <normalperson@yhbt.net>.
+linkgit:git-web{litdd}browse[1] for more information about this.
 
 GIT
 ---

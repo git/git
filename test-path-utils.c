@@ -11,9 +11,9 @@ int main(int argc, char **argv)
 		return 0;
 	}
 
-	if (argc >= 2 && !strcmp(argv[1], "make_absolute_path")) {
+	if (argc >= 2 && !strcmp(argv[1], "real_path")) {
 		while (argc > 2) {
-			puts(make_absolute_path(argv[2]));
+			puts(real_path(argv[2]));
 			argc--;
 			argv++;
 		}

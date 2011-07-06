@@ -131,6 +131,17 @@ data <<EOF
 another non-note with SHA1-like name
 EOF
 
+M 644 inline de/adbeefdeadbeefdeadbeefdeadbeefdeadbeef
+data <<EOF
+This is actually a valid note, albeit to a non-existing object.
+It is needed in order to trigger the "mishandling" of the dead/beef non-note.
+EOF
+
+M 644 inline dead/beef
+data <<EOF
+yet another non-note with SHA1-like name
+EOF
+
 INPUT_END
 	git fast-import --quiet <input &&
 	git config core.notesRef refs/notes/commits
@@ -158,6 +169,9 @@ EXPECT_END
 cat >expect_nn3 <<EXPECT_END
 another non-note with SHA1-like name
 EXPECT_END
+cat >expect_nn4 <<EXPECT_END
+yet another non-note with SHA1-like name
+EXPECT_END
 
 test_expect_success "verify contents of non-notes" '
 
@@ -166,7 +180,27 @@ test_expect_success "verify contents of non-notes" '
 	git cat-file -p refs/notes/commits:deadbeef > actual_nn2 &&
 	test_cmp expect_nn2 actual_nn2 &&
 	git cat-file -p refs/notes/commits:de/adbeef > actual_nn3 &&
-	test_cmp expect_nn3 actual_nn3
+	test_cmp expect_nn3 actual_nn3 &&
+	git cat-file -p refs/notes/commits:dead/beef > actual_nn4 &&
+	test_cmp expect_nn4 actual_nn4
+'
+
+test_expect_success "git-notes preserves non-notes" '
+
+	test_tick &&
+	git notes add -f -m "foo bar"
+'
+
+test_expect_success "verify contents of non-notes after git-notes" '
+
+	git cat-file -p refs/notes/commits:foobar/non-note.txt > actual_nn1 &&
+	test_cmp expect_nn1 actual_nn1 &&
+	git cat-file -p refs/notes/commits:deadbeef > actual_nn2 &&
+	test_cmp expect_nn2 actual_nn2 &&
+	git cat-file -p refs/notes/commits:de/adbeef > actual_nn3 &&
+	test_cmp expect_nn3 actual_nn3 &&
+	git cat-file -p refs/notes/commits:dead/beef > actual_nn4 &&
+	test_cmp expect_nn4 actual_nn4
 '
 
 test_done

@@ -61,11 +61,12 @@ test_expect_success 'add a file with plus signs' '
 
 test_expect_success 'clone the repository to test rebase' '
 	git svn clone "$svnrepo" test-rebase &&
-	cd test-rebase &&
-		echo test-rebase > test-rebase &&
+	(
+		cd test-rebase &&
+		echo test-rebase >test-rebase &&
 		git add test-rebase &&
-		git commit -m test-rebase &&
-		cd ..
+		git commit -m test-rebase
+	)
 	'
 
 test_expect_success 'make a commit to test rebase' '

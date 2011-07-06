@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2009 Andrzej K. Haczewski <ahaczewski@gmail.com>
  *
- * DISCLAMER: The implementation is Git-specific, it is subset of original
+ * DISCLAIMER: The implementation is Git-specific, it is subset of original
  * Pthreads API, without lots of other features that Git doesn't use.
  * Git also makes sure that the passed arguments are valid, so there's
  * no need for double-checking.
@@ -16,6 +16,7 @@
 static unsigned __stdcall win32_start_routine(void *arg)
 {
 	pthread_t *thread = arg;
+	thread->tid = GetCurrentThreadId();
 	thread->arg = thread->start_routine(thread->arg);
 	return 0;
 }
@@ -47,6 +48,13 @@ int win32_pthread_join(pthread_t *thread, void **value_ptr)
 		default:
 			return err_win_to_posix(GetLastError());
 	}
+}
+
+pthread_t pthread_self(void)
+{
+	pthread_t t = { 0 };
+	t.tid = GetCurrentThreadId();
+	return t;
 }
 
 int pthread_cond_init(pthread_cond_t *cond, const void *unused)

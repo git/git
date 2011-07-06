@@ -156,6 +156,89 @@ svn merge ../branches/right --accept postpone
 i=$(commit $i "non-merge right to trunk 2")
 cd ..
 
+say "Branching b1 from trunk"
+svn update
+svn cp trunk branches/b1
+i=$(commit $i "make b1 branch from trunk")
+
+say "Branching b2 from trunk"
+svn update
+svn cp trunk branches/b2
+i=$(commit $i "make b2 branch from trunk")
+
+say "Make a commit to b2"
+svn update
+cd branches/b2
+echo "b2" > b2file
+svn add b2file
+i=$(commit $i "b2 update 1")
+cd ../..
+
+say "Make a commit to b1"
+svn update
+cd branches/b1
+echo "b1" > b1file
+svn add b1file
+i=$(commit $i "b1 update 1")
+cd ../..
+
+say "Merge b1 to trunk"
+svn update
+cd trunk
+svn merge ../branches/b1/ --accept postpone
+i=$(commit $i "Merge b1 to trunk")
+cd ..
+
+say "Make a commit to trunk before merging trunk to b2"
+svn update
+cd trunk
+echo "trunk" > trunkfile
+svn add trunkfile
+i=$(commit $i "trunk commit before merging trunk to b2")
+cd ..
+
+say "Merge trunk to b2"
+svn update
+cd branches/b2
+svn merge ../../trunk/ --accept postpone
+i=$(commit $i "Merge trunk to b2")
+cd ../..
+
+say "Merge b2 to trunk"
+svn update
+cd trunk
+svn merge ../branches/b2/ --accept postpone
+svn resolved b1file
+svn resolved trunkfile
+i=$(commit $i "Merge b2 to trunk")
+cd ..
+
+say "Creating f1 from trunk with a new file"
+svn update
+svn cp trunk branches/f1
+cd branches/f1
+echo "f1" > f1file
+svn add f1file
+cd ../..
+i=$(commit $i "make f1 branch from trunk with a new file")
+
+say "Creating f2 from trunk with a new file"
+svn update
+svn cp trunk branches/f2
+cd branches/f2
+echo "f2" > f2file
+svn add f2file
+cd ../..
+i=$(commit $i "make f2 branch from trunk with a new file")
+
+say "Merge f1 and f2 to trunk in one go"
+svn update
+cd trunk
+svn merge ../branches/f1/ --accept postpone
+svn merge ../branches/f2/ --accept postpone
+i=$(commit $i "Merge f1 and f2 to trunk")
+cd ..
+
 say "Adding subdirectory to LEFT"
 svn update
 cd branches/left
@@ -174,8 +257,8 @@ cd ..
 
 say "Make PARTIAL branch"
 svn update
-i=$(commit $i "make partial branch")
 svn cp trunk/subdir branches/partial
+i=$(commit $i "make partial branch")
 
 say "Make a commit to PARTIAL"
 svn update
@@ -194,13 +277,13 @@ cd ../../
 
 say "Tagging trunk"
 svn update
-i=$(commit $i "tagging v1.0")
 svn cp trunk tags/v1.0
+i=$(commit $i "tagging v1.0")
 
 say "Branching BUGFIX from v1.0"
 svn update
-i=$(commit $i "make bugfix branch from tag")
 svn cp tags/v1.0 branches/bugfix
+i=$(commit $i "make bugfix branch from tag")
 
 say "Make a commit to BUGFIX"
 svn update

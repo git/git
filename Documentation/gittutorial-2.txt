@@ -373,7 +373,7 @@ $ git status
 #
 #       new file: closing.txt
 #
-# Changed but not updated:
+# Changes not staged for commit:
 #   (use "git add <file>..." to update what will be committed)
 #
 #       modified: file.txt

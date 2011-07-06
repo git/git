@@ -155,7 +155,7 @@ test_expect_success \
      git checkout-index -f -u -a &&
      sed -e "s/git/GIT/" file0 >file1 &&
      sed -e "s/git/GET/" file0 >file2 &&
-     rm -f file0
+     rm -f file0 &&
      git update-index --add --remove file0 file1 file2'
 
 test_expect_success \
@@ -173,8 +173,8 @@ test_expect_success \
     'compare_diff_raw expected current'
 
 test_expect_success \
-    'run diff with -B -M' \
-    'git diff-index -B -M "$tree" >current'
+    'run diff with -B -C' \
+    'git diff-index -B -C "$tree" >current'
 
 cat >expected <<\EOF
 :100644 100644 f5deac7be59e7eeab8657fd9ae706fd6a57daed2 08bb2fb671deff4c03a4d4a0a1315dff98d5732c C095	file0	file1

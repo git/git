@@ -7,16 +7,18 @@
 #include "revision.h"
 #include "quote.h"
 #include "remote.h"
+#include "string-list.h"
+#include "thread-utils.h"
 
 static int debug;
 
-struct helper_data
-{
+struct helper_data {
 	const char *name;
 	struct child_process *helper;
 	FILE *out;
 	unsigned fetch : 1,
 		import : 1,
+		export : 1,
 		option : 1,
 		push : 1,
 		connect : 1,
@@ -74,7 +76,7 @@ static void write_constant(int fd, const char *str)
 		die_errno("Full write to remote helper failed");
 }
 
-const char *remove_ext_force(const char *url)
+static const char *remove_ext_force(const char *url)
 {
 	if (url) {
 		const char *colon = strchr(url, ':');
@@ -163,6 +165,8 @@ static struct child_process *get_helper(struct transport *transport)
 			data->push = 1;
 		else if (!strcmp(capname, "import"))
 			data->import = 1;
+		else if (!strcmp(capname, "export"))
+			data->export = 1;
 		else if (!data->refspecs && !prefixcmp(capname, "refspec ")) {
 			ALLOC_GROW(refspecs,
 				   refspec_nr + 1,
@@ -170,8 +174,13 @@ static struct child_process *get_helper(struct transport *transport)
 			refspecs[refspec_nr++] = strdup(buf.buf + strlen("refspec "));
 		} else if (!strcmp(capname, "connect")) {
 			data->connect = 1;
+		} else if (!strcmp(buf.buf, "gitdir")) {
+			struct strbuf gitdir = STRBUF_INIT;
+			strbuf_addf(&gitdir, "gitdir %s\n", get_git_dir());
+			sendline(data, &gitdir);
+			strbuf_release(&gitdir);
 		} else if (mandatory) {
-			die("Unknown madatory capability %s. This remote "
+			die("Unknown mandatory capability %s. This remote "
 			    "helper probably needs newer version of Git.\n",
 			    capname);
 		}
@@ -279,9 +288,8 @@ static void standard_options(struct transport *t)
 	char buf[16];
 	int n;
 	int v = t->verbose;
-	int no_progress = v < 0 || (!t->progress && !isatty(2));
 
-	set_helper_option(t, "progress", !no_progress ? "true" : "false");
+	set_helper_option(t, "progress", t->progress ? "true" : "false");
 
 	n = snprintf(buf, sizeof(buf), "%d", v + 1);
 	if (n >= sizeof(buf))
@@ -350,6 +358,33 @@ static int get_importer(struct transport *transport, struct child_process *fasti
 
 	fastimport->git_cmd = 1;
 	return start_command(fastimport);
+}
+
+static int get_exporter(struct transport *transport,
+			struct child_process *fastexport,
+			const char *export_marks,
+			const char *import_marks,
+			struct string_list *revlist_args)
+{
+	struct child_process *helper = get_helper(transport);
+	int argc = 0, i;
+	memset(fastexport, 0, sizeof(*fastexport));
+
+	/* we need to duplicate helper->in because we want to use it after
+	 * fastexport is done with it. */
+	fastexport->out = dup(helper->in);
+	fastexport->argv = xcalloc(4 + revlist_args->nr, sizeof(*fastexport->argv));
+	fastexport->argv[argc++] = "fast-export";
+	if (export_marks)
+		fastexport->argv[argc++] = export_marks;
+	if (import_marks)
+		fastexport->argv[argc++] = import_marks;
+
+	for (i = 0; i < revlist_args->nr; i++)
+		fastexport->argv[argc++] = revlist_args->items[i].string;
+
+	fastexport->git_cmd = 1;
+	return start_command(fastexport);
 }
 
 static int fetch_with_import(struct transport *transport,
@@ -519,28 +554,16 @@ static int fetch(struct transport *transport,
 	return -1;
 }
 
-static int push_refs(struct transport *transport,
+static int push_refs_with_push(struct transport *transport,
 		struct ref *remote_refs, int flags)
 {
 	int force_all = flags & TRANSPORT_PUSH_FORCE;
 	int mirror = flags & TRANSPORT_PUSH_MIRROR;
 	struct helper_data *data = transport->data;
 	struct strbuf buf = STRBUF_INIT;
-	struct child_process *helper;
 	struct ref *ref;
 
-	if (process_connect(transport, 1)) {
-		do_take_over(transport);
-		return transport->push_refs(transport, remote_refs, flags);
-	}
-
-	if (!remote_refs) {
-		fprintf(stderr, "No refs in common and none specified; doing nothing.\n"
-			"Perhaps you should specify a branch such as 'master'.\n");
-		return 0;
-	}
-
-	helper = get_helper(transport);
+	get_helper(transport);
 	if (!data->push)
 		return 1;
 
@@ -576,7 +599,6 @@ static int push_refs(struct transport *transport,
 	if (buf.len == 0)
 		return 0;
 
-	transport->verbose = flags & TRANSPORT_PUSH_VERBOSE ? 1 : 0;
 	standard_options(transport);
 
 	if (flags & TRANSPORT_PUSH_DRY_RUN) {
@@ -658,6 +680,94 @@ static int push_refs(struct transport *transport,
 	strbuf_release(&buf);
 	return 0;
 }
+
+static int push_refs_with_export(struct transport *transport,
+		struct ref *remote_refs, int flags)
+{
+	struct ref *ref;
+	struct child_process *helper, exporter;
+	struct helper_data *data = transport->data;
+	char *export_marks = NULL, *import_marks = NULL;
+	struct string_list revlist_args = STRING_LIST_INIT_NODUP;
+	struct strbuf buf = STRBUF_INIT;
+
+	helper = get_helper(transport);
+
+	write_constant(helper->in, "export\n");
+
+	recvline(data, &buf);
+	if (debug)
+		fprintf(stderr, "Debug: Got export_marks '%s'\n", buf.buf);
+	if (buf.len) {
+		struct strbuf arg = STRBUF_INIT;
+		strbuf_addstr(&arg, "--export-marks=");
+		strbuf_addbuf(&arg, &buf);
+		export_marks = strbuf_detach(&arg, NULL);
+	}
+
+	recvline(data, &buf);
+	if (debug)
+		fprintf(stderr, "Debug: Got import_marks '%s'\n", buf.buf);
+	if (buf.len) {
+		struct strbuf arg = STRBUF_INIT;
+		strbuf_addstr(&arg, "--import-marks=");
+		strbuf_addbuf(&arg, &buf);
+		import_marks = strbuf_detach(&arg, NULL);
+	}
+
+	strbuf_reset(&buf);
+
+	for (ref = remote_refs; ref; ref = ref->next) {
+		char *private;
+		unsigned char sha1[20];
+
+		if (!data->refspecs)
+			continue;
+		private = apply_refspecs(data->refspecs, data->refspec_nr, ref->name);
+		if (private && !get_sha1(private, sha1)) {
+			strbuf_addf(&buf, "^%s", private);
+			string_list_append(&revlist_args, strbuf_detach(&buf, NULL));
+		}
+
+		string_list_append(&revlist_args, ref->name);
+
+	}
+
+	if (get_exporter(transport, &exporter,
+			 export_marks, import_marks, &revlist_args))
+		die("Couldn't run fast-export");
+
+	data->no_disconnect_req = 1;
+	finish_command(&exporter);
+	disconnect_helper(transport);
+	return 0;
+}
+
+static int push_refs(struct transport *transport,
+		struct ref *remote_refs, int flags)
+{
+	struct helper_data *data = transport->data;
+
+	if (process_connect(transport, 1)) {
+		do_take_over(transport);
+		return transport->push_refs(transport, remote_refs, flags);
+	}
+
+	if (!remote_refs) {
+		fprintf(stderr, "No refs in common and none specified; doing nothing.\n"
+			"Perhaps you should specify a branch such as 'master'.\n");
+		return 0;
+	}
+
+	if (data->push)
+		return push_refs_with_push(transport, remote_refs, flags);
+
+	if (data->export)
+		return push_refs_with_export(transport, remote_refs, flags);
+
+	return -1;
+}
+
 
 static int has_attribute(const char *attrs, const char *attr) {
 	int len;
@@ -750,4 +860,315 @@ int transport_helper_init(struct transport *transport, const char *name)
 	transport->connect = connect_helper;
 	transport->smart_options = &(data->transport_options);
 	return 0;
+}
+
+/*
+ * Linux pipes can buffer 65536 bytes at once (and most platforms can
+ * buffer less), so attempt reads and writes with up to that size.
+ */
+#define BUFFERSIZE 65536
+/* This should be enough to hold debugging message. */
+#define PBUFFERSIZE 8192
+
+/* Print bidirectional transfer loop debug message. */
+static void transfer_debug(const char *fmt, ...)
+{
+	va_list args;
+	char msgbuf[PBUFFERSIZE];
+	static int debug_enabled = -1;
+
+	if (debug_enabled < 0)
+		debug_enabled = getenv("GIT_TRANSLOOP_DEBUG") ? 1 : 0;
+	if (!debug_enabled)
+		return;
+
+	va_start(args, fmt);
+	vsnprintf(msgbuf, PBUFFERSIZE, fmt, args);
+	va_end(args);
+	fprintf(stderr, "Transfer loop debugging: %s\n", msgbuf);
+}
+
+/* Stream state: More data may be coming in this direction. */
+#define SSTATE_TRANSFERING 0
+/*
+ * Stream state: No more data coming in this direction, flushing rest of
+ * data.
+ */
+#define SSTATE_FLUSHING 1
+/* Stream state: Transfer in this direction finished. */
+#define SSTATE_FINISHED 2
+
+#define STATE_NEEDS_READING(state) ((state) <= SSTATE_TRANSFERING)
+#define STATE_NEEDS_WRITING(state) ((state) <= SSTATE_FLUSHING)
+#define STATE_NEEDS_CLOSING(state) ((state) == SSTATE_FLUSHING)
+
+/* Unidirectional transfer. */
+struct unidirectional_transfer {
+	/* Source */
+	int src;
+	/* Destination */
+	int dest;
+	/* Is source socket? */
+	int src_is_sock;
+	/* Is destination socket? */
+	int dest_is_sock;
+	/* Transfer state (TRANSFERING/FLUSHING/FINISHED) */
+	int state;
+	/* Buffer. */
+	char buf[BUFFERSIZE];
+	/* Buffer used. */
+	size_t bufuse;
+	/* Name of source. */
+	const char *src_name;
+	/* Name of destination. */
+	const char *dest_name;
+};
+
+/* Closes the target (for writing) if transfer has finished. */
+static void udt_close_if_finished(struct unidirectional_transfer *t)
+{
+	if (STATE_NEEDS_CLOSING(t->state) && !t->bufuse) {
+		t->state = SSTATE_FINISHED;
+		if (t->dest_is_sock)
+			shutdown(t->dest, SHUT_WR);
+		else
+			close(t->dest);
+		transfer_debug("Closed %s.", t->dest_name);
+	}
+}
+
+/*
+ * Tries to read read data from source into buffer. If buffer is full,
+ * no data is read. Returns 0 on success, -1 on error.
+ */
+static int udt_do_read(struct unidirectional_transfer *t)
+{
+	ssize_t bytes;
+
+	if (t->bufuse == BUFFERSIZE)
+		return 0;	/* No space for more. */
+
+	transfer_debug("%s is readable", t->src_name);
+	bytes = read(t->src, t->buf + t->bufuse, BUFFERSIZE - t->bufuse);
+	if (bytes < 0 && errno != EWOULDBLOCK && errno != EAGAIN &&
+		errno != EINTR) {
+		error("read(%s) failed: %s", t->src_name, strerror(errno));
+		return -1;
+	} else if (bytes == 0) {
+		transfer_debug("%s EOF (with %i bytes in buffer)",
+			t->src_name, t->bufuse);
+		t->state = SSTATE_FLUSHING;
+	} else if (bytes > 0) {
+		t->bufuse += bytes;
+		transfer_debug("Read %i bytes from %s (buffer now at %i)",
+			(int)bytes, t->src_name, (int)t->bufuse);
+	}
+	return 0;
+}
+
+/* Tries to write data from buffer into destination. If buffer is empty,
+ * no data is written. Returns 0 on success, -1 on error.
+ */
+static int udt_do_write(struct unidirectional_transfer *t)
+{
+	ssize_t bytes;
+
+	if (t->bufuse == 0)
+		return 0;	/* Nothing to write. */
+
+	transfer_debug("%s is writable", t->dest_name);
+	bytes = write(t->dest, t->buf, t->bufuse);
+	if (bytes < 0 && errno != EWOULDBLOCK && errno != EAGAIN &&
+		errno != EINTR) {
+		error("write(%s) failed: %s", t->dest_name, strerror(errno));
+		return -1;
+	} else if (bytes > 0) {
+		t->bufuse -= bytes;
+		if (t->bufuse)
+			memmove(t->buf, t->buf + bytes, t->bufuse);
+		transfer_debug("Wrote %i bytes to %s (buffer now at %i)",
+			(int)bytes, t->dest_name, (int)t->bufuse);
+	}
+	return 0;
+}
+
+
+/* State of bidirectional transfer loop. */
+struct bidirectional_transfer_state {
+	/* Direction from program to git. */
+	struct unidirectional_transfer ptg;
+	/* Direction from git to program. */
+	struct unidirectional_transfer gtp;
+};
+
+static void *udt_copy_task_routine(void *udt)
+{
+	struct unidirectional_transfer *t = (struct unidirectional_transfer *)udt;
+	while (t->state != SSTATE_FINISHED) {
+		if (STATE_NEEDS_READING(t->state))
+			if (udt_do_read(t))
+				return NULL;
+		if (STATE_NEEDS_WRITING(t->state))
+			if (udt_do_write(t))
+				return NULL;
+		if (STATE_NEEDS_CLOSING(t->state))
+			udt_close_if_finished(t);
+	}
+	return udt;	/* Just some non-NULL value. */
+}
+
+#ifndef NO_PTHREADS
+
+/*
+ * Join thread, with apporiate errors on failure. Name is name for the
+ * thread (for error messages). Returns 0 on success, 1 on failure.
+ */
+static int tloop_join(pthread_t thread, const char *name)
+{
+	int err;
+	void *tret;
+	err = pthread_join(thread, &tret);
+	if (!tret) {
+		error("%s thread failed", name);
+		return 1;
+	}
+	if (err) {
+		error("%s thread failed to join: %s", name, strerror(err));
+		return 1;
+	}
+	return 0;
+}
+
+/*
+ * Spawn the transfer tasks and then wait for them. Returns 0 on success,
+ * -1 on failure.
+ */
+static int tloop_spawnwait_tasks(struct bidirectional_transfer_state *s)
+{
+	pthread_t gtp_thread;
+	pthread_t ptg_thread;
+	int err;
+	int ret = 0;
+	err = pthread_create(&gtp_thread, NULL, udt_copy_task_routine,
+		&s->gtp);
+	if (err)
+		die("Can't start thread for copying data: %s", strerror(err));
+	err = pthread_create(&ptg_thread, NULL, udt_copy_task_routine,
+		&s->ptg);
+	if (err)
+		die("Can't start thread for copying data: %s", strerror(err));
+
+	ret |= tloop_join(gtp_thread, "Git to program copy");
+	ret |= tloop_join(ptg_thread, "Program to git copy");
+	return ret;
+}
+#else
+
+/* Close the source and target (for writing) for transfer. */
+static void udt_kill_transfer(struct unidirectional_transfer *t)
+{
+	t->state = SSTATE_FINISHED;
+	/*
+	 * Socket read end left open isn't a disaster if nobody
+	 * attempts to read from it (mingw compat headers do not
+	 * have SHUT_RD)...
+	 *
+	 * We can't fully close the socket since otherwise gtp
+	 * task would first close the socket it sends data to
+	 * while closing the ptg file descriptors.
+	 */
+	if (!t->src_is_sock)
+		close(t->src);
+	if (t->dest_is_sock)
+		shutdown(t->dest, SHUT_WR);
+	else
+		close(t->dest);
+}
+
+/*
+ * Join process, with apporiate errors on failure. Name is name for the
+ * process (for error messages). Returns 0 on success, 1 on failure.
+ */
+static int tloop_join(pid_t pid, const char *name)
+{
+	int tret;
+	if (waitpid(pid, &tret, 0) < 0) {
+		error("%s process failed to wait: %s", name, strerror(errno));
+		return 1;
+	}
+	if (!WIFEXITED(tret) || WEXITSTATUS(tret)) {
+		error("%s process failed", name);
+		return 1;
+	}
+	return 0;
+}
+
+/*
+ * Spawn the transfer tasks and then wait for them. Returns 0 on success,
+ * -1 on failure.
+ */
+static int tloop_spawnwait_tasks(struct bidirectional_transfer_state *s)
+{
+	pid_t pid1, pid2;
+	int ret = 0;
+
+	/* Fork thread #1: git to program. */
+	pid1 = fork();
+	if (pid1 < 0)
+		die_errno("Can't start thread for copying data");
+	else if (pid1 == 0) {
+		udt_kill_transfer(&s->ptg);
+		exit(udt_copy_task_routine(&s->gtp) ? 0 : 1);
+	}
+
+	/* Fork thread #2: program to git. */
+	pid2 = fork();
+	if (pid2 < 0)
+		die_errno("Can't start thread for copying data");
+	else if (pid2 == 0) {
+		udt_kill_transfer(&s->gtp);
+		exit(udt_copy_task_routine(&s->ptg) ? 0 : 1);
+	}
+
+	/*
+	 * Close both streams in parent as to not interfere with
+	 * end of file detection and wait for both tasks to finish.
+	 */
+	udt_kill_transfer(&s->gtp);
+	udt_kill_transfer(&s->ptg);
+	ret |= tloop_join(pid1, "Git to program copy");
+	ret |= tloop_join(pid2, "Program to git copy");
+	return ret;
+}
+#endif
+
+/*
+ * Copies data from stdin to output and from input to stdout simultaneously.
+ * Additionally filtering through given filter. If filter is NULL, uses
+ * identity filter.
+ */
+int bidirectional_transfer_loop(int input, int output)
+{
+	struct bidirectional_transfer_state state;
+
+	/* Fill the state fields. */
+	state.ptg.src = input;
+	state.ptg.dest = 1;
+	state.ptg.src_is_sock = (input == output);
+	state.ptg.dest_is_sock = 0;
+	state.ptg.state = SSTATE_TRANSFERING;
+	state.ptg.bufuse = 0;
+	state.ptg.src_name = "remote input";
+	state.ptg.dest_name = "stdout";
+
+	state.gtp.src = 0;
+	state.gtp.dest = output;
+	state.gtp.src_is_sock = 0;
+	state.gtp.dest_is_sock = (input == output);
+	state.gtp.state = SSTATE_TRANSFERING;
+	state.gtp.bufuse = 0;
+	state.gtp.src_name = "stdin";
+	state.gtp.dest_name = "remote output";
+
+	return tloop_spawnwait_tasks(&state);
 }

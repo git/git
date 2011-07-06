@@ -8,28 +8,90 @@ git-pull - Fetch from and merge with another repository or a local branch
 
 SYNOPSIS
 --------
-'git pull' <options> <repository> <refspec>...
+'git pull' [options] [<repository> [<refspec>...]]
 
 
 DESCRIPTION
 -----------
-Runs 'git fetch' with the given parameters, and calls 'git merge'
-to merge the retrieved head(s) into the current branch.
-With `--rebase`, calls 'git rebase' instead of 'git merge'.
 
-Note that you can use `.` (current directory) as the
-<repository> to pull from the local repository -- this is useful
-when merging local branches into the current branch.
+Incorporates changes from a remote repository into the current
+branch.  In its default mode, `git pull` is shorthand for
+`git fetch` followed by `git merge FETCH_HEAD`.
 
-Also note that options meant for 'git pull' itself and underlying
-'git merge' must be given before the options meant for 'git fetch'.
+More precisely, 'git pull' runs 'git fetch' with the given
+parameters and calls 'git merge' to merge the retrieved branch
+heads into the current branch.
+With `--rebase`, it runs 'git rebase' instead of 'git merge'.
 
-*Warning*: Running 'git pull' (actually, the underlying 'git merge')
+<repository> should be the name of a remote repository as
+passed to linkgit:git-fetch[1].  <refspec> can name an
+arbitrary remote ref (for example, the name of a tag) or even
+a collection of refs with corresponding remote-tracking branches
+(e.g., refs/heads/{asterisk}:refs/remotes/origin/{asterisk}),
+but usually it is the name of a branch in the remote repository.
+
+Default values for <repository> and <branch> are read from the
+"remote" and "merge" configuration for the current branch
+as set by linkgit:git-branch[1] `--track`.
+
+Assume the following history exists and the current branch is
+"`master`":
+
+------------
+	  A---B---C master on origin
+	 /
+    D---E---F---G master
+------------
+
+Then "`git pull`" will fetch and replay the changes from the remote
+`master` branch since it diverged from the local `master` (i.e., `E`)
+until its current commit (`C`) on top of `master` and record the
+result in a new commit along with the names of the two parent commits
+and a log message from the user describing the changes.
+
+------------
+	  A---B---C remotes/origin/master
+	 /         \
+    D---E---F---G---H master
+------------
+
+See linkgit:git-merge[1] for details, including how conflicts
+are presented and handled.
+
+In git 1.7.0 or later, to cancel a conflicting merge, use
+`git reset --merge`.  *Warning*: In older versions of git, running 'git pull'
 with uncommitted changes is discouraged: while possible, it leaves you
-in a state that is hard to back out of in the case of a conflict.
+in a state that may be hard to back out of in the case of a conflict.
+
+If any of the remote changes overlap with local uncommitted changes,
+the merge will be automatically cancelled and the work tree untouched.
+It is generally best to get any local changes in working order before
+pulling or stash them away with linkgit:git-stash[1].
 
 OPTIONS
 -------
+
+Options meant for 'git pull' itself and the underlying 'git merge'
+must be given before the options meant for 'git fetch'.
+
+-q::
+--quiet::
+	This is passed to both underlying git-fetch to squelch reporting of
+	during transfer, and underlying git-merge to squelch output during
+	merging.
+
+-v::
+--verbose::
+	Pass --verbose to git-fetch and git-merge.
+
+--[no-]recurse-submodules[=yes|on-demand|no]::
+	This option controls if new commits of all populated submodules should
+	be fetched too (see linkgit:git-config[1] and linkgit:gitmodules[5]).
+	That might be necessary to get the data needed for merging submodule
+	commits, a feature git learned in 1.7.3. Notice that the result of a
+	merge will not be checked out in the submodule, "git submodule update"
+	has to be called afterwards to bring the work tree up to date with the
+	merge result.
 
 Options related to merging
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -39,12 +101,15 @@ include::merge-options.txt[]
 :git-pull: 1
 
 --rebase::
-	Instead of a merge, perform a rebase after fetching.  If
-	there is a remote ref for the upstream branch, and this branch
-	was rebased since last fetched, the rebase uses that information
-	to avoid rebasing non-local changes. To make this the default
-	for branch `<name>`, set configuration `branch.<name>.rebase`
-	to `true`.
+	Rebase the current branch on top of the upstream branch after
+	fetching.  If there is a remote-tracking branch corresponding to
+	the upstream branch and the upstream branch was rebased since last
+	fetched, the rebase uses that information to avoid rebasing
+	non-local changes.
++
+See `branch.<name>.rebase` and `branch.autosetuprebase` in
+linkgit:git-config[1] if you want to make `git pull` always use
+`{litdd}rebase` instead of merging.
 +
 [NOTE]
 This is a potentially _dangerous_ mode of operation.
@@ -81,7 +146,7 @@ and if there is not any such variable, the value on `URL: ` line
 in `$GIT_DIR/remotes/<origin>` file is used.
 
 In order to determine what remote branches to fetch (and
-optionally store in the tracking branches) when the command is
+optionally store in the remote-tracking branches) when the command is
 run without any refspec parameters on the command line, values
 of the configuration variable `remote.<origin>.fetch` are
 consulted, and if there aren't any, `$GIT_DIR/remotes/<origin>`
@@ -94,9 +159,9 @@ refs/heads/*:refs/remotes/origin/*
 ------------
 
 A globbing refspec must have a non-empty RHS (i.e. must store
-what were fetched in tracking branches), and its LHS and RHS
+what were fetched in remote-tracking branches), and its LHS and RHS
 must end with `/*`.  The above specifies that all remote
-branches are tracked using tracking branches in
+branches are tracked using remote-tracking branches in
 `refs/remotes/origin/` hierarchy under the same name.
 
 The rule to determine which remote branch to merge after
@@ -155,21 +220,18 @@ If you tried a pull which resulted in a complex conflicts and
 would want to start over, you can recover with 'git reset'.
 
 
+BUGS
+----
+Using --recurse-submodules can only fetch new commits in already checked
+out submodules right now. When e.g. upstream added a new submodule in the
+just fetched commits of the superproject the submodule itself can not be
+fetched, making it impossible to check out that submodule later without
+having to do a fetch again. This is expected to be fixed in a future git
+version.
+
 SEE ALSO
 --------
 linkgit:git-fetch[1], linkgit:git-merge[1], linkgit:git-config[1]
-
-
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org>
-and Junio C Hamano <gitster@pobox.com>
-
-Documentation
---------------
-Documentation by Jon Loeliger,
-David Greaves,
-Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---

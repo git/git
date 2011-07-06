@@ -8,13 +8,14 @@
 #### Copyright The Open University UK - 2006.
 ####
 #### Authors: Martyn Smith    <martyn@catalyst.net.nz>
-####          Martin Langhoff <martin@catalyst.net.nz>
+####          Martin Langhoff <martin@laptop.org>
 ####
 ####
 #### Released under the GNU Public License, version 2.
 ####
 ####
 
+use 5.008;
 use strict;
 use warnings;
 use bytes;
@@ -183,12 +184,58 @@ if ($state->{method} eq 'pserver') {
        exit 1;
     }
     $line = <STDIN>; chomp $line;
-    unless ($line eq 'anonymous') {
-       print "E Only anonymous user allowed via pserver\n";
-       print "I HATE YOU\n";
-       exit 1;
+    my $user = $line;
+    $line = <STDIN>; chomp $line;
+    my $password = $line;
+
+    if ($user eq 'anonymous') {
+        # "A" will be 1 byte, use length instead in case the
+        # encryption method ever changes (yeah, right!)
+        if (length($password) > 1 ) {
+            print "E Don't supply a password for the `anonymous' user\n";
+            print "I HATE YOU\n";
+            exit 1;
+        }
+
+        # Fall through to LOVE
+    } else {
+        # Trying to authenticate a user
+        if (not exists $cfg->{gitcvs}->{authdb}) {
+            print "E the repo config file needs a [gitcvs] section with an 'authdb' parameter set to the filename of the authentication database\n";
+            print "I HATE YOU\n";
+            exit 1;
+        }
+
+        my $authdb = $cfg->{gitcvs}->{authdb};
+
+        unless (-e $authdb) {
+            print "E The authentication database specified in [gitcvs.authdb] does not exist\n";
+            print "I HATE YOU\n";
+            exit 1;
+        }
+
+        my $auth_ok;
+        open my $passwd, "<", $authdb or die $!;
+        while (<$passwd>) {
+            if (m{^\Q$user\E:(.*)}) {
+                if (crypt($user, descramble($password)) eq $1) {
+                    $auth_ok = 1;
+                }
+            };
+        }
+        close $passwd;
+
+        unless ($auth_ok) {
+            print "I HATE YOU\n";
+            exit 1;
+        }
+
+        # Fall through to LOVE
     }
-    $line = <STDIN>; chomp $line;    # validate the password?
+
+    # For checking whether the user is anonymous on commit
+    $state->{user} = $user;
+
     $line = <STDIN>; chomp $line;
     unless ($line eq "END $request REQUEST") {
        die "E Do not understand $line -- expecting END $request REQUEST\n";
@@ -1271,9 +1318,9 @@ sub req_ci
 
     $log->info("req_ci : " . ( defined($data) ? $data : "[NULL]" ));
 
-    if ( $state->{method} eq 'pserver')
+    if ( $state->{method} eq 'pserver' and $state->{user} eq 'anonymous' )
     {
-        print "error 1 pserver access cannot commit\n";
+        print "error 1 anonymous user cannot commit via pserver\n";
         cleanupWorkTree();
         exit;
     }
@@ -2369,14 +2416,19 @@ sub kopts_from_path
     if ( defined ( $cfg->{gitcvs}{usecrlfattr} ) and
          $cfg->{gitcvs}{usecrlfattr} =~ /\s*(1|true|yes)\s*$/i )
     {
-        my ($val) = check_attr( "crlf", $path );
-        if ( $val eq "set" )
+        my ($val) = check_attr( "text", $path );
+        if ( $val eq "unspecified" )
         {
-            return "";
+            $val = check_attr( "crlf", $path );
         }
-        elsif ( $val eq "unset" )
+        if ( $val eq "unset" )
         {
             return "-kb"
+        }
+        elsif ( check_attr( "eol", $path ) ne "unspecified" ||
+                $val eq "set" || $val eq "input" )
+        {
+            return "";
         }
         else
         {
@@ -2586,13 +2638,50 @@ sub cvs_author
     $author;
 }
 
+
+sub descramble
+{
+    # This table is from src/scramble.c in the CVS source
+    my @SHIFTS = (
+        0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
+        16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
+        114,120, 53, 79, 96,109, 72,108, 70, 64, 76, 67,116, 74, 68, 87,
+        111, 52, 75,119, 49, 34, 82, 81, 95, 65,112, 86,118,110,122,105,
+        41, 57, 83, 43, 46,102, 40, 89, 38,103, 45, 50, 42,123, 91, 35,
+        125, 55, 54, 66,124,126, 59, 47, 92, 71,115, 78, 88,107,106, 56,
+        36,121,117,104,101,100, 69, 73, 99, 63, 94, 93, 39, 37, 61, 48,
+        58,113, 32, 90, 44, 98, 60, 51, 33, 97, 62, 77, 84, 80, 85,223,
+        225,216,187,166,229,189,222,188,141,249,148,200,184,136,248,190,
+        199,170,181,204,138,232,218,183,255,234,220,247,213,203,226,193,
+        174,172,228,252,217,201,131,230,197,211,145,238,161,179,160,212,
+        207,221,254,173,202,146,224,151,140,196,205,130,135,133,143,246,
+        192,159,244,239,185,168,215,144,139,165,180,157,147,186,214,176,
+        227,231,219,169,175,156,206,198,129,164,150,210,154,177,134,127,
+        182,128,158,208,162,132,167,209,149,241,153,251,237,236,171,195,
+        243,233,253,240,194,250,191,155,142,137,245,235,163,242,178,152
+    );
+    my ($str) = @_;
+
+    # This should never happen, the same password format (A) has been
+    # used by CVS since the beginning of time
+    {
+        my $fmt = substr($str, 0, 1);
+        die "invalid password format `$fmt'" unless $fmt eq 'A';
+    }
+
+    my @str = unpack "C*", substr($str, 1);
+    my $ret = join '', map { chr $SHIFTS[$_] } @str;
+    return $ret;
+}
+
+
 package GITCVS::log;
 
 ####
 #### Copyright The Open University UK - 2006.
 ####
 #### Authors: Martyn Smith    <martyn@catalyst.net.nz>
-####          Martin Langhoff <martin@catalyst.net.nz>
+####          Martin Langhoff <martin@laptop.org>
 ####
 ####
 
@@ -2759,7 +2848,7 @@ package GITCVS::updater;
 #### Copyright The Open University UK - 2006.
 ####
 #### Authors: Martyn Smith    <martyn@catalyst.net.nz>
-####          Martin Langhoff <martin@catalyst.net.nz>
+####          Martin Langhoff <martin@laptop.org>
 ####
 ####
 

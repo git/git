@@ -14,7 +14,8 @@ add_blob() {
 	BLOB=$(echo aleph_0 | git hash-object -w --stdin) &&
 	BLOB_FILE=.git/objects/$(echo $BLOB | sed "s/^../&\//") &&
 	test $((1 + $before)) = $(git count-objects | sed "s/ .*//") &&
-	test -f $BLOB_FILE
+	test -f $BLOB_FILE &&
+	test-chmtime =+0 $BLOB_FILE
 }
 
 test_expect_success setup '
@@ -144,6 +145,38 @@ test_expect_success 'gc --prune=<date>' '
 	git gc --prune=5002.days.ago &&
 	test -f $BLOB_FILE &&
 	git gc --prune=5000.days.ago &&
+	test ! -f $BLOB_FILE
+
+'
+
+test_expect_success 'gc --prune=never' '
+
+	add_blob &&
+	git gc --prune=never &&
+	test -f $BLOB_FILE &&
+	git gc --prune=now &&
+	test ! -f $BLOB_FILE
+
+'
+
+test_expect_success 'gc respects gc.pruneExpire=never' '
+
+	git config gc.pruneExpire never &&
+	add_blob &&
+	git gc &&
+	test -f $BLOB_FILE &&
+	git config gc.pruneExpire now &&
+	git gc &&
+	test ! -f $BLOB_FILE
+
+'
+
+test_expect_success 'prune --expire=never' '
+
+	add_blob &&
+	git prune --expire=never &&
+	test -f $BLOB_FILE &&
+	git prune &&
 	test ! -f $BLOB_FILE
 
 '

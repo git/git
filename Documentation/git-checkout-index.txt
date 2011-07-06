@@ -13,7 +13,7 @@ SYNOPSIS
 		   [--stage=<number>|all]
 		   [--temp]
 		   [-z] [--stdin]
-		   [--] [<file>]\*
+		   [--] [<file>...]
 
 DESCRIPTION
 -----------
@@ -171,18 +171,6 @@ $ git checkout-index --prefix=.merged- Makefile
 +
 This will check out the currently cached copy of `Makefile`
 into the file `.merged-Makefile`.
-
-
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org>
-
-
-Documentation
---------------
-Documentation by David Greaves,
-Junio C Hamano and the git-list <git@vger.kernel.org>.
-
 
 GIT
 ---

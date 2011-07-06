@@ -28,22 +28,6 @@ embedded' &&
      git commit -m 'add files with tabs and newlines'
 "
 
-# Determine rm behavior
-# Later we will try removing an unremovable path to make sure
-# git rm barfs, but if the test is run as root that cannot be
-# arranged.
-: >test-file
-chmod a-w .
-rm -f test-file 2>/dev/null
-if test -f test-file
-then
-	test_set_prereq RO_DIR
-else
-	say 'skipping removal failure test (perhaps running as root?)'
-fi
-chmod 775 .
-rm -f test-file
-
 test_expect_success \
     'Pre-check that foo exists and is in index before git rm foo' \
     '[ -f foo ] && git ls-files --error-unmatch foo'
@@ -112,7 +96,7 @@ test_expect_success FUNNYNAMES \
     "git rm -f 'space embedded' 'tab	embedded' 'newline
 embedded'"
 
-test_expect_success RO_DIR 'Test that "git rm -f" fails if its rm fails' '
+test_expect_success SANITY 'Test that "git rm -f" fails if its rm fails' '
 	chmod a-w . &&
 	test_must_fail git rm -f baz &&
 	chmod 775 .
@@ -256,11 +240,10 @@ test_expect_success 'refresh index before checking if it is up-to-date' '
 
 test_expect_success 'choking "git rm" should not let it die with cruft' '
 	git reset -q --hard &&
-	H=0000000000000000000000000000000000000000 &&
 	i=0 &&
 	while test $i -lt 12000
 	do
-	    echo "100644 $H 0	some-file-$i"
+	    echo "100644 $_z40 0	some-file-$i"
 	    i=$(( $i + 1 ))
 	done | git update-index --index-info &&
 	git rm -n "some-file-*" | :;
@@ -269,6 +252,14 @@ test_expect_success 'choking "git rm" should not let it die with cruft' '
 	rm -f .git/index.lock
 	git reset -q --hard
 	test "$status" != 0
+'
+
+test_expect_success 'rm removes subdirectories recursively' '
+	mkdir -p dir/subdir/subsubdir &&
+	echo content >dir/subdir/subsubdir/file &&
+	git add dir/subdir/subsubdir/file &&
+	git rm -f dir/subdir/subsubdir/file &&
+	! test -d dir
 '
 
 test_done

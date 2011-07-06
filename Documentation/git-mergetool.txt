@@ -7,7 +7,7 @@ git-mergetool - Run merge conflict resolution tools to resolve merge conflicts
 
 SYNOPSIS
 --------
-'git mergetool' [--tool=<tool>] [-y|--no-prompt|--prompt] [<file>]...
+'git mergetool' [--tool=<tool>] [-y|--no-prompt|--prompt] [<file>...]
 
 DESCRIPTION
 -----------
@@ -26,8 +26,8 @@ OPTIONS
 --tool=<tool>::
 	Use the merge resolution program specified by <tool>.
 	Valid merge tools are:
-	kdiff3, tkdiff, meld, xxdiff, emerge, vimdiff, gvimdiff, ecmerge,
-	diffuse, tortoisemerge, opendiff, p4merge and araxis.
+	araxis, bc3, diffuse, ecmerge, emerge, gvimdiff, kdiff3,
+	meld, opendiff, p4merge, tkdiff, tortoisemerge, vimdiff and xxdiff.
 +
 If a merge resolution program is not specified, 'git mergetool'
 will use the configuration variable `merge.tool`.  If the
@@ -72,13 +72,15 @@ success of the resolution after the custom tool has exited.
 	This is the default behaviour; the option is provided to
 	override any configuration settings.
 
-Author
-------
-Written by Theodore Y Ts'o <tytso@mit.edu>
+TEMPORARY FILES
+---------------
+`git mergetool` creates `*.orig` backup files while resolving merges.
+These are safe to remove once a file has been merged and its
+`git mergetool` session has completed.
 
-Documentation
---------------
-Documentation by Theodore Y Ts'o.
+Setting the `mergetool.keepBackup` configuration variable to `false`
+causes `git mergetool` to automatically remove the backup as files
+are successfully merged.
 
 GIT
 ---

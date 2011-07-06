@@ -72,9 +72,6 @@ plugin. Most functionality works fine with both of these clients.
 LIMITATIONS
 -----------
 
-Currently cvsserver works over SSH connections for read/write clients, and
-over pserver for anonymous CVS access.
-
 CVS clients cannot tag, branch or perform GIT merges.
 
 'git-cvsserver' maps GIT branches to CVS modules. This is very different
@@ -84,7 +81,7 @@ one or more directories.
 INSTALLATION
 ------------
 
-1. If you are going to offer anonymous CVS access via pserver, add a line in
+1. If you are going to offer CVS access via pserver, add a line in
    /etc/inetd.conf like
 +
 --
@@ -100,6 +97,38 @@ looks like
 ------
    cvspserver stream tcp nowait nobody /usr/bin/git-cvsserver git-cvsserver pserver
 
+------
+
+Only anonymous access is provided by pserve by default. To commit you
+will have to create pserver accounts, simply add a gitcvs.authdb
+setting in the config file of the repositories you want the cvsserver
+to allow writes to, for example:
+
+------
+
+   [gitcvs]
+	authdb = /etc/cvsserver/passwd
+
+------
+The format of these files is username followed by the crypted password,
+for example:
+
+------
+   myuser:$1Oyx5r9mdGZ2
+   myuser:$1$BA)@$vbnMJMDym7tA32AamXrm./
+------
+You can use the 'htpasswd' facility that comes with Apache to make these
+files, but Apache's MD5 crypt method differs from the one used by most C
+library's crypt() function, so don't use the -m option.
+
+Alternatively you can produce the password with perl's crypt() operator:
+-----
+   perl -e 'my ($user, $pass) = @ARGV; printf "%s:%s\n", $user, crypt($user, $pass)' $USER password
+-----
+
+Then provide your password via the pserver method, for example:
+------
+   cvs -d:pserver:someuser:somepassword <at> server/path/repo.git co <HEAD_name>
 ------
 No special setup is needed for SSH access, other than having GIT tools
 in the PATH. If you have clients that do not accept the CVS_SERVER
@@ -223,7 +252,7 @@ Configuring database backend
 
 'git-cvsserver' uses the Perl DBI module. Please also read
 its documentation if changing these variables, especially
-about `DBI->connect()`.
+about `DBI\->connect()`.
 
 gitcvs.dbname::
 	Database name. The exact meaning depends on the
@@ -337,19 +366,16 @@ CRLF Line Ending Conversions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 By default the server leaves the '-k' mode blank for all files,
-which causes the cvs client to treat them as a text files, subject
-to crlf conversion on some platforms.
+which causes the CVS client to treat them as a text files, subject
+to end-of-line conversion on some platforms.
 
-You can make the server use `crlf` attributes to set the '-k' modes
-for files by setting the `gitcvs.usecrlfattr` config variable.
-In this case, if `crlf` is explicitly unset ('-crlf'), then the
-server will set '-kb' mode for binary files. If `crlf` is set,
-then the '-k' mode will explicitly be left blank.  See
-also linkgit:gitattributes[5] for more information about the `crlf`
-attribute.
+You can make the server use the end-of-line conversion attributes to
+set the '-k' modes for files by setting the `gitcvs.usecrlfattr`
+config variable.  See linkgit:gitattributes[5] for more information
+about end-of-line conversion.
 
 Alternatively, if `gitcvs.usecrlfattr` config is not enabled
-or if the `crlf` attribute is unspecified for a filename, then
+or the attributes do not allow automatic detection for a filename, then
 the server uses the `gitcvs.allbinary` config for the default setting.
 If `gitcvs.allbinary` is set, then file not otherwise
 specified will default to '-kb' mode. Otherwise the '-k' mode
@@ -364,22 +390,6 @@ and `gitcvs.allbinary` to "guess".
 Dependencies
 ------------
 'git-cvsserver' depends on DBD::SQLite.
-
-Copyright and Authors
----------------------
-
-This program is copyright The Open University UK - 2006.
-
-Authors:
-
-- Martyn Smith    <martyn@catalyst.net.nz>
-- Martin Langhoff <martin@catalyst.net.nz>
-
-with ideas and patches from participants of the git-list <git@vger.kernel.org>.
-
-Documentation
---------------
-Documentation by Martyn Smith <martyn@catalyst.net.nz>, Martin Langhoff <martin@catalyst.net.nz>, and Matthias Urlichs <smurf@smurf.noris.de>.
 
 GIT
 ---

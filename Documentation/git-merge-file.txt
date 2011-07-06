@@ -10,7 +10,7 @@ SYNOPSIS
 --------
 [verse]
 'git merge-file' [-L <current-name> [-L <base-name> [-L <other-name>]]]
-	[--ours|--theirs] [-p|--stdout] [-q|--quiet]
+	[--ours|--theirs|--union] [-p|--stdout] [-q|--quiet] [--marker-size=<n>]
 	<current-file> <base-file> <other-file>
 
 
@@ -35,9 +35,10 @@ normally outputs a warning and brackets the conflict with lines containing
 	>>>>>>> B
 
 If there are conflicts, the user should edit the result and delete one of
-the alternatives.  When `--ours` or `--theirs` option is in effect, however,
-these conflicts are resolved favouring lines from `<current-file>` or
-lines from `<other-file>` respectively.
+the alternatives.  When `--ours`, `--theirs`, or `--union` option is in effect,
+however, these conflicts are resolved favouring lines from `<current-file>`,
+lines from `<other-file>`, or lines from both respectively.  The length of the
+conflict markers can be given with the `--marker-size` option.
 
 The exit value of this program is negative on error, and the number of
 conflicts otherwise. If the merge was clean, the exit value is 0.
@@ -67,8 +68,9 @@ OPTIONS
 
 --ours::
 --theirs::
+--union::
 	Instead of leaving conflicts in the file, resolve conflicts
-	favouring our (or their) side of the lines.
+	favouring our (or their or both) side of the lines.
 
 
 EXAMPLES
@@ -83,17 +85,6 @@ git merge-file -L a -L b -L c tmp/a123 tmp/b234 tmp/c345::
 
 	merges tmp/a123 and tmp/c345 with the base tmp/b234, but uses labels
 	`a` and `c` instead of `tmp/a123` and `tmp/c345`.
-
-
-Author
-------
-Written by Johannes Schindelin <johannes.schindelin@gmx.de>
-
-
-Documentation
---------------
-Documentation by Johannes Schindelin and the git-list <git@vger.kernel.org>,
-with parts copied from the original documentation of RCS 'merge'.
 
 GIT
 ---

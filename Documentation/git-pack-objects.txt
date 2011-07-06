@@ -11,8 +11,8 @@ SYNOPSIS
 [verse]
 'git pack-objects' [-q | --progress | --all-progress] [--all-progress-implied]
 	[--no-reuse-delta] [--delta-base-offset] [--non-empty]
-	[--local] [--incremental] [--window=N] [--depth=N]
-	[--revs [--unpacked | --all]*] [--stdout | base-name]
+	[--local] [--incremental] [--window=<n>] [--depth=<n>]
+	[--revs [--unpacked | --all]] [--stdout | base-name]
 	[--keep-true-parents] < object-list
 
 
@@ -21,26 +21,27 @@ DESCRIPTION
 Reads list of objects from the standard input, and writes a packed
 archive with specified base-name, or to the standard output.
 
-A packed archive is an efficient way to transfer set of objects
-between two repositories, and also is an archival format which
-is efficient to access.  The packed archive format (.pack) is
-designed to be self contained so that it can be unpacked without
-any further information, but for fast, random access to the objects
-in the pack, a pack index file (.idx) will be generated.
+A packed archive is an efficient way to transfer a set of objects
+between two repositories as well as an access efficient archival
+format.  In a packed archive, an object is either stored as a
+compressed whole or as a difference from some other object.
+The latter is often called a delta.
 
-Placing both in the pack/ subdirectory of $GIT_OBJECT_DIRECTORY (or
+The packed archive format (.pack) is designed to be self-contained
+so that it can be unpacked without any further information. Therefore,
+each object that a delta depends upon must be present within the pack.
+
+A pack index file (.idx) is generated for fast, random access to the
+objects in the pack. Placing both the index file (.idx) and the packed
+archive (.pack) in the pack/ subdirectory of $GIT_OBJECT_DIRECTORY (or
 any of the directories on $GIT_ALTERNATE_OBJECT_DIRECTORIES)
-enables git to read from such an archive.
+enables git to read from the pack archive.
 
 The 'git unpack-objects' command can read the packed archive and
 expand the objects contained in the pack into "one-file
 one-object" format; this is typically done by the smart-pull
 commands when a pack is created on-the-fly for efficient network
 transport by their peers.
-
-In a packed archive, an object is either stored as a compressed
-whole, or as a difference from some other object.  The latter is
-often called a delta.
 
 
 OPTIONS
@@ -73,7 +74,7 @@ base-name::
 --all::
 	This implies `--revs`.  In addition to the list of
 	revision arguments read from the standard input, pretend
-	as if all refs under `$GIT_DIR/refs` are specified to be
+	as if all refs under `refs/` are specified to be
 	included.
 
 --include-tag::
@@ -81,8 +82,8 @@ base-name::
 	reference was included in the resulting packfile.  This
 	can be useful to send new tags to native git clients.
 
---window=[N]::
---depth=[N]::
+--window=<n>::
+--depth=<n>::
 	These two options affect how the objects contained in
 	the pack are stored using delta compression.  The
 	objects are first internally sorted by type, size and
@@ -94,10 +95,10 @@ base-name::
 	times to get to the necessary object.
 	The default value for --window is 10 and --depth is 50.
 
---window-memory=[N]::
+--window-memory=<n>::
 	This option provides an additional limit on top of `--window`;
 	the window size will dynamically scale down so as to not take
-	up more than N bytes in memory.  This is useful in
+	up more than '<n>' bytes in memory.  This is useful in
 	repositories with a mix of large and small objects to not run
 	out of memory with a large window, but still be able to take
 	advantage of the large window for the smaller objects.  The
@@ -105,7 +106,7 @@ base-name::
 	`--window-memory=0` makes memory usage unlimited, which is the
 	default.
 
---max-pack-size=[N]::
+--max-pack-size=<n>::
 	Maximum size of each output pack file. The size can be suffixed with
 	"k", "m", or "g". The minimum size allowed is limited to 1 MiB.
 	If specified,  multiple packfiles may be created.
@@ -114,18 +115,17 @@ base-name::
 
 --honor-pack-keep::
 	This flag causes an object already in a local pack that
-	has a .keep file to be ignored, even if it appears in the
-	standard input.
+	has a .keep file to be ignored, even if it would have
+	otherwise been packed.
 
 --incremental::
-	This flag causes an object already in a pack ignored
-	even if it appears in the standard input.
+	This flag causes an object already in a pack to be ignored
+	even if it would have otherwise been packed.
 
 --local::
-	This flag is similar to `--incremental`; instead of
-	ignoring all packed objects, it only ignores objects
-	that are packed and/or not in the local object store
-	(i.e. borrowed from an alternate).
+	This flag causes an object that is borrowed from an alternate
+	object store to be ignored even if it would have otherwise been
+	packed.
 
 --non-empty::
         Only create a packed archive if it would contain at
@@ -171,7 +171,7 @@ base-name::
 	wholesale enforcement of a different compression level on the
 	packed data is desired.
 
---compression=[N]::
+--compression=<n>::
 	Specifies compression level for newly-compressed data in the
 	generated pack.  If not specified,  pack compression level is
 	determined first by pack.compression,  then by core.compression,
@@ -179,16 +179,31 @@ base-name::
 	Add --no-reuse-object if you want to force a uniform compression
 	level on all data no matter the source.
 
+--thin::
+	Create a "thin" pack by omitting the common objects between a
+	sender and a receiver in order to reduce network transfer. This
+	option only makes sense in conjunction with --stdout.
++
+Note: A thin pack violates the packed archive format by omitting
+required objects and is thus unusable by git without making it
+self-contained. Use `git index-pack --fix-thin`
+(see linkgit:git-index-pack[1]) to restore the self-contained property.
+
 --delta-base-offset::
-	A packed archive can express base object of a delta as
-	either 20-byte object name or as an offset in the
-	stream, but older version of git does not understand the
+	A packed archive can express the base object of a delta as
+	either a 20-byte object name or as an offset in the
+	stream, but ancient versions of git don't understand the
 	latter.  By default, 'git pack-objects' only uses the
 	former format for better compatibility.  This option
 	allows the command to use the latter format for
 	compactness.  Depending on the average delta chain
 	length, this option typically shrinks the resulting
 	packfile by 3-5 per-cent.
++
+Note: Porcelain commands such as `git gc` (see linkgit:git-gc[1]),
+`git repack` (see linkgit:git-repack[1]) pass this option by default
+in modern git when they put objects in your repository into pack files.
+So does `git bundle` (see linkgit:git-bundle[1]) when it creates a bundle.
 
 --threads=<n>::
 	Specifies the number of threads to spawn when searching for best
@@ -208,15 +223,6 @@ base-name::
 --keep-true-parents::
 	With this option, parents that are hidden by grafts are packed
 	nevertheless.
-
-
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org>
-
-Documentation
--------------
-Documentation by Junio C Hamano
 
 SEE ALSO
 --------

@@ -40,7 +40,45 @@ the other tree did, declaring 'our' history contains all that happened in it.
 theirs;;
 	This is opposite of 'ours'.
 
-subtree[=path];;
+patience;;
+	With this option, 'merge-recursive' spends a little extra time
+	to avoid mismerges that sometimes occur due to unimportant
+	matching lines (e.g., braces from distinct functions).  Use
+	this when the branches to be merged have diverged wildly.
+	See also linkgit:git-diff[1] `--patience`.
+
+ignore-space-change;;
+ignore-all-space;;
+ignore-space-at-eol;;
+	Treats lines with the indicated type of whitespace change as
+	unchanged for the sake of a three-way merge.  Whitespace
+	changes mixed with other changes to a line are not ignored.
+	See also linkgit:git-diff[1] `-b`, `-w`, and
+	`--ignore-space-at-eol`.
++
+* If 'their' version only introduces whitespace changes to a line,
+  'our' version is used;
+* If 'our' version introduces whitespace changes but 'their'
+  version includes a substantial change, 'their' version is used;
+* Otherwise, the merge proceeds in the usual way.
+
+renormalize;;
+	This runs a virtual check-out and check-in of all three stages
+	of a file when resolving a three-way merge.  This option is
+	meant to be used when merging branches with different clean
+	filters or end-of-line normalization rules.  See "Merging
+	branches with differing checkin/checkout attributes" in
+	linkgit:gitattributes[5] for details.
+
+no-renormalize;;
+	Disables the `renormalize` option.  This overrides the
+	`merge.renormalize` configuration variable.
+
+rename-threshold=<n>;;
+	Controls the similarity threshold used for rename detection.
+	See also linkgit:git-diff[1] `-M`.
+
+subtree[=<path>];;
 	This option is a more advanced form of 'subtree' strategy, where
 	the strategy makes a guess on how two trees must be shifted to
 	match with each other when merging.  Instead, the specified path

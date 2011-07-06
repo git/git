@@ -5,20 +5,38 @@
 #include "strbuf.h"
 #include "cache.h"
 #include "commit.h"
+#include "notes.h"
+
+#define DEFAULT_MERGE_LOG_LEN 20
 
 extern const char git_version_string[];
 extern const char git_usage_string[];
 extern const char git_more_info_string[];
 
-extern void list_common_cmds_help(void);
-extern const char *help_unknown_cmd(const char *cmd);
 extern void prune_packed_objects(int);
-extern int fmt_merge_msg(int merge_summary, struct strbuf *in,
-	struct strbuf *out);
-extern int commit_tree(const char *msg, unsigned char *tree,
-		struct commit_list *parents, unsigned char *ret,
-		const char *author);
+extern int fmt_merge_msg(struct strbuf *in, struct strbuf *out,
+			 int merge_title, int shortlog_len);
+extern void commit_notes(struct notes_tree *t, const char *msg);
+
+struct notes_rewrite_cfg {
+	struct notes_tree **trees;
+	const char *cmd;
+	int enabled;
+	combine_notes_fn combine;
+	struct string_list *refs;
+	int refs_from_env;
+	int mode_from_env;
+};
+
+combine_notes_fn parse_combine_notes_fn(const char *v);
+struct notes_rewrite_cfg *init_copy_notes_for_rewrite(const char *cmd);
+int copy_note_for_rewrite(struct notes_rewrite_cfg *c,
+			  const unsigned char *from_obj, const unsigned char *to_obj);
+void finish_copy_notes_for_rewrite(struct notes_rewrite_cfg *c);
+
 extern int check_pager_config(const char *cmd);
+
+extern int textconv_object(const char *path, unsigned mode, const unsigned char *sha1, char **buf, unsigned long *buf_size);
 
 extern int cmd_add(int argc, const char **argv, const char *prefix);
 extern int cmd_annotate(int argc, const char **argv, const char *prefix);
@@ -39,6 +57,7 @@ extern int cmd_clone(int argc, const char **argv, const char *prefix);
 extern int cmd_clean(int argc, const char **argv, const char *prefix);
 extern int cmd_commit(int argc, const char **argv, const char *prefix);
 extern int cmd_commit_tree(int argc, const char **argv, const char *prefix);
+extern int cmd_config(int argc, const char **argv, const char *prefix);
 extern int cmd_count_objects(int argc, const char **argv, const char *prefix);
 extern int cmd_describe(int argc, const char **argv, const char *prefix);
 extern int cmd_diff_files(int argc, const char **argv, const char *prefix);
@@ -78,6 +97,7 @@ extern int cmd_mktag(int argc, const char **argv, const char *prefix);
 extern int cmd_mktree(int argc, const char **argv, const char *prefix);
 extern int cmd_mv(int argc, const char **argv, const char *prefix);
 extern int cmd_name_rev(int argc, const char **argv, const char *prefix);
+extern int cmd_notes(int argc, const char **argv, const char *prefix);
 extern int cmd_pack_objects(int argc, const char **argv, const char *prefix);
 extern int cmd_pack_redundant(int argc, const char **argv, const char *prefix);
 extern int cmd_patch_id(int argc, const char **argv, const char *prefix);
@@ -89,7 +109,9 @@ extern int cmd_read_tree(int argc, const char **argv, const char *prefix);
 extern int cmd_receive_pack(int argc, const char **argv, const char *prefix);
 extern int cmd_reflog(int argc, const char **argv, const char *prefix);
 extern int cmd_remote(int argc, const char **argv, const char *prefix);
-extern int cmd_config(int argc, const char **argv, const char *prefix);
+extern int cmd_remote_ext(int argc, const char **argv, const char *prefix);
+extern int cmd_remote_fd(int argc, const char **argv, const char *prefix);
+extern int cmd_repo_config(int argc, const char **argv, const char *prefix);
 extern int cmd_rerere(int argc, const char **argv, const char *prefix);
 extern int cmd_reset(int argc, const char **argv, const char *prefix);
 extern int cmd_rev_list(int argc, const char **argv, const char *prefix);

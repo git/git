@@ -131,6 +131,7 @@ proc unmerged_files {files} {
 
 proc parseviewargs {n arglist} {
     global vdatemode vmergeonly vflags vdflags vrevs vfiltered vorigargs env
+    global worddiff git_version
 
     set vdatemode($n) 0
     set vmergeonly($n) 0
@@ -168,7 +169,7 @@ proc parseviewargs {n arglist} {
 		lappend diffargs $arg
 	    }
 	    "--raw" - "--patch-with-raw" - "--patch-with-stat" -
-	    "--name-only" - "--name-status" - "--color" - "--color-words" -
+	    "--name-only" - "--name-status" - "--color" -
 	    "--log-size" - "--pretty=*" - "--decorate" - "--abbrev-commit" -
 	    "--cc" - "-z" - "--header" - "--parents" - "--boundary" -
 	    "--no-color" - "-g" - "--walk-reflogs" - "--no-walk" -
@@ -176,6 +177,18 @@ proc parseviewargs {n arglist} {
 	    "--objects" - "--objects-edge" - "--reverse" {
 		# These cause our parsing of git log's output to fail, or else
 		# they're options we want to set ourselves, so ignore them.
+	    }
+	    "--color-words*" - "--word-diff=color" {
+		# These trigger a word diff in the console interface,
+		# so help the user by enabling our own support
+		if {[package vcompare $git_version "1.7.2"] >= 0} {
+		    set worddiff [mc "Color words"]
+		}
+	    }
+	    "--word-diff*" {
+		if {[package vcompare $git_version "1.7.2"] >= 0} {
+		    set worddiff [mc "Markup words"]
+		}
 	    }
 	    "--stat=*" - "--numstat" - "--shortstat" - "--summary" -
 	    "--check" - "--exit-code" - "--quiet" - "--topo-order" -
@@ -313,6 +326,7 @@ proc start_rev_list {view} {
     global viewactive viewinstances vmergeonly
     global mainheadid viewmainheadid viewmainheadid_orig
     global vcanopt vflags vrevs vorigargs
+    global show_notes
 
     set startmsecs [clock clicks -milliseconds]
     set commitidx($view) 0
@@ -361,8 +375,8 @@ proc start_rev_list {view} {
     }
 
     if {[catch {
-	set fd [open [concat | git log --no-color -z --pretty=raw --parents \
-			 --boundary $args "--" $files] r]
+	set fd [open [concat | git log --no-color -z --pretty=raw $show_notes \
+			--parents --boundary $args "--" $files] r]
     } err]} {
 	error_popup "[mc "Error executing git log:"] $err"
 	return 0
@@ -456,6 +470,7 @@ proc updatecommits {} {
     global mainheadid viewmainheadid viewmainheadid_orig pending_select
     global isworktree
     global varcid vposids vnegids vflags vrevs
+    global show_notes
 
     set isworktree [expr {[exec git rev-parse --is-inside-work-tree] == "true"}]
     rereadrefs
@@ -508,8 +523,8 @@ proc updatecommits {} {
 	set args $vorigargs($view)
     }
     if {[catch {
-	set fd [open [concat | git log --no-color -z --pretty=raw --parents \
-			  --boundary $args "--" $vfilelimit($view)] r]
+	set fd [open [concat | git log --no-color -z --pretty=raw $show_notes \
+			--parents --boundary $args "--" $vfilelimit($view)] r]
     } err]} {
 	error_popup "[mc "Error executing git log:"] $err"
 	return
@@ -1877,8 +1892,11 @@ proc setoptions {} {
     option add *Menubutton.font uifont startupFile
     option add *Label.font uifont startupFile
     option add *Message.font uifont startupFile
-    option add *Entry.font uifont startupFile
+    option add *Entry.font textfont startupFile
+    option add *Text.font textfont startupFile
     option add *Labelframe.font uifont startupFile
+    option add *Spinbox.font textfont startupFile
+    option add *Listbox.font mainfont startupFile
 }
 
 # Make a menu and submenus.
@@ -1967,6 +1985,8 @@ proc makewindow {} {
     global fprogitem fprogcoord lastprogupdate progupdatepending
     global rprogitem rprogcoord rownumsel numcommits
     global have_tk85 use_ttk NS
+    global git_version
+    global worddiff
 
     # The "mc" arguments here are purely so that xgettext
     # sees the following string as needing to be translated
@@ -2174,7 +2194,7 @@ proc makewindow {} {
     set findstring {}
     set fstring .tf.lbar.findstring
     lappend entries $fstring
-    ${NS}::entry $fstring -width 30 -font textfont -textvariable findstring
+    ${NS}::entry $fstring -width 30 -textvariable findstring
     trace add variable findstring write find_change
     set findtype [mc "Exact"]
     set findtypemenu [makedroplist .tf.lbar.findtype \
@@ -2217,7 +2237,7 @@ proc makewindow {} {
     pack .bleft.top.search -side left -padx 5
     set sstring .bleft.top.sstring
     set searchstring ""
-    ${NS}::entry $sstring -width 20 -font textfont -textvariable searchstring
+    ${NS}::entry $sstring -width 20 -textvariable searchstring
     lappend entries $sstring
     trace add variable searchstring write incrsearch
     pack $sstring -side left -expand 1 -fill x
@@ -2229,7 +2249,7 @@ proc makewindow {} {
 	-command changediffdisp -variable diffelide -value {1 0}
     ${NS}::label .bleft.mid.labeldiffcontext -text "      [mc "Lines of context"]: "
     pack .bleft.mid.diff .bleft.mid.old .bleft.mid.new -side left
-    spinbox .bleft.mid.diffcontext -width 5 -font textfont \
+    spinbox .bleft.mid.diffcontext -width 5 \
 	-from 0 -increment 1 -to 10000000 \
 	-validate all -validatecommand "diffcontextvalidate %P" \
 	-textvariable diffcontextstring
@@ -2240,6 +2260,15 @@ proc makewindow {} {
     ${NS}::checkbutton .bleft.mid.ignspace -text [mc "Ignore space change"] \
 	-command changeignorespace -variable ignorespace
     pack .bleft.mid.ignspace -side left -padx 5
+
+    set worddiff [mc "Line diff"]
+    if {[package vcompare $git_version "1.7.2"] >= 0} {
+	makedroplist .bleft.mid.worddiff worddiff [mc "Line diff"] \
+	    [mc "Markup words"] [mc "Color words"]
+	trace add variable worddiff write changeworddiff
+	pack .bleft.mid.worddiff -side left -padx 5
+    }
+
     set ctext .bleft.bottom.ctext
     text $ctext -background $bgcolor -foreground $fgcolor \
 	-state disabled -font textfont \
@@ -2383,6 +2412,8 @@ proc makewindow {} {
     }
     bindall <$::BM> "canvscan mark %W %x %y"
     bindall <B$::BM-Motion> "canvscan dragto %W %x %y"
+    bind all <$M1B-Key-w> {destroy [winfo toplevel %W]}
+    bind . <$M1B-Key-w> doquit
     bindkey <Home> selfirstline
     bindkey <End> sellastline
     bind . <Key-Up> "selnextline -1"
@@ -2446,6 +2477,7 @@ proc makewindow {} {
     global ctxbut
     bind $cflist $ctxbut {pop_flist_menu %W %X %Y %x %y}
     bind $ctext $ctxbut {pop_diff_menu %W %X %Y %x %y}
+    bind $ctext <Button-1> {focus %W}
 
     set maincursor [. cget -cursor]
     set textcursor [$ctext cget -cursor]
@@ -2620,7 +2652,7 @@ proc savestuff {w} {
     global viewname viewfiles viewargs viewargscmd viewperm nextviewnum
     global cmitmode wrapcomment datetimeformat limitdiffs
     global colors uicolor bgcolor fgcolor diffcolors diffcontext selectbgcolor
-    global autoselect extdifftool perfile_attrs markbgcolor use_ttk
+    global autoselect autosellen extdifftool perfile_attrs markbgcolor use_ttk
     global hideremotes want_ttk
 
     if {$stuffsaved} return
@@ -2641,6 +2673,7 @@ proc savestuff {w} {
 	puts $f [list set cmitmode $cmitmode]
 	puts $f [list set wrapcomment $wrapcomment]
 	puts $f [list set autoselect $autoselect]
+	puts $f [list set autosellen $autosellen]
 	puts $f [list set showneartags $showneartags]
 	puts $f [list set hideremotes $hideremotes]
 	puts $f [list set showlocalchanges $showlocalchanges]
@@ -2782,7 +2815,7 @@ proc about {} {
     message $w.m -text [mc "
 Gitk - a commit viewer for git
 
-Copyright © 2005-2009 Paul Mackerras
+Copyright \u00a9 2005-2010 Paul Mackerras
 
 Use and redistribute under the terms of the GNU General Public License"] \
 	    -justify center -aspect 400 -border 2 -bg white -relief groove
@@ -2814,6 +2847,7 @@ proc keys {} {
 [mc "Gitk key bindings:"]
 
 [mc "<%s-Q>		Quit" $M1T]
+[mc "<%s-W>		Close window" $M1T]
 [mc "<Home>		Move to first commit"]
 [mc "<End>		Move to last commit"]
 [mc "<Up>, p, i	Move up one commit"]
@@ -3805,10 +3839,10 @@ proc newview {ishighlight} {
 	raise $top
 	return
     }
+    decode_view_opts $nextviewnum $revtreeargs
     set newviewname($nextviewnum) "[mc "View"] $nextviewnum"
     set newviewopts($nextviewnum,perm) 0
     set newviewopts($nextviewnum,cmd)  $viewargscmd($curview)
-    decode_view_opts $nextviewnum $revtreeargs
     vieweditor $top $nextviewnum [mc "Gitk view definition"]
 }
 
@@ -3845,6 +3879,7 @@ set known_view_options {
     {cmd       t50= +  {}               {mc "Command to generate more commits to include:"}}
     }
 
+# Convert $newviewopts($n, ...) into args for git log.
 proc encode_view_opts {n} {
     global known_view_options newviewopts
 
@@ -3878,6 +3913,7 @@ proc encode_view_opts {n} {
     return [concat $rargs [shellsplit $newviewopts($n,args)]]
 }
 
+# Fill $newviewopts($n, ...) based on args for git log.
 proc decode_view_opts {n view_args} {
     global known_view_options newviewopts
 
@@ -3960,10 +3996,10 @@ proc editview {} {
 	raise $top
 	return
     }
+    decode_view_opts $curview $viewargs($curview)
     set newviewname($curview)      $viewname($curview)
     set newviewopts($curview,perm) $viewperm($curview)
     set newviewopts($curview,cmd)  $viewargscmd($curview)
-    decode_view_opts $curview $viewargs($curview)
     vieweditor $top $curview "[mc "Gitk: edit view"] $viewname($curview)"
 }
 
@@ -4037,7 +4073,7 @@ proc vieweditor {top n title} {
 	} elseif {$type eq "path"} {
 	    ${NS}::label $top.l -text $title
 	    pack $top.l -in $top -side top -pady [list 3 0] -anchor w -padx 3
-	    text $top.t -width 40 -height 5 -background $bgcolor -font uifont
+	    text $top.t -width 40 -height 5 -background $bgcolor
 	    if {[info exists viewfiles($n)]} {
 		foreach f $viewfiles($n) {
 		    $top.t insert end $f
@@ -6265,6 +6301,7 @@ proc drawtags {id x xt y1} {
 	       -width $lthickness -fill black -tags tag.$id]
     $canv lower $t
     foreach tag $marks x $xvals wid $wvals {
+	set tag_quoted [string map {% %%} $tag]
 	set xl [expr {$x + $delta}]
 	set xr [expr {$x + $delta + $wid + $lthickness}]
 	set font mainfont
@@ -6273,7 +6310,7 @@ proc drawtags {id x xt y1} {
 	    set t [$canv create polygon $x [expr {$yt + $delta}] $xl $yt \
 		       $xr $yt $xr $yb $xl $yb $x [expr {$yb - $delta}] \
 		       -width 1 -outline black -fill yellow -tags tag.$id]
-	    $canv bind $t <1> [list showtag $tag 1]
+	    $canv bind $t <1> [list showtag $tag_quoted 1]
 	    set rowtextx([rowofcommit $id]) [expr {$xr + $linespc}]
 	} else {
 	    # draw a head or other ref
@@ -6300,9 +6337,9 @@ proc drawtags {id x xt y1} {
 	set t [$canv create text $xl $y1 -anchor w -text $tag -fill $fgcolor \
 		   -font $font -tags [list tag.$id text]]
 	if {$ntags >= 0} {
-	    $canv bind $t <1> [list showtag $tag 1]
+	    $canv bind $t <1> [list showtag $tag_quoted 1]
 	} elseif {$nheads >= 0} {
-	    $canv bind $t $ctxbut [list headmenu %X %Y $id $tag]
+	    $canv bind $t $ctxbut [list headmenu %X %Y $id $tag_quoted]
 	}
     }
     return $xt
@@ -6861,7 +6898,7 @@ proc selectline {l isnew {desired_loc {}}} {
     global mergemax numcommits pending_select
     global cmitmode showneartags allcommits
     global targetrow targetid lastscrollrows
-    global autoselect jump_to_here
+    global autoselect autosellen jump_to_here
 
     catch {unset pending_select}
     $canv delete hover
@@ -6923,7 +6960,7 @@ proc selectline {l isnew {desired_loc {}}} {
     $sha1entry delete 0 end
     $sha1entry insert 0 $id
     if {$autoselect} {
-	$sha1entry selection range 0 end
+	$sha1entry selection range 0 $autosellen
     }
     rhighlight_sel $id
 
@@ -7293,6 +7330,7 @@ proc getblobline {bf id} {
 			    [lindex [split $commentend .] 0]}]
 	    mark_ctext_line $lnum
 	}
+	$ctext config -state disabled
 	return 0
     }
     $ctext config -state disabled
@@ -7494,14 +7532,19 @@ proc changeignorespace {} {
     reselectline
 }
 
+proc changeworddiff {name ix op} {
+    reselectline
+}
+
 proc getblobdiffs {ids} {
     global blobdifffd diffids env
     global diffinhdr treediffs
     global diffcontext
     global ignorespace
+    global worddiff
     global limitdiffs vfilelimit curview
     global diffencoding targetline diffnparents
-    global git_version
+    global git_version currdiffsubmod
 
     set textconv {}
     if {[package vcompare $git_version "1.6.1"] >= 0} {
@@ -7514,6 +7557,9 @@ proc getblobdiffs {ids} {
     set cmd [diffcmd $ids "-p $textconv $submodule  -C --cc --no-commit-id -U$diffcontext"]
     if {$ignorespace} {
 	append cmd " -w"
+    }
+    if {$worddiff ne [mc "Line diff"]} {
+	append cmd " --word-diff=porcelain"
     }
     if {$limitdiffs && $vfilelimit($curview) ne {}} {
 	set cmd [concat $cmd -- $vfilelimit($curview)]
@@ -7528,6 +7574,7 @@ proc getblobdiffs {ids} {
     set diffencoding [get_path_encoding {}]
     fconfigure $bdf -blocking 0 -encoding binary -eofchar {}
     set blobdifffd($ids) $bdf
+    set currdiffsubmod ""
     filerun $bdf [list getblobdiffline $bdf $diffids]
 }
 
@@ -7598,7 +7645,8 @@ proc getblobdiffline {bdf ids} {
     global diffnexthead diffnextnote difffilestart
     global ctext_file_names ctext_file_lines
     global diffinhdr treediffs mergemax diffnparents
-    global diffencoding jump_to_here targetline diffline
+    global diffencoding jump_to_here targetline diffline currdiffsubmod
+    global worddiff
 
     set nr 0
     $ctext conf -state normal
@@ -7679,19 +7727,30 @@ proc getblobdiffline {bdf ids} {
 
 	} elseif {![string compare -length 10 "Submodule " $line]} {
 	    # start of a new submodule
-	    if {[string compare [$ctext get "end - 4c" end] "\n \n\n"]} {
+	    if {[regexp -indices "\[0-9a-f\]+\\.\\." $line nameend]} {
+		set fname [string range $line 10 [expr [lindex $nameend 0] - 2]]
+	    } else {
+		set fname [string range $line 10 [expr [string first "contains " $line] - 2]]
+	    }
+	    if {$currdiffsubmod != $fname} {
 		$ctext insert end "\n";     # Add newline after commit message
 	    }
 	    set curdiffstart [$ctext index "end - 1c"]
 	    lappend ctext_file_names ""
-	    set fname [string range $line 10 [expr [string last " " $line] - 1]]
-	    lappend ctext_file_lines $fname
-	    makediffhdr $fname $ids
-	    $ctext insert end "\n$line\n" filesep
+	    if {$currdiffsubmod != $fname} {
+		lappend ctext_file_lines $fname
+		makediffhdr $fname $ids
+		set currdiffsubmod $fname
+		$ctext insert end "\n$line\n" filesep
+	    } else {
+		$ctext insert end "$line\n" filesep
+	    }
 	} elseif {![string compare -length 3 "  >" $line]} {
+	    set $currdiffsubmod ""
 	    set line [encoding convertfrom $diffencoding $line]
 	    $ctext insert end "$line\n" dresult
 	} elseif {![string compare -length 3 "  <" $line]} {
+	    set $currdiffsubmod ""
 	    set line [encoding convertfrom $diffencoding $line]
 	    $ctext insert end "$line\n" d0
 	} elseif {$diffinhdr} {
@@ -7727,15 +7786,28 @@ proc getblobdiffline {bdf ids} {
 	    # parse the prefix - one ' ', '-' or '+' for each parent
 	    set prefix [string range $line 0 [expr {$diffnparents - 1}]]
 	    set tag [expr {$diffnparents > 1? "m": "d"}]
+	    set dowords [expr {$worddiff ne [mc "Line diff"] && $diffnparents == 1}]
+	    set words_pre_markup ""
+	    set words_post_markup ""
 	    if {[string trim $prefix " -+"] eq {}} {
 		# prefix only has " ", "-" and "+" in it: normal diff line
 		set num [string first "-" $prefix]
+		if {$dowords} {
+		    set line [string range $line 1 end]
+		}
 		if {$num >= 0} {
 		    # removed line, first parent with line is $num
 		    if {$num >= $mergemax} {
 			set num "max"
 		    }
-		    $ctext insert end "$line\n" $tag$num
+		    if {$dowords && $worddiff eq [mc "Markup words"]} {
+			$ctext insert end "\[-$line-\]" $tag$num
+		    } else {
+			$ctext insert end "$line" $tag$num
+		    }
+		    if {!$dowords} {
+			$ctext insert end "\n" $tag$num
+		    }
 		} else {
 		    set tags {}
 		    if {[string first "+" $prefix] >= 0} {
@@ -7750,6 +7822,8 @@ proc getblobdiffline {bdf ids} {
 				lappend tags m$num
 			    }
 			}
+			set words_pre_markup "{+"
+			set words_post_markup "+}"
 		    }
 		    if {$targetline ne {}} {
 			if {$diffline == $targetline} {
@@ -7759,8 +7833,17 @@ proc getblobdiffline {bdf ids} {
 			    incr diffline
 			}
 		    }
-		    $ctext insert end "$line\n" $tags
+		    if {$dowords && $worddiff eq [mc "Markup words"]} {
+			$ctext insert end "$words_pre_markup$line$words_post_markup" $tags
+		    } else {
+			$ctext insert end "$line" $tags
+		    }
+		    if {!$dowords} {
+			$ctext insert end "\n" $tags
+		    }
 		}
+	    } elseif {$dowords && $prefix eq "~"} {
+		$ctext insert end "\n" {}
 	    } else {
 		# "\ No newline at end of file",
 		# or something else we don't recognize
@@ -8527,7 +8610,7 @@ proc do_cmp_commits {a b} {
 }
 
 proc diffcommits {a b} {
-    global diffcontext diffids blobdifffd diffinhdr
+    global diffcontext diffids blobdifffd diffinhdr currdiffsubmod
 
     set tmpdir [gitknewtmpdir]
     set fna [file join $tmpdir "commit-[string range $a 0 7]"]
@@ -8548,6 +8631,7 @@ proc diffcommits {a b} {
     set diffids [list commits $a $b]
     set blobdifffd($diffids) $fd
     set diffinhdr 0
+    set currdiffsubmod ""
     filerun $fd [list getblobdiffline $fd $diffids]
 }
 
@@ -8981,7 +9065,7 @@ proc cherrypick {} {
 			to file '%s'.\nPlease commit, reset or stash\
 			your changes and try again." $fname]
 	} elseif {[regexp -line \
-		       {^(CONFLICT \(.*\):|Automatic cherry-pick failed)} \
+		       {^(CONFLICT \(.*\):|Automatic cherry-pick failed|error: could not apply)} \
 		       $err]} {
 	    if {[confirm_popup [mc "Cherry-pick failed because of merge\
 			conflict.\nDo you wish to run git citool to\
@@ -10528,7 +10612,6 @@ proc mkfontdisp {font top which} {
     set fontpref($font) [set $font]
     ${NS}::button $top.${font}but -text $which \
 	-command [list choosefont $font $which]
-    if {!$use_ttk} {$top.${font}but configure  -font optionfont}
     ${NS}::label $top.$font -relief flat -font $font \
 	-text $fontattr($font,family) -justify left
     grid x $top.${font}but $top.$font -sticky w
@@ -10675,7 +10758,7 @@ proc doprefs {} {
     global maxwidth maxgraphpct use_ttk NS
     global oldprefs prefstop showneartags showlocalchanges
     global uicolor bgcolor fgcolor ctext diffcolors selectbgcolor markbgcolor
-    global tabstop limitdiffs autoselect extdifftool perfile_attrs
+    global tabstop limitdiffs autoselect autosellen extdifftool perfile_attrs
     global hideremotes want_ttk have_ttk
 
     set top .gitkprefs
@@ -10703,9 +10786,10 @@ proc doprefs {} {
     ${NS}::checkbutton $top.showlocal -text [mc "Show local changes"] \
 	-variable showlocalchanges
     grid x $top.showlocal -sticky w
-    ${NS}::checkbutton $top.autoselect -text [mc "Auto-select SHA1"] \
+    ${NS}::checkbutton $top.autoselect -text [mc "Auto-select SHA1 (length)"] \
 	-variable autoselect
-    grid x $top.autoselect -sticky w
+    spinbox $top.autosellen -from 1 -to 40 -width 4 -textvariable autosellen
+    grid x $top.autoselect $top.autosellen -sticky w
     ${NS}::checkbutton $top.hideremotes -text [mc "Hide remote refs"] \
 	-variable hideremotes
     grid x $top.hideremotes -sticky w
@@ -10791,15 +10875,6 @@ proc doprefs {} {
     mkfontdisp textfont $top [mc "Diff display font"]
     mkfontdisp uifont $top [mc "User interface font"]
 
-    if {!$use_ttk} {
-	foreach w {maxpctl maxwidthl showlocal autoselect tabstopl ntag
-	    ldiff lattr extdifff.l extdifff.b bgbut fgbut
-	    diffoldbut diffnewbut hunksepbut markbgbut selbgbut
-	    want_ttk ttk_note} {
-	    $top.$w configure -font optionfont
-	}
-    }
-
     ${NS}::frame $top.buts
     ${NS}::button $top.buts.ok -text [mc "OK"] -command prefsok -default active
     ${NS}::button $top.buts.can -text [mc "Cancel"] -command prefscan -default normal
@@ -10849,6 +10924,7 @@ proc setselbg {c} {
 # radiobuttons look bad.  This chooses white for selectColor if the
 # background color is light, or black if it is dark.
 proc setui {c} {
+    if {[tk windowingsystem] eq "win32"} { return }
     set bg [winfo rgb . $c]
     set selc black
     if {[lindex $bg 0] + 1.5 * [lindex $bg 1] + 0.5 * [lindex $bg 2] > 100000} {
@@ -11355,6 +11431,7 @@ set showlocalchanges 1
 set limitdiffs 1
 set datetimeformat "%Y-%m-%d %H:%M:%S"
 set autoselect 1
+set autosellen 40
 set perfile_attrs 0
 set want_ttk 1
 
@@ -11379,6 +11456,7 @@ if {[tk windowingsystem] eq "win32"} {
 set diffcolors {red "#00a000" blue}
 set diffcontext 3
 set ignorespace 0
+set worddiff ""
 set markbgcolor "#e0e0ff"
 
 set circlecolors {white blue gray blue blue}
@@ -11410,8 +11488,6 @@ namespace import ::msgcat::mc
 ::msgcat::mcload $gitk_msgsdir
 
 catch {source ~/.gitk}
-
-font create optionfont -family sans-serif -size -12
 
 parsefont mainfont $mainfont
 eval font create mainfont [fontflags mainfont]
@@ -11509,7 +11585,12 @@ if {![info exists have_ttk]} {
 set use_ttk [expr {$have_ttk && $want_ttk}]
 set NS [expr {$use_ttk ? "ttk" : ""}]
 
-set git_version [join [lrange [split [lindex [exec git version] end] .] 0 2] .]
+regexp {^git version ([\d.]*\d)} [exec git version] _ git_version
+
+set show_notes {}
+if {[package vcompare $git_version "1.6.6.2"] >= 0} {
+    set show_notes "--show-notes"
+}
 
 set runq {}
 set history {}
@@ -11613,3 +11694,9 @@ if {[tk windowingsystem] eq "win32"} {
 }
 
 getcommits {}
+
+# Local variables:
+# mode: tcl
+# indent-tabs-mode: t
+# tab-width: 8
+# End:

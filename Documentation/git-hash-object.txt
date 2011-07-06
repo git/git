@@ -10,7 +10,7 @@ SYNOPSIS
 --------
 [verse]
 'git hash-object' [-t <type>] [-w] [--path=<file>|--no-filters] [--stdin] [--] <file>...
-'git hash-object' [-t <type>] [-w] --stdin-paths < <list-of-paths>
+'git hash-object' [-t <type>] [-w] --stdin-paths [--no-filters] < <list-of-paths>
 
 DESCRIPTION
 -----------
@@ -49,17 +49,9 @@ OPTIONS
 
 --no-filters::
 	Hash the contents as is, ignoring any input filter that would
-	have been chosen by the attributes mechanism, including crlf
+	have been chosen by the attributes mechanism, including the end-of-line
 	conversion. If the file is read from standard input then this
 	is always implied, unless the --path option is given.
-
-Author
-------
-Written by Junio C Hamano <gitster@pobox.com>
-
-Documentation
---------------
-Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---

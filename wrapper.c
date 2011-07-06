@@ -3,11 +3,26 @@
  */
 #include "cache.h"
 
+static void do_nothing(size_t size)
+{
+}
+
+static void (*try_to_free_routine)(size_t size) = do_nothing;
+
+try_to_free_t set_try_to_free_routine(try_to_free_t routine)
+{
+	try_to_free_t old = try_to_free_routine;
+	if (!routine)
+		routine = do_nothing;
+	try_to_free_routine = routine;
+	return old;
+}
+
 char *xstrdup(const char *str)
 {
 	char *ret = strdup(str);
 	if (!ret) {
-		release_pack_memory(strlen(str) + 1, -1);
+		try_to_free_routine(strlen(str) + 1);
 		ret = strdup(str);
 		if (!ret)
 			die("Out of memory, strdup failed");
@@ -21,12 +36,13 @@ void *xmalloc(size_t size)
 	if (!ret && !size)
 		ret = malloc(1);
 	if (!ret) {
-		release_pack_memory(size, -1);
+		try_to_free_routine(size);
 		ret = malloc(size);
 		if (!ret && !size)
 			ret = malloc(1);
 		if (!ret)
-			die("Out of memory, malloc failed");
+			die("Out of memory, malloc failed (tried to allocate %lu bytes)",
+			    (unsigned long)size);
 	}
 #ifdef XMALLOC_POISON
 	memset(ret, 0xA5, size);
@@ -37,7 +53,7 @@ void *xmalloc(size_t size)
 void *xmallocz(size_t size)
 {
 	void *ret;
-	if (size + 1 < size)
+	if (unsigned_add_overflows(size, 1))
 		die("Data too large to fit into virtual memory space.");
 	ret = xmalloc(size + 1);
 	((char*)ret)[size] = 0;
@@ -67,7 +83,7 @@ void *xrealloc(void *ptr, size_t size)
 	if (!ret && !size)
 		ret = realloc(ptr, 1);
 	if (!ret) {
-		release_pack_memory(size, -1);
+		try_to_free_routine(size);
 		ret = realloc(ptr, size);
 		if (!ret && !size)
 			ret = realloc(ptr, 1);
@@ -83,27 +99,12 @@ void *xcalloc(size_t nmemb, size_t size)
 	if (!ret && (!nmemb || !size))
 		ret = calloc(1, 1);
 	if (!ret) {
-		release_pack_memory(nmemb * size, -1);
+		try_to_free_routine(nmemb * size);
 		ret = calloc(nmemb, size);
 		if (!ret && (!nmemb || !size))
 			ret = calloc(1, 1);
 		if (!ret)
 			die("Out of memory, calloc failed");
-	}
-	return ret;
-}
-
-void *xmmap(void *start, size_t length,
-	int prot, int flags, int fd, off_t offset)
-{
-	void *ret = mmap(start, length, prot, flags, fd, offset);
-	if (ret == MAP_FAILED) {
-		if (!length)
-			return NULL;
-		release_pack_memory(length, fd);
-		ret = mmap(start, length, prot, flags, fd, offset);
-		if (ret == MAP_FAILED)
-			die_errno("Out of memory? mmap failed");
 	}
 	return ret;
 }
@@ -147,8 +148,10 @@ ssize_t read_in_full(int fd, void *buf, size_t count)
 
 	while (count > 0) {
 		ssize_t loaded = xread(fd, p, count);
-		if (loaded <= 0)
-			return total ? total : loaded;
+		if (loaded < 0)
+			return -1;
+		if (loaded == 0)
+			return total;
 		count -= loaded;
 		p += loaded;
 		total += loaded;
@@ -197,118 +200,184 @@ FILE *xfdopen(int fd, const char *mode)
 int xmkstemp(char *template)
 {
 	int fd;
+	char origtemplate[PATH_MAX];
+	strlcpy(origtemplate, template, sizeof(origtemplate));
 
 	fd = mkstemp(template);
-	if (fd < 0)
-		die_errno("Unable to create temporary file");
+	if (fd < 0) {
+		int saved_errno = errno;
+		const char *nonrelative_template;
+
+		if (!template[0])
+			template = origtemplate;
+
+		nonrelative_template = absolute_path(template);
+		errno = saved_errno;
+		die_errno("Unable to create temporary file '%s'",
+			nonrelative_template);
+	}
 	return fd;
 }
 
-/*
- * zlib wrappers to make sure we don't silently miss errors
- * at init time.
- */
-void git_inflate_init(z_streamp strm)
+/* git_mkstemp() - create tmp file honoring TMPDIR variable */
+int git_mkstemp(char *path, size_t len, const char *template)
 {
-	const char *err;
+	const char *tmp;
+	size_t n;
 
-	switch (inflateInit(strm)) {
-	case Z_OK:
-		return;
-
-	case Z_MEM_ERROR:
-		err = "out of memory";
-		break;
-	case Z_VERSION_ERROR:
-		err = "wrong version";
-		break;
-	default:
-		err = "error";
+	tmp = getenv("TMPDIR");
+	if (!tmp)
+		tmp = "/tmp";
+	n = snprintf(path, len, "%s/%s", tmp, template);
+	if (len <= n) {
+		errno = ENAMETOOLONG;
+		return -1;
 	}
-	die("inflateInit: %s (%s)", err, strm->msg ? strm->msg : "no message");
+	return mkstemp(path);
 }
 
-void git_inflate_end(z_streamp strm)
+/* git_mkstemps() - create tmp file with suffix honoring TMPDIR variable. */
+int git_mkstemps(char *path, size_t len, const char *template, int suffix_len)
 {
-	if (inflateEnd(strm) != Z_OK)
-		error("inflateEnd: %s", strm->msg ? strm->msg : "failed");
-}
+	const char *tmp;
+	size_t n;
 
-int git_inflate(z_streamp strm, int flush)
-{
-	int ret = inflate(strm, flush);
-	const char *err;
-
-	switch (ret) {
-	/* Out of memory is fatal. */
-	case Z_MEM_ERROR:
-		die("inflate: out of memory");
-
-	/* Data corruption errors: we may want to recover from them (fsck) */
-	case Z_NEED_DICT:
-		err = "needs dictionary"; break;
-	case Z_DATA_ERROR:
-		err = "data stream error"; break;
-	case Z_STREAM_ERROR:
-		err = "stream consistency error"; break;
-	default:
-		err = "unknown error"; break;
-
-	/* Z_BUF_ERROR: normal, needs more space in the output buffer */
-	case Z_BUF_ERROR:
-	case Z_OK:
-	case Z_STREAM_END:
-		return ret;
+	tmp = getenv("TMPDIR");
+	if (!tmp)
+		tmp = "/tmp";
+	n = snprintf(path, len, "%s/%s", tmp, template);
+	if (len <= n) {
+		errno = ENAMETOOLONG;
+		return -1;
 	}
-	error("inflate: %s (%s)", err, strm->msg ? strm->msg : "no message");
-	return ret;
+	return mkstemps(path, suffix_len);
 }
 
-int odb_mkstemp(char *template, size_t limit, const char *pattern)
+/* Adapted from libiberty's mkstemp.c. */
+
+#undef TMP_MAX
+#define TMP_MAX 16384
+
+int git_mkstemps_mode(char *pattern, int suffix_len, int mode)
+{
+	static const char letters[] =
+		"abcdefghijklmnopqrstuvwxyz"
+		"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+		"0123456789";
+	static const int num_letters = 62;
+	uint64_t value;
+	struct timeval tv;
+	char *template;
+	size_t len;
+	int fd, count;
+
+	len = strlen(pattern);
+
+	if (len < 6 + suffix_len) {
+		errno = EINVAL;
+		return -1;
+	}
+
+	if (strncmp(&pattern[len - 6 - suffix_len], "XXXXXX", 6)) {
+		errno = EINVAL;
+		return -1;
+	}
+
+	/*
+	 * Replace pattern's XXXXXX characters with randomness.
+	 * Try TMP_MAX different filenames.
+	 */
+	gettimeofday(&tv, NULL);
+	value = ((size_t)(tv.tv_usec << 16)) ^ tv.tv_sec ^ getpid();
+	template = &pattern[len - 6 - suffix_len];
+	for (count = 0; count < TMP_MAX; ++count) {
+		uint64_t v = value;
+		/* Fill in the random bits. */
+		template[0] = letters[v % num_letters]; v /= num_letters;
+		template[1] = letters[v % num_letters]; v /= num_letters;
+		template[2] = letters[v % num_letters]; v /= num_letters;
+		template[3] = letters[v % num_letters]; v /= num_letters;
+		template[4] = letters[v % num_letters]; v /= num_letters;
+		template[5] = letters[v % num_letters]; v /= num_letters;
+
+		fd = open(pattern, O_CREAT | O_EXCL | O_RDWR, mode);
+		if (fd > 0)
+			return fd;
+		/*
+		 * Fatal error (EPERM, ENOSPC etc).
+		 * It doesn't make sense to loop.
+		 */
+		if (errno != EEXIST)
+			break;
+		/*
+		 * This is a random value.  It is only necessary that
+		 * the next TMP_MAX values generated by adding 7777 to
+		 * VALUE are different with (module 2^32).
+		 */
+		value += 7777;
+	}
+	/* We return the null string if we can't find a unique file name.  */
+	pattern[0] = '\0';
+	return -1;
+}
+
+int git_mkstemp_mode(char *pattern, int mode)
+{
+	/* mkstemp is just mkstemps with no suffix */
+	return git_mkstemps_mode(pattern, 0, mode);
+}
+
+int gitmkstemps(char *pattern, int suffix_len)
+{
+	return git_mkstemps_mode(pattern, suffix_len, 0600);
+}
+
+int xmkstemp_mode(char *template, int mode)
 {
 	int fd;
+	char origtemplate[PATH_MAX];
+	strlcpy(origtemplate, template, sizeof(origtemplate));
 
-	snprintf(template, limit, "%s/%s",
-		 get_object_directory(), pattern);
-	fd = mkstemp(template);
-	if (0 <= fd)
-		return fd;
+	fd = git_mkstemp_mode(template, mode);
+	if (fd < 0) {
+		int saved_errno = errno;
+		const char *nonrelative_template;
 
-	/* slow path */
-	/* some mkstemp implementations erase template on failure */
-	snprintf(template, limit, "%s/%s",
-		 get_object_directory(), pattern);
-	safe_create_leading_directories(template);
-	return xmkstemp(template);
+		if (!template[0])
+			template = origtemplate;
+
+		nonrelative_template = absolute_path(template);
+		errno = saved_errno;
+		die_errno("Unable to create temporary file '%s'",
+			nonrelative_template);
+	}
+	return fd;
 }
 
-int odb_pack_keep(char *name, size_t namesz, unsigned char *sha1)
+static int warn_if_unremovable(const char *op, const char *file, int rc)
 {
-	int fd;
-
-	snprintf(name, namesz, "%s/pack/pack-%s.keep",
-		 get_object_directory(), sha1_to_hex(sha1));
-	fd = open(name, O_RDWR|O_CREAT|O_EXCL, 0600);
-	if (0 <= fd)
-		return fd;
-
-	/* slow path */
-	safe_create_leading_directories(name);
-	return open(name, O_RDWR|O_CREAT|O_EXCL, 0600);
-}
-
-int unlink_or_warn(const char *file)
-{
-	int rc = unlink(file);
-
 	if (rc < 0) {
 		int err = errno;
 		if (ENOENT != err) {
-			warning("unable to unlink %s: %s",
-				file, strerror(errno));
+			warning("unable to %s %s: %s",
+				op, file, strerror(errno));
 			errno = err;
 		}
 	}
 	return rc;
 }
 
+int unlink_or_warn(const char *file)
+{
+	return warn_if_unremovable("unlink", file, unlink(file));
+}
+
+int rmdir_or_warn(const char *file)
+{
+	return warn_if_unremovable("rmdir", file, rmdir(file));
+}
+
+int remove_or_warn(unsigned int mode, const char *file)
+{
+	return S_ISGITLINK(mode) ? rmdir_or_warn(file) : unlink_or_warn(file);
+}

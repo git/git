@@ -14,7 +14,7 @@ test_expect_success setup '
 	echo file > file &&
 	git add file &&
 	test_tick &&
-	git commit -m upstream
+	git commit -m upstream &&
 	git clone . super &&
 	git clone super submodule &&
 	(cd super &&
@@ -23,7 +23,9 @@ test_expect_success setup '
 	 git commit -m "submodule"
 	) &&
 	git clone super super-clone &&
-	(cd super-clone && git submodule update --init)
+	(cd super-clone && git submodule update --init) &&
+	git clone super empty-clone &&
+	(cd empty-clone && git submodule init)
 '
 
 test_expect_success 'change submodule' '
@@ -42,7 +44,7 @@ test_expect_success 'change submodule url' '
 	) &&
 	mv submodule moved-submodule &&
 	(cd super &&
-	 git config -f .gitmodules submodule.submodule.url ../moved-submodule
+	 git config -f .gitmodules submodule.submodule.url ../moved-submodule &&
 	 test_tick &&
 	 git commit -a -m moved-submodule
 	)
@@ -50,7 +52,7 @@ test_expect_success 'change submodule url' '
 
 test_expect_success '"git submodule sync" should update submodule URLs' '
 	(cd super-clone &&
-	 git pull &&
+	 git pull --no-recurse-submodules &&
 	 git submodule sync
 	) &&
 	test -d "$(git config -f super-clone/submodule/.git/config \
@@ -58,6 +60,17 @@ test_expect_success '"git submodule sync" should update submodule URLs' '
 	(cd super-clone/submodule &&
 	 git checkout master &&
 	 git pull
+	) &&
+	(cd super-clone &&
+	 test -d "$(git config submodule.submodule.url)"
+	)
+'
+
+test_expect_success '"git submodule sync" should update submodule URLs if not yet cloned' '
+	(cd empty-clone &&
+	 git pull &&
+	 git submodule sync &&
+	 test -d "$(git config submodule.submodule.url)"
 	)
 '
 

@@ -3,6 +3,7 @@
 #include "xdiff-interface.h"
 #include "ll-merge.h"
 #include "blob.h"
+#include "merge-file.h"
 
 static int fill_mmfile_blob(mmfile_t *f, struct blob *obj)
 {
@@ -30,8 +31,14 @@ static void *three_way_filemerge(const char *path, mmfile_t *base, mmfile_t *our
 	int merge_status;
 	mmbuffer_t res;
 
-	merge_status = ll_merge(&res, path, base,
-				our, ".our", their, ".their", 0);
+	/*
+	 * This function is only used by cmd_merge_tree, which
+	 * does not respect the merge.conflictstyle option.
+	 * There is no need to worry about a label for the
+	 * common ancestor.
+	 */
+	merge_status = ll_merge(&res, path, base, NULL,
+				our, ".our", their, ".their", NULL);
 	if (merge_status < 0)
 		return NULL;
 
@@ -60,7 +67,7 @@ static int generate_common_file(mmfile_t *res, mmfile_t *f1, mmfile_t *f2)
 	xdemitcb_t ecb;
 
 	memset(&xpp, 0, sizeof(xpp));
-	xpp.flags = XDF_NEED_MINIMAL;
+	xpp.flags = 0;
 	memset(&xecfg, 0, sizeof(xecfg));
 	xecfg.ctxlen = 3;
 	xecfg.flags = XDL_EMIT_COMMON;

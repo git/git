@@ -8,6 +8,7 @@
 
 #include "strbuf.h"
 #include "remote.h"
+#include "url.h"
 
 /*
  * We detect based on the cURL version if multi-transfer is
@@ -23,10 +24,10 @@
 #endif
 
 #if LIBCURL_VERSION_NUM < 0x070704
-#define curl_global_cleanup() do { /* nothing */ } while(0)
+#define curl_global_cleanup() do { /* nothing */ } while (0)
 #endif
 #if LIBCURL_VERSION_NUM < 0x070800
-#define curl_global_init(a) do { /* nothing */ } while(0)
+#define curl_global_init(a) do { /* nothing */ } while (0)
 #endif
 
 #if (LIBCURL_VERSION_NUM < 0x070c04) || (LIBCURL_VERSION_NUM == 0x071000)
@@ -41,14 +42,12 @@
 #define NO_CURL_IOCTL
 #endif
 
-struct slot_results
-{
+struct slot_results {
 	CURLcode curl_result;
 	long http_code;
 };
 
-struct active_request_slot
-{
+struct active_request_slot {
 	CURL *curl;
 	FILE *local;
 	int in_use;
@@ -61,16 +60,15 @@ struct active_request_slot
 	struct active_request_slot *next;
 };
 
-struct buffer
-{
+struct buffer {
 	struct strbuf buf;
 	size_t posn;
 };
 
 /* Curl request read/write callbacks */
-extern size_t fread_buffer(void *ptr, size_t eltsize, size_t nmemb, void *strbuf);
-extern size_t fwrite_buffer(const void *ptr, size_t eltsize, size_t nmemb, void *strbuf);
-extern size_t fwrite_null(const void *ptr, size_t eltsize, size_t nmemb, void *strbuf);
+extern size_t fread_buffer(char *ptr, size_t eltsize, size_t nmemb, void *strbuf);
+extern size_t fwrite_buffer(char *ptr, size_t eltsize, size_t nmemb, void *strbuf);
+extern size_t fwrite_null(char *ptr, size_t eltsize, size_t nmemb, void *strbuf);
 #ifndef NO_CURL_IOCTL
 extern curlioerr ioctl_buffer(CURL *handle, int cmd, void *clientp);
 #endif
@@ -126,6 +124,8 @@ extern char *get_remote_object_url(const char *url, const char *hex,
 #define HTTP_MISSING_TARGET	1
 #define HTTP_ERROR		2
 #define HTTP_START_FAILED	3
+#define HTTP_REAUTH	4
+#define HTTP_NOAUTH	5
 
 /*
  * Requests an url and stores the result in a strbuf.
@@ -146,13 +146,11 @@ extern int http_fetch_ref(const char *base, struct ref *ref);
 extern int http_get_info_packs(const char *base_url,
 	struct packed_git **packs_head);
 
-struct http_pack_request
-{
+struct http_pack_request {
 	char *url;
 	struct packed_git *target;
 	struct packed_git **lst;
 	FILE *packfile;
-	char filename[PATH_MAX];
 	char tmpfile[PATH_MAX];
 	struct curl_slist *range_header;
 	struct active_request_slot *slot;
@@ -164,10 +162,8 @@ extern int finish_http_pack_request(struct http_pack_request *preq);
 extern void release_http_pack_request(struct http_pack_request *preq);
 
 /* Helpers for fetching object */
-struct http_object_request
-{
+struct http_object_request {
 	char *url;
-	char filename[PATH_MAX];
 	char tmpfile[PATH_MAX];
 	int localfile;
 	CURLcode curl_result;

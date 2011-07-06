@@ -12,7 +12,7 @@ SYNOPSIS
 'git update-index'
 	     [--add] [--remove | --force-remove] [--replace]
 	     [--refresh] [-q] [--unmerged] [--ignore-missing]
-	     [--cacheinfo <mode> <object> <file>]\*
+	     [(--cacheinfo <mode> <object> <file>)...]
 	     [--chmod=(+|-)x]
 	     [--assume-unchanged | --no-assume-unchanged]
 	     [--skip-worktree | --no-skip-worktree]
@@ -21,7 +21,7 @@ SYNOPSIS
 	     [--info-only] [--index-info]
 	     [-z] [--stdin]
 	     [--verbose]
-	     [--] [<file>]\*
+	     [--] [<file>...]
 
 DESCRIPTION
 -----------
@@ -93,8 +93,6 @@ OPTIONS
 This option can be also used as a coarse file-level mechanism
 to ignore uncommitted changes in tracked files (akin to what
 `.gitignore` does for untracked files).
-You should remember that an explicit 'git add' operation will
-still cause the file to be refreshed from the working tree.
 Git will fail (gracefully) in case it needs to modify this file
 in the index e.g. when merging in a commit;
 thus, in case the assumed-untracked file is changed upstream,
@@ -146,8 +144,8 @@ you will need to handle the situation manually.
         Report what is being added and removed from index.
 
 -z::
-	Only meaningful with `--stdin`; paths are separated with
-	NUL character instead of LF.
+	Only meaningful with `--stdin` or `--index-info`; paths are
+	separated with NUL character instead of LF.
 
 \--::
 	Do not interpret any more arguments as options.
@@ -366,15 +364,6 @@ SEE ALSO
 --------
 linkgit:git-config[1],
 linkgit:git-add[1]
-
-
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org>
-
-Documentation
---------------
-Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---

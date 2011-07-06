@@ -8,7 +8,7 @@ git-repack - Pack unpacked objects in a repository
 
 SYNOPSIS
 --------
-'git repack' [-a] [-A] [-d] [-f] [-l] [-n] [-q] [--window=N] [--depth=N]
+'git repack' [-a] [-A] [-d] [-f] [-F] [-l] [-n] [-q] [--window=<n>] [--depth=<n>]
 
 DESCRIPTION
 -----------
@@ -62,6 +62,10 @@ other objects in that pack they already have locally.
 	linkgit:git-pack-objects[1].
 
 -f::
+	Pass the `--no-reuse-delta` option to `git-pack-objects`, see
+	linkgit:git-pack-objects[1].
+
+-F::
 	Pass the `--no-reuse-object` option to `git-pack-objects`, see
 	linkgit:git-pack-objects[1].
 
@@ -76,8 +80,8 @@ other objects in that pack they already have locally.
 	this repository (or a direct copy of it)
 	over HTTP or FTP.  See linkgit:git-update-server-info[1].
 
---window=[N]::
---depth=[N]::
+--window=<n>::
+--depth=<n>::
 	These two options affect how the objects contained in the pack are
 	stored using delta compression. The objects are first internally
 	sorted by type, size and optionally names and compared against the
@@ -87,10 +91,10 @@ other objects in that pack they already have locally.
 	to be applied that many times to get to the necessary object.
 	The default value for --window is 10 and --depth is 50.
 
---window-memory=[N]::
+--window-memory=<n>::
 	This option provides an additional limit on top of `--window`;
 	the window size will dynamically scale down so as to not take
-	up more than N bytes in memory.  This is useful in
+	up more than '<n>' bytes in memory.  This is useful in
 	repositories with a mix of large and small objects to not run
 	out of memory with a large window, but still be able to take
 	advantage of the large window for the smaller objects.  The
@@ -98,7 +102,7 @@ other objects in that pack they already have locally.
 	`--window-memory=0` makes memory usage unlimited, which is the
 	default.
 
---max-pack-size=[N]::
+--max-pack-size=<n>::
 	Maximum size of each output pack file. The size can be suffixed with
 	"k", "m", or "g". The minimum size allowed is limited to 1 MiB.
 	If specified,  multiple packfiles may be created.
@@ -118,15 +122,6 @@ need to set the configuration variable `repack.UseDeltaBaseOffset` to
 "false" and repack. Access from old Git versions over the native protocol
 is unaffected by this option as the conversion is performed on the fly
 as needed in that case.
-
-
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org>
-
-Documentation
---------------
-Documentation by Ryan Anderson <ryan@michonline.com>
 
 SEE ALSO
 --------

@@ -18,7 +18,7 @@
 #define MAX_SCORE 60000.0
 #define DEFAULT_RENAME_SCORE 30000 /* rename/copy similarity minimum (50%) */
 #define DEFAULT_BREAK_SCORE  30000 /* minimum for break to happen (50%) */
-#define DEFAULT_MERGE_SCORE  36000 /* maximum for break-merge to happen 60%) */
+#define DEFAULT_MERGE_SCORE  36000 /* maximum for break-merge to happen (60%) */
 
 #define MINIMUM_BREAK_SIZE     400 /* do not break a file smaller than this */
 
@@ -42,7 +42,9 @@ struct diff_filespec {
 #define DIFF_FILE_VALID(spec) (((spec)->mode) != 0)
 	unsigned should_free : 1; /* data should be free()'ed */
 	unsigned should_munmap : 1; /* data should be munmap()'ed */
-	unsigned dirty_submodule : 1;  /* For submodules: its work tree is dirty */
+	unsigned dirty_submodule : 2;  /* For submodules: its work tree is dirty */
+#define DIRTY_SUBMODULE_UNTRACKED 1
+#define DIRTY_SUBMODULE_MODIFIED  2
 
 	struct userdiff_driver *driver;
 	/* data should be considered "binary"; -1 means "don't know yet" */
@@ -90,6 +92,11 @@ struct diff_queue_struct {
 	int alloc;
 	int nr;
 };
+#define DIFF_QUEUE_CLEAR(q) \
+	do { \
+		(q)->queue = NULL; \
+		(q)->nr = (q)->alloc = 0; \
+	} while (0)
 
 extern struct diff_queue_struct diff_queued_diff;
 extern struct diff_filepair *diff_queue(struct diff_queue_struct *,
@@ -100,7 +107,7 @@ extern void diff_q(struct diff_queue_struct *, struct diff_filepair *);
 extern void diffcore_break(int);
 extern void diffcore_rename(struct diff_options *);
 extern void diffcore_merge_broken(void);
-extern void diffcore_pickaxe(const char *needle, int opts);
+extern void diffcore_pickaxe(struct diff_options *);
 extern void diffcore_order(const char *orderfile);
 
 #define DIFF_DEBUG 0
@@ -109,9 +116,9 @@ void diff_debug_filespec(struct diff_filespec *, int, const char *);
 void diff_debug_filepair(const struct diff_filepair *, int);
 void diff_debug_queue(const char *, struct diff_queue_struct *);
 #else
-#define diff_debug_filespec(a,b,c) do {} while(0)
-#define diff_debug_filepair(a,b) do {} while(0)
-#define diff_debug_queue(a,b) do {} while(0)
+#define diff_debug_filespec(a,b,c) do { /* nothing */ } while (0)
+#define diff_debug_filepair(a,b) do { /* nothing */ } while (0)
+#define diff_debug_queue(a,b) do { /* nothing */ } while (0)
 #endif
 
 extern int diffcore_count_changes(struct diff_filespec *src,

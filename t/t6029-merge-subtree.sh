@@ -6,7 +6,7 @@ test_description='subtree merge strategy'
 
 test_expect_success setup '
 
-	s="1 2 3 4 5 6 7 8"
+	s="1 2 3 4 5 6 7 8" &&
 	for i in $s; do echo $i; done >hello &&
 	git add hello &&
 	git commit -m initial &&

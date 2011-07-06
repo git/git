@@ -78,7 +78,8 @@ a file that you have not told git about does not remove that file.
 
 File globbing matches across directory boundaries.  Thus, given
 two directories `d` and `d2`, there is a difference between
-using `git rm \'d\*\'` and `git rm \'d/\*\'`, as the former will
+using `git rm {apostrophe}d{asterisk}{apostrophe}` and
+`git rm {apostrophe}d/{asterisk}{apostrophe}`, as the former will
 also remove all of directory `d2`.
 
 REMOVING FILES THAT HAVE DISAPPEARED FROM THE FILESYSTEM
@@ -88,8 +89,8 @@ the paths that have disappeared from the filesystem. However,
 depending on the use case, there are several ways that can be
 done.
 
-Using "git commit -a"
-~~~~~~~~~~~~~~~~~~~~~
+Using ``git commit -a''
+~~~~~~~~~~~~~~~~~~~~~~~
 If you intend that your next commit should record all modifications
 of tracked files in the working tree and record all removals of
 files that have been removed from the working tree with `rm`
@@ -97,8 +98,8 @@ files that have been removed from the working tree with `rm`
 automatically notice and record all removals.  You can also have a
 similar effect without committing by using `git add -u`.
 
-Using "git add -A"
-~~~~~~~~~~~~~~~~~~
+Using ``git add -A''
+~~~~~~~~~~~~~~~~~~~~
 When accepting a new code drop for a vendor branch, you probably
 want to record both the removal of paths and additions of new paths
 as well as modifications of existing paths.
@@ -110,8 +111,8 @@ tree using this command:
 git ls-files -z | xargs -0 rm -f
 ----------------
 
-and then "untar" the new code in the working tree. Alternately
-you could "rsync" the changes into the working tree.
+and then untar the new code in the working tree. Alternately
+you could 'rsync' the changes into the working tree.
 
 After that, the easiest way to record all removals, additions, and
 modifications in the working tree is:
@@ -135,11 +136,11 @@ git diff --name-only --diff-filter=D -z | xargs -0 git rm --cached
 
 EXAMPLES
 --------
-git rm Documentation/\\*.txt::
-	Removes all `\*.txt` files from the index that are under the
+git rm Documentation/\*.txt::
+	Removes all `*.txt` files from the index that are under the
 	`Documentation` directory and any of its subdirectories.
 +
-Note that the asterisk `\*` is quoted from the shell in this
+Note that the asterisk `*` is quoted from the shell in this
 example; this lets git, and not the shell, expand the pathnames
 of files and subdirectories under the `Documentation/` directory.
 
@@ -151,14 +152,6 @@ git rm -f git-*.sh::
 SEE ALSO
 --------
 linkgit:git-add[1]
-
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org>
-
-Documentation
---------------
-Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---

@@ -34,7 +34,9 @@ test_expect_success 'setup' '
 	git checkout master &&
 	commit master2 &&
 	git tag foo/bar master &&
-	git update-ref refs/remotes/foo/baz master
+	commit master3 &&
+	git update-ref refs/remotes/foo/baz master &&
+	commit master4
 '
 
 test_expect_success 'rev-parse --glob=refs/heads/subspace/*' '
@@ -64,6 +66,18 @@ test_expect_success 'rev-parse --glob=heads/subspace/' '
 test_expect_success 'rev-parse --glob=heads/subspace' '
 
 	compare rev-parse "subspace/one subspace/two" "--glob=heads/subspace"
+
+'
+
+test_expect_failure 'rev-parse accepts --glob as detached option' '
+
+	compare rev-parse "subspace/one subspace/two" "--glob heads/subspace"
+
+'
+
+test_expect_failure 'rev-parse is not confused by option-like glob' '
+
+	compare rev-parse "master" "--glob --symbolic master"
 
 '
 
@@ -121,6 +135,18 @@ test_expect_success 'rev-list --glob=refs/heads/subspace/*' '
 
 '
 
+test_expect_success 'rev-list --glob refs/heads/subspace/*' '
+
+	compare rev-list "subspace/one subspace/two" "--glob refs/heads/subspace/*"
+
+'
+
+test_expect_success 'rev-list not confused by option-like --glob arg' '
+
+	compare rev-list "master" "--glob -0 master"
+
+'
+
 test_expect_success 'rev-list --glob=heads/subspace/*' '
 
 	compare rev-list "subspace/one subspace/two" "--glob=heads/subspace/*"
@@ -162,6 +188,13 @@ test_expect_success 'rev-list --branches=subspace' '
 	compare rev-list "subspace/one subspace/two" "--branches=subspace"
 
 '
+
+test_expect_success 'rev-list --branches' '
+
+	compare rev-list "master subspace-x someref other/three subspace/one subspace/two" "--branches"
+
+'
+
 test_expect_success 'rev-list --glob=heads/someref/* master' '
 
 	compare rev-list "master" "--glob=heads/someref/* master"
@@ -186,9 +219,47 @@ test_expect_success 'rev-list --tags=foo' '
 
 '
 
+test_expect_success 'rev-list --tags' '
+
+	compare rev-list "foo/bar" "--tags"
+
+'
+
 test_expect_success 'rev-list --remotes=foo' '
 
 	compare rev-list "foo/baz" "--remotes=foo"
+
+'
+
+test_expect_success 'shortlog accepts --glob/--tags/--remotes' '
+
+	compare shortlog "subspace/one subspace/two" --branches=subspace &&
+	compare shortlog \
+	  "master subspace-x someref other/three subspace/one subspace/two" \
+	  --branches &&
+	compare shortlog master "--glob=heads/someref/* master" &&
+	compare shortlog "subspace/one subspace/two other/three" \
+	  "--glob=heads/subspace/* --glob=heads/other/*" &&
+	compare shortlog \
+	  "master other/three someref subspace-x subspace/one subspace/two" \
+	  "--glob=heads/*" &&
+	compare shortlog foo/bar --tags=foo &&
+	compare shortlog foo/bar --tags &&
+	compare shortlog foo/baz --remotes=foo
+
+'
+
+test_expect_failure 'shortlog accepts --glob as detached option' '
+
+	compare shortlog \
+	  "master other/three someref subspace-x subspace/one subspace/two" \
+	  "--glob heads/*"
+
+'
+
+test_expect_failure 'shortlog --glob is not confused by option-like argument' '
+
+	compare shortlog master "--glob -e master"
 
 '
 

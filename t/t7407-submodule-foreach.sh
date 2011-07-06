@@ -16,7 +16,7 @@ test_expect_success 'setup a submodule tree' '
 	echo file > file &&
 	git add file &&
 	test_tick &&
-	git commit -m upstream
+	git commit -m upstream &&
 	git clone . super &&
 	git clone super submodule &&
 	(
@@ -30,7 +30,7 @@ test_expect_success 'setup a submodule tree' '
 			submodule.sub2 submodule.foo2 &&
 		git config -f .gitmodules --rename-section \
 			submodule.sub3 submodule.foo3 &&
-		git add .gitmodules
+		git add .gitmodules &&
 		test_tick &&
 		git commit -m "submodules" &&
 		git submodule init sub1 &&
@@ -59,11 +59,13 @@ test_expect_success 'setup a submodule tree' '
 sub1sha1=$(cd super/sub1 && git rev-parse HEAD)
 sub3sha1=$(cd super/sub3 && git rev-parse HEAD)
 
+pwd=$(pwd)
+
 cat > expect <<EOF
 Entering 'sub1'
-foo1-sub1-$sub1sha1
+$pwd/clone-foo1-sub1-$sub1sha1
 Entering 'sub3'
-foo3-sub3-$sub3sha1
+$pwd/clone-foo3-sub3-$sub3sha1
 EOF
 
 test_expect_success 'test basic "submodule foreach" usage' '
@@ -71,7 +73,9 @@ test_expect_success 'test basic "submodule foreach" usage' '
 	(
 		cd clone &&
 		git submodule update --init -- sub1 sub3 &&
-		git submodule foreach "echo \$name-\$path-\$sha1" > ../actual
+		git submodule foreach "echo \$toplevel-\$name-\$path-\$sha1" > ../actual &&
+		git config foo.bar zar &&
+		git submodule foreach "git config --file \"\$toplevel/.git/config\" foo.bar"
 	) &&
 	test_cmp expect actual
 '
@@ -222,6 +226,25 @@ test_expect_success 'test "status --recursive"' '
 	test_cmp expect actual
 '
 
+sed -e "/nested1 /s/.*/+$nested1sha1 nested1 (file2~1)/;/sub[1-3]/d" < expect > expect2
+mv -f expect2 expect
+
+test_expect_success 'ensure "status --cached --recursive" preserves the --cached flag' '
+	(
+		cd clone3 &&
+		(
+			cd nested1 &&
+			test_commit file2
+		) &&
+		git submodule status --cached --recursive -- nested1 > ../actual
+	) &&
+	if test_have_prereq MINGW
+	then
+		dos2unix actual
+	fi &&
+	test_cmp expect actual
+'
+
 test_expect_success 'use "git clone --recursive" to checkout all submodules' '
 	git clone --recursive super clone4 &&
 	test -d clone4/.git &&
@@ -232,6 +255,41 @@ test_expect_success 'use "git clone --recursive" to checkout all submodules' '
 	test -d clone4/nested1/nested2/.git &&
 	test -d clone4/nested1/nested2/nested3/.git &&
 	test -d clone4/nested1/nested2/nested3/submodule/.git
+'
+
+test_expect_success 'test "update --recursive" with a flag with spaces' '
+	git clone super "common objects" &&
+	git clone super clone5 &&
+	(
+		cd clone5 &&
+		test ! -d nested1/.git &&
+		git submodule update --init --recursive --reference="$(dirname "$PWD")/common objects" &&
+		test -d nested1/.git &&
+		test -d nested1/nested2/.git &&
+		test -d nested1/nested2/nested3/.git &&
+		test -f nested1/.git/objects/info/alternates &&
+		test -f nested1/nested2/.git/objects/info/alternates &&
+		test -f nested1/nested2/nested3/.git/objects/info/alternates
+	)
+'
+
+test_expect_success 'use "update --recursive nested1" to checkout all submodules rooted in nested1' '
+	git clone super clone6 &&
+	(
+		cd clone6 &&
+		test ! -d sub1/.git &&
+		test ! -d sub2/.git &&
+		test ! -d sub3/.git &&
+		test ! -d nested1/.git &&
+		git submodule update --init --recursive -- nested1 &&
+		test ! -d sub1/.git &&
+		test ! -d sub2/.git &&
+		test ! -d sub3/.git &&
+		test -d nested1/.git &&
+		test -d nested1/nested2/.git &&
+		test -d nested1/nested2/nested3/.git &&
+		test -d nested1/nested2/nested3/submodule/.git
+	)
 '
 
 test_done

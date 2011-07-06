@@ -69,7 +69,7 @@ static void add_mapping(struct string_list *map,
 		index = -1 - index;
 	} else {
 		/* create mailmap entry */
-		struct string_list_item *item = string_list_insert_at_index(index, old_email, map);
+		struct string_list_item *item = string_list_insert_at_index(map, index, old_email);
 		item->util = xmalloc(sizeof(struct mailmap_entry));
 		memset(item->util, 0, sizeof(struct mailmap_entry));
 		((struct mailmap_entry *)item->util)->namemap.strdup_strings = 1;
@@ -79,12 +79,14 @@ static void add_mapping(struct string_list *map,
 	if (old_name == NULL) {
 		debug_mm("mailmap: adding (simple) entry for %s at index %d\n", old_email, index);
 		/* Replace current name and new email for simple entry */
-		free(me->name);
-		free(me->email);
-		if (new_name)
+		if (new_name) {
+			free(me->name);
 			me->name = xstrdup(new_name);
-		if (new_email)
+		}
+		if (new_email) {
+			free(me->email);
 			me->email = xstrdup(new_email);
+		}
 	} else {
 		struct mailmap_info *mi = xmalloc(sizeof(struct mailmap_info));
 		debug_mm("mailmap: adding (complex) entry for %s at index %d\n", old_email, index);
@@ -92,7 +94,7 @@ static void add_mapping(struct string_list *map,
 			mi->name = xstrdup(new_name);
 		if (new_email)
 			mi->email = xstrdup(new_email);
-		string_list_insert(old_name, &me->namemap)->util = mi;
+		string_list_insert(&me->namemap, old_name)->util = mi;
 	}
 
 	debug_mm("mailmap:  '%s' <%s> -> '%s' <%s>\n",
@@ -214,13 +216,13 @@ int map_user(struct string_list *map,
 	mailbuf[i] = 0;
 
 	debug_mm("map_user: map '%s' <%s>\n", name, mailbuf);
-	item = string_list_lookup(mailbuf, map);
+	item = string_list_lookup(map, mailbuf);
 	if (item != NULL) {
 		me = (struct mailmap_entry *)item->util;
 		if (me->namemap.nr) {
 			/* The item has multiple items, so we'll look up on name too */
 			/* If the name is not found, we choose the simple entry      */
-			struct string_list_item *subitem = string_list_lookup(name, &me->namemap);
+			struct string_list_item *subitem = string_list_lookup(&me->namemap, name);
 			if (subitem)
 				item = subitem;
 		}

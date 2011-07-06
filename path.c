@@ -122,39 +122,43 @@ char *git_path(const char *fmt, ...)
 	return cleanup_path(pathname);
 }
 
-
-/* git_mkstemp() - create tmp file honoring TMPDIR variable */
-int git_mkstemp(char *path, size_t len, const char *template)
+char *git_path_submodule(const char *path, const char *fmt, ...)
 {
-	const char *tmp;
-	size_t n;
+	char *pathname = get_pathname();
+	struct strbuf buf = STRBUF_INIT;
+	const char *git_dir;
+	va_list args;
+	unsigned len;
 
-	tmp = getenv("TMPDIR");
-	if (!tmp)
-		tmp = "/tmp";
-	n = snprintf(path, len, "%s/%s", tmp, template);
-	if (len <= n) {
-		errno = ENAMETOOLONG;
-		return -1;
+	len = strlen(path);
+	if (len > PATH_MAX-100)
+		return bad_path;
+
+	strbuf_addstr(&buf, path);
+	if (len && path[len-1] != '/')
+		strbuf_addch(&buf, '/');
+	strbuf_addstr(&buf, ".git");
+
+	git_dir = read_gitfile_gently(buf.buf);
+	if (git_dir) {
+		strbuf_reset(&buf);
+		strbuf_addstr(&buf, git_dir);
 	}
-	return mkstemp(path);
-}
+	strbuf_addch(&buf, '/');
 
-/* git_mkstemps() - create tmp file with suffix honoring TMPDIR variable. */
-int git_mkstemps(char *path, size_t len, const char *template, int suffix_len)
-{
-	const char *tmp;
-	size_t n;
+	if (buf.len >= PATH_MAX)
+		return bad_path;
+	memcpy(pathname, buf.buf, buf.len + 1);
 
-	tmp = getenv("TMPDIR");
-	if (!tmp)
-		tmp = "/tmp";
-	n = snprintf(path, len, "%s/%s", tmp, template);
-	if (len <= n) {
-		errno = ENAMETOOLONG;
-		return -1;
-	}
-	return mkstemps(path, suffix_len);
+	strbuf_release(&buf);
+	len = strlen(pathname);
+
+	va_start(args, fmt);
+	len += vsnprintf(pathname + len, PATH_MAX - len, fmt, args);
+	va_end(args);
+	if (len >= PATH_MAX)
+		return bad_path;
+	return cleanup_path(pathname);
 }
 
 int validate_headref(const char *path)
@@ -237,6 +241,8 @@ char *expand_user_path(const char *path)
 		size_t username_len = first_slash - username;
 		if (username_len == 0) {
 			const char *home = getenv("HOME");
+			if (!home)
+				goto return_null;
 			strbuf_add(&user_path, home, strlen(home));
 		} else {
 			struct passwd *pw = getpw_str(username, username_len);
@@ -336,7 +342,7 @@ char *enter_repo(char *path, int strict)
 
 	if (access("objects", X_OK) == 0 && access("refs", X_OK) == 0 &&
 	    validate_headref("HEAD") == 0) {
-		setenv(GIT_DIR_ENVIRONMENT, ".", 1);
+		set_git_dir(".");
 		check_repository_format();
 		return path;
 	}
@@ -391,7 +397,7 @@ int set_shared_perm(const char *path, int mode)
 	return 0;
 }
 
-const char *make_relative_path(const char *abs, const char *base)
+const char *relative_path(const char *abs, const char *base)
 {
 	static char buf[PATH_MAX + 1];
 	int i = 0, j = 0;
@@ -610,7 +616,7 @@ int daemon_avoid_alias(const char *p)
 	/*
 	 * This resurrects the belts and suspenders paranoia check by HPA
 	 * done in <435560F7.4080006@zytor.com> thread, now enter_repo()
-	 * does not do getcwd() based path canonicalizations.
+	 * does not do getcwd() based path canonicalization.
 	 *
 	 * sl becomes true immediately after seeing '/' and continues to
 	 * be true as long as dots continue after that without intervening
@@ -648,4 +654,11 @@ int daemon_avoid_alias(const char *p)
 			ndot = 0;
 		}
 	}
+}
+
+int offset_1st_component(const char *path)
+{
+	if (has_dos_drive_prefix(path))
+		return 2 + is_dir_sep(path[2]);
+	return is_dir_sep(path[0]);
 }

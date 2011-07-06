@@ -53,7 +53,7 @@ test_expect_success 'set up buggy branch' '
      echo "line 12" >> hello &&
      echo "line 13" >> hello &&
      add_and_commit_file hello "2 more lines" &&
-     HASH6=$(git rev-parse --verify HEAD)
+     HASH6=$(git rev-parse --verify HEAD) &&
      echo "line 14" >> hello &&
      echo "line 15" >> hello &&
      echo "line 16" >> hello &&
@@ -104,17 +104,18 @@ test_expect_success '"git fsck" works' '
 test_expect_success 'repack, clone and fetch work' '
      git repack -a -d &&
      git clone --no-hardlinks . clone_dir &&
-     cd clone_dir &&
-     git show HEAD~5 | grep "A U Thor" &&
-     git show $HASH2 | grep "A U Thor" &&
-     git cat-file commit $R &&
-     git repack -a -d &&
-     test_must_fail git cat-file commit $R &&
-     git fetch ../ "refs/replace/*:refs/replace/*" &&
-     git show HEAD~5 | grep "O Thor" &&
-     git show $HASH2 | grep "O Thor" &&
-     git cat-file commit $R &&
-     cd ..
+     (
+	  cd clone_dir &&
+	  git show HEAD~5 | grep "A U Thor" &&
+	  git show $HASH2 | grep "A U Thor" &&
+	  git cat-file commit $R &&
+	  git repack -a -d &&
+	  test_must_fail git cat-file commit $R &&
+	  git fetch ../ "refs/replace/*:refs/replace/*" &&
+	  git show HEAD~5 | grep "O Thor" &&
+	  git show $HASH2 | grep "O Thor" &&
+	  git cat-file commit $R
+     )
 '
 
 test_expect_success '"git replace" listing and deleting' '
@@ -177,10 +178,11 @@ test_expect_success 'create parallel branch without the bug' '
 
 test_expect_success 'push to cloned repo' '
      git push cloned $HASH6^:refs/heads/parallel &&
-     cd clone_dir &&
-     git checkout parallel &&
-     git log --pretty=oneline | grep $PARA2 &&
-     cd ..
+     (
+	  cd clone_dir &&
+	  git checkout parallel &&
+	  git log --pretty=oneline | grep $PARA2
+     )
 '
 
 test_expect_success 'push branch with replacement' '
@@ -191,25 +193,34 @@ test_expect_success 'push branch with replacement' '
      git show $HASH6~2 | grep "O Thor" &&
      git show $PARA3 | grep "O Thor" &&
      git push cloned $HASH6^:refs/heads/parallel2 &&
-     cd clone_dir &&
-     git checkout parallel2 &&
-     git log --pretty=oneline | grep $PARA3 &&
-     git show $PARA3 | grep "A U Thor" &&
-     cd ..
+     (
+	  cd clone_dir &&
+	  git checkout parallel2 &&
+	  git log --pretty=oneline | grep $PARA3 &&
+	  git show $PARA3 | grep "A U Thor"
+     )
 '
 
 test_expect_success 'fetch branch with replacement' '
      git branch tofetch $HASH6 &&
-     cd clone_dir &&
-     git fetch origin refs/heads/tofetch:refs/heads/parallel3
-     git log --pretty=oneline parallel3 | grep $PARA3
-     git show $PARA3 | grep "A U Thor"
-     cd ..
+     (
+	  cd clone_dir &&
+	  git fetch origin refs/heads/tofetch:refs/heads/parallel3 &&
+	  git log --pretty=oneline parallel3 > output.txt &&
+	  ! grep $PARA3 output.txt &&
+	  git show $PARA3 > para3.txt &&
+	  grep "A U Thor" para3.txt &&
+	  git fetch origin "refs/replace/*:refs/replace/*" &&
+	  git log --pretty=oneline parallel3 > output.txt &&
+	  grep $PARA3 output.txt &&
+	  git show $PARA3 > para3.txt &&
+	  grep "O Thor" para3.txt
+     )
 '
 
 test_expect_success 'bisect and replacements' '
      git bisect start $HASH7 $HASH1 &&
-     test "$S" = "$(git rev-parse --verify HEAD)" &&
+     test "$PARA3" = "$(git rev-parse --verify HEAD)" &&
      git bisect reset &&
      GIT_NO_REPLACE_OBJECTS=1 git bisect start $HASH7 $HASH1 &&
      test "$HASH4" = "$(git rev-parse --verify HEAD)" &&
@@ -219,6 +230,26 @@ test_expect_success 'bisect and replacements' '
      git bisect reset
 '
 
-#
-#
+test_expect_success 'index-pack and replacements' '
+	git --no-replace-objects rev-list --objects HEAD |
+	git --no-replace-objects pack-objects test- &&
+	git index-pack test-*.pack
+'
+
+test_expect_success 'not just commits' '
+	echo replaced >file &&
+	git add file &&
+	REPLACED=$(git rev-parse :file) &&
+	mv file file.replaced &&
+
+	echo original >file &&
+	git add file &&
+	ORIGINAL=$(git rev-parse :file) &&
+	git update-ref refs/replace/$ORIGINAL $REPLACED &&
+	mv file file.original &&
+
+	git checkout file &&
+	test_cmp file.replaced file
+'
+
 test_done

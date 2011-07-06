@@ -19,8 +19,9 @@ status if it is not.
 
 A reference is used in git to specify branches and tags.  A
 branch head is stored under the `$GIT_DIR/refs/heads` directory, and
-a tag is stored under the `$GIT_DIR/refs/tags` directory.  git
-imposes the following rules on how references are named:
+a tag is stored under the `$GIT_DIR/refs/tags` directory (or, if refs
+are packed by `git gc`, as entries in the `$GIT_DIR/packed-refs` file).
+git imposes the following rules on how references are named:
 
 . They can include slash `/` for hierarchical (directory)
   grouping, but no slash-separated component can begin with a
@@ -48,7 +49,7 @@ imposes the following rules on how references are named:
 These rules make it easy for shell script based tools to parse
 reference names, pathname expansion by the shell when a reference name is used
 unquoted (by mistake), and also avoids ambiguities in certain
-reference name expressions (see linkgit:git-rev-parse[1]):
+reference name expressions (see linkgit:gitrevisions[7]):
 
 . A double-dot `..` is often used as in `ref1..ref2`, and in some
   contexts this notation means `{caret}ref1 ref2` (i.e. not in

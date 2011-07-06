@@ -17,7 +17,7 @@ NOTE: In most cases, users should run 'git gc', which calls
 'git prune'. See the section "NOTES", below.
 
 This runs 'git fsck --unreachable' using all the refs
-available in `$GIT_DIR/refs`, optionally with additional set of
+available in `refs/`, optionally with additional set of
 objects specified on the command line, and prunes all unpacked
 objects unreachable from any of these head objects from the object database.
 In addition, it
@@ -31,10 +31,12 @@ OPTIONS
 -------
 
 -n::
+--dry-run::
 	Do not remove anything; just report what it would
 	remove.
 
 -v::
+--verbose::
 	Report all removed objects.
 
 \--::
@@ -75,14 +77,6 @@ SEE ALSO
 linkgit:git-fsck[1],
 linkgit:git-gc[1],
 linkgit:git-reflog[1]
-
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org>
-
-Documentation
---------------
-Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---

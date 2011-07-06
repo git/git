@@ -156,7 +156,7 @@ test_expect_success 'trailing slash in exclude allows directory match (2)' '
 
 test_expect_success 'trailing slash in exclude forces directory match (1)' '
 
-	>two
+	>two &&
 	git ls-files --others --exclude=two/ >output &&
 	grep "^two" output
 

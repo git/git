@@ -36,7 +36,7 @@ Git Transport
 
 The Git transport starts off by sending the command and repository
 on the wire using the pkt-line format, followed by a NUL byte and a
-hostname paramater, terminated by a NUL byte.
+hostname parameter, terminated by a NUL byte.
 
    0032git-upload-pack /project.git\0host=myserver.com\0
 
@@ -331,7 +331,7 @@ An incremental update (fetch) response might look like this:
 
    C: 0009done\n
 
-   S: 003aACK 74730d410fcb6603ace96f1dc55ea6196122532d\n
+   S: 0031ACK 74730d410fcb6603ace96f1dc55ea6196122532d\n
    S: [PACKFILE]
 ----
 
@@ -488,7 +488,7 @@ An example client/server communication might look like this:
    C: 0000
    C: [PACKDATA]
 
-   S: 000aunpack ok\n
-   S: 0014ok refs/heads/debug\n
-   S: 0026ng refs/heads/master non-fast-forward\n
+   S: 000eunpack ok\n
+   S: 0018ok refs/heads/debug\n
+   S: 002ang refs/heads/master non-fast-forward\n
 ----

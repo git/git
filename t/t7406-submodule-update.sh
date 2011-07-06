@@ -25,9 +25,11 @@ test_expect_success 'setup a submodule tree' '
 	echo file > file &&
 	git add file &&
 	test_tick &&
-	git commit -m upstream
+	git commit -m upstream &&
 	git clone . super &&
 	git clone super submodule &&
+	git clone super rebasing &&
+	git clone super merging &&
 	(cd super &&
 	 git submodule add ../submodule submodule &&
 	 test_tick &&
@@ -45,6 +47,16 @@ test_expect_success 'setup a submodule tree' '
 	 ) &&
 	 git add submodule &&
 	 git commit -m "submodule update"
+	) &&
+	(cd super &&
+	 git submodule add ../rebasing rebasing &&
+	 test_tick &&
+	 git commit -m "rebasing"
+	) &&
+	(cd super &&
+	 git submodule add ../merging merging &&
+	 test_tick &&
+	 git commit -m "rebasing"
 	)
 '
 
@@ -57,6 +69,49 @@ test_expect_success 'submodule update detaching the HEAD ' '
 	  compare_head
 	 ) &&
 	 git submodule update submodule &&
+	 cd submodule &&
+	 ! compare_head
+	)
+'
+
+apos="'";
+test_expect_success 'submodule update does not fetch already present commits' '
+	(cd submodule &&
+	  echo line3 >> file &&
+	  git add file &&
+	  test_tick &&
+	  git commit -m "upstream line3"
+	) &&
+	(cd super/submodule &&
+	  head=$(git rev-parse --verify HEAD) &&
+	  echo "Submodule path ${apos}submodule$apos: checked out $apos$head$apos" > ../../expected &&
+	  git reset --hard HEAD~1
+	) &&
+	(cd super &&
+	  git submodule update > ../actual 2> ../actual.err
+	) &&
+	test_cmp expected actual &&
+	! test -s actual.err
+'
+
+test_expect_success 'submodule update should fail due to local changes' '
+	(cd super/submodule &&
+	 git reset --hard HEAD~1 &&
+	 echo "local change" > file
+	) &&
+	(cd super &&
+	 (cd submodule &&
+	  compare_head
+	 ) &&
+	 test_must_fail git submodule update submodule
+	)
+'
+test_expect_success 'submodule update should throw away changes with --force ' '
+	(cd super &&
+	 (cd submodule &&
+	  compare_head
+	 ) &&
+	 git submodule update --force submodule &&
 	 cd submodule &&
 	 ! compare_head
 	)
@@ -177,21 +232,69 @@ test_expect_success 'submodule update - checkout in .git/config' '
 
 test_expect_success 'submodule init picks up rebase' '
 	(cd super &&
-	 git config submodule.rebasing.url git://non-existing/git &&
-	 git config submodule.rebasing.path does-not-matter &&
-	 git config submodule.rebasing.update rebase &&
+	 git config -f .gitmodules submodule.rebasing.update rebase &&
 	 git submodule init rebasing &&
-	 test "rebase" = $(git config submodule.rebasing.update)
+	 test "rebase" = "$(git config submodule.rebasing.update)"
 	)
 '
 
 test_expect_success 'submodule init picks up merge' '
 	(cd super &&
-	 git config submodule.merging.url git://non-existing/git &&
-	 git config submodule.merging.path does-not-matter &&
-	 git config submodule.merging.update merge &&
+	 git config -f .gitmodules submodule.merging.update merge &&
 	 git submodule init merging &&
-	 test "merge" = $(git config submodule.merging.update)
+	 test "merge" = "$(git config submodule.merging.update)"
+	)
+'
+
+test_expect_success 'submodule update --merge  - ignores --merge  for new submodules' '
+	(cd super &&
+	 rm -rf submodule &&
+	 git submodule update submodule &&
+	 git status -s submodule >expect &&
+	 rm -rf submodule &&
+	 git submodule update --merge submodule &&
+	 git status -s submodule >actual &&
+	 test_cmp expect actual
+	)
+'
+
+test_expect_success 'submodule update --rebase - ignores --rebase for new submodules' '
+	(cd super &&
+	 rm -rf submodule &&
+	 git submodule update submodule &&
+	 git status -s submodule >expect &&
+	 rm -rf submodule &&
+	 git submodule update --rebase submodule &&
+	 git status -s submodule >actual &&
+	 test_cmp expect actual
+	)
+'
+
+test_expect_success 'submodule update ignores update=merge config for new submodules' '
+	(cd super &&
+	 rm -rf submodule &&
+	 git submodule update submodule &&
+	 git status -s submodule >expect &&
+	 rm -rf submodule &&
+	 git config submodule.submodule.update merge &&
+	 git submodule update submodule &&
+	 git status -s submodule >actual &&
+	 git config --unset submodule.submodule.update &&
+	 test_cmp expect actual
+	)
+'
+
+test_expect_success 'submodule update ignores update=rebase config for new submodules' '
+	(cd super &&
+	 rm -rf submodule &&
+	 git submodule update submodule &&
+	 git status -s submodule >expect &&
+	 rm -rf submodule &&
+	 git config submodule.submodule.update rebase &&
+	 git submodule update submodule &&
+	 git status -s submodule >actual &&
+	 git config --unset submodule.submodule.update &&
+	 test_cmp expect actual
 	)
 '
 

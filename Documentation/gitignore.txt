@@ -14,11 +14,8 @@ DESCRIPTION
 
 A `gitignore` file specifies intentionally untracked files that
 git should ignore.
-Note that all the `gitignore` files really concern only files
-that are not already tracked by git;
-in order to ignore uncommitted changes in already tracked files,
-please refer to the 'git update-index --assume-unchanged'
-documentation.
+Files already tracked by git are not affected; see the NOTES
+below for details.
 
 Each line in a `gitignore` file specifies a pattern.
 When deciding whether to ignore a path, git normally checks
@@ -62,7 +59,8 @@ files specified by command-line options.  Higher-level git
 tools, such as 'git status' and 'git add',
 use patterns from the sources specified above.
 
-Patterns have the following format:
+PATTERN FORMAT
+--------------
 
  - A blank line matches no files, so it can serve as a separator
    for readability.
@@ -83,18 +81,35 @@ Patterns have the following format:
 
  - If the pattern does not contain a slash '/', git treats it as
    a shell glob pattern and checks for a match against the
-   pathname without leading directories.
+   pathname relative to the location of the `.gitignore` file
+   (relative to the toplevel of the work tree if not from a
+   `.gitignore` file).
 
  - Otherwise, git treats the pattern as a shell glob suitable
    for consumption by fnmatch(3) with the FNM_PATHNAME flag:
    wildcards in the pattern will not match a / in the pathname.
-   For example, "Documentation/\*.html" matches
-   "Documentation/git.html" but not
-   "Documentation/ppc/ppc.html".  A leading slash matches the
-   beginning of the pathname; for example, "/*.c" matches
-   "cat-file.c" but not "mozilla-sha1/sha1.c".
+   For example, "Documentation/{asterisk}.html" matches
+   "Documentation/git.html" but not "Documentation/ppc/ppc.html"
+   or "tools/perf/Documentation/perf.html".
 
-An example:
+ - A leading slash matches the beginning of the pathname.
+   For example, "/{asterisk}.c" matches "cat-file.c" but not
+   "mozilla-sha1/sha1.c".
+
+NOTES
+-----
+
+The purpose of gitignore files is to ensure that certain files
+not tracked by git remain untracked.
+
+To ignore uncommitted changes in a file that is already tracked,
+use 'git update-index {litdd}assume-unchanged'.
+
+To stop tracking a file that is currently tracked, use
+'git rm --cached'.
+
+EXAMPLES
+--------
 
 --------------------------------------------------------------
     $ git status
@@ -136,10 +151,10 @@ Another example:
 The second .gitignore prevents git from ignoring
 `arch/foo/kernel/vmlinux.lds.S`.
 
-Documentation
--------------
-Documentation by David Greaves, Junio C Hamano, Josh Triplett,
-Frank Lichtenheld, and the git-list <git@vger.kernel.org>.
+SEE ALSO
+--------
+linkgit:git-rm[1], linkgit:git-update-index[1],
+linkgit:gitrepository-layout[5]
 
 GIT
 ---

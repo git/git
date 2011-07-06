@@ -517,13 +517,13 @@ test_expect_success '"parallel" side branch creation' '
 	add_line_into_file "2(para): line 2 on parallel branch" dir2/file2 &&
 	PARA_HASH2=$(git rev-parse --verify HEAD) &&
 	add_line_into_file "3(para): line 3 on parallel branch" dir2/file3 &&
-	PARA_HASH3=$(git rev-parse --verify HEAD)
+	PARA_HASH3=$(git rev-parse --verify HEAD) &&
 	git merge -m "merge HASH4 and PARA_HASH3" "$HASH4" &&
-	PARA_HASH4=$(git rev-parse --verify HEAD)
+	PARA_HASH4=$(git rev-parse --verify HEAD) &&
 	add_line_into_file "5(para): add line on parallel branch" dir1/file1 &&
-	PARA_HASH5=$(git rev-parse --verify HEAD)
+	PARA_HASH5=$(git rev-parse --verify HEAD) &&
 	add_line_into_file "6(para): add line on parallel branch" dir2/file2 &&
-	PARA_HASH6=$(git rev-parse --verify HEAD)
+	PARA_HASH6=$(git rev-parse --verify HEAD) &&
 	git merge -m "merge HASH7 and PARA_HASH6" "$HASH7" &&
 	PARA_HASH7=$(git rev-parse --verify HEAD)
 '
@@ -565,6 +565,11 @@ test_expect_success 'skipping away from skipped commit' '
         git bisect skip &&
 	para3=$(git rev-parse --verify HEAD) &&
 	test "$para3" = "$PARA_HASH3"
+'
+
+test_expect_success 'erroring out when using bad path parameters' '
+	test_must_fail git bisect start $PARA_HASH7 $HASH1 -- foobar 2> error.txt &&
+	grep "bad path parameters" error.txt
 '
 
 #

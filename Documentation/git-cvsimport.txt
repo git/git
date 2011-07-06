@@ -13,7 +13,7 @@ SYNOPSIS
 	      [-A <author-conv-file>] [-p <options-for-cvsps>] [-P <file>]
 	      [-C <git_repository>] [-z <fuzz>] [-i] [-k] [-u] [-s <subst>]
 	      [-a] [-m] [-M <regex>] [-S <regex>] [-L <commitlimit>]
-	      [-r <remote>] [<CVS_module>]
+	      [-r <remote>] [-R] [<CVS_module>]
 
 
 DESCRIPTION
@@ -157,6 +157,22 @@ It is not recommended to use this feature if you intend to
 export changes back to CVS again later with
 'git cvsexportcommit'.
 
+-R::
+	Generate a `$GIT_DIR/cvs-revisions` file containing a mapping from CVS
+	revision numbers to newly-created Git commit IDs.  The generated file
+	will contain one line for each (filename, revision) pair imported;
+	each line will look like
++
+---------
+src/widget.c 1.1 1d862f173cdc7325b6fa6d2ae1cfd61fd1b512b7
+---------
++
+The revision data is appended to the file if it already exists, for use when
+doing incremental imports.
++
+This option may be useful if you have CVS revision numbers stored in commit
+messages, bug-tracking systems, email archives, and the like.
+
 -h::
 	Print a short usage message and exit.
 
@@ -172,7 +188,7 @@ ISSUES
 ------
 Problems related to timestamps:
 
- * If timestamps of commits in the cvs repository are not stable enough
+ * If timestamps of commits in the CVS repository are not stable enough
    to be used for ordering commits changes may show up in the wrong
    order.
  * If any files were ever "cvs import"ed more than once (e.g., import of
@@ -185,7 +201,7 @@ Problems related to branches:
 
  * Branches on which no commits have been made are not imported.
  * All files from the branching point are added to a branch even if
-   never added in cvs.
+   never added in CVS.
  * This applies to files added to the source branch *after* a daughter
    branch was created: if previously no commit was made on the daughter
    branch they will erroneously be added to the daughter branch in git.
@@ -200,15 +216,6 @@ more stable in practice:
 
 * cvs2git (part of cvs2svn), `http://cvs2svn.tigris.org`
 * parsecvs, `http://cgit.freedesktop.org/~keithp/parsecvs`
-
-Author
-------
-Written by Matthias Urlichs <smurf@smurf.noris.de>, with help from
-various participants of the git-list <git@vger.kernel.org>.
-
-Documentation
---------------
-Documentation by Matthias Urlichs <smurf@smurf.noris.de>.
 
 GIT
 ---

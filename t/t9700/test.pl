@@ -1,11 +1,18 @@
 #!/usr/bin/perl
 use lib (split(/:/, $ENV{GITPERLLIB}));
 
-use 5.006002;
+use 5.008;
 use warnings;
 use strict;
 
 use Test::More qw(no_plan);
+
+BEGIN {
+	# t9700-perl-git.sh kicks off our testing, so we have to go from
+	# there.
+	Test::More->builder->current_test(1);
+	Test::More->builder->no_ending(1);
+}
 
 use Cwd;
 use File::Basename;
@@ -105,3 +112,18 @@ my $last_commit = $r2->command_oneline(qw(rev-parse --verify HEAD));
 like($last_commit, qr/^[0-9a-fA-F]{40}$/, 'rev-parse returned hash');
 my $dir_commit = $r2->command_oneline('log', '-n1', '--pretty=format:%H', '.');
 isnt($last_commit, $dir_commit, 'log . does not show last commit');
+
+# commands outside working tree
+chdir($abs_repo_dir . '/..');
+my $r3 = Git->repository(Directory => $abs_repo_dir);
+my $tmpfile3 = "$abs_repo_dir/file3.tmp";
+open TEMPFILE3, "+>$tmpfile3" or die "Can't open $tmpfile3: $!";
+is($r3->cat_blob($file1hash, \*TEMPFILE3), 15, "cat_blob(outside): size");
+close TEMPFILE3;
+unlink $tmpfile3;
+chdir($abs_repo_dir);
+
+printf "1..%d\n", Test::More->builder->current_test;
+
+my $is_passing = eval { Test::More->is_passing };
+exit($is_passing ? 0 : 1) unless $@ =~ /Can't locate object method/;

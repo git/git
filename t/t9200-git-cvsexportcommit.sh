@@ -5,16 +5,17 @@
 test_description='Test export of commits to CVS'
 
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/lib-prereq-FILEMODE.sh
 
 if ! test_have_prereq PERL; then
-	say 'skipping git cvsexportcommit tests, perl not available'
+	skip_all='skipping git cvsexportcommit tests, perl not available'
 	test_done
 fi
 
 cvs >/dev/null 2>&1
 if test $? -ne 1
 then
-    say 'skipping git cvsexportcommit tests, cvs not found'
+    skip_all='skipping git cvsexportcommit tests, cvs not found'
     test_done
 fi
 
@@ -63,10 +64,10 @@ test_expect_success \
      check_entries B "newfile2.txt/1.1/" &&
      check_entries C "newfile3.png/1.1/-kb" &&
      check_entries D "newfile4.png/1.1/-kb" &&
-     diff A/newfile1.txt ../A/newfile1.txt &&
-     diff B/newfile2.txt ../B/newfile2.txt &&
-     diff C/newfile3.png ../C/newfile3.png &&
-     diff D/newfile4.png ../D/newfile4.png
+     test_cmp A/newfile1.txt ../A/newfile1.txt &&
+     test_cmp B/newfile2.txt ../B/newfile2.txt &&
+     test_cmp C/newfile3.png ../C/newfile3.png &&
+     test_cmp D/newfile4.png ../D/newfile4.png
      )'
 
 test_expect_success \
@@ -89,10 +90,10 @@ test_expect_success \
      check_entries D "newfile4.png/1.2/-kb" &&
      check_entries E "newfile5.txt/1.1/" &&
      check_entries F "newfile6.png/1.1/-kb" &&
-     diff A/newfile1.txt ../A/newfile1.txt &&
-     diff D/newfile4.png ../D/newfile4.png &&
-     diff E/newfile5.txt ../E/newfile5.txt &&
-     diff F/newfile6.png ../F/newfile6.png
+     test_cmp A/newfile1.txt ../A/newfile1.txt &&
+     test_cmp D/newfile4.png ../D/newfile4.png &&
+     test_cmp E/newfile5.txt ../E/newfile5.txt &&
+     test_cmp F/newfile6.png ../F/newfile6.png
      )'
 
 # Should fail (but only on the git cvsexportcommit stage)
@@ -137,9 +138,9 @@ test_expect_success \
      check_entries D "" &&
      check_entries E "newfile5.txt/1.1/" &&
      check_entries F "newfile6.png/1.1/-kb" &&
-     diff A/newfile1.txt ../A/newfile1.txt &&
-     diff E/newfile5.txt ../E/newfile5.txt &&
-     diff F/newfile6.png ../F/newfile6.png
+     test_cmp A/newfile1.txt ../A/newfile1.txt &&
+     test_cmp E/newfile5.txt ../E/newfile5.txt &&
+     test_cmp F/newfile6.png ../F/newfile6.png
      )'
 
 test_expect_success \
@@ -155,8 +156,8 @@ test_expect_success \
      check_entries D "" &&
      check_entries E "newfile5.txt/1.1/" &&
      check_entries F "newfile6.png/1.1/-kb" &&
-     diff E/newfile5.txt ../E/newfile5.txt &&
-     diff F/newfile6.png ../F/newfile6.png
+     test_cmp E/newfile5.txt ../E/newfile5.txt &&
+     test_cmp F/newfile6.png ../F/newfile6.png
      )'
 
 test_expect_success \
@@ -228,11 +229,6 @@ test_expect_success \
       (cd "$CVSWORK" &&
       test_must_fail git cvsexportcommit -c $id
       )'
-
-if ! test "$(git config --bool core.filemode)" = false
-then
-	test_set_prereq FILEMODE
-fi
 
 test_expect_success FILEMODE \
      'Retain execute bit' \

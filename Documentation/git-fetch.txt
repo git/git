@@ -8,13 +8,13 @@ git-fetch - Download objects and refs from another repository
 
 SYNOPSIS
 --------
-'git fetch' <options> <repository> <refspec>...
+'git fetch' [<options>] [<repository> [<refspec>...]]
 
-'git fetch' <options> <group>
+'git fetch' [<options>] <group>
 
-'git fetch' --multiple <options> [<repository> | <group>]...
+'git fetch' --multiple [<options>] [(<repository> | <group>)...]
 
-'git fetch' --all <options>
+'git fetch' --all [<options>]
 
 
 DESCRIPTION
@@ -26,7 +26,7 @@ The ref names and their object names of fetched refs are stored
 in `.git/FETCH_HEAD`.  This information is left for a later merge
 operation done by 'git merge'.
 
-When <refspec> stores the fetched result in tracking branches,
+When <refspec> stores the fetched result in remote-tracking branches,
 the tags that point at these branches are automatically
 followed.  This is done by first fetching from the remote using
 the given <refspec>s, and if the repository has objects that are
@@ -34,7 +34,7 @@ pointed by remote tags that it does not yet have, then fetch
 those missing tags.  If the other end has tags that point at
 branches you are not interested in, you will not get them.
 
-'git fetch' can fetch from either a single named repository, or
+'git fetch' can fetch from either a single named repository,
 or from several repositories at once if <group> is given and
 there is a remotes.<group> entry in the configuration file.
 (See linkgit:git-config[1]).
@@ -76,19 +76,18 @@ The `pu` branch will be updated even if it is does not fast-forward,
 because it is prefixed with a plus sign; `tmp` will not be.
 
 
+BUGS
+----
+Using --recurse-submodules can only fetch new commits in already checked
+out submodules right now. When e.g. upstream added a new submodule in the
+just fetched commits of the superproject the submodule itself can not be
+fetched, making it impossible to check out that submodule later without
+having to do a fetch again. This is expected to be fixed in a future git
+version.
+
 SEE ALSO
 --------
 linkgit:git-pull[1]
-
-
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org> and
-Junio C Hamano <gitster@pobox.com>
-
-Documentation
--------------
-Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---

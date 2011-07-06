@@ -139,6 +139,7 @@ do
 		continue
 		;;
 	--remap-to-ancestor)
+		# deprecated ($remap_to_ancestor is set now automatically)
 		shift
 		remap_to_ancestor=t
 		continue
@@ -265,7 +266,14 @@ mkdir ../map || die "Could not create map/ directory"
 
 # we need "--" only if there are no path arguments in $@
 nonrevs=$(git rev-parse --no-revs "$@") || exit
-test -z "$nonrevs" && dashdash=-- || dashdash=
+if test -z "$nonrevs"
+then
+	dashdash=--
+else
+	dashdash=
+	remap_to_ancestor=t
+fi
+
 rev_args=$(git rev-parse --revs-only "$@")
 
 case "$filter_subdir" in

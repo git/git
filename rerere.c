@@ -7,6 +7,11 @@
 #include "ll-merge.h"
 #include "attr.h"
 
+#define RESOLVED 0
+#define PUNTED 1
+#define THREE_STAGED 2
+void *RERERE_RESOLVED = &RERERE_RESOLVED;
+
 /* if rerere_enabled == -1, fall back to detection of .git/rr-cache */
 static int rerere_enabled = -1;
 
@@ -42,11 +47,17 @@ static void read_rr(struct string_list *rr)
 		name = xstrdup(buf);
 		if (fgetc(in) != '\t')
 			die("corrupt MERGE_RR");
-		for (i = 0; i < sizeof(buf) && (buf[i] = fgetc(in)); i++)
-			; /* do nothing */
+		for (i = 0; i < sizeof(buf); i++) {
+			int c = fgetc(in);
+			if (c < 0)
+				die("corrupt MERGE_RR");
+			buf[i] = c;
+			if (c == 0)
+				 break;
+		}
 		if (i == sizeof(buf))
 			die("filename too long");
-		string_list_insert(buf, rr)->util = name;
+		string_list_insert(rr, buf)->util = name;
 	}
 	fclose(in);
 }
@@ -153,7 +164,7 @@ static int handle_path(unsigned char *sha1, struct rerere_io *io, int marker_siz
 	git_SHA_CTX ctx;
 	int hunk_no = 0;
 	enum {
-		RR_CONTEXT = 0, RR_SIDE_1, RR_SIDE_2, RR_ORIGINAL,
+		RR_CONTEXT = 0, RR_SIDE_1, RR_SIDE_2, RR_ORIGINAL
 	} hunk = RR_CONTEXT;
 	struct strbuf one = STRBUF_INIT, two = STRBUF_INIT;
 	struct strbuf buf = STRBUF_INIT;
@@ -319,9 +330,13 @@ static int handle_cache(const char *path, unsigned char *sha1, const char *outpu
 		if (!mmfile[i].ptr && !mmfile[i].size)
 			mmfile[i].ptr = xstrdup("");
 	}
-	ll_merge(&result, path, &mmfile[0],
+	/*
+	 * NEEDSWORK: handle conflicts from merges with
+	 * merge.renormalize set, too
+	 */
+	ll_merge(&result, path, &mmfile[0], NULL,
 		 &mmfile[1], "ours",
-		 &mmfile[2], "theirs", 0);
+		 &mmfile[2], "theirs", NULL);
 	for (i = 0; i < 3; i++)
 		free(mmfile[i].ptr);
 
@@ -341,21 +356,74 @@ static int handle_cache(const char *path, unsigned char *sha1, const char *outpu
 	return hunk_no;
 }
 
+static int check_one_conflict(int i, int *type)
+{
+	struct cache_entry *e = active_cache[i];
+
+	if (!ce_stage(e)) {
+		*type = RESOLVED;
+		return i + 1;
+	}
+
+	*type = PUNTED;
+	if (ce_stage(e) == 1) {
+		if (active_nr <= ++i)
+			return i + 1;
+	}
+
+	/* Only handle regular files with both stages #2 and #3 */
+	if (i + 1 < active_nr) {
+		struct cache_entry *e2 = active_cache[i];
+		struct cache_entry *e3 = active_cache[i + 1];
+		if (ce_stage(e2) == 2 &&
+		    ce_stage(e3) == 3 &&
+		    ce_same_name(e, e3) &&
+		    S_ISREG(e2->ce_mode) &&
+		    S_ISREG(e3->ce_mode))
+			*type = THREE_STAGED;
+	}
+
+	/* Skip the entries with the same name */
+	while (i < active_nr && ce_same_name(e, active_cache[i]))
+		i++;
+	return i;
+}
+
 static int find_conflict(struct string_list *conflict)
 {
 	int i;
 	if (read_cache() < 0)
 		return error("Could not read index");
-	for (i = 0; i+1 < active_nr; i++) {
-		struct cache_entry *e2 = active_cache[i];
-		struct cache_entry *e3 = active_cache[i+1];
-		if (ce_stage(e2) == 2 &&
-		    ce_stage(e3) == 3 &&
-		    ce_same_name(e2, e3) &&
-		    S_ISREG(e2->ce_mode) &&
-		    S_ISREG(e3->ce_mode)) {
-			string_list_insert((const char *)e2->name, conflict);
-			i++; /* skip over both #2 and #3 */
+
+	for (i = 0; i < active_nr;) {
+		int conflict_type;
+		struct cache_entry *e = active_cache[i];
+		i = check_one_conflict(i, &conflict_type);
+		if (conflict_type == THREE_STAGED)
+			string_list_insert(conflict, (const char *)e->name);
+	}
+	return 0;
+}
+
+int rerere_remaining(struct string_list *merge_rr)
+{
+	int i;
+	if (read_cache() < 0)
+		return error("Could not read index");
+
+	for (i = 0; i < active_nr;) {
+		int conflict_type;
+		struct cache_entry *e = active_cache[i];
+		i = check_one_conflict(i, &conflict_type);
+		if (conflict_type == PUNTED)
+			string_list_insert(merge_rr, (const char *)e->name);
+		else if (conflict_type == RESOLVED) {
+			struct string_list_item *it;
+			it = string_list_lookup(merge_rr, (const char *)e->name);
+			if (it != NULL) {
+				free(it->util);
+				it->util = RERERE_RESOLVED;
+			}
 		}
 	}
 	return 0;
@@ -364,7 +432,7 @@ static int find_conflict(struct string_list *conflict)
 static int merge(const char *name, const char *path)
 {
 	int ret;
-	mmfile_t cur, base, other;
+	mmfile_t cur = {NULL, 0}, base = {NULL, 0}, other = {NULL, 0};
 	mmbuffer_t result = {NULL, 0};
 
 	if (handle_file(path, NULL, rerere_path(name, "thisimage")) < 0)
@@ -372,11 +440,19 @@ static int merge(const char *name, const char *path)
 
 	if (read_mmfile(&cur, rerere_path(name, "thisimage")) ||
 			read_mmfile(&base, rerere_path(name, "preimage")) ||
-			read_mmfile(&other, rerere_path(name, "postimage")))
-		return 1;
-	ret = ll_merge(&result, path, &base, &cur, "", &other, "", 0);
+			read_mmfile(&other, rerere_path(name, "postimage"))) {
+		ret = 1;
+		goto out;
+	}
+	ret = ll_merge(&result, path, &base, NULL, &cur, "", &other, "", NULL);
 	if (!ret) {
-		FILE *f = fopen(path, "w");
+		FILE *f;
+
+		if (utime(rerere_path(name, "postimage"), NULL) < 0)
+			warning("failed utime() on %s: %s",
+					rerere_path(name, "postimage"),
+					strerror(errno));
+		f = fopen(path, "w");
 		if (!f)
 			return error("Could not open %s: %s", path,
 				     strerror(errno));
@@ -387,6 +463,7 @@ static int merge(const char *name, const char *path)
 				     strerror(errno));
 	}
 
+out:
 	free(cur.ptr);
 	free(base.ptr);
 	free(other.ptr);
@@ -423,8 +500,8 @@ static int update_paths(struct string_list *update)
 
 static int do_plain_rerere(struct string_list *rr, int fd)
 {
-	struct string_list conflict = { NULL, 0, 0, 1 };
-	struct string_list update = { NULL, 0, 0, 1 };
+	struct string_list conflict = STRING_LIST_INIT_DUP;
+	struct string_list update = STRING_LIST_INIT_DUP;
 	int i;
 
 	find_conflict(&conflict);
@@ -446,7 +523,7 @@ static int do_plain_rerere(struct string_list *rr, int fd)
 			if (ret < 1)
 				continue;
 			hex = xstrdup(sha1_to_hex(sha1));
-			string_list_insert(path, rr)->util = hex;
+			string_list_insert(rr, path)->util = hex;
 			if (mkdir(git_path("rr-cache/%s", hex), 0755))
 				continue;
 			handle_file(path, NULL, rerere_path(hex, "preimage"));
@@ -468,7 +545,7 @@ static int do_plain_rerere(struct string_list *rr, int fd)
 		if (has_rerere_resolution(name)) {
 			if (!merge(name, path)) {
 				if (rerere_autoupdate)
-					string_list_insert(path, &update);
+					string_list_insert(&update, path);
 				fprintf(stderr,
 					"%s '%s' using previous resolution.\n",
 					rerere_autoupdate
@@ -519,8 +596,7 @@ static int is_rerere_enabled(void)
 	if (rerere_enabled < 0)
 		return rr_cache_exists;
 
-	if (!rr_cache_exists &&
-	    (mkdir(rr_cache, 0777) || adjust_shared_perm(rr_cache)))
+	if (!rr_cache_exists && mkdir_in_gitdir(rr_cache))
 		die("Could not create directory %s", rr_cache);
 	return 1;
 }
@@ -544,7 +620,7 @@ int setup_rerere(struct string_list *merge_rr, int flags)
 
 int rerere(int flags)
 {
-	struct string_list merge_rr = { NULL, 0, 0, 1 };
+	struct string_list merge_rr = STRING_LIST_INIT_DUP;
 	int fd;
 
 	fd = setup_rerere(&merge_rr, flags);
@@ -574,7 +650,7 @@ static int rerere_forget_one_path(const char *path, struct string_list *rr)
 	fprintf(stderr, "Updated preimage for '%s'\n", path);
 
 
-	string_list_insert(path, rr)->util = hex;
+	string_list_insert(rr, path)->util = hex;
 	fprintf(stderr, "Forgot resolution for %s\n", path);
 	return 0;
 }
@@ -582,8 +658,8 @@ static int rerere_forget_one_path(const char *path, struct string_list *rr)
 int rerere_forget(const char **pathspec)
 {
 	int i, fd;
-	struct string_list conflict = { NULL, 0, 0, 1 };
-	struct string_list merge_rr = { NULL, 0, 0, 1 };
+	struct string_list conflict = STRING_LIST_INIT_DUP;
+	struct string_list merge_rr = STRING_LIST_INIT_DUP;
 
 	if (read_cache() < 0)
 		return error("Could not read index");
@@ -600,4 +676,89 @@ int rerere_forget(const char **pathspec)
 		rerere_forget_one_path(it->string, &merge_rr);
 	}
 	return write_rr(&merge_rr, fd);
+}
+
+static time_t rerere_created_at(const char *name)
+{
+	struct stat st;
+	return stat(rerere_path(name, "preimage"), &st) ? (time_t) 0 : st.st_mtime;
+}
+
+static time_t rerere_last_used_at(const char *name)
+{
+	struct stat st;
+	return stat(rerere_path(name, "postimage"), &st) ? (time_t) 0 : st.st_mtime;
+}
+
+static void unlink_rr_item(const char *name)
+{
+	unlink(rerere_path(name, "thisimage"));
+	unlink(rerere_path(name, "preimage"));
+	unlink(rerere_path(name, "postimage"));
+	rmdir(git_path("rr-cache/%s", name));
+}
+
+struct rerere_gc_config_cb {
+	int cutoff_noresolve;
+	int cutoff_resolve;
+};
+
+static int git_rerere_gc_config(const char *var, const char *value, void *cb)
+{
+	struct rerere_gc_config_cb *cf = cb;
+
+	if (!strcmp(var, "gc.rerereresolved"))
+		cf->cutoff_resolve = git_config_int(var, value);
+	else if (!strcmp(var, "gc.rerereunresolved"))
+		cf->cutoff_noresolve = git_config_int(var, value);
+	else
+		return git_default_config(var, value, cb);
+	return 0;
+}
+
+void rerere_gc(struct string_list *rr)
+{
+	struct string_list to_remove = STRING_LIST_INIT_DUP;
+	DIR *dir;
+	struct dirent *e;
+	int i, cutoff;
+	time_t now = time(NULL), then;
+	struct rerere_gc_config_cb cf = { 15, 60 };
+
+	git_config(git_rerere_gc_config, &cf);
+	dir = opendir(git_path("rr-cache"));
+	if (!dir)
+		die_errno("unable to open rr-cache directory");
+	while ((e = readdir(dir))) {
+		if (is_dot_or_dotdot(e->d_name))
+			continue;
+
+		then = rerere_last_used_at(e->d_name);
+		if (then) {
+			cutoff = cf.cutoff_resolve;
+		} else {
+			then = rerere_created_at(e->d_name);
+			if (!then)
+				continue;
+			cutoff = cf.cutoff_noresolve;
+		}
+		if (then < now - cutoff * 86400)
+			string_list_append(&to_remove, e->d_name);
+	}
+	closedir(dir);
+	for (i = 0; i < to_remove.nr; i++)
+		unlink_rr_item(to_remove.items[i].string);
+	string_list_clear(&to_remove, 0);
+}
+
+void rerere_clear(struct string_list *merge_rr)
+{
+	int i;
+
+	for (i = 0; i < merge_rr->nr; i++) {
+		const char *name = (const char *)merge_rr->items[i].util;
+		if (!has_rerere_resolution(name))
+			unlink_rr_item(name);
+	}
+	unlink_or_warn(git_path("MERGE_RR"));
 }

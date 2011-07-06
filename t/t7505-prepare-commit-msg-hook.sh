@@ -132,6 +132,18 @@ test_expect_success 'with hook (-c)' '
 
 '
 
+test_expect_success 'with hook (merge)' '
+
+	head=`git rev-parse HEAD` &&
+	git checkout -b other HEAD@{1} &&
+	echo "more" >> file &&
+	git add file &&
+	git commit -m other &&
+	git checkout - &&
+	git merge other &&
+	test "`git log -1 --pretty=format:%s`" = merge
+'
+
 cat > "$HOOK" <<'EOF'
 #!/bin/sh
 exit 1

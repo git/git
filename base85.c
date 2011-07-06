@@ -7,9 +7,9 @@
 #define say1(a,b) fprintf(stderr, a, b)
 #define say2(a,b,c) fprintf(stderr, a, b, c)
 #else
-#define say(a) do {} while(0)
-#define say1(a,b) do {} while(0)
-#define say2(a,b,c) do {} while(0)
+#define say(a) do { /* nothing */ } while (0)
+#define say1(a,b) do { /* nothing */ } while (0)
+#define say2(a,b,c) do { /* nothing */ } while (0)
 #endif
 
 static const char en85[] = {

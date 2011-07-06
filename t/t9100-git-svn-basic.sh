@@ -15,24 +15,25 @@ case "$GIT_SVN_LC_ALL" in
 	test_set_prereq UTF8
 	;;
 *)
-	say "UTF-8 locale not set, some tests skipped ($GIT_SVN_LC_ALL)"
+	say "# UTF-8 locale not set, some tests skipped ($GIT_SVN_LC_ALL)"
 	;;
 esac
 
 test_expect_success \
     'initialize git svn' '
 	mkdir import &&
-	cd import &&
-	echo foo > foo &&
-	ln -s foo foo.link
-	mkdir -p dir/a/b/c/d/e &&
-	echo "deep dir" > dir/a/b/c/d/e/file &&
-	mkdir bar &&
-	echo "zzz" > bar/zzz &&
-	echo "#!/bin/sh" > exec.sh &&
-	chmod +x exec.sh &&
-	svn_cmd import -m "import for git svn" . "$svnrepo" >/dev/null &&
-	cd .. &&
+	(
+		cd import &&
+		echo foo >foo &&
+		ln -s foo foo.link
+		mkdir -p dir/a/b/c/d/e &&
+		echo "deep dir" >dir/a/b/c/d/e/file &&
+		mkdir bar &&
+		echo "zzz" >bar/zzz &&
+		echo "#!/bin/sh" >exec.sh &&
+		chmod +x exec.sh &&
+		svn_cmd import -m "import for git svn" . "$svnrepo" >/dev/null
+	) &&
 	rm -rf import &&
 	git svn init "$svnrepo"'
 
@@ -142,7 +143,7 @@ test_expect_success "$name" '
 	git svn set-tree --find-copies-harder --rmdir \
 		${remotes_git_svn}..mybranch5 &&
 	svn_cmd up "$SVN_TREE" &&
-	test -L "$SVN_TREE"/exec.sh'
+	test -h "$SVN_TREE"/exec.sh'
 
 name='new symlink is added to a file that was also just made executable'
 
@@ -155,7 +156,7 @@ test_expect_success "$name" '
 		${remotes_git_svn}..mybranch5 &&
 	svn_cmd up "$SVN_TREE" &&
 	test -x "$SVN_TREE"/bar/zzz &&
-	test -L "$SVN_TREE"/exec-2.sh'
+	test -h "$SVN_TREE"/exec-2.sh'
 
 name='modify a symlink to become a file'
 test_expect_success "$name" '
@@ -168,7 +169,7 @@ test_expect_success "$name" '
 		${remotes_git_svn}..mybranch5 &&
 	svn_cmd up "$SVN_TREE" &&
 	test -f "$SVN_TREE"/exec-2.sh &&
-	test ! -L "$SVN_TREE"/exec-2.sh &&
+	test ! -h "$SVN_TREE"/exec-2.sh &&
 	test_cmp help "$SVN_TREE"/exec-2.sh'
 
 name="commit with UTF-8 message: locale: $GIT_SVN_LC_ALL"
@@ -270,6 +271,17 @@ test_expect_success 'able to dcommit to a subdirectory' "
 	git svn dcommit -i bar &&
 	test -z \"\`git diff refs/heads/my-bar refs/remotes/bar\`\"
 	"
+
+test_expect_success 'dcommit should not fail with a touched file' '
+	test_commit "commit-new-file-foo2" foo2 &&
+	test-chmtime =-60 foo &&
+	git svn dcommit
+'
+
+test_expect_success 'rebase should not fail with a touched file' '
+	test-chmtime =-60 foo &&
+	git svn rebase
+'
 
 test_expect_success 'able to set-tree to a subdirectory' "
 	echo cba > d &&

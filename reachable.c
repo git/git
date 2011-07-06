@@ -70,15 +70,10 @@ static void process_tree(struct tree *tree,
 static void process_tag(struct tag *tag, struct object_array *p, const char *name)
 {
 	struct object *obj = &tag->object;
-	struct name_path me;
 
 	if (obj->flags & SEEN)
 		return;
 	obj->flags |= SEEN;
-
-	me.up = NULL;
-	me.elem = "tag:/";
-	me.elem_len = 5;
 
 	if (parse_tag(tag) < 0)
 		die("bad tag object %s", sha1_to_hex(obj->sha1));
@@ -90,7 +85,7 @@ static void walk_commit_list(struct rev_info *revs)
 {
 	int i;
 	struct commit *commit;
-	struct object_array objects = { 0, 0, NULL };
+	struct object_array objects = OBJECT_ARRAY_INIT;
 
 	/* Walk all commits, process their trees */
 	while ((commit = get_revision(revs)) != NULL)

@@ -26,6 +26,7 @@ require_work_tree
 cd_to_toplevel
 
 no_commit=
+xopt=
 while case "$#" in 0) break ;; esac
 do
 	case "$1" in
@@ -43,6 +44,16 @@ do
 		: no-op ;;
 	-x|--i-really-want-to-expose-my-private-commit-object-name)
 		replay=
+		;;
+	-X?*)
+		xopt="$xopt$(git rev-parse --sq-quote "--${1#-X}")"
+		;;
+	--strategy-option=*)
+		xopt="$xopt$(git rev-parse --sq-quote "--${1#--strategy-option=}")"
+		;;
+	-X|--strategy-option)
+		shift
+		xopt="$xopt$(git rev-parse --sq-quote "--$1")"
 		;;
 	-*)
 		usage
@@ -159,7 +170,7 @@ export GITHEAD_$head GITHEAD_$next
 # and $prev on top of us (when reverting), or the change between
 # $prev and $commit on top of us (when cherry-picking or replaying).
 
-git-merge-recursive $base -- $head $next &&
+eval "git merge-recursive $xopt $base -- $head $next" &&
 result=$(git-write-tree 2>/dev/null) || {
 	mv -f .msg "$GIT_DIR/MERGE_MSG"
 	{
@@ -181,7 +192,6 @@ Conflicts:
 	esac
 	exit 1
 }
-echo >&2 "Finished one $me."
 
 # If we are cherry-pick, and if the merge did not result in
 # hand-editing, we will hit this commit and inherit the original

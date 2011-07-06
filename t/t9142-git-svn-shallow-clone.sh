@@ -17,10 +17,9 @@ test_expect_success 'setup test repository' '
 		> foo &&
 		svn_cmd add foo &&
 		svn_cmd commit -m "add foo"
-	)
+	) &&
+	start_httpd
 '
-
-start_httpd
 
 test_expect_success 'clone trunk with "-r HEAD"' '
 	git svn clone -r HEAD "$svnrepo/trunk" g &&

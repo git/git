@@ -5,8 +5,7 @@
 
 if test -z "$GIT_TEST_HTTPD"
 then
-	say "skipping test, network testing disabled by default"
-	say "(define GIT_TEST_HTTPD to enable)"
+	skip_all="Network testing disabled (define GIT_TEST_HTTPD to enable)"
 	test_done
 fi
 
@@ -46,7 +45,7 @@ HTTPD_DOCUMENT_ROOT_PATH=$HTTPD_ROOT_PATH/www
 
 if ! test -x "$LIB_HTTPD_PATH"
 then
-	say "skipping test, no web server found at '$LIB_HTTPD_PATH'"
+	skip_all="skipping test, no web server found at '$LIB_HTTPD_PATH'"
 	test_done
 fi
 
@@ -59,12 +58,12 @@ then
 	then
 		if ! test $HTTPD_VERSION -ge 2
 		then
-			say "skipping test, at least Apache version 2 is required"
+			skip_all="skipping test, at least Apache version 2 is required"
 			test_done
 		fi
 		if ! test -d "$DEFAULT_HTTPD_MODULE_PATH"
 		then
-			say "Apache module directory not found.  Skipping tests."
+			skip_all="Apache module directory not found.  Skipping tests."
 			test_done
 		fi
 
@@ -76,12 +75,14 @@ fi
 
 prepare_httpd() {
 	mkdir -p "$HTTPD_DOCUMENT_ROOT_PATH"
+	cp "$TEST_PATH"/passwd "$HTTPD_ROOT_PATH"
 
 	ln -s "$LIB_HTTPD_MODULE_PATH" "$HTTPD_ROOT_PATH/modules"
 
 	if test -n "$LIB_HTTPD_SSL"
 	then
 		HTTPD_URL=https://127.0.0.1:$LIB_HTTPD_PORT
+		AUTH_HTTPD_URL=https://user%40host:user%40host@127.0.0.1:$LIB_HTTPD_PORT
 
 		RANDFILE_PATH="$HTTPD_ROOT_PATH"/.rnd openssl req \
 			-config "$TEST_PATH/ssl.cnf" \
@@ -93,6 +94,7 @@ prepare_httpd() {
 		HTTPD_PARA="$HTTPD_PARA -DSSL"
 	else
 		HTTPD_URL=http://127.0.0.1:$LIB_HTTPD_PORT
+		AUTH_HTTPD_URL=http://user%40host:user%40host@127.0.0.1:$LIB_HTTPD_PORT
 	fi
 
 	if test -n "$LIB_HTTPD_DAV" -o -n "$LIB_HTTPD_SVN"
@@ -119,7 +121,7 @@ start_httpd() {
 		>&3 2>&4
 	if test $? -ne 0
 	then
-		say "skipping test, web server setup failed"
+		skip_all="skipping test, web server setup failed"
 		trap 'die' EXIT
 		test_done
 	fi
@@ -130,4 +132,32 @@ stop_httpd() {
 
 	"$LIB_HTTPD_PATH" -d "$HTTPD_ROOT_PATH" \
 		-f "$TEST_PATH/apache.conf" $HTTPD_PARA -k stop
+}
+
+test_http_push_nonff() {
+	REMOTE_REPO=$1
+	LOCAL_REPO=$2
+	BRANCH=$3
+
+	test_expect_success 'non-fast-forward push fails' '
+		cd "$REMOTE_REPO" &&
+		HEAD=$(git rev-parse --verify HEAD) &&
+
+		cd "$LOCAL_REPO" &&
+		git checkout $BRANCH &&
+		echo "changed" > path2 &&
+		git commit -a -m path2 --amend &&
+
+		test_must_fail git push -v origin >output 2>&1 &&
+		(cd "$REMOTE_REPO" &&
+		 test $HEAD = $(git rev-parse --verify HEAD))
+	'
+
+	test_expect_success 'non-fast-forward push show ref status' '
+		grep "^ ! \[rejected\][ ]*$BRANCH -> $BRANCH (non-fast-forward)$" output
+	'
+
+	test_expect_success 'non-fast-forward push shows help message' '
+		test_i18ngrep "To prevent you from losing history, non-fast-forward updates were rejected" output
+	'
 }

@@ -8,7 +8,7 @@ git-commit-tree - Create a new commit object
 
 SYNOPSIS
 --------
-'git commit-tree' <tree> [-p <parent commit>]\* < changelog
+'git commit-tree' <tree> [(-p <parent commit>)...] < changelog
 
 DESCRIPTION
 -----------
@@ -92,15 +92,6 @@ include::i18n.txt[]
 SEE ALSO
 --------
 linkgit:git-write-tree[1]
-
-
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org>
-
-Documentation
---------------
-Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---

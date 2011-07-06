@@ -12,7 +12,9 @@ SYNOPSIS
 'git clone' [--template=<template_directory>]
 	  [-l] [-s] [--no-hardlinks] [-q] [-n] [--bare] [--mirror]
 	  [-o <name>] [-b <name>] [-u <upload-pack>] [--reference <repository>]
-	  [--depth <depth>] [--recursive] [--] <repository> [<directory>]
+	  [--separate-git-dir <git dir>]
+	  [--depth <depth>] [--recursive|--recurse-submodules] [--] <repository>
+	  [<directory>]
 
 DESCRIPTION
 -----------
@@ -29,7 +31,7 @@ arguments will in addition merge the remote master branch into the
 current master branch, if any.
 
 This default configuration is achieved by creating references to
-the remote branch heads under `$GIT_DIR/refs/remotes/origin` and
+the remote branch heads under `refs/remotes/origin` and
 by initializing `remote.origin.url` and `remote.origin.fetch`
 configuration variables.
 
@@ -102,7 +104,8 @@ objects from the source repository into a pack in the cloned repository.
 
 --verbose::
 -v::
-	Run verbosely.
+	Run verbosely. Does not affect the reporting of progress status
+	to the standard error stream.
 
 --progress::
 	Progress status is reported on the standard error stream
@@ -127,7 +130,12 @@ objects from the source repository into a pack in the cloned repository.
 	configuration variables are created.
 
 --mirror::
-	Set up a mirror of the remote repository.  This implies `--bare`.
+	Set up a mirror of the source repository.  This implies `--bare`.
+	Compared to `--bare`, `--mirror` not only maps local branches of the
+	source to local branches of the target, it maps all refs (including
+	remote-tracking branches, notes etc.) and sets up a refspec configuration such
+	that all these refs are overwritten by a `git remote update` in the
+	target repository.
 
 --origin <name>::
 -o <name>::
@@ -149,8 +157,7 @@ objects from the source repository into a pack in the cloned repository.
 
 --template=<template_directory>::
 	Specify the directory from which templates will be used;
-	if unset the templates are taken from the installation
-	defined default, typically `/usr/share/git-core/templates`.
+	(See the "TEMPLATE DIRECTORY" section of linkgit:git-init[1].)
 
 --depth <depth>::
 	Create a 'shallow' clone with a history truncated to the
@@ -162,12 +169,21 @@ objects from the source repository into a pack in the cloned repository.
 	as patches.
 
 --recursive::
+--recurse-submodules::
 	After the clone is created, initialize all submodules within,
 	using their default settings. This is equivalent to running
 	`git submodule update --init --recursive` immediately after
 	the clone is finished. This option is ignored if the cloned
 	repository does not have a worktree/checkout (i.e. if any of
 	`--no-checkout`/`-n`, `--bare`, or `--mirror` is given)
+
+--separate-git-dir=<git dir>::
+	Instead of placing the cloned repository where it is supposed
+	to be, place the cloned repository at the specified directory,
+	then make a filesytem-agnostic git symbolic link to there.
+	The result is git repository can be separated from working
+	tree.
+
 
 <repository>::
 	The (possibly remote) repository to clone from.  See the
@@ -187,7 +203,7 @@ include::urls.txt[]
 Examples
 --------
 
-Clone from upstream::
+* Clone from upstream:
 +
 ------------
 $ git clone git://git.kernel.org/pub/scm/.../linux-2.6 my2.6
@@ -196,7 +212,7 @@ $ make
 ------------
 
 
-Make a local clone that borrows from the current directory, without checking things out::
+* Make a local clone that borrows from the current directory, without checking things out:
 +
 ------------
 $ git clone -l -s -n . ../copy
@@ -205,7 +221,7 @@ $ git show-branch
 ------------
 
 
-Clone from upstream while borrowing from an existing local directory::
+* Clone from upstream while borrowing from an existing local directory:
 +
 ------------
 $ git clone --reference my2.6 \
@@ -215,30 +231,19 @@ $ cd my2.7
 ------------
 
 
-Create a bare repository to publish your changes to the public::
+* Create a bare repository to publish your changes to the public:
 +
 ------------
 $ git clone --bare -l /home/proj/.git /pub/scm/proj.git
 ------------
 
 
-Create a repository on the kernel.org machine that borrows from Linus::
+* Create a repository on the kernel.org machine that borrows from Linus:
 +
 ------------
 $ git clone --bare -l -s /pub/scm/.../torvalds/linux-2.6.git \
     /pub/scm/.../me/subsys-2.6.git
 ------------
-
-
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org>
-
-
-Documentation
---------------
-Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
-
 
 GIT
 ---

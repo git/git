@@ -6,7 +6,7 @@ failed=0
 broken=0
 total=0
 
-for file
+while read file
 do
 	while read type value
 	do

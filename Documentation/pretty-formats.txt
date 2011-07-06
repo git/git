@@ -11,7 +11,12 @@ have limited your view of history: for example, if you are
 only interested in changes related to a certain directory or
 file.
 
-Here are some additional details for each format:
+There are several built-in formats, and you can define
+additional formats by setting a pretty.<name>
+config option to either another format name, or a
+'format:' string, as described below (see
+linkgit:git-config[1]). Here are the details of the
+built-in formats:
 
 * 'oneline'
 
@@ -76,9 +81,9 @@ displayed in full, regardless of whether --abbrev or
 true parent commits, without taking grafts nor history
 simplification into account.
 
-* 'format:'
+* 'format:<string>'
 +
-The 'format:' format allows you to specify which information
+The 'format:<string>' format allows you to specify which information
 you want to show. It works a little bit like printf format,
 with the notable exception that you get a newline with '%n'
 instead of '\n'.
@@ -123,6 +128,7 @@ The placeholders are:
 - '%s': subject
 - '%f': sanitized subject line, suitable for a filename
 - '%b': body
+- '%B': raw body (unwrapped subject and body)
 - '%N': commit notes
 - '%gD': reflog selector, e.g., `refs/stash@\{1\}`
 - '%gd': shortened reflog selector, e.g., `stash@\{1\}`
@@ -152,6 +158,10 @@ placeholder expands to a non-empty string.
 If you add a `-` (minus sign) after '%' of a placeholder, line-feeds that
 immediately precede the expansion are deleted if and only if the
 placeholder expands to an empty string.
+
+If you add a ` ` (space) after '%' of a placeholder, a space
+is inserted immediately before the expansion if and only if the
+placeholder expands to a non-empty string.
 
 * 'tformat:'
 +

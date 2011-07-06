@@ -1,0 +1,22 @@
+#!/usr/bin/perl
+
+use strict;
+
+package Frotz;
+sub new {
+	my ($class, %opts) = @_;
+	return bless { xyzzy => "nitfol", %opts }, $class;
+}
+
+__END__
+=head1 NAME
+
+frotz - Frotz
+
+=head1 SYNOPSIS
+
+  use frotz;
+
+  $nitfol = new Frotz();
+
+=cut

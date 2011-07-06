@@ -26,7 +26,7 @@ test_expect_success \
 	 chmod 755 xfoo1 &&
 	 git add xfoo1 &&
 	 case "`git ls-files --stage xfoo1`" in
-	 100644" "*xfoo1) echo ok;;
+	 100644" "*xfoo1) echo pass;;
 	 *) echo fail; git ls-files --stage xfoo1; (exit 1);;
 	 esac'
 
@@ -35,7 +35,7 @@ test_expect_success SYMLINKS 'git add: filemode=0 should not get confused by sym
 	ln -s foo xfoo1 &&
 	git add xfoo1 &&
 	case "`git ls-files --stage xfoo1`" in
-	120000" "*xfoo1) echo ok;;
+	120000" "*xfoo1) echo pass;;
 	*) echo fail; git ls-files --stage xfoo1; (exit 1);;
 	esac
 '
@@ -47,7 +47,7 @@ test_expect_success \
 	 chmod 755 xfoo2 &&
 	 git update-index --add xfoo2 &&
 	 case "`git ls-files --stage xfoo2`" in
-	 100644" "*xfoo2) echo ok;;
+	 100644" "*xfoo2) echo pass;;
 	 *) echo fail; git ls-files --stage xfoo2; (exit 1);;
 	 esac'
 
@@ -56,7 +56,7 @@ test_expect_success SYMLINKS 'git add: filemode=0 should not get confused by sym
 	ln -s foo xfoo2 &&
 	git update-index --add xfoo2 &&
 	case "`git ls-files --stage xfoo2`" in
-	120000" "*xfoo2) echo ok;;
+	120000" "*xfoo2) echo pass;;
 	*) echo fail; git ls-files --stage xfoo2; (exit 1);;
 	esac
 '
@@ -67,7 +67,7 @@ test_expect_success SYMLINKS \
 	 ln -s xfoo2 xfoo3 &&
 	 git update-index --add xfoo3 &&
 	 case "`git ls-files --stage xfoo3`" in
-	 120000" "*xfoo3) echo ok;;
+	 120000" "*xfoo3) echo pass;;
 	 *) echo fail; git ls-files --stage xfoo3; (exit 1);;
 	 esac'
 
@@ -172,14 +172,14 @@ test_expect_success 'git add --refresh' '
 	test -z "`git diff-index HEAD -- foo`" &&
 	git read-tree HEAD &&
 	case "`git diff-index HEAD -- foo`" in
-	:100644" "*"M	foo") echo ok;;
+	:100644" "*"M	foo") echo pass;;
 	*) echo fail; (exit 1);;
 	esac &&
 	git add --refresh -- foo &&
 	test -z "`git diff-index HEAD -- foo`"
 '
 
-test_expect_success POSIXPERM 'git add should fail atomically upon an unreadable file' '
+test_expect_success POSIXPERM,SANITY 'git add should fail atomically upon an unreadable file' '
 	git reset --hard &&
 	date >foo1 &&
 	date >foo2 &&
@@ -190,7 +190,7 @@ test_expect_success POSIXPERM 'git add should fail atomically upon an unreadable
 
 rm -f foo2
 
-test_expect_success POSIXPERM 'git add --ignore-errors' '
+test_expect_success POSIXPERM,SANITY 'git add --ignore-errors' '
 	git reset --hard &&
 	date >foo1 &&
 	date >foo2 &&
@@ -201,7 +201,7 @@ test_expect_success POSIXPERM 'git add --ignore-errors' '
 
 rm -f foo2
 
-test_expect_success POSIXPERM 'git add (add.ignore-errors)' '
+test_expect_success POSIXPERM,SANITY 'git add (add.ignore-errors)' '
 	git config add.ignore-errors 1 &&
 	git reset --hard &&
 	date >foo1 &&
@@ -212,7 +212,7 @@ test_expect_success POSIXPERM 'git add (add.ignore-errors)' '
 '
 rm -f foo2
 
-test_expect_success POSIXPERM 'git add (add.ignore-errors = false)' '
+test_expect_success POSIXPERM,SANITY 'git add (add.ignore-errors = false)' '
 	git config add.ignore-errors 0 &&
 	git reset --hard &&
 	date >foo1 &&
@@ -223,7 +223,7 @@ test_expect_success POSIXPERM 'git add (add.ignore-errors = false)' '
 '
 rm -f foo2
 
-test_expect_success POSIXPERM '--no-ignore-errors overrides config' '
+test_expect_success POSIXPERM,SANITY '--no-ignore-errors overrides config' '
        git config add.ignore-errors 1 &&
        git reset --hard &&
        date >foo1 &&
@@ -253,6 +253,46 @@ test_expect_success 'git add to resolve conflicts on otherwise ignored path' '
 	echo track-this >>.gitignore &&
 	echo resolved >track-this &&
 	git add track-this
+'
+
+test_expect_success '"add non-existent" should fail' '
+	test_must_fail git add non-existent &&
+	! (git ls-files | grep "non-existent")
+'
+
+test_expect_success 'git add --dry-run of existing changed file' "
+	echo new >>track-this &&
+	git add --dry-run track-this >actual 2>&1 &&
+	echo \"add 'track-this'\" | test_cmp - actual
+"
+
+test_expect_success 'git add --dry-run of non-existing file' "
+	echo ignored-file >>.gitignore &&
+	test_must_fail git add --dry-run track-this ignored-file >actual 2>&1
+"
+
+test_expect_success 'git add --dry-run of an existing file output' "
+	echo \"fatal: pathspec 'ignored-file' did not match any files\" >expect &&
+	test_i18ncmp expect actual
+"
+
+cat >expect.err <<\EOF
+The following paths are ignored by one of your .gitignore files:
+ignored-file
+Use -f if you really want to add them.
+fatal: no files added
+EOF
+cat >expect.out <<\EOF
+add 'track-this'
+EOF
+
+test_expect_success 'git add --dry-run --ignore-missing of non-existing file' '
+	test_must_fail git add --dry-run --ignore-missing track-this ignored-file >actual.out 2>actual.err
+'
+
+test_expect_success 'git add --dry-run --ignore-missing of non-existing file output' '
+	test_i18ncmp expect.out actual.out &&
+	test_i18ncmp expect.err actual.err
 '
 
 test_done

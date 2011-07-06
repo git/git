@@ -6,14 +6,46 @@ merge.conflictstyle::
 	a `>>>>>>>` marker.  An alternate style, "diff3", adds a `|||||||`
 	marker and the original text before the `=======` marker.
 
+merge.defaultToUpstream::
+	If merge is called without any commit argument, merge the upstream
+	branches configured for the current branch by using their last
+	observed values stored in their remote tracking branches.
+	The values of the `branch.<current branch>.merge` that name the
+	branches at the remote named by `branch.<current branch>.remote`
+	are consulted, and then they are mapped via `remote.<remote>.fetch`
+	to their corresponding remote tracking branches, and the tips of
+	these tracking branches are merged.
+
+merge.ff::
+	By default, git does not create an extra merge commit when merging
+	a commit that is a descendant of the current commit. Instead, the
+	tip of the current branch is fast-forwarded. When set to `false`,
+	this variable tells git to create an extra merge commit in such
+	a case (equivalent to giving the `--no-ff` option from the command
+	line). When set to `only`, only such fast-forward merges are
+	allowed (equivalent to giving the `--ff-only` option from the
+	command line).
+
 merge.log::
-	Whether to include summaries of merged commits in newly created
-	merge commit messages. False by default.
+	In addition to branch names, populate the log message with at
+	most the specified number of one-line descriptions from the
+	actual commits that are being merged.  Defaults to false, and
+	true is a synonym for 20.
 
 merge.renameLimit::
 	The number of files to consider when performing rename detection
 	during a merge; if not specified, defaults to the value of
 	diff.renameLimit.
+
+merge.renormalize::
+	Tell git that canonical representation of files in the
+	repository has changed over time (e.g. earlier commits record
+	text files with CRLF line endings, but recent ones use LF line
+	endings).  In such a repository, git can convert the data
+	recorded in commits to a canonical form before performing a
+	merge to reduce unnecessary conflicts.  For more information,
+	see section "Merging branches with differing checkin/checkout
+	attributes" in linkgit:gitattributes[5].
 
 merge.stat::
 	Whether to print the diffstat between ORIG_HEAD and the merge result
@@ -21,10 +53,10 @@ merge.stat::
 
 merge.tool::
 	Controls which merge resolution program is used by
-	linkgit:git-mergetool[1].  Valid built-in values are: "kdiff3",
-	"tkdiff", "meld", "xxdiff", "emerge", "vimdiff", "gvimdiff",
-	"diffuse", "ecmerge", "tortoisemerge", "p4merge", "araxis" and
-	"opendiff".  Any other value is treated is custom merge tool
+	linkgit:git-mergetool[1].  Valid built-in values are: "araxis",
+	"bc3", "diffuse", "ecmerge", "emerge", "gvimdiff", "kdiff3", "meld",
+	"opendiff", "p4merge", "tkdiff", "tortoisemerge", "vimdiff"
+	and "xxdiff".  Any other value is treated is custom merge tool
 	and there must be a corresponding mergetool.<tool>.cmd option.
 
 merge.verbosity::

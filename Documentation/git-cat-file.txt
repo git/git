@@ -9,14 +9,15 @@ git-cat-file - Provide content or type and size information for repository objec
 SYNOPSIS
 --------
 [verse]
-'git cat-file' (-t | -s | -e | -p | <type>) <object>
+'git cat-file' (-t | -s | -e | -p | <type> | --textconv ) <object>
 'git cat-file' (--batch | --batch-check) < <list-of-objects>
 
 DESCRIPTION
 -----------
 In its first form, the command provides the content or the type of an object in
 the repository. The type is required unless '-t' or '-p' is used to find the
-object type, or '-s' is used to find the object size.
+object type, or '-s' is used to find the object size, or '--textconv' is used
+(which implies type "blob").
 
 In the second form, a list of objects (separated by linefeeds) is provided on
 stdin, and the SHA1, type, and size of each object is printed on stdout.
@@ -26,7 +27,7 @@ OPTIONS
 <object>::
 	The name of the object to show.
 	For a more complete list of ways to spell object names, see
-	the "SPECIFYING REVISIONS" section in linkgit:git-rev-parse[1].
+	the "SPECIFYING REVISIONS" section in linkgit:gitrevisions[7].
 
 -t::
 	Instead of the content, show the object type identified by
@@ -50,6 +51,11 @@ OPTIONS
 	"tree" with <object> being a commit object that contains it,
 	or to ask for a "blob" with <object> being a tag object that
 	points at it.
+
+--textconv::
+	Show the content as transformed by a textconv filter. In this case,
+	<object> has be of the form <treeish>:<path>, or :<path> in order
+	to apply the filter to the content recorded in the index at <path>.
 
 --batch::
 	Print the SHA1, type, size, and contents of each object provided on
@@ -93,14 +99,6 @@ for each object specified on stdin that does not exist in the repository:
 ------------
 <object> SP missing LF
 ------------
-
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org>
-
-Documentation
---------------
-Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---

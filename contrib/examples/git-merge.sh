@@ -15,7 +15,10 @@ log                  add list of one-line log to merge commit message
 squash               create a single commit instead of doing a merge
 commit               perform a commit if the merge succeeds (default)
 ff                   allow fast-forward (default)
+ff-only              abort if fast-forward is not possible
+rerere-autoupdate    update index with any reused conflict resolution
 s,strategy=          merge strategy to use
+X=                   option for selected merge strategy
 m,message=           message to be used for the merge commit (if any)
 "
 
@@ -25,26 +28,32 @@ require_work_tree
 cd_to_toplevel
 
 test -z "$(git ls-files -u)" ||
-	die "You are in the middle of a conflicted merge."
+	die "Merge is not possible because you have unmerged files."
+
+! test -e "$GIT_DIR/MERGE_HEAD" ||
+	die 'You have not concluded your merge (MERGE_HEAD exists).'
 
 LF='
 '
 
 all_strategies='recur recursive octopus resolve stupid ours subtree'
 all_strategies="$all_strategies recursive-ours recursive-theirs"
+not_strategies='base file index tree'
 default_twohead_strategies='recursive'
 default_octopus_strategies='octopus'
 no_fast_forward_strategies='subtree ours'
 no_trivial_strategies='recursive recur subtree ours recursive-ours recursive-theirs'
 use_strategies=
+xopt=
 
 allow_fast_forward=t
+fast_forward_only=
 allow_trivial_merge=t
-squash= no_commit= log_arg=
+squash= no_commit= log_arg= rr_arg=
 
 dropsave() {
 	rm -f -- "$GIT_DIR/MERGE_HEAD" "$GIT_DIR/MERGE_MSG" \
-		 "$GIT_DIR/MERGE_STASH" || exit 1
+		 "$GIT_DIR/MERGE_STASH" "$GIT_DIR/MERGE_MODE" || exit 1
 }
 
 savestate() {
@@ -131,21 +140,34 @@ finish () {
 merge_name () {
 	remote="$1"
 	rh=$(git rev-parse --verify "$remote^0" 2>/dev/null) || return
-	bh=$(git show-ref -s --verify "refs/heads/$remote" 2>/dev/null)
-	if test "$rh" = "$bh"
-	then
-		echo "$rh		branch '$remote' of ."
-	elif truname=$(expr "$remote" : '\(.*\)~[1-9][0-9]*$') &&
+	if truname=$(expr "$remote" : '\(.*\)~[0-9]*$') &&
 		git show-ref -q --verify "refs/heads/$truname" 2>/dev/null
 	then
 		echo "$rh		branch '$truname' (early part) of ."
-	elif test "$remote" = "FETCH_HEAD" -a -r "$GIT_DIR/FETCH_HEAD"
+		return
+	fi
+	if found_ref=$(git rev-parse --symbolic-full-name --verify \
+							"$remote" 2>/dev/null)
+	then
+		expanded=$(git check-ref-format --branch "$remote") ||
+			exit
+		if test "${found_ref#refs/heads/}" != "$found_ref"
+		then
+			echo "$rh		branch '$expanded' of ."
+			return
+		elif test "${found_ref#refs/remotes/}" != "$found_ref"
+		then
+			echo "$rh		remote branch '$expanded' of ."
+			return
+		fi
+	fi
+	if test "$remote" = "FETCH_HEAD" -a -r "$GIT_DIR/FETCH_HEAD"
 	then
 		sed -e 's/	not-for-merge	/		/' -e 1q \
 			"$GIT_DIR/FETCH_HEAD"
-	else
-		echo "$rh		commit '$remote'"
+		return
 	fi
+	echo "$rh		commit '$remote'"
 }
 
 parse_config () {
@@ -172,15 +194,35 @@ parse_config () {
 		--no-ff)
 			test "$squash" != t ||
 				die "You cannot combine --squash with --no-ff."
+			test "$fast_forward_only" != t ||
+				die "You cannot combine --ff-only with --no-ff."
 			allow_fast_forward=f ;;
+		--ff-only)
+			test "$allow_fast_forward" != f ||
+				die "You cannot combine --ff-only with --no-ff."
+			fast_forward_only=t ;;
+		--rerere-autoupdate|--no-rerere-autoupdate)
+			rr_arg=$1 ;;
 		-s|--strategy)
 			shift
 			case " $all_strategies " in
 			*" $1 "*)
-				use_strategies="$use_strategies$1 " ;;
+				use_strategies="$use_strategies$1 "
+				;;
 			*)
-				die "available strategies are: $all_strategies" ;;
+				case " $not_strategies " in
+				*" $1 "*)
+					false
+				esac &&
+				type "git-merge-$1" >/dev/null 2>&1 ||
+					die "available strategies are: $all_strategies"
+				use_strategies="$use_strategies$1 "
+				;;
 			esac
+			;;
+		-X)
+			shift
+			xopt="${xopt:+$xopt }$(git rev-parse --sq-quote "--$1")"
 			;;
 		-m|--message)
 			shift
@@ -245,6 +287,10 @@ then
 		exit 1
 	fi
 
+	test "$squash" != t ||
+		die "Squash commit into empty head not supported yet"
+	test "$allow_fast_forward" = t ||
+		die "Non-fast-forward into an empty head does not make sense"
 	rh=$(git rev-parse --verify "$1^0") ||
 		die "$1 - not something we can merge"
 
@@ -261,12 +307,18 @@ else
 	# the given message.  If remote is invalid we will die
 	# later in the common codepath so we discard the error
 	# in this loop.
-	merge_name=$(for remote
+	merge_msg="$(
+		for remote
 		do
 			merge_name "$remote"
-		done | git fmt-merge-msg $log_arg
-	)
-	merge_msg="${merge_msg:+$merge_msg$LF$LF}$merge_name"
+		done |
+		if test "$have_message" = t
+		then
+			git fmt-merge-msg -m "$merge_msg" $log_arg
+		else
+			git fmt-merge-msg $log_arg
+		fi
+	)"
 fi
 head=$(git rev-parse --verify "$head_arg"^0) || usage
 
@@ -335,7 +387,7 @@ case "$#" in
 	common=$(git merge-base --all $head "$@")
 	;;
 *)
-	common=$(git show-branch --merge-base $head "$@")
+	common=$(git merge-base --all --octopus $head "$@")
 	;;
 esac
 echo "$head" >"$GIT_DIR/ORIG_HEAD"
@@ -373,8 +425,8 @@ t,1,"$head",*)
 	# We are not doing octopus, not fast-forward, and have only
 	# one common.
 	git update-index --refresh 2>/dev/null
-	case "$allow_trivial_merge" in
-	t)
+	case "$allow_trivial_merge,$fast_forward_only" in
+	t,)
 		# See if it is really trivial.
 		git var GIT_COMMITTER_IDENT >/dev/null || exit
 		echo "Trying really trivial in-index merge..."
@@ -412,6 +464,11 @@ t,1,"$head",*)
 	fi
 	;;
 esac
+
+if test "$fast_forward_only" = t
+then
+	die "Not possible to fast-forward, aborting."
+fi
 
 # We are going to make a new commit.
 git var GIT_COMMITTER_IDENT >/dev/null || exit
@@ -451,7 +508,7 @@ do
     # Remember which strategy left the state in the working tree
     wt_strategy=$strategy
 
-    git-merge-$strategy $common -- "$head_arg" "$@"
+    eval 'git-merge-$strategy '"$xopt"' $common -- "$head_arg" "$@"'
     exit=$?
     if test "$no_commit" = t && test "$exit" = 0
     then
@@ -489,9 +546,9 @@ if test '' != "$result_tree"
 then
     if test "$allow_fast_forward" = "t"
     then
-        parents=$(git show-branch --independent "$head" "$@")
+	parents=$(git merge-base --independent "$head" "$@")
     else
-        parents=$(git rev-parse "$head" "$@")
+	parents=$(git rev-parse "$head" "$@")
     fi
     parents=$(echo "$parents" | sed -e 's/^/-p /')
     result_commit=$(printf '%s\n' "$merge_msg" | git commit-tree $result_tree $parents) || exit
@@ -533,7 +590,15 @@ else
 	do
 		echo $remote
 	done >"$GIT_DIR/MERGE_HEAD"
-	printf '%s\n' "$merge_msg" >"$GIT_DIR/MERGE_MSG"
+	printf '%s\n' "$merge_msg" >"$GIT_DIR/MERGE_MSG" ||
+		die "Could not write to $GIT_DIR/MERGE_MSG"
+	if test "$allow_fast_forward" != t
+	then
+		printf "%s" no-ff
+	else
+		:
+	fi >"$GIT_DIR/MERGE_MODE" ||
+		die "Could not write to $GIT_DIR/MERGE_MODE"
 fi
 
 if test "$merge_was_ok" = t
@@ -550,6 +615,6 @@ Conflicts:
 		sed -e 's/^[^	]*	/	/' |
 		uniq
 	} >>"$GIT_DIR/MERGE_MSG"
-	git rerere
+	git rerere $rr_arg
 	die "Automatic merge failed; fix conflicts and then commit the result."
 fi

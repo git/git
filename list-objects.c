@@ -61,12 +61,15 @@ static void process_tree(struct rev_info *revs,
 			 struct tree *tree,
 			 show_object_fn show,
 			 struct name_path *path,
+			 struct strbuf *base,
 			 const char *name)
 {
 	struct object *obj = &tree->object;
 	struct tree_desc desc;
 	struct name_entry entry;
 	struct name_path me;
+	int match = revs->diffopt.pathspec.nr == 0 ? 2 : 0;
+	int baselen = base->len;
 
 	if (!revs->tree_objects)
 		return;
@@ -82,13 +85,28 @@ static void process_tree(struct rev_info *revs,
 	me.elem = name;
 	me.elem_len = strlen(name);
 
+	if (!match) {
+		strbuf_addstr(base, name);
+		if (base->len)
+			strbuf_addch(base, '/');
+	}
+
 	init_tree_desc(&desc, tree->buffer, tree->size);
 
 	while (tree_entry(&desc, &entry)) {
+		if (match != 2) {
+			match = tree_entry_interesting(&entry, base, 0,
+						       &revs->diffopt.pathspec);
+			if (match < 0)
+				break;
+			if (match == 0)
+				continue;
+		}
+
 		if (S_ISDIR(entry.mode))
 			process_tree(revs,
 				     lookup_tree(entry.sha1),
-				     show, &me, entry.path);
+				     show, &me, base, entry.path);
 		else if (S_ISGITLINK(entry.mode))
 			process_gitlink(revs, entry.sha1,
 					show, &me, entry.path);
@@ -97,6 +115,7 @@ static void process_tree(struct rev_info *revs,
 				     lookup_blob(entry.sha1),
 				     show, &me, entry.path);
 	}
+	strbuf_setlen(base, baselen);
 	free(tree->buffer);
 	tree->buffer = NULL;
 }
@@ -146,9 +165,16 @@ void traverse_commit_list(struct rev_info *revs,
 {
 	int i;
 	struct commit *commit;
+	struct strbuf base;
 
+	strbuf_init(&base, PATH_MAX);
 	while ((commit = get_revision(revs)) != NULL) {
-		add_pending_tree(revs, commit->tree);
+		/*
+		 * an uninteresting boundary commit may not have its tree
+		 * parsed yet, but we are not going to show them anyway
+		 */
+		if (commit->tree)
+			add_pending_tree(revs, commit->tree);
 		show_commit(commit, data);
 	}
 	for (i = 0; i < revs->pending.nr; i++) {
@@ -164,7 +190,7 @@ void traverse_commit_list(struct rev_info *revs,
 		}
 		if (obj->type == OBJ_TREE) {
 			process_tree(revs, (struct tree *)obj, show_object,
-				     NULL, name);
+				     NULL, &base, name);
 			continue;
 		}
 		if (obj->type == OBJ_BLOB) {
@@ -181,4 +207,5 @@ void traverse_commit_list(struct rev_info *revs,
 		revs->pending.alloc = 0;
 		revs->pending.objects = NULL;
 	}
+	strbuf_release(&base);
 }

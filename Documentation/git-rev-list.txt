@@ -9,35 +9,43 @@ git-rev-list - Lists commit objects in reverse chronological order
 SYNOPSIS
 --------
 [verse]
-'git rev-list' [ \--max-count=number ]
-	     [ \--skip=number ]
-	     [ \--max-age=timestamp ]
-	     [ \--min-age=timestamp ]
+'git rev-list' [ \--max-count=<number> ]
+	     [ \--skip=<number> ]
+	     [ \--max-age=<timestamp> ]
+	     [ \--min-age=<timestamp> ]
 	     [ \--sparse ]
 	     [ \--merges ]
 	     [ \--no-merges ]
+	     [ \--min-parents=<number> ]
+	     [ \--no-min-parents ]
+	     [ \--max-parents=<number> ]
+	     [ \--no-max-parents ]
 	     [ \--first-parent ]
 	     [ \--remove-empty ]
 	     [ \--full-history ]
 	     [ \--not ]
 	     [ \--all ]
-	     [ \--branches[=pattern] ]
-	     [ \--tags[=pattern] ]
-	     [ \--remotes[=pattern] ]
-	     [ \--glob=glob-pattern ]
+	     [ \--branches[=<pattern>] ]
+	     [ \--tags[=<pattern>] ]
+	     [ \--remotes[=<pattern>] ]
+	     [ \--glob=<glob-pattern> ]
+	     [ \--ignore-missing ]
 	     [ \--stdin ]
 	     [ \--quiet ]
 	     [ \--topo-order ]
 	     [ \--parents ]
 	     [ \--timestamp ]
 	     [ \--left-right ]
+	     [ \--left-only ]
+	     [ \--right-only ]
+	     [ \--cherry-mark ]
 	     [ \--cherry-pick ]
 	     [ \--encoding[=<encoding>] ]
 	     [ \--(author|committer|grep)=<pattern> ]
 	     [ \--regexp-ignore-case | -i ]
 	     [ \--extended-regexp | -E ]
 	     [ \--fixed-strings | -F ]
-	     [ \--date={local|relative|default|iso|rfc|short} ]
+	     [ \--date=(local|relative|default|iso|rfc|short) ]
 	     [ [\--objects | \--objects-edge] [ \--unpacked ] ]
 	     [ \--pretty | \--header ]
 	     [ \--bisect ]
@@ -104,16 +112,6 @@ OPTIONS
 include::rev-list-options.txt[]
 
 include::pretty-formats.txt[]
-
-
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org>
-
-Documentation
---------------
-Documentation by David Greaves, Junio C Hamano, Jonas Fonseca
-and the git-list <git@vger.kernel.org>.
 
 GIT
 ---

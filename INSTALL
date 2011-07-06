@@ -67,10 +67,10 @@ Issues of note:
 	- A POSIX-compliant shell is required to run many scripts needed
 	  for everyday use (e.g. "bisect", "pull").
 
-	- "Perl" is needed to use some of the features (e.g. preparing a
-	  partial commit using "git add -i/-p", interacting with svn
-	  repositories with "git svn").  If you can live without these, use
-	  NO_PERL.
+	- "Perl" version 5.8 or later is needed to use some of the
+	  features (e.g. preparing a partial commit using "git add -i/-p",
+	  interacting with svn repositories with "git svn").  If you can
+	  live without these, use NO_PERL.
 
 	- "openssl" library is used by git-imap-send to use IMAP over SSL.
 	  If you don't need it, use NO_OPENSSL.
@@ -122,8 +122,9 @@ Issues of note:
    Building and installing the pdf file additionally requires
    dblatex.  Version 0.2.7 with asciidoc >= 8.2.7 is known to work.
 
-   The documentation is written for AsciiDoc 7, but "make
-   ASCIIDOC8=YesPlease doc" will let you format with AsciiDoc 8.
+   The documentation is written for AsciiDoc 7, but by default
+   uses some compatibility wrappers to work on AsciiDoc 8. If you have
+   AsciiDoc 7, try "make ASCIIDOC7=YesPlease".
 
    Alternatively, pre-formatted documentation is available in
    "html" and "man" branches of the git repository itself.  For
@@ -157,3 +158,36 @@ Issues of note:
    It has been reported that docbook-xsl version 1.72 and 1.73 are
    buggy; 1.72 misformats manual pages for callouts, and 1.73 needs
    the patch in contrib/patches/docbook-xsl-manpages-charmap.patch
+
+   Users attempting to build the documentation on Cygwin may need to ensure
+   that the /etc/xml/catalog file looks something like this:
+
+   <?xml version="1.0"?>
+   <!DOCTYPE catalog PUBLIC
+      "-//OASIS//DTD Entity Resolution XML Catalog V1.0//EN"
+      "http://www.oasis-open.org/committees/entity/release/1.0/catalog.dtd"
+   >
+   <catalog xmlns="urn:oasis:names:tc:entity:xmlns:xml:catalog">
+     <rewriteURI
+       uriStartString = "http://docbook.sourceforge.net/release/xsl/current"
+       rewritePrefix = "/usr/share/sgml/docbook/xsl-stylesheets"
+     />
+     <rewriteURI
+       uriStartString="http://www.oasis-open.org/docbook/xml/4.5"
+       rewritePrefix="/usr/share/sgml/docbook/xml-dtd-4.5"
+     />
+  </catalog>
+
+  This can be achieved with the following two xmlcatalog commands:
+
+  xmlcatalog --noout \
+     --add rewriteURI \
+        http://docbook.sourceforge.net/release/xsl/current \
+        /usr/share/sgml/docbook/xsl-stylesheets \
+     /etc/xml/catalog
+
+  xmlcatalog --noout \
+     --add rewriteURI \
+         http://www.oasis-open.org/docbook/xml/4.5/xsl/current \
+         /usr/share/sgml/docbook/xml-dtd-4.5 \
+     /etc/xml/catalog

@@ -29,7 +29,7 @@ test_expect_success 'set up rev-list --graph test' '
 	# Octopus merge B and C into branch A
 	git checkout A &&
 	git merge B C &&
-	git tag A4
+	git tag A4 &&
 
 	test_commit A5 bar.txt &&
 
@@ -39,7 +39,7 @@ test_expect_success 'set up rev-list --graph test' '
 	test_commit C4 bar.txt &&
 	git checkout A &&
 	git merge -s ours C &&
-	git tag A6
+	git tag A6 &&
 
 	test_commit A7 bar.txt &&
 
@@ -90,7 +90,7 @@ test_expect_success '--graph --all' '
 # that undecorated merges are interesting, even with --simplify-by-decoration
 test_expect_success '--graph --simplify-by-decoration' '
 	rm -f expected &&
-	git tag -d A4
+	git tag -d A4 &&
 	echo "* $A7" >> expected &&
 	echo "*   $A6" >> expected &&
 	echo "|\\  " >> expected &&
@@ -116,12 +116,15 @@ test_expect_success '--graph --simplify-by-decoration' '
 	test_cmp expected actual
 	'
 
-# Get rid of all decorations on branch B, and graph with it simplified away
+test_expect_success 'setup: get rid of decorations on B' '
+	git tag -d B2 &&
+	git tag -d B1 &&
+	git branch -d B
+'
+
+# Graph with branch B simplified away
 test_expect_success '--graph --simplify-by-decoration prune branch B' '
 	rm -f expected &&
-	git tag -d B2
-	git tag -d B1
-	git branch -d B
 	echo "* $A7" >> expected &&
 	echo "*   $A6" >> expected &&
 	echo "|\\  " >> expected &&
@@ -143,9 +146,6 @@ test_expect_success '--graph --simplify-by-decoration prune branch B' '
 
 test_expect_success '--graph --full-history -- bar.txt' '
 	rm -f expected &&
-	git tag -d B2
-	git tag -d B1
-	git branch -d B
 	echo "* $A7" >> expected &&
 	echo "*   $A6" >> expected &&
 	echo "|\\  " >> expected &&
@@ -163,9 +163,6 @@ test_expect_success '--graph --full-history -- bar.txt' '
 
 test_expect_success '--graph --full-history --simplify-merges -- bar.txt' '
 	rm -f expected &&
-	git tag -d B2
-	git tag -d B1
-	git branch -d B
 	echo "* $A7" >> expected &&
 	echo "*   $A6" >> expected &&
 	echo "|\\  " >> expected &&
@@ -181,9 +178,6 @@ test_expect_success '--graph --full-history --simplify-merges -- bar.txt' '
 
 test_expect_success '--graph -- bar.txt' '
 	rm -f expected &&
-	git tag -d B2
-	git tag -d B1
-	git branch -d B
 	echo "* $A7" >> expected &&
 	echo "* $A5" >> expected &&
 	echo "* $A3" >> expected &&
@@ -196,9 +190,6 @@ test_expect_success '--graph -- bar.txt' '
 
 test_expect_success '--graph --sparse -- bar.txt' '
 	rm -f expected &&
-	git tag -d B2
-	git tag -d B1
-	git branch -d B
 	echo "* $A7" >> expected &&
 	echo "* $A6" >> expected &&
 	echo "* $A5" >> expected &&

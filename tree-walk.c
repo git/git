@@ -1,5 +1,7 @@
 #include "cache.h"
 #include "tree-walk.h"
+#include "unpack-trees.h"
+#include "dir.h"
 #include "tree.h"
 
 static const char *get_mode(const char *str, unsigned int *modep)
@@ -310,6 +312,7 @@ static void free_extended_entry(struct tree_desc_x *t)
 int traverse_trees(int n, struct tree_desc *t, struct traverse_info *info)
 {
 	int ret = 0;
+	int error = 0;
 	struct name_entry *entry = xmalloc(n*sizeof(*entry));
 	int i;
 	struct tree_desc_x *tx = xcalloc(n, sizeof(*tx));
@@ -377,8 +380,11 @@ int traverse_trees(int n, struct tree_desc *t, struct traverse_info *info)
 		if (!mask)
 			break;
 		ret = info->fn(n, mask, dirmask, entry, info);
-		if (ret < 0)
-			break;
+		if (ret < 0) {
+			error = ret;
+			if (!info->show_all_errors)
+				break;
+		}
 		mask &= ret;
 		ret = 0;
 		for (i = 0; i < n; i++)
@@ -389,7 +395,7 @@ int traverse_trees(int n, struct tree_desc *t, struct traverse_info *info)
 	for (i = 0; i < n; i++)
 		free_extended_entry(tx + i);
 	free(tx);
-	return ret;
+	return error;
 }
 
 static int find_tree_entry(struct tree_desc *t, const char *name, unsigned char *result, unsigned *mode)
@@ -441,6 +447,7 @@ int get_tree_entry(const unsigned char *tree_sha1, const char *name, unsigned ch
 
 	if (name[0] == '\0') {
 		hashcpy(sha1, root);
+		free(tree);
 		return 0;
 	}
 
@@ -448,4 +455,187 @@ int get_tree_entry(const unsigned char *tree_sha1, const char *name, unsigned ch
 	retval = find_tree_entry(&t, name, sha1, mode);
 	free(tree);
 	return retval;
+}
+
+static int match_entry(const struct name_entry *entry, int pathlen,
+		       const char *match, int matchlen,
+		       int *never_interesting)
+{
+	int m = -1; /* signals that we haven't called strncmp() */
+
+	if (*never_interesting) {
+		/*
+		 * We have not seen any match that sorts later
+		 * than the current path.
+		 */
+
+		/*
+		 * Does match sort strictly earlier than path
+		 * with their common parts?
+		 */
+		m = strncmp(match, entry->path,
+			    (matchlen < pathlen) ? matchlen : pathlen);
+		if (m < 0)
+			return 0;
+
+		/*
+		 * If we come here even once, that means there is at
+		 * least one pathspec that would sort equal to or
+		 * later than the path we are currently looking at.
+		 * In other words, if we have never reached this point
+		 * after iterating all pathspecs, it means all
+		 * pathspecs are either outside of base, or inside the
+		 * base but sorts strictly earlier than the current
+		 * one.  In either case, they will never match the
+		 * subsequent entries.  In such a case, we initialized
+		 * the variable to -1 and that is what will be
+		 * returned, allowing the caller to terminate early.
+		 */
+		*never_interesting = 0;
+	}
+
+	if (pathlen > matchlen)
+		return 0;
+
+	if (matchlen > pathlen) {
+		if (match[pathlen] != '/')
+			return 0;
+		if (!S_ISDIR(entry->mode))
+			return 0;
+	}
+
+	if (m == -1)
+		/*
+		 * we cheated and did not do strncmp(), so we do
+		 * that here.
+		 */
+		m = strncmp(match, entry->path, pathlen);
+
+	/*
+	 * If common part matched earlier then it is a hit,
+	 * because we rejected the case where path is not a
+	 * leading directory and is shorter than match.
+	 */
+	if (!m)
+		return 1;
+
+	return 0;
+}
+
+static int match_dir_prefix(const char *base, int baselen,
+			    const char *match, int matchlen)
+{
+	if (strncmp(base, match, matchlen))
+		return 0;
+
+	/*
+	 * If the base is a subdirectory of a path which
+	 * was specified, all of them are interesting.
+	 */
+	if (!matchlen ||
+	    base[matchlen] == '/' ||
+	    match[matchlen - 1] == '/')
+		return 1;
+
+	/* Just a random prefix match */
+	return 0;
+}
+
+/*
+ * Is a tree entry interesting given the pathspec we have?
+ *
+ * Pre-condition: either baselen == base_offset (i.e. empty path)
+ * or base[baselen-1] == '/' (i.e. with trailing slash).
+ *
+ * Return:
+ *  - 2 for "yes, and all subsequent entries will be"
+ *  - 1 for yes
+ *  - zero for no
+ *  - negative for "no, and no subsequent entries will be either"
+ */
+int tree_entry_interesting(const struct name_entry *entry,
+			   struct strbuf *base, int base_offset,
+			   const struct pathspec *ps)
+{
+	int i;
+	int pathlen, baselen = base->len - base_offset;
+	int never_interesting = ps->has_wildcard ? 0 : -1;
+
+	if (!ps->nr) {
+		if (!ps->recursive || ps->max_depth == -1)
+			return 2;
+		return !!within_depth(base->buf + base_offset, baselen,
+				      !!S_ISDIR(entry->mode),
+				      ps->max_depth);
+	}
+
+	pathlen = tree_entry_len(entry->path, entry->sha1);
+
+	for (i = ps->nr - 1; i >= 0; i--) {
+		const struct pathspec_item *item = ps->items+i;
+		const char *match = item->match;
+		const char *base_str = base->buf + base_offset;
+		int matchlen = item->len;
+
+		if (baselen >= matchlen) {
+			/* If it doesn't match, move along... */
+			if (!match_dir_prefix(base_str, baselen, match, matchlen))
+				goto match_wildcards;
+
+			if (!ps->recursive || ps->max_depth == -1)
+				return 2;
+
+			return !!within_depth(base_str + matchlen + 1,
+					      baselen - matchlen - 1,
+					      !!S_ISDIR(entry->mode),
+					      ps->max_depth);
+		}
+
+		/* Does the base match? */
+		if (!strncmp(base_str, match, baselen)) {
+			if (match_entry(entry, pathlen,
+					match + baselen, matchlen - baselen,
+					&never_interesting))
+				return 1;
+
+			if (ps->items[i].use_wildcard) {
+				if (!fnmatch(match + baselen, entry->path, 0))
+					return 1;
+
+				/*
+				 * Match all directories. We'll try to
+				 * match files later on.
+				 */
+				if (ps->recursive && S_ISDIR(entry->mode))
+					return 1;
+			}
+
+			continue;
+		}
+
+match_wildcards:
+		if (!ps->items[i].use_wildcard)
+			continue;
+
+		/*
+		 * Concatenate base and entry->path into one and do
+		 * fnmatch() on it.
+		 */
+
+		strbuf_add(base, entry->path, pathlen);
+
+		if (!fnmatch(match, base->buf + base_offset, 0)) {
+			strbuf_setlen(base, base_offset + baselen);
+			return 1;
+		}
+		strbuf_setlen(base, base_offset + baselen);
+
+		/*
+		 * Match all directories. We'll try to match files
+		 * later on.
+		 */
+		if (ps->recursive && S_ISDIR(entry->mode))
+			return 1;
+	}
+	return never_interesting; /* No matches */
 }

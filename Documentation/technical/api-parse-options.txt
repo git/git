@@ -115,13 +115,19 @@ There are some macros to easily define options:
 `OPT__ABBREV(&int_var)`::
 	Add `\--abbrev[=<n>]`.
 
-`OPT__DRY_RUN(&int_var)`::
+`OPT__COLOR(&int_var, description)`::
+	Add `\--color[=<when>]` and `--no-color`.
+
+`OPT__DRY_RUN(&int_var, description)`::
 	Add `-n, \--dry-run`.
 
-`OPT__QUIET(&int_var)`::
+`OPT__FORCE(&int_var, description)`::
+	Add `-f, \--force`.
+
+`OPT__QUIET(&int_var, description)`::
 	Add `-q, \--quiet`.
 
-`OPT__VERBOSE(&int_var)`::
+`OPT__VERBOSE(&int_var, description)`::
 	Add `-v, \--verbose`.
 
 `OPT_GROUP(description)`::
@@ -183,13 +189,22 @@ There are some macros to easily define options:
 	arguments.  Short options that happen to be digits take
 	precedence over it.
 
+`OPT_COLOR_FLAG(short, long, &int_var, description)`::
+	Introduce an option that takes an optional argument that can
+	have one of three values: "always", "never", or "auto".  If the
+	argument is not given, it defaults to "always".  The `--no-` form
+	works like `--long=never`; it cannot take an argument.  If
+	"always", set `int_var` to 1; if "never", set `int_var` to 0; if
+	"auto", set `int_var` to 1 if stdout is a tty or a pager,
+	0 otherwise.
+
 
 The last element of the array must be `OPT_END()`.
 
 If not stated otherwise, interpret the arguments as follows:
 
 * `short` is a character for the short option
-  (e.g. `\'e\'` for `-e`, use `0` to omit),
+  (e.g. `{apostrophe}e{apostrophe}` for `-e`, use `0` to omit),
 
 * `long` is a string for the long option
   (e.g. `"example"` for `\--example`, use `NULL` to omit),
@@ -216,10 +231,10 @@ The function must be defined in this form:
 The callback mechanism is as follows:
 
 * Inside `func`, the only interesting member of the structure
-  given by `opt` is the void pointer `opt->value`.
-  `\*opt->value` will be the value that is saved into `var`, if you
+  given by `opt` is the void pointer `opt\->value`.
+  `\*opt\->value` will be the value that is saved into `var`, if you
   use `OPT_CALLBACK()`.
-  For example, do `*(unsigned long *)opt->value = 42;` to get 42
+  For example, do `*(unsigned long *)opt\->value = 42;` to get 42
   into an `unsigned long` variable.
 
 * Return value `0` indicates success and non-zero return

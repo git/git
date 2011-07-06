@@ -7,7 +7,11 @@ pysetupfile:=setup.py
 DESTDIR_SQ = $(subst ','\'',$(DESTDIR))
 
 ifndef PYTHON_PATH
-	PYTHON_PATH = /usr/bin/python
+	ifeq ($(uname_S),FreeBSD)
+		PYTHON_PATH = /usr/local/bin/python
+	else
+		PYTHON_PATH = /usr/bin/python
+	endif
 endif
 ifndef prefix
 	prefix = $(HOME)

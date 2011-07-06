@@ -44,7 +44,7 @@ archives that it imports, it is also possible to specify git branch names
 manually.  To do so, write a git branch name after each <archive/branch>
 parameter, separated by a colon.  This way, you can shorten the Arch
 branch names and convert Arch jargon to git jargon, for example mapping a
-"PROJECT--devo--VERSION" branch to "master".
+"PROJECT{litdd}devo{litdd}VERSION" branch to "master".
 
 Associating multiple Arch branches to one git branch is possible; the
 result will make the most sense only if no commits are made to the first
@@ -85,8 +85,8 @@ OPTIONS
 -o::
 	Use this for compatibility with old-style branch names used by
 	earlier versions of 'git archimport'.  Old-style branch names
-	were category--branch, whereas new-style branch names are
-	archive,category--branch--version.  In both cases, names given
+	were category{litdd}branch, whereas new-style branch names are
+	archive,category{litdd}branch{litdd}version.  In both cases, names given
 	on the command-line will override the automatically-generated
 	ones.
 
@@ -106,14 +106,6 @@ OPTIONS
 <archive/branch>::
 	Archive/branch identifier in a format that `tla log` understands.
 
-
-Author
-------
-Written by Martin Langhoff <martin@catalyst.net.nz>.
-
-Documentation
---------------
-Documentation by Junio C Hamano, Martin Langhoff and the git-list <git@vger.kernel.org>.
 
 GIT
 ---

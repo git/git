@@ -62,14 +62,21 @@ consults `$GIT_DIR/info/attributes` file (which has the highest
 precedence), `.gitattributes` file in the same directory as the
 path in question, and its parent directories up to the toplevel of the
 work tree (the further the directory that contains `.gitattributes`
-is from the path in question, the lower its precedence).
+is from the path in question, the lower its precedence). Finally
+global and system-wide files are considered (they have the lowest
+precedence).
 
 If you wish to affect only a single repository (i.e., to assign
-attributes to files that are particular to one user's workflow), then
+attributes to files that are particular to
+one user's workflow for that repository), then
 attributes should be placed in the `$GIT_DIR/info/attributes` file.
 Attributes which should be version-controlled and distributed to other
 repositories (i.e., attributes of interest to all users) should go into
-`.gitattributes` files.
+`.gitattributes` files. Attributes that should affect all repositories
+for a single user should be placed in a file specified by the
+`core.attributesfile` configuration option (see linkgit:git-config[1]).
+Attributes for all users on a system should be placed in the
+`$(prefix)/etc/gitattributes` file.
 
 Sometimes you would need to override an setting of an attribute
 for a path to `unspecified` state.  This can be done by listing
@@ -92,53 +99,154 @@ such as 'git checkout' and 'git merge' run.  They also affect how
 git stores the contents you prepare in the working tree in the
 repository upon 'git add' and 'git commit'.
 
-`crlf`
+`text`
 ^^^^^^
 
-This attribute controls the line-ending convention.
+This attribute enables and controls end-of-line normalization.  When a
+text file is normalized, its line endings are converted to LF in the
+repository.  To control what line ending style is used in the working
+directory, use the `eol` attribute for a single file and the
+`core.eol` configuration variable for all text files.
 
 Set::
 
-	Setting the `crlf` attribute on a path is meant to mark
-	the path as a "text" file.  'core.autocrlf' conversion
-	takes place without guessing the content type by
-	inspection.
+	Setting the `text` attribute on a path enables end-of-line
+	normalization and marks the path as a text file.  End-of-line
+	conversion takes place without guessing the content type.
 
 Unset::
 
-	Unsetting the `crlf` attribute on a path tells git not to
+	Unsetting the `text` attribute on a path tells git not to
 	attempt any end-of-line conversion upon checkin or checkout.
+
+Set to string value "auto"::
+
+	When `text` is set to "auto", the path is marked for automatic
+	end-of-line normalization.  If git decides that the content is
+	text, its line endings are normalized to LF on checkin.
 
 Unspecified::
 
-	Unspecified `crlf` attribute tells git to apply the
-	`core.autocrlf` conversion when the file content looks
-	like text.
+	If the `text` attribute is unspecified, git uses the
+	`core.autocrlf` configuration variable to determine if the
+	file should be converted.
 
-Set to string value "input"::
+Any other value causes git to act as if `text` has been left
+unspecified.
 
-	This is similar to setting the attribute to `true`, but
-	also forces git to act as if `core.autocrlf` is set to
-	`input` for the path.
+`eol`
+^^^^^
 
-Any other value set to `crlf` attribute is ignored and git acts
-as if the attribute is left unspecified.
+This attribute sets a specific line-ending style to be used in the
+working directory.  It enables end-of-line normalization without any
+content checks, effectively setting the `text` attribute.
 
+Set to string value "crlf"::
 
-The `core.autocrlf` conversion
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+	This setting forces git to normalize line endings for this
+	file on checkin and convert them to CRLF when the file is
+	checked out.
 
-If the configuration variable `core.autocrlf` is false, no
-conversion is done.
+Set to string value "lf"::
 
-When `core.autocrlf` is true, it means that the platform wants
-CRLF line endings for files in the working tree, and you want to
-convert them back to the normal LF line endings when checking
-in to the repository.
+	This setting forces git to normalize line endings to LF on
+	checkin and prevents conversion to CRLF when the file is
+	checked out.
 
-When `core.autocrlf` is set to "input", line endings are
-converted to LF upon checkin, but there is no conversion done
-upon checkout.
+Backwards compatibility with `crlf` attribute
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For backwards compatibility, the `crlf` attribute is interpreted as
+follows:
+
+------------------------
+crlf		text
+-crlf		-text
+crlf=input	eol=lf
+------------------------
+
+End-of-line conversion
+^^^^^^^^^^^^^^^^^^^^^^
+
+While git normally leaves file contents alone, it can be configured to
+normalize line endings to LF in the repository and, optionally, to
+convert them to CRLF when files are checked out.
+
+Here is an example that will make git normalize .txt, .vcproj and .sh
+files, ensure that .vcproj files have CRLF and .sh files have LF in
+the working directory, and prevent .jpg files from being normalized
+regardless of their content.
+
+------------------------
+*.txt		text
+*.vcproj	eol=crlf
+*.sh		eol=lf
+*.jpg		-text
+------------------------
+
+Other source code management systems normalize all text files in their
+repositories, and there are two ways to enable similar automatic
+normalization in git.
+
+If you simply want to have CRLF line endings in your working directory
+regardless of the repository you are working with, you can set the
+config variable "core.autocrlf" without changing any attributes.
+
+------------------------
+[core]
+	autocrlf = true
+------------------------
+
+This does not force normalization of all text files, but does ensure
+that text files that you introduce to the repository have their line
+endings normalized to LF when they are added, and that files that are
+already normalized in the repository stay normalized.
+
+If you want to interoperate with a source code management system that
+enforces end-of-line normalization, or you simply want all text files
+in your repository to be normalized, you should instead set the `text`
+attribute to "auto" for _all_ files.
+
+------------------------
+*	text=auto
+------------------------
+
+This ensures that all files that git considers to be text will have
+normalized (LF) line endings in the repository.  The `core.eol`
+configuration variable controls which line endings git will use for
+normalized files in your working directory; the default is to use the
+native line ending for your platform, or CRLF if `core.autocrlf` is
+set.
+
+NOTE: When `text=auto` normalization is enabled in an existing
+repository, any text files containing CRLFs should be normalized.  If
+they are not they will be normalized the next time someone tries to
+change them, causing unfortunate misattribution.  From a clean working
+directory:
+
+-------------------------------------------------
+$ echo "* text=auto" >>.gitattributes
+$ rm .git/index     # Remove the index to force git to
+$ git reset         # re-scan the working directory
+$ git status        # Show files that will be normalized
+$ git add -u
+$ git add .gitattributes
+$ git commit -m "Introduce end-of-line normalization"
+-------------------------------------------------
+
+If any files that should not be normalized show up in 'git status',
+unset their `text` attribute before running 'git add -u'.
+
+------------------------
+manual.pdf	-text
+------------------------
+
+Conversely, text files that git does not detect can have normalization
+enabled manually.
+
+------------------------
+weirdchars.txt	text
+------------------------
 
 If `core.safecrlf` is set to "true" or "warn", git verifies if
 the conversion is reversible for the current setting of
@@ -216,6 +324,27 @@ command is "cat").
 	smudge = cat
 ------------------------
 
+For best results, `clean` should not alter its output further if it is
+run twice ("clean->clean" should be equivalent to "clean"), and
+multiple `smudge` commands should not alter `clean`'s output
+("smudge->smudge->clean" should be equivalent to "clean").  See the
+section on merging below.
+
+The "indent" filter is well-behaved in this regard: it will not modify
+input that is already correctly indented.  In this case, the lack of a
+smudge filter means that the clean filter _must_ accept its own output
+without modifying it.
+
+Sequence "%f" on the filter command line is replaced with the name of
+the file the filter is working on.  A filter might use this in keyword
+substitution.  For example:
+
+------------------------
+[filter "p4"]
+	clean = git-p4-filter --clean %f
+	smudge = git-p4-filter --smudge %f
+------------------------
+
 
 Interaction between checkin/checkout attributes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -223,11 +352,34 @@ Interaction between checkin/checkout attributes
 In the check-in codepath, the worktree file is first converted
 with `filter` driver (if specified and corresponding driver
 defined), then the result is processed with `ident` (if
-specified), and then finally with `crlf` (again, if specified
+specified), and then finally with `text` (again, if specified
 and applicable).
 
 In the check-out codepath, the blob content is first converted
-with `crlf`, and then `ident` and fed to `filter`.
+with `text`, and then `ident` and fed to `filter`.
+
+
+Merging branches with differing checkin/checkout attributes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If you have added attributes to a file that cause the canonical
+repository format for that file to change, such as adding a
+clean/smudge filter or text/eol/ident attributes, merging anything
+where the attribute is not in place would normally cause merge
+conflicts.
+
+To prevent these unnecessary merge conflicts, git can be told to run a
+virtual check-out and check-in of all three stages of a file when
+resolving a three-way merge by setting the `merge.renormalize`
+configuration variable.  This prevents changes caused by check-in
+conversion from causing spurious merge conflicts when a converted file
+is merged with an unconverted file.
+
+As long as a "smudge->clean" results in the same output as a "clean"
+even on files that are already smudged, this strategy will
+automatically resolve all filter-related conflicts.  Filters that do
+not act in this way may cause additional merge conflicts that must be
+resolved manually.
 
 
 Generating diff text
@@ -340,6 +492,10 @@ patterns are available:
 
 - `cpp` suitable for source code in the C and C++ languages.
 
+- `csharp` suitable for source code in the C# language.
+
+- `fortran` suitable for source code in the Fortran language.
+
 - `html` suitable for HTML/XHTML documents.
 
 - `java` suitable for source code in the Java language.
@@ -347,6 +503,8 @@ patterns are available:
 - `objc` suitable for source code in the Objective-C language.
 
 - `pascal` suitable for source code in the Pascal/Delphi language.
+
+- `perl` suitable for source code in the Perl language.
 
 - `php` suitable for source code in the PHP language.
 
@@ -360,7 +518,7 @@ patterns are available:
 Customizing word diff
 ^^^^^^^^^^^^^^^^^^^^^
 
-You can customize the rules that `git diff --color-words` uses to
+You can customize the rules that `git diff --word-diff` uses to
 split words in a line, by specifying an appropriate regular expression
 in the "diff.*.wordRegex" configuration variable.  For example, in TeX
 a backslash followed by a sequence of letters forms a command, but
@@ -414,6 +572,90 @@ because it quickly conveys the changes you have made), you
 should generate it separately and send it as a comment _in
 addition to_ the usual binary diff that you might send.
 
+Because text conversion can be slow, especially when doing a
+large number of them with `git log -p`, git provides a mechanism
+to cache the output and use it in future diffs.  To enable
+caching, set the "cachetextconv" variable in your diff driver's
+config. For example:
+
+------------------------
+[diff "jpg"]
+	textconv = exif
+	cachetextconv = true
+------------------------
+
+This will cache the result of running "exif" on each blob
+indefinitely. If you change the textconv config variable for a
+diff driver, git will automatically invalidate the cache entries
+and re-run the textconv filter. If you want to invalidate the
+cache manually (e.g., because your version of "exif" was updated
+and now produces better output), you can remove the cache
+manually with `git update-ref -d refs/notes/textconv/jpg` (where
+"jpg" is the name of the diff driver, as in the example above).
+
+Choosing textconv versus external diff
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If you want to show differences between binary or specially-formatted
+blobs in your repository, you can choose to use either an external diff
+command, or to use textconv to convert them to a diff-able text format.
+Which method you choose depends on your exact situation.
+
+The advantage of using an external diff command is flexibility. You are
+not bound to find line-oriented changes, nor is it necessary for the
+output to resemble unified diff. You are free to locate and report
+changes in the most appropriate way for your data format.
+
+A textconv, by comparison, is much more limiting. You provide a
+transformation of the data into a line-oriented text format, and git
+uses its regular diff tools to generate the output. There are several
+advantages to choosing this method:
+
+1. Ease of use. It is often much simpler to write a binary to text
+   transformation than it is to perform your own diff. In many cases,
+   existing programs can be used as textconv filters (e.g., exif,
+   odt2txt).
+
+2. Git diff features. By performing only the transformation step
+   yourself, you can still utilize many of git's diff features,
+   including colorization, word-diff, and combined diffs for merges.
+
+3. Caching. Textconv caching can speed up repeated diffs, such as those
+   you might trigger by running `git log -p`.
+
+
+Marking files as binary
+^^^^^^^^^^^^^^^^^^^^^^^
+
+Git usually guesses correctly whether a blob contains text or binary
+data by examining the beginning of the contents. However, sometimes you
+may want to override its decision, either because a blob contains binary
+data later in the file, or because the content, while technically
+composed of text characters, is opaque to a human reader. For example,
+many postscript files contain only ascii characters, but produce noisy
+and meaningless diffs.
+
+The simplest way to mark a file as binary is to unset the diff
+attribute in the `.gitattributes` file:
+
+------------------------
+*.ps -diff
+------------------------
+
+This will cause git to generate `Binary files differ` (or a binary
+patch, if binary patches are enabled) instead of a regular diff.
+
+However, one may also want to specify other diff driver attributes. For
+example, you might want to use `textconv` to convert postscript files to
+an ascii representation for human viewing, but otherwise treat them as
+binary files. You cannot specify both `-diff` and `diff=ps` attributes.
+The solution is to use the `diff.*.binary` config option:
+
+------------------------
+[diff "ps"]
+  textconv = ps2ascii
+  binary = true
+------------------------
 
 Performing a three-way merge
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -421,7 +663,7 @@ Performing a three-way merge
 `merge`
 ^^^^^^^
 
-The attribute `merge` affects how three versions of a file is
+The attribute `merge` affects how three versions of a file are
 merged when a file-level merge is necessary during `git merge`,
 and other commands such as `git revert` and `git cherry-pick`.
 
@@ -435,15 +677,15 @@ Unset::
 
 	Take the version from the current branch as the
 	tentative merge result, and declare that the merge has
-	conflicts.  This is suitable for binary files that does
+	conflicts.  This is suitable for binary files that do
 	not have a well-defined merge semantics.
 
 Unspecified::
 
 	By default, this uses the same built-in 3-way merge
-	driver as is the case the `merge` attribute is set.
-	However, `merge.default` configuration variable can name
-	different merge driver to be used for paths to which the
+	driver as is the case when the `merge` attribute is set.
+	However, the `merge.default` configuration variable can name
+	different merge driver to be used with paths for which the
 	`merge` attribute is unspecified.
 
 String::
@@ -511,7 +753,8 @@ command to run to merge ancestor's version (`%O`), current
 version (`%A`) and the other branches' version (`%B`).  These
 three tokens are replaced with the names of temporary files that
 hold the contents of these versions when the command line is
-built.
+built. Additionally, %L will be replaced with the conflict marker
+size (see below).
 
 The merge driver is expected to leave the result of the merge in
 the file named with `%A` by overwriting it, and exit with zero
@@ -556,6 +799,8 @@ control per path.
 Set::
 
 	Notice all types of potential whitespace errors known to git.
+	The tab width is taken from the value of the `core.whitespace`
+	configuration variable.
 
 Unset::
 
@@ -563,13 +808,13 @@ Unset::
 
 Unspecified::
 
-	Use the value of `core.whitespace` configuration variable to
+	Use the value of the `core.whitespace` configuration variable to
 	decide what to notice as error.
 
 String::
 
 	Specify a comma separate list of common whitespace problems to
-	notice in the same format as `core.whitespace` configuration
+	notice in the same format as the `core.whitespace` configuration
 	variable.
 
 
@@ -630,7 +875,7 @@ You do not want any end-of-line conversions applied to, nor textual diffs
 produced for, any binary file you track.  You would need to specify e.g.
 
 ------------
-*.jpg -crlf -diff
+*.jpg -text -diff
 ------------
 
 but that may become cumbersome, when you have many attributes.  Using
@@ -643,7 +888,7 @@ the same time.  The system knows a built-in attribute macro, `binary`:
 
 which is equivalent to the above.  Note that the attribute macros can only
 be "Set" (see the above example that sets "binary" macro as if it were an
-ordinary attribute --- setting it in turn unsets "crlf" and "diff").
+ordinary attribute --- setting it in turn unsets "text" and "diff").
 
 
 DEFINING ATTRIBUTE MACROS
@@ -654,7 +899,7 @@ at the toplevel (i.e. not in any subdirectory).  The built-in attribute
 macro "binary" is equivalent to:
 
 ------------
-[attr]binary -diff -crlf
+[attr]binary -diff -text
 ------------
 
 

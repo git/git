@@ -20,7 +20,7 @@ void record_resolve_undo(struct index_state *istate, struct cache_entry *ce)
 		istate->resolve_undo = resolve_undo;
 	}
 	resolve_undo = istate->resolve_undo;
-	lost = string_list_insert(ce->name, resolve_undo);
+	lost = string_list_insert(resolve_undo, ce->name);
 	if (!lost->util)
 		lost->util = xcalloc(1, sizeof(*ui));
 	ui = lost->util;
@@ -28,29 +28,25 @@ void record_resolve_undo(struct index_state *istate, struct cache_entry *ce)
 	ui->mode[stage - 1] = ce->ce_mode;
 }
 
-static int write_one(struct string_list_item *item, void *cbdata)
-{
-	struct strbuf *sb = cbdata;
-	struct resolve_undo_info *ui = item->util;
-	int i;
-
-	if (!ui)
-		return 0;
-	strbuf_addstr(sb, item->string);
-	strbuf_addch(sb, 0);
-	for (i = 0; i < 3; i++)
-		strbuf_addf(sb, "%o%c", ui->mode[i], 0);
-	for (i = 0; i < 3; i++) {
-		if (!ui->mode[i])
-			continue;
-		strbuf_add(sb, ui->sha1[i], 20);
-	}
-	return 0;
-}
-
 void resolve_undo_write(struct strbuf *sb, struct string_list *resolve_undo)
 {
-	for_each_string_list(write_one, resolve_undo, sb);
+	struct string_list_item *item;
+	for_each_string_list_item(item, resolve_undo) {
+		struct resolve_undo_info *ui = item->util;
+		int i;
+
+		if (!ui)
+			continue;
+		strbuf_addstr(sb, item->string);
+		strbuf_addch(sb, 0);
+		for (i = 0; i < 3; i++)
+			strbuf_addf(sb, "%o%c", ui->mode[i], 0);
+		for (i = 0; i < 3; i++) {
+			if (!ui->mode[i])
+				continue;
+			strbuf_add(sb, ui->sha1[i], 20);
+		}
+	}
 }
 
 struct string_list *resolve_undo_read(const char *data, unsigned long size)
@@ -70,7 +66,7 @@ struct string_list *resolve_undo_read(const char *data, unsigned long size)
 		len = strlen(data) + 1;
 		if (size <= len)
 			goto error;
-		lost = string_list_insert(data, resolve_undo);
+		lost = string_list_insert(resolve_undo, data);
 		if (!lost->util)
 			lost->util = xcalloc(1, sizeof(*ui));
 		ui = lost->util;
@@ -135,7 +131,7 @@ int unmerge_index_entry_at(struct index_state *istate, int pos)
 			pos++;
 		return pos - 1; /* return the last entry processed */
 	}
-	item = string_list_lookup(ce->name, istate->resolve_undo);
+	item = string_list_lookup(istate->resolve_undo, ce->name);
 	if (!item)
 		return pos;
 	ru = item->util;

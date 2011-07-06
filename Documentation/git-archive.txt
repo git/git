@@ -12,7 +12,7 @@ SYNOPSIS
 'git archive' [--format=<fmt>] [--list] [--prefix=<prefix>/] [<extra>]
 	      [-o | --output=<file>] [--worktree-attributes]
 	      [--remote=<repo> [--exec=<git-upload-archive>]] <tree-ish>
-	      [path...]
+	      [<path>...]
 
 DESCRIPTION
 -----------
@@ -73,7 +73,7 @@ OPTIONS
 <tree-ish>::
 	The tree or commit to produce an archive for.
 
-path::
+<path>::
 	Without an optional path parameter, all files and subdirectories
 	of the current working directory are included in the archive.
 	If one or more paths are specified, only these are included.
@@ -98,7 +98,8 @@ tar.umask::
 	tar archive entries.  The default is 0002, which turns off the
 	world write bit.  The special value "user" indicates that the
 	archiving user's umask will be used instead.  See umask(2) for
-	details.
+	details.  If `--remote` is used then only the configuration of
+	the remote repository takes effect.
 
 ATTRIBUTES
 ----------
@@ -116,7 +117,7 @@ Note that attributes are by default taken from the `.gitattributes` files
 in the tree that is being archived.  If you want to tweak the way the
 output is generated after the fact (e.g. you committed without adding an
 appropriate export-ignore in its `.gitattributes`), adjust the checked out
-`.gitattributes` file as necessary and use `--work-tree-attributes`
+`.gitattributes` file as necessary and use `--worktree-attributes`
 option.  Alternatively you can keep necessary attributes that should apply
 while archiving any tree in your `$GIT_DIR/info/attributes` file.
 
@@ -152,14 +153,6 @@ git archive -o latest.zip HEAD::
 SEE ALSO
 --------
 linkgit:gitattributes[5]
-
-Author
-------
-Written by Franck Bui-Huu and Rene Scharfe.
-
-Documentation
---------------
-Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---

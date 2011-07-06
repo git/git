@@ -10,11 +10,6 @@ Testing basic diff tool invocation
 
 . ./test-lib.sh
 
-if ! test_have_prereq PERL; then
-	say 'skipping difftool tests, perl not available'
-	test_done
-fi
-
 LF='
 '
 
@@ -50,7 +45,7 @@ prompt_given()
 }
 
 # Create a file on master and change it on branch
-test_expect_success 'setup' '
+test_expect_success PERL 'setup' '
 	echo master >file &&
 	git add file &&
 	git commit -m "added file" &&
@@ -62,7 +57,7 @@ test_expect_success 'setup' '
 '
 
 # Configure a custom difftool.<tool>.cmd and use it
-test_expect_success 'custom commands' '
+test_expect_success PERL 'custom commands' '
 	restore_test_defaults &&
 	git config difftool.test-tool.cmd "cat \$REMOTE" &&
 
@@ -75,13 +70,13 @@ test_expect_success 'custom commands' '
 '
 
 # Ensures that git-difftool ignores bogus --tool values
-test_expect_success 'difftool ignores bad --tool values' '
+test_expect_success PERL 'difftool ignores bad --tool values' '
 	diff=$(git difftool --no-prompt --tool=bad-tool branch)
 	test "$?" = 1 &&
 	test "$diff" = ""
 '
 
-test_expect_success 'difftool honors --gui' '
+test_expect_success PERL 'difftool honors --gui' '
 	git config merge.tool bogus-tool &&
 	git config diff.tool bogus-tool &&
 	git config diff.guitool test-tool &&
@@ -92,9 +87,18 @@ test_expect_success 'difftool honors --gui' '
 	restore_test_defaults
 '
 
+test_expect_success PERL 'difftool --gui works without configured diff.guitool' '
+	git config diff.tool test-tool &&
+
+	diff=$(git difftool --no-prompt --gui branch) &&
+	test "$diff" = "branch" &&
+
+	restore_test_defaults
+'
+
 # Specify the diff tool using $GIT_DIFF_TOOL
-test_expect_success 'GIT_DIFF_TOOL variable' '
-	git config --unset diff.tool
+test_expect_success PERL 'GIT_DIFF_TOOL variable' '
+	test_might_fail git config --unset diff.tool &&
 	GIT_DIFF_TOOL=test-tool &&
 	export GIT_DIFF_TOOL &&
 
@@ -106,7 +110,7 @@ test_expect_success 'GIT_DIFF_TOOL variable' '
 
 # Test the $GIT_*_TOOL variables and ensure
 # that $GIT_DIFF_TOOL always wins unless --tool is specified
-test_expect_success 'GIT_DIFF_TOOL overrides' '
+test_expect_success PERL 'GIT_DIFF_TOOL overrides' '
 	git config diff.tool bogus-tool &&
 	git config merge.tool bogus-tool &&
 
@@ -127,7 +131,7 @@ test_expect_success 'GIT_DIFF_TOOL overrides' '
 
 # Test that we don't have to pass --no-prompt to difftool
 # when $GIT_DIFFTOOL_NO_PROMPT is true
-test_expect_success 'GIT_DIFFTOOL_NO_PROMPT variable' '
+test_expect_success PERL 'GIT_DIFFTOOL_NO_PROMPT variable' '
 	GIT_DIFFTOOL_NO_PROMPT=true &&
 	export GIT_DIFFTOOL_NO_PROMPT &&
 
@@ -139,7 +143,7 @@ test_expect_success 'GIT_DIFFTOOL_NO_PROMPT variable' '
 
 # git-difftool supports the difftool.prompt variable.
 # Test that GIT_DIFFTOOL_PROMPT can override difftool.prompt = false
-test_expect_success 'GIT_DIFFTOOL_PROMPT variable' '
+test_expect_success PERL 'GIT_DIFFTOOL_PROMPT variable' '
 	git config difftool.prompt false &&
 	GIT_DIFFTOOL_PROMPT=true &&
 	export GIT_DIFFTOOL_PROMPT &&
@@ -151,7 +155,7 @@ test_expect_success 'GIT_DIFFTOOL_PROMPT variable' '
 '
 
 # Test that we don't have to pass --no-prompt when difftool.prompt is false
-test_expect_success 'difftool.prompt config variable is false' '
+test_expect_success PERL 'difftool.prompt config variable is false' '
 	git config difftool.prompt false &&
 
 	diff=$(git difftool branch) &&
@@ -161,8 +165,8 @@ test_expect_success 'difftool.prompt config variable is false' '
 '
 
 # Test that we don't have to pass --no-prompt when mergetool.prompt is false
-test_expect_success 'difftool merge.prompt = false' '
-	git config --unset difftool.prompt
+test_expect_success PERL 'difftool merge.prompt = false' '
+	test_might_fail git config --unset difftool.prompt &&
 	git config mergetool.prompt false &&
 
 	diff=$(git difftool branch) &&
@@ -172,7 +176,7 @@ test_expect_success 'difftool merge.prompt = false' '
 '
 
 # Test that the -y flag can override difftool.prompt = true
-test_expect_success 'difftool.prompt can overridden with -y' '
+test_expect_success PERL 'difftool.prompt can overridden with -y' '
 	git config difftool.prompt true &&
 
 	diff=$(git difftool -y branch) &&
@@ -182,7 +186,7 @@ test_expect_success 'difftool.prompt can overridden with -y' '
 '
 
 # Test that the --prompt flag can override difftool.prompt = false
-test_expect_success 'difftool.prompt can overridden with --prompt' '
+test_expect_success PERL 'difftool.prompt can overridden with --prompt' '
 	git config difftool.prompt false &&
 
 	prompt=$(echo | git difftool --prompt branch | tail -1) &&
@@ -192,7 +196,7 @@ test_expect_success 'difftool.prompt can overridden with --prompt' '
 '
 
 # Test that the last flag passed on the command-line wins
-test_expect_success 'difftool last flag wins' '
+test_expect_success PERL 'difftool last flag wins' '
 	diff=$(git difftool --prompt --no-prompt branch) &&
 	test "$diff" = "branch" &&
 
@@ -206,8 +210,8 @@ test_expect_success 'difftool last flag wins' '
 
 # git-difftool falls back to git-mergetool config variables
 # so test that behavior here
-test_expect_success 'difftool + mergetool config variables' '
-	remove_config_vars
+test_expect_success PERL 'difftool + mergetool config variables' '
+	remove_config_vars &&
 	git config merge.tool test-tool &&
 	git config mergetool.test-tool.cmd "cat \$LOCAL" &&
 
@@ -224,7 +228,7 @@ test_expect_success 'difftool + mergetool config variables' '
 	restore_test_defaults
 '
 
-test_expect_success 'difftool.<tool>.path' '
+test_expect_success PERL 'difftool.<tool>.path' '
 	git config difftool.tkdiff.path echo &&
 	diff=$(git difftool --tool=tkdiff --no-prompt branch) &&
 	git config --unset difftool.tkdiff.path &&
@@ -234,33 +238,33 @@ test_expect_success 'difftool.<tool>.path' '
 	restore_test_defaults
 '
 
-test_expect_success 'difftool --extcmd=cat' '
+test_expect_success PERL 'difftool --extcmd=cat' '
 	diff=$(git difftool --no-prompt --extcmd=cat branch) &&
 	test "$diff" = branch"$LF"master
 '
 
-test_expect_success 'difftool --extcmd cat' '
+test_expect_success PERL 'difftool --extcmd cat' '
 	diff=$(git difftool --no-prompt --extcmd cat branch) &&
 	test "$diff" = branch"$LF"master
 '
 
-test_expect_success 'difftool -x cat' '
+test_expect_success PERL 'difftool -x cat' '
 	diff=$(git difftool --no-prompt -x cat branch) &&
 	test "$diff" = branch"$LF"master
 '
 
-test_expect_success 'difftool --extcmd echo arg1' '
-	diff=$(git difftool --no-prompt --extcmd sh\ -c\ \"echo\ \$1\" branch)
+test_expect_success PERL 'difftool --extcmd echo arg1' '
+	diff=$(git difftool --no-prompt --extcmd sh\ -c\ \"echo\ \$1\" branch) &&
 	test "$diff" = file
 '
 
-test_expect_success 'difftool --extcmd cat arg1' '
-	diff=$(git difftool --no-prompt --extcmd sh\ -c\ \"cat\ \$1\" branch)
+test_expect_success PERL 'difftool --extcmd cat arg1' '
+	diff=$(git difftool --no-prompt --extcmd sh\ -c\ \"cat\ \$1\" branch) &&
 	test "$diff" = master
 '
 
-test_expect_success 'difftool --extcmd cat arg2' '
-	diff=$(git difftool --no-prompt --extcmd sh\ -c\ \"cat\ \$2\" branch)
+test_expect_success PERL 'difftool --extcmd cat arg2' '
+	diff=$(git difftool --no-prompt --extcmd sh\ -c\ \"cat\ \$2\" branch) &&
 	test "$diff" = branch
 '
 

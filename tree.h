@@ -25,9 +25,9 @@ typedef int (*read_tree_fn_t)(const unsigned char *, const char *, int, const ch
 
 extern int read_tree_recursive(struct tree *tree,
 			       const char *base, int baselen,
-			       int stage, const char **match,
+			       int stage, struct pathspec *pathspec,
 			       read_tree_fn_t fn, void *context);
 
-extern int read_tree(struct tree *tree, int stage, const char **paths);
+extern int read_tree(struct tree *tree, int stage, struct pathspec *pathspec);
 
 #endif /* TREE_H */

@@ -81,7 +81,7 @@ OPTIONS
 	This filter may be used if you only need to modify the environment
 	in which the commit will be performed.  Specifically, you might
 	want to rewrite the author/committer name/email/time environment
-	variables (see linkgit:git-commit[1] for details).  Do not forget
+	variables (see linkgit:git-commit-tree[1] for details).  Do not forget
 	to re-export the variables.
 
 --tree-filter <command>::
@@ -117,7 +117,7 @@ OPTIONS
 	This is the filter for performing the commit.
 	If this filter is specified, it will be called instead of the
 	'git commit-tree' command, with arguments of the form
-	"<TREE_ID> [-p <PARENT_COMMIT_ID>]..." and the log message on
+	"<TREE_ID> [(-p <PARENT_COMMIT_ID>)...]" and the log message on
 	stdin.  The commit id is expected on stdout.
 +
 As a special extension, the commit filter may emit multiple
@@ -159,18 +159,7 @@ to other tags will be rewritten to point to the underlying commit.
 --subdirectory-filter <directory>::
 	Only look at the history which touches the given subdirectory.
 	The result will contain that directory (and only that) as its
-	project root.  Implies --remap-to-ancestor.
-
---remap-to-ancestor::
-	Rewrite refs to the nearest rewritten ancestor instead of
-	ignoring them.
-+
-Normally, positive refs on the command line are only changed if the
-commit they point to was rewritten.  However, you can limit the extent
-of this rewriting by using linkgit:rev-list[1] arguments, e.g., path
-limiters.  Refs pointing to such excluded commits would then normally
-be ignored.  With this option, they are instead rewritten to point at
-the nearest ancestor that was not excluded.
+	project root. Implies <<Remap_to_ancestor>>.
 
 --prune-empty::
 	Some kind of filters will generate empty commits, that left the tree
@@ -204,7 +193,18 @@ the nearest ancestor that was not excluded.
 	Arguments for 'git rev-list'.  All positive refs included by
 	these options are rewritten.  You may also specify options
 	such as '--all', but you must use '--' to separate them from
-	the 'git filter-branch' options.
+	the 'git filter-branch' options. Implies <<Remap_to_ancestor>>.
+
+
+[[Remap_to_ancestor]]
+Remap to ancestor
+~~~~~~~~~~~~~~~~~
+
+By using linkgit:rev-list[1] arguments, e.g., path limiters, you can limit the
+set of revisions which get rewritten. However, positive refs on the command
+line are distinguished: we don't let them be excluded by such limiters. For
+this purpose, they are instead rewritten to point at the nearest ancestor that
+was not excluded.
 
 
 Examples
@@ -361,7 +361,7 @@ git filter-branch --index-filter \
 	'git ls-files -s | sed "s-\t\"*-&newsubdir/-" |
 		GIT_INDEX_FILE=$GIT_INDEX_FILE.new \
 			git update-index --index-info &&
-	 mv $GIT_INDEX_FILE.new $GIT_INDEX_FILE' HEAD
+	 mv "$GIT_INDEX_FILE.new" "$GIT_INDEX_FILE"' HEAD
 ---------------------------------------------------------------
 
 
@@ -404,16 +404,6 @@ warned.
 * Garbage collect all unreferenced objects with `git gc \--prune=now`
   (or if your git-gc is not new enough to support arguments to
   `\--prune`, use `git repack -ad; git prune` instead).
-
-
-Author
-------
-Written by Petr "Pasky" Baudis <pasky@suse.cz>,
-and the git list <git@vger.kernel.org>
-
-Documentation
---------------
-Documentation by Petr Baudis and the git list.
 
 GIT
 ---

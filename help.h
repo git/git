@@ -16,14 +16,17 @@ static inline void mput_char(char c, unsigned int num)
 		putchar(c);
 }
 
-void load_command_list(const char *prefix,
-		struct cmdnames *main_cmds,
-		struct cmdnames *other_cmds);
-void add_cmdname(struct cmdnames *cmds, const char *name, int len);
+extern void list_common_cmds_help(void);
+extern const char *help_unknown_cmd(const char *cmd);
+extern void load_command_list(const char *prefix,
+			      struct cmdnames *main_cmds,
+			      struct cmdnames *other_cmds);
+extern void add_cmdname(struct cmdnames *cmds, const char *name, int len);
 /* Here we require that excludes is a sorted list. */
-void exclude_cmds(struct cmdnames *cmds, struct cmdnames *excludes);
-int is_in_cmdlist(struct cmdnames *c, const char *s);
-void list_commands(const char *title, struct cmdnames *main_cmds,
-		   struct cmdnames *other_cmds);
+extern void exclude_cmds(struct cmdnames *cmds, struct cmdnames *excludes);
+extern int is_in_cmdlist(struct cmdnames *cmds, const char *name);
+extern void list_commands(const char *title,
+			  struct cmdnames *main_cmds,
+			  struct cmdnames *other_cmds);
 
 #endif /* HELP_H */

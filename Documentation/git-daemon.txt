@@ -9,15 +9,15 @@ SYNOPSIS
 --------
 [verse]
 'git daemon' [--verbose] [--syslog] [--export-all]
-	     [--timeout=n] [--init-timeout=n] [--max-connections=n]
-	     [--strict-paths] [--base-path=path] [--base-path-relaxed]
-	     [--user-path | --user-path=path]
-	     [--interpolated-path=pathtemplate]
-	     [--reuseaddr] [--detach] [--pid-file=file]
-	     [--enable=service] [--disable=service]
-	     [--allow-override=service] [--forbid-override=service]
-	     [--inetd | [--listen=host_or_ipaddr] [--port=n] [--user=user [--group=group]]
-	     [directory...]
+	     [--timeout=<n>] [--init-timeout=<n>] [--max-connections=<n>]
+	     [--strict-paths] [--base-path=<path>] [--base-path-relaxed]
+	     [--user-path | --user-path=<path>]
+	     [--interpolated-path=<pathtemplate>]
+	     [--reuseaddr] [--detach] [--pid-file=<file>]
+	     [--enable=<service>] [--disable=<service>]
+	     [--allow-override=<service>] [--forbid-override=<service>]
+	     [--inetd | [--listen=<host_or_ipaddr>] [--port=<n>] [--user=<user> [--group=<group>]]
+	     [<directory>...]
 
 DESCRIPTION
 -----------
@@ -48,7 +48,7 @@ OPTIONS
 	'git daemon' will refuse to start when this option is enabled and no
 	whitelist is specified.
 
---base-path=path::
+--base-path=<path>::
 	Remap all the path requests as relative to the given path.
 	This is sort of "GIT root" - if you run 'git daemon' with
 	'--base-path=/srv/git' on example.com, then if you later try to pull
@@ -61,7 +61,7 @@ OPTIONS
 	This is useful for switching to --base-path usage, while still
 	allowing the old paths.
 
---interpolated-path=pathtemplate::
+--interpolated-path=<pathtemplate>::
 	To support virtual hosting, an interpolated path template can be
 	used to dynamically construct alternate paths.  The template
 	supports %H for the target hostname as supplied by the client but
@@ -78,29 +78,31 @@ OPTIONS
 
 --inetd::
 	Have the server run as an inetd service. Implies --syslog.
-	Incompatible with --port, --listen, --user and --group options.
+	Incompatible with --detach, --port, --listen, --user and --group
+	options.
 
---listen=host_or_ipaddr::
+--listen=<host_or_ipaddr>::
 	Listen on a specific IP address or hostname.  IP addresses can
 	be either an IPv4 address or an IPv6 address if supported.  If IPv6
 	is not supported, then --listen=hostname is also not supported and
 	--listen must be given an IPv4 address.
+	Can be given more than once.
 	Incompatible with '--inetd' option.
 
---port=n::
+--port=<n>::
 	Listen on an alternative port.  Incompatible with '--inetd' option.
 
---init-timeout=n::
+--init-timeout=<n>::
 	Timeout between the moment the connection is established and the
 	client request is received (typically a rather low value, since
 	that should be basically immediate).
 
---timeout=n::
+--timeout=<n>::
 	Timeout for specific client sub-requests. This includes the time
 	it takes for the server to process the sub-request and the time spent
 	waiting for the next client's request.
 
---max-connections=n::
+--max-connections=<n>::
 	Maximum number of concurrent clients, defaults to 32.  Set it to
 	zero for no limit.
 
@@ -109,7 +111,7 @@ OPTIONS
 	--verbose, thus by default only error conditions will be logged.
 
 --user-path::
---user-path=path::
+--user-path=<path>::
 	Allow {tilde}user notation to be used in requests.  When
 	specified with no parameter, requests to
 	git://host/{tilde}alice/foo is taken as a request to access
@@ -129,12 +131,12 @@ OPTIONS
 --detach::
 	Detach from the shell. Implies --syslog.
 
---pid-file=file::
+--pid-file=<file>::
 	Save the process id in 'file'.  Ignored when the daemon
 	is run under `--inetd`.
 
---user=user::
---group=group::
+--user=<user>::
+--group=<group>::
 	Change daemon's uid and gid before entering the service loop.
 	When only `--user` is given without `--group`, the
 	primary group ID for the user is used.  The values of
@@ -145,16 +147,16 @@ Giving these options is an error when used with `--inetd`; use
 the facility of inet daemon to achieve the same before spawning
 'git daemon' if needed.
 
---enable=service::
---disable=service::
+--enable=<service>::
+--disable=<service>::
 	Enable/disable the service site-wide per default.  Note
 	that a service disabled site-wide can still be enabled
 	per repository if it is marked overridable and the
 	repository enables the service with a configuration
 	item.
 
---allow-override=service::
---forbid-override=service::
+--allow-override=<service>::
+--forbid-override=<service>::
 	Allow/forbid overriding the site-wide default with per
 	repository configuration.  By default, all the services
 	are overridable.
@@ -276,17 +278,6 @@ ENVIRONMENT
 that connected to it, if the IP address is available. REMOTE_ADDR will
 be available in the environment of hooks called when
 services are performed.
-
-
-
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org>, YOSHIFUJI Hideaki
-<yoshfuji@linux-ipv6.org> and the git-list <git@vger.kernel.org>
-
-Documentation
---------------
-Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---

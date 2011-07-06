@@ -6,7 +6,7 @@ MAN5_TXT=gitattributes.txt gitignore.txt gitmodules.txt githooks.txt \
 	gitrepository-layout.txt
 MAN7_TXT=gitcli.txt gittutorial.txt gittutorial-2.txt \
 	gitcvs-migration.txt gitcore-tutorial.txt gitglossary.txt \
-	gitdiffcore.txt gitworkflows.txt
+	gitdiffcore.txt gitrevisions.txt gitworkflows.txt
 
 MAN_TXT = $(MAN1_TXT) $(MAN5_TXT) $(MAN7_TXT)
 MAN_XML=$(patsubst %.txt,%.xml,$(MAN_TXT))
@@ -63,35 +63,28 @@ endif
 
 #
 # For asciidoc ...
-#	-7.1.2,	no extra settings are needed.
-#	8.0-,	set ASCIIDOC8.
+#	-7.1.2,	set ASCIIDOC7
+#	8.0-,	no extra settings are needed
 #
 
 #
 # For docbook-xsl ...
-#	-1.68.1,	set ASCIIDOC_NO_ROFF? (based on changelog from 1.73.0)
-#	1.69.0,		no extra settings are needed?
+#	-1.68.1,	no extra settings are needed?
+#	1.69.0,		set ASCIIDOC_ROFF?
 #	1.69.1-1.71.0,	set DOCBOOK_SUPPRESS_SP?
-#	1.71.1,		no extra settings are needed?
+#	1.71.1,		set ASCIIDOC_ROFF?
 #	1.72.0,		set DOCBOOK_XSL_172.
-#	1.73.0-,	set ASCIIDOC_NO_ROFF
+#	1.73.0-,	no extra settings are needed
 #
 
-#
-# If you had been using DOCBOOK_XSL_172 in an attempt to get rid
-# of 'the ".ft C" problem' in your generated manpages, and you
-# instead ended up with weird characters around callouts, try
-# using ASCIIDOC_NO_ROFF instead (it works fine with ASCIIDOC8).
-#
-
-ifdef ASCIIDOC8
+ifndef ASCIIDOC7
 ASCIIDOC_EXTRA += -a asciidoc7compatible -a no-inline-literal
 endif
 ifdef DOCBOOK_XSL_172
 ASCIIDOC_EXTRA += -a git-asciidoc-no-roff
 MANPAGE_XSL = manpage-1.72.xsl
 else
-	ifdef ASCIIDOC_NO_ROFF
+	ifndef ASCIIDOC_ROFF
 	# docbook-xsl after 1.72 needs the regular XSL, but will not
 	# pass-thru raw roff codes from asciidoc.conf, so turn them off.
 	ASCIIDOC_EXTRA += -a git-asciidoc-no-roff
@@ -264,7 +257,9 @@ manpage-base-url.xsl: manpage-base-url.xsl.in
 	mv $@+ $@
 
 user-manual.xml: user-manual.txt user-manual.conf
-	$(QUIET_ASCIIDOC)$(ASCIIDOC) $(ASCIIDOC_EXTRA) -b docbook -d book $<
+	$(QUIET_ASCIIDOC)$(RM) $@+ $@ && \
+	$(ASCIIDOC) $(ASCIIDOC_EXTRA) -b docbook -d book -o $@+ $< && \
+	mv $@+ $@
 
 technical/api-index.txt: technical/api-index-skel.txt \
 	technical/api-index.sh $(patsubst %,%.txt,$(API_DOCS))
@@ -277,8 +272,10 @@ $(patsubst %,%.html,$(API_DOCS) technical/api-index): %.html : %.txt
 XSLT = docbook.xsl
 XSLTOPTS = --xinclude --stringparam html.stylesheet docbook-xsl.css
 
-user-manual.html: user-manual.xml
-	$(QUIET_XSLTPROC)xsltproc $(XSLTOPTS) -o $@ $(XSLT) $<
+user-manual.html: user-manual.xml $(XSLT)
+	$(QUIET_XSLTPROC)$(RM) $@+ $@ && \
+	xsltproc $(XSLTOPTS) -o $@+ $(XSLT) $< && \
+	mv $@+ $@
 
 git.info: user-manual.texi
 	$(QUIET_MAKEINFO)$(MAKEINFO) --no-split -o $@ user-manual.texi

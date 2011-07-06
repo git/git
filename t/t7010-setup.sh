@@ -103,14 +103,10 @@ test_expect_success 'git ls-files (relative #3)' '
 	git add a &&
 	(
 		cd a/b &&
-		if git ls-files "../e/f"
-		then
-			echo Gaah, should have failed
-			exit 1
-		else
-			: happy
-		fi
-	)
+		git ls-files "../e/f"
+	)  >current &&
+	echo ../e/f >expect &&
+	test_cmp expect current
 
 '
 

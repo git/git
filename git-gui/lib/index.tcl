@@ -103,8 +103,11 @@ proc write_update_indexinfo {fd pathList totalCnt batch after} {
 		set s $file_states($path)
 		switch -glob -- [lindex $s 0] {
 		A? {set new _O}
-		M? {set new _M}
+		MT -
+		TM -
 		T_ {set new _T}
+		M? {set new _M}
+		TD -
 		D_ {set new _D}
 		D? {set new _?}
 		?? {continue}
@@ -167,7 +170,10 @@ proc write_update_index {fd pathList totalCnt batch after} {
 		AD {set new __}
 		?D {set new D_}
 		_O -
+		AT -
 		AM {set new A_}
+		TM -
+		MT -
 		_T {set new T_}
 		_U -
 		U? {
@@ -261,7 +267,7 @@ proc unstage_helper {txt paths} {
 		switch -glob -- [lindex $file_states($path) 0] {
 		A? -
 		M? -
-		T_ -
+		T? -
 		D? {
 			lappend pathList $path
 			if {$path eq $current_diff_path} {

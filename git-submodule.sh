@@ -5,10 +5,10 @@
 # Copyright (c) 2007 Lars Hjemli
 
 dashless=$(basename "$0" | sed -e 's/-/ /')
-USAGE="[--quiet] add [-b branch] [--reference <repository>] [--] <repository> [<path>]
+USAGE="[--quiet] add [-b branch] [-f|--force] [--reference <repository>] [--] <repository> [<path>]
    or: $dashless [--quiet] status [--cached] [--recursive] [--] [<path>...]
    or: $dashless [--quiet] init [--] [<path>...]
-   or: $dashless [--quiet] update [--init] [-N|--no-fetch] [--rebase] [--reference <repository>] [--merge] [--recursive] [--] [<path>...]
+   or: $dashless [--quiet] update [--init] [-N|--no-fetch] [-f|--force] [--rebase] [--reference <repository>] [--merge] [--recursive] [--] [<path>...]
    or: $dashless [--quiet] summary [--cached|--files] [--summary-limit <n>] [commit] [--] [<path>...]
    or: $dashless [--quiet] foreach [--recursive] <command>
    or: $dashless [--quiet] sync [--] [<path>...]"
@@ -19,8 +19,11 @@ require_work_tree
 
 command=
 branch=
+force=
 reference=
 cached=
+recursive=
+init=
 files=
 nofetch=
 update=
@@ -34,12 +37,24 @@ resolve_relative_url ()
 		die "remote ($remote) does not have a url defined in .git/config"
 	url="$1"
 	remoteurl=${remoteurl%/}
+	sep=/
 	while test -n "$url"
 	do
 		case "$url" in
 		../*)
 			url="${url#../}"
-			remoteurl="${remoteurl%/*}"
+			case "$remoteurl" in
+			*/*)
+				remoteurl="${remoteurl%/*}"
+				;;
+			*:*)
+				remoteurl="${remoteurl%:*}"
+				sep=:
+				;;
+			*)
+				die "cannot strip one component off url '$remoteurl'"
+				;;
+			esac
 			;;
 		./*)
 			url="${url#./}"
@@ -48,7 +63,7 @@ resolve_relative_url ()
 			break;;
 		esac
 	done
-	echo "$remoteurl/${url%/}"
+	echo "$remoteurl$sep${url%/}"
 }
 
 #
@@ -57,7 +72,24 @@ resolve_relative_url ()
 #
 module_list()
 {
-	git ls-files --error-unmatch --stage -- "$@" | sane_grep '^160000 '
+	git ls-files --error-unmatch --stage -- "$@" |
+	perl -e '
+	my %unmerged = ();
+	my ($null_sha1) = ("0" x 40);
+	while (<STDIN>) {
+		chomp;
+		my ($mode, $sha1, $stage, $path) =
+			/^([0-7]+) ([0-9a-f]{40}) ([0-3])\t(.*)$/;
+		next unless $mode eq "160000";
+		if ($stage ne "0") {
+			if (!$unmerged{$path}++) {
+				print "$mode $null_sha1 U\t$path\n";
+			}
+			next;
+		}
+		print "$_\n";
+	}
+	'
 }
 
 #
@@ -90,20 +122,6 @@ module_clone()
 	url=$2
 	reference="$3"
 
-	# If there already is a directory at the submodule path,
-	# expect it to be empty (since that is the default checkout
-	# action) and try to remove it.
-	# Note: if $path is a symlink to a directory the test will
-	# succeed but the rmdir will fail. We might want to fix this.
-	if test -d "$path"
-	then
-		rmdir "$path" 2>/dev/null ||
-		die "Directory '$path' exists, but is neither empty nor a git repository"
-	fi
-
-	test -e "$path" &&
-	die "A file already exist at path '$path'"
-
 	if test -n "$reference"
 	then
 		git-clone "$reference" -n "$url" "$path"
@@ -130,6 +148,9 @@ cmd_add()
 			case "$2" in '') usage ;; esac
 			branch=$2
 			shift
+			;;
+		-f | --force)
+			force=$1
 			;;
 		-q|--quiet)
 			GIT_QUIET=1
@@ -199,6 +220,14 @@ cmd_add()
 	git ls-files --error-unmatch "$path" > /dev/null 2>&1 &&
 	die "'$path' already exists in the index"
 
+	if test -z "$force" && ! git add --dry-run --ignore-missing "$path" > /dev/null 2>&1
+	then
+		echo >&2 "The following path is ignored by one of your .gitignore files:" &&
+		echo >&2 $path &&
+		echo >&2 "Use -f if you really want to add it."
+		exit 1
+	fi
+
 	# perhaps the path exists and is already a git repo, else clone it
 	if test -e "$path"
 	then
@@ -222,22 +251,22 @@ cmd_add()
 
 		module_clone "$path" "$realrepo" "$reference" || exit
 		(
-			unset GIT_DIR
+			clear_local_git_env
 			cd "$path" &&
 			# ash fails to wordsplit ${branch:+-b "$branch"...}
 			case "$branch" in
 			'') git checkout -f -q ;;
-			?*) git checkout -f -q -b "$branch" "origin/$branch" ;;
+			?*) git checkout -f -q -B "$branch" "origin/$branch" ;;
 			esac
 		) || die "Unable to checkout submodule '$path'"
 	fi
 
-	git add "$path" ||
+	git add $force "$path" ||
 	die "Failed to add submodule '$path'"
 
 	git config -f .gitmodules submodule."$path".path "$path" &&
 	git config -f .gitmodules submodule."$path".url "$repo" &&
-	git add .gitmodules ||
+	git add --force .gitmodules ||
 	die "Failed to register submodule '$path'"
 }
 
@@ -269,6 +298,8 @@ cmd_foreach()
 		shift
 	done
 
+	toplevel=$(pwd)
+
 	module_list |
 	while read mode sha1 stage path
 	do
@@ -278,7 +309,7 @@ cmd_foreach()
 			name=$(module_name "$path")
 			(
 				prefix="$prefix$path/"
-				unset GIT_DIR
+				clear_local_git_env
 				cd "$path" &&
 				eval "$@" &&
 				if test -n "$recursive"
@@ -358,41 +389,38 @@ cmd_init()
 cmd_update()
 {
 	# parse $args after "submodule ... update".
-	orig_args="$@"
+	orig_flags=
 	while test $# -ne 0
 	do
 		case "$1" in
 		-q|--quiet)
-			shift
 			GIT_QUIET=1
 			;;
 		-i|--init)
 			init=1
-			shift
 			;;
 		-N|--no-fetch)
-			shift
 			nofetch=1
 			;;
+		-f|--force)
+			force=$1
+			;;
 		-r|--rebase)
-			shift
 			update="rebase"
 			;;
 		--reference)
 			case "$2" in '') usage ;; esac
 			reference="--reference=$2"
-			shift 2
+			orig_flags="$orig_flags $(git rev-parse --sq-quote "$1")"
+			shift
 			;;
 		--reference=*)
 			reference="$1"
-			shift
 			;;
 		-m|--merge)
-			shift
 			update="merge"
 			;;
 		--recursive)
-			shift
 			recursive=1
 			;;
 		--)
@@ -406,6 +434,8 @@ cmd_update()
 			break
 			;;
 		esac
+		orig_flags="$orig_flags $(git rev-parse --sq-quote "$1")"
+		shift
 	done
 
 	if test -n "$init"
@@ -413,9 +443,15 @@ cmd_update()
 		cmd_init "--" "$@" || return
 	fi
 
+	cloned_modules=
 	module_list "$@" |
 	while read mode sha1 stage path
 	do
+		if test "$stage" = U
+		then
+			echo >&2 "Skipping unmerged submodule $path"
+			continue
+		fi
 		name=$(module_name "$path") || exit
 		url=$(git config submodule."$name".url)
 		update_module=$(git config submodule."$name".update)
@@ -432,9 +468,10 @@ cmd_update()
 		if ! test -d "$path"/.git -o -f "$path"/.git
 		then
 			module_clone "$path" "$url" "$reference"|| exit
+			cloned_modules="$cloned_modules;$name"
 			subsha1=
 		else
-			subsha1=$(unset GIT_DIR; cd "$path" &&
+			subsha1=$(clear_local_git_env; cd "$path" &&
 				git rev-parse --verify HEAD) ||
 			die "Unable to find current revision in submodule path '$path'"
 		fi
@@ -446,18 +483,29 @@ cmd_update()
 
 		if test "$subsha1" != "$sha1"
 		then
-			force=
-			if test -z "$subsha1"
+			subforce=$force
+			# If we don't already have a -f flag and the submodule has never been checked out
+			if test -z "$subsha1" -a -z "$force"
 			then
-				force="-f"
+				subforce="-f"
 			fi
 
 			if test -z "$nofetch"
 			then
-				(unset GIT_DIR; cd "$path" &&
-					git-fetch) ||
+				# Run fetch only if $sha1 isn't present or it
+				# is not reachable from a ref.
+				(clear_local_git_env; cd "$path" &&
+					( (rev=$(git rev-list -n 1 $sha1 --not --all 2>/dev/null) &&
+					 test -z "$rev") || git-fetch)) ||
 				die "Unable to fetch in submodule path '$path'"
 			fi
+
+			# Is this something we just cloned?
+			case ";$cloned_modules;" in
+			*";$name;"*)
+				# then there is no local change to integrate
+				update_module= ;;
+			esac
 
 			case "$update_module" in
 			rebase)
@@ -471,20 +519,20 @@ cmd_update()
 				msg="merged in"
 				;;
 			*)
-				command="git checkout $force -q"
+				command="git checkout $subforce -q"
 				action="checkout"
 				msg="checked out"
 				;;
 			esac
 
-			(unset GIT_DIR; cd "$path" && $command "$sha1") ||
+			(clear_local_git_env; cd "$path" && $command "$sha1") ||
 			die "Unable to $action '$sha1' in submodule path '$path'"
 			say "Submodule path '$path': $msg '$sha1'"
 		fi
 
 		if test -n "$recursive"
 		then
-			(unset GIT_DIR; cd "$path" && cmd_update $orig_args) ||
+			(clear_local_git_env; cd "$path" && eval cmd_update "$orig_flags") ||
 			die "Failed to recurse into submodule path '$path'"
 		fi
 	done
@@ -492,7 +540,7 @@ cmd_update()
 
 set_name_rev () {
 	revname=$( (
-		unset GIT_DIR
+		clear_local_git_env
 		cd "$1" && {
 			git describe "$2" 2>/dev/null ||
 			git describe --tags "$2" 2>/dev/null ||
@@ -553,12 +601,17 @@ cmd_summary() {
 
 	test $summary_limit = 0 && return
 
-	if rev=$(git rev-parse -q --verify "$1^0")
+	if rev=$(git rev-parse -q --verify --default HEAD ${1+"$1"})
 	then
 		head=$rev
-		shift
+		test $# = 0 || shift
+	elif test -z "$1" -o "$1" = "HEAD"
+	then
+		# before the first commit: compare with an empty tree
+		head=$(git hash-object -w -t tree --stdin </dev/null)
+		test -z "$1" || shift
 	else
-		head=HEAD
+		head="HEAD"
 	fi
 
 	if [ -n "$files" ]
@@ -571,7 +624,7 @@ cmd_summary() {
 
 	cd_to_toplevel
 	# Get modified modules cared by user
-	modules=$(git $diff_cmd $cached --raw $head -- "$@" |
+	modules=$(git $diff_cmd $cached --ignore-submodules=dirty --raw $head -- "$@" |
 		sane_egrep '^:([0-7]* )?160000' |
 		while read mod_src mod_dst sha1_src sha1_dst status name
 		do
@@ -585,7 +638,7 @@ cmd_summary() {
 
 	test -z "$modules" && return
 
-	git $diff_cmd $cached --raw $head -- $modules |
+	git $diff_cmd $cached --ignore-submodules=dirty --raw $head -- $modules |
 	sane_egrep '^:([0-7]* )?160000' |
 	cut -c2- |
 	while read mod_src mod_dst sha1_src sha1_dst status name
@@ -643,7 +696,7 @@ cmd_summary() {
 				range=$sha1_dst
 			fi
 			GIT_DIR="$name/.git" \
-			git log --pretty=oneline --first-parent $range | wc -l
+			git rev-list --first-parent $range -- | wc -l
 			)
 			total_commits=" ($(($total_commits + 0)))"
 			;;
@@ -712,7 +765,7 @@ cmd_summary() {
 cmd_status()
 {
 	# parse $args after "submodule ... status".
-	orig_args="$@"
+	orig_flags=
 	while test $# -ne 0
 	do
 		case "$1" in
@@ -736,6 +789,7 @@ cmd_status()
 			break
 			;;
 		esac
+		orig_flags="$orig_flags $(git rev-parse --sq-quote "$1")"
 		shift
 	done
 
@@ -745,19 +799,24 @@ cmd_status()
 		name=$(module_name "$path") || exit
 		url=$(git config submodule."$name".url)
 		displaypath="$prefix$path"
+		if test "$stage" = U
+		then
+			say "U$sha1 $displaypath"
+			continue
+		fi
 		if test -z "$url" || ! test -d "$path"/.git -o -f "$path"/.git
 		then
 			say "-$sha1 $displaypath"
 			continue;
 		fi
 		set_name_rev "$path" "$sha1"
-		if git diff-files --quiet -- "$path"
+		if git diff-files --ignore-submodules=dirty --quiet -- "$path"
 		then
 			say " $sha1 $displaypath$revname"
 		else
 			if test -z "$cached"
 			then
-				sha1=$(unset GIT_DIR; cd "$path" && git rev-parse --verify HEAD)
+				sha1=$(clear_local_git_env; cd "$path" && git rev-parse --verify HEAD)
 				set_name_rev "$path" "$sha1"
 			fi
 			say "+$sha1 $displaypath$revname"
@@ -767,9 +826,9 @@ cmd_status()
 		then
 			(
 				prefix="$displaypath/"
-				unset GIT_DIR
+				clear_local_git_env
 				cd "$path" &&
-				cmd_status $orig_args
+				eval cmd_status "$orig_args"
 			) ||
 			die "Failed to recurse into submodule path '$path'"
 		fi
@@ -815,13 +874,15 @@ cmd_sync()
 			;;
 		esac
 
+		say "Synchronizing submodule url for '$name'"
+		git config submodule."$name".url "$url"
+
 		if test -e "$path"/.git
 		then
 		(
-			unset GIT_DIR
+			clear_local_git_env
 			cd "$path"
 			remote=$(get_default_remote)
-			say "Synchronizing submodule url for '$name'"
 			git config remote."$remote".url "$url"
 		)
 		fi

@@ -51,13 +51,13 @@ static int add_entry(int insert_at, struct string_list *list, const char *string
 	return index;
 }
 
-struct string_list_item *string_list_insert(const char *string, struct string_list *list)
+struct string_list_item *string_list_insert(struct string_list *list, const char *string)
 {
-	return string_list_insert_at_index(-1, string, list);
+	return string_list_insert_at_index(list, -1, string);
 }
 
-struct string_list_item *string_list_insert_at_index(int insert_at,
-						     const char *string, struct string_list *list)
+struct string_list_item *string_list_insert_at_index(struct string_list *list,
+						     int insert_at, const char *string)
 {
 	int index = add_entry(insert_at, list, string);
 
@@ -84,7 +84,7 @@ int string_list_find_insert_index(const struct string_list *list, const char *st
 	return index;
 }
 
-struct string_list_item *string_list_lookup(const char *string, struct string_list *list)
+struct string_list_item *string_list_lookup(struct string_list *list, const char *string)
 {
 	int exact_match, i = get_entry_index(list, string, &exact_match);
 	if (!exact_match)
@@ -92,8 +92,8 @@ struct string_list_item *string_list_lookup(const char *string, struct string_li
 	return list->items + i;
 }
 
-int for_each_string_list(string_list_each_func_t fn,
-			 struct string_list *list, void *cb_data)
+int for_each_string_list(struct string_list *list,
+			 string_list_each_func_t fn, void *cb_data)
 {
 	int i, ret = 0;
 	for (i = 0; i < list->nr; i++)
@@ -139,7 +139,7 @@ void string_list_clear_func(struct string_list *list, string_list_clear_func_t c
 }
 
 
-void print_string_list(const char *text, const struct string_list *p)
+void print_string_list(const struct string_list *p, const char *text)
 {
 	int i;
 	if ( text )
@@ -148,11 +148,12 @@ void print_string_list(const char *text, const struct string_list *p)
 		printf("%s:%p\n", p->items[i].string, p->items[i].util);
 }
 
-struct string_list_item *string_list_append(const char *string, struct string_list *list)
+struct string_list_item *string_list_append(struct string_list *list, const char *string)
 {
 	ALLOC_GROW(list->items, list->nr + 1, list->alloc);
 	list->items[list->nr].string =
 		list->strdup_strings ? xstrdup(string) : (char *)string;
+	list->items[list->nr].util = NULL;
 	return list->items + list->nr++;
 }
 
@@ -168,12 +169,19 @@ void sort_string_list(struct string_list *list)
 	qsort(list->items, list->nr, sizeof(*list->items), cmp_items);
 }
 
-int unsorted_string_list_has_string(struct string_list *list, const char *string)
+struct string_list_item *unsorted_string_list_lookup(struct string_list *list,
+						     const char *string)
 {
 	int i;
 	for (i = 0; i < list->nr; i++)
 		if (!strcmp(string, list->items[i].string))
-			return 1;
-	return 0;
+			return list->items + i;
+	return NULL;
+}
+
+int unsorted_string_list_has_string(struct string_list *list,
+				    const char *string)
+{
+	return unsorted_string_list_lookup(list, string) != NULL;
 }
 

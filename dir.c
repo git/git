@@ -18,6 +18,22 @@ static int read_directory_recursive(struct dir_struct *dir, const char *path, in
 	int check_only, const struct path_simplify *simplify);
 static int get_dtype(struct dirent *de, const char *path, int len);
 
+/* helper string functions with support for the ignore_case flag */
+int strcmp_icase(const char *a, const char *b)
+{
+	return ignore_case ? strcasecmp(a, b) : strcmp(a, b);
+}
+
+int strncmp_icase(const char *a, const char *b, size_t count)
+{
+	return ignore_case ? strncasecmp(a, b, count) : strncmp(a, b, count);
+}
+
+int fnmatch_icase(const char *pattern, const char *string, int flags)
+{
+	return fnmatch(pattern, string, flags | (ignore_case ? FNM_CASEFOLD : 0));
+}
+
 static int common_prefix(const char **pathspec)
 {
 	const char *path, *slash, *next;
@@ -31,22 +47,22 @@ static int common_prefix(const char **pathspec)
 	if (!slash)
 		return 0;
 
+	/*
+	 * The first 'prefix' characters of 'path' are common leading
+	 * path components among the pathspecs we have seen so far,
+	 * including the trailing slash.
+	 */
 	prefix = slash - path + 1;
 	while ((next = *++pathspec) != NULL) {
-		int len = strlen(next);
-		if (len >= prefix && !memcmp(path, next, prefix))
+		int len, last_matching_slash = -1;
+		for (len = 0; len < prefix && next[len] == path[len]; len++)
+			if (next[len] == '/')
+				last_matching_slash = len;
+		if (len == prefix)
 			continue;
-		len = prefix - 1;
-		for (;;) {
-			if (!len)
-				return 0;
-			if (next[--len] != '/')
-				continue;
-			if (memcmp(path, next, len+1))
-				continue;
-			prefix = len + 1;
-			break;
-		}
+		if (last_matching_slash < 0)
+			return 0;
+		prefix = last_matching_slash + 1;
 	}
 	return prefix;
 }
@@ -71,6 +87,21 @@ int fill_directory(struct dir_struct *dir, const char **pathspec)
 	return len;
 }
 
+int within_depth(const char *name, int namelen,
+			int depth, int max_depth)
+{
+	const char *cp = name, *cpe = name + namelen;
+
+	while (cp < cpe) {
+		if (*cp++ != '/')
+			continue;
+		depth++;
+		if (depth > max_depth)
+			return 0;
+	}
+	return 1;
+}
+
 /*
  * Does 'match' match the given name?
  * A match is found if
@@ -91,16 +122,30 @@ static int match_one(const char *match, const char *name, int namelen)
 	if (!*match)
 		return MATCHED_RECURSIVELY;
 
-	for (;;) {
-		unsigned char c1 = *match;
-		unsigned char c2 = *name;
-		if (c1 == '\0' || is_glob_special(c1))
-			break;
-		if (c1 != c2)
-			return 0;
-		match++;
-		name++;
-		namelen--;
+	if (ignore_case) {
+		for (;;) {
+			unsigned char c1 = tolower(*match);
+			unsigned char c2 = tolower(*name);
+			if (c1 == '\0' || is_glob_special(c1))
+				break;
+			if (c1 != c2)
+				return 0;
+			match++;
+			name++;
+			namelen--;
+		}
+	} else {
+		for (;;) {
+			unsigned char c1 = *match;
+			unsigned char c2 = *name;
+			if (c1 == '\0' || is_glob_special(c1))
+				break;
+			if (c1 != c2)
+				return 0;
+			match++;
+			name++;
+			namelen--;
+		}
 	}
 
 
@@ -109,8 +154,8 @@ static int match_one(const char *match, const char *name, int namelen)
 	 * we need to match by fnmatch
 	 */
 	matchlen = strlen(match);
-	if (strncmp(match, name, matchlen))
-		return !fnmatch(match, name, 0) ? MATCHED_FNMATCH : 0;
+	if (strncmp_icase(match, name, matchlen))
+		return !fnmatch_icase(match, name, 0) ? MATCHED_FNMATCH : 0;
 
 	if (namelen == matchlen)
 		return MATCHED_EXACTLY;
@@ -144,6 +189,95 @@ int match_pathspec(const char **pathspec, const char *name, int namelen,
 		if (seen && seen[i] == MATCHED_EXACTLY)
 			continue;
 		how = match_one(match, name, namelen);
+		if (how) {
+			if (retval < how)
+				retval = how;
+			if (seen && seen[i] < how)
+				seen[i] = how;
+		}
+	}
+	return retval;
+}
+
+/*
+ * Does 'match' match the given name?
+ * A match is found if
+ *
+ * (1) the 'match' string is leading directory of 'name', or
+ * (2) the 'match' string is a wildcard and matches 'name', or
+ * (3) the 'match' string is exactly the same as 'name'.
+ *
+ * and the return value tells which case it was.
+ *
+ * It returns 0 when there is no match.
+ */
+static int match_pathspec_item(const struct pathspec_item *item, int prefix,
+			       const char *name, int namelen)
+{
+	/* name/namelen has prefix cut off by caller */
+	const char *match = item->match + prefix;
+	int matchlen = item->len - prefix;
+
+	/* If the match was just the prefix, we matched */
+	if (!*match)
+		return MATCHED_RECURSIVELY;
+
+	if (matchlen <= namelen && !strncmp(match, name, matchlen)) {
+		if (matchlen == namelen)
+			return MATCHED_EXACTLY;
+
+		if (match[matchlen-1] == '/' || name[matchlen] == '/')
+			return MATCHED_RECURSIVELY;
+	}
+
+	if (item->use_wildcard && !fnmatch(match, name, 0))
+		return MATCHED_FNMATCH;
+
+	return 0;
+}
+
+/*
+ * Given a name and a list of pathspecs, see if the name matches
+ * any of the pathspecs.  The caller is also interested in seeing
+ * all pathspec matches some names it calls this function with
+ * (otherwise the user could have mistyped the unmatched pathspec),
+ * and a mark is left in seen[] array for pathspec element that
+ * actually matched anything.
+ */
+int match_pathspec_depth(const struct pathspec *ps,
+			 const char *name, int namelen,
+			 int prefix, char *seen)
+{
+	int i, retval = 0;
+
+	if (!ps->nr) {
+		if (!ps->recursive || ps->max_depth == -1)
+			return MATCHED_RECURSIVELY;
+
+		if (within_depth(name, namelen, 0, ps->max_depth))
+			return MATCHED_EXACTLY;
+		else
+			return 0;
+	}
+
+	name += prefix;
+	namelen -= prefix;
+
+	for (i = ps->nr - 1; i >= 0; i--) {
+		int how;
+		if (seen && seen[i] == MATCHED_EXACTLY)
+			continue;
+		how = match_pathspec_item(ps->items+i, prefix, name, namelen);
+		if (ps->recursive && ps->max_depth != -1 &&
+		    how && how != MATCHED_FNMATCH) {
+			int len = ps->items[i].len;
+			if (name[len] == '/')
+				len++;
+			if (within_depth(name+len, namelen-len, 0, ps->max_depth))
+				how = MATCHED_EXACTLY;
+			else
+				how = 0;
+		}
 		if (how) {
 			if (retval < how)
 				retval = how;
@@ -223,6 +357,18 @@ static void *read_skip_worktree_file_from_index(const char *path, size_t *size)
 	return data;
 }
 
+void free_excludes(struct exclude_list *el)
+{
+	int i;
+
+	for (i = 0; i < el->nr; i++)
+		free(el->excludes[i]);
+	free(el->excludes);
+
+	el->nr = 0;
+	el->excludes = NULL;
+}
+
 int add_excludes_from_file_to_list(const char *fname,
 				   const char *base,
 				   int baselen,
@@ -232,7 +378,7 @@ int add_excludes_from_file_to_list(const char *fname,
 {
 	struct stat st;
 	int fd, i;
-	size_t size;
+	size_t size = 0;
 	char *buf, *entry;
 
 	fd = open(fname, O_RDONLY);
@@ -359,12 +505,6 @@ int excluded_from_list(const char *pathname,
 			int to_exclude = x->to_exclude;
 
 			if (x->flags & EXC_FLAG_MUSTBEDIR) {
-				if (!dtype) {
-					if (!prefixcmp(pathname, exclude))
-						return to_exclude;
-					else
-						continue;
-				}
 				if (*dtype == DT_UNKNOWN)
 					*dtype = get_dtype(NULL, pathname, pathlen);
 				if (*dtype != DT_DIR)
@@ -374,14 +514,14 @@ int excluded_from_list(const char *pathname,
 			if (x->flags & EXC_FLAG_NODIR) {
 				/* match basename */
 				if (x->flags & EXC_FLAG_NOWILDCARD) {
-					if (!strcmp(exclude, basename))
+					if (!strcmp_icase(exclude, basename))
 						return to_exclude;
 				} else if (x->flags & EXC_FLAG_ENDSWITH) {
 					if (x->patternlen - 1 <= pathlen &&
-					    !strcmp(exclude + 1, pathname + pathlen - x->patternlen + 1))
+					    !strcmp_icase(exclude + 1, pathname + pathlen - x->patternlen + 1))
 						return to_exclude;
 				} else {
-					if (fnmatch(exclude, basename, 0) == 0)
+					if (fnmatch_icase(exclude, basename, 0) == 0)
 						return to_exclude;
 				}
 			}
@@ -396,14 +536,14 @@ int excluded_from_list(const char *pathname,
 
 				if (pathlen < baselen ||
 				    (baselen && pathname[baselen-1] != '/') ||
-				    strncmp(pathname, x->base, baselen))
+				    strncmp_icase(pathname, x->base, baselen))
 				    continue;
 
 				if (x->flags & EXC_FLAG_NOWILDCARD) {
-					if (!strcmp(exclude, pathname + baselen))
+					if (!strcmp_icase(exclude, pathname + baselen))
 						return to_exclude;
 				} else {
-					if (fnmatch(exclude, pathname+baselen,
+					if (fnmatch_icase(exclude, pathname+baselen,
 						    FNM_PATHNAME) == 0)
 					    return to_exclude;
 				}
@@ -453,7 +593,7 @@ static struct dir_entry *dir_add_name(struct dir_struct *dir, const char *pathna
 	return dir->entries[dir->nr++] = dir_entry_new(pathname, len);
 }
 
-static struct dir_entry *dir_add_ignored(struct dir_struct *dir, const char *pathname, int len)
+struct dir_entry *dir_add_ignored(struct dir_struct *dir, const char *pathname, int len)
 {
 	if (!cache_name_is_other(pathname, len))
 		return NULL;
@@ -465,8 +605,41 @@ static struct dir_entry *dir_add_ignored(struct dir_struct *dir, const char *pat
 enum exist_status {
 	index_nonexistent = 0,
 	index_directory,
-	index_gitdir,
+	index_gitdir
 };
+
+/*
+ * Do not use the alphabetically stored index to look up
+ * the directory name; instead, use the case insensitive
+ * name hash.
+ */
+static enum exist_status directory_exists_in_index_icase(const char *dirname, int len)
+{
+	struct cache_entry *ce = index_name_exists(&the_index, dirname, len + 1, ignore_case);
+	unsigned char endchar;
+
+	if (!ce)
+		return index_nonexistent;
+	endchar = ce->name[len];
+
+	/*
+	 * The cache_entry structure returned will contain this dirname
+	 * and possibly additional path components.
+	 */
+	if (endchar == '/')
+		return index_directory;
+
+	/*
+	 * If there are no additional path components, then this cache_entry
+	 * represents a submodule.  Submodules, despite being directories,
+	 * are stored in the cache without a closing slash.
+	 */
+	if (!endchar && S_ISGITLINK(ce->ce_mode))
+		return index_gitdir;
+
+	/* This should never be hit, but it exists just in case. */
+	return index_nonexistent;
+}
 
 /*
  * The index sorts alphabetically by entry name, which
@@ -477,7 +650,12 @@ enum exist_status {
  */
 static enum exist_status directory_exists_in_index(const char *dirname, int len)
 {
-	int pos = cache_name_pos(dirname, len);
+	int pos;
+
+	if (ignore_case)
+		return directory_exists_in_index_icase(dirname, len);
+
+	pos = cache_name_pos(dirname, len);
 	if (pos < 0)
 		pos = -pos-1;
 	while (pos < active_nr) {
@@ -533,7 +711,7 @@ static enum exist_status directory_exists_in_index(const char *dirname, int len)
 enum directory_treatment {
 	show_directory,
 	ignore_directory,
-	recurse_into_directory,
+	recurse_into_directory
 };
 
 static enum directory_treatment treat_directory(struct dir_struct *dir,
@@ -594,11 +772,27 @@ static int simplify_away(const char *path, int pathlen, const struct path_simpli
 	return 0;
 }
 
-static int in_pathspec(const char *path, int len, const struct path_simplify *simplify)
+/*
+ * This function tells us whether an excluded path matches a
+ * list of "interesting" pathspecs. That is, whether a path matched
+ * by any of the pathspecs could possibly be ignored by excluding
+ * the specified path. This can happen if:
+ *
+ *   1. the path is mentioned explicitly in the pathspec
+ *
+ *   2. the path is a directory prefix of some element in the
+ *      pathspec
+ */
+static int exclude_matches_pathspec(const char *path, int len,
+		const struct path_simplify *simplify)
 {
 	if (simplify) {
 		for (; simplify->path; simplify++) {
 			if (len == simplify->len
+			    && !memcmp(path, simplify->path, len))
+				return 1;
+			if (len < simplify->len
+			    && simplify->path[len] == '/'
 			    && !memcmp(path, simplify->path, len))
 				return 1;
 		}
@@ -668,7 +862,7 @@ static int get_dtype(struct dirent *de, const char *path, int len)
 enum path_treatment {
 	path_ignored,
 	path_handled,
-	path_recurse,
+	path_recurse
 };
 
 static enum path_treatment treat_one_path(struct dir_struct *dir,
@@ -678,7 +872,7 @@ static enum path_treatment treat_one_path(struct dir_struct *dir,
 {
 	int exclude = excluded(dir, path, &dtype);
 	if (exclude && (dir->flags & DIR_COLLECT_IGNORED)
-	    && in_pathspec(path, *len, simplify))
+	    && exclude_matches_pathspec(path, *len, simplify))
 		dir_add_ignored(dir, path, *len);
 
 	/*
@@ -911,46 +1105,45 @@ int file_exists(const char *f)
 }
 
 /*
- * get_relative_cwd() gets the prefix of the current working directory
- * relative to 'dir'.  If we are not inside 'dir', it returns NULL.
- *
- * As a convenience, it also returns NULL if 'dir' is already NULL.  The
- * reason for this behaviour is that it is natural for functions returning
- * directory names to return NULL to say "this directory does not exist"
- * or "this directory is invalid".  These cases are usually handled the
- * same as if the cwd is not inside 'dir' at all, so get_relative_cwd()
- * returns NULL for both of them.
- *
- * Most notably, get_relative_cwd(buffer, size, get_git_work_tree())
- * unifies the handling of "outside work tree" with "no work tree at all".
+ * Given two normalized paths (a trailing slash is ok), if subdir is
+ * outside dir, return -1.  Otherwise return the offset in subdir that
+ * can be used as relative path to dir.
  */
-char *get_relative_cwd(char *buffer, int size, const char *dir)
+int dir_inside_of(const char *subdir, const char *dir)
 {
-	char *cwd = buffer;
+	int offset = 0;
 
-	if (!dir)
-		return NULL;
-	if (!getcwd(buffer, size))
-		die_errno("can't find the current directory");
+	assert(dir && subdir && *dir && *subdir);
 
-	if (!is_absolute_path(dir))
-		dir = make_absolute_path(dir);
-
-	while (*dir && *dir == *cwd) {
+	while (*dir && *subdir && *dir == *subdir) {
 		dir++;
-		cwd++;
+		subdir++;
+		offset++;
 	}
-	if (*dir)
-		return NULL;
-	if (*cwd == '/')
-		return cwd + 1;
-	return cwd;
+
+	/* hel[p]/me vs hel[l]/yeah */
+	if (*dir && *subdir)
+		return -1;
+
+	if (!*subdir)
+		return !*dir ? offset : -1; /* same dir */
+
+	/* foo/[b]ar vs foo/[] */
+	if (is_dir_sep(dir[-1]))
+		return is_dir_sep(subdir[-1]) ? offset : -1;
+
+	/* foo[/]bar vs foo[] */
+	return is_dir_sep(*subdir) ? offset + 1 : -1;
 }
 
 int is_inside_dir(const char *dir)
 {
-	char buffer[PATH_MAX];
-	return get_relative_cwd(buffer, sizeof(buffer), dir) != NULL;
+	char cwd[PATH_MAX];
+	if (!dir)
+		return 0;
+	if (!getcwd(cwd, sizeof(cwd)))
+		die_errno("can't find the current directory");
+	return dir_inside_of(cwd, dir) >= 0;
 }
 
 int is_empty_dir(const char *path)
@@ -987,7 +1180,7 @@ int remove_dir_recursively(struct strbuf *path, int flag)
 
 	dir = opendir(path->buf);
 	if (!dir)
-		return -1;
+		return rmdir(path->buf);
 	if (path->buf[original_len - 1] != '/')
 		strbuf_addch(path, '/');
 
@@ -1044,9 +1237,56 @@ int remove_path(const char *name)
 		slash = dirs + (slash - name);
 		do {
 			*slash = '\0';
-		} while (rmdir(dirs) && (slash = strrchr(dirs, '/')));
+		} while (rmdir(dirs) == 0 && (slash = strrchr(dirs, '/')));
 		free(dirs);
 	}
 	return 0;
 }
 
+static int pathspec_item_cmp(const void *a_, const void *b_)
+{
+	struct pathspec_item *a, *b;
+
+	a = (struct pathspec_item *)a_;
+	b = (struct pathspec_item *)b_;
+	return strcmp(a->match, b->match);
+}
+
+int init_pathspec(struct pathspec *pathspec, const char **paths)
+{
+	const char **p = paths;
+	int i;
+
+	memset(pathspec, 0, sizeof(*pathspec));
+	if (!p)
+		return 0;
+	while (*p)
+		p++;
+	pathspec->raw = paths;
+	pathspec->nr = p - paths;
+	if (!pathspec->nr)
+		return 0;
+
+	pathspec->items = xmalloc(sizeof(struct pathspec_item)*pathspec->nr);
+	for (i = 0; i < pathspec->nr; i++) {
+		struct pathspec_item *item = pathspec->items+i;
+		const char *path = paths[i];
+
+		item->match = path;
+		item->len = strlen(path);
+		item->use_wildcard = !no_wildcard(path);
+		if (item->use_wildcard)
+			pathspec->has_wildcard = 1;
+	}
+
+	qsort(pathspec->items, pathspec->nr,
+	      sizeof(struct pathspec_item), pathspec_item_cmp);
+
+	return 0;
+}
+
+void free_pathspec(struct pathspec *pathspec)
+{
+	free(pathspec->items);
+	pathspec->items = NULL;
+}

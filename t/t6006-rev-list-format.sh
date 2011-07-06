@@ -101,6 +101,15 @@ commit 131a310eb913d107dd3c09a65d1651175898735d
 commit 86c75cfd708a0e5868dc876ed5b8bb66c80b4873
 EOF
 
+test_format raw-body %B <<'EOF'
+commit 131a310eb913d107dd3c09a65d1651175898735d
+changed foo
+
+commit 86c75cfd708a0e5868dc876ed5b8bb66c80b4873
+added foo
+
+EOF
+
 test_format colors %Credfoo%Cgreenbar%Cbluebaz%Cresetxyzzy <<'EOF'
 commit 131a310eb913d107dd3c09a65d1651175898735d
 [31mfoo[32mbar[34mbaz[mxyzzy
@@ -153,6 +162,14 @@ commit 131a310eb913d107dd3c09a65d1651175898735d
 commit 86c75cfd708a0e5868dc876ed5b8bb66c80b4873
 EOF
 
+test_expect_success '%x00 shows NUL' '
+	echo  >expect commit f58db70b055c5718631e5c61528b28b12090cdea &&
+	echo >>expect fooQbar &&
+	git rev-list -1 --format=foo%x00bar HEAD >actual.nul &&
+	nul_to_q <actual.nul >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success '%ad respects --date=' '
 	echo 2005-04-07 >expect.ad-short &&
 	git log -1 --date=short --pretty=tformat:%ad >output.ad-short master &&
@@ -191,6 +208,41 @@ test_expect_success 'add LF before non-empty (2)' '
 	grep "^$" actual
 '
 
+test_expect_success 'add SP before non-empty (1)' '
+	git show -s --pretty=format:"%s% bThanks" HEAD^^ >actual &&
+	test $(wc -w <actual) = 2
+'
+
+test_expect_success 'add SP before non-empty (2)' '
+	git show -s --pretty=format:"%s% sThanks" HEAD^^ >actual &&
+	test $(wc -w <actual) = 4
+'
+
+test_expect_success '--abbrev' '
+	echo SHORT SHORT SHORT >expect2 &&
+	echo LONG LONG LONG >expect3 &&
+	git log -1 --format="%h %h %h" HEAD >actual1 &&
+	git log -1 --abbrev=5 --format="%h %h %h" HEAD >actual2 &&
+	git log -1 --abbrev=5 --format="%H %H %H" HEAD >actual3 &&
+	sed -e "s/$_x40/LONG/g" -e "s/$_x05/SHORT/g" <actual2 >fuzzy2 &&
+	sed -e "s/$_x40/LONG/g" -e "s/$_x05/SHORT/g" <actual3 >fuzzy3 &&
+	test_cmp expect2 fuzzy2 &&
+	test_cmp expect3 fuzzy3 &&
+	! test_cmp actual1 actual2
+'
+
+test_expect_success '%H is not affected by --abbrev-commit' '
+	git log -1 --format=%H --abbrev-commit --abbrev=20 HEAD >actual &&
+	len=$(wc -c <actual) &&
+	test $len = 41
+'
+
+test_expect_success '%h is not affected by --abbrev-commit' '
+	git log -1 --format=%h --abbrev-commit --abbrev=20 HEAD >actual &&
+	len=$(wc -c <actual) &&
+	test $len = 21
+'
+
 test_expect_success '"%h %gD: %gs" is same as git-reflog' '
 	git reflog >expect &&
 	git log -g --format="%h %gD: %gs" >actual &&
@@ -203,10 +255,25 @@ test_expect_success '"%h %gD: %gs" is same as git-reflog (with date)' '
 	test_cmp expect actual
 '
 
+test_expect_success '"%h %gD: %gs" is same as git-reflog (with --abbrev)' '
+	git reflog --abbrev=13 --date=raw >expect &&
+	git log -g --abbrev=13 --format="%h %gD: %gs" --date=raw >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success '%gd shortens ref name' '
 	echo "master@{0}" >expect.gd-short &&
 	git log -g -1 --format=%gd refs/heads/master >actual.gd-short &&
 	test_cmp expect.gd-short actual.gd-short
+'
+
+test_expect_success 'oneline with empty message' '
+	git commit -m "dummy" --allow-empty &&
+	git commit -m "dummy" --allow-empty &&
+	git filter-branch --msg-filter "sed -e s/dummy//" HEAD^^.. &&
+	git rev-list --oneline HEAD >test.txt &&
+	test $(git rev-list --oneline HEAD | wc -l) -eq 5 &&
+	test $(git rev-list --oneline --graph HEAD | wc -l) -eq 5
 '
 
 test_done

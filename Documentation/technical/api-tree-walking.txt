@@ -42,6 +42,8 @@ information.
 
 * `data` can be anything the `fn` callback would want to use.
 
+* `show_all_errors` tells whether to stop at the first error or not.
+
 Initializing
 ------------
 

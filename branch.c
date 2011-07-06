@@ -159,7 +159,7 @@ void create_branch(const char *head,
 			dont_change_ref = 1;
 		else if (!force)
 			die("A branch named '%s' already exists.", name);
-		else if (!is_bare_repository() && !strcmp(head, name))
+		else if (!is_bare_repository() && head && !strcmp(head, name))
 			die("Cannot force update the current branch.");
 		forcing = 1;
 	}
@@ -175,9 +175,14 @@ void create_branch(const char *head,
 			die("Cannot setup tracking information; starting point is not a branch.");
 		break;
 	case 1:
-		/* Unique completion -- good, only if it is a real ref */
-		if (explicit_tracking && !strcmp(real_ref, "HEAD"))
-			die("Cannot setup tracking information; starting point is not a branch.");
+		/* Unique completion -- good, only if it is a real branch */
+		if (prefixcmp(real_ref, "refs/heads/") &&
+		    prefixcmp(real_ref, "refs/remotes/")) {
+			if (explicit_tracking)
+				die("Cannot setup tracking information; starting point is not a branch.");
+			else
+				real_ref = NULL;
+		}
 		break;
 	default:
 		die("Ambiguous object name: '%s'.", start_name);
@@ -198,7 +203,7 @@ void create_branch(const char *head,
 		log_all_ref_updates = 1;
 
 	if (forcing)
-		snprintf(msg, sizeof msg, "branch: Reset from %s",
+		snprintf(msg, sizeof msg, "branch: Reset to %s",
 			 start_name);
 	else if (!dont_change_ref)
 		snprintf(msg, sizeof msg, "branch: Created from %s",
@@ -217,6 +222,7 @@ void create_branch(const char *head,
 
 void remove_branch_state(void)
 {
+	unlink(git_path("CHERRY_PICK_HEAD"));
 	unlink(git_path("MERGE_HEAD"));
 	unlink(git_path("MERGE_RR"));
 	unlink(git_path("MERGE_MSG"));

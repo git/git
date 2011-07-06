@@ -32,7 +32,7 @@ Calling sequence
 
 * As you find different pairs of files, call `diff_change()` to feed
   modified files, `diff_addremove()` to feed created or deleted files,
-  or `diff_unmerged()` to feed a file whose state is 'unmerged' to the
+  or `diff_unmerge()` to feed a file whose state is 'unmerged' to the
   API.  These are thin wrappers to a lower-level `diff_queue()` function
   that is flexible enough to record any of these kinds of changes.
 
@@ -50,7 +50,7 @@ Data structures
 This is the internal representation for a single file (blob).  It
 records the blob object name (if known -- for a work tree file it
 typically is a NUL SHA-1), filemode and pathname.  This is what the
-`diff_addremove()`, `diff_change()` and `diff_unmerged()` synthesize and
+`diff_addremove()`, `diff_change()` and `diff_unmerge()` synthesize and
 feed `diff_queue()` function with.
 
 * `struct diff_filepair`

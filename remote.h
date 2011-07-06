@@ -145,7 +145,7 @@ int branch_merge_matches(struct branch *, int n, const char *);
 enum match_refs_flags {
 	MATCH_REFS_NONE		= 0,
 	MATCH_REFS_ALL 		= (1 << 0),
-	MATCH_REFS_MIRROR	= (1 << 1),
+	MATCH_REFS_MIRROR	= (1 << 1)
 };
 
 /* Reporting of tracking info */

@@ -8,7 +8,7 @@ test_description='mmap sliding window tests'
 
 test_expect_success \
     'setup' \
-    'rm -f .git/index*
+    'rm -f .git/index* &&
      for i in a b c
      do
          echo $i >$i &&
@@ -48,7 +48,7 @@ test_expect_success \
      git repack -a -d &&
      test "`git count-objects`" = "0 objects, 0 kilobytes" &&
      pack2=`ls .git/objects/pack/*.pack` &&
-     test -f "$pack2"
+     test -f "$pack2" &&
      test "$pack1" \!= "$pack2"'
 
 test_expect_success \

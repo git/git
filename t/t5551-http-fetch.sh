@@ -4,7 +4,7 @@ test_description='test smart fetching over http via http-backend'
 . ./test-lib.sh
 
 if test -n "$NO_CURL"; then
-	say 'skipping test, git built without http support'
+	skip_all='skipping test, git built without http support'
 	test_done
 fi
 
@@ -99,6 +99,14 @@ test_expect_success 'used upload-pack service' '
 		s/^GET /GET  /
 	" >act <"$HTTPD_ROOT_PATH"/access.log &&
 	test_cmp exp act
+'
+
+test_expect_success 'follow redirects (301)' '
+	git clone $HTTPD_URL/smart-redir-perm/repo.git --quiet repo-p
+'
+
+test_expect_success 'follow redirects (302)' '
+	git clone $HTTPD_URL/smart-redir-temp/repo.git --quiet repo-t
 '
 
 stop_httpd

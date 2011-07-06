@@ -19,14 +19,6 @@ to the less interactive 'git commit' program.
 'git citool' is actually a standard alias for `git gui citool`.
 See linkgit:git-gui[1] for more details.
 
-Author
-------
-Written by Shawn O. Pearce <spearce@spearce.org>.
-
-Documentation
---------------
-Documentation by Shawn O. Pearce <spearce@spearce.org>.
-
 GIT
 ---
 Part of the linkgit:git[1] suite

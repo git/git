@@ -385,7 +385,7 @@ alice$ git fetch bob
 
 Unlike the longhand form, when Alice fetches from Bob using a
 remote repository shorthand set up with 'git remote', what was
-fetched is stored in a remote tracking branch, in this case
+fetched is stored in a remote-tracking branch, in this case
 `bob/master`.  So after this:
 
 -------------------------------------
@@ -402,8 +402,8 @@ could merge the changes into her master branch:
 alice$ git merge bob/master
 -------------------------------------
 
-This `merge` can also be done by 'pulling from her own remote
-tracking branch', like this:
+This `merge` can also be done by 'pulling from her own remote-tracking
+branch', like this:
 
 -------------------------------------
 alice$ git pull . remotes/bob/master

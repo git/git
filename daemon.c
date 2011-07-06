@@ -3,8 +3,7 @@
 #include "exec_cmd.h"
 #include "run-command.h"
 #include "strbuf.h"
-
-#include <syslog.h>
+#include "string-list.h"
 
 #ifndef HOST_NAME_MAX
 #define HOST_NAME_MAX 256
@@ -14,21 +13,25 @@
 #define NI_MAXSERV 32
 #endif
 
+#ifdef NO_INITGROUPS
+#define initgroups(x, y) (0) /* nothing */
+#endif
+
 static int log_syslog;
 static int verbose;
 static int reuseaddr;
 
 static const char daemon_usage[] =
 "git daemon [--verbose] [--syslog] [--export-all]\n"
-"           [--timeout=n] [--init-timeout=n] [--max-connections=n]\n"
-"           [--strict-paths] [--base-path=path] [--base-path-relaxed]\n"
-"           [--user-path | --user-path=path]\n"
-"           [--interpolated-path=path]\n"
-"           [--reuseaddr] [--detach] [--pid-file=file]\n"
-"           [--[enable|disable|allow-override|forbid-override]=service]\n"
-"           [--inetd | [--listen=host_or_ipaddr] [--port=n]\n"
-"                      [--user=user [--group=group]]\n"
-"           [directory...]";
+"           [--timeout=<n>] [--init-timeout=<n>] [--max-connections=<n>]\n"
+"           [--strict-paths] [--base-path=<path>] [--base-path-relaxed]\n"
+"           [--user-path | --user-path=<path>]\n"
+"           [--interpolated-path=<path>]\n"
+"           [--reuseaddr] [--pid-file=<file>]\n"
+"           [--(enable|disable|allow-override|forbid-override)=<service>]\n"
+"           [--inetd | [--listen=<host_or_ipaddr>] [--port=<n>]\n"
+"                      [--detach] [--user=<user> [--group=<group>]]\n"
+"           [<directory>...]";
 
 /* List of acceptable pathname prefixes */
 static char **ok_paths;
@@ -68,12 +71,14 @@ static void logreport(int priority, const char *err, va_list params)
 		syslog(priority, "%s", buf);
 	} else {
 		/*
-		 * Since stderr is set to linebuffered mode, the
+		 * Since stderr is set to buffered mode, the
 		 * logging of different processes will not overlap
+		 * unless they overflow the (rather big) buffers.
 		 */
 		fprintf(stderr, "[%"PRIuMAX"] ", (uintmax_t)getpid());
 		vfprintf(stderr, err, params);
 		fputc('\n', stderr);
+		fflush(stderr);
 	}
 }
 
@@ -141,15 +146,14 @@ static char *path_ok(char *directory)
 	}
 	else if (interpolated_path && saw_extended_args) {
 		struct strbuf expanded_path = STRBUF_INIT;
-		struct strbuf_expand_dict_entry dict[] = {
-			{ "H", hostname },
-			{ "CH", canon_hostname },
-			{ "IP", ip_address },
-			{ "P", tcp_port },
-			{ "D", directory },
-			{ NULL }
-		};
+		struct strbuf_expand_dict_entry dict[6];
 
+		dict[0].placeholder = "H"; dict[0].value = hostname;
+		dict[1].placeholder = "CH"; dict[1].value = canon_hostname;
+		dict[2].placeholder = "IP"; dict[2].value = ip_address;
+		dict[3].placeholder = "P"; dict[3].value = tcp_port;
+		dict[4].placeholder = "D"; dict[4].value = directory;
+		dict[5].placeholder = NULL; dict[5].value = NULL;
 		if (*dir != '/') {
 			/* Allow only absolute */
 			logerror("'%s': Non-absolute path denied (interpolated-path active)", dir);
@@ -343,7 +347,9 @@ static int upload_pack(void)
 {
 	/* Timeout as string */
 	char timeout_buf[64];
-	const char *argv[] = { "upload-pack", "--strict", timeout_buf, ".", NULL };
+	const char *argv[] = { "upload-pack", "--strict", NULL, ".", NULL };
+
+	argv[2] = timeout_buf;
 
 	snprintf(timeout_buf, sizeof timeout_buf, "--timeout=%u", timeout);
 	return run_service_command(argv);
@@ -407,7 +413,7 @@ static void parse_host_and_port(char *hostport, char **host,
 
 		end = strchr(hostport, ']');
 		if (!end)
-			die("Invalid reqeuest ('[' without ']')");
+			die("Invalid request ('[' without ']')");
 		*end = '\0';
 		*host = hostport + 1;
 		if (!end[1])
@@ -420,7 +426,7 @@ static void parse_host_and_port(char *hostport, char **host,
 		*host = hostport;
 		*port = strrchr(hostport, ':');
 		if (*port) {
-			*port = '\0';
+			**port = '\0';
 			++*port;
 		}
 	}
@@ -514,37 +520,14 @@ static void parse_host_arg(char *extra_args, int buflen)
 }
 
 
-static int execute(struct sockaddr *addr)
+static int execute(void)
 {
 	static char line[1000];
 	int pktlen, len, i;
+	char *addr = getenv("REMOTE_ADDR"), *port = getenv("REMOTE_PORT");
 
-	if (addr) {
-		char addrbuf[256] = "";
-		int port = -1;
-
-		if (addr->sa_family == AF_INET) {
-			struct sockaddr_in *sin_addr = (void *) addr;
-			inet_ntop(addr->sa_family, &sin_addr->sin_addr, addrbuf, sizeof(addrbuf));
-			port = ntohs(sin_addr->sin_port);
-#ifndef NO_IPV6
-		} else if (addr && addr->sa_family == AF_INET6) {
-			struct sockaddr_in6 *sin6_addr = (void *) addr;
-
-			char *buf = addrbuf;
-			*buf++ = '['; *buf = '\0'; /* stpcpy() is cool */
-			inet_ntop(AF_INET6, &sin6_addr->sin6_addr, buf, sizeof(addrbuf) - 1);
-			strcat(buf, "]");
-
-			port = ntohs(sin6_addr->sin6_port);
-#endif
-		}
-		loginfo("Connection from %s:%d", addrbuf, port);
-		setenv("REMOTE_ADDR", addrbuf, 1);
-	}
-	else {
-		unsetenv("REMOTE_ADDR");
-	}
+	if (addr)
+		loginfo("Connection from %s:%s", addr, port);
 
 	alarm(init_timeout ? init_timeout : timeout);
 	pktlen = packet_read_line(0, line, sizeof(line));
@@ -590,14 +573,17 @@ static int execute(struct sockaddr *addr)
 static int addrcmp(const struct sockaddr_storage *s1,
     const struct sockaddr_storage *s2)
 {
-	if (s1->ss_family != s2->ss_family)
-		return s1->ss_family - s2->ss_family;
-	if (s1->ss_family == AF_INET)
+	const struct sockaddr *sa1 = (const struct sockaddr*) s1;
+	const struct sockaddr *sa2 = (const struct sockaddr*) s2;
+
+	if (sa1->sa_family != sa2->sa_family)
+		return sa1->sa_family - sa2->sa_family;
+	if (sa1->sa_family == AF_INET)
 		return memcmp(&((struct sockaddr_in *)s1)->sin_addr,
 		    &((struct sockaddr_in *)s2)->sin_addr,
 		    sizeof(struct in_addr));
 #ifndef NO_IPV6
-	if (s1->ss_family == AF_INET6)
+	if (sa1->sa_family == AF_INET6)
 		return memcmp(&((struct sockaddr_in6 *)s1)->sin6_addr,
 		    &((struct sockaddr_in6 *)s2)->sin6_addr,
 		    sizeof(struct in6_addr));
@@ -611,36 +597,23 @@ static unsigned int live_children;
 
 static struct child {
 	struct child *next;
-	pid_t pid;
+	struct child_process cld;
 	struct sockaddr_storage address;
 } *firstborn;
 
-static void add_child(pid_t pid, struct sockaddr *addr, int addrlen)
+static void add_child(struct child_process *cld, struct sockaddr *addr, socklen_t addrlen)
 {
 	struct child *newborn, **cradle;
 
 	newborn = xcalloc(1, sizeof(*newborn));
 	live_children++;
-	newborn->pid = pid;
+	memcpy(&newborn->cld, cld, sizeof(*cld));
 	memcpy(&newborn->address, addr, addrlen);
 	for (cradle = &firstborn; *cradle; cradle = &(*cradle)->next)
 		if (!addrcmp(&(*cradle)->address, &newborn->address))
 			break;
 	newborn->next = *cradle;
 	*cradle = newborn;
-}
-
-static void remove_child(pid_t pid)
-{
-	struct child **cradle, *blanket;
-
-	for (cradle = &firstborn; (blanket = *cradle); cradle = &blanket->next)
-		if (blanket->pid == pid) {
-			*cradle = blanket->next;
-			live_children--;
-			free(blanket);
-			break;
-		}
 }
 
 /*
@@ -658,7 +631,7 @@ static void kill_some_child(void)
 
 	for (; (next = blanket->next); blanket = next)
 		if (!addrcmp(&blanket->address, &next->address)) {
-			kill(blanket->pid, SIGTERM);
+			kill(blanket->cld.pid, SIGTERM);
 			break;
 		}
 }
@@ -668,18 +641,28 @@ static void check_dead_children(void)
 	int status;
 	pid_t pid;
 
-	while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
-		const char *dead = "";
-		remove_child(pid);
-		if (!WIFEXITED(status) || (WEXITSTATUS(status) > 0))
-			dead = " (with error)";
-		loginfo("[%"PRIuMAX"] Disconnected%s", (uintmax_t)pid, dead);
-	}
+	struct child **cradle, *blanket;
+	for (cradle = &firstborn; (blanket = *cradle);)
+		if ((pid = waitpid(blanket->cld.pid, &status, WNOHANG)) > 1) {
+			const char *dead = "";
+			if (status)
+				dead = " (with error)";
+			loginfo("[%"PRIuMAX"] Disconnected%s", (uintmax_t)pid, dead);
+
+			/* remove the child */
+			*cradle = blanket->next;
+			live_children--;
+			free(blanket);
+		} else
+			cradle = &blanket->next;
 }
 
-static void handle(int incoming, struct sockaddr *addr, int addrlen)
+static char **cld_argv;
+static void handle(int incoming, struct sockaddr *addr, socklen_t addrlen)
 {
-	pid_t pid;
+	struct child_process cld = { NULL };
+	char addrbuf[300] = "REMOTE_ADDR=", portbuf[300];
+	char *env[] = { addrbuf, portbuf, NULL };
 
 	if (max_connections && live_children >= max_connections) {
 		kill_some_child();
@@ -692,22 +675,37 @@ static void handle(int incoming, struct sockaddr *addr, int addrlen)
 		}
 	}
 
-	if ((pid = fork())) {
-		close(incoming);
-		if (pid < 0) {
-			logerror("Couldn't fork %s", strerror(errno));
-			return;
-		}
+	if (addr->sa_family == AF_INET) {
+		struct sockaddr_in *sin_addr = (void *) addr;
+		inet_ntop(addr->sa_family, &sin_addr->sin_addr, addrbuf + 12,
+		    sizeof(addrbuf) - 12);
+		snprintf(portbuf, sizeof(portbuf), "REMOTE_PORT=%d",
+		    ntohs(sin_addr->sin_port));
+#ifndef NO_IPV6
+	} else if (addr && addr->sa_family == AF_INET6) {
+		struct sockaddr_in6 *sin6_addr = (void *) addr;
 
-		add_child(pid, addr, addrlen);
-		return;
+		char *buf = addrbuf + 12;
+		*buf++ = '['; *buf = '\0'; /* stpcpy() is cool */
+		inet_ntop(AF_INET6, &sin6_addr->sin6_addr, buf,
+		    sizeof(addrbuf) - 13);
+		strcat(buf, "]");
+
+		snprintf(portbuf, sizeof(portbuf), "REMOTE_PORT=%d",
+		    ntohs(sin6_addr->sin6_port));
+#endif
 	}
 
-	dup2(incoming, 0);
-	dup2(incoming, 1);
-	close(incoming);
+	cld.env = (const char **)env;
+	cld.argv = (const char **)cld_argv;
+	cld.in = incoming;
+	cld.out = dup(incoming);
 
-	exit(execute(addr));
+	if (start_command(&cld))
+		logerror("unable to fork");
+	else
+		add_child(&cld, addr, addrlen);
+	close(incoming);
 }
 
 static void child_handler(int signo)
@@ -730,11 +728,17 @@ static int set_reuse_addr(int sockfd)
 			  &on, sizeof(on));
 }
 
+struct socketlist {
+	int *list;
+	size_t nr;
+	size_t alloc;
+};
+
 #ifndef NO_IPV6
 
-static int socksetup(char *listen_addr, int listen_port, int **socklist_p)
+static int setup_named_sock(char *listen_addr, int listen_port, struct socketlist *socklist)
 {
-	int socknum = 0, *socklist = NULL;
+	int socknum = 0;
 	int maxfd = -1;
 	char pbuf[NI_MAXSERV];
 	struct addrinfo hints, *ai0, *ai;
@@ -749,8 +753,10 @@ static int socksetup(char *listen_addr, int listen_port, int **socklist_p)
 	hints.ai_flags = AI_PASSIVE;
 
 	gai = getaddrinfo(listen_addr, pbuf, &hints, &ai0);
-	if (gai)
-		die("getaddrinfo() failed: %s", gai_strerror(gai));
+	if (gai) {
+		logerror("getaddrinfo() for %s failed: %s", listen_addr, gai_strerror(gai));
+		return 0;
+	}
 
 	for (ai = ai0; ai; ai = ai->ai_next) {
 		int sockfd;
@@ -791,8 +797,9 @@ static int socksetup(char *listen_addr, int listen_port, int **socklist_p)
 		if (flags >= 0)
 			fcntl(sockfd, F_SETFD, flags | FD_CLOEXEC);
 
-		socklist = xrealloc(socklist, sizeof(int) * (socknum + 1));
-		socklist[socknum++] = sockfd;
+		ALLOC_GROW(socklist->list, socklist->nr + 1, socklist->alloc);
+		socklist->list[socklist->nr++] = sockfd;
+		socknum++;
 
 		if (maxfd < sockfd)
 			maxfd = sockfd;
@@ -800,13 +807,12 @@ static int socksetup(char *listen_addr, int listen_port, int **socklist_p)
 
 	freeaddrinfo(ai0);
 
-	*socklist_p = socklist;
 	return socknum;
 }
 
 #else /* NO_IPV6 */
 
-static int socksetup(char *listen_addr, int listen_port, int **socklist_p)
+static int setup_named_sock(char *listen_addr, int listen_port, struct socketlist *socklist)
 {
 	struct sockaddr_in sin;
 	int sockfd;
@@ -847,22 +853,39 @@ static int socksetup(char *listen_addr, int listen_port, int **socklist_p)
 	if (flags >= 0)
 		fcntl(sockfd, F_SETFD, flags | FD_CLOEXEC);
 
-	*socklist_p = xmalloc(sizeof(int));
-	**socklist_p = sockfd;
+	ALLOC_GROW(socklist->list, socklist->nr + 1, socklist->alloc);
+	socklist->list[socklist->nr++] = sockfd;
 	return 1;
 }
 
 #endif
 
-static int service_loop(int socknum, int *socklist)
+static void socksetup(struct string_list *listen_addr, int listen_port, struct socketlist *socklist)
+{
+	if (!listen_addr->nr)
+		setup_named_sock(NULL, listen_port, socklist);
+	else {
+		int i, socknum;
+		for (i = 0; i < listen_addr->nr; i++) {
+			socknum = setup_named_sock(listen_addr->items[i].string,
+						   listen_port, socklist);
+
+			if (socknum == 0)
+				logerror("unable to allocate any listen sockets for host %s on port %u",
+					 listen_addr->items[i].string, listen_port);
+		}
+	}
+}
+
+static int service_loop(struct socketlist *socklist)
 {
 	struct pollfd *pfd;
 	int i;
 
-	pfd = xcalloc(socknum, sizeof(struct pollfd));
+	pfd = xcalloc(socklist->nr, sizeof(struct pollfd));
 
-	for (i = 0; i < socknum; i++) {
-		pfd[i].fd = socklist[i];
+	for (i = 0; i < socklist->nr; i++) {
+		pfd[i].fd = socklist->list[i];
 		pfd[i].events = POLLIN;
 	}
 
@@ -873,7 +896,7 @@ static int service_loop(int socknum, int *socklist)
 
 		check_dead_children();
 
-		if (poll(pfd, socknum, -1) < 0) {
+		if (poll(pfd, socklist->nr, -1) < 0) {
 			if (errno != EINTR) {
 				logerror("Poll failed, resuming: %s",
 				      strerror(errno));
@@ -882,11 +905,17 @@ static int service_loop(int socknum, int *socklist)
 			continue;
 		}
 
-		for (i = 0; i < socknum; i++) {
+		for (i = 0; i < socklist->nr; i++) {
 			if (pfd[i].revents & POLLIN) {
-				struct sockaddr_storage ss;
-				unsigned int sslen = sizeof(ss);
-				int incoming = accept(pfd[i].fd, (struct sockaddr *)&ss, &sslen);
+				union {
+					struct sockaddr sa;
+					struct sockaddr_in sai;
+#ifndef NO_IPV6
+					struct sockaddr_in6 sai6;
+#endif
+				} ss;
+				socklen_t sslen = sizeof(ss);
+				int incoming = accept(pfd[i].fd, &ss.sa, &sslen);
 				if (incoming < 0) {
 					switch (errno) {
 					case EAGAIN:
@@ -897,7 +926,7 @@ static int service_loop(int socknum, int *socklist)
 						die_errno("accept returned");
 					}
 				}
-				handle(incoming, (struct sockaddr *)&ss, sslen);
+				handle(incoming, &ss.sa, sslen);
 			}
 		}
 	}
@@ -913,6 +942,62 @@ static void sanitize_stdfds(void)
 		die_errno("open /dev/null or dup failed");
 	if (fd > 2)
 		close(fd);
+}
+
+#ifdef NO_POSIX_GOODIES
+
+struct credentials;
+
+static void drop_privileges(struct credentials *cred)
+{
+	/* nothing */
+}
+
+static void daemonize(void)
+{
+	die("--detach not supported on this platform");
+}
+
+static struct credentials *prepare_credentials(const char *user_name,
+    const char *group_name)
+{
+	die("--user not supported on this platform");
+}
+
+#else
+
+struct credentials {
+	struct passwd *pass;
+	gid_t gid;
+};
+
+static void drop_privileges(struct credentials *cred)
+{
+	if (cred && (initgroups(cred->pass->pw_name, cred->gid) ||
+	    setgid (cred->gid) || setuid(cred->pass->pw_uid)))
+		die("cannot drop privileges");
+}
+
+static struct credentials *prepare_credentials(const char *user_name,
+    const char *group_name)
+{
+	static struct credentials c;
+
+	c.pass = getpwnam(user_name);
+	if (!c.pass)
+		die("user not found - %s", user_name);
+
+	if (!group_name)
+		c.gid = c.pass->pw_gid;
+	else {
+		struct group *group = getgrnam(group_name);
+		if (!group)
+			die("group not found - %s", group_name);
+
+		c.gid = group->gr_gid;
+	}
+
+	return &c;
 }
 
 static void daemonize(void)
@@ -932,6 +1017,7 @@ static void daemonize(void)
 	close(2);
 	sanitize_stdfds();
 }
+#endif
 
 static void store_pid(const char *path)
 {
@@ -942,33 +1028,29 @@ static void store_pid(const char *path)
 		die_errno("failed to write pid file '%s'", path);
 }
 
-static int serve(char *listen_addr, int listen_port, struct passwd *pass, gid_t gid)
+static int serve(struct string_list *listen_addr, int listen_port,
+    struct credentials *cred)
 {
-	int socknum, *socklist;
+	struct socketlist socklist = { NULL, 0, 0 };
 
-	socknum = socksetup(listen_addr, listen_port, &socklist);
-	if (socknum == 0)
-		die("unable to allocate any listen sockets on host %s port %u",
-		    listen_addr, listen_port);
+	socksetup(listen_addr, listen_port, &socklist);
+	if (socklist.nr == 0)
+		die("unable to allocate any listen sockets on port %u",
+		    listen_port);
 
-	if (pass && gid &&
-	    (initgroups(pass->pw_name, gid) || setgid (gid) ||
-	     setuid(pass->pw_uid)))
-		die("cannot drop privileges");
+	drop_privileges(cred);
 
-	return service_loop(socknum, socklist);
+	return service_loop(&socklist);
 }
 
 int main(int argc, char **argv)
 {
 	int listen_port = 0;
-	char *listen_addr = NULL;
-	int inetd_mode = 0;
+	struct string_list listen_addr = STRING_LIST_INIT_NODUP;
+	int serve_mode = 0, inetd_mode = 0;
 	const char *pid_file = NULL, *user_name = NULL, *group_name = NULL;
 	int detach = 0;
-	struct passwd *pass = NULL;
-	struct group *group;
-	gid_t gid = 0;
+	struct credentials *cred = NULL;
 	int i;
 
 	git_extract_argv0_path(argv[0]);
@@ -977,7 +1059,7 @@ int main(int argc, char **argv)
 		char *arg = argv[i];
 
 		if (!prefixcmp(arg, "--listen=")) {
-			listen_addr = xstrdup_tolower(arg + 9);
+			string_list_append(&listen_addr, xstrdup_tolower(arg + 9));
 			continue;
 		}
 		if (!prefixcmp(arg, "--port=")) {
@@ -988,6 +1070,10 @@ int main(int argc, char **argv)
 				listen_port = n;
 				continue;
 			}
+		}
+		if (!strcmp(arg, "--serve")) {
+			serve_mode = 1;
+			continue;
 		}
 		if (!strcmp(arg, "--inetd")) {
 			inetd_mode = 1;
@@ -1097,12 +1183,12 @@ int main(int argc, char **argv)
 		set_die_routine(daemon_die);
 	} else
 		/* avoid splitting a message in the middle */
-		setvbuf(stderr, NULL, _IOLBF, 0);
+		setvbuf(stderr, NULL, _IOFBF, 4096);
 
-	if (inetd_mode && (group_name || user_name))
-		die("--user and --group are incompatible with --inetd");
+	if (inetd_mode && (detach || group_name || user_name))
+		die("--detach, --user and --group are incompatible with --inetd");
 
-	if (inetd_mode && (listen_port || listen_addr))
+	if (inetd_mode && (listen_port || (listen_addr.nr > 0)))
 		die("--listen= and --port= are incompatible with --inetd");
 	else if (listen_port == 0)
 		listen_port = DEFAULT_GIT_PORT;
@@ -1110,21 +1196,8 @@ int main(int argc, char **argv)
 	if (group_name && !user_name)
 		die("--group supplied without --user");
 
-	if (user_name) {
-		pass = getpwnam(user_name);
-		if (!pass)
-			die("user not found - %s", user_name);
-
-		if (!group_name)
-			gid = pass->pw_gid;
-		else {
-			group = getgrnam(group_name);
-			if (!group)
-				die("group not found - %s", group_name);
-
-			gid = group->gr_gid;
-		}
-	}
+	if (user_name)
+		cred = prepare_credentials(user_name, group_name);
 
 	if (strict_paths && (!ok_paths || !*ok_paths))
 		die("option --strict-paths requires a whitelist");
@@ -1134,18 +1207,12 @@ int main(int argc, char **argv)
 		    base_path);
 
 	if (inetd_mode) {
-		struct sockaddr_storage ss;
-		struct sockaddr *peer = (struct sockaddr *)&ss;
-		socklen_t slen = sizeof(ss);
-
 		if (!freopen("/dev/null", "w", stderr))
 			die_errno("failed to redirect stderr to /dev/null");
-
-		if (getpeername(0, peer, &slen))
-			peer = NULL;
-
-		return execute(peer);
 	}
+
+	if (inetd_mode || serve_mode)
+		return execute();
 
 	if (detach) {
 		daemonize();
@@ -1157,5 +1224,13 @@ int main(int argc, char **argv)
 	if (pid_file)
 		store_pid(pid_file);
 
-	return serve(listen_addr, listen_port, pass, gid);
+	/* prepare argv for serving-processes */
+	cld_argv = xmalloc(sizeof (char *) * (argc + 2));
+	cld_argv[0] = argv[0];	/* git-daemon */
+	cld_argv[1] = "--serve";
+	for (i = 1; i < argc; ++i)
+		cld_argv[i+1] = argv[i];
+	cld_argv[argc+1] = NULL;
+
+	return serve(&listen_addr, listen_port, cred);
 }

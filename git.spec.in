@@ -35,6 +35,7 @@ Requires:	git-cvs = %{version}-%{release}
 Requires:	git-arch = %{version}-%{release}
 Requires:	git-email = %{version}-%{release}
 Requires:	gitk = %{version}-%{release}
+Requires:	gitweb = %{version}-%{release}
 Requires:	git-gui = %{version}-%{release}
 Obsoletes:	git <= 1.5.4.2
 
@@ -87,6 +88,13 @@ Requires:       git = %{version}-%{release}, tk >= 8.4
 %description -n gitk
 Git revision tree visualiser ('gitk')
 
+%package -n gitweb
+Summary:	Git web interface
+Group:          Development/Tools
+Requires:       git = %{version}-%{release}
+%description -n gitweb
+Browsing git repository on the web
+
 %package -n perl-Git
 Summary:        Perl interface to Git
 Group:          Development/Libraries
@@ -127,6 +135,9 @@ find $RPM_BUILD_ROOT -type f -name perllocal.pod -exec rm -f {} ';'
 rm -rf $RPM_BUILD_ROOT%{_mandir}
 %endif
 
+mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/bash_completion.d
+install -m 644 -T contrib/completion/git-completion.bash $RPM_BUILD_ROOT%{_sysconfdir}/bash_completion.d/git
+
 %clean
 rm -rf $RPM_BUILD_ROOT
 
@@ -136,6 +147,7 @@ rm -rf $RPM_BUILD_ROOT
 %doc README COPYING Documentation/*.txt
 %{!?_without_docs: %doc Documentation/*.html Documentation/howto}
 %{!?_without_docs: %doc Documentation/technical}
+%{_sysconfdir}/bash_completion.d
 
 %files svn
 %defattr(-,root,root)
@@ -185,6 +197,10 @@ rm -rf $RPM_BUILD_ROOT
 %{!?_without_docs: %{_mandir}/man1/*gitk*.1*}
 %{!?_without_docs: %doc Documentation/*gitk*.html }
 
+%files -n gitweb
+%defattr(-,root,root)
+%{_datadir}/gitweb
+
 %files -n perl-Git -f perl-files
 %defattr(-,root,root)
 
@@ -192,6 +208,12 @@ rm -rf $RPM_BUILD_ROOT
 # No files for you!
 
 %changelog
+* Wed Jun 30 2010 Junio C Hamano <gitster@pobox.com>
+- Add 'gitweb' subpackage.
+
+* Fri Mar 26 2010 Ian Ward Comfort <icomfort@stanford.edu>
+- Ship bash completion support from contrib/ in the core package.
+
 * Sun Jan 31 2010 Junio C Hamano <gitster@pobox.com>
 - Do not use %define inside %{!?...} construct.
 

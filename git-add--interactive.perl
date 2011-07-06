@@ -1,6 +1,8 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
 
+use 5.008;
 use strict;
+use warnings;
 use Git;
 
 binmode(STDOUT, ":raw");
@@ -43,6 +45,9 @@ my ($diff_new_color) =
 my $normal_color = $repo->get_color("", "reset");
 
 my $use_readkey = 0;
+my $use_termcap = 0;
+my %term_escapes;
+
 sub ReadMode;
 sub ReadKey;
 if ($repo->config_bool("interactive.singlekey")) {
@@ -50,6 +55,14 @@ if ($repo->config_bool("interactive.singlekey")) {
 		require Term::ReadKey;
 		Term::ReadKey->import;
 		$use_readkey = 1;
+	};
+	eval {
+		require Term::Cap;
+		my $termcap = Term::Cap->Tgetent;
+		foreach (values %$termcap) {
+			$term_escapes{$_} = 1 if /^\e/;
+		}
+		$use_termcap = 1;
 	};
 }
 
@@ -87,6 +100,7 @@ my %patch_modes = (
 		TARGET => '',
 		PARTICIPLE => 'staging',
 		FILTER => 'file-only',
+		IS_REVERSE => 0,
 	},
 	'stash' => {
 		DIFF => 'diff-index -p HEAD',
@@ -96,6 +110,7 @@ my %patch_modes = (
 		TARGET => '',
 		PARTICIPLE => 'stashing',
 		FILTER => undef,
+		IS_REVERSE => 0,
 	},
 	'reset_head' => {
 		DIFF => 'diff-index -p --cached',
@@ -105,6 +120,7 @@ my %patch_modes = (
 		TARGET => '',
 		PARTICIPLE => 'unstaging',
 		FILTER => 'index-only',
+		IS_REVERSE => 1,
 	},
 	'reset_nothead' => {
 		DIFF => 'diff-index -R -p --cached',
@@ -114,6 +130,7 @@ my %patch_modes = (
 		TARGET => ' to index',
 		PARTICIPLE => 'applying',
 		FILTER => 'index-only',
+		IS_REVERSE => 0,
 	},
 	'checkout_index' => {
 		DIFF => 'diff-files -p',
@@ -123,6 +140,7 @@ my %patch_modes = (
 		TARGET => ' from worktree',
 		PARTICIPLE => 'discarding',
 		FILTER => 'file-only',
+		IS_REVERSE => 1,
 	},
 	'checkout_head' => {
 		DIFF => 'diff-index -p',
@@ -132,6 +150,7 @@ my %patch_modes = (
 		TARGET => ' from index and worktree',
 		PARTICIPLE => 'discarding',
 		FILTER => undef,
+		IS_REVERSE => 1,
 	},
 	'checkout_nothead' => {
 		DIFF => 'diff-index -R -p',
@@ -141,6 +160,7 @@ my %patch_modes = (
 		TARGET => ' to index and worktree',
 		PARTICIPLE => 'applying',
 		FILTER => undef,
+		IS_REVERSE => 0,
 	},
 );
 
@@ -696,7 +716,7 @@ sub add_untracked_cmd {
 sub run_git_apply {
 	my $cmd = shift;
 	my $fh;
-	open $fh, '| git ' . $cmd;
+	open $fh, '| git ' . $cmd . " --recount --allow-overlap";
 	print $fh @_;
 	return close $fh;
 }
@@ -957,6 +977,28 @@ sub coalesce_overlapping_hunks {
 	return @out;
 }
 
+sub reassemble_patch {
+	my $head = shift;
+	my @patch;
+
+	# Include everything in the header except the beginning of the diff.
+	push @patch, (grep { !/^[-+]{3}/ } @$head);
+
+	# Then include any headers from the hunk lines, which must
+	# come before any actual hunk.
+	while (@_ && $_[0] !~ /^@/) {
+		push @patch, shift;
+	}
+
+	# Then begin the diff.
+	push @patch, grep { /^[-+]{3}/ } @$head;
+
+	# And then the actual hunks.
+	push @patch, @_;
+
+	return @patch;
+}
+
 sub color_diff {
 	return map {
 		colored((/^@/  ? $fraginfo_color :
@@ -977,10 +1019,12 @@ sub edit_hunk_manually {
 	print $fh "# Manual hunk edit mode -- see bottom for a quick guide\n";
 	print $fh @$oldtext;
 	my $participle = $patch_mode_flavour{PARTICIPLE};
+	my $is_reverse = $patch_mode_flavour{IS_REVERSE};
+	my ($remove_plus, $remove_minus) = $is_reverse ? ('-', '+') : ('+', '-');
 	print $fh <<EOF;
 # ---
-# To remove '-' lines, make them ' ' lines (context).
-# To remove '+' lines, delete them.
+# To remove '$remove_minus' lines, make them ' ' lines (context).
+# To remove '$remove_plus' lines, delete them.
 # Lines starting with # will be removed.
 #
 # If the patch applies cleanly, the edited hunk will immediately be
@@ -1017,7 +1061,7 @@ EOF
 
 sub diff_applies {
 	my $fh;
-	return run_git_apply($patch_mode_flavour{APPLY_CHECK} . ' --recount --check',
+	return run_git_apply($patch_mode_flavour{APPLY_CHECK} . ' --check',
 			     map { @{$_->{TEXT}} } @_);
 }
 
@@ -1034,6 +1078,14 @@ sub prompt_single_character {
 		ReadMode 'cbreak';
 		my $key = ReadKey 0;
 		ReadMode 'restore';
+		if ($use_termcap and $key eq "\e") {
+			while (!defined $term_escapes{$key}) {
+				my $next = ReadKey 0.5;
+				last if (!defined $next);
+				$key .= $next;
+			}
+			$key =~ s/\e/^[/;
+		}
 		print "$key" if defined $key;
 		print "\n";
 		return $key;
@@ -1089,9 +1141,9 @@ sub help_patch_cmd {
 	print colored $help_color, <<EOF ;
 y - $verb this hunk$target
 n - do not $verb this hunk$target
-q - quit, do not $verb this hunk nor any of the remaining ones
-a - $verb this and all the remaining hunks in the file
-d - do not $verb this hunk nor any of the remaining hunks in the file
+q - quit; do not $verb this hunk nor any of the remaining ones
+a - $verb this hunk and all later hunks in the file
+d - do not $verb this hunk nor any of the later hunks in the file
 g - select a hunk to go to
 / - search for a hunk matching the given regex
 j - leave this hunk undecided, see next undecided hunk
@@ -1106,7 +1158,7 @@ EOF
 
 sub apply_patch {
 	my $cmd = shift;
-	my $ret = run_git_apply $cmd . ' --recount', @_;
+	my $ret = run_git_apply $cmd, @_;
 	if (!$ret) {
 		print STDERR @_;
 	}
@@ -1115,17 +1167,17 @@ sub apply_patch {
 
 sub apply_patch_for_checkout_commit {
 	my $reverse = shift;
-	my $applies_index = run_git_apply 'apply '.$reverse.' --cached --recount --check', @_;
-	my $applies_worktree = run_git_apply 'apply '.$reverse.' --recount --check', @_;
+	my $applies_index = run_git_apply 'apply '.$reverse.' --cached --check', @_;
+	my $applies_worktree = run_git_apply 'apply '.$reverse.' --check', @_;
 
 	if ($applies_worktree && $applies_index) {
-		run_git_apply 'apply '.$reverse.' --cached --recount', @_;
-		run_git_apply 'apply '.$reverse.' --recount', @_;
+		run_git_apply 'apply '.$reverse.' --cached', @_;
+		run_git_apply 'apply '.$reverse, @_;
 		return 1;
 	} elsif (!$applies_index) {
 		print colored $error_color, "The selected hunks do not apply to the index!\n";
 		if (prompt_yesno "Apply them to the worktree anyway? ") {
-			return run_git_apply 'apply '.$reverse.' --recount', @_;
+			return run_git_apply 'apply '.$reverse, @_;
 		} else {
 			print colored $error_color, "Nothing was applied.\n";
 			return 0;
@@ -1333,14 +1385,13 @@ sub patch_update_file {
 				next;
 			}
 			elsif ($line =~ /^q/i) {
-				while ($ix < $num) {
-					if (!defined $hunk[$ix]{USE}) {
-						$hunk[$ix]{USE} = 0;
+				for ($i = 0; $i < $num; $i++) {
+					if (!defined $hunk[$i]{USE}) {
+						$hunk[$i]{USE} = 0;
 					}
-					$ix++;
 				}
 				$quit = 1;
-				next;
+				last;
 			}
 			elsif ($line =~ m|^/(.*)|) {
 				my $regex = $1;
@@ -1453,7 +1504,7 @@ sub patch_update_file {
 
 	if (@result) {
 		my $fh;
-		my @patch = (@{$head->{TEXT}}, @result);
+		my @patch = reassemble_patch($head->{TEXT}, @result);
 		my $apply_routine = $patch_mode_flavour{APPLY};
 		&$apply_routine(@patch);
 		refresh();

@@ -188,8 +188,8 @@ struct object *parse_object(const unsigned char *sha1)
 	unsigned long size;
 	enum object_type type;
 	int eaten;
-	const unsigned char *repl;
-	void *buffer = read_sha1_file_repl(sha1, &type, &size, &repl);
+	const unsigned char *repl = lookup_replace_object(sha1);
+	void *buffer = read_sha1_file(sha1, &type, &size);
 
 	if (buffer) {
 		struct object *obj;
@@ -199,7 +199,7 @@ struct object *parse_object(const unsigned char *sha1)
 			return NULL;
 		}
 
-		obj = parse_object_buffer(repl, type, size, buffer, &eaten);
+		obj = parse_object_buffer(sha1, type, size, buffer, &eaten);
 		if (!eaten)
 			free(buffer);
 		return obj;
@@ -211,10 +211,10 @@ struct object_list *object_list_insert(struct object *item,
 				       struct object_list **list_p)
 {
 	struct object_list *new_list = xmalloc(sizeof(struct object_list));
-        new_list->item = item;
-        new_list->next = *list_p;
-        *list_p = new_list;
-        return new_list;
+	new_list->item = item;
+	new_list->next = *list_p;
+	*list_p = new_list;
+	return new_list;
 }
 
 int object_list_contains(struct object_list *list, struct object *obj)
@@ -252,10 +252,10 @@ void add_object_array_with_mode(struct object *obj, const char *name, struct obj
 
 void object_array_remove_duplicates(struct object_array *array)
 {
-	int ref, src, dst;
+	unsigned int ref, src, dst;
 	struct object_array_entry *objects = array->objects;
 
-	for (ref = 0; ref < array->nr - 1; ref++) {
+	for (ref = 0; ref + 1 < array->nr; ref++) {
 		for (src = ref + 1, dst = src;
 		     src < array->nr;
 		     src++) {

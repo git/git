@@ -3,6 +3,7 @@
 
 #include "parse-options.h"
 #include "grep.h"
+#include "notes.h"
 
 #define SEEN		(1u<<0)
 #define UNINTERESTING   (1u<<1)
@@ -13,13 +14,15 @@
 #define CHILD_SHOWN	(1u<<6)
 #define ADDED		(1u<<7)	/* Parents already parsed and added? */
 #define SYMMETRIC_LEFT	(1u<<8)
-#define ALL_REV_FLAGS	((1u<<9)-1)
+#define PATCHSAME	(1u<<9)
+#define ALL_REV_FLAGS	((1u<<10)-1)
 
 #define DECORATE_SHORT_REFS	1
 #define DECORATE_FULL_REFS	2
 
 struct rev_info;
 struct log_info;
+struct string_list;
 
 struct rev_info {
 	/* Starting list */
@@ -32,14 +35,13 @@ struct rev_info {
 	/* Basic information */
 	const char *prefix;
 	const char *def;
-	void *prune_data;
-	unsigned int early_output;
+	struct pathspec prune_data;
+	unsigned int	early_output:1,
+			ignore_missing:1;
 
 	/* Traversal flags */
 	unsigned int	dense:1,
 			prune:1,
-			no_merges:1,
-			merges_only:1,
 			no_walk:1,
 			show_all:1,
 			remove_empty_trees:1,
@@ -55,7 +57,10 @@ struct rev_info {
 			limited:1,
 			unpacked:1,
 			boundary:2,
+			count:1,
 			left_right:1,
+			left_only:1,
+			right_only:1,
 			rewrite_parents:1,
 			print_parents:1,
 			show_source:1,
@@ -63,7 +68,9 @@ struct rev_info {
 			reverse:1,
 			reverse_output_stage:1,
 			cherry_pick:1,
+			cherry_mark:1,
 			bisect:1,
+			ancestry_path:1,
 			first_parent_only:1;
 
 	/* Diff flags */
@@ -84,9 +91,11 @@ struct rev_info {
 			show_notes_given:1,
 			pretty_given:1,
 			abbrev_commit:1,
+			abbrev_commit_given:1,
 			use_terminator:1,
 			missing_newline:1,
-			date_mode_explicit:1;
+			date_mode_explicit:1,
+			preserve_subject:1;
 	unsigned int	disable_stdin:1;
 
 	enum date_mode date_mode;
@@ -118,6 +127,8 @@ struct rev_info {
 	int max_count;
 	unsigned long max_age;
 	unsigned long min_age;
+	int min_parents;
+	int max_parents;
 
 	/* diff info for patches and for paths limiting */
 	struct diff_options diffopt;
@@ -126,6 +137,14 @@ struct rev_info {
 	struct reflog_walk_info *reflog_info;
 	struct decoration children;
 	struct decoration merge_simplification;
+
+	/* notes-specific options: which refs to show */
+	struct display_notes_opt notes_opt;
+
+	/* commit counts */
+	int count_left;
+	int count_right;
+	int count_same;
 };
 
 #define REV_TREE_SAME		0
@@ -137,8 +156,14 @@ struct rev_info {
 typedef void (*show_early_output_fn_t)(struct rev_info *, struct commit_list *);
 extern volatile show_early_output_fn_t show_early_output;
 
+struct setup_revision_opt {
+	const char *def;
+	void (*tweak)(struct rev_info *, struct setup_revision_opt *);
+	const char *submodule;
+};
+
 extern void init_revisions(struct rev_info *revs, const char *prefix);
-extern int setup_revisions(int argc, const char **argv, struct rev_info *revs, const char *def);
+extern int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct setup_revision_opt *);
 extern void parse_revision_opt(struct rev_info *revs, struct parse_opt_ctx_t *ctx,
 				 const struct option *options,
 				 const char * const usagestr[]);
@@ -146,6 +171,8 @@ extern int handle_revision_arg(const char *arg, struct rev_info *revs,int flags,
 
 extern int prepare_revision_walk(struct rev_info *revs);
 extern struct commit *get_revision(struct rev_info *revs);
+extern char *get_revision_mark(const struct rev_info *revs, const struct commit *commit);
+extern void put_revision_mark(const struct rev_info *revs, const struct commit *commit);
 
 extern void mark_parents_uninteresting(struct commit *commit);
 extern void mark_tree_uninteresting(struct tree *tree);

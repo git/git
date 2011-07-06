@@ -28,6 +28,19 @@ extern int for_each_replace_ref(each_ref_fn, void *);
 extern int for_each_glob_ref(each_ref_fn, const char *pattern, void *);
 extern int for_each_glob_ref_in(each_ref_fn, const char *pattern, const char* prefix, void *);
 
+extern int head_ref_submodule(const char *submodule, each_ref_fn fn, void *cb_data);
+extern int for_each_ref_submodule(const char *submodule, each_ref_fn fn, void *cb_data);
+extern int for_each_ref_in_submodule(const char *submodule, const char *prefix,
+		each_ref_fn fn, void *cb_data);
+extern int for_each_tag_ref_submodule(const char *submodule, each_ref_fn fn, void *cb_data);
+extern int for_each_branch_ref_submodule(const char *submodule, each_ref_fn fn, void *cb_data);
+extern int for_each_remote_ref_submodule(const char *submodule, each_ref_fn fn, void *cb_data);
+
+static inline const char *has_glob_specials(const char *pattern)
+{
+	return strpbrk(pattern, "?*[");
+}
+
 /* can be used to learn about broken ref and symref */
 extern int for_each_rawref(each_ref_fn, void *);
 
@@ -62,6 +75,9 @@ extern void unlock_ref(struct ref_lock *lock);
 
 /** Writes sha1 into the ref specified by the lock. **/
 extern int write_ref_sha1(struct ref_lock *lock, const unsigned char *sha1, const char *msg);
+
+/** Setup reflog before using. **/
+int log_ref_setup(const char *ref_name, char *logfile, int bufsize);
 
 /** Reads log for the value of ref during at_time. **/
 extern int read_ref_at(const char *ref, unsigned long at_time, int cnt, unsigned char *sha1, char **msg, unsigned long *cutoff_time, int *cutoff_tz, int *cutoff_cnt);

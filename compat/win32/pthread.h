@@ -18,10 +18,16 @@
  */
 #define pthread_mutex_t CRITICAL_SECTION
 
-#define pthread_mutex_init(a,b) InitializeCriticalSection((a))
+#define pthread_mutex_init(a,b) (InitializeCriticalSection((a)), 0)
 #define pthread_mutex_destroy(a) DeleteCriticalSection((a))
 #define pthread_mutex_lock EnterCriticalSection
 #define pthread_mutex_unlock LeaveCriticalSection
+
+typedef int pthread_mutexattr_t;
+#define pthread_mutexattr_init(a) (*(a) = 0)
+#define pthread_mutexattr_destroy(a) do {} while (0)
+#define pthread_mutexattr_settype(a, t) 0
+#define PTHREAD_MUTEX_RECURSIVE 0
 
 /*
  * Implement simple condition variable for Windows threads, based on ACE
@@ -52,6 +58,7 @@ typedef struct {
 	HANDLE handle;
 	void *(*start_routine)(void*);
 	void *arg;
+	DWORD tid;
 } pthread_t;
 
 extern int pthread_create(pthread_t *thread, const void *unused,
@@ -64,5 +71,29 @@ extern int pthread_create(pthread_t *thread, const void *unused,
 #define pthread_join(a, b) win32_pthread_join(&(a), (b))
 
 extern int win32_pthread_join(pthread_t *thread, void **value_ptr);
+
+#define pthread_equal(t1, t2) ((t1).tid == (t2).tid)
+extern pthread_t pthread_self(void);
+
+static inline int pthread_exit(void *ret)
+{
+	ExitThread((DWORD)ret);
+}
+
+typedef DWORD pthread_key_t;
+static inline int pthread_key_create(pthread_key_t *keyp, void (*destructor)(void *value))
+{
+	return (*keyp = TlsAlloc()) == TLS_OUT_OF_INDEXES ? EAGAIN : 0;
+}
+
+static inline int pthread_setspecific(pthread_key_t key, const void *value)
+{
+	return TlsSetValue(key, (void *)value) ? 0 : EINVAL;
+}
+
+static inline void *pthread_getspecific(pthread_key_t key)
+{
+	return TlsGetValue(key);
+}
 
 #endif /* PTHREAD_H */

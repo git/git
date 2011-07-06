@@ -25,10 +25,10 @@
 #include "cache.h"
 #include "quote.h"
 
-/* Get a trace file descriptor from GIT_TRACE env variable. */
-static int get_trace_fd(int *need_close)
+/* Get a trace file descriptor from "key" env variable. */
+static int get_trace_fd(const char *key, int *need_close)
 {
-	char *trace = getenv("GIT_TRACE");
+	char *trace = getenv(key);
 
 	if (!trace || !strcmp(trace, "") ||
 	    !strcmp(trace, "0") || !strcasecmp(trace, "false"))
@@ -50,10 +50,10 @@ static int get_trace_fd(int *need_close)
 		return fd;
 	}
 
-	fprintf(stderr, "What does '%s' for GIT_TRACE mean?\n", trace);
+	fprintf(stderr, "What does '%s' for %s mean?\n", trace, key);
 	fprintf(stderr, "If you want to trace into a file, "
-		"then please set GIT_TRACE to an absolute pathname "
-		"(starting with /).\n");
+		"then please set %s to an absolute pathname "
+		"(starting with /).\n", key);
 	fprintf(stderr, "Defaulting to tracing on stderr...\n");
 
 	return STDERR_FILENO;
@@ -62,32 +62,44 @@ static int get_trace_fd(int *need_close)
 static const char err_msg[] = "Could not trace into fd given by "
 	"GIT_TRACE environment variable";
 
+void trace_vprintf(const char *key, const char *fmt, va_list ap)
+{
+	struct strbuf buf = STRBUF_INIT;
+
+	if (!trace_want(key))
+		return;
+
+	set_try_to_free_routine(NULL);	/* is never reset */
+	strbuf_vaddf(&buf, fmt, ap);
+	trace_strbuf(key, &buf);
+	strbuf_release(&buf);
+}
+
+static void trace_printf_key(const char *key, const char *fmt, ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	trace_vprintf(key, fmt, ap);
+	va_end(ap);
+}
+
 void trace_printf(const char *fmt, ...)
 {
-	struct strbuf buf;
 	va_list ap;
-	int fd, len, need_close = 0;
+	va_start(ap, fmt);
+	trace_vprintf("GIT_TRACE", fmt, ap);
+	va_end(ap);
+}
 
-	fd = get_trace_fd(&need_close);
+void trace_strbuf(const char *key, const struct strbuf *buf)
+{
+	int fd, need_close = 0;
+
+	fd = get_trace_fd(key, &need_close);
 	if (!fd)
 		return;
 
-	strbuf_init(&buf, 64);
-	va_start(ap, fmt);
-	len = vsnprintf(buf.buf, strbuf_avail(&buf), fmt, ap);
-	va_end(ap);
-	if (len >= strbuf_avail(&buf)) {
-		strbuf_grow(&buf, len - strbuf_avail(&buf) + 128);
-		va_start(ap, fmt);
-		len = vsnprintf(buf.buf, strbuf_avail(&buf), fmt, ap);
-		va_end(ap);
-		if (len >= strbuf_avail(&buf))
-			die("broken vsnprintf");
-	}
-	strbuf_setlen(&buf, len);
-
-	write_or_whine_pipe(fd, buf.buf, buf.len, err_msg);
-	strbuf_release(&buf);
+	write_or_whine_pipe(fd, buf->buf, buf->len, err_msg);
 
 	if (need_close)
 		close(fd);
@@ -95,27 +107,18 @@ void trace_printf(const char *fmt, ...)
 
 void trace_argv_printf(const char **argv, const char *fmt, ...)
 {
-	struct strbuf buf;
+	struct strbuf buf = STRBUF_INIT;
 	va_list ap;
-	int fd, len, need_close = 0;
+	int fd, need_close = 0;
 
-	fd = get_trace_fd(&need_close);
+	fd = get_trace_fd("GIT_TRACE", &need_close);
 	if (!fd)
 		return;
 
-	strbuf_init(&buf, 64);
+	set_try_to_free_routine(NULL);	/* is never reset */
 	va_start(ap, fmt);
-	len = vsnprintf(buf.buf, strbuf_avail(&buf), fmt, ap);
+	strbuf_vaddf(&buf, fmt, ap);
 	va_end(ap);
-	if (len >= strbuf_avail(&buf)) {
-		strbuf_grow(&buf, len - strbuf_avail(&buf) + 128);
-		va_start(ap, fmt);
-		len = vsnprintf(buf.buf, strbuf_avail(&buf), fmt, ap);
-		va_end(ap);
-		if (len >= strbuf_avail(&buf))
-			die("broken vsnprintf");
-	}
-	strbuf_setlen(&buf, len);
 
 	sq_quote_argv(&buf, argv, 0);
 	strbuf_addch(&buf, '\n');
@@ -124,4 +127,62 @@ void trace_argv_printf(const char **argv, const char *fmt, ...)
 
 	if (need_close)
 		close(fd);
+}
+
+static const char *quote_crnl(const char *path)
+{
+	static char new_path[PATH_MAX];
+	const char *p2 = path;
+	char *p1 = new_path;
+
+	if (!path)
+		return NULL;
+
+	while (*p2) {
+		switch (*p2) {
+		case '\\': *p1++ = '\\'; *p1++ = '\\'; break;
+		case '\n': *p1++ = '\\'; *p1++ = 'n'; break;
+		case '\r': *p1++ = '\\'; *p1++ = 'r'; break;
+		default:
+			*p1++ = *p2;
+		}
+		p2++;
+	}
+	*p1 = '\0';
+	return new_path;
+}
+
+/* FIXME: move prefix to startup_info struct and get rid of this arg */
+void trace_repo_setup(const char *prefix)
+{
+	static const char *key = "GIT_TRACE_SETUP";
+	const char *git_work_tree;
+	char cwd[PATH_MAX];
+
+	if (!trace_want(key))
+		return;
+
+	if (!getcwd(cwd, PATH_MAX))
+		die("Unable to get current working directory");
+
+	if (!(git_work_tree = get_git_work_tree()))
+		git_work_tree = "(null)";
+
+	if (!prefix)
+		prefix = "(null)";
+
+	trace_printf_key(key, "setup: git_dir: %s\n", quote_crnl(get_git_dir()));
+	trace_printf_key(key, "setup: worktree: %s\n", quote_crnl(git_work_tree));
+	trace_printf_key(key, "setup: cwd: %s\n", quote_crnl(cwd));
+	trace_printf_key(key, "setup: prefix: %s\n", quote_crnl(prefix));
+}
+
+int trace_want(const char *key)
+{
+	const char *trace = getenv(key);
+
+	if (!trace || !strcmp(trace, "") ||
+	    !strcmp(trace, "0") || !strcasecmp(trace, "false"))
+		return 0;
+	return 1;
 }

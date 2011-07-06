@@ -10,17 +10,20 @@ merge_mode() {
 
 translate_merge_tool_path () {
 	case "$1" in
-	vimdiff)
-		echo vim
+	araxis)
+		echo compare
 		;;
-	gvimdiff)
-		echo gvim
+	bc3)
+		echo bcompare
 		;;
 	emerge)
 		echo emacs
 		;;
-	araxis)
-		echo compare
+	gvimdiff|gvimdiff2)
+		echo gvim
+		;;
+	vimdiff|vimdiff2)
+		echo vim
 		;;
 	*)
 		echo "$1"
@@ -35,7 +38,7 @@ check_unchanged () {
 		while true; do
 			echo "$MERGED seems unchanged."
 			printf "Was the merge successful? [y/n] "
-			read answer < /dev/tty
+			read answer
 			case "$answer" in
 			y*|Y*) status=0; break ;;
 			n*|N*) status=1; break ;;
@@ -46,16 +49,16 @@ check_unchanged () {
 
 valid_tool () {
 	case "$1" in
-	kdiff3 | tkdiff | xxdiff | meld | opendiff | \
-	emerge | vimdiff | gvimdiff | ecmerge | diffuse | araxis | p4merge)
+	araxis | bc3 | diffuse | ecmerge | emerge | gvimdiff | gvimdiff2 | \
+	kdiff3 | meld | opendiff | p4merge | tkdiff | vimdiff | vimdiff2 | xxdiff)
 		;; # happy
-	tortoisemerge)
-		if ! merge_mode; then
+	kompare)
+		if ! diff_mode; then
 			return 1
 		fi
 		;;
-	kompare)
-		if ! diff_mode; then
+	tortoisemerge)
+		if ! merge_mode; then
 			return 1
 		fi
 		;;
@@ -88,66 +91,34 @@ run_merge_tool () {
 	status=0
 
 	case "$1" in
-	kdiff3)
+	araxis)
 		if merge_mode; then
+			touch "$BACKUP"
 			if $base_present; then
-				("$merge_tool_path" --auto \
-					--L1 "$MERGED (Base)" \
-					--L2 "$MERGED (Local)" \
-					--L3 "$MERGED (Remote)" \
-					-o "$MERGED" \
-					"$BASE" "$LOCAL" "$REMOTE" \
-				> /dev/null 2>&1)
+				"$merge_tool_path" -wait -merge -3 -a1 \
+					"$BASE" "$LOCAL" "$REMOTE" "$MERGED" \
+					>/dev/null 2>&1
 			else
-				("$merge_tool_path" --auto \
-					--L1 "$MERGED (Local)" \
-					--L2 "$MERGED (Remote)" \
-					-o "$MERGED" \
-					"$LOCAL" "$REMOTE" \
-				> /dev/null 2>&1)
-			fi
-			status=$?
-		else
-			("$merge_tool_path" --auto \
-				--L1 "$MERGED (A)" \
-				--L2 "$MERGED (B)" "$LOCAL" "$REMOTE" \
-			> /dev/null 2>&1)
-		fi
-		;;
-	kompare)
-		"$merge_tool_path" "$LOCAL" "$REMOTE"
-		;;
-	tkdiff)
-		if merge_mode; then
-			if $base_present; then
-				"$merge_tool_path" -a "$BASE" \
-					-o "$MERGED" "$LOCAL" "$REMOTE"
-			else
-				"$merge_tool_path" \
-					-o "$MERGED" "$LOCAL" "$REMOTE"
-			fi
-			status=$?
-		else
-			"$merge_tool_path" "$LOCAL" "$REMOTE"
-		fi
-		;;
-	p4merge)
-		if merge_mode; then
-		    touch "$BACKUP"
-			if $base_present; then
-				"$merge_tool_path" "$BASE" "$LOCAL" "$REMOTE" "$MERGED"
-			else
-				"$merge_tool_path" "$LOCAL" "$LOCAL" "$REMOTE" "$MERGED"
+				"$merge_tool_path" -wait -2 \
+					"$LOCAL" "$REMOTE" "$MERGED" \
+					>/dev/null 2>&1
 			fi
 			check_unchanged
 		else
-			"$merge_tool_path" "$LOCAL" "$REMOTE"
+			"$merge_tool_path" -wait -2 "$LOCAL" "$REMOTE" \
+				>/dev/null 2>&1
 		fi
 		;;
-	meld)
+	bc3)
 		if merge_mode; then
 			touch "$BACKUP"
-			"$merge_tool_path" "$LOCAL" "$MERGED" "$REMOTE"
+			if $base_present; then
+				"$merge_tool_path" "$LOCAL" "$REMOTE" "$BASE" \
+					-mergeoutput="$MERGED"
+			else
+				"$merge_tool_path" "$LOCAL" "$REMOTE" \
+					-mergeoutput="$MERGED"
+			fi
 			check_unchanged
 		else
 			"$merge_tool_path" "$LOCAL" "$REMOTE"
@@ -163,70 +134,6 @@ run_merge_tool () {
 			else
 				"$merge_tool_path" \
 					"$LOCAL" "$MERGED" "$REMOTE" | cat
-			fi
-			check_unchanged
-		else
-			"$merge_tool_path" "$LOCAL" "$REMOTE" | cat
-		fi
-		;;
-	vimdiff)
-		if merge_mode; then
-			touch "$BACKUP"
-			"$merge_tool_path" -d -c "wincmd l" \
-				"$LOCAL" "$MERGED" "$REMOTE"
-			check_unchanged
-		else
-			"$merge_tool_path" -d -c "wincmd l" \
-				"$LOCAL" "$REMOTE"
-		fi
-		;;
-	gvimdiff)
-		if merge_mode; then
-			touch "$BACKUP"
-			"$merge_tool_path" -d -c "wincmd l" -f \
-				"$LOCAL" "$MERGED" "$REMOTE"
-			check_unchanged
-		else
-			"$merge_tool_path" -d -c "wincmd l" -f \
-				"$LOCAL" "$REMOTE"
-		fi
-		;;
-	xxdiff)
-		if merge_mode; then
-			touch "$BACKUP"
-			if $base_present; then
-				"$merge_tool_path" -X --show-merged-pane \
-					-R 'Accel.SaveAsMerged: "Ctrl-S"' \
-					-R 'Accel.Search: "Ctrl+F"' \
-					-R 'Accel.SearchForward: "Ctrl-G"' \
-					--merged-file "$MERGED" \
-					"$LOCAL" "$BASE" "$REMOTE"
-			else
-				"$merge_tool_path" -X $extra \
-					-R 'Accel.SaveAsMerged: "Ctrl-S"' \
-					-R 'Accel.Search: "Ctrl+F"' \
-					-R 'Accel.SearchForward: "Ctrl-G"' \
-					--merged-file "$MERGED" \
-					"$LOCAL" "$REMOTE"
-			fi
-			check_unchanged
-		else
-			"$merge_tool_path" \
-				-R 'Accel.Search: "Ctrl+F"' \
-				-R 'Accel.SearchForward: "Ctrl-G"' \
-				"$LOCAL" "$REMOTE"
-		fi
-		;;
-	opendiff)
-		if merge_mode; then
-			touch "$BACKUP"
-			if $base_present; then
-				"$merge_tool_path" "$LOCAL" "$REMOTE" \
-					-ancestor "$BASE" \
-					-merge "$MERGED" | cat
-			else
-				"$merge_tool_path" "$LOCAL" "$REMOTE" \
-					-merge "$MERGED" | cat
 			fi
 			check_unchanged
 		else
@@ -268,6 +175,111 @@ run_merge_tool () {
 				"$LOCAL" "$REMOTE"
 		fi
 		;;
+	gvimdiff|vimdiff)
+		if merge_mode; then
+			touch "$BACKUP"
+			if $base_present; then
+				"$merge_tool_path" -f -d -c "wincmd J" \
+					"$MERGED" "$LOCAL" "$BASE" "$REMOTE"
+			else
+				"$merge_tool_path" -f -d -c "wincmd l" \
+					"$LOCAL" "$MERGED" "$REMOTE"
+			fi
+			check_unchanged
+		else
+			"$merge_tool_path" -R -f -d -c "wincmd l" \
+				"$LOCAL" "$REMOTE"
+		fi
+		;;
+	gvimdiff2|vimdiff2)
+		if merge_mode; then
+			touch "$BACKUP"
+			"$merge_tool_path" -f -d -c "wincmd l" \
+				"$LOCAL" "$MERGED" "$REMOTE"
+			check_unchanged
+		else
+			"$merge_tool_path" -R -f -d -c "wincmd l" \
+				"$LOCAL" "$REMOTE"
+		fi
+		;;
+	kdiff3)
+		if merge_mode; then
+			if $base_present; then
+				("$merge_tool_path" --auto \
+					--L1 "$MERGED (Base)" \
+					--L2 "$MERGED (Local)" \
+					--L3 "$MERGED (Remote)" \
+					-o "$MERGED" \
+					"$BASE" "$LOCAL" "$REMOTE" \
+				> /dev/null 2>&1)
+			else
+				("$merge_tool_path" --auto \
+					--L1 "$MERGED (Local)" \
+					--L2 "$MERGED (Remote)" \
+					-o "$MERGED" \
+					"$LOCAL" "$REMOTE" \
+				> /dev/null 2>&1)
+			fi
+			status=$?
+		else
+			("$merge_tool_path" --auto \
+				--L1 "$MERGED (A)" \
+				--L2 "$MERGED (B)" "$LOCAL" "$REMOTE" \
+			> /dev/null 2>&1)
+		fi
+		;;
+	kompare)
+		"$merge_tool_path" "$LOCAL" "$REMOTE"
+		;;
+	meld)
+		if merge_mode; then
+			touch "$BACKUP"
+			"$merge_tool_path" "$LOCAL" "$MERGED" "$REMOTE"
+			check_unchanged
+		else
+			"$merge_tool_path" "$LOCAL" "$REMOTE"
+		fi
+		;;
+	opendiff)
+		if merge_mode; then
+			touch "$BACKUP"
+			if $base_present; then
+				"$merge_tool_path" "$LOCAL" "$REMOTE" \
+					-ancestor "$BASE" \
+					-merge "$MERGED" | cat
+			else
+				"$merge_tool_path" "$LOCAL" "$REMOTE" \
+					-merge "$MERGED" | cat
+			fi
+			check_unchanged
+		else
+			"$merge_tool_path" "$LOCAL" "$REMOTE" | cat
+		fi
+		;;
+	p4merge)
+		if merge_mode; then
+			touch "$BACKUP"
+			$base_present || >"$BASE"
+			"$merge_tool_path" "$BASE" "$LOCAL" "$REMOTE" "$MERGED"
+			check_unchanged
+		else
+			"$merge_tool_path" "$LOCAL" "$REMOTE"
+		fi
+		;;
+	tkdiff)
+		if merge_mode; then
+			if $base_present; then
+				"$merge_tool_path" -a "$BASE" \
+					-o "$MERGED" "$LOCAL" "$REMOTE"
+			else
+				"$merge_tool_path" \
+					-o "$MERGED" "$LOCAL" "$REMOTE"
+			fi
+			status=$?
+		else
+			"$merge_tool_path" "$LOCAL" "$REMOTE"
+		fi
+		;;
 	tortoisemerge)
 		if $base_present; then
 			touch "$BACKUP"
@@ -280,22 +292,30 @@ run_merge_tool () {
 			status=1
 		fi
 		;;
-	araxis)
+	xxdiff)
 		if merge_mode; then
 			touch "$BACKUP"
 			if $base_present; then
-				"$merge_tool_path" -wait -merge -3 -a1 \
-					"$BASE" "$LOCAL" "$REMOTE" "$MERGED" \
-					>/dev/null 2>&1
+				"$merge_tool_path" -X --show-merged-pane \
+					-R 'Accel.SaveAsMerged: "Ctrl-S"' \
+					-R 'Accel.Search: "Ctrl+F"' \
+					-R 'Accel.SearchForward: "Ctrl-G"' \
+					--merged-file "$MERGED" \
+					"$LOCAL" "$BASE" "$REMOTE"
 			else
-				"$merge_tool_path" -wait -2 \
-					"$LOCAL" "$REMOTE" "$MERGED" \
-					>/dev/null 2>&1
+				"$merge_tool_path" -X $extra \
+					-R 'Accel.SaveAsMerged: "Ctrl-S"' \
+					-R 'Accel.Search: "Ctrl+F"' \
+					-R 'Accel.SearchForward: "Ctrl-G"' \
+					--merged-file "$MERGED" \
+					"$LOCAL" "$REMOTE"
 			fi
 			check_unchanged
 		else
-			"$merge_tool_path" -wait -2 "$LOCAL" "$REMOTE" \
-				>/dev/null 2>&1
+			"$merge_tool_path" \
+				-R 'Accel.Search: "Ctrl+F"' \
+				-R 'Accel.SearchForward: "Ctrl-G"' \
+				"$LOCAL" "$REMOTE"
 		fi
 		;;
 	*)
@@ -337,7 +357,7 @@ guess_merge_tool () {
 		else
 			tools="opendiff kdiff3 tkdiff xxdiff meld $tools"
 		fi
-		tools="$tools gvimdiff diffuse ecmerge p4merge araxis"
+		tools="$tools gvimdiff diffuse ecmerge p4merge araxis bc3"
 	fi
 	case "${VISUAL:-$EDITOR}" in
 	*vim*)

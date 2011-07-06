@@ -39,17 +39,6 @@ OPTIONS
 --dry-run::
 	Do nothing; only show what would happen
 
-
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org>
-Rewritten by Ryan Anderson <ryan@michonline.com>
-Move functionality added by Josef Weidendorfer <Josef.Weidendorfer@gmx.de>
-
-Documentation
---------------
-Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
-
 GIT
 ---
 Part of the linkgit:git[1] suite

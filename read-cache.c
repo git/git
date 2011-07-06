@@ -92,7 +92,7 @@ static int ce_compare_data(struct cache_entry *ce, struct stat *st)
 
 	if (fd >= 0) {
 		unsigned char sha1[20];
-		if (!index_fd(sha1, fd, st, 0, OBJ_BLOB, ce->name))
+		if (!index_fd(sha1, fd, st, OBJ_BLOB, ce->name, 0))
 			match = hashcmp(sha1, ce->sha1);
 		/* index_fd() closed the file descriptor already */
 	}
@@ -608,6 +608,29 @@ int add_to_index(struct index_state *istate, const char *path, struct stat *st, 
 		ce->ce_mode = ce_mode_from_stat(ent, st_mode);
 	}
 
+	/* When core.ignorecase=true, determine if a directory of the same name but differing
+	 * case already exists within the Git repository.  If it does, ensure the directory
+	 * case of the file being added to the repository matches (is folded into) the existing
+	 * entry's directory case.
+	 */
+	if (ignore_case) {
+		const char *startPtr = ce->name;
+		const char *ptr = startPtr;
+		while (*ptr) {
+			while (*ptr && *ptr != '/')
+				++ptr;
+			if (*ptr == '/') {
+				struct cache_entry *foundce;
+				++ptr;
+				foundce = index_name_exists(&the_index, ce->name, ptr - ce->name, ignore_case);
+				if (foundce) {
+					memcpy((void *)startPtr, foundce->name + (startPtr - ce->name), ptr - startPtr);
+					startPtr = ptr;
+				}
+			}
+		}
+	}
+
 	alias = index_name_exists(istate, ce->name, ce_namelen(ce), ignore_case);
 	if (alias && !ce_stage(alias) && !ie_match_stat(istate, alias, st, ce_option)) {
 		/* Nothing changed, really */
@@ -618,7 +641,7 @@ int add_to_index(struct index_state *istate, const char *path, struct stat *st, 
 		return 0;
 	}
 	if (!intent_only) {
-		if (index_path(ce->sha1, path, st, 1))
+		if (index_path(ce->sha1, path, st, HASH_WRITE_OBJECT))
 			return error("unable to index file %s", path);
 	} else
 		record_intent_to_add(ce);
@@ -683,30 +706,9 @@ int ce_same_name(struct cache_entry *a, struct cache_entry *b)
 	return ce_namelen(b) == len && !memcmp(a->name, b->name, len);
 }
 
-int ce_path_match(const struct cache_entry *ce, const char **pathspec)
+int ce_path_match(const struct cache_entry *ce, const struct pathspec *pathspec)
 {
-	const char *match, *name;
-	int len;
-
-	if (!pathspec)
-		return 1;
-
-	len = ce_namelen(ce);
-	name = ce->name;
-	while ((match = *pathspec++) != NULL) {
-		int matchlen = strlen(match);
-		if (matchlen > len)
-			continue;
-		if (memcmp(name, match, matchlen))
-			continue;
-		if (matchlen && name[matchlen-1] == '/')
-			return 1;
-		if (name[matchlen] == '/' || !name[matchlen])
-			return 1;
-		if (!matchlen)
-			return 1;
-	}
-	return 0;
+	return match_pathspec_depth(pathspec, ce->name, ce_namelen(ce), 0, NULL);
 }
 
 /*
@@ -1081,7 +1083,7 @@ static struct cache_entry *refresh_cache_ent(struct index_state *istate,
 }
 
 static void show_file(const char * fmt, const char * name, int in_porcelain,
-		      int * first, char *header_msg)
+		      int * first, const char *header_msg)
 {
 	if (in_porcelain && *first && header_msg) {
 		printf("%s\n", header_msg);
@@ -1091,7 +1093,7 @@ static void show_file(const char * fmt, const char * name, int in_porcelain,
 }
 
 int refresh_index(struct index_state *istate, unsigned int flags, const char **pathspec,
-		  char *seen, char *header_msg)
+		  char *seen, const char *header_msg)
 {
 	int i;
 	int has_errors = 0;
@@ -1516,6 +1518,7 @@ static int ce_write_entry(git_SHA_CTX *c, int fd, struct cache_entry *ce)
 	int size = ondisk_ce_size(ce);
 	struct ondisk_cache_entry *ondisk = xcalloc(1, size);
 	char *name;
+	int result;
 
 	ondisk->ctime.sec = htonl(ce->ce_ctime.sec);
 	ondisk->mtime.sec = htonl(ce->ce_mtime.sec);
@@ -1539,7 +1542,34 @@ static int ce_write_entry(git_SHA_CTX *c, int fd, struct cache_entry *ce)
 		name = ondisk->name;
 	memcpy(name, ce->name, ce_namelen(ce));
 
-	return ce_write(c, fd, ondisk, size);
+	result = ce_write(c, fd, ondisk, size);
+	free(ondisk);
+	return result;
+}
+
+static int has_racy_timestamp(struct index_state *istate)
+{
+	int entries = istate->cache_nr;
+	int i;
+
+	for (i = 0; i < entries; i++) {
+		struct cache_entry *ce = istate->cache[i];
+		if (is_racy_timestamp(istate, ce))
+			return 1;
+	}
+	return 0;
+}
+
+/*
+ * Opportunisticly update the index but do not complain if we can't
+ */
+void update_index_if_able(struct index_state *istate, struct lock_file *lockfile)
+{
+	if ((istate->cache_changed || has_racy_timestamp(istate)) &&
+	    !write_index(istate, lockfile->fd))
+		commit_locked_index(lockfile);
+	else
+		rollback_lock_file(lockfile);
 }
 
 int write_index(struct index_state *istate, int newfd)

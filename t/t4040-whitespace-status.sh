@@ -60,4 +60,16 @@ test_expect_success 'diff-files -b -p --exit-code' '
 	git diff-files -b -p --exit-code
 '
 
+test_expect_success 'diff-files --diff-filter --quiet' '
+	git reset --hard &&
+	rm a/d &&
+	echo x >>b/e &&
+	test_must_fail git diff-files --diff-filter=M --quiet
+'
+
+test_expect_success 'diff-tree --diff-filter --quiet' '
+	git commit -a -m "worktree state" &&
+	test_must_fail git diff-tree --diff-filter=M --quiet HEAD^ HEAD
+'
+
 test_done

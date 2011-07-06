@@ -6,11 +6,6 @@ struct object_list {
 	struct object_list *next;
 };
 
-struct object_refs {
-	unsigned count;
-	struct object *ref[FLEX_ARRAY]; /* more */
-};
-
 struct object_array {
 	unsigned int nr;
 	unsigned int alloc;
@@ -20,6 +15,8 @@ struct object_array {
 		unsigned mode;
 	} *objects;
 };
+
+#define OBJECT_ARRAY_INIT { 0, 0, NULL }
 
 #define TYPE_BITS   3
 #define FLAG_BITS  27

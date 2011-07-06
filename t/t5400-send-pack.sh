@@ -94,6 +94,29 @@ test_expect_success 'refuse deleting push with denyDeletes' '
 	test_must_fail git send-pack ./victim :extra master
 '
 
+test_expect_success 'cannot override denyDeletes with git -c send-pack' '
+	(
+		cd victim &&
+		test_might_fail git branch -D extra &&
+		git config receive.denyDeletes true &&
+		git branch extra master
+	) &&
+	test_must_fail git -c receive.denyDeletes=false \
+					send-pack ./victim :extra master
+'
+
+test_expect_success 'override denyDeletes with git -c receive-pack' '
+	(
+		cd victim &&
+		test_might_fail git branch -D extra &&
+		git config receive.denyDeletes true &&
+		git branch extra master
+	) &&
+	git send-pack \
+		--receive-pack="git -c receive.denyDeletes=false receive-pack" \
+		./victim :extra master
+'
+
 test_expect_success 'denyNonFastforwards trumps --force' '
 	(
 	    cd victim &&
@@ -106,7 +129,7 @@ test_expect_success 'denyNonFastforwards trumps --force' '
 	test "$victim_orig" = "$victim_head"
 '
 
-test_expect_success 'push --all excludes remote tracking hierarchy' '
+test_expect_success 'push --all excludes remote-tracking hierarchy' '
 	mkdir parent &&
 	(
 	    cd parent &&
@@ -167,7 +190,7 @@ test_expect_success 'pushing explicit refspecs respects forcing' '
 	        +refs/heads/master:refs/heads/master
 	) &&
 	parent_head=$(cd parent && git rev-parse --verify master) &&
-	child_head=$(cd parent && git rev-parse --verify master) &&
+	child_head=$(cd child && git rev-parse --verify master) &&
 	test "$parent_head" = "$child_head"
 '
 
@@ -187,7 +210,7 @@ test_expect_success 'pushing wildcard refspecs respects forcing' '
 	        "+refs/heads/*:refs/heads/*"
 	) &&
 	parent_head=$(cd parent && git rev-parse --verify master) &&
-	child_head=$(cd parent && git rev-parse --verify master) &&
+	child_head=$(cd child && git rev-parse --verify master) &&
 	test "$parent_head" = "$child_head"
 '
 

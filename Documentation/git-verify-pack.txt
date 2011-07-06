@@ -8,7 +8,7 @@ git-verify-pack - Validate packed git archive files
 
 SYNOPSIS
 --------
-'git verify-pack' [-v|--verbose] [--] <pack>.idx ...
+'git verify-pack' [-v|--verbose] [-s|--stat-only] [--] <pack>.idx ...
 
 
 DESCRIPTION
@@ -46,14 +46,6 @@ for objects that are not deltified in the pack, and
 	SHA1 type size size-in-packfile offset-in-packfile depth base-SHA1
 
 for objects that are deltified.
-
-Author
-------
-Written by Junio C Hamano <gitster@pobox.com>
-
-Documentation
---------------
-Documentation by Junio C Hamano
 
 GIT
 ---

@@ -69,7 +69,7 @@ frequently used options.
 	the form "'<from>'..'<to>'" to show all revisions between '<from>' and
 	back to '<to>'. Note, more advanced revision selection can be applied.
 	For a more complete list of ways to spell object names, see
-	"SPECIFYING REVISIONS" section in linkgit:git-rev-parse[1].
+	linkgit:gitrevisions[7].
 
 <path>...::
 
@@ -112,15 +112,6 @@ SEE ALSO
 'tig(1)'::
 	A minimal repository browser and git tool output highlighter written
 	in C using Ncurses.
-
-Author
-------
-Written by Paul Mackerras <paulus@samba.org>.
-
-Documentation
---------------
-Documentation by Junio C Hamano, Jonas Fonseca, and the git-list
-<git@vger.kernel.org>.
 
 GIT
 ---

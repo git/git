@@ -51,7 +51,7 @@ test_expect_success 'update-index again' \
 	echo hello world >dir1/file3 &&
 	echo goodbye people >file2 &&
 	git update-index --add file2 dir1/file3 &&
-	echo hello everybody >file2
+	echo hello everybody >file2 &&
 	echo happy >dir1/file3 &&
 	git update-index --again &&
 	git ls-files -s >current &&
@@ -63,10 +63,10 @@ cat > expected <<\EOF
 EOF
 test_expect_success 'update-index --update from subdir' \
 	'echo not so happy >file2 &&
-	cd dir1 &&
+	(cd dir1 &&
 	cat ../file2 >file3 &&
-	git update-index --again &&
-	cd .. &&
+	git update-index --again
+	) &&
 	git ls-files -s >current &&
 	cmp current expected'
 

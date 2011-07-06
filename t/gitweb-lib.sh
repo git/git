@@ -19,9 +19,9 @@ our \$site_name = '[localhost]';
 our \$site_header = '';
 our \$site_footer = '';
 our \$home_text = 'indextext.html';
-our @stylesheets = ('file:///$TEST_DIRECTORY/../gitweb/gitweb.css');
-our \$logo = 'file:///$TEST_DIRECTORY/../gitweb/git-logo.png';
-our \$favicon = 'file:///$TEST_DIRECTORY/../gitweb/git-favicon.png';
+our @stylesheets = ('file:///$GIT_BUILD_DIR/gitweb/static/gitweb.css');
+our \$logo = 'file:///$GIT_BUILD_DIR/gitweb/static/git-logo.png';
+our \$favicon = 'file:///$GIT_BUILD_DIR/gitweb/static/git-favicon.png';
 our \$projects_list = '';
 our \$export_ok = '';
 our \$strict_export = '';
@@ -32,17 +32,34 @@ EOF
 	cat >.git/description <<EOF
 $0 test repository
 EOF
+
+	# You can set the GITWEB_TEST_INSTALLED environment variable to
+	# the gitwebdir (the directory where gitweb is installed / deployed to)
+	# of an existing gitweb instalation to test that installation,
+	# or simply to pathname of installed gitweb script.
+	if test -n "$GITWEB_TEST_INSTALLED" ; then
+		if test -d $GITWEB_TEST_INSTALLED; then
+			SCRIPT_NAME="$GITWEB_TEST_INSTALLED/gitweb.cgi"
+		else
+			SCRIPT_NAME="$GITWEB_TEST_INSTALLED"
+		fi
+		test -f "$SCRIPT_NAME" ||
+		error "Cannot find gitweb at $GITWEB_TEST_INSTALLED."
+		say "# Testing $SCRIPT_NAME"
+	else # normal case, use source version of gitweb
+		SCRIPT_NAME="$GIT_BUILD_DIR/gitweb/gitweb.perl"
+	fi
+	export SCRIPT_NAME
 }
 
 gitweb_run () {
 	GATEWAY_INTERFACE='CGI/1.1'
 	HTTP_ACCEPT='*/*'
 	REQUEST_METHOD='GET'
-	SCRIPT_NAME="$TEST_DIRECTORY/../gitweb/gitweb.perl"
 	QUERY_STRING=""$1""
 	PATH_INFO=""$2""
 	export GATEWAY_INTERFACE HTTP_ACCEPT REQUEST_METHOD \
-		SCRIPT_NAME QUERY_STRING PATH_INFO
+		QUERY_STRING PATH_INFO
 
 	GITWEB_CONFIG=$(pwd)/gitweb_config.perl
 	export GITWEB_CONFIG
@@ -65,7 +82,12 @@ gitweb_run () {
 		}
 		close O;
 	' gitweb.output &&
-	if grep '^[[]' gitweb.log >/dev/null 2>&1; then false; else true; fi
+	if grep '^[[]' gitweb.log >/dev/null 2>&1; then
+		test_debug 'cat gitweb.log >&2' &&
+		false
+	else
+		true
+	fi
 
 	# gitweb.log is left for debugging
 	# gitweb.output is used to parse HTTP output
@@ -76,13 +98,13 @@ gitweb_run () {
 . ./test-lib.sh
 
 if ! test_have_prereq PERL; then
-	say 'skipping gitweb tests, perl not available'
+	skip_all='skipping gitweb tests, perl not available'
 	test_done
 fi
 
-perl -MEncode -e 'decode_utf8("", Encode::FB_CROAK)' >/dev/null 2>&1 || {
-    say 'skipping gitweb tests, perl version is too old'
-    test_done
+perl -MEncode -e '$e="";decode_utf8($e, Encode::FB_CROAK)' >/dev/null 2>&1 || {
+	skip_all='skipping gitweb tests, perl version is too old'
+	test_done
 }
 
 gitweb_init

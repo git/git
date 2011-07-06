@@ -81,4 +81,12 @@ test_expect_success 'check combined output (2)' '
 	verify_helper sidesansone
 '
 
+test_expect_success 'diagnose truncated file' '
+	>file &&
+	git add file &&
+	git commit --amend -C HEAD &&
+	git show >out &&
+	grep "diff --cc file" out
+'
+
 test_done

@@ -71,10 +71,35 @@ test_expect_success 'favour same basenames over different ones' '
 	git rm path1 &&
 	mkdir subdir &&
 	git mv another-path subdir/path1 &&
-	git status | grep "renamed: .*path1 -> subdir/path1"'
+	git status | test_i18ngrep "renamed: .*path1 -> subdir/path1"'
 
-test_expect_success  'favour same basenames even with minor differences' '
+test_expect_success 'favour same basenames even with minor differences' '
 	git show HEAD:path1 | sed "s/15/16/" > subdir/path1 &&
-	git status | grep "renamed: .*path1 -> subdir/path1"'
+	git status | test_i18ngrep "renamed: .*path1 -> subdir/path1"'
+
+test_expect_success 'setup for many rename source candidates' '
+	git reset --hard &&
+	for i in 0 1 2 3 4 5 6 7 8 9;
+	do
+		for j in 0 1 2 3 4 5 6 7 8 9;
+		do
+			echo "$i$j" >"path$i$j"
+		done
+	done &&
+	git add "path??" &&
+	test_tick &&
+	git commit -m "hundred" &&
+	(cat path1; echo new) >new-path &&
+	echo old >>path1 &&
+	git add new-path path1 &&
+	git diff -l 4 -C -C --cached --name-status >actual 2>actual.err &&
+	sed -e "s/^\([CM]\)[0-9]*	/\1	/" actual >actual.munged &&
+	cat >expect <<-EOF &&
+	C	path1	new-path
+	M	path1
+	EOF
+	test_cmp expect actual.munged &&
+	grep warning actual.err
+'
 
 test_done

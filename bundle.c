@@ -200,7 +200,7 @@ int create_bundle(struct bundle_header *header, const char *path,
 	int bundle_fd = -1;
 	int bundle_to_stdout;
 	const char **argv_boundary = xmalloc((argc + 4) * sizeof(const char *));
-	const char **argv_pack = xmalloc(5 * sizeof(const char *));
+	const char **argv_pack = xmalloc(6 * sizeof(const char *));
 	int i, ref_count = 0;
 	char buffer[1024];
 	struct rev_info revs;
@@ -346,7 +346,8 @@ int create_bundle(struct bundle_header *header, const char *path,
 	argv_pack[1] = "--all-progress-implied";
 	argv_pack[2] = "--stdout";
 	argv_pack[3] = "--thin";
-	argv_pack[4] = NULL;
+	argv_pack[4] = "--delta-base-offset";
+	argv_pack[5] = NULL;
 	memset(&rls, 0, sizeof(rls));
 	rls.argv = argv_pack;
 	rls.in = -1;
@@ -372,8 +373,10 @@ int create_bundle(struct bundle_header *header, const char *path,
 	close(rls.in);
 	if (finish_command(&rls))
 		return error ("pack-objects died");
-	if (!bundle_to_stdout)
-		commit_lock_file(&lock);
+	if (!bundle_to_stdout) {
+		if (commit_lock_file(&lock))
+			die_errno("cannot create '%s'", path);
+	}
 	return 0;
 }
 

@@ -1,6 +1,12 @@
 #ifndef GREP_H
 #define GREP_H
 #include "color.h"
+#ifdef USE_LIBPCRE
+#include <pcre.h>
+#else
+typedef int pcre;
+typedef int pcre_extra;
+#endif
 
 enum grep_pat_token {
 	GREP_PATTERN,
@@ -10,18 +16,19 @@ enum grep_pat_token {
 	GREP_OPEN_PAREN,
 	GREP_CLOSE_PAREN,
 	GREP_NOT,
-	GREP_OR,
+	GREP_OR
 };
 
 enum grep_context {
 	GREP_CONTEXT_HEAD,
-	GREP_CONTEXT_BODY,
+	GREP_CONTEXT_BODY
 };
 
 enum grep_header_field {
 	GREP_HEADER_AUTHOR = 0,
-	GREP_HEADER_COMMITTER,
+	GREP_HEADER_COMMITTER
 };
+#define GREP_HEADER_FIELD_MAX (GREP_HEADER_COMMITTER + 1)
 
 struct grep_pat {
 	struct grep_pat *next;
@@ -29,8 +36,11 @@ struct grep_pat {
 	int no;
 	enum grep_pat_token token;
 	const char *pattern;
+	size_t patternlen;
 	enum grep_header_field field;
 	regex_t regexp;
+	pcre *pcre_regexp;
+	pcre_extra *pcre_extra_info;
 	unsigned fixed:1;
 	unsigned ignore_case:1;
 	unsigned word_regexp:1;
@@ -40,7 +50,8 @@ enum grep_expr_node {
 	GREP_NODE_ATOM,
 	GREP_NODE_NOT,
 	GREP_NODE_AND,
-	GREP_NODE_OR,
+	GREP_NODE_TRUE,
+	GREP_NODE_OR
 };
 
 struct grep_expr {
@@ -59,6 +70,8 @@ struct grep_expr {
 struct grep_opt {
 	struct grep_pat *pattern_list;
 	struct grep_pat **pattern_tail;
+	struct grep_pat *header_list;
+	struct grep_pat **header_tail;
 	struct grep_expr *pattern_expression;
 	const char *prefix;
 	int prefix_length;
@@ -78,13 +91,20 @@ struct grep_opt {
 #define GREP_BINARY_TEXT	2
 	int binary;
 	int extended;
+	int pcre;
 	int relative;
 	int pathname;
 	int null_following_name;
 	int color;
 	int max_depth;
 	int funcname;
+	char color_context[COLOR_MAXLEN];
+	char color_filename[COLOR_MAXLEN];
+	char color_function[COLOR_MAXLEN];
+	char color_lineno[COLOR_MAXLEN];
 	char color_match[COLOR_MAXLEN];
+	char color_selected[COLOR_MAXLEN];
+	char color_sep[COLOR_MAXLEN];
 	int regflags;
 	unsigned pre_context;
 	unsigned post_context;
@@ -96,6 +116,7 @@ struct grep_opt {
 	void *output_priv;
 };
 
+extern void append_grep_pat(struct grep_opt *opt, const char *pat, size_t patlen, const char *origin, int no, enum grep_pat_token t);
 extern void append_grep_pattern(struct grep_opt *opt, const char *pat, const char *origin, int no, enum grep_pat_token t);
 extern void append_header_grep_pattern(struct grep_opt *, enum grep_header_field, const char *);
 extern void compile_grep_patterns(struct grep_opt *opt);

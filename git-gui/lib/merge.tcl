@@ -83,6 +83,7 @@ method _visualize {} {
 
 method _start {} {
 	global HEAD current_branch remote_url
+	global _last_merged_branch
 
 	set name [_rev $this]
 	if {$name eq {}} {
@@ -109,6 +110,7 @@ method _start {} {
 	regsub ^refs/heads/ $branch {} branch
 	puts $fh "$cmit\t\tbranch '$branch' of $remote"
 	close $fh
+	set _last_merged_branch $branch
 
 	set cmd [list git]
 	lappend cmd merge

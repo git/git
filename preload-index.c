@@ -35,7 +35,9 @@ static void *preload_thread(void *_data)
 	struct index_state *index = p->index;
 	struct cache_entry **cep = index->cache + p->offset;
 	struct cache_def cache;
+	struct pathspec pathspec;
 
+	init_pathspec(&pathspec, p->pathspec);
 	memset(&cache, 0, sizeof(cache));
 	nr = p->nr;
 	if (nr + p->offset > index->cache_nr)
@@ -51,7 +53,7 @@ static void *preload_thread(void *_data)
 			continue;
 		if (ce_uptodate(ce))
 			continue;
-		if (!ce_path_match(ce, p->pathspec))
+		if (!ce_path_match(ce, &pathspec))
 			continue;
 		if (threaded_has_symlink_leading_path(&cache, ce->name, ce_namelen(ce)))
 			continue;
@@ -61,6 +63,7 @@ static void *preload_thread(void *_data)
 			continue;
 		ce_mark_uptodate(ce);
 	} while (--nr > 0);
+	free_pathspec(&pathspec);
 	return NULL;
 }
 

@@ -16,7 +16,7 @@ You may find these things in your git repository (`.git`
 directory for a repository associated with your working tree, or
 `<project>.git` directory for a public 'bare' repository. It is
 also possible to have a working tree where `.git` is a plain
-ascii file containing `gitdir: <path>`, i.e. the path to the
+ASCII file containing `gitdir: <path>`, i.e. the path to the
 real git repository).
 
 objects::

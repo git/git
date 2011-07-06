@@ -31,25 +31,36 @@ But if you must have a list of rules, here they are.
 
 For shell scripts specifically (not exhaustive):
 
+ - We use tabs for indentation.
+
+ - Case arms are indented at the same depth as case and esac lines.
+
  - We prefer $( ... ) for command substitution; unlike ``, it
    properly nests.  It should have been the way Bourne spelled
    it from day one, but unfortunately isn't.
 
- - We use ${parameter-word} and its [-=?+] siblings, and their
-   colon'ed "unset or null" form.
+ - We use POSIX compliant parameter substitutions and avoid bashisms;
+   namely:
 
- - We use ${parameter#word} and its [#%] siblings, and their
-   doubled "longest matching" form.
+   - We use ${parameter-word} and its [-=?+] siblings, and their
+     colon'ed "unset or null" form.
+
+   - We use ${parameter#word} and its [#%] siblings, and their
+     doubled "longest matching" form.
+
+   - No "Substring Expansion" ${parameter:offset:length}.
+
+   - No shell arrays.
+
+   - No strlen ${#parameter}.
+
+   - No pattern replacement ${parameter/pattern/string}.
 
  - We use Arithmetic Expansion $(( ... )).
 
- - No "Substring Expansion" ${parameter:offset:length}.
-
- - No shell arrays.
-
- - No strlen ${#parameter}.
-
- - No regexp ${parameter/pattern/string}.
+ - Inside Arithmetic Expansion, spell shell variables with $ in front
+   of them, as some shells do not grok $((x)) while accepting $(($x))
+   just fine (e.g. dash older than 0.5.4).
 
  - We do not use Process Substitution <(list) or >(list).
 
@@ -132,3 +143,55 @@ For C programs:
 
  - When we pass <string, length> pair to functions, we should try to
    pass them in that order.
+
+Writing Documentation:
+
+ Every user-visible change should be reflected in the documentation.
+ The same general rule as for code applies -- imitate the existing
+ conventions.  A few commented examples follow to provide reference
+ when writing or modifying command usage strings and synopsis sections
+ in the manual pages:
+
+ Placeholders are spelled in lowercase and enclosed in angle brackets:
+   <file>
+   --sort=<key>
+   --abbrev[=<n>]
+
+ Possibility of multiple occurrences is indicated by three dots:
+   <file>...
+   (One or more of <file>.)
+
+ Optional parts are enclosed in square brackets:
+   [<extra>]
+   (Zero or one <extra>.)
+
+   --exec-path[=<path>]
+   (Option with an optional argument.  Note that the "=" is inside the
+   brackets.)
+
+   [<patch>...]
+   (Zero or more of <patch>.  Note that the dots are inside, not
+   outside the brackets.)
+
+ Multiple alternatives are indicated with vertical bar:
+   [-q | --quiet]
+   [--utf8 | --no-utf8]
+
+ Parentheses are used for grouping:
+   [(<rev>|<range>)...]
+   (Any number of either <rev> or <range>.  Parens are needed to make
+   it clear that "..." pertains to both <rev> and <range>.)
+
+   [(-p <parent>)...]
+   (Any number of option -p, each with one <parent> argument.)
+
+   git remote set-head <name> (-a | -d | <branch>)
+   (One and only one of "-a", "-d" or "<branch>" _must_ (no square
+   brackets) be provided.)
+
+ And a somewhat more contrived example:
+   --diff-filter=[(A|C|D|M|R|T|U|X|B)...[*]]
+   Here "=" is outside the brackets, because "--diff-filter=" is a
+   valid usage.  "*" has its own pair of brackets, because it can
+   (optionally) be specified only when one or more of the letters is
+   also provided.

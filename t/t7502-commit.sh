@@ -4,7 +4,78 @@ test_description='git commit porcelain-ish'
 
 . ./test-lib.sh
 
+# Arguments: [<prefix] [<commit message>] [<commit options>]
+check_summary_oneline() {
+	test_tick &&
+	git commit ${3+"$3"} -m "$2" | head -1 > act &&
+
+	# branch name
+	SUMMARY_PREFIX="$(git name-rev --name-only HEAD)" &&
+
+	# append the "special" prefix, like "root-commit", "detached HEAD"
+	if test -n "$1"
+	then
+		SUMMARY_PREFIX="$SUMMARY_PREFIX ($1)"
+	fi
+
+	# abbrev SHA-1
+	SUMMARY_POSTFIX="$(git log -1 --pretty='format:%h')"
+	echo "[$SUMMARY_PREFIX $SUMMARY_POSTFIX] $2" >exp &&
+
+	test_i18ncmp exp act
+}
+
+test_expect_success 'output summary format' '
+
+	echo new >file1 &&
+	git add file1 &&
+	check_summary_oneline "root-commit" "initial" &&
+
+	echo change >>file1 &&
+	git add file1
+'
+
+test_expect_success 'output summary format: root-commit' '
+	check_summary_oneline "" "a change"
+'
+
+test_expect_success 'output summary format for commit with an empty diff' '
+
+	check_summary_oneline "" "empty" "--allow-empty"
+'
+
+test_expect_success 'output summary format for merges' '
+
+	git checkout -b recursive-base &&
+	test_commit base file1 &&
+
+	git checkout -b recursive-a recursive-base &&
+	test_commit commit-a file1 &&
+
+	git checkout -b recursive-b recursive-base &&
+	test_commit commit-b file1 &&
+
+	# conflict
+	git checkout recursive-a &&
+	test_must_fail git merge recursive-b &&
+	# resolve the conflict
+	echo commit-a > file1 &&
+	git add file1 &&
+	check_summary_oneline "" "Merge"
+'
+
+output_tests_cleanup() {
+	# this is needed for "do not fire editor in the presence of conflicts"
+	git checkout master &&
+
+	# this is needed for the "partial removal" test to pass
+	git rm file1 &&
+	git commit -m "cleanup"
+}
+
 test_expect_success 'the basics' '
+
+	output_tests_cleanup &&
 
 	echo doing partial >"commit is" &&
 	mkdir not &&
@@ -35,7 +106,7 @@ test_expect_success 'partial' '
 
 '
 
-test_expect_success 'partial modification in a subdirecotry' '
+test_expect_success 'partial modification in a subdirectory' '
 
 	test_tick &&
 	git commit -m "partial commit to subdirectory" not &&
@@ -147,19 +218,21 @@ test_expect_success 'cleanup commit messages (strip,-F)' '
 
 '
 
-echo "sample
-
-# Please enter the commit message for your changes. Lines starting
-# with '#' will be ignored, and an empty message aborts the commit." >expect
-
 test_expect_success 'cleanup commit messages (strip,-F,-e)' '
 
 	echo >>negative &&
 	{ echo;echo sample;echo; } >text &&
 	git commit -e -F text -a &&
-	head -n 4 .git/COMMIT_EDITMSG >actual &&
-	test_cmp expect actual
+	head -n 4 .git/COMMIT_EDITMSG >actual
+'
 
+echo "sample
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit." >expect
+
+test_expect_success 'cleanup commit messages (strip,-F,-e): output' '
+	test_i18ncmp expect actual
 '
 
 echo "#
@@ -167,11 +240,10 @@ echo "#
 #" >> expect
 
 test_expect_success 'author different from committer' '
-
 	echo >>negative &&
-	git commit -e -m "sample"
+	test_might_fail git commit -e -m "sample" &&
 	head -n 7 .git/COMMIT_EDITMSG >actual &&
-	test_cmp expect actual
+	test_i18ncmp expect actual
 '
 
 mv expect expect.tmp
@@ -184,14 +256,14 @@ test_expect_success 'committer is automatic' '
 
 	echo >>negative &&
 	(
-		unset GIT_COMMITTER_EMAIL
-		unset GIT_COMMITTER_NAME
+		sane_unset GIT_COMMITTER_EMAIL &&
+		sane_unset GIT_COMMITTER_NAME &&
 		# must fail because there is no change
 		test_must_fail git commit -e -m "sample"
 	) &&
 	head -n 8 .git/COMMIT_EDITMSG |	\
-	sed "s/^# Committer: .*/# Committer:/" >actual &&
-	test_cmp expect actual
+	sed "s/^# Committer: .*/# Committer:/" >actual
+	test_i18ncmp expect actual
 '
 
 pwd=`pwd`
@@ -294,9 +366,9 @@ try_commit () {
 	GIT_EDITOR=.git/FAKE_EDITOR git commit -a $* $use_template &&
 	case "$use_template" in
 	'')
-		! grep "^## Custom template" .git/COMMIT_EDITMSG ;;
+		test_i18ngrep ! "^## Custom template" .git/COMMIT_EDITMSG ;;
 	*)
-		grep "^## Custom template" .git/COMMIT_EDITMSG ;;
+		test_i18ngrep "^## Custom template" .git/COMMIT_EDITMSG ;;
 	esac
 }
 
@@ -305,67 +377,67 @@ try_commit_status_combo () {
 	test_expect_success 'commit' '
 		clear_config commit.status &&
 		try_commit "" &&
-		grep "^# Changes to be committed:" .git/COMMIT_EDITMSG
+		test_i18ngrep "^# Changes to be committed:" .git/COMMIT_EDITMSG
 	'
 
 	test_expect_success 'commit' '
 		clear_config commit.status &&
 		try_commit "" &&
-		grep "^# Changes to be committed:" .git/COMMIT_EDITMSG
+		test_i18ngrep "^# Changes to be committed:" .git/COMMIT_EDITMSG
 	'
 
 	test_expect_success 'commit --status' '
 		clear_config commit.status &&
 		try_commit --status &&
-		grep "^# Changes to be committed:" .git/COMMIT_EDITMSG
+		test_i18ngrep "^# Changes to be committed:" .git/COMMIT_EDITMSG
 	'
 
 	test_expect_success 'commit --no-status' '
 		clear_config commit.status &&
-		try_commit --no-status
-		! grep "^# Changes to be committed:" .git/COMMIT_EDITMSG
+		try_commit --no-status &&
+		test_i18ngrep ! "^# Changes to be committed:" .git/COMMIT_EDITMSG
 	'
 
 	test_expect_success 'commit with commit.status = yes' '
 		clear_config commit.status &&
 		git config commit.status yes &&
 		try_commit "" &&
-		grep "^# Changes to be committed:" .git/COMMIT_EDITMSG
+		test_i18ngrep "^# Changes to be committed:" .git/COMMIT_EDITMSG
 	'
 
 	test_expect_success 'commit with commit.status = no' '
 		clear_config commit.status &&
 		git config commit.status no &&
 		try_commit "" &&
-		! grep "^# Changes to be committed:" .git/COMMIT_EDITMSG
+		test_i18ngrep ! "^# Changes to be committed:" .git/COMMIT_EDITMSG
 	'
 
 	test_expect_success 'commit --status with commit.status = yes' '
 		clear_config commit.status &&
 		git config commit.status yes &&
 		try_commit --status &&
-		grep "^# Changes to be committed:" .git/COMMIT_EDITMSG
+		test_i18ngrep "^# Changes to be committed:" .git/COMMIT_EDITMSG
 	'
 
 	test_expect_success 'commit --no-status with commit.status = yes' '
 		clear_config commit.status &&
 		git config commit.status yes &&
 		try_commit --no-status &&
-		! grep "^# Changes to be committed:" .git/COMMIT_EDITMSG
+		test_i18ngrep ! "^# Changes to be committed:" .git/COMMIT_EDITMSG
 	'
 
 	test_expect_success 'commit --status with commit.status = no' '
 		clear_config commit.status &&
 		git config commit.status no &&
 		try_commit --status &&
-		grep "^# Changes to be committed:" .git/COMMIT_EDITMSG
+		test_i18ngrep "^# Changes to be committed:" .git/COMMIT_EDITMSG
 	'
 
 	test_expect_success 'commit --no-status with commit.status = no' '
 		clear_config commit.status &&
 		git config commit.status no &&
 		try_commit --no-status &&
-		! grep "^# Changes to be committed:" .git/COMMIT_EDITMSG
+		test_i18ngrep ! "^# Changes to be committed:" .git/COMMIT_EDITMSG
 	'
 
 }

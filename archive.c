@@ -7,9 +7,9 @@
 #include "unpack-trees.h"
 
 static char const * const archive_usage[] = {
-	"git archive [options] <tree-ish> [path...]",
+	"git archive [options] <tree-ish> [<path>...]",
 	"git archive --list",
-	"git archive --remote <repo> [--exec <cmd>] [options] <tree-ish> [path...]",
+	"git archive --remote <repo> [--exec <cmd>] [options] <tree-ish> [<path>...]",
 	"git archive --remote <repo> [--exec <cmd>] --list",
 	NULL
 };
@@ -33,6 +33,7 @@ static void format_subst(const struct commit *commit,
 	struct strbuf fmt = STRBUF_INIT;
 	struct pretty_print_context ctx = {0};
 	ctx.date_mode = DATE_NORMAL;
+	ctx.abbrev = DEFAULT_ABBREV;
 
 	if (src == buf->buf)
 		to_free = strbuf_detach(buf, NULL);
@@ -156,6 +157,7 @@ int write_archive_entries(struct archiver_args *args,
 	struct archiver_context context;
 	struct unpack_trees_options opts;
 	struct tree_desc t;
+	struct pathspec pathspec;
 	int err;
 
 	if (args->baselen > 0 && args->base[args->baselen - 1] == '/') {
@@ -190,8 +192,10 @@ int write_archive_entries(struct archiver_args *args,
 		git_attr_set_direction(GIT_ATTR_INDEX, &the_index);
 	}
 
-	err = read_tree_recursive(args->tree, "", 0, 0, args->pathspec,
+	init_pathspec(&pathspec, args->pathspec);
+	err = read_tree_recursive(args->tree, "", 0, 0, &pathspec,
 				  write_archive_entry, &context);
+	free_pathspec(&pathspec);
 	if (err == READ_TREE_RECURSIVE)
 		err = 0;
 	return err;
@@ -220,11 +224,14 @@ static int reject_entry(const unsigned char *sha1, const char *base,
 
 static int path_exists(struct tree *tree, const char *path)
 {
-	const char *pathspec[] = { path, NULL };
+	const char *paths[] = { path, NULL };
+	struct pathspec pathspec;
+	int ret;
 
-	if (read_tree_recursive(tree, "", 0, 0, pathspec, reject_entry, NULL))
-		return 1;
-	return 0;
+	init_pathspec(&pathspec, paths);
+	ret = read_tree_recursive(tree, "", 0, 0, &pathspec, reject_entry, NULL);
+	free_pathspec(&pathspec);
+	return ret != 0;
 }
 
 static void parse_pathspec_arg(const char **pathspec,
@@ -313,7 +320,7 @@ static int parse_archive_args(int argc, const char **argv,
 			"write the archive to this file"),
 		OPT_BOOLEAN(0, "worktree-attributes", &worktree_attributes,
 			"read .gitattributes in working directory"),
-		OPT__VERBOSE(&verbose),
+		OPT__VERBOSE(&verbose, "report archived files on stderr"),
 		OPT__COMPR('0', &compression_level, "store only", 0),
 		OPT__COMPR('1', &compression_level, "compress faster", 1),
 		OPT__COMPR_HIDDEN('2', &compression_level, 2),

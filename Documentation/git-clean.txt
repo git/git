@@ -8,7 +8,7 @@ git-clean - Remove untracked files from the working tree
 SYNOPSIS
 --------
 [verse]
-'git clean' [-d] [-f] [-n] [-q] [-x | -X] [--] <path>...
+'git clean' [-d] [-f] [-n] [-q] [-e <pattern>] [-x | -X] [--] <path>...
 
 DESCRIPTION
 -----------
@@ -45,6 +45,12 @@ OPTIONS
 	Be quiet, only report errors, but not the files that are
 	successfully removed.
 
+-e <pattern>::
+--exclude=<pattern>::
+	Specify special exceptions to not be cleaned.  Each <pattern> is
+	the same form as in $GIT_DIR/info/excludes and this option can be
+	given multiple times.
+
 -x::
 	Don't use the ignore rules.  This allows removing all untracked
 	files, including build products.  This can be used (possibly in
@@ -54,12 +60,6 @@ OPTIONS
 -X::
 	Remove only files ignored by git.  This may be useful to rebuild
 	everything from scratch, but keep manually created files.
-
-
-Author
-------
-Written by Pavel Roskin <proski@gnu.org>
-
 
 GIT
 ---

@@ -5,7 +5,7 @@
 SUBDIRECTORY_OK=Yes
 OPTIONS_KEEPDASHDASH=
 OPTIONS_SPEC="\
-git am [options] [<mbox>|<Maildir>...]
+git am [options] [(<mbox>|<Maildir>)...]
 git am [options] (--resolved | --skip | --abort)
 --
 i,interactive   run interactively
@@ -15,6 +15,8 @@ q,quiet         be quiet
 s,signoff       add a Signed-off-by line to the commit message
 u,utf8          recode into utf8 (default)
 k,keep          pass -k flag to git-mailinfo
+keep-cr         pass --keep-cr flag to git-mailsplit for mbox format
+no-keep-cr      do not pass --keep-cr flag to git-mailsplit independent of am.keepcr
 c,scissors      strip everything before a scissors line
 whitespace=     pass it through git-apply
 ignore-space-change pass it through git-apply
@@ -50,28 +52,51 @@ else
 	HAS_HEAD=
 fi
 
+cmdline="git am"
+if test '' != "$interactive"
+then
+	cmdline="$cmdline -i"
+fi
+if test '' != "$threeway"
+then
+	cmdline="$cmdline -3"
+fi
+
 sq () {
 	git rev-parse --sq-quote "$@"
 }
 
 stop_here () {
     echo "$1" >"$dotest/next"
+    git rev-parse --verify -q HEAD >"$dotest/abort-safety"
     exit 1
+}
+
+safe_to_abort () {
+	if test -f "$dotest/dirtyindex"
+	then
+		return 1
+	fi
+
+	if ! test -s "$dotest/abort-safety"
+	then
+		return 0
+	fi
+
+	abort_safety=$(cat "$dotest/abort-safety")
+	if test "z$(git rev-parse --verify -q HEAD)" = "z$abort_safety"
+	then
+		return 0
+	fi
+	echo >&2 "You seem to have moved HEAD since the last 'am' failure."
+	echo >&2 "Not rewinding to ORIG_HEAD"
+	return 1
 }
 
 stop_here_user_resolve () {
     if [ -n "$resolvemsg" ]; then
 	    printf '%s\n' "$resolvemsg"
 	    stop_here $1
-    fi
-    cmdline="git am"
-    if test '' != "$interactive"
-    then
-        cmdline="$cmdline -i"
-    fi
-    if test '' != "$threeway"
-    then
-        cmdline="$cmdline -3"
     fi
     echo "When you have resolved this problem run \"$cmdline --resolved\"."
     echo "If you would prefer to skip this patch, instead run \"$cmdline --skip\"."
@@ -134,7 +159,7 @@ It does not apply to blobs recorded in its index."
     export GITHEAD_$his_tree
     if test -n "$GIT_QUIET"
     then
-	    export GIT_MERGE_VERBOSITY=0
+	    GIT_MERGE_VERBOSITY=0 && export GIT_MERGE_VERBOSITY
     fi
     git-merge-recursive $orig_tree -- HEAD $his_tree || {
 	    git rerere $allow_rerere_autoupdate
@@ -217,12 +242,12 @@ check_patch_format () {
 split_patches () {
 	case "$patch_format" in
 	mbox)
-		case "$rebasing" in
-		'')
-			keep_cr= ;;
-		?*)
-			keep_cr=--keep-cr ;;
-		esac
+		if test -n "$rebasing" || test t = "$keepcr"
+		then
+		    keep_cr=--keep-cr
+		else
+		    keep_cr=
+		fi
 		git mailsplit -d"$prec" -o"$dotest" -b $keep_cr -- "$@" > "$dotest/last" ||
 		clean_abort
 		;;
@@ -291,12 +316,17 @@ split_patches () {
 
 prec=4
 dotest="$GIT_DIR/rebase-apply"
-sign= utf8=t keep= skip= interactive= resolved= rebasing= abort=
+sign= utf8=t keep= keepcr= skip= interactive= resolved= rebasing= abort=
 resolvemsg= resume= scissors= no_inbody_headers=
 git_apply_opt=
 committer_date_is_author_date=
 ignore_date=
 allow_rerere_autoupdate=
+
+if test "$(git config --bool --get am.keepcr)" = true
+then
+    keepcr=t
+fi
 
 while test $# != 0
 do
@@ -348,6 +378,10 @@ do
 		allow_rerere_autoupdate="$1" ;;
 	-q|--quiet)
 		GIT_QUIET=t ;;
+	--keep-cr)
+		keepcr=t ;;
+	--no-keep-cr)
+		keepcr=f ;;
 	--)
 		shift; break ;;
 	*)
@@ -407,10 +441,11 @@ then
 			exec git rebase --abort
 		fi
 		git rerere clear
-		test -f "$dotest/dirtyindex" || {
+		if safe_to_abort
+		then
 			git read-tree --reset -u HEAD ORIG_HEAD
 			git reset ORIG_HEAD
-		}
+		fi
 		rm -fr "$dotest"
 		exit ;;
 	esac
@@ -432,12 +467,12 @@ else
 				set x
 				first=
 			}
-			case "$arg" in
-			/*)
-				set "$@" "$arg" ;;
-			*)
-				set "$@" "$prefix$arg" ;;
-			esac
+			if is_absolute_path "$arg"
+			then
+				set "$@" "$arg"
+			else
+				set "$@" "$prefix$arg"
+			fi
 		done
 		shift
 	fi
@@ -453,6 +488,7 @@ else
 	echo "$sign" >"$dotest/sign"
 	echo "$utf8" >"$dotest/utf8"
 	echo "$keep" >"$dotest/keep"
+	echo "$keepcr" >"$dotest/keepcr"
 	echo "$scissors" >"$dotest/scissors"
 	echo "$no_inbody_headers" >"$dotest/no_inbody_headers"
 	echo "$GIT_QUIET" >"$dotest/quiet"
@@ -496,6 +532,12 @@ if test "$(cat "$dotest/keep")" = t
 then
 	keep=-k
 fi
+case "$(cat "$dotest/keepcr")" in
+t)
+	keepcr=--keep-cr ;;
+f)
+	keepcr=--no-keep-cr ;;
+esac
 case "$(cat "$dotest/scissors")" in
 t)
 	scissors=--scissors ;;
@@ -535,13 +577,6 @@ then
 	resume=
 fi
 
-if test "$this" -gt "$last"
-then
-	say Nothing to do.
-	rm -fr "$dotest"
-	exit
-fi
-
 while test "$this" -le "$last"
 do
 	msgnum=`printf "%0${prec}d" $this`
@@ -573,8 +608,11 @@ do
 
 		test -s "$dotest/patch" || {
 			echo "Patch is empty.  Was it split wrong?"
+			echo "If you would prefer to skip this patch, instead run \"$cmdline --skip\"."
+			echo "To restore the original branch and stop patching run \"$cmdline --abort\"."
 			stop_here $this
 		}
+		rm -f "$dotest/original-commit" "$dotest/author-script"
 		if test -f "$dotest/rebasing" &&
 			commit=$(sed -e 's/^From \([0-9a-f]*\) .*/\1/' \
 				-e q "$dotest/$msgnum") &&
@@ -582,6 +620,8 @@ do
 		then
 			git cat-file commit "$commit" |
 			sed -e '1,/^$/d' >"$dotest/msg-clean"
+			echo "$commit" > "$dotest/original-commit"
+			get_author_ident_from_commit "$commit" > "$dotest/author-script"
 		else
 			{
 				sed -n '/^Subject/ s/Subject: //p' "$dotest/info"
@@ -593,9 +633,14 @@ do
 		;;
 	esac
 
-	GIT_AUTHOR_NAME="$(sed -n '/^Author/ s/Author: //p' "$dotest/info")"
-	GIT_AUTHOR_EMAIL="$(sed -n '/^Email/ s/Email: //p' "$dotest/info")"
-	GIT_AUTHOR_DATE="$(sed -n '/^Date/ s/Date: //p' "$dotest/info")"
+	if test -f "$dotest/author-script"
+	then
+		eval $(cat "$dotest/author-script")
+	else
+		GIT_AUTHOR_NAME="$(sed -n '/^Author/ s/Author: //p' "$dotest/info")"
+		GIT_AUTHOR_EMAIL="$(sed -n '/^Email/ s/Email: //p' "$dotest/info")"
+		GIT_AUTHOR_DATE="$(sed -n '/^Date/ s/Date: //p' "$dotest/info")"
+	fi
 
 	if test -z "$GIT_AUTHOR_EMAIL"
 	then
@@ -663,17 +708,20 @@ do
 		[eE]*) git_editor "$dotest/final-commit"
 		       action=again ;;
 		[vV]*) action=again
-		       : ${GIT_PAGER=$(git var GIT_PAGER)}
-		       : ${LESS=-FRSX}
-		       export LESS
-		       $GIT_PAGER "$dotest/patch" ;;
+		       git_pager "$dotest/patch" ;;
 		*)     action=again ;;
 		esac
 	    done
 	else
 	    action=yes
 	fi
-	FIRSTLINE=$(sed 1q "$dotest/final-commit")
+
+	if test -f "$dotest/final-commit"
+	then
+		FIRSTLINE=$(sed 1q "$dotest/final-commit")
+	else
+		FIRSTLINE=""
+	fi
 
 	if test $action = skip
 	then
@@ -709,6 +757,8 @@ do
 		resolved=
 		git diff-index --quiet --cached HEAD -- && {
 			echo "No changes - did you forget to use 'git add'?"
+			echo "If there is nothing left to stage, chances are that something else"
+			echo "already introduced the same changes; you might want to skip this patch."
 			stop_here_user_resolve $this
 		}
 		unmerged=$(git ls-files -u)
@@ -723,7 +773,7 @@ do
 		;;
 	esac
 
-	if test $apply_status = 1 && test "$threeway" = t
+	if test $apply_status != 0 && test "$threeway" = t
 	then
 		if (fall_back_3way)
 		then
@@ -768,6 +818,10 @@ do
 	git update-ref -m "$GIT_REFLOG_ACTION: $FIRSTLINE" HEAD $commit $parent ||
 	stop_here $this
 
+	if test -f "$dotest/original-commit"; then
+		echo "$(cat "$dotest/original-commit") $commit" >> "$dotest/rewritten"
+	fi
+
 	if test -x "$GIT_DIR"/hooks/post-applypatch
 	then
 		"$GIT_DIR"/hooks/post-applypatch
@@ -776,6 +830,12 @@ do
 	go_next
 done
 
-git gc --auto
+if test -s "$dotest"/rewritten; then
+    git notes copy --for-rewrite=rebase < "$dotest"/rewritten
+    if test -x "$GIT_DIR"/hooks/post-rewrite; then
+	"$GIT_DIR"/hooks/post-rewrite rebase < "$dotest"/rewritten
+    fi
+fi
 
 rm -fr "$dotest"
+git gc --auto
