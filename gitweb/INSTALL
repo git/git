@@ -123,6 +123,15 @@ GITWEB_CONFIG file:
 	$feature{'snapshot'}{'default'} = ['zip', 'tgz'];
 	$feature{'snapshot'}{'override'} = 1;
 
+If you allow overriding for the snapshot feature, you can specify which
+snapshot formats are globally disabled. You can also add any command line
+options you want (such as setting the compression level). For instance,
+you can disable Zip compressed snapshots and set GZip to run at level 6 by
+adding the following lines to your $GITWEB_CONFIG:
+
+	$known_snapshot_formats{'zip'}{'disabled'} = 1;
+	$known_snapshot_formats{'tgz'}{'compressor'} = ['gzip','-6'];
+
 
 Gitweb repositories
 -------------------
@@ -165,6 +174,27 @@ Gitweb repositories
   variable in gitweb config file). If it evaluates to true, gitweb
   shows repositories only if this file exists in its object database
   (if directory has the magic file named $export_ok).
+
+- Finally, it is possible to specify an arbitrary perl subroutine that
+  will be called for each project to determine if it can be exported.
+  The subroutine receives an absolute path to the project as its only
+  parameter.
+
+  For example, if you use mod_perl to run the script, and have dumb
+  http protocol authentication configured for your repositories, you
+  can use the following hook to allow access only if the user is
+  authorized to read the files:
+
+    $export_auth_hook = sub {
+        use Apache2::SubRequest ();
+        use Apache2::Const -compile => qw(HTTP_OK);
+        my $path = "$_[0]/HEAD";
+        my $r    = Apache2::RequestUtil->request;
+        my $sub  = $r->lookup_file($path);
+        return $sub->filename eq $path
+            && $sub->status == Apache2::Const::HTTP_OK;
+    };
+
 
 Generating projects list using gitweb
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

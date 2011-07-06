@@ -55,8 +55,8 @@ other display programs (see below).
 +
 The web browser can be specified using the configuration variable
 'help.browser', or 'web.browser' if the former is not set. If none of
-these config variables is set, the 'git-web--browse' helper script
-(called by 'git-help') will pick a suitable default. See
+these config variables is set, the 'git web--browse' helper script
+(called by 'git help') will pick a suitable default. See
 linkgit:git-web--browse[1] for more information about this.
 
 CONFIGURATION VARIABLES
@@ -67,7 +67,7 @@ help.format
 
 If no command line option is passed, the 'help.format' configuration
 variable will be checked. The following values are supported for this
-variable; they make 'git-help' behave as their corresponding command
+variable; they make 'git help' behave as their corresponding command
 line option:
 
 * "man" corresponds to '-m|--man',
@@ -112,7 +112,9 @@ For example, this configuration:
 will try to use konqueror first. But this may fail (for example if
 DISPLAY is not set) and in that case emacs' woman mode will be tried.
 
-If everything fails the 'man' program will be tried anyway.
+If everything fails, or if no viewer is configured, the viewer specified
+in the GIT_MAN_VIEWER environment variable will be tried.  If that
+fails too, the 'man' program will be tried anyway.
 
 man.<tool>.path
 ~~~~~~~~~~~~~~~
@@ -120,7 +122,7 @@ man.<tool>.path
 You can explicitly provide a full path to your preferred man viewer by
 setting the configuration variable 'man.<tool>.path'. For example, you
 can configure the absolute path to konqueror by setting
-'man.konqueror.path'. Otherwise, 'git-help' assumes the tool is
+'man.konqueror.path'. Otherwise, 'git help' assumes the tool is
 available in PATH.
 
 man.<tool>.cmd

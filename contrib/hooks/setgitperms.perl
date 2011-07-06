@@ -50,7 +50,7 @@ if ((@ARGV < 0) || !GetOptions(
 			      )) { die $usage; }
 die $usage unless ($read_mode xor $write_mode);
 
-my $topdir = `git-rev-parse --show-cdup` or die "\n"; chomp $topdir;
+my $topdir = `git rev-parse --show-cdup` or die "\n"; chomp $topdir;
 my $gitdir = $topdir . '.git';
 my $gitmeta = $topdir . '.gitmeta';
 
@@ -155,7 +155,7 @@ elsif ($read_mode) {
 	open (OUT, ">$gitmeta.tmp") or die "Could not open $gitmeta.tmp for writing: $!\n";
     }
 
-    my @files = `git-ls-files`;
+    my @files = `git ls-files`;
     my %dirs;
 
     foreach my $path (@files) {

@@ -52,6 +52,7 @@ struct collect_reflog_cb {
 
 #define INCOMPLETE	(1u<<10)
 #define STUDYING	(1u<<11)
+#define REACHABLE	(1u<<12)
 
 static int tree_is_complete(const unsigned char *sha1)
 {
@@ -209,6 +210,70 @@ static int keep_entry(struct commit **it, unsigned char *sha1)
 	return 1;
 }
 
+static int unreachable(struct expire_reflog_cb *cb, struct commit *commit, unsigned char *sha1)
+{
+	/*
+	 * We may or may not have the commit yet - if not, look it
+	 * up using the supplied sha1.
+	 */
+	if (!commit) {
+		if (is_null_sha1(sha1))
+			return 0;
+
+		commit = lookup_commit_reference_gently(sha1, 1);
+
+		/* Not a commit -- keep it */
+		if (!commit)
+			return 0;
+	}
+
+	/* Reachable from the current ref?  Don't prune. */
+	if (commit->object.flags & REACHABLE)
+		return 0;
+	if (in_merge_bases(commit, &cb->ref_commit, 1))
+		return 0;
+
+	/* We can't reach it - prune it. */
+	return 1;
+}
+
+static void mark_reachable(struct commit *commit, unsigned long expire_limit)
+{
+	/*
+	 * We need to compute whether the commit on either side of a reflog
+	 * entry is reachable from the tip of the ref for all entries.
+	 * Mark commits that are reachable from the tip down to the
+	 * time threshold first; we know a commit marked thusly is
+	 * reachable from the tip without running in_merge_bases()
+	 * at all.
+	 */
+	struct commit_list *pending = NULL;
+
+	commit_list_insert(commit, &pending);
+	while (pending) {
+		struct commit_list *entry = pending;
+		struct commit_list *parent;
+		pending = entry->next;
+		commit = entry->item;
+		free(entry);
+		if (commit->object.flags & REACHABLE)
+			continue;
+		if (parse_commit(commit))
+			continue;
+		commit->object.flags |= REACHABLE;
+		if (commit->date < expire_limit)
+			continue;
+		parent = commit->parents;
+		while (parent) {
+			commit = parent->item;
+			parent = parent->next;
+			if (commit->object.flags & REACHABLE)
+				continue;
+			commit_list_insert(commit, &pending);
+		}
+	}
+}
+
 static int expire_reflog_ent(unsigned char *osha1, unsigned char *nsha1,
 		const char *email, unsigned long timestamp, int tz,
 		const char *message, void *cb_data)
@@ -230,12 +295,7 @@ static int expire_reflog_ent(unsigned char *osha1, unsigned char *nsha1,
 	if (timestamp < cb->cmd->expire_unreachable) {
 		if (!cb->ref_commit)
 			goto prune;
-		if (!old && !is_null_sha1(osha1))
-			old = lookup_commit_reference_gently(osha1, 1);
-		if (!new && !is_null_sha1(nsha1))
-			new = lookup_commit_reference_gently(nsha1, 1);
-		if ((old && !in_merge_bases(old, &cb->ref_commit, 1)) ||
-		    (new && !in_merge_bases(new, &cb->ref_commit, 1)))
+		if (unreachable(cb, old, osha1) || unreachable(cb, new, nsha1))
 			goto prune;
 	}
 
@@ -277,18 +337,22 @@ static int expire_reflog(const char *ref, const unsigned char *sha1, int unused,
 	lock = lock_any_ref_for_update(ref, sha1, 0);
 	if (!lock)
 		return error("cannot lock ref '%s'", ref);
-	log_file = xstrdup(git_path("logs/%s", ref));
+	log_file = git_pathdup("logs/%s", ref);
 	if (!file_exists(log_file))
 		goto finish;
 	if (!cmd->dry_run) {
-		newlog_path = xstrdup(git_path("logs/%s.lock", ref));
+		newlog_path = git_pathdup("logs/%s.lock", ref);
 		cb.newlog = fopen(newlog_path, "w");
 	}
 
 	cb.ref_commit = lookup_commit_reference_gently(sha1, 1);
 	cb.ref = ref;
 	cb.cmd = cmd;
+	if (cb.ref_commit)
+		mark_reachable(cb.ref_commit, cmd->expire_total);
 	for_each_reflog_ent(ref, expire_reflog_ent, &cb);
+	if (cb.ref_commit)
+		clear_commit_marks(cb.ref_commit, REACHABLE);
  finish:
 	if (cb.newlog) {
 		if (fclose(cb.newlog)) {
@@ -298,7 +362,7 @@ static int expire_reflog(const char *ref, const unsigned char *sha1, int unused,
 		} else if (cmd->updateref &&
 			(write_in_full(lock->lock_fd,
 				sha1_to_hex(cb.last_kept_sha1), 40) != 40 ||
-			 write_in_full(lock->lock_fd, "\n", 1) != 1 ||
+			 write_str_in_full(lock->lock_fd, "\n") != 1 ||
 			 close_ref(lock) < 0)) {
 			status |= error("Couldn't write %s",
 				lock->lk->filename);
@@ -540,11 +604,11 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 		free(collected.e);
 	}
 
-	while (i < argc) {
-		const char *ref = argv[i++];
+	for (; i < argc; i++) {
+		char *ref;
 		unsigned char sha1[20];
-		if (!resolve_ref(ref, sha1, 1, NULL)) {
-			status |= error("%s points nowhere!", ref);
+		if (!dwim_log(argv[i], strlen(argv[i]), sha1, &ref)) {
+			status |= error("%s points nowhere!", argv[i]);
 			continue;
 		}
 		set_reflog_expiry_param(&cb, explicit_expiry, ref);
@@ -630,10 +694,13 @@ static int cmd_reflog_delete(int argc, const char **argv, const char *prefix)
  */
 
 static const char reflog_usage[] =
-"git reflog (expire | ...)";
+"git reflog [ show | expire | delete ]";
 
 int cmd_reflog(int argc, const char **argv, const char *prefix)
 {
+	if (argc > 1 && !strcmp(argv[1], "-h"))
+		usage(reflog_usage);
+
 	/* With no command, we default to showing it. */
 	if (argc < 2 || *argv[1] == '-')
 		return cmd_log_reflog(argc, argv, prefix);

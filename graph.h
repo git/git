@@ -6,14 +6,8 @@ struct git_graph;
 
 /*
  * Create a new struct git_graph.
- * The graph should be freed with graph_release() when no longer needed.
  */
 struct git_graph *graph_init(struct rev_info *opt);
-
-/*
- * Destroy a struct git_graph and free associated memory.
- */
-void graph_release(struct git_graph *graph);
 
 /*
  * Update a git_graph with a new commit.
@@ -25,26 +19,6 @@ void graph_release(struct git_graph *graph);
  * to indicate that a portion of the graph is missing.
  */
 void graph_update(struct git_graph *graph, struct commit *commit);
-
-/*
- * Output the next line for a graph.
- * This formats the next graph line into the specified strbuf.  It is not
- * terminated with a newline.
- *
- * Returns 1 if the line includes the current commit, and 0 otherwise.
- * graph_next_line() will return 1 exactly once for each time
- * graph_update() is called.
- */
-int graph_next_line(struct git_graph *graph, struct strbuf *sb);
-
-/*
- * Output a padding line in the graph.
- * This is similar to graph_next_line().  However, it is guaranteed to
- * never print the current commit line.  Instead, if the commit line is
- * next, it will simply output a line of vertical padding, extending the
- * branch lines downwards, but leaving them otherwise unchanged.
- */
-void graph_padding_line(struct git_graph *graph, struct strbuf *sb);
 
 /*
  * Determine if a graph has finished outputting lines for the current
@@ -88,21 +62,6 @@ void graph_show_padding(struct git_graph *graph);
  * commit to stdout.  Does not print a terminating newline on the last line.
  */
 int graph_show_remainder(struct git_graph *graph);
-
-/*
- * Print a strbuf to stdout.  If the graph is non-NULL, all lines but the
- * first will be prefixed with the graph output.
- *
- * If the strbuf ends with a newline, the output will end after this
- * newline.  A new graph line will not be printed after the final newline.
- * If the strbuf is empty, no output will be printed.
- *
- * Since the first line will not include the graph ouput, the caller is
- * responsible for printing this line's graph (perhaps via
- * graph_show_commit() or graph_show_oneline()) before calling
- * graph_show_strbuf().
- */
-void graph_show_strbuf(struct git_graph *graph, struct strbuf const *sb);
 
 /*
  * Print a commit message strbuf and the remainder of the graph to stdout.

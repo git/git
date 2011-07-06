@@ -40,6 +40,7 @@ The rescan will be automatically started now.
 		_O {
 			continue; # and pray it works!
 		}
+		_U -
 		U? {
 			error_popup [mc "You are in the middle of a conflicted merge.
 
@@ -138,14 +139,14 @@ method _finish {cons ok} {
 
 constructor dialog {} {
 	global current_branch
-	global M1B
+	global M1B use_ttk NS
 
 	if {![_can_merge $this]} {
 		delete_this
 		return
 	}
 
-	make_toplevel top w
+	make_dialog top w
 	wm title $top [append "[appname] ([reponame]): " [mc "Merge"]]
 	if {$top ne {.}} {
 		wm geometry $top "+[winfo rootx .]+[winfo rooty .]"
@@ -153,21 +154,21 @@ constructor dialog {} {
 
 	set _start [cb _start]
 
-	label $w.header \
+	${NS}::label $w.header \
 		-text [mc "Merge Into %s" $current_branch] \
 		-font font_uibold
 	pack $w.header -side top -fill x
 
-	frame $w.buttons
-	button $w.buttons.visualize \
+	${NS}::frame $w.buttons
+	${NS}::button $w.buttons.visualize \
 		-text [mc Visualize] \
 		-command [cb _visualize]
 	pack $w.buttons.visualize -side left
-	button $w.buttons.merge \
+	${NS}::button $w.buttons.merge \
 		-text [mc Merge] \
 		-command $_start
 	pack $w.buttons.merge -side right
-	button $w.buttons.cancel \
+	${NS}::button $w.buttons.cancel \
 		-text [mc "Cancel"] \
 		-command [cb _cancel]
 	pack $w.buttons.cancel -side right -padx 5

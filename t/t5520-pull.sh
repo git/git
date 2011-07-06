@@ -29,6 +29,18 @@ test_expect_success 'checking the results' '
 	diff file cloned/file
 '
 
+test_expect_success 'pulling into void using master:master' '
+	mkdir cloned-uho &&
+	(
+		cd cloned-uho &&
+		git init &&
+		git pull .. master:master
+	) &&
+	test -f file &&
+	test -f cloned-uho/file &&
+	test_cmp file cloned-uho/file
+'
+
 test_expect_success 'test . as a remote' '
 
 	git branch copy master &&
@@ -80,20 +92,47 @@ test_expect_success '--rebase with rebased upstream' '
 
 	git remote add -f me . &&
 	git checkout copy &&
+	git tag copy-orig &&
 	git reset --hard HEAD^ &&
 	echo conflicting modification > file &&
 	git commit -m conflict file &&
 	git checkout to-rebase &&
 	echo file > file2 &&
 	git commit -m to-rebase file2 &&
+	git tag to-rebase-orig &&
 	git pull --rebase me copy &&
 	test "conflicting modification" = "$(cat file)" &&
 	test file = $(cat file2)
 
 '
 
+test_expect_success '--rebase with rebased default upstream' '
+
+	git update-ref refs/remotes/me/copy copy-orig &&
+	git checkout --track -b to-rebase2 me/copy &&
+	git reset --hard to-rebase-orig &&
+	git pull --rebase &&
+	test "conflicting modification" = "$(cat file)" &&
+	test file = $(cat file2)
+
+'
+
+test_expect_success 'rebased upstream + fetch + pull --rebase' '
+
+	git update-ref refs/remotes/me/copy copy-orig &&
+	git reset --hard to-rebase-orig &&
+	git checkout --track -b to-rebase3 me/copy &&
+	git reset --hard to-rebase-orig &&
+	git fetch &&
+	git pull --rebase &&
+	test "conflicting modification" = "$(cat file)" &&
+	test file = "$(cat file2)"
+
+'
+
 test_expect_success 'pull --rebase dies early with dirty working directory' '
 
+	git checkout to-rebase &&
 	git update-ref refs/remotes/me/copy copy^ &&
 	COPY=$(git rev-parse --verify me/copy) &&
 	git rebase --onto $COPY copy &&
@@ -108,6 +147,17 @@ test_expect_success 'pull --rebase dies early with dirty working directory' '
 	git pull &&
 	test $COPY != $(git rev-parse --verify me/copy)
 
+'
+
+test_expect_success 'pull --rebase works on branch yet to be born' '
+	git rev-parse master >expect &&
+	mkdir empty_repo &&
+	(cd empty_repo &&
+	 git init &&
+	 git pull --rebase .. master &&
+	 git rev-parse HEAD >../actual
+	) &&
+	test_cmp expect actual
 '
 
 test_done

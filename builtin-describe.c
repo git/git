@@ -5,23 +5,33 @@
 #include "builtin.h"
 #include "exec_cmd.h"
 #include "parse-options.h"
+#include "diff.h"
 
 #define SEEN		(1u<<0)
 #define MAX_TAGS	(FLAG_BITS - 1)
 
 static const char * const describe_usage[] = {
 	"git describe [options] <committish>*",
+	"git describe [options] --dirty",
 	NULL
 };
 
 static int debug;	/* Display lots of verbose info */
-static int all;	/* Default to annotated tags only */
-static int tags;	/* But allow any tags if --tags is specified */
+static int all;	/* Any valid ref can be used */
+static int tags;	/* Allow lightweight tags */
 static int longformat;
 static int abbrev = DEFAULT_ABBREV;
 static int max_candidates = 10;
+static int found_names;
 static const char *pattern;
 static int always;
+static const char *dirty;
+
+/* diff-index command arguments to check if working tree is dirty. */
+static const char *diff_index_args[] = {
+	"diff-index", "--quiet", "HEAD", "--", NULL
+};
+
 
 struct commit_name {
 	struct tag *tag;
@@ -49,6 +59,7 @@ static void add_to_known_names(const char *path,
 		memcpy(e->path, path, len);
 		commit->util = e;
 	}
+	found_names = 1;
 }
 
 static int get_name(const char *path, const unsigned char *sha1, int flag, void *cb_data)
@@ -94,8 +105,6 @@ static int get_name(const char *path, const unsigned char *sha1, int flag, void 
 	if (!all) {
 		if (!prio)
 			return 0;
-		if (!tags && prio < 2)
-			return 0;
 	}
 	add_to_known_names(all ? path + 5 : path + 10, commit, prio, sha1);
 	return 0;
@@ -112,8 +121,6 @@ static int compare_pt(const void *a_, const void *b_)
 {
 	struct possible_tag *a = (struct possible_tag *)a_;
 	struct possible_tag *b = (struct possible_tag *)b_;
-	if (a->name->prio != b->name->prio)
-		return b->name->prio - a->name->prio;
 	if (a->depth != b->depth)
 		return a->depth - b->depth;
 	if (a->found_order != b->found_order)
@@ -160,7 +167,7 @@ static void display_name(struct commit_name *n)
 		n->tag = lookup_tag(n->sha1);
 		if (!n->tag || parse_tag(n->tag) || !n->tag->tag)
 			die("annotated tag %s not available", n->path);
-		if (strcmp(n->tag->tag, n->path))
+		if (strcmp(n->tag->tag, all ? n->path + 5 : n->path))
 			warning("tag '%s' is really '%s' here", n->tag->tag, n->path);
 	}
 
@@ -180,11 +187,11 @@ static void describe(const char *arg, int last_one)
 	unsigned char sha1[20];
 	struct commit *cmit, *gave_up_on = NULL;
 	struct commit_list *list;
-	static int initialized = 0;
 	struct commit_name *n;
 	struct possible_tag all_matches[MAX_TAGS];
 	unsigned int match_cnt = 0, annotated_cnt = 0, cur_match;
 	unsigned long seen_commits = 0;
+	unsigned int unannotated_cnt = 0;
 
 	if (get_sha1(arg, sha1))
 		die("Not a valid object name %s", arg);
@@ -192,19 +199,16 @@ static void describe(const char *arg, int last_one)
 	if (!cmit)
 		die("%s is not a valid '%s' object", arg, commit_type);
 
-	if (!initialized) {
-		initialized = 1;
-		for_each_ref(get_name, NULL);
-	}
-
 	n = cmit->util;
-	if (n) {
+	if (n && (tags || all || n->prio == 2)) {
 		/*
 		 * Exact match to an existing ref.
 		 */
 		display_name(n);
 		if (longformat)
 			show_suffix(0, n->tag ? n->tag->tagged->sha1 : sha1);
+		if (dirty)
+			printf("%s", dirty);
 		printf("\n");
 		return;
 	}
@@ -223,7 +227,9 @@ static void describe(const char *arg, int last_one)
 		seen_commits++;
 		n = c->util;
 		if (n) {
-			if (match_cnt < max_candidates) {
+			if (!tags && !all && n->prio < 2) {
+				unannotated_cnt++;
+			} else if (match_cnt < max_candidates) {
 				struct possible_tag *t = &all_matches[match_cnt++];
 				t->name = n;
 				t->depth = seen_commits - 1;
@@ -262,10 +268,20 @@ static void describe(const char *arg, int last_one)
 	if (!match_cnt) {
 		const unsigned char *sha1 = cmit->object.sha1;
 		if (always) {
-			printf("%s\n", find_unique_abbrev(sha1, abbrev));
+			printf("%s", find_unique_abbrev(sha1, abbrev));
+			if (dirty)
+				printf("%s", dirty);
+			printf("\n");
 			return;
 		}
-		die("cannot describe '%s'", sha1_to_hex(sha1));
+		if (unannotated_cnt)
+			die("No annotated tags can describe '%s'.\n"
+			    "However, there were unannotated tags: try --tags.",
+			    sha1_to_hex(sha1));
+		else
+			die("No tags can describe '%s'.\n"
+			    "Try --always, or create some tags.",
+			    sha1_to_hex(sha1));
 	}
 
 	qsort(all_matches, match_cnt, sizeof(all_matches[0]), compare_pt);
@@ -297,6 +313,8 @@ static void describe(const char *arg, int last_one)
 	display_name(all_matches[0].name);
 	if (abbrev)
 		show_suffix(all_matches[0].depth, cmit->object.sha1);
+	if (dirty)
+		printf("%s", dirty);
 	printf("\n");
 
 	if (!last_one)
@@ -321,10 +339,13 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 			   "only consider tags matching <pattern>"),
 		OPT_BOOLEAN(0, "always",     &always,
 			   "show abbreviated commit object as fallback"),
+		{OPTION_STRING, 0, "dirty",  &dirty, "mark",
+			   "append <mark> on dirty working tree (default: \"-dirty\")",
+		 PARSE_OPT_OPTARG, NULL, (intptr_t) "-dirty"},
 		OPT_END(),
 	};
 
-	argc = parse_options(argc, argv, options, describe_usage, 0);
+	argc = parse_options(argc, argv, prefix, options, describe_usage, 0);
 	if (max_candidates < 0)
 		max_candidates = 0;
 	else if (max_candidates > MAX_TAGS)
@@ -336,7 +357,7 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 		die("--long is incompatible with --abbrev=0");
 
 	if (contains) {
-		const char **args = xmalloc((7 + argc) * sizeof(char*));
+		const char **args = xmalloc((7 + argc) * sizeof(char *));
 		int i = 0;
 		args[i++] = "name-rev";
 		args[i++] = "--name-only";
@@ -351,13 +372,21 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 				args[i++] = s;
 			}
 		}
-		memcpy(args + i, argv, argc * sizeof(char*));
+		memcpy(args + i, argv, argc * sizeof(char *));
 		args[i + argc] = NULL;
 		return cmd_name_rev(i + argc, args, prefix);
 	}
 
+	for_each_ref(get_name, NULL);
+	if (!found_names && !always)
+		die("No names found, cannot describe anything.");
+
 	if (argc == 0) {
+		if (dirty && !cmd_diff_index(ARRAY_SIZE(diff_index_args) - 1, diff_index_args, prefix))
+			dirty = NULL;
 		describe("HEAD", 1);
+	} else if (dirty) {
+		die("--dirty is incompatible with committishes");
 	} else {
 		while (argc-- > 0) {
 			describe(*argv++, argc == 0);

@@ -39,6 +39,14 @@ extern void sq_quote_argv(struct strbuf *, const char **argv, size_t maxlen);
  */
 extern char *sq_dequote(char *);
 
+/*
+ * Same as the above, but can be used to unwrap many arguments in the
+ * same string separated by space. "next" is changed to point to the
+ * next argument that should be passed as first parameter. When there
+ * is no more argument to be dequoted, "next" is updated to point to NULL.
+ */
+extern int sq_dequote_to_argv(char *arg, const char ***argv, int *nr, int *alloc);
+
 extern int unquote_c_style(struct strbuf *, const char *quoted, const char **endp);
 extern size_t quote_c_style(const char *name, struct strbuf *, FILE *, int no_dq);
 extern void quote_two_c_style(struct strbuf *, const char *, const char *, int);

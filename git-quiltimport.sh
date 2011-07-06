@@ -63,7 +63,7 @@ tmp_info="$tmp_dir/info"
 commit=$(git rev-parse HEAD)
 
 mkdir $tmp_dir || exit 2
-while read patch_name level garbage
+while read patch_name level garbage <&3
 do
 	case "$patch_name" in ''|'#'*) continue;; esac
 	case "$level" in
@@ -134,5 +134,5 @@ do
 		commit=$( (echo "$SUBJECT"; echo; cat "$tmp_msg") | git commit-tree $tree -p $commit) &&
 		git update-ref -m "quiltimport: $patch_name" HEAD $commit || exit 4
 	fi
-done <"$QUILT_PATCHES/series"
+done 3<"$QUILT_PATCHES/series"
 rm -rf $tmp_dir || exit 5

@@ -31,7 +31,7 @@ valid_custom_tool()
 
 valid_tool() {
 	case "$1" in
-		firefox | iceweasel | konqueror | w3m | links | lynx | dillo | open)
+		firefox | iceweasel | konqueror | w3m | links | lynx | dillo | open | start)
 			;; # happy
 		*)
 			valid_custom_tool "$1" || return 1
@@ -111,8 +111,13 @@ if test -z "$browser" ; then
 	browser_candidates="w3m links lynx"
     fi
     # SECURITYSESSIONID indicates an OS X GUI login session
-    if test -n "$SECURITYSESSIONID"; then
+    if test -n "$SECURITYSESSIONID" \
+	    -o "$TERM_PROGRAM" = "Apple_Terminal" ; then
 	browser_candidates="open $browser_candidates"
+    fi
+    # /bin/start indicates MinGW
+    if test -x /bin/start; then
+	browser_candidates="start $browser_candidates"
     fi
 
     for i in $browser_candidates; do
@@ -160,6 +165,9 @@ case "$browser" in
     w3m|links|lynx|open)
 	eval "$browser_path" "$@"
 	;;
+    start)
+        exec "$browser_path" '"web-browse"' "$@"
+        ;;
     dillo)
 	"$browser_path" "$@" &
 	;;

@@ -167,4 +167,128 @@ test_expect_success 'init with --template (blank)' '
 	! test -f template-blank/.git/info/exclude
 '
 
+test_expect_success 'init --bare/--shared overrides system/global config' '
+	(
+		HOME="`pwd`" &&
+		export HOME &&
+		test_config="$HOME"/.gitconfig &&
+		unset GIT_CONFIG_NOGLOBAL &&
+		git config -f "$test_config" core.bare false &&
+		git config -f "$test_config" core.sharedRepository 0640 &&
+		mkdir init-bare-shared-override &&
+		cd init-bare-shared-override &&
+		git init --bare --shared=0666
+	) &&
+	check_config init-bare-shared-override true unset &&
+	test x0666 = \
+	x`git config -f init-bare-shared-override/config core.sharedRepository`
+'
+
+test_expect_success 'init honors global core.sharedRepository' '
+	(
+		HOME="`pwd`" &&
+		export HOME &&
+		test_config="$HOME"/.gitconfig &&
+		unset GIT_CONFIG_NOGLOBAL &&
+		git config -f "$test_config" core.sharedRepository 0666 &&
+		mkdir shared-honor-global &&
+		cd shared-honor-global &&
+		git init
+	) &&
+	test x0666 = \
+	x`git config -f shared-honor-global/.git/config core.sharedRepository`
+'
+
+test_expect_success 'init rejects insanely long --template' '
+	(
+		insane=$(printf "x%09999dx" 1) &&
+		mkdir test &&
+		cd test &&
+		test_must_fail git init --template=$insane
+	)
+'
+
+test_expect_success 'init creates a new directory' '
+	rm -fr newdir &&
+	(
+		git init newdir &&
+		test -d newdir/.git/refs
+	)
+'
+
+test_expect_success 'init creates a new bare directory' '
+	rm -fr newdir &&
+	(
+		git init --bare newdir &&
+		test -d newdir/refs
+	)
+'
+
+test_expect_success 'init recreates a directory' '
+	rm -fr newdir &&
+	(
+		mkdir newdir &&
+		git init newdir &&
+		test -d newdir/.git/refs
+	)
+'
+
+test_expect_success 'init recreates a new bare directory' '
+	rm -fr newdir &&
+	(
+		mkdir newdir &&
+		git init --bare newdir &&
+		test -d newdir/refs
+	)
+'
+
+test_expect_success 'init creates a new deep directory' '
+	rm -fr newdir &&
+	git init newdir/a/b/c &&
+	test -d newdir/a/b/c/.git/refs
+'
+
+test_expect_success POSIXPERM 'init creates a new deep directory (umask vs. shared)' '
+	rm -fr newdir &&
+	(
+		# Leading directories should honor umask while
+		# the repository itself should follow "shared"
+		umask 002 &&
+		git init --bare --shared=0660 newdir/a/b/c &&
+		test -d newdir/a/b/c/refs &&
+		ls -ld newdir/a newdir/a/b > lsab.out &&
+		! grep -v "^drwxrw[sx]r-x" lsab.out &&
+		ls -ld newdir/a/b/c > lsc.out &&
+		! grep -v "^drwxrw[sx]---" lsc.out
+	)
+'
+
+test_expect_success 'init notices EEXIST (1)' '
+	rm -fr newdir &&
+	(
+		>newdir &&
+		test_must_fail git init newdir &&
+		test -f newdir
+	)
+'
+
+test_expect_success 'init notices EEXIST (2)' '
+	rm -fr newdir &&
+	(
+		mkdir newdir &&
+		>newdir/a
+		test_must_fail git init newdir/a/b &&
+		test -f newdir/a
+	)
+'
+
+test_expect_success POSIXPERM 'init notices EPERM' '
+	rm -fr newdir &&
+	(
+		mkdir newdir &&
+		chmod -w newdir &&
+		test_must_fail git init newdir/a/b
+	)
+'
+
 test_done

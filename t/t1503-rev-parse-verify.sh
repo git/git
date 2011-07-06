@@ -23,7 +23,7 @@ add_line_into_file()
     fi
 
     test_tick
-    git-commit --quiet -m "$MSG" $_file
+    git commit --quiet -m "$MSG" $_file
 }
 
 HASH1=

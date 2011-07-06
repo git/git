@@ -8,11 +8,12 @@ test_expect_success setup '
 
 	>file1 && git add file1 && test_tick &&
 	git commit -m Initial &&
+	git config receive.denyCurrentBranch warn &&
 
 	mkdir another && (
 		cd another &&
 		git init &&
-		git fetch .. master:master
+		git fetch --update-head-ok .. master:master
 	) &&
 
 	>file2 && git add file2 && test_tick &&

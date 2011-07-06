@@ -13,7 +13,7 @@ include::pretty-options.txt[]
 
 	Synonym for `--date=relative`.
 
---date={relative,local,default,iso,rfc,short}::
+--date={relative,local,default,iso,rfc,short,raw}::
 
 	Only takes effect for dates shown in human-readable format, such
 	as when using "--pretty". `log.date` config variable sets a default
@@ -30,6 +30,8 @@ e.g. "2 hours ago".
 format, often found in E-mail messages.
 +
 `--date=short` shows only date but not time, in `YYYY-MM-DD` format.
++
+`--date=raw` shows the date in the internal raw git format `%s %z` format.
 +
 `--date=default` shows timestamps in the original timezone
 (either committer's or author's).
@@ -138,41 +140,45 @@ limiting may be applied.
 --
 
 -n 'number'::
---max-count='number'::
+--max-count=<number>::
 
 	Limit the number of commits output.
 
---skip='number'::
+--skip=<number>::
 
 	Skip 'number' commits before starting to show the commit output.
 
---since='date'::
---after='date'::
+--since=<date>::
+--after=<date>::
 
 	Show commits more recent than a specific date.
 
---until='date'::
---before='date'::
+--until=<date>::
+--before=<date>::
 
 	Show commits older than a specific date.
 
 ifdef::git-rev-list[]
---max-age='timestamp'::
---min-age='timestamp'::
+--max-age=<timestamp>::
+--min-age=<timestamp>::
 
 	Limit the commits output to specified time range.
 endif::git-rev-list[]
 
---author='pattern'::
---committer='pattern'::
+--author=<pattern>::
+--committer=<pattern>::
 
 	Limit the commits output to ones with author/committer
 	header lines that match the specified pattern (regular expression).
 
---grep='pattern'::
+--grep=<pattern>::
 
 	Limit the commits output to ones with log message that
 	matches the specified pattern (regular expression).
+
+--all-match::
+	Limit the commits output to ones that match all given --grep,
+	--author and --committer instead of ones that match at least one.
 
 -i::
 --regexp-ignore-case::
@@ -194,6 +200,10 @@ endif::git-rev-list[]
 --remove-empty::
 
 	Stop when a given path disappears from the tree.
+
+--merges::
+
+	Print only merge commits.
 
 --no-merges::
 
@@ -218,12 +228,51 @@ endif::git-rev-list[]
 	Pretend as if all the refs in `$GIT_DIR/refs/` are listed on the
 	command line as '<commit>'.
 
-ifdef::git-rev-list[]
+--branches[=pattern]::
+
+	Pretend as if all the refs in `$GIT_DIR/refs/heads` are listed
+	on the command line as '<commit>'. If `pattern` is given, limit
+	branches to ones matching given shell glob. If pattern lacks '?',
+	'*', or '[', '/*' at the end is implied.
+
+--tags[=pattern]::
+
+	Pretend as if all the refs in `$GIT_DIR/refs/tags` are listed
+	on the command line as '<commit>'. If `pattern` is given, limit
+	tags to ones matching given shell glob. If pattern lacks '?', '*',
+	or '[', '/*' at the end is implied.
+
+--remotes[=pattern]::
+
+	Pretend as if all the refs in `$GIT_DIR/refs/remotes` are listed
+	on the command line as '<commit>'. If `pattern`is given, limit
+	remote tracking branches to ones matching given shell glob.
+	If pattern lacks '?', '*', or '[', '/*' at the end is implied.
+
+--glob=glob-pattern::
+	Pretend as if all the refs matching shell glob `glob-pattern`
+	are listed on the command line as '<commit>'. Leading 'refs/',
+	is automatically prepended if missing. If pattern lacks '?', '*',
+	or '[', '/*' at the end is implied.
+
+
+ifndef::git-rev-list[]
+--bisect::
+
+	Pretend as if the bad bisection ref `$GIT_DIR/refs/bisect/bad`
+	was listed and as if it was followed by `--not` and the good
+	bisection refs `$GIT_DIR/refs/bisect/good-*` on the command
+	line.
+endif::git-rev-list[]
+
 --stdin::
 
 	In addition to the '<commit>' listed on the command
-	line, read them from the standard input.
+	line, read them from the standard input. If a '--' separator is
+	seen, stop reading commits and start reading paths to limit the
+	result.
 
+ifdef::git-rev-list[]
 --quiet::
 
 	Don't print anything to standard output.  This form
@@ -281,8 +330,52 @@ See also linkgit:git-reflog[1].
 History Simplification
 ~~~~~~~~~~~~~~~~~~~~~~
 
-When optional paths are given, 'git-rev-list' simplifies commits with
-various strategies, according to the options you have selected.
+Sometimes you are only interested in parts of the history, for example the
+commits modifying a particular <path>. But there are two parts of
+'History Simplification', one part is selecting the commits and the other
+is how to do it, as there are various strategies to simplify the history.
+
+The following options select the commits to be shown:
+
+<paths>::
+
+	Commits modifying the given <paths> are selected.
+
+--simplify-by-decoration::
+
+	Commits that are referred by some branch or tag are selected.
+
+Note that extra commits can be shown to give a meaningful history.
+
+The following options affect the way the simplification is performed:
+
+Default mode::
+
+	Simplifies the history to the simplest history explaining the
+	final state of the tree. Simplest because it prunes some side
+	branches if the end result is the same (i.e. merging branches
+	with the same content)
+
+--full-history::
+
+	As the default mode but does not prune some history.
+
+--dense::
+
+	Only the selected commits are shown, plus some to have a
+	meaningful history.
+
+--sparse::
+
+	All commits in the simplified history are shown.
+
+--simplify-merges::
+
+	Additional option to '--full-history' to remove some needless
+	merges from the resulting history, as there are no selected
+	commits contributing to this merge.
+
+A more detailed explanation follows.
 
 Suppose you specified `foo` as the <paths>.  We shall call commits
 that modify `foo` !TREESAME, and the rest TREESAME.  (In a diff
@@ -409,6 +502,56 @@ Note that without '\--full-history', this still simplifies merges: if
 one of the parents is TREESAME, we follow only that one, so the other
 sides of the merge are never walked.
 
+Finally, there is a fourth simplification mode available:
+
+--simplify-merges::
+
+	First, build a history graph in the same way that
+	'\--full-history' with parent rewriting does (see above).
++
+Then simplify each commit `C` to its replacement `C'` in the final
+history according to the following rules:
++
+--
+* Set `C'` to `C`.
++
+* Replace each parent `P` of `C'` with its simplification `P'`.  In
+  the process, drop parents that are ancestors of other parents, and
+  remove duplicates.
++
+* If after this parent rewriting, `C'` is a root or merge commit (has
+  zero or >1 parents), a boundary commit, or !TREESAME, it remains.
+  Otherwise, it is replaced with its only parent.
+--
++
+The effect of this is best shown by way of comparing to
+'\--full-history' with parent rewriting.  The example turns into:
++
+-----------------------------------------------------------------------
+	  .-A---M---N---O
+	 /     /       /
+	I     B       D
+	 \   /       /
+	  `---------'
+-----------------------------------------------------------------------
++
+Note the major differences in `N` and `P` over '\--full-history':
++
+--
+* `N`'s parent list had `I` removed, because it is an ancestor of the
+  other parent `M`.  Still, `N` remained because it is !TREESAME.
++
+* `P`'s parent list similarly had `I` removed.  `P` was then
+  removed completely, because it had one parent and is TREESAME.
+--
+
+The '\--simplify-by-decoration' option allows you to view only the
+big picture of the topology of the history, by omitting commits
+that are not referenced by tags.  Commits are marked as !TREESAME
+(in other words, kept after history simplification rules described
+above) if (1) they are referenced by tags, or (2) they change the
+contents of the paths given on the command line.  All other
+commits are marked as TREESAME (subject to be simplified away).
 
 ifdef::git-rev-list[]
 Bisection Helpers
@@ -417,17 +560,21 @@ Bisection Helpers
 --bisect::
 
 Limit output to the one commit object which is roughly halfway between
-the included and excluded commits. Thus, if
+included and excluded commits. Note that the bad bisection ref
+`$GIT_DIR/refs/bisect/bad` is added to the included commits (if it
+exists) and the good bisection refs `$GIT_DIR/refs/bisect/good-*` are
+added to the excluded commits (if they exist). Thus, supposing there
+are no refs in `$GIT_DIR/refs/bisect/`, if
 
 -----------------------------------------------------------------------
-	$ git-rev-list --bisect foo ^bar ^baz
+	$ git rev-list --bisect foo ^bar ^baz
 -----------------------------------------------------------------------
 
 outputs 'midpoint', the output of the two commands
 
 -----------------------------------------------------------------------
-	$ git-rev-list foo ^midpoint
-	$ git-rev-list midpoint ^bar ^baz
+	$ git rev-list foo ^midpoint
+	$ git rev-list midpoint ^bar ^baz
 -----------------------------------------------------------------------
 
 would be of roughly the same length.  Finding the change which
@@ -437,27 +584,29 @@ one.
 
 --bisect-vars::
 
-This calculates the same as `--bisect`, but outputs text ready
-to be eval'ed by the shell. These lines will assign the name of
-the midpoint revision to the variable `bisect_rev`, and the
-expected number of commits to be tested after `bisect_rev` is
-tested to `bisect_nr`, the expected number of commits to be
-tested if `bisect_rev` turns out to be good to `bisect_good`,
-the expected number of commits to be tested if `bisect_rev`
-turns out to be bad to `bisect_bad`, and the number of commits
-we are bisecting right now to `bisect_all`.
+This calculates the same as `--bisect`, except that refs in
+`$GIT_DIR/refs/bisect/` are not used, and except that this outputs
+text ready to be eval'ed by the shell. These lines will assign the
+name of the midpoint revision to the variable `bisect_rev`, and the
+expected number of commits to be tested after `bisect_rev` is tested
+to `bisect_nr`, the expected number of commits to be tested if
+`bisect_rev` turns out to be good to `bisect_good`, the expected
+number of commits to be tested if `bisect_rev` turns out to be bad to
+`bisect_bad`, and the number of commits we are bisecting right now to
+`bisect_all`.
 
 --bisect-all::
 
 This outputs all the commit objects between the included and excluded
 commits, ordered by their distance to the included and excluded
-commits. The farthest from them is displayed first. (This is the only
-one displayed by `--bisect`.)
-
+commits. Refs in `$GIT_DIR/refs/bisect/` are not used. The farthest
+from them is displayed first. (This is the only one displayed by
+`--bisect`.)
++
 This is useful because it makes it easy to choose a good commit to
 test when you want to avoid to test some of them for some reason (they
 may not compile for example).
-
++
 This option can be used along with `--bisect-vars`, in this case,
 after all the sorted commit objects, there will be the same text as if
 `--bisect-vars` had been used alone.

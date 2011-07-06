@@ -56,4 +56,12 @@ test_expect_success 'show-branch with more than 8 branches' '
 
 '
 
+test_expect_success 'show-branch with showbranch.default' '
+	for i in $numbers; do
+		git config --add showbranch.default branch$i
+	done &&
+	git show-branch >out &&
+	test_cmp expect out
+'
+
 test_done

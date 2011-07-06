@@ -68,7 +68,7 @@ static int compare_tree_entry(struct tree_desc *t1, struct tree_desc *t2, const 
 		if (DIFF_OPT_TST(opt, TREE_IN_RECURSIVE)) {
 			newbase[baselen + pathlen1] = 0;
 			opt->change(opt, mode1, mode2,
-				    sha1, sha2, newbase);
+				    sha1, sha2, newbase, 0, 0);
 			newbase[baselen + pathlen1] = '/';
 		}
 		retval = diff_tree_sha1(sha1, sha2, newbase, opt);
@@ -77,7 +77,7 @@ static int compare_tree_entry(struct tree_desc *t1, struct tree_desc *t2, const 
 	}
 
 	fullname = malloc_fullname(base, baselen, path1, pathlen1);
-	opt->change(opt, mode1, mode2, sha1, sha2, fullname);
+	opt->change(opt, mode1, mode2, sha1, sha2, fullname, 0, 0);
 	free(fullname);
 	return 0;
 }
@@ -118,10 +118,16 @@ static int tree_entry_interesting(struct tree_desc *desc, const char *base, int 
 				continue;
 
 			/*
-			 * The base is a subdirectory of a path which
-			 * was specified, so all of them are interesting.
+			 * If the base is a subdirectory of a path which
+			 * was specified, all of them are interesting.
 			 */
-			return 2;
+			if (!matchlen ||
+			    base[matchlen] == '/' ||
+			    match[matchlen - 1] == '/')
+				return 2;
+
+			/* Just a random prefix match */
+			continue;
 		}
 
 		/* Does the base match? */
@@ -233,6 +239,12 @@ static void show_entry(struct diff_options *opt, const char *prefix, struct tree
 		if (!tree || type != OBJ_TREE)
 			die("corrupt tree sha %s", sha1_to_hex(sha1));
 
+		if (DIFF_OPT_TST(opt, TREE_IN_RECURSIVE)) {
+			newbase[baselen + pathlen] = 0;
+			opt->add_remove(opt, *prefix, mode, sha1, newbase, 0);
+			newbase[baselen + pathlen] = '/';
+		}
+
 		init_tree_desc(&inner, tree, size);
 		show_tree(opt, prefix, &inner, newbase, baselen + 1 + pathlen);
 
@@ -240,7 +252,7 @@ static void show_entry(struct diff_options *opt, const char *prefix, struct tree
 		free(newbase);
 	} else {
 		char *fullname = malloc_fullname(base, baselen, path, pathlen);
-		opt->add_remove(opt, prefix[0], mode, sha1, fullname);
+		opt->add_remove(opt, prefix[0], mode, sha1, fullname, 0);
 		free(fullname);
 	}
 }
@@ -274,7 +286,8 @@ int diff_tree(struct tree_desc *t1, struct tree_desc *t2, const char *base, stru
 	int baselen = strlen(base);
 
 	for (;;) {
-		if (DIFF_OPT_TST(opt, QUIET) && DIFF_OPT_TST(opt, HAS_CHANGES))
+		if (DIFF_OPT_TST(opt, QUICK) &&
+		    DIFF_OPT_TST(opt, HAS_CHANGES))
 			break;
 		if (opt->nr_paths) {
 			skip_uninteresting(t1, base, baselen, opt);
@@ -303,7 +316,7 @@ int diff_tree(struct tree_desc *t1, struct tree_desc *t2, const char *base, stru
 			update_tree_entry(t2);
 			continue;
 		}
-		die("git-diff-tree: internal error");
+		die("git diff-tree: internal error");
 	}
 	return 0;
 }
@@ -368,7 +381,7 @@ static void try_to_follow_renames(struct tree_desc *t1, struct tree_desc *t2, co
 	}
 
 	/*
-	 * Then, discard all the non-relevane file pairs...
+	 * Then, discard all the non-relevant file pairs...
 	 */
 	for (i = 0; i < q->nr; i++) {
 		struct diff_filepair *p = q->queue[i];

@@ -1,4 +1,5 @@
 --pretty[='<format>']::
+--format[='<format>']::
 
 	Pretty-print the contents of the commit logs in a given format,
 	where '<format>' can be one of 'oneline', 'short', 'medium',
@@ -10,12 +11,16 @@ configuration (see linkgit:git-config[1]).
 
 --abbrev-commit::
 	Instead of showing the full 40-byte hexadecimal commit object
-	name, show only handful hexdigits prefix.  Non default number of
+	name, show only a partial prefix.  Non default number of
 	digits can be specified with "--abbrev=<n>" (which also modifies
 	diff output, if it is displayed).
 +
 This should make "--pretty=oneline" a whole lot more readable for
 people using 80-column terminals.
+
+--oneline::
+	This is a shorthand for "--pretty=oneline --abbrev-commit"
+	used together.
 
 --encoding[=<encoding>]::
 	The commit objects record the encoding used for the log message
@@ -23,3 +28,11 @@ people using 80-column terminals.
 	command to re-code the commit log message in the encoding
 	preferred by the user.  For non plumbing commands this
 	defaults to UTF-8.
+
+--no-notes::
+--show-notes::
+	Show the notes (see linkgit:git-notes[1]) that annotate the
+	commit, when showing the commit log message.  This is the default
+	for `git log`, `git show` and `git whatchanged` commands when
+	there is no `--pretty`, `--format` nor `--oneline` option is
+	given on the command line.

@@ -8,17 +8,136 @@ static inline void close_pair(int fd[2])
 	close(fd[1]);
 }
 
+#ifndef WIN32
 static inline void dup_devnull(int to)
 {
 	int fd = open("/dev/null", O_RDWR);
 	dup2(fd, to);
 	close(fd);
 }
+#endif
+
+static const char **prepare_shell_cmd(const char **argv)
+{
+	int argc, nargc = 0;
+	const char **nargv;
+
+	for (argc = 0; argv[argc]; argc++)
+		; /* just counting */
+	/* +1 for NULL, +3 for "sh -c" plus extra $0 */
+	nargv = xmalloc(sizeof(*nargv) * (argc + 1 + 3));
+
+	if (argc < 1)
+		die("BUG: shell command is empty");
+
+	if (strcspn(argv[0], "|&;<>()$`\\\"' \t\n*?[#~=%") != strlen(argv[0])) {
+		nargv[nargc++] = "sh";
+		nargv[nargc++] = "-c";
+
+		if (argc < 2)
+			nargv[nargc++] = argv[0];
+		else {
+			struct strbuf arg0 = STRBUF_INIT;
+			strbuf_addf(&arg0, "%s \"$@\"", argv[0]);
+			nargv[nargc++] = strbuf_detach(&arg0, NULL);
+		}
+	}
+
+	for (argc = 0; argv[argc]; argc++)
+		nargv[nargc++] = argv[argc];
+	nargv[nargc] = NULL;
+
+	return nargv;
+}
+
+#ifndef WIN32
+static int execv_shell_cmd(const char **argv)
+{
+	const char **nargv = prepare_shell_cmd(argv);
+	trace_argv_printf(nargv, "trace: exec:");
+	execvp(nargv[0], (char **)nargv);
+	free(nargv);
+	return -1;
+}
+#endif
+
+#ifndef WIN32
+static int child_err = 2;
+static int child_notifier = -1;
+
+static void notify_parent(void)
+{
+	write(child_notifier, "", 1);
+}
+
+static NORETURN void die_child(const char *err, va_list params)
+{
+	char msg[4096];
+	int len = vsnprintf(msg, sizeof(msg), err, params);
+	if (len > sizeof(msg))
+		len = sizeof(msg);
+
+	write(child_err, "fatal: ", 7);
+	write(child_err, msg, len);
+	write(child_err, "\n", 1);
+	exit(128);
+}
+
+static inline void set_cloexec(int fd)
+{
+	int flags = fcntl(fd, F_GETFD);
+	if (flags >= 0)
+		fcntl(fd, F_SETFD, flags | FD_CLOEXEC);
+}
+#endif
+
+static int wait_or_whine(pid_t pid, const char *argv0, int silent_exec_failure)
+{
+	int status, code = -1;
+	pid_t waiting;
+	int failed_errno = 0;
+
+	while ((waiting = waitpid(pid, &status, 0)) < 0 && errno == EINTR)
+		;	/* nothing */
+
+	if (waiting < 0) {
+		failed_errno = errno;
+		error("waitpid for %s failed: %s", argv0, strerror(errno));
+	} else if (waiting != pid) {
+		error("waitpid is confused (%s)", argv0);
+	} else if (WIFSIGNALED(status)) {
+		code = WTERMSIG(status);
+		error("%s died of signal %d", argv0, code);
+		/*
+		 * This return value is chosen so that code & 0xff
+		 * mimics the exit code that a POSIX shell would report for
+		 * a program that died from this signal.
+		 */
+		code -= 128;
+	} else if (WIFEXITED(status)) {
+		code = WEXITSTATUS(status);
+		/*
+		 * Convert special exit code when execvp failed.
+		 */
+		if (code == 127) {
+			code = -1;
+			failed_errno = ENOENT;
+			if (!silent_exec_failure)
+				error("cannot run %s: %s", argv0,
+					strerror(ENOENT));
+		}
+	} else {
+		error("waitpid is confused (%s)", argv0);
+	}
+	errno = failed_errno;
+	return code;
+}
 
 int start_command(struct child_process *cmd)
 {
 	int need_in, need_out, need_err;
 	int fdin[2], fdout[2], fderr[2];
+	int failed_errno = failed_errno;
 
 	/*
 	 * In case of errors we must keep the promise to close FDs
@@ -28,9 +147,10 @@ int start_command(struct child_process *cmd)
 	need_in = !cmd->no_stdin && cmd->in < 0;
 	if (need_in) {
 		if (pipe(fdin) < 0) {
+			failed_errno = errno;
 			if (cmd->out > 0)
 				close(cmd->out);
-			return -ERR_RUN_COMMAND_PIPE;
+			goto fail_pipe;
 		}
 		cmd->in = fdin[1];
 	}
@@ -40,11 +160,12 @@ int start_command(struct child_process *cmd)
 		&& cmd->out < 0;
 	if (need_out) {
 		if (pipe(fdout) < 0) {
+			failed_errno = errno;
 			if (need_in)
 				close_pair(fdin);
 			else if (cmd->in)
 				close(cmd->in);
-			return -ERR_RUN_COMMAND_PIPE;
+			goto fail_pipe;
 		}
 		cmd->out = fdout[0];
 	}
@@ -52,6 +173,7 @@ int start_command(struct child_process *cmd)
 	need_err = !cmd->no_stderr && cmd->err < 0;
 	if (need_err) {
 		if (pipe(fderr) < 0) {
+			failed_errno = errno;
 			if (need_in)
 				close_pair(fdin);
 			else if (cmd->in)
@@ -60,17 +182,42 @@ int start_command(struct child_process *cmd)
 				close_pair(fdout);
 			else if (cmd->out)
 				close(cmd->out);
-			return -ERR_RUN_COMMAND_PIPE;
+fail_pipe:
+			error("cannot create pipe for %s: %s",
+				cmd->argv[0], strerror(failed_errno));
+			errno = failed_errno;
+			return -1;
 		}
 		cmd->err = fderr[0];
 	}
 
 	trace_argv_printf(cmd->argv, "trace: run_command:");
 
-#ifndef __MINGW32__
+#ifndef WIN32
+{
+	int notify_pipe[2];
+	if (pipe(notify_pipe))
+		notify_pipe[0] = notify_pipe[1] = -1;
+
 	fflush(NULL);
 	cmd->pid = fork();
 	if (!cmd->pid) {
+		/*
+		 * Redirect the channel to write syscall error messages to
+		 * before redirecting the process's stderr so that all die()
+		 * in subsequent call paths use the parent's stderr.
+		 */
+		if (cmd->no_stderr || need_err) {
+			child_err = dup(2);
+			set_cloexec(child_err);
+		}
+		set_die_routine(die_child);
+
+		close(notify_pipe[0]);
+		set_cloexec(notify_pipe[1]);
+		child_notifier = notify_pipe[1];
+		atexit(notify_parent);
+
 		if (cmd->no_stdin)
 			dup_devnull(0);
 		else if (need_in) {
@@ -101,74 +248,109 @@ int start_command(struct child_process *cmd)
 		}
 
 		if (cmd->dir && chdir(cmd->dir))
-			die("exec %s: cd to %s failed (%s)", cmd->argv[0],
-			    cmd->dir, strerror(errno));
+			die_errno("exec '%s': cd to '%s' failed", cmd->argv[0],
+			    cmd->dir);
 		if (cmd->env) {
 			for (; *cmd->env; cmd->env++) {
 				if (strchr(*cmd->env, '='))
-					putenv((char*)*cmd->env);
+					putenv((char *)*cmd->env);
 				else
 					unsetenv(*cmd->env);
 			}
 		}
+		if (cmd->preexec_cb) {
+			/*
+			 * We cannot predict what the pre-exec callback does.
+			 * Forgo parent notification.
+			 */
+			close(child_notifier);
+			child_notifier = -1;
+
+			cmd->preexec_cb();
+		}
 		if (cmd->git_cmd) {
 			execv_git_cmd(cmd->argv);
+		} else if (cmd->use_shell) {
+			execv_shell_cmd(cmd->argv);
 		} else {
 			execvp(cmd->argv[0], (char *const*) cmd->argv);
 		}
-		die("exec %s failed.", cmd->argv[0]);
+		/*
+		 * Do not check for cmd->silent_exec_failure; the parent
+		 * process will check it when it sees this exit code.
+		 */
+		if (errno == ENOENT)
+			exit(127);
+		else
+			die_errno("cannot exec '%s'", cmd->argv[0]);
 	}
+	if (cmd->pid < 0)
+		error("cannot fork() for %s: %s", cmd->argv[0],
+			strerror(failed_errno = errno));
+
+	/*
+	 * Wait for child's execvp. If the execvp succeeds (or if fork()
+	 * failed), EOF is seen immediately by the parent. Otherwise, the
+	 * child process sends a single byte.
+	 * Note that use of this infrastructure is completely advisory,
+	 * therefore, we keep error checks minimal.
+	 */
+	close(notify_pipe[1]);
+	if (read(notify_pipe[0], &notify_pipe[1], 1) == 1) {
+		/*
+		 * At this point we know that fork() succeeded, but execvp()
+		 * failed. Errors have been reported to our stderr.
+		 */
+		wait_or_whine(cmd->pid, cmd->argv[0],
+			      cmd->silent_exec_failure);
+		failed_errno = errno;
+		cmd->pid = -1;
+	}
+	close(notify_pipe[0]);
+}
 #else
-	int s0 = -1, s1 = -1, s2 = -1;	/* backups of stdin, stdout, stderr */
+{
+	int fhin = 0, fhout = 1, fherr = 2;
 	const char **sargv = cmd->argv;
 	char **env = environ;
 
-	if (cmd->no_stdin) {
-		s0 = dup(0);
-		dup_devnull(0);
-	} else if (need_in) {
-		s0 = dup(0);
-		dup2(fdin[0], 0);
-	} else if (cmd->in) {
-		s0 = dup(0);
-		dup2(cmd->in, 0);
-	}
+	if (cmd->no_stdin)
+		fhin = open("/dev/null", O_RDWR);
+	else if (need_in)
+		fhin = dup(fdin[0]);
+	else if (cmd->in)
+		fhin = dup(cmd->in);
 
-	if (cmd->no_stderr) {
-		s2 = dup(2);
-		dup_devnull(2);
-	} else if (need_err) {
-		s2 = dup(2);
-		dup2(fderr[1], 2);
-	}
+	if (cmd->no_stderr)
+		fherr = open("/dev/null", O_RDWR);
+	else if (need_err)
+		fherr = dup(fderr[1]);
 
-	if (cmd->no_stdout) {
-		s1 = dup(1);
-		dup_devnull(1);
-	} else if (cmd->stdout_to_stderr) {
-		s1 = dup(1);
-		dup2(2, 1);
-	} else if (need_out) {
-		s1 = dup(1);
-		dup2(fdout[1], 1);
-	} else if (cmd->out > 1) {
-		s1 = dup(1);
-		dup2(cmd->out, 1);
-	}
+	if (cmd->no_stdout)
+		fhout = open("/dev/null", O_RDWR);
+	else if (cmd->stdout_to_stderr)
+		fhout = dup(fherr);
+	else if (need_out)
+		fhout = dup(fdout[1]);
+	else if (cmd->out > 1)
+		fhout = dup(cmd->out);
 
 	if (cmd->dir)
 		die("chdir in start_command() not implemented");
-	if (cmd->env) {
-		env = copy_environ();
-		for (; *cmd->env; cmd->env++)
-			env = env_setenv(env, *cmd->env);
-	}
+	if (cmd->env)
+		env = make_augmented_environ(cmd->env);
 
 	if (cmd->git_cmd) {
 		cmd->argv = prepare_git_cmd(cmd->argv);
+	} else if (cmd->use_shell) {
+		cmd->argv = prepare_shell_cmd(cmd->argv);
 	}
 
-	cmd->pid = mingw_spawnvpe(cmd->argv[0], cmd->argv, env);
+	cmd->pid = mingw_spawnvpe(cmd->argv[0], cmd->argv, env,
+				  fhin, fhout, fherr);
+	failed_errno = errno;
+	if (cmd->pid < 0 && (!cmd->silent_exec_failure || errno != ENOENT))
+		error("cannot spawn %s: %s", cmd->argv[0], strerror(errno));
 
 	if (cmd->env)
 		free_environ(env);
@@ -176,12 +358,13 @@ int start_command(struct child_process *cmd)
 		free(cmd->argv);
 
 	cmd->argv = sargv;
-	if (s0 >= 0)
-		dup2(s0, 0), close(s0);
-	if (s1 >= 0)
-		dup2(s1, 1), close(s1);
-	if (s2 >= 0)
-		dup2(s2, 2), close(s2);
+	if (fhin != 0)
+		close(fhin);
+	if (fhout != 1)
+		close(fhout);
+	if (fherr != 2)
+		close(fherr);
+}
 #endif
 
 	if (cmd->pid < 0) {
@@ -195,7 +378,8 @@ int start_command(struct child_process *cmd)
 			close(cmd->out);
 		if (need_err)
 			close_pair(fderr);
-		return -ERR_RUN_COMMAND_FORK;
+		errno = failed_errno;
+		return -1;
 	}
 
 	if (need_in)
@@ -214,35 +398,9 @@ int start_command(struct child_process *cmd)
 	return 0;
 }
 
-static int wait_or_whine(pid_t pid)
-{
-	for (;;) {
-		int status, code;
-		pid_t waiting = waitpid(pid, &status, 0);
-
-		if (waiting < 0) {
-			if (errno == EINTR)
-				continue;
-			error("waitpid failed (%s)", strerror(errno));
-			return -ERR_RUN_COMMAND_WAITPID;
-		}
-		if (waiting != pid)
-			return -ERR_RUN_COMMAND_WAITPID_WRONG_PID;
-		if (WIFSIGNALED(status))
-			return -ERR_RUN_COMMAND_WAITPID_SIGNAL;
-
-		if (!WIFEXITED(status))
-			return -ERR_RUN_COMMAND_WAITPID_NOEXIT;
-		code = WEXITSTATUS(status);
-		if (code)
-			return -code;
-		return 0;
-	}
-}
-
 int finish_command(struct child_process *cmd)
 {
-	return wait_or_whine(cmd->pid);
+	return wait_or_whine(cmd->pid, cmd->argv[0], cmd->silent_exec_failure);
 }
 
 int run_command(struct child_process *cmd)
@@ -262,20 +420,14 @@ static void prepare_run_command_v_opt(struct child_process *cmd,
 	cmd->no_stdin = opt & RUN_COMMAND_NO_STDIN ? 1 : 0;
 	cmd->git_cmd = opt & RUN_GIT_CMD ? 1 : 0;
 	cmd->stdout_to_stderr = opt & RUN_COMMAND_STDOUT_TO_STDERR ? 1 : 0;
+	cmd->silent_exec_failure = opt & RUN_SILENT_EXEC_FAILURE ? 1 : 0;
+	cmd->use_shell = opt & RUN_USING_SHELL ? 1 : 0;
 }
 
 int run_command_v_opt(const char **argv, int opt)
 {
 	struct child_process cmd;
 	prepare_run_command_v_opt(&cmd, argv, opt);
-	return run_command(&cmd);
-}
-
-int run_command_v_opt_cd(const char **argv, int opt, const char *dir)
-{
-	struct child_process cmd;
-	prepare_run_command_v_opt(&cmd, argv, opt);
-	cmd.dir = dir;
 	return run_command(&cmd);
 }
 
@@ -288,8 +440,8 @@ int run_command_v_opt_cd_env(const char **argv, int opt, const char *dir, const 
 	return run_command(&cmd);
 }
 
-#ifdef __MINGW32__
-static __stdcall unsigned run_thread(void *data)
+#ifdef WIN32
+static unsigned __stdcall run_thread(void *data)
 {
 	struct async *async = data;
 	return async->proc(async->fd_for_proc, async->data);
@@ -304,7 +456,7 @@ int start_async(struct async *async)
 		return error("cannot create pipe: %s", strerror(errno));
 	async->out = pipe_out[0];
 
-#ifndef __MINGW32__
+#ifndef WIN32
 	/* Flush stdio before fork() to avoid cloning buffers */
 	fflush(NULL);
 
@@ -333,11 +485,8 @@ int start_async(struct async *async)
 
 int finish_async(struct async *async)
 {
-#ifndef __MINGW32__
-	int ret = 0;
-
-	if (wait_or_whine(async->pid))
-		ret = error("waitpid (async) failed");
+#ifndef WIN32
+	int ret = wait_or_whine(async->pid, "child process", 0);
 #else
 	DWORD ret = 0;
 	if (WaitForSingleObject(async->tid, INFINITE) != WAIT_OBJECT_0)
@@ -346,5 +495,42 @@ int finish_async(struct async *async)
 		ret = error("cannot get thread exit code: %lu", GetLastError());
 	CloseHandle(async->tid);
 #endif
+	return ret;
+}
+
+int run_hook(const char *index_file, const char *name, ...)
+{
+	struct child_process hook;
+	const char **argv = NULL, *env[2];
+	char index[PATH_MAX];
+	va_list args;
+	int ret;
+	size_t i = 0, alloc = 0;
+
+	if (access(git_path("hooks/%s", name), X_OK) < 0)
+		return 0;
+
+	va_start(args, name);
+	ALLOC_GROW(argv, i + 1, alloc);
+	argv[i++] = git_path("hooks/%s", name);
+	while (argv[i-1]) {
+		ALLOC_GROW(argv, i + 1, alloc);
+		argv[i++] = va_arg(args, const char *);
+	}
+	va_end(args);
+
+	memset(&hook, 0, sizeof(hook));
+	hook.argv = argv;
+	hook.no_stdin = 1;
+	hook.stdout_to_stderr = 1;
+	if (index_file) {
+		snprintf(index, sizeof(index), "GIT_INDEX_FILE=%s", index_file);
+		env[0] = index;
+		env[1] = NULL;
+		hook.env = env;
+	}
+
+	ret = run_command(&hook);
+	free(argv);
 	return ret;
 }

@@ -9,17 +9,18 @@ SYNOPSIS
 --------
 [verse]
 'git stash' list [<options>]
-'git stash' (show | drop | pop ) [<stash>]
-'git stash' apply [--index] [<stash>]
+'git stash' show [<stash>]
+'git stash' drop [-q|--quiet] [<stash>]
+'git stash' ( pop | apply ) [--index] [-q|--quiet] [<stash>]
 'git stash' branch <branchname> [<stash>]
-'git stash' [save [--keep-index] [<message>]]
+'git stash' [save [--patch] [-k|--[no-]keep-index] [-q|--quiet] [<message>]]
 'git stash' clear
 'git stash' create
 
 DESCRIPTION
 -----------
 
-Use 'git stash' when you want to record the current state of the
+Use `git stash` when you want to record the current state of the
 working directory and the index, but want to go back to a clean
 working directory.  The command saves your local modifications away
 and reverts the working directory to match the `HEAD` commit.
@@ -41,15 +42,27 @@ is also possible).
 OPTIONS
 -------
 
-save [--keep-index] [<message>]::
+save [--patch] [--[no-]keep-index] [-q|--quiet] [<message>]::
 
 	Save your local modifications to a new 'stash', and run `git reset
-	--hard` to revert them.  This is the default action when no
-	subcommand is given. The <message> part is optional and gives
-	the description along with the stashed state.
+	--hard` to revert them.  The <message> part is optional and gives
+	the description along with the stashed state.  For quickly making
+	a snapshot, you can omit _both_ "save" and <message>, but giving
+	only <message> does not trigger this action to prevent a misspelled
+	subcommand from making an unwanted stash.
 +
 If the `--keep-index` option is used, all changes already added to the
 index are left intact.
++
+With `--patch`, you can interactively select hunks from in the diff
+between HEAD and the working tree to be stashed.  The stash entry is
+constructed such that its index state is the same as the index state
+of your repository, and its worktree contains only the changes you
+selected interactively.  The selected changes are then rolled back
+from your worktree.
++
+The `--patch` option implies `--keep-index`.  You can use
+`--no-keep-index` to override this.
 
 list [<options>]::
 
@@ -64,7 +77,7 @@ stash@{0}: WIP on submit: 6ebd0e2... Update git-stash documentation
 stash@{1}: On master: 9cc0589... Add git-stash
 ----------------------------------------------------------------
 +
-The command takes options applicable to the 'git-log'
+The command takes options applicable to the 'git log'
 command to control what is shown and how. See linkgit:git-log[1].
 
 show [<stash>]::
@@ -72,22 +85,30 @@ show [<stash>]::
 	Show the changes recorded in the stash as a diff between the
 	stashed state and its original parent. When no `<stash>` is given,
 	shows the latest one. By default, the command shows the diffstat, but
-	it will accept any format known to 'git-diff' (e.g., `git stash show
+	it will accept any format known to 'git diff' (e.g., `git stash show
 	-p stash@\{1}` to view the second most recent stash in patch form).
 
-apply [--index] [<stash>]::
+pop [--index] [-q|--quiet] [<stash>]::
 
-	Restore the changes recorded in the stash on top of the current
-	working tree state.  When no `<stash>` is given, applies the latest
-	one.  The working directory must match the index.
+	Remove a single stashed state from the stash list and apply it
+	on top of the current working tree state, i.e., do the inverse
+	operation of `git stash save`. The working directory must
+	match the index.
 +
-This operation can fail with conflicts; you need to resolve them
-by hand in the working tree.
+Applying the state can fail with conflicts; in this case, it is not
+removed from the stash list. You need to resolve the conflicts by hand
+and call `git stash drop` manually afterwards.
 +
 If the `--index` option is used, then tries to reinstate not only the working
 tree's changes, but also the index's ones. However, this can fail, when you
 have conflicts (which are stored in the index, where you therefore can no
 longer apply the changes as they were originally).
++
+When no `<stash>` is given, `stash@\{0}` is assumed.
+
+apply [--index] [-q|--quiet] [<stash>]::
+
+	Like `pop`, but do not remove the state from the stash list.
 
 branch <branchname> [<stash>]::
 
@@ -105,18 +126,13 @@ no conflicts.
 
 clear::
 	Remove all the stashed states. Note that those states will then
-	be subject to pruning, and may be difficult or impossible to recover.
+	be subject to pruning, and may be impossible to recover (see
+	'Examples' below for a possible strategy).
 
-drop [<stash>]::
+drop [-q|--quiet] [<stash>]::
 
 	Remove a single stashed state from the stash list. When no `<stash>`
 	is given, it removes the latest one. i.e. `stash@\{0}`
-
-pop [<stash>]::
-
-	Remove a single stashed state from the stash list and apply on top
-	of the current working tree state. When no `<stash>` is given,
-	`stash@\{0}` is assumed. See also `apply`.
 
 create::
 
@@ -159,11 +175,11 @@ perform a pull, and then unstash, like this:
 +
 ----------------------------------------------------------------
 $ git pull
-...
+ ...
 file foobar not up to date, cannot merge.
 $ git stash
 $ git pull
-$ git stash apply
+$ git stash pop
 ----------------------------------------------------------------
 
 Interrupted workflow::
@@ -174,7 +190,7 @@ make a commit to a temporary branch to store your changes away, and
 return to your original branch to make the emergency fix, like this:
 +
 ----------------------------------------------------------------
-... hack hack hack ...
+# ... hack hack hack ...
 $ git checkout -b my_wip
 $ git commit -a -m "WIP"
 $ git checkout master
@@ -182,18 +198,18 @@ $ edit emergency fix
 $ git commit -a -m "Fix in a hurry"
 $ git checkout my_wip
 $ git reset --soft HEAD^
-... continue hacking ...
+# ... continue hacking ...
 ----------------------------------------------------------------
 +
-You can use 'git-stash' to simplify the above, like this:
+You can use 'git stash' to simplify the above, like this:
 +
 ----------------------------------------------------------------
-... hack hack hack ...
+# ... hack hack hack ...
 $ git stash
 $ edit emergency fix
 $ git commit -a -m "Fix in a hurry"
-$ git stash apply
-... continue hacking ...
+$ git stash pop
+# ... continue hacking ...
 ----------------------------------------------------------------
 
 Testing partial commits::
@@ -203,16 +219,30 @@ more commits out of the changes in the work tree, and you want to test
 each change before committing:
 +
 ----------------------------------------------------------------
-... hack hack hack ...
+# ... hack hack hack ...
 $ git add --patch foo            # add just first part to the index
 $ git stash save --keep-index    # save all other changes to the stash
 $ edit/build/test first part
-$ git commit foo -m 'First part' # commit fully tested change
+$ git commit -m 'First part'     # commit fully tested change
 $ git stash pop                  # prepare to work on all other changes
-... repeat above five steps until one commit remains ...
+# ... repeat above five steps until one commit remains ...
 $ edit/build/test remaining parts
 $ git commit foo -m 'Remaining parts'
 ----------------------------------------------------------------
+
+Recovering stashes that were cleared/dropped erroneously::
+
+If you mistakenly drop or clear stashes, they cannot be recovered
+through the normal safety mechanisms.  However, you can try the
+following incantation to get a list of stashes that are still in your
+repository, but not reachable any more:
++
+----------------------------------------------------------------
+git fsck --unreachable |
+grep commit | cut -d\  -f3 |
+xargs git log --merges --no-walk --grep=WIP
+----------------------------------------------------------------
+
 
 SEE ALSO
 --------

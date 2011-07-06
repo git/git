@@ -124,7 +124,7 @@ to point at the new commit.
 	An evil merge is a <<def_merge,merge>> that introduces changes that
 	do not appear in any <<def_parent,parent>>.
 
-[[def_fast_forward]]fast forward::
+[[def_fast_forward]]fast-forward::
 	A fast-forward is a special type of <<def_merge,merge>> where you have a
 	<<def_revision,revision>> and you are "merging" another
 	<<def_branch,branch>>'s changes that happen to be a descendant of what
@@ -183,7 +183,8 @@ to point at the new commit.
 	and potentially aborted, and allow for a post-notification after the
 	operation is done. The hook scripts are found in the
 	`$GIT_DIR/hooks/` directory, and are enabled by simply
-	making them executable.
+	removing the `.sample` suffix from the filename. In earlier versions
+	of git you had to make them executable.
 
 [[def_index]]index::
 	A collection of files with stat information, whose contents are stored
@@ -219,7 +220,7 @@ to point at the new commit.
 	conflict, manual intervention may be required to complete the
 	merge.
 +
-As a noun: unless it is a <<def_fast_forward,fast forward>>, a
+As a noun: unless it is a <<def_fast_forward,fast-forward>>, a
 successful merge results in the creation of a new <<def_commit,commit>>
 representing the result of the merge, and having as
 <<def_parent,parents>> the tips of the merged <<def_branch,branches>>.
@@ -261,7 +262,7 @@ This commit is referred to as a "merge commit", or sometimes just a
 	'origin' is used for that purpose. New upstream updates
 	will be fetched into remote <<def_tracking_branch,tracking branches>> named
 	origin/name-of-upstream-branch, which you can see using
-	"`git branch -r`".
+	`git branch -r`.
 
 [[def_pack]]pack::
 	A set of objects which have been compressed into one file (to save space
@@ -448,7 +449,13 @@ This commit is referred to as a "merge commit", or sometimes just a
 	An <<def_object,object>> which is not <<def_reachable,reachable>> from a
 	<<def_branch,branch>>, <<def_tag,tag>>, or any other reference.
 
+[[def_upstream_branch]]upstream branch::
+	The default <<def_branch,branch>> that is merged into the branch in
+	question (or the branch in question is rebased onto). It is configured
+	via branch.<name>.remote and branch.<name>.merge. If the upstream branch
+	of 'A' is 'origin/B' sometimes we say "'A' is tracking 'origin/B'".
+
 [[def_working_tree]]working tree::
-	The tree of actual checked out files.  The working tree is
-	normally equal to the <<def_HEAD,HEAD>> plus any local changes
-	that you have made but not yet committed.
+	The tree of actual checked out files.  The working tree normally
+	contains the contents of the <<def_HEAD,HEAD>> commit's tree,
+	plus any local changes that you have made but not yet committed.

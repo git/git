@@ -3,7 +3,7 @@
 # Copyright (c) 2007 Eric Wong
 #
 
-test_description='git-svn log tests'
+test_description='git svn log tests'
 . ./lib-git-svn.sh
 
 test_expect_success 'setup repository and import' '
@@ -14,10 +14,10 @@ test_expect_success 'setup repository and import' '
 			mkdir -p $i && \
 			echo hello >> $i/README || exit 1
 		done && \
-		svn import -m test . "$svnrepo"
+		svn_cmd import -m test . "$svnrepo"
 		cd .. &&
-	git-svn init "$svnrepo" -T trunk -b branches -t tags &&
-	git-svn fetch &&
+	git svn init "$svnrepo" -T trunk -b branches -t tags &&
+	git svn fetch &&
 	git reset --hard trunk &&
 	echo bye >> README &&
 	git commit -a -m bye &&

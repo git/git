@@ -12,7 +12,7 @@ SYNOPSIS
 DESCRIPTION
 -----------
 
-The diff commands 'git-diff-index', 'git-diff-files', and 'git-diff-tree'
+The diff commands 'git diff-index', 'git diff-files', and 'git diff-tree'
 can be told to manipulate differences they find in
 unconventional ways before showing 'diff' output.  The manipulation
 is collectively called "diffcore transformation".  This short note
@@ -23,24 +23,38 @@ that is easier to understand than the conventional kind.
 The chain of operation
 ----------------------
 
-The 'git-diff-{asterisk}' family works by first comparing two sets of
+The 'git diff-{asterisk}' family works by first comparing two sets of
 files:
 
- - 'git-diff-index' compares contents of a "tree" object and the
+ - 'git diff-index' compares contents of a "tree" object and the
    working directory (when '\--cached' flag is not used) or a
    "tree" object and the index file (when '\--cached' flag is
    used);
 
- - 'git-diff-files' compares contents of the index file and the
+ - 'git diff-files' compares contents of the index file and the
    working directory;
 
- - 'git-diff-tree' compares contents of two "tree" objects;
+ - 'git diff-tree' compares contents of two "tree" objects;
 
-In all of these cases, the commands themselves compare
-corresponding paths in the two sets of files.  The result of
-comparison is passed from these commands to what is internally
-called "diffcore", in a format similar to what is output when
-the -p option is not used.  E.g.
+In all of these cases, the commands themselves first optionally limit
+the two sets of files by any pathspecs given on their command-lines,
+and compare corresponding paths in the two resulting sets of files.
+
+The pathspecs are used to limit the world diff operates in.  They remove
+the filepairs outside the specified sets of pathnames.  E.g. If the
+input set of filepairs included:
+
+------------------------------------------------
+:100644 100644 bcd1234... 0123456... M junkfile
+------------------------------------------------
+
+but the command invocation was `git diff-files myfile`, then the
+junkfile entry would be removed from the list because only "myfile"
+is under consideration.
+
+The result of comparison is passed from these commands to what is
+internally called "diffcore", in a format similar to what is output
+when the -p option is not used.  E.g.
 
 ------------------------------------------------
 in-place edit  :100644 100644 bcd1234... 0123456... M file0
@@ -52,53 +66,28 @@ unmerged       :000000 000000 0000000... 0000000... U file6
 The diffcore mechanism is fed a list of such comparison results
 (each of which is called "filepair", although at this point each
 of them talks about a single file), and transforms such a list
-into another list.  There are currently 6 such transformations:
+into another list.  There are currently 5 such transformations:
 
-- diffcore-pathspec
 - diffcore-break
 - diffcore-rename
 - diffcore-merge-broken
 - diffcore-pickaxe
 - diffcore-order
 
-These are applied in sequence.  The set of filepairs 'git-diff-{asterisk}'
-commands find are used as the input to diffcore-pathspec, and
-the output from diffcore-pathspec is used as the input to the
+These are applied in sequence.  The set of filepairs 'git diff-{asterisk}'
+commands find are used as the input to diffcore-break, and
+the output from diffcore-break is used as the input to the
 next transformation.  The final result is then passed to the
 output routine and generates either diff-raw format (see Output
-format sections of the manual for 'git-diff-{asterisk}' commands) or
+format sections of the manual for 'git diff-{asterisk}' commands) or
 diff-patch format.
-
-
-diffcore-pathspec: For Ignoring Files Outside Our Consideration
----------------------------------------------------------------
-
-The first transformation in the chain is diffcore-pathspec, and
-is controlled by giving the pathname parameters to the
-'git-diff-{asterisk}' commands on the command line.  The pathspec is used
-to limit the world diff operates in.  It removes the filepairs
-outside the specified set of pathnames.  E.g. If the input set
-of filepairs included:
-
-------------------------------------------------
-:100644 100644 bcd1234... 0123456... M junkfile
-------------------------------------------------
-
-but the command invocation was `git diff-files myfile`, then the
-junkfile entry would be removed from the list because only "myfile"
-is under consideration.
-
-Implementation note.  For performance reasons, 'git-diff-tree'
-uses the pathname parameters on the command line to cull set of
-filepairs it feeds the diffcore mechanism itself, and does not
-use diffcore-pathspec, but the end result is the same.
 
 
 diffcore-break: For Splitting Up "Complete Rewrites"
 ----------------------------------------------------
 
 The second transformation in the chain is diffcore-break, and is
-controlled by the -B option to the 'git-diff-{asterisk}' commands.  This is
+controlled by the -B option to the 'git diff-{asterisk}' commands.  This is
 used to detect a filepair that represents "complete rewrite" and
 break such filepair into two filepairs that represent delete and
 create.  E.g.  If the input contained this filepair:
@@ -134,7 +123,7 @@ diffcore-rename: For Detection Renames and Copies
 
 This transformation is used to detect renames and copies, and is
 controlled by the -M option (to detect renames) and the -C option
-(to detect copies as well) to the 'git-diff-{asterisk}' commands.  If the
+(to detect copies as well) to the 'git diff-{asterisk}' commands.  If the
 input contained these filepairs:
 
 ------------------------------------------------
@@ -179,11 +168,11 @@ number after the "-M" or "-C" option (e.g. "-M8" to tell it to use
 8/10 = 80%).
 
 Note.  When the "-C" option is used with `\--find-copies-harder`
-option, 'git-diff-{asterisk}' commands feed unmodified filepairs to
+option, 'git diff-{asterisk}' commands feed unmodified filepairs to
 diffcore mechanism as well as modified ones.  This lets the copy
 detector consider unmodified files as copy source candidates at
 the expense of making it slower.  Without `\--find-copies-harder`,
-'git-diff-{asterisk}' commands can detect copies only if the file that was
+'git diff-{asterisk}' commands can detect copies only if the file that was
 copied happened to have been modified in the same changeset.
 
 
@@ -234,7 +223,7 @@ diffcore-pickaxe: For Detecting Addition/Deletion of Specified String
 
 This transformation is used to find filepairs that represent
 changes that touch a specified string, and is controlled by the
--S option and the `\--pickaxe-all` option to the 'git-diff-{asterisk}'
+-S option and the `\--pickaxe-all` option to the 'git diff-{asterisk}'
 commands.
 
 When diffcore-pickaxe is in use, it checks if there are
@@ -257,7 +246,7 @@ diffcore-order: For Sorting the Output Based on Filenames
 
 This is used to reorder the filepairs according to the user's
 (or project's) taste, and is controlled by the -O option to the
-'git-diff-{asterisk}' commands.
+'git diff-{asterisk}' commands.
 
 This takes a text file each of whose lines is a shell glob
 pattern.  Filepairs that match a glob pattern on an earlier line

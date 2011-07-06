@@ -14,70 +14,94 @@ endif::git-format-patch[]
 
 ifdef::git-format-patch[]
 -p::
-	Generate patches without diffstat.
+--no-stat::
+	Generate plain patches without any diffstats.
 endif::git-format-patch[]
 
 ifndef::git-format-patch[]
 -p::
+-u::
 	Generate patch (see section on generating patches).
 	{git-diff? This is the default.}
 endif::git-format-patch[]
 
--u::
-	Synonym for "-p".
-
 -U<n>::
-	Shorthand for "--unified=<n>".
-
 --unified=<n>::
 	Generate diffs with <n> lines of context instead of
-	the usual three. Implies "-p".
+	the usual three.
+ifndef::git-format-patch[]
+	Implies `-p`.
+endif::git-format-patch[]
 
+ifndef::git-format-patch[]
 --raw::
 	Generate the raw format.
 	{git-diff-core? This is the default.}
+endif::git-format-patch[]
 
+ifndef::git-format-patch[]
 --patch-with-raw::
-	Synonym for "-p --raw".
+	Synonym for `-p --raw`.
+endif::git-format-patch[]
+
+--patience::
+	Generate a diff using the "patience diff" algorithm.
 
 --stat[=width[,name-width]]::
 	Generate a diffstat.  You can override the default
-	output width for 80-column terminal by "--stat=width".
+	output width for 80-column terminal by `--stat=width`.
 	The width of the filename part can be controlled by
 	giving another width to it separated by a comma.
 
 --numstat::
-	Similar to \--stat, but shows number of added and
+	Similar to `\--stat`, but shows number of added and
 	deleted lines in decimal notation and pathname without
 	abbreviation, to make it more machine friendly.  For
 	binary files, outputs two `-` instead of saying
 	`0 0`.
 
 --shortstat::
-	Output only the last line of the --stat format containing total
+	Output only the last line of the `--stat` format containing total
 	number of modified files, as well as number of added and deleted
 	lines.
 
 --dirstat[=limit]::
-	Output only the sub-directories that are impacted by a diff,
-	and to what degree they are impacted.  You can override the
-	default cut-off in percent (3) by "--dirstat=limit".  If you
-	want to enable "cumulative" directory statistics, you can use
-	the "--cumulative" flag, which adds up percentages recursively
-	even when they have been already reported for a sub-directory.
+	Output the distribution of relative amount of changes (number of lines added or
+	removed) for each sub-directory. Directories with changes below
+	a cut-off percent (3% by default) are not shown. The cut-off percent
+	can be set with `--dirstat=limit`. Changes in a child directory is not
+	counted for the parent directory, unless `--cumulative` is used.
+
+--dirstat-by-file[=limit]::
+	Same as `--dirstat`, but counts changed files instead of lines.
 
 --summary::
 	Output a condensed summary of extended header information
 	such as creations, renames and mode changes.
 
+ifndef::git-format-patch[]
 --patch-with-stat::
-	Synonym for "-p --stat".
-	{git-format-patch? This is the default.}
+	Synonym for `-p --stat`.
+endif::git-format-patch[]
+
+ifndef::git-format-patch[]
 
 -z::
-	NUL-line termination on output.  This affects the --raw
-	output field terminator.  Also output from commands such
-	as "git-log" will be delimited with NUL between commits.
+ifdef::git-log[]
+	Separate the commits with NULs instead of with new newlines.
++
+Also, when `--raw` or `--numstat` has been given, do not munge
+pathnames and use NULs as output field terminators.
+endif::git-log[]
+ifndef::git-log[]
+	When `--raw` or `--numstat` has been given, do not munge
+	pathnames and use NULs as output field terminators.
+endif::git-log[]
++
+Without this option, each pathname output will have TAB, LF, double quotes,
+and backslash characters replaced with `\t`, `\n`, `\"`, and `\\`,
+respectively, and the pathname will be enclosed in double quotes if
+any of those replacements occurred.
 
 --name-only::
 	Show only names of changed files.
@@ -86,6 +110,13 @@ endif::git-format-patch[]
 	Show only names and status of changed files. See the description
 	of the `--diff-filter` option on what the status letters mean.
 
+--submodule[=<format>]::
+	Chose the output format for submodule differences. <format> can be one of
+	'short' and 'log'. 'short' just shows pairs of commit names, this format
+	is used when this option is not given. 'log' is the default value for this
+	option and lists the commits in that commit range like the 'summary'
+	option of linkgit:git-submodule[1] does.
+
 --color::
 	Show colored diff.
 
@@ -93,35 +124,52 @@ endif::git-format-patch[]
 	Turn off colored diff, even when the configuration file
 	gives the default to color output.
 
---color-words::
-	Show colored word diff, i.e. color words which have changed.
+--color-words[=<regex>]::
+	Show colored word diff, i.e., color words which have changed.
+	By default, words are separated by whitespace.
++
+When a <regex> is specified, every non-overlapping match of the
+<regex> is considered a word.  Anything between these matches is
+considered whitespace and ignored(!) for the purposes of finding
+differences.  You may want to append `|[^[:space:]]` to your regular
+expression to make sure that it matches all non-whitespace characters.
+A match that contains a newline is silently truncated(!) at the
+newline.
++
+The regex can also be set via a diff driver or configuration option, see
+linkgit:gitattributes[1] or linkgit:git-config[1].  Giving it explicitly
+overrides any diff driver or configuration setting.  Diff drivers
+override configuration settings.
+endif::git-format-patch[]
 
 --no-renames::
 	Turn off rename detection, even when the configuration
 	file gives the default to do so.
 
+ifndef::git-format-patch[]
 --check::
 	Warn if changes introduce trailing whitespace
 	or an indent that uses a space before a tab. Exits with
 	non-zero status if problems are found. Not compatible with
 	--exit-code.
+endif::git-format-patch[]
 
 --full-index::
-	Instead of the first handful characters, show full
-	object name of pre- and post-image blob on the "index"
-	line when generating a patch format output.
+	Instead of the first handful of characters, show the full
+	pre- and post-image blob object names on the "index"
+	line when generating patch format output.
 
 --binary::
-	In addition to --full-index, output "binary diff" that
-	can be applied with "git apply".
+	In addition to `--full-index`, output a binary diff that
+	can be applied with `git-apply`.
 
 --abbrev[=<n>]::
 	Instead of showing the full 40-byte hexadecimal object
 	name in diff-raw format output and diff-tree header
-	lines, show only handful hexdigits prefix.  This is
-	independent of --full-index option above, which controls
+	lines, show only a partial prefix.  This is
+	independent of the `--full-index` option above, which controls
 	the diff-patch output format.  Non default number of
-	digits can be specified with --abbrev=<n>.
+	digits can be specified with `--abbrev=<n>`.
 
 -B::
 	Break complete rewrite changes into pairs of delete and create.
@@ -132,16 +180,19 @@ endif::git-format-patch[]
 -C::
 	Detect copies as well as renames.  See also `--find-copies-harder`.
 
+ifndef::git-format-patch[]
 --diff-filter=[ACDMRTUXB*]::
 	Select only files that are Added (`A`), Copied (`C`),
 	Deleted (`D`), Modified (`M`), Renamed (`R`), have their
-	type (mode) changed (`T`), are Unmerged (`U`), are
+	type (i.e. regular file, symlink, submodule, ...) changed (`T`),
+	are Unmerged (`U`), are
 	Unknown (`X`), or have had their pairing Broken (`B`).
 	Any combination of the filter characters may be used.
 	When `*` (All-or-none) is added to the combination, all
 	paths are selected if there is any file that matches
 	other criteria in the comparison; if there is no file
 	that matches other criteria, nothing is selected.
+endif::git-format-patch[]
 
 --find-copies-harder::
 	For performance reasons, by default, `-C` option finds copies only
@@ -153,28 +204,34 @@ endif::git-format-patch[]
 	`-C` option has the same effect.
 
 -l<num>::
-	-M and -C options require O(n^2) processing time where n
+	The `-M` and `-C` options require O(n^2) processing time where n
 	is the number of potential rename/copy targets.  This
 	option prevents rename/copy detection from running if
 	the number of rename/copy targets exceeds the specified
 	number.
 
+ifndef::git-format-patch[]
 -S<string>::
-	Look for differences that contain the change in <string>.
+	Look for differences that introduce or remove an instance of
+	<string>. Note that this is different than the string simply
+	appearing in diff output; see the 'pickaxe' entry in
+	linkgit:gitdiffcore[7] for more details.
 
 --pickaxe-all::
-	When -S finds a change, show all the changes in that
+	When `-S` finds a change, show all the changes in that
 	changeset, not just the files that contain the change
 	in <string>.
 
 --pickaxe-regex::
 	Make the <string> not a plain string but an extended POSIX
 	regex to match.
+endif::git-format-patch[]
 
 -O<orderfile>::
 	Output the patch in the order specified in the
 	<orderfile>, which has one shell glob pattern per line.
 
+ifndef::git-format-patch[]
 -R::
 	Swap two inputs; that is, show differences from index or
 	on-disk file to tree contents.
@@ -186,39 +243,40 @@ endif::git-format-patch[]
 	not in a subdirectory (e.g. in a bare repository), you
 	can name which subdirectory to make the output relative
 	to by giving a <path> as an argument.
-
---text::
-	Treat all files as text.
+endif::git-format-patch[]
 
 -a::
-	Shorthand for "--text".
+--text::
+	Treat all files as text.
 
 --ignore-space-at-eol::
 	Ignore changes in whitespace at EOL.
 
+-b::
 --ignore-space-change::
 	Ignore changes in amount of whitespace.  This ignores whitespace
 	at line end, and considers all other sequences of one or
 	more whitespace characters to be equivalent.
 
--b::
-	Shorthand for "--ignore-space-change".
-
+-w::
 --ignore-all-space::
 	Ignore whitespace when comparing lines.  This ignores
 	differences even if one line has whitespace where the other
 	line has none.
 
--w::
-	Shorthand for "--ignore-all-space".
+--inter-hunk-context=<lines>::
+	Show the context between diff hunks, up to the specified number
+	of lines, thereby fusing hunks that are close to each other.
 
+ifndef::git-format-patch[]
 --exit-code::
 	Make the program exit with codes similar to diff(1).
 	That is, it exits with 1 if there were differences and
 	0 means no differences.
 
 --quiet::
-	Disable all output of the program. Implies --exit-code.
+	Disable all output of the program. Implies `--exit-code`.
+endif::git-format-patch[]
 
 --ext-diff::
 	Allow an external diff helper to be executed. If you set an

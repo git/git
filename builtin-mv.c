@@ -24,13 +24,12 @@ static const char **copy_pathspec(const char *prefix, const char **pathspec,
 	result[count] = NULL;
 	for (i = 0; i < count; i++) {
 		int length = strlen(result[i]);
-		if (length > 0 && result[i][length - 1] == '/') {
-			result[i] = xmemdupz(result[i], length - 1);
-		}
-		if (base_name) {
-			const char *last_slash = strrchr(result[i], '/');
-			if (last_slash)
-				result[i] = last_slash + 1;
+		int to_copy = length;
+		while (to_copy > 0 && is_dir_sep(result[i][to_copy - 1]))
+			to_copy--;
+		if (to_copy != length || base_name) {
+			char *it = xmemdupz(result[i], to_copy);
+			result[i] = base_name ? strdup(basename(it)) : it;
 		}
 	}
 	return get_pathspec(prefix, result);
@@ -57,7 +56,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 	int verbose = 0, show_only = 0, force = 0, ignore_errors = 0;
 	struct option builtin_mv_options[] = {
 		OPT__DRY_RUN(&show_only),
-		OPT_BOOLEAN('f', NULL, &force, "force move/rename even if target exists"),
+		OPT_BOOLEAN('f', "force", &force, "force move/rename even if target exists"),
 		OPT_BOOLEAN('k', NULL, &ignore_errors, "skip move/rename errors"),
 		OPT_END(),
 	};
@@ -68,13 +67,14 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 
 	git_config(git_default_config, NULL);
 
+	argc = parse_options(argc, argv, prefix, builtin_mv_options,
+			     builtin_mv_usage, 0);
+	if (--argc < 1)
+		usage_with_options(builtin_mv_usage, builtin_mv_options);
+
 	newfd = hold_locked_index(&lock_file, 1);
 	if (read_cache() < 0)
 		die("index file corrupt");
-
-	argc = parse_options(argc, argv, builtin_mv_options, builtin_mv_usage, 0);
-	if (--argc < 1)
-		usage_with_options(builtin_mv_usage, builtin_mv_options);
 
 	source = copy_pathspec(prefix, argv, argc, 0);
 	modes = xcalloc(argc, sizeof(enum update_mode));
@@ -162,7 +162,9 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 				}
 				argc += last - first;
 			}
-		} else if (lstat(dst, &st) == 0) {
+		} else if (cache_name_pos(src, length) < 0)
+			bad = "not under version control";
+		else if (lstat(dst, &st) == 0) {
 			bad = "destination exists";
 			if (force) {
 				/*
@@ -170,16 +172,12 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 				 * check both source and destination
 				 */
 				if (S_ISREG(st.st_mode) || S_ISLNK(st.st_mode)) {
-					fprintf(stderr, "Warning: %s;"
-							" will overwrite!\n",
-							bad);
+					warning("%s; will overwrite!", bad);
 					bad = NULL;
 				} else
 					bad = "Cannot overwrite";
 			}
-		} else if (cache_name_pos(src, length) < 0)
-			bad = "not under version control";
-		else if (string_list_has_string(&src_for_dst, dst))
+		} else if (string_list_has_string(&src_for_dst, dst))
 			bad = "multiple sources for the same target";
 		else
 			string_list_insert(dst, &src_for_dst);
@@ -192,6 +190,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 					memmove(destination + i,
 						destination + i + 1,
 						(argc - i) * sizeof(char *));
+					i--;
 				}
 			} else
 				die ("%s, source=%s, destination=%s",
@@ -207,7 +206,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 			printf("Renaming %s to %s\n", src, dst);
 		if (!show_only && mode != INDEX &&
 				rename(src, dst) < 0 && !ignore_errors)
-			die ("renaming %s failed: %s", src, strerror(errno));
+			die_errno ("renaming '%s' failed", src);
 
 		if (mode == WORKING_DIRECTORY)
 			continue;

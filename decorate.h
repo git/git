@@ -2,7 +2,7 @@
 #define DECORATE_H
 
 struct object_decoration {
-	struct object *base;
+	const struct object *base;
 	void *decoration;
 };
 
@@ -12,7 +12,7 @@ struct decoration {
 	struct object_decoration *hash;
 };
 
-extern void *add_decoration(struct decoration *n, struct object *obj, void *decoration);
-extern void *lookup_decoration(struct decoration *n, struct object *obj);
+extern void *add_decoration(struct decoration *n, const struct object *obj, void *decoration);
+extern void *lookup_decoration(struct decoration *n, const struct object *obj);
 
 #endif

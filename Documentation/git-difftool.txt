@@ -1,0 +1,120 @@
+git-difftool(1)
+===============
+
+NAME
+----
+git-difftool - Show changes using common diff tools
+
+SYNOPSIS
+--------
+'git difftool' [<options>] <commit>{0,2} [--] [<path>...]
+
+DESCRIPTION
+-----------
+'git difftool' is a git command that allows you to compare and edit files
+between revisions using common diff tools.  'git difftool' is a frontend
+to 'git diff' and accepts the same options and arguments.
+
+OPTIONS
+-------
+-y::
+--no-prompt::
+	Do not prompt before launching a diff tool.
+
+--prompt::
+	Prompt before each invocation of the diff tool.
+	This is the default behaviour; the option is provided to
+	override any configuration settings.
+
+-t <tool>::
+--tool=<tool>::
+	Use the diff tool specified by <tool>.
+	Valid merge tools are:
+	kdiff3, kompare, tkdiff, meld, xxdiff, emerge, vimdiff, gvimdiff,
+	ecmerge, diffuse, opendiff, p4merge and araxis.
++
+If a diff tool is not specified, 'git difftool'
+will use the configuration variable `diff.tool`.  If the
+configuration variable `diff.tool` is not set, 'git difftool'
+will pick a suitable default.
++
+You can explicitly provide a full path to the tool by setting the
+configuration variable `difftool.<tool>.path`. For example, you
+can configure the absolute path to kdiff3 by setting
+`difftool.kdiff3.path`. Otherwise, 'git difftool' assumes the
+tool is available in PATH.
++
+Instead of running one of the known diff tools,
+'git difftool' can be customized to run an alternative program
+by specifying the command line to invoke in a configuration
+variable `difftool.<tool>.cmd`.
++
+When 'git difftool' is invoked with this tool (either through the
+`-t` or `--tool` option or the `diff.tool` configuration variable)
+the configured command line will be invoked with the following
+variables available: `$LOCAL` is set to the name of the temporary
+file containing the contents of the diff pre-image and `$REMOTE`
+is set to the name of the temporary file containing the contents
+of the diff post-image.  `$BASE` is provided for compatibility
+with custom merge tool commands and has the same value as `$LOCAL`.
+
+-x <command>::
+--extcmd=<command>::
+	Specify a custom command for viewing diffs.
+	'git-difftool' ignores the configured defaults and runs
+	`$command $LOCAL $REMOTE` when this option is specified.
+
+-g::
+--gui::
+	When 'git-difftool' is invoked with the `-g` or `--gui` option
+	the default diff tool will be read from the configured
+	`diff.guitool` variable instead of `diff.tool`.
+
+See linkgit:git-diff[1] for the full list of supported options.
+
+CONFIG VARIABLES
+----------------
+'git difftool' falls back to 'git mergetool' config variables when the
+difftool equivalents have not been defined.
+
+diff.tool::
+	The default diff tool to use.
+
+diff.guitool::
+	The default diff tool to use when `--gui` is specified.
+
+difftool.<tool>.path::
+	Override the path for the given tool.  This is useful in case
+	your tool is not in the PATH.
+
+difftool.<tool>.cmd::
+	Specify the command to invoke the specified diff tool.
++
+See the `--tool=<tool>` option above for more details.
+
+difftool.prompt::
+	Prompt before each invocation of the diff tool.
+
+SEE ALSO
+--------
+linkgit:git-diff[1]::
+	 Show changes between commits, commit and working tree, etc
+
+linkgit:git-mergetool[1]::
+	Run merge conflict resolution tools to resolve merge conflicts
+
+linkgit:git-config[1]::
+	 Get and set repository or global options
+
+
+AUTHOR
+------
+Written by David Aguilar <davvid@gmail.com>.
+
+Documentation
+--------------
+Documentation by David Aguilar and the git-list <git@vger.kernel.org>.
+
+GIT
+---
+Part of the linkgit:git[1] suite

@@ -20,9 +20,14 @@ use strict;
 use warnings;
 use Term::ReadLine;
 use Getopt::Long;
+use Text::ParseWords;
 use Data::Dumper;
 use Term::ANSIColor;
+use File::Temp qw/ tempdir tempfile /;
+use Error qw(:try);
 use Git;
+
+Getopt::Long::Configure qw/ pass_through /;
 
 package FakeTerm;
 sub new {
@@ -38,76 +43,45 @@ package main;
 
 sub usage {
 	print <<EOT;
-git send-email [options] <file | directory>...
-Options:
-   --from         Specify the "From:" line of the email to be sent.
+git send-email [options] <file | directory | rev-list options >
 
-   --to           Specify the primary "To:" line of the email.
+  Composing:
+    --from                  <str>  * Email From:
+    --to                    <str>  * Email To:
+    --cc                    <str>  * Email Cc:
+    --bcc                   <str>  * Email Bcc:
+    --subject               <str>  * Email "Subject:"
+    --in-reply-to           <str>  * Email "In-Reply-To:"
+    --annotate                     * Review each patch that will be sent in an editor.
+    --compose                      * Open an editor for introduction.
 
-   --cc           Specify an initial "Cc:" list for the entire series
-                  of emails.
+  Sending:
+    --envelope-sender       <str>  * Email envelope sender.
+    --smtp-server       <str:int>  * Outgoing SMTP server to use. The port
+                                     is optional. Default 'localhost'.
+    --smtp-server-port      <int>  * Outgoing SMTP server port.
+    --smtp-user             <str>  * Username for SMTP-AUTH.
+    --smtp-pass             <str>  * Password for SMTP-AUTH; not necessary.
+    --smtp-encryption       <str>  * tls or ssl; anything else disables.
+    --smtp-ssl                     * Deprecated. Use '--smtp-encryption ssl'.
 
-   --cc-cmd       Specify a command to execute per file which adds
-                  per file specific cc address entries
+  Automating:
+    --identity              <str>  * Use the sendemail.<id> options.
+    --cc-cmd                <str>  * Email Cc: via `<str> \$patch_path`
+    --suppress-cc           <str>  * author, self, sob, cc, cccmd, body, bodycc, all.
+    --[no-]signed-off-by-cc        * Send to Signed-off-by: addresses. Default on.
+    --[no-]suppress-from           * Send to self. Default off.
+    --[no-]chain-reply-to          * Chain In-Reply-To: fields. Default off.
+    --[no-]thread                  * Use In-Reply-To: field. Default on.
 
-   --bcc          Specify a list of email addresses that should be Bcc:
-		  on all the emails.
-
-   --compose      Use \$GIT_EDITOR, core.editor, \$EDITOR, or \$VISUAL to edit
-		  an introductory message for the patch series.
-
-   --subject      Specify the initial "Subject:" line.
-                  Only necessary if --compose is also set.  If --compose
-		  is not set, this will be prompted for.
-
-   --in-reply-to  Specify the first "In-Reply-To:" header line.
-                  Only used if --compose is also set.  If --compose is not
-		  set, this will be prompted for.
-
-   --chain-reply-to If set, the replies will all be to the previous
-                  email sent, rather than to the first email sent.
-                  Defaults to on.
-
-   --signed-off-cc Automatically add email addresses that appear in
-                 Signed-off-by: or Cc: lines to the cc: list. Defaults to on.
-
-   --identity     The configuration identity, a subsection to prioritise over
-                  the default section.
-
-   --smtp-server  If set, specifies the outgoing SMTP server to use.
-                  Defaults to localhost.  Port number can be specified here with
-                  hostname:port format or by using --smtp-server-port option.
-
-   --smtp-server-port Specify a port on the outgoing SMTP server to connect to.
-
-   --smtp-user    The username for SMTP-AUTH.
-
-   --smtp-pass    The password for SMTP-AUTH.
-
-   --smtp-encryption Specify 'tls' for STARTTLS encryption, or 'ssl' for SSL.
-                  Any other value disables the feature.
-
-   --smtp-ssl     Synonym for '--smtp-encryption=ssl'.  Deprecated.
-
-   --suppress-cc  Suppress the specified category of auto-CC.  The category
-		  can be one of 'author' for the patch author, 'self' to
-		  avoid copying yourself, 'sob' for Signed-off-by lines,
-		  'cccmd' for the output of the cccmd, or 'all' to suppress
-		  all of these.
-
-   --suppress-from Suppress sending emails to yourself. Defaults to off.
-
-   --thread       Specify that the "In-Reply-To:" header should be set on all
-                  emails. Defaults to on.
-
-   --quiet	  Make git-send-email less verbose.  One line per email
-                  should be all that is output.
-
-   --dry-run	  Do everything except actually send the emails.
-
-   --envelope-sender	Specify the envelope sender used to send the emails.
-
-   --no-validate	Don't perform any sanity checks on patches.
+  Administering:
+    --confirm               <str>  * Confirm recipients before sending;
+                                     auto, cc, compose, always, or never.
+    --quiet                        * Output one line of info per email.
+    --dry-run                      * Don't actually send the emails.
+    --[no-]validate                * Perform patch sanity checks. Default on.
+    --[no-]format-patch            * understand any non optional arguments as
+                                     `git format-patch` ones.
 
 EOT
 	exit(1);
@@ -153,18 +127,17 @@ sub format_2822_time {
 }
 
 my $have_email_valid = eval { require Email::Valid; 1 };
+my $have_mail_address = eval { require Mail::Address; 1 };
 my $smtp;
 my $auth;
 
 sub unique_email_list(@);
 sub cleanup_compose_files();
 
-# Constants (essentially)
-my $compose_filename = ".msg.$$";
-
 # Variables we fill in automatically, or via prompting:
 my (@to,@cc,@initial_cc,@bcclist,@xh,
-	$initial_reply_to,$initial_subject,@files,$author,$sender,$smtp_authpass,$compose,$time);
+	$initial_reply_to,$initial_subject,@files,
+	$author,$sender,$smtp_authpass,$annotate,$compose,$time);
 
 my $envelope_sender;
 
@@ -184,19 +157,45 @@ if ($@) {
 
 # Behavior modification variables
 my ($quiet, $dry_run) = (0, 0);
+my $format_patch;
+my $compose_filename;
+
+# Handle interactive edition of files.
+my $multiedit;
+my $editor = Git::command_oneline('var', 'GIT_EDITOR');
+
+sub do_edit {
+	if (defined($multiedit) && !$multiedit) {
+		map {
+			system('sh', '-c', $editor.' "$@"', $editor, $_);
+			if (($? & 127) || ($? >> 8)) {
+				die("the editor exited uncleanly, aborting everything");
+			}
+		} @_;
+	} else {
+		system('sh', '-c', $editor.' "$@"', $editor, @_);
+		if (($? & 127) || ($? >> 8)) {
+			die("the editor exited uncleanly, aborting everything");
+		}
+	}
+}
 
 # Variables with corresponding config settings
-my ($thread, $chain_reply_to, $suppress_from, $signed_off_cc, $cc_cmd);
+my ($thread, $chain_reply_to, $suppress_from, $signed_off_by_cc, $cc_cmd);
 my ($smtp_server, $smtp_server_port, $smtp_authuser, $smtp_encryption);
 my ($identity, $aliasfiletype, @alias_files, @smtp_host_parts);
-my ($no_validate);
+my ($validate, $confirm);
 my (@suppress_cc);
+
+my $not_set_by_user = "true but not set by the user";
 
 my %config_bool_settings = (
     "thread" => [\$thread, 1],
-    "chainreplyto" => [\$chain_reply_to, 1],
+    "chainreplyto" => [\$chain_reply_to, $not_set_by_user],
     "suppressfrom" => [\$suppress_from, undef],
-    "signedoffcc" => [\$signed_off_cc, undef],
+    "signedoffbycc" => [\$signed_off_by_cc, undef],
+    "signedoffcc" => [\$signed_off_by_cc, undef],      # Deprecated
+    "validate" => [\$validate, 1],
 );
 
 my %config_settings = (
@@ -212,7 +211,23 @@ my %config_settings = (
     "aliasesfile" => \@alias_files,
     "suppresscc" => \@suppress_cc,
     "envelopesender" => \$envelope_sender,
+    "multiedit" => \$multiedit,
+    "confirm"   => \$confirm,
+    "from" => \$sender,
 );
+
+# Help users prepare for 1.7.0
+sub chain_reply_to {
+	if (defined $chain_reply_to &&
+	    $chain_reply_to eq $not_set_by_user) {
+		print STDERR
+		    "In git 1.7.0, the default has changed to --no-chain-reply-to\n" .
+		    "Set sendemail.chainreplyto configuration variable to true if\n" .
+		    "you want to keep --chain-reply-to as your default.\n";
+		$chain_reply_to = 0;
+	}
+	return $chain_reply_to;
+}
 
 # Handle Uncouth Termination
 sub signal_handler {
@@ -224,11 +239,13 @@ sub signal_handler {
 	system "stty echo";
 
 	# tmp files from --compose
-	if (-e $compose_filename) {
-		print "'$compose_filename' contains an intermediate version of the email you were composing.\n";
-	}
-	if (-e ($compose_filename . ".final")) {
-		print "'$compose_filename.final' contains the composed email.\n"
+	if (defined $compose_filename) {
+		if (-e $compose_filename) {
+			print "'$compose_filename' contains an intermediate version of the email you were composing.\n";
+		}
+		if (-e ($compose_filename . ".final")) {
+			print "'$compose_filename.final' contains the composed email.\n"
+		}
 	}
 
 	exit;
@@ -254,21 +271,27 @@ my $rc = GetOptions("sender|from=s" => \$sender,
 		    "smtp-ssl" => sub { $smtp_encryption = 'ssl' },
 		    "smtp-encryption=s" => \$smtp_encryption,
 		    "identity=s" => \$identity,
+		    "annotate" => \$annotate,
 		    "compose" => \$compose,
 		    "quiet" => \$quiet,
 		    "cc-cmd=s" => \$cc_cmd,
 		    "suppress-from!" => \$suppress_from,
 		    "suppress-cc=s" => \@suppress_cc,
-		    "signed-off-cc|signed-off-by-cc!" => \$signed_off_cc,
+		    "signed-off-cc|signed-off-by-cc!" => \$signed_off_by_cc,
+		    "confirm=s" => \$confirm,
 		    "dry-run" => \$dry_run,
 		    "envelope-sender=s" => \$envelope_sender,
 		    "thread!" => \$thread,
-		    "no-validate" => \$no_validate,
+		    "validate!" => \$validate,
+		    "format-patch!" => \$format_patch,
 	 );
 
 unless ($rc) {
     usage();
 }
+
+die "Cannot run git format-patch from outside a repository\n"
+	if $format_patch and not $repo;
 
 # Now, let's fill any that aren't set in with defaults:
 
@@ -321,13 +344,13 @@ my(%suppress_cc);
 if (@suppress_cc) {
 	foreach my $entry (@suppress_cc) {
 		die "Unknown --suppress-cc field: '$entry'\n"
-			unless $entry =~ /^(all|cccmd|cc|author|self|sob)$/;
+			unless $entry =~ /^(all|cccmd|cc|author|self|sob|body|bodycc)$/;
 		$suppress_cc{$entry} = 1;
 	}
 }
 
 if ($suppress_cc{'all'}) {
-	foreach my $entry (qw (ccmd cc author self sob)) {
+	foreach my $entry (qw (cccmd cc author self sob body bodycc)) {
 		$suppress_cc{$entry} = 1;
 	}
 	delete $suppress_cc{'all'};
@@ -335,7 +358,22 @@ if ($suppress_cc{'all'}) {
 
 # If explicit old-style ones are specified, they trump --suppress-cc.
 $suppress_cc{'self'} = $suppress_from if defined $suppress_from;
-$suppress_cc{'sob'} = !$signed_off_cc if defined $signed_off_cc;
+$suppress_cc{'sob'} = !$signed_off_by_cc if defined $signed_off_by_cc;
+
+if ($suppress_cc{'body'}) {
+	foreach my $entry (qw (sob bodycc)) {
+		$suppress_cc{$entry} = 1;
+	}
+	delete $suppress_cc{'body'};
+}
+
+# Set confirm's default value
+my $confirm_unconfigured = !defined $confirm;
+if ($confirm_unconfigured) {
+	$confirm = scalar %suppress_cc ? 'compose' : 'auto';
+};
+die "Unknown --confirm setting: '$confirm'\n"
+	unless $confirm =~ /^(?:auto|cc|compose|always|never)/;
 
 # Debugging, print out the suppressions.
 if (0) {
@@ -363,25 +401,48 @@ foreach my $entry (@bcclist) {
 	die "Comma in --bcclist entry: $entry'\n" unless $entry !~ m/,/;
 }
 
+sub parse_address_line {
+	if ($have_mail_address) {
+		return map { $_->format } Mail::Address->parse($_[0]);
+	} else {
+		return split_addrs($_[0]);
+	}
+}
+
+sub split_addrs {
+	return quotewords('\s*,\s*', 1, @_);
+}
+
 my %aliases;
 my %parse_alias = (
 	# multiline formats can be supported in the future
 	mutt => sub { my $fh = shift; while (<$fh>) {
-		if (/^\s*alias\s+(\S+)\s+(.*)$/) {
+		if (/^\s*alias\s+(?:-group\s+\S+\s+)*(\S+)\s+(.*)$/) {
 			my ($alias, $addr) = ($1, $2);
 			$addr =~ s/#.*$//; # mutt allows # comments
 			 # commas delimit multiple addresses
-			$aliases{$alias} = [ split(/\s*,\s*/, $addr) ];
+			$aliases{$alias} = [ split_addrs($addr) ];
 		}}},
 	mailrc => sub { my $fh = shift; while (<$fh>) {
 		if (/^alias\s+(\S+)\s+(.*)$/) {
 			# spaces delimit multiple addresses
-			$aliases{$1} = [ split(/\s+/, $2) ];
+			$aliases{$1} = [ quotewords('\s+', 0, $2) ];
 		}}},
-	pine => sub { my $fh = shift; while (<$fh>) {
-		if (/^(\S+)\t.*\t(.*)$/) {
-			$aliases{$1} = [ split(/\s*,\s*/, $2) ];
-		}}},
+	pine => sub { my $fh = shift; my $f='\t[^\t]*';
+	        for (my $x = ''; defined($x); $x = $_) {
+			chomp $x;
+		        $x .= $1 while(defined($_ = <$fh>) && /^ +(.*)$/);
+			$x =~ /^(\S+)$f\t\(?([^\t]+?)\)?(:?$f){0,2}$/ or next;
+			$aliases{$1} = [ split_addrs($2) ];
+		}},
+	elm => sub  { my $fh = shift;
+		      while (<$fh>) {
+			  if (/^(\S+)\s+=\s+[^=]+=\s(\S+)/) {
+			      my ($alias, $addr) = ($1, $2);
+			       $aliases{$alias} = [ split_addrs($addr) ];
+			  }
+		      } },
+
 	gnus => sub { my $fh = shift; while (<$fh>) {
 		if (/\(define-mail-alias\s+"(\S+?)"\s+"(\S+?)"\)/) {
 			$aliases{$1} = [ $2 ];
@@ -398,25 +459,55 @@ if (@alias_files and $aliasfiletype and defined $parse_alias{$aliasfiletype}) {
 
 ($sender) = expand_aliases($sender) if defined $sender;
 
+# returns 1 if the conflict must be solved using it as a format-patch argument
+sub check_file_rev_conflict($) {
+	return unless $repo;
+	my $f = shift;
+	try {
+		$repo->command('rev-parse', '--verify', '--quiet', $f);
+		if (defined($format_patch)) {
+			return $format_patch;
+		}
+		die(<<EOF);
+File '$f' exists but it could also be the range of commits
+to produce patches for.  Please disambiguate by...
+
+    * Saying "./$f" if you mean a file; or
+    * Giving --format-patch option if you mean a range.
+EOF
+	} catch Git::Error::Command with {
+		return 0;
+	}
+}
+
 # Now that all the defaults are set, process the rest of the command line
 # arguments and collect up the files that need to be processed.
-for my $f (@ARGV) {
-	if (-d $f) {
+my @rev_list_opts;
+while (defined(my $f = shift @ARGV)) {
+	if ($f eq "--") {
+		push @rev_list_opts, "--", @ARGV;
+		@ARGV = ();
+	} elsif (-d $f and !check_file_rev_conflict($f)) {
 		opendir(DH,$f)
 			or die "Failed to opendir $f: $!";
 
 		push @files, grep { -f $_ } map { +$f . "/" . $_ }
 				sort readdir(DH);
-
-	} elsif (-f $f or -p $f) {
+		closedir(DH);
+	} elsif ((-f $f or -p $f) and !check_file_rev_conflict($f)) {
 		push @files, $f;
-
 	} else {
-		print STDERR "Skipping $f - not found.\n";
+		push @rev_list_opts, $f;
 	}
 }
 
-if (!$no_validate) {
+if (@rev_list_opts) {
+	die "Cannot run git format-patch from outside a repository\n"
+		unless $repo;
+	push @files, $repo->command('format-patch', '-o', tempdir(CLEANUP => 1), @rev_list_opts);
+}
+
+if ($validate) {
 	foreach my $f (@files) {
 		unless (-p $f) {
 			my $error = validate_patch($f);
@@ -434,43 +525,161 @@ if (@files) {
 	usage();
 }
 
+sub get_patch_subject($) {
+	my $fn = shift;
+	open (my $fh, '<', $fn);
+	while (my $line = <$fh>) {
+		next unless ($line =~ /^Subject: (.*)$/);
+		close $fh;
+		return "GIT: $1\n";
+	}
+	close $fh;
+	die "No subject line in $fn ?";
+}
+
+if ($compose) {
+	# Note that this does not need to be secure, but we will make a small
+	# effort to have it be unique
+	$compose_filename = ($repo ?
+		tempfile(".gitsendemail.msg.XXXXXX", DIR => $repo->repo_path()) :
+		tempfile(".gitsendemail.msg.XXXXXX", DIR => "."))[1];
+	open(C,">",$compose_filename)
+		or die "Failed to open for writing $compose_filename: $!";
+
+
+	my $tpl_sender = $sender || $repoauthor || $repocommitter || '';
+	my $tpl_subject = $initial_subject || '';
+	my $tpl_reply_to = $initial_reply_to || '';
+
+	print C <<EOT;
+From $tpl_sender # This line is ignored.
+GIT: Lines beginning in "GIT:" will be removed.
+GIT: Consider including an overall diffstat or table of contents
+GIT: for the patch you are writing.
+GIT:
+GIT: Clear the body content if you don't wish to send a summary.
+From: $tpl_sender
+Subject: $tpl_subject
+In-Reply-To: $tpl_reply_to
+
+EOT
+	for my $f (@files) {
+		print C get_patch_subject($f);
+	}
+	close(C);
+
+	if ($annotate) {
+		do_edit($compose_filename, @files);
+	} else {
+		do_edit($compose_filename);
+	}
+
+	open(C2,">",$compose_filename . ".final")
+		or die "Failed to open $compose_filename.final : " . $!;
+
+	open(C,"<",$compose_filename)
+		or die "Failed to open $compose_filename : " . $!;
+
+	my $need_8bit_cte = file_has_nonascii($compose_filename);
+	my $in_body = 0;
+	my $summary_empty = 1;
+	while(<C>) {
+		next if m/^GIT:/;
+		if ($in_body) {
+			$summary_empty = 0 unless (/^\n$/);
+		} elsif (/^\n$/) {
+			$in_body = 1;
+			if ($need_8bit_cte) {
+				print C2 "MIME-Version: 1.0\n",
+					 "Content-Type: text/plain; ",
+					   "charset=UTF-8\n",
+					 "Content-Transfer-Encoding: 8bit\n";
+			}
+		} elsif (/^MIME-Version:/i) {
+			$need_8bit_cte = 0;
+		} elsif (/^Subject:\s*(.+)\s*$/i) {
+			$initial_subject = $1;
+			my $subject = $initial_subject;
+			$_ = "Subject: " .
+				($subject =~ /[^[:ascii:]]/ ?
+				 quote_rfc2047($subject) :
+				 $subject) .
+				"\n";
+		} elsif (/^In-Reply-To:\s*(.+)\s*$/i) {
+			$initial_reply_to = $1;
+			next;
+		} elsif (/^From:\s*(.+)\s*$/i) {
+			$sender = $1;
+			next;
+		} elsif (/^(?:To|Cc|Bcc):/i) {
+			print "To/Cc/Bcc fields are not interpreted yet, they have been ignored\n";
+			next;
+		}
+		print C2 $_;
+	}
+	close(C);
+	close(C2);
+
+	if ($summary_empty) {
+		print "Summary email is empty, skipping it\n";
+		$compose = -1;
+	}
+} elsif ($annotate) {
+	do_edit(@files);
+}
+
+sub ask {
+	my ($prompt, %arg) = @_;
+	my $valid_re = $arg{valid_re};
+	my $default = $arg{default};
+	my $resp;
+	my $i = 0;
+	return defined $default ? $default : undef
+		unless defined $term->IN and defined fileno($term->IN) and
+		       defined $term->OUT and defined fileno($term->OUT);
+	while ($i++ < 10) {
+		$resp = $term->readline($prompt);
+		if (!defined $resp) { # EOF
+			print "\n";
+			return defined $default ? $default : undef;
+		}
+		if ($resp eq '' and defined $default) {
+			return $default;
+		}
+		if (!defined $valid_re or $resp =~ /$valid_re/) {
+			return $resp;
+		}
+	}
+	return undef;
+}
+
 my $prompting = 0;
 if (!defined $sender) {
 	$sender = $repoauthor || $repocommitter || '';
-
-	while (1) {
-		$_ = $term->readline("Who should the emails appear to be from? [$sender] ");
-		last if defined $_;
-		print "\n";
-	}
-
-	$sender = $_ if ($_);
+	$sender = ask("Who should the emails appear to be from? [$sender] ",
+	              default => $sender);
 	print "Emails will be sent from: ", $sender, "\n";
 	$prompting++;
 }
 
 if (!@to) {
-
-
-	while (1) {
-		$_ = $term->readline("Who should the emails be sent to? ", "");
-		last if defined $_;
-		print "\n";
-	}
-
-	my $to = $_;
-	push @to, split /,\s*/, $to;
+	my $to = ask("Who should the emails be sent to? ");
+	push @to, parse_address_line($to) if defined $to; # sanitized/validated later
 	$prompting++;
 }
 
 sub expand_aliases {
-	my @cur = @_;
-	my @last;
-	do {
-		@last = @cur;
-		@cur = map { $aliases{$_} ? @{$aliases{$_}} : $_ } @last;
-	} while (join(',',@cur) ne join(',',@last));
-	return @cur;
+	return map { expand_one_alias($_) } @_;
+}
+
+my %EXPANDED_ALIASES;
+sub expand_one_alias {
+	my $alias = shift;
+	if ($EXPANDED_ALIASES{$alias}) {
+		die "fatal: alias '$alias' expands to itself\n";
+	}
+	local $EXPANDED_ALIASES{$alias} = 1;
+	return $aliases{$alias} ? expand_aliases(@{$aliases{$alias}}) : $alias;
 }
 
 @to = expand_aliases(@to);
@@ -478,25 +687,9 @@ sub expand_aliases {
 @initial_cc = expand_aliases(@initial_cc);
 @bcclist = expand_aliases(@bcclist);
 
-if (!defined $initial_subject && $compose) {
-	while (1) {
-		$_ = $term->readline("What subject should the initial email start with? ", $initial_subject);
-		last if defined $_;
-		print "\n";
-	}
-
-	$initial_subject = $_;
-	$prompting++;
-}
-
 if ($thread && !defined $initial_reply_to && $prompting) {
-	while (1) {
-		$_= $term->readline("Message-ID to be used as In-Reply-To for the first email? ", $initial_reply_to);
-		last if defined $_;
-		print "\n";
-	}
-
-	$initial_reply_to = $_;
+	$initial_reply_to = ask(
+		"Message-ID to be used as In-Reply-To for the first email? ");
 }
 if (defined $initial_reply_to) {
 	$initial_reply_to =~ s/^\s*<?//;
@@ -514,76 +707,13 @@ if (!defined $smtp_server) {
 	$smtp_server ||= 'localhost'; # could be 127.0.0.1, too... *shrug*
 }
 
-if ($compose) {
-	# Note that this does not need to be secure, but we will make a small
-	# effort to have it be unique
-	open(C,">",$compose_filename)
-		or die "Failed to open for writing $compose_filename: $!";
-	print C "From $sender # This line is ignored.\n";
-	printf C "Subject: %s\n\n", $initial_subject;
-	printf C <<EOT;
-GIT: Please enter your email below.
-GIT: Lines beginning in "GIT: " will be removed.
-GIT: Consider including an overall diffstat or table of contents
-GIT: for the patch you are writing.
-
-EOT
-	close(C);
-
-	my $editor = $ENV{GIT_EDITOR} || Git::config(@repo, "core.editor") || $ENV{VISUAL} || $ENV{EDITOR} || "vi";
-	system('sh', '-c', $editor.' "$@"', $editor, $compose_filename);
-
-	open(C2,">",$compose_filename . ".final")
-		or die "Failed to open $compose_filename.final : " . $!;
-
-	open(C,"<",$compose_filename)
-		or die "Failed to open $compose_filename : " . $!;
-
-	my $need_8bit_cte = file_has_nonascii($compose_filename);
-	my $in_body = 0;
-	while(<C>) {
-		next if m/^GIT: /;
-		if (!$in_body && /^\n$/) {
-			$in_body = 1;
-			if ($need_8bit_cte) {
-				print C2 "MIME-Version: 1.0\n",
-					 "Content-Type: text/plain; ",
-					   "charset=utf-8\n",
-					 "Content-Transfer-Encoding: 8bit\n";
-			}
-		}
-		if (!$in_body && /^MIME-Version:/i) {
-			$need_8bit_cte = 0;
-		}
-		if (!$in_body && /^Subject: ?(.*)/i) {
-			my $subject = $1;
-			$_ = "Subject: " .
-				($subject =~ /[^[:ascii:]]/ ?
-				 quote_rfc2047($subject) :
-				 $subject) .
-				"\n";
-		}
-		print C2 $_;
-	}
-	close(C);
-	close(C2);
-
-	while (1) {
-		$_ = $term->readline("Send this email? (y|n) ");
-		last if defined $_;
-		print "\n";
-	}
-
-	if (uc substr($_,0,1) ne 'Y') {
-		cleanup_compose_files();
-		exit(0);
-	}
-
+if ($compose && $compose > 0) {
 	@files = ($compose_filename . ".final", @files);
 }
 
 # Variables we set as part of the loop over files
-our ($message_id, %mail, $subject, $reply_to, $references, $message);
+our ($message_id, %mail, $subject, $reply_to, $references, $message,
+	$needs_confirm, $message_num, $ask_default);
 
 sub extract_valid_address {
 	my $address = shift;
@@ -655,10 +785,18 @@ sub unquote_rfc2047 {
 
 sub quote_rfc2047 {
 	local $_ = shift;
-	my $encoding = shift || 'utf-8';
+	my $encoding = shift || 'UTF-8';
 	s/([^-a-zA-Z0-9!*+\/])/sprintf("=%02X", ord($1))/eg;
 	s/(.*)/=\?$encoding\?q\?$1\?=/;
 	return $_;
+}
+
+sub is_rfc2047_quoted {
+	my $s = shift;
+	my $token = '[^][()<>@,;:"\/?.= \000-\037\177-\377]+';
+	my $encoded_text = '[!->@-~]+';
+	length($s) <= 75 &&
+	$s =~ m/^(?:"[[:ascii:]]*"|=\?$token\?$token\?$encoded_text\?=)$/o;
 }
 
 # use the simplest quoting being able to handle the recipient
@@ -672,12 +810,13 @@ sub sanitize_address
 	}
 
 	# if recipient_name is already quoted, do nothing
-	if ($recipient_name =~ /^(".*"|=\?utf-8\?q\?.*\?=)$/) {
+	if (is_rfc2047_quoted($recipient_name)) {
 		return $recipient;
 	}
 
 	# rfc2047 is needed if a non-ascii char is included
 	if ($recipient_name =~ /[^[:ascii:]]/) {
+		$recipient_name =~ s/^"(.*)"$/$1/;
 		$recipient_name = quote_rfc2047($recipient_name);
 	}
 
@@ -690,6 +829,10 @@ sub sanitize_address
 	return "$recipient_name $recipient_addr";
 
 }
+
+# Returns 1 if the message was sent, and 0 otherwise.
+# In actuality, the whole program dies when there
+# is an error sending a message.
 
 sub send_message
 {
@@ -708,7 +851,7 @@ sub send_message
 	    $gitversion = Git::version();
 	}
 
-	my $cc = join(", ", unique_email_list(@cc));
+	my $cc = join(",\n\t", unique_email_list(@cc));
 	my $ccline = "";
 	if ($cc ne '') {
 		$ccline = "\nCc: $cc";
@@ -723,7 +866,7 @@ Date: $date
 Message-Id: $message_id
 X-Mailer: git-send-email $gitversion
 ";
-	if ($thread && $reply_to) {
+	if ($reply_to) {
 
 		$header .= "In-Reply-To: $reply_to\n";
 		$header .= "References: $references\n";
@@ -734,10 +877,41 @@ X-Mailer: git-send-email $gitversion
 
 	my @sendmail_parameters = ('-i', @recipients);
 	my $raw_from = $sanitized_sender;
-	$raw_from = $envelope_sender if (defined $envelope_sender);
+	if (defined $envelope_sender && $envelope_sender ne "auto") {
+		$raw_from = $envelope_sender;
+	}
 	$raw_from = extract_valid_address($raw_from);
 	unshift (@sendmail_parameters,
 			'-f', $raw_from) if(defined $envelope_sender);
+
+	if ($needs_confirm && !$dry_run) {
+		print "\n$header\n";
+		if ($needs_confirm eq "inform") {
+			$confirm_unconfigured = 0; # squelch this message for the rest of this run
+			$ask_default = "y"; # assume yes on EOF since user hasn't explicitly asked for confirmation
+			print "    The Cc list above has been expanded by additional\n";
+			print "    addresses found in the patch commit message. By default\n";
+			print "    send-email prompts before sending whenever this occurs.\n";
+			print "    This behavior is controlled by the sendemail.confirm\n";
+			print "    configuration setting.\n";
+			print "\n";
+			print "    For additional information, run 'git send-email --help'.\n";
+			print "    To retain the current behavior, but squelch this message,\n";
+			print "    run 'git config --global sendemail.confirm auto'.\n\n";
+		}
+		$_ = ask("Send this email? ([y]es|[n]o|[q]uit|[a]ll): ",
+		         valid_re => qr/^(?:yes|y|no|n|quit|q|all|a)/i,
+		         default => $ask_default);
+		die "Send this email reply required" unless defined $_;
+		if (/^n/i) {
+			return 0;
+		} elsif (/^q/i) {
+			cleanup_compose_files();
+			exit(0);
+		} elsif (/^a/i) {
+			$confirm = 'never';
+		}
+	}
 
 	if ($dry_run) {
 		# We don't want to send the email.
@@ -765,7 +939,7 @@ X-Mailer: git-send-email $gitversion
 			$smtp ||= Net::SMTP->new((defined $smtp_server_port)
 						 ? "$smtp_server:$smtp_server_port"
 						 : $smtp_server);
-			if ($smtp_encryption eq 'tls') {
+			if ($smtp_encryption eq 'tls' && $smtp) {
 				require Net::SMTP::SSL;
 				$smtp->command('STARTTLS');
 				$smtp->response();
@@ -811,7 +985,7 @@ X-Mailer: git-send-email $gitversion
 		$smtp->data or die $smtp->message;
 		$smtp->datasend("$header\n$message") or die $smtp->message;
 		$smtp->dataend() or die $smtp->message;
-		$smtp->ok or die "Failed to send $subject\n".$smtp->message;
+		$smtp->code =~ /250|200/ or die "Failed to send $subject\n".$smtp->message;
 	}
 	if ($quiet) {
 		printf (($dry_run ? "Dry-" : "")."Sent %s\n", $subject);
@@ -820,7 +994,9 @@ X-Mailer: git-send-email $gitversion
 		if ($smtp_server !~ m#^/#) {
 			print "Server: $smtp_server\n";
 			print "MAIL FROM:<$raw_from>\n";
-			print "RCPT TO:".join(',',(map { "<$_>" } @recipients))."\n";
+			foreach my $entry (@recipients) {
+			    print "RCPT TO:<$entry>\n";
+			}
 		} else {
 			print "Sendmail: $smtp_server ".join(' ',@sendmail_parameters)."\n";
 		}
@@ -832,11 +1008,14 @@ X-Mailer: git-send-email $gitversion
 			print "Result: OK\n";
 		}
 	}
+
+	return 1;
 }
 
 $reply_to = $initial_reply_to;
 $references = $initial_reply_to || '';
 $subject = $initial_subject;
+$message_num = 0;
 
 foreach my $t (@files) {
 	open(F,"<",$t) or die "can't open file $t";
@@ -845,95 +1024,110 @@ foreach my $t (@files) {
 	my $author_encoding;
 	my $has_content_type;
 	my $body_encoding;
-	@cc = @initial_cc;
+	@cc = ();
 	@xh = ();
 	my $input_format = undef;
-	my $header_done = 0;
+	my @header = ();
 	$message = "";
+	$message_num++;
+	# First unfold multiline header fields
 	while(<F>) {
-		if (!$header_done) {
-			if (/^From /) {
-				$input_format = 'mbox';
-				next;
-			}
-			chomp;
-			if (!defined $input_format && /^[-A-Za-z]+:\s/) {
-				$input_format = 'mbox';
-			}
+		last if /^\s*$/;
+		if (/^\s+\S/ and @header) {
+			chomp($header[$#header]);
+			s/^\s+/ /;
+			$header[$#header] .= $_;
+	    } else {
+			push(@header, $_);
+		}
+	}
+	# Now parse the header
+	foreach(@header) {
+		if (/^From /) {
+			$input_format = 'mbox';
+			next;
+		}
+		chomp;
+		if (!defined $input_format && /^[-A-Za-z]+:\s/) {
+			$input_format = 'mbox';
+		}
 
-			if (defined $input_format && $input_format eq 'mbox') {
-				if (/^Subject:\s+(.*)$/) {
-					$subject = $1;
-
-				} elsif (/^(Cc|From):\s+(.*)$/) {
-					if (unquote_rfc2047($2) eq $sender) {
+		if (defined $input_format && $input_format eq 'mbox') {
+			if (/^Subject:\s+(.*)$/) {
+				$subject = $1;
+			}
+			elsif (/^From:\s+(.*)$/) {
+				($author, $author_encoding) = unquote_rfc2047($1);
+				next if $suppress_cc{'author'};
+				next if $suppress_cc{'self'} and $author eq $sender;
+				printf("(mbox) Adding cc: %s from line '%s'\n",
+					$1, $_) unless $quiet;
+				push @cc, $1;
+			}
+			elsif (/^Cc:\s+(.*)$/) {
+				foreach my $addr (parse_address_line($1)) {
+					if (unquote_rfc2047($addr) eq $sender) {
 						next if ($suppress_cc{'self'});
-					}
-					elsif ($1 eq 'From') {
-						($author, $author_encoding)
-						  = unquote_rfc2047($2);
-						next if ($suppress_cc{'author'});
 					} else {
 						next if ($suppress_cc{'cc'});
 					}
 					printf("(mbox) Adding cc: %s from line '%s'\n",
-						$2, $_) unless $quiet;
-					push @cc, $2;
-				}
-				elsif (/^Content-type:/i) {
-					$has_content_type = 1;
-					if (/charset="?([^ "]+)/) {
-						$body_encoding = $1;
-					}
-					push @xh, $_;
-				}
-				elsif (/^Message-Id: (.*)/i) {
-					$message_id = $1;
-				}
-				elsif (!/^Date:\s/ && /^[-A-Za-z]+:\s+\S/) {
-					push @xh, $_;
-				}
-
-			} else {
-				# In the traditional
-				# "send lots of email" format,
-				# line 1 = cc
-				# line 2 = subject
-				# So let's support that, too.
-				$input_format = 'lots';
-				if (@cc == 0 && !$suppress_cc{'cc'}) {
-					printf("(non-mbox) Adding cc: %s from line '%s'\n",
-						$_, $_) unless $quiet;
-
-					push @cc, $_;
-
-				} elsif (!defined $subject) {
-					$subject = $_;
+						$addr, $_) unless $quiet;
+					push @cc, $addr;
 				}
 			}
-
-			# A whitespace line will terminate the headers
-			if (m/^\s*$/) {
-				$header_done = 1;
+			elsif (/^Content-type:/i) {
+				$has_content_type = 1;
+				if (/charset="?([^ "]+)/) {
+					$body_encoding = $1;
+				}
+				push @xh, $_;
 			}
+			elsif (/^Message-Id: (.*)/i) {
+				$message_id = $1;
+			}
+			elsif (!/^Date:\s/ && /^[-A-Za-z]+:\s+\S/) {
+				push @xh, $_;
+			}
+
 		} else {
-			$message .=  $_;
-			if (/^(Signed-off-by|Cc): (.*)$/i) {
-				next if ($suppress_cc{'sob'});
-				chomp;
-				my $c = $2;
-				chomp $c;
-				next if ($c eq $sender and $suppress_cc{'self'});
-				push @cc, $c;
-				printf("(sob) Adding cc: %s from line '%s'\n",
-					$c, $_) unless $quiet;
+			# In the traditional
+			# "send lots of email" format,
+			# line 1 = cc
+			# line 2 = subject
+			# So let's support that, too.
+			$input_format = 'lots';
+			if (@cc == 0 && !$suppress_cc{'cc'}) {
+				printf("(non-mbox) Adding cc: %s from line '%s'\n",
+					$_, $_) unless $quiet;
+				push @cc, $_;
+			} elsif (!defined $subject) {
+				$subject = $_;
 			}
+		}
+	}
+	# Now parse the message body
+	while(<F>) {
+		$message .=  $_;
+		if (/^(Signed-off-by|Cc): (.*)$/i) {
+			chomp;
+			my ($what, $c) = ($1, $2);
+			chomp $c;
+			if ($c eq $sender) {
+				next if ($suppress_cc{'self'});
+			} else {
+				next if $suppress_cc{'sob'} and $what =~ /Signed-off-by/i;
+				next if $suppress_cc{'bodycc'} and $what =~ /Cc/i;
+			}
+			push @cc, $c;
+			printf("(body) Adding cc: %s from line '%s'\n",
+				$c, $_) unless $quiet;
 		}
 	}
 	close F;
 
 	if (defined $cc_cmd && !$suppress_cc{'cccmd'}) {
-		open(F, "$cc_cmd $t |")
+		open(F, "$cc_cmd \Q$t\E |")
 			or die "(cc-cmd) Could not execute '$cc_cmd'";
 		while(<F>) {
 			my $c = $_;
@@ -948,7 +1142,7 @@ foreach my $t (@files) {
 			or die "(cc-cmd) failed to close pipe to '$cc_cmd'";
 	}
 
-	if (defined $author) {
+	if (defined $author and $author ne $sender) {
 		$message = "From: $author\n\n$message";
 		if (defined $author_encoding) {
 			if ($has_content_type) {
@@ -968,10 +1162,19 @@ foreach my $t (@files) {
 		}
 	}
 
-	send_message();
+	$needs_confirm = (
+		$confirm eq "always" or
+		($confirm =~ /^(?:auto|cc)$/ && @cc) or
+		($confirm =~ /^(?:auto|compose)$/ && $compose && $message_num == 1));
+	$needs_confirm = "inform" if ($needs_confirm && $confirm_unconfigured && @cc);
+
+	@cc = (@initial_cc, @cc);
+
+	my $message_was_sent = send_message();
 
 	# set up for the next message
-	if ($chain_reply_to || !defined $reply_to || length($reply_to) == 0) {
+	if ($thread && $message_was_sent &&
+		(chain_reply_to() || !defined $reply_to || length($reply_to) == 0)) {
 		$reply_to = $message_id;
 		if (length $references > 0) {
 			$references .= "\n $message_id";
@@ -982,13 +1185,10 @@ foreach my $t (@files) {
 	$message_id = undef;
 }
 
-if ($compose) {
-	cleanup_compose_files();
-}
+cleanup_compose_files();
 
 sub cleanup_compose_files() {
-	unlink($compose_filename, $compose_filename . ".final");
-
+	unlink($compose_filename, $compose_filename . ".final") if $compose;
 }
 
 $smtp->quit if $smtp;

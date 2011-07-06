@@ -9,7 +9,8 @@ git-archive - Create an archive of files from a named tree
 SYNOPSIS
 --------
 [verse]
-'git archive' --format=<fmt> [--list] [--prefix=<prefix>/] [<extra>]
+'git archive' [--format=<fmt>] [--list] [--prefix=<prefix>/] [<extra>]
+	      [-o | --output=<file>] [--worktree-attributes]
 	      [--remote=<repo> [--exec=<git-upload-archive>]] <tree-ish>
 	      [path...]
 
@@ -20,21 +21,24 @@ structure for the named tree, and writes it out to the standard
 output.  If <prefix> is specified it is
 prepended to the filenames in the archive.
 
-'git-archive' behaves differently when given a tree ID versus when
+'git archive' behaves differently when given a tree ID versus when
 given a commit ID or tag ID.  In the first case the current time is
-used as modification time of each file in the archive.  In the latter
+used as the modification time of each file in the archive.  In the latter
 case the commit time as recorded in the referenced commit object is
 used instead.  Additionally the commit ID is stored in a global
 extended pax header if the tar format is used; it can be extracted
-using 'git-get-tar-commit-id'. In ZIP files it is stored as a file
+using 'git get-tar-commit-id'. In ZIP files it is stored as a file
 comment.
 
 OPTIONS
 -------
 
 --format=<fmt>::
-	Format of the resulting archive: 'tar' or 'zip'.  The default
-	is 'tar'.
+	Format of the resulting archive: 'tar' or 'zip'. If this option
+	is not given, and the output file is specified, the format is
+	inferred from the filename if possible (e.g. writing to "foo.zip"
+	makes the output to be in the zip format). Otherwise the output
+	format is `tar`.
 
 -l::
 --list::
@@ -47,12 +51,19 @@ OPTIONS
 --prefix=<prefix>/::
 	Prepend <prefix>/ to each filename in the archive.
 
+-o <file>::
+--output=<file>::
+	Write the archive to <file> instead of stdout.
+
+--worktree-attributes::
+	Look for attributes in .gitattributes in working directory too.
+
 <extra>::
-	This can be any options that the archiver backend understand.
+	This can be any options that the archiver backend understands.
 	See next section.
 
 --remote=<repo>::
-	Instead of making a tar archive from local repository,
+	Instead of making a tar archive from the local repository,
 	retrieve a tar archive from a remote repository.
 
 --exec=<git-upload-archive>::
@@ -63,8 +74,9 @@ OPTIONS
 	The tree or commit to produce an archive for.
 
 path::
-	If one or more paths are specified, include only these in the
-	archive, otherwise include all files and subdirectories.
+	Without an optional path parameter, all files and subdirectories
+	of the current working directory are included in the archive.
+	If one or more paths are specified, only these are included.
 
 BACKEND EXTRA OPTIONS
 ---------------------
@@ -88,12 +100,32 @@ tar.umask::
 	archiving user's umask will be used instead.  See umask(2) for
 	details.
 
+ATTRIBUTES
+----------
+
+export-ignore::
+	Files and directories with the attribute export-ignore won't be
+	added to archive files.  See linkgit:gitattributes[5] for details.
+
+export-subst::
+	If the attribute export-subst is set for a file then git will
+	expand several placeholders when adding this file to an archive.
+	See linkgit:gitattributes[5] for details.
+
+Note that attributes are by default taken from the `.gitattributes` files
+in the tree that is being archived.  If you want to tweak the way the
+output is generated after the fact (e.g. you committed without adding an
+appropriate export-ignore in its `.gitattributes`), adjust the checked out
+`.gitattributes` file as necessary and use `--work-tree-attributes`
+option.  Alternatively you can keep necessary attributes that should apply
+while archiving any tree in your `$GIT_DIR/info/attributes` file.
+
 EXAMPLES
 --------
 git archive --format=tar --prefix=junk/ HEAD | (cd /var/tmp/ && tar xf -)::
 
 	Create a tar archive that contains the contents of the
-	latest commit on the current branch, and extracts it in
+	latest commit on the current branch, and extract it in the
 	`/var/tmp/junk` directory.
 
 git archive --format=tar --prefix=git-1.4.0/ v1.4.0 | gzip >git-1.4.0.tar.gz::
@@ -109,6 +141,17 @@ git archive --format=zip --prefix=git-docs/ HEAD:Documentation/ > git-1.4.0-docs
 
 	Put everything in the current head's Documentation/ directory
 	into 'git-1.4.0-docs.zip', with the prefix 'git-docs/'.
+
+git archive -o latest.zip HEAD::
+
+	Create a Zip archive that contains the contents of the latest
+	commit on the current branch. Note that the output format is
+	inferred by the extension of the output file.
+
+
+SEE ALSO
+--------
+linkgit:gitattributes[5]
 
 Author
 ------

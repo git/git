@@ -38,6 +38,16 @@
 # hooks.emailprefix
 #   All emails have their subjects prefixed with this prefix, or "[SCM]"
 #   if emailprefix is unset, to aid filtering
+# hooks.showrev
+#   The shell command used to format each revision in the email, with
+#   "%s" replaced with the commit id.  Defaults to "git rev-list -1
+#   --pretty %s", displaying the commit id, author, date and log
+#   message.  To list full patches separated by a blank line, you
+#   could set this to "git show -C %s; echo".
+#   To list a gitweb/cgit URL *and* a full patch for each change set, use this:
+#     "t=%s; printf 'http://.../?id=%%s' \$t; echo;echo; git show -C \$t; echo"
+#   Be careful if "..." contains things that will be expanded by shell "eval"
+#   or printf.
 #
 # Notes
 # -----
@@ -224,13 +234,7 @@ generate_create_branch_email()
 	echo ""
 
 	echo $LOGBEGIN
-	# This shows all log entries that are not already covered by
-	# another ref - i.e. commits that are now accessible from this
-	# ref that were previously not accessible
-	# (see generate_update_branch_email for the explanation of this
-	# command)
-	git rev-parse --not --branches | grep -v $(git rev-parse $refname) |
-	git rev-list --pretty --stdin $newrev
+	show_new_revisions
 	echo $LOGEND
 }
 
@@ -311,8 +315,8 @@ generate_update_branch_email()
 	# "remotes/" will be ignored as well.
 
 	# List all of the revisions that were removed by this update, in a
-	# fast forward update, this list will be empty, because rev-list O
-	# ^N is empty.  For a non fast forward, O ^N is the list of removed
+	# fast-forward update, this list will be empty, because rev-list O
+	# ^N is empty.  For a non-fast-forward, O ^N is the list of removed
 	# revisions
 	fast_forward=""
 	rev=""
@@ -390,8 +394,7 @@ generate_update_branch_email()
 
 		echo ""
 		echo $LOGBEGIN
-		git rev-parse --not --branches | grep -v $(git rev-parse $refname) |
-		git rev-list --pretty --stdin $oldrev..$newrev
+		show_new_revisions
 
 		# XXX: Need a way of detecting whether git rev-list actually
 		# outputted anything, so that we can issue a "no new
@@ -408,7 +411,7 @@ generate_update_branch_email()
 	# revision because the base is effectively a random revision at this
 	# point - the user will be interested in what this revision changed
 	# - including the undoing of previous revisions in the case of
-	# non-fast forward updates.
+	# non-fast-forward updates.
 	echo ""
 	echo "Summary of changes:"
 	git diff-tree --stat --summary --find-copies-harder $oldrev..$newrev
@@ -591,6 +594,47 @@ generate_delete_general_email()
 	echo $LOGEND
 }
 
+
+# --------------- Miscellaneous utilities
+
+#
+# Show new revisions as the user would like to see them in the email.
+#
+show_new_revisions()
+{
+	# This shows all log entries that are not already covered by
+	# another ref - i.e. commits that are now accessible from this
+	# ref that were previously not accessible
+	# (see generate_update_branch_email for the explanation of this
+	# command)
+
+	# Revision range passed to rev-list differs for new vs. updated
+	# branches.
+	if [ "$change_type" = create ]
+	then
+		# Show all revisions exclusive to this (new) branch.
+		revspec=$newrev
+	else
+		# Branch update; show revisions not part of $oldrev.
+		revspec=$oldrev..$newrev
+	fi
+
+	other_branches=$(git for-each-ref --format='%(refname)' refs/heads/ |
+	    grep -F -v $refname)
+	git rev-parse --not $other_branches |
+	if [ -z "$custom_showrev" ]
+	then
+		git rev-list --pretty --stdin $revspec
+	else
+		git rev-list --stdin $revspec |
+		while read onerev
+		do
+			eval $(printf "$custom_showrev" $onerev)
+		done
+	fi
+}
+
+
 send_mail()
 {
 	if [ -n "$envelopesender" ]; then
@@ -627,6 +671,7 @@ recipients=$(git config hooks.mailinglist)
 announcerecipients=$(git config hooks.announcelist)
 envelopesender=$(git config hooks.envelopesender)
 emailprefix=$(git config hooks.emailprefix || echo '[SCM] ')
+custom_showrev=$(git config hooks.showrev)
 
 # --- Main loop
 # Allow dual mode: run from the command line just like the update hook, or

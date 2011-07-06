@@ -12,6 +12,7 @@ mk_empty () {
 	(
 		cd testrepo &&
 		git init &&
+		git config receive.denyCurrentBranch warn &&
 		mv .git/hooks .git/hooks-disabled
 	)
 }
@@ -37,6 +38,11 @@ mk_test () {
 		done &&
 		git fsck --full
 	)
+}
+
+mk_child() {
+	rm -rf "$1" &&
+	git clone testrepo "$1"
 }
 
 check_push_result () {
@@ -117,6 +123,23 @@ test_expect_success 'fetch with insteadOf' '
 	)
 '
 
+test_expect_success 'fetch with pushInsteadOf (should not rewrite)' '
+	mk_empty &&
+	(
+		TRASH=$(pwd)/ &&
+		cd testrepo &&
+		git config "url.trash/.pushInsteadOf" "$TRASH" &&
+		git config remote.up.url "$TRASH." &&
+		git config remote.up.fetch "refs/heads/*:refs/remotes/origin/*" &&
+		git fetch up &&
+
+		r=$(git show-ref -s --verify refs/remotes/origin/master) &&
+		test "z$r" = "z$the_commit" &&
+
+		test 1 = $(git for-each-ref refs/remotes/origin | wc -l)
+	)
+'
+
 test_expect_success 'push without wildcard' '
 	mk_empty &&
 
@@ -148,6 +171,36 @@ test_expect_success 'push with insteadOf' '
 	TRASH="$(pwd)/" &&
 	git config "url.$TRASH.insteadOf" trash/ &&
 	git push trash/testrepo refs/heads/master:refs/remotes/origin/master &&
+	(
+		cd testrepo &&
+		r=$(git show-ref -s --verify refs/remotes/origin/master) &&
+		test "z$r" = "z$the_commit" &&
+
+		test 1 = $(git for-each-ref refs/remotes/origin | wc -l)
+	)
+'
+
+test_expect_success 'push with pushInsteadOf' '
+	mk_empty &&
+	TRASH="$(pwd)/" &&
+	git config "url.$TRASH.pushInsteadOf" trash/ &&
+	git push trash/testrepo refs/heads/master:refs/remotes/origin/master &&
+	(
+		cd testrepo &&
+		r=$(git show-ref -s --verify refs/remotes/origin/master) &&
+		test "z$r" = "z$the_commit" &&
+
+		test 1 = $(git for-each-ref refs/remotes/origin | wc -l)
+	)
+'
+
+test_expect_success 'push with pushInsteadOf and explicit pushurl (pushInsteadOf should not rewrite)' '
+	mk_empty &&
+	TRASH="$(pwd)/" &&
+	git config "url.trash2/.pushInsteadOf" trash/ &&
+	git config remote.r.url trash/wrong &&
+	git config remote.r.pushurl "$TRASH/testrepo" &&
+	git push r refs/heads/master:refs/remotes/origin/master &&
 	(
 		cd testrepo &&
 		r=$(git show-ref -s --verify refs/remotes/origin/master) &&
@@ -414,6 +467,19 @@ test_expect_success 'push with config remote.*.push = HEAD' '
 git config --remove-section remote.there
 git config --remove-section branch.master
 
+test_expect_success 'push with config remote.*.pushurl' '
+
+	mk_test heads/master &&
+	git checkout master &&
+	git config remote.there.url test2repo &&
+	git config remote.there.pushurl testrepo &&
+	git push there &&
+	check_push_result $the_commit heads/master
+'
+
+# clean up the cruft left with the previous one
+git config --remove-section remote.there
+
 test_expect_success 'push with dry-run' '
 
 	mk_test heads/master &&
@@ -425,29 +491,47 @@ test_expect_success 'push with dry-run' '
 
 test_expect_success 'push updates local refs' '
 
-	rm -rf parent child &&
-	mkdir parent &&
-	(cd parent && git init &&
-		echo one >foo && git add foo && git commit -m one) &&
-	git clone parent child &&
+	mk_test heads/master &&
+	mk_child child &&
 	(cd child &&
-		echo two >foo && git commit -a -m two &&
+		git pull .. master &&
 		git push &&
 	test $(git rev-parse master) = $(git rev-parse remotes/origin/master))
 
 '
 
+test_expect_success 'push updates up-to-date local refs' '
+
+	mk_test heads/master &&
+	mk_child child1 &&
+	mk_child child2 &&
+	(cd child1 && git pull .. master && git push) &&
+	(cd child2 &&
+		git pull ../child1 master &&
+		git push &&
+	test $(git rev-parse master) = $(git rev-parse remotes/origin/master))
+
+'
+
+test_expect_success 'push preserves up-to-date packed refs' '
+
+	mk_test heads/master &&
+	mk_child child &&
+	(cd child &&
+		git push &&
+	! test -f .git/refs/remotes/origin/master)
+
+'
+
 test_expect_success 'push does not update local refs on failure' '
 
-	rm -rf parent child &&
-	mkdir parent &&
-	(cd parent && git init &&
-		echo one >foo && git add foo && git commit -m one &&
-		echo exit 1 >.git/hooks/pre-receive &&
-		chmod +x .git/hooks/pre-receive) &&
-	git clone parent child &&
+	mk_test heads/master &&
+	mk_child child &&
+	mkdir testrepo/.git/hooks &&
+	echo exit 1 >testrepo/.git/hooks/pre-receive &&
+	chmod +x testrepo/.git/hooks/pre-receive &&
 	(cd child &&
-		echo two >foo && git commit -a -m two &&
+		git pull .. master
 		test_must_fail git push &&
 		test $(git rev-parse master) != \
 			$(git rev-parse remotes/origin/master))
@@ -456,11 +540,124 @@ test_expect_success 'push does not update local refs on failure' '
 
 test_expect_success 'allow deleting an invalid remote ref' '
 
-	pwd &&
+	mk_test heads/master &&
 	rm -f testrepo/.git/objects/??/* &&
 	git push testrepo :refs/heads/master &&
 	(cd testrepo && test_must_fail git rev-parse --verify refs/heads/master)
 
+'
+
+test_expect_success 'allow deleting a ref using --delete' '
+	mk_test heads/master &&
+	(cd testrepo && git config receive.denyDeleteCurrent warn) &&
+	git push testrepo --delete master &&
+	(cd testrepo && test_must_fail git rev-parse --verify refs/heads/master)
+'
+
+test_expect_success 'allow deleting a tag using --delete' '
+	mk_test heads/master &&
+	git tag -a -m dummy_message deltag heads/master &&
+	git push testrepo --tags &&
+	(cd testrepo && git rev-parse --verify -q refs/tags/deltag) &&
+	git push testrepo --delete tag deltag &&
+	(cd testrepo && test_must_fail git rev-parse --verify refs/tags/deltag)
+'
+
+test_expect_success 'push --delete without args aborts' '
+	mk_test heads/master &&
+	test_must_fail git push testrepo --delete
+'
+
+test_expect_success 'push --delete refuses src:dest refspecs' '
+	mk_test heads/master &&
+	test_must_fail git push testrepo --delete master:foo
+'
+
+test_expect_success 'warn on push to HEAD of non-bare repository' '
+	mk_test heads/master
+	(cd testrepo &&
+		git checkout master &&
+		git config receive.denyCurrentBranch warn) &&
+	git push testrepo master 2>stderr &&
+	grep "warning: updating the current branch" stderr
+'
+
+test_expect_success 'deny push to HEAD of non-bare repository' '
+	mk_test heads/master
+	(cd testrepo &&
+		git checkout master &&
+		git config receive.denyCurrentBranch true) &&
+	test_must_fail git push testrepo master
+'
+
+test_expect_success 'allow push to HEAD of bare repository (bare)' '
+	mk_test heads/master
+	(cd testrepo &&
+		git checkout master &&
+		git config receive.denyCurrentBranch true &&
+		git config core.bare true) &&
+	git push testrepo master 2>stderr &&
+	! grep "warning: updating the current branch" stderr
+'
+
+test_expect_success 'allow push to HEAD of non-bare repository (config)' '
+	mk_test heads/master
+	(cd testrepo &&
+		git checkout master &&
+		git config receive.denyCurrentBranch false
+	) &&
+	git push testrepo master 2>stderr &&
+	! grep "warning: updating the current branch" stderr
+'
+
+test_expect_success 'fetch with branches' '
+	mk_empty &&
+	git branch second $the_first_commit &&
+	git checkout second &&
+	echo ".." > testrepo/.git/branches/branch1 &&
+	(cd testrepo &&
+		git fetch branch1 &&
+		r=$(git show-ref -s --verify refs/heads/branch1) &&
+		test "z$r" = "z$the_commit" &&
+		test 1 = $(git for-each-ref refs/heads | wc -l)
+	) &&
+	git checkout master
+'
+
+test_expect_success 'fetch with branches containing #' '
+	mk_empty &&
+	echo "..#second" > testrepo/.git/branches/branch2 &&
+	(cd testrepo &&
+		git fetch branch2 &&
+		r=$(git show-ref -s --verify refs/heads/branch2) &&
+		test "z$r" = "z$the_first_commit" &&
+		test 1 = $(git for-each-ref refs/heads | wc -l)
+	) &&
+	git checkout master
+'
+
+test_expect_success 'push with branches' '
+	mk_empty &&
+	git checkout second &&
+	echo "testrepo" > .git/branches/branch1 &&
+	git push branch1 &&
+	(cd testrepo &&
+		r=$(git show-ref -s --verify refs/heads/master) &&
+		test "z$r" = "z$the_first_commit" &&
+		test 1 = $(git for-each-ref refs/heads | wc -l)
+	)
+'
+
+test_expect_success 'push with branches containing #' '
+	mk_empty &&
+	echo "testrepo#branch3" > .git/branches/branch2 &&
+	git push branch2 &&
+	(cd testrepo &&
+		r=$(git show-ref -s --verify refs/heads/branch3) &&
+		test "z$r" = "z$the_first_commit" &&
+		test 1 = $(git for-each-ref refs/heads | wc -l)
+	) &&
+	git checkout master
 '
 
 test_done

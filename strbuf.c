@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "refs.h"
 
 int prefixcmp(const char *str, const char *prefix)
 {
@@ -7,6 +8,15 @@ int prefixcmp(const char *str, const char *prefix)
 			return 0;
 		else if (*str != *prefix)
 			return (unsigned char)*prefix - (unsigned char)*str;
+}
+
+int suffixcmp(const char *str, const char *suffix)
+{
+	int len = strlen(str), suflen = strlen(suffix);
+	if (len < suflen)
+		return -1;
+	else
+		return strcmp(str + len - suflen, suffix);
 }
 
 /*
@@ -90,13 +100,6 @@ void strbuf_ltrim(struct strbuf *sb)
 	sb->buf[sb->len] = '\0';
 }
 
-void strbuf_tolower(struct strbuf *sb)
-{
-	int i;
-	for (i = 0; i < sb->len; i++)
-		sb->buf[i] = tolower(sb->buf[i]);
-}
-
 struct strbuf **strbuf_split(const struct strbuf *sb, int delim)
 {
 	int alloc = 2, pos = 0;
@@ -139,14 +142,11 @@ void strbuf_list_free(struct strbuf **sbs)
 
 int strbuf_cmp(const struct strbuf *a, const struct strbuf *b)
 {
-	int cmp;
-	if (a->len < b->len) {
-		cmp = memcmp(a->buf, b->buf, a->len);
-		return cmp ? cmp : -1;
-	} else {
-		cmp = memcmp(a->buf, b->buf, b->len);
-		return cmp ? cmp : a->len != b->len;
-	}
+	int len = a->len < b->len ? a->len: b->len;
+	int cmp = memcmp(a->buf, b->buf, len);
+	if (cmp)
+		return cmp;
+	return a->len < b->len ? -1: a->len != b->len;
 }
 
 void strbuf_splice(struct strbuf *sb, size_t pos, size_t len,
@@ -229,6 +229,12 @@ void strbuf_expand(struct strbuf *sb, const char *format, expand_fn_t fn,
 			break;
 		format = percent + 1;
 
+		if (*format == '%') {
+			strbuf_addch(sb, '%');
+			format++;
+			continue;
+		}
+
 		consumed = fn(sb, format, context);
 		if (consumed)
 			format += consumed;
@@ -237,21 +243,51 @@ void strbuf_expand(struct strbuf *sb, const char *format, expand_fn_t fn,
 	}
 }
 
+size_t strbuf_expand_dict_cb(struct strbuf *sb, const char *placeholder,
+		void *context)
+{
+	struct strbuf_expand_dict_entry *e = context;
+	size_t len;
+
+	for (; e->placeholder && (len = strlen(e->placeholder)); e++) {
+		if (!strncmp(placeholder, e->placeholder, len)) {
+			if (e->value)
+				strbuf_addstr(sb, e->value);
+			return len;
+		}
+	}
+	return 0;
+}
+
+void strbuf_addbuf_percentquote(struct strbuf *dst, const struct strbuf *src)
+{
+	int i, len = src->len;
+
+	for (i = 0; i < len; i++) {
+		if (src->buf[i] == '%')
+			strbuf_addch(dst, '%');
+		strbuf_addch(dst, src->buf[i]);
+	}
+}
+
 size_t strbuf_fread(struct strbuf *sb, size_t size, FILE *f)
 {
 	size_t res;
+	size_t oldalloc = sb->alloc;
 
 	strbuf_grow(sb, size);
 	res = fread(sb->buf + sb->len, 1, size, f);
-	if (res > 0) {
+	if (res > 0)
 		strbuf_setlen(sb, sb->len + res);
-	}
+	else if (oldalloc == 0)
+		strbuf_release(sb);
 	return res;
 }
 
 ssize_t strbuf_read(struct strbuf *sb, int fd, size_t hint)
 {
 	size_t oldlen = sb->len;
+	size_t oldalloc = sb->alloc;
 
 	strbuf_grow(sb, hint ? hint : 8192);
 	for (;;) {
@@ -259,7 +295,10 @@ ssize_t strbuf_read(struct strbuf *sb, int fd, size_t hint)
 
 		cnt = xread(fd, sb->buf + sb->len, sb->alloc - sb->len - 1);
 		if (cnt < 0) {
-			strbuf_setlen(sb, oldlen);
+			if (oldalloc == 0)
+				strbuf_release(sb);
+			else
+				strbuf_setlen(sb, oldlen);
 			return -1;
 		}
 		if (!cnt)
@@ -272,7 +311,37 @@ ssize_t strbuf_read(struct strbuf *sb, int fd, size_t hint)
 	return sb->len - oldlen;
 }
 
-int strbuf_getline(struct strbuf *sb, FILE *fp, int term)
+#define STRBUF_MAXLINK (2*PATH_MAX)
+
+int strbuf_readlink(struct strbuf *sb, const char *path, size_t hint)
+{
+	size_t oldalloc = sb->alloc;
+
+	if (hint < 32)
+		hint = 32;
+
+	while (hint < STRBUF_MAXLINK) {
+		int len;
+
+		strbuf_grow(sb, hint);
+		len = readlink(path, sb->buf, hint);
+		if (len < 0) {
+			if (errno != ERANGE)
+				break;
+		} else if (len < hint) {
+			strbuf_setlen(sb, len);
+			return 0;
+		}
+
+		/* .. the buffer was too small - try again */
+		hint *= 2;
+	}
+	if (oldalloc == 0)
+		strbuf_release(sb);
+	return -1;
+}
+
+int strbuf_getwholeline(struct strbuf *sb, FILE *fp, int term)
 {
 	int ch;
 
@@ -282,15 +351,24 @@ int strbuf_getline(struct strbuf *sb, FILE *fp, int term)
 
 	strbuf_reset(sb);
 	while ((ch = fgetc(fp)) != EOF) {
-		if (ch == term)
-			break;
 		strbuf_grow(sb, 1);
 		sb->buf[sb->len++] = ch;
+		if (ch == term)
+			break;
 	}
 	if (ch == EOF && sb->len == 0)
 		return EOF;
 
 	sb->buf[sb->len] = '\0';
+	return 0;
+}
+
+int strbuf_getline(struct strbuf *sb, FILE *fp, int term)
+{
+	if (strbuf_getwholeline(sb, fp, term))
+		return EOF;
+	if (sb->buf[sb->len-1] == term)
+		strbuf_setlen(sb, sb->len-1);
 	return 0;
 }
 
@@ -307,4 +385,20 @@ int strbuf_read_file(struct strbuf *sb, const char *path, size_t hint)
 		return -1;
 
 	return len;
+}
+
+int strbuf_branchname(struct strbuf *sb, const char *name)
+{
+	int len = strlen(name);
+	if (interpret_branch_name(name, sb) == len)
+		return 0;
+	strbuf_add(sb, name, len);
+	return len;
+}
+
+int strbuf_check_branch_ref(struct strbuf *sb, const char *name)
+{
+	strbuf_branchname(sb, name);
+	strbuf_splice(sb, 0, 0, "refs/heads/", 11);
+	return check_ref_format(sb->buf);
 }

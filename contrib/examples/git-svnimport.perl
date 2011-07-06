@@ -287,9 +287,9 @@ my $last_rev = "";
 my $last_branch;
 my $current_rev = $opt_s || 1;
 unless(-d $git_dir) {
-	system("git-init");
+	system("git init");
 	die "Cannot init the GIT db at $git_tree: $?\n" if $?;
-	system("git-read-tree");
+	system("git read-tree");
 	die "Cannot init an empty tree: $?\n" if $?;
 
 	$last_branch = $opt_o;
@@ -303,7 +303,7 @@ unless(-d $git_dir) {
 	-f "$git_dir/svn2git"
 		or die "'$git_dir/svn2git' does not exist.\n".
 		       "You need that file for incremental imports.\n";
-	open(F, "git-symbolic-ref HEAD |") or
+	open(F, "git symbolic-ref HEAD |") or
 		die "Cannot run git-symbolic-ref: $!\n";
 	chomp ($last_branch = <F>);
 	$last_branch = basename($last_branch);
@@ -331,7 +331,7 @@ EOM
 				"$git_dir/refs/heads/$opt_o") == 0;
 
 	# populate index
-	system('git-read-tree', $last_rev);
+	system('git', 'read-tree', $last_rev);
 	die "read-tree failed: $?\n" if $?;
 
 	# Get the last import timestamps
@@ -399,7 +399,7 @@ sub get_file($$$) {
 	my $pid = open(my $F, '-|');
 	die $! unless defined $pid;
 	if (!$pid) {
-	    exec("git-hash-object", "-w", $name)
+	    exec("git", "hash-object", "-w", $name)
 		or die "Cannot create object: $!\n";
 	}
 	my $sha = <$F>;
@@ -423,7 +423,7 @@ sub get_ignore($$$$$) {
 		my $pid = open(my $F, '-|');
 		die $! unless defined $pid;
 		if (!$pid) {
-			exec("git-hash-object", "-w", $name)
+			exec("git", "hash-object", "-w", $name)
 			    or die "Cannot create object: $!\n";
 		}
 		my $sha = <$F>;
@@ -547,7 +547,7 @@ sub copy_path($$$$$$$$) {
 	my $pid = open my $f,'-|';
 	die $! unless defined $pid;
 	if (!$pid) {
-		exec("git-ls-tree","-r","-z",$gitrev,$srcpath)
+		exec("git","ls-tree","-r","-z",$gitrev,$srcpath)
 			or die $!;
 	}
 	local $/ = "\0";
@@ -634,7 +634,7 @@ sub commit {
 
 	my $rev;
 	if($revision > $opt_s and defined $parent) {
-		open(H,'-|',"git-rev-parse","--verify",$parent);
+		open(H,'-|',"git","rev-parse","--verify",$parent);
 		$rev = <H>;
 		close(H) or do {
 			print STDERR "$revision: cannot find commit '$parent'!\n";
@@ -671,7 +671,7 @@ sub commit {
 		unlink($git_index);
 	} elsif ($rev ne $last_rev) {
 		print "Switching from $last_rev to $rev ($branch)\n" if $opt_v;
-		system("git-read-tree", $rev);
+		system("git", "read-tree", $rev);
 		die "read-tree failed for $rev: $?\n" if $?;
 		$last_rev = $rev;
 	}
@@ -740,7 +740,7 @@ sub commit {
 			my $pid = open my $F, "-|";
 			die "$!" unless defined $pid;
 			if (!$pid) {
-				exec("git-ls-files", "-z", @o1) or die $!;
+				exec("git", "ls-files", "-z", @o1) or die $!;
 			}
 			@o1 = ();
 			local $/ = "\0";
@@ -758,7 +758,7 @@ sub commit {
 					@o2 = @o1;
 					@o1 = ();
 				}
-				system("git-update-index","--force-remove","--",@o2);
+				system("git","update-index","--force-remove","--",@o2);
 				die "Cannot remove files: $?\n" if $?;
 			}
 		}
@@ -770,7 +770,7 @@ sub commit {
 				@n2 = @new;
 				@new = ();
 			}
-			system("git-update-index","--add",
+			system("git","update-index","--add",
 				(map { ('--cacheinfo', @$_) } @n2));
 			die "Cannot add files: $?\n" if $?;
 		}
@@ -778,7 +778,7 @@ sub commit {
 		my $pid = open(C,"-|");
 		die "Cannot fork: $!" unless defined $pid;
 		unless($pid) {
-			exec("git-write-tree");
+			exec("git","write-tree");
 			die "Cannot exec git-write-tree: $!\n";
 		}
 		chomp(my $tree = <C>);
@@ -830,7 +830,7 @@ sub commit {
 				"GIT_COMMITTER_NAME=$committer_name",
 				"GIT_COMMITTER_EMAIL=$committer_email",
 				"GIT_COMMITTER_DATE=".strftime("+0000 %Y-%m-%d %H:%M:%S",gmtime($date)),
-				"git-commit-tree", $tree,@par);
+				"git", "commit-tree", $tree,@par);
 			die "Cannot exec git-commit-tree: $!\n";
 		}
 		$pw->writer();
@@ -874,7 +874,7 @@ sub commit {
 
 		$dest =~ tr/_/\./ if $opt_u;
 
-		system('git-tag', '-f', $dest, $cid) == 0
+		system('git', 'tag', '-f', $dest, $cid) == 0
 			or die "Cannot create tag $dest: $!\n";
 
 		print "Created tag '$dest' on '$branch'\n" if $opt_v;
@@ -937,7 +937,7 @@ while ($to_rev < $opt_l) {
 	my $pid = fork();
 	die "Fork: $!\n" unless defined $pid;
 	unless($pid) {
-		exec("git-repack", "-d")
+		exec("git", "repack", "-d")
 			or die "Cannot repack: $!\n";
 	}
 	waitpid($pid, 0);
@@ -958,7 +958,7 @@ if($orig_branch) {
 	system("cp","$git_dir/refs/heads/$opt_o","$git_dir/refs/heads/master")
 		if $forward_master;
 	unless ($opt_i) {
-		system('git-read-tree', '-m', '-u', 'SVN2GIT_HEAD', 'HEAD');
+		system('git', 'read-tree', '-m', '-u', 'SVN2GIT_HEAD', 'HEAD');
 		die "read-tree failed: $?\n" if $?;
 	}
 } else {
@@ -966,7 +966,7 @@ if($orig_branch) {
 	print "DONE; creating $orig_branch branch\n" if $opt_v and (not defined $opt_l or $opt_l > 0);
 	system("cp","$git_dir/refs/heads/$opt_o","$git_dir/refs/heads/master")
 		unless -f "$git_dir/refs/heads/master";
-	system('git-update-ref', 'HEAD', "$orig_branch");
+	system('git', 'update-ref', 'HEAD', "$orig_branch");
 	unless ($opt_i) {
 		system('git checkout');
 		die "checkout failed: $?\n" if $?;

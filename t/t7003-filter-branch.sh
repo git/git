@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='git-filter-branch'
+test_description='git filter-branch'
 . ./test-lib.sh
 
 make_commit () {
@@ -32,22 +32,40 @@ test_expect_success 'setup' '
 H=$(git rev-parse H)
 
 test_expect_success 'rewrite identically' '
-	git-filter-branch branch
+	git filter-branch branch
 '
 test_expect_success 'result is really identical' '
 	test $H = $(git rev-parse HEAD)
 '
 
 test_expect_success 'rewrite bare repository identically' '
-	(git config core.bare true && cd .git && git-filter-branch branch)
+	(git config core.bare true && cd .git &&
+	 git filter-branch branch > filter-output 2>&1 &&
+	! fgrep fatal filter-output)
 '
 git config core.bare false
 test_expect_success 'result is really identical' '
 	test $H = $(git rev-parse HEAD)
 '
 
+TRASHDIR=$(pwd)
+test_expect_success 'correct GIT_DIR while using -d' '
+	mkdir drepo &&
+	( cd drepo &&
+	git init &&
+	test_commit drepo &&
+	git filter-branch -d "$TRASHDIR/dfoo" \
+		--index-filter "cp \"$TRASHDIR\"/dfoo/backup-refs \"$TRASHDIR\"" \
+	) &&
+	grep drepo "$TRASHDIR/backup-refs"
+'
+
+test_expect_success 'Fail if commit filter fails' '
+	test_must_fail git filter-branch -f --commit-filter "exit 1" HEAD
+'
+
 test_expect_success 'rewrite, renaming a specific file' '
-	git-filter-branch -f --tree-filter "mv d doh || :" HEAD
+	git filter-branch -f --tree-filter "mv d doh || :" HEAD
 '
 
 test_expect_success 'test that the file was renamed' '
@@ -58,7 +76,7 @@ test_expect_success 'test that the file was renamed' '
 '
 
 test_expect_success 'rewrite, renaming a specific directory' '
-	git-filter-branch -f --tree-filter "mv dir diroh || :" HEAD
+	git filter-branch -f --tree-filter "mv dir diroh || :" HEAD
 '
 
 test_expect_success 'test that the directory was renamed' '
@@ -73,7 +91,7 @@ test_expect_success 'test that the directory was renamed' '
 git tag oldD HEAD~4
 test_expect_success 'rewrite one branch, keeping a side branch' '
 	git branch modD oldD &&
-	git-filter-branch -f --tree-filter "mv b boh || :" D..modD
+	git filter-branch -f --tree-filter "mv b boh || :" D..modD
 '
 
 test_expect_success 'common ancestor is still common (unchanged)' '
@@ -96,13 +114,17 @@ test_expect_success 'filter subdirectory only' '
 	test_tick &&
 	git commit -m "again not subdir" &&
 	git branch sub &&
-	git-filter-branch -f --subdirectory-filter subdir refs/heads/sub
+	git branch sub-earlier HEAD~2 &&
+	git filter-branch -f --subdirectory-filter subdir \
+		refs/heads/sub refs/heads/sub-earlier
 '
 
 test_expect_success 'subdirectory filter result looks okay' '
 	test 2 = $(git rev-list sub | wc -l) &&
 	git show sub:new &&
-	test_must_fail git show sub:subdir
+	test_must_fail git show sub:subdir &&
+	git show sub-earlier:new &&
+	test_must_fail git show sub-earlier:subdir
 '
 
 test_expect_success 'more setup' '
@@ -120,7 +142,7 @@ test_expect_success 'more setup' '
 
 test_expect_success 'use index-filter to move into a subdirectory' '
 	git branch directorymoved &&
-	git-filter-branch -f --index-filter \
+	git filter-branch -f --index-filter \
 		 "git ls-files -s | sed \"s-\\t-&newsubdir/-\" |
 	          GIT_INDEX_FILE=\$GIT_INDEX_FILE.new \
 			git update-index --index-info &&
@@ -129,7 +151,7 @@ test_expect_success 'use index-filter to move into a subdirectory' '
 
 test_expect_success 'stops when msg filter fails' '
 	old=$(git rev-parse HEAD) &&
-	test_must_fail git-filter-branch -f --msg-filter false HEAD &&
+	test_must_fail git filter-branch -f --msg-filter false HEAD &&
 	test $old = $(git rev-parse HEAD) &&
 	rm -rf .git-rewrite
 '
@@ -140,7 +162,7 @@ test_expect_success 'author information is preserved' '
 	test_tick &&
 	GIT_AUTHOR_NAME="B V Uips" git commit -m bvuips &&
 	git branch preserved-author &&
-	git-filter-branch -f --msg-filter "cat; \
+	git filter-branch -f --msg-filter "cat; \
 			test \$GIT_COMMIT != $(git rev-parse master) || \
 			echo Hallo" \
 		preserved-author &&
@@ -152,7 +174,7 @@ test_expect_success "remove a certain author's commits" '
 	test_tick &&
 	git commit -m i i &&
 	git branch removed-author &&
-	git-filter-branch -f --commit-filter "\
+	git filter-branch -f --commit-filter "\
 		if [ \"\$GIT_AUTHOR_NAME\" = \"B V Uips\" ];\
 		then\
 			skip_commit \"\$@\";
@@ -248,6 +270,79 @@ test_expect_success 'Tag name filtering strips gpg signature' '
 	git filter-branch -f --tag-name-filter cat &&
 	git cat-file tag S > actual &&
 	test_cmp expect actual
+'
+
+test_expect_success 'Tag name filtering allows slashes in tag names' '
+	git tag -m tag-with-slash X/1 &&
+	git cat-file tag X/1 | sed -e s,X/1,X/2, > expect &&
+	git filter-branch -f --tag-name-filter "echo X/2" &&
+	git cat-file tag X/2 > actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'Prune empty commits' '
+	git rev-list HEAD > expect &&
+	make_commit to_remove &&
+	git filter-branch -f --index-filter "git update-index --remove to_remove" --prune-empty HEAD &&
+	git rev-list HEAD > actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--remap-to-ancestor with filename filters' '
+	git checkout master &&
+	git reset --hard A &&
+	test_commit add-foo foo 1 &&
+	git branch moved-foo &&
+	test_commit add-bar bar a &&
+	git branch invariant &&
+	orig_invariant=$(git rev-parse invariant) &&
+	git branch moved-bar &&
+	test_commit change-foo foo 2 &&
+	git filter-branch -f --remap-to-ancestor \
+		moved-foo moved-bar A..master \
+		-- -- foo &&
+	test $(git rev-parse moved-foo) = $(git rev-parse moved-bar) &&
+	test $(git rev-parse moved-foo) = $(git rev-parse master^) &&
+	test $orig_invariant = $(git rev-parse invariant)
+'
+
+test_expect_success 'setup submodule' '
+	rm -fr ?* .git &&
+	git init &&
+	test_commit file &&
+	mkdir submod &&
+	submodurl="$PWD/submod" &&
+	( cd submod &&
+	  git init &&
+	  test_commit file-in-submod ) &&
+	git submodule add "$submodurl" &&
+	git commit -m "added submodule" &&
+	test_commit add-file &&
+	( cd submod && test_commit add-in-submodule ) &&
+	git add submod &&
+	git commit -m "changed submodule" &&
+	git branch original HEAD
+'
+
+orig_head=`git show-ref --hash --head HEAD`
+
+test_expect_success 'rewrite submodule with another content' '
+	git filter-branch --tree-filter "test -d submod && {
+					 rm -rf submod &&
+					 git rm -rf --quiet submod &&
+					 mkdir submod &&
+					 : > submod/file
+					 } || :" HEAD &&
+	test $orig_head != `git show-ref --hash --head HEAD`
+'
+
+test_expect_success 'replace submodule revision' '
+	git reset --hard original &&
+	git filter-branch -f --tree-filter \
+	    "if git ls-files --error-unmatch -- submod > /dev/null 2>&1
+	     then git update-index --cacheinfo 160000 0123456789012345678901234567890123456789 submod
+	     fi" HEAD &&
+	test $orig_head != `git show-ref --hash --head HEAD`
 '
 
 test_done

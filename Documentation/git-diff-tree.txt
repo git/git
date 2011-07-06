@@ -20,7 +20,7 @@ Compares the content and mode of the blobs found via two tree objects.
 If there is only one <tree-ish> given, the commit is compared with its parents
 (see --stdin below).
 
-Note that 'git-diff-tree' can use the tree encapsulated in a commit object.
+Note that 'git diff-tree' can use the tree encapsulated in a commit object.
 
 OPTIONS
 -------
@@ -43,40 +43,49 @@ include::diff-options.txt[]
 	show tree entry itself as well as subtrees.  Implies -r.
 
 --root::
-	When '--root' is specified the initial commit will be showed as a big
+	When '--root' is specified the initial commit will be shown as a big
 	creation event. This is equivalent to a diff against the NULL tree.
 
 --stdin::
 	When '--stdin' is specified, the command does not take
 	<tree-ish> arguments from the command line.  Instead, it
-	reads either one <commit> or a list of <commit>
-	separated with a single space from its standard input.
+	reads lines containing either two <tree>, one <commit>, or a
+	list of <commit> from its standard input.  (Use a single space
+	as separator.)
 +
-When a single commit is given on one line of such input, it compares
-the commit with its parents.  The following flags further affects its
-behavior.  The remaining commits, when given, are used as if they are
+When two trees are given, it compares the first tree with the second.
+When a single commit is given, it compares the commit with its
+parents.  The remaining commits, when given, are used as if they are
 parents of the first commit.
++
+When comparing two trees, the ID of both trees (separated by a space
+and terminated by a newline) is printed before the difference.  When
+comparing commits, the ID of the first (or only) commit, followed by a
+newline, is printed.
++
+The following flags further affect the behavior when comparing
+commits (but not trees).
 
 -m::
-	By default, 'git-diff-tree --stdin' does not show
+	By default, 'git diff-tree --stdin' does not show
 	differences for merge commits.  With this flag, it shows
 	differences to that commit from all of its parents. See
 	also '-c'.
 
 -s::
-	By default, 'git-diff-tree --stdin' shows differences,
+	By default, 'git diff-tree --stdin' shows differences,
 	either in machine-readable form (without '-p') or in patch
 	form (with '-p').  This output can be suppressed.  It is
 	only useful with '-v' flag.
 
 -v::
-	This flag causes 'git-diff-tree --stdin' to also show
+	This flag causes 'git diff-tree --stdin' to also show
 	the commit message before the differences.
 
 include::pretty-options.txt[]
 
 --no-commit-id::
-	'git-diff-tree' outputs a line with the commit ID when
+	'git diff-tree' outputs a line with the commit ID when
 	applicable.  This flag suppressed the commit ID output.
 
 -c::
@@ -150,8 +159,7 @@ HEAD commits it finds, which is even more interesting.
 
 in case you care).
 
-Output format
--------------
+
 include::diff-format.txt[]
 
 

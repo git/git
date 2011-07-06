@@ -26,21 +26,83 @@ i,interactive      always used (no-op)
 continue           continue rebasing process
 abort              abort rebasing process and restore original branch
 skip               skip current patch and continue rebasing process
+no-verify          override pre-rebase hook from stopping the operation
+root               rebase all reachable commmits up to the root(s)
+autosquash         move commits that begin with squash!/fixup! under -i
 "
 
 . git-sh-setup
 require_work_tree
 
 DOTEST="$GIT_DIR/rebase-merge"
+
+# The file containing rebase commands, comments, and empty lines.
+# This file is created by "git rebase -i" then edited by the user.  As
+# the lines are processed, they are removed from the front of this
+# file and written to the tail of $DONE.
 TODO="$DOTEST"/git-rebase-todo
+
+# The rebase command lines that have already been processed.  A line
+# is moved here when it is first handled, before any associated user
+# actions.
 DONE="$DOTEST"/done
+
+# The commit message that is planned to be used for any changes that
+# need to be committed following a user interaction.
 MSG="$DOTEST"/message
+
+# The file into which is accumulated the suggested commit message for
+# squash/fixup commands.  When the first of a series of squash/fixups
+# is seen, the file is created and the commit message from the
+# previous commit and from the first squash/fixup commit are written
+# to it.  The commit message for each subsequent squash/fixup commit
+# is appended to the file as it is processed.
+#
+# The first line of the file is of the form
+#     # This is a combination of $COUNT commits.
+# where $COUNT is the number of commits whose messages have been
+# written to the file so far (including the initial "pick" commit).
+# Each time that a commit message is processed, this line is read and
+# updated.  It is deleted just before the combined commit is made.
 SQUASH_MSG="$DOTEST"/message-squash
+
+# If the current series of squash/fixups has not yet included a squash
+# command, then this file exists and holds the commit message of the
+# original "pick" commit.  (If the series ends without a "squash"
+# command, then this can be used as the commit message of the combined
+# commit without opening the editor.)
+FIXUP_MSG="$DOTEST"/message-fixup
+
+# $REWRITTEN is the name of a directory containing files for each
+# commit that is reachable by at least one merge base of $HEAD and
+# $UPSTREAM. They are not necessarily rewritten, but their children
+# might be.  This ensures that commits on merged, but otherwise
+# unrelated side branches are left alone. (Think "X" in the man page's
+# example.)
 REWRITTEN="$DOTEST"/rewritten
+
+DROPPED="$DOTEST"/dropped
+
+# A script to set the GIT_AUTHOR_NAME, GIT_AUTHOR_EMAIL, and
+# GIT_AUTHOR_DATE that will be used for the commit that is currently
+# being rebased.
+AUTHOR_SCRIPT="$DOTEST"/author-script
+
+# When an "edit" rebase command is being processed, the SHA1 of the
+# commit to be edited is recorded in this file.  When "git rebase
+# --continue" is executed, if there are any staged changes then they
+# will be amended to the HEAD commit, but only provided the HEAD
+# commit is still the commit to be edited.  When any other rebase
+# command is processed, this file is deleted.
+AMEND="$DOTEST"/amend
+
 PRESERVE_MERGES=
 STRATEGY=
 ONTO=
 VERBOSE=
+OK_TO_SKIP_PRE_REBASE=
+REBASE_ROOT=
+AUTOSQUASH=
 
 GIT_CHERRY_PICK_HELP="  After resolving the conflicts,
 mark the corrected paths with 'git add <paths>', and
@@ -63,6 +125,22 @@ output () {
 		"$@"
 		;;
 	esac
+}
+
+# Output the commit message for the specified commit.
+commit_message () {
+	git cat-file commit "$1" | sed "1,/^$/d"
+}
+
+run_pre_rebase_hook () {
+	if test -z "$OK_TO_SKIP_PRE_REBASE" &&
+	   test -x "$GIT_DIR/hooks/pre-rebase"
+	then
+		"$GIT_DIR/hooks/pre-rebase" ${1+"$@"} || {
+			echo >&2 "The pre-rebase hook refused to rebase."
+			exit 1
+		}
+	fi
 }
 
 require_clean_work_tree () {
@@ -90,8 +168,8 @@ mark_action_done () {
 	sed -e 1q < "$TODO" >> "$DONE"
 	sed -e 1d < "$TODO" >> "$TODO".new
 	mv -f "$TODO".new "$TODO"
-	count=$(grep -c '^[^#]' < "$DONE")
-	total=$(($count+$(grep -c '^[^#]' < "$TODO")))
+	count=$(sane_grep -c '^[^#]' < "$DONE")
+	total=$(($count+$(sane_grep -c '^[^#]' < "$TODO")))
 	if test "$last_count" != "$count"
 	then
 		last_count=$count
@@ -101,13 +179,22 @@ mark_action_done () {
 }
 
 make_patch () {
-	parent_sha1=$(git rev-parse --verify "$1"^) ||
-		die "Cannot get patch for $1^"
-	git diff-tree -p "$parent_sha1".."$1" > "$DOTEST"/patch
-	test -f "$DOTEST"/message ||
-		git cat-file commit "$1" | sed "1,/^$/d" > "$DOTEST"/message
-	test -f "$DOTEST"/author-script ||
-		get_author_ident_from_commit "$1" > "$DOTEST"/author-script
+	sha1_and_parents="$(git rev-list --parents -1 "$1")"
+	case "$sha1_and_parents" in
+	?*' '?*' '?*)
+		git diff --cc $sha1_and_parents
+		;;
+	?*' '?*)
+		git diff-tree -p "$1^!"
+		;;
+	*)
+		echo "Root commit"
+		;;
+	esac > "$DOTEST"/patch
+	test -f "$MSG" ||
+		commit_message "$1" > "$MSG"
+	test -f "$AUTHOR_SCRIPT" ||
+		get_author_ident_from_commit "$1" > "$AUTHOR_SCRIPT"
 }
 
 die_with_patch () {
@@ -122,7 +209,16 @@ die_abort () {
 }
 
 has_action () {
-	grep '^[^#]' "$1" >/dev/null
+	sane_grep '^[^#]' "$1" >/dev/null
+}
+
+# Run command with GIT_AUTHOR_NAME, GIT_AUTHOR_EMAIL, and
+# GIT_AUTHOR_DATE exported from the current environment.
+do_with_author () {
+	(
+		export GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL GIT_AUTHOR_DATE
+		"$@"
+	)
 }
 
 pick_one () {
@@ -131,14 +227,18 @@ pick_one () {
 	output git rev-parse --verify $sha1 || die "Invalid commit name: $sha1"
 	test -d "$REWRITTEN" &&
 		pick_one_preserving_merges "$@" && return
+	if test -n "$REBASE_ROOT"
+	then
+		output git cherry-pick "$@"
+		return
+	fi
 	parent_sha1=$(git rev-parse --verify $sha1^) ||
 		die "Could not get the parent of $sha1"
 	current_sha1=$(git rev-parse --verify HEAD)
-	if test "$no_ff$current_sha1" = "$parent_sha1"; then
+	if test -z "$no_ff" && test "$current_sha1" = "$parent_sha1"
+	then
 		output git reset --hard $sha1
-		test "a$1" = a-n && output git reset --soft $current_sha1
-		sha1=$(git rev-parse --short $sha1)
-		output warn Fast forward to $sha1
+		output warn Fast-forward to $(git rev-parse --short $sha1)
 	else
 		output git cherry-pick "$@"
 	fi
@@ -159,21 +259,43 @@ pick_one_preserving_merges () {
 
 	if test -f "$DOTEST"/current-commit
 	then
-		current_commit=$(cat "$DOTEST"/current-commit) &&
-		git rev-parse HEAD > "$REWRITTEN"/$current_commit &&
-		rm "$DOTEST"/current-commit ||
-		die "Cannot write current commit's replacement sha1"
+		if test "$fast_forward" = t
+		then
+			cat "$DOTEST"/current-commit | while read current_commit
+			do
+				git rev-parse HEAD > "$REWRITTEN"/$current_commit
+			done
+			rm "$DOTEST"/current-commit ||
+			die "Cannot write current commit's replacement sha1"
+		fi
 	fi
 
-	echo $sha1 > "$DOTEST"/current-commit
+	echo $sha1 >> "$DOTEST"/current-commit
 
 	# rewrite parents; if none were rewritten, we can fast-forward.
 	new_parents=
-	for p in $(git rev-list --parents -1 $sha1 | cut -d' ' -f2-)
+	pend=" $(git rev-list --parents -1 $sha1 | cut -d' ' -s -f2-)"
+	if test "$pend" = " "
+	then
+		pend=" root"
+	fi
+	while [ "$pend" != "" ]
 	do
+		p=$(expr "$pend" : ' \([^ ]*\)')
+		pend="${pend# $p}"
+
 		if test -f "$REWRITTEN"/$p
 		then
 			new_p=$(cat "$REWRITTEN"/$p)
+
+			# If the todo reordered commits, and our parent is marked for
+			# rewriting, but hasn't been gotten to yet, assume the user meant to
+			# drop it on top of the current HEAD
+			if test -z "$new_p"
+			then
+				new_p=$(git rev-parse HEAD)
+			fi
+
 			test $p != $new_p && fast_forward=f
 			case "$new_parents" in
 			*$new_p*)
@@ -183,40 +305,48 @@ pick_one_preserving_merges () {
 				;;
 			esac
 		else
-			new_parents="$new_parents $p"
+			if test -f "$DROPPED"/$p
+			then
+				fast_forward=f
+				replacement="$(cat "$DROPPED"/$p)"
+				test -z "$replacement" && replacement=root
+				pend=" $replacement$pend"
+			else
+				new_parents="$new_parents $p"
+			fi
 		fi
 	done
 	case $fast_forward in
 	t)
-		output warn "Fast forward to $sha1"
+		output warn "Fast-forward to $sha1"
 		output git reset --hard $sha1 ||
-			die "Cannot fast forward to $sha1"
+			die "Cannot fast-forward to $sha1"
 		;;
 	f)
-		test "a$1" = a-n && die "Refusing to squash a merge: $sha1"
-
 		first_parent=$(expr "$new_parents" : ' \([^ ]*\)')
-		# detach HEAD to current parent
-		output git checkout $first_parent 2> /dev/null ||
-			die "Cannot move HEAD to $first_parent"
+
+		if [ "$1" != "-n" ]
+		then
+			# detach HEAD to current parent
+			output git checkout $first_parent 2> /dev/null ||
+				die "Cannot move HEAD to $first_parent"
+		fi
 
 		case "$new_parents" in
 		' '*' '*)
+			test "a$1" = a-n && die "Refusing to squash a merge: $sha1"
+
 			# redo merge
 			author_script=$(get_author_ident_from_commit $sha1)
 			eval "$author_script"
-			msg="$(git cat-file commit $sha1 | sed -e '1,/^$/d')"
+			msg="$(commit_message $sha1)"
 			# No point in merging the first parent, that's HEAD
 			new_parents=${new_parents# $first_parent}
-			if ! GIT_AUTHOR_NAME="$GIT_AUTHOR_NAME" \
-				GIT_AUTHOR_EMAIL="$GIT_AUTHOR_EMAIL" \
-				GIT_AUTHOR_DATE="$GIT_AUTHOR_DATE" \
-				output git merge $STRATEGY -m "$msg" \
-					$new_parents
+			if ! do_with_author output \
+				git merge $STRATEGY -m "$msg" $new_parents
 			then
-				git rerere
 				printf "%s\n" "$msg" > "$GIT_DIR"/MERGE_MSG
-				die Error redoing merge $sha1
+				die_with_patch $sha1 "Error redoing merge $sha1"
 			fi
 			;;
 		*)
@@ -237,37 +367,69 @@ nth_string () {
 	esac
 }
 
-make_squash_message () {
+update_squash_messages () {
 	if test -f "$SQUASH_MSG"; then
-		COUNT=$(($(sed -n "s/^# This is [^0-9]*\([1-9][0-9]*\).*/\1/p" \
-			< "$SQUASH_MSG" | sed -ne '$p')+1))
-		echo "# This is a combination of $COUNT commits."
-		sed -e 1d -e '2,/^./{
-			/^$/d
-		}' <"$SQUASH_MSG"
+		mv "$SQUASH_MSG" "$SQUASH_MSG".bak || exit
+		COUNT=$(($(sed -n \
+			-e "1s/^# This is a combination of \(.*\) commits\./\1/p" \
+			-e "q" < "$SQUASH_MSG".bak)+1))
+		{
+			echo "# This is a combination of $COUNT commits."
+			sed -e 1d -e '2,/^./{
+				/^$/d
+			}' <"$SQUASH_MSG".bak
+		} >"$SQUASH_MSG"
 	else
+		commit_message HEAD > "$FIXUP_MSG" || die "Cannot write $FIXUP_MSG"
 		COUNT=2
-		echo "# This is a combination of two commits."
-		echo "# The first commit's message is:"
-		echo
-		git cat-file commit HEAD | sed -e '1,/^$/d'
+		{
+			echo "# This is a combination of 2 commits."
+			echo "# The first commit's message is:"
+			echo
+			cat "$FIXUP_MSG"
+		} >"$SQUASH_MSG"
 	fi
-	echo
-	echo "# This is the $(nth_string $COUNT) commit message:"
-	echo
-	git cat-file commit $1 | sed -e '1,/^$/d'
+	case $1 in
+	squash)
+		rm -f "$FIXUP_MSG"
+		echo
+		echo "# This is the $(nth_string $COUNT) commit message:"
+		echo
+		commit_message $2
+		;;
+	fixup)
+		echo
+		echo "# The $(nth_string $COUNT) commit message will be skipped:"
+		echo
+		commit_message $2 | sed -e 's/^/#	/'
+		;;
+	esac >>"$SQUASH_MSG"
 }
 
 peek_next_command () {
-	sed -n "1s/ .*$//p" < "$TODO"
+	sed -n -e "/^#/d" -e '/^$/d' -e "s/ .*//p" -e "q" < "$TODO"
+}
+
+# A squash/fixup has failed.  Prepare the long version of the squash
+# commit message, then die_with_patch.  This code path requires the
+# user to edit the combined commit message for all commits that have
+# been squashed/fixedup so far.  So also erase the old squash
+# messages, effectively causing the combined commit to be used as the
+# new basis for any further squash/fixups.  Args: sha1 rest
+die_failed_squash() {
+	mv "$SQUASH_MSG" "$MSG" || exit
+	rm -f "$FIXUP_MSG"
+	cp "$MSG" "$GIT_DIR"/MERGE_MSG || exit
+	warn
+	warn "Could not apply $1... $2"
+	die_with_patch $1 ""
 }
 
 do_next () {
-	rm -f "$DOTEST"/message "$DOTEST"/author-script \
-		"$DOTEST"/amend || exit
+	rm -f "$MSG" "$AUTHOR_SCRIPT" "$AMEND" || exit
 	read command sha1 rest < "$TODO"
 	case "$command" in
-	'#'*|'')
+	'#'*|''|noop)
 		mark_action_done
 		;;
 	pick|p)
@@ -277,6 +439,14 @@ do_next () {
 		pick_one $sha1 ||
 			die_with_patch $sha1 "Could not apply $sha1... $rest"
 		;;
+	reword|r)
+		comment_for_reflog reword
+
+		mark_action_done
+		pick_one $sha1 ||
+			die_with_patch $sha1 "Could not apply $sha1... $rest"
+		git commit --amend
+		;;
 	edit|e)
 		comment_for_reflog edit
 
@@ -284,7 +454,7 @@ do_next () {
 		pick_one $sha1 ||
 			die_with_patch $sha1 "Could not apply $sha1... $rest"
 		make_patch $sha1
-		: > "$DOTEST"/amend
+		git rev-parse --verify HEAD > "$AMEND"
 		warn "Stopped at $sha1... $rest"
 		warn "You can amend the commit now, with"
 		warn
@@ -296,52 +466,58 @@ do_next () {
 		warn
 		exit 0
 		;;
-	squash|s)
-		comment_for_reflog squash
-
-		has_action "$DONE" ||
-			die "Cannot 'squash' without a previous commit"
-
-		mark_action_done
-		make_squash_message $sha1 > "$MSG"
-		case "$(peek_next_command)" in
+	squash|s|fixup|f)
+		case "$command" in
 		squash|s)
-			EDIT_COMMIT=
-			USE_OUTPUT=output
-			cp "$MSG" "$SQUASH_MSG"
+			squash_style=squash
 			;;
-		*)
-			EDIT_COMMIT=-e
-			USE_OUTPUT=
-			rm -f "$SQUASH_MSG" || exit
+		fixup|f)
+			squash_style=fixup
 			;;
 		esac
+		comment_for_reflog $squash_style
 
-		failed=f
+		test -f "$DONE" && has_action "$DONE" ||
+			die "Cannot '$squash_style' without a previous commit"
+
+		mark_action_done
+		update_squash_messages $squash_style $sha1
 		author_script=$(get_author_ident_from_commit HEAD)
+		echo "$author_script" > "$AUTHOR_SCRIPT"
+		eval "$author_script"
 		output git reset --soft HEAD^
-		pick_one -n $sha1 || failed=t
-		echo "$author_script" > "$DOTEST"/author-script
-		if test $failed = f
-		then
-			# This is like --amend, but with a different message
-			eval "$author_script"
-			GIT_AUTHOR_NAME="$GIT_AUTHOR_NAME" \
-			GIT_AUTHOR_EMAIL="$GIT_AUTHOR_EMAIL" \
-			GIT_AUTHOR_DATE="$GIT_AUTHOR_DATE" \
-			$USE_OUTPUT git commit --no-verify -F "$MSG" $EDIT_COMMIT || failed=t
-		fi
-		if test $failed = t
-		then
-			cp "$MSG" "$GIT_DIR"/MERGE_MSG
-			warn
-			warn "Could not apply $sha1... $rest"
-			die_with_patch $sha1 ""
-		fi
+		pick_one -n $sha1 || die_failed_squash $sha1 "$rest"
+		case "$(peek_next_command)" in
+		squash|s|fixup|f)
+			# This is an intermediate commit; its message will only be
+			# used in case of trouble.  So use the long version:
+			do_with_author output git commit --no-verify -F "$SQUASH_MSG" ||
+				die_failed_squash $sha1 "$rest"
+			;;
+		*)
+			# This is the final command of this squash/fixup group
+			if test -f "$FIXUP_MSG"
+			then
+				do_with_author git commit --no-verify -F "$FIXUP_MSG" ||
+					die_failed_squash $sha1 "$rest"
+			else
+				cp "$SQUASH_MSG" "$GIT_DIR"/SQUASH_MSG || exit
+				rm -f "$GIT_DIR"/MERGE_MSG
+				do_with_author git commit --no-verify -e ||
+					die_failed_squash $sha1 "$rest"
+			fi
+			rm -f "$SQUASH_MSG" "$FIXUP_MSG"
+			;;
+		esac
 		;;
 	*)
 		warn "Unknown command: $command $sha1 $rest"
-		die_with_patch $sha1 "Please fix this in the file $TODO."
+		if git rev-parse --verify -q "$sha1" >/dev/null
+		then
+			die_with_patch $sha1 "Please fix this in the file $TODO."
+		else
+			die "Please fix this in the file $TODO."
+		fi
 		;;
 	esac
 	test -s "$TODO" && return
@@ -350,23 +526,10 @@ do_next () {
 	HEADNAME=$(cat "$DOTEST"/head-name) &&
 	OLDHEAD=$(cat "$DOTEST"/head) &&
 	SHORTONTO=$(git rev-parse --short $(cat "$DOTEST"/onto)) &&
-	if test -d "$REWRITTEN"
-	then
-		test -f "$DOTEST"/current-commit &&
-			current_commit=$(cat "$DOTEST"/current-commit) &&
-			git rev-parse HEAD > "$REWRITTEN"/$current_commit
-		if test -f "$REWRITTEN"/$OLDHEAD
-		then
-			NEWHEAD=$(cat "$REWRITTEN"/$OLDHEAD)
-		else
-			NEWHEAD=$OLDHEAD
-		fi
-	else
-		NEWHEAD=$(git rev-parse HEAD)
-	fi &&
+	NEWHEAD=$(git rev-parse HEAD) &&
 	case $HEADNAME in
 	refs/*)
-		message="$GIT_REFLOG_ACTION: $HEADNAME onto $SHORTONTO)" &&
+		message="$GIT_REFLOG_ACTION: $HEADNAME onto $SHORTONTO" &&
 		git update-ref -m "$message" $HEADNAME $NEWHEAD $OLDHEAD &&
 		git symbolic-ref HEAD $HEADNAME
 		;;
@@ -388,6 +551,30 @@ do_rest () {
 	done
 }
 
+# skip picking commits whose parents are unchanged
+skip_unnecessary_picks () {
+	fd=3
+	while read command sha1 rest
+	do
+		# fd=3 means we skip the command
+		case "$fd,$command,$(git rev-parse --verify --quiet $sha1^)" in
+		3,pick,"$ONTO"*|3,p,"$ONTO"*)
+			# pick a commit whose parent is current $ONTO -> skip
+			ONTO=$sha1
+			;;
+		3,#*|3,,*)
+			# copy comments
+			;;
+		*)
+			fd=1
+			;;
+		esac
+		echo "$command${sha1:+ }$sha1${rest:+ }$rest" >&$fd
+	done <"$TODO" >"$TODO.new" 3>>"$DONE" &&
+	mv -f "$TODO".new "$TODO" ||
+	die "Could not skip unnecessary pick commands"
+}
+
 # check if no other options are set
 is_standalone () {
 	test $# -eq 2 -a "$2" = '--' &&
@@ -401,11 +588,67 @@ get_saved_options () {
 	test -d "$REWRITTEN" && PRESERVE_MERGES=t
 	test -f "$DOTEST"/strategy && STRATEGY="$(cat "$DOTEST"/strategy)"
 	test -f "$DOTEST"/verbose && VERBOSE=t
+	test -f "$DOTEST"/rebase-root && REBASE_ROOT=t
+}
+
+# Rearrange the todo list that has both "pick sha1 msg" and
+# "pick sha1 fixup!/squash! msg" appears in it so that the latter
+# comes immediately after the former, and change "pick" to
+# "fixup"/"squash".
+rearrange_squash () {
+	sed -n -e 's/^pick \([0-9a-f]*\) \(squash\)! /\1 \2 /p' \
+		-e 's/^pick \([0-9a-f]*\) \(fixup\)! /\1 \2 /p' \
+		"$1" >"$1.sq"
+	test -s "$1.sq" || return
+
+	used=
+	while read pick sha1 message
+	do
+		case " $used" in
+		*" $sha1 "*) continue ;;
+		esac
+		echo "$pick $sha1 $message"
+		while read squash action msg
+		do
+			case "$message" in
+			"$msg"*)
+				echo "$action $squash $action! $msg"
+				used="$used$squash "
+				;;
+			esac
+		done <"$1.sq"
+	done >"$1.rearranged" <"$1"
+	cat "$1.rearranged" >"$1"
+	rm -f "$1.sq" "$1.rearranged"
+}
+
+LF='
+'
+parse_onto () {
+	case "$1" in
+	*...*)
+		if	left=${1%...*} right=${1#*...} &&
+			onto=$(git merge-base --all ${left:-HEAD} ${right:-HEAD})
+		then
+			case "$onto" in
+			?*"$LF"?* | '')
+				exit 1 ;;
+			esac
+			echo "$onto"
+			exit 0
+		fi
+	esac
+	git rev-parse --verify "$1^0"
 }
 
 while test $# != 0
 do
 	case "$1" in
+	--no-verify)
+		OK_TO_SKIP_PRE_REBASE=yes
+		;;
+	--verify)
+		;;
 	--continue)
 		is_standalone "$@" || usage
 		get_saved_options
@@ -425,16 +668,23 @@ do
 		then
 			: Nothing to commit -- skip this
 		else
-			. "$DOTEST"/author-script ||
+			. "$AUTHOR_SCRIPT" ||
 				die "Cannot find the author identity"
-			if test -f "$DOTEST"/amend
+			amend=
+			if test -f "$AMEND"
 			then
+				amend=$(git rev-parse --verify HEAD)
+				test "$amend" = $(cat "$AMEND") ||
+				die "\
+You have uncommitted changes in your working tree. Please, commit them
+first and then run 'git rebase --continue' again."
 				git reset --soft HEAD^ ||
 				die "Cannot rewind the HEAD"
 			fi
-			export GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL GIT_AUTHOR_DATE &&
-			git commit --no-verify -F "$DOTEST"/message -e ||
-			die "Could not commit staged changes."
+			do_with_author git commit --no-verify -F "$MSG" -e || {
+				test -n "$amend" && git reset --soft $amend
+				die "Could not commit staged changes."
+			}
 		fi
 
 		require_clean_work_tree
@@ -492,33 +742,51 @@ do
 	-i)
 		# yeah, we know
 		;;
+	--root)
+		REBASE_ROOT=t
+		;;
+	--autosquash)
+		AUTOSQUASH=t
+		;;
 	--onto)
 		shift
-		ONTO=$(git rev-parse --verify "$1") ||
+		ONTO=$(parse_onto "$1") ||
 			die "Does not point to a valid commit: $1"
 		;;
 	--)
 		shift
-		test $# -eq 1 -o $# -eq 2 || usage
+		test -z "$REBASE_ROOT" -a $# -ge 1 -a $# -le 2 ||
+		test ! -z "$REBASE_ROOT" -a $# -le 1 || usage
 		test -d "$DOTEST" &&
 			die "Interactive rebase already started"
 
 		git var GIT_COMMITTER_IDENT >/dev/null ||
 			die "You need to set your committer info first"
 
+		if test -z "$REBASE_ROOT"
+		then
+			UPSTREAM_ARG="$1"
+			UPSTREAM=$(git rev-parse --verify "$1") || die "Invalid base"
+			test -z "$ONTO" && ONTO=$UPSTREAM
+			shift
+		else
+			UPSTREAM=
+			UPSTREAM_ARG=--root
+			test -z "$ONTO" &&
+				die "You must specify --onto when using --root"
+		fi
+		run_pre_rebase_hook "$UPSTREAM_ARG" "$@"
+
 		comment_for_reflog start
 
 		require_clean_work_tree
 
-		UPSTREAM=$(git rev-parse --verify "$1") || die "Invalid base"
-		test -z "$ONTO" && ONTO=$UPSTREAM
-
-		if test ! -z "$2"
+		if test ! -z "$1"
 		then
-			output git show-ref --verify --quiet "refs/heads/$2" ||
-				die "Invalid branchname: $2"
-			output git checkout "$2" ||
-				die "Could not checkout $2"
+			output git show-ref --verify --quiet "refs/heads/$1" ||
+				die "Invalid branchname: $1"
+			output git checkout "$1" ||
+				die "Could not checkout $1"
 		fi
 
 		HEAD=$(git rev-parse --verify HEAD) || die "No HEAD?"
@@ -529,45 +797,120 @@ do
 			echo "detached HEAD" > "$DOTEST"/head-name
 
 		echo $HEAD > "$DOTEST"/head
-		echo $UPSTREAM > "$DOTEST"/upstream
+		case "$REBASE_ROOT" in
+		'')
+			rm -f "$DOTEST"/rebase-root ;;
+		*)
+			: >"$DOTEST"/rebase-root ;;
+		esac
 		echo $ONTO > "$DOTEST"/onto
 		test -z "$STRATEGY" || echo "$STRATEGY" > "$DOTEST"/strategy
 		test t = "$VERBOSE" && : > "$DOTEST"/verbose
 		if test t = "$PRESERVE_MERGES"
 		then
-			# $REWRITTEN contains files for each commit that is
-			# reachable by at least one merge base of $HEAD and
-			# $UPSTREAM. They are not necessarily rewritten, but
-			# their children might be.
-			# This ensures that commits on merged, but otherwise
-			# unrelated side branches are left alone. (Think "X"
-			# in the man page's example.)
-			mkdir "$REWRITTEN" &&
-			for c in $(git merge-base --all $HEAD $UPSTREAM)
-			do
-				echo $ONTO > "$REWRITTEN"/$c ||
+			if test -z "$REBASE_ROOT"
+			then
+				mkdir "$REWRITTEN" &&
+				for c in $(git merge-base --all $HEAD $UPSTREAM)
+				do
+					echo $ONTO > "$REWRITTEN"/$c ||
+						die "Could not init rewritten commits"
+				done
+			else
+				mkdir "$REWRITTEN" &&
+				echo $ONTO > "$REWRITTEN"/root ||
 					die "Could not init rewritten commits"
-			done
+			fi
+			# No cherry-pick because our first pass is to determine
+			# parents to rewrite and skipping dropped commits would
+			# prematurely end our probe
 			MERGES_OPTION=
+			first_after_upstream="$(git rev-list --reverse --first-parent $UPSTREAM..$HEAD | head -n 1)"
 		else
-			MERGES_OPTION=--no-merges
+			MERGES_OPTION="--no-merges --cherry-pick"
 		fi
 
-		SHORTUPSTREAM=$(git rev-parse --short $UPSTREAM)
 		SHORTHEAD=$(git rev-parse --short $HEAD)
 		SHORTONTO=$(git rev-parse --short $ONTO)
+		if test -z "$REBASE_ROOT"
+			# this is now equivalent to ! -z "$UPSTREAM"
+		then
+			SHORTUPSTREAM=$(git rev-parse --short $UPSTREAM)
+			REVISIONS=$UPSTREAM...$HEAD
+			SHORTREVISIONS=$SHORTUPSTREAM..$SHORTHEAD
+		else
+			REVISIONS=$ONTO...$HEAD
+			SHORTREVISIONS=$SHORTHEAD
+		fi
 		git rev-list $MERGES_OPTION --pretty=oneline --abbrev-commit \
-			--abbrev=7 --reverse --left-right --cherry-pick \
-			$UPSTREAM...$HEAD | \
-			sed -n "s/^>/pick /p" > "$TODO"
+			--abbrev=7 --reverse --left-right --topo-order \
+			$REVISIONS | \
+			sed -n "s/^>//p" | while read shortsha1 rest
+		do
+			if test t != "$PRESERVE_MERGES"
+			then
+				echo "pick $shortsha1 $rest" >> "$TODO"
+			else
+				sha1=$(git rev-parse $shortsha1)
+				if test -z "$REBASE_ROOT"
+				then
+					preserve=t
+					for p in $(git rev-list --parents -1 $sha1 | cut -d' ' -s -f2-)
+					do
+						if test -f "$REWRITTEN"/$p -a \( $p != $ONTO -o $sha1 = $first_after_upstream \)
+						then
+							preserve=f
+						fi
+					done
+				else
+					preserve=f
+				fi
+				if test f = "$preserve"
+				then
+					touch "$REWRITTEN"/$sha1
+					echo "pick $shortsha1 $rest" >> "$TODO"
+				fi
+			fi
+		done
+
+		# Watch for commits that been dropped by --cherry-pick
+		if test t = "$PRESERVE_MERGES"
+		then
+			mkdir "$DROPPED"
+			# Save all non-cherry-picked changes
+			git rev-list $REVISIONS --left-right --cherry-pick | \
+				sed -n "s/^>//p" > "$DOTEST"/not-cherry-picks
+			# Now all commits and note which ones are missing in
+			# not-cherry-picks and hence being dropped
+			git rev-list $REVISIONS |
+			while read rev
+			do
+				if test -f "$REWRITTEN"/$rev -a "$(sane_grep "$rev" "$DOTEST"/not-cherry-picks)" = ""
+				then
+					# Use -f2 because if rev-list is telling us this commit is
+					# not worthwhile, we don't want to track its multiple heads,
+					# just the history of its first-parent for others that will
+					# be rebasing on top of it
+					git rev-list --parents -1 $rev | cut -d' ' -s -f2 > "$DROPPED"/$rev
+					short=$(git rev-list -1 --abbrev-commit --abbrev=7 $rev)
+					sane_grep -v "^[a-z][a-z]* $short" <"$TODO" > "${TODO}2" ; mv "${TODO}2" "$TODO"
+					rm "$REWRITTEN"/$rev
+				fi
+			done
+		fi
+
+		test -s "$TODO" || echo noop >> "$TODO"
+		test -n "$AUTOSQUASH" && rearrange_squash "$TODO"
 		cat >> "$TODO" << EOF
 
-# Rebase $SHORTUPSTREAM..$SHORTHEAD onto $SHORTONTO
+# Rebase $SHORTREVISIONS onto $SHORTONTO
 #
 # Commands:
 #  p, pick = use commit
+#  r, reword = use commit, but edit the commit message
 #  e, edit = use commit, but stop for amending
 #  s, squash = use commit, but meld into previous commit
+#  f, fixup = like "squash", but discard this commit's log message
 #
 # If you remove a line here THAT COMMIT WILL BE LOST.
 # However, if you remove everything, the rebase will be aborted.
@@ -579,10 +922,12 @@ EOF
 
 		cp "$TODO" "$TODO".backup
 		git_editor "$TODO" ||
-			die "Could not execute editor"
+			die_abort "Could not execute editor"
 
 		has_action "$TODO" ||
 			die_abort "Nothing to do"
+
+		test -d "$REWRITTEN" || skip_unnecessary_picks
 
 		git update-ref ORIG_HEAD $HEAD
 		output git checkout $ONTO && do_rest

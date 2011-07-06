@@ -14,9 +14,9 @@ DESCRIPTION
 Given one argument, reads which branch head the given symbolic
 ref refers to and outputs its path, relative to the `.git/`
 directory.  Typically you would give `HEAD` as the <name>
-argument to see on which branch your working tree is on.
+argument to see which branch your working tree is on.
 
-Give two arguments, create or update a symbolic ref <name> to
+Given two arguments, creates or updates a symbolic ref <name> to
 point at the given branch <ref>.
 
 A symbolic ref is a regular file that stores a string that
@@ -49,7 +49,7 @@ cumbersome.  On some platforms, `ln -sf` does not even work as
 advertised (horrors).  Therefore symbolic links are now deprecated
 and symbolic refs are used by default.
 
-'git-symbolic-ref' will exit with status 0 if the contents of the
+'git symbolic-ref' will exit with status 0 if the contents of the
 symbolic ref were printed correctly, with status 1 if the requested
 name is not a symbolic ref, or 128 if another error occurs.
 

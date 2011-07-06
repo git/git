@@ -21,8 +21,8 @@ git repository.
 
 OPTIONS
 -------
-To control which revisions to shown, the command takes options applicable to
-the 'git-rev-list' command (see linkgit:git-rev-list[1]).
+To control which revisions to show, the command takes options applicable to
+the 'git rev-list' command (see linkgit:git-rev-list[1]).
 This manual page describes only the most
 frequently used options.
 
@@ -47,7 +47,20 @@ frequently used options.
 
 	After an attempt to merge stops with conflicts, show the commits on
 	the history between two branches (i.e. the HEAD and the MERGE_HEAD)
-	that modify the conflicted files.
+	that modify the conflicted files and do not exist on all the heads
+	being merged.
+
+--argscmd=<command>::
+	Command to be run each time gitk has to determine the list of
+	<revs> to show.  The command is expected to print on its standard
+	output a list of additional revs to be shown, one per line.
+	Use this instead of explicitly specifying <revs> if the set of
+	commits to show may vary between refreshes.
+
+--select-commit=<ref>::
+
+	Automatically select the specified commit after loading the graph.
+	Default behavior is equivalent to specifying '--select-commit=HEAD'.
 
 <revs>::
 
@@ -61,14 +74,14 @@ frequently used options.
 <path>...::
 
 	Limit commits to the ones touching files in the given paths. Note, to
-	avoid ambiguity wrt. revision names use "--" to separate the paths
+	avoid ambiguity with respect to revision names use "--" to separate the paths
 	from any preceding options.
 
 Examples
 --------
 gitk v2.6.12.. include/scsi drivers/scsi::
 
-	Show as the changes since version 'v2.6.12' that changed any
+	Show the changes since version 'v2.6.12' that changed any
 	file in the include/scsi or drivers/scsi subdirectories
 
 gitk --since="2 weeks ago" \-- gitk::

@@ -54,6 +54,12 @@ deduxit me super semitas jusitiae,
 EOF
 printf "propter nomen suum." >> new4.txt
 
+test_expect_success 'merge with no changes' '
+	cp orig.txt test.txt &&
+	git merge-file test.txt orig.txt orig.txt &&
+	test_cmp test.txt orig.txt
+'
+
 cp new1.txt test.txt
 test_expect_success "merge without conflict" \
 	"git merge-file test.txt orig.txt new2.txt"
@@ -136,12 +142,12 @@ test_expect_success "expected conflict markers" "test_cmp expect out"
 
 test_expect_success 'binary files cannot be merged' '
 	test_must_fail git merge-file -p \
-		orig.txt ../test4012.png new1.txt 2> merge.err &&
+		orig.txt "$TEST_DIRECTORY"/test4012.png new1.txt 2> merge.err &&
 	grep "Cannot merge binary files" merge.err
 '
 
-sed -e "s/deerit.$/deerit;/" -e "s/me;$/me./" < new5.txt > new6.txt
-sed -e "s/deerit.$/deerit,/" -e "s/me;$/me,/" < new5.txt > new7.txt
+sed -e "s/deerit.\$/deerit;/" -e "s/me;\$/me./" < new5.txt > new6.txt
+sed -e "s/deerit.\$/deerit,/" -e "s/me;\$/me,/" < new5.txt > new7.txt
 
 test_expect_success 'MERGE_ZEALOUS simplifies non-conflicts' '
 
@@ -150,8 +156,8 @@ test_expect_success 'MERGE_ZEALOUS simplifies non-conflicts' '
 
 '
 
-sed -e 's/deerit./&\n\n\n\n/' -e "s/locavit,/locavit;/" < new6.txt > new8.txt
-sed -e 's/deerit./&\n\n\n\n/' -e "s/locavit,/locavit --/" < new7.txt > new9.txt
+sed -e 's/deerit./&%%%%/' -e "s/locavit,/locavit;/"< new6.txt | tr '%' '\012' > new8.txt
+sed -e 's/deerit./&%%%%/' -e "s/locavit,/locavit --/" < new7.txt | tr '%' '\012' > new9.txt
 
 test_expect_success 'ZEALOUS_ALNUM' '
 
@@ -159,6 +165,50 @@ test_expect_success 'ZEALOUS_ALNUM' '
 		new8.txt new5.txt new9.txt > merge.out &&
 	test 1 = $(grep ======= < merge.out | wc -l)
 
+'
+
+cat >expect <<\EOF
+Dominus regit me,
+<<<<<<< new8.txt
+et nihil mihi deerit;
+
+
+
+
+In loco pascuae ibi me collocavit;
+super aquam refectionis educavit me.
+|||||||
+et nihil mihi deerit.
+In loco pascuae ibi me collocavit,
+super aquam refectionis educavit me;
+=======
+et nihil mihi deerit,
+
+
+
+
+In loco pascuae ibi me collocavit --
+super aquam refectionis educavit me,
+>>>>>>> new9.txt
+animam meam convertit,
+deduxit me super semitas jusitiae,
+propter nomen suum.
+Nam et si ambulavero in medio umbrae mortis,
+non timebo mala, quoniam TU mecum es:
+virga tua et baculus tuus ipsa me consolata sunt.
+EOF
+
+test_expect_success '"diff3 -m" style output (1)' '
+	test_must_fail git merge-file -p --diff3 \
+		new8.txt new5.txt new9.txt >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '"diff3 -m" style output (2)' '
+	git config merge.conflictstyle diff3 &&
+	test_must_fail git merge-file -p \
+		new8.txt new5.txt new9.txt >actual &&
+	test_cmp expect actual
 '
 
 test_done

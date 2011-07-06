@@ -16,6 +16,18 @@
 # been handled already by git read-tree, but that one doesn't
 # do any merges that might change the tree layout.
 
+USAGE='<orig blob> <our blob> <their blob> <path>'
+USAGE="$USAGE <orig mode> <our mode> <their mode>"
+LONG_USAGE="Usage: git merge-one-file $USAGE
+
+Blob ids and modes should be empty for missing files."
+
+if ! test "$#" -eq 7
+then
+	echo "$LONG_USAGE"
+	exit 1
+fi
+
 case "${1:-.}${2:-.}${3:-.}" in
 #
 # Deleted in both or deleted in one and unchanged in the other
@@ -113,6 +125,10 @@ case "${1:-.}${2:-.}${3:-.}" in
 	src1=`git-unpack-file $2`
 	git merge-file "$src1" "$orig" "$src2"
 	ret=$?
+	msg=
+	if [ $ret -ne 0 ]; then
+		msg='content conflict'
+	fi
 
 	# Create the working tree file, using "our tree" version from the
 	# index, and then store the result of the merge.
@@ -120,7 +136,10 @@ case "${1:-.}${2:-.}${3:-.}" in
 	rm -f -- "$orig" "$src1" "$src2"
 
 	if [ "$6" != "$7" ]; then
-		echo "ERROR: Permissions conflict: $5->$6,$7."
+		if [ -n "$msg" ]; then
+			msg="$msg, "
+		fi
+		msg="${msg}permissions conflict: $5->$6,$7"
 		ret=1
 	fi
 	if [ "$1" = '' ]; then
@@ -128,7 +147,7 @@ case "${1:-.}${2:-.}${3:-.}" in
 	fi
 
 	if [ $ret -ne 0 ]; then
-		echo "ERROR: Merge conflict in $4"
+		echo "ERROR: $msg in $4"
 		exit 1
 	fi
 	exec git update-index -- "$4"

@@ -8,9 +8,12 @@ git-show-branch - Show branches and their commits
 SYNOPSIS
 --------
 [verse]
-'git show-branch' [--all] [--remotes] [--topo-order] [--current]
+'git show-branch' [-a|--all] [-r|--remotes] [--topo-order | --date-order]
+		[--current] [--color | --no-color] [--sparse]
 		[--more=<n> | --list | --independent | --merge-base]
-		[--no-name | --sha1-name] [--topics] [<rev> | <glob>]...
+		[--no-name | --sha1-name] [--topics]
+		[<rev> | <glob>]...
+
 'git show-branch' (-g|--reflog)[=<n>[,<base>]] [--list] [<ref>]
 
 DESCRIPTION
@@ -30,7 +33,7 @@ OPTIONS
 -------
 <rev>::
 	Arbitrary extended SHA1 expression (see linkgit:git-rev-parse[1])
-	that typically names a branch HEAD or a tag.
+	that typically names a branch head or a tag.
 
 <glob>::
 	A glob pattern that matches branch or tag names under
@@ -57,6 +60,11 @@ OPTIONS
         appear in topological order (i.e., descendant commits
         are shown before their parents).
 
+--date-order::
+	This option is similar to '--topo-order' in the sense that no
+	parent comes before all of its children, but otherwise commits
+	are ordered according to their commit date.
+
 --sparse::
 	By default, the output omits merges that are reachable
 	from only one tip being shown.  This option makes them
@@ -74,9 +82,11 @@ OPTIONS
 	Synonym to `--more=-1`
 
 --merge-base::
-	Instead of showing the commit list, just act like the
-	'git-merge-base -a' command, except that it can accept
-	more than two heads.
+	Instead of showing the commit list, determine possible
+	merge bases for the specified commits. All merge bases
+	will be contained in all specified commits. This is
+	different from how linkgit:git-merge-base[1] handles
+	the case of three or more commits.
 
 --independent::
 	Among the <reference>s given, display only the ones that
@@ -99,13 +109,21 @@ OPTIONS
 	will show the revisions given by "git rev-list {caret}master
 	topic1 topic2"
 
+-g::
 --reflog[=<n>[,<base>]] [<ref>]::
 	Shows <n> most recent ref-log entries for the given
 	ref.  If <base> is given, <n> entries going back from
 	that entry.  <base> can be specified as count or date.
-	`-g` can be used as a short-hand for this option.  When
-	no explicit <ref> parameter is given, it defaults to the
+	When no explicit <ref> parameter is given, it defaults to the
 	current branch (or `HEAD` if it is detached).
+
+--color::
+	Color the status sign (one of these: `*` `!` `+` `-`) of each commit
+	corresponding to the branch it's in.
+
+--no-color::
+	Turn off colored output, even when the configuration file gives the
+	default to color output.
 
 Note that --more, --list, --independent and --merge-base options
 are mutually exclusive.
@@ -148,9 +166,10 @@ $ git show-branch master fixes mhf
 ------------------------------------------------
 
 These three branches all forked from a common commit, [master],
-whose commit message is "Add 'git show-branch'.  "fixes" branch
-adds one commit 'Introduce "reset type"'.  "mhf" branch has many
-other commits.  The current branch is "master".
+whose commit message is "Add \'git show-branch\'". The "fixes"
+branch adds one commit "Introduce "reset type" flag to "git reset"".
+The "mhf" branch adds many other commits. The current branch
+is "master".
 
 
 EXAMPLE
@@ -172,7 +191,7 @@ only the primary branches.  In addition, if you happen to be on
 your topic branch, it is shown as well.
 
 ------------
-$ git show-branch --reflog='10,1 hour ago' --list master
+$ git show-branch --reflog="10,1 hour ago" --list master
 ------------
 
 shows 10 reflog entries going back from the tip as of 1 hour ago.

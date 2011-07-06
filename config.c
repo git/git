@@ -51,7 +51,7 @@ static char *parse_value(void)
 
 	for (;;) {
 		int c = get_next_char();
-		if (len >= sizeof(value))
+		if (len >= sizeof(value) - 1)
 			return NULL;
 		if (c == '\n') {
 			if (quote)
@@ -62,7 +62,8 @@ static char *parse_value(void)
 		if (comment)
 			continue;
 		if (isspace(c) && !quote) {
-			space = 1;
+			if (len)
+				space++;
 			continue;
 		}
 		if (!quote) {
@@ -71,11 +72,8 @@ static char *parse_value(void)
 				continue;
 			}
 		}
-		if (space) {
-			if (len)
-				value[len++] = ' ';
-			space = 0;
-		}
+		for (; space; space--)
+			value[len++] = ' ';
 		if (c == '\\') {
 			c = get_next_char();
 			switch (c) {
@@ -205,8 +203,27 @@ static int git_parse_file(config_fn_t fn, void *data)
 	int baselen = 0;
 	static char var[MAXNAME];
 
+	/* U+FEFF Byte Order Mark in UTF8 */
+	static const unsigned char *utf8_bom = (unsigned char *) "\xef\xbb\xbf";
+	const unsigned char *bomptr = utf8_bom;
+
 	for (;;) {
 		int c = get_next_char();
+		if (bomptr && *bomptr) {
+			/* We are at the file beginning; skip UTF8-encoded BOM
+			 * if present. Sane editors won't put this in on their
+			 * own, but e.g. Windows Notepad will do it happily. */
+			if ((unsigned char) c == *bomptr) {
+				bomptr++;
+				continue;
+			} else {
+				/* Do not tolerate partial BOM. */
+				if (bomptr != utf8_bom)
+					break;
+				/* No BOM at file beginning. Cool. */
+				bomptr = NULL;
+			}
+		}
 		if (c == '\n') {
 			if (config_file_eof)
 				return 0;
@@ -255,7 +272,7 @@ static int parse_unit_factor(const char *end, unsigned long *val)
 	return 0;
 }
 
-int git_parse_long(const char *value, long *ret)
+static int git_parse_long(const char *value, long *ret)
 {
 	if (value && *value) {
 		char *end;
@@ -291,7 +308,7 @@ static void die_bad_config(const char *name)
 
 int git_config_int(const char *name, const char *value)
 {
-	long ret;
+	long ret = 0;
 	if (!git_parse_long(value, &ret))
 		die_bad_config(name);
 	return ret;
@@ -312,9 +329,9 @@ int git_config_bool_or_int(const char *name, const char *value, int *is_bool)
 		return 1;
 	if (!*value)
 		return 0;
-	if (!strcasecmp(value, "true") || !strcasecmp(value, "yes"))
+	if (!strcasecmp(value, "true") || !strcasecmp(value, "yes") || !strcasecmp(value, "on"))
 		return 1;
-	if (!strcasecmp(value, "false") || !strcasecmp(value, "no"))
+	if (!strcasecmp(value, "false") || !strcasecmp(value, "no") || !strcasecmp(value, "off"))
 		return 0;
 	*is_bool = 0;
 	return git_config_int(name, value);
@@ -331,6 +348,16 @@ int git_config_string(const char **dest, const char *var, const char *value)
 	if (!value)
 		return config_error_nonbool(var);
 	*dest = xstrdup(value);
+	return 0;
+}
+
+int git_config_pathname(const char **dest, const char *var, const char *value)
+{
+	if (!value)
+		return config_error_nonbool(var);
+	*dest = expand_user_path(value);
+	if (!*dest)
+		die("Failed to expand user dir in: '%s'", value);
 	return 0;
 }
 
@@ -450,6 +477,11 @@ static int git_default_core_config(const char *var, const char *value)
 		return 0;
 	}
 
+	if (!strcmp(var, "core.notesref")) {
+		notes_ref_name = xstrdup(value);
+		return 0;
+	}
+
 	if (!strcmp(var, "core.pager"))
 		return git_config_string(&pager_program, var, value);
 
@@ -457,7 +489,7 @@ static int git_default_core_config(const char *var, const char *value)
 		return git_config_string(&editor_program, var, value);
 
 	if (!strcmp(var, "core.excludesfile"))
-		return git_config_string(&excludes_file, var, value);
+		return git_config_pathname(&excludes_file, var, value);
 
 	if (!strcmp(var, "core.whitespace")) {
 		if (!value)
@@ -471,6 +503,26 @@ static int git_default_core_config(const char *var, const char *value)
 		return 0;
 	}
 
+	if (!strcmp(var, "core.preloadindex")) {
+		core_preload_index = git_config_bool(var, value);
+		return 0;
+	}
+
+	if (!strcmp(var, "core.createobject")) {
+		if (!strcmp(value, "rename"))
+			object_creation_mode = OBJECT_CREATION_USES_RENAMES;
+		else if (!strcmp(value, "link"))
+			object_creation_mode = OBJECT_CREATION_USES_HARDLINKS;
+		else
+			die("Invalid mode for object creation: %s", value);
+		return 0;
+	}
+
+	if (!strcmp(var, "core.sparsecheckout")) {
+		core_apply_sparse_checkout = git_config_bool(var, value);
+		return 0;
+	}
+
 	/* Add other config variables here and to Documentation/config.txt. */
 	return 0;
 }
@@ -481,8 +533,7 @@ static int git_default_user_config(const char *var, const char *value)
 		if (!value)
 			return config_error_nonbool(var);
 		strlcpy(git_default_name, value, sizeof(git_default_name));
-		if (git_default_email[0])
-			user_ident_explicitly_given = 1;
+		user_ident_explicitly_given |= IDENT_NAME_GIVEN;
 		return 0;
 	}
 
@@ -490,8 +541,7 @@ static int git_default_user_config(const char *var, const char *value)
 		if (!value)
 			return config_error_nonbool(var);
 		strlcpy(git_default_email, value, sizeof(git_default_email));
-		if (git_default_name[0])
-			user_ident_explicitly_given = 1;
+		user_ident_explicitly_given |= IDENT_MAIL_GIVEN;
 		return 0;
 	}
 
@@ -541,6 +591,40 @@ static int git_default_branch_config(const char *var, const char *value)
 	return 0;
 }
 
+static int git_default_push_config(const char *var, const char *value)
+{
+	if (!strcmp(var, "push.default")) {
+		if (!value)
+			return config_error_nonbool(var);
+		else if (!strcmp(value, "nothing"))
+			push_default = PUSH_DEFAULT_NOTHING;
+		else if (!strcmp(value, "matching"))
+			push_default = PUSH_DEFAULT_MATCHING;
+		else if (!strcmp(value, "tracking"))
+			push_default = PUSH_DEFAULT_TRACKING;
+		else if (!strcmp(value, "current"))
+			push_default = PUSH_DEFAULT_CURRENT;
+		else {
+			error("Malformed value for %s: %s", var, value);
+			return error("Must be one of nothing, matching, "
+				     "tracking or current.");
+		}
+		return 0;
+	}
+
+	/* Add other config variables here and to Documentation/config.txt. */
+	return 0;
+}
+
+static int git_default_mailmap_config(const char *var, const char *value)
+{
+	if (!strcmp(var, "mailmap.file"))
+		return git_config_string(&git_mailmap_file, var, value);
+
+	/* Add other config variables here and to Documentation/config.txt. */
+	return 0;
+}
+
 int git_default_config(const char *var, const char *value, void *dummy)
 {
 	if (!prefixcmp(var, "core."))
@@ -554,6 +638,15 @@ int git_default_config(const char *var, const char *value, void *dummy)
 
 	if (!prefixcmp(var, "branch."))
 		return git_default_branch_config(var, value);
+
+	if (!prefixcmp(var, "push."))
+		return git_default_push_config(var, value);
+
+	if (!prefixcmp(var, "mailmap."))
+		return git_default_mailmap_config(var, value);
+
+	if (!prefixcmp(var, "advice."))
+		return git_default_advice_config(var, value);
 
 	if (!strcmp(var, "pager.color") || !strcmp(var, "color.pager")) {
 		pager_use_color = git_config_bool(var,value);
@@ -608,31 +701,37 @@ int git_config_global(void)
 
 int git_config(config_fn_t fn, void *data)
 {
-	int ret = 0;
+	int ret = 0, found = 0;
 	char *repo_config = NULL;
 	const char *home = NULL;
 
-	/* $GIT_CONFIG makes git read _only_ the given config file,
-	 * $GIT_CONFIG_LOCAL will make it process it in addition to the
-	 * global config file, the same way it would the per-repository
-	 * config file otherwise. */
+	/* Setting $GIT_CONFIG makes git read _only_ the given config file. */
 	if (config_exclusive_filename)
 		return git_config_from_file(fn, config_exclusive_filename, data);
-	if (git_config_system() && !access(git_etc_gitconfig(), R_OK))
+	if (git_config_system() && !access(git_etc_gitconfig(), R_OK)) {
 		ret += git_config_from_file(fn, git_etc_gitconfig(),
 					    data);
+		found += 1;
+	}
 
 	home = getenv("HOME");
 	if (git_config_global() && home) {
 		char *user_config = xstrdup(mkpath("%s/.gitconfig", home));
-		if (!access(user_config, R_OK))
+		if (!access(user_config, R_OK)) {
 			ret += git_config_from_file(fn, user_config, data);
+			found += 1;
+		}
 		free(user_config);
 	}
 
-	repo_config = xstrdup(git_path("config"));
-	ret += git_config_from_file(fn, repo_config, data);
+	repo_config = git_pathdup("config");
+	if (!access(repo_config, R_OK)) {
+		ret += git_config_from_file(fn, repo_config, data);
+		found += 1;
+	}
 	free(repo_config);
+	if (found == 0)
+		return -1;
 	return ret;
 }
 
@@ -644,16 +743,16 @@ int git_config(config_fn_t fn, void *data)
 
 static struct {
 	int baselen;
-	char* key;
+	char *key;
 	int do_not_match;
-	regex_t* value_regex;
+	regex_t *value_regex;
 	int multi_replace;
 	size_t offset[MAX_MATCHES];
 	enum { START, SECTION_SEEN, SECTION_END_SEEN, KEY_SEEN } state;
 	int seen;
 } store;
 
-static int matches(const char* key, const char* value)
+static int matches(const char *key, const char *value)
 {
 	return !strcmp(key, store.key) &&
 		(store.value_regex == NULL ||
@@ -661,7 +760,7 @@ static int matches(const char* key, const char* value)
 		  !regexec(store.value_regex, value, 0, NULL, 0)));
 }
 
-static int store_aux(const char* key, const char* value, void *cb)
+static int store_aux(const char *key, const char *value, void *cb)
 {
 	const char *ep;
 	size_t section_len;
@@ -730,13 +829,12 @@ static int write_error(const char *filename)
 	return 4;
 }
 
-static int store_write_section(int fd, const char* key)
+static int store_write_section(int fd, const char *key)
 {
 	const char *dot;
 	int i, success;
-	struct strbuf sb;
+	struct strbuf sb = STRBUF_INIT;
 
-	strbuf_init(&sb, 0);
 	dot = memchr(key, '.', store.baselen);
 	if (dot) {
 		strbuf_addf(&sb, "[%.*s \"", (int)(dot - key), key);
@@ -756,12 +854,12 @@ static int store_write_section(int fd, const char* key)
 	return success;
 }
 
-static int store_write_pair(int fd, const char* key, const char* value)
+static int store_write_pair(int fd, const char *key, const char *value)
 {
 	int i, success;
 	int length = strlen(key + store.baselen + 1);
 	const char *quote = "";
-	struct strbuf sb;
+	struct strbuf sb = STRBUF_INIT;
 
 	/*
 	 * Check to see if the value needs to be surrounded with a dq pair.
@@ -778,7 +876,6 @@ static int store_write_pair(int fd, const char* key, const char* value)
 	if (i && value[i - 1] == ' ')
 		quote = "\"";
 
-	strbuf_init(&sb, 0);
 	strbuf_addf(&sb, "\t%.*s = %s",
 		    length, key + store.baselen + 1, quote);
 
@@ -805,8 +902,8 @@ static int store_write_pair(int fd, const char* key, const char* value)
 	return success;
 }
 
-static ssize_t find_beginning_of_line(const char* contents, size_t size,
-	size_t offset_, int* found_bracket)
+static ssize_t find_beginning_of_line(const char *contents, size_t size,
+	size_t offset_, int *found_bracket)
 {
 	size_t equal_offset = size, bracket_offset = size;
 	ssize_t offset;
@@ -831,7 +928,7 @@ contline:
 	return offset;
 }
 
-int git_config_set(const char* key, const char* value)
+int git_config_set(const char *key, const char *value)
 {
 	return git_config_set_multivar(key, value, NULL, 0);
 }
@@ -859,20 +956,20 @@ int git_config_set(const char* key, const char* value)
  * - the config file is removed and the lock file rename()d to it.
  *
  */
-int git_config_set_multivar(const char* key, const char* value,
-	const char* value_regex, int multi_replace)
+int git_config_set_multivar(const char *key, const char *value,
+	const char *value_regex, int multi_replace)
 {
 	int i, dot;
 	int fd = -1, in_fd;
 	int ret;
-	char* config_filename;
+	char *config_filename;
 	struct lock_file *lock = NULL;
-	const char* last_dot = strrchr(key, '.');
+	const char *last_dot = strrchr(key, '.');
 
 	if (config_exclusive_filename)
 		config_filename = xstrdup(config_exclusive_filename);
 	else
-		config_filename = xstrdup(git_path("config"));
+		config_filename = git_pathdup("config");
 
 	/*
 	 * Since "key" actually contains the section name and the real
@@ -923,7 +1020,7 @@ int git_config_set_multivar(const char* key, const char* value,
 	lock = xcalloc(sizeof(struct lock_file), 1);
 	fd = hold_lock_file_for_update(lock, config_filename, 0);
 	if (fd < 0) {
-		error("could not lock config file %s", config_filename);
+		error("could not lock config file %s: %s", config_filename, strerror(errno));
 		free(store.key);
 		ret = -1;
 		goto out_free;
@@ -948,13 +1045,13 @@ int git_config_set_multivar(const char* key, const char* value,
 			goto out_free;
 		}
 
-		store.key = (char*)key;
+		store.key = (char *)key;
 		if (!store_write_section(fd, key) ||
 		    !store_write_pair(fd, key, value))
 			goto write_err_out;
 	} else {
 		struct stat st;
-		char* contents;
+		char *contents;
 		size_t contents_sz, copy_begin, copy_end;
 		int i, new_line = 0;
 
@@ -1040,7 +1137,7 @@ int git_config_set_multivar(const char* key, const char* value,
 				    copy_end - copy_begin)
 					goto write_err_out;
 				if (new_line &&
-				    write_in_full(fd, "\n", 1) != 1)
+				    write_str_in_full(fd, "\n") != 1)
 					goto write_err_out;
 			}
 			copy_begin = store.offset[i];
@@ -1096,7 +1193,9 @@ write_err_out:
 static int section_name_match (const char *buf, const char *name)
 {
 	int i = 0, j = 0, dot = 0;
-	for (; buf[i] && buf[i] != ']'; i++) {
+	if (buf[i] != '[')
+		return 0;
+	for (i = 1; buf[i] && buf[i] != ']'; i++) {
 		if (!dot && isspace(buf[i])) {
 			dot = 1;
 			if (name[j++] != '.')
@@ -1117,7 +1216,17 @@ static int section_name_match (const char *buf, const char *name)
 		if (buf[i] != name[j++])
 			break;
 	}
-	return (buf[i] == ']' && name[j] == 0);
+	if (buf[i] == ']' && name[j] == 0) {
+		/*
+		 * We match, now just find the right length offset by
+		 * gobbling up any whitespace after it, as well
+		 */
+		i++;
+		for (; buf[i] && isspace(buf[i]); i++)
+			; /* do nothing */
+		return i;
+	}
+	return 0;
 }
 
 /* if new_name == NULL, the section is removed instead */
@@ -1132,7 +1241,7 @@ int git_config_rename_section(const char *old_name, const char *new_name)
 	if (config_exclusive_filename)
 		config_filename = xstrdup(config_exclusive_filename);
 	else
-		config_filename = xstrdup(git_path("config"));
+		config_filename = git_pathdup("config");
 	out_fd = hold_lock_file_for_update(lock, config_filename, 0);
 	if (out_fd < 0) {
 		ret = error("could not lock config file %s", config_filename);
@@ -1147,11 +1256,13 @@ int git_config_rename_section(const char *old_name, const char *new_name)
 	while (fgets(buf, sizeof(buf), config_file)) {
 		int i;
 		int length;
+		char *output = buf;
 		for (i = 0; buf[i] && isspace(buf[i]); i++)
 			; /* do nothing */
 		if (buf[i] == '[') {
 			/* it's a section */
-			if (section_name_match (&buf[i+1], old_name)) {
+			int offset = section_name_match(&buf[i], old_name);
+			if (offset > 0) {
 				ret++;
 				if (new_name == NULL) {
 					remove = 1;
@@ -1162,14 +1273,29 @@ int git_config_rename_section(const char *old_name, const char *new_name)
 					ret = write_error(lock->filename);
 					goto out;
 				}
-				continue;
+				/*
+				 * We wrote out the new section, with
+				 * a newline, now skip the old
+				 * section's length
+				 */
+				output += offset + i;
+				if (strlen(output) > 0) {
+					/*
+					 * More content means there's
+					 * a declaration to put on the
+					 * next line; indent with a
+					 * tab
+					 */
+					output -= 1;
+					output[0] = '\t';
+				}
 			}
 			remove = 0;
 		}
 		if (remove)
 			continue;
-		length = strlen(buf);
-		if (write_in_full(out_fd, buf, length) != length) {
+		length = strlen(output);
+		if (write_in_full(out_fd, output, length) != length) {
 			ret = write_error(lock->filename);
 			goto out;
 		}

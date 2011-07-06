@@ -6,7 +6,7 @@
 test_description='Test git rev-parse with different parent options'
 
 . ./test-lib.sh
-. ../t6000lib.sh # t6xxx specific functions
+. "$TEST_DIRECTORY"/t6000lib.sh # t6xxx specific functions
 
 date >path0
 git update-index --add path0

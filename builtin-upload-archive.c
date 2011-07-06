@@ -35,7 +35,7 @@ static int run_upload_archive(int argc, const char **argv, const char *prefix)
 	strcpy(buf, argv[1]); /* enter-repo smudges its argument */
 
 	if (!enter_repo(buf, 0))
-		die("not a git archive");
+		die("'%s' does not appear to be a git repository", buf);
 
 	/* put received options in sent_argv[] */
 	sent_argc = 1;
@@ -67,6 +67,7 @@ static int run_upload_archive(int argc, const char **argv, const char *prefix)
 	return write_archive(sent_argc, sent_argv, prefix, 0);
 }
 
+__attribute__((format (printf, 1, 2)))
 static void error_clnt(const char *fmt, ...)
 {
 	char buf[1024];
@@ -80,16 +81,17 @@ static void error_clnt(const char *fmt, ...)
 	die("sent error to the client: %s", buf);
 }
 
-static void process_input(int child_fd, int band)
+static ssize_t process_input(int child_fd, int band)
 {
 	char buf[16384];
 	ssize_t sz = read(child_fd, buf, sizeof(buf));
 	if (sz < 0) {
 		if (errno != EAGAIN && errno != EINTR)
 			error_clnt("read error: %s\n", strerror(errno));
-		return;
+		return sz;
 	}
 	send_sideband(1, band, buf, sz, LARGE_PACKET_MAX);
+	return sz;
 }
 
 int cmd_upload_archive(int argc, const char **argv, const char *prefix)
@@ -145,15 +147,14 @@ int cmd_upload_archive(int argc, const char **argv, const char *prefix)
 			}
 			continue;
 		}
-		if (pfd[0].revents & POLLIN)
-			/* Data stream ready */
-			process_input(pfd[0].fd, 1);
 		if (pfd[1].revents & POLLIN)
 			/* Status stream ready */
-			process_input(pfd[1].fd, 2);
-		/* Always finish to read data when available */
-		if ((pfd[0].revents | pfd[1].revents) & POLLIN)
-			continue;
+			if (process_input(pfd[1].fd, 2))
+				continue;
+		if (pfd[0].revents & POLLIN)
+			/* Data stream ready */
+			if (process_input(pfd[0].fd, 1))
+				continue;
 
 		if (waitpid(writer, &status, 0) < 0)
 			error_clnt("%s", lostchild);

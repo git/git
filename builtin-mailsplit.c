@@ -7,6 +7,7 @@
 #include "cache.h"
 #include "builtin.h"
 #include "string-list.h"
+#include "strbuf.h"
 
 static const char git_mailsplit_usage[] =
 "git mailsplit [-d<prec>] [-f<n>] [-b] -o<directory> [<mbox>|<Maildir>...]";
@@ -42,26 +43,8 @@ static int is_from_line(const char *line, int len)
 	return 1;
 }
 
-/* Could be as small as 64, enough to hold a Unix "From " line. */
-static char buf[4096];
-
-/* We cannot use fgets() because our lines can contain NULs */
-int read_line_with_nul(char *buf, int size, FILE *in)
-{
-	int len = 0, c;
-
-	for (;;) {
-		c = getc(in);
-		if (c == EOF)
-			break;
-		buf[len++] = c;
-		if (c == '\n' || len + 1 >= size)
-			break;
-	}
-	buf[len] = '\0';
-
-	return len;
-}
+static struct strbuf buf = STRBUF_INIT;
+static int keep_cr;
 
 /* Called with the first line (potentially partial)
  * already in buf[] -- normally that should begin with
@@ -71,37 +54,39 @@ int read_line_with_nul(char *buf, int size, FILE *in)
 static int split_one(FILE *mbox, const char *name, int allow_bare)
 {
 	FILE *output = NULL;
-	int len = strlen(buf);
 	int fd;
 	int status = 0;
-	int is_bare = !is_from_line(buf, len);
+	int is_bare = !is_from_line(buf.buf, buf.len);
 
 	if (is_bare && !allow_bare)
 		goto corrupt;
 
 	fd = open(name, O_WRONLY | O_CREAT | O_EXCL, 0666);
 	if (fd < 0)
-		die("cannot open output file %s", name);
-	output = fdopen(fd, "w");
+		die_errno("cannot open output file '%s'", name);
+	output = xfdopen(fd, "w");
 
 	/* Copy it out, while searching for a line that begins with
 	 * "From " and having something that looks like a date format.
 	 */
 	for (;;) {
-		int is_partial = len && buf[len-1] != '\n';
+		if (!keep_cr && buf.len > 1 && buf.buf[buf.len-1] == '\n' &&
+			buf.buf[buf.len-2] == '\r') {
+			strbuf_setlen(&buf, buf.len-2);
+			strbuf_addch(&buf, '\n');
+		}
 
-		if (fwrite(buf, 1, len, output) != len)
-			die("cannot write output");
+		if (fwrite(buf.buf, 1, buf.len, output) != buf.len)
+			die_errno("cannot write output");
 
-		len = read_line_with_nul(buf, sizeof(buf), mbox);
-		if (len == 0) {
+		if (strbuf_getwholeline(&buf, mbox, '\n')) {
 			if (feof(mbox)) {
 				status = 1;
 				break;
 			}
-			die("cannot read mbox");
+			die_errno("cannot read mbox");
 		}
-		if (!is_partial && !is_bare && is_from_line(buf, len))
+		if (!is_bare && is_from_line(buf.buf, buf.len))
 			break; /* done with one message */
 	}
 	fclose(output);
@@ -166,7 +151,7 @@ static int split_maildir(const char *maildir, const char *dir,
 			goto out;
 		}
 
-		if (fgets(buf, sizeof(buf), f) == NULL) {
+		if (strbuf_getwholeline(&buf, f, '\n')) {
 			error("cannot read mail %s (%s)", file, strerror(errno));
 			goto out;
 		}
@@ -203,7 +188,7 @@ static int split_mbox(const char *file, const char *dir, int allow_bare,
 	} while (isspace(peek));
 	ungetc(peek, f);
 
-	if (fgets(buf, sizeof(buf), f) == NULL) {
+	if (strbuf_getwholeline(&buf, f, '\n')) {
 		/* empty stdin is OK */
 		if (f != stdin) {
 			error("cannot read mbox %s", file);
@@ -246,8 +231,12 @@ int cmd_mailsplit(int argc, const char **argv, const char *prefix)
 			continue;
 		} else if ( arg[1] == 'f' ) {
 			nr = strtol(arg+2, NULL, 10);
+		} else if ( arg[1] == 'h' ) {
+			usage(git_mailsplit_usage);
 		} else if ( arg[1] == 'b' && !arg[2] ) {
 			allow_bare = 1;
+		} else if (!strcmp(arg, "--keep-cr")) {
+			keep_cr = 1;
 		} else if ( arg[1] == 'o' && arg[2] ) {
 			dir = arg+2;
 		} else if ( arg[1] == '-' && !arg[2] ) {

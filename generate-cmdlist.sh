@@ -14,7 +14,7 @@ sort |
 while read cmd
 do
      sed -n '
-     /NAME/,/git-'"$cmd"'/H
+     /^NAME/,/git-'"$cmd"'/H
      ${
             x
             s/.*git-'"$cmd"' - \(.*\)/  {"'"$cmd"'", "\1"},/

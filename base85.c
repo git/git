@@ -57,14 +57,8 @@ int decode_85(char *dst, const char *buffer, int len)
 		de = de85[ch];
 		if (--de < 0)
 			return error("invalid base85 alphabet %c", ch);
-		/*
-		 * Detect overflow.  The largest
-		 * 5-letter possible is "|NsC0" to
-		 * encode 0xffffffff, and "|NsC" gives
-		 * 0x03030303 at this point (i.e.
-		 * 0xffffffff = 0x03030303 * 85).
-		 */
-		if (0x03030303 < acc ||
+		/* Detect overflow. */
+		if (0xffffffff / 85 < acc ||
 		    0xffffffff - de < (acc *= 85))
 			return error("invalid base85 sequence %.5s", buffer-5);
 		acc += de;
@@ -84,14 +78,12 @@ int decode_85(char *dst, const char *buffer, int len)
 
 void encode_85(char *buf, const unsigned char *data, int bytes)
 {
-	prep_base85();
-
 	say("encode 85");
 	while (bytes) {
 		unsigned acc = 0;
 		int cnt;
 		for (cnt = 24; cnt >= 0; cnt -= 8) {
-			int ch = *data++;
+			unsigned ch = *data++;
 			acc |= ch << cnt;
 			if (--bytes == 0)
 				break;
@@ -118,7 +110,7 @@ int main(int ac, char **av)
 		int len = strlen(av[2]);
 		encode_85(buf, av[2], len);
 		if (len <= 26) len = len + 'A' - 1;
-		else len = len + 'a' - 26 + 1;
+		else len = len + 'a' - 26 - 1;
 		printf("encoded: %c%s\n", len, buf);
 		return 0;
 	}

@@ -4,8 +4,7 @@
  * Copyright (C) 2007 by Nicolas Pitre, licensed under the GPL version 2.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
+#include "git-compat-util.h"
 
 int main(int argc, char *argv[])
 {
@@ -13,7 +12,7 @@ int main(int argc, char *argv[])
 	unsigned char *c;
 
 	if (argc < 2 || argc > 3) {
-		fprintf( stderr, "Usage: %s <seed_string> [<size>]", argv[0]);
+		fprintf(stderr, "Usage: %s <seed_string> [<size>]\n", argv[0]);
 		return 1;
 	}
 

@@ -8,15 +8,15 @@ git-mailinfo - Extracts patch and authorship from a single e-mail message
 
 SYNOPSIS
 --------
-'git mailinfo' [-k] [-u | --encoding=<encoding> | -n] <msg> <patch>
+'git mailinfo' [-k|-b] [-u | --encoding=<encoding> | -n] [--scissors] <msg> <patch>
 
 
 DESCRIPTION
 -----------
-Reading a single e-mail message from the standard input, and
+Reads a single e-mail message from the standard input, and
 writes the commit log message in <msg> file, and the patches in
 <patch> file.  The author name, e-mail and e-mail subject are
-written out to the standard output to be used by 'git-am'
+written out to the standard output to be used by 'git am'
 to create a commit.  It is usually not necessary to use this
 command directly.  See linkgit:git-am[1] instead.
 
@@ -30,7 +30,12 @@ OPTIONS
 	whitespaces, (3) '[' up to ']', typically '[PATCH]', and
 	then prepends "[PATCH] ".  This flag forbids this
 	munging, and is most useful when used to read back
-	'git-format-patch -k' output.
+	'git format-patch -k' output.
+
+-b::
+	When -k is not in effect, all leading strings bracketed with '['
+	and ']' pairs are stripped.  This option limits the stripping to
+	only the pairs whose bracketed string contains the word "PATCH".
 
 -u::
 	The commit log message, author name and author email are
@@ -48,6 +53,25 @@ conversion, even with this flag.
 
 -n::
 	Disable all charset re-coding of the metadata.
+
+--scissors::
+	Remove everything in body before a scissors line.  A line that
+	mainly consists of scissors (either ">8" or "8<") and perforation
+	(dash "-") marks is called a scissors line, and is used to request
+	the reader to cut the message at that line.  If such a line
+	appears in the body of the message before the patch, everything
+	before it (including the scissors line itself) is ignored when
+	this option is used.
++
+This is useful if you want to begin your message in a discussion thread
+with comments and suggestions on the message you are responding to, and to
+conclude it with a patch submission, separating the discussion and the
+beginning of the proposed commit log message with a scissors line.
++
+This can enabled by default with the configuration option mailinfo.scissors.
+
+--no-scissors::
+	Ignore scissors lines. Useful for overriding mailinfo.scissors settings.
 
 <msg>::
 	The commit log message extracted from e-mail, usually

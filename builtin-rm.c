@@ -29,29 +29,10 @@ static void add_list(const char *name)
 	list.name[list.nr++] = name;
 }
 
-static int remove_file(const char *name)
-{
-	int ret;
-	char *slash;
-
-	ret = unlink(name);
-	if (ret && errno == ENOENT)
-		/* The user has removed it from the filesystem by hand */
-		ret = errno = 0;
-
-	if (!ret && (slash = strrchr(name, '/'))) {
-		char *n = xstrdup(name);
-		do {
-			n[slash - name] = 0;
-			name = n;
-		} while (!rmdir(name) && (slash = strrchr(name, '/')));
-	}
-	return ret;
-}
-
 static int check_local_mod(unsigned char *head, int index_only)
 {
-	/* items in list are already sorted in the cache order,
+	/*
+	 * Items in list are already sorted in the cache order,
 	 * so we could do this a lot more efficiently by using
 	 * tree_desc based traversal if we wanted to, but I am
 	 * lazy, and who cares if removal of files is a tad
@@ -78,8 +59,7 @@ static int check_local_mod(unsigned char *head, int index_only)
 
 		if (lstat(ce->name, &st) < 0) {
 			if (errno != ENOENT)
-				fprintf(stderr, "warning: '%s': %s",
-					ce->name, strerror(errno));
+				warning("'%s': %s", ce->name, strerror(errno));
 			/* It already vanished from the working tree */
 			continue;
 		}
@@ -91,24 +71,55 @@ static int check_local_mod(unsigned char *head, int index_only)
 			 */
 			continue;
 		}
+
+		/*
+		 * "rm" of a path that has changes need to be treated
+		 * carefully not to allow losing local changes
+		 * accidentally.  A local change could be (1) file in
+		 * work tree is different since the index; and/or (2)
+		 * the user staged a content that is different from
+		 * the current commit in the index.
+		 *
+		 * In such a case, you would need to --force the
+		 * removal.  However, "rm --cached" (remove only from
+		 * the index) is safe if the index matches the file in
+		 * the work tree or the HEAD commit, as it means that
+		 * the content being removed is available elsewhere.
+		 */
+
+		/*
+		 * Is the index different from the file in the work tree?
+		 */
 		if (ce_match_stat(ce, &st, 0))
 			local_changes = 1;
+
+		/*
+		 * Is the index different from the HEAD commit?  By
+		 * definition, before the very initial commit,
+		 * anything staged in the index is treated by the same
+		 * way as changed from the HEAD.
+		 */
 		if (no_head
 		     || get_tree_entry(head, name, sha1, &mode)
 		     || ce->ce_mode != create_ce_mode(mode)
 		     || hashcmp(ce->sha1, sha1))
 			staged_changes = 1;
 
-		if (local_changes && staged_changes)
-			errs = error("'%s' has staged content different "
-				     "from both the file and the HEAD\n"
-				     "(use -f to force removal)", name);
+		/*
+		 * If the index does not match the file in the work
+		 * tree and if it does not match the HEAD commit
+		 * either, (1) "git rm" without --cached definitely
+		 * will lose information; (2) "git rm --cached" will
+		 * lose information unless it is about removing an
+		 * "intent to add" entry.
+		 */
+		if (local_changes && staged_changes) {
+			if (!index_only || !(ce->ce_flags & CE_INTENT_TO_ADD))
+				errs = error("'%s' has staged content different "
+					     "from both the file and the HEAD\n"
+					     "(use -f to force removal)", name);
+		}
 		else if (!index_only) {
-			/* It's not dangerous to git-rm --cached a
-			 * file if the index matches the file or the
-			 * HEAD, since it means the deleted content is
-			 * still available somewhere.
-			 */
 			if (staged_changes)
 				errs = error("'%s' has changes staged in the index\n"
 					     "(use --cached to keep the file, "
@@ -146,7 +157,8 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 
 	git_config(git_default_config, NULL);
 
-	argc = parse_options(argc, argv, builtin_rm_options, builtin_rm_usage, 0);
+	argc = parse_options(argc, argv, prefix, builtin_rm_options,
+			     builtin_rm_usage, 0);
 	if (!argc)
 		usage_with_options(builtin_rm_usage, builtin_rm_options);
 
@@ -159,6 +171,8 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 		die("index file corrupt");
 
 	pathspec = get_pathspec(prefix, argv);
+	refresh_index(&the_index, REFRESH_QUIET, pathspec, NULL, NULL);
+
 	seen = NULL;
 	for (i = 0; pathspec[i] ; i++)
 		/* nothing */;
@@ -221,7 +235,7 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 			printf("rm '%s'\n", path);
 
 		if (remove_file_from_cache(path))
-			die("git-rm: unable to remove %s", path);
+			die("git rm: unable to remove %s", path);
 	}
 
 	if (show_only)
@@ -239,12 +253,12 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 		int removed = 0;
 		for (i = 0; i < list.nr; i++) {
 			const char *path = list.name[i];
-			if (!remove_file(path)) {
+			if (!remove_path(path)) {
 				removed = 1;
 				continue;
 			}
 			if (!removed)
-				die("git-rm: %s: %s", path, strerror(errno));
+				die_errno("git rm: '%s'", path);
 		}
 	}
 

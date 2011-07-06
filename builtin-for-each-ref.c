@@ -8,6 +8,7 @@
 #include "blob.h"
 #include "quote.h"
 #include "parse-options.h"
+#include "remote.h"
 
 /* Quoting styles */
 #define QUOTE_NONE 0
@@ -66,6 +67,7 @@ static struct {
 	{ "subject" },
 	{ "body" },
 	{ "contents" },
+	{ "upstream" },
 };
 
 /*
@@ -320,9 +322,7 @@ static const char *find_wholine(const char *who, int wholen, const char *buf, un
 
 static const char *copy_line(const char *buf)
 {
-	const char *eol = strchr(buf, '\n');
-	if (!eol)
-		return "";
+	const char *eol = strchrnul(buf, '\n');
 	return xmemdupz(buf, eol - buf);
 }
 
@@ -339,8 +339,11 @@ static const char *copy_name(const char *buf)
 static const char *copy_email(const char *buf)
 {
 	const char *email = strchr(buf, '<');
-	const char *eoemail = strchr(email, '>');
-	if (!email || !eoemail)
+	const char *eoemail;
+	if (!email)
+		return "";
+	eoemail = strchr(email, '>');
+	if (!eoemail)
 		return "";
 	return xmemdupz(email, eoemail + 1 - email);
 }
@@ -459,8 +462,10 @@ static void find_subpos(const char *buf, unsigned long sz, const char **sub, con
 		return;
 	*sub = buf; /* first non-empty line */
 	buf = strchr(buf, '\n');
-	if (!buf)
+	if (!buf) {
+		*body = "";
 		return; /* no body */
+	}
 	while (*buf == '\n')
 		buf++; /* skip blank between subject and body */
 	*body = buf;
@@ -556,6 +561,66 @@ static void populate_value(struct refinfo *ref)
 
 	ref->value = xcalloc(sizeof(struct atom_value), used_atom_cnt);
 
+	/* Fill in specials first */
+	for (i = 0; i < used_atom_cnt; i++) {
+		const char *name = used_atom[i];
+		struct atom_value *v = &ref->value[i];
+		int deref = 0;
+		const char *refname;
+		const char *formatp;
+
+		if (*name == '*') {
+			deref = 1;
+			name++;
+		}
+
+		if (!prefixcmp(name, "refname"))
+			refname = ref->refname;
+		else if (!prefixcmp(name, "upstream")) {
+			struct branch *branch;
+			/* only local branches may have an upstream */
+			if (prefixcmp(ref->refname, "refs/heads/"))
+				continue;
+			branch = branch_get(ref->refname + 11);
+
+			if (!branch || !branch->merge || !branch->merge[0] ||
+			    !branch->merge[0]->dst)
+				continue;
+			refname = branch->merge[0]->dst;
+		}
+		else
+			continue;
+
+		formatp = strchr(name, ':');
+		/* look for "short" refname format */
+		if (formatp) {
+			formatp++;
+			if (!strcmp(formatp, "short"))
+				refname = shorten_unambiguous_ref(refname,
+						      warn_ambiguous_refs);
+			else
+				die("unknown %.*s format %s",
+				    (int)(formatp - name), name, formatp);
+		}
+
+		if (!deref)
+			v->s = refname;
+		else {
+			int len = strlen(refname);
+			char *s = xmalloc(len + 4);
+			sprintf(s, "%s^{}", refname);
+			v->s = s;
+		}
+	}
+
+	for (i = 0; i < used_atom_cnt; i++) {
+		struct atom_value *v = &ref->value[i];
+		if (v->s == NULL)
+			goto need_obj;
+	}
+	return;
+
+ need_obj:
 	buf = get_obj(ref->objectname, &obj, &size, &eaten);
 	if (!buf)
 		die("missing object %s for %s",
@@ -563,20 +628,6 @@ static void populate_value(struct refinfo *ref)
 	if (!obj)
 		die("parse_object_buffer failed on %s for %s",
 		    sha1_to_hex(ref->objectname), ref->refname);
-
-	/* Fill in specials first */
-	for (i = 0; i < used_atom_cnt; i++) {
-		const char *name = used_atom[i];
-		struct atom_value *v = &ref->value[i];
-		if (!strcmp(name, "refname"))
-			v->s = ref->refname;
-		else if (!strcmp(name, "*refname")) {
-			int len = strlen(ref->refname);
-			char *s = xmalloc(len + 4);
-			sprintf(s, "%s^{}", ref->refname);
-			v->s = s;
-		}
-	}
 
 	grab_values(ref->value, 0, obj, buf, size);
 	if (!eaten)
@@ -650,7 +701,8 @@ static int grab_single_ref(const char *refname, const unsigned char *sha1, int f
 			if ((plen <= namelen) &&
 			    !strncmp(refname, p, plen) &&
 			    (refname[plen] == '\0' ||
-			     refname[plen] == '/'))
+			     refname[plen] == '/' ||
+			     p[plen-1] == '/'))
 				break;
 			if (!fnmatch(p, refname, FNM_PATHNAME))
 				break;
@@ -819,7 +871,6 @@ static int opt_parse_sort(const struct option *opt, const char *arg, int unset)
 		return -1;
 
 	*sort_tail = s = xcalloc(1, sizeof(*s));
-	sort_tail = &s->next;
 
 	if (*arg == '-') {
 		s->reverse = 1;
@@ -862,7 +913,7 @@ int cmd_for_each_ref(int argc, const char **argv, const char *prefix)
 		OPT_END(),
 	};
 
-	parse_options(argc, argv, opts, for_each_ref_usage, 0);
+	parse_options(argc, argv, prefix, opts, for_each_ref_usage, 0);
 	if (maxcount < 0) {
 		error("invalid --count argument: `%d'", maxcount);
 		usage_with_options(for_each_ref_usage, opts);
@@ -878,9 +929,12 @@ int cmd_for_each_ref(int argc, const char **argv, const char *prefix)
 		sort = default_sort();
 	sort_atom_limit = used_atom_cnt;
 
+	/* for warn_ambiguous_refs */
+	git_config(git_default_config, NULL);
+
 	memset(&cbdata, 0, sizeof(cbdata));
 	cbdata.grab_pattern = argv;
-	for_each_ref(grab_single_ref, &cbdata);
+	for_each_rawref(grab_single_ref, &cbdata);
 	refs = cbdata.grab_array;
 	num_refs = cbdata.grab_cnt;
 

@@ -23,10 +23,10 @@ static const char * const builtin_gc_usage[] = {
 };
 
 static int pack_refs = 1;
-static int aggressive_window = -1;
+static int aggressive_window = 250;
 static int gc_auto_threshold = 6700;
 static int gc_auto_pack_limit = 50;
-static char *prune_expire = "2.weeks.ago";
+static const char *prune_expire = "2.weeks.ago";
 
 #define MAX_ADD 10
 static const char *argv_pack_refs[] = {"pack-refs", "--all", "--prune", NULL};
@@ -57,15 +57,12 @@ static int gc_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 	if (!strcmp(var, "gc.pruneexpire")) {
-		if (!value)
-			return config_error_nonbool(var);
-		if (strcmp(value, "now")) {
+		if (value && strcmp(value, "now")) {
 			unsigned long now = approxidate("now");
 			if (approxidate(value) >= now)
 				return error("Invalid %s: '%s'", var, value);
 		}
-		prune_expire = xstrdup(value);
-		return 0;
+		return git_config_string(&prune_expire, var, value);
 	}
 	return git_default_config(var, value, cb);
 }
@@ -134,19 +131,9 @@ static int too_many_packs(void)
 
 	prepare_packed_git();
 	for (cnt = 0, p = packed_git; p; p = p->next) {
-		char path[PATH_MAX];
-		size_t len;
-		int keep;
-
 		if (!p->pack_local)
 			continue;
-		len = strlen(p->pack_name);
-		if (PATH_MAX <= len + 1)
-			continue; /* oops, give up */
-		memcpy(path, p->pack_name, len-5);
-		memcpy(path + len - 5, ".keep", 6);
-		keep = access(p->pack_name, F_OK) && (errno == ENOENT);
-		if (keep)
+		if (p->pack_keep)
 			continue;
 		/*
 		 * Perhaps check the size of the pack and count only
@@ -155,34 +142,6 @@ static int too_many_packs(void)
 		cnt++;
 	}
 	return gc_auto_pack_limit <= cnt;
-}
-
-static int run_hook(void)
-{
-	const char *argv[2];
-	struct child_process hook;
-	int ret;
-
-	argv[0] = git_path("hooks/pre-auto-gc");
-	argv[1] = NULL;
-
-	if (access(argv[0], X_OK) < 0)
-		return 0;
-
-	memset(&hook, 0, sizeof(hook));
-	hook.argv = argv;
-	hook.no_stdin = 1;
-	hook.stdout_to_stderr = 1;
-
-	ret = start_command(&hook);
-	if (ret) {
-		warning("Could not spawn %s", argv[0]);
-		return ret;
-	}
-	ret = finish_command(&hook);
-	if (ret == -ERR_RUN_COMMAND_WAITPID_SIGNAL)
-		warning("%s exited due to uncaught signal", argv[0]);
-	return ret;
 }
 
 static int need_to_gc(void)
@@ -201,28 +160,32 @@ static int need_to_gc(void)
 	 * there is no need.
 	 */
 	if (too_many_packs())
-		append_option(argv_repack, "-A", MAX_ADD);
+		append_option(argv_repack,
+			      prune_expire && !strcmp(prune_expire, "now") ?
+			      "-a" : "-A",
+			      MAX_ADD);
 	else if (!too_many_loose_objects())
 		return 0;
 
-	if (run_hook())
+	if (run_hook(NULL, "pre-auto-gc", NULL))
 		return 0;
 	return 1;
 }
 
 int cmd_gc(int argc, const char **argv, const char *prefix)
 {
-	int prune = 0;
 	int aggressive = 0;
 	int auto_gc = 0;
 	int quiet = 0;
 	char buf[80];
 
 	struct option builtin_gc_options[] = {
-		OPT_BOOLEAN(0, "prune", &prune, "prune unreferenced objects (deprecated)"),
+		OPT__QUIET(&quiet),
+		{ OPTION_STRING, 0, "prune", &prune_expire, "date",
+			"prune unreferenced objects",
+			PARSE_OPT_OPTARG, NULL, (intptr_t)prune_expire },
 		OPT_BOOLEAN(0, "aggressive", &aggressive, "be more thorough (increased runtime)"),
 		OPT_BOOLEAN(0, "auto", &auto_gc, "enable auto-gc mode"),
-		OPT_BOOLEAN('q', "quiet", &quiet, "suppress progress reports"),
 		OPT_END()
 	};
 
@@ -231,12 +194,14 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 	if (pack_refs < 0)
 		pack_refs = !is_bare_repository();
 
-	argc = parse_options(argc, argv, builtin_gc_options, builtin_gc_usage, 0);
+	argc = parse_options(argc, argv, prefix, builtin_gc_options,
+			     builtin_gc_usage, 0);
 	if (argc > 0)
 		usage_with_options(builtin_gc_usage, builtin_gc_options);
 
 	if (aggressive) {
 		append_option(argv_repack, "-f", MAX_ADD);
+		append_option(argv_repack, "--depth=250", MAX_ADD);
 		if (aggressive_window > 0) {
 			sprintf(buf, "--window=%d", aggressive_window);
 			append_option(argv_repack, buf, MAX_ADD);
@@ -251,12 +216,18 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 		 */
 		if (!need_to_gc())
 			return 0;
-		fprintf(stderr, "Auto packing your repository for optimum "
-			"performance. You may also\n"
-			"run \"git gc\" manually. See "
-			"\"git help gc\" for more information.\n");
+		fprintf(stderr,
+			"Auto packing the repository for optimum performance.%s\n",
+			quiet
+			? ""
+			: (" You may also\n"
+			   "run \"git gc\" manually. See "
+			   "\"git help gc\" for more information."));
 	} else
-		append_option(argv_repack, "-A", MAX_ADD);
+		append_option(argv_repack,
+			      prune_expire && !strcmp(prune_expire, "now")
+			      ? "-a" : "-A",
+			      MAX_ADD);
 
 	if (pack_refs && run_command_v_opt(argv_pack_refs, RUN_GIT_CMD))
 		return error(FAILED_RUN, argv_pack_refs[0]);
@@ -267,9 +238,11 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 	if (run_command_v_opt(argv_repack, RUN_GIT_CMD))
 		return error(FAILED_RUN, argv_repack[0]);
 
-	argv_prune[2] = prune_expire;
-	if (run_command_v_opt(argv_prune, RUN_GIT_CMD))
-		return error(FAILED_RUN, argv_prune[0]);
+	if (prune_expire) {
+		argv_prune[2] = prune_expire;
+		if (run_command_v_opt(argv_prune, RUN_GIT_CMD))
+			return error(FAILED_RUN, argv_prune[0]);
+	}
 
 	if (run_command_v_opt(argv_rerere, RUN_GIT_CMD))
 		return error(FAILED_RUN, argv_rerere[0]);

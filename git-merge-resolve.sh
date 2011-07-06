@@ -37,10 +37,10 @@ then
 	exit 2
 fi
 
-git update-index --refresh 2>/dev/null
+git update-index -q --refresh
 git read-tree -u -m --aggressive $bases $head $remotes || exit 2
 echo "Trying simple merge."
-if result_tree=$(git write-tree  2>/dev/null)
+if result_tree=$(git write-tree 2>/dev/null)
 then
 	exit 0
 else

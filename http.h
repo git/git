@@ -37,6 +37,10 @@
 #define CURLE_HTTP_RETURNED_ERROR CURLE_HTTP_NOT_FOUND
 #endif
 
+#if LIBCURL_VERSION_NUM < 0x070c03
+#define NO_CURL_IOCTL
+#endif
+
 struct slot_results
 {
 	CURLcode curl_result;
@@ -67,13 +71,16 @@ struct buffer
 extern size_t fread_buffer(void *ptr, size_t eltsize, size_t nmemb, void *strbuf);
 extern size_t fwrite_buffer(const void *ptr, size_t eltsize, size_t nmemb, void *strbuf);
 extern size_t fwrite_null(const void *ptr, size_t eltsize, size_t nmemb, void *strbuf);
+#ifndef NO_CURL_IOCTL
+extern curlioerr ioctl_buffer(CURL *handle, int cmd, void *clientp);
+#endif
 
 /* Slot lifecycle functions */
 extern struct active_request_slot *get_active_slot(void);
 extern int start_active_slot(struct active_request_slot *slot);
 extern void run_active_slot(struct active_request_slot *slot);
+extern void finish_active_slot(struct active_request_slot *slot);
 extern void finish_all_active_slots(void);
-extern void release_active_slot(struct active_request_slot *slot);
 
 #ifdef USE_CURL_MULTI
 extern void fill_active_slots(void);
@@ -86,6 +93,8 @@ extern void http_cleanup(void);
 
 extern int data_received;
 extern int active_requests;
+extern int http_is_verbose;
+extern size_t http_post_buffer;
 
 extern char curl_errorstr[CURL_ERROR_SIZE];
 
@@ -102,6 +111,82 @@ static inline int missing__target(int code, int result)
 
 #define missing_target(a) missing__target((a)->http_code, (a)->curl_result)
 
+/* Helpers for modifying and creating URLs */
+extern void append_remote_object_url(struct strbuf *buf, const char *url,
+				     const char *hex,
+				     int only_two_digit_prefix);
+extern char *get_remote_object_url(const char *url, const char *hex,
+				   int only_two_digit_prefix);
+
+/* Options for http_request_*() */
+#define HTTP_NO_CACHE		1
+
+/* Return values for http_request_*() */
+#define HTTP_OK			0
+#define HTTP_MISSING_TARGET	1
+#define HTTP_ERROR		2
+#define HTTP_START_FAILED	3
+
+/*
+ * Requests an url and stores the result in a strbuf.
+ *
+ * If the result pointer is NULL, a HTTP HEAD request is made instead of GET.
+ */
+int http_get_strbuf(const char *url, struct strbuf *result, int options);
+
+/*
+ * Prints an error message using error() containing url and curl_errorstr,
+ * and returns ret.
+ */
+int http_error(const char *url, int ret);
+
 extern int http_fetch_ref(const char *base, struct ref *ref);
+
+/* Helpers for fetching packs */
+extern int http_get_info_packs(const char *base_url,
+	struct packed_git **packs_head);
+
+struct http_pack_request
+{
+	char *url;
+	struct packed_git *target;
+	struct packed_git **lst;
+	FILE *packfile;
+	char filename[PATH_MAX];
+	char tmpfile[PATH_MAX];
+	struct curl_slist *range_header;
+	struct active_request_slot *slot;
+};
+
+extern struct http_pack_request *new_http_pack_request(
+	struct packed_git *target, const char *base_url);
+extern int finish_http_pack_request(struct http_pack_request *preq);
+extern void release_http_pack_request(struct http_pack_request *preq);
+
+/* Helpers for fetching object */
+struct http_object_request
+{
+	char *url;
+	char filename[PATH_MAX];
+	char tmpfile[PATH_MAX];
+	int localfile;
+	CURLcode curl_result;
+	char errorstr[CURL_ERROR_SIZE];
+	long http_code;
+	unsigned char sha1[20];
+	unsigned char real_sha1[20];
+	git_SHA_CTX c;
+	z_stream stream;
+	int zret;
+	int rename;
+	struct active_request_slot *slot;
+};
+
+extern struct http_object_request *new_http_object_request(
+	const char *base_url, unsigned char *sha1);
+extern void process_http_object_request(struct http_object_request *freq);
+extern int finish_http_object_request(struct http_object_request *freq);
+extern void abort_http_object_request(struct http_object_request *freq);
+extern void release_http_object_request(struct http_object_request *freq);
 
 #endif /* HTTP_H */

@@ -45,17 +45,22 @@ test_numbered() {
 	grep "^Subject: \[PATCH 2/2\]" $1
 }
 
-test_expect_success 'Default: no numbered' '
+test_expect_success 'single patch defaults to no numbers' '
+	git format-patch --stdout HEAD~1 >patch0.single &&
+	test_single_no_numbered patch0.single
+'
 
-	git format-patch --stdout HEAD~2 >patch0 &&
-	test_no_numbered patch0
+test_expect_success 'multiple patch defaults to numbered' '
+
+	git format-patch --stdout HEAD~2 >patch0.multiple &&
+	test_numbered patch0.multiple
 
 '
 
 test_expect_success 'Use --numbered' '
 
-	git format-patch --numbered --stdout HEAD~2 >patch1 &&
-	test_numbered patch1
+	git format-patch --numbered --stdout HEAD~1 >patch1 &&
+	test_single_numbered patch1
 
 '
 
@@ -81,6 +86,13 @@ test_expect_success 'format.numbered && --no-numbered' '
 
 '
 
+test_expect_success 'format.numbered && --keep-subject' '
+
+	git format-patch --keep-subject --stdout HEAD^ >patch4a &&
+	grep "^Subject: Third" patch4a
+
+'
+
 test_expect_success 'format.numbered = auto' '
 
 	git config format.numbered auto
@@ -101,6 +113,12 @@ test_expect_success 'format.numbered = auto && --no-numbered' '
 	git format-patch --no-numbered --stdout HEAD~2 > patch7 &&
 	test_no_numbered patch7
 
+'
+
+test_expect_success '--start-number && --numbered' '
+
+	git format-patch --start-number 3 --numbered --stdout HEAD~1 > patch8 &&
+	grep "^Subject: \[PATCH 3/3\]" patch8
 '
 
 test_done

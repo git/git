@@ -2,7 +2,7 @@
  * patch-delta.c:
  * recreate a buffer from a source and the delta produced by diff-delta.c
  *
- * (C) 2005 Nicolas Pitre <nico@cam.org>
+ * (C) 2005 Nicolas Pitre <nico@fluxnic.net>
  *
  * This code is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -33,8 +33,7 @@ void *patch_delta(const void *src_buf, unsigned long src_size,
 
 	/* now the result size */
 	size = get_delta_hdr_size(&data, top);
-	dst_buf = xmalloc(size + 1);
-	dst_buf[size] = 0;
+	dst_buf = xmallocz(size);
 
 	out = dst_buf;
 	while (data < top) {
@@ -44,7 +43,7 @@ void *patch_delta(const void *src_buf, unsigned long src_size,
 			if (cmd & 0x01) cp_off = *data++;
 			if (cmd & 0x02) cp_off |= (*data++ << 8);
 			if (cmd & 0x04) cp_off |= (*data++ << 16);
-			if (cmd & 0x08) cp_off |= (*data++ << 24);
+			if (cmd & 0x08) cp_off |= ((unsigned) *data++ << 24);
 			if (cmd & 0x10) cp_size = *data++;
 			if (cmd & 0x20) cp_size |= (*data++ << 8);
 			if (cmd & 0x40) cp_size |= (*data++ << 16);

@@ -97,7 +97,8 @@ BuildRequires:  perl(Error)
 %description -n perl-Git
 Perl interface to Git
 
-%define path_settings ETC_GITCONFIG=/etc/gitconfig prefix=%{_prefix} mandir=%{_mandir} htmldir=%{_docdir}/%{name}-core-%{version}
+%define path_settings ETC_GITCONFIG=/etc/gitconfig prefix=%{_prefix} mandir=%{_mandir} htmldir=%{_docdir}/%{name}-%{version}
+%{!?python_sitelib: %global python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 %prep
 %setup -q
@@ -112,6 +113,7 @@ rm -rf $RPM_BUILD_ROOT
 make %{_smp_mflags} CFLAGS="$RPM_OPT_FLAGS" DESTDIR=$RPM_BUILD_ROOT \
      %{path_settings} \
      INSTALLDIRS=vendor install %{!?_without_docs: install-doc}
+test ! -d $RPM_BUILD_ROOT%{python_sitelib} || rm -fr $RPM_BUILD_ROOT%{python_sitelib}
 find $RPM_BUILD_ROOT -type f -name .packlist -exec rm -f {} ';'
 find $RPM_BUILD_ROOT -type f -name '*.bs' -empty -exec rm -f {} ';'
 find $RPM_BUILD_ROOT -type f -name perllocal.pod -exec rm -f {} ';'
@@ -145,6 +147,7 @@ rm -rf $RPM_BUILD_ROOT
 %files cvs
 %defattr(-,root,root)
 %doc Documentation/*git-cvs*.txt
+%{_bindir}/git-cvsserver
 %{_libexecdir}/git-core/*cvs*
 %{!?_without_docs: %{_mandir}/man1/*cvs*.1*}
 %{!?_without_docs: %doc Documentation/*git-cvs*.html }
@@ -167,6 +170,7 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root)
 %{_libexecdir}/git-core/git-gui
 %{_libexecdir}/git-core/git-citool
+%{_libexecdir}/git-core/git-gui--askpass
 %{_datadir}/git-gui/
 %{!?_without_docs: %{_mandir}/man1/git-gui.1*}
 %{!?_without_docs: %doc Documentation/git-gui.html}
@@ -188,6 +192,18 @@ rm -rf $RPM_BUILD_ROOT
 # No files for you!
 
 %changelog
+* Sun Jan 31 2010 Junio C Hamano <gitster@pobox.com>
+- Do not use %define inside %{!?...} construct.
+
+* Sat Jan 30 2010 Junio C Hamano <gitster@pobox.com>
+- We don't ship Python bits until a real foreign scm interface comes.
+
+* Mon Feb 04 2009 David J. Mellor <dmellor@whistlingcat.com>
+- fixed broken git help -w after renaming the git-core package to git.
+
+* Fri Sep 12 2008 Quy Tonthat <qtonthat@gmail.com>
+- move git-cvsserver to bindir.
+
 * Sun Jun 15 2008 Junio C Hamano <gitster@pobox.com>
 - Remove curl from Requires list.
 
@@ -225,7 +241,7 @@ rm -rf $RPM_BUILD_ROOT
 * Tue Mar 27 2007 Eygene Ryabinkin <rea-git@codelabs.ru>
 - Added the git-p4 package: Perforce import stuff.
 
-* Mon Feb 13 2007 Nicolas Pitre <nico@cam.org>
+* Mon Feb 13 2007 Nicolas Pitre <nico@fluxnic.net>
 - Update core package description (Git isn't as stupid as it used to be)
 
 * Mon Feb 12 2007 Junio C Hamano <junkio@cox.net>

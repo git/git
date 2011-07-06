@@ -6,8 +6,10 @@ enum parse_opt_type {
 	OPTION_END,
 	OPTION_ARGUMENT,
 	OPTION_GROUP,
+	OPTION_NUMBER,
 	/* options with no arguments */
 	OPTION_BIT,
+	OPTION_NEGBIT,
 	OPTION_BOOLEAN, /* _INCR would have been a better name */
 	OPTION_SET_INT,
 	OPTION_SET_PTR,
@@ -15,12 +17,15 @@ enum parse_opt_type {
 	OPTION_STRING,
 	OPTION_INTEGER,
 	OPTION_CALLBACK,
+	OPTION_FILENAME
 };
 
 enum parse_opt_flags {
 	PARSE_OPT_KEEP_DASHDASH = 1,
 	PARSE_OPT_STOP_AT_NON_OPTION = 2,
 	PARSE_OPT_KEEP_ARGV0 = 4,
+	PARSE_OPT_KEEP_UNKNOWN = 8,
+	PARSE_OPT_NO_INTERNAL_HELP = 16,
 };
 
 enum parse_opt_option_flags {
@@ -29,6 +34,9 @@ enum parse_opt_option_flags {
 	PARSE_OPT_NONEG   = 4,
 	PARSE_OPT_HIDDEN  = 8,
 	PARSE_OPT_LASTARG_DEFAULT = 16,
+	PARSE_OPT_NODASH = 32,
+	PARSE_OPT_LITERAL_ARGHELP = 64,
+	PARSE_OPT_NEGHELP = 128,
 };
 
 struct option;
@@ -50,7 +58,7 @@ typedef int parse_opt_cb(const struct option *, const char *arg, int unset);
  *
  * `argh`::
  *   token to explain the kind of argument this option wants. Keep it
- *   homogenous across the repository.
+ *   homogeneous across the repository.
  *
  * `help`::
  *   the short help associated to what the option does.
@@ -59,11 +67,23 @@ typedef int parse_opt_cb(const struct option *, const char *arg, int unset);
  *
  * `flags`::
  *   mask of parse_opt_option_flags.
- *   PARSE_OPT_OPTARG: says that the argument is optionnal (not for BOOLEANs)
- *   PARSE_OPT_NOARG: says that this option takes no argument, for CALLBACKs
+ *   PARSE_OPT_OPTARG: says that the argument is optional (not for BOOLEANs)
+ *   PARSE_OPT_NOARG: says that this option takes no argument
  *   PARSE_OPT_NONEG: says that this option cannot be negated
- *   PARSE_OPT_HIDDEN this option is skipped in the default usage, showed in
- *                    the long one.
+ *   PARSE_OPT_HIDDEN: this option is skipped in the default usage, and
+ *                     shown only in the full usage.
+ *   PARSE_OPT_LASTARG_DEFAULT: says that this option will take the default
+ *				value if no argument is given when the option
+ *				is last on the command line. If the option is
+ *				not last it will require an argument.
+ *				Should not be used with PARSE_OPT_OPTARG.
+ *   PARSE_OPT_NODASH: this option doesn't start with a dash.
+ *   PARSE_OPT_LITERAL_ARGHELP: says that argh shouldn't be enclosed in brackets
+ *				(i.e. '<argh>') in the help message.
+ *				Useful for options with multiple parameters.
+ *   PARSE_OPT_NEGHELP: says that the long option should always be shown with
+ *				the --no prefix in the usage message. Sometimes
+ *				useful for users of OPTION_NEGBIT.
  *
  * `callback`::
  *   pointer to the callback to use for OPTION_CALLBACK.
@@ -88,32 +108,50 @@ struct option {
 };
 
 #define OPT_END()                   { OPTION_END }
-#define OPT_ARGUMENT(l, h)          { OPTION_ARGUMENT, 0, (l), NULL, NULL, (h) }
+#define OPT_ARGUMENT(l, h)          { OPTION_ARGUMENT, 0, (l), NULL, NULL, \
+				      (h), PARSE_OPT_NOARG}
 #define OPT_GROUP(h)                { OPTION_GROUP, 0, NULL, NULL, NULL, (h) }
-#define OPT_BIT(s, l, v, h, b)      { OPTION_BIT, (s), (l), (v), NULL, (h), 0, NULL, (b) }
-#define OPT_BOOLEAN(s, l, v, h)     { OPTION_BOOLEAN, (s), (l), (v), NULL, (h) }
-#define OPT_SET_INT(s, l, v, h, i)  { OPTION_SET_INT, (s), (l), (v), NULL, (h), 0, NULL, (i) }
-#define OPT_SET_PTR(s, l, v, h, p)  { OPTION_SET_PTR, (s), (l), (v), NULL, (h), 0, NULL, (p) }
-#define OPT_INTEGER(s, l, v, h)     { OPTION_INTEGER, (s), (l), (v), NULL, (h) }
+#define OPT_BIT(s, l, v, h, b)      { OPTION_BIT, (s), (l), (v), NULL, (h), \
+				      PARSE_OPT_NOARG, NULL, (b) }
+#define OPT_NEGBIT(s, l, v, h, b)   { OPTION_NEGBIT, (s), (l), (v), NULL, \
+				      (h), PARSE_OPT_NOARG, NULL, (b) }
+#define OPT_BOOLEAN(s, l, v, h)     { OPTION_BOOLEAN, (s), (l), (v), NULL, \
+				      (h), PARSE_OPT_NOARG }
+#define OPT_SET_INT(s, l, v, h, i)  { OPTION_SET_INT, (s), (l), (v), NULL, \
+				      (h), PARSE_OPT_NOARG, NULL, (i) }
+#define OPT_SET_PTR(s, l, v, h, p)  { OPTION_SET_PTR, (s), (l), (v), NULL, \
+				      (h), PARSE_OPT_NOARG, NULL, (p) }
+#define OPT_INTEGER(s, l, v, h)     { OPTION_INTEGER, (s), (l), (v), "n", (h) }
 #define OPT_STRING(s, l, v, a, h)   { OPTION_STRING,  (s), (l), (v), (a), (h) }
+#define OPT_UYN(s, l, v, h)         { OPTION_CALLBACK, (s), (l), (v), NULL, \
+				      (h), PARSE_OPT_NOARG, &parse_opt_tertiary }
 #define OPT_DATE(s, l, v, h) \
 	{ OPTION_CALLBACK, (s), (l), (v), "time",(h), 0, \
 	  parse_opt_approxidate_cb }
 #define OPT_CALLBACK(s, l, v, a, h, f) \
 	{ OPTION_CALLBACK, (s), (l), (v), (a), (h), 0, (f) }
+#define OPT_NUMBER_CALLBACK(v, h, f) \
+	{ OPTION_NUMBER, 0, NULL, (v), NULL, (h), \
+	  PARSE_OPT_NOARG | PARSE_OPT_NONEG, (f) }
+#define OPT_FILENAME(s, l, v, h)    { OPTION_FILENAME, (s), (l), (v), \
+				       "FILE", (h) }
 
 /* parse_options() will filter out the processed options and leave the
- * non-option argments in argv[].
+ * non-option arguments in argv[].
  * Returns the number of arguments left in argv[].
  */
-extern int parse_options(int argc, const char **argv,
+extern int parse_options(int argc, const char **argv, const char *prefix,
                          const struct option *options,
                          const char * const usagestr[], int flags);
 
 extern NORETURN void usage_with_options(const char * const *usagestr,
                                         const struct option *options);
 
-/*----- incremantal advanced APIs -----*/
+extern NORETURN void usage_msg_opt(const char *msg,
+				   const char * const *usagestr,
+				   const struct option *options);
+
+/*----- incremental advanced APIs -----*/
 
 enum {
 	PARSE_OPT_HELP = -1,
@@ -132,13 +170,12 @@ struct parse_opt_ctx_t {
 	int argc, cpidx;
 	const char *opt;
 	int flags;
+	const char *prefix;
 };
 
-extern int parse_options_usage(const char * const *usagestr,
-			       const struct option *opts);
-
 extern void parse_options_start(struct parse_opt_ctx_t *ctx,
-				int argc, const char **argv, int flags);
+				int argc, const char **argv, const char *prefix,
+				int flags);
 
 extern int parse_options_step(struct parse_opt_ctx_t *ctx,
 			      const struct option *options,
@@ -150,15 +187,21 @@ extern int parse_options_end(struct parse_opt_ctx_t *ctx);
 /*----- some often used options -----*/
 extern int parse_opt_abbrev_cb(const struct option *, const char *, int);
 extern int parse_opt_approxidate_cb(const struct option *, const char *, int);
+extern int parse_opt_verbosity_cb(const struct option *, const char *, int);
+extern int parse_opt_with_commit(const struct option *, const char *, int);
+extern int parse_opt_tertiary(const struct option *, const char *, int);
 
 #define OPT__VERBOSE(var)  OPT_BOOLEAN('v', "verbose", (var), "be verbose")
 #define OPT__QUIET(var)    OPT_BOOLEAN('q', "quiet",   (var), "be quiet")
+#define OPT__VERBOSITY(var) \
+	{ OPTION_CALLBACK, 'v', "verbose", (var), NULL, "be more verbose", \
+	  PARSE_OPT_NOARG, &parse_opt_verbosity_cb, 0 }, \
+	{ OPTION_CALLBACK, 'q', "quiet", (var), NULL, "be more quiet", \
+	  PARSE_OPT_NOARG, &parse_opt_verbosity_cb, 0 }
 #define OPT__DRY_RUN(var)  OPT_BOOLEAN('n', "dry-run", (var), "dry run")
 #define OPT__ABBREV(var)  \
 	{ OPTION_CALLBACK, 0, "abbrev", (var), "n", \
 	  "use <n> digits to display SHA-1s", \
 	  PARSE_OPT_OPTARG, &parse_opt_abbrev_cb, 0 }
-
-extern const char *parse_options_fix_filename(const char *prefix, const char *file);
 
 #endif

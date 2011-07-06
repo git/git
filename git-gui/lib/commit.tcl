@@ -27,9 +27,8 @@ You are currently in the middle of a merge that has not been fully completed.  Y
 	if {[catch {
 			set fd [git_read cat-file commit $curHEAD]
 			fconfigure $fd -encoding binary -translation lf
-			if {[catch {set enc $repo_config(i18n.commitencoding)}]} {
-				set enc utf-8
-			}
+			# By default commits are assumed to be in utf-8
+			set enc utf-8
 			while {[gets $fd line] > 0} {
 				if {[string match {parent *} $line]} {
 					lappend parents [string range $line 7 end]
@@ -116,6 +115,23 @@ proc create_new_commit {} {
 	rescan ui_ready
 }
 
+proc setup_commit_encoding {msg_wt {quiet 0}} {
+	global repo_config
+
+	if {[catch {set enc $repo_config(i18n.commitencoding)}]} {
+		set enc utf-8
+	}
+	set use_enc [tcl_encoding $enc]
+	if {$use_enc ne {}} {
+		fconfigure $msg_wt -encoding $use_enc
+	} else {
+		if {!$quiet} {
+			error_popup [mc "warning: Tcl does not support encoding '%s'." $enc]
+		}
+		fconfigure $msg_wt -encoding utf-8
+	}
+}
+
 proc commit_tree {} {
 	global HEAD commit_type file_states ui_comm repo_config
 	global pch_error
@@ -149,7 +165,9 @@ The rescan will be automatically started now.
 		_? {continue}
 		A? -
 		D? -
+		T_ -
 		M? {set files_ready 1}
+		_U -
 		U? {
 			error_popup [mc "Unmerged files cannot be committed.
 
@@ -166,7 +184,7 @@ File %s cannot be committed by this program.
 		}
 		}
 	}
-	if {!$files_ready && ![string match *merge $curType]} {
+	if {!$files_ready && ![string match *merge $curType] && ![is_enabled nocommit]} {
 		info_popup [mc "No changes to commit.
 
 You must stage at least 1 file before you can commit.
@@ -174,6 +192,8 @@ You must stage at least 1 file before you can commit.
 		unlock_index
 		return
 	}
+
+	if {[is_enabled nocommitmsg]} { do_quit 0 }
 
 	# -- A message is required.
 	#
@@ -197,18 +217,11 @@ A good commit message has the following format:
 	set msg_p [gitdir GITGUI_EDITMSG]
 	set msg_wt [open $msg_p w]
 	fconfigure $msg_wt -translation lf
-	if {[catch {set enc $repo_config(i18n.commitencoding)}]} {
-		set enc utf-8
-	}
-	set use_enc [tcl_encoding $enc]
-	if {$use_enc ne {}} {
-		fconfigure $msg_wt -encoding $use_enc
-	} else {
-		puts stderr [mc "warning: Tcl does not support encoding '%s'." $enc]
-		fconfigure $msg_wt -encoding utf-8
-	}
+	setup_commit_encoding $msg_wt
 	puts $msg_wt $msg
 	close $msg_wt
+
+	if {[is_enabled nocommit]} { do_quit 0 }
 
 	# -- Run the pre-commit hook.
 	#
@@ -357,6 +370,7 @@ A rescan will be automatically started now.
 		append reflogm " ($commit_type)"
 	}
 	set msg_fd [open $msg_p r]
+	setup_commit_encoding $msg_fd 1
 	gets $msg_fd subject
 	close $msg_fd
 	append reflogm {: } $subject
@@ -393,8 +407,8 @@ A rescan will be automatically started now.
 	#
 	set fd_ph [githook_read post-commit]
 	if {$fd_ph ne {}} {
-		upvar #0 pch_error$cmt_id pc_err
-		set pc_err {}
+		global pch_error
+		set pch_error {}
 		fconfigure $fd_ph -blocking 0 -translation binary -eofchar {}
 		fileevent $fd_ph readable \
 			[list commit_postcommit_wait $fd_ph $cmt_id]
@@ -408,7 +422,7 @@ A rescan will be automatically started now.
 		set ::GITGUI_BCK_exists 0
 	}
 
-	if {[is_enabled singlecommit]} do_quit
+	if {[is_enabled singlecommit]} { do_quit 0 }
 
 	# -- Update in memory status
 	#
@@ -428,6 +442,7 @@ A rescan will be automatically started now.
 		__ -
 		A_ -
 		M_ -
+		T_ -
 		D_ {
 			unset file_states($path)
 			catch {unset selected_paths($path)}
@@ -455,7 +470,7 @@ A rescan will be automatically started now.
 }
 
 proc commit_postcommit_wait {fd_ph cmt_id} {
-	upvar #0 pch_error$cmt_id pch_error
+	global pch_error
 
 	append pch_error [read $fd_ph]
 	fconfigure $fd_ph -blocking 1

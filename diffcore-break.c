@@ -45,7 +45,7 @@ static int should_break(struct diff_filespec *src,
 	 * The value we return is 1 if we want the pair to be broken,
 	 * or 0 if we do not.
 	 */
-	unsigned long delta_size, base_size, max_size;
+	unsigned long delta_size, max_size;
 	unsigned long src_copied, literal_added, src_removed;
 
 	*merge_score_p = 0; /* assume no deletion --- "do not break"
@@ -64,13 +64,12 @@ static int should_break(struct diff_filespec *src,
 	if (diff_populate_filespec(src, 0) || diff_populate_filespec(dst, 0))
 		return 0; /* error but caught downstream */
 
-	base_size = ((src->size < dst->size) ? src->size : dst->size);
 	max_size = ((src->size > dst->size) ? src->size : dst->size);
 	if (max_size < MINIMUM_BREAK_SIZE)
 		return 0; /* we do not break too small filepair */
 
 	if (diffcore_count_changes(src, dst,
-				   NULL, NULL,
+				   &src->cnt_data, &dst->cnt_data,
 				   0,
 				   &src_copied, &literal_added))
 		return 0;
@@ -205,12 +204,16 @@ void diffcore_break(int break_score)
 				dp->score = score;
 				dp->broken_pair = 1;
 
+				diff_free_filespec_blob(p->one);
+				diff_free_filespec_blob(p->two);
 				free(p); /* not diff_free_filepair(), we are
 					  * reusing one and two here.
 					  */
 				continue;
 			}
 		}
+		diff_free_filespec_data(p->one);
+		diff_free_filespec_data(p->two);
 		diff_q(&outq, p);
 	}
 	free(q->queue);

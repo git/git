@@ -11,7 +11,7 @@
  *    build complex strings/buffers whose final size isn't easily known.
  *
  *    It is NOT legal to copy the ->buf pointer away.
- *    `strbuf_detach' is the operation that detachs a buffer from its shell
+ *    `strbuf_detach' is the operation that detaches a buffer from its shell
  *    while keeping the shell valid wrt its invariants.
  *
  * 2. the ->buf member is a byte array that has at least ->len + 1 bytes
@@ -81,7 +81,6 @@ extern void strbuf_trim(struct strbuf *);
 extern void strbuf_rtrim(struct strbuf *);
 extern void strbuf_ltrim(struct strbuf *);
 extern int strbuf_cmp(const struct strbuf *, const struct strbuf *);
-extern void strbuf_tolower(struct strbuf *);
 
 extern struct strbuf **strbuf_split(const struct strbuf *, int delim);
 extern void strbuf_list_free(struct strbuf **);
@@ -105,24 +104,36 @@ static inline void strbuf_addstr(struct strbuf *sb, const char *s) {
 	strbuf_add(sb, s, strlen(s));
 }
 static inline void strbuf_addbuf(struct strbuf *sb, const struct strbuf *sb2) {
+	strbuf_grow(sb, sb2->len);
 	strbuf_add(sb, sb2->buf, sb2->len);
 }
 extern void strbuf_adddup(struct strbuf *sb, size_t pos, size_t len);
 
 typedef size_t (*expand_fn_t) (struct strbuf *sb, const char *placeholder, void *context);
 extern void strbuf_expand(struct strbuf *sb, const char *format, expand_fn_t fn, void *context);
+struct strbuf_expand_dict_entry {
+	const char *placeholder;
+	const char *value;
+};
+extern size_t strbuf_expand_dict_cb(struct strbuf *sb, const char *placeholder, void *context);
+extern void strbuf_addbuf_percentquote(struct strbuf *dst, const struct strbuf *src);
 
-__attribute__((format(printf,2,3)))
+__attribute__((format (printf,2,3)))
 extern void strbuf_addf(struct strbuf *sb, const char *fmt, ...);
 
 extern size_t strbuf_fread(struct strbuf *, size_t, FILE *);
 /* XXX: if read fails, any partial read is undone */
 extern ssize_t strbuf_read(struct strbuf *, int fd, size_t hint);
 extern int strbuf_read_file(struct strbuf *sb, const char *path, size_t hint);
+extern int strbuf_readlink(struct strbuf *sb, const char *path, size_t hint);
 
+extern int strbuf_getwholeline(struct strbuf *, FILE *, int);
 extern int strbuf_getline(struct strbuf *, FILE *, int);
 
 extern void stripspace(struct strbuf *buf, int skip_comments);
 extern int launch_editor(const char *path, struct strbuf *buffer, const char *const *env);
+
+extern int strbuf_branchname(struct strbuf *sb, const char *name);
+extern int strbuf_check_branch_ref(struct strbuf *sb, const char *name);
 
 #endif /* STRBUF_H */

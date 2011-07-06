@@ -9,6 +9,7 @@
 #include "commit.h"
 #include "quote.h"
 #include "builtin.h"
+#include "parse-options.h"
 
 static int line_termination = '\n';
 #define LS_RECURSIVE 1
@@ -22,8 +23,10 @@ static const char **pathspec;
 static int chomp_prefix;
 static const char *ls_tree_prefix;
 
-static const char ls_tree_usage[] =
-	"git ls-tree [-d] [-r] [-t] [-l] [-z] [--name-only] [--name-status] [--full-name] [--abbrev[=<n>]] <tree-ish> [path...]";
+static const  char * const ls_tree_usage[] = {
+	"git ls-tree [<options>] <tree-ish> [path...]",
+	NULL
+};
 
 static int show_recursive(const char *base, int baselen, const char *pathname)
 {
@@ -60,7 +63,6 @@ static int show_tree(const unsigned char *sha1, const char *base, int baselen,
 {
 	int retval = 0;
 	const char *type = blob_type;
-	unsigned long size;
 
 	if (S_ISGITLINK(mode)) {
 		/*
@@ -68,13 +70,8 @@ static int show_tree(const unsigned char *sha1, const char *base, int baselen,
 		 *
 		 * Something similar to this incomplete example:
 		 *
-		if (show_subprojects(base, baselen, pathname)) {
-			struct child_process ls_tree;
-
-			ls_tree.dir = base;
-			ls_tree.argv = ls-tree;
-			start_command(&ls_tree);
-		}
+		if (show_subprojects(base, baselen, pathname))
+			retval = READ_TREE_RECURSIVE;
 		 *
 		 */
 		type = commit_type;
@@ -95,17 +92,20 @@ static int show_tree(const unsigned char *sha1, const char *base, int baselen,
 
 	if (!(ls_options & LS_NAME_ONLY)) {
 		if (ls_options & LS_SHOW_SIZE) {
+			char size_text[24];
 			if (!strcmp(type, blob_type)) {
-				sha1_object_info(sha1, &size);
-				printf("%06o %s %s %7lu\t", mode, type,
-				       abbrev ? find_unique_abbrev(sha1, abbrev)
-				              : sha1_to_hex(sha1),
-				       size);
+				unsigned long size;
+				if (sha1_object_info(sha1, &size) == OBJ_BAD)
+					strcpy(size_text, "BAD");
+				else
+					snprintf(size_text, sizeof(size_text),
+						 "%lu", size);
 			} else
-				printf("%06o %s %s %7c\t", mode, type,
-				       abbrev ? find_unique_abbrev(sha1, abbrev)
-				              : sha1_to_hex(sha1),
-				       '-');
+				strcpy(size_text, "-");
+			printf("%06o %s %s %7s\t", mode, type,
+			       abbrev ? find_unique_abbrev(sha1, abbrev)
+				      : sha1_to_hex(sha1),
+			       size_text);
 		} else
 			printf("%06o %s %s\t", mode, type,
 			       abbrev ? find_unique_abbrev(sha1, abbrev)
@@ -120,71 +120,53 @@ int cmd_ls_tree(int argc, const char **argv, const char *prefix)
 {
 	unsigned char sha1[20];
 	struct tree *tree;
+	int full_tree = 0;
+	const struct option ls_tree_options[] = {
+		OPT_BIT('d', NULL, &ls_options, "only show trees",
+			LS_TREE_ONLY),
+		OPT_BIT('r', NULL, &ls_options, "recurse into subtrees",
+			LS_RECURSIVE),
+		OPT_BIT('t', NULL, &ls_options, "show trees when recursing",
+			LS_SHOW_TREES),
+		OPT_SET_INT('z', NULL, &line_termination,
+			    "terminate entries with NUL byte", 0),
+		OPT_BIT('l', "long", &ls_options, "include object size",
+			LS_SHOW_SIZE),
+		OPT_BIT(0, "name-only", &ls_options, "list only filenames",
+			LS_NAME_ONLY),
+		OPT_BIT(0, "name-status", &ls_options, "list only filenames",
+			LS_NAME_ONLY),
+		OPT_SET_INT(0, "full-name", &chomp_prefix,
+			    "use full path names", 0),
+		OPT_BOOLEAN(0, "full-tree", &full_tree,
+			    "list entire tree; not just current directory "
+			    "(implies --full-name)"),
+		OPT__ABBREV(&abbrev),
+		OPT_END()
+	};
 
 	git_config(git_default_config, NULL);
 	ls_tree_prefix = prefix;
 	if (prefix && *prefix)
 		chomp_prefix = strlen(prefix);
-	while (1 < argc && argv[1][0] == '-') {
-		switch (argv[1][1]) {
-		case 'z':
-			line_termination = 0;
-			break;
-		case 'r':
-			ls_options |= LS_RECURSIVE;
-			break;
-		case 'd':
-			ls_options |= LS_TREE_ONLY;
-			break;
-		case 't':
-			ls_options |= LS_SHOW_TREES;
-			break;
-		case 'l':
-			ls_options |= LS_SHOW_SIZE;
-			break;
-		case '-':
-			if (!strcmp(argv[1]+2, "name-only") ||
-			    !strcmp(argv[1]+2, "name-status")) {
-				ls_options |= LS_NAME_ONLY;
-				break;
-			}
-			if (!strcmp(argv[1]+2, "long")) {
-				ls_options |= LS_SHOW_SIZE;
-				break;
-			}
-			if (!strcmp(argv[1]+2, "full-name")) {
-				chomp_prefix = 0;
-				break;
-			}
-			if (!prefixcmp(argv[1]+2, "abbrev=")) {
-				abbrev = strtoul(argv[1]+9, NULL, 10);
-				if (abbrev && abbrev < MINIMUM_ABBREV)
-					abbrev = MINIMUM_ABBREV;
-				else if (abbrev > 40)
-					abbrev = 40;
-				break;
-			}
-			if (!strcmp(argv[1]+2, "abbrev")) {
-				abbrev = DEFAULT_ABBREV;
-				break;
-			}
-			/* otherwise fallthru */
-		default:
-			usage(ls_tree_usage);
-		}
-		argc--; argv++;
+
+	argc = parse_options(argc, argv, prefix, ls_tree_options,
+			     ls_tree_usage, 0);
+	if (full_tree) {
+		ls_tree_prefix = prefix = NULL;
+		chomp_prefix = 0;
 	}
 	/* -d -r should imply -t, but -d by itself should not have to. */
 	if ( (LS_TREE_ONLY|LS_RECURSIVE) ==
 	    ((LS_TREE_ONLY|LS_RECURSIVE) & ls_options))
 		ls_options |= LS_SHOW_TREES;
 
-	if (argc < 2)
-		usage(ls_tree_usage);
-	if (get_sha1(argv[1], sha1))
-		die("Not a valid object name %s", argv[1]);
+	if (argc < 1)
+		usage_with_options(ls_tree_usage, ls_tree_options);
+	if (get_sha1(argv[0], sha1))
+		die("Not a valid object name %s", argv[0]);
 
-	pathspec = get_pathspec(prefix, argv + 2);
+	pathspec = get_pathspec(prefix, argv + 1);
 	tree = parse_tree_indirect(sha1);
 	if (!tree)
 		die("not a tree object");

@@ -10,17 +10,19 @@ cvs CLI client via git-cvsserver server'
 
 . ./test-lib.sh
 
+if ! test_have_prereq PERL; then
+	say 'skipping git cvsserver tests, perl not available'
+	test_done
+fi
 cvs >/dev/null 2>&1
 if test $? -ne 1
 then
-    test_expect_success 'skipping git-cvsserver tests, cvs not found' :
+    say 'skipping git-cvsserver tests, cvs not found'
     test_done
-    exit
 fi
-perl -e 'use DBI; use DBD::SQLite' >/dev/null 2>&1 || {
-    test_expect_success 'skipping git-cvsserver tests, Perl SQLite interface unavailable' :
+"$PERL_PATH" -e 'use DBI; use DBD::SQLite' >/dev/null 2>&1 || {
+    say 'skipping git-cvsserver tests, Perl SQLite interface unavailable'
     test_done
-    exit
 }
 
 unset GIT_DIR GIT_CONFIG
@@ -44,7 +46,7 @@ test_expect_success 'setup' '
   git add secondrootfile &&
   git commit -m "second root") &&
   git pull secondroot master &&
-  git clone -q --local --bare "$WORKDIR/.git" "$SERVERDIR" >/dev/null 2>&1 &&
+  git clone -q --bare "$WORKDIR/.git" "$SERVERDIR" >/dev/null 2>&1 &&
   GIT_DIR="$SERVERDIR" git config --bool gitcvs.enabled true &&
   GIT_DIR="$SERVERDIR" git config gitcvs.logfile "$SERVERDIR/gitcvs.log"
 '
@@ -94,7 +96,7 @@ EOF
 
 test_expect_success 'pserver authentication' \
   'cat request-anonymous | git-cvsserver pserver >log 2>&1 &&
-   sed -ne \$p log | grep "^I LOVE YOU$"'
+   sed -ne \$p log | grep "^I LOVE YOU\$"'
 
 test_expect_success 'pserver authentication failure (non-anonymous user)' \
   'if cat request-git | git-cvsserver pserver >log 2>&1
@@ -103,11 +105,11 @@ test_expect_success 'pserver authentication failure (non-anonymous user)' \
    else
        true
    fi &&
-   sed -ne \$p log | grep "^I HATE YOU$"'
+   sed -ne \$p log | grep "^I HATE YOU\$"'
 
 test_expect_success 'pserver authentication (login)' \
   'cat login-anonymous | git-cvsserver pserver >log 2>&1 &&
-   sed -ne \$p log | grep "^I LOVE YOU$"'
+   sed -ne \$p log | grep "^I LOVE YOU\$"'
 
 test_expect_success 'pserver authentication failure (login/non-anonymous user)' \
   'if cat login-git | git-cvsserver pserver >log 2>&1
@@ -116,7 +118,7 @@ test_expect_success 'pserver authentication failure (login/non-anonymous user)' 
    else
        true
    fi &&
-   sed -ne \$p log | grep "^I HATE YOU$"'
+   sed -ne \$p log | grep "^I HATE YOU\$"'
 
 
 # misuse pserver authentication for testing of req_Root
@@ -154,7 +156,7 @@ test_expect_success 'req_Root failure (conflicting roots)' \
 
 test_expect_success 'req_Root (strict paths)' \
   'cat request-anonymous | git-cvsserver --strict-paths pserver "$SERVERDIR" >log 2>&1 &&
-   sed -ne \$p log | grep "^I LOVE YOU$"'
+   sed -ne \$p log | grep "^I LOVE YOU\$"'
 
 test_expect_success 'req_Root failure (strict-paths)' '
     ! cat request-anonymous |
@@ -163,7 +165,7 @@ test_expect_success 'req_Root failure (strict-paths)' '
 
 test_expect_success 'req_Root (w/o strict-paths)' \
   'cat request-anonymous | git-cvsserver pserver "$WORKDIR/" >log 2>&1 &&
-   sed -ne \$p log | grep "^I LOVE YOU$"'
+   sed -ne \$p log | grep "^I LOVE YOU\$"'
 
 test_expect_success 'req_Root failure (w/o strict-paths)' '
     ! cat request-anonymous |
@@ -181,7 +183,7 @@ EOF
 
 test_expect_success 'req_Root (base-path)' \
   'cat request-base | git-cvsserver --strict-paths --base-path "$WORKDIR/" pserver "$SERVERDIR" >log 2>&1 &&
-   sed -ne \$p log | grep "^I LOVE YOU$"'
+   sed -ne \$p log | grep "^I LOVE YOU\$"'
 
 test_expect_success 'req_Root failure (base-path)' '
     ! cat request-anonymous |
@@ -192,14 +194,14 @@ GIT_DIR="$SERVERDIR" git config --bool gitcvs.enabled false || exit 1
 
 test_expect_success 'req_Root (export-all)' \
   'cat request-anonymous | git-cvsserver --export-all pserver "$WORKDIR" >log 2>&1 &&
-   sed -ne \$p log | grep "^I LOVE YOU$"'
+   sed -ne \$p log | grep "^I LOVE YOU\$"'
 
 test_expect_success 'req_Root failure (export-all w/o whitelist)' \
   '! (cat request-anonymous | git-cvsserver --export-all pserver >log 2>&1 || false)'
 
 test_expect_success 'req_Root (everything together)' \
   'cat request-base | git-cvsserver --export-all --strict-paths --base-path "$WORKDIR/" pserver "$SERVERDIR" >log 2>&1 &&
-   sed -ne \$p log | grep "^I LOVE YOU$"'
+   sed -ne \$p log | grep "^I LOVE YOU\$"'
 
 GIT_DIR="$SERVERDIR" git config --bool gitcvs.enabled true || exit 1
 
@@ -267,7 +269,7 @@ test_expect_success 'gitcvs.ext.dbname' \
 
 rm -fr "$SERVERDIR"
 cd "$WORKDIR" &&
-git clone -q --local --bare "$WORKDIR/.git" "$SERVERDIR" >/dev/null 2>&1 &&
+git clone -q --bare "$WORKDIR/.git" "$SERVERDIR" >/dev/null 2>&1 &&
 GIT_DIR="$SERVERDIR" git config --bool gitcvs.enabled true &&
 GIT_DIR="$SERVERDIR" git config gitcvs.logfile "$SERVERDIR/gitcvs.log" ||
 exit 1
@@ -424,7 +426,7 @@ cd "$WORKDIR"
 test_expect_success 'cvs update (-p)' '
     touch really-empty &&
     echo Line 1 > no-lf &&
-    echo -n Line 2 >> no-lf &&
+    printf "Line 2" >> no-lf &&
     git add really-empty no-lf &&
     git commit -q -m "Update -p test" &&
     git push gitcvs.git >/dev/null &&
@@ -486,6 +488,19 @@ test_expect_success 'cvs co -c (shows module database)' '
     GIT_CONFIG="$git_config" cvs co -c > out &&
     grep "^master[	 ]\+master$" < out &&
     ! grep -v "^master[	 ]\+master$" < out
+'
+
+#------------
+# CVS ANNOTATE
+#------------
+
+cd "$WORKDIR"
+test_expect_success 'cvs annotate' '
+    cd cvswork &&
+    GIT_CONFIG="$git_config" cvs annotate merge >../out &&
+    sed -e "s/ .*//" ../out >../actual &&
+    for i in 3 1 1 1 1 1 1 1 2 4; do echo 1.$i; done >../expect &&
+    test_cmp ../expect ../actual
 '
 
 test_done

@@ -9,22 +9,62 @@ static const char *argv0_path;
 
 const char *system_path(const char *path)
 {
-	if (!is_absolute_path(path) && argv0_path) {
-		struct strbuf d = STRBUF_INIT;
-		strbuf_addf(&d, "%s/%s", argv0_path, path);
-		path = strbuf_detach(&d, NULL);
+#ifdef RUNTIME_PREFIX
+	static const char *prefix;
+#else
+	static const char *prefix = PREFIX;
+#endif
+	struct strbuf d = STRBUF_INIT;
+
+	if (is_absolute_path(path))
+		return path;
+
+#ifdef RUNTIME_PREFIX
+	assert(argv0_path);
+	assert(is_absolute_path(argv0_path));
+
+	if (!prefix &&
+	    !(prefix = strip_path_suffix(argv0_path, GIT_EXEC_PATH)) &&
+	    !(prefix = strip_path_suffix(argv0_path, BINDIR)) &&
+	    !(prefix = strip_path_suffix(argv0_path, "git"))) {
+		prefix = PREFIX;
+		fprintf(stderr, "RUNTIME_PREFIX requested, "
+				"but prefix computation failed.  "
+				"Using static fallback '%s'.\n", prefix);
 	}
+#endif
+
+	strbuf_addf(&d, "%s/%s", prefix, path);
+	path = strbuf_detach(&d, NULL);
 	return path;
 }
 
-void git_set_argv0_path(const char *path)
+const char *git_extract_argv0_path(const char *argv0)
 {
-	argv0_path = path;
+	const char *slash;
+
+	if (!argv0 || !*argv0)
+		return NULL;
+	slash = argv0 + strlen(argv0);
+
+	while (argv0 <= slash && !is_dir_sep(*slash))
+		slash--;
+
+	if (slash >= argv0) {
+		argv0_path = xstrndup(argv0, slash - argv0);
+		return slash + 1;
+	}
+
+	return argv0;
 }
 
 void git_set_argv_exec_path(const char *exec_path)
 {
 	argv_exec_path = exec_path;
+	/*
+	 * Propagate this setting to external programs.
+	 */
+	setenv(EXEC_PATH_ENVIRONMENT, exec_path, 1);
 }
 
 
@@ -59,13 +99,9 @@ static void add_path(struct strbuf *out, const char *path)
 void setup_path(void)
 {
 	const char *old_path = getenv("PATH");
-	struct strbuf new_path;
+	struct strbuf new_path = STRBUF_INIT;
 
-	strbuf_init(&new_path, 0);
-
-	add_path(&new_path, argv_exec_path);
-	add_path(&new_path, getenv(EXEC_PATH_ENVIRONMENT));
-	add_path(&new_path, system_path(GIT_EXEC_PATH));
+	add_path(&new_path, git_exec_path());
 	add_path(&new_path, argv0_path);
 
 	if (old_path)

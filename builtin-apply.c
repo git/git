@@ -13,6 +13,8 @@
 #include "delta.h"
 #include "builtin.h"
 #include "string-list.h"
+#include "dir.h"
+#include "parse-options.h"
 
 /*
  *  --check turns on checking that the working tree matches the
@@ -44,9 +46,11 @@ static int apply_verbosely;
 static int no_add;
 static const char *fake_ancestor;
 static int line_termination = '\n';
-static unsigned long p_context = ULONG_MAX;
-static const char apply_usage[] =
-"git apply [--stat] [--numstat] [--summary] [--check] [--index] [--cached] [--apply] [--no-add] [--index-info] [--allow-binary-replacement] [--reverse] [--reject] [--verbose] [-z] [-pNUM] [-CNUM] [--whitespace=<nowarn|warn|fix|error|error-all>] <patch>...";
+static unsigned int p_context = UINT_MAX;
+static const char * const apply_usage[] = {
+	"git apply [options] [<patch>...]",
+	NULL
+};
 
 static enum ws_error_action {
 	nowarn_ws_error,
@@ -57,9 +61,18 @@ static enum ws_error_action {
 static int whitespace_error;
 static int squelch_whitespace_errors = 5;
 static int applied_after_fixing_ws;
+
+static enum ws_ignore {
+	ignore_ws_none,
+	ignore_ws_change,
+} ws_ignore_action = ignore_ws_none;
+
+
 static const char *patch_input_file;
 static const char *root;
 static int root_len;
+static int read_stdin = 1;
+static int options;
 
 static void parse_whitespace_option(const char *option)
 {
@@ -89,6 +102,21 @@ static void parse_whitespace_option(const char *option)
 		return;
 	}
 	die("unrecognized whitespace option '%s'", option);
+}
+
+static void parse_ignorewhitespace_option(const char *option)
+{
+	if (!option || !strcmp(option, "no") ||
+	    !strcmp(option, "false") || !strcmp(option, "never") ||
+	    !strcmp(option, "none")) {
+		ws_ignore_action = ignore_ws_none;
+		return;
+	}
+	if (!strcmp(option, "change")) {
+		ws_ignore_action = ignore_ws_change;
+		return;
+	}
+	die("unrecognized whitespace ignore option '%s'", option);
 }
 
 static void set_default_whitespace_mode(const char *whitespace_option)
@@ -125,6 +153,7 @@ struct fragment {
 	const char *patch;
 	int size;
 	int rejected;
+	int linenr;
 	struct fragment *next;
 };
 
@@ -208,6 +237,62 @@ static uint32_t hash_line(const char *cp, size_t len)
 	return h;
 }
 
+/*
+ * Compare lines s1 of length n1 and s2 of length n2, ignoring
+ * whitespace difference. Returns 1 if they match, 0 otherwise
+ */
+static int fuzzy_matchlines(const char *s1, size_t n1,
+			    const char *s2, size_t n2)
+{
+	const char *last1 = s1 + n1 - 1;
+	const char *last2 = s2 + n2 - 1;
+	int result = 0;
+
+	if (n1 < 0 || n2 < 0)
+		return 0;
+
+	/* ignore line endings */
+	while ((*last1 == '\r') || (*last1 == '\n'))
+		last1--;
+	while ((*last2 == '\r') || (*last2 == '\n'))
+		last2--;
+
+	/* skip leading whitespace */
+	while (isspace(*s1) && (s1 <= last1))
+		s1++;
+	while (isspace(*s2) && (s2 <= last2))
+		s2++;
+	/* early return if both lines are empty */
+	if ((s1 > last1) && (s2 > last2))
+		return 1;
+	while (!result) {
+		result = *s1++ - *s2++;
+		/*
+		 * Skip whitespace inside. We check for whitespace on
+		 * both buffers because we don't want "a b" to match
+		 * "ab"
+		 */
+		if (isspace(*s1) && isspace(*s2)) {
+			while (isspace(*s1) && s1 <= last1)
+				s1++;
+			while (isspace(*s2) && s2 <= last2)
+				s2++;
+		}
+		/*
+		 * If we reached the end on one side only,
+		 * lines don't match
+		 */
+		if (
+		    ((s2 > last2) && (s1 <= last1)) ||
+		    ((s1 > last1) && (s2 <= last2)))
+			return 0;
+		if ((s1 > last1) && (s2 > last2))
+			break;
+	}
+
+	return !result;
+}
+
 static void add_line_info(struct image *img, const char *bol, size_t len, unsigned flag)
 {
 	ALLOC_GROW(img->line_allocated, img->nr + 1, img->alloc);
@@ -274,7 +359,7 @@ static void say_patch_name(FILE *output, const char *pre,
 static void read_patch_file(struct strbuf *sb, int fd)
 {
 	if (strbuf_read(sb, fd, 0) < 0)
-		die("git-apply: read returned %s", strerror(errno));
+		die_errno("git apply: failed to read");
 
 	/*
 	 * Make sure that we have some slop in the buffer
@@ -314,19 +399,38 @@ static int name_terminate(const char *name, int namelen, int c, int terminate)
 	return 1;
 }
 
+/* remove double slashes to make --index work with such filenames */
+static char *squash_slash(char *name)
+{
+	int i = 0, j = 0;
+
+	if (!name)
+		return NULL;
+
+	while (name[i]) {
+		if ((name[j++] = name[i++]) == '/')
+			while (name[i] == '/')
+				i++;
+	}
+	name[j] = '\0';
+	return name;
+}
+
 static char *find_name(const char *line, char *def, int p_value, int terminate)
 {
 	int len;
-	const char *start = line;
+	const char *start = NULL;
+
+	if (p_value == 0)
+		start = line;
 
 	if (*line == '"') {
-		struct strbuf name;
+		struct strbuf name = STRBUF_INIT;
 
 		/*
 		 * Proposed "new-style" GNU patch/diff format; see
 		 * http://marc.theaimsgroup.com/?l=git&m=112927316408690&w=2
 		 */
-		strbuf_init(&name, 0);
 		if (!unquote_c_style(&name, line, NULL)) {
 			char *cp;
 
@@ -344,7 +448,7 @@ static char *find_name(const char *line, char *def, int p_value, int terminate)
 				free(def);
 				if (root)
 					strbuf_insert(&name, 0, root, root_len);
-				return strbuf_detach(&name, NULL);
+				return squash_slash(strbuf_detach(&name, NULL));
 			}
 		}
 		strbuf_release(&name);
@@ -364,10 +468,10 @@ static char *find_name(const char *line, char *def, int p_value, int terminate)
 			start = line;
 	}
 	if (!start)
-		return def;
+		return squash_slash(def);
 	len = line - start;
 	if (!len)
-		return def;
+		return squash_slash(def);
 
 	/*
 	 * Generally we prefer the shorter name, especially
@@ -378,7 +482,7 @@ static char *find_name(const char *line, char *def, int p_value, int terminate)
 	if (def) {
 		int deflen = strlen(def);
 		if (deflen < len && !strncmp(start, def, deflen))
-			return def;
+			return squash_slash(def);
 		free(def);
 	}
 
@@ -387,10 +491,10 @@ static char *find_name(const char *line, char *def, int p_value, int terminate)
 		strcpy(ret, root);
 		memcpy(ret + root_len, start, len);
 		ret[root_len + len] = '\0';
-		return ret;
+		return squash_slash(ret);
 	}
 
-	return xmemdupz(start, len);
+	return squash_slash(xmemdupz(start, len));
 }
 
 static int count_slashes(const char *cp)
@@ -439,6 +543,76 @@ static int guess_p_value(const char *nameline)
 }
 
 /*
+ * Does the ---/+++ line has the POSIX timestamp after the last HT?
+ * GNU diff puts epoch there to signal a creation/deletion event.  Is
+ * this such a timestamp?
+ */
+static int has_epoch_timestamp(const char *nameline)
+{
+	/*
+	 * We are only interested in epoch timestamp; any non-zero
+	 * fraction cannot be one, hence "(\.0+)?" in the regexp below.
+	 * For the same reason, the date must be either 1969-12-31 or
+	 * 1970-01-01, and the seconds part must be "00".
+	 */
+	const char stamp_regexp[] =
+		"^(1969-12-31|1970-01-01)"
+		" "
+		"[0-2][0-9]:[0-5][0-9]:00(\\.0+)?"
+		" "
+		"([-+][0-2][0-9][0-5][0-9])\n";
+	const char *timestamp = NULL, *cp;
+	static regex_t *stamp;
+	regmatch_t m[10];
+	int zoneoffset;
+	int hourminute;
+	int status;
+
+	for (cp = nameline; *cp != '\n'; cp++) {
+		if (*cp == '\t')
+			timestamp = cp + 1;
+	}
+	if (!timestamp)
+		return 0;
+	if (!stamp) {
+		stamp = xmalloc(sizeof(*stamp));
+		if (regcomp(stamp, stamp_regexp, REG_EXTENDED)) {
+			warning("Cannot prepare timestamp regexp %s",
+				stamp_regexp);
+			return 0;
+		}
+	}
+
+	status = regexec(stamp, timestamp, ARRAY_SIZE(m), m, 0);
+	if (status) {
+		if (status != REG_NOMATCH)
+			warning("regexec returned %d for input: %s",
+				status, timestamp);
+		return 0;
+	}
+
+	zoneoffset = strtol(timestamp + m[3].rm_so + 1, NULL, 10);
+	zoneoffset = (zoneoffset / 100) * 60 + (zoneoffset % 100);
+	if (timestamp[m[3].rm_so] == '-')
+		zoneoffset = -zoneoffset;
+
+	/*
+	 * YYYY-MM-DD hh:mm:ss must be from either 1969-12-31
+	 * (west of GMT) or 1970-01-01 (east of GMT)
+	 */
+	if ((zoneoffset < 0 && memcmp(timestamp, "1969-12-31", 10)) ||
+	    (0 <= zoneoffset && memcmp(timestamp, "1970-01-01", 10)))
+		return 0;
+
+	hourminute = (strtol(timestamp + 11, NULL, 10) * 60 +
+		      strtol(timestamp + 14, NULL, 10) -
+		      zoneoffset);
+
+	return ((zoneoffset < 0 && hourminute == 1440) ||
+		(0 <= zoneoffset && !hourminute));
+}
+
+/*
  * Get the name etc info from the ---/+++ lines of a traditional patch header
  *
  * FIXME! The end-of-filename heuristics are kind of screwy. For existing
@@ -474,7 +648,17 @@ static void parse_traditional_patch(const char *first, const char *second, struc
 	} else {
 		name = find_name(first, NULL, p_value, TERM_SPACE | TERM_TAB);
 		name = find_name(second, name, p_value, TERM_SPACE | TERM_TAB);
-		patch->old_name = patch->new_name = name;
+		if (has_epoch_timestamp(first)) {
+			patch->is_new = 1;
+			patch->is_delete = 0;
+			patch->new_name = name;
+		} else if (has_epoch_timestamp(second)) {
+			patch->is_new = 0;
+			patch->is_delete = 1;
+			patch->old_name = name;
+		} else {
+			patch->old_name = patch->new_name = name;
+		}
 	}
 	if (!name)
 		die("unable to find filename in patch at line %d", linenr);
@@ -506,17 +690,17 @@ static char *gitdiff_verify_name(const char *line, int isnull, char *orig_name, 
 		name = orig_name;
 		len = strlen(name);
 		if (isnull)
-			die("git-apply: bad git-diff - expected /dev/null, got %s on line %d", name, linenr);
+			die("git apply: bad git-diff - expected /dev/null, got %s on line %d", name, linenr);
 		another = find_name(line, NULL, p_value, TERM_TAB);
-		if (!another || memcmp(another, name, len))
-			die("git-apply: bad git-diff - inconsistent %s filename on line %d", oldnew, linenr);
+		if (!another || memcmp(another, name, len + 1))
+			die("git apply: bad git-diff - inconsistent %s filename on line %d", oldnew, linenr);
 		free(another);
 		return orig_name;
 	}
 	else {
 		/* expect "/dev/null" */
 		if (memcmp("/dev/null", line, 9) || line[9] != '\n')
-			die("git-apply: bad git-diff - expected /dev/null on line %d", linenr);
+			die("git apply: bad git-diff - expected /dev/null on line %d", linenr);
 		return NULL;
 	}
 }
@@ -630,7 +814,7 @@ static int gitdiff_index(const char *line, struct patch *patch)
 	memcpy(patch->new_sha1_prefix, line, len);
 	patch->new_sha1_prefix[len] = 0;
 	if (*ptr == ' ')
-		patch->new_mode = patch->old_mode = strtoul(ptr+1, NULL, 8);
+		patch->old_mode = strtoul(ptr+1, NULL, 8);
 	return 0;
 }
 
@@ -645,12 +829,13 @@ static int gitdiff_unrecognized(const char *line, struct patch *patch)
 
 static const char *stop_at_slash(const char *line, int llen)
 {
+	int nslash = p_value;
 	int i;
 
 	for (i = 0; i < llen; i++) {
 		int ch = line[i];
-		if (ch == '/')
-			return line + i;
+		if (ch == '/' && --nslash <= 0)
+			return &line[i];
 	}
 	return NULL;
 }
@@ -674,11 +859,8 @@ static char *git_header_name(char *line, int llen)
 
 	if (*line == '"') {
 		const char *cp;
-		struct strbuf first;
-		struct strbuf sp;
-
-		strbuf_init(&first, 0);
-		strbuf_init(&sp, 0);
+		struct strbuf first = STRBUF_INIT;
+		struct strbuf sp = STRBUF_INIT;
 
 		if (unquote_c_style(&first, line, &second))
 			goto free_and_fail1;
@@ -740,10 +922,9 @@ static char *git_header_name(char *line, int llen)
 	 */
 	for (second = name; second < line + llen; second++) {
 		if (*second == '"') {
-			struct strbuf sp;
+			struct strbuf sp = STRBUF_INIT;
 			const char *np;
 
-			strbuf_init(&sp, 0);
 			if (unquote_c_style(&sp, second, NULL))
 				goto free_and_fail2;
 
@@ -809,6 +990,13 @@ static int parse_git_header(char *line, int len, unsigned int size, struct patch
 	 * the default name from the header.
 	 */
 	patch->def_name = git_header_name(line, len);
+	if (patch->def_name && root) {
+		char *s = xmalloc(root_len + strlen(patch->def_name) + 1);
+		strcpy(s, root);
+		strcpy(s + root_len, patch->def_name);
+		free(patch->def_name);
+		patch->def_name = s;
+	}
 
 	line += len;
 	size -= len;
@@ -1017,7 +1205,8 @@ static int find_header(char *line, unsigned long size, int *hdrsize, struct patc
 				continue;
 			if (!patch->old_name && !patch->new_name) {
 				if (!patch->def_name)
-					die("git diff header lacks filename information (line %d)", linenr);
+					die("git diff header lacks filename information when removing "
+					    "%d leading pathname components (line %d)" , p_value, linenr);
 				patch->old_name = patch->new_name = patch->def_name;
 			}
 			patch->is_toplevel_relative = 1;
@@ -1047,23 +1236,29 @@ static int find_header(char *line, unsigned long size, int *hdrsize, struct patc
 	return -1;
 }
 
-static void check_whitespace(const char *line, int len, unsigned ws_rule)
+static void record_ws_error(unsigned result, const char *line, int len, int linenr)
 {
 	char *err;
-	unsigned result = ws_check(line + 1, len - 1, ws_rule);
+
 	if (!result)
 		return;
 
 	whitespace_error++;
 	if (squelch_whitespace_errors &&
 	    squelch_whitespace_errors < whitespace_error)
-		;
-	else {
-		err = whitespace_error_string(result);
-		fprintf(stderr, "%s:%d: %s.\n%.*s\n",
-			patch_input_file, linenr, err, len - 2, line + 1);
-		free(err);
-	}
+		return;
+
+	err = whitespace_error_string(result);
+	fprintf(stderr, "%s:%d: %s.\n%.*s\n",
+		patch_input_file, linenr, err, len, line);
+	free(err);
+}
+
+static void check_whitespace(const char *line, int len, unsigned ws_rule)
+{
+	unsigned result = ws_check(line + 1, len - 1, ws_rule);
+
+	record_ws_error(result, line + 1, len - 2, linenr);
 }
 
 /*
@@ -1179,6 +1374,7 @@ static int parse_single_patch(char *line, unsigned long size, struct patch *patc
 		int len;
 
 		fragment = xcalloc(1, sizeof(*fragment));
+		fragment->linenr = linenr;
 		len = parse_fragment(line, size, patch, fragment);
 		if (len <= 0)
 			die("corrupt patch at line %d", linenr);
@@ -1250,8 +1446,9 @@ static char *inflate_it(const void *data, unsigned long size,
 	stream.avail_in = size;
 	stream.next_out = out = xmalloc(inflated_size);
 	stream.avail_out = inflated_size;
-	inflateInit(&stream);
-	st = inflate(&stream, Z_FINISH);
+	git_inflate_init(&stream);
+	st = git_inflate(&stream, Z_FINISH);
+	git_inflate_end(&stream);
 	if ((st != Z_STREAM_END) || stream.total_out != inflated_size) {
 		free(out);
 		return NULL;
@@ -1507,11 +1704,10 @@ static const char minuses[]=
 
 static void show_stats(struct patch *patch)
 {
-	struct strbuf qname;
+	struct strbuf qname = STRBUF_INIT;
 	char *cp = patch->new_name ? patch->new_name : patch->old_name;
 	int max, add, del;
 
-	strbuf_init(&qname, 0);
 	quote_c_style(cp, &qname, NULL, 0);
 
 	/*
@@ -1557,10 +1753,8 @@ static int read_old_data(struct stat *st, const char *path, struct strbuf *buf)
 {
 	switch (st->st_mode & S_IFMT) {
 	case S_IFLNK:
-		strbuf_grow(buf, st->st_size);
-		if (readlink(path, buf->buf, st->st_size) != st->st_size)
-			return -1;
-		strbuf_setlen(buf, st->st_size);
+		if (strbuf_readlink(buf, path, st->st_size) < 0)
+			return error("unable to read symlink %s", path);
 		return 0;
 	case S_IFREG:
 		if (strbuf_read_file(buf, path, st->st_size) != st->st_size)
@@ -1572,10 +1766,17 @@ static int read_old_data(struct stat *st, const char *path, struct strbuf *buf)
 	}
 }
 
+/*
+ * Update the preimage, and the common lines in postimage,
+ * from buffer buf of length len. If postlen is 0 the postimage
+ * is updated in place, otherwise it's updated on a new buffer
+ * of length postlen
+ */
+
 static void update_pre_post_images(struct image *preimage,
 				   struct image *postimage,
 				   char *buf,
-				   size_t len)
+				   size_t len, size_t postlen)
 {
 	int i, ctx;
 	char *new, *old, *fixed;
@@ -1594,11 +1795,19 @@ static void update_pre_post_images(struct image *preimage,
 	*preimage = fixed_preimage;
 
 	/*
-	 * Adjust the common context lines in postimage, in place.
-	 * This is possible because whitespace fixing does not make
-	 * the string grow.
+	 * Adjust the common context lines in postimage. This can be
+	 * done in-place when we are just doing whitespace fixing,
+	 * which does not make the string grow, but needs a new buffer
+	 * when ignoring whitespace causes the update, since in this case
+	 * we could have e.g. tabs converted to multiple spaces.
+	 * We trust the caller to tell us if the update can be done
+	 * in place (postlen==0) or not.
 	 */
-	new = old = postimage->buf;
+	old = postimage->buf;
+	if (postlen)
+		new = postimage->buf = xmalloc(postlen);
+	else
+		new = old;
 	fixed = preimage->buf;
 	for (i = ctx = 0; i < postimage->nr; i++) {
 		size_t len = postimage->line[i].len;
@@ -1673,12 +1882,56 @@ static int match_fragment(struct image *img,
 	    !memcmp(img->buf + try, preimage->buf, preimage->len))
 		return 1;
 
+	/*
+	 * No exact match. If we are ignoring whitespace, run a line-by-line
+	 * fuzzy matching. We collect all the line length information because
+	 * we need it to adjust whitespace if we match.
+	 */
+	if (ws_ignore_action == ignore_ws_change) {
+		size_t imgoff = 0;
+		size_t preoff = 0;
+		size_t postlen = postimage->len;
+		for (i = 0; i < preimage->nr; i++) {
+			size_t prelen = preimage->line[i].len;
+			size_t imglen = img->line[try_lno+i].len;
+
+			if (!fuzzy_matchlines(img->buf + try + imgoff, imglen,
+					      preimage->buf + preoff, prelen))
+				return 0;
+			if (preimage->line[i].flag & LINE_COMMON)
+				postlen += imglen - prelen;
+			imgoff += imglen;
+			preoff += prelen;
+		}
+
+		/*
+		 * Ok, the preimage matches with whitespace fuzz. Update it and
+		 * the common postimage lines to use the same whitespace as the
+		 * target. imgoff now holds the true length of the target that
+		 * matches the preimage, and we need to update the line lengths
+		 * of the preimage to match the target ones.
+		 */
+		fixed_buf = xmalloc(imgoff);
+		memcpy(fixed_buf, img->buf + try, imgoff);
+		for (i = 0; i < preimage->nr; i++)
+			preimage->line[i].len = img->line[try_lno+i].len;
+
+		/*
+		 * Update the preimage buffer and the postimage context lines.
+		 */
+		update_pre_post_images(preimage, postimage,
+				fixed_buf, imgoff, postlen);
+		return 1;
+	}
+
 	if (ws_error_action != correct_ws_error)
 		return 0;
 
 	/*
 	 * The hunk does not apply byte-by-byte, but the hash says
-	 * it might with whitespace fuzz.
+	 * it might with whitespace fuzz. We haven't been asked to
+	 * ignore whitespace, we were asked to correct whitespace
+	 * errors, so let's try matching after whitespace correction.
 	 */
 	fixed_buf = xmalloc(preimage->len + 1);
 	buf = fixed_buf;
@@ -1696,7 +1949,7 @@ static int match_fragment(struct image *img,
 		fixlen = ws_fix_copy(buf, orig, oldlen, ws_rule, NULL);
 
 		/* Try fixing the line in the target */
-		if (sizeof(tgtfixbuf) < tgtlen)
+		if (sizeof(tgtfixbuf) > tgtlen)
 			tgtfix = tgtfixbuf;
 		else
 			tgtfix = xmalloc(tgtlen);
@@ -1730,7 +1983,7 @@ static int match_fragment(struct image *img,
 	 * hunk match.  Update the context lines in the postimage.
 	 */
 	update_pre_post_images(preimage, postimage,
-			       fixed_buf, buf - fixed_buf);
+			       fixed_buf, buf - fixed_buf, 0);
 	return 1;
 
  unmatch_exit:
@@ -1905,6 +2158,7 @@ static int apply_one_fragment(struct image *img, struct fragment *frag,
 		int len = linelen(patch, size);
 		int plen, added;
 		int added_blank_line = 0;
+		int is_blank_context = 0;
 
 		if (!len)
 			break;
@@ -1937,8 +2191,12 @@ static int apply_one_fragment(struct image *img, struct fragment *frag,
 			*new++ = '\n';
 			add_line_info(&preimage, "\n", 1, LINE_COMMON);
 			add_line_info(&postimage, "\n", 1, LINE_COMMON);
+			is_blank_context = 1;
 			break;
 		case ' ':
+			if (plen && (ws_rule & WS_BLANK_AT_EOF) &&
+			    ws_blank_line(patch + 1, plen, ws_rule))
+				is_blank_context = 1;
 		case '-':
 			memcpy(old, patch + 1, plen);
 			add_line_info(&preimage, old, plen,
@@ -1965,7 +2223,8 @@ static int apply_one_fragment(struct image *img, struct fragment *frag,
 				      (first == '+' ? 0 : LINE_COMMON));
 			new += added;
 			if (first == '+' &&
-			    added == 1 && new[-1] == '\n')
+			    (ws_rule & WS_BLANK_AT_EOF) &&
+			    ws_blank_line(patch + 1, plen, ws_rule))
 				added_blank_line = 1;
 			break;
 		case '@': case '\\':
@@ -1978,6 +2237,8 @@ static int apply_one_fragment(struct image *img, struct fragment *frag,
 		}
 		if (added_blank_line)
 			new_blank_lines_at_end++;
+		else if (is_blank_context)
+			;
 		else
 			new_blank_lines_at_end = 0;
 		patch += len;
@@ -1996,6 +2257,8 @@ static int apply_one_fragment(struct image *img, struct fragment *frag,
 	/*
 	 * A hunk to change lines at the beginning would begin with
 	 * @@ -1,L +N,M @@
+	 * but we need to be careful.  -U0 that inserts before the second
+	 * line also has this pattern.
 	 *
 	 * And a hunk to add to an empty file would begin with
 	 * @@ -0,0 +N,M @@
@@ -2003,7 +2266,8 @@ static int apply_one_fragment(struct image *img, struct fragment *frag,
 	 * In other words, a hunk that is (frag->oldpos <= 1) with or
 	 * without leading context must match at the beginning.
 	 */
-	match_beginning = frag->oldpos <= 1;
+	match_beginning = (!frag->oldpos ||
+			   (frag->oldpos == 1 && !unidiff_zero));
 
 	/*
 	 * A hunk without trailing lines must match at the end.
@@ -2056,17 +2320,24 @@ static int apply_one_fragment(struct image *img, struct fragment *frag,
 	}
 
 	if (applied_pos >= 0) {
-		if (ws_error_action == correct_ws_error &&
-		    new_blank_lines_at_end &&
-		    postimage.nr + applied_pos == img->nr) {
+		if (new_blank_lines_at_end &&
+		    preimage.nr + applied_pos == img->nr &&
+		    (ws_rule & WS_BLANK_AT_EOF) &&
+		    ws_error_action != nowarn_ws_error) {
+			record_ws_error(WS_BLANK_AT_EOF, "+", 1, frag->linenr);
+			if (ws_error_action == correct_ws_error) {
+				while (new_blank_lines_at_end--)
+					remove_last_line(&postimage);
+			}
 			/*
-			 * If the patch application adds blank lines
-			 * at the end, and if the patch applies at the
-			 * end of the image, remove those added blank
-			 * lines.
+			 * We would want to prevent write_out_results()
+			 * from taking place in apply_patch() that follows
+			 * the callchain led us here, which is:
+			 * apply_patch->check_patch_list->check_patch->
+			 * apply_data->apply_fragments->apply_one_fragment
 			 */
-			while (new_blank_lines_at_end--)
-				remove_last_line(&postimage);
+			if (ws_error_action == die_on_ws_error)
+				apply = 0;
 		}
 
 		/*
@@ -2262,6 +2533,25 @@ static struct patch *in_fn_table(const char *name)
 	return NULL;
 }
 
+/*
+ * item->util in the filename table records the status of the path.
+ * Usually it points at a patch (whose result records the contents
+ * of it after applying it), but it could be PATH_WAS_DELETED for a
+ * path that a previously applied patch has already removed.
+ */
+ #define PATH_TO_BE_DELETED ((struct patch *) -2)
+#define PATH_WAS_DELETED ((struct patch *) -1)
+
+static int to_be_deleted(struct patch *patch)
+{
+	return patch == PATH_TO_BE_DELETED;
+}
+
+static int was_deleted(struct patch *patch)
+{
+	return patch == PATH_WAS_DELETED;
+}
+
 static void add_to_fn_table(struct patch *patch)
 {
 	struct string_list_item *item;
@@ -2282,23 +2572,36 @@ static void add_to_fn_table(struct patch *patch)
 	 */
 	if ((patch->new_name == NULL) || (patch->is_rename)) {
 		item = string_list_insert(patch->old_name, &fn_table);
-		item->util = (struct patch *) -1;
+		item->util = PATH_WAS_DELETED;
+	}
+}
+
+static void prepare_fn_table(struct patch *patch)
+{
+	/*
+	 * store information about incoming file deletion
+	 */
+	while (patch) {
+		if ((patch->new_name == NULL) || (patch->is_rename)) {
+			struct string_list_item *item;
+			item = string_list_insert(patch->old_name, &fn_table);
+			item->util = PATH_TO_BE_DELETED;
+		}
+		patch = patch->next;
 	}
 }
 
 static int apply_data(struct patch *patch, struct stat *st, struct cache_entry *ce)
 {
-	struct strbuf buf;
+	struct strbuf buf = STRBUF_INIT;
 	struct image image;
 	size_t len;
 	char *img;
 	struct patch *tpatch;
 
-	strbuf_init(&buf, 0);
-
 	if (!(patch->is_copy || patch->is_rename) &&
-	    ((tpatch = in_fn_table(patch->old_name)) != NULL)) {
-		if (tpatch == (struct patch *) -1) {
+	    (tpatch = in_fn_table(patch->old_name)) != NULL && !to_be_deleted(tpatch)) {
+		if (was_deleted(tpatch)) {
 			return error("patch %s has been renamed/deleted",
 				patch->old_name);
 		}
@@ -2353,7 +2656,7 @@ static int check_to_create_blob(const char *new_name, int ok_if_exists)
 		 * In such a case, path "new_name" does not exist as
 		 * far as git is concerned.
 		 */
-		if (has_symlink_leading_path(strlen(new_name), new_name))
+		if (has_symlink_leading_path(new_name, strlen(new_name)))
 			return 0;
 
 		return error("%s: already exists in working directory", new_name);
@@ -2370,7 +2673,7 @@ static int verify_index_match(struct cache_entry *ce, struct stat *st)
 			return -1;
 		return 0;
 	}
-	return ce_match_stat(ce, st, CE_MATCH_IGNORE_VALID);
+	return ce_match_stat(ce, st, CE_MATCH_IGNORE_VALID|CE_MATCH_IGNORE_SKIP_WORKTREE);
 }
 
 static int check_preimage(struct patch *patch, struct cache_entry **ce, struct stat *st)
@@ -2392,16 +2695,18 @@ static int check_preimage(struct patch *patch, struct cache_entry **ce, struct s
 	assert(patch->is_new <= 0);
 
 	if (!(patch->is_copy || patch->is_rename) &&
-	    (tpatch = in_fn_table(old_name)) != NULL) {
-		if (tpatch == (struct patch *) -1) {
+	    (tpatch = in_fn_table(old_name)) != NULL && !to_be_deleted(tpatch)) {
+		if (was_deleted(tpatch))
 			return error("%s: has been deleted/renamed", old_name);
-		}
 		st_mode = tpatch->new_mode;
 	} else if (!cached) {
 		stat_ret = lstat(old_name, st);
 		if (stat_ret && errno != ENOENT)
 			return error("%s: %s", old_name, strerror(errno));
 	}
+
+	if (to_be_deleted(tpatch))
+		tpatch = NULL;
 
 	if (check_index && !tpatch) {
 		int pos = cache_name_pos(old_name, strlen(old_name));
@@ -2434,7 +2739,7 @@ static int check_preimage(struct patch *patch, struct cache_entry **ce, struct s
 		return error("%s: %s", old_name, strerror(errno));
 	}
 
-	if (!cached)
+	if (!cached && !tpatch)
 		st_mode = ce_mode_from_stat(*ce, st->st_mode);
 
 	if (patch->is_new < 0)
@@ -2444,8 +2749,10 @@ static int check_preimage(struct patch *patch, struct cache_entry **ce, struct s
 	if ((st_mode ^ patch->old_mode) & S_IFMT)
 		return error("%s: wrong type", old_name);
 	if (st_mode != patch->old_mode)
-		fprintf(stderr, "warning: %s has type %o, expected %o\n",
+		warning("%s has type %o, expected %o",
 			old_name, st_mode, patch->old_mode);
+	if (!patch->new_mode && !patch->is_delete)
+		patch->new_mode = st_mode;
 	return 0;
 
  is_new:
@@ -2462,6 +2769,7 @@ static int check_patch(struct patch *patch)
 	const char *new_name = patch->new_name;
 	const char *name = old_name ? old_name : new_name;
 	struct cache_entry *ce = NULL;
+	struct patch *tpatch;
 	int ok_if_exists;
 	int status;
 
@@ -2472,7 +2780,8 @@ static int check_patch(struct patch *patch)
 		return status;
 	old_name = patch->old_name;
 
-	if (in_fn_table(new_name) == (struct patch *) -1)
+	if ((tpatch = in_fn_table(new_name)) &&
+			(was_deleted(tpatch) || to_be_deleted(tpatch)))
 		/*
 		 * A type-change diff is always split into a patch to
 		 * delete old, immediately followed by a patch to
@@ -2524,6 +2833,7 @@ static int check_patch_list(struct patch *patch)
 {
 	int err = 0;
 
+	prepare_fn_table(patch);
 	while (patch) {
 		if (apply_verbosely)
 			say_patch_name(stderr,
@@ -2552,7 +2862,7 @@ static int get_current_sha1(const char *path, unsigned char *sha1)
 static void build_fake_ancestor(struct patch *list, const char *filename)
 {
 	struct patch *patch;
-	struct index_state result = { 0 };
+	struct index_state result = { NULL };
 	int fd;
 
 	/* Once we start supporting the reverse patch, it may be
@@ -2582,6 +2892,8 @@ static void build_fake_ancestor(struct patch *list, const char *filename)
 			sha1_ptr = sha1;
 
 		ce = make_cache_entry(patch->old_mode, sha1_ptr, name, 0, 0);
+		if (!ce)
+			die("make_cache_entry failed for path '%s'", name);
 		if (add_index_entry(&result, ce, ADD_CACHE_OK_TO_ADD))
 			die ("Could not add %s to temporary index", name);
 	}
@@ -2731,16 +3043,8 @@ static void remove_file(struct patch *patch, int rmdir_empty)
 			if (rmdir(patch->old_name))
 				warning("unable to remove submodule %s",
 					patch->old_name);
-		} else if (!unlink(patch->old_name) && rmdir_empty) {
-			char *name = xstrdup(patch->old_name);
-			char *end = strrchr(name, '/');
-			while (end) {
-				*end = 0;
-				if (rmdir(name))
-					break;
-				end = strrchr(name, '/');
-			}
-			free(name);
+		} else if (!unlink_or_warn(patch->old_name) && rmdir_empty) {
+			remove_path(patch->old_name);
 		}
 	}
 }
@@ -2767,8 +3071,8 @@ static void add_index_file(const char *path, unsigned mode, void *buf, unsigned 
 	} else {
 		if (!cached) {
 			if (lstat(path, &st) < 0)
-				die("unable to stat newly created file %s",
-				    path);
+				die_errno("unable to stat newly created file '%s'",
+					  path);
 			fill_stat_cache_info(ce, &st);
 		}
 		if (write_sha1_file(buf, size, blob_type, ce->sha1) < 0)
@@ -2781,7 +3085,7 @@ static void add_index_file(const char *path, unsigned mode, void *buf, unsigned 
 static int try_create_file(const char *path, unsigned int mode, const char *buf, unsigned long size)
 {
 	int fd;
-	struct strbuf nbuf;
+	struct strbuf nbuf = STRBUF_INIT;
 
 	if (S_ISGITLINK(mode)) {
 		struct stat st;
@@ -2800,7 +3104,6 @@ static int try_create_file(const char *path, unsigned int mode, const char *buf,
 	if (fd < 0)
 		return -1;
 
-	strbuf_init(&nbuf, 0);
 	if (convert_to_working_tree(path, buf, size, &nbuf)) {
 		size = nbuf.len;
 		buf  = nbuf.buf;
@@ -2809,7 +3112,7 @@ static int try_create_file(const char *path, unsigned int mode, const char *buf,
 	strbuf_release(&nbuf);
 
 	if (close(fd) < 0)
-		die("closing file %s: %s", path, strerror(errno));
+		die_errno("closing file '%s'", path);
 	return 0;
 }
 
@@ -2845,12 +3148,12 @@ static void create_one_file(char *path, unsigned mode, const char *buf, unsigned
 		unsigned int nr = getpid();
 
 		for (;;) {
-			const char *newpath;
-			newpath = mkpath("%s~%u", path, nr);
+			char newpath[PATH_MAX];
+			mksnpath(newpath, sizeof(newpath), "%s~%u", path, nr);
 			if (!try_create_file(newpath, mode, buf, size)) {
 				if (!rename(newpath, path))
 					return;
-				unlink(newpath);
+				unlink_or_warn(newpath);
 				break;
 			}
 			if (errno != EEXIST)
@@ -2858,7 +3161,7 @@ static void create_one_file(char *path, unsigned mode, const char *buf, unsigned
 			++nr;
 		}
 	}
-	die("unable to write file %s mode %o", path, mode);
+	die_errno("unable to write file '%s' mode %o", path, mode);
 }
 
 static void create_file(struct patch *patch)
@@ -2930,8 +3233,7 @@ static int write_out_one_reject(struct patch *patch)
 	cnt = strlen(patch->new_name);
 	if (ARRAY_SIZE(namebuf) <= cnt + 5) {
 		cnt = ARRAY_SIZE(namebuf) - 5;
-		fprintf(stderr,
-			"warning: truncating .rej filename to %.*s.rej",
+		warning("truncating .rej filename to %.*s.rej",
 			cnt - 1, patch->new_name);
 	}
 	memcpy(namebuf, patch->new_name, cnt);
@@ -2991,28 +3293,44 @@ static int write_out_results(struct patch *list, int skipped_patch)
 
 static struct lock_file lock_file;
 
-static struct excludes {
-	struct excludes *next;
-	const char *path;
-} *excludes;
+static struct string_list limit_by_name;
+static int has_include;
+static void add_name_limit(const char *name, int exclude)
+{
+	struct string_list_item *it;
+
+	it = string_list_append(name, &limit_by_name);
+	it->util = exclude ? NULL : (void *) 1;
+}
 
 static int use_patch(struct patch *p)
 {
 	const char *pathname = p->new_name ? p->new_name : p->old_name;
-	struct excludes *x = excludes;
-	while (x) {
-		if (fnmatch(x->path, pathname, 0) == 0)
-			return 0;
-		x = x->next;
-	}
+	int i;
+
+	/* Paths outside are not touched regardless of "--include" */
 	if (0 < prefix_length) {
 		int pathlen = strlen(pathname);
 		if (pathlen <= prefix_length ||
 		    memcmp(prefix, pathname, prefix_length))
 			return 0;
 	}
-	return 1;
+
+	/* See if it matches any of exclude/include rule */
+	for (i = 0; i < limit_by_name.nr; i++) {
+		struct string_list_item *it = &limit_by_name.items[i];
+		if (!fnmatch(it->string, pathname, 0))
+			return (it->util != NULL);
+	}
+
+	/*
+	 * If we had any include, a path that does not match any rule is
+	 * not used.  Otherwise, we saw bunch of exclude rules (or none)
+	 * and such a path is used.
+	 */
+	return !has_include;
 }
+
 
 static void prefix_one(char **name)
 {
@@ -3046,13 +3364,12 @@ static void prefix_patches(struct patch *p)
 static int apply_patch(int fd, const char *filename, int options)
 {
 	size_t offset;
-	struct strbuf buf;
+	struct strbuf buf = STRBUF_INIT;
 	struct patch *list = NULL, **listp = &list;
 	int skipped_patch = 0;
 
 	/* FIXME - memory leak when using multiple patch files as inputs */
 	memset(&fn_table, 0, sizeof(struct string_list));
-	strbuf_init(&buf, 0);
 	patch_input_file = filename;
 	read_patch_file(&buf, fd);
 	offset = 0;
@@ -3123,157 +3440,191 @@ static int git_apply_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, "apply.whitespace"))
 		return git_config_string(&apply_default_whitespace, var, value);
+	else if (!strcmp(var, "apply.ignorewhitespace"))
+		return git_config_string(&apply_default_ignorewhitespace, var, value);
 	return git_default_config(var, value, cb);
 }
 
+static int option_parse_exclude(const struct option *opt,
+				const char *arg, int unset)
+{
+	add_name_limit(arg, 1);
+	return 0;
+}
+
+static int option_parse_include(const struct option *opt,
+				const char *arg, int unset)
+{
+	add_name_limit(arg, 0);
+	has_include = 1;
+	return 0;
+}
+
+static int option_parse_p(const struct option *opt,
+			  const char *arg, int unset)
+{
+	p_value = atoi(arg);
+	p_value_known = 1;
+	return 0;
+}
+
+static int option_parse_z(const struct option *opt,
+			  const char *arg, int unset)
+{
+	if (unset)
+		line_termination = '\n';
+	else
+		line_termination = 0;
+	return 0;
+}
+
+static int option_parse_space_change(const struct option *opt,
+			  const char *arg, int unset)
+{
+	if (unset)
+		ws_ignore_action = ignore_ws_none;
+	else
+		ws_ignore_action = ignore_ws_change;
+	return 0;
+}
+
+static int option_parse_whitespace(const struct option *opt,
+				   const char *arg, int unset)
+{
+	const char **whitespace_option = opt->value;
+
+	*whitespace_option = arg;
+	parse_whitespace_option(arg);
+	return 0;
+}
+
+static int option_parse_directory(const struct option *opt,
+				  const char *arg, int unset)
+{
+	root_len = strlen(arg);
+	if (root_len && arg[root_len - 1] != '/') {
+		char *new_root;
+		root = new_root = xmalloc(root_len + 2);
+		strcpy(new_root, arg);
+		strcpy(new_root + root_len++, "/");
+	} else
+		root = arg;
+	return 0;
+}
 
 int cmd_apply(int argc, const char **argv, const char *unused_prefix)
 {
 	int i;
-	int read_stdin = 1;
-	int options = 0;
 	int errs = 0;
 	int is_not_gitdir;
+	int binary;
+	int force_apply = 0;
 
 	const char *whitespace_option = NULL;
+
+	struct option builtin_apply_options[] = {
+		{ OPTION_CALLBACK, 0, "exclude", NULL, "path",
+			"don't apply changes matching the given path",
+			0, option_parse_exclude },
+		{ OPTION_CALLBACK, 0, "include", NULL, "path",
+			"apply changes matching the given path",
+			0, option_parse_include },
+		{ OPTION_CALLBACK, 'p', NULL, NULL, "num",
+			"remove <num> leading slashes from traditional diff paths",
+			0, option_parse_p },
+		OPT_BOOLEAN(0, "no-add", &no_add,
+			"ignore additions made by the patch"),
+		OPT_BOOLEAN(0, "stat", &diffstat,
+			"instead of applying the patch, output diffstat for the input"),
+		{ OPTION_BOOLEAN, 0, "allow-binary-replacement", &binary,
+		  NULL, "old option, now no-op",
+		  PARSE_OPT_HIDDEN | PARSE_OPT_NOARG },
+		{ OPTION_BOOLEAN, 0, "binary", &binary,
+		  NULL, "old option, now no-op",
+		  PARSE_OPT_HIDDEN | PARSE_OPT_NOARG },
+		OPT_BOOLEAN(0, "numstat", &numstat,
+			"shows number of added and deleted lines in decimal notation"),
+		OPT_BOOLEAN(0, "summary", &summary,
+			"instead of applying the patch, output a summary for the input"),
+		OPT_BOOLEAN(0, "check", &check,
+			"instead of applying the patch, see if the patch is applicable"),
+		OPT_BOOLEAN(0, "index", &check_index,
+			"make sure the patch is applicable to the current index"),
+		OPT_BOOLEAN(0, "cached", &cached,
+			"apply a patch without touching the working tree"),
+		OPT_BOOLEAN(0, "apply", &force_apply,
+			"also apply the patch (use with --stat/--summary/--check)"),
+		OPT_FILENAME(0, "build-fake-ancestor", &fake_ancestor,
+			"build a temporary index based on embedded index information"),
+		{ OPTION_CALLBACK, 'z', NULL, NULL, NULL,
+			"paths are separated with NUL character",
+			PARSE_OPT_NOARG, option_parse_z },
+		OPT_INTEGER('C', NULL, &p_context,
+				"ensure at least <n> lines of context match"),
+		{ OPTION_CALLBACK, 0, "whitespace", &whitespace_option, "action",
+			"detect new or modified lines that have whitespace errors",
+			0, option_parse_whitespace },
+		{ OPTION_CALLBACK, 0, "ignore-space-change", NULL, NULL,
+			"ignore changes in whitespace when finding context",
+			PARSE_OPT_NOARG, option_parse_space_change },
+		{ OPTION_CALLBACK, 0, "ignore-whitespace", NULL, NULL,
+			"ignore changes in whitespace when finding context",
+			PARSE_OPT_NOARG, option_parse_space_change },
+		OPT_BOOLEAN('R', "reverse", &apply_in_reverse,
+			"apply the patch in reverse"),
+		OPT_BOOLEAN(0, "unidiff-zero", &unidiff_zero,
+			"don't expect at least one line of context"),
+		OPT_BOOLEAN(0, "reject", &apply_with_reject,
+			"leave the rejected hunks in corresponding *.rej files"),
+		OPT__VERBOSE(&apply_verbosely),
+		OPT_BIT(0, "inaccurate-eof", &options,
+			"tolerate incorrectly detected missing new-line at the end of file",
+			INACCURATE_EOF),
+		OPT_BIT(0, "recount", &options,
+			"do not trust the line counts in the hunk headers",
+			RECOUNT),
+		{ OPTION_CALLBACK, 0, "directory", NULL, "root",
+			"prepend <root> to all filenames",
+			0, option_parse_directory },
+		OPT_END()
+	};
 
 	prefix = setup_git_directory_gently(&is_not_gitdir);
 	prefix_length = prefix ? strlen(prefix) : 0;
 	git_config(git_apply_config, NULL);
 	if (apply_default_whitespace)
 		parse_whitespace_option(apply_default_whitespace);
+	if (apply_default_ignorewhitespace)
+		parse_ignorewhitespace_option(apply_default_ignorewhitespace);
 
-	for (i = 1; i < argc; i++) {
+	argc = parse_options(argc, argv, prefix, builtin_apply_options,
+			apply_usage, 0);
+
+	if (apply_with_reject)
+		apply = apply_verbosely = 1;
+	if (!force_apply && (diffstat || numstat || summary || check || fake_ancestor))
+		apply = 0;
+	if (check_index && is_not_gitdir)
+		die("--index outside a repository");
+	if (cached) {
+		if (is_not_gitdir)
+			die("--cached outside a repository");
+		check_index = 1;
+	}
+	for (i = 0; i < argc; i++) {
 		const char *arg = argv[i];
-		char *end;
 		int fd;
 
 		if (!strcmp(arg, "-")) {
 			errs |= apply_patch(0, "<stdin>", options);
 			read_stdin = 0;
 			continue;
-		}
-		if (!prefixcmp(arg, "--exclude=")) {
-			struct excludes *x = xmalloc(sizeof(*x));
-			x->path = arg + 10;
-			x->next = excludes;
-			excludes = x;
-			continue;
-		}
-		if (!prefixcmp(arg, "-p")) {
-			p_value = atoi(arg + 2);
-			p_value_known = 1;
-			continue;
-		}
-		if (!strcmp(arg, "--no-add")) {
-			no_add = 1;
-			continue;
-		}
-		if (!strcmp(arg, "--stat")) {
-			apply = 0;
-			diffstat = 1;
-			continue;
-		}
-		if (!strcmp(arg, "--allow-binary-replacement") ||
-		    !strcmp(arg, "--binary")) {
-			continue; /* now no-op */
-		}
-		if (!strcmp(arg, "--numstat")) {
-			apply = 0;
-			numstat = 1;
-			continue;
-		}
-		if (!strcmp(arg, "--summary")) {
-			apply = 0;
-			summary = 1;
-			continue;
-		}
-		if (!strcmp(arg, "--check")) {
-			apply = 0;
-			check = 1;
-			continue;
-		}
-		if (!strcmp(arg, "--index")) {
-			if (is_not_gitdir)
-				die("--index outside a repository");
-			check_index = 1;
-			continue;
-		}
-		if (!strcmp(arg, "--cached")) {
-			if (is_not_gitdir)
-				die("--cached outside a repository");
-			check_index = 1;
-			cached = 1;
-			continue;
-		}
-		if (!strcmp(arg, "--apply")) {
-			apply = 1;
-			continue;
-		}
-		if (!strcmp(arg, "--build-fake-ancestor")) {
-			apply = 0;
-			if (++i >= argc)
-				die ("need a filename");
-			fake_ancestor = argv[i];
-			continue;
-		}
-		if (!strcmp(arg, "-z")) {
-			line_termination = 0;
-			continue;
-		}
-		if (!prefixcmp(arg, "-C")) {
-			p_context = strtoul(arg + 2, &end, 0);
-			if (*end != '\0')
-				die("unrecognized context count '%s'", arg + 2);
-			continue;
-		}
-		if (!prefixcmp(arg, "--whitespace=")) {
-			whitespace_option = arg + 13;
-			parse_whitespace_option(arg + 13);
-			continue;
-		}
-		if (!strcmp(arg, "-R") || !strcmp(arg, "--reverse")) {
-			apply_in_reverse = 1;
-			continue;
-		}
-		if (!strcmp(arg, "--unidiff-zero")) {
-			unidiff_zero = 1;
-			continue;
-		}
-		if (!strcmp(arg, "--reject")) {
-			apply = apply_with_reject = apply_verbosely = 1;
-			continue;
-		}
-		if (!strcmp(arg, "-v") || !strcmp(arg, "--verbose")) {
-			apply_verbosely = 1;
-			continue;
-		}
-		if (!strcmp(arg, "--inaccurate-eof")) {
-			options |= INACCURATE_EOF;
-			continue;
-		}
-		if (!strcmp(arg, "--recount")) {
-			options |= RECOUNT;
-			continue;
-		}
-		if (!prefixcmp(arg, "--directory=")) {
-			arg += strlen("--directory=");
-			root_len = strlen(arg);
-			if (root_len && arg[root_len - 1] != '/') {
-				char *new_root;
-				root = new_root = xmalloc(root_len + 2);
-				strcpy(new_root, arg);
-				strcpy(new_root + root_len++, "/");
-			} else
-				root = arg;
-			continue;
-		}
-		if (0 < prefix_length)
+		} else if (0 < prefix_length)
 			arg = prefix_filename(prefix, prefix_length, arg);
 
 		fd = open(arg, O_RDONLY);
 		if (fd < 0)
-			die("can't open patch '%s': %s", arg, strerror(errno));
+			die_errno("can't open patch '%s'", arg);
 		read_stdin = 0;
 		set_default_whitespace_mode(whitespace_option);
 		errs |= apply_patch(fd, arg, options);
@@ -3287,8 +3638,8 @@ int cmd_apply(int argc, const char **argv, const char *unused_prefix)
 		    squelch_whitespace_errors < whitespace_error) {
 			int squelched =
 				whitespace_error - squelch_whitespace_errors;
-			fprintf(stderr, "warning: squelched %d "
-				"whitespace error%s\n",
+			warning("squelched %d "
+				"whitespace error%s",
 				squelched,
 				squelched == 1 ? "" : "s");
 		}
@@ -3298,12 +3649,12 @@ int cmd_apply(int argc, const char **argv, const char *unused_prefix)
 			    whitespace_error == 1 ? "" : "s",
 			    whitespace_error == 1 ? "s" : "");
 		if (applied_after_fixing_ws && apply)
-			fprintf(stderr, "warning: %d line%s applied after"
-				" fixing whitespace errors.\n",
+			warning("%d line%s applied after"
+				" fixing whitespace errors.",
 				applied_after_fixing_ws,
 				applied_after_fixing_ws == 1 ? "" : "s");
 		else if (whitespace_error)
-			fprintf(stderr, "warning: %d line%s add%s whitespace errors.\n",
+			warning("%d line%s add%s whitespace errors.",
 				whitespace_error,
 				whitespace_error == 1 ? "" : "s",
 				whitespace_error == 1 ? "s" : "");

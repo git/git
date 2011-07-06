@@ -11,14 +11,6 @@ repository using cvs CLI client via git-cvsserver server'
 
 . ./test-lib.sh
 
-q_to_nul () {
-    perl -pe 'y/Q/\000/'
-}
-
-q_to_cr () {
-    tr Q '\015'
-}
-
 marked_as () {
     foundEntry="$(grep "^/$2/" "$1/CVS/Entries")"
     if [ x"$foundEntry" = x"" ] ; then
@@ -49,14 +41,17 @@ not_present() {
 cvs >/dev/null 2>&1
 if test $? -ne 1
 then
-    test_expect_success 'skipping git-cvsserver tests, cvs not found' :
+    say 'skipping git-cvsserver tests, cvs not found'
     test_done
-    exit
 fi
-perl -e 'use DBI; use DBD::SQLite' >/dev/null 2>&1 || {
-    test_expect_success 'skipping git-cvsserver tests, Perl SQLite interface unavailable' :
+if ! test_have_prereq PERL
+then
+    say 'skipping git-cvsserver tests, perl not available'
     test_done
-    exit
+fi
+"$PERL_PATH" -e 'use DBI; use DBD::SQLite' >/dev/null 2>&1 || {
+    say 'skipping git-cvsserver tests, Perl SQLite interface unavailable'
+    test_done
 }
 
 unset GIT_DIR GIT_CONFIG
@@ -84,7 +79,7 @@ test_expect_success 'setup' '
     echo "subdir/file.h crlf" >> .gitattributes &&
     git add .gitattributes textfile.c binfile.bin mixedUp.c subdir/* &&
     git commit -q -m "First Commit" &&
-    git clone -q --local --bare "$WORKDIR/.git" "$SERVERDIR" >/dev/null 2>&1 &&
+    git clone -q --bare "$WORKDIR/.git" "$SERVERDIR" >/dev/null 2>&1 &&
     GIT_DIR="$SERVERDIR" git config --bool gitcvs.enabled true &&
     GIT_DIR="$SERVERDIR" git config gitcvs.logfile "$SERVERDIR/gitcvs.log"
 '

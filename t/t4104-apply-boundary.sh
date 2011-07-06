@@ -27,6 +27,15 @@ test_expect_success setup '
 	git diff victim >add-a-patch.with &&
 	git diff --unified=0 >add-a-patch.without &&
 
+	: insert at line two
+	for i in b a '"$L"' y
+	do
+		echo $i
+	done >victim &&
+	cat victim >insert-a-expect &&
+	git diff victim >insert-a-patch.with &&
+	git diff --unified=0 >insert-a-patch.without &&
+
 	: modify at the head
 	for i in a '"$L"' y
 	do
@@ -55,7 +64,7 @@ test_expect_success setup '
 	git diff --unified=0 >add-z-patch.without &&
 
 	: modify at the tail
-	for i in a '"$L"' y
+	for i in b '"$L"' z
 	do
 		echo $i
 	done >victim &&
@@ -81,7 +90,7 @@ do
 	with) u= ;;
 	without) u='--unidiff-zero ' ;;
 	esac
-	for kind in add-a add-z mod-a mod-z del-a del-z
+	for kind in add-a add-z insert-a mod-a mod-z del-a del-z
 	do
 		test_expect_success "apply $kind-patch $with context" '
 			cat original >victim &&
@@ -95,7 +104,7 @@ do
 	done
 done
 
-for kind in add-a add-z mod-a mod-z del-a del-z
+for kind in add-a add-z insert-a mod-a mod-z del-a del-z
 do
 	rm -f $kind-ng.without
 	sed	-e "s/^diff --git /diff /" \

@@ -44,12 +44,14 @@ OPTIONS
 
 -o::
 --others::
-	Show other files in the output
+	Show other (i.e. untracked) files in the output
 
 -i::
 --ignored::
-	Show ignored files in the output.
-	Note that this also reverses any exclude list present.
+	Show only ignored files in the output. When showing files in the
+	index, print only those matched by an exclude pattern. When
+	showing "other" files, show only those matched by an exclude
+	pattern.
 
 -s::
 --stage::
@@ -107,6 +109,7 @@ OPTIONS
 	Identify the file status with the following tags (followed by
 	a space) at the start of each line:
 	H::	cached
+	S::	skip-worktree
 	M::	unmerged
 	R::	removed/deleted
 	C::	modified/changed
@@ -126,7 +129,7 @@ OPTIONS
 
 --abbrev[=<n>]::
 	Instead of showing the full 40-byte hexadecimal object
-	lines, show only handful hexdigits prefix.
+	lines, show only a partial prefix.
 	Non default number of digits can be specified with --abbrev=<n>.
 
 \--::
@@ -138,12 +141,12 @@ OPTIONS
 
 Output
 ------
-show files just outputs the filename unless '--stage' is specified in
+'git ls-files' just outputs the filenames unless '--stage' is specified in
 which case it outputs:
 
         [<tag> ]<mode> <object> <stage> <file>
 
-'git-ls-files --unmerged' and 'git-ls-files --stage' can be used to examine
+'git ls-files --unmerged' and 'git ls-files --stage' can be used to examine
 detailed information on unmerged paths.
 
 For an unmerged path, instead of recording a single mode/SHA1 pair,
@@ -160,7 +163,7 @@ respectively.
 Exclude Patterns
 ----------------
 
-'git-ls-files' can use a list of "exclude patterns" when
+'git ls-files' can use a list of "exclude patterns" when
 traversing the directory tree and finding files to show when the
 flags --others or --ignored are specified.  linkgit:gitignore[5]
 specifies the format of exclude patterns.
@@ -176,7 +179,7 @@ These exclude patterns come from these places, in order:
      in the same order they appear in the file.
 
   3. command line flag --exclude-per-directory=<name> specifies
-     a name of the file in each directory 'git-ls-files'
+     a name of the file in each directory 'git ls-files'
      examines, normally `.gitignore`.  Files in deeper
      directories take precedence.  Patterns are ordered in the
      same order they appear in the files.

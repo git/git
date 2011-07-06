@@ -26,6 +26,7 @@ The following browsers (or commands) are currently supported:
 * lynx
 * dillo
 * open (this is the default under Mac OS X GUI)
+* start (this is the default under MinGW)
 
 Custom commands may also be specified.
 
@@ -61,7 +62,7 @@ browser.<tool>.path
 You can explicitly provide a full path to your preferred browser by
 setting the configuration variable 'browser.<tool>.path'. For example,
 you can configure the absolute path to firefox by setting
-'browser.firefox.path'. Otherwise, 'git-web--browse' assumes the tool
+'browser.firefox.path'. Otherwise, 'git web--browse' assumes the tool
 is available in PATH.
 
 browser.<tool>.cmd
@@ -70,14 +71,14 @@ browser.<tool>.cmd
 When the browser, specified by options or configuration variables, is
 not among the supported ones, then the corresponding
 'browser.<tool>.cmd' configuration variable will be looked up. If this
-variable exists then 'git-web--browse' will treat the specified tool
+variable exists then 'git web--browse' will treat the specified tool
 as a custom command and will use a shell eval to run the command with
 the URLs passed as arguments.
 
 Note about konqueror
 --------------------
 
-When 'konqueror' is specified by the a command line option or a
+When 'konqueror' is specified by a command line option or a
 configuration variable, we launch 'kfmclient' to try to open the HTML
 man page on an already opened konqueror in a new tab if possible.
 
@@ -112,7 +113,7 @@ See linkgit:git-config[1] for more information about this.
 Author
 ------
 Written by Christian Couder <chriscool@tuxfamily.org> and the git-list
-<git@vger.kernel.org>, based on 'git-mergetool' by Theodore Y. Ts'o.
+<git@vger.kernel.org>, based on 'git mergetool' by Theodore Y. Ts'o.
 
 Documentation
 -------------

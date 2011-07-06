@@ -33,6 +33,7 @@ forced by --no-index.
 	commit relative to the named <commit>.  Typically you
 	would want comparison with the latest commit, so if you
 	do not give <commit>, it defaults to HEAD.
+	--staged is a synonym of --cached.
 
 'git diff' [--options] <commit> [--] [<path>...]::
 
@@ -83,8 +84,7 @@ include::diff-options.txt[]
 	the diff to the named paths (you can give directory
 	names and get diff for all files under them).
 
-Output format
--------------
+
 include::diff-format.txt[]
 
 EXAMPLES
@@ -157,6 +157,10 @@ $ git diff -R                          <2>
 rewrites (very expensive).
 <2> Output diff in reverse.
 
+SEE ALSO
+--------
+linkgit:git-difftool[1]::
+	Show changes using common diff tools
 
 Author
 ------

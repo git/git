@@ -8,7 +8,7 @@ git-prune-packed - Remove extra objects that are already in pack files
 
 SYNOPSIS
 --------
-'git prune-packed' [-n] [-q]
+'git prune-packed' [-n|--dry-run] [-q|--quiet]
 
 
 DESCRIPTION
@@ -28,10 +28,12 @@ disk storage, etc.
 OPTIONS
 -------
 -n::
+--dry-run::
         Don't actually remove any objects, only show those that would have been
         removed.
 
 -q::
+--quiet::
 	Squelch the progress indicator.
 
 Author

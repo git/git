@@ -3,7 +3,7 @@
 # Copyright (c) 2007 Steven Grimm
 #
 
-test_description='git-commit
+test_description='git commit
 
 Tests for selected commit options.'
 
@@ -46,15 +46,24 @@ test_expect_success 'unedited template with comments should not commit' '
 '
 
 test_expect_success 'a Signed-off-by line by itself should not commit' '
-	! GIT_EDITOR=../t7500/add-signed-off git commit --template "$TEMPLATE"
+	(
+		test_set_editor "$TEST_DIRECTORY"/t7500/add-signed-off &&
+		test_must_fail git commit --template "$TEMPLATE"
+	)
 '
 
 test_expect_success 'adding comments to a template should not commit' '
-	! GIT_EDITOR=../t7500/add-comments git commit --template "$TEMPLATE"
+	(
+		test_set_editor "$TEST_DIRECTORY"/t7500/add-comments &&
+		test_must_fail git commit --template "$TEMPLATE"
+	)
 '
 
 test_expect_success 'adding real content to a template should commit' '
-	GIT_EDITOR=../t7500/add-content git commit --template "$TEMPLATE" &&
+	(
+		test_set_editor "$TEST_DIRECTORY"/t7500/add-content &&
+		git commit --template "$TEMPLATE"
+	) &&
 	commit_msg_is "template linecommit message"
 '
 
@@ -62,7 +71,10 @@ test_expect_success '-t option should be short for --template' '
 	echo "short template" > "$TEMPLATE" &&
 	echo "new content" >> foo &&
 	git add foo &&
-	GIT_EDITOR=../t7500/add-content git commit -t "$TEMPLATE" &&
+	(
+		test_set_editor "$TEST_DIRECTORY"/t7500/add-content &&
+		git commit -t "$TEMPLATE"
+	) &&
 	commit_msg_is "short templatecommit message"
 '
 
@@ -71,7 +83,10 @@ test_expect_success 'config-specified template should commit' '
 	git config commit.template "$TEMPLATE" &&
 	echo "more content" >> foo &&
 	git add foo &&
-	GIT_EDITOR=../t7500/add-content git commit &&
+	(
+		test_set_editor "$TEST_DIRECTORY"/t7500/add-content &&
+		git commit
+	) &&
 	git config --unset commit.template &&
 	commit_msg_is "new templatecommit message"
 '
@@ -79,7 +94,7 @@ test_expect_success 'config-specified template should commit' '
 test_expect_success 'explicit commit message should override template' '
 	echo "still more content" >> foo &&
 	git add foo &&
-	GIT_EDITOR=../t7500/add-content git commit --template "$TEMPLATE" \
+	GIT_EDITOR="$TEST_DIRECTORY"/t7500/add-content git commit --template "$TEMPLATE" \
 		-m "command line msg" &&
 	commit_msg_is "command line msg"
 '
@@ -88,8 +103,10 @@ test_expect_success 'commit message from file should override template' '
 	echo "content galore" >> foo &&
 	git add foo &&
 	echo "standard input msg" |
-		GIT_EDITOR=../t7500/add-content git commit \
-			--template "$TEMPLATE" --file - &&
+	(
+		test_set_editor "$TEST_DIRECTORY"/t7500/add-content &&
+		git commit --template "$TEMPLATE" --file -
+	) &&
 	commit_msg_is "standard input msg"
 '
 
@@ -132,10 +149,9 @@ EOF
 
 test_expect_success '--signoff' '
 	echo "yet another content *narf*" >> foo &&
-	echo "zort" |
-		GIT_EDITOR=../t7500/add-content git commit -s -F - foo &&
-	git cat-file commit HEAD | sed "1,/^$/d" > output &&
-	diff expect output
+	echo "zort" | git commit -s -F - foo &&
+	git cat-file commit HEAD | sed "1,/^\$/d" > output &&
+	test_cmp expect output
 '
 
 test_expect_success 'commit message from file (1)' '
@@ -165,6 +181,16 @@ test_expect_success 'commit message from stdin' '
 		echo "Log with foo word" | git commit --allow-empty -F -
 	) &&
 	commit_msg_is "Log with foo word"
+'
+
+test_expect_success 'commit -F overrides -t' '
+	(
+		cd subdir &&
+		echo "-F log" > f.log &&
+		echo "-t template" > t.template &&
+		git commit --allow-empty -F f.log -t t.template
+	) &&
+	commit_msg_is "-F log"
 '
 
 test_done

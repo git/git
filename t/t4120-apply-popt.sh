@@ -22,4 +22,9 @@ test_expect_success 'apply git diff with -p2' '
 	git apply -p2 patch.file
 '
 
+test_expect_success 'apply with too large -p' '
+	test_must_fail git apply --stat -p3 patch.file 2>err &&
+	grep "removing 3 leading" err
+'
+
 test_done

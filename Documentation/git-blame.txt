@@ -9,8 +9,8 @@ SYNOPSIS
 --------
 [verse]
 'git blame' [-c] [-b] [-l] [--root] [-t] [-f] [-n] [-s] [-p] [-w] [--incremental] [-L n,m]
-            [-S <revs-file>] [-M] [-C] [-C] [--since=<date>]
-            [<rev> | --contents <file>] [--] <file>
+	    [-S <revs-file>] [-M] [-C] [-C] [-C] [--since=<date>]
+	    [<rev> | --contents <file> | --reverse <rev>] [--] <file>
 
 DESCRIPTION
 -----------
@@ -18,10 +18,10 @@ DESCRIPTION
 Annotates each line in the given file with information from the revision which
 last modified the line. Optionally, start annotating from the given revision.
 
-Also it can limit the range of lines annotated.
+The command can also limit the range of lines annotated.
 
-This report doesn't tell you anything about lines which have been deleted or
-replaced; you need to use a tool such as 'git-diff' or the "pickaxe"
+The report does not tell you anything about lines which have been deleted or
+replaced; you need to use a tool such as 'git diff' or the "pickaxe"
 interface briefly mentioned in the following paragraph.
 
 Apart from supporting file annotation, git also supports searching the
@@ -48,26 +48,26 @@ include::blame-options.txt[]
 	lines between files (see `-C`) and lines moved within a
 	file (see `-M`).  The first number listed is the score.
 	This is the number of alphanumeric characters detected
-	to be moved between or within files.  This must be above
-	a certain threshold for 'git-blame' to consider those lines
+	as having been moved between or within files.  This must be above
+	a certain threshold for 'git blame' to consider those lines
 	of code to have been moved.
 
 -f::
 --show-name::
-	Show filename in the original commit.  By default
-	filename is shown if there is any line that came from a
-	file with different name, due to rename detection.
+	Show the filename in the original commit.  By default
+	the filename is shown if there is any line that came from a
+	file with a different name, due to rename detection.
 
 -n::
 --show-number::
-	Show line number in the original commit (Default: off).
+	Show the line number in the original commit (Default: off).
 
 -s::
-	Suppress author name and timestamp from the output.
+	Suppress the author name and timestamp from the output.
 
 -w::
-	Ignore whitespace when comparing parent's version and
-	child's to find where the lines came from.
+	Ignore whitespace when comparing the parent's version and
+	the child's to find where the lines came from.
 
 
 THE PORCELAIN FORMAT
@@ -79,17 +79,17 @@ header at the minimum has the first line which has:
 - 40-byte SHA-1 of the commit the line is attributed to;
 - the line number of the line in the original file;
 - the line number of the line in the final file;
-- on a line that starts a group of line from a different
+- on a line that starts a group of lines from a different
   commit than the previous one, the number of lines in this
   group.  On subsequent lines this field is absent.
 
 This header line is followed by the following information
 at least once for each commit:
 
-- author name ("author"), email ("author-mail"), time
+- the author name ("author"), email ("author-mail"), time
   ("author-time"), and timezone ("author-tz"); similarly
   for committer.
-- filename in the commit the line is attributed to.
+- the filename in the commit that the line is attributed to.
 - the first line of the commit log message ("summary").
 
 The contents of the actual line is output after the above
@@ -100,25 +100,25 @@ header elements later.
 SPECIFYING RANGES
 -----------------
 
-Unlike 'git-blame' and 'git-annotate' in older git, the extent
-of annotation can be limited to both line ranges and revision
+Unlike 'git blame' and 'git annotate' in older versions of git, the extent
+of the annotation can be limited to both line ranges and revision
 ranges.  When you are interested in finding the origin for
-ll. 40-60 for file `foo`, you can use `-L` option like these
+lines 40-60 for file `foo`, you can use the `-L` option like so
 (they mean the same thing -- both ask for 21 lines starting at
 line 40):
 
 	git blame -L 40,60 foo
 	git blame -L 40,+21 foo
 
-Also you can use regular expression to specify the line range.
+Also you can use a regular expression to specify the line range:
 
 	git blame -L '/^sub hello {/,/^}$/' foo
 
-would limit the annotation to the body of `hello` subroutine.
+which limits the annotation to the body of the `hello` subroutine.
 
-When you are not interested in changes older than the version
+When you are not interested in changes older than version
 v2.6.18, or changes older than 3 weeks, you can use revision
-range specifiers  similar to 'git-rev-list':
+range specifiers  similar to 'git rev-list':
 
 	git blame v2.6.18.. -- foo
 	git blame --since=3.weeks -- foo
@@ -129,7 +129,7 @@ commit v2.6.18 or the most recent commit that is more than 3
 weeks old in the above example) are blamed for that range
 boundary commit.
 
-A particularly useful way is to see if an added file have lines
+A particularly useful way is to see if an added file has lines
 created by copy-and-paste from existing files.  Sometimes this
 indicates that the developer was being sloppy and did not
 refactor the code properly.  You can first find the commit that
@@ -162,26 +162,32 @@ annotated.
 +
 Line numbers count from 1.
 
-. The first time that commit shows up in the stream, it has various
+. The first time that a commit shows up in the stream, it has various
   other information about it printed out with a one-word tag at the
-  beginning of each line about that "extended commit info" (author,
-  email, committer, dates, summary etc).
+  beginning of each line describing the extra commit information (author,
+  email, committer, dates, summary, etc.).
 
-. Unlike Porcelain format, the filename information is always
+. Unlike the Porcelain format, the filename information is always
   given and terminates the entry:
 
 	"filename" <whitespace-quoted-filename-goes-here>
 +
-and thus it's really quite easy to parse for some line- and word-oriented
+and thus it is really quite easy to parse for some line- and word-oriented
 parser (which should be quite natural for most scripting languages).
 +
 [NOTE]
 For people who do parsing: to make it more robust, just ignore any
-lines in between the first and last one ("<sha1>" and "filename" lines)
-where you don't recognize the tag-words (or care about that particular
+lines between the first and last one ("<sha1>" and "filename" lines)
+where you do not recognize the tag words (or care about that particular
 one) at the beginning of the "extended information" lines. That way, if
 there is ever added information (like the commit encoding or extended
-commit commentary), a blame viewer won't ever care.
+commit commentary), a blame viewer will not care.
+
+
+MAPPING AUTHORS
+---------------
+
+include::mailmap.txt[]
 
 
 SEE ALSO

@@ -19,6 +19,10 @@
 #include "strbuf.h"
 #include "dir.h"
 #include "pack-refs.h"
+#include "sigchain.h"
+#include "branch.h"
+#include "remote.h"
+#include "run-command.h"
 
 /*
  * Overall FIXMEs:
@@ -34,17 +38,25 @@ static const char * const builtin_clone_usage[] = {
 };
 
 static int option_quiet, option_no_checkout, option_bare, option_mirror;
-static int option_local, option_no_hardlinks, option_shared;
+static int option_local, option_no_hardlinks, option_shared, option_recursive;
 static char *option_template, *option_reference, *option_depth;
 static char *option_origin = NULL;
+static char *option_branch = NULL;
 static char *option_upload_pack = "git-upload-pack";
+static int option_verbose;
+static int option_progress;
 
 static struct option builtin_clone_options[] = {
 	OPT__QUIET(&option_quiet),
+	OPT__VERBOSE(&option_verbose),
+	OPT_BOOLEAN(0, "progress", &option_progress,
+			"force progress reporting"),
 	OPT_BOOLEAN('n', "no-checkout", &option_no_checkout,
 		    "don't create a checkout"),
 	OPT_BOOLEAN(0, "bare", &option_bare, "create a bare repository"),
-	OPT_BOOLEAN(0, "naked", &option_bare, "create a bare repository"),
+	{ OPTION_BOOLEAN, 0, "naked", &option_bare, NULL,
+		"create a bare repository",
+		PARSE_OPT_NOARG | PARSE_OPT_HIDDEN },
 	OPT_BOOLEAN(0, "mirror", &option_mirror,
 		    "create a mirror repository (implies bare)"),
 	OPT_BOOLEAN('l', "local", &option_local,
@@ -53,18 +65,26 @@ static struct option builtin_clone_options[] = {
 		    "don't use local hardlinks, always copy"),
 	OPT_BOOLEAN('s', "shared", &option_shared,
 		    "setup as shared repository"),
+	OPT_BOOLEAN(0, "recursive", &option_recursive,
+		    "initialize submodules in the clone"),
 	OPT_STRING(0, "template", &option_template, "path",
 		   "path the template repository"),
 	OPT_STRING(0, "reference", &option_reference, "repo",
 		   "reference repository"),
 	OPT_STRING('o', "origin", &option_origin, "branch",
-		   "use <branch> instead or 'origin' to track upstream"),
+		   "use <branch> instead of 'origin' to track upstream"),
+	OPT_STRING('b', "branch", &option_branch, "branch",
+		   "checkout <branch> instead of the remote's HEAD"),
 	OPT_STRING('u', "upload-pack", &option_upload_pack, "path",
 		   "path to git-upload-pack on the remote"),
 	OPT_STRING(0, "depth", &option_depth, "depth",
 		    "create a shallow clone of that depth"),
 
 	OPT_END()
+};
+
+static const char *argv_submodule[] = {
+	"submodule", "update", "--init", "--recursive", NULL
 };
 
 static char *get_repo_path(const char *repo, int *is_bundle)
@@ -77,7 +97,7 @@ static char *get_repo_path(const char *repo, int *is_bundle)
 	for (i = 0; i < ARRAY_SIZE(suffix); i++) {
 		const char *path;
 		path = mkpath("%s%s", repo, suffix[i]);
-		if (!stat(path, &st) && S_ISDIR(st.st_mode)) {
+		if (is_directory(path)) {
 			*is_bundle = 0;
 			return xstrdup(make_nonrelative_path(path));
 		}
@@ -98,11 +118,12 @@ static char *get_repo_path(const char *repo, int *is_bundle)
 static char *guess_dir_name(const char *repo, int is_bundle, int is_bare)
 {
 	const char *end = repo + strlen(repo), *start;
+	char *dir;
 
 	/*
-	 * Strip trailing slashes and /.git
+	 * Strip trailing spaces, slashes and /.git
 	 */
-	while (repo < end && is_dir_sep(end[-1]))
+	while (repo < end && (is_dir_sep(end[-1]) || isspace(end[-1])))
 		end--;
 	if (end - repo > 5 && is_dir_sep(end[-5]) &&
 	    !strncmp(end - 4, ".git", 4)) {
@@ -132,19 +153,44 @@ static char *guess_dir_name(const char *repo, int is_bundle, int is_bare)
 	}
 
 	if (is_bare) {
-		char *result = xmalloc(end - start + 5);
-		sprintf(result, "%.*s.git", (int)(end - start), start);
-		return result;
+		struct strbuf result = STRBUF_INIT;
+		strbuf_addf(&result, "%.*s.git", (int)(end - start), start);
+		dir = strbuf_detach(&result, NULL);
+	} else
+		dir = xstrndup(start, end - start);
+	/*
+	 * Replace sequences of 'control' characters and whitespace
+	 * with one ascii space, remove leading and trailing spaces.
+	 */
+	if (*dir) {
+		char *out = dir;
+		int prev_space = 1 /* strip leading whitespace */;
+		for (end = dir; *end; ++end) {
+			char ch = *end;
+			if ((unsigned char)ch < '\x20')
+				ch = '\x20';
+			if (isspace(ch)) {
+				if (prev_space)
+					continue;
+				prev_space = 1;
+			} else
+				prev_space = 0;
+			*out++ = ch;
+		}
+		*out = '\0';
+		if (out > dir && prev_space)
+			out[-1] = '\0';
 	}
-
-	return xstrndup(start, end - start);
+	return dir;
 }
 
-static int is_directory(const char *path)
+static void strip_trailing_slashes(char *dir)
 {
-	struct stat buf;
+	char *end = dir + strlen(dir);
 
-	return !stat(path, &buf) && S_ISDIR(buf.st_mode);
+	while (dir < end - 1 && is_dir_sep(end[-1]))
+		end--;
+	*end = '\0';
 }
 
 static void setup_reference(const char *repo)
@@ -179,36 +225,38 @@ static void setup_reference(const char *repo)
 	free(ref_git_copy);
 }
 
-static void copy_or_link_directory(char *src, char *dest)
+static void copy_or_link_directory(struct strbuf *src, struct strbuf *dest)
 {
 	struct dirent *de;
 	struct stat buf;
 	int src_len, dest_len;
 	DIR *dir;
 
-	dir = opendir(src);
+	dir = opendir(src->buf);
 	if (!dir)
-		die("failed to open %s\n", src);
+		die_errno("failed to open '%s'", src->buf);
 
-	if (mkdir(dest, 0777)) {
+	if (mkdir(dest->buf, 0777)) {
 		if (errno != EEXIST)
-			die("failed to create directory %s\n", dest);
-		else if (stat(dest, &buf))
-			die("failed to stat %s\n", dest);
+			die_errno("failed to create directory '%s'", dest->buf);
+		else if (stat(dest->buf, &buf))
+			die_errno("failed to stat '%s'", dest->buf);
 		else if (!S_ISDIR(buf.st_mode))
-			die("%s exists and is not a directory\n", dest);
+			die("%s exists and is not a directory", dest->buf);
 	}
 
-	src_len = strlen(src);
-	src[src_len] = '/';
-	dest_len = strlen(dest);
-	dest[dest_len] = '/';
+	strbuf_addch(src, '/');
+	src_len = src->len;
+	strbuf_addch(dest, '/');
+	dest_len = dest->len;
 
 	while ((de = readdir(dir)) != NULL) {
-		strcpy(src + src_len + 1, de->d_name);
-		strcpy(dest + dest_len + 1, de->d_name);
-		if (stat(src, &buf)) {
-			warning ("failed to stat %s\n", src);
+		strbuf_setlen(src, src_len);
+		strbuf_addstr(src, de->d_name);
+		strbuf_setlen(dest, dest_len);
+		strbuf_addstr(dest, de->d_name);
+		if (stat(src->buf, &buf)) {
+			warning ("failed to stat %s\n", src->buf);
 			continue;
 		}
 		if (S_ISDIR(buf.st_mode)) {
@@ -217,17 +265,17 @@ static void copy_or_link_directory(char *src, char *dest)
 			continue;
 		}
 
-		if (unlink(dest) && errno != ENOENT)
-			die("failed to unlink %s\n", dest);
+		if (unlink(dest->buf) && errno != ENOENT)
+			die_errno("failed to unlink '%s'", dest->buf);
 		if (!option_no_hardlinks) {
-			if (!link(src, dest))
+			if (!link(src->buf, dest->buf))
 				continue;
 			if (option_local)
-				die("failed to create link %s\n", dest);
+				die_errno("failed to create link '%s'", dest->buf);
 			option_no_hardlinks = 1;
 		}
-		if (copy_file(dest, src, 0666))
-			die("failed to copy file to %s\n", dest);
+		if (copy_file_with_time(dest->buf, src->buf, 0666))
+			die_errno("failed to copy file to '%s'", dest->buf);
 	}
 	closedir(dir);
 }
@@ -236,17 +284,19 @@ static const struct ref *clone_local(const char *src_repo,
 				     const char *dest_repo)
 {
 	const struct ref *ret;
-	char src[PATH_MAX];
-	char dest[PATH_MAX];
+	struct strbuf src = STRBUF_INIT;
+	struct strbuf dest = STRBUF_INIT;
 	struct remote *remote;
 	struct transport *transport;
 
 	if (option_shared)
 		add_to_alternates_file(src_repo);
 	else {
-		snprintf(src, PATH_MAX, "%s/objects", src_repo);
-		snprintf(dest, PATH_MAX, "%s/objects", dest_repo);
-		copy_or_link_directory(src, dest);
+		strbuf_addf(&src, "%s/objects", src_repo);
+		strbuf_addf(&dest, "%s/objects", dest_repo);
+		copy_or_link_directory(&src, &dest);
+		strbuf_release(&src);
+		strbuf_release(&dest);
 	}
 
 	remote = remote_get(src_repo);
@@ -258,14 +308,13 @@ static const struct ref *clone_local(const char *src_repo,
 
 static const char *junk_work_tree;
 static const char *junk_git_dir;
-pid_t junk_pid;
+static pid_t junk_pid;
 
 static void remove_junk(void)
 {
-	struct strbuf sb;
+	struct strbuf sb = STRBUF_INIT;
 	if (getpid() != junk_pid)
 		return;
-	strbuf_init(&sb, 0);
 	if (junk_git_dir) {
 		strbuf_addstr(&sb, junk_git_dir);
 		remove_dir_recursively(&sb, 0);
@@ -281,93 +330,66 @@ static void remove_junk(void)
 static void remove_junk_on_signal(int signo)
 {
 	remove_junk();
-	signal(SIGINT, SIG_DFL);
+	sigchain_pop(signo);
 	raise(signo);
 }
 
-static const struct ref *locate_head(const struct ref *refs,
-				     const struct ref *mapped_refs,
-				     const struct ref **remote_head_p)
-{
-	const struct ref *remote_head = NULL;
-	const struct ref *remote_master = NULL;
-	const struct ref *r;
-	for (r = refs; r; r = r->next)
-		if (!strcmp(r->name, "HEAD"))
-			remote_head = r;
-
-	for (r = mapped_refs; r; r = r->next)
-		if (!strcmp(r->name, "refs/heads/master"))
-			remote_master = r;
-
-	if (remote_head_p)
-		*remote_head_p = remote_head;
-
-	/* If there's no HEAD value at all, never mind. */
-	if (!remote_head)
-		return NULL;
-
-	/* If refs/heads/master could be right, it is. */
-	if (remote_master && !hashcmp(remote_master->old_sha1,
-				      remote_head->old_sha1))
-		return remote_master;
-
-	/* Look for another ref that points there */
-	for (r = mapped_refs; r; r = r->next)
-		if (r != remote_head &&
-		    !hashcmp(r->old_sha1, remote_head->old_sha1))
-			return r;
-
-	/* Nothing is the same */
-	return NULL;
-}
-
-static struct ref *write_remote_refs(const struct ref *refs,
-		struct refspec *refspec, const char *reflog)
+static struct ref *wanted_peer_refs(const struct ref *refs,
+		struct refspec *refspec)
 {
 	struct ref *local_refs = NULL;
 	struct ref **tail = &local_refs;
-	struct ref *r;
 
 	get_fetch_map(refs, refspec, &tail, 0);
 	if (!option_mirror)
 		get_fetch_map(refs, tag_refspec, &tail, 0);
+
+	return local_refs;
+}
+
+static void write_remote_refs(const struct ref *local_refs)
+{
+	const struct ref *r;
 
 	for (r = local_refs; r; r = r->next)
 		add_extra_ref(r->peer_ref->name, r->old_sha1, 0);
 
 	pack_refs(PACK_REFS_ALL);
 	clear_extra_refs();
-
-	return local_refs;
 }
 
 int cmd_clone(int argc, const char **argv, const char *prefix)
 {
-	int use_local_hardlinks = 1;
-	int use_separate_remote = 1;
 	int is_bundle = 0;
 	struct stat buf;
 	const char *repo_name, *repo, *work_tree, *git_dir;
 	char *path, *dir;
-	const struct ref *refs, *head_points_at, *remote_head, *mapped_refs;
-	char branch_top[256], key[256], value[256];
-	struct strbuf reflog_msg;
+	int dest_exists;
+	const struct ref *refs, *remote_head;
+	const struct ref *remote_head_points_at;
+	const struct ref *our_head_points_at;
+	struct ref *mapped_refs;
+	struct strbuf key = STRBUF_INIT, value = STRBUF_INIT;
+	struct strbuf branch_top = STRBUF_INIT, reflog_msg = STRBUF_INIT;
 	struct transport *transport = NULL;
 	char *src_ref_prefix = "refs/heads/";
+	int err = 0;
 
-	struct refspec refspec;
+	struct refspec *refspec;
+	const char *fetch_pattern;
 
 	junk_pid = getpid();
 
-	argc = parse_options(argc, argv, builtin_clone_options,
+	argc = parse_options(argc, argv, prefix, builtin_clone_options,
 			     builtin_clone_usage, 0);
 
-	if (argc == 0)
-		die("You must specify a repository to clone.");
+	if (argc > 2)
+		usage_msg_opt("Too many arguments.",
+			builtin_clone_usage, builtin_clone_options);
 
-	if (option_no_hardlinks)
-		use_local_hardlinks = 0;
+	if (argc == 0)
+		usage_msg_opt("You must specify a repository to clone.",
+			builtin_clone_usage, builtin_clone_options);
 
 	if (option_mirror)
 		option_bare = 1;
@@ -377,7 +399,6 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 			die("--bare and --origin %s options are incompatible.",
 			    option_origin);
 		option_no_checkout = 1;
-		use_separate_remote = 0;
 	}
 
 	if (!option_origin)
@@ -387,7 +408,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 
 	path = get_repo_path(repo_name, &is_bundle);
 	if (path)
-		repo = path;
+		repo = xstrdup(make_nonrelative_path(repo_name));
 	else if (!strchr(repo_name, ':'))
 		repo = xstrdup(make_absolute_path(repo_name));
 	else
@@ -397,11 +418,13 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		dir = xstrdup(argv[1]);
 	else
 		dir = guess_dir_name(repo_name, is_bundle, option_bare);
+	strip_trailing_slashes(dir);
 
-	if (!stat(dir, &buf))
-		die("destination directory '%s' already exists.", dir);
+	dest_exists = !stat(dir, &buf);
+	if (dest_exists && !is_empty_dir(dir))
+		die("destination path '%s' already exists and is not "
+			"an empty directory.", dir);
 
-	strbuf_init(&reflog_msg, 0);
 	strbuf_addf(&reflog_msg, "clone: from %s", repo);
 
 	if (option_bare)
@@ -422,17 +445,18 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	if (!option_bare) {
 		junk_work_tree = work_tree;
 		if (safe_create_leading_directories_const(work_tree) < 0)
-			die("could not create leading directories of '%s'",
-					work_tree);
-		if (mkdir(work_tree, 0755))
-			die("could not create work tree dir '%s'.", work_tree);
+			die_errno("could not create leading directories of '%s'",
+				  work_tree);
+		if (!dest_exists && mkdir(work_tree, 0755))
+			die_errno("could not create work tree dir '%s'.",
+				  work_tree);
 		set_git_work_tree(work_tree);
 	}
 	junk_git_dir = git_dir;
 	atexit(remove_junk);
-	signal(SIGINT, remove_junk_on_signal);
+	sigchain_push_common(remove_junk_on_signal);
 
-	setenv(CONFIG_ENVIRONMENT, xstrdup(mkpath("%s/config", git_dir)), 1);
+	setenv(CONFIG_ENVIRONMENT, mkpath("%s/config", git_dir), 1);
 
 	if (safe_create_leading_directories_const(git_dir) < 0)
 		die("could not create leading directories of '%s'", git_dir);
@@ -455,39 +479,41 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	if (option_bare) {
 		if (option_mirror)
 			src_ref_prefix = "refs/";
-		strcpy(branch_top, src_ref_prefix);
+		strbuf_addstr(&branch_top, src_ref_prefix);
 
 		git_config_set("core.bare", "true");
 	} else {
-		snprintf(branch_top, sizeof(branch_top),
-			 "refs/remotes/%s/", option_origin);
+		strbuf_addf(&branch_top, "refs/remotes/%s/", option_origin);
 	}
+
+	strbuf_addf(&value, "+%s*:%s*", src_ref_prefix, branch_top.buf);
 
 	if (option_mirror || !option_bare) {
 		/* Configure the remote */
+		strbuf_addf(&key, "remote.%s.fetch", option_origin);
+		git_config_set_multivar(key.buf, value.buf, "^$", 0);
+		strbuf_reset(&key);
+
 		if (option_mirror) {
-			snprintf(key, sizeof(key),
-					"remote.%s.mirror", option_origin);
-			git_config_set(key, "true");
+			strbuf_addf(&key, "remote.%s.mirror", option_origin);
+			git_config_set(key.buf, "true");
+			strbuf_reset(&key);
 		}
 
-		snprintf(key, sizeof(key), "remote.%s.url", option_origin);
-		git_config_set(key, repo);
-
-		snprintf(key, sizeof(key), "remote.%s.fetch", option_origin);
-		snprintf(value, sizeof(value),
-				"+%s*:%s*", src_ref_prefix, branch_top);
-		git_config_set_multivar(key, value, "^$", 0);
+		strbuf_addf(&key, "remote.%s.url", option_origin);
+		git_config_set(key.buf, repo);
+		strbuf_reset(&key);
 	}
 
-	refspec.force = 0;
-	refspec.pattern = 1;
-	refspec.src = src_ref_prefix;
-	refspec.dst = branch_top;
+	fetch_pattern = value.buf;
+	refspec = parse_fetch_refspec(1, &fetch_pattern);
 
-	if (path && !is_bundle)
+	strbuf_reset(&value);
+
+	if (path && !is_bundle) {
 		refs = clone_local(path, git_dir);
-	else {
+		mapped_refs = wanted_peer_refs(refs, refspec);
+	} else {
 		struct remote *remote = remote_get(argv[0]);
 		transport = transport_get(remote, remote->url[0]);
 
@@ -502,59 +528,90 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 
 		if (option_quiet)
 			transport->verbose = -1;
+		else if (option_verbose)
+			transport->verbose = 1;
+
+		if (option_progress)
+			transport->progress = 1;
 
 		if (option_upload_pack)
 			transport_set_option(transport, TRANS_OPT_UPLOADPACK,
 					     option_upload_pack);
 
 		refs = transport_get_remote_refs(transport);
-		transport_fetch_refs(transport, refs);
+		if (refs) {
+			mapped_refs = wanted_peer_refs(refs, refspec);
+			transport_fetch_refs(transport, mapped_refs);
+		}
 	}
 
-	clear_extra_refs();
+	if (refs) {
+		clear_extra_refs();
 
-	mapped_refs = write_remote_refs(refs, &refspec, reflog_msg.buf);
+		write_remote_refs(mapped_refs);
 
-	head_points_at = locate_head(refs, mapped_refs, &remote_head);
+		remote_head = find_ref_by_name(refs, "HEAD");
+		remote_head_points_at =
+			guess_remote_head(remote_head, mapped_refs, 0);
 
-	if (head_points_at) {
+		if (option_branch) {
+			struct strbuf head = STRBUF_INIT;
+			strbuf_addstr(&head, src_ref_prefix);
+			strbuf_addstr(&head, option_branch);
+			our_head_points_at =
+				find_ref_by_name(mapped_refs, head.buf);
+			strbuf_release(&head);
+
+			if (!our_head_points_at) {
+				warning("Remote branch %s not found in "
+					"upstream %s, using HEAD instead",
+					option_branch, option_origin);
+				our_head_points_at = remote_head_points_at;
+			}
+		}
+		else
+			our_head_points_at = remote_head_points_at;
+	}
+	else {
+		warning("You appear to have cloned an empty repository.");
+		our_head_points_at = NULL;
+		remote_head_points_at = NULL;
+		remote_head = NULL;
+		option_no_checkout = 1;
+		if (!option_bare)
+			install_branch_config(0, "master", option_origin,
+					      "refs/heads/master");
+	}
+
+	if (remote_head_points_at && !option_bare) {
+		struct strbuf head_ref = STRBUF_INIT;
+		strbuf_addstr(&head_ref, branch_top.buf);
+		strbuf_addstr(&head_ref, "HEAD");
+		create_symref(head_ref.buf,
+			      remote_head_points_at->peer_ref->name,
+			      reflog_msg.buf);
+	}
+
+	if (our_head_points_at) {
 		/* Local default branch link */
-		create_symref("HEAD", head_points_at->name, NULL);
-
+		create_symref("HEAD", our_head_points_at->name, NULL);
 		if (!option_bare) {
-			struct strbuf head_ref;
-			const char *head = head_points_at->name;
-
-			if (!prefixcmp(head, "refs/heads/"))
-				head += 11;
-
-			/* Set up the initial local branch */
-
-			/* Local branch initial value */
+			const char *head = skip_prefix(our_head_points_at->name,
+						       "refs/heads/");
 			update_ref(reflog_msg.buf, "HEAD",
-				   head_points_at->old_sha1,
+				   our_head_points_at->old_sha1,
 				   NULL, 0, DIE_ON_ERR);
-
-			strbuf_init(&head_ref, 0);
-			strbuf_addstr(&head_ref, branch_top);
-			strbuf_addstr(&head_ref, "HEAD");
-
-			/* Remote branch link */
-			create_symref(head_ref.buf,
-				      head_points_at->peer_ref->name,
-				      reflog_msg.buf);
-
-			snprintf(key, sizeof(key), "branch.%s.remote", head);
-			git_config_set(key, option_origin);
-			snprintf(key, sizeof(key), "branch.%s.merge", head);
-			git_config_set(key, head_points_at->name);
+			install_branch_config(0, head, option_origin,
+					      our_head_points_at->name);
 		}
 	} else if (remote_head) {
 		/* Source had detached HEAD pointing somewhere. */
-		if (!option_bare)
+		if (!option_bare) {
 			update_ref(reflog_msg.buf, "HEAD",
 				   remote_head->old_sha1,
 				   NULL, REF_NODEREF, DIE_ON_ERR);
+			our_head_points_at = remote_head;
+		}
 	} else {
 		/* Nothing to checkout out */
 		if (!option_no_checkout)
@@ -563,8 +620,10 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		option_no_checkout = 1;
 	}
 
-	if (transport)
+	if (transport) {
 		transport_unlock_pack(transport);
+		transport_disconnect(transport);
+	}
 
 	if (!option_no_checkout) {
 		struct lock_file *lock_file = xcalloc(1, sizeof(struct lock_file));
@@ -586,7 +645,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		opts.src_index = &the_index;
 		opts.dst_index = &the_index;
 
-		tree = parse_tree_indirect(remote_head->old_sha1);
+		tree = parse_tree_indirect(our_head_points_at->old_sha1);
 		parse_tree(tree);
 		init_tree_desc(&t, tree->buffer, tree->size);
 		unpack_trees(1, &t, &opts);
@@ -594,9 +653,19 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		if (write_cache(fd, active_cache, active_nr) ||
 		    commit_locked_index(lock_file))
 			die("unable to write new index file");
+
+		err |= run_hook(NULL, "post-checkout", sha1_to_hex(null_sha1),
+				sha1_to_hex(our_head_points_at->old_sha1), "1",
+				NULL);
+
+		if (!err && option_recursive)
+			err = run_command_v_opt(argv_submodule, RUN_GIT_CMD);
 	}
 
 	strbuf_release(&reflog_msg);
+	strbuf_release(&branch_top);
+	strbuf_release(&key);
+	strbuf_release(&value);
 	junk_pid = 0;
-	return 0;
+	return err;
 }

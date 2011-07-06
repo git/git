@@ -1,7 +1,10 @@
 #ifndef MAILMAP_H
 #define MAILMAP_H
 
-int read_mailmap(struct string_list *map, const char *filename, char **repo_abbrev);
-int map_email(struct string_list *mailmap, const char *email, char *name, int maxlen);
+int read_mailmap(struct string_list *map, char **repo_abbrev);
+void clear_mailmap(struct string_list *map);
+
+int map_user(struct string_list *mailmap,
+	     char *email, int maxlen_email, char *name, int maxlen_name);
 
 #endif

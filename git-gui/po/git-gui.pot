@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-08-02 14:45-0700\n"
+"POT-Creation-Date: 2010-01-26 15:47-0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,33 +16,33 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: git-gui.sh:41 git-gui.sh:688 git-gui.sh:702 git-gui.sh:715 git-gui.sh:798
-#: git-gui.sh:817
+#: git-gui.sh:41 git-gui.sh:793 git-gui.sh:807 git-gui.sh:820 git-gui.sh:903
+#: git-gui.sh:922
 msgid "git-gui: fatal error"
 msgstr ""
 
-#: git-gui.sh:644
+#: git-gui.sh:743
 #, tcl-format
 msgid "Invalid font specified in %s:"
 msgstr ""
 
-#: git-gui.sh:674
+#: git-gui.sh:779
 msgid "Main Font"
 msgstr ""
 
-#: git-gui.sh:675
+#: git-gui.sh:780
 msgid "Diff/Console Font"
 msgstr ""
 
-#: git-gui.sh:689
+#: git-gui.sh:794
 msgid "Cannot find git in PATH."
 msgstr ""
 
-#: git-gui.sh:716
+#: git-gui.sh:821
 msgid "Cannot parse Git version string:"
 msgstr ""
 
-#: git-gui.sh:734
+#: git-gui.sh:839
 #, tcl-format
 msgid ""
 "Git version cannot be determined.\n"
@@ -54,379 +54,473 @@ msgid ""
 "Assume '%s' is version 1.5.0?\n"
 msgstr ""
 
-#: git-gui.sh:972
+#: git-gui.sh:1128
 msgid "Git directory not found:"
 msgstr ""
 
-#: git-gui.sh:979
+#: git-gui.sh:1146
 msgid "Cannot move to top of working directory:"
 msgstr ""
 
-#: git-gui.sh:986
-msgid "Cannot use funny .git directory:"
+#: git-gui.sh:1154
+msgid "Cannot use bare repository:"
 msgstr ""
 
-#: git-gui.sh:991
+#: git-gui.sh:1162
 msgid "No working directory"
 msgstr ""
 
-#: git-gui.sh:1138 lib/checkout_op.tcl:305
+#: git-gui.sh:1334 lib/checkout_op.tcl:306
 msgid "Refreshing file status..."
 msgstr ""
 
-#: git-gui.sh:1194
+#: git-gui.sh:1390
 msgid "Scanning for modified files ..."
 msgstr ""
 
-#: git-gui.sh:1369 lib/browser.tcl:246
+#: git-gui.sh:1454
+msgid "Calling prepare-commit-msg hook..."
+msgstr ""
+
+#: git-gui.sh:1471
+msgid "Commit declined by prepare-commit-msg hook."
+msgstr ""
+
+#: git-gui.sh:1629 lib/browser.tcl:246
 msgid "Ready."
 msgstr ""
 
-#: git-gui.sh:1635
+#: git-gui.sh:1787
+#, tcl-format
+msgid "Displaying only %s of %s files."
+msgstr ""
+
+#: git-gui.sh:1913
 msgid "Unmodified"
 msgstr ""
 
-#: git-gui.sh:1637
+#: git-gui.sh:1915
 msgid "Modified, not staged"
 msgstr ""
 
-#: git-gui.sh:1638 git-gui.sh:1643
+#: git-gui.sh:1916 git-gui.sh:1924
 msgid "Staged for commit"
 msgstr ""
 
-#: git-gui.sh:1639 git-gui.sh:1644
+#: git-gui.sh:1917 git-gui.sh:1925
 msgid "Portions staged for commit"
 msgstr ""
 
-#: git-gui.sh:1640 git-gui.sh:1645
+#: git-gui.sh:1918 git-gui.sh:1926
 msgid "Staged for commit, missing"
 msgstr ""
 
-#: git-gui.sh:1642
+#: git-gui.sh:1920
+msgid "File type changed, not staged"
+msgstr ""
+
+#: git-gui.sh:1921
+msgid "File type changed, staged"
+msgstr ""
+
+#: git-gui.sh:1923
 msgid "Untracked, not staged"
 msgstr ""
 
-#: git-gui.sh:1647
+#: git-gui.sh:1928
 msgid "Missing"
 msgstr ""
 
-#: git-gui.sh:1648
+#: git-gui.sh:1929
 msgid "Staged for removal"
 msgstr ""
 
-#: git-gui.sh:1649
+#: git-gui.sh:1930
 msgid "Staged for removal, still present"
 msgstr ""
 
-#: git-gui.sh:1651 git-gui.sh:1652 git-gui.sh:1653 git-gui.sh:1654
+#: git-gui.sh:1932 git-gui.sh:1933 git-gui.sh:1934 git-gui.sh:1935
+#: git-gui.sh:1936 git-gui.sh:1937
 msgid "Requires merge resolution"
 msgstr ""
 
-#: git-gui.sh:1689
+#: git-gui.sh:1972
 msgid "Starting gitk... please wait..."
 msgstr ""
 
-#: git-gui.sh:1698
+#: git-gui.sh:1984
 msgid "Couldn't find gitk in PATH"
 msgstr ""
 
-#: git-gui.sh:1948 lib/choose_repository.tcl:36
+#: git-gui.sh:2043
+msgid "Couldn't find git gui in PATH"
+msgstr ""
+
+#: git-gui.sh:2455 lib/choose_repository.tcl:36
 msgid "Repository"
 msgstr ""
 
-#: git-gui.sh:1949
+#: git-gui.sh:2456
 msgid "Edit"
 msgstr ""
 
-#: git-gui.sh:1951 lib/choose_rev.tcl:561
+#: git-gui.sh:2458 lib/choose_rev.tcl:561
 msgid "Branch"
 msgstr ""
 
-#: git-gui.sh:1954 lib/choose_rev.tcl:548
+#: git-gui.sh:2461 lib/choose_rev.tcl:548
 msgid "Commit@@noun"
 msgstr ""
 
-#: git-gui.sh:1957 lib/merge.tcl:120 lib/merge.tcl:149 lib/merge.tcl:167
+#: git-gui.sh:2464 lib/merge.tcl:121 lib/merge.tcl:150 lib/merge.tcl:168
 msgid "Merge"
 msgstr ""
 
-#: git-gui.sh:1958 lib/choose_rev.tcl:557
+#: git-gui.sh:2465 lib/choose_rev.tcl:557
 msgid "Remote"
 msgstr ""
 
-#: git-gui.sh:1967
+#: git-gui.sh:2468
+msgid "Tools"
+msgstr ""
+
+#: git-gui.sh:2477
+msgid "Explore Working Copy"
+msgstr ""
+
+#: git-gui.sh:2483
 msgid "Browse Current Branch's Files"
 msgstr ""
 
-#: git-gui.sh:1971
+#: git-gui.sh:2487
 msgid "Browse Branch Files..."
 msgstr ""
 
-#: git-gui.sh:1976
+#: git-gui.sh:2492
 msgid "Visualize Current Branch's History"
 msgstr ""
 
-#: git-gui.sh:1980
+#: git-gui.sh:2496
 msgid "Visualize All Branch History"
 msgstr ""
 
-#: git-gui.sh:1987
+#: git-gui.sh:2503
 #, tcl-format
 msgid "Browse %s's Files"
 msgstr ""
 
-#: git-gui.sh:1989
+#: git-gui.sh:2505
 #, tcl-format
 msgid "Visualize %s's History"
 msgstr ""
 
-#: git-gui.sh:1994 lib/database.tcl:27 lib/database.tcl:67
+#: git-gui.sh:2510 lib/database.tcl:27 lib/database.tcl:67
 msgid "Database Statistics"
 msgstr ""
 
-#: git-gui.sh:1997 lib/database.tcl:34
+#: git-gui.sh:2513 lib/database.tcl:34
 msgid "Compress Database"
 msgstr ""
 
-#: git-gui.sh:2000
+#: git-gui.sh:2516
 msgid "Verify Database"
 msgstr ""
 
-#: git-gui.sh:2007 git-gui.sh:2011 git-gui.sh:2015 lib/shortcut.tcl:7
-#: lib/shortcut.tcl:39 lib/shortcut.tcl:71
+#: git-gui.sh:2523 git-gui.sh:2527 git-gui.sh:2531 lib/shortcut.tcl:8
+#: lib/shortcut.tcl:40 lib/shortcut.tcl:72
 msgid "Create Desktop Icon"
 msgstr ""
 
-#: git-gui.sh:2023 lib/choose_repository.tcl:177 lib/choose_repository.tcl:185
+#: git-gui.sh:2539 lib/choose_repository.tcl:183 lib/choose_repository.tcl:191
 msgid "Quit"
 msgstr ""
 
-#: git-gui.sh:2031
+#: git-gui.sh:2547
 msgid "Undo"
 msgstr ""
 
-#: git-gui.sh:2034
+#: git-gui.sh:2550
 msgid "Redo"
 msgstr ""
 
-#: git-gui.sh:2038 git-gui.sh:2545
+#: git-gui.sh:2554 git-gui.sh:3109
 msgid "Cut"
 msgstr ""
 
-#: git-gui.sh:2041 git-gui.sh:2548 git-gui.sh:2622 git-gui.sh:2715
+#: git-gui.sh:2557 git-gui.sh:3112 git-gui.sh:3186 git-gui.sh:3259
 #: lib/console.tcl:69
 msgid "Copy"
 msgstr ""
 
-#: git-gui.sh:2044 git-gui.sh:2551
+#: git-gui.sh:2560 git-gui.sh:3115
 msgid "Paste"
 msgstr ""
 
-#: git-gui.sh:2047 git-gui.sh:2554 lib/branch_delete.tcl:26
+#: git-gui.sh:2563 git-gui.sh:3118 lib/branch_delete.tcl:26
 #: lib/remote_branch_delete.tcl:38
 msgid "Delete"
 msgstr ""
 
-#: git-gui.sh:2051 git-gui.sh:2558 git-gui.sh:2719 lib/console.tcl:71
+#: git-gui.sh:2567 git-gui.sh:3122 git-gui.sh:3263 lib/console.tcl:71
 msgid "Select All"
 msgstr ""
 
-#: git-gui.sh:2060
+#: git-gui.sh:2576
 msgid "Create..."
 msgstr ""
 
-#: git-gui.sh:2066
+#: git-gui.sh:2582
 msgid "Checkout..."
 msgstr ""
 
-#: git-gui.sh:2072
+#: git-gui.sh:2588
 msgid "Rename..."
 msgstr ""
 
-#: git-gui.sh:2077 git-gui.sh:2187
+#: git-gui.sh:2593
 msgid "Delete..."
 msgstr ""
 
-#: git-gui.sh:2082
+#: git-gui.sh:2598
 msgid "Reset..."
 msgstr ""
 
-#: git-gui.sh:2094 git-gui.sh:2491
-msgid "New Commit"
+#: git-gui.sh:2608
+msgid "Done"
 msgstr ""
 
-#: git-gui.sh:2102 git-gui.sh:2498
-msgid "Amend Last Commit"
-msgstr ""
-
-#: git-gui.sh:2111 git-gui.sh:2458 lib/remote_branch_delete.tcl:99
-msgid "Rescan"
-msgstr ""
-
-#: git-gui.sh:2117
-msgid "Stage To Commit"
-msgstr ""
-
-#: git-gui.sh:2123
-msgid "Stage Changed Files To Commit"
-msgstr ""
-
-#: git-gui.sh:2129
-msgid "Unstage From Commit"
-msgstr ""
-
-#: git-gui.sh:2134 lib/index.tcl:395
-msgid "Revert Changes"
-msgstr ""
-
-#: git-gui.sh:2141 git-gui.sh:2702
-msgid "Show Less Context"
-msgstr ""
-
-#: git-gui.sh:2145 git-gui.sh:2706
-msgid "Show More Context"
-msgstr ""
-
-#: git-gui.sh:2151 git-gui.sh:2470 git-gui.sh:2569
-msgid "Sign Off"
-msgstr ""
-
-#: git-gui.sh:2155 git-gui.sh:2474
+#: git-gui.sh:2610
 msgid "Commit@@verb"
 msgstr ""
 
-#: git-gui.sh:2166
+#: git-gui.sh:2619 git-gui.sh:3050
+msgid "New Commit"
+msgstr ""
+
+#: git-gui.sh:2627 git-gui.sh:3057
+msgid "Amend Last Commit"
+msgstr ""
+
+#: git-gui.sh:2637 git-gui.sh:3011 lib/remote_branch_delete.tcl:99
+msgid "Rescan"
+msgstr ""
+
+#: git-gui.sh:2643
+msgid "Stage To Commit"
+msgstr ""
+
+#: git-gui.sh:2649
+msgid "Stage Changed Files To Commit"
+msgstr ""
+
+#: git-gui.sh:2655
+msgid "Unstage From Commit"
+msgstr ""
+
+#: git-gui.sh:2661 lib/index.tcl:412
+msgid "Revert Changes"
+msgstr ""
+
+#: git-gui.sh:2669 git-gui.sh:3310 git-gui.sh:3341
+msgid "Show Less Context"
+msgstr ""
+
+#: git-gui.sh:2673 git-gui.sh:3314 git-gui.sh:3345
+msgid "Show More Context"
+msgstr ""
+
+#: git-gui.sh:2680 git-gui.sh:3024 git-gui.sh:3133
+msgid "Sign Off"
+msgstr ""
+
+#: git-gui.sh:2696
 msgid "Local Merge..."
 msgstr ""
 
-#: git-gui.sh:2171
+#: git-gui.sh:2701
 msgid "Abort Merge..."
 msgstr ""
 
-#: git-gui.sh:2183
+#: git-gui.sh:2713 git-gui.sh:2741
+msgid "Add..."
+msgstr ""
+
+#: git-gui.sh:2717
 msgid "Push..."
 msgstr ""
 
-#: git-gui.sh:2197 git-gui.sh:2219 lib/about.tcl:14
-#: lib/choose_repository.tcl:44 lib/choose_repository.tcl:50
+#: git-gui.sh:2721
+msgid "Delete Branch..."
+msgstr ""
+
+#: git-gui.sh:2731 git-gui.sh:3292
+msgid "Options..."
+msgstr ""
+
+#: git-gui.sh:2742
+msgid "Remove..."
+msgstr ""
+
+#: git-gui.sh:2751 lib/choose_repository.tcl:50
+msgid "Help"
+msgstr ""
+
+#: git-gui.sh:2755 git-gui.sh:2759 lib/about.tcl:14
+#: lib/choose_repository.tcl:44 lib/choose_repository.tcl:53
 #, tcl-format
 msgid "About %s"
 msgstr ""
 
-#: git-gui.sh:2201
-msgid "Preferences..."
-msgstr ""
-
-#: git-gui.sh:2209 git-gui.sh:2740
-msgid "Options..."
-msgstr ""
-
-#: git-gui.sh:2215 lib/choose_repository.tcl:47
-msgid "Help"
-msgstr ""
-
-#: git-gui.sh:2256
+#: git-gui.sh:2783
 msgid "Online Documentation"
 msgstr ""
 
-#: git-gui.sh:2340
+#: git-gui.sh:2786 lib/choose_repository.tcl:47 lib/choose_repository.tcl:56
+msgid "Show SSH Key"
+msgstr ""
+
+#: git-gui.sh:2893
 #, tcl-format
 msgid "fatal: cannot stat path %s: No such file or directory"
 msgstr ""
 
-#: git-gui.sh:2373
+#: git-gui.sh:2926
 msgid "Current Branch:"
 msgstr ""
 
-#: git-gui.sh:2394
+#: git-gui.sh:2947
 msgid "Staged Changes (Will Commit)"
 msgstr ""
 
-#: git-gui.sh:2414
+#: git-gui.sh:2967
 msgid "Unstaged Changes"
 msgstr ""
 
-#: git-gui.sh:2464
+#: git-gui.sh:3017
 msgid "Stage Changed"
 msgstr ""
 
-#: git-gui.sh:2480 lib/transport.tcl:93 lib/transport.tcl:182
+#: git-gui.sh:3036 lib/transport.tcl:104 lib/transport.tcl:193
 msgid "Push"
 msgstr ""
 
-#: git-gui.sh:2510
+#: git-gui.sh:3071
 msgid "Initial Commit Message:"
 msgstr ""
 
-#: git-gui.sh:2511
+#: git-gui.sh:3072
 msgid "Amended Commit Message:"
 msgstr ""
 
-#: git-gui.sh:2512
+#: git-gui.sh:3073
 msgid "Amended Initial Commit Message:"
 msgstr ""
 
-#: git-gui.sh:2513
+#: git-gui.sh:3074
 msgid "Amended Merge Commit Message:"
 msgstr ""
 
-#: git-gui.sh:2514
+#: git-gui.sh:3075
 msgid "Merge Commit Message:"
 msgstr ""
 
-#: git-gui.sh:2515
+#: git-gui.sh:3076
 msgid "Commit Message:"
 msgstr ""
 
-#: git-gui.sh:2561 git-gui.sh:2723 lib/console.tcl:73
+#: git-gui.sh:3125 git-gui.sh:3267 lib/console.tcl:73
 msgid "Copy All"
 msgstr ""
 
-#: git-gui.sh:2585 lib/blame.tcl:100
+#: git-gui.sh:3149 lib/blame.tcl:104
 msgid "File:"
 msgstr ""
 
-#: git-gui.sh:2691
-msgid "Apply/Reverse Hunk"
-msgstr ""
-
-#: git-gui.sh:2696
-msgid "Apply/Reverse Line"
-msgstr ""
-
-#: git-gui.sh:2711
+#: git-gui.sh:3255
 msgid "Refresh"
 msgstr ""
 
-#: git-gui.sh:2732
+#: git-gui.sh:3276
 msgid "Decrease Font Size"
 msgstr ""
 
-#: git-gui.sh:2736
+#: git-gui.sh:3280
 msgid "Increase Font Size"
 msgstr ""
 
-#: git-gui.sh:2747
+#: git-gui.sh:3288 lib/blame.tcl:281
+msgid "Encoding"
+msgstr ""
+
+#: git-gui.sh:3299
+msgid "Apply/Reverse Hunk"
+msgstr ""
+
+#: git-gui.sh:3304
+msgid "Apply/Reverse Line"
+msgstr ""
+
+#: git-gui.sh:3323
+msgid "Run Merge Tool"
+msgstr ""
+
+#: git-gui.sh:3328
+msgid "Use Remote Version"
+msgstr ""
+
+#: git-gui.sh:3332
+msgid "Use Local Version"
+msgstr ""
+
+#: git-gui.sh:3336
+msgid "Revert To Base"
+msgstr ""
+
+#: git-gui.sh:3354
+msgid "Visualize These Changes In The Submodule"
+msgstr ""
+
+#: git-gui.sh:3358
+msgid "Visualize Current Branch History In The Submodule"
+msgstr ""
+
+#: git-gui.sh:3362
+msgid "Visualize All Branch History In The Submodule"
+msgstr ""
+
+#: git-gui.sh:3367
+msgid "Start git gui In The Submodule"
+msgstr ""
+
+#: git-gui.sh:3389
 msgid "Unstage Hunk From Commit"
 msgstr ""
 
-#: git-gui.sh:2748
+#: git-gui.sh:3391
+msgid "Unstage Lines From Commit"
+msgstr ""
+
+#: git-gui.sh:3393
 msgid "Unstage Line From Commit"
 msgstr ""
 
-#: git-gui.sh:2750
+#: git-gui.sh:3396
 msgid "Stage Hunk For Commit"
 msgstr ""
 
-#: git-gui.sh:2751
+#: git-gui.sh:3398
+msgid "Stage Lines For Commit"
+msgstr ""
+
+#: git-gui.sh:3400
 msgid "Stage Line For Commit"
 msgstr ""
 
-#: git-gui.sh:2771
+#: git-gui.sh:3424
 msgid "Initializing..."
 msgstr ""
 
-#: git-gui.sh:2876
+#: git-gui.sh:3541
 #, tcl-format
 msgid ""
 "Possible environment issues exist.\n"
@@ -437,14 +531,14 @@ msgid ""
 "\n"
 msgstr ""
 
-#: git-gui.sh:2906
+#: git-gui.sh:3570
 msgid ""
 "\n"
 "This is due to a known issue with the\n"
 "Tcl binary distributed by Cygwin."
 msgstr ""
 
-#: git-gui.sh:2911
+#: git-gui.sh:3575
 #, tcl-format
 msgid ""
 "\n"
@@ -459,80 +553,108 @@ msgstr ""
 msgid "git-gui - a graphical user interface for Git."
 msgstr ""
 
-#: lib/blame.tcl:70
+#: lib/blame.tcl:72
 msgid "File Viewer"
 msgstr ""
 
-#: lib/blame.tcl:74
+#: lib/blame.tcl:78
 msgid "Commit:"
 msgstr ""
 
-#: lib/blame.tcl:257
+#: lib/blame.tcl:271
 msgid "Copy Commit"
 msgstr ""
 
-#: lib/blame.tcl:260
+#: lib/blame.tcl:275
+msgid "Find Text..."
+msgstr ""
+
+#: lib/blame.tcl:284
 msgid "Do Full Copy Detection"
 msgstr ""
 
-#: lib/blame.tcl:388
+#: lib/blame.tcl:288
+msgid "Show History Context"
+msgstr ""
+
+#: lib/blame.tcl:291
+msgid "Blame Parent Commit"
+msgstr ""
+
+#: lib/blame.tcl:450
 #, tcl-format
 msgid "Reading %s..."
 msgstr ""
 
-#: lib/blame.tcl:492
+#: lib/blame.tcl:557
 msgid "Loading copy/move tracking annotations..."
 msgstr ""
 
-#: lib/blame.tcl:512
+#: lib/blame.tcl:577
 msgid "lines annotated"
 msgstr ""
 
-#: lib/blame.tcl:704
+#: lib/blame.tcl:769
 msgid "Loading original location annotations..."
 msgstr ""
 
-#: lib/blame.tcl:707
+#: lib/blame.tcl:772
 msgid "Annotation complete."
 msgstr ""
 
-#: lib/blame.tcl:737
+#: lib/blame.tcl:802
 msgid "Busy"
 msgstr ""
 
-#: lib/blame.tcl:738
+#: lib/blame.tcl:803
 msgid "Annotation process is already running."
 msgstr ""
 
-#: lib/blame.tcl:777
+#: lib/blame.tcl:842
 msgid "Running thorough copy detection..."
 msgstr ""
 
-#: lib/blame.tcl:827
+#: lib/blame.tcl:910
 msgid "Loading annotation..."
 msgstr ""
 
-#: lib/blame.tcl:883
+#: lib/blame.tcl:963
 msgid "Author:"
 msgstr ""
 
-#: lib/blame.tcl:887
+#: lib/blame.tcl:967
 msgid "Committer:"
 msgstr ""
 
-#: lib/blame.tcl:892
+#: lib/blame.tcl:972
 msgid "Original File:"
 msgstr ""
 
-#: lib/blame.tcl:1006
+#: lib/blame.tcl:1020
+msgid "Cannot find HEAD commit:"
+msgstr ""
+
+#: lib/blame.tcl:1075
+msgid "Cannot find parent commit:"
+msgstr ""
+
+#: lib/blame.tcl:1090
+msgid "Unable to display parent"
+msgstr ""
+
+#: lib/blame.tcl:1091 lib/diff.tcl:320
+msgid "Error loading diff:"
+msgstr ""
+
+#: lib/blame.tcl:1231
 msgid "Originally By:"
 msgstr ""
 
-#: lib/blame.tcl:1012
+#: lib/blame.tcl:1237
 msgid "In File:"
 msgstr ""
 
-#: lib/blame.tcl:1017
+#: lib/blame.tcl:1242
 msgid "Copied Or Moved Here By:"
 msgstr ""
 
@@ -546,16 +668,18 @@ msgstr ""
 
 #: lib/branch_checkout.tcl:27 lib/branch_create.tcl:35
 #: lib/branch_delete.tcl:32 lib/branch_rename.tcl:30 lib/browser.tcl:282
-#: lib/checkout_op.tcl:544 lib/choose_font.tcl:43 lib/merge.tcl:171
-#: lib/option.tcl:103 lib/remote_branch_delete.tcl:42 lib/transport.tcl:97
+#: lib/checkout_op.tcl:579 lib/choose_font.tcl:43 lib/merge.tcl:172
+#: lib/option.tcl:125 lib/remote_add.tcl:32 lib/remote_branch_delete.tcl:42
+#: lib/tools_dlg.tcl:40 lib/tools_dlg.tcl:204 lib/tools_dlg.tcl:352
+#: lib/transport.tcl:108
 msgid "Cancel"
 msgstr ""
 
-#: lib/branch_checkout.tcl:32 lib/browser.tcl:287
+#: lib/branch_checkout.tcl:32 lib/browser.tcl:287 lib/tools_dlg.tcl:328
 msgid "Revision"
 msgstr ""
 
-#: lib/branch_checkout.tcl:36 lib/branch_create.tcl:69 lib/option.tcl:244
+#: lib/branch_checkout.tcl:36 lib/branch_create.tcl:69 lib/option.tcl:280
 msgid "Options"
 msgstr ""
 
@@ -575,7 +699,7 @@ msgstr ""
 msgid "Create New Branch"
 msgstr ""
 
-#: lib/branch_create.tcl:31 lib/choose_repository.tcl:371
+#: lib/branch_create.tcl:31 lib/choose_repository.tcl:381
 msgid "Create"
 msgstr ""
 
@@ -583,7 +707,7 @@ msgstr ""
 msgid "Branch Name"
 msgstr ""
 
-#: lib/branch_create.tcl:43
+#: lib/branch_create.tcl:43 lib/remote_add.tcl:39 lib/tools_dlg.tcl:50
 msgid "Name:"
 msgstr ""
 
@@ -607,7 +731,7 @@ msgstr ""
 msgid "Fast Forward Only"
 msgstr ""
 
-#: lib/branch_create.tcl:85 lib/checkout_op.tcl:536
+#: lib/branch_create.tcl:85 lib/checkout_op.tcl:571
 msgid "Reset"
 msgstr ""
 
@@ -649,8 +773,8 @@ msgstr ""
 msgid "Delete Only If Merged Into"
 msgstr ""
 
-#: lib/branch_delete.tcl:54
-msgid "Always (Do not perform merge test.)"
+#: lib/branch_delete.tcl:54 lib/remote_branch_delete.tcl:119
+msgid "Always (Do not perform merge checks)"
 msgstr ""
 
 #: lib/branch_delete.tcl:103
@@ -658,11 +782,11 @@ msgstr ""
 msgid "The following branches are not completely merged into %s:"
 msgstr ""
 
-#: lib/branch_delete.tcl:115
+#: lib/branch_delete.tcl:115 lib/remote_branch_delete.tcl:217
 msgid ""
-"Recovering deleted branches is difficult. \n"
+"Recovering deleted branches is difficult.\n"
 "\n"
-" Delete the selected branches?"
+"Delete the selected branches?"
 msgstr ""
 
 #: lib/branch_delete.tcl:141
@@ -692,7 +816,7 @@ msgstr ""
 msgid "Please select a branch to rename."
 msgstr ""
 
-#: lib/branch_rename.tcl:96 lib/checkout_op.tcl:201
+#: lib/branch_rename.tcl:96 lib/checkout_op.tcl:202
 #, tcl-format
 msgid "Branch '%s' already exists."
 msgstr ""
@@ -723,37 +847,38 @@ msgstr ""
 msgid "Browse Branch Files"
 msgstr ""
 
-#: lib/browser.tcl:278 lib/choose_repository.tcl:387
-#: lib/choose_repository.tcl:472 lib/choose_repository.tcl:482
-#: lib/choose_repository.tcl:985
+#: lib/browser.tcl:278 lib/choose_repository.tcl:398
+#: lib/choose_repository.tcl:486 lib/choose_repository.tcl:497
+#: lib/choose_repository.tcl:1028
 msgid "Browse"
 msgstr ""
 
-#: lib/checkout_op.tcl:84
+#: lib/checkout_op.tcl:85
 #, tcl-format
 msgid "Fetching %s from %s"
 msgstr ""
 
-#: lib/checkout_op.tcl:132
+#: lib/checkout_op.tcl:133
 #, tcl-format
 msgid "fatal: Cannot resolve %s"
 msgstr ""
 
-#: lib/checkout_op.tcl:145 lib/console.tcl:81 lib/database.tcl:31
+#: lib/checkout_op.tcl:146 lib/console.tcl:81 lib/database.tcl:31
+#: lib/sshkey.tcl:53
 msgid "Close"
 msgstr ""
 
-#: lib/checkout_op.tcl:174
+#: lib/checkout_op.tcl:175
 #, tcl-format
 msgid "Branch '%s' does not exist."
 msgstr ""
 
-#: lib/checkout_op.tcl:193
+#: lib/checkout_op.tcl:194
 #, tcl-format
 msgid "Failed to configure simplified git-pull for '%s'."
 msgstr ""
 
-#: lib/checkout_op.tcl:228
+#: lib/checkout_op.tcl:229
 #, tcl-format
 msgid ""
 "Branch '%s' already exists.\n"
@@ -762,21 +887,21 @@ msgid ""
 "A merge is required."
 msgstr ""
 
-#: lib/checkout_op.tcl:242
+#: lib/checkout_op.tcl:243
 #, tcl-format
 msgid "Merge strategy '%s' not supported."
 msgstr ""
 
-#: lib/checkout_op.tcl:261
+#: lib/checkout_op.tcl:262
 #, tcl-format
 msgid "Failed to update '%s'."
 msgstr ""
 
-#: lib/checkout_op.tcl:273
+#: lib/checkout_op.tcl:274
 msgid "Staging area (index) is already locked."
 msgstr ""
 
-#: lib/checkout_op.tcl:288
+#: lib/checkout_op.tcl:289
 msgid ""
 "Last scanned state does not match repository state.\n"
 "\n"
@@ -786,30 +911,30 @@ msgid ""
 "The rescan will be automatically started now.\n"
 msgstr ""
 
-#: lib/checkout_op.tcl:344
+#: lib/checkout_op.tcl:345
 #, tcl-format
 msgid "Updating working directory to '%s'..."
 msgstr ""
 
-#: lib/checkout_op.tcl:345
+#: lib/checkout_op.tcl:346
 msgid "files checked out"
 msgstr ""
 
-#: lib/checkout_op.tcl:375
+#: lib/checkout_op.tcl:376
 #, tcl-format
 msgid "Aborted checkout of '%s' (file level merging is required)."
 msgstr ""
 
-#: lib/checkout_op.tcl:376
+#: lib/checkout_op.tcl:377
 msgid "File level merge required."
 msgstr ""
 
-#: lib/checkout_op.tcl:380
+#: lib/checkout_op.tcl:381
 #, tcl-format
 msgid "Staying on branch '%s'."
 msgstr ""
 
-#: lib/checkout_op.tcl:451
+#: lib/checkout_op.tcl:452
 msgid ""
 "You are no longer on a local branch.\n"
 "\n"
@@ -817,30 +942,30 @@ msgid ""
 "Checkout'."
 msgstr ""
 
-#: lib/checkout_op.tcl:468 lib/checkout_op.tcl:472
+#: lib/checkout_op.tcl:503 lib/checkout_op.tcl:507
 #, tcl-format
 msgid "Checked out '%s'."
 msgstr ""
 
-#: lib/checkout_op.tcl:500
+#: lib/checkout_op.tcl:535
 #, tcl-format
 msgid "Resetting '%s' to '%s' will lose the following commits:"
 msgstr ""
 
-#: lib/checkout_op.tcl:522
+#: lib/checkout_op.tcl:557
 msgid "Recovering lost commits may not be easy."
 msgstr ""
 
-#: lib/checkout_op.tcl:527
+#: lib/checkout_op.tcl:562
 #, tcl-format
 msgid "Reset '%s'?"
 msgstr ""
 
-#: lib/checkout_op.tcl:532 lib/merge.tcl:163
+#: lib/checkout_op.tcl:567 lib/merge.tcl:164 lib/tools_dlg.tcl:343
 msgid "Visualize"
 msgstr ""
 
-#: lib/checkout_op.tcl:600
+#: lib/checkout_op.tcl:635
 #, tcl-format
 msgid ""
 "Failed to set current branch.\n"
@@ -877,221 +1002,225 @@ msgstr ""
 msgid "Git Gui"
 msgstr ""
 
-#: lib/choose_repository.tcl:81 lib/choose_repository.tcl:376
+#: lib/choose_repository.tcl:87 lib/choose_repository.tcl:386
 msgid "Create New Repository"
 msgstr ""
 
-#: lib/choose_repository.tcl:87
+#: lib/choose_repository.tcl:93
 msgid "New..."
 msgstr ""
 
-#: lib/choose_repository.tcl:94 lib/choose_repository.tcl:458
+#: lib/choose_repository.tcl:100 lib/choose_repository.tcl:471
 msgid "Clone Existing Repository"
 msgstr ""
 
-#: lib/choose_repository.tcl:100
+#: lib/choose_repository.tcl:106
 msgid "Clone..."
 msgstr ""
 
-#: lib/choose_repository.tcl:107 lib/choose_repository.tcl:974
+#: lib/choose_repository.tcl:113 lib/choose_repository.tcl:1016
 msgid "Open Existing Repository"
 msgstr ""
 
-#: lib/choose_repository.tcl:113
+#: lib/choose_repository.tcl:119
 msgid "Open..."
 msgstr ""
 
-#: lib/choose_repository.tcl:126
+#: lib/choose_repository.tcl:132
 msgid "Recent Repositories"
 msgstr ""
 
-#: lib/choose_repository.tcl:132
+#: lib/choose_repository.tcl:138
 msgid "Open Recent Repository:"
 msgstr ""
 
-#: lib/choose_repository.tcl:296 lib/choose_repository.tcl:303
-#: lib/choose_repository.tcl:310
+#: lib/choose_repository.tcl:306 lib/choose_repository.tcl:313
+#: lib/choose_repository.tcl:320
 #, tcl-format
 msgid "Failed to create repository %s:"
 msgstr ""
 
-#: lib/choose_repository.tcl:381 lib/choose_repository.tcl:476
+#: lib/choose_repository.tcl:391
 msgid "Directory:"
 msgstr ""
 
-#: lib/choose_repository.tcl:410 lib/choose_repository.tcl:535
-#: lib/choose_repository.tcl:1007
+#: lib/choose_repository.tcl:423 lib/choose_repository.tcl:550
+#: lib/choose_repository.tcl:1052
 msgid "Git Repository"
 msgstr ""
 
-#: lib/choose_repository.tcl:435
+#: lib/choose_repository.tcl:448
 #, tcl-format
 msgid "Directory %s already exists."
 msgstr ""
 
-#: lib/choose_repository.tcl:439
+#: lib/choose_repository.tcl:452
 #, tcl-format
 msgid "File %s already exists."
 msgstr ""
 
-#: lib/choose_repository.tcl:453
+#: lib/choose_repository.tcl:466
 msgid "Clone"
 msgstr ""
 
-#: lib/choose_repository.tcl:466
-msgid "URL:"
+#: lib/choose_repository.tcl:479
+msgid "Source Location:"
 msgstr ""
 
-#: lib/choose_repository.tcl:487
+#: lib/choose_repository.tcl:490
+msgid "Target Directory:"
+msgstr ""
+
+#: lib/choose_repository.tcl:502
 msgid "Clone Type:"
 msgstr ""
 
-#: lib/choose_repository.tcl:493
+#: lib/choose_repository.tcl:508
 msgid "Standard (Fast, Semi-Redundant, Hardlinks)"
 msgstr ""
 
-#: lib/choose_repository.tcl:499
+#: lib/choose_repository.tcl:514
 msgid "Full Copy (Slower, Redundant Backup)"
 msgstr ""
 
-#: lib/choose_repository.tcl:505
+#: lib/choose_repository.tcl:520
 msgid "Shared (Fastest, Not Recommended, No Backup)"
 msgstr ""
 
-#: lib/choose_repository.tcl:541 lib/choose_repository.tcl:588
-#: lib/choose_repository.tcl:734 lib/choose_repository.tcl:804
-#: lib/choose_repository.tcl:1013 lib/choose_repository.tcl:1021
+#: lib/choose_repository.tcl:556 lib/choose_repository.tcl:603
+#: lib/choose_repository.tcl:749 lib/choose_repository.tcl:819
+#: lib/choose_repository.tcl:1058 lib/choose_repository.tcl:1066
 #, tcl-format
 msgid "Not a Git repository: %s"
 msgstr ""
 
-#: lib/choose_repository.tcl:577
+#: lib/choose_repository.tcl:592
 msgid "Standard only available for local repository."
 msgstr ""
 
-#: lib/choose_repository.tcl:581
+#: lib/choose_repository.tcl:596
 msgid "Shared only available for local repository."
 msgstr ""
 
-#: lib/choose_repository.tcl:602
+#: lib/choose_repository.tcl:617
 #, tcl-format
 msgid "Location %s already exists."
 msgstr ""
 
-#: lib/choose_repository.tcl:613
+#: lib/choose_repository.tcl:628
 msgid "Failed to configure origin"
 msgstr ""
 
-#: lib/choose_repository.tcl:625
+#: lib/choose_repository.tcl:640
 msgid "Counting objects"
 msgstr ""
 
-#: lib/choose_repository.tcl:626
+#: lib/choose_repository.tcl:641
 msgid "buckets"
 msgstr ""
 
-#: lib/choose_repository.tcl:650
+#: lib/choose_repository.tcl:665
 #, tcl-format
 msgid "Unable to copy objects/info/alternates: %s"
 msgstr ""
 
-#: lib/choose_repository.tcl:686
+#: lib/choose_repository.tcl:701
 #, tcl-format
 msgid "Nothing to clone from %s."
 msgstr ""
 
-#: lib/choose_repository.tcl:688 lib/choose_repository.tcl:902
-#: lib/choose_repository.tcl:914
+#: lib/choose_repository.tcl:703 lib/choose_repository.tcl:917
+#: lib/choose_repository.tcl:929
 msgid "The 'master' branch has not been initialized."
 msgstr ""
 
-#: lib/choose_repository.tcl:701
+#: lib/choose_repository.tcl:716
 msgid "Hardlinks are unavailable.  Falling back to copying."
 msgstr ""
 
-#: lib/choose_repository.tcl:713
+#: lib/choose_repository.tcl:728
 #, tcl-format
 msgid "Cloning from %s"
 msgstr ""
 
-#: lib/choose_repository.tcl:744
+#: lib/choose_repository.tcl:759
 msgid "Copying objects"
 msgstr ""
 
-#: lib/choose_repository.tcl:745
+#: lib/choose_repository.tcl:760
 msgid "KiB"
 msgstr ""
 
-#: lib/choose_repository.tcl:769
+#: lib/choose_repository.tcl:784
 #, tcl-format
 msgid "Unable to copy object: %s"
 msgstr ""
 
-#: lib/choose_repository.tcl:779
+#: lib/choose_repository.tcl:794
 msgid "Linking objects"
 msgstr ""
 
-#: lib/choose_repository.tcl:780
+#: lib/choose_repository.tcl:795
 msgid "objects"
 msgstr ""
 
-#: lib/choose_repository.tcl:788
+#: lib/choose_repository.tcl:803
 #, tcl-format
 msgid "Unable to hardlink object: %s"
 msgstr ""
 
-#: lib/choose_repository.tcl:843
+#: lib/choose_repository.tcl:858
 msgid "Cannot fetch branches and objects.  See console output for details."
 msgstr ""
 
-#: lib/choose_repository.tcl:854
+#: lib/choose_repository.tcl:869
 msgid "Cannot fetch tags.  See console output for details."
 msgstr ""
 
-#: lib/choose_repository.tcl:878
+#: lib/choose_repository.tcl:893
 msgid "Cannot determine HEAD.  See console output for details."
 msgstr ""
 
-#: lib/choose_repository.tcl:887
+#: lib/choose_repository.tcl:902
 #, tcl-format
 msgid "Unable to cleanup %s"
 msgstr ""
 
-#: lib/choose_repository.tcl:893
+#: lib/choose_repository.tcl:908
 msgid "Clone failed."
 msgstr ""
 
-#: lib/choose_repository.tcl:900
+#: lib/choose_repository.tcl:915
 msgid "No default branch obtained."
 msgstr ""
 
-#: lib/choose_repository.tcl:911
+#: lib/choose_repository.tcl:926
 #, tcl-format
 msgid "Cannot resolve %s as a commit."
 msgstr ""
 
-#: lib/choose_repository.tcl:923
+#: lib/choose_repository.tcl:938
 msgid "Creating working directory"
 msgstr ""
 
-#: lib/choose_repository.tcl:924 lib/index.tcl:65 lib/index.tcl:127
-#: lib/index.tcl:193
+#: lib/choose_repository.tcl:939 lib/index.tcl:67 lib/index.tcl:130
+#: lib/index.tcl:198
 msgid "files"
 msgstr ""
 
-#: lib/choose_repository.tcl:953
+#: lib/choose_repository.tcl:968
 msgid "Initial file checkout failed."
 msgstr ""
 
-#: lib/choose_repository.tcl:969
+#: lib/choose_repository.tcl:1011
 msgid "Open"
 msgstr ""
 
-#: lib/choose_repository.tcl:979
+#: lib/choose_repository.tcl:1021
 msgid "Repository:"
 msgstr ""
 
-#: lib/choose_repository.tcl:1027
+#: lib/choose_repository.tcl:1072
 #, tcl-format
 msgid "Failed to open repository %s:"
 msgstr ""
@@ -1154,19 +1283,24 @@ msgid ""
 "current merge activity.\n"
 msgstr ""
 
-#: lib/commit.tcl:49
+#: lib/commit.tcl:48
 msgid "Error loading commit data for amend:"
 msgstr ""
 
-#: lib/commit.tcl:76
+#: lib/commit.tcl:75
 msgid "Unable to obtain your identity:"
 msgstr ""
 
-#: lib/commit.tcl:81
+#: lib/commit.tcl:80
 msgid "Invalid GIT_COMMITTER_IDENT:"
 msgstr ""
 
-#: lib/commit.tcl:133
+#: lib/commit.tcl:129
+#, tcl-format
+msgid "warning: Tcl does not support encoding '%s'."
+msgstr ""
+
+#: lib/commit.tcl:149
 msgid ""
 "Last scanned state does not match repository state.\n"
 "\n"
@@ -1176,7 +1310,7 @@ msgid ""
 "The rescan will be automatically started now.\n"
 msgstr ""
 
-#: lib/commit.tcl:154
+#: lib/commit.tcl:172
 #, tcl-format
 msgid ""
 "Unmerged files cannot be committed.\n"
@@ -1185,7 +1319,7 @@ msgid ""
 "before committing.\n"
 msgstr ""
 
-#: lib/commit.tcl:162
+#: lib/commit.tcl:180
 #, tcl-format
 msgid ""
 "Unknown file state %s detected.\n"
@@ -1193,14 +1327,14 @@ msgid ""
 "File %s cannot be committed by this program.\n"
 msgstr ""
 
-#: lib/commit.tcl:170
+#: lib/commit.tcl:188
 msgid ""
 "No changes to commit.\n"
 "\n"
 "You must stage at least 1 file before you can commit.\n"
 msgstr ""
 
-#: lib/commit.tcl:183
+#: lib/commit.tcl:203
 msgid ""
 "Please supply a commit message.\n"
 "\n"
@@ -1211,45 +1345,40 @@ msgid ""
 "- Remaining lines: Describe why this change is good.\n"
 msgstr ""
 
-#: lib/commit.tcl:207
-#, tcl-format
-msgid "warning: Tcl does not support encoding '%s'."
-msgstr ""
-
-#: lib/commit.tcl:221
+#: lib/commit.tcl:234
 msgid "Calling pre-commit hook..."
 msgstr ""
 
-#: lib/commit.tcl:236
+#: lib/commit.tcl:249
 msgid "Commit declined by pre-commit hook."
 msgstr ""
 
-#: lib/commit.tcl:259
+#: lib/commit.tcl:272
 msgid "Calling commit-msg hook..."
 msgstr ""
 
-#: lib/commit.tcl:274
+#: lib/commit.tcl:287
 msgid "Commit declined by commit-msg hook."
 msgstr ""
 
-#: lib/commit.tcl:287
+#: lib/commit.tcl:300
 msgid "Committing changes..."
 msgstr ""
 
-#: lib/commit.tcl:303
+#: lib/commit.tcl:316
 msgid "write-tree failed:"
 msgstr ""
 
-#: lib/commit.tcl:304 lib/commit.tcl:348 lib/commit.tcl:368
+#: lib/commit.tcl:317 lib/commit.tcl:361 lib/commit.tcl:382
 msgid "Commit failed."
 msgstr ""
 
-#: lib/commit.tcl:321
+#: lib/commit.tcl:334
 #, tcl-format
 msgid "Commit %s appears to be corrupt"
 msgstr ""
 
-#: lib/commit.tcl:326
+#: lib/commit.tcl:339
 msgid ""
 "No changes to commit.\n"
 "\n"
@@ -1258,19 +1387,19 @@ msgid ""
 "A rescan will be automatically started now.\n"
 msgstr ""
 
-#: lib/commit.tcl:333
+#: lib/commit.tcl:346
 msgid "No changes to commit."
 msgstr ""
 
-#: lib/commit.tcl:347
+#: lib/commit.tcl:360
 msgid "commit-tree failed:"
 msgstr ""
 
-#: lib/commit.tcl:367
+#: lib/commit.tcl:381
 msgid "update-ref failed:"
 msgstr ""
 
-#: lib/commit.tcl:454
+#: lib/commit.tcl:469
 #, tcl-format
 msgid "Created commit %s: %s"
 msgstr ""
@@ -1323,13 +1452,13 @@ msgstr ""
 msgid "Verifying the object database with fsck-objects"
 msgstr ""
 
-#: lib/database.tcl:108
+#: lib/database.tcl:107
 #, tcl-format
 msgid ""
 "This repository currently has approximately %i loose objects.\n"
 "\n"
 "To maintain optimal performance it is strongly recommended that you compress "
-"the database when more than %i loose objects exist.\n"
+"the database.\n"
 "\n"
 "Compress the database now?"
 msgstr ""
@@ -1339,7 +1468,7 @@ msgstr ""
 msgid "Invalid date from Git: %s"
 msgstr ""
 
-#: lib/diff.tcl:44
+#: lib/diff.tcl:64
 #, tcl-format
 msgid ""
 "No differences detected.\n"
@@ -1353,46 +1482,90 @@ msgid ""
 "the same state."
 msgstr ""
 
-#: lib/diff.tcl:83
+#: lib/diff.tcl:104
 #, tcl-format
 msgid "Loading diff of %s..."
 msgstr ""
 
-#: lib/diff.tcl:116 lib/diff.tcl:190
+#: lib/diff.tcl:125
+msgid ""
+"LOCAL: deleted\n"
+"REMOTE:\n"
+msgstr ""
+
+#: lib/diff.tcl:130
+msgid ""
+"REMOTE: deleted\n"
+"LOCAL:\n"
+msgstr ""
+
+#: lib/diff.tcl:137
+msgid "LOCAL:\n"
+msgstr ""
+
+#: lib/diff.tcl:140
+msgid "REMOTE:\n"
+msgstr ""
+
+#: lib/diff.tcl:202 lib/diff.tcl:319
 #, tcl-format
 msgid "Unable to display %s"
 msgstr ""
 
-#: lib/diff.tcl:117
+#: lib/diff.tcl:203
 msgid "Error loading file:"
 msgstr ""
 
-#: lib/diff.tcl:124
+#: lib/diff.tcl:210
 msgid "Git Repository (subproject)"
 msgstr ""
 
-#: lib/diff.tcl:136
+#: lib/diff.tcl:222
 msgid "* Binary file (not showing content)."
 msgstr ""
 
-#: lib/diff.tcl:191
-msgid "Error loading diff:"
+#: lib/diff.tcl:227
+#, tcl-format
+msgid ""
+"* Untracked file is %d bytes.\n"
+"* Showing only first %d bytes.\n"
 msgstr ""
 
-#: lib/diff.tcl:313
+#: lib/diff.tcl:233
+#, tcl-format
+msgid ""
+"\n"
+"* Untracked file clipped here by %s.\n"
+"* To see the entire file, use an external editor.\n"
+msgstr ""
+
+#: lib/diff.tcl:482
 msgid "Failed to unstage selected hunk."
 msgstr ""
 
-#: lib/diff.tcl:320
+#: lib/diff.tcl:489
 msgid "Failed to stage selected hunk."
 msgstr ""
 
-#: lib/diff.tcl:386
+#: lib/diff.tcl:568
 msgid "Failed to unstage selected line."
 msgstr ""
 
-#: lib/diff.tcl:394
+#: lib/diff.tcl:576
 msgid "Failed to stage selected line."
+msgstr ""
+
+#: lib/encoding.tcl:443
+msgid "Default"
+msgstr ""
+
+#: lib/encoding.tcl:448
+#, tcl-format
+msgid "System (%s)"
+msgstr ""
+
+#: lib/encoding.tcl:459 lib/encoding.tcl:465
+msgid "Other"
 msgstr ""
 
 #: lib/error.tcl:20 lib/error.tcl:114
@@ -1415,13 +1588,13 @@ msgstr ""
 msgid "Index Error"
 msgstr ""
 
-#: lib/index.tcl:21
+#: lib/index.tcl:17
 msgid ""
 "Updating the Git index failed.  A rescan will be automatically started to "
 "resynchronize git-gui."
 msgstr ""
 
-#: lib/index.tcl:27
+#: lib/index.tcl:28
 msgid "Continue"
 msgstr ""
 
@@ -1429,36 +1602,45 @@ msgstr ""
 msgid "Unlock Index"
 msgstr ""
 
-#: lib/index.tcl:282
+#: lib/index.tcl:289
 #, tcl-format
 msgid "Unstaging %s from commit"
 msgstr ""
 
-#: lib/index.tcl:313
+#: lib/index.tcl:328
 msgid "Ready to commit."
 msgstr ""
 
-#: lib/index.tcl:326
+#: lib/index.tcl:341
 #, tcl-format
 msgid "Adding %s"
 msgstr ""
 
-#: lib/index.tcl:381
+#: lib/index.tcl:398
 #, tcl-format
 msgid "Revert changes in file %s?"
 msgstr ""
 
-#: lib/index.tcl:383
+#: lib/index.tcl:400
 #, tcl-format
 msgid "Revert changes in these %i files?"
 msgstr ""
 
-#: lib/index.tcl:391
+#: lib/index.tcl:408
 msgid "Any unstaged changes will be permanently lost by the revert."
 msgstr ""
 
-#: lib/index.tcl:394
+#: lib/index.tcl:411
 msgid "Do Nothing"
+msgstr ""
+
+#: lib/index.tcl:429
+msgid "Reverting selected files"
+msgstr ""
+
+#: lib/index.tcl:433
+#, tcl-format
+msgid "Reverting %s"
 msgstr ""
 
 #: lib/merge.tcl:13
@@ -1478,7 +1660,7 @@ msgid ""
 "The rescan will be automatically started now.\n"
 msgstr ""
 
-#: lib/merge.tcl:44
+#: lib/merge.tcl:45
 #, tcl-format
 msgid ""
 "You are in the middle of a conflicted merge.\n"
@@ -1489,7 +1671,7 @@ msgid ""
 "merge.  Only then can you begin another merge.\n"
 msgstr ""
 
-#: lib/merge.tcl:54
+#: lib/merge.tcl:55
 #, tcl-format
 msgid ""
 "You are in the middle of a change.\n"
@@ -1500,41 +1682,41 @@ msgid ""
 "will help you abort a failed merge, should the need arise.\n"
 msgstr ""
 
-#: lib/merge.tcl:106
+#: lib/merge.tcl:107
 #, tcl-format
 msgid "%s of %s"
 msgstr ""
 
-#: lib/merge.tcl:119
+#: lib/merge.tcl:120
 #, tcl-format
 msgid "Merging %s and %s..."
 msgstr ""
 
-#: lib/merge.tcl:130
+#: lib/merge.tcl:131
 msgid "Merge completed successfully."
 msgstr ""
 
-#: lib/merge.tcl:132
+#: lib/merge.tcl:133
 msgid "Merge failed.  Conflict resolution is required."
 msgstr ""
 
-#: lib/merge.tcl:157
+#: lib/merge.tcl:158
 #, tcl-format
 msgid "Merge Into %s"
 msgstr ""
 
-#: lib/merge.tcl:176
+#: lib/merge.tcl:177
 msgid "Revision To Merge"
 msgstr ""
 
-#: lib/merge.tcl:211
+#: lib/merge.tcl:212
 msgid ""
 "Cannot abort while amending.\n"
 "\n"
 "You must finish amending this commit.\n"
 msgstr ""
 
-#: lib/merge.tcl:221
+#: lib/merge.tcl:222
 msgid ""
 "Abort merge?\n"
 "\n"
@@ -1543,7 +1725,7 @@ msgid ""
 "Continue with aborting the current merge?"
 msgstr ""
 
-#: lib/merge.tcl:227
+#: lib/merge.tcl:228
 msgid ""
 "Reset changes?\n"
 "\n"
@@ -1552,142 +1734,325 @@ msgid ""
 "Continue with resetting the current changes?"
 msgstr ""
 
-#: lib/merge.tcl:238
+#: lib/merge.tcl:239
 msgid "Aborting"
 msgstr ""
 
-#: lib/merge.tcl:238
+#: lib/merge.tcl:239
 msgid "files reset"
 msgstr ""
 
-#: lib/merge.tcl:266
+#: lib/merge.tcl:267
 msgid "Abort failed."
 msgstr ""
 
-#: lib/merge.tcl:268
+#: lib/merge.tcl:269
 msgid "Abort completed.  Ready."
 msgstr ""
 
-#: lib/option.tcl:95
+#: lib/mergetool.tcl:8
+msgid "Force resolution to the base version?"
+msgstr ""
+
+#: lib/mergetool.tcl:9
+msgid "Force resolution to this branch?"
+msgstr ""
+
+#: lib/mergetool.tcl:10
+msgid "Force resolution to the other branch?"
+msgstr ""
+
+#: lib/mergetool.tcl:14
+#, tcl-format
+msgid ""
+"Note that the diff shows only conflicting changes.\n"
+"\n"
+"%s will be overwritten.\n"
+"\n"
+"This operation can be undone only by restarting the merge."
+msgstr ""
+
+#: lib/mergetool.tcl:45
+#, tcl-format
+msgid "File %s seems to have unresolved conflicts, still stage?"
+msgstr ""
+
+#: lib/mergetool.tcl:60
+#, tcl-format
+msgid "Adding resolution for %s"
+msgstr ""
+
+#: lib/mergetool.tcl:141
+msgid "Cannot resolve deletion or link conflicts using a tool"
+msgstr ""
+
+#: lib/mergetool.tcl:146
+msgid "Conflict file does not exist"
+msgstr ""
+
+#: lib/mergetool.tcl:264
+#, tcl-format
+msgid "Not a GUI merge tool: '%s'"
+msgstr ""
+
+#: lib/mergetool.tcl:268
+#, tcl-format
+msgid "Unsupported merge tool '%s'"
+msgstr ""
+
+#: lib/mergetool.tcl:303
+msgid "Merge tool is already running, terminate it?"
+msgstr ""
+
+#: lib/mergetool.tcl:323
+#, tcl-format
+msgid ""
+"Error retrieving versions:\n"
+"%s"
+msgstr ""
+
+#: lib/mergetool.tcl:343
+#, tcl-format
+msgid ""
+"Could not start the merge tool:\n"
+"\n"
+"%s"
+msgstr ""
+
+#: lib/mergetool.tcl:347
+msgid "Running merge tool..."
+msgstr ""
+
+#: lib/mergetool.tcl:375 lib/mergetool.tcl:383
+msgid "Merge tool failed."
+msgstr ""
+
+#: lib/option.tcl:11
+#, tcl-format
+msgid "Invalid global encoding '%s'"
+msgstr ""
+
+#: lib/option.tcl:19
+#, tcl-format
+msgid "Invalid repo encoding '%s'"
+msgstr ""
+
+#: lib/option.tcl:117
 msgid "Restore Defaults"
 msgstr ""
 
-#: lib/option.tcl:99
+#: lib/option.tcl:121
 msgid "Save"
 msgstr ""
 
-#: lib/option.tcl:109
+#: lib/option.tcl:131
 #, tcl-format
 msgid "%s Repository"
 msgstr ""
 
-#: lib/option.tcl:110
+#: lib/option.tcl:132
 msgid "Global (All Repositories)"
 msgstr ""
 
-#: lib/option.tcl:116
+#: lib/option.tcl:138
 msgid "User Name"
 msgstr ""
 
-#: lib/option.tcl:117
+#: lib/option.tcl:139
 msgid "Email Address"
 msgstr ""
 
-#: lib/option.tcl:119
+#: lib/option.tcl:141
 msgid "Summarize Merge Commits"
 msgstr ""
 
-#: lib/option.tcl:120
+#: lib/option.tcl:142
 msgid "Merge Verbosity"
 msgstr ""
 
-#: lib/option.tcl:121
+#: lib/option.tcl:143
 msgid "Show Diffstat After Merge"
 msgstr ""
 
-#: lib/option.tcl:123
+#: lib/option.tcl:144
+msgid "Use Merge Tool"
+msgstr ""
+
+#: lib/option.tcl:146
 msgid "Trust File Modification Timestamps"
 msgstr ""
 
-#: lib/option.tcl:124
+#: lib/option.tcl:147
 msgid "Prune Tracking Branches During Fetch"
 msgstr ""
 
-#: lib/option.tcl:125
+#: lib/option.tcl:148
 msgid "Match Tracking Branches"
 msgstr ""
 
-#: lib/option.tcl:126
+#: lib/option.tcl:149
 msgid "Blame Copy Only On Changed Files"
 msgstr ""
 
-#: lib/option.tcl:127
+#: lib/option.tcl:150
 msgid "Minimum Letters To Blame Copy On"
 msgstr ""
 
-#: lib/option.tcl:128
+#: lib/option.tcl:151
+msgid "Blame History Context Radius (days)"
+msgstr ""
+
+#: lib/option.tcl:152
 msgid "Number of Diff Context Lines"
 msgstr ""
 
-#: lib/option.tcl:129
+#: lib/option.tcl:153
 msgid "Commit Message Text Width"
 msgstr ""
 
-#: lib/option.tcl:130
+#: lib/option.tcl:154
 msgid "New Branch Name Template"
 msgstr ""
 
-#: lib/option.tcl:194
+#: lib/option.tcl:155
+msgid "Default File Contents Encoding"
+msgstr ""
+
+#: lib/option.tcl:203
+msgid "Change"
+msgstr ""
+
+#: lib/option.tcl:230
 msgid "Spelling Dictionary:"
 msgstr ""
 
-#: lib/option.tcl:218
+#: lib/option.tcl:254
 msgid "Change Font"
 msgstr ""
 
-#: lib/option.tcl:222
+#: lib/option.tcl:258
 #, tcl-format
 msgid "Choose %s"
 msgstr ""
 
-#: lib/option.tcl:228
+#: lib/option.tcl:264
 msgid "pt."
 msgstr ""
 
-#: lib/option.tcl:242
+#: lib/option.tcl:278
 msgid "Preferences"
 msgstr ""
 
-#: lib/option.tcl:277
+#: lib/option.tcl:314
 msgid "Failed to completely save options:"
 msgstr ""
 
-#: lib/remote.tcl:165
+#: lib/remote.tcl:163
+msgid "Remove Remote"
+msgstr ""
+
+#: lib/remote.tcl:168
 msgid "Prune from"
 msgstr ""
 
-#: lib/remote.tcl:170
+#: lib/remote.tcl:173
 msgid "Fetch from"
 msgstr ""
 
-#: lib/remote.tcl:213
+#: lib/remote.tcl:215
 msgid "Push to"
 msgstr ""
 
+#: lib/remote_add.tcl:19
+msgid "Add Remote"
+msgstr ""
+
+#: lib/remote_add.tcl:24
+msgid "Add New Remote"
+msgstr ""
+
+#: lib/remote_add.tcl:28 lib/tools_dlg.tcl:36
+msgid "Add"
+msgstr ""
+
+#: lib/remote_add.tcl:37
+msgid "Remote Details"
+msgstr ""
+
+#: lib/remote_add.tcl:50
+msgid "Location:"
+msgstr ""
+
+#: lib/remote_add.tcl:62
+msgid "Further Action"
+msgstr ""
+
+#: lib/remote_add.tcl:65
+msgid "Fetch Immediately"
+msgstr ""
+
+#: lib/remote_add.tcl:71
+msgid "Initialize Remote Repository and Push"
+msgstr ""
+
+#: lib/remote_add.tcl:77
+msgid "Do Nothing Else Now"
+msgstr ""
+
+#: lib/remote_add.tcl:101
+msgid "Please supply a remote name."
+msgstr ""
+
+#: lib/remote_add.tcl:114
+#, tcl-format
+msgid "'%s' is not an acceptable remote name."
+msgstr ""
+
+#: lib/remote_add.tcl:125
+#, tcl-format
+msgid "Failed to add remote '%s' of location '%s'."
+msgstr ""
+
+#: lib/remote_add.tcl:133 lib/transport.tcl:6
+#, tcl-format
+msgid "fetch %s"
+msgstr ""
+
+#: lib/remote_add.tcl:134
+#, tcl-format
+msgid "Fetching the %s"
+msgstr ""
+
+#: lib/remote_add.tcl:157
+#, tcl-format
+msgid "Do not know how to initialize repository at location '%s'."
+msgstr ""
+
+#: lib/remote_add.tcl:163 lib/transport.tcl:25 lib/transport.tcl:63
+#: lib/transport.tcl:81
+#, tcl-format
+msgid "push %s"
+msgstr ""
+
+#: lib/remote_add.tcl:164
+#, tcl-format
+msgid "Setting up the %s (at %s)"
+msgstr ""
+
 #: lib/remote_branch_delete.tcl:29 lib/remote_branch_delete.tcl:34
-msgid "Delete Remote Branch"
+msgid "Delete Branch Remotely"
 msgstr ""
 
 #: lib/remote_branch_delete.tcl:47
 msgid "From Repository"
 msgstr ""
 
-#: lib/remote_branch_delete.tcl:50 lib/transport.tcl:123
+#: lib/remote_branch_delete.tcl:50 lib/transport.tcl:134
 msgid "Remote:"
 msgstr ""
 
-#: lib/remote_branch_delete.tcl:66 lib/transport.tcl:138
-msgid "Arbitrary URL:"
+#: lib/remote_branch_delete.tcl:66 lib/transport.tcl:149
+msgid "Arbitrary Location:"
 msgstr ""
 
 #: lib/remote_branch_delete.tcl:84
@@ -1700,10 +2065,6 @@ msgstr ""
 
 #: lib/remote_branch_delete.tcl:111
 msgid "Merged Into:"
-msgstr ""
-
-#: lib/remote_branch_delete.tcl:119
-msgid "Always (Do not perform merge checks)"
 msgstr ""
 
 #: lib/remote_branch_delete.tcl:152
@@ -1729,32 +2090,41 @@ msgstr ""
 msgid "Please select one or more branches to delete."
 msgstr ""
 
-#: lib/remote_branch_delete.tcl:216
-msgid ""
-"Recovering deleted branches is difficult.\n"
-"\n"
-"Delete the selected branches?"
-msgstr ""
-
 #: lib/remote_branch_delete.tcl:226
 #, tcl-format
 msgid "Deleting branches from %s"
 msgstr ""
 
-#: lib/remote_branch_delete.tcl:286
+#: lib/remote_branch_delete.tcl:292
 msgid "No repository selected."
 msgstr ""
 
-#: lib/remote_branch_delete.tcl:291
+#: lib/remote_branch_delete.tcl:297
 #, tcl-format
 msgid "Scanning %s..."
 msgstr ""
 
-#: lib/shortcut.tcl:20 lib/shortcut.tcl:61
+#: lib/search.tcl:21
+msgid "Find:"
+msgstr ""
+
+#: lib/search.tcl:23
+msgid "Next"
+msgstr ""
+
+#: lib/search.tcl:24
+msgid "Prev"
+msgstr ""
+
+#: lib/search.tcl:25
+msgid "Case-Sensitive"
+msgstr ""
+
+#: lib/shortcut.tcl:21 lib/shortcut.tcl:62
 msgid "Cannot write shortcut:"
 msgstr ""
 
-#: lib/shortcut.tcl:136
+#: lib/shortcut.tcl:137
 msgid "Cannot write icon:"
 msgstr ""
 
@@ -1787,12 +2157,58 @@ msgstr ""
 msgid "No Suggestions"
 msgstr ""
 
-#: lib/spellcheck.tcl:387
+#: lib/spellcheck.tcl:388
 msgid "Unexpected EOF from spell checker"
 msgstr ""
 
-#: lib/spellcheck.tcl:391
+#: lib/spellcheck.tcl:392
 msgid "Spell Checker Failed"
+msgstr ""
+
+#: lib/sshkey.tcl:31
+msgid "No keys found."
+msgstr ""
+
+#: lib/sshkey.tcl:34
+#, tcl-format
+msgid "Found a public key in: %s"
+msgstr ""
+
+#: lib/sshkey.tcl:40
+msgid "Generate Key"
+msgstr ""
+
+#: lib/sshkey.tcl:56
+msgid "Copy To Clipboard"
+msgstr ""
+
+#: lib/sshkey.tcl:70
+msgid "Your OpenSSH Public Key"
+msgstr ""
+
+#: lib/sshkey.tcl:78
+msgid "Generating..."
+msgstr ""
+
+#: lib/sshkey.tcl:84
+#, tcl-format
+msgid ""
+"Could not start ssh-keygen:\n"
+"\n"
+"%s"
+msgstr ""
+
+#: lib/sshkey.tcl:111
+msgid "Generation failed."
+msgstr ""
+
+#: lib/sshkey.tcl:118
+msgid "Generation succeded, but no keys found."
+msgstr ""
+
+#: lib/sshkey.tcl:121
+#, tcl-format
+msgid "Your key is in: %s"
 msgstr ""
 
 #: lib/status_bar.tcl:83
@@ -1800,9 +2216,123 @@ msgstr ""
 msgid "%s ... %*i of %*i %s (%3i%%)"
 msgstr ""
 
-#: lib/transport.tcl:6
+#: lib/tools.tcl:75
 #, tcl-format
-msgid "fetch %s"
+msgid "Running %s requires a selected file."
+msgstr ""
+
+#: lib/tools.tcl:90
+#, tcl-format
+msgid "Are you sure you want to run %s?"
+msgstr ""
+
+#: lib/tools.tcl:110
+#, tcl-format
+msgid "Tool: %s"
+msgstr ""
+
+#: lib/tools.tcl:111
+#, tcl-format
+msgid "Running: %s"
+msgstr ""
+
+#: lib/tools.tcl:149
+#, tcl-format
+msgid "Tool completed successfully: %s"
+msgstr ""
+
+#: lib/tools.tcl:151
+#, tcl-format
+msgid "Tool failed: %s"
+msgstr ""
+
+#: lib/tools_dlg.tcl:22
+msgid "Add Tool"
+msgstr ""
+
+#: lib/tools_dlg.tcl:28
+msgid "Add New Tool Command"
+msgstr ""
+
+#: lib/tools_dlg.tcl:33
+msgid "Add globally"
+msgstr ""
+
+#: lib/tools_dlg.tcl:45
+msgid "Tool Details"
+msgstr ""
+
+#: lib/tools_dlg.tcl:48
+msgid "Use '/' separators to create a submenu tree:"
+msgstr ""
+
+#: lib/tools_dlg.tcl:61
+msgid "Command:"
+msgstr ""
+
+#: lib/tools_dlg.tcl:74
+msgid "Show a dialog before running"
+msgstr ""
+
+#: lib/tools_dlg.tcl:80
+msgid "Ask the user to select a revision (sets $REVISION)"
+msgstr ""
+
+#: lib/tools_dlg.tcl:85
+msgid "Ask the user for additional arguments (sets $ARGS)"
+msgstr ""
+
+#: lib/tools_dlg.tcl:92
+msgid "Don't show the command output window"
+msgstr ""
+
+#: lib/tools_dlg.tcl:97
+msgid "Run only if a diff is selected ($FILENAME not empty)"
+msgstr ""
+
+#: lib/tools_dlg.tcl:121
+msgid "Please supply a name for the tool."
+msgstr ""
+
+#: lib/tools_dlg.tcl:129
+#, tcl-format
+msgid "Tool '%s' already exists."
+msgstr ""
+
+#: lib/tools_dlg.tcl:151
+#, tcl-format
+msgid ""
+"Could not add tool:\n"
+"%s"
+msgstr ""
+
+#: lib/tools_dlg.tcl:190
+msgid "Remove Tool"
+msgstr ""
+
+#: lib/tools_dlg.tcl:196
+msgid "Remove Tool Commands"
+msgstr ""
+
+#: lib/tools_dlg.tcl:200
+msgid "Remove"
+msgstr ""
+
+#: lib/tools_dlg.tcl:236
+msgid "(Blue denotes repository-local tools)"
+msgstr ""
+
+#: lib/tools_dlg.tcl:297
+#, tcl-format
+msgid "Run Command: %s"
+msgstr ""
+
+#: lib/tools_dlg.tcl:311
+msgid "Arguments"
+msgstr ""
+
+#: lib/tools_dlg.tcl:348
+msgid "OK"
 msgstr ""
 
 #: lib/transport.tcl:7
@@ -1820,45 +2350,45 @@ msgstr ""
 msgid "Pruning tracking branches deleted from %s"
 msgstr ""
 
-#: lib/transport.tcl:25 lib/transport.tcl:71
-#, tcl-format
-msgid "push %s"
-msgstr ""
-
 #: lib/transport.tcl:26
 #, tcl-format
 msgid "Pushing changes to %s"
 msgstr ""
 
-#: lib/transport.tcl:72
+#: lib/transport.tcl:64
+#, tcl-format
+msgid "Mirroring to %s"
+msgstr ""
+
+#: lib/transport.tcl:82
 #, tcl-format
 msgid "Pushing %s %s to %s"
 msgstr ""
 
-#: lib/transport.tcl:89
+#: lib/transport.tcl:100
 msgid "Push Branches"
 msgstr ""
 
-#: lib/transport.tcl:103
+#: lib/transport.tcl:114
 msgid "Source Branches"
 msgstr ""
 
-#: lib/transport.tcl:120
+#: lib/transport.tcl:131
 msgid "Destination Repository"
 msgstr ""
 
-#: lib/transport.tcl:158
+#: lib/transport.tcl:169
 msgid "Transfer Options"
 msgstr ""
 
-#: lib/transport.tcl:160
+#: lib/transport.tcl:171
 msgid "Force overwrite existing branch (may discard changes)"
 msgstr ""
 
-#: lib/transport.tcl:164
+#: lib/transport.tcl:175
 msgid "Use thin pack (for slow network connections)"
 msgstr ""
 
-#: lib/transport.tcl:168
+#: lib/transport.tcl:179
 msgid "Include tags"
 msgstr ""

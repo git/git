@@ -107,4 +107,73 @@ test_expect_success 'clone --mirror does not repeat tags' '
 
 '
 
+test_expect_success 'clone to destination with trailing /' '
+
+	git clone src target-1/ &&
+	T=$( cd target-1 && git rev-parse HEAD ) &&
+	S=$( cd src && git rev-parse HEAD ) &&
+	test "$T" = "$S"
+
+'
+
+test_expect_success 'clone to destination with extra trailing /' '
+
+	git clone src target-2/// &&
+	T=$( cd target-2 && git rev-parse HEAD ) &&
+	S=$( cd src && git rev-parse HEAD ) &&
+	test "$T" = "$S"
+
+'
+
+test_expect_success 'clone to an existing empty directory' '
+	mkdir target-3 &&
+	git clone src target-3 &&
+	T=$( cd target-3 && git rev-parse HEAD ) &&
+	S=$( cd src && git rev-parse HEAD ) &&
+	test "$T" = "$S"
+'
+
+test_expect_success 'clone to an existing non-empty directory' '
+	mkdir target-4 &&
+	>target-4/Fakefile &&
+	test_must_fail git clone src target-4
+'
+
+test_expect_success 'clone to an existing path' '
+	>target-5 &&
+	test_must_fail git clone src target-5
+'
+
+test_expect_success 'clone a void' '
+	mkdir src-0 &&
+	(
+		cd src-0 && git init
+	) &&
+	git clone "file://$(pwd)/src-0" target-6 2>err-6 &&
+	! grep "fatal:" err-6 &&
+	(
+		cd src-0 && test_commit A
+	) &&
+	git clone "file://$(pwd)/src-0" target-7 2>err-7 &&
+	! grep "fatal:" err-7 &&
+	# There is no reason to insist they are bit-for-bit
+	# identical, but this test should suffice for now.
+	test_cmp target-6/.git/config target-7/.git/config
+'
+
+test_expect_success 'clone respects global branch.autosetuprebase' '
+	(
+		HOME=$(pwd) &&
+		export HOME &&
+		test_config="$HOME/.gitconfig" &&
+		unset GIT_CONFIG_NOGLOBAL &&
+		git config -f "$test_config" branch.autosetuprebase remote &&
+		rm -fr dst &&
+		git clone src dst &&
+		cd dst &&
+		actual="z$(git config branch.master.rebase)" &&
+		test ztrue = $actual
+	)
+'
+
 test_done

@@ -70,9 +70,11 @@ static int builtin_diff_b_f(struct rev_info *revs,
 		usage(builtin_diff_usage);
 
 	if (lstat(path, &st))
-		die("'%s': %s", path, strerror(errno));
+		die_errno("failed to stat '%s'", path);
 	if (!(S_ISREG(st.st_mode) || S_ISLNK(st.st_mode)))
 		die("'%s': not a regular file or symlink", path);
+
+	diff_set_mnemonic_prefix(&revs->diffopt, "o/", "w/");
 
 	if (blob[0].mode == S_IFINVALID)
 		blob[0].mode = canon_mode(st.st_mode);
@@ -116,12 +118,14 @@ static int builtin_diff_index(struct rev_info *revs,
 	int cached = 0;
 	while (1 < argc) {
 		const char *arg = argv[1];
-		if (!strcmp(arg, "--cached"))
+		if (!strcmp(arg, "--cached") || !strcmp(arg, "--staged"))
 			cached = 1;
 		else
 			usage(builtin_diff_usage);
 		argv++; argc--;
 	}
+	if (!cached)
+		setup_work_tree();
 	/*
 	 * Make sure there is one revision (i.e. pending object),
 	 * and there is no revision filtering parameters.
@@ -130,8 +134,8 @@ static int builtin_diff_index(struct rev_info *revs,
 	    revs->max_count != -1 || revs->min_age != -1 ||
 	    revs->max_age != -1)
 		usage(builtin_diff_usage);
-	if (read_cache() < 0) {
-		perror("read_cache");
+	if (read_cache_preload(revs->diffopt.paths) < 0) {
+		perror("read_cache_preload");
 		return -1;
 	}
 	return run_diff_index(revs, cached);
@@ -173,10 +177,8 @@ static int builtin_diff_combined(struct rev_info *revs,
 	if (!revs->dense_combined_merges && !revs->combine_merges)
 		revs->dense_combined_merges = revs->combine_merges = 1;
 	parent = xmalloc(ents * sizeof(*parent));
-	/* Again, the revs are all reverse */
 	for (i = 0; i < ents; i++)
-		hashcpy((unsigned char *)(parent + i),
-			ent[ents - 1 - i].item->sha1);
+		hashcpy((unsigned char *)(parent + i), ent[i].item->sha1);
 	diff_tree_combined(parent[0], parent + 1, ents - 1,
 			   revs->dense_combined_merges, revs);
 	return 0;
@@ -216,17 +218,26 @@ static int builtin_diff_files(struct rev_info *revs, int argc, const char **argv
 			revs->max_count = 3;
 		else if (!strcmp(argv[1], "-q"))
 			options |= DIFF_SILENT_ON_REMOVED;
+		else if (!strcmp(argv[1], "-h"))
+			usage(builtin_diff_usage);
 		else
 			return error("invalid option: %s", argv[1]);
 		argv++; argc--;
 	}
 
-	if (revs->max_count == -1 &&
+	/*
+	 * "diff --base" should not combine merges because it was not
+	 * asked to.  "diff -c" should not densify (if the user wants
+	 * dense one, --cc can be explicitly asked for, or just rely
+	 * on the default).
+	 */
+	if (revs->max_count == -1 && !revs->combine_merges &&
 	    (revs->diffopt.output_format & DIFF_FORMAT_PATCH))
 		revs->combine_merges = revs->dense_combined_merges = 1;
 
-	if (read_cache() < 0) {
-		perror("read_cache");
+	setup_work_tree();
+	if (read_cache_preload(revs->diffopt.paths) < 0) {
+		perror("read_cache_preload");
 		return -1;
 	}
 	result = run_diff_files(revs, options);
@@ -281,6 +292,10 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 	/* Otherwise, we are doing the usual "git" diff */
 	rev.diffopt.skip_stat_unmatch = !!diff_auto_refresh_index;
 
+	/* Default to let external and textconv be used */
+	DIFF_OPT_SET(&rev.diffopt, ALLOW_EXTERNAL);
+	DIFF_OPT_SET(&rev.diffopt, ALLOW_TEXTCONV);
+
 	if (nongit)
 		die("Not a git repository");
 	argc = setup_revisions(argc, argv, &rev, NULL);
@@ -289,7 +304,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 		if (diff_setup_done(&rev.diffopt) < 0)
 			die("diff_setup_done failed");
 	}
-	DIFF_OPT_SET(&rev.diffopt, ALLOW_EXTERNAL);
+
 	DIFF_OPT_SET(&rev.diffopt, RECURSIVE);
 
 	/*
@@ -310,7 +325,8 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 			const char *arg = argv[i];
 			if (!strcmp(arg, "--"))
 				break;
-			else if (!strcmp(arg, "--cached")) {
+			else if (!strcmp(arg, "--cached") ||
+				 !strcmp(arg, "--staged")) {
 				add_head_to_pending(&rev);
 				if (!rev.pending.nr)
 					die("No HEAD commit to compare with (yet)");

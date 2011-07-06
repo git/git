@@ -7,19 +7,19 @@ test_description='Test the post-checkout hook.'
 . ./test-lib.sh
 
 test_expect_success setup '
-	 echo Data for commit0. >a &&
-	 echo Data for commit0. >b &&
-	 git update-index --add a &&
-	 git update-index --add b &&
-	 tree0=$(git write-tree) &&
-	 commit0=$(echo setup | git commit-tree $tree0) &&
-        git update-ref refs/heads/master $commit0 &&
-	 git-clone ./. clone1 &&
-	 git-clone ./. clone2 &&
-        GIT_DIR=clone2/.git git branch -a new2 &&
-        echo Data for commit1. >clone2/b &&
-	 GIT_DIR=clone2/.git git add clone2/b &&
-	 GIT_DIR=clone2/.git git commit -m new2
+	echo Data for commit0. >a &&
+	echo Data for commit0. >b &&
+	git update-index --add a &&
+	git update-index --add b &&
+	tree0=$(git write-tree) &&
+	commit0=$(echo setup | git commit-tree $tree0) &&
+	git update-ref refs/heads/master $commit0 &&
+	git clone ./. clone1 &&
+	git clone ./. clone2 &&
+	GIT_DIR=clone2/.git git branch new2 &&
+	echo Data for commit1. >clone2/b &&
+	GIT_DIR=clone2/.git git add clone2/b &&
+	GIT_DIR=clone2/.git git commit -m new2
 '
 
 for clone in 1 2; do
@@ -70,5 +70,19 @@ test_expect_success 'post-checkout receives the right args when not switching br
         flag=$(awk "{print \$3}" clone2/.git/post-checkout.args) &&
         test $old = $new -a $flag = 0
 '
+
+if test "$(git config --bool core.filemode)" = true; then
+mkdir -p templates/hooks
+cat >templates/hooks/post-checkout <<'EOF'
+#!/bin/sh
+echo $@ > $GIT_DIR/post-checkout.args
+EOF
+chmod +x templates/hooks/post-checkout
+
+test_expect_success 'post-checkout hook is triggered by clone' '
+	git clone --template=templates . clone3 &&
+	test -f clone3/.git/post-checkout.args
+'
+fi
 
 test_done

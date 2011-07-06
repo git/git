@@ -70,16 +70,17 @@ void stripspace(struct strbuf *sb, int skip_comments)
 
 int cmd_stripspace(int argc, const char **argv, const char *prefix)
 {
-	struct strbuf buf;
+	struct strbuf buf = STRBUF_INIT;
 	int strip_comments = 0;
 
-	if (argc > 1 && (!strcmp(argv[1], "-s") ||
+	if (argc == 2 && (!strcmp(argv[1], "-s") ||
 				!strcmp(argv[1], "--strip-comments")))
 		strip_comments = 1;
+	else if (argc > 1)
+		usage("git stripspace [-s | --strip-comments] < <stream>");
 
-	strbuf_init(&buf, 0);
 	if (strbuf_read(&buf, 0, 1024) < 0)
-		die("could not read the input");
+		die_errno("could not read the input");
 
 	stripspace(&buf, strip_comments);
 

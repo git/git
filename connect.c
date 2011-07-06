@@ -41,12 +41,20 @@ int check_ref_type(const struct ref *ref, int flags)
 	return check_ref(ref->name, strlen(ref->name), flags);
 }
 
+static void add_extra_have(struct extra_have_objects *extra, unsigned char *sha1)
+{
+	ALLOC_GROW(extra->array, extra->nr + 1, extra->alloc);
+	hashcpy(&(extra->array[extra->nr][0]), sha1);
+	extra->nr++;
+}
+
 /*
  * Read all the refs from the other end
  */
 struct ref **get_remote_heads(int in, struct ref **list,
 			      int nr_match, char **match,
-			      unsigned int flags)
+			      unsigned int flags,
+			      struct extra_have_objects *extra_have)
 {
 	*list = NULL;
 	for (;;) {
@@ -62,6 +70,9 @@ struct ref **get_remote_heads(int in, struct ref **list,
 		if (buffer[len-1] == '\n')
 			buffer[--len] = 0;
 
+		if (len > 4 && !prefixcmp(buffer, "ERR "))
+			die("remote error: %s", buffer + 4);
+
 		if (len < 42 || get_sha1_hex(buffer, old_sha1) || buffer[40] != ' ')
 			die("protocol error: expected sha/ref, got '%s'", buffer);
 		name = buffer + 41;
@@ -72,13 +83,18 @@ struct ref **get_remote_heads(int in, struct ref **list,
 			server_capabilities = xstrdup(name + name_len + 1);
 		}
 
+		if (extra_have &&
+		    name_len == 5 && !memcmp(".have", name, 5)) {
+			add_extra_have(extra_have, old_sha1);
+			continue;
+		}
+
 		if (!check_ref(name, name_len, flags))
 			continue;
 		if (nr_match && !path_match(name, nr_match, match))
 			continue;
-		ref = alloc_ref(name_len + 1);
+		ref = alloc_ref(buffer + 41);
 		hashcpy(ref->old_sha1, old_sha1);
-		memcpy(ref->name, buffer + 41, name_len + 1);
 		*list = ref;
 		list = &ref->next;
 	}
@@ -89,27 +105,6 @@ int server_supports(const char *feature)
 {
 	return server_capabilities &&
 		strstr(server_capabilities, feature) != NULL;
-}
-
-int get_ack(int fd, unsigned char *result_sha1)
-{
-	static char line[1000];
-	int len = packet_read_line(fd, line, sizeof(line));
-
-	if (!len)
-		die("git-fetch-pack: expected ACK/NAK, got EOF");
-	if (line[len-1] == '\n')
-		line[--len] = 0;
-	if (!strcmp(line, "NAK"))
-		return 0;
-	if (!prefixcmp(line, "ACK ")) {
-		if (!get_sha1_hex(line+4, result_sha1)) {
-			if (strstr(line+45, "continue"))
-				return 2;
-			return 1;
-		}
-	}
-	die("git-fetch_pack: expected ACK/NAK, got '%s'", line);
 }
 
 int path_match(const char *path, int nr, char **match)
@@ -161,18 +156,11 @@ static enum protocol get_protocol(const char *name)
 
 static const char *ai_name(const struct addrinfo *ai)
 {
-	static char addr[INET_ADDRSTRLEN];
-	if ( AF_INET == ai->ai_family ) {
-		struct sockaddr_in *in;
-		in = (struct sockaddr_in *)ai->ai_addr;
-		inet_ntop(ai->ai_family, &in->sin_addr, addr, sizeof(addr));
-	} else if ( AF_INET6 == ai->ai_family ) {
-		struct sockaddr_in6 *in;
-		in = (struct sockaddr_in6 *)ai->ai_addr;
-		inet_ntop(ai->ai_family, &in->sin6_addr, addr, sizeof(addr));
-	} else {
+	static char addr[NI_MAXHOST];
+	if (getnameinfo(ai->ai_addr, ai->ai_addrlen, addr, sizeof(addr), NULL, 0,
+			NI_NUMERICHOST) != 0)
 		strcpy(addr, "(unknown)");
-	}
+
 	return addr;
 }
 
@@ -299,7 +287,7 @@ static int git_tcp_connect_sock(char *host, int flags)
 		/* Not numeric */
 		struct servent *se = getservbyname(port,"tcp");
 		if ( !se )
-			die("Unknown port %s\n", port);
+			die("Unknown port %s", port);
 		nport = se->s_port;
 	}
 
@@ -357,8 +345,6 @@ static void git_tcp_connect(int fd[2], char *host, int flags)
 
 
 static char *git_proxy_command;
-static const char *rhost_name;
-static int rhost_len;
 
 static int git_proxy_command_options(const char *var, const char *value,
 		void *cb)
@@ -367,6 +353,8 @@ static int git_proxy_command_options(const char *var, const char *value,
 		const char *for_pos;
 		int matchlen = -1;
 		int hostlen;
+		const char *rhost_name = cb;
+		int rhost_len = strlen(rhost_name);
 
 		if (git_proxy_command)
 			return 0;
@@ -410,11 +398,8 @@ static int git_proxy_command_options(const char *var, const char *value,
 
 static int git_use_proxy(const char *host)
 {
-	rhost_name = host;
-	rhost_len = strlen(host);
 	git_proxy_command = getenv("GIT_PROXY_COMMAND");
-	git_config(git_proxy_command_options, NULL);
-	rhost_name = NULL;
+	git_config(git_proxy_command_options, (void*)host);
 	return (git_proxy_command && *git_proxy_command);
 }
 
@@ -458,14 +443,14 @@ static void git_proxy_connect(int fd[2], char *host)
 
 #define MAX_CMD_LEN 1024
 
-char *get_port(char *host)
+static char *get_port(char *host)
 {
 	char *end;
 	char *p = strchr(host, ':');
 
 	if (p) {
-		strtol(p+1, &end, 10);
-		if (*end == '\0') {
+		long port = strtol(p + 1, &end, 10);
+		if (end != p + 1 && *end == '\0' && 0 <= port && port < 65536) {
 			*p = '\0';
 			return p+1;
 		}
@@ -491,7 +476,7 @@ struct child_process *git_connect(int fd[2], const char *url_orig,
 				  const char *prog, int flags)
 {
 	char *url = xstrdup(url_orig);
-	char *host, *path = url;
+	char *host, *path;
 	char *end;
 	int c;
 	struct child_process *conn;
@@ -507,7 +492,7 @@ struct child_process *git_connect(int fd[2], const char *url_orig,
 	signal(SIGCHLD, SIG_DFL);
 
 	host = strstr(url, "://");
-	if(host) {
+	if (host) {
 		*host = '\0';
 		protocol = get_protocol(url);
 		host += 3;
@@ -517,12 +502,18 @@ struct child_process *git_connect(int fd[2], const char *url_orig,
 		c = ':';
 	}
 
+	/*
+	 * Don't do destructive transforms with git:// as that
+	 * protocol code does '[]' dewrapping of its own.
+	 */
 	if (host[0] == '[') {
 		end = strchr(host + 1, ']');
 		if (end) {
-			*end = 0;
+			if (protocol != PROTO_GIT) {
+				*end = 0;
+				host++;
+			}
 			end++;
-			host++;
 		} else
 			end = host;
 	} else
@@ -573,7 +564,10 @@ struct child_process *git_connect(int fd[2], const char *url_orig,
 			git_tcp_connect(fd, host, flags);
 		/*
 		 * Separate original protocol components prog and path
-		 * from extended components with a NUL byte.
+		 * from extended host header with a NUL byte.
+		 *
+		 * Note: Do not add any other headers here!  Doing so
+		 * will cause older git-daemon servers to crash.
 		 */
 		packet_write(fd[1],
 			     "%s %s%chost=%s%c",
@@ -596,14 +590,18 @@ struct child_process *git_connect(int fd[2], const char *url_orig,
 		die("command line too long");
 
 	conn->in = conn->out = -1;
-	conn->argv = arg = xcalloc(6, sizeof(*arg));
+	conn->argv = arg = xcalloc(7, sizeof(*arg));
 	if (protocol == PROTO_SSH) {
 		const char *ssh = getenv("GIT_SSH");
+		int putty = ssh && strcasestr(ssh, "plink");
 		if (!ssh) ssh = "ssh";
 
 		*arg++ = ssh;
+		if (putty && !strcasestr(ssh, "tortoiseplink"))
+			*arg++ = "-batch";
 		if (port) {
-			*arg++ = "-p";
+			/* P is for PuTTY, p is for OpenSSH */
+			*arg++ = putty ? "-P" : "-p";
 			*arg++ = port;
 		}
 		*arg++ = host;
@@ -617,11 +615,11 @@ struct child_process *git_connect(int fd[2], const char *url_orig,
 			GIT_WORK_TREE_ENVIRONMENT,
 			GRAFT_ENVIRONMENT,
 			INDEX_ENVIRONMENT,
+			NO_REPLACE_OBJECTS_ENVIRONMENT,
 			NULL
 		};
 		conn->env = env;
-		*arg++ = "sh";
-		*arg++ = "-c";
+		conn->use_shell = 1;
 	}
 	*arg++ = cmd.buf;
 	*arg = NULL;

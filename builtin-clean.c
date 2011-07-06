@@ -31,17 +31,17 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 	int i;
 	int show_only = 0, remove_directories = 0, quiet = 0, ignored = 0;
 	int ignored_only = 0, baselen = 0, config_set = 0, errors = 0;
-	struct strbuf directory;
+	int rm_flags = REMOVE_DIR_KEEP_NESTED_GIT;
+	struct strbuf directory = STRBUF_INIT;
 	struct dir_struct dir;
-	const char *path, *base;
 	static const char **pathspec;
-	struct strbuf buf;
+	struct strbuf buf = STRBUF_INIT;
 	const char *qname;
 	char *seen = NULL;
 	struct option options[] = {
 		OPT__QUIET(&quiet),
 		OPT__DRY_RUN(&show_only),
-		OPT_BOOLEAN('f', NULL, &force, "force"),
+		OPT_BOOLEAN('f', "force", &force, "force"),
 		OPT_BOOLEAN('d', NULL, &remove_directories,
 				"remove whole directories"),
 		OPT_BOOLEAN('x', NULL, &ignored, "remove ignored files, too"),
@@ -56,39 +56,34 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 	else
 		config_set = 1;
 
-	argc = parse_options(argc, argv, options, builtin_clean_usage, 0);
+	argc = parse_options(argc, argv, prefix, options, builtin_clean_usage,
+			     0);
 
-	strbuf_init(&buf, 0);
 	memset(&dir, 0, sizeof(dir));
 	if (ignored_only)
-		dir.show_ignored = 1;
+		dir.flags |= DIR_SHOW_IGNORED;
 
 	if (ignored && ignored_only)
 		die("-x and -X cannot be used together");
 
 	if (!show_only && !force)
-		die("clean.requireForce%s set and -n or -f not given; "
-		    "refusing to clean", config_set ? "" : " not");
+		die("clean.requireForce %s to true and neither -n nor -f given; "
+		    "refusing to clean", config_set ? "set" : "defaults");
 
-	dir.show_other_directories = 1;
+	if (force > 1)
+		rm_flags = 0;
+
+	dir.flags |= DIR_SHOW_OTHER_DIRECTORIES;
+
+	if (read_cache() < 0)
+		die("index file corrupt");
 
 	if (!ignored)
 		setup_standard_excludes(&dir);
 
 	pathspec = get_pathspec(prefix, argv);
-	read_cache();
 
-	/*
-	 * Calculate common prefix for the pathspec, and
-	 * use that to optimize the directory walk
-	 */
-	baselen = common_prefix(pathspec);
-	path = ".";
-	base = "";
-	if (baselen)
-		path = base = xmemdupz(*pathspec, baselen);
-	read_directory(&dir, path, base, baselen, pathspec);
-	strbuf_init(&directory, 0);
+	fill_directory(&dir, pathspec);
 
 	if (pathspec)
 		seen = xmalloc(argc > 0 ? argc : 1);
@@ -142,7 +137,8 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 				   (matches == MATCHED_EXACTLY)) {
 				if (!quiet)
 					printf("Removing %s\n", qname);
-				if (remove_dir_recursively(&directory, 0) != 0) {
+				if (remove_dir_recursively(&directory,
+							   rm_flags) != 0) {
 					warning("failed to remove '%s'", qname);
 					errors++;
 				}

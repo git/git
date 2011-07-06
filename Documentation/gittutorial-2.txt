@@ -32,22 +32,27 @@ Initialized empty Git repository in .git/
 $ echo 'hello world' > file.txt
 $ git add .
 $ git commit -a -m "initial commit"
-Created initial commit 54196cc2703dc165cbd373a65a4dcf22d50ae7f7
+[master (root-commit) 54196cc] initial commit
+ 1 files changed, 1 insertions(+), 0 deletions(-)
  create mode 100644 file.txt
 $ echo 'hello world!' >file.txt
 $ git commit -a -m "add emphasis"
-Created commit c4d59f390b9cfd4318117afde11d601c1085f241
+[master c4d59f3] add emphasis
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 ------------------------------------------------
 
-What are the 40 digits of hex that git responded to the commit with?
+What are the 7 digits of hex that git responded to the commit with?
 
 We saw in part one of the tutorial that commits have names like this.
 It turns out that every object in the git history is stored under
-such a 40-digit hex name.  That name is the SHA1 hash of the object's
+a 40-digit hex name.  That name is the SHA1 hash of the object's
 contents; among other things, this ensures that git will never store
 the same data twice (since identical data is given an identical SHA1
 name), and that the contents of a git object will never change (since
-that would change the object's name as well).
+that would change the object's name as well). The 7 char hex strings
+here are simply the abbreviation of such 40 character long strings.
+Abbreviations can be used everywhere where the 40 character strings
+can be used, so long as they are unambiguous.
 
 It is expected that the content of the commit object you created while
 following the example above generates a different SHA1 hash than
@@ -255,7 +260,7 @@ index a042389..513feba 100644
 +hello world, again
 ------------------------------------------------
 
-So 'git-diff' is comparing against something other than the head.
+So 'git diff' is comparing against something other than the head.
 The thing that it's comparing against is actually the index file,
 which is stored in .git/index in a binary format, but whose contents
 we can examine with ls-files:
@@ -270,9 +275,9 @@ hello world!
 hello world, again
 ------------------------------------------------
 
-So what our 'git-add' did was store a new blob and then put
+So what our 'git add' did was store a new blob and then put
 a reference to it in the index file.  If we modify the file again,
-we'll see that the new modifications are reflected in the 'git-diff'
+we'll see that the new modifications are reflected in the 'git diff'
 output:
 
 ------------------------------------------------
@@ -287,7 +292,7 @@ index 513feba..ba3da7b 100644
 +again?
 ------------------------------------------------
 
-With the right arguments, 'git-diff' can also show us the difference
+With the right arguments, 'git diff' can also show us the difference
 between the working directory and the last commit, or between the
 index and the last commit:
 
@@ -311,7 +316,7 @@ index a042389..513feba 100644
 +hello world, again
 ------------------------------------------------
 
-At any time, we can create a new commit using 'git-commit' (without
+At any time, we can create a new commit using 'git commit' (without
 the "-a" option), and verify that the state committed only includes the
 changes stored in the index file, not the additional change that is
 still only in our working tree:
@@ -329,11 +334,11 @@ index 513feba..ba3da7b 100644
 +again?
 ------------------------------------------------
 
-So by default 'git-commit' uses the index to create the commit, not
+So by default 'git commit' uses the index to create the commit, not
 the working tree; the "-a" option to commit tells it to first update
 the index with all changes in the working tree.
 
-Finally, it's worth looking at the effect of 'git-add' on the index
+Finally, it's worth looking at the effect of 'git add' on the index
 file:
 
 ------------------------------------------------
@@ -341,7 +346,7 @@ $ echo "goodbye, world" >closing.txt
 $ git add closing.txt
 ------------------------------------------------
 
-The effect of the 'git-add' was to add one entry to the index file:
+The effect of the 'git add' was to add one entry to the index file:
 
 ------------------------------------------------
 $ git ls-files --stage
@@ -420,6 +425,7 @@ linkgit:gittutorial[7],
 linkgit:gitcvs-migration[7],
 linkgit:gitcore-tutorial[7],
 linkgit:gitglossary[7],
+linkgit:git-help[1],
 link:everyday.html[Everyday git],
 link:user-manual.html[The Git User's Manual]
 

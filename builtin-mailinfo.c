@@ -10,6 +10,7 @@
 static FILE *cmitmsg, *patchfile, *fin, *fout;
 
 static int keep_subject;
+static int keep_non_patch_brackets_in_subject;
 static const char *metainfo_charset;
 static struct strbuf line = STRBUF_INIT;
 static struct strbuf name = STRBUF_INIT;
@@ -25,9 +26,14 @@ static enum  {
 static struct strbuf charset = STRBUF_INIT;
 static int patch_lines;
 static struct strbuf **p_hdr_data, **s_hdr_data;
+static int use_scissors;
+static int use_inbody_headers = 1;
 
 #define MAX_HDR_PARSED 10
 #define MAX_BOUNDARIES 5
+
+static void cleanup_space(struct strbuf *sb);
+
 
 static void get_sane_name(struct strbuf *out, struct strbuf *name, struct strbuf *email)
 {
@@ -107,13 +113,21 @@ static void handle_from(const struct strbuf *from)
 	el = strcspn(at, " \n\t\r\v\f>");
 	strbuf_reset(&email);
 	strbuf_add(&email, at, el);
-	strbuf_remove(&f, at - f.buf, el + 1);
+	strbuf_remove(&f, at - f.buf, el + (at[el] ? 1 : 0));
 
-	/* The remainder is name.  It could be "John Doe <john.doe@xz>"
-	 * or "john.doe@xz (John Doe)", but we have removed the
-	 * email part, so trim from both ends, possibly removing
-	 * the () pair at the end.
+	/* The remainder is name.  It could be
+	 *
+	 * - "John Doe <john.doe@xz>"			(a), or
+	 * - "john.doe@xz (John Doe)"			(b), or
+	 * - "John (zzz) Doe <john.doe@xz> (Comment)"	(c)
+	 *
+	 * but we have removed the email part, so
+	 *
+	 * - remove extra spaces which could stay after email (case 'c'), and
+	 * - trim from both ends, possibly removing the () pair at the end
+	 *   (cases 'a' and 'b').
 	 */
+	cleanup_space(&f);
 	strbuf_trim(&f);
 	if (f.buf[0] == '(' && f.len && f.buf[f.len - 1] == ')') {
 		strbuf_remove(&f, 0, 1);
@@ -175,15 +189,14 @@ static void handle_content_type(struct strbuf *line)
 		 message_type = TYPE_OTHER;
 	if (slurp_attr(line->buf, "boundary=", boundary)) {
 		strbuf_insert(boundary, 0, "--", 2);
-		if (content_top++ >= &content[MAX_BOUNDARIES]) {
+		if (++content_top > &content[MAX_BOUNDARIES]) {
 			fprintf(stderr, "Too many boundaries to handle\n");
 			exit(1);
 		}
 		*content_top = boundary;
 		boundary = NULL;
 	}
-	if (slurp_attr(line->buf, "charset=", &charset))
-		strbuf_tolower(&charset);
+	slurp_attr(line->buf, "charset=", &charset);
 
 	if (boundary) {
 		strbuf_release(boundary);
@@ -209,35 +222,41 @@ static int is_multipart_boundary(const struct strbuf *line)
 
 static void cleanup_subject(struct strbuf *subject)
 {
-	char *pos;
-	size_t remove;
-	while (subject->len) {
-		switch (*subject->buf) {
+	size_t at = 0;
+
+	while (at < subject->len) {
+		char *pos;
+		size_t remove;
+
+		switch (subject->buf[at]) {
 		case 'r': case 'R':
-			if (subject->len <= 3)
+			if (subject->len <= at + 3)
 				break;
-			if (!memcmp(subject->buf + 1, "e:", 2)) {
-				strbuf_remove(subject, 0, 3);
+			if (!memcmp(subject->buf + at + 1, "e:", 2)) {
+				strbuf_remove(subject, at, 3);
 				continue;
 			}
+			at++;
 			break;
 		case ' ': case '\t': case ':':
-			strbuf_remove(subject, 0, 1);
+			strbuf_remove(subject, at, 1);
 			continue;
 		case '[':
-			if ((pos = strchr(subject->buf, ']'))) {
-				remove = pos - subject->buf;
-				if (remove <= (subject->len - remove) * 2) {
-					strbuf_remove(subject, 0, remove + 1);
-					continue;
-				}
-			} else
-				strbuf_remove(subject, 0, 1);
-			break;
+			pos = strchr(subject->buf + at, ']');
+			if (!pos)
+				break;
+			remove = pos - subject->buf + at + 1;
+			if (!keep_non_patch_brackets_in_subject ||
+			    (7 <= remove &&
+			     memmem(subject->buf + at, remove, "PATCH", 5)))
+				strbuf_remove(subject, at, remove);
+			else
+				at += remove;
+			continue;
 		}
-		strbuf_trim(subject);
-		return;
+		break;
 	}
+	strbuf_trim(subject);
 }
 
 static void cleanup_space(struct strbuf *sb)
@@ -430,13 +449,6 @@ static struct strbuf *decode_b_segment(const struct strbuf *b_seg)
 			c -= 'a' - 26;
 		else if ('0' <= c && c <= '9')
 			c -= '0' - 52;
-		else if (c == '=') {
-			/* padding is almost like (c == 0), except we do
-			 * not output NUL resulting only from it;
-			 * for now we just trust the data.
-			 */
-			c = 0;
-		}
 		else
 			continue; /* garbage */
 		switch (pos++) {
@@ -477,7 +489,7 @@ static const char *guess_charset(const struct strbuf *line, const char *target_c
 		if (is_utf8(line->buf))
 			return NULL;
 	}
-	return "latin1";
+	return "ISO8859-1";
 }
 
 static void convert_to_utf8(struct strbuf *line, const char *charset)
@@ -490,11 +502,11 @@ static void convert_to_utf8(struct strbuf *line, const char *charset)
 			return;
 	}
 
-	if (!strcmp(metainfo_charset, charset))
+	if (!strcasecmp(metainfo_charset, charset))
 		return;
 	out = reencode_string(line->buf, metainfo_charset, charset);
 	if (!out)
-		die("cannot convert from %s to %s\n",
+		die("cannot convert from %s to %s",
 		    charset, metainfo_charset);
 	strbuf_attach(line, out, strlen(out), strlen(out));
 }
@@ -514,8 +526,25 @@ static int decode_header_bq(struct strbuf *it)
 		rfc2047 = 1;
 
 		if (in != ep) {
-			strbuf_add(&outbuf, in, ep - in);
-			in = ep;
+			/*
+			 * We are about to process an encoded-word
+			 * that begins at ep, but there is something
+			 * before the encoded word.
+			 */
+			char *scan;
+			for (scan = in; scan < ep; scan++)
+				if (!isspace(*scan))
+					break;
+
+			if (scan != ep || in == it->buf) {
+				/*
+				 * We should not lose that "something",
+				 * unless we have just processed an
+				 * encoded-word, and there is only LWS
+				 * before the one we are about to process.
+				 */
+				strbuf_add(&outbuf, in, ep - in);
+			}
 		}
 		/* E.g.
 		 * ep : "=?iso-2022-jp?B?GyR...?= foo"
@@ -529,7 +558,6 @@ static int decode_header_bq(struct strbuf *it)
 		if (cp + 3 - it->buf > it->len)
 			goto decode_header_bq_out;
 		strbuf_add(&charset_q, ep, cp - ep);
-		strbuf_tolower(&charset_q);
 
 		encoding = cp[1];
 		if (!encoding || cp[2] != '?')
@@ -603,7 +631,7 @@ static void handle_filter(struct strbuf *line);
 static int find_boundary(void)
 {
 	while (!strbuf_getline(&line, fin, '\n')) {
-		if (is_multipart_boundary(&line))
+		if (*content_top && is_multipart_boundary(&line))
 			return 1;
 	}
 	return 0;
@@ -626,7 +654,7 @@ again:
 		/* technically won't happen as is_multipart_boundary()
 		   will fail first.  But just in case..
 		 */
-		if (content_top-- < content) {
+		if (--content_top < content) {
 			fprintf(stderr, "Detected mismatched boundaries, "
 					"can't recover\n");
 			exit(1);
@@ -693,6 +721,56 @@ static inline int patchbreak(const struct strbuf *line)
 	return 0;
 }
 
+static int is_scissors_line(const struct strbuf *line)
+{
+	size_t i, len = line->len;
+	int scissors = 0, gap = 0;
+	int first_nonblank = -1;
+	int last_nonblank = 0, visible, perforation = 0, in_perforation = 0;
+	const char *buf = line->buf;
+
+	for (i = 0; i < len; i++) {
+		if (isspace(buf[i])) {
+			if (in_perforation) {
+				perforation++;
+				gap++;
+			}
+			continue;
+		}
+		last_nonblank = i;
+		if (first_nonblank < 0)
+			first_nonblank = i;
+		if (buf[i] == '-') {
+			in_perforation = 1;
+			perforation++;
+			continue;
+		}
+		if (i + 1 < len &&
+		    (!memcmp(buf + i, ">8", 2) || !memcmp(buf + i, "8<", 2))) {
+			in_perforation = 1;
+			perforation += 2;
+			scissors += 2;
+			i++;
+			continue;
+		}
+		in_perforation = 0;
+	}
+
+	/*
+	 * The mark must be at least 8 bytes long (e.g. "-- >8 --").
+	 * Even though there can be arbitrary cruft on the same line
+	 * (e.g. "cut here"), in order to avoid misidentification, the
+	 * perforation must occupy more than a third of the visible
+	 * width of the line, and dashes and scissors must occupy more
+	 * than half of the perforation.
+	 */
+
+	visible = last_nonblank - first_nonblank + 1;
+	return (scissors && 8 <= visible &&
+		visible < perforation * 3 &&
+		gap * 2 < perforation);
+}
+
 static int handle_commit_msg(struct strbuf *line)
 {
 	static int still_looking = 1;
@@ -704,13 +782,41 @@ static int handle_commit_msg(struct strbuf *line)
 		strbuf_ltrim(line);
 		if (!line->len)
 			return 0;
-		if ((still_looking = check_header(line, s_hdr_data, 0)) != 0)
-			return 0;
 	}
+
+	if (use_inbody_headers && still_looking) {
+		still_looking = check_header(line, s_hdr_data, 0);
+		if (still_looking)
+			return 0;
+	} else
+		/* Only trim the first (blank) line of the commit message
+		 * when ignoring in-body headers.
+		 */
+		still_looking = 0;
 
 	/* normalize the log message to UTF-8. */
 	if (metainfo_charset)
 		convert_to_utf8(line, charset.buf);
+
+	if (use_scissors && is_scissors_line(line)) {
+		int i;
+		if (fseek(cmitmsg, 0L, SEEK_SET))
+			die_errno("Could not rewind output message file");
+		if (ftruncate(fileno(cmitmsg), 0))
+			die_errno("Could not truncate output message file at scissors");
+		still_looking = 1;
+
+		/*
+		 * We may have already read "secondary headers"; purge
+		 * them to give ourselves a clean restart.
+		 */
+		for (i = 0; header[i]; i++) {
+			if (s_hdr_data[i])
+				strbuf_release(s_hdr_data[i]);
+			s_hdr_data[i] = NULL;
+		}
+		return 0;
+	}
 
 	if (patchbreak(line)) {
 		fclose(cmitmsg);
@@ -746,7 +852,6 @@ static void handle_filter(struct strbuf *line)
 
 static void handle_body(void)
 {
-	int len = 0;
 	struct strbuf prev = STRBUF_INIT;
 
 	/* Skip up to the first boundary */
@@ -756,8 +861,6 @@ static void handle_body(void)
 	}
 
 	do {
-		strbuf_setlen(&line, line.len + len);
-
 		/* process any boundary lines */
 		if (*content_top && is_multipart_boundary(&line)) {
 			/* flush any leftover */
@@ -813,10 +916,7 @@ static void handle_body(void)
 			handle_filter(&line);
 		}
 
-		strbuf_reset(&line);
-		if (strbuf_avail(&line) < 100)
-			strbuf_grow(&line, 100);
-	} while ((len = read_line_with_nul(line.buf, strbuf_avail(&line), fin)));
+	} while (!strbuf_getwholeline(&line, fin, '\n'));
 
 handle_body_out:
 	strbuf_release(&prev);
@@ -860,6 +960,7 @@ static void handle_info(void)
 			}
 			output_header_lines(fout, "Subject", hdr);
 		} else if (!memcmp(header[i], "From", 4)) {
+			cleanup_space(hdr);
 			handle_from(hdr);
 			fprintf(fout, "Author: %s\n", name.buf);
 			fprintf(fout, "Email: %s\n", email.buf);
@@ -871,12 +972,9 @@ static void handle_info(void)
 	fprintf(fout, "\n");
 }
 
-static int mailinfo(FILE *in, FILE *out, int ks, const char *encoding,
-		    const char *msg, const char *patch)
+static int mailinfo(FILE *in, FILE *out, const char *msg, const char *patch)
 {
 	int peek;
-	keep_subject = ks;
-	metainfo_charset = encoding;
 	fin = in;
 	fout = out;
 
@@ -910,8 +1008,20 @@ static int mailinfo(FILE *in, FILE *out, int ks, const char *encoding,
 	return 0;
 }
 
+static int git_mailinfo_config(const char *var, const char *value, void *unused)
+{
+	if (prefixcmp(var, "mailinfo."))
+		return git_default_config(var, value, unused);
+	if (!strcmp(var, "mailinfo.scissors")) {
+		use_scissors = git_config_bool(var, value);
+		return 0;
+	}
+	/* perhaps others here */
+	return 0;
+}
+
 static const char mailinfo_usage[] =
-	"git mailinfo [-k] [-u | --encoding=<encoding> | -n] msg patch <mail >info";
+	"git mailinfo [-k|-b] [-u | --encoding=<encoding> | -n] [--scissors | --no-scissors] msg patch < mail >info";
 
 int cmd_mailinfo(int argc, const char **argv, const char *prefix)
 {
@@ -920,20 +1030,28 @@ int cmd_mailinfo(int argc, const char **argv, const char *prefix)
 	/* NEEDSWORK: might want to do the optional .git/ directory
 	 * discovery
 	 */
-	git_config(git_default_config, NULL);
+	git_config(git_mailinfo_config, NULL);
 
-	def_charset = (git_commit_encoding ? git_commit_encoding : "utf-8");
+	def_charset = (git_commit_encoding ? git_commit_encoding : "UTF-8");
 	metainfo_charset = def_charset;
 
 	while (1 < argc && argv[1][0] == '-') {
 		if (!strcmp(argv[1], "-k"))
 			keep_subject = 1;
+		else if (!strcmp(argv[1], "-b"))
+			keep_non_patch_brackets_in_subject = 1;
 		else if (!strcmp(argv[1], "-u"))
 			metainfo_charset = def_charset;
 		else if (!strcmp(argv[1], "-n"))
 			metainfo_charset = NULL;
 		else if (!prefixcmp(argv[1], "--encoding="))
 			metainfo_charset = argv[1] + 11;
+		else if (!strcmp(argv[1], "--scissors"))
+			use_scissors = 1;
+		else if (!strcmp(argv[1], "--no-scissors"))
+			use_scissors = 0;
+		else if (!strcmp(argv[1], "--no-inbody-headers"))
+			use_inbody_headers = 0;
 		else
 			usage(mailinfo_usage);
 		argc--; argv++;
@@ -942,5 +1060,5 @@ int cmd_mailinfo(int argc, const char **argv, const char *prefix)
 	if (argc != 3)
 		usage(mailinfo_usage);
 
-	return !!mailinfo(stdin, stdout, keep_subject, metainfo_charset, argv[1], argv[2]);
+	return !!mailinfo(stdin, stdout, argv[1], argv[2]);
 }

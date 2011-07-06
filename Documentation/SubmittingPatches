@@ -6,9 +6,13 @@ Checklist (and a short version for the impatient):
 	- check for unnecessary whitespace with "git diff --check"
 	  before committing
 	- do not check in commented out code or unneeded files
-	- provide a meaningful commit message
 	- the first line of the commit message should be a short
 	  description and should skip the full stop
+	- the body should provide a meaningful commit message, which:
+		- uses the imperative, present tense: "change",
+		  not "changed" or "changes".
+		- includes motivation for the change, and contrasts
+		  its implementation with previous behaviour
 	- if you want your work included in git.git, add a
 	  "Signed-off-by: Your Name <you@example.com>" line to the
 	  commit message (or just use the option "-s" when
@@ -62,6 +66,14 @@ Describe the technical detail of the change(s).
 
 If your description starts to get too long, that's a sign that you
 probably need to split up your commit to finer grained pieces.
+That being said, patches which plainly describe the things that
+help reviewers check the patch, and future maintainers understand
+the code, are the most beautiful patches.  Descriptions that summarise
+the point in the subject well, and describe the motivation for the
+change, the approach taken by the change, and if relevant how this
+differs substantially from the prior version, can be found on Usenet
+archives back into the late 80's.  Consider it like good Netiquette,
+but for code.
 
 Oh, another thing.  I am picky about whitespaces.  Make sure your
 changes do not trigger errors with the sample pre-commit hook shipped
@@ -71,7 +83,7 @@ run git diff --check on your changes before you commit.
 
 (1a) Try to be nice to older C compilers
 
-We try to support wide range of C compilers to compile
+We try to support a wide range of C compilers to compile
 git with. That means that you should not use C99 initializers, even
 if a lot of compilers grok it.
 
@@ -222,6 +234,9 @@ D-C-O.  Indeed you are encouraged to do so.  Do not forget to
 place an in-body "From: " line at the beginning to properly attribute
 the change to its true author (see (2) above).
 
+Also notice that a real name is used in the Signed-off-by: line. Please
+don't hide your real name.
+
 Some people also put extra tags at the end.
 
 "Acked-by:" says that the patch was reviewed by the person who
@@ -263,6 +278,20 @@ In any time between the (2)-(3) cycle, the maintainer may pick it up
 from the list and queue it to 'pu', in order to make it easier for
 people play with it without having to pick up and apply the patch to
 their trees themselves.
+
+------------------------------------------------
+Know the status of your patch after submission
+
+* You can use Git itself to find out when your patch is merged in
+  master. 'git pull --rebase' will automatically skip already-applied
+  patches, and will let you know. This works only if you rebase on top
+  of the branch in which your patch has been merged (i.e. it will not
+  tell you if your patch is merged in pu if you rebase on top of
+  master).
+
+* Read the git mailing list, the maintainer regularly posts messages
+  entitled "What's cooking in git.git" and "What's in git.git" giving
+  the status of various proposed changes.
 
 ------------------------------------------------
 MUA specific hints
@@ -373,8 +402,35 @@ Thunderbird
 
 (A Large Angry SCM)
 
+By default, Thunderbird will both wrap emails as well as flag them as
+being 'format=flowed', both of which will make the resulting email unusable
+by git.
+
 Here are some hints on how to successfully submit patches inline using
 Thunderbird.
+
+There are two different approaches.  One approach is to configure
+Thunderbird to not mangle patches.  The second approach is to use
+an external editor to keep Thunderbird from mangling the patches.
+
+Approach #1 (configuration):
+
+This recipe is current as of Thunderbird 2.0.0.19.  Three steps:
+  1.  Configure your mail server composition as plain text
+      Edit...Account Settings...Composition & Addressing,
+        uncheck 'Compose Messages in HTML'.
+  2.  Configure your general composition window to not wrap
+      Edit..Preferences..Composition, wrap plain text messages at 0
+  3.  Disable the use of format=flowed
+      Edit..Preferences..Advanced..Config Editor.  Search for:
+        mailnews.send_plaintext_flowed
+      toggle it to make sure it is set to 'false'.
+
+After that is done, you should be able to compose email as you
+otherwise would (cut + paste, git-format-patch | git-imap-send, etc),
+and the patches should not be mangled.
+
+Approach #2 (external editor):
 
 This recipe appears to work with the current [*1*] Thunderbird from Suse.
 
@@ -456,3 +512,40 @@ This should help you to submit patches inline using KMail.
 
 5) Back in the compose window: add whatever other text you wish to the
 message, complete the addressing and subject fields, and press send.
+
+
+Gmail
+-----
+
+GMail does not appear to have any way to turn off line wrapping in the web
+interface, so this will mangle any emails that you send.  You can however
+use any IMAP email client to connect to the google imap server, and forward
+the emails through that.  Just make sure to disable line wrapping in that
+email client.  Alternatively, use "git send-email" instead.
+
+Submitting properly formatted patches via Gmail is simple now that
+IMAP support is available. First, edit your ~/.gitconfig to specify your
+account settings:
+
+[imap]
+	folder = "[Gmail]/Drafts"
+	host = imaps://imap.gmail.com
+	user = user@gmail.com
+	pass = p4ssw0rd
+	port = 993
+	sslverify = false
+
+You might need to instead use: folder = "[Google Mail]/Drafts" if you get an error
+that the "Folder doesn't exist".
+
+Next, ensure that your Gmail settings are correct. In "Settings" the
+"Use Unicode (UTF-8) encoding for outgoing messages" should be checked.
+
+Once your commits are ready to send to the mailing list, run the following
+command to send the patch emails to your Gmail Drafts folder.
+
+	$ git format-patch -M --stdout origin/master | git imap-send
+
+Go to your Gmail account, open the Drafts folder, find the patch email, fill
+in the To: and CC: fields and send away!
+

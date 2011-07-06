@@ -13,13 +13,13 @@
 #include "fsck.h"
 
 static int dry_run, quiet, recover, has_errors, strict;
-static const char unpack_usage[] = "git-unpack-objects [-n] [-q] [-r] [--strict] < pack-file";
+static const char unpack_usage[] = "git unpack-objects [-n] [-q] [-r] [--strict] < pack-file";
 
 /* We always read in 4kB chunks. */
 static unsigned char buffer[4096];
 static unsigned int offset, len;
 static off_t consumed_bytes;
-static SHA_CTX ctx;
+static git_SHA_CTX ctx;
 
 /*
  * When running under --strict mode, objects whose reachability are
@@ -59,7 +59,7 @@ static void *fill(int min)
 	if (min > sizeof(buffer))
 		die("cannot fill %d bytes", min);
 	if (offset) {
-		SHA1_Update(&ctx, buffer, offset);
+		git_SHA1_Update(&ctx, buffer, offset);
 		memmove(buffer, buffer + offset, len);
 		offset = 0;
 	}
@@ -68,7 +68,7 @@ static void *fill(int min)
 		if (ret <= 0) {
 			if (!ret)
 				die("early EOF");
-			die("read error on input: %s", strerror(errno));
+			die_errno("read error on input");
 		}
 		len += ret;
 	} while (len < min);
@@ -99,10 +99,10 @@ static void *get_data(unsigned long size)
 	stream.avail_out = size;
 	stream.next_in = fill(1);
 	stream.avail_in = len;
-	inflateInit(&stream);
+	git_inflate_init(&stream);
 
 	for (;;) {
-		int ret = inflate(&stream, 0);
+		int ret = git_inflate(&stream, 0);
 		use(len - stream.avail_in);
 		if (stream.total_out == size && ret == Z_STREAM_END)
 			break;
@@ -118,7 +118,7 @@ static void *get_data(unsigned long size)
 		stream.next_in = fill(1);
 		stream.avail_in = len;
 	}
-	inflateEnd(&stream);
+	git_inflate_end(&stream);
 	return buf;
 }
 
@@ -158,7 +158,7 @@ struct obj_info {
 #define FLAG_WRITTEN (1u<<21)
 
 static struct obj_info *obj_list;
-unsigned nr_objects;
+static unsigned nr_objects;
 
 /*
  * Called only from check_object() after it verified this object
@@ -181,10 +181,10 @@ static void write_cached_object(struct object *obj)
 static int check_object(struct object *obj, int type, void *data)
 {
 	if (!obj)
-		return 0;
+		return 1;
 
 	if (obj->flags & FLAG_WRITTEN)
-		return 1;
+		return 0;
 
 	if (type != OBJ_ANY && obj->type != type)
 		die("object type mismatch");
@@ -195,22 +195,24 @@ static int check_object(struct object *obj, int type, void *data)
 		if (type != obj->type || type <= 0)
 			die("object of unexpected type");
 		obj->flags |= FLAG_WRITTEN;
-		return 1;
+		return 0;
 	}
 
 	if (fsck_object(obj, 1, fsck_error_function))
 		die("Error in object");
-	if (!fsck_walk(obj, check_object, 0))
+	if (fsck_walk(obj, check_object, NULL))
 		die("Error on reachable objects of %s", sha1_to_hex(obj->sha1));
 	write_cached_object(obj);
-	return 1;
+	return 0;
 }
 
 static void write_rest(void)
 {
 	unsigned i;
-	for (i = 0; i < nr_objects; i++)
-		check_object(obj_list[i].obj, OBJ_ANY, 0);
+	for (i = 0; i < nr_objects; i++) {
+		if (obj_list[i].obj)
+			check_object(obj_list[i].obj, OBJ_ANY, NULL);
+	}
 }
 
 static void added_object(unsigned nr, enum object_type type,
@@ -370,6 +372,8 @@ static void unpack_delta_entry(enum object_type type, unsigned long delta_size,
 			base_offset = (base_offset << 7) + (c & 127);
 		}
 		base_offset = obj_list[nr].offset - base_offset;
+		if (base_offset <= 0 || base_offset >= obj_list[nr].offset)
+			die("offset value out of bound for delta base object");
 
 		delta_data = get_data(delta_size);
 		if (dry_run || !delta_data) {
@@ -420,8 +424,8 @@ static void unpack_delta_entry(enum object_type type, unsigned long delta_size,
 static void unpack_one(unsigned nr)
 {
 	unsigned shift;
-	unsigned char *pack, c;
-	unsigned long size;
+	unsigned char *pack;
+	unsigned long size, c;
 	enum object_type type;
 
 	obj_list[nr].offset = consumed_bytes;
@@ -477,8 +481,7 @@ static void unpack_all(void)
 
 	if (!quiet)
 		progress = start_progress("Unpacking objects", nr_objects);
-	obj_list = xmalloc(nr_objects * sizeof(*obj_list));
-	memset(obj_list, 0, nr_objects * sizeof(*obj_list));
+	obj_list = xcalloc(nr_objects, sizeof(*obj_list));
 	for (i = 0; i < nr_objects; i++) {
 		unpack_one(i);
 		display_progress(progress, i + 1);
@@ -493,6 +496,8 @@ int cmd_unpack_objects(int argc, const char **argv, const char *prefix)
 {
 	int i;
 	unsigned char sha1[20];
+
+	read_replace_refs = 0;
 
 	git_config(git_default_config, NULL);
 
@@ -539,10 +544,10 @@ int cmd_unpack_objects(int argc, const char **argv, const char *prefix)
 		/* We don't take any non-flag arguments now.. Maybe some day */
 		usage(unpack_usage);
 	}
-	SHA1_Init(&ctx);
+	git_SHA1_Init(&ctx);
 	unpack_all();
-	SHA1_Update(&ctx, buffer, offset);
-	SHA1_Final(sha1, &ctx);
+	git_SHA1_Update(&ctx, buffer, offset);
+	git_SHA1_Final(sha1, &ctx);
 	if (strict)
 		write_rest();
 	if (hashcmp(fill(20), sha1))

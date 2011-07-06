@@ -5,7 +5,7 @@
 
 test_description='Two way merge with read-tree -m $H $M
 
-This test tries two-way merge (aka fast forward with carry forward).
+This test tries two-way merge (aka fast-forward with carry forward).
 
 There is the head (called H) and another commit (called M), which is
 simply ahead of H.  The index and the work tree contains a state that
@@ -26,8 +26,6 @@ read_tree_twoway () {
     git read-tree -m "$1" "$2" && git ls-files --stage
 }
 
-_x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
-_x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
 compare_change () {
 	sed -n >current \
 	    -e '/^--- /d; /^+++ /d; /^@@ /d;' \
@@ -51,7 +49,7 @@ check_cache_at () {
 }
 
 cat >bozbar-old <<\EOF
-This is a sample file used in two-way fast forward merge
+This is a sample file used in two-way fast-forward merge
 tests.  Its second line ends with a magic word bozbar
 which will be modified by the merged head to gnusto.
 It has some extra lines so that external tools can
@@ -300,7 +298,7 @@ test_expect_success \
      echo gnusto gnusto >bozbar &&
      if read_tree_twoway $treeH $treeM; then false; else :; fi'
 
-# This fails with straight two-way fast forward.
+# This fails with straight two-way fast-forward.
 test_expect_success \
     '22 - local change cache updated.' \
     'rm -f .git/index &&
@@ -340,5 +338,56 @@ test_expect_success \
      test_cmp DFDF.out DFDFcheck.out &&
      check_cache_at DF/DF dirty &&
      :'
+
+test_expect_success \
+    'a/b (untracked) vs a case setup.' \
+    'rm -f .git/index &&
+     : >a &&
+     git update-index --add a &&
+     treeM=`git write-tree` &&
+     echo treeM $treeM &&
+     git ls-tree $treeM &&
+     git ls-files --stage >treeM.out &&
+
+     rm -f a &&
+     git update-index --remove a &&
+     mkdir a &&
+     : >a/b &&
+     treeH=`git write-tree` &&
+     echo treeH $treeH &&
+     git ls-tree $treeH'
+
+test_expect_success \
+    'a/b (untracked) vs a, plus c/d case test.' \
+    '! git read-tree -u -m "$treeH" "$treeM" &&
+     git ls-files --stage &&
+     test -f a/b'
+
+test_expect_success \
+    'a/b vs a, plus c/d case setup.' \
+    'rm -f .git/index &&
+     rm -fr a &&
+     : >a &&
+     mkdir c &&
+     : >c/d &&
+     git update-index --add a c/d &&
+     treeM=`git write-tree` &&
+     echo treeM $treeM &&
+     git ls-tree $treeM &&
+     git ls-files --stage >treeM.out &&
+
+     rm -f a &&
+     mkdir a
+     : >a/b &&
+     git update-index --add --remove a a/b &&
+     treeH=`git write-tree` &&
+     echo treeH $treeH &&
+     git ls-tree $treeH'
+
+test_expect_success \
+    'a/b vs a, plus c/d case test.' \
+    'git read-tree -u -m "$treeH" "$treeM" &&
+     git ls-files --stage | tee >treeMcheck.out &&
+     test_cmp treeM.out treeMcheck.out'
 
 test_done

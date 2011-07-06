@@ -12,7 +12,7 @@ strbuf API actually relies on the string being free of NULs.
 
 strbufs has some invariants that are very important to keep in mind:
 
-. The `buf` member is never NULL, so you it can be used in any usual C
+. The `buf` member is never NULL, so it can be used in any usual C
 string operations safely. strbuf's _have_ to be initialized either by
 `strbuf_init()` or by `= STRBUF_INIT` before the invariants, though.
 +
@@ -21,7 +21,7 @@ allocated memory or not), use `strbuf_detach()` to unwrap a memory
 buffer from its strbuf shell in a safe way. That is the sole supported
 way. This will give you a malloced buffer that you can later `free()`.
 +
-However, it it totally safe to modify anything in the string pointed by
+However, it is totally safe to modify anything in the string pointed by
 the `buf` member, between the indices `0` and `len-1` (inclusive).
 
 . The `buf` member is a byte array that has at least `len + 1` bytes
@@ -55,7 +55,7 @@ Data structures
 
 * `struct strbuf`
 
-This is string buffer structure. The `len` member can be used to
+This is the string buffer structure. The `len` member can be used to
 determine the current length of the string, and `buf` member provides access to
 the string itself.
 
@@ -133,8 +133,10 @@ Functions
 
 * Adding data to the buffer
 
-NOTE: All of these functions in this section will grow the buffer as
-      necessary.
+NOTE: All of the functions in this section will grow the buffer as necessary.
+If they fail for some reason other than memory shortage and the buffer hadn't
+been allocated before (i.e. the `struct strbuf` was set to `STRBUF_INIT`),
+then they will free() it.
 
 `strbuf_addch`::
 
@@ -197,6 +199,10 @@ character if the letter `n` appears after a `%`.  The function returns
 the length of the placeholder recognized and `strbuf_expand()` skips
 over it.
 +
+The format `%%` is automatically expanded to a single `%` as a quoting
+mechanism; callers do not need to handle the `%` placeholder themselves,
+and the callback function will not be invoked for this placeholder.
++
 All other characters (non-percent and not skipped ones) are copied
 verbatim to the strbuf.  If the callback returned zero, meaning that the
 placeholder is unknown, then the percent sign is copied, too.
@@ -204,6 +210,20 @@ placeholder is unknown, then the percent sign is copied, too.
 In order to facilitate caching and to make it possible to give
 parameters to the callback, `strbuf_expand()` passes a context pointer,
 which can be used by the programmer of the callback as she sees fit.
+
+`strbuf_expand_dict_cb`::
+
+	Used as callback for `strbuf_expand()`, expects an array of
+	struct strbuf_expand_dict_entry as context, i.e. pairs of
+	placeholder and replacement string.  The array needs to be
+	terminated by an entry with placeholder set to NULL.
+
+`strbuf_addbuf_percentquote`::
+
+	Append the contents of one strbuf to another, quoting any
+	percent signs ("%") into double-percents ("%%") in the
+	destination. This is useful for literal data to be fed to either
+	strbuf_expand or to the *printf family of functions.
 
 `strbuf_addf`::
 
@@ -213,7 +233,7 @@ which can be used by the programmer of the callback as she sees fit.
 
 	Read a given size of data from a FILE* pointer to the buffer.
 +
-NOTE: The buffer is rewinded if the read fails. If -1 is returned,
+NOTE: The buffer is rewound if the read fails. If -1 is returned,
 `errno` must be consulted, like you would do for `read(3)`.
 `strbuf_read()`, `strbuf_read_file()` and `strbuf_getline()` has the
 same behaviour as well.
@@ -228,6 +248,11 @@ same behaviour as well.
 	Read the contents of a file, specified by its path. The third argument
 	can be used to give a hint about the file size, to avoid reallocs.
 
+`strbuf_readlink`::
+
+	Read the target of a symbolic link, specified by its path.  The third
+	argument can be used to give a hint about the size, to avoid reallocs.
+
 `strbuf_getline`::
 
 	Read a line from a FILE* pointer. The second argument specifies the line
@@ -239,3 +264,9 @@ same behaviour as well.
 	comments are considered contents to be removed or not.
 
 `launch_editor`::
+
+	Launch the user preferred editor to edit a file and fill the buffer
+	with the file's contents upon the user completing their editing. The
+	third argument can be used to set the environment which the editor is
+	run in. If the buffer is NULL the editor is launched as usual but the
+	file's contents are not read into the buffer upon completion.

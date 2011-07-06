@@ -148,20 +148,17 @@ static int fsck_tree(struct tree *item, int strict, fsck_error error_func)
 	struct tree_desc desc;
 	unsigned o_mode;
 	const char *o_name;
-	const unsigned char *o_sha1;
 
 	init_tree_desc(&desc, item->buffer, item->size);
 
 	o_mode = 0;
 	o_name = NULL;
-	o_sha1 = NULL;
 
 	while (desc.size) {
 		unsigned mode;
 		const char *name;
-		const unsigned char *sha1;
 
-		sha1 = tree_entry_extract(&desc, &name, &mode);
+		tree_entry_extract(&desc, &name, &mode);
 
 		if (strchr(name, '/'))
 			has_full_path = 1;
@@ -207,7 +204,6 @@ static int fsck_tree(struct tree *item, int strict, fsck_error error_func)
 
 		o_mode = mode;
 		o_name = name;
-		o_sha1 = sha1;
 	}
 
 	retval = 0;
@@ -233,7 +229,7 @@ static int fsck_commit(struct commit *commit, fsck_error error_func)
 	struct commit_graft *graft;
 	int parents = 0;
 
-	if (!commit->date)
+	if (commit->date == ULONG_MAX)
 		return error_func(&commit->object, FSCK_ERROR, "invalid author/committer line");
 
 	if (memcmp(buffer, "tree ", 5))
@@ -307,9 +303,8 @@ int fsck_error_function(struct object *obj, int type, const char *fmt, ...)
 {
 	va_list ap;
 	int len;
-	struct strbuf sb;
+	struct strbuf sb = STRBUF_INIT;
 
-	strbuf_init(&sb, 0);
 	strbuf_addf(&sb, "object %s:", obj->sha1?sha1_to_hex(obj->sha1):"(null)");
 
 	va_start(ap, fmt);
@@ -327,7 +322,7 @@ int fsck_error_function(struct object *obj, int type, const char *fmt, ...)
 			die("this should not happen, your snprintf is broken");
 	}
 
-	error(sb.buf);
+	error("%s", sb.buf);
 	strbuf_release(&sb);
 	return 1;
 }

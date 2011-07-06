@@ -15,7 +15,10 @@ SYNOPSIS
 	   [-E | --extended-regexp] [-G | --basic-regexp]
 	   [-F | --fixed-strings] [-n]
 	   [-l | --files-with-matches] [-L | --files-without-match]
-	   [-c | --count] [--all-match]
+	   [-z | --null]
+	   [-c | --count] [--all-match] [-q | --quiet]
+	   [--max-depth <depth>]
+	   [--color | --no-color]
 	   [-A <post-context>] [-B <pre-context>] [-C <context>]
 	   [-f <file>] [-e] <pattern>
 	   [--and|--or|--not|(|)|-e <pattern>...] [<tree>...]
@@ -44,6 +47,10 @@ OPTIONS
 
 -I::
 	Don't match the pattern in binary files.
+
+--max-depth <depth>::
+	For each pathspec given on command line, descend at most <depth>
+	levels of directories. A negative value means no limit.
 
 -w::
 --word-regexp::
@@ -91,13 +98,25 @@ OPTIONS
 --files-without-match::
 	Instead of showing every matched line, show only the
 	names of files that contain (or do not contain) matches.
-	For better compatibility with 'git-diff', --name-only is a
+	For better compatibility with 'git diff', --name-only is a
 	synonym for --files-with-matches.
+
+-z::
+--null::
+	Output \0 instead of the character that normally follows a
+	file name.
 
 -c::
 --count::
 	Instead of showing every matched line, show the number of
 	lines that match.
+
+--color::
+	Show colored matches.
+
+--no-color::
+	Turn off match highlighting, even when the configuration file
+	gives the default to color output.
 
 -[ABC] <context>::
 	Show `context` trailing (`A` -- after), or leading (`B`
@@ -107,6 +126,14 @@ OPTIONS
 
 -<num>::
 	A shortcut for specifying -C<num>.
+
+-p::
+--show-function::
+	Show the preceding line that contains the function name of
+	the match, unless the matching line is a function name itself.
+	The name is determined in the same way as 'git diff' works out
+	patch hunk headers (see 'Defining a custom hunk-header' in
+	linkgit:gitattributes[5]).
 
 -f <file>::
 	Read patterns from <file>, one per line.
@@ -130,6 +157,11 @@ OPTIONS
 	When giving multiple pattern expressions combined with `--or`,
 	this flag is specified to limit the match to files that
 	have lines to match all of them.
+
+-q::
+--quiet::
+	Do not output matched lines; instead, exit with status 0 when
+	there is a match and with non-zero status when there isn't.
 
 `<tree>...`::
 	Search blobs in the trees for specified patterns.

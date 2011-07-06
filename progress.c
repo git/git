@@ -1,7 +1,7 @@
 /*
  * Simple text-based progress display module for GIT
  *
- * Copyright (c) 2007 by Nicolas Pitre <nico@cam.org>
+ * Copyright (c) 2007 by Nicolas Pitre <nico@fluxnic.net>
  *
  * This code is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -121,17 +121,23 @@ static void throughput_string(struct throughput *tp, off_t total,
 			      (int)(total >> 30),
 			      (int)(total & ((1 << 30) - 1)) / 10737419);
 	} else if (total > 1 << 20) {
+		int x = total + 5243;  /* for rounding */
 		l -= snprintf(tp->display, l, ", %u.%2.2u MiB",
-			      (int)(total >> 20),
-			      ((int)(total & ((1 << 20) - 1)) * 100) >> 20);
+			      x >> 20, ((x & ((1 << 20) - 1)) * 100) >> 20);
 	} else if (total > 1 << 10) {
+		int x = total + 5;  /* for rounding */
 		l -= snprintf(tp->display, l, ", %u.%2.2u KiB",
-			      (int)(total >> 10),
-			      ((int)(total & ((1 << 10) - 1)) * 100) >> 10);
+			      x >> 10, ((x & ((1 << 10) - 1)) * 100) >> 10);
 	} else {
 		l -= snprintf(tp->display, l, ", %u bytes", (int)total);
 	}
-	if (rate)
+
+	if (rate > 1 << 10) {
+		int x = rate + 5;  /* for rounding */
+		snprintf(tp->display + sizeof(tp->display) - l, l,
+			 " | %u.%2.2u MiB/s",
+			 x >> 10, ((x & ((1 << 10) - 1)) * 100) >> 10);
+	} else if (rate)
 		snprintf(tp->display + sizeof(tp->display) - l, l,
 			 " | %u KiB/s", rate);
 }

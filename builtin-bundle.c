@@ -6,10 +6,14 @@
  * Basic handler for bundle files to connect repositories via sneakernet.
  * Invocation must include action.
  * This function can create a bundle or provide information on an existing
- * bundle supporting git-fetch, git-pull, and git-ls-remote
+ * bundle supporting "fetch", "pull", and "ls-remote".
  */
 
-static const char *bundle_usage="git-bundle (create <bundle> <git-rev-list args> | verify <bundle> | list-heads <bundle> [refname]... | unbundle <bundle> [refname]... )";
+static const char builtin_bundle_usage[] =
+  "git bundle create <file> <git-rev-list args>\n"
+  "   or: git bundle verify <file>\n"
+  "   or: git bundle list-heads <file> [refname...]\n"
+  "   or: git bundle unbundle <file> [refname...]";
 
 int cmd_bundle(int argc, const char **argv, const char *prefix)
 {
@@ -20,7 +24,7 @@ int cmd_bundle(int argc, const char **argv, const char *prefix)
 	char buffer[PATH_MAX];
 
 	if (argc < 3)
-		usage(bundle_usage);
+		usage(builtin_bundle_usage);
 
 	cmd = argv[1];
 	bundle_file = argv[2];
@@ -59,5 +63,5 @@ int cmd_bundle(int argc, const char **argv, const char *prefix)
 		return !!unbundle(&header, bundle_fd) ||
 			list_bundle_refs(&header, argc, argv);
 	} else
-		usage(bundle_usage);
+		usage(builtin_bundle_usage);
 }

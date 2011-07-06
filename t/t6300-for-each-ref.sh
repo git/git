@@ -26,6 +26,13 @@ test_expect_success 'Create sample commit with known timestamp' '
 	git tag -a -m "Tagging at $datestamp" testtag
 '
 
+test_expect_success 'Create upstream config' '
+	git update-ref refs/remotes/origin/master master &&
+	git remote add origin nowhere &&
+	git config branch.master.remote origin &&
+	git config branch.master.merge refs/heads/master
+'
+
 test_atom() {
 	case "$1" in
 		head) ref=refs/heads/master ;;
@@ -39,6 +46,7 @@ test_atom() {
 }
 
 test_atom head refname refs/heads/master
+test_atom head upstream refs/remotes/origin/master
 test_atom head objecttype commit
 test_atom head objectsize 171
 test_atom head objectname 67a36f10722846e891fbada1ba48ed035de75581
@@ -68,6 +76,7 @@ test_atom head contents 'Initial
 '
 
 test_atom tag refname refs/tags/testtag
+test_atom tag upstream ''
 test_atom tag objecttype tag
 test_atom tag objectsize 154
 test_atom tag objectname 98b46b1d36e5b07909de1b3886224e3e81e87322
@@ -97,27 +106,27 @@ test_atom tag contents 'Tagging at 1151939927
 '
 
 test_expect_success 'Check invalid atoms names are errors' '
-	test_must_fail git-for-each-ref --format="%(INVALID)" refs/heads
+	test_must_fail git for-each-ref --format="%(INVALID)" refs/heads
 '
 
 test_expect_success 'Check format specifiers are ignored in naming date atoms' '
-	git-for-each-ref --format="%(authordate)" refs/heads &&
-	git-for-each-ref --format="%(authordate:default) %(authordate)" refs/heads &&
-	git-for-each-ref --format="%(authordate) %(authordate:default)" refs/heads &&
-	git-for-each-ref --format="%(authordate:default) %(authordate:default)" refs/heads
+	git for-each-ref --format="%(authordate)" refs/heads &&
+	git for-each-ref --format="%(authordate:default) %(authordate)" refs/heads &&
+	git for-each-ref --format="%(authordate) %(authordate:default)" refs/heads &&
+	git for-each-ref --format="%(authordate:default) %(authordate:default)" refs/heads
 '
 
 test_expect_success 'Check valid format specifiers for date fields' '
-	git-for-each-ref --format="%(authordate:default)" refs/heads &&
-	git-for-each-ref --format="%(authordate:relative)" refs/heads &&
-	git-for-each-ref --format="%(authordate:short)" refs/heads &&
-	git-for-each-ref --format="%(authordate:local)" refs/heads &&
-	git-for-each-ref --format="%(authordate:iso8601)" refs/heads &&
-	git-for-each-ref --format="%(authordate:rfc2822)" refs/heads
+	git for-each-ref --format="%(authordate:default)" refs/heads &&
+	git for-each-ref --format="%(authordate:relative)" refs/heads &&
+	git for-each-ref --format="%(authordate:short)" refs/heads &&
+	git for-each-ref --format="%(authordate:local)" refs/heads &&
+	git for-each-ref --format="%(authordate:iso8601)" refs/heads &&
+	git for-each-ref --format="%(authordate:rfc2822)" refs/heads
 '
 
 test_expect_success 'Check invalid format specifiers are errors' '
-	test_must_fail git-for-each-ref --format="%(authordate:INVALID)" refs/heads
+	test_must_fail git for-each-ref --format="%(authordate:INVALID)" refs/heads
 '
 
 cat >expected <<\EOF
@@ -203,27 +212,30 @@ test_expect_success 'Check format "rfc2822" date fields output' '
 
 cat >expected <<\EOF
 refs/heads/master
+refs/remotes/origin/master
 refs/tags/testtag
 EOF
 
 test_expect_success 'Verify ascending sort' '
-	git-for-each-ref --format="%(refname)" --sort=refname >actual &&
+	git for-each-ref --format="%(refname)" --sort=refname >actual &&
 	test_cmp expected actual
 '
 
 
 cat >expected <<\EOF
 refs/tags/testtag
+refs/remotes/origin/master
 refs/heads/master
 EOF
 
 test_expect_success 'Verify descending sort' '
-	git-for-each-ref --format="%(refname)" --sort=-refname >actual &&
+	git for-each-ref --format="%(refname)" --sort=-refname >actual &&
 	test_cmp expected actual
 '
 
 cat >expected <<\EOF
 'refs/heads/master'
+'refs/remotes/origin/master'
 'refs/tags/testtag'
 EOF
 
@@ -244,6 +256,7 @@ test_expect_success 'Quoting style: python' '
 
 cat >expected <<\EOF
 "refs/heads/master"
+"refs/remotes/origin/master"
 "refs/tags/testtag"
 EOF
 
@@ -261,5 +274,80 @@ for i in "--perl --shell" "-s --python" "--python --tcl" "--tcl --perl"; do
 		esac)
 	"
 done
+
+cat >expected <<\EOF
+master
+testtag
+EOF
+
+test_expect_success 'Check short refname format' '
+	(git for-each-ref --format="%(refname:short)" refs/heads &&
+	git for-each-ref --format="%(refname:short)" refs/tags) >actual &&
+	test_cmp expected actual
+'
+
+cat >expected <<EOF
+origin/master
+EOF
+
+test_expect_success 'Check short upstream format' '
+	git for-each-ref --format="%(upstream:short)" refs/heads >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'Check for invalid refname format' '
+	test_must_fail git for-each-ref --format="%(refname:INVALID)"
+'
+
+cat >expected <<\EOF
+heads/master
+tags/master
+EOF
+
+test_expect_success 'Check ambiguous head and tag refs (strict)' '
+	git config --bool core.warnambiguousrefs true &&
+	git checkout -b newtag &&
+	echo "Using $datestamp" > one &&
+	git add one &&
+	git commit -m "Branch" &&
+	setdate_and_increment &&
+	git tag -m "Tagging at $datestamp" master &&
+	git for-each-ref --format "%(refname:short)" refs/heads/master refs/tags/master >actual &&
+	test_cmp expected actual
+'
+
+cat >expected <<\EOF
+heads/master
+master
+EOF
+
+test_expect_success 'Check ambiguous head and tag refs (loose)' '
+	git config --bool core.warnambiguousrefs false &&
+	git for-each-ref --format "%(refname:short)" refs/heads/master refs/tags/master >actual &&
+	test_cmp expected actual
+'
+
+cat >expected <<\EOF
+heads/ambiguous
+ambiguous
+EOF
+
+test_expect_success 'Check ambiguous head and tag refs II (loose)' '
+	git checkout master &&
+	git tag ambiguous testtag^0 &&
+	git branch ambiguous testtag^0 &&
+	git for-each-ref --format "%(refname:short)" refs/heads/ambiguous refs/tags/ambiguous >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'an unusual tag with an incomplete line' '
+
+	git tag -m "bogo" bogo &&
+	bogo=$(git cat-file tag bogo) &&
+	bogo=$(printf "%s" "$bogo" | git mktag) &&
+	git tag -f bogo "$bogo" &&
+	git for-each-ref --format "%(body)" refs/tags/bogo
+
+'
 
 test_done

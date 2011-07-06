@@ -50,12 +50,17 @@ int cmd_diff_files(int argc, const char **argv, const char *prefix)
 	    3 < rev.max_count)
 		usage(diff_files_usage);
 
-	if (rev.max_count == -1 &&
+	/*
+	 * "diff-files --base -p" should not combine merges because it
+	 * was not asked to.  "diff-files -c -p" should not densify
+	 * (the user should ask with "diff-files --cc" explicitly).
+	 */
+	if (rev.max_count == -1 && !rev.combine_merges &&
 	    (rev.diffopt.output_format & DIFF_FORMAT_PATCH))
 		rev.combine_merges = rev.dense_combined_merges = 1;
 
-	if (read_cache() < 0) {
-		perror("read_cache");
+	if (read_cache_preload(rev.diffopt.paths) < 0) {
+		perror("read_cache_preload");
 		return -1;
 	}
 	result = run_diff_files(&rev, options);

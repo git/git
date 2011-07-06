@@ -1,4 +1,10 @@
 #include "cache.h"
+#include "run-command.h"
+#include "sigchain.h"
+
+#ifndef DEFAULT_PAGER
+#define DEFAULT_PAGER "less"
+#endif
 
 /*
  * This is split up from the rest of git so that we can do
@@ -7,8 +13,8 @@
 
 static int spawned_pager;
 
-#ifndef __MINGW32__
-static void run_pager(const char *pager)
+#ifndef WIN32
+static void pager_preexec(void)
 {
 	/*
 	 * Work around bug in "less" by not starting it until we
@@ -19,18 +25,12 @@ static void run_pager(const char *pager)
 	FD_ZERO(&in);
 	FD_SET(0, &in);
 	select(1, &in, NULL, &in, NULL);
-
-	execlp(pager, pager, NULL);
-	execl("/bin/sh", "sh", "-c", pager, NULL);
 }
-#else
-#include "run-command.h"
+#endif
 
-static const char *pager_argv[] = { "sh", "-c", NULL, NULL };
-static struct child_process pager_process = {
-	.argv = pager_argv,
-	.in = -1
-};
+static const char *pager_argv[] = { NULL, NULL };
+static struct child_process pager_process;
+
 static void wait_for_pager(void)
 {
 	fflush(stdout);
@@ -40,18 +40,22 @@ static void wait_for_pager(void)
 	close(2);
 	finish_command(&pager_process);
 }
-#endif
 
-void setup_pager(void)
+static void wait_for_pager_signal(int signo)
 {
-#ifndef __MINGW32__
-	pid_t pid;
-	int fd[2];
-#endif
-	const char *pager = getenv("GIT_PAGER");
+	wait_for_pager();
+	sigchain_pop(signo);
+	raise(signo);
+}
+
+const char *git_pager(void)
+{
+	const char *pager;
 
 	if (!isatty(1))
-		return;
+		return NULL;
+
+	pager = getenv("GIT_PAGER");
 	if (!pager) {
 		if (!pager_program)
 			git_config(git_default_config, NULL);
@@ -60,54 +64,46 @@ void setup_pager(void)
 	if (!pager)
 		pager = getenv("PAGER");
 	if (!pager)
-		pager = "less";
+		pager = DEFAULT_PAGER;
 	else if (!*pager || !strcmp(pager, "cat"))
+		pager = NULL;
+
+	return pager;
+}
+
+void setup_pager(void)
+{
+	const char *pager = git_pager();
+
+	if (!pager)
 		return;
 
 	spawned_pager = 1; /* means we are emitting to terminal */
 
-#ifndef __MINGW32__
-	if (pipe(fd) < 0)
-		return;
-	pid = fork();
-	if (pid < 0) {
-		close(fd[0]);
-		close(fd[1]);
-		return;
-	}
-
-	/* return in the child */
-	if (!pid) {
-		dup2(fd[1], 1);
-		dup2(fd[1], 2);
-		close(fd[0]);
-		close(fd[1]);
-		return;
-	}
-
-	/* The original process turns into the PAGER */
-	dup2(fd[0], 0);
-	close(fd[0]);
-	close(fd[1]);
-
-	setenv("LESS", "FRSX", 0);
-	run_pager(pager);
-	die("unable to execute pager '%s'", pager);
-	exit(255);
-#else
 	/* spawn the pager */
-	pager_argv[2] = pager;
+	pager_argv[0] = pager;
+	pager_process.use_shell = 1;
+	pager_process.argv = pager_argv;
+	pager_process.in = -1;
+	if (!getenv("LESS")) {
+		static const char *env[] = { "LESS=FRSX", NULL };
+		pager_process.env = env;
+	}
+#ifndef WIN32
+	pager_process.preexec_cb = pager_preexec;
+#endif
 	if (start_command(&pager_process))
 		return;
 
 	/* original process continues, but writes to the pipe */
 	dup2(pager_process.in, 1);
-	dup2(pager_process.in, 2);
+	if (isatty(2))
+		dup2(pager_process.in, 2);
 	close(pager_process.in);
 
 	/* this makes sure that the parent terminates after the pager */
+	sigchain_push_common(wait_for_pager_signal);
 	atexit(wait_for_pager);
-#endif
 }
 
 int pager_in_use(void)

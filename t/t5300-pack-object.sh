@@ -3,7 +3,7 @@
 # Copyright (c) 2005 Junio C Hamano
 #
 
-test_description='git-pack-object
+test_description='git pack-object
 
 '
 . ./test-lib.sh
@@ -13,11 +13,12 @@ TRASH=`pwd`
 test_expect_success \
     'setup' \
     'rm -f .git/index*
-     for i in a b c
-     do
-	     dd if=/dev/zero bs=4k count=1 | perl -pe "y/\\000/$i/" >$i &&
-	     git update-index --add $i || return 1
-     done &&
+     perl -e "print \"a\" x 4096;" > a &&
+     perl -e "print \"b\" x 4096;" > b &&
+     perl -e "print \"c\" x 4096;" > c &&
+     test-genrandom "seed a" 2097152 > a_big &&
+     test-genrandom "seed b" 2097152 > b_big &&
+     git update-index --add a a_big b b_big c &&
      cat c >d && echo foo >>d && git update-index --add d &&
      tree=`git write-tree` &&
      commit=`git commit-tree $tree </dev/null` && {
@@ -180,9 +181,32 @@ test_expect_success \
 
 unset GIT_OBJECT_DIRECTORY
 
+test_expect_success 'survive missing objects/pack directory' '
+	(
+		rm -fr missing-pack &&
+		mkdir missing-pack &&
+		cd missing-pack &&
+		git init &&
+		GOP=.git/objects/pack
+		rm -fr $GOP &&
+		git index-pack --stdin --keep=test <../test-3-${packname_3}.pack &&
+		test -f $GOP/pack-${packname_3}.pack &&
+		test_cmp $GOP/pack-${packname_3}.pack ../test-3-${packname_3}.pack &&
+		test -f $GOP/pack-${packname_3}.idx &&
+		test_cmp $GOP/pack-${packname_3}.idx ../test-3-${packname_3}.idx &&
+		test -f $GOP/pack-${packname_3}.keep
+	)
+'
+
 test_expect_success \
     'verify pack' \
     'git verify-pack	test-1-${packname_1}.idx \
+			test-2-${packname_2}.idx \
+			test-3-${packname_3}.idx'
+
+test_expect_success \
+    'verify pack -v' \
+    'git verify-pack -v	test-1-${packname_1}.idx \
 			test-2-${packname_2}.idx \
 			test-3-${packname_3}.idx'
 
@@ -198,7 +222,7 @@ test_expect_success \
 test_expect_success \
     'verify-pack catches a corrupted pack signature' \
     'cat test-1-${packname_1}.pack >test-3.pack &&
-     dd if=/dev/zero of=test-3.pack count=1 bs=1 conv=notrunc seek=2 &&
+     echo | dd of=test-3.pack count=1 bs=1 conv=notrunc seek=2 &&
      if git verify-pack test-3.idx
      then false
      else :;
@@ -207,7 +231,7 @@ test_expect_success \
 test_expect_success \
     'verify-pack catches a corrupted pack version' \
     'cat test-1-${packname_1}.pack >test-3.pack &&
-     dd if=/dev/zero of=test-3.pack count=1 bs=1 conv=notrunc seek=7 &&
+     echo | dd of=test-3.pack count=1 bs=1 conv=notrunc seek=7 &&
      if git verify-pack test-3.idx
      then false
      else :;
@@ -216,7 +240,7 @@ test_expect_success \
 test_expect_success \
     'verify-pack catches a corrupted type/size of the 1st packed object data' \
     'cat test-1-${packname_1}.pack >test-3.pack &&
-     dd if=/dev/zero of=test-3.pack count=1 bs=1 conv=notrunc seek=12 &&
+     echo | dd of=test-3.pack count=1 bs=1 conv=notrunc seek=12 &&
      if git verify-pack test-3.idx
      then false
      else :;
@@ -227,7 +251,7 @@ test_expect_success \
     'l=`wc -c <test-3.idx` &&
      l=`expr $l - 20` &&
      cat test-1-${packname_1}.pack >test-3.pack &&
-     dd if=/dev/zero of=test-3.idx count=20 bs=1 conv=notrunc seek=$l &&
+     printf "%20s" "" | dd of=test-3.idx count=20 bs=1 conv=notrunc seek=$l &&
      if git verify-pack test-3.pack
      then false
      else :;
@@ -236,47 +260,30 @@ test_expect_success \
 test_expect_success \
     'build pack index for an existing pack' \
     'cat test-1-${packname_1}.pack >test-3.pack &&
-     git-index-pack -o tmp.idx test-3.pack &&
+     git index-pack -o tmp.idx test-3.pack &&
      cmp tmp.idx test-1-${packname_1}.idx &&
 
-     git-index-pack test-3.pack &&
+     git index-pack test-3.pack &&
      cmp test-3.idx test-1-${packname_1}.idx &&
 
      cat test-2-${packname_2}.pack >test-3.pack &&
-     git-index-pack -o tmp.idx test-2-${packname_2}.pack &&
+     git index-pack -o tmp.idx test-2-${packname_2}.pack &&
      cmp tmp.idx test-2-${packname_2}.idx &&
 
-     git-index-pack test-3.pack &&
+     git index-pack test-3.pack &&
      cmp test-3.idx test-2-${packname_2}.idx &&
 
      cat test-3-${packname_3}.pack >test-3.pack &&
-     git-index-pack -o tmp.idx test-3-${packname_3}.pack &&
+     git index-pack -o tmp.idx test-3-${packname_3}.pack &&
      cmp tmp.idx test-3-${packname_3}.idx &&
 
-     git-index-pack test-3.pack &&
+     git index-pack test-3.pack &&
      cmp test-3.idx test-3-${packname_3}.idx &&
 
      :'
 
-test_expect_success \
-    'fake a SHA1 hash collision' \
-    'test -f	.git/objects/c8/2de19312b6c3695c0c18f70709a6c535682a67 &&
-     cp -f	.git/objects/9d/235ed07cd19811a6ceb342de82f190e49c9f68 \
-		.git/objects/c8/2de19312b6c3695c0c18f70709a6c535682a67'
-
-test_expect_success \
-    'make sure index-pack detects the SHA1 collision' \
-    'test_must_fail git-index-pack -o bad.idx test-3.pack'
-
-test_expect_success \
-    'honor pack.packSizeLimit' \
-    'git config pack.packSizeLimit 200 &&
-     packname_4=$(git pack-objects test-4 <obj-list) &&
-     test 3 = $(ls test-4-*.pack | wc -l)'
-
 test_expect_success 'unpacking with --strict' '
 
-	git config --unset pack.packsizelimit &&
 	for j in a b c d e f g
 	do
 		for i in 0 1 2 3 4 5 6 7 8 9
@@ -368,5 +375,43 @@ test_expect_success 'index-pack with --strict' '
 		git index-pack --strict --stdin <../test-6-$PACK6.pack
 	)
 '
+
+test_expect_success 'honor pack.packSizeLimit' '
+	git config pack.packSizeLimit 3m &&
+	packname_10=$(git pack-objects test-10 <obj-list) &&
+	test 2 = $(ls test-10-*.pack | wc -l)
+'
+
+test_expect_success 'verify resulting packs' '
+	git verify-pack test-10-*.pack
+'
+
+test_expect_success 'tolerate packsizelimit smaller than biggest object' '
+	git config pack.packSizeLimit 1 &&
+	packname_11=$(git pack-objects test-11 <obj-list) &&
+	test 5 = $(ls test-11-*.pack | wc -l)
+'
+
+test_expect_success 'verify resulting packs' '
+	git verify-pack test-11-*.pack
+'
+
+#
+# WARNING!
+#
+# The following test is destructive.  Please keep the next
+# two tests at the end of this file.
+#
+
+test_expect_success \
+    'fake a SHA1 hash collision' \
+    'test -f	.git/objects/c8/2de19312b6c3695c0c18f70709a6c535682a67 &&
+     cp -f	.git/objects/9d/235ed07cd19811a6ceb342de82f190e49c9f68 \
+		.git/objects/c8/2de19312b6c3695c0c18f70709a6c535682a67'
+
+test_expect_success \
+    'make sure index-pack detects the SHA1 collision' \
+    'test_must_fail git index-pack -o bad.idx test-3.pack 2>msg &&
+     grep "SHA1 COLLISION FOUND" msg'
 
 test_done

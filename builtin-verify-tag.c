@@ -10,9 +10,12 @@
 #include "tag.h"
 #include "run-command.h"
 #include <signal.h>
+#include "parse-options.h"
 
-static const char builtin_verify_tag_usage[] =
-		"git verify-tag [-v|--verbose] <tag>...";
+static const char * const verify_tag_usage[] = {
+		"git verify-tag [-v|--verbose] <tag>...",
+		NULL
+};
 
 #define PGP_SIGNATURE "-----BEGIN PGP SIGNATURE-----"
 
@@ -55,7 +58,7 @@ static int run_gpg_verify(const char *buf, unsigned long size, int verbose)
 	close(gpg.in);
 	ret = finish_command(&gpg);
 
-	unlink(path);
+	unlink_or_warn(path);
 
 	return ret;
 }
@@ -89,17 +92,17 @@ static int verify_tag(const char *name, int verbose)
 int cmd_verify_tag(int argc, const char **argv, const char *prefix)
 {
 	int i = 1, verbose = 0, had_error = 0;
+	const struct option verify_tag_options[] = {
+		OPT__VERBOSE(&verbose),
+		OPT_END()
+	};
 
 	git_config(git_default_config, NULL);
 
-	if (argc > 1 &&
-	    (!strcmp(argv[i], "-v") || !strcmp(argv[i], "--verbose"))) {
-		verbose = 1;
-		i++;
-	}
-
+	argc = parse_options(argc, argv, prefix, verify_tag_options,
+			     verify_tag_usage, PARSE_OPT_KEEP_ARGV0);
 	if (argc <= i)
-		usage(builtin_verify_tag_usage);
+		usage_with_options(verify_tag_usage, verify_tag_options);
 
 	/* sometimes the program was terminated because this signal
 	 * was received in the process of writing the gpg input: */

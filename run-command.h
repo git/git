@@ -1,16 +1,6 @@
 #ifndef RUN_COMMAND_H
 #define RUN_COMMAND_H
 
-enum {
-	ERR_RUN_COMMAND_FORK = 10000,
-	ERR_RUN_COMMAND_EXEC,
-	ERR_RUN_COMMAND_PIPE,
-	ERR_RUN_COMMAND_WAITPID,
-	ERR_RUN_COMMAND_WAITPID_WRONG_PID,
-	ERR_RUN_COMMAND_WAITPID_SIGNAL,
-	ERR_RUN_COMMAND_WAITPID_NOEXIT,
-};
-
 struct child_process {
 	const char **argv;
 	pid_t pid;
@@ -41,18 +31,24 @@ struct child_process {
 	unsigned no_stdout:1;
 	unsigned no_stderr:1;
 	unsigned git_cmd:1; /* if this is to be git sub-command */
+	unsigned silent_exec_failure:1;
 	unsigned stdout_to_stderr:1;
+	unsigned use_shell:1;
+	void (*preexec_cb)(void);
 };
 
 int start_command(struct child_process *);
 int finish_command(struct child_process *);
 int run_command(struct child_process *);
 
+extern int run_hook(const char *index_file, const char *name, ...);
+
 #define RUN_COMMAND_NO_STDIN 1
 #define RUN_GIT_CMD	     2	/*If this is to be git sub-command */
 #define RUN_COMMAND_STDOUT_TO_STDERR 4
+#define RUN_SILENT_EXEC_FAILURE 8
+#define RUN_USING_SHELL 16
 int run_command_v_opt(const char **argv, int opt);
-int run_command_v_opt_cd(const char **argv, int opt, const char *dir);
 
 /*
  * env (the environment) is to be formatted like environ: "VAR=VALUE".
@@ -76,7 +72,7 @@ struct async {
 	int (*proc)(int fd, void *data);
 	void *data;
 	int out;	/* caller reads from here and closes it */
-#ifndef __MINGW32__
+#ifndef WIN32
 	pid_t pid;
 #else
 	HANDLE tid;

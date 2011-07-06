@@ -12,22 +12,29 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Removes files unknown to git.  This allows to clean the working tree
-from files that are not under version control.  If the '-x' option is
-specified, ignored files are also removed, allowing to remove all
-build products.
+
+Cleans the working tree by recursively removing files that are not
+under version control, starting from the current directory.
+
+Normally, only files unknown to git are removed, but if the '-x'
+option is specified, ignored files are also removed. This can, for
+example, be useful to remove all build products.
+
 If any optional `<path>...` arguments are given, only those paths
 are affected.
-
 
 OPTIONS
 -------
 -d::
 	Remove untracked directories in addition to untracked files.
+	If an untracked directory is managed by a different git
+	repository, it is not removed by default.  Use -f option twice
+	if you really want to remove such a directory.
 
 -f::
-	If the git configuration specifies clean.requireForce as true,
-	'git-clean' will refuse to run unless given -f or -n.
+--force::
+	If the git configuration variable clean.requireForce is not set
+	to false, 'git clean' will refuse to run unless given -f or -n.
 
 -n::
 --dry-run::
@@ -41,7 +48,7 @@ OPTIONS
 -x::
 	Don't use the ignore rules.  This allows removing all untracked
 	files, including build products.  This can be used (possibly in
-	conjunction with 'git-reset') to create a pristine
+	conjunction with 'git reset') to create a pristine
 	working directory to test a clean build.
 
 -X::

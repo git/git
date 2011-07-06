@@ -14,20 +14,10 @@ static int diff_tree_commit_sha1(const unsigned char *sha1)
 	return log_tree_commit(&log_tree_opt, commit);
 }
 
-static int diff_tree_stdin(char *line)
+/* Diff one or more commits. */
+static int stdin_diff_commit(struct commit *commit, char *line, int len)
 {
-	int len = strlen(line);
 	unsigned char sha1[20];
-	struct commit *commit;
-
-	if (!len || line[len-1] != '\n')
-		return -1;
-	line[len-1] = 0;
-	if (get_sha1_hex(line, sha1))
-		return -1;
-	commit = lookup_commit(sha1);
-	if (!commit || parse_commit(commit))
-		return -1;
 	if (isspace(line[40]) && !get_sha1_hex(line+41, sha1)) {
 		/* Graft the fake parents locally to the commit */
 		int pos = 41;
@@ -52,6 +42,49 @@ static int diff_tree_stdin(char *line)
 	return log_tree_commit(&log_tree_opt, commit);
 }
 
+/* Diff two trees. */
+static int stdin_diff_trees(struct tree *tree1, char *line, int len)
+{
+	unsigned char sha1[20];
+	struct tree *tree2;
+	if (len != 82 || !isspace(line[40]) || get_sha1_hex(line + 41, sha1))
+		return error("Need exactly two trees, separated by a space");
+	tree2 = lookup_tree(sha1);
+	if (!tree2 || parse_tree(tree2))
+		return -1;
+	printf("%s %s\n", sha1_to_hex(tree1->object.sha1),
+			  sha1_to_hex(tree2->object.sha1));
+	diff_tree_sha1(tree1->object.sha1, tree2->object.sha1,
+		       "", &log_tree_opt.diffopt);
+	log_tree_diff_flush(&log_tree_opt);
+	return 0;
+}
+
+static int diff_tree_stdin(char *line)
+{
+	int len = strlen(line);
+	unsigned char sha1[20];
+	struct object *obj;
+
+	if (!len || line[len-1] != '\n')
+		return -1;
+	line[len-1] = 0;
+	if (get_sha1_hex(line, sha1))
+		return -1;
+	obj = lookup_unknown_object(sha1);
+	if (!obj || !obj->parsed)
+		obj = parse_object(sha1);
+	if (!obj)
+		return -1;
+	if (obj->type == OBJ_COMMIT)
+		return stdin_diff_commit((struct commit *)obj, line, len);
+	if (obj->type == OBJ_TREE)
+		return stdin_diff_trees((struct tree *)obj, line, len);
+	error("Object %s is a %s, not a commit or tree",
+	      sha1_to_hex(sha1), typename(obj->type));
+	return -1;
+}
+
 static const char diff_tree_usage[] =
 "git diff-tree [--stdin] [-m] [-c] [--cc] [-s] [-v] [--pretty] [-t] [-r] [--root] "
 "[<common diff options>] <tree-ish> [<tree-ish>] [<path>...]\n"
@@ -69,9 +102,9 @@ int cmd_diff_tree(int argc, const char **argv, const char *prefix)
 
 	init_revisions(opt, prefix);
 	git_config(git_diff_basic_config, NULL); /* no "diff" UI options */
-	nr_sha1 = 0;
 	opt->abbrev = 0;
 	opt->diff = 1;
+	opt->disable_stdin = 1;
 	argc = setup_revisions(argc, argv, opt, NULL);
 
 	while (--argc > 0) {

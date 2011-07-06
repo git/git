@@ -23,17 +23,19 @@ all: boilerplates.made custom
 
 bpsrc = $(filter-out %~,$(wildcard *--*))
 boilerplates.made : $(bpsrc)
-	$(QUIET)ls *--* 2>/dev/null | \
+	$(QUIET)umask 022 && ls *--* 2>/dev/null | \
 	while read boilerplate; \
 	do \
 		case "$$boilerplate" in *~) continue ;; esac && \
 		dst=`echo "$$boilerplate" | sed -e 's|^this|.|;s|--|/|g'` && \
 		dir=`expr "$$dst" : '\(.*\)/'` && \
-		$(INSTALL) -d -m 755 blt/$$dir && \
+		mkdir -p blt/$$dir && \
 		case "$$boilerplate" in \
-		*--) ;; \
-		*) cp -p $$boilerplate blt/$$dst ;; \
-		esac || exit; \
+		*--) continue;; \
+		esac && \
+		cp $$boilerplate blt/$$dst && \
+		if test -x "blt/$$dst"; then rx=rx; else rx=r; fi && \
+		chmod a+$$rx "blt/$$dst" || exit; \
 	done && \
 	date >$@
 
@@ -48,4 +50,4 @@ clean:
 install: all
 	$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(template_instdir_SQ)'
 	(cd blt && $(TAR) cf - .) | \
-	(cd '$(DESTDIR_SQ)$(template_instdir_SQ)' && umask 022 && $(TAR) xf -)
+	(cd '$(DESTDIR_SQ)$(template_instdir_SQ)' && umask 022 && $(TAR) xof -)

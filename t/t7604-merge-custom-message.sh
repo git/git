@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='git-merge
+test_description='git merge
 
 Testing merge when using a custom message for the merge commit.'
 
@@ -22,15 +22,12 @@ test_expect_success 'setup' '
 	git tag c2
 '
 
-cat >expected <<\EOF
-custom message
 
-Merge commit 'c2'
-EOF
 test_expect_success 'merge c2 with a custom message' '
 	git reset --hard c1 &&
+	echo >expected "custom message" &&
 	git merge -m "custom message" c2 &&
-	git cat-file commit HEAD | sed -e "1,/^$/d" > actual &&
+	git cat-file commit HEAD | sed -e "1,/^$/d" >actual &&
 	test_cmp expected actual
 '
 

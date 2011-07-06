@@ -1,5 +1,6 @@
 #include "builtin.h"
 #include "cache.h"
+#include "dir.h"
 #include "string-list.h"
 #include "rerere.h"
 #include "xdiff/xdiff.h"
@@ -12,28 +13,17 @@ static const char git_rerere_usage[] =
 static int cutoff_noresolve = 15;
 static int cutoff_resolve = 60;
 
-static const char *rr_path(const char *name, const char *file)
-{
-	return git_path("rr-cache/%s/%s", name, file);
-}
-
 static time_t rerere_created_at(const char *name)
 {
 	struct stat st;
-	return stat(rr_path(name, "preimage"), &st) ? (time_t) 0 : st.st_mtime;
-}
-
-static int has_resolution(const char *name)
-{
-	struct stat st;
-	return !stat(rr_path(name, "postimage"), &st);
+	return stat(rerere_path(name, "preimage"), &st) ? (time_t) 0 : st.st_mtime;
 }
 
 static void unlink_rr_item(const char *name)
 {
-	unlink(rr_path(name, "thisimage"));
-	unlink(rr_path(name, "preimage"));
-	unlink(rr_path(name, "postimage"));
+	unlink(rerere_path(name, "thisimage"));
+	unlink(rerere_path(name, "preimage"));
+	unlink(rerere_path(name, "postimage"));
 	rmdir(git_path("rr-cache/%s", name));
 }
 
@@ -58,18 +48,18 @@ static void garbage_collect(struct string_list *rr)
 
 	git_config(git_rerere_gc_config, NULL);
 	dir = opendir(git_path("rr-cache"));
+	if (!dir)
+		die_errno("unable to open rr-cache directory");
 	while ((e = readdir(dir))) {
-		const char *name = e->d_name;
-		if (name[0] == '.' &&
-		    (name[1] == '\0' || (name[1] == '.' && name[2] == '\0')))
+		if (is_dot_or_dotdot(e->d_name))
 			continue;
-		then = rerere_created_at(name);
+		then = rerere_created_at(e->d_name);
 		if (!then)
 			continue;
-		cutoff = (has_resolution(name)
+		cutoff = (has_rerere_resolution(e->d_name)
 			  ? cutoff_resolve : cutoff_noresolve);
 		if (then < now - cutoff * 86400)
-			string_list_append(name, &to_remove);
+			string_list_append(e->d_name, &to_remove);
 	}
 	for (i = 0; i < to_remove.nr; i++)
 		unlink_rr_item(to_remove.items[i].string);
@@ -98,6 +88,7 @@ static int diff_two(const char *file1, const char *label1,
 
 	printf("--- a/%s\n+++ b/%s\n", label1, label2);
 	fflush(stdout);
+	memset(&xpp, 0, sizeof(xpp));
 	xpp.flags = XDF_NEED_MINIMAL;
 	memset(&xecfg, 0, sizeof(xecfg));
 	xecfg.ctxlen = 3;
@@ -112,22 +103,39 @@ static int diff_two(const char *file1, const char *label1,
 int cmd_rerere(int argc, const char **argv, const char *prefix)
 {
 	struct string_list merge_rr = { NULL, 0, 0, 1 };
-	int i, fd;
+	int i, fd, flags = 0;
 
+	if (2 < argc) {
+		if (!strcmp(argv[1], "-h"))
+			usage(git_rerere_usage);
+		if (!strcmp(argv[1], "--rerere-autoupdate"))
+			flags = RERERE_AUTOUPDATE;
+		else if (!strcmp(argv[1], "--no-rerere-autoupdate"))
+			flags = RERERE_NOAUTOUPDATE;
+		if (flags) {
+			argc--;
+			argv++;
+		}
+	}
 	if (argc < 2)
-		return rerere();
+		return rerere(flags);
 
-	fd = setup_rerere(&merge_rr);
+	if (!strcmp(argv[1], "forget")) {
+		const char **pathspec = get_pathspec(prefix, argv + 2);
+		return rerere_forget(pathspec);
+	}
+
+	fd = setup_rerere(&merge_rr, flags);
 	if (fd < 0)
 		return 0;
 
 	if (!strcmp(argv[1], "clear")) {
 		for (i = 0; i < merge_rr.nr; i++) {
 			const char *name = (const char *)merge_rr.items[i].util;
-			if (!has_resolution(name))
+			if (!has_rerere_resolution(name))
 				unlink_rr_item(name);
 		}
-		unlink(git_path("rr-cache/MERGE_RR"));
+		unlink_or_warn(git_path("rr-cache/MERGE_RR"));
 	} else if (!strcmp(argv[1], "gc"))
 		garbage_collect(&merge_rr);
 	else if (!strcmp(argv[1], "status"))
@@ -137,7 +145,7 @@ int cmd_rerere(int argc, const char **argv, const char *prefix)
 		for (i = 0; i < merge_rr.nr; i++) {
 			const char *path = merge_rr.items[i].string;
 			const char *name = (const char *)merge_rr.items[i].util;
-			diff_two(rr_path(name, "preimage"), path, path, path);
+			diff_two(rerere_path(name, "preimage"), path, path, path);
 		}
 	else
 		usage(git_rerere_usage);

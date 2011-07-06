@@ -7,7 +7,7 @@ gitattributes - defining attributes per path
 
 SYNOPSIS
 --------
-$GIT_DIR/info/attributes, gitattributes
+$GIT_DIR/info/attributes, .gitattributes
 
 
 DESCRIPTION
@@ -18,10 +18,10 @@ A `gitattributes` file is a simple text file that gives
 
 Each line in `gitattributes` file is of form:
 
-	glob	attr1 attr2 ...
+	pattern	attr1 attr2 ...
 
-That is, a glob pattern followed by an attributes list,
-separated by whitespaces.  When the glob pattern matches the
+That is, a pattern followed by an attributes list,
+separated by whitespaces.  When the pattern matches the
 path in question, the attributes listed on the line are given to
 the path.
 
@@ -48,20 +48,21 @@ Set to a value::
 
 Unspecified::
 
-	No glob pattern matches the path, and nothing says if
+	No pattern matches the path, and nothing says if
 	the path has or does not have the attribute, the
 	attribute for the path is said to be Unspecified.
 
-When more than one glob pattern matches the path, a later line
+When more than one pattern matches the path, a later line
 overrides an earlier line.  This overriding is done per
-attribute.
+attribute.  The rules how the pattern matches paths are the
+same as in `.gitignore` files; see linkgit:gitignore[5].
 
 When deciding what attributes are assigned to a path, git
 consults `$GIT_DIR/info/attributes` file (which has the highest
 precedence), `.gitattributes` file in the same directory as the
-path in question, and its parent directories (the further the
-directory that contains `.gitattributes` is from the path in
-question, the lower its precedence).
+path in question, and its parent directories up to the toplevel of the
+work tree (the further the directory that contains `.gitattributes`
+is from the path in question, the lower its precedence).
 
 If you wish to affect only a single repository (i.e., to assign
 attributes to files that are particular to one user's workflow), then
@@ -87,9 +88,9 @@ Checking-out and checking-in
 
 These attributes affect how the contents stored in the
 repository are copied to the working tree files when commands
-such as 'git-checkout' and 'git-merge' run.  They also affect how
+such as 'git checkout' and 'git merge' run.  They also affect how
 git stores the contents you prepare in the working tree in the
-repository upon 'git-add' and 'git-commit'.
+repository upon 'git add' and 'git commit'.
 
 `crlf`
 ^^^^^^
@@ -105,9 +106,8 @@ Set::
 
 Unset::
 
-	Unsetting the `crlf` attribute on a path is meant to
-	mark the path as a "binary" file.  The path never goes
-	through line endings conversion upon checkin/checkout.
+	Unsetting the `crlf` attribute on a path tells git not to
+	attempt any end-of-line conversion upon checkin or checkout.
 
 Unspecified::
 
@@ -148,24 +148,24 @@ an irreversible conversion.  The safety triggers to prevent such
 a conversion done to the files in the work tree, but there are a
 few exceptions.  Even though...
 
-- 'git-add' itself does not touch the files in the work tree, the
+- 'git add' itself does not touch the files in the work tree, the
   next checkout would, so the safety triggers;
 
-- 'git-apply' to update a text file with a patch does touch the files
+- 'git apply' to update a text file with a patch does touch the files
   in the work tree, but the operation is about text files and CRLF
   conversion is about fixing the line ending inconsistencies, so the
   safety does not trigger;
 
-- 'git-diff' itself does not touch the files in the work tree, it is
-  often run to inspect the changes you intend to next 'git-add'.  To
+- 'git diff' itself does not touch the files in the work tree, it is
+  often run to inspect the changes you intend to next 'git add'.  To
   catch potential problems early, safety triggers.
 
 
 `ident`
 ^^^^^^^
 
-When the attribute `ident` is set to a path, git replaces
-`$Id$` in the blob object with `$Id:`, followed by
+When the attribute `ident` is set for a path, git replaces
+`$Id$` in the blob object with `$Id:`, followed by the
 40-character hexadecimal blob object name, followed by a dollar
 sign `$` upon checkout.  Any byte sequence that begins with
 `$Id:` and ends with `$` in the worktree file is replaced
@@ -197,6 +197,25 @@ intent is that if someone unsets the filter driver definition,
 or does not have the appropriate filter program, the project
 should still be usable.
 
+For example, in .gitattributes, you would assign the `filter`
+attribute for paths.
+
+------------------------
+*.c	filter=indent
+------------------------
+
+Then you would define a "filter.indent.clean" and "filter.indent.smudge"
+configuration in your .git/config to specify a pair of commands to
+modify the contents of C programs when the source files are checked
+in ("clean" is run) and checked out (no change is made because the
+command is "cat").
+
+------------------------
+[filter "indent"]
+	clean = indent
+	smudge = cat
+------------------------
+
 
 Interaction between checkin/checkout attributes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -214,10 +233,15 @@ with `crlf`, and then `ident` and fed to `filter`.
 Generating diff text
 ~~~~~~~~~~~~~~~~~~~~
 
-The attribute `diff` affects if 'git-diff' generates textual
-patch for the path or just says `Binary files differ`.  It also
-can affect what line is shown on the hunk header `@@ -k,l +n,m @@`
-line.
+`diff`
+^^^^^^
+
+The attribute `diff` affects how 'git' generates diffs for particular
+files. It can tell git whether to generate a textual patch for the path
+or to treat the path as a binary file.  It can also affect what line is
+shown on the hunk header `@@ -k,l +n,m @@` line, tell git to use an
+external command to generate the diff, or ask git to convert binary
+files to a text format before generating the diff.
 
 Set::
 
@@ -228,7 +252,8 @@ Set::
 Unset::
 
 	A path to which the `diff` attribute is unset will
-	generate `Binary files differ`.
+	generate `Binary files differ` (or a binary patch, if
+	binary patches are enabled).
 
 Unspecified::
 
@@ -239,21 +264,21 @@ Unspecified::
 
 String::
 
-	Diff is shown using the specified custom diff driver.
-	The driver program is given its input using the same
-	calling convention as used for GIT_EXTERNAL_DIFF
-	program.  This name is also used for custom hunk header
-	selection.
+	Diff is shown using the specified diff driver.  Each driver may
+	specify one or more options, as described in the following
+	section. The options for the diff driver "foo" are defined
+	by the configuration variables in the "diff.foo" section of the
+	git config file.
 
 
-Defining a custom diff driver
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Defining an external diff driver
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The definition of a diff driver is done in `gitconfig`, not
 `gitattributes` file, so strictly speaking this manual page is a
 wrong place to talk about it.  However...
 
-To define a custom diff driver `jcdiff`, add a section to your
+To define an external diff driver `jcdiff`, add a section to your
 `$GIT_DIR/config` file (or `$HOME/.gitconfig` file) like this:
 
 ----------------------------------------------------------------
@@ -271,31 +296,32 @@ See linkgit:git[1] for details.
 Defining a custom hunk-header
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Each group of changes (called "hunk") in the textual diff output
+Each group of changes (called a "hunk") in the textual diff output
 is prefixed with a line of the form:
 
 	@@ -k,l +n,m @@ TEXT
 
-The text is called 'hunk header', and by default a line that
-begins with an alphabet, an underscore or a dollar sign is used,
-which matches what GNU 'diff -p' output uses.  This default
-selection however is not suited for some contents, and you can
-use customized pattern to make a selection.
+This is called a 'hunk header'.  The "TEXT" portion is by default a line
+that begins with an alphabet, an underscore or a dollar sign; this
+matches what GNU 'diff -p' output uses.  This default selection however
+is not suited for some contents, and you can use a customized pattern
+to make a selection.
 
-First in .gitattributes, you would assign the `diff` attribute
+First, in .gitattributes, you would assign the `diff` attribute
 for paths.
 
 ------------------------
 *.tex	diff=tex
 ------------------------
 
-Then, you would define "diff.tex.funcname" configuration to
+Then, you would define a "diff.tex.xfuncname" configuration to
 specify a regular expression that matches a line that you would
-want to appear as the hunk header, like this:
+want to appear as the hunk header "TEXT". Add a section to your
+`$GIT_DIR/config` file (or `$HOME/.gitconfig` file) like this:
 
 ------------------------
 [diff "tex"]
-	funcname = "^\\(\\\\\\(sub\\)*section{.*\\)$"
+	xfuncname = "^(\\\\(sub)*section\\{.*)$"
 ------------------------
 
 Note.  A single level of backslashes are eaten by the
@@ -312,21 +338,92 @@ patterns are available:
 
 - `bibtex` suitable for files with BibTeX coded references.
 
-- `java` suitable for source code in the Java lanugage.
+- `cpp` suitable for source code in the C and C++ languages.
+
+- `html` suitable for HTML/XHTML documents.
+
+- `java` suitable for source code in the Java language.
+
+- `objc` suitable for source code in the Objective-C language.
 
 - `pascal` suitable for source code in the Pascal/Delphi language.
+
+- `php` suitable for source code in the PHP language.
+
+- `python` suitable for source code in the Python language.
 
 - `ruby` suitable for source code in the Ruby language.
 
 - `tex` suitable for source code for LaTeX documents.
 
 
+Customizing word diff
+^^^^^^^^^^^^^^^^^^^^^
+
+You can customize the rules that `git diff --color-words` uses to
+split words in a line, by specifying an appropriate regular expression
+in the "diff.*.wordRegex" configuration variable.  For example, in TeX
+a backslash followed by a sequence of letters forms a command, but
+several such commands can be run together without intervening
+whitespace.  To separate them, use a regular expression in your
+`$GIT_DIR/config` file (or `$HOME/.gitconfig` file) like this:
+
+------------------------
+[diff "tex"]
+	wordRegex = "\\\\[a-zA-Z]+|[{}]|\\\\.|[^\\{}[:space:]]+"
+------------------------
+
+A built-in pattern is provided for all languages listed in the
+previous section.
+
+
+Performing text diffs of binary files
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Sometimes it is desirable to see the diff of a text-converted
+version of some binary files. For example, a word processor
+document can be converted to an ASCII text representation, and
+the diff of the text shown. Even though this conversion loses
+some information, the resulting diff is useful for human
+viewing (but cannot be applied directly).
+
+The `textconv` config option is used to define a program for
+performing such a conversion. The program should take a single
+argument, the name of a file to convert, and produce the
+resulting text on stdout.
+
+For example, to show the diff of the exif information of a
+file instead of the binary information (assuming you have the
+exif tool installed), add the following section to your
+`$GIT_DIR/config` file (or `$HOME/.gitconfig` file):
+
+------------------------
+[diff "jpg"]
+	textconv = exif
+------------------------
+
+NOTE: The text conversion is generally a one-way conversion;
+in this example, we lose the actual image contents and focus
+just on the text data. This means that diffs generated by
+textconv are _not_ suitable for applying. For this reason,
+only `git diff` and the `git log` family of commands (i.e.,
+log, whatchanged, show) will perform text conversion. `git
+format-patch` will never generate this output. If you want to
+send somebody a text-converted diff of a binary file (e.g.,
+because it quickly conveys the changes you have made), you
+should generate it separately and send it as a comment _in
+addition to_ the usual binary diff that you might send.
+
+
 Performing a three-way merge
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+`merge`
+^^^^^^^
+
 The attribute `merge` affects how three versions of a file is
 merged when a file-level merge is necessary during `git merge`,
-and other programs such as `git revert` and `git cherry-pick`.
+and other commands such as `git revert` and `git cherry-pick`.
 
 Set::
 
@@ -428,6 +525,23 @@ When left unspecified, the driver itself is used for both
 internal merge and the final merge.
 
 
+`conflict-marker-size`
+^^^^^^^^^^^^^^^^^^^^^^
+
+This attribute controls the length of conflict markers left in
+the work tree file during a conflicted merge.  Only setting to
+the value to a positive integer has any meaningful effect.
+
+For example, this line in `.gitattributes` can be used to tell the merge
+machinery to leave much longer (instead of the usual 7-character-long)
+conflict markers when merging the file `Documentation/git-merge.txt`
+results in a conflict.
+
+------------------------
+Documentation/git-merge.txt	conflict-marker-size=32
+------------------------
+
+
 Checking whitespace errors
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -480,6 +594,68 @@ as those for the option `--pretty=format:` of linkgit:git-log[1],
 except that they need to be wrapped like this: `$Format:PLACEHOLDERS$`
 in the file.  E.g. the string `$Format:%H$` will be replaced by the
 commit hash.
+
+
+Packing objects
+~~~~~~~~~~~~~~~
+
+`delta`
+^^^^^^^
+
+Delta compression will not be attempted for blobs for paths with the
+attribute `delta` set to false.
+
+
+Viewing files in GUI tools
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+`encoding`
+^^^^^^^^^^
+
+The value of this attribute specifies the character encoding that should
+be used by GUI tools (e.g. linkgit:gitk[1] and linkgit:git-gui[1]) to
+display the contents of the relevant file. Note that due to performance
+considerations linkgit:gitk[1] does not use this attribute unless you
+manually enable per-file encodings in its options.
+
+If this attribute is not set or has an invalid value, the value of the
+`gui.encoding` configuration variable is used instead
+(See linkgit:git-config[1]).
+
+
+USING ATTRIBUTE MACROS
+----------------------
+
+You do not want any end-of-line conversions applied to, nor textual diffs
+produced for, any binary file you track.  You would need to specify e.g.
+
+------------
+*.jpg -crlf -diff
+------------
+
+but that may become cumbersome, when you have many attributes.  Using
+attribute macros, you can specify groups of attributes set or unset at
+the same time.  The system knows a built-in attribute macro, `binary`:
+
+------------
+*.jpg binary
+------------
+
+which is equivalent to the above.  Note that the attribute macros can only
+be "Set" (see the above example that sets "binary" macro as if it were an
+ordinary attribute --- setting it in turn unsets "crlf" and "diff").
+
+
+DEFINING ATTRIBUTE MACROS
+-------------------------
+
+Custom attribute macros can be defined only in the `.gitattributes` file
+at the toplevel (i.e. not in any subdirectory).  The built-in attribute
+macro "binary" is equivalent to:
+
+------------
+[attr]binary -diff -crlf
+------------
 
 
 EXAMPLE

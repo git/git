@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='core.whitespace rules and git-apply'
+test_description='core.whitespace rules and git apply'
 
 . ./test-lib.sh
 
@@ -147,5 +147,118 @@ do
 		done
 	done
 done
+
+create_patch () {
+	sed -e "s/_/ /" <<-\EOF
+		diff --git a/target b/target
+		index e69de29..8bd6648 100644
+		--- a/target
+		+++ b/target
+		@@ -0,0 +1,3 @@
+		+An empty line follows
+		+
+		+A line with trailing whitespace and no newline_
+		\ No newline at end of file
+	EOF
+}
+
+test_expect_success 'trailing whitespace & no newline at the end of file' '
+	>target &&
+	create_patch >patch-file &&
+	git apply --whitespace=fix patch-file &&
+	grep "newline$" target &&
+	grep "^$" target
+'
+
+test_expect_success 'blank at EOF with --whitespace=fix (1)' '
+	: these can fail depending on what we did before
+	git config --unset core.whitespace
+	rm -f .gitattributes
+
+	{ echo a; echo b; echo c; } >one &&
+	git add one &&
+	{ echo a; echo b; echo c; } >expect &&
+	{ cat expect; echo; } >one &&
+	git diff -- one >patch &&
+
+	git checkout one &&
+	git apply --whitespace=fix patch &&
+	test_cmp expect one
+'
+
+test_expect_success 'blank at EOF with --whitespace=fix (2)' '
+	{ echo a; echo b; echo c; } >one &&
+	git add one &&
+	{ echo a; echo c; } >expect &&
+	{ cat expect; echo; echo; } >one &&
+	git diff -- one >patch &&
+
+	git checkout one &&
+	git apply --whitespace=fix patch &&
+	test_cmp expect one
+'
+
+test_expect_success 'blank at EOF with --whitespace=fix (3)' '
+	{ echo a; echo b; echo; } >one &&
+	git add one &&
+	{ echo a; echo c; echo; } >expect &&
+	{ cat expect; echo; echo; } >one &&
+	git diff -- one >patch &&
+
+	git checkout one &&
+	git apply --whitespace=fix patch &&
+	test_cmp expect one
+'
+
+test_expect_success 'blank at end of hunk, not at EOF with --whitespace=fix' '
+	{ echo a; echo b; echo; echo; echo; echo; echo; echo d; } >one &&
+	git add one &&
+	{ echo a; echo c; echo; echo; echo; echo; echo; echo; echo d; } >expect &&
+	cp expect one &&
+	git diff -- one >patch &&
+
+	git checkout one &&
+	git apply --whitespace=fix patch &&
+	test_cmp expect one
+'
+
+test_expect_success 'blank at EOF with --whitespace=warn' '
+	{ echo a; echo b; echo c; } >one &&
+	git add one &&
+	echo >>one &&
+	cat one >expect &&
+	git diff -- one >patch &&
+
+	git checkout one &&
+	git apply --whitespace=warn patch 2>error &&
+	test_cmp expect one &&
+	grep "new blank line at EOF" error
+'
+
+test_expect_success 'blank at EOF with --whitespace=error' '
+	{ echo a; echo b; echo c; } >one &&
+	git add one &&
+	cat one >expect &&
+	echo >>one &&
+	git diff -- one >patch &&
+
+	git checkout one &&
+	test_must_fail git apply --whitespace=error patch 2>error &&
+	test_cmp expect one &&
+	grep "new blank line at EOF" error
+'
+
+test_expect_success 'blank but not empty at EOF' '
+	{ echo a; echo b; echo c; } >one &&
+	git add one &&
+	echo "   " >>one &&
+	cat one >expect &&
+	git diff -- one >patch &&
+
+	git checkout one &&
+	git apply --whitespace=warn patch 2>error &&
+	test_cmp expect one &&
+	grep "new blank line at EOF" error
+'
 
 test_done

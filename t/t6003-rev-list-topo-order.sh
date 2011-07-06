@@ -6,7 +6,7 @@
 test_description='Tests git rev-list --topo-order functionality'
 
 . ./test-lib.sh
-. ../t6000lib.sh # t6xxx specific functions
+. "$TEST_DIRECTORY"/t6000lib.sh # t6xxx specific functions
 
 list_duplicates()
 {

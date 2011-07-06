@@ -56,9 +56,9 @@ require Exporter;
 @EXPORT_OK = qw(command command_oneline command_noisy
                 command_output_pipe command_input_pipe command_close_pipe
                 command_bidi_pipe command_close_bidi_pipe
-                version exec_path hash_object git_cmd_try
+                version exec_path html_path hash_object git_cmd_try
                 remote_refs
-                temp_acquire temp_release temp_reset);
+                temp_acquire temp_release temp_reset temp_path);
 
 
 =head1 DESCRIPTION
@@ -166,11 +166,12 @@ sub repository {
 		}
 	}
 
-	if (not defined $opts{Repository} and not defined $opts{WorkingCopy}) {
-		$opts{Directory} ||= '.';
+	if (not defined $opts{Repository} and not defined $opts{WorkingCopy}
+		and not defined $opts{Directory}) {
+		$opts{Directory} = '.';
 	}
 
-	if ($opts{Directory}) {
+	if (defined $opts{Directory}) {
 		-d $opts{Directory} or throw Error::Simple("Directory not found: $!");
 
 		my $search = Git->repository(WorkingCopy => $opts{Directory});
@@ -184,7 +185,7 @@ sub repository {
 
 		if ($dir) {
 			$dir =~ m#^/# or $dir = $opts{Directory} . '/' . $dir;
-			$opts{Repository} = $dir;
+			$opts{Repository} = abs_path($dir);
 
 			# If --git-dir went ok, this shouldn't die either.
 			my $prefix = $search->command_oneline('rev-parse', '--show-prefix');
@@ -204,14 +205,14 @@ sub repository {
 
 			unless (-d "$dir/refs" and -d "$dir/objects" and -e "$dir/HEAD") {
 				# Mimick git-rev-parse --git-dir error message:
-				throw Error::Simple('fatal: Not a git repository');
+				throw Error::Simple("fatal: Not a git repository: $dir");
 			}
 			my $search = Git->repository(Repository => $dir);
 			try {
 				$search->command('symbolic-ref', 'HEAD');
 			} catch Git::Error::Command with {
 				# Mimick git-rev-parse --git-dir error message:
-				throw Error::Simple('fatal: Not a git repository');
+				throw Error::Simple("fatal: Not a git repository: $dir");
 			}
 
 			$opts{Repository} = abs_path($dir);
@@ -489,6 +490,16 @@ C<git --exec-path>). Useful mostly only internally.
 =cut
 
 sub exec_path { command_oneline('--exec-path') }
+
+
+=item html_path ()
+
+Return path to the Git html documentation (the same as
+C<git --html-path>). Useful mostly only internally.
+
+=cut
+
+sub html_path { command_oneline('--html-path') }
 
 
 =item repo_path ()
@@ -937,7 +948,7 @@ sub _close_cat_blob {
 
 { # %TEMP_* Lexical Context
 
-my (%TEMP_LOCKS, %TEMP_FILES);
+my (%TEMP_FILEMAP, %TEMP_FILES);
 
 =item temp_acquire ( NAME )
 
@@ -961,11 +972,9 @@ issue.
 =cut
 
 sub temp_acquire {
-	my ($self, $name) = _maybe_self(@_);
+	my $temp_fd = _temp_cache(@_);
 
-	my $temp_fd = _temp_cache($name);
-
-	$TEMP_LOCKS{$temp_fd} = 1;
+	$TEMP_FILES{$temp_fd}{locked} = 1;
 	$temp_fd;
 }
 
@@ -991,29 +1000,29 @@ the same string.
 sub temp_release {
 	my ($self, $temp_fd, $trunc) = _maybe_self(@_);
 
-	if (ref($temp_fd) ne 'File::Temp') {
+	if (exists $TEMP_FILEMAP{$temp_fd}) {
 		$temp_fd = $TEMP_FILES{$temp_fd};
 	}
-	unless ($TEMP_LOCKS{$temp_fd}) {
+	unless ($TEMP_FILES{$temp_fd}{locked}) {
 		carp "Attempt to release temp file '",
 			$temp_fd, "' that has not been locked";
 	}
 	temp_reset($temp_fd) if $trunc and $temp_fd->opened;
 
-	$TEMP_LOCKS{$temp_fd} = 0;
+	$TEMP_FILES{$temp_fd}{locked} = 0;
 	undef;
 }
 
 sub _temp_cache {
-	my ($name) = @_;
+	my ($self, $name) = _maybe_self(@_);
 
 	_verify_require();
 
-	my $temp_fd = \$TEMP_FILES{$name};
+	my $temp_fd = \$TEMP_FILEMAP{$name};
 	if (defined $$temp_fd and $$temp_fd->opened) {
-		if ($TEMP_LOCKS{$$temp_fd}) {
-			throw Error::Simple("Temp file with moniker '",
-				$name, "' already in use");
+		if ($TEMP_FILES{$$temp_fd}{locked}) {
+			throw Error::Simple("Temp file with moniker '" .
+				$name . "' already in use");
 		}
 	} else {
 		if (defined $$temp_fd) {
@@ -1021,12 +1030,20 @@ sub _temp_cache {
 			carp "Temp file '", $name,
 				"' was closed. Opening replacement.";
 		}
-		$$temp_fd = File::Temp->new(
-			TEMPLATE => 'Git_XXXXXX',
-			DIR => File::Spec->tmpdir
+		my $fname;
+
+		my $tmpdir;
+		if (defined $self) {
+			$tmpdir = $self->repo_path();
+		}
+
+		($$temp_fd, $fname) = File::Temp->tempfile(
+			'Git_XXXXXX', UNLINK => 1, DIR => $tmpdir,
 			) or throw Error::Simple("couldn't open new temp file");
+
 		$$temp_fd->autoflush;
 		binmode $$temp_fd;
+		$TEMP_FILES{$$temp_fd}{fname} = $fname;
 	}
 	$$temp_fd;
 }
@@ -1053,8 +1070,25 @@ sub temp_reset {
 		or throw Error::Simple("expected file position to be reset");
 }
 
+=item temp_path ( NAME )
+
+=item temp_path ( FILEHANDLE )
+
+Returns the filename associated with the given tempfile.
+
+=cut
+
+sub temp_path {
+	my ($self, $temp_fd) = _maybe_self(@_);
+
+	if (exists $TEMP_FILEMAP{$temp_fd}) {
+		$temp_fd = $TEMP_FILEMAP{$temp_fd};
+	}
+	$TEMP_FILES{$temp_fd}{fname};
+}
+
 sub END {
-	unlink values %TEMP_FILES if %TEMP_FILES;
+	unlink values %TEMP_FILEMAP if %TEMP_FILEMAP;
 }
 
 } # %TEMP_* Lexical Context
@@ -1185,8 +1219,7 @@ either version 2, or (at your option) any later version.
 # the method was called upon an instance and (undef, @args) if
 # it was called directly.
 sub _maybe_self {
-	# This breaks inheritance. Oh well.
-	ref $_[0] eq 'Git' ? @_ : (undef, @_);
+	UNIVERSAL::isa($_[0], 'Git') ? @_ : (undef, @_);
 }
 
 # Check if the command id is something reasonable.
@@ -1247,6 +1280,8 @@ sub _cmd_exec {
 	my ($self, @args) = @_;
 	if ($self) {
 		$self->repo_path() and $ENV{'GIT_DIR'} = $self->repo_path();
+		$self->repo_path() and $self->wc_path()
+			and $ENV{'GIT_WORK_TREE'} = $self->wc_path();
 		$self->wc_path() and chdir($self->wc_path());
 		$self->wc_subdir() and chdir($self->wc_subdir());
 	}

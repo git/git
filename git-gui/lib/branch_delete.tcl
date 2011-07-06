@@ -9,41 +9,40 @@ field w_check         ; # revision picker for merge test
 field w_delete        ; # delete button
 
 constructor dialog {} {
-	global current_branch
+	global current_branch use_ttk NS
 
-	make_toplevel top w
+	make_dialog top w
+	wm withdraw $w
 	wm title $top [append "[appname] ([reponame]): " [mc "Delete Branch"]]
 	if {$top ne {.}} {
 		wm geometry $top "+[winfo rootx .]+[winfo rooty .]"
 	}
 
-	label $w.header -text [mc "Delete Local Branch"] -font font_uibold
+	${NS}::label $w.header -text [mc "Delete Local Branch"] \
+		-font font_uibold -anchor center
 	pack $w.header -side top -fill x
 
-	frame $w.buttons
+	${NS}::frame $w.buttons
 	set w_delete $w.buttons.delete
-	button $w_delete \
+	${NS}::button $w_delete \
 		-text [mc Delete] \
 		-default active \
 		-state disabled \
 		-command [cb _delete]
 	pack $w_delete -side right
-	button $w.buttons.cancel \
+	${NS}::button $w.buttons.cancel \
 		-text [mc Cancel] \
 		-command [list destroy $w]
 	pack $w.buttons.cancel -side right -padx 5
 	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
 
-	labelframe $w.list -text [mc "Local Branches"]
+	${NS}::labelframe $w.list -text [mc "Local Branches"]
 	set w_heads $w.list.l
-	listbox $w_heads \
+	slistbox $w_heads \
 		-height 10 \
 		-width 70 \
 		-selectmode extended \
-		-exportselection false \
-		-yscrollcommand [list $w.list.sby set]
-	scrollbar $w.list.sby -command [list $w.list.l yview]
-	pack $w.list.sby -side right -fill y
+		-exportselection false
 	pack $w.list.l -side left -fill both -expand 1
 	pack $w.list -fill both -expand 1 -pady 5 -padx 5
 
@@ -51,7 +50,7 @@ constructor dialog {} {
 		$w.check \
 		[mc "Delete Only If Merged Into"] \
 		]
-	$w_check none [mc "Always (Do not perform merge test.)"]
+	$w_check none [mc "Always (Do not perform merge checks)"]
 	pack $w.check -anchor nw -fill x -pady 5 -padx 5
 
 	foreach h [load_all_heads] {
@@ -67,6 +66,7 @@ constructor dialog {} {
 	"
 	bind $w <Key-Escape> [list destroy $w]
 	bind $w <Key-Return> [cb _delete]\;break
+	wm deiconify $w
 	tkwait window $w
 }
 
@@ -112,7 +112,7 @@ method _delete {} {
 	}
 	if {$to_delete eq {}} return
 	if {$check_cmt eq {}} {
-		set msg [mc "Recovering deleted branches is difficult. \n\n Delete the selected branches?"]
+		set msg [mc "Recovering deleted branches is difficult.\n\nDelete the selected branches?"]
 		if {[tk_messageBox \
 			-icon warning \
 			-type yesno \

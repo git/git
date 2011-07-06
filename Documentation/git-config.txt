@@ -11,7 +11,7 @@ SYNOPSIS
 [verse]
 'git config' [<file-option>] [type] [-z|--null] name [value [value_regex]]
 'git config' [<file-option>] [type] --add name value
-'git config' [<file-option>] [type] --replace-all name [value [value_regex]]
+'git config' [<file-option>] [type] --replace-all name value [value_regex]
 'git config' [<file-option>] [type] [-z|--null] --get name [value_regex]
 'git config' [<file-option>] [type] [-z|--null] --get-all name [value_regex]
 'git config' [<file-option>] [type] [-z|--null] --get-regexp name_regex [value_regex]
@@ -22,6 +22,7 @@ SYNOPSIS
 'git config' [<file-option>] [-z|--null] -l | --list
 'git config' [<file-option>] --get-color name [default]
 'git config' [<file-option>] --get-colorbool name [stdout-is-tty]
+'git config' [<file-option>] -e | --edit
 
 DESCRIPTION
 -----------
@@ -36,11 +37,12 @@ existing values that match the regexp are updated or unset.  If
 you want to handle the lines that do *not* match the regex, just
 prepend a single exclamation mark in front (see also <<EXAMPLES>>).
 
-The type specifier can be either '--int' or '--bool', which will make
-'git-config' ensure that the variable(s) are of the given type and
+The type specifier can be either '--int' or '--bool', to make
+'git config' ensure that the variable(s) are of the given type and
 convert the value to the canonical form (simple decimal number for int,
-a "true" or "false" string for bool).  If no type specifier is passed,
-no checks or transformations are performed on the value.
+a "true" or "false" string for bool), or '--path', which does some
+path expansion (see '--path' below).  If no type specifier is passed, no
+checks or transformations are performed on the value.
 
 The file-option can be one of '--system', '--global' or '--file'
 which specify where the values will be read from or written to.
@@ -68,7 +70,8 @@ OPTIONS
 
 --add::
 	Adds a new line to the option without altering any existing
-	values.  This is the same as providing '^$' as the value_regex.
+	values.  This is the same as providing '^$' as the value_regex
+	in `--replace-all`.
 
 --get::
 	Get the value for a given key (optionally filtered by a regex
@@ -122,13 +125,24 @@ See also <<FILES>>.
 	List all variables set in config file.
 
 --bool::
-	'git-config' will ensure that the output is "true" or "false"
+	'git config' will ensure that the output is "true" or "false"
 
 --int::
-	'git-config' will ensure that the output is a simple
+	'git config' will ensure that the output is a simple
 	decimal number.  An optional value suffix of 'k', 'm', or 'g'
 	in the config file will cause the value to be multiplied
 	by 1024, 1048576, or 1073741824 prior to output.
+
+--bool-or-int::
+	'git config' will ensure that the output matches the format of
+	either --bool or --int, as described above.
+
+--path::
+	'git-config' will expand leading '{tilde}' to the value of
+	'$HOME', and '{tilde}user' to the home directory for the
+	specified user.  This option has no effect when setting the
+	value (but you can use 'git config bla {tilde}/' from the
+	command line to let your shell do the expansion).
 
 -z::
 --null::
@@ -150,19 +164,24 @@ See also <<FILES>>.
 	When the color setting for `name` is undefined, the command uses
 	`color.ui` as fallback.
 
---get-color name default::
+--get-color name [default]::
 
 	Find the color configured for `name` (e.g. `color.diff.new`) and
 	output it as the ANSI color escape sequence to the standard
 	output.  The optional `default` parameter is used instead, if
 	there is no color configured for `name`.
 
+-e::
+--edit::
+	Opens an editor to modify the specified config file; either
+	'--system', '--global', or repository (default).
+
 [[FILES]]
 FILES
 -----
 
 If not set explicitly with '--file', there are three files where
-'git-config' will search for configuration options:
+'git config' will search for configuration options:
 
 $GIT_DIR/config::
 	Repository specific configuration file. (The filename is
@@ -179,12 +198,12 @@ $(prefix)/etc/gitconfig::
 If no further options are given, all reading options will read all of these
 files that are available. If the global or the system-wide configuration
 file are not available they will be ignored. If the repository configuration
-file is not available or readable, 'git-config' will exit with a non-zero
+file is not available or readable, 'git config' will exit with a non-zero
 error code. However, in neither case will an error message be issued.
 
 All writing options will per default write to the repository specific
 configuration file. Note that this also affects options like '--replace-all'
-and '--unset'. *'git-config' will only ever change one file at a time*.
+and '--unset'. *'git config' will only ever change one file at a time*.
 
 You can override these rules either by command line options or by environment
 variables. The '--global' and the '--system' options will limit the file used
@@ -279,7 +298,7 @@ If you want to know all the values for a multivar, do:
 % git config --get-all core.gitproxy
 ------------
 
-If you like to live dangerous, you can replace *all* core.gitproxy by a
+If you like to live dangerously, you can replace *all* core.gitproxy by a
 new one with
 
 ------------

@@ -3,7 +3,7 @@
 # Copyright (c) 2007 Eric Wong
 #
 
-test_description='git-svn init/clone tests'
+test_description='git svn init/clone tests'
 
 . ./lib-git-svn.sh
 
@@ -16,7 +16,7 @@ cd tmp
 test_expect_success 'setup svnrepo' '
 	mkdir project project/trunk project/branches project/tags &&
 	echo foo > project/trunk/foo &&
-	svn import -m "$test_description" project "$svnrepo"/project &&
+	svn_cmd import -m "$test_description" project "$svnrepo"/project &&
 	rm -rf project
 	'
 

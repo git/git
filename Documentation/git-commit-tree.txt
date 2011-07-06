@@ -70,18 +70,19 @@ is taken from the configuration items user.name and user.email, or, if not
 present, system user name and fully qualified hostname.
 
 A commit comment is read from stdin. If a changelog
-entry is not provided via "<" redirection, 'git-commit-tree' will just wait
+entry is not provided via "<" redirection, 'git commit-tree' will just wait
 for one to be entered and terminated with ^D.
 
+include::date-formats.txt[]
 
 Diagnostics
 -----------
 You don't exist. Go away!::
     The passwd(5) gecos field couldn't be read
 Your parents must have hated you!::
-    The password(5) gecos field is longer than a giant static buffer.
+    The passwd(5) gecos field is longer than a giant static buffer.
 Your sysadmin must hate you!::
-    The password(5) name field is longer than a giant static buffer.
+    The passwd(5) name field is longer than a giant static buffer.
 
 Discussion
 ----------

@@ -1,3 +1,4 @@
+#define NO_THE_INDEX_COMPATIBILITY_MACROS
 #include "cache.h"
 #include "attr.h"
 
@@ -34,8 +35,7 @@ static struct git_attr *(git_attr_hash[HASHSIZE]);
 
 static unsigned hash_name(const char *name, int namelen)
 {
-	unsigned val = 0;
-	unsigned char c;
+	unsigned val = 0, c;
 
 	while (namelen--) {
 		c = *name++;
@@ -65,7 +65,7 @@ static int invalid_attr_name(const char *name, int namelen)
 	return 0;
 }
 
-struct git_attr *git_attr(const char *name, int len)
+static struct git_attr *git_attr_internal(const char *name, int len)
 {
 	unsigned hval = hash_name(name, len);
 	unsigned pos = hval % HASHSIZE;
@@ -93,6 +93,11 @@ struct git_attr *git_attr(const char *name, int len)
 	check_all_attr[a->attr_nr].attr = a;
 	check_all_attr[a->attr_nr].value = ATTR__UNKNOWN;
 	return a;
+}
+
+struct git_attr *git_attr(const char *name)
+{
+	return git_attr_internal(name, strlen(name));
 }
 
 /*
@@ -162,7 +167,7 @@ static const char *parse_attr(const char *src, int lineno, const char *cp,
 		else {
 			e->setto = xmemdupz(equals + 1, ep - equals - 1);
 		}
-		e->attr = git_attr(cp, len);
+		e->attr = git_attr_internal(cp, len);
 	}
 	(*num_attr)++;
 	return ep + strspn(ep, blank);
@@ -221,9 +226,9 @@ static struct match_attr *parse_attr_line(const char *line, const char *src,
 			      sizeof(struct attr_state) * num_attr +
 			      (is_macro ? 0 : namelen + 1));
 		if (is_macro)
-			res->u.attr = git_attr(name, namelen);
+			res->u.attr = git_attr_internal(name, namelen);
 		else {
-			res->u.pattern = (char*)&(res->state[num_attr]);
+			res->u.pattern = (char *)&(res->state[num_attr]);
 			memcpy(res->u.pattern, name, namelen);
 			res->u.pattern[namelen] = 0;
 		}
@@ -274,7 +279,7 @@ static void free_attr_elem(struct attr_stack *e)
 			    setto == ATTR__UNKNOWN)
 				;
 			else
-				free((char*) setto);
+				free((char *) setto);
 		}
 		free(a);
 	}
@@ -318,6 +323,9 @@ static struct attr_stack *read_attr_from_array(const char **list)
 	return res;
 }
 
+static enum git_attr_direction direction;
+static struct index_state *use_index;
+
 static struct attr_stack *read_attr_from_file(const char *path, int macro_ok)
 {
 	FILE *fp = fopen(path, "r");
@@ -340,9 +348,10 @@ static void *read_index_data(const char *path)
 	unsigned long sz;
 	enum object_type type;
 	void *data;
+	struct index_state *istate = use_index ? use_index : &the_index;
 
 	len = strlen(path);
-	pos = cache_name_pos(path, len);
+	pos = index_name_pos(istate, path, len);
 	if (pos < 0) {
 		/*
 		 * We might be in the middle of a merge, in which
@@ -350,15 +359,15 @@ static void *read_index_data(const char *path)
 		 */
 		int i;
 		for (i = -pos - 1;
-		     (pos < 0 && i < active_nr &&
-		      !strcmp(active_cache[i]->name, path));
+		     (pos < 0 && i < istate->cache_nr &&
+		      !strcmp(istate->cache[i]->name, path));
 		     i++)
-			if (ce_stage(active_cache[i]) == 2)
+			if (ce_stage(istate->cache[i]) == 2)
 				pos = i;
 	}
 	if (pos < 0)
 		return NULL;
-	data = read_sha1_file(active_cache[pos]->sha1, &type, &sz);
+	data = read_sha1_file(istate->cache[pos]->sha1, &type, &sz);
 	if (!data || type != OBJ_BLOB) {
 		free(data);
 		return NULL;
@@ -366,27 +375,17 @@ static void *read_index_data(const char *path)
 	return data;
 }
 
-static struct attr_stack *read_attr(const char *path, int macro_ok)
+static struct attr_stack *read_attr_from_index(const char *path, int macro_ok)
 {
 	struct attr_stack *res;
 	char *buf, *sp;
 	int lineno = 0;
 
-	res = read_attr_from_file(path, macro_ok);
-	if (res)
-		return res;
-
-	res = xcalloc(1, sizeof(*res));
-
-	/*
-	 * There is no checked out .gitattributes file there, but
-	 * we might have it in the index.  We allow operation in a
-	 * sparsely checked out work tree, so read from it.
-	 */
 	buf = read_index_data(path);
 	if (!buf)
-		return res;
+		return NULL;
 
+	res = xcalloc(1, sizeof(*res));
 	for (sp = buf; *sp; ) {
 		char *ep;
 		int more;
@@ -398,6 +397,32 @@ static struct attr_stack *read_attr(const char *path, int macro_ok)
 		sp = ep + more;
 	}
 	free(buf);
+	return res;
+}
+
+static struct attr_stack *read_attr(const char *path, int macro_ok)
+{
+	struct attr_stack *res;
+
+	if (direction == GIT_ATTR_CHECKOUT) {
+		res = read_attr_from_index(path, macro_ok);
+		if (!res)
+			res = read_attr_from_file(path, macro_ok);
+	}
+	else if (direction == GIT_ATTR_CHECKIN) {
+		res = read_attr_from_file(path, macro_ok);
+		if (!res)
+			/*
+			 * There is no checked out .gitattributes file there, but
+			 * we might have it in the index.  We allow operation in a
+			 * sparsely checked out work tree, so read from it.
+			 */
+			res = read_attr_from_index(path, macro_ok);
+	}
+	else
+		res = read_attr_from_index(path, macro_ok);
+	if (!res)
+		res = xcalloc(1, sizeof(*res));
 	return res;
 }
 
@@ -428,6 +453,15 @@ static void debug_set(const char *what, const char *match, struct git_attr *attr
 #define debug_set(a,b,c,d) do { ; } while (0)
 #endif
 
+static void drop_attr_stack(void)
+{
+	while (attr_stack) {
+		struct attr_stack *elem = attr_stack;
+		attr_stack = elem->prev;
+		free_attr_elem(elem);
+	}
+}
+
 static void bootstrap_attr_stack(void)
 {
 	if (!attr_stack) {
@@ -438,7 +472,7 @@ static void bootstrap_attr_stack(void)
 		elem->prev = attr_stack;
 		attr_stack = elem;
 
-		if (!is_bare_repository()) {
+		if (!is_bare_repository() || direction == GIT_ATTR_INDEX) {
 			elem = read_attr(GITATTRIBUTES_FILE, 1);
 			elem->origin = strdup("");
 			elem->prev = attr_stack;
@@ -505,7 +539,7 @@ static void prepare_attr_stack(const char *path, int dirlen)
 	/*
 	 * Read from parent directories and push them down
 	 */
-	if (!is_bare_repository()) {
+	if (!is_bare_repository() || direction == GIT_ATTR_INDEX) {
 		while (1) {
 			char *cp;
 
@@ -525,6 +559,8 @@ static void prepare_attr_stack(const char *path, int dirlen)
 			debug_push(elem);
 		}
 	}
+
+	strbuf_release(&pathbuf);
 
 	/*
 	 * Finally push the "info" one at the top of the stack.
@@ -641,4 +677,17 @@ int git_checkattr(const char *path, int num, struct git_attr_check *check)
 	}
 
 	return 0;
+}
+
+void git_attr_set_direction(enum git_attr_direction new, struct index_state *istate)
+{
+	enum git_attr_direction old = direction;
+
+	if (is_bare_repository() && new != GIT_ATTR_INDEX)
+		die("BUG: non-INDEX attr direction in a bare repo");
+
+	direction = new;
+	if (new != old)
+		drop_attr_stack();
+	use_index = istate;
 }

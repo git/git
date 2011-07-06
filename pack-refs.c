@@ -66,7 +66,7 @@ static void prune_ref(struct ref_to_prune *r)
 	struct ref_lock *lock = lock_ref_sha1(r->name + 5, r->sha1);
 
 	if (lock) {
-		unlink(git_path("%s", r->name));
+		unlink_or_warn(git_path("%s", r->name));
 		unlock_ref(lock);
 	}
 }
@@ -89,11 +89,11 @@ int pack_refs(unsigned int flags)
 	memset(&cbdata, 0, sizeof(cbdata));
 	cbdata.flags = flags;
 
-	fd = hold_lock_file_for_update(&packed, git_path("packed-refs"), 1);
+	fd = hold_lock_file_for_update(&packed, git_path("packed-refs"),
+				       LOCK_DIE_ON_ERROR);
 	cbdata.refs_file = fdopen(fd, "w");
 	if (!cbdata.refs_file)
-		die("unable to create ref-pack file structure (%s)",
-		    strerror(errno));
+		die_errno("unable to create ref-pack file structure");
 
 	/* perhaps other traits later as well */
 	fprintf(cbdata.refs_file, "# pack-refs with: peeled \n");
@@ -102,7 +102,7 @@ int pack_refs(unsigned int flags)
 	if (ferror(cbdata.refs_file))
 		die("failed to write ref-pack file");
 	if (fflush(cbdata.refs_file) || fsync(fd) || fclose(cbdata.refs_file))
-		die("failed to write ref-pack file (%s)", strerror(errno));
+		die_errno("failed to write ref-pack file");
 	/*
 	 * Since the lock file was fdopen()'ed and then fclose()'ed above,
 	 * assign -1 to the lock file descriptor so that commit_lock_file()
@@ -110,7 +110,7 @@ int pack_refs(unsigned int flags)
 	 */
 	packed.fd = -1;
 	if (commit_lock_file(&packed) < 0)
-		die("unable to overwrite old ref-pack file (%s)", strerror(errno));
+		die_errno("unable to overwrite old ref-pack file");
 	if (cbdata.flags & PACK_REFS_PRUNE)
 		prune_refs(cbdata.ref_to_prune);
 	return 0;

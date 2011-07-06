@@ -9,8 +9,6 @@
 #include "builtin.h"
 #include "utf8.h"
 
-#define BLOCKING (1ul << 14)
-
 /*
  * FIXME! Share the code with "write-tree.c"
  */
@@ -24,7 +22,7 @@ static void check_valid(unsigned char *sha1, enum object_type expect)
 		    typename(expect));
 }
 
-static const char commit_tree_usage[] = "git-commit-tree <sha1> [-p <sha1>]* < changelog";
+static const char commit_tree_usage[] = "git commit-tree <sha1> [-p <sha1>]* < changelog";
 
 static void new_parent(struct commit *parent, struct commit_list **parents_p)
 {
@@ -46,8 +44,10 @@ static const char commit_utf8_warn[] =
 "variable i18n.commitencoding to the encoding your project uses.\n";
 
 int commit_tree(const char *msg, unsigned char *tree,
-		struct commit_list *parents, unsigned char *ret)
+		struct commit_list *parents, unsigned char *ret,
+		const char *author)
 {
+	int result;
 	int encoding_is_utf8;
 	struct strbuf buffer;
 
@@ -73,7 +73,9 @@ int commit_tree(const char *msg, unsigned char *tree,
 	}
 
 	/* Person/date information */
-	strbuf_addf(&buffer, "author %s\n", git_author_info(IDENT_ERROR_ON_NO_NAME));
+	if (!author)
+		author = git_author_info(IDENT_ERROR_ON_NO_NAME);
+	strbuf_addf(&buffer, "author %s\n", author);
 	strbuf_addf(&buffer, "committer %s\n", git_committer_info(IDENT_ERROR_ON_NO_NAME));
 	if (!encoding_is_utf8)
 		strbuf_addf(&buffer, "encoding %s\n", git_commit_encoding);
@@ -86,7 +88,9 @@ int commit_tree(const char *msg, unsigned char *tree,
 	if (encoding_is_utf8 && !is_utf8(buffer.buf))
 		fprintf(stderr, commit_utf8_warn);
 
-	return write_sha1_file(buffer.buf, buffer.len, commit_type, ret);
+	result = write_sha1_file(buffer.buf, buffer.len, commit_type, ret);
+	strbuf_release(&buffer);
+	return result;
 }
 
 int cmd_commit_tree(int argc, const char **argv, const char *prefix)
@@ -99,7 +103,7 @@ int cmd_commit_tree(int argc, const char **argv, const char *prefix)
 
 	git_config(git_default_config, NULL);
 
-	if (argc < 2)
+	if (argc < 2 || !strcmp(argv[1], "-h"))
 		usage(commit_tree_usage);
 	if (get_sha1(argv[1], tree_sha1))
 		die("Not a valid object name %s", argv[1]);
@@ -118,9 +122,9 @@ int cmd_commit_tree(int argc, const char **argv, const char *prefix)
 	}
 
 	if (strbuf_read(&buffer, 0, 0) < 0)
-		die("git-commit-tree: read returned %s", strerror(errno));
+		die_errno("git commit-tree: failed to read");
 
-	if (!commit_tree(buffer.buf, tree_sha1, parents, commit_sha1)) {
+	if (!commit_tree(buffer.buf, tree_sha1, parents, commit_sha1, NULL)) {
 		printf("%s\n", sha1_to_hex(commit_sha1));
 		return 0;
 	}

@@ -17,7 +17,8 @@ test_expect_success setup '
 	commit1=$(echo modify | git commit-tree $tree1 -p $commit0) &&
 	git update-ref refs/heads/master $commit0 &&
 	git update-ref refs/heads/tofail $commit1 &&
-	git-clone ./. victim &&
+	git clone ./. victim &&
+	GIT_DIR=victim/.git git config receive.denyCurrentBranch warn &&
 	GIT_DIR=victim/.git git update-ref refs/heads/tofail $commit1 &&
 	git update-ref refs/heads/master $commit1 &&
 	git update-ref refs/heads/tofail $commit0
@@ -61,7 +62,7 @@ EOF
 chmod u+x victim/.git/hooks/post-update
 
 test_expect_success push '
-	test_must_fail git-send-pack --force ./victim/.git \
+	test_must_fail git send-pack --force ./victim/.git \
 		master tofail >send.out 2>send.err
 '
 

@@ -70,9 +70,7 @@ test_expect_success setup '
 	E=`git rev-parse --verify HEAD:A/B/E` &&
 	check_fsck &&
 
-	chmod +x C &&
-	( test "`git config --bool core.filemode`" != false ||
-	  echo executable >>C ) &&
+	test_chmod +x C &&
 	git add C &&
 	test_tick && git commit -m dragon &&
 	L=`git rev-parse --verify HEAD` &&

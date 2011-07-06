@@ -2,11 +2,26 @@
 #include "commit.h"
 #include "refs.h"
 #include "builtin.h"
+#include "color.h"
+#include "parse-options.h"
 
-static const char show_branch_usage[] =
-"git show-branch [--sparse] [--current] [--all] [--remotes] [--topo-order] [--more=count | --list | --independent | --merge-base ] [--topics] [<refs>...] | --reflog[=n[,b]] <branch>";
-static const char show_branch_usage_reflog[] =
-"--reflog is incompatible with --all, --remotes, --independent or --merge-base";
+static const char* show_branch_usage[] = {
+    "git show-branch [-a|--all] [-r|--remotes] [--topo-order | --date-order] [--current] [--color | --no-color] [--sparse] [--more=<n> | --list | --independent | --merge-base] [--no-name | --sha1-name] [--topics] [<rev> | <glob>]...",
+    "git show-branch (-g|--reflog)[=<n>[,<base>]] [--list] [<ref>]",
+    NULL
+};
+
+static int showbranch_use_color = -1;
+static char column_colors[][COLOR_MAXLEN] = {
+	GIT_COLOR_RED,
+	GIT_COLOR_GREEN,
+	GIT_COLOR_YELLOW,
+	GIT_COLOR_BLUE,
+	GIT_COLOR_MAGENTA,
+	GIT_COLOR_CYAN,
+};
+
+#define COLUMN_COLORS_MAX (ARRAY_SIZE(column_colors))
 
 static int default_num;
 static int default_alloc;
@@ -18,6 +33,20 @@ static const char **default_arg;
 #define MAX_REVS	(FLAG_BITS - REV_SHIFT) /* should not exceed bits_per_int - REV_SHIFT */
 
 #define DEFAULT_REFLOG	4
+
+static const char *get_color_code(int idx)
+{
+	if (showbranch_use_color)
+		return column_colors[idx];
+	return "";
+}
+
+static const char *get_color_reset_code(void)
+{
+	if (showbranch_use_color)
+		return GIT_COLOR_RESET;
+	return "";
+}
 
 static struct commit *interesting(struct commit_list *list)
 {
@@ -259,14 +288,13 @@ static void join_revs(struct commit_list **list_p,
 
 static void show_one_commit(struct commit *commit, int no_name)
 {
-	struct strbuf pretty;
+	struct strbuf pretty = STRBUF_INIT;
 	const char *pretty_str = "(unavailable)";
 	struct commit_name *name = commit->util;
 
-	strbuf_init(&pretty, 0);
 	if (commit->object.parsed) {
-		pretty_print_commit(CMIT_FMT_ONELINE, commit,
-				    &pretty, 0, NULL, NULL, 0, 0);
+		struct pretty_print_context ctx = {0};
+		pretty_print_commit(CMIT_FMT_ONELINE, commit, &pretty, &ctx);
 		pretty_str = pretty.buf;
 	}
 	if (!prefixcmp(pretty_str, "[PATCH] "))
@@ -366,8 +394,7 @@ static int append_ref(const char *refname, const unsigned char *sha1,
 				return 0;
 	}
 	if (MAX_REVS <= ref_name_cnt) {
-		fprintf(stderr, "warning: ignoring %s; "
-			"cannot handle more than %d refs\n",
+		warning("ignoring %s; cannot handle more than %d refs",
 			refname, MAX_REVS);
 		return 0;
 	}
@@ -538,7 +565,15 @@ static int git_show_branch_config(const char *var, const char *value, void *cb)
 	if (!strcmp(var, "showbranch.default")) {
 		if (!value)
 			return config_error_nonbool(var);
-		if (default_alloc <= default_num + 1) {
+		/*
+		 * default_arg is now passed to parse_options(), so we need to
+		 * mimick the real argv a bit better.
+		 */
+		if (!default_num) {
+			default_alloc = 20;
+			default_arg = xcalloc(default_alloc, sizeof(*default_arg));
+			default_arg[default_num++] = "show-branch";
+		} else if (default_alloc <= default_num + 1) {
 			default_alloc = default_alloc * 3 / 2 + 20;
 			default_arg = xrealloc(default_arg, sizeof *default_arg * default_alloc);
 		}
@@ -547,7 +582,12 @@ static int git_show_branch_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 
-	return git_default_config(var, value, cb);
+	if (!strcmp(var, "color.showbranch")) {
+		showbranch_use_color = git_config_colorbool(var, value, -1);
+		return 0;
+	}
+
+	return git_color_default_config(var, value, cb);
 }
 
 static int omit_in_dense(struct commit *commit, struct commit **rev, int n)
@@ -571,18 +611,25 @@ static int omit_in_dense(struct commit *commit, struct commit **rev, int n)
 	return 0;
 }
 
-static void parse_reflog_param(const char *arg, int *cnt, const char **base)
+static int reflog = 0;
+
+static int parse_reflog_param(const struct option *opt, const char *arg,
+			      int unset)
 {
 	char *ep;
-	*cnt = strtoul(arg, &ep, 10);
+	const char **base = (const char **)opt->value;
+	if (!arg)
+		arg = "";
+	reflog = strtoul(arg, &ep, 10);
 	if (*ep == ',')
 		*base = ep + 1;
 	else if (*ep)
-		die("unrecognized reflog param '%s'", arg + 9);
+		return error("unrecognized reflog param '%s'", arg);
 	else
 		*base = NULL;
-	if (*cnt <= 0)
-		*cnt = DEFAULT_REFLOG;
+	if (reflog <= 0)
+		reflog = DEFAULT_REFLOG;
+	return 0;
 }
 
 int cmd_show_branch(int ac, const char **av, const char *prefix)
@@ -608,70 +655,67 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 	int head_at = -1;
 	int topics = 0;
 	int dense = 1;
-	int reflog = 0;
 	const char *reflog_base = NULL;
+	struct option builtin_show_branch_options[] = {
+		OPT_BOOLEAN('a', "all", &all_heads,
+			    "show remote-tracking and local branches"),
+		OPT_BOOLEAN('r', "remotes", &all_remotes,
+			    "show remote-tracking branches"),
+		OPT_BOOLEAN(0, "color", &showbranch_use_color,
+			    "color '*!+-' corresponding to the branch"),
+		{ OPTION_INTEGER, 0, "more", &extra, "n",
+			    "show <n> more commits after the common ancestor",
+			    PARSE_OPT_OPTARG, NULL, (intptr_t)1 },
+		OPT_SET_INT(0, "list", &extra, "synonym to more=-1", -1),
+		OPT_BOOLEAN(0, "no-name", &no_name, "suppress naming strings"),
+		OPT_BOOLEAN(0, "current", &with_current_branch,
+			    "include the current branch"),
+		OPT_BOOLEAN(0, "sha1-name", &sha1_name,
+			    "name commits with their object names"),
+		OPT_BOOLEAN(0, "merge-base", &merge_base,
+			    "show possible merge bases"),
+		OPT_BOOLEAN(0, "independent", &independent,
+			    "show refs unreachable from any other ref"),
+		OPT_BOOLEAN(0, "topo-order", &lifo,
+			    "show commits in topological order"),
+		OPT_BOOLEAN(0, "topics", &topics,
+			    "show only commits not on the first branch"),
+		OPT_SET_INT(0, "sparse", &dense,
+			    "show merges reachable from only one tip", 0),
+		OPT_SET_INT(0, "date-order", &lifo,
+			    "show commits where no parent comes before its "
+			    "children", 0),
+		{ OPTION_CALLBACK, 'g', "reflog", &reflog_base, "<n>[,<base>]",
+			    "show <n> most recent ref-log entries starting at "
+			    "base",
+			    PARSE_OPT_OPTARG | PARSE_OPT_LITERAL_ARGHELP,
+			    parse_reflog_param },
+		OPT_END()
+	};
 
 	git_config(git_show_branch_config, NULL);
 
+	if (showbranch_use_color == -1)
+		showbranch_use_color = git_use_color_default;
+
 	/* If nothing is specified, try the default first */
 	if (ac == 1 && default_num) {
-		ac = default_num + 1;
-		av = default_arg - 1; /* ick; we would not address av[0] */
+		ac = default_num;
+		av = default_arg;
 	}
 
-	while (1 < ac && av[1][0] == '-') {
-		const char *arg = av[1];
-		if (!strcmp(arg, "--")) {
-			ac--; av++;
-			break;
-		}
-		else if (!strcmp(arg, "--all") || !strcmp(arg, "-a"))
-			all_heads = all_remotes = 1;
-		else if (!strcmp(arg, "--remotes") || !strcmp(arg, "-r"))
-			all_remotes = 1;
-		else if (!strcmp(arg, "--more"))
-			extra = 1;
-		else if (!strcmp(arg, "--list"))
-			extra = -1;
-		else if (!strcmp(arg, "--no-name"))
-			no_name = 1;
-		else if (!strcmp(arg, "--current"))
-			with_current_branch = 1;
-		else if (!strcmp(arg, "--sha1-name"))
-			sha1_name = 1;
-		else if (!prefixcmp(arg, "--more="))
-			extra = atoi(arg + 7);
-		else if (!strcmp(arg, "--merge-base"))
-			merge_base = 1;
-		else if (!strcmp(arg, "--independent"))
-			independent = 1;
-		else if (!strcmp(arg, "--topo-order"))
-			lifo = 1;
-		else if (!strcmp(arg, "--topics"))
-			topics = 1;
-		else if (!strcmp(arg, "--sparse"))
-			dense = 0;
-		else if (!strcmp(arg, "--date-order"))
-			lifo = 0;
-		else if (!strcmp(arg, "--reflog") || !strcmp(arg, "-g")) {
-			reflog = DEFAULT_REFLOG;
-		}
-		else if (!prefixcmp(arg, "--reflog="))
-			parse_reflog_param(arg + 9, &reflog, &reflog_base);
-		else if (!prefixcmp(arg, "-g="))
-			parse_reflog_param(arg + 3, &reflog, &reflog_base);
-		else
-			usage(show_branch_usage);
-		ac--; av++;
-	}
-	ac--; av++;
+	ac = parse_options(ac, av, prefix, builtin_show_branch_options,
+			   show_branch_usage, PARSE_OPT_STOP_AT_NON_OPTION);
+	if (all_heads)
+		all_remotes = 1;
 
 	if (extra || reflog) {
 		/* "listing" mode is incompatible with
 		 * independent nor merge-base modes.
 		 */
 		if (independent || merge_base)
-			usage(show_branch_usage);
+			usage_with_options(show_branch_usage,
+					   builtin_show_branch_options);
 		if (reflog && ((0 < extra) || all_heads || all_remotes))
 			/*
 			 * Asking for --more in reflog mode does not
@@ -679,7 +723,8 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 			 *
 			 * Also --all and --remotes do not make sense either.
 			 */
-			usage(show_branch_usage_reflog);
+			die("--reflog is incompatible with --all, --remotes, "
+			    "--independent or --merge-base");
 	}
 
 	/* If nothing is specified, show all branches by default */
@@ -845,8 +890,10 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 			else {
 				for (j = 0; j < i; j++)
 					putchar(' ');
-				printf("%c [%s] ",
-				       is_head ? '*' : '!', ref_name[i]);
+				printf("%s%c%s [%s] ",
+				       get_color_code(i % COLUMN_COLORS_MAX),
+				       is_head ? '*' : '!',
+				       get_color_reset_code(), ref_name[i]);
 			}
 
 			if (!reflog) {
@@ -905,7 +952,9 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 					mark = '*';
 				else
 					mark = '+';
-				putchar(mark);
+				printf("%s%c%s",
+				       get_color_code(i % COLUMN_COLORS_MAX),
+				       mark, get_color_reset_code());
 			}
 			putchar(' ');
 		}

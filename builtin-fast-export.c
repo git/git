@@ -23,7 +23,10 @@ static const char *fast_export_usage[] = {
 };
 
 static int progress;
-static enum { VERBATIM, WARN, STRIP, ABORT } signed_tag_mode = ABORT;
+static enum { ABORT, VERBATIM, WARN, STRIP } signed_tag_mode = ABORT;
+static enum { ERROR, DROP, REWRITE } tag_of_filtered_mode = ABORT;
+static int fake_missing_tagger;
+static int no_data;
 
 static int parse_opt_signed_tag_mode(const struct option *opt,
 				     const char *arg, int unset)
@@ -38,6 +41,20 @@ static int parse_opt_signed_tag_mode(const struct option *opt,
 		signed_tag_mode = STRIP;
 	else
 		return error("Unknown signed-tag mode: %s", arg);
+	return 0;
+}
+
+static int parse_opt_tag_of_filtered_mode(const struct option *opt,
+					  const char *arg, int unset)
+{
+	if (unset || !strcmp(arg, "abort"))
+		tag_of_filtered_mode = ABORT;
+	else if (!strcmp(arg, "drop"))
+		tag_of_filtered_mode = DROP;
+	else if (!strcmp(arg, "rewrite"))
+		tag_of_filtered_mode = REWRITE;
+	else
+		return error("Unknown tag-of-filtered mode: %s", arg);
 	return 0;
 }
 
@@ -100,6 +117,9 @@ static void handle_object(const unsigned char *sha1)
 	char *buf;
 	struct object *object;
 
+	if (no_data)
+		return;
+
 	if (is_null_sha1(sha1))
 		return;
 
@@ -118,7 +138,7 @@ static void handle_object(const unsigned char *sha1)
 
 	printf("blob\nmark :%"PRIu32"\ndata %lu\n", last_idnum, size);
 	if (size && fwrite(buf, size, 1, stdout) != 1)
-		die ("Could not write blob %s", sha1_to_hex(sha1));
+		die_errno ("Could not write blob '%s'", sha1_to_hex(sha1));
 	printf("\n");
 
 	show_progress();
@@ -157,7 +177,7 @@ static void show_filemodify(struct diff_queue_struct *q,
 			 * Links refer to objects in another repositories;
 			 * output the SHA-1 verbatim.
 			 */
-			if (S_ISGITLINK(spec->mode))
+			if (no_data || S_ISGITLINK(spec->mode))
 				printf("M %06o %s %s\n", spec->mode,
 				       sha1_to_hex(spec->sha1), spec->path);
 			else {
@@ -220,7 +240,8 @@ static void handle_commit(struct commit *commit, struct rev_info *rev)
 	if (message)
 		message += 2;
 
-	if (commit->parents) {
+	if (commit->parents &&
+	    get_object_mark(&commit->parents->item->object) != 0) {
 		parse_commit(commit->parents->item);
 		diff_tree_sha1(commit->parents->item->tree->object.sha1,
 			       commit->tree->object.sha1, "", &rev->diffopt);
@@ -287,6 +308,23 @@ static void handle_tag(const char *name, struct tag *tag)
 	char *buf;
 	const char *tagger, *tagger_end, *message;
 	size_t message_size = 0;
+	struct object *tagged;
+	int tagged_mark;
+	struct commit *p;
+
+	/* Trees have no identifer in fast-export output, thus we have no way
+	 * to output tags of trees, tags of tags of trees, etc.  Simply omit
+	 * such tags.
+	 */
+	tagged = tag->tagged;
+	while (tagged->type == OBJ_TAG) {
+		tagged = ((struct tag *)tagged)->tagged;
+	}
+	if (tagged->type == OBJ_TREE) {
+		warning("Omitting tag %s,\nsince tags of trees (or tags of tags of trees, etc.) are not supported.",
+			sha1_to_hex(tag->object.sha1));
+		return;
+	}
 
 	buf = read_sha1_file(tag->object.sha1, &type, &size);
 	if (!buf)
@@ -297,10 +335,17 @@ static void handle_tag(const char *name, struct tag *tag)
 		message_size = strlen(message);
 	}
 	tagger = memmem(buf, message ? message - buf : size, "\ntagger ", 8);
-	if (!tagger)
-		die ("No tagger for tag %s", sha1_to_hex(tag->object.sha1));
-	tagger++;
-	tagger_end = strchrnul(tagger, '\n');
+	if (!tagger) {
+		if (fake_missing_tagger)
+			tagger = "tagger Unspecified Tagger "
+				"<unspecified-tagger> 0 +0000";
+		else
+			tagger = "";
+		tagger_end = tagger + strlen(tagger);
+	} else {
+		tagger++;
+		tagger_end = strchrnul(tagger, '\n');
+	}
 
 	/* handle signed tags */
 	if (message) {
@@ -324,11 +369,47 @@ static void handle_tag(const char *name, struct tag *tag)
 			}
 	}
 
+	/* handle tag->tagged having been filtered out due to paths specified */
+	tagged = tag->tagged;
+	tagged_mark = get_object_mark(tagged);
+	if (!tagged_mark) {
+		switch(tag_of_filtered_mode) {
+		case ABORT:
+			die ("Tag %s tags unexported object; use "
+			     "--tag-of-filtered-object=<mode> to handle it.",
+			     sha1_to_hex(tag->object.sha1));
+		case DROP:
+			/* Ignore this tag altogether */
+			return;
+		case REWRITE:
+			if (tagged->type != OBJ_COMMIT) {
+				die ("Tag %s tags unexported %s!",
+				     sha1_to_hex(tag->object.sha1),
+				     typename(tagged->type));
+			}
+			p = (struct commit *)tagged;
+			for (;;) {
+				if (p->parents && p->parents->next)
+					break;
+				if (p->object.flags & UNINTERESTING)
+					break;
+				if (!(p->object.flags & TREESAME))
+					break;
+				if (!p->parents)
+					die ("Can't find replacement commit for tag %s\n",
+					     sha1_to_hex(tag->object.sha1));
+				p = p->parents->item;
+			}
+			tagged_mark = get_object_mark(&p->object);
+		}
+	}
+
 	if (!prefixcmp(name, "refs/tags/"))
 		name += 10;
-	printf("tag %s\nfrom :%d\n%.*s\ndata %d\n%.*s\n",
-	       name, get_object_mark(tag->tagged),
+	printf("tag %s\nfrom :%d\n%.*s%sdata %d\n%.*s\n",
+	       name, tagged_mark,
 	       (int)(tagger_end - tagger), tagger,
+	       tagger == tagger_end ? "" : "\n",
 	       (int)message_size, (int)message_size, message ? message : "");
 }
 
@@ -353,8 +434,11 @@ static void get_tags_and_duplicates(struct object_array *pending,
 			break;
 		case OBJ_TAG:
 			tag = (struct tag *)e->item;
+
+			/* handle nested tags */
 			while (tag && tag->object.type == OBJ_TAG) {
-				string_list_insert(full_name, extra_refs)->util = tag;
+				parse_object(tag->object.sha1);
+				string_list_append(full_name, extra_refs)->util = tag;
 				tag = (struct tag *)tag->tagged;
 			}
 			if (!tag)
@@ -366,15 +450,21 @@ static void get_tags_and_duplicates(struct object_array *pending,
 			case OBJ_BLOB:
 				handle_object(tag->object.sha1);
 				continue;
+			default: /* OBJ_TAG (nested tags) is already handled */
+				warning("Tag points to object of unexpected type %s, skipping.",
+					typename(tag->object.type));
+				continue;
 			}
 			break;
 		default:
-			die ("Unexpected object of type %s",
-			     typename(e->item->type));
+			warning("%s: Unexpected object of type %s, skipping.",
+				e->name,
+				typename(e->item->type));
+			continue;
 		}
 		if (commit->util)
 			/* more than one name for the same object */
-			string_list_insert(full_name, extra_refs)->util = commit;
+			string_list_append(full_name, extra_refs)->util = commit;
 		else
 			commit->util = full_name;
 	}
@@ -409,20 +499,27 @@ static void export_marks(char *file)
 	uint32_t mark;
 	struct object_decoration *deco = idnums.hash;
 	FILE *f;
+	int e = 0;
 
 	f = fopen(file, "w");
 	if (!f)
-		error("Unable to open marks file %s for writing", file);
+		error("Unable to open marks file %s for writing.", file);
 
 	for (i = 0; i < idnums.size; i++) {
 		if (deco->base && deco->base->type == 1) {
 			mark = ptr_to_mark(deco->decoration);
-			fprintf(f, ":%u %s\n", mark, sha1_to_hex(deco->base->sha1));
+			if (fprintf(f, ":%"PRIu32" %s\n", mark,
+				sha1_to_hex(deco->base->sha1)) < 0) {
+			    e = 1;
+			    break;
+			}
 		}
 		deco++;
 	}
 
-	if (ferror(f) || fclose(f))
+	e |= ferror(f);
+	e |= fclose(f);
+	if (e)
 		error("Unable to write marks file %s.", file);
 }
 
@@ -431,7 +528,7 @@ static void import_marks(char *input_file)
 	char line[512];
 	FILE *f = fopen(input_file, "r");
 	if (!f)
-		die("cannot read %s: %s", input_file, strerror(errno));
+		die_errno("cannot read '%s'", input_file);
 
 	while (fgets(line, sizeof(line), f)) {
 		uint32_t mark;
@@ -478,19 +575,33 @@ int cmd_fast_export(int argc, const char **argv, const char *prefix)
 		OPT_CALLBACK(0, "signed-tags", &signed_tag_mode, "mode",
 			     "select handling of signed tags",
 			     parse_opt_signed_tag_mode),
+		OPT_CALLBACK(0, "tag-of-filtered-object", &tag_of_filtered_mode, "mode",
+			     "select handling of tags that tag filtered objects",
+			     parse_opt_tag_of_filtered_mode),
 		OPT_STRING(0, "export-marks", &export_filename, "FILE",
 			     "Dump marks to this file"),
 		OPT_STRING(0, "import-marks", &import_filename, "FILE",
 			     "Import marks from this file"),
+		OPT_BOOLEAN(0, "fake-missing-tagger", &fake_missing_tagger,
+			     "Fake a tagger when tags lack one"),
+		{ OPTION_NEGBIT, 0, "data", &no_data, NULL,
+			"Skip output of blob data",
+			PARSE_OPT_NOARG | PARSE_OPT_NEGHELP, NULL, 1 },
 		OPT_END()
 	};
+
+	if (argc == 1)
+		usage_with_options (fast_export_usage, options);
 
 	/* we handle encodings */
 	git_config(git_default_config, NULL);
 
 	init_revisions(&revs, prefix);
+	revs.topo_order = 1;
+	revs.show_source = 1;
+	revs.rewrite_parents = 1;
 	argc = setup_revisions(argc, argv, &revs, NULL);
-	argc = parse_options(argc, argv, options, fast_export_usage, 0);
+	argc = parse_options(argc, argv, prefix, options, fast_export_usage, 0);
 	if (argc > 1)
 		usage_with_options (fast_export_usage, options);
 
@@ -505,11 +616,7 @@ int cmd_fast_export(int argc, const char **argv, const char *prefix)
 	DIFF_OPT_SET(&revs.diffopt, RECURSIVE);
 	while ((commit = get_revision(&revs))) {
 		if (has_unshown_parent(commit)) {
-			struct commit_list *parent = commit->parents;
 			add_object_array(&commit->object, NULL, &commits);
-			for (; parent; parent = parent->next)
-				if (!parent->item->util)
-					parent->item->util = commit->util;
 		}
 		else {
 			handle_commit(commit, &revs);

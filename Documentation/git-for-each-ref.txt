@@ -16,7 +16,7 @@ DESCRIPTION
 
 Iterate over all refs that match `<pattern>` and show them
 according to the given `<format>`, after sorting them according
-to the given set of `<key>`.  If `<max>` is given, stop after
+to the given set of `<key>`.  If `<count>` is given, stop after
 showing that many refs.  The interpolated values in `<format>`
 can optionally be quoted as string literals in the specified
 host language allowing their direct evaluation in that language.
@@ -74,15 +74,23 @@ For all objects, the following names can be used:
 
 refname::
 	The name of the ref (the part after $GIT_DIR/).
+	For a non-ambiguous short name of the ref append `:short`.
+	The option core.warnAmbiguousRefs is used to select the strict
+	abbreviation mode.
 
 objecttype::
 	The type of the object (`blob`, `tree`, `commit`, `tag`).
 
 objectsize::
-	The size of the object (the same as 'git-cat-file -s' reports).
+	The size of the object (the same as 'git cat-file -s' reports).
 
 objectname::
 	The object name (aka SHA-1).
+
+upstream::
+	The name of a local ref which can be considered ``upstream''
+	from the displayed ref. Respects `:short` in the same way as
+	`refname` above.
 
 In addition to the above, for commit and tag objects, the header
 field names (`tree`, `parent`, `object`, `type`, and `tag`) can

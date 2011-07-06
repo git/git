@@ -7,8 +7,10 @@ static unsigned long timestamp;
 static int abbrev = 7;
 static int verbose = 0, dry_run = 0, quiet = 0;
 static char *string = NULL;
+static char *file = NULL;
+static int ambiguous;
 
-int length_callback(const struct option *opt, const char *arg, int unset)
+static int length_callback(const struct option *opt, const char *arg, int unset)
 {
 	printf("Callback: \"%s\", %d\n",
 		(arg ? arg : "not set"), unset);
@@ -19,8 +21,15 @@ int length_callback(const struct option *opt, const char *arg, int unset)
 	return 0;
 }
 
+static int number_callback(const struct option *opt, const char *arg, int unset)
+{
+	*(int *)opt->value = strtol(arg, NULL, 10);
+	return 0;
+}
+
 int main(int argc, const char **argv)
 {
+	const char *prefix = "prefix/";
 	const char *usage[] = {
 		"test-parse-options <options>",
 		NULL
@@ -29,6 +38,7 @@ int main(int argc, const char **argv)
 		OPT_BOOLEAN('b', "boolean", &boolean, "get a boolean"),
 		OPT_BIT('4', "or4", &boolean,
 			"bitwise-or boolean with ...0100", 4),
+		OPT_NEGBIT(0, "neg-or4", &boolean, "same as --no-or4", 4),
 		OPT_GROUP(""),
 		OPT_INTEGER('i', "integer", &integer, "get a integer"),
 		OPT_INTEGER('j', NULL, &integer, "get a integer, too"),
@@ -36,6 +46,7 @@ int main(int argc, const char **argv)
 		OPT_DATE('t', NULL, &timestamp, "get timestamp of <time>"),
 		OPT_CALLBACK('L', "length", &integer, "str",
 			"get length of <str>", length_callback),
+		OPT_FILENAME('F', "file", &file, "set file to <FILE>"),
 		OPT_GROUP("String options"),
 		OPT_STRING('s', "string", &string, "string", "get a string"),
 		OPT_STRING(0, "string2", &string, "str", "get another string"),
@@ -45,6 +56,14 @@ int main(int argc, const char **argv)
 			"set string to default", (unsigned long)"default"),
 		OPT_GROUP("Magic arguments"),
 		OPT_ARGUMENT("quux", "means --quux"),
+		OPT_NUMBER_CALLBACK(&integer, "set integer to NUM",
+			number_callback),
+		{ OPTION_BOOLEAN, '+', NULL, &boolean, NULL, "same as -b",
+		  PARSE_OPT_NOARG | PARSE_OPT_NONEG | PARSE_OPT_NODASH },
+		{ OPTION_BOOLEAN, 0, "ambiguous", &ambiguous, NULL,
+		  "positive ambiguity", PARSE_OPT_NOARG | PARSE_OPT_NONEG },
+		{ OPTION_BOOLEAN, 0, "no-ambiguous", &ambiguous, NULL,
+		  "negative ambiguity", PARSE_OPT_NOARG | PARSE_OPT_NONEG },
 		OPT_GROUP("Standard options"),
 		OPT__ABBREV(&abbrev),
 		OPT__VERBOSE(&verbose),
@@ -54,7 +73,7 @@ int main(int argc, const char **argv)
 	};
 	int i;
 
-	argc = parse_options(argc, argv, options, usage, 0);
+	argc = parse_options(argc, argv, prefix, options, usage, 0);
 
 	printf("boolean: %d\n", boolean);
 	printf("integer: %u\n", integer);
@@ -64,6 +83,7 @@ int main(int argc, const char **argv)
 	printf("verbose: %d\n", verbose);
 	printf("quiet: %s\n", quiet ? "yes" : "no");
 	printf("dry run: %s\n", dry_run ? "yes" : "no");
+	printf("file: %s\n", file ? file : "(not set)");
 
 	for (i = 0; i < argc; i++)
 		printf("arg %02d: %s\n", i, argv[i]);

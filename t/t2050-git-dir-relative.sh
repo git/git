@@ -26,8 +26,8 @@ chmod +x .git/hooks/post-commit'
 
 test_expect_success 'post-commit hook used ordinarily' '
 echo initial >top &&
-git-add top
-git-commit -m initial &&
+git add top
+git commit -m initial &&
 test -r "${COMMIT_FILE}"
 '
 

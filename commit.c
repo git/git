@@ -5,6 +5,7 @@
 #include "utf8.h"
 #include "diff.h"
 #include "revision.h"
+#include "notes.h"
 
 int save_commit_buffer = 1;
 
@@ -50,7 +51,6 @@ struct commit *lookup_commit(const unsigned char *sha1)
 
 static unsigned long parse_commit_date(const char *buf, const char *tail)
 {
-	unsigned long date;
 	const char *dateptr;
 
 	if (buf + 6 >= tail)
@@ -73,10 +73,7 @@ static unsigned long parse_commit_date(const char *buf, const char *tail)
 	if (buf >= tail)
 		return 0;
 	/* dateptr < buf && buf[-1] == '\n', so strtoul will stop at buf-1 */
-	date = strtoul(dateptr, NULL, 10);
-	if (date == ULONG_MAX)
-		date = 0;
-	return date;
+	return strtoul(dateptr, NULL, 10);
 }
 
 static struct commit_graft **commit_graft;
@@ -136,8 +133,8 @@ struct commit_graft *read_graft_line(char *buf, int len)
 	int i;
 	struct commit_graft *graft = NULL;
 
-	if (buf[len-1] == '\n')
-		buf[--len] = 0;
+	while (len && isspace(buf[len-1]))
+		buf[--len] = '\0';
 	if (buf[0] == '#' || buf[0] == '\0')
 		return NULL;
 	if ((len + 1) % 41) {
@@ -160,7 +157,7 @@ struct commit_graft *read_graft_line(char *buf, int len)
 	return graft;
 }
 
-int read_graft_file(const char *graft_file)
+static int read_graft_file(const char *graft_file)
 {
 	FILE *fp = fopen(graft_file, "r");
 	char buf[1024];
@@ -203,7 +200,7 @@ struct commit_graft *lookup_commit_graft(const unsigned char *sha1)
 	return commit_graft[pos];
 }
 
-int write_shallow_commits(int fd, int use_pack_protocol)
+int write_shallow_commits(struct strbuf *out, int use_pack_protocol)
 {
 	int i, count = 0;
 	for (i = 0; i < commit_graft_nr; i++)
@@ -212,12 +209,10 @@ int write_shallow_commits(int fd, int use_pack_protocol)
 				sha1_to_hex(commit_graft[i]->sha1);
 			count++;
 			if (use_pack_protocol)
-				packet_write(fd, "shallow %s", hex);
+				packet_buf_write(out, "shallow %s", hex);
 			else {
-				if (write_in_full(fd, hex,  40) != 40)
-					break;
-				if (write_in_full(fd, "\n", 1) != 1)
-					break;
+				strbuf_addstr(out, hex);
+				strbuf_addch(out, '\n');
 			}
 		}
 	return count;
@@ -229,7 +224,7 @@ int unregister_shallow(const unsigned char *sha1)
 	if (pos < 0)
 		return -1;
 	if (pos + 1 < commit_graft_nr)
-		memcpy(commit_graft + pos, commit_graft + pos + 1,
+		memmove(commit_graft + pos, commit_graft + pos + 1,
 				sizeof(struct commit_graft *)
 				* (commit_graft_nr - pos - 1));
 	commit_graft_nr--;
@@ -266,7 +261,11 @@ int parse_commit_buffer(struct commit *item, void *buffer, unsigned long size)
 		    bufptr[47] != '\n')
 			return error("bad parents in commit %s", sha1_to_hex(item->object.sha1));
 		bufptr += 48;
-		if (graft)
+		/*
+		 * The clone is shallow if nr_parent < 0, and we must
+		 * not traverse its real parents even when we unhide them.
+		 */
+		if (graft && (graft->nr_parent < 0 || grafts_replace_parents))
 			continue;
 		new_parent = lookup_commit(parent);
 		if (new_parent)
@@ -564,13 +563,13 @@ static struct commit_list *merge_bases_many(struct commit *one, int n, struct co
 	while (interesting(list)) {
 		struct commit *commit;
 		struct commit_list *parents;
-		struct commit_list *n;
+		struct commit_list *next;
 		int flags;
 
 		commit = list->item;
-		n = list->next;
+		next = list->next;
 		free(list);
-		list = n;
+		list = next;
 
 		flags = commit->object.flags & (PARENT1 | PARENT2 | STALE);
 		if (flags == (PARENT1 | PARENT2)) {
@@ -598,11 +597,11 @@ static struct commit_list *merge_bases_many(struct commit *one, int n, struct co
 	free_commit_list(list);
 	list = result; result = NULL;
 	while (list) {
-		struct commit_list *n = list->next;
+		struct commit_list *next = list->next;
 		if (!(list->item->object.flags & STALE))
 			insert_by_date(list->item, &result);
 		free(list);
-		list = n;
+		list = next;
 	}
 	return result;
 }
@@ -703,6 +702,21 @@ struct commit_list *get_merge_bases(struct commit *one, struct commit *two,
 				    int cleanup)
 {
 	return get_merge_bases_many(one, 1, &two, cleanup);
+}
+
+int is_descendant_of(struct commit *commit, struct commit_list *with_commit)
+{
+	if (!with_commit)
+		return 1;
+	while (with_commit) {
+		struct commit *other;
+
+		other = with_commit->item;
+		with_commit = with_commit->next;
+		if (in_merge_bases(other, &commit, 1))
+			return 1;
+	}
+	return 0;
 }
 
 int in_merge_bases(struct commit *commit, struct commit **reference, int num)

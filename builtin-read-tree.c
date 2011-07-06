@@ -12,6 +12,8 @@
 #include "unpack-trees.h"
 #include "dir.h"
 #include "builtin.h"
+#include "parse-options.h"
+#include "resolve-undo.h"
 
 static int nr_trees;
 static struct tree *trees[MAX_UNPACK_TREES];
@@ -29,42 +31,67 @@ static int list_tree(unsigned char *sha1)
 	return 0;
 }
 
-static void prime_cache_tree_rec(struct cache_tree *it, struct tree *tree)
-{
-	struct tree_desc desc;
-	struct name_entry entry;
-	int cnt;
+static const char * const read_tree_usage[] = {
+	"git read-tree [[-m [--trivial] [--aggressive] | --reset | --prefix=<prefix>] [-u [--exclude-per-directory=<gitignore>] | -i]] [--no-sparse-checkout] [--index-output=<file>] <tree-ish1> [<tree-ish2> [<tree-ish3>]]",
+	NULL
+};
 
-	hashcpy(it->sha1, tree->object.sha1);
-	init_tree_desc(&desc, tree->buffer, tree->size);
-	cnt = 0;
-	while (tree_entry(&desc, &entry)) {
-		if (!S_ISDIR(entry.mode))
-			cnt++;
-		else {
-			struct cache_tree_sub *sub;
-			struct tree *subtree = lookup_tree(entry.sha1);
-			if (!subtree->object.parsed)
-				parse_tree(subtree);
-			sub = cache_tree_sub(it, entry.path);
-			sub->cache_tree = cache_tree();
-			prime_cache_tree_rec(sub->cache_tree, subtree);
-			cnt += sub->cache_tree->entry_count;
-		}
+static int index_output_cb(const struct option *opt, const char *arg,
+				 int unset)
+{
+	set_alternate_index_output(arg);
+	return 0;
+}
+
+static int exclude_per_directory_cb(const struct option *opt, const char *arg,
+				    int unset)
+{
+	struct dir_struct *dir;
+	struct unpack_trees_options *opts;
+
+	opts = (struct unpack_trees_options *)opt->value;
+
+	if (opts->dir)
+		die("more than one --exclude-per-directory given.");
+
+	dir = xcalloc(1, sizeof(*opts->dir));
+	dir->flags |= DIR_SHOW_IGNORED;
+	dir->exclude_per_dir = arg;
+	opts->dir = dir;
+	/* We do not need to nor want to do read-directory
+	 * here; we are merely interested in reusing the
+	 * per directory ignore stack mechanism.
+	 */
+	return 0;
+}
+
+static void debug_stage(const char *label, struct cache_entry *ce,
+			struct unpack_trees_options *o)
+{
+	printf("%s ", label);
+	if (!ce)
+		printf("(missing)\n");
+	else if (ce == o->df_conflict_entry)
+		printf("(conflict)\n");
+	else
+		printf("%06o #%d %s %.8s\n",
+		       ce->ce_mode, ce_stage(ce), ce->name,
+		       sha1_to_hex(ce->sha1));
+}
+
+static int debug_merge(struct cache_entry **stages, struct unpack_trees_options *o)
+{
+	int i;
+
+	printf("* %d-way merge\n", o->merge_size);
+	debug_stage("index", stages[0], o);
+	for (i = 1; i <= o->merge_size; i++) {
+		char buf[24];
+		sprintf(buf, "ent#%d", i);
+		debug_stage(buf, stages[i], o);
 	}
-	it->entry_count = cnt;
+	return 0;
 }
-
-static void prime_cache_tree(void)
-{
-	if (!nr_trees)
-		return;
-	active_cache_tree = cache_tree();
-	prime_cache_tree_rec(active_cache_tree, trees[0]);
-
-}
-
-static const char read_tree_usage[] = "git-read-tree (<sha> | [[-m [--trivial] [--aggressive] | --reset | --prefix=<prefix>] [-u | -i]] [--exclude-per-directory=<gitignore>] [--index-output=<file>] <sha1> [<sha2> [<sha3>]])";
 
 static struct lock_file lock_file;
 
@@ -74,6 +101,38 @@ int cmd_read_tree(int argc, const char **argv, const char *unused_prefix)
 	unsigned char sha1[20];
 	struct tree_desc t[MAX_UNPACK_TREES];
 	struct unpack_trees_options opts;
+	int prefix_set = 0;
+	const struct option read_tree_options[] = {
+		{ OPTION_CALLBACK, 0, "index-output", NULL, "FILE",
+		  "write resulting index to <FILE>",
+		  PARSE_OPT_NONEG, index_output_cb },
+		OPT__VERBOSE(&opts.verbose_update),
+		OPT_GROUP("Merging"),
+		OPT_SET_INT('m', NULL, &opts.merge,
+			    "perform a merge in addition to a read", 1),
+		OPT_SET_INT(0, "trivial", &opts.trivial_merges_only,
+			    "3-way merge if no file level merging required", 1),
+		OPT_SET_INT(0, "aggressive", &opts.aggressive,
+			    "3-way merge in presence of adds and removes", 1),
+		OPT_SET_INT(0, "reset", &opts.reset,
+			    "same as -m, but discard unmerged entries", 1),
+		{ OPTION_STRING, 0, "prefix", &opts.prefix, "<subdirectory>/",
+		  "read the tree into the index under <subdirectory>/",
+		  PARSE_OPT_NONEG | PARSE_OPT_LITERAL_ARGHELP },
+		OPT_SET_INT('u', NULL, &opts.update,
+			    "update working tree with merge result", 1),
+		{ OPTION_CALLBACK, 0, "exclude-per-directory", &opts,
+		  "gitignore",
+		  "allow explicitly ignored files to be overwritten",
+		  PARSE_OPT_NONEG, exclude_per_directory_cb },
+		OPT_SET_INT('i', NULL, &opts.index_only,
+			    "don't check the working tree after merging", 1),
+		OPT_SET_INT(0, "no-sparse-checkout", &opts.skip_sparse_checkout,
+			    "skip applying sparse checkout filter", 1),
+		OPT_SET_INT(0, "debug-unpack", &opts.debug_unpack,
+			    "debug unpack-trees", 1),
+		OPT_END()
+	};
 
 	memset(&opts, 0, sizeof(opts));
 	opts.head_idx = -1;
@@ -82,107 +141,24 @@ int cmd_read_tree(int argc, const char **argv, const char *unused_prefix)
 
 	git_config(git_default_config, NULL);
 
+	argc = parse_options(argc, argv, unused_prefix, read_tree_options,
+			     read_tree_usage, 0);
+
 	newfd = hold_locked_index(&lock_file, 1);
 
-	for (i = 1; i < argc; i++) {
+	prefix_set = opts.prefix ? 1 : 0;
+	if (1 < opts.merge + opts.reset + prefix_set)
+		die("Which one? -m, --reset, or --prefix?");
+
+	if (opts.reset || opts.merge || opts.prefix) {
+		if (read_cache_unmerged() && (opts.prefix || opts.merge))
+			die("You need to resolve your current index first");
+		stage = opts.merge = 1;
+	}
+	resolve_undo_clear();
+
+	for (i = 0; i < argc; i++) {
 		const char *arg = argv[i];
-
-		/* "-u" means "update", meaning that a merge will update
-		 * the working tree.
-		 */
-		if (!strcmp(arg, "-u")) {
-			opts.update = 1;
-			continue;
-		}
-
-		if (!strcmp(arg, "-v")) {
-			opts.verbose_update = 1;
-			continue;
-		}
-
-		/* "-i" means "index only", meaning that a merge will
-		 * not even look at the working tree.
-		 */
-		if (!strcmp(arg, "-i")) {
-			opts.index_only = 1;
-			continue;
-		}
-
-		if (!prefixcmp(arg, "--index-output=")) {
-			set_alternate_index_output(arg + 15);
-			continue;
-		}
-
-		/* "--prefix=<subdirectory>/" means keep the current index
-		 *  entries and put the entries from the tree under the
-		 * given subdirectory.
-		 */
-		if (!prefixcmp(arg, "--prefix=")) {
-			if (stage || opts.merge || opts.prefix)
-				usage(read_tree_usage);
-			opts.prefix = arg + 9;
-			opts.merge = 1;
-			stage = 1;
-			if (read_cache_unmerged())
-				die("you need to resolve your current index first");
-			continue;
-		}
-
-		/* This differs from "-m" in that we'll silently ignore
-		 * unmerged entries and overwrite working tree files that
-		 * correspond to them.
-		 */
-		if (!strcmp(arg, "--reset")) {
-			if (stage || opts.merge || opts.prefix)
-				usage(read_tree_usage);
-			opts.reset = 1;
-			opts.merge = 1;
-			stage = 1;
-			read_cache_unmerged();
-			continue;
-		}
-
-		if (!strcmp(arg, "--trivial")) {
-			opts.trivial_merges_only = 1;
-			continue;
-		}
-
-		if (!strcmp(arg, "--aggressive")) {
-			opts.aggressive = 1;
-			continue;
-		}
-
-		/* "-m" stands for "merge", meaning we start in stage 1 */
-		if (!strcmp(arg, "-m")) {
-			if (stage || opts.merge || opts.prefix)
-				usage(read_tree_usage);
-			if (read_cache_unmerged())
-				die("you need to resolve your current index first");
-			stage = 1;
-			opts.merge = 1;
-			continue;
-		}
-
-		if (!prefixcmp(arg, "--exclude-per-directory=")) {
-			struct dir_struct *dir;
-
-			if (opts.dir)
-				die("more than one --exclude-per-directory are given.");
-
-			dir = xcalloc(1, sizeof(*opts.dir));
-			dir->show_ignored = 1;
-			dir->exclude_per_dir = arg + 24;
-			opts.dir = dir;
-			/* We do not need to nor want to do read-directory
-			 * here; we are merely interested in reusing the
-			 * per directory ignore stack mechanism.
-			 */
-			continue;
-		}
-
-		/* using -u and -i at the same time makes no sense */
-		if (1 < opts.index_only + opts.update)
-			usage(read_tree_usage);
 
 		if (get_sha1(arg, sha1))
 			die("Not a valid object name %s", arg);
@@ -190,10 +166,15 @@ int cmd_read_tree(int argc, const char **argv, const char *unused_prefix)
 			die("failed to unpack tree object %s", arg);
 		stage++;
 	}
+	if (1 < opts.index_only + opts.update)
+		die("-u and -i at the same time makes no sense");
 	if ((opts.update||opts.index_only) && !opts.merge)
-		usage(read_tree_usage);
+		die("%s is meaningless without -m, --reset, or --prefix",
+		    opts.update ? "-u" : "-i");
 	if ((opts.dir && !opts.update))
 		die("--exclude-per-directory is meaningless unless -u");
+	if (opts.merge && !opts.index_only)
+		setup_work_tree();
 
 	if (opts.merge) {
 		if (stage < 2)
@@ -204,11 +185,11 @@ int cmd_read_tree(int argc, const char **argv, const char *unused_prefix)
 			break;
 		case 2:
 			opts.fn = twoway_merge;
+			opts.initial_checkout = is_cache_unborn();
 			break;
 		case 3:
 		default:
 			opts.fn = threeway_merge;
-			cache_tree_free(&active_cache_tree);
 			break;
 		}
 
@@ -218,6 +199,10 @@ int cmd_read_tree(int argc, const char **argv, const char *unused_prefix)
 			opts.head_idx = 1;
 	}
 
+	if (opts.debug_unpack)
+		opts.fn = debug_merge;
+
+	cache_tree_free(&active_cache_tree);
 	for (i = 0; i < nr_trees; i++) {
 		struct tree *tree = trees[i];
 		parse_tree(tree);
@@ -226,16 +211,22 @@ int cmd_read_tree(int argc, const char **argv, const char *unused_prefix)
 	if (unpack_trees(nr_trees, t, &opts))
 		return 128;
 
+	if (opts.debug_unpack)
+		return 0; /* do not write the index out */
+
 	/*
 	 * When reading only one tree (either the most basic form,
 	 * "-m ent" or "--reset ent" form), we can obtain a fully
 	 * valid cache-tree because the index must match exactly
 	 * what came from the tree.
+	 *
+	 * The same holds true if we are switching between two trees
+	 * using read-tree -m A B.  The index must match B after that.
 	 */
-	if (nr_trees && !opts.prefix && (!opts.merge || (stage == 2))) {
-		cache_tree_free(&active_cache_tree);
-		prime_cache_tree();
-	}
+	if (nr_trees == 1 && !opts.prefix)
+		prime_cache_tree(&active_cache_tree, trees[0]);
+	else if (nr_trees == 2 && opts.merge)
+		prime_cache_tree(&active_cache_tree, trees[1]);
 
 	if (write_cache(newfd, active_cache, active_nr) ||
 	    commit_locked_index(&lock_file))

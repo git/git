@@ -60,8 +60,13 @@ static int match_tree_entry(const char *base, int baselen, const char *path, uns
 			/* If it doesn't match, move along... */
 			if (strncmp(base, match, matchlen))
 				continue;
-			/* The base is a subdirectory of a path which was specified. */
-			return 1;
+			/* pathspecs match only at the directory boundaries */
+			if (!matchlen ||
+			    baselen == matchlen ||
+			    base[matchlen] == '/' ||
+			    match[matchlen - 1] == '/')
+				return 1;
+			continue;
 		}
 
 		/* Does the base match? */
@@ -110,7 +115,7 @@ int read_tree_recursive(struct tree *tree,
 		case 0:
 			continue;
 		case READ_TREE_RECURSIVE:
-			break;;
+			break;
 		default:
 			return -1;
 		}
@@ -128,6 +133,34 @@ int read_tree_recursive(struct tree *tree,
 						     baselen + pathlen + 1,
 						     stage, match, fn, context);
 			free(newbase);
+			if (retval)
+				return -1;
+			continue;
+		} else if (S_ISGITLINK(entry.mode)) {
+			int retval;
+			struct strbuf path;
+			unsigned int entrylen;
+			struct commit *commit;
+
+			entrylen = tree_entry_len(entry.path, entry.sha1);
+			strbuf_init(&path, baselen + entrylen + 1);
+			strbuf_add(&path, base, baselen);
+			strbuf_add(&path, entry.path, entrylen);
+			strbuf_addch(&path, '/');
+
+			commit = lookup_commit(entry.sha1);
+			if (!commit)
+				die("Commit %s in submodule path %s not found",
+				    sha1_to_hex(entry.sha1), path.buf);
+
+			if (parse_commit(commit))
+				die("Invalid commit %s in submodule path %s",
+				    sha1_to_hex(entry.sha1), path.buf);
+
+			retval = read_tree_recursive(commit->tree,
+						     path.buf, path.len,
+						     stage, match, fn, context);
+			strbuf_release(&path);
 			if (retval)
 				return -1;
 			continue;

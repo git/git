@@ -1,9 +1,31 @@
 # git-gui options editor
 # Copyright (C) 2006, 2007 Shawn Pearce
 
+proc config_check_encodings {} {
+	global repo_config_new global_config_new
+
+	set enc $global_config_new(gui.encoding)
+	if {$enc eq {}} {
+		set global_config_new(gui.encoding) [encoding system]
+	} elseif {[tcl_encoding $enc] eq {}} {
+		error_popup [mc "Invalid global encoding '%s'" $enc]
+		return 0
+	}
+
+	set enc $repo_config_new(gui.encoding)
+	if {$enc eq {}} {
+		set repo_config_new(gui.encoding) [encoding system]
+	} elseif {[tcl_encoding $enc] eq {}} {
+		error_popup [mc "Invalid repo encoding '%s'" $enc]
+		return 0
+	}
+
+	return 1
+}
+
 proc save_config {} {
 	global default_config font_descs
-	global repo_config global_config
+	global repo_config global_config system_config
 	global repo_config_new global_config_new
 	global ui_comm_spell
 
@@ -27,7 +49,7 @@ proc save_config {} {
 	foreach name [array names default_config] {
 		set value $global_config_new($name)
 		if {$value ne $global_config($name)} {
-			if {$value eq $default_config($name)} {
+			if {$value eq $system_config($name)} {
 				catch {git config --global --unset $name}
 			} else {
 				regsub -all "\[{}\]" $value {"} value
@@ -69,7 +91,7 @@ proc save_config {} {
 proc do_options {} {
 	global repo_config global_config font_descs
 	global repo_config_new global_config_new
-	global ui_comm_spell
+	global ui_comm_spell use_ttk NS
 
 	array unset repo_config_new
 	array unset global_config_new
@@ -88,26 +110,28 @@ proc do_options {} {
 	}
 
 	set w .options_editor
-	toplevel $w
+	Dialog $w
+	wm withdraw $w
+	wm transient $w [winfo parent $w]
 	wm geometry $w "+[winfo rootx .]+[winfo rooty .]"
 
-	frame $w.buttons
-	button $w.buttons.restore -text [mc "Restore Defaults"] \
+	${NS}::frame $w.buttons
+	${NS}::button $w.buttons.restore -text [mc "Restore Defaults"] \
 		-default normal \
 		-command do_restore_defaults
 	pack $w.buttons.restore -side left
-	button $w.buttons.save -text [mc Save] \
+	${NS}::button $w.buttons.save -text [mc Save] \
 		-default active \
 		-command [list do_save_config $w]
 	pack $w.buttons.save -side right
-	button $w.buttons.cancel -text [mc "Cancel"] \
+	${NS}::button $w.buttons.cancel -text [mc "Cancel"] \
 		-default normal \
 		-command [list destroy $w]
 	pack $w.buttons.cancel -side right -padx 5
 	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
 
-	labelframe $w.repo -text [mc "%s Repository" [reponame]]
-	labelframe $w.global -text [mc "Global (All Repositories)"]
+	${NS}::labelframe $w.repo -text [mc "%s Repository" [reponame]]
+	${NS}::labelframe $w.global -text [mc "Global (All Repositories)"]
 	pack $w.repo -side left -fill both -expand 1 -pady 5 -padx 5
 	pack $w.global -side right -fill both -expand 1 -pady 5 -padx 5
 
@@ -119,15 +143,18 @@ proc do_options {} {
 		{b merge.summary {mc "Summarize Merge Commits"}}
 		{i-1..5 merge.verbosity {mc "Merge Verbosity"}}
 		{b merge.diffstat {mc "Show Diffstat After Merge"}}
+		{t merge.tool {mc "Use Merge Tool"}}
 
 		{b gui.trustmtime  {mc "Trust File Modification Timestamps"}}
 		{b gui.pruneduringfetch {mc "Prune Tracking Branches During Fetch"}}
 		{b gui.matchtrackingbranch {mc "Match Tracking Branches"}}
 		{b gui.fastcopyblame {mc "Blame Copy Only On Changed Files"}}
 		{i-20..200 gui.copyblamethreshold {mc "Minimum Letters To Blame Copy On"}}
-		{i-0..99 gui.diffcontext {mc "Number of Diff Context Lines"}}
+		{i-0..300 gui.blamehistoryctx {mc "Blame History Context Radius (days)"}}
+		{i-1..99 gui.diffcontext {mc "Number of Diff Context Lines"}}
 		{i-0..99 gui.commitmsgwidth {mc "Commit Message Text Width"}}
 		{t gui.newbranchtemplate {mc "New Branch Name Template"}}
+		{c gui.encoding {mc "Default File Contents Encoding"}}
 		} {
 		set type [lindex $option 0]
 		set name [lindex $option 1]
@@ -136,7 +163,7 @@ proc do_options {} {
 		foreach f {repo global} {
 			switch -glob -- $type {
 			b {
-				checkbutton $w.$f.$optid -text $text \
+				${NS}::checkbutton $w.$f.$optid -text $text \
 					-variable ${f}_config_new($name) \
 					-onvalue true \
 					-offvalue false
@@ -144,10 +171,10 @@ proc do_options {} {
 			}
 			i-* {
 				regexp -- {-(\d+)\.\.(\d+)$} $type _junk min max
-				frame $w.$f.$optid
-				label $w.$f.$optid.l -text "$text:"
+				${NS}::frame $w.$f.$optid
+				${NS}::label $w.$f.$optid.l -text "$text:"
 				pack $w.$f.$optid.l -side left -anchor w -fill x
-				spinbox $w.$f.$optid.v \
+				tspinbox $w.$f.$optid.v \
 					-textvariable ${f}_config_new($name) \
 					-from $min \
 					-to $max \
@@ -157,18 +184,27 @@ proc do_options {} {
 				pack $w.$f.$optid.v -side right -anchor e -padx 5
 				pack $w.$f.$optid -side top -anchor w -fill x
 			}
+			c -
 			t {
-				frame $w.$f.$optid
-				label $w.$f.$optid.l -text "$text:"
-				entry $w.$f.$optid.v \
-					-borderwidth 1 \
-					-relief sunken \
+				${NS}::frame $w.$f.$optid
+				${NS}::label $w.$f.$optid.l -text "$text:"
+				${NS}::entry $w.$f.$optid.v \
 					-width 20 \
 					-textvariable ${f}_config_new($name)
 				pack $w.$f.$optid.l -side left -anchor w
 				pack $w.$f.$optid.v -side left -anchor w \
 					-fill x -expand 1 \
 					-padx 5
+				if {$type eq {c}} {
+					menu $w.$f.$optid.m
+					build_encoding_menu $w.$f.$optid.m \
+						[list set ${f}_config_new($name)] 1
+					${NS}::button $w.$f.$optid.b \
+						-text [mc "Change"] \
+						-command [list popup_btn_menu \
+							$w.$f.$optid.m $w.$f.$optid.b]
+					pack $w.$f.$optid.b -side left -anchor w
+				}
 				pack $w.$f.$optid -side top -anchor w -fill x
 			}
 			}
@@ -190,11 +226,17 @@ proc do_options {} {
 			set ${f}_config_new(gui.spellingdictionary) $value
 		}
 
-		frame $w.$f.$optid
-		label $w.$f.$optid.l -text [mc "Spelling Dictionary:"]
-		eval tk_optionMenu $w.$f.$optid.v \
-			${f}_config_new(gui.spellingdictionary) \
-			$all_dicts
+		${NS}::frame $w.$f.$optid
+		${NS}::label $w.$f.$optid.l -text [mc "Spelling Dictionary:"]
+		if {$use_ttk} {
+			ttk::combobox $w.$f.$optid.v \
+				-textvariable ${f}_config_new(gui.spellingdictionary) \
+				-values $all_dicts -state readonly
+		} else {
+			eval tk_optionMenu $w.$f.$optid.v \
+				${f}_config_new(gui.spellingdictionary) \
+				$all_dicts
+		}
 		pack $w.$f.$optid.l -side left -anchor w -fill x
 		pack $w.$f.$optid.v -side right -anchor e -padx 5
 		pack $w.$f.$optid -side top -anchor w -fill x
@@ -212,20 +254,20 @@ proc do_options {} {
 		set global_config_new(gui.$font^^size) \
 			[font configure $font -size]
 
-		frame $w.global.$name
-		label $w.global.$name.l -text "$text:"
-		button $w.global.$name.b \
+		${NS}::frame $w.global.$name
+		${NS}::label $w.global.$name.l -text "$text:"
+		${NS}::button $w.global.$name.b \
 			-text [mc "Change Font"] \
 			-command [list \
-				choose_font::pick \
+				tchoosefont \
 				$w \
 				[mc "Choose %s" $text] \
 				global_config_new(gui.$font^^family) \
 				global_config_new(gui.$font^^size) \
 				]
-		label $w.global.$name.f -textvariable global_config_new(gui.$font^^family)
-		label $w.global.$name.s -textvariable global_config_new(gui.$font^^size)
-		label $w.global.$name.pt -text [mc "pt."]
+		${NS}::label $w.global.$name.f -textvariable global_config_new(gui.$font^^family)
+		${NS}::label $w.global.$name.s -textvariable global_config_new(gui.$font^^size)
+		${NS}::label $w.global.$name.pt -text [mc "pt."]
 		pack $w.global.$name.l -side left -anchor w
 		pack $w.global.$name.b -side right -anchor e
 		pack $w.global.$name.pt -side right -anchor w
@@ -244,21 +286,22 @@ proc do_options {} {
 		set t [mc "Options"]
 	}
 	wm title $w "[appname] ([reponame]): $t"
+	wm deiconify $w
 	tkwait window $w
 }
 
 proc do_restore_defaults {} {
-	global font_descs default_config repo_config
+	global font_descs default_config repo_config system_config
 	global repo_config_new global_config_new
 
 	foreach name [array names default_config] {
-		set repo_config_new($name) $default_config($name)
-		set global_config_new($name) $default_config($name)
+		set repo_config_new($name) $system_config($name)
+		set global_config_new($name) $system_config($name)
 	}
 
 	foreach option $font_descs {
 		set name [lindex $option 0]
-		set repo_config(gui.$name) $default_config(gui.$name)
+		set repo_config(gui.$name) $system_config(gui.$name)
 	}
 	apply_config
 
@@ -273,6 +316,7 @@ proc do_restore_defaults {} {
 }
 
 proc do_save_config {w} {
+	if {![config_check_encodings]} return
 	if {[catch {save_config} err]} {
 		error_popup [strcat [mc "Failed to completely save options:"] "\n\n$err"]
 	}

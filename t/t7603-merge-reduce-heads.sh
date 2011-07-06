@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='git-merge
+test_description='git merge
 
 Testing octopus merge when reducing parents to independent branches.'
 
@@ -60,4 +60,57 @@ test_expect_success 'merge c1 with c2, c3, c4, c5' '
 	test -f c5.c
 '
 
+test_expect_success 'setup' '
+	for i in A B C D E
+	do
+		echo $i > $i.c &&
+		git add $i.c &&
+		git commit -m $i &&
+		git tag $i
+	done &&
+	git reset --hard A &&
+	for i in F G H I
+	do
+		echo $i > $i.c &&
+		git add $i.c &&
+		git commit -m $i &&
+		git tag $i
+	done
+'
+
+test_expect_success 'merge E and I' '
+	git reset --hard A &&
+	git merge E I
+'
+
+test_expect_success 'verify merge result' '
+	test $(git rev-parse HEAD^1) = $(git rev-parse E) &&
+	test $(git rev-parse HEAD^2) = $(git rev-parse I)
+'
+
+test_expect_success 'add conflicts' '
+	git reset --hard E &&
+	echo foo > file.c &&
+	git add file.c &&
+	git commit -m E2 &&
+	git tag E2 &&
+	git reset --hard I &&
+	echo bar >file.c &&
+	git add file.c &&
+	git commit -m I2 &&
+	git tag I2
+'
+
+test_expect_success 'merge E2 and I2, causing a conflict and resolve it' '
+	git reset --hard A &&
+	test_must_fail git merge E2 I2 &&
+	echo baz > file.c &&
+	git add file.c &&
+	git commit -m "resolve conflict"
+'
+
+test_expect_success 'verify merge result' '
+	test $(git rev-parse HEAD^1) = $(git rev-parse E2) &&
+	test $(git rev-parse HEAD^2) = $(git rev-parse I2)
+'
 test_done

@@ -41,7 +41,7 @@ resolve_full_httpd () {
 	case "$httpd" in
 	*apache2*|*lighttpd*)
 		# ensure that the apache2/lighttpd command ends with "-f"
-		if ! echo "$httpd" | grep -- '-f *$' >/dev/null 2>&1
+		if ! echo "$httpd" | sane_grep -- '-f *$' >/dev/null 2>&1
 		then
 			httpd="$httpd -f"
 		fi
@@ -49,7 +49,7 @@ resolve_full_httpd () {
 	esac
 
 	httpd_only="$(echo $httpd | cut -f1 -d' ')"
-	if case "$httpd_only" in /*) : ;; *) which $httpd_only >/dev/null;; esac
+	if case "$httpd_only" in /*) : ;; *) which $httpd_only >/dev/null 2>&1;; esac
 	then
 		full_httpd=$httpd
 	else
@@ -73,15 +73,39 @@ resolve_full_httpd () {
 }
 
 start_httpd () {
+	if test -f "$fqgitdir/pid"; then
+		say "Instance already running. Restarting..."
+		stop_httpd
+	fi
+
 	# here $httpd should have a meaningful value
 	resolve_full_httpd
 
 	# don't quote $full_httpd, there can be arguments to it (-f)
-	$full_httpd "$fqgitdir/gitweb/httpd.conf"
-	if test $? != 0; then
-		echo "Could not execute http daemon $httpd."
-		exit 1
-	fi
+	case "$httpd" in
+	*mongoose*)
+		#The mongoose server doesn't have a daemon mode so we'll have to fork it
+		$full_httpd "$fqgitdir/gitweb/httpd.conf" &
+		#Save the pid before doing anything else (we'll print it later)
+		pid=$!
+
+		if test $? != 0; then
+			echo "Could not execute http daemon $httpd."
+			exit 1
+		fi
+
+		cat > "$fqgitdir/pid" <<EOF
+$pid
+EOF
+		;;
+	*)
+		$full_httpd "$fqgitdir/gitweb/httpd.conf"
+		if test $? != 0; then
+			echo "Could not execute http daemon $httpd."
+			exit 1
+		fi
+		;;
+	esac
 }
 
 stop_httpd () {
@@ -179,11 +203,74 @@ lighttpd_conf () {
 	cat > "$conf" <<EOF
 server.document-root = "$fqgitdir/gitweb"
 server.port = $port
-server.modules = ( "mod_cgi" )
+server.modules = ( "mod_setenv", "mod_cgi" )
 server.indexfiles = ( "gitweb.cgi" )
 server.pid-file = "$fqgitdir/pid"
+server.errorlog = "$fqgitdir/gitweb/error.log"
+
+# to enable, add "mod_access", "mod_accesslog" to server.modules
+# variable above and uncomment this
+#accesslog.filename = "$fqgitdir/gitweb/access.log"
+
+setenv.add-environment = ( "PATH" => "/usr/local/bin:/usr/bin:/bin" )
+
 cgi.assign = ( ".cgi" => "" )
-mimetype.assign = ( ".css" => "text/css" )
+
+# mimetype mapping
+mimetype.assign             = (
+  ".pdf"          =>      "application/pdf",
+  ".sig"          =>      "application/pgp-signature",
+  ".spl"          =>      "application/futuresplash",
+  ".class"        =>      "application/octet-stream",
+  ".ps"           =>      "application/postscript",
+  ".torrent"      =>      "application/x-bittorrent",
+  ".dvi"          =>      "application/x-dvi",
+  ".gz"           =>      "application/x-gzip",
+  ".pac"          =>      "application/x-ns-proxy-autoconfig",
+  ".swf"          =>      "application/x-shockwave-flash",
+  ".tar.gz"       =>      "application/x-tgz",
+  ".tgz"          =>      "application/x-tgz",
+  ".tar"          =>      "application/x-tar",
+  ".zip"          =>      "application/zip",
+  ".mp3"          =>      "audio/mpeg",
+  ".m3u"          =>      "audio/x-mpegurl",
+  ".wma"          =>      "audio/x-ms-wma",
+  ".wax"          =>      "audio/x-ms-wax",
+  ".ogg"          =>      "application/ogg",
+  ".wav"          =>      "audio/x-wav",
+  ".gif"          =>      "image/gif",
+  ".jpg"          =>      "image/jpeg",
+  ".jpeg"         =>      "image/jpeg",
+  ".png"          =>      "image/png",
+  ".xbm"          =>      "image/x-xbitmap",
+  ".xpm"          =>      "image/x-xpixmap",
+  ".xwd"          =>      "image/x-xwindowdump",
+  ".css"          =>      "text/css",
+  ".html"         =>      "text/html",
+  ".htm"          =>      "text/html",
+  ".js"           =>      "text/javascript",
+  ".asc"          =>      "text/plain",
+  ".c"            =>      "text/plain",
+  ".cpp"          =>      "text/plain",
+  ".log"          =>      "text/plain",
+  ".conf"         =>      "text/plain",
+  ".text"         =>      "text/plain",
+  ".txt"          =>      "text/plain",
+  ".dtd"          =>      "text/xml",
+  ".xml"          =>      "text/xml",
+  ".mpeg"         =>      "video/mpeg",
+  ".mpg"          =>      "video/mpeg",
+  ".mov"          =>      "video/quicktime",
+  ".qt"           =>      "video/quicktime",
+  ".avi"          =>      "video/x-msvideo",
+  ".asf"          =>      "video/x-ms-asf",
+  ".asx"          =>      "video/x-ms-asf",
+  ".wmv"          =>      "video/x-ms-wmv",
+  ".bz2"          =>      "application/x-bzip",
+  ".tbz"          =>      "application/x-bzip-compressed-tar",
+  ".tar.bz2"      =>      "application/x-bzip-compressed-tar",
+  ""              =>      "text/plain"
+ )
 EOF
 	test x"$local" = xtrue && echo 'server.bind = "127.0.0.1"' >> "$conf"
 }
@@ -193,7 +280,7 @@ apache2_conf () {
 	mkdir -p "$GIT_DIR/gitweb/logs"
 	bind=
 	test x"$local" = xtrue && bind='127.0.0.1:'
-	echo 'text/css css' > $fqgitdir/mime.types
+	echo 'text/css css' > "$fqgitdir/mime.types"
 	cat > "$conf" <<EOF
 ServerName "git-instaweb"
 ServerRoot "$fqgitdir/gitweb"
@@ -209,14 +296,14 @@ EOF
 		fi
 	done
 	cat >> "$conf" <<EOF
-TypesConfig $fqgitdir/mime.types
+TypesConfig "$fqgitdir/mime.types"
 DirectoryIndex gitweb.cgi
 EOF
 
 	# check to see if Dennis Stosberg's mod_perl compatibility patch
 	# (<20060621130708.Gcbc6e5c@leonov.stosberg.net>) has been applied
-	if test -f "$module_path/mod_perl.so" && grep '^our $gitbin' \
-				"$GIT_DIR/gitweb/gitweb.cgi" >/dev/null
+	if test -f "$module_path/mod_perl.so" &&
+	   sane_grep 'MOD_PERL' "$GIT_DIR/gitweb/gitweb.cgi" >/dev/null
 	then
 		# favor mod_perl if available
 		cat >> "$conf" <<EOF
@@ -233,9 +320,23 @@ EOF
 	else
 		# plain-old CGI
 		resolve_full_httpd
-		list_mods=$(echo "$full_httpd" | sed "s/-f$/-l/")
-		$list_mods | grep 'mod_cgi\.c' >/dev/null 2>&1 || \
-		echo "LoadModule cgi_module $module_path/mod_cgi.so" >> "$conf"
+		list_mods=$(echo "$full_httpd" | sed 's/-f$/-l/')
+		$list_mods | sane_grep 'mod_cgi\.c' >/dev/null 2>&1 || \
+		if test -f "$module_path/mod_cgi.so"
+		then
+			echo "LoadModule cgi_module $module_path/mod_cgi.so" >> "$conf"
+		else
+			$list_mods | grep 'mod_cgid\.c' >/dev/null 2>&1 || \
+			if test -f "$module_path/mod_cgid.so"
+			then
+				echo "LoadModule cgid_module $module_path/mod_cgid.so" \
+					>> "$conf"
+			else
+				echo "You have no CGI support!"
+				exit 2
+			fi
+			echo "ScriptSock logs/gitweb.sock" >> "$conf"
+		fi
 		cat >> "$conf" <<EOF
 AddHandler cgi-script .cgi
 <Location /gitweb.cgi>
@@ -244,6 +345,31 @@ AddHandler cgi-script .cgi
 EOF
 	fi
 }
+
+mongoose_conf() {
+	cat > "$conf" <<EOF
+# Mongoose web server configuration file.
+# Lines starting with '#' and empty lines are ignored.
+# For detailed description of every option, visit
+# http://code.google.com/p/mongoose/wiki/MongooseManual
+
+root		$fqgitdir/gitweb
+ports		$port
+index_files	gitweb.cgi
+#ssl_cert	$fqgitdir/gitweb/ssl_cert.pem
+error_log	$fqgitdir/gitweb/error.log
+access_log	$fqgitdir/gitweb/access.log
+
+#cgi setup
+cgi_env		PATH=/usr/local/bin:/usr/bin:/bin,GIT_DIR=$GIT_DIR,GIT_EXEC_PATH=$GIT_EXEC_PATH
+cgi_interp	$PERL
+cgi_ext		cgi,pl
+
+# mimetype mapping
+mime_types	.gz=application/x-gzip,.tar.gz=application/x-tgz,.tgz=application/x-tgz,.tar=application/x-tar,.zip=application/zip,.gif=image/gif,.jpg=image/jpeg,.jpeg=image/jpeg,.png=image/png,.css=text/css,.html=text/html,.htm=text/html,.js=text/javascript,.c=text/plain,.cpp=text/plain,.log=text/plain,.conf=text/plain,.text=text/plain,.txt=text/plain,.dtd=text/xml,.bz2=application/x-bzip,.tbz=application/x-bzip-compressed-tar,.tar.bz2=application/x-bzip-compressed-tar
+EOF
+}
+
 
 script='
 s#^(my|our) \$projectroot =.*#$1 \$projectroot = "'$(dirname "$fqgitdir")'";#;
@@ -268,8 +394,15 @@ gitweb_css () {
 EOFGITWEB
 }
 
+gitweb_js () {
+	cat > "$1" <<\EOFGITWEB
+@@GITWEB_JS@@
+EOFGITWEB
+}
+
 gitweb_cgi "$GIT_DIR/gitweb/gitweb.cgi"
 gitweb_css "$GIT_DIR/gitweb/gitweb.css"
+gitweb_js  "$GIT_DIR/gitweb/gitweb.js"
 
 case "$httpd" in
 *lighttpd*)
@@ -280,6 +413,9 @@ case "$httpd" in
 	;;
 webrick)
 	webrick_conf
+	;;
+*mongoose*)
+	mongoose_conf
 	;;
 *)
 	echo "Unknown httpd specified: $httpd"

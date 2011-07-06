@@ -11,6 +11,7 @@
  * which is what it's designed for.
  */
 #include "cache.h"
+#include "strbuf.h"
 
 static char bad_path[] = "/bad-path/";
 
@@ -30,6 +31,60 @@ static char *cleanup_path(char *path)
 			path++;
 	}
 	return path;
+}
+
+char *mksnpath(char *buf, size_t n, const char *fmt, ...)
+{
+	va_list args;
+	unsigned len;
+
+	va_start(args, fmt);
+	len = vsnprintf(buf, n, fmt, args);
+	va_end(args);
+	if (len >= n) {
+		strlcpy(buf, bad_path, n);
+		return buf;
+	}
+	return cleanup_path(buf);
+}
+
+static char *git_vsnpath(char *buf, size_t n, const char *fmt, va_list args)
+{
+	const char *git_dir = get_git_dir();
+	size_t len;
+
+	len = strlen(git_dir);
+	if (n < len + 1)
+		goto bad;
+	memcpy(buf, git_dir, len);
+	if (len && !is_dir_sep(git_dir[len-1]))
+		buf[len++] = '/';
+	len += vsnprintf(buf + len, n - len, fmt, args);
+	if (len >= n)
+		goto bad;
+	return cleanup_path(buf);
+bad:
+	strlcpy(buf, bad_path, n);
+	return buf;
+}
+
+char *git_snpath(char *buf, size_t n, const char *fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+	(void)git_vsnpath(buf, n, fmt, args);
+	va_end(args);
+	return buf;
+}
+
+char *git_pathdup(const char *fmt, ...)
+{
+	char path[PATH_MAX];
+	va_list args;
+	va_start(args, fmt);
+	(void)git_vsnpath(path, sizeof(path), fmt, args);
+	va_end(args);
+	return xstrdup(path);
 }
 
 char *mkpath(const char *fmt, ...)
@@ -85,6 +140,22 @@ int git_mkstemp(char *path, size_t len, const char *template)
 	return mkstemp(path);
 }
 
+/* git_mkstemps() - create tmp file with suffix honoring TMPDIR variable. */
+int git_mkstemps(char *path, size_t len, const char *template, int suffix_len)
+{
+	const char *tmp;
+	size_t n;
+
+	tmp = getenv("TMPDIR");
+	if (!tmp)
+		tmp = "/tmp";
+	n = snprintf(path, len, "%s/%s", tmp, template);
+	if (len <= n) {
+		errno = ENAMETOOLONG;
+		return -1;
+	}
+	return mkstemps(path, suffix_len);
+}
 
 int validate_headref(const char *path)
 {
@@ -137,43 +208,49 @@ int validate_headref(const char *path)
 	return -1;
 }
 
-static char *user_path(char *buf, char *path, int sz)
+static struct passwd *getpw_str(const char *username, size_t len)
 {
 	struct passwd *pw;
-	char *slash;
-	int len, baselen;
+	char *username_z = xmalloc(len + 1);
+	memcpy(username_z, username, len);
+	username_z[len] = '\0';
+	pw = getpwnam(username_z);
+	free(username_z);
+	return pw;
+}
 
-	if (!path || path[0] != '~')
-		return NULL;
-	path++;
-	slash = strchr(path, '/');
-	if (path[0] == '/' || !path[0]) {
-		pw = getpwuid(getuid());
-	}
-	else {
-		if (slash) {
-			*slash = 0;
-			pw = getpwnam(path);
-			*slash = '/';
+/*
+ * Return a string with ~ and ~user expanded via getpw*.  If buf != NULL,
+ * then it is a newly allocated string. Returns NULL on getpw failure or
+ * if path is NULL.
+ */
+char *expand_user_path(const char *path)
+{
+	struct strbuf user_path = STRBUF_INIT;
+	const char *first_slash = strchrnul(path, '/');
+	const char *to_copy = path;
+
+	if (path == NULL)
+		goto return_null;
+	if (path[0] == '~') {
+		const char *username = path + 1;
+		size_t username_len = first_slash - username;
+		if (username_len == 0) {
+			const char *home = getenv("HOME");
+			strbuf_add(&user_path, home, strlen(home));
+		} else {
+			struct passwd *pw = getpw_str(username, username_len);
+			if (!pw)
+				goto return_null;
+			strbuf_add(&user_path, pw->pw_dir, strlen(pw->pw_dir));
 		}
-		else
-			pw = getpwnam(path);
+		to_copy = first_slash;
 	}
-	if (!pw || !pw->pw_dir || sz <= strlen(pw->pw_dir))
-		return NULL;
-	baselen = strlen(pw->pw_dir);
-	memcpy(buf, pw->pw_dir, baselen);
-	while ((1 < baselen) && (buf[baselen-1] == '/')) {
-		buf[baselen-1] = 0;
-		baselen--;
-	}
-	if (slash && slash[1]) {
-		len = strlen(slash);
-		if (sz <= baselen + len)
-			return NULL;
-		memcpy(buf + baselen, slash, len + 1);
-	}
-	return buf;
+	strbuf_add(&user_path, to_copy, strlen(to_copy));
+	return strbuf_detach(&user_path, NULL);
+return_null:
+	strbuf_release(&user_path);
+	return NULL;
 }
 
 /*
@@ -221,8 +298,18 @@ char *enter_repo(char *path, int strict)
 		if (PATH_MAX <= len)
 			return NULL;
 		if (path[0] == '~') {
-			if (!user_path(used_path, path, PATH_MAX))
+			char *newpath = expand_user_path(path);
+			if (!newpath || (PATH_MAX - 10 < strlen(newpath))) {
+				free(newpath);
 				return NULL;
+			}
+			/*
+			 * Copy back into the static buffer. A pity
+			 * since newpath was not bounded, but other
+			 * branches of the if are limited by PATH_MAX
+			 * anyway.
+			 */
+			strcpy(used_path, newpath); free(newpath);
 			strcpy(validated_path, path);
 			path = used_path;
 		}
@@ -257,36 +344,49 @@ char *enter_repo(char *path, int strict)
 	return NULL;
 }
 
-int adjust_shared_perm(const char *path)
+int set_shared_perm(const char *path, int mode)
 {
 	struct stat st;
-	int mode;
+	int tweak, shared, orig_mode;
 
-	if (!shared_repository)
+	if (!shared_repository) {
+		if (mode)
+			return chmod(path, mode & ~S_IFMT);
 		return 0;
-	if (lstat(path, &st) < 0)
-		return -1;
-	mode = st.st_mode;
-
-	if (shared_repository) {
-		int tweak = shared_repository;
-		if (!(mode & S_IWUSR))
-			tweak &= ~0222;
-		mode |= tweak;
-	} else {
-		/* Preserve old PERM_UMASK behaviour */
-		if (mode & S_IWUSR)
-			mode |= S_IWGRP;
 	}
+	if (!mode) {
+		if (lstat(path, &st) < 0)
+			return -1;
+		mode = st.st_mode;
+		orig_mode = mode;
+	} else
+		orig_mode = 0;
+	if (shared_repository < 0)
+		shared = -shared_repository;
+	else
+		shared = shared_repository;
+	tweak = shared;
+
+	if (!(mode & S_IWUSR))
+		tweak &= ~0222;
+	if (mode & S_IXUSR)
+		/* Copy read bits to execute bits */
+		tweak |= (tweak & 0444) >> 2;
+	if (shared_repository < 0)
+		mode = (mode & ~0777) | tweak;
+	else
+		mode |= tweak;
 
 	if (S_ISDIR(mode)) {
-		mode |= FORCE_DIR_SET_GID;
-
 		/* Copy read bits to execute bits */
-		mode |= (shared_repository & 0444) >> 2;
+		mode |= (shared & 0444) >> 2;
+		mode |= FORCE_DIR_SET_GID;
 	}
 
-	if ((mode & st.st_mode) != mode && chmod(path, mode) < 0)
+	if (((shared_repository < 0
+	      ? (orig_mode & (FORCE_DIR_SET_GID | 0777))
+	      : (orig_mode & mode)) != mode) &&
+	    chmod(path, (mode & ~S_IFMT)) < 0)
 		return -2;
 	return 0;
 }
@@ -294,71 +394,133 @@ int adjust_shared_perm(const char *path)
 const char *make_relative_path(const char *abs, const char *base)
 {
 	static char buf[PATH_MAX + 1];
-	int baselen;
-	if (!base)
+	int i = 0, j = 0;
+
+	if (!base || !base[0])
 		return abs;
-	baselen = strlen(base);
-	if (prefixcmp(abs, base))
+	while (base[i]) {
+		if (is_dir_sep(base[i])) {
+			if (!is_dir_sep(abs[j]))
+				return abs;
+			while (is_dir_sep(base[i]))
+				i++;
+			while (is_dir_sep(abs[j]))
+				j++;
+			continue;
+		} else if (abs[j] != base[i]) {
+			return abs;
+		}
+		i++;
+		j++;
+	}
+	if (
+	    /* "/foo" is a prefix of "/foo" */
+	    abs[j] &&
+	    /* "/foo" is not a prefix of "/foobar" */
+	    !is_dir_sep(base[i-1]) && !is_dir_sep(abs[j])
+	   )
 		return abs;
-	if (abs[baselen] == '/')
-		baselen++;
-	else if (base[baselen - 1] != '/')
-		return abs;
-	strcpy(buf, abs + baselen);
+	while (is_dir_sep(abs[j]))
+		j++;
+	if (!abs[j])
+		strcpy(buf, ".");
+	else
+		strcpy(buf, abs + j);
 	return buf;
 }
 
 /*
- * path = absolute path
- * buf = buffer of at least max(2, strlen(path)+1) bytes
- * It is okay if buf == path, but they should not overlap otherwise.
+ * It is okay if dst == src, but they should not overlap otherwise.
  *
- * Performs the following normalizations on path, storing the result in buf:
- * - Removes trailing slashes.
- * - Removes empty components.
+ * Performs the following normalizations on src, storing the result in dst:
+ * - Ensures that components are separated by '/' (Windows only)
+ * - Squashes sequences of '/'.
  * - Removes "." components.
  * - Removes ".." components, and the components the precede them.
- * "" and paths that contain only slashes are normalized to "/".
- * Returns the length of the output.
+ * Returns failure (non-zero) if a ".." component appears as first path
+ * component anytime during the normalization. Otherwise, returns success (0).
  *
  * Note that this function is purely textual.  It does not follow symlinks,
  * verify the existence of the path, or make any system calls.
  */
-int normalize_absolute_path(char *buf, const char *path)
+int normalize_path_copy(char *dst, const char *src)
 {
-	const char *comp_start = path, *comp_end = path;
-	char *dst = buf;
-	int comp_len;
-	assert(buf);
-	assert(path);
+	char *dst0;
 
-	while (*comp_start) {
-		assert(*comp_start == '/');
-		while (*++comp_end && *comp_end != '/')
-			; /* nothing */
-		comp_len = comp_end - comp_start;
+	if (has_dos_drive_prefix(src)) {
+		*dst++ = *src++;
+		*dst++ = *src++;
+	}
+	dst0 = dst;
 
-		if (!strncmp("/",  comp_start, comp_len) ||
-		    !strncmp("/.", comp_start, comp_len))
-			goto next;
-
-		if (!strncmp("/..", comp_start, comp_len)) {
-			while (dst > buf && *--dst != '/')
-				; /* nothing */
-			goto next;
-		}
-
-		memcpy(dst, comp_start, comp_len);
-		dst += comp_len;
-	next:
-		comp_start = comp_end;
+	if (is_dir_sep(*src)) {
+		*dst++ = '/';
+		while (is_dir_sep(*src))
+			src++;
 	}
 
-	if (dst == buf)
-		*dst++ = '/';
+	for (;;) {
+		char c = *src;
 
+		/*
+		 * A path component that begins with . could be
+		 * special:
+		 * (1) "." and ends   -- ignore and terminate.
+		 * (2) "./"           -- ignore them, eat slash and continue.
+		 * (3) ".." and ends  -- strip one and terminate.
+		 * (4) "../"          -- strip one, eat slash and continue.
+		 */
+		if (c == '.') {
+			if (!src[1]) {
+				/* (1) */
+				src++;
+			} else if (is_dir_sep(src[1])) {
+				/* (2) */
+				src += 2;
+				while (is_dir_sep(*src))
+					src++;
+				continue;
+			} else if (src[1] == '.') {
+				if (!src[2]) {
+					/* (3) */
+					src += 2;
+					goto up_one;
+				} else if (is_dir_sep(src[2])) {
+					/* (4) */
+					src += 3;
+					while (is_dir_sep(*src))
+						src++;
+					goto up_one;
+				}
+			}
+		}
+
+		/* copy up to the next '/', and eat all '/' */
+		while ((c = *src++) != '\0' && !is_dir_sep(c))
+			*dst++ = c;
+		if (is_dir_sep(c)) {
+			*dst++ = '/';
+			while (is_dir_sep(c))
+				c = *src++;
+			src--;
+		} else if (!c)
+			break;
+		continue;
+
+	up_one:
+		/*
+		 * dst0..dst is prefix portion, and dst[-1] is '/';
+		 * go up one level.
+		 */
+		dst--;	/* go to trailing '/' */
+		if (dst <= dst0)
+			return -1;
+		/* Windows: dst[-1] cannot be backslash anymore */
+		while (dst0 < dst && dst[-1] != '/')
+			dst--;
+	}
 	*dst = '\0';
-	return dst - buf;
+	return 0;
 }
 
 /*
@@ -384,15 +546,16 @@ int longest_ancestor_length(const char *path, const char *prefix_list)
 		return -1;
 
 	for (colon = ceil = prefix_list; *colon; ceil = colon+1) {
-		for (colon = ceil; *colon && *colon != ':'; colon++);
+		for (colon = ceil; *colon && *colon != PATH_SEP; colon++);
 		len = colon - ceil;
 		if (len == 0 || len > PATH_MAX || !is_absolute_path(ceil))
 			continue;
 		strlcpy(buf, ceil, len+1);
-		len = normalize_absolute_path(buf, buf);
-		/* Strip "trailing slashes" from "/". */
-		if (len == 1)
-			len = 0;
+		if (normalize_path_copy(buf, buf) < 0)
+			continue;
+		len = strlen(buf);
+		if (len > 0 && buf[len-1] == '/')
+			buf[--len] = '\0';
 
 		if (!strncmp(path, buf, len) &&
 		    path[len] == '/' &&
@@ -402,4 +565,87 @@ int longest_ancestor_length(const char *path, const char *prefix_list)
 	}
 
 	return max_len;
+}
+
+/* strip arbitrary amount of directory separators at end of path */
+static inline int chomp_trailing_dir_sep(const char *path, int len)
+{
+	while (len && is_dir_sep(path[len - 1]))
+		len--;
+	return len;
+}
+
+/*
+ * If path ends with suffix (complete path components), returns the
+ * part before suffix (sans trailing directory separators).
+ * Otherwise returns NULL.
+ */
+char *strip_path_suffix(const char *path, const char *suffix)
+{
+	int path_len = strlen(path), suffix_len = strlen(suffix);
+
+	while (suffix_len) {
+		if (!path_len)
+			return NULL;
+
+		if (is_dir_sep(path[path_len - 1])) {
+			if (!is_dir_sep(suffix[suffix_len - 1]))
+				return NULL;
+			path_len = chomp_trailing_dir_sep(path, path_len);
+			suffix_len = chomp_trailing_dir_sep(suffix, suffix_len);
+		}
+		else if (path[--path_len] != suffix[--suffix_len])
+			return NULL;
+	}
+
+	if (path_len && !is_dir_sep(path[path_len - 1]))
+		return NULL;
+	return xstrndup(path, chomp_trailing_dir_sep(path, path_len));
+}
+
+int daemon_avoid_alias(const char *p)
+{
+	int sl, ndot;
+
+	/*
+	 * This resurrects the belts and suspenders paranoia check by HPA
+	 * done in <435560F7.4080006@zytor.com> thread, now enter_repo()
+	 * does not do getcwd() based path canonicalizations.
+	 *
+	 * sl becomes true immediately after seeing '/' and continues to
+	 * be true as long as dots continue after that without intervening
+	 * non-dot character.
+	 */
+	if (!p || (*p != '/' && *p != '~'))
+		return -1;
+	sl = 1; ndot = 0;
+	p++;
+
+	while (1) {
+		char ch = *p++;
+		if (sl) {
+			if (ch == '.')
+				ndot++;
+			else if (ch == '/') {
+				if (ndot < 3)
+					/* reject //, /./ and /../ */
+					return -1;
+				ndot = 0;
+			}
+			else if (ch == 0) {
+				if (0 < ndot && ndot < 3)
+					/* reject /.$ and /..$ */
+					return -1;
+				return 0;
+			}
+			else
+				sl = ndot = 0;
+		}
+		else if (ch == 0)
+			return 0;
+		else if (ch == '/') {
+			sl = 1;
+			ndot = 0;
+		}
+	}
 }

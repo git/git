@@ -1,5 +1,5 @@
 /*
- * Pickaxe
+ * Blame
  *
  * Copyright (c) 2006, Junio C Hamano
  */
@@ -19,6 +19,7 @@
 #include "string-list.h"
 #include "mailmap.h"
 #include "parse-options.h"
+#include "utf8.h"
 
 static char blame_usage[] = "git blame [options] [rev-opts] [rev] [--] file";
 
@@ -38,8 +39,11 @@ static int show_root;
 static int reverse;
 static int blank_boundary;
 static int incremental;
-static int cmd_is_annotate;
 static int xdl_opts = XDF_NEED_MINIMAL;
+
+static enum date_mode blame_date_mode = DATE_ISO8601;
+static size_t blame_date_width;
+
 static struct string_list mailmap;
 
 #ifndef DEBUG
@@ -74,6 +78,7 @@ static unsigned blame_copy_score;
  */
 struct origin {
 	int refcnt;
+	struct origin *previous;
 	struct commit *commit;
 	mmfile_t file;
 	unsigned char blob_sha1[20];
@@ -115,6 +120,8 @@ static inline struct origin *origin_incref(struct origin *o)
 static void origin_decref(struct origin *o)
 {
 	if (o && --o->refcnt <= 0) {
+		if (o->previous)
+			origin_decref(o->previous);
 		free(o->file.ptr);
 		free(o);
 	}
@@ -355,18 +362,28 @@ static struct origin *find_origin(struct scoreboard *sb,
 			       "", &diff_opts);
 	diffcore_std(&diff_opts);
 
-	/* It is either one entry that says "modified", or "created",
-	 * or nothing.
-	 */
 	if (!diff_queued_diff.nr) {
 		/* The path is the same as parent */
 		porigin = get_origin(sb, parent, origin->path);
 		hashcpy(porigin->blob_sha1, origin->blob_sha1);
-	}
-	else if (diff_queued_diff.nr != 1)
-		die("internal error in blame::find_origin");
-	else {
-		struct diff_filepair *p = diff_queued_diff.queue[0];
+	} else {
+		/*
+		 * Since origin->path is a pathspec, if the parent
+		 * commit had it as a directory, we will see a whole
+		 * bunch of deletion of files in the directory that we
+		 * do not care about.
+		 */
+		int i;
+		struct diff_filepair *p = NULL;
+		for (i = 0; i < diff_queued_diff.nr; i++) {
+			const char *name;
+			p = diff_queued_diff.queue[i];
+			name = p->one->path ? p->one->path : p->two->path;
+			if (!strcmp(name, origin->path))
+				break;
+		}
+		if (!p)
+			die("internal error in blame::find_origin");
 		switch (p->status) {
 		default:
 			die("internal error in blame::find_origin (%c)",
@@ -441,135 +458,6 @@ static struct origin *find_rename(struct scoreboard *sb,
 	diff_flush(&diff_opts);
 	diff_tree_release_paths(&diff_opts);
 	return porigin;
-}
-
-/*
- * Parsing of patch chunks...
- */
-struct chunk {
-	/* line number in postimage; up to but not including this
-	 * line is the same as preimage
-	 */
-	int same;
-
-	/* preimage line number after this chunk */
-	int p_next;
-
-	/* postimage line number after this chunk */
-	int t_next;
-};
-
-struct patch {
-	struct chunk *chunks;
-	int num;
-};
-
-struct blame_diff_state {
-	struct xdiff_emit_state xm;
-	struct patch *ret;
-	unsigned hunk_post_context;
-	unsigned hunk_in_pre_context : 1;
-};
-
-static void process_u_diff(void *state_, char *line, unsigned long len)
-{
-	struct blame_diff_state *state = state_;
-	struct chunk *chunk;
-	int off1, off2, len1, len2, num;
-
-	num = state->ret->num;
-	if (len < 4 || line[0] != '@' || line[1] != '@') {
-		if (state->hunk_in_pre_context && line[0] == ' ')
-			state->ret->chunks[num - 1].same++;
-		else {
-			state->hunk_in_pre_context = 0;
-			if (line[0] == ' ')
-				state->hunk_post_context++;
-			else
-				state->hunk_post_context = 0;
-		}
-		return;
-	}
-
-	if (num && state->hunk_post_context) {
-		chunk = &state->ret->chunks[num - 1];
-		chunk->p_next -= state->hunk_post_context;
-		chunk->t_next -= state->hunk_post_context;
-	}
-	state->ret->num = ++num;
-	state->ret->chunks = xrealloc(state->ret->chunks,
-				      sizeof(struct chunk) * num);
-	chunk = &state->ret->chunks[num - 1];
-	if (parse_hunk_header(line, len, &off1, &len1, &off2, &len2)) {
-		state->ret->num--;
-		return;
-	}
-
-	/* Line numbers in patch output are one based. */
-	off1--;
-	off2--;
-
-	chunk->same = len2 ? off2 : (off2 + 1);
-
-	chunk->p_next = off1 + (len1 ? len1 : 1);
-	chunk->t_next = chunk->same + len2;
-	state->hunk_in_pre_context = 1;
-	state->hunk_post_context = 0;
-}
-
-static struct patch *compare_buffer(mmfile_t *file_p, mmfile_t *file_o,
-				    int context)
-{
-	struct blame_diff_state state;
-	xpparam_t xpp;
-	xdemitconf_t xecfg;
-	xdemitcb_t ecb;
-
-	xpp.flags = xdl_opts;
-	memset(&xecfg, 0, sizeof(xecfg));
-	xecfg.ctxlen = context;
-	ecb.outf = xdiff_outf;
-	ecb.priv = &state;
-	memset(&state, 0, sizeof(state));
-	state.xm.consume = process_u_diff;
-	state.ret = xmalloc(sizeof(struct patch));
-	state.ret->chunks = NULL;
-	state.ret->num = 0;
-
-	xdi_diff(file_p, file_o, &xpp, &xecfg, &ecb);
-
-	if (state.ret->num) {
-		struct chunk *chunk;
-		chunk = &state.ret->chunks[state.ret->num - 1];
-		chunk->p_next -= state.hunk_post_context;
-		chunk->t_next -= state.hunk_post_context;
-	}
-	return state.ret;
-}
-
-/*
- * Run diff between two origins and grab the patch output, so that
- * we can pass blame for lines origin is currently suspected for
- * to its parent.
- */
-static struct patch *get_patch(struct origin *parent, struct origin *origin)
-{
-	mmfile_t file_p, file_o;
-	struct patch *patch;
-
-	fill_origin_blob(parent, &file_p);
-	fill_origin_blob(origin, &file_o);
-	if (!file_p.ptr || !file_o.ptr)
-		return NULL;
-	patch = compare_buffer(&file_p, &file_o, 0);
-	num_get_patch++;
-	return patch;
-}
-
-static void free_patch(struct patch *p)
-{
-	free(p->chunks);
-	free(p);
 }
 
 /*
@@ -818,6 +706,22 @@ static void blame_chunk(struct scoreboard *sb,
 	}
 }
 
+struct blame_chunk_cb_data {
+	struct scoreboard *sb;
+	struct origin *target;
+	struct origin *parent;
+	long plno;
+	long tlno;
+};
+
+static void blame_chunk_cb(void *data, long same, long p_next, long t_next)
+{
+	struct blame_chunk_cb_data *d = data;
+	blame_chunk(d->sb, d->tlno, d->plno, same, d->target, d->parent);
+	d->plno = p_next;
+	d->tlno = t_next;
+}
+
 /*
  * We are looking at the origin 'target' and aiming to pass blame
  * for the lines it is suspected to its parent.  Run diff to find
@@ -827,26 +731,28 @@ static int pass_blame_to_parent(struct scoreboard *sb,
 				struct origin *target,
 				struct origin *parent)
 {
-	int i, last_in_target, plno, tlno;
-	struct patch *patch;
+	int last_in_target;
+	mmfile_t file_p, file_o;
+	struct blame_chunk_cb_data d = { sb, target, parent, 0, 0 };
+	xpparam_t xpp;
+	xdemitconf_t xecfg;
 
 	last_in_target = find_last_in_target(sb, target);
 	if (last_in_target < 0)
 		return 1; /* nothing remains for this target */
 
-	patch = get_patch(parent, target);
-	plno = tlno = 0;
-	for (i = 0; i < patch->num; i++) {
-		struct chunk *chunk = &patch->chunks[i];
+	fill_origin_blob(parent, &file_p);
+	fill_origin_blob(target, &file_o);
+	num_get_patch++;
 
-		blame_chunk(sb, tlno, plno, chunk->same, target, parent);
-		plno = chunk->p_next;
-		tlno = chunk->t_next;
-	}
+	memset(&xpp, 0, sizeof(xpp));
+	xpp.flags = xdl_opts;
+	memset(&xecfg, 0, sizeof(xecfg));
+	xecfg.ctxlen = 0;
+	xdi_diff_hunks(&file_p, &file_o, blame_chunk_cb, &d, &xpp, &xecfg);
 	/* The rest (i.e. anything after tlno) are the same as the parent */
-	blame_chunk(sb, tlno, plno, last_in_target, target, parent);
+	blame_chunk(sb, d.tlno, d.plno, last_in_target, target, parent);
 
-	free_patch(patch);
 	return 0;
 }
 
@@ -938,6 +844,23 @@ static void handle_split(struct scoreboard *sb,
 	}
 }
 
+struct handle_split_cb_data {
+	struct scoreboard *sb;
+	struct blame_entry *ent;
+	struct origin *parent;
+	struct blame_entry *split;
+	long plno;
+	long tlno;
+};
+
+static void handle_split_cb(void *data, long same, long p_next, long t_next)
+{
+	struct handle_split_cb_data *d = data;
+	handle_split(d->sb, d->ent, d->tlno, d->plno, same, d->parent, d->split);
+	d->plno = p_next;
+	d->tlno = t_next;
+}
+
 /*
  * Find the lines from parent that are the same as ent so that
  * we can pass blames to it.  file_p has the blob contents for
@@ -952,14 +875,15 @@ static void find_copy_in_blob(struct scoreboard *sb,
 	const char *cp;
 	int cnt;
 	mmfile_t file_o;
-	struct patch *patch;
-	int i, plno, tlno;
+	struct handle_split_cb_data d = { sb, ent, parent, split, 0, 0 };
+	xpparam_t xpp;
+	xdemitconf_t xecfg;
 
 	/*
 	 * Prepare mmfile that contains only the lines in ent.
 	 */
 	cp = nth_line(sb, ent->lno);
-	file_o.ptr = (char*) cp;
+	file_o.ptr = (char *) cp;
 	cnt = ent->num_lines;
 
 	while (cnt && cp < sb->final_buf + sb->final_buf_size) {
@@ -968,24 +892,18 @@ static void find_copy_in_blob(struct scoreboard *sb,
 	}
 	file_o.size = cp - file_o.ptr;
 
-	patch = compare_buffer(file_p, &file_o, 1);
-
 	/*
 	 * file_o is a part of final image we are annotating.
 	 * file_p partially may match that image.
 	 */
+	memset(&xpp, 0, sizeof(xpp));
+	xpp.flags = xdl_opts;
+	memset(&xecfg, 0, sizeof(xecfg));
+	xecfg.ctxlen = 1;
 	memset(split, 0, sizeof(struct blame_entry [3]));
-	plno = tlno = 0;
-	for (i = 0; i < patch->num; i++) {
-		struct chunk *chunk = &patch->chunks[i];
-
-		handle_split(sb, ent, tlno, plno, chunk->same, parent, split);
-		plno = chunk->p_next;
-		tlno = chunk->t_next;
-	}
+	xdi_diff_hunks(file_p, &file_o, handle_split_cb, &d, &xpp, &xecfg);
 	/* remainder, if any, all match the preimage */
-	handle_split(sb, ent, tlno, plno, ent->num_lines, parent, split);
-	free_patch(patch);
+	handle_split(sb, ent, d.tlno, d.plno, ent->num_lines, parent, split);
 }
 
 /*
@@ -1137,6 +1055,8 @@ static int find_copy_in_parent(struct scoreboard *sb,
 
 			if (!DIFF_FILE_VALID(p->one))
 				continue; /* does not exist in parent */
+			if (S_ISGITLINK(p->one->mode))
+				continue; /* ignore git links */
 			if (porigin && !strcmp(p->one->path, porigin->path))
 				/* find_move already dealt with this path */
 				continue;
@@ -1295,6 +1215,10 @@ static void pass_blame(struct scoreboard *sb, struct origin *origin, int opt)
 		struct origin *porigin = sg_origin[i];
 		if (!porigin)
 			continue;
+		if (!origin->previous) {
+			origin_incref(porigin);
+			origin->previous = porigin;
+		}
 		if (pass_blame_to_parent(sb, origin, porigin))
 			goto finish;
 	}
@@ -1361,11 +1285,12 @@ struct commit_info
  * Parse author/committer line in the commit object buffer
  */
 static void get_ac_line(const char *inbuf, const char *what,
-			int bufsz, char *person, const char **mail,
+			int person_len, char *person,
+			int mail_len, char *mail,
 			unsigned long *time, const char **tz)
 {
 	int len, tzlen, maillen;
-	char *tmp, *endp, *timepos;
+	char *tmp, *endp, *timepos, *mailpos;
 
 	tmp = strstr(inbuf, what);
 	if (!tmp)
@@ -1376,10 +1301,12 @@ static void get_ac_line(const char *inbuf, const char *what,
 		len = strlen(tmp);
 	else
 		len = endp - tmp;
-	if (bufsz <= len) {
+	if (person_len <= len) {
 	error_out:
 		/* Ugh */
-		*mail = *tz = "(unknown)";
+		*tz = "(unknown)";
+		strcpy(person, *tz);
+		strcpy(mail, *tz);
 		*time = 0;
 		return;
 	}
@@ -1388,23 +1315,30 @@ static void get_ac_line(const char *inbuf, const char *what,
 	tmp = person;
 	tmp += len;
 	*tmp = 0;
-	while (*tmp != ' ')
+	while (person < tmp && *tmp != ' ')
 		tmp--;
+	if (tmp <= person)
+		goto error_out;
 	*tz = tmp+1;
 	tzlen = (person+len)-(tmp+1);
 
 	*tmp = 0;
-	while (*tmp != ' ')
+	while (person < tmp && *tmp != ' ')
 		tmp--;
+	if (tmp <= person)
+		goto error_out;
 	*time = strtoul(tmp, NULL, 10);
 	timepos = tmp;
 
 	*tmp = 0;
-	while (*tmp != ' ')
+	while (person < tmp && *tmp != ' ')
 		tmp--;
-	*mail = tmp + 1;
+	if (tmp <= person)
+		return;
+	mailpos = tmp + 1;
 	*tmp = 0;
 	maillen = timepos - tmp;
+	memcpy(mail, mailpos, maillen);
 
 	if (!mailmap.nr)
 		return;
@@ -1413,20 +1347,23 @@ static void get_ac_line(const char *inbuf, const char *what,
 	 * mailmap expansion may make the name longer.
 	 * make room by pushing stuff down.
 	 */
-	tmp = person + bufsz - (tzlen + 1);
+	tmp = person + person_len - (tzlen + 1);
 	memmove(tmp, *tz, tzlen);
 	tmp[tzlen] = 0;
 	*tz = tmp;
 
-	tmp = tmp - (maillen + 1);
-	memmove(tmp, *mail, maillen);
-	tmp[maillen] = 0;
-	*mail = tmp;
-
 	/*
-	 * Now, convert e-mail using mailmap
+	 * Now, convert both name and e-mail using mailmap
 	 */
-	map_email(&mailmap, tmp + 1, person, tmp-person-1);
+	if (map_user(&mailmap, mail+1, mail_len-1, person, tmp-person-1)) {
+		/* Add a trailing '>' to email, since map_user returns plain emails
+		   Note: It already has '<', since we replace from mail+1 */
+		mailpos = memchr(mail, '\0', mail_len);
+		if (mailpos && mailpos-mail < mail_len - 1) {
+			*mailpos = '>';
+			*(mailpos+1) = '\0';
+		}
+	}
 }
 
 static void get_commit_info(struct commit *commit,
@@ -1434,9 +1371,11 @@ static void get_commit_info(struct commit *commit,
 			    int detailed)
 {
 	int len;
-	char *tmp, *endp;
-	static char author_buf[1024];
-	static char committer_buf[1024];
+	char *tmp, *endp, *reencoded, *message;
+	static char author_name[1024];
+	static char author_mail[1024];
+	static char committer_name[1024];
+	static char committer_mail[1024];
 	static char summary_buf[1024];
 
 	/*
@@ -1452,24 +1391,33 @@ static void get_commit_info(struct commit *commit,
 			die("Cannot read commit %s",
 			    sha1_to_hex(commit->object.sha1));
 	}
-	ret->author = author_buf;
-	get_ac_line(commit->buffer, "\nauthor ",
-		    sizeof(author_buf), author_buf, &ret->author_mail,
+	reencoded = reencode_commit_message(commit, NULL);
+	message   = reencoded ? reencoded : commit->buffer;
+	ret->author = author_name;
+	ret->author_mail = author_mail;
+	get_ac_line(message, "\nauthor ",
+		    sizeof(author_name), author_name,
+		    sizeof(author_mail), author_mail,
 		    &ret->author_time, &ret->author_tz);
 
-	if (!detailed)
+	if (!detailed) {
+		free(reencoded);
 		return;
+	}
 
-	ret->committer = committer_buf;
-	get_ac_line(commit->buffer, "\ncommitter ",
-		    sizeof(committer_buf), committer_buf, &ret->committer_mail,
+	ret->committer = committer_name;
+	ret->committer_mail = committer_mail;
+	get_ac_line(message, "\ncommitter ",
+		    sizeof(committer_name), committer_name,
+		    sizeof(committer_mail), committer_mail,
 		    &ret->committer_time, &ret->committer_tz);
 
 	ret->summary = summary_buf;
-	tmp = strstr(commit->buffer, "\n\n");
+	tmp = strstr(message, "\n\n");
 	if (!tmp) {
 	error_out:
 		sprintf(summary_buf, "(%s)", sha1_to_hex(commit->object.sha1));
+		free(reencoded);
 		return;
 	}
 	tmp += 2;
@@ -1481,6 +1429,7 @@ static void get_commit_info(struct commit *commit,
 		goto error_out;
 	memcpy(summary_buf, tmp, len);
 	summary_buf[len] = 0;
+	free(reencoded);
 }
 
 /*
@@ -1491,6 +1440,39 @@ static void write_filename_info(const char *path)
 {
 	printf("filename ");
 	write_name_quoted(path, stdout, '\n');
+}
+
+/*
+ * Porcelain/Incremental format wants to show a lot of details per
+ * commit.  Instead of repeating this every line, emit it only once,
+ * the first time each commit appears in the output.
+ */
+static int emit_one_suspect_detail(struct origin *suspect)
+{
+	struct commit_info ci;
+
+	if (suspect->commit->object.flags & METAINFO_SHOWN)
+		return 0;
+
+	suspect->commit->object.flags |= METAINFO_SHOWN;
+	get_commit_info(suspect->commit, &ci, 1);
+	printf("author %s\n", ci.author);
+	printf("author-mail %s\n", ci.author_mail);
+	printf("author-time %lu\n", ci.author_time);
+	printf("author-tz %s\n", ci.author_tz);
+	printf("committer %s\n", ci.committer);
+	printf("committer-mail %s\n", ci.committer_mail);
+	printf("committer-time %lu\n", ci.committer_time);
+	printf("committer-tz %s\n", ci.committer_tz);
+	printf("summary %s\n", ci.summary);
+	if (suspect->commit->object.flags & UNINTERESTING)
+		printf("boundary\n");
+	if (suspect->previous) {
+		struct origin *prev = suspect->previous;
+		printf("previous %s ", sha1_to_hex(prev->commit->object.sha1));
+		write_name_quoted(prev->path, stdout, '\n');
+	}
+	return 1;
 }
 
 /*
@@ -1508,22 +1490,7 @@ static void found_guilty_entry(struct blame_entry *ent)
 		printf("%s %d %d %d\n",
 		       sha1_to_hex(suspect->commit->object.sha1),
 		       ent->s_lno + 1, ent->lno + 1, ent->num_lines);
-		if (!(suspect->commit->object.flags & METAINFO_SHOWN)) {
-			struct commit_info ci;
-			suspect->commit->object.flags |= METAINFO_SHOWN;
-			get_commit_info(suspect->commit, &ci, 1);
-			printf("author %s\n", ci.author);
-			printf("author-mail %s\n", ci.author_mail);
-			printf("author-time %lu\n", ci.author_time);
-			printf("author-tz %s\n", ci.author_tz);
-			printf("committer %s\n", ci.committer);
-			printf("committer-mail %s\n", ci.committer_mail);
-			printf("committer-time %lu\n", ci.committer_time);
-			printf("committer-tz %s\n", ci.committer_tz);
-			printf("summary %s\n", ci.summary);
-			if (suspect->commit->object.flags & UNINTERESTING)
-				printf("boundary\n");
-		}
+		emit_one_suspect_detail(suspect);
 		write_filename_info(suspect->path);
 		maybe_flush_or_die(stdout, "stdout");
 	}
@@ -1586,24 +1553,20 @@ static const char *format_time(unsigned long time, const char *tz_str,
 			       int show_raw_time)
 {
 	static char time_buf[128];
-	time_t t = time;
-	int minutes, tz;
-	struct tm *tm;
+	const char *time_str;
+	int time_len;
+	int tz;
 
 	if (show_raw_time) {
 		sprintf(time_buf, "%lu %s", time, tz_str);
-		return time_buf;
 	}
-
-	tz = atoi(tz_str);
-	minutes = tz < 0 ? -tz : tz;
-	minutes = (minutes / 100)*60 + (minutes % 100);
-	minutes = tz < 0 ? -minutes : minutes;
-	t = time + minutes * 60;
-	tm = gmtime(&t);
-
-	strftime(time_buf, sizeof(time_buf), "%Y-%m-%d %H:%M:%S ", tm);
-	strcat(time_buf, tz_str);
+	else {
+		tz = atoi(tz_str);
+		time_str = show_date(time, tz, blame_date_mode);
+		time_len = strlen(time_str);
+		memcpy(time_buf, time_str, time_len);
+		memset(time_buf + time_len, ' ', blame_date_width - time_len);
+	}
 	return time_buf;
 }
 
@@ -1630,24 +1593,8 @@ static void emit_porcelain(struct scoreboard *sb, struct blame_entry *ent)
 	       ent->s_lno + 1,
 	       ent->lno + 1,
 	       ent->num_lines);
-	if (!(suspect->commit->object.flags & METAINFO_SHOWN)) {
-		struct commit_info ci;
-		suspect->commit->object.flags |= METAINFO_SHOWN;
-		get_commit_info(suspect->commit, &ci, 1);
-		printf("author %s\n", ci.author);
-		printf("author-mail %s\n", ci.author_mail);
-		printf("author-time %lu\n", ci.author_time);
-		printf("author-tz %s\n", ci.author_tz);
-		printf("committer %s\n", ci.committer);
-		printf("committer-mail %s\n", ci.committer_mail);
-		printf("committer-time %lu\n", ci.committer_time);
-		printf("committer-tz %s\n", ci.committer_tz);
-		write_filename_info(suspect->path);
-		printf("summary %s\n", ci.summary);
-		if (suspect->commit->object.flags & UNINTERESTING)
-			printf("boundary\n");
-	}
-	else if (suspect->commit->object.flags & MORE_THAN_ONE_PATH)
+	if (emit_one_suspect_detail(suspect) ||
+	    (suspect->commit->object.flags & MORE_THAN_ONE_PATH))
 		write_filename_info(suspect->path);
 
 	cp = nth_line(sb, ent->lno);
@@ -1664,6 +1611,9 @@ static void emit_porcelain(struct scoreboard *sb, struct blame_entry *ent)
 		} while (ch != '\n' &&
 			 cp < sb->final_buf + sb->final_buf_size);
 	}
+
+	if (sb->final_buf_size && cp[-1] != '\n')
+		putchar('\n');
 }
 
 static void emit_other(struct scoreboard *sb, struct blame_entry *ent, int opt)
@@ -1686,7 +1636,7 @@ static void emit_other(struct scoreboard *sb, struct blame_entry *ent, int opt)
 		if (suspect->commit->object.flags & UNINTERESTING) {
 			if (blank_boundary)
 				memset(hex, ' ', length);
-			else if (!cmd_is_annotate) {
+			else if (!(opt & OUTPUT_ANNOTATE_COMPAT)) {
 				length--;
 				putchar('^');
 			}
@@ -1710,13 +1660,14 @@ static void emit_other(struct scoreboard *sb, struct blame_entry *ent, int opt)
 				printf(" %*d", max_orig_digits,
 				       ent->s_lno + 1 + cnt);
 
-			if (!(opt & OUTPUT_NO_AUTHOR))
-				printf(" (%-*.*s %10s",
-				       longest_author, longest_author,
-				       ci.author,
+			if (!(opt & OUTPUT_NO_AUTHOR)) {
+				int pad = longest_author - utf8_strwidth(ci.author);
+				printf(" (%s%*s %10s",
+				       ci.author, pad, "",
 				       format_time(ci.author_time,
 						   ci.author_tz,
 						   show_raw_time));
+			}
 			printf(" %*d) ",
 			       max_digits, ent->lno + 1 + cnt);
 		}
@@ -1726,6 +1677,9 @@ static void emit_other(struct scoreboard *sb, struct blame_entry *ent, int opt)
 		} while (ch != '\n' &&
 			 cp < sb->final_buf + sb->final_buf_size);
 	}
+
+	if (sb->final_buf_size && cp[-1] != '\n')
+		putchar('\n');
 }
 
 static void output(struct scoreboard *sb, int option)
@@ -1773,7 +1727,7 @@ static int prepare_lines(struct scoreboard *sb)
 	while (len--) {
 		if (bol) {
 			sb->lineno = xrealloc(sb->lineno,
-					      sizeof(int* ) * (num + 1));
+					      sizeof(int *) * (num + 1));
 			sb->lineno[num] = buf - sb->final_buf;
 			bol = 0;
 		}
@@ -1783,7 +1737,7 @@ static int prepare_lines(struct scoreboard *sb)
 		}
 	}
 	sb->lineno = xrealloc(sb->lineno,
-			      sizeof(int* ) * (num + incomplete + 1));
+			      sizeof(int *) * (num + incomplete + 1));
 	sb->lineno[num + incomplete] = buf - sb->final_buf;
 	sb->num_lines = num + incomplete;
 	return sb->num_lines;
@@ -1791,7 +1745,7 @@ static int prepare_lines(struct scoreboard *sb)
 
 /*
  * Add phony grafts for use with -S; this is primarily to
- * support git-cvsserver that wants to give a linear history
+ * support git's cvsserver that wants to give a linear history
  * to its clients.
  */
 static int read_ancestry(const char *graft_file)
@@ -1847,7 +1801,7 @@ static void find_alignment(struct scoreboard *sb, int *option)
 		if (!(suspect->commit->object.flags & METAINFO_SHOWN)) {
 			suspect->commit->object.flags |= METAINFO_SHOWN;
 			get_commit_info(suspect->commit, &ci, 1);
-			num = strlen(ci.author);
+			num = utf8_strwidth(ci.author);
 			if (longest_author < num)
 				longest_author = num;
 		}
@@ -1882,36 +1836,6 @@ static void sanity_check_refcnt(struct scoreboard *sb)
 				sha1_to_hex(ent->suspect->commit->object.sha1),
 				ent->suspect->refcnt);
 			baa = 1;
-		}
-	}
-	for (ent = sb->ent; ent; ent = ent->next) {
-		/* Mark the ones that haven't been checked */
-		if (0 < ent->suspect->refcnt)
-			ent->suspect->refcnt = -ent->suspect->refcnt;
-	}
-	for (ent = sb->ent; ent; ent = ent->next) {
-		/*
-		 * ... then pick each and see if they have the the
-		 * correct refcnt.
-		 */
-		int found;
-		struct blame_entry *e;
-		struct origin *suspect = ent->suspect;
-
-		if (0 < suspect->refcnt)
-			continue;
-		suspect->refcnt = -suspect->refcnt; /* Unmark */
-		for (found = 0, e = sb->ent; e; e = e->next) {
-			if (e->suspect != suspect)
-				continue;
-			found++;
-		}
-		if (suspect->refcnt != found) {
-			fprintf(stderr, "%s in %s has refcnt %d, not %d\n",
-				ent->suspect->path,
-				sha1_to_hex(ent->suspect->commit->object.sha1),
-				ent->suspect->refcnt, found);
-			baa = 2;
 		}
 	}
 	if (baa) {
@@ -1988,7 +1912,7 @@ static const char *parse_loc(const char *spec,
 		return spec;
 
 	/* it could be a regexp of form /.../ */
-	for (term = (char*) spec + 1; *term && *term != '/'; term++) {
+	for (term = (char *) spec + 1; *term && *term != '/'; term++) {
 		if (*term == '\\')
 			term++;
 	}
@@ -2053,6 +1977,12 @@ static int git_blame_config(const char *var, const char *value, void *cb)
 		blank_boundary = git_config_bool(var, value);
 		return 0;
 	}
+	if (!strcmp(var, "blame.date")) {
+		if (!value)
+			return config_error_nonbool(var);
+		blame_date_mode = parse_date_format(value);
+		return 0;
+	}
 	return git_default_config(var, value, cb);
 }
 
@@ -2065,7 +1995,7 @@ static struct commit *fake_working_tree_commit(const char *path, const char *con
 	struct commit *commit;
 	struct origin *origin;
 	unsigned char head_sha1[20];
-	struct strbuf buf;
+	struct strbuf buf = STRBUF_INIT;
 	const char *ident;
 	time_t now;
 	int size, len;
@@ -2085,33 +2015,29 @@ static struct commit *fake_working_tree_commit(const char *path, const char *con
 
 	origin = make_origin(commit, path);
 
-	strbuf_init(&buf, 0);
 	if (!contents_from || strcmp("-", contents_from)) {
 		struct stat st;
 		const char *read_from;
-		unsigned long fin_size;
 
 		if (contents_from) {
 			if (stat(contents_from, &st) < 0)
-				die("Cannot stat %s", contents_from);
+				die_errno("Cannot stat '%s'", contents_from);
 			read_from = contents_from;
 		}
 		else {
 			if (lstat(path, &st) < 0)
-				die("Cannot lstat %s", path);
+				die_errno("Cannot lstat '%s'", path);
 			read_from = path;
 		}
-		fin_size = xsize_t(st.st_size);
 		mode = canon_mode(st.st_mode);
 		switch (st.st_mode & S_IFMT) {
 		case S_IFREG:
 			if (strbuf_read_file(&buf, read_from, st.st_size) != st.st_size)
-				die("cannot open or read %s", read_from);
+				die_errno("cannot open or read '%s'", read_from);
 			break;
 		case S_IFLNK:
-			if (readlink(read_from, buf.buf, buf.alloc) != fin_size)
-				die("cannot readlink %s", read_from);
-			buf.len = fin_size;
+			if (strbuf_readlink(&buf, read_from, st.st_size) < 0)
+				die_errno("cannot readlink '%s'", read_from);
 			break;
 		default:
 			die("unsupported file type %s", read_from);
@@ -2122,7 +2048,7 @@ static struct commit *fake_working_tree_commit(const char *path, const char *con
 		contents_from = "standard input";
 		mode = 0;
 		if (strbuf_read(&buf, 0, 0) < 0)
-			die("read error %s from stdin", strerror(errno));
+			die_errno("failed to read from stdin");
 	}
 	convert_to_git(path, buf.buf, buf.len, &buf, 0);
 	origin->file.ptr = buf.buf;
@@ -2317,15 +2243,16 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 	};
 
 	struct parse_opt_ctx_t ctx;
-
-	cmd_is_annotate = !strcmp(argv[0], "annotate");
+	int cmd_is_annotate = !strcmp(argv[0], "annotate");
 
 	git_config(git_blame_config, NULL);
 	init_revisions(&revs, NULL);
+	revs.date_mode = blame_date_mode;
+
 	save_commit_buffer = 0;
 	dashdash_pos = 0;
 
-	parse_options_start(&ctx, argc, argv, PARSE_OPT_KEEP_DASHDASH |
+	parse_options_start(&ctx, argc, argv, prefix, PARSE_OPT_KEEP_DASHDASH |
 			    PARSE_OPT_KEEP_ARGV0);
 	for (;;) {
 		switch (parse_options_step(&ctx, options, blame_opt_usage)) {
@@ -2345,6 +2272,39 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 	}
 parse_done:
 	argc = parse_options_end(&ctx);
+
+	if (revs_file && read_ancestry(revs_file))
+		die_errno("reading graft file '%s' failed", revs_file);
+
+	if (cmd_is_annotate) {
+		output_option |= OUTPUT_ANNOTATE_COMPAT;
+		blame_date_mode = DATE_ISO8601;
+	} else {
+		blame_date_mode = revs.date_mode;
+	}
+
+	/* The maximum width used to show the dates */
+	switch (blame_date_mode) {
+	case DATE_RFC2822:
+		blame_date_width = sizeof("Thu, 19 Oct 2006 16:00:04 -0700");
+		break;
+	case DATE_ISO8601:
+		blame_date_width = sizeof("2006-10-19 16:00:04 -0700");
+		break;
+	case DATE_RAW:
+		blame_date_width = sizeof("1161298804 -0700");
+		break;
+	case DATE_SHORT:
+		blame_date_width = sizeof("2006-10-19");
+		break;
+	case DATE_RELATIVE:
+		/* "normal" is used as the fallback for "relative" */
+	case DATE_LOCAL:
+	case DATE_NORMAL:
+		blame_date_width = sizeof("Thu Oct 19 16:00:04 2006 -0700");
+		break;
+	}
+	blame_date_width -= 1; /* strip the null */
 
 	if (DIFF_OPT_TST(&revs.diffopt, FIND_COPIES_HARDER))
 		opt |= (PICKAXE_BLAME_COPY | PICKAXE_BLAME_MOVE |
@@ -2402,9 +2362,10 @@ parse_done:
 
 		setup_work_tree();
 		if (!has_string_in_work_tree(path))
-			die("cannot stat path %s: %s", path, strerror(errno));
+			die_errno("cannot stat path '%s'", path);
 	}
 
+	revs.disable_stdin = 1;
 	setup_revisions(argc, argv, &revs, NULL);
 	memset(&sb, 0, sizeof(sb));
 
@@ -2472,7 +2433,7 @@ parse_done:
 	if (top < 1)
 		top = lno;
 	bottom--;
-	if (lno < top)
+	if (lno < top || lno < bottom)
 		die("file %s has only %lu lines", path, lno);
 
 	ent = xcalloc(1, sizeof(*ent));
@@ -2484,11 +2445,7 @@ parse_done:
 	sb.ent = ent;
 	sb.path = path;
 
-	if (revs_file && read_ancestry(revs_file))
-		die("reading graft file %s failed: %s",
-		    revs_file, strerror(errno));
-
-	read_mailmap(&mailmap, ".mailmap", NULL);
+	read_mailmap(&mailmap, NULL);
 
 	if (!incremental)
 		setup_pager();
