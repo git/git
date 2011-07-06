@@ -275,6 +275,8 @@ struct recent_command
 static unsigned long max_depth = 10;
 static off_t max_packsize = (1LL << 32) - 1;
 static int force_update;
+static int pack_compression_level = Z_DEFAULT_COMPRESSION;
+static int pack_compression_seen;
 
 /* Stats and misc. counters */
 static uintmax_t alloc_count;
@@ -370,6 +372,8 @@ static void write_branch_report(FILE *rpt, struct branch *b)
 	fputc('\n', rpt);
 }
 
+static void dump_marks_helper(FILE *, uintmax_t, struct mark_set *);
+
 static void write_crash_report(const char *err)
 {
 	char *loc = git_path("fast_import_crash_%d", getpid());
@@ -428,11 +432,36 @@ static void write_crash_report(const char *err)
 			write_branch_report(rpt, b);
 	}
 
+	if (first_tag) {
+		struct tag *tg;
+		fputc('\n', rpt);
+		fputs("Annotated Tags\n", rpt);
+		fputs("--------------\n", rpt);
+		for (tg = first_tag; tg; tg = tg->next_tag) {
+			fputs(sha1_to_hex(tg->sha1), rpt);
+			fputc(' ', rpt);
+			fputs(tg->name, rpt);
+			fputc('\n', rpt);
+		}
+	}
+
+	fputc('\n', rpt);
+	fputs("Marks\n", rpt);
+	fputs("-----\n", rpt);
+	if (mark_file)
+		fprintf(rpt, "  exported to %s\n", mark_file);
+	else
+		dump_marks_helper(rpt, 0, marks);
+
 	fputc('\n', rpt);
 	fputs("-------------------\n", rpt);
 	fputs("END OF CRASH REPORT\n", rpt);
 	fclose(rpt);
 }
+
+static void end_packfile(void);
+static void unkeep_all_packs(void);
+static void dump_marks(void);
 
 static NORETURN void die_nicely(const char *err, va_list params)
 {
@@ -447,6 +476,9 @@ static NORETURN void die_nicely(const char *err, va_list params)
 	if (!zombie) {
 		zombie = 1;
 		write_crash_report(message);
+		end_packfile();
+		unkeep_all_packs();
+		dump_marks();
 	}
 	exit(128);
 }
@@ -858,7 +890,7 @@ static char *create_index(void)
 		SHA1_Update(&ctx, (*c)->sha1, 20);
 	}
 	sha1write(f, pack_data->sha1, sizeof(pack_data->sha1));
-	sha1close(f, NULL, 1);
+	sha1close(f, NULL, CSUM_FSYNC);
 	free(idx);
 	SHA1_Final(pack_data->sha1, &ctx);
 	return tmpfile;
@@ -1038,7 +1070,7 @@ static int store_object(
 		delta = NULL;
 
 	memset(&s, 0, sizeof(s));
-	deflateInit(&s, zlib_compression_level);
+	deflateInit(&s, pack_compression_level);
 	if (delta) {
 		s.next_in = delta;
 		s.avail_in = deltalen;
@@ -1066,7 +1098,7 @@ static int store_object(
 			delta = NULL;
 
 			memset(&s, 0, sizeof(s));
-			deflateInit(&s, zlib_compression_level);
+			deflateInit(&s, pack_compression_level);
 			s.next_in = (void *)dat->buf;
 			s.avail_in = dat->len;
 			s.avail_out = deflateBound(&s, s.avail_in);
@@ -1123,6 +1155,24 @@ static int store_object(
 	return 0;
 }
 
+/* All calls must be guarded by find_object() or find_mark() to
+ * ensure the 'struct object_entry' passed was written by this
+ * process instance.  We unpack the entry by the offset, avoiding
+ * the need for the corresponding .idx file.  This unpacking rule
+ * works because we only use OBJ_REF_DELTA within the packfiles
+ * created by fast-import.
+ *
+ * oe must not be NULL.  Such an oe usually comes from giving
+ * an unknown SHA-1 to find_object() or an undefined mark to
+ * find_mark().  Callers must test for this condition and use
+ * the standard read_sha1_file() when it happens.
+ *
+ * oe->pack_id must not be MAX_PACK_ID.  Such an oe is usually from
+ * find_mark(), where the mark was reloaded from an existing marks
+ * file and is referencing an object that this fast-import process
+ * instance did not write out to a packfile.  Callers must test for
+ * this condition and use read_sha1_file() instead.
+ */
 static void *gfi_unpack_entry(
 	struct object_entry *oe,
 	unsigned long *sizep)
@@ -1130,7 +1180,22 @@ static void *gfi_unpack_entry(
 	enum object_type type;
 	struct packed_git *p = all_packs[oe->pack_id];
 	if (p == pack_data && p->pack_size < (pack_size + 20)) {
+		/* The object is stored in the packfile we are writing to
+		 * and we have modified it since the last time we scanned
+		 * back to read a previously written object.  If an old
+		 * window covered [p->pack_size, p->pack_size + 20) its
+		 * data is stale and is not valid.  Closing all windows
+		 * and updating the packfile length ensures we can read
+		 * the newly written data.
+		 */
 		close_pack_windows(p);
+
+		/* We have to offer 20 bytes additional on the end of
+		 * the packfile as the core unpacker code assumes the
+		 * footer is present at the file end and must promise
+		 * at least 20 bytes within any window it maps.  But
+		 * we don't actually create the footer here.
+		 */
 		p->pack_size = pack_size + 20;
 	}
 	return unpack_entry(p, oe->offset, &type, sizep);
@@ -1169,6 +1234,8 @@ static void load_tree(struct tree_entry *root)
 			die("Not a tree: %s", sha1_to_hex(sha1));
 		t->delta_depth = myoe->depth;
 		buf = gfi_unpack_entry(myoe, &size);
+		if (!buf)
+			die("Can't load tree %s", sha1_to_hex(sha1));
 	} else {
 		enum object_type type;
 		buf = read_sha1_file(sha1, &type, &size);
@@ -1449,6 +1516,8 @@ static int update_branch(struct branch *b)
 	struct ref_lock *lock;
 	unsigned char old_sha1[20];
 
+	if (is_null_sha1(b->sha1))
+		return 0;
 	if (read_ref(b->name, old_sha1))
 		hashclr(old_sha1);
 	lock = lock_any_ref_for_update(b->name, old_sha1, 0);
@@ -1621,7 +1690,7 @@ static void skip_optional_lf(void)
 		ungetc(term_char, stdin);
 }
 
-static void cmd_mark(void)
+static void parse_mark(void)
 {
 	if (!prefixcmp(command_buf.buf, "mark :")) {
 		next_mark = strtoumax(command_buf.buf + 6, NULL, 10);
@@ -1631,7 +1700,7 @@ static void cmd_mark(void)
 		next_mark = 0;
 }
 
-static void cmd_data(struct strbuf *sb)
+static void parse_data(struct strbuf *sb)
 {
 	strbuf_reset(sb);
 
@@ -1729,13 +1798,13 @@ static char *parse_ident(const char *buf)
 	return ident;
 }
 
-static void cmd_new_blob(void)
+static void parse_new_blob(void)
 {
 	static struct strbuf buf = STRBUF_INIT;
 
 	read_next_command();
-	cmd_mark();
-	cmd_data(&buf);
+	parse_mark();
+	parse_data(&buf);
 	store_object(OBJ_BLOB, &buf, &last_blob, NULL, next_mark);
 }
 
@@ -1799,6 +1868,7 @@ static void file_change_m(struct branch *b)
 	case S_IFREG | 0644:
 	case S_IFREG | 0755:
 	case S_IFLNK:
+	case S_IFGITLINK:
 	case 0644:
 	case 0755:
 		/* ok */
@@ -1831,7 +1901,20 @@ static void file_change_m(struct branch *b)
 		p = uq.buf;
 	}
 
-	if (inline_data) {
+	if (S_ISGITLINK(mode)) {
+		if (inline_data)
+			die("Git links cannot be specified 'inline': %s",
+				command_buf.buf);
+		else if (oe) {
+			if (oe->type != OBJ_COMMIT)
+				die("Not a commit (actually a %s): %s",
+					typename(oe->type), command_buf.buf);
+		}
+		/*
+		 * Accept the sha1 without checking; it expected to be in
+		 * another repository.
+		 */
+	} else if (inline_data) {
 		static struct strbuf buf = STRBUF_INIT;
 
 		if (p != uq.buf) {
@@ -1839,7 +1922,7 @@ static void file_change_m(struct branch *b)
 			p = uq.buf;
 		}
 		read_next_command();
-		cmd_data(&buf);
+		parse_data(&buf);
 		store_object(OBJ_BLOB, &buf, &last_blob, sha1, 0);
 	} else if (oe) {
 		if (oe->type != OBJ_BLOB)
@@ -1926,7 +2009,7 @@ static void file_change_deleteall(struct branch *b)
 	load_tree(&b->branch_tree);
 }
 
-static void cmd_from_commit(struct branch *b, char *buf, unsigned long size)
+static void parse_from_commit(struct branch *b, char *buf, unsigned long size)
 {
 	if (!buf || size < 46)
 		die("Not a valid commit: %s", sha1_to_hex(b->sha1));
@@ -1937,7 +2020,7 @@ static void cmd_from_commit(struct branch *b, char *buf, unsigned long size)
 		b->branch_tree.versions[1].sha1);
 }
 
-static void cmd_from_existing(struct branch *b)
+static void parse_from_existing(struct branch *b)
 {
 	if (is_null_sha1(b->sha1)) {
 		hashclr(b->branch_tree.versions[0].sha1);
@@ -1948,12 +2031,12 @@ static void cmd_from_existing(struct branch *b)
 
 		buf = read_object_with_reference(b->sha1,
 			commit_type, &size, b->sha1);
-		cmd_from_commit(b, buf, size);
+		parse_from_commit(b, buf, size);
 		free(buf);
 	}
 }
 
-static int cmd_from(struct branch *b)
+static int parse_from(struct branch *b)
 {
 	const char *from;
 	struct branch *s;
@@ -1984,12 +2067,12 @@ static int cmd_from(struct branch *b)
 		if (oe->pack_id != MAX_PACK_ID) {
 			unsigned long size;
 			char *buf = gfi_unpack_entry(oe, &size);
-			cmd_from_commit(b, buf, size);
+			parse_from_commit(b, buf, size);
 			free(buf);
 		} else
-			cmd_from_existing(b);
+			parse_from_existing(b);
 	} else if (!get_sha1(from, b->sha1))
-		cmd_from_existing(b);
+		parse_from_existing(b);
 	else
 		die("Invalid ref name or SHA1 expression: %s", from);
 
@@ -1997,7 +2080,7 @@ static int cmd_from(struct branch *b)
 	return 1;
 }
 
-static struct hash_list *cmd_merge(unsigned int *count)
+static struct hash_list *parse_merge(unsigned int *count)
 {
 	struct hash_list *list = NULL, *n, *e = e;
 	const char *from;
@@ -2038,7 +2121,7 @@ static struct hash_list *cmd_merge(unsigned int *count)
 	return list;
 }
 
-static void cmd_new_commit(void)
+static void parse_new_commit(void)
 {
 	static struct strbuf msg = STRBUF_INIT;
 	struct branch *b;
@@ -2055,7 +2138,7 @@ static void cmd_new_commit(void)
 		b = new_branch(sp);
 
 	read_next_command();
-	cmd_mark();
+	parse_mark();
 	if (!prefixcmp(command_buf.buf, "author ")) {
 		author = parse_ident(command_buf.buf + 7);
 		read_next_command();
@@ -2066,10 +2149,10 @@ static void cmd_new_commit(void)
 	}
 	if (!committer)
 		die("Expected committer but didn't get one");
-	cmd_data(&msg);
+	parse_data(&msg);
 	read_next_command();
-	cmd_from(b);
-	merge_list = cmd_merge(&merge_count);
+	parse_from(b);
+	merge_list = parse_merge(&merge_count);
 
 	/* ensure the branch is active/loaded */
 	if (!b->branch_tree.tree || !max_active_branches) {
@@ -2127,7 +2210,7 @@ static void cmd_new_commit(void)
 	b->last_commit = object_count_by_type[OBJ_COMMIT];
 }
 
-static void cmd_new_tag(void)
+static void parse_new_tag(void)
 {
 	static struct strbuf msg = STRBUF_INIT;
 	char *sp;
@@ -2184,7 +2267,7 @@ static void cmd_new_tag(void)
 
 	/* tag payload/message */
 	read_next_command();
-	cmd_data(&msg);
+	parse_data(&msg);
 
 	/* build the tag object */
 	strbuf_reset(&new_data);
@@ -2204,7 +2287,7 @@ static void cmd_new_tag(void)
 		t->pack_id = pack_id;
 }
 
-static void cmd_reset_branch(void)
+static void parse_reset_branch(void)
 {
 	struct branch *b;
 	char *sp;
@@ -2224,11 +2307,12 @@ static void cmd_reset_branch(void)
 	else
 		b = new_branch(sp);
 	read_next_command();
-	if (!cmd_from(b) && command_buf.len > 0)
+	parse_from(b);
+	if (command_buf.len > 0)
 		unread_command_buf = 1;
 }
 
-static void cmd_checkpoint(void)
+static void parse_checkpoint(void)
 {
 	if (object_count) {
 		cycle_packfile();
@@ -2239,7 +2323,7 @@ static void cmd_checkpoint(void)
 	skip_optional_lf();
 }
 
-static void cmd_progress(void)
+static void parse_progress(void)
 {
 	fwrite(command_buf.buf, 1, command_buf.len, stdout);
 	fputc('\n', stdout);
@@ -2282,14 +2366,39 @@ static void import_marks(const char *input_file)
 	fclose(f);
 }
 
+static int git_pack_config(const char *k, const char *v, void *cb)
+{
+	if (!strcmp(k, "pack.depth")) {
+		max_depth = git_config_int(k, v);
+		if (max_depth > MAX_DEPTH)
+			max_depth = MAX_DEPTH;
+		return 0;
+	}
+	if (!strcmp(k, "pack.compression")) {
+		int level = git_config_int(k, v);
+		if (level == -1)
+			level = Z_DEFAULT_COMPRESSION;
+		else if (level < 0 || level > Z_BEST_COMPRESSION)
+			die("bad pack compression level %d", level);
+		pack_compression_level = level;
+		pack_compression_seen = 1;
+		return 0;
+	}
+	return git_default_config(k, v, cb);
+}
+
 static const char fast_import_usage[] =
-"git-fast-import [--date-format=f] [--max-pack-size=n] [--depth=n] [--active-branches=n] [--export-marks=marks.file]";
+"git fast-import [--date-format=f] [--max-pack-size=n] [--depth=n] [--active-branches=n] [--export-marks=marks.file]";
 
 int main(int argc, const char **argv)
 {
 	unsigned int i, show_stats = 1;
 
-	git_config(git_default_config);
+	setup_git_directory();
+	git_config(git_pack_config, NULL);
+	if (!pack_compression_seen && core_compression_seen)
+		pack_compression_level = core_compression_level;
+
 	alloc_objects(object_entry_alloc);
 	strbuf_init(&command_buf, 0);
 	atom_table = xcalloc(atom_table_sz, sizeof(struct atom_str*));
@@ -2354,17 +2463,17 @@ int main(int argc, const char **argv)
 	set_die_routine(die_nicely);
 	while (read_next_command() != EOF) {
 		if (!strcmp("blob", command_buf.buf))
-			cmd_new_blob();
+			parse_new_blob();
 		else if (!prefixcmp(command_buf.buf, "commit "))
-			cmd_new_commit();
+			parse_new_commit();
 		else if (!prefixcmp(command_buf.buf, "tag "))
-			cmd_new_tag();
+			parse_new_tag();
 		else if (!prefixcmp(command_buf.buf, "reset "))
-			cmd_reset_branch();
+			parse_reset_branch();
 		else if (!strcmp("checkpoint", command_buf.buf))
-			cmd_checkpoint();
+			parse_checkpoint();
 		else if (!prefixcmp(command_buf.buf, "progress "))
-			cmd_progress();
+			parse_progress();
 		else
 			die("Unsupported command: %s", command_buf.buf);
 	}

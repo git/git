@@ -8,7 +8,7 @@ git-merge-tree - Show three-way merge without touching index
 
 SYNOPSIS
 --------
-'git-merge-tree' <base-tree> <branch1> <branch2>
+'git merge-tree' <base-tree> <branch1> <branch2>
 
 DESCRIPTION
 -----------
@@ -33,4 +33,4 @@ Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

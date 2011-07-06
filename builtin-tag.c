@@ -14,63 +14,14 @@
 #include "parse-options.h"
 
 static const char * const git_tag_usage[] = {
-	"git-tag [-a|-s|-u <key-id>] [-f] [-m <msg>|-F <file>] <tagname> [<head>]",
-	"git-tag -d <tagname>...",
-	"git-tag -l [-n [<num>]] [<pattern>]",
-	"git-tag -v <tagname>...",
+	"git tag [-a|-s|-u <key-id>] [-f] [-m <msg>|-F <file>] <tagname> [<head>]",
+	"git tag -d <tagname>...",
+	"git tag -l [-n[<num>]] [<pattern>]",
+	"git tag -v <tagname>...",
 	NULL
 };
 
 static char signingkey[1000];
-
-void launch_editor(const char *path, struct strbuf *buffer, const char *const *env)
-{
-	const char *editor, *terminal;
-
-	editor = getenv("GIT_EDITOR");
-	if (!editor && editor_program)
-		editor = editor_program;
-	if (!editor)
-		editor = getenv("VISUAL");
-	if (!editor)
-		editor = getenv("EDITOR");
-
-	terminal = getenv("TERM");
-	if (!editor && (!terminal || !strcmp(terminal, "dumb"))) {
-		fprintf(stderr,
-		"Terminal is dumb but no VISUAL nor EDITOR defined.\n"
-		"Please supply the message using either -m or -F option.\n");
-		exit(1);
-	}
-
-	if (!editor)
-		editor = "vi";
-
-	if (strcmp(editor, ":")) {
-		size_t len = strlen(editor);
-		int i = 0;
-		const char *args[6];
-
-		if (strcspn(editor, "$ \t'") != len) {
-			/* there are specials */
-			args[i++] = "sh";
-			args[i++] = "-c";
-			args[i++] = "$0 \"$@\"";
-		}
-		args[i++] = editor;
-		args[i++] = path;
-		args[i] = NULL;
-
-		if (run_command_v_opt_cd_env(args, 0, NULL, env))
-			die("There was a problem with the editor %s.", editor);
-	}
-
-	if (!buffer)
-		return;
-	if (strbuf_read_file(buffer, path, 0) < 0)
-		die("could not read message file '%s': %s",
-		    path, strerror(errno));
-}
 
 struct tag_filter {
 	const char *pattern;
@@ -198,6 +149,7 @@ static int do_sign(struct strbuf *buffer)
 	const char *args[4];
 	char *bracket;
 	int len;
+	int i, j;
 
 	if (!*signingkey) {
 		if (strlcpy(signingkey, git_committer_info(IDENT_ERROR_ON_NO_NAME),
@@ -226,18 +178,25 @@ static int do_sign(struct strbuf *buffer)
 
 	if (write_in_full(gpg.in, buffer->buf, buffer->len) != buffer->len) {
 		close(gpg.in);
+		close(gpg.out);
 		finish_command(&gpg);
 		return error("gpg did not accept the tag data");
 	}
 	close(gpg.in);
-	gpg.close_in = 0;
 	len = strbuf_read(buffer, gpg.out, 1024);
+	close(gpg.out);
 
 	if (finish_command(&gpg) || !len || len < 0)
 		return error("gpg failed to sign the tag");
 
-	if (len < 0)
-		return error("could not read the entire signature from gpg.");
+	/* Strip CR from the line endings, in case we are on Windows. */
+	for (i = j = 0; i < buffer->len; i++)
+		if (buffer->buf[i] != '\r') {
+			if (i != j)
+				buffer->buf[j] = buffer->buf[i];
+			j++;
+		}
+	strbuf_setlen(buffer, j);
 
 	return 0;
 }
@@ -254,16 +213,16 @@ static void set_signingkey(const char *value)
 		die("signing key value too long (%.10s...)", value);
 }
 
-static int git_tag_config(const char *var, const char *value)
+static int git_tag_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, "user.signingkey")) {
 		if (!value)
-			die("user.signingkey without value");
+			return config_error_nonbool(var);
 		set_signingkey(value);
 		return 0;
 	}
 
-	return git_default_config(var, value);
+	return git_default_config(var, value, cb);
 }
 
 static void write_tag_body(int fd, const unsigned char *sha1)
@@ -336,7 +295,11 @@ static void create_tag(const unsigned char *object, const char *tag,
 			write_or_die(fd, tag_template, strlen(tag_template));
 		close(fd);
 
-		launch_editor(path, buf, NULL);
+		if (launch_editor(path, buf, NULL)) {
+			fprintf(stderr,
+			"Please supply the message using either -m or -F option.\n");
+			exit(1);
+		}
 
 		unlink(path);
 		free(path);
@@ -383,7 +346,7 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 
 	int annotate = 0, sign = 0, force = 0, lines = 0,
 		list = 0, delete = 0, verify = 0;
-	char *msgfile = NULL, *keyid = NULL;
+	const char *msgfile = NULL, *keyid = NULL;
 	struct msg_arg msg = { 0, STRBUF_INIT };
 	struct option options[] = {
 		OPT_BOOLEAN('l', NULL, &list, "list tag names"),
@@ -406,9 +369,10 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 		OPT_END()
 	};
 
-	git_config(git_tag_config);
+	git_config(git_tag_config, NULL);
 
 	argc = parse_options(argc, argv, options, git_tag_usage, 0);
+	msgfile = parse_options_fix_filename(prefix, msgfile);
 
 	if (keyid) {
 		sign = 1;

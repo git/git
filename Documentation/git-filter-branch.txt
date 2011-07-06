@@ -8,12 +8,12 @@ git-filter-branch - Rewrite branches
 SYNOPSIS
 --------
 [verse]
-'git-filter-branch' [--env-filter <command>] [--tree-filter <command>]
+'git filter-branch' [--env-filter <command>] [--tree-filter <command>]
 	[--index-filter <command>] [--parent-filter <command>]
 	[--msg-filter <command>] [--commit-filter <command>]
 	[--tag-name-filter <command>] [--subdirectory-filter <directory>]
 	[--original <namespace>] [-d <directory>] [-f | --force]
-	[<rev-list options>...]
+	[--] [<rev-list options>...]
 
 DESCRIPTION
 -----------
@@ -25,7 +25,7 @@ Otherwise, all information (including original commit times or merge
 information) will be preserved.
 
 The command will only rewrite the _positive_ refs mentioned in the
-command line (i.e. if you pass 'a..b', only 'b' will be rewritten).
+command line (e.g. if you pass 'a..b', only 'b' will be rewritten).
 If you specify no filters, the commits will be recommitted without any
 changes, which would normally have no effect.  Nevertheless, this may be
 useful in the future for compensating for some git bugs or such,
@@ -42,7 +42,7 @@ Always verify that the rewritten version is correct: The original refs,
 if different from the rewritten ones, will be stored in the namespace
 'refs/original/'.
 
-Note that since this operation is extensively I/O expensive, it might
+Note that since this operation is very I/O expensive, it might
 be a good idea to redirect the temporary directory off-disk with the
 '-d' option, e.g. on tmpfs.  Reportedly the speedup is very noticeable.
 
@@ -51,12 +51,15 @@ Filters
 ~~~~~~~
 
 The filters are applied in the order as listed below.  The <command>
-argument is always evaluated in shell using the 'eval' command (with the
-notable exception of the commit filter, for technical reasons).
+argument is always evaluated in the shell context using the 'eval' command
+(with the notable exception of the commit filter, for technical reasons).
 Prior to that, the $GIT_COMMIT environment variable will be set to contain
 the id of the commit being rewritten.  Also, GIT_AUTHOR_NAME,
 GIT_AUTHOR_EMAIL, GIT_AUTHOR_DATE, GIT_COMMITTER_NAME, GIT_COMMITTER_EMAIL,
-and GIT_COMMITTER_DATE are set according to the current commit.
+and GIT_COMMITTER_DATE are set according to the current commit.  The values
+of these variables after the filters have run, are used for the new commit.
+If any evaluation of <command> returns a non-zero exit status, the whole
+operation will be aborted.
 
 A 'map' function is available that takes an "original sha1 id" argument
 and outputs a "rewritten sha1 id" if the commit has been already
@@ -69,9 +72,9 @@ OPTIONS
 -------
 
 --env-filter <command>::
-	This is the filter for modifying the environment in which
-	the commit will be performed.  Specifically, you might want
-	to rewrite the author/committer name/email/time environment
+	This filter may be used if you only need to modify the environment
+	in which the commit will be performed.  Specifically, you might
+	want to rewrite the author/committer name/email/time environment
 	variables (see linkgit:git-commit[1] for details).  Do not forget
 	to re-export the variables.
 
@@ -92,7 +95,7 @@ OPTIONS
 	This is the filter for rewriting the commit's parent list.
 	It will receive the parent string on stdin and shall output
 	the new parent string on stdout.  The parent string is in
-	a format accepted by linkgit:git-commit-tree[1]: empty for
+	the format described in linkgit:git-commit-tree[1]: empty for
 	the initial commit, "-p parent" for a normal commit and
 	"-p parent1 -p parent2 -p parent3 ..." for a merge commit.
 
@@ -105,18 +108,18 @@ OPTIONS
 --commit-filter <command>::
 	This is the filter for performing the commit.
 	If this filter is specified, it will be called instead of the
-	linkgit:git-commit-tree[1] command, with arguments of the form
+	'git-commit-tree' command, with arguments of the form
 	"<TREE_ID> [-p <PARENT_COMMIT_ID>]..." and the log message on
 	stdin.  The commit id is expected on stdout.
 +
 As a special extension, the commit filter may emit multiple
-commit ids; in that case, ancestors of the original commit will
+commit ids; in that case, the rewritten children of the original commit will
 have all of them as parents.
 +
 You can use the 'map' convenience function in this filter, and other
 convenience functions, too.  For example, calling 'skip_commit "$@"'
 will leave out the current commit (but not its changes! If you want
-that, use linkgit:git-rebase[1] instead).
+that, use 'git-rebase' instead).
 
 --tag-name-filter <command>::
 	This is the filter for rewriting tag names. When passed,
@@ -130,10 +133,16 @@ use "--tag-name-filter cat" to simply update the tags.  In this
 case, be very careful and make sure you have the old tags
 backed up in case the conversion has run afoul.
 +
-Note that there is currently no support for proper rewriting of
-tag objects; in layman terms, if the tag has a message or signature
-attached, the rewritten tag won't have it.  Sorry.  (It is by
-definition impossible to preserve signatures at any rate.)
+Nearly proper rewriting of tag objects is supported. If the tag has
+a message attached, a new tag object will be created with the same message,
+author, and timestamp. If the tag has a signature attached, the
+signature will be stripped. It is by definition impossible to preserve
+signatures. The reason this is "nearly" proper, is because ideally if
+the tag did not change (points to the same object, has the same name, etc.)
+it should retain any signature. That is not the case, signatures will always
+be removed, buyer beware. There is also no support for changing the
+author or timestamp (or the tag message for that matter). Tags which point
+to other tags will be rewritten to point to the underlying commit.
 
 --subdirectory-filter <directory>::
 	Only look at the history which touches the given subdirectory.
@@ -147,21 +156,22 @@ definition impossible to preserve signatures at any rate.)
 -d <directory>::
 	Use this option to set the path to the temporary directory used for
 	rewriting.  When applying a tree filter, the command needs to
-	temporary checkout the tree to some directory, which may consume
+	temporarily check out the tree to some directory, which may consume
 	considerable space in case of large projects.  By default it
 	does this in the '.git-rewrite/' directory but you can override
 	that choice by this parameter.
 
--f|--force::
-	`git filter-branch` refuses to start with an existing temporary
+-f::
+--force::
+	'git-filter-branch' refuses to start with an existing temporary
 	directory or when there are already refs starting with
 	'refs/original/', unless forced.
 
-<rev-list-options>::
-	When options are given after the new branch name, they will
-	be passed to linkgit:git-rev-list[1].  Only commits in the resulting
-	output will be filtered, although the filtered commits can still
-	reference parents which are outside of that set.
+<rev-list options>...::
+	Arguments for 'git-rev-list'.  All positive refs included by
+	these options are rewritten.  You may also specify options
+	such as '--all', but you must use '--' to separate them from
+	the 'git-filter-branch' options.
 
 
 Examples
@@ -174,13 +184,28 @@ or copyright violation) from all commits:
 git filter-branch --tree-filter 'rm filename' HEAD
 -------------------------------------------------------
 
+However, if the file is absent from the tree of some commit,
+a simple `rm filename` will fail for that tree and commit.
+Thus you may instead want to use `rm -f filename` as the script.
+
 A significantly faster version:
 
 --------------------------------------------------------------------------
-git filter-branch --index-filter 'git update-index --remove filename' HEAD
+git filter-branch --index-filter 'git rm --cached filename' HEAD
 --------------------------------------------------------------------------
 
 Now, you will get the rewritten history saved in HEAD.
+
+To rewrite the repository to look as if `foodir/` had been its project
+root, and discard all other history:
+
+-------------------------------------------------------
+git filter-branch --subdirectory-filter foodir -- --all
+-------------------------------------------------------
+
+Thus you can, e.g., turn a library subdirectory into a repository of
+its own.  Note the `\--` that separates 'filter-branch' options from
+revision options, and the `\--all` to rewrite all branches and tags.
 
 To set a commit (which typically is at the tip of another
 history) to be the parent of the current initial commit, in
@@ -197,7 +222,7 @@ happened).  If this is not the case, use:
 
 --------------------------------------------------------------------------
 git filter-branch --parent-filter \
-	'cat; test $GIT_COMMIT = <commit-id> && echo "-p <graft-id>"' HEAD
+	'test $GIT_COMMIT = <commit-id> && echo "-p <graft-id>" || cat' HEAD
 --------------------------------------------------------------------------
 
 or even simpler:
@@ -240,16 +265,25 @@ committed a merge between P1 and P2, it will be propagated properly
 and all children of the merge will become merge commits with P1,P2
 as their parents instead of the merge commit.
 
+You can rewrite the commit log messages using `--msg-filter`.  For
+example, 'git-svn-id' strings in a repository created by 'git-svn' can
+be removed this way:
+
+-------------------------------------------------------
+git filter-branch --msg-filter '
+	sed -e "/^git-svn-id:/d"
+'
+-------------------------------------------------------
 
 To restrict rewriting to only part of the history, specify a revision
 range in addition to the new branch name.  The new branch name will
-point to the top-most revision that a 'git rev-list' of this range
+point to the top-most revision that a 'git-rev-list' of this range
 will print.
 
 *NOTE* the changes introduced by the commits, and which are not reverted
 by subsequent commits, will still be in the rewritten branch. If you want
 to throw out _changes_ together with the commits, you should use the
-interactive mode of linkgit:git-rebase[1].
+interactive mode of 'git-rebase'.
 
 
 Consider this history:
@@ -295,4 +329,4 @@ Documentation by Petr Baudis and the git list.
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

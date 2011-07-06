@@ -91,7 +91,8 @@ int validate_headref(const char *path)
 	struct stat st;
 	char *buf, buffer[256];
 	unsigned char sha1[20];
-	int len, fd;
+	int fd;
+	ssize_t len;
 
 	if (lstat(path, &st) < 0)
 		return -1;
@@ -266,90 +267,139 @@ int adjust_shared_perm(const char *path)
 	if (lstat(path, &st) < 0)
 		return -1;
 	mode = st.st_mode;
-	if (mode & S_IRUSR)
-		mode |= (shared_repository == PERM_GROUP
-			 ? S_IRGRP
-			 : (shared_repository == PERM_EVERYBODY
-			    ? (S_IRGRP|S_IROTH)
-			    : 0));
 
-	if (mode & S_IWUSR)
-		mode |= S_IWGRP;
+	if (shared_repository) {
+		int tweak = shared_repository;
+		if (!(mode & S_IWUSR))
+			tweak &= ~0222;
+		mode |= tweak;
+	} else {
+		/* Preserve old PERM_UMASK behaviour */
+		if (mode & S_IWUSR)
+			mode |= S_IWGRP;
+	}
 
-	if (mode & S_IXUSR)
-		mode |= (shared_repository == PERM_GROUP
-			 ? S_IXGRP
-			 : (shared_repository == PERM_EVERYBODY
-			    ? (S_IXGRP|S_IXOTH)
-			    : 0));
-	if (S_ISDIR(mode))
-		mode |= S_ISGID;
+	if (S_ISDIR(mode)) {
+		mode |= FORCE_DIR_SET_GID;
+
+		/* Copy read bits to execute bits */
+		mode |= (shared_repository & 0444) >> 2;
+	}
+
 	if ((mode & st.st_mode) != mode && chmod(path, mode) < 0)
 		return -2;
 	return 0;
 }
 
-/* We allow "recursive" symbolic links. Only within reason, though. */
-#define MAXDEPTH 5
-
-const char *make_absolute_path(const char *path)
+const char *make_relative_path(const char *abs, const char *base)
 {
-	static char bufs[2][PATH_MAX + 1], *buf = bufs[0], *next_buf = bufs[1];
-	char cwd[1024] = "";
-	int buf_index = 1, len;
+	static char buf[PATH_MAX + 1];
+	int baselen;
+	if (!base)
+		return abs;
+	baselen = strlen(base);
+	if (prefixcmp(abs, base))
+		return abs;
+	if (abs[baselen] == '/')
+		baselen++;
+	else if (base[baselen - 1] != '/')
+		return abs;
+	strcpy(buf, abs + baselen);
+	return buf;
+}
 
-	int depth = MAXDEPTH;
-	char *last_elem = NULL;
-	struct stat st;
+/*
+ * path = absolute path
+ * buf = buffer of at least max(2, strlen(path)+1) bytes
+ * It is okay if buf == path, but they should not overlap otherwise.
+ *
+ * Performs the following normalizations on path, storing the result in buf:
+ * - Removes trailing slashes.
+ * - Removes empty components.
+ * - Removes "." components.
+ * - Removes ".." components, and the components the precede them.
+ * "" and paths that contain only slashes are normalized to "/".
+ * Returns the length of the output.
+ *
+ * Note that this function is purely textual.  It does not follow symlinks,
+ * verify the existence of the path, or make any system calls.
+ */
+int normalize_absolute_path(char *buf, const char *path)
+{
+	const char *comp_start = path, *comp_end = path;
+	char *dst = buf;
+	int comp_len;
+	assert(buf);
+	assert(path);
 
-	if (strlcpy(buf, path, PATH_MAX) >= PATH_MAX)
-		die ("Too long path: %.*s", 60, path);
+	while (*comp_start) {
+		assert(*comp_start == '/');
+		while (*++comp_end && *comp_end != '/')
+			; /* nothing */
+		comp_len = comp_end - comp_start;
 
-	while (depth--) {
-		if (stat(buf, &st) || !S_ISDIR(st.st_mode)) {
-			char *last_slash = strrchr(buf, '/');
-			if (last_slash) {
-				*last_slash = '\0';
-				last_elem = xstrdup(last_slash + 1);
-			} else
-				last_elem = xstrdup(buf);
+		if (!strncmp("/",  comp_start, comp_len) ||
+		    !strncmp("/.", comp_start, comp_len))
+			goto next;
+
+		if (!strncmp("/..", comp_start, comp_len)) {
+			while (dst > buf && *--dst != '/')
+				; /* nothing */
+			goto next;
 		}
 
-		if (*buf) {
-			if (!*cwd && !getcwd(cwd, sizeof(cwd)))
-				die ("Could not get current working directory");
-
-			if (chdir(buf))
-				die ("Could not switch to '%s'", buf);
-		}
-		if (!getcwd(buf, PATH_MAX))
-			die ("Could not get current working directory");
-
-		if (last_elem) {
-			int len = strlen(buf);
-			if (len + strlen(last_elem) + 2 > PATH_MAX)
-				die ("Too long path name: '%s/%s'",
-						buf, last_elem);
-			buf[len] = '/';
-			strcpy(buf + len + 1, last_elem);
-			free(last_elem);
-			last_elem = NULL;
-		}
-
-		if (!lstat(buf, &st) && S_ISLNK(st.st_mode)) {
-			len = readlink(buf, next_buf, PATH_MAX);
-			if (len < 0)
-				die ("Invalid symlink: %s", buf);
-			next_buf[len] = '\0';
-			buf = next_buf;
-			buf_index = 1 - buf_index;
-			next_buf = bufs[buf_index];
-		} else
-			break;
+		memcpy(dst, comp_start, comp_len);
+		dst += comp_len;
+	next:
+		comp_start = comp_end;
 	}
 
-	if (*cwd && chdir(cwd))
-		die ("Could not change back to '%s'", cwd);
+	if (dst == buf)
+		*dst++ = '/';
 
-	return buf;
+	*dst = '\0';
+	return dst - buf;
+}
+
+/*
+ * path = Canonical absolute path
+ * prefix_list = Colon-separated list of absolute paths
+ *
+ * Determines, for each path in prefix_list, whether the "prefix" really
+ * is an ancestor directory of path.  Returns the length of the longest
+ * ancestor directory, excluding any trailing slashes, or -1 if no prefix
+ * is an ancestor.  (Note that this means 0 is returned if prefix_list is
+ * "/".) "/foo" is not considered an ancestor of "/foobar".  Directories
+ * are not considered to be their own ancestors.  path must be in a
+ * canonical form: empty components, or "." or ".." components are not
+ * allowed.  prefix_list may be null, which is like "".
+ */
+int longest_ancestor_length(const char *path, const char *prefix_list)
+{
+	char buf[PATH_MAX+1];
+	const char *ceil, *colon;
+	int len, max_len = -1;
+
+	if (prefix_list == NULL || !strcmp(path, "/"))
+		return -1;
+
+	for (colon = ceil = prefix_list; *colon; ceil = colon+1) {
+		for (colon = ceil; *colon && *colon != ':'; colon++);
+		len = colon - ceil;
+		if (len == 0 || len > PATH_MAX || !is_absolute_path(ceil))
+			continue;
+		strlcpy(buf, ceil, len+1);
+		len = normalize_absolute_path(buf, buf);
+		/* Strip "trailing slashes" from "/". */
+		if (len == 1)
+			len = 0;
+
+		if (!strncmp(path, buf, len) &&
+		    path[len] == '/' &&
+		    len > max_len) {
+			max_len = len;
+		}
+	}
+
+	return max_len;
 }

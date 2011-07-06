@@ -12,7 +12,7 @@ Fixes since v1.5.3.2
  * The default shell on some FreeBSD did not execute the
    argument parsing code correctly and made git unusable.
 
- * git-svn incorrectly spawned pager even when the user user
+ * git-svn incorrectly spawned pager even when the user
    explicitly asked not to.
 
  * sample post-receive hook overquoted the envelope sender

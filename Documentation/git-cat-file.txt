@@ -8,13 +8,18 @@ git-cat-file - Provide content or type/size information for repository objects
 
 SYNOPSIS
 --------
-'git-cat-file' [-t | -s | -e | -p | <type>] <object>
+[verse]
+'git cat-file' [-t | -s | -e | -p | <type>] <object>
+'git cat-file' [--batch | --batch-check] < <list-of-objects>
 
 DESCRIPTION
 -----------
-Provides content or type of objects in the repository. The type
-is required unless '-t' or '-p' is used to find the object type,
-or '-s' is used to find the object size.
+In the first form, provides content or type of objects in the repository. The
+type is required unless '-t' or '-p' is used to find the object type, or '-s'
+is used to find the object size.
+
+In the second form, a list of object (separated by LFs) is provided on stdin,
+and the SHA1, type, and size of each object is printed on stdout.
 
 OPTIONS
 -------
@@ -46,6 +51,14 @@ OPTIONS
 	or to ask for a "blob" with <object> being a tag object that
 	points at it.
 
+--batch::
+	Print the SHA1, type, size, and contents of each object provided on
+	stdin. May not be combined with any other options or arguments.
+
+--batch-check::
+	Print the SHA1, type, and size of each object provided on stdin. May not be
+	combined with any other options or arguments.
+
 OUTPUT
 ------
 If '-t' is specified, one of the <type>.
@@ -56,9 +69,30 @@ If '-e' is specified, no output.
 
 If '-p' is specified, the contents of <object> are pretty-printed.
 
-Otherwise the raw (though uncompressed) contents of the <object> will
-be returned.
+If <type> is specified, the raw (though uncompressed) contents of the <object>
+will be returned.
 
+If '--batch' is specified, output of the following form is printed for each
+object specified on stdin:
+
+------------
+<sha1> SP <type> SP <size> LF
+<contents> LF
+------------
+
+If '--batch-check' is specified, output of the following form is printed for
+each object specified on stdin:
+
+------------
+<sha1> SP <type> SP <size> LF
+------------
+
+For both '--batch' and '--batch-check', output of the following form is printed
+for each object specified on stdin that does not exist in the repository:
+
+------------
+<object> SP missing LF
+------------
 
 Author
 ------
@@ -70,4 +104,4 @@ Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

@@ -3,13 +3,13 @@ git-checkout(1)
 
 NAME
 ----
-git-checkout - Checkout and switch to a branch
+git-checkout - Checkout a branch or paths to the working tree
 
 SYNOPSIS
 --------
 [verse]
-'git-checkout' [-q] [-f] [[--track | --no-track] -b <new_branch> [-l]] [-m] [<branch>]
-'git-checkout' [<tree-ish>] <paths>...
+'git checkout' [-q] [-f] [[--track | --no-track] -b <new_branch> [-l]] [-m] [<branch>]
+'git checkout' [<tree-ish>] [--] <paths>...
 
 DESCRIPTION
 -----------
@@ -23,7 +23,7 @@ options, which will be passed to `git branch`.
 
 When <paths> are given, this command does *not* switch
 branches.  It updates the named paths in the working tree from
-the index file (i.e. it runs `git-checkout-index -f -u`), or
+the index file (i.e. it runs `git checkout-index -f -u`), or
 from a named commit.  In
 this case, the `-f` and `-b` options are meaningless and giving
 either of them results in an error.  <tree-ish> argument can be
@@ -47,21 +47,21 @@ OPTIONS
 	by linkgit:git-check-ref-format[1].  Some of these checks
 	may restrict the characters allowed in a branch name.
 
+-t::
 --track::
-	When -b is given and a branch is created off a remote branch,
-	set up configuration so that git-pull will automatically
-	retrieve data from the remote branch.  Use this if you always
-	pull from the same remote branch into the new branch, or if you
-	don't want to use "git pull <repository> <refspec>" explicitly.  Set the
-	branch.autosetupmerge configuration variable to true if you
-	want git-checkout and git-branch to always behave as if
-	'--track' were given.
+	When creating a new branch, set up configuration so that 'git-pull'
+	will automatically retrieve data from the start point, which must be
+	a branch. Use this if you always pull from the same upstream branch
+	into the new branch, and if you don't want to use "git pull
+	<repository> <refspec>" explicitly. This behavior is the default
+	when the start point is a remote branch. Set the
+	branch.autosetupmerge configuration variable to `false` if you want
+	'git-checkout' and 'git-branch' to always behave as if '--no-track' were
+	given. Set it to `always` if you want this behavior when the
+	start-point is either a local or remote branch.
 
 --no-track::
-	When -b is given and a branch is created off a remote branch,
-	set up configuration so that git-pull will not retrieve data
-	from the remote branch, ignoring the branch.autosetupmerge
-	configuration variable.
+	Ignore the branch.autosetupmerge configuration variable.
 
 -l::
 	Create the new branch's reflog.  This activates recording of
@@ -112,7 +112,7 @@ current branch and directly point at the commit named by the tag
 (`v2.6.18` in the above example).
 
 You can use usual git commands while in this state.  You can use
-`git-reset --hard $othercommit` to further move around, for
+`git reset --hard $othercommit` to further move around, for
 example.  You can make changes and create a new commit on top of
 a detached HEAD.  You can even create a merge by using `git
 merge $othercommit`.
@@ -216,4 +216,4 @@ Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

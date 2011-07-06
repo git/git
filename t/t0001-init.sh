@@ -79,6 +79,17 @@ test_expect_success 'GIT_DIR bare' '
 	check_config git-dir-bare.git true unset
 '
 
+test_expect_success 'init --bare' '
+
+	(
+		unset GIT_DIR GIT_WORK_TREE GIT_CONFIG
+		mkdir init-bare.git &&
+		cd init-bare.git &&
+		git init --bare
+	) &&
+	check_config init-bare.git true unset
+'
+
 test_expect_success 'GIT_DIR non-bare' '
 
 	(
@@ -111,6 +122,49 @@ test_expect_success 'GIT_DIR & GIT_WORK_TREE (2)' '
 		echo Should have failed -- --bare should not be used
 		false
 	fi
+'
+
+test_expect_success 'reinit' '
+
+	(
+		unset GIT_CONFIG GIT_WORK_TREE GIT_CONFIG
+
+		mkdir again &&
+		cd again &&
+		git init >out1 2>err1 &&
+		git init >out2 2>err2
+	) &&
+	grep "Initialized empty" again/out1 &&
+	grep "Reinitialized existing" again/out2 &&
+	>again/empty &&
+	test_cmp again/empty again/err1 &&
+	test_cmp again/empty again/err2
+'
+
+test_expect_success 'init with --template' '
+	mkdir template-source &&
+	echo content >template-source/file &&
+	(
+		mkdir template-custom &&
+		cd template-custom &&
+		git init --template=../template-source
+	) &&
+	test_cmp template-source/file template-custom/.git/file
+'
+
+test_expect_success 'init with --template (blank)' '
+	(
+		mkdir template-plain &&
+		cd template-plain &&
+		git init
+	) &&
+	test -f template-plain/.git/info/exclude &&
+	(
+		mkdir template-blank &&
+		cd template-blank &&
+		git init --template=
+	) &&
+	! test -f template-blank/.git/info/exclude
 '
 
 test_done

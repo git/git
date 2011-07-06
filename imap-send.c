@@ -472,7 +472,7 @@ v_issue_imap_cmd( imap_store_t *ctx, struct imap_cmd_cb *cb,
 	if (socket_write( &imap->buf.sock, buf, bufl ) != bufl) {
 		free( cmd->cmd );
 		free( cmd );
-		if (cb && cb->data)
+		if (cb)
 			free( cb->data );
 		return NULL;
 	}
@@ -858,8 +858,7 @@ get_cmd_result( imap_store_t *ctx, struct imap_cmd *tcmd )
 		  normal:
 			if (cmdp->cb.done)
 				cmdp->cb.done( ctx, cmdp, resp );
-			if (cmdp->cb.data)
-				free( cmdp->cb.data );
+			free( cmdp->cb.data );
 			free( cmdp->cmd );
 			free( cmdp );
 			if (!tcmd || tcmd == cmdp)
@@ -1248,12 +1247,16 @@ static imap_server_conf_t server =
 static char *imap_folder;
 
 static int
-git_imap_config(const char *key, const char *val)
+git_imap_config(const char *key, const char *val, void *cb)
 {
 	char imap_key[] = "imap.";
 
 	if (strncmp( key, imap_key, sizeof imap_key - 1 ))
 		return 0;
+
+	if (!val)
+		return config_error_nonbool(key);
+
 	key += sizeof imap_key - 1;
 
 	if (!strcmp( "folder", key )) {
@@ -1293,11 +1296,18 @@ main(int argc, char **argv)
 	/* init the random number generator */
 	arc4_init();
 
-	git_config( git_imap_config );
+	git_config(git_imap_config, NULL);
 
 	if (!imap_folder) {
 		fprintf( stderr, "no imap store specified\n" );
 		return 1;
+	}
+	if (!server.host) {
+		if (!server.tunnel) {
+			fprintf( stderr, "no imap host specified\n" );
+			return 1;
+		}
+		server.host = "tunnel";
 	}
 
 	/* read the messages */

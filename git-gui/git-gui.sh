@@ -52,7 +52,11 @@ catch {rename send {}} ; # What an evil concept...
 set oguilib {@@GITGUI_LIBDIR@@}
 set oguirel {@@GITGUI_RELATIVE@@}
 if {$oguirel eq {1}} {
-	set oguilib [file dirname [file dirname [file normalize $argv0]]]
+	set oguilib [file dirname [file normalize $argv0]]
+	if {[file tail $oguilib] eq {git-core}} {
+		set oguilib [file dirname $oguilib]
+	}
+	set oguilib [file dirname $oguilib]
 	set oguilib [file join $oguilib share git-gui lib]
 	set oguimsg [file join $oguilib msgs]
 } elseif {[string match @@* $oguirel]} {
@@ -121,6 +125,14 @@ set _gitexec {}
 set _reponame {}
 set _iscygwin {}
 set _search_path {}
+
+set _trace [lsearch -exact $argv --trace]
+if {$_trace >= 0} {
+	set argv [lreplace $argv $_trace $_trace]
+	set _trace 1
+} else {
+	set _trace 0
+}
 
 proc appname {} {
 	global _appname
@@ -245,6 +257,21 @@ proc get_config {name} {
 ##
 ## handy utils
 
+proc _trace_exec {cmd} {
+	if {!$::_trace} return
+	set d {}
+	foreach v $cmd {
+		if {$d ne {}} {
+			append d { }
+		}
+		if {[regexp {[ \t\r\n'"$?*]} $v]} {
+			set v [sq $v]
+		}
+		append d $v
+	}
+	puts stderr $d
+}
+
 proc _git_cmd {name} {
 	global _git_cmd_path
 
@@ -294,7 +321,7 @@ proc _git_cmd {name} {
 	return $v
 }
 
-proc _which {what} {
+proc _which {what args} {
 	global env _search_exe _search_path
 
 	if {$_search_path eq {}} {
@@ -317,8 +344,14 @@ proc _which {what} {
 		}
 	}
 
+	if {[is_Windows] && [lsearch -exact $args -script] >= 0} {
+		set suffix {}
+	} else {
+		set suffix $_search_exe
+	}
+
 	foreach p $_search_path {
-		set p [file join $p $what$_search_exe]
+		set p [file join $p $what$suffix]
 		if {[file exists $p]} {
 			return [file normalize $p]
 		}
@@ -339,7 +372,7 @@ proc _lappend_nice {cmd_var} {
 }
 
 proc git {args} {
-	set opt [list exec]
+	set opt [list]
 
 	while {1} {
 		switch -- [lindex $args 0] {
@@ -359,12 +392,18 @@ proc git {args} {
 	set cmdp [_git_cmd [lindex $args 0]]
 	set args [lrange $args 1 end]
 
-	return [eval $opt $cmdp $args]
+	_trace_exec [concat $opt $cmdp $args]
+	set result [eval exec $opt $cmdp $args]
+	if {$::_trace} {
+		puts stderr "< $result"
+	}
+	return $result
 }
 
 proc _open_stdout_stderr {cmd} {
+	_trace_exec $cmd
 	if {[catch {
-			set fd [open $cmd r]
+			set fd [open [concat [list | ] $cmd] r]
 		} err]} {
 		if {   [lindex $cmd end] eq {2>@1}
 		    && $err eq {can not find channel named "1"}
@@ -375,6 +414,7 @@ proc _open_stdout_stderr {cmd} {
 			# to try to start it a second time.
 			#
 			set fd [open [concat \
+				[list | ] \
 				[lrange $cmd 0 end-1] \
 				[list |& cat] \
 				] r]
@@ -387,7 +427,7 @@ proc _open_stdout_stderr {cmd} {
 }
 
 proc git_read {args} {
-	set opt [list |]
+	set opt [list]
 
 	while {1} {
 		switch -- [lindex $args 0] {
@@ -415,7 +455,7 @@ proc git_read {args} {
 }
 
 proc git_write {args} {
-	set opt [list |]
+	set opt [list]
 
 	while {1} {
 		switch -- [lindex $args 0] {
@@ -435,7 +475,50 @@ proc git_write {args} {
 	set cmdp [_git_cmd [lindex $args 0]]
 	set args [lrange $args 1 end]
 
-	return [open [concat $opt $cmdp $args] w]
+	_trace_exec [concat $opt $cmdp $args]
+	return [open [concat [list | ] $opt $cmdp $args] w]
+}
+
+proc githook_read {hook_name args} {
+	set pchook [gitdir hooks $hook_name]
+	lappend args 2>@1
+
+	# On Windows [file executable] might lie so we need to ask
+	# the shell if the hook is executable.  Yes that's annoying.
+	#
+	if {[is_Windows]} {
+		upvar #0 _sh interp
+		if {![info exists interp]} {
+			set interp [_which sh]
+		}
+		if {$interp eq {}} {
+			error "hook execution requires sh (not in PATH)"
+		}
+
+		set scr {if test -x "$1";then exec "$@";fi}
+		set sh_c [list $interp -c $scr $interp $pchook]
+		return [_open_stdout_stderr [concat $sh_c $args]]
+	}
+
+	if {[file executable $pchook]} {
+		return [_open_stdout_stderr [concat [list $pchook] $args]]
+	}
+
+	return {}
+}
+
+proc kill_file_process {fd} {
+	set process [pid $fd]
+
+	catch {
+		if {[is_Windows]} {
+			# Use a Cygwin-specific flag to allow killing
+			# native Windows processes
+			exec kill -f $process
+		} else {
+			exec kill $process
+		}
+	}
 }
 
 proc sq {value} {
@@ -573,6 +656,7 @@ proc apply_config {} {
 	}
 }
 
+set default_config(branch.autosetupmerge) true
 set default_config(merge.diffstat) true
 set default_config(merge.summary) false
 set default_config(merge.verbosity) 2
@@ -582,8 +666,12 @@ set default_config(user.email) {}
 set default_config(gui.matchtrackingbranch) false
 set default_config(gui.pruneduringfetch) false
 set default_config(gui.trustmtime) false
+set default_config(gui.fastcopyblame) false
+set default_config(gui.copyblamethreshold) 40
 set default_config(gui.diffcontext) 5
+set default_config(gui.commitmsgwidth) 75
 set default_config(gui.newbranchtemplate) {}
+set default_config(gui.spellingdictionary) {}
 set default_config(gui.fontui) [font configure font_ui]
 set default_config(gui.fontdiff) [font configure font_diff]
 set font_descs {
@@ -634,7 +722,7 @@ if {![regsub {^git version } $_git_version {} _git_version]} {
 }
 
 set _real_git_version $_git_version
-regsub -- {-dirty$} $_git_version {} _git_version
+regsub -- {[\-\.]dirty$} $_git_version {} _git_version
 regsub {\.[0-9]+\.g[0-9a-f]+$} $_git_version {} _git_version
 regsub {\.rc[0-9]+$} $_git_version {} _git_version
 regsub {\.GIT$} $_git_version {} _git_version
@@ -1065,27 +1153,18 @@ proc rescan {after {honor_trustmtime 1}} {
 }
 
 if {[is_Cygwin]} {
-	set is_git_info_link {}
 	set is_git_info_exclude {}
 	proc have_info_exclude {} {
-		global is_git_info_link is_git_info_exclude
+		global is_git_info_exclude
 
-		if {$is_git_info_link eq {}} {
-			set is_git_info_link [file isfile [gitdir info.lnk]]
-		}
-
-		if {$is_git_info_link} {
-			if {$is_git_info_exclude eq {}} {
-				if {[catch {exec test -f [gitdir info exclude]}]} {
-					set is_git_info_exclude 0
-				} else {
-					set is_git_info_exclude 1
-				}
+		if {$is_git_info_exclude eq {}} {
+			if {[catch {exec test -f [gitdir info exclude]}]} {
+				set is_git_info_exclude 0
+			} else {
+				set is_git_info_exclude 1
 			}
-			return $is_git_info_exclude
-		} else {
-			return [file readable [gitdir info exclude]]
 		}
+		return $is_git_info_exclude
 	}
 } else {
 	proc have_info_exclude {} {
@@ -1617,10 +1696,10 @@ proc do_gitk {revs} {
 	# -- Always start gitk through whatever we were loaded with.  This
 	#    lets us bypass using shell process on Windows systems.
 	#
-	set exe [file join [file dirname $::_git] gitk]
+	set exe [_which gitk -script]
 	set cmd [list [info nameofexecutable] $exe]
-	if {! [file exists $exe]} {
-		error_popup [mc "Unable to start gitk:\n\n%s does not exist" $exe]
+	if {$exe eq {}} {
+		error_popup [mc "Couldn't find gitk in PATH"]
 	} else {
 		global env
 
@@ -1655,6 +1734,7 @@ set is_quitting 0
 proc do_quit {} {
 	global ui_comm is_quitting repo_config commit_type
 	global GITGUI_BCK_exists GITGUI_BCK_i
+	global ui_comm_spell
 
 	if {$is_quitting} return
 	set is_quitting 1
@@ -1680,6 +1760,12 @@ proc do_quit {} {
 			} else {
 				catch {file delete $save}
 			}
+		}
+
+		# -- Cancel our spellchecker if its running.
+		#
+		if {[info exists ui_comm_spell]} {
+			$ui_comm_spell stop
 		}
 
 		# -- Remove our editor backup, its not needed.
@@ -1714,6 +1800,11 @@ proc do_commit {} {
 	commit_tree
 }
 
+proc next_diff {} {
+	global next_diff_p next_diff_w next_diff_i
+	show_diff $next_diff_p $next_diff_w $next_diff_i
+}
+
 proc toggle_or_diff {w x y} {
 	global file_states file_lists current_diff_path ui_index ui_workdir
 	global last_clicked selected_paths
@@ -1732,12 +1823,34 @@ proc toggle_or_diff {w x y} {
 	$ui_index tag remove in_sel 0.0 end
 	$ui_workdir tag remove in_sel 0.0 end
 
-	if {$col == 0} {
-		if {$current_diff_path eq $path} {
+	if {$col == 0 && $y > 1} {
+		set i [expr {$lno-1}]
+		set ll [expr {[llength $file_lists($w)]-1}]
+
+		if {$i == $ll && $i == 0} {
 			set after {reshow_diff;}
 		} else {
-			set after {}
+			global next_diff_p next_diff_w next_diff_i
+
+			set next_diff_w $w
+
+			if {$i < $ll} {
+				set i [expr {$i + 1}]
+				set next_diff_i $i
+			} else {
+				set next_diff_i $i
+				set i [expr {$i - 1}]
+			}
+
+			set next_diff_p [lindex $file_lists($w) $i]
+
+			if {$next_diff_p ne {} && $current_diff_path ne {}} {
+				set after {next_diff;}
+			} else {
+				set after {}
+			}
 		}
+
 		if {$w eq $ui_index} {
 			update_indexinfo \
 				"Unstaging [short_path $path] from commit" \
@@ -1807,6 +1920,22 @@ proc add_range_to_selection {w x y} {
 		set selected_paths($path) 1
 	}
 	$w tag add in_sel $begin.0 [expr {$end + 1}].0
+}
+
+proc show_more_context {} {
+	global repo_config
+	if {$repo_config(gui.diffcontext) < 99} {
+		incr repo_config(gui.diffcontext)
+		reshow_diff
+	}
+}
+
+proc show_less_context {} {
+	global repo_config
+	if {$repo_config(gui.diffcontext) >= 1} {
+		incr repo_config(gui.diffcontext) -1
+		reshow_diff
+	}
 }
 
 ######################################################################
@@ -1892,9 +2021,13 @@ if {[is_enabled multicommit]} {
 	}
 }
 
-.mbar.repository add command -label [mc Quit] \
-	-command do_quit \
-	-accelerator $M1T-Q
+if {[is_MacOSX]} {
+	proc ::tk::mac::Quit {args} { do_quit }
+} else {
+	.mbar.repository add command -label [mc Quit] \
+		-command do_quit \
+		-accelerator $M1T-Q
+}
 
 # -- Edit Menu
 #
@@ -2009,6 +2142,16 @@ if {[is_enabled multicommit] || [is_enabled singlecommit]} {
 
 	.mbar.commit add separator
 
+	.mbar.commit add command -label [mc "Show Less Context"] \
+		-command show_less_context \
+		-accelerator $M1T-\-
+
+	.mbar.commit add command -label [mc "Show More Context"] \
+		-command show_more_context \
+		-accelerator $M1T-=
+
+	.mbar.commit add separator
+
 	.mbar.commit add command -label [mc "Sign Off"] \
 		-command do_signoff \
 		-accelerator $M1T-S
@@ -2052,7 +2195,7 @@ if {[is_enabled transport]} {
 if {[is_MacOSX]} {
 	# -- Apple Menu (Mac OS X only)
 	#
-	.mbar add cascade -label [mc Apple] -menu .mbar.apple
+	.mbar add cascade -label Apple -menu .mbar.apple
 	menu .mbar.apple
 
 	.mbar.apple add command -label [mc "About %s" [appname]] \
@@ -2253,8 +2396,9 @@ pack .vpane -anchor n -side top -fill both -expand 1
 #
 frame .vpane.files.index -height 100 -width 200
 label .vpane.files.index.title -text [mc "Staged Changes (Will Commit)"] \
-	-background lightgreen
-text $ui_index -background white -borderwidth 0 \
+	-background lightgreen -foreground black
+text $ui_index -background white -foreground black \
+	-borderwidth 0 \
 	-width 20 -height 10 \
 	-wrap none \
 	-cursor $cursor_ptr \
@@ -2272,8 +2416,9 @@ pack $ui_index -side left -fill both -expand 1
 #
 frame .vpane.files.workdir -height 100 -width 200
 label .vpane.files.workdir.title -text [mc "Unstaged Changes"] \
-	-background lightsalmon
-text $ui_workdir -background white -borderwidth 0 \
+	-background lightsalmon -foreground black
+text $ui_workdir -background white -foreground black \
+	-borderwidth 0 \
 	-width 20 -height 10 \
 	-wrap none \
 	-cursor $cursor_ptr \
@@ -2380,12 +2525,13 @@ pack $ui_coml -side left -fill x
 pack .vpane.lower.commarea.buffer.header.amend -side right
 pack .vpane.lower.commarea.buffer.header.new -side right
 
-text $ui_comm -background white -borderwidth 1 \
+text $ui_comm -background white -foreground black \
+	-borderwidth 1 \
 	-undo true \
 	-maxundo 20 \
 	-autoseparators true \
 	-relief sunken \
-	-width 75 -height 9 -wrap none \
+	-width $repo_config(gui.commitmsgwidth) -height 9 -wrap none \
 	-font font_diff \
 	-yscrollcommand {.vpane.lower.commarea.buffer.sby set}
 scrollbar .vpane.lower.commarea.buffer.sby \
@@ -2426,7 +2572,7 @@ $ctxm add separator
 $ctxm add command \
 	-label [mc "Sign Off"] \
 	-command do_signoff
-bind_button3 $ui_comm "tk_popup $ctxm %X %Y"
+set ui_comm_ctxm $ctxm
 
 # -- Diff Header
 #
@@ -2457,15 +2603,18 @@ trace add variable current_diff_path write trace_current_diff_path
 frame .vpane.lower.diff.header -background gold
 label .vpane.lower.diff.header.status \
 	-background gold \
+	-foreground black \
 	-width $max_status_desc \
 	-anchor w \
 	-justify left
 label .vpane.lower.diff.header.file \
 	-background gold \
+	-foreground black \
 	-anchor w \
 	-justify left
 label .vpane.lower.diff.header.path \
 	-background gold \
+	-foreground black \
 	-anchor w \
 	-justify left
 pack .vpane.lower.diff.header.status -side left
@@ -2489,7 +2638,8 @@ bind_button3 .vpane.lower.diff.header.path "tk_popup $ctxm %X %Y"
 #
 frame .vpane.lower.diff.body
 set ui_diff .vpane.lower.diff.body.t
-text $ui_diff -background white -borderwidth 0 \
+text $ui_diff -background white -foreground black \
+	-borderwidth 0 \
 	-width 80 -height 15 -wrap none \
 	-font font_diff \
 	-xscrollcommand {.vpane.lower.diff.body.sbx set} \
@@ -2546,20 +2696,19 @@ $ctxm add command \
 	-command {apply_hunk $cursorX $cursorY}
 set ui_diff_applyhunk [$ctxm index last]
 lappend diff_actions [list $ctxm entryconf $ui_diff_applyhunk -state]
+$ctxm add command \
+	-label [mc "Apply/Reverse Line"] \
+	-command {apply_line $cursorX $cursorY; do_rescan}
+set ui_diff_applyline [$ctxm index last]
+lappend diff_actions [list $ctxm entryconf $ui_diff_applyline -state]
 $ctxm add separator
 $ctxm add command \
 	-label [mc "Show Less Context"] \
-	-command {if {$repo_config(gui.diffcontext) >= 1} {
-		incr repo_config(gui.diffcontext) -1
-		reshow_diff
-	}}
+	-command show_less_context
 lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
 $ctxm add command \
 	-label [mc "Show More Context"] \
-	-command {if {$repo_config(gui.diffcontext) < 99} {
-		incr repo_config(gui.diffcontext)
-		reshow_diff
-	}}
+	-command show_more_context
 lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
 $ctxm add separator
 $ctxm add command \
@@ -2600,8 +2749,10 @@ proc popup_diff_menu {ctxm x y X Y} {
 	set ::cursorY $y
 	if {$::ui_index eq $::current_diff_side} {
 		set l [mc "Unstage Hunk From Commit"]
+		set t [mc "Unstage Line From Commit"]
 	} else {
 		set l [mc "Stage Hunk For Commit"]
+		set t [mc "Stage Line For Commit"]
 	}
 	if {$::is_3way_diff
 		|| $current_diff_path eq {}
@@ -2612,6 +2763,7 @@ proc popup_diff_menu {ctxm x y X Y} {
 		set s normal
 	}
 	$ctxm entryconf $::ui_diff_applyhunk -state $s -label $l
+	$ctxm entryconf $::ui_diff_applyline -state $s -label $t
 	tk_popup $ctxm $X $Y
 }
 bind_button3 $ui_diff [list popup_diff_menu $ctxm %x %y %X %Y]
@@ -2651,6 +2803,11 @@ bind $ui_comm <$M1B-Key-v> {tk_textPaste %W; %W see insert; break}
 bind $ui_comm <$M1B-Key-V> {tk_textPaste %W; %W see insert; break}
 bind $ui_comm <$M1B-Key-a> {%W tag add sel 0.0 end;break}
 bind $ui_comm <$M1B-Key-A> {%W tag add sel 0.0 end;break}
+bind $ui_comm <$M1B-Key-minus> {show_less_context;break}
+bind $ui_comm <$M1B-Key-KP_Subtract> {show_less_context;break}
+bind $ui_comm <$M1B-Key-equal> {show_more_context;break}
+bind $ui_comm <$M1B-Key-plus> {show_more_context;break}
+bind $ui_comm <$M1B-Key-KP_Add> {show_more_context;break}
 
 bind $ui_diff <$M1B-Key-x> {tk_textCopy %W;break}
 bind $ui_diff <$M1B-Key-X> {tk_textCopy %W;break}
@@ -2694,6 +2851,11 @@ bind .   <$M1B-Key-t> do_add_selection
 bind .   <$M1B-Key-T> do_add_selection
 bind .   <$M1B-Key-i> do_add_all
 bind .   <$M1B-Key-I> do_add_all
+bind .   <$M1B-Key-minus> {show_less_context;break}
+bind .   <$M1B-Key-KP_Subtract> {show_less_context;break}
+bind .   <$M1B-Key-equal> {show_more_context;break}
+bind .   <$M1B-Key-plus> {show_more_context;break}
+bind .   <$M1B-Key-KP_Add> {show_more_context;break}
 bind .   <$M1B-Key-Return> do_commit
 foreach i [list $ui_index $ui_workdir] {
 	bind $i <Button-1>       "toggle_or_diff         $i %x %y; break"
@@ -2773,6 +2935,7 @@ if {[is_enabled transport]} {
 	populate_fetch_menu
 	set n [expr {[.mbar.remote index end] - $n}]
 	if {$n > 0} {
+		if {[.mbar.remote type 0] eq "tearoff"} { incr n }
 		.mbar.remote insert $n separator
 	}
 	unset n
@@ -2829,6 +2992,30 @@ if {[winfo exists $ui_comm]} {
 	}
 
 	backup_commit_buffer
+
+	# -- If the user has aspell available we can drive it
+	#    in pipe mode to spellcheck the commit message.
+	#
+	set spell_cmd [list |]
+	set spell_dict [get_config gui.spellingdictionary]
+	lappend spell_cmd aspell
+	if {$spell_dict ne {}} {
+		lappend spell_cmd --master=$spell_dict
+	}
+	lappend spell_cmd --mode=none
+	lappend spell_cmd --encoding=utf-8
+	lappend spell_cmd pipe
+	if {$spell_dict eq {none}
+	 || [catch {set spell_fd [open $spell_cmd r+]} spell_err]} {
+		bind_button3 $ui_comm [list tk_popup $ui_comm_ctxm %X %Y]
+	} else {
+		set ui_comm_spell [spellcheck::init \
+			$spell_fd \
+			$ui_comm \
+			$ui_comm_ctxm \
+		]
+	}
+	unset -nocomplain spell_cmd spell_fd spell_err spell_dict
 }
 
 lock_index begin-read

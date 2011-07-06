@@ -24,19 +24,15 @@ set up install paths (via config.mak.autogen), so you can write instead
 
 Issues of note:
 
- - git normally installs a helper script wrapper called "git", which
-   conflicts with a similarly named "GNU interactive tools" program.
+ - Ancient versions of GNU Interactive Tools (pre-4.9.2) installed a
+   program "git", whose name conflicts with this program.  But with
+   version 4.9.2, after long hiatus without active maintenance (since
+   around 1997), it changed its name to gnuit and the name conflict is no
+   longer a problem.
 
-   Tough.  Either don't use the wrapper script, or delete the old GNU
-   interactive tools.  None of the core git stuff needs the wrapper,
-   it's just a convenient shorthand and while it is documented in some
-   places, you can always replace "git commit" with "git-commit"
-   instead.
-
-   But let's face it, most of us don't have GNU interactive tools, and
-   even if we had it, we wouldn't know what it does.  I don't think it
-   has been actively developed since 1997, and people have moved over to
-   graphical file managers.
+   NOTE: When compiled with backward compatibility option, the GNU
+   Interactive Tools package still can install "git", but you can build it
+   with --disable-transition option to avoid this.
 
  - You can use git after building but without installing if you
    wanted to.  Various git commands need to find other git
@@ -63,10 +59,10 @@ Issues of note:
 	  that come with git (git includes the one from Mozilla, and has
 	  its own PowerPC and ARM optimized ones too - see the Makefile).
 
-	- "libcurl" and "curl" executable.  git-http-fetch and
-	  git-fetch use them.  If you do not use http
-	  transfer, you are probably OK if you do not have
-	  them.
+	- libcurl library; git-http-fetch and git-fetch use them.  You
+	  might also want the "curl" executable for debugging purposes.
+	  If you do not use http transfer, you are probably OK if you
+	  do not have them.
 
 	- expat library; git-http-push uses it for remote lock
 	  management over DAV.  Similar to "curl" above, this is optional.
@@ -77,10 +73,7 @@ Issues of note:
 	- "ssh" is used to push and pull over the net
 
 	- "perl" and POSIX-compliant shells are needed to use most of
-	  the barebone Porcelainish scripts.
-
-	- "cpio" is used by git-merge for saving and restoring the index,
-	  and by git-clone when doing a local (possibly hardlinked) clone.
+	  the bare-bones Porcelainish scripts.
 
  - Some platform specific issues are dealt with Makefile rules,
    but depending on your specific installation, you may not

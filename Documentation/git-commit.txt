@@ -8,23 +8,23 @@ git-commit - Record changes to the repository
 SYNOPSIS
 --------
 [verse]
-'git-commit' [-a | --interactive] [-s] [-v] [-u]
-	   [(-c | -C) <commit> | -F <file> | -m <msg> | --amend]
-	   [--allow-empty] [--no-verify] [-e] [--author <author>]
+'git commit' [-a | --interactive] [-s] [-v] [-u<mode>] [--amend]
+	   [(-c | -C) <commit>] [-F <file> | -m <msg>]
+	   [--allow-empty] [--no-verify] [-e] [--author=<author>]
 	   [--cleanup=<mode>] [--] [[-i | -o ]<file>...]
 
 DESCRIPTION
 -----------
-Use 'git commit' to store the current contents of the index in a new
-commit along with a log message describing the changes you have made.
+Stores the current contents of the index in a new commit along
+with a log message from the user describing the changes.
 
 The content to be added can be specified in several ways:
 
-1. by using linkgit:git-add[1] to incrementally "add" changes to the
+1. by using 'git-add' to incrementally "add" changes to the
    index before using the 'commit' command (Note: even modified
    files must be "added");
 
-2. by using linkgit:git-rm[1] to remove files from the working tree
+2. by using 'git-rm' to remove files from the working tree
    and the index, again before using the 'commit' command;
 
 3. by listing files as arguments to the 'commit' command, in which
@@ -39,55 +39,65 @@ The content to be added can be specified in several ways:
 
 5. by using the --interactive switch with the 'commit' command to decide one
    by one which files should be part of the commit, before finalizing the
-   operation.  Currently, this is done by invoking `git-add --interactive`.
+   operation.  Currently, this is done by invoking 'git-add --interactive'.
 
-The linkgit:git-status[1] command can be used to obtain a
+The 'git-status' command can be used to obtain a
 summary of what is included by any of the above for the next
 commit by giving the same set of parameters you would give to
 this command.
 
-If you make a commit and then found a mistake immediately after
-that, you can recover from it with linkgit:git-reset[1].
+If you make a commit and then find a mistake immediately after
+that, you can recover from it with 'git-reset'.
 
 
 OPTIONS
 -------
--a|--all::
+-a::
+--all::
 	Tell the command to automatically stage files that have
 	been modified and deleted, but new files you have not
 	told git about are not affected.
 
--c or -C <commit>::
-	Take existing commit object, and reuse the log message
+-C <commit>::
+--reuse-message=<commit>::
+	Take an existing commit object, and reuse the log message
 	and the authorship information (including the timestamp)
-	when creating the commit.  With '-C', the editor is not
-	invoked; with '-c' the user can further edit the commit
-	message.
+	when creating the commit.
+
+-c <commit>::
+--reedit-message=<commit>::
+	Like '-C', but with '-c' the editor is invoked, so that
+	the user can further edit the commit message.
 
 -F <file>::
+--file=<file>::
 	Take the commit message from the given file.  Use '-' to
 	read the message from the standard input.
 
---author <author>::
+--author=<author>::
 	Override the author name used in the commit.  Use
 	`A U Thor <author@example.com>` format.
 
--m <msg>|--message=<msg>::
+-m <msg>::
+--message=<msg>::
 	Use the given <msg> as the commit message.
 
--t <file>|--template=<file>::
+-t <file>::
+--template=<file>::
 	Use the contents of the given file as the initial version
 	of the commit message. The editor is invoked and you can
 	make subsequent changes. If a message is specified using
 	the `-m` or `-F` options, this option has no effect. This
 	overrides the `commit.template` configuration variable.
 
--s|--signoff::
+-s::
+--signoff::
 	Add Signed-off-by line at the end of the commit message.
 
+-n::
 --no-verify::
 	This option bypasses the pre-commit and commit-msg hooks.
-	See also link:hooks.html[hooks].
+	See also linkgit:githooks[5].
 
 --allow-empty::
 	Usually recording a commit that has the exact same tree as its
@@ -105,14 +115,14 @@ OPTIONS
 	'whitespace' removes just leading/trailing whitespace lines
 	and 'strip' removes both whitespace and commentary.
 
--e|--edit::
+-e::
+--edit::
 	The message taken from file with `-F`, command line with
 	`-m`, and from file with `-C` are usually used as the
 	commit log message unmodified.  This option lets you
 	further edit the message taken from these sources.
 
 --amend::
-
 	Used to amend the tip of the current branch. Prepare the tree
 	object you would want to replace the latest commit as usual
 	(this includes the usual -i/-o and explicit paths), and the
@@ -133,26 +143,51 @@ It is a rough equivalent for:
 but can be used to amend a merge commit.
 --
 
--i|--include::
+-i::
+--include::
 	Before making a commit out of staged contents so far,
 	stage the contents of paths given on the command line
 	as well.  This is usually not what you want unless you
 	are concluding a conflicted merge.
 
--u|--untracked-files::
-	Show all untracked files, also those in uninteresting
-	directories, in the "Untracked files:" section of commit
-	message template.  Without this option only its name and
-	a trailing slash are displayed for each untracked
-	directory.
+-o::
+--only::
+	Make a commit only from the paths specified on the
+	command line, disregarding any contents that have been
+	staged so far. This is the default mode of operation of
+	'git-commit' if any paths are given on the command line,
+	in which case this option can be omitted.
+	If this option is specified together with '--amend', then
+	no paths need be specified, which can be used to amend
+	the last commit without committing changes that have
+	already been staged.
 
--v|--verbose::
+-u[<mode>]::
+--untracked-files[=<mode>]::
+	Show untracked files (Default: 'all').
++
+The mode parameter is optional, and is used to specify
+the handling of untracked files. The possible options are:
++
+--
+	- 'no'     - Show no untracked files
+	- 'normal' - Shows untracked files and directories
+	- 'all'    - Also shows individual files in untracked directories.
+--
++
+See linkgit:git-config[1] for configuration variable
+used to change the default for when the option is not
+specified.
+
+-v::
+--verbose::
 	Show unified diff between the HEAD commit and what
 	would be committed at the bottom of the commit message
 	template.  Note that this diff output doesn't have its
 	lines prefixed with '#'.
 
--q|--quiet::
+-q::
+--quiet::
 	Suppress commit summary message.
 
 \--::
@@ -170,10 +205,10 @@ EXAMPLES
 --------
 When recording your own work, the contents of modified files in
 your working tree are temporarily stored to a staging area
-called the "index" with linkgit:git-add[1].  A file can be
+called the "index" with 'git-add'.  A file can be
 reverted back, only in the index but not in the working tree,
-to that of the last commit with `git-reset HEAD -- <file>`,
-which effectively reverts `git-add` and prevents the changes to
+to that of the last commit with `git reset HEAD -- <file>`,
+which effectively reverts 'git-add' and prevents the changes to
 this file from participating in the next commit.  After building
 the state to be committed incrementally with these commands,
 `git commit` (without any pathname parameter) is used to record what
@@ -229,13 +264,13 @@ $ git commit
 this second commit would record the changes to `hello.c` and
 `hello.h` as expected.
 
-After a merge (initiated by either linkgit:git-merge[1] or
-linkgit:git-pull[1]) stops because of conflicts, cleanly merged
+After a merge (initiated by 'git-merge' or 'git-pull') stops
+because of conflicts, cleanly merged
 paths are already staged to be committed for you, and paths that
 conflicted are left in unmerged state.  You would have to first
-check which paths are conflicting with linkgit:git-status[1]
+check which paths are conflicting with 'git-status'
 and after fixing them manually in your working tree, you would
-stage the result as usual with linkgit:git-add[1]:
+stage the result as usual with 'git-add':
 
 ------------
 $ git status | grep unmerged
@@ -280,8 +315,8 @@ order).
 
 HOOKS
 -----
-This command can run `commit-msg`, `pre-commit`, and
-`post-commit` hooks.  See link:hooks.html[hooks] for more
+This command can run `commit-msg`, `prepare-commit-msg`, `pre-commit`,
+and `post-commit` hooks.  See linkgit:githooks[5] for more
 information.
 
 
@@ -296,9 +331,9 @@ linkgit:git-commit-tree[1]
 Author
 ------
 Written by Linus Torvalds <torvalds@osdl.org> and
-Junio C Hamano <junkio@cox.net>
+Junio C Hamano <gitster@pobox.com>
 
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

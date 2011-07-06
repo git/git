@@ -1,4 +1,4 @@
-From:	Junio C Hamano <junkio@cox.net>
+From:	Junio C Hamano <gitster@pobox.com>
 To:	git@vger.kernel.org
 Cc:	Petr Baudis <pasky@suse.cz>, Linus Torvalds <torvalds@osdl.org>
 Subject: Re: sending changesets from the middle of a git tree

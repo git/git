@@ -24,6 +24,15 @@ extern int for_each_tag_ref(each_ref_fn, void *);
 extern int for_each_branch_ref(each_ref_fn, void *);
 extern int for_each_remote_ref(each_ref_fn, void *);
 
+/*
+ * Extra refs will be listed by for_each_ref() before any actual refs
+ * for the duration of this process or until clear_extra_refs() is
+ * called. Only extra refs added before for_each_ref() is called will
+ * be listed on a given call of for_each_ref().
+ */
+extern void add_extra_ref(const char *refname, const unsigned char *sha1, int flags);
+extern void clear_extra_refs(void);
+
 extern int peel_ref(const char *, unsigned char *);
 
 /** Locks a "refs/" ref returning the lock on success and NULL on failure. **/
@@ -32,6 +41,12 @@ extern struct ref_lock *lock_ref_sha1(const char *ref, const unsigned char *old_
 /** Locks any ref (for 'HEAD' type refs). */
 #define REF_NODEREF	0x01
 extern struct ref_lock *lock_any_ref_for_update(const char *ref, const unsigned char *old_sha1, int flags);
+
+/** Close the file descriptor owned by a lock and return the status */
+extern int close_ref(struct ref_lock *lock);
+
+/** Close and commit the ref locked by the lock */
+extern int commit_ref(struct ref_lock *lock);
 
 /** Release any lock taken but not written. **/
 extern void unlock_ref(struct ref_lock *lock);

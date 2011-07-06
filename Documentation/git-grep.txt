@@ -9,7 +9,7 @@ git-grep - Print lines matching a pattern
 SYNOPSIS
 --------
 [verse]
-'git-grep' [--cached]
+'git grep' [--cached]
 	   [-a | --text] [-I] [-i | --ignore-case] [-w | --word-regexp]
 	   [-v | --invert-match] [-h|-H] [--full-name]
 	   [-E | --extended-regexp] [-G | --basic-regexp]
@@ -33,25 +33,30 @@ OPTIONS
 	Instead of searching in the working tree files, check
 	the blobs registered in the index file.
 
--a | --text::
+-a::
+--text::
 	Process binary files as if they were text.
 
--i | --ignore-case::
+-i::
+--ignore-case::
 	Ignore case differences between the patterns and the
 	files.
 
 -I::
 	Don't match the pattern in binary files.
 
--w | --word-regexp::
+-w::
+--word-regexp::
 	Match the pattern only at word boundary (either begin at the
 	beginning of a line, or preceded by a non-word character; end at
 	the end of a line or followed by a non-word character).
 
--v | --invert-match::
+-v::
+--invert-match::
 	Select non-matching lines.
 
--h | -H::
+-h::
+-H::
 	By default, the command shows the filename for each
 	match.  `-h` option is used to suppress this output.
 	`-H` is there for completeness and does not do anything
@@ -64,22 +69,33 @@ OPTIONS
 	option forces paths to be output relative to the project
 	top directory.
 
--E | --extended-regexp | -G | --basic-regexp::
+-E::
+--extended-regexp::
+-G::
+--basic-regexp::
 	Use POSIX extended/basic regexp for patterns.  Default
 	is to use basic regexp.
 
--F | --fixed-strings::
+-F::
+--fixed-strings::
 	Use fixed strings for patterns (don't interpret pattern
 	as a regex).
 
 -n::
 	Prefix the line number to matching lines.
 
--l | --files-with-matches | -L | --files-without-match::
+-l::
+--files-with-matches::
+--name-only::
+-L::
+--files-without-match::
 	Instead of showing every matched line, show only the
 	names of files that contain (or do not contain) matches.
+	For better compatibility with 'git-diff', --name-only is a
+	synonym for --files-with-matches.
 
--c | --count::
+-c::
+--count::
 	Instead of showing every matched line, show the number of
 	lines that match.
 
@@ -101,7 +117,10 @@ OPTIONS
 	scripts passing user input to grep.  Multiple patterns are
 	combined by 'or'.
 
---and | --or | --not | ( | )::
+--and::
+--or::
+--not::
+( ... )::
 	Specify how multiple patterns are combined using Boolean
 	expressions.  `--or` is the default operator.  `--and` has
 	higher precedence than `--or`.  `-e` has to be used for all
@@ -143,4 +162,4 @@ Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

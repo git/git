@@ -31,7 +31,7 @@ int main(int argc, char **argv)
 		die("Not a valid object name %s", argv[1]);
 
 	setup_git_directory();
-	git_config(git_default_config);
+	git_config(git_default_config, NULL);
 
 	puts(create_temp_file(sha1));
 	return 0;

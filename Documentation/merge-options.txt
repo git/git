@@ -1,9 +1,24 @@
---summary::
+--stat::
 	Show a diffstat at the end of the merge. The diffstat is also
-	controlled by the configuration option merge.diffstat.
+	controlled by the configuration option merge.stat.
 
--n, \--no-summary::
+-n::
+--no-stat::
 	Do not show diffstat at the end of the merge.
+
+--summary::
+--no-summary::
+	Synonyms to --stat and --no-stat; these are deprecated and will be
+	removed in the future.
+
+--log::
+	In addition to branch names, populate the log message with
+	one-line descriptions from the actual commits that are being
+	merged.
+
+--no-log::
+	Do not list one-line descriptions from the actual commits being
+	merged.
 
 --no-commit::
 	Perform the merge but pretend the merge failed and do
@@ -36,9 +51,10 @@
 	a fast-forward, only update the branch pointer. This is
 	the default behavior of git-merge.
 
--s <strategy>, \--strategy=<strategy>::
+-s <strategy>::
+--strategy=<strategy>::
 	Use the given merge strategy; can be supplied more than
 	once to specify them in the order they should be tried.
 	If there is no `-s` option, a built-in list of strategies
-	is used instead (`git-merge-recursive` when merging a single
-	head, `git-merge-octopus` otherwise).
+	is used instead ('git-merge-recursive' when merging a single
+	head, 'git-merge-octopus' otherwise).

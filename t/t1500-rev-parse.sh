@@ -33,9 +33,9 @@ test_rev_parse() {
 test_rev_parse toplevel false false true ''
 
 cd .git || exit 1
-test_rev_parse .git/ true true false ''
+test_rev_parse .git/ false true false ''
 cd objects || exit 1
-test_rev_parse .git/objects/ true true false ''
+test_rev_parse .git/objects/ false true false ''
 cd ../.. || exit 1
 
 mkdir -p sub/dir || exit 1
@@ -51,8 +51,9 @@ test_rev_parse 'core.bare undefined' false false true
 
 mkdir work || exit 1
 cd work || exit 1
-export GIT_DIR=../.git
-export GIT_CONFIG="$(pwd)"/../.git/config
+GIT_DIR=../.git
+GIT_CONFIG="$(pwd)"/../.git/config
+export GIT_DIR GIT_CONFIG
 
 git config core.bare false
 test_rev_parse 'GIT_DIR=../.git, core.bare = false' false false true ''
@@ -64,8 +65,8 @@ git config --unset core.bare
 test_rev_parse 'GIT_DIR=../.git, core.bare undefined' false false true ''
 
 mv ../.git ../repo.git || exit 1
-export GIT_DIR=../repo.git
-export GIT_CONFIG="$(pwd)"/../repo.git/config
+GIT_DIR=../repo.git
+GIT_CONFIG="$(pwd)"/../repo.git/config
 
 git config core.bare false
 test_rev_parse 'GIT_DIR=../repo.git, core.bare = false' false false true ''

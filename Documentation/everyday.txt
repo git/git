@@ -48,14 +48,12 @@ $ git gc <3>
 repository health reasonably well.
 <2> check how many loose objects there are and how much
 disk space is wasted by not repacking.
-<3> repacks the local repository and performs other housekeeping tasks. Running
-without `--prune` is a safe operation even while other ones are in progress.
+<3> repacks the local repository and performs other housekeeping tasks.
 
 Repack a small project into single pack.::
 +
 ------------
 $ git gc <1>
-$ git gc --prune
 ------------
 +
 <1> pack all the objects reachable from the refs into one pack,
@@ -182,7 +180,7 @@ $ git pull <3>
 $ git log -p ORIG_HEAD.. arch/i386 include/asm-i386 <4>
 $ git pull git://git.kernel.org/pub/.../jgarzik/libata-dev.git ALL <5>
 $ git reset --hard ORIG_HEAD <6>
-$ git gc --prune <7>
+$ git gc <7>
 $ git fetch --tags <8>
 ------------
 +

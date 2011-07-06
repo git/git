@@ -16,7 +16,7 @@ compare_change () {
 	sed >current \
 	    -e '/^--- /d; /^+++ /d; /^@@ /d;' \
 	    -e 's/^\(.[0-7][0-7][0-7][0-7][0-7][0-7]\) '"$_x40"' /\1 X /' "$1"
-	git diff expected current
+	test_cmp expected current
 }
 
 check_cache_at () {
@@ -112,7 +112,7 @@ test_expect_success \
      git update-index --add frotz &&
      git read-tree -m -u $treeH $treeM &&
      git ls-files --stage >6.out &&
-     diff -U0 M.out 6.out &&
+     test_cmp M.out 6.out &&
      check_cache_at frotz clean &&
      sum bozbar frotz nitfol >actual3.sum &&
      cmp M.sum actual3.sum &&
@@ -129,7 +129,7 @@ test_expect_success \
      echo frotz frotz >frotz &&
      git read-tree -m -u $treeH $treeM &&
      git ls-files --stage >7.out &&
-     diff -U0 M.out 7.out &&
+     test_cmp M.out 7.out &&
      check_cache_at frotz dirty &&
      sum bozbar frotz nitfol >actual7.sum &&
      if cmp M.sum actual7.sum; then false; else :; fi &&
@@ -264,7 +264,7 @@ test_expect_success \
      git update-index --add bozbar &&
      git read-tree -m -u $treeH $treeM &&
      git ls-files --stage >18.out &&
-     diff -U0 M.out 18.out &&
+     test_cmp M.out 18.out &&
      check_cache_at bozbar clean &&
      sum bozbar frotz nitfol >actual18.sum &&
      cmp M.sum actual18.sum'
@@ -278,7 +278,7 @@ test_expect_success \
      echo gnusto gnusto >bozbar &&
      git read-tree -m -u $treeH $treeM &&
      git ls-files --stage >19.out &&
-     diff -U0 M.out 19.out &&
+     test_cmp M.out 19.out &&
      check_cache_at bozbar dirty &&
      sum frotz nitfol >actual19.sum &&
      grep -v bozbar  M.sum > expected19.sum &&
@@ -297,7 +297,7 @@ test_expect_success \
      git update-index --add bozbar &&
      git read-tree -m -u $treeH $treeM &&
      git ls-files --stage >20.out &&
-     diff -U0 M.out 20.out &&
+     test_cmp M.out 20.out &&
      check_cache_at bozbar clean &&
      sum bozbar frotz nitfol >actual20.sum &&
      cmp M.sum actual20.sum'
@@ -338,7 +338,7 @@ test_expect_success \
      git update-index --add DF &&
      git read-tree -m -u $treeDF $treeDFDF &&
      git ls-files --stage >DFDFcheck.out &&
-     diff -U0 DFDF.out DFDFcheck.out &&
+     test_cmp DFDF.out DFDFcheck.out &&
      check_cache_at DF/DF clean'
 
 test_done

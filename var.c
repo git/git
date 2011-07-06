@@ -5,7 +5,7 @@
  */
 #include "cache.h"
 
-static const char var_usage[] = "git-var [-l | <variable>]";
+static const char var_usage[] = "git var [-l | <variable>]";
 
 struct git_var {
 	const char *name;
@@ -39,31 +39,32 @@ static const char *read_var(const char *var)
 	return val;
 }
 
-static int show_config(const char *var, const char *value)
+static int show_config(const char *var, const char *value, void *cb)
 {
 	if (value)
 		printf("%s=%s\n", var, value);
 	else
 		printf("%s\n", var);
-	return git_default_config(var, value);
+	return git_default_config(var, value, cb);
 }
 
 int main(int argc, char **argv)
 {
 	const char *val;
+	int nongit;
 	if (argc != 2) {
 		usage(var_usage);
 	}
 
-	setup_git_directory();
+	setup_git_directory_gently(&nongit);
 	val = NULL;
 
 	if (strcmp(argv[1], "-l") == 0) {
-		git_config(show_config);
+		git_config(show_config, NULL);
 		list_vars();
 		return 0;
 	}
-	git_config(git_default_config);
+	git_config(git_default_config, NULL);
 	val = read_var(argv[1]);
 	if (!val)
 		usage(var_usage);

@@ -15,7 +15,7 @@ test_format() {
 	cat >expect.$1
 	test_expect_success "format $1" "
 git rev-list --pretty=format:$2 master >output.$1 &&
-git diff expect.$1 output.$1
+test_cmp expect.$1 output.$1
 "
 }
 

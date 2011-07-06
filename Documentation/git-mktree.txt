@@ -8,7 +8,7 @@ git-mktree - Build a tree-object from ls-tree formatted text
 
 SYNOPSIS
 --------
-'git-mktree' [-z]
+'git mktree' [-z]
 
 DESCRIPTION
 -----------
@@ -23,7 +23,7 @@ OPTIONS
 
 Author
 ------
-Written by Junio C Hamano <junkio@cox.net>
+Written by Junio C Hamano <gitster@pobox.com>
 
 Documentation
 --------------
@@ -31,4 +31,4 @@ Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

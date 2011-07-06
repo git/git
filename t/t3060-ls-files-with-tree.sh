@@ -66,6 +66,6 @@ test_expect_success 'git -ls-files --with-tree should succeed from subdir' '
 cd ..
 test_expect_success \
     'git -ls-files --with-tree should add entries from named tree.' \
-    'diff -u expected output'
+    'test_cmp expected output'
 
 test_done

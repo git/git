@@ -8,7 +8,7 @@ git-shell - Restricted login shell for GIT-only SSH access
 
 SYNOPSIS
 --------
-'git-shell' -c <command> <argument>
+'$(git --exec-path)/git-shell' -c <command> <argument>
 
 DESCRIPTION
 -----------
@@ -18,7 +18,7 @@ of server-side GIT commands implementing the pull/push functionality.
 The commands can be executed only by the '-c' option; the shell is not
 interactive.
 
-Currently, only the `git-receive-pack` and `git-upload-pack` commands
+Currently, only the 'git-receive-pack' and 'git-upload-pack' commands
 are permitted to be called, with a single required argument.
 
 Author
@@ -31,4 +31,4 @@ Documentation by Petr Baudis and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

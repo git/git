@@ -8,7 +8,7 @@ git-repack - Pack unpacked objects in a repository
 
 SYNOPSIS
 --------
-'git-repack' [-a] [-d] [-f] [-l] [-n] [-q] [--window=N] [--depth=N]
+'git repack' [-a] [-A] [-d] [-f] [-l] [-n] [-q] [--window=N] [--depth=N]
 
 DESCRIPTION
 -----------
@@ -37,28 +37,45 @@ OPTIONS
 	leaves behind, but `git fsck --full` shows as
 	dangling.
 
+-A::
+	Same as `-a`, but any unreachable objects in a previous
+	pack become loose, unpacked objects, instead of being
+	left in the old pack.  Unreachable objects are never
+	intentionally added to a pack, even when repacking.
+	When used with '-d', this option
+	prevents unreachable objects from being immediately
+	deleted by way of being left in the old pack and then
+	removed.  Instead, the loose unreachable objects
+	will be pruned according to normal expiry rules
+	with the next 'git-gc' invocation. See linkgit:git-gc[1].
+
 -d::
 	After packing, if the newly created packs make some
 	existing packs redundant, remove the redundant packs.
-	Also runs linkgit:git-prune-packed[1].
+	Also run  'git-prune-packed' to remove redundant
+	loose object files.
 
 -l::
-        Pass the `--local` option to `git pack-objects`, see
+	Pass the `--local` option to 'git-pack-objects'. See
 	linkgit:git-pack-objects[1].
 
 -f::
-        Pass the `--no-reuse-delta` option to `git pack-objects`, see
+	Pass the `--no-reuse-delta` option to 'git-pack-objects'. See
 	linkgit:git-pack-objects[1].
 
 -q::
-        Pass the `-q` option to `git pack-objects`, see
+	Pass the `-q` option to 'git-pack-objects'. See
 	linkgit:git-pack-objects[1].
 
 -n::
-        Do not update the server information with
-        `git update-server-info`.
+	Do not update the server information with
+	'git-update-server-info'.  This option skips
+	updating local catalog files needed to publish
+	this repository (or a direct copy of it)
+	over HTTP or FTP.  See linkgit:git-update-server-info[1].
 
---window=[N], --depth=[N]::
+--window=[N]::
+--depth=[N]::
 	These two options affect how the objects contained in the pack are
 	stored using delta compression. The objects are first internally
 	sorted by type, size and optionally names and compared against the
@@ -90,7 +107,7 @@ Configuration
 
 When configuration variable `repack.UseDeltaBaseOffset` is set
 for the repository, the command passes `--delta-base-offset`
-option to `git-pack-objects`; this typically results in slightly
+option to 'git-pack-objects'; this typically results in slightly
 smaller packs, but the generated packs are incompatible with
 versions of git older than (and including) v1.4.3; do not set
 the variable in a repository that older version of git needs to
@@ -107,11 +124,11 @@ Documentation
 --------------
 Documentation by Ryan Anderson <ryan@michonline.com>
 
-See Also
+SEE ALSO
 --------
 linkgit:git-pack-objects[1]
 linkgit:git-prune-packed[1]
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

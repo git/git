@@ -3,6 +3,13 @@
 test_description='git-cvsimport basic tests'
 . ./test-lib.sh
 
+CVSROOT=$(pwd)/cvsroot
+export CVSROOT
+unset CVS_SERVER
+# for clean cvsps cache
+HOME=$(pwd)
+export HOME
+
 if ! type cvs >/dev/null 2>&1
 then
 	say 'skipping cvsimport tests, cvs not found'
@@ -12,7 +19,7 @@ fi
 
 cvsps_version=`cvsps -h 2>&1 | sed -ne 's/cvsps version //p'`
 case "$cvsps_version" in
-2.1)
+2.1 | 2.2*)
 	;;
 '')
 	say 'skipping cvsimport tests, cvsps not found'
@@ -20,23 +27,17 @@ case "$cvsps_version" in
 	exit
 	;;
 *)
-	say 'skipping cvsimport tests, cvsps too old'
+	say 'skipping cvsimport tests, unsupported cvsps version'
 	test_done
 	exit
 	;;
 esac
 
-CVSROOT=$(pwd)/cvsroot
-export CVSROOT
-# for clean cvsps cache
-HOME=$(pwd)
-export HOME
-
 test_expect_success 'setup cvsroot' 'cvs init'
 
 test_expect_success 'setup a cvs module' '
 
-	mkdir $CVSROOT/module &&
+	mkdir "$CVSROOT/module" &&
 	cvs co -d module-cvs module &&
 	cd module-cvs &&
 	cat <<EOF >o_fortuna &&
@@ -69,7 +70,7 @@ EOF
 test_expect_success 'import a trivial module' '
 
 	git cvsimport -a -z 0 -C module-git module &&
-	git diff module-cvs/o_fortuna module-git/o_fortuna
+	test_cmp module-cvs/o_fortuna module-git/o_fortuna
 
 '
 
@@ -110,7 +111,7 @@ test_expect_success 'update git module' '
 	git cvsimport -a -z 0 module &&
 	git merge origin &&
 	cd .. &&
-	git diff module-cvs/o_fortuna module-git/o_fortuna
+	test_cmp module-cvs/o_fortuna module-git/o_fortuna
 
 '
 
@@ -131,7 +132,7 @@ test_expect_success 'cvsimport.module config works' '
 		git cvsimport -a -z0 &&
 		git merge origin &&
 	cd .. &&
-	git diff module-cvs/tick module-git/tick
+	test_cmp module-cvs/tick module-git/tick
 
 '
 
@@ -142,7 +143,7 @@ test_expect_success 'import from a CVS working tree' '
 		git cvsimport -a -z0 &&
 		echo 1 >expect &&
 		git log -1 --pretty=format:%s%n >actual &&
-		git diff actual expect &&
+		test_cmp actual expect &&
 	cd ..
 
 '

@@ -7,7 +7,7 @@ git-relink - Hardlink common objects in local repositories
 
 SYNOPSIS
 --------
-'git-relink' [--safe] <dir> [<dir>]\* <master_dir>
+'git relink' [--safe] <dir> [<dir>]\* <master_dir>
 
 DESCRIPTION
 -----------
@@ -34,4 +34,4 @@ Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

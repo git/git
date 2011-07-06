@@ -6,14 +6,17 @@ struct remote {
 
 	const char **url;
 	int url_nr;
+	int url_alloc;
 
 	const char **push_refspec;
 	struct refspec *push;
 	int push_refspec_nr;
+	int push_refspec_alloc;
 
 	const char **fetch_refspec;
 	struct refspec *fetch;
 	int fetch_refspec_nr;
+	int fetch_refspec_alloc;
 
 	/*
 	 * -1 to never fetch tags
@@ -22,6 +25,8 @@ struct remote {
 	 * 2 to always fetch tags
 	 */
 	int fetch_tags;
+	int skip_default_update;
+	int mirror;
 
 	const char *receivepack;
 	const char *uploadpack;
@@ -42,12 +47,17 @@ int remote_has_url(struct remote *remote, const char *url);
 struct refspec {
 	unsigned force : 1;
 	unsigned pattern : 1;
+	unsigned matching : 1;
 
 	char *src;
 	char *dst;
 };
 
+extern const struct refspec *tag_refspec;
+
 struct ref *alloc_ref(unsigned namelen);
+
+struct ref *alloc_ref_from_str(const char* str);
 
 struct ref *copy_ref_list(const struct ref *ref);
 
@@ -58,12 +68,16 @@ int check_ref_type(const struct ref *ref, int flags);
  */
 void free_refs(struct ref *ref);
 
+int resolve_remote_symref(struct ref *ref, struct ref *list);
+
 /*
  * Removes and frees any duplicate refs in the map.
  */
 void ref_remove_duplicates(struct ref *ref_map);
 
-struct refspec *parse_ref_spec(int nr_refspec, const char **refspec);
+int valid_fetch_refspec(const char *refspec);
+struct refspec *parse_fetch_refspec(int nr_refspec, const char **refspec);
+struct refspec *parse_push_refspec(int nr_refspec, const char **refspec);
 
 int match_refs(struct ref *src, struct ref *dst, struct ref ***dst_tail,
 	       int nr_refspec, const char **refspec, int all);
@@ -100,6 +114,7 @@ struct branch {
 	const char **merge_name;
 	struct refspec **merge;
 	int merge_nr;
+	int merge_alloc;
 };
 
 struct branch *branch_get(const char *name);
@@ -113,5 +128,9 @@ enum match_refs_flags {
 	MATCH_REFS_ALL 		= (1 << 0),
 	MATCH_REFS_MIRROR	= (1 << 1),
 };
+
+/* Reporting of tracking info */
+int stat_tracking_info(struct branch *branch, int *num_ours, int *num_theirs);
+int format_tracking_info(struct branch *branch, struct strbuf *sb);
 
 #endif

@@ -28,8 +28,6 @@ static int symbolic;
 static int abbrev;
 static int output_sq;
 
-static int revs_count;
-
 /*
  * Some arguments are relevant "revision" arguments,
  * others are about output format or other details.
@@ -96,16 +94,21 @@ static void show(const char *arg)
 		puts(arg);
 }
 
+/* Like show(), but with a negation prefix according to type */
+static void show_with_type(int type, const char *arg)
+{
+	if (type != show_type)
+		putchar('^');
+	show(arg);
+}
+
 /* Output a revision, only if filter allows it */
 static void show_rev(int type, const unsigned char *sha1, const char *name)
 {
 	if (!(filter & DO_REVS))
 		return;
 	def = NULL;
-	revs_count++;
 
-	if (type != show_type)
-		putchar('^');
 	if (symbolic && name) {
 		if (symbolic == SHOW_SYMBOLIC_FULL) {
 			unsigned char discard[20];
@@ -122,20 +125,20 @@ static void show_rev(int type, const unsigned char *sha1, const char *name)
 				 */
 				break;
 			case 1: /* happy */
-				show(full);
+				show_with_type(type, full);
 				break;
 			default: /* ambiguous */
 				error("refname '%s' is ambiguous", name);
 				break;
 			}
 		} else {
-			show(name);
+			show_with_type(type, name);
 		}
 	}
 	else if (abbrev)
-		show(find_unique_abbrev(sha1, abbrev));
+		show_with_type(type, find_unique_abbrev(sha1, abbrev));
 	else
-		show(sha1_to_hex(sha1));
+		show_with_type(type, sha1_to_hex(sha1));
 }
 
 /* Output a flag, only if filter allows it. */
@@ -150,7 +153,7 @@ static int show_flag(const char *arg)
 	return 0;
 }
 
-static void show_default(void)
+static int show_default(void)
 {
 	const char *s = def;
 
@@ -160,9 +163,10 @@ static void show_default(void)
 		def = NULL;
 		if (!get_sha1(s, sha1)) {
 			show_rev(NORMAL, sha1, s);
-			return;
+			return 1;
 		}
 	}
+	return 0;
 }
 
 static int show_reference(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
@@ -237,6 +241,36 @@ static int try_difference(const char *arg)
 	return 0;
 }
 
+static int try_parent_shorthands(const char *arg)
+{
+	char *dotdot;
+	unsigned char sha1[20];
+	struct commit *commit;
+	struct commit_list *parents;
+	int parents_only;
+
+	if ((dotdot = strstr(arg, "^!")))
+		parents_only = 0;
+	else if ((dotdot = strstr(arg, "^@")))
+		parents_only = 1;
+
+	if (!dotdot || dotdot[2])
+		return 0;
+
+	*dotdot = 0;
+	if (get_sha1(arg, sha1))
+		return 0;
+
+	if (!parents_only)
+		show_rev(NORMAL, sha1, arg);
+	commit = lookup_commit_reference(sha1);
+	for (parents = commit->parents; parents; parents = parents->next)
+		show_rev(parents_only ? NORMAL : REVERSED,
+				parents->item->object.sha1, arg);
+
+	return 1;
+}
+
 static int parseopt_dump(const struct option *o, const char *arg, int unset)
 {
 	struct strbuf *parsed = o->value;
@@ -264,7 +298,7 @@ static int cmd_parseopt(int argc, const char **argv, const char *prefix)
 {
 	static int keep_dashdash = 0;
 	static char const * const parseopt_usage[] = {
-		"git-rev-parse --parseopt [options] -- [<args>...]",
+		"git rev-parse --parseopt [options] -- [<args>...]",
 		NULL
 	};
 	static struct option parseopt_opts[] = {
@@ -315,25 +349,31 @@ static int cmd_parseopt(int argc, const char **argv, const char *prefix)
 		s = strchr(sb.buf, ' ');
 		if (!s || *sb.buf == ' ') {
 			o->type = OPTION_GROUP;
-			o->help = xstrdup(skipspaces(s));
+			o->help = xstrdup(skipspaces(sb.buf));
 			continue;
 		}
 
 		o->type = OPTION_CALLBACK;
 		o->help = xstrdup(skipspaces(s));
 		o->value = &parsed;
+		o->flags = PARSE_OPT_NOARG;
 		o->callback = &parseopt_dump;
-		switch (s[-1]) {
-		case '=':
-			s--;
-			break;
-		case '?':
-			o->flags = PARSE_OPT_OPTARG;
-			s--;
-			break;
-		default:
-			o->flags = PARSE_OPT_NOARG;
-			break;
+		while (s > sb.buf && strchr("*=?!", s[-1])) {
+			switch (*--s) {
+			case '=':
+				o->flags &= ~PARSE_OPT_NOARG;
+				break;
+			case '?':
+				o->flags &= ~PARSE_OPT_NOARG;
+				o->flags |= PARSE_OPT_OPTARG;
+				break;
+			case '!':
+				o->flags |= PARSE_OPT_NONEG;
+				break;
+			case '*':
+				o->flags |= PARSE_OPT_HIDDEN;
+				break;
+			}
 		}
 
 		if (s - sb.buf == 1) /* short option only */
@@ -359,16 +399,25 @@ static int cmd_parseopt(int argc, const char **argv, const char *prefix)
 	return 0;
 }
 
+static void die_no_single_rev(int quiet)
+{
+	if (quiet)
+		exit(1);
+	else
+		die("Needed a single revision");
+}
+
 int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 {
-	int i, as_is = 0, verify = 0;
+	int i, as_is = 0, verify = 0, quiet = 0, revs_count = 0, type = 0;
 	unsigned char sha1[20];
+	const char *name = NULL;
 
 	if (argc > 1 && !strcmp("--parseopt", argv[1]))
 		return cmd_parseopt(argc - 1, argv + 1, prefix);
 
 	prefix = setup_git_directory();
-	git_config(git_default_config);
+	git_config(git_default_config, NULL);
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
 
@@ -424,6 +473,10 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 			if (!strcmp(arg, "--verify")) {
 				filter &= ~(DO_FLAGS|DO_NOREV);
 				verify = 1;
+				continue;
+			}
+			if (!strcmp(arg, "--quiet") || !strcmp(arg, "-q")) {
+				quiet = 1;
 				continue;
 			}
 			if (!strcmp(arg, "--short") ||
@@ -543,30 +596,43 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 				continue;
 			}
 			if (show_flag(arg) && verify)
-				die("Needed a single revision");
+				die_no_single_rev(quiet);
 			continue;
 		}
 
 		/* Not a flag argument */
 		if (try_difference(arg))
 			continue;
-		if (!get_sha1(arg, sha1)) {
-			show_rev(NORMAL, sha1, arg);
+		if (try_parent_shorthands(arg))
+			continue;
+		name = arg;
+		type = NORMAL;
+		if (*arg == '^') {
+			name++;
+			type = REVERSED;
+		}
+		if (!get_sha1(name, sha1)) {
+			if (verify)
+				revs_count++;
+			else
+				show_rev(type, sha1, name);
 			continue;
 		}
-		if (*arg == '^' && !get_sha1(arg+1, sha1)) {
-			show_rev(REVERSED, sha1, arg+1);
-			continue;
-		}
+		if (verify)
+			die_no_single_rev(quiet);
 		as_is = 1;
 		if (!show_file(arg))
 			continue;
-		if (verify)
-			die("Needed a single revision");
 		verify_filename(prefix, arg);
 	}
-	show_default();
-	if (verify && revs_count != 1)
-		die("Needed a single revision");
+	if (verify) {
+		if (revs_count == 1) {
+			show_rev(type, sha1, name);
+			return 0;
+		} else if (revs_count == 0 && show_default())
+			return 0;
+		die_no_single_rev(quiet);
+	} else
+		show_default();
 	return 0;
 }

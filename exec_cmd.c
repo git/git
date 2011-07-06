@@ -4,8 +4,23 @@
 #define MAX_ARGS	32
 
 extern char **environ;
-static const char *builtin_exec_path = GIT_EXEC_PATH;
 static const char *argv_exec_path;
+static const char *argv0_path;
+
+const char *system_path(const char *path)
+{
+	if (!is_absolute_path(path) && argv0_path) {
+		struct strbuf d = STRBUF_INIT;
+		strbuf_addf(&d, "%s/%s", argv0_path, path);
+		path = strbuf_detach(&d, NULL);
+	}
+	return path;
+}
+
+void git_set_argv0_path(const char *path)
+{
+	argv0_path = path;
+}
 
 void git_set_argv_exec_path(const char *exec_path)
 {
@@ -26,7 +41,7 @@ const char *git_exec_path(void)
 		return env;
 	}
 
-	return builtin_exec_path;
+	return system_path(GIT_EXEC_PATH);
 }
 
 static void add_path(struct strbuf *out, const char *path)
@@ -35,13 +50,13 @@ static void add_path(struct strbuf *out, const char *path)
 		if (is_absolute_path(path))
 			strbuf_addstr(out, path);
 		else
-			strbuf_addstr(out, make_absolute_path(path));
+			strbuf_addstr(out, make_nonrelative_path(path));
 
-		strbuf_addch(out, ':');
+		strbuf_addch(out, PATH_SEP);
 	}
 }
 
-void setup_path(const char *cmd_path)
+void setup_path(void)
 {
 	const char *old_path = getenv("PATH");
 	struct strbuf new_path;
@@ -50,8 +65,8 @@ void setup_path(const char *cmd_path)
 
 	add_path(&new_path, argv_exec_path);
 	add_path(&new_path, getenv(EXEC_PATH_ENVIRONMENT));
-	add_path(&new_path, builtin_exec_path);
-	add_path(&new_path, cmd_path);
+	add_path(&new_path, system_path(GIT_EXEC_PATH));
+	add_path(&new_path, argv0_path);
 
 	if (old_path)
 		strbuf_addstr(&new_path, old_path);
@@ -63,34 +78,32 @@ void setup_path(const char *cmd_path)
 	strbuf_release(&new_path);
 }
 
-int execv_git_cmd(const char **argv)
+const char **prepare_git_cmd(const char **argv)
 {
-	struct strbuf cmd;
-	const char *tmp;
+	int argc;
+	const char **nargv;
 
-	strbuf_init(&cmd, 0);
-	strbuf_addf(&cmd, "git-%s", argv[0]);
+	for (argc = 0; argv[argc]; argc++)
+		; /* just counting */
+	nargv = xmalloc(sizeof(*nargv) * (argc + 2));
 
-	/*
-	 * argv[0] must be the git command, but the argv array
-	 * belongs to the caller, and may be reused in
-	 * subsequent loop iterations. Save argv[0] and
-	 * restore it on error.
-	 */
-	tmp = argv[0];
-	argv[0] = cmd.buf;
+	nargv[0] = "git";
+	for (argc = 0; argv[argc]; argc++)
+		nargv[argc + 1] = argv[argc];
+	nargv[argc + 1] = NULL;
+	return nargv;
+}
 
-	trace_argv_printf(argv, "trace: exec:");
+int execv_git_cmd(const char **argv) {
+	const char **nargv = prepare_git_cmd(argv);
+	trace_argv_printf(nargv, "trace: exec:");
 
 	/* execvp() can only ever return if it fails */
-	execvp(cmd.buf, (char **)argv);
+	execvp("git", (char **)nargv);
 
 	trace_printf("trace: exec failed: %s\n", strerror(errno));
 
-	argv[0] = tmp;
-
-	strbuf_release(&cmd);
-
+	free(nargv);
 	return -1;
 }
 

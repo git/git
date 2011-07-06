@@ -89,4 +89,8 @@ EOF
 
 test_expect_success 'Criss-cross merge result' 'cmp file file-expect'
 
+test_expect_success 'Criss-cross merge fails (-s resolve)' \
+'git reset --hard A^ &&
+test_must_fail git merge -s resolve -m "final merge" B'
+
 test_done

@@ -9,7 +9,10 @@ const char *tag_type = "tag";
 struct object *deref_tag(struct object *o, const char *warn, int warnlen)
 {
 	while (o && o->type == OBJ_TAG)
-		o = parse_object(((struct tag *)o)->tagged->sha1);
+		if (((struct tag *)o)->tagged)
+			o = parse_object(((struct tag *)o)->tagged->sha1);
+		else
+			o = NULL;
 	if (!o && warn) {
 		if (!warnlen)
 			warnlen = strlen(warn);
@@ -82,12 +85,6 @@ int parse_tag_buffer(struct tag *item, void *data, unsigned long size)
 	} else {
 		error("Unknown type %s", type);
 		item->tagged = NULL;
-	}
-
-	if (item->tagged && track_object_refs) {
-		struct object_refs *refs = alloc_object_refs(1);
-		refs->ref[0] = item->tagged;
-		set_object_refs(&item->object, refs);
 	}
 
 	return 0;

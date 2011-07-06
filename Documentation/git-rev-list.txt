@@ -20,6 +20,9 @@ SYNOPSIS
 	     [ \--full-history ]
 	     [ \--not ]
 	     [ \--all ]
+	     [ \--branches ]
+	     [ \--tags ]
+	     [ \--remotes ]
 	     [ \--stdin ]
 	     [ \--quiet ]
 	     [ \--topo-order ]
@@ -31,6 +34,7 @@ SYNOPSIS
 	     [ \--(author|committer|grep)=<pattern> ]
 	     [ \--regexp-ignore-case | \-i ]
 	     [ \--extended-regexp | \-E ]
+	     [ \--fixed-strings | \-F ]
 	     [ \--date={local|relative|default|iso|rfc|short} ]
 	     [ [\--objects | \--objects-edge] [ \--unpacked ] ]
 	     [ \--pretty | \--header ]
@@ -55,7 +59,7 @@ stop at that point. Their parents are implied. Thus the following
 command:
 
 -----------------------------------------------------------------------
-	$ git-rev-list foo bar ^baz
+	$ git rev-list foo bar ^baz
 -----------------------------------------------------------------------
 
 means "list all the commits which are included in 'foo' and 'bar', but
@@ -66,8 +70,8 @@ short-hand for "{caret}'<commit1>' '<commit2>'". For example, either of
 the following may be used interchangeably:
 
 -----------------------------------------------------------------------
-	$ git-rev-list origin..HEAD
-	$ git-rev-list HEAD ^origin
+	$ git rev-list origin..HEAD
+	$ git rev-list HEAD ^origin
 -----------------------------------------------------------------------
 
 Another special notation is "'<commit1>'...'<commit2>'" which is useful
@@ -75,15 +79,15 @@ for merges.  The resulting set of commits is the symmetric difference
 between the two operands.  The following two commands are equivalent:
 
 -----------------------------------------------------------------------
-	$ git-rev-list A B --not $(git-merge-base --all A B)
-	$ git-rev-list A...B
+	$ git rev-list A B --not $(git merge-base --all A B)
+	$ git rev-list A...B
 -----------------------------------------------------------------------
 
-linkgit:git-rev-list[1] is a very essential git program, since it
+'git-rev-list' is a very essential git program, since it
 provides the ability to build and traverse commit ancestry graphs. For
 this reason, it has a lot of different options that enables it to be
-used by commands as different as linkgit:git-bisect[1] and
-linkgit:git-repack[1].
+used by commands as different as 'git-bisect' and
+'git-repack'.
 
 OPTIONS
 -------
@@ -105,4 +109,4 @@ and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

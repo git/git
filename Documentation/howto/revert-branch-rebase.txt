@@ -1,4 +1,4 @@
-From: Junio C Hamano <junkio@cox.net>
+From: Junio C Hamano <gitster@pobox.com>
 To: git@vger.kernel.org
 Subject: [HOWTO] Reverting an existing commit
 Abstract: In this article, JC gives a small real-life example of using

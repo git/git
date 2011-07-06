@@ -2,7 +2,7 @@
 #
 # Copyright (c) Robin Rosenberg
 #
-test_description='CVS export comit. '
+test_description='Test export of commits to CVS'
 
 . ./test-lib.sh
 
@@ -37,7 +37,7 @@ check_entries () {
 	else
 		printf '%s\n' "$2" | tr '|' '\012' >expected
 	fi
-	diff -u expected actual
+	test_cmp expected actual
 }
 
 test_expect_success \
@@ -100,7 +100,7 @@ test_expect_success \
      git commit -a -m "generation 2" &&
      id=$(git rev-list --max-count=1 HEAD) &&
      (cd "$CVSWORK" &&
-     ! git cvsexportcommit -c $id
+     test_must_fail git cvsexportcommit -c $id
      )'
 
 #test_expect_success \
@@ -112,7 +112,7 @@ test_expect_success \
 #     git commit -a -m "generation 3" &&
 #     id=$(git rev-list --max-count=1 HEAD) &&
 #     (cd "$CVSWORK" &&
-#     ! git cvsexportcommit -c $id
+#     test_must_fail git cvsexportcommit -c $id
 #     )'
 
 # We reuse the state from two tests back here
@@ -222,7 +222,7 @@ test_expect_success \
       git commit -a -m "Update two" &&
       id=$(git rev-list --max-count=1 HEAD) &&
       (cd "$CVSWORK" &&
-      ! git-cvsexportcommit -c $id
+      test_must_fail git-cvsexportcommit -c $id
       )'
 
 case "$(git config --bool core.filemode)" in
@@ -245,5 +245,73 @@ test_expect_success \
       )'
 	;;
 esac
+
+test_expect_success '-w option should work with relative GIT_DIR' '
+      mkdir W &&
+      echo foobar >W/file1.txt &&
+      echo bazzle >W/file2.txt &&
+      git add W/file1.txt &&
+      git add W/file2.txt &&
+      git commit -m "More updates" &&
+      id=$(git rev-list --max-count=1 HEAD) &&
+      (cd "$GIT_DIR" &&
+      GIT_DIR=. git cvsexportcommit -w "$CVSWORK" -c $id &&
+      check_entries "$CVSWORK/W" "file1.txt/1.1/|file2.txt/1.1/" &&
+      test_cmp "$CVSWORK/W/file1.txt" ../W/file1.txt &&
+      test_cmp "$CVSWORK/W/file2.txt" ../W/file2.txt
+      )
+'
+
+test_expect_success 'check files before directories' '
+
+	echo Notes > release-notes &&
+	git add release-notes &&
+	git commit -m "Add release notes" release-notes &&
+	id=$(git rev-parse HEAD) &&
+	git cvsexportcommit -w "$CVSWORK" -c $id &&
+
+	echo new > DS &&
+	echo new > E/DS &&
+	echo modified > release-notes &&
+	git add DS E/DS release-notes &&
+	git commit -m "Add two files with the same basename" &&
+	id=$(git rev-parse HEAD) &&
+	git cvsexportcommit -w "$CVSWORK" -c $id &&
+	check_entries "$CVSWORK/E" "DS/1.1/|newfile5.txt/1.1/" &&
+	check_entries "$CVSWORK" "DS/1.1/|release-notes/1.2/" &&
+	test_cmp "$CVSWORK/DS" DS &&
+	test_cmp "$CVSWORK/E/DS" E/DS &&
+	test_cmp "$CVSWORK/release-notes" release-notes
+
+'
+
+test_expect_success 'commit a file with leading spaces in the name' '
+
+	echo space > " space" &&
+	git add " space" &&
+	git commit -m "Add a file with a leading space" &&
+	id=$(git rev-parse HEAD) &&
+	git cvsexportcommit -w "$CVSWORK" -c $id &&
+	check_entries "$CVSWORK" " space/1.1/|DS/1.1/|release-notes/1.2/" &&
+	test_cmp "$CVSWORK/ space" " space"
+
+'
+
+test_expect_success 'use the same checkout for Git and CVS' '
+
+	(mkdir shared &&
+	 cd shared &&
+	 unset GIT_DIR &&
+	 cvs co . &&
+	 git init &&
+	 git add " space" &&
+	 git commit -m "fake initial commit" &&
+	 echo Hello >> " space" &&
+	 git commit -m "Another change" " space" &&
+	 git cvsexportcommit -W -p -u -c HEAD &&
+	 grep Hello " space" &&
+	 git diff-files)
+
+'
 
 test_done

@@ -25,7 +25,6 @@ commit id embedding:
 '
 
 . ./test-lib.sh
-TAR=${TAR:-tar}
 UNZIP=${UNZIP:-unzip}
 
 SUBSTFORMAT=%H%n
@@ -45,6 +44,11 @@ test_expect_success \
      (cd a && find .) | sort >a.lst'
 
 test_expect_success \
+    'add ignored file' \
+    'echo ignore me >a/ignored &&
+     echo ignored export-ignore >.gitattributes'
+
+test_expect_success \
     'add files to repository' \
     'find a -type f | xargs git update-index --add &&
      find a -type l | xargs git update-index --add &&
@@ -52,6 +56,10 @@ test_expect_success \
      echo $treeid >treeid &&
      git update-ref HEAD $(TZ=GMT GIT_COMMITTER_DATE="2005-05-27 22:00:00" \
      git commit-tree $treeid </dev/null)'
+
+test_expect_success \
+    'remove ignored file' \
+    'rm a/ignored'
 
 test_expect_success \
     'git archive' \
@@ -67,10 +75,10 @@ test_expect_success \
 
 test_expect_success \
     'validate file modification time' \
-    'TZ=GMT $TAR tvf b.tar a/a |
-     awk \{print\ \$4,\ \(length\(\$5\)\<7\)\ ?\ \$5\":00\"\ :\ \$5\} \
-     >b.mtime &&
-     echo "2005-05-27 22:00:00" >expected.mtime &&
+    'mkdir extract &&
+     "$TAR" xf b.tar -C extract a/a &&
+     perl -e '\''print((stat("extract/a/a"))[9], "\n")'\'' >b.mtime &&
+     echo "1117231200" >expected.mtime &&
      diff expected.mtime b.mtime'
 
 test_expect_success \
@@ -80,7 +88,7 @@ test_expect_success \
 
 test_expect_success \
     'extract tar archive' \
-    '(cd b && $TAR xf -) <b.tar'
+    '(cd b && "$TAR" xf -) <b.tar'
 
 test_expect_success \
     'validate filenames' \
@@ -97,7 +105,7 @@ test_expect_success \
 
 test_expect_success \
     'extract tar archive with prefix' \
-    '(cd c && $TAR xf -) <c.tar'
+    '(cd c && "$TAR" xf -) <c.tar'
 
 test_expect_success \
     'validate filenames with prefix' \
@@ -109,14 +117,15 @@ test_expect_success \
     'diff -r a c/prefix/a'
 
 test_expect_success \
-    'create an archive with a substfiles' \
+    'create archives with substfiles' \
     'echo "substfile?" export-subst >a/.gitattributes &&
      git archive HEAD >f.tar &&
+     git archive --prefix=prefix/ HEAD >g.tar &&
      rm a/.gitattributes'
 
 test_expect_success \
     'extract substfiles' \
-    '(mkdir f && cd f && $TAR xf -) <f.tar'
+    '(mkdir f && cd f && "$TAR" xf -) <f.tar'
 
 test_expect_success \
      'validate substfile contents' \
@@ -124,6 +133,18 @@ test_expect_success \
       >f/a/substfile1.expected &&
       diff f/a/substfile1.expected f/a/substfile1 &&
       diff a/substfile2 f/a/substfile2
+'
+
+test_expect_success \
+    'extract substfiles from archive with prefix' \
+    '(mkdir g && cd g && "$TAR" xf -) <g.tar'
+
+test_expect_success \
+     'validate substfile contents from archive with prefix' \
+     'git log --max-count=1 "--pretty=format:A${SUBSTFORMAT}O" HEAD \
+      >g/prefix/a/substfile1.expected &&
+      diff g/prefix/a/substfile1.expected g/prefix/a/substfile1 &&
+      diff a/substfile2 g/prefix/a/substfile2
 '
 
 test_expect_success \

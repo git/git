@@ -83,13 +83,13 @@ test_expect_success "checkout with unrelated dirty tree without -m" '
 	fill 0 1 2 3 4 5 6 7 8 >same &&
 	cp same kept
 	git checkout side >messages &&
-	diff -u same kept
+	test_cmp same kept
 	(cat > messages.expect <<EOF
 M	same
 EOF
 ) &&
 	touch messages.expect &&
-	diff -u messages.expect messages
+	test_cmp messages.expect messages
 '
 
 test_expect_success "checkout -m with dirty tree" '
@@ -106,19 +106,19 @@ test_expect_success "checkout -m with dirty tree" '
 M	one
 EOF
 ) &&
-	diff -u expect.messages messages &&
+	test_cmp expect.messages messages &&
 
 	fill "M	one" "A	three" "D	two" >expect.master &&
 	git diff --name-status master >current.master &&
-	diff -u expect.master current.master &&
+	test_cmp expect.master current.master &&
 
 	fill "M	one" >expect.side &&
 	git diff --name-status side >current.side &&
-	diff -u expect.side current.side &&
+	test_cmp expect.side current.side &&
 
 	: >expect.index &&
 	git diff --cached >current.index &&
-	diff -u expect.index current.index
+	test_cmp expect.index current.index
 '
 
 test_expect_success "checkout -m with dirty tree, renamed" '
@@ -136,7 +136,7 @@ test_expect_success "checkout -m with dirty tree, renamed" '
 
 	git checkout -m renamer &&
 	fill 1 3 4 5 7 8 >expect &&
-	diff -u expect uno &&
+	test_cmp expect uno &&
 	! test -f one &&
 	git diff --cached >current &&
 	! test -s current
@@ -161,7 +161,7 @@ test_expect_success 'checkout -m with merge conflict' '
 	git diff master:one :3:uno |
 	sed -e "1,/^@@/d" -e "/^ /d" -e "s/^-/d/" -e "s/^+/a/" >current &&
 	fill d2 aT d7 aS >expect &&
-	diff -u current expect &&
+	test_cmp current expect &&
 	git diff --cached two >current &&
 	! test -s current
 '
@@ -178,7 +178,7 @@ If you want to create a new branch from this checkout, you may do so
 HEAD is now at 7329388... Initial A one, A two
 EOF
 ) &&
-	diff -u messages.expect messages &&
+	test_cmp messages.expect messages &&
 	H=$(git rev-parse --verify HEAD) &&
 	M=$(git show-ref -s --verify refs/heads/master) &&
 	test "z$H" = "z$M" &&
@@ -195,6 +195,22 @@ test_expect_success 'checkout to detach HEAD with branchname^' '
 
 	git checkout -f master && git clean -f &&
 	git checkout renamer^ &&
+	H=$(git rev-parse --verify HEAD) &&
+	M=$(git show-ref -s --verify refs/heads/master) &&
+	test "z$H" = "z$M" &&
+	if git symbolic-ref HEAD >/dev/null 2>&1
+	then
+		echo "OOPS, HEAD is still symbolic???"
+		false
+	else
+		: happy
+	fi
+'
+
+test_expect_success 'checkout to detach HEAD with :/message' '
+
+	git checkout -f master && git clean -f &&
+	git checkout ":/Initial" &&
 	H=$(git rev-parse --verify HEAD) &&
 	M=$(git show-ref -s --verify refs/heads/master) &&
 	test "z$H" = "z$M" &&
@@ -262,5 +278,63 @@ test_expect_success 'checkout with ambiguous tag/branch names' '
 	fi
 
 '
+
+test_expect_success 'switch branches while in subdirectory' '
+
+	git reset --hard &&
+	git checkout master &&
+
+	mkdir subs &&
+	(
+		cd subs &&
+		git checkout side
+	) &&
+	! test -f subs/one &&
+	rm -fr subs
+
+'
+
+test_expect_success 'checkout specific path while in subdirectory' '
+
+	git reset --hard &&
+	git checkout side &&
+	mkdir subs &&
+	>subs/bero &&
+	git add subs/bero &&
+	git commit -m "add subs/bero" &&
+
+	git checkout master &&
+	mkdir -p subs &&
+	(
+		cd subs &&
+		git checkout side -- bero
+	) &&
+	test -f subs/bero
+
+'
+
+test_expect_success \
+    'checkout w/--track sets up tracking' '
+    git config branch.autosetupmerge false &&
+    git checkout master &&
+    git checkout --track -b track1 &&
+    test "$(git config branch.track1.remote)" &&
+    test "$(git config branch.track1.merge)"'
+
+test_expect_success \
+    'checkout w/autosetupmerge=always sets up tracking' '
+    git config branch.autosetupmerge always &&
+    git checkout master &&
+    git checkout -b track2 &&
+    test "$(git config branch.track2.remote)" &&
+    test "$(git config branch.track2.merge)"
+    git config branch.autosetupmerge false'
+
+test_expect_success \
+    'checkout w/--track from non-branch HEAD fails' '
+    git checkout -b delete-me master &&
+    rm .git/refs/heads/delete-me &&
+    test refs/heads/delete-me = "$(git symbolic-ref HEAD)" &&
+    test_must_fail git checkout --track -b track'
 
 test_done

@@ -9,7 +9,7 @@ git-pack-objects - Create a packed archive of objects
 SYNOPSIS
 --------
 [verse]
-'git-pack-objects' [-q] [--no-reuse-delta] [--delta-base-offset] [--non-empty]
+'git pack-objects' [-q] [--no-reuse-delta] [--delta-base-offset] [--non-empty]
 	[--local] [--incremental] [--window=N] [--depth=N] [--all-progress]
 	[--revs [--unpacked | --all]*] [--stdout | base-name] < object-list
 
@@ -22,14 +22,15 @@ archive with specified base-name, or to the standard output.
 A packed archive is an efficient way to transfer set of objects
 between two repositories, and also is an archival format which
 is efficient to access.  The packed archive format (.pack) is
-designed to be unpackable without having anything else, but for
-random access, accompanied with the pack index file (.idx).
+designed to be self contained so that it can be unpacked without
+any further information, but for fast, random access to the objects
+in the pack, a pack index file (.idx) will be generated.
 
 Placing both in the pack/ subdirectory of $GIT_OBJECT_DIRECTORY (or
 any of the directories on $GIT_ALTERNATE_OBJECT_DIRECTORIES)
 enables git to read from such an archive.
 
-'git-unpack-objects' command can read the packed archive and
+The 'git-unpack-objects' command can read the packed archive and
 expand the objects contained in the pack into "one-file
 one-object" format; this is typically done by the smart-pull
 commands when a pack is created on-the-fly for efficient network
@@ -58,7 +59,7 @@ base-name::
 --revs::
 	Read the revision arguments from the standard input, instead of
 	individual object names.  The revision arguments are processed
-	the same way as linkgit:git-rev-list[1] with `--objects` flag
+	the same way as 'git-rev-list' with the `--objects` flag
 	uses its `commit` arguments to build the list of objects it
 	outputs.  The objects on the resulting list are packed.
 
@@ -73,7 +74,13 @@ base-name::
 	as if all refs under `$GIT_DIR/refs` are specified to be
 	included.
 
---window=[N], --depth=[N]::
+--include-tag::
+	Include unasked-for annotated tags if the object they
+	reference was included in the resulting packfile.  This
+	can be useful to send new tags to native git clients.
+
+--window=[N]::
+--depth=[N]::
 	These two options affect how the objects contained in
 	the pack are stored using delta compression.  The
 	objects are first internally sorted by type, size and
@@ -99,7 +106,8 @@ base-name::
 --max-pack-size=<n>::
 	Maximum size of each output packfile, expressed in MiB.
 	If specified,  multiple packfiles may be created.
-	The default is unlimited.
+	The default is unlimited, unless the config variable
+	`pack.packSizeLimit` is set.
 
 --incremental::
 	This flag causes an object already in a pack ignored
@@ -155,14 +163,14 @@ base-name::
 	generated pack.  If not specified,  pack compression level is
 	determined first by pack.compression,  then by core.compression,
 	and defaults to -1,  the zlib default,  if neither is set.
-	Add \--no-reuse-object if you want to force a uniform compression
+	Add --no-reuse-object if you want to force a uniform compression
 	level on all data no matter the source.
 
 --delta-base-offset::
 	A packed archive can express base object of a delta as
 	either 20-byte object name or as an offset in the
 	stream, but older version of git does not understand the
-	latter.  By default, git-pack-objects only uses the
+	latter.  By default, 'git-pack-objects' only uses the
 	former format for better compatibility.  This option
 	allows the command to use the latter format for
 	compactness.  Depending on the average delta chain
@@ -176,6 +184,8 @@ base-name::
 	This is meant to reduce packing time on multiprocessor machines.
 	The required amount of memory for the delta search window is
 	however multiplied by the number of threads.
+	Specifying 0 will cause git to auto-detect the number of CPU's
+	and set the number of threads accordingly.
 
 --index-version=<version>[,<offset>]::
 	This is intended to be used by the test suite only. It allows
@@ -191,7 +201,7 @@ Documentation
 -------------
 Documentation by Junio C Hamano
 
-See Also
+SEE ALSO
 --------
 linkgit:git-rev-list[1]
 linkgit:git-repack[1]
@@ -199,4 +209,4 @@ linkgit:git-prune-packed[1]
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

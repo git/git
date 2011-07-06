@@ -7,7 +7,7 @@ git-sh-setup - Common git shell script setup code
 
 SYNOPSIS
 --------
-'git-sh-setup'
+'. "$(git --exec-path)/git-sh-setup"'
 
 DESCRIPTION
 -----------
@@ -16,7 +16,7 @@ This is not a command the end user would want to run.  Ever.
 This documentation is meant for people who are studying the
 Porcelain-ish scripts and/or are writing new ones.
 
-The `git-sh-setup` scriptlet is designed to be sourced (using
+The 'git-sh-setup' scriptlet is designed to be sourced (using
 `.`) by other shell scripts to set up some variables pointing at
 the normal git directories and a few helper shell functions.
 
@@ -77,4 +77,4 @@ Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

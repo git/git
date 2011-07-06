@@ -34,7 +34,7 @@ msgstr "branche"
 
 #. ""
 msgid "branch [verb]"
-msgstr "créer une branche"
+msgstr "crÃ©er une branche"
 
 #. ""
 msgid "checkout [noun]"
@@ -58,7 +58,7 @@ msgstr "commiter"
 
 #. ""
 msgid "diff [noun]"
-msgstr "différence"
+msgstr "diffÃ©rence"
 
 #. ""
 msgid "diff [verb]"
@@ -70,11 +70,11 @@ msgstr "fusion par avance rapide"
 
 #. "Fetching a branch means to get the branch's head from a remote repository, to find out which objects are missing from the local object database, and to get them, too."
 msgid "fetch"
-msgstr "récupérer"
+msgstr "rÃ©cupÃ©rer"
 
 #. "A collection of files. The index is a stored version of your working tree."
 msgid "index (in git-gui: staging area)"
-msgstr "pré-commit"
+msgstr "prÃ©-commit"
 
 #. "A successful merge results in the creation of a new commit representing the result of the merge."
 msgid "merge [noun]"
@@ -106,15 +106,15 @@ msgstr "refaire"
 
 #. "An other repository ('remote'). One might have a set of remotes whose branches one tracks."
 msgid "remote"
-msgstr "référentiel distant"
+msgstr "rÃ©fÃ©rentiel distant"
 
 #. "A collection of refs (?) together with an object database containing all objects which are reachable from the refs... (oops, you've lost me here. Again, please an explanation for mere mortals?)"
 msgid "repository"
-msgstr "référentiel"
+msgstr "rÃ©fÃ©rentiel"
 
 #. ""
 msgid "reset"
-msgstr "réinitialiser"
+msgstr "rÃ©initialiser"
 
 #. ""
 msgid "revert"
@@ -122,7 +122,7 @@ msgstr "inverser"
 
 #. "A particular state of files and directories which was stored in the object database."
 msgid "revision"
-msgstr "révision"
+msgstr "rÃ©vision"
 
 #. ""
 msgid "sign off"
@@ -130,11 +130,11 @@ msgstr "signer"
 
 #. ""
 msgid "staging area"
-msgstr "pré-commit"
+msgstr "prÃ©-commit"
 
 #. ""
 msgid "status"
-msgstr "état"
+msgstr "Ã©tat"
 
 #. "A ref pointing to a tag or commit object"
 msgid "tag [noun]"
@@ -150,15 +150,15 @@ msgstr "branche de suivi"
 
 #. ""
 msgid "undo"
-msgstr "défaire"
+msgstr "dÃ©faire"
 
 #. ""
 msgid "update"
-msgstr "mise à jour"
+msgstr "mise Ã  jour"
 
 #. ""
 msgid "verify"
-msgstr "vérifier"
+msgstr "vÃ©rifier"
 
 #. "The tree of actual checked out files."
 msgid "working copy, working tree"

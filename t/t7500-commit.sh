@@ -23,12 +23,12 @@ test_expect_success 'a basic commit in an empty tree should succeed' '
 test_expect_success 'nonexistent template file should return error' '
 	echo changes >> foo &&
 	git add foo &&
-	! git commit --template "$PWD"/notexist
+	test_must_fail git commit --template "$PWD"/notexist
 '
 
 test_expect_success 'nonexistent template file in config should return error' '
 	git config commit.template "$PWD"/notexist &&
-	! git commit &&
+	test_must_fail git commit &&
 	git config --unset commit.template
 '
 
@@ -37,12 +37,12 @@ TEMPLATE="$PWD"/template
 
 test_expect_success 'unedited template should not commit' '
 	echo "template line" > "$TEMPLATE" &&
-	! git commit --template "$TEMPLATE"
+	test_must_fail git commit --template "$TEMPLATE"
 '
 
 test_expect_success 'unedited template with comments should not commit' '
 	echo "# comment in template" >> "$TEMPLATE" &&
-	! git commit --template "$TEMPLATE"
+	test_must_fail git commit --template "$TEMPLATE"
 '
 
 test_expect_success 'a Signed-off-by line by itself should not commit' '
@@ -136,6 +136,35 @@ test_expect_success '--signoff' '
 		GIT_EDITOR=../t7500/add-content git commit -s -F - foo &&
 	git cat-file commit HEAD | sed "1,/^$/d" > output &&
 	diff expect output
+'
+
+test_expect_success 'commit message from file (1)' '
+	mkdir subdir &&
+	echo "Log in top directory" >log &&
+	echo "Log in sub directory" >subdir/log &&
+	(
+		cd subdir &&
+		git commit --allow-empty -F log
+	) &&
+	commit_msg_is "Log in sub directory"
+'
+
+test_expect_success 'commit message from file (2)' '
+	rm -f log &&
+	echo "Log in sub directory" >subdir/log &&
+	(
+		cd subdir &&
+		git commit --allow-empty -F log
+	) &&
+	commit_msg_is "Log in sub directory"
+'
+
+test_expect_success 'commit message from stdin' '
+	(
+		cd subdir &&
+		echo "Log with foo word" | git commit --allow-empty -F -
+	) &&
+	commit_msg_is "Log with foo word"
 '
 
 test_done

@@ -8,14 +8,14 @@ git-diff - Show changes between commits, commit and working tree, etc
 
 SYNOPSIS
 --------
-'git-diff' [<common diff options>] <commit>{0,2} [--] [<path>...]
+'git diff' [<common diff options>] <commit>{0,2} [--] [<path>...]
 
 DESCRIPTION
 -----------
 Show changes between two trees, a tree and the working tree, a
 tree and the index file, or the index file and the working tree.
 
-'git-diff' [--options] [--] [<path>...]::
+'git diff' [--options] [--] [<path>...]::
 
 	This form is to view the changes you made relative to
 	the index (staging area for the next commit).  In other
@@ -27,14 +27,14 @@ If exactly two paths are given, and at least one is untracked,
 compare the two files / directories. This behavior can be
 forced by --no-index.
 
-'git-diff' [--options] --cached [<commit>] [--] [<path>...]::
+'git diff' [--options] --cached [<commit>] [--] [<path>...]::
 
 	This form is to view the changes you staged for the next
 	commit relative to the named <commit>.  Typically you
 	would want comparison with the latest commit, so if you
 	do not give <commit>, it defaults to HEAD.
 
-'git-diff' [--options] <commit> [--] [<path>...]::
+'git diff' [--options] <commit> [--] [<path>...]::
 
 	This form is to view the changes you have in your
 	working tree relative to the named <commit>.  You can
@@ -42,23 +42,23 @@ forced by --no-index.
 	branch name to compare with the tip of a different
 	branch.
 
-'git-diff' [--options] <commit> <commit> [--] [<path>...]::
+'git diff' [--options] <commit> <commit> [--] [<path>...]::
 
 	This is to view the changes between two arbitrary
 	<commit>.
 
-'git-diff' [--options] <commit>..<commit> [--] [<path>...]::
+'git diff' [--options] <commit>..<commit> [--] [<path>...]::
 
 	This is synonymous to the previous form.  If <commit> on
 	one side is omitted, it will have the same effect as
 	using HEAD instead.
 
-'git-diff' [--options] <commit>\...<commit> [--] [<path>...]::
+'git diff' [--options] <commit>\...<commit> [--] [<path>...]::
 
 	This form is to view the changes on the branch containing
 	and up to the second <commit>, starting at a common ancestor
-	of both <commit>.  "git-diff A\...B" is equivalent to
-	"git-diff $(git-merge-base A B) B".  You can omit any one
+	of both <commit>.  "git diff A\...B" is equivalent to
+	"git diff $(git-merge-base A B) B".  You can omit any one
 	of <commit>, which has the same effect as using HEAD instead.
 
 Just in case if you are doing something exotic, it should be
@@ -168,4 +168,4 @@ Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

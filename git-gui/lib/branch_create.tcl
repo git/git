@@ -183,6 +183,9 @@ method _create {} {
 	if {$spec ne {} && $opt_fetch} {
 		$co enable_fetch $spec
 	}
+	if {$spec ne {}} {
+		$co remote_source $spec
+	}
 
 	if {[$co run]} {
 		destroy $w

@@ -8,7 +8,7 @@ git-blame - Show what revision and author last modified each line of a file
 SYNOPSIS
 --------
 [verse]
-'git-blame' [-c] [-b] [-l] [--root] [-t] [-f] [-n] [-s] [-p] [-w] [--incremental] [-L n,m]
+'git blame' [-c] [-b] [-l] [--root] [-t] [-f] [-n] [-s] [-p] [-w] [--incremental] [-L n,m]
             [-S <revs-file>] [-M] [-C] [-C] [--since=<date>]
             [<rev> | --contents <file>] [--] <file>
 
@@ -21,7 +21,7 @@ last modified the line. Optionally, start annotating from the given revision.
 Also it can limit the range of lines annotated.
 
 This report doesn't tell you anything about lines which have been deleted or
-replaced; you need to use a tool such as linkgit:git-diff[1] or the "pickaxe"
+replaced; you need to use a tool such as 'git-diff' or the "pickaxe"
 interface briefly mentioned in the following paragraph.
 
 Apart from supporting file annotation, git also supports searching the
@@ -49,15 +49,17 @@ include::blame-options.txt[]
 	file (see `-M`).  The first number listed is the score.
 	This is the number of alphanumeric characters detected
 	to be moved between or within files.  This must be above
-	a certain threshold for git-blame to consider those lines
+	a certain threshold for 'git-blame' to consider those lines
 	of code to have been moved.
 
--f, --show-name::
+-f::
+--show-name::
 	Show filename in the original commit.  By default
 	filename is shown if there is any line that came from a
 	file with different name, due to rename detection.
 
--n, --show-number::
+-n::
+--show-number::
 	Show line number in the original commit (Default: off).
 
 -s::
@@ -98,7 +100,7 @@ header elements later.
 SPECIFYING RANGES
 -----------------
 
-Unlike `git-blame` and `git-annotate` in older git, the extent
+Unlike 'git-blame' and 'git-annotate' in older git, the extent
 of annotation can be limited to both line ranges and revision
 ranges.  When you are interested in finding the origin for
 ll. 40-60 for file `foo`, you can use `-L` option like these
@@ -116,7 +118,7 @@ would limit the annotation to the body of `hello` subroutine.
 
 When you are not interested in changes older than the version
 v2.6.18, or changes older than 3 weeks, you can use revision
-range specifiers  similar to `git-rev-list`:
+range specifiers  similar to 'git-rev-list':
 
 	git blame v2.6.18.. -- foo
 	git blame --since=3.weeks -- foo
@@ -188,8 +190,8 @@ linkgit:git-annotate[1]
 
 AUTHOR
 ------
-Written by Junio C Hamano <junkio@cox.net>
+Written by Junio C Hamano <gitster@pobox.com>
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

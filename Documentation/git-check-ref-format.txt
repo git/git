@@ -7,7 +7,7 @@ git-check-ref-format - Make sure ref name is well formed
 
 SYNOPSIS
 --------
-'git-check-ref-format' <refname>
+'git check-ref-format' <refname>
 
 DESCRIPTION
 -----------
@@ -47,9 +47,9 @@ refname expressions (see linkgit:git-rev-parse[1]).  Namely:
 . colon `:` is used as in `srcref:dstref` to mean "use srcref\'s
   value and store it in dstref" in fetch and push operations.
   It may also be used to select a specific object such as with
-  linkgit:git-cat-file[1] "git-cat-file blob v1.3.3:refs.c".
+  'git-cat-file': "git cat-file blob v1.3.3:refs.c".
 
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

@@ -63,6 +63,13 @@ path in question, and its parent directories (the further the
 directory that contains `.gitattributes` is from the path in
 question, the lower its precedence).
 
+If you wish to affect only a single repository (i.e., to assign
+attributes to files that are particular to one user's workflow), then
+attributes should be placed in the `$GIT_DIR/info/attributes` file.
+Attributes which should be version-controlled and distributed to other
+repositories (i.e., attributes of interest to all users) should go into
+`.gitattributes` files.
+
 Sometimes you would need to override an setting of an attribute
 for a path to `unspecified` state.  This can be done by listing
 the name of the attribute prefixed with an exclamation point `!`.
@@ -80,9 +87,9 @@ Checking-out and checking-in
 
 These attributes affect how the contents stored in the
 repository are copied to the working tree files when commands
-such as `git checkout` and `git merge` run.  They also affect how
+such as 'git-checkout' and 'git-merge' run.  They also affect how
 git stores the contents you prepare in the working tree in the
-repository upon `git add` and `git commit`.
+repository upon 'git-add' and 'git-commit'.
 
 `crlf`
 ^^^^^^
@@ -132,6 +139,26 @@ in to the repository.
 When `core.autocrlf` is set to "input", line endings are
 converted to LF upon checkin, but there is no conversion done
 upon checkout.
+
+If `core.safecrlf` is set to "true" or "warn", git verifies if
+the conversion is reversible for the current setting of
+`core.autocrlf`.  For "true", git rejects irreversible
+conversions; for "warn", git only prints a warning but accepts
+an irreversible conversion.  The safety triggers to prevent such
+a conversion done to the files in the work tree, but there are a
+few exceptions.  Even though...
+
+- 'git-add' itself does not touch the files in the work tree, the
+  next checkout would, so the safety triggers;
+
+- 'git-apply' to update a text file with a patch does touch the files
+  in the work tree, but the operation is about text files and CRLF
+  conversion is about fixing the line ending inconsistencies, so the
+  safety does not trigger;
+
+- 'git-diff' itself does not touch the files in the work tree, it is
+  often run to inspect the changes you intend to next 'git-add'.  To
+  catch potential problems early, safety triggers.
 
 
 `ident`
@@ -187,7 +214,7 @@ with `crlf`, and then `ident` and fed to `filter`.
 Generating diff text
 ~~~~~~~~~~~~~~~~~~~~
 
-The attribute `diff` affects if `git diff` generates textual
+The attribute `diff` affects if 'git-diff' generates textual
 patch for the path or just says `Binary files differ`.  It also
 can affect what line is shown on the hunk header `@@ -k,l +n,m @@`
 line.
@@ -238,7 +265,7 @@ When git needs to show you a diff for the path with `diff`
 attribute set to `jcdiff`, it calls the command you specified
 with the above configuration, i.e. `j-c-diff`, with 7
 parameters, just like `GIT_EXTERNAL_DIFF` program is called.
-See linkgit:git[7] for details.
+See linkgit:git[1] for details.
 
 
 Defining a custom hunk-header
@@ -251,7 +278,7 @@ is prefixed with a line of the form:
 
 The text is called 'hunk header', and by default a line that
 begins with an alphabet, an underscore or a dollar sign is used,
-which matches what GNU `diff -p` output uses.  This default
+which matches what GNU 'diff -p' output uses.  This default
 selection however is not suited for some contents, and you can
 use customized pattern to make a selection.
 
@@ -280,9 +307,18 @@ backslash, and zero or more occurrences of `sub` followed by
 There are a few built-in patterns to make this easier, and `tex`
 is one of them, so you do not have to write the above in your
 configuration file (you still need to enable this with the
-attribute mechanism, via `.gitattributes`).  Another built-in
-pattern is defined for `java` that defines a pattern suitable
-for program text in Java language.
+attribute mechanism, via `.gitattributes`).  The following built in
+patterns are available:
+
+- `bibtex` suitable for files with BibTeX coded references.
+
+- `java` suitable for source code in the Java lanugage.
+
+- `pascal` suitable for source code in the Pascal/Delphi language.
+
+- `ruby` suitable for source code in the Ruby language.
+
+- `tex` suitable for source code for LaTeX documents.
 
 
 Performing a three-way merge
@@ -295,7 +331,7 @@ and other programs such as `git revert` and `git cherry-pick`.
 Set::
 
 	Built-in 3-way merge driver is used to merge the
-	contents in a way similar to `merge` command of `RCS`
+	contents in a way similar to 'merge' command of `RCS`
 	suite.  This is suitable for ordinary text files.
 
 Unset::
@@ -399,7 +435,7 @@ Checking whitespace errors
 ^^^^^^^^^^^^
 
 The `core.whitespace` configuration variable allows you to define what
-`diff` and `apply` should consider whitespace errors for all paths in
+'diff' and 'apply' should consider whitespace errors for all paths in
 the project (See linkgit:git-config[1]).  This attribute gives you finer
 control per path.
 
@@ -421,6 +457,29 @@ String::
 	Specify a comma separate list of common whitespace problems to
 	notice in the same format as `core.whitespace` configuration
 	variable.
+
+
+Creating an archive
+~~~~~~~~~~~~~~~~~~~
+
+`export-ignore`
+^^^^^^^^^^^^^^^
+
+Files and directories with the attribute `export-ignore` won't be added to
+archive files.
+
+`export-subst`
+^^^^^^^^^^^^^^
+
+If the attribute `export-subst` is set for a file then git will expand
+several placeholders when adding this file to an archive.  The
+expansion depends on the availability of a commit ID, i.e., if
+linkgit:git-archive[1] has been given a tree instead of a commit or a
+tag then no replacement will be done.  The placeholders are the same
+as those for the option `--pretty=format:` of linkgit:git-log[1],
+except that they need to be wrapped like this: `$Format:PLACEHOLDERS$`
+in the file.  E.g. the string `$Format:%H$` will be replaced by the
+commit hash.
 
 
 EXAMPLE
@@ -472,23 +531,7 @@ frotz	unspecified
 ----------------------------------------------------------------
 
 
-Creating an archive
-~~~~~~~~~~~~~~~~~~~
-
-`export-subst`
-^^^^^^^^^^^^^^
-
-If the attribute `export-subst` is set for a file then git will expand
-several placeholders when adding this file to an archive.  The
-expansion depends on the availability of a commit ID, i.e. if
-linkgit:git-archive[1] has been given a tree instead of a commit or a
-tag then no replacement will be done.  The placeholders are the same
-as those for the option `--pretty=format:` of linkgit:git-log[1],
-except that they need to be wrapped like this: `$Format:PLACEHOLDERS$`
-in the file.  E.g. the string `$Format:%H$` will be replaced by the
-commit hash.
-
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

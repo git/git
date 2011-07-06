@@ -110,7 +110,7 @@ test_expect_success \
 	cd .. &&
 	git update-ref refs/heads/master master^ || return 1
 	git-send-pack --force ./victim/.git/ master && return 1
-	! git diff .git/refs/heads/master victim/.git/refs/heads/master
+	! test_cmp .git/refs/heads/master victim/.git/refs/heads/master
 '
 
 test_expect_success \
@@ -120,7 +120,7 @@ test_expect_success \
 	cd .. &&
 	git-clone parent child && cd child && git-push --all &&
 	cd ../parent &&
-	git-branch -a >branches && ! grep -q origin/master branches
+	git-branch -a >branches && ! grep origin/master branches
 '
 
 rewound_push_setup() {

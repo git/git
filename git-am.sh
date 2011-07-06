@@ -2,31 +2,36 @@
 #
 # Copyright (c) 2005, 2006 Junio C Hamano
 
+SUBDIRECTORY_OK=Yes
 OPTIONS_KEEPDASHDASH=
 OPTIONS_SPEC="\
-git-am [options] <mbox>|<Maildir>...
-git-am [options] --resolved
-git-am [options] --skip
+git am [options] [<mbox>|<Maildir>...]
+git am [options] (--resolved | --skip | --abort)
 --
-d,dotest=       use <dir> and not .dotest
+d,dotest=       (removed -- do not use)
 i,interactive   run interactively
-b,binary        pass --allo-binary-replacement to git-apply
+b,binary        (historical option -- no-op)
 3,3way          allow fall back on 3way merging if needed
 s,signoff       add a Signed-off-by line to the commit message
 u,utf8          recode into utf8 (default)
-k,keep          pass -k flagg to git-mailinfo
+k,keep          pass -k flag to git-mailinfo
 whitespace=     pass it through git-apply
 C=              pass it through git-apply
 p=              pass it through git-apply
 resolvemsg=     override error message when patch failure occurs
 r,resolved      to be used after a patch failure
-skip            skip the current patch"
+skip            skip the current patch
+abort           restore the original branch and abort the patching operation.
+rebasing        (internal use for git-rebase)"
 
 . git-sh-setup
+prefix=$(git rev-parse --show-prefix)
 set_reflog_action am
 require_work_tree
+cd_to_toplevel
 
-git var GIT_COMMITTER_IDENT >/dev/null || exit
+git var GIT_COMMITTER_IDENT >/dev/null ||
+	die "You need to set your committer info first"
 
 stop_here () {
     echo "$1" >"$dotest/next"
@@ -38,7 +43,7 @@ stop_here_user_resolve () {
 	    printf '%s\n' "$resolvemsg"
 	    stop_here $1
     fi
-    cmdline=$(basename $0)
+    cmdline="git am"
     if test '' != "$interactive"
     then
         cmdline="$cmdline -i"
@@ -47,12 +52,9 @@ stop_here_user_resolve () {
     then
         cmdline="$cmdline -3"
     fi
-    if test '.dotest' != "$dotest"
-    then
-        cmdline="$cmdline -d=$dotest"
-    fi
     echo "When you have resolved this problem run \"$cmdline --resolved\"."
     echo "If you would prefer to skip this patch, instead run \"$cmdline --skip\"."
+    echo "To restore the original branch and stop patching run \"$cmdline --abort\"."
 
     stop_here $1
 }
@@ -85,7 +87,7 @@ fall_back_3way () {
 
     echo Using index info to reconstruct a base tree...
     if GIT_INDEX_FILE="$dotest/patch-merge-tmp-index" \
-	git apply $binary --cached <"$dotest/patch"
+	git apply --cached <"$dotest/patch"
     then
 	mv "$dotest/patch-merge-base+" "$dotest/patch-merge-base"
 	mv "$dotest/patch-merge-tmp-index" "$dotest/patch-merge-index"
@@ -107,7 +109,7 @@ It does not apply to blobs recorded in its index."
     # patch did not touch, so recursive ends up canceling them,
     # saying that we reverted all those changes.
 
-    eval GITHEAD_$his_tree='"$SUBJECT"'
+    eval GITHEAD_$his_tree='"$FIRSTLINE"'
     export GITHEAD_$his_tree
     git-merge-recursive $orig_tree -- HEAD $his_tree || {
 	    git rerere
@@ -117,12 +119,9 @@ It does not apply to blobs recorded in its index."
     unset GITHEAD_$his_tree
 }
 
-reread_subject () {
-	git stripspace <"$1" | sed -e 1q
-}
-
 prec=4
-dotest=.dotest sign= utf8=t keep= skip= interactive= resolved= binary=
+dotest="$GIT_DIR/rebase-apply"
+sign= utf8=t keep= skip= interactive= resolved= rebasing= abort=
 resolvemsg= resume=
 git_apply_opt=
 
@@ -132,7 +131,7 @@ do
 	-i|--interactive)
 		interactive=t ;;
 	-b|--binary)
-		binary=t ;;
+		: ;;
 	-3|--3way)
 		threeway=t ;;
 	-s|--signoff)
@@ -147,8 +146,13 @@ do
 		resolved=t ;;
 	--skip)
 		skip=t ;;
+	--abort)
+		abort=t ;;
+	--rebasing)
+		rebasing=t threeway=t keep=t ;;
 	-d|--dotest)
-		shift; dotest=$1;;
+		die "-d option is no longer supported.  Do not use."
+		;;
 	--resolvemsg)
 		shift; resolvemsg=$1 ;;
 	--whitespace)
@@ -176,7 +180,7 @@ fi
 
 if test -d "$dotest"
 then
-	case "$#,$skip$resolved" in
+	case "$#,$skip$resolved$abort" in
 	0,*t*)
 		# Explicit resume command and we do not have file, so
 		# we are happy.
@@ -184,7 +188,7 @@ then
 	0,)
 		# No file input but without resume parameters; catch
 		# user error to feed us a patch from standard input
-		# when there is already .dotest.  This is somewhat
+		# when there is already $dotest.  This is somewhat
 		# unreliable -- stdin could be /dev/null for example
 		# and the caller did not intend to feed us a patch but
 		# wanted to continue unattended.
@@ -194,30 +198,70 @@ then
 		false
 		;;
 	esac ||
-	die "previous dotest directory $dotest still exists but mbox given."
+	die "previous rebase directory $dotest still exists but mbox given."
 	resume=yes
+
+	case "$skip,$abort" in
+	t,)
+		git rerere clear
+		git read-tree --reset -u HEAD HEAD
+		orig_head=$(cat "$GIT_DIR/ORIG_HEAD")
+		git reset HEAD
+		git update-ref ORIG_HEAD $orig_head
+		;;
+	,t)
+		git rerere clear
+		git read-tree --reset -u HEAD ORIG_HEAD
+		git reset ORIG_HEAD
+		rm -fr "$dotest"
+		exit ;;
+	esac
 else
-	# Make sure we are not given --skip nor --resolved
-	test ",$skip,$resolved," = ,,, ||
+	# Make sure we are not given --skip, --resolved, nor --abort
+	test "$skip$resolved$abort" = "" ||
 		die "Resolve operation not in progress, we are not resuming."
 
 	# Start afresh.
 	mkdir -p "$dotest" || exit
 
+	if test -n "$prefix" && test $# != 0
+	then
+		first=t
+		for arg
+		do
+			test -n "$first" && {
+				set x
+				first=
+			}
+			case "$arg" in
+			/*)
+				set "$@" "$arg" ;;
+			*)
+				set "$@" "$prefix$arg" ;;
+			esac
+		done
+		shift
+	fi
 	git mailsplit -d"$prec" -o"$dotest" -b -- "$@" > "$dotest/last" ||  {
 		rm -fr "$dotest"
 		exit 1
 	}
 
-	# -b, -s, -u, -k and --whitespace flags are kept for the
+	# -s, -u, -k and --whitespace flags are kept for the
 	# resuming session after a patch failure.
 	# -3 and -i can and must be given when resuming.
-	echo "$binary" >"$dotest/binary"
 	echo " $ws" >"$dotest/whitespace"
 	echo "$sign" >"$dotest/sign"
 	echo "$utf8" >"$dotest/utf8"
 	echo "$keep" >"$dotest/keep"
 	echo 1 >"$dotest/next"
+	if test -n "$rebasing"
+	then
+		: >"$dotest/rebasing"
+	else
+		: >"$dotest/applying"
+		git update-ref ORIG_HEAD HEAD
+	fi
 fi
 
 case "$resolved" in
@@ -229,10 +273,6 @@ case "$resolved" in
 	fi
 esac
 
-if test "$(cat "$dotest/binary")" = t
-then
-	binary=--allow-binary-replacement
-fi
 if test "$(cat "$dotest/utf8")" = t
 then
 	utf8=-u
@@ -246,7 +286,7 @@ fi
 ws=`cat "$dotest/whitespace"`
 if test "$(cat "$dotest/sign")" = t
 then
-	SIGNOFF=`git-var GIT_COMMITTER_IDENT | sed -e '
+	SIGNOFF=`git var GIT_COMMITTER_IDENT | sed -e '
 			s/>.*/>/
 			s/^/Signed-off-by: /'
 		`
@@ -258,7 +298,6 @@ last=`cat "$dotest/last"`
 this=`cat "$dotest/next"`
 if test "$skip" = t
 then
-	git rerere clear
 	this=`expr "$this" + 1`
 	resume=
 fi
@@ -299,11 +338,24 @@ do
 			<"$dotest"/info >/dev/null &&
 			go_next && continue
 
-		test -s $dotest/patch || {
+		test -s "$dotest/patch" || {
 			echo "Patch is empty.  Was it split wrong?"
 			stop_here $this
 		}
-		git stripspace < "$dotest/msg" > "$dotest/msg-clean"
+		if test -f "$dotest/rebasing" &&
+			commit=$(sed -e 's/^From \([0-9a-f]*\) .*/\1/' \
+				-e q "$dotest/$msgnum") &&
+			test "$(git cat-file -t "$commit")" = commit
+		then
+			git cat-file commit "$commit" |
+			sed -e '1,/^$/d' >"$dotest/msg-clean"
+		else
+			SUBJECT="$(sed -n '/^Subject/ s/Subject: //p' "$dotest/info")"
+			case "$keep_subject" in -k)  SUBJECT="[PATCH] $SUBJECT" ;; esac
+
+			(printf '%s\n\n' "$SUBJECT"; cat "$dotest/msg") |
+				git stripspace > "$dotest/msg-clean"
+		fi
 		;;
 	esac
 
@@ -319,9 +371,6 @@ do
 
 	export GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL GIT_AUTHOR_DATE
 
-	SUBJECT="$(sed -n '/^Subject/ s/Subject: //p' "$dotest/info")"
-	case "$keep_subject" in -k)  SUBJECT="[PATCH] $SUBJECT" ;; esac
-
 	case "$resume" in
 	'')
 	    if test '' != "$SIGNOFF"
@@ -329,7 +378,7 @@ do
 		LAST_SIGNED_OFF_BY=`
 		    sed -ne '/^Signed-off-by: /p' \
 		    "$dotest/msg-clean" |
-		    tail -n 1
+		    sed -ne '$p'
 		`
 		ADD_SIGNOFF=`
 		    test "$LAST_SIGNED_OFF_BY" = "$SIGNOFF" || {
@@ -340,10 +389,8 @@ do
 		ADD_SIGNOFF=
 	    fi
 	    {
-		printf '%s\n' "$SUBJECT"
 		if test -s "$dotest/msg-clean"
 		then
-			echo
 			cat "$dotest/msg-clean"
 		fi
 		if test '' != "$ADD_SIGNOFF"
@@ -380,7 +427,6 @@ do
 		[aA]*) action=yes interactive= ;;
 		[nN]*) action=skip ;;
 		[eE]*) git_editor "$dotest/final-commit"
-		       SUBJECT=$(reread_subject "$dotest/final-commit")
 		       action=again ;;
 		[vV]*) action=again
 		       LESS=-S ${PAGER:-less} "$dotest/patch" ;;
@@ -390,6 +436,7 @@ do
 	else
 	    action=yes
 	fi
+	FIRSTLINE=$(sed 1q "$dotest/final-commit")
 
 	if test $action = skip
 	then
@@ -403,11 +450,11 @@ do
 		stop_here $this
 	fi
 
-	printf 'Applying %s\n' "$SUBJECT"
+	printf 'Applying: %s\n' "$FIRSTLINE"
 
 	case "$resolved" in
 	'')
-		git apply $git_apply_opt $binary --index "$dotest/patch"
+		git apply $git_apply_opt --index "$dotest/patch"
 		apply_status=$?
 		;;
 	t)
@@ -461,7 +508,7 @@ do
 	tree=$(git write-tree) &&
 	parent=$(git rev-parse --verify HEAD) &&
 	commit=$(git commit-tree $tree -p $parent <"$dotest/final-commit") &&
-	git update-ref -m "$GIT_REFLOG_ACTION: $SUBJECT" HEAD $commit $parent ||
+	git update-ref -m "$GIT_REFLOG_ACTION: $FIRSTLINE" HEAD $commit $parent ||
 	stop_here $this
 
 	if test -x "$GIT_DIR"/hooks/post-applypatch

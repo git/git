@@ -9,7 +9,7 @@ git-quiltimport - Applies a quilt patchset onto the current branch
 SYNOPSIS
 --------
 [verse]
-'git-quiltimport' [--dry-run] [--author <author>] [--patches <dir>]
+'git quiltimport' [--dry-run] [--author <author>] [--patches <dir>]
 
 
 DESCRIPTION
@@ -29,6 +29,8 @@ preserved as the 1 line subject in the git description.
 
 OPTIONS
 -------
+
+-n::
 --dry-run::
 	Walk through the patches in the series and warn
 	if we cannot find all of the necessary information to commit
@@ -57,4 +59,4 @@ Documentation by Eric Biederman <ebiederm@lnxi.com>
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

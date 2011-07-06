@@ -8,7 +8,7 @@ git-mktag - Creates a tag object
 
 SYNOPSIS
 --------
-'git-mktag' < signature_file
+'git mktag' < signature_file
 
 DESCRIPTION
 -----------
@@ -43,4 +43,4 @@ Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

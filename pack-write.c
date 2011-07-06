@@ -2,7 +2,7 @@
 #include "pack.h"
 #include "csum-file.h"
 
-uint32_t pack_idx_default_version = 1;
+uint32_t pack_idx_default_version = 2;
 uint32_t pack_idx_off32_limit = 0x7fffffff;
 
 static int sha1_compare(const void *_a, const void *_b)
@@ -139,7 +139,7 @@ char *write_idx_file(char *index_name, struct pack_idx_entry **objects,
 	}
 
 	sha1write(f, sha1, 20);
-	sha1close(f, NULL, 1);
+	sha1close(f, NULL, CSUM_FSYNC);
 	SHA1_Final(sha1, &ctx);
 	return index_name;
 }
@@ -183,7 +183,6 @@ void fixup_pack_header_footer(int pack_fd,
 
 char *index_pack_lockfile(int ip_out)
 {
-	int len, s;
 	char packname[46];
 
 	/*
@@ -193,11 +192,8 @@ char *index_pack_lockfile(int ip_out)
 	 * case, we need it to remove the corresponding .keep file
 	 * later on.  If we don't get that then tough luck with it.
 	 */
-	for (len = 0;
-		 len < 46 && (s = xread(ip_out, packname+len, 46-len)) > 0;
-		 len += s);
-	if (len == 46 && packname[45] == '\n' &&
-		memcmp(packname, "keep\t", 5) == 0) {
+	if (read_in_full(ip_out, packname, 46) == 46 && packname[45] == '\n' &&
+	    memcmp(packname, "keep\t", 5) == 0) {
 		char path[PATH_MAX];
 		packname[45] = 0;
 		snprintf(path, sizeof(path), "%s/pack/pack-%s.keep",

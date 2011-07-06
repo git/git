@@ -58,8 +58,8 @@ eval "$functions"
 # "author" or "committer
 
 set_ident () {
-	lid="$(echo "$1" | tr "A-Z" "a-z")"
-	uid="$(echo "$1" | tr "a-z" "A-Z")"
+	lid="$(echo "$1" | tr "[A-Z]" "[a-z]")"
+	uid="$(echo "$1" | tr "[a-z]" "[A-Z]")"
 	pick_id_script='
 		/^'$lid' /{
 			s/'\''/'\''\\'\'\''/g
@@ -97,9 +97,11 @@ USAGE="[--env-filter <command>] [--tree-filter <command>] \
 OPTIONS_SPEC=
 . git-sh-setup
 
-git diff-files --quiet &&
+if [ "$(is_bare_repository)" = false ]; then
+	git diff-files --quiet &&
 	git diff-index --cached --quiet HEAD -- ||
 	die "Cannot rewrite branch(es) with a dirty working directory."
+fi
 
 tempdir=.git-rewrite
 filter_env=
@@ -114,7 +116,6 @@ orig_namespace=refs/original/
 force=
 while :
 do
-	test $# = 0 && usage
 	case "$1" in
 	--)
 		shift
@@ -189,6 +190,9 @@ cd "$tempdir/t" &&
 workdir="$(pwd)" ||
 die ""
 
+# Remove tempdir on exit
+trap 'cd ../..; rm -rf "$tempdir"' 0
+
 # Make sure refs/original is empty
 git for-each-ref > "$tempdir"/backup-refs
 while read sha1 type name
@@ -210,7 +214,7 @@ GIT_WORK_TREE=.
 export GIT_DIR GIT_WORK_TREE
 
 # The refs should be updated if their heads were rewritten
-git rev-parse --no-flags --revs-only --symbolic-full-name "$@" |
+git rev-parse --no-flags --revs-only --symbolic-full-name --default HEAD "$@" |
 sed -e '/^^/d' >"$tempdir"/heads
 
 test -s "$tempdir"/heads ||
@@ -232,7 +236,7 @@ case "$filter_subdir" in
 	;;
 *)
 	git rev-list --reverse --topo-order --default HEAD \
-		--parents --full-history "$@" -- "$filter_subdir"
+		--parents "$@" -- "$filter_subdir"
 esac > ../revs || die "Could not get the commits"
 commits=$(wc -l <../revs | tr -d " ")
 
@@ -250,7 +254,16 @@ while read commit parents; do
 		git read-tree -i -m $commit
 		;;
 	*)
-		git read-tree -i -m $commit:"$filter_subdir"
+		# The commit may not have the subdirectory at all
+		err=$(git read-tree -i -m $commit:"$filter_subdir" 2>&1) || {
+			if ! git rev-parse --verify $commit:"$filter_subdir" 2>/dev/null
+			then
+				rm -f "$GIT_INDEX_FILE"
+			else
+				echo >&2 "$err"
+				false
+			fi
+		}
 	esac || die "Could not initialize the index"
 
 	GIT_COMMIT=$commit
@@ -270,14 +283,15 @@ while read commit parents; do
 			die "Could not checkout the index"
 		# files that $commit removed are now still in the working tree;
 		# remove them, else they would be added again
-		git ls-files -z --others | xargs -0 rm -f
+		git clean -d -q -f -x
 		eval "$filter_tree" < /dev/null ||
 			die "tree filter failed: $filter_tree"
 
-		git diff-index -r $commit | cut -f 2- | tr '\012' '\000' | \
-			xargs -0 git update-index --add --replace --remove
-		git ls-files -z --others | \
-			xargs -0 git update-index --add --replace --remove
+		(
+			git diff-index -r --name-only $commit
+			git ls-files --others
+		) |
+		git update-index --add --replace --remove --stdin
 	fi
 
 	eval "$filter_index" < /dev/null ||
@@ -297,7 +311,7 @@ while read commit parents; do
 	sed -e '1,/^$/d' <../commit | \
 		eval "$filter_msg" > ../message ||
 			die "msg filter failed: $filter_msg"
-	sh -c "$filter_commit" "git commit-tree" \
+	@SHELL_PATH@ -c "$filter_commit" "git commit-tree" \
 		$(git write-tree) $parentstr < ../message > ../map/$commit
 done <../revs
 
@@ -347,9 +361,17 @@ do
 	;;
 	$_x40)
 		echo "Ref '$ref' was rewritten"
-		git update-ref -m "filter-branch: rewrite" \
-				"$ref" $rewritten $sha1 ||
-			die "Could not rewrite $ref"
+		if ! git update-ref -m "filter-branch: rewrite" \
+					"$ref" $rewritten $sha1 2>/dev/null; then
+			if test $(git cat-file -t "$ref") = tag; then
+				if test -z "$filter_tag_name"; then
+					warn "WARNING: You said to rewrite tagged commits, but not the corresponding tag."
+					warn "WARNING: Perhaps use '--tag-name-filter cat' to rewrite the tag."
+				fi
+			else
+				die "Could not rewrite $ref"
+			fi
+		fi
 	;;
 	*)
 		# NEEDSWORK: possibly add -Werror, making this an error
@@ -394,8 +416,22 @@ if [ "$filter_tag_name" ]; then
 		echo "$ref -> $new_ref ($sha1 -> $new_sha1)"
 
 		if [ "$type" = "tag" ]; then
-			# Warn that we are not rewriting the tag object itself.
-			warn "unreferencing tag object $sha1t"
+			new_sha1=$(git cat-file tag "$ref" |
+				sed -n \
+				    -e "1,/^$/{
+					  s/^object .*/object $new_sha1/
+					  s/^type .*/type commit/
+					  s/^tag .*/tag $new_ref/
+					}" \
+				    -e '/^-----BEGIN PGP SIGNATURE-----/q' \
+				    -e 'p' |
+				git mktag) ||
+				die "Could not create new tag object for $ref"
+			if git cat-file tag "$ref" | \
+			   grep '^-----BEGIN PGP SIGNATURE-----' >/dev/null 2>&1
+			then
+				warn "gpg signature stripped from tag object $sha1t"
+			fi
 		fi
 
 		git update-ref "refs/tags/$new_ref" "$new_sha1" ||
@@ -406,12 +442,22 @@ fi
 cd ../..
 rm -rf "$tempdir"
 
-unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE
-test -z "$ORIG_GIT_DIR" || GIT_DIR="$ORIG_GIT_DIR" && export GIT_DIR
-test -z "$ORIG_GIT_WORK_TREE" || GIT_WORK_TREE="$ORIG_GIT_WORK_TREE" &&
-	export GIT_WORK_TREE
-test -z "$ORIG_GIT_INDEX_FILE" || GIT_INDEX_FILE="$ORIG_GIT_INDEX_FILE" &&
-	export GIT_INDEX_FILE
-git read-tree -u -m HEAD
+trap - 0
+
+if [ "$(is_bare_repository)" = false ]; then
+	unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE
+	test -z "$ORIG_GIT_DIR" || {
+		GIT_DIR="$ORIG_GIT_DIR" && export GIT_DIR
+	}
+	test -z "$ORIG_GIT_WORK_TREE" || {
+		GIT_WORK_TREE="$ORIG_GIT_WORK_TREE" &&
+		export GIT_WORK_TREE
+	}
+	test -z "$ORIG_GIT_INDEX_FILE" || {
+		GIT_INDEX_FILE="$ORIG_GIT_INDEX_FILE" &&
+		export GIT_INDEX_FILE
+	}
+	git read-tree -u -m HEAD
+fi
 
 exit $ret

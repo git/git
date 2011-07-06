@@ -62,7 +62,7 @@ test_expect_success 'cache tree has not been corrupted' '
 	sed -e "s/ 0	/	/" >expect &&
 	git ls-tree -r $(git write-tree) |
 	sed -e "s/ blob / /" >current &&
-	diff -u expect current
+	test_cmp expect current
 
 '
 
@@ -108,6 +108,23 @@ test_expect_success 'touch and then add explicitly' '
 	touch check &&
 	git add check &&
 	test -z "$(git diff-files)"
+
+'
+
+test_expect_success 'add -n -u should not add but just report' '
+
+	(
+		echo "add '\''check'\''" &&
+		echo "remove '\''top'\''"
+	) >expect &&
+	before=$(git ls-files -s check top) &&
+	echo changed >>check &&
+	rm -f top &&
+	git add -n -u >actual &&
+	after=$(git ls-files -s check top) &&
+
+	test "$before" = "$after" &&
+	test_cmp expect actual
 
 '
 

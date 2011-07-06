@@ -14,13 +14,29 @@ enum {
 struct child_process {
 	const char **argv;
 	pid_t pid;
+	/*
+	 * Using .in, .out, .err:
+	 * - Specify 0 for no redirections (child inherits stdin, stdout,
+	 *   stderr from parent).
+	 * - Specify -1 to have a pipe allocated as follows:
+	 *     .in: returns the writable pipe end; parent writes to it,
+	 *          the readable pipe end becomes child's stdin
+	 *     .out, .err: returns the readable pipe end; parent reads from
+	 *          it, the writable pipe end becomes child's stdout/stderr
+	 *   The caller of start_command() must close the returned FDs
+	 *   after it has completed reading from/writing to it!
+	 * - Specify > 0 to set a channel to a particular FD as follows:
+	 *     .in: a readable FD, becomes child's stdin
+	 *     .out: a writable FD, becomes child's stdout/stderr
+	 *     .err > 0 not supported
+	 *   The specified FD is closed by start_command(), even in case
+	 *   of errors!
+	 */
 	int in;
 	int out;
 	int err;
 	const char *dir;
 	const char *const *env;
-	unsigned close_in:1;
-	unsigned close_out:1;
 	unsigned no_stdin:1;
 	unsigned no_stdout:1;
 	unsigned no_stderr:1;
@@ -60,7 +76,12 @@ struct async {
 	int (*proc)(int fd, void *data);
 	void *data;
 	int out;	/* caller reads from here and closes it */
+#ifndef __MINGW32__
 	pid_t pid;
+#else
+	HANDLE tid;
+	int fd_for_proc;
+#endif
 };
 
 int start_async(struct async *async);

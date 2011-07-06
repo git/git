@@ -15,7 +15,7 @@
 
 use strict;
 use warnings;
-use Getopt::Std;
+use Getopt::Long;
 use File::Spec;
 use File::Temp qw(tempfile tmpnam);
 use File::Path qw(mkpath);
@@ -29,14 +29,14 @@ use IPC::Open2;
 $SIG{'PIPE'}="IGNORE";
 $ENV{'TZ'}="UTC";
 
-our ($opt_h,$opt_o,$opt_v,$opt_k,$opt_u,$opt_d,$opt_p,$opt_C,$opt_z,$opt_i,$opt_P, $opt_s,$opt_m,$opt_M,$opt_A,$opt_S,$opt_L, $opt_a, $opt_r);
+our ($opt_h,$opt_o,$opt_v,$opt_k,$opt_u,$opt_d,$opt_p,$opt_C,$opt_z,$opt_i,$opt_P, $opt_s,$opt_m,@opt_M,$opt_A,$opt_S,$opt_L, $opt_a, $opt_r);
 my (%conv_author_name, %conv_author_email);
 
 sub usage(;$) {
 	my $msg = shift;
 	print(STDERR "Error: $msg\n") if $msg;
 	print STDERR <<END;
-Usage: ${\basename $0}     # fetch/update GIT from CVS
+Usage: git cvsimport     # fetch/update GIT from CVS
        [-o branch-for-HEAD] [-h] [-v] [-d CVSROOT] [-A author-conv-file]
        [-p opts-for-cvsps] [-P file] [-C GIT_repository] [-z fuzz] [-i] [-k]
        [-u] [-s subst] [-a] [-m] [-M regex] [-S regex] [-L commitlimit]
@@ -112,7 +112,12 @@ sub read_repo_config {
 
 my $opts = "haivmkuo:d:p:r:C:z:s:M:P:A:S:L:";
 read_repo_config($opts);
-getopts($opts) or usage();
+Getopt::Long::Configure( 'no_ignore_case', 'bundling' );
+
+# turn the Getopt::Std specification in a Getopt::Long one,
+# with support for multiple -M options
+GetOptions( map { s/:/=s/; /M/ ? "$_\@" : $_ } split( /(?!:)/, $opts ) )
+    or usage();
 usage if $opt_h;
 
 if (@ARGV == 0) {
@@ -164,10 +169,10 @@ if ($#ARGV == 0) {
 
 our @mergerx = ();
 if ($opt_m) {
-	@mergerx = ( qr/\W(?:from|of|merge|merging|merged) (\w+)/i );
+	@mergerx = ( qr/\b(?:from|of|merge|merging|merged) ([-\w]+)/i );
 }
-if ($opt_M) {
-	push (@mergerx, qr/$opt_M/);
+if (@opt_M) {
+	push (@mergerx, map { qr/$_/ } @opt_M);
 }
 
 # Remember UTC of our starting time
@@ -222,6 +227,7 @@ sub conn {
 				$proxyport = $1;
 			}
 		}
+		$repo ||= '/';
 
 		# if username is not explicit in CVSROOT, then use current user, as cvs would
 		$user=(getlogin() || $ENV{'LOGNAME'} || $ENV{'USER'} || "anonymous") unless $user;
@@ -730,7 +736,7 @@ sub commit {
 		next unless $logmsg =~ $rx && $1;
 		my $mparent = $1 eq 'HEAD' ? $opt_o : $1;
 		if (my $sha1 = get_headref("$remote/$mparent")) {
-			push @commit_args, '-p', $mparent;
+			push @commit_args, '-p', "$remote/$mparent";
 			print "Merge parent branch: $mparent\n" if $opt_v;
 		}
 	}
@@ -767,7 +773,7 @@ sub commit {
 	waitpid($pid,0);
 	die "Error running git-commit-tree: $?\n" if $?;
 
-	system("git-update-ref $remote/$branch $cid") == 0
+	system('git-update-ref', "$remote/$branch", $cid) == 0
 		or die "Cannot write branch $branch for update: $!\n";
 
 	if ($tag) {
@@ -775,6 +781,7 @@ sub commit {
 		$xtag =~ s/\s+\*\*.*$//; # Remove stuff like ** INVALID ** and ** FUNKY **
 		$xtag =~ tr/_/\./ if ( $opt_u );
 		$xtag =~ s/[\/]/$opt_s/g;
+		$xtag =~ s/\[//g;
 
 		system('git-tag', '-f', $xtag, $cid) == 0
 			or die "Cannot create tag $xtag: $!\n";
@@ -945,7 +952,7 @@ while (<CVS>) {
 	} elsif (/^-+$/) { # end of unknown-line processing
 		$state = 1;
 	} elsif ($state != 11) { # ignore stuff when skipping
-		print "* UNKNOWN LINE * $_\n";
+		print STDERR "* UNKNOWN LINE * $_\n";
 	}
 }
 commit() if $branch and $state != 11;

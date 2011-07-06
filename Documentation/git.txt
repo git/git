@@ -1,4 +1,4 @@
-git(7)
+git(1)
 ======
 
 NAME
@@ -20,11 +20,11 @@ Git is a fast, scalable, distributed revision control system with an
 unusually rich command set that provides both high-level operations
 and full access to internals.
 
-See this link:tutorial.html[tutorial] to get started, then see
+See linkgit:gittutorial[7] to get started, then see
 link:everyday.html[Everyday Git] for a useful minimum set of commands, and
 "man git-commandname" for documentation of each command.  CVS users may
-also want to read link:cvs-migration.html[CVS migration].  See
-link:user-manual.html[Git User's Manual] for a more in-depth
+also want to read linkgit:gitcvs-migration[7].  See
+the link:user-manual.html[Git User's Manual] for a more in-depth
 introduction.
 
 The COMMAND is either a name of a Git command (see below) or an alias
@@ -43,6 +43,40 @@ unreleased) version of git, that is available from 'master'
 branch of the `git.git` repository.
 Documentation for older releases are available here:
 
+* link:v1.6.0/git.html[documentation for release 1.6.0]
+
+* release notes for
+  link:RelNotes-1.6.0.txt[1.6.0].
+
+* link:v1.5.6.5/git.html[documentation for release 1.5.6.5]
+
+* release notes for
+  link:RelNotes-1.5.6.5.txt[1.5.6.5],
+  link:RelNotes-1.5.6.4.txt[1.5.6.4],
+  link:RelNotes-1.5.6.3.txt[1.5.6.3],
+  link:RelNotes-1.5.6.2.txt[1.5.6.2],
+  link:RelNotes-1.5.6.1.txt[1.5.6.1],
+  link:RelNotes-1.5.6.txt[1.5.6].
+
+* link:v1.5.5.4/git.html[documentation for release 1.5.5.4]
+
+* release notes for
+  link:RelNotes-1.5.5.4.txt[1.5.5.4],
+  link:RelNotes-1.5.5.3.txt[1.5.5.3],
+  link:RelNotes-1.5.5.2.txt[1.5.5.2],
+  link:RelNotes-1.5.5.1.txt[1.5.5.1],
+  link:RelNotes-1.5.5.txt[1.5.5].
+
+* link:v1.5.4.5/git.html[documentation for release 1.5.4.5]
+
+* release notes for
+  link:RelNotes-1.5.4.5.txt[1.5.4.5],
+  link:RelNotes-1.5.4.4.txt[1.5.4.4],
+  link:RelNotes-1.5.4.3.txt[1.5.4.3],
+  link:RelNotes-1.5.4.2.txt[1.5.4.2],
+  link:RelNotes-1.5.4.1.txt[1.5.4.1],
+  link:RelNotes-1.5.4.txt[1.5.4].
+
 * link:v1.5.3.8/git.html[documentation for release 1.5.3.8]
 
 * release notes for
@@ -55,6 +89,8 @@ Documentation for older releases are available here:
   link:RelNotes-1.5.3.2.txt[1.5.3.2],
   link:RelNotes-1.5.3.1.txt[1.5.3.1],
   link:RelNotes-1.5.3.txt[1.5.3].
+
+* link:v1.5.2.5/git.html[documentation for release 1.5.2.5]
 
 * release notes for
   link:RelNotes-1.5.2.5.txt[1.5.2.5],
@@ -108,16 +144,17 @@ OPTIONS
 +
 Other options are available to control how the manual page is
 displayed. See linkgit:git-help[1] for more information,
-because 'git --help ...' is converted internally into 'git
-help ...'.
+because `git --help ...` is converted internally into `git
+help ...`.
 
 --exec-path::
 	Path to wherever your core git programs are installed.
 	This can also be controlled by setting the GIT_EXEC_PATH
-	environment variable. If no path is given 'git' will print
+	environment variable. If no path is given, 'git' will print
 	the current setting and then exit.
 
--p|--paginate::
+-p::
+--paginate::
 	Pipe all output into 'less' (or if set, $PAGER).
 
 --no-pager::
@@ -125,7 +162,8 @@ help ...'.
 
 --git-dir=<path>::
 	Set the path to the repository. This can also be controlled by
-	setting the GIT_DIR environment variable.
+	setting the GIT_DIR environment variable. It can be an absolute
+	path or relative path to current working directory.
 
 --work-tree=<path>::
 	Set the path to the working tree.  The value will not be
@@ -133,7 +171,12 @@ help ...'.
 	a .git directory (i.e. $GIT_DIR is not set).
 	This can also be controlled by setting the GIT_WORK_TREE
 	environment variable and the core.worktree configuration
-	variable.
+	variable. It can be an absolute path or relative path to
+	the directory specified by --git-dir or GIT_DIR.
+	Note: If --git-dir or GIT_DIR are specified but none of
+	--work-tree, GIT_WORK_TREE and core.worktree is specified,
+	the current working directory is regarded as the top directory
+	of your working tree.
 
 --bare::
 	Treat the repository as a bare repository.  If GIT_DIR
@@ -148,13 +191,14 @@ See the references above to get started using git.  The following is
 probably more detail than necessary for a first-time user.
 
 The link:user-manual.html#git-concepts[git concepts chapter of the
-user-manual] and the link:core-tutorial.html[Core tutorial] both provide
+user-manual] and linkgit:gitcore-tutorial[7] both provide
 introductions to the underlying git architecture.
 
 See also the link:howto-index.html[howto] documents for some useful
 examples.
 
-The internals are documented link:technical/api-index.html[here].
+The internals are documented in the
+link:technical/api-index.html[GIT API documentation].
 
 GIT COMMANDS
 ------------
@@ -338,9 +382,9 @@ For a more complete list of ways to spell object names, see
 File/Directory Structure
 ------------------------
 
-Please see the link:repository-layout.html[repository layout] document.
+Please see the linkgit:gitrepository-layout[5] document.
 
-Read link:hooks.html[hooks] for more details about each hook.
+Read linkgit:githooks[5] for more details about each hook.
 
 Higher level SCMs may provide and manage additional information in the
 `$GIT_DIR`.
@@ -348,7 +392,7 @@ Higher level SCMs may provide and manage additional information in the
 
 Terminology
 -----------
-Please see the link:glossary.html[glossary] document.
+Please see linkgit:gitglossary[7].
 
 
 Environment Variables
@@ -375,9 +419,9 @@ git so take care if using Cogito etc.
 'GIT_ALTERNATE_OBJECT_DIRECTORIES'::
 	Due to the immutable nature of git objects, old objects can be
 	archived into shared, read-only directories. This variable
-	specifies a ":" separated list of git object directories which
-	can be used to search for git objects. New objects will not be
-	written to these directories.
+	specifies a ":" separated (on Windows ";" separated) list
+	of git object directories which can be used to search for git
+	objects. New objects will not be written to these directories.
 
 'GIT_DIR'::
 	If the 'GIT_DIR' environment variable is set then it
@@ -390,6 +434,14 @@ git so take care if using Cogito etc.
 	a .git directory (i.e. $GIT_DIR is not set).
 	This can also be controlled by the '--work-tree' command line
 	option and the core.worktree configuration variable.
+
+'GIT_CEILING_DIRECTORIES'::
+	This should be a colon-separated list of absolute paths.
+	If set, it is a list of directories that git should not chdir
+	up into while looking for a repository directory.
+	It will not exclude the current working directory or
+	a GIT_DIR set on the command line or in the environment.
+	(Useful for excluding slow-loading network directories.)
 
 git Commits
 ~~~~~~~~~~~
@@ -448,10 +500,10 @@ other
 	a pager.
 
 'GIT_SSH'::
-	If this environment variable is set then linkgit:git-fetch[1]
-	and linkgit:git-push[1] will use this command instead
-	of `ssh` when they need to connect to a remote system.
-	The 'GIT_SSH' command will be given exactly two arguments:
+	If this environment variable is set then 'git-fetch'
+	and 'git-push' will use this command instead
+	of 'ssh' when they need to connect to a remote system.
+	The '$GIT_SSH' command will be given exactly two arguments:
 	the 'username@host' (or just 'host') from the URL and the
 	shell command to execute on that remote system.
 +
@@ -465,8 +517,8 @@ for further details.
 
 'GIT_FLUSH'::
 	If this environment variable is set to "1", then commands such
-	as git-blame (in incremental mode), git-rev-list, git-log,
-	git-whatchanged, etc., will force a flush of the output stream
+	as 'git-blame' (in incremental mode), 'git-rev-list', 'git-log',
+	and 'git-whatchanged' will force a flush of the output stream
 	after each commit-oriented record have been flushed.   If this
 	variable is set to "0", the output of these commands will be done
 	using completely buffered I/O.   If this environment variable is
@@ -492,7 +544,7 @@ Discussion[[Discussion]]
 
 More detail on the following is available from the
 link:user-manual.html#git-concepts[git concepts chapter of the
-user-manual] and the link:core-tutorial.html[Core tutorial].
+user-manual] and linkgit:gitcore-tutorial[7].
 
 A git project normally consists of a working directory with a ".git"
 subdirectory at the top level.  The .git directory contains, among other
@@ -553,6 +605,13 @@ The documentation for git suite was started by David Greaves
 <david@dgreaves.com>, and later enhanced greatly by the
 contributors on the git-list <git@vger.kernel.org>.
 
+SEE ALSO
+--------
+linkgit:gittutorial[7], linkgit:gittutorial-2[7],
+link:everyday.html[Everyday Git], linkgit:gitcvs-migration[7],
+linkgit:gitglossary[7], linkgit:gitcore-tutorial[7],
+linkgit:gitcli[7], link:user-manual.html[The Git User's Manual]
+
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

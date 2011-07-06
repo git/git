@@ -44,3 +44,26 @@ endif::git-clone[]
 ifdef::git-clone[]
 They are equivalent, except the former implies --local option.
 endif::git-clone[]
+
+
+If there are a large number of similarly-named remote repositories and
+you want to use a different format for them (such that the URLs you
+use will be rewritten into URLs that work), you can create a
+configuration section of the form:
+
+------------
+	[url "<actual url base>"]
+		insteadOf = <other url base>
+------------
+
+For example, with this:
+
+------------
+	[url "git://git.host.xz/"]
+		insteadOf = host.xz:/path/to/
+		insteadOf = work:
+------------
+
+a URL like "work:repo.git" or like "host.xz:/path/to/repo.git" will be
+rewritten in any context that takes a URL to be "git://git.host.xz/repo.git".
+

@@ -8,7 +8,7 @@ git-send-email - Send a collection of patches as emails
 
 SYNOPSIS
 --------
-'git-send-email' [options] <file|directory> [... file|directory]
+'git send-email' [options] <file|directory> [... file|directory]
 
 
 
@@ -40,7 +40,8 @@ The --cc option must be repeated for each user you want on the cc list.
 	Output of this command must be single email address per line.
 	Default is the value of 'sendemail.cccmd' configuration value.
 
---chain-reply-to, --no-chain-reply-to::
+--chain-reply-to::
+--no-chain-reply-to::
 	If this is set, each email will be sent as a reply to the previous
 	email sent.  If disabled with "--no-chain-reply-to", all emails after
 	the first will be sent as replies to the first email sent.  When using
@@ -55,7 +56,7 @@ The --cc option must be repeated for each user you want on the cc list.
 
 --from::
 	Specify the sender of the emails.  This will default to
-	the value GIT_COMMITTER_IDENT, as returned by "git-var -l".
+	the value GIT_COMMITTER_IDENT, as returned by "git var -l".
 	The user will still be prompted to confirm this entry.
 
 --in-reply-to::
@@ -65,7 +66,8 @@ The --cc option must be repeated for each user you want on the cc list.
 	Only necessary if --compose is also set.  If --compose
 	is not set, this will be prompted for.
 
---signed-off-by-cc, --no-signed-off-by-cc::
+--signed-off-by-cc::
+--no-signed-off-by-cc::
         If this is set, add emails found in Signed-off-by: or Cc: lines to the
         cc list.
         Default is the value of 'sendemail.signedoffcc' configuration value;
@@ -96,28 +98,73 @@ The --cc option must be repeated for each user you want on the cc list.
 	servers typically listen to smtp port 25 and ssmtp port
 	465).
 
---smtp-user, --smtp-pass::
-	Username and password for SMTP-AUTH. Defaults are the values of
-	the configuration values 'sendemail.smtpuser' and
-	'sendemail.smtppass', but see also 'sendemail.identity'.
-	If not set, authentication is not attempted.
+--smtp-user::
+	Username for SMTP-AUTH. In place of this option, the following
+	configuration variables can be specified:
++
+--
+		* sendemail.smtpuser
+		* sendemail.<identity>.smtpuser (see sendemail.identity).
+--
++
+However, --smtp-user always overrides these variables.
++
+If a username is not specified (with --smtp-user or a
+configuration variable), then authentication is not attempted.
+
+--smtp-pass::
+	Password for SMTP-AUTH. The argument is optional: If no
+	argument is specified, then the empty string is used as
+	the password.
++
+In place of this option, the following configuration variables
+can be specified:
++
+--
+		* sendemail.smtppass
+		* sendemail.<identity>.smtppass (see sendemail.identity).
+--
++
+However, --smtp-pass always overrides these variables.
++
+Furthermore, passwords need not be specified in configuration files
+or on the command line. If a username has been specified (with
+--smtp-user or a configuration variable), but no password has been
+specified (with --smtp-pass or a configuration variable), then the
+user is prompted for a password while the input is masked for privacy.
+
+--smtp-encryption::
+	Specify the encryption to use, either 'ssl' or 'tls'.  Any other
+	value reverts to plain SMTP.  Default is the value of
+	'sendemail.smtpencryption'.
 
 --smtp-ssl::
-	If set, connects to the SMTP server using SSL.
-	Default is the value of the 'sendemail.smtpssl' configuration value;
-	if that is unspecified, does not use SSL.
+	Legacy alias for '--smtp-encryption=ssl'.
 
 --subject::
 	Specify the initial subject of the email thread.
 	Only necessary if --compose is also set.  If --compose
 	is not set, this will be prompted for.
 
---suppress-from, --no-suppress-from::
+--suppress-from::
+--no-suppress-from::
         If this is set, do not add the From: address to the cc: list.
         Default is the value of 'sendemail.suppressfrom' configuration value;
         if that is unspecified, default to --no-suppress-from.
 
---thread, --no-thread::
+--suppress-cc::
+	Specify an additional category of recipients to suppress the
+	auto-cc of.  'self' will avoid including the sender, 'author' will
+	avoid including the patch author, 'cc' will avoid including anyone
+	mentioned in Cc lines in the patch, 'sob' will avoid including
+	anyone mentioned in Signed-off-by lines, and 'cccmd' will avoid
+	running the --cc-cmd.  'all' will suppress all auto cc values.
+	Default is the value of 'sendemail.suppresscc' configuration value;
+	if that is unspecified, default to 'self' if --suppress-from is
+	specified, as well as 'sob' if --no-signed-off-cc is specified.
+
+--thread::
+--no-thread::
 	If this is set, the In-Reply-To header will be set on each email sent.
 	If disabled with "--no-thread", no emails will have the In-Reply-To
 	header set.
@@ -137,6 +184,8 @@ The --cc option must be repeated for each user you want on the cc list.
 	Specify the primary recipient of the emails generated.
 	Generally, this will be the upstream maintainer of the
 	project involved.
+	Default is the value of the 'sendemail.to' configuration value;
+	if that is unspecified, this will be prompted for.
 +
 The --to option must be repeated for each user you want on the to list.
 
@@ -174,14 +223,22 @@ sendemail.chainreplyto::
 sendemail.smtpserver::
 	Default SMTP server to use.
 
+sendemail.smtpserverport::
+	Default SMTP server port to use.
+
 sendemail.smtpuser::
 	Default SMTP-AUTH username.
 
 sendemail.smtppass::
 	Default SMTP-AUTH password.
 
+sendemail.smtpencryption::
+	Default encryption method.  Use 'ssl' for SSL (and specify an
+	appropriate port), or 'tls' for TLS.  Takes precedence over
+	'smtpssl' if both are specified.
+
 sendemail.smtpssl::
-	Boolean value specifying the default to the '--smtp-ssl' parameter.
+	Legacy boolean that sets 'smtpencryption=ssl' if enabled.
 
 Author
 ------
@@ -196,4 +253,4 @@ Documentation by Ryan Anderson
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

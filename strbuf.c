@@ -60,6 +60,18 @@ void strbuf_grow(struct strbuf *sb, size_t extra)
 	ALLOC_GROW(sb->buf, sb->len + extra + 1, sb->alloc);
 }
 
+void strbuf_trim(struct strbuf *sb)
+{
+	char *b = sb->buf;
+	while (sb->len > 0 && isspace((unsigned char)sb->buf[sb->len - 1]))
+		sb->len--;
+	while (sb->len > 0 && isspace(*b)) {
+		b++;
+		sb->len--;
+	}
+	memmove(sb->buf, b, sb->len);
+	sb->buf[sb->len] = '\0';
+}
 void strbuf_rtrim(struct strbuf *sb)
 {
 	while (sb->len > 0 && isspace((unsigned char)sb->buf[sb->len - 1]))
@@ -67,7 +79,65 @@ void strbuf_rtrim(struct strbuf *sb)
 	sb->buf[sb->len] = '\0';
 }
 
-int strbuf_cmp(struct strbuf *a, struct strbuf *b)
+void strbuf_ltrim(struct strbuf *sb)
+{
+	char *b = sb->buf;
+	while (sb->len > 0 && isspace(*b)) {
+		b++;
+		sb->len--;
+	}
+	memmove(sb->buf, b, sb->len);
+	sb->buf[sb->len] = '\0';
+}
+
+void strbuf_tolower(struct strbuf *sb)
+{
+	int i;
+	for (i = 0; i < sb->len; i++)
+		sb->buf[i] = tolower(sb->buf[i]);
+}
+
+struct strbuf **strbuf_split(const struct strbuf *sb, int delim)
+{
+	int alloc = 2, pos = 0;
+	char *n, *p;
+	struct strbuf **ret;
+	struct strbuf *t;
+
+	ret = xcalloc(alloc, sizeof(struct strbuf *));
+	p = n = sb->buf;
+	while (n < sb->buf + sb->len) {
+		int len;
+		n = memchr(n, delim, sb->len - (n - sb->buf));
+		if (pos + 1 >= alloc) {
+			alloc = alloc * 2;
+			ret = xrealloc(ret, sizeof(struct strbuf *) * alloc);
+		}
+		if (!n)
+			n = sb->buf + sb->len - 1;
+		len = n - p + 1;
+		t = xmalloc(sizeof(struct strbuf));
+		strbuf_init(t, len);
+		strbuf_add(t, p, len);
+		ret[pos] = t;
+		ret[++pos] = NULL;
+		p = ++n;
+	}
+	return ret;
+}
+
+void strbuf_list_free(struct strbuf **sbs)
+{
+	struct strbuf **s = sbs;
+
+	while (*s) {
+		strbuf_release(*s);
+		free(*s++);
+	}
+	free(sbs);
+}
+
+int strbuf_cmp(const struct strbuf *a, const struct strbuf *b)
 {
 	int cmp;
 	if (a->len < b->len) {
@@ -146,11 +216,12 @@ void strbuf_addf(struct strbuf *sb, const char *fmt, ...)
 	strbuf_setlen(sb, sb->len + len);
 }
 
-void strbuf_expand(struct strbuf *sb, const char *format,
-                   const char **placeholders, expand_fn_t fn, void *context)
+void strbuf_expand(struct strbuf *sb, const char *format, expand_fn_t fn,
+		   void *context)
 {
 	for (;;) {
-		const char *percent, **p;
+		const char *percent;
+		size_t consumed;
 
 		percent = strchrnul(format, '%');
 		strbuf_add(sb, format, percent - format);
@@ -158,14 +229,10 @@ void strbuf_expand(struct strbuf *sb, const char *format,
 			break;
 		format = percent + 1;
 
-		for (p = placeholders; *p; p++) {
-			if (!prefixcmp(format, *p))
-				break;
-		}
-		if (*p) {
-			fn(sb, *p, context);
-			format += strlen(*p);
-		} else
+		consumed = fn(sb, format, context);
+		if (consumed)
+			format += consumed;
+		else
 			strbuf_addch(sb, '%');
 	}
 }

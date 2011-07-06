@@ -6,7 +6,10 @@
 
 #include "cache.h"
 
-static time_t my_mktime(struct tm *tm)
+/*
+ * This is like mktime, but without normalization of tm_wday and tm_yday.
+ */
+time_t tm_to_time_t(const struct tm *tm)
 {
 	static const int mdays[] = {
 	    0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334
@@ -67,7 +70,7 @@ static int local_tzoffset(unsigned long time)
 
 	t = time;
 	localtime_r(&t, &tm);
-	t_local = my_mktime(&tm);
+	t_local = tm_to_time_t(&tm);
 
 	if (t_local < t) {
 		eastwest = -1;
@@ -213,9 +216,9 @@ static const struct {
 	{ "EAST", +10, 0, },	/* Eastern Australian Standard */
 	{ "EADT", +10, 1, },	/* Eastern Australian Daylight */
 	{ "GST",  +10, 0, },	/* Guam Standard, USSR Zone 9 */
-	{ "NZT",  +11, 0, },	/* New Zealand */
-	{ "NZST", +11, 0, },	/* New Zealand Standard */
-	{ "NZDT", +11, 1, },	/* New Zealand Daylight */
+	{ "NZT",  +12, 0, },	/* New Zealand */
+	{ "NZST", +12, 0, },	/* New Zealand Standard */
+	{ "NZDT", +12, 1, },	/* New Zealand Daylight */
 	{ "IDLE", +12, 0, },	/* International Date Line East */
 };
 
@@ -322,7 +325,7 @@ static int is_date(int year, int month, int day, struct tm *now_tm, time_t now, 
 		if (!now_tm)
 			return 1;
 
-		specified = my_mktime(r);
+		specified = tm_to_time_t(r);
 
 		/* Be it commit time or author time, it does not make
 		 * sense to specify timestamp way into the future.  Make
@@ -572,7 +575,7 @@ int parse_date(const char *date, char *result, int maxlen)
 	}
 
 	/* mktime uses local timezone */
-	then = my_mktime(&tm);
+	then = tm_to_time_t(&tm);
 	if (offset == -1)
 		offset = (then - mktime(&tm)) / 60;
 
@@ -611,7 +614,7 @@ void datestamp(char *buf, int bufsize)
 
 	time(&now);
 
-	offset = my_mktime(localtime(&now)) - now;
+	offset = tm_to_time_t(localtime(&now)) - now;
 	offset /= 60;
 
 	date_string(now, offset, buf, bufsize);
@@ -682,10 +685,8 @@ static void date_am(struct tm *tm, int *num)
 
 static void date_never(struct tm *tm, int *num)
 {
-	tm->tm_mon = tm->tm_wday = tm->tm_yday
-		= tm->tm_hour = tm->tm_min = tm->tm_sec = 0;
-	tm->tm_year = 70;
-	tm->tm_mday = 1;
+	time_t n = 0;
+	localtime_r(&n, tm);
 }
 
 static const struct special {

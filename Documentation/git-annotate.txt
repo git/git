@@ -7,7 +7,7 @@ git-annotate - Annotate file lines with commit info
 
 SYNOPSIS
 --------
-git-annotate [options] file [revision]
+'git annotate' [options] file [revision]
 
 DESCRIPTION
 -----------
@@ -28,4 +28,4 @@ Written by Ryan Anderson <ryan@michonline.com>.
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

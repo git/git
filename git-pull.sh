@@ -4,7 +4,7 @@
 #
 # Fetch one or more remote refs and merge it/them into the current HEAD.
 
-USAGE='[-n | --no-summary] [--[no-]commit] [--[no-]squash] [--[no-]ff] [-s strategy]... [<fetch-options>] <repo> <head>...'
+USAGE='[-n | --no-stat] [--[no-]commit] [--[no-]squash] [--[no-]ff] [-s strategy]... [<fetch-options>] <repo> <head>...'
 LONG_USAGE='Fetch one or more remote refs and merge it/them into the current HEAD.'
 SUBDIRECTORY_OK=Yes
 OPTIONS_SPEC=
@@ -16,19 +16,19 @@ cd_to_toplevel
 test -z "$(git ls-files -u)" ||
 	die "You are in the middle of a conflicted merge."
 
-strategy_args= no_summary= no_commit= squash= no_ff=
+strategy_args= no_stat= no_commit= squash= no_ff= log_arg=
 curr_branch=$(git symbolic-ref -q HEAD)
 curr_branch_short=$(echo "$curr_branch" | sed "s|refs/heads/||")
 rebase=$(git config --bool branch.$curr_branch_short.rebase)
 while :
 do
 	case "$1" in
-	-n|--n|--no|--no-|--no-s|--no-su|--no-sum|--no-summ|\
-		--no-summa|--no-summar|--no-summary)
-		no_summary=-n ;;
-	--summary)
-		no_summary=$1
-		;;
+	-n|--no-stat|--no-summary)
+		no_stat=-n ;;
+	--stat|--summary)
+		no_stat=$1 ;;
+	--log|--no-log)
+		log_arg=$1 ;;
 	--no-c|--no-co|--no-com|--no-comm|--no-commi|--no-commit)
 		no_commit=--no-commit ;;
 	--c|--co|--com|--comm|--commi|--commit)
@@ -106,8 +106,22 @@ error_on_no_merge_candidates () {
 	exit 1
 }
 
+test true = "$rebase" && {
+	git update-index --ignore-submodules --refresh &&
+	git diff-files --ignore-submodules --quiet &&
+	git diff-index --ignore-submodules --cached --quiet HEAD -- ||
+	die "refusing to pull with rebase: your working tree is not up-to-date"
+
+	. git-parse-remote &&
+	origin="$1"
+	test -z "$origin" && origin=$(get_default_remote)
+	reflist="$(get_remote_refs_for_fetch "$@" 2>/dev/null |
+		sed "s|refs/heads/\(.*\):|\1|")" &&
+	oldremoteref="$(git rev-parse --verify \
+		"refs/remotes/$origin/$reflist" 2>/dev/null)"
+}
 orig_head=$(git rev-parse --verify HEAD 2>/dev/null)
-git-fetch --update-head-ok "$@" || exit 1
+git fetch --update-head-ok "$@" || exit 1
 
 curr_head=$(git rev-parse --verify HEAD 2>/dev/null)
 if test "$curr_head" != "$orig_head"
@@ -163,7 +177,9 @@ then
 	exit
 fi
 
-merge_name=$(git fmt-merge-msg <"$GIT_DIR/FETCH_HEAD") || exit
-test true = "$rebase" && exec git-rebase $merge_head
-exec git-merge $no_summary $no_commit $squash $no_ff $strategy_args \
+merge_name=$(git fmt-merge-msg $log_arg <"$GIT_DIR/FETCH_HEAD") || exit
+test true = "$rebase" &&
+	exec git-rebase $strategy_args --onto $merge_head \
+	${oldremoteref:-$merge_head}
+exec git-merge $no_stat $no_commit $squash $no_ff $log_arg $strategy_args \
 	"$merge_name" HEAD $merge_head

@@ -41,7 +41,8 @@ of lines before or after the line given by <start>.
 -S <revs-file>::
 	Use revs from revs-file instead of calling linkgit:git-rev-list[1].
 
--p, --porcelain::
+-p::
+--porcelain::
 	Show in a format designed for machine consumption.
 
 --incremental::
@@ -52,7 +53,7 @@ of lines before or after the line given by <start>.
 	When <rev> is not specified, the command annotates the
 	changes starting backwards from the working tree copy.
 	This flag makes the command pretend as if the working
-	tree copy has the contents of he named file (specify
+	tree copy has the contents of the named file (specify
 	`-` to make the command read from the standard input).
 
 -M|<num>|::
@@ -83,5 +84,6 @@ alphanumeric characters that git must detect as moving
 between files for it to associate those lines with the parent
 commit.
 
--h, --help::
+-h::
+--help::
 	Show help message.

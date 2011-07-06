@@ -5,28 +5,34 @@ use Getopt::Std;
 use File::Temp qw(tempdir);
 use Data::Dumper;
 use File::Basename qw(basename dirname);
+use File::Spec;
+use Git;
 
-our ($opt_h, $opt_P, $opt_p, $opt_v, $opt_c, $opt_f, $opt_a, $opt_m, $opt_d, $opt_u, $opt_w);
+our ($opt_h, $opt_P, $opt_p, $opt_v, $opt_c, $opt_f, $opt_a, $opt_m, $opt_d, $opt_u, $opt_w, $opt_W);
 
-getopts('uhPpvcfam:d:w:');
+getopts('uhPpvcfam:d:w:W');
 
 $opt_h && usage();
 
 die "Need at least one commit identifier!" unless @ARGV;
 
-if ($opt_w) {
+# Get git-config settings
+my $repo = Git->repository();
+$opt_w = $repo->config('cvsexportcommit.cvsdir') unless defined $opt_w;
+
+if ($opt_w || $opt_W) {
+	# Remember where GIT_DIR is before changing to CVS checkout
 	unless ($ENV{GIT_DIR}) {
-		# Remember where our GIT_DIR is before changing to CVS checkout
+		# No GIT_DIR set. Figure it out for ourselves
 		my $gd =`git-rev-parse --git-dir`;
 		chomp($gd);
-		if ($gd eq '.git') {
-			my $wd = `pwd`;
-			chomp($wd);
-			$gd = $wd."/.git"	;
-		}
 		$ENV{GIT_DIR} = $gd;
 	}
+	# Make sure GIT_DIR is absolute
+	$ENV{GIT_DIR} = File::Spec->rel2abs($ENV{GIT_DIR});
+}
 
+if ($opt_w) {
 	if (! -d $opt_w."/CVS" ) {
 		die "$opt_w is not a CVS checkout";
 	}
@@ -117,6 +123,15 @@ if ($parent) {
     }
 }
 
+my $go_back_to = 0;
+
+if ($opt_W) {
+    $opt_v && print "Resetting to $parent\n";
+    $go_back_to = `git symbolic-ref HEAD 2> /dev/null ||
+	git rev-parse HEAD` || die "Could not determine current branch";
+    system("git checkout -q $parent^0") && die "Could not check out $parent^0";
+}
+
 $opt_v && print "Applying to CVS commit $commit from parent $parent\n";
 
 # grab the commit message
@@ -198,15 +213,40 @@ if (@canstatusfiles) {
       my @updated = xargs_safe_pipe_capture([@cvs, 'update'], @canstatusfiles);
       print @updated;
     }
-    my @cvsoutput;
-    @cvsoutput = xargs_safe_pipe_capture([@cvs, 'status'], @canstatusfiles);
-    my $matchcount = 0;
-    foreach my $l (@cvsoutput) {
-        chomp $l;
-        if ( $l =~ /^File:/ and  $l =~ /Status: (.*)$/ ) {
-            $cvsstat{$canstatusfiles[$matchcount]} = $1;
-            $matchcount++;
+    # "cvs status" reorders the parameters, notably when there are multiple
+    # arguments with the same basename.  So be precise here.
+
+    my %added = map { $_ => 1 } @afiles;
+    my %todo = map { $_ => 1 } @canstatusfiles;
+
+    while (%todo) {
+      my @canstatusfiles2 = ();
+      my %fullname = ();
+      foreach my $name (keys %todo) {
+	my $basename = basename($name);
+
+	$basename = "no file " . $basename if (exists($added{$basename}));
+	$basename =~ s/^\s+//;
+	$basename =~ s/\s+$//;
+
+	if (!exists($fullname{$basename})) {
+	  $fullname{$basename} = $name;
+	  push (@canstatusfiles2, $name);
+	  delete($todo{$name});
         }
+      }
+      my @cvsoutput;
+      @cvsoutput = xargs_safe_pipe_capture([@cvs, 'status'], @canstatusfiles2);
+      foreach my $l (@cvsoutput) {
+        chomp $l;
+        if ($l =~ /^File:\s+(.*\S)\s+Status: (.*)$/) {
+	  if (!exists($fullname{$1})) {
+	    print STDERR "Huh? Status reported for unexpected file '$1'\n";
+	  } else {
+	    $cvsstat{$fullname{$1}} = $2;
+	  }
+	}
+      }
     }
 }
 
@@ -236,7 +276,11 @@ if ($dirty) {
 }
 
 print "Applying\n";
-`GIT_DIR= git-apply $context --summary --numstat --apply <.cvsexportcommit.diff` || die "cannot patch";
+if ($opt_W) {
+    system("git checkout -q $commit^0") && die "cannot patch";
+} else {
+    `GIT_DIR= git-apply $context --summary --numstat --apply <.cvsexportcommit.diff` || die "cannot patch";
+}
 
 print "Patch applied successfully. Adding new files and directories to CVS\n";
 my $dirtypatch = 0;
@@ -289,7 +333,9 @@ if ($dirtypatch) {
     print "using a patch program. After applying the patch and resolving the\n";
     print "problems you may commit using:";
     print "\n    cd \"$opt_w\"" if $opt_w;
-    print "\n    $cmd\n\n";
+    print "\n    $cmd\n";
+    print "\n    git checkout $go_back_to\n" if $go_back_to;
+    print "\n";
     exit(1);
 }
 
@@ -309,6 +355,14 @@ if ($opt_c) {
 # clean up
 unlink(".cvsexportcommit.diff");
 
+if ($opt_W) {
+    system("git checkout $go_back_to") && die "cannot move back to $go_back_to";
+    if (!($go_back_to =~ /^[0-9a-fA-F]{40}$/)) {
+	system("git symbolic-ref HEAD $go_back_to") &&
+	    die "cannot move back to $go_back_to";
+    }
+}
+
 # CVS version 1.11.x and 1.12.x sleeps the wrong way to ensure the timestamp
 # used by CVS and the one set by subsequence file modifications are different.
 # If they are not different CVS will not detect changes.
@@ -316,7 +370,7 @@ sleep(1);
 
 sub usage {
 	print STDERR <<END;
-Usage: GIT_DIR=/path/to/.git ${\basename $0} [-h] [-p] [-v] [-c] [-f] [-u] [-w cvsworkdir] [-m msgprefix] [ parent ] commit
+Usage: GIT_DIR=/path/to/.git git cvsexportcommit [-h] [-p] [-v] [-c] [-f] [-u] [-w cvsworkdir] [-m msgprefix] [ parent ] commit
 END
 	exit(1);
 }

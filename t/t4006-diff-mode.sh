@@ -38,6 +38,6 @@ echo ":100644 100755 X X M	rezrov" >expected
 
 test_expect_success \
     'verify' \
-    'git diff expected check'
+    'test_cmp expected check'
 
 test_done

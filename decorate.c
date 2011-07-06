@@ -37,10 +37,7 @@ static void grow_decoration(struct decoration *n)
 {
 	int i;
 	int old_size = n->size;
-	struct object_decoration *old_hash;
-
-	old_size = n->size;
-	old_hash = n->hash;
+	struct object_decoration *old_hash = n->hash;
 
 	n->size = (old_size + 1000) * 3 / 2;
 	n->hash = xcalloc(n->size, sizeof(struct object_decoration));

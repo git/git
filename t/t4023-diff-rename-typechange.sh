@@ -57,7 +57,7 @@ test_expect_success 'cross renames to be detected for regular files' '
 		echo "R100	foo	bar"
 		echo "R100	bar	foo"
 	} | sort >expect &&
-	diff -u expect actual
+	test_cmp expect actual
 
 '
 
@@ -68,7 +68,7 @@ test_expect_success 'cross renames to be detected for typechange' '
 		echo "R100	foo	bar"
 		echo "R100	bar	foo"
 	} | sort >expect &&
-	diff -u expect actual
+	test_cmp expect actual
 
 '
 
@@ -79,7 +79,7 @@ test_expect_success 'moves and renames' '
 		echo "R100	foo	bar"
 		echo "T100	foo"
 	} | sort >expect &&
-	diff -u expect actual
+	test_cmp expect actual
 
 '
 

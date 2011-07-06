@@ -24,26 +24,20 @@ static void check_valid(unsigned char *sha1, enum object_type expect)
 		    typename(expect));
 }
 
-/*
- * Having more than two parents is not strange at all, and this is
- * how multi-way merges are represented.
- */
-#define MAXPARENT (16)
-static unsigned char parent_sha1[MAXPARENT][20];
-
 static const char commit_tree_usage[] = "git-commit-tree <sha1> [-p <sha1>]* < changelog";
 
-static int new_parent(int idx)
+static void new_parent(struct commit *parent, struct commit_list **parents_p)
 {
-	int i;
-	unsigned char *sha1 = parent_sha1[idx];
-	for (i = 0; i < idx; i++) {
-		if (!hashcmp(parent_sha1[i], sha1)) {
+	unsigned char *sha1 = parent->object.sha1;
+	struct commit_list *parents;
+	for (parents = *parents_p; parents; parents = parents->next) {
+		if (parents->item == parent) {
 			error("duplicate parent %s ignored", sha1_to_hex(sha1));
-			return 0;
+			return;
 		}
+		parents_p = &parents->next;
 	}
-	return 1;
+	commit_list_insert(parent, parents_p);
 }
 
 static const char commit_utf8_warn[] =
@@ -51,51 +45,32 @@ static const char commit_utf8_warn[] =
 "You may want to amend it after fixing the message, or set the config\n"
 "variable i18n.commitencoding to the encoding your project uses.\n";
 
-int cmd_commit_tree(int argc, const char **argv, const char *prefix)
+int commit_tree(const char *msg, unsigned char *tree,
+		struct commit_list *parents, unsigned char *ret)
 {
-	int i;
-	int parents = 0;
-	unsigned char tree_sha1[20];
-	unsigned char commit_sha1[20];
-	struct strbuf buffer;
 	int encoding_is_utf8;
+	struct strbuf buffer;
 
-	git_config(git_default_config);
-
-	if (argc < 2)
-		usage(commit_tree_usage);
-	if (get_sha1(argv[1], tree_sha1))
-		die("Not a valid object name %s", argv[1]);
-
-	check_valid(tree_sha1, OBJ_TREE);
-	for (i = 2; i < argc; i += 2) {
-		const char *a, *b;
-		a = argv[i]; b = argv[i+1];
-		if (!b || strcmp(a, "-p"))
-			usage(commit_tree_usage);
-
-		if (parents >= MAXPARENT)
-			die("Too many parents (%d max)", MAXPARENT);
-		if (get_sha1(b, parent_sha1[parents]))
-			die("Not a valid object name %s", b);
-		check_valid(parent_sha1[parents], OBJ_COMMIT);
-		if (new_parent(parents))
-			parents++;
-	}
+	check_valid(tree, OBJ_TREE);
 
 	/* Not having i18n.commitencoding is the same as having utf-8 */
 	encoding_is_utf8 = is_encoding_utf8(git_commit_encoding);
 
 	strbuf_init(&buffer, 8192); /* should avoid reallocs for the headers */
-	strbuf_addf(&buffer, "tree %s\n", sha1_to_hex(tree_sha1));
+	strbuf_addf(&buffer, "tree %s\n", sha1_to_hex(tree));
 
 	/*
 	 * NOTE! This ordering means that the same exact tree merged with a
 	 * different order of parents will be a _different_ changeset even
 	 * if everything else stays the same.
 	 */
-	for (i = 0; i < parents; i++)
-		strbuf_addf(&buffer, "parent %s\n", sha1_to_hex(parent_sha1[i]));
+	while (parents) {
+		struct commit_list *next = parents->next;
+		strbuf_addf(&buffer, "parent %s\n",
+			sha1_to_hex(parents->item->object.sha1));
+		free(parents);
+		parents = next;
+	}
 
 	/* Person/date information */
 	strbuf_addf(&buffer, "author %s\n", git_author_info(IDENT_ERROR_ON_NO_NAME));
@@ -105,14 +80,47 @@ int cmd_commit_tree(int argc, const char **argv, const char *prefix)
 	strbuf_addch(&buffer, '\n');
 
 	/* And add the comment */
-	if (strbuf_read(&buffer, 0, 0) < 0)
-		die("git-commit-tree: read returned %s", strerror(errno));
+	strbuf_addstr(&buffer, msg);
 
 	/* And check the encoding */
 	if (encoding_is_utf8 && !is_utf8(buffer.buf))
 		fprintf(stderr, commit_utf8_warn);
 
-	if (!write_sha1_file(buffer.buf, buffer.len, commit_type, commit_sha1)) {
+	return write_sha1_file(buffer.buf, buffer.len, commit_type, ret);
+}
+
+int cmd_commit_tree(int argc, const char **argv, const char *prefix)
+{
+	int i;
+	struct commit_list *parents = NULL;
+	unsigned char tree_sha1[20];
+	unsigned char commit_sha1[20];
+	struct strbuf buffer = STRBUF_INIT;
+
+	git_config(git_default_config, NULL);
+
+	if (argc < 2)
+		usage(commit_tree_usage);
+	if (get_sha1(argv[1], tree_sha1))
+		die("Not a valid object name %s", argv[1]);
+
+	for (i = 2; i < argc; i += 2) {
+		unsigned char sha1[20];
+		const char *a, *b;
+		a = argv[i]; b = argv[i+1];
+		if (!b || strcmp(a, "-p"))
+			usage(commit_tree_usage);
+
+		if (get_sha1(b, sha1))
+			die("Not a valid object name %s", b);
+		check_valid(sha1, OBJ_COMMIT);
+		new_parent(lookup_commit(sha1), &parents);
+	}
+
+	if (strbuf_read(&buffer, 0, 0) < 0)
+		die("git-commit-tree: read returned %s", strerror(errno));
+
+	if (!commit_tree(buffer.buf, tree_sha1, parents, commit_sha1)) {
 		printf("%s\n", sha1_to_hex(commit_sha1));
 		return 0;
 	}

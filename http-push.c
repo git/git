@@ -9,11 +9,12 @@
 #include "revision.h"
 #include "exec_cmd.h"
 #include "remote.h"
+#include "list-objects.h"
 
 #include <expat.h>
 
 static const char http_push_usage[] =
-"git-http-push [--all] [--dry-run] [--force] [--verbose] <remote> [<head>...]\n";
+"git http-push [--all] [--dry-run] [--force] [--verbose] <remote> [<head>...]\n";
 
 #ifndef XML_STATUS_OK
 enum XML_Status {
@@ -664,8 +665,7 @@ static void release_request(struct transfer_request *request)
 		close(request->local_fileno);
 	if (request->local_stream)
 		fclose(request->local_stream);
-	if (request->url != NULL)
-		free(request->url);
+	free(request->url);
 	free(request);
 }
 
@@ -783,7 +783,7 @@ static void finish_request(struct transfer_request *request)
 					lst = &((*lst)->next);
 				*lst = (*lst)->next;
 
-				if (!verify_pack(target, 0))
+				if (!verify_pack(target))
 					install_packed_git(target);
 				else
 					remote->can_update_info_refs = 0;
@@ -1283,10 +1283,8 @@ static struct remote_lock *lock_remote(const char *path, long timeout)
 	strbuf_release(&in_buffer);
 
 	if (lock->token == NULL || lock->timeout <= 0) {
-		if (lock->token != NULL)
-			free(lock->token);
-		if (lock->owner != NULL)
-			free(lock->owner);
+		free(lock->token);
+		free(lock->owner);
 		free(url);
 		free(lock);
 		lock = NULL;
@@ -1344,13 +1342,30 @@ static int unlock_remote(struct remote_lock *lock)
 			prev->next = prev->next->next;
 	}
 
-	if (lock->owner != NULL)
-		free(lock->owner);
+	free(lock->owner);
 	free(lock->url);
 	free(lock->token);
 	free(lock);
 
 	return rc;
+}
+
+static void remove_locks(void)
+{
+	struct remote_lock *lock = remote->locks;
+
+	fprintf(stderr, "Removing remote locks...\n");
+	while (lock) {
+		unlock_remote(lock);
+		lock = lock->next;
+	}
+}
+
+static void remove_locks_on_signal(int signo)
+{
+	remove_locks();
+	signal(signo, SIG_DFL);
+	raise(signo);
 }
 
 static void remote_ls(const char *path, int flags,
@@ -1634,12 +1649,19 @@ static struct object_list **process_tree(struct tree *tree,
 
 	init_tree_desc(&desc, tree->buffer, tree->size);
 
-	while (tree_entry(&desc, &entry)) {
-		if (S_ISDIR(entry.mode))
+	while (tree_entry(&desc, &entry))
+		switch (object_type(entry.mode)) {
+		case OBJ_TREE:
 			p = process_tree(lookup_tree(entry.sha1), p, &me, name);
-		else
+			break;
+		case OBJ_BLOB:
 			p = process_blob(lookup_blob(entry.sha1), p, &me, name);
-	}
+			break;
+		default:
+			/* Subproject commit - not in this repository */
+			break;
+		}
+
 	free(tree->buffer);
 	tree->buffer = NULL;
 	return p;
@@ -1756,15 +1778,15 @@ static int one_local_ref(const char *refname, const unsigned char *sha1, int fla
 static void one_remote_ref(char *refname)
 {
 	struct ref *ref;
-	unsigned char remote_sha1[20];
 	struct object *obj;
-	int len = strlen(refname) + 1;
 
-	if (http_fetch_ref(remote->url, refname + 5 /* "refs/" */,
-			   remote_sha1) != 0) {
+	ref = alloc_ref_from_str(refname);
+
+	if (http_fetch_ref(remote->url, ref) != 0) {
 		fprintf(stderr,
 			"Unable to fetch ref %s from %s\n",
 			refname, remote->url);
+		free(ref);
 		return;
 	}
 
@@ -1772,18 +1794,15 @@ static void one_remote_ref(char *refname)
 	 * Fetch a copy of the object if it doesn't exist locally - it
 	 * may be required for updating server info later.
 	 */
-	if (remote->can_update_info_refs && !has_sha1_file(remote_sha1)) {
-		obj = lookup_unknown_object(remote_sha1);
+	if (remote->can_update_info_refs && !has_sha1_file(ref->old_sha1)) {
+		obj = lookup_unknown_object(ref->old_sha1);
 		if (obj) {
 			fprintf(stderr,	"  fetch %s for %s\n",
-				sha1_to_hex(remote_sha1), refname);
+				sha1_to_hex(ref->old_sha1), refname);
 			add_fetch_request(obj);
 		}
 	}
 
-	ref = xcalloc(1, sizeof(*ref) + len);
-	hashcpy(ref->old_sha1, remote_sha1);
-	memcpy(ref->name, refname, len);
 	*remote_tail = ref;
 	remote_tail = &ref->next;
 }
@@ -1860,61 +1879,39 @@ static int ref_newer(const unsigned char *new_sha1,
 	return found;
 }
 
-static void mark_edge_parents_uninteresting(struct commit *commit)
-{
-	struct commit_list *parents;
-
-	for (parents = commit->parents; parents; parents = parents->next) {
-		struct commit *parent = parents->item;
-		if (!(parent->object.flags & UNINTERESTING))
-			continue;
-		mark_tree_uninteresting(parent->tree);
-	}
-}
-
-static void mark_edges_uninteresting(struct commit_list *list)
-{
-	for ( ; list; list = list->next) {
-		struct commit *commit = list->item;
-
-		if (commit->object.flags & UNINTERESTING) {
-			mark_tree_uninteresting(commit->tree);
-			continue;
-		}
-		mark_edge_parents_uninteresting(commit);
-	}
-}
-
 static void add_remote_info_ref(struct remote_ls_ctx *ls)
 {
 	struct strbuf *buf = (struct strbuf *)ls->userData;
-	unsigned char remote_sha1[20];
 	struct object *o;
 	int len;
 	char *ref_info;
+	struct ref *ref;
 
-	if (http_fetch_ref(remote->url, ls->dentry_name + 5 /* "refs/" */,
-			   remote_sha1) != 0) {
+	ref = alloc_ref_from_str(ls->dentry_name);
+
+	if (http_fetch_ref(remote->url, ref) != 0) {
 		fprintf(stderr,
 			"Unable to fetch ref %s from %s\n",
 			ls->dentry_name, remote->url);
 		aborted = 1;
+		free(ref);
 		return;
 	}
 
-	o = parse_object(remote_sha1);
+	o = parse_object(ref->old_sha1);
 	if (!o) {
 		fprintf(stderr,
 			"Unable to parse object %s for remote ref %s\n",
-			sha1_to_hex(remote_sha1), ls->dentry_name);
+			sha1_to_hex(ref->old_sha1), ls->dentry_name);
 		aborted = 1;
+		free(ref);
 		return;
 	}
 
 	len = strlen(ls->dentry_name) + 42;
 	ref_info = xcalloc(len + 1, 1);
 	sprintf(ref_info, "%s	%s\n",
-		sha1_to_hex(remote_sha1), ls->dentry_name);
+		sha1_to_hex(ref->old_sha1), ls->dentry_name);
 	fwrite_buffer(ref_info, 1, len, buf);
 	free(ref_info);
 
@@ -1929,6 +1926,7 @@ static void add_remote_info_ref(struct remote_ls_ctx *ls)
 			free(ref_info);
 		}
 	}
+	free(ref);
 }
 
 static void update_remote_info_refs(struct remote_lock *lock)
@@ -2028,8 +2026,7 @@ static void fetch_symref(const char *path, char **symref, unsigned char *sha1)
 	}
 	free(url);
 
-	if (*symref != NULL)
-		free(*symref);
+	free(*symref);
 	*symref = NULL;
 	hashclr(sha1);
 
@@ -2131,6 +2128,8 @@ static int delete_remote_branch(char *pattern, int force)
 
 	/* Send delete request */
 	fprintf(stderr, "Removing remote branch '%s'\n", remote_ref->name);
+	if (dry_run)
+		return 0;
 	url = xmalloc(strlen(remote->url) + strlen(remote_ref->name) + 1);
 	sprintf(url, "%s%s", remote->url, remote_ref->name);
 	slot = get_active_slot();
@@ -2233,7 +2232,7 @@ int main(int argc, char **argv)
 
 	memset(remote_dir_exists, -1, 256);
 
-	http_init();
+	http_init(NULL);
 
 	no_pragma_header = curl_slist_append(no_pragma_header, "Pragma:");
 
@@ -2250,6 +2249,11 @@ int main(int argc, char **argv)
 		rc = 1;
 		goto cleanup;
 	}
+
+	signal(SIGINT, remove_locks_on_signal);
+	signal(SIGHUP, remove_locks_on_signal);
+	signal(SIGQUIT, remove_locks_on_signal);
+	signal(SIGTERM, remove_locks_on_signal);
 
 	/* Check whether the remote has server info files */
 	remote->can_update_info_refs = 0;
@@ -2304,6 +2308,16 @@ int main(int argc, char **argv)
 
 		if (!ref->peer_ref)
 			continue;
+
+		if (is_zero_sha1(ref->peer_ref->new_sha1)) {
+			if (delete_remote_branch(ref->name, 1) == -1) {
+				error("Could not remove %s", ref->name);
+				rc = -4;
+			}
+			new_refs++;
+			continue;
+		}
+
 		if (!hashcmp(ref->old_sha1, ref->peer_ref->new_sha1)) {
 			if (push_verbosely || 1)
 				fprintf(stderr, "'%s': up-to-date\n", ref->name);
@@ -2335,11 +2349,6 @@ int main(int argc, char **argv)
 			}
 		}
 		hashcpy(ref->new_sha1, ref->peer_ref->new_sha1);
-		if (is_zero_sha1(ref->new_sha1)) {
-			error("cannot happen anymore");
-			rc = -3;
-			continue;
-		}
 		new_refs++;
 		strcpy(old_hex, sha1_to_hex(ref->old_sha1));
 		new_hex = sha1_to_hex(ref->new_sha1);
@@ -2375,6 +2384,7 @@ int main(int argc, char **argv)
 		}
 		init_revisions(&revs, setup_git_directory());
 		setup_revisions(commit_argc, commit_argv, &revs, NULL);
+		revs.edge_hint = 0; /* just in case */
 		free(new_sha1_hex);
 		if (old_sha1_hex) {
 			free(old_sha1_hex);
@@ -2383,8 +2393,9 @@ int main(int argc, char **argv)
 
 		/* Generate a list of objects that need to be pushed */
 		pushing = 0;
-		prepare_revision_walk(&revs);
-		mark_edges_uninteresting(revs.commits);
+		if (prepare_revision_walk(&revs))
+			die("revision walk setup failed");
+		mark_edges_uninteresting(revs.commits, &revs, NULL);
 		objects_to_send = get_delta(&revs, ref_lock);
 		finish_all_active_slots();
 
@@ -2398,15 +2409,17 @@ int main(int argc, char **argv)
 		fill_active_slots();
 		add_fill_function(NULL, fill_active_slot);
 #endif
-		finish_all_active_slots();
+		do {
+			finish_all_active_slots();
+#ifdef USE_CURL_MULTI
+			fill_active_slots();
+#endif
+		} while (request_queue_head && !aborted);
 
 		/* Update the remote branch if all went well */
-		if (aborted || !update_remote(ref->new_sha1, ref_lock)) {
+		if (aborted || !update_remote(ref->new_sha1, ref_lock))
 			rc = 1;
-			goto unlock;
-		}
 
-	unlock:
 		if (!rc)
 			fprintf(stderr, "    done\n");
 		unlock_remote(ref_lock);
@@ -2425,8 +2438,7 @@ int main(int argc, char **argv)
 	}
 
  cleanup:
-	if (rewritten_url)
-		free(rewritten_url);
+	free(rewritten_url);
 	if (info_ref_lock)
 		unlock_remote(info_ref_lock);
 	free(remote);

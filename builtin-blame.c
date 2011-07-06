@@ -16,26 +16,18 @@
 #include "quote.h"
 #include "xdiff-interface.h"
 #include "cache-tree.h"
-#include "path-list.h"
+#include "string-list.h"
 #include "mailmap.h"
+#include "parse-options.h"
 
-static char blame_usage[] =
-"git-blame [-c] [-b] [-l] [--root] [-t] [-f] [-n] [-s] [-p] [-w] [-L n,m] [-S <revs-file>] [-M] [-C] [-C] [--contents <filename>] [--incremental] [commit] [--] file\n"
-"  -c                  Use the same output mode as git-annotate (Default: off)\n"
-"  -b                  Show blank SHA-1 for boundary commits (Default: off)\n"
-"  -l                  Show long commit SHA1 (Default: off)\n"
-"  --root              Do not treat root commits as boundaries (Default: off)\n"
-"  -t                  Show raw timestamp (Default: off)\n"
-"  -f, --show-name     Show original filename (Default: auto)\n"
-"  -n, --show-number   Show original linenumber (Default: off)\n"
-"  -s                  Suppress author name and timestamp (Default: off)\n"
-"  -p, --porcelain     Show in a format designed for machine consumption\n"
-"  -w                  Ignore whitespace differences\n"
-"  -L n,m              Process only line range n,m, counting from 1\n"
-"  -M, -C              Find line movements within and across files\n"
-"  --incremental       Show blame entries as we find them, incrementally\n"
-"  --contents file     Use <file>'s contents as the final image\n"
-"  -S revs-file        Use revisions from revs-file instead of calling git-rev-list\n";
+static char blame_usage[] = "git blame [options] [rev-opts] [rev] [--] file";
+
+static const char *blame_opt_usage[] = {
+	blame_usage,
+	"",
+	"[rev-opts] are documented in git-rev-list(1)",
+	NULL
+};
 
 static int longest_file;
 static int longest_author;
@@ -43,11 +35,12 @@ static int max_orig_digits;
 static int max_digits;
 static int max_score_digits;
 static int show_root;
+static int reverse;
 static int blank_boundary;
 static int incremental;
 static int cmd_is_annotate;
 static int xdl_opts = XDF_NEED_MINIMAL;
-static struct path_list mailmap;
+static struct string_list mailmap;
 
 #ifndef DEBUG
 #define DEBUG 0
@@ -91,7 +84,7 @@ struct origin {
  * Given an origin, prepare mmfile_t structure to be used by the
  * diff machinery
  */
-static char *fill_origin_blob(struct origin *o, mmfile_t *file)
+static void fill_origin_blob(struct origin *o, mmfile_t *file)
 {
 	if (!o->file.ptr) {
 		enum object_type type;
@@ -106,7 +99,6 @@ static char *fill_origin_blob(struct origin *o, mmfile_t *file)
 	}
 	else
 		*file = o->file;
-	return file->ptr;
 }
 
 /*
@@ -123,8 +115,7 @@ static inline struct origin *origin_incref(struct origin *o)
 static void origin_decref(struct origin *o)
 {
 	if (o && --o->refcnt <= 0) {
-		if (o->file.ptr)
-			free(o->file.ptr);
+		free(o->file.ptr);
 		free(o);
 	}
 }
@@ -162,6 +153,10 @@ struct blame_entry {
 	 */
 	char guilty;
 
+	/* true if the entry has been scanned for copies in the current parent
+	 */
+	char scanned;
+
 	/* the line number of the first line of this group in the
 	 * suspect's file; internally all line numbers are 0 based.
 	 */
@@ -179,7 +174,7 @@ struct blame_entry {
 struct scoreboard {
 	/* the final commit (i.e. where we started digging from) */
 	struct commit *final;
-
+	struct rev_info *revs;
 	const char *path;
 
 	/*
@@ -1017,7 +1012,8 @@ static int find_move_in_parent(struct scoreboard *sb,
 	while (made_progress) {
 		made_progress = 0;
 		for (e = sb->ent; e; e = e->next) {
-			if (e->guilty || !same_suspect(e->suspect, target))
+			if (e->guilty || !same_suspect(e->suspect, target) ||
+			    ent_score(sb, e) < blame_move_score)
 				continue;
 			find_copy_in_blob(sb, e, parent, split, &file_p);
 			if (split[1].suspect &&
@@ -1042,6 +1038,7 @@ struct blame_list {
  */
 static struct blame_list *setup_blame_list(struct scoreboard *sb,
 					   struct origin *target,
+					   int min_score,
 					   int *num_ents_p)
 {
 	struct blame_entry *e;
@@ -1049,16 +1046,30 @@ static struct blame_list *setup_blame_list(struct scoreboard *sb,
 	struct blame_list *blame_list = NULL;
 
 	for (e = sb->ent, num_ents = 0; e; e = e->next)
-		if (!e->guilty && same_suspect(e->suspect, target))
+		if (!e->scanned && !e->guilty &&
+		    same_suspect(e->suspect, target) &&
+		    min_score < ent_score(sb, e))
 			num_ents++;
 	if (num_ents) {
 		blame_list = xcalloc(num_ents, sizeof(struct blame_list));
 		for (e = sb->ent, i = 0; e; e = e->next)
-			if (!e->guilty && same_suspect(e->suspect, target))
+			if (!e->scanned && !e->guilty &&
+			    same_suspect(e->suspect, target) &&
+			    min_score < ent_score(sb, e))
 				blame_list[i++].ent = e;
 	}
 	*num_ents_p = num_ents;
 	return blame_list;
+}
+
+/*
+ * Reset the scanned status on all entries.
+ */
+static void reset_scanned_flag(struct scoreboard *sb)
+{
+	struct blame_entry *e;
+	for (e = sb->ent; e; e = e->next)
+		e->scanned = 0;
 }
 
 /*
@@ -1079,7 +1090,7 @@ static int find_copy_in_parent(struct scoreboard *sb,
 	struct blame_list *blame_list;
 	int num_ents;
 
-	blame_list = setup_blame_list(sb, target, &num_ents);
+	blame_list = setup_blame_list(sb, target, blame_copy_score, &num_ents);
 	if (!blame_list)
 		return 1; /* nothing remains for this target */
 
@@ -1153,18 +1164,21 @@ static int find_copy_in_parent(struct scoreboard *sb,
 				split_blame(sb, split, blame_list[j].ent);
 				made_progress = 1;
 			}
+			else
+				blame_list[j].ent->scanned = 1;
 			decref_split(split);
 		}
 		free(blame_list);
 
 		if (!made_progress)
 			break;
-		blame_list = setup_blame_list(sb, target, &num_ents);
+		blame_list = setup_blame_list(sb, target, blame_copy_score, &num_ents);
 		if (!blame_list) {
 			retval = 1;
 			break;
 		}
 	}
+	reset_scanned_flag(sb);
 	diff_flush(&diff_opts);
 	diff_tree_release_paths(&diff_opts);
 	return retval;
@@ -1193,18 +1207,48 @@ static void pass_whole_blame(struct scoreboard *sb,
 	}
 }
 
-#define MAXPARENT 16
+/*
+ * We pass blame from the current commit to its parents.  We keep saying
+ * "parent" (and "porigin"), but what we mean is to find scapegoat to
+ * exonerate ourselves.
+ */
+static struct commit_list *first_scapegoat(struct rev_info *revs, struct commit *commit)
+{
+	if (!reverse)
+		return commit->parents;
+	return lookup_decoration(&revs->children, &commit->object);
+}
+
+static int num_scapegoats(struct rev_info *revs, struct commit *commit)
+{
+	int cnt;
+	struct commit_list *l = first_scapegoat(revs, commit);
+	for (cnt = 0; l; l = l->next)
+		cnt++;
+	return cnt;
+}
+
+#define MAXSG 16
 
 static void pass_blame(struct scoreboard *sb, struct origin *origin, int opt)
 {
-	int i, pass;
+	struct rev_info *revs = sb->revs;
+	int i, pass, num_sg;
 	struct commit *commit = origin->commit;
-	struct commit_list *parent;
-	struct origin *parent_origin[MAXPARENT], *porigin;
+	struct commit_list *sg;
+	struct origin *sg_buf[MAXSG];
+	struct origin *porigin, **sg_origin = sg_buf;
 
-	memset(parent_origin, 0, sizeof(parent_origin));
+	num_sg = num_scapegoats(revs, commit);
+	if (!num_sg)
+		goto finish;
+	else if (num_sg < ARRAY_SIZE(sg_buf))
+		memset(sg_buf, 0, sizeof(sg_buf));
+	else
+		sg_origin = xcalloc(num_sg, sizeof(*sg_origin));
 
-	/* The first pass looks for unrenamed path to optimize for
+	/*
+	 * The first pass looks for unrenamed path to optimize for
 	 * common cases, then we look for renames in the second pass.
 	 */
 	for (pass = 0; pass < 2; pass++) {
@@ -1212,13 +1256,13 @@ static void pass_blame(struct scoreboard *sb, struct origin *origin, int opt)
 				       struct commit *, struct origin *);
 		find = pass ? find_rename : find_origin;
 
-		for (i = 0, parent = commit->parents;
-		     i < MAXPARENT && parent;
-		     parent = parent->next, i++) {
-			struct commit *p = parent->item;
+		for (i = 0, sg = first_scapegoat(revs, commit);
+		     i < num_sg && sg;
+		     sg = sg->next, i++) {
+			struct commit *p = sg->item;
 			int j, same;
 
-			if (parent_origin[i])
+			if (sg_origin[i])
 				continue;
 			if (parse_commit(p))
 				continue;
@@ -1231,24 +1275,24 @@ static void pass_blame(struct scoreboard *sb, struct origin *origin, int opt)
 				goto finish;
 			}
 			for (j = same = 0; j < i; j++)
-				if (parent_origin[j] &&
-				    !hashcmp(parent_origin[j]->blob_sha1,
+				if (sg_origin[j] &&
+				    !hashcmp(sg_origin[j]->blob_sha1,
 					     porigin->blob_sha1)) {
 					same = 1;
 					break;
 				}
 			if (!same)
-				parent_origin[i] = porigin;
+				sg_origin[i] = porigin;
 			else
 				origin_decref(porigin);
 		}
 	}
 
 	num_commits++;
-	for (i = 0, parent = commit->parents;
-	     i < MAXPARENT && parent;
-	     parent = parent->next, i++) {
-		struct origin *porigin = parent_origin[i];
+	for (i = 0, sg = first_scapegoat(revs, commit);
+	     i < num_sg && sg;
+	     sg = sg->next, i++) {
+		struct origin *porigin = sg_origin[i];
 		if (!porigin)
 			continue;
 		if (pass_blame_to_parent(sb, origin, porigin))
@@ -1259,10 +1303,10 @@ static void pass_blame(struct scoreboard *sb, struct origin *origin, int opt)
 	 * Optionally find moves in parents' files.
 	 */
 	if (opt & PICKAXE_BLAME_MOVE)
-		for (i = 0, parent = commit->parents;
-		     i < MAXPARENT && parent;
-		     parent = parent->next, i++) {
-			struct origin *porigin = parent_origin[i];
+		for (i = 0, sg = first_scapegoat(revs, commit);
+		     i < num_sg && sg;
+		     sg = sg->next, i++) {
+			struct origin *porigin = sg_origin[i];
 			if (!porigin)
 				continue;
 			if (find_move_in_parent(sb, origin, porigin))
@@ -1273,23 +1317,25 @@ static void pass_blame(struct scoreboard *sb, struct origin *origin, int opt)
 	 * Optionally find copies from parents' files.
 	 */
 	if (opt & PICKAXE_BLAME_COPY)
-		for (i = 0, parent = commit->parents;
-		     i < MAXPARENT && parent;
-		     parent = parent->next, i++) {
-			struct origin *porigin = parent_origin[i];
-			if (find_copy_in_parent(sb, origin, parent->item,
+		for (i = 0, sg = first_scapegoat(revs, commit);
+		     i < num_sg && sg;
+		     sg = sg->next, i++) {
+			struct origin *porigin = sg_origin[i];
+			if (find_copy_in_parent(sb, origin, sg->item,
 						porigin, opt))
 				goto finish;
 		}
 
  finish:
-	for (i = 0; i < MAXPARENT; i++) {
-		if (parent_origin[i]) {
-			drop_origin_blob(parent_origin[i]);
-			origin_decref(parent_origin[i]);
+	for (i = 0; i < num_sg; i++) {
+		if (sg_origin[i]) {
+			drop_origin_blob(sg_origin[i]);
+			origin_decref(sg_origin[i]);
 		}
 	}
 	drop_origin_blob(origin);
+	if (sg_buf != sg_origin)
+		free(sg_origin);
 }
 
 /*
@@ -1488,8 +1534,10 @@ static void found_guilty_entry(struct blame_entry *ent)
  * is still unknown, pick one blame_entry, and allow its current
  * suspect to pass blames to its parents.
  */
-static void assign_blame(struct scoreboard *sb, struct rev_info *revs, int opt)
+static void assign_blame(struct scoreboard *sb, int opt)
 {
+	struct rev_info *revs = sb->revs;
+
 	while (1) {
 		struct blame_entry *ent;
 		struct commit *commit;
@@ -1510,8 +1558,9 @@ static void assign_blame(struct scoreboard *sb, struct rev_info *revs, int opt)
 		commit = suspect->commit;
 		if (!commit->object.parsed)
 			parse_commit(commit);
-		if (!(commit->object.flags & UNINTERESTING) &&
-		    !(revs->max_age != -1 && commit->date < revs->max_age))
+		if (reverse ||
+		    (!(commit->object.flags & UNINTERESTING) &&
+		     !(revs->max_age != -1 && commit->date < revs->max_age)))
 			pass_blame(sb, suspect, opt);
 		else {
 			commit->object.flags |= UNINTERESTING;
@@ -1877,7 +1926,7 @@ static void sanity_check_refcnt(struct scoreboard *sb)
  * Used for the command line parsing; check if the path exists
  * in the working tree.
  */
-static int has_path_in_work_tree(const char *path)
+static int has_string_in_work_tree(const char *path)
 {
 	struct stat st;
 	return !lstat(path, &st);
@@ -1894,9 +1943,7 @@ static unsigned parse_score(const char *arg)
 
 static const char *add_prefix(const char *prefix, const char *path)
 {
-	if (!prefix || !prefix[0])
-		return path;
-	return prefix_path(prefix, strlen(prefix), path);
+	return prefix_path(prefix, prefix ? strlen(prefix) : 0, path);
 }
 
 /*
@@ -1996,7 +2043,7 @@ static void prepare_blame_range(struct scoreboard *sb,
 		usage(blame_usage);
 }
 
-static int git_blame_config(const char *var, const char *value)
+static int git_blame_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, "blame.showroot")) {
 		show_root = git_config_bool(var, value);
@@ -2006,9 +2053,13 @@ static int git_blame_config(const char *var, const char *value)
 		blank_boundary = git_config_bool(var, value);
 		return 0;
 	}
-	return git_default_config(var, value);
+	return git_default_config(var, value, cb);
 }
 
+/*
+ * Prepare a dummy commit that represents the work tree (or staged) item.
+ * Note that annotating work tree item never works in the reverse.
+ */
 static struct commit *fake_working_tree_commit(const char *path, const char *contents_from)
 {
 	struct commit *commit;
@@ -2073,7 +2124,7 @@ static struct commit *fake_working_tree_commit(const char *path, const char *con
 		if (strbuf_read(&buf, 0, 0) < 0)
 			die("read error %s from stdin", strerror(errno));
 	}
-	convert_to_git(path, buf.buf, buf.len, &buf);
+	convert_to_git(path, buf.buf, buf.len, &buf, 0);
 	origin->file.ptr = buf.buf;
 	origin->file.size = buf.len;
 	pretend_sha1_file(buf.buf, buf.len, OBJ_BLOB, origin->blob_sha1);
@@ -2125,6 +2176,108 @@ static struct commit *fake_working_tree_commit(const char *path, const char *con
 	return commit;
 }
 
+static const char *prepare_final(struct scoreboard *sb)
+{
+	int i;
+	const char *final_commit_name = NULL;
+	struct rev_info *revs = sb->revs;
+
+	/*
+	 * There must be one and only one positive commit in the
+	 * revs->pending array.
+	 */
+	for (i = 0; i < revs->pending.nr; i++) {
+		struct object *obj = revs->pending.objects[i].item;
+		if (obj->flags & UNINTERESTING)
+			continue;
+		while (obj->type == OBJ_TAG)
+			obj = deref_tag(obj, NULL, 0);
+		if (obj->type != OBJ_COMMIT)
+			die("Non commit %s?", revs->pending.objects[i].name);
+		if (sb->final)
+			die("More than one commit to dig from %s and %s?",
+			    revs->pending.objects[i].name,
+			    final_commit_name);
+		sb->final = (struct commit *) obj;
+		final_commit_name = revs->pending.objects[i].name;
+	}
+	return final_commit_name;
+}
+
+static const char *prepare_initial(struct scoreboard *sb)
+{
+	int i;
+	const char *final_commit_name = NULL;
+	struct rev_info *revs = sb->revs;
+
+	/*
+	 * There must be one and only one negative commit, and it must be
+	 * the boundary.
+	 */
+	for (i = 0; i < revs->pending.nr; i++) {
+		struct object *obj = revs->pending.objects[i].item;
+		if (!(obj->flags & UNINTERESTING))
+			continue;
+		while (obj->type == OBJ_TAG)
+			obj = deref_tag(obj, NULL, 0);
+		if (obj->type != OBJ_COMMIT)
+			die("Non commit %s?", revs->pending.objects[i].name);
+		if (sb->final)
+			die("More than one commit to dig down to %s and %s?",
+			    revs->pending.objects[i].name,
+			    final_commit_name);
+		sb->final = (struct commit *) obj;
+		final_commit_name = revs->pending.objects[i].name;
+	}
+	if (!final_commit_name)
+		die("No commit to dig down to?");
+	return final_commit_name;
+}
+
+static int blame_copy_callback(const struct option *option, const char *arg, int unset)
+{
+	int *opt = option->value;
+
+	/*
+	 * -C enables copy from removed files;
+	 * -C -C enables copy from existing files, but only
+	 *       when blaming a new file;
+	 * -C -C -C enables copy from existing files for
+	 *          everybody
+	 */
+	if (*opt & PICKAXE_BLAME_COPY_HARDER)
+		*opt |= PICKAXE_BLAME_COPY_HARDEST;
+	if (*opt & PICKAXE_BLAME_COPY)
+		*opt |= PICKAXE_BLAME_COPY_HARDER;
+	*opt |= PICKAXE_BLAME_COPY | PICKAXE_BLAME_MOVE;
+
+	if (arg)
+		blame_copy_score = parse_score(arg);
+	return 0;
+}
+
+static int blame_move_callback(const struct option *option, const char *arg, int unset)
+{
+	int *opt = option->value;
+
+	*opt |= PICKAXE_BLAME_MOVE;
+
+	if (arg)
+		blame_move_score = parse_score(arg);
+	return 0;
+}
+
+static int blame_bottomtop_callback(const struct option *option, const char *arg, int unset)
+{
+	const char **bottomtop = option->value;
+	if (!arg)
+		return -1;
+	if (*bottomtop)
+		die("More than one '-L n,m' option given");
+	*bottomtop = arg;
+	return 0;
+}
+
 int cmd_blame(int argc, const char **argv, const char *prefix)
 {
 	struct rev_info revs;
@@ -2132,102 +2285,70 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 	struct scoreboard sb;
 	struct origin *o;
 	struct blame_entry *ent;
-	int i, seen_dashdash, unk, opt;
-	long bottom, top, lno;
-	int output_option = 0;
-	int show_stats = 0;
-	const char *revs_file = NULL;
+	long dashdash_pos, bottom, top, lno;
 	const char *final_commit_name = NULL;
 	enum object_type type;
-	const char *bottomtop = NULL;
-	const char *contents_from = NULL;
+
+	static const char *bottomtop = NULL;
+	static int output_option = 0, opt = 0;
+	static int show_stats = 0;
+	static const char *revs_file = NULL;
+	static const char *contents_from = NULL;
+	static const struct option options[] = {
+		OPT_BOOLEAN(0, "incremental", &incremental, "Show blame entries as we find them, incrementally"),
+		OPT_BOOLEAN('b', NULL, &blank_boundary, "Show blank SHA-1 for boundary commits (Default: off)"),
+		OPT_BOOLEAN(0, "root", &show_root, "Do not treat root commits as boundaries (Default: off)"),
+		OPT_BOOLEAN(0, "show-stats", &show_stats, "Show work cost statistics"),
+		OPT_BIT(0, "score-debug", &output_option, "Show output score for blame entries", OUTPUT_SHOW_SCORE),
+		OPT_BIT('f', "show-name", &output_option, "Show original filename (Default: auto)", OUTPUT_SHOW_NAME),
+		OPT_BIT('n', "show-number", &output_option, "Show original linenumber (Default: off)", OUTPUT_SHOW_NUMBER),
+		OPT_BIT('p', "porcelain", &output_option, "Show in a format designed for machine consumption", OUTPUT_PORCELAIN),
+		OPT_BIT('c', NULL, &output_option, "Use the same output mode as git-annotate (Default: off)", OUTPUT_ANNOTATE_COMPAT),
+		OPT_BIT('t', NULL, &output_option, "Show raw timestamp (Default: off)", OUTPUT_RAW_TIMESTAMP),
+		OPT_BIT('l', NULL, &output_option, "Show long commit SHA1 (Default: off)", OUTPUT_LONG_OBJECT_NAME),
+		OPT_BIT('s', NULL, &output_option, "Suppress author name and timestamp (Default: off)", OUTPUT_NO_AUTHOR),
+		OPT_BIT('w', NULL, &xdl_opts, "Ignore whitespace differences", XDF_IGNORE_WHITESPACE),
+		OPT_STRING('S', NULL, &revs_file, "file", "Use revisions from <file> instead of calling git-rev-list"),
+		OPT_STRING(0, "contents", &contents_from, "file", "Use <file>'s contents as the final image"),
+		{ OPTION_CALLBACK, 'C', NULL, &opt, "score", "Find line copies within and across files", PARSE_OPT_OPTARG, blame_copy_callback },
+		{ OPTION_CALLBACK, 'M', NULL, &opt, "score", "Find line movements within and across files", PARSE_OPT_OPTARG, blame_move_callback },
+		OPT_CALLBACK('L', NULL, &bottomtop, "n,m", "Process only line range n,m, counting from 1", blame_bottomtop_callback),
+		OPT_END()
+	};
+
+	struct parse_opt_ctx_t ctx;
 
 	cmd_is_annotate = !strcmp(argv[0], "annotate");
 
-	git_config(git_blame_config);
+	git_config(git_blame_config, NULL);
+	init_revisions(&revs, NULL);
 	save_commit_buffer = 0;
+	dashdash_pos = 0;
 
-	opt = 0;
-	seen_dashdash = 0;
-	for (unk = i = 1; i < argc; i++) {
-		const char *arg = argv[i];
-		if (*arg != '-')
-			break;
-		else if (!strcmp("-b", arg))
-			blank_boundary = 1;
-		else if (!strcmp("--root", arg))
-			show_root = 1;
-		else if (!strcmp(arg, "--show-stats"))
-			show_stats = 1;
-		else if (!strcmp("-c", arg))
-			output_option |= OUTPUT_ANNOTATE_COMPAT;
-		else if (!strcmp("-t", arg))
-			output_option |= OUTPUT_RAW_TIMESTAMP;
-		else if (!strcmp("-l", arg))
-			output_option |= OUTPUT_LONG_OBJECT_NAME;
-		else if (!strcmp("-s", arg))
-			output_option |= OUTPUT_NO_AUTHOR;
-		else if (!strcmp("-w", arg))
-			xdl_opts |= XDF_IGNORE_WHITESPACE;
-		else if (!strcmp("-S", arg) && ++i < argc)
-			revs_file = argv[i];
-		else if (!prefixcmp(arg, "-M")) {
-			opt |= PICKAXE_BLAME_MOVE;
-			blame_move_score = parse_score(arg+2);
+	parse_options_start(&ctx, argc, argv, PARSE_OPT_KEEP_DASHDASH |
+			    PARSE_OPT_KEEP_ARGV0);
+	for (;;) {
+		switch (parse_options_step(&ctx, options, blame_opt_usage)) {
+		case PARSE_OPT_HELP:
+			exit(129);
+		case PARSE_OPT_DONE:
+			if (ctx.argv[0])
+				dashdash_pos = ctx.cpidx;
+			goto parse_done;
 		}
-		else if (!prefixcmp(arg, "-C")) {
-			/*
-			 * -C enables copy from removed files;
-			 * -C -C enables copy from existing files, but only
-			 *       when blaming a new file;
-			 * -C -C -C enables copy from existing files for
-			 *          everybody
-			 */
-			if (opt & PICKAXE_BLAME_COPY_HARDER)
-				opt |= PICKAXE_BLAME_COPY_HARDEST;
-			if (opt & PICKAXE_BLAME_COPY)
-				opt |= PICKAXE_BLAME_COPY_HARDER;
-			opt |= PICKAXE_BLAME_COPY | PICKAXE_BLAME_MOVE;
-			blame_copy_score = parse_score(arg+2);
+
+		if (!strcmp(ctx.argv[0], "--reverse")) {
+			ctx.argv[0] = "--children";
+			reverse = 1;
 		}
-		else if (!prefixcmp(arg, "-L")) {
-			if (!arg[2]) {
-				if (++i >= argc)
-					usage(blame_usage);
-				arg = argv[i];
-			}
-			else
-				arg += 2;
-			if (bottomtop)
-				die("More than one '-L n,m' option given");
-			bottomtop = arg;
-		}
-		else if (!strcmp("--contents", arg)) {
-			if (++i >= argc)
-				usage(blame_usage);
-			contents_from = argv[i];
-		}
-		else if (!strcmp("--incremental", arg))
-			incremental = 1;
-		else if (!strcmp("--score-debug", arg))
-			output_option |= OUTPUT_SHOW_SCORE;
-		else if (!strcmp("-f", arg) ||
-			 !strcmp("--show-name", arg))
-			output_option |= OUTPUT_SHOW_NAME;
-		else if (!strcmp("-n", arg) ||
-			 !strcmp("--show-number", arg))
-			output_option |= OUTPUT_SHOW_NUMBER;
-		else if (!strcmp("-p", arg) ||
-			 !strcmp("--porcelain", arg))
-			output_option |= OUTPUT_PORCELAIN;
-		else if (!strcmp("--", arg)) {
-			seen_dashdash = 1;
-			i++;
-			break;
-		}
-		else
-			argv[unk++] = arg;
+		parse_revision_opt(&revs, &ctx, options, blame_opt_usage);
 	}
+parse_done:
+	argc = parse_options_end(&ctx);
+
+	if (DIFF_OPT_TST(&revs.diffopt, FIND_COPIES_HARDER))
+		opt |= (PICKAXE_BLAME_COPY | PICKAXE_BLAME_MOVE |
+			PICKAXE_BLAME_COPY_HARDER);
 
 	if (!blame_move_score)
 		blame_move_score = BLAME_DEFAULT_MOVE_SCORE;
@@ -2241,115 +2362,59 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 	 *
 	 * The remaining are:
 	 *
-	 * (1) if seen_dashdash, its either
-	 *     "-options -- <path>" or
-	 *     "-options -- <path> <rev>".
-	 *     but the latter is allowed only if there is no
-	 *     options that we passed to revision machinery.
+	 * (1) if dashdash_pos != 0, its either
+	 *     "blame [revisions] -- <path>" or
+	 *     "blame -- <path> <rev>"
 	 *
-	 * (2) otherwise, we may have "--" somewhere later and
-	 *     might be looking at the first one of multiple 'rev'
-	 *     parameters (e.g. " master ^next ^maint -- path").
-	 *     See if there is a dashdash first, and give the
-	 *     arguments before that to revision machinery.
-	 *     After that there must be one 'path'.
+	 * (2) otherwise, its one of the two:
+	 *     "blame [revisions] <path>"
+	 *     "blame <path> <rev>"
 	 *
-	 * (3) otherwise, its one of the three:
-	 *     "-options <path> <rev>"
-	 *     "-options <rev> <path>"
-	 *     "-options <path>"
-	 *     but again the first one is allowed only if
-	 *     there is no options that we passed to revision
-	 *     machinery.
+	 * Note that we must strip out <path> from the arguments: we do not
+	 * want the path pruning but we may want "bottom" processing.
 	 */
-
-	if (seen_dashdash) {
-		/* (1) */
-		if (argc <= i)
-			usage(blame_usage);
-		path = add_prefix(prefix, argv[i]);
-		if (i + 1 == argc - 1) {
-			if (unk != 1)
-				usage(blame_usage);
-			argv[unk++] = argv[i + 1];
+	if (dashdash_pos) {
+		switch (argc - dashdash_pos - 1) {
+		case 2: /* (1b) */
+			if (argc != 4)
+				usage_with_options(blame_opt_usage, options);
+			/* reorder for the new way: <rev> -- <path> */
+			argv[1] = argv[3];
+			argv[3] = argv[2];
+			argv[2] = "--";
+			/* FALLTHROUGH */
+		case 1: /* (1a) */
+			path = add_prefix(prefix, argv[--argc]);
+			argv[argc] = NULL;
+			break;
+		default:
+			usage_with_options(blame_opt_usage, options);
 		}
-		else if (i + 1 != argc)
-			/* garbage at end */
-			usage(blame_usage);
-	}
-	else {
-		int j;
-		for (j = i; !seen_dashdash && j < argc; j++)
-			if (!strcmp(argv[j], "--"))
-				seen_dashdash = j;
-		if (seen_dashdash) {
-			/* (2) */
-			if (seen_dashdash + 1 != argc - 1)
-				usage(blame_usage);
-			path = add_prefix(prefix, argv[seen_dashdash + 1]);
-			for (j = i; j < seen_dashdash; j++)
-				argv[unk++] = argv[j];
+	} else {
+		if (argc < 2)
+			usage_with_options(blame_opt_usage, options);
+		path = add_prefix(prefix, argv[argc - 1]);
+		if (argc == 3 && !has_string_in_work_tree(path)) { /* (2b) */
+			path = add_prefix(prefix, argv[1]);
+			argv[1] = argv[2];
 		}
-		else {
-			/* (3) */
-			if (argc <= i)
-				usage(blame_usage);
-			path = add_prefix(prefix, argv[i]);
-			if (i + 1 == argc - 1) {
-				final_commit_name = argv[i + 1];
+		argv[argc - 1] = "--";
 
-				/* if (unk == 1) we could be getting
-				 * old-style
-				 */
-				if (unk == 1 && !has_path_in_work_tree(path)) {
-					path = add_prefix(prefix, argv[i + 1]);
-					final_commit_name = argv[i];
-				}
-			}
-			else if (i != argc - 1)
-				usage(blame_usage); /* garbage at end */
-
-			setup_work_tree();
-			if (!has_path_in_work_tree(path))
-				die("cannot stat path %s: %s",
-				    path, strerror(errno));
-		}
+		setup_work_tree();
+		if (!has_string_in_work_tree(path))
+			die("cannot stat path %s: %s", path, strerror(errno));
 	}
 
-	if (final_commit_name)
-		argv[unk++] = final_commit_name;
-
-	/*
-	 * Now we got rev and path.  We do not want the path pruning
-	 * but we may want "bottom" processing.
-	 */
-	argv[unk++] = "--"; /* terminate the rev name */
-	argv[unk] = NULL;
-
-	init_revisions(&revs, NULL);
-	setup_revisions(unk, argv, &revs, NULL);
+	setup_revisions(argc, argv, &revs, NULL);
 	memset(&sb, 0, sizeof(sb));
 
-	/*
-	 * There must be one and only one positive commit in the
-	 * revs->pending array.
-	 */
-	for (i = 0; i < revs.pending.nr; i++) {
-		struct object *obj = revs.pending.objects[i].item;
-		if (obj->flags & UNINTERESTING)
-			continue;
-		while (obj->type == OBJ_TAG)
-			obj = deref_tag(obj, NULL, 0);
-		if (obj->type != OBJ_COMMIT)
-			die("Non commit %s?",
-			    revs.pending.objects[i].name);
-		if (sb.final)
-			die("More than one commit to dig from %s and %s?",
-			    revs.pending.objects[i].name,
-			    final_commit_name);
-		sb.final = (struct commit *) obj;
-		final_commit_name = revs.pending.objects[i].name;
-	}
+	sb.revs = &revs;
+	if (!reverse)
+		final_commit_name = prepare_final(&sb);
+	else if (contents_from)
+		die("--contents and --children do not blend well.");
+	else
+		final_commit_name = prepare_initial(&sb);
 
 	if (!sb.final) {
 		/*
@@ -2369,7 +2434,8 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 	 * bottom commits we would reach while traversing as
 	 * uninteresting.
 	 */
-	prepare_revision_walk(&revs);
+	if (prepare_revision_walk(&revs))
+		die("revision walk setup failed");
 
 	if (is_null_sha1(sb.final->object.sha1)) {
 		char *buf;
@@ -2427,7 +2493,7 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 	if (!incremental)
 		setup_pager();
 
-	assign_blame(&sb, &revs, opt);
+	assign_blame(&sb, opt);
 
 	if (incremental)
 		return 0;

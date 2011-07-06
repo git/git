@@ -27,7 +27,8 @@ static const char upload_pack_usage[] = "git-upload-pack [--strict] [--timeout=n
 static unsigned long oldest_have;
 
 static int multi_ack, nr_our_refs;
-static int use_thin_pack, use_ofs_delta, no_progress;
+static int use_thin_pack, use_ofs_delta, use_include_tag;
+static int no_progress;
 static struct object_array have_obj;
 static struct object_array want_obj;
 static unsigned int timeout;
@@ -35,6 +36,7 @@ static unsigned int timeout;
  * otherwise maximum packet size (up to 65520 bytes).
  */
 static int use_sideband;
+static int debug_fd;
 
 static void reset_timeout(void)
 {
@@ -129,9 +131,12 @@ static int do_rev_list(int fd, void *create_full_pack)
 		}
 		setup_revisions(0, NULL, &revs, NULL);
 	}
-	prepare_revision_walk(&revs);
+	if (prepare_revision_walk(&revs))
+		die("revision walk setup failed");
 	mark_edges_uninteresting(revs.commits, &revs, show_edge);
 	traverse_commit_list(&revs, show_commit, show_object);
+	fflush(pack_pipe);
+	fclose(pack_pipe);
 	return 0;
 }
 
@@ -160,6 +165,8 @@ static void create_pack_file(void)
 		argv[arg++] = "--progress";
 	if (use_ofs_delta)
 		argv[arg++] = "--delta-base-offset";
+	if (use_include_tag)
+		argv[arg++] = "--include-tag";
 	argv[arg++] = NULL;
 
 	memset(&pack_objects, 0, sizeof(pack_objects));
@@ -392,7 +399,6 @@ static int get_common_commits(void)
 	char hex[41], last_hex[41];
 	int len;
 
-	track_object_refs = 0;
 	save_commit_buffer = 0;
 
 	for(;;) {
@@ -444,6 +450,8 @@ static void receive_needs(void)
 	static char line[1000];
 	int len, depth = 0;
 
+	if (debug_fd)
+		write_in_full(debug_fd, "#S\n", 3);
 	for (;;) {
 		struct object *o;
 		unsigned char sha1_buf[20];
@@ -451,6 +459,8 @@ static void receive_needs(void)
 		reset_timeout();
 		if (!len)
 			break;
+		if (debug_fd)
+			write_in_full(debug_fd, line, len);
 
 		if (!prefixcmp(line, "shallow ")) {
 			unsigned char sha1[20];
@@ -489,6 +499,8 @@ static void receive_needs(void)
 			use_sideband = DEFAULT_PACKET_MAX;
 		if (strstr(line+45, "no-progress"))
 			no_progress = 1;
+		if (strstr(line+45, "include-tag"))
+			use_include_tag = 1;
 
 		/* We have sent all our refs already, and the other end
 		 * should have chosen out of them; otherwise they are
@@ -506,6 +518,8 @@ static void receive_needs(void)
 			add_object_array(o, NULL, &want_obj);
 		}
 	}
+	if (debug_fd)
+		write_in_full(debug_fd, "#E\n", 3);
 	if (depth == 0 && shallows.nr == 0)
 		return;
 	if (depth > 0) {
@@ -533,7 +547,8 @@ static void receive_needs(void)
 				/* make sure the real parents are parsed */
 				unregister_shallow(object->sha1);
 				object->parsed = 0;
-				parse_commit((struct commit *)object);
+				if (parse_commit((struct commit *)object))
+					die("invalid commit");
 				parents = ((struct commit *)object)->parents;
 				while (parents) {
 					add_object_array(&parents->item->object,
@@ -557,7 +572,8 @@ static void receive_needs(void)
 static int send_ref(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
 {
 	static const char *capabilities = "multi_ack thin-pack side-band"
-		" side-band-64k ofs-delta shallow no-progress";
+		" side-band-64k ofs-delta shallow no-progress"
+		" include-tag";
 	struct object *o = parse_object(sha1);
 
 	if (!o)
@@ -575,7 +591,8 @@ static int send_ref(const char *refname, const unsigned char *sha1, int flag, vo
 	}
 	if (o->type == OBJ_TAG) {
 		o = deref_tag(o, refname, 0);
-		packet_write(1, "%s %s^{}\n", sha1_to_hex(o->sha1), refname);
+		if (o)
+			packet_write(1, "%s %s^{}\n", sha1_to_hex(o->sha1), refname);
 	}
 	return 0;
 }
@@ -620,12 +637,17 @@ int main(int argc, char **argv)
 
 	if (i != argc-1)
 		usage(upload_pack_usage);
+
+	setup_path();
+
 	dir = argv[i];
 
 	if (!enter_repo(dir, strict))
 		die("'%s': unable to chdir or not a git archive", dir);
 	if (is_repository_shallow())
 		die("attempt to fetch/clone from a shallow repository");
+	if (getenv("GIT_DEBUG_SEND_PACK"))
+		debug_fd = atoi(getenv("GIT_DEBUG_SEND_PACK"));
 	upload_pack();
 	return 0;
 }

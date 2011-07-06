@@ -8,14 +8,14 @@ git-mv - Move or rename a file, a directory, or a symlink
 
 SYNOPSIS
 --------
-'git-mv' <options>... <args>...
+'git mv' <options>... <args>...
 
 DESCRIPTION
 -----------
 This script is used to move or rename a file, directory or symlink.
 
- git-mv [-f] [-n] <source> <destination>
- git-mv [-f] [-n] [-k] <source> ... <destination directory>
+ git mv [-f] [-n] <source> <destination>
+ git mv [-f] [-n] [-k] <source> ... <destination directory>
 
 In the first form, it renames <source>, which must exist and be either
 a file, symlink or directory, to <destination>.
@@ -34,7 +34,8 @@ OPTIONS
 	condition. An error happens when a source is neither existing nor
         controlled by GIT, or when it would overwrite an existing
         file unless '-f' is given.
--n, \--dry-run::
+-n::
+--dry-run::
 	Do nothing; only show what would happen
 
 
@@ -50,4 +51,4 @@ Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

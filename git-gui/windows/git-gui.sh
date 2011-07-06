@@ -8,9 +8,12 @@ if { $argc >=2 && [lindex $argv 0] == "--working-dir" } {
 	incr argc -2
 }
 
-set gitguidir [file dirname [info script]]
-regsub -all ";" $gitguidir "\\;" gitguidir
-set env(PATH) "$gitguidir;$env(PATH)"
-unset gitguidir
+set bindir [file dirname \
+            [file dirname \
+             [file dirname [info script]]]]
+set bindir [file join $bindir bin]
+regsub -all ";" $bindir "\\;" bindir
+set env(PATH) "$bindir;$env(PATH)"
+unset bindir
 
 source [file join [file dirname [info script]] git-gui.tcl]

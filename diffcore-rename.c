@@ -112,8 +112,8 @@ static int basename_same(struct diff_filespec *src, struct diff_filespec *dst)
 struct diff_score {
 	int src; /* index in rename_src */
 	int dst; /* index in rename_dst */
-	int score;
-	int name_score;
+	unsigned short score;
+	short name_score;
 };
 
 static int estimate_similarity(struct diff_filespec *src,
@@ -222,6 +222,12 @@ static void record_rename_pair(int dst_index, int src_index, int score)
 static int score_compare(const void *a_, const void *b_)
 {
 	const struct diff_score *a = a_, *b = b_;
+
+	/* sink the unused ones to the bottom */
+	if (a->dst < 0)
+		return (0 <= b->dst);
+	else if (b->dst < 0)
+		return -1;
 
 	if (a->score == b->score)
 		return b->name_score - a->name_score;
@@ -387,6 +393,22 @@ static int find_exact_renames(void)
 	return i;
 }
 
+#define NUM_CANDIDATE_PER_DST 4
+static void record_if_better(struct diff_score m[], struct diff_score *o)
+{
+	int i, worst;
+
+	/* find the worst one */
+	worst = 0;
+	for (i = 1; i < NUM_CANDIDATE_PER_DST; i++)
+		if (score_compare(&m[i], &m[worst]) > 0)
+			worst = i;
+
+	/* is it better than the worst one? */
+	if (score_compare(&m[worst], o) > 0)
+		m[worst] = *o;
+}
+
 void diffcore_rename(struct diff_options *options)
 {
 	int detect_rename = options->detect_rename;
@@ -468,52 +490,68 @@ void diffcore_rename(struct diff_options *options)
 	 */
 	if (rename_limit <= 0 || rename_limit > 32767)
 		rename_limit = 32767;
-	if (num_create > rename_limit && num_src > rename_limit)
+	if ((num_create > rename_limit && num_src > rename_limit) ||
+	    (num_create * num_src > rename_limit * rename_limit)) {
+		if (options->warn_on_too_large_rename)
+			warning("too many files, skipping inexact rename detection");
 		goto cleanup;
-	if (num_create * num_src > rename_limit * rename_limit)
-		goto cleanup;
+	}
 
-	mx = xmalloc(sizeof(*mx) * num_create * num_src);
+	mx = xcalloc(num_create * NUM_CANDIDATE_PER_DST, sizeof(*mx));
 	for (dst_cnt = i = 0; i < rename_dst_nr; i++) {
-		int base = dst_cnt * num_src;
 		struct diff_filespec *two = rename_dst[i].two;
+		struct diff_score *m;
+
 		if (rename_dst[i].pair)
 			continue; /* dealt with exact match already. */
+
+		m = &mx[dst_cnt * NUM_CANDIDATE_PER_DST];
+		for (j = 0; j < NUM_CANDIDATE_PER_DST; j++)
+			m[j].dst = -1;
+
 		for (j = 0; j < rename_src_nr; j++) {
 			struct diff_filespec *one = rename_src[j].one;
-			struct diff_score *m = &mx[base+j];
-			m->src = j;
-			m->dst = i;
-			m->score = estimate_similarity(one, two,
-						       minimum_score);
-			m->name_score = basename_same(one, two);
+			struct diff_score this_src;
+			this_src.score = estimate_similarity(one, two,
+							     minimum_score);
+			this_src.name_score = basename_same(one, two);
+			this_src.dst = i;
+			this_src.src = j;
+			record_if_better(m, &this_src);
 			diff_free_filespec_blob(one);
 		}
 		/* We do not need the text anymore */
 		diff_free_filespec_blob(two);
 		dst_cnt++;
 	}
+
 	/* cost matrix sorted by most to least similar pair */
-	qsort(mx, num_create * num_src, sizeof(*mx), score_compare);
-	for (i = 0; i < num_create * num_src; i++) {
-		struct diff_rename_dst *dst = &rename_dst[mx[i].dst];
-		struct diff_filespec *src;
+	qsort(mx, dst_cnt * NUM_CANDIDATE_PER_DST, sizeof(*mx), score_compare);
+
+	for (i = 0; i < dst_cnt * NUM_CANDIDATE_PER_DST; i++) {
+		struct diff_rename_dst *dst;
+
+		if ((mx[i].dst < 0) ||
+		    (mx[i].score < minimum_score))
+			break; /* there is no more usable pair. */
+		dst = &rename_dst[mx[i].dst];
 		if (dst->pair)
 			continue; /* already done, either exact or fuzzy. */
-		if (mx[i].score < minimum_score)
-			break; /* there is no more usable pair. */
-		src = rename_src[mx[i].src].one;
-		if (src->rename_used)
+		if (rename_src[mx[i].src].one->rename_used)
 			continue;
 		record_rename_pair(mx[i].dst, mx[i].src, mx[i].score);
 		rename_count++;
 	}
-	for (i = 0; i < num_create * num_src; i++) {
-		struct diff_rename_dst *dst = &rename_dst[mx[i].dst];
+
+	for (i = 0; i < dst_cnt * NUM_CANDIDATE_PER_DST; i++) {
+		struct diff_rename_dst *dst;
+
+		if ((mx[i].dst < 0) ||
+		    (mx[i].score < minimum_score))
+			break; /* there is no more usable pair. */
+		dst = &rename_dst[mx[i].dst];
 		if (dst->pair)
 			continue; /* already done, either exact or fuzzy. */
-		if (mx[i].score < minimum_score)
-			break; /* there is no more usable pair. */
 		record_rename_pair(mx[i].dst, mx[i].src, mx[i].score);
 		rename_count++;
 	}

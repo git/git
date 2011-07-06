@@ -65,7 +65,7 @@ test_expect_success \
        --exclude-per-directory=.gitignore \
        --exclude-from=.git/ignore \
        >output &&
-     git diff expect output'
+     test_cmp expect output'
 
 # Test \r\n (MSDOS-like systems)
 printf '*.1\r\n/*.3\r\n!*.6\r\n' >.gitignore
@@ -77,7 +77,7 @@ test_expect_success \
        --exclude-per-directory=.gitignore \
        --exclude-from=.git/ignore \
        >output &&
-     git diff expect output'
+     test_cmp expect output'
 
 cat > excludes-file << EOF
 *.[1-8]
@@ -97,6 +97,47 @@ cat > expect << EOF
 EOF
 
 test_expect_success 'git-status honours core.excludesfile' \
-	'diff -u expect output'
+	'test_cmp expect output'
+
+test_expect_success 'trailing slash in exclude allows directory match(1)' '
+
+	git ls-files --others --exclude=one/ >output &&
+	if grep "^one/" output
+	then
+		echo Ooops
+		false
+	else
+		: happy
+	fi
+
+'
+
+test_expect_success 'trailing slash in exclude allows directory match (2)' '
+
+	git ls-files --others --exclude=one/two/ >output &&
+	if grep "^one/two/" output
+	then
+		echo Ooops
+		false
+	else
+		: happy
+	fi
+
+'
+
+test_expect_success 'trailing slash in exclude forces directory match (1)' '
+
+	>two
+	git ls-files --others --exclude=two/ >output &&
+	grep "^two" output
+
+'
+
+test_expect_success 'trailing slash in exclude forces directory match (2)' '
+
+	git ls-files --others --exclude=one/a.1/ >output &&
+	grep "^one/a.1" output
+
+'
 
 test_done

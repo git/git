@@ -58,6 +58,14 @@ endif::git-format-patch[]
 	number of modified files, as well as number of added and deleted
 	lines.
 
+--dirstat[=limit]::
+	Output only the sub-directories that are impacted by a diff,
+	and to what degree they are impacted.  You can override the
+	default cut-off in percent (3) by "--dirstat=limit".  If you
+	want to enable "cumulative" directory statistics, you can use
+	the "--cumulative" flag, which adds up percentages recursively
+	even when they have been already reported for a sub-directory.
+
 --summary::
 	Output a condensed summary of extended header information
 	such as creations, renames and mode changes.
@@ -75,7 +83,8 @@ endif::git-format-patch[]
 	Show only names of changed files.
 
 --name-status::
-	Show only names and status of changed files.
+	Show only names and status of changed files. See the description
+	of the `--diff-filter` option on what the status letters mean.
 
 --color::
 	Show colored diff.
@@ -170,6 +179,14 @@ endif::git-format-patch[]
 	Swap two inputs; that is, show differences from index or
 	on-disk file to tree contents.
 
+--relative[=<path>]::
+	When run from a subdirectory of the project, it can be
+	told to exclude changes outside the directory and show
+	pathnames relative to it with this option.  When you are
+	not in a subdirectory (e.g. in a bare repository), you
+	can name which subdirectory to make the output relative
+	to by giving a <path> as an argument.
+
 --text::
 	Treat all files as text.
 
@@ -211,6 +228,9 @@ endif::git-format-patch[]
 --no-ext-diff::
 	Disallow external diff drivers.
 
+--ignore-submodules::
+	Ignore changes to submodules in the diff generation.
+
 --src-prefix=<prefix>::
 	Show the given source prefix instead of "a/".
 
@@ -221,4 +241,4 @@ endif::git-format-patch[]
 	Do not show any source or destination prefix.
 
 For more detailed explanation on these common options, see also
-link:diffcore.html[diffcore documentation].
+linkgit:gitdiffcore[7].

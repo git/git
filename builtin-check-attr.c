@@ -4,7 +4,7 @@
 #include "quote.h"
 
 static const char check_attr_usage[] =
-"git-check-attr attr... [--] pathname...";
+"git check-attr attr... [--] pathname...";
 
 int cmd_check_attr(int argc, const char **argv, const char *prefix)
 {

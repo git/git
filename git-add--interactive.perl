@@ -18,6 +18,18 @@ my ($fraginfo_color) =
 	$diff_use_color ? (
 		$repo->get_color('color.diff.frag', 'cyan'),
 	) : ();
+my ($diff_plain_color) =
+	$diff_use_color ? (
+		$repo->get_color('color.diff.plain', ''),
+	) : ();
+my ($diff_old_color) =
+	$diff_use_color ? (
+		$repo->get_color('color.diff.old', 'red'),
+	) : ();
+my ($diff_new_color) =
+	$diff_use_color ? (
+		$repo->get_color('color.diff.new', 'green'),
+	) : ();
 
 my $normal_color = $repo->get_color("", "reset");
 
@@ -42,7 +54,7 @@ sub colored {
 my $patch_mode;
 
 sub run_cmd_pipe {
-	if ($^O eq 'MSWin32') {
+	if ($^O eq 'MSWin32' || $^O eq 'msys') {
 		my @invalid = grep {m/[":*]/} @_;
 		die "$^O does not support: @invalid\n" if @invalid;
 		my @args = map { m/ /o ? "\"$_\"": $_ } @_;
@@ -82,6 +94,19 @@ sub list_untracked {
 my $status_fmt = '%12s %12s %s';
 my $status_head = sprintf($status_fmt, 'staged', 'unstaged', 'path');
 
+{
+	my $initial;
+	sub is_initial_commit {
+		$initial = system('git rev-parse HEAD -- >/dev/null 2>&1') != 0
+			unless defined $initial;
+		return $initial;
+	}
+}
+
+sub get_empty_tree {
+	return '4b825dc642cb6eb9a060e54bf8d69288fbee4904';
+}
+
 # Returns list of hashes, contents of each of which are:
 # VALUE:	pathname
 # BINARY:	is a binary path
@@ -103,8 +128,10 @@ sub list_modified {
 		return if (!@tracked);
 	}
 
+	my $reference = is_initial_commit() ? get_empty_tree() : 'HEAD';
 	for (run_cmd_pipe(qw(git diff-index --cached
-			     --numstat --summary HEAD --), @tracked)) {
+			     --numstat --summary), $reference,
+			     '--', @tracked)) {
 		if (($add, $del, $file) =
 		    /^([-\d]+)	([-\d]+)	(.*)/) {
 			my ($change, $bin);
@@ -379,9 +406,9 @@ sub list_and_choose {
 			if ($choice =~ s/^-//) {
 				$choose = 0;
 			}
-			# A range can be specified like 5-7
-			if ($choice =~ /^(\d+)-(\d+)$/) {
-				($bottom, $top) = ($1, $2);
+			# A range can be specified like 5-7 or 5-.
+			if ($choice =~ /^(\d+)-(\d*)$/) {
+				($bottom, $top) = ($1, length($2) ? $2 : 1 + @stuff);
 			}
 			elsif ($choice =~ /^\d+$/) {
 				$bottom = $top = $choice;
@@ -476,21 +503,27 @@ sub revert_cmd {
 				       HEADER => $status_head, },
 				     list_modified());
 	if (@update) {
-		my @lines = run_cmd_pipe(qw(git ls-tree HEAD --),
-					 map { $_->{VALUE} } @update);
-		my $fh;
-		open $fh, '| git update-index --index-info'
-		    or die;
-		for (@lines) {
-			print $fh $_;
+		if (is_initial_commit()) {
+			system(qw(git rm --cached),
+				map { $_->{VALUE} } @update);
 		}
-		close($fh);
-		for (@update) {
-			if ($_->{INDEX_ADDDEL} &&
-			    $_->{INDEX_ADDDEL} eq 'create') {
-				system(qw(git update-index --force-remove --),
-				       $_->{VALUE});
-				print "note: $_->{VALUE} is untracked now.\n";
+		else {
+			my @lines = run_cmd_pipe(qw(git ls-tree HEAD --),
+						 map { $_->{VALUE} } @update);
+			my $fh;
+			open $fh, '| git update-index --index-info'
+			    or die;
+			for (@lines) {
+				print $fh $_;
+			}
+			close($fh);
+			for (@update) {
+				if ($_->{INDEX_ADDDEL} &&
+				    $_->{INDEX_ADDDEL} eq 'create') {
+					system(qw(git update-index --force-remove --),
+					       $_->{VALUE});
+					print "note: $_->{VALUE} is untracked now.\n";
+				}
 			}
 		}
 		refresh();
@@ -527,6 +560,21 @@ sub parse_diff {
 			($diff_use_color ? $colored[$i] : $diff[$i]);
 	}
 	return @hunk;
+}
+
+sub parse_diff_header {
+	my $src = shift;
+
+	my $head = { TEXT => [], DISPLAY => [] };
+	my $mode = { TEXT => [], DISPLAY => [] };
+
+	for (my $i = 0; $i < @{$src->{TEXT}}; $i++) {
+		my $dest = $src->{TEXT}->[$i] =~ /^(old|new) mode (\d+)$/ ?
+			$mode : $head;
+		push @{$dest->{TEXT}}, $src->{TEXT}->[$i];
+		push @{$dest->{DISPLAY}}, $src->{DISPLAY}->[$i];
+	}
+	return ($head, $mode);
 }
 
 sub hunk_splittable {
@@ -646,92 +694,104 @@ sub split_hunk {
 	return @split;
 }
 
-sub find_last_o_ctx {
-	my ($it) = @_;
-	my $text = $it->{TEXT};
-	my ($o_ofs, $o_cnt) = parse_hunk_header($text->[0]);
-	my $i = @{$text};
-	my $last_o_ctx = $o_ofs + $o_cnt;
-	while (0 < --$i) {
-		my $line = $text->[$i];
-		if ($line =~ /^ /) {
-			$last_o_ctx--;
-			next;
-		}
-		last;
-	}
-	return $last_o_ctx;
+
+sub color_diff {
+	return map {
+		colored((/^@/  ? $fraginfo_color :
+			 /^\+/ ? $diff_new_color :
+			 /^-/  ? $diff_old_color :
+			 $diff_plain_color),
+			$_);
+	} @_;
 }
 
-sub merge_hunk {
-	my ($prev, $this) = @_;
-	my ($o0_ofs, $o0_cnt, $n0_ofs, $n0_cnt) =
-	    parse_hunk_header($prev->{TEXT}[0]);
-	my ($o1_ofs, $o1_cnt, $n1_ofs, $n1_cnt) =
-	    parse_hunk_header($this->{TEXT}[0]);
+sub edit_hunk_manually {
+	my ($oldtext) = @_;
 
-	my (@line, $i, $ofs, $o_cnt, $n_cnt);
-	$ofs = $o0_ofs;
-	$o_cnt = $n_cnt = 0;
-	for ($i = 1; $i < @{$prev->{TEXT}}; $i++) {
-		my $line = $prev->{TEXT}[$i];
-		if ($line =~ /^\+/) {
-			$n_cnt++;
-			push @line, $line;
-			next;
-		}
+	my $hunkfile = $repo->repo_path . "/addp-hunk-edit.diff";
+	my $fh;
+	open $fh, '>', $hunkfile
+		or die "failed to open hunk edit file for writing: " . $!;
+	print $fh "# Manual hunk edit mode -- see bottom for a quick guide\n";
+	print $fh @$oldtext;
+	print $fh <<EOF;
+# ---
+# To remove '-' lines, make them ' ' lines (context).
+# To remove '+' lines, delete them.
+# Lines starting with # will be removed.
+#
+# If the patch applies cleanly, the edited hunk will immediately be
+# marked for staging. If it does not apply cleanly, you will be given
+# an opportunity to edit again. If all lines of the hunk are removed,
+# then the edit is aborted and the hunk is left unchanged.
+EOF
+	close $fh;
 
-		last if ($o1_ofs <= $ofs);
+	my $editor = $ENV{GIT_EDITOR} || $repo->config("core.editor")
+		|| $ENV{VISUAL} || $ENV{EDITOR} || "vi";
+	system('sh', '-c', $editor.' "$@"', $editor, $hunkfile);
 
-		$o_cnt++;
-		$ofs++;
-		if ($line =~ /^ /) {
-			$n_cnt++;
-		}
-		push @line, $line;
+	open $fh, '<', $hunkfile
+		or die "failed to open hunk edit file for reading: " . $!;
+	my @newtext = grep { !/^#/ } <$fh>;
+	close $fh;
+	unlink $hunkfile;
+
+	# Abort if nothing remains
+	if (!grep { /\S/ } @newtext) {
+		return undef;
 	}
 
-	for ($i = 1; $i < @{$this->{TEXT}}; $i++) {
-		my $line = $this->{TEXT}[$i];
-		if ($line =~ /^\+/) {
-			$n_cnt++;
-			push @line, $line;
-			next;
-		}
-		$ofs++;
-		$o_cnt++;
-		if ($line =~ /^ /) {
-			$n_cnt++;
-		}
-		push @line, $line;
+	# Reinsert the first hunk header if the user accidentally deleted it
+	if ($newtext[0] !~ /^@/) {
+		unshift @newtext, $oldtext->[0];
 	}
-	my $head = ("@@ -$o0_ofs" .
-		    (($o_cnt != 1) ? ",$o_cnt" : '') .
-		    " +$n0_ofs" .
-		    (($n_cnt != 1) ? ",$n_cnt" : '') .
-		    " @@\n");
-	@{$prev->{TEXT}} = ($head, @line);
+	return \@newtext;
 }
 
-sub coalesce_overlapping_hunks {
-	my (@in) = @_;
-	my @out = ();
+sub diff_applies {
+	my $fh;
+	open $fh, '| git apply --recount --cached --check';
+	for my $h (@_) {
+		print $fh @{$h->{TEXT}};
+	}
+	return close $fh;
+}
 
-	my ($last_o_ctx);
+sub prompt_yesno {
+	my ($prompt) = @_;
+	while (1) {
+		print colored $prompt_color, $prompt;
+		my $line = <STDIN>;
+		return 0 if $line =~ /^n/i;
+		return 1 if $line =~ /^y/i;
+	}
+}
 
-	for (grep { $_->{USE} } @in) {
-		my $text = $_->{TEXT};
-		my ($o_ofs) = parse_hunk_header($text->[0]);
-		if (defined $last_o_ctx &&
-		    $o_ofs <= $last_o_ctx) {
-			merge_hunk($out[-1], $_);
+sub edit_hunk_loop {
+	my ($head, $hunk, $ix) = @_;
+	my $text = $hunk->[$ix]->{TEXT};
+
+	while (1) {
+		$text = edit_hunk_manually($text);
+		if (!defined $text) {
+			return undef;
+		}
+		my $newhunk = { TEXT => $text, USE => 1 };
+		if (diff_applies($head,
+				 @{$hunk}[0..$ix-1],
+				 $newhunk,
+				 @{$hunk}[$ix+1..$#{$hunk}])) {
+			$newhunk->{DISPLAY} = [color_diff(@{$text})];
+			return $newhunk;
 		}
 		else {
-			push @out, $_;
+			prompt_yesno(
+				'Your edited hunk does not apply. Edit again '
+				. '(saying "no" discards!) [y/n]? '
+				) or return undef;
 		}
-		$last_o_ctx = find_last_o_ctx($out[-1]);
 	}
-	return @out;
 }
 
 sub help_patch_cmd {
@@ -745,6 +805,7 @@ J - leave this hunk undecided, see next hunk
 k - leave this hunk undecided, see previous undecided hunk
 K - leave this hunk undecided, see previous hunk
 s - split the current hunk into smaller hunks
+e - manually edit the current hunk
 ? - print help
 EOF
 }
@@ -774,9 +835,40 @@ sub patch_update_file {
 	my ($ix, $num);
 	my $path = shift;
 	my ($head, @hunk) = parse_diff($path);
+	($head, my $mode) = parse_diff_header($head);
 	for (@{$head->{DISPLAY}}) {
 		print;
 	}
+
+	if (@{$mode->{TEXT}}) {
+		while (1) {
+			print @{$mode->{DISPLAY}};
+			print colored $prompt_color,
+				"Stage mode change [y/n/a/d/?]? ";
+			my $line = <STDIN>;
+			if ($line =~ /^y/i) {
+				$mode->{USE} = 1;
+				last;
+			}
+			elsif ($line =~ /^n/i) {
+				$mode->{USE} = 0;
+				last;
+			}
+			elsif ($line =~ /^a/i) {
+				$_->{USE} = 1 foreach ($mode, @hunk);
+				last;
+			}
+			elsif ($line =~ /^d/i) {
+				$_->{USE} = 0 foreach ($mode, @hunk);
+				last;
+			}
+			else {
+				help_patch_cmd('');
+				next;
+			}
+		}
+	}
+
 	$num = scalar @hunk;
 	$ix = 0;
 
@@ -818,6 +910,7 @@ sub patch_update_file {
 		if (hunk_splittable($hunk[$ix]{TEXT})) {
 			$other .= '/s';
 		}
+		$other .= '/e';
 		for (@{$hunk[$ix]{DISPLAY}}) {
 			print;
 		}
@@ -882,6 +975,12 @@ sub patch_update_file {
 				$num = scalar @hunk;
 				next;
 			}
+			elsif ($line =~ /^e/) {
+				my $newhunk = edit_hunk_loop($head, \@hunk, $ix);
+				if (defined $newhunk) {
+					splice @hunk, $ix, 1, $newhunk;
+				}
+			}
 			else {
 				help_patch_cmd($other);
 				next;
@@ -895,44 +994,21 @@ sub patch_update_file {
 		}
 	}
 
-	@hunk = coalesce_overlapping_hunks(@hunk);
-
 	my $n_lofs = 0;
 	my @result = ();
+	if ($mode->{USE}) {
+		push @result, @{$mode->{TEXT}};
+	}
 	for (@hunk) {
-		my $text = $_->{TEXT};
-		my ($o_ofs, $o_cnt, $n_ofs, $n_cnt) =
-		    parse_hunk_header($text->[0]);
-
-		if (!$_->{USE}) {
-			# We would have added ($n_cnt - $o_cnt) lines
-			# to the postimage if we were to use this hunk,
-			# but we didn't.  So the line number that the next
-			# hunk starts at would be shifted by that much.
-			$n_lofs -= ($n_cnt - $o_cnt);
-			next;
-		}
-		else {
-			if ($n_lofs) {
-				$n_ofs += $n_lofs;
-				$text->[0] = ("@@ -$o_ofs" .
-					      (($o_cnt != 1)
-					       ? ",$o_cnt" : '') .
-					      " +$n_ofs" .
-					      (($n_cnt != 1)
-					       ? ",$n_cnt" : '') .
-					      " @@\n");
-			}
-			for (@$text) {
-				push @result, $_;
-			}
+		if ($_->{USE}) {
+			push @result, @{$_->{TEXT}};
 		}
 	}
 
 	if (@result) {
 		my $fh;
 
-		open $fh, '| git apply --cached';
+		open $fh, '| git apply --cached --recount';
 		for (@{$head->{TEXT}}, @result) {
 			print $fh $_;
 		}
@@ -956,7 +1032,9 @@ sub diff_cmd {
 				     HEADER => $status_head, },
 				   @mods);
 	return if (!@them);
-	system(qw(git diff -p --cached HEAD --), map { $_->{VALUE} } @them);
+	my $reference = is_initial_commit() ? get_empty_tree() : 'HEAD';
+	system(qw(git diff -p --cached), $reference, '--',
+		map { $_->{VALUE} } @them);
 }
 
 sub quit_cmd {

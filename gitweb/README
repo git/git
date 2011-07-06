@@ -2,7 +2,7 @@ GIT web Interface
 =================
 
 The one working on:
-  http://www.kernel.org/git/
+  http://git.kernel.org/
 
 From the git version 1.4.0 gitweb is bundled with git.
 
@@ -10,13 +10,13 @@ From the git version 1.4.0 gitweb is bundled with git.
 How to configure gitweb for your local system
 ---------------------------------------------
 
-See also "Build time configuration" section in INSTALL
+See also the "Build time configuration" section in the INSTALL
 file for gitweb (in gitweb/INSTALL).
 
 You can specify the following configuration variables when building GIT:
  * GIT_BINDIR
-   Points out where to find git executable.  You should set up it to
-   the place where git binary was installed (usually /usr/bin) if you
+   Points where to find the git executable.  You should set it up to
+   the place where the git binary was installed (usually /usr/bin) if you
    don't install git from sources together with gitweb.  [Default: $(bindir)]
  * GITWEB_SITENAME
    Shown in the title of all generated pages, defaults to the server name
@@ -24,13 +24,13 @@ You can specify the following configuration variables when building GIT:
  * GITWEB_PROJECTROOT
    The root directory for all projects shown by gitweb. Must be set
    correctly for gitweb to find repositories to display.  See also
-   "Gitweb repositories" in INSTALL file for gitweb.  [Default: /pub/git]
+   "Gitweb repositories" in the INSTALL file for gitweb.  [Default: /pub/git]
  * GITWEB_PROJECT_MAXDEPTH
-   The filesystem traversing limit for getting projects list; the number
+   The filesystem traversing limit for getting the project list; the number
    is taken as depth relative to the projectroot.  It is used when
    GITWEB_LIST is a directory (or is not set; then project root is used).
    Is is meant to speed up project listing on large work trees by limiting
-   find depth.  [Default: 2007]
+   search depth.  [Default: 2007]
  * GITWEB_LIST
    Points to a directory to scan for projects (defaults to project root
    if not set / if empty) or to a file with explicit listing of projects
@@ -72,15 +72,15 @@ You can specify the following configuration variables when building GIT:
    Git base URLs used for URL to where fetch project from, i.e. full
    URL is "$git_base_url/$project".  Shown on projects summary page.
    Repository URL for project can be also configured per repository; this
-   takes precendence over URL composed from base URL and project name.
+   takes precedence over URLs composed from base URL and a project name.
    Note that you can setup multiple base URLs (for example one for
-   git:// protocol access, one for http:// access) from gitweb config
-   file.  [No default]
+   git:// protocol access, another for http:// access) from the gitweb
+   config file.  [No default]
  * GITWEB_CSS
    Points to the location where you put gitweb.css on your web server
-   (or to be more generic URI of gitweb stylesheet).  Relative to base
-   URI of gitweb.  Note that you can setup multiple stylesheets from
-   gitweb config file.  [Default: gitweb.css]
+   (or to be more generic, the URI of gitweb stylesheet).  Relative to the
+   base URI of gitweb.  Note that you can setup multiple stylesheets from
+   the gitweb config file.  [Default: gitweb.css]
  * GITWEB_LOGO
    Points to the location where you put git-logo.png on your web server
    (or to be more generic URI of logo, 72x27 size, displayed in top right
@@ -100,13 +100,20 @@ You can specify the following configuration variables when building GIT:
    is set when gitweb.cgi is executed, then the file specified in the
    environment variable will be loaded instead of the file specified
    when gitweb.cgi was created.  [Default: gitweb_config.perl]
+ * GITWEB_CONFIG_SYSTEM
+   This Perl file will be loaded using 'do' as a fallback if GITWEB_CONFIG
+   does not exist.  If the environment variable GITWEB_CONFIG_SYSTEM is set
+   when gitweb.cgi is executed, then the file specified in the environment
+   variable will be loaded instead of the file specified when gitweb.cgi was
+   created.  [Default: /etc/gitweb.conf]
 
 
 Runtime gitweb configuration
 ----------------------------
 
 You can adjust gitweb behaviour using the file specified in `GITWEB_CONFIG`
-(defaults to 'gitweb_config.perl' in the same directory as the CGI).
+(defaults to 'gitweb_config.perl' in the same directory as the CGI), and
+as a fallback `GITWEB_CONFIG_SYSTEM` (defaults to /etc/gitweb.conf).
 The most notable thing that is not configurable at compile time are the
 optional features, stored in the '%features' variable.
 
@@ -114,32 +121,46 @@ Ultimate description on how to reconfigure the default features setting
 in your `GITWEB_CONFIG` or per-project in `project.git/config` can be found
 as comments inside 'gitweb.cgi'.
 
-See also "Gitweb config file" (with example of gitweb config file), and
-"Gitweb repositories" sections in INSTALL file for gitweb.
+See also the "Gitweb config file" (with an example of config file), and
+the "Gitweb repositories" sections in INSTALL file for gitweb.
 
 
-Gitweb config file is [fragment] of perl code. You can set variables
+The gitweb config file is a fragment of perl code. You can set variables
 using "our $variable = value"; text from "#" character until the end
 of a line is ignored. See perlsyn(1) man page for details.
 
-Below there is list of vaiables which you might want to set in gitweb config.
+Below is the list of variables which you might want to set in gitweb config.
 See the top of 'gitweb.cgi' for the full list of variables and their
 descriptions.
 
 Gitweb config file variables
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You can set, among others,  the following variables in gitweb config files:
+You can set, among others, the following variables in gitweb config files
+(with the exception of $projectroot and $projects_list this list does
+not include variables usually directly set during build):
  * $GIT
-   Cure git executable to use.  By default set to "$GIT_BINDIR/git", which
+   Core git executable to use.  By default set to "$GIT_BINDIR/git", which
    in turn is by default set to "$(bindir)/git".  If you use git from binary
    package, set this to "/usr/bin/git".  This can just be "git" if your
    webserver has a sensible PATH.  If you have multiple git versions
-   installed it is / can be used to choose which one to use.
+   installed it can be used to choose which one to use.
  * $version
    Gitweb version, set automatically when creating gitweb.cgi from
    gitweb.perl. You might want to modify it if you are running modified
    gitweb.
+ * $projectroot
+   Absolute filesystem path which will be prepended to project path;
+   the path to repository is $projectroot/$project.  Set to
+   $GITWEB_PROJECTROOT during installation.  This variable have to be
+   set correctly for gitweb to find repositories.
+ * $projects_list
+   Source of projects list, either directory to scan, or text file
+   with list of repositories (in the "<URI-encoded repository path> SP
+   <URI-encoded repository owner>" line format; actually there can be
+   any sequence of whitespace in place of space (SP)).  Set to
+   $GITWEB_LIST during installation.  If empty, $projectroot is used
+   to scan for repositories.
  * $my_url, $my_uri
    URL and absolute URL of gitweb script; you might need to set those
    variables if you are using 'pathinfo' feature: see also below.
@@ -156,7 +177,7 @@ You can set, among others,  the following variables in gitweb config files:
    to make it easier to upgrade gitweb. You can add 'site' stylesheet
    for example by using
       push @stylesheets, "gitweb-site.css";
-   in gitweb config file.
+   in the gitweb config file.
  * $logo_url, $logo_label
    URI and label (title) of GIT logo link (or your site logo, if you choose
    to use different logo image). By default they point to git homepage;
@@ -178,12 +199,12 @@ You can set, among others,  the following variables in gitweb config files:
    Default mimetype for blob_plain (raw) view, if mimetype checking
    doesn't result in some other type; by default 'text/plain'.
  * $default_text_plain_charset
-   Default charset for text files. If not set, web serwer configuration
+   Default charset for text files. If not set, web server configuration
    would be used.
  * $mimetypes_file
    File to use for (filename extension based) guessing of MIME types before
-   trying /etc/mime.types. Path, if relative, is taken currently as taken
-   relative to current git repositoy.
+   trying /etc/mime.types. Path, if relative, is taken currently as
+   relative to the current git repository.
  * $fallback_encoding
    Gitweb assumes this charset if line contains non-UTF-8 characters.
    Fallback decoding is used without error checking, so it can be even
@@ -193,6 +214,39 @@ You can set, among others,  the following variables in gitweb config files:
    Rename detection options for git-diff and git-diff-tree. By default
    ('-M'); set it to ('-C') or ('-C', '-C') to also detect copies, or
    set it to () if you don't want to have renames detection.
+
+
+Projects list file format
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Instead of having gitweb find repositories by scanning filesystem starting
+from $projectroot (or $projects_list, if it points to directory), you can
+provide list of projects by setting $projects_list to a text file with list
+of projects (and some additional info).  This file uses the following
+format:
+
+One record (for project / repository) per line, whitespace separated fields;
+does not support (at least for now) lines continuation (newline escaping).
+Leading and trailing whitespace are ignored, any run of whitespace can be
+used as field separator (rules for Perl's "split(' ', $line)").  Keyed by
+the first field, which is project name, i.e. path to repository GIT_DIR
+relative to $projectroot.  Fields use modified URI encoding, defined in
+RFC 3986, section 2.1 (Percent-Encoding), or rather "Query string encoding"
+(see http://en.wikipedia.org/wiki/Query_string#URL_encoding), the difference
+being that SP (' ') can be encoded as '+' (and therefore '+' has to be also
+percent-encoded).  Reserved characters are: '%' (used for encoding), '+'
+(can be used to encode SPACE), all whitespace characters as defined in Perl,
+including SP, TAB and LF, (used to separate fields in a record).
+
+Currently list of fields is
+ * <repository path>  - path to repository GIT_DIR, relative to $projectroot
+ * <repository owner> - displayed as repository owner, preferably full name,
+                        or email, or both
+
+You can additionally use $projects_list file to limit which repositories
+are visible, and together with $strict_export to limit access to
+repositories (see "Gitweb repositories" section in gitweb/INSTALL).
+
 
 Per-repository gitweb configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -205,21 +259,26 @@ You can use the following files in repository:
  * README.html
    A .html file (HTML fragment) which is included on the gitweb project
    summary page inside <div> block element. You can use it for longer
-   description of a project, to provide links for example to projects
-   homepage, etc.
+   description of a project, to provide links (for example to project's
+   homepage), etc.
  * description (or gitweb.description)
    Short (shortened by default to 25 characters in the projects list page)
    single line description of a project (of a repository). Plain text file;
    HTML will be escaped. By default set to
      Unnamed repository; edit this file to name it for gitweb.
-   from the template during creating repository. You can use
+   from the template during repository creation. You can use the
    gitweb.description repo configuration variable, but the file takes
-   precendence.
+   precedence.
  * cloneurl (or multiple-valued gitweb.url)
    File with repository URL (used for clone and fetch), one per line.
    Displayed in the project summary page. You can use multiple-valued
    gitweb.url repository configuration variable for that, but the file
-   takes precendence.
+   takes precedence.
+ * gitweb.owner
+   You can use the gitweb.owner repository configuration variable to set
+   repository's owner. It is displayed in the project list and summary
+   page. If it's not set, filesystem directory's owner is used
+   (via GECOS field / real name field from getpwiud(3)).
  * various gitweb.* config variables (in config)
    Read description of %feature hash for detailed list, and some
    descriptions.
@@ -231,12 +290,15 @@ Webserver configuration
 If you want to have one URL for both gitweb and your http://
 repositories, you can configure apache like this:
 
-<VirtualHost www:80>
-    ServerName git.domain.org
+<VirtualHost *:80>
+    ServerName git.example.org
     DocumentRoot /pub/git
-    RewriteEngine on
-    RewriteRule ^/(.*\.git/(?!/?(info|objects|refs)).*)?$ /cgi-bin/gitweb.cgi%{REQUEST_URI}  [L,PT]
     SetEnv	GITWEB_CONFIG	/etc/gitweb.conf
+    RewriteEngine on
+    # make the front page an internal rewrite to the gitweb script
+    RewriteRule ^/$  /cgi-bin/gitweb.cgi
+    # make access for "dumb clients" work
+    RewriteRule ^/(.*\.git/(?!/?(HEAD|info|objects|refs)).*)?$ /cgi-bin/gitweb.cgi%{REQUEST_URI}  [L,PT]
 </VirtualHost>
 
 The above configuration expects your public repositories to live under
@@ -251,6 +313,13 @@ configuration for gitweb.  Perl variables defined in here will
 override the defaults given at the head of the gitweb.perl (or
 gitweb.cgi).  Look at the comments in that file for information on
 which variables and what they mean.
+
+If you use the rewrite rules from the example you'll likely also need
+something like the following in your gitweb.conf (or gitweb_config.perl) file:
+
+  @stylesheets = ("/some/absolute/path/gitweb.css");
+  $my_uri = "/";
+  $home_link = "/";
 
 
 Originally written by:

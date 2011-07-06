@@ -78,28 +78,28 @@ EOF
 
 test_expect_success 'check fully quoted output from ls-files' '
 
-	git ls-files >current && diff -u expect.quoted current
+	git ls-files >current && test_cmp expect.quoted current
 
 '
 
 test_expect_success 'check fully quoted output from diff-files' '
 
 	git diff --name-only >current &&
-	diff -u expect.quoted current
+	test_cmp expect.quoted current
 
 '
 
 test_expect_success 'check fully quoted output from diff-index' '
 
 	git diff --name-only HEAD >current &&
-	diff -u expect.quoted current
+	test_cmp expect.quoted current
 
 '
 
 test_expect_success 'check fully quoted output from diff-tree' '
 
 	git diff --name-only HEAD^ HEAD >current &&
-	diff -u expect.quoted current
+	test_cmp expect.quoted current
 
 '
 
@@ -111,28 +111,28 @@ test_expect_success 'setting core.quotepath' '
 
 test_expect_success 'check fully quoted output from ls-files' '
 
-	git ls-files >current && diff -u expect.raw current
+	git ls-files >current && test_cmp expect.raw current
 
 '
 
 test_expect_success 'check fully quoted output from diff-files' '
 
 	git diff --name-only >current &&
-	diff -u expect.raw current
+	test_cmp expect.raw current
 
 '
 
 test_expect_success 'check fully quoted output from diff-index' '
 
 	git diff --name-only HEAD >current &&
-	diff -u expect.raw current
+	test_cmp expect.raw current
 
 '
 
 test_expect_success 'check fully quoted output from diff-tree' '
 
 	git diff --name-only HEAD^ HEAD >current &&
-	diff -u expect.raw current
+	test_cmp expect.raw current
 
 '
 

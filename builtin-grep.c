@@ -12,6 +12,14 @@
 #include "builtin.h"
 #include "grep.h"
 
+#ifndef NO_EXTERNAL_GREP
+#ifdef __unix__
+#define NO_EXTERNAL_GREP 0
+#else
+#define NO_EXTERNAL_GREP 1
+#endif
+#endif
+
 /*
  * git grep pathspecs are somewhat different from diff-tree pathspecs;
  * pathname wildcards are allowed.
@@ -153,7 +161,7 @@ static int grep_file(struct grep_opt *opt, const char *filename)
 	return i;
 }
 
-#ifdef __unix__
+#if !NO_EXTERNAL_GREP
 static int exec_grep(int argc, const char **argv)
 {
 	pid_t pid;
@@ -372,7 +380,7 @@ static int grep_cache(struct grep_opt *opt, const char **paths, int cached)
 	int nr;
 	read_cache();
 
-#ifdef __unix__
+#if !NO_EXTERNAL_GREP
 	/*
 	 * Use the external "grep" command for the case where
 	 * we grep through the checked-out files. It tends to
@@ -419,33 +427,35 @@ static int grep_tree(struct grep_opt *opt, const char **paths,
 	struct name_entry entry;
 	char *down;
 	int tn_len = strlen(tree_name);
-	char *path_buf = xmalloc(PATH_MAX + tn_len + 100);
+	struct strbuf pathbuf;
+
+	strbuf_init(&pathbuf, PATH_MAX + tn_len);
 
 	if (tn_len) {
-		tn_len = sprintf(path_buf, "%s:", tree_name);
-		down = path_buf + tn_len;
-		strcat(down, base);
+		strbuf_add(&pathbuf, tree_name, tn_len);
+		strbuf_addch(&pathbuf, ':');
+		tn_len = pathbuf.len;
 	}
-	else {
-		down = path_buf;
-		strcpy(down, base);
-	}
-	len = strlen(path_buf);
+	strbuf_addstr(&pathbuf, base);
+	len = pathbuf.len;
 
 	while (tree_entry(tree, &entry)) {
-		strcpy(path_buf + len, entry.path);
+		int te_len = tree_entry_len(entry.path, entry.sha1);
+		pathbuf.len = len;
+		strbuf_add(&pathbuf, entry.path, te_len);
 
 		if (S_ISDIR(entry.mode))
 			/* Match "abc/" against pathspec to
 			 * decide if we want to descend into "abc"
 			 * directory.
 			 */
-			strcpy(path_buf + len + tree_entry_len(entry.path, entry.sha1), "/");
+			strbuf_addch(&pathbuf, '/');
 
+		down = pathbuf.buf + tn_len;
 		if (!pathspec_matches(paths, down))
 			;
 		else if (S_ISREG(entry.mode))
-			hit |= grep_sha1(opt, entry.sha1, path_buf, tn_len);
+			hit |= grep_sha1(opt, entry.sha1, pathbuf.buf, tn_len);
 		else if (S_ISDIR(entry.mode)) {
 			enum object_type type;
 			struct tree_desc sub;
@@ -461,6 +471,7 @@ static int grep_tree(struct grep_opt *opt, const char **paths,
 			free(data);
 		}
 	}
+	strbuf_release(&pathbuf);
 	return hit;
 }
 
@@ -487,7 +498,7 @@ static int grep_object(struct grep_opt *opt, const char **paths,
 }
 
 static const char builtin_grep_usage[] =
-"git-grep <option>* <rev>* [-e] <pattern> [<path>...]";
+"git grep <option>* [-e] <pattern> <rev>* [[--] <path>...]";
 
 static const char emsg_invalid_context_len[] =
 "%s: invalid context length argument";
@@ -578,6 +589,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 			continue;
 		}
 		if (!strcmp("-l", arg) ||
+		    !strcmp("--name-only", arg) ||
 		    !strcmp("--files-with-matches", arg)) {
 			opt.name_only = 1;
 			continue;

@@ -165,7 +165,7 @@ static int verify_format(const char *format)
 	for (cp = format; *cp && (sp = find_next(cp)); ) {
 		const char *ep = strchr(sp, ')');
 		if (!ep)
-			return error("malformatted format string %s", sp);
+			return error("malformed format string %s", sp);
 		/* sp points at "%(" and ep points at the closing ")" */
 		parse_atom(sp + 2, ep);
 		cp = ep + 1;
@@ -234,6 +234,13 @@ static void grab_tag_values(struct atom_value *val, int deref, struct object *ob
 			name++;
 		if (!strcmp(name, "tag"))
 			v->s = tag->tag;
+		else if (!strcmp(name, "type") && tag->tagged)
+			v->s = typename(tag->tagged->type);
+		else if (!strcmp(name, "object") && tag->tagged) {
+			char *s = xmalloc(41);
+			strcpy(s, sha1_to_hex(tag->tagged->sha1));
+			v->s = s;
+		}
 	}
 }
 
@@ -802,7 +809,7 @@ static struct ref_sort *default_sort(void)
 	return sort;
 }
 
-int opt_parse_sort(const struct option *opt, const char *arg, int unset)
+static int opt_parse_sort(const struct option *opt, const char *arg, int unset)
 {
 	struct ref_sort **sort_tail = opt->value;
 	struct ref_sort *s;
@@ -824,7 +831,7 @@ int opt_parse_sort(const struct option *opt, const char *arg, int unset)
 }
 
 static char const * const for_each_ref_usage[] = {
-	"git-for-each-ref [options] [<pattern>]",
+	"git for-each-ref [options] [<pattern>]",
 	NULL
 };
 

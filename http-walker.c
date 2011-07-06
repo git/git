@@ -442,6 +442,8 @@ static int setup_index(struct walker *walker, struct alt_base *repo, unsigned ch
 		return -1;
 
 	new_pack = parse_pack_index(sha1);
+	if (!new_pack)
+		return -1; /* parse_pack_index() already issued error message */
 	new_pack->next = repo->packs;
 	repo->packs = new_pack;
 	return 0;
@@ -795,7 +797,7 @@ static int fetch_pack(struct walker *walker, struct alt_base *repo, unsigned cha
 		lst = &((*lst)->next);
 	*lst = (*lst)->next;
 
-	if (verify_pack(target, 0))
+	if (verify_pack(target))
 		return -1;
 	install_packed_git(target);
 
@@ -888,10 +890,10 @@ static int fetch(struct walker *walker, unsigned char *sha1)
 		     data->alt->base);
 }
 
-static int fetch_ref(struct walker *walker, char *ref, unsigned char *sha1)
+static int fetch_ref(struct walker *walker, struct ref *ref)
 {
 	struct walker_data *data = walker->data;
-	return http_fetch_ref(data->alt->base, ref, sha1);
+	return http_fetch_ref(data->alt->base, ref);
 }
 
 static void cleanup(struct walker *walker)
@@ -902,13 +904,13 @@ static void cleanup(struct walker *walker)
 	curl_slist_free_all(data->no_pragma_header);
 }
 
-struct walker *get_http_walker(const char *url)
+struct walker *get_http_walker(const char *url, struct remote *remote)
 {
 	char *s;
 	struct walker_data *data = xmalloc(sizeof(struct walker_data));
 	struct walker *walker = xmalloc(sizeof(struct walker));
 
-	http_init();
+	http_init(remote);
 
 	data->no_pragma_header = curl_slist_append(NULL, "Pragma:");
 

@@ -53,6 +53,7 @@ extern "C" {
 #define XDL_MERGE_MINIMAL 0
 #define XDL_MERGE_EAGER 1
 #define XDL_MERGE_ZEALOUS 2
+#define XDL_MERGE_ZEALOUS_ALNUM 3
 
 typedef struct s_mmfile {
 	char *ptr;

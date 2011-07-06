@@ -8,12 +8,12 @@ git-daemon - A really simple server for git repositories
 SYNOPSIS
 --------
 [verse]
-'git-daemon' [--verbose] [--syslog] [--export-all]
-             [--timeout=n] [--init-timeout=n] [--strict-paths]
-             [--base-path=path] [--user-path | --user-path=path]
-             [--interpolated-path=pathtemplate]
-             [--reuseaddr] [--detach] [--pid-file=file]
-             [--enable=service] [--disable=service]
+'git daemon' [--verbose] [--syslog] [--export-all]
+	     [--timeout=n] [--init-timeout=n] [--strict-paths]
+	     [--base-path=path] [--user-path | --user-path=path]
+	     [--interpolated-path=pathtemplate]
+	     [--reuseaddr] [--detach] [--pid-file=file]
+	     [--enable=service] [--disable=service]
 	     [--allow-override=service] [--forbid-override=service]
 	     [--inetd | [--listen=host_or_ipaddr] [--port=n] [--user=user [--group=group]]
 	     [directory...]
@@ -31,32 +31,32 @@ pass some directory paths as 'git-daemon' arguments, you can further restrict
 the offers to a whitelist comprising of those.
 
 By default, only `upload-pack` service is enabled, which serves
-`git-fetch-pack` and `git-ls-remote` clients, which are invoked
-from `git-fetch`, `git-pull`, and `git-clone`.
+'git-fetch-pack' and 'git-ls-remote' clients, which are invoked
+from 'git-fetch', 'git-pull', and 'git-clone'.
 
 This is ideally suited for read-only updates, i.e., pulling from
 git repositories.
 
-An `upload-archive` also exists to serve `git-archive`.
+An `upload-archive` also exists to serve 'git-archive'.
 
 OPTIONS
 -------
 --strict-paths::
 	Match paths exactly (i.e. don't allow "/foo/repo" when the real path is
 	"/foo/repo.git" or "/foo/repo/.git") and don't do user-relative paths.
-	git-daemon will refuse to start when this option is enabled and no
+	'git-daemon' will refuse to start when this option is enabled and no
 	whitelist is specified.
 
 --base-path::
 	Remap all the path requests as relative to the given path.
-	This is sort of "GIT root" - if you run git-daemon with
+	This is sort of "GIT root" - if you run 'git-daemon' with
 	'--base-path=/srv/git' on example.com, then if you later try to pull
-	'git://example.com/hello.git', `git-daemon` will interpret the path
+	'git://example.com/hello.git', 'git-daemon' will interpret the path
 	as '/srv/git/hello.git'.
 
 --base-path-relaxed::
 	If --base-path is enabled and repo lookup fails, with this option
-	`git-daemon` will attempt to lookup without prefixing the base path.
+	'git-daemon' will attempt to lookup without prefixing the base path.
 	This is useful for switching to --base-path usage, while still
 	allowing the old paths.
 
@@ -103,7 +103,8 @@ OPTIONS
 	Log to syslog instead of stderr. Note that this option does not imply
 	--verbose, thus by default only error conditions will be logged.
 
---user-path, --user-path=path::
+--user-path::
+--user-path=path::
 	Allow ~user notation to be used in requests.  When
 	specified with no parameter, requests to
 	git://host/~alice/foo is taken as a request to access
@@ -127,7 +128,8 @@ OPTIONS
 	Save the process id in 'file'.  Ignored when the daemon
 	is run under `--inetd`.
 
---user=user, --group=group::
+--user=user::
+--group=group::
 	Change daemon's uid and gid before entering the service loop.
 	When only `--user` is given without `--group`, the
 	primary group ID for the user is used.  The values of
@@ -136,16 +138,18 @@ OPTIONS
 +
 Giving these options is an error when used with `--inetd`; use
 the facility of inet daemon to achieve the same before spawning
-`git-daemon` if needed.
+'git-daemon' if needed.
 
---enable=service, --disable=service::
+--enable=service::
+--disable=service::
 	Enable/disable the service site-wide per default.  Note
 	that a service disabled site-wide can still be enabled
 	per repository if it is marked overridable and the
 	repository enables the service with an configuration
 	item.
 
---allow-override=service, --forbid-override=service::
+--allow-override=service::
+--forbid-override=service::
 	Allow/forbid overriding the site-wide default with per
 	repository configuration.  By default, all the services
 	are overridable.
@@ -160,24 +164,24 @@ SERVICES
 
 These services can be globally enabled/disabled using the
 command line options of this command.  If a finer-grained
-control is desired (e.g. to allow `git-archive` to be run
+control is desired (e.g. to allow 'git-archive' to be run
 against only in a few selected repositories the daemon serves),
 the per-repository configuration file can be used to enable or
 disable them.
 
 upload-pack::
-	This serves `git-fetch-pack` and `git-ls-remote`
+	This serves 'git-fetch-pack' and 'git-ls-remote'
 	clients.  It is enabled by default, but a repository can
 	disable it by setting `daemon.uploadpack` configuration
 	item to `false`.
 
 upload-archive::
-	This serves `git-archive --remote`.  It is disabled by
+	This serves 'git-archive --remote'.  It is disabled by
 	default, but a repository can enable it by setting
-	`daemon.uploadarchive` configuration item to `true`.
+	`daemon.uploadarch` configuration item to `true`.
 
 receive-pack::
-	This serves `git-send-pack` clients, allowing anonymous
+	This serves 'git-send-pack' clients, allowing anonymous
 	push.  It is disabled by default, as there is _no_
 	authentication in the protocol (in other words, anybody
 	can push anything into the repository, including removal
@@ -195,28 +199,28 @@ $ grep 9418 /etc/services
 git		9418/tcp		# Git Version Control System
 ------------
 
-git-daemon as inetd server::
-	To set up `git-daemon` as an inetd service that handles any
+'git-daemon' as inetd server::
+	To set up 'git-daemon' as an inetd service that handles any
 	repository under the whitelisted set of directories, /pub/foo
 	and /pub/bar, place an entry like the following into
 	/etc/inetd all on one line:
 +
 ------------------------------------------------
-	git stream tcp nowait nobody  /usr/bin/git-daemon
-		git-daemon --inetd --verbose --export-all
+	git stream tcp nowait nobody  /usr/bin/git
+		git daemon --inetd --verbose --export-all
 		/pub/foo /pub/bar
 ------------------------------------------------
 
 
-git-daemon as inetd server for virtual hosts::
-	To set up `git-daemon` as an inetd service that handles
+'git-daemon' as inetd server for virtual hosts::
+	To set up 'git-daemon' as an inetd service that handles
 	repositories for different virtual hosts, `www.example.com`
 	and `www.example.org`, place an entry like the following into
 	`/etc/inetd` all on one line:
 +
 ------------------------------------------------
-	git stream tcp nowait nobody /usr/bin/git-daemon
-		git-daemon --inetd --verbose --export-all
+	git stream tcp nowait nobody /usr/bin/git
+		git daemon --inetd --verbose --export-all
 		--interpolated-path=/pub/%H%D
 		/pub/www.example.org/software
 		/pub/www.example.com/software
@@ -231,13 +235,13 @@ clients, a symlink from `/software` into the appropriate
 default repository could be made as well.
 
 
-git-daemon as regular daemon for virtual hosts::
-	To set up `git-daemon` as a regular, non-inetd service that
+'git-daemon' as regular daemon for virtual hosts::
+	To set up 'git-daemon' as a regular, non-inetd service that
 	handles repositories for multiple virtual hosts based on
 	their IP addresses, start the daemon like this:
 +
 ------------------------------------------------
-	git-daemon --verbose --export-all
+	git daemon --verbose --export-all
 		--interpolated-path=/pub/%IP/%D
 		/pub/192.168.1.200/software
 		/pub/10.10.220.23/software
@@ -249,7 +253,7 @@ Repositories can still be accessed by hostname though, assuming
 they correspond to these IP addresses.
 
 selectively enable/disable services per repository::
-	To enable `git-archive --remote` and disable `git-fetch` against
+	To enable 'git-archive --remote' and disable 'git-fetch' against
 	a repository, have the following in the configuration file in the
 	repository (that is the file 'config' next to 'HEAD', 'refs' and
 	'objects').
@@ -257,7 +261,7 @@ selectively enable/disable services per repository::
 ----------------------------------------------------------------
 	[daemon]
 		uploadpack = false
-		uploadarchive = true
+		uploadarch = true
 ----------------------------------------------------------------
 
 
@@ -272,4 +276,4 @@ Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

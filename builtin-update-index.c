@@ -387,7 +387,7 @@ static void read_index_info(int line_termination)
 }
 
 static const char update_index_usage[] =
-"git-update-index [-q] [--add] [--replace] [--remove] [--unmerged] [--refresh] [--really-refresh] [--cacheinfo] [--chmod=(+|-)x] [--assume-unchanged] [--info-only] [--force-remove] [--stdin] [--index-info] [--unresolve] [--again | -g] [--ignore-missing] [-z] [--verbose] [--] <file>...";
+"git update-index [-q] [--add] [--replace] [--remove] [--unmerged] [--refresh] [--really-refresh] [--cacheinfo] [--chmod=(+|-)x] [--assume-unchanged] [--info-only] [--force-remove] [--stdin] [--index-info] [--unresolve] [--again | -g] [--ignore-missing] [-z] [--verbose] [--] <file>...";
 
 static unsigned char head_sha1[20];
 static unsigned char merge_head_sha1[20];
@@ -567,7 +567,7 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 	int lock_error = 0;
 	struct lock_file *lock_file;
 
-	git_config(git_default_config);
+	git_config(git_default_config, NULL);
 
 	/* We can't free this memory, it becomes part of a linked list parsed atexit() */
 	lock_file = xcalloc(1, sizeof(struct lock_file));
@@ -591,6 +591,10 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 			}
 			if (!strcmp(path, "-q")) {
 				refresh_flags |= REFRESH_QUIET;
+				continue;
+			}
+			if (!strcmp(path, "--ignore-submodules")) {
+				refresh_flags |= REFRESH_IGNORE_SUBMODULES;
 				continue;
 			}
 			if (!strcmp(path, "--add")) {

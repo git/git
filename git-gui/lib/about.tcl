@@ -4,6 +4,7 @@
 proc do_about {} {
 	global appvers copyright oguilib
 	global tcl_patchLevel tk_patchLevel
+	global ui_comm_spell
 
 	set w .about_dialog
 	toplevel $w
@@ -39,6 +40,11 @@ proc do_about {} {
 	} else {
 		append v "Tcl version $tcl_patchLevel"
 		append v ", Tk version $tk_patchLevel"
+	}
+	if {[info exists ui_comm_spell]
+		&& [$ui_comm_spell version] ne {}} {
+		append v "\n"
+		append v [$ui_comm_spell version]
 	}
 
 	set d {}

@@ -4,51 +4,121 @@
 static int inside_git_dir = -1;
 static int inside_work_tree = -1;
 
+static int sanitary_path_copy(char *dst, const char *src)
+{
+	char *dst0;
+
+	if (has_dos_drive_prefix(src)) {
+		*dst++ = *src++;
+		*dst++ = *src++;
+	}
+	dst0 = dst;
+
+	if (is_dir_sep(*src)) {
+		*dst++ = '/';
+		while (is_dir_sep(*src))
+			src++;
+	}
+
+	for (;;) {
+		char c = *src;
+
+		/*
+		 * A path component that begins with . could be
+		 * special:
+		 * (1) "." and ends   -- ignore and terminate.
+		 * (2) "./"           -- ignore them, eat slash and continue.
+		 * (3) ".." and ends  -- strip one and terminate.
+		 * (4) "../"          -- strip one, eat slash and continue.
+		 */
+		if (c == '.') {
+			if (!src[1]) {
+				/* (1) */
+				src++;
+			} else if (is_dir_sep(src[1])) {
+				/* (2) */
+				src += 2;
+				while (is_dir_sep(*src))
+					src++;
+				continue;
+			} else if (src[1] == '.') {
+				if (!src[2]) {
+					/* (3) */
+					src += 2;
+					goto up_one;
+				} else if (is_dir_sep(src[2])) {
+					/* (4) */
+					src += 3;
+					while (is_dir_sep(*src))
+						src++;
+					goto up_one;
+				}
+			}
+		}
+
+		/* copy up to the next '/', and eat all '/' */
+		while ((c = *src++) != '\0' && !is_dir_sep(c))
+			*dst++ = c;
+		if (is_dir_sep(c)) {
+			*dst++ = '/';
+			while (is_dir_sep(c))
+				c = *src++;
+			src--;
+		} else if (!c)
+			break;
+		continue;
+
+	up_one:
+		/*
+		 * dst0..dst is prefix portion, and dst[-1] is '/';
+		 * go up one level.
+		 */
+		dst -= 2; /* go past trailing '/' if any */
+		if (dst < dst0)
+			return -1;
+		while (1) {
+			if (dst <= dst0)
+				break;
+			c = *dst--;
+			if (c == '/') {	/* MinGW: cannot be '\\' anymore */
+				dst += 2;
+				break;
+			}
+		}
+	}
+	*dst = '\0';
+	return 0;
+}
+
 const char *prefix_path(const char *prefix, int len, const char *path)
 {
 	const char *orig = path;
-	for (;;) {
-		char c;
-		if (*path != '.')
-			break;
-		c = path[1];
-		/* "." */
-		if (!c) {
-			path++;
-			break;
-		}
-		/* "./" */
-		if (c == '/') {
-			path += 2;
-			continue;
-		}
-		if (c != '.')
-			break;
-		c = path[2];
-		if (!c)
-			path += 2;
-		else if (c == '/')
-			path += 3;
-		else
-			break;
-		/* ".." and "../" */
-		/* Remove last component of the prefix */
-		do {
-			if (!len)
-				die("'%s' is outside repository", orig);
-			len--;
-		} while (len && prefix[len-1] != '/');
-		continue;
+	char *sanitized = xmalloc(len + strlen(path) + 1);
+	if (is_absolute_path(orig))
+		strcpy(sanitized, path);
+	else {
+		if (len)
+			memcpy(sanitized, prefix, len);
+		strcpy(sanitized + len, path);
 	}
-	if (len) {
-		int speclen = strlen(path);
-		char *n = xmalloc(speclen + len + 1);
-
-		memcpy(n, prefix, len);
-		memcpy(n + len, path, speclen+1);
-		path = n;
+	if (sanitary_path_copy(sanitized, sanitized))
+		goto error_out;
+	if (is_absolute_path(orig)) {
+		const char *work_tree = get_git_work_tree();
+		size_t len = strlen(work_tree);
+		size_t total = strlen(sanitized) + 1;
+		if (strncmp(sanitized, work_tree, len) ||
+		    (sanitized[len] != '\0' && sanitized[len] != '/')) {
+		error_out:
+			error("'%s' is outside repository", orig);
+			free(sanitized);
+			return NULL;
+		}
+		if (sanitized[len] == '/')
+			len++;
+		memmove(sanitized, sanitized + len, total - len);
 	}
-	return path;
+	return sanitized;
 }
 
 /*
@@ -59,10 +129,23 @@ const char *prefix_path(const char *prefix, int len, const char *path)
 const char *prefix_filename(const char *pfx, int pfx_len, const char *arg)
 {
 	static char path[PATH_MAX];
+#ifndef __MINGW32__
 	if (!pfx || !*pfx || is_absolute_path(arg))
 		return arg;
 	memcpy(path, pfx, pfx_len);
 	strcpy(path + pfx_len, arg);
+#else
+	char *p;
+	/* don't add prefix to absolute paths, but still replace '\' by '/' */
+	if (is_absolute_path(arg))
+		pfx_len = 0;
+	else
+		memcpy(path, pfx, pfx_len);
+	strcpy(path + pfx_len, arg);
+	for (p = path + pfx_len; *p; p++)
+		if (*p == '\\')
+			*p = '/';
+#endif
 	return path;
 }
 
@@ -114,7 +197,7 @@ void verify_non_filename(const char *prefix, const char *arg)
 const char **get_pathspec(const char *prefix, const char **pathspec)
 {
 	const char *entry = *pathspec;
-	const char **p;
+	const char **src, **dst;
 	int prefixlen;
 
 	if (!prefix && !entry)
@@ -128,12 +211,21 @@ const char **get_pathspec(const char *prefix, const char **pathspec)
 	}
 
 	/* Otherwise we have to re-write the entries.. */
-	p = pathspec;
+	src = pathspec;
+	dst = pathspec;
 	prefixlen = prefix ? strlen(prefix) : 0;
-	do {
-		*p = prefix_path(prefix, prefixlen, entry);
-	} while ((entry = *++p) != NULL);
-	return (const char **) pathspec;
+	while (*src) {
+		const char *p = prefix_path(prefix, prefixlen, *src);
+		if (p)
+			*(dst++) = p;
+		else
+			exit(128); /* error message already given */
+		src++;
+	}
+	*dst = NULL;
+	if (!*pathspec)
+		return NULL;
+	return pathspec;
 }
 
 /*
@@ -216,15 +308,16 @@ void setup_work_tree(void)
 	work_tree = get_git_work_tree();
 	git_dir = get_git_dir();
 	if (!is_absolute_path(git_dir))
-		set_git_dir(make_absolute_path(git_dir));
+		git_dir = make_absolute_path(git_dir);
 	if (!work_tree || chdir(work_tree))
 		die("This operation must be run in a work tree");
+	set_git_dir(make_relative_path(git_dir, work_tree));
 	initialized = 1;
 }
 
 static int check_repository_format_gently(int *nongit_ok)
 {
-	git_config(check_repository_format_version);
+	git_config(check_repository_format_version, NULL);
 	if (GIT_REPO_VERSION < repository_format_version) {
 		if (!nongit_ok)
 			die ("Expected git repo version <= %d, found %d",
@@ -239,15 +332,63 @@ static int check_repository_format_gently(int *nongit_ok)
 }
 
 /*
+ * Try to read the location of the git directory from the .git file,
+ * return path to git directory if found.
+ */
+const char *read_gitfile_gently(const char *path)
+{
+	char *buf;
+	struct stat st;
+	int fd;
+	size_t len;
+
+	if (stat(path, &st))
+		return NULL;
+	if (!S_ISREG(st.st_mode))
+		return NULL;
+	fd = open(path, O_RDONLY);
+	if (fd < 0)
+		die("Error opening %s: %s", path, strerror(errno));
+	buf = xmalloc(st.st_size + 1);
+	len = read_in_full(fd, buf, st.st_size);
+	close(fd);
+	if (len != st.st_size)
+		die("Error reading %s", path);
+	buf[len] = '\0';
+	if (prefixcmp(buf, "gitdir: "))
+		die("Invalid gitfile format: %s", path);
+	while (buf[len - 1] == '\n' || buf[len - 1] == '\r')
+		len--;
+	if (len < 9)
+		die("No path in gitfile: %s", path);
+	buf[len] = '\0';
+	if (!is_git_directory(buf + 8))
+		die("Not a git repository: %s", buf + 8);
+	path = make_absolute_path(buf + 8);
+	free(buf);
+	return path;
+}
+
+/*
  * We cannot decide in this function whether we are in the work tree or
  * not, since the config can only be read _after_ this function was called.
  */
 const char *setup_git_directory_gently(int *nongit_ok)
 {
 	const char *work_tree_env = getenv(GIT_WORK_TREE_ENVIRONMENT);
+	const char *env_ceiling_dirs = getenv(CEILING_DIRECTORIES_ENVIRONMENT);
 	static char cwd[PATH_MAX+1];
 	const char *gitdirenv;
-	int len, offset;
+	const char *gitfile_dir;
+	int len, offset, ceil_offset;
+
+	/*
+	 * Let's assume that we are in a git repository.
+	 * If it turns out later that we are somewhere else, the value will be
+	 * updated accordingly.
+	 */
+	if (nongit_ok)
+		*nongit_ok = 0;
 
 	/*
 	 * If GIT_DIR is set explicitly, we're not going
@@ -291,10 +432,16 @@ const char *setup_git_directory_gently(int *nongit_ok)
 	if (!getcwd(cwd, sizeof(cwd)-1))
 		die("Unable to read current working directory");
 
+	ceil_offset = longest_ancestor_length(cwd, env_ceiling_dirs);
+	if (ceil_offset < 0 && has_dos_drive_prefix(cwd))
+		ceil_offset = 1;
+
 	/*
 	 * Test in the following order (relative to the cwd):
+	 * - .git (file containing "gitdir: <path>")
 	 * - .git/
 	 * - ./ (bare)
+	 * - ../.git
 	 * - ../.git/
 	 * - ../ (bare)
 	 * - ../../.git/
@@ -302,6 +449,12 @@ const char *setup_git_directory_gently(int *nongit_ok)
 	 */
 	offset = len = strlen(cwd);
 	for (;;) {
+		gitfile_dir = read_gitfile_gently(DEFAULT_GIT_DIR_ENVIRONMENT);
+		if (gitfile_dir) {
+			if (set_git_dir(gitfile_dir))
+				die("Repository setup failed");
+			break;
+		}
 		if (is_git_directory(DEFAULT_GIT_DIR_ENVIRONMENT))
 			break;
 		if (is_git_directory(".")) {
@@ -312,18 +465,17 @@ const char *setup_git_directory_gently(int *nongit_ok)
 			check_repository_format_gently(nongit_ok);
 			return NULL;
 		}
-		chdir("..");
-		do {
-			if (!offset) {
-				if (nongit_ok) {
-					if (chdir(cwd))
-						die("Cannot come back to cwd");
-					*nongit_ok = 1;
-					return NULL;
-				}
-				die("Not a git repository");
+		while (--offset > ceil_offset && cwd[offset] != '/');
+		if (offset <= ceil_offset) {
+			if (nongit_ok) {
+				if (chdir(cwd))
+					die("Cannot come back to cwd");
+				*nongit_ok = 1;
+				return NULL;
 			}
-		} while (cwd[--offset] != '/');
+			die("Not a git repository");
+		}
+		chdir("..");
 	}
 
 	inside_git_dir = 0;
@@ -344,24 +496,56 @@ const char *setup_git_directory_gently(int *nongit_ok)
 
 int git_config_perm(const char *var, const char *value)
 {
-	if (value) {
-		int i;
-		if (!strcmp(value, "umask"))
-			return PERM_UMASK;
-		if (!strcmp(value, "group"))
-			return PERM_GROUP;
-		if (!strcmp(value, "all") ||
-		    !strcmp(value, "world") ||
-		    !strcmp(value, "everybody"))
-			return PERM_EVERYBODY;
-		i = atoi(value);
-		if (i > 1)
-			return i;
+	int i;
+	char *endptr;
+
+	if (value == NULL)
+		return PERM_GROUP;
+
+	if (!strcmp(value, "umask"))
+		return PERM_UMASK;
+	if (!strcmp(value, "group"))
+		return PERM_GROUP;
+	if (!strcmp(value, "all") ||
+	    !strcmp(value, "world") ||
+	    !strcmp(value, "everybody"))
+		return PERM_EVERYBODY;
+
+	/* Parse octal numbers */
+	i = strtol(value, &endptr, 8);
+
+	/* If not an octal number, maybe true/false? */
+	if (*endptr != 0)
+		return git_config_bool(var, value) ? PERM_GROUP : PERM_UMASK;
+
+	/*
+	 * Treat values 0, 1 and 2 as compatibility cases, otherwise it is
+	 * a chmod value.
+	 */
+	switch (i) {
+	case PERM_UMASK:               /* 0 */
+		return PERM_UMASK;
+	case OLD_PERM_GROUP:           /* 1 */
+		return PERM_GROUP;
+	case OLD_PERM_EVERYBODY:       /* 2 */
+		return PERM_EVERYBODY;
 	}
-	return git_config_bool(var, value);
+
+	/* A filemode value was given: 0xxx */
+
+	if ((i & 0600) != 0600)
+		die("Problem with core.sharedRepository filemode value "
+		    "(0%.3o).\nThe owner of files must always have "
+		    "read and write permissions.", i);
+
+	/*
+	 * Mask filemode value. Others can not get write permission.
+	 * x flags for directories are handled separately.
+	 */
+	return i & 0666;
 }
 
-int check_repository_format_version(const char *var, const char *value)
+int check_repository_format_version(const char *var, const char *value, void *cb)
 {
 	if (strcmp(var, "core.repositoryformatversion") == 0)
 		repository_format_version = git_config_int(var, value);
@@ -372,8 +556,9 @@ int check_repository_format_version(const char *var, const char *value)
 		if (is_bare_repository_cfg == 1)
 			inside_work_tree = -1;
 	} else if (strcmp(var, "core.worktree") == 0) {
-		if (git_work_tree_cfg)
-			free(git_work_tree_cfg);
+		if (!value)
+			return config_error_nonbool(var);
+		free(git_work_tree_cfg);
 		git_work_tree_cfg = xstrdup(value);
 		inside_work_tree = -1;
 	}

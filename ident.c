@@ -171,7 +171,7 @@ static const char au_env[] = "GIT_AUTHOR_NAME";
 static const char co_env[] = "GIT_COMMITTER_NAME";
 static const char *env_hint =
 "\n"
-"*** Your name cannot be determined from your system services (gecos).\n"
+"*** Please tell me who you are.\n"
 "\n"
 "Run\n"
 "\n"
@@ -204,7 +204,7 @@ const char *fmt_ident(const char *name, const char *email,
 		if ((warn_on_no_name || error_on_no_name) &&
 		    name == git_default_name && env_hint) {
 			fprintf(stderr, env_hint, au_env, co_env);
-			env_hint = NULL; /* warn only once, for "git-var -l" */
+			env_hint = NULL; /* warn only once, for "git var -l" */
 		}
 		if (error_on_no_name)
 			die("empty ident %s <%s> not allowed", name, email);
@@ -250,6 +250,9 @@ const char *git_author_info(int flag)
 
 const char *git_committer_info(int flag)
 {
+	if (getenv("GIT_COMMITTER_NAME") &&
+	    getenv("GIT_COMMITTER_EMAIL"))
+		user_ident_explicitly_given = 1;
 	return fmt_ident(getenv("GIT_COMMITTER_NAME"),
 			 getenv("GIT_COMMITTER_EMAIL"),
 			 getenv("GIT_COMMITTER_DATE"),

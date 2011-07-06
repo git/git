@@ -8,7 +8,7 @@ git-check-attr - Display gitattributes information.
 
 SYNOPSIS
 --------
-'git-check-attr' attr... [--] pathname...
+'git check-attr' attr... [--] pathname...
 
 DESCRIPTION
 -----------
@@ -30,7 +30,7 @@ linkgit:gitattributes[5].
 
 Author
 ------
-Written by Junio C Hamano <junkio@cox.net>
+Written by Junio C Hamano <gitster@pobox.com>
 
 Documentation
 --------------
@@ -38,4 +38,4 @@ Documentation by James Bowes.
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

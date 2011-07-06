@@ -14,6 +14,7 @@ static struct whitespace_rule {
 	{ "trailing-space", WS_TRAILING_SPACE },
 	{ "space-before-tab", WS_SPACE_BEFORE_TAB },
 	{ "indent-with-non-tab", WS_INDENT_WITH_NON_TAB },
+	{ "cr-at-eol", WS_CR_AT_EOL },
 };
 
 unsigned parse_whitespace_rule(const char *string)
@@ -116,19 +117,25 @@ char *whitespace_error_string(unsigned ws)
 }
 
 /* If stream is non-NULL, emits the line after checking. */
-unsigned check_and_emit_line(const char *line, int len, unsigned ws_rule,
-			     FILE *stream, const char *set,
-			     const char *reset, const char *ws)
+static unsigned ws_check_emit_1(const char *line, int len, unsigned ws_rule,
+				FILE *stream, const char *set,
+				const char *reset, const char *ws)
 {
 	unsigned result = 0;
 	int written = 0;
 	int trailing_whitespace = -1;
 	int trailing_newline = 0;
+	int trailing_carriage_return = 0;
 	int i;
 
 	/* Logic is simpler if we temporarily ignore the trailing newline. */
 	if (len > 0 && line[len - 1] == '\n') {
 		trailing_newline = 1;
+		len--;
+	}
+	if ((ws_rule & WS_CR_AT_EOL) &&
+	    len > 0 && line[len - 1] == '\r') {
+		trailing_carriage_return = 1;
 		len--;
 	}
 
@@ -176,8 +183,10 @@ unsigned check_and_emit_line(const char *line, int len, unsigned ws_rule,
 	}
 
 	if (stream) {
-		/* Now the rest of the line starts at written.
-		 * The non-highlighted part ends at trailing_whitespace. */
+		/*
+		 * Now the rest of the line starts at "written".
+		 * The non-highlighted part ends at "trailing_whitespace".
+		 */
 		if (trailing_whitespace == -1)
 			trailing_whitespace = len;
 
@@ -196,8 +205,141 @@ unsigned check_and_emit_line(const char *line, int len, unsigned ws_rule,
 			    len - trailing_whitespace, 1, stream);
 			fputs(reset, stream);
 		}
+		if (trailing_carriage_return)
+			fputc('\r', stream);
 		if (trailing_newline)
 			fputc('\n', stream);
 	}
 	return result;
+}
+
+void ws_check_emit(const char *line, int len, unsigned ws_rule,
+		   FILE *stream, const char *set,
+		   const char *reset, const char *ws)
+{
+	(void)ws_check_emit_1(line, len, ws_rule, stream, set, reset, ws);
+}
+
+unsigned ws_check(const char *line, int len, unsigned ws_rule)
+{
+	return ws_check_emit_1(line, len, ws_rule, NULL, NULL, NULL, NULL);
+}
+
+int ws_blank_line(const char *line, int len, unsigned ws_rule)
+{
+	/*
+	 * We _might_ want to treat CR differently from other
+	 * whitespace characters when ws_rule has WS_CR_AT_EOL, but
+	 * for now we just use this stupid definition.
+	 */
+	while (len-- > 0) {
+		if (!isspace(*line))
+			return 0;
+		line++;
+	}
+	return 1;
+}
+
+/* Copy the line to the buffer while fixing whitespaces */
+int ws_fix_copy(char *dst, const char *src, int len, unsigned ws_rule, int *error_count)
+{
+	/*
+	 * len is number of bytes to be copied from src, starting
+	 * at src.  Typically src[len-1] is '\n', unless this is
+	 * the incomplete last line.
+	 */
+	int i;
+	int add_nl_to_tail = 0;
+	int add_cr_to_tail = 0;
+	int fixed = 0;
+	int last_tab_in_indent = -1;
+	int last_space_in_indent = -1;
+	int need_fix_leading_space = 0;
+	char *buf;
+
+	/*
+	 * Strip trailing whitespace
+	 */
+	if ((ws_rule & WS_TRAILING_SPACE) &&
+	    (2 <= len && isspace(src[len-2]))) {
+		if (src[len - 1] == '\n') {
+			add_nl_to_tail = 1;
+			len--;
+			if (1 < len && src[len - 1] == '\r') {
+				add_cr_to_tail = !!(ws_rule & WS_CR_AT_EOL);
+				len--;
+			}
+		}
+		if (0 < len && isspace(src[len - 1])) {
+			while (0 < len && isspace(src[len-1]))
+				len--;
+			fixed = 1;
+		}
+	}
+
+	/*
+	 * Check leading whitespaces (indent)
+	 */
+	for (i = 0; i < len; i++) {
+		char ch = src[i];
+		if (ch == '\t') {
+			last_tab_in_indent = i;
+			if ((ws_rule & WS_SPACE_BEFORE_TAB) &&
+			    0 <= last_space_in_indent)
+			    need_fix_leading_space = 1;
+		} else if (ch == ' ') {
+			last_space_in_indent = i;
+			if ((ws_rule & WS_INDENT_WITH_NON_TAB) &&
+			    8 <= i - last_tab_in_indent)
+				need_fix_leading_space = 1;
+		} else
+			break;
+	}
+
+	buf = dst;
+	if (need_fix_leading_space) {
+		/* Process indent ourselves */
+		int consecutive_spaces = 0;
+		int last = last_tab_in_indent + 1;
+
+		if (ws_rule & WS_INDENT_WITH_NON_TAB) {
+			/* have "last" point at one past the indent */
+			if (last_tab_in_indent < last_space_in_indent)
+				last = last_space_in_indent + 1;
+			else
+				last = last_tab_in_indent + 1;
+		}
+
+		/*
+		 * between src[0..last-1], strip the funny spaces,
+		 * updating them to tab as needed.
+		 */
+		for (i = 0; i < last; i++) {
+			char ch = src[i];
+			if (ch != ' ') {
+				consecutive_spaces = 0;
+				*dst++ = ch;
+			} else {
+				consecutive_spaces++;
+				if (consecutive_spaces == 8) {
+					*dst++ = '\t';
+					consecutive_spaces = 0;
+				}
+			}
+		}
+		while (0 < consecutive_spaces--)
+			*dst++ = ' ';
+		len -= last;
+		src += last;
+		fixed = 1;
+	}
+
+	memcpy(dst, src, len);
+	if (add_cr_to_tail)
+		dst[len++] = '\r';
+	if (add_nl_to_tail)
+		dst[len++] = '\n';
+	if (fixed && error_count)
+		(*error_count)++;
+	return dst + len - buf;
 }

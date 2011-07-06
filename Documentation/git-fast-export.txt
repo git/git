@@ -8,23 +8,23 @@ git-fast-export - Git data exporter
 
 SYNOPSIS
 --------
-'git-fast-export [options]' | 'git-fast-import'
+'git fast-export [options]' | 'git fast-import'
 
 DESCRIPTION
 -----------
 This program dumps the given revisions in a form suitable to be piped
-into linkgit:git-fast-import[1].
+into 'git-fast-import'.
 
 You can use it as a human readable bundle replacement (see
 linkgit:git-bundle[1]), or as a kind of an interactive
-linkgit:git-filter-branch[1].
+'git-filter-branch'.
 
 
 OPTIONS
 -------
 --progress=<n>::
 	Insert 'progress' statements every <n> objects, to be shown by
-	linkgit:git-fast-import[1] during import.
+	'git-fast-import' during import.
 
 --signed-tags=(verbatim|warn|strip|abort)::
 	Specify how to handle signed tags.  Since any transformation
@@ -35,6 +35,35 @@ When asking to 'abort' (which is the default), this program will die
 when encountering a signed tag.  With 'strip', the tags will be made
 unsigned, with 'verbatim', they will be silently exported
 and with 'warn', they will be exported, but you will see a warning.
+
+-M::
+-C::
+	Perform move and/or copy detection, as described in the
+	linkgit:git-diff[1] manual page, and use it to generate
+	rename and copy commands in the output dump.
++
+Note that earlier versions of this command did not complain and
+produced incorrect results if you gave these options.
+
+--export-marks=<file>::
+	Dumps the internal marks table to <file> when complete.
+	Marks are written one per line as `:markid SHA-1`. Only marks
+	for revisions are dumped; marks for blobs are ignored.
+	Backends can use this file to validate imports after they
+	have been completed, or to save the marks table across
+	incremental runs.  As <file> is only opened and truncated
+	at completion, the same path can also be safely given to
+	\--import-marks.
+
+--import-marks=<file>::
+	Before processing any input, load the marks specified in
+	<file>.  The input file must exist, must be readable, and
+	must use the same format as produced by \--export-marks.
++
+Any commits that have already been marked will not be exported again.
+If the backend uses a similar \--import-marks file, this allows for
+incremental bidirectional exporting of the repository by keeping the
+marks the same across runs.
 
 
 EXAMPLES
@@ -65,7 +94,7 @@ referenced by that revision range contains the string
 Limitations
 -----------
 
-Since linkgit:git-fast-import[1] cannot tag trees, you will not be
+Since 'git-fast-import' cannot tag trees, you will not be
 able to export the linux-2.6.git repository completely, as it contains
 a tag referencing a tree instead of a commit.
 
@@ -80,4 +109,4 @@ Documentation by Johannes E. Schindelin <johannes.schindelin@gmx.de>.
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

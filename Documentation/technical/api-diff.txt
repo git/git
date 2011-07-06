@@ -39,7 +39,7 @@ Calling sequence
 * Once you finish feeding the pairs of files, call `diffcore_std()`.
   This will tell the diffcore library to go ahead and do its work.
 
-* Calling `diffcore_flush()` will produce the output.
+* Calling `diff_flush()` will produce the output.
 
 
 Data structures

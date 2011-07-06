@@ -8,7 +8,7 @@ git-hash-object - Compute object ID and optionally creates a blob from a file
 
 SYNOPSIS
 --------
-'git-hash-object' [-t <type>] [-w] [--stdin] [--] <file>...
+'git hash-object' [-t <type>] [-w] [--stdin | --stdin-paths] [--] <file>...
 
 DESCRIPTION
 -----------
@@ -16,7 +16,7 @@ Computes the object ID value for an object with specified type
 with the contents of the named file (which can be outside of the
 work tree), and optionally writes the resulting object into the
 object database.  Reports its object ID to its standard output.
-This is used by "git-cvsimport" to update the index
+This is used by 'git-cvsimport' to update the index
 without modifying files in the work tree.  When <type> is not
 specified, it defaults to "blob".
 
@@ -32,9 +32,12 @@ OPTIONS
 --stdin::
 	Read the object from standard input instead of from a file.
 
+--stdin-paths::
+	Read file names from stdin instead of from the command-line.
+
 Author
 ------
-Written by Junio C Hamano <junkio@cox.net>
+Written by Junio C Hamano <gitster@pobox.com>
 
 Documentation
 --------------
@@ -42,4 +45,4 @@ Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

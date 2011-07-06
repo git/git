@@ -19,6 +19,7 @@ proc clear_diff {} {
 proc reshow_diff {} {
 	global file_states file_lists
 	global current_diff_path current_diff_side
+	global ui_diff
 
 	set p $current_diff_path
 	if {$p eq {}} {
@@ -28,7 +29,8 @@ proc reshow_diff {} {
 		|| [lsearch -sorted -exact $file_lists($current_diff_side) $p] == -1} {
 		clear_diff
 	} else {
-		show_diff $p $current_diff_side
+		set save_pos [lindex [$ui_diff yview] 0]
+		show_diff $p $current_diff_side {} $save_pos
 	}
 }
 
@@ -52,7 +54,7 @@ A rescan will be automatically started to find other files which may have the sa
 	rescan ui_ready 0
 }
 
-proc show_diff {path w {lno {}}} {
+proc show_diff {path w {lno {}} {scroll_pos {}}} {
 	global file_states file_lists
 	global is_3way_diff diff_active repo_config
 	global ui_diff ui_index ui_workdir
@@ -151,6 +153,10 @@ proc show_diff {path w {lno {}}} {
 		$ui_diff conf -state disabled
 		set diff_active 0
 		unlock_index
+		if {$scroll_pos ne {}} {
+			update
+			$ui_diff yview moveto $scroll_pos
+		}
 		ui_ready
 		return
 	}
@@ -190,10 +196,10 @@ proc show_diff {path w {lno {}}} {
 		-blocking 0 \
 		-encoding binary \
 		-translation binary
-	fileevent $fd readable [list read_diff $fd]
+	fileevent $fd readable [list read_diff $fd $scroll_pos]
 }
 
-proc read_diff {fd} {
+proc read_diff {fd scroll_pos} {
 	global ui_diff diff_active
 	global is_3way_diff current_diff_header
 
@@ -282,6 +288,10 @@ proc read_diff {fd} {
 		close $fd
 		set diff_active 0
 		unlock_index
+		if {$scroll_pos ne {}} {
+			update
+			$ui_diff yview moveto $scroll_pos
+		}
 		ui_ready
 
 		if {[$ui_diff index end] eq {2.0}} {
@@ -361,4 +371,149 @@ proc apply_hunk {x y} {
 	} else {
 		set current_diff_path $current_diff_path
 	}
+}
+
+proc apply_line {x y} {
+	global current_diff_path current_diff_header current_diff_side
+	global ui_diff ui_index file_states
+
+	if {$current_diff_path eq {} || $current_diff_header eq {}} return
+	if {![lock_index apply_hunk]} return
+
+	set apply_cmd {apply --cached --whitespace=nowarn}
+	set mi [lindex $file_states($current_diff_path) 0]
+	if {$current_diff_side eq $ui_index} {
+		set failed_msg [mc "Failed to unstage selected line."]
+		set to_context {+}
+		lappend apply_cmd --reverse
+		if {[string index $mi 0] ne {M}} {
+			unlock_index
+			return
+		}
+	} else {
+		set failed_msg [mc "Failed to stage selected line."]
+		set to_context {-}
+		if {[string index $mi 1] ne {M}} {
+			unlock_index
+			return
+		}
+	}
+
+	set the_l [$ui_diff index @$x,$y]
+
+	# operate only on change lines
+	set c1 [$ui_diff get "$the_l linestart"]
+	if {$c1 ne {+} && $c1 ne {-}} {
+		unlock_index
+		return
+	}
+	set sign $c1
+
+	set i_l [$ui_diff search -backwards -regexp ^@@ $the_l 0.0]
+	if {$i_l eq {}} {
+		unlock_index
+		return
+	}
+	# $i_l is now at the beginning of a line
+
+	# pick start line number from hunk header
+	set hh [$ui_diff get $i_l "$i_l + 1 lines"]
+	set hh [lindex [split $hh ,] 0]
+	set hln [lindex [split $hh -] 1]
+
+	# There is a special situation to take care of. Consider this hunk:
+	#
+	#    @@ -10,4 +10,4 @@
+	#     context before
+	#    -old 1
+	#    -old 2
+	#    +new 1
+	#    +new 2
+	#     context after
+	#
+	# We used to keep the context lines in the order they appear in the
+	# hunk. But then it is not possible to correctly stage only
+	# "-old 1" and "+new 1" - it would result in this staged text:
+	#
+	#    context before
+	#    old 2
+	#    new 1
+	#    context after
+	#
+	# (By symmetry it is not possible to *un*stage "old 2" and "new 2".)
+	#
+	# We resolve the problem by introducing an asymmetry, namely, when
+	# a "+" line is *staged*, it is moved in front of the context lines
+	# that are generated from the "-" lines that are immediately before
+	# the "+" block. That is, we construct this patch:
+	#
+	#    @@ -10,4 +10,5 @@
+	#     context before
+	#    +new 1
+	#     old 1
+	#     old 2
+	#     context after
+	#
+	# But we do *not* treat "-" lines that are *un*staged in a special
+	# way.
+	#
+	# With this asymmetry it is possible to stage the change
+	# "old 1" -> "new 1" directly, and to stage the change
+	# "old 2" -> "new 2" by first staging the entire hunk and
+	# then unstaging the change "old 1" -> "new 1".
+
+	# This is non-empty if and only if we are _staging_ changes;
+	# then it accumulates the consecutive "-" lines (after converting
+	# them to context lines) in order to be moved after the "+" change
+	# line.
+	set pre_context {}
+
+	set n 0
+	set i_l [$ui_diff index "$i_l + 1 lines"]
+	set patch {}
+	while {[$ui_diff compare $i_l < "end - 1 chars"] &&
+	       [$ui_diff get $i_l "$i_l + 2 chars"] ne {@@}} {
+		set next_l [$ui_diff index "$i_l + 1 lines"]
+		set c1 [$ui_diff get $i_l]
+		if {[$ui_diff compare $i_l <= $the_l] &&
+		    [$ui_diff compare $the_l < $next_l]} {
+			# the line to stage/unstage
+			set ln [$ui_diff get $i_l $next_l]
+			if {$c1 eq {-}} {
+				set n [expr $n+1]
+				set patch "$patch$pre_context$ln"
+			} else {
+				set patch "$patch$ln$pre_context"
+			}
+			set pre_context {}
+		} elseif {$c1 ne {-} && $c1 ne {+}} {
+			# context line
+			set ln [$ui_diff get $i_l $next_l]
+			set patch "$patch$pre_context$ln"
+			set n [expr $n+1]
+			set pre_context {}
+		} elseif {$c1 eq $to_context} {
+			# turn change line into context line
+			set ln [$ui_diff get "$i_l + 1 chars" $next_l]
+			if {$c1 eq {-}} {
+				set pre_context "$pre_context $ln"
+			} else {
+				set patch "$patch $ln"
+			}
+			set n [expr $n+1]
+		}
+		set i_l $next_l
+	}
+	set patch "@@ -$hln,$n +$hln,[eval expr $n $sign 1] @@\n$patch"
+
+	if {[catch {
+		set p [eval git_write $apply_cmd]
+		fconfigure $p -translation binary -encoding binary
+		puts -nonewline $p $current_diff_header
+		puts -nonewline $p $patch
+		close $p} err]} {
+		error_popup [append $failed_msg "\n\n$err"]
+	}
+
+	unlock_index
 }

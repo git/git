@@ -10,14 +10,28 @@
 # The original idea comes from Eric W. Biederman, in
 # http://article.gmane.org/gmane.comp.version-control.git/22407
 
-USAGE='(--continue | --abort | --skip | [--preserve-merges] [--verbose]
-	[--onto <branch>] <upstream> [<branch>])'
+OPTIONS_KEEPDASHDASH=
+OPTIONS_SPEC="\
+git-rebase [-i] [options] [--] <upstream> [<branch>]
+git-rebase [-i] (--continue | --abort | --skip)
+--
+ Available options are
+v,verbose          display a diffstat of what changed upstream
+onto=              rebase onto given branch instead of upstream
+p,preserve-merges  try to recreate merges instead of ignoring them
+s,strategy=        use the given merge strategy
+m,merge            always used (no-op)
+i,interactive      always used (no-op)
+ Actions:
+continue           continue rebasing process
+abort              abort rebasing process and restore original branch
+skip               skip current patch and continue rebasing process
+"
 
-OPTIONS_SPEC=
 . git-sh-setup
 require_work_tree
 
-DOTEST="$GIT_DIR/.dotest-merge"
+DOTEST="$GIT_DIR/rebase-merge"
 TODO="$DOTEST"/git-rebase-todo
 DONE="$DOTEST"/done
 MSG="$DOTEST"/message
@@ -25,10 +39,8 @@ SQUASH_MSG="$DOTEST"/message-squash
 REWRITTEN="$DOTEST"/rewritten
 PRESERVE_MERGES=
 STRATEGY=
+ONTO=
 VERBOSE=
-test -d "$REWRITTEN" && PRESERVE_MERGES=t
-test -f "$DOTEST"/strategy && STRATEGY="$(cat "$DOTEST"/strategy)"
-test -f "$DOTEST"/verbose && VERBOSE=t
 
 GIT_CHERRY_PICK_HELP="  After resolving the conflicts,
 mark the corrected paths with 'git add <paths>', and
@@ -56,9 +68,9 @@ output () {
 require_clean_work_tree () {
 	# test if working tree is dirty
 	git rev-parse --verify HEAD > /dev/null &&
-	git update-index --refresh &&
-	git diff-files --quiet &&
-	git diff-index --cached --quiet HEAD -- ||
+	git update-index --ignore-submodules --refresh &&
+	git diff-files --quiet --ignore-submodules &&
+	git diff-index --cached --quiet HEAD --ignore-submodules -- ||
 	die "Working tree is dirty"
 }
 
@@ -78,8 +90,8 @@ mark_action_done () {
 	sed -e 1q < "$TODO" >> "$DONE"
 	sed -e 1d < "$TODO" >> "$TODO".new
 	mv -f "$TODO".new "$TODO"
-	count=$(($(grep -ve '^$' -e '^#' < "$DONE" | wc -l)))
-	total=$(($count+$(grep -ve '^$' -e '^#' < "$TODO" | wc -l)))
+	count=$(grep -c '^[^#]' < "$DONE")
+	total=$(($count+$(grep -c '^[^#]' < "$TODO")))
 	if test "$last_count" != "$count"
 	then
 		last_count=$count
@@ -110,7 +122,7 @@ die_abort () {
 }
 
 has_action () {
-	grep -vqe '^$' -e '^#' "$1"
+	grep '^[^#]' "$1" >/dev/null
 }
 
 pick_one () {
@@ -133,7 +145,16 @@ pick_one () {
 }
 
 pick_one_preserving_merges () {
-	case "$1" in -n) sha1=$2 ;; *) sha1=$1 ;; esac
+	fast_forward=t
+	case "$1" in
+	-n)
+		fast_forward=f
+		sha1=$2
+		;;
+	*)
+		sha1=$1
+		;;
+	esac
 	sha1=$(git rev-parse $sha1)
 
 	if test -f "$DOTEST"/current-commit
@@ -144,15 +165,14 @@ pick_one_preserving_merges () {
 		die "Cannot write current commit's replacement sha1"
 	fi
 
+	echo $sha1 > "$DOTEST"/current-commit
+
 	# rewrite parents; if none were rewritten, we can fast-forward.
-	fast_forward=t
-	preserve=t
 	new_parents=
 	for p in $(git rev-list --parents -1 $sha1 | cut -d' ' -f2-)
 	do
 		if test -f "$REWRITTEN"/$p
 		then
-			preserve=f
 			new_p=$(cat "$REWRITTEN"/$p)
 			test $p != $new_p && fast_forward=f
 			case "$new_parents" in
@@ -162,12 +182,15 @@ pick_one_preserving_merges () {
 				new_parents="$new_parents $new_p"
 				;;
 			esac
+		else
+			new_parents="$new_parents $p"
 		fi
 	done
 	case $fast_forward in
 	t)
 		output warn "Fast forward to $sha1"
-		test $preserve = f || echo $sha1 > "$REWRITTEN"/$sha1
+		output git reset --hard $sha1 ||
+			die "Cannot fast forward to $sha1"
 		;;
 	f)
 		test "a$1" = a-n && die "Refusing to squash a merge: $sha1"
@@ -177,7 +200,6 @@ pick_one_preserving_merges () {
 		output git checkout $first_parent 2> /dev/null ||
 			die "Cannot move HEAD to $first_parent"
 
-		echo $sha1 > "$DOTEST"/current-commit
 		case "$new_parents" in
 		' '*' '*)
 			# redo merge
@@ -218,7 +240,7 @@ nth_string () {
 make_squash_message () {
 	if test -f "$SQUASH_MSG"; then
 		COUNT=$(($(sed -n "s/^# This is [^0-9]*\([1-9][0-9]*\).*/\1/p" \
-			< "$SQUASH_MSG" | tail -n 1)+1))
+			< "$SQUASH_MSG" | sed -ne '$p')+1))
 		echo "# This is a combination of $COUNT commits."
 		sed -e 1d -e '2,/^./{
 			/^$/d
@@ -263,10 +285,14 @@ do_next () {
 			die_with_patch $sha1 "Could not apply $sha1... $rest"
 		make_patch $sha1
 		: > "$DOTEST"/amend
-		warn
+		warn "Stopped at $sha1... $rest"
 		warn "You can amend the commit now, with"
 		warn
 		warn "	git commit --amend"
+		warn
+		warn "Once you are satisfied with your changes, run"
+		warn
+		warn "	git rebase --continue"
 		warn
 		exit 0
 		;;
@@ -362,10 +388,27 @@ do_rest () {
 	done
 }
 
+# check if no other options are set
+is_standalone () {
+	test $# -eq 2 -a "$2" = '--' &&
+	test -z "$ONTO" &&
+	test -z "$PRESERVE_MERGES" &&
+	test -z "$STRATEGY" &&
+	test -z "$VERBOSE"
+}
+
+get_saved_options () {
+	test -d "$REWRITTEN" && PRESERVE_MERGES=t
+	test -f "$DOTEST"/strategy && STRATEGY="$(cat "$DOTEST"/strategy)"
+	test -f "$DOTEST"/verbose && VERBOSE=t
+}
+
 while test $# != 0
 do
 	case "$1" in
 	--continue)
+		is_standalone "$@" || usage
+		get_saved_options
 		comment_for_reflog continue
 
 		test -d "$DOTEST" || die "No interactive rebase running"
@@ -373,11 +416,12 @@ do
 		# Sanity check
 		git rev-parse --verify HEAD >/dev/null ||
 			die "Cannot read HEAD"
-		git update-index --refresh && git diff-files --quiet ||
+		git update-index --ignore-submodules --refresh &&
+			git diff-files --quiet --ignore-submodules ||
 			die "Working tree is dirty"
 
 		# do we have anything to commit?
-		if git diff-index --cached --quiet HEAD --
+		if git diff-index --cached --quiet --ignore-submodules HEAD --
 		then
 			: Nothing to commit -- skip this
 		else
@@ -397,6 +441,8 @@ do
 		do_rest
 		;;
 	--abort)
+		is_standalone "$@" || usage
+		get_saved_options
 		comment_for_reflog abort
 
 		git rerere clear
@@ -414,6 +460,8 @@ do
 		exit
 		;;
 	--skip)
+		is_standalone "$@" || usage
+		get_saved_options
 		comment_for_reflog skip
 
 		git rerere clear
@@ -421,7 +469,7 @@ do
 
 		output git reset --hard && do_rest
 		;;
-	-s|--strategy)
+	-s)
 		case "$#,$1" in
 		*,*=*)
 			STRATEGY="-s "$(expr "z$1" : 'z-[^=]*=\(.*\)') ;;
@@ -432,25 +480,26 @@ do
 			shift ;;
 		esac
 		;;
-	--merge)
+	-m)
 		# we use merge anyway
 		;;
-	-C*)
-		die "Interactive rebase uses merge, so $1 does not make sense"
-		;;
-	-v|--verbose)
+	-v)
 		VERBOSE=t
 		;;
-	-p|--preserve-merges)
+	-p)
 		PRESERVE_MERGES=t
 		;;
-	-i|--interactive)
+	-i)
 		# yeah, we know
 		;;
-	''|-h)
-		usage
+	--onto)
+		shift
+		ONTO=$(git rev-parse --verify "$1") ||
+			die "Does not point to a valid commit: $1"
 		;;
-	*)
+	--)
+		shift
+		test $# -eq 1 -o $# -eq 2 || usage
 		test -d "$DOTEST" &&
 			die "Interactive rebase already started"
 
@@ -459,16 +508,10 @@ do
 
 		comment_for_reflog start
 
-		ONTO=
-		case "$1" in
-		--onto)
-			ONTO=$(git rev-parse --verify "$2") ||
-				die "Does not point to a valid commit: $2"
-			shift; shift
-			;;
-		esac
-
 		require_clean_work_tree
+
+		UPSTREAM=$(git rev-parse --verify "$1") || die "Invalid base"
+		test -z "$ONTO" && ONTO=$UPSTREAM
 
 		if test ! -z "$2"
 		then
@@ -479,11 +522,7 @@ do
 		fi
 
 		HEAD=$(git rev-parse --verify HEAD) || die "No HEAD?"
-		UPSTREAM=$(git rev-parse --verify "$1") || die "Invalid base"
-
 		mkdir "$DOTEST" || die "Could not create temporary $DOTEST"
-
-		test -z "$ONTO" && ONTO=$UPSTREAM
 
 		: > "$DOTEST"/interactive || die "Could not mark as interactive"
 		git symbolic-ref HEAD > "$DOTEST"/head-name 2> /dev/null ||
@@ -526,9 +565,9 @@ do
 # Rebase $SHORTUPSTREAM..$SHORTHEAD onto $SHORTONTO
 #
 # Commands:
-#  pick = use commit
-#  edit = use commit, but stop for amending
-#  squash = use commit, but meld into previous commit
+#  p, pick = use commit
+#  e, edit = use commit, but stop for amending
+#  s, squash = use commit, but meld into previous commit
 #
 # If you remove a line here THAT COMMIT WILL BE LOST.
 # However, if you remove everything, the rebase will be aborted.
@@ -545,6 +584,7 @@ EOF
 		has_action "$TODO" ||
 			die_abort "Nothing to do"
 
+		git update-ref ORIG_HEAD $HEAD
 		output git checkout $ONTO && do_rest
 		;;
 	esac

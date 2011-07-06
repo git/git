@@ -28,6 +28,9 @@ struct cache_tree *cache_tree_read(const char *buffer, unsigned long size);
 int cache_tree_fully_valid(struct cache_tree *);
 int cache_tree_update(struct cache_tree *, struct cache_entry **, int, int, int);
 
-struct cache_tree *cache_tree_find(struct cache_tree *, const char *);
+#define WRITE_TREE_UNREADABLE_INDEX (-1)
+#define WRITE_TREE_UNMERGED_INDEX (-2)
+#define WRITE_TREE_PREFIX_ERROR (-3)
 
+int write_cache_as_tree(unsigned char *sha1, int missing_ok, const char *prefix);
 #endif

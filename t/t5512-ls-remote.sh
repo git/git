@@ -17,35 +17,35 @@ test_expect_success setup '
 		git show-ref -d	| sed -e "s/ /	/"
 	) >expected.all &&
 
-	git remote add self $(pwd)/.git
+	git remote add self "$(pwd)/.git"
 
 '
 
 test_expect_success 'ls-remote --tags .git' '
 
 	git ls-remote --tags .git >actual &&
-	diff -u expected.tag actual
+	test_cmp expected.tag actual
 
 '
 
 test_expect_success 'ls-remote .git' '
 
 	git ls-remote .git >actual &&
-	diff -u expected.all actual
+	test_cmp expected.all actual
 
 '
 
 test_expect_success 'ls-remote --tags self' '
 
 	git ls-remote --tags self >actual &&
-	diff -u expected.tag actual
+	test_cmp expected.tag actual
 
 '
 
 test_expect_success 'ls-remote self' '
 
 	git ls-remote self >actual &&
-	diff -u expected.all actual
+	test_cmp expected.all actual
 
 '
 

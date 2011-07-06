@@ -11,7 +11,7 @@ setup() {
 check() {
 	echo "$2" >expected
 	git config --get "$1" >actual
-	git diff actual expected
+	test_cmp actual expected
 }
 
 test_expect_success 'modify same key' '
@@ -32,6 +32,12 @@ test_expect_success 'add key in different section' '
 	git config section2.key bar &&
 	check section.key foo &&
 	check section2.key bar
+'
+
+SECTION="test.q\"s\\sq'sp e.key"
+test_expect_success 'make sure git-config escapes section names properly' '
+	git config "$SECTION" bar &&
+	check "$SECTION" bar
 '
 
 test_done

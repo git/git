@@ -104,11 +104,15 @@ create_merge_msgs() {
 	git log --no-merges ^HEAD c2 >>squash.1-5 &&
 	echo "Squashed commit of the following:" >squash.1-5-9 &&
 	echo >>squash.1-5-9 &&
-	git log --no-merges ^HEAD c2 c3 >>squash.1-5-9
+	git log --no-merges ^HEAD c2 c3 >>squash.1-5-9 &&
+	echo > msg.nolog &&
+	echo "* commit 'c3':" >msg.log &&
+	echo "  commit 3" >>msg.log &&
+	echo >>msg.log
 }
 
 verify_diff() {
-	if ! diff -u "$1" "$2"
+	if ! test_cmp "$1" "$2"
 	then
 		echo "$3"
 		false
@@ -122,7 +126,7 @@ verify_merge() {
 		echo "[OOPS] unmerged files"
 		false
 	fi &&
-	if ! git diff --exit-code
+	if test_must_fail git diff --exit-code
 	then
 		echo "[OOPS] working tree != index"
 		false
@@ -165,7 +169,7 @@ verify_mergeheads() {
 	fi &&
 	while test $# -gt 0
 	do
-		head=$(head -n $i .git/MERGE_HEAD | tail -n 1)
+		head=$(head -n $i .git/MERGE_HEAD | sed -ne \$p)
 		if test "$1" != "$head"
 		then
 			echo "[OOPS] MERGE_HEAD $i != $1"
@@ -218,36 +222,12 @@ test_expect_success 'setup' '
 test_debug 'gitk --all'
 
 test_expect_success 'test option parsing' '
-	if git merge -$ c1
-	then
-		echo "[OOPS] -$ accepted"
-		false
-	fi &&
-	if git merge --no-such c1
-	then
-		echo "[OOPS] --no-such accepted"
-		false
-	fi &&
-	if git merge -s foobar c1
-	then
-		echo "[OOPS] -s foobar accepted"
-		false
-	fi &&
-	if git merge -s=foobar c1
-	then
-		echo "[OOPS] -s=foobar accepted"
-		false
-	fi &&
-	if git merge -m
-	then
-		echo "[OOPS] missing commit msg accepted"
-		false
-	fi &&
-	if git merge
-	then
-		echo "[OOPS] missing commit references accepted"
-		false
-	fi
+	test_must_fail git merge -$ c1 &&
+	test_must_fail git merge --no-such c1 &&
+	test_must_fail git merge -s foobar c1 &&
+	test_must_fail git merge -s=foobar c1 &&
+	test_must_fail git merge -m &&
+	test_must_fail git merge
 '
 
 test_expect_success 'merge c0 with c1' '
@@ -364,29 +344,44 @@ test_expect_success 'merge c1 with c2 (squash in config)' '
 
 test_debug 'gitk --all'
 
-test_expect_success 'override config option -n' '
+test_expect_success 'override config option -n with --summary' '
 	git reset --hard c1 &&
 	git config branch.master.mergeoptions "-n" &&
 	test_tick &&
 	git merge --summary c2 >diffstat.txt &&
 	verify_merge file result.1-5 msg.1-5 &&
 	verify_parents $c1 $c2 &&
-	if ! grep -e "^ file |  *2 +-$" diffstat.txt
+	if ! grep "^ file |  *2 +-$" diffstat.txt
 	then
-		echo "[OOPS] diffstat was not generated"
+		echo "[OOPS] diffstat was not generated with --summary"
+		false
+	fi
+'
+
+test_expect_success 'override config option -n with --stat' '
+	git reset --hard c1 &&
+	git config branch.master.mergeoptions "-n" &&
+	test_tick &&
+	git merge --stat c2 >diffstat.txt &&
+	verify_merge file result.1-5 msg.1-5 &&
+	verify_parents $c1 $c2 &&
+	if ! grep "^ file |  *2 +-$" diffstat.txt
+	then
+		echo "[OOPS] diffstat was not generated with --stat"
+		false
 	fi
 '
 
 test_debug 'gitk --all'
 
-test_expect_success 'override config option --summary' '
+test_expect_success 'override config option --stat' '
 	git reset --hard c1 &&
-	git config branch.master.mergeoptions "--summary" &&
+	git config branch.master.mergeoptions "--stat" &&
 	test_tick &&
 	git merge -n c2 >diffstat.txt &&
 	verify_merge file result.1-5 msg.1-5 &&
 	verify_parents $c1 $c2 &&
-	if grep -e "^ file |  *2 +-$" diffstat.txt
+	if grep "^ file |  *2 +-$" diffstat.txt
 	then
 		echo "[OOPS] diffstat was generated"
 		false
@@ -419,6 +414,7 @@ test_debug 'gitk --all'
 
 test_expect_success 'merge c0 with c1 (no-ff)' '
 	git reset --hard c0 &&
+	git config branch.master.mergeoptions "" &&
 	test_tick &&
 	git merge --no-ff c1 &&
 	verify_merge file result.1 &&
@@ -427,12 +423,67 @@ test_expect_success 'merge c0 with c1 (no-ff)' '
 
 test_debug 'gitk --all'
 
+test_expect_success 'combining --squash and --no-ff is refused' '
+	test_must_fail git merge --squash --no-ff c1 &&
+	test_must_fail git merge --no-ff --squash c1
+'
+
 test_expect_success 'merge c0 with c1 (ff overrides no-ff)' '
 	git reset --hard c0 &&
 	git config branch.master.mergeoptions "--no-ff" &&
 	git merge --ff c1 &&
 	verify_merge file result.1 &&
 	verify_head $c1
+'
+
+test_expect_success 'merge log message' '
+	git reset --hard c0 &&
+	git merge --no-log c2 &&
+	git show -s --pretty=format:%b HEAD >msg.act &&
+	verify_diff msg.nolog msg.act "[OOPS] bad merge log message" &&
+
+	git merge --log c3 &&
+	git show -s --pretty=format:%b HEAD >msg.act &&
+	verify_diff msg.log msg.act "[OOPS] bad merge log message" &&
+
+	git reset --hard HEAD^ &&
+	git config merge.log yes &&
+	git merge c3 &&
+	git show -s --pretty=format:%b HEAD >msg.act &&
+	verify_diff msg.log msg.act "[OOPS] bad merge log message"
+'
+
+test_debug 'gitk --all'
+
+test_expect_success 'merge c1 with c0, c2, c0, and c1' '
+       git reset --hard c1 &&
+       git config branch.master.mergeoptions "" &&
+       test_tick &&
+       git merge c0 c2 c0 c1 &&
+       verify_merge file result.1-5 &&
+       verify_parents $c1 $c2
+'
+
+test_debug 'gitk --all'
+
+test_expect_success 'merge c1 with c0, c2, c0, and c1' '
+       git reset --hard c1 &&
+       git config branch.master.mergeoptions "" &&
+       test_tick &&
+       git merge c0 c2 c0 c1 &&
+       verify_merge file result.1-5 &&
+       verify_parents $c1 $c2
+'
+
+test_debug 'gitk --all'
+
+test_expect_success 'merge c1 with c1 and c2' '
+       git reset --hard c1 &&
+       git config branch.master.mergeoptions "" &&
+       test_tick &&
+       git merge c1 c2 &&
+       verify_merge file result.1-5 &&
+       verify_parents $c1 $c2
 '
 
 test_debug 'gitk --all'

@@ -8,7 +8,10 @@ test_expect_success setup '
 
 	cat ../../COPYING >test &&
 	git add test &&
-	tr 'a-zA-Z' 'n-za-mN-ZA-M' <../../COPYING >test
+	tr \
+	  "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" \
+	  "nopqrstuvwxyzabcdefghijklmNOPQRSTUVWXYZABCDEFGHIJKLM" \
+	  <../../COPYING >test
 
 '
 

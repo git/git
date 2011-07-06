@@ -1,8 +1,8 @@
 #include "cache.h"
-#include "path-list.h"
+#include "string-list.h"
 #include "mailmap.h"
 
-int read_mailmap(struct path_list *map, const char *filename, char **repo_abbrev)
+int read_mailmap(struct string_list *map, const char *filename, char **repo_abbrev)
 {
 	char buffer[1024];
 	FILE *f = fopen(filename, "r");
@@ -54,16 +54,16 @@ int read_mailmap(struct path_list *map, const char *filename, char **repo_abbrev
 		for (i = 0; i < right_bracket - left_bracket - 1; i++)
 			email[i] = tolower(left_bracket[i + 1]);
 		email[right_bracket - left_bracket - 1] = '\0';
-		path_list_insert(email, map)->util = name;
+		string_list_insert(email, map)->util = name;
 	}
 	fclose(f);
 	return 0;
 }
 
-int map_email(struct path_list *map, const char *email, char *name, int maxlen)
+int map_email(struct string_list *map, const char *email, char *name, int maxlen)
 {
 	char *p;
-	struct path_list_item *item;
+	struct string_list_item *item;
 	char buf[1024], *mailbuf;
 	int i;
 
@@ -80,7 +80,7 @@ int map_email(struct path_list *map, const char *email, char *name, int maxlen)
 	for (i = 0; i < p - email; i++)
 		mailbuf[i] = tolower(email[i]);
 	mailbuf[i] = 0;
-	item = path_list_lookup(mailbuf, map);
+	item = string_list_lookup(mailbuf, map);
 	if (mailbuf != buf)
 		free(mailbuf);
 	if (item != NULL) {

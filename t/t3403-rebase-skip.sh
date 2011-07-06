@@ -31,8 +31,8 @@ test_expect_success setup '
 	git branch skip-merge skip-reference
 	'
 
-test_expect_failure 'rebase with git am -3 (default)' '
-	git rebase master
+test_expect_success 'rebase with git am -3 (default)' '
+	test_must_fail git rebase master
 '
 
 test_expect_success 'rebase --skip with am -3' '
@@ -43,7 +43,7 @@ test_expect_success 'rebase moves back to skip-reference' '
 	test refs/heads/skip-reference = $(git symbolic-ref HEAD) &&
 	git branch post-rebase &&
 	git reset --hard pre-rebase &&
-	! git rebase master &&
+	test_must_fail git rebase master &&
 	echo "hello" > hello &&
 	git add hello &&
 	git rebase --continue &&
@@ -53,7 +53,9 @@ test_expect_success 'rebase moves back to skip-reference' '
 
 test_expect_success 'checkout skip-merge' 'git checkout -f skip-merge'
 
-test_expect_failure 'rebase with --merge' 'git rebase --merge master'
+test_expect_success 'rebase with --merge' '
+	test_must_fail git rebase --merge master
+'
 
 test_expect_success 'rebase --skip with --merge' '
 	git rebase --skip

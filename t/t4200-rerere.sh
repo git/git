@@ -9,6 +9,8 @@ test_description='git rerere
 . ./test-lib.sh
 
 cat > a1 << EOF
+Some title
+==========
 Whether 'tis nobler in the mind to suffer
 The slings and arrows of outrageous fortune,
 Or to take arms against a sea of troubles,
@@ -24,6 +26,8 @@ git commit -q -a -m initial
 
 git checkout -b first
 cat >> a1 << EOF
+Some title
+==========
 To die, to sleep;
 To sleep: perchance to dream: ay, there's the rub;
 For in that sleep of death what dreams may come
@@ -35,13 +39,13 @@ git commit -q -a -m first
 
 git checkout -b second master
 git show first:a1 |
-sed -e 's/To die, t/To die! T/' > a1
+sed -e 's/To die, t/To die! T/' -e 's/Some title/Some Title/' > a1
 echo "* END *" >>a1
 git commit -q -a -m second
 
 test_expect_success 'nothing recorded without rerere' '
 	(rm -rf .git/rr-cache; git config rerere.enabled false) &&
-	! git merge first &&
+	test_must_fail git merge first &&
 	! test -d .git/rr-cache
 '
 
@@ -50,19 +54,19 @@ test_expect_success 'conflicting merge' '
 	git reset --hard &&
 	mkdir .git/rr-cache &&
 	git config --unset rerere.enabled &&
-	! git merge first
+	test_must_fail git merge first
 '
 
-sha1=$(sed -e 's/	.*//' .git/rr-cache/MERGE_RR)
+sha1=$(sed -e 's/	.*//' .git/MERGE_RR)
 rr=.git/rr-cache/$sha1
-test_expect_success 'recorded preimage' "grep ======= $rr/preimage"
+test_expect_success 'recorded preimage' "grep ^=======$ $rr/preimage"
 
 test_expect_success 'rerere.enabled works, too' '
 	rm -rf .git/rr-cache &&
 	git config rerere.enabled true &&
 	git reset --hard &&
-	! git merge first &&
-	grep ======= $rr/preimage
+	test_must_fail git merge first &&
+	grep ^=======$ $rr/preimage
 '
 
 test_expect_success 'no postimage or thisimage yet' \
@@ -71,7 +75,7 @@ test_expect_success 'no postimage or thisimage yet' \
 test_expect_success 'preimage has right number of lines' '
 
 	cnt=$(sed -ne "/^<<<<<<</,/^>>>>>>>/p" $rr/preimage | wc -l) &&
-	test $cnt = 9
+	test $cnt = 13
 
 '
 
@@ -80,13 +84,23 @@ git show first:a1 > a1
 cat > expect << EOF
 --- a/a1
 +++ b/a1
-@@ -6,17 +6,9 @@
+@@ -1,4 +1,4 @@
+-Some Title
++Some title
+ ==========
+ Whether 'tis nobler in the mind to suffer
+ The slings and arrows of outrageous fortune,
+@@ -8,21 +8,11 @@
  The heart-ache and the thousand natural shocks
  That flesh is heir to, 'tis a consummation
  Devoutly to be wish'd.
 -<<<<<<<
+-Some Title
+-==========
 -To die! To sleep;
 -=======
+ Some title
+ ==========
  To die, to sleep;
 ->>>>>>>
  To sleep: perchance to dream: ay, there's the rub;
@@ -101,7 +115,7 @@ cat > expect << EOF
 EOF
 git rerere diff > out
 
-test_expect_success 'rerere diff' 'git diff expect out'
+test_expect_success 'rerere diff' 'test_cmp expect out'
 
 cat > expect << EOF
 a1
@@ -109,7 +123,7 @@ EOF
 
 git rerere status > out
 
-test_expect_success 'rerere status' 'git diff expect out'
+test_expect_success 'rerere status' 'test_cmp expect out'
 
 test_expect_success 'commit succeeds' \
 	"git commit -q -a -m 'prefer first over second'"
@@ -120,16 +134,16 @@ test_expect_success 'another conflicting merge' '
 	git checkout -b third master &&
 	git show second^:a1 | sed "s/To die: t/To die! T/" > a1 &&
 	git commit -q -a -m third &&
-	! git pull . first
+	test_must_fail git pull . first
 '
 
 git show first:a1 | sed 's/To die: t/To die! T/' > expect
-test_expect_success 'rerere kicked in' "! grep ======= a1"
+test_expect_success 'rerere kicked in' "! grep ^=======$ a1"
 
-test_expect_success 'rerere prefers first change' 'git diff a1 expect'
+test_expect_success 'rerere prefers first change' 'test_cmp a1 expect'
 
 rm $rr/postimage
-echo "$sha1	a1" | tr '\012' '\000' > .git/rr-cache/MERGE_RR
+echo "$sha1	a1" | perl -pe 'y/\012/\000/' > .git/MERGE_RR
 
 test_expect_success 'rerere clear' 'git rerere clear'
 
@@ -175,8 +189,8 @@ test_expect_success 'file2 added differently in two branches' '
 	echo Bello > file2 &&
 	git add file2 &&
 	git commit -m version2 &&
-	! git merge fourth &&
-	sha1=$(sed -e "s/	.*//" .git/rr-cache/MERGE_RR) &&
+	test_must_fail git merge fourth &&
+	sha1=$(sed -e "s/	.*//" .git/MERGE_RR) &&
 	rr=.git/rr-cache/$sha1 &&
 	echo Cello > file2 &&
 	git add file2 &&
@@ -193,9 +207,19 @@ test_expect_success 'resolution was recorded properly' '
 	echo Bello > file3 &&
 	git add file3 &&
 	git commit -m version2 &&
-	! git merge fifth &&
-	git diff-files -q &&
-	test Cello = "$(cat file3)"
+	git tag version2 &&
+	test_must_fail git merge fifth &&
+	test Cello = "$(cat file3)" &&
+	test 0 != $(git ls-files -u | wc -l)
+'
+
+test_expect_success 'rerere.autoupdate' '
+	git config rerere.autoupdate true
+	git reset --hard &&
+	git checkout version2 &&
+	test_must_fail git merge fifth &&
+	test 0 = $(git ls-files -u | wc -l)
+
 '
 
 test_done

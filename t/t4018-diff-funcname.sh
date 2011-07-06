@@ -33,13 +33,13 @@ EOF
 sed 's/beer\\/beer,\\/' < Beer.java > Beer-correct.java
 
 test_expect_success 'default behaviour' '
-	git diff Beer.java Beer-correct.java |
+	git diff --no-index Beer.java Beer-correct.java |
 	grep "^@@.*@@ public class Beer"
 '
 
 test_expect_success 'preset java pattern' '
 	echo "*.java diff=java" >.gitattributes &&
-	git diff Beer.java Beer-correct.java |
+	git diff --no-index Beer.java Beer-correct.java |
 	grep "^@@.*@@ public static void main("
 '
 
@@ -48,13 +48,13 @@ git config diff.java.funcname '!static
 [^ 	].*s.*'
 
 test_expect_success 'custom pattern' '
-	git diff Beer.java Beer-correct.java |
+	git diff --no-index Beer.java Beer-correct.java |
 	grep "^@@.*@@ int special;$"
 '
 
 test_expect_success 'last regexp must not be negated' '
 	git config diff.java.funcname "!static" &&
-	! git diff Beer.java Beer-correct.java
+	test_must_fail git diff --no-index Beer.java Beer-correct.java
 '
 
 test_done

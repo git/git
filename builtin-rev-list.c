@@ -10,13 +10,14 @@
 #include "list-objects.h"
 #include "builtin.h"
 #include "log-tree.h"
+#include "graph.h"
 
 /* bits #0-15 in revision.h */
 
 #define COUNTED		(1u<<16)
 
 static const char rev_list_usage[] =
-"git-rev-list [OPTION] <commit-id>... [ -- paths... ]\n"
+"git rev-list [OPTION] <commit-id>... [ -- paths... ]\n"
 "  limiting output:\n"
 "    --max-count=nr\n"
 "    --max-age=epoch\n"
@@ -25,13 +26,18 @@ static const char rev_list_usage[] =
 "    --no-merges\n"
 "    --remove-empty\n"
 "    --all\n"
+"    --branches\n"
+"    --tags\n"
+"    --remotes\n"
 "    --stdin\n"
 "    --quiet\n"
 "  ordering output:\n"
 "    --topo-order\n"
 "    --date-order\n"
+"    --reverse\n"
 "  formatting output:\n"
 "    --parents\n"
+"    --children\n"
 "    --objects | --objects-edge\n"
 "    --unpacked\n"
 "    --header | --pretty\n"
@@ -54,28 +60,44 @@ static const char *header_prefix;
 static void finish_commit(struct commit *commit);
 static void show_commit(struct commit *commit)
 {
+	graph_show_commit(revs.graph);
+
 	if (show_timestamp)
 		printf("%lu ", commit->date);
 	if (header_prefix)
 		fputs(header_prefix, stdout);
-	if (commit->object.flags & BOUNDARY)
-		putchar('-');
-	else if (revs.left_right) {
-		if (commit->object.flags & SYMMETRIC_LEFT)
-			putchar('<');
-		else
-			putchar('>');
+
+	if (!revs.graph) {
+		if (commit->object.flags & BOUNDARY)
+			putchar('-');
+		else if (commit->object.flags & UNINTERESTING)
+			putchar('^');
+		else if (revs.left_right) {
+			if (commit->object.flags & SYMMETRIC_LEFT)
+				putchar('<');
+			else
+				putchar('>');
+		}
 	}
 	if (revs.abbrev_commit && revs.abbrev)
 		fputs(find_unique_abbrev(commit->object.sha1, revs.abbrev),
 		      stdout);
 	else
 		fputs(sha1_to_hex(commit->object.sha1), stdout);
-	if (revs.parents) {
+	if (revs.print_parents) {
 		struct commit_list *parents = commit->parents;
 		while (parents) {
 			printf(" %s", sha1_to_hex(parents->item->object.sha1));
 			parents = parents->next;
+		}
+	}
+	if (revs.children.name) {
+		struct commit_list *children;
+
+		children = lookup_decoration(&revs.children, &commit->object);
+		while (children) {
+			printf(" %s", sha1_to_hex(children->item->object.sha1));
+			children = children->next;
 		}
 	}
 	show_decorations(commit);
@@ -84,15 +106,54 @@ static void show_commit(struct commit *commit)
 	else
 		putchar('\n');
 
-	if (revs.verbose_header) {
+	if (revs.verbose_header && commit->buffer) {
 		struct strbuf buf;
 		strbuf_init(&buf, 0);
 		pretty_print_commit(revs.commit_format, commit,
 				    &buf, revs.abbrev, NULL, NULL,
 				    revs.date_mode, 0);
-		if (buf.len)
-			printf("%s%c", buf.buf, hdr_termination);
+		if (revs.graph) {
+			if (buf.len) {
+				if (revs.commit_format != CMIT_FMT_ONELINE)
+					graph_show_oneline(revs.graph);
+
+				graph_show_commit_msg(revs.graph, &buf);
+
+				/*
+				 * Add a newline after the commit message.
+				 *
+				 * Usually, this newline produces a blank
+				 * padding line between entries, in which case
+				 * we need to add graph padding on this line.
+				 *
+				 * However, the commit message may not end in a
+				 * newline.  In this case the newline simply
+				 * ends the last line of the commit message,
+				 * and we don't need any graph output.  (This
+				 * always happens with CMIT_FMT_ONELINE, and it
+				 * happens with CMIT_FMT_USERFORMAT when the
+				 * format doesn't explicitly end in a newline.)
+				 */
+				if (buf.len && buf.buf[buf.len - 1] == '\n')
+					graph_show_padding(revs.graph);
+				putchar('\n');
+			} else {
+				/*
+				 * If the message buffer is empty, just show
+				 * the rest of the graph output for this
+				 * commit.
+				 */
+				if (graph_show_remainder(revs.graph))
+					putchar('\n');
+			}
+		} else {
+			if (buf.len)
+				printf("%s%c", buf.buf, hdr_termination);
+		}
 		strbuf_release(&buf);
+	} else {
+		if (graph_show_remainder(revs.graph))
+			putchar('\n');
 	}
 	maybe_flush_or_die(stdout, "stdout");
 	finish_commit(commit);
@@ -514,23 +575,6 @@ static struct commit_list *find_bisection(struct commit_list *list,
 	return best;
 }
 
-static void read_revisions_from_stdin(struct rev_info *revs)
-{
-	char line[1000];
-
-	while (fgets(line, sizeof(line), stdin) != NULL) {
-		int len = strlen(line);
-		if (len && line[len - 1] == '\n')
-			line[--len] = 0;
-		if (!len)
-			break;
-		if (line[0] == '-')
-			die("options not supported in --stdin mode");
-		if (handle_revision_arg(line, revs, 0, 1))
-			die("bad revision '%s'", line);
-	}
-}
-
 int cmd_rev_list(int argc, const char **argv, const char *prefix)
 {
 	struct commit_list *list;
@@ -540,12 +584,13 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 	int bisect_find_all = 0;
 	int quiet = 0;
 
-	git_config(git_default_config);
+	git_config(git_default_config, NULL);
 	init_revisions(&revs, prefix);
 	revs.abbrev = 0;
 	revs.commit_format = CMIT_FMT_UNSPECIFIED;
 	argc = setup_revisions(argc, argv, &revs, NULL);
 
+	quiet = DIFF_OPT_TST(&revs.diffopt, QUIET);
 	for (i = 1 ; i < argc; i++) {
 		const char *arg = argv[i];
 
@@ -577,10 +622,6 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 			read_revisions_from_stdin(&revs);
 			continue;
 		}
-		if (!strcmp(arg, "--quiet")) {
-			quiet = 1;
-			continue;
-		}
 		usage(rev_list_usage);
 
 	}
@@ -605,11 +646,11 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 		usage(rev_list_usage);
 
 	save_commit_buffer = revs.verbose_header || revs.grep_filter;
-	track_object_refs = 0;
 	if (bisect_list)
 		revs.limited = 1;
 
-	prepare_revision_walk(&revs);
+	if (prepare_revision_walk(&revs))
+		die("revision walk setup failed");
 	if (revs.tree_objects)
 		mark_edges_uninteresting(revs.commits, &revs, show_edge);
 

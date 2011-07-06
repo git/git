@@ -8,23 +8,23 @@ git-rev-parse - Pick out and massage parameters
 
 SYNOPSIS
 --------
-'git-rev-parse' [ --option ] <args>...
+'git rev-parse' [ --option ] <args>...
 
 DESCRIPTION
 -----------
 
 Many git porcelainish commands take mixture of flags
 (i.e. parameters that begin with a dash '-') and parameters
-meant for underlying `git-rev-list` command they use internally
-and flags and parameters for other commands they use as the
-downstream of `git-rev-list`.  This command is used to
+meant for the underlying 'git-rev-list' command they use internally
+and flags and parameters for the other commands they use
+downstream of 'git-rev-list'.  This command is used to
 distinguish between them.
 
 
 OPTIONS
 -------
 --parseopt::
-	Use `git-rev-parse` in option parsing mode (see PARSEOPT section below).
+	Use 'git-rev-parse' in option parsing mode (see PARSEOPT section below).
 
 --keep-dash-dash::
 	Only meaningful in `--parseopt` mode. Tells the option parser to echo
@@ -32,11 +32,11 @@ OPTIONS
 
 --revs-only::
 	Do not output flags and parameters not meant for
-	`git-rev-list` command.
+	'git-rev-list' command.
 
 --no-revs::
 	Do not output flags and parameters meant for
-	`git-rev-list` command.
+	'git-rev-list' command.
 
 --flags::
 	Do not output non-flag parameters.
@@ -52,13 +52,19 @@ OPTIONS
 	The parameter given must be usable as a single, valid
 	object name.  Otherwise barf and abort.
 
+-q::
+--quiet::
+	Only meaningful in `--verify` mode. Do not output an error
+	message if the first argument is not a valid object name;
+	instead exit with non-zero status silently.
+
 --sq::
 	Usually the output is made one line per flag and
 	parameter.  This option makes output a single line,
 	properly quoted for consumption by shell.  Useful when
 	you expect your parameter to contain whitespaces and
 	newlines (e.g. when using pickaxe `-S` with
-	`git-diff-\*`).
+	'git-diff-\*').
 
 --not::
 	When showing object names, prefix them with '{caret}' and
@@ -114,18 +120,21 @@ OPTIONS
 --is-bare-repository::
 	When the repository is bare print "true", otherwise "false".
 
---short, --short=number::
+--short::
+--short=number::
 	Instead of outputting the full SHA1 values of object names try to
 	abbreviate them to a shorter unique name. When no length is specified
 	7 is used. The minimum length is 4.
 
---since=datestring, --after=datestring::
-	Parses the date string, and outputs corresponding
-	--max-age= parameter for git-rev-list command.
+--since=datestring::
+--after=datestring::
+	Parse the date string, and output the corresponding
+	--max-age= parameter for 'git-rev-list'.
 
---until=datestring, --before=datestring::
-	Parses the date string, and outputs corresponding
-	--min-age= parameter for git-rev-list command.
+--until=datestring::
+--before=datestring::
+	Parse the date string, and output the corresponding
+	--min-age= parameter for 'git-rev-list'.
 
 <args>...::
 	Flags and parameters to be parsed.
@@ -146,8 +155,9 @@ blobs contained in a commit.
   name the same commit object if there are no other object in
   your repository whose object name starts with dae86e.
 
-* An output from `git-describe`; i.e. a closest tag, followed by a
-  dash, a `g`, and an abbreviated object name.
+* An output from 'git-describe'; i.e. a closest tag, optionally
+  followed by a dash and a number of commits, followed by a dash, a
+  `g`, and an abbreviated object name.
 
 * A symbolic ref name.  E.g. 'master' typically means the commit
   object referenced by $GIT_DIR/refs/heads/master.  If you
@@ -157,7 +167,7 @@ blobs contained in a commit.
   first match in the following rules:
 
   . if `$GIT_DIR/<name>` exists, that is what you mean (this is usually
-    useful only for `HEAD`, `FETCH_HEAD` and `MERGE_HEAD`);
+    useful only for `HEAD`, `FETCH_HEAD`, `ORIG_HEAD` and `MERGE_HEAD`);
 
   . otherwise, `$GIT_DIR/refs/<name>` if exists;
 
@@ -168,6 +178,16 @@ blobs contained in a commit.
   . otherwise, `$GIT_DIR/refs/remotes/<name>` if exists;
 
   . otherwise, `$GIT_DIR/refs/remotes/<name>/HEAD` if exists.
++
+HEAD names the commit your changes in the working tree is based on.
+FETCH_HEAD records the branch you fetched from a remote repository
+with your last 'git-fetch' invocation.
+ORIG_HEAD is created by commands that moves your HEAD in a drastic
+way, to record the position of the HEAD before their operation, so that
+you can change the tip of the branch back to the state before you ran
+them easily.
+MERGE_HEAD records the commit(s) you are merging into your branch
+when you run 'git-merge'.
 
 * A ref followed by the suffix '@' with a date specification
   enclosed in a brace
@@ -175,7 +195,10 @@ blobs contained in a commit.
   second ago\}' or '\{1979-02-26 18:30:00\}') to specify the value
   of the ref at a prior point in time.  This suffix may only be
   used immediately following a ref name and the ref must have an
-  existing log ($GIT_DIR/logs/<ref>).
+  existing log ($GIT_DIR/logs/<ref>). Note that this looks up the state
+  of your *local* ref at a given time; e.g., what was in your local
+  `master` branch last week. If you want to look at commits made during
+  certain times, see `--since` and `--until`.
 
 * A ref followed by the suffix '@' with an ordinal specification
   enclosed in a brace pair (e.g. '\{1\}', '\{15\}') to specify
@@ -229,25 +252,27 @@ blobs contained in a commit.
 * A colon, optionally followed by a stage number (0 to 3) and a
   colon, followed by a path; this names a blob object in the
   index at the given path.  Missing stage number (and the colon
-  that follows it) names an stage 0 entry. During a merge, stage
+  that follows it) names a stage 0 entry. During a merge, stage
   1 is the common ancestor, stage 2 is the target branch's version
   (typically the current branch), and stage 3 is the version from
   the branch being merged.
 
-Here is an illustration, by Jon Loeliger.  Both node B and C are
-a commit parents of commit node A.  Parent commits are ordered
+Here is an illustration, by Jon Loeliger.  Both commit nodes B
+and C are parents of commit node A.  Parent commits are ordered
 left-to-right.
 
-    G   H   I   J
-     \ /     \ /
-      D   E   F
-       \  |  / \ 
-        \ | /   |
-         \|/    |
-          B     C
-           \   /
-            \ /
-             A
+........................................
+G   H   I   J
+ \ /     \ /
+  D   E   F
+   \  |  / \
+    \ | /   |
+     \|/    |
+      B     C
+       \   /
+        \ /
+         A
+........................................
 
     A =      = A^0
     B = A^   = A^1     = A~1
@@ -264,7 +289,7 @@ left-to-right.
 SPECIFYING RANGES
 -----------------
 
-History traversing commands such as `git-log` operate on a set
+History traversing commands such as 'git-log' operate on a set
 of commits, not just a single commit.  To these commands,
 specifying a single revision with the notation described in the
 previous section means the set of commits reachable from that
@@ -275,23 +300,23 @@ notation is used.  E.g. "`{caret}r1 r2`" means commits reachable
 from `r2` but exclude the ones reachable from `r1`.
 
 This set operation appears so often that there is a shorthand
-for it.  "`r1..r2`" is equivalent to "`{caret}r1 r2`".  It is
-the difference of two sets (subtract the set of commits
-reachable from `r1` from the set of commits reachable from
-`r2`).
+for it.  When you have two commits `r1` and `r2` (named according
+to the syntax explained in SPECIFYING REVISIONS above), you can ask
+for commits that are reachable from r2 excluding those that are reachable
+from r1 by "`{caret}r1 r2`" and it can be written as "`r1..r2`".
 
 A similar notation "`r1\...r2`" is called symmetric difference
 of `r1` and `r2` and is defined as
-"`r1 r2 --not $(git-merge-base --all r1 r2)`".
+"`r1 r2 --not $(git merge-base --all r1 r2)`".
 It is the set of commits that are reachable from either one of
 `r1` or `r2` but not from both.
 
 Two other shorthands for naming a set that is formed by a commit
-and its parent commits exists.  `r1{caret}@` notation means all
+and its parent commits exist.  The `r1{caret}@` notation means all
 parents of `r1`.  `r1{caret}!` includes commit `r1` but excludes
-its all parents.
+all of its parents.
 
-Here are a handful examples:
+Here are a handful of examples:
 
    D                G H D
    D F              G H I J D F
@@ -305,7 +330,7 @@ Here are a handful examples:
 PARSEOPT
 --------
 
-In `--parseopt` mode, `git-rev-parse` helps massaging options to bring to shell
+In `--parseopt` mode, 'git-rev-parse' helps massaging options to bring to shell
 scripts the same facilities C builtins have. It works as an option normalizer
 (e.g. splits single switches aggregate values), a bit like `getopt(1)` does.
 
@@ -317,7 +342,7 @@ usage on the standard error stream, and exits with code 129.
 Input Format
 ~~~~~~~~~~~~
 
-`git-rev-parse --parseopt` input format is fully text based. It has two parts,
+'git-rev-parse --parseopt' input format is fully text based. It has two parts,
 separated by a line that contains only `--`. The lines before the separator
 (should be more than one) are used for the usage.
 The lines after the separator describe the options.
@@ -325,7 +350,7 @@ The lines after the separator describe the options.
 Each line of options has this format:
 
 ------------
-<opt_spec><arg_spec>? SP+ help LF
+<opt_spec><flags>* SP+ help LF
 ------------
 
 `<opt_spec>`::
@@ -334,10 +359,17 @@ Each line of options has this format:
 	is necessary. `h,help`, `dry-run` and `f` are all three correct
 	`<opt_spec>`.
 
-`<arg_spec>`::
-	an `<arg_spec>` tells the option parser if the option has an argument
-	(`=`), an optional one (`?` though its use is discouraged) or none
-	(no `<arg_spec>` in that case).
+`<flags>`::
+	`<flags>` are of `*`, `=`, `?` or `!`.
+	* Use `=` if the option takes an argument.
+
+	* Use `?` to mean that the option is optional (though its use is discouraged).
+
+	* Use `*` to mean that this option should not be listed in the usage
+	  generated for the `-h` argument. It's shown for `--help-all` as
+	  documented in linkgit:gitcli[7].
+
+	* Use `!` to not make the corresponding negated long option available.
 
 The remainder of the line, after stripping the spaces, is used
 as the help associated to the option.
@@ -363,14 +395,39 @@ bar=      some cool option --bar with an argument
   An option group Header
 C?        option C with an optional argument"
 
-eval `echo "$OPTS_SPEC" | git-rev-parse --parseopt -- "$@" || echo exit $?`
+eval `echo "$OPTS_SPEC" | git rev-parse --parseopt -- "$@" || echo exit $?`
 ------------
+
+EXAMPLES
+--------
+
+* Print the object name of the current commit:
++
+------------
+$ git rev-parse --verify HEAD
+------------
+
+* Print the commit object name from the revision in the $REV shell variable:
++
+------------
+$ git rev-parse --verify $REV
+------------
++
+This will error out if $REV is empty or not a valid revision.
+
+* Same as above:
++
+------------
+$ git rev-parse --default master --verify $REV
+------------
++
+but if $REV is empty, the commit object name from master will be printed.
 
 
 Author
 ------
 Written by Linus Torvalds <torvalds@osdl.org> .
-Junio C Hamano <junkio@cox.net> and Pierre Habouzit <madcoder@debian.org>
+Junio C Hamano <gitster@pobox.com> and Pierre Habouzit <madcoder@debian.org>
 
 Documentation
 --------------
@@ -378,4 +435,4 @@ Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

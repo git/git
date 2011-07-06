@@ -8,7 +8,7 @@ git-prune-packed - Remove extra objects that are already in pack files
 
 SYNOPSIS
 --------
-'git-prune-packed' [-n] [-q]
+'git prune-packed' [-n] [-q]
 
 
 DESCRIPTION
@@ -42,11 +42,11 @@ Documentation
 --------------
 Documentation by Ryan Anderson <ryan@michonline.com>
 
-See Also
+SEE ALSO
 --------
 linkgit:git-pack-objects[1]
 linkgit:git-repack[1]
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

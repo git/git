@@ -8,8 +8,9 @@ git-add - Add file contents to the index
 SYNOPSIS
 --------
 [verse]
-'git-add' [-n] [-v] [-f] [--interactive | -i] [--patch | -p] [-u] [--refresh]
-          [--] <filepattern>...
+'git add' [-n] [-v] [--force | -f] [--interactive | -i] [--patch | -p]
+	  [--all | [--update | -u]] [--refresh] [--ignore-errors] [--]
+	  <filepattern>...
 
 DESCRIPTION
 -----------
@@ -50,36 +51,55 @@ OPTIONS
 	and `dir/file2`) can be given to add all files in the
 	directory, recursively.
 
--n, \--dry-run::
+-n::
+--dry-run::
         Don't actually add the file(s), just show if they exist.
 
--v, \--verbose::
+-v::
+--verbose::
         Be verbose.
 
 -f::
+--force::
 	Allow adding otherwise ignored files.
 
--i, \--interactive::
+-i::
+--interactive::
 	Add modified contents in the working tree interactively to
 	the index. Optional path arguments may be supplied to limit
 	operation to a subset of the working tree. See ``Interactive
 	mode'' for details.
 
--p, \--patch::
+-p::
+--patch::
 	Similar to Interactive mode but the initial command loop is
 	bypassed and the 'patch' subcommand is invoked using each of
 	the specified filepatterns before exiting.
 
 -u::
-	Update only files that git already knows about. This is similar
+--update::
+	Update only files that git already knows about, staging modified
+	content for commit and marking deleted files for removal. This
+	is similar
 	to what "git commit -a" does in preparation for making a commit,
 	except that the update is limited to paths specified on the
-	command line. If no paths are specified, all tracked files are
-	updated.
+	command line. If no paths are specified, all tracked files in the
+	current directory and its subdirectories are updated.
 
-\--refresh::
+-A::
+--all::
+	Update files that git already knows about (same as '\--update')
+	and add all untracked files that are not ignored by '.gitignore'
+	mechanism.
+
+--refresh::
 	Don't add the file(s), but only refresh their stat()
 	information in the index.
+
+--ignore-errors::
+	If some files could not be added because of errors indexing
+	them, do not abort the operation, but continue adding the
+	others. The command shall still exit with non-zero status.
 
 \--::
 	This option can be used to separate command-line options from
@@ -93,26 +113,32 @@ Configuration
 The optional configuration variable 'core.excludesfile' indicates a path to a
 file containing patterns of file names to exclude from git-add, similar to
 $GIT_DIR/info/exclude.  Patterns in the exclude file are used in addition to
-those in info/exclude.  See link:repository-layout.html[repository layout].
+those in info/exclude.  See linkgit:gitrepository-layout[5].
 
 
 EXAMPLES
 --------
-git-add Documentation/\\*.txt::
 
-	Adds content from all `\*.txt` files under `Documentation`
-	directory and its subdirectories.
+* Adds content from all `\*.txt` files under `Documentation` directory
+and its subdirectories:
++
+------------
+$ git add Documentation/\\*.txt
+------------
 +
 Note that the asterisk `\*` is quoted from the shell in this
 example; this lets the command to include the files from
 subdirectories of `Documentation/` directory.
 
-git-add git-*.sh::
-
-	Considers adding content from all git-*.sh scripts.
-	Because this example lets shell expand the asterisk
-	(i.e. you are listing the files explicitly), it does not
-	consider `subdir/git-foo.sh`.
+* Considers adding content from all git-*.sh scripts:
++
+------------
+$ git add git-*.sh
+------------
++
+Because this example lets shell expand the asterisk (i.e. you are
+listing the files explicitly), it does not consider
+`subdir/git-foo.sh`.
 
 Interactive mode
 ----------------
@@ -167,8 +193,9 @@ update::
    "Update>>".  When the prompt ends with double '>>', you can
    make more than one selection, concatenated with whitespace or
    comma.  Also you can say ranges.  E.g. "2-5 7,9" to choose
-   2,3,4,5,7,9 from the list.  You can say '*' to choose
-   everything.
+   2,3,4,5,7,9 from the list.  If the second number in a range is
+   omitted, all remaining patches are taken.  E.g. "7-" to choose
+   7,8,9 from the list.  You can say '*' to choose everything.
 +
 What you chose are then highlighted with '*',
 like this:
@@ -207,17 +234,16 @@ patch::
   and the working tree file and asks you if you want to stage
   the change of each hunk.  You can say:
 
-       y - add the change from that hunk to index
-       n - do not add the change from that hunk to index
-       a - add the change from that hunk and all the rest to index
-       d - do not the change from that hunk nor any of the rest to index
-       j - do not decide on this hunk now, and view the next
-           undecided hunk
-       J - do not decide on this hunk now, and view the next hunk
-       k - do not decide on this hunk now, and view the previous
-           undecided hunk
-       K - do not decide on this hunk now, and view the previous hunk
+       y - stage this hunk
+       n - do not stage this hunk
+       a - stage this and all the remaining hunks in the file
+       d - do not stage this hunk nor any of the remaining hunks in the file
+       j - leave this hunk undecided, see next undecided hunk
+       J - leave this hunk undecided, see next hunk
+       k - leave this hunk undecided, see previous undecided hunk
+       K - leave this hunk undecided, see previous hunk
        s - split the current hunk into smaller hunks
+       e - manually edit the current hunk
        ? - print help
 +
 After deciding the fate for all hunks, if there is any hunk
@@ -228,8 +254,14 @@ diff::
   This lets you review what will be committed (i.e. between
   HEAD and index).
 
+Bugs
+----
+The interactive mode does not work with files whose names contain
+characters that need C-quoting.  `core.quotepath` configuration can be
+used to work this limitation around to some degree, but backslash,
+double-quote and control characters will still have problems.
 
-See Also
+SEE ALSO
 --------
 linkgit:git-status[1]
 linkgit:git-rm[1]
@@ -248,4 +280,4 @@ Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

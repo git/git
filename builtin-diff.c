@@ -4,6 +4,7 @@
  * Copyright (c) 2006 Junio C Hamano
  */
 #include "cache.h"
+#include "color.h"
 #include "commit.h"
 #include "blob.h"
 #include "tag.h"
@@ -20,7 +21,7 @@ struct blobinfo {
 };
 
 static const char builtin_diff_usage[] =
-"git-diff <options> <rev>{0,2} -- <path>*";
+"git diff <options> <rev>{0,2} -- <path>*";
 
 static void stuff_change(struct diff_options *opt,
 			 unsigned old_mode, unsigned new_mode,
@@ -43,12 +44,17 @@ static void stuff_change(struct diff_options *opt,
 		tmp_u = old_sha1; old_sha1 = new_sha1; new_sha1 = tmp_u;
 		tmp_c = old_name; old_name = new_name; new_name = tmp_c;
 	}
+
+	if (opt->prefix &&
+	    (strncmp(old_name, opt->prefix, opt->prefix_length) ||
+	     strncmp(new_name, opt->prefix, opt->prefix_length)))
+		return;
+
 	one = alloc_filespec(old_name);
 	two = alloc_filespec(new_name);
 	fill_filespec(one, old_sha1, old_mode);
 	fill_filespec(two, new_sha1, new_mode);
 
-	/* NEEDSWORK: shouldn't this part of diffopt??? */
 	diff_queue(&diff_queued_diff, one, two);
 }
 
@@ -196,6 +202,37 @@ static void refresh_index_quietly(void)
 	rollback_lock_file(lock_file);
 }
 
+static int builtin_diff_files(struct rev_info *revs, int argc, const char **argv)
+{
+	int result;
+	unsigned int options = 0;
+
+	while (1 < argc && argv[1][0] == '-') {
+		if (!strcmp(argv[1], "--base"))
+			revs->max_count = 1;
+		else if (!strcmp(argv[1], "--ours"))
+			revs->max_count = 2;
+		else if (!strcmp(argv[1], "--theirs"))
+			revs->max_count = 3;
+		else if (!strcmp(argv[1], "-q"))
+			options |= DIFF_SILENT_ON_REMOVED;
+		else
+			return error("invalid option: %s", argv[1]);
+		argv++; argc--;
+	}
+
+	if (revs->max_count == -1 &&
+	    (revs->diffopt.output_format & DIFF_FORMAT_PATCH))
+		revs->combine_merges = revs->dense_combined_merges = 1;
+
+	if (read_cache() < 0) {
+		perror("read_cache");
+		return -1;
+	}
+	result = run_diff_files(revs, options);
+	return diff_result_code(&revs->diffopt, result);
+}
+
 int cmd_diff(int argc, const char **argv, const char *prefix)
 {
 	int i;
@@ -204,7 +241,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 	int ents = 0, blobs = 0, paths = 0;
 	const char *path = NULL;
 	struct blobinfo blob[2];
-	int nongit = 0;
+	int nongit;
 	int result = 0;
 
 	/*
@@ -224,18 +261,29 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 	 * N=2, M=0:
 	 *      tree vs tree (diff-tree)
 	 *
+	 * N=0, M=0, P=2:
+	 *      compare two filesystem entities (aka --no-index).
+	 *
 	 * Other cases are errors.
 	 */
 
 	prefix = setup_git_directory_gently(&nongit);
-	git_config(git_diff_ui_config);
+	git_config(git_diff_ui_config, NULL);
+
+	if (diff_use_color_default == -1)
+		diff_use_color_default = git_use_color_default;
+
 	init_revisions(&rev, prefix);
+
+	/* If this is a no-index diff, just run it and exit there. */
+	diff_no_index(&rev, argc, argv, nongit, prefix);
+
+	/* Otherwise, we are doing the usual "git" diff */
 	rev.diffopt.skip_stat_unmatch = !!diff_auto_refresh_index;
 
-	if (!setup_diff_no_index(&rev, argc, argv, nongit, prefix))
-		argc = 0;
-	else
-		argc = setup_revisions(argc, argv, &rev, NULL);
+	if (nongit)
+		die("Not a git repository");
+	argc = setup_revisions(argc, argv, &rev, NULL);
 	if (!rev.diffopt.output_format) {
 		rev.diffopt.output_format = DIFF_FORMAT_PATCH;
 		if (diff_setup_done(&rev.diffopt) < 0)
@@ -248,10 +296,12 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 	 * If the user asked for our exit code then don't start a
 	 * pager or we would end up reporting its exit code instead.
 	 */
-	if (!DIFF_OPT_TST(&rev.diffopt, EXIT_WITH_STATUS))
+	if (!DIFF_OPT_TST(&rev.diffopt, EXIT_WITH_STATUS) &&
+	    check_pager_config("diff") != 0)
 		setup_pager();
 
-	/* Do we have --cached and not have a pending object, then
+	/*
+	 * Do we have --cached and not have a pending object, then
 	 * default to HEAD by hand.  Eek.
 	 */
 	if (!rev.pending.nr) {
@@ -319,7 +369,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 	if (!ents) {
 		switch (blobs) {
 		case 0:
-			result = run_diff_files_cmd(&rev, argc, argv);
+			result = builtin_diff_files(&rev, argc, argv);
 			break;
 		case 1:
 			if (paths != 1)

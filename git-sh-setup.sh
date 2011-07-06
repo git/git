@@ -32,15 +32,16 @@ if test -n "$OPTIONS_SPEC"; then
 		echo exit $?
 	)"
 else
+	dashless=$(basename "$0" | sed -e 's/-/ /')
 	usage() {
-		die "Usage: $0 $USAGE"
+		die "Usage: $dashless $USAGE"
 	}
 
 	if [ -z "$LONG_USAGE" ]
 	then
-		LONG_USAGE="Usage: $0 $USAGE"
+		LONG_USAGE="Usage: $dashless $USAGE"
 	else
-		LONG_USAGE="Usage: $0 $USAGE
+		LONG_USAGE="Usage: $dashless $USAGE
 
 $LONG_USAGE"
 	fi
@@ -119,7 +120,7 @@ get_author_ident_from_commit () {
 	}
 	'
 	encoding=$(git config i18n.commitencoding || echo UTF-8)
-	git show -s --pretty=raw --encoding="$encoding" "$1" |
+	git show -s --pretty=raw --encoding="$encoding" "$1" -- |
 	LANG=C LC_ALL=C sed -ne "$pick_author_script"
 }
 
@@ -127,19 +128,13 @@ get_author_ident_from_commit () {
 # if we require to be in a git repository.
 if test -z "$NONGIT_OK"
 then
+	GIT_DIR=$(git rev-parse --git-dir) || exit
 	if [ -z "$SUBDIRECTORY_OK" ]
 	then
-		: ${GIT_DIR=.git}
 		test -z "$(git rev-parse --show-cdup)" || {
 			exit=$?
 			echo >&2 "You need to run this command from the toplevel of the working tree."
 			exit $exit
-		}
-	else
-		GIT_DIR=$(git rev-parse --git-dir) || {
-		    exit=$?
-		    echo >&2 "Failed to find a valid git directory."
-		    exit $exit
 		}
 	fi
 	test -n "$GIT_DIR" && GIT_DIR=$(cd "$GIT_DIR" && pwd) || {
@@ -148,3 +143,16 @@ then
 	}
 	: ${GIT_OBJECT_DIRECTORY="$GIT_DIR/objects"}
 fi
+
+# Fix some commands on Windows
+case $(uname -s) in
+*MINGW*)
+	# Windows has its own (incompatible) sort and find
+	sort () {
+		/usr/bin/sort "$@"
+	}
+	find () {
+		/usr/bin/find "$@"
+	}
+	;;
+esac

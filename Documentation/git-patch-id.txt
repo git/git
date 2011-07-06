@@ -7,7 +7,7 @@ git-patch-id - Compute unique ID for a patch
 
 SYNOPSIS
 --------
-'git-patch-id' < <patch>
+'git patch-id' < <patch>
 
 DESCRIPTION
 -----------
@@ -18,7 +18,7 @@ ID" are almost guaranteed to be the same thing.
 
 IOW, you can use this thing to look for likely duplicate commits.
 
-When dealing with git-diff-tree output, it takes advantage of
+When dealing with 'git-diff-tree' output, it takes advantage of
 the fact that the patch is prefixed with the object name of the
 commit, and outputs two 40-byte hexadecimal string.  The first
 string is the patch ID, and the second string is the commit ID.
@@ -39,4 +39,4 @@ Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

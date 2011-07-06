@@ -16,6 +16,7 @@ field merge_base   {}; # merge base if we have another ref involved
 field fetch_spec   {}; # refetch tracking branch if used?
 field checkout      1; # actually checkout the branch?
 field create        0; # create the branch if it doesn't exist?
+field remote_source {}; # same as fetch_spec, to setup tracking
 
 field reset_ok      0; # did the user agree to reset?
 field fetch_ok      0; # did the fetch succeed?
@@ -42,6 +43,10 @@ method enable_merge {type} {
 
 method enable_fetch {spec} {
 	set fetch_spec $spec
+}
+
+method remote_source {spec} {
+	set remote_source $spec
 }
 
 method enable_checkout {co} {
@@ -145,7 +150,7 @@ method _finish_fetch {ok} {
 }
 
 method _update_ref {} {
-	global null_sha1 current_branch
+	global null_sha1 current_branch repo_config
 
 	set ref $new_ref
 	set new $new_hash
@@ -172,6 +177,23 @@ method _update_ref {} {
 
 		set reflog_msg "branch: Created from $new_expr"
 		set cur $null_sha1
+
+		if {($repo_config(branch.autosetupmerge) eq {true}
+			|| $repo_config(branch.autosetupmerge) eq {always})
+			&& $remote_source ne {}
+			&& "refs/heads/$newbranch" eq $ref} {
+
+			set c_remote [lindex $remote_source 1]
+			set c_merge [lindex $remote_source 2]
+			if {[catch {
+					git config branch.$newbranch.remote $c_remote
+					git config branch.$newbranch.merge  $c_merge
+				} err]} {
+				_error $this [strcat \
+				[mc "Failed to configure simplified git-pull for '%s'." $newbranch] \
+				"\n\n$err"]
+			}
+		}
 	} elseif {$create && $merge_type eq {none}} {
 		# We were told to create it, but not do a merge.
 		# Bad.  Name shouldn't have existed.
@@ -280,7 +302,7 @@ The rescan will be automatically started now.
 	} elseif {[is_config_true gui.trustmtime]} {
 		_readtree $this
 	} else {
-		ui_status {Refreshing file status...}
+		ui_status [mc "Refreshing file status..."]
 		set fd [git_read update-index \
 			-q \
 			--unmerged \
@@ -320,7 +342,7 @@ method _readtree {} {
 	set readtree_d {}
 	$::main_status start \
 		[mc "Updating working directory to '%s'..." [_name $this]] \
-		{files checked out}
+		[mc "files checked out"]
 
 	set fd [git_read --stderr read-tree \
 		-m \
@@ -447,7 +469,7 @@ If you wanted to be on a branch, create one now starting from 'This Detached Che
 	} else {
 		repository_state commit_type HEAD MERGE_HEAD
 		set PARENT $HEAD
-		ui_status "Checked out '$name'."
+		ui_status [mc "Checked out '%s'." $name]
 	}
 	delete_this
 }

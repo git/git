@@ -71,8 +71,43 @@ test_expect_success 'branch.to-rebase.rebase' '
 	git reset --hard before-rebase &&
 	git config branch.to-rebase.rebase 1 &&
 	git pull . copy &&
+	git config branch.to-rebase.rebase 0 &&
 	test $(git rev-parse HEAD^) = $(git rev-parse copy) &&
 	test new = $(git show HEAD:file2)
+'
+
+test_expect_success '--rebase with rebased upstream' '
+
+	git remote add -f me . &&
+	git checkout copy &&
+	git reset --hard HEAD^ &&
+	echo conflicting modification > file &&
+	git commit -m conflict file &&
+	git checkout to-rebase &&
+	echo file > file2 &&
+	git commit -m to-rebase file2 &&
+	git pull --rebase me copy &&
+	test "conflicting modification" = "$(cat file)" &&
+	test file = $(cat file2)
+
+'
+
+test_expect_success 'pull --rebase dies early with dirty working directory' '
+
+	git update-ref refs/remotes/me/copy copy^ &&
+	COPY=$(git rev-parse --verify me/copy) &&
+	git rebase --onto $COPY copy &&
+	git config branch.to-rebase.remote me &&
+	git config branch.to-rebase.merge refs/heads/copy &&
+	git config branch.to-rebase.rebase true &&
+	echo dirty >> file &&
+	git add file &&
+	test_must_fail git pull &&
+	test $COPY = $(git rev-parse --verify me/copy) &&
+	git checkout HEAD -- file &&
+	git pull &&
+	test $COPY != $(git rev-parse --verify me/copy)
+
 '
 
 test_done

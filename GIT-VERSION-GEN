@@ -1,7 +1,7 @@
 #!/bin/sh
 
 GVF=GIT-VERSION-FILE
-DEF_VER=v1.5.4-rc3.GIT
+DEF_VER=v1.6.0.GIT
 
 LF='
 '
@@ -11,11 +11,14 @@ LF='
 if test -f version
 then
 	VN=$(cat version) || VN="$DEF_VER"
-elif test -d .git &&
+elif test -d .git -o -f .git &&
 	VN=$(git describe --abbrev=4 HEAD 2>/dev/null) &&
 	case "$VN" in
 	*$LF*) (exit 1) ;;
-	v[0-9]*) : happy ;;
+	v[0-9]*)
+		git update-index -q --refresh
+		test -z "$(git diff-index --name-only HEAD --)" ||
+		VN="$VN-dirty" ;;
 	esac
 then
 	VN=$(echo "$VN" | sed -e 's/-/./g');
@@ -24,14 +27,6 @@ else
 fi
 
 VN=$(expr "$VN" : v*'\(.*\)')
-
-dirty=$(sh -c 'git diff-index --name-only HEAD' 2>/dev/null) || dirty=
-case "$dirty" in
-'')
-	;;
-*)
-	VN="$VN-dirty" ;;
-esac
 
 if test -r $GVF
 then

@@ -8,7 +8,7 @@ git-status - Show the working tree status
 
 SYNOPSIS
 --------
-'git-status' <options>...
+'git status' <options>...
 
 DESCRIPTION
 -----------
@@ -17,16 +17,16 @@ current HEAD commit, paths that have differences between the working
 tree and the index file, and paths in the working tree that are not
 tracked by git (and are not ignored by linkgit:gitignore[5]). The first
 are what you _would_ commit by running `git commit`; the second and
-third are what you _could_ commit by running `git add` before running
+third are what you _could_ commit by running 'git-add' before running
 `git commit`.
 
-The command takes the same set of options as `git-commit`; it
+The command takes the same set of options as 'git-commit'; it
 shows what would be committed if the same options are given to
-`git-commit`.
+'git-commit'.
 
 If there is no path that is different between the index file and
 the current HEAD commit (i.e., there is nothing to commit by running
-`git-commit`), the command exits with non-zero status.
+`git commit`), the command exits with non-zero status.
 
 
 OUTPUT
@@ -52,14 +52,19 @@ If the config variable `status.relativePaths` is set to false, then all
 paths shown are relative to the repository root, not to the current
 directory.
 
-See Also
+If `status.submodulesummary` is set to a non zero number or true (identical
+to -1 or an unlimited number), the submodule summary will be enabled and a
+summary of commits for modified submodules will be shown (see --summary-limit
+option of linkgit:git-submodule[1]).
+
+SEE ALSO
 --------
 linkgit:gitignore[5]
 
 Author
 ------
 Written by Linus Torvalds <torvalds@osdl.org> and
-Junio C Hamano <junkio@cox.net>.
+Junio C Hamano <gitster@pobox.com>.
 
 Documentation
 --------------
@@ -67,4 +72,4 @@ Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

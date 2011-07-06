@@ -84,6 +84,7 @@ struct sline {
 	/* bit 0 up to (N-1) are on if the parent has this line (i.e.
 	 * we did not change it).
 	 * bit N is used for "interesting" lines, including context.
+	 * bit (N+1) is used for "do not show deletion before this".
 	 */
 	unsigned long flag;
 	unsigned long *p_lno;
@@ -308,6 +309,7 @@ static int give_context(struct sline *sline, unsigned long cnt, int num_parent)
 {
 	unsigned long all_mask = (1UL<<num_parent) - 1;
 	unsigned long mark = (1UL<<num_parent);
+	unsigned long no_pre_delete = (2UL<<num_parent);
 	unsigned long i;
 
 	/* Two groups of interesting lines may have a short gap of
@@ -329,7 +331,7 @@ static int give_context(struct sline *sline, unsigned long cnt, int num_parent)
 
 		/* Paint a few lines before the first interesting line. */
 		while (j < i)
-			sline[j++].flag |= mark;
+			sline[j++].flag |= mark | no_pre_delete;
 
 	again:
 		/* we know up to i is to be included.  where does the
@@ -502,6 +504,7 @@ static void dump_sline(struct sline *sline, unsigned long cnt, int num_parent,
 		       int use_color)
 {
 	unsigned long mark = (1UL<<num_parent);
+	unsigned long no_pre_delete = (2UL<<num_parent);
 	int i;
 	unsigned long lno = 0;
 	const char *c_frag = diff_get_color(use_color, DIFF_FRAGINFO);
@@ -581,7 +584,7 @@ static void dump_sline(struct sline *sline, unsigned long cnt, int num_parent,
 			int j;
 			unsigned long p_mask;
 			sl = &sline[lno++];
-			ll = sl->lost_head;
+			ll = (sl->flag & no_pre_delete) ? NULL : sl->lost_head;
 			while (ll) {
 				fputs(c_old, stdout);
 				for (j = 0; j < num_parent; j++) {
@@ -701,7 +704,7 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 		else if (0 <= (fd = open(elem->path, O_RDONLY)) &&
 			 !fstat(fd, &st)) {
 			size_t len = xsize_t(st.st_size);
-			size_t sz = 0;
+			ssize_t done;
 			int is_file, i;
 
 			elem->mode = canon_mode(st.st_mode);
@@ -716,14 +719,13 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 
 			result_size = len;
 			result = xmalloc(len + 1);
-			while (sz < len) {
-				ssize_t done = xread(fd, result+sz, len-sz);
-				if (done == 0)
-					break;
-				if (done < 0)
-					die("read error '%s'", elem->path);
-				sz += done;
-			}
+
+			done = read_in_full(fd, result, len);
+			if (done < 0)
+				die("read error '%s'", elem->path);
+			else if (done < len)
+				die("early EOF '%s'", elem->path);
+
 			result[len] = 0;
 		}
 		else {
@@ -798,7 +800,7 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 		int deleted = 0;
 
 		if (rev->loginfo && !rev->no_commit_id)
-			show_log(rev, opt->msg_sep);
+			show_log(rev);
 		dump_quoted_path(dense ? "diff --cc " : "diff --combined ",
 				 "", elem->path, c_meta, c_reset);
 		printf("%sindex ", c_meta);
@@ -881,7 +883,7 @@ static void show_raw_diff(struct combine_diff_path *p, int num_parent, struct re
 		inter_name_termination = 0;
 
 	if (rev->loginfo && !rev->no_commit_id)
-		show_log(rev, opt->msg_sep);
+		show_log(rev);
 
 	if (opt->output_format & DIFF_FORMAT_RAW) {
 		offset = strlen(COLONS) - num_parent;
@@ -962,7 +964,7 @@ void diff_tree_combined(const unsigned char *sha1,
 		paths = intersect_paths(paths, i, num_parent);
 
 		if (show_log_first && i == 0) {
-			show_log(rev, opt->msg_sep);
+			show_log(rev);
 			if (rev->verbose_header && opt->output_format)
 				putchar(opt->line_termination);
 		}

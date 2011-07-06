@@ -8,6 +8,9 @@
 #include "exec_cmd.h"
 #include "utf8.h"
 #include "parse-options.h"
+#include "cache-tree.h"
+#include "diff.h"
+#include "revision.h"
 
 /*
  * This implements the builtins revert and cherry-pick.
@@ -21,16 +24,16 @@
  */
 
 static const char * const revert_usage[] = {
-	"git-revert [options] <commit-ish>",
+	"git revert [options] <commit-ish>",
 	NULL
 };
 
 static const char * const cherry_pick_usage[] = {
-	"git-cherry-pick [options] <commit-ish>",
+	"git cherry-pick [options] <commit-ish>",
 	NULL
 };
 
-static int edit, no_replay, no_commit, mainline;
+static int edit, no_replay, no_commit, mainline, signoff;
 static enum { REVERT, CHERRY_PICK } action;
 static struct commit *commit;
 
@@ -50,6 +53,7 @@ static void parse_args(int argc, const char **argv)
 		OPT_BOOLEAN('e', "edit", &edit, "edit the commit message"),
 		OPT_BOOLEAN('x', NULL, &no_replay, "append commit name when cherry-picking"),
 		OPT_BOOLEAN('r', NULL, &noop, "no-op (backward compatibility)"),
+		OPT_BOOLEAN('s', "signoff", &signoff, "add Signed-off-by:"),
 		OPT_INTEGER('m', "mainline", &mainline, "parent number"),
 		OPT_END(),
 	};
@@ -176,7 +180,7 @@ static void set_author_ident_env(const char *message)
 			email++;
 			timestamp = strchr(email, '>');
 			if (!timestamp)
-				die ("Could not extract author email from %s",
+				die ("Could not extract author time from %s",
 					sha1_to_hex(commit->object.sha1));
 			*timestamp = '\0';
 			for (timestamp++; *timestamp && isspace(*timestamp);
@@ -202,6 +206,7 @@ static int merge_recursive(const char *base_sha1,
 {
 	char buffer[256];
 	const char *argv[6];
+	int i = 0;
 
 	sprintf(buffer, "GITHEAD_%s", head_sha1);
 	setenv(buffer, head_name, 1);
@@ -214,12 +219,13 @@ static int merge_recursive(const char *base_sha1,
 	 * and $prev on top of us (when reverting), or the change between
 	 * $prev and $commit on top of us (when cherry-picking or replaying).
 	 */
-	argv[0] = "merge-recursive";
-	argv[1] = base_sha1;
-	argv[2] = "--";
-	argv[3] = head_sha1;
-	argv[4] = next_sha1;
-	argv[5] = NULL;
+	argv[i++] = "merge-recursive";
+	if (base_sha1)
+		argv[i++] = base_sha1;
+	argv[i++] = "--";
+	argv[i++] = head_sha1;
+	argv[i++] = next_sha1;
+	argv[i++] = NULL;
 
 	return run_command_v_opt(argv, RUN_COMMAND_NO_STDIN | RUN_GIT_CMD);
 }
@@ -245,6 +251,17 @@ static char *help_msg(const unsigned char *sha1)
 	return helpbuf;
 }
 
+static int index_is_dirty(void)
+{
+	struct rev_info rev;
+	init_revisions(&rev, NULL);
+	setup_revisions(0, NULL, &rev, "HEAD");
+	DIFF_OPT_SET(&rev.diffopt, QUIET);
+	DIFF_OPT_SET(&rev.diffopt, EXIT_WITH_STATUS);
+	run_diff_index(&rev, 1);
+	return !!DIFF_OPT_TST(&rev.diffopt, HAS_CHANGES);
+}
+
 static int revert_or_cherry_pick(int argc, const char **argv)
 {
 	unsigned char head[20];
@@ -254,7 +271,7 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 	const char *message, *encoding;
 	const char *defmsg = xstrdup(git_path("MERGE_MSG"));
 
-	git_config(git_default_config);
+	git_config(git_default_config, NULL);
 	me = action == REVERT ? "revert" : "cherry-pick";
 	setenv(GIT_REFLOG_ACTION, me, 0);
 	parse_args(argc, argv);
@@ -270,22 +287,24 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 		 * that represents the "current" state for merge-recursive
 		 * to work on.
 		 */
-		if (write_tree(head, 0, NULL))
+		if (write_cache_as_tree(head, 0, NULL))
 			die ("Your index file is unmerged.");
 	} else {
-		struct wt_status s;
-
 		if (get_sha1("HEAD", head))
 			die ("You do not have a valid HEAD");
-		wt_status_prepare(&s);
-		if (s.commitable)
+		if (read_cache() < 0)
+			die("could not read the index");
+		if (index_is_dirty())
 			die ("Dirty index: cannot %s", me);
 		discard_cache();
 	}
 
-	if (!commit->parents)
-		die ("Cannot %s a root commit", me);
-	if (commit->parents->next) {
+	if (!commit->parents) {
+		if (action == REVERT)
+			die ("Cannot revert a root commit");
+		parent = NULL;
+	}
+	else if (commit->parents->next) {
 		/* Reverting or cherry-picking a merge commit */
 		int cnt;
 		struct commit_list *p;
@@ -354,10 +373,11 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 		}
 	}
 
-	if (merge_recursive(sha1_to_hex(base->object.sha1),
+	if (merge_recursive(base == NULL ?
+				NULL : sha1_to_hex(base->object.sha1),
 				sha1_to_hex(head), "HEAD",
 				sha1_to_hex(next->object.sha1), oneline) ||
-			write_tree(head, 0, NULL)) {
+			write_cache_as_tree(head, 0, NULL)) {
 		add_to_msg("\nConflicts:\n\n");
 		read_cache();
 		for (i = 0; i < active_nr;) {
@@ -391,13 +411,21 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 	 */
 
 	if (!no_commit) {
-		if (edit)
-			return execl_git_cmd("commit", "-n", NULL);
-		else
-			return execl_git_cmd("commit", "-n", "-F", defmsg, NULL);
+		/* 6 is max possible length of our args array including NULL */
+		const char *args[6];
+		int i = 0;
+		args[i++] = "commit";
+		args[i++] = "-n";
+		if (signoff)
+			args[i++] = "-s";
+		if (!edit) {
+			args[i++] = "-F";
+			args[i++] = defmsg;
+		}
+		args[i] = NULL;
+		return execv_git_cmd(args);
 	}
-	if (reencoded_message)
-		free(reencoded_message);
+	free(reencoded_message);
 
 	return 0;
 }

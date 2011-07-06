@@ -18,7 +18,7 @@ int cmd_http_fetch(int argc, const char **argv, const char *prefix)
 	int get_verbosely = 0;
 	int get_recover = 0;
 
-	git_config(git_default_config);
+	git_config(git_default_config, NULL);
 
 	while (arg < argc && argv[arg][0] == '-') {
 		if (argv[arg][1] == 't') {
@@ -59,7 +59,7 @@ int cmd_http_fetch(int argc, const char **argv, const char *prefix)
 		url = rewritten_url;
 	}
 
-	walker = get_http_walker(url);
+	walker = get_http_walker(url, NULL);
 	walker->get_tree = get_tree;
 	walker->get_history = get_history;
 	walker->get_all = get_all;
@@ -80,8 +80,7 @@ int cmd_http_fetch(int argc, const char **argv, const char *prefix)
 
 	walker_free(walker);
 
-	if (rewritten_url)
-		free(rewritten_url);
+	free(rewritten_url);
 
 	return rc;
 }

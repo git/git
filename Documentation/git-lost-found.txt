@@ -7,7 +7,7 @@ git-lost-found - Recover lost refs that luckily have not yet been pruned
 
 SYNOPSIS
 --------
-'git-lost-found'
+'git lost-found'
 
 DESCRIPTION
 -----------
@@ -78,4 +78,4 @@ Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

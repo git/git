@@ -8,7 +8,7 @@ git-imap-send - Dump a mailbox from stdin into an imap folder
 
 SYNOPSIS
 --------
-'git-imap-send'
+'git imap-send'
 
 
 DESCRIPTION
@@ -20,13 +20,13 @@ files directly.
 
 Typical usage is something like:
 
-git-format-patch --signoff --stdout --attach origin | git-imap-send
+git format-patch --signoff --stdout --attach origin | git imap-send
 
 
 CONFIGURATION
 -------------
 
-git-imap-send requires the following values in the repository
+'git-imap-send' requires the following values in the repository
 configuration file (shown with examples):
 
 ..........................
@@ -59,4 +59,4 @@ Documentation by Mike McCormack
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

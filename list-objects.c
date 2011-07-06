@@ -18,6 +18,8 @@ static void process_blob(struct rev_info *revs,
 
 	if (!revs->blob_objects)
 		return;
+	if (!obj)
+		die("bad blob object");
 	if (obj->flags & (UNINTERESTING | SEEN))
 		return;
 	obj->flags |= SEEN;
@@ -69,6 +71,8 @@ static void process_tree(struct rev_info *revs,
 
 	if (!revs->tree_objects)
 		return;
+	if (!obj)
+		die("bad tree object");
 	if (obj->flags & (UNINTERESTING | SEEN))
 		return;
 	if (parse_tree(tree) < 0)

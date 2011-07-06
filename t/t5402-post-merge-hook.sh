@@ -30,9 +30,9 @@ EOF
     chmod u+x clone${clone}/.git/hooks/post-merge
 done
 
-test_expect_failure 'post-merge does not run for up-to-date ' '
+test_expect_success 'post-merge does not run for up-to-date ' '
         GIT_DIR=clone1/.git git merge $commit0 &&
-	test -e clone1/.git/post-merge.args
+	! test -f clone1/.git/post-merge.args
 '
 
 test_expect_success 'post-merge runs as expected ' '

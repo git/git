@@ -112,7 +112,7 @@ do
 		} >"$actual" &&
 		if test -f "$expect"
 		then
-			git diff "$expect" "$actual" &&
+			test_cmp "$expect" "$actual" &&
 			rm -f "$actual"
 		else
 			# this is to help developing new tests.
@@ -245,6 +245,7 @@ format-patch --inline --stdout initial..master
 format-patch --inline --stdout --subject-prefix=TESTCASE initial..master
 config format.subjectprefix DIFFERENT_PREFIX
 format-patch --inline --stdout initial..master^^
+format-patch --stdout --cover-letter -n initial..master^
 
 diff --abbrev initial..side
 diff -r initial..side
@@ -256,6 +257,7 @@ diff --patch-with-raw initial..side
 diff --patch-with-stat -r initial..side
 diff --patch-with-raw -r initial..side
 diff --name-status dir2 dir
+diff --no-index --name-status dir2 dir
 EOF
 
 test_done

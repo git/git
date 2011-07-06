@@ -127,7 +127,7 @@ method _delete {} {
 	foreach i $to_delete {
 		set b [lindex $i 0]
 		set o [lindex $i 1]
-		if {[catch {git update-ref -d "refs/heads/$b" $o} err]} {
+		if {[catch {git branch -D $b} err]} {
 			append failed " - $b: $err\n"
 		}
 	}

@@ -8,7 +8,7 @@ git-repo-config - Get and set repository or global options
 
 SYNOPSIS
 --------
-'git-repo-config' ...
+'git repo-config' ...
 
 
 DESCRIPTION

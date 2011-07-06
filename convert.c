@@ -61,6 +61,10 @@ static void gather_stats(const char *buf, unsigned long size, struct text_stat *
 		else
 			stats->printable++;
 	}
+
+	/* If file ends with EOF then don't count this EOF as non-printable. */
+	if (size >= 1 && buf[size-1] == '\032')
+		stats->nonprintable--;
 }
 
 /*
@@ -85,8 +89,39 @@ static int is_binary(unsigned long size, struct text_stat *stats)
 	return 0;
 }
 
+static void check_safe_crlf(const char *path, int action,
+                            struct text_stat *stats, enum safe_crlf checksafe)
+{
+	if (!checksafe)
+		return;
+
+	if (action == CRLF_INPUT || auto_crlf <= 0) {
+		/*
+		 * CRLFs would not be restored by checkout:
+		 * check if we'd remove CRLFs
+		 */
+		if (stats->crlf) {
+			if (checksafe == SAFE_CRLF_WARN)
+				warning("CRLF will be replaced by LF in %s.", path);
+			else /* i.e. SAFE_CRLF_FAIL */
+				die("CRLF would be replaced by LF in %s.", path);
+		}
+	} else if (auto_crlf > 0) {
+		/*
+		 * CRLFs would be added by checkout:
+		 * check if we have "naked" LFs
+		 */
+		if (stats->lf != stats->crlf) {
+			if (checksafe == SAFE_CRLF_WARN)
+				warning("LF will be replaced by CRLF in %s", path);
+			else /* i.e. SAFE_CRLF_FAIL */
+				die("LF would be replaced by CRLF in %s", path);
+		}
+	}
+}
+
 static int crlf_to_git(const char *path, const char *src, size_t len,
-                       struct strbuf *buf, int action)
+                       struct strbuf *buf, int action, enum safe_crlf checksafe)
 {
 	struct text_stat stats;
 	char *dst;
@@ -95,9 +130,6 @@ static int crlf_to_git(const char *path, const char *src, size_t len,
 		return 0;
 
 	gather_stats(src, len, &stats);
-	/* No CR? Nothing to convert, regardless. */
-	if (!stats.cr)
-		return 0;
 
 	if (action == CRLF_GUESS) {
 		/*
@@ -114,6 +146,12 @@ static int crlf_to_git(const char *path, const char *src, size_t len,
 		if (is_binary(len, &stats))
 			return 0;
 	}
+
+	check_safe_crlf(path, action, &stats, checksafe);
+
+	/* Optimization: No CR? Nothing to convert, regardless. */
+	if (!stats.cr)
+		return 0;
 
 	/* only grow if not in place */
 	if (strbuf_avail(buf) + buf->len < len)
@@ -285,11 +323,11 @@ static int apply_filter(const char *path, const char *src, size_t len,
 static struct convert_driver {
 	const char *name;
 	struct convert_driver *next;
-	char *smudge;
-	char *clean;
+	const char *smudge;
+	const char *clean;
 } *user_convert, **user_convert_tail;
 
-static int read_convert_config(const char *var, const char *value)
+static int read_convert_config(const char *var, const char *value, void *cb)
 {
 	const char *ep, *name;
 	int namelen;
@@ -324,19 +362,12 @@ static int read_convert_config(const char *var, const char *value)
 	 * The command-line will not be interpolated in any way.
 	 */
 
-	if (!strcmp("smudge", ep)) {
-		if (!value)
-			return error("%s: lacks value", var);
-		drv->smudge = strdup(value);
-		return 0;
-	}
+	if (!strcmp("smudge", ep))
+		return git_config_string(&drv->smudge, var, value);
 
-	if (!strcmp("clean", ep)) {
-		if (!value)
-			return error("%s: lacks value", var);
-		drv->clean = strdup(value);
-		return 0;
-	}
+	if (!strcmp("clean", ep))
+		return git_config_string(&drv->clean, var, value);
+
 	return 0;
 }
 
@@ -351,7 +382,7 @@ static void setup_convert_check(struct git_attr_check *check)
 		attr_ident = git_attr("ident", 5);
 		attr_filter = git_attr("filter", 6);
 		user_convert_tail = &user_convert;
-		git_config(read_convert_config);
+		git_config(read_convert_config, NULL);
 	}
 	check[0].attr = attr_crlf;
 	check[1].attr = attr_ident;
@@ -536,12 +567,13 @@ static int git_path_check_ident(const char *path, struct git_attr_check *check)
 	return !!ATTR_TRUE(value);
 }
 
-int convert_to_git(const char *path, const char *src, size_t len, struct strbuf *dst)
+int convert_to_git(const char *path, const char *src, size_t len,
+                   struct strbuf *dst, enum safe_crlf checksafe)
 {
 	struct git_attr_check check[3];
 	int crlf = CRLF_GUESS;
 	int ident = 0, ret = 0;
-	char *filter = NULL;
+	const char *filter = NULL;
 
 	setup_convert_check(check);
 	if (!git_checkattr(path, ARRAY_SIZE(check), check)) {
@@ -558,7 +590,7 @@ int convert_to_git(const char *path, const char *src, size_t len, struct strbuf 
 		src = dst->buf;
 		len = dst->len;
 	}
-	ret |= crlf_to_git(path, src, len, dst, crlf);
+	ret |= crlf_to_git(path, src, len, dst, crlf, checksafe);
 	if (ret) {
 		src = dst->buf;
 		len = dst->len;
@@ -571,7 +603,7 @@ int convert_to_working_tree(const char *path, const char *src, size_t len, struc
 	struct git_attr_check check[3];
 	int crlf = CRLF_GUESS;
 	int ident = 0, ret = 0;
-	char *filter = NULL;
+	const char *filter = NULL;
 
 	setup_convert_check(check);
 	if (!git_checkattr(path, ARRAY_SIZE(check), check)) {

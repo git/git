@@ -30,7 +30,7 @@ This is designed to be as compact as possible.
 
 	  commit <sha1>
 	  Author: <author>
-	  Date: <date>
+	  Date: <author date>
 
 	      <title line>
 
@@ -50,9 +50,9 @@ This is designed to be as compact as possible.
 
 	  commit <sha1>
 	  Author: <author>
-	  AuthorDate: <date & time>
+	  AuthorDate: <author date>
 	  Commit: <committer>
-	  CommitDate: <date & time>
+	  CommitDate: <committer date>
 
 	       <title line>
 
@@ -62,7 +62,7 @@ This is designed to be as compact as possible.
 
 	  From <sha1> <date>
 	  From: <author>
-	  Date: <date & time>
+	  Date: <author date>
 	  Subject: [PATCH] <title line>
 
 	  <full commit message>
@@ -101,6 +101,7 @@ The placeholders are:
 - '%P': parent hashes
 - '%p': abbreviated parent hashes
 - '%an': author name
+- '%aN': author name (respecting .mailmap)
 - '%ae': author email
 - '%ad': author date
 - '%aD': author date, RFC2822 style
@@ -108,6 +109,7 @@ The placeholders are:
 - '%at': author date, UNIX timestamp
 - '%ai': author date, ISO 8601 format
 - '%cn': committer name
+- '%cN': committer name (respecting .mailmap)
 - '%ce': committer email
 - '%cd': committer date
 - '%cD': committer date, RFC2822 style
@@ -123,3 +125,26 @@ The placeholders are:
 - '%Creset': reset color
 - '%m': left, right or boundary mark
 - '%n': newline
+- '%x00': print a byte from a hex code
+
+* 'tformat:'
++
+The 'tformat:' format works exactly like 'format:', except that it
+provides "terminator" semantics instead of "separator" semantics. In
+other words, each commit has the message terminator character (usually a
+newline) appended, rather than a separator placed between entries.
+This means that the final entry of a single-line format will be properly
+terminated with a new line, just as the "oneline" format does.
+For example:
++
+---------------------
+$ git log -2 --pretty=format:%h 4da45bef \
+  | perl -pe '$_ .= " -- NO NEWLINE\n" unless /\n/'
+4da45be
+7134973 -- NO NEWLINE
+
+$ git log -2 --pretty=tformat:%h 4da45bef \
+  | perl -pe '$_ .= " -- NO NEWLINE\n" unless /\n/'
+4da45be
+7134973
+---------------------

@@ -15,8 +15,11 @@ test_description='test describe
 check_describe () {
 	expect="$1"
 	shift
-	R=$(git describe "$@") &&
+	R=$(git describe "$@" 2>err.actual)
+	S=$?
+	cat err.actual >&3
 	test_expect_success "describe $*" '
+	test $S = 0 &&
 	case "$R" in
 	$expect)	echo happy ;;
 	*)	echo "Oops - $R is not $expect";
@@ -93,5 +96,49 @@ check_describe A-* --tags HEAD^
 check_describe D-* --tags HEAD^^
 check_describe A-* --tags HEAD^^2
 check_describe B --tags HEAD^^2^
+
+check_describe B-0-* --long HEAD^^2^
+check_describe A-3-* --long HEAD^^2
+
+test_expect_success 'rename tag A to Q locally' '
+	mv .git/refs/tags/A .git/refs/tags/Q
+'
+cat - >err.expect <<EOF
+warning: tag 'A' is really 'Q' here
+EOF
+check_describe A-* HEAD
+test_expect_success 'warning was displayed for Q' '
+	test_cmp err.expect err.actual
+'
+test_expect_success 'rename tag Q back to A' '
+	mv .git/refs/tags/Q .git/refs/tags/A
+'
+
+test_expect_success 'pack tag refs' 'git pack-refs'
+check_describe A-* HEAD
+
+test_expect_success 'set-up matching pattern tests' '
+	git tag -a -m test-annotated test-annotated &&
+	echo >>file &&
+	test_tick &&
+	git commit -a -m "one more" &&
+	git tag test1-lightweight &&
+	echo >>file &&
+	test_tick &&
+	git commit -a -m "yet another" &&
+	git tag test2-lightweight &&
+	echo >>file &&
+	test_tick &&
+	git commit -a -m "even more"
+
+'
+
+check_describe "test-annotated-*" --match="test-*"
+
+check_describe "test1-lightweight-*" --tags --match="test1-*"
+
+check_describe "test2-lightweight-*" --tags --match="test2-*"
+
+check_describe "test2-lightweight-*" --long --tags --match="test2-*" HEAD^
 
 test_done

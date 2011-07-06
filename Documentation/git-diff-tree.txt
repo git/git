@@ -9,7 +9,7 @@ git-diff-tree - Compares the content and mode of blobs found via two tree object
 SYNOPSIS
 --------
 [verse]
-'git-diff-tree' [--stdin] [-m] [-s] [-v] [--no-commit-id] [--pretty]
+'git diff-tree' [--stdin] [-m] [-s] [-v] [--no-commit-id] [--pretty]
 	      [-t] [-r] [-c | --cc] [--root] [<common diff options>]
 	      <tree-ish> [<tree-ish>] [<path>...]
 
@@ -20,7 +20,7 @@ Compares the content and mode of the blobs found via two tree objects.
 If there is only one <tree-ish> given, the commit is compared with its parents
 (see --stdin below).
 
-Note that "git-diff-tree" can use the tree encapsulated in a commit object.
+Note that 'git-diff-tree' can use the tree encapsulated in a commit object.
 
 OPTIONS
 -------
@@ -49,34 +49,34 @@ include::diff-options.txt[]
 --stdin::
 	When '--stdin' is specified, the command does not take
 	<tree-ish> arguments from the command line.  Instead, it
-	reads either one <commit> or a pair of <tree-ish>
+	reads either one <commit> or a list of <commit>
 	separated with a single space from its standard input.
 +
 When a single commit is given on one line of such input, it compares
 the commit with its parents.  The following flags further affects its
-behavior.  This does not apply to the case where two <tree-ish>
-separated with a single space are given.
+behavior.  The remaining commits, when given, are used as if they are
+parents of the first commit.
 
 -m::
-	By default, "git-diff-tree --stdin" does not show
+	By default, 'git-diff-tree --stdin' does not show
 	differences for merge commits.  With this flag, it shows
 	differences to that commit from all of its parents. See
 	also '-c'.
 
 -s::
-	By default, "git-diff-tree --stdin" shows differences,
+	By default, 'git-diff-tree --stdin' shows differences,
 	either in machine-readable form (without '-p') or in patch
 	form (with '-p').  This output can be suppressed.  It is
 	only useful with '-v' flag.
 
 -v::
-	This flag causes "git-diff-tree --stdin" to also show
+	This flag causes 'git-diff-tree --stdin' to also show
 	the commit message before the differences.
 
 include::pretty-options.txt[]
 
 --no-commit-id::
-	git-diff-tree outputs a line with the commit ID when
+	'git-diff-tree' outputs a line with the commit ID when
 	applicable.  This flag suppressed the commit ID output.
 
 -c::
@@ -93,11 +93,11 @@ include::pretty-options.txt[]
 	This flag changes the way a merge commit patch is displayed,
 	in a similar way to the '-c' option. It implies the '-c'
 	and '-p' options and further compresses the patch output
-	by omitting hunks that show differences from only one
-	parent, or show the same change from all but one parent
-	for an Octopus merge.  When this optimization makes all
-	hunks disappear, the commit itself and the commit log
-	message is not shown, just like in any other "empty diff" case.
+	by omitting uninteresting hunks whose the contents in the parents
+	have only two variants and the merge result picks one of them
+	without modification.  When all hunks are uninteresting, the commit
+	itself and the commit log message is not shown, just like in any other
+	"empty diff" case.
 
 --always::
 	Show the commit itself and the commit log message even
@@ -112,13 +112,13 @@ Limiting Output
 If you're only interested in differences in a subset of files, for
 example some architecture-specific files, you might do:
 
-	git-diff-tree -r <tree-ish> <tree-ish> arch/ia64 include/asm-ia64
+	git diff-tree -r <tree-ish> <tree-ish> arch/ia64 include/asm-ia64
 
 and it will only show you what changed in those two directories.
 
 Or if you are searching for what changed in just `kernel/sched.c`, just do
 
-	git-diff-tree -r <tree-ish> <tree-ish> kernel/sched.c
+	git diff-tree -r <tree-ish> <tree-ish> kernel/sched.c
 
 and it will ignore all differences to other files.
 
@@ -129,7 +129,7 @@ so it can be used to name subdirectories.
 
 An example of normal usage is:
 
-  torvalds@ppc970:~/git> git-diff-tree 5319e4......
+  torvalds@ppc970:~/git> git diff-tree 5319e4......
   *100664->100664 blob    ac348b.......->a01513.......      git-fsck-objects.c
 
 which tells you that the last commit changed just one file (it's from
@@ -165,4 +165,4 @@ Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

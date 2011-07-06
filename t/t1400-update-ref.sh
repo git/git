@@ -32,6 +32,22 @@ test_expect_success \
 	"create $m" \
 	"git update-ref $m $B $A &&
 	 test $B"' = $(cat .git/'"$m"')'
+test_expect_success "fail to delete $m with stale ref" '
+	test_must_fail git update-ref -d $m $A &&
+	test $B = "$(cat .git/$m)"
+'
+test_expect_success "delete $m" '
+	git update-ref -d $m $B &&
+	! test -f .git/$m
+'
+rm -f .git/$m
+
+test_expect_success "delete $m without oldvalue verification" "
+	git update-ref $m $A &&
+	test $A = \$(cat .git/$m) &&
+	git update-ref -d $m &&
+	! test -f .git/$m
+"
 rm -f .git/$m
 
 test_expect_success \
@@ -49,25 +65,33 @@ test_expect_success \
 	"create $m (by HEAD)" \
 	"git update-ref HEAD $B $A &&
 	 test $B"' = $(cat .git/'"$m"')'
+test_expect_success "fail to delete $m (by HEAD) with stale ref" '
+	test_must_fail git update-ref -d HEAD $A &&
+	test $B = $(cat .git/$m)
+'
+test_expect_success "delete $m (by HEAD)" '
+	git update-ref -d HEAD $B &&
+	! test -f .git/$m
+'
 rm -f .git/$m
 
-test_expect_failure \
-	'(not) create HEAD with old sha1' \
-	"git update-ref HEAD $A $B"
-test_expect_failure \
-	"(not) prior created .git/$m" \
-	"test -f .git/$m"
+test_expect_success '(not) create HEAD with old sha1' "
+	test_must_fail git update-ref HEAD $A $B
+"
+test_expect_success "(not) prior created .git/$m" "
+	! test -f .git/$m
+"
 rm -f .git/$m
 
 test_expect_success \
 	"create HEAD" \
 	"git update-ref HEAD $A"
-test_expect_failure \
-	'(not) change HEAD with wrong SHA1' \
-	"git update-ref HEAD $B $Z"
-test_expect_failure \
-	"(not) changed .git/$m" \
-	"test $B"' = $(cat .git/'"$m"')'
+test_expect_success '(not) change HEAD with wrong SHA1' "
+	test_must_fail git update-ref HEAD $B $Z
+"
+test_expect_success "(not) changed .git/$m" "
+	! test $B"' = $(cat .git/'"$m"')
+'
 rm -f .git/$m
 
 : a repository with working tree always has reflog these days...
@@ -131,7 +155,8 @@ rm -f .git/$m .git/logs/$m expect
 
 git update-ref $m $D
 cat >.git/logs/$m <<EOF
-$C $A $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150320 -0500
+0000000000000000000000000000000000000000 $C $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150320 -0500
+$C $A $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150350 -0500
 $A $B $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150380 -0500
 $F $Z $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150680 -0500
 $Z $E $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150980 -0500
@@ -162,6 +187,12 @@ test_expect_success \
 	'Query "master@{May 26 2005 23:32:00}" (exactly history start)' \
 	'rm -f o e
 	 git rev-parse --verify "master@{May 26 2005 23:32:00}" >o 2>e &&
+	 test '"$C"' = $(cat o) &&
+	 test "" = "$(cat e)"'
+test_expect_success \
+	'Query "master@{May 26 2005 23:32:30}" (first non-creation change)' \
+	'rm -f o e
+	 git rev-parse --verify "master@{May 26 2005 23:32:30}" >o 2>e &&
 	 test '"$A"' = $(cat o) &&
 	 test "" = "$(cat e)"'
 test_expect_success \

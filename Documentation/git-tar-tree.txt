@@ -8,23 +8,23 @@ git-tar-tree - Create a tar archive of the files in the named tree object
 
 SYNOPSIS
 --------
-'git-tar-tree' [--remote=<repo>] <tree-ish> [ <base> ]
+'git tar-tree' [--remote=<repo>] <tree-ish> [ <base> ]
 
 DESCRIPTION
 -----------
-THIS COMMAND IS DEPRECATED.  Use `git-archive` with `--format=tar`
+THIS COMMAND IS DEPRECATED.  Use 'git-archive' with `--format=tar`
 option instead (and move the <base> argument to `--prefix=base/`).
 
 Creates a tar archive containing the tree structure for the named tree.
 When <base> is specified it is added as a leading path to the files in the
 generated tar archive.
 
-git-tar-tree behaves differently when given a tree ID versus when given
+'git-tar-tree' behaves differently when given a tree ID versus when given
 a commit ID or tag ID.  In the first case the current time is used as
 modification time of each file in the archive.  In the latter case the
 commit time as recorded in the referenced commit object is used instead.
 Additionally the commit ID is stored in a global extended pax header.
-It can be extracted using git-get-tar-commit-id.
+It can be extracted using 'git-get-tar-commit-id'.
 
 OPTIONS
 -------
@@ -86,4 +86,4 @@ Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

@@ -1,9 +1,12 @@
 MAN1_TXT= \
 	$(filter-out $(addsuffix .txt, $(ARTICLES) $(SP_ARTICLES)), \
 		$(wildcard git-*.txt)) \
-	gitk.txt
-MAN5_TXT=gitattributes.txt gitignore.txt gitcli.txt gitmodules.txt
-MAN7_TXT=git.txt
+	gitk.txt git.txt
+MAN5_TXT=gitattributes.txt gitignore.txt gitmodules.txt githooks.txt \
+	gitrepository-layout.txt
+MAN7_TXT=gitcli.txt gittutorial.txt gittutorial-2.txt \
+	gitcvs-migration.txt gitcore-tutorial.txt gitglossary.txt \
+	gitdiffcore.txt
 
 MAN_TXT = $(MAN1_TXT) $(MAN5_TXT) $(MAN7_TXT)
 MAN_XML=$(patsubst %.txt,%.xml,$(MAN_TXT))
@@ -11,17 +14,9 @@ MAN_HTML=$(patsubst %.txt,%.html,$(MAN_TXT))
 
 DOC_HTML=$(MAN_HTML)
 
-ARTICLES = tutorial
-ARTICLES += tutorial-2
-ARTICLES += core-tutorial
-ARTICLES += cvs-migration
-ARTICLES += diffcore
-ARTICLES += howto-index
-ARTICLES += repository-layout
-ARTICLES += hooks
+ARTICLES = howto-index
 ARTICLES += everyday
 ARTICLES += git-tools
-ARTICLES += glossary
 # with their own formatting rules.
 SP_ARTICLES = howto/revert-branch-rebase howto/using-merge-subtree user-manual
 API_DOCS = $(patsubst %.txt,%,$(filter-out technical/api-index-skel.txt technical/api-index.txt, $(wildcard technical/api-*.txt)))
@@ -45,6 +40,7 @@ man7dir=$(mandir)/man7
 
 ASCIIDOC=asciidoc
 ASCIIDOC_EXTRA =
+MANPAGE_XSL = callouts.xsl
 INSTALL?=install
 RM ?= rm -f
 DOC_REF = origin/man
@@ -65,6 +61,7 @@ ASCIIDOC_EXTRA += -a asciidoc7compatible
 endif
 ifdef DOCBOOK_XSL_172
 ASCIIDOC_EXTRA += -a docbook-xsl-172
+MANPAGE_XSL = manpage-1.72.xsl
 endif
 
 #
@@ -142,8 +139,6 @@ cmd-list.made: cmd-list.perl ../command-list.txt $(MAN1_TXT)
 	$(PERL_PATH) ./cmd-list.perl ../command-list.txt
 	date >$@
 
-git.7 git.html: git.txt
-
 clean:
 	$(RM) *.xml *.xml+ *.html *.html+ *.1 *.5 *.7
 	$(RM) *.texi *.texi+ git.info gitman.info
@@ -159,7 +154,7 @@ $(MAN_HTML): %.html : %.txt
 
 %.1 %.5 %.7 : %.xml
 	$(RM) $@
-	xmlto -m callouts.xsl man $<
+	xmlto -m $(MANPAGE_XSL) man $<
 
 %.xml : %.txt
 	$(RM) $@+ $@

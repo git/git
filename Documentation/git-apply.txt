@@ -9,16 +9,16 @@ git-apply - Apply a patch on a git index file and a working tree
 SYNOPSIS
 --------
 [verse]
-'git-apply' [--stat] [--numstat] [--summary] [--check] [--index]
+'git apply' [--stat] [--numstat] [--summary] [--check] [--index]
 	  [--apply] [--no-add] [--build-fake-ancestor <file>] [-R | --reverse]
 	  [--allow-binary-replacement | --binary] [--reject] [-z]
-	  [-pNUM] [-CNUM] [--inaccurate-eof] [--cached]
+	  [-pNUM] [-CNUM] [--inaccurate-eof] [--recount] [--cached]
 	  [--whitespace=<nowarn|warn|fix|error|error-all>]
-	  [--exclude=PATH] [--verbose] [<patch>...]
+	  [--exclude=PATH] [--directory=<root>] [--verbose] [<patch>...]
 
 DESCRIPTION
 -----------
-Reads supplied diff output and applies it on a git index file
+Reads supplied 'diff' output and applies it on a git index file
 and a work tree.
 
 OPTIONS
@@ -64,7 +64,7 @@ OPTIONS
 	without using the working tree. This implies '--index'.
 
 --build-fake-ancestor <file>::
-	Newer git-diff output has embedded 'index information'
+	Newer 'git-diff' output has embedded 'index information'
 	for each blob to help identify the original version that
 	the patch applies to.  When this flag is given, and if
 	the original versions of the blobs is available locally,
@@ -73,11 +73,12 @@ OPTIONS
 When a pure mode change is encountered (which has no index information),
 the information is read from the current index instead.
 
--R, --reverse::
+-R::
+--reverse::
 	Apply the patch in reverse.
 
 --reject::
-	For atomicity, linkgit:git-apply[1] by default fails the whole patch and
+	For atomicity, 'git-apply' by default fails the whole patch and
 	does not touch the working tree when some of the hunks
 	do not apply.  This option makes it apply
 	the parts of the patch that are applicable, and leave the
@@ -101,7 +102,7 @@ the information is read from the current index instead.
 	ever ignored.
 
 --unidiff-zero::
-	By default, linkgit:git-apply[1] expects that the patch being
+	By default, 'git-apply' expects that the patch being
 	applied is a unified diff with at least one line of context.
 	This provides good safety measures, but breaks down when
 	applying a diff generated with --unified=0. To bypass these
@@ -112,7 +113,7 @@ discouraged.
 
 --apply::
 	If you use any of the options marked "Turns off
-	'apply'" above, linkgit:git-apply[1] reads and outputs the
+	'apply'" above, 'git-apply' reads and outputs the
 	information you asked without actually applying the
 	patch.  Give this flag after those flags to also apply
 	the patch.
@@ -120,11 +121,12 @@ discouraged.
 --no-add::
 	When applying a patch, ignore additions made by the
 	patch.  This can be used to extract the common part between
-	two files by first running `diff` on them and applying
+	two files by first running 'diff' on them and applying
 	the result with this option, which would apply the
 	deletion part but not addition part.
 
---allow-binary-replacement, --binary::
+--allow-binary-replacement::
+--binary::
 	Historically we did not allow binary patch applied
 	without an explicit permission from the user, and this
 	flag was the way to do so.  Currently we always allow binary
@@ -145,7 +147,7 @@ discouraged.
 	considered whitespace errors.
 +
 By default, the command outputs warning messages but applies the patch.
-When linkgit:git-apply[1] is used for statistics and not applying a
+When `git-apply is used for statistics and not applying a
 patch, it defaults to `nowarn`.
 +
 You can use different `<action>` to control this
@@ -163,16 +165,30 @@ behavior:
 * `error-all` is similar to `error` but shows all errors.
 
 --inaccurate-eof::
-	Under certain circumstances, some versions of diff do not correctly
+	Under certain circumstances, some versions of 'diff' do not correctly
 	detect a missing new-line at the end of the file. As a result, patches
-	created by such diff programs do not record incomplete lines
+	created by such 'diff' programs do not record incomplete lines
 	correctly. This option adds support for applying such patches by
 	working around this bug.
 
--v, --verbose::
+-v::
+--verbose::
 	Report progress to stderr. By default, only a message about the
 	current patch being applied will be printed. This option will cause
 	additional information to be reported.
+
+--recount::
+	Do not trust the line counts in the hunk headers, but infer them
+	by inspecting the patch (e.g. after editing the patch without
+	adjusting the hunk headers appropriately).
+
+--directory=<root>::
+	Prepend <root> to all filenames.  If a "-p" argument was passed, too,
+	it is applied before prepending the new root.
++
+For example, a patch that talks about updating `a/git-gui.sh` to `b/git-gui.sh`
+can be applied to the file in the working tree `modules/git-gui/git-gui.sh` by
+running `git apply --directory=modules/git-gui`.
 
 Configuration
 -------------
@@ -183,7 +199,7 @@ apply.whitespace::
 
 Submodules
 ----------
-If the patch contains any changes to submodules then linkgit:git-apply[1]
+If the patch contains any changes to submodules then 'git-apply'
 treats these changes as follows.
 
 If --index is specified (explicitly or implicitly), then the submodule
@@ -206,4 +222,4 @@ Documentation by Junio C Hamano
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

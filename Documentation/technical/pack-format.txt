@@ -103,10 +103,24 @@ Pack file entry: <+
      packed object data:
         If it is not DELTA, then deflated bytes (the size above
 		is the size before compression).
-	If it is DELTA, then
+	If it is REF_DELTA, then
 	  20-byte base object name SHA1 (the size above is the
 		size of the delta data that follows).
           delta data, deflated.
+	If it is OFS_DELTA, then
+	  n-byte offset (see below) interpreted as a negative
+		offset from the type-byte of the header of the
+		ofs-delta entry (the size above is the size of
+		the delta data that follows).
+	  delta data, deflated.
+
+     offset encoding:
+	  n bytes with MSB set in all but the last one.
+	  The offset is then the number constructed by
+	  concatenating the lower 7 bit of each byte, and
+	  for n >= 2 adding 2^7 + 2^14 + ... + 2^(7*(n-1))
+	  to the result.
+
 
 
 = Version 2 pack-*.idx files support packs larger than 4 GiB, and

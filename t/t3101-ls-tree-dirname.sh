@@ -43,7 +43,7 @@ _x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
 _x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
 test_output () {
     sed -e "s/ $_x40	/ X	/" <current >check
-    git diff expected check
+    test_cmp expected check
 }
 
 test_expect_success \
@@ -120,7 +120,7 @@ EOF
 # having 1.txt and path3
 test_expect_success \
     'ls-tree filter odd names' \
-    'git ls-tree $tree 1.txt /1.txt //1.txt path3/1.txt /path3/1.txt //path3//1.txt path3 /path3/ path3// >current &&
+    'git ls-tree $tree 1.txt ./1.txt .//1.txt path3/1.txt path3/./1.txt path3 path3// >current &&
      cat >expected <<\EOF &&
 100644 blob X	1.txt
 100644 blob X	path3/1.txt

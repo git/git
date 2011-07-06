@@ -8,7 +8,7 @@ git-clean - Remove untracked files from the working tree
 SYNOPSIS
 --------
 [verse]
-'git-clean' [-d] [-f] [-n] [-q] [-x | -X] [--] <paths>...
+'git clean' [-d] [-f] [-n] [-q] [-x | -X] [--] <path>...
 
 DESCRIPTION
 -----------
@@ -16,8 +16,8 @@ Removes files unknown to git.  This allows to clean the working tree
 from files that are not under version control.  If the '-x' option is
 specified, ignored files are also removed, allowing to remove all
 build products.
-When optional `<paths>...` arguments are given, the paths
-affected are further limited to those that match them.
+If any optional `<path>...` arguments are given, only those paths
+are affected.
 
 
 OPTIONS
@@ -27,19 +27,21 @@ OPTIONS
 
 -f::
 	If the git configuration specifies clean.requireForce as true,
-	git-clean will refuse to run unless given -f or -n.
+	'git-clean' will refuse to run unless given -f or -n.
 
 -n::
+--dry-run::
 	Don't actually remove anything, just show what would be done.
 
 -q::
+--quiet::
 	Be quiet, only report errors, but not the files that are
 	successfully removed.
 
 -x::
 	Don't use the ignore rules.  This allows removing all untracked
 	files, including build products.  This can be used (possibly in
-	conjunction with linkgit:git-reset[1]) to create a pristine
+	conjunction with 'git-reset') to create a pristine
 	working directory to test a clean build.
 
 -X::
@@ -54,4 +56,4 @@ Written by Pavel Roskin <proski@gnu.org>
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

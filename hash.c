@@ -9,7 +9,7 @@
  * the existing entry, or the empty slot if none existed. The caller
  * can then look at the (*ptr) to see whether it existed or not.
  */
-static struct hash_table_entry *lookup_hash_entry(unsigned int hash, struct hash_table *table)
+static struct hash_table_entry *lookup_hash_entry(unsigned int hash, const struct hash_table *table)
 {
 	unsigned int size = table->size, nr = hash % size;
 	struct hash_table_entry *array = table->array;
@@ -66,11 +66,11 @@ static void grow_hash_table(struct hash_table *table)
 	free(old_array);
 }
 
-void *lookup_hash(unsigned int hash, struct hash_table *table)
+void *lookup_hash(unsigned int hash, const struct hash_table *table)
 {
 	if (!table->array)
 		return NULL;
-	return &lookup_hash_entry(hash, table)->ptr;
+	return lookup_hash_entry(hash, table)->ptr;
 }
 
 void **insert_hash(unsigned int hash, void *ptr, struct hash_table *table)
@@ -81,7 +81,7 @@ void **insert_hash(unsigned int hash, void *ptr, struct hash_table *table)
 	return insert_hash_entry(hash, ptr, table);
 }
 
-int for_each_hash(struct hash_table *table, int (*fn)(void *))
+int for_each_hash(const struct hash_table *table, int (*fn)(void *))
 {
 	int sum = 0;
 	unsigned int i;

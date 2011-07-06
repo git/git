@@ -63,18 +63,6 @@ It is recommended to run 'git repack -a -d -f' from time to time when using
 incremental imports to optimally combine the individual git packs that each
 incremental import creates through the use of git-fast-import.
 
-
-A useful setup may be that you have a periodically updated git repository
-somewhere that contains a complete import of a Perforce project. That git
-repository can be used to clone the working repository from and one would
-import from Perforce directly after cloning using git-p4. If the connection to
-the Perforce server is slow and the working repository hasn't been synced for a
-while it may be desirable to fetch changes from the origin git repository using
-the efficient git protocol. git-p4 supports this setup by calling "git fetch origin"
-by default if there is an origin branch. You can disable this using
-
-  git config git-p4.syncFromOrigin false
-
 Updating
 ========
 
@@ -139,6 +127,62 @@ Example
 # ... and synchronize with Perforce
   git-p4 rebase
 
+
+Configuration parameters
+========================
+
+git-p4.user ($P4USER)
+
+Allows you to specify the username to use to connect to the Perforce repository.
+
+  git config [--global] git-p4.user public
+
+git-p4.password ($P4PASS)
+
+Allows you to specify the password to use to connect to the Perforce repository.
+Warning this password will be visible on the command-line invocation of the p4 binary.
+
+  git config [--global] git-p4.password public1234
+
+git-p4.port ($P4PORT)
+
+Specify the port to be used to contact the Perforce server. As this will be passed
+directly to the p4 binary, it may be in the format host:port as well.
+
+  git config [--global] git-p4.port codes.zimbra.com:2666
+
+git-p4.host ($P4HOST)
+
+Specify the host to contact for a Perforce repository.
+
+  git config [--global] git-p4.host perforce.example.com
+
+git-p4.client ($P4CLIENT)
+
+Specify the client name to use
+
+  git config [--global] git-p4.client public-view
+
+git-p4.allowSubmit
+
+  git config [--global] git-p4.allowSubmit false
+
+git-p4.syncFromOrigin
+
+A useful setup may be that you have a periodically updated git repository
+somewhere that contains a complete import of a Perforce project. That git
+repository can be used to clone the working repository from and one would
+import from Perforce directly after cloning using git-p4. If the connection to
+the Perforce server is slow and the working repository hasn't been synced for a
+while it may be desirable to fetch changes from the origin git repository using
+the efficient git protocol. git-p4 supports this setup by calling "git fetch origin"
+by default if there is an origin branch. You can disable this using:
+
+  git config [--global] git-p4.syncFromOrigin false
+
+git-p4.useclientspec
+
+  git config [--global] git-p4.useclientspec false
 
 Implementation Details...
 =========================

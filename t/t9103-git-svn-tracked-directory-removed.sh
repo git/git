@@ -10,30 +10,30 @@ test_expect_success 'make history for tracking' '
 	mkdir import &&
 	mkdir import/trunk &&
 	echo hello >> import/trunk/README &&
-	svn import -m initial import $svnrepo &&
+	svn import -m initial import "$svnrepo" &&
 	rm -rf import &&
-	svn co $svnrepo/trunk trunk &&
+	svn co "$svnrepo"/trunk trunk &&
 	echo bye bye >> trunk/README &&
-	svn rm -m "gone" $svnrepo/trunk &&
+	svn rm -m "gone" "$svnrepo"/trunk &&
 	rm -rf trunk &&
 	mkdir trunk &&
 	echo "new" > trunk/FOLLOWME &&
-	svn import -m "new trunk" trunk $svnrepo/trunk
+	svn import -m "new trunk" trunk "$svnrepo"/trunk
 '
 
 test_expect_success 'clone repo with git' '
-	git svn clone -s $svnrepo x &&
+	git svn clone -s "$svnrepo" x &&
 	test -f x/FOLLOWME &&
 	test ! -f x/README
 '
 
-test_expect_success 'make sure r2 still has old file' '
+test_expect_success 'make sure r2 still has old file' "
 	cd x &&
-		test -n "$(git svn find-rev r1)" &&
-		git reset --hard $(git svn find-rev r1) &&
+		test -n \"\$(git svn find-rev r1)\" &&
+		git reset --hard \$(git svn find-rev r1) &&
 		test -f README &&
 		test ! -f FOLLOWME &&
-		test x$(git svn find-rev r2) = x
-'
+		test x\$(git svn find-rev r2) = x
+"
 
 test_done

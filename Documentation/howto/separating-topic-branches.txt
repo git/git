@@ -1,4 +1,4 @@
-From: Junio C Hamano <junkio@cox.net>
+From: Junio C Hamano <gitster@pobox.com>
 Subject: Separating topic branches
 Abstract: In this article, JC describes how to separate topic branches.
 

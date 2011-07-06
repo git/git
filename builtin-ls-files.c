@@ -238,7 +238,8 @@ static void show_files(struct dir_struct *dir, const char *prefix)
 	if (show_cached | show_stage) {
 		for (i = 0; i < active_nr; i++) {
 			struct cache_entry *ce = active_cache[i];
-			if (excluded(dir, ce->name) != dir->show_ignored)
+			int dtype = ce_to_dtype(ce);
+			if (excluded(dir, ce->name, &dtype) != dir->show_ignored)
 				continue;
 			if (show_unmerged && !ce_stage(ce))
 				continue;
@@ -252,7 +253,8 @@ static void show_files(struct dir_struct *dir, const char *prefix)
 			struct cache_entry *ce = active_cache[i];
 			struct stat st;
 			int err;
-			if (excluded(dir, ce->name) != dir->show_ignored)
+			int dtype = ce_to_dtype(ce);
+			if (excluded(dir, ce->name, &dtype) != dir->show_ignored)
 				continue;
 			err = lstat(ce->name, &st);
 			if (show_deleted && err)
@@ -421,7 +423,7 @@ int report_path_error(const char *ps_matched, const char **pathspec, int prefix_
 }
 
 static const char ls_files_usage[] =
-	"git-ls-files [-z] [-t] [-v] (--[cached|deleted|others|stage|unmerged|killed|modified])* "
+	"git ls-files [-z] [-t] [-v] (--[cached|deleted|others|stage|unmerged|killed|modified])* "
 	"[ --ignored ] [--exclude=<pattern>] [--exclude-from=<file>] "
 	"[ --exclude-per-directory=<filename> ] [--exclude-standard] "
 	"[--full-name] [--abbrev] [--] [<file>]*";
@@ -435,7 +437,7 @@ int cmd_ls_files(int argc, const char **argv, const char *prefix)
 	memset(&dir, 0, sizeof(dir));
 	if (prefix)
 		prefix_offset = strlen(prefix);
-	git_config(git_default_config);
+	git_config(git_default_config, NULL);
 
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];

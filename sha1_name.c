@@ -192,26 +192,25 @@ static int get_short_sha1(const char *name, int len, unsigned char *sha1,
 
 const char *find_unique_abbrev(const unsigned char *sha1, int len)
 {
-	int status, is_null;
+	int status, exists;
 	static char hex[41];
 
-	is_null = is_null_sha1(sha1);
+	exists = has_sha1_file(sha1);
 	memcpy(hex, sha1_to_hex(sha1), 40);
 	if (len == 40 || !len)
 		return hex;
 	while (len < 40) {
 		unsigned char sha1_ret[20];
 		status = get_short_sha1(hex, len, sha1_ret, 1);
-		if (!status ||
-		    (is_null && status != SHORT_NAME_AMBIGUOUS)) {
+		if (exists
+		    ? !status
+		    : status == SHORT_NAME_NOT_FOUND) {
 			hex[len] = 0;
 			return hex;
 		}
-		if (status != SHORT_NAME_AMBIGUOUS)
-			return NULL;
 		len++;
 	}
-	return NULL;
+	return hex;
 }
 
 static int ambiguous_path(const char *path, int len)
@@ -274,7 +273,7 @@ int dwim_log(const char *str, int len, unsigned char *sha1, char **log)
 		const char *ref, *it;
 
 		strcpy(path, mkpath(*p, len, str));
-		ref = resolve_ref(path, hash, 0, NULL);
+		ref = resolve_ref(path, hash, 1, NULL);
 		if (!ref)
 			continue;
 		if (!stat(git_path("logs/%s", path), &st) &&
@@ -352,8 +351,11 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 		}
 		if (0 <= nth)
 			at_time = 0;
-		else
-			at_time = approxidate(str + at + 2);
+		else {
+			char *tmp = xstrndup(str + at + 2, reflog_len);
+			at_time = approxidate(tmp);
+			free(tmp);
+		}
 		if (read_ref_at(real_ref, at_time, nth, sha1, NULL,
 				&co_time, &co_tz, &co_cnt)) {
 			if (at_time)
@@ -408,19 +410,54 @@ static int get_nth_ancestor(const char *name, int len,
 			    unsigned char *result, int generation)
 {
 	unsigned char sha1[20];
-	int ret = get_sha1_1(name, len, sha1);
+	struct commit *commit;
+	int ret;
+
+	ret = get_sha1_1(name, len, sha1);
 	if (ret)
 		return ret;
+	commit = lookup_commit_reference(sha1);
+	if (!commit)
+		return -1;
 
 	while (generation--) {
-		struct commit *commit = lookup_commit_reference(sha1);
-
-		if (!commit || parse_commit(commit) || !commit->parents)
+		if (parse_commit(commit) || !commit->parents)
 			return -1;
-		hashcpy(sha1, commit->parents->item->object.sha1);
+		commit = commit->parents->item;
 	}
-	hashcpy(result, sha1);
+	hashcpy(result, commit->object.sha1);
 	return 0;
+}
+
+struct object *peel_to_type(const char *name, int namelen,
+			    struct object *o, enum object_type expected_type)
+{
+	if (name && !namelen)
+		namelen = strlen(name);
+	if (!o) {
+		unsigned char sha1[20];
+		if (get_sha1_1(name, namelen, sha1))
+			return NULL;
+		o = parse_object(sha1);
+	}
+	while (1) {
+		if (!o || (!o->parsed && !parse_object(o->sha1)))
+			return NULL;
+		if (o->type == expected_type)
+			return o;
+		if (o->type == OBJ_TAG)
+			o = ((struct tag*) o)->tagged;
+		else if (o->type == OBJ_COMMIT)
+			o = &(((struct commit *) o)->tree->object);
+		else {
+			if (name)
+				error("%.*s: expected %s type, but the object "
+				      "dereferences to %s type",
+				      namelen, name, typename(expected_type),
+				      typename(o->type));
+			return NULL;
+		}
+	}
 }
 
 static int peel_onion(const char *name, int len, unsigned char *sha1)
@@ -474,29 +511,17 @@ static int peel_onion(const char *name, int len, unsigned char *sha1)
 		hashcpy(sha1, o->sha1);
 	}
 	else {
-		/* At this point, the syntax look correct, so
+		/*
+		 * At this point, the syntax look correct, so
 		 * if we do not get the needed object, we should
 		 * barf.
 		 */
-
-		while (1) {
-			if (!o || (!o->parsed && !parse_object(o->sha1)))
-				return -1;
-			if (o->type == expected_type) {
-				hashcpy(sha1, o->sha1);
-				return 0;
-			}
-			if (o->type == OBJ_TAG)
-				o = ((struct tag*) o)->tagged;
-			else if (o->type == OBJ_COMMIT)
-				o = &(((struct commit *) o)->tree->object);
-			else
-				return error("%.*s: expected %s type, but the object dereferences to %s type",
-					     len, name, typename(expected_type),
-					     typename(o->type));
-			if (!o->parsed)
-				parse_object(o->sha1);
+		o = peel_to_type(name, len, o, expected_type);
+		if (o) {
+			hashcpy(sha1, o->sha1);
+			return 0;
 		}
+		return -1;
 	}
 	return 0;
 }
@@ -526,9 +551,8 @@ static int get_sha1_1(const char *name, int len, unsigned char *sha1)
 	int ret, has_suffix;
 	const char *cp;
 
-	/* "name~3" is "name^^^",
-	 * "name~" and "name~0" are name -- not "name^0"!
-	 * "name^" is not "name^0"; it is "name^1".
+	/*
+	 * "name~3" is "name^^^", "name~" is "name~1", and "name^" is "name^1".
 	 */
 	has_suffix = 0;
 	for (cp = name + len - 1; name <= cp; cp--) {
@@ -546,11 +570,10 @@ static int get_sha1_1(const char *name, int len, unsigned char *sha1)
 		cp++;
 		while (cp < name + len)
 			num = num * 10 + *cp++ - '0';
-		if (has_suffix == '^') {
-			if (!num && len1 == len - 1)
-				num = 1;
+		if (!num && len1 == len - 1)
+			num = 1;
+		if (has_suffix == '^')
 			return get_parent(name, len1, sha1, num);
-		}
 		/* else if (has_suffix == '~') -- goes without saying */
 		return get_nth_ancestor(name, len1, sha1, num);
 	}
@@ -578,8 +601,11 @@ static int handle_one_ref(const char *path,
 	struct object *object = parse_object(sha1);
 	if (!object)
 		return 0;
-	if (object->type == OBJ_TAG)
+	if (object->type == OBJ_TAG) {
 		object = deref_tag(object, path, strlen(path));
+		if (!object)
+			return 0;
+	}
 	if (object->type != OBJ_COMMIT)
 		return 0;
 	insert_by_date((struct commit *)object, list);
@@ -617,9 +643,9 @@ static int get_sha1_oneline(const char *prefix, unsigned char *sha1)
 		unsigned long size;
 
 		commit = pop_most_recent_commit(&list, ONELINE_SEEN);
-		parse_object(commit->object.sha1);
-		if (temp_commit_buffer)
-			free(temp_commit_buffer);
+		if (!parse_object(commit->object.sha1))
+			continue;
+		free(temp_commit_buffer);
 		if (commit->buffer)
 			p = commit->buffer;
 		else {
@@ -636,8 +662,7 @@ static int get_sha1_oneline(const char *prefix, unsigned char *sha1)
 			break;
 		}
 	}
-	if (temp_commit_buffer)
-		free(temp_commit_buffer);
+	free(temp_commit_buffer);
 	free_commit_list(list);
 	for (l = backup; l; l = l->next)
 		clear_commit_marks(l->item, ONELINE_SEEN);

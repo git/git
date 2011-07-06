@@ -45,7 +45,7 @@ test_expect_success resolve '
 		false
 	else
 		git ls-files -s >current
-		diff -u current expect
+		test_cmp current expect
 	fi
 '
 
@@ -60,7 +60,7 @@ test_expect_success recursive '
 		false
 	else
 		git ls-files -s >current
-		diff -u current expect
+		test_cmp current expect
 	fi
 '
 

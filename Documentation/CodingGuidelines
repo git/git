@@ -53,6 +53,18 @@ For shell scripts specifically (not exhaustive):
  - We do not write the noiseword "function" in front of shell
    functions.
 
+ - As to use of grep, stick to a subset of BRE (namely, no \{m,n\},
+   [::], [==], nor [..]) for portability.
+
+   - We do not use \{m,n\};
+
+   - We do not use -E;
+
+   - We do not use ? nor + (which are \{0,1\} and \{1,\}
+     respectively in BRE) but that goes without saying as these
+     are ERE elements not BRE (note that \? and \+ are not even part
+     of BRE -- making them accessible from BRE is a GNU extension).
+
 For C programs:
 
  - We use tabs to indent, and interpret tabs as taking up to
@@ -77,6 +89,8 @@ For C programs:
    of "else if" statements, it can make sense to add braces to
    single line blocks.
 
+ - We try to avoid assignments inside if().
+
  - Try to make your code understandable.  You may put comments
    in, but comments invariably tend to stale out when the code
    they were describing changes.  Often splitting a function
@@ -91,7 +105,7 @@ For C programs:
 
  - Use the API.  No, really.  We have a strbuf (variable length
    string), several arrays with the ALLOC_GROW() macro, a
-   path_list for sorted string lists, a hash map (mapping struct
+   string_list for sorted string lists, a hash map (mapping struct
    objects) named "struct decorate", amongst other things.
 
  - When you come up with an API, document it.

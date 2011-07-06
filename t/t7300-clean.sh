@@ -75,8 +75,8 @@ test_expect_success 'git-clean src/ src/' '
 
 test_expect_success 'git-clean with prefix' '
 
-	mkdir -p build docs &&
-	touch a.out src/part3.c docs/manual.txt obj.o build/lib.so &&
+	mkdir -p build docs src/test &&
+	touch a.out src/part3.c docs/manual.txt obj.o build/lib.so src/test/1.c &&
 	(cd src/ && git-clean) &&
 	test -f Makefile &&
 	test -f README &&
@@ -84,11 +84,64 @@ test_expect_success 'git-clean with prefix' '
 	test -f src/part2.c &&
 	test -f a.out &&
 	test ! -f src/part3.c &&
+	test -f src/test/1.c &&
 	test -f docs/manual.txt &&
 	test -f obj.o &&
 	test -f build/lib.so
 
 '
+
+test_expect_success 'git-clean with relative prefix' '
+
+	mkdir -p build docs &&
+	touch a.out src/part3.c docs/manual.txt obj.o build/lib.so &&
+	would_clean=$(
+		cd docs &&
+		git clean -n ../src |
+		sed -n -e "s|^Would remove ||p"
+	) &&
+	test "$would_clean" = ../src/part3.c || {
+		echo "OOps <$would_clean>"
+		false
+	}
+'
+
+test_expect_success 'git-clean with absolute path' '
+
+	mkdir -p build docs &&
+	touch a.out src/part3.c docs/manual.txt obj.o build/lib.so &&
+	would_clean=$(
+		cd docs &&
+		git clean -n "$(pwd)/../src" |
+		sed -n -e "s|^Would remove ||p"
+	) &&
+	test "$would_clean" = ../src/part3.c || {
+		echo "OOps <$would_clean>"
+		false
+	}
+'
+
+test_expect_success 'git-clean with out of work tree relative path' '
+
+	mkdir -p build docs &&
+	touch a.out src/part3.c docs/manual.txt obj.o build/lib.so &&
+	(
+		cd docs &&
+		test_must_fail git clean -n ../..
+	)
+'
+
+test_expect_success 'git-clean with out of work tree absolute path' '
+
+	mkdir -p build docs &&
+	touch a.out src/part3.c docs/manual.txt obj.o build/lib.so &&
+	dd=$(cd .. && pwd) &&
+	(
+		cd docs &&
+		test_must_fail git clean -n $dd
+	)
+'
+
 test_expect_success 'git-clean -d with prefix and path' '
 
 	mkdir -p build docs src/feature &&
@@ -263,14 +316,14 @@ test_expect_success 'git-clean -d -X' '
 test_expect_success 'clean.requireForce defaults to true' '
 
 	git config --unset clean.requireForce &&
-	! git-clean
+	test_must_fail git clean
 
 '
 
 test_expect_success 'clean.requireForce' '
 
 	git config clean.requireForce true &&
-	! git-clean
+	test_must_fail git clean
 
 '
 
@@ -315,5 +368,16 @@ test_expect_success 'core.excludesfile' '
 	! expr "$output" : ".*excludes" >/dev/null
 
 '
+
+test_expect_success 'removal failure' '
+
+	mkdir foo &&
+	touch foo/bar &&
+	exec <foo/bar &&
+	chmod 0 foo &&
+	test_must_fail git clean -f -d
+
+'
+chmod 755 foo
 
 test_done

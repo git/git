@@ -32,12 +32,28 @@ static int find_tracked_branch(struct remote *remote, void *priv)
 	return 0;
 }
 
+static int should_setup_rebase(const struct tracking *tracking)
+{
+	switch (autorebase) {
+	case AUTOREBASE_NEVER:
+		return 0;
+	case AUTOREBASE_LOCAL:
+		return tracking->remote == NULL;
+	case AUTOREBASE_REMOTE:
+		return tracking->remote != NULL;
+	case AUTOREBASE_ALWAYS:
+		return 1;
+	}
+	return 0;
+}
+
 /*
  * This is called when new_ref is branched off of orig_ref, and tries
  * to infer the settings for branch.<new_ref>.{remote,merge} from the
  * config.
  */
-static int setup_tracking(const char *new_ref, const char *orig_ref)
+static int setup_tracking(const char *new_ref, const char *orig_ref,
+                          enum branch_track track)
 {
 	char key[1024];
 	struct tracking tracking;
@@ -48,30 +64,41 @@ static int setup_tracking(const char *new_ref, const char *orig_ref)
 
 	memset(&tracking, 0, sizeof(tracking));
 	tracking.spec.dst = (char *)orig_ref;
-	if (for_each_remote(find_tracked_branch, &tracking) ||
-			!tracking.matches)
+	if (for_each_remote(find_tracked_branch, &tracking))
 		return 1;
+
+	if (!tracking.matches)
+		switch (track) {
+		case BRANCH_TRACK_ALWAYS:
+		case BRANCH_TRACK_EXPLICIT:
+			break;
+		default:
+			return 1;
+		}
 
 	if (tracking.matches > 1)
 		return error("Not tracking: ambiguous information for ref %s",
 				orig_ref);
 
-	if (tracking.matches == 1) {
-		sprintf(key, "branch.%s.remote", new_ref);
-		git_config_set(key, tracking.remote ?  tracking.remote : ".");
-		sprintf(key, "branch.%s.merge", new_ref);
-		git_config_set(key, tracking.src);
-		free(tracking.src);
-		printf("Branch %s set up to track remote branch %s.\n",
-			       new_ref, orig_ref);
+	sprintf(key, "branch.%s.remote", new_ref);
+	git_config_set(key, tracking.remote ?  tracking.remote : ".");
+	sprintf(key, "branch.%s.merge", new_ref);
+	git_config_set(key, tracking.src ? tracking.src : orig_ref);
+	printf("Branch %s set up to track %s branch %s.\n", new_ref,
+		tracking.remote ? "remote" : "local", orig_ref);
+	if (should_setup_rebase(&tracking)) {
+		sprintf(key, "branch.%s.rebase", new_ref);
+		git_config_set(key, "true");
+		printf("This branch will rebase on pull.\n");
 	}
+	free(tracking.src);
 
 	return 0;
 }
 
 void create_branch(const char *head,
 		   const char *name, const char *start_name,
-		   int force, int reflog, int track)
+		   int force, int reflog, enum branch_track track)
 {
 	struct ref_lock *lock;
 	struct commit *commit;
@@ -98,7 +125,8 @@ void create_branch(const char *head,
 	switch (dwim_ref(start_name, strlen(start_name), sha1, &real_ref)) {
 	case 0:
 		/* Not branching from any existing branch */
-		real_ref = NULL;
+		if (track == BRANCH_TRACK_EXPLICIT)
+			die("Cannot setup tracking information; starting point is not a branch.");
 		break;
 	case 1:
 		/* Unique completion -- good */
@@ -126,23 +154,19 @@ void create_branch(const char *head,
 		snprintf(msg, sizeof msg, "branch: Created from %s",
 			 start_name);
 
-	/* When branching off a remote branch, set up so that git-pull
-	   automatically merges from there.  So far, this is only done for
-	   remotes registered via .git/config.  */
 	if (real_ref && track)
-		setup_tracking(name, real_ref);
+		setup_tracking(name, real_ref, track);
 
 	if (write_ref_sha1(lock, sha1, msg) < 0)
 		die("Failed to write ref: %s.", strerror(errno));
 
-	if (real_ref)
-		free(real_ref);
+	free(real_ref);
 }
 
 void remove_branch_state(void)
 {
 	unlink(git_path("MERGE_HEAD"));
-	unlink(git_path("rr-cache/MERGE_RR"));
+	unlink(git_path("MERGE_RR"));
 	unlink(git_path("MERGE_MSG"));
 	unlink(git_path("SQUASH_MSG"));
 }

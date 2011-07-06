@@ -3,7 +3,7 @@
 #include "refs.h"
 #include "object.h"
 #include "tag.h"
-#include "path-list.h"
+#include "string-list.h"
 
 static const char show_ref_usage[] = "git show-ref [-q|--quiet] [--verify] [-h|--head] [-d|--dereference] [-s|--hash[=<length>]] [--abbrev[=<length>]] [--tags] [--heads] [--] [pattern*] < ref-list";
 
@@ -86,6 +86,9 @@ match:
 			    sha1_to_hex(sha1));
 		if (obj->type == OBJ_TAG) {
 			obj = deref_tag(obj, refname, 0);
+			if (!obj)
+				die("git-show-ref: bad tag at ref %s (%s)", refname,
+				    sha1_to_hex(sha1));
 			hex = find_unique_abbrev(obj->sha1, abbrev);
 			printf("%s %s^{}\n", hex, refname);
 		}
@@ -95,8 +98,8 @@ match:
 
 static int add_existing(const char *refname, const unsigned char *sha1, int flag, void *cbdata)
 {
-	struct path_list *list = (struct path_list *)cbdata;
-	path_list_insert(refname, list);
+	struct string_list *list = (struct string_list *)cbdata;
+	string_list_insert(refname, list);
 	return 0;
 }
 
@@ -111,7 +114,7 @@ static int add_existing(const char *refname, const unsigned char *sha1, int flag
  */
 static int exclude_existing(const char *match)
 {
-	static struct path_list existing_refs = { NULL, 0, 0, 0 };
+	static struct string_list existing_refs = { NULL, 0, 0, 0 };
 	char buf[1024];
 	int matchlen = match ? strlen(match) : 0;
 
@@ -140,7 +143,7 @@ static int exclude_existing(const char *match)
 			fprintf(stderr, "warning: ref '%s' ignored\n", ref);
 			continue;
 		}
-		if (!path_list_has_path(&existing_refs, ref)) {
+		if (!string_list_has_string(&existing_refs, ref)) {
 			printf("%s\n", buf);
 		}
 	}

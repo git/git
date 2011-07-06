@@ -90,7 +90,7 @@ do
 				cat '"$kind-patch.$with"'
 				(exit 1)
 			} &&
-			git diff '"$kind"'-expect victim
+			test_cmp '"$kind"'-expect victim
 		'
 	done
 done
@@ -108,8 +108,21 @@ do
 			cat '"$kind-ng.without"'
 			(exit 1)
 		} &&
-		git diff '"$kind"'-expect victim
+		test_cmp '"$kind"'-expect victim
 	'
 done
+
+test_expect_success 'two lines' '
+
+	>file &&
+	git add file &&
+	echo aaa >file &&
+	git diff >patch &&
+	git add file &&
+	echo bbb >file &&
+	git add file &&
+	test_must_fail git apply --check patch
+
+'
 
 test_done

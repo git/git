@@ -34,13 +34,13 @@ test_expect_success 'creating initial files and commits' '
 
 check_changes () {
 	test "$(git rev-parse HEAD)" = "$1" &&
-	git diff | git diff .diff_expect - &&
-	git diff --cached | git diff .cached_expect - &&
+	git diff | test_cmp .diff_expect - &&
+	git diff --cached | test_cmp .cached_expect - &&
 	for FILE in *
 	do
 		echo $FILE':'
 		cat $FILE || return
-	done | git diff .cat_expect -
+	done | test_cmp .cat_expect -
 }
 
 >.diff_expect
@@ -52,10 +52,10 @@ secondfile:
 EOF
 
 test_expect_success 'giving a non existing revision should fail' '
-	! git reset aaaaaa &&
-	! git reset --mixed aaaaaa &&
-	! git reset --soft aaaaaa &&
-	! git reset --hard aaaaaa &&
+	test_must_fail git reset aaaaaa &&
+	test_must_fail git reset --mixed aaaaaa &&
+	test_must_fail git reset --soft aaaaaa &&
+	test_must_fail git reset --hard aaaaaa &&
 	check_changes 3ec39651e7f44ea531a5de18a9fa791c0fd370fc
 '
 
@@ -63,29 +63,29 @@ test_expect_success 'reset --soft with unmerged index should fail' '
 	touch .git/MERGE_HEAD &&
 	echo "100644 44c5b5884550c17758737edcced463447b91d42b 1	un" |
 		git update-index --index-info &&
-	! git reset --soft HEAD &&
+	test_must_fail git reset --soft HEAD &&
 	rm .git/MERGE_HEAD &&
 	git rm --cached -- un
 '
 
 test_expect_success \
 	'giving paths with options different than --mixed should fail' '
-	! git reset --soft -- first &&
-	! git reset --hard -- first &&
-	! git reset --soft HEAD^ -- first &&
-	! git reset --hard HEAD^ -- first &&
+	test_must_fail git reset --soft -- first &&
+	test_must_fail git reset --hard -- first &&
+	test_must_fail git reset --soft HEAD^ -- first &&
+	test_must_fail git reset --hard HEAD^ -- first &&
 	check_changes 3ec39651e7f44ea531a5de18a9fa791c0fd370fc
 '
 
 test_expect_success 'giving unrecognized options should fail' '
-	! git reset --other &&
-	! git reset -o &&
-	! git reset --mixed --other &&
-	! git reset --mixed -o &&
-	! git reset --soft --other &&
-	! git reset --soft -o &&
-	! git reset --hard --other &&
-	! git reset --hard -o &&
+	test_must_fail git reset --other &&
+	test_must_fail git reset -o &&
+	test_must_fail git reset --mixed --other &&
+	test_must_fail git reset --mixed -o &&
+	test_must_fail git reset --soft --other &&
+	test_must_fail git reset --soft -o &&
+	test_must_fail git reset --hard --other &&
+	test_must_fail git reset --hard -o &&
 	check_changes 3ec39651e7f44ea531a5de18a9fa791c0fd370fc
 '
 
@@ -102,8 +102,8 @@ test_expect_success \
 	echo "3rd line in branch2" >>secondfile &&
 	git commit -a -m "change in branch2" &&
 
-	! git merge branch1 &&
-	! git reset --soft &&
+	test_must_fail git merge branch1 &&
+	test_must_fail git reset --soft &&
 
 	printf "1st line 2nd file\n2nd line 2nd file\n3rd line" >secondfile &&
 	git commit -a -m "the change in branch2" &&
@@ -126,7 +126,7 @@ test_expect_success \
 	echo "3rd line in branch4" >>secondfile &&
 
 	git checkout -m branch3 &&
-	! git reset --soft &&
+	test_must_fail git reset --soft &&
 
 	printf "1st line 2nd file\n2nd line 2nd file\n3rd line" >secondfile &&
 	git commit -a -m "the line in branch3" &&
@@ -326,7 +326,7 @@ test_expect_success '--hard reset to HEAD should clear a failed merge' '
 	echo "3rd line in branch2" >>secondfile &&
 	git commit -a -m "change in branch2" &&
 
-	! git pull . branch1 &&
+	test_must_fail git pull . branch1 &&
 	git reset --hard &&
 	check_changes 77abb337073fb4369a7ad69ff6f5ec0e4d6b54bb
 '
@@ -388,11 +388,11 @@ test_expect_success 'test --mixed <paths>' '
 	echo 4 > file4 &&
 	echo 5 > file1 &&
 	git add file1 file3 file4 &&
-	! git reset HEAD -- file1 file2 file3 &&
+	test_must_fail git reset HEAD -- file1 file2 file3 &&
 	git diff > output &&
-	git diff output expect &&
+	test_cmp output expect &&
 	git diff --cached > output &&
-	git diff output cached_expect
+	test_cmp output cached_expect
 '
 
 test_expect_success 'test resetting the index at give paths' '
@@ -402,11 +402,11 @@ test_expect_success 'test resetting the index at give paths' '
 	>sub/file2 &&
 	git update-index --add sub/file1 sub/file2 &&
 	T=$(git write-tree) &&
-	! git reset HEAD sub/file2 &&
+	test_must_fail git reset HEAD sub/file2 &&
 	U=$(git write-tree) &&
 	echo "$T" &&
 	echo "$U" &&
-	! git diff-index --cached --exit-code "$T" &&
+	test_must_fail git diff-index --cached --exit-code "$T" &&
 	test "$T" != "$U"
 
 '
@@ -419,13 +419,60 @@ test_expect_success 'resetting an unmodified path is a no-op' '
 '
 
 cat > expect << EOF
-file2: needs update
+file2: locally modified
 EOF
 
 test_expect_success '--mixed refreshes the index' '
 	echo 123 >> file2 &&
 	git reset --mixed HEAD > output &&
-	git diff --exit-code expect output
+	test_cmp expect output
+'
+
+test_expect_success 'disambiguation (1)' '
+
+	git reset --hard &&
+	>secondfile &&
+	git add secondfile &&
+	test_must_fail git reset secondfile &&
+	test -z "$(git diff --cached --name-only)" &&
+	test -f secondfile &&
+	test ! -s secondfile
+
+'
+
+test_expect_success 'disambiguation (2)' '
+
+	git reset --hard &&
+	>secondfile &&
+	git add secondfile &&
+	rm -f secondfile &&
+	test_must_fail git reset secondfile &&
+	test -n "$(git diff --cached --name-only -- secondfile)" &&
+	test ! -f secondfile
+
+'
+
+test_expect_success 'disambiguation (3)' '
+
+	git reset --hard &&
+	>secondfile &&
+	git add secondfile &&
+	rm -f secondfile &&
+	test_must_fail git reset HEAD secondfile &&
+	test -z "$(git diff --cached --name-only)" &&
+	test ! -f secondfile
+
+'
+
+test_expect_success 'disambiguation (4)' '
+
+	git reset --hard &&
+	>secondfile &&
+	git add secondfile &&
+	rm -f secondfile &&
+	test_must_fail git reset -- secondfile &&
+	test -z "$(git diff --cached --name-only)" &&
+	test ! -f secondfile
 '
 
 test_done

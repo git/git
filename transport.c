@@ -203,7 +203,7 @@ static struct ref *get_refs_via_rsync(struct transport *transport)
 }
 
 static int fetch_objs_via_rsync(struct transport *transport,
-				 int nr_objs, struct ref **to_fetch)
+				int nr_objs, const struct ref **to_fetch)
 {
 	struct strbuf buf = STRBUF_INIT;
 	struct child_process rsync;
@@ -350,7 +350,7 @@ static int rsync_transport_push(struct transport *transport,
 
 #ifndef NO_CURL /* http fetch is the only user */
 static int fetch_objs_via_walker(struct transport *transport,
-				 int nr_objs, struct ref **to_fetch)
+				 int nr_objs, const struct ref **to_fetch)
 {
 	char *dest = xstrdup(transport->url);
 	struct walker *walker = transport->data;
@@ -441,10 +441,16 @@ static struct ref *get_refs_via_curl(struct transport *transport)
 	struct ref *ref = NULL;
 	struct ref *last_ref = NULL;
 
+	struct walker *walker;
+
+	if (!transport->data)
+		transport->data = get_http_walker(transport->url,
+						transport->remote);
+
+	walker = transport->data;
+
 	refs_url = xmalloc(strlen(transport->url) + 11);
 	sprintf(refs_url, "%s/info/refs", transport->url);
-
-	http_init();
 
 	slot = get_active_slot();
 	slot->results = &results;
@@ -452,28 +458,20 @@ static struct ref *get_refs_via_curl(struct transport *transport)
 	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, fwrite_buffer);
 	curl_easy_setopt(slot->curl, CURLOPT_URL, refs_url);
 	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, NULL);
-	if (transport->remote->http_proxy)
-		curl_easy_setopt(slot->curl, CURLOPT_PROXY,
-				 transport->remote->http_proxy);
 
 	if (start_active_slot(slot)) {
 		run_active_slot(slot);
 		if (results.curl_result != CURLE_OK) {
 			strbuf_release(&buffer);
-			if (missing_target(&results)) {
-				return NULL;
-			} else {
-				error("%s", curl_errorstr);
-				return NULL;
-			}
+			if (missing_target(&results))
+				die("%s not found: did you run git update-server-info on the server?", refs_url);
+			else
+				die("%s download error - %s", refs_url, curl_errorstr);
 		}
 	} else {
 		strbuf_release(&buffer);
-		error("Unable to start request");
-		return NULL;
+		die("Unable to start HTTP request");
 	}
-
-	http_cleanup();
 
 	data = buffer.buf;
 	start = NULL;
@@ -503,14 +501,24 @@ static struct ref *get_refs_via_curl(struct transport *transport)
 
 	strbuf_release(&buffer);
 
+	ref = alloc_ref_from_str("HEAD");
+	if (!walker->fetch_ref(walker, ref) &&
+	    !resolve_remote_symref(ref, refs)) {
+		ref->next = refs;
+		refs = ref;
+	} else {
+		free(ref);
+	}
+
 	return refs;
 }
 
 static int fetch_objs_via_curl(struct transport *transport,
-				 int nr_objs, struct ref **to_fetch)
+				 int nr_objs, const struct ref **to_fetch)
 {
 	if (!transport->data)
-		transport->data = get_http_walker(transport->url);
+		transport->data = get_http_walker(transport->url,
+						transport->remote);
 	return fetch_objs_via_walker(transport, nr_objs, to_fetch);
 }
 
@@ -534,9 +542,8 @@ static struct ref *get_refs_from_bundle(struct transport *transport)
 		die ("Could not read bundle '%s'.", transport->url);
 	for (i = 0; i < data->header.references.nr; i++) {
 		struct ref_list_entry *e = data->header.references.list + i;
-		struct ref *ref = alloc_ref(strlen(e->name) + 1);
+		struct ref *ref = alloc_ref_from_str(e->name);
 		hashcpy(ref->old_sha1, e->sha1);
-		strcpy(ref->name, e->name);
 		ref->next = result;
 		result = ref;
 	}
@@ -544,7 +551,7 @@ static struct ref *get_refs_from_bundle(struct transport *transport)
 }
 
 static int fetch_refs_from_bundle(struct transport *transport,
-			       int nr_heads, struct ref **to_fetch)
+			       int nr_heads, const struct ref **to_fetch)
 {
 	struct bundle_transport_data *data = transport->data;
 	return unbundle(&data->header, data->fd);
@@ -562,7 +569,10 @@ static int close_bundle(struct transport *transport)
 struct git_transport_data {
 	unsigned thin : 1;
 	unsigned keep : 1;
+	unsigned followtags : 1;
 	int depth;
+	struct child_process *conn;
+	int fd[2];
 	const char *uploadpack;
 	const char *receivepack;
 };
@@ -580,6 +590,9 @@ static int set_git_option(struct transport *connection,
 	} else if (!strcmp(name, TRANS_OPT_THIN)) {
 		data->thin = !!value;
 		return 0;
+	} else if (!strcmp(name, TRANS_OPT_FOLLOWTAGS)) {
+		data->followtags = !!value;
+		return 0;
 	} else if (!strcmp(name, TRANS_OPT_KEEP)) {
 		data->keep = !!value;
 		return 0;
@@ -593,52 +606,70 @@ static int set_git_option(struct transport *connection,
 	return 1;
 }
 
+static int connect_setup(struct transport *transport)
+{
+	struct git_transport_data *data = transport->data;
+	data->conn = git_connect(data->fd, transport->url, data->uploadpack, 0);
+	return 0;
+}
+
 static struct ref *get_refs_via_connect(struct transport *transport)
 {
 	struct git_transport_data *data = transport->data;
 	struct ref *refs;
-	int fd[2];
-	char *dest = xstrdup(transport->url);
-	struct child_process *conn = git_connect(fd, dest, data->uploadpack, 0);
 
-	get_remote_heads(fd[0], &refs, 0, NULL, 0);
-	packet_flush(fd[1]);
-
-	finish_connect(conn);
-
-	free(dest);
+	connect_setup(transport);
+	get_remote_heads(data->fd[0], &refs, 0, NULL, 0);
 
 	return refs;
 }
 
 static int fetch_refs_via_pack(struct transport *transport,
-			       int nr_heads, struct ref **to_fetch)
+			       int nr_heads, const struct ref **to_fetch)
 {
 	struct git_transport_data *data = transport->data;
 	char **heads = xmalloc(nr_heads * sizeof(*heads));
 	char **origh = xmalloc(nr_heads * sizeof(*origh));
-	struct ref *refs;
+	const struct ref *refs;
 	char *dest = xstrdup(transport->url);
 	struct fetch_pack_args args;
 	int i;
+	struct ref *refs_tmp = NULL;
 
 	memset(&args, 0, sizeof(args));
 	args.uploadpack = data->uploadpack;
 	args.keep_pack = data->keep;
 	args.lock_pack = 1;
 	args.use_thin_pack = data->thin;
-	args.verbose = transport->verbose > 0;
+	args.include_tag = data->followtags;
+	args.verbose = (transport->verbose > 0);
+	args.quiet = args.no_progress = (transport->verbose < 0);
+	args.no_progress = !isatty(1);
 	args.depth = data->depth;
 
 	for (i = 0; i < nr_heads; i++)
 		origh[i] = heads[i] = xstrdup(to_fetch[i]->name);
-	refs = fetch_pack(&args, dest, nr_heads, heads, &transport->pack_lockfile);
+
+	if (!data->conn) {
+		connect_setup(transport);
+		get_remote_heads(data->fd[0], &refs_tmp, 0, NULL, 0);
+	}
+
+	refs = fetch_pack(&args, data->fd, data->conn,
+			  refs_tmp ? refs_tmp : transport->remote_refs,
+			  dest, nr_heads, heads, &transport->pack_lockfile);
+	close(data->fd[0]);
+	close(data->fd[1]);
+	if (finish_connect(data->conn))
+		refs = NULL;
+	data->conn = NULL;
+
+	free_refs(refs_tmp);
 
 	for (i = 0; i < nr_heads; i++)
 		free(origh[i]);
 	free(origh);
 	free(heads);
-	free_refs(refs);
 	free(dest);
 	return (refs ? 0 : -1);
 }
@@ -661,7 +692,15 @@ static int git_transport_push(struct transport *transport, int refspec_nr, const
 
 static int disconnect_git(struct transport *transport)
 {
-	free(transport->data);
+	struct git_transport_data *data = transport->data;
+	if (data->conn) {
+		packet_flush(data->fd[1]);
+		close(data->fd[0]);
+		close(data->fd[1]);
+		finish_connect(data->conn);
+	}
+
+	free(data);
 	return 0;
 }
 
@@ -669,7 +708,8 @@ static int is_local(const char *url)
 {
 	const char *colon = strchr(url, ':');
 	const char *slash = strchr(url, '/');
-	return !colon || (slash && slash < colon);
+	return !colon || (slash && slash < colon) ||
+		has_dos_drive_prefix(url);
 }
 
 static int is_file(const char *url)
@@ -721,6 +761,7 @@ struct transport *transport_get(struct remote *remote, const char *url)
 		ret->disconnect = disconnect_git;
 
 		data->thin = 1;
+		data->conn = NULL;
 		data->uploadpack = "git-upload-pack";
 		if (remote && remote->uploadpack)
 			data->uploadpack = remote->uploadpack;
@@ -755,12 +796,12 @@ const struct ref *transport_get_remote_refs(struct transport *transport)
 	return transport->remote_refs;
 }
 
-int transport_fetch_refs(struct transport *transport, struct ref *refs)
+int transport_fetch_refs(struct transport *transport, const struct ref *refs)
 {
 	int rc;
 	int nr_heads = 0, nr_alloc = 0;
-	struct ref **heads = NULL;
-	struct ref *rm;
+	const struct ref **heads = NULL;
+	const struct ref *rm;
 
 	for (rm = refs; rm; rm = rm->next) {
 		if (rm->peer_ref &&

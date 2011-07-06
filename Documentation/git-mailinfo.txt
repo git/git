@@ -8,7 +8,7 @@ git-mailinfo - Extracts patch and authorship from a single e-mail message
 
 SYNOPSIS
 --------
-'git-mailinfo' [-k] [-u | --encoding=<encoding>] <msg> <patch>
+'git mailinfo' [-k] [-u | --encoding=<encoding> | -n] <msg> <patch>
 
 
 DESCRIPTION
@@ -16,7 +16,7 @@ DESCRIPTION
 Reading a single e-mail message from the standard input, and
 writes the commit log message in <msg> file, and the patches in
 <patch> file.  The author name, e-mail and e-mail subject are
-written out to the standard output to be used by git-am
+written out to the standard output to be used by 'git-am'
 to create a commit.  It is usually not necessary to use this
 command directly.  See linkgit:git-am[1] instead.
 
@@ -29,8 +29,8 @@ OPTIONS
 	among which (1) remove 'Re:' or 're:', (2) leading
 	whitespaces, (3) '[' up to ']', typically '[PATCH]', and
 	then prepends "[PATCH] ".  This flag forbids this
-	munging, and is most useful when used to read back 'git
-	format-patch -k' output.
+	munging, and is most useful when used to read back
+	'git-format-patch -k' output.
 
 -u::
 	The commit log message, author name and author email are
@@ -46,6 +46,9 @@ conversion, even with this flag.
 	from what is specified by i18n.commitencoding, this flag
 	can be used to override it.
 
+-n::
+	Disable all charset re-coding of the metadata.
+
 <msg>::
 	The commit log message extracted from e-mail, usually
 	except the title line which comes from e-mail Subject.
@@ -57,7 +60,7 @@ conversion, even with this flag.
 Author
 ------
 Written by Linus Torvalds <torvalds@osdl.org> and
-Junio C Hamano <junkio@cox.net>
+Junio C Hamano <gitster@pobox.com>
 
 
 Documentation
@@ -66,4 +69,4 @@ Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

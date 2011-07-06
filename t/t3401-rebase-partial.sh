@@ -50,12 +50,12 @@ test_debug \
 
 test_expect_success \
     'rebase topic branch against new master and check git-am did not get halted' \
-    'git-rebase master && test ! -d .dotest'
+    'git-rebase master && test ! -d .git/rebase-apply'
 
 test_expect_success \
 	'rebase --merge topic branch that was partially merged upstream' \
 	'git-checkout -f my-topic-branch-merge &&
 	 git-rebase --merge master-merge &&
-	 test ! -d .git/.dotest-merge'
+	 test ! -d .git/rebase-merge'
 
 test_done

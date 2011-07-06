@@ -150,7 +150,7 @@ test_expect_success 'diff -U0' '
 	do
 		git diff -U0 file-?$n
 	done | zc >actual &&
-	diff -u expect actual
+	test_cmp expect actual
 
 '
 

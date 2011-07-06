@@ -7,6 +7,15 @@
 #include <curl/easy.h>
 
 #include "strbuf.h"
+#include "remote.h"
+
+/*
+ * We detect based on the cURL version if multi-transfer is
+ * usable in this implementation and define this symbol accordingly.
+ * This is not something Makefile should set nor users should pass
+ * via CFLAGS.
+ */
+#undef USE_CURL_MULTI
 
 #if LIBCURL_VERSION_NUM >= 0x071000
 #define USE_CURL_MULTI
@@ -55,12 +64,9 @@ struct buffer
 };
 
 /* Curl request read/write callbacks */
-extern size_t fread_buffer(void *ptr, size_t eltsize, size_t nmemb,
-			   struct buffer *buffer);
-extern size_t fwrite_buffer(const void *ptr, size_t eltsize,
-			    size_t nmemb, struct strbuf *buffer);
-extern size_t fwrite_null(const void *ptr, size_t eltsize,
-			  size_t nmemb, struct strbuf *buffer);
+extern size_t fread_buffer(void *ptr, size_t eltsize, size_t nmemb, void *strbuf);
+extern size_t fwrite_buffer(const void *ptr, size_t eltsize, size_t nmemb, void *strbuf);
+extern size_t fwrite_null(const void *ptr, size_t eltsize, size_t nmemb, void *strbuf);
 
 /* Slot lifecycle functions */
 extern struct active_request_slot *get_active_slot(void);
@@ -75,7 +81,7 @@ extern void add_fill_function(void *data, int (*fill)(void *));
 extern void step_active_slots(void);
 #endif
 
-extern void http_init(void);
+extern void http_init(struct remote *remote);
 extern void http_cleanup(void);
 
 extern int data_received;
@@ -96,6 +102,6 @@ static inline int missing__target(int code, int result)
 
 #define missing_target(a) missing__target((a)->http_code, (a)->curl_result)
 
-extern int http_fetch_ref(const char *base, const char *ref, unsigned char *sha1);
+extern int http_fetch_ref(const char *base, struct ref *ref);
 
 #endif /* HTTP_H */

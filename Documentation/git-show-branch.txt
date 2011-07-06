@@ -8,10 +8,10 @@ git-show-branch - Show branches and their commits
 SYNOPSIS
 --------
 [verse]
-'git-show-branch' [--all] [--remotes] [--topo-order] [--current]
+'git show-branch' [--all] [--remotes] [--topo-order] [--current]
 		[--more=<n> | --list | --independent | --merge-base]
 		[--no-name | --sha1-name] [--topics] [<rev> | <glob>]...
-'git-show-branch' (-g|--reflog)[=<n>[,<base>]] [--list] [<ref>]
+'git show-branch' (-g|--reflog)[=<n>[,<base>]] [--list] [<ref>]
 
 DESCRIPTION
 -----------
@@ -29,7 +29,7 @@ no <rev> nor <glob> is given on the command line.
 OPTIONS
 -------
 <rev>::
-	Arbitrary extended SHA1 expression (see `git-rev-parse`)
+	Arbitrary extended SHA1 expression (see linkgit:git-rev-parse[1])
 	that typically names a branch HEAD or a tag.
 
 <glob>::
@@ -38,10 +38,12 @@ OPTIONS
 	branches under $GIT_DIR/refs/heads/topic, giving
 	`topic/*` would show all of them.
 
--r|--remotes::
+-r::
+--remotes::
 	Show the remote-tracking branches.
 
--a|--all::
+-a::
+--all::
 	Show both remote-tracking branches and local branches.
 
 --current::
@@ -180,7 +182,7 @@ topologically related with each other.
 
 Author
 ------
-Written by Junio C Hamano <junkio@cox.net>
+Written by Junio C Hamano <gitster@pobox.com>
 
 
 Documentation
@@ -190,4 +192,4 @@ Documentation by Junio C Hamano.
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

@@ -10,6 +10,7 @@ commandline, and checks that it would not write any errors
 or warnings to log.'
 
 gitweb_init () {
+	safe_pwd="$(perl -MPOSIX=getcwd -e 'print quotemeta(getcwd)')"
 	cat >gitweb_config.perl <<EOF
 #!/usr/bin/perl
 
@@ -17,16 +18,16 @@ gitweb_init () {
 
 our \$version = "current";
 our \$GIT = "git";
-our \$projectroot = "$(pwd)";
+our \$projectroot = "$safe_pwd";
 our \$project_maxdepth = 8;
 our \$home_link_str = "projects";
 our \$site_name = "[localhost]";
 our \$site_header = "";
 our \$site_footer = "";
 our \$home_text = "indextext.html";
-our @stylesheets = ("file:///$(pwd)/../../gitweb/gitweb.css");
-our \$logo = "file:///$(pwd)/../../gitweb/git-logo.png";
-our \$favicon = "file:///$(pwd)/../../gitweb/git-favicon.png";
+our @stylesheets = ("file:///$safe_pwd/../../gitweb/gitweb.css");
+our \$logo = "file:///$safe_pwd/../../gitweb/git-logo.png";
+our \$favicon = "file:///$safe_pwd/../../gitweb/git-favicon.png";
 our \$projects_list = "";
 our \$export_ok = "";
 our \$strict_export = "";
@@ -39,19 +40,21 @@ EOF
 }
 
 gitweb_run () {
-	export GATEWAY_INTERFACE="CGI/1.1"
-	export HTTP_ACCEPT="*/*"
-	export REQUEST_METHOD="GET"
-	export QUERY_STRING=""$1""
-	export PATH_INFO=""$2""
+	GATEWAY_INTERFACE="CGI/1.1"
+	HTTP_ACCEPT="*/*"
+	REQUEST_METHOD="GET"
+	QUERY_STRING=""$1""
+	PATH_INFO=""$2""
+	export GATEWAY_INTERFACE HTTP_ACCEPT REQUEST_METHOD QUERY_STRING PATH_INFO
 
-	export GITWEB_CONFIG=$(pwd)/gitweb_config.perl
+	GITWEB_CONFIG=$(pwd)/gitweb_config.perl
+	export GITWEB_CONFIG
 
 	# some of git commands write to STDERR on error, but this is not
 	# written to web server logs, so we are not interested in that:
 	# we are interested only in properly formatted errors/warnings
 	rm -f gitweb.log &&
-	perl -- $(pwd)/../../gitweb/gitweb.perl \
+	perl -- "$(pwd)/../../gitweb/gitweb.perl" \
 		>/dev/null 2>gitweb.log &&
 	if grep -q -s "^[[]" gitweb.log >/dev/null; then false; else true; fi
 
@@ -481,6 +484,22 @@ test_debug 'cat gitweb.log'
 test_expect_success \
 	'logs: history (implicit HEAD, file)' \
 	'gitweb_run "p=.git;a=history;f=file"'
+test_debug 'cat gitweb.log'
+
+test_expect_success \
+	'logs: history (implicit HEAD, non-existent file)' \
+	'gitweb_run "p=.git;a=history;f=non-existent"'
+test_debug 'cat gitweb.log'
+
+test_expect_success \
+	'logs: history (implicit HEAD, deleted file)' \
+	'git checkout master &&
+	 echo "to be deleted" > deleted_file &&
+	 git add deleted_file &&
+	 git commit -m "Add file to be deleted" &&
+	 git rm deleted_file &&
+	 git commit -m "Delete file" &&
+	 gitweb_run "p=.git;a=history;f=deleted_file"'
 test_debug 'cat gitweb.log'
 
 # ----------------------------------------------------------------------

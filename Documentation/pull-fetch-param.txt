@@ -1,10 +1,12 @@
 <repository>::
 	The "remote" repository that is the source of a fetch
-	or pull operation.  See the section <<URLS,GIT URLS>> below.
+	or pull operation.  This parameter can be either a URL
+	(see the section <<URLS,GIT URLS>> below) or the name
+	of a remote (see the section <<REMOTES,REMOTES>> below).
 
 <refspec>::
 	The canonical format of a <refspec> parameter is
-	`+?<src>:<dst>`; that is, an optional plus `+`, followed
+	`+?<src>:<dst>`; that is, an optional plus `{plus}`, followed
 	by the source ref, followed by a colon `:`, followed by
 	the destination ref.
 +
@@ -30,7 +32,7 @@ must know this is the expected usage pattern for a branch.
 [NOTE]
 You never do your own development on branches that appear
 on the right hand side of a <refspec> colon on `Pull:` lines;
-they are to be updated by `git-fetch`.  If you intend to do
+they are to be updated by 'git-fetch'.  If you intend to do
 development derived from a remote branch `B`, have a `Pull:`
 line to track it (i.e. `Pull: B:remote-B`), and have a separate
 branch `my-B` to do your development on top of it.  The latter
@@ -42,13 +44,13 @@ on the remote branch, merge it into your development branch with
 +
 [NOTE]
 There is a difference between listing multiple <refspec>
-directly on `git-pull` command line and having multiple
+directly on 'git-pull' command line and having multiple
 `Pull:` <refspec> lines for a <repository> and running
-`git-pull` command without any explicit <refspec> parameters.
+'git-pull' command without any explicit <refspec> parameters.
 <refspec> listed explicitly on the command line are always
 merged into the current branch after fetching.  In other words,
 if you list more than one remote refs, you would be making
-an Octopus.  While `git-pull` run without any explicit <refspec>
+an Octopus.  While 'git-pull' run without any explicit <refspec>
 parameter takes default <refspec>s from `Pull:` lines, it
 merges only the first <refspec> found into the current branch,
 after fetching all the remote refs.  This is because making an

@@ -81,17 +81,17 @@ test_expect_success '.gitignore test setup' '
 
 test_expect_success '.gitignore is honored' '
 	git add . &&
-	! git ls-files | grep "\\.ig"
+	! (git ls-files | grep "\\.ig")
 '
 
 test_expect_success 'error out when attempting to add ignored ones without -f' '
-	! git add a.?? &&
-	! git ls-files | grep "\\.ig"
+	test_must_fail git add a.?? &&
+	! (git ls-files | grep "\\.ig")
 '
 
 test_expect_success 'error out when attempting to add ignored ones without -f' '
-	! git add d.?? &&
-	! git ls-files | grep "\\.ig"
+	test_must_fail git add d.?? &&
+	! (git ls-files | grep "\\.ig")
 '
 
 test_expect_success 'add ignored ones with -f' '
@@ -177,6 +177,57 @@ test_expect_success 'git add --refresh' '
 	esac &&
 	git add --refresh -- foo &&
 	test -z "`git diff-index HEAD -- foo`"
+'
+
+test_expect_success 'git add should fail atomically upon an unreadable file' '
+	git reset --hard &&
+	date >foo1 &&
+	date >foo2 &&
+	chmod 0 foo2 &&
+	test_must_fail git add --verbose . &&
+	! ( git ls-files foo1 | grep foo1 )
+'
+
+rm -f foo2
+
+test_expect_success 'git add --ignore-errors' '
+	git reset --hard &&
+	date >foo1 &&
+	date >foo2 &&
+	chmod 0 foo2 &&
+	test_must_fail git add --verbose --ignore-errors . &&
+	git ls-files foo1 | grep foo1
+'
+
+rm -f foo2
+
+test_expect_success 'git add (add.ignore-errors)' '
+	git config add.ignore-errors 1 &&
+	git reset --hard &&
+	date >foo1 &&
+	date >foo2 &&
+	chmod 0 foo2 &&
+	test_must_fail git add --verbose . &&
+	git ls-files foo1 | grep foo1
+'
+rm -f foo2
+
+test_expect_success 'git add (add.ignore-errors = false)' '
+	git config add.ignore-errors 0 &&
+	git reset --hard &&
+	date >foo1 &&
+	date >foo2 &&
+	chmod 0 foo2 &&
+	test_must_fail git add --verbose . &&
+	! ( git ls-files foo1 | grep foo1 )
+'
+
+test_expect_success 'git add '\''fo\[ou\]bar'\'' ignores foobar' '
+	git reset --hard &&
+	touch fo\[ou\]bar foobar &&
+	git add '\''fo\[ou\]bar'\'' &&
+	git ls-files fo\[ou\]bar | grep -F fo\[ou\]bar &&
+	! ( git ls-files foobar | grep foobar )
 '
 
 test_done

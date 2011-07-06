@@ -15,6 +15,7 @@ DESCRIPTION
 The command takes various subcommands, and different options depending
 on the subcommand:
 
+ git bisect help
  git bisect start [<bad> [<good>...]] [--] [<paths>...]
  git bisect bad [<rev>]
  git bisect good [<rev>...]
@@ -25,9 +26,15 @@ on the subcommand:
  git bisect log
  git bisect run <cmd>...
 
-This command uses 'git-rev-list --bisect' option to help drive the
+This command uses 'git-rev-list --bisect' to help drive the
 binary search process to find which change introduced a bug, given an
 old "good" commit object name and a later "bad" commit object name.
+
+Getting help
+~~~~~~~~~~~~
+
+Use "git bisect" to get a short usage description, and "git bisect
+help" or "git bisect -h" to get a long usage description.
 
 Basic bisect commands: start, bad, good
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -78,10 +85,9 @@ Oh, and then after you want to reset to the original head, do a
 $ git bisect reset
 ------------------------------------------------
 
-to get back to the master branch, instead of being in one of the
-bisection branches ("git bisect start" will do that for you too,
-actually: it will reset the bisection state, and before it does that
-it checks that you're not using some old bisection branch).
+to get back to the original branch, instead of being on the bisection
+commit ("git bisect start" will do that for you too, actually: it will
+reset the bisection state).
 
 Bisect visualize
 ~~~~~~~~~~~~~~~~
@@ -92,10 +98,10 @@ During the bisection process, you can say
 $ git bisect visualize
 ------------
 
-to see the currently remaining suspects in `gitk`.  `visualize` is a bit
+to see the currently remaining suspects in 'gitk'.  `visualize` is a bit
 too long to type and `view` is provided as a synonym.
 
-If `DISPLAY` environment variable is not set, `git log` is used
+If 'DISPLAY' environment variable is not set, 'git-log' is used
 instead.  You can even give command line options such as `-p` and
 `--stat`.
 
@@ -209,13 +215,62 @@ tweaks (e.g., s/#define DEBUG 0/#define DEBUG 1/ in a header file, or
 work around other problem this bisection is not interested in")
 applied to the revision being tested.
 
-To cope with such a situation, after the inner git-bisect finds the
+To cope with such a situation, after the inner 'git-bisect' finds the
 next revision to test, with the "run" script, you can apply that tweak
 before compiling, run the real test, and after the test decides if the
 revision (possibly with the needed tweaks) passed the test, rewind the
 tree to the pristine state.  Finally the "run" script can exit with
-the status of the real test to let "git bisect run" command loop to
-know the outcome.
+the status of the real test to let the "git bisect run" command loop to
+determine the outcome.
+
+EXAMPLES
+--------
+
+* Automatically bisect a broken build between v1.2 and HEAD:
++
+------------
+$ git bisect start HEAD v1.2 --      # HEAD is bad, v1.2 is good
+$ git bisect run make                # "make" builds the app
+------------
+
+* Automatically bisect a broken test suite:
++
+------------
+$ cat ~/test.sh
+#!/bin/sh
+make || exit 125                   # this "skip"s broken builds
+make test                          # "make test" runs the test suite
+$ git bisect start v1.3 v1.1 --    # v1.3 is bad, v1.1 is good
+$ git bisect run ~/test.sh
+------------
++
+Here we use a "test.sh" custom script. In this script, if "make"
+fails, we "skip" the current commit.
++
+It's safer to use a custom script outside the repo to prevent
+interactions between the bisect, make and test processes and the
+script.
++
+And "make test" should "exit 0", if the test suite passes, and
+"exit 1" (for example) otherwise.
+
+* Automatically bisect a broken test case:
++
+------------
+$ cat ~/test.sh
+#!/bin/sh
+make || exit 125                     # this "skip"s broken builds
+~/check_test_case.sh                 # does the test case passes ?
+$ git bisect start HEAD HEAD~10 --   # culprit is among the last 10
+$ git bisect run ~/test.sh
+------------
++
+Here "check_test_case.sh" should "exit 0", if the test case passes,
+and "exit 1" (for example) otherwise.
++
+It's safer if both "test.sh" and "check_test_case.sh" scripts are
+outside the repo to prevent interactions between the bisect, make and
+test processes and the scripts.
 
 Author
 ------
@@ -227,4 +282,4 @@ Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

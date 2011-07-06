@@ -17,49 +17,49 @@ test_expect_success \
 	 git-add file && \
 	 git-status | grep 'Initial commit'"
 
-test_expect_failure \
+test_expect_success \
 	"fail initial amend" \
-	"git-commit --amend"
+	"test_must_fail git-commit --amend"
 
 test_expect_success \
 	"initial commit" \
 	"git-commit -m initial"
 
-test_expect_failure \
+test_expect_success \
 	"invalid options 1" \
-	"git-commit -m foo -m bar -F file"
+	"test_must_fail git-commit -m foo -m bar -F file"
 
-test_expect_failure \
+test_expect_success \
 	"invalid options 2" \
-	"git-commit -C HEAD -m illegal"
+	"test_must_fail git-commit -C HEAD -m illegal"
 
-test_expect_failure \
+test_expect_success \
 	"using paths with -a" \
 	"echo King of the bongo >file &&
-	git-commit -m foo -a file"
+	test_must_fail git-commit -m foo -a file"
 
-test_expect_failure \
+test_expect_success \
 	"using paths with --interactive" \
 	"echo bong-o-bong >file &&
-	echo 7 | git-commit -m foo --interactive file"
+	! (echo 7 | git-commit -m foo --interactive file)"
 
-test_expect_failure \
+test_expect_success \
 	"using invalid commit with -C" \
-	"git-commit -C bogus"
+	"test_must_fail git-commit -C bogus"
 
-test_expect_failure \
+test_expect_success \
 	"testing nothing to commit" \
-	"git-commit -m initial"
+	"test_must_fail git-commit -m initial"
 
 test_expect_success \
 	"next commit" \
 	"echo 'bongo bongo bongo' >file \
 	 git-commit -m next -a"
 
-test_expect_failure \
+test_expect_success \
 	"commit message from non-existing file" \
 	"echo 'more bongo: bongo bongo bongo bongo' >file && \
-	 git-commit -F gah -a"
+	 test_must_fail git-commit -F gah -a"
 
 # Empty except stray tabs and spaces on a few lines.
 sed -e 's/@$//' >msg <<EOF
@@ -68,9 +68,9 @@ sed -e 's/@$//' >msg <<EOF
   @
 Signed-off-by: hula
 EOF
-test_expect_failure \
+test_expect_success \
 	"empty commit message" \
-	"git-commit -F msg -a"
+	"test_must_fail git-commit -F msg -a"
 
 test_expect_success \
 	"commit message from file" \
@@ -79,8 +79,8 @@ test_expect_success \
 
 cat >editor <<\EOF
 #!/bin/sh
-sed -e "s/a file/an amend commit/g" < $1 > $1-
-mv $1- $1
+sed -e "s/a file/an amend commit/g" < "$1" > "$1-"
+mv "$1-" "$1"
 EOF
 chmod 755 editor
 
@@ -88,10 +88,10 @@ test_expect_success \
 	"amend commit" \
 	"VISUAL=./editor git-commit --amend"
 
-test_expect_failure \
+test_expect_success \
 	"passing -m and -F" \
 	"echo 'enough with the bongos' >file && \
-	 git-commit -F msg -m amending ."
+	 test_must_fail git-commit -F msg -m amending ."
 
 test_expect_success \
 	"using message from other commit" \
@@ -99,8 +99,8 @@ test_expect_success \
 
 cat >editor <<\EOF
 #!/bin/sh
-sed -e "s/amend/older/g"  < $1 > $1-
-mv $1- $1
+sed -e "s/amend/older/g"  < "$1" > "$1-"
+mv "$1-" "$1"
 EOF
 chmod 755 editor
 
@@ -203,7 +203,7 @@ test_expect_success 'sign off (1)' '
 		git var GIT_COMMITTER_IDENT |
 		sed -e "s/>.*/>/" -e "s/^/Signed-off-by: /"
 	) >expected &&
-	diff -u expected actual
+	test_cmp expected actual
 
 '
 
@@ -223,7 +223,7 @@ $existing" &&
 		git var GIT_COMMITTER_IDENT |
 		sed -e "s/>.*/>/" -e "s/^/Signed-off-by: /"
 	) >expected &&
-	diff -u expected actual
+	test_cmp expected actual
 
 '
 
@@ -240,7 +240,7 @@ test_expect_success 'multiple -m' '
 		echo
 		echo three
 	) >expected &&
-	diff -u expected actual
+	test_cmp expected actual
 
 '
 
@@ -301,12 +301,12 @@ test_expect_success 'same tree (merge and amend merge)' '
 	git merge -s ours side -m "empty ok" &&
 	git diff HEAD^ HEAD >actual &&
 	: >expected &&
-	diff -u expected actual &&
+	test_cmp expected actual &&
 
 	git commit --amend -m "empty really ok" &&
 	git diff HEAD^ HEAD >actual &&
 	: >expected &&
-	diff -u expected actual
+	test_cmp expected actual
 
 '
 
@@ -323,7 +323,25 @@ test_expect_success 'amend using the message from another commit' '
 	git commit --allow-empty --amend -C "$old" &&
 	git show --pretty="format:%ad %s" "$old" >expected &&
 	git show --pretty="format:%ad %s" HEAD >actual &&
-	diff -u expected actual
+	test_cmp expected actual
+
+'
+
+test_expect_success 'amend using the message from a commit named with tag' '
+
+	git reset --hard &&
+	test_tick &&
+	git commit --allow-empty -m "old commit" &&
+	old=$(git rev-parse --verify HEAD) &&
+	git tag -a -m "tag on old" tagged-old HEAD &&
+	test_tick &&
+	git commit --allow-empty -m "new commit" &&
+	new=$(git rev-parse --verify HEAD) &&
+	test_tick &&
+	git commit --allow-empty --amend -C tagged-old &&
+	git show --pretty="format:%ad %s" "$old" >expected &&
+	git show --pretty="format:%ad %s" HEAD >actual &&
+	test_cmp expected actual
 
 '
 

@@ -22,10 +22,12 @@ git repository.
 OPTIONS
 -------
 To control which revisions to shown, the command takes options applicable to
-the linkgit:git-rev-list[1] command. This manual page describes only the most
+the 'git-rev-list' command (see linkgit:git-rev-list[1]).
+This manual page describes only the most
 frequently used options.
 
--n <number>, --max-count=<number>::
+-n <number>::
+--max-count=<number>::
 
 	Limits the number of commits to show.
 
@@ -41,6 +43,12 @@ frequently used options.
 
 	Show all branches.
 
+--merge::
+
+	After an attempt to merge stops with conflicts, show the commits on
+	the history between two branches (i.e. the HEAD and the MERGE_HEAD)
+	that modify the conflicted files.
+
 <revs>::
 
 	Limit the revisions to show. This can be either a single revision
@@ -50,7 +58,7 @@ frequently used options.
 	For a more complete list of ways to spell object names, see
 	"SPECIFYING REVISIONS" section in linkgit:git-rev-parse[1].
 
-<path>::
+<path>...::
 
 	Limit commits to the ones touching files in the given paths. Note, to
 	avoid ambiguity wrt. revision names use "--" to separate the paths
@@ -74,7 +82,12 @@ gitk --max-count=100 --all \-- Makefile::
 	Show at most 100 changes made to the file 'Makefile'. Instead of only
 	looking for changes in the current branch look in all branches.
 
-See Also
+Files
+-----
+Gitk creates the .gitk file in your $HOME directory to store preferences
+such as display options, font, and colors.
+
+SEE ALSO
 --------
 'qgit(1)'::
 	A repository browser written in C++ using Qt.
@@ -98,4 +111,4 @@ Documentation by Junio C Hamano, Jonas Fonseca, and the git-list
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

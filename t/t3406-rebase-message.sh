@@ -37,7 +37,7 @@ test_expect_success 'rebase -m' '
 	git rebase -m master >report &&
 	sed -n -e "/^Already applied: /p" \
 		-e "/^Committed: /p" report >actual &&
-	diff -u expect actual
+	test_cmp expect actual
 
 '
 

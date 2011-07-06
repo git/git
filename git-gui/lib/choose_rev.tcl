@@ -451,7 +451,8 @@ method _sb_set {sb orient first last} {
 			focus $old_focus
 		}
 	}
-	$sb set $first $last
+
+	catch {$sb set $first $last}
 }
 
 method _show_tooltip {pos} {

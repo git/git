@@ -3,44 +3,38 @@
 # Copyright (c) 2005 Junio C Hamano
 #
 
-test_description='git apply --stat --summary test.
+test_description='git apply --stat --summary test, with --recount
 
 '
 . ./test-lib.sh
 
-test_expect_success \
-    'rename' \
-    'git apply --stat --summary <../t4100/t-apply-1.patch >current &&
-    git diff ../t4100/t-apply-1.expect current'
+UNC='s/^\(@@ -[1-9][0-9]*\),[0-9]* \(+[1-9][0-9]*\),[0-9]* @@/\1,999 \2,999 @@/'
 
-test_expect_success \
-    'copy' \
-    'git apply --stat --summary <../t4100/t-apply-2.patch >current &&
-    git diff ../t4100/t-apply-2.expect current'
+num=0
+while read title
+do
+	num=$(( $num + 1 ))
+	test_expect_success "$title" '
+		git apply --stat --summary \
+			<"$TEST_DIRECTORY/t4100/t-apply-$num.patch" >current &&
+		test_cmp ../t4100/t-apply-$num.expect current
+	'
 
-test_expect_success \
-    'rewrite' \
-    'git apply --stat --summary <../t4100/t-apply-3.patch >current &&
-    git diff ../t4100/t-apply-3.expect current'
-
-test_expect_success \
-    'mode' \
-    'git apply --stat --summary <../t4100/t-apply-4.patch >current &&
-    git diff ../t4100/t-apply-4.expect current'
-
-test_expect_success \
-    'non git' \
-    'git apply --stat --summary <../t4100/t-apply-5.patch >current &&
-    git diff ../t4100/t-apply-5.expect current'
-
-test_expect_success \
-    'non git' \
-    'git apply --stat --summary <../t4100/t-apply-6.patch >current &&
-    git diff ../t4100/t-apply-6.expect current'
-
-test_expect_success \
-    'non git' \
-    'git apply --stat --summary <../t4100/t-apply-7.patch >current &&
-    git diff ../t4100/t-apply-7.expect current'
+	test_expect_success "$title with recount" '
+		sed -e "$UNC" <"$TEST_DIRECTORY/t4100/t-apply-$num.patch" |
+		git apply --recount --stat --summary >current &&
+		test_cmp ../t4100/t-apply-$num.expect current
+	'
+done <<\EOF
+rename
+copy
+rewrite
+mode
+non git (1)
+non git (2)
+non git (3)
+incomplete (1)
+incomplete (2)
+EOF
 
 test_done

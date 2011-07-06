@@ -13,26 +13,24 @@
 #include "remote.h"
 #include "parse-options.h"
 #include "branch.h"
+#include "diff.h"
+#include "revision.h"
 
 static const char * const builtin_branch_usage[] = {
-	"git-branch [options] [-r | -a]",
-	"git-branch [options] [-l] [-f] <branchname> [<start-point>]",
-	"git-branch [options] [-r] (-d | -D) <branchname>",
-	"git-branch [options] (-m | -M) [<oldbranch>] <newbranch>",
+	"git branch [options] [-r | -a] [--merged | --no-merged]",
+	"git branch [options] [-l] [-f] <branchname> [<start-point>]",
+	"git branch [options] [-r] (-d | -D) <branchname>",
+	"git branch [options] (-m | -M) [<oldbranch>] <newbranch>",
 	NULL
 };
 
-#define REF_UNKNOWN_TYPE    0x00
 #define REF_LOCAL_BRANCH    0x01
 #define REF_REMOTE_BRANCH   0x02
-#define REF_TAG             0x04
 
 static const char *head;
 static unsigned char head_sha1[20];
 
-static int branch_track = 1;
-
-static int branch_use_color;
+static int branch_use_color = -1;
 static char branch_colors[][COLOR_MAXLEN] = {
 	"\033[m",	/* reset */
 	"",		/* PLAIN (normal) */
@@ -47,6 +45,13 @@ enum color_branch {
 	COLOR_BRANCH_LOCAL = 3,
 	COLOR_BRANCH_CURRENT = 4,
 };
+
+static enum merge_filter {
+	NO_FILTER = 0,
+	SHOW_NOT_MERGED,
+	SHOW_MERGED,
+} merge_filter;
+static unsigned char merge_filter_ref[20];
 
 static int parse_branch_color_slot(const char *var, int ofs)
 {
@@ -63,7 +68,7 @@ static int parse_branch_color_slot(const char *var, int ofs)
 	die("bad config variable '%s'", var);
 }
 
-static int git_branch_config(const char *var, const char *value)
+static int git_branch_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, "color.branch")) {
 		branch_use_color = git_config_colorbool(var, value, -1);
@@ -71,18 +76,17 @@ static int git_branch_config(const char *var, const char *value)
 	}
 	if (!prefixcmp(var, "color.branch.")) {
 		int slot = parse_branch_color_slot(var, 13);
+		if (!value)
+			return config_error_nonbool(var);
 		color_parse(value, var, branch_colors[slot]);
 		return 0;
 	}
-	if (!strcmp(var, "branch.autosetupmerge"))
-			branch_track = git_config_bool(var, value);
-
-	return git_default_config(var, value);
+	return git_color_default_config(var, value, cb);
 }
 
 static const char *branch_get_color(enum color_branch ix)
 {
-	if (branch_use_color)
+	if (branch_use_color > 0)
 		return branch_colors[ix];
 	return "";
 }
@@ -124,8 +128,7 @@ static int delete_branches(int argc, const char **argv, int force, int kinds)
 			continue;
 		}
 
-		if (name)
-			free(name);
+		free(name);
 
 		name = xstrdup(mkpath(fmt, argv[i]));
 		if (!resolve_ref(name, sha1, 1, NULL)) {
@@ -170,8 +173,7 @@ static int delete_branches(int argc, const char **argv, int force, int kinds)
 		}
 	}
 
-	if (name)
-		free(name);
+	free(name);
 
 	return(ret);
 }
@@ -179,25 +181,21 @@ static int delete_branches(int argc, const char **argv, int force, int kinds)
 struct ref_item {
 	char *name;
 	unsigned int kind;
-	unsigned char sha1[20];
+	struct commit *commit;
 };
 
 struct ref_list {
+	struct rev_info revs;
 	int index, alloc, maxwidth;
 	struct ref_item *list;
 	struct commit_list *with_commit;
 	int kinds;
 };
 
-static int has_commit(const unsigned char *sha1, struct commit_list *with_commit)
+static int has_commit(struct commit *commit, struct commit_list *with_commit)
 {
-	struct commit *commit;
-
 	if (!with_commit)
 		return 1;
-	commit = lookup_commit_reference_gently(sha1, 1);
-	if (!commit)
-		return 0;
 	while (with_commit) {
 		struct commit *other;
 
@@ -213,7 +211,8 @@ static int append_ref(const char *refname, const unsigned char *sha1, int flags,
 {
 	struct ref_list *ref_list = (struct ref_list*)(cb_data);
 	struct ref_item *newitem;
-	int kind = REF_UNKNOWN_TYPE;
+	struct commit *commit;
+	int kind;
 	int len;
 
 	/* Detect kind */
@@ -223,18 +222,24 @@ static int append_ref(const char *refname, const unsigned char *sha1, int flags,
 	} else if (!prefixcmp(refname, "refs/remotes/")) {
 		kind = REF_REMOTE_BRANCH;
 		refname += 13;
-	} else if (!prefixcmp(refname, "refs/tags/")) {
-		kind = REF_TAG;
-		refname += 10;
-	}
+	} else
+		return 0;
+
+	commit = lookup_commit_reference_gently(sha1, 1);
+	if (!commit)
+		return error("branch '%s' does not point at a commit", refname);
 
 	/* Filter with with_commit if specified */
-	if (!has_commit(sha1, ref_list->with_commit))
+	if (!has_commit(commit, ref_list->with_commit))
 		return 0;
 
 	/* Don't add types the caller doesn't want */
 	if ((kind & ref_list->kinds) == 0)
 		return 0;
+
+	if (merge_filter != NO_FILTER)
+		add_pending_object(&ref_list->revs,
+				   (struct object *)commit, refname);
 
 	/* Resize buffer */
 	if (ref_list->index >= ref_list->alloc) {
@@ -247,7 +252,7 @@ static int append_ref(const char *refname, const unsigned char *sha1, int flags,
 	newitem = &(ref_list->list[ref_list->index++]);
 	newitem->name = xstrdup(refname);
 	newitem->kind = kind;
-	hashcpy(newitem->sha1, sha1);
+	newitem->commit = commit;
 	len = strlen(newitem->name);
 	if (len > ref_list->maxwidth)
 		ref_list->maxwidth = len;
@@ -274,12 +279,41 @@ static int ref_cmp(const void *r1, const void *r2)
 	return strcmp(c1->name, c2->name);
 }
 
+static void fill_tracking_info(char *stat, const char *branch_name)
+{
+	int ours, theirs;
+	struct branch *branch = branch_get(branch_name);
+
+	if (!stat_tracking_info(branch, &ours, &theirs) || (!ours && !theirs))
+		return;
+	if (!ours)
+		sprintf(stat, "[behind %d] ", theirs);
+	else if (!theirs)
+		sprintf(stat, "[ahead %d] ", ours);
+	else
+		sprintf(stat, "[ahead %d, behind %d] ", ours, theirs);
+}
+
+static int matches_merge_filter(struct commit *commit)
+{
+	int is_merged;
+
+	if (merge_filter == NO_FILTER)
+		return 1;
+
+	is_merged = !!(commit->object.flags & UNINTERESTING);
+	return (is_merged == (merge_filter == SHOW_MERGED));
+}
+
 static void print_ref_item(struct ref_item *item, int maxwidth, int verbose,
 			   int abbrev, int current)
 {
 	char c;
 	int color;
-	struct commit *commit;
+	struct commit *commit = item->commit;
+
+	if (!matches_merge_filter(commit))
+		return;
 
 	switch (item->kind) {
 	case REF_LOCAL_BRANCH:
@@ -302,19 +336,26 @@ static void print_ref_item(struct ref_item *item, int maxwidth, int verbose,
 	if (verbose) {
 		struct strbuf subject;
 		const char *sub = " **** invalid ref ****";
+		char stat[128];
 
 		strbuf_init(&subject, 0);
+		stat[0] = '\0';
 
-		commit = lookup_commit(item->sha1);
+		commit = item->commit;
 		if (commit && !parse_commit(commit)) {
 			pretty_print_commit(CMIT_FMT_ONELINE, commit,
 					    &subject, 0, NULL, NULL, 0, 0);
 			sub = subject.buf;
 		}
-		printf("%c %s%-*s%s %s %s\n", c, branch_get_color(color),
+
+		if (item->kind == REF_LOCAL_BRANCH)
+			fill_tracking_info(stat, item->name);
+
+		printf("%c %s%-*s%s %s %s%s\n", c, branch_get_color(color),
 		       maxwidth, item->name,
 		       branch_get_color(COLOR_BRANCH_RESET),
-		       find_unique_abbrev(item->sha1, abbrev), sub);
+		       find_unique_abbrev(item->commit->object.sha1, abbrev),
+		       stat, sub);
 		strbuf_release(&subject);
 	} else {
 		printf("%c %s%s%s\n", c, branch_get_color(color), item->name,
@@ -322,26 +363,53 @@ static void print_ref_item(struct ref_item *item, int maxwidth, int verbose,
 	}
 }
 
+static int calc_maxwidth(struct ref_list *refs)
+{
+	int i, l, w = 0;
+	for (i = 0; i < refs->index; i++) {
+		if (!matches_merge_filter(refs->list[i].commit))
+			continue;
+		l = strlen(refs->list[i].name);
+		if (l > w)
+			w = l;
+	}
+	return w;
+}
+
 static void print_ref_list(int kinds, int detached, int verbose, int abbrev, struct commit_list *with_commit)
 {
 	int i;
 	struct ref_list ref_list;
+	struct commit *head_commit = lookup_commit_reference_gently(head_sha1, 1);
 
 	memset(&ref_list, 0, sizeof(ref_list));
 	ref_list.kinds = kinds;
 	ref_list.with_commit = with_commit;
+	if (merge_filter != NO_FILTER)
+		init_revisions(&ref_list.revs, NULL);
 	for_each_ref(append_ref, &ref_list);
+	if (merge_filter != NO_FILTER) {
+		struct commit *filter;
+		filter = lookup_commit_reference_gently(merge_filter_ref, 0);
+		filter->object.flags |= UNINTERESTING;
+		add_pending_object(&ref_list.revs,
+				   (struct object *) filter, "");
+		ref_list.revs.limited = 1;
+		prepare_revision_walk(&ref_list.revs);
+		if (verbose)
+			ref_list.maxwidth = calc_maxwidth(&ref_list);
+	}
 
 	qsort(ref_list.list, ref_list.index, sizeof(struct ref_item), ref_cmp);
 
 	detached = (detached && (kinds & REF_LOCAL_BRANCH));
-	if (detached && has_commit(head_sha1, with_commit)) {
+	if (detached && head_commit && has_commit(head_commit, with_commit)) {
 		struct ref_item item;
 		item.name = xstrdup("(no branch)");
 		item.kind = REF_LOCAL_BRANCH;
-		hashcpy(item.sha1, head_sha1);
+		item.commit = head_commit;
 		if (strlen(item.name) > ref_list.maxwidth)
-			      ref_list.maxwidth = strlen(item.name);
+			ref_list.maxwidth = strlen(item.name);
 		print_ref_item(&item, ref_list.maxwidth, verbose, abbrev, 1);
 		free(item.name);
 	}
@@ -413,28 +481,48 @@ static int opt_parse_with_commit(const struct option *opt, const char *arg, int 
 	return 0;
 }
 
+static int opt_parse_merge_filter(const struct option *opt, const char *arg, int unset)
+{
+	merge_filter = ((opt->long_name[0] == 'n')
+			? SHOW_NOT_MERGED
+			: SHOW_MERGED);
+	if (unset)
+		merge_filter = SHOW_NOT_MERGED; /* b/c for --no-merged */
+	if (!arg)
+		arg = "HEAD";
+	if (get_sha1(arg, merge_filter_ref))
+		die("malformed object name %s", arg);
+	return 0;
+}
+
 int cmd_branch(int argc, const char **argv, const char *prefix)
 {
 	int delete = 0, rename = 0, force_create = 0;
 	int verbose = 0, abbrev = DEFAULT_ABBREV, detached = 0;
-	int reflog = 0, track;
+	int reflog = 0;
+	enum branch_track track;
 	int kinds = REF_LOCAL_BRANCH;
 	struct commit_list *with_commit = NULL;
 
 	struct option options[] = {
 		OPT_GROUP("Generic options"),
 		OPT__VERBOSE(&verbose),
-		OPT_BOOLEAN( 0 , "track",  &track, "set up tracking mode (see git-pull(1))"),
+		OPT_SET_INT( 0 , "track",  &track, "set up tracking mode (see git-pull(1))",
+			BRANCH_TRACK_EXPLICIT),
 		OPT_BOOLEAN( 0 , "color",  &branch_use_color, "use colored output"),
 		OPT_SET_INT('r', NULL,     &kinds, "act on remote-tracking branches",
 			REF_REMOTE_BRANCH),
-		OPT_CALLBACK(0, "contains", &with_commit, "commit",
-			     "print only branches that contain the commit",
-			     opt_parse_with_commit),
+		{
+			OPTION_CALLBACK, 0, "contains", &with_commit, "commit",
+			"print only branches that contain the commit",
+			PARSE_OPT_LASTARG_DEFAULT,
+			opt_parse_with_commit, (intptr_t)"HEAD",
+		},
 		{
 			OPTION_CALLBACK, 0, "with", &with_commit, "commit",
 			"print only branches that contain the commit",
-			PARSE_OPT_HIDDEN, opt_parse_with_commit,
+			PARSE_OPT_HIDDEN | PARSE_OPT_LASTARG_DEFAULT,
+			opt_parse_with_commit, (intptr_t) "HEAD",
 		},
 		OPT__ABBREV(&abbrev),
 
@@ -447,14 +535,27 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 		OPT_BIT('M', NULL, &rename, "move/rename a branch, even if target exists", 2),
 		OPT_BOOLEAN('l', NULL, &reflog, "create the branch's reflog"),
 		OPT_BOOLEAN('f', NULL, &force_create, "force creation (when already exists)"),
+		{
+			OPTION_CALLBACK, 0, "no-merged", &merge_filter_ref,
+			"commit", "print only not merged branches",
+			PARSE_OPT_LASTARG_DEFAULT | PARSE_OPT_NONEG,
+			opt_parse_merge_filter, (intptr_t) "HEAD",
+		},
+		{
+			OPTION_CALLBACK, 0, "merged", &merge_filter_ref,
+			"commit", "print only merged branches",
+			PARSE_OPT_LASTARG_DEFAULT | PARSE_OPT_NONEG,
+			opt_parse_merge_filter, (intptr_t) "HEAD",
+		},
 		OPT_END(),
 	};
 
-	git_config(git_branch_config);
-	track = branch_track;
-	argc = parse_options(argc, argv, options, builtin_branch_usage, 0);
-	if (!!delete + !!rename + !!force_create > 1)
-		usage_with_options(builtin_branch_usage, options);
+	git_config(git_branch_config, NULL);
+
+	if (branch_use_color == -1)
+		branch_use_color = git_use_color_default;
+
+	track = git_branch_track;
 
 	head = resolve_ref("HEAD", head_sha1, 0, NULL);
 	if (!head)
@@ -467,6 +568,11 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 			die("HEAD not found below refs/heads!");
 		head += 11;
 	}
+	hashcpy(merge_filter_ref, head_sha1);
+
+	argc = parse_options(argc, argv, options, builtin_branch_usage, 0);
+	if (!!delete + !!rename + !!force_create > 1)
+		usage_with_options(builtin_branch_usage, options);
 
 	if (delete)
 		return delete_branches(argc, argv, delete > 1, kinds);

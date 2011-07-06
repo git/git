@@ -6,6 +6,46 @@
 const char git_usage_string[] =
 	"git [--version] [--exec-path[=GIT_EXEC_PATH]] [-p|--paginate|--no-pager] [--bare] [--git-dir=GIT_DIR] [--work-tree=GIT_WORK_TREE] [--help] COMMAND [ARGS]";
 
+const char git_more_info_string[] =
+	"See 'git help COMMAND' for more information on a specific command.";
+
+static int use_pager = -1;
+struct pager_config {
+	const char *cmd;
+	int val;
+};
+
+static int pager_command_config(const char *var, const char *value, void *data)
+{
+	struct pager_config *c = data;
+	if (!prefixcmp(var, "pager.") && !strcmp(var + 6, c->cmd))
+		c->val = git_config_bool(var, value);
+	return 0;
+}
+
+/* returns 0 for "no pager", 1 for "use pager", and -1 for "not specified" */
+int check_pager_config(const char *cmd)
+{
+	struct pager_config c;
+	c.cmd = cmd;
+	c.val = -1;
+	git_config(pager_command_config, &c);
+	return c.val;
+}
+
+static void commit_pager_choice(void) {
+	switch (use_pager) {
+	case 0:
+		setenv("GIT_PAGER", "cat", 1);
+		break;
+	case 1:
+		setup_pager();
+		break;
+	default:
+		break;
+	}
+}
+
 static int handle_options(const char*** argv, int* argc, int* envchanged)
 {
 	int handled = 0;
@@ -35,9 +75,9 @@ static int handle_options(const char*** argv, int* argc, int* envchanged)
 				exit(0);
 			}
 		} else if (!strcmp(cmd, "-p") || !strcmp(cmd, "--paginate")) {
-			setup_pager();
+			use_pager = 1;
 		} else if (!strcmp(cmd, "--no-pager")) {
-			setenv("GIT_PAGER", "cat", 1);
+			use_pager = 0;
 			if (envchanged)
 				*envchanged = 1;
 		} else if (!strcmp(cmd, "--git-dir")) {
@@ -87,81 +127,20 @@ static int handle_options(const char*** argv, int* argc, int* envchanged)
 	return handled;
 }
 
-static const char *alias_command;
-static char *alias_string;
-
-static int git_alias_config(const char *var, const char *value)
-{
-	if (!prefixcmp(var, "alias.") && !strcmp(var + 6, alias_command)) {
-		alias_string = xstrdup(value);
-	}
-	return 0;
-}
-
-static int split_cmdline(char *cmdline, const char ***argv)
-{
-	int src, dst, count = 0, size = 16;
-	char quoted = 0;
-
-	*argv = xmalloc(sizeof(char*) * size);
-
-	/* split alias_string */
-	(*argv)[count++] = cmdline;
-	for (src = dst = 0; cmdline[src];) {
-		char c = cmdline[src];
-		if (!quoted && isspace(c)) {
-			cmdline[dst++] = 0;
-			while (cmdline[++src]
-					&& isspace(cmdline[src]))
-				; /* skip */
-			if (count >= size) {
-				size += 16;
-				*argv = xrealloc(*argv, sizeof(char*) * size);
-			}
-			(*argv)[count++] = cmdline + dst;
-		} else if(!quoted && (c == '\'' || c == '"')) {
-			quoted = c;
-			src++;
-		} else if (c == quoted) {
-			quoted = 0;
-			src++;
-		} else {
-			if (c == '\\' && quoted != '\'') {
-				src++;
-				c = cmdline[src];
-				if (!c) {
-					free(*argv);
-					*argv = NULL;
-					return error("cmdline ends with \\");
-				}
-			}
-			cmdline[dst++] = c;
-			src++;
-		}
-	}
-
-	cmdline[dst] = 0;
-
-	if (quoted) {
-		free(*argv);
-		*argv = NULL;
-		return error("unclosed quote");
-	}
-
-	return count;
-}
-
 static int handle_alias(int *argcp, const char ***argv)
 {
-	int nongit = 0, envchanged = 0, ret = 0, saved_errno = errno;
+	int envchanged = 0, ret = 0, saved_errno = errno;
 	const char *subdir;
 	int count, option_count;
 	const char** new_argv;
+	const char *alias_command;
+	char *alias_string;
+	int unused_nongit;
 
-	subdir = setup_git_directory_gently(&nongit);
+	subdir = setup_git_directory_gently(&unused_nongit);
 
 	alias_command = (*argv)[0];
-	git_config(git_alias_config);
+	alias_string = alias_lookup(alias_command);
 	if (alias_string) {
 		if (alias_string[0] == '!') {
 			if (*argcp > 1) {
@@ -247,8 +226,13 @@ static int run_command(struct cmd_struct *p, int argc, const char **argv)
 	prefix = NULL;
 	if (p->option & RUN_SETUP)
 		prefix = setup_git_directory();
-	if (p->option & USE_PAGER)
-		setup_pager();
+
+	if (use_pager == -1 && p->option & RUN_SETUP)
+		use_pager = check_pager_config(p->cmd);
+	if (use_pager == -1 && p->option & USE_PAGER)
+		use_pager = 1;
+	commit_pager_choice();
+
 	if (p->option & NEED_WORK_TREE)
 		setup_work_tree();
 
@@ -291,9 +275,10 @@ static void handle_internal_command(int argc, const char **argv)
 		{ "checkout-index", cmd_checkout_index,
 			RUN_SETUP | NEED_WORK_TREE},
 		{ "check-ref-format", cmd_check_ref_format },
-		{ "check-attr", cmd_check_attr, RUN_SETUP | NEED_WORK_TREE },
+		{ "check-attr", cmd_check_attr, RUN_SETUP },
 		{ "cherry", cmd_cherry, RUN_SETUP },
 		{ "cherry-pick", cmd_cherry_pick, RUN_SETUP | NEED_WORK_TREE },
+		{ "clone", cmd_clone },
 		{ "clean", cmd_clean, RUN_SETUP | NEED_WORK_TREE },
 		{ "commit", cmd_commit, RUN_SETUP | NEED_WORK_TREE },
 		{ "commit-tree", cmd_commit_tree, RUN_SETUP },
@@ -301,7 +286,7 @@ static void handle_internal_command(int argc, const char **argv)
 		{ "count-objects", cmd_count_objects, RUN_SETUP },
 		{ "describe", cmd_describe, RUN_SETUP },
 		{ "diff", cmd_diff },
-		{ "diff-files", cmd_diff_files },
+		{ "diff-files", cmd_diff_files, RUN_SETUP },
 		{ "diff-index", cmd_diff_index, RUN_SETUP },
 		{ "diff-tree", cmd_diff_tree, RUN_SETUP },
 		{ "fast-export", cmd_fast_export, RUN_SETUP },
@@ -328,10 +313,12 @@ static void handle_internal_command(int argc, const char **argv)
 		{ "ls-remote", cmd_ls_remote },
 		{ "mailinfo", cmd_mailinfo },
 		{ "mailsplit", cmd_mailsplit },
+		{ "merge", cmd_merge, RUN_SETUP | NEED_WORK_TREE },
 		{ "merge-base", cmd_merge_base, RUN_SETUP },
 		{ "merge-file", cmd_merge_file },
 		{ "merge-ours", cmd_merge_ours, RUN_SETUP },
 		{ "merge-recursive", cmd_merge_recursive, RUN_SETUP | NEED_WORK_TREE },
+		{ "merge-subtree", cmd_merge_recursive, RUN_SETUP | NEED_WORK_TREE },
 		{ "mv", cmd_mv, RUN_SETUP | NEED_WORK_TREE },
 		{ "name-rev", cmd_name_rev, RUN_SETUP },
 		{ "pack-objects", cmd_pack_objects, RUN_SETUP },
@@ -342,6 +329,7 @@ static void handle_internal_command(int argc, const char **argv)
 		{ "push", cmd_push, RUN_SETUP },
 		{ "read-tree", cmd_read_tree, RUN_SETUP },
 		{ "reflog", cmd_reflog, RUN_SETUP },
+		{ "remote", cmd_remote, RUN_SETUP },
 		{ "repo-config", cmd_config },
 		{ "rerere", cmd_rerere, RUN_SETUP },
 		{ "reset", cmd_reset, RUN_SETUP },
@@ -350,7 +338,7 @@ static void handle_internal_command(int argc, const char **argv)
 		{ "revert", cmd_revert, RUN_SETUP | NEED_WORK_TREE },
 		{ "rm", cmd_rm, RUN_SETUP },
 		{ "send-pack", cmd_send_pack, RUN_SETUP },
-		{ "shortlog", cmd_shortlog, RUN_SETUP | USE_PAGER },
+		{ "shortlog", cmd_shortlog, USE_PAGER },
 		{ "show-branch", cmd_show_branch, RUN_SETUP },
 		{ "show", cmd_show, RUN_SETUP | USE_PAGER },
 		{ "status", cmd_status, RUN_SETUP | NEED_WORK_TREE },
@@ -371,6 +359,16 @@ static void handle_internal_command(int argc, const char **argv)
 		{ "pack-refs", cmd_pack_refs, RUN_SETUP },
 	};
 	int i;
+	static const char ext[] = STRIP_EXTENSION;
+
+	if (sizeof(ext) > 1) {
+		i = strlen(argv[0]) - strlen(ext);
+		if (i > 0 && !strcmp(argv[0] + i, ext)) {
+			char *argv0 = strdup(argv[0]);
+			argv[0] = cmd = argv0;
+			argv0[i] = '\0';
+		}
+	}
 
 	/* Turn "git cmd --help" into "git help cmd" */
 	if (argc > 1 && !strcmp(argv[1], "--help")) {
@@ -386,11 +384,40 @@ static void handle_internal_command(int argc, const char **argv)
 	}
 }
 
+static void execv_dashed_external(const char **argv)
+{
+	struct strbuf cmd;
+	const char *tmp;
+
+	strbuf_init(&cmd, 0);
+	strbuf_addf(&cmd, "git-%s", argv[0]);
+
+	/*
+	 * argv[0] must be the git command, but the argv array
+	 * belongs to the caller, and may be reused in
+	 * subsequent loop iterations. Save argv[0] and
+	 * restore it on error.
+	 */
+	tmp = argv[0];
+	argv[0] = cmd.buf;
+
+	trace_argv_printf(argv, "trace: exec:");
+
+	/* execvp() can only ever return if it fails */
+	execvp(cmd.buf, (char **)argv);
+
+	trace_printf("trace: exec failed: %s\n", strerror(errno));
+
+	argv[0] = tmp;
+
+	strbuf_release(&cmd);
+}
+
+
 int main(int argc, const char **argv)
 {
-	const char *cmd = argv[0] ? argv[0] : "git-help";
-	char *slash = strrchr(cmd, '/');
-	const char *cmd_path = NULL;
+	const char *cmd = argv[0] && *argv[0] ? argv[0] : "git-help";
+	char *slash = (char *)cmd + strlen(cmd);
 	int done_alias = 0;
 
 	/*
@@ -398,9 +425,12 @@ int main(int argc, const char **argv)
 	 * name, and the dirname as the default exec_path
 	 * if we don't have anything better.
 	 */
-	if (slash) {
+	do
+		--slash;
+	while (cmd <= slash && !is_dir_sep(*slash));
+	if (cmd <= slash) {
 		*slash++ = 0;
-		cmd_path = cmd;
+		git_set_argv0_path(cmd);
 		cmd = slash;
 	}
 
@@ -425,6 +455,7 @@ int main(int argc, const char **argv)
 	argv++;
 	argc--;
 	handle_options(&argv, &argc, NULL);
+	commit_pager_choice();
 	if (argc > 0) {
 		if (!prefixcmp(argv[0], "--"))
 			argv[0] += 2;
@@ -432,6 +463,7 @@ int main(int argc, const char **argv)
 		/* The user didn't specify a command; give them help */
 		printf("usage: %s\n\n", git_usage_string);
 		list_common_cmds_help();
+		printf("\n%s\n", git_more_info_string);
 		exit(1);
 	}
 	cmd = argv[0];
@@ -442,14 +474,14 @@ int main(int argc, const char **argv)
 	 * environment, and the $(gitexecdir) from the Makefile at build
 	 * time.
 	 */
-	setup_path(cmd_path);
+	setup_path();
 
 	while (1) {
 		/* See if it's an internal command */
 		handle_internal_command(argc, argv);
 
 		/* .. then try the external ones */
-		execv_git_cmd(argv);
+		execv_dashed_external(argv);
 
 		/* It could be an alias -- this works around the insanity
 		 * of overriding "git log" with "git show" by having

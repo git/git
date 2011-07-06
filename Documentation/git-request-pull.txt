@@ -7,7 +7,7 @@ git-request-pull - Generates a summary of pending changes
 
 SYNOPSIS
 --------
-'git-request-pull' <start> <url> [<end>]
+'git request-pull' <start> <url> [<end>]
 
 DESCRIPTION
 -----------
@@ -24,11 +24,11 @@ OPTIONS
 	URL to include in the summary.
 
 <end>::
-	Commit to send at; defaults to HEAD.
+	Commit to end at; defaults to HEAD.
 
 Author
 ------
-Written by Ryan Anderson <ryan@michonline.com> and Junio C Hamano <junkio@cox.net>
+Written by Ryan Anderson <ryan@michonline.com> and Junio C Hamano <gitster@pobox.com>
 
 Documentation
 --------------
@@ -36,4 +36,4 @@ Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

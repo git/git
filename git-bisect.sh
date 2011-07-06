@@ -1,7 +1,9 @@
 #!/bin/sh
 
-USAGE='[start|bad|good|skip|next|reset|visualize|replay|log|run]'
-LONG_USAGE='git bisect start [<bad> [<good>...]] [--] [<pathspec>...]
+USAGE='[help|start|bad|good|skip|next|reset|visualize|replay|log|run]'
+LONG_USAGE='git bisect help
+        print this long help message.
+git bisect start [<bad> [<good>...]] [--] [<pathspec>...]
         reset bisect state and start bisection.
 git bisect bad [<rev>]
         mark <rev> a known-bad revision.
@@ -20,11 +22,16 @@ git bisect replay <logfile>
 git bisect log
         show bisect log.
 git bisect run <cmd>...
-        use <cmd>... to automatically bisect.'
+        use <cmd>... to automatically bisect.
+
+Please use "git help bisect" to get the full man page.'
 
 OPTIONS_SPEC=
 . git-sh-setup
 require_work_tree
+
+_x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
+_x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
 
 sq() {
 	@@PERL@@ -e '
@@ -37,7 +44,7 @@ sq() {
 }
 
 bisect_autostart() {
-	test -f "$GIT_DIR/BISECT_NAMES" || {
+	test -s "$GIT_DIR/BISECT_START" || {
 		echo >&2 'You need to start by "git bisect start"'
 		if test -t 0
 		then
@@ -56,33 +63,42 @@ bisect_autostart() {
 
 bisect_start() {
 	#
-	# Verify HEAD. If we were bisecting before this, reset to the
-	# top-of-line master first!
+	# Verify HEAD.
 	#
-	head=$(GIT_DIR="$GIT_DIR" git symbolic-ref HEAD) ||
-	die "Bad HEAD - I need a symbolic ref"
-	case "$head" in
-	refs/heads/bisect)
-		if [ -s "$GIT_DIR/head-name" ]; then
-		    branch=`cat "$GIT_DIR/head-name"`
-		else
-		    branch=master
-		fi
-		git checkout $branch || exit
-		;;
-	refs/heads/*)
-		[ -s "$GIT_DIR/head-name" ] && die "won't bisect on seeked tree"
-		echo "${head#refs/heads/}" >"$GIT_DIR/head-name"
-		;;
-	*)
-		die "Bad HEAD - strange symbolic ref"
-		;;
-	esac
+	head=$(GIT_DIR="$GIT_DIR" git symbolic-ref -q HEAD) ||
+	head=$(GIT_DIR="$GIT_DIR" git rev-parse --verify HEAD) ||
+	die "Bad HEAD - I need a HEAD"
 
 	#
-	# Get rid of any old bisect state
+	# Check if we are bisecting.
 	#
-	bisect_clean_state
+	start_head=''
+	if test -s "$GIT_DIR/BISECT_START"
+	then
+		# Reset to the rev from where we started.
+		start_head=$(cat "$GIT_DIR/BISECT_START")
+		git checkout "$start_head" || exit
+	else
+		# Get rev from where we start.
+		case "$head" in
+		refs/heads/*|$_x40)
+			# This error message should only be triggered by
+			# cogito usage, and cogito users should understand
+			# it relates to cg-seek.
+			[ -s "$GIT_DIR/head-name" ] &&
+				die "won't bisect on seeked tree"
+			start_head="${head#refs/heads/}"
+			;;
+		*)
+			die "Bad HEAD - strange symbolic ref"
+			;;
+		esac
+	fi
+
+	#
+	# Get rid of any old bisect state.
+	#
+	bisect_clean_state || exit
 
 	#
 	# Check for one bad and then some good revisions.
@@ -93,6 +109,7 @@ bisect_start() {
 	done
 	orig_args=$(sq "$@")
 	bad_seen=0
+	eval=''
 	while [ $# -gt 0 ]; do
 	    arg="$1"
 	    case "$arg" in
@@ -101,7 +118,7 @@ bisect_start() {
 		break
 		;;
 	    *)
-		rev=$(git rev-parse --verify "$arg^{commit}" 2>/dev/null) || {
+		rev=$(git rev-parse -q --verify "$arg^{commit}") || {
 		    test $has_double_dash -eq 1 &&
 		        die "'$arg' does not appear to be a valid revision"
 		    break
@@ -110,15 +127,35 @@ bisect_start() {
 		0) state='bad' ; bad_seen=1 ;;
 		*) state='good' ;;
 		esac
-		bisect_write "$state" "$rev" 'nolog'
+		eval="$eval bisect_write '$state' '$rev' 'nolog'; "
 		shift
 		;;
 	    esac
 	done
 
-	sq "$@" >"$GIT_DIR/BISECT_NAMES"
-	echo "git-bisect start$orig_args" >>"$GIT_DIR/BISECT_LOG"
+	#
+	# Change state.
+	# In case of mistaken revs or checkout error, or signals received,
+	# "bisect_auto_next" below may exit or misbehave.
+	# We have to trap this to be able to clean up using
+	# "bisect_clean_state".
+	#
+	trap 'bisect_clean_state' 0
+	trap 'exit 255' 1 2 3 15
+
+	#
+	# Write new start state.
+	#
+	echo "$start_head" >"$GIT_DIR/BISECT_START" &&
+	sq "$@" >"$GIT_DIR/BISECT_NAMES" &&
+	eval "$eval" &&
+	echo "git bisect start$orig_args" >>"$GIT_DIR/BISECT_LOG" || exit
+	#
+	# Check if we can proceed to the next bisect state.
+	#
 	bisect_auto_next
+
+	trap '-' 0
 }
 
 bisect_write() {
@@ -130,9 +167,9 @@ bisect_write() {
 		good|skip)	tag="$state"-"$rev" ;;
 		*)		die "Bad bisect_write argument: $state" ;;
 	esac
-	git update-ref "refs/bisect/$tag" "$rev"
-	echo "# $state: "$(git show-branch $rev) >>"$GIT_DIR/BISECT_LOG"
-	test -z "$nolog" && echo "git-bisect $state $rev" >>"$GIT_DIR/BISECT_LOG"
+	git update-ref "refs/bisect/$tag" "$rev" || exit
+	echo "# $state: $(git show-branch $rev)" >>"$GIT_DIR/BISECT_LOG"
+	test -n "$nolog" || echo "git bisect $state $rev" >>"$GIT_DIR/BISECT_LOG"
 }
 
 bisect_state() {
@@ -145,20 +182,18 @@ bisect_state() {
 		rev=$(git rev-parse --verify HEAD) ||
 			die "Bad rev input: HEAD"
 		bisect_write "$state" "$rev" ;;
-	2,bad)
-		rev=$(git rev-parse --verify "$2^{commit}") ||
-			die "Bad rev input: $2"
-		bisect_write "$state" "$rev" ;;
-	*,good|*,skip)
+	2,bad|*,good|*,skip)
 		shift
-		revs=$(git rev-parse --revs-only --no-flags "$@") &&
-			test '' != "$revs" || die "Bad rev input: $@"
-		for rev in $revs
+		eval=''
+		for rev in "$@"
 		do
-			rev=$(git rev-parse --verify "$rev^{commit}") ||
-				die "Bad rev commit: $rev^{commit}"
-			bisect_write "$state" "$rev"
-		done ;;
+			sha=$(git rev-parse --verify "$rev^{commit}") ||
+				die "Bad rev input: $rev"
+			eval="$eval bisect_write '$state' '$sha'; "
+		done
+		eval "$eval" ;;
+	*,bad)
+		die "'git bisect bad' can take only one argument." ;;
 	*)
 		usage ;;
 	esac
@@ -185,13 +220,14 @@ bisect_next_check() {
 		if test -t 0
 		then
 			printf >&2 'Are you sure [Y/n]? '
-			case "$(read yesno)" in [Nn]*) exit 1 ;; esac
+			read yesno
+			case "$yesno" in [Nn]*) exit 1 ;; esac
 		fi
 		: bisect without good...
 		;;
 	*)
 		THEN=''
-		test -f "$GIT_DIR/BISECT_NAMES" || {
+		test -s "$GIT_DIR/BISECT_START" || {
 			echo >&2 'You need to start by "git bisect start".'
 			THEN='then '
 		}
@@ -207,18 +243,33 @@ bisect_auto_next() {
 	bisect_next_check && bisect_next || :
 }
 
+eval_rev_list() {
+	_eval="$1"
+
+	eval $_eval
+	res=$?
+
+	if [ $res -ne 0 ]; then
+		echo >&2 "'git rev-list --bisect-vars' failed:"
+		echo >&2 "maybe you mistake good and bad revs?"
+		exit $res
+	fi
+
+	return $res
+}
+
 filter_skipped() {
 	_eval="$1"
 	_skip="$2"
 
 	if [ -z "$_skip" ]; then
-		eval $_eval
+		eval_rev_list "$_eval"
 		return
 	fi
 
 	# Let's parse the output of:
 	# "git rev-list --bisect-vars --bisect-all ..."
-	eval $_eval | while read hash line
+	eval_rev_list "$_eval" | while read hash line
 	do
 		case "$VARS,$FOUND,$TRIED,$hash" in
 			# We display some vars.
@@ -287,14 +338,14 @@ bisect_next() {
 	bisect_next_check good
 
 	skip=$(git for-each-ref --format='%(objectname)' \
-		"refs/bisect/skip-*" | tr '[\012]' ' ') || exit
+		"refs/bisect/skip-*" | tr '\012' ' ') || exit
 
 	BISECT_OPT=''
 	test -n "$skip" && BISECT_OPT='--bisect-all'
 
 	bad=$(git rev-parse --verify refs/bisect/bad) &&
 	good=$(git for-each-ref --format='^%(objectname)' \
-		"refs/bisect/good-*" | tr '[\012]' ' ') &&
+		"refs/bisect/good-*" | tr '\012' ' ') &&
 	eval="git rev-list --bisect-vars $BISECT_OPT $good $bad --" &&
 	eval="$eval $(cat "$GIT_DIR/BISECT_NAMES")" &&
 	eval=$(filter_skipped "$eval" "$skip") &&
@@ -316,9 +367,7 @@ bisect_next() {
 	exit_if_skipped_commits "$bisect_rev"
 
 	echo "Bisecting: $bisect_nr revisions left to test after this"
-	git branch -f new-bisect "$bisect_rev"
-	git checkout -q new-bisect || exit
-	git branch -M new-bisect bisect
+	git checkout -q "$bisect_rev" || exit
 	git show-branch "$bisect_rev"
 }
 
@@ -327,9 +376,9 @@ bisect_visualize() {
 
 	if test $# = 0
 	then
-		case "${DISPLAY+set}" in
+		case "${DISPLAY+set}${MSYSTEM+set}${SECURITYSESSIONID+set}" in
 		'')	set git log ;;
-		set)	set gitk ;;
+		set*)	set gitk ;;
 		esac
 	else
 		case "$1" in
@@ -344,46 +393,47 @@ bisect_visualize() {
 }
 
 bisect_reset() {
-	test -f "$GIT_DIR/BISECT_NAMES" || {
+	test -s "$GIT_DIR/BISECT_START" || {
 		echo "We are not bisecting."
 		return
 	}
 	case "$#" in
-	0) if [ -s "$GIT_DIR/head-name" ]; then
-	       branch=`cat "$GIT_DIR/head-name"`
-	   else
-	       branch=master
-	   fi ;;
+	0) branch=$(cat "$GIT_DIR/BISECT_START") ;;
 	1) git show-ref --verify --quiet -- "refs/heads/$1" ||
 	       die "$1 does not seem to be a valid branch"
 	   branch="$1" ;;
 	*)
 	    usage ;;
 	esac
-	if git checkout "$branch"; then
-		rm -f "$GIT_DIR/head-name"
-		bisect_clean_state
-	fi
+	git checkout "$branch" && bisect_clean_state
 }
 
 bisect_clean_state() {
 	# There may be some refs packed during bisection.
-	git for-each-ref --format='%(refname) %(objectname)' refs/bisect/\* refs/heads/bisect |
+	git for-each-ref --format='%(refname) %(objectname)' refs/bisect/\* |
 	while read ref hash
 	do
-		git update-ref -d $ref $hash
+		git update-ref -d $ref $hash || exit
 	done
-	rm -f "$GIT_DIR/BISECT_LOG"
-	rm -f "$GIT_DIR/BISECT_NAMES"
-	rm -f "$GIT_DIR/BISECT_RUN"
+	rm -f "$GIT_DIR/BISECT_LOG" &&
+	rm -f "$GIT_DIR/BISECT_NAMES" &&
+	rm -f "$GIT_DIR/BISECT_RUN" &&
+	# Cleanup head-name if it got left by an old version of git-bisect
+	rm -f "$GIT_DIR/head-name" &&
+
+	rm -f "$GIT_DIR/BISECT_START"
 }
 
 bisect_replay () {
 	test -r "$1" || die "cannot read $1 for replaying"
 	bisect_reset
-	while read bisect command rev
+	while read git bisect command rev
 	do
-		test "$bisect" = "git-bisect" || continue
+		test "$git $bisect" = "git bisect" -o "$git" = "git-bisect" || continue
+		if test "$git" = "git-bisect"; then
+			rev="$command"
+			command="$bisect"
+		fi
 		case "$command" in
 		start)
 			cmd="bisect_start $rev"
@@ -457,6 +507,8 @@ case "$#" in
     cmd="$1"
     shift
     case "$cmd" in
+    help)
+        git bisect -h ;;
     start)
         bisect_start "$@" ;;
     bad|good|skip)

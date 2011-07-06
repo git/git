@@ -4,14 +4,14 @@
 #include "parse-options.h"
 
 static const char * const git_update_ref_usage[] = {
-	"git-update-ref [options] -d <refname> <oldval>",
-	"git-update-ref [options]    <refname> <newval> [<oldval>]",
+	"git update-ref [options] -d <refname> [<oldval>]",
+	"git update-ref [options]    <refname> <newval> [<oldval>]",
 	NULL
 };
 
 int cmd_update_ref(int argc, const char **argv, const char *prefix)
 {
-	const char *refname, *value, *oldval, *msg=NULL;
+	const char *refname, *oldval, *msg=NULL;
 	unsigned char sha1[20], oldsha1[20];
 	int delete = 0, no_deref = 0;
 	struct option options[] = {
@@ -22,30 +22,34 @@ int cmd_update_ref(int argc, const char **argv, const char *prefix)
 		OPT_END(),
 	};
 
-	git_config(git_default_config);
+	git_config(git_default_config, NULL);
 	argc = parse_options(argc, argv, options, git_update_ref_usage, 0);
 	if (msg && !*msg)
 		die("Refusing to perform update with empty message.");
 
-	if (argc < 2 || argc > 3)
-		usage_with_options(git_update_ref_usage, options);
-	refname = argv[0];
-	value   = argv[1];
-	oldval  = argv[2];
-
-	if (get_sha1(value, sha1))
-		die("%s: not a valid SHA1", value);
-
 	if (delete) {
-		if (oldval)
+		if (argc < 1 || argc > 2)
 			usage_with_options(git_update_ref_usage, options);
-		return delete_ref(refname, sha1);
+		refname = argv[0];
+		oldval = argv[1];
+	} else {
+		const char *value;
+		if (argc < 2 || argc > 3)
+			usage_with_options(git_update_ref_usage, options);
+		refname = argv[0];
+		value = argv[1];
+		oldval = argv[2];
+		if (get_sha1(value, sha1))
+			die("%s: not a valid SHA1", value);
 	}
 
-	hashclr(oldsha1);
+	hashclr(oldsha1); /* all-zero hash in case oldval is the empty string */
 	if (oldval && *oldval && get_sha1(oldval, oldsha1))
 		die("%s: not a valid old SHA1", oldval);
 
-	return update_ref(msg, refname, sha1, oldval ? oldsha1 : NULL,
-			  no_deref ? REF_NODEREF : 0, DIE_ON_ERR);
+	if (delete)
+		return delete_ref(refname, oldval ? oldsha1 : NULL);
+	else
+		return update_ref(msg, refname, sha1, oldval ? oldsha1 : NULL,
+				  no_deref ? REF_NODEREF : 0, DIE_ON_ERR);
 }

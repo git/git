@@ -9,40 +9,50 @@ git-fmt-merge-msg - Produce a merge commit message
 SYNOPSIS
 --------
 [verse]
-git-fmt-merge-msg [--summary | --no-summary] <$GIT_DIR/FETCH_HEAD
-git-fmt-merge-msg [--summary | --no-summary] -F <file>
+'git fmt-merge-msg' [--log | --no-log] <$GIT_DIR/FETCH_HEAD
+'git fmt-merge-msg' [--log | --no-log] -F <file>
 
 DESCRIPTION
 -----------
 Takes the list of merged objects on stdin and produces a suitable
 commit message to be used for the merge commit, usually to be
-passed as the '<merge-message>' argument of `git-merge`.
+passed as the '<merge-message>' argument of 'git-merge'.
 
 This script is intended mostly for internal use by scripts
-automatically invoking `git-merge`.
+automatically invoking 'git-merge'.
 
 OPTIONS
 -------
 
---summary::
+--log::
 	In addition to branch names, populate the log message with
 	one-line descriptions from the actual commits that are being
 	merged.
 
---no-summary::
+--no-log::
 	Do not list one-line descriptions from the actual commits being
 	merged.
 
---file <file>, -F <file>::
+--summary::
+--no-summary::
+	Synonyms to --log and --no-log; these are deprecated and will be
+	removed in the future.
+
+-F <file>::
+--file <file>::
 	Take the list of merged objects from <file> instead of
 	stdin.
 
 CONFIGURATION
 -------------
 
-merge.summary::
+merge.log::
 	Whether to include summaries of merged commits in newly
 	merge commit messages. False by default.
+
+merge.summary::
+	Synonym to `merge.log`; this is deprecated and will be removed in
+	the future.
 
 SEE ALSO
 --------
@@ -51,7 +61,7 @@ linkgit:git-merge[1]
 
 Author
 ------
-Written by Junio C Hamano <junkio@cox.net>
+Written by Junio C Hamano <gitster@pobox.com>
 
 Documentation
 --------------
@@ -59,4 +69,4 @@ Documentation by Petr Baudis, Junio C Hamano and the git-list <git@vger.kernel.o
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite

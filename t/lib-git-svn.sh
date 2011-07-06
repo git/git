@@ -20,12 +20,13 @@ then
 fi
 
 svnrepo=$PWD/svnrepo
+export svnrepo
 
 perl -w -e "
 use SVN::Core;
 use SVN::Repos;
 \$SVN::Core::VERSION gt '1.1.0' or exit(42);
-system(qw/svnadmin create --fs-type fsfs/, '$svnrepo') == 0 or exit(41);
+system(qw/svnadmin create --fs-type fsfs/, \$ENV{svnrepo}) == 0 or exit(41);
 " >&3 2>&4
 x=$?
 if test $x -ne 0
@@ -49,14 +50,39 @@ poke() {
 	test-chmtime +1 "$1"
 }
 
-SVN_HTTPD_MODULE_PATH=${SVN_HTTPD_MODULE_PATH-'/usr/lib/apache2/modules'}
-SVN_HTTPD_PATH=${SVN_HTTPD_PATH-'/usr/sbin/apache2'}
+for d in \
+	"$SVN_HTTPD_PATH" \
+	/usr/sbin/apache2 \
+	/usr/sbin/httpd \
+; do
+	if test -f "$d"
+	then
+		SVN_HTTPD_PATH="$d"
+		break
+	fi
+done
+for d in \
+	"$SVN_HTTPD_MODULE_PATH" \
+	/usr/lib/apache2/modules \
+	/usr/libexec/apache2 \
+; do
+	if test -d "$d"
+	then
+		SVN_HTTPD_MODULE_PATH="$d"
+		break
+	fi
+done
 
 start_httpd () {
+	repo_base_path="$1"
 	if test -z "$SVN_HTTPD_PORT"
 	then
 		echo >&2 'SVN_HTTPD_PORT is not defined!'
 		return
+	fi
+	if test -z "$repo_base_path"
+	then
+		repo_base_path=svn
 	fi
 
 	mkdir "$GIT_DIR"/logs
@@ -66,16 +92,17 @@ ServerName "git-svn test"
 ServerRoot "$GIT_DIR"
 DocumentRoot "$GIT_DIR"
 PidFile "$GIT_DIR/httpd.pid"
+LockFile logs/accept.lock
 Listen 127.0.0.1:$SVN_HTTPD_PORT
 LoadModule dav_module $SVN_HTTPD_MODULE_PATH/mod_dav.so
 LoadModule dav_svn_module $SVN_HTTPD_MODULE_PATH/mod_dav_svn.so
-<Location /svn>
+<Location /$repo_base_path>
 	DAV svn
-	SVNPath $rawsvnrepo
+	SVNPath "$rawsvnrepo"
 </Location>
 EOF
 	"$SVN_HTTPD_PATH" -f "$GIT_DIR"/httpd.conf -k start
-	svnrepo=http://127.0.0.1:$SVN_HTTPD_PORT/svn
+	svnrepo="http://127.0.0.1:$SVN_HTTPD_PORT/$repo_base_path"
 }
 
 stop_httpd () {
