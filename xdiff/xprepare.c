@@ -143,24 +143,21 @@ static int xdl_prepare_ctx(mmfile_t *mf, long narec, xpparam_t const *xpp,
 	char *rchg;
 	long *rindex;
 
-	if (xdl_cha_init(&xdf->rcha, sizeof(xrecord_t), narec / 4 + 1) < 0) {
+	ha = NULL;
+	rindex = NULL;
+	rchg = NULL;
+	rhash = NULL;
+	recs = NULL;
 
-		return -1;
-	}
-	if (!(recs = (xrecord_t **) xdl_malloc(narec * sizeof(xrecord_t *)))) {
-
-		xdl_cha_free(&xdf->rcha);
-		return -1;
-	}
+	if (xdl_cha_init(&xdf->rcha, sizeof(xrecord_t), narec / 4 + 1) < 0)
+		goto abort;
+	if (!(recs = (xrecord_t **) xdl_malloc(narec * sizeof(xrecord_t *))))
+		goto abort;
 
 	hbits = xdl_hashbits((unsigned int) narec);
 	hsize = 1 << hbits;
-	if (!(rhash = (xrecord_t **) xdl_malloc(hsize * sizeof(xrecord_t *)))) {
-
-		xdl_free(recs);
-		xdl_cha_free(&xdf->rcha);
-		return -1;
-	}
+	if (!(rhash = (xrecord_t **) xdl_malloc(hsize * sizeof(xrecord_t *))))
+		goto abort;
 	memset(rhash, 0, hsize * sizeof(xrecord_t *));
 
 	nrec = 0;
@@ -175,63 +172,30 @@ static int xdl_prepare_ctx(mmfile_t *mf, long narec, xpparam_t const *xpp,
 			hav = xdl_hash_record(&cur, top, xpp->flags);
 			if (nrec >= narec) {
 				narec *= 2;
-				if (!(rrecs = (xrecord_t **) xdl_realloc(recs, narec * sizeof(xrecord_t *)))) {
-
-					xdl_free(rhash);
-					xdl_free(recs);
-					xdl_cha_free(&xdf->rcha);
-					return -1;
-				}
+				if (!(rrecs = (xrecord_t **) xdl_realloc(recs, narec * sizeof(xrecord_t *))))
+					goto abort;
 				recs = rrecs;
 			}
-			if (!(crec = xdl_cha_alloc(&xdf->rcha))) {
-
-				xdl_free(rhash);
-				xdl_free(recs);
-				xdl_cha_free(&xdf->rcha);
-				return -1;
-			}
+			if (!(crec = xdl_cha_alloc(&xdf->rcha)))
+				goto abort;
 			crec->ptr = prev;
 			crec->size = (long) (cur - prev);
 			crec->ha = hav;
 			recs[nrec++] = crec;
 
-			if (xdl_classify_record(cf, rhash, hbits, crec) < 0) {
-
-				xdl_free(rhash);
-				xdl_free(recs);
-				xdl_cha_free(&xdf->rcha);
-				return -1;
-			}
+			if (xdl_classify_record(cf, rhash, hbits, crec) < 0)
+				goto abort;
 		}
 	}
 
-	if (!(rchg = (char *) xdl_malloc((nrec + 2) * sizeof(char)))) {
-
-		xdl_free(rhash);
-		xdl_free(recs);
-		xdl_cha_free(&xdf->rcha);
-		return -1;
-	}
+	if (!(rchg = (char *) xdl_malloc((nrec + 2) * sizeof(char))))
+		goto abort;
 	memset(rchg, 0, (nrec + 2) * sizeof(char));
 
-	if (!(rindex = (long *) xdl_malloc((nrec + 1) * sizeof(long)))) {
-
-		xdl_free(rchg);
-		xdl_free(rhash);
-		xdl_free(recs);
-		xdl_cha_free(&xdf->rcha);
-		return -1;
-	}
-	if (!(ha = (unsigned long *) xdl_malloc((nrec + 1) * sizeof(unsigned long)))) {
-
-		xdl_free(rindex);
-		xdl_free(rchg);
-		xdl_free(rhash);
-		xdl_free(recs);
-		xdl_cha_free(&xdf->rcha);
-		return -1;
-	}
+	if (!(rindex = (long *) xdl_malloc((nrec + 1) * sizeof(long))))
+		goto abort;
+	if (!(ha = (unsigned long *) xdl_malloc((nrec + 1) * sizeof(unsigned long))))
+		goto abort;
 
 	xdf->nrec = nrec;
 	xdf->recs = recs;
@@ -245,6 +209,15 @@ static int xdl_prepare_ctx(mmfile_t *mf, long narec, xpparam_t const *xpp,
 	xdf->dend = nrec - 1;
 
 	return 0;
+
+abort:
+	xdl_free(ha);
+	xdl_free(rindex);
+	xdl_free(rchg);
+	xdl_free(rhash);
+	xdl_free(recs);
+	xdl_cha_free(&xdf->rcha);
+	return -1;
 }
 
 
