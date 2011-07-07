@@ -1,0 +1,36 @@
+Git v1.7.7 Release Notes
+========================
+
+Updates since v1.7.6
+--------------------
+
+ * The scripting part of the codebase is getting prepared for i18n/l10n.
+
+ * "git checkout" (both the code to update the files upon checking out a
+   different branch, the code to checkout specific set of files) learned
+   to stream the data from object store when possible, without having to
+   read the entire contents of a file in memory first.
+
+ * "git diff --cc" learned to correctly ignore binary files.
+
+ * "git diff --stat" learned --stat-count option to limit the output of
+   diffstat report.
+
+ * "git grep" learned --break and --heading options, to let users mimic
+   output format of "ack".
+
+Also contains various documentation updates and minor miscellaneous
+changes.
+
+
+Fixes since v1.7.6
+------------------
+
+Unless otherwise noted, all the fixes in 1.7.6.X maintenance track are
+included in this release.
+
+--
+exec >/var/tmp/1
+echo O=$(git describe master)
+O=v1.7.6-133-g395f65d
+git shortlog --no-merges ^maint ^$O master
