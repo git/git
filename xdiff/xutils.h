@@ -41,6 +41,8 @@ int xdl_num_out(char *out, long val);
 long xdl_atol(char const *str, char const **next);
 int xdl_emit_hunk_hdr(long s1, long c1, long s2, long c2,
 		      const char *func, long funclen, xdemitcb_t *ecb);
+int xdl_fall_back_diff(xdfenv_t *diff_env, xpparam_t const *xpp,
+		       int line1, int count1, int line2, int count2);
 
 
 
