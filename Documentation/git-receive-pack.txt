@@ -149,7 +149,7 @@ if the repository is packed and is served via a dumb transport.
 
 SEE ALSO
 --------
-linkgit:git-send-pack[1]
+linkgit:git-send-pack[1], linkgit:gitnamespaces[7]
 
 GIT
 ---
