@@ -56,6 +56,7 @@ static size_t use_strategies_nr, use_strategies_alloc;
 static const char **xopts;
 static size_t xopts_nr, xopts_alloc;
 static const char *branch;
+static char *branch_mergeoptions;
 static int option_renormalize;
 static int verbosity;
 static int allow_rerere_auto;
@@ -338,13 +339,14 @@ static void squash_message(void)
 
 	ctx.abbrev = rev.abbrev;
 	ctx.date_mode = rev.date_mode;
+	ctx.fmt = rev.commit_format;
 
 	strbuf_addstr(&out, "Squashed commit of the following:\n");
 	while ((commit = get_revision(&rev)) != NULL) {
 		strbuf_addch(&out, '\n');
 		strbuf_addf(&out, "commit %s\n",
 			sha1_to_hex(commit->object.sha1));
-		pretty_print_commit(rev.commit_format, commit, &out, &ctx);
+		pretty_print_commit(&ctx, commit, &out);
 	}
 	if (write(fd, out.buf, out.len) < 0)
 		die_errno(_("Writing SQUASH_MSG"));
@@ -503,26 +505,34 @@ cleanup:
 	strbuf_release(&bname);
 }
 
+static void parse_branch_merge_options(char *bmo)
+{
+	const char **argv;
+	int argc;
+
+	if (!bmo)
+		return;
+	argc = split_cmdline(bmo, &argv);
+	if (argc < 0)
+		die(_("Bad branch.%s.mergeoptions string: %s"), branch,
+		    split_cmdline_strerror(argc));
+	argv = xrealloc(argv, sizeof(*argv) * (argc + 2));
+	memmove(argv + 1, argv, sizeof(*argv) * (argc + 1));
+	argc++;
+	argv[0] = "branch.*.mergeoptions";
+	parse_options(argc, argv, NULL, builtin_merge_options,
+		      builtin_merge_usage, 0);
+	free(argv);
+}
+
 static int git_merge_config(const char *k, const char *v, void *cb)
 {
 	if (branch && !prefixcmp(k, "branch.") &&
 		!prefixcmp(k + 7, branch) &&
 		!strcmp(k + 7 + strlen(branch), ".mergeoptions")) {
-		const char **argv;
-		int argc;
-		char *buf;
-
-		buf = xstrdup(v);
-		argc = split_cmdline(buf, &argv);
-		if (argc < 0)
-			die(_("Bad branch.%s.mergeoptions string: %s"), branch,
-			    split_cmdline_strerror(argc));
-		argv = xrealloc(argv, sizeof(*argv) * (argc + 2));
-		memmove(argv + 1, argv, sizeof(*argv) * (argc + 1));
-		argc++;
-		parse_options(argc, argv, NULL, builtin_merge_options,
-			      builtin_merge_usage, 0);
-		free(buf);
+		free(branch_mergeoptions);
+		branch_mergeoptions = xstrdup(v);
+		return 0;
 	}
 
 	if (!strcmp(k, "merge.diffstat") || !strcmp(k, "merge.stat"))
@@ -540,6 +550,15 @@ static int git_merge_config(const char *k, const char *v, void *cb)
 			return error(_("%s: negative length %s"), k, v);
 		if (is_bool && shortlog_len)
 			shortlog_len = DEFAULT_MERGE_LOG_LEN;
+		return 0;
+	} else if (!strcmp(k, "merge.ff")) {
+		int boolval = git_config_maybe_bool(k, v);
+		if (0 <= boolval) {
+			allow_fast_forward = boolval;
+		} else if (v && !strcmp(v, "only")) {
+			allow_fast_forward = 1;
+			fast_forward_only = 1;
+		} /* do not barf on values from future versions of git */
 		return 0;
 	} else if (!strcmp(k, "merge.defaulttoupstream")) {
 		default_to_upstream = git_config_bool(k, v);
@@ -590,6 +609,14 @@ static void write_tree_trivial(unsigned char *sha1)
 		die(_("git write-tree failed to write a tree"));
 }
 
+static const char *merge_argument(struct commit *commit)
+{
+	if (commit)
+		return sha1_to_hex(commit->object.sha1);
+	else
+		return EMPTY_TREE_SHA1_HEX;
+}
+
 int try_merge_command(const char *strategy, size_t xopts_nr,
 		      const char **xopts, struct commit_list *common,
 		      const char *head_arg, struct commit_list *remotes)
@@ -610,11 +637,11 @@ int try_merge_command(const char *strategy, size_t xopts_nr,
 		args[i++] = s;
 	}
 	for (j = common; j; j = j->next)
-		args[i++] = xstrdup(sha1_to_hex(j->item->object.sha1));
+		args[i++] = xstrdup(merge_argument(j->item));
 	args[i++] = "--";
 	args[i++] = head_arg;
 	for (j = remotes; j; j = j->next)
-		args[i++] = xstrdup(sha1_to_hex(j->item->object.sha1));
+		args[i++] = xstrdup(merge_argument(j->item));
 	args[i] = NULL;
 	ret = run_command_v_opt(args, RUN_GIT_CMD);
 	strbuf_release(&buf);
@@ -1010,6 +1037,8 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 	if (diff_use_color_default == -1)
 		diff_use_color_default = git_use_color_default;
 
+	if (branch_mergeoptions)
+		parse_branch_merge_options(branch_mergeoptions);
 	argc = parse_options(argc, argv, prefix, builtin_merge_options,
 			builtin_merge_usage, 0);
 

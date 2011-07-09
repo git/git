@@ -6,7 +6,7 @@
 #include "run-command.h"
 
 const char git_usage_string[] =
-	"git [--version] [--exec-path[=<path>]] [--html-path]\n"
+	"git [--version] [--exec-path[=<path>]] [--html-path] [--man-path] [--info-path]\n"
 	"           [-p|--paginate|--no-pager] [--no-replace-objects]\n"
 	"           [--bare] [--git-dir=<path>] [--work-tree=<path>]\n"
 	"           [-c name=value] [--help]\n"
@@ -66,7 +66,7 @@ static void commit_pager_choice(void) {
 
 static int handle_options(const char ***argv, int *argc, int *envchanged)
 {
-	int handled = 0;
+	const char **orig_argv = *argv;
 
 	while (*argc > 0) {
 		const char *cmd = (*argv)[0];
@@ -95,6 +95,12 @@ static int handle_options(const char ***argv, int *argc, int *envchanged)
 		} else if (!strcmp(cmd, "--html-path")) {
 			puts(system_path(GIT_HTML_PATH));
 			exit(0);
+		} else if (!strcmp(cmd, "--man-path")) {
+			puts(system_path(GIT_MAN_PATH));
+			exit(0);
+		} else if (!strcmp(cmd, "--info-path")) {
+			puts(system_path(GIT_INFO_PATH));
+			exit(0);
 		} else if (!strcmp(cmd, "-p") || !strcmp(cmd, "--paginate")) {
 			use_pager = 1;
 		} else if (!strcmp(cmd, "--no-pager")) {
@@ -116,7 +122,6 @@ static int handle_options(const char ***argv, int *argc, int *envchanged)
 				*envchanged = 1;
 			(*argv)++;
 			(*argc)--;
-			handled++;
 		} else if (!prefixcmp(cmd, "--git-dir=")) {
 			setenv(GIT_DIR_ENVIRONMENT, cmd + 10, 1);
 			if (envchanged)
@@ -156,9 +161,8 @@ static int handle_options(const char ***argv, int *argc, int *envchanged)
 
 		(*argv)++;
 		(*argc)--;
-		handled++;
 	}
-	return handled;
+	return (*argv) - orig_argv;
 }
 
 static int handle_alias(int *argcp, const char ***argv)

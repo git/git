@@ -190,7 +190,7 @@ test_expect_success 'pushing explicit refspecs respects forcing' '
 	        +refs/heads/master:refs/heads/master
 	) &&
 	parent_head=$(cd parent && git rev-parse --verify master) &&
-	child_head=$(cd parent && git rev-parse --verify master) &&
+	child_head=$(cd child && git rev-parse --verify master) &&
 	test "$parent_head" = "$child_head"
 '
 
@@ -210,7 +210,7 @@ test_expect_success 'pushing wildcard refspecs respects forcing' '
 	        "+refs/heads/*:refs/heads/*"
 	) &&
 	parent_head=$(cd parent && git rev-parse --verify master) &&
-	child_head=$(cd parent && git rev-parse --verify master) &&
+	child_head=$(cd child && git rev-parse --verify master) &&
 	test "$parent_head" = "$child_head"
 '
 

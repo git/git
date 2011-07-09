@@ -780,6 +780,13 @@ test_expect_success 'status -s submodule summary (clean submodule)' '
 	test_cmp expect output
 '
 
+test_expect_success 'status -z implies porcelain' '
+	git status --porcelain |
+	perl -pe "s/\012/\000/g" >expect &&
+	git status -z >output &&
+	test_cmp expect output
+'
+
 cat >expect <<EOF
 # On branch master
 # Changes to be committed:

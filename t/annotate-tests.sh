@@ -1,5 +1,5 @@
 # This file isn't used as a test script directly, instead it is
-# sourced from t8001-annotate.sh and t8001-blame.sh.
+# sourced from t8001-annotate.sh and t8002-blame.sh.
 
 check_count () {
 	head=
@@ -124,3 +124,14 @@ test_expect_success \
 test_expect_success \
     'some edit' \
     'check_count A 1 B 1 B1 1 B2 1 "A U Thor" 1 C 1 D 1'
+
+test_expect_success \
+    'an obfuscated email added' \
+    'echo "No robots allowed" > file.new &&
+     cat file >> file.new &&
+     mv file.new file &&
+     GIT_AUTHOR_NAME="E" GIT_AUTHOR_EMAIL="E at test dot git" git commit -a -m "norobots"'
+
+test_expect_success \
+    'obfuscated email parsed' \
+    'check_count A 1 B 1 B1 1 B2 1 "A U Thor" 1 C 1 D 1 E 1'

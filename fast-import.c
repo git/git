@@ -3135,11 +3135,11 @@ static int parse_one_feature(const char *feature, int from_stream)
 		option_export_marks(feature + 13);
 	} else if (!strcmp(feature, "cat-blob")) {
 		; /* Don't die - this feature is supported */
-	} else if (!prefixcmp(feature, "relative-marks")) {
+	} else if (!strcmp(feature, "relative-marks")) {
 		relative_marks_paths = 1;
-	} else if (!prefixcmp(feature, "no-relative-marks")) {
+	} else if (!strcmp(feature, "no-relative-marks")) {
 		relative_marks_paths = 0;
-	} else if (!prefixcmp(feature, "force")) {
+	} else if (!strcmp(feature, "force")) {
 		force_update = 1;
 	} else if (!strcmp(feature, "notes") || !strcmp(feature, "ls")) {
 		; /* do nothing; we have the feature */

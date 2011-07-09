@@ -139,6 +139,10 @@ parents) and `--max-parents=-1` (negative numbers denote no upper limit).
 	is automatically prepended if missing. If pattern lacks '?', '*',
 	or '[', '/*' at the end is implied.
 
+--ignore-missing::
+
+	Upon seeing an invalid object name in the input, pretend as if
+	the bad input was not given.
 
 ifndef::git-rev-list[]
 --bisect::
@@ -730,7 +734,10 @@ ifdef::git-rev-list[]
 	Print a number stating how many commits would have been
 	listed, and suppress all other output.  When used together
 	with '--left-right', instead print the counts for left and
-	right commits, separated by a tab.
+	right commits, separated by a tab. When used together with
+	'--cherry-mark', omit patch equivalent commits from these
+	counts and print the count for equivalent commits separated
+	by a tab.
 endif::git-rev-list[]
 
 

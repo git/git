@@ -82,10 +82,9 @@ EOF
 '
 
 test_expect_success PERL 'setup fake editor' '
-	cat >fake_editor.sh <<EOF
-	EOF
+	>fake_editor.sh &&
 	chmod a+x fake_editor.sh &&
-	test_set_editor "$(pwd)/fake_editor.sh" &&
+	test_set_editor "$(pwd)/fake_editor.sh"
 '
 
 test_expect_success PERL 'dummy edit works' '
@@ -293,6 +292,42 @@ test_expect_success PERL 'deleting an empty file' '
 	echo y | git add -p empty &&
 	git diff --cached >diff &&
 	test_cmp expected diff
+'
+
+test_expect_success PERL 'split hunk setup' '
+	git reset --hard &&
+	for i in 10 20 30 40 50 60
+	do
+		echo $i
+	done >test &&
+	git add test &&
+	test_tick &&
+	git commit -m test &&
+
+	for i in 10 15 20 21 22 23 24 30 40 50 60
+	do
+		echo $i
+	done >test
+'
+
+test_expect_success PERL 'split hunk "add -p (edit)"' '
+	# Split, say Edit and do nothing.  Then:
+	#
+	# 1. Broken version results in a patch that does not apply and
+	# only takes [y/n] (edit again) so the first q is discarded
+	# and then n attempts to discard the edit. Repeat q enough
+	# times to get out.
+	#
+	# 2. Correct version applies the (not)edited version, and asks
+	#    about the next hunk, against wich we say q and program
+	#    exits.
+	for a in s e     q n q q
+	do
+		echo $a
+	done |
+	EDITOR=: git add -p &&
+	git diff >actual &&
+	! grep "^+15" actual
 '
 
 test_done

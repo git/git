@@ -60,10 +60,24 @@ PATTERNS("pascal",
 	 "|[-+0-9.e]+|0[xXbB]?[0-9a-fA-F]+"
 	 "|<>|<=|>=|:=|\\.\\."),
 PATTERNS("perl",
-	 "^[ \t]*package .*;\n"
-	 "^[ \t]*sub .* \\{\n"
-	 "^[A-Z]+ \\{\n"	/* BEGIN, END, ... */
-	 "^=head[0-9] ",	/* POD */
+	 "^package .*\n"
+	 "^sub [[:alnum:]_':]+[ \t]*"
+		"(\\([^)]*\\)[ \t]*)?" /* prototype */
+		/*
+		 * Attributes.  A regex can't count nested parentheses,
+		 * so just slurp up whatever we see, taking care not
+		 * to accept lines like "sub foo; # defined elsewhere".
+		 *
+		 * An attribute could contain a semicolon, but at that
+		 * point it seems reasonable enough to give up.
+		 */
+		"(:[^;#]*)?"
+		"(\\{[ \t]*)?" /* brace can come here or on the next line */
+		"(#.*)?$\n" /* comment */
+	 "^(BEGIN|END|INIT|CHECK|UNITCHECK|AUTOLOAD|DESTROY)[ \t]*"
+		"(\\{[ \t]*)?" /* brace can come here or on the next line */
+		"(#.*)?$\n"
+	 "^=head[0-9] .*",	/* POD */
 	 /* -- */
 	 "[[:alpha:]_'][[:alnum:]_']*"
 	 "|0[xb]?[0-9a-fA-F_]*"
@@ -266,4 +280,21 @@ struct userdiff_driver *userdiff_find_by_path(const char *path)
 	if (ATTR_UNSET(check.value))
 		return NULL;
 	return userdiff_find_by_name(check.value);
+}
+
+struct userdiff_driver *userdiff_get_textconv(struct userdiff_driver *driver)
+{
+	if (!driver->textconv)
+		return NULL;
+
+	if (driver->textconv_want_cache && !driver->textconv_cache) {
+		struct notes_cache *c = xmalloc(sizeof(*c));
+		struct strbuf name = STRBUF_INIT;
+
+		strbuf_addf(&name, "textconv/%s", driver->name);
+		notes_cache_init(c, name.buf, driver->textconv);
+		driver->textconv_cache = c;
+	}
+
+	return driver;
 }

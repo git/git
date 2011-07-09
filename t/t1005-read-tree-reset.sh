@@ -3,6 +3,7 @@
 test_description='read-tree -u --reset'
 
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/lib-read-tree.sh
 
 # two-tree test
 
@@ -22,13 +23,13 @@ test_expect_success 'setup' '
 '
 
 test_expect_success 'reset should work' '
-  git read-tree -u --reset HEAD^ &&
+  read_tree_u_must_succeed -u --reset HEAD^ &&
   git ls-files >actual &&
   test_cmp expect actual
 '
 
 test_expect_success 'reset should remove remnants from a failed merge' '
-  git read-tree --reset -u HEAD &&
+  read_tree_u_must_succeed --reset -u HEAD &&
   git ls-files -s >expect &&
   sha1=$(git rev-parse :new) &&
   (
@@ -37,13 +38,13 @@ test_expect_success 'reset should remove remnants from a failed merge' '
   ) | git update-index --index-info &&
   >old &&
   git ls-files -s &&
-  git read-tree --reset -u HEAD &&
+  read_tree_u_must_succeed --reset -u HEAD &&
   git ls-files -s >actual &&
   ! test -f old
 '
 
 test_expect_success 'Porcelain reset should remove remnants too' '
-  git read-tree --reset -u HEAD &&
+  read_tree_u_must_succeed --reset -u HEAD &&
   git ls-files -s >expect &&
   sha1=$(git rev-parse :new) &&
   (
@@ -58,7 +59,7 @@ test_expect_success 'Porcelain reset should remove remnants too' '
 '
 
 test_expect_success 'Porcelain checkout -f should remove remnants too' '
-  git read-tree --reset -u HEAD &&
+  read_tree_u_must_succeed --reset -u HEAD &&
   git ls-files -s >expect &&
   sha1=$(git rev-parse :new) &&
   (
@@ -73,7 +74,7 @@ test_expect_success 'Porcelain checkout -f should remove remnants too' '
 '
 
 test_expect_success 'Porcelain checkout -f HEAD should remove remnants too' '
-  git read-tree --reset -u HEAD &&
+  read_tree_u_must_succeed --reset -u HEAD &&
   git ls-files -s >expect &&
   sha1=$(git rev-parse :new) &&
   (

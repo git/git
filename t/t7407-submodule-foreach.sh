@@ -81,7 +81,7 @@ test_expect_success 'test basic "submodule foreach" usage' '
 	then
 		dos2unix actual
 	fi &&
-	test_cmp expect actual
+	test_i18ncmp expect actual
 '
 
 test_expect_success 'setup nested submodules' '
@@ -166,7 +166,7 @@ test_expect_success 'test messages from "foreach --recursive"' '
 	then
 		dos2unix actual
 	fi &&
-	test_cmp expect actual
+	test_i18ncmp expect actual
 '
 
 cat > expect <<EOF

@@ -475,7 +475,7 @@ static int do_lstat(int follow, const char *file_name, struct stat *buf)
 static int do_stat_internal(int follow, const char *file_name, struct stat *buf)
 {
 	int namelen;
-	static char alt_name[PATH_MAX];
+	char alt_name[PATH_MAX];
 
 	if (!do_lstat(follow, file_name, buf))
 		return 0;
@@ -1452,6 +1452,13 @@ int mingw_setsockopt(int sockfd, int lvl, int optname, void *optval, int optlen)
 	return setsockopt(s, lvl, optname, (const char*)optval, optlen);
 }
 
+#undef shutdown
+int mingw_shutdown(int sockfd, int how)
+{
+	SOCKET s = (SOCKET)_get_osfhandle(sockfd);
+	return shutdown(s, how);
+}
+
 #undef listen
 int mingw_listen(int sockfd, int backlog)
 {
@@ -1844,4 +1851,25 @@ int mingw_offset_1st_component(const char *path)
 	}
 
 	return offset + is_dir_sep(path[offset]);
+}
+
+/*
+ * Disable MSVCRT command line wildcard expansion (__getmainargs called from
+ * mingw startup code, see init.c in mingw runtime).
+ */
+int _CRT_glob = 0;
+
+void mingw_startup()
+{
+	/* copy executable name to argv[0] */
+	__argv[0] = xstrdup(_pgmptr);
+
+	/* initialize critical section for waitpid pinfo_t list */
+	InitializeCriticalSection(&pinfo_cs);
+
+	/* set up default file mode and file modes for stdin/out/err */
+	_fmode = _O_BINARY;
+	_setmode(_fileno(stdin), _O_BINARY);
+	_setmode(_fileno(stdout), _O_BINARY);
+	_setmode(_fileno(stderr), _O_BINARY);
 }

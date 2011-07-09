@@ -26,6 +26,27 @@ struct update_callback_data {
 	int add_errors;
 };
 
+static int fix_unmerged_status(struct diff_filepair *p,
+			       struct update_callback_data *data)
+{
+	if (p->status != DIFF_STATUS_UNMERGED)
+		return p->status;
+	if (!(data->flags & ADD_CACHE_IGNORE_REMOVAL) && !p->two->mode)
+		/*
+		 * This is not an explicit add request, and the
+		 * path is missing from the working tree (deleted)
+		 */
+		return DIFF_STATUS_DELETED;
+	else
+		/*
+		 * Either an explicit add request, or path exists
+		 * in the working tree.  An attempt to explicitly
+		 * add a path that does not exist in the working tree
+		 * will be caught as an error by the caller immediately.
+		 */
+		return DIFF_STATUS_MODIFIED;
+}
+
 static void update_callback(struct diff_queue_struct *q,
 			    struct diff_options *opt, void *cbdata)
 {
@@ -35,30 +56,9 @@ static void update_callback(struct diff_queue_struct *q,
 	for (i = 0; i < q->nr; i++) {
 		struct diff_filepair *p = q->queue[i];
 		const char *path = p->one->path;
-		switch (p->status) {
+		switch (fix_unmerged_status(p, data)) {
 		default:
 			die(_("unexpected diff status %c"), p->status);
-		case DIFF_STATUS_UNMERGED:
-			/*
-			 * ADD_CACHE_IGNORE_REMOVAL is unset if "git
-			 * add -u" is calling us, In such a case, a
-			 * missing work tree file needs to be removed
-			 * if there is an unmerged entry at stage #2,
-			 * but such a diff record is followed by
-			 * another with DIFF_STATUS_DELETED (and if
-			 * there is no stage #2, we won't see DELETED
-			 * nor MODIFIED).  We can simply continue
-			 * either way.
-			 */
-			if (!(data->flags & ADD_CACHE_IGNORE_REMOVAL))
-				continue;
-			/*
-			 * Otherwise, it is "git add path" is asking
-			 * to explicitly add it; we fall through.  A
-			 * missing work tree file is an error and is
-			 * caught by add_file_to_index() in such a
-			 * case.
-			 */
 		case DIFF_STATUS_MODIFIED:
 		case DIFF_STATUS_TYPE_CHANGED:
 			if (add_file_to_index(&the_index, path, data->flags)) {
@@ -91,6 +91,7 @@ int add_files_to_cache(const char *prefix, const char **pathspec, int flags)
 	data.flags = flags;
 	data.add_errors = 0;
 	rev.diffopt.format_callback_data = &data;
+	rev.max_count = 0; /* do not compare unmerged paths with stage #2 */
 	run_diff_files(&rev, DIFF_RACY_IS_MODIFIED);
 	return !!data.add_errors;
 }
@@ -241,7 +242,7 @@ int run_add_interactive(const char *revision, const char *patch_mode,
 	return status;
 }
 
-int interactive_add(int argc, const char **argv, const char *prefix)
+int interactive_add(int argc, const char **argv, const char *prefix, int patch)
 {
 	const char **pathspec = NULL;
 
@@ -252,7 +253,7 @@ int interactive_add(int argc, const char **argv, const char *prefix)
 	}
 
 	return run_add_interactive(NULL,
-				   patch_interactive ? "--patch" : NULL,
+				   patch ? "--patch" : NULL,
 				   pathspec);
 }
 
@@ -331,8 +332,8 @@ static struct option builtin_add_options[] = {
 
 static int add_config(const char *var, const char *value, void *cb)
 {
-	if (!strcasecmp(var, "add.ignoreerrors") ||
-	    !strcasecmp(var, "add.ignore-errors")) {
+	if (!strcmp(var, "add.ignoreerrors") ||
+	    !strcmp(var, "add.ignore-errors")) {
 		ignore_add_errors = git_config_bool(var, value);
 		return 0;
 	}
@@ -378,7 +379,7 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 	if (patch_interactive)
 		add_interactive = 1;
 	if (add_interactive)
-		exit(interactive_add(argc - 1, argv + 1, prefix));
+		exit(interactive_add(argc - 1, argv + 1, prefix, patch_interactive));
 
 	if (edit_interactive)
 		return(edit_patch(argc, argv, prefix));

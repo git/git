@@ -55,7 +55,9 @@ static void show_commit(struct commit *commit, void *data)
 	graph_show_commit(revs->graph);
 
 	if (revs->count) {
-		if (commit->object.flags & SYMMETRIC_LEFT)
+		if (commit->object.flags & PATCHSAME)
+			revs->count_same++;
+		else if (commit->object.flags & SYMMETRIC_LEFT)
 			revs->count_left++;
 		else
 			revs->count_right++;
@@ -102,7 +104,8 @@ static void show_commit(struct commit *commit, void *data)
 		struct pretty_print_context ctx = {0};
 		ctx.abbrev = revs->abbrev;
 		ctx.date_mode = revs->date_mode;
-		pretty_print_commit(revs->commit_format, commit, &buf, &ctx);
+		ctx.fmt = revs->commit_format;
+		pretty_print_commit(&ctx, commit, &buf);
 		if (revs->graph) {
 			if (buf.len) {
 				if (revs->commit_format != CMIT_FMT_ONELINE)
@@ -406,8 +409,12 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 			     &info);
 
 	if (revs.count) {
-		if (revs.left_right)
+		if (revs.left_right && revs.cherry_mark)
+			printf("%d\t%d\t%d\n", revs.count_left, revs.count_right, revs.count_same);
+		else if (revs.left_right)
 			printf("%d\t%d\n", revs.count_left, revs.count_right);
+		else if (revs.cherry_mark)
+			printf("%d\t%d\n", revs.count_left + revs.count_right, revs.count_same);
 		else
 			printf("%d\n", revs.count_left + revs.count_right);
 	}

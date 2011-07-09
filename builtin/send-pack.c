@@ -228,8 +228,11 @@ static void print_helper_status(struct ref *ref)
 
 static int sideband_demux(int in, int out, void *data)
 {
-	int *fd = data;
-	int ret = recv_sideband("send-pack", fd[0], out);
+	int *fd = data, ret;
+#ifdef NO_PTHREADS
+	close(fd[1]);
+#endif
+	ret = recv_sideband("send-pack", fd[0], out);
 	close(out);
 	return ret;
 }
@@ -339,6 +342,10 @@ int send_pack(struct send_pack_args *args,
 		if (pack_objects(out, remote_refs, extra_have, args) < 0) {
 			for (ref = remote_refs; ref; ref = ref->next)
 				ref->status = REF_STATUS_NONE;
+			if (args->stateless_rpc)
+				close(out);
+			if (git_connection_is_socket(conn))
+				shutdown(fd[0], SHUT_WR);
 			if (use_sideband)
 				finish_async(&demux);
 			return -1;

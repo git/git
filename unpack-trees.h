@@ -46,7 +46,9 @@ struct unpack_trees_options {
 		     debug_unpack,
 		     skip_sparse_checkout,
 		     gently,
-		     show_all_errors;
+		     exiting_early,
+		     show_all_errors,
+		     dry_run;
 	const char *prefix;
 	int cache_bottom;
 	struct dir_struct *dir;

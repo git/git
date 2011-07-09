@@ -498,7 +498,7 @@ void diffcore_rename(struct diff_options *options)
 	struct diff_queue_struct outq;
 	struct diff_score *mx;
 	int i, j, rename_count, skip_unmodified = 0;
-	int num_create, num_src, dst_cnt;
+	int num_create, dst_cnt;
 	struct progress *progress = NULL;
 
 	if (!minimum_score)
@@ -554,7 +554,6 @@ void diffcore_rename(struct diff_options *options)
 	 * files still remain as options for rename/copies!)
 	 */
 	num_create = (rename_dst_nr - rename_count);
-	num_src = rename_src_nr;
 
 	/* All done? */
 	if (!num_create)

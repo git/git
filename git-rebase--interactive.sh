@@ -270,7 +270,7 @@ pick_one_preserving_merges () {
 			# No point in merging the first parent, that's HEAD
 			new_parents=${new_parents# $first_parent}
 			if ! do_with_author output \
-				git merge ${strategy:+-s $strategy} -m \
+				git merge --no-ff ${strategy:+-s $strategy} -m \
 					"$msg_content" $new_parents
 			then
 				printf "%s\n" "$msg_content" > "$GIT_DIR"/MERGE_MSG
@@ -510,7 +510,9 @@ do_next () {
 	refs/*)
 		message="$GIT_REFLOG_ACTION: $head_name onto $shortonto" &&
 		git update-ref -m "$message" $head_name $newhead $orig_head &&
-		git symbolic-ref HEAD $head_name
+		git symbolic-ref \
+		  -m "$GIT_REFLOG_ACTION: returning to $head_name" \
+		  HEAD $head_name
 		;;
 	esac && {
 		test ! -f "$state_dir"/verbose ||

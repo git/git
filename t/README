@@ -379,7 +379,7 @@ library for your script to use.
 
  - test_expect_success [<prereq>] <message> <script>
 
-   Usually takes two strings as parameter, and evaluates the
+   Usually takes two strings as parameters, and evaluates the
    <script>.  If it yields success, test is considered
    successful.  <message> should state what it is testing.
 
@@ -390,7 +390,7 @@ library for your script to use.
 	    'tree=$(git-write-tree)'
 
    If you supply three parameters the first will be taken to be a
-   prerequisite, see the test_set_prereq and test_have_prereq
+   prerequisite; see the test_set_prereq and test_have_prereq
    documentation below:
 
 	test_expect_success TTY 'git --paginate rev-list uses a pager' \
@@ -446,7 +446,7 @@ library for your script to use.
    Merges the given rev using the given message.  Like test_commit,
    creates a tag and calls test_tick before committing.
 
- - test_set_prereq SOME_PREREQ
+ - test_set_prereq <prereq>
 
    Set a test prerequisite to be used later with test_have_prereq. The
    test-lib will set some prerequisites for you, see the
@@ -456,7 +456,7 @@ library for your script to use.
    test_have_prereq directly, or the three argument invocation of
    test_expect_success and test_expect_failure.
 
- - test_have_prereq SOME PREREQ
+ - test_have_prereq <prereq>
 
    Check if we have a prerequisite previously set with
    test_set_prereq. The most common use of this directly is to skip
@@ -526,12 +526,13 @@ library for your script to use.
 
    Check whether a file has the length it is expected to.
 
- - test_path_is_file <file> [<diagnosis>]
-   test_path_is_dir <dir> [<diagnosis>]
+ - test_path_is_file <path> [<diagnosis>]
+   test_path_is_dir <path> [<diagnosis>]
    test_path_is_missing <path> [<diagnosis>]
 
-   Check whether a file/directory exists or doesn't. <diagnosis> will
-   be displayed if the test fails.
+   Check if the named path is a file, if the named path is a
+   directory, or if the named path does not exist, respectively,
+   and fail otherwise, showing the <diagnosis> text.
 
  - test_when_finished <script>
 
@@ -586,6 +587,11 @@ use these, and "test_set_prereq" for how to define your own.
 
    Test is not run by root user, and an attempt to write to an
    unwritable file is expected to fail correctly.
+
+ - LIBPCRE
+
+   Git was compiled with USE_LIBPCRE=YesPlease. Wrap any tests
+   that use git-grep --perl-regexp or git-grep -P in these.
 
 Tips for Writing Tests
 ----------------------

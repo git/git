@@ -10,7 +10,7 @@ SYNOPSIS
 --------
 [verse]
 'git ls-remote' [--heads] [--tags]  [-u <exec> | --upload-pack <exec>]
-	      <repository> [<refs>...]
+	      [--exit-code] <repository> [<refs>...]
 
 DESCRIPTION
 -----------
@@ -35,6 +35,12 @@ OPTIONS
 	host. This allows listing references from repositories accessed via
 	SSH and where the SSH daemon does not use the PATH configured by the
 	user.
+
+--exit-code::
+	Exit with status "2" when no matching refs are found in the remote
+	repository. Usually the command exits with status "0" to indicate
+	it successfully talked with the remote repository, whether it
+	found any matching refs.
 
 <repository>::
 	Location of the repository.  The shorthand defined in

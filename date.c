@@ -129,8 +129,9 @@ const char *show_date_relative(unsigned long time, int tz,
 	}
 	/* Give years and months for 5 years or so */
 	if (diff < 1825) {
-		unsigned long years = diff / 365;
-		unsigned long months = (diff % 365 + 15) / 30;
+		unsigned long totalmonths = (diff * 12 * 2 + 365) / (365 * 2);
+		unsigned long years = totalmonths / 12;
+		unsigned long months = totalmonths % 12;
 		int n;
 		n = snprintf(timebuf, timebuf_size, "%lu year%s",
 				years, (years > 1 ? "s" : ""));

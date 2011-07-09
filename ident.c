@@ -9,6 +9,12 @@
 
 static char git_default_date[50];
 
+#ifdef NO_GECOS_IN_PWENT
+#define get_gecos(ignored) "&"
+#else
+#define get_gecos(struct_passwd) ((struct_passwd)->pw_gecos)
+#endif
+
 static void copy_gecos(const struct passwd *w, char *name, size_t sz)
 {
 	char *src, *dst;
@@ -20,7 +26,7 @@ static void copy_gecos(const struct passwd *w, char *name, size_t sz)
 	 * with commas.  Also & stands for capitalized form of the login name.
 	 */
 
-	for (len = 0, dst = name, src = w->pw_gecos; len < sz; src++) {
+	for (len = 0, dst = name, src = get_gecos(w); len < sz; src++) {
 		int ch = *src;
 		if (ch != '&') {
 			*dst++ = ch;
@@ -34,6 +40,7 @@ static void copy_gecos(const struct passwd *w, char *name, size_t sz)
 			*dst++ = toupper(*w->pw_name);
 			memcpy(dst, w->pw_name + 1, nlen - 1);
 			dst += nlen - 1;
+			len += nlen;
 		}
 	}
 	if (len < sz)

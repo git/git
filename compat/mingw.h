@@ -14,12 +14,6 @@ typedef int socklen_t;
 #define S_ISLNK(x) (((x) & S_IFMT) == S_IFLNK)
 #define S_ISSOCK(x) 0
 
-#ifndef _STAT_H_
-#define S_IRUSR 0
-#define S_IWUSR 0
-#define S_IXUSR 0
-#define S_IRWXU (S_IRUSR | S_IWUSR | S_IXUSR)
-#endif
 #define S_IRGRP 0
 #define S_IWGRP 0
 #define S_IXGRP 0
@@ -220,6 +214,9 @@ int mingw_bind(int sockfd, struct sockaddr *sa, size_t sz);
 int mingw_setsockopt(int sockfd, int lvl, int optname, void *optval, int optlen);
 #define setsockopt mingw_setsockopt
 
+int mingw_shutdown(int sockfd, int how);
+#define shutdown mingw_shutdown
+
 int mingw_listen(int sockfd, int backlog);
 #define listen mingw_listen
 
@@ -302,6 +299,15 @@ int winansi_vfprintf(FILE *stream, const char *format, va_list list);
 
 #define has_dos_drive_prefix(path) (isalpha(*(path)) && (path)[1] == ':')
 #define is_dir_sep(c) ((c) == '/' || (c) == '\\')
+static inline char *mingw_find_last_dir_sep(const char *path)
+{
+	char *ret = NULL;
+	for (; *path; ++path)
+		if (is_dir_sep(*path))
+			ret = (char *)path;
+	return ret;
+}
+#define find_last_dir_sep mingw_find_last_dir_sep
 int mingw_offset_1st_component(const char *path);
 #define offset_1st_component mingw_offset_1st_component
 #define PATH_SEP ';'
@@ -321,22 +327,16 @@ char **make_augmented_environ(const char *const *vars);
 void free_environ(char **env);
 
 /*
- * A replacement of main() that ensures that argv[0] has a path
- * and that default fmode and std(in|out|err) are in binary mode
+ * A replacement of main() that adds win32 specific initialization.
  */
 
+void mingw_startup();
 #define main(c,v) dummy_decl_mingw_main(); \
 static int mingw_main(); \
 int main(int argc, const char **argv) \
 { \
-	extern CRITICAL_SECTION pinfo_cs; \
-	_fmode = _O_BINARY; \
-	_setmode(_fileno(stdin), _O_BINARY); \
-	_setmode(_fileno(stdout), _O_BINARY); \
-	_setmode(_fileno(stderr), _O_BINARY); \
-	argv[0] = xstrdup(_pgmptr); \
-	InitializeCriticalSection(&pinfo_cs); \
-	return mingw_main(argc, argv); \
+	mingw_startup(); \
+	return mingw_main(__argc, __argv); \
 } \
 static int mingw_main(c,v)
 

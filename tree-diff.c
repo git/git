@@ -142,8 +142,7 @@ int diff_tree(struct tree_desc *t1, struct tree_desc *t2,
 	strbuf_add(&base, base_str, baselen);
 
 	for (;;) {
-		if (DIFF_OPT_TST(opt, QUICK) &&
-		    DIFF_OPT_TST(opt, HAS_CHANGES))
+		if (diff_can_quit_early(opt))
 			break;
 		if (opt->pathspec.nr) {
 			skip_uninteresting(t1, &base, opt, &t1_match);

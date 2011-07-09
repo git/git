@@ -294,8 +294,9 @@ void log_write_email_headers(struct rev_info *opt, struct commit *commit,
 	if (opt->total > 0) {
 		static char buffer[64];
 		snprintf(buffer, sizeof(buffer),
-			 "Subject: [%s %0*d/%d] ",
+			 "Subject: [%s%s%0*d/%d] ",
 			 opt->subject_prefix,
+			 *opt->subject_prefix ? " " : "",
 			 digits_in_number(opt->total),
 			 opt->nr, opt->total);
 		subject = buffer;
@@ -484,8 +485,10 @@ void show_log(struct rev_info *opt)
 	ctx.date_mode = opt->date_mode;
 	ctx.abbrev = opt->diffopt.abbrev;
 	ctx.after_subject = extra_headers;
+	ctx.preserve_subject = opt->preserve_subject;
 	ctx.reflog_info = opt->reflog_info;
-	pretty_print_commit(opt->commit_format, commit, &msgbuf, &ctx);
+	ctx.fmt = opt->commit_format;
+	pretty_print_commit(&ctx, commit, &msgbuf);
 
 	if (opt->add_signoff)
 		append_signoff(&msgbuf, opt->add_signoff);

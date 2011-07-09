@@ -220,6 +220,27 @@ AS_HELP_STRING([--with-openssl],[use OpenSSL library (default is YES)])
 AS_HELP_STRING([],              [ARG can be prefix for openssl library and headers]),\
 GIT_PARSE_WITH(openssl))
 #
+# Define USE_LIBPCRE if you have and want to use libpcre. git-grep will be
+# able to use Perl-compatible regular expressions.
+#
+# Define LIBPCREDIR=/foo/bar if your libpcre header and library files are in
+# /foo/bar/include and /foo/bar/lib directories.
+#
+AC_ARG_WITH(libpcre,
+AS_HELP_STRING([--with-libpcre],[support Perl-compatible regexes (default is NO)])
+AS_HELP_STRING([],           [ARG can be also prefix for libpcre library and headers]),
+if test "$withval" = "no"; then \
+	USE_LIBPCRE=; \
+elif test "$withval" = "yes"; then \
+	USE_LIBPCRE=YesPlease; \
+else
+	USE_LIBPCRE=YesPlease; \
+	LIBPCREDIR=$withval; \
+	AC_MSG_NOTICE([Setting LIBPCREDIR to $withval]); \
+	GIT_CONF_APPEND_LINE(LIBPCREDIR=$withval); \
+fi \
+)
+#
 # Define NO_CURL if you do not have curl installed.  git-http-pull and
 # git-http-push are not built, and you cannot use http:// and https://
 # transports.
@@ -433,6 +454,25 @@ GIT_UNSTASH_FLAGS($OPENSSLDIR)
 
 AC_SUBST(NEEDS_SSL_WITH_CRYPTO)
 AC_SUBST(NO_OPENSSL)
+
+#
+# Define USE_LIBPCRE if you have and want to use libpcre. git-grep will be
+# able to use Perl-compatible regular expressions.
+#
+
+if test -n "$USE_LIBPCRE"; then
+
+GIT_STASH_FLAGS($LIBPCREDIR)
+
+AC_CHECK_LIB([pcre], [pcre_version],
+[USE_LIBPCRE=YesPlease],
+[USE_LIBPCRE=])
+
+GIT_UNSTASH_FLAGS($LIBPCREDIR)
+
+AC_SUBST(USE_LIBPCRE)
+
+fi
 
 #
 # Define NO_CURL if you do not have libcurl installed.  git-http-pull and

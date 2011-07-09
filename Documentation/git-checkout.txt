@@ -12,7 +12,7 @@ SYNOPSIS
 'git checkout' [-q] [-f] [-m] [--detach] [<commit>]
 'git checkout' [-q] [-f] [-m] [[-b|-B|--orphan] <new_branch>] [<start_point>]
 'git checkout' [-f|--ours|--theirs|-m|--conflict=<style>] [<tree-ish>] [--] <paths>...
-'git checkout' --patch [<tree-ish>] [--] [<paths>...]
+'git checkout' [-p|--patch] [<tree-ish>] [--] [<paths>...]
 
 DESCRIPTION
 -----------
@@ -45,7 +45,7 @@ $ git checkout <branch>
 that is to say, the branch is not reset/created unless "git checkout" is
 successful.
 
-'git checkout' [--patch] [<tree-ish>] [--] <pathspec>...::
+'git checkout' [-p|--patch] [<tree-ish>] [--] <pathspec>...::
 
 	When <paths> or `--patch` are given, 'git checkout' does *not*
 	switch branches.  It updates the named paths in the working tree
@@ -183,7 +183,8 @@ the conflicted merge in the specified paths.
 	working tree (and if a <tree-ish> was specified, the index).
 +
 This means that you can use `git checkout -p` to selectively discard
-edits from your current working tree.
+edits from your current working tree. See the ``Interactive Mode''
+section of linkgit:git-add[1] to learn how to operate the `\--patch` mode.
 
 <branch>::
 	Branch to checkout; if it refers to a branch (i.e., a name that,

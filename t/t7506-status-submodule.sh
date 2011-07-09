@@ -4,17 +4,21 @@ test_description='git status for submodule'
 
 . ./test-lib.sh
 
-test_expect_success 'setup' '
-	test_create_repo sub &&
+test_create_repo_with_commit () {
+	test_create_repo "$1" &&
 	(
-		cd sub &&
+		cd "$1" &&
 		: >bar &&
 		git add bar &&
 		git commit -m " Add bar" &&
 		: >foo &&
 		git add foo &&
 		git commit -m " Add foo"
-	) &&
+	)
+}
+
+test_expect_success 'setup' '
+	test_create_repo_with_commit sub &&
 	echo output > .gitignore &&
 	git add sub .gitignore &&
 	git commit -m "Add submodule sub"
@@ -185,6 +189,86 @@ test_expect_success 'status clean (empty submodule dir)' '
 test_expect_success 'status -a clean (empty submodule dir)' '
 	test_must_fail git commit --dry-run -a >output &&
 	test_i18ngrep "nothing to commit" output
+'
+
+cat >status_expect <<\EOF
+AA .gitmodules
+A  sub1
+EOF
+
+test_expect_success 'status with merge conflict in .gitmodules' '
+	git clone . super &&
+	test_create_repo_with_commit sub1 &&
+	test_tick &&
+	test_create_repo_with_commit sub2 &&
+	(
+		cd super &&
+		prev=$(git rev-parse HEAD) &&
+		git checkout -b add_sub1 &&
+		git submodule add ../sub1 &&
+		git commit -m "add sub1" &&
+		git checkout -b add_sub2 $prev &&
+		git submodule add ../sub2 &&
+		git commit -m "add sub2" &&
+		git checkout -b merge_conflict_gitmodules &&
+		test_must_fail git merge add_sub1 &&
+		git status -s >../status_actual 2>&1
+	) &&
+	test_cmp status_actual status_expect
+'
+
+sha1_merge_sub1=$(cd sub1 && git rev-parse HEAD)
+sha1_merge_sub2=$(cd sub2 && git rev-parse HEAD)
+short_sha1_merge_sub1=$(cd sub1 && git rev-parse --short HEAD)
+short_sha1_merge_sub2=$(cd sub2 && git rev-parse --short HEAD)
+cat >diff_expect <<\EOF
+diff --cc .gitmodules
+index badaa4c,44f999a..0000000
+--- a/.gitmodules
++++ b/.gitmodules
+@@@ -1,3 -1,3 +1,9 @@@
+++<<<<<<< HEAD
+ +[submodule "sub2"]
+ +	path = sub2
+ +	url = ../sub2
+++=======
++ [submodule "sub1"]
++ 	path = sub1
++ 	url = ../sub1
+++>>>>>>> add_sub1
+EOF
+
+cat >diff_submodule_expect <<\EOF
+diff --cc .gitmodules
+index badaa4c,44f999a..0000000
+--- a/.gitmodules
++++ b/.gitmodules
+@@@ -1,3 -1,3 +1,9 @@@
+++<<<<<<< HEAD
+ +[submodule "sub2"]
+ +	path = sub2
+ +	url = ../sub2
+++=======
++ [submodule "sub1"]
++ 	path = sub1
++ 	url = ../sub1
+++>>>>>>> add_sub1
+EOF
+
+test_expect_success 'diff with merge conflict in .gitmodules' '
+	(
+		cd super &&
+		git diff >../diff_actual 2>&1
+	) &&
+	test_cmp diff_actual diff_expect
+'
+
+test_expect_success 'diff --submodule with merge conflict in .gitmodules' '
+	(
+		cd super &&
+		git diff --submodule >../diff_submodule_actual 2>&1
+	) &&
+	test_cmp diff_submodule_actual diff_submodule_expect
 '
 
 test_done

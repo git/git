@@ -48,11 +48,17 @@ endif::git-format-patch[]
 --patience::
 	Generate a diff using the "patience diff" algorithm.
 
---stat[=<width>[,<name-width>]]::
+--stat[=<width>[,<name-width>[,<count>]]]::
 	Generate a diffstat.  You can override the default
 	output width for 80-column terminal by `--stat=<width>`.
 	The width of the filename part can be controlled by
 	giving another width to it separated by a comma.
+	By giving a third parameter `<count>`, you can limit the
+	output to the first `<count>` lines, followed by
+	`...` if there are more.
++
+These parameters can also be set individually with `--stat-width=<width>`,
+`--stat-name-width=<name-width>` and `--stat-count=<count>`.
 
 --numstat::
 	Similar to `\--stat`, but shows number of added and
@@ -66,19 +72,49 @@ endif::git-format-patch[]
 	number of modified files, as well as number of added and deleted
 	lines.
 
---dirstat[=<limit>]::
-	Output the distribution of relative amount of changes (number of lines added or
-	removed) for each sub-directory. Directories with changes below
-	a cut-off percent (3% by default) are not shown. The cut-off percent
-	can be set with `--dirstat=<limit>`. Changes in a child directory are not
-	counted for the parent directory, unless `--cumulative` is used.
+--dirstat[=<param1,param2,...>]::
+	Output the distribution of relative amount of changes for each
+	sub-directory. The behavior of `--dirstat` can be customized by
+	passing it a comma separated list of parameters.
+	The defaults are controlled by the `diff.dirstat` configuration
+	variable (see linkgit:git-config[1]).
+	The following parameters are available:
 +
-Note that the `--dirstat` option computes the changes while ignoring
-the amount of pure code movements within a file.  In other words,
-rearranging lines in a file is not counted as much as other changes.
-
---dirstat-by-file[=<limit>]::
-	Same as `--dirstat`, but counts changed files instead of lines.
+--
+`changes`;;
+	Compute the dirstat numbers by counting the lines that have been
+	removed from the source, or added to the destination. This ignores
+	the amount of pure code movements within a file.  In other words,
+	rearranging lines in a file is not counted as much as other changes.
+	This is the default behavior when no parameter is given.
+`lines`;;
+	Compute the dirstat numbers by doing the regular line-based diff
+	analysis, and summing the removed/added line counts. (For binary
+	files, count 64-byte chunks instead, since binary files have no
+	natural concept of lines). This is a more expensive `--dirstat`
+	behavior than the `changes` behavior, but it does count rearranged
+	lines within a file as much as other changes. The resulting output
+	is consistent with what you get from the other `--*stat` options.
+`files`;;
+	Compute the dirstat numbers by counting the number of files changed.
+	Each changed file counts equally in the dirstat analysis. This is
+	the computationally cheapest `--dirstat` behavior, since it does
+	not have to look at the file contents at all.
+`cumulative`;;
+	Count changes in a child directory for the parent directory as well.
+	Note that when using `cumulative`, the sum of the percentages
+	reported may exceed 100%. The default (non-cumulative) behavior can
+	be specified with the `noncumulative` parameter.
+<limit>;;
+	An integer parameter specifies a cut-off percent (3% by default).
+	Directories contributing less than this percentage of the changes
+	are not shown in the output.
+--
++
+Example: The following will count changed files, while ignoring
+directories with less than 10% of the total amount of changed files,
+and accumulating child directory counts in the parent directories:
+`--dirstat=files,10,cumulative`.
 
 --summary::
 	Output a condensed summary of extended header information
@@ -124,12 +160,19 @@ any of those replacements occurred.
 
 --color[=<when>]::
 	Show colored diff.
-	The value must be always (the default), never, or auto.
+	The value must be `always` (the default for `<when>`), `never`, or `auto`.
+	The default value is `never`.
+ifdef::git-diff[]
+	It can be changed by the `color.ui` and `color.diff`
+	configuration settings.
+endif::git-diff[]
 
 --no-color::
-	Turn off colored diff, even when the configuration file
-	gives the default to color output.
-	Same as `--color=never`.
+	Turn off colored diff.
+ifdef::git-diff[]
+	This can be used to override configuration settings.
+endif::git-diff[]
+	It is the same as `--color=never`.
 
 --word-diff[=<mode>]::
 	Show a word diff, using the <mode> to delimit changed words.
@@ -243,7 +286,7 @@ ifdef::git-log[]
 	For following files across renames while traversing history, see
 	`--follow`.
 endif::git-log[]
-	If `n` is specified, it is a is a threshold on the similarity
+	If `n` is specified, it is a threshold on the similarity
 	index (i.e. amount of addition/deletions compared to the
 	file's size). For example, `-M90%` means git should consider a
 	delete/add pair to be a rename if more than 90% of the file

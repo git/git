@@ -12,7 +12,8 @@ SYNOPSIS
 'git grep' [-a | --text] [-I] [-i | --ignore-case] [-w | --word-regexp]
 	   [-v | --invert-match] [-h|-H] [--full-name]
 	   [-E | --extended-regexp] [-G | --basic-regexp]
-	   [-F | --fixed-strings] [-n]
+	   [-P | --perl-regexp]
+	   [-F | --fixed-strings] [-n | --line-number]
 	   [-l | --files-with-matches] [-L | --files-without-match]
 	   [(-O | --open-files-in-pager) [<pager>]]
 	   [-z | --null]
@@ -96,6 +97,11 @@ OPTIONS
 --basic-regexp::
 	Use POSIX extended/basic regexp for patterns.  Default
 	is to use basic regexp.
+
+-P::
+--perl-regexp::
+	Use Perl-compatible regexp for patterns. Requires libpcre to be
+	compiled in.
 
 -F::
 --fixed-strings::

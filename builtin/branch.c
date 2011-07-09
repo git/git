@@ -399,9 +399,7 @@ static void add_verbose_info(struct strbuf *out, struct ref_item *item,
 	struct commit *commit = item->commit;
 
 	if (commit && !parse_commit(commit)) {
-		struct pretty_print_context ctx = {0};
-		pretty_print_commit(CMIT_FMT_ONELINE, commit,
-				    &subject, &ctx);
+		pp_commit_easy(CMIT_FMT_ONELINE, commit, &subject);
 		sub = subject.buf;
 	}
 

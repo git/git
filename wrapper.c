@@ -148,8 +148,10 @@ ssize_t read_in_full(int fd, void *buf, size_t count)
 
 	while (count > 0) {
 		ssize_t loaded = xread(fd, p, count);
-		if (loaded <= 0)
-			return total ? total : loaded;
+		if (loaded < 0)
+			return -1;
+		if (loaded == 0)
+			return total;
 		count -= loaded;
 		p += loaded;
 		total += loaded;

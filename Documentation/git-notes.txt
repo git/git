@@ -17,7 +17,7 @@ SYNOPSIS
 'git notes' merge [-v | -q] [-s <strategy> ] <notes_ref>
 'git notes' merge --commit [-v | -q]
 'git notes' merge --abort [-v | -q]
-'git notes' remove [<object>]
+'git notes' remove [--ignore-missing] [--stdin] [<object>...]
 'git notes' prune [-n | -v]
 'git notes' get-ref
 
@@ -106,8 +106,9 @@ When done, the user can either finalize the merge with
 'git notes merge --abort'.
 
 remove::
-	Remove the notes for a given object (defaults to HEAD).
-	This is equivalent to specifying an empty note message to
+	Remove the notes for given objects (defaults to HEAD). When
+	giving zero or one object from the command line, this is
+	equivalent to specifying an empty note message to
 	the `edit` subcommand.
 
 prune::
@@ -153,6 +154,15 @@ OPTIONS
 	Manipulate the notes tree in <ref>.  This overrides
 	'GIT_NOTES_REF' and the "core.notesRef" configuration.  The ref
 	is taken to be in `refs/notes/` if it is not qualified.
+
+--ignore-missing::
+	Do not consider it an error to request removing notes from an
+	object that does not have notes attached to it.
+
+--stdin::
+	Also read the object names to remove notes from from the standard
+	input (there is no reason you cannot combine this with object
+	names from the command line).
 
 -n::
 --dry-run::

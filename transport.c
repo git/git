@@ -156,7 +156,7 @@ static void set_upstreams(struct transport *transport, struct ref *refs,
 			continue;
 		if (!ref->peer_ref)
 			continue;
-		if (!ref->new_sha1 || is_null_sha1(ref->new_sha1))
+		if (is_null_sha1(ref->new_sha1))
 			continue;
 
 		/* Follow symbolic refs (mainly for HEAD). */
@@ -1190,14 +1190,20 @@ literal_copy:
 	return xstrdup(url);
 }
 
-int refs_from_alternate_cb(struct alternate_object_database *e, void *cb)
+struct alternate_refs_data {
+	alternate_ref_fn *fn;
+	void *data;
+};
+
+static int refs_from_alternate_cb(struct alternate_object_database *e,
+				  void *data)
 {
 	char *other;
 	size_t len;
 	struct remote *remote;
 	struct transport *transport;
 	const struct ref *extra;
-	alternate_ref_fn *ref_fn = cb;
+	struct alternate_refs_data *cb = data;
 
 	e->name[-1] = '\0';
 	other = xstrdup(real_path(e->base));
@@ -1218,8 +1224,16 @@ int refs_from_alternate_cb(struct alternate_object_database *e, void *cb)
 	for (extra = transport_get_remote_refs(transport);
 	     extra;
 	     extra = extra->next)
-		ref_fn(extra, NULL);
+		cb->fn(extra, cb->data);
 	transport_disconnect(transport);
 	free(other);
 	return 0;
+}
+
+void for_each_alternate_ref(alternate_ref_fn fn, void *data)
+{
+	struct alternate_refs_data cb;
+	cb.fn = fn;
+	cb.data = data;
+	foreach_alt_odb(refs_from_alternate_cb, &cb);
 }

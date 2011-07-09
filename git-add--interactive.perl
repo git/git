@@ -45,6 +45,9 @@ my ($diff_new_color) =
 my $normal_color = $repo->get_color("", "reset");
 
 my $use_readkey = 0;
+my $use_termcap = 0;
+my %term_escapes;
+
 sub ReadMode;
 sub ReadKey;
 if ($repo->config_bool("interactive.singlekey")) {
@@ -52,6 +55,14 @@ if ($repo->config_bool("interactive.singlekey")) {
 		require Term::ReadKey;
 		Term::ReadKey->import;
 		$use_readkey = 1;
+	};
+	eval {
+		require Term::Cap;
+		my $termcap = Term::Cap->Tgetent;
+		foreach (values %$termcap) {
+			$term_escapes{$_} = 1 if /^\e/;
+		}
+		$use_termcap = 1;
 	};
 }
 
@@ -705,7 +716,7 @@ sub add_untracked_cmd {
 sub run_git_apply {
 	my $cmd = shift;
 	my $fh;
-	open $fh, '| git ' . $cmd;
+	open $fh, '| git ' . $cmd . " --recount --allow-overlap";
 	print $fh @_;
 	return close $fh;
 }
@@ -1050,7 +1061,7 @@ EOF
 
 sub diff_applies {
 	my $fh;
-	return run_git_apply($patch_mode_flavour{APPLY_CHECK} . ' --recount --check',
+	return run_git_apply($patch_mode_flavour{APPLY_CHECK} . ' --check',
 			     map { @{$_->{TEXT}} } @_);
 }
 
@@ -1067,6 +1078,14 @@ sub prompt_single_character {
 		ReadMode 'cbreak';
 		my $key = ReadKey 0;
 		ReadMode 'restore';
+		if ($use_termcap and $key eq "\e") {
+			while (!defined $term_escapes{$key}) {
+				my $next = ReadKey 0.5;
+				last if (!defined $next);
+				$key .= $next;
+			}
+			$key =~ s/\e/^[/;
+		}
 		print "$key" if defined $key;
 		print "\n";
 		return $key;
@@ -1139,7 +1158,7 @@ EOF
 
 sub apply_patch {
 	my $cmd = shift;
-	my $ret = run_git_apply $cmd . ' --recount', @_;
+	my $ret = run_git_apply $cmd, @_;
 	if (!$ret) {
 		print STDERR @_;
 	}
@@ -1148,17 +1167,17 @@ sub apply_patch {
 
 sub apply_patch_for_checkout_commit {
 	my $reverse = shift;
-	my $applies_index = run_git_apply 'apply '.$reverse.' --cached --recount --check', @_;
-	my $applies_worktree = run_git_apply 'apply '.$reverse.' --recount --check', @_;
+	my $applies_index = run_git_apply 'apply '.$reverse.' --cached --check', @_;
+	my $applies_worktree = run_git_apply 'apply '.$reverse.' --check', @_;
 
 	if ($applies_worktree && $applies_index) {
-		run_git_apply 'apply '.$reverse.' --cached --recount', @_;
-		run_git_apply 'apply '.$reverse.' --recount', @_;
+		run_git_apply 'apply '.$reverse.' --cached', @_;
+		run_git_apply 'apply '.$reverse, @_;
 		return 1;
 	} elsif (!$applies_index) {
 		print colored $error_color, "The selected hunks do not apply to the index!\n";
 		if (prompt_yesno "Apply them to the worktree anyway? ") {
-			return run_git_apply 'apply '.$reverse.' --recount', @_;
+			return run_git_apply 'apply '.$reverse, @_;
 		} else {
 			print colored $error_color, "Nothing was applied.\n";
 			return 0;
@@ -1366,14 +1385,13 @@ sub patch_update_file {
 				next;
 			}
 			elsif ($line =~ /^q/i) {
-				while ($ix < $num) {
-					if (!defined $hunk[$ix]{USE}) {
-						$hunk[$ix]{USE} = 0;
+				for ($i = 0; $i < $num; $i++) {
+					if (!defined $hunk[$i]{USE}) {
+						$hunk[$i]{USE} = 0;
 					}
-					$ix++;
 				}
 				$quit = 1;
-				next;
+				last;
 			}
 			elsif ($line =~ m|^/(.*)|) {
 				my $regex = $1;

@@ -26,7 +26,7 @@ index file, all SHA1 references in .git/refs/*, and all reflogs (unless
 --no-reflogs is given) as heads.
 
 --unreachable::
-	Print out objects that exist but that aren't readable from any
+	Print out objects that exist but that aren't reachable from any
 	of the reference nodes.
 
 --root::
@@ -76,7 +76,7 @@ It tests SHA1 and general object sanity, and it does full tracking of
 the resulting reachability and everything else. It prints out any
 corruption it finds (missing or bad objects), and if you use the
 '--unreachable' flag it will also print out objects that exist but
-that aren't readable from any of the specified head nodes.
+that aren't reachable from any of the specified head nodes.
 
 So for example
 

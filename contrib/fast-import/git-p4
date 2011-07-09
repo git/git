@@ -474,6 +474,47 @@ class Command:
         self.usage = "usage: %prog [options]"
         self.needsGit = True
 
+class P4UserMap:
+    def __init__(self):
+        self.userMapFromPerforceServer = False
+
+    def getUserCacheFilename(self):
+        home = os.environ.get("HOME", os.environ.get("USERPROFILE"))
+        return home + "/.gitp4-usercache.txt"
+
+    def getUserMapFromPerforceServer(self):
+        if self.userMapFromPerforceServer:
+            return
+        self.users = {}
+        self.emails = {}
+
+        for output in p4CmdList("users"):
+            if not output.has_key("User"):
+                continue
+            self.users[output["User"]] = output["FullName"] + " <" + output["Email"] + ">"
+            self.emails[output["Email"]] = output["User"]
+
+
+        s = ''
+        for (key, val) in self.users.items():
+            s += "%s\t%s\n" % (key.expandtabs(1), val.expandtabs(1))
+
+        open(self.getUserCacheFilename(), "wb").write(s)
+        self.userMapFromPerforceServer = True
+
+    def loadUserMapFromCache(self):
+        self.users = {}
+        self.userMapFromPerforceServer = False
+        try:
+            cache = open(self.getUserCacheFilename(), "rb")
+            lines = cache.readlines()
+            cache.close()
+            for line in lines:
+                entry = line.strip().split("\t")
+                self.users[entry[0]] = entry[1]
+        except IOError:
+            self.getUserMapFromPerforceServer()
+
 class P4Debug(Command):
     def __init__(self):
         Command.__init__(self)
@@ -554,13 +595,16 @@ class P4RollBack(Command):
 
         return True
 
-class P4Submit(Command):
+class P4Submit(Command, P4UserMap):
     def __init__(self):
         Command.__init__(self)
+        P4UserMap.__init__(self)
         self.options = [
                 optparse.make_option("--verbose", dest="verbose", action="store_true"),
                 optparse.make_option("--origin", dest="origin"),
                 optparse.make_option("-M", dest="detectRenames", action="store_true"),
+                # preserve the user, requires relevant p4 permissions
+                optparse.make_option("--preserve-user", dest="preserveUser", action="store_true"),
         ]
         self.description = "Submit changes from git to the perforce depot."
         self.usage += " [name of git branch to submit into perforce depot]"
@@ -568,7 +612,9 @@ class P4Submit(Command):
         self.origin = ""
         self.detectRenames = False
         self.verbose = False
+        self.preserveUser = gitConfig("git-p4.preserveUser").lower() == "true"
         self.isWindows = (platform.system() == "Windows")
+        self.myP4UserId = None
 
     def check(self):
         if len(p4CmdList("opened ...")) > 0:
@@ -602,6 +648,99 @@ class P4Submit(Command):
 
         return result
 
+    def p4UserForCommit(self,id):
+        # Return the tuple (perforce user,git email) for a given git commit id
+        self.getUserMapFromPerforceServer()
+        gitEmail = read_pipe("git log --max-count=1 --format='%%ae' %s" % id)
+        gitEmail = gitEmail.strip()
+        if not self.emails.has_key(gitEmail):
+            return (None,gitEmail)
+        else:
+            return (self.emails[gitEmail],gitEmail)
+
+    def checkValidP4Users(self,commits):
+        # check if any git authors cannot be mapped to p4 users
+        for id in commits:
+            (user,email) = self.p4UserForCommit(id)
+            if not user:
+                msg = "Cannot find p4 user for email %s in commit %s." % (email, id)
+                if gitConfig('git-p4.allowMissingP4Users').lower() == "true":
+                    print "%s" % msg
+                else:
+                    die("Error: %s\nSet git-p4.allowMissingP4Users to true to allow this." % msg)
+
+    def lastP4Changelist(self):
+        # Get back the last changelist number submitted in this client spec. This
+        # then gets used to patch up the username in the change. If the same
+        # client spec is being used by multiple processes then this might go
+        # wrong.
+        results = p4CmdList("client -o")        # find the current client
+        client = None
+        for r in results:
+            if r.has_key('Client'):
+                client = r['Client']
+                break
+        if not client:
+            die("could not get client spec")
+        results = p4CmdList("changes -c %s -m 1" % client)
+        for r in results:
+            if r.has_key('change'):
+                return r['change']
+        die("Could not get changelist number for last submit - cannot patch up user details")
+
+    def modifyChangelistUser(self, changelist, newUser):
+        # fixup the user field of a changelist after it has been submitted.
+        changes = p4CmdList("change -o %s" % changelist)
+        if len(changes) != 1:
+            die("Bad output from p4 change modifying %s to user %s" %
+                (changelist, newUser))
+
+        c = changes[0]
+        if c['User'] == newUser: return   # nothing to do
+        c['User'] = newUser
+        input = marshal.dumps(c)
+
+        result = p4CmdList("change -f -i", stdin=input)
+        for r in result:
+            if r.has_key('code'):
+                if r['code'] == 'error':
+                    die("Could not modify user field of changelist %s to %s:%s" % (changelist, newUser, r['data']))
+            if r.has_key('data'):
+                print("Updated user field for changelist %s to %s" % (changelist, newUser))
+                return
+        die("Could not modify user field of changelist %s to %s" % (changelist, newUser))
+
+    def canChangeChangelists(self):
+        # check to see if we have p4 admin or super-user permissions, either of
+        # which are required to modify changelists.
+        results = p4CmdList("protects %s" % self.depotPath)
+        for r in results:
+            if r.has_key('perm'):
+                if r['perm'] == 'admin':
+                    return 1
+                if r['perm'] == 'super':
+                    return 1
+        return 0
+
+    def p4UserId(self):
+        if self.myP4UserId:
+            return self.myP4UserId
+
+        results = p4CmdList("user -o")
+        for r in results:
+            if r.has_key('User'):
+                self.myP4UserId = r['User']
+                return r['User']
+        die("Could not find your p4 user id")
+
+    def p4UserIsMe(self, p4User):
+        # return True if the given p4 user is actually me
+        me = self.p4UserId()
+        if not p4User or p4User != me:
+            return False
+        else:
+            return True
+
     def prepareSubmitTemplate(self):
         # remove lines in the Files section that show changes to files outside the depot path we're committing into
         template = ""
@@ -630,6 +769,8 @@ class P4Submit(Command):
 
     def applyCommit(self, id):
         print "Applying %s" % (read_pipe("git log --max-count=1 --pretty=oneline %s" % id))
+
+        (p4User, gitEmail) = self.p4UserForCommit(id)
 
         if not self.detectRenames:
             # If not explicitly set check the config variable
@@ -748,6 +889,10 @@ class P4Submit(Command):
 
         if self.interactive:
             submitTemplate = self.prepareLogMessage(template, logMessage)
+
+            if self.preserveUser:
+               submitTemplate = submitTemplate + ("\n######## Actual user %s, modified after commit\n" % p4User)
+
             if os.environ.has_key("P4DIFF"):
                 del(os.environ["P4DIFF"])
             diff = ""
@@ -763,6 +908,11 @@ class P4Submit(Command):
                 for line in f.readlines():
                     newdiff += "+" + line
                 f.close()
+
+            if self.checkAuthorship and not self.p4UserIsMe(p4User):
+                submitTemplate += "######## git author %s does not match your p4 account.\n" % gitEmail
+                submitTemplate += "######## Use git-p4 option --preserve-user to modify authorship\n"
+                submitTemplate += "######## Use git-p4 config git-p4.skipUserNameCheck hides this message.\n"
 
             separatorLine = "######## everything below this line is just the diff #######\n"
 
@@ -781,8 +931,13 @@ class P4Submit(Command):
                 editor = read_pipe("git var GIT_EDITOR").strip()
             system(editor + " " + fileName)
 
+            if gitConfig("git-p4.skipSubmitEditCheck") == "true":
+                checkModTime = False
+            else:
+                checkModTime = True
+
             response = "y"
-            if os.stat(fileName).st_mtime <= mtime:
+            if checkModTime and (os.stat(fileName).st_mtime <= mtime):
                 response = "x"
                 while response != "y" and response != "n":
                     response = raw_input("Submit template unchanged. Submit anyway? [y]es, [n]o (skip this patch) ")
@@ -795,6 +950,14 @@ class P4Submit(Command):
                 if self.isWindows:
                     submitTemplate = submitTemplate.replace("\r\n", "\n")
                 p4_write_pipe("submit -i", submitTemplate)
+
+                if self.preserveUser:
+                    if p4User:
+                        # Get last changelist number. Cannot easily get it from
+                        # the submit command output as the output is unmarshalled.
+                        changelist = self.lastP4Changelist()
+                        self.modifyChangelistUser(changelist, p4User)
+
             else:
                 for f in editedFiles:
                     p4_system("revert \"%s\"" % f);
@@ -831,6 +994,10 @@ class P4Submit(Command):
         if len(self.origin) == 0:
             self.origin = upstream
 
+        if self.preserveUser:
+            if not self.canChangeChangelists():
+                die("Cannot preserve user names without p4 super-user or admin permissions")
+
         if self.verbose:
             print "Origin branch is " + self.origin
 
@@ -858,6 +1025,14 @@ class P4Submit(Command):
             commits.append(line.strip())
         commits.reverse()
 
+        if self.preserveUser or (gitConfig("git-p4.skipUserNameCheck") == "true"):
+            self.checkAuthorship = False
+        else:
+            self.checkAuthorship = True
+
+        if self.preserveUser:
+            self.checkValidP4Users(commits)
+
         while len(commits) > 0:
             commit = commits[0]
             commits = commits[1:]
@@ -877,11 +1052,12 @@ class P4Submit(Command):
 
         return True
 
-class P4Sync(Command):
+class P4Sync(Command, P4UserMap):
     delete_actions = ( "delete", "move/delete", "purge" )
 
     def __init__(self):
         Command.__init__(self)
+        P4UserMap.__init__(self)
         self.options = [
                 optparse.make_option("--branch", dest="branch"),
                 optparse.make_option("--detect-branches", dest="detectBranches", action="store_true"),
@@ -1235,41 +1411,6 @@ class P4Sync(Command):
                 if not self.silent:
                     print ("Tag %s does not match with change %s: file count is different."
                            % (labelDetails["label"], change))
-
-    def getUserCacheFilename(self):
-        home = os.environ.get("HOME", os.environ.get("USERPROFILE"))
-        return home + "/.gitp4-usercache.txt"
-
-    def getUserMapFromPerforceServer(self):
-        if self.userMapFromPerforceServer:
-            return
-        self.users = {}
-
-        for output in p4CmdList("users"):
-            if not output.has_key("User"):
-                continue
-            self.users[output["User"]] = output["FullName"] + " <" + output["Email"] + ">"
-
-
-        s = ''
-        for (key, val) in self.users.items():
-            s += "%s\t%s\n" % (key.expandtabs(1), val.expandtabs(1))
-
-        open(self.getUserCacheFilename(), "wb").write(s)
-        self.userMapFromPerforceServer = True
-
-    def loadUserMapFromCache(self):
-        self.users = {}
-        self.userMapFromPerforceServer = False
-        try:
-            cache = open(self.getUserCacheFilename(), "rb")
-            lines = cache.readlines()
-            cache.close()
-            for line in lines:
-                entry = line.strip().split("\t")
-                self.users[entry[0]] = entry[1]
-        except IOError:
-            self.getUserMapFromPerforceServer()
 
     def getLabels(self):
         self.labels = {}

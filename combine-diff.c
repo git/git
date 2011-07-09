@@ -7,6 +7,7 @@
 #include "xdiff-interface.h"
 #include "log-tree.h"
 #include "refs.h"
+#include "userdiff.h"
 
 static struct combine_diff_path *intersect_paths(struct combine_diff_path *curr, int n, int num_parent)
 {
@@ -92,7 +93,9 @@ struct sline {
 	unsigned long *p_lno;
 };
 
-static char *grab_blob(const unsigned char *sha1, unsigned int mode, unsigned long *size)
+static char *grab_blob(const unsigned char *sha1, unsigned int mode,
+		       unsigned long *size, struct userdiff_driver *textconv,
+		       const char *path)
 {
 	char *blob;
 	enum object_type type;
@@ -105,6 +108,11 @@ static char *grab_blob(const unsigned char *sha1, unsigned int mode, unsigned lo
 		/* deleted blob */
 		*size = 0;
 		return xcalloc(1, 1);
+	} else if (textconv) {
+		struct diff_filespec *df = alloc_filespec(path);
+		fill_filespec(df, sha1, mode);
+		*size = fill_textconv(textconv, df, &blob);
+		free_filespec(df);
 	} else {
 		blob = read_sha1_file(sha1, &type, size);
 		if (type != OBJ_BLOB)
@@ -204,7 +212,9 @@ static void consume_line(void *state_, char *line, unsigned long len)
 static void combine_diff(const unsigned char *parent, unsigned int mode,
 			 mmfile_t *result_file,
 			 struct sline *sline, unsigned int cnt, int n,
-			 int num_parent, int result_deleted)
+			 int num_parent, int result_deleted,
+			 struct userdiff_driver *textconv,
+			 const char *path)
 {
 	unsigned int p_lno, lno;
 	unsigned long nmask = (1UL << n);
@@ -217,7 +227,7 @@ static void combine_diff(const unsigned char *parent, unsigned int mode,
 	if (result_deleted)
 		return; /* result deleted */
 
-	parent_file.ptr = grab_blob(parent, mode, &sz);
+	parent_file.ptr = grab_blob(parent, mode, &sz, textconv, path);
 	parent_file.size = sz;
 	memset(&xpp, 0, sizeof(xpp));
 	xpp.flags = 0;
@@ -681,6 +691,82 @@ static void dump_quoted_path(const char *head,
 	puts(buf.buf);
 }
 
+static void show_combined_header(struct combine_diff_path *elem,
+				 int num_parent,
+				 int dense,
+				 struct rev_info *rev,
+				 int mode_differs,
+				 int show_file_header)
+{
+	struct diff_options *opt = &rev->diffopt;
+	int abbrev = DIFF_OPT_TST(opt, FULL_INDEX) ? 40 : DEFAULT_ABBREV;
+	const char *a_prefix = opt->a_prefix ? opt->a_prefix : "a/";
+	const char *b_prefix = opt->b_prefix ? opt->b_prefix : "b/";
+	int use_color = DIFF_OPT_TST(opt, COLOR_DIFF);
+	const char *c_meta = diff_get_color(use_color, DIFF_METAINFO);
+	const char *c_reset = diff_get_color(use_color, DIFF_RESET);
+	const char *abb;
+	int added = 0;
+	int deleted = 0;
+	int i;
+
+	if (rev->loginfo && !rev->no_commit_id)
+		show_log(rev);
+
+	dump_quoted_path(dense ? "diff --cc " : "diff --combined ",
+			 "", elem->path, c_meta, c_reset);
+	printf("%sindex ", c_meta);
+	for (i = 0; i < num_parent; i++) {
+		abb = find_unique_abbrev(elem->parent[i].sha1,
+					 abbrev);
+		printf("%s%s", i ? "," : "", abb);
+	}
+	abb = find_unique_abbrev(elem->sha1, abbrev);
+	printf("..%s%s\n", abb, c_reset);
+
+	if (mode_differs) {
+		deleted = !elem->mode;
+
+		/* We say it was added if nobody had it */
+		added = !deleted;
+		for (i = 0; added && i < num_parent; i++)
+			if (elem->parent[i].status !=
+			    DIFF_STATUS_ADDED)
+				added = 0;
+		if (added)
+			printf("%snew file mode %06o",
+			       c_meta, elem->mode);
+		else {
+			if (deleted)
+				printf("%sdeleted file ", c_meta);
+			printf("mode ");
+			for (i = 0; i < num_parent; i++) {
+				printf("%s%06o", i ? "," : "",
+				       elem->parent[i].mode);
+			}
+			if (elem->mode)
+				printf("..%06o", elem->mode);
+		}
+		printf("%s\n", c_reset);
+	}
+
+	if (!show_file_header)
+		return;
+
+	if (added)
+		dump_quoted_path("--- ", "", "/dev/null",
+				 c_meta, c_reset);
+	else
+		dump_quoted_path("--- ", a_prefix, elem->path,
+				 c_meta, c_reset);
+	if (deleted)
+		dump_quoted_path("+++ ", "", "/dev/null",
+				 c_meta, c_reset);
+	else
+		dump_quoted_path("+++ ", b_prefix, elem->path,
+				 c_meta, c_reset);
+}
+
 static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 			    int dense, struct rev_info *rev)
 {
@@ -692,17 +778,22 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 	int mode_differs = 0;
 	int i, show_hunks;
 	int working_tree_file = is_null_sha1(elem->sha1);
-	int abbrev = DIFF_OPT_TST(opt, FULL_INDEX) ? 40 : DEFAULT_ABBREV;
-	const char *a_prefix, *b_prefix;
 	mmfile_t result_file;
+	struct userdiff_driver *userdiff;
+	struct userdiff_driver *textconv = NULL;
+	int is_binary;
 
 	context = opt->context;
-	a_prefix = opt->a_prefix ? opt->a_prefix : "a/";
-	b_prefix = opt->b_prefix ? opt->b_prefix : "b/";
+	userdiff = userdiff_find_by_path(elem->path);
+	if (!userdiff)
+		userdiff = userdiff_find_by_name("default");
+	if (DIFF_OPT_TST(opt, ALLOW_TEXTCONV))
+		textconv = userdiff_get_textconv(userdiff);
 
 	/* Read the result of merge first */
 	if (!working_tree_file)
-		result = grab_blob(elem->sha1, elem->mode, &result_size);
+		result = grab_blob(elem->sha1, elem->mode, &result_size,
+				   textconv, elem->path);
 	else {
 		/* Used by diff-tree to read from the working tree */
 		struct stat st;
@@ -725,9 +816,16 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 		} else if (S_ISDIR(st.st_mode)) {
 			unsigned char sha1[20];
 			if (resolve_gitlink_ref(elem->path, "HEAD", sha1) < 0)
-				result = grab_blob(elem->sha1, elem->mode, &result_size);
+				result = grab_blob(elem->sha1, elem->mode,
+						   &result_size, NULL, NULL);
 			else
-				result = grab_blob(sha1, elem->mode, &result_size);
+				result = grab_blob(sha1, elem->mode,
+						   &result_size, NULL, NULL);
+		} else if (textconv) {
+			struct diff_filespec *df = alloc_filespec(elem->path);
+			fill_filespec(df, null_sha1, st.st_mode);
+			result_size = fill_textconv(textconv, df, &result);
+			free_filespec(df);
 		} else if (0 <= (fd = open(elem->path, O_RDONLY))) {
 			size_t len = xsize_t(st.st_size);
 			ssize_t done;
@@ -777,6 +875,38 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 			close(fd);
 	}
 
+	for (i = 0; i < num_parent; i++) {
+		if (elem->parent[i].mode != elem->mode) {
+			mode_differs = 1;
+			break;
+		}
+	}
+
+	if (textconv)
+		is_binary = 0;
+	else if (userdiff->binary != -1)
+		is_binary = userdiff->binary;
+	else {
+		is_binary = buffer_is_binary(result, result_size);
+		for (i = 0; !is_binary && i < num_parent; i++) {
+			char *buf;
+			unsigned long size;
+			buf = grab_blob(elem->parent[i].sha1,
+					elem->parent[i].mode,
+					&size, NULL, NULL);
+			if (buffer_is_binary(buf, size))
+				is_binary = 1;
+			free(buf);
+		}
+	}
+	if (is_binary) {
+		show_combined_header(elem, num_parent, dense, rev,
+				     mode_differs, 0);
+		printf("Binary files differ\n");
+		free(result);
+		return;
+	}
+
 	for (cnt = 0, cp = result; cp < result + result_size; cp++) {
 		if (*cp == '\n')
 			cnt++;
@@ -824,71 +954,15 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 			combine_diff(elem->parent[i].sha1,
 				     elem->parent[i].mode,
 				     &result_file, sline,
-				     cnt, i, num_parent, result_deleted);
-		if (elem->parent[i].mode != elem->mode)
-			mode_differs = 1;
+				     cnt, i, num_parent, result_deleted,
+				     textconv, elem->path);
 	}
 
 	show_hunks = make_hunks(sline, cnt, num_parent, dense);
 
 	if (show_hunks || mode_differs || working_tree_file) {
-		const char *abb;
-		int use_color = DIFF_OPT_TST(opt, COLOR_DIFF);
-		const char *c_meta = diff_get_color(use_color, DIFF_METAINFO);
-		const char *c_reset = diff_get_color(use_color, DIFF_RESET);
-		int added = 0;
-		int deleted = 0;
-
-		if (rev->loginfo && !rev->no_commit_id)
-			show_log(rev);
-		dump_quoted_path(dense ? "diff --cc " : "diff --combined ",
-				 "", elem->path, c_meta, c_reset);
-		printf("%sindex ", c_meta);
-		for (i = 0; i < num_parent; i++) {
-			abb = find_unique_abbrev(elem->parent[i].sha1,
-						 abbrev);
-			printf("%s%s", i ? "," : "", abb);
-		}
-		abb = find_unique_abbrev(elem->sha1, abbrev);
-		printf("..%s%s\n", abb, c_reset);
-
-		if (mode_differs) {
-			deleted = !elem->mode;
-
-			/* We say it was added if nobody had it */
-			added = !deleted;
-			for (i = 0; added && i < num_parent; i++)
-				if (elem->parent[i].status !=
-				    DIFF_STATUS_ADDED)
-					added = 0;
-			if (added)
-				printf("%snew file mode %06o",
-				       c_meta, elem->mode);
-			else {
-				if (deleted)
-					printf("%sdeleted file ", c_meta);
-				printf("mode ");
-				for (i = 0; i < num_parent; i++) {
-					printf("%s%06o", i ? "," : "",
-					       elem->parent[i].mode);
-				}
-				if (elem->mode)
-					printf("..%06o", elem->mode);
-			}
-			printf("%s\n", c_reset);
-		}
-		if (added)
-			dump_quoted_path("--- ", "", "/dev/null",
-					 c_meta, c_reset);
-		else
-			dump_quoted_path("--- ", a_prefix, elem->path,
-					 c_meta, c_reset);
-		if (deleted)
-			dump_quoted_path("+++ ", "", "/dev/null",
-					 c_meta, c_reset);
-		else
-			dump_quoted_path("+++ ", b_prefix, elem->path,
-					 c_meta, c_reset);
+		show_combined_header(elem, num_parent, dense, rev,
+				     mode_differs, 1);
 		dump_sline(sline, cnt, num_parent,
 			   DIFF_OPT_TST(opt, COLOR_DIFF), result_deleted);
 	}

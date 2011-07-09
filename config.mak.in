@@ -18,6 +18,7 @@ bindir = @bindir@
 gitexecdir = @libexecdir@/git-core
 datarootdir = @datarootdir@
 template_dir = @datadir@/git-core/templates
+sysconfdir = @sysconfdir@
 
 mandir=@mandir@
 
@@ -61,6 +62,7 @@ NO_INET_PTON=@NO_INET_PTON@
 NO_ICONV=@NO_ICONV@
 OLD_ICONV=@OLD_ICONV@
 NO_REGEX=@NO_REGEX@
+USE_LIBPCRE=@USE_LIBPCRE@
 NO_DEFLATE_BOUND=@NO_DEFLATE_BOUND@
 INLINE=@INLINE@
 SOCKLEN_T=@SOCKLEN_T@
