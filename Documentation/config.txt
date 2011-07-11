@@ -330,7 +330,9 @@ core.logAllRefUpdates::
 	SHA1, the date/time and the reason of the update, but
 	only when the file exists.  If this configuration
 	variable is set to true, missing "$GIT_DIR/logs/<ref>"
-	file is automatically created for branch heads.
+	file is automatically created for branch heads (i.e. under
+	refs/heads/), remote refs (i.e. under refs/remotes/),
+	note refs (i.e. under refs/notes/), and the symbolic ref HEAD.
 +
 This information can be used to determine what commit
 was the tip of a branch "2 days ago".

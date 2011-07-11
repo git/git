@@ -60,8 +60,9 @@ still contains <oldvalue>.
 
 Logging Updates
 ---------------
-If config parameter "core.logAllRefUpdates" is true or the file
-"$GIT_DIR/logs/<ref>" exists then `git update-ref` will append
+If config parameter "core.logAllRefUpdates" is true and the ref is one under
+"refs/heads/", "refs/remotes/", "refs/notes/", or the symbolic ref HEAD; or
+the file "$GIT_DIR/logs/<ref>" exists then `git update-ref` will append
 a line to the log file "$GIT_DIR/logs/<ref>" (dereferencing all
 symbolic refs before creating the log name) describing the change
 in ref value.  Log lines are formatted as:
