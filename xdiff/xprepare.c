@@ -154,11 +154,15 @@ static int xdl_prepare_ctx(mmfile_t *mf, long narec, xpparam_t const *xpp,
 	if (!(recs = (xrecord_t **) xdl_malloc(narec * sizeof(xrecord_t *))))
 		goto abort;
 
-	hbits = xdl_hashbits((unsigned int) narec);
-	hsize = 1 << hbits;
-	if (!(rhash = (xrecord_t **) xdl_malloc(hsize * sizeof(xrecord_t *))))
-		goto abort;
-	memset(rhash, 0, hsize * sizeof(xrecord_t *));
+	if (xpp->flags & XDF_HISTOGRAM_DIFF)
+		hbits = hsize = 0;
+	else {
+		hbits = xdl_hashbits((unsigned int) narec);
+		hsize = 1 << hbits;
+		if (!(rhash = (xrecord_t **) xdl_malloc(hsize * sizeof(xrecord_t *))))
+			goto abort;
+		memset(rhash, 0, hsize * sizeof(xrecord_t *));
+	}
 
 	nrec = 0;
 	if ((cur = blk = xdl_mmfile_first(mf, &bsize)) != NULL) {
@@ -183,7 +187,8 @@ static int xdl_prepare_ctx(mmfile_t *mf, long narec, xpparam_t const *xpp,
 			crec->ha = hav;
 			recs[nrec++] = crec;
 
-			if (xdl_classify_record(cf, rhash, hbits, crec) < 0)
+			if (!(xpp->flags & XDF_HISTOGRAM_DIFF) &&
+				xdl_classify_record(cf, rhash, hbits, crec) < 0)
 				goto abort;
 		}
 	}
@@ -240,7 +245,8 @@ int xdl_prepare_env(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp,
 	enl1 = xdl_guess_lines(mf1) + 1;
 	enl2 = xdl_guess_lines(mf2) + 1;
 
-	if (xdl_init_classifier(&cf, enl1 + enl2 + 1, xpp->flags) < 0) {
+	if (!(xpp->flags & XDF_HISTOGRAM_DIFF) &&
+		xdl_init_classifier(&cf, enl1 + enl2 + 1, xpp->flags) < 0) {
 
 		return -1;
 	}
@@ -257,9 +263,11 @@ int xdl_prepare_env(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp,
 		return -1;
 	}
 
-	xdl_free_classifier(&cf);
+	if (!(xpp->flags & XDF_HISTOGRAM_DIFF))
+		xdl_free_classifier(&cf);
 
 	if (!(xpp->flags & XDF_PATIENCE_DIFF) &&
+			!(xpp->flags & XDF_HISTOGRAM_DIFF) &&
 			xdl_optimize_ctxs(&xe->xdf1, &xe->xdf2) < 0) {
 
 		xdl_free_ctx(&xe->xdf2);
