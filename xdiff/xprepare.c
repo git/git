@@ -26,6 +26,8 @@
 #define XDL_KPDIS_RUN 4
 #define XDL_MAX_EQLIMIT 1024
 #define XDL_SIMSCAN_WINDOW 100
+#define XDL_GUESS_NLINES1 256
+#define XDL_GUESS_NLINES2 20
 
 
 typedef struct s_xdlclass {
@@ -239,11 +241,20 @@ static void xdl_free_ctx(xdfile_t *xdf) {
 
 int xdl_prepare_env(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp,
 		    xdfenv_t *xe) {
-	long enl1, enl2;
+	long enl1, enl2, sample;
 	xdlclassifier_t cf;
 
-	enl1 = xdl_guess_lines(mf1) + 1;
-	enl2 = xdl_guess_lines(mf2) + 1;
+	/*
+	 * For histogram diff, we can afford a smaller sample size and
+	 * thus a poorer estimate of the number of lines, as the hash
+	 * table (rhash) won't be filled up/grown. The number of lines
+	 * (nrecs) will be updated correctly anyway by
+	 * xdl_prepare_ctx().
+	 */
+	sample = xpp->flags & XDF_HISTOGRAM_DIFF ? XDL_GUESS_NLINES2 : XDL_GUESS_NLINES1;
+
+	enl1 = xdl_guess_lines(mf1, sample) + 1;
+	enl2 = xdl_guess_lines(mf2, sample) + 1;
 
 	if (!(xpp->flags & XDF_HISTOGRAM_DIFF) &&
 		xdl_init_classifier(&cf, enl1 + enl2 + 1, xpp->flags) < 0) {

@@ -24,10 +24,6 @@
 
 
 
-#define XDL_GUESS_NLINES 256
-
-
-
 
 long xdl_bogosqrt(long n) {
 	long i;
@@ -159,12 +155,12 @@ void *xdl_cha_next(chastore_t *cha) {
 }
 
 
-long xdl_guess_lines(mmfile_t *mf) {
+long xdl_guess_lines(mmfile_t *mf, long sample) {
 	long nl = 0, size, tsize = 0;
 	char const *data, *cur, *top;
 
 	if ((cur = data = xdl_mmfile_first(mf, &size)) != NULL) {
-		for (top = data + size; nl < XDL_GUESS_NLINES;) {
+		for (top = data + size; nl < sample;) {
 			if (cur >= top) {
 				tsize += (long) (cur - data);
 				if (!(cur = data = xdl_mmfile_next(mf, &size)))
