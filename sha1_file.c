@@ -1205,20 +1205,29 @@ void *map_sha1_file(const unsigned char *sha1, unsigned long *size)
 	return map;
 }
 
-static int legacy_loose_object(unsigned char *map)
+/*
+ * There used to be a second loose object header format which
+ * was meant to mimic the in-pack format, allowing for direct
+ * copy of the object data.  This format turned up not to be
+ * really worth it and we no longer write loose objects in that
+ * format.
+ */
+static int experimental_loose_object(unsigned char *map)
 {
 	unsigned int word;
 
 	/*
 	 * Is it a zlib-compressed buffer? If so, the first byte
 	 * must be 0x78 (15-bit window size, deflated), and the
-	 * first 16-bit word is evenly divisible by 31
+	 * first 16-bit word is evenly divisible by 31. If so,
+	 * we are looking at the official format, not the experimental
+	 * one.
 	 */
 	word = (map[0] << 8) + map[1];
 	if (map[0] == 0x78 && !(word % 31))
-		return 1;
-	else
 		return 0;
+	else
+		return 1;
 }
 
 unsigned long unpack_object_header_buffer(const unsigned char *buf,
@@ -1262,34 +1271,29 @@ int unpack_sha1_header(z_stream *stream, unsigned char *map, unsigned long mapsi
 	stream->next_out = buffer;
 	stream->avail_out = bufsiz;
 
-	if (legacy_loose_object(map)) {
+	if (experimental_loose_object(map)) {
+		/*
+		 * The old experimental format we no longer produce;
+		 * we can still read it.
+		 */
+		used = unpack_object_header_buffer(map, mapsize, &type, &size);
+		if (!used || !valid_loose_object_type[type])
+			return -1;
+		map += used;
+		mapsize -= used;
+
+		/* Set up the stream for the rest.. */
+		stream->next_in = map;
+		stream->avail_in = mapsize;
 		git_inflate_init(stream);
-		return git_inflate(stream, 0);
+
+		/* And generate the fake traditional header */
+		stream->total_out = 1 + snprintf(buffer, bufsiz, "%s %lu",
+						 typename(type), size);
+		return 0;
 	}
-
-
-	/*
-	 * There used to be a second loose object header format which
-	 * was meant to mimic the in-pack format, allowing for direct
-	 * copy of the object data.  This format turned up not to be
-	 * really worth it and we don't write it any longer.  But we
-	 * can still read it.
-	 */
-	used = unpack_object_header_buffer(map, mapsize, &type, &size);
-	if (!used || !valid_loose_object_type[type])
-		return -1;
-	map += used;
-	mapsize -= used;
-
-	/* Set up the stream for the rest.. */
-	stream->next_in = map;
-	stream->avail_in = mapsize;
 	git_inflate_init(stream);
-
-	/* And generate the fake traditional header */
-	stream->total_out = 1 + snprintf(buffer, bufsiz, "%s %lu",
-					 typename(type), size);
-	return 0;
+	return git_inflate(stream, 0);
 }
 
 static void *unpack_sha1_rest(z_stream *stream, void *buffer, unsigned long size, const unsigned char *sha1)
