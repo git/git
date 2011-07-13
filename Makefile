@@ -1126,8 +1126,6 @@ endif
 	X = .exe
 endif
 ifeq ($(uname_S),Interix)
-	NO_SYS_POLL_H = YesPlease
-	NO_INTTYPES_H = YesPlease
 	NO_INITGROUPS = YesPlease
 	NO_IPV6 = YesPlease
 	NO_MEMMEM = YesPlease
@@ -1138,10 +1136,14 @@ ifeq ($(uname_S),Interix)
 	ifeq ($(uname_R),3.5)
 		NO_INET_NTOP = YesPlease
 		NO_INET_PTON = YesPlease
+		NO_SOCKADDR_STORAGE = YesPlease
+		NO_FNMATCH_CASEFOLD = YesPlease
 	endif
 	ifeq ($(uname_R),5.2)
 		NO_INET_NTOP = YesPlease
 		NO_INET_PTON = YesPlease
+		NO_SOCKADDR_STORAGE = YesPlease
+		NO_FNMATCH_CASEFOLD = YesPlease
 	endif
 endif
 ifneq (,$(findstring MINGW,$(uname_S)))
