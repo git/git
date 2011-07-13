@@ -446,6 +446,16 @@ test_expect_success 'add should fail when path is used by an existing directory'
 	)
 '
 
+test_expect_success 'use superproject as upstream when path is relative and no url is set there' '
+	(
+		cd addtest &&
+		git submodule add ../repo relative &&
+		test "$(git config -f .gitmodules submodule.relative.url)" = ../repo &&
+		git submodule sync relative &&
+		test "$(git config submodule.relative.url)" = "$submodurl/repo"
+	)
+'
+
 test_expect_success 'set up for relative path tests' '
 	mkdir reltest &&
 	(
