@@ -172,7 +172,7 @@ sync::
 	repositories accordingly.
 +
 "git submodule sync" synchronizes all submodules while
-"git submodule sync -- A" synchronizes submodule "A" only.
+"git submodule sync \-- A" synchronizes submodule "A" only.
 
 OPTIONS
 -------
