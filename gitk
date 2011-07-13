@@ -4522,9 +4522,14 @@ proc makepatterns {l} {
 
 proc do_file_hl {serial} {
     global highlight_files filehighlight highlight_paths gdttype fhl_list
-    global cdup
+    global cdup findtype
 
     if {$gdttype eq [mc "touching paths:"]} {
+	# If "exact" match then convert backslashes to forward slashes.
+	# Most useful to support Windows-flavoured file paths.
+	if {$findtype eq [mc "Exact"]} {
+	    set highlight_files [string map {"\\" "/"} $highlight_files]
+	}
 	if {[catch {set paths [shellsplit $highlight_files]}]} return
 	set highlight_paths [makepatterns $paths]
 	highlight_filelist
