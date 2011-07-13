@@ -648,9 +648,14 @@ paths for a commit are encouraged to do so.
 
 `notemodify`
 ^^^^^^^^^^^^
-Included in a `commit` command to add a new note (annotating a given
-commit) or change the content of an existing note.  This command has
-two different means of specifying the content of the note.
+Included in a `commit` `<notes_ref>` command to add a new note
+annotating a `<committish>` or change this annotation contents.
+Internally it is similar to filemodify 100644 on `<committish>`
+path (maybe split into subdirectories). It's not advised to
+use any other commands to write to the `<notes_ref>` tree except
+`filedeleteall` to delete all existing notes in this tree.
+This command has two different means of specifying the content
+of the note.
 
 External data format::
 	The data content for the note was already supplied by a prior
