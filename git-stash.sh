@@ -7,7 +7,8 @@ USAGE="list [<options>]
    or: $dashless drop [-q|--quiet] [<stash>]
    or: $dashless ( pop | apply ) [--index] [-q|--quiet] [<stash>]
    or: $dashless branch <branchname> [<stash>]
-   or: $dashless [save [--patch] [-k|--[no-]keep-index] [-q|--quiet] [<message>]]
+   or: $dashless [save [--patch] [-k|--[no-]keep-index] [-q|--quiet]
+		       [-u|--include-untracked] [-a|--all] [<message>]]
    or: $dashless clear"
 
 SUBDIRECTORY_OK=Yes
@@ -34,7 +35,14 @@ fi
 
 no_changes () {
 	git diff-index --quiet --cached HEAD --ignore-submodules -- &&
-	git diff-files --quiet --ignore-submodules
+	git diff-files --quiet --ignore-submodules &&
+	(test -z "$untracked" || test -z "$(untracked_files)")
+}
+
+untracked_files () {
+	excl_opt=--exclude-standard
+	test "$untracked" = "all" && excl_opt=
+	git ls-files -o -z $excl_opt
 }
 
 clear_stash () {
@@ -50,6 +58,7 @@ clear_stash () {
 
 create_stash () {
 	stash_msg="$1"
+	untracked="$2"
 
 	git update-index -q --refresh
 	if no_changes
@@ -78,6 +87,25 @@ create_stash () {
 	i_commit=$(printf 'index on %s\n' "$msg" |
 		git commit-tree $i_tree -p $b_commit) ||
 		die "$(gettext "Cannot save the current index state")"
+
+	if test -n "$untracked"
+	then
+		# Untracked files are stored by themselves in a parentless commit, for
+		# ease of unpacking later.
+		u_commit=$(
+			untracked_files | (
+				export GIT_INDEX_FILE="$TMPindex"
+				rm -f "$TMPindex" &&
+				git update-index -z --add --remove --stdin &&
+				u_tree=$(git write-tree) &&
+				printf 'untracked files on %s\n' "$msg" | git commit-tree $u_tree  &&
+				rm -f "$TMPindex"
+		) ) || die "Cannot save the untracked files"
+
+		untracked_commit_option="-p $u_commit";
+	else
+		untracked_commit_option=
+	fi
 
 	if test -z "$patch_mode"
 	then
@@ -123,13 +151,14 @@ create_stash () {
 		stash_msg=$(printf 'On %s: %s' "$branch" "$stash_msg")
 	fi
 	w_commit=$(printf '%s\n' "$stash_msg" |
-		git commit-tree $w_tree -p $b_commit -p $i_commit) ||
-		die "$(gettext "Cannot record working tree state")"
+	git commit-tree $w_tree -p $b_commit -p $i_commit $untracked_commit_option) ||
+	die "$(gettext "Cannot record working tree state")"
 }
 
 save_stash () {
 	keep_index=
 	patch_mode=
+	untracked=
 	while test $# != 0
 	do
 		case "$1" in
@@ -146,6 +175,12 @@ save_stash () {
 			;;
 		-q|--quiet)
 			GIT_QUIET=t
+			;;
+		-u|--include-untracked)
+			untracked=untracked
+			;;
+		-a|--all)
+			untracked=all
 			;;
 		--)
 			shift
@@ -174,6 +209,11 @@ save_stash () {
 		shift
 	done
 
+	if test -n "$patch_mode" && test -n "$untracked"
+	then
+	    die "Can't use --patch and ---include-untracked or --all at the same time"
+	fi
+
 	stash_msg="$*"
 
 	git update-index -q --refresh
@@ -185,7 +225,7 @@ save_stash () {
 	test -f "$GIT_DIR/logs/$ref_stash" ||
 		clear_stash || die "$(gettext "Cannot initialize stash")"
 
-	create_stash "$stash_msg"
+	create_stash "$stash_msg" $untracked
 
 	# Make sure the reflog for stash is kept.
 	: >>"$GIT_DIR/logs/$ref_stash"
@@ -197,6 +237,11 @@ save_stash () {
 	if test -z "$patch_mode"
 	then
 		git reset --hard ${GIT_QUIET:+-q}
+		test "$untracked" = "all" && CLEAN_X_OPTION=-x || CLEAN_X_OPTION=
+		if test -n "$untracked"
+		then
+			git clean --force --quiet $CLEAN_X_OPTION
+		fi
 
 		if test "$keep_index" = "t" && test -n $i_tree
 		then
@@ -246,9 +291,11 @@ show_stash () {
 #   w_commit is set to the commit containing the working tree
 #   b_commit is set to the base commit
 #   i_commit is set to the commit containing the index tree
+#   u_commit is set to the commit containing the untracked files tree
 #   w_tree is set to the working tree
 #   b_tree is set to the base tree
 #   i_tree is set to the index tree
+#   u_tree is set to the untracked files tree
 #
 #   GIT_QUIET is set to t if -q is specified
 #   INDEX_OPTION is set to --index if --index is specified.
@@ -273,9 +320,11 @@ parse_flags_and_rev()
 	w_commit=
 	b_commit=
 	i_commit=
+	u_commit=
 	w_tree=
 	b_tree=
 	i_tree=
+	u_tree=
 
 	REV=$(git rev-parse --no-flags --symbolic "$@") || exit 1
 
@@ -326,6 +375,9 @@ parse_flags_and_rev()
 	IS_STASH_LIKE=t &&
 	test "$ref_stash" = "$(git rev-parse --symbolic-full-name "${REV%@*}")" &&
 	IS_STASH_REF=t
+
+	u_commit=$(git rev-parse --quiet --verify $REV^3 2>/dev/null) &&
+	u_tree=$(git rev-parse $REV^3: 2>/dev/null)
 }
 
 is_stash_like()
@@ -372,6 +424,14 @@ apply_stash () {
 		unstashed_index_tree=$(git write-tree) ||
 			die "$(gettext "Could not save index tree")"
 		git reset
+	fi
+
+	if test -n "$u_tree"
+	then
+		GIT_INDEX_FILE="$TMPindex" git-read-tree "$u_tree" &&
+		GIT_INDEX_FILE="$TMPindex" git checkout-index --all &&
+		rm -f "$TMPindex" ||
+		die 'Could not restore untracked files from stash'
 	fi
 
 	eval "
