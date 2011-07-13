@@ -179,34 +179,36 @@ and descriptions.
 
 Packfile Negotiation
 --------------------
-After reference and capabilities discovery, the client can decide
-to terminate the connection by sending a flush-pkt, telling the
-server it can now gracefully terminate (as happens with the ls-remote
-command) or it can enter the negotiation phase, where the client and
-server determine what the minimal packfile necessary for transport is.
+After reference and capabilities discovery, the client can decide to
+terminate the connection by sending a flush-pkt, telling the server it can
+now gracefully terminate, and disconnect, when it does not need any pack
+data. This can happen with the ls-remote command, and also can happen when
+the client already is up-to-date.
 
-Once the client has the initial list of references that the server
-has, as well as the list of capabilities, it will begin telling the
-server what objects it wants and what objects it has, so the server
-can make a packfile that only contains the objects that the client needs.
-The client will also send a list of the capabilities it wants to be in
-effect, out of what the server said it could do with the first 'want' line.
+Otherwise, it enters the negotiation phase, where the client and
+server determine what the minimal packfile necessary for transport is,
+by telling the server what objects it wants, its shallow objects
+(if any), and the maximum commit depth it wants (if any).  The client
+will also send a list of the capabilities it wants to be in effect,
+out of what the server said it could do with the first 'want' line.
 
 ----
   upload-request    =  want-list
-		       have-list
-		       compute-end
+		       *shallow-line
+		       *1depth-request
+		       flush-pkt
 
   want-list         =  first-want
 		       *additional-want
-		       flush-pkt
+
+  shallow-line      =  PKT_LINE("shallow" SP obj-id)
+
+  depth-request     =  PKT_LINE("deepen" SP depth)
 
   first-want        =  PKT-LINE("want" SP obj-id SP capability-list LF)
   additional-want   =  PKT-LINE("want" SP obj-id LF)
 
-  have-list         =  *have-line
-  have-line         =  PKT-LINE("have" SP obj-id LF)
-  compute-end       =  flush-pkt / PKT-LINE("done")
+  depth             =  1*DIGIT
 ----
 
 Clients MUST send all the obj-ids it wants from the reference
@@ -215,21 +217,64 @@ discovery phase as 'want' lines. Clients MUST send at least one
 obj-id in a 'want' command which did not appear in the response
 obtained through ref discovery.
 
-If client is requesting a shallow clone, it will now send a 'deepen'
-line with the depth it is requesting.
+The client MUST write all obj-ids which it only has shallow copies
+of (meaning that it does not have the parents of a commit) as
+'shallow' lines so that the server is aware of the limitations of
+the client's history. Clients MUST NOT mention an obj-id which
+it does not know exists on the server.
 
-Once all the "want"s (and optional 'deepen') are transferred,
-clients MUST send a flush-pkt. If the client has all the references
-on the server, client flushes and disconnects.
+The client now sends the maximum commit history depth it wants for
+this transaction, which is the number of commits it wants from the
+tip of the history, if any, as a 'deepen' line.  A depth of 0 is the
+same as not making a depth request. The client does not want to receive
+any commits beyond this depth, nor objects needed only to complete
+those commits. Commits whose parents are not received as a result are
+defined as shallow and marked as such in the server. This information
+is sent back to the client in the next step.
 
-TODO: shallow/unshallow response and document the deepen command in the ABNF.
+Once all the 'want's and 'shallow's (and optional 'deepen') are
+transferred, clients MUST send a flush-pkt, to tell the server side
+that it is done sending the list.
+
+Otherwise, if the client sent a positive depth request, the server
+will determine which commits will and will not be shallow and
+send this information to the client. If the client did not request
+a positive depth, this step is skipped.
+
+----
+  shallow-update   =  *shallow-line
+		      *unshallow-line
+		      flush-pkt
+
+  shallow-line     =  PKT-LINE("shallow" SP obj-id)
+
+  unshallow-line   =  PKT-LINE("unshallow" SP obj-id)
+----
+
+If the client has requested a positive depth, the server will compute
+the set of commits which are no deeper than the desired depth, starting
+at the client's wants. The server writes 'shallow' lines for each
+commit whose parents will not be sent as a result. The server writes
+an 'unshallow' line for each commit which the client has indicated is
+shallow, but is no longer shallow at the currently requested depth
+(that is, its parents will now be sent). The server MUST NOT mark
+as unshallow anything which the client has not indicated was shallow.
 
 Now the client will send a list of the obj-ids it has using 'have'
-lines.  In multi_ack mode, the canonical implementation will send up
-to 32 of these at a time, then will send a flush-pkt.  The canonical
-implementation will skip ahead and send the next 32 immediately,
-so that there is always a block of 32 "in-flight on the wire" at a
-time.
+lines, so the server can make a packfile that only contains the objects
+that the client needs. In multi_ack mode, the canonical implementation
+will send up to 32 of these at a time, then will send a flush-pkt. The
+canonical implementation will skip ahead and send the next 32 immediately,
+so that there is always a block of 32 "in-flight on the wire" at a time.
+
+----
+  upload-haves      =  have-list
+		       compute-end
+
+  have-list         =  *have-line
+  have-line         =  PKT-LINE("have" SP obj-id LF)
+  compute-end       =  flush-pkt / PKT-LINE("done")
+----
 
 If the server reads 'have' lines, it then will respond by ACKing any
 of the obj-ids the client said it had that the server also has. The
