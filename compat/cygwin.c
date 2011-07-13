@@ -114,8 +114,7 @@ static int git_cygwin_config(const char *var, const char *value, void *cb)
 
 static int init_stat(void)
 {
-	if (have_git_dir()) {
-		git_config(git_cygwin_config, NULL);
+	if (have_git_dir() && git_config(git_cygwin_config,NULL)) {
 		if (!core_filemode && native_stat) {
 			cygwin_stat_fn = cygwin_stat;
 			cygwin_lstat_fn = cygwin_lstat;
