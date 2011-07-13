@@ -3562,12 +3562,9 @@ sub mimetype_guess_file {
 	open(my $mh, '<', $mimemap) or return undef;
 	while (<$mh>) {
 		next if m/^#/; # skip comments
-		my ($mimetype, $exts) = split(/\t+/);
-		if (defined $exts) {
-			my @exts = split(/\s+/, $exts);
-			foreach my $ext (@exts) {
-				$mimemap{$ext} = $mimetype;
-			}
+		my ($mimetype, @exts) = split(/\s+/);
+		foreach my $ext (@exts) {
+			$mimemap{$ext} = $mimetype;
 		}
 	}
 	close($mh);
