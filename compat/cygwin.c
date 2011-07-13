@@ -101,7 +101,7 @@ static int cygwin_stat(const char *path, struct stat *buf)
  * and calling git_default_config() from here would break such variables.
  */
 static int native_stat = 1;
-static int core_filemode;
+static int core_filemode = 1; /* matches trust_executable_bit default */
 
 static int git_cygwin_config(const char *var, const char *value, void *cb)
 {
