@@ -102,7 +102,8 @@ static const char *get_pwd_cwd(void)
 	pwd = getenv("PWD");
 	if (pwd && strcmp(pwd, cwd)) {
 		stat(cwd, &cwd_stat);
-		if (!stat(pwd, &pwd_stat) &&
+		if ((cwd_stat.st_dev || cwd_stat.st_ino) &&
+		    !stat(pwd, &pwd_stat) &&
 		    pwd_stat.st_dev == cwd_stat.st_dev &&
 		    pwd_stat.st_ino == cwd_stat.st_ino) {
 			strlcpy(cwd, pwd, PATH_MAX);
