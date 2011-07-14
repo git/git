@@ -429,6 +429,21 @@ test_expect_success '--mixed refreshes the index' '
 	test_i18ncmp expect output
 '
 
+test_expect_success 'resetting specific path that is unmerged' '
+	git rm --cached file2 &&
+	F1=$(git rev-parse HEAD:file1) &&
+	F2=$(git rev-parse HEAD:file2) &&
+	F3=$(git rev-parse HEAD:secondfile) &&
+	{
+		echo "100644 $F1 1	file2" &&
+		echo "100644 $F2 2	file2" &&
+		echo "100644 $F3 3	file2"
+	} | git update-index --index-info &&
+	git ls-files -u &&
+	test_must_fail git reset HEAD file2 &&
+	git diff-index --exit-code --cached HEAD
+'
+
 test_expect_success 'disambiguation (1)' '
 
 	git reset --hard &&

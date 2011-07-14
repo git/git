@@ -379,7 +379,8 @@ static void do_oneway_diff(struct unpack_trees_options *o,
 	if (cached && idx && ce_stage(idx)) {
 		struct diff_filepair *pair;
 		pair = diff_unmerge(&revs->diffopt, idx->name);
-		fill_filespec(pair->one, idx->sha1, idx->ce_mode);
+		if (tree)
+			fill_filespec(pair->one, tree->sha1, tree->ce_mode);
 		return;
 	}
 
