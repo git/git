@@ -399,7 +399,6 @@ static void handle_internal_command(int argc, const char **argv)
 		{ "verify-pack", cmd_verify_pack },
 		{ "show-ref", cmd_show_ref, RUN_SETUP },
 		{ "pack-refs", cmd_pack_refs, RUN_SETUP },
-		{ "skew", cmd_skew, RUN_SETUP },
 	};
 	int i;
 	static const char ext[] = STRIP_EXTENSION;
