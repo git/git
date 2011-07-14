@@ -8,6 +8,7 @@ git-diff-index - Compares content and mode of blobs between the index and reposi
 
 SYNOPSIS
 --------
+[verse]
 'git diff-index' [-m] [--cached] [<common diff options>] <tree-ish> [<path>...]
 
 DESCRIPTION

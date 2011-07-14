@@ -8,6 +8,7 @@ git-shell - Restricted login shell for Git-only SSH access
 
 SYNOPSIS
 --------
+[verse]
 'git shell' [-c <command> <argument>]
 
 DESCRIPTION

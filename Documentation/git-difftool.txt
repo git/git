@@ -7,6 +7,7 @@ git-difftool - Show changes using common diff tools
 
 SYNOPSIS
 --------
+[verse]
 'git difftool' [<options>] [<commit> [<commit>]] [--] [<path>...]
 
 DESCRIPTION

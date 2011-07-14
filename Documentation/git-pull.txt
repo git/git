@@ -8,6 +8,7 @@ git-pull - Fetch from and merge with another repository or a local branch
 
 SYNOPSIS
 --------
+[verse]
 'git pull' [options] [<repository> [<refspec>...]]
 
 

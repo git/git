@@ -8,6 +8,7 @@ git-repack - Pack unpacked objects in a repository
 
 SYNOPSIS
 --------
+[verse]
 'git repack' [-a] [-A] [-d] [-f] [-F] [-l] [-n] [-q] [--window=<n>] [--depth=<n>]
 
 DESCRIPTION

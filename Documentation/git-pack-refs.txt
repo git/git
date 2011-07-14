@@ -7,6 +7,7 @@ git-pack-refs - Pack heads and tags for efficient repository access
 
 SYNOPSIS
 --------
+[verse]
 'git pack-refs' [--all] [--no-prune]
 
 DESCRIPTION

@@ -7,6 +7,7 @@ git-verify-tag - Check the GPG signature of tags
 
 SYNOPSIS
 --------
+[verse]
 'git verify-tag' <tag>...
 
 DESCRIPTION

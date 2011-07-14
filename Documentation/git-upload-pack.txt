@@ -8,6 +8,7 @@ git-upload-pack - Send objects packed back to git-fetch-pack
 
 SYNOPSIS
 --------
+[verse]
 'git-upload-pack' [--strict] [--timeout=<n>] <directory>
 
 DESCRIPTION

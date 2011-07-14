@@ -8,6 +8,7 @@ git-mktree - Build a tree-object from ls-tree formatted text
 
 SYNOPSIS
 --------
+[verse]
 'git mktree' [-z] [--missing] [--batch]
 
 DESCRIPTION

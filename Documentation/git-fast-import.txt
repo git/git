@@ -8,6 +8,7 @@ git-fast-import - Backend for fast Git data importers
 
 SYNOPSIS
 --------
+[verse]
 frontend | 'git fast-import' [options]
 
 DESCRIPTION

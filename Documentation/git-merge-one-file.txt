@@ -8,6 +8,7 @@ git-merge-one-file - The standard helper program to use with git-merge-index
 
 SYNOPSIS
 --------
+[verse]
 'git merge-one-file'
 
 DESCRIPTION
