@@ -305,6 +305,10 @@ static void add_cmd_list(struct cmdnames *cmds, struct cmdnames *old)
 #define SIMILARITY_FLOOR 7
 #define SIMILAR_ENOUGH(x) ((x) < SIMILARITY_FLOOR)
 
+static const char bad_interpreter_advice[] =
+	N_("'%s' appears to be a git command, but we were not\n"
+	"able to execute it. Maybe git-%s is broken?");
+
 const char *help_unknown_cmd(const char *cmd)
 {
 	int i, n, best_similarity = 0;
@@ -328,6 +332,14 @@ const char *help_unknown_cmd(const char *cmd)
 	for (i = 0, n = 0; i < main_cmds.cnt; i++) {
 		int cmp = 0; /* avoid compiler stupidity */
 		const char *candidate = main_cmds.names[i]->name;
+
+		/*
+		 * An exact match means we have the command, but
+		 * for some reason exec'ing it gave us ENOENT; probably
+		 * it's a bad interpreter in the #! line.
+		 */
+		if (!strcmp(candidate, cmd))
+			die(_(bad_interpreter_advice), cmd, cmd);
 
 		/* Does the candidate appear in common_cmds list? */
 		while (n < ARRAY_SIZE(common_cmds) &&
