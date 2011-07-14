@@ -13,7 +13,7 @@ It then attempts to create a new commit for each commit from the original
 It is possible that a merge failure will prevent this process from being
 completely automatic.  You will have to resolve any such merge failure
 and run git rebase --continue.  Another option is to bypass the commit
-that caused the merge failure with git rebase --skip.  To restore the
+that caused the merge failure with git rebase --skip.  To check out the
 original <branch> and remove the .git/rebase-apply working files, use the
 command git rebase --abort instead.
 
@@ -57,9 +57,9 @@ whitespace=!       passed to 'git apply'
 ignore-whitespace! passed to 'git apply'
 C=!                passed to 'git apply'
  Actions:
-continue!          continue rebasing process
-abort!             abort rebasing process and restore original branch
-skip!              skip current patch and continue rebasing process
+continue!          continue
+abort!             abort and check out the original branch
+skip!              skip current patch and continue
 "
 . git-sh-setup
 set_reflog_action rebase
@@ -72,7 +72,7 @@ ok_to_skip_pre_rebase=
 resolvemsg="
 When you have resolved this problem run \"git rebase --continue\".
 If you would prefer to skip this patch, instead run \"git rebase --skip\".
-To restore the original branch and stop rebasing run \"git rebase --abort\".
+To check out the original branch and stop rebasing run \"git rebase --abort\".
 "
 unset onto
 strategy=
