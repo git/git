@@ -480,32 +480,8 @@ int do_diff_cache(const unsigned char *tree_sha1, struct diff_options *opt)
 {
 	struct tree *tree;
 	struct rev_info revs;
-	int i;
-	struct cache_entry **dst;
-	struct cache_entry *last = NULL;
 	struct unpack_trees_options opts;
 	struct tree_desc t;
-
-	/*
-	 * This is used by git-blame to run diff-cache internally;
-	 * it potentially needs to repeatedly run this, so we will
-	 * start by removing the higher order entries the last round
-	 * left behind.
-	 */
-	dst = active_cache;
-	for (i = 0; i < active_nr; i++) {
-		struct cache_entry *ce = active_cache[i];
-		if (ce_stage(ce)) {
-			if (last && !strcmp(ce->name, last->name))
-				continue;
-			cache_tree_invalidate_path(active_cache_tree,
-						   ce->name);
-			last = ce;
-			ce->ce_flags |= CE_REMOVE;
-		}
-		*dst++ = ce;
-	}
-	active_nr = dst - active_cache;
 
 	init_revisions(&revs, NULL);
 	init_pathspec(&revs.prune_data, opt->pathspec.raw);
@@ -521,7 +497,7 @@ int do_diff_cache(const unsigned char *tree_sha1, struct diff_options *opt)
 	opts.fn = oneway_diff;
 	opts.unpack_data = &revs;
 	opts.src_index = &the_index;
-	opts.dst_index = &the_index;
+	opts.dst_index = NULL;
 
 	init_tree_desc(&t, tree->buffer, tree->size);
 	if (unpack_trees(1, &t, &opts))
