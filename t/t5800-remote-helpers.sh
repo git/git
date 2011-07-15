@@ -125,13 +125,24 @@ test_expect_success 'push new branch by name' '
 	compare_refs clone HEAD server refs/heads/new-name
 '
 
-test_expect_failure 'push new branch with old content' '
+test_expect_success 'push new branch with old content' '
 	(cd clone &&
 	 git checkout -b existing &&
 	 git push origin existing
 	) &&
 	compare_refs clone refs/heads/existing server refs/heads/existing
 '
+
+test_expect_failure BROKEN 'delete branch' '
+	(cd clone &&
+	 git checkout -b delete-me &&
+	 echo content >>file &&
+	 git commit -a -m eight &&
+	 git push origin delete-me
+	 git push origin :delete-me) &&
+	test_must_fail git --git-dir="server/.git" rev-parse --verify delete-me
+'
+
 
 test_expect_failure 'push new branch with old:new refspec' '
 	(cd clone &&
