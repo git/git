@@ -147,10 +147,14 @@ def do_export(repo, args):
     sys.stdout.flush()
 
     update_local_repo(repo)
-    repo.importer.do_import(repo.gitdir)
+    changed = repo.importer.do_import(repo.gitdir)
 
     if not repo.local:
         repo.non_local.push(repo.gitdir)
+
+    for ref in changed:
+        print "ok %s" % ref
+    print
 
 
 COMMANDS = {
