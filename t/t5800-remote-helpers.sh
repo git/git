@@ -115,7 +115,7 @@ test_expect_success 'push when remote has extra refs' '
 	compare_refs clone master server master
 '
 
-test_expect_failure 'push new branch by name' '
+test_expect_success 'push new branch by name' '
 	(cd clone &&
 	 git checkout -b new-name  &&
 	 echo content >>file &&
