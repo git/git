@@ -146,7 +146,9 @@ def do_export(repo, args):
 
     update_local_repo(repo)
     repo.importer.do_import(repo.gitdir)
-    repo.non_local.push(repo.gitdir)
+
+    if not repo.local:
+        repo.non_local.push(repo.gitdir)
 
 
 COMMANDS = {
