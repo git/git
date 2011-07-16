@@ -98,7 +98,7 @@ test_expect_success 'fetch new branch' '
 	compare_refs public HEAD localclone FETCH_HEAD
 '
 
-test_expect_failure 'fetch multiple branches' '
+test_expect_success 'fetch multiple branches' '
 	(cd localclone &&
 	 git fetch
 	) &&

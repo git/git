@@ -120,8 +120,22 @@ def do_import(repo, args):
     if not repo.gitdir:
         die("Need gitdir to import")
 
+    ref = args[0]
+    refs = [ref]
+
+    while True:
+        line = sys.stdin.readline()
+        if line == '\n':
+            break
+        if not line.startswith('import '):
+            die("Expected import line.")
+
+        # strip of leading 'import '
+        ref = line[7:].strip()
+        refs.append(ref)
+
     repo = update_local_repo(repo)
-    repo.exporter.export_repo(repo.gitdir, args)
+    repo.exporter.export_repo(repo.gitdir, refs)
 
     print "done"
 
