@@ -35,7 +35,7 @@ def get_repo(alias, url):
     prefix = 'refs/testgit/%s/' % alias
     debug("prefix: '%s'", prefix)
 
-    repo.gitdir = ""
+    repo.gitdir = os.environ["GIT_DIR"]
     repo.alias = alias
     repo.prefix = prefix
 
@@ -70,7 +70,6 @@ def do_capabilities(repo, args):
 
     print "import"
     print "export"
-    print "gitdir"
     print "refspec refs/heads/*:%s*" % repo.prefix
 
     print # end capabilities
@@ -150,22 +149,11 @@ def do_export(repo, args):
     repo.non_local.push(repo.gitdir)
 
 
-def do_gitdir(repo, args):
-    """Stores the location of the gitdir.
-    """
-
-    if not args:
-        die("gitdir needs an argument")
-
-    repo.gitdir = ' '.join(args)
-
-
 COMMANDS = {
     'capabilities': do_capabilities,
     'list': do_list,
     'import': do_import,
     'export': do_export,
-    'gitdir': do_gitdir,
 }
 
 

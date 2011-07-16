@@ -105,6 +105,12 @@ static struct child_process *get_helper(struct transport *transport)
 	int refspec_alloc = 0;
 	int duped;
 	int code;
+	char git_dir_buf[sizeof(GIT_DIR_ENVIRONMENT) + PATH_MAX + 1];
+	const char *helper_env[] = {
+		git_dir_buf,
+		NULL
+	};
+
 
 	if (data->helper)
 		return data->helper;
@@ -120,6 +126,10 @@ static struct child_process *get_helper(struct transport *transport)
 	helper->argv[2] = remove_ext_force(transport->url);
 	helper->git_cmd = 0;
 	helper->silent_exec_failure = 1;
+
+	snprintf(git_dir_buf, sizeof(git_dir_buf), "%s=%s", GIT_DIR_ENVIRONMENT, get_git_dir());
+	helper->env = helper_env;
+
 	code = start_command(helper);
 	if (code < 0 && errno == ENOENT)
 		die("Unable to find remote helper for '%s'", data->name);
@@ -174,11 +184,6 @@ static struct child_process *get_helper(struct transport *transport)
 			refspecs[refspec_nr++] = strdup(buf.buf + strlen("refspec "));
 		} else if (!strcmp(capname, "connect")) {
 			data->connect = 1;
-		} else if (!strcmp(buf.buf, "gitdir")) {
-			struct strbuf gitdir = STRBUF_INIT;
-			strbuf_addf(&gitdir, "gitdir %s\n", get_git_dir());
-			sendline(data, &gitdir);
-			strbuf_release(&gitdir);
 		} else if (mandatory) {
 			die("Unknown mandatory capability %s. This remote "
 			    "helper probably needs newer version of Git.\n",
