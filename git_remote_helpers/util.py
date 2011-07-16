@@ -11,6 +11,21 @@ import sys
 import os
 import subprocess
 
+try:
+    from subprocess import CalledProcessError
+except ImportError:
+    # from python2.7:subprocess.py
+    # Exception classes used by this module.
+    class CalledProcessError(Exception):
+        """This exception is raised when a process run by check_call() returns
+        a non-zero exit status.  The exit status will be stored in the
+        returncode attribute."""
+        def __init__(self, returncode, cmd):
+            self.returncode = returncode
+            self.cmd = cmd
+        def __str__(self):
+            return "Command '%s' returned non-zero exit status %d" % (self.cmd, self.returncode)
+
 
 # Whether or not to show debug messages
 DEBUG = False
@@ -126,6 +141,38 @@ def run_command (args, cwd = None, shell = False, add_env = None,
     if flag_error and exit_code:
         error("'%s' returned exit code %i", " ".join(args), exit_code)
     return (exit_code, output, errors)
+
+
+# from python2.7:subprocess.py
+def call(*popenargs, **kwargs):
+    """Run command with arguments.  Wait for command to complete, then
+    return the returncode attribute.
+
+    The arguments are the same as for the Popen constructor.  Example:
+
+    retcode = call(["ls", "-l"])
+    """
+    return subprocess.Popen(*popenargs, **kwargs).wait()
+
+
+# from python2.7:subprocess.py
+def check_call(*popenargs, **kwargs):
+    """Run command with arguments.  Wait for command to complete.  If
+    the exit code was zero then return, otherwise raise
+    CalledProcessError.  The CalledProcessError object will have the
+    return code in the returncode attribute.
+
+    The arguments are the same as for the Popen constructor.  Example:
+
+    check_call(["ls", "-l"])
+    """
+    retcode = call(*popenargs, **kwargs)
+    if retcode:
+        cmd = kwargs.get("args")
+        if cmd is None:
+            cmd = popenargs[0]
+        raise CalledProcessError(retcode, cmd)
+    return 0
 
 
 def file_reader_method (missing_ok = False):

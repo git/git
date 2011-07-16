@@ -2,6 +2,8 @@ import os
 import subprocess
 import sys
 
+from git_remote_helpers.util import check_call
+
 
 class GitExporter(object):
     """An exporter for testgit repositories.
@@ -53,6 +55,4 @@ class GitExporter(object):
 
         args = ["sed", "s_refs/heads/_" + self.repo.prefix + "_g"]
 
-        child = subprocess.Popen(args, stdin=p1.stdout)
-        if child.wait() != 0:
-            raise CalledProcessError
+        check_call(args, stdin=p1.stdout)

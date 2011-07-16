@@ -1,6 +1,8 @@
 import os
 import subprocess
 
+from git_remote_helpers.util import check_call
+
 
 class GitImporter(object):
     """An importer for testgit repositories.
@@ -35,6 +37,4 @@ class GitImporter(object):
         if os.path.exists(path):
             args.append("--import-marks=" + path)
 
-        child = subprocess.Popen(args)
-        if child.wait() != 0:
-            raise CalledProcessError
+        check_call(args)
