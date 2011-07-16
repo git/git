@@ -122,7 +122,7 @@ def do_import(repo, args):
         die("Need gitdir to import")
 
     repo = update_local_repo(repo)
-    repo.exporter.export_repo(repo.gitdir)
+    repo.exporter.export_repo(repo.gitdir, args)
 
 
 def do_export(repo, args):

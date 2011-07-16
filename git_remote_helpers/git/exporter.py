@@ -15,7 +15,7 @@ class GitExporter(object):
 
         self.repo = repo
 
-    def export_repo(self, base):
+    def export_repo(self, base, refs=None):
         """Exports a fast-export stream for the given directory.
 
         Simply delegates to git fast-epxort and pipes it through sed
@@ -23,7 +23,12 @@ class GitExporter(object):
         default refs/heads. This is to demonstrate how the export
         data can be stored under it's own ref (using the refspec
         capability).
+
+        If None, refs defaults to ["HEAD"].
         """
+
+        if not refs:
+            refs = ["HEAD"]
 
         dirname = self.repo.get_base_path(base)
         path = os.path.abspath(os.path.join(dirname, 'testgit.marks'))
@@ -42,7 +47,7 @@ class GitExporter(object):
         if os.path.exists(path):
             args.append("--import-marks=" + path)
 
-        args.append("HEAD")
+        args.extend(refs)
 
         p1 = subprocess.Popen(args, stdout=subprocess.PIPE)
 

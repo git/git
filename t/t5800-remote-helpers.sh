@@ -85,7 +85,7 @@ test_expect_success 'pushing remote local repo' '
 	compare_refs clone HEAD server HEAD
 '
 
-test_expect_failure 'fetch new branch' '
+test_expect_success 'fetch new branch' '
 	(cd public &&
 	 git checkout -b new &&
 	 echo content >>file &&
