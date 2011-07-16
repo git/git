@@ -82,6 +82,10 @@ marks the same across runs.
 	allow that.  So fake a tagger to be able to fast-import the
 	output.
 
+--use-done-feature::
+	Start the stream with a 'feature done' stanza, and terminate
+	it with a 'done' command.
+
 --no-data::
 	Skip output of blob objects and instead refer to blobs via
 	their original SHA-1 hash.  This is useful when rewriting the
