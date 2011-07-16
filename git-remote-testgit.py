@@ -123,6 +123,8 @@ def do_import(repo, args):
     repo = update_local_repo(repo)
     repo.exporter.export_repo(repo.gitdir, args)
 
+    print "done"
+
 
 def do_export(repo, args):
     """Imports a fast-import stream from git to testgit.
