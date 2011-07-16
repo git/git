@@ -106,7 +106,7 @@ test_expect_failure 'fetch multiple branches' '
 	compare_refs server new localclone refs/remotes/origin/new
 '
 
-test_expect_failure 'push when remote has extra refs' '
+test_expect_success 'push when remote has extra refs' '
 	(cd clone &&
 	 echo content >>file &&
 	 git commit -a -m six &&

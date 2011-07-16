@@ -730,7 +730,8 @@ static int push_refs_with_export(struct transport *transport,
 		}
 		free(private);
 
-		string_list_append(&revlist_args, ref->name);
+		if (ref->peer_ref)
+			string_list_append(&revlist_args, ref->peer_ref->name);
 
 	}
 
