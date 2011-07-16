@@ -23,6 +23,8 @@ struct helper_data {
 		push : 1,
 		connect : 1,
 		no_disconnect_req : 1;
+	char *export_marks;
+	char *import_marks;
 	/* These go from remote name (as in "list") to private name */
 	struct refspec *refspecs;
 	int refspec_nr;
@@ -184,6 +186,16 @@ static struct child_process *get_helper(struct transport *transport)
 			refspecs[refspec_nr++] = strdup(capname + strlen("refspec "));
 		} else if (!strcmp(capname, "connect")) {
 			data->connect = 1;
+		} else if (!prefixcmp(capname, "export-marks ")) {
+			struct strbuf arg = STRBUF_INIT;
+			strbuf_addstr(&arg, "--export-marks=");
+			strbuf_addstr(&arg, capname + strlen("export-marks "));
+			data->export_marks = strbuf_detach(&arg, NULL);
+		} else if (!prefixcmp(capname, "import-marks")) {
+			struct strbuf arg = STRBUF_INIT;
+			strbuf_addstr(&arg, "--import-marks=");
+			strbuf_addstr(&arg, capname + strlen("import-marks "));
+			data->import_marks = strbuf_detach(&arg, NULL);
 		} else if (mandatory) {
 			die("Unknown mandatory capability %s. This remote "
 			    "helper probably needs newer version of Git.\n",
@@ -369,10 +381,9 @@ static int get_importer(struct transport *transport, struct child_process *fasti
 
 static int get_exporter(struct transport *transport,
 			struct child_process *fastexport,
-			const char *export_marks,
-			const char *import_marks,
 			struct string_list *revlist_args)
 {
+	struct helper_data *data = transport->data;
 	struct child_process *helper = get_helper(transport);
 	int argc = 0, i;
 	memset(fastexport, 0, sizeof(*fastexport));
@@ -383,10 +394,10 @@ static int get_exporter(struct transport *transport,
 	fastexport->argv = xcalloc(5 + revlist_args->nr, sizeof(*fastexport->argv));
 	fastexport->argv[argc++] = "fast-export";
 	fastexport->argv[argc++] = "--use-done-feature";
-	if (export_marks)
-		fastexport->argv[argc++] = export_marks;
-	if (import_marks)
-		fastexport->argv[argc++] = import_marks;
+	if (data->export_marks)
+		fastexport->argv[argc++] = data->export_marks;
+	if (data->import_marks)
+		fastexport->argv[argc++] = data->import_marks;
 
 	for (i = 0; i < revlist_args->nr; i++)
 		fastexport->argv[argc++] = revlist_args->items[i].string;
@@ -713,33 +724,12 @@ static int push_refs_with_export(struct transport *transport,
 	struct ref *ref;
 	struct child_process *helper, exporter;
 	struct helper_data *data = transport->data;
-	char *export_marks = NULL, *import_marks = NULL;
 	struct string_list revlist_args = STRING_LIST_INIT_NODUP;
 	struct strbuf buf = STRBUF_INIT;
 
 	helper = get_helper(transport);
 
 	write_constant(helper->in, "export\n");
-
-	recvline(data, &buf);
-	if (debug)
-		fprintf(stderr, "Debug: Got export_marks '%s'\n", buf.buf);
-	if (buf.len) {
-		struct strbuf arg = STRBUF_INIT;
-		strbuf_addstr(&arg, "--export-marks=");
-		strbuf_addbuf(&arg, &buf);
-		export_marks = strbuf_detach(&arg, NULL);
-	}
-
-	recvline(data, &buf);
-	if (debug)
-		fprintf(stderr, "Debug: Got import_marks '%s'\n", buf.buf);
-	if (buf.len) {
-		struct strbuf arg = STRBUF_INIT;
-		strbuf_addstr(&arg, "--import-marks=");
-		strbuf_addbuf(&arg, &buf);
-		import_marks = strbuf_detach(&arg, NULL);
-	}
 
 	strbuf_reset(&buf);
 
@@ -761,8 +751,7 @@ static int push_refs_with_export(struct transport *transport,
 
 	}
 
-	if (get_exporter(transport, &exporter,
-			 export_marks, import_marks, &revlist_args))
+	if (get_exporter(transport, &exporter, &revlist_args))
 		die("Couldn't run fast-export");
 
 	if (finish_command(&exporter))
