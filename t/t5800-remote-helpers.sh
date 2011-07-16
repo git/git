@@ -17,6 +17,12 @@ then
 	test_set_prereq PYTHON_24
 fi
 
+compare_refs() {
+	git --git-dir="$1/.git" rev-parse --verify $2 >expect &&
+	git --git-dir="$3/.git" rev-parse --verify $4 >actual &&
+	test_cmp expect actual
+}
+
 test_expect_success PYTHON_24 'setup repository' '
 	git init --bare server/.git &&
 	git clone server public &&
@@ -59,8 +65,7 @@ test_expect_success PYTHON_24 'pushing to local repo' '
 	echo content >>file &&
 	git commit -a -m three &&
 	git push) &&
-	HEAD=$(git --git-dir=localclone/.git rev-parse --verify HEAD) &&
-	test $HEAD = $(git --git-dir=server/.git rev-parse --verify HEAD)
+	compare_refs localclone HEAD server HEAD
 '
 
 test_expect_success PYTHON_24 'synch with changes from localclone' '
@@ -73,8 +78,7 @@ test_expect_success PYTHON_24 'pushing remote local repo' '
 	echo content >>file &&
 	git commit -a -m four &&
 	git push) &&
-	HEAD=$(git --git-dir=clone/.git rev-parse --verify HEAD) &&
-	test $HEAD = $(git --git-dir=server/.git rev-parse --verify HEAD)
+	compare_refs clone HEAD server HEAD
 '
 
 test_done
