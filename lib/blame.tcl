@@ -22,6 +22,7 @@ field w_asim     ; # text column: annotations (simple computation)
 field w_file     ; # text column: actual file data
 field w_cviewer  ; # pane showing commit message
 field finder     ; # find mini-dialog frame
+field gotoline   ; # line goto mini-dialog frame
 field status     ; # status mega-widget instance
 field old_height ; # last known height of $w.file_pane
 
@@ -231,6 +232,11 @@ constructor new {i_commit i_path i_jump} {
 		-column [expr {[llength $w_columns] - 1}] \
 		]
 
+	set gotoline [::linebar::new \
+		$w.file_pane.out.lf $w_file \
+		-column [expr {[llength $w_columns] - 1}] \
+		]
+
 	set w_cviewer $w.file_pane.cm.t
 	text $w_cviewer \
 		-background white \
@@ -275,6 +281,10 @@ constructor new {i_commit i_path i_jump} {
 		-label [mc "Find Text..."] \
 		-accelerator F7 \
 		-command [list searchbar::show $finder]
+	$w.ctxm add command \
+		-label [mc "Goto Line..."] \
+		-accelerator "Ctrl-G" \
+		-command [list linebar::show $gotoline]
 	menu $w.ctxm.enc
 	build_encoding_menu $w.ctxm.enc [cb _setencoding]
 	$w.ctxm add cascade \
@@ -345,6 +355,7 @@ constructor new {i_commit i_path i_jump} {
 	bind $top       <Escape>     [list searchbar::hide $finder]
 	bind $top       <F3>         [list searchbar::find_next $finder]
 	bind $top       <Shift-F3>   [list searchbar::find_prev $finder]
+	bind $top    <Control-Key-g> [list linebar::show $gotoline]
 	catch { bind $top <Shift-Key-XF86_Switch_VT_3> [list searchbar::find_prev $finder] }
 
 	grid configure $w.header -sticky ew
