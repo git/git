@@ -33,6 +33,7 @@
 /git-credential-cache
 /git-credential-cache--daemon
 /git-credential-store
+/git-credential-getpass
 /git-cvsexportcommit
 /git-cvsimport
 /git-cvsserver
