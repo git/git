@@ -310,7 +310,6 @@ static CURL *get_curl_handle(void)
 static void http_auth_init(const char *url)
 {
 	const char *at, *colon, *cp, *slash, *host, *proto_end;
-	char *decoded;
 	struct strbuf unique = STRBUF_INIT;
 
 	proto_end = strstr(url, "://");
@@ -342,11 +341,11 @@ static void http_auth_init(const char *url)
 		host = at + 1;
 	}
 
+	http_auth.description = url_decode_mem(host, slash - host);
+
 	strbuf_add(&unique, url, proto_end - url);
 	strbuf_addch(&unique, ':');
-	decoded = url_decode_mem(host, slash - host);
-	strbuf_addstr(&unique, decoded);
-	free(decoded);
+	strbuf_addstr(&unique, http_auth.description);
 	http_auth.unique = strbuf_detach(&unique, NULL);
 }
 
