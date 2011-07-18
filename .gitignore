@@ -167,6 +167,7 @@
 /gitweb/static/gitweb.js
 /gitweb/static/gitweb.min.*
 /test-chmtime
+/test-credential
 /test-ctype
 /test-date
 /test-delta
