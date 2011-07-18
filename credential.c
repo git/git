@@ -4,6 +4,8 @@
 #include "string-list.h"
 #include "run-command.h"
 
+static struct string_list default_methods;
+
 static int credential_config_callback(const char *var, const char *value,
 				      void *data)
 {
@@ -173,15 +175,18 @@ void credential_fill(struct credential *c, const struct string_list *methods)
 {
 	struct strbuf err = STRBUF_INIT;
 
+	if (!methods)
+		methods = &default_methods;
+
 	if (!credential_fill_gently(c, methods))
 		return;
 
 	strbuf_addstr(&err, "unable to get credentials");
 	if (c->description)
 		strbuf_addf(&err, "for '%s'", c->description);
-	if (methods && methods->nr == 1)
+	if (methods->nr == 1)
 		strbuf_addf(&err, "; tried '%s'", methods->items[0].string);
-	else if (methods) {
+	else {
 		int i;
 		strbuf_addstr(&err, "; tried:");
 		for (i = 0; i < methods->nr; i++)
@@ -198,7 +203,10 @@ int credential_fill_gently(struct credential *c,
 	if (c->username && c->password)
 		return 0;
 
-	if (!methods || !methods->nr)
+	if (!methods)
+		methods = &default_methods;
+
+	if (!methods->nr)
 		return credential_getpass(c);
 
 	for (i = 0; i < methods->nr; i++) {
@@ -214,7 +222,10 @@ void credential_reject(struct credential *c, const struct string_list *methods)
 {
 	int i;
 
-	if (methods && c->username) {
+	if (!methods)
+		methods = &default_methods;
+
+	if (c->username) {
 		for (i = 0; i < methods->nr; i++) {
 			/* ignore errors, there's nothing we can do */
 			credential_do(c, methods->items[i].string, "--reject");
@@ -225,4 +236,16 @@ void credential_reject(struct credential *c, const struct string_list *methods)
 	c->username = NULL;
 	free(c->password);
 	c->password = NULL;
+}
+
+int git_default_credential_config(const char *var, const char *value)
+{
+	if (!strcmp(var, "credential.helper")) {
+		if (!value)
+			return config_error_nonbool(var);
+		string_list_append(&default_methods, xstrdup(value));
+		return 0;
+	}
+
+	return 0;
 }

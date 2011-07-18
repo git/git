@@ -93,6 +93,19 @@ test_expect_success 'http auth can pull user from config' '
 	test_cmp askpass-expect-pass askpass-query
 '
 
+test_expect_success 'http auth respects credential helpers' '
+	cat >credential-helper <<-\EOF &&
+	#!/bin/sh
+	echo username=user@host
+	echo password=user@host
+	EOF
+	chmod +x credential-helper &&
+	git config --global credential.helper "\"$PWD/credential-helper\"" &&
+	>askpass-query &&
+	git clone "$HTTPD_URL/auth/repo.git" clone-auth-helper &&
+	test_cmp askpass-expect-none askpass-query
+'
+
 test_expect_success 'fetch changes via http' '
 	echo content >>file &&
 	git commit -a -m two &&

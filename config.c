@@ -9,6 +9,7 @@
 #include "exec_cmd.h"
 #include "strbuf.h"
 #include "quote.h"
+#include "credential.h"
 
 #define MAXNAME (256)
 
@@ -790,6 +791,9 @@ int git_default_config(const char *var, const char *value, void *dummy)
 		pager_use_color = git_config_bool(var,value);
 		return 0;
 	}
+
+	if (!prefixcmp(var, "credential."))
+		return git_default_credential_config(var, value);
 
 	/* Add other config variables here and to Documentation/config.txt. */
 	return 0;
