@@ -182,4 +182,95 @@ test_expect_success 'internal getpass can pull from config' '
 	EOF
 '
 
+test_expect_success 'credential-cache caches password' '
+	test_when_finished "git credential-cache --exit" &&
+	check --unique=host cache <<-\EOF &&
+	username=askpass-result
+	password=askpass-result
+	--
+	askpass: Username:
+	askpass: Password:
+	EOF
+	check --unique=host cache <<-\EOF
+	username=askpass-result
+	password=askpass-result
+	--
+	EOF
+'
+
+test_expect_success 'credential-cache requires matching unique token' '
+	test_when_finished "git credential-cache --exit" &&
+	check --unique=host cache <<-\EOF &&
+	username=askpass-result
+	password=askpass-result
+	--
+	askpass: Username:
+	askpass: Password:
+	EOF
+	check --unique=host2 cache <<-\EOF
+	username=askpass-result
+	password=askpass-result
+	--
+	askpass: Username:
+	askpass: Password:
+	EOF
+'
+
+test_expect_success 'credential-cache requires matching usernames' '
+	test_when_finished "git credential-cache --exit" &&
+	check --unique=host cache <<-\EOF &&
+	username=askpass-result
+	password=askpass-result
+	--
+	askpass: Username:
+	askpass: Password:
+	EOF
+	check --unique=host --username=other cache <<-\EOF
+	username=other
+	password=askpass-result
+	--
+	askpass: Password:
+	EOF
+'
+
+test_expect_success 'credential-cache times out' '
+	test_when_finished "git credential-cache --exit || true" &&
+	check --unique=host "cache --timeout=1" <<-\EOF &&
+	username=askpass-result
+	password=askpass-result
+	--
+	askpass: Username:
+	askpass: Password:
+	EOF
+	sleep 2 &&
+	check --unique=host cache <<-\EOF
+	username=askpass-result
+	password=askpass-result
+	--
+	askpass: Username:
+	askpass: Password:
+	EOF
+'
+
+test_expect_success 'credential-cache removes rejected credentials' '
+	test_when_finished "git credential-cache --exit || true" &&
+	check --unique=host cache <<-\EOF &&
+	username=askpass-result
+	password=askpass-result
+	--
+	askpass: Username:
+	askpass: Password:
+	EOF
+	check --reject --unique=host --username=askpass-result cache <<-\EOF &&
+	--
+	EOF
+	check --unique=host cache <<-\EOF
+	username=askpass-result
+	password=askpass-result
+	--
+	askpass: Username:
+	askpass: Password:
+	EOF
+'
+
 test_done

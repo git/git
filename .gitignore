@@ -30,6 +30,8 @@
 /git-commit-tree
 /git-config
 /git-count-objects
+/git-credential-cache
+/git-credential-cache--daemon
 /git-cvsexportcommit
 /git-cvsimport
 /git-cvsserver
