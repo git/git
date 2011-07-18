@@ -32,6 +32,7 @@
 /git-count-objects
 /git-credential-cache
 /git-credential-cache--daemon
+/git-credential-store
 /git-cvsexportcommit
 /git-cvsimport
 /git-cvsserver

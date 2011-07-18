@@ -273,4 +273,59 @@ test_expect_success 'credential-cache removes rejected credentials' '
 	EOF
 '
 
+test_expect_success 'credential-store stores password' '
+	test_when_finished "rm -f .git-credentials" &&
+	check --unique=host store <<-\EOF &&
+	username=askpass-result
+	password=askpass-result
+	--
+	askpass: Username:
+	askpass: Password:
+	EOF
+	check --unique=host store <<-\EOF
+	username=askpass-result
+	password=askpass-result
+	--
+	EOF
+'
+
+test_expect_success 'credential-store requires matching unique token' '
+	test_when_finished "rm -f .git-credentials" &&
+	check --unique=host store <<-\EOF &&
+	username=askpass-result
+	password=askpass-result
+	--
+	askpass: Username:
+	askpass: Password:
+	EOF
+	check --unique=host2 store <<-\EOF
+	username=askpass-result
+	password=askpass-result
+	--
+	askpass: Username:
+	askpass: Password:
+	EOF
+'
+
+test_expect_success 'credential-store removes rejected credentials' '
+	test_when_finished "rm -f .git-credentials" &&
+	check --unique=host store <<-\EOF &&
+	username=askpass-result
+	password=askpass-result
+	--
+	askpass: Username:
+	askpass: Password:
+	EOF
+	check --reject --unique=host --username=askpass-result store <<-\EOF &&
+	--
+	EOF
+	check --unique=host store <<-\EOF
+	username=askpass-result
+	password=askpass-result
+	--
+	askpass: Username:
+	askpass: Password:
+	EOF
+'
+
 test_done

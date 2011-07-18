@@ -422,6 +422,7 @@ PROGRAM_OBJS += http-backend.o
 PROGRAM_OBJS += sh-i18n--envsubst.o
 PROGRAM_OBJS += credential-cache.o
 PROGRAM_OBJS += credential-cache--daemon.o
+PROGRAM_OBJS += credential-store.o
 
 PROGRAMS += $(patsubst %.o,git-%$X,$(PROGRAM_OBJS))
 
