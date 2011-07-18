@@ -66,7 +66,7 @@ test_expect_success 'cloning password-protected repository can fail' '
 
 test_expect_success 'http auth can use user/pass in URL' '
 	>askpass-query &&
-	echo wrong >askpass-reponse &&
+	echo wrong >askpass-response &&
 	git clone "$HTTPD_URL_USER_PASS/auth/repo.git" clone-auth-none &&
 	test_cmp askpass-expect-none askpass-query
 '
