@@ -85,6 +85,14 @@ test_expect_success 'http auth can request both user and pass' '
 	test_cmp askpass-expect-both askpass-query
 '
 
+test_expect_success 'http auth can pull user from config' '
+	>askpass-query &&
+	echo user@host >askpass-response &&
+	git config --global credential.$HTTPD_PROTO:$HTTPD_DEST.username user@host &&
+	git clone "$HTTPD_URL/auth/repo.git" clone-auth-config &&
+	test_cmp askpass-expect-pass askpass-query
+'
+
 test_expect_success 'fetch changes via http' '
 	echo content >>file &&
 	git commit -a -m two &&

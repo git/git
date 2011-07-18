@@ -4,6 +4,43 @@
 #include "string-list.h"
 #include "run-command.h"
 
+static int credential_config_callback(const char *var, const char *value,
+				      void *data)
+{
+	struct credential *c = data;
+
+	if (!value)
+		return 0;
+
+	var = skip_prefix(var, "credential.");
+	if (!var)
+		return 0;
+
+	var = skip_prefix(var, c->unique);
+	if (!var)
+		return 0;
+
+	if (*var != '.')
+		return 0;
+	var++;
+
+	if (!strcmp(var, "username")) {
+		if (!c->username)
+			c->username = xstrdup(value);
+	}
+	else if (!strcmp(var, "password")) {
+		free(c->password);
+		c->password = xstrdup(value);
+	}
+	return 0;
+}
+
+void credential_from_config(struct credential *c)
+{
+	if (c->unique)
+		git_config(credential_config_callback, c);
+}
+
 static char *credential_ask_one(const char *what, const char *desc)
 {
 	struct strbuf prompt = STRBUF_INIT;
@@ -26,6 +63,7 @@ static char *credential_ask_one(const char *what, const char *desc)
 
 int credential_getpass(struct credential *c)
 {
+	credential_from_config(c);
 
 	if (!c->username)
 		c->username = credential_ask_one("Username", c->description);

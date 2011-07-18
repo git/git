@@ -172,4 +172,14 @@ test_expect_success 'internal getpass does not ask for known username' '
 	EOF
 '
 
+test_expect_success 'internal getpass can pull from config' '
+	git config credential.foo.username configured-username
+	check --unique=foo <<-\EOF
+	username=configured-username
+	password=askpass-result
+	--
+	askpass: Password:
+	EOF
+'
+
 test_done
