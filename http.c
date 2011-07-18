@@ -307,8 +307,7 @@ static CURL *get_curl_handle(void)
 
 static void http_auth_init(const char *url)
 {
-	char *at, *colon, *cp, *slash, *decoded;
-	int len;
+	char *at, *colon, *cp, *slash;
 
 	cp = strstr(url, "://");
 	if (!cp)
@@ -328,29 +327,11 @@ static void http_auth_init(const char *url)
 		return; /* No credentials */
 	if (!colon || at <= colon) {
 		/* Only username */
-		len = at - cp;
-		user_name = xmalloc(len + 1);
-		memcpy(user_name, cp, len);
-		user_name[len] = '\0';
-		decoded = url_decode(user_name);
-		free(user_name);
-		user_name = decoded;
+		user_name = url_decode_mem(cp, at - cp);
 		user_pass = NULL;
 	} else {
-		len = colon - cp;
-		user_name = xmalloc(len + 1);
-		memcpy(user_name, cp, len);
-		user_name[len] = '\0';
-		decoded = url_decode(user_name);
-		free(user_name);
-		user_name = decoded;
-		len = at - (colon + 1);
-		user_pass = xmalloc(len + 1);
-		memcpy(user_pass, colon + 1, len);
-		user_pass[len] = '\0';
-		decoded = url_decode(user_pass);
-		free(user_pass);
-		user_pass = decoded;
+		user_name = url_decode_mem(cp, colon - cp);
+		user_pass = url_decode_mem(colon + 1, at - (colon + 1));
 	}
 }
 
