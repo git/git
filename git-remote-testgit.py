@@ -35,7 +35,7 @@ def get_repo(alias, url):
     prefix = 'refs/testgit/%s/' % alias
     debug("prefix: '%s'", prefix)
 
-    repo.gitdir = ""
+    repo.gitdir = os.environ["GIT_DIR"]
     repo.alias = alias
     repo.prefix = prefix
 
@@ -70,8 +70,18 @@ def do_capabilities(repo, args):
 
     print "import"
     print "export"
-    print "gitdir"
     print "refspec refs/heads/*:%s*" % repo.prefix
+
+    dirname = repo.get_base_path(repo.gitdir)
+
+    if not os.path.exists(dirname):
+        os.makedirs(dirname)
+
+    path = os.path.join(dirname, 'testgit.marks')
+
+    print "*export-marks %s" % path
+    if os.path.exists(path):
+        print "*import-marks %s" % path
 
     print # end capabilities
 
@@ -121,8 +131,24 @@ def do_import(repo, args):
     if not repo.gitdir:
         die("Need gitdir to import")
 
+    ref = args[0]
+    refs = [ref]
+
+    while True:
+        line = sys.stdin.readline()
+        if line == '\n':
+            break
+        if not line.startswith('import '):
+            die("Expected import line.")
+
+        # strip of leading 'import '
+        ref = line[7:].strip()
+        refs.append(ref)
+
     repo = update_local_repo(repo)
-    repo.exporter.export_repo(repo.gitdir)
+    repo.exporter.export_repo(repo.gitdir, refs)
+
+    print "done"
 
 
 def do_export(repo, args):
@@ -132,32 +158,15 @@ def do_export(repo, args):
     if not repo.gitdir:
         die("Need gitdir to export")
 
-    dirname = repo.get_base_path(repo.gitdir)
-
-    if not os.path.exists(dirname):
-        os.makedirs(dirname)
-
-    path = os.path.join(dirname, 'testgit.marks')
-    print path
-    if os.path.exists(path):
-        print path
-    else:
-        print ""
-    sys.stdout.flush()
-
     update_local_repo(repo)
-    repo.importer.do_import(repo.gitdir)
-    repo.non_local.push(repo.gitdir)
+    changed = repo.importer.do_import(repo.gitdir)
 
+    if not repo.local:
+        repo.non_local.push(repo.gitdir)
 
-def do_gitdir(repo, args):
-    """Stores the location of the gitdir.
-    """
-
-    if not args:
-        die("gitdir needs an argument")
-
-    repo.gitdir = ' '.join(args)
+    for ref in changed:
+        print "ok %s" % ref
+    print
 
 
 COMMANDS = {
@@ -165,7 +174,6 @@ COMMANDS = {
     'list': do_list,
     'import': do_import,
     'export': do_export,
-    'gitdir': do_gitdir,
 }
 
 

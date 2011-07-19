@@ -355,6 +355,7 @@ static unsigned int cmd_save = 100;
 static uintmax_t next_mark;
 static struct strbuf new_data = STRBUF_INIT;
 static int seen_data_command;
+static int require_explicit_termination;
 
 /* Signal handling */
 static volatile sig_atomic_t checkpoint_requested;
@@ -3140,6 +3141,8 @@ static int parse_one_feature(const char *feature, int from_stream)
 		relative_marks_paths = 1;
 	} else if (!strcmp(feature, "no-relative-marks")) {
 		relative_marks_paths = 0;
+	} else if (!strcmp(feature, "done")) {
+		require_explicit_termination = 1;
 	} else if (!strcmp(feature, "force")) {
 		force_update = 1;
 	} else if (!strcmp(feature, "notes") || !strcmp(feature, "ls")) {
@@ -3290,6 +3293,8 @@ int main(int argc, const char **argv)
 			parse_reset_branch();
 		else if (!strcmp("checkpoint", command_buf.buf))
 			parse_checkpoint();
+		else if (!strcmp("done", command_buf.buf))
+			break;
 		else if (!prefixcmp(command_buf.buf, "progress "))
 			parse_progress();
 		else if (!prefixcmp(command_buf.buf, "feature "))
@@ -3308,6 +3313,9 @@ int main(int argc, const char **argv)
 	/* argv hasn't been parsed yet, do so */
 	if (!seen_data_command)
 		parse_argv();
+
+	if (require_explicit_termination && feof(stdin))
+		die("stream ends early");
 
 	end_packfile();
 

@@ -23,6 +23,8 @@ struct helper_data {
 		push : 1,
 		connect : 1,
 		no_disconnect_req : 1;
+	char *export_marks;
+	char *import_marks;
 	/* These go from remote name (as in "list") to private name */
 	struct refspec *refspecs;
 	int refspec_nr;
@@ -105,6 +107,12 @@ static struct child_process *get_helper(struct transport *transport)
 	int refspec_alloc = 0;
 	int duped;
 	int code;
+	char git_dir_buf[sizeof(GIT_DIR_ENVIRONMENT) + PATH_MAX + 1];
+	const char *helper_env[] = {
+		git_dir_buf,
+		NULL
+	};
+
 
 	if (data->helper)
 		return data->helper;
@@ -120,6 +128,10 @@ static struct child_process *get_helper(struct transport *transport)
 	helper->argv[2] = remove_ext_force(transport->url);
 	helper->git_cmd = 0;
 	helper->silent_exec_failure = 1;
+
+	snprintf(git_dir_buf, sizeof(git_dir_buf), "%s=%s", GIT_DIR_ENVIRONMENT, get_git_dir());
+	helper->env = helper_env;
+
 	code = start_command(helper);
 	if (code < 0 && errno == ENOENT)
 		die("Unable to find remote helper for '%s'", data->name);
@@ -171,14 +183,19 @@ static struct child_process *get_helper(struct transport *transport)
 			ALLOC_GROW(refspecs,
 				   refspec_nr + 1,
 				   refspec_alloc);
-			refspecs[refspec_nr++] = strdup(buf.buf + strlen("refspec "));
+			refspecs[refspec_nr++] = strdup(capname + strlen("refspec "));
 		} else if (!strcmp(capname, "connect")) {
 			data->connect = 1;
-		} else if (!strcmp(buf.buf, "gitdir")) {
-			struct strbuf gitdir = STRBUF_INIT;
-			strbuf_addf(&gitdir, "gitdir %s\n", get_git_dir());
-			sendline(data, &gitdir);
-			strbuf_release(&gitdir);
+		} else if (!prefixcmp(capname, "export-marks ")) {
+			struct strbuf arg = STRBUF_INIT;
+			strbuf_addstr(&arg, "--export-marks=");
+			strbuf_addstr(&arg, capname + strlen("export-marks "));
+			data->export_marks = strbuf_detach(&arg, NULL);
+		} else if (!prefixcmp(capname, "import-marks")) {
+			struct strbuf arg = STRBUF_INIT;
+			strbuf_addstr(&arg, "--import-marks=");
+			strbuf_addstr(&arg, capname + strlen("import-marks "));
+			data->import_marks = strbuf_detach(&arg, NULL);
 		} else if (mandatory) {
 			die("Unknown mandatory capability %s. This remote "
 			    "helper probably needs newer version of Git.\n",
@@ -204,6 +221,7 @@ static int disconnect_helper(struct transport *transport)
 {
 	struct helper_data *data = transport->data;
 	struct strbuf buf = STRBUF_INIT;
+	int res = 0;
 
 	if (data->helper) {
 		if (debug)
@@ -215,13 +233,13 @@ static int disconnect_helper(struct transport *transport)
 		close(data->helper->in);
 		close(data->helper->out);
 		fclose(data->out);
-		finish_command(data->helper);
+		res = finish_command(data->helper);
 		free((char *)data->helper->argv[0]);
 		free(data->helper->argv);
 		free(data->helper);
 		data->helper = NULL;
 	}
-	return 0;
+	return res;
 }
 
 static const char *unsupported_options[] = {
@@ -299,12 +317,13 @@ static void standard_options(struct transport *t)
 
 static int release_helper(struct transport *transport)
 {
+	int res = 0;
 	struct helper_data *data = transport->data;
 	free_refspec(data->refspec_nr, data->refspecs);
 	data->refspecs = NULL;
-	disconnect_helper(transport);
+	res = disconnect_helper(transport);
 	free(transport->data);
-	return 0;
+	return res;
 }
 
 static int fetch_with_fetch(struct transport *transport,
@@ -362,10 +381,9 @@ static int get_importer(struct transport *transport, struct child_process *fasti
 
 static int get_exporter(struct transport *transport,
 			struct child_process *fastexport,
-			const char *export_marks,
-			const char *import_marks,
 			struct string_list *revlist_args)
 {
+	struct helper_data *data = transport->data;
 	struct child_process *helper = get_helper(transport);
 	int argc = 0, i;
 	memset(fastexport, 0, sizeof(*fastexport));
@@ -373,12 +391,13 @@ static int get_exporter(struct transport *transport,
 	/* we need to duplicate helper->in because we want to use it after
 	 * fastexport is done with it. */
 	fastexport->out = dup(helper->in);
-	fastexport->argv = xcalloc(4 + revlist_args->nr, sizeof(*fastexport->argv));
+	fastexport->argv = xcalloc(5 + revlist_args->nr, sizeof(*fastexport->argv));
 	fastexport->argv[argc++] = "fast-export";
-	if (export_marks)
-		fastexport->argv[argc++] = export_marks;
-	if (import_marks)
-		fastexport->argv[argc++] = import_marks;
+	fastexport->argv[argc++] = "--use-done-feature";
+	if (data->export_marks)
+		fastexport->argv[argc++] = data->export_marks;
+	if (data->import_marks)
+		fastexport->argv[argc++] = data->import_marks;
 
 	for (i = 0; i < revlist_args->nr; i++)
 		fastexport->argv[argc++] = revlist_args->items[i].string;
@@ -410,8 +429,11 @@ static int fetch_with_import(struct transport *transport,
 		sendline(data, &buf);
 		strbuf_reset(&buf);
 	}
-	disconnect_helper(transport);
-	finish_command(&fastimport);
+
+	write_constant(data->helper->in, "\n");
+
+	if (finish_command(&fastimport))
+		die("Error while running fast-import");
 	free(fastimport.argv);
 	fastimport.argv = NULL;
 
@@ -554,6 +576,88 @@ static int fetch(struct transport *transport,
 	return -1;
 }
 
+static void push_update_ref_status(struct strbuf *buf,
+				   struct ref **ref,
+				   struct ref *remote_refs)
+{
+	char *refname, *msg;
+	int status;
+
+	if (!prefixcmp(buf->buf, "ok ")) {
+		status = REF_STATUS_OK;
+		refname = buf->buf + 3;
+	} else if (!prefixcmp(buf->buf, "error ")) {
+		status = REF_STATUS_REMOTE_REJECT;
+		refname = buf->buf + 6;
+	} else
+		die("expected ok/error, helper said '%s'\n", buf->buf);
+
+	msg = strchr(refname, ' ');
+	if (msg) {
+		struct strbuf msg_buf = STRBUF_INIT;
+		const char *end;
+
+		*msg++ = '\0';
+		if (!unquote_c_style(&msg_buf, msg, &end))
+			msg = strbuf_detach(&msg_buf, NULL);
+		else
+			msg = xstrdup(msg);
+		strbuf_release(&msg_buf);
+
+		if (!strcmp(msg, "no match")) {
+			status = REF_STATUS_NONE;
+			free(msg);
+			msg = NULL;
+		}
+		else if (!strcmp(msg, "up to date")) {
+			status = REF_STATUS_UPTODATE;
+			free(msg);
+			msg = NULL;
+		}
+		else if (!strcmp(msg, "non-fast forward")) {
+			status = REF_STATUS_REJECT_NONFASTFORWARD;
+			free(msg);
+			msg = NULL;
+		}
+	}
+
+	if (*ref)
+		*ref = find_ref_by_name(*ref, refname);
+	if (!*ref)
+		*ref = find_ref_by_name(remote_refs, refname);
+	if (!*ref) {
+		warning("helper reported unexpected status of %s", refname);
+		return;
+	}
+
+	if ((*ref)->status != REF_STATUS_NONE) {
+		/*
+		 * Earlier, the ref was marked not to be pushed, so ignore the ref
+		 * status reported by the remote helper if the latter is 'no match'.
+		 */
+		if (status == REF_STATUS_NONE)
+			return;
+	}
+
+	(*ref)->status = status;
+	(*ref)->remote_status = msg;
+}
+
+static void push_update_refs_status(struct helper_data *data,
+				    struct ref *remote_refs)
+{
+	struct strbuf buf = STRBUF_INIT;
+	struct ref *ref = remote_refs;
+	for (;;) {
+		recvline(data, &buf);
+		if (!buf.len)
+			break;
+
+		push_update_ref_status(&buf, &ref, remote_refs);
+	}
+	strbuf_release(&buf);
+}
+
 static int push_refs_with_push(struct transport *transport,
 		struct ref *remote_refs, int flags)
 {
@@ -608,76 +712,9 @@ static int push_refs_with_push(struct transport *transport,
 
 	strbuf_addch(&buf, '\n');
 	sendline(data, &buf);
-
-	ref = remote_refs;
-	while (1) {
-		char *refname, *msg;
-		int status;
-
-		recvline(data, &buf);
-		if (!buf.len)
-			break;
-
-		if (!prefixcmp(buf.buf, "ok ")) {
-			status = REF_STATUS_OK;
-			refname = buf.buf + 3;
-		} else if (!prefixcmp(buf.buf, "error ")) {
-			status = REF_STATUS_REMOTE_REJECT;
-			refname = buf.buf + 6;
-		} else
-			die("expected ok/error, helper said '%s'\n", buf.buf);
-
-		msg = strchr(refname, ' ');
-		if (msg) {
-			struct strbuf msg_buf = STRBUF_INIT;
-			const char *end;
-
-			*msg++ = '\0';
-			if (!unquote_c_style(&msg_buf, msg, &end))
-				msg = strbuf_detach(&msg_buf, NULL);
-			else
-				msg = xstrdup(msg);
-			strbuf_release(&msg_buf);
-
-			if (!strcmp(msg, "no match")) {
-				status = REF_STATUS_NONE;
-				free(msg);
-				msg = NULL;
-			}
-			else if (!strcmp(msg, "up to date")) {
-				status = REF_STATUS_UPTODATE;
-				free(msg);
-				msg = NULL;
-			}
-			else if (!strcmp(msg, "non-fast forward")) {
-				status = REF_STATUS_REJECT_NONFASTFORWARD;
-				free(msg);
-				msg = NULL;
-			}
-		}
-
-		if (ref)
-			ref = find_ref_by_name(ref, refname);
-		if (!ref)
-			ref = find_ref_by_name(remote_refs, refname);
-		if (!ref) {
-			warning("helper reported unexpected status of %s", refname);
-			continue;
-		}
-
-		if (ref->status != REF_STATUS_NONE) {
-			/*
-			 * Earlier, the ref was marked not to be pushed, so ignore the ref
-			 * status reported by the remote helper if the latter is 'no match'.
-			 */
-			if (status == REF_STATUS_NONE)
-				continue;
-		}
-
-		ref->status = status;
-		ref->remote_status = msg;
-	}
 	strbuf_release(&buf);
+
+	push_update_refs_status(data, remote_refs);
 	return 0;
 }
 
@@ -687,33 +724,12 @@ static int push_refs_with_export(struct transport *transport,
 	struct ref *ref;
 	struct child_process *helper, exporter;
 	struct helper_data *data = transport->data;
-	char *export_marks = NULL, *import_marks = NULL;
 	struct string_list revlist_args = STRING_LIST_INIT_NODUP;
 	struct strbuf buf = STRBUF_INIT;
 
 	helper = get_helper(transport);
 
 	write_constant(helper->in, "export\n");
-
-	recvline(data, &buf);
-	if (debug)
-		fprintf(stderr, "Debug: Got export_marks '%s'\n", buf.buf);
-	if (buf.len) {
-		struct strbuf arg = STRBUF_INIT;
-		strbuf_addstr(&arg, "--export-marks=");
-		strbuf_addbuf(&arg, &buf);
-		export_marks = strbuf_detach(&arg, NULL);
-	}
-
-	recvline(data, &buf);
-	if (debug)
-		fprintf(stderr, "Debug: Got import_marks '%s'\n", buf.buf);
-	if (buf.len) {
-		struct strbuf arg = STRBUF_INIT;
-		strbuf_addstr(&arg, "--import-marks=");
-		strbuf_addbuf(&arg, &buf);
-		import_marks = strbuf_detach(&arg, NULL);
-	}
 
 	strbuf_reset(&buf);
 
@@ -728,18 +744,23 @@ static int push_refs_with_export(struct transport *transport,
 			strbuf_addf(&buf, "^%s", private);
 			string_list_append(&revlist_args, strbuf_detach(&buf, NULL));
 		}
+		free(private);
 
-		string_list_append(&revlist_args, ref->name);
+		if (ref->deletion) {
+			die("remote-helpers do not support ref deletion");
+		}
+
+		if (ref->peer_ref)
+			string_list_append(&revlist_args, ref->peer_ref->name);
 
 	}
 
-	if (get_exporter(transport, &exporter,
-			 export_marks, import_marks, &revlist_args))
+	if (get_exporter(transport, &exporter, &revlist_args))
 		die("Couldn't run fast-export");
 
-	data->no_disconnect_req = 1;
-	finish_command(&exporter);
-	disconnect_helper(transport);
+	if (finish_command(&exporter))
+		die("Error while running fast-export");
+	push_update_refs_status(data, remote_refs);
 	return 0;
 }
 
