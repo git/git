@@ -6,18 +6,41 @@ Updates since v1.7.6
 
  * The scripting part of the codebase is getting prepared for i18n/l10n.
 
+ * Interix and Cygwin ports got updated.
+
+ * Various codepaths that invoked zlib deflate/inflate assumed that these
+   functions can compress or uncompress more than 4GB data in one call on
+   platforms with 64-bit long, which has been corrected.
+
+ * "git archive" can be told to pass the output to gzip compression and
+   produce "archive.tar.gz".
+
  * "git checkout" (both the code to update the files upon checking out a
    different branch, the code to checkout specific set of files) learned
    to stream the data from object store when possible, without having to
    read the entire contents of a file in memory first.
 
- * "git diff --cc" learned to correctly ignore binary files.
+ * "git clone" can now take "--config key=value" option to set the
+   repository configuration options that affect the initial checkout.
 
  * "git diff --stat" learned --stat-count option to limit the output of
    diffstat report.
 
  * "git grep" learned --break and --heading options, to let users mimic
    output format of "ack".
+
+ * "git rebase master topci" no longer spews usage hints after giving
+   "fatal: no such branch: topci" error message.
+
+ * "git submodule update" used to stop at the first error updating a
+   submodule; it now goes on to update other submodules that can be
+   updated, and reports the ones with errors at the end.
+
+ * "git verify-pack" has been rewritten to use the "index-pack" machinery
+   that is more efficient in reading objects in packfiles.
+
+ * test scripts for gitweb tried to run even when CGI-related perl modules
+   are not installed; it now exits early when they are unavailable.
 
 Also contains various documentation updates and minor miscellaneous
 changes.
@@ -29,8 +52,32 @@ Fixes since v1.7.6
 Unless otherwise noted, all the fixes in 1.7.6.X maintenance track are
 included in this release.
 
+ * "git diff --cc" learned to correctly ignore binary files.
+   (merge 0508fe5 jk/combine-diff-binary-etc later)
+
+ * "git fetch" did not recurse into submodules in subdirectories.
+   (merge ea2d325 jl/maint-fetch-recursive-fix later)
+
+ * "git rebase -i -p" incorrectly dropped commits from side branches.
+   (merge 12bf828 aw/rebase-i-p later)
+
+ * "git submodule foreach" failed to correctly give the standard input to
+   the user-supplied command it invoked.
+   (merge 4dca1aa bc/submodule-foreach-stdin-fix-1.7.4 later)
+
+ * submodules that the user has never showed interest in by running
+   "git submodule init" was incorrectly marked as interesting by "git
+   submodule sync".
+   (merge 2cd9de3 jc/submodule-sync-no-auto-vivify later)
+
+ * "git tag -l <glob>..." did not take multiple glob patterns from the
+   command line.
+   (merge 588d0e8 jk/tag-list-multiple-patterns later)
+
 --
 exec >/var/tmp/1
 echo O=$(git describe master)
-O=v1.7.6-133-g395f65d
+O=v1.7.6-232-gd907bf8
+git log --first-parent --oneline $O..master
+echo
 git shortlog --no-merges ^maint ^$O master
