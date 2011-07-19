@@ -14,16 +14,15 @@ static char const * const archive_usage[] = {
 	NULL
 };
 
-#define USES_ZLIB_COMPRESSION 1
+static const struct archiver **archivers;
+static int nr_archivers;
+static int alloc_archivers;
 
-static const struct archiver {
-	const char *name;
-	write_archive_fn_t write_archive;
-	unsigned int flags;
-} archivers[] = {
-	{ "tar", write_tar_archive },
-	{ "zip", write_zip_archive, USES_ZLIB_COMPRESSION },
-};
+void register_archiver(struct archiver *ar)
+{
+	ALLOC_GROW(archivers, nr_archivers + 1, alloc_archivers);
+	archivers[nr_archivers++] = ar;
+}
 
 static void format_subst(const struct commit *commit,
                          const char *src, size_t len,
@@ -208,9 +207,9 @@ static const struct archiver *lookup_archiver(const char *name)
 	if (!name)
 		return NULL;
 
-	for (i = 0; i < ARRAY_SIZE(archivers); i++) {
-		if (!strcmp(name, archivers[i].name))
-			return &archivers[i];
+	for (i = 0; i < nr_archivers; i++) {
+		if (!strcmp(name, archivers[i]->name))
+			return archivers[i];
 	}
 	return NULL;
 }
@@ -299,9 +298,10 @@ static void parse_treeish_arg(const char **argv,
 	  PARSE_OPT_NOARG | PARSE_OPT_NONEG | PARSE_OPT_HIDDEN, NULL, (p) }
 
 static int parse_archive_args(int argc, const char **argv,
-		const struct archiver **ar, struct archiver_args *args)
+		const struct archiver **ar, struct archiver_args *args,
+		const char *name_hint, int is_remote)
 {
-	const char *format = "tar";
+	const char *format = NULL;
 	const char *base = NULL;
 	const char *remote = NULL;
 	const char *exec = NULL;
@@ -355,21 +355,27 @@ static int parse_archive_args(int argc, const char **argv,
 		base = "";
 
 	if (list) {
-		for (i = 0; i < ARRAY_SIZE(archivers); i++)
-			printf("%s\n", archivers[i].name);
+		for (i = 0; i < nr_archivers; i++)
+			if (!is_remote || archivers[i]->flags & ARCHIVER_REMOTE)
+				printf("%s\n", archivers[i]->name);
 		exit(0);
 	}
+
+	if (!format && name_hint)
+		format = archive_format_from_filename(name_hint);
+	if (!format)
+		format = "tar";
 
 	/* We need at least one parameter -- tree-ish */
 	if (argc < 1)
 		usage_with_options(archive_usage, opts);
 	*ar = lookup_archiver(format);
-	if (!*ar)
+	if (!*ar || (is_remote && !((*ar)->flags & ARCHIVER_REMOTE)))
 		die("Unknown archive format '%s'", format);
 
 	args->compression_level = Z_DEFAULT_COMPRESSION;
 	if (compression_level != -1) {
-		if ((*ar)->flags & USES_ZLIB_COMPRESSION)
+		if ((*ar)->flags & ARCHIVER_WANT_COMPRESSION_LEVELS)
 			args->compression_level = compression_level;
 		else {
 			die("Argument not supported for format '%s': -%d",
@@ -385,19 +391,55 @@ static int parse_archive_args(int argc, const char **argv,
 }
 
 int write_archive(int argc, const char **argv, const char *prefix,
-		int setup_prefix)
+		  int setup_prefix, const char *name_hint, int remote)
 {
+	int nongit = 0;
 	const struct archiver *ar = NULL;
 	struct archiver_args args;
 
-	argc = parse_archive_args(argc, argv, &ar, &args);
 	if (setup_prefix && prefix == NULL)
-		prefix = setup_git_directory();
+		prefix = setup_git_directory_gently(&nongit);
+
+	git_config(git_default_config, NULL);
+	init_tar_archiver();
+	init_zip_archiver();
+
+	argc = parse_archive_args(argc, argv, &ar, &args, name_hint, remote);
+	if (nongit) {
+		/*
+		 * We know this will die() with an error, so we could just
+		 * die ourselves; but its error message will be more specific
+		 * than what we could write here.
+		 */
+		setup_git_directory();
+	}
 
 	parse_treeish_arg(argv, &args, prefix);
 	parse_pathspec_arg(argv + 1, &args);
 
-	git_config(git_default_config, NULL);
+	return ar->write_archive(ar, &args);
+}
 
-	return ar->write_archive(&args);
+static int match_extension(const char *filename, const char *ext)
+{
+	int prefixlen = strlen(filename) - strlen(ext);
+
+	/*
+	 * We need 1 character for the '.', and 1 character to ensure that the
+	 * prefix is non-empty (k.e., we don't match .tar.gz with no actual
+	 * filename).
+	 */
+	if (prefixlen < 2 || filename[prefixlen-1] != '.')
+		return 0;
+	return !strcmp(filename + prefixlen, ext);
+}
+
+const char *archive_format_from_filename(const char *filename)
+{
+	int i;
+
+	for (i = 0; i < nr_archivers; i++)
+		if (match_extension(filename, archivers[i]->name))
+			return archivers[i]->name;
+	return NULL;
 }

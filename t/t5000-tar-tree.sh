@@ -26,6 +26,8 @@ commit id embedding:
 
 . ./test-lib.sh
 UNZIP=${UNZIP:-unzip}
+GZIP=${GZIP:-gzip}
+GUNZIP=${GUNZIP:-gzip -d}
 
 SUBSTFORMAT=%H%n
 
@@ -250,6 +252,104 @@ test_expect_success 'git-archive --prefix=olde-' '
 	test -d h/olde-a &&
 	test -d h/olde-a/bin &&
 	test -f h/olde-a/bin/sh
+'
+
+test_expect_success 'setup tar filters' '
+	git config tar.tar.foo.command "tr ab ba" &&
+	git config tar.bar.command "tr ab ba" &&
+	git config tar.bar.remote true
+'
+
+test_expect_success 'archive --list mentions user filter' '
+	git archive --list >output &&
+	grep "^tar\.foo\$" output &&
+	grep "^bar\$" output
+'
+
+test_expect_success 'archive --list shows only enabled remote filters' '
+	git archive --list --remote=. >output &&
+	! grep "^tar\.foo\$" output &&
+	grep "^bar\$" output
+'
+
+test_expect_success 'invoke tar filter by format' '
+	git archive --format=tar.foo HEAD >config.tar.foo &&
+	tr ab ba <config.tar.foo >config.tar &&
+	test_cmp b.tar config.tar &&
+	git archive --format=bar HEAD >config.bar &&
+	tr ab ba <config.bar >config.tar &&
+	test_cmp b.tar config.tar
+'
+
+test_expect_success 'invoke tar filter by extension' '
+	git archive -o config-implicit.tar.foo HEAD &&
+	test_cmp config.tar.foo config-implicit.tar.foo &&
+	git archive -o config-implicit.bar HEAD &&
+	test_cmp config.tar.foo config-implicit.bar
+'
+
+test_expect_success 'default output format remains tar' '
+	git archive -o config-implicit.baz HEAD &&
+	test_cmp b.tar config-implicit.baz
+'
+
+test_expect_success 'extension matching requires dot' '
+	git archive -o config-implicittar.foo HEAD &&
+	test_cmp b.tar config-implicittar.foo
+'
+
+test_expect_success 'only enabled filters are available remotely' '
+	test_must_fail git archive --remote=. --format=tar.foo HEAD \
+		>remote.tar.foo &&
+	git archive --remote=. --format=bar >remote.bar HEAD &&
+	test_cmp remote.bar config.bar
+'
+
+if $GZIP --version >/dev/null 2>&1; then
+	test_set_prereq GZIP
+else
+	say "Skipping some tar.gz tests because gzip not found"
+fi
+
+test_expect_success GZIP 'git archive --format=tgz' '
+	git archive --format=tgz HEAD >j.tgz
+'
+
+test_expect_success GZIP 'git archive --format=tar.gz' '
+	git archive --format=tar.gz HEAD >j1.tar.gz &&
+	test_cmp j.tgz j1.tar.gz
+'
+
+test_expect_success GZIP 'infer tgz from .tgz filename' '
+	git archive --output=j2.tgz HEAD &&
+	test_cmp j.tgz j2.tgz
+'
+
+test_expect_success GZIP 'infer tgz from .tar.gz filename' '
+	git archive --output=j3.tar.gz HEAD &&
+	test_cmp j.tgz j3.tar.gz
+'
+
+if $GUNZIP --version >/dev/null 2>&1; then
+	test_set_prereq GUNZIP
+else
+	say "Skipping some tar.gz tests because gunzip was not found"
+fi
+
+test_expect_success GZIP,GUNZIP 'extract tgz file' '
+	$GUNZIP -c <j.tgz >j.tar &&
+	test_cmp b.tar j.tar
+'
+
+test_expect_success GZIP 'remote tar.gz is allowed by default' '
+	git archive --remote=. --format=tar.gz HEAD >remote.tar.gz &&
+	test_cmp j.tgz remote.tar.gz
+'
+
+test_expect_success GZIP 'remote tar.gz can be disabled' '
+	git config tar.tar.gz.remote false &&
+	test_must_fail git archive --remote=. --format=tar.gz HEAD \
+		>remote.tar.gz
 '
 
 test_done

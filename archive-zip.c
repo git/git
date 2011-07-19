@@ -261,7 +261,8 @@ static void dos_time(time_t *time, int *dos_date, int *dos_time)
 	*dos_time = t->tm_sec / 2 + t->tm_min * 32 + t->tm_hour * 2048;
 }
 
-int write_zip_archive(struct archiver_args *args)
+static int write_zip_archive(const struct archiver *ar,
+			     struct archiver_args *args)
 {
 	int err;
 
@@ -277,4 +278,15 @@ int write_zip_archive(struct archiver_args *args)
 	free(zip_dir);
 
 	return err;
+}
+
+static struct archiver zip_archiver = {
+	"zip",
+	write_zip_archive,
+	ARCHIVER_WANT_COMPRESSION_LEVELS|ARCHIVER_REMOTE
+};
+
+void init_zip_archiver(void)
+{
+	register_archiver(&zip_archiver);
 }

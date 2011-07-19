@@ -64,7 +64,7 @@ static int run_upload_archive(int argc, const char **argv, const char *prefix)
 	sent_argv[sent_argc] = NULL;
 
 	/* parse all options sent by the client */
-	return write_archive(sent_argc, sent_argv, prefix, 0);
+	return write_archive(sent_argc, sent_argv, prefix, 0, NULL, 1);
 }
 
 __attribute__((format (printf, 1, 2)))
