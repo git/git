@@ -90,14 +90,14 @@ static void copy_le32(unsigned char *dest, unsigned int n)
 static void *zlib_deflate(void *data, unsigned long size,
 		int compression_level, unsigned long *compressed_size)
 {
-	z_stream stream;
+	git_zstream stream;
 	unsigned long maxsize;
 	void *buffer;
 	int result;
 
 	memset(&stream, 0, sizeof(stream));
-	deflateInit(&stream, compression_level);
-	maxsize = deflateBound(&stream, size);
+	git_deflate_init(&stream, compression_level);
+	maxsize = git_deflate_bound(&stream, size);
 	buffer = xmalloc(maxsize);
 
 	stream.next_in = data;
@@ -106,7 +106,7 @@ static void *zlib_deflate(void *data, unsigned long size,
 	stream.avail_out = maxsize;
 
 	do {
-		result = deflate(&stream, Z_FINISH);
+		result = git_deflate(&stream, Z_FINISH);
 	} while (result == Z_OK);
 
 	if (result != Z_STREAM_END) {
@@ -114,7 +114,7 @@ static void *zlib_deflate(void *data, unsigned long size,
 		return NULL;
 	}
 
-	deflateEnd(&stream);
+	git_deflate_end(&stream);
 	*compressed_size = stream.total_out;
 
 	return buffer;

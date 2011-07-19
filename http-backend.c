@@ -271,16 +271,13 @@ static struct rpc_service *select_service(const char *name)
 
 static void inflate_request(const char *prog_name, int out)
 {
-	z_stream stream;
+	git_zstream stream;
 	unsigned char in_buf[8192];
 	unsigned char out_buf[8192];
 	unsigned long cnt = 0;
-	int ret;
 
 	memset(&stream, 0, sizeof(stream));
-	ret = inflateInit2(&stream, (15 + 16));
-	if (ret != Z_OK)
-		die("cannot start zlib inflater, zlib err %d", ret);
+	git_inflate_init_gzip_only(&stream);
 
 	while (1) {
 		ssize_t n = xread(0, in_buf, sizeof(in_buf));
@@ -296,7 +293,7 @@ static void inflate_request(const char *prog_name, int out)
 			stream.next_out = out_buf;
 			stream.avail_out = sizeof(out_buf);
 
-			ret = inflate(&stream, Z_NO_FLUSH);
+			ret = git_inflate(&stream, Z_NO_FLUSH);
 			if (ret != Z_OK && ret != Z_STREAM_END)
 				die("zlib error inflating request, result %d", ret);
 
@@ -311,7 +308,7 @@ static void inflate_request(const char *prog_name, int out)
 	}
 
 done:
-	inflateEnd(&stream);
+	git_inflate_end(&stream);
 	close(out);
 }
 

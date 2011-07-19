@@ -66,7 +66,7 @@ struct filtered_istream {
 struct git_istream {
 	const struct stream_vtbl *vtbl;
 	unsigned long size; /* inflated size of full object */
-	z_stream z;
+	git_zstream z;
 	enum { z_unused, z_used, z_done, z_error } z_state;
 
 	union {
