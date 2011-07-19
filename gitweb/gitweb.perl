@@ -3680,6 +3680,20 @@ sub get_page_title {
 	return $title;
 }
 
+sub get_content_type_html {
+	# require explicit support from the UA if we are to send the page as
+	# 'application/xhtml+xml', otherwise send it as plain old 'text/html'.
+	# we have to do this because MSIE sometimes globs '*/*', pretending to
+	# support xhtml+xml but choking when it gets what it asked for.
+	if (defined $cgi->http('HTTP_ACCEPT') &&
+	    $cgi->http('HTTP_ACCEPT') =~ m/(,|;|\s|^)application\/xhtml\+xml(,|;|\s|$)/ &&
+	    $cgi->Accept('application/xhtml+xml') != 0) {
+		return 'application/xhtml+xml';
+	} else {
+		return 'text/html';
+	}
+}
+
 sub print_feed_meta {
 	if (defined $project) {
 		my %href_params = get_feed_info();
@@ -3725,24 +3739,90 @@ sub print_feed_meta {
 	}
 }
 
+sub print_header_links {
+	my $status = shift;
+
+	# print out each stylesheet that exist, providing backwards capability
+	# for those people who defined $stylesheet in a config file
+	if (defined $stylesheet) {
+		print '<link rel="stylesheet" type="text/css" href="'.esc_url($stylesheet).'"/>'."\n";
+	} else {
+		foreach my $stylesheet (@stylesheets) {
+			next unless $stylesheet;
+			print '<link rel="stylesheet" type="text/css" href="'.esc_url($stylesheet).'"/>'."\n";
+		}
+	}
+	print_feed_meta()
+		if ($status eq '200 OK');
+	if (defined $favicon) {
+		print qq(<link rel="shortcut icon" href=").esc_url($favicon).qq(" type="image/png" />\n);
+	}
+}
+
+sub print_nav_breadcrumbs {
+	my %opts = @_;
+
+	print $cgi->a({-href => esc_url($home_link)}, $home_link_str) . " / ";
+	if (defined $project) {
+		print $cgi->a({-href => href(action=>"summary")}, esc_html($project));
+		if (defined $action) {
+			my $action_print = $action ;
+			if (defined $opts{-action_extra}) {
+				$action_print = $cgi->a({-href => href(action=>$action)},
+					$action);
+			}
+			print " / $action_print";
+		}
+		if (defined $opts{-action_extra}) {
+			print " / $opts{-action_extra}";
+		}
+		print "\n";
+	}
+}
+
+sub print_search_form {
+	if (!defined $searchtext) {
+		$searchtext = "";
+	}
+	my $search_hash;
+	if (defined $hash_base) {
+		$search_hash = $hash_base;
+	} elsif (defined $hash) {
+		$search_hash = $hash;
+	} else {
+		$search_hash = "HEAD";
+	}
+	my $action = $my_uri;
+	my $use_pathinfo = gitweb_check_feature('pathinfo');
+	if ($use_pathinfo) {
+		$action .= "/".esc_url($project);
+	}
+	print $cgi->startform(-method => "get", -action => $action) .
+	      "<div class=\"search\">\n" .
+	      (!$use_pathinfo &&
+	      $cgi->input({-name=>"p", -value=>$project, -type=>"hidden"}) . "\n") .
+	      $cgi->input({-name=>"a", -value=>"search", -type=>"hidden"}) . "\n" .
+	      $cgi->input({-name=>"h", -value=>$search_hash, -type=>"hidden"}) . "\n" .
+	      $cgi->popup_menu(-name => 'st', -default => 'commit',
+	                       -values => ['commit', 'grep', 'author', 'committer', 'pickaxe']) .
+	      $cgi->sup($cgi->a({-href => href(action=>"search_help")}, "?")) .
+	      " search:\n",
+	      $cgi->textfield(-name => "s", -value => $searchtext) . "\n" .
+	      "<span title=\"Extended regular expression\">" .
+	      $cgi->checkbox(-name => 'sr', -value => 1, -label => 're',
+	                     -checked => $search_use_regexp) .
+	      "</span>" .
+	      "</div>" .
+	      $cgi->end_form() . "\n";
+}
+
 sub git_header_html {
 	my $status = shift || "200 OK";
 	my $expires = shift;
 	my %opts = @_;
 
 	my $title = get_page_title();
-	my $content_type;
-	# require explicit support from the UA if we are to send the page as
-	# 'application/xhtml+xml', otherwise send it as plain old 'text/html'.
-	# we have to do this because MSIE sometimes globs '*/*', pretending to
-	# support xhtml+xml but choking when it gets what it asked for.
-	if (defined $cgi->http('HTTP_ACCEPT') &&
-	    $cgi->http('HTTP_ACCEPT') =~ m/(,|;|\s|^)application\/xhtml\+xml(,|;|\s|$)/ &&
-	    $cgi->Accept('application/xhtml+xml') != 0) {
-		$content_type = 'application/xhtml+xml';
-	} else {
-		$content_type = 'text/html';
-	}
+	my $content_type = get_content_type_html();
 	print $cgi->header(-type=>$content_type, -charset => 'utf-8',
 	                   -status=> $status, -expires => $expires)
 		unless ($opts{'-no_http_header'});
@@ -3764,22 +3844,7 @@ EOF
 	if ($ENV{'PATH_INFO'}) {
 		print "<base href=\"".esc_url($base_url)."\" />\n";
 	}
-	# print out each stylesheet that exist, providing backwards capability
-	# for those people who defined $stylesheet in a config file
-	if (defined $stylesheet) {
-		print '<link rel="stylesheet" type="text/css" href="'.esc_url($stylesheet).'"/>'."\n";
-	} else {
-		foreach my $stylesheet (@stylesheets) {
-			next unless $stylesheet;
-			print '<link rel="stylesheet" type="text/css" href="'.esc_url($stylesheet).'"/>'."\n";
-		}
-	}
-	print_feed_meta()
-		if ($status eq '200 OK');
-	if (defined $favicon) {
-		print qq(<link rel="shortcut icon" href=").esc_url($favicon).qq(" type="image/png" />\n);
-	}
-
+	print_header_links($status);
 	print "</head>\n" .
 	      "<body>\n";
 
@@ -3796,59 +3861,12 @@ EOF
 		                         -alt => "git",
 		                         -class => "logo"}));
 	}
-	print $cgi->a({-href => esc_url($home_link)}, $home_link_str) . " / ";
-	if (defined $project) {
-		print $cgi->a({-href => href(action=>"summary")}, esc_html($project));
-		if (defined $action) {
-			my $action_print = $action ;
-			if (defined $opts{-action_extra}) {
-				$action_print = $cgi->a({-href => href(action=>$action)},
-					$action);
-			}
-			print " / $action_print";
-		}
-		if (defined $opts{-action_extra}) {
-			print " / $opts{-action_extra}";
-		}
-		print "\n";
-	}
+	print_nav_breadcrumbs(%opts);
 	print "</div>\n";
 
 	my $have_search = gitweb_check_feature('search');
 	if (defined $project && $have_search) {
-		if (!defined $searchtext) {
-			$searchtext = "";
-		}
-		my $search_hash;
-		if (defined $hash_base) {
-			$search_hash = $hash_base;
-		} elsif (defined $hash) {
-			$search_hash = $hash;
-		} else {
-			$search_hash = "HEAD";
-		}
-		my $action = $my_uri;
-		my $use_pathinfo = gitweb_check_feature('pathinfo');
-		if ($use_pathinfo) {
-			$action .= "/".esc_url($project);
-		}
-		print $cgi->startform(-method => "get", -action => $action) .
-		      "<div class=\"search\">\n" .
-		      (!$use_pathinfo &&
-		      $cgi->input({-name=>"p", -value=>$project, -type=>"hidden"}) . "\n") .
-		      $cgi->input({-name=>"a", -value=>"search", -type=>"hidden"}) . "\n" .
-		      $cgi->input({-name=>"h", -value=>$search_hash, -type=>"hidden"}) . "\n" .
-		      $cgi->popup_menu(-name => 'st', -default => 'commit',
-		                       -values => ['commit', 'grep', 'author', 'committer', 'pickaxe']) .
-		      $cgi->sup($cgi->a({-href => href(action=>"search_help")}, "?")) .
-		      " search:\n",
-		      $cgi->textfield(-name => "s", -value => $searchtext) . "\n" .
-		      "<span title=\"Extended regular expression\">" .
-		      $cgi->checkbox(-name => 'sr', -value => 1, -label => 're',
-		                     -checked => $search_use_regexp) .
-		      "</span>" .
-		      "</div>" .
-		      $cgi->end_form() . "\n";
+		print_search_form();
 	}
 }
 
