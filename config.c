@@ -50,10 +50,10 @@ void git_config_push_parameter(const char *text)
 static int git_config_parse_parameter(const char *text,
 				      config_fn_t fn, void *data)
 {
-	struct strbuf tmp = STRBUF_INIT;
 	struct strbuf **pair;
-	strbuf_addstr(&tmp, text);
-	pair = strbuf_split(&tmp, '=');
+	pair = strbuf_split_str(text, '=', 2);
+	if (!pair[0])
+		return error("bogus config parameter: %s", text);
 	if (pair[0]->len && pair[0]->buf[pair[0]->len - 1] == '=')
 		strbuf_setlen(pair[0], pair[0]->len - 1);
 	strbuf_trim(pair[0]);
@@ -874,7 +874,7 @@ int git_config_early(config_fn_t fn, void *data, const char *repo_config)
 
 	switch (git_config_from_parameters(fn, data)) {
 	case -1: /* error */
-		ret--;
+		die("unable to parse command-line config");
 		break;
 	case 0: /* found nothing */
 		break;
