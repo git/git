@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "parse-options.h"
+#include "string-list.h"
 
 static int boolean = 0;
 static int integer = 0;
@@ -9,6 +10,7 @@ static int verbose = 0, dry_run = 0, quiet = 0;
 static char *string = NULL;
 static char *file = NULL;
 static int ambiguous;
+static struct string_list list;
 
 static int length_callback(const struct option *opt, const char *arg, int unset)
 {
@@ -54,6 +56,7 @@ int main(int argc, const char **argv)
 		OPT_STRING('o', NULL, &string, "str", "get another string"),
 		OPT_SET_PTR(0, "default-string", &string,
 			"set string to default", (unsigned long)"default"),
+		OPT_STRING_LIST(0, "list", &list, "str", "add str to list"),
 		OPT_GROUP("Magic arguments"),
 		OPT_ARGUMENT("quux", "means --quux"),
 		OPT_NUMBER_CALLBACK(&integer, "set integer to NUM",
@@ -84,6 +87,9 @@ int main(int argc, const char **argv)
 	printf("quiet: %s\n", quiet ? "yes" : "no");
 	printf("dry run: %s\n", dry_run ? "yes" : "no");
 	printf("file: %s\n", file ? file : "(not set)");
+
+	for (i = 0; i < list.nr; i++)
+		printf("list: %s\n", list.items[i].string);
 
 	for (i = 0; i < argc; i++)
 		printf("arg %02d: %s\n", i, argv[i]);

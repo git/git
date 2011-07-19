@@ -46,6 +46,7 @@ static const char *real_git_dir;
 static char *option_upload_pack = "git-upload-pack";
 static int option_verbosity;
 static int option_progress;
+static struct string_list option_config;
 
 static struct option builtin_clone_options[] = {
 	OPT__VERBOSITY(&option_verbosity),
@@ -83,7 +84,8 @@ static struct option builtin_clone_options[] = {
 		    "create a shallow clone of that depth"),
 	OPT_STRING(0, "separate-git-dir", &real_git_dir, "gitdir",
 		   "separate git dir from working tree"),
-
+	OPT_STRING_LIST('c', "config", &option_config, "key=value",
+			"set config inside the new repository"),
 	OPT_END()
 };
 
@@ -364,6 +366,22 @@ static void write_remote_refs(const struct ref *local_refs)
 	clear_extra_refs();
 }
 
+static int write_one_config(const char *key, const char *value, void *data)
+{
+	return git_config_set_multivar(key, value ? value : "true", "^$", 0);
+}
+
+static void write_config(struct string_list *config)
+{
+	int i;
+
+	for (i = 0; i < config->nr; i++) {
+		if (git_config_parse_parameter(config->items[i].string,
+					       write_one_config, NULL) < 0)
+			die("unable to write parameters to config file");
+	}
+}
+
 int cmd_clone(int argc, const char **argv, const char *prefix)
 {
 	int is_bundle = 0, is_local;
@@ -482,6 +500,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 			printf(_("Cloning into %s...\n"), dir);
 	}
 	init_db(option_template, INIT_DB_QUIET);
+	write_config(&option_config);
 
 	/*
 	 * At this point, the config exists, so we do not need the

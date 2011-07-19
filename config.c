@@ -47,8 +47,8 @@ void git_config_push_parameter(const char *text)
 	strbuf_release(&env);
 }
 
-static int git_config_parse_parameter(const char *text,
-				      config_fn_t fn, void *data)
+int git_config_parse_parameter(const char *text,
+			       config_fn_t fn, void *data)
 {
 	struct strbuf **pair;
 	pair = strbuf_split_str(text, '=', 2);
