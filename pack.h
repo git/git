@@ -34,9 +34,24 @@ struct pack_header {
  */
 #define PACK_IDX_SIGNATURE 0xff744f63	/* "\377tOc" */
 
-/* These may be overridden by command-line parameters */
-extern uint32_t pack_idx_default_version;
-extern uint32_t pack_idx_off32_limit;
+struct pack_idx_option {
+	unsigned flags;
+	/* flag bits */
+#define WRITE_IDX_VERIFY 01
+
+	uint32_t version;
+	uint32_t off32_limit;
+
+	/*
+	 * List of offsets that would fit within off32_limit but
+	 * need to be written out as 64-bit entity for byte-for-byte
+	 * verification.
+	 */
+	int anomaly_alloc, anomaly_nr;
+	uint32_t *anomaly;
+};
+
+extern void reset_pack_idx_option(struct pack_idx_option *);
 
 /*
  * Packed object index header
@@ -55,7 +70,7 @@ struct pack_idx_entry {
 	off_t offset;
 };
 
-extern const char *write_idx_file(const char *index_name, struct pack_idx_entry **objects, int nr_objects, unsigned char *sha1);
+extern const char *write_idx_file(const char *index_name, struct pack_idx_entry **objects, int nr_objects, const struct pack_idx_option *, unsigned char *sha1);
 extern int check_pack_crc(struct packed_git *p, struct pack_window **w_curs, off_t offset, off_t len, unsigned int nr);
 extern int verify_pack_index(struct packed_git *);
 extern int verify_pack(struct packed_git *);

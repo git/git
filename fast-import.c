@@ -304,6 +304,7 @@ static unsigned int atom_cnt;
 static struct atom_str **atom_table;
 
 /* The .pack file being generated */
+static struct pack_idx_option pack_idx_opts;
 static unsigned int pack_id;
 static struct sha1file *pack_file;
 static struct packed_git *pack_data;
@@ -896,7 +897,7 @@ static const char *create_index(void)
 	if (c != last)
 		die("internal consistency error creating the index");
 
-	tmpfile = write_idx_file(NULL, idx, object_count, pack_data->sha1);
+	tmpfile = write_idx_file(NULL, idx, object_count, &pack_idx_opts, pack_data->sha1);
 	free(idx);
 	return tmpfile;
 }
@@ -3195,10 +3196,10 @@ static int git_pack_config(const char *k, const char *v, void *cb)
 		return 0;
 	}
 	if (!strcmp(k, "pack.indexversion")) {
-		pack_idx_default_version = git_config_int(k, v);
-		if (pack_idx_default_version > 2)
+		pack_idx_opts.version = git_config_int(k, v);
+		if (pack_idx_opts.version > 2)
 			die("bad pack.indexversion=%"PRIu32,
-			    pack_idx_default_version);
+			    pack_idx_opts.version);
 		return 0;
 	}
 	if (!strcmp(k, "pack.packsizelimit")) {
@@ -3252,6 +3253,7 @@ int main(int argc, const char **argv)
 		usage(fast_import_usage);
 
 	setup_git_directory();
+	reset_pack_idx_option(&pack_idx_opts);
 	git_config(git_pack_config, NULL);
 	if (!pack_compression_seen && core_compression_seen)
 		pack_compression_level = core_compression_level;
