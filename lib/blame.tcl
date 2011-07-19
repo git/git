@@ -356,9 +356,7 @@ constructor new {i_commit i_path i_jump} {
 	bind $top    <Control-Key-s> [list searchbar::show $finder]
 	bind $top       <Escape>     [list searchbar::hide $finder]
 	bind $top       <F3>         [list searchbar::find_next $finder]
-	bind $top       <Key-n>      [list searchbar::find_next $finder]
 	bind $top       <Shift-F3>   [list searchbar::find_prev $finder]
-	bind $top    <Shift-Key-n>   [list searchbar::find_prev $finder]
 	bind $top    <Control-Key-g> [list linebar::show $gotoline]
 	catch { bind $top <Shift-Key-XF86_Switch_VT_3> [list searchbar::find_prev $finder] }
 
