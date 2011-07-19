@@ -250,7 +250,6 @@ Use -f if you really want to add it." &&
 			url="$repo"
 			;;
 		esac
-		git config submodule."$path".url "$url"
 	else
 
 		module_clone "$path" "$realrepo" "$reference" || exit
@@ -264,6 +263,7 @@ Use -f if you really want to add it." &&
 			esac
 		) || die "$(eval_gettext "Unable to checkout submodule '\$path'")"
 	fi
+	git config submodule."$path".url "$url"
 
 	git add $force "$path" ||
 	die "$(eval_gettext "Failed to add submodule '\$path'")"
@@ -363,25 +363,26 @@ cmd_init()
 	do
 		# Skip already registered paths
 		name=$(module_name "$path") || exit
-		url=$(git config submodule."$name".url)
-		test -z "$url" || continue
+		if test -z "$(git config "submodule.$name.url")"
+		then
+			url=$(git config -f .gitmodules submodule."$name".url)
+			test -z "$url" &&
+			die "$(eval_gettext "No url found for submodule path '\$path' in .gitmodules")"
 
-		url=$(git config -f .gitmodules submodule."$name".url)
-		test -z "$url" &&
-		die "$(eval_gettext "No url found for submodule path '\$path' in .gitmodules")"
+			# Possibly a url relative to parent
+			case "$url" in
+			./*|../*)
+				url=$(resolve_relative_url "$url") || exit
+				;;
+			esac
+			git config submodule."$name".url "$url" ||
+			die "$(eval_gettext "Failed to register url for submodule path '\$path'")"
+		fi
 
-		# Possibly a url relative to parent
-		case "$url" in
-		./*|../*)
-			url=$(resolve_relative_url "$url") || exit
-			;;
-		esac
-
-		git config submodule."$name".url "$url" ||
-		die "$(eval_gettext "Failed to register url for submodule path '\$path'")"
-
+		# Copy "update" setting when it is not set yet
 		upd="$(git config -f .gitmodules submodule."$name".update)"
 		test -z "$upd" ||
+		test -n "$(git config submodule."$name".update)" ||
 		git config submodule."$name".update "$upd" ||
 		die "$(eval_gettext "Failed to register update mode for submodule path '\$path'")"
 
@@ -925,17 +926,20 @@ cmd_sync()
 			;;
 		esac
 
-		say "$(eval_gettext "Synchronizing submodule url for '\$name'")"
-		git config submodule."$name".url "$url"
-
-		if test -e "$path"/.git
+		if git config "submodule.$name.url" >/dev/null 2>/dev/null
 		then
-		(
-			clear_local_git_env
-			cd "$path"
-			remote=$(get_default_remote)
-			git config remote."$remote".url "$url"
-		)
+			say "$(eval_gettext "Synchronizing submodule url for '\$name'")"
+			git config submodule."$name".url "$url"
+
+			if test -e "$path"/.git
+			then
+			(
+				clear_local_git_env
+				cd "$path"
+				remote=$(get_default_remote)
+				git config remote."$remote".url "$url"
+			)
+			fi
 		fi
 	done
 }
