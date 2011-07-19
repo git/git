@@ -222,7 +222,7 @@ extern char *gitbasename(char *);
 #if __HP_cc >= 61000
 #define NORETURN __attribute__((noreturn))
 #define NORETURN_PTR
-#elif defined(__GNUC__)
+#elif defined(__GNUC__) && !defined(NO_NORETURN)
 #define NORETURN __attribute__((__noreturn__))
 #define NORETURN_PTR __attribute__((__noreturn__))
 #elif defined(_MSC_VER)

@@ -153,6 +153,9 @@ all::
 # that tells runtime paths to dynamic libraries;
 # "-Wl,-rpath=/path/lib" is used instead.
 #
+# Define NO_NORETURN if using buggy versions of gcc 4.6+ and profile feedback,
+# as the compiler can crash (http://gcc.gnu.org/bugzilla/show_bug.cgi?id=49299)
+#
 # Define USE_NSEC below if you want git to care about sub-second file mtimes
 # and ctimes. Note that you need recent glibc (at least 2.2.4) for this, and
 # it will BREAK YOUR LOCAL DIFFS! show-diff and anything using it will likely
@@ -1378,6 +1381,9 @@ endif
 ifdef USE_ST_TIMESPEC
 	BASIC_CFLAGS += -DUSE_ST_TIMESPEC
 endif
+ifdef NO_NORETURN
+	BASIC_CFLAGS += -DNO_NORETURN
+endif
 ifdef NO_NSEC
 	BASIC_CFLAGS += -DNO_NSEC
 endif
@@ -2499,3 +2505,19 @@ cover_db: coverage-report
 
 cover_db_html: cover_db
 	cover -report html -outputdir cover_db_html cover_db
+
+### profile feedback build
+#
+.PHONY: profile-all profile-clean
+
+PROFILE_GEN_CFLAGS := $(CFLAGS) -fprofile-generate -DNO_NORETURN=1
+PROFILE_USE_CFLAGS := $(CFLAGS) -fprofile-use -fprofile-correction -DNO_NORETURN=1
+
+profile-clean:
+	$(RM) $(addsuffix *.gcda,$(object_dirs))
+	$(RM) $(addsuffix *.gcno,$(object_dirs))
+
+profile-all: profile-clean
+	$(MAKE) CFLAGS="$(PROFILE_GEN_CFLAGS)" all
+	$(MAKE) CFLAGS="$(PROFILE_GEN_CFLAGS)" -j1 test
+	$(MAKE) CFLAGS="$(PROFILE_USE_CFLAGS)" all
