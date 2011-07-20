@@ -89,6 +89,7 @@ my ($_stdin, $_help, $_edit,
 	$_prefix, $_no_checkout, $_url, $_verbose,
 	$_git_format, $_commit_url, $_tag, $_merge_info);
 $Git::SVN::_follow_parent = 1;
+$SVN::Git::Fetcher::_placeholder_filename = ".gitignore";
 $_q ||= 0;
 my %remote_opts = ( 'username=s' => \$Git::SVN::Prompt::_username,
                     'config-dir=s' => \$Git::SVN::Ra::config_dir,
@@ -139,6 +140,10 @@ my %cmd = (
 			   %fc_opts } ],
 	clone => [ \&cmd_clone, "Initialize and fetch revisions",
 			{ 'revision|r=s' => \$_revision,
+			  'preserve-empty-dirs' =>
+				\$SVN::Git::Fetcher::_preserve_empty_dirs,
+			  'placeholder-filename=s' =>
+				\$SVN::Git::Fetcher::_placeholder_filename,
 			   %fc_opts, %init_opts } ],
 	init => [ \&cmd_init, "Initialize a repo for tracking" .
 			  " (requires URL argument)",
@@ -386,6 +391,12 @@ sub do_git_init_db {
 	my $ignore_regex = \$SVN::Git::Fetcher::_ignore_regex;
 	command_noisy('config', "$pfx.ignore-paths", $$ignore_regex)
 		if defined $$ignore_regex;
+
+	if (defined $SVN::Git::Fetcher::_preserve_empty_dirs) {
+		my $fname = \$SVN::Git::Fetcher::_placeholder_filename;
+		command_noisy('config', "$pfx.preserve-empty-dirs", 'true');
+		command_noisy('config', "$pfx.placeholder-filename", $$fname);
+	}
 }
 
 sub init_subdir {
@@ -4080,12 +4091,13 @@ sub _read_password {
 }
 
 package SVN::Git::Fetcher;
-use vars qw/@ISA/;
+use vars qw/@ISA $_ignore_regex $_preserve_empty_dirs $_placeholder_filename
+            @deleted_gpath %added_placeholder $repo_id/;
 use strict;
 use warnings;
 use Carp qw/croak/;
+use File::Basename qw/dirname/;
 use IO::File qw//;
-use vars qw/$_ignore_regex/;
 
 # file baton members: path, mode_a, mode_b, pool, fh, blob, base
 sub new {
@@ -4097,8 +4109,34 @@ sub new {
 		$self->{empty_symlinks} =
 		                  _mark_empty_symlinks($git_svn, $switch_path);
 	}
-	$self->{ignore_regex} = eval { command_oneline('config', '--get',
-			     "svn-remote.$git_svn->{repo_id}.ignore-paths") };
+
+	# some options are read globally, but can be overridden locally
+	# per [svn-remote "..."] section.  Command-line options will *NOT*
+	# override options set in an [svn-remote "..."] section
+	$repo_id = $git_svn->{repo_id};
+	my $k = "svn-remote.$repo_id.ignore-paths";
+	my $v = eval { command_oneline('config', '--get', $k) };
+	$self->{ignore_regex} = $v;
+
+	$k = "svn-remote.$repo_id.preserve-empty-dirs";
+	$v = eval { command_oneline('config', '--get', '--bool', $k) };
+	if ($v && $v eq 'true') {
+		$_preserve_empty_dirs = 1;
+		$k = "svn-remote.$repo_id.placeholder-filename";
+		$v = eval { command_oneline('config', '--get', $k) };
+		$_placeholder_filename = $v;
+	}
+
+	# Load the list of placeholder files added during previous invocations.
+	$k = "svn-remote.$repo_id.added-placeholder";
+	$v = eval { command_oneline('config', '--get-all', $k) };
+	if ($_preserve_empty_dirs && $v) {
+		# command() prints errors to stderr, so we only call it if
+		# command_oneline() succeeded.
+		my @v = command('config', '--get-all', $k);
+		$added_placeholder{ dirname($_) } = $_ foreach @v;
+	}
+
 	$self->{empty} = {};
 	$self->{dir_prop} = {};
 	$self->{file_prop} = {};
@@ -4227,6 +4265,8 @@ sub delete_entry {
 		$self->{gii}->remove($gpath);
 		print "\tD\t$gpath\n" unless $::_q;
 	}
+	# Don't add to @deleted_gpath if we're deleting a placeholder file.
+	push @deleted_gpath, $gpath unless $added_placeholder{dirname($path)};
 	$self->{empty}->{$path} = 0;
 	undef;
 }
@@ -4259,7 +4299,15 @@ sub add_file {
 		my ($dir, $file) = ($path =~ m#^(.*?)/?([^/]+)$#);
 		delete $self->{empty}->{$dir};
 		$mode = '100644';
+
+		if ($added_placeholder{$dir}) {
+			# Remove our placeholder file, if we created one.
+			delete_entry($self, $added_placeholder{$dir})
+				unless $path eq $added_placeholder{$dir};
+			delete $added_placeholder{$dir}
+		}
 	}
+
 	{ path => $path, mode_a => $mode, mode_b => $mode,
 	  pool => SVN::Pool->new, action => 'A' };
 }
@@ -4277,6 +4325,7 @@ sub add_directory {
 			chomp;
 			$self->{gii}->remove($_);
 			print "\tD\t$_\n" unless $::_q;
+			push @deleted_gpath, $gpath;
 		}
 		command_close_pipe($ls, $ctx);
 		$self->{empty}->{$path} = 0;
@@ -4284,6 +4333,13 @@ sub add_directory {
 	my ($dir, $file) = ($path =~ m#^(.*?)/?([^/]+)$#);
 	delete $self->{empty}->{$dir};
 	$self->{empty}->{$path} = 1;
+
+	if ($added_placeholder{$dir}) {
+		# Remove our placeholder file, if we created one.
+		delete_entry($self, $added_placeholder{$dir});
+		delete $added_placeholder{$dir}
+	}
+
 out:
 	{ path => $path };
 }
@@ -4447,10 +4503,94 @@ sub abort_edit {
 
 sub close_edit {
 	my $self = shift;
+
+	if ($_preserve_empty_dirs) {
+		my @empty_dirs;
+
+		# Any entry flagged as empty that also has an associated
+		# dir_prop represents a newly created empty directory.
+		foreach my $i (keys %{$self->{empty}}) {
+			push @empty_dirs, $i if exists $self->{dir_prop}->{$i};
+		}
+
+		# Search for directories that have become empty due subsequent
+		# file deletes.
+		push @empty_dirs, $self->find_empty_directories();
+
+		# Finally, add a placeholder file to each empty directory.
+		$self->add_placeholder_file($_) foreach (@empty_dirs);
+
+		$self->stash_placeholder_list();
+	}
+
 	$self->{git_commit_ok} = 1;
 	$self->{nr} = $self->{gii}->{nr};
 	delete $self->{gii};
 	$self->SUPER::close_edit(@_);
+}
+
+sub find_empty_directories {
+	my ($self) = @_;
+	my @empty_dirs;
+	my %dirs = map { dirname($_) => 1 } @deleted_gpath;
+
+	foreach my $dir (sort keys %dirs) {
+		next if $dir eq ".";
+
+		# If there have been any additions to this directory, there is
+		# no reason to check if it is empty.
+		my $skip_added = 0;
+		foreach my $t (qw/dir_prop file_prop/) {
+			foreach my $path (keys %{ $self->{$t} }) {
+				if (exists $self->{$t}->{dirname($path)}) {
+					$skip_added = 1;
+					last;
+				}
+			}
+			last if $skip_added;
+		}
+		next if $skip_added;
+
+		# Use `git ls-tree` to get the filenames of this directory
+		# that existed prior to this particular commit.
+		my $ls = command('ls-tree', '-z', '--name-only',
+				 $self->{c}, "$dir/");
+		my %files = map { $_ => 1 } split(/\0/, $ls);
+
+		# Remove the filenames that were deleted during this commit.
+		delete $files{$_} foreach (@deleted_gpath);
+
+		# Report the directory if there are no filenames left.
+		push @empty_dirs, $dir unless (scalar %files);
+	}
+	@empty_dirs;
+}
+
+sub add_placeholder_file {
+	my ($self, $dir) = @_;
+	my $path = "$dir/$_placeholder_filename";
+	my $gpath = $self->git_path($path);
+
+	my $fh = $::_repository->temp_acquire($gpath);
+	my $hash = $::_repository->hash_and_insert_object(Git::temp_path($fh));
+	Git::temp_release($fh, 1);
+	$self->{gii}->update('100644', $hash, $gpath) or croak $!;
+
+	# The directory should no longer be considered empty.
+	delete $self->{empty}->{$dir} if exists $self->{empty}->{$dir};
+
+	# Keep track of any placeholder files we create.
+	$added_placeholder{$dir} = $path;
+}
+
+sub stash_placeholder_list {
+	my ($self) = @_;
+	my $k = "svn-remote.$repo_id.added-placeholder";
+	my $v = eval { command_oneline('config', '--get-all', $k) };
+	command_noisy('config', '--unset-all', $k) if $v;
+	foreach (values %added_placeholder) {
+		command_noisy('config', '--add', $k, $_);
+	}
 }
 
 package SVN::Git::Editor;

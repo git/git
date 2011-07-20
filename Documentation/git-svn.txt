@@ -157,6 +157,17 @@ Skip "branches" and "tags" of first level directories;;
 	affecting the working tree; and the 'rebase' command will be
 	able to update the working tree with the latest changes.
 
+--preserve-empty-dirs;;
+	Create a placeholder file in the local Git repository for each
+	empty directory fetched from Subversion.  This includes directories
+	that become empty by removing all entries in the Subversion
+	repository (but not the directory itself).  The placeholder files
+	are also tracked and removed when no longer necessary.
+
+--placeholder-filename=<filename>;;
+	Set the name of placeholder files created by --preserve-empty-dirs.
+	Default: ".gitignore"
+
 'rebase'::
 	This fetches revisions from the SVN parent of the current HEAD
 	and rebases the current (uncommitted to SVN) work against it.
