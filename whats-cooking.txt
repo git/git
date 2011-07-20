@@ -1,145 +1,134 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jul 2011, #02; Wed, 13)
-X-master-at: 55272570dbe1c3f2a6f2f142c4bfe806665cd111
-X-next-at: 867dc3783dfcad0e8c9bdd1c8d299d5a82f5babc
+Subject: What's cooking in git.git (Jul 2011, #03; Wed, 20)
+X-master-at: d79bcd68056250d7c03bf9b12728ee2fd85a0ab3
+X-next-at: e1ef4147bce8b10d938f988e64e2adfef7cb94eb
 
-What's cooking in git.git (Jul 2011, #02; Wed, 13)
+What's cooking in git.git (Jul 2011, #03; Wed, 20)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' while commits prefixed with '+' are in 'next'.
 
 --------------------------------------------------
-[New Topics]
-
-* bw/log-all-ref-updates-doc (2011-07-12) 1 commit
- - Documentation: clearly specify what refs are honored by core.logAllRefUpdates
-
-* di/fast-import-doc (2011-07-13) 2 commits
- - doc/fast-import: document feature import-marks-if-exists
- - doc/fast-import: clarify notemodify command
-
-* dz/connect-error-report (2011-07-13) 2 commits
- - connect.c: (fixup) report errors from failed socket(2) call as well
- - Do not log unless all connect() attempts fail
-
-Needs squashing these into one.
-
-* jc/pack-order-tweak (2011-07-08) 2 commits
- - pack-objects: optimize "recency order"
- - core: log offset pack data accesses happened
-
-* jk/generation-numbers (2011-07-11) 6 commits
- - limit "contains" traversals based on commit generation
- - pretty: support %G to show the generation number of a commit
- - commit: add commit_generation function
- - add object-cache infrastructure
- - decorate: allow storing values instead of pointers
- + tag: speed up --contains calculation
- (this branch is tangled with jk/tag-contains-ab.)
-
-Getting rerolled.
-
-* js/maint-add-path-stat-pwd (2011-07-11) 1 commit
- - get_pwd_cwd(): Do not trust st_dev/st_ino blindly
-
-Will merge to "next".
-
-* ms/help-unknown (2011-07-08) 1 commit
- - help_unknown_cmd: do not propose an "unknown" cmd
-
-Will merge to "next".
-
-* mz/doc-rebase-abort (2011-07-11) 1 commit
- - git-rebase.txt: clarify that --abort checks out <branch>
-
-Will merge to "next".
-
---------------------------------------------------
 [Graduated to "master"]
 
-* an/shallow-doc (2011-06-08) 2 commits
-  (merged to 'next' on 2011-07-01 at 6ba80ef)
- + Document the underlying protocol used by shallow repositories and --depth commands.
- + Fix documentation of fetch-pack that implies that the client can disconnect after sending wants.
+* ak/gcc46-profile-feedback (2011-06-20) 3 commits
+  (merged to 'next' on 2011-07-01 at 81bc0a7)
+ + Add explanation of the profile feedback build to the README
+ + Add profile feedback build to git
+ + Add option to disable NORETURN
 
-* aw/rebase-i-p (2011-06-19) 1 commit
-  (merged to 'next' on 2011-07-01 at df3f3d8)
- + rebase -i -p: include non-first-parent commits in todo list
+* jc/index-pack (2011-06-05) 9 commits
+  (merged to 'next' on 2011-07-05 at 5062ba9)
+ + verify-pack: use index-pack --verify
+ + index-pack: show histogram when emulating "verify-pack -v"
+ + index-pack: start learning to emulate "verify-pack -v"
+ + index-pack: a miniscule refactor
+ + index-pack --verify: read anomalous offsets from v2 idx file
+ + write_idx_file: need_large_offset() helper function
+ + index-pack: --verify
+ + write_idx_file: introduce a struct to hold idx customization options
+ + index-pack: group the delta-base array entries also by type
 
-* bc/submodule-foreach-stdin-fix-1.7.4 (2011-06-29) 2 commits
-  (merged to 'next' on 2011-07-01 at 4651925)
- + git-submodule.sh: preserve stdin for the command spawned by foreach
- + t/t7407: demonstrate that the command called by 'submodule foreach' loses stdin
+* jc/submodule-sync-no-auto-vivify (2011-06-26) 2 commits
+  (merged to 'next' on 2011-07-05 at b207ba3)
+ + submodule add: always initialize .git/config entry
+ + submodule sync: do not auto-vivify uninteresting submodule
 
-* fg/submodule-keep-updating (2011-06-13) 3 commits
-  (merged to 'next' on 2011-07-01 at 227827c)
- + git-submodule.sh: clarify the "should we die now" logic
- + submodule update: continue when a checkout fails
- + git-sh-setup: add die_with_status
+* jc/zlib-wrap (2011-06-10) 7 commits
+  (merged to 'next' on 2011-07-05 at 77bcbdc)
+ + zlib: allow feeding more than 4GB in one go
+ + zlib: zlib can only process 4GB at a time
+ + zlib: wrap deflateBound() too
+ + zlib: wrap deflate side of the API
+ + zlib: wrap inflateInit2 used to accept only for gzip format
+ + zlib: wrap remaining calls to direct inflate/inflateEnd
+ + zlib wrapper: refactor error message formatter
 
-* fk/relink-upon-ldflags-update (2011-06-22) 1 commit
-  (merged to 'next' on 2011-07-01 at 69b57d0)
- + Makefile: Track changes to LDFLAGS and relink when necessary
+We used to use zlib incorrectly and botched inflating/deflating data
+that is more than 4GB long on platforms with 64-bit ulong.
 
-* jc/legacy-loose-object (2011-06-08) 1 commit
-  (merged to 'next' on 2011-07-01 at 5561971)
- + sha1_file.c: "legacy" is really the current format
+* jk/archive-tar-filter (2011-06-22) 9 commits
+  (merged to 'next' on 2011-07-05 at add3e7f)
+ + upload-archive: allow user to turn off filters
+ + archive: provide builtin .tar.gz filter
+ + archive: implement configurable tar filters
+ + archive: refactor file extension format-guessing
+ + archive: move file extension format-guessing lower
+ + archive: pass archiver struct to write_archive callback
+ + archive: refactor list of archive formats
+ + archive-tar: don't reload default config options
+ + archive: reorder option parsing and config reading
 
-* jc/maint-cygwin-trust-executable-bit-default (2011-06-20) 1 commit
-  (merged to 'next' on 2011-07-01 at d85aa04)
- + cygwin: trust executable bit by default
+* jk/clone-cmdline-config (2011-06-22) 4 commits
+  (merged to 'next' on 2011-07-05 at a022613)
+ + clone: accept config options on the command line
+ + config: make git_config_parse_parameter a public function
+ + remote: use new OPT_STRING_LIST
+ + parse-options: add OPT_STRING_LIST helper
+ (this branch uses jk/maint-config-param.)
 
-Fix for an ancient regression.
+* jk/maint-config-param (2011-06-22) 6 commits
+  (merged to 'next' on 2011-07-05 at 2dce181)
+ + config: use strbuf_split_str instead of a temporary strbuf
+ + strbuf: allow strbuf_split to work on non-strbufs
+ + config: avoid segfault when parsing command-line config
+ + config: die on error in command-line config
+ + fix "git -c" parsing of values with equals signs
+ + strbuf_split: add a max parameter
+ (this branch is used by jk/clone-cmdline-config.)
 
-* jc/no-gitweb-test-without-cgi-etc (2011-06-15) 1 commit
-  (merged to 'next' on 2011-07-01 at 1db3fa4)
- + t/gitweb-lib.sh: skip gitweb tests when perl dependencies are not met
+* jk/tag-list-multiple-patterns (2011-06-20) 1 commit
+  (merged to 'next' on 2011-07-05 at 8db1bf0)
+ + tag: accept multiple patterns for --list
 
-* jl/maint-fetch-recursive-fix (2011-06-20) 1 commit
-  (merged to 'next' on 2011-07-01 at 476eee4)
- + fetch: Also fetch submodules in subdirectories in on-demand mode
+* jn/gitweb-split-header-html (2011-06-22) 1 commit
+  (merged to 'next' on 2011-07-05 at c60d9dc)
+ + gitweb: Refactor git_header_html
 
-* jn/doc-dashdash (2011-06-29) 2 commits
-  (merged to 'next' on 2011-07-01 at 5d51929)
- + Documentation/i18n: quote double-dash for AsciiDoc
- + Merge branch 'jn/maint-doc-dashdash' into jn/doc-dashdash
- (this branch uses jn/maint-doc-dashdash.)
+* jn/mime-type-with-params (2011-06-30) 2 commits
+  (merged to 'next' on 2011-07-05 at 7caaf3b)
+ + gitweb: Serve */*+xml 'blob_plain' as text/plain with $prevent_xss
+ + gitweb: Serve text/* 'blob_plain' as text/plain with $prevent_xss
 
-* jn/maint-doc-dashdash (2011-06-29) 1 commit
-  (merged to 'next' on 2011-07-01 at 55ab98d)
- + Documentation: quote double-dash for AsciiDoc
- (this branch is used by jn/doc-dashdash.)
+--------------------------------------------------
+[New Topics]
 
-Will merge to "maint" later.
+* jc/maint-reset-unmerged-path (2011-07-13) 1 commit
+  (merged to 'next' on 2011-07-19 at bbc2d54)
+ + reset [<commit>] paths...: do not mishandle unmerged paths
+ (this branch is used by jc/diff-index-refactor.)
 
-* js/rebase-typo-branch-squelch-usage (2011-06-29) 1 commit
-  (merged to 'next' on 2011-07-01 at b5b4c03)
- + rebase: do not print lots of usage hints after an obvious error message
+* jc/diff-index-refactor (2011-07-13) 2 commits
+ - diff-lib: refactor run_diff_index() and do_diff_cache()
+ - diff-lib: simplify do_diff_cache()
+ (this branch uses jc/maint-reset-unmerged-path.)
 
-* ln/gitweb-mime-types-split-at-blank (2011-06-15) 1 commit
-  (merged to 'next' on 2011-07-01 at 765aa1e)
- + gitweb: allow space as delimiter in mime.types
+* sr/transport-helper-fix-rfc (2011-07-19) 2 commits
+ - t5800: point out that deleting branches does not work
+ - t5800: document inability to push new branch with old content
+ (this branch uses sr/transport-helper-fix.)
 
-* md/interix-update (2011-06-15) 1 commit
-  (merged to 'next' on 2011-07-01 at 0bc327d)
- + Update the Interix default build configuration.
+* vi/make-test-vector-less-specific (2011-07-19) 1 commit
+ - tests: cleanup binary test vector files
 
-* nk/ref-doc (2011-06-23) 7 commits
-  (merged to 'next' on 2011-07-01 at 9ff278d)
- + glossary: clarify description of HEAD
- + glossary: update description of head and ref
- + glossary: update description of "tag"
- + git.txt: de-emphasize the implementation detail of a ref
- + check-ref-format doc: de-emphasize the implementation detail of a ref
- + git-remote.txt: avoid sounding as if loose refs are the only ones in the world
- + git-remote.txt: fix wrong remote refspec
+* jk/http-auth-keyring (2011-07-20) 13 commits
+ - credentials: add "getpass" helper
+ - credentials: add "store" helper
+ - credentials: add "cache" helper
+ - docs: end-user documentation for the credential subsystem
+ - http: use hostname in credential description
+ - allow the user to configure credential helpers
+ - look for credentials in config before prompting
+ - http: use credential API to get passwords
+ - introduce credentials API
+ - http: retry authentication failures for all http requests
+ - remote-curl: don't retry auth failures with dumb protocol
+ - improve httpd auth tests
+ - url: decode buffers that are not NUL-terminated
 
-* rj/config-cygwin (2011-06-16) 3 commits
-  (merged to 'next' on 2011-07-01 at 6da4aa5)
- + config.c: Make git_config() work correctly when called recursively
- + t1301-*.sh: Fix the 'forced modes' test on cygwin
- + help.c: Fix detection of custom merge strategy on cygwin
+* tc/minix (2011-07-20) 1 commit
+ - Makefile: add Minix configuration options.
 
 --------------------------------------------------
 [Stalled]
@@ -158,32 +147,6 @@ Will merge to "maint" later.
 
 Would need another round to separate per-pack and per-session limits.
 
-* sr/transport-helper-fix (2011-06-19) 20 commits
- - transport-helper: implement marks location as capability
- - transport-helper: Use capname for gitdir capability too
- - transport-helper: export is no longer always the last command
- - transport-helper: change import semantics
- - transport-helper: update ref status after push with export
- - transport-helper: use the new done feature where possible
- - transport-helper: check status code of finish_command
- - transport-helper: factor out push_update_refs_status
- - fast-export: support done feature
- - fast-import: introduce 'done' command
- - git-remote-testgit: fix error handling
- - git-remote-testgit: only push for non-local repositories
- - remote-curl: accept empty line as terminator
- - git_remote_helpers: push all refs during a non-local export
- - transport-helper: don't feed bogus refs to export push
- - teach remote-testgit to import non-HEAD refs
- - t5800: document some non-functional parts of remote helpers
- - t5800: use skip_all instead of prereq
- - t5800: factor out some ref tests
- - transport-helper: fix minor leak in push_refs_with_export
-
-At least Patch 10/20 (git-remote-testgit: fix error handling) and Patch
-15/20 (transport-helper: use the new done feature where possible) need a
-reroll.
-
 * jm/mergetool-pathspec (2011-06-22) 2 commits
  - mergetool: Don't assume paths are unmerged
  - mergetool: Add tests for filename with whitespace
@@ -194,10 +157,75 @@ Cf. $gmane/176254, 176255, 166256
 --------------------------------------------------
 [Cooking]
 
-* jc/maint-mergetool-read-fix (2011-07-01) 1 commit
- - mergetool: check return value from read
+* sr/transport-helper-fix (2011-07-19) 21 commits
+  (merged to 'next' on 2011-07-19 at e1ef414)
+ + transport-helper: die early on encountering deleted refs
+ + transport-helper: implement marks location as capability
+ + transport-helper: Use capname for refspec capability too
+ + transport-helper: change import semantics
+ + transport-helper: update ref status after push with export
+ + transport-helper: use the new done feature where possible
+ + transport-helper: check status code of finish_command
+ + transport-helper: factor out push_update_refs_status
+ + fast-export: support done feature
+ + fast-import: introduce 'done' command
+ + git-remote-testgit: fix error handling
+ + git-remote-testgit: only push for non-local repositories
+ + remote-curl: accept empty line as terminator
+ + remote-helpers: export GIT_DIR variable to helpers
+ + git_remote_helpers: push all refs during a non-local export
+ + transport-helper: don't feed bogus refs to export push
+ + git-remote-testgit: import non-HEAD refs
+ + t5800: document some non-functional parts of remote helpers
+ + t5800: use skip_all instead of prereq
+ + t5800: factor out some ref tests
+ + transport-helper: fix minor leak in push_refs_with_export
+ (this branch is used by sr/transport-helper-fix-rfc.)
 
-Will merge to "next".
+* bw/log-all-ref-updates-doc (2011-07-12) 1 commit
+  (merged to 'next' on 2011-07-14 at 31b80a8)
+ + Documentation: clearly specify what refs are honored by core.logAllRefUpdates
+
+* di/fast-import-doc (2011-07-13) 2 commits
+ - doc/fast-import: document feature import-marks-if-exists
+ - doc/fast-import: clarify notemodify command
+
+Comments from fast-import folks?
+
+* dz/connect-error-report (2011-07-14) 1 commit
+  (merged to 'next' on 2011-07-14 at bf1c775)
+ + Do not log unless all connect() attempts fail
+
+* jc/pack-order-tweak (2011-07-08) 2 commits
+ - pack-objects: optimize "recency order"
+ - core: log offset pack data accesses happened
+
+* jk/generation-numbers (2011-07-14) 8 commits
+ - limit "contains" traversals based on commit generation
+ - check commit generation cache validity against grafts
+ - pretty: support %G to show the generation number of a commit
+ - commit: add commit_generation function
+ - add metadata-cache infrastructure
+ - decorate: allow storing values instead of pointers
+ - Merge branch 'jk/tag-contains-ab' (early part) into HEAD
+ + tag: speed up --contains calculation
+ (this branch is tangled with jk/tag-contains-ab.)
+
+* js/maint-add-path-stat-pwd (2011-07-11) 1 commit
+  (merged to 'next' on 2011-07-14 at c6fef9d)
+ + get_pwd_cwd(): Do not trust st_dev/st_ino blindly
+
+* ms/help-unknown (2011-07-08) 1 commit
+  (merged to 'next' on 2011-07-14 at d7976b4)
+ + help_unknown_cmd: do not propose an "unknown" cmd
+
+* mz/doc-rebase-abort (2011-07-13) 1 commit
+  (merged to 'next' on 2011-07-14 at a1a612c)
+ + rebase: clarify "restore the original branch"
+
+* jc/maint-mergetool-read-fix (2011-07-01) 1 commit
+  (merged to 'next' on 2011-07-14 at 2056a67)
+ + mergetool: check return value from read
 
 * nk/branch-v-abbrev (2011-07-01) 1 commit
  - branch -v: honor core.abbrev
@@ -205,29 +233,27 @@ Will merge to "next".
 Perhaps needs an updated commit log message?
 
 * jc/checkout-reflog-fix (2011-07-06) 3 commits
- - Merge commit 'v1.7.6' into jc/checkout-reflog-fix
- - Merge commit 'v1.7.0' into jc/checkout-reflog-fix
- - Merge commit 'v1.6.0' into jc/checkout-reflog-fix
+  (merged to 'next' on 2011-07-14 at 5982cdd)
+ + Merge commit 'v1.7.6' into jc/checkout-reflog-fix
+ + Merge commit 'v1.7.0' into jc/checkout-reflog-fix
+ + Merge commit 'v1.6.0' into jc/checkout-reflog-fix
  (this branch uses jc/maint-checkout-reflog-fix.)
 
-Will merge to "next".
-
 * jc/maint-checkout-reflog-fix (2011-07-06) 1 commit
- - checkout: do not write bogus reflog entry out
+ + checkout: do not write bogus reflog entry out
  (this branch is used by jc/checkout-reflog-fix.)
 
-* js/ref-namespaces (2011-07-11) 4 commits
+* js/ref-namespaces (2011-07-14) 6 commits
+ - t5509: (fixup) partial readability fix
+ - ref namespaces: tests
  - ref namespaces: documentation
  - ref namespaces: Support remote repositories via upload-pack and receive-pack
  - ref namespaces: infrastructure
  - Fix prefix handling in ref iteration functions
 
-Would be nice to have some tests before merging to "next", no?
-
 * mz/doc-synopsis-verse (2011-07-06) 1 commit
- - Documentation: use [verse] for SYNOPSIS sections
-
-Will merge to "next".
+  (merged to 'next' on 2011-07-14 at 34d45e2)
+ + Documentation: use [verse] for SYNOPSIS sections
 
 * rc/histogram-diff (2011-07-12) 7 commits
  - xdiff/xprepare: use a smaller sample size for histogram diff
@@ -238,15 +264,15 @@ Will merge to "next".
  - xdiff/xprepare: refactor abort cleanups
  - xdiff/xprepare: use memset()
 
-* rr/revert-cherry-pick-continue (2011-07-11) 17 commits
+* rr/revert-cherry-pick-continue (2011-07-19) 18 commits
  - revert: Introduce --continue to continue the operation
- - revert: Introduce --reset to remove sequencer state
+ - revert: Don't implictly stomp pending sequencer operation
  - revert: Remove sequencer state when no commits are pending
- - reset: Make hard reset remove the sequencer state
- - revert: Introduce a layer of indirection over pick_commits
+ - reset: Make reset remove the sequencer state
+ - revert: Introduce --reset to remove sequencer state
+ - revert: Make pick_commits functionally act on a commit list
  - revert: Save command-line options for continuing operation
  - revert: Save data for continuing after conflict resolution
- - sequencer: Announce sequencer state location
  - revert: Don't create invalid replay_opts in parse_args
  - revert: Separate cmdline parsing from functional code
  - revert: Introduce struct to keep command-line options
@@ -254,19 +280,15 @@ Will merge to "next".
  - revert: Propogate errors upwards from do_pick_commit
  - revert: Rename no_replay to record_origin
  - revert: Don't check lone argument in get_encoding
- - revert: Inline add_message_to_msg function
+ - revert: Simplify and inline add_message_to_msg
+ - config: Introduce functions to write non-standard file
  - advice: Introduce error_resolve_conflict
+
+Getting very close, I would think...
 
 * dc/stash-con-untracked (2011-06-26) 1 commit
   (merged to 'next' on 2011-07-13 at 9ed0d1d)
  + stash: Add --include-untracked option to stash and remove all untracked files
-
-* jc/submodule-sync-no-auto-vivify (2011-06-26) 2 commits
-  (merged to 'next' on 2011-07-05 at b207ba3)
- + submodule add: always initialize .git/config entry
- + submodule sync: do not auto-vivify uninteresting submodule
-
-Will merge to "master".
 
 * jn/gitweb-search (2011-06-22) 4 commits
   (merged to 'next' on 2011-07-13 at 455acdd)
@@ -275,49 +297,8 @@ Will merge to "master".
  + gitweb: Split body of git_search into subroutines
  + gitweb: Check permissions first in git_search
 
-* ak/gcc46-profile-feedback (2011-06-20) 3 commits
-  (merged to 'next' on 2011-07-01 at 81bc0a7)
- + Add explanation of the profile feedback build to the README
- + Add profile feedback build to git
- + Add option to disable NORETURN
-
-Will merge to "master".
-
-* jk/tag-list-multiple-patterns (2011-06-20) 1 commit
-  (merged to 'next' on 2011-07-05 at 8db1bf0)
- + tag: accept multiple patterns for --list
-
-Will merge to "master".
-
-* jk/maint-config-param (2011-06-22) 6 commits
-  (merged to 'next' on 2011-07-05 at 2dce181)
- + config: use strbuf_split_str instead of a temporary strbuf
- + strbuf: allow strbuf_split to work on non-strbufs
- + config: avoid segfault when parsing command-line config
- + config: die on error in command-line config
- + fix "git -c" parsing of values with equals signs
- + strbuf_split: add a max parameter
- (this branch is used by jk/clone-cmdline-config.)
-
-Will merge to "master".
-
-* jk/clone-cmdline-config (2011-06-22) 4 commits
-  (merged to 'next' on 2011-07-05 at a022613)
- + clone: accept config options on the command line
- + config: make git_config_parse_parameter a public function
- + remote: use new OPT_STRING_LIST
- + parse-options: add OPT_STRING_LIST helper
- (this branch uses jk/maint-config-param.)
-
-Will merge to "master".
-
-* jn/gitweb-split-header-html (2011-06-22) 1 commit
-  (merged to 'next' on 2011-07-05 at c60d9dc)
- + gitweb: Refactor git_header_html
-
-Will merge to "master".
-
-* en/merge-recursive (2011-06-13) 49 commits
+* en/merge-recursive (2011-07-14) 50 commits
+ - fixup! Do not assume that qsort is stable
  - t3030: fix accidental success in symlink rename
  - merge-recursive: Fix working copy handling for rename/rename/add/add
  - merge-recursive: add handling for rename/rename/add-dest/add-dest
@@ -368,71 +349,19 @@ Will merge to "master".
  - t6042: Add failing testcase for rename/modify/add-source conflict
  - t6042: Add a testcase where git deletes an untracked file
 
-Haven't looked at the whole series yet.
+Looked at up to 29/48; looks basically sound.
 
-* jn/mime-type-with-params (2011-06-30) 2 commits
-  (merged to 'next' on 2011-07-05 at 7caaf3b)
- + gitweb: Serve */*+xml 'blob_plain' as text/plain with $prevent_xss
- + gitweb: Serve text/* 'blob_plain' as text/plain with $prevent_xss
-
-Will merge to "master".
-
-* jk/archive-tar-filter (2011-06-22) 9 commits
-  (merged to 'next' on 2011-07-05 at add3e7f)
- + upload-archive: allow user to turn off filters
- + archive: provide builtin .tar.gz filter
- + archive: implement configurable tar filters
- + archive: refactor file extension format-guessing
- + archive: move file extension format-guessing lower
- + archive: pass archiver struct to write_archive callback
- + archive: refactor list of archive formats
- + archive-tar: don't reload default config options
- + archive: reorder option parsing and config reading
-
-Will merge to "master".
-
-* jc/index-pack (2011-06-05) 9 commits
-  (merged to 'next' on 2011-07-05 at 5062ba9)
- + verify-pack: use index-pack --verify
- + index-pack: show histogram when emulating "verify-pack -v"
- + index-pack: start learning to emulate "verify-pack -v"
- + index-pack: a miniscule refactor
- + index-pack --verify: read anomalous offsets from v2 idx file
- + write_idx_file: need_large_offset() helper function
- + index-pack: --verify
- + write_idx_file: introduce a struct to hold idx customization options
- + index-pack: group the delta-base array entries also by type
-
-Killed "verify-pack" ;-) The next will be to update fsck, which would be a
-bigger task.
-
-Will merge to "master".
-
-* jc/zlib-wrap (2011-06-10) 7 commits
-  (merged to 'next' on 2011-07-05 at 77bcbdc)
- + zlib: allow feeding more than 4GB in one go
- + zlib: zlib can only process 4GB at a time
- + zlib: wrap deflateBound() too
- + zlib: wrap deflate side of the API
- + zlib: wrap inflateInit2 used to accept only for gzip format
- + zlib: wrap remaining calls to direct inflate/inflateEnd
- + zlib wrapper: refactor error message formatter
-
-We used to use zlib incorrectly and botched inflating/deflating data
-that is more than 4GB long on platforms with 64-bit ulong.
-
-Will merge to "master".
-
-* jk/tag-contains-ab (2011-06-30) 4 commits
- - git skew: a tool to find how big a clock skew exists in the history
+* jk/tag-contains-ab (2011-07-14) 5 commits
+  (merged to 'next' on 2011-07-14 at 002a9d7)
+ + Revert clock-skew based attempt to optimize tag --contains traversal
+ + git skew: a tool to find how big a clock skew exists in the history
   (merged to 'next' on 2011-07-05 at f9cf575)
  + default core.clockskew variable to one day
  + limit "contains" traversals based on commit timestamp
  + tag: speed up --contains calculation
  (this branch is tangled with jk/generation-numbers.)
 
-Will revert the two commits from "next" once metadata-cache series gets
-more stable.
+Reverted the commits near the tip.
 
 * jk/clone-detached (2011-06-07) 4 commits
  - clone: always fetch remote HEAD
