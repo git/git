@@ -45,7 +45,7 @@ with a different commit message or timestamp will be skipped).
 It is possible that a merge failure will prevent this process from being
 completely automatic.  You will have to resolve any such merge failure
 and run `git rebase --continue`.  Another option is to bypass the commit
-that caused the merge failure with `git rebase --skip`.  To restore the
+that caused the merge failure with `git rebase --skip`.  To check out the
 original <branch> and remove the .git/rebase-apply working files, use the
 command `git rebase --abort` instead.
 
@@ -232,7 +232,11 @@ leave out at most one of A and B, in which case it defaults to HEAD.
 	Restart the rebasing process after having resolved a merge conflict.
 
 --abort::
-	Restore the original branch and abort the rebase operation.
+	Abort the rebase operation and reset HEAD to the original
+	branch. If <branch> was provided when the rebase operation was
+	started, then HEAD will be reset to <branch>. Otherwise HEAD
+	will be reset to where it was when the rebase operation was
+	started.
 
 --skip::
 	Restart the rebasing process by skipping the current patch.
