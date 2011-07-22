@@ -272,7 +272,7 @@ Default mode::
 
 --full-history::
 
-	As the default mode but does not prune some history.
+	Same as the default mode, but does not prune some history.
 
 --dense::
 
