@@ -100,7 +100,7 @@ resolve_deleted_merge () {
 	else
 	    printf "Use (c)reated or (d)eleted file, or (a)bort? "
 	fi
-	read ans
+	read ans || return 1
 	case "$ans" in
 	    [mMcC]*)
 		git add -- "$MERGED"
@@ -122,7 +122,7 @@ resolve_deleted_merge () {
 resolve_submodule_merge () {
     while true; do
 	printf "Use (l)ocal or (r)emote, or (a)bort? "
-	read ans
+	read ans || return 1
 	case "$ans" in
 	    [lL]*)
 		if ! local_present; then
@@ -249,7 +249,7 @@ merge_file () {
     describe_file "$remote_mode" "remote" "$REMOTE"
     if "$prompt" = true; then
 	printf "Hit return to start merge resolution tool (%s): " "$merge_tool"
-	read ans
+	read ans || return 1
     fi
 
     if base_present; then
@@ -320,7 +320,7 @@ done
 prompt_after_failed_merge() {
     while true; do
 	printf "Continue merging other unresolved paths (y/n) ? "
-	read ans
+	read ans || return 1
 	case "$ans" in
 
 	    [yY]*)
