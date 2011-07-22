@@ -8,6 +8,7 @@ git-write-tree - Create a tree object from the current index
 
 SYNOPSIS
 --------
+[verse]
 'git write-tree' [--missing-ok] [--prefix=<prefix>/]
 
 DESCRIPTION

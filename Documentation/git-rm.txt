@@ -7,6 +7,7 @@ git-rm - Remove files from the working tree and from the index
 
 SYNOPSIS
 --------
+[verse]
 'git rm' [-f | --force] [-n] [-r] [--cached] [--ignore-unmatch] [--quiet] [--] <file>...
 
 DESCRIPTION

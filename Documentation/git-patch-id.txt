@@ -7,6 +7,7 @@ git-patch-id - Compute unique ID for a patch
 
 SYNOPSIS
 --------
+[verse]
 'git patch-id' < <patch>
 
 DESCRIPTION

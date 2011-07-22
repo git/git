@@ -7,6 +7,7 @@ gittutorial - A tutorial introduction to git (for version 1.5.1 or newer)
 
 SYNOPSIS
 --------
+[verse]
 git *
 
 DESCRIPTION

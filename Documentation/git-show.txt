@@ -8,6 +8,7 @@ git-show - Show various types of objects
 
 SYNOPSIS
 --------
+[verse]
 'git show' [options] <object>...
 
 DESCRIPTION

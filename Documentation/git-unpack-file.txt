@@ -9,6 +9,7 @@ git-unpack-file - Creates a temporary file with a blob's contents
 
 SYNOPSIS
 --------
+[verse]
 'git unpack-file' <blob>
 
 DESCRIPTION

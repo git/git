@@ -8,6 +8,7 @@ git-pack-redundant - Find redundant pack files
 
 SYNOPSIS
 --------
+[verse]
 'git pack-redundant' [ --verbose ] [ --alt-odb ] < --all | .pack filename ... >
 
 DESCRIPTION

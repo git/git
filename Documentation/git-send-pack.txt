@@ -8,6 +8,7 @@ git-send-pack - Push objects over git protocol to another repository
 
 SYNOPSIS
 --------
+[verse]
 'git send-pack' [--all] [--dry-run] [--force] [--receive-pack=<git-receive-pack>] [--verbose] [--thin] [<host>:]<directory> [<ref>...]
 
 DESCRIPTION

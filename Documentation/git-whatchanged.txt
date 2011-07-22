@@ -8,6 +8,7 @@ git-whatchanged - Show logs with difference each commit introduces
 
 SYNOPSIS
 --------
+[verse]
 'git whatchanged' <option>...
 
 DESCRIPTION

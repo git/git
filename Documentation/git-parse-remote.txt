@@ -8,6 +8,7 @@ git-parse-remote - Routines to help parsing remote repository access parameters
 
 SYNOPSIS
 --------
+[verse]
 '. "$(git --exec-path)/git-parse-remote"'
 
 DESCRIPTION

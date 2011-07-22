@@ -8,6 +8,7 @@ git-bisect - Find by binary search the change that introduced a bug
 
 SYNOPSIS
 --------
+[verse]
 'git bisect' <subcommand> <options>
 
 DESCRIPTION

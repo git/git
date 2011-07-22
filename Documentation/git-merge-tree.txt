@@ -8,6 +8,7 @@ git-merge-tree - Show three-way merge without touching index
 
 SYNOPSIS
 --------
+[verse]
 'git merge-tree' <base-tree> <branch1> <branch2>
 
 DESCRIPTION
