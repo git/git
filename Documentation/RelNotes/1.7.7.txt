@@ -26,11 +26,18 @@ Updates since v1.7.6
  * "git diff --stat" learned --stat-count option to limit the output of
    diffstat report.
 
+ * "git fetch", "git push" and friends no longer show connection
+   errors for addresses that couldn't be connected when at least one
+   address succeeds (this is arguably a regression but a deliberate
+   one).
+
  * "git grep" learned --break and --heading options, to let users mimic
    output format of "ack".
 
  * "git rebase master topci" no longer spews usage hints after giving
    "fatal: no such branch: topci" error message.
+
+ * "git stash" learned --include-untracked option.
 
  * "git submodule update" used to stop at the first error updating a
    submodule; it now goes on to update other submodules that can be
@@ -52,6 +59,10 @@ Fixes since v1.7.6
 Unless otherwise noted, all the fixes in 1.7.6.X maintenance track are
 included in this release.
 
+ * "git checkout -b <branch>" sometimes wrote a bogus reflog entry,
+   causing later "git checkout -" fail.
+   (merge 71ee7fd jc/checkout-reflog-fix~1 later).
+
  * "git diff --cc" learned to correctly ignore binary files.
    (merge 0508fe5 jk/combine-diff-binary-etc later)
 
@@ -60,6 +71,10 @@ included in this release.
 
  * "git rebase -i -p" incorrectly dropped commits from side branches.
    (merge 12bf828 aw/rebase-i-p later)
+
+ * "git submodule add" did not allow a relative repository path when
+   the superproject did not have any default remote url.
+   (merge f22a17e8 jl/submodule-add-relurl-wo-upstream later)
 
  * "git submodule foreach" failed to correctly give the standard input to
    the user-supplied command it invoked.
@@ -77,7 +92,7 @@ included in this release.
 --
 exec >/var/tmp/1
 echo O=$(git describe master)
-O=v1.7.6-232-gd907bf8
+O=v1.7.6-344-g22f4128
 git log --first-parent --oneline $O..master
 echo
 git shortlog --no-merges ^maint ^$O master
