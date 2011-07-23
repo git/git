@@ -186,7 +186,7 @@ void mark_parents_uninteresting(struct commit *commit)
 	}
 }
 
-static void add_pending_object_with_mode(struct rev_info *revs, struct object *obj, const char *name, unsigned mode)
+static void add_pending_object_with_mode(struct rev_info *revs, struct object *obj, const char *name, unsigned mode, unsigned flags)
 {
 	if (!obj)
 		return;
@@ -207,11 +207,12 @@ static void add_pending_object_with_mode(struct rev_info *revs, struct object *o
 			return;
 	}
 	add_object_array_with_mode(obj, name, &revs->pending, mode);
+	revs->pending.objects[revs->pending.nr-1].flags = flags;
 }
 
 void add_pending_object(struct rev_info *revs, struct object *obj, const char *name)
 {
-	add_pending_object_with_mode(revs, obj, name, S_IFINVALID);
+	add_pending_object_with_mode(revs, obj, name, S_IFINVALID, 0);
 }
 
 void add_head_to_pending(struct rev_info *revs)
@@ -1191,7 +1192,8 @@ int handle_revision_arg(const char *arg_, struct rev_info *revs, int flags, unsi
 					REV_CMD_LEFT, a_flags);
 			add_rev_cmdline(revs, &b->object, next,
 					REV_CMD_RIGHT, flags);
-			add_pending_object(revs, &a->object, this);
+			add_pending_object_with_mode(revs, &a->object, this,
+						     S_IFINVALID, flags_exclude);
 			add_pending_object(revs, &b->object, next);
 			return 0;
 		}
@@ -1226,7 +1228,7 @@ int handle_revision_arg(const char *arg_, struct rev_info *revs, int flags, unsi
 		verify_non_filename(revs->prefix, arg);
 	object = get_reference(revs, arg, sha1, flags ^ local_flags);
 	add_rev_cmdline(revs, object, arg_, REV_CMD_REV, flags ^ local_flags);
-	add_pending_object_with_mode(revs, object, arg, oc.mode);
+	add_pending_object_with_mode(revs, object, arg, oc.mode, local_flags);
 	return 0;
 }
 
@@ -1870,7 +1872,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 		if (get_sha1_with_context(revs->def, 0, sha1, &oc))
 			die("bad default revision '%s'", revs->def);
 		object = get_reference(revs, revs->def, sha1, 0);
-		add_pending_object_with_mode(revs, object, revs->def, oc.mode);
+		add_pending_object_with_mode(revs, object, revs->def, oc.mode, 0);
 	}
 
 	/* Did the user ask for any diff output? Run the diff! */
