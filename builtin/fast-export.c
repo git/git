@@ -484,7 +484,7 @@ static void get_tags_and_duplicates(struct object_array *pending,
 		struct commit *commit = commit;
 		char *full_name;
 
-		if (dwim_ref(e->name, strlen(e->name), sha1, &full_name) != 1)
+		if ((e->flags & UNINTERESTING) || dwim_ref(e->name, strlen(e->name), sha1, &full_name) != 1)
 			continue;
 
 		switch (e->item->type) {
