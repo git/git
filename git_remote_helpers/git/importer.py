@@ -1,7 +1,7 @@
 import os
 import subprocess
 
-from git_remote_helpers.util import check_call, check_output
+from git_remote_helpers.util import check_call
 
 
 class GitImporter(object):
@@ -15,18 +15,6 @@ class GitImporter(object):
         """
 
         self.repo = repo
-
-    def get_refs(self, gitdir):
-        """Returns a dictionary with refs.
-        """
-        args = ["git", "--git-dir=" + gitdir, "for-each-ref", "refs/heads"]
-        lines = check_output(args).strip().split('\n')
-        refs = {}
-        for line in lines:
-            value, name = line.split(' ')
-            name = name.strip('commit\t')
-            refs[name] = value
-        return refs
 
     def do_import(self, base):
         """Imports a fast-import stream to the given directory.
@@ -44,23 +32,9 @@ class GitImporter(object):
         if not os.path.exists(dirname):
             os.makedirs(dirname)
 
-        refs_before = self.get_refs(gitdir)
-
         args = ["git", "--git-dir=" + gitdir, "fast-import", "--quiet", "--export-marks=" + path]
 
         if os.path.exists(path):
             args.append("--import-marks=" + path)
 
         check_call(args)
-
-        refs_after = self.get_refs(gitdir)
-
-        changed = {}
-
-        for name, value in refs_after.iteritems():
-            if refs_before.get(name) == value:
-                continue
-
-            changed[name] = value
-
-        return changed
