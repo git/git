@@ -415,6 +415,19 @@ static int get_exporter(struct transport *transport,
 	return start_command(fastexport);
 }
 
+static void check_helper_status(struct helper_data *data)
+{
+	int pid, status;
+
+	pid = waitpid(data->helper->pid, &status, WNOHANG);
+	if (pid < 0)
+		die("Could not retrieve status of remote helper '%s'",
+		    data->name);
+	if (pid > 0 && WIFEXITED(status))
+		die("Remote helper '%s' died with %d",
+		    data->name, WEXITSTATUS(status));
+}
+
 static int fetch_with_import(struct transport *transport,
 			     int nr_heads, struct ref **to_fetch)
 {
@@ -443,6 +456,8 @@ static int fetch_with_import(struct transport *transport,
 
 	if (finish_command(&fastimport))
 		die("Error while running fast-import");
+	check_helper_status(data);
+
 	free(fastimport.argv);
 	fastimport.argv = NULL;
 
@@ -786,6 +801,7 @@ static int push_refs_with_export(struct transport *transport,
 
 	if (finish_command(&exporter))
 		die("Error while running fast-export");
+	check_helper_status(data);
 	push_update_refs_status(data, remote_refs);
 	return 0;
 }
