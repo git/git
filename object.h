@@ -12,7 +12,7 @@ struct object_array {
 	struct object_array_entry {
 		struct object *item;
 		const char *name;
-		unsigned mode;
+		unsigned mode, flags;
 	} *objects;
 };
 
