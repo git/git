@@ -119,6 +119,7 @@
 /git-remote-fd
 /git-remote-ext
 /git-remote-testgit
+/git-remote-hg
 /git-repack
 /git-replace
 /git-repo-config
