@@ -70,7 +70,7 @@ class RemoteHelper(object):
         """Updates (or clones) a local repo.
         """
 
-        if repo.local:
+        if repo.local():
             return repo
 
         path = repo.non_local.clone(repo.gitdir)
@@ -129,7 +129,7 @@ class RemoteHelper(object):
 
             changed[name] = value
 
-        if not repo.local:
+        if not repo.local():
             repo.non_local.push(repo.gitdir)
 
         for ref in changed:
