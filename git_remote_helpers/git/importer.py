@@ -23,7 +23,7 @@ class GitImporter(object):
         """
 
         dirname = self.repo.get_base_path(base)
-        if self.repo.local:
+        if self.repo.local():
             gitdir = self.repo.gitpath
         else:
             gitdir = os.path.abspath(os.path.join(dirname, '.git'))
