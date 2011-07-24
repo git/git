@@ -231,7 +231,7 @@ Gitweb config file
 See also "Runtime gitweb configuration" section in README file
 for gitweb (in gitweb/README).
 
-- You can configure gitweb further using the gitweb configuration file;
+- You can configure gitweb further using the per-instance gitweb configuration file;
   by default this is a file named gitweb_config.perl in the same place as
   gitweb.cgi script. You can control the default place for the config file
   using the GITWEB_CONFIG build configuration variable, and you can set it
@@ -240,6 +240,17 @@ for gitweb (in gitweb/README).
   /etc/gitweb.conf. You can change the default using the
   GITWEB_CONFIG_SYSTEM build configuration variable, and override it
   through the GITWEB_CONFIG_SYSTEM environment variable.
+
+  Note that if per-instance configuration file exists, then system-wide
+  configuration is _not used at all_.  This is quite untypical and suprising
+  behavior.  On the other hand changing current behavior would break backwards
+  compatibility and can lead to unexpected changes in gitweb behavior.
+  Therefore gitweb also looks for common system-wide configuration file,
+  normally /etc/gitweb-common.conf (set during build time using build time
+  configuration variable GITWEB_CONFIG_COMMON, set it at runtime using
+  environment variable with the same name).  Settings from per-instance or
+  system-wide configuration file override those from common system-wide
+  configuration file.
 
 - The gitweb config file is a fragment of perl code. You can set variables
   using "our $variable = value"; text from "#" character until the end

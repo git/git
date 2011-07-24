@@ -10,9 +10,30 @@ From the git version 1.4.0 gitweb is bundled with git.
 Runtime gitweb configuration
 ----------------------------
 
-You can adjust gitweb behaviour using the file specified in `GITWEB_CONFIG`
-(defaults to 'gitweb_config.perl' in the same directory as the CGI), and
-as a fallback `GITWEB_CONFIG_SYSTEM` (defaults to /etc/gitweb.conf).
+Gitweb obtains configuration data from the following sources in the
+following order:
+
+1. built-in values (some set during build stage),
+2. common system-wide configuration file (`GITWEB_CONFIG_COMMON`,
+   defaults to '/etc/gitweb-common.conf'),
+3. either per-instance configuration file (`GITWEB_CONFIG`, defaults to
+   'gitweb_config.perl' in the same directory as the installed gitweb),
+   or if it does not exists then system-wide configuration file
+   (`GITWEB_CONFIG_SYSTEM`, defaults to '/etc/gitweb.conf').
+
+Values obtained in later configuration files override values obtained earlier
+in above sequence.
+
+You can read defaults in system-wide GITWEB_CONFIG_SYSTEM from GITWEB_CONFIG
+by adding
+
+  read_config_file($GITWEB_CONFIG_SYSTEM);
+
+at very beginning of per-instance GITWEB_CONFIG file.  In this case
+settings in said per-instance file will override settings from
+system-wide configuration file.  Note that read_config_file checks
+itself that the $GITWEB_CONFIG_SYSTEM file exists.
+
 The most notable thing that is not configurable at compile time are the
 optional features, stored in the '%features' variable.
 
