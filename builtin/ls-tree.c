@@ -173,7 +173,5 @@ int cmd_ls_tree(int argc, const char **argv, const char *prefix)
 	tree = parse_tree_indirect(sha1);
 	if (!tree)
 		die("not a tree object");
-	read_tree_recursive(tree, "", 0, 0, &pathspec, show_tree, NULL);
-
-	return 0;
+	return !!read_tree_recursive(tree, "", 0, 0, &pathspec, show_tree, NULL);
 }
