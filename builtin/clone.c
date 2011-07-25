@@ -345,8 +345,9 @@ static void remove_junk_on_signal(int signo)
 static struct ref *wanted_peer_refs(const struct ref *refs,
 		struct refspec *refspec)
 {
-	struct ref *local_refs = NULL;
-	struct ref **tail = &local_refs;
+	struct ref *head = copy_ref(find_ref_by_name(refs, "HEAD"));
+	struct ref *local_refs = head;
+	struct ref **tail = head ? &head->next : &local_refs;
 
 	get_fetch_map(refs, refspec, &tail, 0);
 	if (!option_mirror)
@@ -359,8 +360,11 @@ static void write_remote_refs(const struct ref *local_refs)
 {
 	const struct ref *r;
 
-	for (r = local_refs; r; r = r->next)
+	for (r = local_refs; r; r = r->next) {
+		if (!r->peer_ref)
+			continue;
 		add_extra_ref(r->peer_ref->name, r->old_sha1, 0);
+	}
 
 	pack_refs(PACK_REFS_ALL);
 	clear_extra_refs();
