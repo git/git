@@ -51,6 +51,8 @@ struct object_entry {
 				       * objects against.
 				       */
 	unsigned char no_try_delta;
+	unsigned char tagged; /* near the very tip of refs */
+	unsigned char filled; /* assigned write-order */
 };
 
 /*
@@ -96,6 +98,7 @@ static unsigned long window_memory_limit = 0;
  */
 static int *object_ix;
 static int object_ix_hashsz;
+static struct object_entry *locate_object_entry(const unsigned char *sha1);
 
 /*
  * stats
@@ -200,6 +203,7 @@ static void copy_pack_data(struct sha1file *f,
 	}
 }
 
+/* Return 0 if we will bust the pack-size limit */
 static unsigned long write_object(struct sha1file *f,
 				  struct object_entry *entry,
 				  off_t write_offset)
@@ -434,6 +438,134 @@ static int write_one(struct sha1file *f,
 	return 1;
 }
 
+static int mark_tagged(const char *path, const unsigned char *sha1, int flag,
+		       void *cb_data)
+{
+	unsigned char peeled[20];
+	struct object_entry *entry = locate_object_entry(sha1);
+
+	if (entry)
+		entry->tagged = 1;
+	if (!peel_ref(path, peeled)) {
+		entry = locate_object_entry(peeled);
+		if (entry)
+			entry->tagged = 1;
+	}
+	return 0;
+}
+
+static void add_to_write_order(struct object_entry **wo,
+			       int *endp,
+			       struct object_entry *e)
+{
+	if (e->filled)
+		return;
+	wo[(*endp)++] = e;
+	e->filled = 1;
+}
+
+static void add_descendants_to_write_order(struct object_entry **wo,
+					   int *endp,
+					   struct object_entry *e)
+{
+	struct object_entry *child;
+
+	for (child = e->delta_child; child; child = child->delta_sibling)
+		add_to_write_order(wo, endp, child);
+	for (child = e->delta_child; child; child = child->delta_sibling)
+		add_descendants_to_write_order(wo, endp, child);
+}
+
+static void add_family_to_write_order(struct object_entry **wo,
+				      int *endp,
+				      struct object_entry *e)
+{
+	struct object_entry *root;
+
+	for (root = e; root->delta; root = root->delta)
+		; /* nothing */
+	add_to_write_order(wo, endp, root);
+	add_descendants_to_write_order(wo, endp, root);
+}
+
+static struct object_entry **compute_write_order(void)
+{
+	int i, wo_end;
+
+	struct object_entry **wo = xmalloc(nr_objects * sizeof(*wo));
+
+	for (i = 0; i < nr_objects; i++) {
+		objects[i].tagged = 0;
+		objects[i].filled = 0;
+		objects[i].delta_child = NULL;
+		objects[i].delta_sibling = NULL;
+	}
+
+	/*
+	 * Fully connect delta_child/delta_sibling network.
+	 * Make sure delta_sibling is sorted in the original
+	 * recency order.
+	 */
+	for (i = nr_objects - 1; 0 <= i; i--) {
+		struct object_entry *e = &objects[i];
+		if (!e->delta)
+			continue;
+		/* Mark me as the first child */
+		e->delta_sibling = e->delta->delta_child;
+		e->delta->delta_child = e;
+	}
+
+	/*
+	 * Mark objects that are at the tip of tags.
+	 */
+	for_each_tag_ref(mark_tagged, NULL);
+
+	/*
+	 * Give the commits in the original recency order until
+	 * we see a tagged tip.
+	 */
+	for (i = wo_end = 0; i < nr_objects; i++) {
+		if (objects[i].tagged)
+			break;
+		add_to_write_order(wo, &wo_end, &objects[i]);
+	}
+
+	/*
+	 * Then fill all the tagged tips.
+	 */
+	for (; i < nr_objects; i++) {
+		if (objects[i].tagged)
+			add_to_write_order(wo, &wo_end, &objects[i]);
+	}
+
+	/*
+	 * And then all remaining commits and tags.
+	 */
+	for (i = 0; i < nr_objects; i++) {
+		if (objects[i].type != OBJ_COMMIT &&
+		    objects[i].type != OBJ_TAG)
+			continue;
+		add_to_write_order(wo, &wo_end, &objects[i]);
+	}
+
+	/*
+	 * And then all the trees.
+	 */
+	for (i = 0; i < nr_objects; i++) {
+		if (objects[i].type != OBJ_TREE)
+			continue;
+		add_to_write_order(wo, &wo_end, &objects[i]);
+	}
+
+	/*
+	 * Finally all the rest in really tight order
+	 */
+	for (i = 0; i < nr_objects; i++)
+		add_family_to_write_order(wo, &wo_end, &objects[i]);
+
+	return wo;
+}
+
 static void write_pack_file(void)
 {
 	uint32_t i = 0, j;
@@ -442,10 +574,12 @@ static void write_pack_file(void)
 	struct pack_header hdr;
 	uint32_t nr_remaining = nr_result;
 	time_t last_mtime = 0;
+	struct object_entry **write_order;
 
 	if (progress > pack_to_stdout)
 		progress_state = start_progress("Writing objects", nr_result);
 	written_list = xmalloc(nr_objects * sizeof(*written_list));
+	write_order = compute_write_order();
 
 	do {
 		unsigned char sha1[20];
@@ -469,7 +603,8 @@ static void write_pack_file(void)
 		offset = sizeof(hdr);
 		nr_written = 0;
 		for (; i < nr_objects; i++) {
-			if (!write_one(f, objects + i, &offset))
+			struct object_entry *e = write_order[i];
+			if (!write_one(f, e, &offset))
 				break;
 			display_progress(progress_state, written);
 		}
@@ -546,6 +681,7 @@ static void write_pack_file(void)
 	} while (nr_remaining && i < nr_objects);
 
 	free(written_list);
+	free(write_order);
 	stop_progress(&progress_state);
 	if (written != nr_result)
 		die("wrote %"PRIu32" objects while expecting %"PRIu32,

@@ -1797,6 +1797,24 @@ static void *unpack_delta_entry(struct packed_git *p,
 	return result;
 }
 
+static void write_pack_access_log(struct packed_git *p, off_t obj_offset)
+{
+	static FILE *log_file;
+
+	if (!log_file) {
+		log_file = fopen(log_pack_access, "w");
+		if (!log_file) {
+			error("cannot open pack access log '%s' for writing: %s",
+			      log_pack_access, strerror(errno));
+			log_pack_access = NULL;
+			return;
+		}
+	}
+	fprintf(log_file, "%s %"PRIuMAX"\n",
+		p->pack_name, (uintmax_t)obj_offset);
+	fflush(log_file);
+}
+
 int do_check_packed_object_crc;
 
 void *unpack_entry(struct packed_git *p, off_t obj_offset,
@@ -1805,6 +1823,9 @@ void *unpack_entry(struct packed_git *p, off_t obj_offset,
 	struct pack_window *w_curs = NULL;
 	off_t curpos = obj_offset;
 	void *data;
+
+	if (log_pack_access)
+		write_pack_access_log(p, obj_offset);
 
 	if (do_check_packed_object_crc && p->index_version > 1) {
 		struct revindex_entry *revidx = find_pack_revindex(p, obj_offset);

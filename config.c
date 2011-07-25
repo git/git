@@ -576,6 +576,9 @@ static int git_default_core_config(const char *var, const char *value)
 		return 0;
 	}
 
+	if (!strcmp(var, "core.logpackaccess"))
+		return git_config_string(&log_pack_access, var, value);
+
 	if (!strcmp(var, "core.autocrlf")) {
 		if (value && !strcasecmp(value, "input")) {
 			if (core_eol == EOL_CRLF)
