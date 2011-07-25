@@ -120,9 +120,25 @@ static int show_ref(const char *path, const unsigned char *sha1, int flag, void 
 	return 0;
 }
 
+static int show_ref_cb(const char *path, const unsigned char *sha1, int flag, void *cb_data)
+{
+	path = strip_namespace(path);
+	/*
+	 * Advertise refs outside our current namespace as ".have"
+	 * refs, so that the client can use them to minimize data
+	 * transfer but will otherwise ignore them. This happens to
+	 * cover ".have" that are thrown in by add_one_alternate_ref()
+	 * to mark histories that are complete in our alternates as
+	 * well.
+	 */
+	if (!path)
+		path = ".have";
+	return show_ref(path, sha1, flag, cb_data);
+}
+
 static void write_head_info(void)
 {
-	for_each_ref(show_ref, NULL);
+	for_each_ref(show_ref_cb, NULL);
 	if (!sent_capabilities)
 		show_ref("capabilities^{}", null_sha1, 0, NULL);
 
@@ -333,6 +349,8 @@ static void refuse_unconfigured_deny_delete_current(void)
 static const char *update(struct command *cmd)
 {
 	const char *name = cmd->ref_name;
+	struct strbuf namespaced_name_buf = STRBUF_INIT;
+	const char *namespaced_name;
 	unsigned char *old_sha1 = cmd->old_sha1;
 	unsigned char *new_sha1 = cmd->new_sha1;
 	struct ref_lock *lock;
@@ -343,7 +361,10 @@ static const char *update(struct command *cmd)
 		return "funny refname";
 	}
 
-	if (is_ref_checked_out(name)) {
+	strbuf_addf(&namespaced_name_buf, "%s%s", get_git_namespace(), name);
+	namespaced_name = strbuf_detach(&namespaced_name_buf, NULL);
+
+	if (is_ref_checked_out(namespaced_name)) {
 		switch (deny_current_branch) {
 		case DENY_IGNORE:
 			break;
@@ -371,7 +392,7 @@ static const char *update(struct command *cmd)
 			return "deletion prohibited";
 		}
 
-		if (!strcmp(name, head_name)) {
+		if (!strcmp(namespaced_name, head_name)) {
 			switch (deny_delete_current) {
 			case DENY_IGNORE:
 				break;
@@ -427,14 +448,14 @@ static const char *update(struct command *cmd)
 			rp_warning("Allowing deletion of corrupt ref.");
 			old_sha1 = NULL;
 		}
-		if (delete_ref(name, old_sha1, 0)) {
+		if (delete_ref(namespaced_name, old_sha1, 0)) {
 			rp_error("failed to delete %s", name);
 			return "failed to delete";
 		}
 		return NULL; /* good */
 	}
 	else {
-		lock = lock_any_ref_for_update(name, old_sha1, 0);
+		lock = lock_any_ref_for_update(namespaced_name, old_sha1, 0);
 		if (!lock) {
 			rp_error("failed to lock %s", name);
 			return "failed to lock";
@@ -491,16 +512,28 @@ static void run_update_post_hook(struct command *commands)
 
 static void check_aliased_update(struct command *cmd, struct string_list *list)
 {
+	struct strbuf buf = STRBUF_INIT;
+	const char *dst_name;
 	struct string_list_item *item;
 	struct command *dst_cmd;
 	unsigned char sha1[20];
 	char cmd_oldh[41], cmd_newh[41], dst_oldh[41], dst_newh[41];
 	int flag;
 
-	const char *dst_name = resolve_ref(cmd->ref_name, sha1, 0, &flag);
+	strbuf_addf(&buf, "%s%s", get_git_namespace(), cmd->ref_name);
+	dst_name = resolve_ref(buf.buf, sha1, 0, &flag);
+	strbuf_release(&buf);
 
 	if (!(flag & REF_ISSYMREF))
 		return;
+
+	dst_name = strip_namespace(dst_name);
+	if (!dst_name) {
+		rp_error("refusing update to broken symref '%s'", cmd->ref_name);
+		cmd->skip_update = 1;
+		cmd->error_string = "broken symref";
+		return;
+	}
 
 	if ((item = string_list_lookup(list, dst_name)) == NULL)
 		return;

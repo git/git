@@ -641,16 +641,17 @@ static int send_ref(const char *refname, const unsigned char *sha1, int flag, vo
 		" side-band-64k ofs-delta shallow no-progress"
 		" include-tag multi_ack_detailed";
 	struct object *o = parse_object(sha1);
+	const char *refname_nons = strip_namespace(refname);
 
 	if (!o)
 		die("git upload-pack: cannot find object %s:", sha1_to_hex(sha1));
 
 	if (capabilities)
-		packet_write(1, "%s %s%c%s%s\n", sha1_to_hex(sha1), refname,
+		packet_write(1, "%s %s%c%s%s\n", sha1_to_hex(sha1), refname_nons,
 			     0, capabilities,
 			     stateless_rpc ? " no-done" : "");
 	else
-		packet_write(1, "%s %s\n", sha1_to_hex(sha1), refname);
+		packet_write(1, "%s %s\n", sha1_to_hex(sha1), refname_nons);
 	capabilities = NULL;
 	if (!(o->flags & OUR_REF)) {
 		o->flags |= OUR_REF;
@@ -659,7 +660,7 @@ static int send_ref(const char *refname, const unsigned char *sha1, int flag, vo
 	if (o->type == OBJ_TAG) {
 		o = deref_tag(o, refname, 0);
 		if (o)
-			packet_write(1, "%s %s^{}\n", sha1_to_hex(o->sha1), refname);
+			packet_write(1, "%s %s^{}\n", sha1_to_hex(o->sha1), refname_nons);
 	}
 	return 0;
 }
@@ -680,12 +681,12 @@ static void upload_pack(void)
 {
 	if (advertise_refs || !stateless_rpc) {
 		reset_timeout();
-		head_ref(send_ref, NULL);
-		for_each_ref(send_ref, NULL);
+		head_ref_namespaced(send_ref, NULL);
+		for_each_namespaced_ref(send_ref, NULL);
 		packet_flush(1);
 	} else {
-		head_ref(mark_our_ref, NULL);
-		for_each_ref(mark_our_ref, NULL);
+		head_ref_namespaced(mark_our_ref, NULL);
+		for_each_namespaced_ref(mark_our_ref, NULL);
 	}
 	if (advertise_refs)
 		return;
