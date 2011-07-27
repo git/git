@@ -4,12 +4,25 @@
  * Copyright (C) Linus Torvalds, 2005
  */
 #include "git-compat-util.h"
+#include "cache.h"
 
 void vreportf(const char *prefix, const char *err, va_list params)
 {
 	char msg[4096];
 	vsnprintf(msg, sizeof(msg), err, params);
 	fprintf(stderr, "%s%s\n", prefix, msg);
+}
+
+void vwritef(int fd, const char *prefix, const char *err, va_list params)
+{
+	char msg[4096];
+	int len = vsnprintf(msg, sizeof(msg), err, params);
+	if (len > sizeof(msg))
+		len = sizeof(msg);
+
+	write_in_full(fd, prefix, strlen(prefix));
+	write_in_full(fd, msg, len);
+	write_in_full(fd, "\n", 1);
 }
 
 static NORETURN void usage_builtin(const char *err, va_list params)
@@ -44,6 +57,11 @@ static void (*warn_routine)(const char *err, va_list params) = warn_builtin;
 void set_die_routine(NORETURN_PTR void (*routine)(const char *err, va_list params))
 {
 	die_routine = routine;
+}
+
+void set_error_routine(void (*routine)(const char *err, va_list params))
+{
+	error_routine = routine;
 }
 
 void NORETURN usagef(const char *err, ...)

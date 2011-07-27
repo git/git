@@ -77,15 +77,13 @@ static void notify_parent(void)
 
 static NORETURN void die_child(const char *err, va_list params)
 {
-	char msg[4096];
-	int len = vsnprintf(msg, sizeof(msg), err, params);
-	if (len > sizeof(msg))
-		len = sizeof(msg);
-
-	write_in_full(child_err, "fatal: ", 7);
-	write_in_full(child_err, msg, len);
-	write_in_full(child_err, "\n", 1);
+	vwritef(child_err, "fatal: ", err, params);
 	exit(128);
+}
+
+static void error_child(const char *err, va_list params)
+{
+	vwritef(child_err, "error: ", err, params);
 }
 #endif
 
@@ -217,6 +215,7 @@ fail_pipe:
 			set_cloexec(child_err);
 		}
 		set_die_routine(die_child);
+		set_error_routine(error_child);
 
 		close(notify_pipe[0]);
 		set_cloexec(notify_pipe[1]);
