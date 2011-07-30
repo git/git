@@ -8,7 +8,7 @@ git-receive-pack - Receive what is pushed into the repository
 
 SYNOPSIS
 --------
-'git-receive-pack' <directory>
+'git-receive-pack' [--quiet] <directory>
 
 DESCRIPTION
 -----------
@@ -34,6 +34,9 @@ are not fast-forwards.
 
 OPTIONS
 -------
+--quiet::
+	Print only error messages.
+
 <directory>::
 	The repository to sync into.
 

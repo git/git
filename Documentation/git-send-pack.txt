@@ -8,7 +8,7 @@ git-send-pack - Push objects over git protocol to another repository
 
 SYNOPSIS
 --------
-'git send-pack' [--all] [--dry-run] [--force] [--receive-pack=<git-receive-pack>] [--verbose] [--thin] [<host>:]<directory> [<ref>...]
+'git send-pack' [--all] [--dry-run] [--force] [--receive-pack=<git-receive-pack>] [--quiet] [--verbose] [--thin] [<host>:]<directory> [<ref>...]
 
 DESCRIPTION
 -----------
@@ -43,6 +43,9 @@ OPTIONS
 	This flag disables the check.  What this means is that
 	the remote repository can lose commits; use it with
 	care.
+
+--quiet::
+	Print only error messages.
 
 --verbose::
 	Run verbosely.
