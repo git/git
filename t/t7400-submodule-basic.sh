@@ -47,8 +47,10 @@ test_expect_success 'setup - repository to add submodules to' '
 '
 
 # The 'submodule add' tests need some repository to add as a submodule.
-# The trash directory is a good one as any.
-submodurl=$TRASH_DIRECTORY
+# The trash directory is a good one as any. We need to canonicalize
+# the name, though, as some tests compare it to the absolute path git
+# generates, which will expand symbolic links.
+submodurl=$(pwd -P)
 
 listbranches() {
 	git for-each-ref --format='%(refname)' 'refs/heads/*'
