@@ -249,6 +249,25 @@ test_expect_success 'not preserving user with mixed authorship' '
 	p4_check_commit_author usernamefile3 alice
 '
 
+marshal_dump() {
+	what=$1
+	python -c 'import marshal, sys; d = marshal.load(sys.stdin); print d["'$what'"]'
+}
+
+# Sleep a bit so that the top-most p4 change did not happen "now".  Then
+# import the repo and make sure that the initial import has the same time
+# as the top-most change.
+test_expect_success 'initial import time from top change time' '
+	p4change=$(p4 -G changes -m 1 //depot/... | marshal_dump change) &&
+	p4time=$(p4 -G changes -m 1 //depot/... | marshal_dump time) &&
+	sleep 3 &&
+	"$GITP4" clone --dest="$git" //depot &&
+	test_when_finished cleanup_git &&
+	cd "$git" &&
+	gittime=$(git show -s --raw --pretty=format:%at HEAD) &&
+	echo $p4time $gittime &&
+	test $p4time = $gittime
+'
 
 test_expect_success 'shutdown' '
 	pid=`pgrep -f p4d` &&
