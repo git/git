@@ -202,7 +202,7 @@ test_expect_success 'preserve user where author is unknown to p4' '
 	"$GITP4" clone --dest="$git" //depot &&
 	test_when_finished cleanup_git &&
 	cd "$git" &&
-	git config git-p4.skipSubmitEditCheck true
+	git config git-p4.skipSubmitEditCheck true &&
 	echo "username-bob: a change by bob" >> file1 &&
 	git commit --author "Bob <bob@localhost>" -m "preserve: a change by bob" file1 &&
 	echo "username-unknown: a change by charlie" >> file1 &&
