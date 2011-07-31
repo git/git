@@ -191,6 +191,7 @@ test_expect_success 'refuse to preserve users without perms' '
 	"$GITP4" clone --dest="$git" //depot &&
 	test_when_finished cleanup_git &&
 	cd "$git" &&
+	git config git-p4.skipSubmitEditCheck true &&
 	echo "username-noperms: a change by alice" >> file1 &&
 	git commit --author "Alice <alice@localhost>" -m "perms: a change by alice" file1 &&
 	! P4EDITOR=touch P4USER=bob P4PASSWD=secret "$GITP4" commit --preserve-user &&
