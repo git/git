@@ -147,8 +147,9 @@ GIT index format
   - 160-bit object name for the object that would result from writing
     this span of index as a tree.
 
-  An entry can be in an invalidated state and is represented by having -1
-  in the entry_count field.
+  An entry can be in an invalidated state and is represented by having
+  -1 in the entry_count field. In this case, there is no object name
+  and the next entry starts immediately after the newline.
 
   The entries are written out in the top-down, depth-first order.  The
   first entry represents the root level of the repository, followed by the
