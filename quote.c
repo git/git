@@ -325,8 +325,12 @@ static const char *path_relative(const char *in, int len,
 
 	if (len < 0)
 		len = strlen(in);
-	if (prefix && prefix_len < 0)
-		prefix_len = strlen(prefix);
+	if (prefix_len < 0) {
+		if (prefix)
+			prefix_len = strlen(prefix);
+		else
+			prefix_len = 0;
+	}
 
 	off = 0;
 	i = 0;
