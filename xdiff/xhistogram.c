@@ -323,11 +323,10 @@ static int histogram_diff(xpparam_t const *xpp, xdfenv_t *env,
 		result = fall_back_to_classic_diff(&index, line1, count1, line2, count2);
 	else {
 		if (lcs.begin1 == 0 && lcs.begin2 == 0) {
-			int ptr;
-			for (ptr = 0; ptr < count1; ptr++)
-				env->xdf1.rchg[line1 + ptr - 1] = 1;
-			for (ptr = 0; ptr < count2; ptr++)
-				env->xdf2.rchg[line2 + ptr - 1] = 1;
+			while (count1--)
+				env->xdf1.rchg[line1++ - 1] = 1;
+			while (count2--)
+				env->xdf2.rchg[line2++ - 1] = 1;
 			result = 0;
 		} else {
 			result = histogram_diff(xpp, env,
