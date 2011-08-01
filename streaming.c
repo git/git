@@ -94,7 +94,9 @@ struct git_istream {
 
 int close_istream(struct git_istream *st)
 {
-	return st->vtbl->close(st);
+	int r = st->vtbl->close(st);
+	free(st);
+	return r;
 }
 
 ssize_t read_istream(struct git_istream *st, char *buf, size_t sz)
