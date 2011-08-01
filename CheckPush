@@ -1,0 +1,32 @@
+#!/bin/sh
+
+for range in $(
+	prev_branch=
+	{
+		git for-each-ref --format='%(refname)' refs/heads/maint-* |
+		sed -e 's|^refs/heads/||'
+		cat <<-EOF
+		maint
+		master
+		next
+		EOF
+	} |
+	while read branch
+	do
+		if test -n "$prev_branch"
+		then
+			echo "$branch..$prev_branch"
+		fi
+		prev_branch=$branch
+	done
+) pu..jch
+do
+	lg=$(git log --oneline "$range")
+	if test -n "$lg"
+	then
+		echo "*** $range ***"
+		echo "$lg"
+	fi
+done
+
+git diff --stat next jch
