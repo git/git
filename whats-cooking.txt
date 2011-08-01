@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jul 2011, #04; Wed, 27)
-X-master-at: 4db0d0d1ba94c08f9476c7adff61375a752b154d
-X-next-at: 013d7d08533ebc8b58e6e42cfdba28f2f4817be6
+Subject: What's cooking in git.git (Jul 2011, #05; Sun, 31)
+X-master-at: b35acb53458d0f99ba2400b902980b35e5acc2d3
+X-next-at: ec3e38edaac75ed4160d114e62c74b1d1d55c320
 
-What's cooking in git.git (Jul 2011, #04; Wed, 27)
+What's cooking in git.git (Jul 2011, #05; Sun, 31)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -12,129 +12,17 @@ only in 'pu' while commits prefixed with '+' are in 'next'.
 --------------------------------------------------
 [New Topics]
 
-* jc/streaming-filter (2011-07-22) 1 commit
-  (merged to 'next' on 2011-07-22 at 2081cd7)
- + streaming: free git_istream upon closing
+* cb/maint-exec-error-report (2011-07-31) 1 commit
+ - error_routine: use parent's stderr if exec fails
 
-A large leak found and plugged.
-Will merge to "master".
+* cb/maint-quiet-push (2011-07-31) 1 commit
+ - propagate --quiet to send-pack/receive-pack
 
-* jn/gitweb-system-config (2011-07-24) 1 commit
- - gitweb: Introduce common system-wide settings for convenience
+* jl/submodule-update-quiet (2011-07-28) 1 commit
+ - submodule: update and add must honor --quiet flag
 
-* js/ls-tree-error (2011-07-25) 2 commits
- - Ensure git ls-tree exits with a non-zero exit code if read_tree_recursive fails.
- - Add a test to check that git ls-tree sets non-zero exit code on error.
-
-* jc/merge-reword (2011-05-25) 2 commits
- - merge: mark the final "Merge made by..." message for l10n
- - merge: reword the final message
-
-Probably the topmost commit should be dropped.
-
-* jk/reset-reflog-message-fix (2011-07-22) 1 commit
- - reset: give better reflog messages
-
-Will merge to "next".
-
-* jk/add-i-hunk-filter (2011-07-27) 5 commits
- - add--interactive: add option to autosplit hunks
- - add--interactive: allow negatation of hunk filters
- - add--interactive: allow hunk filtering on command line
- - add--interactive: factor out regex error handling
- - add--interactive: refactor patch mode argument processing
-
-* mh/check-attr-listing (2011-07-27) 19 commits
- - Rename struct git_attr_check to git_attr_value
- - git-check-attr: Fix command-line handling to match docs
- - git-check-attr: Drive two tests using the same raw data
- - git-check-attr: Add an --all option to show all attributes
- - git-check-attr: Error out if no pathnames are specified
- - git-check-attr: Process command-line args more systematically
- - git-check-attr: Handle each error separately
- - git-check-attr: Extract a function error_with_usage()
- - git-check-attr: Introduce a new variable
- - git-check-attr: Extract a function output_attr()
- - Allow querying all attributes on a file
- - git-check-attr: Use git_attr_name()
- - Provide access to the name attribute of git_attr
- - git-check-attr: Add tests of command-line parsing
- - git-check-attr: Add missing "&&"
- - Disallow the empty string as an attribute name
- - Remove anachronism from comment
- - doc: Correct git_attr() calls in example code
- - doc: Add a link from gitattributes(5) to git-check-attr(1)
-
---------------------------------------------------
-[Graduated to "master"]
-
-* bw/log-all-ref-updates-doc (2011-07-12) 1 commit
-  (merged to 'next' on 2011-07-14 at 31b80a8)
- + Documentation: clearly specify what refs are honored by core.logAllRefUpdates
-
-* dc/stash-con-untracked (2011-06-26) 1 commit
-  (merged to 'next' on 2011-07-13 at 9ed0d1d)
- + stash: Add --include-untracked option to stash and remove all untracked files
-
-* dz/connect-error-report (2011-07-14) 1 commit
-  (merged to 'next' on 2011-07-14 at bf1c775)
- + Do not log unless all connect() attempts fail
-
-* jc/checkout-reflog-fix (2011-07-06) 3 commits
-  (merged to 'next' on 2011-07-14 at 5982cdd)
- + Merge commit 'v1.7.6' into jc/checkout-reflog-fix
- + Merge commit 'v1.7.0' into jc/checkout-reflog-fix
- + Merge commit 'v1.6.0' into jc/checkout-reflog-fix
- (this branch uses jc/maint-checkout-reflog-fix.)
-
-* jc/maint-checkout-reflog-fix (2011-07-06) 1 commit
- + checkout: do not write bogus reflog entry out
- (this branch is used by jc/checkout-reflog-fix.)
-
-* jc/maint-mergetool-read-fix (2011-07-01) 1 commit
-  (merged to 'next' on 2011-07-14 at 2056a67)
- + mergetool: check return value from read
-
-* jk/tag-contains-ab (2011-07-14) 5 commits
-  (merged to 'next' on 2011-07-14 at 002a9d7)
- + Revert clock-skew based attempt to optimize tag --contains traversal
- + git skew: a tool to find how big a clock skew exists in the history
-  (merged to 'next' on 2011-07-05 at f9cf575)
- + default core.clockskew variable to one day
- + limit "contains" traversals based on commit timestamp
- + tag: speed up --contains calculation
- (this branch is tangled with jk/generation-numbers.)
-
-Reverted the commits near the tip.
-
-* jl/submodule-add-relurl-wo-upstream (2011-06-06) 3 commits
-  (merged to 'next' on 2011-07-13 at f989abb)
- + submodule add: clean up duplicated code
- + submodule add: allow relative repository path even when no url is set
- + submodule add: test failure when url is not configured in superproject
-
-* jn/gitweb-search (2011-06-22) 4 commits
-  (merged to 'next' on 2011-07-13 at 455acdd)
- + gitweb: Make git_search_* subroutines render whole pages
- + gitweb: Clean up code in git_search_* subroutines
- + gitweb: Split body of git_search into subroutines
- + gitweb: Check permissions first in git_search
-
-* js/maint-add-path-stat-pwd (2011-07-11) 1 commit
-  (merged to 'next' on 2011-07-14 at c6fef9d)
- + get_pwd_cwd(): Do not trust st_dev/st_ino blindly
-
-* ms/help-unknown (2011-07-08) 1 commit
-  (merged to 'next' on 2011-07-14 at d7976b4)
- + help_unknown_cmd: do not propose an "unknown" cmd
-
-* mz/doc-rebase-abort (2011-07-13) 1 commit
-  (merged to 'next' on 2011-07-14 at a1a612c)
- + rebase: clarify "restore the original branch"
-
-* mz/doc-synopsis-verse (2011-07-06) 1 commit
-  (merged to 'next' on 2011-07-14 at 34d45e2)
- + Documentation: use [verse] for SYNOPSIS sections
+* jn/gitweb-config-list-case (2011-07-31) 1 commit
+ - gitweb: Git config keys are case insensitive, make config search too
 
 --------------------------------------------------
 [Stalled]
@@ -186,6 +74,65 @@ numbers is already in; backburnered.
 --------------------------------------------------
 [Cooking]
 
+* jc/streaming-filter (2011-07-22) 1 commit
+  (merged to 'next' on 2011-07-22 at 2081cd7)
+ + streaming: free git_istream upon closing
+
+A large leak found and plugged.
+Will merge to "master".
+
+* jn/gitweb-system-config (2011-07-24) 1 commit
+ - gitweb: Introduce common system-wide settings for convenience
+
+Will merge to "next".
+
+* js/ls-tree-error (2011-07-25) 2 commits
+ - Ensure git ls-tree exits with a non-zero exit code if read_tree_recursive fails.
+ - Add a test to check that git ls-tree sets non-zero exit code on error.
+
+Will merge to "next".
+
+* jc/merge-reword (2011-05-25) 2 commits
+ - merge: mark the final "Merge made by..." message for l10n
+ - merge: reword the final message
+
+Probably the topmost commit should be dropped.
+
+* jk/reset-reflog-message-fix (2011-07-22) 1 commit
+ - reset: give better reflog messages
+
+Will merge to "next".
+
+* jk/add-i-hunk-filter (2011-07-27) 5 commits
+ - add--interactive: add option to autosplit hunks
+ - add--interactive: allow negatation of hunk filters
+ - add--interactive: allow hunk filtering on command line
+ - add--interactive: factor out regex error handling
+ - add--interactive: refactor patch mode argument processing
+
+* mh/check-attr-listing (2011-07-27) 19 commits
+ - Rename struct git_attr_check to git_attr_value
+ - git-check-attr: Fix command-line handling to match docs
+ - git-check-attr: Drive two tests using the same raw data
+ - git-check-attr: Add an --all option to show all attributes
+ - git-check-attr: Error out if no pathnames are specified
+ - git-check-attr: Process command-line args more systematically
+ - git-check-attr: Handle each error separately
+ - git-check-attr: Extract a function error_with_usage()
+ - git-check-attr: Introduce a new variable
+ - git-check-attr: Extract a function output_attr()
+ - Allow querying all attributes on a file
+ - git-check-attr: Use git_attr_name()
+ - Provide access to the name attribute of git_attr
+ - git-check-attr: Add tests of command-line parsing
+ - git-check-attr: Add missing "&&"
+ - Disallow the empty string as an attribute name
+ - Remove anachronism from comment
+ - doc: Correct git_attr() calls in example code
+ - doc: Add a link from gitattributes(5) to git-check-attr(1)
+
+Need to replace this with a more recent reroll.
+
 * jc/maint-reset-unmerged-path (2011-07-13) 1 commit
   (merged to 'next' on 2011-07-19 at bbc2d54)
  + reset [<commit>] paths...: do not mishandle unmerged paths
@@ -198,6 +145,8 @@ Will merge to "master".
  - diff-lib: simplify do_diff_cache()
  (this branch uses jc/maint-reset-unmerged-path.)
 
+Will merge to "next".
+
 * sr/transport-helper-fix-rfc (2011-07-19) 2 commits
  - t5800: point out that deleting branches does not work
  - t5800: document inability to push new branch with old content
@@ -206,6 +155,8 @@ Will merge to "master".
 * vi/make-test-vector-less-specific (2011-07-19) 1 commit
   (merged to 'next' on 2011-07-25 at 1973192)
  + tests: cleanup binary test vector files
+
+Will merge to "master".
 
 * jk/http-auth-keyring (2011-07-21) 14 commits
  - credentials: add "getpass" helper
@@ -309,6 +260,8 @@ Will merge to "master".
  - revert: Simplify and inline add_message_to_msg
  - config: Introduce functions to write non-standard file
  - advice: Introduce error_resolve_conflict
+
+Need to replace this with a more recent reroll.
 
 * en/merge-recursive (2011-07-14) 50 commits
  - fixup! Do not assume that qsort is stable
