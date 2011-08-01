@@ -106,7 +106,6 @@ typedef struct s_bdiffparam {
 #define xdl_realloc(ptr,x) realloc(ptr,x)
 
 void *xdl_mmfile_first(mmfile_t *mmf, long *size);
-void *xdl_mmfile_next(mmfile_t *mmf, long *size);
 long xdl_mmfile_size(mmfile_t *mmf);
 
 int xdl_diff(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp,

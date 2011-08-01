@@ -67,12 +67,6 @@ void *xdl_mmfile_first(mmfile_t *mmf, long *size)
 }
 
 
-void *xdl_mmfile_next(mmfile_t *mmf, long *size)
-{
-	return NULL;
-}
-
-
 long xdl_mmfile_size(mmfile_t *mmf)
 {
 	return mmf->size;
@@ -160,13 +154,7 @@ long xdl_guess_lines(mmfile_t *mf, long sample) {
 	char const *data, *cur, *top;
 
 	if ((cur = data = xdl_mmfile_first(mf, &size)) != NULL) {
-		for (top = data + size; nl < sample;) {
-			if (cur >= top) {
-				tsize += (long) (cur - data);
-				if (!(cur = data = xdl_mmfile_next(mf, &size)))
-					break;
-				top = data + size;
-			}
+		for (top = data + size; nl < sample && cur < top; ) {
 			nl++;
 			if (!(cur = memchr(cur, '\n', top - cur)))
 				cur = top;
