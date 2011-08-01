@@ -1649,7 +1649,8 @@ class P4Sync(Command, P4UserMap):
     def importHeadRevision(self, revision):
         print "Doing initial import of %s from revision %s into %s" % (' '.join(self.depotPaths), revision, self.branch)
 
-        details = { "user" : "git perforce import user", "time" : int(time.time()) }
+        details = {}
+        details["user"] = "git perforce import user"
         details["desc"] = ("Initial import of %s from the state at revision %s\n"
                            % (' '.join(self.depotPaths), revision))
         details["change"] = revision
@@ -1689,6 +1690,18 @@ class P4Sync(Command, P4UserMap):
             fileCnt = fileCnt + 1
 
         details["change"] = newestRevision
+
+        # Use time from top-most change so that all git-p4 clones of
+        # the same p4 repo have the same commit SHA1s.
+        res = p4CmdList("describe -s %d" % newestRevision)
+        newestTime = None
+        for r in res:
+            if r.has_key('time'):
+                newestTime = int(r['time'])
+        if newestTime is None:
+            die("\"describe -s\" on newest change %d did not give a time")
+        details["time"] = newestTime
+
         self.updateOptionDict(details)
         try:
             self.commit(details, self.extractFilesFromCommit(details), self.branch, self.depotPaths)
