@@ -1,7 +1,7 @@
 import os
 import subprocess
 
-from git_remote_helpers.util import die, warn
+from git_remote_helpers.util import check_call, die, warn
 
 
 class NonLocalGit(object):
@@ -29,9 +29,7 @@ class NonLocalGit(object):
         os.makedirs(path)
         args = ["git", "clone", "--bare", "--quiet", self.repo.gitpath, path]
 
-        child = subprocess.Popen(args)
-        if child.wait() != 0:
-            raise CalledProcessError
+        check_call(args)
 
         return path
 
@@ -45,14 +43,10 @@ class NonLocalGit(object):
             die("could not find repo at %s", path)
 
         args = ["git", "--git-dir=" + path, "fetch", "--quiet", self.repo.gitpath]
-        child = subprocess.Popen(args)
-        if child.wait() != 0:
-            raise CalledProcessError
+        check_call(args)
 
         args = ["git", "--git-dir=" + path, "update-ref", "refs/heads/master", "FETCH_HEAD"]
-        child = subprocess.Popen(args)
-        if child.wait() != 0:
-            raise CalledProcessError
+        child = check_call(args)
 
     def push(self, base):
         """Pushes from the non-local repo to base.
@@ -63,7 +57,5 @@ class NonLocalGit(object):
         if not os.path.exists(path):
             die("could not find repo at %s", path)
 
-        args = ["git", "--git-dir=" + path, "push", "--quiet", self.repo.gitpath]
-        child = subprocess.Popen(args)
-        if child.wait() != 0:
-            raise CalledProcessError
+        args = ["git", "--git-dir=" + path, "push", "--quiet", self.repo.gitpath, "--all"]
+        child = check_call(args)

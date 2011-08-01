@@ -1,6 +1,9 @@
 import os
 import subprocess
 
+from git_remote_helpers.util import check_call
+
+
 def sanitize(rev, sep='\t'):
     """Converts a for-each-ref line to a name/value pair.
     """
@@ -53,9 +56,7 @@ class GitRepo(object):
         path = ".cached_revs"
         ofile = open(path, "w")
 
-        child = subprocess.Popen(args, stdout=ofile)
-        if child.wait() != 0:
-            raise CalledProcessError
+        check_call(args, stdout=ofile)
         output = open(path).readlines()
         self.revmap = dict(sanitize(i) for i in output)
         if "HEAD" in self.revmap:

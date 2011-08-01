@@ -2,6 +2,8 @@ import os
 import subprocess
 import sys
 
+from git_remote_helpers.util import check_call
+
 
 class GitExporter(object):
     """An exporter for testgit repositories.
@@ -15,7 +17,7 @@ class GitExporter(object):
 
         self.repo = repo
 
-    def export_repo(self, base):
+    def export_repo(self, base, refs=None):
         """Exports a fast-export stream for the given directory.
 
         Simply delegates to git fast-epxort and pipes it through sed
@@ -23,7 +25,12 @@ class GitExporter(object):
         default refs/heads. This is to demonstrate how the export
         data can be stored under it's own ref (using the refspec
         capability).
+
+        If None, refs defaults to ["HEAD"].
         """
+
+        if not refs:
+            refs = ["HEAD"]
 
         dirname = self.repo.get_base_path(base)
         path = os.path.abspath(os.path.join(dirname, 'testgit.marks'))
@@ -42,12 +49,10 @@ class GitExporter(object):
         if os.path.exists(path):
             args.append("--import-marks=" + path)
 
-        args.append("HEAD")
+        args.extend(refs)
 
         p1 = subprocess.Popen(args, stdout=subprocess.PIPE)
 
         args = ["sed", "s_refs/heads/_" + self.repo.prefix + "_g"]
 
-        child = subprocess.Popen(args, stdin=p1.stdout)
-        if child.wait() != 0:
-            raise CalledProcessError
+        check_call(args, stdin=p1.stdout)

@@ -102,6 +102,12 @@ OPTIONS
 	when the `cat-blob` command is encountered in the stream.
 	The default behaviour is to write to `stdout`.
 
+--done::
+	Require a `done` command at the end of the stream.
+	This option might be useful for detecting errors that
+	cause the frontend to terminate before it has started to
+	write a stream.
+
 --export-pack-edges=<file>::
 	After creating a packfile, print a line of data to
 	<file> listing the filename of the packfile and the last
@@ -330,6 +336,11 @@ and control the current import process.  More detailed discussion
 	Causes fast-import to echo the entire line to its own
 	standard output.  This command is optional and is not needed
 	to perform an import.
+
+`done`::
+	Marks the end of the stream. This command is optional
+	unless the `done` feature was requested using the
+	`--done` command line option or `feature done` command.
 
 `cat-blob`::
 	Causes fast-import to print a blob in 'cat-file --batch'
@@ -1021,6 +1032,11 @@ notes::
 	Versions of fast-import not supporting notes will exit
 	with a message indicating so.
 
+done::
+	Error out if the stream ends without a 'done' command.
+	Without this feature, errors causing the frontend to end
+	abruptly at a convenient point in the stream can go
+	undetected.
 
 `option`
 ~~~~~~~~
@@ -1049,6 +1065,15 @@ not be passed as option:
 * export-marks
 * cat-blob-fd
 * force
+
+`done`
+~~~~~~
+If the `done` feature is not in use, treated as if EOF was read.
+This can be used to tell fast-import to finish early.
+
+If the `--done` command line option or `feature done` command is
+in use, the `done` command is mandatory and marks the end of the
+stream.
 
 Crash Reports
 -------------
