@@ -102,7 +102,7 @@ static int cmp_recs(xpparam_t const *xpp,
 	(cmp_recs(xpp, REC(env, s1, l1), REC(env, s2, l2)))
 
 #define CMP(i, s1, l1, s2, l2) \
-	(CMP_ENV(i->xpp, i->env, s1, l1, s2, l2))
+	(cmp_recs(i->xpp, REC(i->env, s1, l1), REC(i->env, s2, l2)))
 
 #define TABLE_HASH(index, side, line) \
 	XDL_HASHLONG((REC(index->env, side, line))->ha, index->table_bits)
@@ -248,23 +248,6 @@ static int find_lcs(struct histindex *index, struct region *lcs,
 	return index->has_common && index->max_chain_length < index->cnt;
 }
 
-static void reduce_common_start_end(xpparam_t const *xpp, xdfenv_t *env,
-	int *line1, int *count1, int *line2, int *count2)
-{
-	if (*count1 <= 1 || *count2 <= 1)
-		return;
-	while (*count1 > 1 && *count2 > 1 && CMP_ENV(xpp, env, 1, *line1, 2, *line2)) {
-		(*line1)++;
-		(*count1)--;
-		(*line2)++;
-		(*count2)--;
-	}
-	while (*count1 > 1 && *count2 > 1 && CMP_ENV(xpp, env, 1, LINE_END_PTR(1), 2, LINE_END_PTR(2))) {
-		(*count1)--;
-		(*count2)--;
-	}
-}
-
 static int fall_back_to_classic_diff(struct histindex *index,
 		int line1, int count1, int line2, int count2)
 {
@@ -372,16 +355,10 @@ cleanup:
 int xdl_do_histogram_diff(mmfile_t *file1, mmfile_t *file2,
 	xpparam_t const *xpp, xdfenv_t *env)
 {
-	int line1, line2, count1, count2;
-
 	if (xdl_prepare_env(file1, file2, xpp, env) < 0)
 		return -1;
 
-	line1 = line2 = 1;
-	count1 = env->xdf1.nrec;
-	count2 = env->xdf2.nrec;
-
-	reduce_common_start_end(xpp, env, &line1, &count1, &line2, &count2);
-
-	return histogram_diff(xpp, env, line1, count1, line2, count2);
+	return histogram_diff(xpp, env,
+		env->xdf1.dstart + 1, env->xdf1.dend - env->xdf1.dstart + 1,
+		env->xdf2.dstart + 1, env->xdf2.dend - env->xdf2.dstart + 1);
 }
