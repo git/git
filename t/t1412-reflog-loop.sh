@@ -21,10 +21,10 @@ test_expect_success 'setup reflog with alternating commits' '
 
 test_expect_success 'reflog shows all entries' '
 	cat >expect <<-\EOF
-		topic@{0} two: updating HEAD
-		topic@{1} one: updating HEAD
-		topic@{2} two: updating HEAD
-		topic@{3} one: updating HEAD
+		topic@{0} reset: moving to two
+		topic@{1} reset: moving to one
+		topic@{2} reset: moving to two
+		topic@{3} reset: moving to one
 		topic@{4} branch: Created from HEAD
 	EOF
 	git log -g --format="%gd %gs" topic >actual &&
