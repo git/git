@@ -339,21 +339,24 @@ static int histogram_diff(xpparam_t const *xpp, xdfenv_t *env,
 	if (find_lcs(&index, &lcs, line1, count1, line2, count2))
 		result = fall_back_to_classic_diff(&index, line1, count1, line2, count2);
 	else {
-		result = 0;
 		if (lcs.begin1 == 0 && lcs.begin2 == 0) {
 			int ptr;
 			for (ptr = 0; ptr < count1; ptr++)
 				env->xdf1.rchg[line1 + ptr - 1] = 1;
 			for (ptr = 0; ptr < count2; ptr++)
 				env->xdf2.rchg[line2 + ptr - 1] = 1;
+			result = 0;
 		} else {
 			result = histogram_diff(xpp, env,
-				line1, lcs.begin1 - line1,
-				line2, lcs.begin2 - line2);
+						line1, lcs.begin1 - line1,
+						line2, lcs.begin2 - line2);
+			if (result)
+				goto cleanup;
 			result = histogram_diff(xpp, env,
-				lcs.end1 + 1, LINE_END(1) - lcs.end1,
-				lcs.end2 + 1, LINE_END(2) - lcs.end2);
-			result *= -1;
+						lcs.end1 + 1, LINE_END(1) - lcs.end1,
+						lcs.end2 + 1, LINE_END(2) - lcs.end2);
+			if (result)
+				goto cleanup;
 		}
 	}
 
