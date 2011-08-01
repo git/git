@@ -388,6 +388,7 @@ void check_for_new_submodule_commits(unsigned char new_sha1[20])
 		while (parent) {
 			struct diff_options diff_opts;
 			diff_setup(&diff_opts);
+			DIFF_OPT_SET(&diff_opts, RECURSIVE);
 			diff_opts.output_format |= DIFF_FORMAT_CALLBACK;
 			diff_opts.format_callback = submodule_collect_changed_cb;
 			if (diff_setup_done(&diff_opts) < 0)
