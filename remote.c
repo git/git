@@ -896,7 +896,7 @@ struct ref *alloc_ref(const char *name)
 	return alloc_ref_with_prefix("", 0, name);
 }
 
-static struct ref *copy_ref(const struct ref *ref)
+struct ref *copy_ref(const struct ref *ref)
 {
 	struct ref *cpy;
 	size_t len;
@@ -1667,7 +1667,9 @@ struct ref *guess_remote_head(const struct ref *head,
 
 	/* Look for another ref that points there */
 	for (r = refs; r; r = r->next) {
-		if (r != head && !hashcmp(r->old_sha1, head->old_sha1)) {
+		if (r != head &&
+		    !prefixcmp(r->name, "refs/heads/") &&
+		    !hashcmp(r->old_sha1, head->old_sha1)) {
 			*tail = copy_ref(r);
 			tail = &((*tail)->next);
 			if (!all)
