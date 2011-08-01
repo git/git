@@ -162,7 +162,7 @@ static void update_index_from_diff(struct diff_queue_struct *q,
 
 	for (i = 0; i < q->nr; i++) {
 		struct diff_filespec *one = q->queue[i]->one;
-		if (one->mode) {
+		if (one->mode && !is_null_sha1(one->sha1)) {
 			struct cache_entry *ce;
 			ce = make_cache_entry(one->mode, one->sha1, one->path,
 				0, 0);
