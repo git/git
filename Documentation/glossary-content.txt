@@ -161,8 +161,8 @@ to point at the new commit.
 
 [[def_head]]head::
 	A <<def_ref,named reference>> to the <<def_commit,commit>> at the tip of a
-	<<def_branch,branch>>.  Heads are stored in
-	`$GIT_DIR/refs/heads/`, except when using packed refs. (See
+	<<def_branch,branch>>.  Heads are stored in a file in
+	`$GIT_DIR/refs/heads/` directory, except when using packed refs. (See
 	linkgit:git-pack-refs[1].)
 
 [[def_HEAD]]HEAD::
@@ -170,8 +170,8 @@ to point at the new commit.
 	working tree>> is normally derived from the state of the tree
 	referred to by HEAD.  HEAD is a reference to one of the
 	<<def_head,heads>> in your repository, except when using a
-	<<def_detached_HEAD,detached HEAD>>, in which case it may
-	reference an arbitrary commit.
+	<<def_detached_HEAD,detached HEAD>>, in which case it directly
+	references an arbitrary commit.
 
 [[def_head_ref]]head ref::
 	A synonym for <<def_head,head>>.
@@ -382,8 +382,9 @@ should not be combined with other pathspec.
 
 [[def_ref]]ref::
 	A 40-byte hex representation of a <<def_SHA1,SHA1>> or a name that
-	denotes a particular <<def_object,object>>. These may be stored in
-	`$GIT_DIR/refs/`.
+	denotes a particular <<def_object,object>>. They may be stored in
+	a file under `$GIT_DIR/refs/` directory, or
+	in the `$GIT_DIR/packed-refs` file.
 
 [[def_reflog]]reflog::
 	A reflog shows the local "history" of a ref.  In other words,
@@ -459,14 +460,14 @@ should not be combined with other pathspec.
 	command.
 
 [[def_tag]]tag::
-	A <<def_ref,ref>> pointing to a <<def_tag_object,tag>> or
-	<<def_commit_object,commit object>>. In contrast to a <<def_head,head>>,
-	a tag is not changed by a <<def_commit,commit>>. Tags (not
-	<<def_tag_object,tag objects>>) are stored in `$GIT_DIR/refs/tags/`. A
-	git tag has nothing to do with a Lisp tag (which would be
-	called an <<def_object_type,object type>> in git's context). A
-	tag is most typically used to mark a particular point in the
-	commit ancestry <<def_chain,chain>>.
+	A <<def_ref,ref>> under `refs/tags/` namespace that points to an
+	object of an arbitrary type (typically a tag points to either a
+	<<def_tag_object,tag>> or a <<def_commit_object,commit object>>).
+	In contrast to a <<def_head,head>>, a tag is not updated by
+	the `commit` command. A git tag has nothing to do with a Lisp
+	tag (which would be called an <<def_object_type,object type>>
+	in git's context). A tag is most typically used to mark a particular
+	point in the commit ancestry <<def_chain,chain>>.
 
 [[def_tag_object]]tag object::
 	An <<def_object,object>> containing a <<def_ref,ref>> pointing to
