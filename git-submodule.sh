@@ -122,12 +122,17 @@ module_clone()
 	path=$1
 	url=$2
 	reference="$3"
+	quiet=
+	if test -n "$GIT_QUIET"
+	then
+		quiet=-q
+	fi
 
 	if test -n "$reference"
 	then
-		git-clone "$reference" -n "$url" "$path"
+		git-clone $quiet "$reference" -n "$url" "$path"
 	else
-		git-clone -n "$url" "$path"
+		git-clone $quiet -n "$url" "$path"
 	fi ||
 	die "$(eval_gettext "Clone of '\$url' into submodule path '\$path' failed")"
 }
