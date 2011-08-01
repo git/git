@@ -838,6 +838,8 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 			context_callback),
 		OPT_BOOLEAN('p', "show-function", &opt.funcname,
 			"show a line with the function name before matches"),
+		OPT_BOOLEAN('W', NULL, &opt.funcbody,
+			"show the surrounding function"),
 		OPT_GROUP(""),
 		OPT_CALLBACK('f', NULL, &opt, "file",
 			"read patterns from file", file_callback),
@@ -980,7 +982,8 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		use_threads = 0;
 
 	if (use_threads) {
-		if (opt.pre_context || opt.post_context || opt.file_break)
+		if (opt.pre_context || opt.post_context || opt.file_break ||
+		    opt.funcbody)
 			skip_first_line = 1;
 		start_threads(&opt);
 	}

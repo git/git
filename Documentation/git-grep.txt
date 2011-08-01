@@ -172,6 +172,12 @@ OPTIONS
 	patch hunk headers (see 'Defining a custom hunk-header' in
 	linkgit:gitattributes[5]).
 
+-W::
+	Show the surrounding text from the previous line containing a
+	function name up to the one before the next function name,
+	effectively showing the whole function in which the match was
+	found.
+
 -f <file>::
 	Read patterns from <file>, one per line.
 
