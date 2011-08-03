@@ -10,7 +10,7 @@ SUBDIRECTORY_OK=Yes
 OPTIONS_SPEC=
 . git-sh-setup
 . git-sh-i18n
-set_reflog_action "pull $*"
+set_reflog_action "pull${1+ $*}"
 require_work_tree
 cd_to_toplevel
 
