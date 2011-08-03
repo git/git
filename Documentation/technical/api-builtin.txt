@@ -49,6 +49,8 @@ Additionally, if `foo` is a new command, there are 3 more things to do:
 
 . Add an entry for `git-foo` to `command-list.txt`.
 
+. Add an entry for `/git-foo` to `.gitignore`.
+
 
 How a built-in is called
 ------------------------
