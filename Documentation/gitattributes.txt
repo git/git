@@ -79,7 +79,7 @@ Attributes for all users on a system should be placed in the
 `$(prefix)/etc/gitattributes` file.
 
 Sometimes you would need to override an setting of an attribute
-for a path to `unspecified` state.  This can be done by listing
+for a path to `Unspecified` state.  This can be done by listing
 the name of the attribute prefixed with an exclamation point `!`.
 
 
@@ -868,7 +868,7 @@ If this attribute is not set or has an invalid value, the value of the
 (See linkgit:git-config[1]).
 
 
-USING ATTRIBUTE MACROS
+USING MACRO ATTRIBUTES
 ----------------------
 
 You do not want any end-of-line conversions applied to, nor textual diffs
@@ -879,24 +879,27 @@ produced for, any binary file you track.  You would need to specify e.g.
 ------------
 
 but that may become cumbersome, when you have many attributes.  Using
-attribute macros, you can specify groups of attributes set or unset at
-the same time.  The system knows a built-in attribute macro, `binary`:
+macro attributes, you can define an attribute that, when set, also
+sets or unsets a number of other attributes at the same time.  The
+system knows a built-in macro attribute, `binary`:
 
 ------------
 *.jpg binary
 ------------
 
-which is equivalent to the above.  Note that the attribute macros can only
-be "Set" (see the above example that sets "binary" macro as if it were an
-ordinary attribute --- setting it in turn unsets "text" and "diff").
+Setting the "binary" attribute also unsets the "text" and "diff"
+attributes as above.  Note that macro attributes can only be "Set",
+though setting one might have the effect of setting or unsetting other
+attributes or even returning other attributes to the "Unspecified"
+state.
 
 
-DEFINING ATTRIBUTE MACROS
+DEFINING MACRO ATTRIBUTES
 -------------------------
 
-Custom attribute macros can be defined only in the `.gitattributes` file
-at the toplevel (i.e. not in any subdirectory).  The built-in attribute
-macro "binary" is equivalent to:
+Custom macro attributes can be defined only in the `.gitattributes`
+file at the toplevel (i.e. not in any subdirectory).  The built-in
+macro attribute "binary" is equivalent to:
 
 ------------
 [attr]binary -diff -text
