@@ -3,6 +3,7 @@
 #include "sideband.h"
 #include "run-command.h"
 #include "url.h"
+#include "credential.h"
 
 int data_received;
 int active_requests;
@@ -42,7 +43,7 @@ static long curl_low_speed_time = -1;
 static int curl_ftp_no_epsv;
 static const char *curl_http_proxy;
 static const char *curl_cookie_file;
-static char *user_name, *user_pass;
+static struct credential http_auth;
 static const char *user_agent;
 
 #if LIBCURL_VERSION_NUM >= 0x071700
@@ -53,7 +54,7 @@ static const char *user_agent;
 #define CURLOPT_KEYPASSWD CURLOPT_SSLCERTPASSWD
 #endif
 
-static char *ssl_cert_password;
+static struct credential cert_auth;
 static int ssl_cert_password_required;
 
 static struct curl_slist *pragma_header;
@@ -211,11 +212,11 @@ static int http_options(const char *var, const char *value, void *cb)
 
 static void init_curl_http_auth(CURL *result)
 {
-	if (user_name) {
+	if (http_auth.username) {
 		struct strbuf up = STRBUF_INIT;
-		if (!user_pass)
-			user_pass = xstrdup(git_getpass("Password: "));
-		strbuf_addf(&up, "%s:%s", user_name, user_pass);
+		credential_fill(&http_auth, NULL);
+		strbuf_addf(&up, "%s:%s",
+			    http_auth.username, http_auth.password);
 		curl_easy_setopt(result, CURLOPT_USERPWD,
 				 strbuf_detach(&up, NULL));
 	}
@@ -223,18 +224,19 @@ static void init_curl_http_auth(CURL *result)
 
 static int has_cert_password(void)
 {
-	if (ssl_cert_password != NULL)
-		return 1;
 	if (ssl_cert == NULL || ssl_cert_password_required != 1)
 		return 0;
-	/* Only prompt the user once. */
-	ssl_cert_password_required = -1;
-	ssl_cert_password = git_getpass("Certificate Password: ");
-	if (ssl_cert_password != NULL) {
-		ssl_cert_password = xstrdup(ssl_cert_password);
-		return 1;
-	} else
-		return 0;
+	if (!cert_auth.description)
+		cert_auth.description = "certificate";
+	if (!cert_auth.unique) {
+		struct strbuf unique = STRBUF_INIT;
+		strbuf_addf(&unique, "cert:%s", ssl_cert);
+		cert_auth.unique = strbuf_detach(&unique, NULL);
+	}
+	if (!cert_auth.username)
+		cert_auth.username = xstrdup("");
+	credential_fill(&cert_auth, NULL);
+	return 1;
 }
 
 static CURL *get_curl_handle(void)
@@ -263,7 +265,7 @@ static CURL *get_curl_handle(void)
 	if (ssl_cert != NULL)
 		curl_easy_setopt(result, CURLOPT_SSLCERT, ssl_cert);
 	if (has_cert_password())
-		curl_easy_setopt(result, CURLOPT_KEYPASSWD, ssl_cert_password);
+		curl_easy_setopt(result, CURLOPT_KEYPASSWD, cert_auth.password);
 #if LIBCURL_VERSION_NUM >= 0x070903
 	if (ssl_key != NULL)
 		curl_easy_setopt(result, CURLOPT_SSLKEY, ssl_key);
@@ -307,11 +309,11 @@ static CURL *get_curl_handle(void)
 
 static void http_auth_init(const char *url)
 {
-	char *at, *colon, *cp, *slash, *decoded;
-	int len;
+	const char *at, *colon, *cp, *slash, *host, *proto_end;
+	struct strbuf unique = STRBUF_INIT;
 
-	cp = strstr(url, "://");
-	if (!cp)
+	proto_end = strstr(url, "://");
+	if (!proto_end)
 		return;
 
 	/*
@@ -320,38 +322,31 @@ static void http_auth_init(const char *url)
 	 * "proto://<user>@<host>/...", or just
 	 * "proto://<host>/..."?
 	 */
-	cp += 3;
+	cp = proto_end + 3;
 	at = strchr(cp, '@');
 	colon = strchr(cp, ':');
 	slash = strchrnul(cp, '/');
-	if (!at || slash <= at)
-		return; /* No credentials */
-	if (!colon || at <= colon) {
-		/* Only username */
-		len = at - cp;
-		user_name = xmalloc(len + 1);
-		memcpy(user_name, cp, len);
-		user_name[len] = '\0';
-		decoded = url_decode(user_name);
-		free(user_name);
-		user_name = decoded;
-		user_pass = NULL;
-	} else {
-		len = colon - cp;
-		user_name = xmalloc(len + 1);
-		memcpy(user_name, cp, len);
-		user_name[len] = '\0';
-		decoded = url_decode(user_name);
-		free(user_name);
-		user_name = decoded;
-		len = at - (colon + 1);
-		user_pass = xmalloc(len + 1);
-		memcpy(user_pass, colon + 1, len);
-		user_pass[len] = '\0';
-		decoded = url_decode(user_pass);
-		free(user_pass);
-		user_pass = decoded;
+
+	if (!at || slash <= at) {
+		/* No credentials, but we may have to ask for some later */
+		host = cp;
 	}
+	else if (!colon || at <= colon) {
+		/* Only username */
+		http_auth.username = url_decode_mem(cp, at - cp);
+		host = at + 1;
+	} else {
+		http_auth.username = url_decode_mem(cp, colon - cp);
+		http_auth.password = url_decode_mem(colon + 1, at - (colon + 1));
+		host = at + 1;
+	}
+
+	http_auth.description = url_decode_mem(host, slash - host);
+
+	strbuf_add(&unique, url, proto_end - url);
+	strbuf_addch(&unique, ':');
+	strbuf_addstr(&unique, http_auth.description);
+	http_auth.unique = strbuf_detach(&unique, NULL);
 }
 
 static void set_from_env(const char **var, const char *envname)
@@ -475,10 +470,10 @@ void http_cleanup(void)
 		curl_http_proxy = NULL;
 	}
 
-	if (ssl_cert_password != NULL) {
-		memset(ssl_cert_password, 0, strlen(ssl_cert_password));
-		free(ssl_cert_password);
-		ssl_cert_password = NULL;
+	if (cert_auth.password) {
+		memset(cert_auth.password, 0, strlen(cert_auth.password));
+		free(cert_auth.password);
+		cert_auth.password = NULL;
 	}
 	ssl_cert_password_required = 0;
 }
@@ -838,16 +833,11 @@ static int http_request(const char *url, void *result, int target, int options)
 		else if (missing_target(&results))
 			ret = HTTP_MISSING_TARGET;
 		else if (results.http_code == 401) {
-			if (user_name) {
+			if (http_auth.username) {
+				credential_reject(&http_auth, NULL);
 				ret = HTTP_NOAUTH;
 			} else {
-				/*
-				 * git_getpass is needed here because its very likely stdin/stdout are
-				 * pipes to our parent process.  So we instead need to use /dev/tty,
-				 * but that is non-portable.  Using git_getpass() can at least be stubbed
-				 * on other platforms with a different implementation if/when necessary.
-				 */
-				user_name = xstrdup(git_getpass("Username: "));
+				credential_fill(&http_auth, NULL);
 				init_curl_http_auth(slot->curl);
 				ret = HTTP_REAUTH;
 			}
@@ -865,13 +855,18 @@ static int http_request(const char *url, void *result, int target, int options)
 	return ret;
 }
 
+static int http_request_reauth(const char *url, void *result, int target,
+			       int options)
+{
+	int ret = http_request(url, result, target, options);
+	if (ret != HTTP_REAUTH)
+		return ret;
+	return http_request(url, result, target, options);
+}
+
 int http_get_strbuf(const char *url, struct strbuf *result, int options)
 {
-	int http_ret = http_request(url, result, HTTP_REQUEST_STRBUF, options);
-	if (http_ret == HTTP_REAUTH) {
-		http_ret = http_request(url, result, HTTP_REQUEST_STRBUF, options);
-	}
-	return http_ret;
+	return http_request_reauth(url, result, HTTP_REQUEST_STRBUF, options);
 }
 
 /*
@@ -894,7 +889,7 @@ static int http_get_file(const char *url, const char *filename, int options)
 		goto cleanup;
 	}
 
-	ret = http_request(url, result, HTTP_REQUEST_FILE, options);
+	ret = http_request_reauth(url, result, HTTP_REQUEST_FILE, options);
 	fclose(result);
 
 	if ((ret == HTTP_OK) && move_temp_to_file(tmpfile.buf, filename))

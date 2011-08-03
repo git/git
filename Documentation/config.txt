@@ -825,6 +825,17 @@ commit.template::
 	"{tilde}/" is expanded to the value of `$HOME` and "{tilde}user/" to the
 	specified user's home directory.
 
+credential.helper::
+	Specify an external helper to be called when a username or
+	password credential is needed; the helper may consult external
+	storage to avoid prompting the user for the credentials. See
+	linkgit:gitcredentials[7] for details.
+
+credential.<context>.username::
+	Specify a default username to be used instead of prompting the
+	user when getting credentials for `<context>`. See
+	linkgit:gitcredentials[7] for details.
+
 include::diff-config.txt[]
 
 difftool.<tool>.path::

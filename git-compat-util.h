@@ -130,6 +130,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <pwd.h>
+#include <sys/un.h>
 #ifndef NO_INTTYPES_H
 #include <inttypes.h>
 #else

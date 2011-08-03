@@ -35,11 +35,75 @@ test_expect_success 'clone http repository' '
 	test_cmp file clone/file
 '
 
-test_expect_success 'clone http repository with authentication' '
+test_expect_success 'create password-protected repository' '
 	mkdir "$HTTPD_DOCUMENT_ROOT_PATH/auth/" &&
-	cp -Rf "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" "$HTTPD_DOCUMENT_ROOT_PATH/auth/repo.git" &&
-	git clone $AUTH_HTTPD_URL/auth/repo.git clone-auth &&
-	test_cmp file clone-auth/file
+	cp -Rf "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" \
+	       "$HTTPD_DOCUMENT_ROOT_PATH/auth/repo.git"
+'
+
+test_expect_success 'setup askpass helpers' '
+	cat >askpass <<-EOF &&
+	#!/bin/sh
+	echo >>"$PWD/askpass-query" "askpass: \$*" &&
+	cat "$PWD/askpass-response"
+	EOF
+	chmod +x askpass &&
+	GIT_ASKPASS="$PWD/askpass" &&
+	export GIT_ASKPASS &&
+	>askpass-expect-none &&
+	echo "askpass: Password for '\''$HTTPD_DEST'\'': " >askpass-expect-pass &&
+	{ echo "askpass: Username for '\''$HTTPD_DEST'\'': " &&
+	  cat askpass-expect-pass
+	} >askpass-expect-both
+'
+
+test_expect_success 'cloning password-protected repository can fail' '
+	>askpass-query &&
+	echo wrong >askpass-response &&
+	test_must_fail git clone "$HTTPD_URL/auth/repo.git" clone-auth-fail &&
+	test_cmp askpass-expect-both askpass-query
+'
+
+test_expect_success 'http auth can use user/pass in URL' '
+	>askpass-query &&
+	echo wrong >askpass-response &&
+	git clone "$HTTPD_URL_USER_PASS/auth/repo.git" clone-auth-none &&
+	test_cmp askpass-expect-none askpass-query
+'
+
+test_expect_success 'http auth can use just user in URL' '
+	>askpass-query &&
+	echo user@host >askpass-response &&
+	git clone "$HTTPD_URL_USER/auth/repo.git" clone-auth-pass &&
+	test_cmp askpass-expect-pass askpass-query
+'
+
+test_expect_success 'http auth can request both user and pass' '
+	>askpass-query &&
+	echo user@host >askpass-response &&
+	git clone "$HTTPD_URL/auth/repo.git" clone-auth-both &&
+	test_cmp askpass-expect-both askpass-query
+'
+
+test_expect_success 'http auth can pull user from config' '
+	>askpass-query &&
+	echo user@host >askpass-response &&
+	git config --global credential.$HTTPD_PROTO:$HTTPD_DEST.username user@host &&
+	git clone "$HTTPD_URL/auth/repo.git" clone-auth-config &&
+	test_cmp askpass-expect-pass askpass-query
+'
+
+test_expect_success 'http auth respects credential helpers' '
+	cat >credential-helper <<-\EOF &&
+	#!/bin/sh
+	echo username=user@host
+	echo password=user@host
+	EOF
+	chmod +x credential-helper &&
+	git config --global credential.helper "\"$PWD/credential-helper\"" &&
+	>askpass-query &&
+	git clone "$HTTPD_URL/auth/repo.git" clone-auth-helper &&
+	test_cmp askpass-expect-none askpass-query
 '
 
 test_expect_success 'fetch changes via http' '
