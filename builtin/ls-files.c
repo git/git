@@ -276,41 +276,6 @@ static void prune_cache(const char *prefix)
 	active_nr = last;
 }
 
-static const char *pathspec_prefix(const char *prefix)
-{
-	const char **p, *n, *prev;
-	unsigned long max;
-
-	if (!pathspec) {
-		max_prefix_len = prefix ? strlen(prefix) : 0;
-		return prefix;
-	}
-
-	prev = NULL;
-	max = PATH_MAX;
-	for (p = pathspec; (n = *p) != NULL; p++) {
-		int i, len = 0;
-		for (i = 0; i < max; i++) {
-			char c = n[i];
-			if (prev && prev[i] != c)
-				break;
-			if (!c || c == '*' || c == '?')
-				break;
-			if (c == '/')
-				len = i+1;
-		}
-		prev = n;
-		if (len < max) {
-			max = len;
-			if (!max)
-				break;
-		}
-	}
-
-	max_prefix_len = max;
-	return max ? xmemdupz(prev, max) : NULL;
-}
-
 static void strip_trailing_slash_from_submodules(void)
 {
 	const char **p;
@@ -576,7 +541,8 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 		strip_trailing_slash_from_submodules();
 
 	/* Find common prefix for all pathspec's */
-	max_prefix = pathspec_prefix(prefix);
+	max_prefix = pathspec_prefix(prefix, pathspec);
+	max_prefix_len = max_prefix ? strlen(max_prefix) : 0;
 
 	/* Treat unmatching pathspec elements as errors */
 	if (pathspec && error_unmatch) {
