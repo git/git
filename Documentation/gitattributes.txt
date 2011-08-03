@@ -879,16 +879,19 @@ produced for, any binary file you track.  You would need to specify e.g.
 ------------
 
 but that may become cumbersome, when you have many attributes.  Using
-attribute macros, you can specify groups of attributes set or unset at
-the same time.  The system knows a built-in attribute macro, `binary`:
+attribute macros, you can define an attribute that, when set, also
+sets or unsets a number of other attributes at the same time.  The
+system knows a built-in attribute macro, `binary`:
 
 ------------
 *.jpg binary
 ------------
 
-which is equivalent to the above.  Note that the attribute macros can only
-be "Set" (see the above example that sets "binary" macro as if it were an
-ordinary attribute --- setting it in turn unsets "text" and "diff").
+Setting the "binary" attribute also unsets the "text" and "diff"
+attributes as above.  Note that attribute macros can only be "Set",
+though setting one might have the effect of setting or unsetting other
+attributes or even returning other attributes to the "Unspecified"
+state.
 
 
 DEFINING ATTRIBUTE MACROS
