@@ -15,7 +15,8 @@ SYNOPSIS
 'git submodule' [--quiet] init [--] [<path>...]
 'git submodule' [--quiet] update [--init] [-N|--no-fetch] [--rebase]
 	      [--reference <repository>] [--merge] [--recursive] [--] [<path>...]
-'git submodule' [--quiet] summary [--cached|--files] [--summary-limit <n>] [commit] [--] [<path>...]
+'git submodule' [--quiet] summary [--cached|--files] [(-n|--summary-limit) <n>]
+	      [commit] [--] [<path>...]
 'git submodule' [--quiet] foreach [--recursive] <command>
 'git submodule' [--quiet] sync [--] [<path>...]
 
@@ -108,8 +109,13 @@ status::
 	repository and `U` if the submodule has merge conflicts.
 	This command is the default command for 'git submodule'.
 +
-If '--recursive' is specified, this command will recurse into nested
+If `--recursive` is specified, this command will recurse into nested
 submodules, and show their status as well.
++
+If you are only interested in changes of the currently initialized
+submodules with respect to the commit recorded in the index or the HEAD,
+linkgit:git-status[1] and linkgit:git-diff[1] will provide that information
+too (and can also report changes to a submodule's work tree).
 
 init::
 	Initialize the submodules, i.e. register each submodule name
@@ -125,26 +131,29 @@ init::
 update::
 	Update the registered submodules, i.e. clone missing submodules and
 	checkout the commit specified in the index of the containing repository.
-	This will make the submodules HEAD be detached unless '--rebase' or
-	'--merge' is specified or the key `submodule.$name.update` is set to
+	This will make the submodules HEAD be detached unless `--rebase` or
+	`--merge` is specified or the key `submodule.$name.update` is set to
 	`rebase` or `merge`.
 +
 If the submodule is not yet initialized, and you just want to use the
 setting as stored in .gitmodules, you can automatically initialize the
-submodule with the --init option.
+submodule with the `--init` option.
 +
-If '--recursive' is specified, this command will recurse into the
+If `--recursive` is specified, this command will recurse into the
 registered submodules, and update any nested submodules within.
 
 summary::
 	Show commit summary between the given commit (defaults to HEAD) and
 	working tree/index. For a submodule in question, a series of commits
 	in the submodule between the given super project commit and the
-	index or working tree (switched by --cached) are shown. If the option
-	--files is given, show the series of commits in the submodule between
+	index or working tree (switched by `--cached`) are shown. If the option
+	`--files` is given, show the series of commits in the submodule between
 	the index of the super project and the working tree of the submodule
-	(this option doesn't allow to use the --cached option or to provide an
+	(this option doesn't allow to use the `--cached` option or to provide an
 	explicit commit).
++
+Using the `--submodule=log` option with linkgit:git-diff[1] will provide that
+information too.
 
 foreach::
 	Evaluates an arbitrary shell command in each checked out submodule.
@@ -155,9 +164,9 @@ foreach::
 	superproject, $sha1 is the commit as recorded in the superproject,
 	and $toplevel is the absolute path to the top-level of the superproject.
 	Any submodules defined in the superproject but not checked out are
-	ignored by this command. Unless given --quiet, foreach prints the name
+	ignored by this command. Unless given `--quiet`, foreach prints the name
 	of each submodule before evaluating the command.
-	If --recursive is given, submodules are traversed recursively (i.e.
+	If `--recursive` is given, submodules are traversed recursively (i.e.
 	the given shell command is evaluated in nested submodules as well).
 	A non-zero return from the command in any submodule causes
 	the processing to terminate. This can be overridden by adding '|| :'
@@ -237,13 +246,18 @@ OPTIONS
 	If the key `submodule.$name.update` is set to `rebase`, this option is
 	implicit.
 
+--init::
+	This option is only valid for the update command.
+	Initialize all submodules for which "git submodule init" has not been
+	called so far before updating.
+
 --reference <repository>::
 	This option is only valid for add and update commands.  These
 	commands sometimes need to clone a remote repository. In this case,
 	this option will be passed to the linkgit:git-clone[1] command.
 +
 *NOTE*: Do *not* use this option unless you have read the note
-for linkgit:git-clone[1]'s --reference and --shared options carefully.
+for linkgit:git-clone[1]'s `--reference` and `--shared` options carefully.
 
 --recursive::
 	This option is only valid for foreach, update and status commands.
