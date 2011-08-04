@@ -38,6 +38,15 @@ char *git_attr_name(struct git_attr *);
 
 int git_checkattr(const char *path, int, struct git_attr_check *);
 
+/*
+ * Retrieve all attributes that apply to the specified path.  *num
+ * will be set the the number of attributes on the path; **check will
+ * be set to point at a newly-allocated array of git_attr_check
+ * objects describing the attributes and their values.  *check must be
+ * free()ed by the caller.
+ */
+int git_all_attrs(const char *path, int *num, struct git_attr_check **check);
+
 enum git_attr_direction {
 	GIT_ATTR_CHECKIN,
 	GIT_ATTR_CHECKOUT,
