@@ -9,9 +9,10 @@ attr_check () {
 	path="$1"
 	expect="$2"
 
-	git check-attr test -- "$path" >actual &&
+	git check-attr test -- "$path" >actual 2>err &&
 	echo "$path: test: $2" >expect &&
-	test_cmp expect actual
+	test_cmp expect actual &&
+	test_line_count = 0 err
 
 }
 
