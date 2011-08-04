@@ -35,6 +35,19 @@ int main(int argc, char **argv)
 		return 0;
 	}
 
+	if (argc >= 4 && !strcmp(argv[1], "prefix_path")) {
+		char *prefix = argv[2];
+		int prefix_len = strlen(prefix);
+		int nongit_ok;
+		setup_git_directory_gently(&nongit_ok);
+		while (argc > 3) {
+			puts(prefix_path(prefix, prefix_len, argv[3]));
+			argc--;
+			argv++;
+		}
+		return 0;
+	}
+
 	if (argc == 4 && !strcmp(argv[1], "strip_path_suffix")) {
 		char *prefix = strip_path_suffix(argv[2], argv[3]);
 		printf("%s\n", prefix ? prefix : "(null)");
