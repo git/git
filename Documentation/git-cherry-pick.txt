@@ -112,31 +112,31 @@ effect to your index in a row.
 
 EXAMPLES
 --------
-git cherry-pick master::
+`git cherry-pick master`::
 
 	Apply the change introduced by the commit at the tip of the
 	master branch and create a new commit with this change.
 
-git cherry-pick ..master::
-git cherry-pick ^HEAD master::
+`git cherry-pick ..master`::
+`git cherry-pick ^HEAD master`::
 
 	Apply the changes introduced by all commits that are ancestors
 	of master but not of HEAD to produce new commits.
 
-git cherry-pick master{tilde}4 master{tilde}2::
+`git cherry-pick master{tilde}4 master{tilde}2`::
 
 	Apply the changes introduced by the fifth and third last
 	commits pointed to by master and create 2 new commits with
 	these changes.
 
-git cherry-pick -n master~1 next::
+`git cherry-pick -n master~1 next`::
 
 	Apply to the working tree and the index the changes introduced
 	by the second last commit pointed to by master and by the last
 	commit pointed to by next, but do not create any commit with
 	these changes.
 
-git cherry-pick --ff ..next::
+`git cherry-pick --ff ..next`::
 
 	If history is linear and HEAD is an ancestor of next, update
 	the working tree and advance the HEAD pointer to match next.
@@ -144,7 +144,7 @@ git cherry-pick --ff ..next::
 	are in next but not HEAD to the current branch, creating a new
 	commit for each new change.
 
-git rev-list --reverse master \-- README | git cherry-pick -n --stdin::
+`git rev-list --reverse master \-- README | git cherry-pick -n --stdin`::
 
 	Apply the changes introduced by all commits on the master
 	branch that touched README to the working tree and index,

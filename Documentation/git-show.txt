@@ -48,23 +48,23 @@ include::pretty-formats.txt[]
 EXAMPLES
 --------
 
-git show v1.0.0::
+`git show v1.0.0`::
 	Shows the tag `v1.0.0`, along with the object the tags
 	points at.
 
-git show v1.0.0^\{tree\}::
+`git show v1.0.0^\{tree\}`::
 	Shows the tree pointed to by the tag `v1.0.0`.
 
-git show -s --format=%s v1.0.0^\{commit\}::
+`git show -s --format=%s v1.0.0^\{commit\}`::
 	Shows the subject of the commit pointed to by the
 	tag `v1.0.0`.
 
-git show next~10:Documentation/README::
+`git show next~10:Documentation/README`::
 	Shows the contents of the file `Documentation/README` as
 	they were current in the 10th last commit of the branch
 	`next`.
 
-git show master:Makefile master:t/Makefile::
+`git show master:Makefile master:t/Makefile`::
 	Concatenates the contents of said Makefiles in the head
 	of the branch `master`.
 

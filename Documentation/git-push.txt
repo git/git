@@ -327,12 +327,12 @@ a case where you do mean to lose history.
 Examples
 --------
 
-git push::
+`git push`::
 	Works like `git push <remote>`, where <remote> is the
 	current branch's remote (or `origin`, if no remote is
 	configured for the current branch).
 
-git push origin::
+`git push origin`::
 	Without additional configuration, works like
 	`git push origin :`.
 +
@@ -344,45 +344,45 @@ use `git config remote.origin.push HEAD`.  Any valid <refspec> (like
 the ones in the examples below) can be configured as the default for
 `git push origin`.
 
-git push origin :::
+`git push origin :`::
 	Push "matching" branches to `origin`. See
 	<refspec> in the <<OPTIONS,OPTIONS>> section above for a
 	description of "matching" branches.
 
-git push origin master::
+`git push origin master`::
 	Find a ref that matches `master` in the source repository
 	(most likely, it would find `refs/heads/master`), and update
 	the same ref (e.g. `refs/heads/master`) in `origin` repository
 	with it.  If `master` did not exist remotely, it would be
 	created.
 
-git push origin HEAD::
+`git push origin HEAD`::
 	A handy way to push the current branch to the same name on the
 	remote.
 
-git push origin master:satellite/master dev:satellite/dev::
+`git push origin master:satellite/master dev:satellite/dev`::
 	Use the source ref that matches `master` (e.g. `refs/heads/master`)
 	to update the ref that matches `satellite/master` (most probably
 	`refs/remotes/satellite/master`) in the `origin` repository, then
 	do the same for `dev` and `satellite/dev`.
 
-git push origin HEAD:master::
+`git push origin HEAD:master`::
 	Push the current branch to the remote ref matching `master` in the
 	`origin` repository. This form is convenient to push the current
 	branch without thinking about its local name.
 
-git push origin master:refs/heads/experimental::
+`git push origin master:refs/heads/experimental`::
 	Create the branch `experimental` in the `origin` repository
 	by copying the current `master` branch.  This form is only
 	needed to create a new branch or tag in the remote repository when
 	the local name and the remote name are different; otherwise,
 	the ref name on its own will work.
 
-git push origin :experimental::
+`git push origin :experimental`::
 	Find a ref that matches `experimental` in the `origin` repository
 	(e.g. `refs/heads/experimental`), and delete it.
 
-git push origin {plus}dev:master::
+`git push origin {plus}dev:master`::
 	Update the origin repository's master branch with the dev branch,
 	allowing non-fast-forward updates.  *This can leave unreferenced
 	commits dangling in the origin repository.*  Consider the

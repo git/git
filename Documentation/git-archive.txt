@@ -142,41 +142,41 @@ while archiving any tree in your `$GIT_DIR/info/attributes` file.
 
 EXAMPLES
 --------
-git archive --format=tar --prefix=junk/ HEAD | (cd /var/tmp/ && tar xf -)::
+`git archive --format=tar --prefix=junk/ HEAD | (cd /var/tmp/ && tar xf -)`::
 
 	Create a tar archive that contains the contents of the
 	latest commit on the current branch, and extract it in the
 	`/var/tmp/junk` directory.
 
-git archive --format=tar --prefix=git-1.4.0/ v1.4.0 | gzip >git-1.4.0.tar.gz::
+`git archive --format=tar --prefix=git-1.4.0/ v1.4.0 | gzip >git-1.4.0.tar.gz`::
 
 	Create a compressed tarball for v1.4.0 release.
 
-git archive --format=tar.gz --prefix=git-1.4.0/ v1.4.0 >git-1.4.0.tar.gz::
+`git archive --format=tar.gz --prefix=git-1.4.0/ v1.4.0 >git-1.4.0.tar.gz`::
 
 	Same as above, but using the builtin tar.gz handling.
 
-git archive --prefix=git-1.4.0/ -o git-1.4.0.tar.gz v1.4.0::
+`git archive --prefix=git-1.4.0/ -o git-1.4.0.tar.gz v1.4.0`::
 
 	Same as above, but the format is inferred from the output file.
 
-git archive --format=tar --prefix=git-1.4.0/ v1.4.0{caret}\{tree\} | gzip >git-1.4.0.tar.gz::
+`git archive --format=tar --prefix=git-1.4.0/ v1.4.0{caret}\{tree\} | gzip >git-1.4.0.tar.gz`::
 
 	Create a compressed tarball for v1.4.0 release, but without a
 	global extended pax header.
 
-git archive --format=zip --prefix=git-docs/ HEAD:Documentation/ > git-1.4.0-docs.zip::
+`git archive --format=zip --prefix=git-docs/ HEAD:Documentation/ > git-1.4.0-docs.zip`::
 
 	Put everything in the current head's Documentation/ directory
 	into 'git-1.4.0-docs.zip', with the prefix 'git-docs/'.
 
-git archive -o latest.zip HEAD::
+`git archive -o latest.zip HEAD`::
 
 	Create a Zip archive that contains the contents of the latest
 	commit on the current branch. Note that the output format is
 	inferred by the extension of the output file.
 
-git config tar.tar.xz.command "xz -c"::
+`git config tar.tar.xz.command "xz -c"`::
 
 	Configure a "tar.xz" format for making LZMA-compressed tarfiles.
 	You can use it specifying `--format=tar.xz`, or by creating an

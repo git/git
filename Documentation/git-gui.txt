@@ -50,7 +50,7 @@ version::
 
 Examples
 --------
-git gui blame Makefile::
+`git gui blame Makefile`::
 
 	Show the contents of the file 'Makefile' in the current
 	working directory, and provide annotations for both the
@@ -59,41 +59,41 @@ git gui blame Makefile::
 	uncommitted changes (if any) are explicitly attributed to
 	'Not Yet Committed'.
 
-git gui blame v0.99.8 Makefile::
+`git gui blame v0.99.8 Makefile`::
 
 	Show the contents of 'Makefile' in revision 'v0.99.8'
 	and provide annotations for each line.  Unlike the above
 	example the file is read from the object database and not
 	the working directory.
 
-git gui blame --line=100 Makefile::
+`git gui blame --line=100 Makefile`::
 
 	Loads annotations as described above and automatically
 	scrolls the view to center on line '100'.
 
-git gui citool::
+`git gui citool`::
 
 	Make one commit and return to the shell when it is complete.
 	This command returns a non-zero exit code if the window was
 	closed in any way other than by making a commit.
 
-git gui citool --amend::
+`git gui citool --amend`::
 
 	Automatically enter the 'Amend Last Commit' mode of
 	the interface.
 
-git gui citool --nocommit::
+`git gui citool --nocommit`::
 
 	Behave as normal citool, but instead of making a commit
 	simply terminate with a zero exit code. It still checks
 	that the index does not contain any unmerged entries, so
 	you can use it as a GUI version of linkgit:git-mergetool[1]
 
-git citool::
+`git citool`::
 
 	Same as `git gui citool` (above).
 
-git gui browser maint::
+`git gui browser maint`::
 
 	Show a browser for the tree of the 'maint' branch.  Files
 	selected in the browser can be viewed with the internal

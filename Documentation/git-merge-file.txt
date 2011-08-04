@@ -76,12 +76,12 @@ OPTIONS
 EXAMPLES
 --------
 
-git merge-file README.my README README.upstream::
+`git merge-file README.my README README.upstream`::
 
 	combines the changes of README.my and README.upstream since README,
 	tries to merge them and writes the result into README.my.
 
-git merge-file -L a -L b -L c tmp/a123 tmp/b234 tmp/c345::
+`git merge-file -L a -L b -L c tmp/a123 tmp/b234 tmp/c345`::
 
 	merges tmp/a123 and tmp/c345 with the base tmp/b234, but uses labels
 	`a` and `c` instead of `tmp/a123` and `tmp/c345`.
