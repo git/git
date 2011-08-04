@@ -42,6 +42,12 @@ test_expect_success 'setup' '
 
 '
 
+test_expect_success 'command line checks' '
+
+	test_must_fail git check-attr "" -- f
+
+'
+
 test_expect_success 'attribute test' '
 
 	attr_check f f &&
