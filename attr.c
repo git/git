@@ -722,7 +722,6 @@ static void collect_all_attrs(const char *path)
 	struct attr_stack *stk;
 	int i, pathlen, rem;
 
-	bootstrap_attr_stack();
 	prepare_attr_stack(path);
 	for (i = 0; i < attr_nr; i++)
 		check_all_attr[i].value = ATTR__UNKNOWN;
