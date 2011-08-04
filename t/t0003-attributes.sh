@@ -93,7 +93,7 @@ test_expect_success 'attribute test' '
 
 '
 
-test_expect_failure 'unnormalized paths' '
+test_expect_success 'unnormalized paths' '
 
 	attr_check ./f f &&
 	attr_check ./a/g a/g &&
@@ -102,7 +102,7 @@ test_expect_failure 'unnormalized paths' '
 
 '
 
-test_expect_failure 'relative paths' '
+test_expect_success 'relative paths' '
 
 	(cd a && attr_check ../f f) &&
 	(cd a && attr_check f f) &&

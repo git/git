@@ -41,22 +41,26 @@ static void output_attr(int cnt, struct git_attr_check *check,
 	}
 }
 
-static void check_attr(int cnt, struct git_attr_check *check,
-	const char *file)
+static void check_attr(const char *prefix, int cnt,
+	struct git_attr_check *check, const char *file)
 {
+	char *full_path =
+		prefix_path(prefix, prefix ? strlen(prefix) : 0, file);
 	if (check != NULL) {
-		if (git_check_attr(file, cnt, check))
+		if (git_check_attr(full_path, cnt, check))
 			die("git_check_attr died");
 		output_attr(cnt, check, file);
 	} else {
-		if (git_all_attrs(file, &cnt, &check))
+		if (git_all_attrs(full_path, &cnt, &check))
 			die("git_all_attrs died");
 		output_attr(cnt, check, file);
 		free(check);
 	}
+	free(full_path);
 }
 
-static void check_attr_stdin_paths(int cnt, struct git_attr_check *check)
+static void check_attr_stdin_paths(const char *prefix, int cnt,
+	struct git_attr_check *check)
 {
 	struct strbuf buf, nbuf;
 	int line_termination = null_term_line ? 0 : '\n';
@@ -70,7 +74,7 @@ static void check_attr_stdin_paths(int cnt, struct git_attr_check *check)
 				die("line is badly quoted");
 			strbuf_swap(&buf, &nbuf);
 		}
-		check_attr(cnt, check, buf.buf);
+		check_attr(prefix, cnt, check, buf.buf);
 		maybe_flush_or_die(stdout, "attribute to stdout");
 	}
 	strbuf_release(&buf);
@@ -154,10 +158,10 @@ int cmd_check_attr(int argc, const char **argv, const char *prefix)
 	}
 
 	if (stdin_paths)
-		check_attr_stdin_paths(cnt, check);
+		check_attr_stdin_paths(prefix, cnt, check);
 	else {
 		for (i = filei; i < argc; i++)
-			check_attr(cnt, check, argv[i]);
+			check_attr(prefix, cnt, check, argv[i]);
 		maybe_flush_or_die(stdout, "attribute to stdout");
 	}
 	return 0;
