@@ -50,10 +50,8 @@ static unsigned hash_name(const char *name, int namelen)
 static int invalid_attr_name(const char *name, int namelen)
 {
 	/*
-	 * Attribute name cannot begin with '-' and from
-	 * [-A-Za-z0-9_.].  We'd specifically exclude '=' for now,
-	 * as we might later want to allow non-binary value for
-	 * attributes, e.g. "*.svg	merge=special-merge-program-for-svg"
+	 * Attribute name cannot begin with '-' and must consist of
+	 * characters from [-A-Za-z0-9_.].
 	 */
 	if (*name == '-')
 		return -1;
