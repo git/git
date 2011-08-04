@@ -535,11 +535,18 @@ static void bootstrap_attr_stack(void)
 	}
 }
 
-static void prepare_attr_stack(const char *path, int dirlen)
+static void prepare_attr_stack(const char *path)
 {
 	struct attr_stack *elem, *info;
-	int len;
+	int dirlen, len;
 	struct strbuf pathbuf;
+	const char *cp;
+
+	cp = strrchr(path, '/');
+	if (!cp)
+		dirlen = 0;
+	else
+		dirlen = cp - path;
 
 	strbuf_init(&pathbuf, dirlen+2+strlen(GITATTRIBUTES_FILE));
 
@@ -709,20 +716,14 @@ static int macroexpand_one(int attr_nr, int rem)
 int git_checkattr(const char *path, int num, struct git_attr_check *check)
 {
 	struct attr_stack *stk;
-	const char *cp;
-	int dirlen, pathlen, i, rem;
+	int pathlen, i, rem;
 
 	bootstrap_attr_stack();
 	for (i = 0; i < attr_nr; i++)
 		check_all_attr[i].value = ATTR__UNKNOWN;
 
 	pathlen = strlen(path);
-	cp = strrchr(path, '/');
-	if (!cp)
-		dirlen = 0;
-	else
-		dirlen = cp - path;
-	prepare_attr_stack(path, dirlen);
+	prepare_attr_stack(path);
 	rem = attr_nr;
 	for (stk = attr_stack; 0 < rem && stk; stk = stk->prev)
 		rem = fill(path, pathlen, stk, rem);
