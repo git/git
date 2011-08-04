@@ -93,6 +93,15 @@ test_expect_success 'attribute test' '
 
 '
 
+test_expect_failure 'unnormalized paths' '
+
+	attr_check ./f f &&
+	attr_check ./a/g a/g &&
+	attr_check a/./g a/g &&
+	attr_check a/c/../b/g a/b/g
+
+'
+
 test_expect_success 'core.attributesfile' '
 	attr_check global unspecified &&
 	git config core.attributesfile "$HOME/global-gitattributes" &&
