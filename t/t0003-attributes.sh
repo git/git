@@ -35,7 +35,7 @@ test_expect_success 'setup' '
 		echo "h test=a/b/h" &&
 		echo "d/* test=a/b/d/*"
 		echo "d/yes notest"
-	) >a/b/.gitattributes
+	) >a/b/.gitattributes &&
 	(
 		echo "global test=global"
 	) >"$HOME"/global-gitattributes
