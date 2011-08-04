@@ -78,7 +78,6 @@ int cmd_check_attr(int argc, const char **argv, const char *prefix)
 {
 	struct git_attr_check *check;
 	int cnt, i, doubledash, filei;
-	const char *errstr = NULL;
 
 	argc = parse_options(argc, argv, prefix, check_attr_options,
 			     check_attr_usage, PARSE_OPT_KEEP_DASHDASH);
@@ -105,12 +104,10 @@ int cmd_check_attr(int argc, const char **argv, const char *prefix)
 	}
 
 	if (cnt <= 0)
-		errstr = "No attribute specified";
-	else if (stdin_paths && filei < argc)
-		errstr = "Can't specify files with --stdin";
-	if (errstr) {
-		error_with_usage(errstr);
-	}
+		error_with_usage("No attribute specified");
+
+	if (stdin_paths && filei < argc)
+		error_with_usage("Can't specify files with --stdin");
 
 	check = xcalloc(cnt, sizeof(*check));
 	for (i = 0; i < cnt; i++) {
