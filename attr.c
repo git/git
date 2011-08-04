@@ -565,8 +565,7 @@ static void prepare_attr_stack(const char *path)
 	 * .gitattributes in deeper directories to shallower ones,
 	 * and finally use the built-in set as the default.
 	 */
-	if (!attr_stack)
-		bootstrap_attr_stack();
+	bootstrap_attr_stack();
 
 	/*
 	 * Pop the "info" one that is always at the top of the stack.
