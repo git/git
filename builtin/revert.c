@@ -66,15 +66,6 @@ struct replay_opts {
 
 #define GIT_REFLOG_ACTION "GIT_REFLOG_ACTION"
 
-static void fatal(const char *advice, ...)
-{
-	va_list params;
-
-	va_start(params, advice);
-	vreportf("fatal: ", advice, params);
-	va_end(params);
-}
-
 static const char *action_name(const struct replay_opts *opts)
 {
 	return opts->action == REVERT ? "revert" : "cherry-pick";
@@ -356,25 +347,20 @@ static struct tree *empty_tree(void)
 	return tree;
 }
 
-static NORETURN void die_dirty_index(struct replay_opts *opts)
+static int error_dirty_index(struct replay_opts *opts)
 {
-	if (read_cache_unmerged()) {
-		die_resolve_conflict(action_name(opts));
-	} else {
-		if (advice_commit_before_merge) {
-			if (opts->action == REVERT)
-				die(_("Your local changes would be overwritten by revert.\n"
-					  "Please, commit your changes or stash them to proceed."));
-			else
-				die(_("Your local changes would be overwritten by cherry-pick.\n"
-					  "Please, commit your changes or stash them to proceed."));
-		} else {
-			if (opts->action == REVERT)
-				die(_("Your local changes would be overwritten by revert.\n"));
-			else
-				die(_("Your local changes would be overwritten by cherry-pick.\n"));
-		}
-	}
+	if (read_cache_unmerged())
+		return error_resolve_conflict(action_name(opts));
+
+	/* Different translation strings for cherry-pick and revert */
+	if (opts->action == CHERRY_PICK)
+		error(_("Your local changes would be overwritten by cherry-pick."));
+	else
+		error(_("Your local changes would be overwritten by revert."));
+
+	if (advice_commit_before_merge)
+		advise(_("Commit your changes or stash them to proceed."));
+	return -1;
 }
 
 static int fast_forward_to(const unsigned char *to, const unsigned char *from)
@@ -492,9 +478,9 @@ static int do_pick_commit(struct commit *commit, struct replay_opts *opts)
 			die (_("Your index file is unmerged."));
 	} else {
 		if (get_sha1("HEAD", head))
-			die (_("You do not have a valid HEAD"));
+			return error(_("You do not have a valid HEAD"));
 		if (index_differs_from("HEAD", 0))
-			die_dirty_index(opts);
+			return error_dirty_index(opts);
 	}
 	discard_cache();
 
@@ -507,20 +493,20 @@ static int do_pick_commit(struct commit *commit, struct replay_opts *opts)
 		struct commit_list *p;
 
 		if (!opts->mainline)
-			die(_("Commit %s is a merge but no -m option was given."),
-			    sha1_to_hex(commit->object.sha1));
+			return error(_("Commit %s is a merge but no -m option was given."),
+				sha1_to_hex(commit->object.sha1));
 
 		for (cnt = 1, p = commit->parents;
 		     cnt != opts->mainline && p;
 		     cnt++)
 			p = p->next;
 		if (cnt != opts->mainline || !p)
-			die(_("Commit %s does not have parent %d"),
-			    sha1_to_hex(commit->object.sha1), opts->mainline);
+			return error(_("Commit %s does not have parent %d"),
+				sha1_to_hex(commit->object.sha1), opts->mainline);
 		parent = p->item;
 	} else if (0 < opts->mainline)
-		die(_("Mainline was specified but commit %s is not a merge."),
-		    sha1_to_hex(commit->object.sha1));
+		return error(_("Mainline was specified but commit %s is not a merge."),
+			sha1_to_hex(commit->object.sha1));
 	else
 		parent = commit->parents->item;
 
@@ -530,12 +516,12 @@ static int do_pick_commit(struct commit *commit, struct replay_opts *opts)
 	if (parent && parse_commit(parent) < 0)
 		/* TRANSLATORS: The first %s will be "revert" or
 		   "cherry-pick", the second %s a SHA1 */
-		die(_("%s: cannot parse parent commit %s"),
-		    action_name(opts), sha1_to_hex(parent->object.sha1));
+		return error(_("%s: cannot parse parent commit %s"),
+			action_name(opts), sha1_to_hex(parent->object.sha1));
 
 	if (get_message(commit, &msg) != 0)
-		die(_("Cannot get commit message for %s"),
-				sha1_to_hex(commit->object.sha1));
+		return error(_("Cannot get commit message for %s"),
+			sha1_to_hex(commit->object.sha1));
 
 	/*
 	 * "commit" is an existing commit.  We would want to apply
@@ -997,27 +983,28 @@ static int pick_revisions(struct replay_opts *opts)
 
 		walk_revs_populate_todo(&todo_list, opts);
 		if (create_seq_dir() < 0) {
-			fatal(_("A cherry-pick or revert is in progress."));
+			error(_("A cherry-pick or revert is in progress."));
 			advise(_("Use --continue to continue the operation"));
 			advise(_("or --reset to forget about it"));
-			exit(128);
+			return -1;
 		}
 		if (get_sha1("HEAD", sha1)) {
 			if (opts->action == REVERT)
-				die(_("Can't revert as initial commit"));
-			die(_("Can't cherry-pick into empty head"));
+				return error(_("Can't revert as initial commit"));
+			return error(_("Can't cherry-pick into empty head"));
 		}
 		save_head(sha1_to_hex(sha1));
 		save_opts(opts);
 	}
 	return pick_commits(todo_list, opts);
 error:
-	die(_("No %s in progress"), action_name(opts));
+	return error(_("No %s in progress"), action_name(opts));
 }
 
 int cmd_revert(int argc, const char **argv, const char *prefix)
 {
 	struct replay_opts opts;
+	int res;
 
 	memset(&opts, 0, sizeof(opts));
 	if (isatty(0))
@@ -1025,16 +1012,23 @@ int cmd_revert(int argc, const char **argv, const char *prefix)
 	opts.action = REVERT;
 	git_config(git_default_config, NULL);
 	parse_args(argc, argv, &opts);
-	return pick_revisions(&opts);
+	res = pick_revisions(&opts);
+	if (res < 0)
+		die(_("revert failed"));
+	return res;
 }
 
 int cmd_cherry_pick(int argc, const char **argv, const char *prefix)
 {
 	struct replay_opts opts;
+	int res;
 
 	memset(&opts, 0, sizeof(opts));
 	opts.action = CHERRY_PICK;
 	git_config(git_default_config, NULL);
 	parse_args(argc, argv, &opts);
-	return pick_revisions(&opts);
+	res = pick_revisions(&opts);
+	if (res < 0)
+		die(_("cherry-pick failed"));
+	return res;
 }
