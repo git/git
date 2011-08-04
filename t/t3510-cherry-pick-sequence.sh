@@ -13,7 +13,7 @@ test_description='Test cherry-pick continuation features
 . ./test-lib.sh
 
 pristine_detach () {
-	rm -rf .git/sequencer &&
+	git cherry-pick --reset &&
 	git checkout -f "$1^0" &&
 	git read-tree -u --reset HEAD &&
 	git clean -d -f -f -q -x
@@ -67,6 +67,18 @@ test_expect_success 'cherry-pick persists opts correctly' '
 test_expect_success 'cherry-pick cleans up sequencer state upon success' '
 	pristine_detach initial &&
 	git cherry-pick initial..picked &&
+	test_path_is_missing .git/sequencer
+'
+
+test_expect_success '--reset does not complain when no cherry-pick is in progress' '
+	pristine_detach initial &&
+	git cherry-pick --reset
+'
+
+test_expect_success '--reset cleans up sequencer state' '
+	pristine_detach initial &&
+	test_must_fail git cherry-pick base..picked &&
+	git cherry-pick --reset &&
 	test_path_is_missing .git/sequencer
 '
 

@@ -14,6 +14,7 @@
 #include "merge-recursive.h"
 #include "refs.h"
 #include "dir.h"
+#include "sequencer.h"
 
 /*
  * This implements the builtins revert and cherry-pick.
@@ -28,18 +29,22 @@
 
 static const char * const revert_usage[] = {
 	"git revert [options] <commit-ish>",
+	"git revert <subcommand>",
 	NULL
 };
 
 static const char * const cherry_pick_usage[] = {
 	"git cherry-pick [options] <commit-ish>",
+	"git cherry-pick <subcommand>",
 	NULL
 };
 
 enum replay_action { REVERT, CHERRY_PICK };
+enum replay_subcommand { REPLAY_NONE, REPLAY_RESET };
 
 struct replay_opts {
 	enum replay_action action;
+	enum replay_subcommand subcommand;
 
 	/* Boolean options */
 	int edit;
@@ -60,11 +65,6 @@ struct replay_opts {
 };
 
 #define GIT_REFLOG_ACTION "GIT_REFLOG_ACTION"
-
-#define SEQ_DIR         "sequencer"
-#define SEQ_HEAD_FILE   "sequencer/head"
-#define SEQ_TODO_FILE   "sequencer/todo"
-#define SEQ_OPTS_FILE   "sequencer/opts"
 
 static const char *action_name(const struct replay_opts *opts)
 {
@@ -113,7 +113,9 @@ static void parse_args(int argc, const char **argv, struct replay_opts *opts)
 	const char * const * usage_str = revert_or_cherry_pick_usage(opts);
 	const char *me = action_name(opts);
 	int noop;
+	int reset = 0;
 	struct option options[] = {
+		OPT_BOOLEAN(0, "reset", &reset, "forget the current operation"),
 		OPT_BOOLEAN('n', "no-commit", &opts->no_commit, "don't automatically commit"),
 		OPT_BOOLEAN('e', "edit", &opts->edit, "edit the commit message"),
 		{ OPTION_BOOLEAN, 'r', NULL, &noop, NULL, "no-op (backward compatibility)",
@@ -142,7 +144,27 @@ static void parse_args(int argc, const char **argv, struct replay_opts *opts)
 	opts->commit_argc = parse_options(argc, argv, NULL, options, usage_str,
 					PARSE_OPT_KEEP_ARGV0 |
 					PARSE_OPT_KEEP_UNKNOWN);
-	if (opts->commit_argc < 2)
+
+	/* Set the subcommand */
+	if (reset)
+		opts->subcommand = REPLAY_RESET;
+	else
+		opts->subcommand = REPLAY_NONE;
+
+	/* Check for incompatible command line arguments */
+	if (opts->subcommand == REPLAY_RESET) {
+		verify_opt_compatible(me, "--reset",
+				"--no-commit", opts->no_commit,
+				"--signoff", opts->signoff,
+				"--mainline", opts->mainline,
+				"--strategy", opts->strategy ? 1 : 0,
+				"--strategy-option", opts->xopts ? 1 : 0,
+				"-x", opts->record_origin,
+				"--ff", opts->allow_ff,
+				NULL);
+	}
+
+	else if (opts->commit_argc < 2)
 		usage_with_options(usage_str, options);
 
 	if (opts->allow_ff)
@@ -729,7 +751,6 @@ static void save_opts(struct replay_opts *opts)
 
 static int pick_commits(struct commit_list *todo_list, struct replay_opts *opts)
 {
-	struct strbuf buf = STRBUF_INIT;
 	struct commit_list *cur;
 	int res;
 
@@ -750,9 +771,7 @@ static int pick_commits(struct commit_list *todo_list, struct replay_opts *opts)
 	 * Sequence of picks finished successfully; cleanup by
 	 * removing the .git/sequencer directory
 	 */
-	strbuf_addf(&buf, "%s", git_path(SEQ_DIR));
-	remove_dir_recursively(&buf, 0);
-	strbuf_release(&buf);
+	remove_sequencer_state(1);
 	return 0;
 }
 
@@ -768,16 +787,21 @@ static int pick_revisions(struct replay_opts *opts)
 	 * cherry-pick should be handled differently from an existing
 	 * one that is being continued
 	 */
-	walk_revs_populate_todo(&todo_list, opts);
-	create_seq_dir();
-	if (get_sha1("HEAD", sha1)) {
-		if (opts->action == REVERT)
-			die(_("Can't revert as initial commit"));
-		die(_("Can't cherry-pick into empty head"));
+	if (opts->subcommand == REPLAY_RESET) {
+		remove_sequencer_state(1);
+		return 0;
+	} else {
+		/* Start a new cherry-pick/ revert sequence */
+		walk_revs_populate_todo(&todo_list, opts);
+		create_seq_dir();
+		if (get_sha1("HEAD", sha1)) {
+			if (opts->action == REVERT)
+				die(_("Can't revert as initial commit"));
+			die(_("Can't cherry-pick into empty head"));
+		}
+		save_head(sha1_to_hex(sha1));
+		save_opts(opts);
 	}
-	save_head(sha1_to_hex(sha1));
-	save_opts(opts);
-
 	return pick_commits(todo_list, opts);
 }
 

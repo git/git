@@ -8,6 +8,7 @@ git-cherry-pick - Apply the changes introduced by some existing commits
 SYNOPSIS
 --------
 'git cherry-pick' [--edit] [-n] [-m parent-number] [-s] [-x] [--ff] <commit>...
+'git cherry-pick' --reset
 
 DESCRIPTION
 -----------
@@ -108,6 +109,10 @@ effect to your index in a row.
 --strategy-option=<option>::
 	Pass the merge strategy-specific option through to the
 	merge strategy.  See linkgit:git-merge[1] for details.
+
+SEQUENCER SUBCOMMANDS
+---------------------
+include::sequencer.txt[]
 
 EXAMPLES
 --------
