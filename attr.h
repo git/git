@@ -29,6 +29,13 @@ struct git_attr_check {
 	const char *value;
 };
 
+/*
+ * Return the name of the attribute represented by the argument.  The
+ * return value is a pointer to a null-delimited string that is part
+ * of the internal data structure; it should not be modified or freed.
+ */
+char *git_attr_name(struct git_attr *);
+
 int git_checkattr(const char *path, int, struct git_attr_check *);
 
 enum git_attr_direction {

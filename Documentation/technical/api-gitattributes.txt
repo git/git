@@ -13,7 +13,8 @@ Data Structure
 	An attribute is an opaque object that is identified by its name.
 	Pass the name to `git_attr()` function to obtain the object of
 	this type.  The internal representation of this structure is
-	of no interest to the calling programs.
+	of no interest to the calling programs.  The name of the
+	attribute can be retrieved by calling `git_attr_name()`.
 
 `struct git_attr_check`::
 
