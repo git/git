@@ -38,7 +38,25 @@ test_expect_success 'setup' '
 	) >a/b/.gitattributes &&
 	(
 		echo "global test=global"
-	) >"$HOME"/global-gitattributes
+	) >"$HOME"/global-gitattributes &&
+	cat <<EOF >expect-all
+f: test: f
+a/f: test: f
+a/c/f: test: f
+a/g: test: a/g
+a/b/g: test: a/b/g
+b/g: test: unspecified
+a/b/h: test: a/b/h
+a/b/d/g: test: a/b/d/*
+onoff: test: unset
+offon: test: set
+no: notest: set
+no: test: unspecified
+a/b/d/no: notest: set
+a/b/d/no: test: a/b/d/*
+a/b/d/yes: notest: set
+a/b/d/yes: test: unspecified
+EOF
 
 '
 
@@ -87,47 +105,16 @@ test_expect_success 'core.attributesfile' '
 
 test_expect_success 'attribute test: read paths from stdin' '
 
-	cat <<EOF > expect &&
-f: test: f
-a/f: test: f
-a/c/f: test: f
-a/g: test: a/g
-a/b/g: test: a/b/g
-b/g: test: unspecified
-a/b/h: test: a/b/h
-a/b/d/g: test: a/b/d/*
-onoff: test: unset
-offon: test: set
-no: test: unspecified
-a/b/d/no: test: a/b/d/*
-a/b/d/yes: test: unspecified
-EOF
-
+	grep -v notest < expect-all > expect &&
 	sed -e "s/:.*//" < expect | git check-attr --stdin test > actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'attribute test: --all option' '
 
-	cat <<EOF > all &&
-f: test: f
-a/f: test: f
-a/c/f: test: f
-a/g: test: a/g
-a/b/g: test: a/b/g
-b/g: test: unspecified
-a/b/h: test: a/b/h
-a/b/d/g: test: a/b/d/*
-onoff: test: unset
-offon: test: set
-no: notest: set
-a/b/d/no: test: a/b/d/*
-a/b/d/no: notest: set
-a/b/d/yes: notest: set
-EOF
-
-	grep -v unspecified < all | sort > expect &&
-	sed -e "s/:.*//" < all | uniq | git check-attr --stdin --all | sort > actual &&
+	grep -v unspecified < expect-all | sort > expect &&
+	sed -e "s/:.*//" < expect-all | uniq |
+		git check-attr --stdin --all | sort > actual &&
 	test_cmp expect actual
 '
 
