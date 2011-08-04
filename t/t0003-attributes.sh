@@ -19,7 +19,7 @@ attr_check () {
 
 test_expect_success 'setup' '
 
-	mkdir -p a/b/d a/c &&
+	mkdir -p a/b/d a/c b &&
 	(
 		echo "[attr]notest !test"
 		echo "f	test=f"
@@ -99,6 +99,19 @@ test_expect_failure 'unnormalized paths' '
 	attr_check ./a/g a/g &&
 	attr_check a/./g a/g &&
 	attr_check a/c/../b/g a/b/g
+
+'
+
+test_expect_failure 'relative paths' '
+
+	(cd a && attr_check ../f f) &&
+	(cd a && attr_check f f) &&
+	(cd a && attr_check i a/i) &&
+	(cd a && attr_check g a/g) &&
+	(cd a && attr_check b/g a/b/g) &&
+	(cd b && attr_check ../a/f f) &&
+	(cd b && attr_check ../a/g a/g) &&
+	(cd b && attr_check ../a/b/g a/b/g)
 
 '
 
