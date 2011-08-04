@@ -40,7 +40,7 @@ static const char * const cherry_pick_usage[] = {
 };
 
 enum replay_action { REVERT, CHERRY_PICK };
-enum replay_subcommand { REPLAY_NONE, REPLAY_RESET };
+enum replay_subcommand { REPLAY_NONE, REPLAY_RESET, REPLAY_CONTINUE };
 
 struct replay_opts {
 	enum replay_action action;
@@ -117,14 +117,37 @@ static void verify_opt_compatible(const char *me, const char *base_opt, ...)
 		die(_("%s: %s cannot be used with %s"), me, this_opt, base_opt);
 }
 
+static void verify_opt_mutually_compatible(const char *me, ...)
+{
+	const char *opt1, *opt2;
+	va_list ap;
+
+	va_start(ap, me);
+	while ((opt1 = va_arg(ap, const char *))) {
+		if (va_arg(ap, int))
+			break;
+	}
+	if (opt1) {
+		while ((opt2 = va_arg(ap, const char *))) {
+			if (va_arg(ap, int))
+				break;
+		}
+	}
+
+	if (opt1 && opt2)
+		die(_("%s: %s cannot be used with %s"),	me, opt1, opt2);
+}
+
 static void parse_args(int argc, const char **argv, struct replay_opts *opts)
 {
 	const char * const * usage_str = revert_or_cherry_pick_usage(opts);
 	const char *me = action_name(opts);
 	int noop;
 	int reset = 0;
+	int contin = 0;
 	struct option options[] = {
 		OPT_BOOLEAN(0, "reset", &reset, "forget the current operation"),
+		OPT_BOOLEAN(0, "continue", &contin, "continue the current operation"),
 		OPT_BOOLEAN('n', "no-commit", &opts->no_commit, "don't automatically commit"),
 		OPT_BOOLEAN('e', "edit", &opts->edit, "edit the commit message"),
 		{ OPTION_BOOLEAN, 'r', NULL, &noop, NULL, "no-op (backward compatibility)",
@@ -154,15 +177,29 @@ static void parse_args(int argc, const char **argv, struct replay_opts *opts)
 					PARSE_OPT_KEEP_ARGV0 |
 					PARSE_OPT_KEEP_UNKNOWN);
 
+	/* Check for incompatible subcommands */
+	verify_opt_mutually_compatible(me,
+				"--reset", reset,
+				"--continue", contin,
+				NULL);
+
 	/* Set the subcommand */
 	if (reset)
 		opts->subcommand = REPLAY_RESET;
+	else if (contin)
+		opts->subcommand = REPLAY_CONTINUE;
 	else
 		opts->subcommand = REPLAY_NONE;
 
 	/* Check for incompatible command line arguments */
-	if (opts->subcommand == REPLAY_RESET) {
-		verify_opt_compatible(me, "--reset",
+	if (opts->subcommand != REPLAY_NONE) {
+		char *this_operation;
+		if (opts->subcommand == REPLAY_RESET)
+			this_operation = "--reset";
+		else
+			this_operation = "--continue";
+
+		verify_opt_compatible(me, this_operation,
 				"--no-commit", opts->no_commit,
 				"--signoff", opts->signoff,
 				"--mainline", opts->mainline,
@@ -668,6 +705,137 @@ static int format_todo(struct strbuf *buf, struct commit_list *todo_list,
 	return 0;
 }
 
+static struct commit *parse_insn_line(char *start, struct replay_opts *opts)
+{
+	unsigned char commit_sha1[20];
+	char sha1_abbrev[40];
+	enum replay_action action;
+	int insn_len = 0;
+	char *p, *q;
+
+	if (!prefixcmp(start, "pick ")) {
+		action = CHERRY_PICK;
+		insn_len = strlen("pick");
+		p = start + insn_len + 1;
+	} else if (!prefixcmp(start, "revert ")) {
+		action = REVERT;
+		insn_len = strlen("revert");
+		p = start + insn_len + 1;
+	} else
+		return NULL;
+
+	q = strchr(p, ' ');
+	if (!q)
+		return NULL;
+	q++;
+
+	strlcpy(sha1_abbrev, p, q - p);
+
+	/*
+	 * Verify that the action matches up with the one in
+	 * opts; we don't support arbitrary instructions
+	 */
+	if (action != opts->action) {
+		const char *action_str;
+		action_str = action == REVERT ? "revert" : "cherry-pick";
+		error(_("Cannot %s during a %s"), action_str, action_name(opts));
+		return NULL;
+	}
+
+	if (get_sha1(sha1_abbrev, commit_sha1) < 0)
+		return NULL;
+
+	return lookup_commit_reference(commit_sha1);
+}
+
+static int parse_insn_buffer(char *buf, struct commit_list **todo_list,
+			struct replay_opts *opts)
+{
+	struct commit_list **next = todo_list;
+	struct commit *commit;
+	char *p = buf;
+	int i;
+
+	for (i = 1; *p; i++) {
+		commit = parse_insn_line(p, opts);
+		if (!commit)
+			return error(_("Could not parse line %d."), i);
+		next = commit_list_append(commit, next);
+		p = strchrnul(p, '\n');
+		if (*p)
+			p++;
+	}
+	if (!*todo_list)
+		return error(_("No commits parsed."));
+	return 0;
+}
+
+static void read_populate_todo(struct commit_list **todo_list,
+			struct replay_opts *opts)
+{
+	const char *todo_file = git_path(SEQ_TODO_FILE);
+	struct strbuf buf = STRBUF_INIT;
+	int fd, res;
+
+	fd = open(todo_file, O_RDONLY);
+	if (fd < 0)
+		die_errno(_("Could not open %s."), todo_file);
+	if (strbuf_read(&buf, fd, 0) < 0) {
+		close(fd);
+		strbuf_release(&buf);
+		die(_("Could not read %s."), todo_file);
+	}
+	close(fd);
+
+	res = parse_insn_buffer(buf.buf, todo_list, opts);
+	strbuf_release(&buf);
+	if (res)
+		die(_("Unusable instruction sheet: %s"), todo_file);
+}
+
+static int populate_opts_cb(const char *key, const char *value, void *data)
+{
+	struct replay_opts *opts = data;
+	int error_flag = 1;
+
+	if (!value)
+		error_flag = 0;
+	else if (!strcmp(key, "options.no-commit"))
+		opts->no_commit = git_config_bool_or_int(key, value, &error_flag);
+	else if (!strcmp(key, "options.edit"))
+		opts->edit = git_config_bool_or_int(key, value, &error_flag);
+	else if (!strcmp(key, "options.signoff"))
+		opts->signoff = git_config_bool_or_int(key, value, &error_flag);
+	else if (!strcmp(key, "options.record-origin"))
+		opts->record_origin = git_config_bool_or_int(key, value, &error_flag);
+	else if (!strcmp(key, "options.allow-ff"))
+		opts->allow_ff = git_config_bool_or_int(key, value, &error_flag);
+	else if (!strcmp(key, "options.mainline"))
+		opts->mainline = git_config_int(key, value);
+	else if (!strcmp(key, "options.strategy"))
+		git_config_string(&opts->strategy, key, value);
+	else if (!strcmp(key, "options.strategy-option")) {
+		ALLOC_GROW(opts->xopts, opts->xopts_nr + 1, opts->xopts_alloc);
+		opts->xopts[opts->xopts_nr++] = xstrdup(value);
+	} else
+		return error(_("Invalid key: %s"), key);
+
+	if (!error_flag)
+		return error(_("Invalid value for %s: %s"), key, value);
+
+	return 0;
+}
+
+static void read_populate_opts(struct replay_opts **opts_ptr)
+{
+	const char *opts_file = git_path(SEQ_OPTS_FILE);
+
+	if (!file_exists(opts_file))
+		return;
+	if (git_config_from_file(populate_opts_cb, opts_file, *opts_ptr) < 0)
+		die(_("Malformed options sheet: %s"), opts_file);
+}
+
 static void walk_revs_populate_todo(struct commit_list **todo_list,
 				struct replay_opts *opts)
 {
@@ -811,6 +979,15 @@ static int pick_revisions(struct replay_opts *opts)
 	if (opts->subcommand == REPLAY_RESET) {
 		remove_sequencer_state(1);
 		return 0;
+	} else if (opts->subcommand == REPLAY_CONTINUE) {
+		if (!file_exists(git_path(SEQ_TODO_FILE)))
+			goto error;
+		read_populate_opts(&opts);
+		read_populate_todo(&todo_list, opts);
+
+		/* Verify that the conflict has been resolved */
+		if (!index_differs_from("HEAD", 0))
+			todo_list = todo_list->next;
 	} else {
 		/*
 		 * Start a new cherry-pick/ revert sequence; but
@@ -821,7 +998,8 @@ static int pick_revisions(struct replay_opts *opts)
 		walk_revs_populate_todo(&todo_list, opts);
 		if (create_seq_dir() < 0) {
 			fatal(_("A cherry-pick or revert is in progress."));
-			advise(_("Use --reset to forget about it"));
+			advise(_("Use --continue to continue the operation"));
+			advise(_("or --reset to forget about it"));
 			exit(128);
 		}
 		if (get_sha1("HEAD", sha1)) {
@@ -833,6 +1011,8 @@ static int pick_revisions(struct replay_opts *opts)
 		save_opts(opts);
 	}
 	return pick_commits(todo_list, opts);
+error:
+	die(_("No %s in progress"), action_name(opts));
 }
 
 int cmd_revert(int argc, const char **argv, const char *prefix)

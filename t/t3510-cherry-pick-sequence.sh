@@ -115,4 +115,100 @@ test_expect_success 'cherry-pick does not implicitly stomp an existing operation
 	test_cmp expect actual
 '
 
+test_expect_success '--continue complains when no cherry-pick is in progress' '
+	pristine_detach initial &&
+	test_must_fail git cherry-pick --continue
+'
+
+test_expect_success '--continue complains when there are unresolved conflicts' '
+	pristine_detach initial &&
+	test_must_fail git cherry-pick base..anotherpick &&
+	test_must_fail git cherry-pick --continue
+'
+
+test_expect_success '--continue continues after conflicts are resolved' '
+	pristine_detach initial &&
+	test_must_fail git cherry-pick base..anotherpick &&
+	echo "c" >foo &&
+	git add foo &&
+	git commit &&
+	git cherry-pick --continue &&
+	test_path_is_missing .git/sequencer &&
+	{
+		git rev-list HEAD |
+		git diff-tree --root --stdin |
+		sed "s/$_x40/OBJID/g"
+	} >actual &&
+	cat >expect <<-\EOF &&
+	OBJID
+	:100644 100644 OBJID OBJID M	foo
+	OBJID
+	:100644 100644 OBJID OBJID M	foo
+	OBJID
+	:100644 100644 OBJID OBJID M	unrelated
+	OBJID
+	:000000 100644 OBJID OBJID A	foo
+	:000000 100644 OBJID OBJID A	unrelated
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success '--continue respects opts' '
+	pristine_detach initial &&
+	test_must_fail git cherry-pick -x base..anotherpick &&
+	echo "c" >foo &&
+	git add foo &&
+	git commit &&
+	git cherry-pick --continue &&
+	test_path_is_missing .git/sequencer &&
+	git cat-file commit HEAD >anotherpick_msg &&
+	git cat-file commit HEAD~1 >picked_msg &&
+	git cat-file commit HEAD~2 >unrelatedpick_msg &&
+	git cat-file commit HEAD~3 >initial_msg &&
+	test_must_fail grep "cherry picked from" initial_msg &&
+	grep "cherry picked from" unrelatedpick_msg &&
+	grep "cherry picked from" picked_msg &&
+	grep "cherry picked from" anotherpick_msg
+'
+
+test_expect_success '--signoff is not automatically propagated to resolved conflict' '
+	pristine_detach initial &&
+	test_must_fail git cherry-pick --signoff base..anotherpick &&
+	echo "c" >foo &&
+	git add foo &&
+	git commit &&
+	git cherry-pick --continue &&
+	test_path_is_missing .git/sequencer &&
+	git cat-file commit HEAD >anotherpick_msg &&
+	git cat-file commit HEAD~1 >picked_msg &&
+	git cat-file commit HEAD~2 >unrelatedpick_msg &&
+	git cat-file commit HEAD~3 >initial_msg &&
+	test_must_fail grep "Signed-off-by:" initial_msg &&
+	grep "Signed-off-by:" unrelatedpick_msg &&
+	test_must_fail grep "Signed-off-by:" picked_msg &&
+	grep "Signed-off-by:" anotherpick_msg
+'
+
+test_expect_success 'malformed instruction sheet 1' '
+	pristine_detach initial &&
+	test_must_fail git cherry-pick base..anotherpick &&
+	echo "resolved" >foo &&
+	git add foo &&
+	git commit &&
+	sed "s/pick /pick/" .git/sequencer/todo >new_sheet &&
+	cp new_sheet .git/sequencer/todo &&
+	test_must_fail git cherry-pick --continue
+'
+
+test_expect_success 'malformed instruction sheet 2' '
+	pristine_detach initial &&
+	test_must_fail git cherry-pick base..anotherpick &&
+	echo "resolved" >foo &&
+	git add foo &&
+	git commit &&
+	sed "s/pick/revert/" .git/sequencer/todo >new_sheet &&
+	cp new_sheet .git/sequencer/todo &&
+	test_must_fail git cherry-pick --continue
+'
+
 test_done

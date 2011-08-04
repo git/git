@@ -9,6 +9,7 @@ SYNOPSIS
 --------
 'git cherry-pick' [--edit] [-n] [-m parent-number] [-s] [-x] [--ff] <commit>...
 'git cherry-pick' --reset
+'git cherry-pick' --continue
 
 DESCRIPTION
 -----------

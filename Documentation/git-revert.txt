@@ -9,6 +9,7 @@ SYNOPSIS
 --------
 'git revert' [--edit | --no-edit] [-n] [-m parent-number] [-s] <commit>...
 'git revert' --reset
+'git revert' --continue
 
 DESCRIPTION
 -----------
