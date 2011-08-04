@@ -71,7 +71,7 @@ static void check_attr_stdin_paths(int cnt, struct git_attr_check *check)
 int cmd_check_attr(int argc, const char **argv, const char *prefix)
 {
 	struct git_attr_check *check;
-	int cnt, i, doubledash;
+	int cnt, i, doubledash, filei;
 	const char *errstr = NULL;
 
 	argc = parse_options(argc, argv, prefix, check_attr_options,
@@ -92,14 +92,15 @@ int cmd_check_attr(int argc, const char **argv, const char *prefix)
 	/* If there is no double dash, we handle only one attribute */
 	if (doubledash < 0) {
 		cnt = 1;
-		doubledash = 0;
-	} else
+		filei = 1;
+	} else {
 		cnt = doubledash;
-	doubledash++;
+		filei = doubledash + 1;
+	}
 
 	if (cnt <= 0)
 		errstr = "No attribute specified";
-	else if (stdin_paths && doubledash < argc)
+	else if (stdin_paths && filei < argc)
 		errstr = "Can't specify files with --stdin";
 	if (errstr) {
 		error("%s", errstr);
@@ -120,7 +121,7 @@ int cmd_check_attr(int argc, const char **argv, const char *prefix)
 	if (stdin_paths)
 		check_attr_stdin_paths(cnt, check);
 	else {
-		for (i = doubledash; i < argc; i++)
+		for (i = filei; i < argc; i++)
 			check_attr(cnt, check, argv[i]);
 		maybe_flush_or_die(stdout, "attribute to stdout");
 	}
