@@ -111,8 +111,13 @@ int cmd_check_attr(int argc, const char **argv, const char *prefix)
 	}
 
 	/* Check file argument(s): */
-	if (stdin_paths && filei < argc)
-		error_with_usage("Can't specify files with --stdin");
+	if (stdin_paths) {
+		if (filei < argc)
+			error_with_usage("Can't specify files with --stdin");
+	} else {
+		if (filei >= argc)
+			error_with_usage("No file specified");
+	}
 
 	check = xcalloc(cnt, sizeof(*check));
 	for (i = 0; i < cnt; i++) {
