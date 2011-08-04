@@ -4,16 +4,18 @@
 #include "quote.h"
 #include "parse-options.h"
 
+static int all_attrs;
 static int stdin_paths;
 static const char * const check_attr_usage[] = {
-"git check-attr attr... [--] pathname...",
-"git check-attr --stdin attr... < <list-of-paths>",
+"git check-attr [-a | --all | attr...] [--] pathname...",
+"git check-attr --stdin [-a | --all | attr...] < <list-of-paths>",
 NULL
 };
 
 static int null_term_line;
 
 static const struct option check_attr_options[] = {
+	OPT_BOOLEAN('a', "all", &all_attrs, "report all attributes set on file"),
 	OPT_BOOLEAN(0 , "stdin", &stdin_paths, "read file names from stdin"),
 	OPT_BOOLEAN('z', NULL, &null_term_line,
 		"input paths are terminated by a null character"),
@@ -42,9 +44,16 @@ static void output_attr(int cnt, struct git_attr_check *check,
 static void check_attr(int cnt, struct git_attr_check *check,
 	const char *file)
 {
-	if (git_checkattr(file, cnt, check))
-		die("git_checkattr died");
-	output_attr(cnt, check, file);
+	if (check != NULL) {
+		if (git_checkattr(file, cnt, check))
+			die("git_checkattr died");
+		output_attr(cnt, check, file);
+	} else {
+		if (git_all_attrs(file, &cnt, &check))
+			die("git_all_attrs died");
+		output_attr(cnt, check, file);
+		free(check);
+	}
 }
 
 static void check_attr_stdin_paths(int cnt, struct git_attr_check *check)
@@ -92,8 +101,14 @@ int cmd_check_attr(int argc, const char **argv, const char *prefix)
 			doubledash = i;
 	}
 
-	/* Check attribute argument(s): */
-	if (doubledash == 0) {
+	/* Process --all and/or attribute arguments: */
+	if (all_attrs) {
+		if (doubledash >= 1)
+			error_with_usage("Attributes and --all both specified");
+
+		cnt = 0;
+		filei = doubledash + 1;
+	} else if (doubledash == 0) {
 		error_with_usage("No attribute specified");
 	} else if (doubledash < 0) {
 		/*
@@ -119,15 +134,20 @@ int cmd_check_attr(int argc, const char **argv, const char *prefix)
 			error_with_usage("No file specified");
 	}
 
-	check = xcalloc(cnt, sizeof(*check));
-	for (i = 0; i < cnt; i++) {
-		const char *name;
-		struct git_attr *a;
-		name = argv[i];
-		a = git_attr(name);
-		if (!a)
-			return error("%s: not a valid attribute name", name);
-		check[i].attr = a;
+	if (all_attrs) {
+		check = NULL;
+	} else {
+		check = xcalloc(cnt, sizeof(*check));
+		for (i = 0; i < cnt; i++) {
+			const char *name;
+			struct git_attr *a;
+			name = argv[i];
+			a = git_attr(name);
+			if (!a)
+				return error("%s: not a valid attribute name",
+					name);
+			check[i].attr = a;
+		}
 	}
 
 	if (stdin_paths)
