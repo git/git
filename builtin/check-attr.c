@@ -20,12 +20,10 @@ static const struct option check_attr_options[] = {
 	OPT_END()
 };
 
-static void check_attr(int cnt, struct git_attr_check *check,
+static void output_attr(int cnt, struct git_attr_check *check,
 	const char *file)
 {
 	int j;
-	if (git_checkattr(file, cnt, check))
-		die("git_checkattr died");
 	for (j = 0; j < cnt; j++) {
 		const char *value = check[j].value;
 
@@ -39,6 +37,14 @@ static void check_attr(int cnt, struct git_attr_check *check,
 		quote_c_style(file, NULL, stdout, 0);
 		printf(": %s: %s\n", git_attr_name(check[j].attr), value);
 	}
+}
+
+static void check_attr(int cnt, struct git_attr_check *check,
+	const char *file)
+{
+	if (git_checkattr(file, cnt, check))
+		die("git_checkattr died");
+	output_attr(cnt, check, file);
 }
 
 static void check_attr_stdin_paths(int cnt, struct git_attr_check *check)
