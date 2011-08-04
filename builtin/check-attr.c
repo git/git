@@ -81,8 +81,6 @@ int cmd_check_attr(int argc, const char **argv, const char *prefix)
 
 	argc = parse_options(argc, argv, prefix, check_attr_options,
 			     check_attr_usage, PARSE_OPT_KEEP_DASHDASH);
-	if (!argc)
-		usage_with_options(check_attr_usage, check_attr_options);
 
 	if (read_cache() < 0) {
 		die("invalid cache");
@@ -94,8 +92,17 @@ int cmd_check_attr(int argc, const char **argv, const char *prefix)
 			doubledash = i;
 	}
 
-	/* If there is no double dash, we handle only one attribute */
-	if (doubledash < 0) {
+	/* Check attribute argument(s): */
+	if (doubledash == 0) {
+		error_with_usage("No attribute specified");
+	} else if (doubledash < 0) {
+		/*
+		 * There is no double dash; treat the first
+		 * argument as an attribute.
+		 */
+		if (!argc)
+			error_with_usage("No attribute specified");
+
 		cnt = 1;
 		filei = 1;
 	} else {
@@ -103,9 +110,7 @@ int cmd_check_attr(int argc, const char **argv, const char *prefix)
 		filei = doubledash + 1;
 	}
 
-	if (cnt <= 0)
-		error_with_usage("No attribute specified");
-
+	/* Check file argument(s): */
 	if (stdin_paths && filei < argc)
 		error_with_usage("Can't specify files with --stdin");
 
