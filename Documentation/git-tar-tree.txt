@@ -53,26 +53,26 @@ tar.umask::
 
 EXAMPLES
 --------
-git tar-tree HEAD junk | (cd /var/tmp/ && tar xf -)::
+`git tar-tree HEAD junk | (cd /var/tmp/ && tar xf -)`::
 
 	Create a tar archive that contains the contents of the
 	latest commit on the current branch, and extracts it in
 	`/var/tmp/junk` directory.
 
-git tar-tree v1.4.0 git-1.4.0 | gzip >git-1.4.0.tar.gz::
+`git tar-tree v1.4.0 git-1.4.0 | gzip >git-1.4.0.tar.gz`::
 
 	Create a tarball for v1.4.0 release.
 
-git tar-tree v1.4.0{caret}\{tree\} git-1.4.0 | gzip >git-1.4.0.tar.gz::
+`git tar-tree v1.4.0{caret}\{tree\} git-1.4.0 | gzip >git-1.4.0.tar.gz`::
 
 	Create a tarball for v1.4.0 release, but without a
 	global extended pax header.
 
-git tar-tree --remote=example.com:git.git v1.4.0 >git-1.4.0.tar::
+`git tar-tree --remote=example.com:git.git v1.4.0 >git-1.4.0.tar`::
 
 	Get a tarball v1.4.0 from example.com.
 
-git tar-tree HEAD:Documentation/ git-docs > git-1.4.0-docs.tar::
+`git tar-tree HEAD:Documentation/ git-docs > git-1.4.0-docs.tar`::
 
 	Put everything in the current head's Documentation/ directory
 	into 'git-1.4.0-docs.tar', with the prefix 'git-docs/'.

@@ -137,7 +137,7 @@ git diff --name-only --diff-filter=D -z | xargs -0 git rm --cached
 
 EXAMPLES
 --------
-git rm Documentation/\*.txt::
+`git rm Documentation/\*.txt`::
 	Removes all `*.txt` files from the index that are under the
 	`Documentation` directory and any of its subdirectories.
 +
@@ -145,7 +145,7 @@ Note that the asterisk `*` is quoted from the shell in this
 example; this lets git, and not the shell, expand the pathnames
 of files and subdirectories under the `Documentation/` directory.
 
-git rm -f git-*.sh::
+`git rm -f git-*.sh`::
 	Because this example lets the shell expand the asterisk
 	(i.e. you are listing the files explicitly), it
 	does not remove `subdir/git-foo.sh`.

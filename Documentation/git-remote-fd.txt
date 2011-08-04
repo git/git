@@ -35,19 +35,19 @@ GIT_TRANSLOOP_DEBUG::
 
 EXAMPLES
 --------
-git fetch fd::17 master::
+`git fetch fd::17 master`::
 	Fetch master, using file descriptor #17 to communicate with
 	git-upload-pack.
 
-git fetch fd::17/foo master::
+`git fetch fd::17/foo master`::
 	Same as above.
 
-git push fd::7,8 master (as URL)::
+`git push fd::7,8 master (as URL)`::
 	Push master, using file descriptor #7 to read data from
 	git-receive-pack and file descriptor #8 to write data to
 	same service.
 
-git push fd::7,8/bar master::
+`git push fd::7,8/bar master`::
 	Same as above.
 
 Documentation
