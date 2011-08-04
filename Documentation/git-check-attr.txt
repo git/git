@@ -33,8 +33,11 @@ OPTIONS
 
 \--::
 	Interpret all preceding arguments as attributes and all following
-	arguments as path names. If not supplied, only the first argument will
-	be treated as an attribute.
+	arguments as path names.
+
+If none of `--stdin`, `--all`, or `--` is used, the first argument
+will be treated as an attribute and the rest of the arguments as
+pathnames.
 
 OUTPUT
 ------

@@ -111,15 +111,18 @@ int cmd_check_attr(int argc, const char **argv, const char *prefix)
 	} else if (doubledash == 0) {
 		error_with_usage("No attribute specified");
 	} else if (doubledash < 0) {
-		/*
-		 * There is no double dash; treat the first
-		 * argument as an attribute.
-		 */
 		if (!argc)
 			error_with_usage("No attribute specified");
 
-		cnt = 1;
-		filei = 1;
+		if (stdin_paths) {
+			/* Treat all arguments as attribute names. */
+			cnt = argc;
+			filei = argc;
+		} else {
+			/* Treat exactly one argument as an attribute name. */
+			cnt = 1;
+			filei = 1;
+		}
 	} else {
 		cnt = doubledash;
 		filei = doubledash + 1;

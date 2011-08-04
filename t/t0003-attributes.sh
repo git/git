@@ -70,7 +70,6 @@ test_expect_success 'command line checks' '
 	echo "f" | test_must_fail git check-attr --stdin &&
 	echo "f" | test_must_fail git check-attr --stdin -- f &&
 	echo "f" | test_must_fail git check-attr --stdin test -- f &&
-	echo "f" | test_must_fail git check-attr --stdin test f &&
 	test_must_fail git check-attr "" -- f
 
 '
