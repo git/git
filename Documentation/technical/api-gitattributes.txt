@@ -11,9 +11,9 @@ Data Structure
 `struct git_attr`::
 
 	An attribute is an opaque object that is identified by its name.
-	Pass the name and its length to `git_attr()` function to obtain
-	the object of this type.  The internal representation of this
-	structure is of no interest to the calling programs.
+	Pass the name to `git_attr()` function to obtain the object of
+	this type.  The internal representation of this structure is
+	of no interest to the calling programs.
 
 `struct git_attr_check`::
 
@@ -72,8 +72,8 @@ static void setup_check(void)
 {
 	if (check[0].attr)
 		return; /* already done */
-	check[0].attr = git_attr("crlf", 4);
-	check[1].attr = git_attr("ident", 5);
+	check[0].attr = git_attr("crlf");
+	check[1].attr = git_attr("ident");
 }
 ------------
 
