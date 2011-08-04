@@ -713,20 +713,31 @@ static int macroexpand_one(int attr_nr, int rem)
 	return rem;
 }
 
-int git_checkattr(const char *path, int num, struct git_attr_check *check)
+/*
+ * Collect all attributes for path into the array pointed to by
+ * check_all_attr.
+ */
+static void collect_all_attrs(const char *path)
 {
 	struct attr_stack *stk;
-	int pathlen, i, rem;
+	int i, pathlen, rem;
 
 	bootstrap_attr_stack();
+	prepare_attr_stack(path);
 	for (i = 0; i < attr_nr; i++)
 		check_all_attr[i].value = ATTR__UNKNOWN;
 
 	pathlen = strlen(path);
-	prepare_attr_stack(path);
 	rem = attr_nr;
 	for (stk = attr_stack; 0 < rem && stk; stk = stk->prev)
 		rem = fill(path, pathlen, stk, rem);
+}
+
+int git_checkattr(const char *path, int num, struct git_attr_check *check)
+{
+	int i;
+
+	collect_all_attrs(path);
 
 	for (i = 0; i < num; i++) {
 		const char *value = check_all_attr[check[i].attr->attr_nr].value;
