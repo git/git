@@ -731,7 +731,7 @@ static void collect_all_attrs(const char *path)
 		rem = fill(path, pathlen, stk, rem);
 }
 
-int git_checkattr(const char *path, int num, struct git_attr_check *check)
+int git_check_attr(const char *path, int num, struct git_attr_check *check)
 {
 	int i;
 

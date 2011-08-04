@@ -45,8 +45,8 @@ static void check_attr(int cnt, struct git_attr_check *check,
 	const char *file)
 {
 	if (check != NULL) {
-		if (git_checkattr(file, cnt, check))
-			die("git_checkattr died");
+		if (git_check_attr(file, cnt, check))
+			die("git_check_attr died");
 		output_attr(cnt, check, file);
 	} else {
 		if (git_all_attrs(file, &cnt, &check))

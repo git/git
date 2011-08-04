@@ -270,7 +270,7 @@ struct userdiff_driver *userdiff_find_by_path(const char *path)
 
 	if (!path)
 		return NULL;
-	if (git_checkattr(path, 1, &check))
+	if (git_check_attr(path, 1, &check))
 		return NULL;
 
 	if (ATTR_TRUE(check.value))

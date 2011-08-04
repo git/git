@@ -20,7 +20,7 @@ extern const char git_attr__false[];
 #define ATTR_UNSET(v) ((v) == NULL)
 
 /*
- * Send one or more git_attr_check to git_checkattr(), and
+ * Send one or more git_attr_check to git_check_attr(), and
  * each 'value' member tells what its value is.
  * Unset one is returned as NULL.
  */
@@ -36,7 +36,7 @@ struct git_attr_check {
  */
 char *git_attr_name(struct git_attr *);
 
-int git_checkattr(const char *path, int, struct git_attr_check *);
+int git_check_attr(const char *path, int, struct git_attr_check *);
 
 /*
  * Retrieve all attributes that apply to the specified path.  *num
