@@ -3,7 +3,7 @@
 USAGE='[help|start|bad|good|skip|next|reset|visualize|replay|log|run]'
 LONG_USAGE='git bisect help
         print this long help message.
-git bisect start [<bad> [<good>...]] [--] [<pathspec>...]
+git bisect start [--no-checkout] [<bad> [<good>...]] [--] [<pathspec>...]
         reset bisect state and start bisection.
 git bisect bad [<rev>]
         mark <rev> a known-bad revision.
@@ -33,6 +33,16 @@ require_work_tree
 
 _x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
 _x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
+
+bisect_head()
+{
+	if test -f "$GIT_DIR/BISECT_HEAD"
+	then
+		echo BISECT_HEAD
+	else
+		echo HEAD
+	fi
+}
 
 bisect_autostart() {
 	test -s "$GIT_DIR/BISECT_START" || {
@@ -69,6 +79,7 @@ bisect_start() {
 	orig_args=$(git rev-parse --sq-quote "$@")
 	bad_seen=0
 	eval=''
+	mode=''
 	while [ $# -gt 0 ]; do
 	    arg="$1"
 	    case "$arg" in
@@ -76,6 +87,11 @@ bisect_start() {
 		shift
 		break
 		;;
+	    --no-checkout)
+		mode=--no-checkout
+		shift ;;
+	    --*)
+		die "$(eval_gettext "unrecognised option: '\$arg'")" ;;
 	    *)
 		rev=$(git rev-parse -q --verify "$arg^{commit}") || {
 		    test $has_double_dash -eq 1 &&
@@ -107,7 +123,10 @@ bisect_start() {
 	then
 		# Reset to the rev from where we started.
 		start_head=$(cat "$GIT_DIR/BISECT_START")
-		git checkout "$start_head" -- || exit
+		if test "z$mode" != "z--no-checkout"
+		then
+		    git checkout "$start_head" --
+		fi
 	else
 		# Get rev from where we start.
 		case "$head" in
@@ -143,7 +162,10 @@ bisect_start() {
 	#
 	# Write new start state.
 	#
-	echo "$start_head" >"$GIT_DIR/BISECT_START" &&
+	echo "$start_head" >"$GIT_DIR/BISECT_START" && {
+		test "z$mode" != "z--no-checkout" ||
+		git update-ref --no-deref BISECT_HEAD "$start_head"
+	} &&
 	git rev-parse --sq-quote "$@" >"$GIT_DIR/BISECT_NAMES" &&
 	eval "$eval true" &&
 	echo "git bisect start$orig_args" >>"$GIT_DIR/BISECT_LOG" || exit
@@ -206,8 +228,8 @@ bisect_state() {
 	0,*)
 		die "$(gettext "Please call 'bisect_state' with at least one argument.")" ;;
 	1,bad|1,good|1,skip)
-		rev=$(git rev-parse --verify HEAD) ||
-			die "$(gettext "Bad rev input: HEAD")"
+		rev=$(git rev-parse --verify $(bisect_head)) ||
+			die "$(gettext "Bad rev input: $(bisect_head)")"
 		bisect_write "$state" "$rev"
 		check_expected_revs "$rev" ;;
 	2,bad|*,good|*,skip)
@@ -291,7 +313,7 @@ bisect_next() {
 	bisect_next_check good
 
 	# Perform all bisection computation, display and checkout
-	git bisect--helper --next-all
+	git bisect--helper --next-all $(test -f "$GIT_DIR/BISECT_HEAD" && echo --no-checkout)
 	res=$?
 
         # Check if we should exit because bisection is finished
@@ -340,12 +362,15 @@ bisect_reset() {
 	*)
 	    usage ;;
 	esac
-	if git checkout "$branch" -- ; then
-		bisect_clean_state
-	else
-		die "$(eval_gettext "Could not check out original HEAD '\$branch'.
+	if ! test -f "$GIT_DIR/BISECT_HEAD"
+	then
+		if ! git checkout "$branch" --
+		then
+			die "$(eval_gettext "Could not check out original HEAD '\$branch'.
 Try 'git bisect reset <commit>'.")"
+		fi
 	fi
+	bisect_clean_state
 }
 
 bisect_clean_state() {
@@ -362,7 +387,8 @@ bisect_clean_state() {
 	rm -f "$GIT_DIR/BISECT_RUN" &&
 	# Cleanup head-name if it got left by an old version of git-bisect
 	rm -f "$GIT_DIR/head-name" &&
-
+	git update-ref -d --no-deref BISECT_HEAD &&
+	# clean up BISECT_START last
 	rm -f "$GIT_DIR/BISECT_START"
 }
 
