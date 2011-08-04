@@ -68,6 +68,12 @@ static void check_attr_stdin_paths(int cnt, struct git_attr_check *check)
 	strbuf_release(&nbuf);
 }
 
+static NORETURN void error_with_usage(const char *msg)
+{
+	error("%s", msg);
+	usage_with_options(check_attr_usage, check_attr_options);
+}
+
 int cmd_check_attr(int argc, const char **argv, const char *prefix)
 {
 	struct git_attr_check *check;
@@ -103,8 +109,7 @@ int cmd_check_attr(int argc, const char **argv, const char *prefix)
 	else if (stdin_paths && filei < argc)
 		errstr = "Can't specify files with --stdin";
 	if (errstr) {
-		error("%s", errstr);
-		usage_with_options(check_attr_usage, check_attr_options);
+		error_with_usage(errstr);
 	}
 
 	check = xcalloc(cnt, sizeof(*check));
