@@ -60,6 +60,11 @@
 #   email body. If not specified, there is no limit.
 #   Lines beyond the limit are suppressed and counted, and a final
 #   line is added indicating the number of suppressed lines.
+# hooks.diffopts
+#   Alternate options for the git diff-tree invocation that shows changes.
+#   Default is "--stat --summary --find-copies-harder". Add -p to those
+#   options to include a unified diff of changes in addition to the usual
+#   summary output.
 #
 # Notes
 # -----
@@ -446,7 +451,7 @@ generate_update_branch_email()
 	# non-fast-forward updates.
 	echo ""
 	echo "Summary of changes:"
-	git diff-tree --stat --summary --find-copies-harder $oldrev..$newrev
+	git diff-tree $diffopts $oldrev..$newrev
 }
 
 #
@@ -723,6 +728,8 @@ envelopesender=$(git config hooks.envelopesender)
 emailprefix=$(git config hooks.emailprefix || echo '[SCM] ')
 custom_showrev=$(git config hooks.showrev)
 maxlines=$(git config hooks.emailmaxlines)
+diffopts=$(git config hooks.diffopts)
+: ${diffopts:="--stat --summary --find-copies-harder"}
 
 # --- Main loop
 # Allow dual mode: run from the command line just like the update hook, or
