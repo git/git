@@ -155,15 +155,6 @@ OPTIONS
 	Show the filename above the matches in that file instead of
 	at the start of each shown line.
 
--[ABC] <context>::
-	Show `context` trailing (`A` -- after), or leading (`B`
-	-- before), or both (`C` -- context) lines, and place a
-	line containing `--` between contiguous groups of
-	matches.
-
--<num>::
-	A shortcut for specifying `-C<num>`.
-
 -p::
 --show-function::
 	Show the preceding line that contains the function name of
@@ -171,6 +162,29 @@ OPTIONS
 	The name is determined in the same way as 'git diff' works out
 	patch hunk headers (see 'Defining a custom hunk-header' in
 	linkgit:gitattributes[5]).
+
+-<num>::
+-C <num>::
+--context <num>::
+	Show <num> leading and trailing lines, and place a line
+	containing `--` between contiguous groups of matches.
+
+-A <num>::
+--after-context <num>::
+	Show <num> trailing lines, and place a line containing
+	`--` between contiguous groups of matches.
+
+-B <num>::
+--before-context <num>::
+	Show <num> leading lines, and place a line containing
+	`--` between contiguous groups of matches.
+
+-W::
+--function-context::
+	Show the surrounding text from the previous line containing a
+	function name up to the one before the next function name,
+	effectively showing the whole function in which the match was
+	found.
 
 -f <file>::
 	Read patterns from <file>, one per line.

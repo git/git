@@ -724,7 +724,7 @@ static void show_line(struct grep_opt *opt, char *bol, char *eol,
 	if (opt->file_break && opt->last_shown == 0) {
 		if (opt->show_hunk_mark)
 			opt->output(opt, "\n", 1);
-	} else if (opt->pre_context || opt->post_context) {
+	} else if (opt->pre_context || opt->post_context || opt->funcbody) {
 		if (opt->last_shown == 0) {
 			if (opt->show_hunk_mark) {
 				output_color(opt, "--", 2, opt->color_sep);
@@ -819,10 +819,13 @@ static void show_funcname_line(struct grep_opt *opt, const char *name,
 }
 
 static void show_pre_context(struct grep_opt *opt, const char *name, char *buf,
-			     char *bol, unsigned lno)
+			     char *bol, char *end, unsigned lno)
 {
 	unsigned cur = lno, from = 1, funcname_lno = 0;
-	int funcname_needed = opt->funcname;
+	int funcname_needed = !!opt->funcname;
+
+	if (opt->funcbody && !match_funcname(opt, bol, end))
+		funcname_needed = 2;
 
 	if (opt->pre_context < lno)
 		from = lno - opt->pre_context;
@@ -830,7 +833,8 @@ static void show_pre_context(struct grep_opt *opt, const char *name, char *buf,
 		from = opt->last_shown + 1;
 
 	/* Rewind. */
-	while (bol > buf && cur > from) {
+	while (bol > buf &&
+	       cur > (funcname_needed == 2 ? opt->last_shown + 1 : from)) {
 		char *eol = --bol;
 
 		while (bol > buf && bol[-1] != '\n')
@@ -942,13 +946,15 @@ static int grep_buffer_1(struct grep_opt *opt, const char *name,
 	int binary_match_only = 0;
 	unsigned count = 0;
 	int try_lookahead = 0;
+	int show_function = 0;
 	enum grep_context ctx = GREP_CONTEXT_HEAD;
 	xdemitconf_t xecfg;
 
 	if (!opt->output)
 		opt->output = std_output;
 
-	if (opt->pre_context || opt->post_context || opt->file_break) {
+	if (opt->pre_context || opt->post_context || opt->file_break ||
+	    opt->funcbody) {
 		/* Show hunk marks, except for the first file. */
 		if (opt->last_shown)
 			opt->show_hunk_mark = 1;
@@ -1004,7 +1010,8 @@ static int grep_buffer_1(struct grep_opt *opt, const char *name,
 		 */
 		if (try_lookahead
 		    && !(last_hit
-			 && lno <= last_hit + opt->post_context)
+			 && (show_function ||
+			     lno <= last_hit + opt->post_context))
 		    && look_ahead(opt, &left, &lno, &bol))
 			break;
 		eol = end_of_line(bol, &left);
@@ -1051,15 +1058,20 @@ static int grep_buffer_1(struct grep_opt *opt, const char *name,
 			/* Hit at this line.  If we haven't shown the
 			 * pre-context lines, we would need to show them.
 			 */
-			if (opt->pre_context)
-				show_pre_context(opt, name, buf, bol, lno);
+			if (opt->pre_context || opt->funcbody)
+				show_pre_context(opt, name, buf, bol, eol, lno);
 			else if (opt->funcname)
 				show_funcname_line(opt, name, buf, bol, lno);
 			show_line(opt, bol, eol, name, lno, ':');
 			last_hit = lno;
+			if (opt->funcbody)
+				show_function = 1;
+			goto next_line;
 		}
-		else if (last_hit &&
-			 lno <= last_hit + opt->post_context) {
+		if (show_function && match_funcname(opt, bol, eol))
+			show_function = 0;
+		if (show_function ||
+		    (last_hit && lno <= last_hit + opt->post_context)) {
 			/* If the last hit is within the post context,
 			 * we need to show this line.
 			 */
