@@ -228,7 +228,7 @@ test_expect_success 'fast-export -C -C | fast-import' '
 	mkdir new &&
 	git --git-dir=new/.git init &&
 	git fast-export -C -C --signed-tags=strip --all > output &&
-	grep "^C \"file6\" \"file7\"\$" output &&
+	grep "^C file6 file7\$" output &&
 	cat output |
 	(cd new &&
 	 git fast-import &&
@@ -412,6 +412,32 @@ test_expect_success SYMLINKS 'directory becomes symlink'        '
 		(cd ../result && git fast-import --quiet)
 	) &&
 	(cd result && git show master:foo)
+'
+
+test_expect_success 'fast-export quotes pathnames' '
+	git init crazy-paths &&
+	(cd crazy-paths &&
+	 blob=`echo foo | git hash-object -w --stdin` &&
+	 git update-index --add \
+		--cacheinfo 100644 $blob "$(printf "path with\\nnewline")" \
+		--cacheinfo 100644 $blob "path with \"quote\"" \
+		--cacheinfo 100644 $blob "path with \\backslash" \
+		--cacheinfo 100644 $blob "path with space" &&
+	 git commit -m addition &&
+	 git ls-files -z -s | perl -0pe "s{\\t}{$&subdir/}" >index &&
+	 git read-tree --empty &&
+	 git update-index -z --index-info <index &&
+	 git commit -m rename &&
+	 git read-tree --empty &&
+	 git commit -m deletion &&
+	 git fast-export HEAD >export.out &&
+	 git rev-list HEAD >expect &&
+	 git init result &&
+	 cd result &&
+	 git fast-import <../export.out &&
+	 git rev-list HEAD >actual &&
+	 test_cmp ../expect actual
+	)
 '
 
 test_done
