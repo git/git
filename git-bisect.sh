@@ -94,9 +94,9 @@ bisect_start() {
 			die "$(eval_gettext "unrecognised option: '\$arg'")" ;;
 		*)
 			rev=$(git rev-parse -q --verify "$arg^{commit}") || {
-			    test $has_double_dash -eq 1 &&
-			die "$(eval_gettext "'\$arg' does not appear to be a valid revision")"
-			    break
+				test $has_double_dash -eq 1 &&
+				die "$(eval_gettext "'\$arg' does not appear to be a valid revision")"
+				break
 			}
 			case $bad_seen in
 			0) state='bad' ; bad_seen=1 ;;
@@ -125,7 +125,7 @@ bisect_start() {
 		start_head=$(cat "$GIT_DIR/BISECT_START")
 		if test "z$mode" != "z--no-checkout"
 		then
-		    git checkout "$start_head" --
+			git checkout "$start_head" --
 		fi
 	else
 		# Get rev from where we start.
@@ -332,7 +332,7 @@ bisect_visualize() {
 	if test $# = 0
 	then
 		if test -n "${DISPLAY+set}${SESSIONNAME+set}${MSYSTEM+set}${SECURITYSESSIONID+set}" &&
-		   type gitk >/dev/null 2>&1
+			type gitk >/dev/null 2>&1
 		then
 			set gitk
 		else
@@ -364,13 +364,11 @@ bisect_reset() {
 	*)
 		usage ;;
 	esac
-	if ! test -f "$GIT_DIR/BISECT_HEAD"
+
+	if ! test -f "$GIT_DIR/BISECT_HEAD" && ! git checkout "$branch" --
 	then
-		if ! git checkout "$branch" --
-		then
-			die "$(eval_gettext "Could not check out original HEAD '\$branch'.
+		die "$(eval_gettext "Could not check out original HEAD '\$branch'.
 Try 'git bisect reset <commit>'.")"
-		fi
 	fi
 	bisect_clean_state
 }
