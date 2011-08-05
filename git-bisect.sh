@@ -198,7 +198,8 @@ is_expected_rev() {
 
 check_expected_revs() {
 	for _rev in "$@"; do
-		if ! is_expected_rev "$_rev"; then
+		if ! is_expected_rev "$_rev"
+		then
 			rm -f "$GIT_DIR/BISECT_ANCESTORS_OK"
 			rm -f "$GIT_DIR/BISECT_EXPECTED_REV"
 			return
@@ -331,7 +332,8 @@ bisect_visualize() {
 	if test $# = 0
 	then
 		if test -n "${DISPLAY+set}${SESSIONNAME+set}${MSYSTEM+set}${SECURITYSESSIONID+set}" &&
-		   type gitk >/dev/null 2>&1; then
+		   type gitk >/dev/null 2>&1
+		then
 			set gitk
 		else
 			set git log
@@ -400,7 +402,8 @@ bisect_replay () {
 	while read git bisect command rev
 	do
 		test "$git $bisect" = "git bisect" -o "$git" = "git-bisect" || continue
-		if test "$git" = "git-bisect"; then
+		if test "$git" = "git-bisect"
+		then
 			rev="$command"
 			command="$bisect"
 		fi
@@ -428,7 +431,8 @@ bisect_run () {
 		res=$?
 
 		# Check for really bad run error.
-		if [ $res -lt 0 -o $res -ge 128 ]; then
+		if [ $res -lt 0 -o $res -ge 128 ]
+		then
 			(
 				eval_gettext "bisect run failed:
 exit code \$res from '\$command' is < 0 or >= 128" &&
@@ -439,9 +443,11 @@ exit code \$res from '\$command' is < 0 or >= 128" &&
 
 		# Find current state depending on run success or failure.
 		# A special exit code of 125 means cannot test.
-		if [ $res -eq 125 ]; then
+		if [ $res -eq 125 ]
+		then
 			state='skip'
-		elif [ $res -gt 0 ]; then
+		elif [ $res -gt 0 ]
+		then
 			state='bad'
 		else
 			state='good'
@@ -454,7 +460,8 @@ exit code \$res from '\$command' is < 0 or >= 128" &&
 		cat "$GIT_DIR/BISECT_RUN"
 
 		if sane_grep "first bad commit could be any of" "$GIT_DIR/BISECT_RUN" \
-			> /dev/null; then
+			> /dev/null
+		then
 			(
 				gettext "bisect run cannot continue any more" &&
 				echo
@@ -462,7 +469,8 @@ exit code \$res from '\$command' is < 0 or >= 128" &&
 			exit $res
 		fi
 
-		if [ $res -ne 0 ]; then
+		if [ $res -ne 0 ]
+		then
 			(
 				eval_gettext "bisect run failed:
 'bisect_state \$state' exited with error code \$res" &&
@@ -471,7 +479,8 @@ exit code \$res from '\$command' is < 0 or >= 128" &&
 			exit $res
 		fi
 
-		if sane_grep "is the first bad commit" "$GIT_DIR/BISECT_RUN" > /dev/null; then
+		if sane_grep "is the first bad commit" "$GIT_DIR/BISECT_RUN" > /dev/null
+		then
 			gettext "bisect run success"; echo
 			exit 0;
 		fi
