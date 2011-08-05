@@ -773,6 +773,9 @@ extern int parse_sha1_header(const char *hdr, unsigned long *sizep);
 /* global flag to enable extra checks when accessing packed objects */
 extern int do_check_packed_object_crc;
 
+/* for development: log offset of pack access */
+extern const char *log_pack_access;
+
 extern int check_sha1_signature(const unsigned char *sha1, void *buf, unsigned long size, const char *type);
 
 extern int move_temp_to_file(const char *tmpfile, const char *filename);
