@@ -2,27 +2,27 @@
 
 USAGE='[help|start|bad|good|skip|next|reset|visualize|replay|log|run]'
 LONG_USAGE='git bisect help
-        print this long help message.
+	print this long help message.
 git bisect start [--no-checkout] [<bad> [<good>...]] [--] [<pathspec>...]
-        reset bisect state and start bisection.
+	reset bisect state and start bisection.
 git bisect bad [<rev>]
-        mark <rev> a known-bad revision.
+	mark <rev> a known-bad revision.
 git bisect good [<rev>...]
-        mark <rev>... known-good revisions.
+	mark <rev>... known-good revisions.
 git bisect skip [(<rev>|<range>)...]
-        mark <rev>... untestable revisions.
+	mark <rev>... untestable revisions.
 git bisect next
-        find next bisection to test and check it out.
+	find next bisection to test and check it out.
 git bisect reset [<commit>]
-        finish bisection search and go back to commit.
+	finish bisection search and go back to commit.
 git bisect visualize
-        show bisect status in gitk.
+	show bisect status in gitk.
 git bisect replay <logfile>
-        replay bisection log.
+	replay bisection log.
 git bisect log
-        show bisect log.
+	show bisect log.
 git bisect run <cmd>...
-        use <cmd>... to automatically bisect.
+	use <cmd>... to automatically bisect.
 
 Please use "git help bisect" to get the full man page.'
 
@@ -55,7 +55,7 @@ bisect_autostart() {
 			# TRANSLATORS: Make sure to include [Y] and [n] in your
 			# translation. The program will only accept English input
 			# at this point.
-	    gettext "Do you want me to do it for you [Y/n]? " >&2
+			gettext "Do you want me to do it for you [Y/n]? " >&2
 			read yesno
 			case "$yesno" in
 			[Nn]*)
@@ -74,38 +74,38 @@ bisect_start() {
 	#
 	has_double_dash=0
 	for arg; do
-	    case "$arg" in --) has_double_dash=1; break ;; esac
+		case "$arg" in --) has_double_dash=1; break ;; esac
 	done
 	orig_args=$(git rev-parse --sq-quote "$@")
 	bad_seen=0
 	eval=''
 	mode=''
 	while [ $# -gt 0 ]; do
-	    arg="$1"
-	    case "$arg" in
-	    --)
-		shift
-		break
+		arg="$1"
+		case "$arg" in
+		--)
+			shift
+			break
 		;;
-	    --no-checkout)
-		mode=--no-checkout
-		shift ;;
-	    --*)
-		die "$(eval_gettext "unrecognised option: '\$arg'")" ;;
-	    *)
-		rev=$(git rev-parse -q --verify "$arg^{commit}") || {
-		    test $has_double_dash -eq 1 &&
+		--no-checkout)
+			mode=--no-checkout
+			shift ;;
+		--*)
+			die "$(eval_gettext "unrecognised option: '\$arg'")" ;;
+		*)
+			rev=$(git rev-parse -q --verify "$arg^{commit}") || {
+			    test $has_double_dash -eq 1 &&
 			die "$(eval_gettext "'\$arg' does not appear to be a valid revision")"
-		    break
-		}
-		case $bad_seen in
-		0) state='bad' ; bad_seen=1 ;;
-		*) state='good' ;;
+			    break
+			}
+			case $bad_seen in
+			0) state='bad' ; bad_seen=1 ;;
+			*) state='good' ;;
+			esac
+			eval="$eval bisect_write '$state' '$rev' 'nolog' &&"
+			shift
+			;;
 		esac
-		eval="$eval bisect_write '$state' '$rev' 'nolog' &&"
-		shift
-		;;
-	    esac
 	done
 
 	#
@@ -207,18 +207,18 @@ check_expected_revs() {
 }
 
 bisect_skip() {
-        all=''
+	all=''
 	for arg in "$@"
 	do
-	    case "$arg" in
-            *..*)
-		revs=$(git rev-list "$arg") || die "$(eval_gettext "Bad rev input: \$arg")" ;;
-            *)
-                revs=$(git rev-parse --sq-quote "$arg") ;;
-	    esac
-            all="$all $revs"
-        done
-        eval bisect_state 'skip' $all
+		case "$arg" in
+		*..*)
+			revs=$(git rev-list "$arg") || die "$(eval_gettext "Bad rev input: \$arg")" ;;
+		*)
+			revs=$(git rev-parse --sq-quote "$arg") ;;
+		esac
+		all="$all $revs"
+	done
+	eval bisect_state 'skip' $all
 }
 
 bisect_state() {
@@ -316,7 +316,7 @@ bisect_next() {
 	git bisect--helper --next-all $(test -f "$GIT_DIR/BISECT_HEAD" && echo --no-checkout)
 	res=$?
 
-        # Check if we should exit because bisection is finished
+	# Check if we should exit because bisection is finished
 	test $res -eq 10 && exit 0
 
 	# Check for an error in the bisection process
@@ -355,12 +355,12 @@ bisect_reset() {
 	case "$#" in
 	0) branch=$(cat "$GIT_DIR/BISECT_START") ;;
 	1) git rev-parse --quiet --verify "$1^{commit}" > /dev/null || {
-	       invalid="$1"
-	       die "$(eval_gettext "'\$invalid' is not a valid commit")"
-	   }
-	   branch="$1" ;;
+			invalid="$1"
+			die "$(eval_gettext "'\$invalid' is not a valid commit")"
+		}
+		branch="$1" ;;
 	*)
-	    usage ;;
+		usage ;;
 	esac
 	if ! test -f "$GIT_DIR/BISECT_HEAD"
 	then
@@ -418,65 +418,65 @@ bisect_replay () {
 }
 
 bisect_run () {
-    bisect_next_check fail
+	bisect_next_check fail
 
-    while true
-    do
-      command="$@"
-      eval_gettext "running \$command"; echo
-      "$@"
-      res=$?
+	while true
+	do
+		command="$@"
+		eval_gettext "running \$command"; echo
+		"$@"
+		res=$?
 
-      # Check for really bad run error.
-      if [ $res -lt 0 -o $res -ge 128 ]; then
-	  (
-	    eval_gettext "bisect run failed:
+		# Check for really bad run error.
+		if [ $res -lt 0 -o $res -ge 128 ]; then
+			(
+				eval_gettext "bisect run failed:
 exit code \$res from '\$command' is < 0 or >= 128" &&
-	    echo
-	  ) >&2
-	  exit $res
-      fi
+				echo
+			) >&2
+			exit $res
+		fi
 
-      # Find current state depending on run success or failure.
-      # A special exit code of 125 means cannot test.
-      if [ $res -eq 125 ]; then
-	  state='skip'
-      elif [ $res -gt 0 ]; then
-	  state='bad'
-      else
-	  state='good'
-      fi
+		# Find current state depending on run success or failure.
+		# A special exit code of 125 means cannot test.
+		if [ $res -eq 125 ]; then
+			state='skip'
+		elif [ $res -gt 0 ]; then
+			state='bad'
+		else
+			state='good'
+		fi
 
-      # We have to use a subshell because "bisect_state" can exit.
-      ( bisect_state $state > "$GIT_DIR/BISECT_RUN" )
-      res=$?
+		# We have to use a subshell because "bisect_state" can exit.
+		( bisect_state $state > "$GIT_DIR/BISECT_RUN" )
+		res=$?
 
-      cat "$GIT_DIR/BISECT_RUN"
+		cat "$GIT_DIR/BISECT_RUN"
 
-      if sane_grep "first bad commit could be any of" "$GIT_DIR/BISECT_RUN" \
-		> /dev/null; then
-	  (
-	      gettext "bisect run cannot continue any more" &&
-	      echo
-	  ) >&2
-	  exit $res
-      fi
+		if sane_grep "first bad commit could be any of" "$GIT_DIR/BISECT_RUN" \
+			> /dev/null; then
+			(
+				gettext "bisect run cannot continue any more" &&
+				echo
+			) >&2
+			exit $res
+		fi
 
-      if [ $res -ne 0 ]; then
-	  (
-	      eval_gettext "bisect run failed:
+		if [ $res -ne 0 ]; then
+			(
+				eval_gettext "bisect run failed:
 'bisect_state \$state' exited with error code \$res" &&
-	      echo
-	  ) >&2
-	  exit $res
-      fi
+				echo
+			) >&2
+			exit $res
+		fi
 
-      if sane_grep "is the first bad commit" "$GIT_DIR/BISECT_RUN" > /dev/null; then
-	  gettext "bisect run success"; echo
-	  exit 0;
-      fi
+		if sane_grep "is the first bad commit" "$GIT_DIR/BISECT_RUN" > /dev/null; then
+			gettext "bisect run success"; echo
+			exit 0;
+		fi
 
-    done
+	done
 }
 
 bisect_log () {
@@ -486,33 +486,33 @@ bisect_log () {
 
 case "$#" in
 0)
-    usage ;;
+	usage ;;
 *)
-    cmd="$1"
-    shift
-    case "$cmd" in
-    help)
-        git bisect -h ;;
-    start)
-        bisect_start "$@" ;;
-    bad|good)
-        bisect_state "$cmd" "$@" ;;
-    skip)
-        bisect_skip "$@" ;;
-    next)
-        # Not sure we want "next" at the UI level anymore.
-        bisect_next "$@" ;;
-    visualize|view)
-	bisect_visualize "$@" ;;
-    reset)
-        bisect_reset "$@" ;;
-    replay)
-	bisect_replay "$@" ;;
-    log)
-	bisect_log ;;
-    run)
-        bisect_run "$@" ;;
-    *)
-        usage ;;
-    esac
+	cmd="$1"
+	shift
+	case "$cmd" in
+	help)
+		git bisect -h ;;
+	start)
+		bisect_start "$@" ;;
+	bad|good)
+		bisect_state "$cmd" "$@" ;;
+	skip)
+		bisect_skip "$@" ;;
+	next)
+		# Not sure we want "next" at the UI level anymore.
+		bisect_next "$@" ;;
+	visualize|view)
+		bisect_visualize "$@" ;;
+	reset)
+		bisect_reset "$@" ;;
+	replay)
+		bisect_replay "$@" ;;
+	log)
+		bisect_log ;;
+	run)
+		bisect_run "$@" ;;
+	*)
+		usage ;;
+	esac
 esac
