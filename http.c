@@ -1116,9 +1116,8 @@ struct http_pack_request *new_http_pack_request(
 	struct strbuf buf = STRBUF_INIT;
 	struct http_pack_request *preq;
 
-	preq = xmalloc(sizeof(*preq));
+	preq = xcalloc(1, sizeof(*preq));
 	preq->target = target;
-	preq->range_header = NULL;
 
 	end_url_with_slash(&buf, base_url);
 	strbuf_addf(&buf, "objects/pack/pack-%s.pack",
@@ -1210,7 +1209,7 @@ struct http_object_request *new_http_object_request(const char *base_url,
 	struct curl_slist *range_header = NULL;
 	struct http_object_request *freq;
 
-	freq = xmalloc(sizeof(*freq));
+	freq = xcalloc(1, sizeof(*freq));
 	hashcpy(freq->sha1, sha1);
 	freq->localfile = -1;
 
@@ -1247,8 +1246,6 @@ struct http_object_request *new_http_object_request(const char *base_url,
 		      freq->tmpfile, strerror(errno));
 		goto abort;
 	}
-
-	memset(&freq->stream, 0, sizeof(freq->stream));
 
 	git_inflate_init(&freq->stream);
 
@@ -1324,7 +1321,6 @@ struct http_object_request *new_http_object_request(const char *base_url,
 	return freq;
 
 abort:
-	free(filename);
 	free(freq->url);
 	free(freq);
 	return NULL;
