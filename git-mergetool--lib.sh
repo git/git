@@ -79,7 +79,7 @@ get_merge_tool_cmd () {
 	fi
 	if diff_mode; then
 		echo "$(git config difftool.$merge_tool.cmd ||
-		        git config mergetool.$merge_tool.cmd)"
+			git config mergetool.$merge_tool.cmd)"
 	else
 		echo "$(git config mergetool.$merge_tool.cmd)"
 	fi
@@ -419,7 +419,7 @@ get_merge_tool_path () {
 	fi
 	if diff_mode; then
 		merge_tool_path=$(git config difftool."$merge_tool".path ||
-		                  git config mergetool."$merge_tool".path)
+				  git config mergetool."$merge_tool".path)
 	else
 		merge_tool_path=$(git config mergetool."$merge_tool".path)
 	fi
@@ -429,7 +429,7 @@ get_merge_tool_path () {
 	if test -z "$(get_merge_tool_cmd "$merge_tool")" &&
 	! type "$merge_tool_path" > /dev/null 2>&1; then
 		echo >&2 "The $TOOL_MODE tool $merge_tool is not available as"\
-		         "'$merge_tool_path'"
+			 "'$merge_tool_path'"
 		exit 1
 	fi
 	echo "$merge_tool_path"
