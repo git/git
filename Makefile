@@ -258,6 +258,8 @@ all::
 # dependency rules.
 #
 # Define NATIVE_CRLF if your platform uses CRLF for line endings.
+#
+# Define NO_UNIX_SOCKETS if your platform does not have them.
 
 GIT-VERSION-FILE: FORCE
 	@$(SHELL_PATH) ./GIT-VERSION-GEN
@@ -1214,6 +1216,7 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	NO_INET_NTOP = YesPlease
 	NO_POSIX_GOODIES = UnfortunatelyYes
 	NO_D_INO_IN_DIRENT = YesPlease
+	NO_UNIX_SOCKETS = UnfortunatelyNot
 	COMPAT_CFLAGS += -D__USE_MINGW_ACCESS -DNOGDI -Icompat -Icompat/win32
 	COMPAT_CFLAGS += -DSTRIP_EXTENSION=\".exe\"
 	COMPAT_OBJS += compat/mingw.o compat/winansi.o \
@@ -1623,6 +1626,9 @@ endif
 
 ifdef GIT_TEST_CMP_USE_COPIED_CONTEXT
 	export GIT_TEST_CMP_USE_COPIED_CONTEXT
+endif
+ifdef NO_UNIX_SOCKETS
+	COMPAT_CFLAGS += -DNO_UNIX_SOCKETS=1
 endif
 
 ifeq ($(TCLTK_PATH),)

@@ -1,6 +1,19 @@
 #include "cache.h"
 #include "unix-socket.h"
 
+#ifdef NO_UNIX_SOCKETS
+int unix_stream_connect(const char *path)
+{
+	errno = ENOSYS;
+	return -1;
+}
+
+int unix_stream_listen(const char *path)
+{
+	errno = ENOSYS;
+	return -1;
+}
+#else
 static int unix_stream_socket(void)
 {
 	int fd = socket(AF_UNIX, SOCK_STREAM, 0);
@@ -56,3 +69,4 @@ int unix_stream_listen(const char *path)
 
 	return fd;
 }
+#endif
