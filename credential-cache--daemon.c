@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "credential.h"
 #include "unix-socket.h"
+#include <libgen.h>
 
 struct credential_cache_entry {
 	struct credential item;
