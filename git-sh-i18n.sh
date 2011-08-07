@@ -11,8 +11,19 @@ then
 		printf "%s" "$1"
 	}
 
+	gettextln() {
+		printf "%s\n" "$1"
+	}
+
 	eval_gettext () {
 		printf "%s" "$1" | (
+			export PATH $(git sh-i18n--envsubst --variables "$1");
+			git sh-i18n--envsubst "$1"
+		)
+	}
+
+	eval_gettextln () {
+		printf "%s\n" "$1" | (
 			export PATH $(git sh-i18n--envsubst --variables "$1");
 			git sh-i18n--envsubst "$1"
 		)
@@ -22,8 +33,16 @@ else
 		printf "%s" "# GETTEXT POISON #"
 	}
 
+	gettextln () {
+		printf "%s\n" "# GETTEXT POISON #"
+	}
+
 	eval_gettext () {
 		printf "%s" "# GETTEXT POISON #"
+	}
+
+	eval_gettextln () {
+		printf "%s\n" "# GETTEXT POISON #"
 	}
 fi
 
