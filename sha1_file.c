@@ -1217,14 +1217,34 @@ static int experimental_loose_object(unsigned char *map)
 	unsigned int word;
 
 	/*
-	 * Is it a zlib-compressed buffer? If so, the first byte
-	 * must be 0x78 (15-bit window size, deflated), and the
-	 * first 16-bit word is evenly divisible by 31. If so,
-	 * we are looking at the official format, not the experimental
-	 * one.
+	 * We must determine if the buffer contains the standard
+	 * zlib-deflated stream or the experimental format based
+	 * on the in-pack object format. Compare the header byte
+	 * for each format:
+	 *
+	 * RFC1950 zlib w/ deflate : 0www1000 : 0 <= www <= 7
+	 * Experimental pack-based : Stttssss : ttt = 1,2,3,4
+	 *
+	 * If bit 7 is clear and bits 0-3 equal 8, the buffer MUST be
+	 * in standard loose-object format, UNLESS it is a Git-pack
+	 * format object *exactly* 8 bytes in size when inflated.
+	 *
+	 * However, RFC1950 also specifies that the 1st 16-bit word
+	 * must be divisible by 31 - this checksum tells us our buffer
+	 * is in the standard format, giving a false positive only if
+	 * the 1st word of the Git-pack format object happens to be
+	 * divisible by 31, ie:
+	 *      ((byte0 * 256) + byte1) % 31 = 0
+	 *   =>        0ttt10000www1000 % 31 = 0
+	 *
+	 * As it happens, this case can only arise for www=3 & ttt=1
+	 * - ie, a Commit object, which would have to be 8 bytes in
+	 * size. As no Commit can be that small, we find that the
+	 * combination of these two criteria (bitmask & checksum)
+	 * can always correctly determine the buffer format.
 	 */
 	word = (map[0] << 8) + map[1];
-	if (map[0] == 0x78 && !(word % 31))
+	if ((map[0] & 0x8F) == 0x08 && !(word % 31))
 		return 0;
 	else
 		return 1;
