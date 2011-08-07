@@ -89,11 +89,8 @@ safe_to_abort () {
 	then
 		return 0
 	fi
-	(
-		gettext "You seem to have moved HEAD since the last 'am' failure.
-Not rewinding to ORIG_HEAD" &&
-		echo
-	) >&2
+		gettextln "You seem to have moved HEAD since the last 'am' failure.
+Not rewinding to ORIG_HEAD" >&2
 	return 1
 }
 
@@ -102,9 +99,9 @@ stop_here_user_resolve () {
 	    printf '%s\n' "$resolvemsg"
 	    stop_here $1
     fi
-    eval_gettext "When you have resolved this problem run \"\$cmdline --resolved\".
+    eval_gettextln "When you have resolved this problem run \"\$cmdline --resolved\".
 If you would prefer to skip this patch, instead run \"\$cmdline --skip\".
-To restore the original branch and stop patching run \"\$cmdline --abort\"."; echo
+To restore the original branch and stop patching run \"\$cmdline --abort\"."
 
     stop_here $1
 }
@@ -118,7 +115,7 @@ go_next () {
 
 cannot_fallback () {
 	echo "$1"
-	gettext "Cannot fall back to three-way merge."; echo
+	gettextln "Cannot fall back to three-way merge."
 	exit 1
 }
 
@@ -611,9 +608,9 @@ do
 			go_next && continue
 
 		test -s "$dotest/patch" || {
-			eval_gettext "Patch is empty.  Was it split wrong?
+			eval_gettextln "Patch is empty.  Was it split wrong?
 If you would prefer to skip this patch, instead run \"\$cmdline --skip\".
-To restore the original branch and stop patching run \"\$cmdline --abort\"."; echo
+To restore the original branch and stop patching run \"\$cmdline --abort\"."
 			stop_here $this
 		}
 		rm -f "$dotest/original-commit" "$dotest/author-script"
@@ -648,7 +645,7 @@ To restore the original branch and stop patching run \"\$cmdline --abort\"."; ec
 
 	if test -z "$GIT_AUTHOR_EMAIL"
 	then
-		gettext "Patch does not have a valid e-mail address."; echo
+		gettextln "Patch does not have a valid e-mail address."
 		stop_here $this
 	fi
 
@@ -699,7 +696,7 @@ To restore the original branch and stop patching run \"\$cmdline --abort\"."; ec
 	    action=again
 	    while test "$action" = again
 	    do
-		gettext "Commit Body is:"; echo
+		gettextln "Commit Body is:"
 		echo "--------------------------"
 		cat "$dotest/final-commit"
 		echo "--------------------------"
@@ -763,16 +760,16 @@ To restore the original branch and stop patching run \"\$cmdline --abort\"."; ec
 		# working tree.
 		resolved=
 		git diff-index --quiet --cached HEAD -- && {
-			gettext "No changes - did you forget to use 'git add'?
+			gettextln "No changes - did you forget to use 'git add'?
 If there is nothing left to stage, chances are that something else
-already introduced the same changes; you might want to skip this patch."; echo
+already introduced the same changes; you might want to skip this patch."
 			stop_here_user_resolve $this
 		}
 		unmerged=$(git ls-files -u)
 		if test -n "$unmerged"
 		then
-			gettext "You still have unmerged paths in your index
-did you forget to use 'git add'?"; echo
+			gettextln "You still have unmerged paths in your index
+did you forget to use 'git add'?"
 			stop_here_user_resolve $this
 		fi
 		apply_status=0
@@ -797,7 +794,7 @@ did you forget to use 'git add'?"; echo
 	fi
 	if test $apply_status != 0
 	then
-		eval_gettext 'Patch failed at $msgnum $FIRSTLINE'; echo
+		eval_gettextln 'Patch failed at $msgnum $FIRSTLINE'
 		stop_here_user_resolve $this
 	fi
 
