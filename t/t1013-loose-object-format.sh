@@ -26,8 +26,6 @@ standard format, deflated with 4KB window size: Agit/JGit on Android
 '
 
 . ./test-lib.sh
-LF='
-'
 
 assert_blob_equals() {
 	printf "%s" "$2" >expected &&

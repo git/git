@@ -10,8 +10,6 @@ test_description='quoted output'
 FN='濱野'
 GN='純'
 HT='	'
-LF='
-'
 DQ='"'
 
 echo foo 2>/dev/null > "Name and an${HT}HT"

@@ -17,8 +17,6 @@ test_expect_success setup '
 	cp one original.one &&
 	cp dir/two original.two
 '
-LF='
-'
 
 test_expect_success 'update-index and ls-files' '
 	git update-index --add one &&

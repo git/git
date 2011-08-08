@@ -10,9 +10,6 @@ Testing basic diff tool invocation
 
 . ./test-lib.sh
 
-LF='
-'
-
 remove_config_vars()
 {
 	# Unset all config variables used by git-difftool
