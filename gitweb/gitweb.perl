@@ -2526,6 +2526,13 @@ sub git_get_project_config {
 
 	# key sanity check
 	return unless ($key);
+	# only subsection, if exists, is case sensitive,
+	# and not lowercased by 'git config -z -l'
+	if (my ($hi, $mi, $lo) = ($key =~ /^([^.]*)\.(.*)\.([^.]*)$/)) {
+		$key = join(".", lc($hi), $mi, lc($lo));
+	} else {
+		$key = lc($key);
+	}
 	$key =~ s/^gitweb\.//;
 	return if ($key =~ m/\W/);
 
