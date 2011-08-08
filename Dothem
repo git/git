@@ -120,19 +120,29 @@ do
 	fi
 
 	(
+		skip_test=$notest
+		case ",$version,$revision," in
+		*,,*)
+			;;
+		*)
+			if git diff --quiet --exit-code $version $revision
+			then
+				skip_test=1
+			fi
+			;;
+		esac
 		case "$branch, $branches " in
 		jch,*' next '*)
 			if git diff --quiet --exit-code jch next
 			then
-				dotest=
-			else
-				dotest=test
+				skip_test=1
 			fi
 			;;
-		*)
-			dotest=test ;;
 		esac
-		test -z "$notest" || dotest=
+		case "$skip_test" in
+		?*)	dotest= ;;
+		'')	dotest=test ;;
+		esac
 
 		cd "$BUILDBASE/$branch"
 		git reset --hard  &&
