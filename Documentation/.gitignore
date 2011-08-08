@@ -3,6 +3,7 @@
 *.[1-8]
 *.made
 *.texi
+*.pdf
 git.info
 gitman.info
 howto-index.txt
