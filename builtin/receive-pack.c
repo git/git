@@ -651,7 +651,7 @@ static const char *unpack(int quiet)
 
 	if (ntohl(hdr.hdr_entries) < unpack_limit) {
 		int code, i = 0;
-		const char *unpacker[4];
+		const char *unpacker[5];
 		unpacker[i++] = "unpack-objects";
 		if (quiet)
 			unpacker[i++] = "-q";
