@@ -273,6 +273,8 @@ it point to the commit that should be tested.
 +
 This option may be useful when the test you would perform in each step
 does not require a checked out tree.
++
+If the repository is bare, `--no-checkout` is assumed.
 
 EXAMPLES
 --------

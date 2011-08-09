@@ -592,6 +592,37 @@ test_expect_success 'erroring out when using bad path parameters' '
 	grep "bad path parameters" error.txt
 '
 
+test_expect_success 'test bisection on bare repo - --no-checkout specified' '
+	git clone --bare . bare.nocheckout &&
+	(
+		cd bare.nocheckout &&
+		git bisect start --no-checkout &&
+		git bisect good $HASH1 &&
+		git bisect bad $HASH4 &&
+		git bisect run eval \
+			"test \$(git rev-list BISECT_HEAD ^$HASH2 --max-count=1 | wc -l) = 0" \
+			>../nocheckout.log &&
+		git bisect reset
+	) &&
+	grep "$HASH3 is the first bad commit" nocheckout.log
+'
+
+
+test_expect_success 'test bisection on bare repo - --no-checkout defaulted' '
+	git clone --bare . bare.defaulted &&
+	(
+		cd bare.defaulted &&
+		git bisect start &&
+		git bisect good $HASH1 &&
+		git bisect bad $HASH4 &&
+		git bisect run eval \
+			"test \$(git rev-list BISECT_HEAD ^$HASH2 --max-count=1 | wc -l) = 0" \
+			>../defaulted.log &&
+		git bisect reset
+	) &&
+	grep "$HASH3 is the first bad commit" defaulted.log
+'
+
 #
 # This creates a broken branch which cannot be checked out because
 # the tree created has been deleted.

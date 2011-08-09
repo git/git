@@ -29,7 +29,6 @@ Please use "git help bisect" to get the full man page.'
 OPTIONS_SPEC=
 . git-sh-setup
 . git-sh-i18n
-require_work_tree
 
 _x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
 _x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
@@ -79,7 +78,12 @@ bisect_start() {
 	orig_args=$(git rev-parse --sq-quote "$@")
 	bad_seen=0
 	eval=''
-	mode=''
+	if test "z$(git rev-parse --is-bare-repository)" != zfalse
+	then
+		mode=--no-checkout
+	else
+		mode=''
+	fi
 	while [ $# -gt 0 ]; do
 		arg="$1"
 		case "$arg" in
