@@ -429,6 +429,9 @@ cmd_update()
 		--recursive)
 			recursive=1
 			;;
+		--checkout)
+			update="checkout"
+			;;
 		--)
 			shift
 			break
@@ -466,6 +469,12 @@ cmd_update()
 			update_module=$update
 		else
 			update_module=$(git config submodule."$name".update)
+		fi
+
+		if test "$update_module" = "none"
+		then
+			echo "Skipping submodule '$path'"
+			continue
 		fi
 
 		if test -z "$url"
