@@ -110,7 +110,7 @@ test_expect_success 'email with embedded > is not okay' '
 	grep "error in commit $new" out
 '
 
-test_expect_failure 'missing < email delimiter is reported nicely' '
+test_expect_success 'missing < email delimiter is reported nicely' '
 	git cat-file commit HEAD >basis &&
 	sed "s/<//" basis >bad-email-2 &&
 	new=$(git hash-object -t commit -w --stdin <bad-email-2) &&
@@ -122,7 +122,7 @@ test_expect_failure 'missing < email delimiter is reported nicely' '
 	grep "error in commit $new.* - bad name" out
 '
 
-test_expect_failure 'missing email is reported nicely' '
+test_expect_success 'missing email is reported nicely' '
 	git cat-file commit HEAD >basis &&
 	sed "s/[a-z]* <[^>]*>//" basis >bad-email-3 &&
 	new=$(git hash-object -t commit -w --stdin <bad-email-3) &&
@@ -134,7 +134,7 @@ test_expect_failure 'missing email is reported nicely' '
 	grep "error in commit $new.* - missing email" out
 '
 
-test_expect_failure '> in name is reported' '
+test_expect_success '> in name is reported' '
 	git cat-file commit HEAD >basis &&
 	sed "s/ </> </" basis >bad-email-4 &&
 	new=$(git hash-object -t commit -w --stdin <bad-email-4) &&
