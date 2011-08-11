@@ -254,7 +254,8 @@ static int git_tcp_connect_sock(char *host, int flags)
  */
 static int git_tcp_connect_sock(char *host, int flags)
 {
-	int sockfd = -1, saved_errno = 0;
+	struct strbuf error_message = STRBUF_INIT;
+	int sockfd = -1;
 	const char *port = STR(DEFAULT_GIT_PORT);
 	char *ep;
 	struct hostent *he;
@@ -284,25 +285,21 @@ static int git_tcp_connect_sock(char *host, int flags)
 		fprintf(stderr, "done.\nConnecting to %s (port %s) ... ", host, port);
 
 	for (cnt = 0, ap = he->h_addr_list; *ap; ap++, cnt++) {
-		sockfd = socket(he->h_addrtype, SOCK_STREAM, 0);
-		if (sockfd < 0) {
-			saved_errno = errno;
-			continue;
-		}
-
 		memset(&sa, 0, sizeof sa);
 		sa.sin_family = he->h_addrtype;
 		sa.sin_port = htons(nport);
 		memcpy(&sa.sin_addr, *ap, he->h_length);
 
-		if (connect(sockfd, (struct sockaddr *)&sa, sizeof sa) < 0) {
-			saved_errno = errno;
-			fprintf(stderr, "%s[%d: %s]: errno=%s\n",
+		sockfd = socket(he->h_addrtype, SOCK_STREAM, 0);
+		if ((sockfd < 0) ||
+		    connect(sockfd, (struct sockaddr *)&sa, sizeof sa) < 0) {
+			strbuf_addf(&error_message, "%s[%d: %s]: errno=%s\n",
 				host,
 				cnt,
 				inet_ntoa(*(struct in_addr *)&sa.sin_addr),
-				strerror(saved_errno));
-			close(sockfd);
+				strerror(errno));
+			if (0 <= sockfd)
+				close(sockfd);
 			sockfd = -1;
 			continue;
 		}
@@ -313,7 +310,7 @@ static int git_tcp_connect_sock(char *host, int flags)
 	}
 
 	if (sockfd < 0)
-		die("unable to connect a socket (%s)", strerror(saved_errno));
+		die("unable to connect to %s:\n%s", host, error_message.buf);
 
 	if (flags & CONNECT_VERBOSE)
 		fprintf(stderr, "done.\n");
