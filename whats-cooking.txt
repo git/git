@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Aug 2011, #02; Mon, 8)
-X-master-at: 1421fd9df4f1e3ed232bd1c683c6e264a464a41e
-X-next-at: 917d73bc85e756fc5d627c398a3b2aaebc3cf157
+Subject: What's cooking in git.git (Aug 2011, #03; Thu, 11)
+X-master-at: b91766295f2b873bbd4ef79c06de05aff27f8e12
+X-next-at: 6c94a45e9f00a1b3c623d79d889f6b1c0b4db93d
 
-What's cooking in git.git (Aug 2011, #02; Mon, 8)
+What's cooking in git.git (Aug 2011, #03; Thu, 11)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -14,126 +14,65 @@ authors have a choice to just say "that fix looks good, squash it in!"
 instead of going through an extra round.
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* jc/diff-index-refactor (2011-07-13) 2 commits
-  (merged to 'next' on 2011-08-01 at 98d8b08)
- + diff-lib: refactor run_diff_index() and do_diff_cache()
- + diff-lib: simplify do_diff_cache()
-
-* jc/pack-order-tweak (2011-07-08) 2 commits
-  (merged to 'next' on 2011-07-25 at 1460c31)
- + pack-objects: optimize "recency order"
- + core: log offset pack data accesses happened
-
-* jk/reset-reflog-message-fix (2011-07-22) 1 commit
-  (merged to 'next' on 2011-08-01 at 6c88837)
- + reset: give better reflog messages
-
-* jl/submodule-status-summary-doc (2011-08-01) 1 commit
-  (merged to 'next' on 2011-08-03 at 88f97a9)
- + Documentation/submodule: add command references and update options
-
-* jl/submodule-update-quiet (2011-07-28) 1 commit
-  (merged to 'next' on 2011-08-01 at c611587)
- + submodule: update and add must honor --quiet flag
-
-* jn/gitweb-config-list-case (2011-07-31) 1 commit
-  (merged to 'next' on 2011-08-01 at 9268738)
- + gitweb: Git config keys are case insensitive, make config search too
-
-* jn/gitweb-system-config (2011-07-24) 1 commit
-  (merged to 'next' on 2011-08-01 at 4941e45)
- + gitweb: Introduce common system-wide settings for convenience
-
-* js/ls-tree-error (2011-07-25) 2 commits
-  (merged to 'next' on 2011-08-01 at 61bae55)
- + Ensure git ls-tree exits with a non-zero exit code if read_tree_recursive fails.
- + Add a test to check that git ls-tree sets non-zero exit code on error.
-
-* ms/reflog-show-is-default (2011-08-01) 1 commit
-  (merged to 'next' on 2011-08-03 at ae9cf6f)
- + reflog: actually default to subcommand 'show'
-
-* oa/pull-reflog (2011-08-01) 1 commit
-  (merged to 'next' on 2011-08-03 at faeff94)
- + pull: remove extra space from reflog message
-
-* tc/minix (2011-07-20) 1 commit
-  (merged to 'next' on 2011-07-25 at 36ad29f)
- + Makefile: add Minix configuration options.
-
---------------------------------------------------
 [New Topics]
 
-* jc/maint-combined-diff-work-tree (2011-08-04) 1 commit
-  (merged to 'next' on 2011-08-05 at 976a4d4)
- + diff -c/--cc: do not mistake "resolved as deletion" as "use working tree"
+* di/fast-import-ident (2011-08-11) 5 commits
+ - fsck: improve committer/author check
+ - fsck: add a few committer name tests
+ - fast-import: check committer name more strictly
+ - fast-import: don't fail on omitted committer name
+ - fast-import: add input format tests
 
-Will merge to "master" after cooking for a bit more.
+* fg/submodule-ff-check-before-push (2011-08-09) 1 commit
+ - push: Don't push a repository with unpushed submodules
+
+* hv/submodule-update-none (2011-08-11) 2 commits
+ - add update 'none' flag to disable update of submodule by default
+ - submodule: move update configuration variable further up
+
+* jc/lookup-object-hash (2011-08-11) 6 commits
+ - object hash: replace linear probing with 4-way cuckoo hashing
+ - object hash: we know the table size is a power of two
+ - object hash: next_size() helper for readability
+ - pack-objects --count-only
+ - object.c: remove duplicated code for object hashing
+ - object.c: code movement for readability
+
+* js/i18n-scripts (2011-08-08) 5 commits
+ - submodule: take advantage of gettextln and eval_gettextln.
+ - stash: take advantage of eval_gettextln
+ - pull: take advantage of eval_gettextln
+ - git-am: take advantage of gettextln and eval_gettextln.
+ - gettext: add gettextln, eval_gettextln to encode common idiom
+
+--------------------------------------------------
+[Graduated to "master"]
+
+* cb/partial-commit-relative-pathspec (2011-08-02) 1 commit
+  (merged to 'next' on 2011-08-03 at 6918f69)
+ + commit: allow partial commits with relative paths
+
+Ideally the pathspec-prefix helper should be renamed to something more
+sensible, but we could live with it for now.
+
+* ef/ipv4-connect-error-report (2011-08-01) 2 commits
+  (merged to 'next' on 2011-08-03 at ea4842b)
+ + connect: only log if all attempts failed (ipv4)
+ + Merge branch 'maint' into ef/ipv4-connect-error-report
 
 * jk/fast-export-quote-path (2011-08-05) 1 commit
   (merged to 'next' on 2011-08-05 at a80e5f5)
  + fast-export: quote paths in output
-
-Will merge to "master".
-
-* js/sh-style (2011-08-05) 2 commits
- - filter-branch.sh: de-dent usage string
- - misc-sh: fix up whitespace in some other .sh files.
-
-Will merge to "next".
-
-* ma/am-exclude (2011-08-03) 1 commit
-  (merged to 'next' on 2011-08-05 at 658e57c)
- + am: pass exclude down to apply
-
-Will merge to "master" after cooking for a bit more.
-
-* po/cygwin-backslash (2011-08-05) 2 commits
- - On Cygwin support both UNIX and DOS style path-names
- - git-compat-util: add generic find_last_dir_sep that respects is_dir_sep
-
-I think a further refactoring (no, not my suggestion) was offered?
 
 * rc/maint-http-wrong-free (2011-08-03) 2 commits
   (merged to 'next' on 2011-08-05 at cea08ed)
  + Makefile: some changes for http-related flag documentation
  + http.c: fix an invalid free()
 
-Will merge to "master".
-
-* db/am-skip-blank-at-the-beginning (2011-08-08) 2 commits
- - RE: [PATCH v2] am: ignore leading whitespace before patch
- - am: ignore leading whitespace before patch
-
-Hmmm, perhaps mailinfo should consider [Rr][Ee]: instead of [Rr]e:
-as a known noise?
-
-Will merge to "next" after squashing them into one.
-
-* jc/maint-smart-http-race-upload-pack (2011-08-08) 1 commit
- - helping smart-http/stateless-rpc fetch race
-
-Will merge to "next".
-
-* jn/maint-test-return (2011-08-08) 2 commits
- - test: cope better with use of return for errors
- - test: simplify return value of test_run_
-
-Will merge to "next".
-
-* rt/zlib-smaller-window (2011-08-08) 3 commits
- - test: consolidate definition of $LF
- - fixup! Tolerate zlib deflation with window
- - Tolerate zlib deflation with window size < 32Kb
-
-Will merge to "next" after squashing the second one into the bottom one.
-
-* fg/submodule-git-file-git-dir (2011-08-08) 3 commits
- - Move git-dir for submodules
- - fixup! rev-parse: add option --is-well-formed-git-dir
- - rev-parse: add option --is-well-formed-git-dir <path>
+* rs/grep-function-context (2011-08-01) 2 commits
+  (merged to 'next' on 2011-08-05 at 8d63a8c)
+ + grep: long context options
+ + grep: add option to show whole function as context
 
 --------------------------------------------------
 [Stalled]
@@ -143,18 +82,6 @@ Will merge to "next" after squashing the second one into the bottom one.
  - merge: reword the final message
 
 Probably the topmost commit should be dropped.
-
-* cb/maint-ls-files-error-report (2011-08-01) 2 commits
- - squash! ls-files: fix pathspec display on error
- - ls-files: fix pathspec display on error
-
-Will merge to "next" after getting an Ack for the fix-up and squashing it.
-
-* ac/describe-dirty-refresh (2011-08-01) 2 commits
- - fixup! describe: Refresh the index when run with --dirty
- - describe: Refresh the index when run with --dirty
-
-Will merge to "next" after squashing the fixup into the bottom one.
 
 * nk/branch-v-abbrev (2011-07-01) 1 commit
  - branch -v: honor core.abbrev
@@ -257,43 +184,85 @@ Re-roll being worked on.
  - t5800: point out that deleting branches does not work
  - t5800: document inability to push new branch with old content
 
+* po/cygwin-backslash (2011-08-05) 2 commits
+ - On Cygwin support both UNIX and DOS style path-names
+ - git-compat-util: add generic find_last_dir_sep that respects is_dir_sep
+
+I think a further refactoring (no, not my suggestion) was offered?
+
 --------------------------------------------------
 [Cooking]
 
-* ef/ipv4-connect-error-report (2011-08-01) 2 commits
-  (merged to 'next' on 2011-08-03 at ea4842b)
- + connect: only log if all attempts failed (ipv4)
- + Merge branch 'maint' into ef/ipv4-connect-error-report
-
-Will merge to "master".
-
-* js/bisect-no-checkout (2011-08-05) 10 commits
- - bisect: further style nitpicks
- - bisect: replace "; then" with "\n<tab>*then"
- - bisect: cleanup whitespace errors in git-bisect.sh.
- - bisect: add documentation for --no-checkout option.
- - bisect: add tests for the --no-checkout option.
- - bisect: introduce --no-checkout support into porcelain.
- - bisect: introduce support for --no-checkout option.
- - bisect: add tests to document expected behaviour in presence of broken trees.
- - bisect: use && to connect statements that are deferred with eval.
- - bisect: move argument parsing before state modification.
+* cb/maint-ls-files-error-report (2011-08-11) 1 commit
+ - ls-files: fix pathspec display on error
 
 Will merge to "next".
 
-* rs/grep-function-context (2011-08-01) 2 commits
-  (merged to 'next' on 2011-08-05 at 8d63a8c)
- + grep: long context options
- + grep: add option to show whole function as context
+* ac/describe-dirty-refresh (2011-08-11) 1 commit
+ - describe: Refresh the index when run with --dirty
 
-Will merge to "master".
+Will merge to "next".
 
-* cb/partial-commit-relative-pathspec (2011-08-02) 1 commit
-  (merged to 'next' on 2011-08-03 at 6918f69)
- + commit: allow partial commits with relative paths
+* jc/maint-combined-diff-work-tree (2011-08-04) 1 commit
+  (merged to 'next' on 2011-08-05 at 976a4d4)
+ + diff -c/--cc: do not mistake "resolved as deletion" as "use working tree"
 
-Ideally the pathspec-prefix helper should be renamed to something more
-sensible, but we could live with it for now.
+Will merge to "master" after cooking for a bit more.
+
+* js/sh-style (2011-08-05) 2 commits
+  (merged to 'next' on 2011-08-11 at 4a4c22c)
+ + filter-branch.sh: de-dent usage string
+ + misc-sh: fix up whitespace in some other .sh files.
+
+* ma/am-exclude (2011-08-09) 2 commits
+  (merged to 'next' on 2011-08-11 at cf0ba4d)
+ + am: Document new --exclude=<path> option
+  (merged to 'next' on 2011-08-05 at 658e57c)
+ + am: pass exclude down to apply
+
+Will merge to "master" after cooking for a bit more.
+
+* db/am-skip-blank-at-the-beginning (2011-08-11) 1 commit
+  (merged to 'next' on 2011-08-11 at 3637843)
+ + am: ignore leading whitespace before patch
+
+Will merge to "master" after cooking for a bit more.
+
+* jc/maint-smart-http-race-upload-pack (2011-08-08) 1 commit
+  (merged to 'next' on 2011-08-11 at 3f24b64)
+ + helping smart-http/stateless-rpc fetch race
+
+* jn/maint-test-return (2011-08-11) 3 commits
+ - t3900: do not reference numbered arguments from the test script
+ - test: cope better with use of return for errors
+ - test: simplify return value of test_run_
+
+Will merge to "next".
+
+* rt/zlib-smaller-window (2011-08-11) 2 commits
+ - test: consolidate definition of $LF
+ - Tolerate zlib deflation with window size < 32Kb
+
+Will merge to "next".
+
+* fg/submodule-git-file-git-dir (2011-08-08) 3 commits
+ - Move git-dir for submodules
+ - fixup! rev-parse: add option --is-well-formed-git-dir
+ - rev-parse: add option --is-well-formed-git-dir <path>
+
+* js/bisect-no-checkout (2011-08-09) 11 commits
+  (merged to 'next' on 2011-08-11 at 6c94a45)
+ + bisect: add support for bisecting bare repositories
+ + bisect: further style nitpicks
+ + bisect: replace "; then" with "\n<tab>*then"
+ + bisect: cleanup whitespace errors in git-bisect.sh.
+ + bisect: add documentation for --no-checkout option.
+ + bisect: add tests for the --no-checkout option.
+ + bisect: introduce --no-checkout support into porcelain.
+ + bisect: introduce support for --no-checkout option.
+ + bisect: add tests to document expected behaviour in presence of broken trees.
+ + bisect: use && to connect statements that are deferred with eval.
+ + bisect: move argument parsing before state modification.
 
 * cb/maint-exec-error-report (2011-08-01) 2 commits
   (merged to 'next' on 2011-08-05 at 2764424)
@@ -311,52 +280,49 @@ Will merge to "master" after cooking for a bit more.
 Will merge to "master" after cooking for a bit more.
 
 * jk/add-i-hunk-filter (2011-07-27) 5 commits
- - add--interactive: add option to autosplit hunks
- - add--interactive: allow negatation of hunk filters
- - add--interactive: allow hunk filtering on command line
- - add--interactive: factor out regex error handling
- - add--interactive: refactor patch mode argument processing
-
-Will merge to "next".
+  (merged to 'next' on 2011-08-11 at 8ff9a56)
+ + add--interactive: add option to autosplit hunks
+ + add--interactive: allow negatation of hunk filters
+ + add--interactive: allow hunk filtering on command line
+ + add--interactive: factor out regex error handling
+ + add--interactive: refactor patch mode argument processing
 
 * mh/check-attr-listing (2011-08-04) 23 commits
- - Rename git_checkattr() to git_check_attr()
- - git-check-attr: Fix command-line handling to match docs
- - git-check-attr: Drive two tests using the same raw data
- - git-check-attr: Add an --all option to show all attributes
- - git-check-attr: Error out if no pathnames are specified
- - git-check-attr: Process command-line args more systematically
- - git-check-attr: Handle each error separately
- - git-check-attr: Extract a function error_with_usage()
- - git-check-attr: Introduce a new variable
- - git-check-attr: Extract a function output_attr()
- - Allow querying all attributes on a file
- - Remove redundant check
- - Remove redundant call to bootstrap_attr_stack()
- - Extract a function collect_all_attrs()
- - Teach prepare_attr_stack() to figure out dirlen itself
- - git-check-attr: Use git_attr_name()
- - Provide access to the name attribute of git_attr
- - git-check-attr: Add tests of command-line parsing
- - git-check-attr: Add missing "&&"
- - Disallow the empty string as an attribute name
- - Remove anachronism from comment
- - doc: Correct git_attr() calls in example code
- - doc: Add a link from gitattributes(5) to git-check-attr(1)
+  (merged to 'next' on 2011-08-11 at f73ad50)
+ + Rename git_checkattr() to git_check_attr()
+ + git-check-attr: Fix command-line handling to match docs
+ + git-check-attr: Drive two tests using the same raw data
+ + git-check-attr: Add an --all option to show all attributes
+ + git-check-attr: Error out if no pathnames are specified
+ + git-check-attr: Process command-line args more systematically
+ + git-check-attr: Handle each error separately
+ + git-check-attr: Extract a function error_with_usage()
+ + git-check-attr: Introduce a new variable
+ + git-check-attr: Extract a function output_attr()
+ + Allow querying all attributes on a file
+ + Remove redundant check
+ + Remove redundant call to bootstrap_attr_stack()
+ + Extract a function collect_all_attrs()
+ + Teach prepare_attr_stack() to figure out dirlen itself
+ + git-check-attr: Use git_attr_name()
+ + Provide access to the name attribute of git_attr
+ + git-check-attr: Add tests of command-line parsing
+ + git-check-attr: Add missing "&&"
+ + Disallow the empty string as an attribute name
+ + Remove anachronism from comment
+ + doc: Correct git_attr() calls in example code
+ + doc: Add a link from gitattributes(5) to git-check-attr(1)
  (this branch is used by mh/check-attr-relative.)
 
-Will merge to "next".
-
 * mh/check-attr-relative (2011-08-04) 6 commits
- - test-path-utils: Add subcommand "prefix_path"
- - test-path-utils: Add subcommand "absolute_path"
- - git-check-attr: Normalize paths
- - git-check-attr: Demonstrate problems with relative paths
- - git-check-attr: Demonstrate problems with unnormalized paths
- - git-check-attr: test that no output is written to stderr
+  (merged to 'next' on 2011-08-11 at f94550c)
+ + test-path-utils: Add subcommand "prefix_path"
+ + test-path-utils: Add subcommand "absolute_path"
+ + git-check-attr: Normalize paths
+ + git-check-attr: Demonstrate problems with relative paths
+ + git-check-attr: Demonstrate problems with unnormalized paths
+ + git-check-attr: test that no output is written to stderr
  (this branch uses mh/check-attr-listing.)
-
-Will merge to "next".
 
 * jk/http-auth-keyring (2011-08-03) 13 commits
   (merged to 'next' on 2011-08-03 at b06e80e)
@@ -387,10 +353,11 @@ for different repositories.
  + Fix prefix handling in ref iteration functions
 
 * rc/histogram-diff (2011-08-08) 12 commits
- - xdiff/xhistogram: drop need for additional variable
- - xdiff/xhistogram: rely on xdl_trim_ends()
- - xdiff/xhistogram: rework handling of recursed results
- - xdiff: do away with xdl_mmfile_next()
+  (merged to 'next' on 2011-08-11 at 684dfd1)
+ + xdiff/xhistogram: drop need for additional variable
+ + xdiff/xhistogram: rely on xdl_trim_ends()
+ + xdiff/xhistogram: rework handling of recursed results
+ + xdiff: do away with xdl_mmfile_next()
   (merged to 'next' on 2011-08-03 at f9e2328)
  + Make test number unique
   (merged to 'next' on 2011-07-25 at 3351028)
@@ -401,8 +368,6 @@ for different repositories.
  + xdiff/xpatience: factor out fall-back-diff function
  + xdiff/xprepare: refactor abort cleanups
  + xdiff/xprepare: use memset()
-
-Will merge to "next".
 
 * rr/revert-cherry-pick-continue (2011-08-08) 18 commits
  - revert: Propagate errors upwards from do_pick_commit
@@ -424,4 +389,4 @@ Will merge to "next".
  - config: Introduce functions to write non-standard file
  - advice: Introduce error_resolve_conflict
 
-Getting into a reasonable shape. Is another round of re-roll coming?
+Will merge to "next".
