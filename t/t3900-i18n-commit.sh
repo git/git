@@ -147,7 +147,7 @@ test_commit_autosquash_flags () {
 		git commit -a -m "intermediate commit" &&
 		test_tick &&
 		echo $H $flag >>F &&
-		git commit -a --$flag HEAD~1 $3 &&
+		git commit -a --$flag HEAD~1 &&
 		E=$(git cat-file commit '$H-$flag' |
 			sed -ne "s/^encoding //p") &&
 		test "z$E" = "z$H" &&
@@ -160,6 +160,6 @@ test_commit_autosquash_flags () {
 
 test_commit_autosquash_flags eucJP fixup
 
-test_commit_autosquash_flags ISO-2022-JP squash '-m "squash message"'
+test_commit_autosquash_flags ISO-2022-JP squash
 
 test_done
