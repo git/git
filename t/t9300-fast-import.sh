@@ -324,6 +324,105 @@ test_expect_success \
 	 test `git rev-parse master` = `git rev-parse TEMP_TAG^`'
 rm -f .git/TEMP_TAG
 
+git gc 2>/dev/null >/dev/null
+git prune 2>/dev/null >/dev/null
+
+cat >input <<INPUT_END
+commit refs/heads/empty-committer-1
+committer  <> $GIT_COMMITTER_DATE
+data <<COMMIT
+empty commit
+COMMIT
+INPUT_END
+test_expect_success 'B: accept empty committer' '
+	git fast-import <input &&
+	out=$(git fsck) &&
+	echo "$out" &&
+	test -z "$out"
+'
+git update-ref -d refs/heads/empty-committer-1 || true
+
+git gc 2>/dev/null >/dev/null
+git prune 2>/dev/null >/dev/null
+
+cat >input <<INPUT_END
+commit refs/heads/empty-committer-2
+committer <a@b.com> $GIT_COMMITTER_DATE
+data <<COMMIT
+empty commit
+COMMIT
+INPUT_END
+test_expect_failure 'B: accept and fixup committer with no name' '
+	git fast-import <input &&
+	out=$(git fsck) &&
+	echo "$out" &&
+	test -z "$out"
+'
+git update-ref -d refs/heads/empty-committer-2 || true
+
+git gc 2>/dev/null >/dev/null
+git prune 2>/dev/null >/dev/null
+
+cat >input <<INPUT_END
+commit refs/heads/invalid-committer
+committer Name email> $GIT_COMMITTER_DATE
+data <<COMMIT
+empty commit
+COMMIT
+INPUT_END
+test_expect_failure 'B: fail on invalid committer (1)' '
+	test_must_fail git fast-import <input
+'
+git update-ref -d refs/heads/invalid-committer || true
+
+cat >input <<INPUT_END
+commit refs/heads/invalid-committer
+committer Name <e<mail> $GIT_COMMITTER_DATE
+data <<COMMIT
+empty commit
+COMMIT
+INPUT_END
+test_expect_failure 'B: fail on invalid committer (2)' '
+	test_must_fail git fast-import <input
+'
+git update-ref -d refs/heads/invalid-committer || true
+
+cat >input <<INPUT_END
+commit refs/heads/invalid-committer
+committer Name <email>> $GIT_COMMITTER_DATE
+data <<COMMIT
+empty commit
+COMMIT
+INPUT_END
+test_expect_failure 'B: fail on invalid committer (3)' '
+	test_must_fail git fast-import <input
+'
+git update-ref -d refs/heads/invalid-committer || true
+
+cat >input <<INPUT_END
+commit refs/heads/invalid-committer
+committer Name <email $GIT_COMMITTER_DATE
+data <<COMMIT
+empty commit
+COMMIT
+INPUT_END
+test_expect_failure 'B: fail on invalid committer (4)' '
+	test_must_fail git fast-import <input
+'
+git update-ref -d refs/heads/invalid-committer || true
+
+cat >input <<INPUT_END
+commit refs/heads/invalid-committer
+committer Name<email> $GIT_COMMITTER_DATE
+data <<COMMIT
+empty commit
+COMMIT
+INPUT_END
+test_expect_failure 'B: fail on invalid committer (5)' '
+	test_must_fail git fast-import <input
+'
+git update-ref -d refs/heads/invalid-committer || true
+
 ###
 ### series C
 ###
