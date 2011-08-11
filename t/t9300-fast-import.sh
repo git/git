@@ -352,7 +352,7 @@ data <<COMMIT
 empty commit
 COMMIT
 INPUT_END
-test_expect_failure 'B: accept and fixup committer with no name' '
+test_expect_success 'B: accept and fixup committer with no name' '
 	git fast-import <input &&
 	out=$(git fsck) &&
 	echo "$out" &&

@@ -1971,6 +1971,10 @@ static char *parse_ident(const char *buf)
 	size_t name_len;
 	char *ident;
 
+	/* ensure there is a space delimiter even if there is no name */
+	if (*buf == '<')
+		--buf;
+
 	gt = strrchr(buf, '>');
 	if (!gt)
 		die("Missing > in ident string: %s", buf);
