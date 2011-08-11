@@ -370,7 +370,7 @@ data <<COMMIT
 empty commit
 COMMIT
 INPUT_END
-test_expect_failure 'B: fail on invalid committer (1)' '
+test_expect_success 'B: fail on invalid committer (1)' '
 	test_must_fail git fast-import <input
 '
 git update-ref -d refs/heads/invalid-committer || true
@@ -382,7 +382,7 @@ data <<COMMIT
 empty commit
 COMMIT
 INPUT_END
-test_expect_failure 'B: fail on invalid committer (2)' '
+test_expect_success 'B: fail on invalid committer (2)' '
 	test_must_fail git fast-import <input
 '
 git update-ref -d refs/heads/invalid-committer || true
@@ -394,7 +394,7 @@ data <<COMMIT
 empty commit
 COMMIT
 INPUT_END
-test_expect_failure 'B: fail on invalid committer (3)' '
+test_expect_success 'B: fail on invalid committer (3)' '
 	test_must_fail git fast-import <input
 '
 git update-ref -d refs/heads/invalid-committer || true
@@ -406,7 +406,7 @@ data <<COMMIT
 empty commit
 COMMIT
 INPUT_END
-test_expect_failure 'B: fail on invalid committer (4)' '
+test_expect_success 'B: fail on invalid committer (4)' '
 	test_must_fail git fast-import <input
 '
 git update-ref -d refs/heads/invalid-committer || true
@@ -418,7 +418,7 @@ data <<COMMIT
 empty commit
 COMMIT
 INPUT_END
-test_expect_failure 'B: fail on invalid committer (5)' '
+test_expect_success 'B: fail on invalid committer (5)' '
 	test_must_fail git fast-import <input
 '
 git update-ref -d refs/heads/invalid-committer || true
