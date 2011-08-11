@@ -461,7 +461,13 @@ cmd_update()
 		fi
 		name=$(module_name "$path") || exit
 		url=$(git config submodule."$name".url)
-		update_module=$(git config submodule."$name".update)
+		if ! test -z "$update"
+		then
+			update_module=$update
+		else
+			update_module=$(git config submodule."$name".update)
+		fi
+
 		if test -z "$url"
 		then
 			# Only mention uninitialized submodules when its
@@ -481,11 +487,6 @@ Maybe you want to use 'update --init'?")"
 			subsha1=$(clear_local_git_env; cd "$path" &&
 				git rev-parse --verify HEAD) ||
 			die "$(eval_gettext "Unable to find current revision in submodule path '\$path'")"
-		fi
-
-		if ! test -z "$update"
-		then
-			update_module=$update
 		fi
 
 		if test "$subsha1" != "$sha1"
