@@ -228,14 +228,11 @@ static struct match_attr *parse_attr_line(const char *line, const char *src,
 
 	for (pass = 0; pass < 2; pass++) {
 		/* pass 0 counts and allocates, pass 1 fills */
-		num_attr = 0;
-		cp = states;
-		while (*cp) {
+		for (cp = states, num_attr = 0; *cp; num_attr++) {
 			cp = parse_attr(src, lineno, cp,
 				pass ? &(res->state[num_attr]) : NULL);
 			if (!cp)
 				return NULL;
-			num_attr++;
 		}
 		if (pass)
 			break;
