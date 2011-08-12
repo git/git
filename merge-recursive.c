@@ -459,9 +459,10 @@ static struct string_list *get_renames(struct merge_options *o,
 	return renames;
 }
 
-static int update_stages_options(const char *path, struct diff_filespec *o,
-			 struct diff_filespec *a, struct diff_filespec *b,
-			 int clear, int options)
+static int update_stages_options(const char *path, const struct diff_filespec *o,
+				 const struct diff_filespec *a,
+				 const struct diff_filespec *b,
+				 int clear, int options)
 {
 	if (clear)
 		if (remove_file_from_cache(path))
@@ -710,9 +711,9 @@ struct merge_file_info {
 
 static int merge_3way(struct merge_options *o,
 		      mmbuffer_t *result_buf,
-		      struct diff_filespec *one,
-		      struct diff_filespec *a,
-		      struct diff_filespec *b,
+		      const struct diff_filespec *one,
+		      const struct diff_filespec *a,
+		      const struct diff_filespec *b,
 		      const char *branch1,
 		      const char *branch2)
 {
@@ -770,9 +771,9 @@ static int merge_3way(struct merge_options *o,
 }
 
 static struct merge_file_info merge_file(struct merge_options *o,
-				         struct diff_filespec *one,
-					 struct diff_filespec *a,
-					 struct diff_filespec *b,
+					 const struct diff_filespec *one,
+					 const struct diff_filespec *a,
+					 const struct diff_filespec *b,
 					 const char *branch1,
 					 const char *branch2)
 {
