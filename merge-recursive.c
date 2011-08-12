@@ -1071,6 +1071,19 @@ static void conflict_rename_delete(struct merge_options *o,
 			     "rename", "renamed");
 }
 
+static struct diff_filespec *filespec_from_entry(struct diff_filespec *target,
+						 struct stage_data *entry,
+						 int stage)
+{
+	unsigned char *sha = entry->stages[stage].sha;
+	unsigned mode = entry->stages[stage].mode;
+	if (mode == 0 || is_null_sha1(sha))
+		return NULL;
+	hashcpy(target->sha1, sha);
+	target->mode = mode;
+	return target;
+}
+
 static void conflict_rename_rename_1to2(struct merge_options *o,
 					struct rename_conflict_info *ci)
 {
@@ -1116,8 +1129,12 @@ static void conflict_rename_rename_1to2(struct merge_options *o,
 		remove_file_from_cache(a->path);
 		remove_file_from_cache(b->path);
 	} else {
-		update_stages(a->path, NULL, a, NULL);
-		update_stages(b->path, NULL, NULL, b);
+		struct diff_filespec other;
+		update_stages(a->path, NULL,
+			      a, filespec_from_entry(&other, ci->dst_entry1, 3));
+
+		update_stages(b->path, NULL,
+			      filespec_from_entry(&other, ci->dst_entry2, 2), b);
 
 		update_file(o, 0, a->sha1, a->mode, dst_name_a);
 		update_file(o, 0, b->sha1, b->mode, dst_name_b);

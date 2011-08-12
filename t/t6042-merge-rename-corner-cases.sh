@@ -551,7 +551,7 @@ test_expect_success 'setup rename/rename(1to2)/add-dest conflict' '
 	git commit -m two
 '
 
-test_expect_failure 'rename/rename/add-dest merge still knows about conflicting file versions' '
+test_expect_success 'rename/rename/add-dest merge still knows about conflicting file versions' '
 	git checkout C^0 &&
 	test_must_fail git merge -s recursive B^0 &&
 
