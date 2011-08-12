@@ -591,6 +591,30 @@ static void flush_buffer(int fd, const char *buf, unsigned long size)
 	}
 }
 
+static int dir_in_way(const char *path, int check_working_copy)
+{
+	int pos, pathlen = strlen(path);
+	char *dirpath = xmalloc(pathlen + 2);
+	struct stat st;
+
+	strcpy(dirpath, path);
+	dirpath[pathlen] = '/';
+	dirpath[pathlen+1] = '\0';
+
+	pos = cache_name_pos(dirpath, pathlen+1);
+
+	if (pos < 0)
+		pos = -1 - pos;
+	if (pos < active_nr &&
+	    !strncmp(dirpath, active_cache[pos]->name, pathlen+1)) {
+		free(dirpath);
+		return 1;
+	}
+
+	free(dirpath);
+	return check_working_copy && !lstat(path, &st) && S_ISDIR(st.st_mode);
+}
+
 static int would_lose_untracked(const char *path)
 {
 	int pos = cache_name_pos(path, strlen(path));
@@ -880,7 +904,6 @@ static void conflict_rename_delete(struct merge_options *o,
 {
 	char *dest_name = pair->two->path;
 	int df_conflict = 0;
-	struct stat st;
 
 	output(o, 1, "CONFLICT (rename/delete): Rename %s->%s in %s "
 	       "and deleted in %s",
@@ -890,7 +913,7 @@ static void conflict_rename_delete(struct merge_options *o,
 		update_stages(dest_name, NULL,
 			      rename_branch == o->branch1 ? pair->two : NULL,
 			      rename_branch == o->branch1 ? NULL : pair->two);
-	if (lstat(dest_name, &st) == 0 && S_ISDIR(st.st_mode)) {
+	if (dir_in_way(dest_name, !o->call_depth)) {
 		dest_name = unique_path(o, dest_name, rename_branch);
 		df_conflict = 1;
 	}
@@ -912,13 +935,12 @@ static void conflict_rename_rename_1to2(struct merge_options *o,
 	const char *ren2_dst = pair2->two->path;
 	const char *dst_name1 = ren1_dst;
 	const char *dst_name2 = ren2_dst;
-	struct stat st;
-	if (lstat(ren1_dst, &st) == 0 && S_ISDIR(st.st_mode)) {
+	if (dir_in_way(ren1_dst, !o->call_depth)) {
 		dst_name1 = del[delp++] = unique_path(o, ren1_dst, branch1);
 		output(o, 1, "%s is a directory in %s adding as %s instead",
 		       ren1_dst, branch2, dst_name1);
 	}
-	if (lstat(ren2_dst, &st) == 0 && S_ISDIR(st.st_mode)) {
+	if (dir_in_way(ren2_dst, !o->call_depth)) {
 		dst_name2 = del[delp++] = unique_path(o, ren2_dst, branch2);
 		output(o, 1, "%s is a directory in %s adding as %s instead",
 		       ren2_dst, branch1, dst_name2);
@@ -1078,7 +1100,7 @@ static int process_renames(struct merge_options *o,
 			try_merge = 0;
 
 			if (sha_eq(src_other.sha1, null_sha1)) {
-				if (string_list_has_string(&o->current_directory_set, ren1_dst)) {
+				if (dir_in_way(ren1_dst, 0 /*check_wc*/)) {
 					ren1->dst_entry->processed = 0;
 					setup_rename_df_conflict_info(RENAME_DELETE,
 								      ren1->pair,
@@ -1157,7 +1179,7 @@ static int process_renames(struct merge_options *o,
 					a = &src_other;
 				}
 				update_stages_and_entry(ren1_dst, ren1->dst_entry, one, a, b, 1);
-				if (string_list_has_string(&o->current_directory_set, ren1_dst)) {
+				if (dir_in_way(ren1_dst, 0 /*check_wc*/)) {
 					setup_rename_df_conflict_info(RENAME_NORMAL,
 								      ren1->pair,
 								      NULL,
@@ -1262,7 +1284,6 @@ static int merge_content(struct merge_options *o,
 	const char *reason = "content";
 	struct merge_file_info mfi;
 	struct diff_filespec one, a, b;
-	struct stat st;
 	unsigned df_conflict_remains = 0;
 
 	if (!o_sha) {
@@ -1279,7 +1300,7 @@ static int merge_content(struct merge_options *o,
 
 	mfi = merge_file(o, &one, &a, &b, o->branch1, o->branch2);
 	if (df_rename_conflict_branch &&
-	    lstat(path, &st) == 0 && S_ISDIR(st.st_mode)) {
+	    dir_in_way(path, !o->call_depth)) {
 		df_conflict_remains = 1;
 	}
 
@@ -1344,8 +1365,7 @@ static int process_entry(struct merge_options *o,
 				output(o, 2, "Removing %s", path);
 			/* do not touch working file if it did not exist */
 			remove_file(o, 1, path, !a_sha);
-		} else if (string_list_has_string(&o->current_directory_set,
-						  path)) {
+		} else if (dir_in_way(path, 0 /*check_wc*/)) {
 			entry->processed = 0;
 			return 1; /* Assume clean until processed */
 		} else {
@@ -1368,7 +1388,7 @@ static int process_entry(struct merge_options *o,
 			mode = b_mode;
 			sha = b_sha;
 		}
-		if (string_list_has_string(&o->current_directory_set, path)) {
+		if (dir_in_way(path, 0 /*check_wc*/)) {
 			/* Handle D->F conflicts after all subfiles */
 			entry->processed = 0;
 			return 1; /* Assume clean until processed */
@@ -1416,7 +1436,6 @@ static int process_df_entry(struct merge_options *o,
 	unsigned char *o_sha = stage_sha(entry->stages[1].sha, o_mode);
 	unsigned char *a_sha = stage_sha(entry->stages[2].sha, a_mode);
 	unsigned char *b_sha = stage_sha(entry->stages[3].sha, b_mode);
-	struct stat st;
 
 	entry->processed = 1;
 	if (entry->rename_df_conflict_info) {
@@ -1461,7 +1480,7 @@ static int process_df_entry(struct merge_options *o,
 	} else if (o_sha && (!a_sha || !b_sha)) {
 		/* Modify/delete; deleted side may have put a directory in the way */
 		char *renamed = NULL;
-		if (lstat(path, &st) == 0 && S_ISDIR(st.st_mode)) {
+		if (dir_in_way(path, !o->call_depth)) {
 			renamed = unique_path(o, path, a_sha ? o->branch1 : o->branch2);
 		}
 		clean_merge = 0;
@@ -1489,7 +1508,7 @@ static int process_df_entry(struct merge_options *o,
 			sha = b_sha;
 			conf = "directory/file";
 		}
-		if (lstat(path, &st) == 0 && S_ISDIR(st.st_mode)) {
+		if (dir_in_way(path, !o->call_depth)) {
 			char *new_path = unique_path(o, path, add_branch);
 			clean_merge = 0;
 			output(o, 1, "CONFLICT (%s): There is a directory with name %s in %s. "
