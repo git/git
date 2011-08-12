@@ -942,6 +942,36 @@ static struct merge_file_info merge_file_1(struct merge_options *o,
 	return result;
 }
 
+static struct merge_file_info
+merge_file_special_markers(struct merge_options *o,
+			   const struct diff_filespec *one,
+			   const struct diff_filespec *a,
+			   const struct diff_filespec *b,
+			   const char *branch1,
+			   const char *filename1,
+			   const char *branch2,
+			   const char *filename2)
+{
+	char *side1 = NULL;
+	char *side2 = NULL;
+	struct merge_file_info mfi;
+
+	if (filename1) {
+		side1 = xmalloc(strlen(branch1) + strlen(filename1) + 2);
+		sprintf(side1, "%s:%s", branch1, filename1);
+	}
+	if (filename2) {
+		side2 = xmalloc(strlen(branch2) + strlen(filename2) + 2);
+		sprintf(side2, "%s:%s", branch2, filename2);
+	}
+
+	mfi = merge_file_1(o, one, a, b,
+			   side1 ? side1 : branch1, side2 ? side2 : branch2);
+	free(side1);
+	free(side2);
+	return mfi;
+}
+
 static struct merge_file_info merge_file(struct merge_options *o,
 					 const char *path,
 					 const unsigned char *o_sha, int o_mode,
@@ -1415,7 +1445,6 @@ static int merge_content(struct merge_options *o,
 			 struct rename_conflict_info *rename_conflict_info)
 {
 	const char *reason = "content";
-	char *side1 = NULL, *side2 = NULL;
 	const char *path1 = NULL, *path2 = NULL;
 	struct merge_file_info mfi;
 	struct diff_filespec one, a, b;
@@ -1445,18 +1474,13 @@ static int merge_content(struct merge_options *o,
 		path2 = (rename_conflict_info->pair2 ||
 			 o->branch2 == rename_conflict_info->branch1) ?
 			pair1->two->path : pair1->one->path;
-		side1 = xmalloc(strlen(o->branch1) + strlen(path1) + 2);
-		side2 = xmalloc(strlen(o->branch2) + strlen(path2) + 2);
-		sprintf(side1, "%s:%s", o->branch1, path1);
-		sprintf(side2, "%s:%s", o->branch2, path2);
 
 		if (dir_in_way(path, !o->call_depth))
 			df_conflict_remains = 1;
 	}
-	mfi = merge_file_1(o, &one, &a, &b,
-			   side1 ? side1 : o->branch1, side2 ? side2 : o->branch2);
-	free(side1);
-	free(side2);
+	mfi = merge_file_special_markers(o, &one, &a, &b,
+					 o->branch1, path1,
+					 o->branch2, path2);
 
 	if (mfi.clean && !df_conflict_remains &&
 	    sha_eq(mfi.sha, a_sha) && mfi.mode == a_mode) {
