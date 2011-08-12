@@ -1085,6 +1085,9 @@ static int process_renames(struct merge_options *o,
 		}
 
 		ren1->dst_entry->processed = 1;
+		/* BUG: We should only mark src_entry as processed if we
+		 * are not dealing with a rename + add-source case.
+		 */
 		ren1->src_entry->processed = 1;
 
 		if (ren1->processed)
@@ -1111,6 +1114,10 @@ static int process_renames(struct merge_options *o,
 							      ren1->dst_entry,
 							      ren2->dst_entry);
 			} else {
+				/* BUG: We should only remove ren1_src in
+				 * the base stage (think of rename +
+				 * add-source cases).
+				 */
 				remove_file(o, 1, ren1_src, 1);
 				update_entry(ren1->dst_entry,
 					     ren1->pair->one,
@@ -1134,6 +1141,10 @@ static int process_renames(struct merge_options *o,
 			int renamed_stage = a_renames == renames1 ? 2 : 3;
 			int other_stage =   a_renames == renames1 ? 3 : 2;
 
+			/* BUG: We should only remove ren1_src in the base
+			 * stage and in other_stage (think of rename +
+			 * add-source case).
+			 */
 			remove_file(o, 1, ren1_src,
 				    renamed_stage == 2 || !was_tracked(ren1_src));
 
