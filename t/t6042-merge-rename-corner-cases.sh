@@ -441,4 +441,129 @@ test_expect_success 'merge has correct working tree contents' '
 	test $(git hash-object c) = $(git rev-parse A:a)
 '
 
+# Testcase setup for rename/rename(1to2)/add-source conflict:
+#   Commit A: new file: a
+#   Commit B: rename a->b
+#   Commit C: rename a->c, add completely different a
+#
+# Merging of B & C should NOT be clean; there's a rename/rename conflict
+
+test_expect_success 'setup rename/rename(1to2)/add-source conflict' '
+	git rm -rf . &&
+	git clean -fdqx &&
+	rm -rf .git &&
+	git init &&
+
+	printf "1\n2\n3\n4\n5\n6\n7\n" >a &&
+	git add a &&
+	git commit -m A &&
+	git tag A &&
+
+	git checkout -b B A &&
+	git mv a b &&
+	git commit -m B &&
+
+	git checkout -b C A &&
+	git mv a c &&
+	echo something completely different >a &&
+	git add a &&
+	git commit -m C
+'
+
+test_expect_failure 'detect conflict with rename/rename(1to2)/add-source merge' '
+	git checkout B^0 &&
+
+	test_must_fail git merge -s recursive C^0 &&
+
+	test 4 -eq $(git ls-files -s | wc -l) &&
+	test 0 -eq $(git ls-files -o | wc -l) &&
+
+	test $(git rev-parse 3:a) = $(git rev-parse C:a) &&
+	test $(git rev-parse 1:a) = $(git rev-parse A:a) &&
+	test $(git rev-parse 2:b) = $(git rev-parse B:b) &&
+	test $(git rev-parse 3:c) = $(git rev-parse C:c) &&
+
+	test -f a &&
+	test -f b &&
+	test -f c
+'
+
+test_expect_success 'setup rename/rename(1to2)/add-source resolvable conflict' '
+	git rm -rf . &&
+	git clean -fdqx &&
+	rm -rf .git &&
+	git init &&
+
+	>a &&
+	git add a &&
+	test_tick &&
+	git commit -m base &&
+	git tag A &&
+
+	git checkout -b B A &&
+	git mv a b &&
+	test_tick &&
+	git commit -m one &&
+
+	git checkout -b C A &&
+	git mv a b &&
+	echo important-info >a &&
+	git add a &&
+	test_tick &&
+	git commit -m two
+'
+
+test_expect_failure 'rename/rename/add-source still tracks new a file' '
+	git checkout C^0 &&
+	git merge -s recursive B^0 &&
+
+	test 2 -eq $(git ls-files -s | wc -l) &&
+	test 0 -eq $(git ls-files -o | wc -l) &&
+
+	test $(git rev-parse HEAD:a) = $(git rev-parse C:a) &&
+	test $(git rev-parse HEAD:b) = $(git rev-parse A:a)
+'
+
+test_expect_success 'setup rename/rename(1to2)/add-dest conflict' '
+	git rm -rf . &&
+	git clean -fdqx &&
+	rm -rf .git &&
+	git init &&
+
+	echo stuff >a &&
+	git add a &&
+	test_tick &&
+	git commit -m base &&
+	git tag A &&
+
+	git checkout -b B A &&
+	git mv a b &&
+	echo precious-data >c &&
+	git add c &&
+	test_tick &&
+	git commit -m one &&
+
+	git checkout -b C A &&
+	git mv a c &&
+	echo important-info >b &&
+	git add b &&
+	test_tick &&
+	git commit -m two
+'
+
+test_expect_failure 'rename/rename/add-dest merge still knows about conflicting file versions' '
+	git checkout C^0 &&
+	test_must_fail git merge -s recursive B^0 &&
+
+	test 5 -eq $(git ls-files -s | wc -l) &&
+	test 2 -eq $(git ls-files -u b | wc -l) &&
+	test 2 -eq $(git ls-files -u c | wc -l) &&
+
+	test $(git rev-parse :1:a) = $(git rev-parse A:a) &&
+	test $(git rev-parse :2:b) = $(git rev-parse C:b) &&
+	test $(git rev-parse :3:b) = $(git rev-parse B:b) &&
+	test $(git rev-parse :2:c) = $(git rev-parse C:c) &&
+	test $(git rev-parse :3:c) = $(git rev-parse B:c)
+'
+
 test_done
