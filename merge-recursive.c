@@ -79,6 +79,8 @@ struct rename_conflict_info {
 	const char *branch2;
 	struct stage_data *dst_entry1;
 	struct stage_data *dst_entry2;
+	struct diff_filespec ren1_other;
+	struct diff_filespec ren2_other;
 };
 
 /*
@@ -100,7 +102,10 @@ static inline void setup_rename_conflict_info(enum rename_type rename_type,
 					      const char *branch1,
 					      const char *branch2,
 					      struct stage_data *dst_entry1,
-					      struct stage_data *dst_entry2)
+					      struct stage_data *dst_entry2,
+					      struct merge_options *o,
+					      struct stage_data *src_entry1,
+					      struct stage_data *src_entry2)
 {
 	struct rename_conflict_info *ci = xcalloc(1, sizeof(struct rename_conflict_info));
 	ci->rename_type = rename_type;
@@ -117,6 +122,24 @@ static inline void setup_rename_conflict_info(enum rename_type rename_type,
 		ci->dst_entry2 = dst_entry2;
 		ci->pair2 = pair2;
 		dst_entry2->rename_conflict_info = ci;
+	}
+
+	if (rename_type == RENAME_TWO_FILES_TO_ONE) {
+		/*
+		 * For each rename, there could have been
+		 * modifications on the side of history where that
+		 * file was not renamed.
+		 */
+		int ostage1 = o->branch1 == branch1 ? 3 : 2;
+		int ostage2 = ostage1 ^ 1;
+
+		ci->ren1_other.path = pair1->one->path;
+		hashcpy(ci->ren1_other.sha1, src_entry1->stages[ostage1].sha);
+		ci->ren1_other.mode = src_entry1->stages[ostage1].mode;
+
+		ci->ren2_other.path = pair2->one->path;
+		hashcpy(ci->ren2_other.sha1, src_entry2->stages[ostage2].sha);
+		ci->ren2_other.mode = src_entry2->stages[ostage2].mode;
 	}
 }
 
@@ -1158,7 +1181,10 @@ static int process_renames(struct merge_options *o,
 						   branch1,
 						   branch2,
 						   ren1->dst_entry,
-						   ren2->dst_entry);
+						   ren2->dst_entry,
+						   o,
+						   NULL,
+						   NULL);
 		} else if ((lookup = string_list_lookup(renames2Dst, ren1_dst))) {
 			/* Two different files renamed to the same thing */
 			char *ren2_dst;
@@ -1182,7 +1208,11 @@ static int process_renames(struct merge_options *o,
 						   branch1,
 						   branch2,
 						   ren1->dst_entry,
-						   ren2->dst_entry);
+						   ren2->dst_entry,
+						   o,
+						   ren1->src_entry,
+						   ren2->src_entry);
+
 		} else {
 			/* Renamed in 1, maybe changed in 2 */
 			/* we only use sha1 and mode of these */
@@ -1218,6 +1248,9 @@ static int process_renames(struct merge_options *o,
 							   branch1,
 							   branch2,
 							   ren1->dst_entry,
+							   NULL,
+							   o,
+							   NULL,
 							   NULL);
 			} else if ((dst_other.mode == ren1->pair->two->mode) &&
 				   sha_eq(dst_other.sha1, ren1->pair->two->sha1)) {
@@ -1269,6 +1302,9 @@ static int process_renames(struct merge_options *o,
 							   branch1,
 							   NULL,
 							   ren1->dst_entry,
+							   NULL,
+							   o,
+							   NULL,
 							   NULL);
 			}
 		}
