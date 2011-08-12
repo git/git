@@ -258,7 +258,7 @@ test_expect_success 'rename/directory conflict + clean content merge' '
 	test -f newfile~HEAD
 '
 
-test_expect_failure 'rename/directory conflict + content merge conflict' '
+test_expect_success 'rename/directory conflict + content merge conflict' '
 	git reset --hard &&
 	git reset --hard &&
 	git clean -fdqx &&

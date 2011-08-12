@@ -351,11 +351,11 @@ cat >expected <<\EOF &&
 8
 9
 10
-<<<<<<< HEAD
+<<<<<<< HEAD:dir
 12
 =======
 11
->>>>>>> dir-not-in-way
+>>>>>>> dir-not-in-way:sub/file
 EOF
 
 test_expect_success 'Rename+D/F conflict; renamed file cannot merge, dir not in way' '
@@ -405,11 +405,11 @@ cat >expected <<\EOF &&
 8
 9
 10
-<<<<<<< HEAD
+<<<<<<< HEAD:sub/file
 11
 =======
 12
->>>>>>> renamed-file-has-conflicts
+>>>>>>> renamed-file-has-conflicts:dir
 EOF
 
 test_expect_success 'Same as previous, but merged other way' '
@@ -698,6 +698,73 @@ test_expect_success 'merge rename + small change' '
 	test 1 -eq $(git ls-files -s | wc -l) &&
 	test 0 -eq $(git ls-files -o | wc -l) &&
 	test $(git rev-parse HEAD:renamed_file) = $(git rev-parse HEAD~1:file)
+'
+
+test_expect_success 'setup for use of extended merge markers' '
+	git rm -rf . &&
+	git clean -fdqx &&
+	rm -rf .git &&
+	git init &&
+
+	printf "1\n2\n3\n4\n5\n6\n7\n8\n" >original_file &&
+	git add original_file &&
+	git commit -mA &&
+
+	git checkout -b rename &&
+	echo 9 >>original_file &&
+	git add original_file &&
+	git mv original_file renamed_file &&
+	git commit -mB &&
+
+	git checkout master &&
+	echo 8.5 >>original_file &&
+	git add original_file &&
+	git commit -mC
+'
+
+cat >expected <<\EOF &&
+1
+2
+3
+4
+5
+6
+7
+8
+<<<<<<< HEAD:renamed_file
+9
+=======
+8.5
+>>>>>>> master^0:original_file
+EOF
+
+test_expect_success 'merge master into rename has correct extended markers' '
+	git checkout rename^0 &&
+	test_must_fail git merge -s recursive master^0 &&
+	test_cmp expected renamed_file
+'
+
+cat >expected <<\EOF &&
+1
+2
+3
+4
+5
+6
+7
+8
+<<<<<<< HEAD:original_file
+8.5
+=======
+9
+>>>>>>> rename^0:renamed_file
+EOF
+
+test_expect_success 'merge rename into master has correct extended markers' '
+	git reset --hard &&
+	git checkout master^0 &&
+	test_must_fail git merge -s recursive rename^0 &&
+	test_cmp expected renamed_file
 '
 
 test_done

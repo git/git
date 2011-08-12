@@ -1353,6 +1353,7 @@ static int merge_content(struct merge_options *o,
 			 struct rename_conflict_info *rename_conflict_info)
 {
 	const char *reason = "content";
+	char *side1 = NULL, *side2 = NULL;
 	struct merge_file_info mfi;
 	struct diff_filespec one, a, b;
 	unsigned df_conflict_remains = 0;
@@ -1369,10 +1370,31 @@ static int merge_content(struct merge_options *o,
 	hashcpy(b.sha1, b_sha);
 	b.mode = b_mode;
 
-	mfi = merge_file(o, &one, &a, &b, o->branch1, o->branch2);
-	if (rename_conflict_info && dir_in_way(path, !o->call_depth)) {
-		df_conflict_remains = 1;
+	if (rename_conflict_info) {
+		const char *path1, *path2;
+		struct diff_filepair *pair1 = rename_conflict_info->pair1;
+
+		path1 = (o->branch1 == rename_conflict_info->branch1) ?
+			pair1->two->path : pair1->one->path;
+		/* If rename_conflict_info->pair2 != NULL, we are in
+		 * RENAME_ONE_FILE_TO_ONE case.  Otherwise, we have a
+		 * normal rename.
+		 */
+		path2 = (rename_conflict_info->pair2 ||
+			 o->branch2 == rename_conflict_info->branch1) ?
+			pair1->two->path : pair1->one->path;
+		side1 = xmalloc(strlen(o->branch1) + strlen(path1) + 2);
+		side2 = xmalloc(strlen(o->branch2) + strlen(path2) + 2);
+		sprintf(side1, "%s:%s", o->branch1, path1);
+		sprintf(side2, "%s:%s", o->branch2, path2);
+
+		if (dir_in_way(path, !o->call_depth))
+			df_conflict_remains = 1;
 	}
+	mfi = merge_file(o, &one, &a, &b,
+			 side1 ? side1 : o->branch1, side2 ? side2 : o->branch2);
+	free(side1);
+	free(side2);
 
 	if (mfi.clean && !df_conflict_remains &&
 	    sha_eq(mfi.sha, a_sha) && mfi.mode == a.mode)
