@@ -133,4 +133,69 @@ test_expect_failure 'missed conflict if rename not detected' '
 	test_must_fail git merge -s recursive D^0
 '
 
+# Tests for undetected rename/add-source causing a file to erroneously be
+# deleted (and for mishandled rename/rename(1to1) causing the same issue).
+#
+# This test uses a rename/rename(1to1)+add-source conflict (1to1 means the
+# same file is renamed on both sides to the same thing; it should trigger
+# the 1to2 logic, which it would do if the add-source didn't cause issues
+# for git's rename detection):
+#   Commit A: new file: a
+#   Commit B: rename a->b
+#   Commit C: rename a->b, add unrelated a
+
+test_expect_success 'setup undetected rename/add-source causes data loss' '
+	git rm -rf . &&
+	git clean -fdqx &&
+	rm -rf .git &&
+	git init &&
+
+	printf "1\n2\n3\n4\n5\n" >a &&
+	git add a &&
+	git commit -m A &&
+	git tag A &&
+
+	git checkout -b B A &&
+	git mv a b &&
+	git commit -m B &&
+
+	git checkout -b C A &&
+	git mv a b &&
+	echo foobar >a &&
+	git add a &&
+	git commit -m C
+'
+
+test_expect_failure 'detect rename/add-source and preserve all data' '
+	git checkout B^0 &&
+
+	git merge -s recursive C^0 &&
+
+	test 2 -eq $(git ls-files -s | wc -l) &&
+	test 2 -eq $(git ls-files -u | wc -l) &&
+	test 0 -eq $(git ls-files -o | wc -l) &&
+
+	test -f a &&
+	test -f b &&
+
+	test $(git rev-parse HEAD:b) = $(git rev-parse A:a) &&
+	test $(git rev-parse HEAD:a) = $(git rev-parse C:a)
+'
+
+test_expect_failure 'detect rename/add-source and preserve all data, merge other way' '
+	git checkout C^0 &&
+
+	git merge -s recursive B^0 &&
+
+	test 2 -eq $(git ls-files -s | wc -l) &&
+	test 2 -eq $(git ls-files -u | wc -l) &&
+	test 0 -eq $(git ls-files -o | wc -l) &&
+
+	test -f a &&
+	test -f b &&
+
+	test $(git rev-parse HEAD:b) = $(git rev-parse A:a) &&
+	test $(git rev-parse HEAD:a) = $(git rev-parse C:a)
+'
+
 test_done
