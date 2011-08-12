@@ -314,4 +314,87 @@ test_expect_failure 'git detects conflict merging criss-cross+modify/delete, rev
 	test $(git rev-parse :3:file) = $(git rev-parse B:file)
 '
 
+#
+# criss-cross + modify/modify with very contrived file contents:
+#
+#      B   D
+#      o---o
+#     / \ / \
+#  A o   X   ? F
+#     \ / \ /
+#      o---o
+#      C   E
+#
+#   Commit A: file with contents 'A\n'
+#   Commit B: file with contents 'B\n'
+#   Commit C: file with contents 'C\n'
+#   Commit D: file with contents 'D\n'
+#   Commit E: file with contents:
+#      <<<<<<< Temporary merge branch 1
+#      C
+#      =======
+#      B
+#      >>>>>>> Temporary merge branch 2
+#
+# Now, when we merge commits D & E, does git detect the conflict?
+
+test_expect_success 'setup differently handled merges of content conflict' '
+	git clean -fdqx &&
+	rm -rf .git &&
+	git init &&
+
+	echo A >file &&
+	git add file &&
+	test_tick &&
+	git commit -m A &&
+
+	git branch B &&
+	git checkout -b C &&
+	echo C >file &&
+	git add file &&
+	test_tick &&
+	git commit -m C &&
+
+	git checkout B &&
+	echo B >file &&
+	git add file &&
+	test_tick &&
+	git commit -m B &&
+
+	git checkout B^0 &&
+	test_must_fail git merge C &&
+	echo D >file &&
+	git add file &&
+	test_tick &&
+	git commit -m D &&
+	git tag D &&
+
+	git checkout C^0 &&
+	test_must_fail git merge B &&
+	cat <<EOF >file &&
+<<<<<<< Temporary merge branch 1
+C
+=======
+B
+>>>>>>> Temporary merge branch 2
+EOF
+	git add file &&
+	test_tick &&
+	git commit -m E &&
+	git tag E
+'
+
+test_expect_failure 'git detects conflict w/ criss-cross+contrived resolution' '
+	git checkout D^0 &&
+
+	test_must_fail git merge -s recursive E^0 &&
+
+	test 3 -eq $(git ls-files -s | wc -l) &&
+	test 3 -eq $(git ls-files -u | wc -l) &&
+	test 0 -eq $(git ls-files -o | wc -l) &&
+
+	test $(git rev-parse :2:file) = $(git rev-parse D:file) &&
+	test $(git rev-parse :3:file) = $(git rev-parse E:file)
+'
+
 test_done
