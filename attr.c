@@ -113,6 +113,20 @@ struct attr_state {
 	const char *setto;
 };
 
+/*
+ * One rule, as from a .gitattributes file.
+ *
+ * If is_macro is true, then u.attr is a pointer to the git_attr being
+ * defined.
+ *
+ * If is_macro is false, then u.pattern points at the filename pattern
+ * to which the rule applies.  (The memory pointed to is part of the
+ * memory block allocated for the match_attr instance.)
+ *
+ * In either case, num_attr is the number of attributes affected by
+ * this rule, and state is an array listing them.  The attributes are
+ * listed as they appear in the file (macros unexpanded).
+ */
 struct match_attr {
 	union {
 		char *pattern;
