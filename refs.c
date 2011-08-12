@@ -171,16 +171,19 @@ static void free_ref_list(struct ref_list *list)
 	}
 }
 
-static void invalidate_cached_refs(void)
+static void clear_cached_refs(struct cached_refs *ca)
 {
-	struct cached_refs *ca = &cached_refs;
-
 	if (ca->did_loose && ca->loose)
 		free_ref_list(ca->loose);
 	if (ca->did_packed && ca->packed)
 		free_ref_list(ca->packed);
 	ca->loose = ca->packed = NULL;
 	ca->did_loose = ca->did_packed = 0;
+}
+
+static void invalidate_cached_refs(void)
+{
+	clear_cached_refs(&cached_refs);
 }
 
 static void read_packed_refs(FILE *f, struct cached_refs *cached_refs)
