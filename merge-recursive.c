@@ -90,6 +90,7 @@ struct stage_data {
 	} stages[4];
 	struct rename_df_conflict_info *rename_df_conflict_info;
 	unsigned processed:1;
+	unsigned involved_in_rename:1;
 };
 
 static inline void setup_rename_df_conflict_info(enum rename_type rename_type,
@@ -522,15 +523,11 @@ static int update_stages(const char *path, const struct diff_filespec *o,
 	return 0;
 }
 
-static int update_stages_and_entry(const char *path,
-				   struct stage_data *entry,
-				   struct diff_filespec *o,
-				   struct diff_filespec *a,
-				   struct diff_filespec *b,
-				   int clear)
+static void update_entry(struct stage_data *entry,
+			 struct diff_filespec *o,
+			 struct diff_filespec *a,
+			 struct diff_filespec *b)
 {
-	int options;
-
 	entry->processed = 0;
 	entry->stages[1].mode = o->mode;
 	entry->stages[2].mode = a->mode;
@@ -538,7 +535,6 @@ static int update_stages_and_entry(const char *path,
 	hashcpy(entry->stages[1].sha, o->sha1);
 	hashcpy(entry->stages[2].sha, a->sha1);
 	hashcpy(entry->stages[3].sha, b->sha1);
-	return update_stages(path, o, a, b);
 }
 
 static int remove_file(struct merge_options *o, int clean,
@@ -1097,12 +1093,11 @@ static int process_renames(struct merge_options *o,
 							      ren2->dst_entry);
 			} else {
 				remove_file(o, 1, ren1_src, 1);
-				update_stages_and_entry(ren1_dst,
-							ren1->dst_entry,
-							ren1->pair->one,
-							ren1->pair->two,
-							ren2->pair->two,
-							1 /* clear */);
+				update_entry(ren1->dst_entry,
+					     ren1->pair->one,
+					     ren1->pair->two,
+					     ren2->pair->two);
+				ren1->dst_entry->involved_in_rename = 1;
 			}
 		} else {
 			/* Renamed in 1, maybe changed in 2 */
@@ -1207,7 +1202,8 @@ static int process_renames(struct merge_options *o,
 					b = ren1->pair->two;
 					a = &src_other;
 				}
-				update_stages_and_entry(ren1_dst, ren1->dst_entry, one, a, b, 1);
+				update_entry(ren1->dst_entry, one, a, b);
+				ren1->dst_entry->involved_in_rename = 1;
 				if (dir_in_way(ren1_dst, 0 /*check_wc*/)) {
 					setup_rename_df_conflict_info(RENAME_NORMAL,
 								      ren1->pair,
@@ -1304,6 +1300,7 @@ static void handle_delete_modify(struct merge_options *o,
 }
 
 static int merge_content(struct merge_options *o,
+			 unsigned involved_in_rename,
 			 const char *path,
 			 unsigned char *o_sha, int o_mode,
 			 unsigned char *a_sha, int a_mode,
@@ -1344,6 +1341,8 @@ static int merge_content(struct merge_options *o,
 			reason = "submodule";
 		output(o, 1, "CONFLICT (%s): Merge conflict in %s",
 				reason, path);
+		if (involved_in_rename)
+			update_stages(path, &one, &a, &b);
 	}
 
 	if (df_conflict_remains) {
@@ -1428,7 +1427,7 @@ static int process_entry(struct merge_options *o,
 	} else if (a_sha && b_sha) {
 		/* Case C: Added in both (check for same permissions) and */
 		/* case D: Modified in both, but differently. */
-		clean_merge = merge_content(o, path,
+		clean_merge = merge_content(o, entry->involved_in_rename, path,
 					    o_sha, o_mode, a_sha, a_mode, b_sha, b_mode,
 					    NULL);
 	} else if (!o_sha && !a_sha && !b_sha) {
@@ -1472,7 +1471,7 @@ static int process_df_entry(struct merge_options *o,
 		char *src;
 		switch (conflict_info->rename_type) {
 		case RENAME_NORMAL:
-			clean_merge = merge_content(o, path,
+			clean_merge = merge_content(o, entry->involved_in_rename, path,
 						    o_sha, o_mode, a_sha, a_mode, b_sha, b_mode,
 						    conflict_info->branch1);
 			break;
