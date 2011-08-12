@@ -26,7 +26,7 @@ test_expect_success 'setup rename/delete + untracked file' '
 	echo "Myyy PRECIOUSSS" >ring
 '
 
-test_expect_failure "Does git preserve Gollum's precious artifact?" '
+test_expect_success "Does git preserve Gollum's precious artifact?" '
 	test_must_fail git merge -s recursive rename-the-ring &&
 
 	# Make sure git did not delete an untracked file
