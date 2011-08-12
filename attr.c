@@ -191,10 +191,9 @@ static struct match_attr *parse_attr_line(const char *line, const char *src,
 					  int lineno, int macro_ok)
 {
 	int namelen;
-	int num_attr;
+	int num_attr, i;
 	const char *cp, *name, *states;
 	struct match_attr *res = NULL;
-	int pass;
 	int is_macro;
 
 	cp = line + strspn(line, blank);
@@ -226,30 +225,32 @@ static struct match_attr *parse_attr_line(const char *line, const char *src,
 	states = name + namelen;
 	states += strspn(states, blank);
 
-	for (pass = 0; pass < 2; pass++) {
-		/* pass 0 counts and allocates, pass 1 fills */
-		for (cp = states, num_attr = 0; *cp; num_attr++) {
-			cp = parse_attr(src, lineno, cp,
-				pass ? &(res->state[num_attr]) : NULL);
-			if (!cp)
-				return NULL;
-		}
-		if (pass)
-			break;
-		res = xcalloc(1,
-			      sizeof(*res) +
-			      sizeof(struct attr_state) * num_attr +
-			      (is_macro ? 0 : namelen + 1));
-		if (is_macro)
-			res->u.attr = git_attr_internal(name, namelen);
-		else {
-			res->u.pattern = (char *)&(res->state[num_attr]);
-			memcpy(res->u.pattern, name, namelen);
-			res->u.pattern[namelen] = 0;
-		}
-		res->is_macro = is_macro;
-		res->num_attr = num_attr;
+	/* First pass to count the attr_states */
+	for (cp = states, num_attr = 0; *cp; num_attr++) {
+		cp = parse_attr(src, lineno, cp, NULL);
+		if (!cp)
+			return NULL;
 	}
+
+	res = xcalloc(1,
+		      sizeof(*res) +
+		      sizeof(struct attr_state) * num_attr +
+		      (is_macro ? 0 : namelen + 1));
+	if (is_macro)
+		res->u.attr = git_attr_internal(name, namelen);
+	else {
+		res->u.pattern = (char *)&(res->state[num_attr]);
+		memcpy(res->u.pattern, name, namelen);
+		res->u.pattern[namelen] = 0;
+	}
+	res->is_macro = is_macro;
+	res->num_attr = num_attr;
+
+	/* Second pass to fill the attr_states */
+	for (cp = states, i = 0; *cp; i++) {
+		cp = parse_attr(src, lineno, cp, &(res->state[i]));
+	}
+
 	return res;
 }
 
