@@ -181,9 +181,26 @@ static void clear_cached_refs(struct cached_refs *ca)
 	ca->did_loose = ca->did_packed = 0;
 }
 
+/*
+ * Return a pointer to a cached_refs for the specified submodule. For
+ * the main repository, use submodule==NULL. The returned structure
+ * will be allocated and initialized but not necessarily populated; it
+ * should not be freed.
+ */
+static struct cached_refs *get_cached_refs(const char *submodule)
+{
+	if (!submodule)
+		return &cached_refs;
+	else {
+		/* For now, don't reuse the refs cache for submodules. */
+		clear_cached_refs(&submodule_refs);
+		return &submodule_refs;
+	}
+}
+
 static void invalidate_cached_refs(void)
 {
-	clear_cached_refs(&cached_refs);
+	clear_cached_refs(get_cached_refs(NULL));
 }
 
 static void read_packed_refs(FILE *f, struct cached_refs *cached_refs)
@@ -234,20 +251,17 @@ void clear_extra_refs(void)
 
 static struct ref_list *get_packed_refs(const char *submodule)
 {
-	const char *packed_refs_file;
-	struct cached_refs *refs;
+	struct cached_refs *refs = get_cached_refs(submodule);
 
-	if (submodule) {
-		packed_refs_file = git_path_submodule(submodule, "packed-refs");
-		refs = &submodule_refs;
-		free_ref_list(refs->packed);
-	} else {
-		packed_refs_file = git_path("packed-refs");
-		refs = &cached_refs;
-	}
+	if (!refs->did_packed) {
+		const char *packed_refs_file;
+		FILE *f;
 
-	if (!refs->did_packed || submodule) {
-		FILE *f = fopen(packed_refs_file, "r");
+		if (submodule)
+			packed_refs_file = git_path_submodule(submodule, "packed-refs");
+		else
+			packed_refs_file = git_path("packed-refs");
+		f = fopen(packed_refs_file, "r");
 		refs->packed = NULL;
 		if (f) {
 			read_packed_refs(f, refs);
@@ -361,17 +375,13 @@ void warn_dangling_symref(FILE *fp, const char *msg_fmt, const char *refname)
 
 static struct ref_list *get_loose_refs(const char *submodule)
 {
-	if (submodule) {
-		free_ref_list(submodule_refs.loose);
-		submodule_refs.loose = get_ref_dir(submodule, "refs", NULL);
-		return submodule_refs.loose;
-	}
+	struct cached_refs *refs = get_cached_refs(submodule);
 
-	if (!cached_refs.did_loose) {
-		cached_refs.loose = get_ref_dir(NULL, "refs", NULL);
-		cached_refs.did_loose = 1;
+	if (!refs->did_loose) {
+		refs->loose = get_ref_dir(submodule, "refs", NULL);
+		refs->did_loose = 1;
 	}
-	return cached_refs.loose;
+	return refs->loose;
 }
 
 /* We allow "recursive" symbolic refs. Only within reason, though */
