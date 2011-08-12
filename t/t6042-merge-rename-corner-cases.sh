@@ -72,4 +72,65 @@ test_expect_failure 'rename/modify/add-source conflict resolvable' '
 	test $(git rev-parse C:a) = $(git rev-parse a)
 '
 
+test_expect_success 'setup resolvable conflict missed if rename missed' '
+	git rm -rf . &&
+	git clean -fdqx &&
+	rm -rf .git &&
+	git init &&
+
+	printf "1\n2\n3\n4\n5\n" >a &&
+	echo foo >b &&
+	git add a b &&
+	git commit -m A &&
+	git tag A &&
+
+	git checkout -b B A &&
+	git mv a c &&
+	echo "Completely different content" >a &&
+	git add a &&
+	git commit -m B &&
+
+	git checkout -b C A &&
+	echo 6 >>a &&
+	git add a &&
+	git commit -m C
+'
+
+test_expect_failure 'conflict caused if rename not detected' '
+	git checkout -q C^0 &&
+	git merge -s recursive B^0 &&
+
+	test 3 -eq $(git ls-files -s | wc -l) &&
+	test 0 -eq $(git ls-files -u | wc -l) &&
+	test 0 -eq $(git ls-files -o | wc -l) &&
+
+	test 6 -eq $(wc -l < c) &&
+	test $(git rev-parse HEAD:a) = $(git rev-parse B:a) &&
+	test $(git rev-parse HEAD:b) = $(git rev-parse A:b)
+'
+
+test_expect_success 'setup conflict resolved wrong if rename missed' '
+	git reset --hard &&
+	git clean -f &&
+
+	git checkout -b D A &&
+	echo 7 >>a &&
+	git add a &&
+	git mv a c &&
+	echo "Completely different content" >a &&
+	git add a &&
+	git commit -m D &&
+
+	git checkout -b E A &&
+	git rm a &&
+	echo "Completely different content" >>a &&
+	git add a &&
+	git commit -m E
+'
+
+test_expect_failure 'missed conflict if rename not detected' '
+	git checkout -q E^0 &&
+	test_must_fail git merge -s recursive D^0
+'
+
 test_done
