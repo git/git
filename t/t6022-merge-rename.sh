@@ -303,7 +303,7 @@ test_expect_success 'Rename+D/F conflict; renamed file merges but dir in way' '
 	git checkout -q renamed-file-has-no-conflicts^0 &&
 	test_must_fail git merge --strategy=recursive dir-in-way >output &&
 
-	grep "CONFLICT (delete/modify): dir/file-in-the-way" output &&
+	grep "CONFLICT (modify/delete): dir/file-in-the-way" output &&
 	grep "Auto-merging dir" output &&
 	grep "Adding as dir~HEAD instead" output &&
 
@@ -325,7 +325,7 @@ test_expect_success 'Same as previous, but merged other way' '
 	test_must_fail git merge --strategy=recursive renamed-file-has-no-conflicts >output 2>errors &&
 
 	! grep "error: refusing to lose untracked file at" errors &&
-	grep "CONFLICT (delete/modify): dir/file-in-the-way" output &&
+	grep "CONFLICT (modify/delete): dir/file-in-the-way" output &&
 	grep "Auto-merging dir" output &&
 	grep "Adding as dir~renamed-file-has-no-conflicts instead" output &&
 
