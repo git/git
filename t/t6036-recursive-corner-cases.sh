@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='recursive merge corner cases'
+test_description='recursive merge corner cases involving criss-cross merges'
 
 . ./test-lib.sh
 
