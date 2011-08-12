@@ -234,7 +234,7 @@ test_expect_success 'setup content merge + rename/directory conflict' '
 	git commit -m left
 '
 
-test_expect_failure 'rename/directory conflict + clean content merge' '
+test_expect_success 'rename/directory conflict + clean content merge' '
 	git reset --hard &&
 	git reset --hard &&
 	git clean -fdqx &&

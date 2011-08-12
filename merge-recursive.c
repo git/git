@@ -1379,19 +1379,34 @@ static int merge_content(struct merge_options *o,
 			reason = "submodule";
 		output(o, 1, "CONFLICT (%s): Merge conflict in %s",
 				reason, path);
-		if (involved_in_rename)
+		if (involved_in_rename && !df_conflict_remains)
 			update_stages(path, &one, &a, &b);
 	}
 
 	if (df_conflict_remains) {
 		char *new_path;
-		update_file_flags(o, mfi.sha, mfi.mode, path,
-				  o->call_depth || mfi.clean, 0);
+		if (o->call_depth) {
+			remove_file_from_cache(path);
+		} else {
+			if (!mfi.clean)
+				update_stages(path, &one, &a, &b);
+			else {
+				int file_from_stage2 = was_tracked(path);
+				struct diff_filespec merged;
+				hashcpy(merged.sha1, mfi.sha);
+				merged.mode = mfi.mode;
+
+				update_stages(path, NULL,
+					      file_from_stage2 ? &merged : NULL,
+					      file_from_stage2 ? NULL : &merged);
+			}
+
+		}
 		new_path = unique_path(o, path, df_rename_conflict_branch);
-		mfi.clean = 0;
 		output(o, 1, "Adding as %s instead", new_path);
-		update_file_flags(o, mfi.sha, mfi.mode, new_path, 0, 1);
+		update_file(o, 0, mfi.sha, mfi.mode, new_path);
 		free(new_path);
+		mfi.clean = 0;
 	} else {
 		update_file(o, mfi.clean, mfi.sha, mfi.mode, path);
 	}
@@ -1580,6 +1595,8 @@ static int process_df_entry(struct merge_options *o,
 			output(o, 1, "CONFLICT (%s): There is a directory with name %s in %s. "
 			       "Adding %s as %s",
 			       conf, path, other_branch, path, new_path);
+			if (o->call_depth)
+				remove_file_from_cache(path);
 			update_file(o, 0, sha, mode, new_path);
 			if (o->call_depth)
 				remove_file_from_cache(path);
