@@ -376,7 +376,7 @@ test_expect_success 'setup rename/rename (2to1) + modify/modify' '
 	git commit -m C
 '
 
-test_expect_failure 'handle rename/rename (2to1) conflict correctly' '
+test_expect_success 'handle rename/rename (2to1) conflict correctly' '
 	git checkout B^0 &&
 
 	test_must_fail git merge -s recursive C^0 >out &&

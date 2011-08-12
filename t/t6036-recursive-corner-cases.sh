@@ -57,23 +57,15 @@ test_expect_success 'merge simple rename+criss-cross with no modifications' '
 
 	test_must_fail git merge -s recursive R2^0 &&
 
-	test 5 = $(git ls-files -s | wc -l) &&
-	test 3 = $(git ls-files -u | wc -l) &&
-	test 0 = $(git ls-files -o | wc -l) &&
+	test 2 = $(git ls-files -s | wc -l) &&
+	test 2 = $(git ls-files -u | wc -l) &&
+	test 2 = $(git ls-files -o | wc -l) &&
 
-	test $(git rev-parse :0:one) = $(git rev-parse L2:one) &&
-	test $(git rev-parse :0:two) = $(git rev-parse R2:two) &&
 	test $(git rev-parse :2:three) = $(git rev-parse L2:three) &&
 	test $(git rev-parse :3:three) = $(git rev-parse R2:three) &&
 
-	cp one merged &&
-	>empty &&
-	test_must_fail git merge-file \
-		-L "Temporary merge branch 1" \
-		-L "" \
-		-L "Temporary merge branch 2" \
-		merged empty two &&
-	test $(git rev-parse :1:three) = $(git hash-object merged)
+	test $(git rev-parse L2:three) = $(git hash-object three~HEAD) &&
+	test $(git rev-parse R2:three) = $(git hash-object three~R2^0)
 '
 
 #
@@ -132,25 +124,15 @@ test_expect_success 'merge criss-cross + rename merges with basic modification' 
 
 	test_must_fail git merge -s recursive R2^0 &&
 
-	test 5 = $(git ls-files -s | wc -l) &&
-	test 3 = $(git ls-files -u | wc -l) &&
-	test 0 = $(git ls-files -o | wc -l) &&
+	test 2 = $(git ls-files -s | wc -l) &&
+	test 2 = $(git ls-files -u | wc -l) &&
+	test 2 = $(git ls-files -o | wc -l) &&
 
-	test $(git rev-parse :0:one) = $(git rev-parse L2:one) &&
-	test $(git rev-parse :0:two) = $(git rev-parse R2:two) &&
 	test $(git rev-parse :2:three) = $(git rev-parse L2:three) &&
 	test $(git rev-parse :3:three) = $(git rev-parse R2:three) &&
 
-	head -n 10 two >merged &&
-	cp one merge-me &&
-	>empty &&
-	test_must_fail git merge-file \
-		-L "Temporary merge branch 1" \
-		-L "" \
-		-L "Temporary merge branch 2" \
-		merge-me empty merged &&
-
-	test $(git rev-parse :1:three) = $(git hash-object merge-me)
+	test $(git rev-parse L2:three) = $(git hash-object three~HEAD) &&
+	test $(git rev-parse R2:three) = $(git hash-object three~R2^0)
 '
 
 #
