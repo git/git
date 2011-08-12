@@ -558,12 +558,21 @@ test_expect_success 'rename/rename/add-dest merge still knows about conflicting 
 	test 5 -eq $(git ls-files -s | wc -l) &&
 	test 2 -eq $(git ls-files -u b | wc -l) &&
 	test 2 -eq $(git ls-files -u c | wc -l) &&
+	test 4 -eq $(git ls-files -o | wc -l) &&
 
 	test $(git rev-parse :1:a) = $(git rev-parse A:a) &&
 	test $(git rev-parse :2:b) = $(git rev-parse C:b) &&
 	test $(git rev-parse :3:b) = $(git rev-parse B:b) &&
 	test $(git rev-parse :2:c) = $(git rev-parse C:c) &&
-	test $(git rev-parse :3:c) = $(git rev-parse B:c)
+	test $(git rev-parse :3:c) = $(git rev-parse B:c) &&
+
+	test $(git hash-object c~HEAD) = $(git rev-parse C:c) &&
+	test $(git hash-object c~B\^0) = $(git rev-parse B:c) &&
+	test $(git hash-object b~HEAD) = $(git rev-parse C:b) &&
+	test $(git hash-object b~B\^0) = $(git rev-parse B:b) &&
+
+	test ! -f b &&
+	test ! -f c
 '
 
 test_done

@@ -1084,6 +1084,52 @@ static struct diff_filespec *filespec_from_entry(struct diff_filespec *target,
 	return target;
 }
 
+static void handle_file(struct merge_options *o,
+			struct diff_filespec *rename,
+			int stage,
+			struct rename_conflict_info *ci)
+{
+	char *dst_name = rename->path;
+	struct stage_data *dst_entry;
+	const char *cur_branch, *other_branch;
+	struct diff_filespec other;
+	struct diff_filespec *add;
+
+	if (stage == 2) {
+		dst_entry = ci->dst_entry1;
+		cur_branch = ci->branch1;
+		other_branch = ci->branch2;
+	} else {
+		dst_entry = ci->dst_entry2;
+		cur_branch = ci->branch2;
+		other_branch = ci->branch1;
+	}
+
+	add = filespec_from_entry(&other, dst_entry, stage ^ 1);
+	if (stage == 2)
+		update_stages(rename->path, NULL, rename, add);
+	else
+		update_stages(rename->path, NULL, add, rename);
+
+	if (add) {
+		char *add_name = unique_path(o, rename->path, other_branch);
+		update_file(o, 0, add->sha1, add->mode, add_name);
+
+		remove_file(o, 0, rename->path, 0);
+		dst_name = unique_path(o, rename->path, cur_branch);
+	} else {
+		if (dir_in_way(rename->path, !o->call_depth)) {
+			dst_name = unique_path(o, rename->path, cur_branch);
+			output(o, 1, "%s is a directory in %s adding as %s instead",
+			       rename->path, other_branch, dst_name);
+		}
+	}
+	update_file(o, 0, rename->sha1, rename->mode, dst_name);
+
+	if (dst_name != rename->path)
+		free(dst_name);
+}
+
 static void conflict_rename_rename_1to2(struct merge_options *o,
 					struct rename_conflict_info *ci)
 {
@@ -1091,10 +1137,6 @@ static void conflict_rename_rename_1to2(struct merge_options *o,
 	struct diff_filespec *one = ci->pair1->one;
 	struct diff_filespec *a = ci->pair1->two;
 	struct diff_filespec *b = ci->pair2->two;
-	const char *dst_name_a = a->path;
-	const char *dst_name_b = b->path;
-	char *del[2];
-	int delp = 0;
 
 	output(o, 1, "CONFLICT (rename/rename): "
 	       "Rename \"%s\"->\"%s\" in branch \"%s\" "
@@ -1102,16 +1144,6 @@ static void conflict_rename_rename_1to2(struct merge_options *o,
 	       one->path, a->path, ci->branch1,
 	       one->path, b->path, ci->branch2,
 	       o->call_depth ? " (left unresolved)" : "");
-	if (dir_in_way(a->path, !o->call_depth)) {
-		dst_name_a = del[delp++] = unique_path(o, a->path, ci->branch1);
-		output(o, 1, "%s is a directory in %s adding as %s instead",
-		       a->path, ci->branch2, dst_name_a);
-	}
-	if (dir_in_way(b->path, !o->call_depth)) {
-		dst_name_b = del[delp++] = unique_path(o, b->path, ci->branch2);
-		output(o, 1, "%s is a directory in %s adding as %s instead",
-		       b->path, ci->branch1, dst_name_b);
-	}
 	if (o->call_depth) {
 		struct merge_file_info mfi;
 		mfi = merge_file(o, one->path,
@@ -1129,18 +1161,9 @@ static void conflict_rename_rename_1to2(struct merge_options *o,
 		remove_file_from_cache(a->path);
 		remove_file_from_cache(b->path);
 	} else {
-		struct diff_filespec other;
-		update_stages(a->path, NULL,
-			      a, filespec_from_entry(&other, ci->dst_entry1, 3));
-
-		update_stages(b->path, NULL,
-			      filespec_from_entry(&other, ci->dst_entry2, 2), b);
-
-		update_file(o, 0, a->sha1, a->mode, dst_name_a);
-		update_file(o, 0, b->sha1, b->mode, dst_name_b);
+		handle_file(o, a, 2, ci);
+		handle_file(o, b, 3, ci);
 	}
-	while (delp--)
-		free(del[delp]);
 }
 
 static void conflict_rename_rename_2to1(struct merge_options *o,
