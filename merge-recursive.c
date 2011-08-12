@@ -1466,6 +1466,8 @@ static int process_df_entry(struct merge_options *o,
 			       "Adding %s as %s",
 			       conf, path, other_branch, path, new_path);
 			update_file(o, 0, sha, mode, new_path);
+			if (o->call_depth)
+				remove_file_from_cache(path);
 			free(new_path);
 		} else {
 			output(o, 2, "Adding %s", path);

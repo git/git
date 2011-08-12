@@ -509,7 +509,7 @@ test_expect_failure 'merge of D & E1 fails but has appropriate contents' '
 	test $(git rev-parse :2:a) = $(git rev-parse B:a)
 '
 
-test_expect_failure 'merge of E1 & D fails but has appropriate contents' '
+test_expect_success 'merge of E1 & D fails but has appropriate contents' '
 	get_clean_checkout E1^0 &&
 
 	test_must_fail git merge -s recursive D^0 &&
@@ -539,7 +539,7 @@ test_expect_success 'merge of D & E2 fails but has appropriate contents' '
 	test -f a~HEAD
 '
 
-test_expect_failure 'merge of E2 & D fails but has appropriate contents' '
+test_expect_success 'merge of E2 & D fails but has appropriate contents' '
 	get_clean_checkout E2^0 &&
 
 	test_must_fail git merge -s recursive D^0 &&
