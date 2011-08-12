@@ -157,6 +157,8 @@ static struct cached_refs {
 	char did_packed;
 	struct ref_list *loose;
 	struct ref_list *packed;
+	/* The submodule name, or "" for the main repo. */
+	char name[FLEX_ARRAY];
 } *cached_refs, *submodule_refs;
 static struct ref_list *current_ref;
 
@@ -181,12 +183,17 @@ static void clear_cached_refs(struct cached_refs *ca)
 	ca->did_loose = ca->did_packed = 0;
 }
 
-struct cached_refs *create_cached_refs(void)
+struct cached_refs *create_cached_refs(const char *submodule)
 {
+	int len;
 	struct cached_refs *refs;
-	refs = xmalloc(sizeof(struct cached_refs));
+	if (!submodule)
+		submodule = "";
+	len = strlen(submodule) + 1;
+	refs = xmalloc(sizeof(struct cached_refs) + len);
 	refs->did_loose = refs->did_packed = 0;
 	refs->loose = refs->packed = NULL;
+	memcpy(refs->name, submodule, len);
 	return refs;
 }
 
@@ -200,11 +207,11 @@ static struct cached_refs *get_cached_refs(const char *submodule)
 {
 	if (!submodule) {
 		if (!cached_refs)
-			cached_refs = create_cached_refs();
+			cached_refs = create_cached_refs(submodule);
 		return cached_refs;
 	} else {
 		if (!submodule_refs)
-			submodule_refs = create_cached_refs();
+			submodule_refs = create_cached_refs(submodule);
 		else
 			/* For now, don't reuse the refs cache for submodules. */
 			clear_cached_refs(submodule_refs);
