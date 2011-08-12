@@ -192,7 +192,7 @@ static struct match_attr *parse_attr_line(const char *line, const char *src,
 {
 	int namelen;
 	int num_attr;
-	const char *cp, *name;
+	const char *cp, *name, *states;
 	struct match_attr *res = NULL;
 	int pass;
 	int is_macro;
@@ -223,11 +223,13 @@ static struct match_attr *parse_attr_line(const char *line, const char *src,
 	else
 		is_macro = 0;
 
+	states = name + namelen;
+	states += strspn(states, blank);
+
 	for (pass = 0; pass < 2; pass++) {
 		/* pass 0 counts and allocates, pass 1 fills */
 		num_attr = 0;
-		cp = name + namelen;
-		cp = cp + strspn(cp, blank);
+		cp = states;
 		while (*cp) {
 			cp = parse_attr(src, lineno, cp,
 				pass ? &(res->state[num_attr]) : NULL);
