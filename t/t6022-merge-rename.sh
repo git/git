@@ -787,7 +787,7 @@ test_expect_success 'setup spurious "refusing to lose untracked" message' '
 	git commit -mC
 '
 
-test_expect_failure 'no spurious "refusing to lose untracked" message' '
+test_expect_success 'no spurious "refusing to lose untracked" message' '
 	git checkout master^0 &&
 	test_must_fail git merge rename^0 2>errors.txt &&
 	! grep "refusing to lose untracked file" errors.txt

@@ -526,6 +526,15 @@ static int update_stages(const char *path, const struct diff_filespec *o,
 			 const struct diff_filespec *a,
 			 const struct diff_filespec *b)
 {
+
+	/*
+	 * NOTE: It is usually a bad idea to call update_stages on a path
+	 * before calling update_file on that same path, since it can
+	 * sometimes lead to spurious "refusing to lose untracked file..."
+	 * messages from update_file (via make_room_for path via
+	 * would_lose_untracked).  Instead, reverse the order of the calls
+	 * (executing update_file first and then update_stages).
+	 */
 	int clear = 1;
 	int options = ADD_CACHE_OK_TO_ADD | ADD_CACHE_SKIP_DFCHECK;
 	if (clear)
@@ -1039,7 +1048,6 @@ static void conflict_rename_delete(struct merge_options *o,
 {
 	const struct diff_filespec *orig = pair->one;
 	const struct diff_filespec *dest = pair->two;
-	const char *path;
 	const unsigned char *a_sha = NULL;
 	const unsigned char *b_sha = NULL;
 	int a_mode = 0;
@@ -1053,22 +1061,21 @@ static void conflict_rename_delete(struct merge_options *o,
 		b_mode = dest->mode;
 	}
 
+	handle_change_delete(o,
+			     o->call_depth ? orig->path : dest->path,
+			     orig->sha1, orig->mode,
+			     a_sha, a_mode,
+			     b_sha, b_mode,
+			     "rename", "renamed");
+
 	if (o->call_depth) {
 		remove_file_from_cache(dest->path);
-		path = orig->path;
 	} else {
-		path = dest->path;
 		update_stages(dest->path, NULL,
 			      rename_branch == o->branch1 ? dest : NULL,
 			      rename_branch == o->branch1 ? NULL : dest);
 	}
 
-	handle_change_delete(o,
-			     path,
-			     orig->sha1, orig->mode,
-			     a_sha, a_mode,
-			     b_sha, b_mode,
-			     "rename", "renamed");
 }
 
 static struct diff_filespec *filespec_from_entry(struct diff_filespec *target,
@@ -1106,11 +1113,6 @@ static void handle_file(struct merge_options *o,
 	}
 
 	add = filespec_from_entry(&other, dst_entry, stage ^ 1);
-	if (stage == 2)
-		update_stages(rename->path, NULL, rename, add);
-	else
-		update_stages(rename->path, NULL, add, rename);
-
 	if (add) {
 		char *add_name = unique_path(o, rename->path, other_branch);
 		update_file(o, 0, add->sha1, add->mode, add_name);
@@ -1125,6 +1127,10 @@ static void handle_file(struct merge_options *o,
 		}
 	}
 	update_file(o, 0, rename->sha1, rename->mode, dst_name);
+	if (stage == 2)
+		update_stages(rename->path, NULL, rename, add);
+	else
+		update_stages(rename->path, NULL, add, rename);
 
 	if (dst_name != rename->path)
 		free(dst_name);
