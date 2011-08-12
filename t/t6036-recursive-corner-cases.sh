@@ -760,7 +760,7 @@ test_expect_success 'setup criss-cross+rename/rename/add-dest + simple modify' '
 	git tag E
 '
 
-test_expect_failure 'virtual merge base handles rename/rename(1to2)/add-dest' '
+test_expect_success 'virtual merge base handles rename/rename(1to2)/add-dest' '
 	git checkout D^0 &&
 
 	git merge -s recursive E^0 &&

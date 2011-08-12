@@ -1159,6 +1159,8 @@ static void conflict_rename_rename_1to2(struct merge_options *o,
 	       o->call_depth ? " (left unresolved)" : "");
 	if (o->call_depth) {
 		struct merge_file_info mfi;
+		struct diff_filespec other;
+		struct diff_filespec *add;
 		mfi = merge_file(o, one->path,
 				 one->sha1, one->mode,
 				 a->sha1, a->mode,
@@ -1171,8 +1173,25 @@ static void conflict_rename_rename_1to2(struct merge_options *o,
 		 * unique path, or use that unique path instead of src here.
 		 */
 		update_file(o, 0, mfi.sha, mfi.mode, one->path);
-		remove_file_from_cache(a->path);
-		remove_file_from_cache(b->path);
+
+		/*
+		 * Above, we put the merged content at the merge-base's
+		 * path.  Now we usually need to delete both a->path and
+		 * b->path.  However, the rename on each side of the merge
+		 * could also be involved in a rename/add conflict.  In
+		 * such cases, we should keep the added file around,
+		 * resolving the conflict at that path in its favor.
+		 */
+		add = filespec_from_entry(&other, ci->dst_entry1, 2 ^ 1);
+		if (add)
+			update_file(o, 0, add->sha1, add->mode, a->path);
+		else
+			remove_file_from_cache(a->path);
+		add = filespec_from_entry(&other, ci->dst_entry2, 3 ^ 1);
+		if (add)
+			update_file(o, 0, add->sha1, add->mode, b->path);
+		else
+			remove_file_from_cache(b->path);
 	} else {
 		handle_file(o, a, 2, ci);
 		handle_file(o, b, 3, ci);
