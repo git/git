@@ -621,7 +621,7 @@ static int dir_in_way(const char *path, int check_working_copy)
 	return check_working_copy && !lstat(path, &st) && S_ISDIR(st.st_mode);
 }
 
-static int would_lose_untracked(const char *path)
+static int was_tracked(const char *path)
 {
 	int pos = cache_name_pos(path, strlen(path));
 
@@ -638,11 +638,16 @@ static int would_lose_untracked(const char *path)
 		switch (ce_stage(active_cache[pos])) {
 		case 0:
 		case 2:
-			return 0;
+			return 1;
 		}
 		pos++;
 	}
-	return file_exists(path);
+	return 0;
+}
+
+static int would_lose_untracked(const char *path)
+{
+	return !was_tracked(path) && file_exists(path);
 }
 
 static int make_room_for_path(const char *path)
