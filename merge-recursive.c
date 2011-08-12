@@ -1061,7 +1061,6 @@ static int process_renames(struct merge_options *o,
 				   renamed: clean merge */
 				update_file(o, 1, ren1->pair->two->sha1, ren1->pair->two->mode, ren1_dst);
 			} else if (!sha_eq(dst_other.sha1, null_sha1)) {
-				const char *new_path;
 				clean_merge = 0;
 				try_merge = 1;
 				output(o, 1, "CONFLICT (rename/add): Rename %s->%s in %s. "
@@ -1090,9 +1089,10 @@ static int process_renames(struct merge_options *o,
 						    ren1_dst);
 					try_merge = 0;
 				} else {
-					new_path = unique_path(o, ren1_dst, branch2);
+					char *new_path = unique_path(o, ren1_dst, branch2);
 					output(o, 1, "Adding as %s instead", new_path);
 					update_file(o, 0, dst_other.sha1, dst_other.mode, new_path);
+					free(new_path);
 				}
 			} else if ((item = string_list_lookup(renames2Dst, ren1_dst))) {
 				ren2 = item->util;
@@ -1260,13 +1260,14 @@ static int merge_content(struct merge_options *o,
 	}
 
 	if (df_conflict_remains) {
-		const char *new_path;
+		char *new_path;
 		update_file_flags(o, mfi.sha, mfi.mode, path,
 				  o->call_depth || mfi.clean, 0);
 		new_path = unique_path(o, path, df_rename_conflict_branch);
 		mfi.clean = 0;
 		output(o, 1, "Adding as %s instead", new_path);
 		update_file_flags(o, mfi.sha, mfi.mode, new_path, 0, 1);
+		free(new_path);
 	} else {
 		update_file(o, mfi.clean, mfi.sha, mfi.mode, path);
 	}
@@ -1422,12 +1423,14 @@ static int process_df_entry(struct merge_options *o,
 		}
 	} else if (o_sha && (!a_sha || !b_sha)) {
 		/* Modify/delete; deleted side may have put a directory in the way */
-		const char *new_path = path;
-		if (lstat(path, &st) == 0 && S_ISDIR(st.st_mode))
-			new_path = unique_path(o, path, a_sha ? o->branch1 : o->branch2);
+		char *renamed = NULL;
+		if (lstat(path, &st) == 0 && S_ISDIR(st.st_mode)) {
+			renamed = unique_path(o, path, a_sha ? o->branch1 : o->branch2);
+		}
 		clean_merge = 0;
-		handle_delete_modify(o, path, new_path,
+		handle_delete_modify(o, path, renamed ? renamed : path,
 				     a_sha, a_mode, b_sha, b_mode);
+		free(renamed);
 	} else if (!o_sha && !!a_sha != !!b_sha) {
 		/* directory -> (directory, file) or <nothing> -> (directory, file) */
 		const char *add_branch;
@@ -1450,12 +1453,13 @@ static int process_df_entry(struct merge_options *o,
 			conf = "directory/file";
 		}
 		if (lstat(path, &st) == 0 && S_ISDIR(st.st_mode)) {
-			const char *new_path = unique_path(o, path, add_branch);
+			char *new_path = unique_path(o, path, add_branch);
 			clean_merge = 0;
 			output(o, 1, "CONFLICT (%s): There is a directory with name %s in %s. "
 			       "Adding %s as %s",
 			       conf, path, other_branch, path, new_path);
 			update_file(o, 0, sha, mode, new_path);
+			free(new_path);
 		} else {
 			output(o, 2, "Adding %s", path);
 			update_file(o, 1, sha, mode, path);
