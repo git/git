@@ -66,13 +66,13 @@ test_expect_success 'merge simple rename+criss-cross with no modifications' '
 	test $(git rev-parse :2:three) = $(git rev-parse L2:three) &&
 	test $(git rev-parse :3:three) = $(git rev-parse R2:three) &&
 
-	cp two merged &&
+	cp one merged &&
 	>empty &&
 	test_must_fail git merge-file \
-		-L "Temporary merge branch 2" \
-		-L "" \
 		-L "Temporary merge branch 1" \
-		merged empty one &&
+		-L "" \
+		-L "Temporary merge branch 2" \
+		merged empty two &&
 	test $(git rev-parse :1:three) = $(git hash-object merged)
 '
 
@@ -145,11 +145,12 @@ test_expect_success 'merge criss-cross + rename merges with basic modification' 
 	cp one merge-me &&
 	>empty &&
 	test_must_fail git merge-file \
-		-L "Temporary merge branch 2" \
-		-L "" \
 		-L "Temporary merge branch 1" \
-		merged empty merge-me &&
-	test $(git rev-parse :1:three) = $(git hash-object merged)
+		-L "" \
+		-L "Temporary merge branch 2" \
+		merge-me empty merged &&
+
+	test $(git rev-parse :1:three) = $(git hash-object merge-me)
 '
 
 #

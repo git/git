@@ -996,17 +996,36 @@ static void conflict_rename_rename_2to1(struct merge_options *o,
 					struct rename *ren2,
 					const char *branch2)
 {
+	char *path = ren1->pair->two->path; /* same as ren2->pair->two->path */
 	/* Two files were renamed to the same thing. */
-	char *new_path1 = unique_path(o, ren1->pair->two->path, branch1);
-	char *new_path2 = unique_path(o, ren2->pair->two->path, branch2);
-	output(o, 1, "Renaming %s to %s and %s to %s instead",
-	       ren1->pair->one->path, new_path1,
-	       ren2->pair->one->path, new_path2);
-	remove_file(o, 0, ren1->pair->two->path, 0);
-	update_file(o, 0, ren1->pair->two->sha1, ren1->pair->two->mode, new_path1);
-	update_file(o, 0, ren2->pair->two->sha1, ren2->pair->two->mode, new_path2);
-	free(new_path2);
-	free(new_path1);
+	if (o->call_depth) {
+		struct merge_file_info mfi;
+		struct diff_filespec one, a, b;
+
+		one.path = a.path = b.path = path;
+		hashcpy(one.sha1, null_sha1);
+		one.mode = 0;
+		hashcpy(a.sha1, ren1->pair->two->sha1);
+		a.mode = ren1->pair->two->mode;
+		hashcpy(b.sha1, ren2->pair->two->sha1);
+		b.mode = ren2->pair->two->mode;
+		mfi = merge_file(o, &one, &a, &b, branch1, branch2);
+		output(o, 1, "Adding merged %s", path);
+		update_file(o, 0, mfi.sha, mfi.mode, path);
+	} else {
+		char *new_path1 = unique_path(o, path, branch1);
+		char *new_path2 = unique_path(o, path, branch2);
+		output(o, 1, "Renaming %s to %s and %s to %s instead",
+		       ren1->pair->one->path, new_path1,
+		       ren2->pair->one->path, new_path2);
+		remove_file(o, 0, path, 0);
+		update_file(o, 0, ren1->pair->two->sha1, ren1->pair->two->mode,
+			    new_path1);
+		update_file(o, 0, ren2->pair->two->sha1, ren2->pair->two->mode,
+			    new_path2);
+		free(new_path2);
+		free(new_path1);
+	}
 }
 
 static int process_renames(struct merge_options *o,
@@ -1021,12 +1040,12 @@ static int process_renames(struct merge_options *o,
 	for (i = 0; i < a_renames->nr; i++) {
 		sre = a_renames->items[i].util;
 		string_list_insert(&a_by_dst, sre->pair->two->path)->util
-			= sre->dst_entry;
+			= (void *)sre;
 	}
 	for (i = 0; i < b_renames->nr; i++) {
 		sre = b_renames->items[i].util;
 		string_list_insert(&b_by_dst, sre->pair->two->path)->util
-			= sre->dst_entry;
+			= (void *)sre;
 	}
 
 	for (i = 0, j = 0; i < a_renames->nr || j < b_renames->nr;) {
@@ -1138,6 +1157,23 @@ static int process_renames(struct merge_options *o,
 					clean_merge = 0;
 					conflict_rename_delete(o, ren1->pair, branch1, branch2);
 				}
+			} else if ((item = string_list_lookup(renames2Dst, ren1_dst))) {
+				char *ren2_src, *ren2_dst;
+				ren2 = item->util;
+				ren2_src = ren2->pair->one->path;
+				ren2_dst = ren2->pair->two->path;
+
+				clean_merge = 0;
+				ren2->processed = 1;
+				remove_file(o, 1, ren2_src,
+					    renamed_stage == 3 || would_lose_untracked(ren1_src));
+
+				output(o, 1, "CONFLICT (rename/rename): "
+				       "Rename %s->%s in %s. "
+				       "Rename %s->%s in %s",
+				       ren1_src, ren1_dst, branch1,
+				       ren2_src, ren2_dst, branch2);
+				conflict_rename_rename_2to1(o, ren1, branch1, ren2, branch2);
 			} else if ((dst_other.mode == ren1->pair->two->mode) &&
 				   sha_eq(dst_other.sha1, ren1->pair->two->sha1)) {
 				/* Added file on the other side
@@ -1178,16 +1214,6 @@ static int process_renames(struct merge_options *o,
 					update_file(o, 0, dst_other.sha1, dst_other.mode, new_path);
 					free(new_path);
 				}
-			} else if ((item = string_list_lookup(renames2Dst, ren1_dst))) {
-				ren2 = item->util;
-				clean_merge = 0;
-				ren2->processed = 1;
-				output(o, 1, "CONFLICT (rename/rename): "
-				       "Rename %s->%s in %s. "
-				       "Rename %s->%s in %s",
-				       ren1_src, ren1_dst, branch1,
-				       ren2->pair->one->path, ren2->pair->two->path, branch2);
-				conflict_rename_rename_2to1(o, ren1, branch1, ren2, branch2);
 			} else
 				try_merge = 1;
 
