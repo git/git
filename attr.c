@@ -140,7 +140,7 @@ struct match_attr {
 static const char blank[] = " \t\r\n";
 
 static const char *parse_attr(const char *src, int lineno, const char *cp,
-			      int *num_attr, struct match_attr *res)
+			      int num_attr, struct match_attr *res)
 {
 	const char *ep, *equals;
 	int len;
@@ -167,7 +167,7 @@ static const char *parse_attr(const char *src, int lineno, const char *cp,
 	} else {
 		struct attr_state *e;
 
-		e = &(res->state[*num_attr]);
+		e = &(res->state[num_attr]);
 		if (*cp == '-' || *cp == '!') {
 			e->setto = (*cp == '-') ? ATTR__FALSE : ATTR__UNSET;
 			cp++;
@@ -180,7 +180,6 @@ static const char *parse_attr(const char *src, int lineno, const char *cp,
 		}
 		e->attr = git_attr_internal(cp, len);
 	}
-	(*num_attr)++;
 	return ep + strspn(ep, blank);
 }
 
@@ -226,9 +225,10 @@ static struct match_attr *parse_attr_line(const char *line, const char *src,
 		cp = name + namelen;
 		cp = cp + strspn(cp, blank);
 		while (*cp) {
-			cp = parse_attr(src, lineno, cp, &num_attr, res);
+			cp = parse_attr(src, lineno, cp, num_attr, res);
 			if (!cp)
 				return NULL;
+			num_attr++;
 		}
 		if (pass)
 			break;
