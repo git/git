@@ -153,13 +153,15 @@ static struct ref_list *sort_ref_list(struct ref_list *list)
  * when doing a full libification.
  */
 static struct cached_refs {
+	struct cached_refs *next;
 	char did_loose;
 	char did_packed;
 	struct ref_list *loose;
 	struct ref_list *packed;
 	/* The submodule name, or "" for the main repo. */
 	char name[FLEX_ARRAY];
-} *cached_refs, *submodule_refs;
+} *cached_refs;
+
 static struct ref_list *current_ref;
 
 static struct ref_list *extra_refs;
@@ -191,6 +193,7 @@ struct cached_refs *create_cached_refs(const char *submodule)
 		submodule = "";
 	len = strlen(submodule) + 1;
 	refs = xmalloc(sizeof(struct cached_refs) + len);
+	refs->next = NULL;
 	refs->did_loose = refs->did_packed = 0;
 	refs->loose = refs->packed = NULL;
 	memcpy(refs->name, submodule, len);
@@ -205,23 +208,28 @@ struct cached_refs *create_cached_refs(const char *submodule)
  */
 static struct cached_refs *get_cached_refs(const char *submodule)
 {
-	if (!submodule) {
-		if (!cached_refs)
-			cached_refs = create_cached_refs(submodule);
-		return cached_refs;
-	} else {
-		if (!submodule_refs)
-			submodule_refs = create_cached_refs(submodule);
-		else
-			/* For now, don't reuse the refs cache for submodules. */
-			clear_cached_refs(submodule_refs);
-		return submodule_refs;
+	struct cached_refs *refs = cached_refs;
+	if (!submodule)
+		submodule = "";
+	while (refs) {
+		if (!strcmp(submodule, refs->name))
+			return refs;
+		refs = refs->next;
 	}
+
+	refs = create_cached_refs(submodule);
+	refs->next = cached_refs;
+	cached_refs = refs;
+	return refs;
 }
 
 static void invalidate_cached_refs(void)
 {
-	clear_cached_refs(get_cached_refs(NULL));
+	struct cached_refs *refs = cached_refs;
+	while (refs) {
+		clear_cached_refs(refs);
+		refs = refs->next;
+	}
 }
 
 static struct ref_list *read_packed_refs(FILE *f)
