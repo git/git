@@ -633,7 +633,7 @@ test_expect_success 'setup rename/rename(1to2)/modify followed by what looks lik
 	git tag E
 '
 
-test_expect_failure 'handle rename/rename(1to2)/modify followed by what looks like rename/rename(2to1)/modify' '
+test_expect_success 'handle rename/rename(1to2)/modify followed by what looks like rename/rename(2to1)/modify' '
 	git checkout D^0 &&
 
 	git merge -s recursive E^0 &&

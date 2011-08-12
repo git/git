@@ -984,17 +984,6 @@ static void conflict_rename_rename_1to2(struct merge_options *o,
 	       src, pair1->two->path, branch1,
 	       src, pair2->two->path, branch2,
 	       o->call_depth ? " (left unresolved)" : "");
-	if (o->call_depth) {
-		/*
-		 * FIXME: Why remove file from cache, and then
-		 * immediately readd it?  Why not just overwrite using
-		 * update_file only?  Also...this is buggy for
-		 * rename/add-source situations...
-		 */
-		remove_file_from_cache(src);
-		update_file(o, 0, pair1->one->sha1, pair1->one->mode, src);
-	}
-
 	if (dir_in_way(ren1_dst, !o->call_depth)) {
 		dst_name1 = del[delp++] = unique_path(o, ren1_dst, branch1);
 		output(o, 1, "%s is a directory in %s adding as %s instead",
@@ -1006,14 +995,21 @@ static void conflict_rename_rename_1to2(struct merge_options *o,
 		       ren2_dst, branch1, dst_name2);
 	}
 	if (o->call_depth) {
-		remove_file_from_cache(dst_name1);
-		remove_file_from_cache(dst_name2);
+		struct merge_file_info mfi;
+		mfi = merge_file(o, src,
+				 pair1->one->sha1, pair1->one->mode,
+				 pair1->two->sha1, pair1->two->mode,
+				 pair2->two->sha1, pair2->two->mode,
+				 branch1, branch2);
 		/*
-		 * Uncomment to leave the conflicting names in the resulting tree
-		 *
-		 * update_file(o, 0, pair1->two->sha1, pair1->two->mode, dst_name1);
-		 * update_file(o, 0, pair2->two->sha1, pair2->two->mode, dst_name2);
+		 * FIXME: For rename/add-source conflicts (if we could detect
+		 * such), this is wrong.  We should instead find a unique
+		 * pathname and then either rename the add-source file to that
+		 * unique path, or use that unique path instead of src here.
 		 */
+		update_file(o, 0, mfi.sha, mfi.mode, src);
+		remove_file_from_cache(ren1_dst);
+		remove_file_from_cache(ren2_dst);
 	} else {
 		update_stages(ren1_dst, NULL, pair1->two, NULL);
 		update_stages(ren2_dst, NULL, NULL, pair2->two);
