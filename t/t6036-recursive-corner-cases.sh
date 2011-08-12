@@ -556,4 +556,92 @@ test_expect_failure 'merge of E2 & D fails but has appropriate contents' '
 	test -f a~D^0
 '
 
+#
+# criss-cross with rename/rename(1to2)/modify followed by
+# rename/rename(2to1)/modify:
+#
+#      B   D
+#      o---o
+#     / \ / \
+#  A o   X   ? F
+#     \ / \ /
+#      o---o
+#      C   E
+#
+#   Commit A: new file: a
+#   Commit B: rename a->b, modifying by adding a line
+#   Commit C: rename a->c
+#   Commit D: merge B&C, resolving conflict by keeping contents in newname
+#   Commit E: merge B&C, resolving conflict similar to D but adding another line
+#
+# There is a conflict merging B & C, but one of filename not of file
+# content.  Whoever created D and E chose specific resolutions for that
+# conflict resolution.  Now, since: (1) there is no content conflict
+# merging B & C, (2) D does not modify that merged content further, and (3)
+# both D & E resolve the name conflict in the same way, the modification to
+# newname in E should not cause any conflicts when it is merged with D.
+# (Note that this can be accomplished by having the virtual merge base have
+# the merged contents of b and c stored in a file named a, which seems like
+# the most logical choice anyway.)
+#
+# Comment from Junio: I do not necessarily agree with the choice "a", but
+# it feels sound to say "B and C do not agree what the final pathname
+# should be, but we know this content was derived from the common A:a so we
+# use one path whose name is arbitrary in the virtual merge base X between
+# D and E" and then further let the rename detection to notice that that
+# arbitrary path gets renamed between X-D to "newname" and X-E also to
+# "newname" to resolve it as both sides renaming it to the same new
+# name. It is akin to what we do at the content level, i.e. "B and C do not
+# agree what the final contents should be, so we leave the conflict marker
+# but that may cancel out at the final merge stage".
+
+test_expect_success 'setup rename/rename(1to2)/modify followed by what looks like rename/rename(2to1)/modify' '
+	git reset --hard &&
+	git rm -rf . &&
+	git clean -fdqx &&
+	rm -rf .git &&
+	git init &&
+
+	printf "1\n2\n3\n4\n5\n6\n" >a &&
+	git add a &&
+	git commit -m A &&
+	git tag A &&
+
+	git checkout -b B A &&
+	git mv a b &&
+	echo 7 >>b &&
+	git add -u &&
+	git commit -m B &&
+
+	git checkout -b C A &&
+	git mv a c &&
+	git commit -m C &&
+
+	git checkout -q B^0 &&
+	git merge --no-commit -s ours C^0 &&
+	git mv b newname &&
+	git commit -m "Merge commit C^0 into HEAD" &&
+	git tag D &&
+
+	git checkout -q C^0 &&
+	git merge --no-commit -s ours B^0 &&
+	git mv c newname &&
+	printf "7\n8\n" >>newname &&
+	git add -u &&
+	git commit -m "Merge commit B^0 into HEAD" &&
+	git tag E
+'
+
+test_expect_failure 'handle rename/rename(1to2)/modify followed by what looks like rename/rename(2to1)/modify' '
+	git checkout D^0 &&
+
+	git merge -s recursive E^0 &&
+
+	test 1 -eq $(git ls-files -s | wc -l) &&
+	test 0 -eq $(git ls-files -u | wc -l) &&
+	test 0 -eq $(git ls-files -o | wc -l) &&
+
+	test $(git rev-parse HEAD:newname) = $(git rev-parse E:newname)
+'
+
 test_done
