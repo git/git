@@ -696,7 +696,7 @@ test_expect_success 'setup avoid unnecessary update, dir->(file,nothing)' '
 	git commit -m "Add a newfile"
 '
 
-test_expect_failure 'avoid unnecessary update, dir->(file,nothing)' '
+test_expect_success 'avoid unnecessary update, dir->(file,nothing)' '
 	git checkout -q master^0 &&
 	test-chmtime =1000000000 df &&
 	test-chmtime -v +0 df >expect &&
@@ -726,7 +726,7 @@ test_expect_success 'setup avoid unnecessary update, modify/delete' '
 	git commit -m "Modify file"
 '
 
-test_expect_failure 'avoid unnecessary update, modify/delete' '
+test_expect_success 'avoid unnecessary update, modify/delete' '
 	git checkout -q master^0 &&
 	test-chmtime =1000000000 file &&
 	test-chmtime -v +0 file >expect &&
@@ -755,7 +755,7 @@ test_expect_success 'setup avoid unnecessary update, rename/add-dest' '
 	git commit -m "Rename file"
 '
 
-test_expect_failure 'avoid unnecessary update, rename/add-dest' '
+test_expect_success 'avoid unnecessary update, rename/add-dest' '
 	git checkout -q master^0 &&
 	test-chmtime =1000000000 newfile &&
 	test-chmtime -v +0 newfile >expect &&

@@ -1036,7 +1036,14 @@ static void handle_change_delete(struct merge_options *o,
 		       change_past, o->branch1, o->branch1, path,
 		       NULL == renamed ? "" : " at ",
 		       NULL == renamed ? "" : renamed);
-		update_file(o, 0, a_sha, a_mode, renamed ? renamed : path);
+		if (renamed)
+			update_file(o, 0, a_sha, a_mode, renamed);
+		/*
+		 * No need to call update_file() on path when !renamed, since
+		 * that would needlessly touch path.  We could call
+		 * update_file_flags() with update_cache=0 and update_wd=0,
+		 * but that's a no-op.
+		 */
 	}
 	free(renamed);
 }
@@ -1396,10 +1403,20 @@ static int process_renames(struct merge_options *o,
 							   NULL);
 			} else if ((dst_other.mode == ren1->pair->two->mode) &&
 				   sha_eq(dst_other.sha1, ren1->pair->two->sha1)) {
-				/* Added file on the other side
-				   identical to the file being
-				   renamed: clean merge */
-				update_file(o, 1, ren1->pair->two->sha1, ren1->pair->two->mode, ren1_dst);
+				/*
+				 * Added file on the other side identical to
+				 * the file being renamed: clean merge.
+				 * Also, there is no need to overwrite the
+				 * file already in the working copy, so call
+				 * update_file_flags() instead of
+				 * update_file().
+				 */
+				update_file_flags(o,
+						  ren1->pair->two->sha1,
+						  ren1->pair->two->mode,
+						  ren1_dst,
+						  1, /* update_cache */
+						  0  /* update_wd    */);
 			} else if (!sha_eq(dst_other.sha1, null_sha1)) {
 				clean_merge = 0;
 				try_merge = 1;
@@ -1727,7 +1744,8 @@ static int process_entry(struct merge_options *o,
 			free(new_path);
 		} else {
 			output(o, 2, "Adding %s", path);
-			update_file(o, 1, sha, mode, path);
+			/* do not overwrite file if already present */
+			update_file_flags(o, sha, mode, path, 1, !a_sha);
 		}
 	} else if (a_sha && b_sha) {
 		/* Case C: Added in both (check for same permissions) and */
