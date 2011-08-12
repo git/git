@@ -353,6 +353,13 @@ static void make_room_for_directories_of_df_conflicts(struct merge_options *o,
 	int last_len = 0;
 	int i;
 
+	/*
+	 * If we're merging merge-bases, we don't want to bother with
+	 * any working directory changes.
+	 */
+	if (o->call_depth)
+		return;
+
 	for (i = 0; i < entries->nr; i++) {
 		const char *path = entries->items[i].string;
 		int len = strlen(path);
