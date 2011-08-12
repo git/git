@@ -673,4 +673,31 @@ test_expect_failure 'avoid unnecessary update, with D/F conflict' '
 	test_cmp expect actual # "df" should have stayed intact
 '
 
+test_expect_success 'setup merge of rename + small change' '
+	git reset --hard &&
+	git checkout --orphan rename-plus-small-change &&
+	git rm -rf . &&
+	git clean -fdqx &&
+
+	echo ORIGINAL >file &&
+	git add file &&
+
+	test_tick &&
+	git commit -m Initial &&
+	git checkout -b rename_branch &&
+	git mv file renamed_file &&
+	git commit -m Rename &&
+	git checkout rename-plus-small-change &&
+	echo NEW-VERSION >file &&
+	git commit -a -m Reformat
+'
+
+test_expect_success 'merge rename + small change' '
+	git merge rename_branch &&
+
+	test 1 -eq $(git ls-files -s | wc -l) &&
+	test 0 -eq $(git ls-files -o | wc -l) &&
+	test $(git rev-parse HEAD:renamed_file) = $(git rev-parse HEAD~1:file)
+'
+
 test_done
