@@ -459,11 +459,12 @@ static struct string_list *get_renames(struct merge_options *o,
 	return renames;
 }
 
-static int update_stages_options(const char *path, const struct diff_filespec *o,
-				 const struct diff_filespec *a,
-				 const struct diff_filespec *b,
-				 int clear, int options)
+static int update_stages(const char *path, const struct diff_filespec *o,
+			 const struct diff_filespec *a,
+			 const struct diff_filespec *b)
 {
+	int clear = 1;
+	int options = ADD_CACHE_OK_TO_ADD | ADD_CACHE_SKIP_DFCHECK;
 	if (clear)
 		if (remove_file_from_cache(path))
 			return -1;
@@ -477,14 +478,6 @@ static int update_stages_options(const char *path, const struct diff_filespec *o
 		if (add_cacheinfo(b->mode, b->sha1, path, 3, 0, options))
 			return -1;
 	return 0;
-}
-
-static int update_stages(const char *path, struct diff_filespec *o,
-			 struct diff_filespec *a, struct diff_filespec *b,
-			 int clear)
-{
-	int options = ADD_CACHE_OK_TO_ADD | ADD_CACHE_OK_TO_REPLACE;
-	return update_stages_options(path, o, a, b, clear, options);
 }
 
 static int update_stages_and_entry(const char *path,
@@ -503,8 +496,7 @@ static int update_stages_and_entry(const char *path,
 	hashcpy(entry->stages[1].sha, o->sha1);
 	hashcpy(entry->stages[2].sha, a->sha1);
 	hashcpy(entry->stages[3].sha, b->sha1);
-	options = ADD_CACHE_OK_TO_ADD | ADD_CACHE_SKIP_DFCHECK;
-	return update_stages_options(path, o, a, b, clear, options);
+	return update_stages(path, o, a, b);
 }
 
 static int remove_file(struct merge_options *o, int clean,
@@ -860,8 +852,7 @@ static void conflict_rename_delete(struct merge_options *o,
 	if (!o->call_depth)
 		update_stages(dest_name, NULL,
 			      rename_branch == o->branch1 ? pair->two : NULL,
-			      rename_branch == o->branch1 ? NULL : pair->two,
-			      1);
+			      rename_branch == o->branch1 ? NULL : pair->two);
 	if (lstat(dest_name, &st) == 0 && S_ISDIR(st.st_mode)) {
 		dest_name = unique_path(o, dest_name, rename_branch);
 		df_conflict = 1;
@@ -905,8 +896,8 @@ static void conflict_rename_rename_1to2(struct merge_options *o,
 		 * update_file(o, 0, pair2->two->sha1, pair2->two->mode, dst_name2);
 		 */
 	} else {
-		update_stages(ren1_dst, NULL, pair1->two, NULL, 1);
-		update_stages(ren2_dst, NULL, NULL, pair2->two, 1);
+		update_stages(ren1_dst, NULL, pair1->two, NULL);
+		update_stages(ren2_dst, NULL, NULL, pair2->two);
 
 		update_file(o, 0, pair1->two->sha1, pair1->two->mode, dst_name1);
 		update_file(o, 0, pair2->two->sha1, pair2->two->mode, dst_name2);
