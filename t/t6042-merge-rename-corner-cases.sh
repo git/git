@@ -339,4 +339,106 @@ test_expect_success 'disappearing dir in rename/directory conflict handled' '
 	test -f sub
 '
 
+# Test for all kinds of things that can go wrong with rename/rename (2to1):
+#   Commit A: new files: a & b
+#   Commit B: rename a->c, modify b
+#   Commit C: rename b->c, modify a
+#
+# Merging of B & C should NOT be clean.  Questions:
+#   * Both a & b should be removed by the merge; are they?
+#   * The two c's should contain modifications to a & b; do they?
+#   * The index should contain two files, both for c; does it?
+#   * The working copy should have two files, both of form c~<unique>; does it?
+#   * Nothing else should be present.  Is anything?
+
+test_expect_success 'setup rename/rename (2to1) + modify/modify' '
+	git rm -rf . &&
+	git clean -fdqx &&
+	rm -rf .git &&
+	git init &&
+
+	printf "1\n2\n3\n4\n5\n" >a &&
+	printf "5\n4\n3\n2\n1\n" >b &&
+	git add a b &&
+	git commit -m A &&
+	git tag A &&
+
+	git checkout -b B A &&
+	git mv a c &&
+	echo 0 >>b &&
+	git add b &&
+	git commit -m B &&
+
+	git checkout -b C A &&
+	git mv b c &&
+	echo 6 >>a &&
+	git add a &&
+	git commit -m C
+'
+
+test_expect_failure 'handle rename/rename (2to1) conflict correctly' '
+	git checkout B^0 &&
+
+	test_must_fail git merge -s recursive C^0 >out &&
+	grep "CONFLICT (rename/rename)" out &&
+
+	test 2 -eq $(git ls-files -s | wc -l) &&
+	test 2 -eq $(git ls-files -u | wc -l) &&
+	test 2 -eq $(git ls-files -u c | wc -l) &&
+	test 3 -eq $(git ls-files -o | wc -l) &&
+
+	test ! -f a &&
+	test ! -f b &&
+	test -f c~HEAD &&
+	test -f c~C^0 &&
+
+	test $(git hash-object c~HEAD) = $(git rev-parse C:a) &&
+	test $(git hash-object c~C^0) = $(git rev-parse B:b)
+'
+
+# Testcase setup for simple rename/rename (1to2) conflict:
+#   Commit A: new file: a
+#   Commit B: rename a->b
+#   Commit C: rename a->c
+test_expect_success 'setup simple rename/rename (1to2) conflict' '
+	git rm -rf . &&
+	git clean -fdqx &&
+	rm -rf .git &&
+	git init &&
+
+	echo stuff >a &&
+	git add a &&
+	test_tick &&
+	git commit -m A &&
+	git tag A &&
+
+	git checkout -b B A &&
+	git mv a b &&
+	test_tick &&
+	git commit -m B &&
+
+	git checkout -b C A &&
+	git mv a c &&
+	test_tick &&
+	git commit -m C
+'
+
+test_expect_success 'merge has correct working tree contents' '
+	git checkout C^0 &&
+
+	test_must_fail git merge -s recursive B^0 &&
+
+	test 3 -eq $(git ls-files -s | wc -l) &&
+	test 3 -eq $(git ls-files -u | wc -l) &&
+	test 0 -eq $(git ls-files -o | wc -l) &&
+
+	test $(git rev-parse :1:a) = $(git rev-parse A:a) &&
+	test $(git rev-parse :3:b) = $(git rev-parse A:a) &&
+	test $(git rev-parse :2:c) = $(git rev-parse A:a) &&
+
+	test ! -f a &&
+	test $(git hash-object b) = $(git rev-parse A:a) &&
+	test $(git hash-object c) = $(git rev-parse A:a)
+'
+
 test_done
