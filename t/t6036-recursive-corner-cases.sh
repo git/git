@@ -4,6 +4,12 @@ test_description='recursive merge corner cases involving criss-cross merges'
 
 . ./test-lib.sh
 
+get_clean_checkout () {
+	git reset --hard &&
+	git clean -fdqx &&
+	git checkout "$1"
+}
+
 #
 #  L1  L2
 #   o---o
@@ -395,6 +401,159 @@ test_expect_failure 'git detects conflict w/ criss-cross+contrived resolution' '
 
 	test $(git rev-parse :2:file) = $(git rev-parse D:file) &&
 	test $(git rev-parse :3:file) = $(git rev-parse E:file)
+'
+
+#
+# criss-cross + d/f conflict via add/add:
+#   Commit A: Neither file 'a' nor directory 'a/' exist.
+#   Commit B: Introduce 'a'
+#   Commit C: Introduce 'a/file'
+#   Commit D: Merge B & C, keeping 'a' and deleting 'a/'
+#
+# Two different later cases:
+#   Commit E1: Merge B & C, deleting 'a' but keeping 'a/file'
+#   Commit E2: Merge B & C, deleting 'a' but keeping a slightly modified 'a/file'
+#
+#      B   D
+#      o---o
+#     / \ / \
+#  A o   X   ? F
+#     \ / \ /
+#      o---o
+#      C   E1 or E2
+#
+# Merging D & E1 requires we first create a virtual merge base X from
+# merging A & B in memory.  Now, if X could keep both 'a' and 'a/file' in
+# the index, then the merge of D & E1 could be resolved cleanly with both
+# 'a' and 'a/file' removed.  Since git does not currently allow creating
+# such a tree, the best we can do is have X contain both 'a~<unique>' and
+# 'a/file' resulting in the merge of D and E1 having a rename/delete
+# conflict for 'a'.  (Although this merge appears to be unsolvable with git
+# currently, git could do a lot better than it currently does with these
+# d/f conflicts, which is the purpose of this test.)
+#
+# Merge of D & E2 has similar issues for path 'a', but should always result
+# in a modify/delete conflict for path 'a/file'.
+#
+# We run each merge in both directions, to check for directional issues
+# with D/F conflict handling.
+#
+
+test_expect_success 'setup differently handled merges of directory/file conflict' '
+	git rm -rf . &&
+	git clean -fdqx &&
+	rm -rf .git &&
+	git init &&
+
+	>ignore-me &&
+	git add ignore-me &&
+	test_tick &&
+	git commit -m A &&
+	git tag A &&
+
+	git branch B &&
+	git checkout -b C &&
+	mkdir a &&
+	echo 10 >a/file &&
+	git add a/file &&
+	test_tick &&
+	git commit -m C &&
+
+	git checkout B &&
+	echo 5 >a &&
+	git add a &&
+	test_tick &&
+	git commit -m B &&
+
+	git checkout B^0 &&
+	test_must_fail git merge C &&
+	git clean -f &&
+	rm -rf a/ &&
+	echo 5 >a &&
+	git add a &&
+	test_tick &&
+	git commit -m D &&
+	git tag D &&
+
+	git checkout C^0 &&
+	test_must_fail git merge B &&
+	git clean -f &&
+	git rm --cached a &&
+	echo 10 >a/file &&
+	git add a/file &&
+	test_tick &&
+	git commit -m E1 &&
+	git tag E1 &&
+
+	git checkout C^0 &&
+	test_must_fail git merge B &&
+	git clean -f &&
+	git rm --cached a &&
+	printf "10\n11\n" >a/file &&
+	git add a/file &&
+	test_tick &&
+	git commit -m E2 &&
+	git tag E2
+'
+
+test_expect_failure 'merge of D & E1 fails but has appropriate contents' '
+	get_clean_checkout D^0 &&
+
+	test_must_fail git merge -s recursive E1^0 &&
+
+	test 2 -eq $(git ls-files -s | wc -l) &&
+	test 1 -eq $(git ls-files -u | wc -l) &&
+	test 0 -eq $(git ls-files -o | wc -l) &&
+
+	test $(git rev-parse :0:ignore-me) = $(git rev-parse A:ignore-me) &&
+	test $(git rev-parse :2:a) = $(git rev-parse B:a)
+'
+
+test_expect_failure 'merge of E1 & D fails but has appropriate contents' '
+	get_clean_checkout E1^0 &&
+
+	test_must_fail git merge -s recursive D^0 &&
+
+	test 2 -eq $(git ls-files -s | wc -l) &&
+	test 1 -eq $(git ls-files -u | wc -l) &&
+	test 0 -eq $(git ls-files -o | wc -l) &&
+
+	test $(git rev-parse :0:ignore-me) = $(git rev-parse A:ignore-me) &&
+	test $(git rev-parse :3:a) = $(git rev-parse B:a)
+'
+
+test_expect_success 'merge of D & E2 fails but has appropriate contents' '
+	get_clean_checkout D^0 &&
+
+	test_must_fail git merge -s recursive E2^0 &&
+
+	test 4 -eq $(git ls-files -s | wc -l) &&
+	test 3 -eq $(git ls-files -u | wc -l) &&
+	test 1 -eq $(git ls-files -o | wc -l) &&
+
+	test $(git rev-parse :2:a) = $(git rev-parse B:a) &&
+	test $(git rev-parse :3:a/file) = $(git rev-parse E2:a/file) &&
+	test $(git rev-parse :1:a/file) = $(git rev-parse C:a/file) &&
+	test $(git rev-parse :0:ignore-me) = $(git rev-parse A:ignore-me) &&
+
+	test -f a~HEAD
+'
+
+test_expect_failure 'merge of E2 & D fails but has appropriate contents' '
+	get_clean_checkout E2^0 &&
+
+	test_must_fail git merge -s recursive D^0 &&
+
+	test 4 -eq $(git ls-files -s | wc -l) &&
+	test 3 -eq $(git ls-files -u | wc -l) &&
+	test 1 -eq $(git ls-files -o | wc -l) &&
+
+	test $(git rev-parse :3:a) = $(git rev-parse B:a) &&
+	test $(git rev-parse :2:a/file) = $(git rev-parse E2:a/file) &&
+	test $(git rev-parse :1:a/file) = $(git rev-parse C:a/file)
+	test $(git rev-parse :0:ignore-me) = $(git rev-parse A:ignore-me) &&
+
+	test -f a~D^0
 '
 
 test_done
