@@ -59,15 +59,19 @@ test_expect_success 'setup modify/delete + directory/file conflict' '
 	git add letters &&
 	git commit -m initial &&
 
+	# Throw in letters.txt for sorting order fun
+	# ("letters.txt" sorts between "letters" and "letters/file")
 	echo i >>letters &&
-	git add letters &&
+	echo "version 2" >letters.txt &&
+	git add letters letters.txt &&
 	git commit -m modified &&
 
 	git checkout -b delete HEAD^ &&
 	git rm letters &&
 	mkdir letters &&
 	>letters/file &&
-	git add letters &&
+	echo "version 1" >letters.txt &&
+	git add letters letters.txt &&
 	git commit -m deleted
 '
 
@@ -75,25 +79,31 @@ test_expect_success 'modify/delete + directory/file conflict' '
 	git checkout delete^0 &&
 	test_must_fail git merge modify &&
 
-	test 3 = $(git ls-files -s | wc -l) &&
-	test 2 = $(git ls-files -u | wc -l) &&
-	test 1 = $(git ls-files -o | wc -l) &&
+	test 5 -eq $(git ls-files -s | wc -l) &&
+	test 4 -eq $(git ls-files -u | wc -l) &&
+	test 1 -eq $(git ls-files -o | wc -l) &&
 
 	test -f letters/file &&
+	test -f letters.txt &&
 	test -f letters~modify
 '
 
 test_expect_success 'modify/delete + directory/file conflict; other way' '
+	# Yes, we really need the double reset since "letters" appears as
+	# both a file and a directory.
+	git reset --hard &&
 	git reset --hard &&
 	git clean -f &&
 	git checkout modify^0 &&
+
 	test_must_fail git merge delete &&
 
-	test 3 = $(git ls-files -s | wc -l) &&
-	test 2 = $(git ls-files -u | wc -l) &&
-	test 1 = $(git ls-files -o | wc -l) &&
+	test 5 -eq $(git ls-files -s | wc -l) &&
+	test 4 -eq $(git ls-files -u | wc -l) &&
+	test 1 -eq $(git ls-files -o | wc -l) &&
 
 	test -f letters/file &&
+	test -f letters.txt &&
 	test -f letters~HEAD
 '
 

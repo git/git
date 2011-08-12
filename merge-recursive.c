@@ -331,6 +331,37 @@ static struct string_list *get_unmerged(void)
 	return unmerged;
 }
 
+static int string_list_df_name_compare(const void *a, const void *b)
+{
+	const struct string_list_item *one = a;
+	const struct string_list_item *two = b;
+	int onelen = strlen(one->string);
+	int twolen = strlen(two->string);
+	/*
+	 * Here we only care that entries for D/F conflicts are
+	 * adjacent, in particular with the file of the D/F conflict
+	 * appearing before files below the corresponding directory.
+	 * The order of the rest of the list is irrelevant for us.
+	 *
+	 * To achieve this, we sort with df_name_compare and provide
+	 * the mode S_IFDIR so that D/F conflicts will sort correctly.
+	 * We use the mode S_IFDIR for everything else for simplicity,
+	 * since in other cases any changes in their order due to
+	 * sorting cause no problems for us.
+	 */
+	int cmp = df_name_compare(one->string, onelen, S_IFDIR,
+				  two->string, twolen, S_IFDIR);
+	/*
+	 * Now that 'foo' and 'foo/bar' compare equal, we have to make sure
+	 * that 'foo' comes before 'foo/bar'.
+	 */
+	if (cmp)
+		return cmp;
+	return onelen - twolen;
+}
+
+
+
 static void make_room_for_directories_of_df_conflicts(struct merge_options *o,
 						      struct string_list *entries)
 {
@@ -343,11 +374,6 @@ static void make_room_for_directories_of_df_conflicts(struct merge_options *o,
 	 * otherwise, if the file is not supposed to be removed by the
 	 * merge, the contents of the file will be placed in another
 	 * unique filename.
-	 *
-	 * NOTE: This function relies on the fact that entries for a
-	 * D/F conflict will appear adjacent in the index, with the
-	 * entries for the file appearing before entries for paths
-	 * below the corresponding directory.
 	 */
 	const char *last_file = NULL;
 	int last_len = 0;
@@ -359,6 +385,10 @@ static void make_room_for_directories_of_df_conflicts(struct merge_options *o,
 	 */
 	if (o->call_depth)
 		return;
+
+	/* Ensure D/F conflicts are adjacent in the entries list. */
+	qsort(entries->items, entries->nr, sizeof(*entries->items),
+	      string_list_df_name_compare);
 
 	for (i = 0; i < entries->nr; i++) {
 		const char *path = entries->items[i].string;
