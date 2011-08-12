@@ -1,3 +1,12 @@
+/*
+ * Handle git attributes.  See gitattributes(5) for a description of
+ * the file syntax, and Documentation/technical/api-gitattributes.txt
+ * for a description of the API.
+ *
+ * One basic design decision here is that we are not going to support
+ * an insanely large number of attributes.
+ */
+
 #define NO_THE_INDEX_COMPATIBILITY_MACROS
 #include "cache.h"
 #include "exec_cmd.h"
@@ -13,12 +22,7 @@ static const char git_attr__unknown[] = "(builtin)unknown";
 
 static const char *attributes_file;
 
-/*
- * The basic design decision here is that we are not going to have
- * insanely large number of attributes.
- *
- * This is a randomly chosen prime.
- */
+/* This is a randomly chosen prime. */
 #define HASHSIZE 257
 
 #ifndef DEBUG_ATTR
@@ -102,16 +106,6 @@ struct git_attr *git_attr(const char *name)
 {
 	return git_attr_internal(name, strlen(name));
 }
-
-/*
- * .gitattributes file is one line per record, each of which is
- *
- * (1) glob pattern.
- * (2) whitespace
- * (3) whitespace separated list of attribute names, each of which
- *     could be prefixed with '-' to mean "set to false", '!' to mean
- *     "unset".
- */
 
 /* What does a matched pattern decide? */
 struct attr_state {
