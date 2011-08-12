@@ -252,6 +252,7 @@ test_expect_success 'setup for rename + d/f conflicts' '
 	git reset --hard &&
 	git checkout --orphan dir-in-way &&
 	git rm -rf . &&
+	git clean -fdqx &&
 
 	mkdir sub &&
 	mkdir dir &&
