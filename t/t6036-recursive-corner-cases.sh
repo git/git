@@ -231,4 +231,87 @@ test_expect_success 'git detects differently handled merges conflict' '
 	test $(git rev-parse :1:new_a) = $(git hash-object merged)
 '
 
+#
+# criss-cross + modify/delete:
+#
+#      B   D
+#      o---o
+#     / \ / \
+#  A o   X   ? F
+#     \ / \ /
+#      o---o
+#      C   E
+#
+#   Commit A: file with contents 'A\n'
+#   Commit B: file with contents 'B\n'
+#   Commit C: file not present
+#   Commit D: file with contents 'B\n'
+#   Commit E: file not present
+#
+# Merging commits D & E should result in modify/delete conflict.
+
+test_expect_success 'setup criss-cross + modify/delete resolved differently' '
+	git rm -rf . &&
+	git clean -fdqx &&
+	rm -rf .git &&
+	git init &&
+
+	echo A >file &&
+	git add file &&
+	test_tick &&
+	git commit -m A &&
+
+	git branch B &&
+	git checkout -b C &&
+	git rm file &&
+	test_tick &&
+	git commit -m C &&
+
+	git checkout B &&
+	echo B >file &&
+	git add file &&
+	test_tick &&
+	git commit -m B &&
+
+	git checkout B^0 &&
+	test_must_fail git merge C &&
+	echo B >file &&
+	git add file &&
+	test_tick &&
+	git commit -m D &&
+	git tag D &&
+
+	git checkout C^0 &&
+	test_must_fail git merge B &&
+	git rm file &&
+	test_tick &&
+	git commit -m E &&
+	git tag E
+'
+
+test_expect_failure 'git detects conflict merging criss-cross+modify/delete' '
+	git checkout D^0 &&
+
+	test_must_fail git merge -s recursive E^0 &&
+
+	test 2 -eq $(git ls-files -s | wc -l) &&
+	test 2 -eq $(git ls-files -u | wc -l) &&
+
+	test $(git rev-parse :1:file) = $(git rev-parse master:file) &&
+	test $(git rev-parse :2:file) = $(git rev-parse B:file)
+'
+
+test_expect_failure 'git detects conflict merging criss-cross+modify/delete, reverse direction' '
+	git reset --hard &&
+	git checkout E^0 &&
+
+	test_must_fail git merge -s recursive D^0 &&
+
+	test 2 -eq $(git ls-files -s | wc -l) &&
+	test 2 -eq $(git ls-files -u | wc -l) &&
+
+	test $(git rev-parse :1:file) = $(git rev-parse master:file) &&
+	test $(git rev-parse :3:file) = $(git rev-parse B:file)
+'
+
 test_done
