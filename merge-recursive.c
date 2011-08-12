@@ -1322,27 +1322,42 @@ error_return:
 
 static void handle_delete_modify(struct merge_options *o,
 				 const char *path,
-				 const char *new_path,
+				 unsigned char *o_sha, int o_mode,
 				 unsigned char *a_sha, int a_mode,
 				 unsigned char *b_sha, int b_mode)
 {
-	if (!a_sha) {
+	char *renamed = NULL;
+	if (dir_in_way(path, !o->call_depth)) {
+		renamed = unique_path(o, path, a_sha ? o->branch1 : o->branch2);
+	}
+
+	if (o->call_depth) {
+		/*
+		 * We cannot arbitrarily accept either a_sha or b_sha as
+		 * correct; since there is no true "middle point" between
+		 * them, simply reuse the base version for virtual merge base.
+		 */
+		remove_file_from_cache(path);
+		update_file(o, 0, o_sha, o_mode, renamed ? renamed : path);
+	} else if (!a_sha) {
 		output(o, 1, "CONFLICT (delete/modify): %s deleted in %s "
 		       "and modified in %s. Version %s of %s left in tree%s%s.",
 		       path, o->branch1,
 		       o->branch2, o->branch2, path,
-		       NULL == new_path ? "" : " at ",
-		       NULL == new_path ? "" : new_path);
-		update_file(o, 0, b_sha, b_mode, new_path ? new_path : path);
+		       NULL == renamed ? "" : " at ",
+		       NULL == renamed ? "" : renamed);
+		update_file(o, 0, b_sha, b_mode, renamed ? renamed : path);
 	} else {
 		output(o, 1, "CONFLICT (delete/modify): %s deleted in %s "
 		       "and modified in %s. Version %s of %s left in tree%s%s.",
 		       path, o->branch2,
 		       o->branch1, o->branch1, path,
-		       NULL == new_path ? "" : " at ",
-		       NULL == new_path ? "" : new_path);
-		update_file(o, 0, a_sha, a_mode, new_path ? new_path : path);
+		       NULL == renamed ? "" : " at ",
+		       NULL == renamed ? "" : renamed);
+		update_file(o, 0, a_sha, a_mode, renamed ? renamed : path);
 	}
+	free(renamed);
+
 }
 
 static int merge_content(struct merge_options *o,
@@ -1512,14 +1527,9 @@ static int process_entry(struct merge_options *o,
 			remove_file(o, 1, path, !a_sha);
 		} else {
 			/* Modify/delete; deleted side may have put a directory in the way */
-			char *renamed = NULL;
 			clean_merge = 0;
-			if (dir_in_way(path, !o->call_depth)) {
-				renamed = unique_path(o, path, a_sha ? o->branch1 : o->branch2);
-			}
-			handle_delete_modify(o, path, renamed,
+			handle_delete_modify(o, path, o_sha, o_mode,
 					     a_sha, a_mode, b_sha, b_mode);
-			free(renamed);
 		}
 	} else if ((!o_sha && a_sha && !b_sha) ||
 		   (!o_sha && !a_sha && b_sha)) {

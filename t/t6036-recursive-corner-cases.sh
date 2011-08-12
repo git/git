@@ -296,7 +296,7 @@ test_expect_success 'setup criss-cross + modify/delete resolved differently' '
 	git tag E
 '
 
-test_expect_failure 'git detects conflict merging criss-cross+modify/delete' '
+test_expect_success 'git detects conflict merging criss-cross+modify/delete' '
 	git checkout D^0 &&
 
 	test_must_fail git merge -s recursive E^0 &&
@@ -308,7 +308,7 @@ test_expect_failure 'git detects conflict merging criss-cross+modify/delete' '
 	test $(git rev-parse :2:file) = $(git rev-parse B:file)
 '
 
-test_expect_failure 'git detects conflict merging criss-cross+modify/delete, reverse direction' '
+test_expect_success 'git detects conflict merging criss-cross+modify/delete, reverse direction' '
 	git reset --hard &&
 	git checkout E^0 &&
 
