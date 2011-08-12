@@ -704,4 +704,73 @@ test_expect_failure 'detect rename/rename/add-source for virtual merge-base' '
 	test "$(cat a)" = "$(printf "1\n2\n3\n4\n5\n6\n7\n8\n")"
 '
 
+#
+# criss-cross with rename/rename(1to2)/add-dest + simple modify:
+#
+#      B   D
+#      o---o
+#     / \ / \
+#  A o   X   ? F
+#     \ / \ /
+#      o---o
+#      C   E
+#
+#   Commit A: new file: a
+#   Commit B: rename a->b, add c
+#   Commit C: rename a->c
+#   Commit D: merge B&C, keeping A:a and B:c
+#   Commit E: merge B&C, keeping A:a and slightly modified c from B
+#
+# Merging commits D & E should result in no conflict.  The virtual merge
+# base of B & C needs to not delete B:c for that to work, though...
+
+test_expect_success 'setup criss-cross+rename/rename/add-dest + simple modify' '
+	git rm -rf . &&
+	git clean -fdqx &&
+	rm -rf .git &&
+	git init &&
+
+	>a &&
+	git add a &&
+	git commit -m A &&
+	git tag A &&
+
+	git checkout -b B A &&
+	git mv a b &&
+	printf "1\n2\n3\n4\n5\n6\n7\n" >c &&
+	git add c &&
+	git commit -m B &&
+
+	git checkout -b C A &&
+	git mv a c &&
+	git commit -m C &&
+
+	git checkout B^0 &&
+	git merge --no-commit -s ours C^0 &&
+	git mv b a &&
+	git commit -m "D is like B but renames b back to a" &&
+	git tag D &&
+
+	git checkout B^0 &&
+	git merge --no-commit -s ours C^0 &&
+	git mv b a &&
+	echo 8 >>c &&
+	git add c &&
+	git commit -m "E like D but has mod in c" &&
+	git tag E
+'
+
+test_expect_failure 'virtual merge base handles rename/rename(1to2)/add-dest' '
+	git checkout D^0 &&
+
+	git merge -s recursive E^0 &&
+
+	test 2 -eq $(git ls-files -s | wc -l) &&
+	test 0 -eq $(git ls-files -u | wc -l) &&
+	test 0 -eq $(git ls-files -o | wc -l) &&
+
+	test $(git rev-parse HEAD:a) = $(git rev-parse A:a) &&
+	test $(git rev-parse HEAD:c) = $(git rev-parse E:c)
+'
+
 test_done
