@@ -673,6 +673,97 @@ test_expect_success 'avoid unnecessary update, with D/F conflict' '
 	test_cmp expect actual # "df" should have stayed intact
 '
 
+test_expect_success 'setup avoid unnecessary update, dir->(file,nothing)' '
+	git rm -rf . &&
+	git clean -fdqx &&
+	rm -rf .git &&
+	git init &&
+
+	>irrelevant &&
+	mkdir df &&
+	>df/file &&
+	git add -A &&
+	git commit -mA &&
+
+	git checkout -b side
+	git rm -rf df &&
+	git commit -mB &&
+
+	git checkout master &&
+	git rm -rf df &&
+	echo bla >df &&
+	git add -A &&
+	git commit -m "Add a newfile"
+'
+
+test_expect_failure 'avoid unnecessary update, dir->(file,nothing)' '
+	git checkout -q master^0 &&
+	test-chmtime =1000000000 df &&
+	test-chmtime -v +0 df >expect &&
+	git merge side &&
+	test-chmtime -v +0 df >actual &&
+	test_cmp expect actual # "df" should have stayed intact
+'
+
+test_expect_success 'setup avoid unnecessary update, modify/delete' '
+	git rm -rf . &&
+	git clean -fdqx &&
+	rm -rf .git &&
+	git init &&
+
+	>irrelevant &&
+	>file &&
+	git add -A &&
+	git commit -mA &&
+
+	git checkout -b side
+	git rm -f file &&
+	git commit -m "Delete file" &&
+
+	git checkout master &&
+	echo bla >file &&
+	git add -A &&
+	git commit -m "Modify file"
+'
+
+test_expect_failure 'avoid unnecessary update, modify/delete' '
+	git checkout -q master^0 &&
+	test-chmtime =1000000000 file &&
+	test-chmtime -v +0 file >expect &&
+	test_must_fail git merge side &&
+	test-chmtime -v +0 file >actual &&
+	test_cmp expect actual # "file" should have stayed intact
+'
+
+test_expect_success 'setup avoid unnecessary update, rename/add-dest' '
+	git rm -rf . &&
+	git clean -fdqx &&
+	rm -rf .git &&
+	git init &&
+
+	printf "1\n2\n3\n4\n5\n6\n7\n8\n" >file &&
+	git add -A &&
+	git commit -mA &&
+
+	git checkout -b side
+	cp file newfile &&
+	git add -A &&
+	git commit -m "Add file copy" &&
+
+	git checkout master &&
+	git mv file newfile &&
+	git commit -m "Rename file"
+'
+
+test_expect_failure 'avoid unnecessary update, rename/add-dest' '
+	git checkout -q master^0 &&
+	test-chmtime =1000000000 newfile &&
+	test-chmtime -v +0 newfile >expect &&
+	git merge side &&
+	test-chmtime -v +0 newfile >actual &&
+	test_cmp expect actual # "file" should have stayed intact
+'
+
 test_expect_success 'setup merge of rename + small change' '
 	git reset --hard &&
 	git checkout --orphan rename-plus-small-change &&
