@@ -767,4 +767,30 @@ test_expect_success 'merge rename into master has correct extended markers' '
 	test_cmp expected renamed_file
 '
 
+test_expect_success 'setup spurious "refusing to lose untracked" message' '
+	git rm -rf . &&
+	git clean -fdqx &&
+	rm -rf .git &&
+	git init &&
+
+	> irrelevant_file &&
+	printf "1\n2\n3\n4\n5\n6\n7\n8\n" >original_file &&
+	git add irrelevant_file original_file &&
+	git commit -mA &&
+
+	git checkout -b rename &&
+	git mv original_file renamed_file &&
+	git commit -mB &&
+
+	git checkout master &&
+	git rm original_file &&
+	git commit -mC
+'
+
+test_expect_failure 'no spurious "refusing to lose untracked" message' '
+	git checkout master^0 &&
+	test_must_fail git merge rename^0 2>errors.txt &&
+	! grep "refusing to lose untracked file" errors.txt
+'
+
 test_done
