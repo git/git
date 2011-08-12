@@ -1037,24 +1037,38 @@ static void conflict_rename_delete(struct merge_options *o,
 				   const char *rename_branch,
 				   const char *other_branch)
 {
-	char *dest_name = pair->two->path;
-	int df_conflict = 0;
+	const struct diff_filespec *orig = pair->one;
+	const struct diff_filespec *dest = pair->two;
+	const char *path;
+	const unsigned char *a_sha = NULL;
+	const unsigned char *b_sha = NULL;
+	int a_mode = 0;
+	int b_mode = 0;
 
-	output(o, 1, "CONFLICT (rename/delete): Rename %s->%s in %s "
-	       "and deleted in %s",
-	       pair->one->path, pair->two->path, rename_branch,
-	       other_branch);
-	if (!o->call_depth)
-		update_stages(dest_name, NULL,
-			      rename_branch == o->branch1 ? pair->two : NULL,
-			      rename_branch == o->branch1 ? NULL : pair->two);
-	if (dir_in_way(dest_name, !o->call_depth)) {
-		dest_name = unique_path(o, dest_name, rename_branch);
-		df_conflict = 1;
+	if (rename_branch == o->branch1) {
+		a_sha = dest->sha1;
+		a_mode = dest->mode;
+	} else {
+		b_sha = dest->sha1;
+		b_mode = dest->mode;
 	}
-	update_file(o, 0, pair->two->sha1, pair->two->mode, dest_name);
-	if (df_conflict)
-		free(dest_name);
+
+	if (o->call_depth) {
+		remove_file_from_cache(dest->path);
+		path = orig->path;
+	} else {
+		path = dest->path;
+		update_stages(dest->path, NULL,
+			      rename_branch == o->branch1 ? dest : NULL,
+			      rename_branch == o->branch1 ? NULL : dest);
+	}
+
+	handle_change_delete(o,
+			     path,
+			     orig->sha1, orig->mode,
+			     a_sha, a_mode,
+			     b_sha, b_mode,
+			     "rename", "renamed");
 }
 
 static void conflict_rename_rename_1to2(struct merge_options *o,
