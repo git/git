@@ -33,4 +33,43 @@ test_expect_failure "Does git preserve Gollum's precious artifact?" '
 	test -f ring
 '
 
+# Testcase setup for rename/modify/add-source:
+#   Commit A: new file: a
+#   Commit B: modify a slightly
+#   Commit C: rename a->b, add completely different a
+#
+# We should be able to merge B & C cleanly
+
+test_expect_success 'setup rename/modify/add-source conflict' '
+	git rm -rf . &&
+	git clean -fdqx &&
+	rm -rf .git &&
+	git init &&
+
+	printf "1\n2\n3\n4\n5\n6\n7\n" >a &&
+	git add a &&
+	git commit -m A &&
+	git tag A &&
+
+	git checkout -b B A &&
+	echo 8 >>a &&
+	git add a &&
+	git commit -m B &&
+
+	git checkout -b C A &&
+	git mv a b &&
+	echo something completely different >a &&
+	git add a &&
+	git commit -m C
+'
+
+test_expect_failure 'rename/modify/add-source conflict resolvable' '
+	git checkout B^0 &&
+
+	git merge -s recursive C^0 &&
+
+	test $(git rev-parse B:a) = $(git rev-parse b) &&
+	test $(git rev-parse C:a) = $(git rev-parse a)
+'
+
 test_done
