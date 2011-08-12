@@ -496,7 +496,7 @@ test_expect_success 'setup differently handled merges of directory/file conflict
 	git tag E2
 '
 
-test_expect_failure 'merge of D & E1 fails but has appropriate contents' '
+test_expect_success 'merge of D & E1 fails but has appropriate contents' '
 	get_clean_checkout D^0 &&
 
 	test_must_fail git merge -s recursive E1^0 &&

@@ -410,7 +410,6 @@ static void record_df_conflict_files(struct merge_options *o,
 		    len > last_len &&
 		    memcmp(path, last_file, last_len) == 0 &&
 		    path[last_len] == '/') {
-			output(o, 3, "Removing %s to make room for subdirectory; may re-add later.", last_file);
 			string_list_insert(&o->df_conflict_file_set, last_file);
 		}
 
@@ -650,11 +649,30 @@ static int would_lose_untracked(const char *path)
 	return !was_tracked(path) && file_exists(path);
 }
 
-static int make_room_for_path(const char *path)
+static int make_room_for_path(struct merge_options *o, const char *path)
 {
-	int status;
+	int status, i;
 	const char *msg = "failed to create path '%s'%s";
 
+	/* Unlink any D/F conflict files that are in the way */
+	for (i = 0; i < o->df_conflict_file_set.nr; i++) {
+		const char *df_path = o->df_conflict_file_set.items[i].string;
+		size_t pathlen = strlen(path);
+		size_t df_pathlen = strlen(df_path);
+		if (df_pathlen < pathlen &&
+		    path[df_pathlen] == '/' &&
+		    strncmp(path, df_path, df_pathlen) == 0) {
+			output(o, 3,
+			       "Removing %s to make room for subdirectory\n",
+			       df_path);
+			unlink(df_path);
+			unsorted_string_list_delete_item(&o->df_conflict_file_set,
+							 i, 0);
+			break;
+		}
+	}
+
+	/* Make sure leading directories are created */
 	status = safe_create_leading_directories_const(path);
 	if (status) {
 		if (status == -3) {
@@ -722,7 +740,7 @@ static void update_file_flags(struct merge_options *o,
 			}
 		}
 
-		if (make_room_for_path(path) < 0) {
+		if (make_room_for_path(o, path) < 0) {
 			update_wd = 0;
 			free(buf);
 			goto update_index;
