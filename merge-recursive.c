@@ -230,7 +230,7 @@ struct tree *write_tree_from_memory(struct merge_options *o)
 		for (i = 0; i < active_nr; i++) {
 			struct cache_entry *ce = active_cache[i];
 			if (ce_stage(ce))
-				fprintf(stderr, "BUG: %d %.*s", ce_stage(ce),
+				fprintf(stderr, "BUG: %d %.*s\n", ce_stage(ce),
 					(int)ce_namelen(ce), ce->name);
 		}
 		die("Bug in merge-recursive.c");
