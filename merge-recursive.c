@@ -844,12 +844,12 @@ static int merge_3way(struct merge_options *o,
 	return merge_status;
 }
 
-static struct merge_file_info merge_file(struct merge_options *o,
-					 const struct diff_filespec *one,
-					 const struct diff_filespec *a,
-					 const struct diff_filespec *b,
-					 const char *branch1,
-					 const char *branch2)
+static struct merge_file_info merge_file_1(struct merge_options *o,
+					   const struct diff_filespec *one,
+					   const struct diff_filespec *a,
+					   const struct diff_filespec *b,
+					   const char *branch1,
+					   const char *branch2)
 {
 	struct merge_file_info result;
 	result.merge = 0;
@@ -916,6 +916,26 @@ static struct merge_file_info merge_file(struct merge_options *o,
 	}
 
 	return result;
+}
+
+static struct merge_file_info merge_file(struct merge_options *o,
+					 const char *path,
+					 const unsigned char *o_sha, int o_mode,
+					 const unsigned char *a_sha, int a_mode,
+					 const unsigned char *b_sha, int b_mode,
+					 const char *branch1,
+					 const char *branch2)
+{
+	struct diff_filespec one, a, b;
+
+	one.path = a.path = b.path = (char *)path;
+	hashcpy(one.sha1, o_sha);
+	one.mode = o_mode;
+	hashcpy(a.sha1, a_sha);
+	a.mode = a_mode;
+	hashcpy(b.sha1, b_sha);
+	b.mode = b_mode;
+	return merge_file_1(o, &one, &a, &b, branch1, branch2);
 }
 
 static void conflict_rename_delete(struct merge_options *o,
@@ -1015,16 +1035,10 @@ static void conflict_rename_rename_2to1(struct merge_options *o,
 	/* Two files were renamed to the same thing. */
 	if (o->call_depth) {
 		struct merge_file_info mfi;
-		struct diff_filespec one, a, b;
-
-		one.path = a.path = b.path = path;
-		hashcpy(one.sha1, null_sha1);
-		one.mode = 0;
-		hashcpy(a.sha1, ren1->pair->two->sha1);
-		a.mode = ren1->pair->two->mode;
-		hashcpy(b.sha1, ren2->pair->two->sha1);
-		b.mode = ren2->pair->two->mode;
-		mfi = merge_file(o, &one, &a, &b, branch1, branch2);
+		mfi = merge_file(o, path, null_sha1, 0,
+				 ren1->pair->two->sha1, ren1->pair->two->mode,
+				 ren2->pair->two->sha1, ren2->pair->two->mode,
+				 branch1, branch2);
 		output(o, 1, "Adding merged %s", path);
 		update_file(o, 0, mfi.sha, mfi.mode, path);
 	} else {
@@ -1211,24 +1225,12 @@ static int process_renames(struct merge_options *o,
 				       ren1_dst, branch2);
 				if (o->call_depth) {
 					struct merge_file_info mfi;
-					struct diff_filespec one, a, b;
-
-					one.path = a.path = b.path =
-						(char *)ren1_dst;
-					hashcpy(one.sha1, null_sha1);
-					one.mode = 0;
-					hashcpy(a.sha1, ren1->pair->two->sha1);
-					a.mode = ren1->pair->two->mode;
-					hashcpy(b.sha1, dst_other.sha1);
-					b.mode = dst_other.mode;
-					mfi = merge_file(o, &one, &a, &b,
-							 branch1,
-							 branch2);
+					mfi = merge_file(o, ren1_dst, null_sha1, 0,
+							 ren1->pair->two->sha1, ren1->pair->two->mode,
+							 dst_other.sha1, dst_other.mode,
+							 branch1, branch2);
 					output(o, 1, "Adding merged %s", ren1_dst);
-					update_file(o, 0,
-						    mfi.sha,
-						    mfi.mode,
-						    ren1_dst);
+					update_file(o, 0, mfi.sha, mfi.mode, ren1_dst);
 					try_merge = 0;
 				} else {
 					char *new_path = unique_path(o, ren1_dst, branch2);
@@ -1406,8 +1408,8 @@ static int merge_content(struct merge_options *o,
 		if (dir_in_way(path, !o->call_depth))
 			df_conflict_remains = 1;
 	}
-	mfi = merge_file(o, &one, &a, &b,
-			 side1 ? side1 : o->branch1, side2 ? side2 : o->branch2);
+	mfi = merge_file_1(o, &one, &a, &b,
+			   side1 ? side1 : o->branch1, side2 ? side2 : o->branch2);
 	free(side1);
 	free(side2);
 
