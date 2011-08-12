@@ -1437,7 +1437,7 @@ static int process_df_entry(struct merge_options *o,
 		handle_delete_modify(o, path, new_path,
 				     a_sha, a_mode, b_sha, b_mode);
 	} else if (!o_sha && !!a_sha != !!b_sha) {
-		/* directory -> (directory, file) */
+		/* directory -> (directory, file) or <nothing> -> (directory, file) */
 		const char *add_branch;
 		const char *other_branch;
 		unsigned mode;
