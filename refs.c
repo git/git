@@ -157,7 +157,7 @@ static struct cached_refs {
 	char did_packed;
 	struct ref_list *loose;
 	struct ref_list *packed;
-} cached_refs, submodule_refs;
+} *cached_refs, *submodule_refs;
 static struct ref_list *current_ref;
 
 static struct ref_list *extra_refs;
@@ -181,6 +181,15 @@ static void clear_cached_refs(struct cached_refs *ca)
 	ca->did_loose = ca->did_packed = 0;
 }
 
+struct cached_refs *create_cached_refs(void)
+{
+	struct cached_refs *refs;
+	refs = xmalloc(sizeof(struct cached_refs));
+	refs->did_loose = refs->did_packed = 0;
+	refs->loose = refs->packed = NULL;
+	return refs;
+}
+
 /*
  * Return a pointer to a cached_refs for the specified submodule. For
  * the main repository, use submodule==NULL. The returned structure
@@ -189,12 +198,17 @@ static void clear_cached_refs(struct cached_refs *ca)
  */
 static struct cached_refs *get_cached_refs(const char *submodule)
 {
-	if (!submodule)
-		return &cached_refs;
-	else {
-		/* For now, don't reuse the refs cache for submodules. */
-		clear_cached_refs(&submodule_refs);
-		return &submodule_refs;
+	if (!submodule) {
+		if (!cached_refs)
+			cached_refs = create_cached_refs();
+		return cached_refs;
+	} else {
+		if (!submodule_refs)
+			submodule_refs = create_cached_refs();
+		else
+			/* For now, don't reuse the refs cache for submodules. */
+			clear_cached_refs(submodule_refs);
+		return submodule_refs;
 	}
 }
 
