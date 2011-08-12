@@ -139,8 +139,15 @@ struct match_attr {
 
 static const char blank[] = " \t\r\n";
 
+/*
+ * Parse a whitespace-delimited attribute state (i.e., "attr",
+ * "-attr", "!attr", or "attr=value") from the string starting at src.
+ * If e is not NULL, write the results to *e.  Return a pointer to the
+ * remainder of the string (with leading whitespace removed), or NULL
+ * if there was an error.
+ */
 static const char *parse_attr(const char *src, int lineno, const char *cp,
-			      int num_attr, struct match_attr *res)
+			      struct attr_state *e)
 {
 	const char *ep, *equals;
 	int len;
@@ -153,7 +160,7 @@ static const char *parse_attr(const char *src, int lineno, const char *cp,
 		len = equals - cp;
 	else
 		len = ep - cp;
-	if (!res) {
+	if (!e) {
 		if (*cp == '-' || *cp == '!') {
 			cp++;
 			len--;
@@ -165,9 +172,6 @@ static const char *parse_attr(const char *src, int lineno, const char *cp,
 			return NULL;
 		}
 	} else {
-		struct attr_state *e;
-
-		e = &(res->state[num_attr]);
 		if (*cp == '-' || *cp == '!') {
 			e->setto = (*cp == '-') ? ATTR__FALSE : ATTR__UNSET;
 			cp++;
@@ -225,7 +229,8 @@ static struct match_attr *parse_attr_line(const char *line, const char *src,
 		cp = name + namelen;
 		cp = cp + strspn(cp, blank);
 		while (*cp) {
-			cp = parse_attr(src, lineno, cp, num_attr, res);
+			cp = parse_attr(src, lineno, cp,
+				pass ? &(res->state[num_attr]) : NULL);
 			if (!cp)
 				return NULL;
 			num_attr++;
