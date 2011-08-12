@@ -631,7 +631,7 @@ test_expect_success 'setup avoid unnecessary update, normal rename' '
 	git commit -m "Random, unrelated changes"
 '
 
-test_expect_failure 'avoid unnecessary update, normal rename' '
+test_expect_success 'avoid unnecessary update, normal rename' '
 	git checkout -q avoid-unnecessary-update-1^0 &&
 	test-chmtime =1000000000 rename &&
 	test-chmtime -v +0 rename >expect &&
@@ -664,7 +664,7 @@ test_expect_success 'setup to test avoiding unnecessary update, with D/F conflic
 	git commit -m "Only unrelated changes"
 '
 
-test_expect_failure 'avoid unnecessary update, with D/F conflict' '
+test_expect_success 'avoid unnecessary update, with D/F conflict' '
 	git checkout -q avoid-unnecessary-update-2^0 &&
 	test-chmtime =1000000000 df &&
 	test-chmtime -v +0 df >expect &&

@@ -1354,6 +1354,7 @@ static int merge_content(struct merge_options *o,
 {
 	const char *reason = "content";
 	char *side1 = NULL, *side2 = NULL;
+	const char *path1 = NULL, *path2 = NULL;
 	struct merge_file_info mfi;
 	struct diff_filespec one, a, b;
 	unsigned df_conflict_remains = 0;
@@ -1371,7 +1372,6 @@ static int merge_content(struct merge_options *o,
 	b.mode = b_mode;
 
 	if (rename_conflict_info) {
-		const char *path1, *path2;
 		struct diff_filepair *pair1 = rename_conflict_info->pair1;
 
 		path1 = (o->branch1 == rename_conflict_info->branch1) ?
@@ -1397,9 +1397,22 @@ static int merge_content(struct merge_options *o,
 	free(side2);
 
 	if (mfi.clean && !df_conflict_remains &&
-	    sha_eq(mfi.sha, a_sha) && mfi.mode == a.mode)
+	    sha_eq(mfi.sha, a_sha) && mfi.mode == a_mode) {
+		int path_renamed_outside_HEAD;
 		output(o, 3, "Skipped %s (merged same as existing)", path);
-	else
+		/*
+		 * The content merge resulted in the same file contents we
+		 * already had.  We can return early if those file contents
+		 * are recorded at the correct path (which may not be true
+		 * if the merge involves a rename).
+		 */
+		path_renamed_outside_HEAD = !path2 || !strcmp(path, path2);
+		if (!path_renamed_outside_HEAD) {
+			add_cacheinfo(mfi.mode, mfi.sha, path,
+				      0 /*stage*/, 1 /*refresh*/, 0 /*options*/);
+			return mfi.clean;
+		}
+	} else
 		output(o, 2, "Auto-merging %s", path);
 
 	if (!mfi.clean) {
