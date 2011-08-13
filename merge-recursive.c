@@ -400,6 +400,7 @@ static void record_df_conflict_files(struct merge_options *o,
 	 * and the file need to be present, then the D/F file will be
 	 * reinstated with a new unique name at the time it is processed.
 	 */
+	struct string_list df_sorted_entries;
 	const char *last_file = NULL;
 	int last_len = 0;
 	int i;
@@ -412,14 +413,20 @@ static void record_df_conflict_files(struct merge_options *o,
 		return;
 
 	/* Ensure D/F conflicts are adjacent in the entries list. */
-	qsort(entries->items, entries->nr, sizeof(*entries->items),
+	memset(&df_sorted_entries, 0, sizeof(struct string_list));
+	for (i = 0; i < entries->nr; i++) {
+		struct string_list_item *next = &entries->items[i];
+		string_list_append(&df_sorted_entries, next->string)->util =
+				   next->util;
+	}
+	qsort(df_sorted_entries.items, entries->nr, sizeof(*entries->items),
 	      string_list_df_name_compare);
 
 	string_list_clear(&o->df_conflict_file_set, 1);
-	for (i = 0; i < entries->nr; i++) {
-		const char *path = entries->items[i].string;
+	for (i = 0; i < df_sorted_entries.nr; i++) {
+		const char *path = df_sorted_entries.items[i].string;
 		int len = strlen(path);
-		struct stage_data *e = entries->items[i].util;
+		struct stage_data *e = df_sorted_entries.items[i].util;
 
 		/*
 		 * Check if last_file & path correspond to a D/F conflict;
@@ -447,6 +454,7 @@ static void record_df_conflict_files(struct merge_options *o,
 			last_file = NULL;
 		}
 	}
+	string_list_clear(&df_sorted_entries, 0);
 }
 
 struct rename {
