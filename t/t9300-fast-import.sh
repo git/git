@@ -765,7 +765,7 @@ g/b/f
 g/b/h
 EOF
 
-test_expect_failure \
+test_expect_success \
     'L: nested tree copy does not corrupt deltas' \
 	'git fast-import <input &&
 	git ls-tree L2 g/b/ >tmp &&
