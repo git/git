@@ -180,6 +180,10 @@ print a message to stderr and exit with nonzero status.
 <args>...::
 	Flags and parameters to be parsed.
 
+--resolve-git-dir <path>::
+	Check if <path> is a valid git-dir or a git-file pointing to a valid
+	git-dir. If <path> is a valid git-dir the resolved path to git-dir will
+	be printed.
 
 include::revisions.txt[]
 
