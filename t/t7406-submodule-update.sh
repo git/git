@@ -408,6 +408,7 @@ test_expect_success 'submodule update exit immediately in case of merge conflict
 	 test_cmp expect actual
 	)
 '
+
 test_expect_success 'submodule update exit immediately after recursive rebase error' '
 	(cd super &&
 	 git checkout master &&
@@ -442,4 +443,110 @@ test_expect_success 'submodule update exit immediately after recursive rebase er
 	 test_cmp expect actual
 	)
 '
+
+test_expect_success 'add different submodules to the same path' '
+	(cd super &&
+	 git submodule add ../submodule s1 &&
+	 test_must_fail git submodule add ../merging s1
+	)
+'
+
+test_expect_success 'submodule add places git-dir in superprojects git-dir' '
+	(cd super &&
+	 mkdir deeper &&
+	 git submodule add ../submodule deeper/submodule &&
+	 (cd deeper/submodule &&
+	  git log > ../../expected
+	 ) &&
+	 (cd .git/modules/deeper/submodule &&
+	  git log > ../../../../actual
+	 ) &&
+	 test_cmp actual expected
+	)
+'
+
+test_expect_success 'submodule update places git-dir in superprojects git-dir' '
+	(cd super &&
+	 git commit -m "added submodule"
+	) &&
+	git clone super super2 &&
+	(cd super2 &&
+	 git submodule init deeper/submodule &&
+	 git submodule update &&
+	 (cd deeper/submodule &&
+	  git log > ../../expected
+	 ) &&
+	 (cd .git/modules/deeper/submodule &&
+	  git log > ../../../../actual
+	 ) &&
+	 test_cmp actual expected
+	)
+'
+
+test_expect_success 'submodule add places git-dir in superprojects git-dir recursive' '
+	(cd super2 &&
+	 (cd deeper/submodule &&
+	  git submodule add ../submodule subsubmodule &&
+	  (cd subsubmodule &&
+	   git log > ../../../expected
+	  ) &&
+	  git commit -m "added subsubmodule" &&
+	  git push
+	 ) &&
+	 (cd .git/modules/deeper/submodule/modules/subsubmodule &&
+	  git log > ../../../../../actual
+	 ) &&
+	 git add deeper/submodule &&
+	 git commit -m "update submodule" &&
+	 git push &&
+	 test_cmp actual expected
+	)
+'
+
+test_expect_success 'submodule update places git-dir in superprojects git-dir recursive' '
+	mkdir super_update_r &&
+	(cd super_update_r &&
+	 git init --bare
+	) &&
+	mkdir subsuper_update_r &&
+	(cd subsuper_update_r &&
+	 git init --bare
+	) &&
+	mkdir subsubsuper_update_r &&
+	(cd subsubsuper_update_r &&
+	 git init --bare
+	) &&
+	git clone subsubsuper_update_r subsubsuper_update_r2 &&
+	(cd subsubsuper_update_r2 &&
+	 test_commit "update_subsubsuper" file &&
+	 git push origin master
+	) &&
+	git clone subsuper_update_r subsuper_update_r2 &&
+	(cd subsuper_update_r2 &&
+	 test_commit "update_subsuper" file &&
+	 git submodule add ../subsubsuper_update_r subsubmodule &&
+	 git commit -am "subsubmodule" &&
+	 git push origin master
+	) &&
+	git clone super_update_r super_update_r2 &&
+	(cd super_update_r2 &&
+	 test_commit "update_super" file &&
+	 git submodule add ../subsuper_update_r submodule &&
+	 git commit -am "submodule" &&
+	 git push origin master
+	) &&
+	rm -rf super_update_r2 &&
+	git clone super_update_r super_update_r2 &&
+	(cd super_update_r2 &&
+	 git submodule update --init --recursive &&
+	 (cd submodule/subsubmodule &&
+	  git log > ../../expected
+	 ) &&
+	 (cd .git/modules/submodule/modules/subsubmodule
+	  git log > ../../../../../actual
+	 )
+	 test_cmp actual expected
+	)
+'
+
 test_done

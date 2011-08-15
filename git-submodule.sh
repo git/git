@@ -122,14 +122,49 @@ module_clone()
 	path=$1
 	url=$2
 	reference="$3"
+	gitdir=
+	gitdir_base=
+	name=$(module_name "$path")
+	base_path=$(dirname "$path")
 
-	if test -n "$reference"
+	gitdir=$(git rev-parse --git-dir)
+	gitdir_base="$gitdir/modules/$base_path"
+	gitdir="$gitdir/modules/$path"
+
+	case $gitdir in
+	/*)
+		a="$(cd_to_toplevel && pwd)/"
+		b=$gitdir
+		while [ "$b" ] && [ "${a%%/*}" = "${b%%/*}" ]
+		do
+			a=${a#*/} b=${b#*/};
+		done
+
+		rel="$a$name"
+		rel=`echo $rel | sed -e 's|[^/]*|..|g'`
+		rel_gitdir="$rel/$b"
+		;;
+	*)
+		rel=`echo $name | sed -e 's|[^/]*|..|g'`
+		rel_gitdir="$rel/$gitdir"
+		;;
+	esac
+
+	if test -d "$gitdir"
 	then
-		git-clone "$reference" -n "$url" "$path"
+		mkdir -p "$path"
+		echo "gitdir: $rel_gitdir" >"$path/.git"
+		rm -f "$gitdir/index"
 	else
-		git-clone -n "$url" "$path"
-	fi ||
-	die "$(eval_gettext "Clone of '\$url' into submodule path '\$path' failed")"
+		mkdir -p "$gitdir_base"
+		if test -n "$reference"
+		then
+			git-clone "$reference" -n "$url" "$path" --separate-git-dir "$gitdir"
+		else
+			git-clone -n "$url" "$path" --separate-git-dir "$gitdir"
+		fi ||
+		die "$(eval_gettext "Clone of '\$url' into submodule path '\$path' failed")"
+	fi
 }
 
 #

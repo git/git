@@ -43,7 +43,7 @@ git commit -m B-super-added'
 cd "$base_dir"
 
 test_expect_success 'after add: existence of info/alternates' \
-'test `wc -l <super/sub/.git/objects/info/alternates` = 1'
+'test `wc -l <super/.git/modules/sub/objects/info/alternates` = 1'
 
 cd "$base_dir"
 
@@ -66,7 +66,7 @@ test_expect_success 'update with reference' \
 cd "$base_dir"
 
 test_expect_success 'after update: existence of info/alternates' \
-'test `wc -l <super-clone/sub/.git/objects/info/alternates` = 1'
+'test `wc -l <super-clone/.git/modules/sub/objects/info/alternates` = 1'
 
 cd "$base_dir"
 
