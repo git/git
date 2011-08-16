@@ -292,4 +292,22 @@ test_expect_success 'use "update --recursive nested1" to checkout all submodules
 	)
 '
 
+test_expect_success 'command passed to foreach retains notion of stdin' '
+	(
+		cd super &&
+		git submodule foreach echo success >../expected &&
+		yes | git submodule foreach "read y && test \"x\$y\" = xy && echo success" >../actual
+	) &&
+	test_cmp expected actual
+'
+
+test_expect_success 'command passed to foreach --recursive retains notion of stdin' '
+	(
+		cd clone2 &&
+		git submodule foreach --recursive echo success >../expected &&
+		yes | git submodule foreach --recursive "read y && test \"x\$y\" = xy && echo success" >../actual
+	) &&
+	test_cmp expected actual
+'
+
 test_done
