@@ -8,6 +8,7 @@ git-convert-objects - Converts old-style git repository
 
 SYNOPSIS
 --------
+[verse]
 'git-convert-objects'
 
 DESCRIPTION

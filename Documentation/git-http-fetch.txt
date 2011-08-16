@@ -8,6 +8,7 @@ git-http-fetch - Download from a remote git repository via HTTP
 
 SYNOPSIS
 --------
+[verse]
 'git http-fetch' [-c] [-t] [-a] [-d] [-v] [-w filename] [--recover] [--stdin] <commit> <url>
 
 DESCRIPTION

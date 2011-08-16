@@ -8,6 +8,7 @@ git-log - Show commit logs
 
 SYNOPSIS
 --------
+[verse]
 'git log' [<options>] [<since>..<until>] [[\--] <path>...]
 
 DESCRIPTION

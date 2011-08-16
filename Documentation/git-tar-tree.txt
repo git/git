@@ -8,6 +8,7 @@ git-tar-tree - Create a tar archive of the files in the named tree object
 
 SYNOPSIS
 --------
+[verse]
 'git tar-tree' [--remote=<repo>] <tree-ish> [ <base> ]
 
 DESCRIPTION

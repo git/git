@@ -12,7 +12,6 @@ SYNOPSIS
 	[<upstream>] [<branch>]
 'git rebase' [-i | --interactive] [options] --onto <newbase>
 	--root [<branch>]
-
 'git rebase' --continue | --skip | --abort
 
 DESCRIPTION

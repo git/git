@@ -8,6 +8,7 @@ git-commit-tree - Create a new commit object
 
 SYNOPSIS
 --------
+[verse]
 'git commit-tree' <tree> [(-p <parent commit>)...] < changelog
 
 DESCRIPTION

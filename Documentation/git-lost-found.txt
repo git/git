@@ -7,6 +7,7 @@ git-lost-found - Recover lost refs that luckily have not yet been pruned
 
 SYNOPSIS
 --------
+[verse]
 'git lost-found'
 
 DESCRIPTION

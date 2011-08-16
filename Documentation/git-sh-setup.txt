@@ -7,6 +7,7 @@ git-sh-setup - Common git shell script setup code
 
 SYNOPSIS
 --------
+[verse]
 '. "$(git --exec-path)/git-sh-setup"'
 
 DESCRIPTION

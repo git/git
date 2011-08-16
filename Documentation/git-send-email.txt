@@ -8,6 +8,7 @@ git-send-email - Send a collection of patches as emails
 
 SYNOPSIS
 --------
+[verse]
 'git send-email' [options] <file|directory|rev-list options>...
 
 

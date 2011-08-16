@@ -8,6 +8,7 @@ git-merge-index - Run a merge for files needing merging
 
 SYNOPSIS
 --------
+[verse]
 'git merge-index' [-o] [-q] <merge-program> (-a | [--] <file>*)
 
 DESCRIPTION

@@ -8,6 +8,7 @@ git-peek-remote - List the references in a remote repository
 
 SYNOPSIS
 --------
+[verse]
 'git peek-remote' [--upload-pack=<git-upload-pack>] [<host>:]<directory>
 
 DESCRIPTION
