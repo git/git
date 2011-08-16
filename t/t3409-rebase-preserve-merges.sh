@@ -37,7 +37,15 @@ export GIT_AUTHOR_EMAIL
 #      \
 #       B2     <-- origin/topic
 #
-# In all cases, 'topic' is rebased onto 'origin/topic'.
+# Clone 4 (merge using second parent as base):
+#
+# A1--A2--B3   <-- origin/master
+#  \
+#   B1--A3--M  <-- topic
+#    \     /
+#     \--A4    <-- topic2
+#      \
+#       B2     <-- origin/topic
 
 test_expect_success 'setup for merge-preserving rebase' \
 	'echo First > A &&
@@ -55,6 +63,13 @@ test_expect_success 'setup for merge-preserving rebase' \
 	(cd clone1 &&
 	git checkout -b topic origin/topic &&
 	git merge origin/master
+	) &&
+
+	git clone ./. clone4 &&
+	(
+		cd clone4 &&
+		git checkout -b topic origin/topic &&
+		git merge origin/master
 	) &&
 
 	echo Fifth > B &&
@@ -120,6 +135,17 @@ test_expect_success 'rebase -p preserves no-ff merges' '
 	git rebase -p origin/topic &&
 	test 3 = $(git rev-list --all --pretty=oneline | grep "Modify A" | wc -l) &&
 	test 1 = $(git rev-list --all --pretty=oneline | grep "Merge branch" | wc -l)
+	)
+'
+
+test_expect_success 'rebase -p works when base inside second parent' '
+	(
+	cd clone4 &&
+	git fetch &&
+	git rebase -p HEAD^2 &&
+	test 1 = $(git rev-list --all --pretty=oneline | grep "Modify A" | wc -l) &&
+	test 1 = $(git rev-list --all --pretty=oneline | grep "Modify B" | wc -l) &&
+	test 1 = $(git rev-list --all --pretty=oneline | grep "Merge remote-tracking branch " | wc -l)
 	)
 '
 
