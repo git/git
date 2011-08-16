@@ -593,7 +593,7 @@ static int unpack_nondirectories(int n, unsigned long mask,
 static int unpack_failed(struct unpack_trees_options *o, const char *message)
 {
 	discard_index(&o->result);
-	if (!o->gently) {
+	if (!o->gently && !o->exiting_early) {
 		if (message)
 			return error("%s", message);
 		return -1;
@@ -1133,6 +1133,8 @@ return_failed:
 		display_error_msgs(o);
 	mark_all_ce_unused(o->src_index);
 	ret = unpack_failed(o, NULL);
+	if (o->exiting_early)
+		ret = 0;
 	goto done;
 }
 
