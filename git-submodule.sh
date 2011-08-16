@@ -34,7 +34,7 @@ resolve_relative_url ()
 {
 	remote=$(get_default_remote)
 	remoteurl=$(git config "remote.$remote.url") ||
-		die "remote ($remote) does not have a url defined in .git/config"
+		remoteurl=$(pwd) # the repository is its own authoritative upstream
 	url="$1"
 	remoteurl=${remoteurl%/}
 	sep=/
@@ -238,14 +238,6 @@ cmd_add()
 			die "'$path' already exists and is not a valid git repo"
 		fi
 
-		case "$repo" in
-		./*|../*)
-			url=$(resolve_relative_url "$repo") || exit
-		    ;;
-		*)
-			url="$repo"
-			;;
-		esac
 	else
 
 		module_clone "$path" "$realrepo" "$reference" || exit
@@ -259,7 +251,7 @@ cmd_add()
 			esac
 		) || die "Unable to checkout submodule '$path'"
 	fi
-	git config submodule."$path".url "$url"
+	git config submodule."$path".url "$realrepo"
 
 	git add $force "$path" ||
 	die "Failed to add submodule '$path'"
