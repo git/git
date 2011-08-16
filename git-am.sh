@@ -507,6 +507,8 @@ else
 	fi
 fi
 
+git update-index -q --refresh
+
 case "$resolved" in
 '')
 	case "$HAS_HEAD" in
