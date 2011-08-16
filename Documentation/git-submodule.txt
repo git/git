@@ -167,7 +167,9 @@ commit for each submodule.
 
 sync::
 	Synchronizes submodules' remote URL configuration setting
-	to the value specified in .gitmodules.  This is useful when
+	to the value specified in .gitmodules. It will only affect those
+	submodules which already have an url entry in .git/config (that is the
+	case when they are initialized or freshly added). This is useful when
 	submodule URLs change upstream and you need to update your local
 	repositories accordingly.
 +
