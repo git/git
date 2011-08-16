@@ -77,7 +77,8 @@ test_expect_success 'submodule add' '
 
 	(
 		cd addtest &&
-		git submodule add "$submodurl" submod &&
+		git submodule add -q "$submodurl" submod >actual &&
+		test ! -s actual &&
 		git submodule init
 	) &&
 
@@ -275,7 +276,8 @@ test_expect_success 'update should work when path is an empty dir' '
 	echo "$rev1" >expect &&
 
 	mkdir init &&
-	git submodule update &&
+	git submodule update -q >update.out &&
+	test ! -s update.out &&
 
 	inspect init &&
 	test_cmp expect head-sha1
