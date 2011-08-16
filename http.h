@@ -172,7 +172,7 @@ struct http_object_request {
 	unsigned char sha1[20];
 	unsigned char real_sha1[20];
 	git_SHA_CTX c;
-	z_stream stream;
+	git_zstream stream;
 	int zret;
 	int rename;
 	struct active_request_slot *slot;

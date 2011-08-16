@@ -1017,7 +1017,7 @@ static int store_object(
 	unsigned char sha1[20];
 	unsigned long hdrlen, deltalen;
 	git_SHA_CTX c;
-	z_stream s;
+	git_zstream s;
 
 	hdrlen = sprintf((char *)hdr,"%s %lu", typename(type),
 		(unsigned long)dat->len) + 1;
@@ -1050,7 +1050,7 @@ static int store_object(
 		delta = NULL;
 
 	memset(&s, 0, sizeof(s));
-	deflateInit(&s, pack_compression_level);
+	git_deflate_init(&s, pack_compression_level);
 	if (delta) {
 		s.next_in = delta;
 		s.avail_in = deltalen;
@@ -1058,11 +1058,11 @@ static int store_object(
 		s.next_in = (void *)dat->buf;
 		s.avail_in = dat->len;
 	}
-	s.avail_out = deflateBound(&s, s.avail_in);
+	s.avail_out = git_deflate_bound(&s, s.avail_in);
 	s.next_out = out = xmalloc(s.avail_out);
-	while (deflate(&s, Z_FINISH) == Z_OK)
-		/* nothing */;
-	deflateEnd(&s);
+	while (git_deflate(&s, Z_FINISH) == Z_OK)
+		; /* nothing */
+	git_deflate_end(&s);
 
 	/* Determine if we should auto-checkpoint. */
 	if ((max_packsize && (pack_size + 60 + s.total_out) > max_packsize)
@@ -1078,14 +1078,14 @@ static int store_object(
 			delta = NULL;
 
 			memset(&s, 0, sizeof(s));
-			deflateInit(&s, pack_compression_level);
+			git_deflate_init(&s, pack_compression_level);
 			s.next_in = (void *)dat->buf;
 			s.avail_in = dat->len;
-			s.avail_out = deflateBound(&s, s.avail_in);
+			s.avail_out = git_deflate_bound(&s, s.avail_in);
 			s.next_out = out = xrealloc(out, s.avail_out);
-			while (deflate(&s, Z_FINISH) == Z_OK)
-				/* nothing */;
-			deflateEnd(&s);
+			while (git_deflate(&s, Z_FINISH) == Z_OK)
+				; /* nothing */
+			git_deflate_end(&s);
 		}
 	}
 
@@ -1163,7 +1163,7 @@ static void stream_blob(uintmax_t len, unsigned char *sha1out, uintmax_t mark)
 	off_t offset;
 	git_SHA_CTX c;
 	git_SHA_CTX pack_file_ctx;
-	z_stream s;
+	git_zstream s;
 	int status = Z_OK;
 
 	/* Determine if we should auto-checkpoint. */
@@ -1187,7 +1187,7 @@ static void stream_blob(uintmax_t len, unsigned char *sha1out, uintmax_t mark)
 	crc32_begin(pack_file);
 
 	memset(&s, 0, sizeof(s));
-	deflateInit(&s, pack_compression_level);
+	git_deflate_init(&s, pack_compression_level);
 
 	hdrlen = encode_in_pack_object_header(OBJ_BLOB, len, out_buf);
 	if (out_sz <= hdrlen)
@@ -1209,7 +1209,7 @@ static void stream_blob(uintmax_t len, unsigned char *sha1out, uintmax_t mark)
 			len -= n;
 		}
 
-		status = deflate(&s, len ? 0 : Z_FINISH);
+		status = git_deflate(&s, len ? 0 : Z_FINISH);
 
 		if (!s.avail_out || status == Z_STREAM_END) {
 			size_t n = s.next_out - out_buf;
@@ -1228,7 +1228,7 @@ static void stream_blob(uintmax_t len, unsigned char *sha1out, uintmax_t mark)
 			die("unexpected deflate failure: %d", status);
 		}
 	}
-	deflateEnd(&s);
+	git_deflate_end(&s);
 	git_SHA1_Final(sha1, &c);
 
 	if (sha1out)

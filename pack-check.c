@@ -26,7 +26,7 @@ int check_pack_crc(struct packed_git *p, struct pack_window **w_curs,
 	uint32_t data_crc = crc32(0, NULL, 0);
 
 	do {
-		unsigned int avail;
+		unsigned long avail;
 		void *data = use_pack(p, w_curs, offset, &avail);
 		if (avail > len)
 			avail = len;
@@ -61,7 +61,7 @@ static int verify_packfile(struct packed_git *p,
 
 	git_SHA1_Init(&ctx);
 	do {
-		unsigned int remaining;
+		unsigned long remaining;
 		unsigned char *in = use_pack(p, w_curs, offset, &remaining);
 		offset += remaining;
 		if (!pack_sig_ofs)
