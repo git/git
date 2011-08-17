@@ -1,13 +1,16 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Aug 2011, #03; Thu, 11)
-X-master-at: b91766295f2b873bbd4ef79c06de05aff27f8e12
-X-next-at: 6c94a45e9f00a1b3c623d79d889f6b1c0b4db93d
+Subject: What's cooking in git.git (Aug 2011, #04; Tue, 16)
+X-master-at: 4bfe7cb6668c43c1136304bbb17eea1b3ddf0237
+X-next-at: 0e3f8f0b05033eaaaa60133977cc86dd9a5db4bf
 
-What's cooking in git.git (Aug 2011, #03; Thu, 11)
+What's cooking in git.git (Aug 2011, #04; Tue, 16)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' while commits prefixed with '+' are in 'next'.
+
+The kernel.org machine seems to be very busy for the past 48 hours so it
+might take a while for tonight's pushout to propagate to mirrors.
 
 There are a few 'fixup!' commits queued in topics still in 'pu', so that
 authors have a choice to just say "that fix looks good, squash it in!"
@@ -16,63 +19,38 @@ instead of going through an extra round.
 --------------------------------------------------
 [New Topics]
 
-* di/fast-import-ident (2011-08-11) 5 commits
- - fsck: improve committer/author check
- - fsck: add a few committer name tests
- - fast-import: check committer name more strictly
- - fast-import: don't fail on omitted committer name
- - fast-import: add input format tests
+* di/fast-import-deltified-tree (2011-08-14) 2 commits
+ - fast-import: prevent producing bad delta
+ - fast-import: add a test for tree delta base corruption
 
-* fg/submodule-ff-check-before-push (2011-08-09) 1 commit
- - push: Don't push a repository with unpushed submodules
+* di/parse-options-split (2011-08-11) 2 commits
+ - Reduce parse-options.o dependencies
+ - parse-options: export opterr, optbug
 
-* hv/submodule-update-none (2011-08-11) 2 commits
- - add update 'none' flag to disable update of submodule by default
- - submodule: move update configuration variable further up
+* mh/attr (2011-08-14) 7 commits
+ - Unroll the loop over passes
+ - Change while loop into for loop
+ - Determine the start of the states outside of the pass loop
+ - Change parse_attr() to take a pointer to struct attr_state
+ - Increment num_attr in parse_attr_line(), not parse_attr()
+ - Document struct match_attr
+ - Add a file comment
 
-* jc/lookup-object-hash (2011-08-11) 6 commits
- - object hash: replace linear probing with 4-way cuckoo hashing
- - object hash: we know the table size is a power of two
- - object hash: next_size() helper for readability
- - pack-objects --count-only
- - object.c: remove duplicated code for object hashing
- - object.c: code movement for readability
+All looked reasonable.
 
-* js/i18n-scripts (2011-08-08) 5 commits
- - submodule: take advantage of gettextln and eval_gettextln.
- - stash: take advantage of eval_gettextln
- - pull: take advantage of eval_gettextln
- - git-am: take advantage of gettextln and eval_gettextln.
- - gettext: add gettextln, eval_gettextln to encode common idiom
+* mh/iterate-refs (2011-08-14) 6 commits
+ - Retain caches of submodule refs
+ - Store the submodule name in struct cached_refs
+ - Allocate cached_refs objects dynamically
+ - Change the signature of read_packed_refs()
+ - Access reference caches only through new function get_cached_refs()
+ - Extract a function clear_cached_refs()
 
---------------------------------------------------
-[Graduated to "master"]
+* jn/plug-empty-tree-leak (2011-08-16) 2 commits
+ - merge-recursive: take advantage of hardcoded empty tree
+ - revert: plug memory leak in "cherry-pick root commit" codepath
 
-* cb/partial-commit-relative-pathspec (2011-08-02) 1 commit
-  (merged to 'next' on 2011-08-03 at 6918f69)
- + commit: allow partial commits with relative paths
-
-Ideally the pathspec-prefix helper should be renamed to something more
-sensible, but we could live with it for now.
-
-* ef/ipv4-connect-error-report (2011-08-01) 2 commits
-  (merged to 'next' on 2011-08-03 at ea4842b)
- + connect: only log if all attempts failed (ipv4)
- + Merge branch 'maint' into ef/ipv4-connect-error-report
-
-* jk/fast-export-quote-path (2011-08-05) 1 commit
-  (merged to 'next' on 2011-08-05 at a80e5f5)
- + fast-export: quote paths in output
-
-* rc/maint-http-wrong-free (2011-08-03) 2 commits
-  (merged to 'next' on 2011-08-05 at cea08ed)
- + Makefile: some changes for http-related flag documentation
- + http.c: fix an invalid free()
-
-* rs/grep-function-context (2011-08-01) 2 commits
-  (merged to 'next' on 2011-08-05 at 8d63a8c)
- + grep: long context options
- + grep: add option to show whole function as context
+Both looked reasonable.
 
 --------------------------------------------------
 [Stalled]
@@ -127,59 +105,6 @@ Cf. $gmane/176254, 176255, 166256
 The initial "tag --contains" de-pessimization without need for generation
 numbers is already in; backburnered.
 
-* en/merge-recursive (2011-08-04) 49 commits
- - t3030: fix accidental success in symlink rename
- - merge-recursive: Fix working copy handling for rename/rename/add/add
- - merge-recursive: add handling for rename/rename/add-dest/add-dest
- - merge-recursive: Have conflict_rename_delete reuse modify/delete code
- - merge-recursive: Make modify/delete handling code reusable
- - merge-recursive: Consider modifications in rename/rename(2to1) conflicts
- - merge-recursive: Create function for merging with branchname:file markers
- - merge-recursive: Record more data needed for merging with dual renames
- - merge-recursive: Defer rename/rename(2to1) handling until process_entry
- - merge-recursive: Small cleanups for conflict_rename_rename_1to2
- - merge-recursive: Fix rename/rename(1to2) resolution for virtual merge base
- - merge-recursive: Introduce a merge_file convenience function
- - merge-recursive: Fix modify/delete resolution in the recursive case
- - merge-recursive: Provide more info in conflict markers with file renames
- - merge-recursive: Cleanup and consolidation of rename_conflict_info
- - merge-recursive: Consolidate process_entry() and process_df_entry()
- - merge-recursive: Improve handling of rename target vs. directory addition
- - merge-recursive: Add comments about handling rename/add-source cases
- - merge-recursive: Make dead code for rename/rename(2to1) conflicts undead
- - merge-recursive: Fix deletion of untracked file in rename/delete conflicts
- - merge-recursive: When we detect we can skip an update, actually skip it
- - merge-recursive: Split update_stages_and_entry; only update stages at end
- - merge-recursive: Consolidate different update_stages functions
- - merge-recursive: Allow make_room_for_path() to remove D/F entries
- - merge-recursive: Split was_tracked() out of would_lose_untracked()
- - merge-recursive: Save D/F conflict filenames instead of unlinking them
- - merge-recursive: Fix code checking for D/F conflicts still being present
- - merge-recursive: Fix sorting order and directory change assumptions
- - merge-recursive: Fix recursive case with D/F conflict via add/add conflict
- - merge-recursive: Avoid working directory changes during recursive case
- - merge-recursive: Remember to free generated unique path names
- - merge-recursive: Mark some diff_filespec struct arguments const
- - merge-recursive: Correct a comment
- - merge-recursive: Make BUG message more legible by adding a newline
- - t6022: Add testcase for merging a renamed file with a simple change
- - t6022: New tests checking for unnecessary updates of files
- - t6022: Remove unnecessary untracked files to make test cleaner
- - t6036: criss-cross + rename/rename(1to2)/add-source + modify/modify
- - t6036: criss-cross w/ rename/rename(1to2)/modify+rename/rename(2to1)/modify
- - t6036: tests for criss-cross merges with various directory/file conflicts
- - t6036: criss-cross with weird content can fool git into clean merge
- - t6036: Add differently resolved modify/delete conflict in criss-cross test
- - t6042: Ensure rename/rename conflicts leave index and workdir in sane state
- - t6042: Add failing testcases for rename/rename/add-{source,dest} conflicts
- - t6042: Add tests for content issues with modify/rename/directory conflicts
- - t6042: Add a testcase where undetected rename causes silent file deletion
- - t6042: Add a pair of cases where undetected renames cause issues
- - t6042: Add failing testcase for rename/modify/add-source conflict
- - t6042: Add a testcase where git deletes an untracked file
-
-Re-roll being worked on.
-
 * sr/transport-helper-fix-rfc (2011-07-19) 2 commits
  - t5800: point out that deleting branches does not work
  - t5800: document inability to push new branch with old content
@@ -193,15 +118,104 @@ I think a further refactoring (no, not my suggestion) was offered?
 --------------------------------------------------
 [Cooking]
 
-* cb/maint-ls-files-error-report (2011-08-11) 1 commit
- - ls-files: fix pathspec display on error
-
-Will merge to "next".
-
 * ac/describe-dirty-refresh (2011-08-11) 1 commit
  - describe: Refresh the index when run with --dirty
 
-Will merge to "next".
+Will merge to "next", but needs Sign-off.
+
+* en/merge-recursive-2 (2011-08-14) 57 commits
+ - merge-recursive: Don't re-sort a list whose order we depend upon
+ - merge-recursive: Fix virtual merge base for rename/rename(1to2)/add-dest
+ - t6036: criss-cross + rename/rename(1to2)/add-dest + simple modify
+ - merge-recursive: Avoid unnecessary file rewrites
+ - t6022: Additional tests checking for unnecessary updates of files
+ - merge-recursive: Fix spurious 'refusing to lose untracked file...' messages
+ - t6022: Add testcase for spurious "refusing to lose untracked" messages
+ - t3030: fix accidental success in symlink rename
+ - merge-recursive: Fix working copy handling for rename/rename/add/add
+ - merge-recursive: add handling for rename/rename/add-dest/add-dest
+ - merge-recursive: Have conflict_rename_delete reuse modify/delete code
+ - merge-recursive: Make modify/delete handling code reusable
+ - merge-recursive: Consider modifications in rename/rename(2to1) conflicts
+ - merge-recursive: Create function for merging with branchname:file markers
+ - merge-recursive: Record more data needed for merging with dual renames
+ - merge-recursive: Defer rename/rename(2to1) handling until process_entry
+ - merge-recursive: Small cleanups for conflict_rename_rename_1to2
+ - merge-recursive: Fix rename/rename(1to2) resolution for virtual merge base
+ - merge-recursive: Introduce a merge_file convenience function
+ - merge-recursive: Fix modify/delete resolution in the recursive case
+ - merge-recursive: When we detect we can skip an update, actually skip it
+ - merge-recursive: Provide more info in conflict markers with file renames
+ - merge-recursive: Cleanup and consolidation of rename_conflict_info
+ - merge-recursive: Consolidate process_entry() and process_df_entry()
+ - merge-recursive: Improve handling of rename target vs. directory addition
+ - merge-recursive: Add comments about handling rename/add-source cases
+ - merge-recursive: Make dead code for rename/rename(2to1) conflicts undead
+ - merge-recursive: Fix deletion of untracked file in rename/delete conflicts
+ - merge-recursive: Split update_stages_and_entry; only update stages at end
+ - merge-recursive: Allow make_room_for_path() to remove D/F entries
+ - string-list: Add API to remove an item from an unsorted list
+ - merge-recursive: Split was_tracked() out of would_lose_untracked()
+ - merge-recursive: Save D/F conflict filenames instead of unlinking them
+ - merge-recursive: Fix code checking for D/F conflicts still being present
+ - merge-recursive: Fix sorting order and directory change assumptions
+ - merge-recursive: Fix recursive case with D/F conflict via add/add conflict
+ - merge-recursive: Avoid working directory changes during recursive case
+ - merge-recursive: Remember to free generated unique path names
+ - merge-recursive: Consolidate different update_stages functions
+ - merge-recursive: Mark some diff_filespec struct arguments const
+ - merge-recursive: Correct a comment
+ - merge-recursive: Make BUG message more legible by adding a newline
+ - t6022: Add testcase for merging a renamed file with a simple change
+ - t6022: New tests checking for unnecessary updates of files
+ - t6022: Remove unnecessary untracked files to make test cleaner
+ - t6036: criss-cross + rename/rename(1to2)/add-source + modify/modify
+ - t6036: criss-cross w/ rename/rename(1to2)/modify+rename/rename(2to1)/modify
+ - t6036: tests for criss-cross merges with various directory/file conflicts
+ - t6036: criss-cross with weird content can fool git into clean merge
+ - t6036: Add differently resolved modify/delete conflict in criss-cross test
+ - t6042: Add failing testcases for rename/rename/add-{source,dest} conflicts
+ - t6042: Ensure rename/rename conflicts leave index and workdir in sane state
+ - t6042: Add tests for content issues with modify/rename/directory conflicts
+ - t6042: Add a testcase where undetected rename causes silent file deletion
+ - t6042: Add a pair of cases where undetected renames cause issues
+ - t6042: Add failing testcase for rename/modify/add-source conflict
+ - t6042: Add a testcase where git deletes an untracked file
+
+Rerolled.
+
+* di/fast-import-ident (2011-08-11) 5 commits
+ - fsck: improve committer/author check
+ - fsck: add a few committer name tests
+ - fast-import: check committer name more strictly
+ - fast-import: don't fail on omitted committer name
+ - fast-import: add input format tests
+
+* fg/submodule-ff-check-before-push (2011-08-09) 1 commit
+ - push: Don't push a repository with unpushed submodules
+
+* hv/submodule-update-none (2011-08-11) 2 commits
+ - add update 'none' flag to disable update of submodule by default
+ - submodule: move update configuration variable further up
+
+* jc/lookup-object-hash (2011-08-11) 6 commits
+ - object hash: replace linear probing with 4-way cuckoo hashing
+ - object hash: we know the table size is a power of two
+ - object hash: next_size() helper for readability
+ - pack-objects --count-only
+ - object.c: remove duplicated code for object hashing
+ - object.c: code movement for readability
+
+* js/i18n-scripts (2011-08-08) 5 commits
+ - submodule: take advantage of gettextln and eval_gettextln.
+ - stash: take advantage of eval_gettextln
+ - pull: take advantage of eval_gettextln
+ - git-am: take advantage of gettextln and eval_gettextln.
+ - gettext: add gettextln, eval_gettextln to encode common idiom
+
+* cb/maint-ls-files-error-report (2011-08-11) 1 commit
+  (merged to 'next' on 2011-08-15 at 69f41cf)
+ + ls-files: fix pathspec display on error
 
 * jc/maint-combined-diff-work-tree (2011-08-04) 1 commit
   (merged to 'next' on 2011-08-05 at 976a4d4)
@@ -233,22 +247,20 @@ Will merge to "master" after cooking for a bit more.
  + helping smart-http/stateless-rpc fetch race
 
 * jn/maint-test-return (2011-08-11) 3 commits
- - t3900: do not reference numbered arguments from the test script
- - test: cope better with use of return for errors
- - test: simplify return value of test_run_
-
-Will merge to "next".
+  (merged to 'next' on 2011-08-15 at 5a42301)
+ + t3900: do not reference numbered arguments from the test script
+ + test: cope better with use of return for errors
+ + test: simplify return value of test_run_
 
 * rt/zlib-smaller-window (2011-08-11) 2 commits
- - test: consolidate definition of $LF
- - Tolerate zlib deflation with window size < 32Kb
+  (merged to 'next' on 2011-08-15 at e05b26b)
+ + test: consolidate definition of $LF
+ + Tolerate zlib deflation with window size < 32Kb
 
-Will merge to "next".
-
-* fg/submodule-git-file-git-dir (2011-08-08) 3 commits
+* fg/submodule-git-file-git-dir (2011-08-16) 3 commits
+ - fixup! Move git-dir for submodules
  - Move git-dir for submodules
- - fixup! rev-parse: add option --is-well-formed-git-dir
- - rev-parse: add option --is-well-formed-git-dir <path>
+ - rev-parse: add option --resolve-git-dir <path>
 
 * js/bisect-no-checkout (2011-08-09) 11 commits
   (merged to 'next' on 2011-08-11 at 6c94a45)
@@ -388,5 +400,3 @@ for different repositories.
  - revert: Simplify and inline add_message_to_msg
  - config: Introduce functions to write non-standard file
  - advice: Introduce error_resolve_conflict
-
-Will merge to "next".
