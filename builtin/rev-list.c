@@ -182,7 +182,7 @@ static void show_object(struct object *obj, const struct name_path *path, const 
 	 */
 	const char *ep = strchr(name, '\n');
 
-	finish_object(obj, path, name);
+	finish_object(obj, path, component);
 	if (ep) {
 		printf("%s %.*s\n", sha1_to_hex(obj->sha1),
 		       (int) (ep - name),
