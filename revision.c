@@ -40,6 +40,25 @@ char *path_name(const struct name_path *path, const char *name)
 	return n;
 }
 
+void show_object_with_name(FILE *out, struct object *obj, const struct name_path *path, const char *component)
+{
+	char *name = path_name(path, component);
+	const char *ep = strchr(name, '\n');
+
+	/*
+	 * An object with name "foo\n0000000..." can be used to
+	 * confuse downstream "git pack-objects" very badly.
+	 */
+	if (ep) {
+		fprintf(out, "%s %.*s\n", sha1_to_hex(obj->sha1),
+			(int) (ep - name),
+			name);
+	}
+	else
+		fprintf(out, "%s %s\n", sha1_to_hex(obj->sha1), name);
+	free(name);
+}
+
 void add_object(struct object *obj,
 		struct object_array *p,
 		struct name_path *path,

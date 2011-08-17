@@ -185,6 +185,8 @@ struct name_path {
 
 char *path_name(const struct name_path *path, const char *name);
 
+extern void show_object_with_name(FILE *, struct object *, const struct name_path *, const char *);
+
 extern void add_object(struct object *obj,
 		       struct object_array *p,
 		       struct name_path *path,
