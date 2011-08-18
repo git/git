@@ -49,6 +49,16 @@ struct strbuf;
 #define GIT_COLOR_NIL "NIL"
 
 /*
+ * The first three are chosen to match common usage in the code, and what is
+ * returned from git_config_colorbool. The "auto" value can be returned from
+ * config_colorbool, and will be converted by want_color() into either 0 or 1.
+ */
+#define GIT_COLOR_UNKNOWN -1
+#define GIT_COLOR_NEVER  0
+#define GIT_COLOR_ALWAYS 1
+#define GIT_COLOR_AUTO   2
+
+/*
  * This variable stores the value of color.ui
  */
 extern int git_use_color_default;
@@ -69,6 +79,7 @@ extern int color_stdout_is_tty;
 int git_color_default_config(const char *var, const char *value, void *cb);
 
 int git_config_colorbool(const char *var, const char *value);
+int want_color(int var);
 void color_parse(const char *value, const char *var, char *dst);
 void color_parse_mem(const char *value, int len, const char *var, char *dst);
 __attribute__((format (printf, 3, 4)))

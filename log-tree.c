@@ -31,7 +31,7 @@ static char decoration_colors[][COLOR_MAXLEN] = {
 
 static const char *decorate_get_color(int decorate_use_color, enum decoration_type ix)
 {
-	if (decorate_use_color > 0)
+	if (want_color(decorate_use_color))
 		return decoration_colors[ix];
 	return "";
 }

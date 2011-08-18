@@ -330,6 +330,8 @@ static int get_colorbool(int print)
 			get_colorbool_found = git_use_color_default;
 	}
 
+	get_colorbool_found = want_color(get_colorbool_found);
+
 	if (print) {
 		printf("%s\n", get_colorbool_found ? "true" : "false");
 		return 0;

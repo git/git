@@ -166,7 +166,7 @@ int git_config_colorbool(const char *var, const char *value)
 		if (!strcasecmp(value, "always"))
 			return 1;
 		if (!strcasecmp(value, "auto"))
-			goto auto_color;
+			return GIT_COLOR_AUTO;
 	}
 
 	if (!var)
@@ -177,7 +177,11 @@ int git_config_colorbool(const char *var, const char *value)
 		return 0;
 
 	/* any normal truth value defaults to 'auto' */
- auto_color:
+	return GIT_COLOR_AUTO;
+}
+
+static int check_auto_color(void)
+{
 	if (color_stdout_is_tty < 0)
 		color_stdout_is_tty = isatty(1);
 	if (color_stdout_is_tty || (pager_in_use() && pager_use_color)) {
@@ -186,6 +190,18 @@ int git_config_colorbool(const char *var, const char *value)
 			return 1;
 	}
 	return 0;
+}
+
+int want_color(int var)
+{
+	static int want_auto = -1;
+
+	if (var == GIT_COLOR_AUTO) {
+		if (want_auto < 0)
+			want_auto = check_auto_color();
+		return want_auto;
+	}
+	return var > 0;
 }
 
 int git_color_default_config(const char *var, const char *value, void *cb)

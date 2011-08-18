@@ -26,14 +26,14 @@ static const char **default_arg;
 
 static const char *get_color_code(int idx)
 {
-	if (showbranch_use_color)
+	if (want_color(showbranch_use_color))
 		return column_colors_ansi[idx % column_colors_ansi_max];
 	return "";
 }
 
 static const char *get_color_reset_code(void)
 {
-	if (showbranch_use_color)
+	if (want_color(showbranch_use_color))
 		return GIT_COLOR_RESET;
 	return "";
 }

@@ -622,7 +622,7 @@ static void emit_rewrite_diff(const char *name_a,
 	size_two = fill_textconv(textconv_two, two, &data_two);
 
 	memset(&ecbdata, 0, sizeof(ecbdata));
-	ecbdata.color_diff = o->use_color > 0;
+	ecbdata.color_diff = want_color(o->use_color);
 	ecbdata.found_changesp = &o->found_changes;
 	ecbdata.ws_rule = whitespace_rule(name_b ? name_b : name_a);
 	ecbdata.opt = o;
@@ -1003,7 +1003,7 @@ static void free_diff_words_data(struct emit_callback *ecbdata)
 
 const char *diff_get_color(int diff_use_color, enum color_diff ix)
 {
-	if (diff_use_color > 0)
+	if (want_color(diff_use_color))
 		return diff_colors[ix];
 	return "";
 }
@@ -2133,7 +2133,7 @@ static void builtin_diff(const char *name_a,
 		memset(&xecfg, 0, sizeof(xecfg));
 		memset(&ecbdata, 0, sizeof(ecbdata));
 		ecbdata.label_path = lbl;
-		ecbdata.color_diff = o->use_color > 0;
+		ecbdata.color_diff = want_color(o->use_color);
 		ecbdata.found_changesp = &o->found_changes;
 		ecbdata.ws_rule = whitespace_rule(name_b ? name_b : name_a);
 		if (ecbdata.ws_rule & WS_BLANK_AT_EOF)
@@ -2181,7 +2181,7 @@ static void builtin_diff(const char *name_a,
 					break;
 				}
 			}
-			if (o->use_color > 0) {
+			if (want_color(o->use_color)) {
 				struct diff_words_style *st = ecbdata.diff_words->style;
 				st->old.color = diff_get_color_opt(o, DIFF_FILE_OLD);
 				st->new.color = diff_get_color_opt(o, DIFF_FILE_NEW);
@@ -2831,7 +2831,7 @@ static void run_diff_cmd(const char *pgm,
 		 */
 		fill_metainfo(msg, name, other, one, two, o, p,
 			      &must_show_header,
-			      o->use_color > 0 && !pgm);
+			      want_color(o->use_color) && !pgm);
 		xfrm_msg = msg->len ? msg->buf : NULL;
 	}
 
@@ -3374,12 +3374,9 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 		options->use_color = 1;
 	else if (!prefixcmp(arg, "--color=")) {
 		int value = git_config_colorbool(NULL, arg+8);
-		if (value == 0)
-			options->use_color = 0;
-		else if (value > 0)
-			options->use_color = 1;
-		else
+		if (value < 0)
 			return error("option `color' expects \"always\", \"auto\", or \"never\"");
+		options->use_color = value;
 	}
 	else if (!strcmp(arg, "--no-color"))
 		options->use_color = 0;

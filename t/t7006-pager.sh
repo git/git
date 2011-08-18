@@ -167,6 +167,18 @@ test_expect_success TTY 'color when writing to a pager' '
 	colorful paginated.out
 '
 
+test_expect_success TTY 'colors are suppressed by color.pager' '
+	rm -f paginated.out &&
+	test_config color.ui auto &&
+	test_config color.pager false &&
+	(
+		TERM=vt100 &&
+		export TERM &&
+		test_terminal git log
+	) &&
+	! colorful paginated.out
+'
+
 test_expect_success 'color when writing to a file intended for a pager' '
 	rm -f colorful.log &&
 	test_config color.ui auto ||

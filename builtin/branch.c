@@ -88,7 +88,7 @@ static int git_branch_config(const char *var, const char *value, void *cb)
 
 static const char *branch_get_color(enum color_branch ix)
 {
-	if (branch_use_color > 0)
+	if (want_color(branch_use_color))
 		return branch_colors[ix];
 	return "";
 }
