@@ -681,7 +681,7 @@ static void wt_status_print_verbose(struct wt_status *s)
 	 * will have checked isatty on stdout).
 	 */
 	if (s->fp != stdout)
-		DIFF_OPT_CLR(&rev.diffopt, COLOR_DIFF);
+		rev.diffopt.use_color = 0;
 	run_diff_index(&rev, 1);
 }
 

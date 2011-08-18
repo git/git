@@ -390,8 +390,6 @@ static void finish(const unsigned char *new_head, const char *msg)
 		opts.output_format |=
 			DIFF_FORMAT_SUMMARY | DIFF_FORMAT_DIFFSTAT;
 		opts.detect_rename = DIFF_DETECT_RENAME;
-		if (diff_use_color_default > 0)
-			DIFF_OPT_SET(&opts, COLOR_DIFF);
 		if (diff_setup_done(&opts) < 0)
 			die(_("diff_setup_done failed"));
 		diff_tree_sha1(head, new_head, "", &opts);
