@@ -263,6 +263,13 @@ Only use branch specifications defined by the selected username.
 
   git config [--global] git-p4.branchUser username
 
+git-p4.branchList
+
+List of branches to be imported when branch detection is enabled.
+
+  git config [--global] git-p4.branchList main:branchA
+  git config [--global] --add git-p4.branchList main:branchB
+
 Implementation Details...
 =========================
 
