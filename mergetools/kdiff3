@@ -1,0 +1,24 @@
+diff_cmd () {
+	"$merge_tool_path" --auto \
+		--L1 "$MERGED (A)" --L2 "$MERGED (B)" \
+		"$LOCAL" "$REMOTE" >/dev/null 2>&1
+}
+
+merge_cmd () {
+	if $base_present
+	then
+		"$merge_tool_path" --auto \
+			--L1 "$MERGED (Base)" \
+			--L2 "$MERGED (Local)" \
+			--L3 "$MERGED (Remote)" \
+			-o "$MERGED" "$BASE" "$LOCAL" "$REMOTE" \
+		>/dev/null 2>&1
+	else
+		"$merge_tool_path" --auto \
+			--L1 "$MERGED (Local)" \
+			--L2 "$MERGED (Remote)" \
+			-o "$MERGED" "$LOCAL" "$REMOTE" \
+		>/dev/null 2>&1
+	fi
+	status=$?
+}

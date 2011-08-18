@@ -9,26 +9,7 @@ merge_mode() {
 }
 
 translate_merge_tool_path () {
-	case "$1" in
-	araxis)
-		echo compare
-		;;
-	bc3)
-		echo bcompare
-		;;
-	emerge)
-		echo emacs
-		;;
-	gvimdiff|gvimdiff2)
-		echo gvim
-		;;
-	vimdiff|vimdiff2)
-		echo vim
-		;;
-	*)
-		echo "$1"
-		;;
-	esac
+	echo "$1"
 }
 
 check_unchanged () {
@@ -49,40 +30,55 @@ check_unchanged () {
 	fi
 }
 
+valid_tool_config () {
+	if test -n "$(get_merge_tool_cmd "$1")"
+	then
+		return 0
+	else
+		return 1
+	fi
+}
+
 valid_tool () {
+	setup_tool "$1" || valid_tool_config "$1"
+}
+
+setup_tool () {
 	case "$1" in
-	araxis | bc3 | diffuse | ecmerge | emerge | gvimdiff | gvimdiff2 | \
-	kdiff3 | meld | opendiff | p4merge | tkdiff | vimdiff | vimdiff2 | xxdiff)
-		;; # happy
-	kompare)
-		if ! diff_mode
-		then
-			return 1
-		fi
-		;;
-	tortoisemerge)
-		if ! merge_mode
-		then
-			return 1
-		fi
+	vim*|gvim*)
+		tool=vim
 		;;
 	*)
-		if test -z "$(get_merge_tool_cmd "$1")"
-		then
-			return 1
-		fi
+		tool="$1"
 		;;
 	esac
+	mergetools="$(git --exec-path)/mergetools"
+
+	# Load the default definitions
+	. "$mergetools/defaults"
+	if ! test -f "$mergetools/$tool"
+	then
+		return 1
+	fi
+
+	# Load the redefined functions
+	. "$mergetools/$tool"
+
+	if merge_mode && ! can_merge
+	then
+		echo "error: '$tool' can not be used to resolve merges" >&2
+		exit 1
+	elif diff_mode && ! can_diff
+	then
+		echo "error: '$tool' can only be used to resolve merges" >&2
+		exit 1
+	fi
+	return 0
 }
 
 get_merge_tool_cmd () {
 	# Prints the custom command for a merge tool
-	if test -n "$1"
-	then
-		merge_tool="$1"
-	else
-		merge_tool="$(get_merge_tool)"
-	fi
+	merge_tool="$1"
 	if diff_mode
 	then
 		echo "$(git config difftool.$merge_tool.cmd ||
@@ -92,6 +88,7 @@ get_merge_tool_cmd () {
 	fi
 }
 
+# Entry point for running tools
 run_merge_tool () {
 	# If GIT_PREFIX is empty then we cannot use it in tools
 	# that expect to be able to chdir() to its value.
@@ -102,288 +99,15 @@ run_merge_tool () {
 	base_present="$2"
 	status=0
 
-	case "$1" in
-	araxis)
-		if merge_mode
-		then
-			touch "$BACKUP"
-			if $base_present
-			then
-				"$merge_tool_path" -wait -merge -3 -a1 \
-					"$BASE" "$LOCAL" "$REMOTE" "$MERGED" \
-					>/dev/null 2>&1
-			else
-				"$merge_tool_path" -wait -2 \
-					"$LOCAL" "$REMOTE" "$MERGED" \
-					>/dev/null 2>&1
-			fi
-			check_unchanged
-		else
-			"$merge_tool_path" -wait -2 "$LOCAL" "$REMOTE" \
-				>/dev/null 2>&1
-		fi
-		;;
-	bc3)
-		if merge_mode
-		then
-			touch "$BACKUP"
-			if $base_present
-			then
-				"$merge_tool_path" "$LOCAL" "$REMOTE" "$BASE" \
-					-mergeoutput="$MERGED"
-			else
-				"$merge_tool_path" "$LOCAL" "$REMOTE" \
-					-mergeoutput="$MERGED"
-			fi
-			check_unchanged
-		else
-			"$merge_tool_path" "$LOCAL" "$REMOTE"
-		fi
-		;;
-	diffuse)
-		if merge_mode
-		then
-			touch "$BACKUP"
-			if $base_present
-			then
-				"$merge_tool_path" \
-					"$LOCAL" "$MERGED" "$REMOTE" \
-					"$BASE" | cat
-			else
-				"$merge_tool_path" \
-					"$LOCAL" "$MERGED" "$REMOTE" | cat
-			fi
-			check_unchanged
-		else
-			"$merge_tool_path" "$LOCAL" "$REMOTE" | cat
-		fi
-		;;
-	ecmerge)
-		if merge_mode
-		then
-			touch "$BACKUP"
-			if $base_present
-			then
-				"$merge_tool_path" "$BASE" "$LOCAL" "$REMOTE" \
-					--default --mode=merge3 --to="$MERGED"
-			else
-				"$merge_tool_path" "$LOCAL" "$REMOTE" \
-					--default --mode=merge2 --to="$MERGED"
-			fi
-			check_unchanged
-		else
-			"$merge_tool_path" --default --mode=diff2 \
-				"$LOCAL" "$REMOTE"
-		fi
-		;;
-	emerge)
-		if merge_mode
-		then
-			if $base_present
-			then
-				"$merge_tool_path" \
-					-f emerge-files-with-ancestor-command \
-					"$LOCAL" "$REMOTE" "$BASE" \
-					"$(basename "$MERGED")"
-			else
-				"$merge_tool_path" \
-					-f emerge-files-command \
-					"$LOCAL" "$REMOTE" \
-					"$(basename "$MERGED")"
-			fi
-			status=$?
-		else
-			"$merge_tool_path" -f emerge-files-command \
-				"$LOCAL" "$REMOTE"
-		fi
-		;;
-	gvimdiff|vimdiff)
-		if merge_mode
-		then
-			touch "$BACKUP"
-			if $base_present
-			then
-				"$merge_tool_path" -f -d -c "wincmd J" \
-					"$MERGED" "$LOCAL" "$BASE" "$REMOTE"
-			else
-				"$merge_tool_path" -f -d -c "wincmd l" \
-					"$LOCAL" "$MERGED" "$REMOTE"
-			fi
-			check_unchanged
-		else
-			"$merge_tool_path" -R -f -d -c "wincmd l" \
-				-c 'cd $GIT_PREFIX' \
-				"$LOCAL" "$REMOTE"
-		fi
-		;;
-	gvimdiff2|vimdiff2)
-		if merge_mode
-		then
-			touch "$BACKUP"
-			"$merge_tool_path" -f -d -c "wincmd l" \
-				"$LOCAL" "$MERGED" "$REMOTE"
-			check_unchanged
-		else
-			"$merge_tool_path" -R -f -d -c "wincmd l" \
-				-c 'cd $GIT_PREFIX' \
-				"$LOCAL" "$REMOTE"
-		fi
-		;;
-	kdiff3)
-		if merge_mode
-		then
-			if $base_present
-			then
-				"$merge_tool_path" --auto \
-					--L1 "$MERGED (Base)" \
-					--L2 "$MERGED (Local)" \
-					--L3 "$MERGED (Remote)" \
-					-o "$MERGED" \
-					"$BASE" "$LOCAL" "$REMOTE" \
-				>/dev/null 2>&1
-			else
-				"$merge_tool_path" --auto \
-					--L1 "$MERGED (Local)" \
-					--L2 "$MERGED (Remote)" \
-					-o "$MERGED" \
-					"$LOCAL" "$REMOTE" \
-				>/dev/null 2>&1
-			fi
-			status=$?
-		else
-			"$merge_tool_path" --auto \
-				--L1 "$MERGED (A)" \
-				--L2 "$MERGED (B)" "$LOCAL" "$REMOTE" \
-			>/dev/null 2>&1
-		fi
-		;;
-	kompare)
-		"$merge_tool_path" "$LOCAL" "$REMOTE"
-		;;
-	meld)
-		if merge_mode
-		then
-			touch "$BACKUP"
-			"$merge_tool_path" "$LOCAL" "$MERGED" "$REMOTE"
-			check_unchanged
-		else
-			"$merge_tool_path" "$LOCAL" "$REMOTE"
-		fi
-		;;
-	opendiff)
-		if merge_mode
-		then
-			touch "$BACKUP"
-			if $base_present
-			then
-				"$merge_tool_path" "$LOCAL" "$REMOTE" \
-					-ancestor "$BASE" \
-					-merge "$MERGED" | cat
-			else
-				"$merge_tool_path" "$LOCAL" "$REMOTE" \
-					-merge "$MERGED" | cat
-			fi
-			check_unchanged
-		else
-			"$merge_tool_path" "$LOCAL" "$REMOTE" | cat
-		fi
-		;;
-	p4merge)
-		if merge_mode
-		then
-			touch "$BACKUP"
-			$base_present || >"$BASE"
-			"$merge_tool_path" "$BASE" "$LOCAL" "$REMOTE" "$MERGED"
-			check_unchanged
-		else
-			"$merge_tool_path" "$LOCAL" "$REMOTE"
-		fi
-		;;
-	tkdiff)
-		if merge_mode
-		then
-			if $base_present
-			then
-				"$merge_tool_path" -a "$BASE" \
-					-o "$MERGED" "$LOCAL" "$REMOTE"
-			else
-				"$merge_tool_path" \
-					-o "$MERGED" "$LOCAL" "$REMOTE"
-			fi
-			status=$?
-		else
-			"$merge_tool_path" "$LOCAL" "$REMOTE"
-		fi
-		;;
-	tortoisemerge)
-		if $base_present
-		then
-			touch "$BACKUP"
-			"$merge_tool_path" \
-				-base:"$BASE" -mine:"$LOCAL" \
-				-theirs:"$REMOTE" -merged:"$MERGED"
-			check_unchanged
-		else
-			echo "TortoiseMerge cannot be used without a base" 1>&2
-			status=1
-		fi
-		;;
-	xxdiff)
-		if merge_mode
-		then
-			touch "$BACKUP"
-			if $base_present
-			then
-				"$merge_tool_path" -X --show-merged-pane \
-					-R 'Accel.SaveAsMerged: "Ctrl-S"' \
-					-R 'Accel.Search: "Ctrl+F"' \
-					-R 'Accel.SearchForward: "Ctrl-G"' \
-					--merged-file "$MERGED" \
-					"$LOCAL" "$BASE" "$REMOTE"
-			else
-				"$merge_tool_path" -X $extra \
-					-R 'Accel.SaveAsMerged: "Ctrl-S"' \
-					-R 'Accel.Search: "Ctrl+F"' \
-					-R 'Accel.SearchForward: "Ctrl-G"' \
-					--merged-file "$MERGED" \
-					"$LOCAL" "$REMOTE"
-			fi
-			check_unchanged
-		else
-			"$merge_tool_path" \
-				-R 'Accel.Search: "Ctrl+F"' \
-				-R 'Accel.SearchForward: "Ctrl-G"' \
-				"$LOCAL" "$REMOTE"
-		fi
-		;;
-	*)
-		merge_tool_cmd="$(get_merge_tool_cmd "$1")"
-		if test -z "$merge_tool_cmd"
-		then
-			if merge_mode
-			then
-				status=1
-			fi
-			break
-		fi
-		if merge_mode
-		then
-			trust_exit_code="$(git config --bool \
-				mergetool."$1".trustExitCode || echo false)"
-			if test "$trust_exit_code" = "false"
-			then
-				touch "$BACKUP"
-				( eval $merge_tool_cmd )
-				check_unchanged
-			else
-				( eval $merge_tool_cmd )
-				status=$?
-			fi
-		else
-			( eval $merge_tool_cmd )
-		fi
-		;;
-	esac
+	# Bring tool-specific functions into scope
+	setup_tool "$1"
+
+	if merge_mode
+	then
+		merge_cmd "$1"
+	else
+		diff_cmd "$1"
+	fi
 	return $status
 }
 
@@ -449,12 +173,7 @@ get_configured_merge_tool () {
 
 get_merge_tool_path () {
 	# A merge tool has been set, so verify that it's valid.
-	if test -n "$1"
-	then
-		merge_tool="$1"
-	else
-		merge_tool="$(get_merge_tool)"
-	fi
+	merge_tool="$1"
 	if ! valid_tool "$merge_tool"
 	then
 		echo >&2 "Unknown merge tool $merge_tool"
@@ -483,7 +202,7 @@ get_merge_tool_path () {
 
 get_merge_tool () {
 	# Check if a merge tool has been configured
-	merge_tool=$(get_configured_merge_tool)
+	merge_tool="$(get_configured_merge_tool)"
 	# Try to guess an appropriate merge tool if no tool has been set.
 	if test -z "$merge_tool"
 	then

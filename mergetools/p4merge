@@ -1,0 +1,10 @@
+diff_cmd () {
+	"$merge_tool_path" "$LOCAL" "$REMOTE"
+}
+
+merge_cmd () {
+	touch "$BACKUP"
+	$base_present || >"$BASE"
+	"$merge_tool_path" "$BASE" "$LOCAL" "$REMOTE" "$MERGED"
+	check_unchanged
+}
