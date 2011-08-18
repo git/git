@@ -10,6 +10,7 @@
 #include "revision.h"
 #include "list-objects.h"
 #include "run-command.h"
+#include "sigchain.h"
 
 static const char upload_pack_usage[] = "git upload-pack [--strict] [--timeout=<n>] <dir>";
 
@@ -498,11 +499,95 @@ static int get_common_commits(void)
 	}
 }
 
+static void check_non_tip(void)
+{
+	static const char *argv[] = {
+		"rev-list", "--stdin", NULL,
+	};
+	static struct child_process cmd;
+	struct object *o;
+	char namebuf[42]; /* ^ + SHA-1 + LF */
+	int i;
+
+	/* In the normal in-process case non-tip request can never happen */
+	if (!stateless_rpc)
+		goto error;
+
+	cmd.argv = argv;
+	cmd.git_cmd = 1;
+	cmd.no_stderr = 1;
+	cmd.in = -1;
+	cmd.out = -1;
+
+	if (start_command(&cmd))
+		goto error;
+
+	/*
+	 * If rev-list --stdin encounters an unknown commit, it
+	 * terminates, which will cause SIGPIPE in the write loop
+	 * below.
+	 */
+	sigchain_push(SIGPIPE, SIG_IGN);
+
+	namebuf[0] = '^';
+	namebuf[41] = '\n';
+	for (i = get_max_object_index(); 0 < i; ) {
+		o = get_indexed_object(--i);
+		if (!(o->flags & OUR_REF))
+			continue;
+		memcpy(namebuf + 1, sha1_to_hex(o->sha1), 40);
+		if (write_in_full(cmd.in, namebuf, 42) < 0)
+			goto error;
+	}
+	namebuf[40] = '\n';
+	for (i = 0; i < want_obj.nr; i++) {
+		o = want_obj.objects[i].item;
+		if (o->flags & OUR_REF)
+			continue;
+		memcpy(namebuf, sha1_to_hex(o->sha1), 40);
+		if (write_in_full(cmd.in, namebuf, 41) < 0)
+			goto error;
+	}
+	close(cmd.in);
+
+	sigchain_pop(SIGPIPE);
+
+	/*
+	 * The commits out of the rev-list are not ancestors of
+	 * our ref.
+	 */
+	i = read_in_full(cmd.out, namebuf, 1);
+	if (i)
+		goto error;
+	close(cmd.out);
+
+	/*
+	 * rev-list may have died by encountering a bad commit
+	 * in the history, in which case we do want to bail out
+	 * even when it showed no commit.
+	 */
+	if (finish_command(&cmd))
+		goto error;
+
+	/* All the non-tip ones are ancestors of what we advertised */
+	return;
+
+error:
+	/* Pick one of them (we know there at least is one) */
+	for (i = 0; i < want_obj.nr; i++) {
+		o = want_obj.objects[i].item;
+		if (!(o->flags & OUR_REF))
+			die("git upload-pack: not our ref %s",
+			    sha1_to_hex(o->sha1));
+	}
+}
+
 static void receive_needs(void)
 {
 	struct object_array shallows = OBJECT_ARRAY_INIT;
 	static char line[1000];
 	int len, depth = 0;
+	int has_non_tip = 0;
 
 	shallow_nr = 0;
 	if (debug_fd)
@@ -559,25 +644,29 @@ static void receive_needs(void)
 		if (strstr(line+45, "include-tag"))
 			use_include_tag = 1;
 
-		/* We have sent all our refs already, and the other end
-		 * should have chosen out of them; otherwise they are
-		 * asking for nonsense.
-		 *
-		 * Hmph.  We may later want to allow "want" line that
-		 * asks for something like "master~10" (symbolic)...
-		 * would it make sense?  I don't know.
-		 */
 		o = lookup_object(sha1_buf);
-		if (!o || !(o->flags & OUR_REF))
+		if (!o)
 			die("git upload-pack: not our ref %s",
 			    sha1_to_hex(sha1_buf));
 		if (!(o->flags & WANTED)) {
 			o->flags |= WANTED;
+			if (!(o->flags & OUR_REF))
+				has_non_tip = 1;
 			add_object_array(o, NULL, &want_obj);
 		}
 	}
 	if (debug_fd)
 		write_str_in_full(debug_fd, "#E\n");
+
+	/*
+	 * We have sent all our refs already, and the other end
+	 * should have chosen out of them. When we are operating
+	 * in the stateless RPC mode, however, their choice may
+	 * have been based on the set of older refs advertised
+	 * by another process that handled the initial request.
+	 */
+	if (has_non_tip)
+		check_non_tip();
 
 	if (!use_sideband && daemon_mode)
 		no_progress = 1;
