@@ -3393,6 +3393,8 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 		DIFF_XDL_SET(options, IGNORE_WHITESPACE_AT_EOL);
 	else if (!strcmp(arg, "--patience"))
 		DIFF_XDL_SET(options, PATIENCE_DIFF);
+	else if (!strcmp(arg, "--histogram"))
+		DIFF_XDL_SET(options, HISTOGRAM_DIFF);
 
 	/* flags options */
 	else if (!strcmp(arg, "--binary")) {
