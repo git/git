@@ -222,24 +222,6 @@ int for_each_commit_graft(each_commit_graft_fn fn, void *cb_data)
 	return ret;
 }
 
-int write_shallow_commits(struct strbuf *out, int use_pack_protocol)
-{
-	int i, count = 0;
-	for (i = 0; i < commit_graft_nr; i++)
-		if (commit_graft[i]->nr_parent < 0) {
-			const char *hex =
-				sha1_to_hex(commit_graft[i]->sha1);
-			count++;
-			if (use_pack_protocol)
-				packet_buf_write(out, "shallow %s", hex);
-			else {
-				strbuf_addstr(out, hex);
-				strbuf_addch(out, '\n');
-			}
-		}
-	return count;
-}
-
 int unregister_shallow(const unsigned char *sha1)
 {
 	int pos = commit_graft_pos(sha1);
