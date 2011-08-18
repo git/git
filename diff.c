@@ -164,6 +164,9 @@ int git_diff_ui_config(const char *var, const char *value, void *cb)
 	if (!strcmp(var, "diff.ignoresubmodules"))
 		handle_ignore_submodules_arg(&default_diff_options, value);
 
+	if (git_color_config(var, value, cb) < 0)
+		return -1;
+
 	return git_diff_basic_config(var, value, cb);
 }
 
@@ -212,7 +215,7 @@ int git_diff_basic_config(const char *var, const char *value, void *cb)
 	if (!prefixcmp(var, "submodule."))
 		return parse_submodule_config_option(var, value);
 
-	return git_color_default_config(var, value, cb);
+	return git_default_config(var, value, cb);
 }
 
 static char *quote_two(const char *one, const char *two)

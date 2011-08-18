@@ -204,12 +204,20 @@ int want_color(int var)
 	return var > 0;
 }
 
-int git_color_default_config(const char *var, const char *value, void *cb)
+int git_color_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, "color.ui")) {
 		git_use_color_default = git_config_colorbool(var, value);
 		return 0;
 	}
+
+	return 0;
+}
+
+int git_color_default_config(const char *var, const char *value, void *cb)
+{
+	if (git_color_config(var, value, cb) < 0)
+		return -1;
 
 	return git_default_config(var, value, cb);
 }

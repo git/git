@@ -74,8 +74,10 @@ extern const int column_colors_ansi_max;
 extern int color_stdout_is_tty;
 
 /*
- * Use this instead of git_default_config if you need the value of color.ui.
+ * Use the first one if you need only color config; the second is a convenience
+ * if you are just going to change to git_default_config, too.
  */
+int git_color_config(const char *var, const char *value, void *cb);
 int git_color_default_config(const char *var, const char *value, void *cb);
 
 int git_config_colorbool(const char *var, const char *value);
