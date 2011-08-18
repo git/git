@@ -1031,10 +1031,6 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 
 	git_config(git_merge_config, NULL);
 
-	/* for color.ui */
-	if (diff_use_color_default == -1)
-		diff_use_color_default = git_use_color_default;
-
 	if (branch_mergeoptions)
 		parse_branch_merge_options(branch_mergeoptions);
 	argc = parse_options(argc, argv, prefix, builtin_merge_options,

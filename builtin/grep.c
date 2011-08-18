@@ -883,8 +883,6 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	strcpy(opt.color_sep, GIT_COLOR_CYAN);
 	opt.color = -1;
 	git_config(grep_config, &opt);
-	if (opt.color == -1)
-		opt.color = git_use_color_default;
 
 	/*
 	 * If there is no -- then the paths must exist in the working

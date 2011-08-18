@@ -685,9 +685,6 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 
 	git_config(git_show_branch_config, NULL);
 
-	if (showbranch_use_color == -1)
-		showbranch_use_color = git_use_color_default;
-
 	/* If nothing is specified, try the default first */
 	if (ac == 1 && default_num) {
 		ac = default_num;

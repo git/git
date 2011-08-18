@@ -1,7 +1,7 @@
 #include "cache.h"
 #include "color.h"
 
-int git_use_color_default = 0;
+static int git_use_color_default = 0;
 int color_stdout_is_tty = -1;
 
 /*
@@ -196,12 +196,15 @@ int want_color(int var)
 {
 	static int want_auto = -1;
 
+	if (var < 0)
+		var = git_use_color_default;
+
 	if (var == GIT_COLOR_AUTO) {
 		if (want_auto < 0)
 			want_auto = check_auto_color();
 		return want_auto;
 	}
-	return var > 0;
+	return var;
 }
 
 int git_color_config(const char *var, const char *value, void *cb)

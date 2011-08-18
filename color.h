@@ -58,11 +58,6 @@ struct strbuf;
 #define GIT_COLOR_ALWAYS 1
 #define GIT_COLOR_AUTO   2
 
-/*
- * This variable stores the value of color.ui
- */
-extern int git_use_color_default;
-
 /* A default list of colors to use for commit graphs and show-branch output */
 extern const char *column_colors_ansi[];
 extern const int column_colors_ansi_max;

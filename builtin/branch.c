@@ -673,9 +673,6 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 
 	git_config(git_branch_config, NULL);
 
-	if (branch_use_color == -1)
-		branch_use_color = git_use_color_default;
-
 	track = git_branch_track;
 
 	head = resolve_ref("HEAD", head_sha1, 0, NULL);
