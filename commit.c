@@ -214,6 +214,14 @@ struct commit_graft *lookup_commit_graft(const unsigned char *sha1)
 	return commit_graft[pos];
 }
 
+int for_each_commit_graft(each_commit_graft_fn fn, void *cb_data)
+{
+	int i, ret;
+	for (i = ret = 0; i < commit_graft_nr && !ret; i++)
+		ret = fn(commit_graft[i], cb_data);
+	return ret;
+}
+
 int write_shallow_commits(struct strbuf *out, int use_pack_protocol)
 {
 	int i, count = 0;
