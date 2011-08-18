@@ -24,10 +24,6 @@
 
 
 
-#define XDL_GUESS_NLINES 256
-
-
-
 
 long xdl_bogosqrt(long n) {
 	long i;
@@ -68,12 +64,6 @@ void *xdl_mmfile_first(mmfile_t *mmf, long *size)
 {
 	*size = mmf->size;
 	return mmf->ptr;
-}
-
-
-void *xdl_mmfile_next(mmfile_t *mmf, long *size)
-{
-	return NULL;
 }
 
 
@@ -159,18 +149,12 @@ void *xdl_cha_next(chastore_t *cha) {
 }
 
 
-long xdl_guess_lines(mmfile_t *mf) {
+long xdl_guess_lines(mmfile_t *mf, long sample) {
 	long nl = 0, size, tsize = 0;
 	char const *data, *cur, *top;
 
 	if ((cur = data = xdl_mmfile_first(mf, &size)) != NULL) {
-		for (top = data + size; nl < XDL_GUESS_NLINES;) {
-			if (cur >= top) {
-				tsize += (long) (cur - data);
-				if (!(cur = data = xdl_mmfile_next(mf, &size)))
-					break;
-				top = data + size;
-			}
+		for (top = data + size; nl < sample && cur < top; ) {
 			nl++;
 			if (!(cur = memchr(cur, '\n', top - cur)))
 				cur = top;
@@ -399,6 +383,37 @@ int xdl_emit_hunk_hdr(long s1, long c1, long s2, long c2,
 	mb.size = nb;
 	if (ecb->outf(ecb->priv, &mb, 1) < 0)
 		return -1;
+
+	return 0;
+}
+
+int xdl_fall_back_diff(xdfenv_t *diff_env, xpparam_t const *xpp,
+		int line1, int count1, int line2, int count2)
+{
+	/*
+	 * This probably does not work outside Git, since
+	 * we have a very simple mmfile structure.
+	 *
+	 * Note: ideally, we would reuse the prepared environment, but
+	 * the libxdiff interface does not (yet) allow for diffing only
+	 * ranges of lines instead of the whole files.
+	 */
+	mmfile_t subfile1, subfile2;
+	xdfenv_t env;
+
+	subfile1.ptr = (char *)diff_env->xdf1.recs[line1 - 1]->ptr;
+	subfile1.size = diff_env->xdf1.recs[line1 + count1 - 2]->ptr +
+		diff_env->xdf1.recs[line1 + count1 - 2]->size - subfile1.ptr;
+	subfile2.ptr = (char *)diff_env->xdf2.recs[line2 - 1]->ptr;
+	subfile2.size = diff_env->xdf2.recs[line2 + count2 - 2]->ptr +
+		diff_env->xdf2.recs[line2 + count2 - 2]->size - subfile2.ptr;
+	if (xdl_do_diff(&subfile1, &subfile2, xpp, &env) < 0)
+		return -1;
+
+	memcpy(diff_env->xdf1.rchg + line1 - 1, env.xdf1.rchg, count1);
+	memcpy(diff_env->xdf2.rchg + line2 - 1, env.xdf2.rchg, count2);
+
+	xdl_free_env(&env);
 
 	return 0;
 }
