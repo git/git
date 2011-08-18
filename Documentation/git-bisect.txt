@@ -17,7 +17,7 @@ The command takes various subcommands, and different options depending
 on the subcommand:
 
  git bisect help
- git bisect start [<bad> [<good>...]] [--] [<paths>...]
+ git bisect start [--no-checkout] [<bad> [<good>...]] [--] [<paths>...]
  git bisect bad [<rev>]
  git bisect good [<rev>...]
  git bisect skip [(<rev>|<range>)...]
@@ -263,6 +263,19 @@ rewind the tree to the pristine state.  Finally the script should exit
 with the status of the real test to let the "git bisect run" command loop
 determine the eventual outcome of the bisect session.
 
+OPTIONS
+-------
+--no-checkout::
++
+Do not checkout the new working tree at each iteration of the bisection
+process. Instead just update a special reference named 'BISECT_HEAD' to make
+it point to the commit that should be tested.
++
+This option may be useful when the test you would perform in each step
+does not require a checked out tree.
++
+If the repository is bare, `--no-checkout` is assumed.
+
 EXAMPLES
 --------
 
@@ -342,6 +355,25 @@ $ git bisect run sh -c "make || exit 125; ~/check_test_case.sh"
 +
 This shows that you can do without a run script if you write the test
 on a single line.
+
+* Locate a good region of the object graph in a damaged repository
++
+------------
+$ git bisect start HEAD <known-good-commit> [ <boundary-commit> ... ] --no-checkout
+$ git bisect run sh -c '
+	GOOD=$(git for-each-ref "--format=%(objectname)" refs/bisect/good-*) &&
+	git rev-list --objects BISECT_HEAD --not $GOOD >tmp.$$ &&
+	git pack-objects --stdout >/dev/null <tmp.$$
+	rc=$?
+	rm -f tmp.$$
+	test $rc = 0'
+
+------------
++
+In this case, when 'git bisect run' finishes, bisect/bad will refer to a commit that
+has at least one parent whose reachable graph is fully traversable in the sense
+required by 'git pack objects'.
+
 
 SEE ALSO
 --------
