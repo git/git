@@ -95,11 +95,11 @@ static int add_ref_decoration(const char *refname, const unsigned char *sha1, in
 	if (!obj)
 		return 0;
 
-	if (!prefixcmp(refname, "refs/heads"))
+	if (!prefixcmp(refname, "refs/heads/"))
 		type = DECORATION_REF_LOCAL;
-	else if (!prefixcmp(refname, "refs/remotes"))
+	else if (!prefixcmp(refname, "refs/remotes/"))
 		type = DECORATION_REF_REMOTE;
-	else if (!prefixcmp(refname, "refs/tags"))
+	else if (!prefixcmp(refname, "refs/tags/"))
 		type = DECORATION_REF_TAG;
 	else if (!prefixcmp(refname, "refs/stash"))
 		type = DECORATION_REF_STASH;
