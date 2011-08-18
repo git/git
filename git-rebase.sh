@@ -22,7 +22,7 @@ currently checked out branch is used.
 
 Example:       git-rebase master~1 topic
 
-        A---B---C topic                   A'\''--B'\''--C'\'' topic
+	A---B---C topic                   A'\''--B'\''--C'\'' topic
        /                   -->           /
   D---E---F---G master          D---E---F---G master
 '

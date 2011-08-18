@@ -15,8 +15,8 @@ do
      sed -n '
      /^NAME/,/git-'"$cmd"'/H
      ${
-            x
-            s/.*git-'"$cmd"' - \(.*\)/  {"'"$cmd"'", "\1"},/
+	    x
+	    s/.*git-'"$cmd"' - \(.*\)/  {"'"$cmd"'", "\1"},/
 	    p
      }' "Documentation/git-$cmd.txt"
 done

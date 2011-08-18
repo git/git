@@ -12,7 +12,7 @@
 
 functions=$(cat << \EOF
 warn () {
-        echo "$*" >&2
+	echo "$*" >&2
 }
 
 map()
@@ -98,11 +98,11 @@ set_ident () {
 }
 
 USAGE="[--env-filter <command>] [--tree-filter <command>]
-            [--index-filter <command>] [--parent-filter <command>]
-            [--msg-filter <command>] [--commit-filter <command>]
-            [--tag-name-filter <command>] [--subdirectory-filter <directory>]
-            [--original <namespace>] [-d <directory>] [-f | --force]
-            [<rev-list options>...]"
+	[--index-filter <command>] [--parent-filter <command>]
+	[--msg-filter <command>] [--commit-filter <command>]
+	[--tag-name-filter <command>] [--subdirectory-filter <directory>]
+	[--original <namespace>] [-d <directory>] [-f | --force]
+	[<rev-list options>...]"
 
 OPTIONS_SPEC=
 . git-sh-setup
