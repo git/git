@@ -4,28 +4,28 @@
 #include "quote.h"
 #include "parse-options.h"
 
+static int all_attrs;
 static int stdin_paths;
 static const char * const check_attr_usage[] = {
-"git check-attr attr... [--] pathname...",
-"git check-attr --stdin attr... < <list-of-paths>",
+"git check-attr [-a | --all | attr...] [--] pathname...",
+"git check-attr --stdin [-a | --all | attr...] < <list-of-paths>",
 NULL
 };
 
 static int null_term_line;
 
 static const struct option check_attr_options[] = {
+	OPT_BOOLEAN('a', "all", &all_attrs, "report all attributes set on file"),
 	OPT_BOOLEAN(0 , "stdin", &stdin_paths, "read file names from stdin"),
 	OPT_BOOLEAN('z', NULL, &null_term_line,
 		"input paths are terminated by a null character"),
 	OPT_END()
 };
 
-static void check_attr(int cnt, struct git_attr_check *check,
-	const char** name, const char *file)
+static void output_attr(int cnt, struct git_attr_check *check,
+	const char *file)
 {
 	int j;
-	if (git_checkattr(file, cnt, check))
-		die("git_checkattr died");
 	for (j = 0; j < cnt; j++) {
 		const char *value = check[j].value;
 
@@ -37,12 +37,30 @@ static void check_attr(int cnt, struct git_attr_check *check,
 			value = "unspecified";
 
 		quote_c_style(file, NULL, stdout, 0);
-		printf(": %s: %s\n", name[j], value);
+		printf(": %s: %s\n", git_attr_name(check[j].attr), value);
 	}
 }
 
-static void check_attr_stdin_paths(int cnt, struct git_attr_check *check,
-	const char** name)
+static void check_attr(const char *prefix, int cnt,
+	struct git_attr_check *check, const char *file)
+{
+	char *full_path =
+		prefix_path(prefix, prefix ? strlen(prefix) : 0, file);
+	if (check != NULL) {
+		if (git_check_attr(full_path, cnt, check))
+			die("git_check_attr died");
+		output_attr(cnt, check, file);
+	} else {
+		if (git_all_attrs(full_path, &cnt, &check))
+			die("git_all_attrs died");
+		output_attr(cnt, check, file);
+		free(check);
+	}
+	free(full_path);
+}
+
+static void check_attr_stdin_paths(const char *prefix, int cnt,
+	struct git_attr_check *check)
 {
 	struct strbuf buf, nbuf;
 	int line_termination = null_term_line ? 0 : '\n';
@@ -56,23 +74,26 @@ static void check_attr_stdin_paths(int cnt, struct git_attr_check *check,
 				die("line is badly quoted");
 			strbuf_swap(&buf, &nbuf);
 		}
-		check_attr(cnt, check, name, buf.buf);
+		check_attr(prefix, cnt, check, buf.buf);
 		maybe_flush_or_die(stdout, "attribute to stdout");
 	}
 	strbuf_release(&buf);
 	strbuf_release(&nbuf);
 }
 
+static NORETURN void error_with_usage(const char *msg)
+{
+	error("%s", msg);
+	usage_with_options(check_attr_usage, check_attr_options);
+}
+
 int cmd_check_attr(int argc, const char **argv, const char *prefix)
 {
 	struct git_attr_check *check;
-	int cnt, i, doubledash;
-	const char *errstr = NULL;
+	int cnt, i, doubledash, filei;
 
 	argc = parse_options(argc, argv, prefix, check_attr_options,
 			     check_attr_usage, PARSE_OPT_KEEP_DASHDASH);
-	if (!argc)
-		usage_with_options(check_attr_usage, check_attr_options);
 
 	if (read_cache() < 0) {
 		die("invalid cache");
@@ -84,39 +105,63 @@ int cmd_check_attr(int argc, const char **argv, const char *prefix)
 			doubledash = i;
 	}
 
-	/* If there is no double dash, we handle only one attribute */
-	if (doubledash < 0) {
-		cnt = 1;
-		doubledash = 0;
-	} else
-		cnt = doubledash;
-	doubledash++;
+	/* Process --all and/or attribute arguments: */
+	if (all_attrs) {
+		if (doubledash >= 1)
+			error_with_usage("Attributes and --all both specified");
 
-	if (cnt <= 0)
-		errstr = "No attribute specified";
-	else if (stdin_paths && doubledash < argc)
-		errstr = "Can't specify files with --stdin";
-	if (errstr) {
-		error("%s", errstr);
-		usage_with_options(check_attr_usage, check_attr_options);
+		cnt = 0;
+		filei = doubledash + 1;
+	} else if (doubledash == 0) {
+		error_with_usage("No attribute specified");
+	} else if (doubledash < 0) {
+		if (!argc)
+			error_with_usage("No attribute specified");
+
+		if (stdin_paths) {
+			/* Treat all arguments as attribute names. */
+			cnt = argc;
+			filei = argc;
+		} else {
+			/* Treat exactly one argument as an attribute name. */
+			cnt = 1;
+			filei = 1;
+		}
+	} else {
+		cnt = doubledash;
+		filei = doubledash + 1;
 	}
 
-	check = xcalloc(cnt, sizeof(*check));
-	for (i = 0; i < cnt; i++) {
-		const char *name;
-		struct git_attr *a;
-		name = argv[i];
-		a = git_attr(name);
-		if (!a)
-			return error("%s: not a valid attribute name", name);
-		check[i].attr = a;
+	/* Check file argument(s): */
+	if (stdin_paths) {
+		if (filei < argc)
+			error_with_usage("Can't specify files with --stdin");
+	} else {
+		if (filei >= argc)
+			error_with_usage("No file specified");
+	}
+
+	if (all_attrs) {
+		check = NULL;
+	} else {
+		check = xcalloc(cnt, sizeof(*check));
+		for (i = 0; i < cnt; i++) {
+			const char *name;
+			struct git_attr *a;
+			name = argv[i];
+			a = git_attr(name);
+			if (!a)
+				return error("%s: not a valid attribute name",
+					name);
+			check[i].attr = a;
+		}
 	}
 
 	if (stdin_paths)
-		check_attr_stdin_paths(cnt, check, argv);
+		check_attr_stdin_paths(prefix, cnt, check);
 	else {
-		for (i = doubledash; i < argc; i++)
-			check_attr(cnt, check, argv, argv[i]);
+		for (i = filei; i < argc; i++)
+			check_attr(prefix, cnt, check, argv[i]);
 		maybe_flush_or_die(stdout, "attribute to stdout");
 	}
 	return 0;

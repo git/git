@@ -88,7 +88,7 @@ unsigned whitespace_rule(const char *pathname)
 	struct git_attr_check attr_whitespace_rule;
 
 	setup_whitespace_attr_check(&attr_whitespace_rule);
-	if (!git_checkattr(pathname, 1, &attr_whitespace_rule)) {
+	if (!git_check_attr(pathname, 1, &attr_whitespace_rule)) {
 		const char *value;
 
 		value = attr_whitespace_rule.value;

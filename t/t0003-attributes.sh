@@ -9,16 +9,17 @@ attr_check () {
 	path="$1"
 	expect="$2"
 
-	git check-attr test -- "$path" >actual &&
+	git check-attr test -- "$path" >actual 2>err &&
 	echo "$path: test: $2" >expect &&
-	test_cmp expect actual
+	test_cmp expect actual &&
+	test_line_count = 0 err
 
 }
 
 
 test_expect_success 'setup' '
 
-	mkdir -p a/b/d a/c &&
+	mkdir -p a/b/d a/c b &&
 	(
 		echo "[attr]notest !test"
 		echo "f	test=f"
@@ -35,10 +36,42 @@ test_expect_success 'setup' '
 		echo "h test=a/b/h" &&
 		echo "d/* test=a/b/d/*"
 		echo "d/yes notest"
-	) >a/b/.gitattributes
+	) >a/b/.gitattributes &&
 	(
 		echo "global test=global"
-	) >"$HOME"/global-gitattributes
+	) >"$HOME"/global-gitattributes &&
+	cat <<EOF >expect-all
+f: test: f
+a/f: test: f
+a/c/f: test: f
+a/g: test: a/g
+a/b/g: test: a/b/g
+b/g: test: unspecified
+a/b/h: test: a/b/h
+a/b/d/g: test: a/b/d/*
+onoff: test: unset
+offon: test: set
+no: notest: set
+no: test: unspecified
+a/b/d/no: notest: set
+a/b/d/no: test: a/b/d/*
+a/b/d/yes: notest: set
+a/b/d/yes: test: unspecified
+EOF
+
+'
+
+test_expect_success 'command line checks' '
+
+	test_must_fail git check-attr &&
+	test_must_fail git check-attr -- &&
+	test_must_fail git check-attr test &&
+	test_must_fail git check-attr test -- &&
+	test_must_fail git check-attr -- f &&
+	echo "f" | test_must_fail git check-attr --stdin &&
+	echo "f" | test_must_fail git check-attr --stdin -- f &&
+	echo "f" | test_must_fail git check-attr --stdin test -- f &&
+	test_must_fail git check-attr "" -- f
 
 '
 
@@ -60,6 +93,28 @@ test_expect_success 'attribute test' '
 
 '
 
+test_expect_success 'unnormalized paths' '
+
+	attr_check ./f f &&
+	attr_check ./a/g a/g &&
+	attr_check a/./g a/g &&
+	attr_check a/c/../b/g a/b/g
+
+'
+
+test_expect_success 'relative paths' '
+
+	(cd a && attr_check ../f f) &&
+	(cd a && attr_check f f) &&
+	(cd a && attr_check i a/i) &&
+	(cd a && attr_check g a/g) &&
+	(cd a && attr_check b/g a/b/g) &&
+	(cd b && attr_check ../a/f f) &&
+	(cd b && attr_check ../a/g a/g) &&
+	(cd b && attr_check ../a/b/g a/b/g)
+
+'
+
 test_expect_success 'core.attributesfile' '
 	attr_check global unspecified &&
 	git config core.attributesfile "$HOME/global-gitattributes" &&
@@ -72,23 +127,16 @@ test_expect_success 'core.attributesfile' '
 
 test_expect_success 'attribute test: read paths from stdin' '
 
-	cat <<EOF > expect &&
-f: test: f
-a/f: test: f
-a/c/f: test: f
-a/g: test: a/g
-a/b/g: test: a/b/g
-b/g: test: unspecified
-a/b/h: test: a/b/h
-a/b/d/g: test: a/b/d/*
-onoff: test: unset
-offon: test: set
-no: test: unspecified
-a/b/d/no: test: a/b/d/*
-a/b/d/yes: test: unspecified
-EOF
-
+	grep -v notest < expect-all > expect &&
 	sed -e "s/:.*//" < expect | git check-attr --stdin test > actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'attribute test: --all option' '
+
+	grep -v unspecified < expect-all | sort > expect &&
+	sed -e "s/:.*//" < expect-all | uniq |
+		git check-attr --stdin --all | sort > actual &&
 	test_cmp expect actual
 '
 

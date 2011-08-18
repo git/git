@@ -36,6 +36,11 @@ static int attr_nr;
 static struct git_attr_check *check_all_attr;
 static struct git_attr *(git_attr_hash[HASHSIZE]);
 
+char *git_attr_name(struct git_attr *attr)
+{
+	return attr->name;
+}
+
 static unsigned hash_name(const char *name, int namelen)
 {
 	unsigned val = 0, c;
@@ -50,12 +55,10 @@ static unsigned hash_name(const char *name, int namelen)
 static int invalid_attr_name(const char *name, int namelen)
 {
 	/*
-	 * Attribute name cannot begin with '-' and from
-	 * [-A-Za-z0-9_.].  We'd specifically exclude '=' for now,
-	 * as we might later want to allow non-binary value for
-	 * attributes, e.g. "*.svg	merge=special-merge-program-for-svg"
+	 * Attribute name cannot begin with '-' and must consist of
+	 * characters from [-A-Za-z0-9_.].
 	 */
-	if (*name == '-')
+	if (namelen <= 0 || *name == '-')
 		return -1;
 	while (namelen--) {
 		char ch = *name++;
@@ -532,11 +535,18 @@ static void bootstrap_attr_stack(void)
 	}
 }
 
-static void prepare_attr_stack(const char *path, int dirlen)
+static void prepare_attr_stack(const char *path)
 {
 	struct attr_stack *elem, *info;
-	int len;
+	int dirlen, len;
 	struct strbuf pathbuf;
+	const char *cp;
+
+	cp = strrchr(path, '/');
+	if (!cp)
+		dirlen = 0;
+	else
+		dirlen = cp - path;
 
 	strbuf_init(&pathbuf, dirlen+2+strlen(GITATTRIBUTES_FILE));
 
@@ -555,8 +565,7 @@ static void prepare_attr_stack(const char *path, int dirlen)
 	 * .gitattributes in deeper directories to shallower ones,
 	 * and finally use the built-in set as the default.
 	 */
-	if (!attr_stack)
-		bootstrap_attr_stack();
+	bootstrap_attr_stack();
 
 	/*
 	 * Pop the "info" one that is always at the top of the stack.
@@ -703,32 +712,64 @@ static int macroexpand_one(int attr_nr, int rem)
 	return rem;
 }
 
-int git_checkattr(const char *path, int num, struct git_attr_check *check)
+/*
+ * Collect all attributes for path into the array pointed to by
+ * check_all_attr.
+ */
+static void collect_all_attrs(const char *path)
 {
 	struct attr_stack *stk;
-	const char *cp;
-	int dirlen, pathlen, i, rem;
+	int i, pathlen, rem;
 
-	bootstrap_attr_stack();
+	prepare_attr_stack(path);
 	for (i = 0; i < attr_nr; i++)
 		check_all_attr[i].value = ATTR__UNKNOWN;
 
 	pathlen = strlen(path);
-	cp = strrchr(path, '/');
-	if (!cp)
-		dirlen = 0;
-	else
-		dirlen = cp - path;
-	prepare_attr_stack(path, dirlen);
 	rem = attr_nr;
 	for (stk = attr_stack; 0 < rem && stk; stk = stk->prev)
 		rem = fill(path, pathlen, stk, rem);
+}
+
+int git_check_attr(const char *path, int num, struct git_attr_check *check)
+{
+	int i;
+
+	collect_all_attrs(path);
 
 	for (i = 0; i < num; i++) {
 		const char *value = check_all_attr[check[i].attr->attr_nr].value;
 		if (value == ATTR__UNKNOWN)
 			value = ATTR__UNSET;
 		check[i].value = value;
+	}
+
+	return 0;
+}
+
+int git_all_attrs(const char *path, int *num, struct git_attr_check **check)
+{
+	int i, count, j;
+
+	collect_all_attrs(path);
+
+	/* Count the number of attributes that are set. */
+	count = 0;
+	for (i = 0; i < attr_nr; i++) {
+		const char *value = check_all_attr[i].value;
+		if (value != ATTR__UNSET && value != ATTR__UNKNOWN)
+			++count;
+	}
+	*num = count;
+	*check = xmalloc(sizeof(**check) * count);
+	j = 0;
+	for (i = 0; i < attr_nr; i++) {
+		const char *value = check_all_attr[i].value;
+		if (value != ATTR__UNSET && value != ATTR__UNKNOWN) {
+			(*check)[j].attr = check_all_attr[i].attr;
+			(*check)[j].value = value;
+			++j;
+		}
 	}
 
 	return 0;

@@ -955,6 +955,9 @@ frotz	unspecified
 ----------------------------------------------------------------
 
 
+SEE ALSO
+--------
+linkgit:git-check-attr[1].
 
 GIT
 ---
