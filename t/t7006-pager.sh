@@ -402,7 +402,7 @@ test_core_pager_subdir    expect_success test_must_fail \
 					 'git -p apply </dev/null'
 
 test_expect_success TTY 'command-specific pager' '
-	unset PAGER GIT_PAGER;
+	sane_unset PAGER GIT_PAGER &&
 	echo "foo:initial" >expect &&
 	>actual &&
 	git config --unset core.pager &&
@@ -412,7 +412,7 @@ test_expect_success TTY 'command-specific pager' '
 '
 
 test_expect_success TTY 'command-specific pager overrides core.pager' '
-	unset PAGER GIT_PAGER;
+	sane_unset PAGER GIT_PAGER &&
 	echo "foo:initial" >expect &&
 	>actual &&
 	git config core.pager "exit 1"
