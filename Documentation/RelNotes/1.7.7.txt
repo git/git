@@ -22,6 +22,15 @@ Updates since v1.7.6
  * "git archive" can be told to pass the output to gzip compression and
    produce "archive.tar.gz".
 
+ * "git bisect" can be used in a bare repository (provided if the test
+   you perform per each iteration does not need a working tree, of
+   course).
+
+ * "git check-attr" can take relative paths from the command line.
+
+ * "git check-attr" learned "--all" option to list the attributes for a
+   given path.
+
  * "git checkout" (both the code to update the files upon checking out a
    different branch, the code to checkout specific set of files) learned
    to stream the data from object store when possible, without having to
@@ -37,6 +46,10 @@ Updates since v1.7.6
 
  * "git diff --stat" learned --stat-count option to limit the output of
    diffstat report.
+
+ * "git diff" learned "--histogram" option, to use a different diff
+   generation machinery stolen from jgit, which might give better
+   performance.
 
  * "git fetch", "git push" and friends no longer show connection
    errors for addresses that couldn't be connected when at least one
@@ -58,6 +71,11 @@ Updates since v1.7.6
    submodule; it now goes on to update other submodules that can be
    updated, and reports the ones with errors at the end.
 
+ * "git upload-pack" and "git receive-pack" learned to pretend only a
+   subset of the refs exist in a repository. This may help a site to
+   put many tiny repositories into one repository (this would not be
+   useful for larger repositories as repacking would be problematic).
+
  * "git verify-pack" has been rewritten to use the "index-pack" machinery
    that is more efficient in reading objects in packfiles.
 
@@ -74,10 +92,25 @@ Fixes since v1.7.6
 Unless otherwise noted, all the fixes in 1.7.6.X maintenance track are
 included in this release.
 
+ * Error exits from $PAGER were silently ignored.
+   (merge fc1b56f cb/maint-exec-error-report later).
+
+ * "git diff -c/--cc" mishandled a deletion that resolves a conflict, and
+   looked in the working tree instead.
+   (merge 9969454 jc/maint-combined-diff-work-tree later).
+
+ * "git fetch" over smart-http transport used to abort when the
+   repository was updated between the initial connection and the
+   subsequent object transfer.
+   (merge 051e400 jc/maint-smart-http-race-upload-pack later).
+
+ * "git push --quiet" was not really quiet.
+   (merge 0d086b8 cb/maint-quiet-push later).
+
 --
 exec >/var/tmp/1
 echo O=$(git describe master)
-O=v1.7.6-471-g50b68ae
+O=v1.7.6-548-g324b6b1
 git log --first-parent --oneline $O..master
 echo
 git shortlog --no-merges ^maint ^$O master
