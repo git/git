@@ -636,7 +636,7 @@ static const char *parse_pack_header(struct pack_header *hdr)
 
 static const char *pack_lockfile;
 
-static const char *unpack(void)
+static const char *unpack(int quiet)
 {
 	struct pack_header hdr;
 	const char *hdr_err;
@@ -651,8 +651,10 @@ static const char *unpack(void)
 
 	if (ntohl(hdr.hdr_entries) < unpack_limit) {
 		int code, i = 0;
-		const char *unpacker[4];
+		const char *unpacker[5];
 		unpacker[i++] = "unpack-objects";
+		if (quiet)
+			unpacker[i++] = "-q";
 		if (receive_fsck_objects)
 			unpacker[i++] = "--strict";
 		unpacker[i++] = hdr_arg;
@@ -753,6 +755,7 @@ static void add_alternate_refs(void)
 
 int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 {
+	int quiet = 0;
 	int advertise_refs = 0;
 	int stateless_rpc = 0;
 	int i;
@@ -766,6 +769,11 @@ int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 		const char *arg = *argv++;
 
 		if (*arg == '-') {
+			if (!strcmp(arg, "--quiet")) {
+				quiet = 1;
+				continue;
+			}
+
 			if (!strcmp(arg, "--advertise-refs")) {
 				advertise_refs = 1;
 				continue;
@@ -814,7 +822,7 @@ int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 		const char *unpack_status = NULL;
 
 		if (!delete_only(commands))
-			unpack_status = unpack();
+			unpack_status = unpack(quiet);
 		execute_commands(commands, unpack_status);
 		if (pack_lockfile)
 			unlink_or_warn(pack_lockfile);

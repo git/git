@@ -482,14 +482,18 @@ static int set_git_option(struct git_transport_options *opts,
 static int connect_setup(struct transport *transport, int for_push, int verbose)
 {
 	struct git_transport_data *data = transport->data;
+	struct strbuf sb = STRBUF_INIT;
 
 	if (data->conn)
 		return 0;
 
-	data->conn = git_connect(data->fd, transport->url,
-				 for_push ? data->options.receivepack :
-				 data->options.uploadpack,
+	strbuf_addstr(&sb, for_push ? data->options.receivepack :
+				 data->options.uploadpack);
+	if (for_push && transport->verbose < 0)
+		strbuf_addstr(&sb, " --quiet");
+	data->conn = git_connect(data->fd, transport->url, sb.buf,
 				 verbose ? CONNECT_VERBOSE : 0);
+	strbuf_release(&sb);
 
 	return 0;
 }
