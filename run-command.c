@@ -77,15 +77,13 @@ static void notify_parent(void)
 
 static NORETURN void die_child(const char *err, va_list params)
 {
-	char msg[4096];
-	int len = vsnprintf(msg, sizeof(msg), err, params);
-	if (len > sizeof(msg))
-		len = sizeof(msg);
-
-	write_in_full(child_err, "fatal: ", 7);
-	write_in_full(child_err, msg, len);
-	write_in_full(child_err, "\n", 1);
+	vwritef(child_err, "fatal: ", err, params);
 	exit(128);
+}
+
+static void error_child(const char *err, va_list params)
+{
+	vwritef(child_err, "error: ", err, params);
 }
 #endif
 
@@ -127,9 +125,6 @@ static int wait_or_whine(pid_t pid, const char *argv0, int silent_exec_failure)
 		if (code == 127) {
 			code = -1;
 			failed_errno = ENOENT;
-			if (!silent_exec_failure)
-				error("cannot run %s: %s", argv0,
-					strerror(ENOENT));
 		}
 	} else {
 		error("waitpid is confused (%s)", argv0);
@@ -217,6 +212,7 @@ fail_pipe:
 			set_cloexec(child_err);
 		}
 		set_die_routine(die_child);
+		set_error_routine(error_child);
 
 		close(notify_pipe[0]);
 		set_cloexec(notify_pipe[1]);
@@ -283,14 +279,14 @@ fail_pipe:
 		} else {
 			execvp(cmd->argv[0], (char *const*) cmd->argv);
 		}
-		/*
-		 * Do not check for cmd->silent_exec_failure; the parent
-		 * process will check it when it sees this exit code.
-		 */
-		if (errno == ENOENT)
+		if (errno == ENOENT) {
+			if (!cmd->silent_exec_failure)
+				error("cannot run %s: %s", cmd->argv[0],
+					strerror(ENOENT));
 			exit(127);
-		else
+		} else {
 			die_errno("cannot exec '%s'", cmd->argv[0]);
+		}
 	}
 	if (cmd->pid < 0)
 		error("cannot fork() for %s: %s", cmd->argv[0],
