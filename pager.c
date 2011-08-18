@@ -11,8 +11,6 @@
  * something different on Windows.
  */
 
-static int spawned_pager;
-
 #ifndef WIN32
 static void pager_preexec(void)
 {
@@ -78,7 +76,7 @@ void setup_pager(void)
 	if (!pager)
 		return;
 
-	spawned_pager = 1; /* means we are emitting to terminal */
+	setenv("GIT_PAGER_IN_USE", "true", 1);
 
 	/* spawn the pager */
 	pager_argv[0] = pager;
@@ -109,10 +107,6 @@ void setup_pager(void)
 int pager_in_use(void)
 {
 	const char *env;
-
-	if (spawned_pager)
-		return 1;
-
 	env = getenv("GIT_PAGER_IN_USE");
 	return env ? git_config_bool("GIT_PAGER_IN_USE", env) : 0;
 }

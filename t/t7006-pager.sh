@@ -181,6 +181,17 @@ test_expect_success 'color when writing to a file intended for a pager' '
 	colorful colorful.log
 '
 
+test_expect_success TTY 'colors are sent to pager for external commands' '
+	test_config alias.externallog "!git log" &&
+	test_config color.ui auto &&
+	(
+		TERM=vt100 &&
+		export TERM &&
+		test_terminal git -p externallog
+	) &&
+	colorful paginated.out
+'
+
 # Use this helper to make it easy for the caller of your
 # terminal-using function to specify whether it should fail.
 # If you write
