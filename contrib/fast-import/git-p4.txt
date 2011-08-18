@@ -257,6 +257,12 @@ Perforce server. Will enable --find-copies-harder git argument.
 
   git config [--global] git-p4.detectCopies true
 
+git-p4.branchUser
+
+Only use branch specifications defined by the selected username.
+
+  git config [--global] git-p4.branchUser username
+
 Implementation Details...
 =========================
 
