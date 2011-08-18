@@ -18,6 +18,7 @@ enum decoration_type {
 	DECORATION_REF_TAG,
 	DECORATION_REF_STASH,
 	DECORATION_REF_HEAD,
+	DECORATION_GRAFTED,
 };
 
 static char decoration_colors[][COLOR_MAXLEN] = {
@@ -27,6 +28,7 @@ static char decoration_colors[][COLOR_MAXLEN] = {
 	GIT_COLOR_BOLD_YELLOW,	/* REF_TAG */
 	GIT_COLOR_BOLD_MAGENTA,	/* REF_STASH */
 	GIT_COLOR_BOLD_CYAN,	/* REF_HEAD */
+	GIT_COLOR_BOLD_BLUE,	/* GRAFTED */
 };
 
 static const char *decorate_get_color(int decorate_use_color, enum decoration_type ix)
@@ -118,6 +120,15 @@ static int add_ref_decoration(const char *refname, const unsigned char *sha1, in
 	return 0;
 }
 
+static int add_graft_decoration(const struct commit_graft *graft, void *cb_data)
+{
+	struct commit *commit = lookup_commit(graft->sha1);
+	if (!commit)
+		return 0;
+	add_name_decoration(DECORATION_GRAFTED, "grafted", &commit->object);
+	return 0;
+}
+
 void load_ref_decorations(int flags)
 {
 	static int loaded;
@@ -125,6 +136,7 @@ void load_ref_decorations(int flags)
 		loaded = 1;
 		for_each_ref(add_ref_decoration, &flags);
 		head_ref(add_ref_decoration, &flags);
+		for_each_commit_graft(add_graft_decoration, NULL);
 	}
 }
 
