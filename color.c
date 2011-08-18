@@ -2,6 +2,7 @@
 #include "color.h"
 
 int git_use_color_default = 0;
+int color_stdout_is_tty = -1;
 
 /*
  * The list of available column colors.
@@ -157,7 +158,7 @@ bad:
 	die("bad color value '%.*s' for variable '%s'", value_len, value, var);
 }
 
-int git_config_colorbool(const char *var, const char *value, int stdout_is_tty)
+int git_config_colorbool(const char *var, const char *value)
 {
 	if (value) {
 		if (!strcasecmp(value, "never"))
@@ -177,9 +178,9 @@ int git_config_colorbool(const char *var, const char *value, int stdout_is_tty)
 
 	/* any normal truth value defaults to 'auto' */
  auto_color:
-	if (stdout_is_tty < 0)
-		stdout_is_tty = isatty(1);
-	if (stdout_is_tty || (pager_in_use() && pager_use_color)) {
+	if (color_stdout_is_tty < 0)
+		color_stdout_is_tty = isatty(1);
+	if (color_stdout_is_tty || (pager_in_use() && pager_use_color)) {
 		char *term = getenv("TERM");
 		if (term && strcmp(term, "dumb"))
 			return 1;
@@ -190,7 +191,7 @@ int git_config_colorbool(const char *var, const char *value, int stdout_is_tty)
 int git_color_default_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, "color.ui")) {
-		git_use_color_default = git_config_colorbool(var, value, -1);
+		git_use_color_default = git_config_colorbool(var, value);
 		return 0;
 	}
 

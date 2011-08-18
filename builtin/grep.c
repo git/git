@@ -316,7 +316,7 @@ static int grep_config(const char *var, const char *value, void *cb)
 	}
 
 	if (!strcmp(var, "color.grep"))
-		opt->color = git_config_colorbool(var, value, -1);
+		opt->color = git_config_colorbool(var, value);
 	else if (!strcmp(var, "color.grep.context"))
 		color = opt->color_context;
 	else if (!strcmp(var, "color.grep.filename"))

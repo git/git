@@ -58,11 +58,17 @@ extern const char *column_colors_ansi[];
 extern const int column_colors_ansi_max;
 
 /*
+ * Generally the color code will lazily figure this out itself, but
+ * this provides a mechanism for callers to override autodetection.
+ */
+extern int color_stdout_is_tty;
+
+/*
  * Use this instead of git_default_config if you need the value of color.ui.
  */
 int git_color_default_config(const char *var, const char *value, void *cb);
 
-int git_config_colorbool(const char *var, const char *value, int stdout_is_tty);
+int git_config_colorbool(const char *var, const char *value);
 void color_parse(const char *value, const char *var, char *dst);
 void color_parse_mem(const char *value, int len, const char *var, char *dst);
 __attribute__((format (printf, 3, 4)))

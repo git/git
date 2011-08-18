@@ -137,7 +137,7 @@ static int git_config_rename(const char *var, const char *value)
 int git_diff_ui_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, "diff.color") || !strcmp(var, "color.diff")) {
-		diff_use_color_default = git_config_colorbool(var, value, -1);
+		diff_use_color_default = git_config_colorbool(var, value);
 		return 0;
 	}
 	if (!strcmp(var, "diff.renames")) {
@@ -3373,7 +3373,7 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 	else if (!strcmp(arg, "--color"))
 		options->use_color = 1;
 	else if (!prefixcmp(arg, "--color=")) {
-		int value = git_config_colorbool(NULL, arg+8, -1);
+		int value = git_config_colorbool(NULL, arg+8);
 		if (value == 0)
 			options->use_color = 0;
 		else if (value > 0)

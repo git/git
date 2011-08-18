@@ -573,7 +573,7 @@ static int git_show_branch_config(const char *var, const char *value, void *cb)
 	}
 
 	if (!strcmp(var, "color.showbranch")) {
-		showbranch_use_color = git_config_colorbool(var, value, -1);
+		showbranch_use_color = git_config_colorbool(var, value);
 		return 0;
 	}
 
