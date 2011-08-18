@@ -34,6 +34,10 @@ OPTIONS
 <directory>::
 	The repository to sync from.
 
+SEE ALSO
+--------
+linkgit:gitnamespaces[7]
+
 GIT
 ---
 Part of the linkgit:git[1] suite
