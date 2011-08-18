@@ -305,6 +305,7 @@ static void get_color(const char *def_color)
 
 static int get_colorbool_found;
 static int get_diff_color_found;
+static int get_color_ui_found;
 static int git_get_colorbool_config(const char *var, const char *value,
 		void *cb)
 {
@@ -313,7 +314,7 @@ static int git_get_colorbool_config(const char *var, const char *value,
 	else if (!strcmp(var, "diff.color"))
 		get_diff_color_found = git_config_colorbool(var, value);
 	else if (!strcmp(var, "color.ui"))
-		git_use_color_default = git_config_colorbool(var, value);
+		get_color_ui_found = git_config_colorbool(var, value);
 	return 0;
 }
 
@@ -327,7 +328,7 @@ static int get_colorbool(int print)
 		if (!strcmp(get_colorbool_slot, "color.diff"))
 			get_colorbool_found = get_diff_color_found;
 		if (get_colorbool_found < 0)
-			get_colorbool_found = git_use_color_default;
+			get_colorbool_found = get_color_ui_found;
 	}
 
 	get_colorbool_found = want_color(get_colorbool_found);
