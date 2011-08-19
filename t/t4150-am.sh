@@ -96,6 +96,13 @@ test_expect_success setup '
 		echo "X-Fake-Field: Line Three" &&
 		git format-patch --stdout first | sed -e "1d"
 	} | append_cr >patch1-crlf.eml &&
+	{
+		printf "%255s\\n" ""
+		echo "X-Fake-Field: Line One" &&
+		echo "X-Fake-Field: Line Two" &&
+		echo "X-Fake-Field: Line Three" &&
+		git format-patch --stdout first | sed -e "1d"
+	} > patch1-ws.eml &&
 
 	sed -n -e "3,\$p" msg >file &&
 	git add file &&
@@ -161,6 +168,17 @@ test_expect_success 'am applies patch e-mail not in a mbox with CRLF' '
 	git reset --hard &&
 	git checkout first &&
 	git am patch1-crlf.eml &&
+	! test -d .git/rebase-apply &&
+	git diff --exit-code second &&
+	test "$(git rev-parse second)" = "$(git rev-parse HEAD)" &&
+	test "$(git rev-parse second^)" = "$(git rev-parse HEAD^)"
+'
+
+test_expect_success 'am applies patch e-mail with preceding whitespace' '
+	rm -fr .git/rebase-apply &&
+	git reset --hard &&
+	git checkout first &&
+	git am patch1-ws.eml &&
 	! test -d .git/rebase-apply &&
 	git diff --exit-code second &&
 	test "$(git rev-parse second)" = "$(git rev-parse HEAD)" &&

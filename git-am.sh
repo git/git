@@ -197,10 +197,15 @@ check_patch_format () {
 		return 0
 	fi
 
-	# otherwise, check the first few lines of the first patch to try
-	# to detect its format
+	# otherwise, check the first few non-blank lines of the first
+	# patch to try to detect its format
 	{
-		read l1
+		# Start from first line containing non-whitespace
+		l1=
+		while test -z "$l1"
+		do
+			read l1
+		done
 		read l2
 		read l3
 		case "$l1" in
