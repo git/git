@@ -50,7 +50,7 @@ static int fast_forward_only;
 static int allow_trivial = 1, have_message;
 static struct strbuf merge_msg;
 static struct commit_list *remoteheads;
-static unsigned char head[20], stash[20];
+static unsigned char head[20];
 static struct strategy **use_strategies;
 static size_t use_strategies_nr, use_strategies_alloc;
 static const char **xopts;
@@ -217,7 +217,7 @@ static void drop_save(void)
 	unlink(git_path("MERGE_MODE"));
 }
 
-static void save_state(void)
+static int save_state(unsigned char *stash)
 {
 	int len;
 	struct child_process cp;
@@ -236,11 +236,12 @@ static void save_state(void)
 
 	if (finish_command(&cp) || len < 0)
 		die(_("stash failed"));
-	else if (!len)
-		return;
+	else if (!len)		/* no changes */
+		return -1;
 	strbuf_setlen(&buffer, buffer.len-1);
 	if (get_sha1(buffer.buf, stash))
 		die(_("not a valid object: %s"), buffer.buf);
+	return 0;
 }
 
 static void read_empty(unsigned const char *sha1, int verbose)
@@ -278,7 +279,7 @@ static void reset_hard(unsigned const char *sha1, int verbose)
 		die(_("read-tree failed"));
 }
 
-static void restore_state(void)
+static void restore_state(const unsigned char *stash)
 {
 	struct strbuf sb = STRBUF_INIT;
 	const char *args[] = { "stash", "apply", NULL, NULL };
@@ -1010,6 +1011,7 @@ static int setup_with_upstream(const char ***argv)
 int cmd_merge(int argc, const char **argv, const char *prefix)
 {
 	unsigned char result_tree[20];
+	unsigned char stash[20];
 	struct strbuf buf = STRBUF_INIT;
 	const char *head_arg;
 	int flag, head_invalid = 0, i;
@@ -1320,21 +1322,18 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 	 * sync with the head commit.  The strategies are responsible
 	 * to ensure this.
 	 */
-	if (use_strategies_nr != 1) {
-		/*
-		 * Stash away the local changes so that we can try more
-		 * than one.
-		 */
-		save_state();
-	} else {
-		memcpy(stash, null_sha1, 20);
-	}
+	if (use_strategies_nr == 1 ||
+	    /*
+	     * Stash away the local changes so that we can try more than one.
+	     */
+	    save_state(stash))
+		hashcpy(stash, null_sha1);
 
 	for (i = 0; i < use_strategies_nr; i++) {
 		int ret;
 		if (i) {
 			printf(_("Rewinding the tree to pristine...\n"));
-			restore_state();
+			restore_state(stash);
 		}
 		if (use_strategies_nr != 1)
 			printf(_("Trying merge strategy %s...\n"),
@@ -1395,7 +1394,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 	 * it up.
 	 */
 	if (!best_strategy) {
-		restore_state();
+		restore_state(stash);
 		if (use_strategies_nr > 1)
 			fprintf(stderr,
 				_("No merge strategy handled the merge.\n"));
@@ -1407,7 +1406,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		; /* We already have its result in the working tree. */
 	else {
 		printf(_("Rewinding the tree to pristine...\n"));
-		restore_state();
+		restore_state(stash);
 		printf(_("Using the %s to prepare resolving by hand.\n"),
 			best_strategy);
 		try_merge_strategy(best_strategy, common, head_arg);
