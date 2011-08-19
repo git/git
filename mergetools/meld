@@ -3,7 +3,30 @@ diff_cmd () {
 }
 
 merge_cmd () {
+	if test -z "${meld_has_output_option:+set}"
+	then
+		check_meld_for_output_version
+	fi
 	touch "$BACKUP"
-	"$merge_tool_path" "$LOCAL" "$MERGED" "$REMOTE"
+	if test "$meld_has_output_option" = true
+	then
+		"$merge_tool_path" --output "$MERGED" \
+			"$LOCAL" "$BASE" "$REMOTE"
+	else
+		"$merge_tool_path" "$LOCAL" "$MERGED" "$REMOTE"
+	fi
 	check_unchanged
+}
+
+# Check whether 'meld --output <file>' is supported
+check_meld_for_output_version () {
+	meld_path="$(git config mergetool.meld.path)"
+	meld_path="${meld_path:-meld}"
+
+	if "$meld_path" --output /dev/null --help >/dev/null 2>&1
+	then
+		meld_has_output_option=true
+	else
+		meld_has_output_option=false
+	fi
 }
