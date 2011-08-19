@@ -19,6 +19,12 @@ Updates since v1.7.6
    functions can compress or uncompress more than 4GB data in one call on
    platforms with 64-bit long, which has been corrected.
 
+ * "git am" learned to pass "--exclude=<path>" option through to underlying
+   "git apply".
+
+ * You can now feed many empty lines before feeding a mbox file to
+   "git am".
+
  * "git archive" can be told to pass the output to gzip compression and
    produce "archive.tar.gz".
 
