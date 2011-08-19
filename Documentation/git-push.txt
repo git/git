@@ -162,6 +162,12 @@ useful if you write an alias or script around 'git push'.
 	is specified. This flag forces progress status even if the
 	standard error stream is not directed to a terminal.
 
+--recurse-submodules=check::
+	Check whether all submodule commits used by the revisions to be
+	pushed are available on a remote tracking branch. Otherwise the
+	push will be aborted and the command will exit with non-zero status.
+
+
 include::urls-remotes.txt[]
 
 OUTPUT
