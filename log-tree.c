@@ -92,8 +92,22 @@ static void add_name_decoration(enum decoration_type type, const char *name, str
 
 static int add_ref_decoration(const char *refname, const unsigned char *sha1, int flags, void *cb_data)
 {
-	struct object *obj = parse_object(sha1);
+	struct object *obj;
 	enum decoration_type type = DECORATION_NONE;
+
+	if (!prefixcmp(refname, "refs/replace/")) {
+		unsigned char original_sha1[20];
+		if (get_sha1_hex(refname + 13, original_sha1)) {
+			warning("invalid replace ref %s", refname);
+			return 0;
+		}
+		obj = parse_object(original_sha1);
+		if (obj)
+			add_name_decoration(DECORATION_GRAFTED, "replaced", obj);
+		return 0;
+	}
+
+	obj = parse_object(sha1);
 	if (!obj)
 		return 0;
 
