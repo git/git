@@ -1,16 +1,13 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Aug 2011, #04; Tue, 16)
-X-master-at: 4bfe7cb6668c43c1136304bbb17eea1b3ddf0237
-X-next-at: 0e3f8f0b05033eaaaa60133977cc86dd9a5db4bf
+Subject: What's cooking in git.git (Aug 2011, #05; Fri, 19)
+X-master-at: cee426811c981c62c4b236ebdcb47d1c2945cf56
+X-next-at: b5fcad02a1cc9cc1c2b8ebaef4ad67d0f9101c98
 
-What's cooking in git.git (Aug 2011, #04; Tue, 16)
+What's cooking in git.git (Aug 2011, #05; Fri, 19)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' while commits prefixed with '+' are in 'next'.
-
-The kernel.org machine seems to be very busy for the past 48 hours so it
-might take a while for tonight's pushout to propagate to mirrors.
 
 There are a few 'fixup!' commits queued in topics still in 'pu', so that
 authors have a choice to just say "that fix looks good, squash it in!"
@@ -19,38 +16,184 @@ instead of going through an extra round.
 --------------------------------------------------
 [New Topics]
 
-* di/fast-import-deltified-tree (2011-08-14) 2 commits
- - fast-import: prevent producing bad delta
- - fast-import: add a test for tree delta base corruption
+* jc/traverse-commit-list (2011-08-17) 3 commits
+ - revision.c: update show_object_with_name() without using malloc()
+ - revision.c: add show_object_with_name() helper function
+ - rev-list: fix finish_object() call
 
-* di/parse-options-split (2011-08-11) 2 commits
- - Reduce parse-options.o dependencies
- - parse-options: export opterr, optbug
+* rc/diff-cleanup-records (2011-08-17) 2 commits
+ - Merge branch 'rc/histogram-diff' into HEAD
+ - xdiff/xprepare: improve O(n*m) performance in xdl_cleanup_records()
 
-* mh/attr (2011-08-14) 7 commits
- - Unroll the loop over passes
- - Change while loop into for loop
- - Determine the start of the states outside of the pass loop
- - Change parse_attr() to take a pointer to struct attr_state
- - Increment num_attr in parse_attr_line(), not parse_attr()
- - Document struct match_attr
- - Add a file comment
+* fk/make-auto-header-dependencies (2011-08-18) 1 commit
+ - Makefile: Use computed header dependencies if the compiler supports it
 
-All looked reasonable.
+* jk/color-and-pager (2011-08-18) 10 commits
+ - want_color: automatically fallback to color.ui
+ - diff: don't load color config in plumbing
+ - config: refactor get_colorbool function
+ - color: delay auto-color decision until point of use
+ - git_config_colorbool: refactor stdout_is_tty handling
+ - diff: refactor COLOR_DIFF from a flag into an int
+ - setup_pager: set GIT_PAGER_IN_USE
+ - t7006: use test_config helpers
+ - test-lib: add helper functions for config
+ - t7006: modernize calls to unset
+ (this branch is used by jk/pager-with-alias.)
 
-* mh/iterate-refs (2011-08-14) 6 commits
- - Retain caches of submodule refs
- - Store the submodule name in struct cached_refs
- - Allocate cached_refs objects dynamically
- - Change the signature of read_packed_refs()
- - Access reference caches only through new function get_cached_refs()
- - Extract a function clear_cached_refs()
+Looked reasonable.
+Will merge to "next".
 
-* jn/plug-empty-tree-leak (2011-08-16) 2 commits
- - merge-recursive: take advantage of hardcoded empty tree
- - revert: plug memory leak in "cherry-pick root commit" codepath
+* jk/pager-with-alias (2011-08-18) 2 commits
+ - support pager.* for aliases
+ - support pager.* for external commands
+ (this branch uses jk/color-and-pager.)
 
-Both looked reasonable.
+* nd/decorate-grafts (2011-08-19) 5 commits
+ - log: decorate "replaced" on to replaced commits
+ - log: decorate grafted commits with "grafted"
+ - Move write_shallow_commits to fetch-pack.c
+ - Add for_each_commit_graft() to iterate all grafts
+ - decoration: do not mis-decorate refs with same prefix
+
+Looked reasonable.
+Will merge to "next".
+
+* va/p4-branch-import (2011-08-19) 4 commits
+ - git-p4: Add simple test case for branch import
+ - git-p4: Allow branch definition with git config
+ - git-p4: Allow filtering Perforce branches by user
+ - git-p4: Correct branch base depot path detection
+ (this branch uses va/p4-rename-copy.)
+
+* va/p4-rename-copy (2011-08-18) 4 commits
+ - git-p4: Add test case for copy detection.
+ - git-p4: Add test case for rename detection.
+ - git-p4: Add description of rename/copy detection options.
+ - git-p4: Allow setting rename/copy detection threshold.
+ (this branch is used by va/p4-branch-import.)
+
+* da/difftool-mergtool-refactor (2011-08-19) 4 commits
+ - mergetools/meld: Use '--output' when available
+ - mergetool--lib: Refactor tools into separate files
+ - mergetool--lib: Make style consistent with git
+ - difftool--helper: Make style consistent with git
+
+* mg/branch-set-upstream-previous (2011-08-19) 1 commit
+ - branch.c: use the parsed branch name
+
+--------------------------------------------------
+[Graduated to "master"]
+
+* cb/maint-exec-error-report (2011-08-01) 2 commits
+  (merged to 'next' on 2011-08-05 at 2764424)
+ + notice error exit from pager
+ + error_routine: use parent's stderr if exec fails
+
+* cb/maint-quiet-push (2011-08-08) 2 commits
+  (merged to 'next' on 2011-08-08 at 917d73b)
+ + receive-pack: do not overstep command line argument array
+  (merged to 'next' on 2011-08-01 at 87df938)
+ + propagate --quiet to send-pack/receive-pack
+
+* db/am-skip-blank-at-the-beginning (2011-08-11) 1 commit
+  (merged to 'next' on 2011-08-11 at 3637843)
+ + am: ignore leading whitespace before patch
+
+* jc/maint-combined-diff-work-tree (2011-08-04) 1 commit
+  (merged to 'next' on 2011-08-05 at 976a4d4)
+ + diff -c/--cc: do not mistake "resolved as deletion" as "use working tree"
+
+* jc/maint-smart-http-race-upload-pack (2011-08-08) 1 commit
+  (merged to 'next' on 2011-08-11 at 3f24b64)
+ + helping smart-http/stateless-rpc fetch race
+
+* js/bisect-no-checkout (2011-08-09) 11 commits
+  (merged to 'next' on 2011-08-11 at 6c94a45)
+ + bisect: add support for bisecting bare repositories
+ + bisect: further style nitpicks
+ + bisect: replace "; then" with "\n<tab>*then"
+ + bisect: cleanup whitespace errors in git-bisect.sh.
+ + bisect: add documentation for --no-checkout option.
+ + bisect: add tests for the --no-checkout option.
+ + bisect: introduce --no-checkout support into porcelain.
+ + bisect: introduce support for --no-checkout option.
+ + bisect: add tests to document expected behaviour in presence of broken trees.
+ + bisect: use && to connect statements that are deferred with eval.
+ + bisect: move argument parsing before state modification.
+
+* js/ref-namespaces (2011-07-21) 5 commits
+  (merged to 'next' on 2011-07-25 at 5b7dcfe)
+ + ref namespaces: tests
+ + ref namespaces: documentation
+ + ref namespaces: Support remote repositories via upload-pack and receive-pack
+ + ref namespaces: infrastructure
+ + Fix prefix handling in ref iteration functions
+
+* js/sh-style (2011-08-05) 2 commits
+  (merged to 'next' on 2011-08-11 at 4a4c22c)
+ + filter-branch.sh: de-dent usage string
+ + misc-sh: fix up whitespace in some other .sh files.
+
+* ma/am-exclude (2011-08-09) 2 commits
+  (merged to 'next' on 2011-08-11 at cf0ba4d)
+ + am: Document new --exclude=<path> option
+  (merged to 'next' on 2011-08-05 at 658e57c)
+ + am: pass exclude down to apply
+
+* mh/check-attr-listing (2011-08-04) 23 commits
+  (merged to 'next' on 2011-08-11 at f73ad50)
+ + Rename git_checkattr() to git_check_attr()
+ + git-check-attr: Fix command-line handling to match docs
+ + git-check-attr: Drive two tests using the same raw data
+ + git-check-attr: Add an --all option to show all attributes
+ + git-check-attr: Error out if no pathnames are specified
+ + git-check-attr: Process command-line args more systematically
+ + git-check-attr: Handle each error separately
+ + git-check-attr: Extract a function error_with_usage()
+ + git-check-attr: Introduce a new variable
+ + git-check-attr: Extract a function output_attr()
+ + Allow querying all attributes on a file
+ + Remove redundant check
+ + Remove redundant call to bootstrap_attr_stack()
+ + Extract a function collect_all_attrs()
+ + Teach prepare_attr_stack() to figure out dirlen itself
+ + git-check-attr: Use git_attr_name()
+ + Provide access to the name attribute of git_attr
+ + git-check-attr: Add tests of command-line parsing
+ + git-check-attr: Add missing "&&"
+ + Disallow the empty string as an attribute name
+ + Remove anachronism from comment
+ + doc: Correct git_attr() calls in example code
+ + doc: Add a link from gitattributes(5) to git-check-attr(1)
+ (this branch is used by mh/check-attr-relative.)
+
+* mh/check-attr-relative (2011-08-04) 6 commits
+  (merged to 'next' on 2011-08-11 at f94550c)
+ + test-path-utils: Add subcommand "prefix_path"
+ + test-path-utils: Add subcommand "absolute_path"
+ + git-check-attr: Normalize paths
+ + git-check-attr: Demonstrate problems with relative paths
+ + git-check-attr: Demonstrate problems with unnormalized paths
+ + git-check-attr: test that no output is written to stderr
+ (this branch uses mh/check-attr-listing.)
+
+* rc/histogram-diff (2011-08-08) 12 commits
+  (merged to 'next' on 2011-08-11 at 684dfd1)
+ + xdiff/xhistogram: drop need for additional variable
+ + xdiff/xhistogram: rely on xdl_trim_ends()
+ + xdiff/xhistogram: rework handling of recursed results
+ + xdiff: do away with xdl_mmfile_next()
+  (merged to 'next' on 2011-08-03 at f9e2328)
+ + Make test number unique
+  (merged to 'next' on 2011-07-25 at 3351028)
+ + xdiff/xprepare: use a smaller sample size for histogram diff
+ + xdiff/xprepare: skip classification
+ + teach --histogram to diff
+ + t4033-diff-patience: factor out tests
+ + xdiff/xpatience: factor out fall-back-diff function
+ + xdiff/xprepare: refactor abort cleanups
+ + xdiff/xprepare: use memset()
 
 --------------------------------------------------
 [Stalled]
@@ -65,12 +208,6 @@ Probably the topmost commit should be dropped.
  - branch -v: honor core.abbrev
 
 Perhaps needs an updated commit log message?
-
-* di/fast-import-doc (2011-07-13) 2 commits
- - doc/fast-import: document feature import-marks-if-exists
- - doc/fast-import: clarify notemodify command
-
-Comments from fast-import folks?
 
 * jh/receive-count-limit (2011-05-23) 10 commits
  - receive-pack: Allow server to refuse pushes with too many objects
@@ -117,6 +254,63 @@ I think a further refactoring (no, not my suggestion) was offered?
 
 --------------------------------------------------
 [Cooking]
+
+* di/fast-import-doc (2011-08-17) 1 commit
+ - doc/fast-import: document feature import-marks-if-exists
+
+Comments from fast-import folks?
+
+* di/fast-import-deltified-tree (2011-08-14) 2 commits
+ - fast-import: prevent producing bad delta
+ - fast-import: add a test for tree delta base corruption
+
+Comments from fast-import folks?
+
+* di/fast-import-ident (2011-08-11) 5 commits
+ - fsck: improve committer/author check
+ - fsck: add a few committer name tests
+ - fast-import: check committer name more strictly
+ - fast-import: don't fail on omitted committer name
+ - fast-import: add input format tests
+
+Comments from fast-import folks?
+
+* di/parse-options-split (2011-08-11) 2 commits
+ - Reduce parse-options.o dependencies
+ - parse-options: export opterr, optbug
+
+Looked reasonable.
+Will merge to "next".
+
+* mh/attr (2011-08-14) 7 commits
+ - Unroll the loop over passes
+ - Change while loop into for loop
+ - Determine the start of the states outside of the pass loop
+ - Change parse_attr() to take a pointer to struct attr_state
+ - Increment num_attr in parse_attr_line(), not parse_attr()
+ - Document struct match_attr
+ - Add a file comment
+
+All looked reasonable.
+Will merge to "next".
+
+* mh/iterate-refs (2011-08-14) 6 commits
+ - Retain caches of submodule refs
+ - Store the submodule name in struct cached_refs
+ - Allocate cached_refs objects dynamically
+ - Change the signature of read_packed_refs()
+ - Access reference caches only through new function get_cached_refs()
+ - Extract a function clear_cached_refs()
+
+I did not see anything wrong per-se, but it was unclear what the benefit
+of these changes are. I probably need to read it once again.
+
+* jn/plug-empty-tree-leak (2011-08-16) 2 commits
+ - merge-recursive: take advantage of hardcoded empty tree
+ - revert: plug memory leak in "cherry-pick root commit" codepath
+
+Both looked reasonable.
+Will merge to "next".
 
 * ac/describe-dirty-refresh (2011-08-11) 1 commit
  - describe: Refresh the index when run with --dirty
@@ -183,13 +377,7 @@ Will merge to "next", but needs Sign-off.
  - t6042: Add a testcase where git deletes an untracked file
 
 Rerolled.
-
-* di/fast-import-ident (2011-08-11) 5 commits
- - fsck: improve committer/author check
- - fsck: add a few committer name tests
- - fast-import: check committer name more strictly
- - fast-import: don't fail on omitted committer name
- - fast-import: add input format tests
+Will merge to "next".
 
 * fg/submodule-ff-check-before-push (2011-08-09) 1 commit
  - push: Don't push a repository with unpushed submodules
@@ -197,6 +385,8 @@ Rerolled.
 * hv/submodule-update-none (2011-08-11) 2 commits
  - add update 'none' flag to disable update of submodule by default
  - submodule: move update configuration variable further up
+
+Will merge to "next".
 
 * jc/lookup-object-hash (2011-08-11) 6 commits
  - object hash: replace linear probing with 4-way cuckoo hashing
@@ -213,38 +403,13 @@ Rerolled.
  - git-am: take advantage of gettextln and eval_gettextln.
  - gettext: add gettextln, eval_gettextln to encode common idiom
 
+Will merge to "next".
+
 * cb/maint-ls-files-error-report (2011-08-11) 1 commit
   (merged to 'next' on 2011-08-15 at 69f41cf)
  + ls-files: fix pathspec display on error
 
-* jc/maint-combined-diff-work-tree (2011-08-04) 1 commit
-  (merged to 'next' on 2011-08-05 at 976a4d4)
- + diff -c/--cc: do not mistake "resolved as deletion" as "use working tree"
-
-Will merge to "master" after cooking for a bit more.
-
-* js/sh-style (2011-08-05) 2 commits
-  (merged to 'next' on 2011-08-11 at 4a4c22c)
- + filter-branch.sh: de-dent usage string
- + misc-sh: fix up whitespace in some other .sh files.
-
-* ma/am-exclude (2011-08-09) 2 commits
-  (merged to 'next' on 2011-08-11 at cf0ba4d)
- + am: Document new --exclude=<path> option
-  (merged to 'next' on 2011-08-05 at 658e57c)
- + am: pass exclude down to apply
-
-Will merge to "master" after cooking for a bit more.
-
-* db/am-skip-blank-at-the-beginning (2011-08-11) 1 commit
-  (merged to 'next' on 2011-08-11 at 3637843)
- + am: ignore leading whitespace before patch
-
-Will merge to "master" after cooking for a bit more.
-
-* jc/maint-smart-http-race-upload-pack (2011-08-08) 1 commit
-  (merged to 'next' on 2011-08-11 at 3f24b64)
- + helping smart-http/stateless-rpc fetch race
+Will merge to "master".
 
 * jn/maint-test-return (2011-08-11) 3 commits
   (merged to 'next' on 2011-08-15 at 5a42301)
@@ -252,44 +417,21 @@ Will merge to "master" after cooking for a bit more.
  + test: cope better with use of return for errors
  + test: simplify return value of test_run_
 
+Will merge to "master".
+
 * rt/zlib-smaller-window (2011-08-11) 2 commits
   (merged to 'next' on 2011-08-15 at e05b26b)
  + test: consolidate definition of $LF
  + Tolerate zlib deflation with window size < 32Kb
+
+Will merge to "master".
 
 * fg/submodule-git-file-git-dir (2011-08-16) 3 commits
  - fixup! Move git-dir for submodules
  - Move git-dir for submodules
  - rev-parse: add option --resolve-git-dir <path>
 
-* js/bisect-no-checkout (2011-08-09) 11 commits
-  (merged to 'next' on 2011-08-11 at 6c94a45)
- + bisect: add support for bisecting bare repositories
- + bisect: further style nitpicks
- + bisect: replace "; then" with "\n<tab>*then"
- + bisect: cleanup whitespace errors in git-bisect.sh.
- + bisect: add documentation for --no-checkout option.
- + bisect: add tests for the --no-checkout option.
- + bisect: introduce --no-checkout support into porcelain.
- + bisect: introduce support for --no-checkout option.
- + bisect: add tests to document expected behaviour in presence of broken trees.
- + bisect: use && to connect statements that are deferred with eval.
- + bisect: move argument parsing before state modification.
-
-* cb/maint-exec-error-report (2011-08-01) 2 commits
-  (merged to 'next' on 2011-08-05 at 2764424)
- + notice error exit from pager
- + error_routine: use parent's stderr if exec fails
-
-Will merge to "master" after cooking for a bit more.
-
-* cb/maint-quiet-push (2011-08-08) 2 commits
-  (merged to 'next' on 2011-08-08 at 917d73b)
- + receive-pack: do not overstep command line argument array
-  (merged to 'next' on 2011-08-01 at 87df938)
- + propagate --quiet to send-pack/receive-pack
-
-Will merge to "master" after cooking for a bit more.
+Will merge to "next", after squashing the top one.
 
 * jk/add-i-hunk-filter (2011-07-27) 5 commits
   (merged to 'next' on 2011-08-11 at 8ff9a56)
@@ -299,42 +441,7 @@ Will merge to "master" after cooking for a bit more.
  + add--interactive: factor out regex error handling
  + add--interactive: refactor patch mode argument processing
 
-* mh/check-attr-listing (2011-08-04) 23 commits
-  (merged to 'next' on 2011-08-11 at f73ad50)
- + Rename git_checkattr() to git_check_attr()
- + git-check-attr: Fix command-line handling to match docs
- + git-check-attr: Drive two tests using the same raw data
- + git-check-attr: Add an --all option to show all attributes
- + git-check-attr: Error out if no pathnames are specified
- + git-check-attr: Process command-line args more systematically
- + git-check-attr: Handle each error separately
- + git-check-attr: Extract a function error_with_usage()
- + git-check-attr: Introduce a new variable
- + git-check-attr: Extract a function output_attr()
- + Allow querying all attributes on a file
- + Remove redundant check
- + Remove redundant call to bootstrap_attr_stack()
- + Extract a function collect_all_attrs()
- + Teach prepare_attr_stack() to figure out dirlen itself
- + git-check-attr: Use git_attr_name()
- + Provide access to the name attribute of git_attr
- + git-check-attr: Add tests of command-line parsing
- + git-check-attr: Add missing "&&"
- + Disallow the empty string as an attribute name
- + Remove anachronism from comment
- + doc: Correct git_attr() calls in example code
- + doc: Add a link from gitattributes(5) to git-check-attr(1)
- (this branch is used by mh/check-attr-relative.)
-
-* mh/check-attr-relative (2011-08-04) 6 commits
-  (merged to 'next' on 2011-08-11 at f94550c)
- + test-path-utils: Add subcommand "prefix_path"
- + test-path-utils: Add subcommand "absolute_path"
- + git-check-attr: Normalize paths
- + git-check-attr: Demonstrate problems with relative paths
- + git-check-attr: Demonstrate problems with unnormalized paths
- + git-check-attr: test that no output is written to stderr
- (this branch uses mh/check-attr-listing.)
+Needs documentation updates.
 
 * jk/http-auth-keyring (2011-08-03) 13 commits
   (merged to 'next' on 2011-08-03 at b06e80e)
@@ -356,31 +463,6 @@ Looked mostly reasonable except for the limitation that it is not clear
 how to deal with a site at which a user needs to use different passwords 
 for different repositories.
 
-* js/ref-namespaces (2011-07-21) 5 commits
-  (merged to 'next' on 2011-07-25 at 5b7dcfe)
- + ref namespaces: tests
- + ref namespaces: documentation
- + ref namespaces: Support remote repositories via upload-pack and receive-pack
- + ref namespaces: infrastructure
- + Fix prefix handling in ref iteration functions
-
-* rc/histogram-diff (2011-08-08) 12 commits
-  (merged to 'next' on 2011-08-11 at 684dfd1)
- + xdiff/xhistogram: drop need for additional variable
- + xdiff/xhistogram: rely on xdl_trim_ends()
- + xdiff/xhistogram: rework handling of recursed results
- + xdiff: do away with xdl_mmfile_next()
-  (merged to 'next' on 2011-08-03 at f9e2328)
- + Make test number unique
-  (merged to 'next' on 2011-07-25 at 3351028)
- + xdiff/xprepare: use a smaller sample size for histogram diff
- + xdiff/xprepare: skip classification
- + teach --histogram to diff
- + t4033-diff-patience: factor out tests
- + xdiff/xpatience: factor out fall-back-diff function
- + xdiff/xprepare: refactor abort cleanups
- + xdiff/xprepare: use memset()
-
 * rr/revert-cherry-pick-continue (2011-08-08) 18 commits
  - revert: Propagate errors upwards from do_pick_commit
  - revert: Introduce --continue to continue the operation
@@ -400,3 +482,5 @@ for different repositories.
  - revert: Simplify and inline add_message_to_msg
  - config: Introduce functions to write non-standard file
  - advice: Introduce error_resolve_conflict
+
+Will merge to "next".
