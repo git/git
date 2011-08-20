@@ -970,6 +970,72 @@ void show_combined_diff(struct combine_diff_path *p,
 		show_patch_diff(p, num_parent, dense, rev);
 }
 
+static void free_combined_pair(struct diff_filepair *pair)
+{
+	free(pair->two);
+	free(pair);
+}
+
+/*
+ * A combine_diff_path expresses N parents on the LHS against 1 merge
+ * result. Synthesize a diff_filepair that has N entries on the "one"
+ * side and 1 entry on the "two" side.
+ *
+ * In the future, we might want to add more data to combine_diff_path
+ * so that we can fill fields we are ignoring (most notably, size) here,
+ * but currently nobody uses it, so this should suffice for now.
+ */
+static struct diff_filepair *combined_pair(struct combine_diff_path *p,
+					   int num_parent)
+{
+	int i;
+	struct diff_filepair *pair;
+	struct diff_filespec *pool;
+
+	pair = xmalloc(sizeof(*pair));
+	pool = xcalloc(num_parent + 1, sizeof(struct diff_filespec));
+	pair->one = pool + 1;
+	pair->two = pool;
+
+	for (i = 0; i < num_parent; i++) {
+		pair->one[i].path = p->path;
+		pair->one[i].mode = p->parent[i].mode;
+		hashcpy(pair->one[i].sha1, p->parent[i].sha1);
+		pair->one[i].sha1_valid = !is_null_sha1(p->parent[i].sha1);
+		pair->one[i].has_more_entries = 1;
+	}
+	pair->one[num_parent - 1].has_more_entries = 0;
+
+	pair->two->path = p->path;
+	pair->two->mode = p->mode;
+	hashcpy(pair->two->sha1, p->sha1);
+	pair->two->sha1_valid = !is_null_sha1(p->sha1);
+	return pair;
+}
+
+static void handle_combined_callback(struct diff_options *opt,
+				     struct combine_diff_path *paths,
+				     int num_parent,
+				     int num_paths)
+{
+	struct combine_diff_path *p;
+	struct diff_queue_struct q;
+	int i;
+
+	q.queue = xcalloc(num_paths, sizeof(struct diff_filepair *));
+	q.alloc = num_paths;
+	q.nr = num_paths;
+	for (i = 0, p = paths; p; p = p->next) {
+		if (!p->len)
+			continue;
+		q.queue[i++] = combined_pair(p, num_parent);
+	}
+	opt->format_callback(&q, opt, opt->format_callback_data);
+	for (i = 0; i < num_paths; i++)
+		free_combined_pair(q.queue[i]);
+	free(q.queue);
+}
+
 void diff_tree_combined(const unsigned char *sha1,
 			const unsigned char parent[][20],
 			int num_parent,
@@ -1029,6 +1095,9 @@ void diff_tree_combined(const unsigned char *sha1,
 		else if (opt->output_format &
 			 (DIFF_FORMAT_NUMSTAT|DIFF_FORMAT_DIFFSTAT))
 			needsep = 1;
+		else if (opt->output_format & DIFF_FORMAT_CALLBACK)
+			handle_combined_callback(opt, paths, num_parent, num_paths);
+
 		if (opt->output_format & DIFF_FORMAT_PATCH) {
 			if (needsep)
 				putchar(opt->line_termination);
