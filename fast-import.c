@@ -2800,7 +2800,12 @@ static void cat_blob(struct object_entry *oe, unsigned char sha1[20])
 	strbuf_release(&line);
 	cat_blob_write(buf, size);
 	cat_blob_write("\n", 1);
-	free(buf);
+	if (oe && oe->pack_id == pack_id) {
+		last_blob.offset = oe->idx.offset;
+		strbuf_attach(&last_blob.data, buf, size, size);
+		last_blob.depth = oe->depth;
+	} else
+		free(buf);
 }
 
 static void parse_cat_blob(void)
