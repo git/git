@@ -6,6 +6,7 @@
 #include "diff.h"
 #include "diffcore.h"
 #include "xdiff-interface.h"
+#include "kwset.h"
 
 struct diffgrep_cb {
 	regex_t *regexp;
@@ -146,7 +147,7 @@ static void diffcore_pickaxe_grep(struct diff_options *o)
 
 static unsigned int contains(struct diff_filespec *one,
 			     const char *needle, unsigned long len,
-			     regex_t *regexp)
+			     regex_t *regexp, kwset_t kws)
 {
 	unsigned int cnt;
 	unsigned long sz;
@@ -175,9 +176,12 @@ static unsigned int contains(struct diff_filespec *one,
 
 	} else { /* Classic exact string match */
 		while (sz) {
-			const char *found = memmem(data, sz, needle, len);
-			if (!found)
+			size_t offset = kwsexec(kws, data, sz, NULL);
+			const char *found;
+			if (offset == -1)
 				break;
+			else
+				found = data + offset;
 			sz -= found - data + len;
 			data = found + len;
 			cnt++;
@@ -195,6 +199,7 @@ static void diffcore_pickaxe_count(struct diff_options *o)
 	unsigned long len = strlen(needle);
 	int i, has_changes;
 	regex_t regex, *regexp = NULL;
+	kwset_t kws = NULL;
 	struct diff_queue_struct outq;
 	DIFF_QUEUE_CLEAR(&outq);
 
@@ -209,6 +214,10 @@ static void diffcore_pickaxe_count(struct diff_options *o)
 			die("invalid pickaxe regex: %s", errbuf);
 		}
 		regexp = &regex;
+	} else {
+		kws = kwsalloc(NULL);
+		kwsincr(kws, needle, len);
+		kwsprep(kws);
 	}
 
 	if (opts & DIFF_PICKAXE_ALL) {
@@ -219,16 +228,16 @@ static void diffcore_pickaxe_count(struct diff_options *o)
 				if (!DIFF_FILE_VALID(p->two))
 					continue; /* ignore unmerged */
 				/* created */
-				if (contains(p->two, needle, len, regexp))
+				if (contains(p->two, needle, len, regexp, kws))
 					has_changes++;
 			}
 			else if (!DIFF_FILE_VALID(p->two)) {
-				if (contains(p->one, needle, len, regexp))
+				if (contains(p->one, needle, len, regexp, kws))
 					has_changes++;
 			}
 			else if (!diff_unmodified_pair(p) &&
-				 contains(p->one, needle, len, regexp) !=
-				 contains(p->two, needle, len, regexp))
+				 contains(p->one, needle, len, regexp, kws) !=
+				 contains(p->two, needle, len, regexp, kws))
 				has_changes++;
 		}
 		if (has_changes)
@@ -251,16 +260,17 @@ static void diffcore_pickaxe_count(struct diff_options *o)
 				if (!DIFF_FILE_VALID(p->two))
 					; /* ignore unmerged */
 				/* created */
-				else if (contains(p->two, needle, len, regexp))
+				else if (contains(p->two, needle, len, regexp,
+						  kws))
 					has_changes = 1;
 			}
 			else if (!DIFF_FILE_VALID(p->two)) {
-				if (contains(p->one, needle, len, regexp))
+				if (contains(p->one, needle, len, regexp, kws))
 					has_changes = 1;
 			}
 			else if (!diff_unmodified_pair(p) &&
-				 contains(p->one, needle, len, regexp) !=
-				 contains(p->two, needle, len, regexp))
+				 contains(p->one, needle, len, regexp, kws) !=
+				 contains(p->two, needle, len, regexp, kws))
 				has_changes = 1;
 
 			if (has_changes)
@@ -271,6 +281,8 @@ static void diffcore_pickaxe_count(struct diff_options *o)
 
 	if (opts & DIFF_PICKAXE_REGEX)
 		regfree(&regex);
+	else
+		kwsfree(kws);
 
 	free(q->queue);
 	*q = outq;
