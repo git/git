@@ -1,3 +1,8 @@
+/* This file has been copied from commit e7ac713d^ in the GNU grep git
+ * repository. A few small changes have been made to adapt the code to
+ * Git.
+ */
+
 /* kwset.h - header declaring the keyword set library.
    Copyright (C) 1989, 1998, 2005 Free Software Foundation, Inc.
 
@@ -27,22 +32,23 @@ struct kwsmatch
   size_t size[1];		/* Length of each submatch. */
 };
 
-typedef ptr_t kwset_t;
+struct kwset_t;
+typedef struct kwset_t* kwset_t;
 
 /* Return an opaque pointer to a newly allocated keyword set, or NULL
    if enough memory cannot be obtained.  The argument if non-NULL
    specifies a table of character translations to be applied to all
    pattern and search text. */
-extern kwset_t kwsalloc PARAMS((char const *));
+extern kwset_t kwsalloc(char const *);
 
 /* Incrementally extend the keyword set to include the given string.
    Return NULL for success, or an error message.  Remember an index
    number for each keyword included in the set. */
-extern const char *kwsincr PARAMS((kwset_t, char const *, size_t));
+extern const char *kwsincr(kwset_t, char const *, size_t);
 
 /* When the keyword set has been completely built, prepare it for
    use.  Return NULL for success, or an error message. */
-extern const char *kwsprep PARAMS((kwset_t));
+extern const char *kwsprep(kwset_t);
 
 /* Search through the given buffer for a member of the keyword set.
    Return a pointer to the leftmost longest match found, or NULL if
@@ -50,7 +56,8 @@ extern const char *kwsprep PARAMS((kwset_t));
    the matching substring in the integer it points to.  Similarly,
    if foundindex is non-NULL, store the index of the particular
    keyword found therein. */
-extern size_t kwsexec PARAMS((kwset_t, char const *, size_t, struct kwsmatch *));
+extern size_t kwsexec(kwset_t, char const *, size_t, struct kwsmatch *);
 
 /* Deallocate the given keyword set and all its associated storage. */
-extern void kwsfree PARAMS((kwset_t));
+extern void kwsfree(kwset_t);
+

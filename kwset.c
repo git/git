@@ -1,3 +1,9 @@
+/*
+ * This file has been copied from commit e7ac713d^ in the GNU grep git
+ * repository. A few small changes have been made to adapt the code to
+ * Git.
+ */
+
 /* kwset.c - search for any of a set of keywords.
    Copyright 1989, 1998, 2000, 2005 Free Software Foundation, Inc.
 
@@ -28,22 +34,13 @@
    String Matching:  An Aid to Bibliographic Search," CACM June 1975,
    Vol. 18, No. 6, which describes the failure function used below. */
 
-#ifdef HAVE_CONFIG_H
-# include <config.h>
-#endif
-#include <sys/types.h>
-#include "system.h"
+#include "cache.h"
+
 #include "kwset.h"
 #include "obstack.h"
 
-#ifdef GREP
-extern char *xmalloc();
-# undef malloc
-# define malloc xmalloc
-#endif
-
 #define NCHAR (UCHAR_MAX + 1)
-#define obstack_chunk_alloc malloc
+#define obstack_chunk_alloc xmalloc
 #define obstack_chunk_free free
 
 #define U(c) ((unsigned char) (c))
@@ -93,9 +90,7 @@ kwsalloc (char const *trans)
 {
   struct kwset *kwset;
 
-  kwset = (struct kwset *) malloc(sizeof (struct kwset));
-  if (!kwset)
-    return NULL;
+  kwset = (struct kwset *) xmalloc(sizeof (struct kwset));
 
   obstack_init(&kwset->obstack);
   kwset->words = 0;
@@ -174,7 +169,7 @@ kwsincr (kwset_t kws, char const *text, size_t len)
 	  link = (struct tree *) obstack_alloc(&kwset->obstack,
 					       sizeof (struct tree));
 	  if (!link)
-	    return _("memory exhausted");
+	    return "memory exhausted";
 	  link->llink = NULL;
 	  link->rlink = NULL;
 	  link->trie = (struct trie *) obstack_alloc(&kwset->obstack,
@@ -182,7 +177,7 @@ kwsincr (kwset_t kws, char const *text, size_t len)
 	  if (!link->trie)
 	    {
 	      obstack_free(&kwset->obstack, link);
-	      return _("memory exhausted");
+	      return "memory exhausted";
 	    }
 	  link->trie->accepting = 0;
 	  link->trie->links = NULL;
@@ -405,7 +400,7 @@ kwsprep (kwset_t kws)
       /* Looking for just one string.  Extract it from the trie. */
       kwset->target = obstack_alloc(&kwset->obstack, kwset->mind);
       if (!kwset->target)
-	return _("memory exhausted");
+	return "memory exhausted";
       for (i = kwset->mind - 1, curr = kwset->trie; i >= 0; --i)
 	{
 	  kwset->target[i] = curr->links->label;
@@ -597,9 +592,7 @@ cwexec (kwset_t kws, char const *text, size_t len, struct kwsmatch *kwsmatch)
   register struct tree const *tree;
   register char const *trans;
 
-#ifdef lint
   accept = NULL;
-#endif
 
   /* Initialize register copies and look for easy ways out. */
   kwset = (struct kwset *) kws;
