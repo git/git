@@ -146,7 +146,7 @@ int validate_new_branchname(const char *name, struct strbuf *ref, int force)
 	if (!ref_exists(ref->buf))
 		return 0;
 	else if (!force)
-		die("A branch named '%s' already exists.", name);
+		die("A branch named '%s' already exists.", ref->buf + strlen("refs/heads/"));
 
 	head = resolve_ref("HEAD", sha1, 0, NULL);
 	if (!is_bare_repository() && head && !strcmp(head, ref->buf))

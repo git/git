@@ -118,6 +118,15 @@ test_expect_success 'checkout -b to an existing branch fails' '
 	test_must_fail do_checkout branch2 $HEAD2
 '
 
+test_expect_success 'checkout -b to @{-1} fails with the right branch name' '
+	git reset --hard HEAD &&
+	git checkout branch1 &&
+	git checkout branch2 &&
+	echo  >expect "fatal: A branch named '\''branch1'\'' already exists." &&
+	test_must_fail git checkout -b @{-1} 2>actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'checkout -B to an existing branch resets branch to HEAD' '
 	git checkout branch1 &&
 
