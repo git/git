@@ -33,7 +33,7 @@ author $SJIS_NAME
 summary $SJIS_MSG
 EOF
 
-test_expect_success \
+test_expect_success NOT_MINGW \
 	'blame respects i18n.commitencoding' '
 	git blame --incremental file | \
 		egrep "^(author|summary) " > actual &&
@@ -49,7 +49,7 @@ author $EUC_JAPAN_NAME
 summary $EUC_JAPAN_MSG
 EOF
 
-test_expect_success \
+test_expect_success NOT_MINGW \
 	'blame respects i18n.logoutputencoding' '
 	git config i18n.logoutputencoding eucJP &&
 	git blame --incremental file | \
@@ -66,7 +66,7 @@ author $UTF8_NAME
 summary $UTF8_MSG
 EOF
 
-test_expect_success \
+test_expect_success NOT_MINGW \
 	'blame respects --encoding=UTF-8' '
 	git blame --incremental --encoding=UTF-8 file | \
 		egrep "^(author|summary) " > actual &&
@@ -82,7 +82,7 @@ author $UTF8_NAME
 summary $UTF8_MSG
 EOF
 
-test_expect_success \
+test_expect_success NOT_MINGW \
 	'blame respects --encoding=none' '
 	git blame --incremental --encoding=none file | \
 		egrep "^(author|summary) " > actual &&
