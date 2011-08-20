@@ -137,16 +137,50 @@ static void free_pcre_regexp(struct grep_pat *p)
 }
 #endif /* !USE_LIBPCRE */
 
+static int is_fixed(const char *s, size_t len)
+{
+	size_t i;
+
+	/* regcomp cannot accept patterns with NULs so we
+	 * consider any pattern containing a NUL fixed.
+	 */
+	if (memchr(s, 0, len))
+		return 1;
+
+	for (i = 0; i < len; i++) {
+		if (is_regex_special(s[i]))
+			return 0;
+	}
+
+	return 1;
+}
+
 static void compile_regexp(struct grep_pat *p, struct grep_opt *opt)
 {
 	int err;
 
 	p->word_regexp = opt->word_regexp;
 	p->ignore_case = opt->ignore_case;
-	p->fixed = opt->fixed;
 
-	if (p->fixed)
+	if (opt->fixed || is_fixed(p->pattern, p->patternlen))
+		p->fixed = 1;
+	else
+		p->fixed = 0;
+
+	if (p->fixed) {
+		if (opt->regflags & REG_ICASE || p->ignore_case) {
+			static char trans[256];
+			int i;
+			for (i = 0; i < 256; i++)
+				trans[i] = tolower(i);
+			p->kws = kwsalloc(trans);
+		} else {
+			p->kws = kwsalloc(NULL);
+		}
+		kwsincr(p->kws, p->pattern, p->patternlen);
+		kwsprep(p->kws);
 		return;
+	}
 
 	if (opt->pcre) {
 		compile_pcre_regexp(p, opt);
@@ -395,7 +429,9 @@ void free_grep_patterns(struct grep_opt *opt)
 		case GREP_PATTERN: /* atom */
 		case GREP_PATTERN_HEAD:
 		case GREP_PATTERN_BODY:
-			if (p->pcre_regexp)
+			if (p->kws)
+				kwsfree(p->kws);
+			else if (p->pcre_regexp)
 				free_pcre_regexp(p);
 			else
 				regfree(&p->regexp);
@@ -455,26 +491,14 @@ static void show_name(struct grep_opt *opt, const char *name)
 static int fixmatch(struct grep_pat *p, char *line, char *eol,
 		    regmatch_t *match)
 {
-	char *hit;
-
-	if (p->ignore_case) {
-		char *s = line;
-		do {
-			hit = strcasestr(s, p->pattern);
-			if (hit)
-				break;
-			s += strlen(s) + 1;
-		} while (s < eol);
-	} else
-		hit = memmem(line, eol - line, p->pattern, p->patternlen);
-
-	if (!hit) {
+	struct kwsmatch kwsm;
+	size_t offset = kwsexec(p->kws, line, eol - line, &kwsm);
+	if (offset == -1) {
 		match->rm_so = match->rm_eo = -1;
 		return REG_NOMATCH;
-	}
-	else {
-		match->rm_so = hit - line;
-		match->rm_eo = match->rm_so + p->patternlen;
+	} else {
+		match->rm_so = offset;
+		match->rm_eo = match->rm_so + kwsm.size[0];
 		return 0;
 	}
 }
