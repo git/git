@@ -202,6 +202,10 @@ test_expect_success 'clone separate gitdir: output' '
 	test_cmp expected dst/.git
 '
 
+test_expect_success 'clone from .git file' '
+	git clone dst/.git dst2
+'
+
 test_expect_success 'clone separate gitdir where target already exists' '
 	rm -rf dst &&
 	test_must_fail git clone --separate-git-dir realgitdir src dst
