@@ -322,6 +322,89 @@ test_expect_success 'detect renames' '
 	p4 filelog //depot/file7 | grep -q "branch from //depot/file6"
 '
 
+# Copy a file and confirm that copy is not detected in P4.
+# Copy a file with detectCopies option enabled and confirm that copy is not
+# detected in P4.
+# Modify and copy a file with detectCopies option enabled and confirm that copy
+# is detected in P4.
+# Copy a file with detectCopies and detectCopiesHarder options enabled and
+# confirm that copy is detected in P4.
+# Modify and copy a file, configure a bigger threshold in detectCopies and
+# confirm that copy is not detected in P4.
+# Modify and copy a file, configure a smaller threshold in detectCopies and
+# confirm that copy is detected in P4.
+test_expect_success 'detect copies' '
+	"$GITP4" clone --dest="$git" //depot@all &&
+	test_when_finished cleanup_git &&
+	cd "$git" &&
+	git config git-p4.skipSubmitEditCheck true &&
+
+	cp file2 file8 &&
+	git add file8 &&
+	git commit -a -m "Copy file2 to file8" &&
+	git diff-tree -r -C HEAD &&
+	"$GITP4" submit &&
+	p4 filelog //depot/file8 &&
+	! p4 filelog //depot/file8 | grep -q "branch from" &&
+
+	cp file2 file9 &&
+	git add file9 &&
+	git commit -a -m "Copy file2 to file9" &&
+	git diff-tree -r -C HEAD &&
+	git config git-p4.detectCopies true &&
+	"$GITP4" submit &&
+	p4 filelog //depot/file9 &&
+	! p4 filelog //depot/file9 | grep -q "branch from" &&
+
+	echo "file2" >>file2 &&
+	cp file2 file10 &&
+	git add file2 file10 &&
+	git commit -a -m "Modify and copy file2 to file10" &&
+	git diff-tree -r -C HEAD &&
+	"$GITP4" submit &&
+	p4 filelog //depot/file10 &&
+	p4 filelog //depot/file10 | grep -q "branch from //depot/file" &&
+
+	cp file2 file11 &&
+	git add file11 &&
+	git commit -a -m "Copy file2 to file11" &&
+	git diff-tree -r -C --find-copies-harder HEAD &&
+	src=$(git diff-tree -r -C --find-copies-harder HEAD | sed 1d | cut -f2) &&
+	test "$src" = file10 &&
+	git config git-p4.detectCopiesHarder true &&
+	"$GITP4" submit &&
+	p4 filelog //depot/file11 &&
+	p4 filelog //depot/file11 | grep -q "branch from //depot/file" &&
+
+	cp file2 file12 &&
+	echo "some text" >>file12 &&
+	git add file12 &&
+	git commit -a -m "Copy file2 to file12 with changes" &&
+	git diff-tree -r -C --find-copies-harder HEAD &&
+	level=$(git diff-tree -r -C --find-copies-harder HEAD | sed 1d | cut -f1 | cut -d" " -f5 | sed "s/C0*//") &&
+	test -n "$level" && test "$level" -gt 0 && test "$level" -lt 98 &&
+	src=$(git diff-tree -r -C --find-copies-harder HEAD | sed 1d | cut -f2) &&
+	test "$src" = file10 &&
+	git config git-p4.detectCopies $((level + 2)) &&
+	"$GITP4" submit &&
+	p4 filelog //depot/file12 &&
+	! p4 filelog //depot/file12 | grep -q "branch from" &&
+
+	cp file2 file13 &&
+	echo "different text" >>file13 &&
+	git add file13 &&
+	git commit -a -m "Copy file2 to file13 with changes" &&
+	git diff-tree -r -C --find-copies-harder HEAD &&
+	level=$(git diff-tree -r -C --find-copies-harder HEAD | sed 1d | cut -f1 | cut -d" " -f5 | sed "s/C0*//") &&
+	test -n "$level" && test "$level" -gt 2 && test "$level" -lt 100 &&
+	src=$(git diff-tree -r -C --find-copies-harder HEAD | sed 1d | cut -f2) &&
+	test "$src" = file10 &&
+	git config git-p4.detectCopies $((level - 2)) &&
+	"$GITP4" submit &&
+	p4 filelog //depot/file13 &&
+	p4 filelog //depot/file13 | grep -q "branch from //depot/file"
+'
+
 test_expect_success 'shutdown' '
 	pid=`pgrep -f p4d` &&
 	test -n "$pid" &&
