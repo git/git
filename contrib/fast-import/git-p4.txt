@@ -232,6 +232,31 @@ git-p4.skipUserNameCheck
 When submitting, git-p4 checks that the git commits are authored by the current
 p4 user, and warns if they are not. This disables the check.
 
+git-p4.detectRenames
+
+Detect renames when submitting changes to Perforce server. Will enable -M git
+argument. Can be optionally set to a number representing the threshold
+percentage value of the rename detection.
+
+  git config [--global] git-p4.detectRenames true
+  git config [--global] git-p4.detectRenames 50
+
+git-p4.detectCopies
+
+Detect copies when submitting changes to Perforce server. Will enable -C git
+argument. Can be optionally set to a number representing the threshold
+percentage value of the copy detection.
+
+  git config [--global] git-p4.detectCopies true
+  git config [--global] git-p4.detectCopies 80
+
+git-p4.detectCopiesHarder
+
+Detect copies even between files that did not change when submitting changes to
+Perforce server. Will enable --find-copies-harder git argument.
+
+  git config [--global] git-p4.detectCopies true
+
 Implementation Details...
 =========================
 
