@@ -139,7 +139,7 @@ char *git_path_submodule(const char *path, const char *fmt, ...)
 		strbuf_addch(&buf, '/');
 	strbuf_addstr(&buf, ".git");
 
-	git_dir = read_gitfile_gently(buf.buf);
+	git_dir = read_gitfile(buf.buf);
 	if (git_dir) {
 		strbuf_reset(&buf);
 		strbuf_addstr(&buf, git_dir);
