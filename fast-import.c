@@ -2688,9 +2688,13 @@ static void parse_new_tag(void)
 		type = oe->type;
 		hashcpy(sha1, oe->idx.sha1);
 	} else if (!get_sha1(from, sha1)) {
-		type = sha1_object_info(sha1, NULL);
-		if (type < 0)
-			die("Not a valid object: %s", from);
+		struct object_entry *oe = find_object(sha1);
+		if (!oe) {
+			type = sha1_object_info(sha1, NULL);
+			if (type < 0)
+				die("Not a valid object: %s", from);
+		} else
+			type = oe->type;
 	} else
 		die("Invalid ref name or SHA1 expression: %s", from);
 	read_next_command();

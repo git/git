@@ -188,11 +188,31 @@ test_expect_success \
 	test_cmp expect marks.new'
 
 test_tick
+new_blob=$(echo testing | git hash-object --stdin)
 cat >input <<INPUT_END
 tag series-A-blob-2
 from $(git rev-parse refs/heads/master:file3)
 data <<EOF
 Tag blob by sha1.
+EOF
+
+blob
+mark :6
+data <<EOF
+testing
+EOF
+
+commit refs/heads/new_blob
+committer  <> 0 +0000
+data 0
+M 644 :6 new_blob
+#pretend we got sha1 from fast-import
+ls "new_blob"
+
+tag series-A-blob-3
+from $new_blob
+data <<EOF
+Tag new_blob.
 EOF
 INPUT_END
 
@@ -202,12 +222,18 @@ type blob
 tag series-A-blob-2
 
 Tag blob by sha1.
+object $new_blob
+type blob
+tag series-A-blob-3
+
+Tag new_blob.
 EOF
 
 test_expect_success \
 	'A: tag blob by sha1' \
 	'git fast-import <input &&
 	git cat-file tag tags/series-A-blob-2 >actual &&
+	git cat-file tag tags/series-A-blob-3 >>actual &&
 	test_cmp expect actual'
 
 test_tick
