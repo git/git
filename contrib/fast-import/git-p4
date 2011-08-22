@@ -774,15 +774,20 @@ class P4Submit(Command, P4UserMap):
 
         if not self.detectRenames:
             # If not explicitly set check the config variable
-            self.detectRenames = gitConfig("git-p4.detectRenames").lower() == "true"
+            self.detectRenames = gitConfig("git-p4.detectRenames")
 
-        if self.detectRenames:
+        if self.detectRenames.lower() == "false" or self.detectRenames == "":
+            diffOpts = ""
+        elif self.detectRenames.lower() == "true":
             diffOpts = "-M"
         else:
-            diffOpts = ""
+            diffOpts = "-M%s" % self.detectRenames
 
-        if gitConfig("git-p4.detectCopies").lower() == "true":
+        detectCopies = gitConfig("git-p4.detectCopies")
+        if detectCopies.lower() == "true":
             diffOpts += " -C"
+        elif detectCopies != "" and detectCopies.lower() != "false":
+            diffOpts += " -C%s" % detectCopies
 
         if gitConfig("git-p4.detectCopiesHarder").lower() == "true":
             diffOpts += " --find-copies-harder"
