@@ -789,7 +789,7 @@ class P4Submit(Command, P4UserMap):
         elif detectCopies != "" and detectCopies.lower() != "false":
             diffOpts += " -C%s" % detectCopies
 
-        if gitConfig("git-p4.detectCopiesHarder").lower() == "true":
+        if gitConfig("git-p4.detectCopiesHarder", "--bool") == "true":
             diffOpts += " --find-copies-harder"
 
         diff = read_pipe_lines("git diff-tree -r %s \"%s^\" \"%s\"" % (diffOpts, id, id))
