@@ -269,6 +269,59 @@ test_expect_success 'initial import time from top change time' '
 	test $p4time = $gittime
 '
 
+# Rename a file and confirm that rename is not detected in P4.
+# Rename the new file again with detectRenames option enabled and confirm that
+# this is detected in P4.
+# Rename the new file again adding an extra line, configure a big threshold in
+# detectRenames and confirm that rename is not detected in P4.
+# Repeat, this time with a smaller threshold and confirm that the rename is
+# detected in P4.
+test_expect_success 'detect renames' '
+	"$GITP4" clone --dest="$git" //depot@all &&
+	test_when_finished cleanup_git &&
+	cd "$git" &&
+	git config git-p4.skipSubmitEditCheck true &&
+
+	git mv file1 file4 &&
+	git commit -a -m "Rename file1 to file4" &&
+	git diff-tree -r -M HEAD &&
+	"$GITP4" submit &&
+	p4 filelog //depot/file4 &&
+	! p4 filelog //depot/file4 | grep -q "branch from" &&
+
+	git mv file4 file5 &&
+	git commit -a -m "Rename file4 to file5" &&
+	git diff-tree -r -M HEAD &&
+	git config git-p4.detectRenames true &&
+	"$GITP4" submit &&
+	p4 filelog //depot/file5 &&
+	p4 filelog //depot/file5 | grep -q "branch from //depot/file4" &&
+
+	git mv file5 file6 &&
+	echo update >>file6 &&
+	git add file6 &&
+	git commit -a -m "Rename file5 to file6 with changes" &&
+	git diff-tree -r -M HEAD &&
+	level=$(git diff-tree -r -M HEAD | sed 1d | cut -f1 | cut -d" " -f5 | sed "s/R0*//") &&
+	test -n "$level" && test "$level" -gt 0 && test "$level" -lt 98 &&
+	git config git-p4.detectRenames $((level + 2)) &&
+	"$GITP4" submit &&
+	p4 filelog //depot/file6 &&
+	! p4 filelog //depot/file6 | grep -q "branch from" &&
+
+	git mv file6 file7 &&
+	echo update >>file7 &&
+	git add file7 &&
+	git commit -a -m "Rename file6 to file7 with changes" &&
+	git diff-tree -r -M HEAD &&
+	level=$(git diff-tree -r -M HEAD | sed 1d | cut -f1 | cut -d" " -f5 | sed "s/R0*//") &&
+	test -n "$level" && test "$level" -gt 2 && test "$level" -lt 100 &&
+	git config git-p4.detectRenames $((level - 2)) &&
+	"$GITP4" submit &&
+	p4 filelog //depot/file7 &&
+	p4 filelog //depot/file7 | grep -q "branch from //depot/file6"
+'
+
 test_expect_success 'shutdown' '
 	pid=`pgrep -f p4d` &&
 	test -n "$pid" &&
