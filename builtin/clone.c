@@ -39,13 +39,23 @@ static const char * const builtin_clone_usage[] = {
 
 static int option_no_checkout, option_bare, option_mirror;
 static int option_local, option_no_hardlinks, option_shared, option_recursive;
-static char *option_template, *option_reference, *option_depth;
+static char *option_template, *option_depth;
 static char *option_origin = NULL;
 static char *option_branch = NULL;
 static const char *real_git_dir;
 static char *option_upload_pack = "git-upload-pack";
 static int option_verbosity;
 static int option_progress;
+static struct string_list option_reference;
+
+static int opt_parse_reference(const struct option *opt, const char *arg, int unset)
+{
+	struct string_list *option_reference = opt->value;
+	if (!arg)
+		return -1;
+	string_list_append(option_reference, arg);
+	return 0;
+}
 
 static struct option builtin_clone_options[] = {
 	OPT__VERBOSITY(&option_verbosity),
@@ -71,8 +81,8 @@ static struct option builtin_clone_options[] = {
 		    "initialize submodules in the clone"),
 	OPT_STRING(0, "template", &option_template, "template-directory",
 		   "directory from which templates will be used"),
-	OPT_STRING(0, "reference", &option_reference, "repo",
-		   "reference repository"),
+	OPT_CALLBACK(0 , "reference", &option_reference, "repo",
+		     "reference repository", &opt_parse_reference),
 	OPT_STRING('o', "origin", &option_origin, "branch",
 		   "use <branch> instead of 'origin' to track upstream"),
 	OPT_STRING('b', "branch", &option_branch, "branch",
@@ -197,7 +207,7 @@ static void strip_trailing_slashes(char *dir)
 	*end = '\0';
 }
 
-static void setup_reference(const char *repo)
+static int add_one_reference(struct string_list_item *item, void *cb_data)
 {
 	const char *ref_git;
 	char *ref_git_copy;
@@ -206,13 +216,13 @@ static void setup_reference(const char *repo)
 	struct transport *transport;
 	const struct ref *extra;
 
-	ref_git = real_path(option_reference);
+	ref_git = real_path(item->string);
 
 	if (is_directory(mkpath("%s/.git/objects", ref_git)))
 		ref_git = mkpath("%s/.git", ref_git);
 	else if (!is_directory(mkpath("%s/objects", ref_git)))
 		die(_("reference repository '%s' is not a local directory."),
-		    option_reference);
+		    item->string);
 
 	ref_git_copy = xstrdup(ref_git);
 
@@ -227,6 +237,12 @@ static void setup_reference(const char *repo)
 	transport_disconnect(transport);
 
 	free(ref_git_copy);
+	return 0;
+}
+
+static void setup_reference(void)
+{
+	for_each_string_list(&option_reference, add_one_reference, NULL);
 }
 
 static void copy_or_link_directory(struct strbuf *src, struct strbuf *dest)
@@ -521,8 +537,8 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	git_config_set(key.buf, repo);
 	strbuf_reset(&key);
 
-	if (option_reference)
-		setup_reference(git_dir);
+	if (option_reference.nr)
+		setup_reference();
 
 	fetch_pattern = value.buf;
 	refspec = parse_fetch_refspec(1, &fetch_pattern);
