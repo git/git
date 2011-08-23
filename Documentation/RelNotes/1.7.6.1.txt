@@ -12,6 +12,8 @@ Fixes since v1.7.6
    though the actual error was that "unexecutable" was found but did
    not have a proper she-bang line to be executed.
 
+ * Error exits from $PAGER were silently ignored.
+
  * "git checkout -b <branch>" was confused when attempting to create a
    branch whose name ends with "-g" followed by hexadecimal digits,
    and refused to work.
@@ -21,8 +23,15 @@ Fixes since v1.7.6
 
  * "git diff --cc" learned to correctly ignore binary files.
 
+ * "git diff -c/--cc" mishandled a deletion that resolves a conflict, and
+   looked in the working tree instead.
+
  * "git fast-export" forgot to quote pathnames with unsafe characters
    in its output.
+
+ * "git fetch" over smart-http transport used to abort when the
+   repository was updated between the initial connection and the
+   subsequent object transfer.
 
  * "git fetch" did not recurse into submodules in subdirectories.
 
@@ -30,6 +39,8 @@ Fixes since v1.7.6
 
  * "git pull" without any argument left an extra whitespace after the
    command name in its reflog.
+
+ * "git push --quiet" was not really quiet.
 
  * "git rebase -i -p" incorrectly dropped commits from side branches.
 
