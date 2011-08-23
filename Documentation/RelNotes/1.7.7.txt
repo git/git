@@ -19,6 +19,11 @@ Updates since v1.7.6
    functions can compress or uncompress more than 4GB data in one call on
    platforms with 64-bit long, which has been corrected.
 
+ * Git now recognizes loose objects written by other implementations that
+   uses non-standard window size for zlib deflation (e.g. Agit running on
+   Android with 4kb window). We used to reject anything that was not
+   deflated with 32kb window.
+
  * "git am" learned to pass "--exclude=<path>" option through to underlying
    "git apply".
 
@@ -98,25 +103,14 @@ Fixes since v1.7.6
 Unless otherwise noted, all the fixes in 1.7.6.X maintenance track are
 included in this release.
 
- * Error exits from $PAGER were silently ignored.
-   (merge fc1b56f cb/maint-exec-error-report later).
-
- * "git diff -c/--cc" mishandled a deletion that resolves a conflict, and
-   looked in the working tree instead.
-   (merge 9969454 jc/maint-combined-diff-work-tree later).
-
- * "git fetch" over smart-http transport used to abort when the
-   repository was updated between the initial connection and the
-   subsequent object transfer.
-   (merge 051e400 jc/maint-smart-http-race-upload-pack later).
-
- * "git push --quiet" was not really quiet.
-   (merge 0d086b8 cb/maint-quiet-push later).
+ * "ls-files ../$path" that is run from a subdirectory reported errors
+   incorrectly when there is no such path that matches the given pathspec.
+   (merge 0f64bfa cb/maint-ls-files-error-report later to 'maint').
 
 --
 exec >/var/tmp/1
 echo O=$(git describe master)
-O=v1.7.6-548-g324b6b1
+O=v1.7.6-576-g6fcb384
 git log --first-parent --oneline $O..master
 echo
 git shortlog --no-merges ^maint ^$O master
