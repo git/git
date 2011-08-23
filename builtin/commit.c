@@ -274,7 +274,7 @@ static int list_paths(struct string_list *list, const char *with_tree,
 			item->util = item; /* better a valid pointer than a fake one */
 	}
 
-	return report_path_error(m, pattern, prefix ? strlen(prefix) : 0);
+	return report_path_error(m, pattern, prefix);
 }
 
 static void add_remove_files(struct string_list *list)
