@@ -92,6 +92,10 @@ _x40="$_x05$_x05$_x05$_x05$_x05$_x05$_x05$_x05"
 # Zero SHA-1
 _z40=0000000000000000000000000000000000000000
 
+# Line feed
+LF='
+'
+
 # Each test should start with something like this, after copyright notices:
 #
 # test_description='Description of this test...
