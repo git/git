@@ -768,7 +768,8 @@ static void show_combined_header(struct combine_diff_path *elem,
 }
 
 static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
-			    int dense, struct rev_info *rev)
+			    int dense, int working_tree_file,
+			    struct rev_info *rev)
 {
 	struct diff_options *opt = &rev->diffopt;
 	unsigned long result_size, cnt, lno;
@@ -777,7 +778,6 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 	struct sline *sline; /* survived lines */
 	int mode_differs = 0;
 	int i, show_hunks;
-	int working_tree_file = is_null_sha1(elem->sha1);
 	mmfile_t result_file;
 	struct userdiff_driver *userdiff;
 	struct userdiff_driver *textconv = NULL;
@@ -1028,6 +1028,12 @@ static void show_raw_diff(struct combine_diff_path *p, int num_parent, struct re
 	write_name_quoted(p->path, stdout, line_termination);
 }
 
+/*
+ * The result (p->elem) is from the working tree and their
+ * parents are typically from multiple stages during a merge
+ * (i.e. diff-files) or the state in HEAD and in the index
+ * (i.e. diff-index).
+ */
 void show_combined_diff(struct combine_diff_path *p,
 		       int num_parent,
 		       int dense,
@@ -1041,7 +1047,7 @@ void show_combined_diff(struct combine_diff_path *p,
 				  DIFF_FORMAT_NAME_STATUS))
 		show_raw_diff(p, num_parent, rev);
 	else if (opt->output_format & DIFF_FORMAT_PATCH)
-		show_patch_diff(p, num_parent, dense, rev);
+		show_patch_diff(p, num_parent, dense, 1, rev);
 }
 
 void diff_tree_combined(const unsigned char *sha1,
@@ -1109,7 +1115,7 @@ void diff_tree_combined(const unsigned char *sha1,
 			for (p = paths; p; p = p->next) {
 				if (p->len)
 					show_patch_diff(p, num_parent, dense,
-							rev);
+							0, rev);
 			}
 		}
 	}
