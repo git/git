@@ -472,18 +472,24 @@ do_next () {
 		git rev-parse --verify HEAD > "$state_dir"/stopped-sha
 		${SHELL:-@SHELL_PATH@} -c "$rest" # Actual execution
 		status=$?
+		# Run in subshell because require_clean_work_tree can die.
+		dirty=f
+		(require_clean_work_tree "rebase" 2>/dev/null) || dirty=t
 		if test "$status" -ne 0
 		then
 			warn "Execution failed: $rest"
+			test "$dirty" = f ||
+			warn "and made changes to the index and/or the working tree"
+
 			warn "You can fix the problem, and then run"
 			warn
 			warn "	git rebase --continue"
 			warn
 			exit "$status"
-		fi
-		# Run in subshell because require_clean_work_tree can die.
-		if ! (require_clean_work_tree "rebase")
+		elif test "$dirty" = t
 		then
+			warn "Execution succeeded: $rest"
+			warn "but left changes to the index and/or the working tree"
 			warn "Commit or stash your changes, and then run"
 			warn
 			warn "	git rebase --continue"
