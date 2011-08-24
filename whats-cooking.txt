@@ -1,81 +1,13 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Aug 2011, #06; Tue, 23)
-X-master-at: 8d9185bc12650a9839dff45a8754f05618cdb3f5
-X-next-at: b87361146165b920a11ae9bb995856575d51be9a
+Subject: What's cooking in git.git (Aug 2011, #07; Wed, 24)
+X-master-at: b7fcd007153b5021ed70ddc0a224127f14601bbc
+X-next-at: aa5cf7ba43e1b74c3a0aae0ca2989879d9a46233
 
-What's cooking in git.git (Aug 2011, #06; Tue, 23)
+What's cooking in git.git (Aug 2011, #07; Wed, 24)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' while commits prefixed with '+' are in 'next'.
-
-I was very tempted to cut 1.7.7-rc0 today, but we have quite a few topics
-that deserve to be in the upcoming release and are still in 'next'.  I'll
-probably merge most if not all of what are in 'next' as of today sometime
-later this week, tag a 1.7.7-rc0 release and declare feature freeze for
-this cycle.
-
---------------------------------------------------
-[Graduated to "master"]
-
-* cb/maint-ls-files-error-report (2011-08-11) 1 commit
-  (merged to 'next' on 2011-08-15 at 69f41cf)
- + ls-files: fix pathspec display on error
-
-* jn/maint-test-return (2011-08-11) 3 commits
-  (merged to 'next' on 2011-08-15 at 5a42301)
- + t3900: do not reference numbered arguments from the test script
- + test: cope better with use of return for errors
- + test: simplify return value of test_run_
-
-* rt/zlib-smaller-window (2011-08-11) 2 commits
-  (merged to 'next' on 2011-08-15 at e05b26b)
- + test: consolidate definition of $LF
- + Tolerate zlib deflation with window size < 32Kb
-
---------------------------------------------------
-[New Topics]
-
-* fk/use-kwset-pickaxe-grep-f (2011-08-20) 5 commits
-  (merged to 'next' on 2011-08-23 at 93ba509)
- + Use kwset in grep
- + Use kwset in pickaxe
- + Adapt the kwset code to Git
- + Add string search routines from GNU grep
- + Add obstack.[ch] from EGLIBC 2.10
-
-* jc/maint-autofix-tag-in-head (2011-08-19) 1 commit
-  (merged to 'next' on 2011-08-23 at 18cee02)
- + commit: reduce use of redundant global variables
-
-* bw/doc-repo-layout (2011-08-22) 2 commits
- - Mark http-fetch without -a as deprecated
- - Documentation: Grammar correction, wording fixes and cleanup
-
-* ci/forbid-unwanted-current-branch-update (2011-08-22) 2 commits
- - Show interpreted branch name in error messages
- - Prevent force-updating of the current branch
-
-* di/fast-import-blob-tweak (2011-08-22) 2 commits
- - fast-import: treat cat-blob as a delta base hint for next blob
- - fast-import: count and report # of calls to diff_delta in stats
-
-* jc/combine-diff-callback (2011-08-20) 1 commit
- - combine-diff: support format_callback
- (this branch is used by fg/submodule-ff-check-before-push.)
-
-* jc/maint-clone-alternates (2011-08-23) 2 commits
-  (merged to 'next' on 2011-08-23 at 7280deb)
- + clone: clone from a repository with relative alternates
- + clone: allow more than one --reference
-
-* nd/maint-clone-gitdir (2011-08-22) 2 commits
- - clone: allow to clone from .git file
- - read_gitfile_gently(): rename misnamed function to read_gitfile()
-
-* di/fast-import-tagging (2011-08-23) 2 commits
- - fast-import: allow to tag newly created objects
- - fast-import: add tests for tagging blobs
 
 --------------------------------------------------
 [Stalled]
@@ -89,17 +21,6 @@ this cycle.
  + add--interactive: refactor patch mode argument processing
 
 Needs documentation updates.
-
-* jc/merge-reword (2011-05-25) 2 commits
- - merge: mark the final "Merge made by..." message for l10n
- - merge: reword the final message
-
-Probably the topmost commit should be dropped.
-
-* nk/branch-v-abbrev (2011-07-01) 1 commit
- - branch -v: honor core.abbrev
-
-Perhaps needs an updated commit log message?
 
 * jh/receive-count-limit (2011-05-23) 10 commits
  - receive-pack: Allow server to refuse pushes with too many objects
@@ -147,18 +68,136 @@ I think a further refactoring (no, not my suggestion) was offered?
 --------------------------------------------------
 [Cooking]
 
+* jc/merge-reword (2011-05-25) 1 commit
+  (merged to 'next' on 2011-08-24 at aa5cf7b)
+ + merge: reword the final message
+
+Will merge to "master".
+
+* nk/branch-v-abbrev (2011-07-01) 1 commit
+  (merged to 'next' on 2011-08-24 at e9152cf)
+ + branch -v: honor core.abbrev
+
+Will merge to "master".
+
+* jk/pager-with-external-command (2011-08-19) 1 commit
+  (merged to 'next' on 2011-08-24 at 083f5da)
+ + support pager.* for external commands
+ (this branch is used by jk/pager-with-alias and jk/pager-with-alias; uses jk/color-and-pager.)
+
+Up to this part (but not "alias") the topic looked unconditionally a good
+thing to do.
+
+Will aim to merge to "master" by -rc1.
+
+* fk/use-kwset-pickaxe-grep-f (2011-08-20) 5 commits
+  (merged to 'next' on 2011-08-23 at 93ba509)
+ + Use kwset in grep
+ + Use kwset in pickaxe
+ + Adapt the kwset code to Git
+ + Add string search routines from GNU grep
+ + Add obstack.[ch] from EGLIBC 2.10
+
+Will aim to merge to "master" by -rc1.
+
+* jc/maint-autofix-tag-in-head (2011-08-19) 1 commit
+  (merged to 'next' on 2011-08-23 at 18cee02)
+ + commit: reduce use of redundant global variables
+
+Will merge to "master".
+
+* bw/doc-repo-layout (2011-08-23) 2 commits
+  (merged to 'next' on 2011-08-24 at 605c730)
+ + Mark http-fetch without -a as deprecated
+ + Documentation: Grammar correction, wording fixes and cleanup
+
+Will merge to "master".
+
+* ci/forbid-unwanted-current-branch-update (2011-08-22) 2 commits
+  (merged to 'next' on 2011-08-24 at 1e93b67)
+ + Show interpreted branch name in error messages
+ + Prevent force-updating of the current branch
+
+Will aim to merge to "master" by -rc1.
+
+* di/fast-import-blob-tweak (2011-08-22) 2 commits
+  (merged to 'next' on 2011-08-24 at 52eef2a)
+ + fast-import: treat cat-blob as a delta base hint for next blob
+ + fast-import: count and report # of calls to diff_delta in stats
+
+Will aim to merge to "master" by -rc1.
+
+* di/fast-import-tagging (2011-08-23) 2 commits
+  (merged to 'next' on 2011-08-24 at 67e0937)
+ + fast-import: allow to tag newly created objects
+ + fast-import: add tests for tagging blobs
+
+Will aim to merge to "master" by -rc1.
+
+* di/fast-import-deltified-tree (2011-08-14) 2 commits
+  (merged to 'next' on 2011-08-23 at ee30265)
+ + fast-import: prevent producing bad delta
+ + fast-import: add a test for tree delta base corruption
+
+Will aim to merge to "master" by -rc1.
+
+* di/fast-import-ident (2011-08-11) 5 commits
+  (merged to 'next' on 2011-08-23 at 9b86391)
+ + fsck: improve committer/author check
+ + fsck: add a few committer name tests
+ + fast-import: check committer name more strictly
+ + fast-import: don't fail on omitted committer name
+ + fast-import: add input format tests
+
+Will aim to merge to "master" by -rc1.
+
+* di/fast-import-doc (2011-08-17) 1 commit
+  (merged to 'next' on 2011-08-23 at dab4088)
+ + doc/fast-import: document feature import-marks-if-exists
+
+Will merge to "master".
+
+* jc/combine-diff-callback (2011-08-20) 1 commit
+  (merged to 'next' on 2011-08-24 at 9f9b42d)
+ + combine-diff: support format_callback
+ (this branch is used by fg/submodule-ff-check-before-push.)
+
+Will merge to "master".
+
+* jc/maint-clone-alternates (2011-08-23) 2 commits
+  (merged to 'next' on 2011-08-23 at 7280deb)
+ + clone: clone from a repository with relative alternates
+ + clone: allow more than one --reference
+
+Will aim to merge to "master" by -rc1.
+
+* nd/maint-clone-gitdir (2011-08-22) 2 commits
+  (merged to 'next' on 2011-08-24 at cbf052b)
+ + clone: allow to clone from .git file
+ + read_gitfile_gently(): rename misnamed function to read_gitfile()
+
+Will aim to merge to "master" by -rc1.
+
 * jc/traverse-commit-list (2011-08-22) 3 commits
- - revision.c: update show_object_with_name() without using malloc()
- - revision.c: add show_object_with_name() helper function
- - rev-list: fix finish_object() call
+  (merged to 'next' on 2011-08-24 at df50dd7)
+ + revision.c: update show_object_with_name() without using malloc()
+ + revision.c: add show_object_with_name() helper function
+ + rev-list: fix finish_object() call
+
+Not urgent; will not be in 1.7.7.
 
 * rc/diff-cleanup-records (2011-08-17) 2 commits
   (merged to 'next' on 2011-08-23 at b8414f5)
  + Merge branch 'rc/histogram-diff' into HEAD
  + xdiff/xprepare: improve O(n*m) performance in xdl_cleanup_records()
 
+Will aim to merge to "master" by -rc1.
+
 * fk/make-auto-header-dependencies (2011-08-18) 1 commit
- - Makefile: Use computed header dependencies if the compiler supports it
+  (merged to 'next' on 2011-08-24 at 3da2c25)
+ + Makefile: Use computed header dependencies if the compiler supports it
+
+Not urgent; will not be in 1.7.7.
 
 * jk/color-and-pager (2011-08-19) 10 commits
   (merged to 'next' on 2011-08-23 at cbb9495)
@@ -172,12 +211,15 @@ I think a further refactoring (no, not my suggestion) was offered?
  + t7006: use test_config helpers
  + test-lib: add helper functions for config
  + t7006: modernize calls to unset
- (this branch is used by jk/pager-with-alias.)
+ (this branch is used by jk/pager-with-alias and jk/pager-with-external-command.)
 
-* jk/pager-with-alias (2011-08-19) 2 commits
+Will aim to merge to "master" by -rc1.
+
+* jk/pager-with-alias (2011-08-19) 1 commit
  - support pager.* for aliases
- - support pager.* for external commands
- (this branch uses jk/color-and-pager.)
+ (this branch uses jk/color-and-pager, jk/pager-with-external-command and jk/pager-with-external-command.)
+
+Perhaps will drop.
 
 * nd/decorate-grafts (2011-08-19) 5 commits
   (merged to 'next' on 2011-08-23 at 475d27e)
@@ -187,20 +229,28 @@ I think a further refactoring (no, not my suggestion) was offered?
  + Add for_each_commit_graft() to iterate all grafts
  + decoration: do not mis-decorate refs with same prefix
 
+Will aim to merge to "master" by -rc1.
+
 * va/p4-branch-import (2011-08-22) 4 commits
- - git-p4: Add simple test case for branch import
- - git-p4: Allow branch definition with git config
- - git-p4: Allow filtering Perforce branches by user
- - git-p4: Correct branch base depot path detection
+  (merged to 'next' on 2011-08-24 at f67f8af)
+ + git-p4: Add simple test case for branch import
+ + git-p4: Allow branch definition with git config
+ + git-p4: Allow filtering Perforce branches by user
+ + git-p4: Correct branch base depot path detection
  (this branch uses va/p4-rename-copy.)
 
+Will merge to "master".
+
 * va/p4-rename-copy (2011-08-22) 5 commits
- - git-p4: Process detectCopiesHarder with --bool
- - git-p4: Add test case for copy detection
- - git-p4: Add test case for rename detection
- - git-p4: Add description of rename/copy detection options
- - git-p4: Allow setting rename/copy detection threshold
+  (merged to 'next' on 2011-08-24 at f1faa94)
+ + git-p4: Process detectCopiesHarder with --bool
+ + git-p4: Add test case for copy detection
+ + git-p4: Add test case for rename detection
+ + git-p4: Add description of rename/copy detection options
+ + git-p4: Allow setting rename/copy detection threshold
  (this branch is used by va/p4-branch-import.)
+
+Will merge to "master".
 
 * da/difftool-mergtool-refactor (2011-08-19) 4 commits
   (merged to 'next' on 2011-08-23 at a1cc3be)
@@ -209,31 +259,20 @@ I think a further refactoring (no, not my suggestion) was offered?
  + mergetool--lib: Make style consistent with git
  + difftool--helper: Make style consistent with git
 
+Will merge to "master".
+
 * mg/branch-set-upstream-previous (2011-08-19) 1 commit
   (merged to 'next' on 2011-08-23 at acef0b6)
  + branch.c: use the parsed branch name
 
-* di/fast-import-doc (2011-08-17) 1 commit
-  (merged to 'next' on 2011-08-23 at dab4088)
- + doc/fast-import: document feature import-marks-if-exists
-
-* di/fast-import-deltified-tree (2011-08-14) 2 commits
-  (merged to 'next' on 2011-08-23 at ee30265)
- + fast-import: prevent producing bad delta
- + fast-import: add a test for tree delta base corruption
-
-* di/fast-import-ident (2011-08-11) 5 commits
-  (merged to 'next' on 2011-08-23 at 9b86391)
- + fsck: improve committer/author check
- + fsck: add a few committer name tests
- + fast-import: check committer name more strictly
- + fast-import: don't fail on omitted committer name
- + fast-import: add input format tests
+Will merge to "master".
 
 * di/parse-options-split (2011-08-11) 2 commits
   (merged to 'next' on 2011-08-23 at 6cd667f)
  + Reduce parse-options.o dependencies
  + parse-options: export opterr, optbug
+
+Will merge to "master".
 
 * mh/attr (2011-08-14) 7 commits
   (merged to 'next' on 2011-08-23 at 22faa6e)
@@ -245,6 +284,8 @@ I think a further refactoring (no, not my suggestion) was offered?
  + Document struct match_attr
  + Add a file comment
 
+Will aim to merge to "master" by -rc1.
+
 * mh/iterate-refs (2011-08-14) 6 commits
  - Retain caches of submodule refs
  - Store the submodule name in struct cached_refs
@@ -253,17 +294,25 @@ I think a further refactoring (no, not my suggestion) was offered?
  - Access reference caches only through new function get_cached_refs()
  - Extract a function clear_cached_refs()
 
-I did not see anything wrong per-se, but it was unclear what the benefit
-of these changes are.
+I did not see anything fundamentally wrong with this series, but it was
+unclear what the benefit of these changes are.  If the series were to read
+parts of the ref hierarchy (like refs/heads/) lazily, the story would
+have been different, though.
+
+Not urgent; will not be in 1.7.7.
 
 * jn/plug-empty-tree-leak (2011-08-16) 2 commits
   (merged to 'next' on 2011-08-23 at aee2184)
  + merge-recursive: take advantage of hardcoded empty tree
  + revert: plug memory leak in "cherry-pick root commit" codepath
 
+Will merge to "master".
+
 * ac/describe-dirty-refresh (2011-08-11) 1 commit
   (merged to 'next' on 2011-08-23 at b873611)
  + describe: Refresh the index when run with --dirty
+
+Will merge to "master".
 
 * en/merge-recursive-2 (2011-08-14) 57 commits
   (merged to 'next' on 2011-08-23 at ba6ad0d)
@@ -325,24 +374,37 @@ of these changes are.
  + t6042: Add failing testcase for rename/modify/add-source conflict
  + t6042: Add a testcase where git deletes an untracked file
 
+Will aim to merge to "master" by -rc1.
+
 * fg/submodule-ff-check-before-push (2011-08-20) 2 commits
- - push: teach --recurse-submodules the on-demand option
- - push: Don't push a repository with unpushed submodules
+  (merged to 'next' on 2011-08-24 at 398e764)
+ + push: teach --recurse-submodules the on-demand option
+ + push: Don't push a repository with unpushed submodules
  (this branch uses jc/combine-diff-callback.)
 
-* hv/submodule-update-none (2011-08-11) 2 commits
- - add update 'none' flag to disable update of submodule by default
- - submodule: move update configuration variable further up
+Will aim to merge to "master" by -rc1.
 
-Will merge to "next".
+* hv/submodule-update-none (2011-08-11) 2 commits
+  (merged to 'next' on 2011-08-24 at 5302fc1)
+ + add update 'none' flag to disable update of submodule by default
+ + submodule: move update configuration variable further up
+
+Not urgent; will not be in 1.7.7.
 
 * jc/lookup-object-hash (2011-08-11) 6 commits
- - object hash: replace linear probing with 4-way cuckoo hashing
- - object hash: we know the table size is a power of two
- - object hash: next_size() helper for readability
- - pack-objects --count-only
- - object.c: remove duplicated code for object hashing
- - object.c: code movement for readability
+  (merged to 'next' on 2011-08-24 at 5825411)
+ + object hash: replace linear probing with 4-way cuckoo hashing
+ + object hash: we know the table size is a power of two
+ + object hash: next_size() helper for readability
+ + pack-objects --count-only
+ + object.c: remove duplicated code for object hashing
+ + object.c: code movement for readability
+
+I do not think there is anything fundamentally wrong with this series, but
+the risk of breakage far outweighs observed performance gain in one
+particular workload. Will keep it in 'next' at least for one cycle.
+
+Not urgent; will not be in 1.7.7.
 
 * js/i18n-scripts (2011-08-08) 5 commits
   (merged to 'next' on 2011-08-23 at a1b5529)
@@ -352,10 +414,18 @@ Will merge to "next".
  + git-am: take advantage of gettextln and eval_gettextln.
  + gettext: add gettextln, eval_gettextln to encode common idiom
 
+Will merge to "master".
+
 * fg/submodule-git-file-git-dir (2011-08-22) 2 commits
   (merged to 'next' on 2011-08-23 at 762194e)
  + Move git-dir for submodules
  + rev-parse: add option --resolve-git-dir <path>
+
+I do not think there is anything fundamentally wrong with this series, but
+the risk of breakage outweighs any benefit for having this new
+feature. Will keep it in 'next' at least for one cycle.
+
+Not urgent; will not be in 1.7.7.
 
 * jk/http-auth-keyring (2011-08-03) 13 commits
   (merged to 'next' on 2011-08-03 at b06e80e)
@@ -375,26 +445,31 @@ Will merge to "next".
 
 Looked mostly reasonable except for the limitation that it is not clear
 how to deal with a site at which a user needs to use different passwords 
-for different repositories.
+for different repositories. Will keep it in "next" at least for one cycle,
+until we start hearing real-world success reports on the list.
+
+Not urgent; will not be in 1.7.7.
 
 * rr/revert-cherry-pick-continue (2011-08-08) 18 commits
- - revert: Propagate errors upwards from do_pick_commit
- - revert: Introduce --continue to continue the operation
- - revert: Don't implicitly stomp pending sequencer operation
- - revert: Remove sequencer state when no commits are pending
- - reset: Make reset remove the sequencer state
- - revert: Introduce --reset to remove sequencer state
- - revert: Make pick_commits functionally act on a commit list
- - revert: Save command-line options for continuing operation
- - revert: Save data for continuing after conflict resolution
- - revert: Don't create invalid replay_opts in parse_args
- - revert: Separate cmdline parsing from functional code
- - revert: Introduce struct to keep command-line options
- - revert: Eliminate global "commit" variable
- - revert: Rename no_replay to record_origin
- - revert: Don't check lone argument in get_encoding
- - revert: Simplify and inline add_message_to_msg
- - config: Introduce functions to write non-standard file
- - advice: Introduce error_resolve_conflict
+  (merged to 'next' on 2011-08-24 at 712c115)
+ + revert: Propagate errors upwards from do_pick_commit
+ + revert: Introduce --continue to continue the operation
+ + revert: Don't implicitly stomp pending sequencer operation
+ + revert: Remove sequencer state when no commits are pending
+ + reset: Make reset remove the sequencer state
+ + revert: Introduce --reset to remove sequencer state
+ + revert: Make pick_commits functionally act on a commit list
+ + revert: Save command-line options for continuing operation
+ + revert: Save data for continuing after conflict resolution
+ + revert: Don't create invalid replay_opts in parse_args
+ + revert: Separate cmdline parsing from functional code
+ + revert: Introduce struct to keep command-line options
+ + revert: Eliminate global "commit" variable
+ + revert: Rename no_replay to record_origin
+ + revert: Don't check lone argument in get_encoding
+ + revert: Simplify and inline add_message_to_msg
+ + config: Introduce functions to write non-standard file
+ + advice: Introduce error_resolve_conflict
 
-Will merge to "next".
+Will keep it in 'next' at least for one cycle.
+Not urgent; will not be in 1.7.7.
