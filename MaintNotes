@@ -118,8 +118,8 @@ of git: "master", "maint", "next", and "pu".
 The "master" branch is meant to contain what are very well tested and
 ready to be used in a production setting.  Every now and then, a "feature
 release" is cut from the tip of this branch and they typically are named
-with three dotted decimal digits.  The last such release was 1.7.5 done on
-Apr 24, 2011.  You can expect that the tip of the "master" branch is
+with three dotted decimal digits.  The last such release was 1.7.6 done on
+June 26, 2011.  You can expect that the tip of the "master" branch is
 always more stable than any of the released versions.
 
 Whenever a feature release is made, "maint" branch is forked off from
@@ -127,7 +127,7 @@ Whenever a feature release is made, "maint" branch is forked off from
 release are applied to this branch and maintenance releases are cut from
 it.  The maintenance releases are named with four dotted decimal, named
 after the feature release they are updates to; the last such release was
-1.7.4.5.  New features never go to this branch.  This branch is also
+1.7.6.1.  New features never go to this branch.  This branch is also
 merged into "master" to propagate the fixes forward.
 
 A new development does not usually happen on "master". When you send a
