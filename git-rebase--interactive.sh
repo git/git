@@ -647,8 +647,24 @@ continue)
 	then
 		: Nothing to commit -- skip this
 	else
+		if ! test -f "$author_script"
+		then
+			die "You have staged changes in your working tree. If these changes are meant to be
+squashed into the previous commit, run:
+
+  git commit --amend
+
+If they are meant to go into a new commit, run:
+
+  git commit
+
+In both case, once you're done, continue with:
+
+  git rebase --continue
+"
+		fi
 		. "$author_script" ||
-			die "Cannot find the author identity"
+			die "Error trying to find the author identity to amend commit"
 		current_head=
 		if test -f "$amend"
 		then
