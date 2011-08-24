@@ -533,6 +533,8 @@ static void check_non_tip(void)
 	namebuf[41] = '\n';
 	for (i = get_max_object_index(); 0 < i; ) {
 		o = get_indexed_object(--i);
+		if (!o)
+			continue;
 		if (!(o->flags & OUR_REF))
 			continue;
 		memcpy(namebuf + 1, sha1_to_hex(o->sha1), 40);
