@@ -54,7 +54,7 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 		OPT_BOOLEAN('d', NULL, &remove_directories,
 				"remove whole directories"),
 		{ OPTION_CALLBACK, 'e', "exclude", &exclude_list, "pattern",
-		  "exclude <pattern>", PARSE_OPT_NONEG, exclude_cb },
+		  "add <pattern> to ignore rules", PARSE_OPT_NONEG, exclude_cb },
 		OPT_BOOLEAN('x', NULL, &ignored, "remove ignored files, too"),
 		OPT_BOOLEAN('X', NULL, &ignored_only,
 				"remove only ignored files"),
@@ -98,7 +98,8 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 		setup_standard_excludes(&dir);
 
 	for (i = 0; i < exclude_list.nr; i++)
-		add_exclude(exclude_list.items[i].string, "", 0, dir.exclude_list);
+		add_exclude(exclude_list.items[i].string, "", 0,
+			    &dir.exclude_list[EXC_CMDL]);
 
 	pathspec = get_pathspec(prefix, argv);
 
