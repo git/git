@@ -1655,7 +1655,7 @@ static int delete_remote_branch(const char *pattern, int force)
 		return error("Remote HEAD is not a symref");
 
 	/* Remote branch must not be the remote HEAD */
-	for (i=0; symref && i<MAXDEPTH; i++) {
+	for (i = 0; symref && i < MAXDEPTH; i++) {
 		if (!strcmp(remote_ref->name, symref))
 			return error("Remote branch %s is the current HEAD",
 				     remote_ref->name);

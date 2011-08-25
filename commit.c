@@ -515,7 +515,7 @@ void sort_in_topological_order(struct commit_list ** list, int lifo)
 
 		commit = work_item->item;
 		for (parents = commit->parents; parents ; parents = parents->next) {
-			struct commit *parent=parents->item;
+			struct commit *parent = parents->item;
 
 			if (!parent->indegree)
 				continue;

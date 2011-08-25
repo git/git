@@ -11,7 +11,7 @@ static const char * const git_update_ref_usage[] = {
 
 int cmd_update_ref(int argc, const char **argv, const char *prefix)
 {
-	const char *refname, *oldval, *msg=NULL;
+	const char *refname, *oldval, *msg = NULL;
 	unsigned char sha1[20], oldsha1[20];
 	int delete = 0, no_deref = 0, flags = 0;
 	struct option options[] = {
