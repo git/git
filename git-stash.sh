@@ -198,8 +198,8 @@ save_stash () {
 			#    $ git stash save --blah-blah 2>&1 | head -n 2
 			#    error: unknown option for 'stash save': --blah-blah
 			#           To provide a message, use git stash save -- '--blah-blah'
-			eval_gettext "$("error: unknown option for 'stash save': \$option
-       To provide a message, use git stash save -- '\$option'")"; echo
+			eval_gettextln "$("error: unknown option for 'stash save': \$option
+       To provide a message, use git stash save -- '\$option'")"
 			usage
 			;;
 		*)
@@ -470,10 +470,7 @@ apply_stash () {
 		status=$?
 		if test -n "$INDEX_OPTION"
 		then
-			(
-				gettext "Index was not unstashed." &&
-				echo
-			) >&2
+			gettextln "Index was not unstashed." >&2
 		fi
 		exit $status
 	fi
