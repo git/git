@@ -1,0 +1,20 @@
+diff_cmd () {
+	"$merge_tool_path" "$LOCAL" "$REMOTE"
+}
+
+merge_cmd () {
+	touch "$BACKUP"
+	if $base_present
+	then
+		"$merge_tool_path" "$LOCAL" "$REMOTE" "$BASE" \
+			-mergeoutput="$MERGED"
+	else
+		"$merge_tool_path" "$LOCAL" "$REMOTE" \
+			-mergeoutput="$MERGED"
+	fi
+	check_unchanged
+}
+
+translate_merge_tool_path() {
+	echo bcompare
+}
