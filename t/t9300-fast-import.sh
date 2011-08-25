@@ -1882,6 +1882,53 @@ test_expect_success 'R: --import-marks-if-exists' '
 	test_cmp expect io.marks
 '
 
+test_expect_success 'R: feature import-marks-if-exists' '
+	rm -f io.marks &&
+	>expect &&
+
+	git fast-import --export-marks=io.marks <<-\EOF &&
+	feature import-marks-if-exists=not_io.marks
+	EOF
+	test_cmp expect io.marks &&
+
+	blob=$(echo hi | git hash-object --stdin) &&
+
+	echo ":1 $blob" >io.marks &&
+	echo ":1 $blob" >expect &&
+	echo ":2 $blob" >>expect &&
+
+	git fast-import --export-marks=io.marks <<-\EOF &&
+	feature import-marks-if-exists=io.marks
+	blob
+	mark :2
+	data 3
+	hi
+
+	EOF
+	test_cmp expect io.marks &&
+
+	echo ":3 $blob" >>expect &&
+
+	git fast-import --import-marks=io.marks \
+			--export-marks=io.marks <<-\EOF &&
+	feature import-marks-if-exists=not_io.marks
+	blob
+	mark :3
+	data 3
+	hi
+
+	EOF
+	test_cmp expect io.marks &&
+
+	>expect &&
+
+	git fast-import --import-marks-if-exists=not_io.marks \
+			--export-marks=io.marks <<-\EOF
+	feature import-marks-if-exists=io.marks
+	EOF
+	test_cmp expect io.marks
+'
+
 cat >input << EOF
 feature import-marks=marks.out
 feature export-marks=marks.new

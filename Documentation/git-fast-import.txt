@@ -1012,10 +1012,14 @@ force::
 	(see OPTIONS, above).
 
 import-marks::
+import-marks-if-exists::
 	Like --import-marks except in two respects: first, only one
-	"feature import-marks" command is allowed per stream;
-	second, an --import-marks= command-line option overrides
-	any "feature import-marks" command in the stream.
+	"feature import-marks" or "feature import-marks-if-exists"
+	command is allowed per stream; second, an --import-marks=
+	or --import-marks-if-exists command-line option overrides
+	any of these "feature" commands in the stream; third,
+	"feature import-marks-if-exists" like a corresponding
+	command-line option silently skips a nonexistent file.
 
 cat-blob::
 ls::
