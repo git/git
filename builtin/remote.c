@@ -1113,7 +1113,7 @@ static int show(int argc, const char **argv)
 			url = states.remote->url;
 			url_nr = states.remote->url_nr;
 		}
-		for (i=0; i < url_nr; i++)
+		for (i = 0; i < url_nr; i++)
 			printf("  Push  URL: %s\n", url[i]);
 		if (!i)
 			printf("  Push  URL: %s\n", "(no URL)");
