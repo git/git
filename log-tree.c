@@ -97,6 +97,8 @@ static int add_ref_decoration(const char *refname, const unsigned char *sha1, in
 
 	if (!prefixcmp(refname, "refs/replace/")) {
 		unsigned char original_sha1[20];
+		if (!read_replace_refs)
+			return 0;
 		if (get_sha1_hex(refname + 13, original_sha1)) {
 			warning("invalid replace ref %s", refname);
 			return 0;
