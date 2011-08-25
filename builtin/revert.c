@@ -258,12 +258,7 @@ static void write_message(struct strbuf *msgbuf, const char *filename)
 
 static struct tree *empty_tree(void)
 {
-	struct tree *tree = xcalloc(1, sizeof(struct tree));
-
-	tree->object.parsed = 1;
-	tree->object.type = OBJ_TREE;
-	pretend_sha1_file(NULL, 0, OBJ_TREE, tree->object.sha1);
-	return tree;
+	return lookup_tree((const unsigned char *)EMPTY_TREE_SHA1_BIN);
 }
 
 static NORETURN void die_dirty_index(const char *me)

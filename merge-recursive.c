@@ -1601,12 +1601,10 @@ int merge_recursive(struct merge_options *o,
 
 	merged_common_ancestors = pop_commit(&ca);
 	if (merged_common_ancestors == NULL) {
-		/* if there is no common ancestor, make an empty tree */
-		struct tree *tree = xcalloc(1, sizeof(struct tree));
+		/* if there is no common ancestor, use an empty tree */
+		struct tree *tree;
 
-		tree->object.parsed = 1;
-		tree->object.type = OBJ_TREE;
-		pretend_sha1_file(NULL, 0, OBJ_TREE, tree->object.sha1);
+		tree = lookup_tree((const unsigned char *)EMPTY_TREE_SHA1_BIN);
 		merged_common_ancestors = make_virtual_commit(tree, "ancestor");
 	}
 
