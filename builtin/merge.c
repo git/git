@@ -903,7 +903,7 @@ static int finish_automerge(struct commit_list *common,
 	strbuf_addch(&merge_msg, '\n');
 	run_prepare_commit_msg();
 	commit_tree(merge_msg.buf, result_tree, parents, result_commit, NULL);
-	strbuf_addf(&buf, "Merge made by %s.", wt_strategy);
+	strbuf_addf(&buf, "Merge made by the '%s' strategy.", wt_strategy);
 	finish(result_commit, buf.buf);
 	strbuf_release(&buf);
 	drop_save();
