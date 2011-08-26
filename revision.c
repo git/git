@@ -724,12 +724,16 @@ static void limit_to_ancestry(struct commit_list *bottom, struct commit_list *li
  * to filter the result of "A..B" further to the ones that can actually
  * reach A.
  */
-static struct commit_list *collect_bottom_commits(struct commit_list *list)
+static struct commit_list *collect_bottom_commits(struct rev_info *revs)
 {
-	struct commit_list *elem, *bottom = NULL;
-	for (elem = list; elem; elem = elem->next)
-		if (elem->item->object.flags & UNINTERESTING)
-			commit_list_insert(elem->item, &bottom);
+	struct commit_list *bottom = NULL;
+	int i;
+	for (i = 0; i < revs->cmdline.nr; i++) {
+		struct rev_cmdline_entry *elem = &revs->cmdline.rev[i];
+		if ((elem->flags & UNINTERESTING) &&
+		    elem->item->type == OBJ_COMMIT)
+			commit_list_insert((struct commit *)elem->item, &bottom);
+	}
 	return bottom;
 }
 
@@ -743,7 +747,7 @@ static int limit_list(struct rev_info *revs)
 	struct commit_list *bottom = NULL;
 
 	if (revs->ancestry_path) {
-		bottom = collect_bottom_commits(list);
+		bottom = collect_bottom_commits(revs);
 		if (!bottom)
 			die("--ancestry-path given but there are no bottom commits");
 	}

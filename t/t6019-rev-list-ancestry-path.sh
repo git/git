@@ -99,7 +99,7 @@ test_expect_success 'criss-cross: rev-list --ancestry-path cb..bc' '
 '
 
 # no commits in repository descend from cb
-test_expect_failure 'criss-cross: rev-list --ancestry-path --all ^cb' '
+test_expect_success 'criss-cross: rev-list --ancestry-path --all ^cb' '
 	(cd criss-cross &&
 	 git rev-list --ancestry-path --all ^cb > actual &&
 	 test -z "$(cat actual)")
