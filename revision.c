@@ -797,6 +797,23 @@ static int limit_list(struct rev_info *revs)
 	return 0;
 }
 
+static void add_rev_cmdline(struct rev_info *revs,
+			    struct object *item,
+			    const char *name,
+			    int whence,
+			    unsigned flags)
+{
+	struct rev_cmdline_info *info = &revs->cmdline;
+	int nr = info->nr;
+
+	ALLOC_GROW(info->rev, nr + 1, info->alloc);
+	info->rev[nr].item = item;
+	info->rev[nr].name = name;
+	info->rev[nr].whence = whence;
+	info->rev[nr].flags = flags;
+	info->nr++;
+}
+
 struct all_refs_cb {
 	int all_flags;
 	int warned_bad_reflog;
@@ -809,6 +826,7 @@ static int handle_one_ref(const char *path, const unsigned char *sha1, int flag,
 	struct all_refs_cb *cb = cb_data;
 	struct object *object = get_reference(cb->all_revs, path, sha1,
 					      cb->all_flags);
+	add_rev_cmdline(cb->all_revs, object, path, REV_CMD_REF, cb->all_flags);
 	add_pending_object(cb->all_revs, object, path);
 	return 0;
 }
@@ -835,6 +853,7 @@ static void handle_one_reflog_commit(unsigned char *sha1, void *cb_data)
 		struct object *o = parse_object(sha1);
 		if (o) {
 			o->flags |= cb->all_flags;
+			/* ??? CMDLINEFLAGS ??? */
 			add_pending_object(cb->all_revs, o, "");
 		}
 		else if (!cb->warned_bad_reflog) {
@@ -871,12 +890,13 @@ static void handle_reflog(struct rev_info *revs, unsigned flags)
 	for_each_reflog(handle_one_reflog, &cb);
 }
 
-static int add_parents_only(struct rev_info *revs, const char *arg, int flags)
+static int add_parents_only(struct rev_info *revs, const char *arg_, int flags)
 {
 	unsigned char sha1[20];
 	struct object *it;
 	struct commit *commit;
 	struct commit_list *parents;
+	const char *arg = arg_;
 
 	if (*arg == '^') {
 		flags ^= UNINTERESTING;
@@ -898,6 +918,7 @@ static int add_parents_only(struct rev_info *revs, const char *arg, int flags)
 	for (parents = commit->parents; parents; parents = parents->next) {
 		it = &parents->item->object;
 		it->flags |= flags;
+		add_rev_cmdline(revs, it, arg_, REV_CMD_PARENTS_ONLY, flags);
 		add_pending_object(revs, it, arg);
 	}
 	return 1;
@@ -987,7 +1008,7 @@ static void prepare_show_merge(struct rev_info *revs)
 	revs->limited = 1;
 }
 
-int handle_revision_arg(const char *arg, struct rev_info *revs,
+int handle_revision_arg(const char *arg_, struct rev_info *revs,
 			int flags,
 			int cant_be_filename)
 {
@@ -996,6 +1017,7 @@ int handle_revision_arg(const char *arg, struct rev_info *revs,
 	struct object *object;
 	unsigned char sha1[20];
 	int local_flags;
+	const char *arg = arg_;
 
 	dotdot = strstr(arg, "..");
 	if (dotdot) {
@@ -1004,6 +1026,7 @@ int handle_revision_arg(const char *arg, struct rev_info *revs,
 		const char *this = arg;
 		int symmetric = *next == '.';
 		unsigned int flags_exclude = flags ^ UNINTERESTING;
+		unsigned int a_flags;
 
 		*dotdot = 0;
 		next += symmetric;
@@ -1036,10 +1059,15 @@ int handle_revision_arg(const char *arg, struct rev_info *revs,
 				add_pending_commit_list(revs, exclude,
 							flags_exclude);
 				free_commit_list(exclude);
-				a->object.flags |= flags | SYMMETRIC_LEFT;
+				a_flags = flags | SYMMETRIC_LEFT;
 			} else
-				a->object.flags |= flags_exclude;
+				a_flags = flags_exclude;
+			a->object.flags |= a_flags;
 			b->object.flags |= flags;
+			add_rev_cmdline(revs, &a->object, this,
+					REV_CMD_LEFT, a_flags);
+			add_rev_cmdline(revs, &b->object, next,
+					REV_CMD_RIGHT, flags);
 			add_pending_object(revs, &a->object, this);
 			add_pending_object(revs, &b->object, next);
 			return 0;
@@ -1070,6 +1098,7 @@ int handle_revision_arg(const char *arg, struct rev_info *revs,
 	if (!cant_be_filename)
 		verify_non_filename(revs->prefix, arg);
 	object = get_reference(revs, arg, sha1, flags ^ local_flags);
+	add_rev_cmdline(revs, object, arg_, REV_CMD_REV, flags ^ local_flags);
 	add_pending_object_with_mode(revs, object, arg, mode);
 	return 0;
 }
