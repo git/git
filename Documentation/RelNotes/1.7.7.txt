@@ -103,14 +103,21 @@ Fixes since v1.7.6
 Unless otherwise noted, all the fixes in 1.7.6.X maintenance track are
 included in this release.
 
- * "ls-files ../$path" that is run from a subdirectory reported errors
+ * "git branch --set-upstream @{-1} foo" did not expand @{-1} correctly.
+   (merge e9d4f74 mg/branch-set-upstream-previous later to 'maint').
+
+ * "git describe --dirty" did not refresh the index before checking the
+   state of the working tree files.
+   (cherry-pick bb57148 ac/describe-dirty-refresh later to 'maint').
+
+ * "git ls-files ../$path" that is run from a subdirectory reported errors
    incorrectly when there is no such path that matches the given pathspec.
    (merge 0f64bfa cb/maint-ls-files-error-report later to 'maint').
 
 --
 exec >/var/tmp/1
 echo O=$(git describe master)
-O=v1.7.6-576-g6fcb384
+O=v1.7.6.1-415-g284daf2
 git log --first-parent --oneline $O..master
 echo
 git shortlog --no-merges ^maint ^$O master
