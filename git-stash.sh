@@ -228,7 +228,7 @@ save_stash () {
 		test "$untracked" = "all" && CLEAN_X_OPTION=-x || CLEAN_X_OPTION=
 		if test -n "$untracked"
 		then
-			git clean --force --quiet $CLEAN_X_OPTION
+			git clean --force --quiet -d $CLEAN_X_OPTION
 		fi
 
 		if test "$keep_index" = "t" && test -n $i_tree
