@@ -199,7 +199,7 @@ save_stash () {
 
 	if test -n "$patch_mode" && test -n "$untracked"
 	then
-	    die "Can't use --patch and ---include-untracked or --all at the same time"
+	    die "Can't use --patch and --include-untracked or --all at the same time"
 	fi
 
 	stash_msg="$*"
