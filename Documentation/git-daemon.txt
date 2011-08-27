@@ -93,14 +93,14 @@ OPTIONS
 	Listen on an alternative port.  Incompatible with '--inetd' option.
 
 --init-timeout=<n>::
-	Timeout between the moment the connection is established and the
-	client request is received (typically a rather low value, since
+	Timeout (in seconds) between the moment the connection is established
+	and the client request is received (typically a rather low value, since
 	that should be basically immediate).
 
 --timeout=<n>::
-	Timeout for specific client sub-requests. This includes the time
-	it takes for the server to process the sub-request and the time spent
-	waiting for the next client's request.
+	Timeout (in seconds) for specific client sub-requests. This includes
+	the time it takes for the server to process the sub-request and the
+	time spent waiting for the next client's request.
 
 --max-connections=<n>::
 	Maximum number of concurrent clients, defaults to 32.  Set it to
