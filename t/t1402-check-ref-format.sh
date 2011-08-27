@@ -30,6 +30,9 @@ invalid_ref 'heads/foo.lock'
 valid_ref 'heads/foo@bar'
 invalid_ref 'heads/v@{ation'
 invalid_ref 'heads/foo\bar'
+invalid_ref "$(printf 'heads/foo\t')"
+invalid_ref "$(printf 'heads/foo\177')"
+valid_ref "$(printf 'heads/fu\303\237')"
 
 test_expect_success "check-ref-format --branch @{-1}" '
 	T=$(git write-tree) &&
