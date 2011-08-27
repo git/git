@@ -23,13 +23,13 @@ test_expect_success 'stash save --include-untracked some dirty working directory
 '
 
 cat > expect <<EOF
+?? actual
 ?? expect
-?? output
 EOF
 
 test_expect_success 'stash save --include-untracked cleaned the untracked files' '
-	git status --porcelain > output
-	test_cmp output expect
+	git status --porcelain >actual
+	test_cmp expect actual
 '
 
 cat > expect.diff <<EOF
@@ -47,10 +47,10 @@ EOF
 
 test_expect_success 'stash save --include-untracked stashed the untracked files' '
 	test "!" -f file2 &&
-	git diff HEAD..stash^3 -- file2 > output &&
-	test_cmp output expect.diff &&
-	git ls-tree --name-only stash^3: > output &&
-	test_cmp output expect.lstree
+	git diff HEAD..stash^3 -- file2 >actual &&
+	test_cmp expect.diff actual &&
+	git ls-tree --name-only stash^3: >actual &&
+	test_cmp expect.lstree actual
 '
 test_expect_success 'stash save --patch --include-untracked fails' '
 	test_must_fail git stash --patch --include-untracked
@@ -64,15 +64,15 @@ git clean --force --quiet
 
 cat > expect <<EOF
  M file
+?? actual
 ?? expect
 ?? file2
-?? output
 EOF
 
 test_expect_success 'stash pop after save --include-untracked leaves files untracked again' '
 	git stash pop &&
-	git status --porcelain > output
-	test_cmp output expect
+	git status --porcelain >actual
+	test_cmp expect actual
 '
 
 git clean --force --quiet
@@ -96,8 +96,8 @@ EOF
 
 test_expect_success 'stash save --include-untracked dirty index got stashed' '
 	git stash pop --index &&
-	git diff --cached > output &&
-	test_cmp output expect
+	git diff --cached >actual &&
+	test_cmp expect actual
 '
 
 git reset > /dev/null
