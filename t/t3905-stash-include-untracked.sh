@@ -28,7 +28,7 @@ cat > expect <<EOF
 EOF
 
 test_expect_success 'stash save --include-untracked cleaned the untracked files' '
-	git status --porcelain >actual
+	git status --porcelain >actual &&
 	test_cmp expect actual
 '
 
@@ -71,7 +71,7 @@ EOF
 
 test_expect_success 'stash pop after save --include-untracked leaves files untracked again' '
 	git stash pop &&
-	git status --porcelain >actual
+	git status --porcelain >actual &&
 	test_cmp expect actual
 '
 
@@ -136,7 +136,7 @@ test_expect_success 'stash save --include-untracked respects .gitignore' '
 
 test_expect_success 'stash save -u can stash with only untracked files different' '
 	echo 4 > file4 &&
-	git stash -u
+	git stash -u &&
 	test "!" -f file4
 '
 
