@@ -98,6 +98,38 @@ test_expect_success 'git branch -m q r/q should fail when r exists' '
 	test_must_fail git branch -m q r/q
 '
 
+test_expect_success 'git branch -v -d t should work' '
+	git branch t &&
+	test .git/refs/heads/t &&
+	git branch -v -d t &&
+	test ! -f .git/refs/heads/t
+'
+
+test_expect_success 'git branch -v -m t s should work' '
+	git branch t &&
+	test .git/refs/heads/t &&
+	git branch -v -m t s &&
+	test ! -f .git/refs/heads/t &&
+	test -f .git/refs/heads/s &&
+	git branch -d s
+'
+
+test_expect_success 'git branch -m -d t s should fail' '
+	git branch t &&
+	test .git/refs/heads/t &&
+	test_must_fail git branch -m -d t s &&
+	git branch -d t &&
+	test ! -f .git/refs/heads/t
+'
+
+test_expect_success 'git branch --list -d t should fail' '
+	git branch t &&
+	test .git/refs/heads/t &&
+	test_must_fail git branch --list -d t &&
+	git branch -d t &&
+	test ! -f .git/refs/heads/t
+'
+
 mv .git/config .git/config-saved
 
 test_expect_success 'git branch -m q q2 without config should succeed' '

@@ -32,6 +32,11 @@ test_expect_success 'git branch shows local branches' '
 	test_cmp expect actual
 '
 
+test_expect_success 'git branch --list shows local branches' '
+	git branch --list >actual &&
+	test_cmp expect actual
+'
+
 cat >expect <<'EOF'
   origin/HEAD -> origin/branch-one
   origin/branch-one
