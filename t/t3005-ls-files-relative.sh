@@ -45,11 +45,12 @@ test_expect_success 'ls-files -c' '
 		for f in ../y*
 		do
 			echo "error: pathspec $sq$f$sq did not match any file(s) known to git."
-		done >expect &&
-		echo "Did you forget to ${sq}git add${sq}?" >>expect &&
-		ls ../x* >>expect &&
-		test_must_fail git ls-files -c --error-unmatch ../[xy]* >actual 2>&1 &&
-		test_cmp expect actual
+		done >expect.err &&
+		echo "Did you forget to ${sq}git add${sq}?" >>expect.err &&
+		ls ../x* >expect.out &&
+		test_must_fail git ls-files -c --error-unmatch ../[xy]* >actual.out 2>actual.err &&
+		test_cmp expect.out actual.out &&
+		test_cmp expect.err actual.err
 	)
 '
 
@@ -59,11 +60,12 @@ test_expect_success 'ls-files -o' '
 		for f in ../x*
 		do
 			echo "error: pathspec $sq$f$sq did not match any file(s) known to git."
-		done >expect &&
-		echo "Did you forget to ${sq}git add${sq}?" >>expect &&
-		ls ../y* >>expect &&
-		test_must_fail git ls-files -o --error-unmatch ../[xy]* >actual 2>&1 &&
-		test_cmp expect actual
+		done >expect.err &&
+		echo "Did you forget to ${sq}git add${sq}?" >>expect.err &&
+		ls ../y* >expect.out &&
+		test_must_fail git ls-files -o --error-unmatch ../[xy]* >actual.out 2>actual.err &&
+		test_cmp expect.out actual.out &&
+		test_cmp expect.err actual.err
 	)
 '
 
