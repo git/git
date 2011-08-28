@@ -377,21 +377,21 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 	struct msg_arg msg = { 0, STRBUF_INIT };
 	struct commit_list *with_commit = NULL;
 	struct option options[] = {
-		OPT_BOOLEAN('l', NULL, &list, "list tag names"),
+		OPT_BOOLEAN('l', "list", &list, "list tag names"),
 		{ OPTION_INTEGER, 'n', NULL, &lines, "n",
 				"print <n> lines of each tag message",
 				PARSE_OPT_OPTARG, NULL, 1 },
-		OPT_BOOLEAN('d', NULL, &delete, "delete tags"),
-		OPT_BOOLEAN('v', NULL, &verify, "verify tags"),
+		OPT_BOOLEAN('d', "delete", &delete, "delete tags"),
+		OPT_BOOLEAN('v', "verify", &verify, "verify tags"),
 
 		OPT_GROUP("Tag creation options"),
-		OPT_BOOLEAN('a', NULL, &annotate,
+		OPT_BOOLEAN('a', "annotate", &annotate,
 					"annotated tag, needs a message"),
-		OPT_CALLBACK('m', NULL, &msg, "message",
+		OPT_CALLBACK('m', "message", &msg, "message",
 			     "tag message", parse_msg_arg),
-		OPT_FILENAME('F', NULL, &msgfile, "read message from file"),
-		OPT_BOOLEAN('s', NULL, &sign, "annotated and GPG-signed tag"),
-		OPT_STRING('u', NULL, &keyid, "key-id",
+		OPT_FILENAME('F', "file", &msgfile, "read message from file"),
+		OPT_BOOLEAN('s', "sign", &sign, "annotated and GPG-signed tag"),
+		OPT_STRING('u', "local-user", &keyid, "key-id",
 					"use another key to sign the tag"),
 		OPT__FORCE(&force, "replace the tag if exists"),
 

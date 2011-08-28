@@ -43,12 +43,15 @@ GnuPG key for signing.
 OPTIONS
 -------
 -a::
+--annotate::
 	Make an unsigned, annotated tag object
 
 -s::
+--sign::
 	Make a GPG-signed tag, using the default e-mail address's key
 
 -u <key-id>::
+--local-user=<key-id>::
 	Make a GPG-signed tag, using the given key
 
 -f::
@@ -56,9 +59,11 @@ OPTIONS
 	Replace an existing tag with the given name (instead of failing)
 
 -d::
+--delete::
 	Delete existing tags with the given names.
 
 -v::
+--verify::
 	Verify the gpg signature of the given tag names.
 
 -n<num>::
@@ -69,13 +74,18 @@ OPTIONS
 	If the tag is not annotated, the commit message is displayed instead.
 
 -l <pattern>::
-	List tags with names that match the given pattern (or all if no pattern is given).
-	Typing "git tag" without arguments, also lists all tags.
+--list <pattern>::
+	List tags with names that match the given pattern (or all if no
+	pattern is given).  Running "git tag" without arguments also
+	lists all tags. The pattern is a shell wildcard (i.e., matched
+	using fnmatch(3)).  Multiple patterns may be given; if any of
+	them matches, the tag is shown.
 
 --contains <commit>::
 	Only list tags which contain the specified commit.
 
 -m <msg>::
+--message=<msg>::
 	Use the given tag message (instead of prompting).
 	If multiple `-m` options are given, their values are
 	concatenated as separate paragraphs.
@@ -83,6 +93,7 @@ OPTIONS
 	is given.
 
 -F <file>::
+--file=<file>::
 	Take the tag message from the given file.  Use '-' to
 	read the message from the standard input.
 	Implies `-a` if none of `-a`, `-s`, or `-u <key-id>`
