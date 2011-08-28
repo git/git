@@ -64,6 +64,7 @@ way to clean up all obsolete remote-tracking branches.
 OPTIONS
 -------
 -d::
+--delete::
 	Delete a branch. The branch must be fully merged in its
 	upstream branch, or in `HEAD` if no upstream was set with
 	`--track` or `--set-upstream`.
@@ -72,6 +73,7 @@ OPTIONS
 	Delete a branch irrespective of its merged status.
 
 -l::
+--create-reflog::
 	Create the branch's reflog.  This activates recording of
 	all changes made to the branch ref, enabling use of date
 	based sha1 expressions such as "<branchname>@\{yesterday}".
@@ -84,6 +86,7 @@ OPTIONS
 	already. Without `-f` 'git branch' refuses to change an existing branch.
 
 -m::
+--move::
 	Move/rename a branch and the corresponding reflog.
 
 -M::
@@ -100,9 +103,11 @@ OPTIONS
 	Same as `--color=never`.
 
 -r::
+--remotes::
 	List or delete (if used with -d) the remote-tracking branches.
 
 -a::
+--all::
 	List both remote-tracking branches and local branches.
 
 -v::
