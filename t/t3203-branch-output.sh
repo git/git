@@ -38,6 +38,15 @@ test_expect_success 'git branch --list shows local branches' '
 '
 
 cat >expect <<'EOF'
+  branch-one
+  branch-two
+EOF
+test_expect_success 'git branch --list pattern shows matching local branches' '
+	git branch --list branch* >actual &&
+	test_cmp expect actual
+'
+
+cat >expect <<'EOF'
   origin/HEAD -> origin/branch-one
   origin/branch-one
   origin/branch-two
@@ -67,6 +76,16 @@ two
 EOF
 test_expect_success 'git branch -v shows branch summaries' '
 	git branch -v >tmp &&
+	awk "{print \$NF}" <tmp >actual &&
+	test_cmp expect actual
+'
+
+cat >expect <<'EOF'
+two
+one
+EOF
+test_expect_success 'git branch -v pattern shows branch summaries' '
+	git branch -v branch* >tmp &&
 	awk "{print \$NF}" <tmp >actual &&
 	test_cmp expect actual
 '

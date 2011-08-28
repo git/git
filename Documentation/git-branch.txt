@@ -10,7 +10,7 @@ SYNOPSIS
 [verse]
 'git branch' [--color[=<when>] | --no-color] [-r | -a]
 	[--list] [-v [--abbrev=<length> | --no-abbrev]]
-	[(--merged | --no-merged | --contains) [<commit>]]
+	[(--merged | --no-merged | --contains) [<commit>]] [<pattern>...]
 'git branch' [--set-upstream | --track | --no-track] [-l] [-f] <branchname> [<start-point>]
 'git branch' (-m | -M) [<oldbranch>] <newbranch>
 'git branch' (-d | -D) [-r] <branchname>...
@@ -22,6 +22,9 @@ With no arguments, existing branches are listed and the current branch will
 be highlighted with an asterisk.  Option `-r` causes the remote-tracking
 branches to be listed, and option `-a` shows both. This list mode is also
 activated by the `--list` and `-v` options (see below).
+<pattern> restricts the output to matching branches, the pattern is a shell
+wildcard (i.e., matched using fnmatch(3))
+Multiple patterns may be given; if any of them matches, the tag is shown.
 
 With `--contains`, shows only the branches that contain the named commit
 (in other words, the branches whose tip commits are descendants of the
@@ -112,7 +115,8 @@ OPTIONS
 	List both remote-tracking branches and local branches.
 
 --list::
-	Activate the list mode.
+	Activate the list mode. `git branch <pattern>` would try to create a branch,
+	use `git branch --list <pattern>` to list matching branches.
 
 -v::
 --verbose::
