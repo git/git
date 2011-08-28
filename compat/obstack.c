@@ -18,17 +18,9 @@
    Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
    Boston, MA 02110-1301, USA.  */
 
-
-#ifdef HAVE_CONFIG_H
-# include <config.h>
-#endif
-
-#ifdef _LIBC
-# include <obstack.h>
-# include <shlib-compat.h>
-#else
-# include "obstack.h"
-#endif
+#include "git-compat-util.h"
+#include <gettext.h>
+#include "obstack.h"
 
 /* NOTE BEFORE MODIFYING THIS FILE: This version number must be
    incremented whenever callers compiled using an old obstack.h can no
@@ -102,15 +94,6 @@ enum
    `print_and_abort'.  */
 static void print_and_abort (void);
 void (*obstack_alloc_failed_handler) (void) = print_and_abort;
-
-/* Exit value used when `print_and_abort' is used.  */
-# include <stdlib.h>
-# ifdef _LIBC
-int obstack_exit_failure = EXIT_FAILURE;
-# else
-#  include "exitfail.h"
-#  define obstack_exit_failure exit_failure
-# endif
 
 # ifdef _LIBC
 #  if SHLIB_COMPAT (libc, GLIBC_2_0, GLIBC_2_3_4)
@@ -400,16 +383,6 @@ _obstack_memory_used (struct obstack *h)
   return nbytes;
 }
 
-/* Define the error handler.  */
-# ifdef _LIBC
-#  include <libintl.h>
-# else
-#  include "gettext.h"
-# endif
-# ifndef _
-#  define _(msgid) gettext (msgid)
-# endif
-
 # ifdef _LIBC
 #  include <libio/iolibio.h>
 # endif
@@ -435,7 +408,7 @@ print_and_abort (void)
 # else
   fprintf (stderr, "%s\n", _("memory exhausted"));
 # endif
-  exit (obstack_exit_failure);
+  exit (1);
 }
 
 #endif	/* !ELIDE_CODE */

@@ -187,7 +187,7 @@ extern int _obstack_begin_1 (struct obstack *, int, int,
 			     void (*) (void *, void *), void *);
 extern int _obstack_memory_used (struct obstack *);
 
-void obstack_free (struct obstack *__obstack, void *__block);
+void obstack_free (struct obstack *, void *);
 
 
 /* Error handler called when `obstack_chunk_alloc' failed to allocate
@@ -195,9 +195,6 @@ void obstack_free (struct obstack *__obstack, void *__block);
    should either abort gracefully or use longjump - but shouldn't
    return.  The default action is to print a message and abort.  */
 extern void (*obstack_alloc_failed_handler) (void);
-
-/* Exit value used when `print_and_abort' is used.  */
-extern int obstack_exit_failure;
 
 /* Pointer to beginning of object being allocated or to be allocated next.
    Note that this might not be the final address of the object

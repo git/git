@@ -37,7 +37,7 @@
 #include "cache.h"
 
 #include "kwset.h"
-#include "obstack.h"
+#include "compat/obstack.h"
 
 #define NCHAR (UCHAR_MAX + 1)
 #define obstack_chunk_alloc xmalloc
