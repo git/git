@@ -207,4 +207,27 @@ test_expect_success 'clone separate gitdir where target already exists' '
 	test_must_fail git clone --separate-git-dir realgitdir src dst
 '
 
+test_expect_success 'clone --reference from original' '
+	git clone --shared --bare src src-1 &&
+	git clone --bare src src-2 &&
+	git clone --reference=src-2 --bare src-1 target-8 &&
+	grep /src-2/ target-8/objects/info/alternates
+'
+
+test_expect_success 'clone with more than one --reference' '
+	git clone --bare src src-3 &&
+	git clone --bare src src-4 &&
+	git clone --reference=src-3 --reference=src-4 src target-9 &&
+	grep /src-3/ target-9/.git/objects/info/alternates &&
+	grep /src-4/ target-9/.git/objects/info/alternates
+'
+
+test_expect_success 'clone from original with relative alternate' '
+	mkdir nest &&
+	git clone --bare src nest/src-5 &&
+	echo ../../../src/.git/objects >nest/src-5/objects/info/alternates &&
+	git clone --bare nest/src-5 target-10 &&
+	grep /src/\\.git/objects target-10/objects/info/alternates
+'
+
 test_done

@@ -39,7 +39,7 @@ static const char * const builtin_clone_usage[] = {
 
 static int option_no_checkout, option_bare, option_mirror;
 static int option_local, option_no_hardlinks, option_shared, option_recursive;
-static char *option_template, *option_reference, *option_depth;
+static char *option_template, *option_depth;
 static char *option_origin = NULL;
 static char *option_branch = NULL;
 static const char *real_git_dir;
@@ -47,6 +47,16 @@ static char *option_upload_pack = "git-upload-pack";
 static int option_verbosity;
 static int option_progress;
 static struct string_list option_config;
+static struct string_list option_reference;
+
+static int opt_parse_reference(const struct option *opt, const char *arg, int unset)
+{
+	struct string_list *option_reference = opt->value;
+	if (!arg)
+		return -1;
+	string_list_append(option_reference, arg);
+	return 0;
+}
 
 static struct option builtin_clone_options[] = {
 	OPT__VERBOSITY(&option_verbosity),
@@ -72,8 +82,8 @@ static struct option builtin_clone_options[] = {
 		    "initialize submodules in the clone"),
 	OPT_STRING(0, "template", &option_template, "template-directory",
 		   "directory from which templates will be used"),
-	OPT_STRING(0, "reference", &option_reference, "repo",
-		   "reference repository"),
+	OPT_CALLBACK(0 , "reference", &option_reference, "repo",
+		     "reference repository", &opt_parse_reference),
 	OPT_STRING('o', "origin", &option_origin, "branch",
 		   "use <branch> instead of 'origin' to track upstream"),
 	OPT_STRING('b', "branch", &option_branch, "branch",
@@ -199,39 +209,80 @@ static void strip_trailing_slashes(char *dir)
 	*end = '\0';
 }
 
-static void setup_reference(const char *repo)
+static int add_one_reference(struct string_list_item *item, void *cb_data)
 {
-	const char *ref_git;
-	char *ref_git_copy;
-
+	char *ref_git;
+	struct strbuf alternate = STRBUF_INIT;
 	struct remote *remote;
 	struct transport *transport;
 	const struct ref *extra;
 
-	ref_git = real_path(option_reference);
-
-	if (is_directory(mkpath("%s/.git/objects", ref_git)))
-		ref_git = mkpath("%s/.git", ref_git);
-	else if (!is_directory(mkpath("%s/objects", ref_git)))
+	/* Beware: real_path() and mkpath() return static buffer */
+	ref_git = xstrdup(real_path(item->string));
+	if (is_directory(mkpath("%s/.git/objects", ref_git))) {
+		char *ref_git_git = xstrdup(mkpath("%s/.git", ref_git));
+		free(ref_git);
+		ref_git = ref_git_git;
+	} else if (!is_directory(mkpath("%s/objects", ref_git)))
 		die(_("reference repository '%s' is not a local directory."),
-		    option_reference);
+		    item->string);
 
-	ref_git_copy = xstrdup(ref_git);
+	strbuf_addf(&alternate, "%s/objects", ref_git);
+	add_to_alternates_file(alternate.buf);
+	strbuf_release(&alternate);
 
-	add_to_alternates_file(ref_git_copy);
-
-	remote = remote_get(ref_git_copy);
-	transport = transport_get(remote, ref_git_copy);
+	remote = remote_get(ref_git);
+	transport = transport_get(remote, ref_git);
 	for (extra = transport_get_remote_refs(transport); extra;
 	     extra = extra->next)
 		add_extra_ref(extra->name, extra->old_sha1, 0);
 
 	transport_disconnect(transport);
-
-	free(ref_git_copy);
+	free(ref_git);
+	return 0;
 }
 
-static void copy_or_link_directory(struct strbuf *src, struct strbuf *dest)
+static void setup_reference(void)
+{
+	for_each_string_list(&option_reference, add_one_reference, NULL);
+}
+
+static void copy_alternates(struct strbuf *src, struct strbuf *dst,
+			    const char *src_repo)
+{
+	/*
+	 * Read from the source objects/info/alternates file
+	 * and copy the entries to corresponding file in the
+	 * destination repository with add_to_alternates_file().
+	 * Both src and dst have "$path/objects/info/alternates".
+	 *
+	 * Instead of copying bit-for-bit from the original,
+	 * we need to append to existing one so that the already
+	 * created entry via "clone -s" is not lost, and also
+	 * to turn entries with paths relative to the original
+	 * absolute, so that they can be used in the new repository.
+	 */
+	FILE *in = fopen(src->buf, "r");
+	struct strbuf line = STRBUF_INIT;
+
+	while (strbuf_getline(&line, in, '\n') != EOF) {
+		char *abs_path, abs_buf[PATH_MAX];
+		if (!line.len || line.buf[0] == '#')
+			continue;
+		if (is_absolute_path(line.buf)) {
+			add_to_alternates_file(line.buf);
+			continue;
+		}
+		abs_path = mkpath("%s/objects/%s", src_repo, line.buf);
+		normalize_path_copy(abs_buf, abs_path);
+		add_to_alternates_file(abs_buf);
+	}
+	strbuf_release(&line);
+	fclose(in);
+}
+
+static void copy_or_link_directory(struct strbuf *src, struct strbuf *dest,
+				   const char *src_repo, int src_baselen)
 {
 	struct dirent *de;
 	struct stat buf;
@@ -267,7 +318,14 @@ static void copy_or_link_directory(struct strbuf *src, struct strbuf *dest)
 		}
 		if (S_ISDIR(buf.st_mode)) {
 			if (de->d_name[0] != '.')
-				copy_or_link_directory(src, dest);
+				copy_or_link_directory(src, dest,
+						       src_repo, src_baselen);
+			continue;
+		}
+
+		/* Files that cannot be copied bit-for-bit... */
+		if (!strcmp(src->buf + src_baselen, "/info/alternates")) {
+			copy_alternates(src, dest, src_repo);
 			continue;
 		}
 
@@ -290,17 +348,20 @@ static const struct ref *clone_local(const char *src_repo,
 				     const char *dest_repo)
 {
 	const struct ref *ret;
-	struct strbuf src = STRBUF_INIT;
-	struct strbuf dest = STRBUF_INIT;
 	struct remote *remote;
 	struct transport *transport;
 
-	if (option_shared)
-		add_to_alternates_file(src_repo);
-	else {
+	if (option_shared) {
+		struct strbuf alt = STRBUF_INIT;
+		strbuf_addf(&alt, "%s/objects", src_repo);
+		add_to_alternates_file(alt.buf);
+		strbuf_release(&alt);
+	} else {
+		struct strbuf src = STRBUF_INIT;
+		struct strbuf dest = STRBUF_INIT;
 		strbuf_addf(&src, "%s/objects", src_repo);
 		strbuf_addf(&dest, "%s/objects", dest_repo);
-		copy_or_link_directory(&src, &dest);
+		copy_or_link_directory(&src, &dest, src_repo, src.len);
 		strbuf_release(&src);
 		strbuf_release(&dest);
 	}
@@ -544,8 +605,8 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	git_config_set(key.buf, repo);
 	strbuf_reset(&key);
 
-	if (option_reference)
-		setup_reference(git_dir);
+	if (option_reference.nr)
+		setup_reference();
 
 	fetch_pattern = value.buf;
 	refspec = parse_fetch_refspec(1, &fetch_pattern);
