@@ -698,8 +698,8 @@ test_expect_success 'format-patch --no-signature supresses signatures' '
 	! grep "^-- \$" output
 '
 
-test_expect_failure 'format-patch --signature="" supresses signatures' '
-	git format-patch --signature="" -1 >output &&
+test_expect_success 'format-patch --signature="" supresses signatures' '
+	git format-patch --stdout --signature="" -1 >output &&
 	check_patch output &&
 	! grep "^-- \$" output
 '
