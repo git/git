@@ -1,3 +1,12 @@
+/*
+ * Handle git attributes.  See gitattributes(5) for a description of
+ * the file syntax, and Documentation/technical/api-gitattributes.txt
+ * for a description of the API.
+ *
+ * One basic design decision here is that we are not going to support
+ * an insanely large number of attributes.
+ */
+
 #define NO_THE_INDEX_COMPATIBILITY_MACROS
 #include "cache.h"
 #include "exec_cmd.h"
@@ -13,12 +22,7 @@ static const char git_attr__unknown[] = "(builtin)unknown";
 
 static const char *attributes_file;
 
-/*
- * The basic design decision here is that we are not going to have
- * insanely large number of attributes.
- *
- * This is a randomly chosen prime.
- */
+/* This is a randomly chosen prime. */
 #define HASHSIZE 257
 
 #ifndef DEBUG_ATTR
@@ -106,22 +110,26 @@ struct git_attr *git_attr(const char *name)
 	return git_attr_internal(name, strlen(name));
 }
 
-/*
- * .gitattributes file is one line per record, each of which is
- *
- * (1) glob pattern.
- * (2) whitespace
- * (3) whitespace separated list of attribute names, each of which
- *     could be prefixed with '-' to mean "set to false", '!' to mean
- *     "unset".
- */
-
 /* What does a matched pattern decide? */
 struct attr_state {
 	struct git_attr *attr;
 	const char *setto;
 };
 
+/*
+ * One rule, as from a .gitattributes file.
+ *
+ * If is_macro is true, then u.attr is a pointer to the git_attr being
+ * defined.
+ *
+ * If is_macro is false, then u.pattern points at the filename pattern
+ * to which the rule applies.  (The memory pointed to is part of the
+ * memory block allocated for the match_attr instance.)
+ *
+ * In either case, num_attr is the number of attributes affected by
+ * this rule, and state is an array listing them.  The attributes are
+ * listed as they appear in the file (macros unexpanded).
+ */
 struct match_attr {
 	union {
 		char *pattern;
@@ -134,8 +142,15 @@ struct match_attr {
 
 static const char blank[] = " \t\r\n";
 
+/*
+ * Parse a whitespace-delimited attribute state (i.e., "attr",
+ * "-attr", "!attr", or "attr=value") from the string starting at src.
+ * If e is not NULL, write the results to *e.  Return a pointer to the
+ * remainder of the string (with leading whitespace removed), or NULL
+ * if there was an error.
+ */
 static const char *parse_attr(const char *src, int lineno, const char *cp,
-			      int *num_attr, struct match_attr *res)
+			      struct attr_state *e)
 {
 	const char *ep, *equals;
 	int len;
@@ -148,7 +163,7 @@ static const char *parse_attr(const char *src, int lineno, const char *cp,
 		len = equals - cp;
 	else
 		len = ep - cp;
-	if (!res) {
+	if (!e) {
 		if (*cp == '-' || *cp == '!') {
 			cp++;
 			len--;
@@ -160,9 +175,6 @@ static const char *parse_attr(const char *src, int lineno, const char *cp,
 			return NULL;
 		}
 	} else {
-		struct attr_state *e;
-
-		e = &(res->state[*num_attr]);
 		if (*cp == '-' || *cp == '!') {
 			e->setto = (*cp == '-') ? ATTR__FALSE : ATTR__UNSET;
 			cp++;
@@ -175,7 +187,6 @@ static const char *parse_attr(const char *src, int lineno, const char *cp,
 		}
 		e->attr = git_attr_internal(cp, len);
 	}
-	(*num_attr)++;
 	return ep + strspn(ep, blank);
 }
 
@@ -183,10 +194,9 @@ static struct match_attr *parse_attr_line(const char *line, const char *src,
 					  int lineno, int macro_ok)
 {
 	int namelen;
-	int num_attr;
-	const char *cp, *name;
+	int num_attr, i;
+	const char *cp, *name, *states;
 	struct match_attr *res = NULL;
-	int pass;
 	int is_macro;
 
 	cp = line + strspn(line, blank);
@@ -215,32 +225,35 @@ static struct match_attr *parse_attr_line(const char *line, const char *src,
 	else
 		is_macro = 0;
 
-	for (pass = 0; pass < 2; pass++) {
-		/* pass 0 counts and allocates, pass 1 fills */
-		num_attr = 0;
-		cp = name + namelen;
-		cp = cp + strspn(cp, blank);
-		while (*cp) {
-			cp = parse_attr(src, lineno, cp, &num_attr, res);
-			if (!cp)
-				return NULL;
-		}
-		if (pass)
-			break;
-		res = xcalloc(1,
-			      sizeof(*res) +
-			      sizeof(struct attr_state) * num_attr +
-			      (is_macro ? 0 : namelen + 1));
-		if (is_macro)
-			res->u.attr = git_attr_internal(name, namelen);
-		else {
-			res->u.pattern = (char *)&(res->state[num_attr]);
-			memcpy(res->u.pattern, name, namelen);
-			res->u.pattern[namelen] = 0;
-		}
-		res->is_macro = is_macro;
-		res->num_attr = num_attr;
+	states = name + namelen;
+	states += strspn(states, blank);
+
+	/* First pass to count the attr_states */
+	for (cp = states, num_attr = 0; *cp; num_attr++) {
+		cp = parse_attr(src, lineno, cp, NULL);
+		if (!cp)
+			return NULL;
 	}
+
+	res = xcalloc(1,
+		      sizeof(*res) +
+		      sizeof(struct attr_state) * num_attr +
+		      (is_macro ? 0 : namelen + 1));
+	if (is_macro)
+		res->u.attr = git_attr_internal(name, namelen);
+	else {
+		res->u.pattern = (char *)&(res->state[num_attr]);
+		memcpy(res->u.pattern, name, namelen);
+		res->u.pattern[namelen] = 0;
+	}
+	res->is_macro = is_macro;
+	res->num_attr = num_attr;
+
+	/* Second pass to fill the attr_states */
+	for (cp = states, i = 0; *cp; i++) {
+		cp = parse_attr(src, lineno, cp, &(res->state[i]));
+	}
+
 	return res;
 }
 
