@@ -23,32 +23,25 @@ objects::
 	Object store associated with this repository.  Usually
 	an object store is self sufficient (i.e. all the objects
 	that are referred to by an object found in it are also
-	found in it), but there are couple of ways to violate
-	it.
+	found in it), but there are a few ways to violate it.
 +
-. You could populate the repository by running a commit walker
-without `-a` option.  Depending on which options are given, you
-could have only commit objects without associated blobs and
-trees this way, for example.  A repository with this kind of
-incomplete object store is not suitable to be published to the
-outside world but sometimes useful for private repository.
-. You also could have an incomplete but locally usable repository
-by cloning shallowly.  See linkgit:git-clone[1].
-. You can be using `objects/info/alternates` mechanism, or
-`$GIT_ALTERNATE_OBJECT_DIRECTORIES` mechanism to 'borrow'
+. You could have an incomplete but locally usable repository
+by creating a shallow clone.  See linkgit:git-clone[1].
+. You could be using the `objects/info/alternates` or
+`$GIT_ALTERNATE_OBJECT_DIRECTORIES` mechanisms to 'borrow'
 objects from other object stores.  A repository with this kind
 of incomplete object store is not suitable to be published for
 use with dumb transports but otherwise is OK as long as
-`objects/info/alternates` points at the right object stores
-it borrows from.
+`objects/info/alternates` points at the object stores it
+borrows from.
 
 objects/[0-9a-f][0-9a-f]::
-	Traditionally, each object is stored in its own file.
-	They are split into 256 subdirectories using the first
-	two letters from its object name to keep the number of
-	directory entries `objects` directory itself needs to
-	hold.  Objects found here are often called 'unpacked'
-	(or 'loose') objects.
+	A newly created object is stored in its own file.
+	The objects are splayed over 256 subdirectories using
+	the first two characters of the sha1 object name to
+	keep the number of directory entries in `objects`
+	itself to a manageable number. Objects found
+	here are often called 'unpacked' (or 'loose') objects.
 
 objects/pack::
 	Packs (files that store many object in compressed form,
@@ -85,7 +78,7 @@ objects/info/http-alternates::
 
 refs::
 	References are stored in subdirectories of this
-	directory.  The 'git prune' command knows to keep
+	directory.  The 'git prune' command knows to preserve
 	objects reachable from refs found in this directory and
 	its subdirectories.
 
@@ -119,16 +112,17 @@ HEAD::
 +
 HEAD can also record a specific commit directly, instead of
 being a symref to point at the current branch.  Such a state
-is often called 'detached HEAD', and almost all commands work
-identically as normal.  See linkgit:git-checkout[1] for
-details.
+is often called 'detached HEAD.'  See linkgit:git-checkout[1]
+for details.
 
 branches::
 	A slightly deprecated way to store shorthands to be used
-	to specify URL to 'git fetch', 'git pull' and 'git push'
-	commands is to store a file in `branches/<name>` and
-	give 'name' to these commands in place of 'repository'
-	argument.
+	to specify a URL to 'git fetch', 'git pull' and 'git push'.
+	A file can be stored as `branches/<name>` and then
+	'name' can be given to these commands in place of
+	'repository' argument.  See the REMOTES section in
+	linkgit:git-fetch[1] for details.  This mechanism is legacy
+	and not likely to be found in modern repositories.
 
 hooks::
 	Hooks are customization scripts used by various git
@@ -173,9 +167,11 @@ info/exclude::
 	at it.  See also: linkgit:gitignore[5].
 
 remotes::
-	Stores shorthands to be used to give URL and default
-	refnames to interact with remote repository to
-	'git fetch', 'git pull' and 'git push' commands.
+	Stores shorthands for URL and default refnames for use
+	when interacting with remote repositories via 'git fetch',
+	'git pull' and 'git push' commands.  See the REMOTES section
+	in linkgit:git-fetch[1] for details.  This mechanism is legacy
+	and not likely to be found in modern repositories.
 
 logs::
 	Records of changes made to refs are stored in this
