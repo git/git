@@ -833,6 +833,47 @@ test_expect_success \
 	 git diff-tree --abbrev --raw L^ L >output &&
 	 test_cmp expect output'
 
+cat >input <<INPUT_END
+blob
+mark :1
+data <<EOF
+the data
+EOF
+
+commit refs/heads/L2
+committer C O Mitter <committer@example.com> 1112912473 -0700
+data <<COMMIT
+init L2
+COMMIT
+M 644 :1 a/b/c
+M 644 :1 a/b/d
+M 644 :1 a/e/f
+
+commit refs/heads/L2
+committer C O Mitter <committer@example.com> 1112912473 -0700
+data <<COMMIT
+update L2
+COMMIT
+C a g
+C a/e g/b
+M 644 :1 g/b/h
+INPUT_END
+
+cat <<EOF >expect
+g/b/f
+g/b/h
+EOF
+
+test_expect_success \
+    'L: nested tree copy does not corrupt deltas' \
+	'git fast-import <input &&
+	git ls-tree L2 g/b/ >tmp &&
+	cat tmp | cut -f 2 >actual &&
+	test_cmp expect actual &&
+	git fsck `git rev-parse L2`'
+
+git update-ref -d refs/heads/L2
+
 ###
 ### series M
 ###
