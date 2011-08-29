@@ -18,6 +18,7 @@ enum decoration_type {
 	DECORATION_REF_TAG,
 	DECORATION_REF_STASH,
 	DECORATION_REF_HEAD,
+	DECORATION_GRAFTED,
 };
 
 static char decoration_colors[][COLOR_MAXLEN] = {
@@ -27,6 +28,7 @@ static char decoration_colors[][COLOR_MAXLEN] = {
 	GIT_COLOR_BOLD_YELLOW,	/* REF_TAG */
 	GIT_COLOR_BOLD_MAGENTA,	/* REF_STASH */
 	GIT_COLOR_BOLD_CYAN,	/* REF_HEAD */
+	GIT_COLOR_BOLD_BLUE,	/* GRAFTED */
 };
 
 static const char *decorate_get_color(int decorate_use_color, enum decoration_type ix)
@@ -90,16 +92,32 @@ static void add_name_decoration(enum decoration_type type, const char *name, str
 
 static int add_ref_decoration(const char *refname, const unsigned char *sha1, int flags, void *cb_data)
 {
-	struct object *obj = parse_object(sha1);
+	struct object *obj;
 	enum decoration_type type = DECORATION_NONE;
+
+	if (!prefixcmp(refname, "refs/replace/")) {
+		unsigned char original_sha1[20];
+		if (!read_replace_refs)
+			return 0;
+		if (get_sha1_hex(refname + 13, original_sha1)) {
+			warning("invalid replace ref %s", refname);
+			return 0;
+		}
+		obj = parse_object(original_sha1);
+		if (obj)
+			add_name_decoration(DECORATION_GRAFTED, "replaced", obj);
+		return 0;
+	}
+
+	obj = parse_object(sha1);
 	if (!obj)
 		return 0;
 
-	if (!prefixcmp(refname, "refs/heads"))
+	if (!prefixcmp(refname, "refs/heads/"))
 		type = DECORATION_REF_LOCAL;
-	else if (!prefixcmp(refname, "refs/remotes"))
+	else if (!prefixcmp(refname, "refs/remotes/"))
 		type = DECORATION_REF_REMOTE;
-	else if (!prefixcmp(refname, "refs/tags"))
+	else if (!prefixcmp(refname, "refs/tags/"))
 		type = DECORATION_REF_TAG;
 	else if (!prefixcmp(refname, "refs/stash"))
 		type = DECORATION_REF_STASH;
@@ -118,6 +136,15 @@ static int add_ref_decoration(const char *refname, const unsigned char *sha1, in
 	return 0;
 }
 
+static int add_graft_decoration(const struct commit_graft *graft, void *cb_data)
+{
+	struct commit *commit = lookup_commit(graft->sha1);
+	if (!commit)
+		return 0;
+	add_name_decoration(DECORATION_GRAFTED, "grafted", &commit->object);
+	return 0;
+}
+
 void load_ref_decorations(int flags)
 {
 	static int loaded;
@@ -125,6 +152,7 @@ void load_ref_decorations(int flags)
 		loaded = 1;
 		for_each_ref(add_ref_decoration, &flags);
 		head_ref(add_ref_decoration, &flags);
+		for_each_commit_graft(add_graft_decoration, NULL);
 	}
 }
 
