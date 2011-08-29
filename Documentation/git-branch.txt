@@ -113,7 +113,8 @@ OPTIONS
 
 --abbrev=<length>::
 	Alter the sha1's minimum display length in the output listing.
-	The default value is 7.
+	The default value is 7 and can be overridden by the `core.abbrev`
+	config option.
 
 --no-abbrev::
 	Display the full sha1s in the output listing rather than abbreviating them.

@@ -613,7 +613,7 @@ static int opt_parse_merge_filter(const struct option *opt, const char *arg, int
 int cmd_branch(int argc, const char **argv, const char *prefix)
 {
 	int delete = 0, rename = 0, force_create = 0;
-	int verbose = 0, abbrev = DEFAULT_ABBREV, detached = 0;
+	int verbose = 0, abbrev = -1, detached = 0;
 	int reflog = 0;
 	enum branch_track track;
 	int kinds = REF_LOCAL_BRANCH;
@@ -695,6 +695,9 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 			     0);
 	if (!!delete + !!rename + !!force_create > 1)
 		usage_with_options(builtin_branch_usage, options);
+
+	if (abbrev == -1)
+		abbrev = DEFAULT_ABBREV;
 
 	if (delete)
 		return delete_branches(argc, argv, delete > 1, kinds);
