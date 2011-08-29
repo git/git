@@ -45,7 +45,7 @@ struct diff_filespec {
 	unsigned dirty_submodule : 2;  /* For submodules: its work tree is dirty */
 #define DIRTY_SUBMODULE_UNTRACKED 1
 #define DIRTY_SUBMODULE_MODIFIED  2
-
+	unsigned has_more_entries : 1; /* only appear in combined diff */
 	struct userdiff_driver *driver;
 	/* data should be considered "binary"; -1 means "don't know yet" */
 	int is_binary;
