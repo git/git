@@ -166,15 +166,22 @@ will want to ensure that threading is disabled for `git send-email`.
 --to=<email>::
 	Add a `To:` header to the email headers. This is in addition
 	to any configured headers, and may be used multiple times.
+	The negated form `--no-to` discards all `To:` headers added so
+	far (from config or command line).
 
 --cc=<email>::
 	Add a `Cc:` header to the email headers. This is in addition
 	to any configured headers, and may be used multiple times.
+	The negated form `--no-cc` discards all `Cc:` headers added so
+	far (from config or command line).
 
 --add-header=<header>::
 	Add an arbitrary header to the email headers.  This is in addition
 	to any configured headers, and may be used multiple times.
-	For example, `--add-header="Organization: git-foo"`
+	For example, `--add-header="Organization: git-foo"`.
+	The negated form `--no-add-header` discards *all* (`To:`,
+	`Cc:`, and custom) headers added so far from config or command
+	line.
 
 --cover-letter::
 	In addition to the patches, generate a cover letter file
