@@ -413,7 +413,7 @@ test_expect_success 'add simple p4 branches' '
 	cd branch1 &&
 	echo file1 >file1 &&
 	echo file2 >file2 &&
-	p4 add file* &&
+	p4 add file1 file2 &&
 	p4 submit -d "branch1" &&
 	p4 integrate //depot/branch1/... //depot/branch2/... &&
 	p4 submit -d "branch2" &&
@@ -433,13 +433,12 @@ test_expect_success 'add simple p4 branches' '
 # Finally, make an update to branch1 on P4 side to check if it is imported
 # correctly by git-p4.
 test_expect_success 'git-p4 clone simple branches' '
-	git init "$git" &&
+	test_when_finished cleanup_git &&
+	test_create_repo "$git" &&
 	cd "$git" &&
 	git config git-p4.branchList branch1:branch2 &&
 	git config --add git-p4.branchList branch1:branch3 &&
-	cd "$TRASH_DIRECTORY" &&
-	"$GITP4" clone --dest="$git" --detect-branches //depot@all &&
-	cd "$git" &&
+	"$GITP4" clone --dest=. --detect-branches //depot@all &&
 	git log --all --graph --decorate --stat &&
 	git reset --hard p4/depot/branch1 &&
 	test -f file1 &&
@@ -449,7 +448,7 @@ test_expect_success 'git-p4 clone simple branches' '
 	git reset --hard p4/depot/branch2 &&
 	test -f file1 &&
 	test -f file2 &&
-	test \! -z file3 &&
+	test ! -f file3 &&
 	! grep -q update file2 &&
 	git reset --hard p4/depot/branch3 &&
 	test -f file1 &&
@@ -459,14 +458,12 @@ test_expect_success 'git-p4 clone simple branches' '
 	cd "$cli" &&
 	cd branch1 &&
 	p4 edit file2 &&
-	echo file2_ >> file2 &&
-	p4 submit -d "update file2 in branch3" &&
+	echo file2_ >>file2 &&
+	p4 submit -d "update file2 in branch1" &&
 	cd "$git" &&
 	git reset --hard p4/depot/branch1 &&
 	"$GITP4" rebase &&
-	grep -q file2_ file2 &&
-	cd "$TRASH_DIRECTORY" &&
-	rm -rf "$git" && mkdir "$git"
+	grep -q file2_ file2
 '
 
 test_expect_success 'shutdown' '
