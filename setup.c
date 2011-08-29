@@ -379,7 +379,7 @@ static int check_repository_format_gently(const char *gitdir, int *nongit_ok)
  * Try to read the location of the git directory from the .git file,
  * return path to git directory if found.
  */
-const char *read_gitfile_gently(const char *path)
+const char *read_gitfile(const char *path)
 {
 	char *buf;
 	char *dir;
@@ -441,7 +441,7 @@ static const char *setup_explicit_git_dir(const char *gitdirenv,
 	if (PATH_MAX - 40 < strlen(gitdirenv))
 		die("'$%s' too big", GIT_DIR_ENVIRONMENT);
 
-	gitfile = (char*)read_gitfile_gently(gitdirenv);
+	gitfile = (char*)read_gitfile(gitdirenv);
 	if (gitfile) {
 		gitfile = xstrdup(gitfile);
 		gitdirenv = gitfile;
@@ -665,7 +665,7 @@ static const char *setup_git_directory_gently_1(int *nongit_ok)
 	if (one_filesystem)
 		current_device = get_device_or_die(".", NULL);
 	for (;;) {
-		gitfile = (char*)read_gitfile_gently(DEFAULT_GIT_DIR_ENVIRONMENT);
+		gitfile = (char*)read_gitfile(DEFAULT_GIT_DIR_ENVIRONMENT);
 		if (gitfile)
 			gitdirenv = gitfile = xstrdup(gitfile);
 		else {

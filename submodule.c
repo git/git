@@ -32,7 +32,7 @@ static int add_submodule_odb(const char *path)
 	const char *git_dir;
 
 	strbuf_addf(&objects_directory, "%s/.git", path);
-	git_dir = read_gitfile_gently(objects_directory.buf);
+	git_dir = read_gitfile(objects_directory.buf);
 	if (git_dir) {
 		strbuf_reset(&objects_directory);
 		strbuf_addstr(&objects_directory, git_dir);
@@ -479,7 +479,7 @@ int fetch_populated_submodules(int num_options, const char **options,
 		strbuf_addf(&submodule_path, "%s/%s", work_tree, ce->name);
 		strbuf_addf(&submodule_git_dir, "%s/.git", submodule_path.buf);
 		strbuf_addf(&submodule_prefix, "%s%s/", prefix, ce->name);
-		git_dir = read_gitfile_gently(submodule_git_dir.buf);
+		git_dir = read_gitfile(submodule_git_dir.buf);
 		if (!git_dir)
 			git_dir = submodule_git_dir.buf;
 		if (is_directory(git_dir)) {
@@ -517,7 +517,7 @@ unsigned is_submodule_modified(const char *path, int ignore_untracked)
 	const char *git_dir;
 
 	strbuf_addf(&buf, "%s/.git", path);
-	git_dir = read_gitfile_gently(buf.buf);
+	git_dir = read_gitfile(buf.buf);
 	if (!git_dir)
 		git_dir = buf.buf;
 	if (!is_directory(git_dir)) {

@@ -451,7 +451,7 @@ int resolve_gitlink_ref(const char *path, const char *refname, unsigned char *re
 	memcpy(gitdir + len, "/.git", 6);
 	len += 5;
 
-	tmp = read_gitfile_gently(gitdir);
+	tmp = read_gitfile(gitdir);
 	if (tmp) {
 		free(gitdir);
 		len = strlen(tmp);
