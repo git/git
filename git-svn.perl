@@ -3022,7 +3022,7 @@ sub other_gs {
 			my (undef, $max_commit) = $gs->rev_map_max(1);
 			last if (!$max_commit);
 			my ($url) = ::cmt_metadata($max_commit);
-			last if ($url eq $gs->full_url);
+			last if ($url eq $gs->metadata_url);
 			$ref_id .= '-';
 		}
 		print STDERR "Initializing parent: $ref_id\n" unless $::_q > 1;
