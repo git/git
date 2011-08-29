@@ -219,11 +219,11 @@ test_expect_success '--no-cc overrides config.cc' '
 	! grep "^Cc: C. E. Cipient <rcipient@example.com>\$" patch12
 '
 
-test_expect_failure '--no-add-headers overrides config.headers' '
+test_expect_success '--no-add-header overrides config.headers' '
 
 	git config --replace-all format.headers \
 		"Header1: B. E. Cipient <rcipient@example.com>" &&
-	git format-patch --no-add-headers --stdout master..side |
+	git format-patch --no-add-header --stdout master..side |
 	sed -e "/^\$/q" >patch13 &&
 	check_patch patch13 &&
 	! grep "^Header1: B. E. Cipient <rcipient@example.com>\$" patch13
