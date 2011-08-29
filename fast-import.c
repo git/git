@@ -289,6 +289,7 @@ static uintmax_t marks_set_count;
 static uintmax_t object_count_by_type[1 << TYPE_BITS];
 static uintmax_t duplicate_count_by_type[1 << TYPE_BITS];
 static uintmax_t delta_count_by_type[1 << TYPE_BITS];
+static uintmax_t delta_count_attempts_by_type[1 << TYPE_BITS];
 static unsigned long object_count;
 static unsigned long branch_count;
 static unsigned long branch_load_count;
@@ -1050,6 +1051,7 @@ static int store_object(
 	}
 
 	if (last && last->data.buf && last->depth < max_depth && dat->len > 20) {
+		delta_count_attempts_by_type[type]++;
 		delta = diff_delta(last->data.buf, last->data.len,
 			dat->buf, dat->len,
 			&deltalen, dat->len - 20);
@@ -2834,7 +2836,12 @@ static void cat_blob(struct object_entry *oe, unsigned char sha1[20])
 	strbuf_release(&line);
 	cat_blob_write(buf, size);
 	cat_blob_write("\n", 1);
-	free(buf);
+	if (oe && oe->pack_id == pack_id) {
+		last_blob.offset = oe->idx.offset;
+		strbuf_attach(&last_blob.data, buf, size, size);
+		last_blob.depth = oe->depth;
+	} else
+		free(buf);
 }
 
 static void parse_cat_blob(void)
@@ -3372,10 +3379,10 @@ int main(int argc, const char **argv)
 		fprintf(stderr, "---------------------------------------------------------------------\n");
 		fprintf(stderr, "Alloc'd objects: %10" PRIuMAX "\n", alloc_count);
 		fprintf(stderr, "Total objects:   %10" PRIuMAX " (%10" PRIuMAX " duplicates                  )\n", total_count, duplicate_count);
-		fprintf(stderr, "      blobs  :   %10" PRIuMAX " (%10" PRIuMAX " duplicates %10" PRIuMAX " deltas)\n", object_count_by_type[OBJ_BLOB], duplicate_count_by_type[OBJ_BLOB], delta_count_by_type[OBJ_BLOB]);
-		fprintf(stderr, "      trees  :   %10" PRIuMAX " (%10" PRIuMAX " duplicates %10" PRIuMAX " deltas)\n", object_count_by_type[OBJ_TREE], duplicate_count_by_type[OBJ_TREE], delta_count_by_type[OBJ_TREE]);
-		fprintf(stderr, "      commits:   %10" PRIuMAX " (%10" PRIuMAX " duplicates %10" PRIuMAX " deltas)\n", object_count_by_type[OBJ_COMMIT], duplicate_count_by_type[OBJ_COMMIT], delta_count_by_type[OBJ_COMMIT]);
-		fprintf(stderr, "      tags   :   %10" PRIuMAX " (%10" PRIuMAX " duplicates %10" PRIuMAX " deltas)\n", object_count_by_type[OBJ_TAG], duplicate_count_by_type[OBJ_TAG], delta_count_by_type[OBJ_TAG]);
+		fprintf(stderr, "      blobs  :   %10" PRIuMAX " (%10" PRIuMAX " duplicates %10" PRIuMAX " deltas of %10" PRIuMAX" attempts)\n", object_count_by_type[OBJ_BLOB], duplicate_count_by_type[OBJ_BLOB], delta_count_by_type[OBJ_BLOB], delta_count_attempts_by_type[OBJ_BLOB]);
+		fprintf(stderr, "      trees  :   %10" PRIuMAX " (%10" PRIuMAX " duplicates %10" PRIuMAX " deltas of %10" PRIuMAX" attempts)\n", object_count_by_type[OBJ_TREE], duplicate_count_by_type[OBJ_TREE], delta_count_by_type[OBJ_TREE], delta_count_attempts_by_type[OBJ_TREE]);
+		fprintf(stderr, "      commits:   %10" PRIuMAX " (%10" PRIuMAX " duplicates %10" PRIuMAX " deltas of %10" PRIuMAX" attempts)\n", object_count_by_type[OBJ_COMMIT], duplicate_count_by_type[OBJ_COMMIT], delta_count_by_type[OBJ_COMMIT], delta_count_attempts_by_type[OBJ_COMMIT]);
+		fprintf(stderr, "      tags   :   %10" PRIuMAX " (%10" PRIuMAX " duplicates %10" PRIuMAX " deltas of %10" PRIuMAX" attempts)\n", object_count_by_type[OBJ_TAG], duplicate_count_by_type[OBJ_TAG], delta_count_by_type[OBJ_TAG], delta_count_attempts_by_type[OBJ_TAG]);
 		fprintf(stderr, "Total branches:  %10lu (%10lu loads     )\n", branch_count, branch_load_count);
 		fprintf(stderr, "      marks:     %10" PRIuMAX " (%10" PRIuMAX " unique    )\n", (((uintmax_t)1) << marks->shift) * 1024, marks_set_count);
 		fprintf(stderr, "      atoms:     %10u\n", atom_cnt);
