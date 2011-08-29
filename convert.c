@@ -533,7 +533,7 @@ static int ident_to_git(const char *path, const char *src, size_t len,
 		dollar = memchr(src, '$', len);
 		if (!dollar)
 			break;
-		memcpy(dst, src, dollar + 1 - src);
+		memmove(dst, src, dollar + 1 - src);
 		dst += dollar + 1 - src;
 		len -= dollar + 1 - src;
 		src  = dollar + 1;
@@ -553,7 +553,7 @@ static int ident_to_git(const char *path, const char *src, size_t len,
 			src  = dollar + 1;
 		}
 	}
-	memcpy(dst, src, len);
+	memmove(dst, src, len);
 	strbuf_setlen(buf, dst + len - buf->buf);
 	return 1;
 }
