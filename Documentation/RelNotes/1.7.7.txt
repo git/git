@@ -8,7 +8,7 @@ Updates since v1.7.6
 
  * Interix, Cygwin and Minix ports got updated.
 
- * A handful of patches to update git-p4 (in contrib/).
+ * Various updates git-p4 (in contrib/) and "git fast-import".
 
  * Gitweb learned to read from /etc/gitweb-common.conf when it exists,
    before reading from gitweb_config.perl or from /etc/gitweb.conf
@@ -24,6 +24,10 @@ Updates since v1.7.6
    Android with 4kb window). We used to reject anything that was not
    deflated with 32kb window.
 
+ * Interaction between the use of pager and coloring of the output has
+   been improved, especially when a command that is not built-in was
+   involved.
+
  * "git am" learned to pass "--exclude=<path>" option through to underlying
    "git apply".
 
@@ -36,6 +40,9 @@ Updates since v1.7.6
  * "git bisect" can be used in a bare repository (provided if the test
    you perform per each iteration does not need a working tree, of
    course).
+
+ * The length of abbreviated object names in "git branch -v" output
+   now honors core.abbrev configuration variable.
 
  * "git check-attr" can take relative paths from the command line.
 
@@ -73,6 +80,9 @@ Updates since v1.7.6
  * "git grep" learned "-W" option that shows wider context using the same
    logic used by "git diff" to determine the hunk header.
 
+ * The "--decorate" option to "git log" and its family learned to
+   highlight grafted and replaced commits.
+
  * "git rebase master topci" no longer spews usage hints after giving
    "fatal: no such branch: topci" error message.
 
@@ -105,6 +115,19 @@ included in this release.
 
  * "git branch --set-upstream @{-1} foo" did not expand @{-1} correctly.
    (merge e9d4f74 mg/branch-set-upstream-previous later to 'maint').
+
+ * "git branch -m" and "git checkout -b" incorrectly allowed the tip
+   of the branch that is currently checked out updated.
+   (merge 55c4a67 ci/forbid-unwanted-current-branch-update later to 'maint').
+
+ * "git clone" failed to clone locally from a ".git" file that itself
+   is not a directory but is a pointer to one.
+   (merge 9b0ebc7 nd/maint-clone-gitdir later to 'maint').
+
+ * "git clone" from a local repository that borrows from another
+   object store using a relative path in its objects/info/alternates
+   file did not adjust the alternates in the resulting repository.
+   (merge e6baf4a1 jc/maint-clone-alternates later to 'maint').
 
  * "git describe --dirty" did not refresh the index before checking the
    state of the working tree files.
