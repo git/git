@@ -702,9 +702,8 @@ static void show_combined_header(struct combine_diff_path *elem,
 	int abbrev = DIFF_OPT_TST(opt, FULL_INDEX) ? 40 : DEFAULT_ABBREV;
 	const char *a_prefix = opt->a_prefix ? opt->a_prefix : "a/";
 	const char *b_prefix = opt->b_prefix ? opt->b_prefix : "b/";
-	int use_color = DIFF_OPT_TST(opt, COLOR_DIFF);
-	const char *c_meta = diff_get_color(use_color, DIFF_METAINFO);
-	const char *c_reset = diff_get_color(use_color, DIFF_RESET);
+	const char *c_meta = diff_get_color_opt(opt, DIFF_METAINFO);
+	const char *c_reset = diff_get_color_opt(opt, DIFF_RESET);
 	const char *abb;
 	int added = 0;
 	int deleted = 0;
@@ -964,7 +963,7 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 		show_combined_header(elem, num_parent, dense, rev,
 				     mode_differs, 1);
 		dump_sline(sline, cnt, num_parent,
-			   DIFF_OPT_TST(opt, COLOR_DIFF), result_deleted);
+			   opt->use_color, result_deleted);
 	}
 	free(result);
 

@@ -31,7 +31,7 @@ static char decoration_colors[][COLOR_MAXLEN] = {
 
 static const char *decorate_get_color(int decorate_use_color, enum decoration_type ix)
 {
-	if (decorate_use_color)
+	if (want_color(decorate_use_color))
 		return decoration_colors[ix];
 	return "";
 }
@@ -77,7 +77,7 @@ int parse_decorate_color_config(const char *var, const int ofs, const char *valu
  * for showing the commit sha1, use the same check for --decorate
  */
 #define decorate_get_color_opt(o, ix) \
-	decorate_get_color(DIFF_OPT_TST((o), COLOR_DIFF), ix)
+	decorate_get_color((o)->use_color, ix)
 
 static void add_name_decoration(enum decoration_type type, const char *name, struct object *obj)
 {

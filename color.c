@@ -1,7 +1,8 @@
 #include "cache.h"
 #include "color.h"
 
-int git_use_color_default = 0;
+static int git_use_color_default = 0;
+int color_stdout_is_tty = -1;
 
 /*
  * The list of available column colors.
@@ -157,7 +158,7 @@ bad:
 	die("bad color value '%.*s' for variable '%s'", value_len, value, var);
 }
 
-int git_config_colorbool(const char *var, const char *value, int stdout_is_tty)
+int git_config_colorbool(const char *var, const char *value)
 {
 	if (value) {
 		if (!strcasecmp(value, "never"))
@@ -165,7 +166,7 @@ int git_config_colorbool(const char *var, const char *value, int stdout_is_tty)
 		if (!strcasecmp(value, "always"))
 			return 1;
 		if (!strcasecmp(value, "auto"))
-			goto auto_color;
+			return GIT_COLOR_AUTO;
 	}
 
 	if (!var)
@@ -176,10 +177,14 @@ int git_config_colorbool(const char *var, const char *value, int stdout_is_tty)
 		return 0;
 
 	/* any normal truth value defaults to 'auto' */
- auto_color:
-	if (stdout_is_tty < 0)
-		stdout_is_tty = isatty(1);
-	if (stdout_is_tty || (pager_in_use() && pager_use_color)) {
+	return GIT_COLOR_AUTO;
+}
+
+static int check_auto_color(void)
+{
+	if (color_stdout_is_tty < 0)
+		color_stdout_is_tty = isatty(1);
+	if (color_stdout_is_tty || (pager_in_use() && pager_use_color)) {
 		char *term = getenv("TERM");
 		if (term && strcmp(term, "dumb"))
 			return 1;
@@ -187,12 +192,35 @@ int git_config_colorbool(const char *var, const char *value, int stdout_is_tty)
 	return 0;
 }
 
-int git_color_default_config(const char *var, const char *value, void *cb)
+int want_color(int var)
+{
+	static int want_auto = -1;
+
+	if (var < 0)
+		var = git_use_color_default;
+
+	if (var == GIT_COLOR_AUTO) {
+		if (want_auto < 0)
+			want_auto = check_auto_color();
+		return want_auto;
+	}
+	return var;
+}
+
+int git_color_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, "color.ui")) {
-		git_use_color_default = git_config_colorbool(var, value, -1);
+		git_use_color_default = git_config_colorbool(var, value);
 		return 0;
 	}
+
+	return 0;
+}
+
+int git_color_default_config(const char *var, const char *value, void *cb)
+{
+	if (git_color_config(var, value, cb) < 0)
+		return -1;
 
 	return git_default_config(var, value, cb);
 }

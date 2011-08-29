@@ -26,7 +26,9 @@ static char default_wt_status_colors[][COLOR_MAXLEN] = {
 
 static const char *color(int slot, struct wt_status *s)
 {
-	const char *c = s->use_color > 0 ? s->color_palette[slot] : "";
+	const char *c = "";
+	if (want_color(s->use_color))
+		c = s->color_palette[slot];
 	if (slot == WT_STATUS_ONBRANCH && color_is_nil(c))
 		c = s->color_palette[WT_STATUS_HEADER];
 	return c;
@@ -681,7 +683,7 @@ static void wt_status_print_verbose(struct wt_status *s)
 	 * will have checked isatty on stdout).
 	 */
 	if (s->fp != stdout)
-		DIFF_OPT_CLR(&rev.diffopt, COLOR_DIFF);
+		rev.diffopt.use_color = 0;
 	run_diff_index(&rev, 1);
 }
 

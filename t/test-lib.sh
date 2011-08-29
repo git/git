@@ -361,6 +361,24 @@ test_chmod () {
 	git update-index --add "--chmod=$@"
 }
 
+# Unset a configuration variable, but don't fail if it doesn't exist.
+test_unconfig () {
+	git config --unset-all "$@"
+	config_status=$?
+	case "$config_status" in
+	5) # ok, nothing to unset
+		config_status=0
+		;;
+	esac
+	return $config_status
+}
+
+# Set git config, automatically unsetting it after the test is over.
+test_config () {
+	test_when_finished "test_unconfig '$1'" &&
+	git config "$@"
+}
+
 # Use test_set_prereq to tell that a particular prerequisite is available.
 # The prerequisite can later be checked for in two ways:
 #

@@ -137,7 +137,7 @@ static int git_config_rename(const char *var, const char *value)
 int git_diff_ui_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, "diff.color") || !strcmp(var, "color.diff")) {
-		diff_use_color_default = git_config_colorbool(var, value, -1);
+		diff_use_color_default = git_config_colorbool(var, value);
 		return 0;
 	}
 	if (!strcmp(var, "diff.renames")) {
@@ -163,6 +163,9 @@ int git_diff_ui_config(const char *var, const char *value, void *cb)
 
 	if (!strcmp(var, "diff.ignoresubmodules"))
 		handle_ignore_submodules_arg(&default_diff_options, value);
+
+	if (git_color_config(var, value, cb) < 0)
+		return -1;
 
 	return git_diff_basic_config(var, value, cb);
 }
@@ -212,7 +215,7 @@ int git_diff_basic_config(const char *var, const char *value, void *cb)
 	if (!prefixcmp(var, "submodule."))
 		return parse_submodule_config_option(var, value);
 
-	return git_color_default_config(var, value, cb);
+	return git_default_config(var, value, cb);
 }
 
 static char *quote_two(const char *one, const char *two)
@@ -583,11 +586,10 @@ static void emit_rewrite_diff(const char *name_a,
 			      struct diff_options *o)
 {
 	int lc_a, lc_b;
-	int color_diff = DIFF_OPT_TST(o, COLOR_DIFF);
 	const char *name_a_tab, *name_b_tab;
-	const char *metainfo = diff_get_color(color_diff, DIFF_METAINFO);
-	const char *fraginfo = diff_get_color(color_diff, DIFF_FRAGINFO);
-	const char *reset = diff_get_color(color_diff, DIFF_RESET);
+	const char *metainfo = diff_get_color(o->use_color, DIFF_METAINFO);
+	const char *fraginfo = diff_get_color(o->use_color, DIFF_FRAGINFO);
+	const char *reset = diff_get_color(o->use_color, DIFF_RESET);
 	static struct strbuf a_name = STRBUF_INIT, b_name = STRBUF_INIT;
 	const char *a_prefix, *b_prefix;
 	char *data_one, *data_two;
@@ -623,7 +625,7 @@ static void emit_rewrite_diff(const char *name_a,
 	size_two = fill_textconv(textconv_two, two, &data_two);
 
 	memset(&ecbdata, 0, sizeof(ecbdata));
-	ecbdata.color_diff = color_diff;
+	ecbdata.color_diff = want_color(o->use_color);
 	ecbdata.found_changesp = &o->found_changes;
 	ecbdata.ws_rule = whitespace_rule(name_b ? name_b : name_a);
 	ecbdata.opt = o;
@@ -1004,7 +1006,7 @@ static void free_diff_words_data(struct emit_callback *ecbdata)
 
 const char *diff_get_color(int diff_use_color, enum color_diff ix)
 {
-	if (diff_use_color)
+	if (want_color(diff_use_color))
 		return diff_colors[ix];
 	return "";
 }
@@ -1808,11 +1810,10 @@ static int is_conflict_marker(const char *line, int marker_size, unsigned long l
 static void checkdiff_consume(void *priv, char *line, unsigned long len)
 {
 	struct checkdiff_t *data = priv;
-	int color_diff = DIFF_OPT_TST(data->o, COLOR_DIFF);
 	int marker_size = data->conflict_marker_size;
-	const char *ws = diff_get_color(color_diff, DIFF_WHITESPACE);
-	const char *reset = diff_get_color(color_diff, DIFF_RESET);
-	const char *set = diff_get_color(color_diff, DIFF_FILE_NEW);
+	const char *ws = diff_get_color(data->o->use_color, DIFF_WHITESPACE);
+	const char *reset = diff_get_color(data->o->use_color, DIFF_RESET);
+	const char *set = diff_get_color(data->o->use_color, DIFF_FILE_NEW);
 	char *err;
 	char *line_prefix = "";
 	struct strbuf *msgbuf;
@@ -2157,7 +2158,7 @@ static void builtin_diff(const char *name_a,
 		memset(&xecfg, 0, sizeof(xecfg));
 		memset(&ecbdata, 0, sizeof(ecbdata));
 		ecbdata.label_path = lbl;
-		ecbdata.color_diff = DIFF_OPT_TST(o, COLOR_DIFF);
+		ecbdata.color_diff = want_color(o->use_color);
 		ecbdata.found_changesp = &o->found_changes;
 		ecbdata.ws_rule = whitespace_rule(name_b ? name_b : name_a);
 		if (ecbdata.ws_rule & WS_BLANK_AT_EOF)
@@ -2205,7 +2206,7 @@ static void builtin_diff(const char *name_a,
 					break;
 				}
 			}
-			if (DIFF_OPT_TST(o, COLOR_DIFF)) {
+			if (want_color(o->use_color)) {
 				struct diff_words_style *st = ecbdata.diff_words->style;
 				st->old.color = diff_get_color_opt(o, DIFF_FILE_OLD);
 				st->new.color = diff_get_color_opt(o, DIFF_FILE_NEW);
@@ -2855,7 +2856,7 @@ static void run_diff_cmd(const char *pgm,
 		 */
 		fill_metainfo(msg, name, other, one, two, o, p,
 			      &must_show_header,
-			      DIFF_OPT_TST(o, COLOR_DIFF) && !pgm);
+			      want_color(o->use_color) && !pgm);
 		xfrm_msg = msg->len ? msg->buf : NULL;
 	}
 
@@ -3021,8 +3022,7 @@ void diff_setup(struct diff_options *options)
 
 	options->change = diff_change;
 	options->add_remove = diff_addremove;
-	if (diff_use_color_default > 0)
-		DIFF_OPT_SET(options, COLOR_DIFF);
+	options->use_color = diff_use_color_default;
 	options->detect_rename = diff_detect_rename_default;
 
 	if (diff_no_prefix) {
@@ -3412,24 +3412,21 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 	else if (!strcmp(arg, "--follow"))
 		DIFF_OPT_SET(options, FOLLOW_RENAMES);
 	else if (!strcmp(arg, "--color"))
-		DIFF_OPT_SET(options, COLOR_DIFF);
+		options->use_color = 1;
 	else if (!prefixcmp(arg, "--color=")) {
-		int value = git_config_colorbool(NULL, arg+8, -1);
-		if (value == 0)
-			DIFF_OPT_CLR(options, COLOR_DIFF);
-		else if (value > 0)
-			DIFF_OPT_SET(options, COLOR_DIFF);
-		else
+		int value = git_config_colorbool(NULL, arg+8);
+		if (value < 0)
 			return error("option `color' expects \"always\", \"auto\", or \"never\"");
+		options->use_color = value;
 	}
 	else if (!strcmp(arg, "--no-color"))
-		DIFF_OPT_CLR(options, COLOR_DIFF);
+		options->use_color = 0;
 	else if (!strcmp(arg, "--color-words")) {
-		DIFF_OPT_SET(options, COLOR_DIFF);
+		options->use_color = 1;
 		options->word_diff = DIFF_WORDS_COLOR;
 	}
 	else if (!prefixcmp(arg, "--color-words=")) {
-		DIFF_OPT_SET(options, COLOR_DIFF);
+		options->use_color = 1;
 		options->word_diff = DIFF_WORDS_COLOR;
 		options->word_regex = arg + 14;
 	}
@@ -3442,7 +3439,7 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 		if (!strcmp(type, "plain"))
 			options->word_diff = DIFF_WORDS_PLAIN;
 		else if (!strcmp(type, "color")) {
-			DIFF_OPT_SET(options, COLOR_DIFF);
+			options->use_color = 1;
 			options->word_diff = DIFF_WORDS_COLOR;
 		}
 		else if (!strcmp(type, "porcelain"))

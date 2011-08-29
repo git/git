@@ -58,7 +58,7 @@ typedef struct strbuf *(*diff_prefix_fn_t)(struct diff_options *opt, void *data)
 #define DIFF_OPT_SILENT_ON_REMOVE    (1 <<  5)
 #define DIFF_OPT_FIND_COPIES_HARDER  (1 <<  6)
 #define DIFF_OPT_FOLLOW_RENAMES      (1 <<  7)
-#define DIFF_OPT_COLOR_DIFF          (1 <<  8)
+/* (1 <<  8) unused */
 /* (1 <<  9) unused */
 #define DIFF_OPT_HAS_CHANGES         (1 << 10)
 #define DIFF_OPT_QUICK               (1 << 11)
@@ -101,6 +101,7 @@ struct diff_options {
 	const char *single_follow;
 	const char *a_prefix, *b_prefix;
 	unsigned flags;
+	int use_color;
 	int context;
 	int interhunkcontext;
 	int break_opt;
@@ -160,7 +161,7 @@ enum color_diff {
 };
 const char *diff_get_color(int diff_use_color, enum color_diff ix);
 #define diff_get_color_opt(o, ix) \
-	diff_get_color(DIFF_OPT_TST((o), COLOR_DIFF), ix)
+	diff_get_color((o)->use_color, ix)
 
 
 extern const char mime_boundary_leader[];

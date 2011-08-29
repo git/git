@@ -71,7 +71,7 @@ static int parse_branch_color_slot(const char *var, int ofs)
 static int git_branch_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, "color.branch")) {
-		branch_use_color = git_config_colorbool(var, value, -1);
+		branch_use_color = git_config_colorbool(var, value);
 		return 0;
 	}
 	if (!prefixcmp(var, "color.branch.")) {
@@ -88,7 +88,7 @@ static int git_branch_config(const char *var, const char *value, void *cb)
 
 static const char *branch_get_color(enum color_branch ix)
 {
-	if (branch_use_color > 0)
+	if (want_color(branch_use_color))
 		return branch_colors[ix];
 	return "";
 }
@@ -672,9 +672,6 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 		usage_with_options(builtin_branch_usage, options);
 
 	git_config(git_branch_config, NULL);
-
-	if (branch_use_color == -1)
-		branch_use_color = git_use_color_default;
 
 	track = git_branch_track;
 

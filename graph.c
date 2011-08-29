@@ -347,7 +347,7 @@ static struct commit_list *first_interesting_parent(struct git_graph *graph)
 
 static unsigned short graph_get_current_column_color(const struct git_graph *graph)
 {
-	if (!DIFF_OPT_TST(&graph->revs->diffopt, COLOR_DIFF))
+	if (!want_color(graph->revs->diffopt.use_color))
 		return column_colors_max;
 	return graph->default_column_color;
 }

@@ -390,8 +390,6 @@ static void finish(const unsigned char *new_head, const char *msg)
 		opts.output_format |=
 			DIFF_FORMAT_SUMMARY | DIFF_FORMAT_DIFFSTAT;
 		opts.detect_rename = DIFF_DETECT_RENAME;
-		if (diff_use_color_default > 0)
-			DIFF_OPT_SET(&opts, COLOR_DIFF);
 		if (diff_setup_done(&opts) < 0)
 			die(_("diff_setup_done failed"));
 		diff_tree_sha1(head, new_head, "", &opts);
@@ -1032,10 +1030,6 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		head_invalid = 1;
 
 	git_config(git_merge_config, NULL);
-
-	/* for color.ui */
-	if (diff_use_color_default == -1)
-		diff_use_color_default = git_use_color_default;
 
 	if (branch_mergeoptions)
 		parse_branch_merge_options(branch_mergeoptions);
