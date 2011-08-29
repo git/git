@@ -2726,13 +2726,13 @@ static void parse_new_tag(void)
 		type = oe->type;
 		hashcpy(sha1, oe->idx.sha1);
 	} else if (!get_sha1(from, sha1)) {
-		unsigned long size;
-		char *buf;
-
-		buf = read_sha1_file(sha1, &type, &size);
-		if (!buf || size < 46)
-			die("Not a valid commit: %s", from);
-		free(buf);
+		struct object_entry *oe = find_object(sha1);
+		if (!oe) {
+			type = sha1_object_info(sha1, NULL);
+			if (type < 0)
+				die("Not a valid object: %s", from);
+		} else
+			type = oe->type;
 	} else
 		die("Invalid ref name or SHA1 expression: %s", from);
 	read_next_command();

@@ -94,6 +94,12 @@ data <<EOF
 An annotated tag without a tagger
 EOF
 
+tag series-A-blob
+from :3
+data <<EOF
+An annotated tag that annotates a blob.
+EOF
+
 INPUT_END
 test_expect_success \
     'A: create pack from stdin' \
@@ -152,6 +158,18 @@ test_expect_success 'A: verify tag/series-A' '
 '
 
 cat >expect <<EOF
+object $(git rev-parse refs/heads/master:file3)
+type blob
+tag series-A-blob
+
+An annotated tag that annotates a blob.
+EOF
+test_expect_success 'A: verify tag/series-A-blob' '
+	git cat-file tag tags/series-A-blob >actual &&
+	test_cmp expect actual
+'
+
+cat >expect <<EOF
 :2 `git rev-parse --verify master:file2`
 :3 `git rev-parse --verify master:file3`
 :4 `git rev-parse --verify master:file4`
@@ -168,6 +186,55 @@ test_expect_success \
 		--export-marks=marks.new \
 		</dev/null &&
 	test_cmp expect marks.new'
+
+test_tick
+new_blob=$(echo testing | git hash-object --stdin)
+cat >input <<INPUT_END
+tag series-A-blob-2
+from $(git rev-parse refs/heads/master:file3)
+data <<EOF
+Tag blob by sha1.
+EOF
+
+blob
+mark :6
+data <<EOF
+testing
+EOF
+
+commit refs/heads/new_blob
+committer  <> 0 +0000
+data 0
+M 644 :6 new_blob
+#pretend we got sha1 from fast-import
+ls "new_blob"
+
+tag series-A-blob-3
+from $new_blob
+data <<EOF
+Tag new_blob.
+EOF
+INPUT_END
+
+cat >expect <<EOF
+object $(git rev-parse refs/heads/master:file3)
+type blob
+tag series-A-blob-2
+
+Tag blob by sha1.
+object $new_blob
+type blob
+tag series-A-blob-3
+
+Tag new_blob.
+EOF
+
+test_expect_success \
+	'A: tag blob by sha1' \
+	'git fast-import <input &&
+	git cat-file tag tags/series-A-blob-2 >actual &&
+	git cat-file tag tags/series-A-blob-3 >>actual &&
+	test_cmp expect actual'
 
 test_tick
 cat >input <<INPUT_END
