@@ -30,10 +30,8 @@ void strbuf_init(struct strbuf *sb, size_t hint)
 {
 	sb->alloc = sb->len = 0;
 	sb->buf = strbuf_slopbuf;
-	if (hint) {
+	if (hint)
 		strbuf_grow(sb, hint);
-		sb->buf[0] = '\0';
-	}
 }
 
 void strbuf_release(struct strbuf *sb)
@@ -65,12 +63,15 @@ void strbuf_attach(struct strbuf *sb, void *buf, size_t len, size_t alloc)
 
 void strbuf_grow(struct strbuf *sb, size_t extra)
 {
+	int new_buf = !sb->alloc;
 	if (unsigned_add_overflows(extra, 1) ||
 	    unsigned_add_overflows(sb->len, extra + 1))
 		die("you want to use way too much memory");
-	if (!sb->alloc)
+	if (new_buf)
 		sb->buf = NULL;
 	ALLOC_GROW(sb->buf, sb->len + extra + 1, sb->alloc);
+	if (new_buf)
+		sb->buf[0] = '\0';
 }
 
 void strbuf_trim(struct strbuf *sb)
