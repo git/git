@@ -463,6 +463,7 @@ int run_diff_index(struct rev_info *revs, int cached)
 	opts.unpack_data = revs;
 	opts.src_index = &the_index;
 	opts.dst_index = NULL;
+	opts.pathspec = &revs->diffopt.pathspec;
 
 	init_tree_desc(&t, tree->buffer, tree->size);
 	if (unpack_trees(1, &t, &opts))
