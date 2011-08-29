@@ -16,6 +16,14 @@ void create_branch(const char *head, const char *name, const char *start_name,
 		   int force, int reflog, enum branch_track track);
 
 /*
+ * Validates that the requested branch may be created, returning the
+ * interpreted ref in ref, force indicates whether (non-head) branches
+ * may be overwritten. A non-zero return value indicates that the force
+ * parameter was non-zero and the branch already exists.
+ */
+int validate_new_branchname(const char *name, struct strbuf *ref, int force);
+
+/*
  * Remove information about the state of working on the current
  * branch. (E.g., MERGE_HEAD)
  */

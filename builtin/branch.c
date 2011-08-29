@@ -566,11 +566,7 @@ static void rename_branch(const char *oldname, const char *newname, int force)
 			die(_("Invalid branch name: '%s'"), oldname);
 	}
 
-	if (strbuf_check_branch_ref(&newref, newname))
-		die(_("Invalid branch name: '%s'"), newname);
-
-	if (resolve_ref(newref.buf, sha1, 1, NULL) && !force)
-		die(_("A branch named '%s' already exists."), newref.buf + 11);
+	validate_new_branchname(newname, &newref, force);
 
 	strbuf_addf(&logmsg, "Branch: renamed %s to %s",
 		 oldref.buf, newref.buf);

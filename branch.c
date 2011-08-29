@@ -135,6 +135,26 @@ static int setup_tracking(const char *new_ref, const char *orig_ref,
 	return 0;
 }
 
+int validate_new_branchname(const char *name, struct strbuf *ref, int force)
+{
+	const char *head;
+	unsigned char sha1[20];
+
+	if (strbuf_check_branch_ref(ref, name))
+		die("'%s' is not a valid branch name.", name);
+
+	if (!ref_exists(ref->buf))
+		return 0;
+	else if (!force)
+		die("A branch named '%s' already exists.", ref->buf + strlen("refs/heads/"));
+
+	head = resolve_ref("HEAD", sha1, 0, NULL);
+	if (!is_bare_repository() && head && !strcmp(head, ref->buf))
+		die("Cannot force update the current branch.");
+
+	return 1;
+}
+
 void create_branch(const char *head,
 		   const char *name, const char *start_name,
 		   int force, int reflog, enum branch_track track)
@@ -151,17 +171,11 @@ void create_branch(const char *head,
 	if (track == BRANCH_TRACK_EXPLICIT || track == BRANCH_TRACK_OVERRIDE)
 		explicit_tracking = 1;
 
-	if (strbuf_check_branch_ref(&ref, name))
-		die("'%s' is not a valid branch name.", name);
-
-	if (resolve_ref(ref.buf, sha1, 1, NULL)) {
-		if (!force && track == BRANCH_TRACK_OVERRIDE)
+	if (validate_new_branchname(name, &ref, force || track == BRANCH_TRACK_OVERRIDE)) {
+		if (!force)
 			dont_change_ref = 1;
-		else if (!force)
-			die("A branch named '%s' already exists.", name);
-		else if (!is_bare_repository() && head && !strcmp(head, name))
-			die("Cannot force update the current branch.");
-		forcing = 1;
+		else
+			forcing = 1;
 	}
 
 	real_ref = NULL;

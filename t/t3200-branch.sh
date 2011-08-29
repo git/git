@@ -98,6 +98,18 @@ test_expect_success 'git branch -m q r/q should fail when r exists' '
 	test_must_fail git branch -m q r/q
 '
 
+test_expect_success 'git branch -M foo bar should fail when bar is checked out' '
+	git branch bar &&
+	git checkout -b foo &&
+	test_must_fail git branch -M bar foo
+'
+
+test_expect_success 'git branch -M baz bam should succeed when baz is checked out' '
+	git checkout -b baz &&
+	git branch bam &&
+	git branch -M baz bam
+'
+
 mv .git/config .git/config-saved
 
 test_expect_success 'git branch -m q q2 without config should succeed' '
