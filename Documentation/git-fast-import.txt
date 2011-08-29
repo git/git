@@ -425,8 +425,8 @@ Here `<name>` is the person's display name (for example
 (``cm@example.com'').  `LT` and `GT` are the literal less-than (\x3c)
 and greater-than (\x3e) symbols.  These are required to delimit
 the email address from the other fields in the line.  Note that
-`<name>` is free-form and may contain any sequence of bytes, except
-`LT` and `LF`.  It is typically UTF-8 encoded.
+`<name>` and `<email>` are free-form and may contain any sequence
+of bytes, except `LT`, `GT` and `LF`.  `<name>` is typically UTF-8 encoded.
 
 The time of the change is specified by `<when>` using the date format
 that was selected by the \--date-format=<fmt> command line option.
