@@ -632,8 +632,12 @@ static int grep_object(struct grep_opt *opt, const char **paths,
 		void *data;
 		unsigned long size;
 		int hit;
+
+		read_sha1_lock();
 		data = read_object_with_reference(obj->sha1, tree_type,
 						  &size, NULL);
+		read_sha1_unlock();
+
 		if (!data)
 			die("unable to read tree (%s)", sha1_to_hex(obj->sha1));
 		init_tree_desc(&tree, data, size);
