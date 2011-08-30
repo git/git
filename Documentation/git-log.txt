@@ -69,10 +69,13 @@ produced by --stat etc.
 	its size is not included.
 
 [\--] <path>...::
-	Show only commits that affect any of the specified paths. To
-	prevent confusion with options and branch names, paths may need
-	to be prefixed with "\-- " to separate them from options or
-	refnames.
+	Show only commits that are enough to explain how the files
+	that match the specified paths came to be.  See "History
+	Simplification" below for details and other simplification
+	modes.
++
+To prevent confusion with options and branch names, paths may need to
+be prefixed with "\-- " to separate them from options or refnames.
 
 include::rev-list-options.txt[]
 
