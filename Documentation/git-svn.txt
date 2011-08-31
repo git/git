@@ -222,8 +222,9 @@ discouraged.
 	Add the given merge information during the dcommit
 	(e.g. `--mergeinfo="/branches/foo:1-10"`). All svn server versions can
 	store this information (as a property), and svn clients starting from
-	version 1.5 can make use of it. 'git svn' currently does not use it
-	and does not set it automatically.
+	version 1.5 can make use of it. To specify merge information from multiple
+	branches, use a single space character between the branches
+	(`--mergeinfo="/branches/foo:1-10 /branches/bar:3,5-6,8"`)
 
 'branch'::
 	Create a branch in the SVN repository.

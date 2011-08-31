@@ -559,6 +559,9 @@ sub cmd_dcommit {
 	}
 	my $expect_url = $url;
 	Git::SVN::remove_username($expect_url);
+	if (defined($_merge_info)) {
+		$_merge_info =~ tr{ }{\n};
+	}
 	while (1) {
 		my $d = shift @$linear_refs or last;
 		unless (defined $last_rev) {
