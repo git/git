@@ -84,6 +84,27 @@ my $shallow_import = run_git("config --get --bool remote.". $remotename .".shall
 chomp($shallow_import);
 $shallow_import = ($shallow_import eq "true");
 
+# Dumb push: don't update notes and mediawiki ref to reflect the last push.
+#
+# Configurable with mediawiki.dumbPush, or per-remote with
+# remote.<remotename>.dumbPush.
+#
+# This means the user will have to re-import the just-pushed
+# revisions. On the other hand, this means that the Git revisions
+# corresponding to MediaWiki revisions are all imported from the wiki,
+# regardless of whether they were initially created in Git or from the
+# web interface, hence all users will get the same history (i.e. if
+# the push from Git to MediaWiki loses some information, everybody
+# will get the history with information lost). If the import is
+# deterministic, this means everybody gets the same sha1 for each
+# MediaWiki revision.
+my $dumb_push = run_git("config --get --bool remote.$remotename.dumbPush");
+unless ($dumb_push) {
+	$dumb_push = run_git("config --get --bool mediawiki.dumbPush");
+}
+chomp($dumb_push);
+$dumb_push = ($dumb_push eq "true");
+
 my $wiki_name = $url;
 $wiki_name =~ s/[^\/]*:\/\///;
 
@@ -598,6 +619,9 @@ sub mw_push_file {
 	my $complete_file_name = shift;
 	# Commit message
 	my $summary = shift;
+	# MediaWiki revision number. Keep the previous one by default,
+	# in case there's no edit to perform.
+	my $newrevid = shift;
 
 	my $new_sha1 = $diff_info_split[3];
 	my $old_sha1 = $diff_info_split[2];
@@ -631,10 +655,12 @@ sub mw_push_file {
 				  }) || die 'Fatal: Error ' .
 				  $mediawiki->{error}->{code} .
 				  ' from mediwiki: ' . $mediawiki->{error}->{details};
+		$newrevid = $result->{edit}->{newrevid};
 		print STDERR "Pushed file : $new_sha1 - $title\n";
 	} else {
 		print STDERR "$complete_file_name not a mediawiki file (Not pushable on this version of git-remote-mediawiki).\n"
 	}
+	return $newrevid;
 }
 
 sub mw_push {
@@ -666,7 +692,7 @@ sub mw_push {
 	# Notify Git that the push is done
 	print STDOUT "\n";
 
-	if ($pushed) {
+	if ($pushed && $dumb_push) {
 		print STDERR "Just pushed some revisions to MediaWiki.\n";
 		print STDERR "The pushed revisions now have to be re-imported, and your current branch\n";
 		print STDERR "needs to be updated with these re-imported commits. You can do this with\n";
@@ -682,6 +708,7 @@ sub mw_push_revision {
 	my $last_local_revid = get_last_local_revision();
 	print STDERR ".\n"; # Finish sentence started by get_last_local_revision()
 	my $last_remote_revid = get_last_remote_revision();
+	my $mw_revision = $last_remote_revid;
 
 	# Get sha1 of commit pointed by local HEAD
 	my $HEAD_sha1 = run_git("rev-parse $local 2>/dev/null"); chomp($HEAD_sha1);
@@ -747,7 +774,11 @@ sub mw_push_revision {
 			# and we've split on \0.
 			my $info = shift(@diff_info_list);
 			my $file = shift(@diff_info_list);
-			mw_push_file($info, $file, $commit_msg);
+			$mw_revision = mw_push_file($info, $file, $commit_msg, $mw_revision);
+		}
+		unless ($dumb_push) {
+			run_git("notes --ref=$remotename/mediawiki add -m \"mediawiki_revision: $mw_revision\" $sha1_commit");
+			run_git("update-ref -m \"Git-MediaWiki push\" refs/mediawiki/$remotename/master $sha1_commit $sha1_child");
 		}
 	}
 
