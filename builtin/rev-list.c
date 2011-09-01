@@ -180,7 +180,11 @@ static void show_object(struct object *obj,
 			const struct name_path *path, const char *component,
 			void *cb_data)
 {
+	struct rev_info *info = cb_data;
+
 	finish_object(obj, path, component, cb_data);
+	if (info->verify_objects && !obj->parsed && obj->type != OBJ_COMMIT)
+		parse_object(obj->sha1);
 	show_object_with_name(stdout, obj, path, component);
 }
 
