@@ -241,7 +241,22 @@ Supported if the helper has the "fetch" capability.
 'push' +<src>:<dst>::
 	Pushes the given local <src> commit or branch to the
 	remote branch described by <dst>.  A batch sequence of
-	one or more push commands is terminated with a blank line.
+	one or more 'push' commands is terminated with a blank line
+	(if there is only one reference to push, a single 'push' command
+	is followed by a blank line). For example, the following would
+	be two batches of 'push', the first asking the remote-helper
+	to push the local ref 'master' to the remote ref 'master' and
+	the local 'HEAD' to the remote 'branch', and the second
+	asking to push ref 'foo' to ref 'bar' (forced update requested
+	by the '+').
++
+------------
+push refs/heads/master:refs/heads/master
+push HEAD:refs/heads/branch
+\n
+push +refs/heads/foo:refs/heads/bar
+\n
+------------
 +
 Zero or more protocol options may be entered after the last 'push'
 command, before the batch's terminating blank line.
@@ -265,6 +280,11 @@ Supported if the helper has the "push" capability.
 +
 Especially useful for interoperability with a foreign versioning
 system.
++
+Just like 'push', a batch sequence of one or more 'import' is
+terminated with a blank line. For each batch of 'import', the remote
+helper should produce a fast-import stream terminated by a 'done'
+command.
 +
 Supported if the helper has the "import" capability.
 
