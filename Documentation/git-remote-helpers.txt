@@ -362,6 +362,8 @@ SEE ALSO
 --------
 linkgit:git-remote[1]
 
+linkgit:git-remote-testgit[1]
+
 GIT
 ---
 Part of the linkgit:git[1] suite

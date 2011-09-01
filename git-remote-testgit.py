@@ -1,5 +1,18 @@
 #!/usr/bin/env python
 
+# This command is a simple remote-helper, that is used both as a
+# testcase for the remote-helper functionality, and as an example to
+# show remote-helper authors one possible implementation.
+#
+# This is a Git <-> Git importer/exporter, that simply uses git
+# fast-import and git fast-export to consume and produce fast-import
+# streams.
+#
+# To understand better the way things work, one can activate debug
+# traces by setting (to any value) the environment variables
+# GIT_TRANSPORT_HELPER_DEBUG and GIT_DEBUG_TESTGIT, to see messages
+# from the transport-helper side, or from this example remote-helper.
+
 # hashlib is only available in python >= 2.5
 try:
     import hashlib
