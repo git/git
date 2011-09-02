@@ -132,8 +132,12 @@ x38="$x5$x5$x5$x5$x5$x5$x5$x1$x1$x1"
 x40="$x38$x2"
 
 test_expect_success 'PUT and MOVE sends object to URLs with SHA-1 hash suffix' '
-	sed -e "s/PUT /OP /" -e "s/MOVE /OP /" "$HTTPD_ROOT_PATH"/access.log |
-	grep -e "\"OP .*/objects/$x2/${x38}_$x40 HTTP/[.0-9]*\" 20[0-9] "
+	sed \
+		-e "s/PUT /OP /" \
+		-e "s/MOVE /OP /" \
+	    -e "s|/objects/$x2/${x38}_$x40|WANTED_PATH_REQUEST|" \
+		"$HTTPD_ROOT_PATH"/access.log |
+	grep -e "\"OP .*WANTED_PATH_REQUEST HTTP/[.0-9]*\" 20[0-9] "
 
 '
 
