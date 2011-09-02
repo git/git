@@ -84,7 +84,7 @@ test_expect_success 'git grep -Fi Y<NUL>f a' "
 	git grep -f f -Fi a
 "
 
-test_expect_failure 'git grep -Fi Y<NUL>x a' "
+test_expect_success 'git grep -Fi Y<NUL>x a' "
 	printf 'YQx' | q_to_nul >f &&
 	test_must_fail git grep -f f -Fi a
 "
@@ -94,7 +94,7 @@ test_expect_success 'git grep y<NUL>f a' "
 	git grep -f f a
 "
 
-test_expect_failure 'git grep y<NUL>x a' "
+test_expect_success 'git grep y<NUL>x a' "
 	printf 'yQx' | q_to_nul >f &&
 	test_must_fail git grep -f f a
 "

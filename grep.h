@@ -7,6 +7,7 @@
 typedef int pcre;
 typedef int pcre_extra;
 #endif
+#include "kwset.h"
 
 enum grep_pat_token {
 	GREP_PATTERN,
@@ -41,6 +42,7 @@ struct grep_pat {
 	regex_t regexp;
 	pcre *pcre_regexp;
 	pcre_extra *pcre_extra_info;
+	kwset_t kws;
 	unsigned fixed:1;
 	unsigned ignore_case:1;
 	unsigned word_regexp:1;
