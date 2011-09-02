@@ -651,6 +651,16 @@ test_expect_success 'rename a remote with name part of fetch spec' '
 
 '
 
+test_expect_success 'rename a remote with name prefix of other remote' '
+
+	git clone one four.three &&
+	(cd four.three &&
+	 git remote add o git://example.com/repo.git &&
+	 git remote rename o upstream &&
+	 test "$(git rev-parse origin/master)" = "$(git rev-parse master)")
+
+'
+
 cat > remotes_origin << EOF
 URL: $(pwd)/one
 Push: refs/heads/master:refs/heads/upstream

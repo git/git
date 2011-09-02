@@ -580,7 +580,7 @@ static int read_remote_branches(const char *refname,
 	unsigned char orig_sha1[20];
 	const char *symref;
 
-	strbuf_addf(&buf, "refs/remotes/%s", rename->old);
+	strbuf_addf(&buf, "refs/remotes/%s/", rename->old);
 	if (!prefixcmp(refname, buf.buf)) {
 		item = string_list_append(rename->remote_branches, xstrdup(refname));
 		symref = resolve_ref(refname, orig_sha1, 1, &flag);
