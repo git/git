@@ -542,7 +542,7 @@ test_expect_success 'ref with non-existent reflog' '
 	echo bar6 > file2 &&
 	git add file2 &&
 	git stash &&
-	! "git rev-parse --quiet --verify does-not-exist" &&
+	test_must_fail git rev-parse --quiet --verify does-not-exist &&
 	test_must_fail git stash drop does-not-exist &&
 	test_must_fail git stash drop does-not-exist@{0} &&
 	test_must_fail git stash pop does-not-exist &&
