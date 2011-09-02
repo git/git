@@ -142,8 +142,9 @@ OPTIONS
 
 -C <object>::
 --reuse-message=<object>::
-	Take the note message from the given blob object (for
-	example, another note).
+	Take the given blob object (for	example, another note) as the
+	note message. (Use `git notes copy <object>` instead to
+	copy notes between objects.)
 
 -c <object>::
 --reedit-message=<object>::
@@ -285,6 +286,8 @@ $ blob=$(git hash-object -w a.out)
 $ git notes --ref=built add -C "$blob" HEAD
 ------------
 
+(You cannot simply use `git notes --ref=built add -F a.out HEAD`
+because that is not binary-safe.)
 Of course, it doesn't make much sense to display non-text-format notes
 with 'git log', so if you use such notes, you'll probably need to write
 some special-purpose tools to do something useful with them.
