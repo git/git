@@ -8,7 +8,7 @@ Updates since v1.7.6
 
  * Interix, Cygwin and Minix ports got updated.
 
- * Various updates git-p4 (in contrib/) and "git fast-import".
+ * Various updates git-p4 (in contrib/), fast-import, and git-svn.
 
  * Gitweb learned to read from /etc/gitweb-common.conf when it exists,
    before reading from gitweb_config.perl or from /etc/gitweb.conf
@@ -83,6 +83,10 @@ Updates since v1.7.6
  * "git grep" learned "-W" option that shows wider context using the same
    logic used by "git diff" to determine the hunk header.
 
+ * Invoking the low-level "git http-fetch" without "-a" option (which
+   git itself never did---normal users should not have to worry about
+   this) is now deprecated.
+
  * The "--decorate" option to "git log" and its family learned to
    highlight grafted and replaced commits.
 
@@ -126,6 +130,10 @@ Fixes since v1.7.6
 Unless otherwise noted, all the fixes in 1.7.6.X maintenance track are
 included in this release.
 
+ * The error reporting logic of "git am" when the command is fed a file
+   whose mail-storage format is unknown was fixed.
+   (merge dff4b0e gb/maint-am-patch-format-error-message later to 'maint').
+
  * "git branch --set-upstream @{-1} foo" did not expand @{-1} correctly.
    (merge e9d4f74 mg/branch-set-upstream-previous later to 'maint').
 
@@ -153,7 +161,7 @@ included in this release.
 --
 exec >/var/tmp/1
 echo O=$(git describe master)
-O=v1.7.6.1-415-g284daf2
+O=v1.7.7-rc0-174-ga536a9d
 git log --first-parent --oneline $O..master
 echo
 git shortlog --no-merges ^maint ^$O master
