@@ -11,6 +11,7 @@
 #include "transport.h"
 #include "string-list.h"
 #include "sha1-array.h"
+#include "connected.h"
 
 static const char receive_pack_usage[] = "git receive-pack <git-dir>";
 
@@ -546,6 +547,43 @@ static void check_aliased_updates(struct command *commands)
 	string_list_clear(&ref_list, 0);
 }
 
+static int command_singleton_iterator(void *cb_data, unsigned char sha1[20])
+{
+	struct command **cmd_list = cb_data;
+	struct command *cmd = *cmd_list;
+
+	if (!cmd)
+		return -1; /* end of list */
+	*cmd_list = NULL; /* this returns only one */
+	hashcpy(sha1, cmd->new_sha1);
+	return 0;
+}
+
+static void set_connectivity_errors(struct command *commands)
+{
+	struct command *cmd;
+
+	for (cmd = commands; cmd; cmd = cmd->next) {
+		struct command *singleton = cmd;
+		if (!check_everything_connected(command_singleton_iterator,
+						0, &singleton))
+			continue;
+		cmd->error_string = "missing necessary objects";
+	}
+}
+
+static int iterate_receive_command_list(void *cb_data, unsigned char sha1[20])
+{
+	struct command **cmd_list = cb_data;
+	struct command *cmd = *cmd_list;
+
+	if (!cmd)
+		return -1; /* end of list */
+	*cmd_list = cmd->next;
+	hashcpy(sha1, cmd->new_sha1);
+	return 0;
+}
+
 static void execute_commands(struct command *commands, const char *unpacker_error)
 {
 	struct command *cmd;
@@ -556,6 +594,11 @@ static void execute_commands(struct command *commands, const char *unpacker_erro
 			cmd->error_string = "n/a (unpacker error)";
 		return;
 	}
+
+	cmd = commands;
+	if (check_everything_connected(iterate_receive_command_list,
+				       0, &cmd))
+		set_connectivity_errors(commands);
 
 	if (run_receive_hook(commands, pre_receive_hook)) {
 		for (cmd = commands; cmd; cmd = cmd->next)
