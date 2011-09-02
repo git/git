@@ -69,6 +69,9 @@ Updates since v1.7.6
    generation machinery stolen from jgit, which might give better
    performance.
 
+ * "git diff" had a wierd worst case behaviour that can be triggered
+   when comparing files with potentially many places that could match.
+
  * "git fetch", "git push" and friends no longer show connection
    errors for addresses that couldn't be connected when at least one
    address succeeds (this is arguably a regression but a deliberate
@@ -86,11 +89,21 @@ Updates since v1.7.6
  * "git rebase master topci" no longer spews usage hints after giving
    "fatal: no such branch: topci" error message.
 
+ * The recursive merge strategy implementation got a fairly large
+   fixes for many corner cases that may rarely happen in real world
+   projects (it has been verified that none of the 16000+ merges in
+   the Linux kernel history back to v2.6.12 is affected with the
+   corner case bugs this update fixes).
+
  * "git stash" learned --include-untracked option.
 
  * "git submodule update" used to stop at the first error updating a
    submodule; it now goes on to update other submodules that can be
    updated, and reports the ones with errors at the end.
+
+ * "git push" can be told with --recurse-submodules=check option to
+   refuse pushing of the supermodule, if any of its submodules'
+   commits hasn't been pushed out to their remotes.
 
  * "git upload-pack" and "git receive-pack" learned to pretend only a
    subset of the refs exist in a repository. This may help a site to

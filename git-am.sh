@@ -312,7 +312,8 @@ split_patches () {
 		msgnum=
 		;;
 	*)
-		if test -n "$parse_patch" ; then
+		if test -n "$patch_format"
+		then
 			clean_abort "$(eval_gettext "Patch format \$patch_format is not supported.")"
 		else
 			clean_abort "$(gettext "Patch format detection failed.")"
