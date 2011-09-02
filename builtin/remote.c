@@ -631,7 +631,8 @@ static int mv(int argc, const char **argv)
 		OPT_END()
 	};
 	struct remote *oldremote, *newremote;
-	struct strbuf buf = STRBUF_INIT, buf2 = STRBUF_INIT, buf3 = STRBUF_INIT;
+	struct strbuf buf = STRBUF_INIT, buf2 = STRBUF_INIT, buf3 = STRBUF_INIT,
+		old_remote_context = STRBUF_INIT;
 	struct string_list remote_branches = STRING_LIST_INIT_NODUP;
 	struct rename_info rename;
 	int i;
@@ -669,15 +670,18 @@ static int mv(int argc, const char **argv)
 	strbuf_addf(&buf, "remote.%s.fetch", rename.new);
 	if (git_config_set_multivar(buf.buf, NULL, NULL, 1))
 		return error("Could not remove config section '%s'", buf.buf);
+	strbuf_addf(&old_remote_context, ":refs/remotes/%s/", rename.old);
 	for (i = 0; i < oldremote->fetch_refspec_nr; i++) {
 		char *ptr;
 
 		strbuf_reset(&buf2);
 		strbuf_addstr(&buf2, oldremote->fetch_refspec[i]);
-		ptr = strstr(buf2.buf, rename.old);
+		ptr = strstr(buf2.buf, old_remote_context.buf);
 		if (ptr)
-			strbuf_splice(&buf2, ptr-buf2.buf, strlen(rename.old),
-					rename.new, strlen(rename.new));
+			strbuf_splice(&buf2,
+				      ptr-buf2.buf + strlen(":refs/remotes/"),
+				      strlen(rename.old), rename.new,
+				      strlen(rename.new));
 		if (git_config_set_multivar(buf.buf, buf2.buf, "^$", 0))
 			return error("Could not append '%s'", buf.buf);
 	}

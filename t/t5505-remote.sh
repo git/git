@@ -631,6 +631,26 @@ test_expect_success 'rename a remote' '
 
 '
 
+test_expect_success 'rename does not update a non-default fetch refspec' '
+
+	git clone one four.one &&
+	(cd four.one &&
+	 git config remote.origin.fetch +refs/heads/*:refs/heads/origin/* &&
+	 git remote rename origin upstream &&
+	 test "$(git config remote.upstream.fetch)" = "+refs/heads/*:refs/heads/origin/*")
+
+'
+
+test_expect_success 'rename a remote with name part of fetch spec' '
+
+	git clone one four.two &&
+	(cd four.two &&
+	 git remote rename origin remote &&
+	 git remote rename remote upstream &&
+	 test "$(git config remote.upstream.fetch)" = "+refs/heads/*:refs/remotes/upstream/*")
+
+'
+
 cat > remotes_origin << EOF
 URL: $(pwd)/one
 Push: refs/heads/master:refs/heads/upstream
