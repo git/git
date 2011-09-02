@@ -295,7 +295,7 @@ split_patches () {
 			perl -ne 'BEGIN { $subject = 0 }
 				if ($subject > 1) { print ; }
 				elsif (/^\s+$/) { next ; }
-				elsif (/^Author:/) { print s/Author/From/ ; }
+				elsif (/^Author:/) { s/Author/From/ ; print ;}
 				elsif (/^(From|Date)/) { print ; }
 				elsif ($subject) {
 					$subject = 2 ;
