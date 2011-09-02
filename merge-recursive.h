@@ -26,6 +26,7 @@ struct merge_options {
 	struct strbuf obuf;
 	struct string_list current_file_set;
 	struct string_list current_directory_set;
+	struct string_list df_conflict_file_set;
 };
 
 /* merge_trees() but with recursive ancestor consolidation */

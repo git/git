@@ -44,4 +44,5 @@ void sort_string_list(struct string_list *list);
 int unsorted_string_list_has_string(struct string_list *list, const char *string);
 struct string_list_item *unsorted_string_list_lookup(struct string_list *list,
 						     const char *string);
+void unsorted_string_list_delete_item(struct string_list *list, int i, int free_util);
 #endif /* STRING_LIST_H */

@@ -29,6 +29,9 @@ member (you need this if you add things later) and you should set the
 
 . Can sort an unsorted list using `sort_string_list`.
 
+. Can remove individual items of an unsorted list using
+  `unsorted_string_list_delete_item`.
+
 . Finally it should free the list using `string_list_clear`.
 
 Example:
@@ -111,6 +114,13 @@ write `string_list_insert(...)->util = ...;`.
 +
 The above two functions need to look through all items, as opposed to their
 counterpart for sorted lists, which performs a binary search.
+
+`unsorted_string_list_delete_item`::
+
+	Remove an item from a string_list. The `string` pointer of the items
+	will be freed in case the `strdup_strings` member of the string_list
+	is set. The third parameter controls if the `util` pointer of the
+	items should be freed or not.
 
 Data structures
 ---------------
