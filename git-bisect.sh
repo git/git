@@ -45,10 +45,7 @@ bisect_head()
 
 bisect_autostart() {
 	test -s "$GIT_DIR/BISECT_START" || {
-		(
-			gettext "You need to start by \"git bisect start\"" &&
-			echo
-		) >&2
+		gettextln "You need to start by \"git bisect start\"" >&2
 		if test -t 0
 		then
 			# TRANSLATORS: Make sure to include [Y] and [n] in your
@@ -272,10 +269,7 @@ bisect_next_check() {
 	t,,good)
 		# have bad but not good.  we could bisect although
 		# this is less optimum.
-		(
-			gettext "Warning: bisecting only with a bad commit." &&
-			echo
-		) >&2
+		gettextln "Warning: bisecting only with a bad commit." >&2
 		if test -t 0
 		then
 			# TRANSLATORS: Make sure to include [Y] and [n] in your
@@ -291,18 +285,12 @@ bisect_next_check() {
 
 		if test -s "$GIT_DIR/BISECT_START"
 		then
-			(
-				gettext "You need to give me at least one good and one bad revisions.
-(You can use \"git bisect bad\" and \"git bisect good\" for that.)" &&
-				echo
-			) >&2
+			gettextln "You need to give me at least one good and one bad revisions.
+(You can use \"git bisect bad\" and \"git bisect good\" for that.)" >&2
 		else
-			(
-				gettext "You need to start by \"git bisect start\".
+			gettextln "You need to start by \"git bisect start\".
 You then need to give me at least one good and one bad revisions.
-(You can use \"git bisect bad\" and \"git bisect good\" for that.)" &&
-				echo
-			) >&2
+(You can use \"git bisect bad\" and \"git bisect good\" for that.)" >&2
 		fi
 		exit 1 ;;
 	esac
@@ -355,7 +343,7 @@ bisect_visualize() {
 
 bisect_reset() {
 	test -s "$GIT_DIR/BISECT_START" || {
-		gettext "We are not bisecting."; echo
+		gettextln "We are not bisecting."
 		return
 	}
 	case "$#" in
@@ -428,18 +416,15 @@ bisect_run () {
 	while true
 	do
 		command="$@"
-		eval_gettext "running \$command"; echo
+		eval_gettextln "running \$command"
 		"$@"
 		res=$?
 
 		# Check for really bad run error.
 		if [ $res -lt 0 -o $res -ge 128 ]
 		then
-			(
-				eval_gettext "bisect run failed:
-exit code \$res from '\$command' is < 0 or >= 128" &&
-				echo
-			) >&2
+			eval_gettextln "bisect run failed:
+exit code \$res from '\$command' is < 0 or >= 128" >&2
 			exit $res
 		fi
 
@@ -464,26 +449,20 @@ exit code \$res from '\$command' is < 0 or >= 128" &&
 		if sane_grep "first bad commit could be any of" "$GIT_DIR/BISECT_RUN" \
 			> /dev/null
 		then
-			(
-				gettext "bisect run cannot continue any more" &&
-				echo
-			) >&2
+			gettextln "bisect run cannot continue any more" >&2
 			exit $res
 		fi
 
 		if [ $res -ne 0 ]
 		then
-			(
-				eval_gettext "bisect run failed:
-'bisect_state \$state' exited with error code \$res" &&
-				echo
-			) >&2
+			eval_gettextln "bisect run failed:
+'bisect_state \$state' exited with error code \$res" >&2
 			exit $res
 		fi
 
 		if sane_grep "is the first bad commit" "$GIT_DIR/BISECT_RUN" > /dev/null
 		then
-			gettext "bisect run success"; echo
+			gettextln "bisect run success"
 			exit 0;
 		fi
 
