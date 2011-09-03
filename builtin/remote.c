@@ -682,6 +682,12 @@ static int mv(int argc, const char **argv)
 				      ptr-buf2.buf + strlen(":refs/remotes/"),
 				      strlen(rename.old), rename.new,
 				      strlen(rename.new));
+		else
+			warning("Not updating non-default fetch respec\n"
+				"\t%s\n"
+				"\tPlease update the configuration manually if necessary.",
+				buf2.buf);
+
 		if (git_config_set_multivar(buf.buf, buf2.buf, "^$", 0))
 			return error("Could not append '%s'", buf.buf);
 	}
