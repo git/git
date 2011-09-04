@@ -264,13 +264,13 @@ const char **get_pathspec(const char *prefix, const char **pathspec)
 	return pathspec;
 }
 
-const char *pathspec_prefix(const char *prefix, const char **pathspec)
+char *pathspec_prefix(const char **pathspec)
 {
 	const char **p, *n, *prev;
 	unsigned long max;
 
 	if (!pathspec)
-		return prefix ? xmemdupz(prefix, strlen(prefix)) : NULL;
+		return NULL;
 
 	prev = NULL;
 	max = PATH_MAX;
