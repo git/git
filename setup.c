@@ -264,13 +264,6 @@ const char **get_pathspec(const char *prefix, const char **pathspec)
 	return pathspec;
 }
 
-char *pathspec_prefix(const char **pathspec)
-{
-	size_t len = common_prefix_len(pathspec);
-
-	return len ? xmemdupz(*pathspec, len) : NULL;
-}
-
 /*
  * Test if it looks like we're at a git directory.
  * We want to see:

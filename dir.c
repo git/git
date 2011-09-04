@@ -34,7 +34,7 @@ int fnmatch_icase(const char *pattern, const char *string, int flags)
 	return fnmatch(pattern, string, flags | (ignore_case ? FNM_CASEFOLD : 0));
 }
 
-size_t common_prefix_len(const char **pathspec)
+static size_t common_prefix_len(const char **pathspec)
 {
 	const char *n, *first;
 	size_t max = 0;
@@ -59,6 +59,17 @@ size_t common_prefix_len(const char **pathspec)
 		}
 	}
 	return max;
+}
+
+/*
+ * Returns a copy of the longest leading path common among all
+ * pathspecs.
+ */
+char *common_prefix(const char **pathspec)
+{
+	unsigned long len = common_prefix_len(pathspec);
+
+	return len ? xmemdupz(*pathspec, len) : NULL;
 }
 
 int fill_directory(struct dir_struct *dir, const char **pathspec)

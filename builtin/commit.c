@@ -257,7 +257,7 @@ static int list_paths(struct string_list *list, const char *with_tree,
 	m = xcalloc(1, i);
 
 	if (with_tree) {
-		char *max_prefix = pathspec_prefix(pattern);
+		char *max_prefix = common_prefix(pattern);
 		overlay_tree_on_cache(with_tree, max_prefix ? max_prefix : prefix);
 		free(max_prefix);
 	}
