@@ -846,8 +846,13 @@ static int http_request(const char *url, void *result, int target, int options)
 				init_curl_http_auth(slot->curl);
 				ret = HTTP_REAUTH;
 			}
-		} else
+		} else {
+			if (!curl_errorstr[0])
+				strlcpy(curl_errorstr,
+					curl_easy_strerror(results.curl_result),
+					sizeof(curl_errorstr));
 			ret = HTTP_ERROR;
+		}
 	} else {
 		error("Unable to start HTTP request for %s", url);
 		ret = HTTP_START_FAILED;
