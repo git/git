@@ -341,121 +341,122 @@ __git_ps1 ()
 			#In PC mode PS1 always needs to be set
 			PS1="$ps1pc_start$ps1pc_end"
 		fi
+		return
+	fi
+
+	local r=""
+	local b=""
+	local step=""
+	local total=""
+	if [ -d "$g/rebase-merge" ]; then
+		b="$(cat "$g/rebase-merge/head-name" 2>/dev/null)"
+		step=$(cat "$g/rebase-merge/msgnum" 2>/dev/null)
+		total=$(cat "$g/rebase-merge/end" 2>/dev/null)
+		if [ -f "$g/rebase-merge/interactive" ]; then
+			r="|REBASE-i"
+		else
+			r="|REBASE-m"
+		fi
 	else
-		local r=""
-		local b=""
-		local step=""
-		local total=""
-		if [ -d "$g/rebase-merge" ]; then
-			b="$(cat "$g/rebase-merge/head-name" 2>/dev/null)"
-			step=$(cat "$g/rebase-merge/msgnum" 2>/dev/null)
-			total=$(cat "$g/rebase-merge/end" 2>/dev/null)
-			if [ -f "$g/rebase-merge/interactive" ]; then
-				r="|REBASE-i"
+		if [ -d "$g/rebase-apply" ]; then
+			step=$(cat "$g/rebase-apply/next" 2>/dev/null)
+			total=$(cat "$g/rebase-apply/last" 2>/dev/null)
+			if [ -f "$g/rebase-apply/rebasing" ]; then
+				b="$(cat "$g/rebase-apply/head-name" 2>/dev/null)"
+				r="|REBASE"
+			elif [ -f "$g/rebase-apply/applying" ]; then
+				r="|AM"
 			else
-				r="|REBASE-m"
+				r="|AM/REBASE"
 			fi
+		elif [ -f "$g/MERGE_HEAD" ]; then
+			r="|MERGING"
+		elif [ -f "$g/CHERRY_PICK_HEAD" ]; then
+			r="|CHERRY-PICKING"
+		elif [ -f "$g/REVERT_HEAD" ]; then
+			r="|REVERTING"
+		elif [ -f "$g/BISECT_LOG" ]; then
+			r="|BISECTING"
+		fi
+
+		test -n "$b" ||
+		b="$(git symbolic-ref HEAD 2>/dev/null)" || {
+			detached=yes
+			b="$(
+			case "${GIT_PS1_DESCRIBE_STYLE-}" in
+			(contains)
+				git describe --contains HEAD ;;
+			(branch)
+				git describe --contains --all HEAD ;;
+			(describe)
+				git describe HEAD ;;
+			(* | default)
+				git describe --tags --exact-match HEAD ;;
+			esac 2>/dev/null)" ||
+
+			b="$(git rev-parse --short HEAD 2>/dev/null)..." ||
+			b="unknown"
+			b="($b)"
+		}
+	fi
+
+	if [ -n "$step" ] && [ -n "$total" ]; then
+		r="$r $step/$total"
+	fi
+
+	local w=""
+	local i=""
+	local s=""
+	local u=""
+	local c=""
+	local p=""
+
+	if [ "true" = "$(git rev-parse --is-inside-git-dir 2>/dev/null)" ]; then
+		if [ "true" = "$(git rev-parse --is-bare-repository 2>/dev/null)" ]; then
+			c="BARE:"
 		else
-			if [ -d "$g/rebase-apply" ]; then
-				step=$(cat "$g/rebase-apply/next" 2>/dev/null)
-				total=$(cat "$g/rebase-apply/last" 2>/dev/null)
-				if [ -f "$g/rebase-apply/rebasing" ]; then
-					b="$(cat "$g/rebase-apply/head-name" 2>/dev/null)"
-					r="|REBASE"
-				elif [ -f "$g/rebase-apply/applying" ]; then
-					r="|AM"
-				else
-					r="|AM/REBASE"
-				fi
-			elif [ -f "$g/MERGE_HEAD" ]; then
-				r="|MERGING"
-			elif [ -f "$g/CHERRY_PICK_HEAD" ]; then
-				r="|CHERRY-PICKING"
-			elif [ -f "$g/REVERT_HEAD" ]; then
-				r="|REVERTING"
-			elif [ -f "$g/BISECT_LOG" ]; then
-				r="|BISECTING"
-			fi
-
-			test -n "$b" ||
-			b="$(git symbolic-ref HEAD 2>/dev/null)" || {
-				detached=yes
-				b="$(
-				case "${GIT_PS1_DESCRIBE_STYLE-}" in
-				(contains)
-					git describe --contains HEAD ;;
-				(branch)
-					git describe --contains --all HEAD ;;
-				(describe)
-					git describe HEAD ;;
-				(* | default)
-					git describe --tags --exact-match HEAD ;;
-				esac 2>/dev/null)" ||
-
-				b="$(git rev-parse --short HEAD 2>/dev/null)..." ||
-				b="unknown"
-				b="($b)"
-			}
+			b="GIT_DIR!"
 		fi
-
-		if [ -n "$step" ] && [ -n "$total" ]; then
-			r="$r $step/$total"
-		fi
-
-		local w=""
-		local i=""
-		local s=""
-		local u=""
-		local c=""
-		local p=""
-
-		if [ "true" = "$(git rev-parse --is-inside-git-dir 2>/dev/null)" ]; then
-			if [ "true" = "$(git rev-parse --is-bare-repository 2>/dev/null)" ]; then
-				c="BARE:"
+	elif [ "true" = "$(git rev-parse --is-inside-work-tree 2>/dev/null)" ]; then
+		if [ -n "${GIT_PS1_SHOWDIRTYSTATE-}" ] &&
+		   [ "$(git config --bool bash.showDirtyState)" != "false" ]
+		then
+			git diff --no-ext-diff --quiet --exit-code || w="*"
+			if git rev-parse --quiet --verify HEAD >/dev/null; then
+				git diff-index --cached --quiet HEAD -- || i="+"
 			else
-				b="GIT_DIR!"
-			fi
-		elif [ "true" = "$(git rev-parse --is-inside-work-tree 2>/dev/null)" ]; then
-			if [ -n "${GIT_PS1_SHOWDIRTYSTATE-}" ] &&
-			   [ "$(git config --bool bash.showDirtyState)" != "false" ]
-			then
-				git diff --no-ext-diff --quiet --exit-code || w="*"
-				if git rev-parse --quiet --verify HEAD >/dev/null; then
-					git diff-index --cached --quiet HEAD -- || i="+"
-				else
-					i="#"
-				fi
-			fi
-			if [ -n "${GIT_PS1_SHOWSTASHSTATE-}" ]; then
-				git rev-parse --verify refs/stash >/dev/null 2>&1 && s="$"
-			fi
-
-			if [ -n "${GIT_PS1_SHOWUNTRACKEDFILES-}" ] &&
-			   [ "$(git config --bool bash.showUntrackedFiles)" != "false" ] &&
-			   [ -n "$(git ls-files --others --exclude-standard)" ]
-			then
-				u="%${ZSH_VERSION+%}"
-			fi
-
-			if [ -n "${GIT_PS1_SHOWUPSTREAM-}" ]; then
-				__git_ps1_show_upstream
+				i="#"
 			fi
 		fi
+		if [ -n "${GIT_PS1_SHOWSTASHSTATE-}" ]; then
+			git rev-parse --verify refs/stash >/dev/null 2>&1 && s="$"
+		fi
 
-		local z="${GIT_PS1_STATESEPARATOR-" "}"
-		local f="$w$i$s$u"
-		if [ $pcmode = yes ]; then
-			local gitstring=
-			if [ -n "${GIT_PS1_SHOWCOLORHINTS-}" ]; then
-				__git_ps1_colorize_gitstring
-			else
-				gitstring="$c${b##refs/heads/}${f:+$z$f}$r$p"
-			fi
-			gitstring=$(printf -- "$printf_format" "$gitstring")
-			PS1="$ps1pc_start$gitstring$ps1pc_end"
+		if [ -n "${GIT_PS1_SHOWUNTRACKEDFILES-}" ] &&
+		   [ "$(git config --bool bash.showUntrackedFiles)" != "false" ] &&
+		   [ -n "$(git ls-files --others --exclude-standard)" ]
+		then
+			u="%${ZSH_VERSION+%}"
+		fi
+
+		if [ -n "${GIT_PS1_SHOWUPSTREAM-}" ]; then
+			__git_ps1_show_upstream
+		fi
+	fi
+
+	local z="${GIT_PS1_STATESEPARATOR-" "}"
+	local f="$w$i$s$u"
+	if [ $pcmode = yes ]; then
+		local gitstring=
+		if [ -n "${GIT_PS1_SHOWCOLORHINTS-}" ]; then
+			__git_ps1_colorize_gitstring
 		else
-			# NO color option unless in PROMPT_COMMAND mode
-			printf -- "$printf_format" "$c${b##refs/heads/}${f:+$z$f}$r$p"
+			gitstring="$c${b##refs/heads/}${f:+$z$f}$r$p"
 		fi
+		gitstring=$(printf -- "$printf_format" "$gitstring")
+		PS1="$ps1pc_start$gitstring$ps1pc_end"
+	else
+		# NO color option unless in PROMPT_COMMAND mode
+		printf -- "$printf_format" "$c${b##refs/heads/}${f:+$z$f}$r$p"
 	fi
 }
