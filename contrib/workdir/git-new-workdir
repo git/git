@@ -20,7 +20,7 @@ new_workdir=$2
 branch=$3
 
 # want to make sure that what is pointed to has a .git directory ...
-git_dir=$(cd "$orig_git" 2>/dev/null &&
+git_dir=$(cd "$orig_git" &>/dev/null &&
   git rev-parse --git-dir 2>/dev/null) ||
   die "Not a git repository: \"$orig_git\""
 
@@ -55,7 +55,7 @@ then
 fi
 
 # make sure the links use full paths
-git_dir=$(cd "$git_dir"; pwd)
+git_dir=$(cd "$git_dir" &>/dev/null; pwd)
 
 # create the workdir
 mkdir -p "$new_workdir/.git" || die "unable to create \"$new_workdir\"!"
