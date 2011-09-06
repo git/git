@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Sep 2011, #01; Fri, 2)
-X-master-at: b32128793de296348a565e8f7c4257ec82208a48
-X-next-at: be4d2450c3dc8f2570ac5b51987d355b67eef11a
+Subject: What's cooking in git.git (Sep 2011, #02; Tue, 6)
+X-master-at: 50963badbcfe2693d7a51ace3079c6b48ec52f01
+X-next-at: 7931f38a2fd882b0f75a4d6f0eb60c3b1b094178
 
-What's cooking in git.git (Sep 2011, #01; Fri, 2)
+What's cooking in git.git (Sep 2011, #02; Tue, 6)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -15,14 +15,120 @@ patches for new features and fixes to longstanding issues will stay in
 'pu' or 'next' until the 1.7.7 final.
 
 --------------------------------------------------
-[New Topics]
+[Graduated to "master"]
+
+* cb/maint-ls-files-error-report (2011-08-28) 1 commit
+  (merged to 'next' on 2011-08-30 at b606e19)
+ + t3005: do not assume a particular order of stdout and stderr of git-ls-files
 
 * mh/check-ref-format-print-normalize (2011-08-27) 2 commits
   (merged to 'next' on 2011-08-30 at e827410)
  + Forbid DEL characters in reference names
  + check-ref-format --print: Normalize refnames that start with slashes
 
-Will merge to "master".
+* rc/histogram-diff (2011-08-31) 1 commit
+  (merged to 'next' on 2011-09-02 at be4d245)
+ + xdiff/xprepare: initialise xdlclassifier_t cf in xdl_prepare_env()
+
+--------------------------------------------------
+[New Topics]
+
+* cb/common-prefix-unification (2011-09-06) 3 commits
+ - rename pathspec_prefix() to common_prefix() and move to dir.[ch]
+ - consolidate pathspec_prefix and common_prefix
+ - remove prefix argument from pathspec_prefix
+
+* cb/maint-quiet-push (2011-09-05) 4 commits
+ . t5541: avoid TAP test miscounting
+ . push: old receive-pack does not understand --quiet
+ . fix push --quiet via http
+ . tests for push --quiet
+
+Dropped for rerolling after 1.7.7 cycle.
+
+* cb/send-email-help (2011-09-05) 1 commit
+ - send-email: add option -h
+
+* jc/fetch-pack-fsck-objects (2011-09-04) 3 commits
+ - test: fetch/receive with fsckobjects
+ - transfer.fsckobjects: unify fetch/receive.fsckobjects
+ - fetch.fsckobjects: verify downloaded objects
+
+* jc/receive-verify (2011-09-02) 3 commits
+ - receive-pack: check connectivity before concluding "git push"
+ - check_everything_connected(): libify
+ - check_everything_connected(): refactor to use an iterator
+ (this branch uses jc/fetch-verify, jc/fetch-verify and jc/traverse-commit-list.)
+
+* tr/doc-note-rewrite (2011-09-05) 1 commit
+ - Documentation: "on for all" configuration of notes.rewriteRef
+
+* jc/request-pull-show-head (2011-09-06) 1 commit
+ - State what commit to expect in request-pull
+
+* jn/maint-http-error-message (2011-09-06) 2 commits
+ - http: avoid empty error messages for some curl errors
+ - http: remove extra newline in error message
+
+--------------------------------------------------
+[Stalled]
+
+* jk/add-i-hunk-filter (2011-07-27) 5 commits
+  (merged to 'next' on 2011-08-11 at 8ff9a56)
+ + add--interactive: add option to autosplit hunks
+ + add--interactive: allow negatation of hunk filters
+ + add--interactive: allow hunk filtering on command line
+ + add--interactive: factor out regex error handling
+ + add--interactive: refactor patch mode argument processing
+
+Needs documentation updates, tests, and integration with the higher level
+callers, e.g. "git add -p".
+
+* jh/receive-count-limit (2011-05-23) 10 commits
+ - receive-pack: Allow server to refuse pushes with too many objects
+ - pack-objects: Estimate pack size; abort early if pack size limit is exceeded
+ - send-pack/receive-pack: Allow server to refuse pushing too large packs
+ - pack-objects: Allow --max-pack-size to be used together with --stdout
+ - send-pack/receive-pack: Allow server to refuse pushes with too many commits
+ - pack-objects: Teach new option --max-commit-count, limiting #commits in pack
+ - receive-pack: Prepare for addition of the new 'limit-*' family of capabilities
+ - Tighten rules for matching server capabilities in server_supports()
+ - send-pack: Attempt to retrieve remote status even if pack-objects fails
+ - Update technical docs to reflect side-band-64k capability in receive-pack
+
+Would need another round to separate per-pack and per-session limits.
+
+* jm/mergetool-pathspec (2011-06-22) 2 commits
+ - mergetool: Don't assume paths are unmerged
+ - mergetool: Add tests for filename with whitespace
+
+I think this is a good idea, but it probably needs a re-roll.
+Cf. $gmane/176254, 176255, 166256
+
+* jk/generation-numbers (2011-07-14) 7 commits
+ - limit "contains" traversals based on commit generation
+ - check commit generation cache validity against grafts
+ - pretty: support %G to show the generation number of a commit
+ - commit: add commit_generation function
+ - add metadata-cache infrastructure
+ - decorate: allow storing values instead of pointers
+ - Merge branch 'jk/tag-contains-ab' (early part) into HEAD
+
+The initial "tag --contains" de-pessimization without need for generation
+numbers is already in; backburnered.
+
+* sr/transport-helper-fix-rfc (2011-07-19) 2 commits
+ - t5800: point out that deleting branches does not work
+ - t5800: document inability to push new branch with old content
+
+* po/cygwin-backslash (2011-08-05) 2 commits
+ - On Cygwin support both UNIX and DOS style path-names
+ - git-compat-util: add generic find_last_dir_sep that respects is_dir_sep
+
+I think a further refactoring (no, not my suggestion) was offered?
+
+--------------------------------------------------
+[Cooking]
 
 * bk/ancestry-path (2011-08-25) 3 commits
   (merged to 'next' on 2011-09-02 at d05ba5d)
@@ -89,12 +195,6 @@ Not urgent; will not be in 1.7.7.
 
 Not urgent; the topic came up a bit too late in the cycle.
 
-* cb/maint-ls-files-error-report (2011-08-28) 1 commit
-  (merged to 'next' on 2011-08-30 at b606e19)
- + t3005: do not assume a particular order of stdout and stderr of git-ls-files
-
-Will merge to "master".
-
 * da/make-auto-header-dependencies (2011-08-30) 1 commit
   (merged to 'next' on 2011-09-02 at e04a4af)
  + Makefile: Improve compiler header dependency check
@@ -143,390 +243,23 @@ Not urgent; the topic came up a bit too late in the cycle.
 What the topic aims to achieve may make sense, but the implementation
 looked somewhat suboptimal.
 
-* jc/fetch-verify (2011-09-01) 4 commits
- - NEEDSWORK: rev-list --verify-objects: run fsck_objects() on all objects listed
+* jc/fetch-verify (2011-09-01) 3 commits
  - fetch: verify we have everything we need before updating our ref
  - rev-list --verify-object
  - list-objects: pass callback data to show_objects()
- (this branch uses jc/traverse-commit-list.)
+ (this branch is used by jc/receive-verify and jc/receive-verify; uses jc/traverse-commit-list.)
 
 Make "git fetch" verify what it received a bit more carefully before
 updating the refs in the receiving end.
 
 Not urgent; the topic came up a bit too late in the cycle.
 
-* rc/histogram-diff (2011-08-31) 1 commit
-  (merged to 'next' on 2011-09-02 at be4d245)
- + xdiff/xprepare: initialise xdlclassifier_t cf in xdl_prepare_env()
-
-Will merge to "master".
-
---------------------------------------------------
-[Graduated to "master"]
-
-* ac/describe-dirty-refresh (2011-08-11) 1 commit
-  (merged to 'next' on 2011-08-23 at b873611)
- + describe: Refresh the index when run with --dirty
-
-* bc/bisect-test-use-shell-path (2011-08-30) 1 commit
-  (merged to 'next' on 2011-08-30 at c090151)
- + t6030: use $SHELL_PATH to invoke user's preferred shell instead of bare sh
-
-* bg/t5540-osx-grep (2011-08-28) 1 commit
-  (merged to 'next' on 2011-08-30 at 894af05)
- + t5540-http-test: shorten grep pattern
-
-* bw/doc-repo-layout (2011-08-23) 2 commits
-  (merged to 'next' on 2011-08-24 at 605c730)
- + Mark http-fetch without -a as deprecated
- + Documentation: Grammar correction, wording fixes and cleanup
-
-* ci/forbid-unwanted-current-branch-update (2011-08-22) 2 commits
-  (merged to 'next' on 2011-08-24 at 1e93b67)
- + Show interpreted branch name in error messages
- + Prevent force-updating of the current branch
-
-* da/difftool-mergtool-refactor (2011-08-19) 4 commits
-  (merged to 'next' on 2011-08-23 at a1cc3be)
- + mergetools/meld: Use '--output' when available
- + mergetool--lib: Refactor tools into separate files
- + mergetool--lib: Make style consistent with git
- + difftool--helper: Make style consistent with git
-
-* di/fast-import-blob-tweak (2011-08-22) 2 commits
-  (merged to 'next' on 2011-08-24 at 52eef2a)
- + fast-import: treat cat-blob as a delta base hint for next blob
- + fast-import: count and report # of calls to diff_delta in stats
-
-* di/fast-import-deltified-tree (2011-08-14) 2 commits
-  (merged to 'next' on 2011-08-23 at ee30265)
- + fast-import: prevent producing bad delta
- + fast-import: add a test for tree delta base corruption
-
-* di/fast-import-doc (2011-08-17) 1 commit
-  (merged to 'next' on 2011-08-23 at dab4088)
- + doc/fast-import: document feature import-marks-if-exists
-
-* di/fast-import-ident (2011-08-11) 5 commits
-  (merged to 'next' on 2011-08-23 at 9b86391)
- + fsck: improve committer/author check
- + fsck: add a few committer name tests
- + fast-import: check committer name more strictly
- + fast-import: don't fail on omitted committer name
- + fast-import: add input format tests
-
-* di/fast-import-tagging (2011-08-23) 2 commits
-  (merged to 'next' on 2011-08-24 at 67e0937)
- + fast-import: allow to tag newly created objects
- + fast-import: add tests for tagging blobs
-
-* di/parse-options-split (2011-08-11) 2 commits
-  (merged to 'next' on 2011-08-23 at 6cd667f)
- + Reduce parse-options.o dependencies
- + parse-options: export opterr, optbug
-
-* en/merge-recursive-2 (2011-08-14) 57 commits
-  (merged to 'next' on 2011-08-23 at ba6ad0d)
- + merge-recursive: Don't re-sort a list whose order we depend upon
- + merge-recursive: Fix virtual merge base for rename/rename(1to2)/add-dest
- + t6036: criss-cross + rename/rename(1to2)/add-dest + simple modify
- + merge-recursive: Avoid unnecessary file rewrites
- + t6022: Additional tests checking for unnecessary updates of files
- + merge-recursive: Fix spurious 'refusing to lose untracked file...' messages
- + t6022: Add testcase for spurious "refusing to lose untracked" messages
- + t3030: fix accidental success in symlink rename
- + merge-recursive: Fix working copy handling for rename/rename/add/add
- + merge-recursive: add handling for rename/rename/add-dest/add-dest
- + merge-recursive: Have conflict_rename_delete reuse modify/delete code
- + merge-recursive: Make modify/delete handling code reusable
- + merge-recursive: Consider modifications in rename/rename(2to1) conflicts
- + merge-recursive: Create function for merging with branchname:file markers
- + merge-recursive: Record more data needed for merging with dual renames
- + merge-recursive: Defer rename/rename(2to1) handling until process_entry
- + merge-recursive: Small cleanups for conflict_rename_rename_1to2
- + merge-recursive: Fix rename/rename(1to2) resolution for virtual merge base
- + merge-recursive: Introduce a merge_file convenience function
- + merge-recursive: Fix modify/delete resolution in the recursive case
- + merge-recursive: When we detect we can skip an update, actually skip it
- + merge-recursive: Provide more info in conflict markers with file renames
- + merge-recursive: Cleanup and consolidation of rename_conflict_info
- + merge-recursive: Consolidate process_entry() and process_df_entry()
- + merge-recursive: Improve handling of rename target vs. directory addition
- + merge-recursive: Add comments about handling rename/add-source cases
- + merge-recursive: Make dead code for rename/rename(2to1) conflicts undead
- + merge-recursive: Fix deletion of untracked file in rename/delete conflicts
- + merge-recursive: Split update_stages_and_entry; only update stages at end
- + merge-recursive: Allow make_room_for_path() to remove D/F entries
- + string-list: Add API to remove an item from an unsorted list
- + merge-recursive: Split was_tracked() out of would_lose_untracked()
- + merge-recursive: Save D/F conflict filenames instead of unlinking them
- + merge-recursive: Fix code checking for D/F conflicts still being present
- + merge-recursive: Fix sorting order and directory change assumptions
- + merge-recursive: Fix recursive case with D/F conflict via add/add conflict
- + merge-recursive: Avoid working directory changes during recursive case
- + merge-recursive: Remember to free generated unique path names
- + merge-recursive: Consolidate different update_stages functions
- + merge-recursive: Mark some diff_filespec struct arguments const
- + merge-recursive: Correct a comment
- + merge-recursive: Make BUG message more legible by adding a newline
- + t6022: Add testcase for merging a renamed file with a simple change
- + t6022: New tests checking for unnecessary updates of files
- + t6022: Remove unnecessary untracked files to make test cleaner
- + t6036: criss-cross + rename/rename(1to2)/add-source + modify/modify
- + t6036: criss-cross w/ rename/rename(1to2)/modify+rename/rename(2to1)/modify
- + t6036: tests for criss-cross merges with various directory/file conflicts
- + t6036: criss-cross with weird content can fool git into clean merge
- + t6036: Add differently resolved modify/delete conflict in criss-cross test
- + t6042: Add failing testcases for rename/rename/add-{source,dest} conflicts
- + t6042: Ensure rename/rename conflicts leave index and workdir in sane state
- + t6042: Add tests for content issues with modify/rename/directory conflicts
- + t6042: Add a testcase where undetected rename causes silent file deletion
- + t6042: Add a pair of cases where undetected renames cause issues
- + t6042: Add failing testcase for rename/modify/add-source conflict
- + t6042: Add a testcase where git deletes an untracked file
-
-I've taken advantage of the end-of-summer lull and reproduced all 16000+
-two-head merges in the Linux kernel repository with and without this
-series to make sure they get the identical results (either cleanly merged,
-or getting conflicted the same way).
-
-* fg/submodule-ff-check-before-push (2011-08-20) 2 commits
-  (merged to 'next' on 2011-08-24 at 398e764)
- + push: Don't push a repository with unpushed submodules
- (this branch is used by hv/submodule-merge-search.)
-
-This is only the "check" part, which was sensible.  The "auto-push" patch
-has been moved to its own topic.
-
-* fk/use-kwset-pickaxe-grep-f (2011-08-28) 6 commits
-  (merged to 'next' on 2011-08-28 at 3be2039)
- + obstack: Fix portability issues
-  (merged to 'next' on 2011-08-23 at 93ba509)
- + Use kwset in grep
- + Use kwset in pickaxe
- + Adapt the kwset code to Git
- + Add string search routines from GNU grep
- + Add obstack.[ch] from EGLIBC 2.10
-
-* gb/maint-am-patch-format-error-message (2011-08-29) 1 commit
-  (merged to 'next' on 2011-08-30 at ed01a1d)
- + am: format is in $patch_format, not parse_patch
-
-* gb/maint-am-stgit-author-to-from-fix (2011-08-29) 1 commit
-  (merged to 'next' on 2011-08-30 at 0740010)
- + am: fix stgit patch mangling
-
-* jc/clean-exclude-doc (2011-08-28) 1 commit
-  (merged to 'next' on 2011-08-30 at 79dd173)
- + Documentation: clarify "git clean -e <pattern>"
-
-* jc/combine-diff-callback (2011-08-20) 1 commit
-  (merged to 'next' on 2011-08-24 at 9f9b42d)
- + combine-diff: support format_callback
- (this branch is used by fg/submodule-ff-check-before-push and hv/submodule-merge-search.)
-
-* jc/maint-autofix-tag-in-head (2011-08-19) 1 commit
-  (merged to 'next' on 2011-08-23 at 18cee02)
- + commit: reduce use of redundant global variables
-
-* jc/maint-clone-alternates (2011-08-23) 2 commits
-  (merged to 'next' on 2011-08-23 at 7280deb)
- + clone: clone from a repository with relative alternates
- + clone: allow more than one --reference
-
-* jc/merge-reword (2011-05-25) 1 commit
-  (merged to 'next' on 2011-08-24 at aa5cf7b)
- + merge: reword the final message
-
-* jk/color-and-pager (2011-08-19) 10 commits
-  (merged to 'next' on 2011-08-23 at cbb9495)
- + want_color: automatically fallback to color.ui
- + diff: don't load color config in plumbing
- + config: refactor get_colorbool function
- + color: delay auto-color decision until point of use
- + git_config_colorbool: refactor stdout_is_tty handling
- + diff: refactor COLOR_DIFF from a flag into an int
- + setup_pager: set GIT_PAGER_IN_USE
- + t7006: use test_config helpers
- + test-lib: add helper functions for config
- + t7006: modernize calls to unset
- (this branch is used by jk/pager-with-alias and jk/pager-with-external-command.)
-
-* jk/pager-with-external-command (2011-08-19) 1 commit
-  (merged to 'next' on 2011-08-24 at 083f5da)
- + support pager.* for external commands
- (this branch is used by jk/pager-with-alias and jk/pager-with-alias; uses jk/color-and-pager.)
-
-* jn/plug-empty-tree-leak (2011-08-16) 2 commits
-  (merged to 'next' on 2011-08-23 at aee2184)
- + merge-recursive: take advantage of hardcoded empty tree
- + revert: plug memory leak in "cherry-pick root commit" codepath
-
-* js/i18n-scripts (2011-08-08) 5 commits
-  (merged to 'next' on 2011-08-23 at a1b5529)
- + submodule: take advantage of gettextln and eval_gettextln.
- + stash: take advantage of eval_gettextln
- + pull: take advantage of eval_gettextln
- + git-am: take advantage of gettextln and eval_gettextln.
- + gettext: add gettextln, eval_gettextln to encode common idiom
-
-* js/i18n-scripts-2 (2011-08-30) 1 commit
-  (merged to 'next' on 2011-08-30 at 5a144a2)
- + bisect: take advantage of gettextln, eval_gettextln.
-
-* mg/branch-set-upstream-previous (2011-08-19) 1 commit
-  (merged to 'next' on 2011-08-23 at acef0b6)
- + branch.c: use the parsed branch name
-
-* mg/maint-notes-C-doc (2011-08-25) 1 commit
-  (merged to 'next' on 2011-08-30 at 6f3281a)
- + git-notes.txt: clarify -C vs. copy and -F
-
-* mh/attr (2011-08-14) 7 commits
-  (merged to 'next' on 2011-08-23 at 22faa6e)
- + Unroll the loop over passes
- + Change while loop into for loop
- + Determine the start of the states outside of the pass loop
- + Change parse_attr() to take a pointer to struct attr_state
- + Increment num_attr in parse_attr_line(), not parse_attr()
- + Document struct match_attr
- + Add a file comment
-
-* ms/daemon-timeout-is-in-seconds (2011-08-28) 1 commit
-  (merged to 'next' on 2011-08-30 at 2462eb0)
- + git-daemon.txt: specify --timeout in seconds
-
-* nd/decorate-grafts (2011-08-25) 6 commits
-  (merged to 'next' on 2011-08-25 at 44967e7)
- + log: Do not decorate replacements with --no-replace-objects
-  (merged to 'next' on 2011-08-23 at 475d27e)
- + log: decorate "replaced" on to replaced commits
- + log: decorate grafted commits with "grafted"
- + Move write_shallow_commits to fetch-pack.c
- + Add for_each_commit_graft() to iterate all grafts
- + decoration: do not mis-decorate refs with same prefix
-
-* nd/maint-clone-gitdir (2011-08-22) 2 commits
-  (merged to 'next' on 2011-08-24 at cbf052b)
- + clone: allow to clone from .git file
- + read_gitfile_gently(): rename misnamed function to read_gitfile()
-
-* nk/branch-v-abbrev (2011-07-01) 1 commit
-  (merged to 'next' on 2011-08-24 at e9152cf)
- + branch -v: honor core.abbrev
- (this branch is used by mg/branch-list.)
-
-* rc/diff-cleanup-records (2011-08-17) 2 commits
-  (merged to 'next' on 2011-08-23 at b8414f5)
- + Merge branch 'rc/histogram-diff' into HEAD
- + xdiff/xprepare: improve O(n*m) performance in xdl_cleanup_records()
-
-* tr/maint-format-patch-empty-output (2011-08-29) 4 commits
-  (merged to 'next' on 2011-08-30 at 078c522)
- + Document negated forms of format-patch --to --cc --add-headers
- + t4014: "no-add-headers" is actually called "no-add-header"
- + t4014: invoke format-patch with --stdout where intended
- + t4014: check for empty files from git format-patch --stdout
-
-* tr/maint-ident-to-git-memmove (2011-08-29) 1 commit
-  (merged to 'next' on 2011-08-30 at 9395a9b)
- + Use memmove in ident_to_git
-
-* tr/maint-strbuf-grow-nul-termination (2011-08-29) 1 commit
-  (merged to 'next' on 2011-08-30 at dc87192)
- + strbuf_grow(): maintain nul-termination even for new buffer
-
-* tr/maint-t3903-misquoted-command (2011-08-30) 1 commit
-  (merged to 'next' on 2011-08-30 at f533857)
- + t3903: fix misquoted rev-parse invocation
-
-* va/p4-branch-import (2011-08-22) 4 commits
-  (merged to 'next' on 2011-08-24 at f67f8af)
- + git-p4: Add simple test case for branch import
- + git-p4: Allow branch definition with git config
- + git-p4: Allow filtering Perforce branches by user
- + git-p4: Correct branch base depot path detection
- (this branch uses va/p4-rename-copy.)
-
-* va/p4-branch-import-test-update (2011-08-29) 1 commit
-  (merged to 'next' on 2011-08-30 at 5c54fb3)
- + git-p4: simple branch tests edits
-
-* va/p4-rename-copy (2011-08-22) 5 commits
-  (merged to 'next' on 2011-08-24 at f1faa94)
- + git-p4: Process detectCopiesHarder with --bool
- + git-p4: Add test case for copy detection
- + git-p4: Add test case for rename detection
- + git-p4: Add description of rename/copy detection options
- + git-p4: Allow setting rename/copy detection threshold
- (this branch is used by va/p4-branch-import.)
-
---------------------------------------------------
-[Stalled]
-
-* jk/add-i-hunk-filter (2011-07-27) 5 commits
-  (merged to 'next' on 2011-08-11 at 8ff9a56)
- + add--interactive: add option to autosplit hunks
- + add--interactive: allow negatation of hunk filters
- + add--interactive: allow hunk filtering on command line
- + add--interactive: factor out regex error handling
- + add--interactive: refactor patch mode argument processing
-
-Needs documentation updates, tests, and integration with the higher level
-callers, e.g. "git add -p".
-
-* jh/receive-count-limit (2011-05-23) 10 commits
- - receive-pack: Allow server to refuse pushes with too many objects
- - pack-objects: Estimate pack size; abort early if pack size limit is exceeded
- - send-pack/receive-pack: Allow server to refuse pushing too large packs
- - pack-objects: Allow --max-pack-size to be used together with --stdout
- - send-pack/receive-pack: Allow server to refuse pushes with too many commits
- - pack-objects: Teach new option --max-commit-count, limiting #commits in pack
- - receive-pack: Prepare for addition of the new 'limit-*' family of capabilities
- - Tighten rules for matching server capabilities in server_supports()
- - send-pack: Attempt to retrieve remote status even if pack-objects fails
- - Update technical docs to reflect side-band-64k capability in receive-pack
-
-Would need another round to separate per-pack and per-session limits.
-
-* jm/mergetool-pathspec (2011-06-22) 2 commits
- - mergetool: Don't assume paths are unmerged
- - mergetool: Add tests for filename with whitespace
-
-I think this is a good idea, but it probably needs a re-roll.
-Cf. $gmane/176254, 176255, 166256
-
-* jk/generation-numbers (2011-07-14) 7 commits
- - limit "contains" traversals based on commit generation
- - check commit generation cache validity against grafts
- - pretty: support %G to show the generation number of a commit
- - commit: add commit_generation function
- - add metadata-cache infrastructure
- - decorate: allow storing values instead of pointers
- - Merge branch 'jk/tag-contains-ab' (early part) into HEAD
-
-The initial "tag --contains" de-pessimization without need for generation
-numbers is already in; backburnered.
-
-* sr/transport-helper-fix-rfc (2011-07-19) 2 commits
- - t5800: point out that deleting branches does not work
- - t5800: document inability to push new branch with old content
-
-* po/cygwin-backslash (2011-08-05) 2 commits
- - On Cygwin support both UNIX and DOS style path-names
- - git-compat-util: add generic find_last_dir_sep that respects is_dir_sep
-
-I think a further refactoring (no, not my suggestion) was offered?
-
---------------------------------------------------
-[Cooking]
-
 * jc/traverse-commit-list (2011-08-22) 3 commits
   (merged to 'next' on 2011-08-24 at df50dd7)
  + revision.c: update show_object_with_name() without using malloc()
  + revision.c: add show_object_with_name() helper function
  + rev-list: fix finish_object() call
- (this branch is used by jc/fetch-verify.)
+ (this branch is used by jc/fetch-verify and jc/receive-verify.)
 
 Not urgent; will not be in 1.7.7.
 
