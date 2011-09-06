@@ -141,6 +141,11 @@ included in this release.
    of the branch that is currently checked out updated.
    (merge 55c4a67 ci/forbid-unwanted-current-branch-update later to 'maint').
 
+ * "git check-ref-format --print" used to parrot a candidate string that
+   began with a slash (e.g. /refs/heads/master) without stripping it, to make
+   the result a suitably normalized string the caller can append to "$GIT_DIR/".
+   (merge f3738c1 mh/check-ref-format-print-normalize later to 'maint').
+
  * "git clone" failed to clone locally from a ".git" file that itself
    is not a directory but is a pointer to one.
    (merge 9b0ebc7 nd/maint-clone-gitdir later to 'maint').
@@ -161,7 +166,7 @@ included in this release.
 --
 exec >/var/tmp/1
 echo O=$(git describe master)
-O=v1.7.7-rc0-174-ga536a9d
+O=v1.7.7-rc0-185-gb648557
 git log --first-parent --oneline $O..master
 echo
 git shortlog --no-merges ^maint ^$O master
