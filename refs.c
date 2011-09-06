@@ -862,7 +862,7 @@ int for_each_rawref(each_ref_fn fn, void *cb_data)
 
 static inline int bad_ref_char(int ch)
 {
-	if (((unsigned) ch) <= ' ' ||
+	if (((unsigned) ch) <= ' ' || ch == 0x7f ||
 	    ch == '~' || ch == '^' || ch == ':' || ch == '\\')
 		return 1;
 	/* 2.13 Pattern Matching Notation */
