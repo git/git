@@ -264,6 +264,8 @@ int xdl_prepare_env(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp,
 	long enl1, enl2, sample;
 	xdlclassifier_t cf;
 
+	memset(&cf, 0, sizeof(cf));
+
 	/*
 	 * For histogram diff, we can afford a smaller sample size and
 	 * thus a poorer estimate of the number of lines, as the hash
