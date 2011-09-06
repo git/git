@@ -762,9 +762,7 @@ static int push_git(struct discovery *heads, int nr_spec, char **specs)
 		argv[argc++] = "--thin";
 	if (options.dry_run)
 		argv[argc++] = "--dry-run";
-	if (options.verbosity < 0)
-		argv[argc++] = "--quiet";
-	else if (options.verbosity > 1)
+	if (options.verbosity > 1)
 		argv[argc++] = "--verbose";
 	argv[argc++] = url;
 	for (i = 0; i < nr_spec; i++)

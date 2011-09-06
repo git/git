@@ -439,10 +439,6 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 				args.force_update = 1;
 				continue;
 			}
-			if (!strcmp(arg, "--quiet")) {
-				args.quiet = 1;
-				continue;
-			}
 			if (!strcmp(arg, "--verbose")) {
 				args.verbose = 1;
 				continue;
@@ -492,13 +488,8 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 		fd[0] = 0;
 		fd[1] = 1;
 	} else {
-		struct strbuf sb = STRBUF_INIT;
-		strbuf_addstr(&sb, receivepack);
-		if (args.quiet)
-			strbuf_addstr(&sb, " --quiet");
-		conn = git_connect(fd, dest, sb.buf,
+		conn = git_connect(fd, dest, receivepack,
 			args.verbose ? CONNECT_VERBOSE : 0);
-		strbuf_release(&sb);
 	}
 
 	memset(&extra_have, 0, sizeof(extra_have));
