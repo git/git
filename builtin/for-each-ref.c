@@ -361,6 +361,18 @@ static const char *copy_email(const char *buf)
 	return xmemdupz(email, eoemail + 1 - email);
 }
 
+static char *copy_subject(const char *buf, unsigned long len)
+{
+	char *r = xmemdupz(buf, len);
+	int i;
+
+	for (i = 0; i < len; i++)
+		if (r[i] == '\n')
+			r[i] = ' ';
+
+	return r;
+}
+
 static void grab_date(const char *buf, struct atom_value *v, const char *atomname)
 {
 	const char *eoemail = strstr(buf, "> ");
@@ -476,10 +488,17 @@ static void find_subpos(const char *buf, unsigned long sz,
 
 	/* subject is first non-empty line */
 	*sub = buf;
-	/* subject goes to end of line */
-	eol = strchrnul(buf, '\n');
-	*sublen = eol - buf;
-	buf = eol;
+	/* subject goes to first empty line */
+	while (*buf && *buf != '\n') {
+		eol = strchrnul(buf, '\n');
+		if (*eol)
+			eol++;
+		buf = eol;
+	}
+	*sublen = buf - *sub;
+	/* drop trailing newline, if present */
+	if (*sublen && (*sub)[*sublen - 1] == '\n')
+		*sublen -= 1;
 
 	/* skip any empty lines */
 	while (*buf == '\n')
@@ -512,7 +531,7 @@ static void grab_sub_body_contents(struct atom_value *val, int deref, struct obj
 				    &bodypos, &bodylen);
 
 		if (!strcmp(name, "subject"))
-			v->s = xmemdupz(subpos, sublen);
+			v->s = copy_subject(subpos, sublen);
 		else if (!strcmp(name, "body"))
 			v->s = xmemdupz(bodypos, bodylen);
 		else if (!strcmp(name, "contents"))

@@ -379,4 +379,25 @@ first body line
 second body line
 '
 
+test_expect_success 'create tag with multiline subject' '
+	cat >msg <<-\EOF &&
+		first subject line
+		second subject line
+
+		first body line
+		second body line
+	EOF
+	git tag -F msg multiline
+'
+test_atom refs/tags/multiline subject 'first subject line second subject line'
+test_atom refs/tags/multiline body 'first body line
+second body line
+'
+test_atom refs/tags/multiline contents 'first subject line
+second subject line
+
+first body line
+second body line
+'
+
 test_done
