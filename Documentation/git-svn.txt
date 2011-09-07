@@ -225,6 +225,14 @@ discouraged.
 	version 1.5 can make use of it. To specify merge information from multiple
 	branches, use a single space character between the branches
 	(`--mergeinfo="/branches/foo:1-10 /branches/bar:3,5-6,8"`)
++
+[verse]
+config key: svn.pushmergeinfo
++
+This option will cause git-svn to attempt to automatically populate the
+svn:mergeinfo property in the SVN repository when possible. Currently, this can
+only be done when dcommitting non-fast-forward merges where all parents but the
+first have already been pushed into SVN.
 
 'branch'::
 	Create a branch in the SVN repository.

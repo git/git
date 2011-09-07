@@ -508,6 +508,195 @@ sub cmd_set_tree {
 	unlink $gs->{index};
 }
 
+sub split_merge_info_range {
+	my ($range) = @_;
+	if ($range =~ /(\d+)-(\d+)/) {
+		return (int($1), int($2));
+	} else {
+		return (int($range), int($range));
+	}
+}
+
+sub combine_ranges {
+	my ($in) = @_;
+
+	my @fnums = ();
+	my @arr = split(/,/, $in);
+	for my $element (@arr) {
+		my ($start, $end) = split_merge_info_range($element);
+		push @fnums, $start;
+	}
+
+	my @sorted = @arr [ sort {
+		$fnums[$a] <=> $fnums[$b]
+	} 0..$#arr ];
+
+	my @return = ();
+	my $last = -1;
+	my $first = -1;
+	for my $element (@sorted) {
+		my ($start, $end) = split_merge_info_range($element);
+
+		if ($last == -1) {
+			$first = $start;
+			$last = $end;
+			next;
+		}
+		if ($start <= $last+1) {
+			if ($end > $last) {
+				$last = $end;
+			}
+			next;
+		}
+		if ($first == $last) {
+			push @return, "$first";
+		} else {
+			push @return, "$first-$last";
+		}
+		$first = $start;
+		$last = $end;
+	}
+
+	if ($first != -1) {
+		if ($first == $last) {
+			push @return, "$first";
+		} else {
+			push @return, "$first-$last";
+		}
+	}
+
+	return join(',', @return);
+}
+
+sub merge_revs_into_hash {
+	my ($hash, $minfo) = @_;
+	my @lines = split(' ', $minfo);
+
+	for my $line (@lines) {
+		my ($branchpath, $revs) = split(/:/, $line);
+
+		if (exists($hash->{$branchpath})) {
+			# Merge the two revision sets
+			my $combined = "$hash->{$branchpath},$revs";
+			$hash->{$branchpath} = combine_ranges($combined);
+		} else {
+			# Just do range combining for consolidation
+			$hash->{$branchpath} = combine_ranges($revs);
+		}
+	}
+}
+
+sub merge_merge_info {
+	my ($mergeinfo_one, $mergeinfo_two) = @_;
+	my %result_hash = ();
+
+	merge_revs_into_hash(\%result_hash, $mergeinfo_one);
+	merge_revs_into_hash(\%result_hash, $mergeinfo_two);
+
+	my $result = '';
+	# Sort below is for consistency's sake
+	for my $branchname (sort keys(%result_hash)) {
+		my $revlist = $result_hash{$branchname};
+		$result .= "$branchname:$revlist\n"
+	}
+	return $result;
+}
+
+sub populate_merge_info {
+	my ($d, $gs, $uuid, $linear_refs, $rewritten_parent) = @_;
+
+	my %parentshash;
+	read_commit_parents(\%parentshash, $d);
+	my @parents = @{$parentshash{$d}};
+	if ($#parents > 0) {
+		# Merge commit
+		my $all_parents_ok = 1;
+		my $aggregate_mergeinfo = '';
+		my $rooturl = $gs->repos_root;
+
+		if (defined($rewritten_parent)) {
+			# Replace first parent with newly-rewritten version
+			shift @parents;
+			unshift @parents, $rewritten_parent;
+		}
+
+		foreach my $parent (@parents) {
+			my ($branchurl, $svnrev, $paruuid) =
+				cmt_metadata($parent);
+
+			unless (defined($svnrev)) {
+				# Should have been caught be preflight check
+				fatal "merge commit $d has ancestor $parent, but that change "
+                     ."does not have git-svn metadata!";
+			}
+			unless ($branchurl =~ /^$rooturl(.*)/) {
+				fatal "commit $parent git-svn metadata changed mid-run!";
+			}
+			my $branchpath = $1;
+
+			my $ra = Git::SVN::Ra->new($branchurl);
+			my (undef, undef, $props) =
+				$ra->get_dir(canonicalize_path("."), $svnrev);
+			my $par_mergeinfo = $props->{'svn:mergeinfo'};
+			unless (defined $par_mergeinfo) {
+				$par_mergeinfo = '';
+			}
+			# Merge previous mergeinfo values
+			$aggregate_mergeinfo =
+				merge_merge_info($aggregate_mergeinfo,
+								 $par_mergeinfo, 0);
+
+			next if $parent eq $parents[0]; # Skip first parent
+			# Add new changes being placed in tree by merge
+			my @cmd = (qw/rev-list --reverse/,
+					   $parent, qw/--not/);
+			foreach my $par (@parents) {
+				unless ($par eq $parent) {
+					push @cmd, $par;
+				}
+			}
+			my @revsin = ();
+			my ($revlist, $ctx) = command_output_pipe(@cmd);
+			while (<$revlist>) {
+				my $irev = $_;
+				chomp $irev;
+				my (undef, $csvnrev, undef) =
+					cmt_metadata($irev);
+				unless (defined $csvnrev) {
+					# A child is missing SVN annotations...
+					# this might be OK, or might not be.
+					warn "W:child $irev is merged into revision "
+						 ."$d but does not have git-svn metadata. "
+						 ."This means git-svn cannot determine the "
+						 ."svn revision numbers to place into the "
+						 ."svn:mergeinfo property. You must ensure "
+						 ."a branch is entirely committed to "
+						 ."SVN before merging it in order for "
+						 ."svn:mergeinfo population to function "
+						 ."properly";
+				}
+				push @revsin, $csvnrev;
+			}
+			command_close_pipe($revlist, $ctx);
+
+			last unless $all_parents_ok;
+
+			# We now have a list of all SVN revnos which are
+			# merged by this particular parent. Integrate them.
+			next if $#revsin == -1;
+			my $newmergeinfo = "$branchpath:" . join(',', @revsin);
+			$aggregate_mergeinfo =
+				merge_merge_info($aggregate_mergeinfo,
+								 $newmergeinfo, 1);
+		}
+		if ($all_parents_ok and $aggregate_mergeinfo) {
+			return $aggregate_mergeinfo;
+		}
+	}
+
+	return undef;
+}
+
 sub cmd_dcommit {
 	my $head = shift;
 	command_noisy(qw/update-index --refresh/);
@@ -558,6 +747,62 @@ sub cmd_dcommit {
 		     "without --no-rebase may be required."
 	}
 	my $expect_url = $url;
+
+	my $push_merge_info = eval {
+		command_oneline(qw/config --get svn.pushmergeinfo/)
+		};
+	if (not defined($push_merge_info)
+			or $push_merge_info eq "false"
+			or $push_merge_info eq "no"
+			or $push_merge_info eq "never") {
+		$push_merge_info = 0;
+	}
+
+	unless (defined($_merge_info) || ! $push_merge_info) {
+		# Preflight check of changes to ensure no issues with mergeinfo
+		# This includes check for uncommitted-to-SVN parents
+		# (other than the first parent, which we will handle),
+		# information from different SVN repos, and paths
+		# which are not underneath this repository root.
+		my $rooturl = $gs->repos_root;
+		foreach my $d (@$linear_refs) {
+			my %parentshash;
+			read_commit_parents(\%parentshash, $d);
+			my @realparents = @{$parentshash{$d}};
+			if ($#realparents > 0) {
+				# Merge commit
+				shift @realparents; # Remove/ignore first parent
+				foreach my $parent (@realparents) {
+					my ($branchurl, $svnrev, $paruuid) = cmt_metadata($parent);
+					unless (defined $paruuid) {
+						# A parent is missing SVN annotations...
+						# abort the whole operation.
+						fatal "$parent is merged into revision $d, "
+							 ."but does not have git-svn metadata. "
+							 ."Either dcommit the branch or use a "
+							 ."local cherry-pick, FF merge, or rebase "
+							 ."instead of an explicit merge commit.";
+					}
+
+					unless ($paruuid eq $uuid) {
+						# Parent has SVN metadata from different repository
+						fatal "merge parent $parent for change $d has "
+							 ."git-svn uuid $paruuid, while current change "
+							 ."has uuid $uuid!";
+					}
+
+					unless ($branchurl =~ /^$rooturl(.*)/) {
+						# This branch is very strange indeed.
+						fatal "merge parent $parent for $d is on branch "
+							 ."$branchurl, which is not under the "
+							 ."git-svn root $rooturl!";
+					}
+				}
+			}
+		}
+	}
+
+	my $rewritten_parent;
 	Git::SVN::remove_username($expect_url);
 	if (defined($_merge_info)) {
 		$_merge_info =~ tr{ }{\n};
@@ -575,6 +820,14 @@ sub cmd_dcommit {
 			print "diff-tree $d~1 $d\n";
 		} else {
 			my $cmt_rev;
+
+			unless (defined($_merge_info) || ! $push_merge_info) {
+				$_merge_info = populate_merge_info($d, $gs,
+				                             $uuid,
+				                             $linear_refs,
+				                             $rewritten_parent);
+			}
+
 			my %ed_opts = ( r => $last_rev,
 			                log => get_commit_entry($d)->{log},
 			                ra => Git::SVN::Ra->new($url),
@@ -617,6 +870,9 @@ sub cmd_dcommit {
 				@finish = qw/reset --mixed/;
 			}
 			command_noisy(@finish, $gs->refname);
+
+			$rewritten_parent = command_oneline(qw/rev-parse HEAD/);
+
 			if (@diff) {
 				@refs = ();
 				my ($url_, $rev_, $uuid_, $gs_) =
