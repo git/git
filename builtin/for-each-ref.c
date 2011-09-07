@@ -69,6 +69,9 @@ static struct {
 	{ "subject" },
 	{ "body" },
 	{ "contents" },
+	{ "contents:subject" },
+	{ "contents:body" },
+	{ "contents:signature" },
 	{ "upstream" },
 	{ "symref" },
 	{ "flag" },
@@ -472,7 +475,9 @@ static void grab_person(const char *who, struct atom_value *val, int deref, stru
 
 static void find_subpos(const char *buf, unsigned long sz,
 			const char **sub, unsigned long *sublen,
-			const char **body, unsigned long *bodylen)
+			const char **body, unsigned long *bodylen,
+			unsigned long *nonsiglen,
+			const char **sig, unsigned long *siglen)
 {
 	const char *eol;
 	/* skip past header until we hit empty line */
@@ -486,10 +491,14 @@ static void find_subpos(const char *buf, unsigned long sz,
 	while (*buf == '\n')
 		buf++;
 
+	/* parse signature first; we might not even have a subject line */
+	*sig = buf + parse_signature(buf, strlen(buf));
+	*siglen = strlen(*sig);
+
 	/* subject is first non-empty line */
 	*sub = buf;
 	/* subject goes to first empty line */
-	while (*buf && *buf != '\n') {
+	while (buf < *sig && *buf && *buf != '\n') {
 		eol = strchrnul(buf, '\n');
 		if (*eol)
 			eol++;
@@ -505,14 +514,15 @@ static void find_subpos(const char *buf, unsigned long sz,
 		buf++;
 	*body = buf;
 	*bodylen = strlen(buf);
+	*nonsiglen = *sig - buf;
 }
 
 /* See grab_values */
 static void grab_sub_body_contents(struct atom_value *val, int deref, struct object *obj, void *buf, unsigned long sz)
 {
 	int i;
-	const char *subpos = NULL, *bodypos;
-	unsigned long sublen, bodylen;
+	const char *subpos = NULL, *bodypos = NULL, *sigpos = NULL;
+	unsigned long sublen = 0, bodylen = 0, nonsiglen = 0, siglen = 0;
 
 	for (i = 0; i < used_atom_cnt; i++) {
 		const char *name = used_atom[i];
@@ -523,17 +533,27 @@ static void grab_sub_body_contents(struct atom_value *val, int deref, struct obj
 			name++;
 		if (strcmp(name, "subject") &&
 		    strcmp(name, "body") &&
-		    strcmp(name, "contents"))
+		    strcmp(name, "contents") &&
+		    strcmp(name, "contents:subject") &&
+		    strcmp(name, "contents:body") &&
+		    strcmp(name, "contents:signature"))
 			continue;
 		if (!subpos)
 			find_subpos(buf, sz,
 				    &subpos, &sublen,
-				    &bodypos, &bodylen);
+				    &bodypos, &bodylen, &nonsiglen,
+				    &sigpos, &siglen);
 
 		if (!strcmp(name, "subject"))
 			v->s = copy_subject(subpos, sublen);
+		else if (!strcmp(name, "contents:subject"))
+			v->s = copy_subject(subpos, sublen);
 		else if (!strcmp(name, "body"))
 			v->s = xmemdupz(bodypos, bodylen);
+		else if (!strcmp(name, "contents:body"))
+			v->s = xmemdupz(bodypos, nonsiglen);
+		else if (!strcmp(name, "contents:signature"))
+			v->s = xmemdupz(sigpos, siglen);
 		else if (!strcmp(name, "contents"))
 			v->s = xstrdup(subpos);
 	}
