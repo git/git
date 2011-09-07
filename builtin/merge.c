@@ -405,6 +405,16 @@ static void finish(const unsigned char *new_head, const char *msg)
 	strbuf_release(&reflog_message);
 }
 
+static struct object *want_commit(const char *name)
+{
+	struct object *obj;
+	unsigned char sha1[20];
+	if (get_sha1(name, sha1))
+		return NULL;
+	obj = parse_object(sha1);
+	return peel_to_type(name, 0, obj, OBJ_COMMIT);
+}
+
 /* Get the name for the merge commit's message. */
 static void merge_name(const char *remote, struct strbuf *msg)
 {
@@ -420,7 +430,7 @@ static void merge_name(const char *remote, struct strbuf *msg)
 	remote = bname.buf;
 
 	memset(branch_head, 0, sizeof(branch_head));
-	remote_head = peel_to_type(remote, 0, NULL, OBJ_COMMIT);
+	remote_head = want_commit(remote);
 	if (!remote_head)
 		die(_("'%s' does not point to a commit"), remote);
 
@@ -1130,7 +1140,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		if (!allow_fast_forward)
 			die(_("Non-fast-forward commit does not make sense into "
 			    "an empty head"));
-		remote_head = peel_to_type(argv[0], 0, NULL, OBJ_COMMIT);
+		remote_head = want_commit(argv[0]);
 		if (!remote_head)
 			die(_("%s - not something we can merge"), argv[0]);
 		read_empty(remote_head->sha1, 0);
@@ -1176,7 +1186,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		struct object *o;
 		struct commit *commit;
 
-		o = peel_to_type(argv[i], 0, NULL, OBJ_COMMIT);
+		o = want_commit(argv[i]);
 		if (!o)
 			die(_("%s - not something we can merge"), argv[i]);
 		commit = lookup_commit(o->sha1);
@@ -1244,8 +1254,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		if (have_message)
 			strbuf_addstr(&msg,
 				" (no commit created; -m option ignored)");
-		o = peel_to_type(sha1_to_hex(remoteheads->item->object.sha1),
-			0, NULL, OBJ_COMMIT);
+		o = want_commit(sha1_to_hex(remoteheads->item->object.sha1));
 		if (!o)
 			return 1;
 
