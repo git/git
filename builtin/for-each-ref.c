@@ -458,38 +458,42 @@ static void grab_person(const char *who, struct atom_value *val, int deref, stru
 	}
 }
 
-static void find_subpos(const char *buf, unsigned long sz, const char **sub, const char **body)
+static void find_subpos(const char *buf, unsigned long sz,
+			const char **sub, unsigned long *sublen,
+			const char **body, unsigned long *bodylen)
 {
-	while (*buf) {
-		const char *eol = strchr(buf, '\n');
-		if (!eol)
-			return;
-		if (eol[1] == '\n') {
-			buf = eol + 1;
-			break; /* found end of header */
-		}
-		buf = eol + 1;
+	const char *eol;
+	/* skip past header until we hit empty line */
+	while (*buf && *buf != '\n') {
+		eol = strchrnul(buf, '\n');
+		if (*eol)
+			eol++;
+		buf = eol;
 	}
+	/* skip any empty lines */
 	while (*buf == '\n')
 		buf++;
-	if (!*buf)
-		return;
-	*sub = buf; /* first non-empty line */
-	buf = strchr(buf, '\n');
-	if (!buf) {
-		*body = "";
-		return; /* no body */
-	}
+
+	/* subject is first non-empty line */
+	*sub = buf;
+	/* subject goes to end of line */
+	eol = strchrnul(buf, '\n');
+	*sublen = eol - buf;
+	buf = eol;
+
+	/* skip any empty lines */
 	while (*buf == '\n')
-		buf++; /* skip blank between subject and body */
+		buf++;
 	*body = buf;
+	*bodylen = strlen(buf);
 }
 
 /* See grab_values */
 static void grab_sub_body_contents(struct atom_value *val, int deref, struct object *obj, void *buf, unsigned long sz)
 {
 	int i;
-	const char *subpos = NULL, *bodypos = NULL;
+	const char *subpos = NULL, *bodypos;
+	unsigned long sublen, bodylen;
 
 	for (i = 0; i < used_atom_cnt; i++) {
 		const char *name = used_atom[i];
@@ -503,14 +507,14 @@ static void grab_sub_body_contents(struct atom_value *val, int deref, struct obj
 		    strcmp(name, "contents"))
 			continue;
 		if (!subpos)
-			find_subpos(buf, sz, &subpos, &bodypos);
-		if (!subpos)
-			return;
+			find_subpos(buf, sz,
+				    &subpos, &sublen,
+				    &bodypos, &bodylen);
 
 		if (!strcmp(name, "subject"))
-			v->s = copy_line(subpos);
+			v->s = xmemdupz(subpos, sublen);
 		else if (!strcmp(name, "body"))
-			v->s = xstrdup(bodypos);
+			v->s = xmemdupz(bodypos, bodylen);
 		else if (!strcmp(name, "contents"))
 			v->s = xstrdup(subpos);
 	}
