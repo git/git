@@ -176,7 +176,7 @@ by doing the following:
  - Update "What's cooking" message to review the updates to
    existing topics, newly added topics and graduated topics.
 
-   This step is helped with Meta/UWC script (where Meta/ contains
+   This step is helped with Meta/cook script (where Meta/ contains
    a checkout of the 'todo' branch).
 
  - Merge topics to 'next'.  For each branch whose tip is not
@@ -197,10 +197,9 @@ by doing the following:
 
    - Nothing is next-worthy; do not do anything.
 
- - Rebase topics that do not have any commit in next yet.  This
-   step is optional but sometimes is worth doing when an old
-   series that is not in next can take advantage of low-level
-   framework change that is merged to 'master' already.
+ - [** OBSOLETE **] Optionally rebase topics that do not have any commit
+   in next yet, when they can take advantage of low-level framework
+   change that is merged to 'master' already.
 
      $ git rebase master ai/topic
 
@@ -209,7 +208,7 @@ by doing the following:
    pre-rebase hook to make sure that topics that are already in
    'next' are not rebased beyond the merged commit.
 
- - Rebuild "pu" to merge the tips of topics not in 'next'.
+ - [** OBSOLETE **] Rebuild "pu" to merge the tips of topics not in 'next'.
 
      $ git checkout pu
      $ git reset --hard next
@@ -241,7 +240,7 @@ by doing the following:
 
  - Fetch html and man branches back from k.org, and push four
    integration branches and the two documentation branches to
-   repo.or.cz
+   repo.or.cz and other mirrors.
 
 
 Some observations to be made.
