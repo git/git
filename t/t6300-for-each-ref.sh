@@ -37,6 +37,7 @@ test_atom() {
 	case "$1" in
 		head) ref=refs/heads/master ;;
 		 tag) ref=refs/tags/testtag ;;
+		   *) ref=$1 ;;
 	esac
 	printf '%s\n' "$3" >expected
 	test_expect_${4:-success} "basic atom: $1 $2" "
@@ -357,6 +358,25 @@ test_expect_success 'an unusual tag with an incomplete line' '
 	git tag -f bogo "$bogo" &&
 	git for-each-ref --format "%(body)" refs/tags/bogo
 
+'
+
+test_expect_success 'create tag with subject and body content' '
+	cat >>msg <<-\EOF &&
+		the subject line
+
+		first body line
+		second body line
+	EOF
+	git tag -F msg subject-body
+'
+test_atom refs/tags/subject-body subject 'the subject line'
+test_atom refs/tags/subject-body body 'first body line
+second body line
+'
+test_atom refs/tags/subject-body contents 'the subject line
+
+first body line
+second body line
 '
 
 test_done
