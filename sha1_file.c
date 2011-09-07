@@ -248,27 +248,30 @@ static int link_alt_odb_entry(const char * entry, int len, const char * relative
 	const char *objdir = get_object_directory();
 	struct alternate_object_database *ent;
 	struct alternate_object_database *alt;
-	/* 43 = 40-byte + 2 '/' + terminating NUL */
-	int pfxlen = len;
-	int entlen = pfxlen + 43;
-	int base_len = -1;
+	int pfxlen, entlen;
+	struct strbuf pathbuf = STRBUF_INIT;
 
 	if (!is_absolute_path(entry) && relative_base) {
-		/* Relative alt-odb */
-		if (base_len < 0)
-			base_len = strlen(relative_base) + 1;
-		entlen += base_len;
-		pfxlen += base_len;
+		strbuf_addstr(&pathbuf, real_path(relative_base));
+		strbuf_addch(&pathbuf, '/');
 	}
+	strbuf_add(&pathbuf, entry, len);
+
+	normalize_path_copy(pathbuf.buf, pathbuf.buf);
+
+	pfxlen = strlen(pathbuf.buf);
+
+	/*
+	 * The trailing slash after the directory name is given by
+	 * this function at the end. Remove duplicates.
+	 */
+	while (pfxlen && pathbuf.buf[pfxlen-1] == '/')
+		pfxlen -= 1;
+
+	entlen = pfxlen + 43; /* '/' + 2 hex + '/' + 38 hex + NUL */
 	ent = xmalloc(sizeof(*ent) + entlen);
-
-	if (!is_absolute_path(entry) && relative_base) {
-		memcpy(ent->base, relative_base, base_len - 1);
-		ent->base[base_len - 1] = '/';
-		memcpy(ent->base + base_len, entry, len);
-	}
-	else
-		memcpy(ent->base, entry, pfxlen);
+	memcpy(ent->base, pathbuf.buf, pfxlen);
+	strbuf_release(&pathbuf);
 
 	ent->name = ent->base + pfxlen + 1;
 	ent->base[pfxlen + 3] = '/';
