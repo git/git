@@ -21,7 +21,7 @@ DESCRIPTION
 With no arguments, existing branches are listed and the current branch will
 be highlighted with an asterisk.  Option `-r` causes the remote-tracking
 branches to be listed, and option `-a` shows both. This list mode is also
-activated by the `--list` and `-v` options (see below).
+activated by the `--list` option (see below).
 <pattern> restricts the output to matching branches, the pattern is a shell
 wildcard (i.e., matched using fnmatch(3))
 Multiple patterns may be given; if any of them matches, the tag is shown.
@@ -120,10 +120,10 @@ OPTIONS
 
 -v::
 --verbose::
-	Show sha1 and commit subject line for each head, along with
+	When in list mode,
+	show sha1 and commit subject line for each head, along with
 	relationship to upstream branch (if any). If given twice, print
 	the name of the upstream branch, as well.
-	`--list` is implied by all verbosity options.
 
 --abbrev=<length>::
 	Alter the sha1's minimum display length in the output listing.

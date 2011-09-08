@@ -712,8 +712,7 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 	argc = parse_options(argc, argv, prefix, options, builtin_branch_usage,
 			     0);
 
-	if (!delete && !rename && !force_create &&
-	    (argc == 0 || (verbose && argc)))
+	if (!delete && !rename && !force_create && argc == 0)
 		list = 1;
 
 	if (!!delete + !!rename + !!force_create + !!list > 1)

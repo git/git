@@ -84,10 +84,14 @@ cat >expect <<'EOF'
 two
 one
 EOF
-test_expect_success 'git branch -v pattern shows branch summaries' '
-	git branch -v branch* >tmp &&
+test_expect_success 'git branch --list -v pattern shows branch summaries' '
+	git branch --list -v branch* >tmp &&
 	awk "{print \$NF}" <tmp >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success 'git branch -v pattern does not show branch summaries' '
+	test_must_fail git branch -v branch*
 '
 
 cat >expect <<'EOF'
