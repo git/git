@@ -14,6 +14,7 @@
 #include "parse-options.h"
 #include "diff.h"
 #include "revision.h"
+#include "gpg-interface.h"
 
 static const char * const git_tag_usage[] = {
 	"git tag [-a|-s|-u <key-id>] [-f] [-m <msg>|-F <file>] <tagname> [<head>]",
@@ -22,8 +23,6 @@ static const char * const git_tag_usage[] = {
 	"git tag -v <tagname>...",
 	NULL
 };
-
-static char signingkey[1000];
 
 struct tag_filter {
 	const char **patterns;
@@ -208,60 +207,7 @@ static int verify_tag(const char *name, const char *ref,
 
 static int do_sign(struct strbuf *buffer)
 {
-	struct child_process gpg;
-	const char *args[4];
-	char *bracket;
-	int len;
-	int i, j;
-
-	if (!*signingkey) {
-		if (strlcpy(signingkey, git_committer_info(IDENT_ERROR_ON_NO_NAME),
-				sizeof(signingkey)) > sizeof(signingkey) - 1)
-			return error(_("committer info too long."));
-		bracket = strchr(signingkey, '>');
-		if (bracket)
-			bracket[1] = '\0';
-	}
-
-	/* When the username signingkey is bad, program could be terminated
-	 * because gpg exits without reading and then write gets SIGPIPE. */
-	signal(SIGPIPE, SIG_IGN);
-
-	memset(&gpg, 0, sizeof(gpg));
-	gpg.argv = args;
-	gpg.in = -1;
-	gpg.out = -1;
-	args[0] = "gpg";
-	args[1] = "-bsau";
-	args[2] = signingkey;
-	args[3] = NULL;
-
-	if (start_command(&gpg))
-		return error(_("could not run gpg."));
-
-	if (write_in_full(gpg.in, buffer->buf, buffer->len) != buffer->len) {
-		close(gpg.in);
-		close(gpg.out);
-		finish_command(&gpg);
-		return error(_("gpg did not accept the tag data"));
-	}
-	close(gpg.in);
-	len = strbuf_read(buffer, gpg.out, 1024);
-	close(gpg.out);
-
-	if (finish_command(&gpg) || !len || len < 0)
-		return error(_("gpg failed to sign the tag"));
-
-	/* Strip CR from the line endings, in case we are on Windows. */
-	for (i = j = 0; i < buffer->len; i++)
-		if (buffer->buf[i] != '\r') {
-			if (i != j)
-				buffer->buf[j] = buffer->buf[i];
-			j++;
-		}
-	strbuf_setlen(buffer, j);
-
-	return 0;
+	return sign_buffer(buffer, buffer, get_signing_key());
 }
 
 static const char tag_template[] =
@@ -270,21 +216,11 @@ static const char tag_template[] =
 	"# Write a tag message\n"
 	"#\n");
 
-static void set_signingkey(const char *value)
-{
-	if (strlcpy(signingkey, value, sizeof(signingkey)) >= sizeof(signingkey))
-		die(_("signing key value too long (%.10s...)"), value);
-}
-
 static int git_tag_config(const char *var, const char *value, void *cb)
 {
-	if (!strcmp(var, "user.signingkey")) {
-		if (!value)
-			return config_error_nonbool(var);
-		set_signingkey(value);
-		return 0;
-	}
-
+	int status = git_gpg_config(var, value, cb);
+	if (status)
+		return status;
 	return git_default_config(var, value, cb);
 }
 
@@ -463,7 +399,7 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 
 	if (keyid) {
 		sign = 1;
-		set_signingkey(keyid);
+		set_signing_key(keyid);
 	}
 	if (sign)
 		annotate = 1;
