@@ -591,8 +591,8 @@ int tree_entry_interesting(const struct name_entry *entry,
 					      ps->max_depth);
 		}
 
-		/* Does the base match? */
-		if (!strncmp(base_str, match, baselen)) {
+		/* Either there must be no base, or the base must match. */
+		if (baselen == 0 || !strncmp(base_str, match, baselen)) {
 			if (match_entry(entry, pathlen,
 					match + baselen, matchlen - baselen,
 					&never_interesting))
