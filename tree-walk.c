@@ -522,7 +522,7 @@ static int match_entry(const struct name_entry *entry, int pathlen,
 	return 0;
 }
 
-static int match_dir_prefix(const char *base, int baselen,
+static int match_dir_prefix(const char *base,
 			    const char *match, int matchlen)
 {
 	if (strncmp(base, match, matchlen))
@@ -579,7 +579,7 @@ int tree_entry_interesting(const struct name_entry *entry,
 
 		if (baselen >= matchlen) {
 			/* If it doesn't match, move along... */
-			if (!match_dir_prefix(base_str, baselen, match, matchlen))
+			if (!match_dir_prefix(base_str, match, matchlen))
 				goto match_wildcards;
 
 			if (!ps->recursive || ps->max_depth == -1)
