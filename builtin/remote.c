@@ -635,7 +635,7 @@ static int mv(int argc, const char **argv)
 		old_remote_context = STRBUF_INIT;
 	struct string_list remote_branches = STRING_LIST_INIT_NODUP;
 	struct rename_info rename;
-	int i;
+	int i, refspec_updated = 0;
 
 	if (argc != 3)
 		usage_with_options(builtin_remote_rename_usage, options);
@@ -677,12 +677,13 @@ static int mv(int argc, const char **argv)
 		strbuf_reset(&buf2);
 		strbuf_addstr(&buf2, oldremote->fetch_refspec[i]);
 		ptr = strstr(buf2.buf, old_remote_context.buf);
-		if (ptr)
+		if (ptr) {
+			refspec_updated = 1;
 			strbuf_splice(&buf2,
 				      ptr-buf2.buf + strlen(":refs/remotes/"),
 				      strlen(rename.old), rename.new,
 				      strlen(rename.new));
-		else
+		} else
 			warning("Not updating non-default fetch respec\n"
 				"\t%s\n"
 				"\tPlease update the configuration manually if necessary.",
@@ -704,6 +705,9 @@ static int mv(int argc, const char **argv)
 			}
 		}
 	}
+
+	if (!refspec_updated)
+		return 0;
 
 	/*
 	 * First remove symrefs, then rename the rest, finally create

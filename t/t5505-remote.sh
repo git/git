@@ -637,7 +637,8 @@ test_expect_success 'rename does not update a non-default fetch refspec' '
 	(cd four.one &&
 	 git config remote.origin.fetch +refs/heads/*:refs/heads/origin/* &&
 	 git remote rename origin upstream &&
-	 test "$(git config remote.upstream.fetch)" = "+refs/heads/*:refs/heads/origin/*")
+	 test "$(git config remote.upstream.fetch)" = "+refs/heads/*:refs/heads/origin/*" &&
+	 git rev-parse -q origin/master)
 
 '
 
