@@ -1684,7 +1684,7 @@ C_OBJ := $(filter-out $(ASM_OBJ),$(OBJECTS))
 ifdef COMPUTE_HEADER_DEPENDENCIES
 dep_dirs := $(addsuffix deps,$(sort $(dir $(OBJECTS))))
 $(dep_dirs):
-	mkdir -p $@
+	@mkdir -p $@
 
 missing_dep_dirs := $(filter-out $(wildcard $(dep_dirs)),$(dep_dirs))
 else
