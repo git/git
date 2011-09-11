@@ -185,7 +185,7 @@ static void clear_cached_refs(struct cached_refs *ca)
 	ca->did_loose = ca->did_packed = 0;
 }
 
-struct cached_refs *create_cached_refs(const char *submodule)
+static struct cached_refs *create_cached_refs(const char *submodule)
 {
 	int len;
 	struct cached_refs *refs;
