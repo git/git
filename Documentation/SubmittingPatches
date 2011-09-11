@@ -134,8 +134,7 @@ Another thing: NULL pointers shall be written as NULL, not as 0.
 
 (2) Generate your patch using git tools out of your commits.
 
-git based diff tools (git, Cogito, and StGIT included) generate
-unidiff which is the preferred format.
+git based diff tools generate unidiff which is the preferred format.
 
 You do not have to be afraid to use -M option to "git diff" or
 "git format-patch", if your patch involves file renames.  The
