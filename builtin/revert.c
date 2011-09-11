@@ -110,7 +110,7 @@ static void verify_opt_compatible(const char *me, const char *base_opt, ...)
 
 static void verify_opt_mutually_compatible(const char *me, ...)
 {
-	const char *opt1, *opt2;
+	const char *opt1, *opt2 = NULL;
 	va_list ap;
 
 	va_start(ap, me);

@@ -344,7 +344,7 @@ int traverse_trees(int n, struct tree_desc *t, struct traverse_info *info)
 		unsigned long mask, dirmask;
 		const char *first = NULL;
 		int first_len = 0;
-		struct name_entry *e;
+		struct name_entry *e = NULL;
 		int len;
 
 		for (i = 0; i < n; i++) {
