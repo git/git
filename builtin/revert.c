@@ -664,8 +664,8 @@ static void read_and_refresh_cache(struct replay_opts *opts)
  *     assert(commit_list_count(list) == 2);
  *     return list;
  */
-struct commit_list **commit_list_append(struct commit *commit,
-					struct commit_list **next)
+static struct commit_list **commit_list_append(struct commit *commit,
+					       struct commit_list **next)
 {
 	struct commit_list *new = xmalloc(sizeof(struct commit_list));
 	new->item = commit;
