@@ -869,4 +869,12 @@ test_expect_success 'empty subject prefix does not have extra space' '
 	test_cmp expect actual
 '
 
+test_expect_success 'format patch ignores color.ui' '
+	test_unconfig color.ui &&
+	git format-patch --stdout -1 >expect &&
+	test_config color.ui always &&
+	git format-patch --stdout -1 >actual &&
+	test_cmp expect actual
+'
+
 test_done

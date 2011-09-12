@@ -608,7 +608,8 @@ static int git_format_config(const char *var, const char *value, void *cb)
 		string_list_append(&extra_cc, value);
 		return 0;
 	}
-	if (!strcmp(var, "diff.color") || !strcmp(var, "color.diff")) {
+	if (!strcmp(var, "diff.color") || !strcmp(var, "color.diff") ||
+	    !strcmp(var, "color.ui")) {
 		return 0;
 	}
 	if (!strcmp(var, "format.numbered")) {
