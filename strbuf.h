@@ -44,7 +44,22 @@ extern void strbuf_rtrim(struct strbuf *);
 extern void strbuf_ltrim(struct strbuf *);
 extern int strbuf_cmp(const struct strbuf *, const struct strbuf *);
 
-extern struct strbuf **strbuf_split(const struct strbuf *, int delim);
+extern struct strbuf **strbuf_split_buf(const char *, size_t,
+					int delim, int max);
+static inline struct strbuf **strbuf_split_str(const char *str,
+					       int delim, int max)
+{
+	return strbuf_split_buf(str, strlen(str), delim, max);
+}
+static inline struct strbuf **strbuf_split_max(const struct strbuf *sb,
+						int delim, int max)
+{
+	return strbuf_split_buf(sb->buf, sb->len, delim, max);
+}
+static inline struct strbuf **strbuf_split(const struct strbuf *sb, int delim)
+{
+	return strbuf_split_max(sb, delim, 0);
+}
 extern void strbuf_list_free(struct strbuf **);
 
 /*----- add data in your buffer -----*/
