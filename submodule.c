@@ -8,12 +8,17 @@
 #include "diffcore.h"
 #include "refs.h"
 #include "string-list.h"
+#include "sha1-array.h"
 
 static struct string_list config_name_for_path;
 static struct string_list config_fetch_recurse_submodules_for_name;
 static struct string_list config_ignore_for_name;
 static int config_fetch_recurse_submodules = RECURSE_SUBMODULES_ON_DEMAND;
 static struct string_list changed_submodule_paths;
+static int initialized_fetch_ref_tips;
+static struct sha1_array ref_tips_before_fetch;
+static struct sha1_array ref_tips_after_fetch;
+
 /*
  * The following flag is set if the .gitmodules file is unmerged. We then
  * disable recursion for all submodules where .git/config doesn't have a
@@ -366,16 +371,72 @@ static void submodule_collect_changed_cb(struct diff_queue_struct *q,
 	}
 }
 
+static int add_sha1_to_array(const char *ref, const unsigned char *sha1,
+			     int flags, void *data)
+{
+	sha1_array_append(data, sha1);
+	return 0;
+}
+
 void check_for_new_submodule_commits(unsigned char new_sha1[20])
+{
+	if (!initialized_fetch_ref_tips) {
+		for_each_ref(add_sha1_to_array, &ref_tips_before_fetch);
+		initialized_fetch_ref_tips = 1;
+	}
+
+	sha1_array_append(&ref_tips_after_fetch, new_sha1);
+}
+
+struct argv_array {
+	const char **argv;
+	unsigned int argc;
+	unsigned int alloc;
+};
+
+static void init_argv(struct argv_array *array)
+{
+	array->argv = NULL;
+	array->argc = 0;
+	array->alloc = 0;
+}
+
+static void push_argv(struct argv_array *array, const char *value)
+{
+	ALLOC_GROW(array->argv, array->argc + 2, array->alloc);
+	array->argv[array->argc++] = xstrdup(value);
+	array->argv[array->argc] = NULL;
+}
+
+static void clear_argv(struct argv_array *array)
+{
+	int i;
+	for (i = 0; i < array->argc; i++)
+		free((char **)array->argv[i]);
+	free(array->argv);
+	init_argv(array);
+}
+
+static void add_sha1_to_argv(const unsigned char sha1[20], void *data)
+{
+	push_argv(data, sha1_to_hex(sha1));
+}
+
+static void calculate_changed_submodule_paths(void)
 {
 	struct rev_info rev;
 	struct commit *commit;
-	const char *argv[] = {NULL, NULL, "--not", "--all", NULL};
-	int argc = ARRAY_SIZE(argv) - 1;
+	struct argv_array argv;
 
 	init_revisions(&rev, NULL);
-	argv[1] = xstrdup(sha1_to_hex(new_sha1));
-	setup_revisions(argc, argv, &rev, NULL);
+	init_argv(&argv);
+	push_argv(&argv, "--"); /* argv[0] program name */
+	sha1_array_for_each_unique(&ref_tips_after_fetch,
+				   add_sha1_to_argv, &argv);
+	push_argv(&argv, "--not");
+	sha1_array_for_each_unique(&ref_tips_before_fetch,
+				   add_sha1_to_argv, &argv);
+	setup_revisions(argv.argc, argv.argv, &rev, NULL);
 	if (prepare_revision_walk(&rev))
 		die("revision walk setup failed");
 
@@ -398,7 +459,11 @@ void check_for_new_submodule_commits(unsigned char new_sha1[20])
 			parent = parent->next;
 		}
 	}
-	free((char *)argv[1]);
+
+	clear_argv(&argv);
+	sha1_array_clear(&ref_tips_before_fetch);
+	sha1_array_clear(&ref_tips_after_fetch);
+	initialized_fetch_ref_tips = 0;
 }
 
 int fetch_populated_submodules(int num_options, const char **options,
@@ -431,6 +496,8 @@ int fetch_populated_submodules(int num_options, const char **options,
 	cp.env = local_repo_env;
 	cp.git_cmd = 1;
 	cp.no_stdin = 1;
+
+	calculate_changed_submodule_paths();
 
 	for (i = 0; i < active_nr; i++) {
 		struct strbuf submodule_path = STRBUF_INIT;
