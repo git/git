@@ -7,6 +7,10 @@ Fixes since v1.7.6.2
  * "git -c var=value subcmd" misparsed the custom configuration when
    value contained an equal sign.
 
+ * "git fetch" had a major performance regression, wasting many
+   needless cycles in a repository where there is no submodules
+   present. This was especially bad, when there were many refs.
+
  * "git reflog $refname" did not default to the "show" subcommand as
    the documentation advertised the command to do.
 
