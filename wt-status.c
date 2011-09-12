@@ -642,7 +642,7 @@ static void wt_status_print_other(struct wt_status *s,
 	int i;
 	struct strbuf buf = STRBUF_INIT;
 
-	if (!s->untracked.nr)
+	if (!l->nr)
 		return;
 
 	wt_status_print_other_header(s, what, how);
