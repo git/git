@@ -1,0 +1,30 @@
+git-remote-testgit(1)
+=====================
+
+NAME
+----
+git-remote-testgit - Example remote-helper
+
+
+SYNOPSIS
+--------
+[verse]
+git clone testgit::<source-repo> [<destination>]
+
+DESCRIPTION
+-----------
+
+This command is a simple remote-helper, that is used both as a
+testcase for the remote-helper functionality, and as an example to
+show remote-helper authors one possible implementation.
+
+The best way to learn more is to read the comments and source code in
+'git-remote-testgit.py'.
+
+SEE ALSO
+--------
+linkgit:git-remote-helpers[1]
+
+GIT
+---
+Part of the linkgit:git[1] suite
