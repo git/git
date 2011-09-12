@@ -373,6 +373,10 @@ void check_for_new_submodule_commits(unsigned char new_sha1[20])
 	const char *argv[] = {NULL, NULL, "--not", "--all", NULL};
 	int argc = ARRAY_SIZE(argv) - 1;
 
+	/* No need to check if there are no submodules configured */
+	if (!config_name_for_path.nr)
+		return;
+
 	init_revisions(&rev, NULL);
 	argv[1] = xstrdup(sha1_to_hex(new_sha1));
 	setup_revisions(argc, argv, &rev, NULL);
