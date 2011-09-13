@@ -40,9 +40,8 @@ extern char *sq_dequote(char *);
 
 /*
  * Same as the above, but can be used to unwrap many arguments in the
- * same string separated by space. "next" is changed to point to the
- * next argument that should be passed as first parameter. When there
- * is no more argument to be dequoted, "next" is updated to point to NULL.
+ * same string separated by space. Like sq_quote, it works in place,
+ * modifying arg and appending pointers into it to argv.
  */
 extern int sq_dequote_to_argv(char *arg, const char ***argv, int *nr, int *alloc);
 
