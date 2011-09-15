@@ -581,6 +581,11 @@ const char *resolve_ref(const char *ref, unsigned char *sha1, int reading, int *
 		buf = buffer + 4;
 		while (isspace(*buf))
 			buf++;
+		if (check_refname_format(buf, REFNAME_ALLOW_ONELEVEL)) {
+			warning("symbolic reference in %s is formatted incorrectly",
+				path);
+			return NULL;
+		}
 		ref = strcpy(ref_buffer, buf);
 		if (flag)
 			*flag |= REF_ISSYMREF;
