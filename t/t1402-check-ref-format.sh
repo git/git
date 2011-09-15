@@ -5,25 +5,38 @@ test_description='Test git check-ref-format'
 . ./test-lib.sh
 
 valid_ref() {
-	test_expect_success "ref name '$1' is valid" \
-		"git check-ref-format '$1'"
+	if test "$#" = 1
+	then
+		test_expect_success "ref name '$1' is valid" \
+			"git check-ref-format '$1'"
+	else
+		test_expect_success "ref name '$1' is valid with options $2" \
+			"git check-ref-format $2 '$1'"
+	fi
 }
 invalid_ref() {
-	test_expect_success "ref name '$1' is not valid" \
-		"test_must_fail git check-ref-format '$1'"
+	if test "$#" = 1
+	then
+		test_expect_success "ref name '$1' is invalid" \
+			"test_must_fail git check-ref-format '$1'"
+	else
+		test_expect_success "ref name '$1' is invalid with options $2" \
+			"test_must_fail git check-ref-format $2 '$1'"
+	fi
 }
 
 invalid_ref ''
 invalid_ref '/'
-valid_ref 'heads/foo'
-invalid_ref 'foo'
+invalid_ref '/' --allow-onelevel
 valid_ref 'foo/bar/baz'
 valid_ref 'refs///heads/foo'
 invalid_ref 'heads/foo/'
 valid_ref '/heads/foo'
 valid_ref '///heads/foo'
-invalid_ref '/foo'
 invalid_ref './foo'
+invalid_ref './foo/bar'
+invalid_ref 'foo/./bar'
+invalid_ref 'foo/bar/.'
 invalid_ref '.refs/foo'
 invalid_ref 'heads/foo..bar'
 invalid_ref 'heads/foo?bar'
@@ -38,6 +51,67 @@ invalid_ref 'heads/foo\bar'
 invalid_ref "$(printf 'heads/foo\t')"
 invalid_ref "$(printf 'heads/foo\177')"
 valid_ref "$(printf 'heads/fu\303\237')"
+invalid_ref 'heads/*foo/bar' --refspec-pattern
+invalid_ref 'heads/foo*/bar' --refspec-pattern
+invalid_ref 'heads/f*o/bar' --refspec-pattern
+
+ref='foo'
+invalid_ref "$ref"
+valid_ref "$ref" --allow-onelevel
+invalid_ref "$ref" --refspec-pattern
+valid_ref "$ref" '--refspec-pattern --allow-onelevel'
+
+ref='foo/bar'
+valid_ref "$ref"
+valid_ref "$ref" --allow-onelevel
+valid_ref "$ref" --refspec-pattern
+valid_ref "$ref" '--refspec-pattern --allow-onelevel'
+
+ref='foo/*'
+invalid_ref "$ref"
+invalid_ref "$ref" --allow-onelevel
+valid_ref "$ref" --refspec-pattern
+valid_ref "$ref" '--refspec-pattern --allow-onelevel'
+
+ref='*/foo'
+invalid_ref "$ref"
+invalid_ref "$ref" --allow-onelevel
+valid_ref "$ref" --refspec-pattern
+valid_ref "$ref" '--refspec-pattern --allow-onelevel'
+
+ref='foo/*/bar'
+invalid_ref "$ref"
+invalid_ref "$ref" --allow-onelevel
+valid_ref "$ref" --refspec-pattern
+valid_ref "$ref" '--refspec-pattern --allow-onelevel'
+
+ref='*'
+invalid_ref "$ref"
+
+#invalid_ref "$ref" --allow-onelevel
+test_expect_failure "ref name '$ref' is invalid with options --allow-onelevel" \
+	"test_must_fail git check-ref-format --allow-onelevel '$ref'"
+
+invalid_ref "$ref" --refspec-pattern
+valid_ref "$ref" '--refspec-pattern --allow-onelevel'
+
+ref='foo/*/*'
+invalid_ref "$ref" --refspec-pattern
+invalid_ref "$ref" '--refspec-pattern --allow-onelevel'
+
+ref='*/foo/*'
+invalid_ref "$ref" --refspec-pattern
+invalid_ref "$ref" '--refspec-pattern --allow-onelevel'
+
+ref='*/*/foo'
+invalid_ref "$ref" --refspec-pattern
+invalid_ref "$ref" '--refspec-pattern --allow-onelevel'
+
+ref='/foo'
+invalid_ref "$ref"
+valid_ref "$ref" --allow-onelevel
+invalid_ref "$ref" --refspec-pattern
+valid_ref "$ref" '--refspec-pattern --allow-onelevel'
 
 test_expect_success "check-ref-format --branch @{-1}" '
 	T=$(git write-tree) &&

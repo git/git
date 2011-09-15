@@ -8,8 +8,8 @@ git-check-ref-format - Ensures that a reference name is well formed
 SYNOPSIS
 --------
 [verse]
-'git check-ref-format' <refname>
-'git check-ref-format' --print <refname>
+'git check-ref-format' [--print]
+       [--[no-]allow-onelevel] [--refspec-pattern] <refname>
 'git check-ref-format' --branch <branchname-shorthand>
 
 DESCRIPTION
@@ -32,14 +32,18 @@ git imposes the following rules on how references are named:
 
 . They must contain at least one `/`. This enforces the presence of a
   category like `heads/`, `tags/` etc. but the actual names are not
-  restricted.
+  restricted.  If the `--allow-onelevel` option is used, this rule
+  is waived.
 
 . They cannot have two consecutive dots `..` anywhere.
 
 . They cannot have ASCII control characters (i.e. bytes whose
   values are lower than \040, or \177 `DEL`), space, tilde `~`,
-  caret `{caret}`, colon `:`, question-mark `?`, asterisk `*`,
-  or open bracket `[` anywhere.
+  caret `{caret}`, or colon `:` anywhere.
+
+. They cannot have question-mark `?`, asterisk `{asterisk}`, or open
+  bracket `[` anywhere.  See the `--refspec-pattern` option below for
+  an exception to this rule.
 
 . They cannot end with a slash `/` nor a dot `.`.
 
@@ -77,6 +81,21 @@ With the `--branch` option, it expands the ``previous branch syntax''
 were on.  This option should be used by porcelains to accept this
 syntax anywhere a branch name is expected, so they can act as if you
 typed the branch name.
+
+OPTIONS
+-------
+--allow-onelevel::
+--no-allow-onelevel::
+	Controls whether one-level refnames are accepted (i.e.,
+	refnames that do not contain multiple `/`-separated
+	components).  The default is `--no-allow-onelevel`.
+
+--refspec-pattern::
+	Interpret <refname> as a reference name pattern for a refspec
+	(as used with remote repositories).  If this option is
+	enabled, <refname> is allowed to contain a single `{asterisk}`
+	in place of a one full pathname component (e.g.,
+	`foo/{asterisk}/bar` but not `foo/bar{asterisk}`).
 
 EXAMPLES
 --------
