@@ -872,55 +872,70 @@ static inline int bad_ref_char(int ch)
 	return 0;
 }
 
+/*
+ * Try to read one refname component from the front of ref.  Return
+ * the length of the component found, or -1 if the component is not
+ * legal.
+ */
+static int check_refname_component(const char *ref)
+{
+	const char *cp;
+	char last = '\0';
+
+	for (cp = ref; ; cp++) {
+		char ch = *cp;
+		if (ch == '\0' || ch == '/')
+			break;
+		if (bad_ref_char(ch))
+			return -1; /* Illegal character in refname. */
+		if (last == '.' && ch == '.')
+			return -1; /* Refname contains "..". */
+		if (last == '@' && ch == '{')
+			return -1; /* Refname contains "@{". */
+		last = ch;
+	}
+	if (cp == ref)
+		return -1; /* Component has zero length. */
+	if (ref[0] == '.')
+		return -1; /* Component starts with '.'. */
+	return cp - ref;
+}
+
 int check_refname_format(const char *ref, int flags)
 {
-	int ch, level, last;
-	const char *cp = ref;
+	int component_len, component_count = 0;
 
-	level = 0;
 	while (1) {
-		while ((ch = *cp++) == '/')
-			; /* tolerate duplicated slashes */
-		if (!ch)
-			/* should not end with slashes */
-			return -1;
+		while (*ref == '/')
+			ref++; /* tolerate leading and repeated slashes */
 
-		/* we are at the beginning of the path component */
-		if (ch == '.')
-			return -1;
-		if (bad_ref_char(ch)) {
-			if ((flags & REFNAME_REFSPEC_PATTERN) && ch == '*' &&
-				(!*cp || *cp == '/'))
+		/* We are at the start of a path component. */
+		component_len = check_refname_component(ref);
+		if (component_len < 0) {
+			if ((flags & REFNAME_REFSPEC_PATTERN) &&
+					ref[0] == '*' &&
+					(ref[1] == '\0' || ref[1] == '/')) {
 				/* Accept one wildcard as a full refname component. */
 				flags &= ~REFNAME_REFSPEC_PATTERN;
-			else
+				component_len = 1;
+			} else {
 				return -1;
+			}
 		}
-
-		last = ch;
-		/* scan the rest of the path component */
-		while ((ch = *cp++) != 0) {
-			if (bad_ref_char(ch))
-				return -1;
-			if (ch == '/')
-				break;
-			if (last == '.' && ch == '.')
-				return -1;
-			if (last == '@' && ch == '{')
-				return -1;
-			last = ch;
-		}
-		level++;
-		if (!ch) {
-			if (ref <= cp - 2 && cp[-2] == '.')
-				return -1;
-			if (level < 2 && !(flags & REFNAME_ALLOW_ONELEVEL))
-				return -1;
-			if (has_extension(ref, ".lock"))
-				return -1;
-			return 0;
-		}
+		component_count++;
+		if (ref[component_len] == '\0')
+			break;
+		/* Skip to next component. */
+		ref += component_len + 1;
 	}
+
+	if (ref[component_len - 1] == '.')
+		return -1; /* Refname ends with '.'. */
+	if (component_len >= 5 && !memcmp(&ref[component_len - 5], ".lock", 5))
+		return -1; /* Refname ends with ".lock". */
+	if (!(flags & REFNAME_ALLOW_ONELEVEL) && component_count < 2)
+		return -1; /* Refname has only one component. */
+	return 0;
 }
 
 const char *prettify_refname(const char *name)
