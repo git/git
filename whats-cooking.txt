@@ -1,25 +1,13 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Sep 2011, #04; Mon, 12)
-X-master-at: 5738c9c21e53356ab5020912116e7f82fd2d428f
-X-next-at: f7b2633f782e177423b9f0a0fb76c4f5ae0d8364
+Subject: What's cooking in git.git (Sep 2011, #05; Wed, 14)
+X-master-at: 1e5814f3def08452aef4caa703f074ba7d167867
+X-next-at: 872ee2d61fac3d9dd13d38dcf7d86c7059b4ca79
 
-What's cooking in git.git (Sep 2011, #04; Mon, 12)
+What's cooking in git.git (Sep 2011, #05; Wed, 14)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' while commits prefixed with '+' are in 'next'.
-
-The tip of 'master' is tagged as 1.7.7-rc1. Unfortunately k.org seems to
-be still down, so there will be no pre-built rpms nor pre-formatted manual
-or documentation pages.
-
-I've tentatively uploaded a release candidate tarball at:
-
-    http://code.google.com/p/git-core/downloads/list
-  
-and its SHA-1 checksum is:
-
-80dfcce410d2f36ffed4c8b48c8c896a45159e41  git-1.7.7.rc1.tar.gz
 
 Here are the repositories that have my integration branches:
 
@@ -40,30 +28,65 @@ With all the topics and integration branches:
 --------------------------------------------------
 [New Topics]
 
-* ph/format-patch-no-color (2011-09-12) 1 commit
- - format-patch: ignore ui.color
+* jk/maint-fetch-submodule-check-fix (2011-09-12) 1 commit
+  (merged to 'next' on 2011-09-12 at 3c73b8c)
+ + fetch: avoid quadratic loop checking for updated submodules
+ (this branch is used by jk/argv-array.)
 
-This fix for the recent regression probably should be in 1.7.7 final.
-Will merge to "master" soonish.
+* bc/attr-ignore-case (2011-09-14) 5 commits
+ - attr: read core.attributesfile from git_default_core_config
+ - attr.c: respect core.ignorecase when matching attribute patterns
+ - builtin/mv.c: plug miniscule memory leak
+ - cleanup: use internal memory allocation wrapper functions everywhere
+ - attr.c: avoid inappropriate access to strbuf "buf" member
 
---------------------------------------------------
-[Graduated to "master"]
+* jc/maint-fsck-fwrite-size-check (2011-09-11) 1 commit
+ - fsck: do not abort upon finding an empty blob
 
-* jl/maint-fetch-submodule-check-fix (2011-09-09) 1 commit
- + fetch: skip on-demand checking when no submodules are configured
+* jc/request-pull-show-head-2 (2011-09-13) 2 commits
+ - request-pull: state exact commit object name
+ - fetch: allow asking for an explicit commit object by name
 
-* jn/remote-helpers-doc (2011-09-01) 3 commits
- + (short) documentation for the testgit remote helper
- + Documentation/git-remote-helpers: explain how import works with multiple refs
- + Documentation/remote-helpers: explain capabilities first
+* jk/argv-array (2011-09-14) 7 commits
+ - run_hook: use argv_array API
+ - checkout: use argv_array API
+ - bisect: use argv_array API
+ - quote: provide sq_dequote_to_argv_array
+ - refactor argv_array into generic code
+ - quote.h: fix bogus comment
+ - add sha1_array API docs
+ (this branch uses jk/maint-fetch-submodule-check-fix.)
+
+* js/cred-macos-x-keychain-2 (2011-09-14) 1 commit
+ - contrib: add a pair of credential helpers for Mac OS X's keychain
+ (this branch uses jk/http-auth-keyring; is tangled with js/cred-macos-x-keychain.)
+
+Welcome addition to build our confidence in the jk/http-auth-keyring topic.
 
 --------------------------------------------------
 [Stalled]
 
-* jk/default-attr (2011-08-26) 1 commit
- - attr: map builtin userdiff drivers to well-known extensions
+* jc/signed-push (2011-09-12) 7 commits
+ . push -s: support pre-receive-signature hook
+ . push -s: receiving end
+ . push -s: send signed push certificate
+ . push -s: skeleton
+ - Split GPG interface into its own helper library
+ - rename "match_refs()" to "match_push_refs()"
+ - send-pack: typofix error message
+ (this branch uses jc/run-receive-hook-cleanup; is tangled with jc/signed-push-3.)
 
-Not urgent; I fixed up the test breakage just for fun.
+This was the v2 that updated notes tree on the receiving end.
+
+* jc/signed-push-3 (2011-09-12) 4 commits
+ - push -s: signed push
+ - Split GPG interface into its own helper library
+ - rename "match_refs()" to "match_push_refs()"
+ - send-pack: typofix error message
+ (this branch uses jc/run-receive-hook-cleanup; is tangled with jc/signed-push.)
+
+This is the third edition, that moves the preparation of the notes tree to
+the sending end.
 
 * nd/maint-autofix-tag-in-head (2011-08-26) 3 commits
  - Accept tags in HEAD or MERGE_HEAD
@@ -73,11 +96,6 @@ Not urgent; I fixed up the test breakage just for fun.
 Probably needs a re-roll to aim a bit higher.
 Not urgent; will not be in 1.7.7.
 
-* tr/doc-note-rewrite (2011-09-05) 1 commit
- - Documentation: "on for all" configuration of notes.rewriteRef
-
-It was questioned if the new text suggests a sane and safe thing to do.
-
 * jk/add-i-hunk-filter (2011-07-27) 5 commits
   (merged to 'next' on 2011-08-11 at 8ff9a56)
  + add--interactive: add option to autosplit hunks
@@ -86,8 +104,7 @@ It was questioned if the new text suggests a sane and safe thing to do.
  + add--interactive: factor out regex error handling
  + add--interactive: refactor patch mode argument processing
 
-Needs documentation updates, tests, and integration with the higher level
-callers, e.g. "git add -p".
+Will be dropped.
 
 * jh/receive-count-limit (2011-05-23) 10 commits
  - receive-pack: Allow server to refuse pushes with too many objects
@@ -108,7 +125,7 @@ Would need another round to separate per-pack and per-session limits.
  - mergetool: Add tests for filename with whitespace
 
 I think this is a good idea, but it probably needs a re-roll.
-Cf. $gmane/176254, 176255, 166256
+Cf. $gmane/176254 and 176255.
 
 * jk/generation-numbers (2011-09-11) 8 commits
  - metadata-cache.c: make two functions static
@@ -127,51 +144,49 @@ numbers is already in; backburnered.
  - t5800: point out that deleting branches does not work
  - t5800: document inability to push new branch with old content
 
+Perhaps 281eee4 (revision: keep track of the end-user input from the
+command line, 2011-08-25) in bk/ancestry-path would help.
+
 * po/cygwin-backslash (2011-08-05) 2 commits
  - On Cygwin support both UNIX and DOS style path-names
  - git-compat-util: add generic find_last_dir_sep that respects is_dir_sep
 
+Incomplete with respect to backslash processing in prefix_filename(), and
+also loses the ability to escape glob specials. Perhaps drop?
+
 --------------------------------------------------
 [Cooking]
 
-* hl/iso8601-more-zone-formats (2011-09-09) 2 commits
- - fixup? simplification and tightening
- - date.c: Support iso8601 timezone formats
+* rj/maint-t9159-svn-rev-notation (2011-09-13) 1 commit
+ - t9159-*.sh: t9159-*.sh: skip for mergeinfo test for svn <= 1.4
 
-Not urgent.
-Will squash them into one and push them forward to "next", though.
+* tr/doc-note-rewrite (2011-09-13) 1 commit
+ - Documentation: basic configuration of notes.rewriteRef
 
-* jc/signed-push (2011-09-09) 7 commits
- . push -s: support pre-receive-signature hook
- . push -s: receiving end
- . push -s: send signed push certificate
- . push -s: skeleton
- . refactor run_receive_hook()
- - Split GPG interface into its own helper library
- - send-pack: typofix error message
- (this branch is tangled with jc/signed-push-3.)
+Updated to a safer wording.
 
-This was the v2 that updated notes tree on the receiving end.
+* jk/default-attr (2011-09-12) 1 commit
+ - attr: map builtin userdiff drivers to well-known extensions
 
-* jc/signed-push-3 (2011-09-09) 4 commits
- - push -s: signed push
- - rename "match_refs()" to "match_push_refs()"
- - Split GPG interface into its own helper library
- - send-pack: typofix error message
- (this branch is tangled with jc/signed-push.)
+Will be re-rolled after 1.7.7 final.
 
-This is the third edition, that moves the preparation of the notes tree to
-the sending end.
+* ph/format-patch-no-color (2011-09-12) 1 commit
+  (merged to 'next' on 2011-09-12 at 20283e8)
+ + format-patch: ignore ui.color
 
-* jc/run-receive-hook-cleanup (2011-09-09) 1 commit
- - refactor run_receive_hook()
+This fix for the recent regression probably should be in 1.7.7 final.
+Will merge to "master" soonish.
 
-This is a remnant in the jc/signed-push topic that has become unnecessary
-for the purpose of jc/signed-push-3, but is retained for its clean-up
-value.
+* hl/iso8601-more-zone-formats (2011-09-12) 1 commit
+  (merged to 'next' on 2011-09-12 at 270f5c7)
+ + date.c: Support iso8601 timezone formats
 
-The corresponding one will be dropped when rebuilding the jc/signed-push
-topic on top of this topic later.
+* jc/run-receive-hook-cleanup (2011-09-12) 1 commit
+  (merged to 'next' on 2011-09-12 at 68dd431)
+ + refactor run_receive_hook()
+ (this branch is used by jc/signed-push and jc/signed-push-3.)
+
+Just to make it easier to run a hook that reads from its standard input.
 
 * jk/for-each-ref (2011-09-08) 5 commits
  - for-each-ref: add split message parts to %(contents:*).
@@ -180,14 +195,12 @@ topic on top of this topic later.
  - t6300: add more body-parsing tests
  - t7004: factor out gpg setup
 
-Not urgent.
-Looked more or less reasonable, though.
+Will merge to "next".
 
 * wh/normalize-alt-odb-path (2011-09-07) 1 commit
  - sha1_file: normalize alt_odb path before comparing and storing
 
-Not urgent.
-Looked more or less reasonable, though.
+Will merge to "next".
 
 * fk/use-kwset-pickaxe-grep-f (2011-09-11) 2 commits
  - obstack.c: Fix some sparse warnings
@@ -196,26 +209,22 @@ Looked more or less reasonable, though.
 In general we would prefer to see these fixed at the upstream first, but
 we have essentially forked from them at their last GPLv2 versions...
 
-* jc/make-static (2011-09-11) 2 commits
+Will merge to "next".
+
+* jc/make-static (2011-09-14) 4 commits
+  (merged to 'next' on 2011-09-14 at c5943ff)
+ + exec_cmd.c: prepare_git_cmd() is sometimes used
+ + environment.c: have_git_dir() has users on Cygwin
   (merged to 'next' on 2011-09-11 at 2acb0af)
  + vcs-svn: remove unused functions and make some static
  + make-static: master
+ (this branch is tangled with jc/reflog-walk-use-only-nsha1.)
 
-I am not sure about the droppage of a few unused functions in the topmost
-patch.
+With a few fix-ups.
 
 * rj/quietly-create-dep-dir (2011-09-11) 1 commit
- - Makefile: Make dependency directory creation less noisy
-
-Not urgent.
-Will merge to "next", though.
-
-* js/cred-macos-x-keychain (2011-09-11) 1 commit
- - contrib: add a credential helper for Mac OS X's keychain
- (this branch uses jk/http-auth-keyring.)
-
-Welcome addition to build our confidence in the jk/http-auth-keyring topic.
-Will merge to "next".
+  (merged to 'next' on 2011-09-12 at 93d1c6b)
+ + Makefile: Make dependency directory creation less noisy
 
 * mh/check-ref-format (2011-09-11) 8 commits
  - Add tools to avoid the use of unnormalized refnames.
@@ -235,76 +244,60 @@ Another reroll coming.
  - remote: "rename o foo" should not rename ref "origin/bar"
  - remote: write correct fetch spec when renaming remote 'remote'
 
-* rj/maint-t9159-svn-rev-notation (2011-09-11) 1 commit
- - t9159-*.sh: Add an svn version check
-
-Ack/Nack from people involved in git-svn?
-
-* cb/common-prefix-unification (2011-09-11) 4 commits
- - dir.c: make common_prefix_len() static
+* cb/common-prefix-unification (2011-09-12) 3 commits
  - rename pathspec_prefix() to common_prefix() and move to dir.[ch]
  - consolidate pathspec_prefix and common_prefix
  - remove prefix argument from pathspec_prefix
 
-Will merge to "next" after squashing the tip one into "consolidate" patch.
+Will merge to "next".
 
-* cb/send-email-help (2011-09-05) 1 commit
+* cb/send-email-help (2011-09-12) 1 commit
  - send-email: add option -h
-
-I think we should further amend to drop the fully-spelled "help" that will
-be intercepted by "git" wrapper before moving this forward.
 
 A separate set of patches to remove the hidden fully-spelled "help" from
 other commands would be nice to have as companion patches as well.
 
+Will merge to "next".
+
 * jc/fetch-pack-fsck-objects (2011-09-04) 3 commits
- - test: fetch/receive with fsckobjects
- - transfer.fsckobjects: unify fetch/receive.fsckobjects
- - fetch.fsckobjects: verify downloaded objects
+  (merged to 'next' on 2011-09-12 at a031347)
+ + test: fetch/receive with fsckobjects
+ + transfer.fsckobjects: unify fetch/receive.fsckobjects
+ + fetch.fsckobjects: verify downloaded objects
 
 We had an option to verify the sent objects before accepting a push but
 lacked the corresponding option when fetching. In the light of the recent
 k.org incident, a change like this would be a good addition.
 
-Will merge to "next" to cook for more.
-
 * jc/fetch-verify (2011-09-01) 3 commits
- - fetch: verify we have everything we need before updating our ref
- - rev-list --verify-object
- - list-objects: pass callback data to show_objects()
+  (merged to 'next' on 2011-09-12 at 3f491ab)
+ + fetch: verify we have everything we need before updating our ref
+ + rev-list --verify-object
+ + list-objects: pass callback data to show_objects()
  (this branch uses jc/traverse-commit-list; is tangled with jc/receive-verify.)
 
 During a fetch, we verify that the pack stream is self consistent,
 but did not verify that the refs that are updated are consistent with
 objects contained in the packstream, and this adds such a check.
 
-Will merge to "next" to cook for more.
-
 * jc/receive-verify (2011-09-09) 6 commits
- - receive-pack: check connectivity before concluding "git push"
- - check_everything_connected(): libify
- - check_everything_connected(): refactor to use an iterator
- - fetch: verify we have everything we need before updating our ref
- - rev-list --verify-object
- - list-objects: pass callback data to show_objects()
+  (merged to 'next' on 2011-09-12 at 856de78)
+ + receive-pack: check connectivity before concluding "git push"
+ + check_everything_connected(): libify
+ + check_everything_connected(): refactor to use an iterator
+ + fetch: verify we have everything we need before updating our ref
+ + rev-list --verify-object
+ + list-objects: pass callback data to show_objects()
  (this branch uses jc/traverse-commit-list; is tangled with jc/fetch-verify.)
 
 While accepting a push, we verify that the pack stream is self consistent,
 but did not verify that the refs the push updates are consistent with
 objects contained in the packstream, and this adds such a check.
 
-Will merge to "next" to cook for more.
-
-* jc/request-pull-show-head (2011-09-06) 1 commit
- - State what commit to expect in request-pull
-
-Will merge to "next".
-
 * jn/maint-http-error-message (2011-09-06) 2 commits
- - http: avoid empty error messages for some curl errors
- - http: remove extra newline in error message
-
-Will merge to "next".
+  (merged to 'next' on 2011-09-12 at a843f03)
+ + http: avoid empty error messages for some curl errors
+ + http: remove extra newline in error message
 
 * bk/ancestry-path (2011-08-25) 3 commits
   (merged to 'next' on 2011-09-02 at d05ba5d)
@@ -312,10 +305,9 @@ Will merge to "next".
  + revision: keep track of the end-user input from the command line
  + rev-list: Demonstrate breakage with --ancestry-path --all
 
-The topic came up a bit too late in the cycle.
-Will cook for a while.
-
-* mg/branch-list (2011-09-08) 6 commits
+* mg/branch-list (2011-09-13) 7 commits
+  (merged to 'next' on 2011-09-14 at 6610a2e)
+ + t3200: clean up checks for file existence
   (merged to 'next' on 2011-09-11 at 20a9cdb)
  + branch: -v does not automatically imply --list
   (merged to 'next' on 2011-09-02 at b818eae)
@@ -325,14 +317,10 @@ Will cook for a while.
  + git-tag: introduce long forms for the options
  + t6040: test branch -vv
 
-Not urgent; the topic came up a bit too late in the cycle.
-
 * mm/rebase-i-exec-edit (2011-08-26) 2 commits
   (merged to 'next' on 2011-09-02 at e75b1b9)
  + rebase -i: notice and warn if "exec $cmd" modifies the index or the working tree
  + rebase -i: clean error message for --continue after failed exec
-
-Not urgent; the topic came up a bit too late in the cycle.
 
 * hv/submodule-merge-search (2011-08-26) 5 commits
  - submodule: Search for merges only at end of recursive merge
@@ -343,16 +331,15 @@ Not urgent; the topic came up a bit too late in the cycle.
  + push: teach --recurse-submodules the on-demand option
  (this branch is tangled with fg/submodule-auto-push.)
 
-Not urgent; the topic came up a bit too late in the cycle.  The second
-from the bottom one needs to be replaced with a properly written commit
-log message.
+The second from the bottom one needs to be replaced with a properly
+written commit log message.
 
 * mm/mediawiki-as-a-remote (2011-09-01) 2 commits
- - git-remote-mediawiki: allow push to set MediaWiki metadata
- - Add a remote helper to interact with mediawiki (fetch & push)
+  (merged to 'next' on 2011-09-12 at 163c6a5)
+ + git-remote-mediawiki: allow push to set MediaWiki metadata
+ + Add a remote helper to interact with mediawiki (fetch & push)
 
 Fun.
-Not urgent; the topic came up a bit too late in the cycle.
 
 * bc/unstash-clean-crufts (2011-08-27) 4 commits
   (merged to 'next' on 2011-09-02 at 7bfd66f)
@@ -361,20 +348,14 @@ Not urgent; the topic came up a bit too late in the cycle.
  + git-stash.sh: fix typo in error message
  + t/t3905: use the name 'actual' for test output, swap arguments to test_cmp
 
-Not urgent; the topic came up a bit too late in the cycle.
-
 * da/make-auto-header-dependencies (2011-08-30) 1 commit
   (merged to 'next' on 2011-09-02 at e04a4af)
  + Makefile: Improve compiler header dependency check
  (this branch uses fk/make-auto-header-dependencies.)
 
-Not urgent; will not be in 1.7.7.
-
 * gb/am-hg-patch (2011-08-29) 1 commit
   (merged to 'next' on 2011-09-02 at 3edfe4c)
  + am: preliminary support for hg patches
-
-Not urgent; the topic came up a bit too late in the cycle.
 
 * jc/diff-index-unpack (2011-08-29) 3 commits
   (merged to 'next' on 2011-09-02 at 4206bd9)
@@ -382,19 +363,13 @@ Not urgent; the topic came up a bit too late in the cycle.
  + unpack-trees: allow pruning with pathspec
  + traverse_trees(): allow pruning with pathspec
 
-Will cook for a while.
-
 * nm/grep-object-sha1-lock (2011-08-30) 1 commit
   (merged to 'next' on 2011-09-02 at 336f57d)
  + grep: Fix race condition in delta_base_cache
 
-Not urgent; the topic came up a bit too late in the cycle.
-
 * tr/mergetool-valgrind (2011-08-30) 1 commit
   (merged to 'next' on 2011-09-02 at f5f2c61)
  + Symlink mergetools scriptlets into valgrind wrappers
-
-Not urgent; the topic came up a bit too late in the cycle.
 
 * fg/submodule-auto-push (2011-09-11) 2 commits
   (merged to 'next' on 2011-09-11 at 3fc86f7)
@@ -413,14 +388,10 @@ looked somewhat suboptimal.
  + rev-list: fix finish_object() call
  (this branch is used by jc/fetch-verify and jc/receive-verify.)
 
-Not urgent; will not be in 1.7.7.
-
 * fk/make-auto-header-dependencies (2011-08-18) 1 commit
   (merged to 'next' on 2011-08-24 at 3da2c25)
  + Makefile: Use computed header dependencies if the compiler supports it
  (this branch is used by da/make-auto-header-dependencies.)
-
-Not urgent; will not be in 1.7.7.
 
 * mh/iterate-refs (2011-09-11) 7 commits
  - refs.c: make create_cached_refs() static
@@ -436,14 +407,10 @@ unclear what the benefit of these changes are.  If the series were to read
 parts of the ref hierarchy (like refs/heads/) lazily, the story would
 have been different, though.
 
-Not urgent; will not be in 1.7.7.
-
 * hv/submodule-update-none (2011-08-11) 2 commits
   (merged to 'next' on 2011-08-24 at 5302fc1)
  + add update 'none' flag to disable update of submodule by default
  + submodule: move update configuration variable further up
-
-Not urgent; will not be in 1.7.7.
 
 * jc/lookup-object-hash (2011-08-11) 6 commits
   (merged to 'next' on 2011-08-24 at 5825411)
@@ -458,8 +425,6 @@ I do not think there is anything fundamentally wrong with this series, but
 the risk of breakage far outweighs observed performance gain in one
 particular workload. Will keep it in 'next' at least for one cycle.
 
-Not urgent; will not be in 1.7.7.
-
 * fg/submodule-git-file-git-dir (2011-08-22) 2 commits
   (merged to 'next' on 2011-08-23 at 762194e)
  + Move git-dir for submodules
@@ -469,9 +434,13 @@ I do not think there is anything fundamentally wrong with this series, but
 the risk of breakage outweighs any benefit for having this new
 feature. Will keep it in 'next' at least for one cycle.
 
-Not urgent; will not be in 1.7.7.
-
-* jk/http-auth-keyring (2011-09-11) 14 commits
+* jk/http-auth-keyring (2011-09-14) 19 commits
+  (merged to 'next' on 2011-09-14 at 589c7c9)
+ + credential-store: use a better storage format
+ + t0300: make alternate username tests more robust
+ + t0300: make askpass tests a little more robust
+ + credential-cache: fix expiration calculation corner cases
+ + docs: minor tweaks to credentials API
   (merged to 'next' on 2011-09-11 at 491ce6a)
  + credentials: make credential_fill_gently() static
   (merged to 'next' on 2011-08-03 at b06e80e)
@@ -488,14 +457,7 @@ Not urgent; will not be in 1.7.7.
  + remote-curl: don't retry auth failures with dumb protocol
  + improve httpd auth tests
  + url: decode buffers that are not NUL-terminated
- (this branch is used by js/cred-macos-x-keychain.)
-
-Looked mostly reasonable except for the limitation that it is not clear
-how to deal with a site at which a user needs to use different passwords 
-for different repositories. Will keep it in "next" at least for one cycle,
-until we start hearing real-world success reports on the list.
-
-Not urgent; will not be in 1.7.7.
+ (this branch is used by js/cred-macos-x-keychain-2; is tangled with js/cred-macos-x-keychain.)
 
 * rr/revert-cherry-pick-continue (2011-09-11) 19 commits
   (merged to 'next' on 2011-09-11 at 7d78054)
@@ -520,9 +482,6 @@ Not urgent; will not be in 1.7.7.
  + config: Introduce functions to write non-standard file
  + advice: Introduce error_resolve_conflict
 
-Will keep it in 'next' at least for one cycle.
-Not urgent; will not be in 1.7.7.
-
 --------------------------------------------------
 [Discarded]
 
@@ -536,3 +495,42 @@ Not urgent; will not be in 1.7.7.
  . tests for push --quiet
 
 Dropped for rerolling after 1.7.7 cycle.
+
+* js/cred-macos-x-keychain (2011-09-11) 15 commits
+  (merged to 'next' on 2011-09-12 at 8d17f94)
+ + contrib: add a credential helper for Mac OS X's keychain
+  (merged to 'next' on 2011-09-11 at 491ce6a)
+ + credentials: make credential_fill_gently() static
+  (merged to 'next' on 2011-08-03 at b06e80e)
+ + credentials: add "getpass" helper
+ + credentials: add "store" helper
+ + credentials: add "cache" helper
+ + docs: end-user documentation for the credential subsystem
+ + http: use hostname in credential description
+ + allow the user to configure credential helpers
+ + look for credentials in config before prompting
+ + http: use credential API to get passwords
+ + introduce credentials API
+ + http: retry authentication failures for all http requests
+ + remote-curl: don't retry auth failures with dumb protocol
+ + improve httpd auth tests
+ + url: decode buffers that are not NUL-terminated
+ (this branch is tangled with jk/http-auth-keyring and js/cred-macos-x-keychain-2.)
+
+Reverted out of 'next'.
+
+* jc/reflog-walk-use-only-nsha1 (2011-09-13) 4 commits
+ . (baloon) teach reflog-walk to look at only new-sha1 field
+ + environment.c: have_git_dir() has users on Cygwin
+  (merged to 'next' on 2011-09-11 at 2acb0af)
+ + vcs-svn: remove unused functions and make some static
+ + make-static: master
+ (this branch is tangled with jc/make-static.)
+
+* jc/request-pull-show-head (2011-09-13) 2 commits
+  (merged to 'next' on 2011-09-13 at c82fb3a)
+ + Revert "State what commit to expect in request-pull"
+  (merged to 'next' on 2011-09-12 at c1c7b73)
+ + State what commit to expect in request-pull
+
+Reverted out of 'next'.
