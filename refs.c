@@ -860,22 +860,21 @@ int for_each_rawref(each_ref_fn fn, void *cb_data)
  * - it contains a "\" (backslash)
  */
 
+/* Return true iff ch is not allowed in reference names. */
 static inline int bad_ref_char(int ch)
 {
 	if (((unsigned) ch) <= ' ' || ch == 0x7f ||
 	    ch == '~' || ch == '^' || ch == ':' || ch == '\\')
 		return 1;
 	/* 2.13 Pattern Matching Notation */
-	if (ch == '?' || ch == '[') /* Unsupported */
+	if (ch == '*' || ch == '?' || ch == '[') /* Unsupported */
 		return 1;
-	if (ch == '*') /* Supported at the end */
-		return 2;
 	return 0;
 }
 
 int check_ref_format(const char *ref)
 {
-	int ch, level, bad_type, last;
+	int ch, level, last;
 	int ret = CHECK_REF_FORMAT_OK;
 	const char *cp = ref;
 
@@ -890,9 +889,8 @@ int check_ref_format(const char *ref)
 		/* we are at the beginning of the path component */
 		if (ch == '.')
 			return CHECK_REF_FORMAT_ERROR;
-		bad_type = bad_ref_char(ch);
-		if (bad_type) {
-			if (bad_type == 2 && (!*cp || *cp == '/') &&
+		if (bad_ref_char(ch)) {
+			if (ch == '*' && (!*cp || *cp == '/') &&
 			    ret == CHECK_REF_FORMAT_OK)
 				ret = CHECK_REF_FORMAT_WILDCARD;
 			else
@@ -902,8 +900,7 @@ int check_ref_format(const char *ref)
 		last = ch;
 		/* scan the rest of the path component */
 		while ((ch = *cp++) != 0) {
-			bad_type = bad_ref_char(ch);
-			if (bad_type)
+			if (bad_ref_char(ch))
 				return CHECK_REF_FORMAT_ERROR;
 			if (ch == '/')
 				break;
