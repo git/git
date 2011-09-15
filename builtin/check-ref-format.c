@@ -12,25 +12,28 @@ static const char builtin_check_ref_format_usage[] =
 "   or: git check-ref-format --branch <branchname-shorthand>";
 
 /*
- * Remove leading slashes and replace each run of adjacent slashes in
- * src with a single slash, and write the result to dst.
+ * Return a copy of refname but with leading slashes removed and runs
+ * of adjacent slashes replaced with single slashes.
  *
  * This function is similar to normalize_path_copy(), but stripped down
  * to meet check_ref_format's simpler needs.
  */
-static void collapse_slashes(char *dst, const char *src)
+static char *collapse_slashes(const char *refname)
 {
+	char *ret = xmalloc(strlen(refname) + 1);
 	char ch;
 	char prev = '/';
+	char *cp = ret;
 
-	while ((ch = *src++) != '\0') {
+	while ((ch = *refname++) != '\0') {
 		if (prev == '/' && ch == prev)
 			continue;
 
-		*dst++ = ch;
+		*cp++ = ch;
 		prev = ch;
 	}
-	*dst = '\0';
+	*cp = '\0';
+	return ret;
 }
 
 static int check_ref_format_branch(const char *arg)
@@ -47,9 +50,7 @@ static int check_ref_format_branch(const char *arg)
 
 static void refname_format_print(const char *arg)
 {
-	char *refname = xmalloc(strlen(arg) + 1);
-
-	collapse_slashes(refname, arg);
+	char *refname = collapse_slashes(arg);
 	printf("%s\n", refname);
 }
 
