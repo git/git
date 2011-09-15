@@ -500,6 +500,7 @@ const char *resolve_ref(const char *ref, unsigned char *sha1, int reading, int *
 	ssize_t len;
 	char buffer[256];
 	static char ref_buffer[256];
+	char path[PATH_MAX];
 
 	if (flag)
 		*flag = 0;
@@ -508,7 +509,6 @@ const char *resolve_ref(const char *ref, unsigned char *sha1, int reading, int *
 		return NULL;
 
 	for (;;) {
-		char path[PATH_MAX];
 		struct stat st;
 		char *buf;
 		int fd;
@@ -593,8 +593,10 @@ const char *resolve_ref(const char *ref, unsigned char *sha1, int reading, int *
 		if (flag)
 			*flag |= REF_ISSYMREF;
 	}
-	if (get_sha1_hex(buffer, sha1))
+	if (get_sha1_hex(buffer, sha1)) {
+		warning("reference in %s is formatted incorrectly", path);
 		return NULL;
+	}
 	return ref;
 }
 
