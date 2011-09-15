@@ -652,7 +652,6 @@ static int grep_directory(struct grep_opt *opt, const char **paths)
 	int i, hit = 0;
 
 	memset(&dir, 0, sizeof(dir));
-	setup_standard_excludes(&dir);
 
 	fill_directory(&dir, paths);
 	for (i = 0; i < dir.nr; i++) {
