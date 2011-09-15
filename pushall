@@ -1,6 +1,7 @@
 #!/bin/sh
 
 git push repo "$@" &&
+git push gph "$@" &&
 git push sfjp "$@" &&
 git push sf.net "$@" &&
 
