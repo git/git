@@ -56,6 +56,8 @@ static struct ref_list *add_ref(const char *name, const unsigned char *sha1,
 	entry = xmalloc(sizeof(struct ref_list) + len);
 	hashcpy(entry->sha1, sha1);
 	hashclr(entry->peeled);
+	if (check_refname_format(name, REFNAME_ALLOW_ONELEVEL|REFNAME_DOT_COMPONENT))
+		die("Reference has invalid format: '%s'", name);
 	memcpy(entry->name, name, len);
 	entry->flag = flag;
 	entry->next = list;
@@ -900,7 +902,7 @@ static inline int bad_ref_char(int ch)
  * the length of the component found, or -1 if the component is not
  * legal.
  */
-static int check_refname_component(const char *ref)
+static int check_refname_component(const char *ref, int flags)
 {
 	const char *cp;
 	char last = '\0';
@@ -919,8 +921,16 @@ static int check_refname_component(const char *ref)
 	}
 	if (cp == ref)
 		return -1; /* Component has zero length. */
-	if (ref[0] == '.')
-		return -1; /* Component starts with '.'. */
+	if (ref[0] == '.') {
+		if (!(flags & REFNAME_DOT_COMPONENT))
+			return -1; /* Component starts with '.'. */
+		/*
+		 * Even if leading dots are allowed, don't allow "."
+		 * as a component (".." is prevented by a rule above).
+		 */
+		if (ref[1] == '\0')
+			return -1; /* Component equals ".". */
+	}
 	if (cp - ref >= 5 && !memcmp(cp - 5, ".lock", 5))
 		return -1; /* Refname ends with ".lock". */
 	return cp - ref;
@@ -932,7 +942,7 @@ int check_refname_format(const char *ref, int flags)
 
 	while (1) {
 		/* We are at the start of a path component. */
-		component_len = check_refname_component(ref);
+		component_len = check_refname_component(ref, flags);
 		if (component_len < 0) {
 			if ((flags & REFNAME_REFSPEC_PATTERN) &&
 					ref[0] == '*' &&

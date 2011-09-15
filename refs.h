@@ -99,6 +99,7 @@ extern int for_each_reflog(each_ref_fn, void *);
 
 #define REFNAME_ALLOW_ONELEVEL 1
 #define REFNAME_REFSPEC_PATTERN 2
+#define REFNAME_DOT_COMPONENT 4
 
 /*
  * Return 0 iff ref has the correct format for a refname according to
@@ -106,7 +107,10 @@ extern int for_each_reflog(each_ref_fn, void *);
  * REFNAME_ALLOW_ONELEVEL is set in flags, then accept one-level
  * reference names.  If REFNAME_REFSPEC_PATTERN is set in flags, then
  * allow a "*" wildcard character in place of one of the name
- * components.  No leading or repeated slashes are accepted.
+ * components.  No leading or repeated slashes are accepted.  If
+ * REFNAME_DOT_COMPONENT is set in flags, then allow refname
+ * components to start with "." (but not a whole component equal to
+ * "." or "..").
  */
 extern int check_refname_format(const char *ref, int flags);
 
