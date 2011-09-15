@@ -13,6 +13,8 @@ invalid_ref() {
 		"test_must_fail git check-ref-format '$1'"
 }
 
+invalid_ref ''
+invalid_ref '/'
 valid_ref 'heads/foo'
 invalid_ref 'foo'
 valid_ref 'foo/bar/baz'
@@ -27,6 +29,9 @@ invalid_ref 'heads/foo..bar'
 invalid_ref 'heads/foo?bar'
 valid_ref 'foo./bar'
 invalid_ref 'heads/foo.lock'
+invalid_ref 'heads///foo.lock'
+valid_ref 'foo.lock/bar'
+valid_ref 'foo.lock///bar'
 valid_ref 'heads/foo@bar'
 invalid_ref 'heads/v@{ation'
 invalid_ref 'heads/foo\bar'
@@ -83,5 +88,9 @@ invalid_ref_normalized '/foo'
 invalid_ref_normalized 'heads/foo/../bar'
 invalid_ref_normalized 'heads/./foo'
 invalid_ref_normalized 'heads\foo'
+invalid_ref_normalized 'heads/foo.lock'
+invalid_ref_normalized 'heads///foo.lock'
+valid_ref_normalized 'foo.lock/bar' 'foo.lock/bar'
+valid_ref_normalized 'foo.lock///bar' 'foo.lock/bar'
 
 test_done
