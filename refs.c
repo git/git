@@ -521,7 +521,8 @@ const char *resolve_ref(const char *ref, unsigned char *sha1, int reading, int *
 			if (len < 0)
 				return NULL;
 			buffer[len] = 0;
-			if (!prefixcmp(buffer, "refs/")) {
+			if (!prefixcmp(buffer, "refs/") &&
+					!check_refname_format(buffer, 0)) {
 				strcpy(ref_buffer, buffer);
 				ref = ref_buffer;
 				if (flag)
