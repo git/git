@@ -546,25 +546,25 @@ const char *resolve_ref(const char *ref, unsigned char *sha1, int reading, int *
 			return NULL;
 		len = read_in_full(fd, buffer, sizeof(buffer)-1);
 		close(fd);
+		if (len < 0)
+			return NULL;
+		while (len && isspace(buffer[len-1]))
+			len--;
+		buffer[len] = '\0';
 
 		/*
 		 * Is it a symbolic ref?
 		 */
-		if (len < 4 || memcmp("ref:", buffer, 4))
+		if (prefixcmp(buffer, "ref:"))
 			break;
 		buf = buffer + 4;
-		len -= 4;
-		while (len && isspace(*buf))
-			buf++, len--;
-		while (len && isspace(buf[len-1]))
-			len--;
-		buf[len] = 0;
-		memcpy(ref_buffer, buf, len + 1);
-		ref = ref_buffer;
+		while (isspace(*buf))
+			buf++;
+		ref = strcpy(ref_buffer, buf);
 		if (flag)
 			*flag |= REF_ISSYMREF;
 	}
-	if (len < 40 || get_sha1_hex(buffer, sha1))
+	if (get_sha1_hex(buffer, sha1))
 		return NULL;
 	return ref;
 }
