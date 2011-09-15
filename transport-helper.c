@@ -183,7 +183,7 @@ static struct child_process *get_helper(struct transport *transport)
 			ALLOC_GROW(refspecs,
 				   refspec_nr + 1,
 				   refspec_alloc);
-			refspecs[refspec_nr++] = strdup(capname + strlen("refspec "));
+			refspecs[refspec_nr++] = xstrdup(capname + strlen("refspec "));
 		} else if (!strcmp(capname, "connect")) {
 			data->connect = 1;
 		} else if (!prefixcmp(capname, "export-marks ")) {
@@ -445,7 +445,7 @@ static int fetch_with_import(struct transport *transport,
 		if (data->refspecs)
 			private = apply_refspecs(data->refspecs, data->refspec_nr, posn->name);
 		else
-			private = strdup(posn->name);
+			private = xstrdup(posn->name);
 		read_ref(private, posn->old_sha1);
 		free(private);
 	}
