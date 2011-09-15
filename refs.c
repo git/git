@@ -466,6 +466,23 @@ int resolve_gitlink_ref(const char *path, const char *refname, unsigned char *re
 }
 
 /*
+ * Try to read ref from the packed references.  On success, set sha1
+ * and return 0; otherwise, return -1.
+ */
+static int get_packed_ref(const char *ref, unsigned char *sha1)
+{
+	struct ref_list *list = get_packed_refs(NULL);
+	while (list) {
+		if (!strcmp(ref, list->name)) {
+			hashcpy(sha1, list->sha1);
+			return 0;
+		}
+		list = list->next;
+	}
+	return -1;
+}
+
+/*
  * If the "reading" argument is set, this function finds out what _object_
  * the ref points at by "reading" the ref.  The ref, if it is not symbolic,
  * has to exist, and if it is symbolic, it has to point at an existing ref,
@@ -497,22 +514,26 @@ const char *resolve_ref(const char *ref, unsigned char *sha1, int reading, int *
 			return NULL;
 
 		git_snpath(path, sizeof(path), "%s", ref);
-		/* Special case: non-existing file. */
+
 		if (lstat(path, &st) < 0) {
-			struct ref_list *list = get_packed_refs(NULL);
-			while (list) {
-				if (!strcmp(ref, list->name)) {
-					hashcpy(sha1, list->sha1);
-					if (flag)
-						*flag |= REF_ISPACKED;
-					return ref;
-				}
-				list = list->next;
-			}
-			if (reading || errno != ENOENT)
+			if (errno != ENOENT)
 				return NULL;
-			hashclr(sha1);
-			return ref;
+			/*
+			 * The loose reference file does not exist;
+			 * check for a packed reference.
+			 */
+			if (!get_packed_ref(ref, sha1)) {
+				if (flag)
+					*flag |= REF_ISPACKED;
+				return ref;
+			}
+			/* The reference is not a packed reference, either. */
+			if (reading) {
+				return NULL;
+			} else {
+				hashclr(sha1);
+				return ref;
+			}
 		}
 
 		/* Follow "normalized" - ie "refs/.." symlinks by hand */
