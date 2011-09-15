@@ -872,10 +872,9 @@ static inline int bad_ref_char(int ch)
 	return 0;
 }
 
-int check_ref_format(const char *ref)
+int check_refname_format(const char *ref, int flags)
 {
 	int ch, level, last;
-	int ret = CHECK_REF_FORMAT_OK;
 	const char *cp = ref;
 
 	level = 0;
@@ -884,41 +883,42 @@ int check_ref_format(const char *ref)
 			; /* tolerate duplicated slashes */
 		if (!ch)
 			/* should not end with slashes */
-			return CHECK_REF_FORMAT_ERROR;
+			return -1;
 
 		/* we are at the beginning of the path component */
 		if (ch == '.')
-			return CHECK_REF_FORMAT_ERROR;
+			return -1;
 		if (bad_ref_char(ch)) {
-			if (ch == '*' && (!*cp || *cp == '/') &&
-			    ret == CHECK_REF_FORMAT_OK)
-				ret = CHECK_REF_FORMAT_WILDCARD;
+			if ((flags & REFNAME_REFSPEC_PATTERN) && ch == '*' &&
+				(!*cp || *cp == '/'))
+				/* Accept one wildcard as a full refname component. */
+				flags &= ~REFNAME_REFSPEC_PATTERN;
 			else
-				return CHECK_REF_FORMAT_ERROR;
+				return -1;
 		}
 
 		last = ch;
 		/* scan the rest of the path component */
 		while ((ch = *cp++) != 0) {
 			if (bad_ref_char(ch))
-				return CHECK_REF_FORMAT_ERROR;
+				return -1;
 			if (ch == '/')
 				break;
 			if (last == '.' && ch == '.')
-				return CHECK_REF_FORMAT_ERROR;
+				return -1;
 			if (last == '@' && ch == '{')
-				return CHECK_REF_FORMAT_ERROR;
+				return -1;
 			last = ch;
 		}
 		level++;
 		if (!ch) {
 			if (ref <= cp - 2 && cp[-2] == '.')
-				return CHECK_REF_FORMAT_ERROR;
-			if (level < 2)
-				return CHECK_REF_FORMAT_ONELEVEL;
+				return -1;
+			if (level < 2 && !(flags & REFNAME_ALLOW_ONELEVEL))
+				return -1;
 			if (has_extension(ref, ".lock"))
-				return CHECK_REF_FORMAT_ERROR;
-			return ret;
+				return -1;
+			return 0;
 		}
 	}
 }
@@ -1103,7 +1103,7 @@ static struct ref_lock *lock_ref_sha1_basic(const char *ref, const unsigned char
 struct ref_lock *lock_ref_sha1(const char *ref, const unsigned char *old_sha1)
 {
 	char refpath[PATH_MAX];
-	if (check_ref_format(ref))
+	if (check_refname_format(ref, 0))
 		return NULL;
 	strcpy(refpath, mkpath("refs/%s", ref));
 	return lock_ref_sha1_basic(refpath, old_sha1, 0, NULL);
@@ -1111,13 +1111,9 @@ struct ref_lock *lock_ref_sha1(const char *ref, const unsigned char *old_sha1)
 
 struct ref_lock *lock_any_ref_for_update(const char *ref, const unsigned char *old_sha1, int flags)
 {
-	switch (check_ref_format(ref)) {
-	default:
+	if (check_refname_format(ref, REFNAME_ALLOW_ONELEVEL))
 		return NULL;
-	case 0:
-	case CHECK_REF_FORMAT_ONELEVEL:
-		return lock_ref_sha1_basic(ref, old_sha1, flags, NULL);
-	}
+	return lock_ref_sha1_basic(ref, old_sha1, flags, NULL);
 }
 
 static struct lock_file packlock;

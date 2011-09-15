@@ -53,9 +53,6 @@ static void refname_format_print(const char *arg)
 	printf("%s\n", refname);
 }
 
-#define REFNAME_ALLOW_ONELEVEL 1
-#define REFNAME_REFSPEC_PATTERN 2
-
 int cmd_check_ref_format(int argc, const char **argv, const char *prefix)
 {
 	int i;
@@ -83,24 +80,8 @@ int cmd_check_ref_format(int argc, const char **argv, const char *prefix)
 	if (! (i == argc - 1))
 		usage(builtin_check_ref_format_usage);
 
-	switch (check_ref_format(argv[i])) {
-	case CHECK_REF_FORMAT_OK:
-		break;
-	case CHECK_REF_FORMAT_ERROR:
+	if (check_refname_format(argv[i], flags))
 		return 1;
-	case CHECK_REF_FORMAT_ONELEVEL:
-		if (!(flags & REFNAME_ALLOW_ONELEVEL))
-			return 1;
-		else
-			break;
-	case CHECK_REF_FORMAT_WILDCARD:
-		if (!(flags & REFNAME_REFSPEC_PATTERN))
-			return 1;
-		else
-			break;
-	default:
-		die("internal error: unexpected value from check_ref_format()");
-	}
 
 	if (print)
 		refname_format_print(argv[i]);

@@ -407,12 +407,12 @@ static int parse_msg_arg(const struct option *opt, const char *arg, int unset)
 static int strbuf_check_tag_ref(struct strbuf *sb, const char *name)
 {
 	if (name[0] == '-')
-		return CHECK_REF_FORMAT_ERROR;
+		return -1;
 
 	strbuf_reset(sb);
 	strbuf_addf(sb, "refs/tags/%s", name);
 
-	return check_ref_format(sb->buf);
+	return check_refname_format(sb->buf, 0);
 }
 
 int cmd_tag(int argc, const char **argv, const char *prefix)

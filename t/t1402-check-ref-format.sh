@@ -87,11 +87,7 @@ valid_ref "$ref" '--refspec-pattern --allow-onelevel'
 
 ref='*'
 invalid_ref "$ref"
-
-#invalid_ref "$ref" --allow-onelevel
-test_expect_failure "ref name '$ref' is invalid with options --allow-onelevel" \
-	"test_must_fail git check-ref-format --allow-onelevel '$ref'"
-
+invalid_ref "$ref" --allow-onelevel
 invalid_ref "$ref" --refspec-pattern
 valid_ref "$ref" '--refspec-pattern --allow-onelevel'
 

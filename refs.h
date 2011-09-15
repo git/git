@@ -97,11 +97,18 @@ int for_each_recent_reflog_ent(const char *ref, each_reflog_ent_fn fn, long, voi
  */
 extern int for_each_reflog(each_ref_fn, void *);
 
-#define CHECK_REF_FORMAT_OK 0
-#define CHECK_REF_FORMAT_ERROR (-1)
-#define CHECK_REF_FORMAT_ONELEVEL (-2)
-#define CHECK_REF_FORMAT_WILDCARD (-3)
-extern int check_ref_format(const char *target);
+#define REFNAME_ALLOW_ONELEVEL 1
+#define REFNAME_REFSPEC_PATTERN 2
+
+/*
+ * Return 0 iff ref has the correct format for a refname according to
+ * the rules described in Documentation/git-check-ref-format.txt.  If
+ * REFNAME_ALLOW_ONELEVEL is set in flags, then accept one-level
+ * reference names.  If REFNAME_REFSPEC_PATTERN is set in flags, then
+ * allow a "*" wildcard character in place of one of the name
+ * components.
+ */
+extern int check_refname_format(const char *ref, int flags);
 
 extern const char *prettify_refname(const char *refname);
 extern char *shorten_unambiguous_ref(const char *ref, int strict);
