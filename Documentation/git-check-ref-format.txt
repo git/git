@@ -28,7 +28,7 @@ git imposes the following rules on how references are named:
 
 . They can include slash `/` for hierarchical (directory)
   grouping, but no slash-separated component can begin with a
-  dot `.`.
+  dot `.` or end with the sequence `.lock`.
 
 . They must contain at least one `/`. This enforces the presence of a
   category like `heads/`, `tags/` etc. but the actual names are not
@@ -46,8 +46,6 @@ git imposes the following rules on how references are named:
   an exception to this rule.
 
 . They cannot end with a slash `/` nor a dot `.`.
-
-. They cannot end with the sequence `.lock`.
 
 . They cannot contain a sequence `@{`.
 

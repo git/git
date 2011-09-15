@@ -898,6 +898,8 @@ static int check_refname_component(const char *ref)
 		return -1; /* Component has zero length. */
 	if (ref[0] == '.')
 		return -1; /* Component starts with '.'. */
+	if (cp - ref >= 5 && !memcmp(cp - 5, ".lock", 5))
+		return -1; /* Refname ends with ".lock". */
 	return cp - ref;
 }
 
@@ -931,8 +933,6 @@ int check_refname_format(const char *ref, int flags)
 
 	if (ref[component_len - 1] == '.')
 		return -1; /* Refname ends with '.'. */
-	if (component_len >= 5 && !memcmp(&ref[component_len - 5], ".lock", 5))
-		return -1; /* Refname ends with ".lock". */
 	if (!(flags & REFNAME_ALLOW_ONELEVEL) && component_count < 2)
 		return -1; /* Refname has only one component. */
 	return 0;
