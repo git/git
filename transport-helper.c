@@ -446,8 +446,10 @@ static int fetch_with_import(struct transport *transport,
 			private = apply_refspecs(data->refspecs, data->refspec_nr, posn->name);
 		else
 			private = xstrdup(posn->name);
-		read_ref(private, posn->old_sha1);
-		free(private);
+		if (private) {
+			read_ref(private, posn->old_sha1);
+			free(private);
+		}
 	}
 	strbuf_release(&buf);
 	return 0;
