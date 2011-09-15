@@ -504,6 +504,9 @@ const char *resolve_ref(const char *ref, unsigned char *sha1, int reading, int *
 	if (flag)
 		*flag = 0;
 
+	if (check_refname_format(ref, REFNAME_ALLOW_ONELEVEL))
+		return NULL;
+
 	for (;;) {
 		char path[PATH_MAX];
 		struct stat st;
