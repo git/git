@@ -520,8 +520,8 @@ const char *resolve_ref(const char *ref, unsigned char *sha1, int reading, int *
 			len = readlink(path, buffer, sizeof(buffer)-1);
 			if (len < 0)
 				return NULL;
-			if (len >= 5 && !memcmp("refs/", buffer, 5)) {
-				buffer[len] = 0;
+			buffer[len] = 0;
+			if (!prefixcmp(buffer, "refs/")) {
 				strcpy(ref_buffer, buffer);
 				ref = ref_buffer;
 				if (flag)
