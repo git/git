@@ -593,7 +593,8 @@ const char *resolve_ref(const char *ref, unsigned char *sha1, int reading, int *
 		if (flag)
 			*flag |= REF_ISSYMREF;
 	}
-	if (get_sha1_hex(buffer, sha1)) {
+	/* Please note that FETCH_HEAD has a second line containing other data. */
+	if (get_sha1_hex(buffer, sha1) || (buffer[40] != '\0' && !isspace(buffer[40]))) {
 		warning("reference in %s is formatted incorrectly", path);
 		return NULL;
 	}
