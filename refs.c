@@ -908,9 +908,6 @@ int check_refname_format(const char *ref, int flags)
 	int component_len, component_count = 0;
 
 	while (1) {
-		while (*ref == '/')
-			ref++; /* tolerate leading and repeated slashes */
-
 		/* We are at the start of a path component. */
 		component_len = check_refname_component(ref);
 		if (component_len < 0) {

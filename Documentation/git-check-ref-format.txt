@@ -8,8 +8,9 @@ git-check-ref-format - Ensures that a reference name is well formed
 SYNOPSIS
 --------
 [verse]
-'git check-ref-format' [--print]
-       [--[no-]allow-onelevel] [--refspec-pattern] <refname>
+'git check-ref-format' [--normalize]
+       [--[no-]allow-onelevel] [--refspec-pattern]
+       <refname>
 'git check-ref-format' --branch <branchname-shorthand>
 
 DESCRIPTION
@@ -45,7 +46,11 @@ git imposes the following rules on how references are named:
   bracket `[` anywhere.  See the `--refspec-pattern` option below for
   an exception to this rule.
 
-. They cannot end with a slash `/` nor a dot `.`.
+. They cannot begin or end with a slash `/` or contain multiple
+  consecutive slashes (see the `--normalize` option below for an
+  exception to this rule)
+
+. They cannot end with a dot `.`.
 
 . They cannot contain a sequence `@{`.
 
@@ -70,10 +75,6 @@ reference name expressions (see linkgit:gitrevisions[7]):
 
 . at-open-brace `@{` is used as a notation to access a reflog entry.
 
-With the `--print` option, if 'refname' is acceptable, it prints the
-canonicalized name of a hypothetical reference with that name.  That is,
-it prints 'refname' with any extra `/` characters removed.
-
 With the `--branch` option, it expands the ``previous branch syntax''
 `@{-n}`.  For example, `@{-1}` is a way to refer the last branch you
 were on.  This option should be used by porcelains to accept this
@@ -95,6 +96,15 @@ OPTIONS
 	in place of a one full pathname component (e.g.,
 	`foo/{asterisk}/bar` but not `foo/bar{asterisk}`).
 
+--normalize::
+	Normalize 'refname' by removing any leading slash (`/`)
+	characters and collapsing runs of adjacent slashes between
+	name components into a single slash.  Iff the normalized
+	refname is valid then print it to standard output and exit
+	with a status of 0.  (`--print` is a deprecated way to spell
+	`--normalize`.)
+
+
 EXAMPLES
 --------
 
@@ -107,7 +117,7 @@ $ git check-ref-format --branch @{-1}
 * Determine the reference name to use for a new branch:
 +
 ------------
-$ ref=$(git check-ref-format --print "refs/heads/$newbranch") ||
+$ ref=$(git check-ref-format --normalize "refs/heads/$newbranch") ||
 die "we do not like '$newbranch' as a branch name."
 ------------
 
