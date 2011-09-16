@@ -10,7 +10,7 @@ test_description='git-svn svn mergeinfo propagation'
 
 test_expect_success 'load svn dump' "
 	svnadmin load -q '$rawsvnrepo' \
-	  < '$TEST_DIRECTORY/t9160/branches.dump' &&
+	  < '$TEST_DIRECTORY/t9161/branches.dump' &&
 	git svn init --minimize-url -R svnmerge \
 	  -T trunk -b branches '$svnrepo' &&
 	git svn fetch --all
