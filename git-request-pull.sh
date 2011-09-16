@@ -35,7 +35,7 @@ do
 	shift
 done
 
-base=$1 url=$2 head=${3-HEAD}
+base=$1 url=$2 head=${3-HEAD} status=0
 
 test -n "$base" && test -n "$url" || usage
 baserev=$(git rev-parse --verify "$base"^0) &&
@@ -51,25 +51,29 @@ find_matching_branch="/^$headrev	"'refs\/heads\//{
 }'
 branch=$(git ls-remote "$url" | sed -n -e "$find_matching_branch")
 url=$(git ls-remote --get-url "$url")
-if test -z "$branch"
-then
-	echo "warn: No branch of $url is at:" >&2
-	git log --max-count=1 --pretty='tformat:warn:   %h: %s' $headrev >&2
-	echo "warn: Are you sure you pushed $head there?" >&2
-	echo >&2
-	echo >&2
-	branch=..BRANCH.NOT.VERIFIED..
-	status=1
-fi
 
 git show -s --format='The following changes since commit %H:
 
   %s (%ci)
 
-are available in the git repository at:' $baserev &&
-echo "  $url $branch" &&
-echo &&
+are available in the git repository at:
+' $baserev &&
+echo "  $url${branch+ $branch}" &&
+git show -s --format='
+for you to fetch changes up to %H:
+
+  %s (%ci)
+
+----------------------------------------------------------------' $headrev &&
 
 git shortlog ^$baserev $headrev &&
-git diff -M --stat --summary $patch $merge_base..$headrev || exit
+git diff -M --stat --summary $patch $merge_base..$headrev || status=1
+
+if test -z "$branch"
+then
+	echo "warn: No branch of $url is at:" >&2
+	git show -s --format='warn:   %h: %s' $headrev >&2
+	echo "warn: Are you sure you pushed '$head' there?" >&2
+	status=1
+fi
 exit $status

@@ -193,8 +193,14 @@ test_expect_success 'pull request format' '
 	  SUBJECT (DATE)
 
 	are available in the git repository at:
+
 	  URL BRANCH
 
+	for you to fetch changes up to OBJECT_NAME:
+
+	  SUBJECT (DATE)
+
+	----------------------------------------------------------------
 	SHORTLOG
 
 	DIFFSTAT
