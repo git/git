@@ -87,7 +87,7 @@ my ($_stdin, $_help, $_edit,
 	$_version, $_fetch_all, $_no_rebase, $_fetch_parent,
 	$_merge, $_strategy, $_dry_run, $_local,
 	$_prefix, $_no_checkout, $_url, $_verbose,
-	$_git_format, $_commit_url, $_tag, $_merge_info);
+	$_git_format, $_commit_url, $_tag, $_merge_info, $_interactive);
 $Git::SVN::_follow_parent = 1;
 $SVN::Git::Fetcher::_placeholder_filename = ".gitignore";
 $_q ||= 0;
@@ -163,6 +163,7 @@ my %cmd = (
 			  'revision|r=i' => \$_revision,
 			  'no-rebase' => \$_no_rebase,
 			  'mergeinfo=s' => \$_merge_info,
+			  'interactive|i' => \$_interactive,
 			%cmt_opts, %fc_opts } ],
 	branch => [ \&cmd_branch,
 	            'Create a branch in the SVN repository',
@@ -255,6 +256,27 @@ my %cmd = (
 		  "index files in .git/svn",
 		{} ],
 );
+
+use Term::ReadLine;
+package FakeTerm;
+sub new {
+	my ($class, $reason) = @_;
+	return bless \$reason, shift;
+}
+sub readline {
+	my $self = shift;
+	die "Cannot use readline on FakeTerm: $$self";
+}
+package main;
+
+my $term = eval {
+	$ENV{"GIT_SVN_NOTTY"}
+		? new Term::ReadLine 'git-svn', \*STDIN, \*STDOUT
+		: new Term::ReadLine 'git-svn';
+};
+if ($@) {
+	$term = new FakeTerm "$@: going non-interactive";
+}
 
 my $cmd;
 for (my $i = 0; $i < @ARGV; $i++) {
@@ -364,6 +386,36 @@ sub version {
 	::_req_svn();
 	print "git-svn version $VERSION (svn $SVN::Core::VERSION)\n";
 	exit 0;
+}
+
+sub ask {
+	my ($prompt, %arg) = @_;
+	my $valid_re = $arg{valid_re};
+	my $default = $arg{default};
+	my $resp;
+	my $i = 0;
+
+	if ( !( defined($term->IN)
+            && defined( fileno($term->IN) )
+            && defined( $term->OUT )
+            && defined( fileno($term->OUT) ) ) ){
+		return defined($default) ? $default : undef;
+	}
+
+	while ($i++ < 10) {
+		$resp = $term->readline($prompt);
+		if (!defined $resp) { # EOF
+			print "\n";
+			return defined $default ? $default : undef;
+		}
+		if ($resp eq '' and defined $default) {
+			return $default;
+		}
+		if (!defined $valid_re or $resp =~ /$valid_re/) {
+			return $resp;
+		}
+	}
+	return undef;
 }
 
 sub do_git_init_db {
@@ -746,6 +798,27 @@ sub cmd_dcommit {
 		     "If these changes depend on each other, re-running ",
 		     "without --no-rebase may be required."
 	}
+
+	if (defined $_interactive){
+		my $ask_default = "y";
+		foreach my $d (@$linear_refs){
+			my ($fh, $ctx) = command_output_pipe(qw(show --summary), "$d");
+			while (<$fh>){
+				print $_;
+			}
+			command_close_pipe($fh, $ctx);
+			$_ = ask("Commit this patch to SVN? ([y]es (default)|[n]o|[q]uit|[a]ll): ",
+			         valid_re => qr/^(?:yes|y|no|n|quit|q|all|a)/i,
+			         default => $ask_default);
+			die "Commit this patch reply required" unless defined $_;
+			if (/^[nq]/i) {
+				exit(0);
+			} elsif (/^a/i) {
+				last;
+			}
+		}
+	}
+
 	my $expect_url = $url;
 
 	my $push_merge_info = eval {
