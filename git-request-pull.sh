@@ -35,27 +35,24 @@ do
 	shift
 done
 
-base=$1
-url=$2
-head=${3-HEAD}
+base=$1 url=$2 head=${3-HEAD}
 
-[ "$base" ] || usage
-[ "$url" ] || usage
+test -n "$base" && test -n "$url" || usage
+baserev=$(git rev-parse --verify "$base"^0) &&
+headrev=$(git rev-parse --verify "$head"^0) || exit
 
-baserev=`git rev-parse --verify "$base"^0` &&
-headrev=`git rev-parse --verify "$head"^0` || exit
-
-merge_base=`git merge-base $baserev $headrev` ||
+merge_base=$(git merge-base $baserev $headrev) ||
 die "fatal: No commits in common between $base and $head"
 
-branch=$(git ls-remote "$url" \
-	| sed -n -e "/^$headrev	refs.heads./{
-		s/^.*	refs.heads.//
-		p
-		q
-	}")
+find_matching_branch="/^$headrev	"'refs\/heads\//{
+	s/^.*	refs\/heads\///
+	p
+	q
+}'
+branch=$(git ls-remote "$url" | sed -n -e "$find_matching_branch")
 url=$(git ls-remote --get-url "$url")
-if [ -z "$branch" ]; then
+if test -z "$branch"
+then
 	echo "warn: No branch of $url is at:" >&2
 	git log --max-count=1 --pretty='tformat:warn:   %h: %s' $headrev >&2
 	echo "warn: Are you sure you pushed $head there?" >&2
