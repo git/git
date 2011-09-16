@@ -362,20 +362,18 @@ if test -z "$files" ; then
     exit 0
 fi
 
-# Save original stdin
-exec 3<&0
-
 printf "Merging:\n"
 printf "$files\n"
 
 IFS='
-'; for i in $files
+'
+for i in $files
 do
     if test $last_status -ne 0; then
-	prompt_after_failed_merge <&3 || exit 1
+	prompt_after_failed_merge || exit 1
     fi
     printf "\n"
-    merge_file "$i" <&3
+    merge_file "$i"
     last_status=$?
     if test $last_status -ne 0; then
 	rollup_status=1
