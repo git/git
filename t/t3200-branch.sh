@@ -554,4 +554,17 @@ test_expect_success 'attempt to delete a branch merged to its base' '
 	test_must_fail git branch -d my10
 '
 
+test_expect_success 'use set-upstream on the current branch' '
+	git checkout master &&
+	git --bare init myupstream.git &&
+	git push myupstream.git master:refs/heads/frotz &&
+	git remote add origin myupstream.git &&
+	git fetch &&
+	git branch --set-upstream master origin/frotz &&
+
+	test "z$(git config branch.master.remote)" = "zorigin" &&
+	test "z$(git config branch.master.merge)" = "zrefs/heads/frotz"
+
+'
+
 test_done
