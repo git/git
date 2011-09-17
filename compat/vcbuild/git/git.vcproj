@@ -22,7 +22,7 @@
 		<Configuration
 			Name="Debug|Win32"
 			OutputDirectory="$(SolutionDir)\..\bin\$(ConfigurationName)\bin"
-			IntermediateDirectory="$(ConfigurationName)"
+			IntermediateDirectory="$(SolutionDir)\..\obj\tgit\$(ConfigurationName)"
 			ConfigurationType="1"
 			CharacterSet="0"
 			>
@@ -96,7 +96,7 @@
 		<Configuration
 			Name="Debug|x64"
 			OutputDirectory="$(SolutionDir)\..\bin\$(ConfigurationName)64\bin"
-			IntermediateDirectory="$(ConfigurationName)64"
+			IntermediateDirectory="$(SolutionDir)\..\obj\tgit\$(ConfigurationName)64"
 			ConfigurationType="1"
 			CharacterSet="0"
 			>
@@ -174,7 +174,7 @@
 		<Configuration
 			Name="Release|Win32"
 			OutputDirectory="$(SolutionDir)\..\bin\$(ConfigurationName)\bin"
-			IntermediateDirectory="$(ConfigurationName)"
+			IntermediateDirectory="$(SolutionDir)\..\obj\tgit\$(ConfigurationName)"
 			ConfigurationType="1"
 			CharacterSet="0"
 			WholeProgramOptimization="1"
@@ -251,7 +251,7 @@
 		<Configuration
 			Name="Release|x64"
 			OutputDirectory="$(SolutionDir)\..\bin\$(ConfigurationName)64\bin"
-			IntermediateDirectory="$(ConfigurationName)64"
+			IntermediateDirectory="$(SolutionDir)\..\obj\tgit\$(ConfigurationName)64"
 			ConfigurationType="1"
 			UseOfMFC="0"
 			CharacterSet="0"
