@@ -293,7 +293,7 @@ static int do_fmt_merge_msg(int merge_title, struct strbuf *in,
 		struct commit *head;
 		struct rev_info rev;
 
-		head = lookup_commit(head_sha1);
+		head = lookup_commit_or_die(head_sha1, "HEAD");
 		init_revisions(&rev, NULL);
 		rev.commit_format = CMIT_FMT_ONELINE;
 		rev.ignore_merges = 1;

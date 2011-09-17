@@ -1036,11 +1036,8 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		branch += 11;
 	if (!branch || is_null_sha1(head_sha1))
 		head_commit = NULL;
-	else {
-		head_commit = lookup_commit(head_sha1);
-		if (!head_commit)
-			die(_("could not parse HEAD"));
-	}
+	else
+		head_commit = lookup_commit_or_die(head_sha1, "HEAD");
 
 	git_config(git_merge_config, NULL);
 
