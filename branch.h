@@ -20,8 +20,18 @@ void create_branch(const char *head, const char *name, const char *start_name,
  * interpreted ref in ref, force indicates whether (non-head) branches
  * may be overwritten. A non-zero return value indicates that the force
  * parameter was non-zero and the branch already exists.
+ *
+ * Contrary to all of the above, when attr_only is 1, the caller is
+ * not interested in verifying if it is Ok to update the named
+ * branch to point at a potentially different commit. It is merely
+ * asking if it is OK to change some attribute for the named branch
+ * (e.g. tracking upstream).
+ *
+ * NEEDSWORK: This needs to be split into two separate functions in the
+ * longer run for sanity.
+ *
  */
-int validate_new_branchname(const char *name, struct strbuf *ref, int force);
+int validate_new_branchname(const char *name, struct strbuf *ref, int force, int attr_only);
 
 /*
  * Remove information about the state of working on the current

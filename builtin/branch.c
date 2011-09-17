@@ -566,7 +566,7 @@ static void rename_branch(const char *oldname, const char *newname, int force)
 			die(_("Invalid branch name: '%s'"), oldname);
 	}
 
-	validate_new_branchname(newname, &newref, force);
+	validate_new_branchname(newname, &newref, force, 0);
 
 	strbuf_addf(&logmsg, "Branch: renamed %s to %s",
 		 oldref.buf, newref.buf);
