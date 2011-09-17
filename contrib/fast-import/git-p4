@@ -1238,6 +1238,15 @@ class P4Sync(Command, P4UserMap):
             data = ''.join(contents)
             contents = [data[:-1]]
 
+        if file['type'].startswith("utf16"):
+            # p4 delivers different text in the python output to -G
+            # than it does when using "print -o", or normal p4 client
+            # operations.  utf16 is converted to ascii or utf8, perhaps.
+            # But ascii text saved as -t utf16 is completely mangled.
+            # Invoke print -o to get the real contents.
+            text = p4_read_pipe('print -q -o - "%s"' % file['depotFile'])
+            contents = [ text ]
+
         if self.isWindows and file["type"].endswith("text"):
             mangled = []
             for data in contents:
@@ -1245,6 +1254,8 @@ class P4Sync(Command, P4UserMap):
                 mangled.append(data)
             contents = mangled
 
+        # Note that we do not try to de-mangle keywords on utf16 files,
+        # even though in theory somebody may want that.
         if file['type'] in ('text+ko', 'unicode+ko', 'binary+ko'):
             contents = map(lambda text: re.sub(r'(?i)\$(Id|Header):[^$]*\$',r'$\1$', text), contents)
         elif file['type'] in ('text+k', 'ktext', 'kxtext', 'unicode+k', 'binary+k'):
