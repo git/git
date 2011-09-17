@@ -2,7 +2,7 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9.00"
-	Name="git"
+	Name="tgit"
 	ProjectGUID="{E3E30E51-C5AD-407B-AB43-985E4111474A}"
 	RootNamespace="git"
 	Keyword="Win32Proj"
