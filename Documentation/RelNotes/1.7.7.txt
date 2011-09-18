@@ -166,7 +166,7 @@ included in this release.
 --
 exec >/var/tmp/1
 echo O=$(git describe master)
-O=v1.7.7-rc0-185-gb648557
+O=v1.7.7-rc2
 git log --first-parent --oneline $O..master
 echo
 git shortlog --no-merges ^maint ^$O master
