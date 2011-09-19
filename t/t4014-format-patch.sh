@@ -445,22 +445,22 @@ test_expect_success 'thread deep cover-letter in-reply-to' '
 '
 
 test_expect_success 'thread via config' '
-	git config format.thread true &&
+	test_config format.thread true &&
 	check_threading expect.thread master
 '
 
 test_expect_success 'thread deep via config' '
-	git config format.thread deep &&
+	test_config format.thread deep &&
 	check_threading expect.deep master
 '
 
 test_expect_success 'thread config + override' '
-	git config format.thread deep &&
+	test_config format.thread deep &&
 	check_threading expect.thread --thread master
 '
 
 test_expect_success 'thread config + --no-thread' '
-	git config format.thread deep &&
+	test_config format.thread deep &&
 	check_threading expect.no-threading --no-thread master
 '
 
