@@ -2431,9 +2431,9 @@ proc makewindow {} {
     bindkey n "selnextline 1"
     bindkey z "goback"
     bindkey x "goforw"
-    bindkey i "selnextline -1"
-    bindkey k "selnextline 1"
-    bindkey j "goback"
+    bindkey k "selnextline -1"
+    bindkey j "selnextline 1"
+    bindkey h "goback"
     bindkey l "goforw"
     bindkey b prevfile
     bindkey d "$ctext yview scroll 18 units"
@@ -2844,9 +2844,9 @@ proc keys {} {
 [mc "<%s-W>		Close window" $M1T]
 [mc "<Home>		Move to first commit"]
 [mc "<End>		Move to last commit"]
-[mc "<Up>, p, i	Move up one commit"]
-[mc "<Down>, n, k	Move down one commit"]
-[mc "<Left>, z, j	Go back in history list"]
+[mc "<Up>, p, k	Move up one commit"]
+[mc "<Down>, n, j	Move down one commit"]
+[mc "<Left>, z, h	Go back in history list"]
 [mc "<Right>, x, l	Go forward in history list"]
 [mc "<PageUp>	Move up one page in commit list"]
 [mc "<PageDown>	Move down one page in commit list"]
