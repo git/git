@@ -72,7 +72,7 @@ describe_file () {
 resolve_symlink_merge () {
     while true; do
 	printf "Use (l)ocal or (r)emote, or (a)bort? "
-	read ans
+	read ans || return 1
 	case "$ans" in
 	    [lL]*)
 		git checkout-index -f --stage=2 -- "$MERGED"
