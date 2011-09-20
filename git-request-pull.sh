@@ -35,7 +35,18 @@ do
 	shift
 done
 
-base=$1 url=$2 head=${3-HEAD} status=0
+base=$1 url=$2 head=${3-HEAD} status=0 branch_name=
+
+headref=$(git symbolic-ref -q "$head")
+if git show-ref -q --verify "$headref"
+then
+	branch_name=${headref#refs/heads/}
+	if test "z$branch_name" = "z$headref" ||
+		! git config "branch.$branch_name.description" >/dev/null
+	then
+		branch_name=
+	fi
+fi
 
 test -n "$base" && test -n "$url" || usage
 baserev=$(git rev-parse --verify "$base"^0) &&
@@ -66,6 +77,13 @@ for you to fetch changes up to %H:
 
 ----------------------------------------------------------------' $headrev &&
 
+if test -n "$branch_name"
+then
+	echo "(from the branch description for $branch local branch)"
+	echo
+	git config "branch.$branch_name.description"
+	echo "----------------------------------------------------------------"
+fi &&
 git shortlog ^$baserev $headrev &&
 git diff -M --stat --summary $patch $merge_base..$headrev || status=1
 
