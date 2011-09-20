@@ -289,7 +289,7 @@ static void show_new_file(struct rev_info *revs,
 
 	/*
 	 * New file in the index: it might actually be different in
-	 * the working copy.
+	 * the working tree.
 	 */
 	if (get_stat_data(new, &sha1, &mode, cached, match_missing,
 	    &dirty_submodule, &revs->diffopt) < 0)
