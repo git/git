@@ -388,12 +388,12 @@ directory update. `$GIT_DIR/info/sparse-checkout` is used to
 define the skip-worktree reference bitmap. When 'git read-tree' needs
 to update the working directory, it resets the skip-worktree bit in the index
 based on this file, which uses the same syntax as .gitignore files.
-If an entry matches a pattern in this file, skip-worktree will be
-set on that entry. Otherwise, skip-worktree will be unset.
+If an entry matches a pattern in this file, skip-worktree will not be
+set on that entry. Otherwise, skip-worktree will be set.
 
 Then it compares the new skip-worktree value with the previous one. If
-skip-worktree turns from unset to set, it will add the corresponding
-file back. If it turns from set to unset, that file will be removed.
+skip-worktree turns from set to unset, it will add the corresponding
+file back. If it turns from unset to set, that file will be removed.
 
 While `$GIT_DIR/info/sparse-checkout` is usually used to specify what
 files are in, you can also specify what files are _not_ in, using
