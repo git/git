@@ -1119,8 +1119,13 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 		}
 		if (ret < 0)
 			goto return_failed;
+		/*
+		 * Sparse checkout is meant to narrow down checkout area
+		 * but it does not make sense to narrow down to empty working
+		 * tree. This is usually a mistake in sparse checkout rules.
+		 * Do not allow users to do that.
+		 */
 		if (o->result.cache_nr && empty_worktree) {
-			/* dubious---why should this fail??? */
 			ret = unpack_failed(o, "Sparse checkout leaves no entry on working directory");
 			goto done;
 		}
