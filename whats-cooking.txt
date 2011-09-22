@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Sep 2011, #05; Wed, 14)
-X-master-at: 1e5814f3def08452aef4caa703f074ba7d167867
-X-next-at: 872ee2d61fac3d9dd13d38dcf7d86c7059b4ca79
+Subject: What's cooking in git.git (Sep 2011, #06; Wed, 21)
+X-master-at: 5ec8217eb6c89974fda94808a310aa651577b25d
+X-next-at: f316dec93e8cd645d8185a80b972857985dc33a4
 
-What's cooking in git.git (Sep 2011, #05; Wed, 14)
+What's cooking in git.git (Sep 2011, #06; Wed, 21)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -28,49 +28,100 @@ With all the topics and integration branches:
 --------------------------------------------------
 [New Topics]
 
-* jk/maint-fetch-submodule-check-fix (2011-09-12) 1 commit
-  (merged to 'next' on 2011-09-12 at 3c73b8c)
- + fetch: avoid quadratic loop checking for updated submodules
- (this branch is used by jk/argv-array.)
+* bw/grep-no-index-no-exclude (2011-09-15) 2 commits
+ - grep --no-index: don't use git standard exclusions
+ - grep: do not use --index in the short usage output
 
-* bc/attr-ignore-case (2011-09-14) 5 commits
- - attr: read core.attributesfile from git_default_core_config
- - attr.c: respect core.ignorecase when matching attribute patterns
- - builtin/mv.c: plug miniscule memory leak
- - cleanup: use internal memory allocation wrapper functions everywhere
- - attr.c: avoid inappropriate access to strbuf "buf" member
+* jc/namespace-doc-with-old-asciidoc (2011-09-16) 1 commit
+ - Documentation/gitnamespaces.txt: cater to older asciidoc
 
-* jc/maint-fsck-fwrite-size-check (2011-09-11) 1 commit
- - fsck: do not abort upon finding an empty blob
+* jc/want-commit (2011-09-15) 1 commit
+ - Allow git merge ":/<pattern>"
 
-* jc/request-pull-show-head-2 (2011-09-13) 2 commits
- - request-pull: state exact commit object name
- - fetch: allow asking for an explicit commit object by name
+* jc/ls-remote-short-help (2011-09-16) 1 commit
+ - ls-remote: a lone "-h" is asking for help
 
-* jk/argv-array (2011-09-14) 7 commits
- - run_hook: use argv_array API
- - checkout: use argv_array API
- - bisect: use argv_array API
- - quote: provide sq_dequote_to_argv_array
- - refactor argv_array into generic code
- - quote.h: fix bogus comment
- - add sha1_array API docs
- (this branch uses jk/maint-fetch-submodule-check-fix.)
+* jc/maint-bundle-too-quiet (2011-09-19) 1 commit
+ - Teach progress eye-candy to fetch_refs_from_bundle()
 
-* js/cred-macos-x-keychain-2 (2011-09-14) 1 commit
- - contrib: add a pair of credential helpers for Mac OS X's keychain
- (this branch uses jk/http-auth-keyring; is tangled with js/cred-macos-x-keychain.)
+* jk/filter-branch-require-clean-work-tree (2011-09-15) 1 commit
+ - filter-branch: use require_clean_work_tree
 
-Welcome addition to build our confidence in the jk/http-auth-keyring topic.
+* jn/gitweb-highlite-sanitise (2011-09-16) 1 commit
+ - gitweb: Strip non-printable characters from syntax highlighter output
+
+* mh/check-ref-format-3 (2011-09-16) 22 commits
+ - add_ref(): verify that the refname is formatted correctly
+ - resolve_ref(): expand documentation
+ - resolve_ref(): also treat a too-long SHA1 as invalid
+ - resolve_ref(): emit warnings for improperly-formatted references
+ - resolve_ref(): verify that the input refname has the right format
+ - remote: avoid passing NULL to read_ref()
+ - remote: use xstrdup() instead of strdup()
+ - resolve_ref(): do not follow incorrectly-formatted symbolic refs
+ - resolve_ref(): extract a function get_packed_ref()
+ - resolve_ref(): turn buffer into a proper string as soon as possible
+ - resolve_ref(): only follow a symlink that contains a valid, normalized refname
+ - resolve_ref(): use prefixcmp()
+ - resolve_ref(): explicitly fail if a symlink is not readable
+ - Change check_refname_format() to reject unnormalized refnames
+ - Inline function refname_format_print()
+ - Make collapse_slashes() allocate memory for its result
+ - Do not allow ".lock" at the end of any refname component
+ - Refactor check_refname_format()
+ - Change check_ref_format() to take a flags argument
+ - Change bad_ref_char() to return a boolean value
+ - git check-ref-format: add options --allow-onelevel and --refspec-pattern
+ - t1402: add some more tests
+
+* cn/eradicate-working-copy (2011-09-21) 2 commits
+ - patch-id.c: use strbuf instead of a fixed buffer
+ - Remove 'working copy' from the documentation and C code
+
+* js/bisect-no-checkout (2011-09-21) 1 commit
+  (merged to 'next' on 2011-09-21 at e94ad3e)
+ + bisect: fix exiting when checkout failed in bisect_start()
+
+* mg/maint-doc-sparse-checkout (2011-09-21) 3 commits
+  (merged to 'next' on 2011-09-21 at f316dec)
+ + git-read-tree.txt: correct sparse-checkout and skip-worktree description
+ + git-read-tree.txt: language and typography fixes
+ + unpack-trees: print "Aborting" to stderr
+
+* ms/patch-id-with-overlong-line (2011-09-21) 1 commit
+ - patch-id.c: use strbuf instead of a fixed buffer
+
+* sn/doc-update-index-assume-unchanged (2011-09-21) 1 commit
+  (merged to 'next' on 2011-09-21 at 325e796)
+ + Documentation/git-update-index: refer to 'ls-files'
+
+* jc/request-pull-show-head-4 (2011-09-21) 7 commits
+ - request-pull: use the branch description
+ - request-pull: state what commit to expect
+ - request-pull: modernize style
+ - branch: teach --edit-description option
+ - format-patch: use branch description in cover letter
+ - branch: add read_branch_desc() helper function
+ - Merge branch 'bk/ancestry-path' into jc/branch-desc
+ (this branch uses bk/ancestry-path.)
+
+--------------------------------------------------
+[Graduated to "master"]
+
+* ph/format-patch-no-color (2011-09-12) 1 commit
+  (merged to 'next' on 2011-09-12 at 20283e8)
+ + format-patch: ignore ui.color
+
+A fix for the recent regression.
 
 --------------------------------------------------
 [Stalled]
 
 * jc/signed-push (2011-09-12) 7 commits
- . push -s: support pre-receive-signature hook
- . push -s: receiving end
- . push -s: send signed push certificate
- . push -s: skeleton
+ - push -s: support pre-receive-signature hook
+ - push -s: receiving end
+ - push -s: send signed push certificate
+ - push -s: skeleton
  - Split GPG interface into its own helper library
  - rename "match_refs()" to "match_push_refs()"
  - send-pack: typofix error message
@@ -79,7 +130,7 @@ Welcome addition to build our confidence in the jk/http-auth-keyring topic.
 This was the v2 that updated notes tree on the receiving end.
 
 * jc/signed-push-3 (2011-09-12) 4 commits
- - push -s: signed push
+ . push -s: signed push
  - Split GPG interface into its own helper library
  - rename "match_refs()" to "match_push_refs()"
  - send-pack: typofix error message
@@ -87,14 +138,6 @@ This was the v2 that updated notes tree on the receiving end.
 
 This is the third edition, that moves the preparation of the notes tree to
 the sending end.
-
-* nd/maint-autofix-tag-in-head (2011-08-26) 3 commits
- - Accept tags in HEAD or MERGE_HEAD
- - merge: remove global variable head[]
- - merge: keep stash[] a local variable
-
-Probably needs a re-roll to aim a bit higher.
-Not urgent; will not be in 1.7.7.
 
 * jk/add-i-hunk-filter (2011-07-27) 5 commits
   (merged to 'next' on 2011-08-11 at 8ff9a56)
@@ -119,13 +162,6 @@ Will be dropped.
  - Update technical docs to reflect side-band-64k capability in receive-pack
 
 Would need another round to separate per-pack and per-session limits.
-
-* jm/mergetool-pathspec (2011-06-22) 2 commits
- - mergetool: Don't assume paths are unmerged
- - mergetool: Add tests for filename with whitespace
-
-I think this is a good idea, but it probably needs a re-roll.
-Cf. $gmane/176254 and 176255.
 
 * jk/generation-numbers (2011-09-11) 8 commits
  - metadata-cache.c: make two functions static
@@ -157,11 +193,58 @@ also loses the ability to escape glob specials. Perhaps drop?
 --------------------------------------------------
 [Cooking]
 
-* rj/maint-t9159-svn-rev-notation (2011-09-13) 1 commit
- - t9159-*.sh: t9159-*.sh: skip for mergeinfo test for svn <= 1.4
+* jm/mergetool-pathspec (2011-09-16) 2 commits
+ - mergetool: no longer need to save standard input
+ - mergetool: Use args as pathspec to unmerged files
+
+* nd/maint-autofix-tag-in-head (2011-09-18) 4 commits
+ - Accept tags in HEAD or MERGE_HEAD
+ - merge: remove global variable head[]
+ - merge: use return value of resolve_ref() to determine if HEAD is invalid
+ - merge: keep stash[] a local variable
+
+* jk/maint-fetch-submodule-check-fix (2011-09-12) 1 commit
+  (merged to 'next' on 2011-09-12 at 3c73b8c)
+ + fetch: avoid quadratic loop checking for updated submodules
+ (this branch is used by jk/argv-array.)
+
+This probably can wait, as long as the other half of the regression fix
+is in the upcoming release.
+
+* bc/attr-ignore-case (2011-09-14) 5 commits
+ - attr: read core.attributesfile from git_default_core_config
+ - attr.c: respect core.ignorecase when matching attribute patterns
+ - builtin/mv.c: plug miniscule memory leak
+ - cleanup: use internal memory allocation wrapper functions everywhere
+ - attr.c: avoid inappropriate access to strbuf "buf" member
+
+* jc/maint-fsck-fwrite-size-check (2011-09-11) 1 commit
+  (merged to 'next' on 2011-09-16 at 2258f11)
+ + fsck: do not abort upon finding an empty blob
+
+* jk/argv-array (2011-09-14) 7 commits
+  (merged to 'next' on 2011-09-16 at 90feab4)
+ + run_hook: use argv_array API
+ + checkout: use argv_array API
+ + bisect: use argv_array API
+ + quote: provide sq_dequote_to_argv_array
+ + refactor argv_array into generic code
+ + quote.h: fix bogus comment
+ + add sha1_array API docs
+ (this branch uses jk/maint-fetch-submodule-check-fix.)
+
+* js/cred-macos-x-keychain-2 (2011-09-14) 1 commit
+ - contrib: add a pair of credential helpers for Mac OS X's keychain
+ (this branch is tangled with jk/http-auth-keyring.)
+
+Welcome addition to build our confidence in the jk/http-auth-keyring topic.
+
+* rj/maint-t9159-svn-rev-notation (2011-09-21) 1 commit
+ - t9159-*.sh: skip for mergeinfo test for svn <= 1.4
 
 * tr/doc-note-rewrite (2011-09-13) 1 commit
- - Documentation: basic configuration of notes.rewriteRef
+  (merged to 'next' on 2011-09-16 at 5fe813a)
+ + Documentation: basic configuration of notes.rewriteRef
 
 Updated to a safer wording.
 
@@ -169,13 +252,6 @@ Updated to a safer wording.
  - attr: map builtin userdiff drivers to well-known extensions
 
 Will be re-rolled after 1.7.7 final.
-
-* ph/format-patch-no-color (2011-09-12) 1 commit
-  (merged to 'next' on 2011-09-12 at 20283e8)
- + format-patch: ignore ui.color
-
-This fix for the recent regression probably should be in 1.7.7 final.
-Will merge to "master" soonish.
 
 * hl/iso8601-more-zone-formats (2011-09-12) 1 commit
   (merged to 'next' on 2011-09-12 at 270f5c7)
@@ -189,27 +265,24 @@ Will merge to "master" soonish.
 Just to make it easier to run a hook that reads from its standard input.
 
 * jk/for-each-ref (2011-09-08) 5 commits
- - for-each-ref: add split message parts to %(contents:*).
- - for-each-ref: handle multiline subjects like --pretty
- - for-each-ref: refactor subject and body placeholder parsing
- - t6300: add more body-parsing tests
- - t7004: factor out gpg setup
-
-Will merge to "next".
+  (merged to 'next' on 2011-09-14 at 36ed515)
+ + for-each-ref: add split message parts to %(contents:*).
+ + for-each-ref: handle multiline subjects like --pretty
+ + for-each-ref: refactor subject and body placeholder parsing
+ + t6300: add more body-parsing tests
+ + t7004: factor out gpg setup
 
 * wh/normalize-alt-odb-path (2011-09-07) 1 commit
- - sha1_file: normalize alt_odb path before comparing and storing
-
-Will merge to "next".
+  (merged to 'next' on 2011-09-14 at 96f722b)
+ + sha1_file: normalize alt_odb path before comparing and storing
 
 * fk/use-kwset-pickaxe-grep-f (2011-09-11) 2 commits
- - obstack.c: Fix some sparse warnings
- - sparse: Fix an "Using plain integer as NULL pointer" warning
+  (merged to 'next' on 2011-09-14 at 436d858)
+ + obstack.c: Fix some sparse warnings
+ + sparse: Fix an "Using plain integer as NULL pointer" warning
 
 In general we would prefer to see these fixed at the upstream first, but
 we have essentially forked from them at their last GPLv2 versions...
-
-Will merge to "next".
 
 * jc/make-static (2011-09-14) 4 commits
   (merged to 'next' on 2011-09-14 at c5943ff)
@@ -220,23 +293,11 @@ Will merge to "next".
  + make-static: master
  (this branch is tangled with jc/reflog-walk-use-only-nsha1.)
 
-With a few fix-ups.
+With a few fix-ups; probably needs to be ejected after 1.7.7 happens.
 
 * rj/quietly-create-dep-dir (2011-09-11) 1 commit
   (merged to 'next' on 2011-09-12 at 93d1c6b)
  + Makefile: Make dependency directory creation less noisy
-
-* mh/check-ref-format (2011-09-11) 8 commits
- - Add tools to avoid the use of unnormalized refnames.
- - Do not allow ".lock" at the end of any refname component
- - Add a library function normalize_refname()
- - Change check_ref_format() to take a flags argument
- - fixup asciidoc formatting
- - git check-ref-format: add options --allow-onelevel and --refspec-pattern
- - Change bad_ref_char() to return a boolean value
- - t1402: add some more tests
-
-Another reroll coming.
 
 * mz/remote-rename (2011-09-11) 4 commits
  - remote: only update remote-tracking branch if updating refspec
@@ -245,19 +306,17 @@ Another reroll coming.
  - remote: write correct fetch spec when renaming remote 'remote'
 
 * cb/common-prefix-unification (2011-09-12) 3 commits
- - rename pathspec_prefix() to common_prefix() and move to dir.[ch]
- - consolidate pathspec_prefix and common_prefix
- - remove prefix argument from pathspec_prefix
-
-Will merge to "next".
+  (merged to 'next' on 2011-09-14 at 24f571f)
+ + rename pathspec_prefix() to common_prefix() and move to dir.[ch]
+ + consolidate pathspec_prefix and common_prefix
+ + remove prefix argument from pathspec_prefix
 
 * cb/send-email-help (2011-09-12) 1 commit
- - send-email: add option -h
+  (merged to 'next' on 2011-09-14 at ae71999)
+ + send-email: add option -h
 
 A separate set of patches to remove the hidden fully-spelled "help" from
 other commands would be nice to have as companion patches as well.
-
-Will merge to "next".
 
 * jc/fetch-pack-fsck-objects (2011-09-04) 3 commits
   (merged to 'next' on 2011-09-12 at a031347)
@@ -299,11 +358,14 @@ objects contained in the packstream, and this adds such a check.
  + http: avoid empty error messages for some curl errors
  + http: remove extra newline in error message
 
-* bk/ancestry-path (2011-08-25) 3 commits
+* bk/ancestry-path (2011-09-15) 4 commits
+  (merged to 'next' on 2011-09-15 at aa64d04)
+ + t6019: avoid refname collision on case-insensitive systems
   (merged to 'next' on 2011-09-02 at d05ba5d)
  + revision: do not include sibling history in --ancestry-path output
  + revision: keep track of the end-user input from the command line
  + rev-list: Demonstrate breakage with --ancestry-path --all
+ (this branch is used by jc/request-pull-show-head-4.)
 
 * mg/branch-list (2011-09-13) 7 commits
   (merged to 'next' on 2011-09-14 at 6610a2e)
@@ -434,7 +496,10 @@ I do not think there is anything fundamentally wrong with this series, but
 the risk of breakage outweighs any benefit for having this new
 feature. Will keep it in 'next' at least for one cycle.
 
-* jk/http-auth-keyring (2011-09-14) 19 commits
+* jk/http-auth-keyring (2011-09-16) 21 commits
+  (merged to 'next' on 2011-09-16 at b4195eb)
+ + check_expirations: don't copy over same element
+ + t0300: add missing EOF terminator for <<
   (merged to 'next' on 2011-09-14 at 589c7c9)
  + credential-store: use a better storage format
  + t0300: make alternate username tests more robust
@@ -457,7 +522,7 @@ feature. Will keep it in 'next' at least for one cycle.
  + remote-curl: don't retry auth failures with dumb protocol
  + improve httpd auth tests
  + url: decode buffers that are not NUL-terminated
- (this branch is used by js/cred-macos-x-keychain-2; is tangled with js/cred-macos-x-keychain.)
+ (this branch is tangled with js/cred-macos-x-keychain and js/cred-macos-x-keychain-2.)
 
 * rr/revert-cherry-pick-continue (2011-09-11) 19 commits
   (merged to 'next' on 2011-09-11 at 7d78054)
@@ -484,6 +549,18 @@ feature. Will keep it in 'next' at least for one cycle.
 
 --------------------------------------------------
 [Discarded]
+
+* mh/check-ref-format (2011-09-11) 8 commits
+ . Add tools to avoid the use of unnormalized refnames.
+ . Do not allow ".lock" at the end of any refname component
+ . Add a library function normalize_refname()
+ . Change check_ref_format() to take a flags argument
+ . fixup asciidoc formatting
+ . git check-ref-format: add options --allow-onelevel and --refspec-pattern
+ . Change bad_ref_char() to return a boolean value
+ . t1402: add some more tests
+
+Rerolled
 
 * jk/pager-with-alias (2011-08-19) 1 commit
  . support pager.* for aliases
@@ -526,6 +603,15 @@ Reverted out of 'next'.
  + vcs-svn: remove unused functions and make some static
  + make-static: master
  (this branch is tangled with jc/make-static.)
+
+* hw/maint-abspath-cwd-limit (2011-09-21) 3 commits
+  (merged to 'next' on 2011-09-21 at 210cf9a)
+ + Revert 622fea4 (abspath.c: increase array size of cwd variable)
+  (merged to 'next' on 2011-09-19 at 7d5e921)
+ + abspath.c: increase array size of cwd variable to PATH_MAX
+ + path.c: increase array size of cwd variable to PATH_MAX
+
+Reverted out of 'next'.
 
 * jc/request-pull-show-head (2011-09-13) 2 commits
   (merged to 'next' on 2011-09-13 at c82fb3a)
