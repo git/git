@@ -2416,6 +2416,8 @@ static void note_change_n(struct branch *b, unsigned char old_fanout)
 	/* <committish> */
 	s = lookup_branch(p);
 	if (s) {
+		if (is_null_sha1(s->sha1))
+			die("Can't add a note on empty branch.");
 		hashcpy(commit_sha1, s->sha1);
 	} else if (*p == ':') {
 		uintmax_t commit_mark = strtoumax(p + 1, NULL, 10);

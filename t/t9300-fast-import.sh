@@ -1987,6 +1987,23 @@ test_expect_success \
 	'Q: verify second note for second commit' \
 	'git cat-file blob refs/notes/foobar:$commit2 >actual && test_cmp expect actual'
 
+cat >input <<EOF
+reset refs/heads/Q0
+
+commit refs/heads/note-Q0
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+Note for an empty branch.
+COMMIT
+
+N inline refs/heads/Q0
+data <<NOTE
+some note
+NOTE
+EOF
+test_expect_success \
+	'Q: deny note on empty branch' \
+	'test_must_fail git fast-import <input'
 ###
 ### series R (feature and option)
 ###
