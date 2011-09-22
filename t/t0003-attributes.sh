@@ -134,10 +134,20 @@ test_expect_success 'attribute test: read paths from stdin' '
 
 test_expect_success 'attribute test: --all option' '
 
-	grep -v unspecified < expect-all | sort > expect &&
-	sed -e "s/:.*//" < expect-all | uniq |
-		git check-attr --stdin --all | sort > actual &&
-	test_cmp expect actual
+	grep -v unspecified <expect-all | sort >specified-all &&
+	sed -e "s/:.*//" <expect-all | uniq >stdin-all &&
+	git check-attr --stdin --all <stdin-all | sort >actual &&
+	test_cmp specified-all actual
+'
+
+test_expect_success 'attribute test: --cached option' '
+
+	: >empty &&
+	git check-attr --cached --stdin --all <stdin-all | sort >actual &&
+	test_cmp empty actual &&
+	git add .gitattributes a/.gitattributes a/b/.gitattributes &&
+	git check-attr --cached --stdin --all <stdin-all | sort >actual &&
+	test_cmp specified-all actual
 '
 
 test_expect_success 'root subdir attribute test' '
@@ -166,6 +176,13 @@ test_expect_success 'bare repository: check that .gitattribute is ignored' '
 	attr_check a/i unspecified &&
 	attr_check subdir/a/i unspecified
 
+'
+
+test_expect_success 'bare repository: check that --cached honors index' '
+	GIT_INDEX_FILE=../.git/index \
+	git check-attr --cached --stdin --all <../stdin-all |
+	sort >actual &&
+	test_cmp ../specified-all actual
 '
 
 test_expect_success 'bare repository: test info/attributes' '
