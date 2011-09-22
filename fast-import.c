@@ -2717,6 +2717,8 @@ static void parse_new_tag(void)
 	from = strchr(command_buf.buf, ' ') + 1;
 	s = lookup_branch(from);
 	if (s) {
+		if (is_null_sha1(s->sha1))
+			die("Can't tag an empty branch.");
 		hashcpy(sha1, s->sha1);
 		type = OBJ_COMMIT;
 	} else if (*from == ':') {
