@@ -18,6 +18,9 @@ invalid_ref 'foo'
 valid_ref 'foo/bar/baz'
 valid_ref 'refs///heads/foo'
 invalid_ref 'heads/foo/'
+valid_ref '/heads/foo'
+valid_ref '///heads/foo'
+invalid_ref '/foo'
 invalid_ref './foo'
 invalid_ref '.refs/foo'
 invalid_ref 'heads/foo..bar'
@@ -27,6 +30,9 @@ invalid_ref 'heads/foo.lock'
 valid_ref 'heads/foo@bar'
 invalid_ref 'heads/v@{ation'
 invalid_ref 'heads/foo\bar'
+invalid_ref "$(printf 'heads/foo\t')"
+invalid_ref "$(printf 'heads/foo\177')"
+valid_ref "$(printf 'heads/fu\303\237')"
 
 test_expect_success "check-ref-format --branch @{-1}" '
 	T=$(git write-tree) &&
@@ -70,7 +76,10 @@ invalid_ref_normalized() {
 
 valid_ref_normalized 'heads/foo' 'heads/foo'
 valid_ref_normalized 'refs///heads/foo' 'refs/heads/foo'
+valid_ref_normalized '/heads/foo' 'heads/foo'
+valid_ref_normalized '///heads/foo' 'heads/foo'
 invalid_ref_normalized 'foo'
+invalid_ref_normalized '/foo'
 invalid_ref_normalized 'heads/foo/../bar'
 invalid_ref_normalized 'heads/./foo'
 invalid_ref_normalized 'heads\foo'

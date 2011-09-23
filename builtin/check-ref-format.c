@@ -12,8 +12,8 @@ static const char builtin_check_ref_format_usage[] =
 "   or: git check-ref-format --branch <branchname-shorthand>";
 
 /*
- * Replace each run of adjacent slashes in src with a single slash,
- * and write the result to dst.
+ * Remove leading slashes and replace each run of adjacent slashes in
+ * src with a single slash, and write the result to dst.
  *
  * This function is similar to normalize_path_copy(), but stripped down
  * to meet check_ref_format's simpler needs.
@@ -21,7 +21,7 @@ static const char builtin_check_ref_format_usage[] =
 static void collapse_slashes(char *dst, const char *src)
 {
 	char ch;
-	char prev = '\0';
+	char prev = '/';
 
 	while ((ch = *src++) != '\0') {
 		if (prev == '/' && ch == prev)
