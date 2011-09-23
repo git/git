@@ -201,7 +201,7 @@ static int checkout_merged(int pos, struct checkout *state)
 }
 
 static int checkout_paths(struct tree *source_tree, const char **pathspec,
-			  struct checkout_opts *opts)
+			  const char *prefix, struct checkout_opts *opts)
 {
 	int pos;
 	struct checkout state;
@@ -231,7 +231,7 @@ static int checkout_paths(struct tree *source_tree, const char **pathspec,
 		match_pathspec(pathspec, ce->name, ce_namelen(ce), 0, ps_matched);
 	}
 
-	if (report_path_error(ps_matched, pathspec, 0))
+	if (report_path_error(ps_matched, pathspec, prefix))
 		return 1;
 
 	/* "checkout -m path" to recreate conflicted state */
@@ -1063,7 +1063,7 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 		if (1 < !!opts.writeout_stage + !!opts.force + !!opts.merge)
 			die(_("git checkout: --ours/--theirs, --force and --merge are incompatible when\nchecking out of the index."));
 
-		return checkout_paths(source_tree, pathspec, &opts);
+		return checkout_paths(source_tree, pathspec, prefix, &opts);
 	}
 
 	if (patch_mode)
