@@ -1,118 +1,64 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Sep 2011, #06; Wed, 21)
-X-master-at: 5ec8217eb6c89974fda94808a310aa651577b25d
-X-next-at: f316dec93e8cd645d8185a80b972857985dc33a4
+Subject: What's cooking in git.git (Sep 2011, #07; Fri, 23)
+X-master-at: 85e9c7e1d42849c5c3084a9da748608468310c0e
+X-next-at: 6bcf0e2b7ff196fa238fc8d8e9e9e116e0a55e25
 
-What's cooking in git.git (Sep 2011, #06; Wed, 21)
+What's cooking in git.git (Sep 2011, #07; Fri, 23)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' while commits prefixed with '+' are in 'next'.
 
+We are at 1.7.7-rc3 as of today; I had to make a quick fix for a recent
+regression directly on master, and I would like to cook it for a few days,
+so the final has to wait til mid next week.
+
 Here are the repositories that have my integration branches:
 
-With maint, master, next, pu and todo:
+With maint, master, next, pu, todo, html and man:
 
 	url = git://repo.or.cz/alt-git.git
 	url = https://code.google.com/p/git-core/
 
-With only maint and master:
+With only maint, master, html and man:
 
 	url = git://git.sourceforge.jp/gitroot/git-core/git.git
 	url = git://git-core.git.sourceforge.net/gitroot/git-core/git-core
 
-With all the topics and integration branches:
+With all the topics and integration branches but not todo, html or man:
 
 	url = https://github.com/gitster/git
+
+Until kernel.org comes back to life, it might be a good idea to
+tentatively have the following in your $HOME/.gitconfig:
+
+    [url "http://code.google.com/p/git-core"]
+      insteadOf = git://git.kernel.org/pub/scm/git/git.git
 
 --------------------------------------------------
 [New Topics]
 
-* bw/grep-no-index-no-exclude (2011-09-15) 2 commits
- - grep --no-index: don't use git standard exclusions
- - grep: do not use --index in the short usage output
+* jc/maint-diffstat-numstat-context (2011-09-22) 1 commit
+ - diff: teach --stat/--numstat to honor -U$num
 
-* jc/namespace-doc-with-old-asciidoc (2011-09-16) 1 commit
- - Documentation/gitnamespaces.txt: cater to older asciidoc
+* nd/maint-sparse-errors (2011-09-22) 2 commits
+ - Add explanation why we do not allow to sparse checkout to empty working tree
+ - sparse checkout: show error messages when worktree shaping fails
 
-* jc/want-commit (2011-09-15) 1 commit
- - Allow git merge ":/<pattern>"
+* rs/diff-cleanup-records-fix (2011-09-22) 1 commit
+ - Revert a part of rc/diff-cleanup-records
 
-* jc/ls-remote-short-help (2011-09-16) 1 commit
- - ls-remote: a lone "-h" is asking for help
+It seems that the differences (the reverse of) this patch introduces are
+of harmless kind but not very well explained in the original series. We
+would need to try harder to write our log messages better next time.
 
-* jc/maint-bundle-too-quiet (2011-09-19) 1 commit
- - Teach progress eye-candy to fetch_refs_from_bundle()
+* di/fast-import-empty-tag-note-fix (2011-09-22) 2 commits
+ - fast-import: don't allow to note on empty branch
+ - fast-import: don't allow to tag empty branch
 
-* jk/filter-branch-require-clean-work-tree (2011-09-15) 1 commit
- - filter-branch: use require_clean_work_tree
-
-* jn/gitweb-highlite-sanitise (2011-09-16) 1 commit
- - gitweb: Strip non-printable characters from syntax highlighter output
-
-* mh/check-ref-format-3 (2011-09-16) 22 commits
- - add_ref(): verify that the refname is formatted correctly
- - resolve_ref(): expand documentation
- - resolve_ref(): also treat a too-long SHA1 as invalid
- - resolve_ref(): emit warnings for improperly-formatted references
- - resolve_ref(): verify that the input refname has the right format
- - remote: avoid passing NULL to read_ref()
- - remote: use xstrdup() instead of strdup()
- - resolve_ref(): do not follow incorrectly-formatted symbolic refs
- - resolve_ref(): extract a function get_packed_ref()
- - resolve_ref(): turn buffer into a proper string as soon as possible
- - resolve_ref(): only follow a symlink that contains a valid, normalized refname
- - resolve_ref(): use prefixcmp()
- - resolve_ref(): explicitly fail if a symlink is not readable
- - Change check_refname_format() to reject unnormalized refnames
- - Inline function refname_format_print()
- - Make collapse_slashes() allocate memory for its result
- - Do not allow ".lock" at the end of any refname component
- - Refactor check_refname_format()
- - Change check_ref_format() to take a flags argument
- - Change bad_ref_char() to return a boolean value
- - git check-ref-format: add options --allow-onelevel and --refspec-pattern
- - t1402: add some more tests
-
-* cn/eradicate-working-copy (2011-09-21) 2 commits
- - patch-id.c: use strbuf instead of a fixed buffer
- - Remove 'working copy' from the documentation and C code
-
-* js/bisect-no-checkout (2011-09-21) 1 commit
-  (merged to 'next' on 2011-09-21 at e94ad3e)
- + bisect: fix exiting when checkout failed in bisect_start()
-
-* mg/maint-doc-sparse-checkout (2011-09-21) 3 commits
-  (merged to 'next' on 2011-09-21 at f316dec)
- + git-read-tree.txt: correct sparse-checkout and skip-worktree description
- + git-read-tree.txt: language and typography fixes
- + unpack-trees: print "Aborting" to stderr
-
-* ms/patch-id-with-overlong-line (2011-09-21) 1 commit
- - patch-id.c: use strbuf instead of a fixed buffer
-
-* sn/doc-update-index-assume-unchanged (2011-09-21) 1 commit
-  (merged to 'next' on 2011-09-21 at 325e796)
- + Documentation/git-update-index: refer to 'ls-files'
-
-* jc/request-pull-show-head-4 (2011-09-21) 7 commits
- - request-pull: use the branch description
- - request-pull: state what commit to expect
- - request-pull: modernize style
- - branch: teach --edit-description option
- - format-patch: use branch description in cover letter
- - branch: add read_branch_desc() helper function
- - Merge branch 'bk/ancestry-path' into jc/branch-desc
- (this branch uses bk/ancestry-path.)
-
---------------------------------------------------
-[Graduated to "master"]
-
-* ph/format-patch-no-color (2011-09-12) 1 commit
-  (merged to 'next' on 2011-09-12 at 20283e8)
- + format-patch: ignore ui.color
-
-A fix for the recent regression.
+* js/check-attr-cached (2011-09-22) 2 commits
+ - t0003: remove extra whitespaces
+ - Teach '--cached' option to check-attr
 
 --------------------------------------------------
 [Stalled]
@@ -193,6 +139,82 @@ also loses the ability to escape glob specials. Perhaps drop?
 --------------------------------------------------
 [Cooking]
 
+* bw/grep-no-index-no-exclude (2011-09-15) 2 commits
+ - grep --no-index: don't use git standard exclusions
+ - grep: do not use --index in the short usage output
+
+* jc/namespace-doc-with-old-asciidoc (2011-09-16) 1 commit
+ - Documentation/gitnamespaces.txt: cater to older asciidoc
+
+* jc/want-commit (2011-09-15) 1 commit
+ - Allow git merge ":/<pattern>"
+
+* jc/ls-remote-short-help (2011-09-16) 1 commit
+ - ls-remote: a lone "-h" is asking for help
+
+* jc/maint-bundle-too-quiet (2011-09-19) 1 commit
+ - Teach progress eye-candy to fetch_refs_from_bundle()
+
+* jk/filter-branch-require-clean-work-tree (2011-09-15) 1 commit
+ - filter-branch: use require_clean_work_tree
+
+* jn/gitweb-highlite-sanitise (2011-09-16) 1 commit
+ - gitweb: Strip non-printable characters from syntax highlighter output
+
+* mh/check-ref-format-3 (2011-09-16) 22 commits
+ - add_ref(): verify that the refname is formatted correctly
+ - resolve_ref(): expand documentation
+ - resolve_ref(): also treat a too-long SHA1 as invalid
+ - resolve_ref(): emit warnings for improperly-formatted references
+ - resolve_ref(): verify that the input refname has the right format
+ - remote: avoid passing NULL to read_ref()
+ - remote: use xstrdup() instead of strdup()
+ - resolve_ref(): do not follow incorrectly-formatted symbolic refs
+ - resolve_ref(): extract a function get_packed_ref()
+ - resolve_ref(): turn buffer into a proper string as soon as possible
+ - resolve_ref(): only follow a symlink that contains a valid, normalized refname
+ - resolve_ref(): use prefixcmp()
+ - resolve_ref(): explicitly fail if a symlink is not readable
+ - Change check_refname_format() to reject unnormalized refnames
+ - Inline function refname_format_print()
+ - Make collapse_slashes() allocate memory for its result
+ - Do not allow ".lock" at the end of any refname component
+ - Refactor check_refname_format()
+ - Change check_ref_format() to take a flags argument
+ - Change bad_ref_char() to return a boolean value
+ - git check-ref-format: add options --allow-onelevel and --refspec-pattern
+ - t1402: add some more tests
+
+* cn/eradicate-working-copy (2011-09-21) 1 commit
+ - Remove 'working copy' from the documentation and C code
+
+* js/bisect-no-checkout (2011-09-21) 1 commit
+  (merged to 'next' on 2011-09-21 at e94ad3e)
+ + bisect: fix exiting when checkout failed in bisect_start()
+
+* mg/maint-doc-sparse-checkout (2011-09-21) 3 commits
+  (merged to 'next' on 2011-09-21 at f316dec)
+ + git-read-tree.txt: correct sparse-checkout and skip-worktree description
+ + git-read-tree.txt: language and typography fixes
+ + unpack-trees: print "Aborting" to stderr
+
+* ms/patch-id-with-overlong-line (2011-09-22) 1 commit
+ - patch-id.c: use strbuf instead of a fixed buffer
+
+* sn/doc-update-index-assume-unchanged (2011-09-21) 1 commit
+  (merged to 'next' on 2011-09-21 at 325e796)
+ + Documentation/git-update-index: refer to 'ls-files'
+
+* jc/request-pull-show-head-4 (2011-09-21) 7 commits
+ - request-pull: use the branch description
+ - request-pull: state what commit to expect
+ - request-pull: modernize style
+ - branch: teach --edit-description option
+ - format-patch: use branch description in cover letter
+ - branch: add read_branch_desc() helper function
+ - Merge branch 'bk/ancestry-path' into jc/branch-desc
+ (this branch uses bk/ancestry-path.)
+
 * jm/mergetool-pathspec (2011-09-16) 2 commits
  - mergetool: no longer need to save standard input
  - mergetool: Use args as pathspec to unmerged files
@@ -235,7 +257,7 @@ is in the upcoming release.
 
 * js/cred-macos-x-keychain-2 (2011-09-14) 1 commit
  - contrib: add a pair of credential helpers for Mac OS X's keychain
- (this branch is tangled with jk/http-auth-keyring.)
+ (this branch uses jk/http-auth-keyring.)
 
 Welcome addition to build our confidence in the jk/http-auth-keyring topic.
 
@@ -549,29 +571,6 @@ feature. Will keep it in 'next' at least for one cycle.
 
 --------------------------------------------------
 [Discarded]
-
-* mh/check-ref-format (2011-09-11) 8 commits
- . Add tools to avoid the use of unnormalized refnames.
- . Do not allow ".lock" at the end of any refname component
- . Add a library function normalize_refname()
- . Change check_ref_format() to take a flags argument
- . fixup asciidoc formatting
- . git check-ref-format: add options --allow-onelevel and --refspec-pattern
- . Change bad_ref_char() to return a boolean value
- . t1402: add some more tests
-
-Rerolled
-
-* jk/pager-with-alias (2011-08-19) 1 commit
- . support pager.* for aliases
-
-* cb/maint-quiet-push (2011-09-05) 4 commits
- . t5541: avoid TAP test miscounting
- . push: old receive-pack does not understand --quiet
- . fix push --quiet via http
- . tests for push --quiet
-
-Dropped for rerolling after 1.7.7 cycle.
 
 * js/cred-macos-x-keychain (2011-09-11) 15 commits
   (merged to 'next' on 2011-09-12 at 8d17f94)
