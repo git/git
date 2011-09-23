@@ -1627,7 +1627,7 @@ static int merge_content(struct merge_options *o,
 		path_renamed_outside_HEAD = !path2 || !strcmp(path, path2);
 		if (!path_renamed_outside_HEAD) {
 			add_cacheinfo(mfi.mode, mfi.sha, path,
-				      0 /*stage*/, 1 /*refresh*/, 0 /*options*/);
+				      0, (!o->call_depth), 0);
 			return mfi.clean;
 		}
 	} else
