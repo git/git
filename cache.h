@@ -819,7 +819,16 @@ static inline int get_sha1_with_context(const char *str, unsigned char *sha1, st
 {
 	return get_sha1_with_context_1(str, sha1, orc, 0, NULL);
 }
+
+/*
+ * Try to read a SHA1 in hexadecimal format from the 40 characters
+ * starting at hex.  Write the 20-byte result to sha1 in binary form.
+ * Return 0 on success.  Reading stops if a NUL is encountered in the
+ * input, so it is safe to pass this function an arbitrary
+ * null-terminated string.
+ */
 extern int get_sha1_hex(const char *hex, unsigned char *sha1);
+
 extern char *sha1_to_hex(const unsigned char *sha1);	/* static buffer result! */
 extern int read_ref(const char *filename, unsigned char *sha1);
 extern const char *resolve_ref(const char *path, unsigned char *sha1, int, int *);
