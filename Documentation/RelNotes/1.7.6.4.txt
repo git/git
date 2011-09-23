@@ -1,0 +1,32 @@
+Git v1.7.6.4 Release Notes
+==========================
+
+Fixes since v1.7.6.3
+--------------------
+
+ * The error reporting logic of "git am" when the command is fed a file
+   whose mail-storage format is unknown was fixed.
+
+ * "git branch --set-upstream @{-1} foo" did not expand @{-1} correctly.
+
+ * "git check-ref-format --print" used to parrot a candidate string that
+   began with a slash (e.g. /refs/heads/master) without stripping it, to make
+   the result a suitably normalized string the caller can append to "$GIT_DIR/".
+
+ * "git clone" failed to clone locally from a ".git" file that itself
+   is not a directory but is a pointer to one.
+
+ * "git clone" from a local repository that borrows from another
+   object store using a relative path in its objects/info/alternates
+   file did not adjust the alternates in the resulting repository.
+
+ * "git describe --dirty" did not refresh the index before checking the
+   state of the working tree files.
+
+ * "git ls-files ../$path" that is run from a subdirectory reported errors
+   incorrectly when there is no such path that matches the given pathspec.
+
+ * "git mergetool" could loop forever prompting when nothing can be read
+   from the standard input.
+
+Also contains minor fixes and documentation updates.
