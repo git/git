@@ -60,6 +60,11 @@
 #       per-repository basis by setting the bash.showUpstream config
 #       variable.
 #
+#		If you would like to see the name of the remote that the current branch
+#   	is tracking, set GIT_PS1_SHOWBRANCHREMOTE to a nonempty value. If the
+#		current branch is tracking a remote branch, the name of that remote is
+#		displayed before the branch name, separated by a colon.
+#
 #
 # To submit patches:
 #
@@ -217,7 +222,6 @@ __git_ps1_show_upstream ()
 			p=" u+${count#*	}-${count%	*}" ;;
 		esac
 	fi
-
 }
 
 
@@ -278,6 +282,8 @@ __git_ps1 ()
 		local u=""
 		local c=""
 		local p=""
+		local remote=""
+		local branch=""
 
 		if [ "true" = "$(git rev-parse --is-inside-git-dir 2>/dev/null)" ]; then
 			if [ "true" = "$(git rev-parse --is-bare-repository 2>/dev/null)" ]; then
@@ -309,10 +315,17 @@ __git_ps1 ()
 			if [ -n "${GIT_PS1_SHOWUPSTREAM-}" ]; then
 				__git_ps1_show_upstream
 			fi
+			branch=${b##refs/heads/}
+            if [ -n "${GIT_PS1_SHOWBRANCHREMOTE-}" ]; then
+                remote=`git config --get branch.$branch.remote`
+                if [[ $remote ]]; then
+                	remote=$remote:
+                fi
+            fi
 		fi
 
 		local f="$w$i$s$u"
-		printf "${1:- (%s)}" "$c${b##refs/heads/}${f:+ $f}$r$p"
+		printf "${1:- (%s)}" "$c$remote$branch${f:+ $f}$r$p"
 	fi
 }
 
