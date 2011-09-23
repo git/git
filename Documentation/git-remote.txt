@@ -191,7 +191,7 @@ $ git remote add linux-nfs git://linux-nfs.org/pub/linux/nfs-2.6.git
 $ git remote
 linux-nfs
 origin
-$ git fetch
+$ git fetch linux-nfs
 * refs/remotes/linux-nfs/master: storing branch 'master' ...
   commit: bf81b46
 $ git branch -r
