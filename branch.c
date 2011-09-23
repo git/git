@@ -210,7 +210,7 @@ void create_branch(const char *head,
 			 start_name);
 
 	if (real_ref && track)
-		setup_tracking(name, real_ref, track);
+		setup_tracking(ref.buf+11, real_ref, track);
 
 	if (!dont_change_ref)
 		if (write_ref_sha1(lock, sha1, msg) < 0)
