@@ -6812,7 +6812,19 @@ sub git_blob {
 	# we can have blame only for text/* mimetype
 	$have_blame &&= ($mimetype =~ m!^text/!);
 
+	my $highlight_js = gitweb_check_feature('syntaxhighlighter_js');
+	if ($highlight_js) {
+		push @stylesheets, $highlight_js->{url} . '/styles/shCore'
+			. $highlight_js->{style} . '.css';
+		push @stylesheets, $highlight_js->{url} . '/styles/shTheme'
+			. $highlight_js->{theme} . '.css';
+	}
+
 	my $highlight = gitweb_check_feature('highlight');
+	if ($highlight_js && $highlight) {
+		die_error(500, 'The highlight and syntaxhighlighter_js are'
+			. 'mutually exclusive');
+	}
 	my $syntax = guess_file_syntax($highlight, $mimetype, $file_name);
 	$fd = run_highlighter($fd, $highlight, $syntax)
 		if $syntax;
@@ -6860,6 +6872,58 @@ sub git_blob {
 		      href(action=>"blob_plain", hash=>$hash,
 		           hash_base=>$hash_base, file_name=>$file_name) .
 		      qq!" />\n!;
+	} elsif ($highlight_js) {
+		my $ext = $file_name;
+		$ext =~ s/.*\.//;
+		print qq!<pre class="brush:!.$ext.qq!">!;
+		while (my $line = <$fd>) {
+			$line =~ s!&!\&#38;!g;
+			$line =~ s!<!\&#60;!g;
+			print $line;
+		}
+		print qq!</pre>!;
+		foreach my $name ('Core', 'Autoloader') {
+			print qq!<script src="!.$highlight_js->{url}
+				.qq!/scripts/sh!.$name
+				.qq!.js" type="text/javascript"></script>!;
+		}
+		print qq!<script type="text/javascript">!;
+		print qq!SyntaxHighlighter.defaults["pad-line-numbers"] = 3;!;
+		print qq!SyntaxHighlighter.defaults["toolbar"] = false;!;
+		# for XHTML compliance
+		print qq!SyntaxHighlighter.config["space"] = '&#160;';!;
+		print qq!SyntaxHighlighter.autoloader(!;
+		my $brush_prefix = $highlight_js->{url} . '/scripts/shBrush';
+		foreach my $language ('applescript AppleScript',
+				'actionscript3 as3 AS3',
+				'bash shell Bash',
+				'clj Clojure',
+				'coldfusion cf ColdFusion',
+				'cpp c Cpp',
+				'c# c-sharp csharp CSharp',
+				'css Css',
+				'delphi pascal Delphi',
+				'diff patch pas Diff',
+				'erl erlang Erlang',
+				'groovy Groovy',
+				'java Java',
+				'jfx javafx JavaFX',
+				'js jscript javascript JScript',
+				'perl pl Perl',
+				'php Php',
+				'text plain Plain',
+				'py python Python',
+				'ruby rails ror rb Ruby',
+				'scala Scala',
+				'scm Scheme',
+				'sql Sql',
+				'vb vbnet Vb',
+				'xml xhtml xslt html Xml') {
+			my $lang = $language;
+			$lang =~ s! (\S+)$! $brush_prefix$1!;
+			print "'".$lang.qq!.js',!;
+		}
+		print qq!''); SyntaxHighlighter.all();</script>!;
 	} else {
 		my $nr;
 		while (my $line = <$fd>) {
