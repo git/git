@@ -4302,7 +4302,8 @@ sub git_print_page_path {
 			print $cgi->a({-href => href(action=>"blob_plain", file_name=>$file_name,
 			                             hash_base=>$hb),
 			              -title => $name}, esc_path($basename));
-			print '&nbsp;&nbsp;&nbsp;&nbsp;
+			if (gitweb_check_feature('highlight')) {
+				print '&nbsp;&nbsp;&nbsp;&nbsp;
 <a id="lineNoToggle" href="#" onclick="toggleLineNumbers();"></a>
 <script>
 function toggleLineNumbers() {
@@ -4323,6 +4324,7 @@ document.getElementsByTagName("head")[0].appendChild(style);
 toggleLineNumbers();
 </script>
 ';
+			}
 		} elsif (defined $type && $type eq 'tree') {
 			print $cgi->a({-href => href(action=>"tree", file_name=>$file_name,
 			                             hash_base=>$hb),
