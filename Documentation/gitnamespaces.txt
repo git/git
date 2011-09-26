@@ -5,6 +5,13 @@ NAME
 ----
 gitnamespaces - Git namespaces
 
+SYNOPSIS
+--------
+[verse]
+GIT_NAMESPACE=<namespace> 'git upload-pack'
+GIT_NAMESPACE=<namespace> 'git receive-pack'
+
+
 DESCRIPTION
 -----------
 
