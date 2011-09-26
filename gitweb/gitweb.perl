@@ -6563,7 +6563,21 @@ sub git_blob {
 			$lang =~ s! (\S+)$! $brush_prefix$1!;
 			print "'".$lang.qq!.js',!;
 		}
-		print qq!''); SyntaxHighlighter.all();</script>!;
+		print qq!''); SyntaxHighlighter.all();!
+			.qq!function scrollTo(number) {!
+			.qq!  var elements = document.getElementsByClassName(number);!
+			.qq!  if (elements.length == 0) setTimeout('scrollTo("' + number + '");', 50);!
+			.qq!  else {!
+			.qq!    window.scroll(0, elements[0].offsetTop);!
+			.qq!    window.scrollTo(0, elements[0].offsetTop);!
+			.qq!    elements[0].style.color = '#ff0000';!
+			.qq!  }!
+			.qq!}!
+			.qq!var lineRegex = /#l(\\d+)\$/;!
+			.qq!var lineNumber = lineRegex.exec(document.URL);!
+			.qq!if (lineNumber)!
+			.qq!  scrollTo('number' + lineNumber[1]);!
+			.qq!</script>!;
 	} else {
 		my $nr;
 		while (my $line = <$fd>) {
