@@ -1904,6 +1904,8 @@ static int apply_one_fragment(struct image *img, struct fragment *frag,
 	int size = frag->size;
 	char *old, *new, *oldlines, *newlines;
 	int new_blank_lines_at_end = 0;
+	int found_new_blank_lines_at_end = 0;
+	int hunk_linenr = frag->linenr;
 	unsigned long leading, trailing;
 	int pos, applied_pos;
 	struct image preimage;
@@ -1996,14 +1998,18 @@ static int apply_one_fragment(struct image *img, struct fragment *frag,
 				error("invalid start of line: '%c'", first);
 			return -1;
 		}
-		if (added_blank_line)
+		if (added_blank_line) {
+			if (!new_blank_lines_at_end)
+				found_new_blank_lines_at_end = hunk_linenr;
 			new_blank_lines_at_end++;
+		}
 		else if (is_blank_context)
 			;
 		else
 			new_blank_lines_at_end = 0;
 		patch += len;
 		size -= len;
+		hunk_linenr++;
 	}
 	if (inaccurate_eof &&
 	    old > oldlines && old[-1] == '\n' &&
@@ -2085,7 +2091,8 @@ static int apply_one_fragment(struct image *img, struct fragment *frag,
 		    preimage.nr + applied_pos == img->nr &&
 		    (ws_rule & WS_BLANK_AT_EOF) &&
 		    ws_error_action != nowarn_ws_error) {
-			record_ws_error(WS_BLANK_AT_EOF, "+", 1, frag->linenr);
+			record_ws_error(WS_BLANK_AT_EOF, "+", 1,
+					found_new_blank_lines_at_end);
 			if (ws_error_action == correct_ws_error) {
 				while (new_blank_lines_at_end--)
 					remove_last_line(&postimage);
