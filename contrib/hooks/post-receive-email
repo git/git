@@ -11,11 +11,11 @@
 # will have put this somewhere standard.  You should make this script
 # executable then link to it in the repository you would like to use it in.
 # For example, on debian the hook is stored in
-# /usr/share/doc/git-core/contrib/hooks/post-receive-email:
+# /usr/share/git-core/contrib/hooks/post-receive-email:
 #
 #  chmod a+x post-receive-email
 #  cd /path/to/your/repository.git
-#  ln -sf /usr/share/doc/git-core/contrib/hooks/post-receive-email hooks/post-receive
+#  ln -sf /usr/share/git-core/contrib/hooks/post-receive-email hooks/post-receive
 #
 # This hook script assumes it is enabled on the central repository of a
 # project, with all users pushing only to it and not between each other.  It
