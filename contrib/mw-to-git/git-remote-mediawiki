@@ -603,13 +603,16 @@ sub mw_import_ref {
 }
 
 sub error_non_fast_forward {
-	# Native git-push would show this after the summary.
-	# We can't ask it to display it cleanly, so print it
-	# ourselves before.
-	print STDERR "To prevent you from losing history, non-fast-forward updates were rejected\n";
-	print STDERR "Merge the remote changes (e.g. 'git pull') before pushing again. See the\n";
-	print STDERR "'Note about fast-forwards' section of 'git push --help' for details.\n";
-
+	my $advice = run_git("config --bool advice.pushNonFastForward");
+	chomp($advice);
+	if ($advice ne "false") {
+		# Native git-push would show this after the summary.
+		# We can't ask it to display it cleanly, so print it
+		# ourselves before.
+		print STDERR "To prevent you from losing history, non-fast-forward updates were rejected\n";
+		print STDERR "Merge the remote changes (e.g. 'git pull') before pushing again. See the\n";
+		print STDERR "'Note about fast-forwards' section of 'git push --help' for details.\n";
+	}
 	print STDOUT "error $_[0] \"non-fast-forward\"\n";
 	return 0;
 }
