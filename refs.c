@@ -319,7 +319,7 @@ static struct ref_list *get_ref_dir(const char *submodule, const char *base,
 		free(ref);
 		closedir(dir);
 	}
-	return sort_ref_list(list);
+	return list;
 }
 
 struct warn_if_dangling_data {
@@ -361,11 +361,13 @@ static struct ref_list *get_loose_refs(const char *submodule)
 	if (submodule) {
 		free_ref_list(submodule_refs.loose);
 		submodule_refs.loose = get_ref_dir(submodule, "refs", NULL);
+		submodule_refs.loose = sort_ref_list(submodule_refs.loose);
 		return submodule_refs.loose;
 	}
 
 	if (!cached_refs.did_loose) {
 		cached_refs.loose = get_ref_dir(NULL, "refs", NULL);
+		cached_refs.loose = sort_ref_list(cached_refs.loose);
 		cached_refs.did_loose = 1;
 	}
 	return cached_refs.loose;
