@@ -646,12 +646,14 @@ static int grep_object(struct grep_opt *opt, const char **paths,
 	die("unable to grep from object of type %s", typename(obj->type));
 }
 
-static int grep_directory(struct grep_opt *opt, const char **paths)
+static int grep_directory(struct grep_opt *opt, const char **paths, int exc_std)
 {
 	struct dir_struct dir;
 	int i, hit = 0;
 
 	memset(&dir, 0, sizeof(dir));
+	if (exc_std)
+		setup_standard_excludes(&dir);
 
 	fill_directory(&dir, paths);
 	for (i = 0; i < dir.nr; i++) {
@@ -749,7 +751,7 @@ static int help_callback(const struct option *opt, const char *arg, int unset)
 int cmd_grep(int argc, const char **argv, const char *prefix)
 {
 	int hit = 0;
-	int cached = 0;
+	int cached = 0, untracked = 0, opt_exclude = -1;
 	int seen_dashdash = 0;
 	int external_grep_allowed__ignored;
 	struct grep_opt opt;
@@ -764,6 +766,10 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		{ OPTION_BOOLEAN, 0, "index", &use_index, NULL,
 			"finds in contents not managed by git",
 			PARSE_OPT_NOARG | PARSE_OPT_NEGHELP },
+		OPT_BOOLEAN(0, "untracked", &untracked,
+			"search in both tracked and untracked files"),
+		OPT_SET_INT(0, "exclude-standard", &opt_exclude,
+			    "search also in ignored files", 1),
 		OPT_GROUP(""),
 		OPT_BOOLEAN('v', "invert-match", &opt.invert,
 			"show non-matching lines"),
@@ -950,17 +956,22 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		paths[1] = NULL;
 	}
 
-	if (!use_index) {
+	if (!use_index && (untracked || cached))
+		die("--cached or --untracked cannot be used with --no-index.");
+
+	if (!use_index || untracked) {
 		int hit;
-		if (cached)
-			die("--cached cannot be used with --no-index.");
+		int use_exclude = (opt_exclude < 0) ? use_index : !!opt_exclude;
 		if (list.nr)
-			die("--no-index cannot be used with revs.");
-		hit = grep_directory(&opt, paths);
+			die("--no-index or --untracked cannot be used with revs.");
+		hit = grep_directory(&opt, paths, use_exclude);
 		if (use_threads)
 			hit |= wait_all();
 		return !hit;
 	}
+
+	if (0 <= opt_exclude)
+		die("--exclude or --no-exclude cannot be used for tracked contents.");
 
 	if (!list.nr) {
 		int hit;

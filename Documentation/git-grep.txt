@@ -9,7 +9,7 @@ git-grep - Print lines matching a pattern
 SYNOPSIS
 --------
 [verse]
-'git grep' [--cached]
+'git grep' [--cached] [--untracked] [--exclude-standard]
 	   [-a | --text] [-I] [-i | --ignore-case] [-w | --word-regexp]
 	   [-v | --invert-match] [-h|-H] [--full-name]
 	   [-E | --extended-regexp] [-G | --basic-regexp]
@@ -35,6 +35,19 @@ OPTIONS
 --cached::
 	Instead of searching in the working tree files, check
 	the blobs registered in the index file.
+
+--untracked::
+	In addition to searching in the tracked files in the working
+	tree, search also in untracked files.
+
+--no-exclude-standard::
+	Also search in ignored files by not honoring the `.gitignore`
+	mechanism. Only useful with `--untracked`.
+
+--exclude-standard::
+	Do not pay attention to ignored files specified via the	`.gitignore`
+	mechanism.  Only useful when searching files in the current directory
+	with `--no-index`.
 
 -a::
 --text::
