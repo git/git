@@ -287,6 +287,9 @@ sub get_last_local_revision {
 	return $lastrevision_number;
 }
 
+# Remember the timestamp corresponding to a revision id.
+my %basetimestamps;
+
 sub get_last_remote_revision {
 	mw_connect_maybe();
 
@@ -300,13 +303,15 @@ sub get_last_remote_revision {
 		my $query = {
 			action => 'query',
 			prop => 'revisions',
-			rvprop => 'ids',
+			rvprop => 'ids|timestamp',
 			pageids => $id,
 		};
 
 		my $result = $mediawiki->api($query);
 
 		my $lastrev = pop(@{$result->{query}->{pages}->{$id}->{revisions}});
+
+		$basetimestamps{$lastrev->{revid}} = $lastrev->{timestamp};
 
 		$max_rev_num = ($lastrev->{revid} > $max_rev_num ? $lastrev->{revid} : $max_rev_num);
 	}
@@ -649,18 +654,32 @@ sub mw_push_file {
 			action => 'edit',
 			summary => $summary,
 			title => $title,
+			basetimestamp => $basetimestamps{$newrevid},
 			text => mediawiki_clean($file_content, $page_created),
 				  }, {
 					  skip_encoding => 1 # Helps with names with accentuated characters
-				  }) || die 'Fatal: Error ' .
-				  $mediawiki->{error}->{code} .
-				  ' from mediwiki: ' . $mediawiki->{error}->{details};
+				  });
+		if (!$result) {
+			if ($mediawiki->{error}->{code} == 3) {
+				# edit conflicts, considered as non-fast-forward
+				print STDERR 'Warning: Error ' .
+				    $mediawiki->{error}->{code} .
+				    ' from mediwiki: ' . $mediawiki->{error}->{details} .
+				    ".\n";
+				return ($newrevid, "non-fast-forward");
+			} else {
+				# Other errors. Shouldn't happen => just die()
+				die 'Fatal: Error ' .
+				    $mediawiki->{error}->{code} .
+				    ' from mediwiki: ' . $mediawiki->{error}->{details};
+			}
+		}
 		$newrevid = $result->{edit}->{newrevid};
 		print STDERR "Pushed file: $new_sha1 - $title\n";
 	} else {
 		print STDERR "$complete_file_name not a mediawiki file (Not pushable on this version of git-remote-mediawiki).\n"
 	}
-	return $newrevid;
+	return ($newrevid, "ok");
 }
 
 sub mw_push {
@@ -767,13 +786,25 @@ sub mw_push_revision {
 		chomp($commit_msg);
 		# Push every blob
 		while (@diff_info_list) {
+			my $status;
 			# git diff-tree -z gives an output like
 			# <metadata>\0<filename1>\0
 			# <metadata>\0<filename2>\0
 			# and we've split on \0.
 			my $info = shift(@diff_info_list);
 			my $file = shift(@diff_info_list);
-			$mw_revision = mw_push_file($info, $file, $commit_msg, $mw_revision);
+			($mw_revision, $status) = mw_push_file($info, $file, $commit_msg, $mw_revision);
+			if ($status eq "non-fast-forward") {
+				# we may already have sent part of the
+				# commit to MediaWiki, but it's too
+				# late to cancel it. Stop the push in
+				# the middle, but still give an
+				# accurate error message.
+				return error_non_fast_forward($remote);
+			}
+			if ($status ne "ok") {
+				die("Unknown error from mw_push_file()");
+			}
 		}
 		unless ($dumb_push) {
 			run_git("notes --ref=$remotename/mediawiki add -m \"mediawiki_revision: $mw_revision\" $sha1_commit");
