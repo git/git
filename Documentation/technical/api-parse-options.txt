@@ -135,9 +135,14 @@ There are some macros to easily define options:
 	describes the group or an empty string.
 	Start the description with an upper-case letter.
 
-`OPT_BOOLEAN(short, long, &int_var, description)`::
-	Introduce a boolean option.
-	`int_var` is incremented on each use.
+`OPT_BOOL(short, long, &int_var, description)`::
+	Introduce a boolean option. `int_var` is set to one with
+	`--option` and set to zero with `--no-option`.
+
+`OPT_COUNTUP(short, long, &int_var, description)`::
+	Introduce a count-up option.
+	`int_var` is incremented on each use of `--option`, and
+	reset to zero with `--no-option`.
 
 `OPT_BIT(short, long, &int_var, description, mask)`::
 	Introduce a boolean option.
@@ -148,8 +153,9 @@ There are some macros to easily define options:
 	If used, `int_var` is bitwise-anded with the inverted `mask`.
 
 `OPT_SET_INT(short, long, &int_var, description, integer)`::
-	Introduce a boolean option.
-	If used, set `int_var` to `integer`.
+	Introduce an integer option.
+	`int_var` is set to `integer` with `--option`, and
+	reset to zero with `--no-option`.
 
 `OPT_SET_PTR(short, long, &ptr_var, description, ptr)`::
 	Introduce a boolean option.

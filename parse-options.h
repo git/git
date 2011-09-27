@@ -10,7 +10,7 @@ enum parse_opt_type {
 	/* options with no arguments */
 	OPTION_BIT,
 	OPTION_NEGBIT,
-	OPTION_BOOLEAN, /* _INCR would have been a better name */
+	OPTION_COUNTUP,
 	OPTION_SET_INT,
 	OPTION_SET_PTR,
 	/* options with arguments (usually) */
@@ -20,6 +20,9 @@ enum parse_opt_type {
 	OPTION_LOWLEVEL_CALLBACK,
 	OPTION_FILENAME
 };
+
+/* Deprecated synonym */
+#define OPTION_BOOLEAN OPTION_COUNTUP
 
 enum parse_opt_flags {
 	PARSE_OPT_KEEP_DASHDASH = 1,
@@ -122,10 +125,11 @@ struct option {
 				      PARSE_OPT_NOARG, NULL, (b) }
 #define OPT_NEGBIT(s, l, v, h, b)   { OPTION_NEGBIT, (s), (l), (v), NULL, \
 				      (h), PARSE_OPT_NOARG, NULL, (b) }
-#define OPT_BOOLEAN(s, l, v, h)     { OPTION_BOOLEAN, (s), (l), (v), NULL, \
+#define OPT_COUNTUP(s, l, v, h)     { OPTION_COUNTUP, (s), (l), (v), NULL, \
 				      (h), PARSE_OPT_NOARG }
 #define OPT_SET_INT(s, l, v, h, i)  { OPTION_SET_INT, (s), (l), (v), NULL, \
 				      (h), PARSE_OPT_NOARG, NULL, (i) }
+#define OPT_BOOL(s, l, v, h)        OPT_SET_INT(s, l, v, h, 1)
 #define OPT_SET_PTR(s, l, v, h, p)  { OPTION_SET_PTR, (s), (l), (v), NULL, \
 				      (h), PARSE_OPT_NOARG, NULL, (p) }
 #define OPT_INTEGER(s, l, v, h)     { OPTION_INTEGER, (s), (l), (v), "n", (h) }
@@ -149,6 +153,8 @@ struct option {
 	{ OPTION_CALLBACK, (s), (l), (v), "when", (h), PARSE_OPT_OPTARG, \
 		parse_opt_color_flag_cb, (intptr_t)"always" }
 
+/* Deprecated synonym */
+#define OPT_BOOLEAN OPT_COUNTUP
 
 /* parse_options() will filter out the processed options and leave the
  * non-option arguments in argv[].
