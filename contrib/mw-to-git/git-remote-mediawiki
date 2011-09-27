@@ -656,7 +656,7 @@ sub mw_push_file {
 				  $mediawiki->{error}->{code} .
 				  ' from mediwiki: ' . $mediawiki->{error}->{details};
 		$newrevid = $result->{edit}->{newrevid};
-		print STDERR "Pushed file : $new_sha1 - $title\n";
+		print STDERR "Pushed file: $new_sha1 - $title\n";
 	} else {
 		print STDERR "$complete_file_name not a mediawiki file (Not pushable on this version of git-remote-mediawiki).\n"
 	}
@@ -666,7 +666,6 @@ sub mw_push_file {
 sub mw_push {
 	# multiple push statements can follow each other
 	my @refsspecs = (shift, get_more_refs("push"));
-	my %status;
 	my $pushed;
 	for my $refspec (@refsspecs) {
 		my ($force, $local, $remote) = $refspec =~ /^(\+)?([^:]*):([^:]*)$/
