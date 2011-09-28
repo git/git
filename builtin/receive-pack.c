@@ -147,7 +147,8 @@ static void write_head_info(void)
 struct command {
 	struct command *next;
 	const char *error_string;
-	unsigned int skip_update;
+	unsigned int skip_update:1,
+		     did_not_exist:1;
 	unsigned char old_sha1[20];
 	unsigned char new_sha1[20];
 	char ref_name[FLEX_ARRAY]; /* more */
@@ -215,7 +216,7 @@ static int run_receive_hook(struct command *commands, const char *hook_name)
 	int have_input = 0, code;
 
 	for (cmd = commands; !have_input && cmd; cmd = cmd->next) {
-		if (!cmd->error_string)
+		if (!cmd->error_string && !cmd->did_not_exist)
 			have_input = 1;
 	}
 
@@ -248,7 +249,7 @@ static int run_receive_hook(struct command *commands, const char *hook_name)
 	}
 
 	for (cmd = commands; cmd; cmd = cmd->next) {
-		if (!cmd->error_string) {
+		if (!cmd->error_string && !cmd->did_not_exist) {
 			size_t n = snprintf(buf, sizeof(buf), "%s %s %s\n",
 				sha1_to_hex(cmd->old_sha1),
 				sha1_to_hex(cmd->new_sha1),
@@ -445,8 +446,13 @@ static const char *update(struct command *cmd)
 
 	if (is_null_sha1(new_sha1)) {
 		if (!parse_object(old_sha1)) {
-			rp_warning("Allowing deletion of corrupt ref.");
 			old_sha1 = NULL;
+			if (ref_exists(name)) {
+				rp_warning("Allowing deletion of corrupt ref.");
+			} else {
+				rp_warning("Deleting a non-existent ref.");
+				cmd->did_not_exist = 1;
+			}
 		}
 		if (delete_ref(namespaced_name, old_sha1, 0)) {
 			rp_error("failed to delete %s", name);
@@ -477,7 +483,7 @@ static void run_update_post_hook(struct command *commands)
 	struct child_process proc;
 
 	for (argc = 0, cmd = commands; cmd; cmd = cmd->next) {
-		if (cmd->error_string)
+		if (cmd->error_string || cmd->did_not_exist)
 			continue;
 		argc++;
 	}
@@ -488,7 +494,7 @@ static void run_update_post_hook(struct command *commands)
 
 	for (argc = 1, cmd = commands; cmd; cmd = cmd->next) {
 		char *p;
-		if (cmd->error_string)
+		if (cmd->error_string || cmd->did_not_exist)
 			continue;
 		p = xmalloc(strlen(cmd->ref_name) + 1);
 		strcpy(p, cmd->ref_name);
