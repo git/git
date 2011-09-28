@@ -204,6 +204,11 @@ There are some macros to easily define options:
 	"auto", set `int_var` to 1 if stdout is a tty or a pager,
 	0 otherwise.
 
+`OPT_NOOP_NOARG(short, long)`::
+	Introduce an option that has no effect and takes no arguments.
+	Use it to hide deprecated options that are still to be recognized
+	and ignored silently.
+
 
 The last element of the array must be `OPT_END()`.
 

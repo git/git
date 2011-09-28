@@ -153,6 +153,11 @@ struct option {
 	{ OPTION_CALLBACK, (s), (l), (v), "when", (h), PARSE_OPT_OPTARG, \
 		parse_opt_color_flag_cb, (intptr_t)"always" }
 
+#define OPT_NOOP_NOARG(s, l) \
+	{ OPTION_CALLBACK, (s), (l), NULL, NULL, \
+	  "no-op (backward compatibility)", \
+	  PARSE_OPT_HIDDEN | PARSE_OPT_NOARG, parse_opt_noop_cb }
+
 /* Deprecated synonym */
 #define OPT_BOOLEAN OPT_COUNTUP
 
@@ -216,6 +221,7 @@ extern int parse_opt_verbosity_cb(const struct option *, const char *, int);
 extern int parse_opt_with_commit(const struct option *, const char *, int);
 extern int parse_opt_tertiary(const struct option *, const char *, int);
 extern int parse_opt_string_list(const struct option *, const char *, int);
+extern int parse_opt_noop_cb(const struct option *, const char *, int);
 
 #define OPT__VERBOSE(var, h)  OPT_BOOLEAN('v', "verbose", (var), (h))
 #define OPT__QUIET(var, h)    OPT_BOOLEAN('q', "quiet",   (var), (h))

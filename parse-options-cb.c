@@ -123,3 +123,8 @@ int parse_opt_string_list(const struct option *opt, const char *arg, int unset)
 	string_list_append(v, xstrdup(arg));
 	return 0;
 }
+
+int parse_opt_noop_cb(const struct option *opt, const char *arg, int unset)
+{
+	return 0;
+}
