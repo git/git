@@ -76,8 +76,10 @@ my $wiki_login = run_git("config --get remote.". $remotename .".mwLogin");
 # inside a remote helper, so our stdin is connect to git, not to a
 # terminal.
 my $wiki_passwd = run_git("config --get remote.". $remotename .".mwPassword");
+my $wiki_domain = run_git("config --get remote.". $remotename .".mwDomain");
 chomp($wiki_login);
 chomp($wiki_passwd);
+chomp($wiki_domain);
 
 # Import only last revisions (both for clone and fetch)
 my $shallow_import = run_git("config --get --bool remote.". $remotename .".shallow");
@@ -158,6 +160,7 @@ sub mw_connect_maybe {
 		if (!$mediawiki->login({
 			lgname => $wiki_login,
 			lgpassword => $wiki_passwd,
+			lgdomain => $wiki_domain,
 		})) {
 			print STDERR "Failed to log in mediawiki user \"$wiki_login\" on $url\n";
 			print STDERR "(error " .
