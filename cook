@@ -10,7 +10,8 @@ my %reverts = ('next' => {
 %reverts = ();
 
 sub phrase_these {
-	my (@u) = sort @_;
+	my %uniq = ();
+	my (@u) = grep { $uniq{$_}++ == 0 } sort @_;
 	my @d = ();
 	for (my $i = 0; $i < @u; $i++) {
 		push @d, $u[$i];
@@ -437,6 +438,7 @@ sub write_cooking {
 
 my $graduated = 'Graduated to "master"';
 my $new_topics = 'New Topics';
+my $discarded = 'Discarded';
 my $old_new_topics = 'Old New Topics';
 
 sub update_issue {
@@ -547,6 +549,7 @@ sub merge_cooking {
 			}
 			next;
 		}
+		# Annotate if the contents of the topic changed
 		my $n = $current->{$topic}{'desc'};
 		my $o = $td->{$topic}{'desc'};
 		if ($n ne $o) {
@@ -558,6 +561,7 @@ sub merge_cooking {
 		next if ($topic eq $blurb);
 		next if (!$incremental &&
 			 grep { $topic eq $_ } @{$sd->{$graduated}});
+		next if (grep { $topic eq $_ } @{$sd->{$discarded}});
 		if (!exists $current->{$topic}) {
 			push @gone_topic, $topic;
 		}
@@ -627,9 +631,18 @@ sub wildo {
 		}
 		next if (/^ /);
 		if (defined $topic &&
-		    /Will (?:\S+ )?(merge|drop|discard|cook)[. ]/i) {
+		    /Will (?:\S+ ){0,2}(merge|drop|discard|cook)[. ]/i) {
 			wildo_queue(\%what, $_, $topic);
 			$topic = undef;
+		}
+		if (defined $topic &&
+		    /^Not urgent;/) {
+			wildo_queue(\%what, $_, $topic);
+			$topic = undef;
+		}
+		if (defined $topic &&
+		    /Originally merged to 'next' on ([-0-9]+)/) {
+			$topic->[1] = $1;
 		}
 	}
 	if (defined $topic) {
