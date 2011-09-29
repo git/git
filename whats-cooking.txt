@@ -1,17 +1,13 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Sep 2011, #07; Fri, 23)
-X-master-at: 85e9c7e1d42849c5c3084a9da748608468310c0e
-X-next-at: 6bcf0e2b7ff196fa238fc8d8e9e9e116e0a55e25
+Subject: What's cooking in git.git (Sep 2011, #08; Wed, 28)
+X-master-at: 8d714b11df2b65e5f4272c1616e561930010be90
+X-next-at: 65ce6c2cbd3bace125ad01daf7ec705f2a84e58e
 
-What's cooking in git.git (Sep 2011, #07; Fri, 23)
+What's cooking in git.git (Sep 2011, #08; Wed, 28)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' while commits prefixed with '+' are in 'next'.
-
-We are at 1.7.7-rc3 as of today; I had to make a quick fix for a recent
-regression directly on master, and I would like to cook it for a few days,
-so the final has to wait til mid next week.
 
 Here are the repositories that have my integration branches:
 
@@ -33,35 +29,75 @@ Until kernel.org comes back to life, it might be a good idea to
 tentatively have the following in your $HOME/.gitconfig:
 
     [url "http://code.google.com/p/git-core"]
-      insteadOf = git://git.kernel.org/pub/scm/git/git.git
+	insteadOf = git://git.kernel.org/pub/scm/git/git.git
 
 --------------------------------------------------
 [New Topics]
 
-* jc/maint-diffstat-numstat-context (2011-09-22) 1 commit
- - diff: teach --stat/--numstat to honor -U$num
+* jc/apply-blank-at-eof-fix (2011-09-26) 1 commit
+ - apply --whitespace=error: correctly report new blank lines at end
 
-* nd/maint-sparse-errors (2011-09-22) 2 commits
- - Add explanation why we do not allow to sparse checkout to empty working tree
- - sparse checkout: show error messages when worktree shaping fails
+* nd/sparse-doc (2011-09-26) 1 commit
+ - git-read-tree.txt: update sparse checkout examples
 
-* rs/diff-cleanup-records-fix (2011-09-22) 1 commit
- - Revert a part of rc/diff-cleanup-records
+* jp/get-ref-dir-unsorted (2011-09-26) 1 commit
+ - Don't sort ref_list too early
 
-It seems that the differences (the reverse of) this patch introduces are
-of harmless kind but not very well explained in the original series. We
-would need to try harder to write our log messages better next time.
+* jc/grep-untracked-exclude (2011-09-28) 2 commits
+ - Merge branch 'jc/maint-grep-untracked-exclude' into jc/grep-untracked-exclude
+ - Merge branch 'jc/maint-grep-untracked-exclude' into jc/grep-untracked-exclude
+ (this branch uses bw/grep-no-index-no-exclude and jc/maint-grep-untracked-exclude.)
 
-* di/fast-import-empty-tag-note-fix (2011-09-22) 2 commits
- - fast-import: don't allow to note on empty branch
- - fast-import: don't allow to tag empty branch
+* jc/maint-grep-untracked-exclude (2011-09-28) 3 commits
+ - grep: rename --exclude to --exclude-standard
+ - grep: --untracked and --exclude tests
+ - grep: teach --untracked and --exclude options
+ (this branch is used by jc/grep-untracked-exclude; uses bw/grep-no-index-no-exclude.)
 
-* js/check-attr-cached (2011-09-22) 2 commits
- - t0003: remove extra whitespaces
- - Teach '--cached' option to check-attr
+* jc/parse-options-boolean (2011-09-28) 5 commits
+ - apply: use OPT_NOOP_NOARG
+ - revert: use OPT_NOOP_NOARG
+ - parseopt: add OPT_NOOP_NOARG
+ - archive.c: use OPT_BOOL()
+ - parse-options: deprecate OPT_BOOLEAN
+
+* mh/maint-notes-merge-pathbuf-fix (2011-09-27) 1 commit
+ - notes_merge_commit(): do not pass temporary buffer to other function
+
+* ph/push-to-delete-nothing (2011-09-28) 2 commits
+ - fixup
+ - receive-pack: don't pass non-existent refs to post-{receive,update} hooks in push deletions
+
+* ps/gitweb-js-with-lineno (2011-09-27) 1 commit
+ - gitweb: Fix links to lines in blobs when javascript-actions are enabled
+
+* zj/send-email-authen-sasl (2011-09-28) 1 commit
+ - send-email: auth plain/login fix
+
+--------------------------------------------------
+[Graduated to "master"]
+
+* jc/namespace-doc-with-old-asciidoc (2011-09-16) 1 commit
+ + Documentation/gitnamespaces.txt: cater to older asciidoc
+
+It turns out that the version of AsciiDoc that has troubles with the
+mark-up this patch works around is not quite old enough to be dismissed
+as irrelevant.
 
 --------------------------------------------------
 [Stalled]
+
+* hv/submodule-merge-search (2011-08-26) 5 commits
+ - submodule: Search for merges only at end of recursive merge
+ - allow multiple calls to submodule merge search for the same path
+ - submodule: Demonstrate known breakage during recursive merge
+ - push: Don't push a repository with unpushed submodules
+  (merged to 'next' on 2011-08-24 at 398e764)
+ + push: teach --recurse-submodules the on-demand option
+ (this branch is tangled with fg/submodule-auto-push.)
+
+The second from the bottom one needs to be replaced with a properly
+written commit log message.
 
 * jc/signed-push (2011-09-12) 7 commits
  - push -s: support pre-receive-signature hook
@@ -84,6 +120,8 @@ This was the v2 that updated notes tree on the receiving end.
 
 This is the third edition, that moves the preparation of the notes tree to
 the sending end.
+
+I expect that both of these topics will be discarded.
 
 * jk/add-i-hunk-filter (2011-07-27) 5 commits
   (merged to 'next' on 2011-08-11 at 8ff9a56)
@@ -139,27 +177,59 @@ also loses the ability to escape glob specials. Perhaps drop?
 --------------------------------------------------
 [Cooking]
 
-* bw/grep-no-index-no-exclude (2011-09-15) 2 commits
- - grep --no-index: don't use git standard exclusions
- - grep: do not use --index in the short usage output
+* jc/maint-diffstat-numstat-context (2011-09-22) 1 commit
+  (merged to 'next' on 2011-09-26 at 12539ab)
+ + diff: teach --stat/--numstat to honor -U$num
 
-* jc/namespace-doc-with-old-asciidoc (2011-09-16) 1 commit
- - Documentation/gitnamespaces.txt: cater to older asciidoc
+"diff" is allowed to match the common lines differently depending on how
+many context lines it is showing, so running --(num)stat with 0 lines of
+context internally gives a result that may be surprising to some people.
+
+* nd/maint-sparse-errors (2011-09-22) 2 commits
+  (merged to 'next' on 2011-09-26 at cdcdec5)
+ + Add explanation why we do not allow to sparse checkout to empty working tree
+ + sparse checkout: show error messages when worktree shaping fails
+
+* rs/diff-cleanup-records-fix (2011-09-26) 1 commit
+  (merged to 'next' on 2011-09-27 at 3bd75d8)
+ + Revert removal of multi-match discard heuristic in 27af01
+
+* di/fast-import-empty-tag-note-fix (2011-09-22) 2 commits
+ - fast-import: don't allow to note on empty branch
+ - fast-import: don't allow to tag empty branch
+
+Looked reasonable.
+
+* js/check-attr-cached (2011-09-22) 2 commits
+  (merged to 'next' on 2011-09-27 at 74d7b66)
+ + t0003: remove extra whitespaces
+ + Teach '--cached' option to check-attr
+
+* bw/grep-no-index-no-exclude (2011-09-15) 2 commits
+  (merged to 'next' on 2011-09-26 at 776f13b)
+ + grep --no-index: don't use git standard exclusions
+ + grep: do not use --index in the short usage output
+ (this branch is used by jc/grep-untracked-exclude and jc/maint-grep-untracked-exclude.)
 
 * jc/want-commit (2011-09-15) 1 commit
- - Allow git merge ":/<pattern>"
+  (merged to 'next' on 2011-09-26 at 5841512)
+ + Allow git merge ":/<pattern>"
 
 * jc/ls-remote-short-help (2011-09-16) 1 commit
- - ls-remote: a lone "-h" is asking for help
+  (merged to 'next' on 2011-09-26 at e24a27a)
+ + ls-remote: a lone "-h" is asking for help
 
 * jc/maint-bundle-too-quiet (2011-09-19) 1 commit
- - Teach progress eye-candy to fetch_refs_from_bundle()
+  (merged to 'next' on 2011-09-26 at ba140d4)
+ + Teach progress eye-candy to fetch_refs_from_bundle()
 
 * jk/filter-branch-require-clean-work-tree (2011-09-15) 1 commit
- - filter-branch: use require_clean_work_tree
+  (merged to 'next' on 2011-09-26 at 206a74a)
+ + filter-branch: use require_clean_work_tree
 
 * jn/gitweb-highlite-sanitise (2011-09-16) 1 commit
- - gitweb: Strip non-printable characters from syntax highlighter output
+  (merged to 'next' on 2011-09-26 at c79390a)
+ + gitweb: Strip non-printable characters from syntax highlighter output
 
 * mh/check-ref-format-3 (2011-09-16) 22 commits
  - add_ref(): verify that the refname is formatted correctly
@@ -186,7 +256,8 @@ also loses the ability to escape glob specials. Perhaps drop?
  - t1402: add some more tests
 
 * cn/eradicate-working-copy (2011-09-21) 1 commit
- - Remove 'working copy' from the documentation and C code
+  (merged to 'next' on 2011-09-26 at 2683d36)
+ + Remove 'working copy' from the documentation and C code
 
 * js/bisect-no-checkout (2011-09-21) 1 commit
   (merged to 'next' on 2011-09-21 at e94ad3e)
@@ -199,7 +270,8 @@ also loses the ability to escape glob specials. Perhaps drop?
  + unpack-trees: print "Aborting" to stderr
 
 * ms/patch-id-with-overlong-line (2011-09-22) 1 commit
- - patch-id.c: use strbuf instead of a fixed buffer
+  (merged to 'next' on 2011-09-26 at a33d0b2)
+ + patch-id.c: use strbuf instead of a fixed buffer
 
 * sn/doc-update-index-assume-unchanged (2011-09-21) 1 commit
   (merged to 'next' on 2011-09-21 at 325e796)
@@ -215,15 +287,17 @@ also loses the ability to escape glob specials. Perhaps drop?
  - Merge branch 'bk/ancestry-path' into jc/branch-desc
  (this branch uses bk/ancestry-path.)
 
-* jm/mergetool-pathspec (2011-09-16) 2 commits
- - mergetool: no longer need to save standard input
- - mergetool: Use args as pathspec to unmerged files
+* jm/mergetool-pathspec (2011-09-26) 2 commits
+  (merged to 'next' on 2011-09-26 at f699566)
+ + mergetool: no longer need to save standard input
+ + mergetool: Use args as pathspec to unmerged files
 
 * nd/maint-autofix-tag-in-head (2011-09-18) 4 commits
- - Accept tags in HEAD or MERGE_HEAD
- - merge: remove global variable head[]
- - merge: use return value of resolve_ref() to determine if HEAD is invalid
- - merge: keep stash[] a local variable
+  (merged to 'next' on 2011-09-27 at dc8e2e3)
+ + Accept tags in HEAD or MERGE_HEAD
+ + merge: remove global variable head[]
+ + merge: use return value of resolve_ref() to determine if HEAD is invalid
+ + merge: keep stash[] a local variable
 
 * jk/maint-fetch-submodule-check-fix (2011-09-12) 1 commit
   (merged to 'next' on 2011-09-12 at 3c73b8c)
@@ -234,11 +308,12 @@ This probably can wait, as long as the other half of the regression fix
 is in the upcoming release.
 
 * bc/attr-ignore-case (2011-09-14) 5 commits
- - attr: read core.attributesfile from git_default_core_config
- - attr.c: respect core.ignorecase when matching attribute patterns
- - builtin/mv.c: plug miniscule memory leak
- - cleanup: use internal memory allocation wrapper functions everywhere
- - attr.c: avoid inappropriate access to strbuf "buf" member
+  (merged to 'next' on 2011-09-26 at 1e0814c)
+ + attr: read core.attributesfile from git_default_core_config
+ + attr.c: respect core.ignorecase when matching attribute patterns
+ + builtin/mv.c: plug miniscule memory leak
+ + cleanup: use internal memory allocation wrapper functions everywhere
+ + attr.c: avoid inappropriate access to strbuf "buf" member
 
 * jc/maint-fsck-fwrite-size-check (2011-09-11) 1 commit
   (merged to 'next' on 2011-09-16 at 2258f11)
@@ -256,13 +331,15 @@ is in the upcoming release.
  (this branch uses jk/maint-fetch-submodule-check-fix.)
 
 * js/cred-macos-x-keychain-2 (2011-09-14) 1 commit
- - contrib: add a pair of credential helpers for Mac OS X's keychain
+  (merged to 'next' on 2011-09-26 at 4f289a4)
+ + contrib: add a pair of credential helpers for Mac OS X's keychain
  (this branch uses jk/http-auth-keyring.)
 
 Welcome addition to build our confidence in the jk/http-auth-keyring topic.
 
 * rj/maint-t9159-svn-rev-notation (2011-09-21) 1 commit
- - t9159-*.sh: skip for mergeinfo test for svn <= 1.4
+  (merged to 'next' on 2011-09-26 at 525a567)
+ + t9159-*.sh: skip for mergeinfo test for svn <= 1.4
 
 * tr/doc-note-rewrite (2011-09-13) 1 commit
   (merged to 'next' on 2011-09-16 at 5fe813a)
@@ -313,7 +390,6 @@ we have essentially forked from them at their last GPLv2 versions...
   (merged to 'next' on 2011-09-11 at 2acb0af)
  + vcs-svn: remove unused functions and make some static
  + make-static: master
- (this branch is tangled with jc/reflog-walk-use-only-nsha1.)
 
 With a few fix-ups; probably needs to be ejected after 1.7.7 happens.
 
@@ -322,10 +398,11 @@ With a few fix-ups; probably needs to be ejected after 1.7.7 happens.
  + Makefile: Make dependency directory creation less noisy
 
 * mz/remote-rename (2011-09-11) 4 commits
- - remote: only update remote-tracking branch if updating refspec
- - remote rename: warn when refspec was not updated
- - remote: "rename o foo" should not rename ref "origin/bar"
- - remote: write correct fetch spec when renaming remote 'remote'
+  (merged to 'next' on 2011-09-26 at 5e64f68)
+ + remote: only update remote-tracking branch if updating refspec
+ + remote rename: warn when refspec was not updated
+ + remote: "rename o foo" should not rename ref "origin/bar"
+ + remote: write correct fetch spec when renaming remote 'remote'
 
 * cb/common-prefix-unification (2011-09-12) 3 commits
   (merged to 'next' on 2011-09-14 at 24f571f)
@@ -406,19 +483,13 @@ objects contained in the packstream, and this adds such a check.
  + rebase -i: notice and warn if "exec $cmd" modifies the index or the working tree
  + rebase -i: clean error message for --continue after failed exec
 
-* hv/submodule-merge-search (2011-08-26) 5 commits
- - submodule: Search for merges only at end of recursive merge
- - allow multiple calls to submodule merge search for the same path
- - submodule: Demonstrate known breakage during recursive merge
- - push: Don't push a repository with unpushed submodules
-  (merged to 'next' on 2011-08-24 at 398e764)
- + push: teach --recurse-submodules the on-demand option
- (this branch is tangled with fg/submodule-auto-push.)
-
-The second from the bottom one needs to be replaced with a properly
-written commit log message.
-
-* mm/mediawiki-as-a-remote (2011-09-01) 2 commits
+* mm/mediawiki-as-a-remote (2011-09-28) 6 commits
+  (merged to 'next' on 2011-09-28 at a1c9ae5)
+ + git-remote-mediawiki: allow a domain to be set for authentication
+  (merged to 'next' on 2011-09-27 at 7ce8254)
+ + git-remote-mediawiki: obey advice.pushNonFastForward
+ + git-remote-mediawiki: set 'basetimestamp' to let the wiki handle conflicts
+ + git-remote-mediawiki: trivial fixes
   (merged to 'next' on 2011-09-12 at 163c6a5)
  + git-remote-mediawiki: allow push to set MediaWiki metadata
  + Add a remote helper to interact with mediawiki (fetch & push)
@@ -478,13 +549,14 @@ looked somewhat suboptimal.
  (this branch is used by da/make-auto-header-dependencies.)
 
 * mh/iterate-refs (2011-09-11) 7 commits
- - refs.c: make create_cached_refs() static
- - Retain caches of submodule refs
- - Store the submodule name in struct cached_refs
- - Allocate cached_refs objects dynamically
- - Change the signature of read_packed_refs()
- - Access reference caches only through new function get_cached_refs()
- - Extract a function clear_cached_refs()
+  (merged to 'next' on 2011-09-27 at c289699)
+ + refs.c: make create_cached_refs() static
+ + Retain caches of submodule refs
+ + Store the submodule name in struct cached_refs
+ + Allocate cached_refs objects dynamically
+ + Change the signature of read_packed_refs()
+ + Access reference caches only through new function get_cached_refs()
+ + Extract a function clear_cached_refs()
 
 I did not see anything fundamentally wrong with this series, but it was
 unclear what the benefit of these changes are.  If the series were to read
@@ -518,7 +590,9 @@ I do not think there is anything fundamentally wrong with this series, but
 the risk of breakage outweighs any benefit for having this new
 feature. Will keep it in 'next' at least for one cycle.
 
-* jk/http-auth-keyring (2011-09-16) 21 commits
+* jk/http-auth-keyring (2011-09-28) 22 commits
+  (merged to 'next' on 2011-09-28 at 65ce6c2)
+ + credential-cache: don't cache items without context
   (merged to 'next' on 2011-09-16 at b4195eb)
  + check_expirations: don't copy over same element
  + t0300: add missing EOF terminator for <<
@@ -544,7 +618,7 @@ feature. Will keep it in 'next' at least for one cycle.
  + remote-curl: don't retry auth failures with dumb protocol
  + improve httpd auth tests
  + url: decode buffers that are not NUL-terminated
- (this branch is tangled with js/cred-macos-x-keychain and js/cred-macos-x-keychain-2.)
+ (this branch is tangled with js/cred-macos-x-keychain-2.)
 
 * rr/revert-cherry-pick-continue (2011-09-11) 19 commits
   (merged to 'next' on 2011-09-11 at 7d78054)
