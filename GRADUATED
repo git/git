@@ -6,6 +6,20 @@ old_maint=$(
 	sed -e 's|^refs/heads/||'
 )
 
+# Are older maint branches all included in newer ones?
+and_or_thru=thru prev=
+for m in $old_maint maint
+do
+	if test -n "$prev"
+	then
+		test "$(git rev-list $m..$prev | wc -l)" = 0 || {
+			and_or_thru=and
+			break
+		}
+	fi
+	prev=$m
+done
+
 _x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
 _x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
 LF='
@@ -41,7 +55,7 @@ do
 	comm -23 "$tmp.both0" "$tmp.known" >"$tmp.both"
 	if test -s "$tmp.both"
 	then
-		echo "# Graduated to both $m and master"
+		echo "# Graduated to both $m $and_or_thru master"
 		while read branch
 		do
 			d=$(git describe $branch)
@@ -107,7 +121,19 @@ comm -13 "$tmp.maint" "$tmp.master" |
 				git log --pretty=oneline --abbrev-commit maint..$topic 
 			} |
 			sed -e 's/^/: # /'
-			echo "git checkout maint && git merge $topic"
+			maint=maint
+			these=$(git rev-list maint..$topic)
+			for m in $old_maint maint
+			do
+				those=$(git rev-list $m..$topic)
+				if test "z$these" = "z$those"
+				then
+					maint=$m
+					break
+				fi
+			done
+
+			echo "git checkout $maint && git merge $topic"
 			echo
 		done
 	fi
