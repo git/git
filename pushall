@@ -2,6 +2,7 @@
 
 git push repo "$@" &&
 git push gph "$@" &&
+git push github2 "$@" &&
 git push sfjp "$@" &&
 git push sf.net "$@" &&
 
