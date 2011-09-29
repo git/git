@@ -1000,7 +1000,7 @@ static void free_path_split(char **path)
 static char *lookup_prog(const char *dir, const char *cmd, int isexe, int exe_only)
 {
 	char path[MAX_PATH];
-	snprintf(path, sizeof(path), "%s/%s.exe", dir, cmd);
+	snprintf(path, sizeof(path), "%s\\%s.exe", dir, cmd);
 
 	if (!isexe && access(path, F_OK) == 0)
 		return xstrdup(path);
