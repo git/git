@@ -1,12 +1,15 @@
 #!/bin/sh
 
-case "$(git version 2>/dev/null)" in
-"git version"*)
-	GIT=git ;;
-*)
-	echo >&2 "No git to bootstrap"
-	exit 1 ;;
-esac
+if test -z "$GIT"
+then
+	case "$(git version 2>/dev/null)" in
+	"git version"*)
+		GIT=git ;;
+	*)
+		echo >&2 "No git to bootstrap"
+		exit 1 ;;
+	esac
+fi
 
 inst_prefix=$(
 	IFS=:
