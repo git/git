@@ -1,8 +1,6 @@
 #!/usr/bin/perl -w
 
 print <<'EOF' ;
-<html>
-<head>
 <style>
 div.inset {
 background: #aff;
@@ -34,10 +32,7 @@ border: none;
 float: right;
 }
 </style>
-</head>
-<body>
-<img src="Kun-Wave.gif" id="git" width="64" height="64" />
-<h1>A Message from the Git Maintainer</h1>
+<img height="64" id="git" src="http://www.kernel.org/%7Ejunio/Kun-Wave.gif" width="64" />
 EOF
 
 sub show_links {
@@ -105,13 +100,3 @@ while (<>) {
 		print "<p>$_</p>\n\n";
 	}
 }
-
-print <<'EOF' ;
-<a href="http://www.ohloh.net/accounts/5439?ref=Detailed">
-<img height='35' width='191' id='ohloh-badge'
-src='http://www.ohloh.net/accounts/5439/widgets/account_detailed.gif'
-alt="ohloh profile for Junio C Hamano" />
-</a>
-</body>
-</html>
-EOF
