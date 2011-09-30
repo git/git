@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Sep 2011, #08; Wed, 28)
-X-master-at: 8d714b11df2b65e5f4272c1616e561930010be90
-X-next-at: 65ce6c2cbd3bace125ad01daf7ec705f2a84e58e
+Subject: What's cooking in git.git (Sep 2011, #09; Fri, 30)
+X-master-at: 703f05ad5835cff92b12c29aecf8d724c8c847e2
+X-next-at: fb0d39e4afa503eb7e63e40306f6f566df484586
 
-What's cooking in git.git (Sep 2011, #08; Wed, 28)
+What's cooking in git.git (Sep 2011, #09; Fri, 30)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -31,58 +31,22 @@ tentatively have the following in your $HOME/.gitconfig:
     [url "http://code.google.com/p/git-core"]
 	insteadOf = git://git.kernel.org/pub/scm/git/git.git
 
+I just tagged v1.7.7 final, and expect to rewind and rebuild the 'next'
+branch on top of it sometime next week.
+
 --------------------------------------------------
 [New Topics]
 
-* jc/apply-blank-at-eof-fix (2011-09-26) 1 commit
- - apply --whitespace=error: correctly report new blank lines at end
+* dm/tree-walk (2011-09-28) 2 commits
+ - tree-walk: micro-optimization in tree_entry_interesting
+ - tree-walk: drop unused parameter from match_dir_prefix
 
-* nd/sparse-doc (2011-09-26) 1 commit
- - git-read-tree.txt: update sparse checkout examples
+* cs/perl-config-path-send-email (2011-09-30) 2 commits
+ - use new Git::config_path() for aliasesfile
+ - Add Git::config_path()
 
-* jp/get-ref-dir-unsorted (2011-09-26) 1 commit
- - Don't sort ref_list too early
-
-* jc/grep-untracked-exclude (2011-09-28) 2 commits
- - Merge branch 'jc/maint-grep-untracked-exclude' into jc/grep-untracked-exclude
- - Merge branch 'jc/maint-grep-untracked-exclude' into jc/grep-untracked-exclude
- (this branch uses bw/grep-no-index-no-exclude and jc/maint-grep-untracked-exclude.)
-
-* jc/maint-grep-untracked-exclude (2011-09-28) 3 commits
- - grep: rename --exclude to --exclude-standard
- - grep: --untracked and --exclude tests
- - grep: teach --untracked and --exclude options
- (this branch is used by jc/grep-untracked-exclude; uses bw/grep-no-index-no-exclude.)
-
-* jc/parse-options-boolean (2011-09-28) 5 commits
- - apply: use OPT_NOOP_NOARG
- - revert: use OPT_NOOP_NOARG
- - parseopt: add OPT_NOOP_NOARG
- - archive.c: use OPT_BOOL()
- - parse-options: deprecate OPT_BOOLEAN
-
-* mh/maint-notes-merge-pathbuf-fix (2011-09-27) 1 commit
- - notes_merge_commit(): do not pass temporary buffer to other function
-
-* ph/push-to-delete-nothing (2011-09-28) 2 commits
- - fixup
- - receive-pack: don't pass non-existent refs to post-{receive,update} hooks in push deletions
-
-* ps/gitweb-js-with-lineno (2011-09-27) 1 commit
- - gitweb: Fix links to lines in blobs when javascript-actions are enabled
-
-* zj/send-email-authen-sasl (2011-09-28) 1 commit
- - send-email: auth plain/login fix
-
---------------------------------------------------
-[Graduated to "master"]
-
-* jc/namespace-doc-with-old-asciidoc (2011-09-16) 1 commit
- + Documentation/gitnamespaces.txt: cater to older asciidoc
-
-It turns out that the version of AsciiDoc that has troubles with the
-mark-up this patch works around is not quite old enough to be dismissed
-as irrelevant.
+* jc/checkout-from-tree-keep-local-changes (2011-09-30) 1 commit
+ - checkout $tree $path: do not clobber local changes in $path not in $tree
 
 --------------------------------------------------
 [Stalled]
@@ -176,6 +140,46 @@ also loses the ability to escape glob specials. Perhaps drop?
 
 --------------------------------------------------
 [Cooking]
+
+* jc/apply-blank-at-eof-fix (2011-09-26) 1 commit
+ - apply --whitespace=error: correctly report new blank lines at end
+
+* nd/sparse-doc (2011-09-26) 1 commit
+ - git-read-tree.txt: update sparse checkout examples
+
+* jp/get-ref-dir-unsorted (2011-09-30) 2 commits
+ - refs: Use binary search to lookup refs faster
+ - Don't sort ref_list too early
+
+* jc/grep-untracked-exclude (2011-09-28) 2 commits
+ - Merge branch 'jc/maint-grep-untracked-exclude' into jc/grep-untracked-exclude
+ - Merge branch 'jc/maint-grep-untracked-exclude' into jc/grep-untracked-exclude
+ (this branch uses bw/grep-no-index-no-exclude and jc/maint-grep-untracked-exclude.)
+
+* jc/maint-grep-untracked-exclude (2011-09-28) 3 commits
+ - grep: rename --exclude to --exclude-standard
+ - grep: --untracked and --exclude tests
+ - grep: teach --untracked and --exclude options
+ (this branch is used by jc/grep-untracked-exclude; uses bw/grep-no-index-no-exclude.)
+
+* jc/parse-options-boolean (2011-09-28) 5 commits
+ - apply: use OPT_NOOP_NOARG
+ - revert: use OPT_NOOP_NOARG
+ - parseopt: add OPT_NOOP_NOARG
+ - archive.c: use OPT_BOOL()
+ - parse-options: deprecate OPT_BOOLEAN
+
+* mh/maint-notes-merge-pathbuf-fix (2011-09-27) 1 commit
+ - notes_merge_commit(): do not pass temporary buffer to other function
+
+* ph/push-to-delete-nothing (2011-09-30) 1 commit
+ - receive-pack: don't pass non-existent refs to post-{receive,update} hooks
+
+* ps/gitweb-js-with-lineno (2011-09-27) 1 commit
+ - gitweb: Fix links to lines in blobs when javascript-actions are enabled
+
+* zj/send-email-authen-sasl (2011-09-29) 1 commit
+ - send-email: auth plain/login fix
 
 * jc/maint-diffstat-numstat-context (2011-09-22) 1 commit
   (merged to 'next' on 2011-09-26 at 12539ab)
