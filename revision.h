@@ -97,6 +97,7 @@ struct rev_info {
 			date_mode_explicit:1,
 			preserve_subject:1;
 	unsigned int	disable_stdin:1;
+	unsigned int	leak_pending:1;
 
 	enum date_mode date_mode;
 

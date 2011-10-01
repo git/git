@@ -1974,7 +1974,8 @@ int prepare_revision_walk(struct rev_info *revs)
 		}
 		e++;
 	}
-	free(list);
+	if (!revs->leak_pending)
+		free(list);
 
 	if (revs->no_walk)
 		return 0;
