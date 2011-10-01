@@ -663,7 +663,6 @@ static void orphaned_commit_warning(struct commit *commit)
 	struct rev_info revs;
 	struct object *object = &commit->object;
 	struct object_array refs;
-	unsigned int i;
 
 	init_revisions(&revs, NULL);
 	setup_revisions(0, NULL, &revs, NULL);
@@ -683,12 +682,7 @@ static void orphaned_commit_warning(struct commit *commit)
 	else
 		describe_detached_head(_("Previous HEAD position was"), commit);
 
-	for (i = 0; i < refs.nr; i++) {
-		struct object *o = refs.objects[i].item;
-		struct commit *c = lookup_commit_reference_gently(o->sha1, 1);
-		if (c)
-			clear_commit_marks(c, ALL_REV_FLAGS);
-	}
+	clear_commit_marks_for_object_array(&refs, ALL_REV_FLAGS);
 	free(refs.objects);
 }
 

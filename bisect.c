@@ -818,7 +818,7 @@ static int check_ancestors(const char *prefix)
 {
 	struct rev_info revs;
 	struct object_array pending_copy;
-	int i, res;
+	int res;
 
 	bisect_rev_setup(&revs, prefix, "^%s", "%s", 0);
 
@@ -835,10 +835,7 @@ static int check_ancestors(const char *prefix)
 	res = (revs.commits != NULL);
 
 	/* Clean up objects used, as they will be reused. */
-	for (i = 0; i < pending_copy.nr; i++) {
-		struct object *o = pending_copy.objects[i].item;
-		clear_commit_marks((struct commit *)o, ALL_REV_FLAGS);
-	}
+	clear_commit_marks_for_object_array(&pending_copy, ALL_REV_FLAGS);
 	free(pending_copy.objects);
 
 	return res;
