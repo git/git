@@ -36,6 +36,7 @@ int main(int argc, char **argv)
 	TEST_CLASS(isalnum, LOWER UPPER DIGIT);
 	TEST_CLASS(is_glob_special, "*?[\\");
 	TEST_CLASS(is_regex_special, "$()*+.?[\\^{|");
+	TEST_CLASS(is_pathspec_magic, "!\"#%&',-/:;<=>@_`~");
 
 	return rc;
 }
