@@ -191,6 +191,7 @@ extern void add_object(struct object *obj,
 		       const char *name);
 
 extern void add_pending_object(struct rev_info *revs, struct object *obj, const char *name);
+extern void add_pending_sha1(struct rev_info *revs, const char *name, const unsigned char *sha1, unsigned int flags);
 
 extern void add_head_to_pending(struct rev_info *);
 

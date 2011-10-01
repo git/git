@@ -185,6 +185,13 @@ static struct object *get_reference(struct rev_info *revs, const char *name, con
 	return object;
 }
 
+void add_pending_sha1(struct rev_info *revs, const char *name,
+		      const unsigned char *sha1, unsigned int flags)
+{
+	struct object *object = get_reference(revs, name, sha1, flags);
+	add_pending_object(revs, object, name);
+}
+
 static struct commit *handle_commit(struct rev_info *revs, struct object *object, const char *name)
 {
 	unsigned long flags = object->flags;
@@ -832,9 +839,7 @@ struct all_refs_cb {
 static int handle_one_ref(const char *path, const unsigned char *sha1, int flag, void *cb_data)
 {
 	struct all_refs_cb *cb = cb_data;
-	struct object *object = get_reference(cb->all_revs, path, sha1,
-					      cb->all_flags);
-	add_pending_object(cb->all_revs, object, path);
+	add_pending_sha1(cb->all_revs, path, sha1, cb->all_flags);
 	return 0;
 }
 
