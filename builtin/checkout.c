@@ -596,17 +596,6 @@ static int add_pending_uninteresting_ref(const char *refname,
 	return 0;
 }
 
-static int clear_commit_marks_from_one_ref(const char *refname,
-				      const unsigned char *sha1,
-				      int flags,
-				      void *cb_data)
-{
-	struct commit *commit = lookup_commit_reference_gently(sha1, 1);
-	if (commit)
-		clear_commit_marks(commit, -1);
-	return 0;
-}
-
 static void describe_one_orphan(struct strbuf *sb, struct commit *commit)
 {
 	parse_commit(commit);
@@ -673,6 +662,8 @@ static void orphaned_commit_warning(struct commit *commit)
 {
 	struct rev_info revs;
 	struct object *object = &commit->object;
+	struct object_array refs;
+	unsigned int i;
 
 	init_revisions(&revs, NULL);
 	setup_revisions(0, NULL, &revs, NULL);
@@ -682,6 +673,9 @@ static void orphaned_commit_warning(struct commit *commit)
 
 	for_each_ref(add_pending_uninteresting_ref, &revs);
 
+	refs = revs.pending;
+	revs.leak_pending = 1;
+
 	if (prepare_revision_walk(&revs))
 		die(_("internal error in revision walk"));
 	if (!(commit->object.flags & UNINTERESTING))
@@ -689,8 +683,13 @@ static void orphaned_commit_warning(struct commit *commit)
 	else
 		describe_detached_head(_("Previous HEAD position was"), commit);
 
-	clear_commit_marks(commit, -1);
-	for_each_ref(clear_commit_marks_from_one_ref, NULL);
+	for (i = 0; i < refs.nr; i++) {
+		struct object *o = refs.objects[i].item;
+		struct commit *c = lookup_commit_reference_gently(o->sha1, 1);
+		if (c)
+			clear_commit_marks(c, ALL_REV_FLAGS);
+	}
+	free(refs.objects);
 }
 
 static int switch_branches(struct checkout_opts *opts, struct branch_info *new)
