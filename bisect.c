@@ -823,12 +823,14 @@ static int check_ancestors(const char *prefix)
 	bisect_rev_setup(&revs, prefix, "^%s", "%s", 0);
 
 	/* Save pending objects, so they can be cleaned up later. */
-	memset(&pending_copy, 0, sizeof(pending_copy));
-	for (i = 0; i < revs.pending.nr; i++)
-		add_object_array(revs.pending.objects[i].item,
-				 revs.pending.objects[i].name,
-				 &pending_copy);
+	pending_copy = revs.pending;
+	revs.leak_pending = 1;
 
+	/*
+	 * bisect_common calls prepare_revision_walk right away, which
+	 * (together with .leak_pending = 1) makes us the sole owner of
+	 * the list of pending objects.
+	 */
 	bisect_common(&revs);
 	res = (revs.commits != NULL);
 
@@ -837,6 +839,7 @@ static int check_ancestors(const char *prefix)
 		struct object *o = pending_copy.objects[i].item;
 		clear_commit_marks((struct commit *)o, ALL_REV_FLAGS);
 	}
+	free(pending_copy.objects);
 
 	return res;
 }
