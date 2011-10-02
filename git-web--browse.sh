@@ -156,7 +156,7 @@ firefox|iceweasel|seamonkey|iceape)
 	;;
 google-chrome|chrome|chromium|chromium-browser)
 	# No need to specify newTab. It's default in chromium
-	eval "$browser_path" "$@" &
+	"$browser_path" "$@" &
 	;;
 konqueror)
 	case "$(basename "$browser_path")" in
@@ -164,10 +164,10 @@ konqueror)
 		# It's simpler to use kfmclient to open a new tab in konqueror.
 		browser_path="$(echo "$browser_path" | sed -e 's/konqueror$/kfmclient/')"
 		type "$browser_path" > /dev/null 2>&1 || die "No '$browser_path' found."
-		eval "$browser_path" newTab "$@"
+		"$browser_path" newTab "$@" &
 		;;
 	kfmclient)
-		eval "$browser_path" newTab "$@"
+		"$browser_path" newTab "$@" &
 		;;
 	*)
 		"$browser_path" "$@" &
@@ -175,7 +175,7 @@ konqueror)
 	esac
 	;;
 w3m|elinks|links|lynx|open)
-	eval "$browser_path" "$@"
+	"$browser_path" "$@"
 	;;
 start)
 	exec "$browser_path" '"web-browse"' "$@"
@@ -185,7 +185,7 @@ opera|dillo)
 	;;
 *)
 	if test -n "$browser_cmd"; then
-		( eval $browser_cmd "$@" )
+		( eval "$browser_cmd \"\$@\"" )
 	fi
 	;;
 esac
