@@ -38,19 +38,29 @@ echo "Subject: [ANNOUNCE] Git $vername
 "
 
 fmt -70 <<EOF
-$kind Git $vername is available at the usual places$for_testing:
+$kind Git $vername is available$for_testing.
+EOF
 
-  http://www.kernel.org/pub/software/scm/git/
+cat <<EOF
 
-  git-$vername.tar.{gz,bz2}			(source tarball)
-  git-htmldocs-$vername.tar.{gz,bz2}		(preformatted docs)
-  git-manpages-$vername.tar.{gz,bz2}		(preformatted docs)
+The release tarballs are found at:
 
-The RPM binary packages for a few architectures are found in:
+    http://code.google.com/p/git-core/downloads/list
 
-  $rpmroot/git-*-$vername-1.fc13.\$arch.rpm	(RPM)
+and their SHA-1 checksums are:
 
-BLURB HERE BLURB HERE BLURB HERE
+bbf85bd767ca6b7e9caa1489bb4ba7ec64e0ab35  git-1.7.7.tar.gz
+33183db94fd25e001bd8a9fd6696b992f61e28d8  git-htmldocs-1.7.7.tar.gz
+75d3cceb46f7a46eeb825033dff76af5eb5ea3d9  git-manpages-1.7.7.tar.gz
+
+Also the following public repositories all have a copy of the v$vername
+tag and the $branch branch that the tag points at:
+
+  url = git://repo.or.cz/alt-git.git
+  url = https://code.google.com/p/git-core/
+  url = git://git.sourceforge.jp/gitroot/git-core/git.git
+  url = git://git-core.git.sourceforge.net/gitroot/git-core/git-core
+  url = https://github.com/gitster/git
 
 ----------------------------------------------------------------
 
