@@ -299,7 +299,7 @@ read_git_config(\%opts);
 if ($cmd && ($cmd eq 'log' || $cmd eq 'blame')) {
 	Getopt::Long::Configure('pass_through');
 }
-my $rv = GetOptions(%opts, 'help|H|h' => \$_help, 'version|V' => \$_version,
+my $rv = GetOptions(%opts, 'h|H' => \$_help, 'version|V' => \$_version,
                     'minimize-connections' => \$Git::SVN::Migration::_minimize,
                     'id|i=s' => \$Git::SVN::default_ref_id,
                     'svn-remote|remote|R=s' => sub {

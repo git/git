@@ -97,7 +97,7 @@ sub generate_command
 			$prompt = 'yes';
 			next;
 		}
-		if ($arg eq '-h' || $arg eq '--help') {
+		if ($arg eq '-h') {
 			usage();
 		}
 		push @command, $arg;

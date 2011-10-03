@@ -109,14 +109,14 @@ my $usage =
     "    --strict-paths      : Don't allow recursing into subdirectories\n".
     "    --export-all        : Don't check for gitcvs.enabled in config\n".
     "    --version, -V       : Print version information and exit\n".
-    "    --help, -h, -H      : Print usage information and exit\n".
+    "    -h, -H              : Print usage information and exit\n".
     "\n".
     "<directory> ... is a list of allowed directories. If no directories\n".
     "are given, all are allowed. This is an additional restriction, gitcvs\n".
     "access still needs to be enabled by the gitcvs.enabled config option.\n".
     "Alternately, one directory may be specified in GIT_CVSSERVER_ROOT.\n";
 
-my @opts = ( 'help|h|H', 'version|V',
+my @opts = ( 'h|H', 'version|V',
 	     'base-path=s', 'strict-paths', 'export-all' );
 GetOptions( $state, @opts )
     or die $usage;
