@@ -295,6 +295,7 @@ const char *enter_repo(const char *path, int strict)
 		static const char *suffix[] = {
 			".git/.git", "/.git", ".git", "", NULL,
 		};
+		const char *gitfile;
 		int len = strlen(path);
 		int i;
 		while ((1 < len) && (path[len-1] == '/'))
@@ -329,7 +330,12 @@ const char *enter_repo(const char *path, int strict)
 				break;
 			}
 		}
-		if (!suffix[i] || chdir(used_path))
+		if (!suffix[i])
+			return NULL;
+		gitfile = read_gitfile(used_path) ;
+		if (gitfile)
+			strcpy(used_path, gitfile);
+		if (chdir(used_path))
 			return NULL;
 		path = validated_path;
 	}
