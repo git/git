@@ -7476,7 +7476,7 @@ proc addtocflist {ids} {
 }
 
 proc diffcmd {ids flags} {
-    global nullid nullid2
+    global log_showroot nullid nullid2
 
     set i [lsearch -exact $ids $nullid]
     set j [lsearch -exact $ids $nullid2]
@@ -7510,6 +7510,9 @@ proc diffcmd {ids flags} {
 	    lappend cmd HEAD
 	}
     } else {
+	if {$log_showroot} {
+	    lappend flags --root
+	}
 	set cmd [concat | git diff-tree -r $flags $ids]
     }
     return $cmd
@@ -11557,6 +11560,11 @@ catch {
 	    puts stderr "Warning: encoding $enc is not supported by Tcl/Tk"
 	}
     }
+}
+
+set log_showroot true
+catch {
+    set log_showroot [exec git config --bool --get log.showroot]
 }
 
 if {[tk windowingsystem] eq "aqua"} {
