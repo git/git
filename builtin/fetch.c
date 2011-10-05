@@ -13,6 +13,7 @@
 #include "sigchain.h"
 #include "transport.h"
 #include "submodule.h"
+#include "connected.h"
 
 static const char * const builtin_fetch_usage[] = {
 	"git fetch [<options>] [<repository> [<refspec>...]]",
@@ -345,62 +346,16 @@ static int update_local_ref(struct ref *ref,
 	}
 }
 
-/*
- * The ref_map records the tips of the refs we are fetching. If
- *
- *  $ git rev-list --verify-objects --stdin --not --all
- *
- * (feeding all the refs in ref_map on its standard input) does not
- * error out, that means everything reachable from these updated refs
- * locally exists and is connected to some of our existing refs.
- *
- * Returns 0 if everything is connected, non-zero otherwise.
- */
-static int check_everything_connected(struct ref *ref_map, int quiet)
+static int iterate_ref_map(void *cb_data, unsigned char sha1[20])
 {
-	struct child_process rev_list;
-	const char *argv[] = {"rev-list", "--verify-objects",
-			      "--stdin", "--not", "--all", NULL, NULL};
-	char commit[41];
-	struct ref *ref;
-	int err = 0;
+	struct ref **rm = cb_data;
+	struct ref *ref = *rm;
 
-	if (!ref_map)
-		return 0;
-
-	if (quiet)
-		argv[5] = "--quiet";
-
-	memset(&rev_list, 0, sizeof(rev_list));
-	rev_list.argv = argv;
-	rev_list.git_cmd = 1;
-	rev_list.in = -1;
-	rev_list.no_stdout = 1;
-	rev_list.no_stderr = quiet;
-	if (start_command(&rev_list))
-		return error(_("Could not run 'git rev-list'"));
-
-	sigchain_push(SIGPIPE, SIG_IGN);
-
-	memcpy(commit + 40, "\n", 2);
-	for (ref = ref_map; ref; ref = ref->next) {
-		memcpy(commit, sha1_to_hex(ref->old_sha1), 40);
-		if (write_in_full(rev_list.in, commit, 41) < 0) {
-			if (errno != EPIPE && errno != EINVAL)
-				error(_("failed write to rev-list: %s"),
-				      strerror(errno));
-			err = -1;
-			break;
-		}
-	}
-	if (close(rev_list.in)) {
-		error(_("failed to close rev-list's stdin: %s"), strerror(errno));
-		err = -1;
-	}
-
-	sigchain_pop(SIGPIPE);
-
-	return finish_command(&rev_list) || err;
+	if (!ref)
+		return -1; /* end of the list */
+	*rm = ref->next;
+	hashcpy(sha1, ref->old_sha1);
+	return 0;
 }
 
 static int store_updated_refs(const char *raw_url, const char *remote_name,
@@ -423,7 +378,8 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 	else
 		url = xstrdup("foreign");
 
-	if (check_everything_connected(ref_map, 0))
+	rm = ref_map;
+	if (check_everything_connected(iterate_ref_map, 0, &rm))
 		return error(_("%s did not send all necessary objects\n"), url);
 
 	for (rm = ref_map; rm; rm = rm->next) {
@@ -522,6 +478,8 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
  */
 static int quickfetch(struct ref *ref_map)
 {
+	struct ref *rm = ref_map;
+
 	/*
 	 * If we are deepening a shallow clone we already have these
 	 * objects reachable.  Running rev-list here will return with
@@ -531,7 +489,7 @@ static int quickfetch(struct ref *ref_map)
 	 */
 	if (depth)
 		return -1;
-	return check_everything_connected(ref_map, 1);
+	return check_everything_connected(iterate_ref_map, 1, &rm);
 }
 
 static int fetch_refs(struct transport *transport, struct ref *ref_map)
