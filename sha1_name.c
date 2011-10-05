@@ -501,12 +501,6 @@ struct object *peel_to_type(const char *name, int namelen,
 {
 	if (name && !namelen)
 		namelen = strlen(name);
-	if (!o) {
-		unsigned char sha1[20];
-		if (get_sha1_1(name, namelen, sha1))
-			return NULL;
-		o = parse_object(sha1);
-	}
 	while (1) {
 		if (!o || (!o->parsed && !parse_object(o->sha1)))
 			return NULL;
