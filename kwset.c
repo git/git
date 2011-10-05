@@ -674,7 +674,7 @@ cwexec (kwset_t kws, char const *text, size_t len, struct kwsmatch *kwsmatch)
      copy of the preceding main search loops. */
   if (lim - mch > kwset->maxd)
     lim = mch + kwset->maxd;
-  lmch = 0;
+  lmch = NULL;
   d = 1;
   while (lim - end >= d)
     {
