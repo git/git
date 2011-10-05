@@ -73,6 +73,7 @@ struct rev_info {
 			tag_objects:1,
 			tree_objects:1,
 			blob_objects:1,
+			verify_objects:1,
 			edge_hint:1,
 			limited:1,
 			unpacked:1,

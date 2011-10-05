@@ -12,7 +12,8 @@ static void process_blob(struct rev_info *revs,
 			 struct blob *blob,
 			 show_object_fn show,
 			 struct name_path *path,
-			 const char *name)
+			 const char *name,
+			 void *cb_data)
 {
 	struct object *obj = &blob->object;
 
@@ -23,7 +24,7 @@ static void process_blob(struct rev_info *revs,
 	if (obj->flags & (UNINTERESTING | SEEN))
 		return;
 	obj->flags |= SEEN;
-	show(obj, path, name);
+	show(obj, path, name, cb_data);
 }
 
 /*
@@ -52,7 +53,8 @@ static void process_gitlink(struct rev_info *revs,
 			    const unsigned char *sha1,
 			    show_object_fn show,
 			    struct name_path *path,
-			    const char *name)
+			    const char *name,
+			    void *cb_data)
 {
 	/* Nothing to do */
 }
@@ -62,7 +64,8 @@ static void process_tree(struct rev_info *revs,
 			 show_object_fn show,
 			 struct name_path *path,
 			 struct strbuf *base,
-			 const char *name)
+			 const char *name,
+			 void *cb_data)
 {
 	struct object *obj = &tree->object;
 	struct tree_desc desc;
@@ -80,7 +83,7 @@ static void process_tree(struct rev_info *revs,
 	if (parse_tree(tree) < 0)
 		die("bad tree object %s", sha1_to_hex(obj->sha1));
 	obj->flags |= SEEN;
-	show(obj, path, name);
+	show(obj, path, name, cb_data);
 	me.up = path;
 	me.elem = name;
 	me.elem_len = strlen(name);
@@ -106,14 +109,17 @@ static void process_tree(struct rev_info *revs,
 		if (S_ISDIR(entry.mode))
 			process_tree(revs,
 				     lookup_tree(entry.sha1),
-				     show, &me, base, entry.path);
+				     show, &me, base, entry.path,
+				     cb_data);
 		else if (S_ISGITLINK(entry.mode))
 			process_gitlink(revs, entry.sha1,
-					show, &me, entry.path);
+					show, &me, entry.path,
+					cb_data);
 		else
 			process_blob(revs,
 				     lookup_blob(entry.sha1),
-				     show, &me, entry.path);
+				     show, &me, entry.path,
+				     cb_data);
 	}
 	strbuf_setlen(base, baselen);
 	free(tree->buffer);
@@ -185,17 +191,17 @@ void traverse_commit_list(struct rev_info *revs,
 			continue;
 		if (obj->type == OBJ_TAG) {
 			obj->flags |= SEEN;
-			show_object(obj, NULL, name);
+			show_object(obj, NULL, name, data);
 			continue;
 		}
 		if (obj->type == OBJ_TREE) {
 			process_tree(revs, (struct tree *)obj, show_object,
-				     NULL, &base, name);
+				     NULL, &base, name, data);
 			continue;
 		}
 		if (obj->type == OBJ_BLOB) {
 			process_blob(revs, (struct blob *)obj, show_object,
-				     NULL, name);
+				     NULL, name, data);
 			continue;
 		}
 		die("unknown pending object %s (%s)",

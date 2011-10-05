@@ -84,7 +84,9 @@ static void show_commit(struct commit *commit, void *data)
 	commit->buffer = NULL;
 }
 
-static void show_object(struct object *obj, const struct name_path *path, const char *component)
+static void show_object(struct object *obj,
+			const struct name_path *path, const char *component,
+			void *cb_data)
 {
 	show_object_with_name(pack_pipe, obj, path, component);
 }

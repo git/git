@@ -22,7 +22,7 @@ test_expect_success 'fetch without strict' '
 		cd dst &&
 		git config fetch.fsckobjects false &&
 		git config transfer.fsckobjects false &&
-		git fetch ../.git master
+		test_must_fail git fetch ../.git master
 	)
 '
 
@@ -33,7 +33,7 @@ test_expect_success 'fetch with !fetch.fsckobjects' '
 		cd dst &&
 		git config fetch.fsckobjects false &&
 		git config transfer.fsckobjects true &&
-		git fetch ../.git master
+		test_must_fail git fetch ../.git master
 	)
 '
 

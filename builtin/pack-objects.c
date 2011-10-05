@@ -2073,7 +2073,9 @@ static void show_commit(struct commit *commit, void *data)
 	commit->object.flags |= OBJECT_ADDED;
 }
 
-static void show_object(struct object *obj, const struct name_path *path, const char *last)
+static void show_object(struct object *obj,
+			const struct name_path *path, const char *last,
+			void *data)
 {
 	char *name = path_name(path, last);
 

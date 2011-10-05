@@ -168,15 +168,23 @@ static void finish_commit(struct commit *commit, void *data)
 	commit->buffer = NULL;
 }
 
-static void finish_object(struct object *obj, const struct name_path *path, const char *name)
+static void finish_object(struct object *obj,
+			  const struct name_path *path, const char *name,
+			  void *cb_data)
 {
 	if (obj->type == OBJ_BLOB && !has_sha1_file(obj->sha1))
 		die("missing blob object '%s'", sha1_to_hex(obj->sha1));
 }
 
-static void show_object(struct object *obj, const struct name_path *path, const char *component)
+static void show_object(struct object *obj,
+			const struct name_path *path, const char *component,
+			void *cb_data)
 {
-	finish_object(obj, path, component);
+	struct rev_info *info = cb_data;
+
+	finish_object(obj, path, component, cb_data);
+	if (info->verify_objects && !obj->parsed && obj->type != OBJ_COMMIT)
+		parse_object(obj->sha1);
 	show_object_with_name(stdout, obj, path, component);
 }
 
