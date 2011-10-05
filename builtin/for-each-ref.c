@@ -69,6 +69,9 @@ static struct {
 	{ "subject" },
 	{ "body" },
 	{ "contents" },
+	{ "contents:subject" },
+	{ "contents:body" },
+	{ "contents:signature" },
 	{ "upstream" },
 	{ "symref" },
 	{ "flag" },
@@ -361,6 +364,18 @@ static const char *copy_email(const char *buf)
 	return xmemdupz(email, eoemail + 1 - email);
 }
 
+static char *copy_subject(const char *buf, unsigned long len)
+{
+	char *r = xmemdupz(buf, len);
+	int i;
+
+	for (i = 0; i < len; i++)
+		if (r[i] == '\n')
+			r[i] = ' ';
+
+	return r;
+}
+
 static void grab_date(const char *buf, struct atom_value *v, const char *atomname)
 {
 	const char *eoemail = strstr(buf, "> ");
@@ -458,38 +473,56 @@ static void grab_person(const char *who, struct atom_value *val, int deref, stru
 	}
 }
 
-static void find_subpos(const char *buf, unsigned long sz, const char **sub, const char **body)
+static void find_subpos(const char *buf, unsigned long sz,
+			const char **sub, unsigned long *sublen,
+			const char **body, unsigned long *bodylen,
+			unsigned long *nonsiglen,
+			const char **sig, unsigned long *siglen)
 {
-	while (*buf) {
-		const char *eol = strchr(buf, '\n');
-		if (!eol)
-			return;
-		if (eol[1] == '\n') {
-			buf = eol + 1;
-			break; /* found end of header */
-		}
-		buf = eol + 1;
+	const char *eol;
+	/* skip past header until we hit empty line */
+	while (*buf && *buf != '\n') {
+		eol = strchrnul(buf, '\n');
+		if (*eol)
+			eol++;
+		buf = eol;
 	}
+	/* skip any empty lines */
 	while (*buf == '\n')
 		buf++;
-	if (!*buf)
-		return;
-	*sub = buf; /* first non-empty line */
-	buf = strchr(buf, '\n');
-	if (!buf) {
-		*body = "";
-		return; /* no body */
+
+	/* parse signature first; we might not even have a subject line */
+	*sig = buf + parse_signature(buf, strlen(buf));
+	*siglen = strlen(*sig);
+
+	/* subject is first non-empty line */
+	*sub = buf;
+	/* subject goes to first empty line */
+	while (buf < *sig && *buf && *buf != '\n') {
+		eol = strchrnul(buf, '\n');
+		if (*eol)
+			eol++;
+		buf = eol;
 	}
+	*sublen = buf - *sub;
+	/* drop trailing newline, if present */
+	if (*sublen && (*sub)[*sublen - 1] == '\n')
+		*sublen -= 1;
+
+	/* skip any empty lines */
 	while (*buf == '\n')
-		buf++; /* skip blank between subject and body */
+		buf++;
 	*body = buf;
+	*bodylen = strlen(buf);
+	*nonsiglen = *sig - buf;
 }
 
 /* See grab_values */
 static void grab_sub_body_contents(struct atom_value *val, int deref, struct object *obj, void *buf, unsigned long sz)
 {
 	int i;
-	const char *subpos = NULL, *bodypos = NULL;
+	const char *subpos = NULL, *bodypos = NULL, *sigpos = NULL;
+	unsigned long sublen = 0, bodylen = 0, nonsiglen = 0, siglen = 0;
 
 	for (i = 0; i < used_atom_cnt; i++) {
 		const char *name = used_atom[i];
@@ -500,17 +533,27 @@ static void grab_sub_body_contents(struct atom_value *val, int deref, struct obj
 			name++;
 		if (strcmp(name, "subject") &&
 		    strcmp(name, "body") &&
-		    strcmp(name, "contents"))
+		    strcmp(name, "contents") &&
+		    strcmp(name, "contents:subject") &&
+		    strcmp(name, "contents:body") &&
+		    strcmp(name, "contents:signature"))
 			continue;
 		if (!subpos)
-			find_subpos(buf, sz, &subpos, &bodypos);
-		if (!subpos)
-			return;
+			find_subpos(buf, sz,
+				    &subpos, &sublen,
+				    &bodypos, &bodylen, &nonsiglen,
+				    &sigpos, &siglen);
 
 		if (!strcmp(name, "subject"))
-			v->s = copy_line(subpos);
+			v->s = copy_subject(subpos, sublen);
+		else if (!strcmp(name, "contents:subject"))
+			v->s = copy_subject(subpos, sublen);
 		else if (!strcmp(name, "body"))
-			v->s = xstrdup(bodypos);
+			v->s = xmemdupz(bodypos, bodylen);
+		else if (!strcmp(name, "contents:body"))
+			v->s = xmemdupz(bodypos, nonsiglen);
+		else if (!strcmp(name, "contents:signature"))
+			v->s = xmemdupz(sigpos, siglen);
 		else if (!strcmp(name, "contents"))
 			v->s = xstrdup(subpos);
 	}
