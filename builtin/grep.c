@@ -637,13 +637,15 @@ static int grep_objects(struct grep_opt *opt, const struct pathspec *pathspec,
 	return hit;
 }
 
-static int grep_directory(struct grep_opt *opt, const struct pathspec *pathspec)
+static int grep_directory(struct grep_opt *opt, const struct pathspec *pathspec,
+			  int exc_std)
 {
 	struct dir_struct dir;
 	int i, hit = 0;
 
 	memset(&dir, 0, sizeof(dir));
-	setup_standard_excludes(&dir);
+	if (exc_std)
+		setup_standard_excludes(&dir);
 
 	fill_directory(&dir, pathspec->raw);
 	for (i = 0; i < dir.nr; i++) {
@@ -750,7 +752,7 @@ static int help_callback(const struct option *opt, const char *arg, int unset)
 int cmd_grep(int argc, const char **argv, const char *prefix)
 {
 	int hit = 0;
-	int cached = 0;
+	int cached = 0, untracked = 0, opt_exclude = -1;
 	int seen_dashdash = 0;
 	int external_grep_allowed__ignored;
 	const char *show_in_pager = NULL, *default_pager = "dummy";
@@ -774,8 +776,13 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	struct option options[] = {
 		OPT_BOOLEAN(0, "cached", &cached,
 			"search in index instead of in the work tree"),
-		OPT_BOOLEAN(0, "index", &use_index,
-			"--no-index finds in contents not managed by git"),
+		{ OPTION_BOOLEAN, 0, "index", &use_index, NULL,
+			"finds in contents not managed by git",
+			PARSE_OPT_NOARG | PARSE_OPT_NEGHELP },
+		OPT_BOOLEAN(0, "untracked", &untracked,
+			"search in both tracked and untracked files"),
+		OPT_SET_INT(0, "exclude-standard", &opt_exclude,
+			    "search also in ignored files", 1),
 		OPT_GROUP(""),
 		OPT_BOOLEAN('v', "invert-match", &opt.invert,
 			"show non-matching lines"),
@@ -1045,13 +1052,16 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	if (!show_in_pager)
 		setup_pager();
 
+	if (!use_index && (untracked || cached))
+		die(_("--cached or --untracked cannot be used with --no-index."));
 
-	if (!use_index) {
-		if (cached)
-			die(_("--cached cannot be used with --no-index."));
+	if (!use_index || untracked) {
+		int use_exclude = (opt_exclude < 0) ? use_index : !!opt_exclude;
 		if (list.nr)
-			die(_("--no-index cannot be used with revs."));
-		hit = grep_directory(&opt, &pathspec);
+			die(_("--no-index or --untracked cannot be used with revs."));
+		hit = grep_directory(&opt, &pathspec, use_exclude);
+	} else if (0 <= opt_exclude) {
+		die(_("--exclude or --no-exclude cannot be used for tracked contents."));
 	} else if (!list.nr) {
 		if (!cached)
 			setup_work_tree();
