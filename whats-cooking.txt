@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Sep 2011, #09; Fri, 30)
+Subject: What's cooking in git.git (Oct 2011, #01; Tue, 4)
 X-master-at: 703f05ad5835cff92b12c29aecf8d724c8c847e2
 X-next-at: fb0d39e4afa503eb7e63e40306f6f566df484586
 
-What's cooking in git.git (Sep 2011, #09; Fri, 30)
+What's cooking in git.git (Oct 2011, #01; Tue, 4)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -31,22 +31,92 @@ tentatively have the following in your $HOME/.gitconfig:
     [url "http://code.google.com/p/git-core"]
 	insteadOf = git://git.kernel.org/pub/scm/git/git.git
 
-I just tagged v1.7.7 final, and expect to rewind and rebuild the 'next'
-branch on top of it sometime next week.
+I am planning to kick some topics out of 'next' back to 'pu' to give them
+a chance to be cleaned up. Not happened yet, but see below for ideas.
 
 --------------------------------------------------
 [New Topics]
 
-* dm/tree-walk (2011-09-28) 2 commits
- - tree-walk: micro-optimization in tree_entry_interesting
- - tree-walk: drop unused parameter from match_dir_prefix
+* cb/do-not-pretend-to-hijack-long-help (2011-10-03) 2 commits
+ - fixup: leave uppercase H alone
+ - use -h for synopsis and --help for manpage consistently
 
-* cs/perl-config-path-send-email (2011-09-30) 2 commits
- - use new Git::config_path() for aliasesfile
- - Add Git::config_path()
+Will squash the top one into the original unless somebody objects.
 
-* jc/checkout-from-tree-keep-local-changes (2011-09-30) 1 commit
- - checkout $tree $path: do not clobber local changes in $path not in $tree
+* cp/git-web-browse-browsers (2011-10-03) 1 commit
+ - git-web--browse: avoid the use of eval
+
+Will merge to "next".
+
+* il/archive-err-signal (2011-10-03) 1 commit
+ - transport: do not allow to push over git:// protocol
+
+Will merge to "next".
+
+* nd/daemon-log-sock-errors (2011-10-03) 1 commit
+ - daemon: log errors if we could not use some sockets
+
+Will merge to "next".
+
+* nd/document-err-packet (2011-10-03) 1 commit
+ - pack-protocol: document "ERR" line
+
+Will merge to "next".
+
+* nd/git-daemon-error-msgs (2011-10-03) 1 commit
+ - daemon: return "access denied" if a service is not allowed
+
+Will merge to "next".
+
+* jc/is-url-simplify (2011-10-03) 1 commit
+ - url.c: simplify is_url()
+
+Will merge to "next".
+
+* jn/ident-from-etc-mailname (2011-10-03) 1 commit
+ - ident: check /etc/mailname if email is unknown
+
+Will merge to "next".
+
+The warning might have to be squelched further, but that can be done as a
+separate patch in-tree.
+
+* jn/no-g-plus-s-on-bsd (2011-10-03) 1 commit
+ - Makefile: do not set setgid bit on directories on GNU/kFreeBSD
+
+Will merge to "next".
+
+* js/log-show-children (2011-10-04) 1 commit
+ - log --children
+
+Will merge to "next".
+
+* rs/name-rev-usage (2011-10-03) 1 commit
+ - name-rev: split usage string
+
+Will merge to "next".
+
+* rs/test-ctype (2011-10-03) 2 commits
+ - test-ctype: add test for is_pathspec_magic
+ - test-ctype: macrofy
+
+Will merge to "next".
+
+* rs/pending (2011-10-03) 8 commits
+ - commit: factor out clear_commit_marks_for_object_array
+ - checkout: use leak_pending flag
+ - bundle: use leak_pending flag
+ - bisect: use leak_pending flag
+ - revision: add leak_pending flag
+ - checkout: use add_pending_{object,sha1} in orphan check
+ - revision: factor out add_pending_sha1
+ - checkout: check for "Previous HEAD" notice in t2020
+
+* ph/transport-with-gitfile (2011-10-04) 4 commits
+ - Add test showing git-fetch groks gitfiles
+ - Teach transport about the gitfile mechanism
+ - Learn to handle gitfiles in enter_repo
+ - enter_repo: do not modify input
 
 --------------------------------------------------
 [Stalled]
@@ -62,6 +132,8 @@ branch on top of it sometime next week.
 
 The second from the bottom one needs to be replaced with a properly
 written commit log message.
+
+Will kick back to 'pu'.
 
 * jc/signed-push (2011-09-12) 7 commits
  - push -s: support pre-receive-signature hook
@@ -84,7 +156,6 @@ This was the v2 that updated notes tree on the receiving end.
 
 This is the third edition, that moves the preparation of the notes tree to
 the sending end.
-
 I expect that both of these topics will be discarded.
 
 * jk/add-i-hunk-filter (2011-07-27) 5 commits
@@ -95,7 +166,7 @@ I expect that both of these topics will be discarded.
  + add--interactive: factor out regex error handling
  + add--interactive: refactor patch mode argument processing
 
-Will be dropped.
+Will discard.
 
 * jh/receive-count-limit (2011-05-23) 10 commits
  - receive-pack: Allow server to refuse pushes with too many objects
@@ -110,6 +181,7 @@ Will be dropped.
  - Update technical docs to reflect side-band-64k capability in receive-pack
 
 Would need another round to separate per-pack and per-session limits.
+Will discard.
 
 * jk/generation-numbers (2011-09-11) 8 commits
  - metadata-cache.c: make two functions static
@@ -122,7 +194,8 @@ Would need another round to separate per-pack and per-session limits.
  - Merge branch 'jk/tag-contains-ab' (early part) into HEAD
 
 The initial "tag --contains" de-pessimization without need for generation
-numbers is already in; backburnered.
+numbers is already in.
+Will discard.
 
 * sr/transport-helper-fix-rfc (2011-07-19) 2 commits
  - t5800: point out that deleting branches does not work
@@ -136,31 +209,54 @@ command line, 2011-08-25) in bk/ancestry-path would help.
  - git-compat-util: add generic find_last_dir_sep that respects is_dir_sep
 
 Incomplete with respect to backslash processing in prefix_filename(), and
-also loses the ability to escape glob specials. Perhaps drop?
+also loses the ability to escape glob specials.
+Will discard.
 
 --------------------------------------------------
 [Cooking]
 
+* jc/grep-untracked-exclude (2011-10-04) 1 commit
+ - Merge branch 'jc/maint-grep-untracked-exclude' into jc/grep-untracked-exclude
+ (this branch uses bw/grep-no-index-no-exclude and jc/maint-grep-untracked-exclude.)
+
+* jc/maint-grep-untracked-exclude (2011-10-04) 1 commit
+ - grep: teach --untracked and --exclude-standard options
+ (this branch is used by jc/grep-untracked-exclude; uses bw/grep-no-index-no-exclude.)
+
+Will merge to "next".
+
+* dm/tree-walk (2011-09-28) 2 commits
+ - tree-walk: micro-optimization in tree_entry_interesting
+ - tree-walk: drop unused parameter from match_dir_prefix
+
+Will merge to "next".
+
+* cs/perl-config-path-send-email (2011-09-30) 2 commits
+ - use new Git::config_path() for aliasesfile
+ - Add Git::config_path()
+
+Will merge to "next".
+
+* jc/checkout-from-tree-keep-local-changes (2011-09-30) 1 commit
+ - checkout $tree $path: do not clobber local changes in $path not in $tree
+
+Will merge to "next".
+
 * jc/apply-blank-at-eof-fix (2011-09-26) 1 commit
  - apply --whitespace=error: correctly report new blank lines at end
 
+Will merge to "next".
+
 * nd/sparse-doc (2011-09-26) 1 commit
  - git-read-tree.txt: update sparse checkout examples
+
+Will merge to "next".
 
 * jp/get-ref-dir-unsorted (2011-09-30) 2 commits
  - refs: Use binary search to lookup refs faster
  - Don't sort ref_list too early
 
-* jc/grep-untracked-exclude (2011-09-28) 2 commits
- - Merge branch 'jc/maint-grep-untracked-exclude' into jc/grep-untracked-exclude
- - Merge branch 'jc/maint-grep-untracked-exclude' into jc/grep-untracked-exclude
- (this branch uses bw/grep-no-index-no-exclude and jc/maint-grep-untracked-exclude.)
-
-* jc/maint-grep-untracked-exclude (2011-09-28) 3 commits
- - grep: rename --exclude to --exclude-standard
- - grep: --untracked and --exclude tests
- - grep: teach --untracked and --exclude options
- (this branch is used by jc/grep-untracked-exclude; uses bw/grep-no-index-no-exclude.)
+Will merge to "next".
 
 * jc/parse-options-boolean (2011-09-28) 5 commits
  - apply: use OPT_NOOP_NOARG
@@ -169,17 +265,27 @@ also loses the ability to escape glob specials. Perhaps drop?
  - archive.c: use OPT_BOOL()
  - parse-options: deprecate OPT_BOOLEAN
 
+Will merge to "next".
+
 * mh/maint-notes-merge-pathbuf-fix (2011-09-27) 1 commit
  - notes_merge_commit(): do not pass temporary buffer to other function
+
+Will merge to "next".
 
 * ph/push-to-delete-nothing (2011-09-30) 1 commit
  - receive-pack: don't pass non-existent refs to post-{receive,update} hooks
 
+Will merge to "next".
+
 * ps/gitweb-js-with-lineno (2011-09-27) 1 commit
  - gitweb: Fix links to lines in blobs when javascript-actions are enabled
 
+Will merge to "next".
+
 * zj/send-email-authen-sasl (2011-09-29) 1 commit
  - send-email: auth plain/login fix
+
+Will merge to "next".
 
 * jc/maint-diffstat-numstat-context (2011-09-22) 1 commit
   (merged to 'next' on 2011-09-26 at 12539ab)
@@ -189,25 +295,34 @@ also loses the ability to escape glob specials. Perhaps drop?
 many context lines it is showing, so running --(num)stat with 0 lines of
 context internally gives a result that may be surprising to some people.
 
+Will merge to "master" as the second wave.
+
 * nd/maint-sparse-errors (2011-09-22) 2 commits
   (merged to 'next' on 2011-09-26 at cdcdec5)
  + Add explanation why we do not allow to sparse checkout to empty working tree
  + sparse checkout: show error messages when worktree shaping fails
 
-* rs/diff-cleanup-records-fix (2011-09-26) 1 commit
+Will merge to "master" as the third wave.
+
+* rs/diff-cleanup-records-fix (2011-10-03) 2 commits
+ - diff: resurrect XDF_NEED_MINIMAL with --minimal
   (merged to 'next' on 2011-09-27 at 3bd75d8)
  + Revert removal of multi-match discard heuristic in 27af01
+
+Will merge to "next".
 
 * di/fast-import-empty-tag-note-fix (2011-09-22) 2 commits
  - fast-import: don't allow to note on empty branch
  - fast-import: don't allow to tag empty branch
 
-Looked reasonable.
+Will merge to "next".
 
 * js/check-attr-cached (2011-09-22) 2 commits
   (merged to 'next' on 2011-09-27 at 74d7b66)
  + t0003: remove extra whitespaces
  + Teach '--cached' option to check-attr
+
+Will merge to "master" as the first wave.
 
 * bw/grep-no-index-no-exclude (2011-09-15) 2 commits
   (merged to 'next' on 2011-09-26 at 776f13b)
@@ -215,25 +330,37 @@ Looked reasonable.
  + grep: do not use --index in the short usage output
  (this branch is used by jc/grep-untracked-exclude and jc/maint-grep-untracked-exclude.)
 
+Will merge to "master" as the third wave.
+
 * jc/want-commit (2011-09-15) 1 commit
   (merged to 'next' on 2011-09-26 at 5841512)
  + Allow git merge ":/<pattern>"
+
+Will merge to "master" as the first wave.
 
 * jc/ls-remote-short-help (2011-09-16) 1 commit
   (merged to 'next' on 2011-09-26 at e24a27a)
  + ls-remote: a lone "-h" is asking for help
 
+Will merge to "master" as the first wave.
+
 * jc/maint-bundle-too-quiet (2011-09-19) 1 commit
   (merged to 'next' on 2011-09-26 at ba140d4)
  + Teach progress eye-candy to fetch_refs_from_bundle()
+
+Will merge to "master" as the first wave.
 
 * jk/filter-branch-require-clean-work-tree (2011-09-15) 1 commit
   (merged to 'next' on 2011-09-26 at 206a74a)
  + filter-branch: use require_clean_work_tree
 
+Will merge to "master" as the first wave.
+
 * jn/gitweb-highlite-sanitise (2011-09-16) 1 commit
   (merged to 'next' on 2011-09-26 at c79390a)
  + gitweb: Strip non-printable characters from syntax highlighter output
+
+Will merge to "master" as the first wave.
 
 * mh/check-ref-format-3 (2011-09-16) 22 commits
  - add_ref(): verify that the refname is formatted correctly
@@ -259,13 +386,19 @@ Looked reasonable.
  - git check-ref-format: add options --allow-onelevel and --refspec-pattern
  - t1402: add some more tests
 
+Will merge to "next".
+
 * cn/eradicate-working-copy (2011-09-21) 1 commit
   (merged to 'next' on 2011-09-26 at 2683d36)
  + Remove 'working copy' from the documentation and C code
 
+Will merge to "master" as the first wave.
+
 * js/bisect-no-checkout (2011-09-21) 1 commit
   (merged to 'next' on 2011-09-21 at e94ad3e)
  + bisect: fix exiting when checkout failed in bisect_start()
+
+Will merge to "master" as the third wave.
 
 * mg/maint-doc-sparse-checkout (2011-09-21) 3 commits
   (merged to 'next' on 2011-09-21 at f316dec)
@@ -273,13 +406,19 @@ Looked reasonable.
  + git-read-tree.txt: language and typography fixes
  + unpack-trees: print "Aborting" to stderr
 
+Will merge to "master" as the first wave.
+
 * ms/patch-id-with-overlong-line (2011-09-22) 1 commit
   (merged to 'next' on 2011-09-26 at a33d0b2)
  + patch-id.c: use strbuf instead of a fixed buffer
 
+Will merge to "master" as the first wave.
+
 * sn/doc-update-index-assume-unchanged (2011-09-21) 1 commit
   (merged to 'next' on 2011-09-21 at 325e796)
  + Documentation/git-update-index: refer to 'ls-files'
+
+Will merge to "master" as the first wave.
 
 * jc/request-pull-show-head-4 (2011-09-21) 7 commits
  - request-pull: use the branch description
@@ -291,10 +430,14 @@ Looked reasonable.
  - Merge branch 'bk/ancestry-path' into jc/branch-desc
  (this branch uses bk/ancestry-path.)
 
+Will merge to "next".
+
 * jm/mergetool-pathspec (2011-09-26) 2 commits
   (merged to 'next' on 2011-09-26 at f699566)
  + mergetool: no longer need to save standard input
  + mergetool: Use args as pathspec to unmerged files
+
+Will merge to "master" as the second wave.
 
 * nd/maint-autofix-tag-in-head (2011-09-18) 4 commits
   (merged to 'next' on 2011-09-27 at dc8e2e3)
@@ -303,13 +446,14 @@ Looked reasonable.
  + merge: use return value of resolve_ref() to determine if HEAD is invalid
  + merge: keep stash[] a local variable
 
+Will merge to "master" as the third wave.
+
 * jk/maint-fetch-submodule-check-fix (2011-09-12) 1 commit
   (merged to 'next' on 2011-09-12 at 3c73b8c)
  + fetch: avoid quadratic loop checking for updated submodules
  (this branch is used by jk/argv-array.)
 
-This probably can wait, as long as the other half of the regression fix
-is in the upcoming release.
+Will merge to "master" as the first wave.
 
 * bc/attr-ignore-case (2011-09-14) 5 commits
   (merged to 'next' on 2011-09-26 at 1e0814c)
@@ -319,9 +463,13 @@ is in the upcoming release.
  + cleanup: use internal memory allocation wrapper functions everywhere
  + attr.c: avoid inappropriate access to strbuf "buf" member
 
+Will merge to "master" as the second wave.
+
 * jc/maint-fsck-fwrite-size-check (2011-09-11) 1 commit
   (merged to 'next' on 2011-09-16 at 2258f11)
  + fsck: do not abort upon finding an empty blob
+
+Will merge to "master" as the first wave.
 
 * jk/argv-array (2011-09-14) 7 commits
   (merged to 'next' on 2011-09-16 at 90feab4)
@@ -334,31 +482,40 @@ is in the upcoming release.
  + add sha1_array API docs
  (this branch uses jk/maint-fetch-submodule-check-fix.)
 
+This has a slight interaction with the "pending_sha1 without having to
+read the object" work on rs/pending, but otherwise OK.
+
+Will merge to "master" as the first wave.
+
 * js/cred-macos-x-keychain-2 (2011-09-14) 1 commit
   (merged to 'next' on 2011-09-26 at 4f289a4)
  + contrib: add a pair of credential helpers for Mac OS X's keychain
  (this branch uses jk/http-auth-keyring.)
 
-Welcome addition to build our confidence in the jk/http-auth-keyring topic.
+Will kick back to 'pu' together with 'jk/http-auth-keyring'.
 
 * rj/maint-t9159-svn-rev-notation (2011-09-21) 1 commit
   (merged to 'next' on 2011-09-26 at 525a567)
  + t9159-*.sh: skip for mergeinfo test for svn <= 1.4
 
+Will merge to "master" as the first wave.
+
 * tr/doc-note-rewrite (2011-09-13) 1 commit
   (merged to 'next' on 2011-09-16 at 5fe813a)
  + Documentation: basic configuration of notes.rewriteRef
 
-Updated to a safer wording.
+Will merge to "master" as the first wave.
 
 * jk/default-attr (2011-09-12) 1 commit
  - attr: map builtin userdiff drivers to well-known extensions
 
-Will be re-rolled after 1.7.7 final.
+Will discard, expecting a fresh re-roll.
 
 * hl/iso8601-more-zone-formats (2011-09-12) 1 commit
   (merged to 'next' on 2011-09-12 at 270f5c7)
  + date.c: Support iso8601 timezone formats
+
+Will merge to "master" as the first wave.
 
 * jc/run-receive-hook-cleanup (2011-09-12) 1 commit
   (merged to 'next' on 2011-09-12 at 68dd431)
@@ -366,6 +523,7 @@ Will be re-rolled after 1.7.7 final.
  (this branch is used by jc/signed-push and jc/signed-push-3.)
 
 Just to make it easier to run a hook that reads from its standard input.
+Will merge to "master" as the first wave.
 
 * jk/for-each-ref (2011-09-08) 5 commits
   (merged to 'next' on 2011-09-14 at 36ed515)
@@ -375,17 +533,20 @@ Just to make it easier to run a hook that reads from its standard input.
  + t6300: add more body-parsing tests
  + t7004: factor out gpg setup
 
+Will merge to "master" as the first wave.
+
 * wh/normalize-alt-odb-path (2011-09-07) 1 commit
   (merged to 'next' on 2011-09-14 at 96f722b)
  + sha1_file: normalize alt_odb path before comparing and storing
+
+Will merge to "master" as the first wave.
 
 * fk/use-kwset-pickaxe-grep-f (2011-09-11) 2 commits
   (merged to 'next' on 2011-09-14 at 436d858)
  + obstack.c: Fix some sparse warnings
  + sparse: Fix an "Using plain integer as NULL pointer" warning
 
-In general we would prefer to see these fixed at the upstream first, but
-we have essentially forked from them at their last GPLv2 versions...
+Will merge to "master" as the first wave.
 
 * jc/make-static (2011-09-14) 4 commits
   (merged to 'next' on 2011-09-14 at c5943ff)
@@ -395,11 +556,13 @@ we have essentially forked from them at their last GPLv2 versions...
  + vcs-svn: remove unused functions and make some static
  + make-static: master
 
-With a few fix-ups; probably needs to be ejected after 1.7.7 happens.
+Will discard (or at least kick it back to 'pu').
 
 * rj/quietly-create-dep-dir (2011-09-11) 1 commit
   (merged to 'next' on 2011-09-12 at 93d1c6b)
  + Makefile: Make dependency directory creation less noisy
+
+Will merge to "master" as the first wave.
 
 * mz/remote-rename (2011-09-11) 4 commits
   (merged to 'next' on 2011-09-26 at 5e64f68)
@@ -408,18 +571,21 @@ With a few fix-ups; probably needs to be ejected after 1.7.7 happens.
  + remote: "rename o foo" should not rename ref "origin/bar"
  + remote: write correct fetch spec when renaming remote 'remote'
 
+Will merge to "master" as the second wave.
+
 * cb/common-prefix-unification (2011-09-12) 3 commits
   (merged to 'next' on 2011-09-14 at 24f571f)
  + rename pathspec_prefix() to common_prefix() and move to dir.[ch]
  + consolidate pathspec_prefix and common_prefix
  + remove prefix argument from pathspec_prefix
 
+Will merge to "master" as the second wave.
+
 * cb/send-email-help (2011-09-12) 1 commit
   (merged to 'next' on 2011-09-14 at ae71999)
  + send-email: add option -h
 
-A separate set of patches to remove the hidden fully-spelled "help" from
-other commands would be nice to have as companion patches as well.
+Will merge to "master" as the first wave.
 
 * jc/fetch-pack-fsck-objects (2011-09-04) 3 commits
   (merged to 'next' on 2011-09-12 at a031347)
@@ -431,6 +597,8 @@ We had an option to verify the sent objects before accepting a push but
 lacked the corresponding option when fetching. In the light of the recent
 k.org incident, a change like this would be a good addition.
 
+Will merge to "master" as the first wave.
+
 * jc/fetch-verify (2011-09-01) 3 commits
   (merged to 'next' on 2011-09-12 at 3f491ab)
  + fetch: verify we have everything we need before updating our ref
@@ -441,6 +609,8 @@ k.org incident, a change like this would be a good addition.
 During a fetch, we verify that the pack stream is self consistent,
 but did not verify that the refs that are updated are consistent with
 objects contained in the packstream, and this adds such a check.
+
+Will merge to "master" as the first wave.
 
 * jc/receive-verify (2011-09-09) 6 commits
   (merged to 'next' on 2011-09-12 at 856de78)
@@ -456,10 +626,14 @@ While accepting a push, we verify that the pack stream is self consistent,
 but did not verify that the refs the push updates are consistent with
 objects contained in the packstream, and this adds such a check.
 
+Will merge to "master" as the third wave.
+
 * jn/maint-http-error-message (2011-09-06) 2 commits
   (merged to 'next' on 2011-09-12 at a843f03)
  + http: avoid empty error messages for some curl errors
  + http: remove extra newline in error message
+
+Will merge to "master" as the second wave.
 
 * bk/ancestry-path (2011-09-15) 4 commits
   (merged to 'next' on 2011-09-15 at aa64d04)
@@ -469,6 +643,8 @@ objects contained in the packstream, and this adds such a check.
  + revision: keep track of the end-user input from the command line
  + rev-list: Demonstrate breakage with --ancestry-path --all
  (this branch is used by jc/request-pull-show-head-4.)
+
+Will merge to "master" as the first wave.
 
 * mg/branch-list (2011-09-13) 7 commits
   (merged to 'next' on 2011-09-14 at 6610a2e)
@@ -482,10 +658,14 @@ objects contained in the packstream, and this adds such a check.
  + git-tag: introduce long forms for the options
  + t6040: test branch -vv
 
+Will merge to "master" as the first wave.
+
 * mm/rebase-i-exec-edit (2011-08-26) 2 commits
   (merged to 'next' on 2011-09-02 at e75b1b9)
  + rebase -i: notice and warn if "exec $cmd" modifies the index or the working tree
  + rebase -i: clean error message for --continue after failed exec
+
+Will merge to "master" as the first wave.
 
 * mm/mediawiki-as-a-remote (2011-09-28) 6 commits
   (merged to 'next' on 2011-09-28 at a1c9ae5)
@@ -498,7 +678,7 @@ objects contained in the packstream, and this adds such a check.
  + git-remote-mediawiki: allow push to set MediaWiki metadata
  + Add a remote helper to interact with mediawiki (fetch & push)
 
-Fun.
+Will merge to "master" as the first wave.
 
 * bc/unstash-clean-crufts (2011-08-27) 4 commits
   (merged to 'next' on 2011-09-02 at 7bfd66f)
@@ -507,14 +687,13 @@ Fun.
  + git-stash.sh: fix typo in error message
  + t/t3905: use the name 'actual' for test output, swap arguments to test_cmp
 
-* da/make-auto-header-dependencies (2011-08-30) 1 commit
-  (merged to 'next' on 2011-09-02 at e04a4af)
- + Makefile: Improve compiler header dependency check
- (this branch uses fk/make-auto-header-dependencies.)
+Will merge to "master" as the first wave.
 
 * gb/am-hg-patch (2011-08-29) 1 commit
   (merged to 'next' on 2011-09-02 at 3edfe4c)
  + am: preliminary support for hg patches
+
+Will merge to "master" as the first wave.
 
 * jc/diff-index-unpack (2011-08-29) 3 commits
   (merged to 'next' on 2011-09-02 at 4206bd9)
@@ -522,13 +701,19 @@ Fun.
  + unpack-trees: allow pruning with pathspec
  + traverse_trees(): allow pruning with pathspec
 
+Will merge to "master" as the first wave.
+
 * nm/grep-object-sha1-lock (2011-08-30) 1 commit
   (merged to 'next' on 2011-09-02 at 336f57d)
  + grep: Fix race condition in delta_base_cache
 
+Will merge to "master" as the first wave.
+
 * tr/mergetool-valgrind (2011-08-30) 1 commit
   (merged to 'next' on 2011-09-02 at f5f2c61)
  + Symlink mergetools scriptlets into valgrind wrappers
+
+Will merge to "master" as the first wave.
 
 * fg/submodule-auto-push (2011-09-11) 2 commits
   (merged to 'next' on 2011-09-11 at 3fc86f7)
@@ -540,6 +725,8 @@ Fun.
 What the topic aims to achieve may make sense, but the implementation
 looked somewhat suboptimal.
 
+Will kick back to "pu" at least tentatively.
+
 * jc/traverse-commit-list (2011-08-22) 3 commits
   (merged to 'next' on 2011-08-24 at df50dd7)
  + revision.c: update show_object_with_name() without using malloc()
@@ -547,10 +734,21 @@ looked somewhat suboptimal.
  + rev-list: fix finish_object() call
  (this branch is used by jc/fetch-verify and jc/receive-verify.)
 
+Will merge to "master" as the first wave.
+
 * fk/make-auto-header-dependencies (2011-08-18) 1 commit
   (merged to 'next' on 2011-08-24 at 3da2c25)
  + Makefile: Use computed header dependencies if the compiler supports it
  (this branch is used by da/make-auto-header-dependencies.)
+
+Will merge to "master" as the first wave.
+
+* da/make-auto-header-dependencies (2011-08-30) 1 commit
+  (merged to 'next' on 2011-09-02 at e04a4af)
+ + Makefile: Improve compiler header dependency check
+ (this branch uses fk/make-auto-header-dependencies.)
+
+Will merge to "master" as the first wave.
 
 * mh/iterate-refs (2011-09-11) 7 commits
   (merged to 'next' on 2011-09-27 at c289699)
@@ -562,15 +760,14 @@ looked somewhat suboptimal.
  + Access reference caches only through new function get_cached_refs()
  + Extract a function clear_cached_refs()
 
-I did not see anything fundamentally wrong with this series, but it was
-unclear what the benefit of these changes are.  If the series were to read
-parts of the ref hierarchy (like refs/heads/) lazily, the story would
-have been different, though.
+Will merge to "master" as the second wave.
 
 * hv/submodule-update-none (2011-08-11) 2 commits
   (merged to 'next' on 2011-08-24 at 5302fc1)
  + add update 'none' flag to disable update of submodule by default
  + submodule: move update configuration variable further up
+
+Will merge to "master" as the second wave.
 
 * jc/lookup-object-hash (2011-08-11) 6 commits
   (merged to 'next' on 2011-08-24 at 5825411)
@@ -585,14 +782,14 @@ I do not think there is anything fundamentally wrong with this series, but
 the risk of breakage far outweighs observed performance gain in one
 particular workload. Will keep it in 'next' at least for one cycle.
 
+Will kick back to 'pu'.
+
 * fg/submodule-git-file-git-dir (2011-08-22) 2 commits
   (merged to 'next' on 2011-08-23 at 762194e)
  + Move git-dir for submodules
  + rev-parse: add option --resolve-git-dir <path>
 
-I do not think there is anything fundamentally wrong with this series, but
-the risk of breakage outweighs any benefit for having this new
-feature. Will keep it in 'next' at least for one cycle.
+Will merge to "master" as the second wave.
 
 * jk/http-auth-keyring (2011-09-28) 22 commits
   (merged to 'next' on 2011-09-28 at 65ce6c2)
@@ -624,6 +821,8 @@ feature. Will keep it in 'next' at least for one cycle.
  + url: decode buffers that are not NUL-terminated
  (this branch is tangled with js/cred-macos-x-keychain-2.)
 
+Will kick back to 'pu'.
+
 * rr/revert-cherry-pick-continue (2011-09-11) 19 commits
   (merged to 'next' on 2011-09-11 at 7d78054)
  + builtin/revert.c: make commit_list_append() static
@@ -647,53 +846,7 @@ feature. Will keep it in 'next' at least for one cycle.
  + config: Introduce functions to write non-standard file
  + advice: Introduce error_resolve_conflict
 
---------------------------------------------------
-[Discarded]
+Will merge to "master" as the first wave.
 
-* js/cred-macos-x-keychain (2011-09-11) 15 commits
-  (merged to 'next' on 2011-09-12 at 8d17f94)
- + contrib: add a credential helper for Mac OS X's keychain
-  (merged to 'next' on 2011-09-11 at 491ce6a)
- + credentials: make credential_fill_gently() static
-  (merged to 'next' on 2011-08-03 at b06e80e)
- + credentials: add "getpass" helper
- + credentials: add "store" helper
- + credentials: add "cache" helper
- + docs: end-user documentation for the credential subsystem
- + http: use hostname in credential description
- + allow the user to configure credential helpers
- + look for credentials in config before prompting
- + http: use credential API to get passwords
- + introduce credentials API
- + http: retry authentication failures for all http requests
- + remote-curl: don't retry auth failures with dumb protocol
- + improve httpd auth tests
- + url: decode buffers that are not NUL-terminated
- (this branch is tangled with jk/http-auth-keyring and js/cred-macos-x-keychain-2.)
-
-Reverted out of 'next'.
-
-* jc/reflog-walk-use-only-nsha1 (2011-09-13) 4 commits
- . (baloon) teach reflog-walk to look at only new-sha1 field
- + environment.c: have_git_dir() has users on Cygwin
-  (merged to 'next' on 2011-09-11 at 2acb0af)
- + vcs-svn: remove unused functions and make some static
- + make-static: master
- (this branch is tangled with jc/make-static.)
-
-* hw/maint-abspath-cwd-limit (2011-09-21) 3 commits
-  (merged to 'next' on 2011-09-21 at 210cf9a)
- + Revert 622fea4 (abspath.c: increase array size of cwd variable)
-  (merged to 'next' on 2011-09-19 at 7d5e921)
- + abspath.c: increase array size of cwd variable to PATH_MAX
- + path.c: increase array size of cwd variable to PATH_MAX
-
-Reverted out of 'next'.
-
-* jc/request-pull-show-head (2011-09-13) 2 commits
-  (merged to 'next' on 2011-09-13 at c82fb3a)
- + Revert "State what commit to expect in request-pull"
-  (merged to 'next' on 2011-09-12 at c1c7b73)
- + State what commit to expect in request-pull
-
-Reverted out of 'next'.
+Note that generalized sequencer still needs a bit more thought (see the
+summary by Ram at $gmane/179613).
