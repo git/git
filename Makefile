@@ -250,10 +250,6 @@ all::
 #   DEFAULT_EDITOR='$GIT_FALLBACK_EDITOR',
 #   DEFAULT_EDITOR='"C:\Program Files\Vim\gvim.exe" --nofork'
 #
-# Define COMPUTE_HEADER_DEPENDENCIES if your compiler supports the -MMD option
-# and you want to avoid rebuilding objects when an unrelated header file
-# changes.
-#
 # Define CHECK_HEADER_DEPENDENCIES to check for problems in the hard-coded
 # dependency rules.
 #
@@ -1242,6 +1238,15 @@ endif
 ifdef CHECK_HEADER_DEPENDENCIES
 COMPUTE_HEADER_DEPENDENCIES =
 USE_COMPUTED_HEADER_DEPENDENCIES =
+else
+ifndef COMPUTE_HEADER_DEPENDENCIES
+dep_check = $(shell sh -c \
+	'$(CC) -c -MF /dev/null -MMD -MP -x c /dev/null -o /dev/null 2>&1; \
+	echo $$?')
+ifeq ($(dep_check),0)
+COMPUTE_HEADER_DEPENDENCIES=YesPlease
+endif
+endif
 endif
 
 ifdef COMPUTE_HEADER_DEPENDENCIES
