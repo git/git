@@ -19,6 +19,7 @@
 #include "ll-merge.h"
 #include "resolve-undo.h"
 #include "submodule.h"
+#include "argv-array.h"
 
 static const char * const checkout_usage[] = {
 	"git checkout [options] <branch>",
@@ -588,24 +589,12 @@ static void update_refs_for_switch(struct checkout_opts *opts,
 		report_tracking(new);
 }
 
-struct rev_list_args {
-	int argc;
-	int alloc;
-	const char **argv;
-};
-
-static void add_one_rev_list_arg(struct rev_list_args *args, const char *s)
-{
-	ALLOC_GROW(args->argv, args->argc + 1, args->alloc);
-	args->argv[args->argc++] = s;
-}
-
 static int add_one_ref_to_rev_list_arg(const char *refname,
 				       const unsigned char *sha1,
 				       int flags,
 				       void *cb_data)
 {
-	add_one_rev_list_arg(cb_data, refname);
+	argv_array_push(cb_data, refname);
 	return 0;
 }
 
@@ -685,15 +674,14 @@ static void suggest_reattach(struct commit *commit, struct rev_info *revs)
  */
 static void orphaned_commit_warning(struct commit *commit)
 {
-	struct rev_list_args args = { 0, 0, NULL };
+	struct argv_array args = ARGV_ARRAY_INIT;
 	struct rev_info revs;
 
-	add_one_rev_list_arg(&args, "(internal)");
-	add_one_rev_list_arg(&args, sha1_to_hex(commit->object.sha1));
-	add_one_rev_list_arg(&args, "--not");
+	argv_array_push(&args, "(internal)");
+	argv_array_push(&args, sha1_to_hex(commit->object.sha1));
+	argv_array_push(&args, "--not");
 	for_each_ref(add_one_ref_to_rev_list_arg, &args);
-	add_one_rev_list_arg(&args, "--");
-	add_one_rev_list_arg(&args, NULL);
+	argv_array_push(&args, "--");
 
 	init_revisions(&revs, NULL);
 	if (setup_revisions(args.argc - 1, args.argv, &revs, NULL) != 1)
@@ -705,6 +693,7 @@ static void orphaned_commit_warning(struct commit *commit)
 	else
 		describe_detached_head(_("Previous HEAD position was"), commit);
 
+	argv_array_clear(&args);
 	clear_commit_marks(commit, -1);
 	for_each_ref(clear_commit_marks_from_one_ref, NULL);
 }

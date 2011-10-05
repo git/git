@@ -501,6 +501,7 @@ VCSSVN_LIB=vcs-svn/lib.a
 
 LIB_H += advice.h
 LIB_H += archive.h
+LIB_H += argv-array.h
 LIB_H += attr.h
 LIB_H += blob.h
 LIB_H += builtin.h
@@ -584,6 +585,7 @@ LIB_OBJS += alloc.o
 LIB_OBJS += archive.o
 LIB_OBJS += archive-tar.o
 LIB_OBJS += archive-zip.o
+LIB_OBJS += argv-array.o
 LIB_OBJS += attr.o
 LIB_OBJS += base85.o
 LIB_OBJS += bisect.o
