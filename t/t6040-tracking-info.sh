@@ -51,6 +51,22 @@ test_expect_success 'branch -v' '
 	test_i18ncmp expect actual
 '
 
+cat >expect <<\EOF
+b1 origin/master: ahead 1, behind 1
+b2 origin/master: ahead 1, behind 1
+b3 origin/master: behind 1
+b4 origin/master: ahead 2
+EOF
+
+test_expect_success 'branch -vv' '
+	(
+		cd test &&
+		git branch -vv
+	) |
+	sed -n -e "$script" >actual &&
+	test_i18ncmp expect actual
+'
+
 test_expect_success 'checkout' '
 	(
 		cd test && git checkout b1

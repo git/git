@@ -23,7 +23,7 @@ test_expect_success \
 test_expect_success \
     'git branch --help should not have created a bogus branch' '
      git branch --help </dev/null >/dev/null 2>/dev/null;
-     ! test -f .git/refs/heads/--help
+     test_path_is_missing .git/refs/heads/--help
 '
 
 test_expect_success 'branch -h in broken repository' '
@@ -39,11 +39,11 @@ test_expect_success 'branch -h in broken repository' '
 
 test_expect_success \
     'git branch abc should create a branch' \
-    'git branch abc && test -f .git/refs/heads/abc'
+    'git branch abc && test_path_is_file .git/refs/heads/abc'
 
 test_expect_success \
     'git branch a/b/c should create a branch' \
-    'git branch a/b/c && test -f .git/refs/heads/a/b/c'
+    'git branch a/b/c && test_path_is_file .git/refs/heads/a/b/c'
 
 cat >expect <<EOF
 $_z40 $HEAD $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150200 +0000	branch: Created from master
@@ -52,15 +52,15 @@ test_expect_success \
     'git branch -l d/e/f should create a branch and a log' \
 	'GIT_COMMITTER_DATE="2005-05-26 23:30" \
      git branch -l d/e/f &&
-	 test -f .git/refs/heads/d/e/f &&
-	 test -f .git/logs/refs/heads/d/e/f &&
+	 test_path_is_file .git/refs/heads/d/e/f &&
+	 test_path_is_file .git/logs/refs/heads/d/e/f &&
 	 test_cmp expect .git/logs/refs/heads/d/e/f'
 
 test_expect_success \
     'git branch -d d/e/f should delete a branch and a log' \
 	'git branch -d d/e/f &&
-	 test ! -f .git/refs/heads/d/e/f &&
-	 test ! -f .git/logs/refs/heads/d/e/f'
+	 test_path_is_missing .git/refs/heads/d/e/f &&
+	 test_path_is_missing .git/logs/refs/heads/d/e/f'
 
 test_expect_success \
     'git branch j/k should work after branch j has been deleted' \
@@ -78,13 +78,13 @@ test_expect_success \
     'git branch -m m m/m should work' \
        'git branch -l m &&
         git branch -m m m/m &&
-        test -f .git/logs/refs/heads/m/m'
+	test_path_is_file .git/logs/refs/heads/m/m'
 
 test_expect_success \
     'git branch -m n/n n should work' \
        'git branch -l n/n &&
         git branch -m n/n n
-        test -f .git/logs/refs/heads/n'
+	test_path_is_file .git/logs/refs/heads/n'
 
 test_expect_success 'git branch -m o/o o should fail when o/p exists' '
 	git branch o/o &&
@@ -110,6 +110,38 @@ test_expect_success 'git branch -M baz bam should succeed when baz is checked ou
 	git branch -M baz bam
 '
 
+test_expect_success 'git branch -v -d t should work' '
+	git branch t &&
+	test_path_is_file .git/refs/heads/t &&
+	git branch -v -d t &&
+	test_path_is_missing .git/refs/heads/t
+'
+
+test_expect_success 'git branch -v -m t s should work' '
+	git branch t &&
+	test_path_is_file .git/refs/heads/t &&
+	git branch -v -m t s &&
+	test_path_is_missing .git/refs/heads/t &&
+	test_path_is_file .git/refs/heads/s &&
+	git branch -d s
+'
+
+test_expect_success 'git branch -m -d t s should fail' '
+	git branch t &&
+	test_path_is_file .git/refs/heads/t &&
+	test_must_fail git branch -m -d t s &&
+	git branch -d t &&
+	test_path_is_missing .git/refs/heads/t
+'
+
+test_expect_success 'git branch --list -d t should fail' '
+	git branch t &&
+	test_path_is_file .git/refs/heads/t &&
+	test_must_fail git branch --list -d t &&
+	git branch -d t &&
+	test_path_is_missing .git/refs/heads/t
+'
+
 mv .git/config .git/config-saved
 
 test_expect_success 'git branch -m q q2 without config should succeed' '
@@ -124,12 +156,12 @@ git config branch.s/s.dummy Hello
 test_expect_success \
     'git branch -m s/s s should work when s/t is deleted' \
        'git branch -l s/s &&
-        test -f .git/logs/refs/heads/s/s &&
+	test_path_is_file .git/logs/refs/heads/s/s &&
         git branch -l s/t &&
-        test -f .git/logs/refs/heads/s/t &&
+	test_path_is_file .git/logs/refs/heads/s/t &&
         git branch -d s/t &&
         git branch -m s/s s &&
-        test -f .git/logs/refs/heads/s'
+	test_path_is_file .git/logs/refs/heads/s'
 
 test_expect_success 'config information was renamed, too' \
 	"test $(git config branch.s.dummy) = Hello &&
@@ -140,8 +172,8 @@ test_expect_success 'renaming a symref is not allowed' \
 	git symbolic-ref refs/heads/master2 refs/heads/master &&
 	test_must_fail git branch -m master2 master3 &&
 	git symbolic-ref refs/heads/master2 &&
-	test -f .git/refs/heads/master &&
-	! test -f .git/refs/heads/master3
+	test_path_is_file .git/refs/heads/master &&
+	test_path_is_missing .git/refs/heads/master3
 '
 
 test_expect_success SYMLINKS \
@@ -250,8 +282,8 @@ test_expect_success \
     'git checkout -b g/h/i -l should create a branch and a log' \
 	'GIT_COMMITTER_DATE="2005-05-26 23:30" \
      git checkout -b g/h/i -l master &&
-	 test -f .git/refs/heads/g/h/i &&
-	 test -f .git/logs/refs/heads/g/h/i &&
+	 test_path_is_file .git/refs/heads/g/h/i &&
+	 test_path_is_file .git/logs/refs/heads/g/h/i &&
 	 test_cmp expect .git/logs/refs/heads/g/h/i'
 
 test_expect_success 'checkout -b makes reflog by default' '

@@ -9,8 +9,8 @@ SYNOPSIS
 --------
 [verse]
 'git branch' [--color[=<when>] | --no-color] [-r | -a]
-	[-v [--abbrev=<length> | --no-abbrev]]
-	[(--merged | --no-merged | --contains) [<commit>]]
+	[--list] [-v [--abbrev=<length> | --no-abbrev]]
+	[(--merged | --no-merged | --contains) [<commit>]] [<pattern>...]
 'git branch' [--set-upstream | --track | --no-track] [-l] [-f] <branchname> [<start-point>]
 'git branch' (-m | -M) [<oldbranch>] <newbranch>
 'git branch' (-d | -D) [-r] <branchname>...
@@ -20,7 +20,11 @@ DESCRIPTION
 
 With no arguments, existing branches are listed and the current branch will
 be highlighted with an asterisk.  Option `-r` causes the remote-tracking
-branches to be listed, and option `-a` shows both.
+branches to be listed, and option `-a` shows both. This list mode is also
+activated by the `--list` option (see below).
+<pattern> restricts the output to matching branches, the pattern is a shell
+wildcard (i.e., matched using fnmatch(3))
+Multiple patterns may be given; if any of them matches, the tag is shown.
 
 With `--contains`, shows only the branches that contain the named commit
 (in other words, the branches whose tip commits are descendants of the
@@ -64,6 +68,7 @@ way to clean up all obsolete remote-tracking branches.
 OPTIONS
 -------
 -d::
+--delete::
 	Delete a branch. The branch must be fully merged in its
 	upstream branch, or in `HEAD` if no upstream was set with
 	`--track` or `--set-upstream`.
@@ -72,6 +77,7 @@ OPTIONS
 	Delete a branch irrespective of its merged status.
 
 -l::
+--create-reflog::
 	Create the branch's reflog.  This activates recording of
 	all changes made to the branch ref, enabling use of date
 	based sha1 expressions such as "<branchname>@\{yesterday}".
@@ -84,6 +90,7 @@ OPTIONS
 	already. Without `-f` 'git branch' refuses to change an existing branch.
 
 -m::
+--move::
 	Move/rename a branch and the corresponding reflog.
 
 -M::
@@ -100,14 +107,21 @@ OPTIONS
 	Same as `--color=never`.
 
 -r::
+--remotes::
 	List or delete (if used with -d) the remote-tracking branches.
 
 -a::
+--all::
 	List both remote-tracking branches and local branches.
+
+--list::
+	Activate the list mode. `git branch <pattern>` would try to create a branch,
+	use `git branch --list <pattern>` to list matching branches.
 
 -v::
 --verbose::
-	Show sha1 and commit subject line for each head, along with
+	When in list mode,
+	show sha1 and commit subject line for each head, along with
 	relationship to upstream branch (if any). If given twice, print
 	the name of the upstream branch, as well.
 
