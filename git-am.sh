@@ -311,6 +311,40 @@ split_patches () {
 		this=
 		msgnum=
 		;;
+	hg)
+		this=0
+		for hg in "$@"
+		do
+			this=$(( $this + 1 ))
+			msgnum=$(printf "%0${prec}d" $this)
+			# hg stores changeset metadata in #-commented lines preceding
+			# the commit message and diff(s). The only metadata we care about
+			# are the User and Date (Node ID and Parent are hashes which are
+			# only relevant to the hg repository and thus not useful to us)
+			# Since we cannot guarantee that the commit message is in
+			# git-friendly format, we put no Subject: line and just consume
+			# all of the message as the body
+			perl -M'POSIX qw(strftime)' -ne 'BEGIN { $subject = 0 }
+				if ($subject) { print ; }
+				elsif (/^\# User /) { s/\# User/From:/ ; print ; }
+				elsif (/^\# Date /) {
+					my ($hashsign, $str, $time, $tz) = split ;
+					$tz = sprintf "%+05d", (0-$tz)/36;
+					print "Date: " .
+					      strftime("%a, %d %b %Y %H:%M:%S ",
+						       localtime($time))
+					      . "$tz\n";
+				} elsif (/^\# /) { next ; }
+				else {
+					print "\n", $_ ;
+					$subject = 1;
+				}
+			' <"$hg" >"$dotest/$msgnum" || clean_abort
+		done
+		echo "$this" >"$dotest/last"
+		this=
+		msgnum=
+		;;
 	*)
 		if test -n "$patch_format"
 		then
