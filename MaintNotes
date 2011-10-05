@@ -79,13 +79,11 @@ hints.
 My public git.git repository is at:
 
         git://git.kernel.org/pub/scm/git/git.git/
+	git://repo.or.cz/alt-git.git
+	https://github.com/git/git
+	https://code.google.com/p/git-core/
 
-Immediately after I publish to the primary repository at kernel.org, I
-also push into an alternate here:
-
-        git://repo.or.cz/alt-git.git/
-
-Impatient people might have better luck with the latter one (there are a
+Impatient people might have better luck with the latter two (there are a
 few other mirrors I push into at sourceforge and github as well).
 
 Their gitweb interfaces are found at:
@@ -96,20 +94,20 @@ Their gitweb interfaces are found at:
 There are three branches in git.git repository that are not about the
 source tree of git: "html", "man", and "todo".
 
-The "html" and "man" are auto-generated documentation from the tip of
-the "master" branch; the tip of "html" is extracted to be visible at
-kernel.org at:
+The "html" and "man" are preformatted documentation from the tip of
+the "master" branch; the tip of "html" is visible at:
 
         http://www.kernel.org/pub/software/scm/git/docs/
+	http://git-core.googlecode.com/git-history/html/git.html
 
-The above URL is the top-level documentation page, and it has links to
-documentation of older releases.
+The above URL is the top-level documentation page, and it may have
+links to documentation of older releases.
 
 The "todo" branch was originally meant to contain a TODO list for me,
 but is mostly used to keep some helper scripts I use to maintain git.
-For example, the script to maintain the two documentation branches are
-found there as dodoc.sh, which may be a good demonstration of how to
-use a post-update hook to automate a task after pushing into a
+For example, the script that was used to maintain the two documentation
+branches are found there as dodoc.sh, which may be a good demonstration
+of how to use a post-update hook to automate a task after pushing into a
 repository.
 
 There are four branches in git.git repository that track the source tree
@@ -118,16 +116,16 @@ of git: "master", "maint", "next", and "pu".
 The "master" branch is meant to contain what are very well tested and
 ready to be used in a production setting.  Every now and then, a "feature
 release" is cut from the tip of this branch and they typically are named
-with three dotted decimal digits.  The last such release was 1.7.6 done on
-June 26, 2011.  You can expect that the tip of the "master" branch is
-always more stable than any of the released versions.
+with three dotted decimal digits.  The last such release was 1.7.7 done on
+Sept 30, 2011. You can expect that the tip of the "master" branch is always
+more stable than any of the released versions.
 
 Whenever a feature release is made, "maint" branch is forked off from
 "master" at that point.  Obvious, safe and urgent fixes after a feature
 release are applied to this branch and maintenance releases are cut from
 it.  The maintenance releases are named with four dotted decimal, named
 after the feature release they are updates to; the last such release was
-1.7.6.1.  New features never go to this branch.  This branch is also
+1.7.6.4.  New features never go to this branch.  This branch is also
 merged into "master" to propagate the fixes forward.
 
 A new development does not usually happen on "master". When you send a
@@ -160,9 +158,9 @@ using the topics that didn't make the cut in the feature release.
 
 Note that being in "next" is not a guarantee to appear in the next
 release, nor even in any future release.  There were cases that topics
-needed reverting a few commits in them before graduating to "master", or a
-topic that already was in "next" was reverted from "next" because fatal
-flaws were found in it after it was merged.
+needed reverting a few commits in them before graduating to "master",
+or a topic that already was in "next" was reverted from "next" because
+fatal flaws were found in it after it was merged.
 
 
 * Other people's trees, trusted lieutenants and credits.
