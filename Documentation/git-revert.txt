@@ -9,6 +9,8 @@ SYNOPSIS
 --------
 [verse]
 'git revert' [--edit | --no-edit] [-n] [-m parent-number] [-s] <commit>...
+'git revert' --reset
+'git revert' --continue
 
 DESCRIPTION
 -----------
@@ -90,6 +92,10 @@ effect to your index in a row.
 --strategy-option=<option>::
 	Pass the merge strategy-specific option through to the
 	merge strategy.  See linkgit:git-merge[1] for details.
+
+SEQUENCER SUBCOMMANDS
+---------------------
+include::sequencer.txt[]
 
 EXAMPLES
 --------

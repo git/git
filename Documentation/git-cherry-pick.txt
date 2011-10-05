@@ -9,6 +9,8 @@ SYNOPSIS
 --------
 [verse]
 'git cherry-pick' [--edit] [-n] [-m parent-number] [-s] [-x] [--ff] <commit>...
+'git cherry-pick' --reset
+'git cherry-pick' --continue
 
 DESCRIPTION
 -----------
@@ -109,6 +111,10 @@ effect to your index in a row.
 --strategy-option=<option>::
 	Pass the merge strategy-specific option through to the
 	merge strategy.  See linkgit:git-merge[1] for details.
+
+SEQUENCER SUBCOMMANDS
+---------------------
+include::sequencer.txt[]
 
 EXAMPLES
 --------
