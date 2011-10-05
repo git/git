@@ -264,7 +264,9 @@ tree files, you have to explicitly tell git about it by dropping
 "assume unchanged" bit, either before or after you modify them.
 
 In order to set "assume unchanged" bit, use `--assume-unchanged`
-option.  To unset, use `--no-assume-unchanged`.
+option.  To unset, use `--no-assume-unchanged`. To see which files
+have the "assume unchanged" bit set, use `git ls-files -v`
+(see linkgit:git-ls-files[1]).
 
 The command looks at `core.ignorestat` configuration variable.  When
 this is true, paths updated with `git update-index paths...` and
@@ -363,7 +365,8 @@ ctime for marking files processed) (see linkgit:git-config[1]).
 SEE ALSO
 --------
 linkgit:git-config[1],
-linkgit:git-add[1]
+linkgit:git-add[1],
+linkgit:git-ls-files[1]
 
 GIT
 ---
