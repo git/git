@@ -786,14 +786,14 @@ char *mingw_getcwd(char *pointer, int len)
 	return pointer;
 }
 
-static int env_compare(const void *a, const void *b)
+static int compareenv(const void *a, const void *b)
 {
 	char *const *ea = a;
 	char *const *eb = b;
 	return strcasecmp(*ea, *eb);
 }
 
-static int lookup_env(char **env, const char *name, size_t nmln)
+static int lookupenv(char **env, const char *name, size_t nmln)
 {
 	int i;
 
@@ -808,10 +808,10 @@ static int lookup_env(char **env, const char *name, size_t nmln)
 /*
  * If name contains '=', then sets the variable, otherwise it unsets it
  */
-static char **env_setenv(char **env, const char *name)
+static char **do_putenv(char **env, const char *name)
 {
 	char *eq = strchrnul(name, '=');
-	int i = lookup_env(env, name, eq-name);
+	int i = lookupenv(env, name, eq-name);
 
 	if (i < 0) {
 		if (*eq) {
@@ -852,7 +852,7 @@ char *mingw_getenv(const char *name)
 
 int mingw_putenv(const char *namevalue)
 {
-	environ = env_setenv(environ, namevalue);
+	environ = do_putenv(environ, namevalue);
 	return 0;
 }
 
@@ -1131,7 +1131,7 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **env,
 		/* environment must be sorted */
 		sorted_env = xmalloc(sizeof(*sorted_env) * (count + 1));
 		memcpy(sorted_env, env, sizeof(*sorted_env) * (count + 1));
-		qsort(sorted_env, count, sizeof(*sorted_env), env_compare);
+		qsort(sorted_env, count, sizeof(*sorted_env), compareenv);
 
 		/* create environment block from temporary environment */
 		for (e = sorted_env; *e; e++) {
@@ -1341,7 +1341,7 @@ char **make_augmented_environ(const char *const *vars)
 
 	while (*vars) {
 		const char *v = *vars++;
-		env = env_setenv(env, strchr(v, '=') ? xstrdup(v) : v);
+		env = do_putenv(env, strchr(v, '=') ? xstrdup(v) : v);
 	}
 	return env;
 }
