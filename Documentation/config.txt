@@ -1460,7 +1460,8 @@ notes.rewriteRef::
 	You may also specify this configuration several times.
 +
 Does not have a default value; you must configure this variable to
-enable note rewriting.
+enable note rewriting.  Set it to `refs/notes/commits` to enable
+rewriting for the default commit notes.
 +
 This setting can be overridden with the `GIT_NOTES_REWRITE_REF`
 environment variable, which must be a colon separated list of refs or
