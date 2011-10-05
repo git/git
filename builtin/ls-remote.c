@@ -43,6 +43,9 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 	struct transport *transport;
 	const struct ref *ref;
 
+	if (argc == 2 && !strcmp("-h", argv[1]))
+		usage(ls_remote_usage);
+
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
 
