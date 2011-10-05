@@ -1,6 +1,7 @@
 #!/usr/bin/perl -w
 
 print <<'EOF' ;
+<a href="http://3.bp.blogspot.com/-zbY2zfS4fKE/TlgfTSTK-oI/AAAAAAAACOQ/E_0Y4408QRE/s1600/GprofileSmall.png" imageanchor="1" style="clear: right; float: right; margin-bottom: 1em; margin-left: 1em;"><img border="0" src="http://3.bp.blogspot.com/-zbY2zfS4fKE/TlgfTSTK-oI/AAAAAAAACOQ/E_0Y4408QRE/s1600/GprofileSmall.png"></a>
 <style>
 div.inset {
 background: #aff;
@@ -32,7 +33,6 @@ border: none;
 float: right;
 }
 </style>
-<img height="64" id="git" src="http://www.kernel.org/%7Ejunio/Kun-Wave.gif" width="64" />
 EOF
 
 sub show_links {
