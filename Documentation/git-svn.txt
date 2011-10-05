@@ -318,7 +318,7 @@ Any other arguments are passed directly to 'git log'
        Show what revision and author last modified each line of a file. The
        output of this mode is format-compatible with the output of
        `svn blame' by default. Like the SVN blame command,
-       local uncommitted changes in the working copy are ignored;
+       local uncommitted changes in the working tree are ignored;
        the version of the file in the HEAD revision is annotated. Unknown
        arguments are passed directly to 'git blame'.
 +
