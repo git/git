@@ -44,6 +44,7 @@ struct traverse_info {
 	struct traverse_info *prev;
 	struct name_entry name;
 	int pathlen;
+	struct pathspec *pathspec;
 
 	unsigned long conflicts;
 	traverse_callback_t fn;
