@@ -1240,9 +1240,9 @@ COMPUTE_HEADER_DEPENDENCIES =
 USE_COMPUTED_HEADER_DEPENDENCIES =
 else
 ifndef COMPUTE_HEADER_DEPENDENCIES
-dep_check = $(shell sh -c \
-	'$(CC) -c -MF /dev/null -MMD -MP -x c /dev/null -o /dev/null 2>&1; \
-	echo $$?')
+dep_check = $(shell $(CC) $(ALL_CFLAGS) \
+	-c -MF /dev/null -MMD -MP -x c /dev/null -o /dev/null 2>&1; \
+	echo $$?)
 ifeq ($(dep_check),0)
 COMPUTE_HEADER_DEPENDENCIES=YesPlease
 endif
