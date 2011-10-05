@@ -86,20 +86,7 @@ static void show_commit(struct commit *commit, void *data)
 
 static void show_object(struct object *obj, const struct name_path *path, const char *component)
 {
-	/* An object with name "foo\n0000000..." can be used to
-	 * confuse downstream git-pack-objects very badly.
-	 */
-	const char *name = path_name(path, component);
-	const char *ep = strchr(name, '\n');
-	if (ep) {
-		fprintf(pack_pipe, "%s %.*s\n", sha1_to_hex(obj->sha1),
-		       (int) (ep - name),
-		       name);
-	}
-	else
-		fprintf(pack_pipe, "%s %s\n",
-				sha1_to_hex(obj->sha1), name);
-	free((char *)name);
+	show_object_with_name(pack_pipe, obj, path, component);
 }
 
 static void show_edge(struct commit *commit)

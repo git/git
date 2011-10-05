@@ -176,21 +176,8 @@ static void finish_object(struct object *obj, const struct name_path *path, cons
 
 static void show_object(struct object *obj, const struct name_path *path, const char *component)
 {
-	char *name = path_name(path, component);
-	/* An object with name "foo\n0000000..." can be used to
-	 * confuse downstream "git pack-objects" very badly.
-	 */
-	const char *ep = strchr(name, '\n');
-
-	finish_object(obj, path, name);
-	if (ep) {
-		printf("%s %.*s\n", sha1_to_hex(obj->sha1),
-		       (int) (ep - name),
-		       name);
-	}
-	else
-		printf("%s %s\n", sha1_to_hex(obj->sha1), name);
-	free(name);
+	finish_object(obj, path, component);
+	show_object_with_name(stdout, obj, path, component);
 }
 
 static void show_edge(struct commit *commit)
