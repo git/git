@@ -527,6 +527,20 @@ test_expect_success 'auto-amend only edited commits after "edit"' '
 	git rebase --abort
 '
 
+test_expect_success 'clean error after failed "exec"' '
+	test_tick &&
+	test_when_finished "git rebase --abort || :" &&
+	(
+		FAKE_LINES="1 exec_false" &&
+		export FAKE_LINES &&
+		test_must_fail git rebase -i HEAD^
+	) &&
+	echo "edited again" > file7 &&
+	git add file7 &&
+	test_must_fail git rebase --continue 2>error &&
+	grep "You have staged changes in your working tree." error
+'
+
 test_expect_success 'rebase a detached HEAD' '
 	grandparent=$(git rev-parse HEAD~2) &&
 	git checkout $(git rev-parse HEAD) &&
