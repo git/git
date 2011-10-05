@@ -275,7 +275,9 @@ $SIG{INT}  = \&signal_handler;
 # Begin by accumulating all the variables (defined above), that we will end up
 # needing, first, from the command line:
 
-my $rc = GetOptions("sender|from=s" => \$sender,
+my $help;
+my $rc = GetOptions("h" => \$help,
+		    "sender|from=s" => \$sender,
                     "in-reply-to=s" => \$initial_reply_to,
 		    "subject=s" => \$initial_subject,
 		    "to=s" => \@initial_to,
@@ -313,6 +315,7 @@ my $rc = GetOptions("sender|from=s" => \$sender,
 		    "force" => \$force,
 	 );
 
+usage() if $help;
 unless ($rc) {
     usage();
 }
