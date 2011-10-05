@@ -24,6 +24,9 @@ OPTIONS
 	paths.  If this option is used, then 'unspecified' attributes
 	will not be included in the output.
 
+--cached::
+	Consider `.gitattributes` in the index only, ignoring the working tree.
+
 --stdin::
 	Read file names from stdin instead of from the command-line.
 

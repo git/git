@@ -5,6 +5,7 @@
 #include "parse-options.h"
 
 static int all_attrs;
+static int cached_attrs;
 static int stdin_paths;
 static const char * const check_attr_usage[] = {
 "git check-attr [-a | --all | attr...] [--] pathname...",
@@ -16,6 +17,7 @@ static int null_term_line;
 
 static const struct option check_attr_options[] = {
 	OPT_BOOLEAN('a', "all", &all_attrs, "report all attributes set on file"),
+	OPT_BOOLEAN(0,  "cached", &cached_attrs, "use .gitattributes only from the index"),
 	OPT_BOOLEAN(0 , "stdin", &stdin_paths, "read file names from stdin"),
 	OPT_BOOLEAN('z', NULL, &null_term_line,
 		"input paths are terminated by a null character"),
@@ -98,6 +100,9 @@ int cmd_check_attr(int argc, const char **argv, const char *prefix)
 	if (read_cache() < 0) {
 		die("invalid cache");
 	}
+
+	if (cached_attrs)
+		git_attr_set_direction(GIT_ATTR_INDEX, NULL);
 
 	doubledash = -1;
 	for (i = 0; doubledash < 0 && i < argc; i++) {
