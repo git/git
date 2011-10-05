@@ -25,7 +25,8 @@ static int deny_deletes;
 static int deny_non_fast_forwards;
 static enum deny_action deny_current_branch = DENY_UNCONFIGURED;
 static enum deny_action deny_delete_current = DENY_UNCONFIGURED;
-static int receive_fsck_objects;
+static int receive_fsck_objects = -1;
+static int transfer_fsck_objects = -1;
 static int receive_unpack_limit = -1;
 static int transfer_unpack_limit = -1;
 static int unpack_limit = 100;
@@ -76,6 +77,11 @@ static int receive_pack_config(const char *var, const char *value, void *cb)
 
 	if (strcmp(var, "receive.fsckobjects") == 0) {
 		receive_fsck_objects = git_config_bool(var, value);
+		return 0;
+	}
+
+	if (strcmp(var, "transfer.fsckobjects") == 0) {
+		transfer_fsck_objects = git_config_bool(var, value);
 		return 0;
 	}
 
@@ -674,6 +680,11 @@ static const char *unpack(void)
 	struct pack_header hdr;
 	const char *hdr_err;
 	char hdr_arg[38];
+	int fsck_objects = (receive_fsck_objects >= 0
+			    ? receive_fsck_objects
+			    : transfer_fsck_objects >= 0
+			    ? transfer_fsck_objects
+			    : 0);
 
 	hdr_err = parse_pack_header(&hdr);
 	if (hdr_err)
@@ -686,7 +697,7 @@ static const char *unpack(void)
 		int code, i = 0;
 		const char *unpacker[4];
 		unpacker[i++] = "unpack-objects";
-		if (receive_fsck_objects)
+		if (fsck_objects)
 			unpacker[i++] = "--strict";
 		unpacker[i++] = hdr_arg;
 		unpacker[i++] = NULL;
@@ -706,7 +717,7 @@ static const char *unpack(void)
 
 		keeper[i++] = "index-pack";
 		keeper[i++] = "--stdin";
-		if (receive_fsck_objects)
+		if (fsck_objects)
 			keeper[i++] = "--strict";
 		keeper[i++] = "--fix-thin";
 		keeper[i++] = hdr_arg;
