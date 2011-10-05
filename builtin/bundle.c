@@ -58,7 +58,7 @@ int cmd_bundle(int argc, const char **argv, const char *prefix)
 	} else if (!strcmp(cmd, "unbundle")) {
 		if (!startup_info->have_repository)
 			die(_("Need a repository to unbundle."));
-		return !!unbundle(&header, bundle_fd) ||
+		return !!unbundle(&header, bundle_fd, 0) ||
 			list_bundle_refs(&header, argc, argv);
 	} else
 		usage(builtin_bundle_usage);

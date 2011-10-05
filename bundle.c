@@ -380,11 +380,14 @@ int create_bundle(struct bundle_header *header, const char *path,
 	return 0;
 }
 
-int unbundle(struct bundle_header *header, int bundle_fd)
+int unbundle(struct bundle_header *header, int bundle_fd, int flags)
 {
 	const char *argv_index_pack[] = {"index-pack",
-		"--fix-thin", "--stdin", NULL};
+					 "--fix-thin", "--stdin", NULL, NULL};
 	struct child_process ip;
+
+	if (flags & BUNDLE_VERBOSE)
+		argv_index_pack[3] = "-v";
 
 	if (verify_bundle(header, 0))
 		return -1;
