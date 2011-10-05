@@ -22,14 +22,13 @@ $Git::SVN::default_ref_id = $ENV{GIT_SVN_ID} || 'git-svn';
 $Git::SVN::Ra::_log_window_size = 100;
 $Git::SVN::_minimize_url = 'unset';
 
-if (! exists $ENV{SVN_SSH}) {
-	if (exists $ENV{GIT_SSH}) {
-		$ENV{SVN_SSH} = $ENV{GIT_SSH};
-		if ($^O eq 'msys') {
-			$ENV{SVN_SSH} =~ s/\\/\\\\/g;
-			$ENV{SVN_SSH} =~ s/(.*)/"$1"/;
-		}
-	}
+if (! exists $ENV{SVN_SSH} && exists $ENV{GIT_SSH}) {
+	$ENV{SVN_SSH} = $ENV{GIT_SSH};
+}
+
+if (exists $ENV{SVN_SSH} && $^O eq 'msys') {
+	$ENV{SVN_SSH} =~ s/\\/\\\\/g;
+	$ENV{SVN_SSH} =~ s/(.*)/"$1"/;
 }
 
 $Git::SVN::Log::TZ = $ENV{TZ};
