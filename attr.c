@@ -20,8 +20,6 @@ static const char git_attr__unknown[] = "(builtin)unknown";
 #define ATTR__UNSET NULL
 #define ATTR__UNKNOWN git_attr__unknown
 
-static const char *attributes_file;
-
 /* This is a randomly chosen prime. */
 #define HASHSIZE 257
 
@@ -494,14 +492,6 @@ static int git_attr_system(void)
 	return !git_env_bool("GIT_ATTR_NOSYSTEM", 0);
 }
 
-static int git_attr_config(const char *var, const char *value, void *dummy)
-{
-	if (!strcmp(var, "core.attributesfile"))
-		return git_config_pathname(&attributes_file, var, value);
-
-	return 0;
-}
-
 static void bootstrap_attr_stack(void)
 {
 	if (!attr_stack) {
@@ -521,9 +511,8 @@ static void bootstrap_attr_stack(void)
 			}
 		}
 
-		git_config(git_attr_config, NULL);
-		if (attributes_file) {
-			elem = read_attr_from_file(attributes_file, 1);
+		if (git_attributes_file) {
+			elem = read_attr_from_file(git_attributes_file, 1);
 			if (elem) {
 				elem->origin = NULL;
 				elem->prev = attr_stack;
