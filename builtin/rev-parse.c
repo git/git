@@ -468,6 +468,14 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 		return 0;
 	}
 
+	if (argc > 2 && !strcmp(argv[1], "--resolve-git-dir")) {
+		const char *gitdir = resolve_gitdir(argv[2]);
+		if (!gitdir)
+			die("not a gitdir '%s'", argv[2]);
+		puts(gitdir);
+		return 0;
+	}
+
 	if (argc > 1 && !strcmp("-h", argv[1]))
 		usage(builtin_rev_parse_usage);
 
