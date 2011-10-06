@@ -60,6 +60,13 @@ process on the server side over the Git protocol is this:
      "0039git-upload-pack /schacon/gitbook.git\0host=example.com\0" |
      nc -v example.com 9418
 
+If the server refuses the request for some reasons, it could abort
+gracefully with an error message.
+
+----
+  error-line     =  PKT-LINE("ERR" SP explanation-text)
+----
+
 
 SSH Transport
 -------------
