@@ -630,18 +630,18 @@ sub wildo {
 			$topic->[4]++;
 		}
 		next if (/^ /);
-		if (defined $topic &&
-		    /Will (?:\S+ ){0,2}(merge|drop|discard|cook)[. ]/i) {
+		next unless defined $topic;
+		if (/^Will (?:\S+ ){0,2}(merge|drop|discard|cook|kick)[,. ]/ ||
+		    /^Not urgent/ ||
+		    /^Needs? /) {
 			wildo_queue(\%what, $_, $topic);
 			$topic = undef;
 		}
-		if (defined $topic &&
-		    /^Not urgent;/) {
+		if (/^Not urgent;/) {
 			wildo_queue(\%what, $_, $topic);
 			$topic = undef;
 		}
-		if (defined $topic &&
-		    /Originally merged to 'next' on ([-0-9]+)/) {
+		if (/Originally merged to 'next' on ([-0-9]+)/) {
 			$topic->[1] = $1;
 		}
 	}
