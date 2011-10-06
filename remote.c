@@ -840,7 +840,7 @@ char *apply_refspecs(struct refspec *refspecs, int nr_refspec,
 						    refspec->dst, &ret))
 				return ret;
 		} else if (!strcmp(refspec->src, name))
-			return strdup(refspec->dst);
+			return xstrdup(refspec->dst);
 	}
 	return NULL;
 }

@@ -533,7 +533,7 @@ static void bootstrap_attr_stack(void)
 
 		if (!is_bare_repository() || direction == GIT_ATTR_INDEX) {
 			elem = read_attr(GITATTRIBUTES_FILE, 1);
-			elem->origin = strdup("");
+			elem->origin = xstrdup("");
 			elem->prev = attr_stack;
 			attr_stack = elem;
 			debug_push(elem);
