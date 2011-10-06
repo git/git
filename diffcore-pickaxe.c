@@ -45,7 +45,8 @@ static void fill_one(struct diff_filespec *one,
 	}
 }
 
-static int diff_grep(struct diff_filepair *p, regex_t *regexp, struct diff_options *o)
+static int diff_grep(struct diff_filepair *p, struct diff_options *o,
+		     regex_t *regexp, kwset_t kws)
 {
 	regmatch_t regmatch;
 	struct userdiff_driver *textconv_one = NULL;
@@ -114,7 +115,7 @@ static void diffcore_pickaxe_grep(struct diff_options *o)
 		/* Showing the whole changeset if needle exists */
 		for (i = 0; i < q->nr; i++) {
 			struct diff_filepair *p = q->queue[i];
-			if (diff_grep(p, &regex, o))
+			if (diff_grep(p, o, &regex, NULL))
 				goto out; /* do not munge the queue */
 		}
 
@@ -129,7 +130,7 @@ static void diffcore_pickaxe_grep(struct diff_options *o)
 		/* Showing only the filepairs that has the needle */
 		for (i = 0; i < q->nr; i++) {
 			struct diff_filepair *p = q->queue[i];
-			if (diff_grep(p, &regex, o))
+			if (diff_grep(p, o, &regex, NULL))
 				diff_q(&outq, p);
 			else
 				diff_free_filepair(p);
