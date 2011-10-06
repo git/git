@@ -1606,10 +1606,10 @@ static void fetch_symref(const char *path, char **symref, unsigned char *sha1)
 	strbuf_release(&buffer);
 }
 
-static int verify_merge_base(unsigned char *head_sha1, unsigned char *branch_sha1)
+static int verify_merge_base(unsigned char *head_sha1, struct ref *remote)
 {
-	struct commit *head = lookup_commit(head_sha1);
-	struct commit *branch = lookup_commit(branch_sha1);
+	struct commit *head = lookup_commit_or_die(head_sha1, "HEAD");
+	struct commit *branch = lookup_commit_or_die(remote->old_sha1, remote->name);
 	struct commit_list *merge_bases = get_merge_bases(head, branch, 1);
 
 	return (merge_bases && !merge_bases->next && merge_bases->item == branch);
@@ -1680,7 +1680,7 @@ static int delete_remote_branch(const char *pattern, int force)
 			return error("Remote branch %s resolves to object %s\nwhich does not exist locally, perhaps you need to fetch?", remote_ref->name, sha1_to_hex(remote_ref->old_sha1));
 
 		/* Remote branch must be an ancestor of remote HEAD */
-		if (!verify_merge_base(head_sha1, remote_ref->old_sha1)) {
+		if (!verify_merge_base(head_sha1, remote_ref)) {
 			return error("The branch '%s' is not an ancestor "
 				     "of your current HEAD.\n"
 				     "If you are sure you want to delete it,"
