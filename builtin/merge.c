@@ -26,6 +26,7 @@
 #include "merge-recursive.h"
 #include "resolve-undo.h"
 #include "remote.h"
+#include "gpg-interface.h"
 
 #define DEFAULT_TWOHEAD (1<<0)
 #define DEFAULT_OCTOPUS (1<<1)
@@ -63,6 +64,7 @@ static int allow_rerere_auto;
 static int abort_current_merge;
 static int show_progress = -1;
 static int default_to_upstream;
+static const char *sign_commit;
 
 static struct strategy all_strategy[] = {
 	{ "recursive",  DEFAULT_TWOHEAD | NO_TRIVIAL },
@@ -206,6 +208,8 @@ static struct option builtin_merge_options[] = {
 	OPT_BOOLEAN(0, "abort", &abort_current_merge,
 		"abort the current in-progress merge"),
 	OPT_SET_INT(0, "progress", &show_progress, "force progress reporting", 1),
+	{ OPTION_STRING, 'S', "gpg-sign", &sign_commit, "key id",
+	  "GPG sign commit", PARSE_OPT_OPTARG, NULL, (intptr_t) "" },
 	OPT_END()
 };
 
@@ -525,6 +529,8 @@ static void parse_branch_merge_options(char *bmo)
 
 static int git_merge_config(const char *k, const char *v, void *cb)
 {
+	int status;
+
 	if (branch && !prefixcmp(k, "branch.") &&
 		!prefixcmp(k + 7, branch) &&
 		!strcmp(k + 7 + strlen(branch), ".mergeoptions")) {
@@ -562,6 +568,10 @@ static int git_merge_config(const char *k, const char *v, void *cb)
 		default_to_upstream = git_config_bool(k, v);
 		return 0;
 	}
+
+	status = git_gpg_config(k, v, NULL);
+	if (status)
+		return status;
 	return git_diff_ui_config(k, v, cb);
 }
 
@@ -870,7 +880,8 @@ static int merge_trivial(void)
 	parent->next->item = remoteheads->item;
 	parent->next->next = NULL;
 	run_prepare_commit_msg();
-	commit_tree(merge_msg.buf, result_tree, parent, result_commit, NULL);
+	commit_tree(merge_msg.buf, result_tree, parent, result_commit, NULL,
+		    sign_commit);
 	finish(result_commit, "In-index merge");
 	drop_save();
 	return 0;
@@ -900,7 +911,8 @@ static int finish_automerge(struct commit_list *common,
 	free_commit_list(remoteheads);
 	strbuf_addch(&merge_msg, '\n');
 	run_prepare_commit_msg();
-	commit_tree(merge_msg.buf, result_tree, parents, result_commit, NULL);
+	commit_tree(merge_msg.buf, result_tree, parents, result_commit,
+		    NULL, sign_commit);
 	strbuf_addf(&buf, "Merge made by the '%s' strategy.", wt_strategy);
 	finish(result_commit, buf.buf);
 	strbuf_release(&buf);
