@@ -96,7 +96,7 @@ static int diff_grep(struct diff_filepair *p, regex_t *regexp, struct diff_optio
 static void diffcore_pickaxe_grep(struct diff_options *o)
 {
 	struct diff_queue_struct *q = &diff_queued_diff;
-	int i, has_changes, err;
+	int i, err;
 	regex_t regex;
 	struct diff_queue_struct outq;
 	outq.queue = NULL;
@@ -112,13 +112,11 @@ static void diffcore_pickaxe_grep(struct diff_options *o)
 
 	if (o->pickaxe_opts & DIFF_PICKAXE_ALL) {
 		/* Showing the whole changeset if needle exists */
-		for (i = has_changes = 0; !has_changes && i < q->nr; i++) {
+		for (i = 0; i < q->nr; i++) {
 			struct diff_filepair *p = q->queue[i];
 			if (diff_grep(p, &regex, o))
-				has_changes++;
+				goto out; /* do not munge the queue */
 		}
-		if (has_changes)
-			return; /* do not munge the queue */
 
 		/*
 		 * Otherwise we will clear the whole queue by copying
@@ -138,10 +136,11 @@ static void diffcore_pickaxe_grep(struct diff_options *o)
 		}
 	}
 
-	regfree(&regex);
-
 	free(q->queue);
 	*q = outq;
+
+ out:
+	regfree(&regex);
 	return;
 }
 
