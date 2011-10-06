@@ -3838,7 +3838,6 @@ int cmd_apply(int argc, const char **argv, const char *prefix_)
 	int i;
 	int errs = 0;
 	int is_not_gitdir = !startup_info->have_repository;
-	int binary;
 	int force_apply = 0;
 
 	const char *whitespace_option = NULL;
@@ -3857,12 +3856,8 @@ int cmd_apply(int argc, const char **argv, const char *prefix_)
 			"ignore additions made by the patch"),
 		OPT_BOOLEAN(0, "stat", &diffstat,
 			"instead of applying the patch, output diffstat for the input"),
-		{ OPTION_BOOLEAN, 0, "allow-binary-replacement", &binary,
-		  NULL, "old option, now no-op",
-		  PARSE_OPT_HIDDEN | PARSE_OPT_NOARG },
-		{ OPTION_BOOLEAN, 0, "binary", &binary,
-		  NULL, "old option, now no-op",
-		  PARSE_OPT_HIDDEN | PARSE_OPT_NOARG },
+		OPT_NOOP_NOARG(0, "allow-binary-replacement"),
+		OPT_NOOP_NOARG(0, "binary"),
 		OPT_BOOLEAN(0, "numstat", &numstat,
 			"shows number of added and deleted lines in decimal notation"),
 		OPT_BOOLEAN(0, "summary", &summary,

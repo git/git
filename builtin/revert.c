@@ -133,7 +133,6 @@ static void parse_args(int argc, const char **argv, struct replay_opts *opts)
 {
 	const char * const * usage_str = revert_or_cherry_pick_usage(opts);
 	const char *me = action_name(opts);
-	int noop;
 	int reset = 0;
 	int contin = 0;
 	struct option options[] = {
@@ -141,8 +140,7 @@ static void parse_args(int argc, const char **argv, struct replay_opts *opts)
 		OPT_BOOLEAN(0, "continue", &contin, "continue the current operation"),
 		OPT_BOOLEAN('n', "no-commit", &opts->no_commit, "don't automatically commit"),
 		OPT_BOOLEAN('e', "edit", &opts->edit, "edit the commit message"),
-		{ OPTION_BOOLEAN, 'r', NULL, &noop, NULL, "no-op (backward compatibility)",
-		  PARSE_OPT_NOARG | PARSE_OPT_HIDDEN, NULL, 0 },
+		OPT_NOOP_NOARG('r', NULL),
 		OPT_BOOLEAN('s', "signoff", &opts->signoff, "add Signed-off-by:"),
 		OPT_INTEGER('m', "mainline", &opts->mainline, "parent number"),
 		OPT_RERERE_AUTOUPDATE(&opts->allow_rerere_auto),

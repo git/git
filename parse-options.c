@@ -83,7 +83,7 @@ static int get_value(struct parse_opt_ctx_t *p,
 			*(int *)opt->value &= ~opt->defval;
 		return 0;
 
-	case OPTION_BOOLEAN:
+	case OPTION_COUNTUP:
 		*(int *)opt->value = unset ? 0 : *(int *)opt->value + 1;
 		return 0;
 
@@ -319,7 +319,7 @@ static void parse_options_check(const struct option *opts)
 			err |= optbug(opts, "uses feature "
 					"not supported for dashless options");
 		switch (opts->type) {
-		case OPTION_BOOLEAN:
+		case OPTION_COUNTUP:
 		case OPTION_BIT:
 		case OPTION_NEGBIT:
 		case OPTION_SET_INT:
