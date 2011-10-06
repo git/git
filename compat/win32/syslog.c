@@ -1,5 +1,4 @@
 #include "../../git-compat-util.h"
-#include "../../strbuf.h"
 
 static HANDLE ms_eventlog;
 
@@ -16,13 +15,8 @@ void openlog(const char *ident, int logopt, int facility)
 
 void syslog(int priority, const char *fmt, ...)
 {
-	struct strbuf sb = STRBUF_INIT;
-	struct strbuf_expand_dict_entry dict[] = {
-		{"1", "% 1"},
-		{NULL, NULL}
-	};
 	WORD logtype;
-	char *str;
+	char *str, *pos;
 	int str_len;
 	va_list ap;
 
@@ -39,11 +33,24 @@ void syslog(int priority, const char *fmt, ...)
 	}
 
 	str = malloc(str_len + 1);
+	if (!str) {
+		warning("malloc failed: '%s'", strerror(errno));
+		return;
+	}
+
 	va_start(ap, fmt);
 	vsnprintf(str, str_len + 1, fmt, ap);
 	va_end(ap);
-	strbuf_expand(&sb, str, strbuf_expand_dict_cb, &dict);
-	free(str);
+
+	while ((pos = strstr(str, "%1")) != NULL) {
+		str = realloc(str, ++str_len + 1);
+		if (!str) {
+			warning("realloc failed: '%s'", strerror(errno));
+			return;
+		}
+		memmove(pos + 2, pos + 1, strlen(pos));
+		pos[1] = ' ';
+	}
 
 	switch (priority) {
 	case LOG_EMERG:
@@ -66,7 +73,6 @@ void syslog(int priority, const char *fmt, ...)
 	}
 
 	ReportEventA(ms_eventlog, logtype, 0, 0, NULL, 1, 0,
-	    (const char **)&sb.buf, NULL);
-
-	strbuf_release(&sb);
+	    (const char **)&str, NULL);
+	free(str);
 }
