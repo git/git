@@ -1287,7 +1287,8 @@ _git_commit ()
 			" "" "${cur##--cleanup=}"
 		return
 		;;
-	--reuse-message=*|--reedit-message=*)
+	--reuse-message=*|--reedit-message=*|\
+	--fixup=*|--squash=*)
 		__gitcomp "$(__git_refs)" "" "${cur#*=}"
 		return
 		;;
@@ -1302,7 +1303,7 @@ _git_commit ()
 			--dry-run --reuse-message= --reedit-message=
 			--reset-author --file= --message= --template=
 			--cleanup= --untracked-files --untracked-files=
-			--verbose --quiet
+			--verbose --quiet --fixup= --squash=
 			"
 		return
 	esac
