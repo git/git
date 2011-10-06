@@ -223,7 +223,7 @@ static void advise(const char *advice, ...)
 	va_end(params);
 }
 
-static void print_advice(void)
+static void print_advice(int show_hint)
 {
 	char *msg = getenv("GIT_CHERRY_PICK_HELP");
 
@@ -238,9 +238,11 @@ static void print_advice(void)
 		return;
 	}
 
-	advise("after resolving the conflicts, mark the corrected paths");
-	advise("with 'git add <paths>' or 'git rm <paths>'");
-	advise("and commit the result with 'git commit'");
+	if (show_hint) {
+		advise("after resolving the conflicts, mark the corrected paths");
+		advise("with 'git add <paths>' or 'git rm <paths>'");
+		advise("and commit the result with 'git commit'");
+	}
 }
 
 static void write_message(struct strbuf *msgbuf, const char *filename)
@@ -516,7 +518,7 @@ static int do_pick_commit(void)
 		      : _("could not apply %s... %s"),
 		      find_unique_abbrev(commit->object.sha1, DEFAULT_ABBREV),
 		      msg.subject);
-		print_advice();
+		print_advice(res == 1);
 		rerere(allow_rerere_auto);
 	} else {
 		if (!no_commit)
