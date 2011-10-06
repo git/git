@@ -552,7 +552,6 @@ static void prepare_attr_stack(const char *path)
 {
 	struct attr_stack *elem, *info;
 	int dirlen, len;
-	struct strbuf pathbuf;
 	const char *cp;
 
 	cp = strrchr(path, '/');
@@ -560,8 +559,6 @@ static void prepare_attr_stack(const char *path)
 		dirlen = 0;
 	else
 		dirlen = cp - path;
-
-	strbuf_init(&pathbuf, dirlen+2+strlen(GITATTRIBUTES_FILE));
 
 	/*
 	 * At the bottom of the attribute stack is the built-in
@@ -607,27 +604,28 @@ static void prepare_attr_stack(const char *path)
 	 * Read from parent directories and push them down
 	 */
 	if (!is_bare_repository() || direction == GIT_ATTR_INDEX) {
-		while (1) {
-			char *cp;
+		struct strbuf pathbuf = STRBUF_INIT;
 
+		while (1) {
 			len = strlen(attr_stack->origin);
 			if (dirlen <= len)
 				break;
-			strbuf_reset(&pathbuf);
-			strbuf_add(&pathbuf, path, dirlen);
+			cp = memchr(path + len + 1, '/', dirlen - len - 1);
+			if (!cp)
+				cp = path + dirlen;
+			strbuf_add(&pathbuf, path, cp - path);
 			strbuf_addch(&pathbuf, '/');
-			cp = strchr(pathbuf.buf + len + 1, '/');
-			strcpy(cp + 1, GITATTRIBUTES_FILE);
+			strbuf_addstr(&pathbuf, GITATTRIBUTES_FILE);
 			elem = read_attr(pathbuf.buf, 0);
-			*cp = '\0';
-			elem->origin = strdup(pathbuf.buf);
+			strbuf_setlen(&pathbuf, cp - path);
+			elem->origin = strbuf_detach(&pathbuf, NULL);
 			elem->prev = attr_stack;
 			attr_stack = elem;
 			debug_push(elem);
 		}
-	}
 
-	strbuf_release(&pathbuf);
+		strbuf_release(&pathbuf);
+	}
 
 	/*
 	 * Finally push the "info" one at the top of the stack.
