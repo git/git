@@ -126,7 +126,8 @@ bisect_start() {
 		start_head=$(cat "$GIT_DIR/BISECT_START")
 		if test "z$mode" != "z--no-checkout"
 		then
-			git checkout "$start_head" --
+			git checkout "$start_head" -- ||
+			die "$(eval_gettext "Checking out '\$start_head' failed. Try 'git bisect reset <validbranch>'.")"
 		fi
 	else
 		# Get rev from where we start.
