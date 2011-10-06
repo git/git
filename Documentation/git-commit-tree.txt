@@ -68,7 +68,9 @@ if set:
 
 In case (some of) these environment variables are not set, the information
 is taken from the configuration items user.name and user.email, or, if not
-present, system user name and fully qualified hostname.
+present, system user name and the hostname used for outgoing mail (taken
+from `/etc/mailname` and falling back to the fully qualified hostname when
+that file does not exist).
 
 A commit comment is read from stdin. If a changelog
 entry is not provided via "<" redirection, 'git commit-tree' will just wait
@@ -89,6 +91,10 @@ Discussion
 ----------
 
 include::i18n.txt[]
+
+FILES
+-----
+/etc/mailname
 
 SEE ALSO
 --------

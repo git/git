@@ -50,6 +50,54 @@ static void copy_gecos(const struct passwd *w, char *name, size_t sz)
 
 }
 
+static int add_mailname_host(char *buf, size_t len)
+{
+	FILE *mailname;
+
+	mailname = fopen("/etc/mailname", "r");
+	if (!mailname) {
+		if (errno != ENOENT)
+			warning("cannot open /etc/mailname: %s",
+				strerror(errno));
+		return -1;
+	}
+	if (!fgets(buf, len, mailname)) {
+		if (ferror(mailname))
+			warning("cannot read /etc/mailname: %s",
+				strerror(errno));
+		fclose(mailname);
+		return -1;
+	}
+	/* success! */
+	fclose(mailname);
+	return 0;
+}
+
+static void add_domainname(char *buf, size_t len)
+{
+	struct hostent *he;
+	size_t namelen;
+	const char *domainname;
+
+	if (gethostname(buf, len)) {
+		warning("cannot get host name: %s", strerror(errno));
+		strlcpy(buf, "(none)", len);
+		return;
+	}
+	namelen = strlen(buf);
+	if (memchr(buf, '.', namelen))
+		return;
+
+	he = gethostbyname(buf);
+	buf[namelen++] = '.';
+	buf += namelen;
+	len -= namelen;
+	if (he && (domainname = strchr(he->h_name, '.')))
+		strlcpy(buf, domainname + 1, len);
+	else
+		strlcpy(buf, "(none)", len);
+}
+
 static void copy_email(const struct passwd *pw)
 {
 	/*
@@ -61,35 +109,29 @@ static void copy_email(const struct passwd *pw)
 		die("Your sysadmin must hate you!");
 	memcpy(git_default_email, pw->pw_name, len);
 	git_default_email[len++] = '@';
-	gethostname(git_default_email + len, sizeof(git_default_email) - len);
-	if (!strchr(git_default_email+len, '.')) {
-		struct hostent *he = gethostbyname(git_default_email + len);
-		char *domainname;
 
-		len = strlen(git_default_email);
-		git_default_email[len++] = '.';
-		if (he && (domainname = strchr(he->h_name, '.')))
-			strlcpy(git_default_email + len, domainname + 1,
-				sizeof(git_default_email) - len);
-		else
-			strlcpy(git_default_email + len, "(none)",
-				sizeof(git_default_email) - len);
-	}
+	if (!add_mailname_host(git_default_email + len,
+				sizeof(git_default_email) - len))
+		return;	/* read from "/etc/mailname" (Debian) */
+	add_domainname(git_default_email + len,
+			sizeof(git_default_email) - len);
 }
 
-static void setup_ident(void)
+static void setup_ident(const char **name, const char **emailp)
 {
 	struct passwd *pw = NULL;
 
 	/* Get the name ("gecos") */
-	if (!git_default_name[0]) {
+	if (!*name && !git_default_name[0]) {
 		pw = getpwuid(getuid());
 		if (!pw)
 			die("You don't exist. Go away!");
 		copy_gecos(pw, git_default_name, sizeof(git_default_name));
 	}
+	if (!*name)
+		*name = git_default_name;
 
-	if (!git_default_email[0]) {
+	if (!*emailp && !git_default_email[0]) {
 		const char *email = getenv("EMAIL");
 
 		if (email && email[0]) {
@@ -104,6 +146,8 @@ static void setup_ident(void)
 			copy_email(pw);
 		}
 	}
+	if (!*emailp)
+		*emailp = git_default_email;
 
 	/* And set the default date */
 	if (!git_default_date[0])
@@ -199,11 +243,7 @@ const char *fmt_ident(const char *name, const char *email,
 	int warn_on_no_name = (flag & IDENT_WARN_ON_NO_NAME);
 	int name_addr_only = (flag & IDENT_NO_DATE);
 
-	setup_ident();
-	if (!name)
-		name = git_default_name;
-	if (!email)
-		email = git_default_email;
+	setup_ident(&name, &email);
 
 	if (!*name) {
 		struct passwd *pw;
