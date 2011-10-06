@@ -2,6 +2,7 @@
  * Copyright 2008 Peter Harris <git@peter.is-a-geek.org>
  */
 
+#undef NOGDI
 #include "../git-compat-util.h"
 #include <malloc.h>
 #include <wingdi.h>
@@ -30,6 +31,7 @@ static int negative;
 static FILE *last_stream = NULL;
 static int non_ascii_used = 0;
 
+#ifdef __MINGW32__
 typedef struct _CONSOLE_FONT_INFOEX {
 	ULONG cbSize;
 	DWORD nFont;
@@ -38,6 +40,7 @@ typedef struct _CONSOLE_FONT_INFOEX {
 	UINT FontWeight;
 	WCHAR FaceName[LF_FACESIZE];
 } CONSOLE_FONT_INFOEX, *PCONSOLE_FONT_INFOEX;
+#endif
 
 typedef BOOL (WINAPI *PGETCURRENTCONSOLEFONTEX)(HANDLE, BOOL,
 		PCONSOLE_FONT_INFOEX);
@@ -52,8 +55,8 @@ static void warn_if_raster_font(void)
 		return;
 
 	/* GetCurrentConsoleFontEx is available since Vista */
-	pGetCurrentConsoleFontEx = GetProcAddress(GetModuleHandle("kernel32.dll"),
-			"GetCurrentConsoleFontEx");
+	pGetCurrentConsoleFontEx = (PGETCURRENTCONSOLEFONTEX) GetProcAddress(
+			GetModuleHandle("kernel32.dll"), "GetCurrentConsoleFontEx");
 	if (pGetCurrentConsoleFontEx) {
 		CONSOLE_FONT_INFOEX cfi;
 		cfi.cbSize = sizeof(cfi);
