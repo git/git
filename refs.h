@@ -57,7 +57,7 @@ extern void warn_dangling_symref(FILE *fp, const char *msg_fmt, const char *refn
  */
 extern void add_extra_ref(const char *refname, const unsigned char *sha1, int flags);
 extern void clear_extra_refs(void);
-extern int ref_exists(char *);
+extern int ref_exists(const char *);
 
 extern int peel_ref(const char *, unsigned char *);
 

@@ -1931,7 +1931,7 @@ int update_ref(const char *action, const char *refname,
 	return 0;
 }
 
-int ref_exists(char *refname)
+int ref_exists(const char *refname)
 {
 	unsigned char sha1[20];
 	return !!resolve_ref(refname, sha1, 1, NULL);
