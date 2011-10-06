@@ -221,7 +221,7 @@ static void diffcore_pickaxe_count(struct diff_options *o)
 
 	if (opts & DIFF_PICKAXE_ALL) {
 		/* Showing the whole changeset if needle exists */
-		for (i = has_changes = 0; !has_changes && i < q->nr; i++) {
+		for (i = 0; i < q->nr; i++) {
 			struct diff_filepair *p = q->queue[i];
 			if (!DIFF_FILE_VALID(p->one)) {
 				if (!DIFF_FILE_VALID(p->two))
@@ -238,9 +238,9 @@ static void diffcore_pickaxe_count(struct diff_options *o)
 				 contains(p->one, needle, len, regexp, kws) !=
 				 contains(p->two, needle, len, regexp, kws))
 				has_changes++;
+			if (has_changes)
+				goto out; /* do not munge the queue */
 		}
-		if (has_changes)
-			return; /* not munge the queue */
 
 		/* otherwise we will clear the whole queue
 		 * by copying the empty outq at the end of this
@@ -278,13 +278,14 @@ static void diffcore_pickaxe_count(struct diff_options *o)
 				diff_free_filepair(p);
 		}
 
+	free(q->queue);
+	*q = outq;
+
+ out:
 	if (opts & DIFF_PICKAXE_REGEX)
 		regfree(&regex);
 	else
 		kwsfree(kws);
-
-	free(q->queue);
-	*q = outq;
 	return;
 }
 
