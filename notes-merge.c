@@ -570,7 +570,8 @@ int notes_merge(struct notes_merge_options *o,
 	/* Dereference o->local_ref into local_sha1 */
 	if (!resolve_ref(o->local_ref, local_sha1, 0, NULL))
 		die("Failed to resolve local notes ref '%s'", o->local_ref);
-	else if (!check_ref_format(o->local_ref) && is_null_sha1(local_sha1))
+	else if (!check_refname_format(o->local_ref, 0) &&
+		is_null_sha1(local_sha1))
 		local = NULL; /* local_sha1 == null_sha1 indicates unborn ref */
 	else if (!(local = lookup_commit_reference(local_sha1)))
 		die("Could not parse local commit %s (%s)",
@@ -583,7 +584,7 @@ int notes_merge(struct notes_merge_options *o,
 		 * Failed to get remote_sha1. If o->remote_ref looks like an
 		 * unborn ref, perform the merge using an empty notes tree.
 		 */
-		if (!check_ref_format(o->remote_ref)) {
+		if (!check_refname_format(o->remote_ref, 0)) {
 			hashclr(remote_sha1);
 			remote = NULL;
 		} else {

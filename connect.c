@@ -22,7 +22,7 @@ static int check_ref(const char *name, int len, unsigned int flags)
 	len -= 5;
 
 	/* REF_NORMAL means that we don't want the magic fake tag refs */
-	if ((flags & REF_NORMAL) && check_ref_format(name) < 0)
+	if ((flags & REF_NORMAL) && check_refname_format(name, 0))
 		return 0;
 
 	/* REF_HEADS means that we want regular branch heads */

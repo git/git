@@ -145,7 +145,7 @@ static int exclude_existing(const char *match)
 			if (strncmp(ref, match, matchlen))
 				continue;
 		}
-		if (check_ref_format(ref)) {
+		if (check_refname_format(ref, 0)) {
 			warning("ref '%s' ignored", ref);
 			continue;
 		}
