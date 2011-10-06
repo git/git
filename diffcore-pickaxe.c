@@ -8,6 +8,46 @@
 #include "xdiff-interface.h"
 #include "kwset.h"
 
+typedef int (*pickaxe_fn)(struct diff_filepair *p, struct diff_options *o, regex_t *regexp, kwset_t kws);
+
+static void pickaxe(struct diff_queue_struct *q, struct diff_options *o,
+		    regex_t *regexp, kwset_t kws, pickaxe_fn fn)
+{
+	int i;
+	struct diff_queue_struct outq;
+
+	DIFF_QUEUE_CLEAR(&outq);
+
+	if (o->pickaxe_opts & DIFF_PICKAXE_ALL) {
+		/* Showing the whole changeset if needle exists */
+		for (i = 0; i < q->nr; i++) {
+			struct diff_filepair *p = q->queue[i];
+			if (fn(p, o, regexp, kws))
+				return; /* do not munge the queue */
+		}
+
+		/*
+		 * Otherwise we will clear the whole queue by copying
+		 * the empty outq at the end of this function, but
+		 * first clear the current entries in the queue.
+		 */
+		for (i = 0; i < q->nr; i++)
+			diff_free_filepair(q->queue[i]);
+	} else {
+		/* Showing only the filepairs that has the needle */
+		for (i = 0; i < q->nr; i++) {
+			struct diff_filepair *p = q->queue[i];
+			if (fn(p, o, regexp, kws))
+				diff_q(&outq, p);
+			else
+				diff_free_filepair(p);
+		}
+	}
+
+	free(q->queue);
+	*q = outq;
+}
+
 struct diffgrep_cb {
 	regex_t *regexp;
 	int hit;
@@ -96,12 +136,8 @@ static int diff_grep(struct diff_filepair *p, struct diff_options *o,
 
 static void diffcore_pickaxe_grep(struct diff_options *o)
 {
-	struct diff_queue_struct *q = &diff_queued_diff;
-	int i, err;
+	int err;
 	regex_t regex;
-	struct diff_queue_struct outq;
-	outq.queue = NULL;
-	outq.nr = outq.alloc = 0;
 
 	err = regcomp(&regex, o->pickaxe, REG_EXTENDED | REG_NEWLINE);
 	if (err) {
@@ -111,36 +147,8 @@ static void diffcore_pickaxe_grep(struct diff_options *o)
 		die("invalid log-grep regex: %s", errbuf);
 	}
 
-	if (o->pickaxe_opts & DIFF_PICKAXE_ALL) {
-		/* Showing the whole changeset if needle exists */
-		for (i = 0; i < q->nr; i++) {
-			struct diff_filepair *p = q->queue[i];
-			if (diff_grep(p, o, &regex, NULL))
-				goto out; /* do not munge the queue */
-		}
+	pickaxe(&diff_queued_diff, o, &regex, NULL, diff_grep);
 
-		/*
-		 * Otherwise we will clear the whole queue by copying
-		 * the empty outq at the end of this function, but
-		 * first clear the current entries in the queue.
-		 */
-		for (i = 0; i < q->nr; i++)
-			diff_free_filepair(q->queue[i]);
-	} else {
-		/* Showing only the filepairs that has the needle */
-		for (i = 0; i < q->nr; i++) {
-			struct diff_filepair *p = q->queue[i];
-			if (diff_grep(p, o, &regex, NULL))
-				diff_q(&outq, p);
-			else
-				diff_free_filepair(p);
-		}
-	}
-
-	free(q->queue);
-	*q = outq;
-
- out:
 	regfree(&regex);
 	return;
 }
@@ -213,13 +221,9 @@ static void diffcore_pickaxe_count(struct diff_options *o)
 {
 	const char *needle = o->pickaxe;
 	int opts = o->pickaxe_opts;
-	struct diff_queue_struct *q = &diff_queued_diff;
 	unsigned long len = strlen(needle);
-	int i;
 	regex_t regex, *regexp = NULL;
 	kwset_t kws = NULL;
-	struct diff_queue_struct outq;
-	DIFF_QUEUE_CLEAR(&outq);
 
 	if (opts & DIFF_PICKAXE_REGEX) {
 		int err;
@@ -238,36 +242,8 @@ static void diffcore_pickaxe_count(struct diff_options *o)
 		kwsprep(kws);
 	}
 
-	if (opts & DIFF_PICKAXE_ALL) {
-		/* Showing the whole changeset if needle exists */
-		for (i = 0; i < q->nr; i++) {
-			struct diff_filepair *p = q->queue[i];
-			if (has_changes(p, o, regexp, kws))
-				goto out; /* do not munge the queue */
-		}
+	pickaxe(&diff_queued_diff, o, regexp, kws, has_changes);
 
-		/* otherwise we will clear the whole queue
-		 * by copying the empty outq at the end of this
-		 * function, but first clear the current entries
-		 * in the queue.
-		 */
-		for (i = 0; i < q->nr; i++)
-			diff_free_filepair(q->queue[i]);
-	}
-	else
-		/* Showing only the filepairs that has the needle */
-		for (i = 0; i < q->nr; i++) {
-			struct diff_filepair *p = q->queue[i];
-			if (has_changes(p, o, regexp, kws))
-				diff_q(&outq, p);
-			else
-				diff_free_filepair(p);
-		}
-
-	free(q->queue);
-	*q = outq;
-
- out:
 	if (opts & DIFF_PICKAXE_REGEX)
 		regfree(&regex);
 	else
