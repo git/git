@@ -234,4 +234,20 @@ test_expect_success 'read-tree --reset removes outside worktree' '
 	test_cmp empty result
 '
 
+test_expect_success 'print errors when failed to update worktree' '
+	echo sub >.git/info/sparse-checkout &&
+	git checkout -f init &&
+	mkdir sub &&
+	touch sub/added sub/addedtoo &&
+	test_must_fail git checkout top 2>actual &&
+	cat >expected <<\EOF &&
+error: The following untracked working tree files would be overwritten by checkout:
+	sub/added
+	sub/addedtoo
+Please move or remove them before you can switch branches.
+Aborting
+EOF
+	test_cmp expected actual
+'
+
 test_done

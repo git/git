@@ -1091,6 +1091,7 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 		 */
 		mark_new_skip_worktree(o->el, &o->result, CE_ADDED, CE_SKIP_WORKTREE | CE_NEW_SKIP_WORKTREE);
 
+		ret = 0;
 		for (i = 0; i < o->result.cache_nr; i++) {
 			struct cache_entry *ce = o->result.cache[i];
 
@@ -1103,19 +1104,30 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 			 * correct CE_NEW_SKIP_WORKTREE
 			 */
 			if (ce->ce_flags & CE_ADDED &&
-			    verify_absent(ce, ERROR_WOULD_LOSE_UNTRACKED_OVERWRITTEN, o))
-					return -1;
+			    verify_absent(ce, ERROR_WOULD_LOSE_UNTRACKED_OVERWRITTEN, o)) {
+				if (!o->show_all_errors)
+					goto return_failed;
+				ret = -1;
+			}
 
 			if (apply_sparse_checkout(ce, o)) {
+				if (!o->show_all_errors)
+					goto return_failed;
 				ret = -1;
-				goto done;
 			}
 			if (!ce_skip_worktree(ce))
 				empty_worktree = 0;
 
 		}
+		if (ret < 0)
+			goto return_failed;
+		/*
+		 * Sparse checkout is meant to narrow down checkout area
+		 * but it does not make sense to narrow down to empty working
+		 * tree. This is usually a mistake in sparse checkout rules.
+		 * Do not allow users to do that.
+		 */
 		if (o->result.cache_nr && empty_worktree) {
-			/* dubious---why should this fail??? */
 			ret = unpack_failed(o, "Sparse checkout leaves no entry on working directory");
 			goto done;
 		}
