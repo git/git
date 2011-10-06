@@ -3387,6 +3387,10 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 	}
 
 	/* xdiff options */
+	else if (!strcmp(arg, "--minimal"))
+		DIFF_XDL_SET(options, NEED_MINIMAL);
+	else if (!strcmp(arg, "--no-minimal"))
+		DIFF_XDL_CLR(options, NEED_MINIMAL);
 	else if (!strcmp(arg, "-w") || !strcmp(arg, "--ignore-all-space"))
 		DIFF_XDL_SET(options, IGNORE_WHITESPACE);
 	else if (!strcmp(arg, "-b") || !strcmp(arg, "--ignore-space-change"))
