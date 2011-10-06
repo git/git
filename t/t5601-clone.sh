@@ -206,6 +206,20 @@ test_expect_success 'clone from .git file' '
 	git clone dst/.git dst2
 '
 
+test_expect_success 'fetch from .git gitfile' '
+	(
+		cd dst2 &&
+		git fetch ../dst/.git
+	)
+'
+
+test_expect_success 'fetch from gitfile parent' '
+	(
+		cd dst2 &&
+		git fetch ../dst
+	)
+'
+
 test_expect_success 'clone separate gitdir where target already exists' '
 	rm -rf dst &&
 	test_must_fail git clone --separate-git-dir realgitdir src dst
