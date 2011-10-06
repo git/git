@@ -120,6 +120,8 @@ too (and can also report changes to a submodule's work tree).
 init::
 	Initialize the submodules, i.e. register each submodule name
 	and url found in .gitmodules into .git/config.
+	It will also copy the value of `submodule.$name.update` into
+	.git/config.
 	The key used in .git/config is `submodule.$name.url`.
 	This command does not alter existing information in .git/config.
 	You can then customize the submodule clone URLs in .git/config
@@ -133,7 +135,7 @@ update::
 	checkout the commit specified in the index of the containing repository.
 	This will make the submodules HEAD be detached unless `--rebase` or
 	`--merge` is specified or the key `submodule.$name.update` is set to
-	`rebase` or `merge`.
+	`rebase`, `merge` or `none`.
 +
 If the submodule is not yet initialized, and you just want to use the
 setting as stored in .gitmodules, you can automatically initialize the
@@ -141,6 +143,10 @@ submodule with the `--init` option.
 +
 If `--recursive` is specified, this command will recurse into the
 registered submodules, and update any nested submodules within.
++
+If the configuration key `submodule.$name.update` is set to `none` the
+submodule with name `$name` will not be updated by default. This can be
+overriden by adding `--checkout` to the command.
 
 summary::
 	Show commit summary between the given commit (defaults to HEAD) and
