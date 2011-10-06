@@ -820,6 +820,18 @@ test_expect_success \
 	'test 1 = `git rev-list J | wc -l` &&
 	 test 0 = `git ls-tree J | wc -l`'
 
+cat >input <<INPUT_END
+reset refs/heads/J2
+
+tag wrong_tag
+from refs/heads/J2
+data <<EOF
+Tag branch that was reset.
+EOF
+INPUT_END
+test_expect_success \
+	'J: tag must fail on empty branch' \
+	'test_must_fail git fast-import <input'
 ###
 ### series K
 ###
@@ -1975,6 +1987,23 @@ test_expect_success \
 	'Q: verify second note for second commit' \
 	'git cat-file blob refs/notes/foobar:$commit2 >actual && test_cmp expect actual'
 
+cat >input <<EOF
+reset refs/heads/Q0
+
+commit refs/heads/note-Q0
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+Note for an empty branch.
+COMMIT
+
+N inline refs/heads/Q0
+data <<NOTE
+some note
+NOTE
+EOF
+test_expect_success \
+	'Q: deny note on empty branch' \
+	'test_must_fail git fast-import <input'
 ###
 ### series R (feature and option)
 ###
