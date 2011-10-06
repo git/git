@@ -122,11 +122,8 @@ int verify_bundle(struct bundle_header *header, int verbose)
 	req_nr = revs.pending.nr;
 	setup_revisions(2, argv, &revs, NULL);
 
-	memset(&refs, 0, sizeof(struct object_array));
-	for (i = 0; i < revs.pending.nr; i++) {
-		struct object_array_entry *e = revs.pending.objects + i;
-		add_object_array(e->item, e->name, &refs);
-	}
+	refs = revs.pending;
+	revs.leak_pending = 1;
 
 	if (prepare_revision_walk(&revs))
 		die("revision walk setup failed");
@@ -144,8 +141,8 @@ int verify_bundle(struct bundle_header *header, int verbose)
 				refs.objects[i].name);
 		}
 
-	for (i = 0; i < refs.nr; i++)
-		clear_commit_marks((struct commit *)refs.objects[i].item, -1);
+	clear_commit_marks_for_object_array(&refs, ALL_REV_FLAGS);
+	free(refs.objects);
 
 	if (verbose) {
 		struct ref_list *r;
