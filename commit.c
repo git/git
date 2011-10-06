@@ -6,6 +6,7 @@
 #include "diff.h"
 #include "revision.h"
 #include "notes.h"
+#include "gpg-interface.h"
 
 int save_commit_buffer = 1;
 
@@ -840,6 +841,42 @@ struct commit_list *reduce_heads(struct commit_list *heads)
 	return result;
 }
 
+static const char gpg_sig_header[] = "gpgsig";
+static const int gpg_sig_header_len = sizeof(gpg_sig_header) - 1;
+
+static int do_sign_commit(struct strbuf *buf, const char *keyid)
+{
+	struct strbuf sig = STRBUF_INIT;
+	int inspos, copypos;
+
+	/* find the end of the header */
+	inspos = strstr(buf->buf, "\n\n") - buf->buf + 1;
+
+	if (!keyid || !*keyid)
+		keyid = get_signing_key();
+	if (sign_buffer(buf, &sig, keyid)) {
+		strbuf_release(&sig);
+		return -1;
+	}
+
+	for (copypos = 0; sig.buf[copypos]; ) {
+		const char *bol = sig.buf + copypos;
+		const char *eol = strchrnul(bol, '\n');
+		int len = (eol - bol) + !!*eol;
+
+		if (!copypos) {
+			strbuf_insert(buf, inspos, gpg_sig_header, gpg_sig_header_len);
+			inspos += gpg_sig_header_len;
+		}
+		strbuf_insert(buf, inspos++, " ", 1);
+		strbuf_insert(buf, inspos, bol, len);
+		inspos += len;
+		copypos += len;
+	}
+	strbuf_release(&sig);
+	return 0;
+}
+
 static void handle_signed_tag(struct commit *parent, struct commit_extra_header ***tail)
 {
 	struct merge_remote_desc *desc;
@@ -975,13 +1012,14 @@ void free_commit_extra_headers(struct commit_extra_header *extra)
 
 int commit_tree(const char *msg, unsigned char *tree,
 		struct commit_list *parents, unsigned char *ret,
-		const char *author)
+		const char *author, const char *sign_commit)
 {
 	struct commit_extra_header *extra = NULL, **tail = &extra;
 	int result;
 
 	append_merge_tag_headers(parents, &tail);
-	result = commit_tree_extended(msg, tree, parents, ret, author, extra);
+	result = commit_tree_extended(msg, tree, parents, ret,
+				      author, sign_commit, extra);
 	free_commit_extra_headers(extra);
 	return result;
 }
@@ -993,7 +1031,8 @@ static const char commit_utf8_warn[] =
 
 int commit_tree_extended(const char *msg, unsigned char *tree,
 			 struct commit_list *parents, unsigned char *ret,
-			 const char *author, struct commit_extra_header *extra)
+			 const char *author, const char *sign_commit,
+			 struct commit_extra_header *extra)
 {
 	int result;
 	int encoding_is_utf8;
@@ -1042,6 +1081,9 @@ int commit_tree_extended(const char *msg, unsigned char *tree,
 	/* And check the encoding */
 	if (encoding_is_utf8 && !is_utf8(buffer.buf))
 		fprintf(stderr, commit_utf8_warn);
+
+	if (sign_commit && do_sign_commit(&buffer, sign_commit))
+		return -1;
 
 	result = write_sha1_file(buffer.buf, buffer.len, commit_type, ret);
 	strbuf_release(&buffer);
