@@ -342,64 +342,42 @@ merge_keep_temporaries="$(git config --bool mergetool.keepTemporaries || echo fa
 
 last_status=0
 rollup_status=0
-rerere=false
-
-files_to_merge() {
-    if test "$rerere" = true
-    then
-	git rerere remaining
-    else
-	git ls-files -u | sed -e 's/^[^	]*	//' | sort -u
-    fi
-}
-
+files=
 
 if test $# -eq 0 ; then
     cd_to_toplevel
 
     if test -e "$GIT_DIR/MERGE_RR"
     then
-	rerere=true
+	files=$(git rerere remaining)
+    else
+	files=$(git ls-files -u | sed -e 's/^[^	]*	//' | sort -u)
     fi
-
-    files=$(files_to_merge)
-    if test -z "$files" ; then
-	echo "No files need merging"
-	exit 0
-    fi
-
-    # Save original stdin
-    exec 3<&0
-
-    printf "Merging:\n"
-    printf "$files\n"
-
-    files_to_merge |
-    while IFS= read i
-    do
-	if test $last_status -ne 0; then
-	    prompt_after_failed_merge <&3 || exit 1
-	fi
-	printf "\n"
-	merge_file "$i" <&3
-	last_status=$?
-	if test $last_status -ne 0; then
-	    rollup_status=1
-	fi
-    done
 else
-    while test $# -gt 0; do
-	if test $last_status -ne 0; then
-	    prompt_after_failed_merge || exit 1
-	fi
-	printf "\n"
-	merge_file "$1"
-	last_status=$?
-	if test $last_status -ne 0; then
-	    rollup_status=1
-	fi
-	shift
-    done
+    files=$(git ls-files -u -- "$@" | sed -e 's/^[^	]*	//' | sort -u)
 fi
+
+if test -z "$files" ; then
+    echo "No files need merging"
+    exit 0
+fi
+
+printf "Merging:\n"
+printf "$files\n"
+
+IFS='
+'
+for i in $files
+do
+    if test $last_status -ne 0; then
+	prompt_after_failed_merge || exit 1
+    fi
+    printf "\n"
+    merge_file "$i"
+    last_status=$?
+    if test $last_status -ne 0; then
+	rollup_status=1
+    fi
+done
 
 exit $rollup_status
