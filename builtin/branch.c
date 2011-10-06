@@ -623,11 +623,49 @@ static int opt_parse_merge_filter(const struct option *opt, const char *arg, int
 	return 0;
 }
 
+static const char edit_description[] = "BRANCH_DESCRIPTION";
+
+static int edit_branch_description(const char *branch_name)
+{
+	FILE *fp;
+	int status;
+	struct strbuf buf = STRBUF_INIT;
+	struct strbuf name = STRBUF_INIT;
+
+	read_branch_desc(&buf, branch_name);
+	if (!buf.len || buf.buf[buf.len-1] != '\n')
+		strbuf_addch(&buf, '\n');
+	strbuf_addf(&buf,
+		    "# Please edit the description for the branch\n"
+		    "#   %s\n"
+		    "# Lines starting with '#' will be stripped.\n",
+		    branch_name);
+	fp = fopen(git_path(edit_description), "w");
+	if ((fwrite(buf.buf, 1, buf.len, fp) < buf.len) || fclose(fp)) {
+		strbuf_release(&buf);
+		return error(_("could not write branch description template: %s\n"),
+			     strerror(errno));
+	}
+	strbuf_reset(&buf);
+	if (launch_editor(git_path(edit_description), &buf, NULL)) {
+		strbuf_release(&buf);
+		return -1;
+	}
+	stripspace(&buf, 1);
+
+	strbuf_addf(&name, "branch.%s.description", branch_name);
+	status = git_config_set(name.buf, buf.buf);
+	strbuf_release(&name);
+	strbuf_release(&buf);
+
+	return status;
+}
+
 int cmd_branch(int argc, const char **argv, const char *prefix)
 {
 	int delete = 0, rename = 0, force_create = 0, list = 0;
 	int verbose = 0, abbrev = -1, detached = 0;
-	int reflog = 0;
+	int reflog = 0, edit_description = 0;
 	enum branch_track track;
 	int kinds = REF_LOCAL_BRANCH;
 	struct commit_list *with_commit = NULL;
@@ -666,6 +704,8 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 		OPT_BIT('M', NULL, &rename, "move/rename a branch, even if target exists", 2),
 		OPT_BOOLEAN(0, "list", &list, "list branch names"),
 		OPT_BOOLEAN('l', "create-reflog", &reflog, "create the branch's reflog"),
+		OPT_BOOLEAN(0, "edit-description", &edit_description,
+			    "edit the description for the branch"),
 		OPT__FORCE(&force_create, "force creation (when already exists)"),
 		{
 			OPTION_CALLBACK, 0, "no-merged", &merge_filter_ref,
@@ -705,7 +745,7 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 	argc = parse_options(argc, argv, prefix, options, builtin_branch_usage,
 			     0);
 
-	if (!delete && !rename && !force_create && argc == 0)
+	if (!delete && !rename && !force_create && !edit_description && argc == 0)
 		list = 1;
 
 	if (!!delete + !!rename + !!force_create + !!list > 1)
@@ -719,6 +759,19 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 	else if (list)
 		return print_ref_list(kinds, detached, verbose, abbrev,
 				      with_commit, argv);
+	else if (edit_description) {
+		const char *branch_name;
+		if (detached)
+			die("Cannot give description to detached HEAD");
+		if (!argc)
+			branch_name = head;
+		else if (argc == 1)
+			branch_name = argv[0];
+		else
+			usage_with_options(builtin_branch_usage, options);
+		if (edit_branch_description(branch_name))
+			return 1;
+	}
 	else if (rename && (argc == 1))
 		rename_branch(head, argv[0], rename > 1);
 	else if (rename && (argc == 2))
