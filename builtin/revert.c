@@ -481,8 +481,6 @@ static int do_pick_commit(void)
 			strbuf_addstr(&msgbuf, sha1_to_hex(commit->object.sha1));
 			strbuf_addstr(&msgbuf, ")\n");
 		}
-		if (!no_commit)
-			write_cherry_pick_head();
 	}
 
 	if (!strategy || !strcmp(strategy, "recursive") || action == REVERT) {
@@ -502,6 +500,15 @@ static int do_pick_commit(void)
 		free_commit_list(common);
 		free_commit_list(remotes);
 	}
+
+	/*
+	 * If the merge was clean or if it failed due to conflict, we write
+	 * CHERRY_PICK_HEAD for the subsequent invocation of commit to use.
+	 * However, if the merge did not even start, then we don't want to
+	 * write it at all.
+	 */
+	if (action == CHERRY_PICK && !no_commit && (res == 0 || res == 1))
+		write_cherry_pick_head();
 
 	if (res) {
 		error(action == REVERT
