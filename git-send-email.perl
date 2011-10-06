@@ -1098,6 +1098,12 @@ X-Mailer: git-send-email $gitversion
 		}
 
 		if (defined $smtp_authuser) {
+			# Workaround AUTH PLAIN/LOGIN interaction defect
+			# with Authen::SASL::Cyrus
+			eval {
+				require Authen::SASL;
+				Authen::SASL->import(qw(Perl));
+			};
 
 			if (!defined $smtp_authpass) {
 
