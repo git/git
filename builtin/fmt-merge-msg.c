@@ -5,23 +5,27 @@
 #include "revision.h"
 #include "tag.h"
 #include "string-list.h"
+#include "branch.h"
+#include "fmt-merge-msg.h"
 
 static const char * const fmt_merge_msg_usage[] = {
 	"git fmt-merge-msg [-m <message>] [--log[=<n>]|--no-log] [--file <file>]",
 	NULL
 };
 
-static int shortlog_len;
+static int use_branch_desc;
 
-static int fmt_merge_msg_config(const char *key, const char *value, void *cb)
+int fmt_merge_msg_config(const char *key, const char *value, void *cb)
 {
 	if (!strcmp(key, "merge.log") || !strcmp(key, "merge.summary")) {
 		int is_bool;
-		shortlog_len = git_config_bool_or_int(key, value, &is_bool);
-		if (!is_bool && shortlog_len < 0)
+		merge_log_config = git_config_bool_or_int(key, value, &is_bool);
+		if (!is_bool && merge_log_config < 0)
 			return error("%s: negative length %s", key, value);
-		if (is_bool && shortlog_len)
-			shortlog_len = DEFAULT_MERGE_LOG_LEN;
+		if (is_bool && merge_log_config)
+			merge_log_config = DEFAULT_MERGE_LOG_LEN;
+	} else if (!strcmp(key, "merge.branchdesc")) {
+		use_branch_desc = git_config_bool(key, value);
 	}
 	return 0;
 }
@@ -29,6 +33,11 @@ static int fmt_merge_msg_config(const char *key, const char *value, void *cb)
 struct src_data {
 	struct string_list branch, tag, r_branch, generic;
 	int head_status;
+};
+
+struct origin_data {
+	unsigned char sha1[20];
+	int is_local_branch:1;
 };
 
 static void init_src_data(struct src_data *data)
@@ -45,7 +54,7 @@ static struct string_list origins = STRING_LIST_INIT_DUP;
 static int handle_line(char *line)
 {
 	int i, len = strlen(line);
-	unsigned char *sha1;
+	struct origin_data *origin_data;
 	char *src, *origin;
 	struct src_data *src_data;
 	struct string_list_item *item;
@@ -61,11 +70,13 @@ static int handle_line(char *line)
 		return 2;
 
 	line[40] = 0;
-	sha1 = xmalloc(20);
-	i = get_sha1(line, sha1);
+	origin_data = xcalloc(1, sizeof(struct origin_data));
+	i = get_sha1(line, origin_data->sha1);
 	line[40] = '\t';
-	if (i)
+	if (i) {
+		free(origin_data);
 		return 3;
+	}
 
 	if (line[len - 1] == '\n')
 		line[len - 1] = 0;
@@ -93,6 +104,7 @@ static int handle_line(char *line)
 		origin = src;
 		src_data->head_status |= 1;
 	} else if (!prefixcmp(line, "branch ")) {
+		origin_data->is_local_branch = 1;
 		origin = line + 7;
 		string_list_append(&src_data->branch, origin);
 		src_data->head_status |= 2;
@@ -119,7 +131,9 @@ static int handle_line(char *line)
 		sprintf(new_origin, "%s of %s", origin, src);
 		origin = new_origin;
 	}
-	string_list_append(&origins, origin)->util = sha1;
+	if (strcmp(".", src))
+		origin_data->is_local_branch = 0;
+	string_list_append(&origins, origin)->util = origin_data;
 	return 0;
 }
 
@@ -140,9 +154,30 @@ static void print_joined(const char *singular, const char *plural,
 	}
 }
 
-static void shortlog(const char *name, unsigned char *sha1,
-		struct commit *head, struct rev_info *rev, int limit,
-		struct strbuf *out)
+static void add_branch_desc(struct strbuf *out, const char *name)
+{
+	struct strbuf desc = STRBUF_INIT;
+
+	if (!read_branch_desc(&desc, name)) {
+		const char *bp = desc.buf;
+		while (*bp) {
+			const char *ep = strchrnul(bp, '\n');
+			if (*ep)
+				ep++;
+			strbuf_addf(out, "  : %.*s", (int)(ep - bp), bp);
+			bp = ep;
+		}
+		if (out->buf[out->len - 1] != '\n')
+			strbuf_addch(out, '\n');
+	}
+	strbuf_release(&desc);
+}
+
+static void shortlog(const char *name,
+		     struct origin_data *origin_data,
+		     struct commit *head,
+		     struct rev_info *rev, int limit,
+		     struct strbuf *out)
 {
 	int i, count = 0;
 	struct commit *commit;
@@ -150,6 +185,7 @@ static void shortlog(const char *name, unsigned char *sha1,
 	struct string_list subjects = STRING_LIST_INIT_DUP;
 	int flags = UNINTERESTING | TREESAME | SEEN | SHOWN | ADDED;
 	struct strbuf sb = STRBUF_INIT;
+	const unsigned char *sha1 = origin_data->sha1;
 
 	branch = deref_tag(parse_object(sha1), sha1_to_hex(sha1), 40);
 	if (!branch || branch->type != OBJ_COMMIT)
@@ -187,6 +223,9 @@ static void shortlog(const char *name, unsigned char *sha1,
 		strbuf_addf(out, "\n* %s: (%d commits)\n", name, count);
 	else
 		strbuf_addf(out, "\n* %s:\n", name);
+
+	if (origin_data->is_local_branch && use_branch_desc)
+		add_branch_desc(out, name);
 
 	for (i = 0; i < subjects.nr; i++)
 		if (i >= limit)
@@ -303,8 +342,9 @@ static int do_fmt_merge_msg(int merge_title, struct strbuf *in,
 			strbuf_addch(out, '\n');
 
 		for (i = 0; i < origins.nr; i++)
-			shortlog(origins.items[i].string, origins.items[i].util,
-					head, &rev, shortlog_len, out);
+			shortlog(origins.items[i].string,
+				 origins.items[i].util,
+				 head, &rev, shortlog_len, out);
 	}
 	return 0;
 }
@@ -318,6 +358,7 @@ int cmd_fmt_merge_msg(int argc, const char **argv, const char *prefix)
 {
 	const char *inpath = NULL;
 	const char *message = NULL;
+	int shortlog_len = -1;
 	struct option options[] = {
 		{ OPTION_INTEGER, 0, "log", &shortlog_len, "n",
 		  "populate log with at most <n> entries from shortlog",
@@ -341,6 +382,8 @@ int cmd_fmt_merge_msg(int argc, const char **argv, const char *prefix)
 			     0);
 	if (argc > 0)
 		usage_with_options(fmt_merge_msg_usage, options);
+	if (shortlog_len < 0)
+		shortlog_len = (merge_log_config > 0) ? merge_log_config : 0;
 	if (message && !shortlog_len) {
 		char nl = '\n';
 		write_in_full(STDOUT_FILENO, message, strlen(message));

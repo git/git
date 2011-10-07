@@ -26,6 +26,7 @@
 #include "merge-recursive.h"
 #include "resolve-undo.h"
 #include "remote.h"
+#include "fmt-merge-msg.h"
 
 #define DEFAULT_TWOHEAD (1<<0)
 #define DEFAULT_OCTOPUS (1<<1)
@@ -44,7 +45,7 @@ static const char * const builtin_merge_usage[] = {
 	NULL
 };
 
-static int show_diffstat = 1, shortlog_len, squash;
+static int show_diffstat = 1, shortlog_len = -1, squash;
 static int option_commit = 1, allow_fast_forward = 1;
 static int fast_forward_only;
 static int allow_trivial = 1, have_message;
@@ -525,6 +526,8 @@ static void parse_branch_merge_options(char *bmo)
 
 static int git_merge_config(const char *k, const char *v, void *cb)
 {
+	int status;
+
 	if (branch && !prefixcmp(k, "branch.") &&
 		!prefixcmp(k + 7, branch) &&
 		!strcmp(k + 7 + strlen(branch), ".mergeoptions")) {
@@ -541,15 +544,7 @@ static int git_merge_config(const char *k, const char *v, void *cb)
 		return git_config_string(&pull_octopus, k, v);
 	else if (!strcmp(k, "merge.renormalize"))
 		option_renormalize = git_config_bool(k, v);
-	else if (!strcmp(k, "merge.log") || !strcmp(k, "merge.summary")) {
-		int is_bool;
-		shortlog_len = git_config_bool_or_int(k, v, &is_bool);
-		if (!is_bool && shortlog_len < 0)
-			return error(_("%s: negative length %s"), k, v);
-		if (is_bool && shortlog_len)
-			shortlog_len = DEFAULT_MERGE_LOG_LEN;
-		return 0;
-	} else if (!strcmp(k, "merge.ff")) {
+	else if (!strcmp(k, "merge.ff")) {
 		int boolval = git_config_maybe_bool(k, v);
 		if (0 <= boolval) {
 			allow_fast_forward = boolval;
@@ -562,6 +557,9 @@ static int git_merge_config(const char *k, const char *v, void *cb)
 		default_to_upstream = git_config_bool(k, v);
 		return 0;
 	}
+	status = fmt_merge_msg_config(k, v, cb);
+	if (status)
+		return status;
 	return git_diff_ui_config(k, v, cb);
 }
 
@@ -1035,6 +1033,8 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		parse_branch_merge_options(branch_mergeoptions);
 	argc = parse_options(argc, argv, prefix, builtin_merge_options,
 			builtin_merge_usage, 0);
+	if (shortlog_len < 0)
+		shortlog_len = (merge_log_config > 0) ? merge_log_config : 0;
 
 	if (verbosity < 0 && show_progress == -1)
 		show_progress = 0;
