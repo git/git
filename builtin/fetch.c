@@ -918,7 +918,7 @@ static int fetch_one(struct remote *remote, int argc, const char **argv)
 	atexit(unlock_pack);
 	refspec = parse_fetch_refspec(ref_nr, refs);
 	exit_code = do_fetch(transport, refspec, ref_nr);
-	free(refspec);
+	free_refspec(ref_nr, refspec);
 	transport_disconnect(transport);
 	transport = NULL;
 	return exit_code;
