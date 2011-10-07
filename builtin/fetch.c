@@ -423,8 +423,10 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 	else
 		url = xstrdup("foreign");
 
-	if (check_everything_connected(ref_map, 0))
-		return error(_("%s did not send all necessary objects\n"), url);
+	if (check_everything_connected(ref_map, 0)) {
+		rc = error(_("%s did not send all necessary objects\n"), url);
+		goto abort;
+	}
 
 	for (rm = ref_map; rm; rm = rm->next) {
 		struct ref *ref = NULL;
@@ -506,12 +508,15 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 				fprintf(stderr, " %s\n", note);
 		}
 	}
-	free(url);
-	fclose(fp);
+
 	if (rc & STORE_REF_ERROR_DF_CONFLICT)
 		error(_("some local refs could not be updated; try running\n"
 		      " 'git remote prune %s' to remove any old, conflicting "
 		      "branches"), remote_name);
+
+ abort:
+	free(url);
+	fclose(fp);
 	return rc;
 }
 
