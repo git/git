@@ -525,6 +525,7 @@ LIB_H += diffcore.h
 LIB_H += diff.h
 LIB_H += dir.h
 LIB_H += exec_cmd.h
+LIB_H += fmt-merge-msg.h
 LIB_H += fsck.h
 LIB_H += gettext.h
 LIB_H += git-compat-util.h
