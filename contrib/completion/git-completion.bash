@@ -1891,6 +1891,10 @@ _git_config ()
 	remote.*.fetch)
 		local remote="${prev#remote.}"
 		remote="${remote%.fetch}"
+		if [ -z "$cur" ]; then
+			COMPREPLY=("refs/heads/")
+			return
+		fi
 		__gitcomp_nl "$(__git_refs_remotes "$remote")"
 		return
 		;;
