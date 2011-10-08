@@ -643,4 +643,27 @@ test_expect_success 'amending no-ff merge commit' '
 
 test_debug 'git log --graph --decorate --oneline --all'
 
+cat >editor <<\EOF
+#!/bin/sh
+# Add a new message string that was not in the template
+(
+	echo "Merge work done on the side branch c1"
+	echo
+	cat <"$1"
+) >"$1.tmp" && mv "$1.tmp" "$1"
+# strip comments and blank lines from end of message
+sed -e '/^#/d' < "$1" | sed -e :a -e '/^\n*$/{$d;N;ba' -e '}' > expected
+EOF
+chmod 755 editor
+
+test_expect_success 'merge --no-ff --edit' '
+	git reset --hard c0 &&
+	EDITOR=./editor git merge --no-ff --edit c1 &&
+	verify_parents $c0 $c1 &&
+	git cat-file commit HEAD >raw &&
+	grep "work done on the side branch" raw &&
+	sed "1,/^$/d" >actual raw &&
+	test_cmp actual expected
+'
+
 test_done
