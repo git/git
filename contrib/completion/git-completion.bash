@@ -485,8 +485,13 @@ _get_comp_words_by_ref ()
 fi
 fi
 
-# __gitcomp accepts 1, 2, 3, or 4 arguments
-# generates completion reply with compgen
+# Generates completion reply with compgen, appending a space to possible
+# completion words, if necessary.
+# It accepts 1 to 4 arguments:
+# 1: List of possible completion words.
+# 2: A prefix to be added to each possible completion word (optional).
+# 3: Generate possible completion matches for this word (optional).
+# 4: A suffix to be appended to each possible completion word (optional).
 __gitcomp ()
 {
 	local cur_="$cur"
