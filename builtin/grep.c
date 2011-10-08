@@ -217,7 +217,7 @@ static int skip_binary(struct grep_opt *opt, const char *filename)
 			attr_text = git_attr("text");
 		memset(&check, 0, sizeof(check));
 		check.attr = attr_text;
-		return !git_checkattr(filename, 1, &check) &&
+		return !git_check_attr(filename, 1, &check) &&
 				ATTR_FALSE(check.value);
 	}
 	return 0;
