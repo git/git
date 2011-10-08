@@ -580,7 +580,7 @@ __git_tags ()
 # by checkout for tracking branches
 __git_refs ()
 {
-	local i is_hash=y dir="$(__gitdir "${1-}")" track="${2-}"
+	local i hash dir="$(__gitdir "${1-}")" track="${2-}"
 	local format refs
 	if [ -d "$dir" ]; then
 		case "$cur" in
@@ -616,12 +616,12 @@ __git_refs ()
 		fi
 		return
 	fi
-	for i in $(git ls-remote "$dir" HEAD ORIG_HEAD 'refs/tags/*' 'refs/heads/*' 'refs/remotes/*' 2>/dev/null); do
-		case "$is_hash,$i" in
-		y,*) is_hash=n ;;
-		n,*^{}) is_hash=y ;;
-		n,refs/*) is_hash=y; echo "${i#refs/*/}" ;;
-		n,*) is_hash=y; echo "$i" ;;
+	git ls-remote "$dir" HEAD ORIG_HEAD 'refs/tags/*' 'refs/heads/*' 'refs/remotes/*' 2>/dev/null | \
+	while read hash i; do
+		case "$i" in
+		*^{}) ;;
+		refs/*) echo "${i#refs/*/}" ;;
+		*) echo "$i" ;;
 		esac
 	done
 }
