@@ -110,6 +110,9 @@ static struct ref_entry *search_ref_array(struct ref_array *array, const char *n
 	if (name == NULL)
 		return NULL;
 
+	if (!array->nr)
+		return NULL;
+
 	len = strlen(name) + 1;
 	e = xmalloc(sizeof(struct ref_entry) + len);
 	memcpy(e->name, name, len);
