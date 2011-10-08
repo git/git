@@ -651,15 +651,10 @@ __git_refs2 ()
 # __git_refs_remotes requires 1 argument (to pass to ls-remote)
 __git_refs_remotes ()
 {
-	local i is_hash=y
-	for i in $(git ls-remote "$1" 'refs/heads/*' 2>/dev/null); do
-		case "$is_hash" in
-		n)
-			is_hash=y
-			echo "$i:refs/remotes/$1/${i#refs/heads/}"
-			;;
-		y) is_hash=n ;;
-		esac
+	local i hash
+	git ls-remote "$1" 'refs/heads/*' 2>/dev/null | \
+	while read hash i; do
+		echo "$i:refs/remotes/$1/${i#refs/heads/}"
 	done
 }
 
