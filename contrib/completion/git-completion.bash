@@ -1604,14 +1604,9 @@ _git_log ()
 	local cur
 	_get_comp_words_by_ref -n =: cur
 	case "$cur" in
-	--pretty=*)
+	--pretty=*|--format=*)
 		__gitcomp "$__git_log_pretty_formats $(__git_pretty_aliases)
-			" "" "${cur##--pretty=}"
-		return
-		;;
-	--format=*)
-		__gitcomp "$__git_log_pretty_formats $(__git_pretty_aliases)
-			" "" "${cur##--format=}"
+			" "" "${cur#*=}"
 		return
 		;;
 	--date=*)
@@ -2456,14 +2451,9 @@ _git_show ()
 	local cur
 	_get_comp_words_by_ref -n =: cur
 	case "$cur" in
-	--pretty=*)
+	--pretty=*|--format=*)
 		__gitcomp "$__git_log_pretty_formats $(__git_pretty_aliases)
-			" "" "${cur##--pretty=}"
-		return
-		;;
-	--format=*)
-		__gitcomp "$__git_log_pretty_formats $(__git_pretty_aliases)
-			" "" "${cur##--format=}"
+			" "" "${cur#*=}"
 		return
 		;;
 	--*)
