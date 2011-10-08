@@ -616,13 +616,11 @@ __git_refs ()
 		fi
 		return
 	fi
-	for i in $(git ls-remote "$dir" 2>/dev/null); do
+	for i in $(git ls-remote "$dir" HEAD ORIG_HEAD 'refs/tags/*' 'refs/heads/*' 'refs/remotes/*' 2>/dev/null); do
 		case "$is_hash,$i" in
 		y,*) is_hash=n ;;
 		n,*^{}) is_hash=y ;;
-		n,refs/tags/*) is_hash=y; echo "${i#refs/tags/}" ;;
-		n,refs/heads/*) is_hash=y; echo "${i#refs/heads/}" ;;
-		n,refs/remotes/*) is_hash=y; echo "${i#refs/remotes/}" ;;
+		n,refs/*) is_hash=y; echo "${i#refs/*/}" ;;
 		n,*) is_hash=y; echo "$i" ;;
 		esac
 	done
