@@ -94,6 +94,7 @@ static void sort_ref_array(struct ref_array *array)
 				die("Duplicated ref, and SHA1s don't match: %s",
 				    a->name);
 			warning("Duplicated ref: %s", a->name);
+			free(b);
 			continue;
 		}
 		i++;
