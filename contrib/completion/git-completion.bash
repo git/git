@@ -616,14 +616,27 @@ __git_refs ()
 		fi
 		return
 	fi
-	git ls-remote "$dir" HEAD ORIG_HEAD 'refs/tags/*' 'refs/heads/*' 'refs/remotes/*' 2>/dev/null | \
-	while read hash i; do
-		case "$i" in
-		*^{}) ;;
-		refs/*) echo "${i#refs/*/}" ;;
-		*) echo "$i" ;;
-		esac
-	done
+	case "$cur" in
+	refs|refs/*)
+		git ls-remote "$dir" "$cur*" 2>/dev/null | \
+		while read hash i; do
+			case "$i" in
+			*^{}) ;;
+			*) echo "$i" ;;
+			esac
+		done
+		;;
+	*)
+		git ls-remote "$dir" HEAD ORIG_HEAD 'refs/tags/*' 'refs/heads/*' 'refs/remotes/*' 2>/dev/null | \
+		while read hash i; do
+			case "$i" in
+			*^{}) ;;
+			refs/*) echo "${i#refs/*/}" ;;
+			*) echo "$i" ;;
+			esac
+		done
+		;;
+	esac
 }
 
 # __git_refs2 requires 1 argument (to pass to __git_refs)
