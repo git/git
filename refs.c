@@ -360,6 +360,7 @@ static int resolve_gitlink_packed_ref(char *name, int pathlen, const char *refna
 	f = fopen(name, "r");
 	if (!f)
 		return -1;
+	memset(&refs, 0, sizeof(refs));
 	read_packed_refs(f, &refs);
 	fclose(f);
 	ref = search_ref_array(&refs.packed, refname);
