@@ -537,42 +537,24 @@ __gitcomp_nl ()
 	COMPREPLY=($(compgen -P "${2-}" -S "$suffix" -W "$1" -- "$cur_"))
 }
 
-# __git_heads accepts 0 or 1 arguments (to pass to __gitdir)
 __git_heads ()
 {
-	local cmd i is_hash=y dir="$(__gitdir "${1-}")"
+	local dir="$(__gitdir)"
 	if [ -d "$dir" ]; then
 		git --git-dir="$dir" for-each-ref --format='%(refname:short)' \
 			refs/heads
 		return
 	fi
-	for i in $(git ls-remote "${1-}" 2>/dev/null); do
-		case "$is_hash,$i" in
-		y,*) is_hash=n ;;
-		n,*^{}) is_hash=y ;;
-		n,refs/heads/*) is_hash=y; echo "${i#refs/heads/}" ;;
-		n,*) is_hash=y; echo "$i" ;;
-		esac
-	done
 }
 
-# __git_tags accepts 0 or 1 arguments (to pass to __gitdir)
 __git_tags ()
 {
-	local cmd i is_hash=y dir="$(__gitdir "${1-}")"
+	local dir="$(__gitdir)"
 	if [ -d "$dir" ]; then
 		git --git-dir="$dir" for-each-ref --format='%(refname:short)' \
 			refs/tags
 		return
 	fi
-	for i in $(git ls-remote "${1-}" 2>/dev/null); do
-		case "$is_hash,$i" in
-		y,*) is_hash=n ;;
-		n,*^{}) is_hash=y ;;
-		n,refs/tags/*) is_hash=y; echo "${i#refs/tags/}" ;;
-		n,*) is_hash=y; echo "$i" ;;
-		esac
-	done
 }
 
 # __git_refs accepts 0, 1 (to pass to __gitdir), or 2 arguments
