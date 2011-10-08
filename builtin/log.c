@@ -1040,7 +1040,7 @@ static char *find_branch_name(struct rev_info *rev)
 	if (positive < 0)
 		return NULL;
 	strbuf_addf(&buf, "refs/heads/%s", rev->cmdline.rev[positive].name);
-	branch = resolve_ref(buf.buf, branch_sha1, 1, 0);
+	branch = resolve_ref(buf.buf, branch_sha1, 1, NULL);
 	if (!branch ||
 	    prefixcmp(branch, "refs/heads/") ||
 	    hashcmp(rev->cmdline.rev[positive].item->sha1, branch_sha1))
