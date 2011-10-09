@@ -9,6 +9,7 @@
  */
 #include "cache.h"
 #include "refs.h"
+#include "fmt-merge-msg.h"
 
 char git_default_email[MAX_GITNAME];
 char git_default_name[MAX_GITNAME];
