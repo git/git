@@ -100,14 +100,35 @@ static int xdl_emit_common(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
 	return 0;
 }
 
+struct func_line {
+	long len;
+	char buf[80];
+};
+
+static void get_func_line(xdfenv_t *xe, xdemitconf_t const *xecfg,
+			  struct func_line *func_line, long start, long limit)
+{
+	find_func_t ff = xecfg->find_func ? xecfg->find_func : def_ff;
+	long l, size = sizeof(func_line->buf);
+	char *buf = func_line->buf;
+
+	for (l = start; l > limit && 0 <= l; l--) {
+		const char *rec;
+		long reclen = xdl_get_rec(&xe->xdf1, l, &rec);
+		long len = ff(rec, reclen, buf, size, xecfg->find_func_priv);
+		if (len >= 0) {
+			func_line->len = len;
+			break;
+		}
+	}
+}
+
 int xdl_emit_diff(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
 		  xdemitconf_t const *xecfg) {
 	long s1, s2, e1, e2, lctx;
 	xdchange_t *xch, *xche;
-	char funcbuf[80];
-	long funclen = 0;
 	long funclineprev = -1;
-	find_func_t ff = xecfg->find_func ?  xecfg->find_func : def_ff;
+	struct func_line func_line = { 0 };
 
 	if (xecfg->flags & XDL_EMIT_COMMON)
 		return xdl_emit_common(xe, xscr, ecb, xecfg);
@@ -130,22 +151,12 @@ int xdl_emit_diff(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
 		 */
 
 		if (xecfg->flags & XDL_EMIT_FUNCNAMES) {
-			long l;
-			for (l = s1 - 1; l >= 0 && l > funclineprev; l--) {
-				const char *rec;
-				long reclen = xdl_get_rec(&xe->xdf1, l, &rec);
-				long newfunclen = ff(rec, reclen, funcbuf,
-						     sizeof(funcbuf),
-						     xecfg->find_func_priv);
-				if (newfunclen >= 0) {
-					funclen = newfunclen;
-					break;
-				}
-			}
+			get_func_line(xe, xecfg, &func_line,
+				      s1 - 1, funclineprev);
 			funclineprev = s1 - 1;
 		}
 		if (xdl_emit_hunk_hdr(s1 + 1, e1 - s1, s2 + 1, e2 - s2,
-				      funcbuf, funclen, ecb) < 0)
+				      func_line.buf, func_line.len, ecb) < 0)
 			return -1;
 
 		/*
