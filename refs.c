@@ -153,11 +153,15 @@ static struct ref_list *sort_ref_list(struct ref_list *list)
  * when doing a full libification.
  */
 static struct cached_refs {
+	struct cached_refs *next;
 	char did_loose;
 	char did_packed;
 	struct ref_list *loose;
 	struct ref_list *packed;
-} cached_refs, submodule_refs;
+	/* The submodule name, or "" for the main repo. */
+	char name[FLEX_ARRAY];
+} *cached_refs;
+
 static struct ref_list *current_ref;
 
 static struct ref_list *extra_refs;
@@ -171,10 +175,8 @@ static void free_ref_list(struct ref_list *list)
 	}
 }
 
-static void invalidate_cached_refs(void)
+static void clear_cached_refs(struct cached_refs *ca)
 {
-	struct cached_refs *ca = &cached_refs;
-
 	if (ca->did_loose && ca->loose)
 		free_ref_list(ca->loose);
 	if (ca->did_packed && ca->packed)
@@ -183,7 +185,54 @@ static void invalidate_cached_refs(void)
 	ca->did_loose = ca->did_packed = 0;
 }
 
-static void read_packed_refs(FILE *f, struct cached_refs *cached_refs)
+static struct cached_refs *create_cached_refs(const char *submodule)
+{
+	int len;
+	struct cached_refs *refs;
+	if (!submodule)
+		submodule = "";
+	len = strlen(submodule) + 1;
+	refs = xmalloc(sizeof(struct cached_refs) + len);
+	refs->next = NULL;
+	refs->did_loose = refs->did_packed = 0;
+	refs->loose = refs->packed = NULL;
+	memcpy(refs->name, submodule, len);
+	return refs;
+}
+
+/*
+ * Return a pointer to a cached_refs for the specified submodule. For
+ * the main repository, use submodule==NULL. The returned structure
+ * will be allocated and initialized but not necessarily populated; it
+ * should not be freed.
+ */
+static struct cached_refs *get_cached_refs(const char *submodule)
+{
+	struct cached_refs *refs = cached_refs;
+	if (!submodule)
+		submodule = "";
+	while (refs) {
+		if (!strcmp(submodule, refs->name))
+			return refs;
+		refs = refs->next;
+	}
+
+	refs = create_cached_refs(submodule);
+	refs->next = cached_refs;
+	cached_refs = refs;
+	return refs;
+}
+
+static void invalidate_cached_refs(void)
+{
+	struct cached_refs *refs = cached_refs;
+	while (refs) {
+		clear_cached_refs(refs);
+		refs = refs->next;
+	}
+}
+
+static struct ref_list *read_packed_refs(FILE *f)
 {
 	struct ref_list *list = NULL;
 	struct ref_list *last = NULL;
@@ -215,7 +264,7 @@ static void read_packed_refs(FILE *f, struct cached_refs *cached_refs)
 		    !get_sha1_hex(refline + 1, sha1))
 			hashcpy(last->peeled, sha1);
 	}
-	cached_refs->packed = sort_ref_list(list);
+	return sort_ref_list(list);
 }
 
 void add_extra_ref(const char *name, const unsigned char *sha1, int flag)
@@ -231,23 +280,20 @@ void clear_extra_refs(void)
 
 static struct ref_list *get_packed_refs(const char *submodule)
 {
-	const char *packed_refs_file;
-	struct cached_refs *refs;
+	struct cached_refs *refs = get_cached_refs(submodule);
 
-	if (submodule) {
-		packed_refs_file = git_path_submodule(submodule, "packed-refs");
-		refs = &submodule_refs;
-		free_ref_list(refs->packed);
-	} else {
-		packed_refs_file = git_path("packed-refs");
-		refs = &cached_refs;
-	}
+	if (!refs->did_packed) {
+		const char *packed_refs_file;
+		FILE *f;
 
-	if (!refs->did_packed || submodule) {
-		FILE *f = fopen(packed_refs_file, "r");
+		if (submodule)
+			packed_refs_file = git_path_submodule(submodule, "packed-refs");
+		else
+			packed_refs_file = git_path("packed-refs");
+		f = fopen(packed_refs_file, "r");
 		refs->packed = NULL;
 		if (f) {
-			read_packed_refs(f, refs);
+			refs->packed = read_packed_refs(f);
 			fclose(f);
 		}
 		refs->did_packed = 1;
@@ -358,17 +404,13 @@ void warn_dangling_symref(FILE *fp, const char *msg_fmt, const char *refname)
 
 static struct ref_list *get_loose_refs(const char *submodule)
 {
-	if (submodule) {
-		free_ref_list(submodule_refs.loose);
-		submodule_refs.loose = get_ref_dir(submodule, "refs", NULL);
-		return submodule_refs.loose;
-	}
+	struct cached_refs *refs = get_cached_refs(submodule);
 
-	if (!cached_refs.did_loose) {
-		cached_refs.loose = get_ref_dir(NULL, "refs", NULL);
-		cached_refs.did_loose = 1;
+	if (!refs->did_loose) {
+		refs->loose = get_ref_dir(submodule, "refs", NULL);
+		refs->did_loose = 1;
 	}
-	return cached_refs.loose;
+	return refs->loose;
 }
 
 /* We allow "recursive" symbolic refs. Only within reason, though */
@@ -378,7 +420,7 @@ static struct ref_list *get_loose_refs(const char *submodule)
 static int resolve_gitlink_packed_ref(char *name, int pathlen, const char *refname, unsigned char *result)
 {
 	FILE *f;
-	struct cached_refs refs;
+	struct ref_list *packed_refs;
 	struct ref_list *ref;
 	int retval;
 
@@ -386,9 +428,9 @@ static int resolve_gitlink_packed_ref(char *name, int pathlen, const char *refna
 	f = fopen(name, "r");
 	if (!f)
 		return -1;
-	read_packed_refs(f, &refs);
+	packed_refs = read_packed_refs(f);
 	fclose(f);
-	ref = refs.packed;
+	ref = packed_refs;
 	retval = -1;
 	while (ref) {
 		if (!strcmp(ref->name, refname)) {
@@ -398,7 +440,7 @@ static int resolve_gitlink_packed_ref(char *name, int pathlen, const char *refna
 		}
 		ref = ref->next;
 	}
-	free_ref_list(refs.packed);
+	free_ref_list(packed_refs);
 	return retval;
 }
 
