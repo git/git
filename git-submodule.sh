@@ -128,13 +128,49 @@ module_clone()
 		quiet=-q
 	fi
 
-	if test -n "$reference"
+	gitdir=
+	gitdir_base=
+	name=$(module_name "$path")
+	base_path=$(dirname "$path")
+
+	gitdir=$(git rev-parse --git-dir)
+	gitdir_base="$gitdir/modules/$base_path"
+	gitdir="$gitdir/modules/$path"
+
+	case $gitdir in
+	/*)
+		a="$(cd_to_toplevel && pwd)/"
+		b=$gitdir
+		while [ "$b" ] && [ "${a%%/*}" = "${b%%/*}" ]
+		do
+			a=${a#*/} b=${b#*/};
+		done
+
+		rel="$a$name"
+		rel=`echo $rel | sed -e 's|[^/]*|..|g'`
+		rel_gitdir="$rel/$b"
+		;;
+	*)
+		rel=`echo $name | sed -e 's|[^/]*|..|g'`
+		rel_gitdir="$rel/$gitdir"
+		;;
+	esac
+
+	if test -d "$gitdir"
 	then
-		git-clone $quiet "$reference" -n "$url" "$path"
+		mkdir -p "$path"
+		echo "gitdir: $rel_gitdir" >"$path/.git"
+		rm -f "$gitdir/index"
 	else
-		git-clone $quiet -n "$url" "$path"
-	fi ||
-	die "$(eval_gettext "Clone of '\$url' into submodule path '\$path' failed")"
+		mkdir -p "$gitdir_base"
+		if test -n "$reference"
+		then
+			git-clone $quiet "$reference" -n "$url" "$path" --separate-git-dir "$gitdir"
+		else
+			git-clone $quiet -n "$url" "$path" --separate-git-dir "$gitdir"
+		fi ||
+		die "$(eval_gettext "Clone of '\$url' into submodule path '\$path' failed")"
+	fi
 }
 
 #
@@ -426,6 +462,9 @@ cmd_update()
 		--recursive)
 			recursive=1
 			;;
+		--checkout)
+			update="checkout"
+			;;
 		--)
 			shift
 			break
@@ -458,7 +497,19 @@ cmd_update()
 		fi
 		name=$(module_name "$path") || exit
 		url=$(git config submodule."$name".url)
-		update_module=$(git config submodule."$name".update)
+		if ! test -z "$update"
+		then
+			update_module=$update
+		else
+			update_module=$(git config submodule."$name".update)
+		fi
+
+		if test "$update_module" = "none"
+		then
+			echo "Skipping submodule '$path'"
+			continue
+		fi
+
 		if test -z "$url"
 		then
 			# Only mention uninitialized submodules when its
@@ -478,11 +529,6 @@ Maybe you want to use 'update --init'?")"
 			subsha1=$(clear_local_git_env; cd "$path" &&
 				git rev-parse --verify HEAD) ||
 			die "$(eval_gettext "Unable to find current revision in submodule path '\$path'")"
-		fi
-
-		if ! test -z "$update"
-		then
-			update_module=$update
 		fi
 
 		if test "$subsha1" != "$sha1"
