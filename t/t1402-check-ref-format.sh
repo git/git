@@ -36,7 +36,7 @@ invalid_ref 'refs///heads/foo'
 valid_ref 'refs///heads/foo' --normalize
 invalid_ref 'heads/foo/'
 invalid_ref '/heads/foo'
-valid_ref '/heads/foo' --normalize
+test_have_prereq MINGW || valid_ref '/heads/foo' --normalize
 invalid_ref '///heads/foo'
 valid_ref '///heads/foo' --normalize
 invalid_ref './foo'
@@ -120,9 +120,12 @@ invalid_ref "$ref" --allow-onelevel
 invalid_ref "$ref" --refspec-pattern
 invalid_ref "$ref" '--refspec-pattern --allow-onelevel'
 invalid_ref "$ref" --normalize
-valid_ref "$ref" '--allow-onelevel --normalize'
-invalid_ref "$ref" '--refspec-pattern --normalize'
-valid_ref "$ref" '--refspec-pattern --allow-onelevel --normalize'
+if test_have_prereq NOT_MINGW
+then
+	valid_ref "$ref" '--allow-onelevel --normalize'
+	invalid_ref "$ref" '--refspec-pattern --normalize'
+	valid_ref "$ref" '--refspec-pattern --allow-onelevel --normalize'
+fi
 
 test_expect_success "check-ref-format --branch @{-1}" '
 	T=$(git write-tree) &&
@@ -166,10 +169,10 @@ invalid_ref_normalized() {
 
 valid_ref_normalized 'heads/foo' 'heads/foo'
 valid_ref_normalized 'refs///heads/foo' 'refs/heads/foo'
-valid_ref_normalized '/heads/foo' 'heads/foo'
+test_have_prereq MINGW || valid_ref_normalized '/heads/foo' 'heads/foo'
 valid_ref_normalized '///heads/foo' 'heads/foo'
 invalid_ref_normalized 'foo'
-invalid_ref_normalized '/foo'
+test_have_prereq MINGW || invalid_ref_normalized '/foo'
 invalid_ref_normalized 'heads/foo/../bar'
 invalid_ref_normalized 'heads/./foo'
 invalid_ref_normalized 'heads\foo'
