@@ -333,6 +333,12 @@ test_expect_success 'get-regexp variable with no value' \
 	'git config --get-regexp novalue > output &&
 	 cmp output expect'
 
+echo 'novalue.variable true' > expect
+
+test_expect_success 'get-regexp --bool variable with no value' \
+	'git config --bool --get-regexp novalue > output &&
+	 cmp output expect'
+
 echo 'emptyvalue.variable ' > expect
 
 test_expect_success 'get-regexp variable with empty value' \
