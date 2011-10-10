@@ -493,23 +493,6 @@ static void read_config(void)
 }
 
 /*
- * We need to make sure the remote-tracking branches are well formed, but a
- * wildcard refspec in "struct refspec" must have a trailing slash. We
- * temporarily drop the trailing '/' while calling check_ref_format(),
- * and put it back.  The caller knows that a CHECK_REF_FORMAT_ONELEVEL
- * error return is Ok for a wildcard refspec.
- */
-static int verify_refname(char *name, int is_glob)
-{
-	int result;
-
-	result = check_ref_format(name);
-	if (is_glob && result == CHECK_REF_FORMAT_WILDCARD)
-		result = CHECK_REF_FORMAT_OK;
-	return result;
-}
-
-/*
  * This function frees a refspec array.
  * Warning: code paths should be checked to ensure that the src
  *          and dst pointers are always freeable pointers as well
@@ -532,13 +515,13 @@ static void free_refspecs(struct refspec *refspec, int nr_refspec)
 static struct refspec *parse_refspec_internal(int nr_refspec, const char **refspec, int fetch, int verify)
 {
 	int i;
-	int st;
 	struct refspec *rs = xcalloc(sizeof(*rs), nr_refspec);
 
 	for (i = 0; i < nr_refspec; i++) {
 		size_t llen;
 		int is_glob;
 		const char *lhs, *rhs;
+		int flags;
 
 		is_glob = 0;
 
@@ -576,6 +559,7 @@ static struct refspec *parse_refspec_internal(int nr_refspec, const char **refsp
 
 		rs[i].pattern = is_glob;
 		rs[i].src = xstrndup(lhs, llen);
+		flags = REFNAME_ALLOW_ONELEVEL | (is_glob ? REFNAME_REFSPEC_PATTERN : 0);
 
 		if (fetch) {
 			/*
@@ -585,26 +569,20 @@ static struct refspec *parse_refspec_internal(int nr_refspec, const char **refsp
 			 */
 			if (!*rs[i].src)
 				; /* empty is ok */
-			else {
-				st = verify_refname(rs[i].src, is_glob);
-				if (st && st != CHECK_REF_FORMAT_ONELEVEL)
-					goto invalid;
-			}
+			else if (check_refname_format(rs[i].src, flags))
+				goto invalid;
 			/*
 			 * RHS
 			 * - missing is ok, and is same as empty.
 			 * - empty is ok; it means not to store.
 			 * - otherwise it must be a valid looking ref.
 			 */
-			if (!rs[i].dst) {
+			if (!rs[i].dst)
 				; /* ok */
-			} else if (!*rs[i].dst) {
+			else if (!*rs[i].dst)
 				; /* ok */
-			} else {
-				st = verify_refname(rs[i].dst, is_glob);
-				if (st && st != CHECK_REF_FORMAT_ONELEVEL)
-					goto invalid;
-			}
+			else if (check_refname_format(rs[i].dst, flags))
+				goto invalid;
 		} else {
 			/*
 			 * LHS
@@ -616,8 +594,7 @@ static struct refspec *parse_refspec_internal(int nr_refspec, const char **refsp
 			if (!*rs[i].src)
 				; /* empty is ok */
 			else if (is_glob) {
-				st = verify_refname(rs[i].src, is_glob);
-				if (st && st != CHECK_REF_FORMAT_ONELEVEL)
+				if (check_refname_format(rs[i].src, flags))
 					goto invalid;
 			}
 			else
@@ -630,14 +607,12 @@ static struct refspec *parse_refspec_internal(int nr_refspec, const char **refsp
 			 * - otherwise it must be a valid looking ref.
 			 */
 			if (!rs[i].dst) {
-				st = verify_refname(rs[i].src, is_glob);
-				if (st && st != CHECK_REF_FORMAT_ONELEVEL)
+				if (check_refname_format(rs[i].src, flags))
 					goto invalid;
 			} else if (!*rs[i].dst) {
 				goto invalid;
 			} else {
-				st = verify_refname(rs[i].dst, is_glob);
-				if (st && st != CHECK_REF_FORMAT_ONELEVEL)
+				if (check_refname_format(rs[i].dst, flags))
 					goto invalid;
 			}
 		}
@@ -840,7 +815,7 @@ char *apply_refspecs(struct refspec *refspecs, int nr_refspec,
 						    refspec->dst, &ret))
 				return ret;
 		} else if (!strcmp(refspec->src, name))
-			return strdup(refspec->dst);
+			return xstrdup(refspec->dst);
 	}
 	return NULL;
 }
@@ -1427,8 +1402,8 @@ int get_fetch_map(const struct ref *remote_refs,
 
 	for (rmp = &ref_map; *rmp; ) {
 		if ((*rmp)->peer_ref) {
-			int st = check_ref_format((*rmp)->peer_ref->name + 5);
-			if (st && st != CHECK_REF_FORMAT_ONELEVEL) {
+			if (check_refname_format((*rmp)->peer_ref->name + 5,
+				REFNAME_ALLOW_ONELEVEL)) {
 				struct ref *ignore = *rmp;
 				error("* Ignoring funny ref '%s' locally",
 				      (*rmp)->peer_ref->name);
@@ -1620,7 +1595,7 @@ static int one_local_ref(const char *refname, const unsigned char *sha1, int fla
 	int len;
 
 	/* we already know it starts with refs/ to get here */
-	if (check_ref_format(refname + 5))
+	if (check_refname_format(refname + 5, 0))
 		return 0;
 
 	len = strlen(refname) + 1;

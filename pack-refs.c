@@ -72,7 +72,7 @@ static void try_remove_empty_parents(char *name)
 	for (i = 0; i < 2; i++) { /* refs/{heads,tags,...}/ */
 		while (*p && *p != '/')
 			p++;
-		/* tolerate duplicate slashes; see check_ref_format() */
+		/* tolerate duplicate slashes; see check_refname_format() */
 		while (*p == '/')
 			p++;
 	}

@@ -966,9 +966,9 @@ int strbuf_check_branch_ref(struct strbuf *sb, const char *name)
 {
 	strbuf_branchname(sb, name);
 	if (name[0] == '-')
-		return CHECK_REF_FORMAT_ERROR;
+		return -1;
 	strbuf_splice(sb, 0, 0, "refs/heads/", 11);
-	return check_ref_format(sb->buf);
+	return check_refname_format(sb->buf, 0);
 }
 
 /*

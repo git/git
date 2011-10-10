@@ -819,10 +819,51 @@ static inline int get_sha1_with_context(const char *str, unsigned char *sha1, st
 {
 	return get_sha1_with_context_1(str, sha1, orc, 0, NULL);
 }
+
+/*
+ * Try to read a SHA1 in hexadecimal format from the 40 characters
+ * starting at hex.  Write the 20-byte result to sha1 in binary form.
+ * Return 0 on success.  Reading stops if a NUL is encountered in the
+ * input, so it is safe to pass this function an arbitrary
+ * null-terminated string.
+ */
 extern int get_sha1_hex(const char *hex, unsigned char *sha1);
+
 extern char *sha1_to_hex(const unsigned char *sha1);	/* static buffer result! */
 extern int read_ref(const char *filename, unsigned char *sha1);
-extern const char *resolve_ref(const char *path, unsigned char *sha1, int, int *);
+
+/*
+ * Resolve a reference, recursively following symbolic refererences.
+ *
+ * Store the referred-to object's name in sha1 and return the name of
+ * the non-symbolic reference that ultimately pointed at it.  The
+ * return value, if not NULL, is a pointer into either a static buffer
+ * or the input ref.
+ *
+ * If the reference cannot be resolved to an object, the behavior
+ * depends on the "reading" argument:
+ *
+ * - If reading is set, return NULL.
+ *
+ * - If reading is not set, clear sha1 and return the name of the last
+ *   reference name in the chain, which will either be a non-symbolic
+ *   reference or an undefined reference.  If this is a prelude to
+ *   "writing" to the ref, the return value is the name of the ref
+ *   that will actually be created or changed.
+ *
+ * If flag is non-NULL, set the value that it points to the
+ * combination of REF_ISPACKED (if the reference was found among the
+ * packed references) and REF_ISSYMREF (if the initial reference was a
+ * symbolic reference).
+ *
+ * If ref is not a properly-formatted, normalized reference, return
+ * NULL.  If more than MAXDEPTH recursive symbolic lookups are needed,
+ * give up and return NULL.
+ *
+ * errno is sometimes set on errors, but not always.
+ */
+extern const char *resolve_ref(const char *ref, unsigned char *sha1, int reading, int *flag);
+
 extern int dwim_ref(const char *str, int len, unsigned char *sha1, char **ref);
 extern int dwim_log(const char *str, int len, unsigned char *sha1, char **ref);
 extern int interpret_branch_name(const char *str, struct strbuf *);

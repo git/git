@@ -8,8 +8,9 @@ git-check-ref-format - Ensures that a reference name is well formed
 SYNOPSIS
 --------
 [verse]
-'git check-ref-format' <refname>
-'git check-ref-format' --print <refname>
+'git check-ref-format' [--normalize]
+       [--[no-]allow-onelevel] [--refspec-pattern]
+       <refname>
 'git check-ref-format' --branch <branchname-shorthand>
 
 DESCRIPTION
@@ -28,22 +29,28 @@ git imposes the following rules on how references are named:
 
 . They can include slash `/` for hierarchical (directory)
   grouping, but no slash-separated component can begin with a
-  dot `.`.
+  dot `.` or end with the sequence `.lock`.
 
 . They must contain at least one `/`. This enforces the presence of a
   category like `heads/`, `tags/` etc. but the actual names are not
-  restricted.
+  restricted.  If the `--allow-onelevel` option is used, this rule
+  is waived.
 
 . They cannot have two consecutive dots `..` anywhere.
 
 . They cannot have ASCII control characters (i.e. bytes whose
   values are lower than \040, or \177 `DEL`), space, tilde `~`,
-  caret `{caret}`, colon `:`, question-mark `?`, asterisk `*`,
-  or open bracket `[` anywhere.
+  caret `{caret}`, or colon `:` anywhere.
 
-. They cannot end with a slash `/` nor a dot `.`.
+. They cannot have question-mark `?`, asterisk `{asterisk}`, or open
+  bracket `[` anywhere.  See the `--refspec-pattern` option below for
+  an exception to this rule.
 
-. They cannot end with the sequence `.lock`.
+. They cannot begin or end with a slash `/` or contain multiple
+  consecutive slashes (see the `--normalize` option below for an
+  exception to this rule)
+
+. They cannot end with a dot `.`.
 
 . They cannot contain a sequence `@{`.
 
@@ -68,15 +75,35 @@ reference name expressions (see linkgit:gitrevisions[7]):
 
 . at-open-brace `@{` is used as a notation to access a reflog entry.
 
-With the `--print` option, if 'refname' is acceptable, it prints the
-canonicalized name of a hypothetical reference with that name.  That is,
-it prints 'refname' with any extra `/` characters removed.
-
 With the `--branch` option, it expands the ``previous branch syntax''
 `@{-n}`.  For example, `@{-1}` is a way to refer the last branch you
 were on.  This option should be used by porcelains to accept this
 syntax anywhere a branch name is expected, so they can act as if you
 typed the branch name.
+
+OPTIONS
+-------
+--allow-onelevel::
+--no-allow-onelevel::
+	Controls whether one-level refnames are accepted (i.e.,
+	refnames that do not contain multiple `/`-separated
+	components).  The default is `--no-allow-onelevel`.
+
+--refspec-pattern::
+	Interpret <refname> as a reference name pattern for a refspec
+	(as used with remote repositories).  If this option is
+	enabled, <refname> is allowed to contain a single `{asterisk}`
+	in place of a one full pathname component (e.g.,
+	`foo/{asterisk}/bar` but not `foo/bar{asterisk}`).
+
+--normalize::
+	Normalize 'refname' by removing any leading slash (`/`)
+	characters and collapsing runs of adjacent slashes between
+	name components into a single slash.  Iff the normalized
+	refname is valid then print it to standard output and exit
+	with a status of 0.  (`--print` is a deprecated way to spell
+	`--normalize`.)
+
 
 EXAMPLES
 --------
@@ -90,7 +117,7 @@ $ git check-ref-format --branch @{-1}
 * Determine the reference name to use for a new branch:
 +
 ------------
-$ ref=$(git check-ref-format --print "refs/heads/$newbranch") ||
+$ ref=$(git check-ref-format --normalize "refs/heads/$newbranch") ||
 die "we do not like '$newbranch' as a branch name."
 ------------
 

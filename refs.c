@@ -56,6 +56,8 @@ static struct ref_list *add_ref(const char *name, const unsigned char *sha1,
 	entry = xmalloc(sizeof(struct ref_list) + len);
 	hashcpy(entry->sha1, sha1);
 	hashclr(entry->peeled);
+	if (check_refname_format(name, REFNAME_ALLOW_ONELEVEL|REFNAME_DOT_COMPONENT))
+		die("Reference has invalid format: '%s'", name);
 	memcpy(entry->name, name, len);
 	entry->flag = flag;
 	entry->next = list;
@@ -508,29 +510,37 @@ int resolve_gitlink_ref(const char *path, const char *refname, unsigned char *re
 }
 
 /*
- * If the "reading" argument is set, this function finds out what _object_
- * the ref points at by "reading" the ref.  The ref, if it is not symbolic,
- * has to exist, and if it is symbolic, it has to point at an existing ref,
- * because the "read" goes through the symref to the ref it points at.
- *
- * The access that is not "reading" may often be "writing", but does not
- * have to; it can be merely checking _where it leads to_. If it is a
- * prelude to "writing" to the ref, a write to a symref that points at
- * yet-to-be-born ref will create the real ref pointed by the symref.
- * reading=0 allows the caller to check where such a symref leads to.
+ * Try to read ref from the packed references.  On success, set sha1
+ * and return 0; otherwise, return -1.
  */
+static int get_packed_ref(const char *ref, unsigned char *sha1)
+{
+	struct ref_list *list = get_packed_refs(NULL);
+	while (list) {
+		if (!strcmp(ref, list->name)) {
+			hashcpy(sha1, list->sha1);
+			return 0;
+		}
+		list = list->next;
+	}
+	return -1;
+}
+
 const char *resolve_ref(const char *ref, unsigned char *sha1, int reading, int *flag)
 {
 	int depth = MAXDEPTH;
 	ssize_t len;
 	char buffer[256];
 	static char ref_buffer[256];
+	char path[PATH_MAX];
 
 	if (flag)
 		*flag = 0;
 
+	if (check_refname_format(ref, REFNAME_ALLOW_ONELEVEL))
+		return NULL;
+
 	for (;;) {
-		char path[PATH_MAX];
 		struct stat st;
 		char *buf;
 		int fd;
@@ -539,29 +549,36 @@ const char *resolve_ref(const char *ref, unsigned char *sha1, int reading, int *
 			return NULL;
 
 		git_snpath(path, sizeof(path), "%s", ref);
-		/* Special case: non-existing file. */
+
 		if (lstat(path, &st) < 0) {
-			struct ref_list *list = get_packed_refs(NULL);
-			while (list) {
-				if (!strcmp(ref, list->name)) {
-					hashcpy(sha1, list->sha1);
-					if (flag)
-						*flag |= REF_ISPACKED;
-					return ref;
-				}
-				list = list->next;
-			}
-			if (reading || errno != ENOENT)
+			if (errno != ENOENT)
 				return NULL;
-			hashclr(sha1);
-			return ref;
+			/*
+			 * The loose reference file does not exist;
+			 * check for a packed reference.
+			 */
+			if (!get_packed_ref(ref, sha1)) {
+				if (flag)
+					*flag |= REF_ISPACKED;
+				return ref;
+			}
+			/* The reference is not a packed reference, either. */
+			if (reading) {
+				return NULL;
+			} else {
+				hashclr(sha1);
+				return ref;
+			}
 		}
 
 		/* Follow "normalized" - ie "refs/.." symlinks by hand */
 		if (S_ISLNK(st.st_mode)) {
 			len = readlink(path, buffer, sizeof(buffer)-1);
-			if (len >= 5 && !memcmp("refs/", buffer, 5)) {
-				buffer[len] = 0;
+			if (len < 0)
+				return NULL;
+			buffer[len] = 0;
+			if (!prefixcmp(buffer, "refs/") &&
+					!check_refname_format(buffer, 0)) {
 				strcpy(ref_buffer, buffer);
 				ref = ref_buffer;
 				if (flag)
@@ -585,26 +602,34 @@ const char *resolve_ref(const char *ref, unsigned char *sha1, int reading, int *
 			return NULL;
 		len = read_in_full(fd, buffer, sizeof(buffer)-1);
 		close(fd);
+		if (len < 0)
+			return NULL;
+		while (len && isspace(buffer[len-1]))
+			len--;
+		buffer[len] = '\0';
 
 		/*
 		 * Is it a symbolic ref?
 		 */
-		if (len < 4 || memcmp("ref:", buffer, 4))
+		if (prefixcmp(buffer, "ref:"))
 			break;
 		buf = buffer + 4;
-		len -= 4;
-		while (len && isspace(*buf))
-			buf++, len--;
-		while (len && isspace(buf[len-1]))
-			len--;
-		buf[len] = 0;
-		memcpy(ref_buffer, buf, len + 1);
-		ref = ref_buffer;
+		while (isspace(*buf))
+			buf++;
+		if (check_refname_format(buf, REFNAME_ALLOW_ONELEVEL)) {
+			warning("symbolic reference in %s is formatted incorrectly",
+				path);
+			return NULL;
+		}
+		ref = strcpy(ref_buffer, buf);
 		if (flag)
 			*flag |= REF_ISSYMREF;
 	}
-	if (len < 40 || get_sha1_hex(buffer, sha1))
+	/* Please note that FETCH_HEAD has a second line containing other data. */
+	if (get_sha1_hex(buffer, sha1) || (buffer[40] != '\0' && !isspace(buffer[40]))) {
+		warning("reference in %s is formatted incorrectly", path);
 		return NULL;
+	}
 	return ref;
 }
 
@@ -902,70 +927,87 @@ int for_each_rawref(each_ref_fn fn, void *cb_data)
  * - it contains a "\" (backslash)
  */
 
+/* Return true iff ch is not allowed in reference names. */
 static inline int bad_ref_char(int ch)
 {
 	if (((unsigned) ch) <= ' ' || ch == 0x7f ||
 	    ch == '~' || ch == '^' || ch == ':' || ch == '\\')
 		return 1;
 	/* 2.13 Pattern Matching Notation */
-	if (ch == '?' || ch == '[') /* Unsupported */
+	if (ch == '*' || ch == '?' || ch == '[') /* Unsupported */
 		return 1;
-	if (ch == '*') /* Supported at the end */
-		return 2;
 	return 0;
 }
 
-int check_ref_format(const char *ref)
+/*
+ * Try to read one refname component from the front of ref.  Return
+ * the length of the component found, or -1 if the component is not
+ * legal.
+ */
+static int check_refname_component(const char *ref, int flags)
 {
-	int ch, level, bad_type, last;
-	int ret = CHECK_REF_FORMAT_OK;
-	const char *cp = ref;
+	const char *cp;
+	char last = '\0';
 
-	level = 0;
-	while (1) {
-		while ((ch = *cp++) == '/')
-			; /* tolerate duplicated slashes */
-		if (!ch)
-			/* should not end with slashes */
-			return CHECK_REF_FORMAT_ERROR;
-
-		/* we are at the beginning of the path component */
-		if (ch == '.')
-			return CHECK_REF_FORMAT_ERROR;
-		bad_type = bad_ref_char(ch);
-		if (bad_type) {
-			if (bad_type == 2 && (!*cp || *cp == '/') &&
-			    ret == CHECK_REF_FORMAT_OK)
-				ret = CHECK_REF_FORMAT_WILDCARD;
-			else
-				return CHECK_REF_FORMAT_ERROR;
-		}
-
+	for (cp = ref; ; cp++) {
+		char ch = *cp;
+		if (ch == '\0' || ch == '/')
+			break;
+		if (bad_ref_char(ch))
+			return -1; /* Illegal character in refname. */
+		if (last == '.' && ch == '.')
+			return -1; /* Refname contains "..". */
+		if (last == '@' && ch == '{')
+			return -1; /* Refname contains "@{". */
 		last = ch;
-		/* scan the rest of the path component */
-		while ((ch = *cp++) != 0) {
-			bad_type = bad_ref_char(ch);
-			if (bad_type)
-				return CHECK_REF_FORMAT_ERROR;
-			if (ch == '/')
-				break;
-			if (last == '.' && ch == '.')
-				return CHECK_REF_FORMAT_ERROR;
-			if (last == '@' && ch == '{')
-				return CHECK_REF_FORMAT_ERROR;
-			last = ch;
-		}
-		level++;
-		if (!ch) {
-			if (ref <= cp - 2 && cp[-2] == '.')
-				return CHECK_REF_FORMAT_ERROR;
-			if (level < 2)
-				return CHECK_REF_FORMAT_ONELEVEL;
-			if (has_extension(ref, ".lock"))
-				return CHECK_REF_FORMAT_ERROR;
-			return ret;
-		}
 	}
+	if (cp == ref)
+		return -1; /* Component has zero length. */
+	if (ref[0] == '.') {
+		if (!(flags & REFNAME_DOT_COMPONENT))
+			return -1; /* Component starts with '.'. */
+		/*
+		 * Even if leading dots are allowed, don't allow "."
+		 * as a component (".." is prevented by a rule above).
+		 */
+		if (ref[1] == '\0')
+			return -1; /* Component equals ".". */
+	}
+	if (cp - ref >= 5 && !memcmp(cp - 5, ".lock", 5))
+		return -1; /* Refname ends with ".lock". */
+	return cp - ref;
+}
+
+int check_refname_format(const char *ref, int flags)
+{
+	int component_len, component_count = 0;
+
+	while (1) {
+		/* We are at the start of a path component. */
+		component_len = check_refname_component(ref, flags);
+		if (component_len < 0) {
+			if ((flags & REFNAME_REFSPEC_PATTERN) &&
+					ref[0] == '*' &&
+					(ref[1] == '\0' || ref[1] == '/')) {
+				/* Accept one wildcard as a full refname component. */
+				flags &= ~REFNAME_REFSPEC_PATTERN;
+				component_len = 1;
+			} else {
+				return -1;
+			}
+		}
+		component_count++;
+		if (ref[component_len] == '\0')
+			break;
+		/* Skip to next component. */
+		ref += component_len + 1;
+	}
+
+	if (ref[component_len - 1] == '.')
+		return -1; /* Refname ends with '.'. */
+	if (!(flags & REFNAME_ALLOW_ONELEVEL) && component_count < 2)
+		return -1; /* Refname has only one component. */
+	return 0;
 }
 
 const char *prettify_refname(const char *name)
@@ -1148,7 +1190,7 @@ static struct ref_lock *lock_ref_sha1_basic(const char *ref, const unsigned char
 struct ref_lock *lock_ref_sha1(const char *ref, const unsigned char *old_sha1)
 {
 	char refpath[PATH_MAX];
-	if (check_ref_format(ref))
+	if (check_refname_format(ref, 0))
 		return NULL;
 	strcpy(refpath, mkpath("refs/%s", ref));
 	return lock_ref_sha1_basic(refpath, old_sha1, 0, NULL);
@@ -1156,13 +1198,9 @@ struct ref_lock *lock_ref_sha1(const char *ref, const unsigned char *old_sha1)
 
 struct ref_lock *lock_any_ref_for_update(const char *ref, const unsigned char *old_sha1, int flags)
 {
-	switch (check_ref_format(ref)) {
-	default:
+	if (check_refname_format(ref, REFNAME_ALLOW_ONELEVEL))
 		return NULL;
-	case 0:
-	case CHECK_REF_FORMAT_ONELEVEL:
-		return lock_ref_sha1_basic(ref, old_sha1, flags, NULL);
-	}
+	return lock_ref_sha1_basic(ref, old_sha1, flags, NULL);
 }
 
 static struct lock_file packlock;

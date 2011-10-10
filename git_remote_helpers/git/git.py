@@ -54,7 +54,7 @@ def valid_git_ref (ref_name):
     # The following is a reimplementation of the git check-ref-format
     # command.  The rules were derived from the git check-ref-format(1)
     # manual page.  This code should be replaced by a call to
-    # check_ref_format() in the git library, when such is available.
+    # check_refname_format() in the git library, when such is available.
     if ref_name.endswith('/') or \
        ref_name.startswith('.') or \
        ref_name.count('/.') or \
