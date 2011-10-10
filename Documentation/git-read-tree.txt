@@ -401,7 +401,7 @@ files are in, you can also specify what files are _not_ in, using
 negate patterns. For example, to remove the file `unwanted`:
 
 ----------------
-*
+/*
 !unwanted
 ----------------
 
@@ -413,7 +413,7 @@ directory with the `$GIT_DIR/info/sparse-checkout` file content as
 follows:
 
 ----------------
-*
+/*
 ----------------
 
 Then you can disable sparse checkout. Sparse checkout support in 'git
