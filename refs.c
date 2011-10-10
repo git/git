@@ -341,7 +341,6 @@ static void get_ref_dir(const char *submodule, const char *base,
 		free(ref);
 		closedir(dir);
 	}
-	sort_ref_array(array);
 }
 
 struct warn_if_dangling_data {
@@ -384,6 +383,7 @@ static struct ref_array *get_loose_refs(const char *submodule)
 
 	if (!refs->did_loose) {
 		get_ref_dir(submodule, "refs", &refs->loose);
+		sort_ref_array(&refs->loose);
 		refs->did_loose = 1;
 	}
 	return &refs->loose;
