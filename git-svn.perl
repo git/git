@@ -94,7 +94,8 @@ $_q ||= 0;
 my %remote_opts = ( 'username=s' => \$Git::SVN::Prompt::_username,
                     'config-dir=s' => \$Git::SVN::Ra::config_dir,
                     'no-auth-cache' => \$Git::SVN::Prompt::_no_auth_cache,
-                    'ignore-paths=s' => \$SVN::Git::Fetcher::_ignore_regex );
+                    'ignore-paths=s' => \$SVN::Git::Fetcher::_ignore_regex,
+                    'ignore-refs=s' => \$Git::SVN::Ra::_ignore_refs_regex );
 my %fc_opts = ( 'follow-parent|follow!' => \$Git::SVN::_follow_parent,
 		'authors-file|A=s' => \$_authors,
 		'authors-prog=s' => \$_authors_prog,
@@ -440,9 +441,12 @@ sub do_git_init_db {
 		command_noisy('config', "$pfx.$i", $icv{$i});
 		$set = $i;
 	}
-	my $ignore_regex = \$SVN::Git::Fetcher::_ignore_regex;
-	command_noisy('config', "$pfx.ignore-paths", $$ignore_regex)
-		if defined $$ignore_regex;
+	my $ignore_paths_regex = \$SVN::Git::Fetcher::_ignore_regex;
+	command_noisy('config', "$pfx.ignore-paths", $$ignore_paths_regex)
+		if defined $$ignore_paths_regex;
+	my $ignore_refs_regex = \$Git::SVN::Ra::_ignore_refs_regex;
+	command_noisy('config', "$pfx.ignore-refs", $$ignore_refs_regex)
+		if defined $$ignore_refs_regex;
 
 	if (defined $SVN::Git::Fetcher::_preserve_empty_dirs) {
 		my $fname = \$SVN::Git::Fetcher::_placeholder_filename;
@@ -2192,6 +2196,8 @@ sub read_all_remotes {
 			$r->{$1}->{url} = $2;
 		} elsif (m!^(.+)\.pushurl=\s*(.*)\s*$!) {
 			$r->{$1}->{pushurl} = $2;
+		} elsif (m!^(.+)\.ignore-refs=\s*(.*)\s*$!) {
+			$r->{$1}->{ignore_refs_regex} = $2;
 		} elsif (m!^(.+)\.(branches|tags)=$svn_refspec$!) {
 			my ($remote, $t, $local_ref, $remote_ref) =
 			                                     ($1, $2, $3, $4);
@@ -2227,6 +2233,16 @@ sub read_all_remotes {
 			$r->{$_}->{svm} = $svm;
 		}
 	} keys %$r;
+
+	foreach my $remote (keys %$r) {
+		foreach ( grep { defined $_ }
+			  map { $r->{$remote}->{$_} } qw(branches tags) ) {
+			foreach my $rs ( @$_ ) {
+				$rs->{ignore_refs_regex} =
+				    $r->{$remote}->{ignore_refs_regex};
+			}
+		}
+	}
 
 	$r;
 }
@@ -5383,7 +5399,7 @@ sub apply_diff {
 }
 
 package Git::SVN::Ra;
-use vars qw/@ISA $config_dir $_log_window_size/;
+use vars qw/@ISA $config_dir $_ignore_refs_regex $_log_window_size/;
 use strict;
 use warnings;
 my ($ra_invalid, $can_do_switch, %ignored_err, $RA);
@@ -5841,6 +5857,17 @@ sub get_dir_globbed {
 	@finalents;
 }
 
+# return value: 0 -- don't ignore, 1 -- ignore
+sub is_ref_ignored {
+	my ($g, $p) = @_;
+	my $refname = $g->{ref}->full_path($p);
+	return 1 if defined($g->{ignore_refs_regex}) &&
+	            $refname =~ m!$g->{ignore_refs_regex}!;
+	return 0 unless defined($_ignore_refs_regex);
+	return 1 if $refname =~ m!$_ignore_refs_regex!o;
+	return 0;
+}
+
 sub match_globs {
 	my ($self, $exists, $paths, $globs, $r) = @_;
 
@@ -5877,6 +5904,7 @@ sub match_globs {
 			next unless /$g->{path}->{regex}/;
 			my $p = $1;
 			my $pathname = $g->{path}->full_path($p);
+			next if is_ref_ignored($g, $p);
 			next if $exists->{$pathname};
 			next if ($self->check_path($pathname, $r) !=
 			         $SVN::Node::dir);
