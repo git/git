@@ -30,6 +30,7 @@ test_expect_success 'setup a submodule tree' '
 	git clone super submodule &&
 	git clone super rebasing &&
 	git clone super merging &&
+	git clone super none &&
 	(cd super &&
 	 git submodule add ../submodule submodule &&
 	 test_tick &&
@@ -57,6 +58,11 @@ test_expect_success 'setup a submodule tree' '
 	 git submodule add ../merging merging &&
 	 test_tick &&
 	 git commit -m "rebasing"
+	)
+	(cd super &&
+	 git submodule add ../none none &&
+	 test_tick &&
+	 git commit -m "none"
 	)
 '
 
@@ -295,6 +301,62 @@ test_expect_success 'submodule update ignores update=rebase config for new submo
 	 git status -s submodule >actual &&
 	 git config --unset submodule.submodule.update &&
 	 test_cmp expect actual
+	)
+'
+
+test_expect_success 'submodule init picks up update=none' '
+	(cd super &&
+	 git config -f .gitmodules submodule.none.update none &&
+	 git submodule init none &&
+	 test "none" = "$(git config submodule.none.update)"
+	)
+'
+
+test_expect_success 'submodule update - update=none in .git/config' '
+	(cd super &&
+	 git config submodule.submodule.update none &&
+	 (cd submodule &&
+	  git checkout master &&
+	  compare_head
+	 ) &&
+	 git diff --raw | grep "	submodule" &&
+	 git submodule update &&
+	 git diff --raw | grep "	submodule" &&
+	 (cd submodule &&
+	  compare_head
+	 ) &&
+	 git config --unset submodule.submodule.update &&
+	 git submodule update submodule
+	)
+'
+
+test_expect_success 'submodule update - update=none in .git/config but --checkout given' '
+	(cd super &&
+	 git config submodule.submodule.update none &&
+	 (cd submodule &&
+	  git checkout master &&
+	  compare_head
+	 ) &&
+	 git diff --raw | grep "	submodule" &&
+	 git submodule update --checkout &&
+	 test_must_fail git diff --raw \| grep "	submodule" &&
+	 (cd submodule &&
+	  test_must_fail compare_head
+	 ) &&
+	 git config --unset submodule.submodule.update
+	)
+'
+
+test_expect_success 'submodule update --init skips submodule with update=none' '
+	(cd super &&
+	 git add .gitmodules &&
+	 git commit -m ".gitmodules"
+	) &&
+	git clone super cloned &&
+	(cd cloned &&
+	 git submodule update --init &&
+	 test -e submodule/.git &&
+	 test_must_fail test -e none/.git
 	)
 '
 
