@@ -40,11 +40,25 @@ Updates since v1.7.7
  * "git stash" learned "--include-untracked" option to stash away
    untracked/ignored cruft from the working tree.
 
+ * "git submodule update" learned to honor "none" as the value for
+   submodule.<name>.update to specify that the named submodule should
+   not be checked out by default.
+
+ * When populating a new submodule directory with "git submodule init",
+   the $GIT_DIR metainformation directory for submodules is created inside
+   $GIT_DIR/modules/<name>/ directory of the superproject and referenced
+   via the gitfile mechanism. This is to make it possible to switch
+   between commits in the superproject that has and does not have the
+   submodule in the tree without re-cloning.
+
  * "mediawiki" remote helper can interact with (surprise!) MediaWiki
    with "git fetch" & "git push".
 
  * "gitweb" leaked unescaped control characters from syntax hiliter
    outputs.
+
+
+Also contains other documentation updates and minor code cleanups.
 
 
 Fixes since v1.7.7
@@ -53,9 +67,27 @@ Fixes since v1.7.7
 Unless otherwise noted, all fixes in the 1.7.7.X maintenance track are
 included in this release.
 
+ * We used to drop error messages from libcurl on certain kinds of
+   errors.
+   (merge be22d92eac8 jn/maint-http-error-message later to maint).
+
+ * Adding many refs to the local repository in one go (e.g. "git fetch"
+   that fetches many tags) and looking up a ref by name in a repository
+   with too many refs were unnecessarily slow.
+   (merge 17d68a54d jp/get-ref-dir-unsorted later to maint).
+
+ * "git remote rename $a $b" were not careful to match the remote name
+   against $a (i.e. source side of the remote nickname).
+   (merge b52d00aed mz/remote-rename later to maint).
+
  * "git diff $tree $path" used to apply the pathspec at the output stage,
    reading the whole tree, wasting resources.
    (merge 2f88c1970 jc/diff-index-unpack later to maint).
+
+ * "git diff --[num]stat" used to use the number of lines of context
+   different from the default, potentially giving different results from
+   "git diff | diffstat" and confusing the users.
+   (merge f01cae918 jc/maint-diffstat-numstat-context later to maint).
 
  * The code to check for updated submodules during a "git fetch" of the
    superproject had an unnecessary quadratic loop.
@@ -84,6 +116,10 @@ included in this release.
 
  * "git merge" did not understand ":/<pattern>" as a way to name a commit.
 
+ * "git mergetool" learned to use its arguments as pathspec, not a path to
+   the file that may not even have any conflict.
+   (merge 6d9990a jm/mergetool-pathspec later to maint).
+
  * Tests with --valgrind failed to find "mergetool" scriptlets.
    (merge ee0d7bf92 tr/mergetool-valgrind later to maint).
 
@@ -96,12 +132,14 @@ included in this release.
    be cleaned up.
    (merge 1686519a mm/rebase-i-exec-edit later to maint).
 
+ * "gitweb" used to produce a non-working link while showing the contents
+   of a blob, when JavaScript actions are enabled.
+   (merge 2b07ff3ff ps/gitweb-js-with-lineno later to maint).
+
 ---
-it=master
 exec >/var/tmp/1
-O=v1.7.7
-O=v1.7.7-137-g2e49dab
-echo O=$(git describe --always $it)
-git log --first-parent --oneline --reverse ^$O $it
+O=v1.7.7-212-g4909bbe
+echo O=$(git describe --always master)
+git log --first-parent --oneline --reverse ^$O master
 echo
-git shortlog --no-merges ^$O $it
+git shortlog --no-merges ^$O master
