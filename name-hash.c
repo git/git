@@ -57,12 +57,10 @@ static void hash_index_entry_directories(struct index_state *istate, struct cach
 		if (*ptr == '/') {
 			++ptr;
 			hash = hash_name(ce->name, ptr - ce->name);
-			if (!lookup_hash(hash, &istate->name_hash)) {
-				pos = insert_hash(hash, ce, &istate->name_hash);
-				if (pos) {
-					ce->next = *pos;
-					*pos = ce;
-				}
+			pos = insert_hash(hash, ce, &istate->name_hash);
+			if (pos) {
+				ce->dir_next = *pos;
+				*pos = ce;
 			}
 		}
 	}
@@ -166,7 +164,10 @@ struct cache_entry *index_name_exists(struct index_state *istate, const char *na
 			if (same_name(ce, name, namelen, icase))
 				return ce;
 		}
-		ce = ce->next;
+		if (icase && name[namelen - 1] == '/')
+			ce = ce->dir_next;
+		else
+			ce = ce->next;
 	}
 
 	/*
