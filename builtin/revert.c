@@ -302,7 +302,7 @@ static void write_cherry_pick_head(struct commit *commit)
 	strbuf_release(&buf);
 }
 
-static void print_advice(void)
+static void print_advice(int show_hint)
 {
 	char *msg = getenv("GIT_CHERRY_PICK_HELP");
 
@@ -317,9 +317,11 @@ static void print_advice(void)
 		return;
 	}
 
-	advise("after resolving the conflicts, mark the corrected paths");
-	advise("with 'git add <paths>' or 'git rm <paths>'");
-	advise("and commit the result with 'git commit'");
+	if (show_hint) {
+		advise("after resolving the conflicts, mark the corrected paths");
+		advise("with 'git add <paths>' or 'git rm <paths>'");
+		advise("and commit the result with 'git commit'");
+	}
 }
 
 static void write_message(struct strbuf *msgbuf, const char *filename)
@@ -564,8 +566,6 @@ static int do_pick_commit(struct commit *commit, struct replay_opts *opts)
 			strbuf_addstr(&msgbuf, sha1_to_hex(commit->object.sha1));
 			strbuf_addstr(&msgbuf, ")\n");
 		}
-		if (!opts->no_commit)
-			write_cherry_pick_head(commit);
 	}
 
 	if (!opts->strategy || !strcmp(opts->strategy, "recursive") || opts->action == REVERT) {
@@ -586,13 +586,22 @@ static int do_pick_commit(struct commit *commit, struct replay_opts *opts)
 		free_commit_list(remotes);
 	}
 
+	/*
+	 * If the merge was clean or if it failed due to conflict, we write
+	 * CHERRY_PICK_HEAD for the subsequent invocation of commit to use.
+	 * However, if the merge did not even start, then we don't want to
+	 * write it at all.
+	 */
+	if (opts->action == CHERRY_PICK && !opts->no_commit && (res == 0 || res == 1))
+		write_cherry_pick_head(commit);
+
 	if (res) {
 		error(opts->action == REVERT
 		      ? _("could not revert %s... %s")
 		      : _("could not apply %s... %s"),
 		      find_unique_abbrev(commit->object.sha1, DEFAULT_ABBREV),
 		      msg.subject);
-		print_advice();
+		print_advice(res == 1);
 		rerere(opts->allow_rerere_auto);
 	} else {
 		if (!opts->no_commit)
