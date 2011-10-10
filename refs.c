@@ -96,6 +96,7 @@ static void sort_ref_array(struct ref_array *array)
 				die("Duplicated ref, and SHA1s don't match: %s",
 				    a->name);
 			warning("Duplicated ref: %s", a->name);
+			free(b);
 			continue;
 		}
 		i++;
@@ -110,6 +111,9 @@ static struct ref_entry *search_ref_array(struct ref_array *array, const char *n
 	int len;
 
 	if (name == NULL)
+		return NULL;
+
+	if (!array->nr)
 		return NULL;
 
 	len = strlen(name) + 1;
