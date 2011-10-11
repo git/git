@@ -408,6 +408,10 @@ endif::git-format-patch[]
 	Show the context between diff hunks, up to the specified number
 	of lines, thereby fusing hunks that are close to each other.
 
+-W::
+--function-context::
+	Show whole surrounding functions of changes.
+
 ifndef::git-format-patch[]
 --exit-code::
 	Make the program exit with codes similar to diff(1).
