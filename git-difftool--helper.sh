@@ -43,12 +43,15 @@ launch_merge_tool () {
 		printf "\nViewing: '$MERGED'\n"
 		if use_ext_cmd
 		then
-			printf "Hit return to launch '%s': " \
+			printf "Launch '%s' [Y/n]: " \
 				"$GIT_DIFFTOOL_EXTCMD"
 		else
-			printf "Hit return to launch '%s': " "$merge_tool"
+			printf "Launch '%s' [Y/n]: " "$merge_tool"
 		fi
-		read ans
+		if read ans && test "$ans" = n
+		then
+			return
+		fi
 	fi
 
 	if use_ext_cmd
