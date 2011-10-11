@@ -875,8 +875,8 @@ static int is_gitfile(const char *url)
 		return 0;
 	if (!S_ISREG(st.st_mode))
 		return 0;
-	if (st.st_size < 10 || st.st_size > PATH_MAX)
-		return 1;
+	if (st.st_size < 10 || st.st_size > 9 + PATH_MAX)
+		return 0;
 
 	fd = open(url, O_RDONLY);
 	if (fd < 0)
