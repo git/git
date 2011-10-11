@@ -11,6 +11,7 @@
 #include "cache.h"
 #include "exec_cmd.h"
 #include "attr.h"
+#include "dir.h"
 
 const char git_attr__true[] = "(builtin)true";
 const char git_attr__false[] = "\0(builtin)false";
@@ -19,8 +20,6 @@ static const char git_attr__unknown[] = "(builtin)unknown";
 #define ATTR__FALSE git_attr__false
 #define ATTR__UNSET NULL
 #define ATTR__UNKNOWN git_attr__unknown
-
-static const char *attributes_file;
 
 /* This is a randomly chosen prime. */
 #define HASHSIZE 257
@@ -494,14 +493,6 @@ static int git_attr_system(void)
 	return !git_env_bool("GIT_ATTR_NOSYSTEM", 0);
 }
 
-static int git_attr_config(const char *var, const char *value, void *dummy)
-{
-	if (!strcmp(var, "core.attributesfile"))
-		return git_config_pathname(&attributes_file, var, value);
-
-	return 0;
-}
-
 static void bootstrap_attr_stack(void)
 {
 	if (!attr_stack) {
@@ -521,9 +512,8 @@ static void bootstrap_attr_stack(void)
 			}
 		}
 
-		git_config(git_attr_config, NULL);
-		if (attributes_file) {
-			elem = read_attr_from_file(attributes_file, 1);
+		if (git_attributes_file) {
+			elem = read_attr_from_file(git_attributes_file, 1);
 			if (elem) {
 				elem->origin = NULL;
 				elem->prev = attr_stack;
@@ -533,7 +523,7 @@ static void bootstrap_attr_stack(void)
 
 		if (!is_bare_repository() || direction == GIT_ATTR_INDEX) {
 			elem = read_attr(GITATTRIBUTES_FILE, 1);
-			elem->origin = strdup("");
+			elem->origin = xstrdup("");
 			elem->prev = attr_stack;
 			attr_stack = elem;
 			debug_push(elem);
@@ -552,7 +542,6 @@ static void prepare_attr_stack(const char *path)
 {
 	struct attr_stack *elem, *info;
 	int dirlen, len;
-	struct strbuf pathbuf;
 	const char *cp;
 
 	cp = strrchr(path, '/');
@@ -560,8 +549,6 @@ static void prepare_attr_stack(const char *path)
 		dirlen = 0;
 	else
 		dirlen = cp - path;
-
-	strbuf_init(&pathbuf, dirlen+2+strlen(GITATTRIBUTES_FILE));
 
 	/*
 	 * At the bottom of the attribute stack is the built-in
@@ -607,27 +594,28 @@ static void prepare_attr_stack(const char *path)
 	 * Read from parent directories and push them down
 	 */
 	if (!is_bare_repository() || direction == GIT_ATTR_INDEX) {
-		while (1) {
-			char *cp;
+		struct strbuf pathbuf = STRBUF_INIT;
 
+		while (1) {
 			len = strlen(attr_stack->origin);
 			if (dirlen <= len)
 				break;
-			strbuf_reset(&pathbuf);
-			strbuf_add(&pathbuf, path, dirlen);
+			cp = memchr(path + len + 1, '/', dirlen - len - 1);
+			if (!cp)
+				cp = path + dirlen;
+			strbuf_add(&pathbuf, path, cp - path);
 			strbuf_addch(&pathbuf, '/');
-			cp = strchr(pathbuf.buf + len + 1, '/');
-			strcpy(cp + 1, GITATTRIBUTES_FILE);
+			strbuf_addstr(&pathbuf, GITATTRIBUTES_FILE);
 			elem = read_attr(pathbuf.buf, 0);
-			*cp = '\0';
-			elem->origin = strdup(pathbuf.buf);
+			strbuf_setlen(&pathbuf, cp - path);
+			elem->origin = strbuf_detach(&pathbuf, NULL);
 			elem->prev = attr_stack;
 			attr_stack = elem;
 			debug_push(elem);
 		}
-	}
 
-	strbuf_release(&pathbuf);
+		strbuf_release(&pathbuf);
+	}
 
 	/*
 	 * Finally push the "info" one at the top of the stack.
@@ -644,7 +632,7 @@ static int path_matches(const char *pathname, int pathlen,
 		/* match basename */
 		const char *basename = strrchr(pathname, '/');
 		basename = basename ? basename + 1 : pathname;
-		return (fnmatch(pattern, basename, 0) == 0);
+		return (fnmatch_icase(pattern, basename, 0) == 0);
 	}
 	/*
 	 * match with FNM_PATHNAME; the pattern has base implicitly
@@ -658,7 +646,7 @@ static int path_matches(const char *pathname, int pathlen,
 		return 0;
 	if (baselen != 0)
 		baselen++;
-	return fnmatch(pattern, pathname + baselen, FNM_PATHNAME) == 0;
+	return fnmatch_icase(pattern, pathname + baselen, FNM_PATHNAME) == 0;
 }
 
 static int macroexpand_one(int attr_nr, int rem);
