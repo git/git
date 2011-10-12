@@ -73,6 +73,33 @@ EOF
 
 test_expect_success 'non-match result' 'test_cmp expect .git/config'
 
+test_expect_success 'find mixed-case key by canonical name' '
+	echo Second >expect &&
+	git config cores.whatever >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'find mixed-case key by non-canonical name' '
+	echo Second >expect &&
+	git config CoReS.WhAtEvEr >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'subsections are not canonicalized by git-config' '
+	cat >>.git/config <<-\EOF &&
+	[section.SubSection]
+	key = one
+	[section "SubSection"]
+	key = two
+	EOF
+	echo one >expect &&
+	git config section.subsection.key >actual &&
+	test_cmp expect actual &&
+	echo two >expect &&
+	git config section.SubSection.key >actual &&
+	test_cmp expect actual
+'
+
 cat > .git/config <<\EOF
 [alpha]
 bar = foo
