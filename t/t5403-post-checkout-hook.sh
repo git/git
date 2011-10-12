@@ -31,44 +31,44 @@ EOF
 done
 
 test_expect_success 'post-checkout runs as expected ' '
-        GIT_DIR=clone1/.git git checkout master &&
-        test -e clone1/.git/post-checkout.args
+	GIT_DIR=clone1/.git git checkout master &&
+	test -e clone1/.git/post-checkout.args
 '
 
 test_expect_success 'post-checkout receives the right arguments with HEAD unchanged ' '
-        old=$(awk "{print \$1}" clone1/.git/post-checkout.args) &&
-        new=$(awk "{print \$2}" clone1/.git/post-checkout.args) &&
-        flag=$(awk "{print \$3}" clone1/.git/post-checkout.args) &&
-        test $old = $new -a $flag = 1
+	old=$(awk "{print \$1}" clone1/.git/post-checkout.args) &&
+	new=$(awk "{print \$2}" clone1/.git/post-checkout.args) &&
+	flag=$(awk "{print \$3}" clone1/.git/post-checkout.args) &&
+	test $old = $new -a $flag = 1
 '
 
 test_expect_success 'post-checkout runs as expected ' '
-        GIT_DIR=clone1/.git git checkout master &&
-        test -e clone1/.git/post-checkout.args
+	GIT_DIR=clone1/.git git checkout master &&
+	test -e clone1/.git/post-checkout.args
 '
 
 test_expect_success 'post-checkout args are correct with git checkout -b ' '
-        GIT_DIR=clone1/.git git checkout -b new1 &&
-        old=$(awk "{print \$1}" clone1/.git/post-checkout.args) &&
-        new=$(awk "{print \$2}" clone1/.git/post-checkout.args) &&
-        flag=$(awk "{print \$3}" clone1/.git/post-checkout.args) &&
-        test $old = $new -a $flag = 1
+	GIT_DIR=clone1/.git git checkout -b new1 &&
+	old=$(awk "{print \$1}" clone1/.git/post-checkout.args) &&
+	new=$(awk "{print \$2}" clone1/.git/post-checkout.args) &&
+	flag=$(awk "{print \$3}" clone1/.git/post-checkout.args) &&
+	test $old = $new -a $flag = 1
 '
 
 test_expect_success 'post-checkout receives the right args with HEAD changed ' '
-        GIT_DIR=clone2/.git git checkout new2 &&
-        old=$(awk "{print \$1}" clone2/.git/post-checkout.args) &&
-        new=$(awk "{print \$2}" clone2/.git/post-checkout.args) &&
-        flag=$(awk "{print \$3}" clone2/.git/post-checkout.args) &&
-        test $old != $new -a $flag = 1
+	GIT_DIR=clone2/.git git checkout new2 &&
+	old=$(awk "{print \$1}" clone2/.git/post-checkout.args) &&
+	new=$(awk "{print \$2}" clone2/.git/post-checkout.args) &&
+	flag=$(awk "{print \$3}" clone2/.git/post-checkout.args) &&
+	test $old != $new -a $flag = 1
 '
 
 test_expect_success 'post-checkout receives the right args when not switching branches ' '
-        GIT_DIR=clone2/.git git checkout master b &&
-        old=$(awk "{print \$1}" clone2/.git/post-checkout.args) &&
-        new=$(awk "{print \$2}" clone2/.git/post-checkout.args) &&
-        flag=$(awk "{print \$3}" clone2/.git/post-checkout.args) &&
-        test $old = $new -a $flag = 0
+	GIT_DIR=clone2/.git git checkout master b &&
+	old=$(awk "{print \$1}" clone2/.git/post-checkout.args) &&
+	new=$(awk "{print \$2}" clone2/.git/post-checkout.args) &&
+	flag=$(awk "{print \$3}" clone2/.git/post-checkout.args) &&
+	test $old = $new -a $flag = 0
 '
 
 if test "$(git config --bool core.filemode)" = true; then
