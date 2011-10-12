@@ -786,7 +786,6 @@ int delete_ref(const char *refname, unsigned char *sha1)
 
 int rename_ref(const char *oldref, const char *newref)
 {
-	static const char renamed_ref[] = "RENAMED-REF";
 	unsigned char sha1[20], orig_sha1[20];
 	int flag = 0, logmoved = 0;
 	struct ref_lock *lock;
@@ -808,13 +807,6 @@ int rename_ref(const char *oldref, const char *newref)
 
 	if (snprintf(msg, sizeof(msg), "renamed %s to %s", oldref, newref) > sizeof(msg))
 		return error("Refnames to long");
-
-	lock = lock_ref_sha1_basic(renamed_ref, NULL, NULL);
-	if (!lock)
-		return error("unable to lock %s", renamed_ref);
-	lock->force_write = 1;
-	if (write_ref_sha1(lock, orig_sha1, msg))
-		return error("unable to save current sha1 in %s", renamed_ref);
 
 	if (log && rename(git_path("logs/%s", oldref), git_path("tmp-renamed-log")))
 		return error("unable to move logfile logs/%s to tmp-renamed-log: %s",
