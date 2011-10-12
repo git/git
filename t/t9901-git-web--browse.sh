@@ -12,7 +12,7 @@ test_expect_success \
 	echo http://example.com/foo\&bar >expect &&
 	git config browser.custom.cmd echo &&
 	git web--browse --browser=custom \
-		http://example.com/foo\&bar >actual &&
+		http://example.com/foo\&bar | tr -d "\r" >actual &&
 	test_cmp expect actual
 '
 
@@ -21,7 +21,7 @@ test_expect_success \
 	echo http://example.com/foo\;bar >expect &&
 	git config browser.custom.cmd echo &&
 	git web--browse --browser=custom \
-		http://example.com/foo\;bar >actual &&
+		http://example.com/foo\;bar | tr -d "\r" >actual &&
 	test_cmp expect actual
 '
 
@@ -30,7 +30,7 @@ test_expect_success \
 	echo http://example.com/foo#bar >expect &&
 	git config browser.custom.cmd echo &&
 	git web--browse --browser=custom \
-		http://example.com/foo#bar >actual &&
+		http://example.com/foo#bar | tr -d "\r" >actual &&
 	test_cmp expect actual
 '
 
@@ -44,7 +44,7 @@ test_expect_success \
 	chmod +x "fake browser" &&
 	git config browser.w3m.path "`pwd`/fake browser" &&
 	git web--browse --browser=w3m \
-		http://example.com/foo >actual &&
+		http://example.com/foo | tr -d "\r" >actual &&
 	test_cmp expect actual
 '
 
@@ -59,7 +59,7 @@ test_expect_success \
 		}
 		f" &&
 	git web--browse --browser=custom \
-		http://example.com/foo >actual &&
+		http://example.com/foo | tr -d "\r" >actual &&
 	test_cmp expect actual
 '
 
