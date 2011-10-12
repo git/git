@@ -7,6 +7,12 @@ With --no-commit perform the merge but pretend the merge
 failed and do not autocommit, to give the user a chance to
 inspect and further tweak the merge result before committing.
 
+--edit::
+-e::
++
+	Invoke editor before committing successful merge to further
+	edit the default merge message.
+
 --ff::
 --no-ff::
 	Do not generate a merge commit if the merge resolved as
