@@ -117,5 +117,4 @@ commit. And the default value is 40. If there are more than one
 take effect.
 
 -h::
---help::
 	Show help message.
