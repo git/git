@@ -627,6 +627,38 @@ sub config_bool {
 	};
 }
 
+
+=item config_path ( VARIABLE )
+
+Retrieve the path configuration C<VARIABLE>. The return value
+is an expanded path or C<undef> if it's not defined.
+
+This currently wraps command('config') so it is not so fast.
+
+=cut
+
+sub config_path {
+	my ($self, $var) = _maybe_self(@_);
+
+	try {
+		my @cmd = ('config', '--path');
+		unshift @cmd, $self if $self;
+		if (wantarray) {
+			return command(@cmd, '--get-all', $var);
+		} else {
+			return command_oneline(@cmd, '--get', $var);
+		}
+	} catch Git::Error::Command with {
+		my $E = shift;
+		if ($E->value() == 1) {
+			# Key not found.
+			return undef;
+		} else {
+			throw $E;
+		}
+	};
+}
+
 =item config_int ( VARIABLE )
 
 Retrieve the integer configuration C<VARIABLE>. The return value
