@@ -1,17 +1,18 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Oct 2011, #03; Fri, 7)
-X-master-at: 7f41b6bbe3181dc4d1687db036bf22316997a1bf
-X-next-at: fbb28a2df5b67b80240267347d7f018681c7153c
+Subject: What's cooking in git.git (Oct 2011, #04; Wed, 12)
+X-master-at: 8b0e15fa95e11965f18c8d2585dc8ffd9bfc9356
+X-next-at: 6d5841794ba7a676b5918d0bc8cbad836597555b
 
-What's cooking in git.git (Oct 2011, #03; Fri, 7)
+What's cooking in git.git (Oct 2011, #04; Wed, 12)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' (proposed updates) while commits prefixed with '+' are in 'next'.
 
-The first wave of topics have been graduated to 'master'.  I've rebuilt
-'next' while kicking some topics back to 'pu'. Also some topics have been
-discarded.
+As reported earlier, 'next' has been rebuilt with some topics kicked back
+to 'pu'.  Also, k.org is back.
+
+The second wave of topics are starting to graduate to 'master'.
 
 Here are the repositories that have my integration branches:
 
@@ -34,48 +35,221 @@ With all the topics and integration branches but not todo, html or man:
 --------------------------------------------------
 [New Topics]
 
-* jc/signed-commit (2011-10-05) 4 commits
- - commit: teach --gpg-sign option
- - Split GPG interface into its own helper library
- - rename "match_refs()" to "match_push_refs()"
- - send-pack: typofix error message
- (this branch is tangled with jc/signed-push and jc/signed-push-3.)
+* cn/fetch-prune (2011-10-07) 4 commits
+ - fetch: treat --tags like refs/tags/*:refs/tags/* when pruning
+ - fetch: honor the user-provided refspecs when pruning refs
+ - t5510: add tests for fetch --prune
+ - fetch: free all the additional refspecs
 
-This is to replace the earlier "signed push" experiments.
+* ef/mingw-syslog (2011-10-07) 1 commit
+  (merged to 'next' on 2011-10-11 at d5d6945)
+ + mingw: avoid using strbuf in syslog
 
-* js/maint-merge-one-file-osx-expr (2011-10-06) 1 commit
-  (merged to 'next' on 2011-10-07 at fbb28a2)
- + merge-one-file: fix "expr: non-numeric argument"
+* jk/name-hash-dirent (2011-10-07) 1 commit
+  (merged to 'next' on 2011-10-11 at e2ea68b)
+ + fix phantom untracked files when core.ignorecase is set
 
-Will merge to 'master' in the third wave.
+* jn/gitweb-manpages (2011-10-10) 6 commits
+ . gitweb: Add gitweb manpages to 'gitweb' package in git.spec
+ . Documentation: Add gitweb config variables to git-config(1)
+ . Documentation: Link to gitweb(1) and gitweb.conf(5) in other manpages
+ . gitweb: Add manpage for gitweb
+ . gitweb: Add manpage for gitweb configuration files
+ . Documentation: Preparation for gitweb manpages
 
-* tm/completion-commit-fixup-squash (2011-10-06) 2 commits
- - completion: commit --fixup and --squash
- - completion: unite --reuse-message and --reedit-message handling
+A re-roll already being discussed.
 
-Looked reasonable but completion is not exactly in my area so I'd like to
-see others the test these in the real life and give opinions first.
+* js/merge-edit-option (2011-10-10) 2 commits
+ - fixup! 0f6adfe2a26287c5c13366975f621c818bb3214d
+ - Teach merge the '[-e|--edit]' option
 
-* tm/completion-push-set-upstream (2011-10-06) 1 commit
- - completion: push --set-upstream
+The part to tweak builtin/merge.c in the fix-up should be removed but
+otherwise ready to be squashed into one and merged to 'next'.
 
-Looked reasonable but completion is not exactly in my area so I'd like to
-see others the test these in the real life and give opinions first.
+* mm/maint-config-explicit-bool-display (2011-10-10) 1 commit
+  (merged to 'next' on 2011-10-11 at 795939f)
+ + config: display key_delim for config --bool --get-regexp
 
-* js/no-cherry-pick-head-after-punted (2011-10-06) 1 commit
- - Merge branch 'js/maint-no-cherry-pick-head-after-punted' into js/no-cherry-pick-head-after-punted
- (this branch uses js/maint-no-cherry-pick-head-after-punted.)
+* rr/revert-cherry-pick (2011-10-10) 7 commits
+ - fixup! 82d520bd
+ - revert: Simplify passing command-line arguments around
+ - revert: Allow mixed pick and revert instructions
+ - revert: Make commit descriptions in insn sheet optional
+ - revert: Fix buffer overflow in insn sheet parser
+ - revert: Simplify getting commit subject
+ - revert: Free memory after get_message call
 
-Looked reasonable.
-Will merge to 'next'.
+Probably needs a little bit more polish.
 
-* js/maint-no-cherry-pick-head-after-punted (2011-10-06) 2 commits
- - cherry-pick: do not give irrelevant advice when cherry-pick punted
- - revert.c: defer writing CHERRY_PICK_HEAD till it is safe to do so
- (this branch is used by js/no-cherry-pick-head-after-punted.)
+* rs/diff-whole-function (2011-10-10) 2 commits
+  (merged to 'next' on 2011-10-11 at 6196752)
+ + diff: add option to show whole functions as context
+ + xdiff: factor out get_func_line()
 
-Looked reasonable.
-Will merge to 'next'.
+* rs/pickaxe (2011-10-07) 7 commits
+  (merged to 'next' on 2011-10-11 at 27d02b2)
+ + pickaxe: factor out pickaxe
+ + pickaxe: give diff_grep the same signature as has_changes
+ + pickaxe: pass diff_options to contains and has_changes
+ + pickaxe: factor out has_changes
+ + pickaxe: plug regex/kws leak
+ + pickaxe: plug regex leak
+ + pickaxe: plug diff filespec leak with empty needle
+
+* sc/difftool-skip (2011-10-10) 1 commit
+  (merged to 'next' on 2011-10-11 at 38d7e84)
+ + git-difftool: allow skipping file by typing 'n' at prompt
+
+* sg/completion (2011-10-10) 2 commits
+  (merged to 'next' on 2011-10-11 at 4724640)
+ + completion: unite --format and --pretty for 'log' and 'show'
+ + completion: unite --reuse-message and --reedit-message for 'notes'
+ (this branch uses tm/completion-commit-fixup-squash.)
+
+* tc/fetch-leak (2011-10-07) 1 commit
+  (merged to 'next' on 2011-10-11 at d867153)
+ + fetch: plug two leaks on error exit in store_updated_refs
+
+* jc/check-ref-format-fixup (2011-10-12) 2 commits
+ - Restrict ref-like names immediately below $GIT_DIR
+ - refs.c: move dwim_ref()/dwim_log() from sha1_name.c
+
+An attempt to fix-up unfortunate side effect of mh/check-ref-format-3
+topic. "git show -s config" is never meant to refer to $GIT_DIR/config
+and treat it as a file that records an object name.
+
+* jc/maint-remove-renamed-ref (2011-10-12) 1 commit
+ - branch -m/-M: remove undocumented RENAMED-REF
+
+--------------------------------------------------
+[Graduated to "master"]
+
+* cb/common-prefix-unification (2011-09-12) 3 commits
+  (merged to 'next' on 2011-10-06 at 8349bca)
+ + rename pathspec_prefix() to common_prefix() and move to dir.[ch]
+ + consolidate pathspec_prefix and common_prefix
+ + remove prefix argument from pathspec_prefix
+
+Originally merged to 'next' on 2011-09-14.
+
+* dm/tree-walk (2011-09-28) 2 commits
+  (merged to 'next' on 2011-10-06 at 76e90c3)
+ + tree-walk: micro-optimization in tree_entry_interesting
+ + tree-walk: drop unused parameter from match_dir_prefix
+
+Originally merged to 'next' on 2011-10-05.
+
+* fg/submodule-git-file-git-dir (2011-08-22) 2 commits
+  (merged to 'next' on 2011-10-06 at 3526bb9)
+ + Move git-dir for submodules
+ + rev-parse: add option --resolve-git-dir <path>
+
+Originally merged to 'next' on 2011-08-23.
+
+* hv/submodule-update-none (2011-08-11) 2 commits
+  (merged to 'next' on 2011-10-06 at 4c105df)
+ + add update 'none' flag to disable update of submodule by default
+ + submodule: move update configuration variable further up
+
+Originally merged to 'next' on 2011-08-24.
+
+* jc/maint-diffstat-numstat-context (2011-09-22) 1 commit
+  (merged to 'next' on 2011-10-06 at 36c972d)
+ + diff: teach --stat/--numstat to honor -U$num
+
+"diff" is allowed to match the common lines differently depending on how
+many context lines it is showing, so running --(num)stat with 0 lines of
+context internally gives a result that may be surprising to some people.
+
+Originally merged to 'next' on 2011-09-26.
+
+* jm/mergetool-pathspec (2011-09-26) 2 commits
+  (merged to 'next' on 2011-10-06 at b8e830f)
+ + mergetool: no longer need to save standard input
+ + mergetool: Use args as pathspec to unmerged files
+
+Originally merged to 'next' on 2011-09-26.
+
+* jn/maint-http-error-message (2011-09-06) 2 commits
+  (merged to 'next' on 2011-10-06 at 668a706)
+ + http: avoid empty error messages for some curl errors
+ + http: remove extra newline in error message
+
+Originally merged to 'next' on 2011-09-12.
+
+* jp/get-ref-dir-unsorted (2011-09-30) 2 commits
+  (merged to 'next' on 2011-10-06 at 69fe65d)
+ + refs: Use binary search to lookup refs faster
+ + Don't sort ref_list too early
+
+* mh/check-ref-format-3 (2011-10-05) 23 commits
+  (merged to 'next' on 2011-10-06 at c277498)
+ + add_ref(): verify that the refname is formatted correctly
+ + resolve_ref(): expand documentation
+ + resolve_ref(): also treat a too-long SHA1 as invalid
+ + resolve_ref(): emit warnings for improperly-formatted references
+ + resolve_ref(): verify that the input refname has the right format
+ + remote: avoid passing NULL to read_ref()
+ + remote: use xstrdup() instead of strdup()
+ + resolve_ref(): do not follow incorrectly-formatted symbolic refs
+ + resolve_ref(): extract a function get_packed_ref()
+ + resolve_ref(): turn buffer into a proper string as soon as possible
+ + resolve_ref(): only follow a symlink that contains a valid, normalized refname
+ + resolve_ref(): use prefixcmp()
+ + resolve_ref(): explicitly fail if a symlink is not readable
+ + Change check_refname_format() to reject unnormalized refnames
+ + Inline function refname_format_print()
+ + Make collapse_slashes() allocate memory for its result
+ + Do not allow ".lock" at the end of any refname component
+ + Refactor check_refname_format()
+ + Change check_ref_format() to take a flags argument
+ + Change bad_ref_char() to return a boolean value
+ + git check-ref-format: add options --allow-onelevel and --refspec-pattern
+ + t1402: add some more tests
+ + get_sha1_hex(): do not read past a NUL character
+
+An unpleasant minor side effect was discovered with this one. If you try
+"git show -s config", the code warns that $GIT_DIR/config is not formatted
+correctly as a ref, which is technically correct but totally unwarranted.
+
+* mh/iterate-refs (2011-09-11) 7 commits
+  (merged to 'next' on 2011-10-06 at c7a33e5)
+ + refs.c: make create_cached_refs() static
+ + Retain caches of submodule refs
+ + Store the submodule name in struct cached_refs
+ + Allocate cached_refs objects dynamically
+ + Change the signature of read_packed_refs()
+ + Access reference caches only through new function get_cached_refs()
+ + Extract a function clear_cached_refs()
+
+Originally merged to 'next' on 2011-09-27.
+
+* mh/maint-notes-merge-pathbuf-fix (2011-09-27) 1 commit
+  (merged to 'next' on 2011-10-06 at 0af69bb)
+ + notes_merge_commit(): do not pass temporary buffer to other function
+
+Originally merged to 'next' on 2011-10-05.
+
+* mz/remote-rename (2011-09-11) 4 commits
+  (merged to 'next' on 2011-10-06 at 96db20d)
+ + remote: only update remote-tracking branch if updating refspec
+ + remote rename: warn when refspec was not updated
+ + remote: "rename o foo" should not rename ref "origin/bar"
+ + remote: write correct fetch spec when renaming remote 'remote'
+
+Originally merged to 'next' on 2011-09-26.
+
+* nd/sparse-doc (2011-09-26) 1 commit
+  (merged to 'next' on 2011-10-06 at f6b8355)
+ + git-read-tree.txt: update sparse checkout examples
+
+Originally merged to 'next' on 2011-10-05.
+
+* ps/gitweb-js-with-lineno (2011-09-27) 1 commit
+  (merged to 'next' on 2011-10-06 at 9236f5e)
+ + gitweb: Fix links to lines in blobs when javascript-actions are enabled
+
+Originally merged to 'next' on 2011-10-05.
 
 --------------------------------------------------
 [Stalled]
@@ -142,6 +316,44 @@ command line, 2011-08-25) would help.
 --------------------------------------------------
 [Cooking]
 
+* jc/signed-commit (2011-10-05) 4 commits
+ - commit: teach --gpg-sign option
+ - Split GPG interface into its own helper library
+ - rename "match_refs()" to "match_push_refs()"
+ - send-pack: typofix error message
+
+This is to replace the earlier "signed push" experiments.
+
+* js/maint-merge-one-file-osx-expr (2011-10-06) 1 commit
+  (merged to 'next' on 2011-10-07 at fbb28a2)
+ + merge-one-file: fix "expr: non-numeric argument"
+
+Will merge to 'master' in the third wave.
+
+* tm/completion-commit-fixup-squash (2011-10-06) 2 commits
+  (merged to 'next' on 2011-10-11 at 6bb192e)
+ + completion: commit --fixup and --squash
+ + completion: unite --reuse-message and --reedit-message handling
+ (this branch is used by sg/completion.)
+
+* tm/completion-push-set-upstream (2011-10-06) 1 commit
+  (merged to 'next' on 2011-10-11 at 85544e5)
+ + completion: push --set-upstream
+
+* js/no-cherry-pick-head-after-punted (2011-10-06) 1 commit
+  (merged to 'next' on 2011-10-10 at acb29ee)
+ + Merge branch 'js/maint-no-cherry-pick-head-after-punted' into js/no-cherry-pick-head-after-punted
+ (this branch uses js/maint-no-cherry-pick-head-after-punted.)
+
+Will merge to 'master' in the third wave.
+
+* js/maint-no-cherry-pick-head-after-punted (2011-10-06) 2 commits
+ + cherry-pick: do not give irrelevant advice when cherry-pick punted
+ + revert.c: defer writing CHERRY_PICK_HEAD till it is safe to do so
+ (this branch is used by js/no-cherry-pick-head-after-punted.)
+
+Will merge to 'maint' later.
+
 * sp/smart-http-failure (2011-10-04) 1 commit
   (merged to 'next' on 2011-10-06 at 02f9982)
  + remote-curl: Fix warning after HTTP failure
@@ -164,9 +376,13 @@ Will merge to 'master' in the third wave.
   (merged to 'next' on 2011-10-06 at 7e3083f)
  + Support ERR in remote archive like in fetch/push
 
+Will merge to 'master' in the third wave.
+
 * nd/daemon-log-sock-errors (2011-10-03) 1 commit
   (merged to 'next' on 2011-10-06 at 5f3630f)
  + daemon: log errors if we could not use some sockets
+
+Will merge to 'master' in the third wave.
 
 * nd/document-err-packet (2011-10-03) 1 commit
   (merged to 'next' on 2011-10-06 at 0c5f5d0)
@@ -178,6 +394,8 @@ Will merge to 'master' in the second wave.
   (merged to 'next' on 2011-10-06 at 209126d)
  + daemon: return "access denied" if a service is not allowed
 
+Will merge to 'master' in the third wave.
+
 * jc/is-url-simplify (2011-10-03) 1 commit
   (merged to 'next' on 2011-10-06 at d6c6741)
  + url.c: simplify is_url()
@@ -188,6 +406,8 @@ Will merge to 'master' in the third wave.
   (merged to 'next' on 2011-10-06 at a68770d)
  + ident: do not retrieve default ident when unnecessary
  + ident: check /etc/mailname if email is unknown
+
+Will merge to 'master' in the third wave.
 
 * jn/no-g-plus-s-on-bsd (2011-10-03) 1 commit
   (merged to 'next' on 2011-10-06 at 3d85674)
@@ -227,29 +447,31 @@ Will merge to 'master' in the second wave.
  + revision: factor out add_pending_sha1
  + checkout: check for "Previous HEAD" notice in t2020
 
-* ph/transport-with-gitfile (2011-10-04) 4 commits
+Will merge to 'master' in the third wave.
+
+* ph/transport-with-gitfile (2011-10-11) 5 commits
+  (merged to 'next' on 2011-10-12 at 6d58417)
+ + Fix is_gitfile() for files too small or larger than PATH_MAX to be a gitfile
   (merged to 'next' on 2011-10-06 at 891b8b6)
  + Add test showing git-fetch groks gitfiles
  + Teach transport about the gitfile mechanism
  + Learn to handle gitfiles in enter_repo
  + enter_repo: do not modify input
 
+Will merge to 'master' in the third wave.
+
 * jc/grep-untracked-exclude (2011-10-04) 1 commit
   (merged to 'next' on 2011-10-06 at b16cffe)
  + Merge branch 'jc/maint-grep-untracked-exclude' into jc/grep-untracked-exclude
  (this branch uses bw/grep-no-index-no-exclude and jc/maint-grep-untracked-exclude.)
 
+Will merge to 'master' in the third wave.
+
 * jc/maint-grep-untracked-exclude (2011-10-04) 1 commit
  + grep: teach --untracked and --exclude-standard options
  (this branch is used by jc/grep-untracked-exclude; uses bw/grep-no-index-no-exclude.)
 
-* dm/tree-walk (2011-09-28) 2 commits
-  (merged to 'next' on 2011-10-06 at 76e90c3)
- + tree-walk: micro-optimization in tree_entry_interesting
- + tree-walk: drop unused parameter from match_dir_prefix
-
-Originally merged to 'next' on 2011-10-05.
-Will merge to 'master' in the second wave.
+Will merge to 'maint' later.
 
 * cs/perl-config-path-send-email (2011-09-30) 2 commits
   (merged to 'next' on 2011-10-06 at 93c00f0)
@@ -273,20 +495,6 @@ Will merge to 'master' in the fourth wave.
 Originally merged to 'next' on 2011-10-05.
 Will merge to 'master' in the third wave.
 
-* nd/sparse-doc (2011-09-26) 1 commit
-  (merged to 'next' on 2011-10-06 at f6b8355)
- + git-read-tree.txt: update sparse checkout examples
-
-Originally merged to 'next' on 2011-10-05.
-Will merge to 'master' in the second wave.
-
-* jp/get-ref-dir-unsorted (2011-09-30) 2 commits
-  (merged to 'next' on 2011-10-06 at 69fe65d)
- + refs: Use binary search to lookup refs faster
- + Don't sort ref_list too early
-
-Will merge to 'master' in the third wave.
-
 * jc/parse-options-boolean (2011-09-28) 5 commits
   (merged to 'next' on 2011-10-06 at dd4936c)
  + apply: use OPT_NOOP_NOARG
@@ -297,42 +505,17 @@ Will merge to 'master' in the third wave.
 
 Will merge to 'master' in the second wave.
 
-* mh/maint-notes-merge-pathbuf-fix (2011-09-27) 1 commit
-  (merged to 'next' on 2011-10-06 at 0af69bb)
- + notes_merge_commit(): do not pass temporary buffer to other function
-
-Originally merged to 'next' on 2011-10-05.
-Will merge to 'master' in the second wave.
-
 * ph/push-to-delete-nothing (2011-09-30) 1 commit
   (merged to 'next' on 2011-10-06 at 33ac777)
  + receive-pack: don't pass non-existent refs to post-{receive,update} hooks
 
 Will merge to 'master' in the fourth wave.
 
-* ps/gitweb-js-with-lineno (2011-09-27) 1 commit
-  (merged to 'next' on 2011-10-06 at 9236f5e)
- + gitweb: Fix links to lines in blobs when javascript-actions are enabled
-
-Originally merged to 'next' on 2011-10-05.
-Will merge to 'master' in the second wave.
-
 * zj/send-email-authen-sasl (2011-09-29) 1 commit
   (merged to 'next' on 2011-10-06 at 78b31cd)
  + send-email: auth plain/login fix
 
 Originally merged to 'next' on 2011-10-05.
-Will merge to 'master' in the second wave.
-
-* jc/maint-diffstat-numstat-context (2011-09-22) 1 commit
-  (merged to 'next' on 2011-10-06 at 36c972d)
- + diff: teach --stat/--numstat to honor -U$num
-
-"diff" is allowed to match the common lines differently depending on how
-many context lines it is showing, so running --(num)stat with 0 lines of
-context internally gives a result that may be surprising to some people.
-
-Originally merged to 'next' on 2011-09-26.
 Will merge to 'master' in the second wave.
 
 * nd/maint-sparse-errors (2011-09-22) 2 commits
@@ -367,32 +550,6 @@ Will merge to 'master' in the fourth wave.
 Originally merged to 'next' on 2011-09-26.
 Will merge to 'master' in the third wave.
 
-* mh/check-ref-format-3 (2011-10-05) 23 commits
-  (merged to 'next' on 2011-10-06 at c277498)
- + add_ref(): verify that the refname is formatted correctly
- + resolve_ref(): expand documentation
- + resolve_ref(): also treat a too-long SHA1 as invalid
- + resolve_ref(): emit warnings for improperly-formatted references
- + resolve_ref(): verify that the input refname has the right format
- + remote: avoid passing NULL to read_ref()
- + remote: use xstrdup() instead of strdup()
- + resolve_ref(): do not follow incorrectly-formatted symbolic refs
- + resolve_ref(): extract a function get_packed_ref()
- + resolve_ref(): turn buffer into a proper string as soon as possible
- + resolve_ref(): only follow a symlink that contains a valid, normalized refname
- + resolve_ref(): use prefixcmp()
- + resolve_ref(): explicitly fail if a symlink is not readable
- + Change check_refname_format() to reject unnormalized refnames
- + Inline function refname_format_print()
- + Make collapse_slashes() allocate memory for its result
- + Do not allow ".lock" at the end of any refname component
- + Refactor check_refname_format()
- + Change check_ref_format() to take a flags argument
- + Change bad_ref_char() to return a boolean value
- + git check-ref-format: add options --allow-onelevel and --refspec-pattern
- + t1402: add some more tests
- + get_sha1_hex(): do not read past a NUL character
-
 * js/bisect-no-checkout (2011-09-21) 1 commit
   (merged to 'next' on 2011-10-06 at 0354e94)
  + bisect: fix exiting when checkout failed in bisect_start()
@@ -400,7 +557,10 @@ Will merge to 'master' in the third wave.
 Originally merged to 'next' on 2011-09-21.
 Will merge to 'master' in the third wave.
 
-* jc/request-pull-show-head-4 (2011-10-07) 8 commits
+* jc/request-pull-show-head-4 (2011-10-09) 10 commits
+  (merged to 'next' on 2011-10-10 at 092175e)
+ + environment.c: Fix an sparse "symbol not declared" warning
+ + builtin/log.c: Fix an "Using plain integer as NULL pointer" warning
   (merged to 'next' on 2011-10-07 at fcaeca0)
  + fmt-merge-msg: use branch.$name.description
   (merged to 'next' on 2011-10-06 at fa5e0fe)
@@ -414,14 +574,6 @@ Will merge to 'master' in the third wave.
 
 Will merge to 'master' in the fourth wave.
 
-* jm/mergetool-pathspec (2011-09-26) 2 commits
-  (merged to 'next' on 2011-10-06 at b8e830f)
- + mergetool: no longer need to save standard input
- + mergetool: Use args as pathspec to unmerged files
-
-Originally merged to 'next' on 2011-09-26.
-Will merge to 'master' in the second wave.
-
 * nd/maint-autofix-tag-in-head (2011-09-18) 4 commits
   (merged to 'next' on 2011-10-06 at c083e69)
  + Accept tags in HEAD or MERGE_HEAD
@@ -432,62 +584,15 @@ Will merge to 'master' in the second wave.
 Originally merged to 'next' on 2011-09-27.
 Will merge to 'master' in the third wave.
 
-* bc/attr-ignore-case (2011-10-06) 5 commits
- - attr.c: respect core.ignorecase when matching attribute patterns
- - attr: read core.attributesfile from git_default_core_config
- - builtin/mv.c: plug miniscule memory leak
- - cleanup: use internal memory allocation wrapper functions everywhere
- - attr.c: avoid inappropriate access to strbuf "buf" member
+* bc/attr-ignore-case (2011-10-11) 5 commits
+  (merged to 'next' on 2011-10-11 at daa6b51)
+ + attr.c: respect core.ignorecase when matching attribute patterns
+ + attr: read core.attributesfile from git_default_core_config
+ + builtin/mv.c: plug miniscule memory leak
+ + cleanup: use internal memory allocation wrapper functions everywhere
+ + attr.c: avoid inappropriate access to strbuf "buf" member
 
 Re-rolled.
-
-* mz/remote-rename (2011-09-11) 4 commits
-  (merged to 'next' on 2011-10-06 at 96db20d)
- + remote: only update remote-tracking branch if updating refspec
- + remote rename: warn when refspec was not updated
- + remote: "rename o foo" should not rename ref "origin/bar"
- + remote: write correct fetch spec when renaming remote 'remote'
-
-Originally merged to 'next' on 2011-09-26.
-Will merge to 'master' in the second wave.
-
-* cb/common-prefix-unification (2011-09-12) 3 commits
-  (merged to 'next' on 2011-10-06 at 8349bca)
- + rename pathspec_prefix() to common_prefix() and move to dir.[ch]
- + consolidate pathspec_prefix and common_prefix
- + remove prefix argument from pathspec_prefix
-
-Originally merged to 'next' on 2011-09-14.
-Will merge to 'master' in the second wave.
-
-* jn/maint-http-error-message (2011-09-06) 2 commits
-  (merged to 'next' on 2011-10-06 at 668a706)
- + http: avoid empty error messages for some curl errors
- + http: remove extra newline in error message
-
-Originally merged to 'next' on 2011-09-12.
-Will merge to 'master' in the second wave.
-
-* mh/iterate-refs (2011-09-11) 7 commits
-  (merged to 'next' on 2011-10-06 at c7a33e5)
- + refs.c: make create_cached_refs() static
- + Retain caches of submodule refs
- + Store the submodule name in struct cached_refs
- + Allocate cached_refs objects dynamically
- + Change the signature of read_packed_refs()
- + Access reference caches only through new function get_cached_refs()
- + Extract a function clear_cached_refs()
-
-Originally merged to 'next' on 2011-09-27.
-Will merge to 'master' in the second wave.
-
-* hv/submodule-update-none (2011-08-11) 2 commits
-  (merged to 'next' on 2011-10-06 at 4c105df)
- + add update 'none' flag to disable update of submodule by default
- + submodule: move update configuration variable further up
-
-Originally merged to 'next' on 2011-08-24.
-Will merge to 'master' in the second wave.
 
 * jc/lookup-object-hash (2011-08-11) 6 commits
  - object hash: replace linear probing with 4-way cuckoo hashing
@@ -500,86 +605,3 @@ Will merge to 'master' in the second wave.
 I do not think there is anything fundamentally wrong with this series, but
 the risk of breakage far outweighs observed performance gain in one
 particular workload. Will keep it in 'next' at least for one cycle.
-
-* fg/submodule-git-file-git-dir (2011-08-22) 2 commits
-  (merged to 'next' on 2011-10-06 at 3526bb9)
- + Move git-dir for submodules
- + rev-parse: add option --resolve-git-dir <path>
-
-Originally merged to 'next' on 2011-08-23.
-Will merge to 'master' in the second wave.
-
---------------------------------------------------
-[Discarded]
-
-* jk/default-attr (2011-09-12) 1 commit
- . attr: map builtin userdiff drivers to well-known extensions
-
-Discarded, expecting a fresh re-roll.
-
-* jc/make-static (2011-09-14) 4 commits
- . exec_cmd.c: prepare_git_cmd() is sometimes used
- . environment.c: have_git_dir() has users on Cygwin
- . vcs-svn: remove unused functions and make some static
- . make-static: master
-
-* jk/add-i-hunk-filter (2011-07-27) 5 commits
- . add--interactive: add option to autosplit hunks
- . add--interactive: allow negatation of hunk filters
- . add--interactive: allow hunk filtering on command line
- . add--interactive: factor out regex error handling
- . add--interactive: refactor patch mode argument processing
-
-* jc/signed-push (2011-10-05) 7 commits
- . push -s: support pre-receive-signature hook
- . push -s: receiving end
- . push -s: send signed push certificate
- . push -s: skeleton
- - Split GPG interface into its own helper library
- - rename "match_refs()" to "match_push_refs()"
- - send-pack: typofix error message
- (this branch is tangled with jc/signed-commit and jc/signed-push-3.)
-
-This was the v2 that updated notes tree on the receiving end.
-
-* jc/signed-push-3 (2011-10-05) 4 commits
- . push -s: signed push
- - Split GPG interface into its own helper library
- - rename "match_refs()" to "match_push_refs()"
- - send-pack: typofix error message
- (this branch is tangled with jc/signed-commit and jc/signed-push.)
-
-This is the third edition, that moves the preparation of the notes tree to
-the sending end.
-
-* jh/receive-count-limit (2011-05-23) 10 commits
- . receive-pack: Allow server to refuse pushes with too many objects
- . pack-objects: Estimate pack size; abort early if pack size limit is exceeded
- . send-pack/receive-pack: Allow server to refuse pushing too large packs
- . pack-objects: Allow --max-pack-size to be used together with --stdout
- . send-pack/receive-pack: Allow server to refuse pushes with too many commits
- . pack-objects: Teach new option --max-commit-count, limiting #commits in pack
- . receive-pack: Prepare for addition of the new 'limit-*' family of capabilities
- . Tighten rules for matching server capabilities in server_supports()
- . send-pack: Attempt to retrieve remote status even if pack-objects fails
- . Update technical docs to reflect side-band-64k capability in receive-pack
-
-Discarded, expecting another round to separate per-pack and per-session
-limits.
-
-* jk/generation-numbers (2011-09-11) 8 commits
- . metadata-cache.c: make two functions static
- . limit "contains" traversals based on commit generation
- . check commit generation cache validity against grafts
- . pretty: support %G to show the generation number of a commit
- . commit: add commit_generation function
- . add metadata-cache infrastructure
- . decorate: allow storing values instead of pointers
- . Merge branch 'jk/tag-contains-ab' (early part) into HEAD
-
-* po/cygwin-backslash (2011-08-05) 2 commits
- . On Cygwin support both UNIX and DOS style path-names
- . git-compat-util: add generic find_last_dir_sep that respects is_dir_sep
-
-Incomplete with respect to backslash processing in prefix_filename(), and
-also loses the ability to escape glob specials.
