@@ -37,6 +37,12 @@ Updates since v1.7.7
 
  * "git send-email" learned to respond to "-h"(elp) requests.
 
+ * "git send-email" allows the value given to sendemail.aliasfile to begin
+   with "~/" to refer to the $HOME directory.
+
+ * "git send-email" forces use of Authen::SASL::Perl to work around
+   issues between Authen::SASL::Cyrus and AUTH PLAIN/LOGIN.
+
  * "git stash" learned "--include-untracked" option to stash away
    untracked/ignored cruft from the working tree.
 
@@ -70,6 +76,11 @@ included in this release.
  * We used to drop error messages from libcurl on certain kinds of
    errors.
    (merge be22d92eac8 jn/maint-http-error-message later to maint).
+
+ * Error report from smart HTTP transport, when the connection was
+   broken in the middle of a transfer, showed a useless message on
+   a corrupt packet.
+   (merge 6cdf022 sp/smart-http-failure later to maint).
 
  * Adding many refs to the local repository in one go (e.g. "git fetch"
    that fetches many tags) and looking up a ref by name in a repository
@@ -138,7 +149,7 @@ included in this release.
 
 ---
 exec >/var/tmp/1
-O=v1.7.7-212-g4909bbe
+O=v1.7.7-236-g5366afa
 echo O=$(git describe --always master)
 git log --first-parent --oneline --reverse ^$O master
 echo
