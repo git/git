@@ -280,11 +280,11 @@ constructor new {i_commit i_path i_jump} {
 	$w.ctxm add command \
 		-label [mc "Find Text..."] \
 		-accelerator F7 \
-		-command [list searchbar::show $finder]
+		-command [cb _show_finder]
 	$w.ctxm add command \
 		-label [mc "Goto Line..."] \
 		-accelerator "Ctrl-G" \
-		-command [list linebar::show $gotoline]
+		-command [cb _show_linebar]
 	menu $w.ctxm.enc
 	build_encoding_menu $w.ctxm.enc [cb _setencoding]
 	$w.ctxm add cascade \
@@ -351,13 +351,13 @@ constructor new {i_commit i_path i_jump} {
 	bind $w_cviewer <Tab>       "[list focus $w_file];break"
 	bind $w_cviewer <Button-1>   [list focus $w_cviewer]
 	bind $w_file    <Visibility> [cb _focus_search $w_file]
-	bind $top       <F7>         [list searchbar::show $finder]
-	bind $top       <Key-slash>  [list searchbar::show $finder]
-	bind $top    <Control-Key-s> [list searchbar::show $finder]
+	bind $top       <F7>         [cb _show_finder]
+	bind $top       <Key-slash>  [cb _show_finder]
+	bind $top    <Control-Key-s> [cb _show_finder]
 	bind $top       <Escape>     [list searchbar::hide $finder]
 	bind $top       <F3>         [list searchbar::find_next $finder]
 	bind $top       <Shift-F3>   [list searchbar::find_prev $finder]
-	bind $top    <Control-Key-g> [list linebar::show $gotoline]
+	bind $top    <Control-Key-g> [cb _show_linebar]
 	catch { bind $top <Shift-Key-XF86_Switch_VT_3> [list searchbar::find_prev $finder] }
 
 	grid configure $w.header -sticky ew
@@ -1347,6 +1347,16 @@ method _resize {new_height} {
 	$w.file_pane sash place 0 $ox $oy
 
 	set old_height $new_height
+}
+
+method _show_finder {} {
+	linebar::hide $gotoline
+	searchbar::show $finder
+}
+
+method _show_linebar {} {
+	searchbar::hide $finder
+	linebar::show $gotoline
 }
 
 }
