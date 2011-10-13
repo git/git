@@ -16,5 +16,12 @@ merge_cmd () {
 }
 
 translate_merge_tool_path() {
-	echo bcompare
+	case $(uname -s) in
+	*MINGW*)
+		echo bcomp
+		;;
+	*)
+		echo bcompare
+		;;
+	esac
 }
