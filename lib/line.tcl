@@ -45,6 +45,7 @@ method show {} {
 
 method hide {} {
 	if {[visible $this]} {
+		$w.ent delete 0 end
 		focus $ctext
 		grid remove $w
 	}
