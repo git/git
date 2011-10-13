@@ -10,7 +10,7 @@ SUBDIRECTORY_OK=Yes
 OPTIONS_SPEC=
 . git-sh-setup
 set_reflog_action "pull $*"
-require_work_tree
+require_work_tree_exists
 cd_to_toplevel
 
 
