@@ -15,7 +15,11 @@ constructor new {i_w i_text args} {
 
 	${NS}::frame  $w
 	${NS}::label  $w.l       -text [mc "Goto Line:"]
-	entry  $w.ent -textvariable ${__this}::linenum -background lightgreen
+	entry  $w.ent \
+		-textvariable ${__this}::linenum \
+		-background lightgreen \
+		-validate key \
+		-validatecommand [cb _validate %P]
 	${NS}::button $w.bn      -text [mc Go] -command [cb _incrgoto]
 
 	pack   $w.l   -side left
@@ -26,7 +30,7 @@ constructor new {i_w i_text args} {
 	grid remove $w
 
 	bind $w.ent <Return> [cb _incrgoto]
-	bind $w.ent <Escape> [list linebar::hide $this]
+	bind $w.ent <Escape> [cb hide]
 
 	bind $w <Destroy> [list delete_this $this]
 	return $this
@@ -52,6 +56,11 @@ method visible {} {
 
 method editor {} {
 	return $w.ent
+}
+
+method _validate {P} {
+	# only accept numbers as input
+	string is integer $P
 }
 
 method _incrgoto {} {
