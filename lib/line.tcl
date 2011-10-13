@@ -20,7 +20,7 @@ constructor new {i_w i_text args} {
 		-background lightgreen \
 		-validate key \
 		-validatecommand [cb _validate %P]
-	${NS}::button $w.bn      -text [mc Go] -command [cb _incrgoto]
+	${NS}::button $w.bn      -text [mc Go] -command [cb _goto]
 
 	pack   $w.l   -side left
 	pack   $w.bn  -side right
@@ -29,7 +29,8 @@ constructor new {i_w i_text args} {
 	eval grid conf $w -sticky we $args
 	grid remove $w
 
-	bind $w.ent <Return> [cb _incrgoto]
+	trace add variable linenum write [cb _goto_cb]
+	bind $w.ent <Return> [cb _goto]
 	bind $w.ent <Escape> [cb hide]
 
 	bind $w <Destroy> [list delete_this $this]
@@ -64,10 +65,16 @@ method _validate {P} {
 	string is integer $P
 }
 
-method _incrgoto {} {
+method _goto_cb {name ix op} {
+	after idle [cb _goto 1]
+}
+
+method _goto {{nohide {0}}} {
 	if {$linenum ne {}} {
 		$ctext see $linenum.0
-		hide $this
+		if {!$nohide} {
+			hide $this
+		}
 	}
 }
 
