@@ -794,7 +794,7 @@ static void print_commit(struct commit *commit)
 
 int merge_submodule(unsigned char result[20], const char *path,
 		    const unsigned char base[20], const unsigned char a[20],
-		    const unsigned char b[20])
+		    const unsigned char b[20], int search)
 {
 	struct commit *commit_base, *commit_a, *commit_b;
 	int parent_count;
@@ -848,6 +848,10 @@ int merge_submodule(unsigned char result[20], const char *path,
 	 * suggestion to the user, but leave it marked unmerged so the
 	 * user needs to confirm the resolution.
 	 */
+
+	/* Skip the search if makes no sense to the calling context.  */
+	if (!search)
+		return 0;
 
 	/* find commit which merges them */
 	parent_count = find_first_merges(&merges, path, commit_a, commit_b);
