@@ -40,19 +40,18 @@ static int strbuf_readline_fd(struct strbuf *sb, int fd)
 	return 0;
 }
 
-int read_bundle_header(const char *path, struct bundle_header *header)
+static int parse_bundle_header(int fd, struct bundle_header *header,
+			       const char *report_path)
 {
 	struct strbuf buf = STRBUF_INIT;
-	int fd = open(path, O_RDONLY);
 	int status = 0;
-
-	if (fd < 0)
-		return error("could not open '%s'", path);
 
 	/* The bundle header begins with the signature */
 	if (strbuf_readline_fd(&buf, fd) ||
 	    strcmp(buf.buf, bundle_signature)) {
-		error("'%s' does not look like a v2 bundle file", path);
+		if (report_path)
+			error("'%s' does not look like a v2 bundle file",
+			      report_path);
 		status = -1;
 		goto abort;
 	}
@@ -77,8 +76,9 @@ int read_bundle_header(const char *path, struct bundle_header *header)
 		if (get_sha1_hex(buf.buf, sha1) ||
 		    (40 <= buf.len && !isspace(buf.buf[40])) ||
 		    (!is_prereq && buf.len <= 40)) {
-			error("unrecognized header: %s%s (%d)",
-			      (is_prereq ? "-" : ""), buf.buf, (int)buf.len);
+			if (report_path)
+				error("unrecognized header: %s%s (%d)",
+				      (is_prereq ? "-" : ""), buf.buf, (int)buf.len);
 			status = -1;
 			break;
 		} else {
@@ -96,6 +96,29 @@ int read_bundle_header(const char *path, struct bundle_header *header)
 	}
 	strbuf_release(&buf);
 	return fd;
+}
+
+int read_bundle_header(const char *path, struct bundle_header *header)
+{
+	int fd = open(path, O_RDONLY);
+
+	if (fd < 0)
+		return error("could not open '%s'", path);
+	return parse_bundle_header(fd, header, path);
+}
+
+int is_bundle(const char *path, int quiet)
+{
+	struct bundle_header header;
+	int fd = open(path, O_RDONLY);
+
+	if (fd < 0)
+		return 0;
+	memset(&header, 0, sizeof(header));
+	fd = parse_bundle_header(fd, &header, quiet ? NULL : path);
+	if (fd >= 0)
+		close(fd);
+	return (fd >= 0);
 }
 
 static int list_refs(struct ref_list *r, int argc, const char **argv)
