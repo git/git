@@ -356,20 +356,20 @@ proc do_add_all {} {
 	global file_states
 
 	set paths [list]
-	set unknown_paths [list]
+	set untracked_paths [list]
 	foreach path [array names file_states] {
 		switch -glob -- [lindex $file_states($path) 0] {
 		U? {continue}
 		?M -
 		?T -
 		?D {lappend paths $path}
-		?O {lappend unknown_paths $path}
+		?O {lappend untracked_paths $path}
 		}
 	}
-	if {[llength $unknown_paths]} {
-		set reply [ask_popup [mc "There are unknown files do you also want to stage those?"]]
+	if {[llength $untracked_paths]} {
+		set reply [ask_popup [mc "Stage also untracked files?"]]
 		if {$reply} {
-			set paths [concat $paths $unknown_paths]
+			set paths [concat $paths $untracked_paths]
 		}
 	}
 	add_helper {Adding all changed files} $paths
