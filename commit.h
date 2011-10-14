@@ -133,6 +133,7 @@ struct commit *pop_most_recent_commit(struct commit_list **list,
 struct commit *pop_commit(struct commit_list **stack);
 
 void clear_commit_marks(struct commit *commit, unsigned int mark);
+void clear_commit_marks_for_object_array(struct object_array *a, unsigned mark);
 
 /*
  * Performs an in-place topological sort of list supplied.

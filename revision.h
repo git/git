@@ -118,6 +118,7 @@ struct rev_info {
 			date_mode_explicit:1,
 			preserve_subject:1;
 	unsigned int	disable_stdin:1;
+	unsigned int	leak_pending:1;
 
 	enum date_mode date_mode;
 
@@ -214,6 +215,7 @@ extern void add_object(struct object *obj,
 		       const char *name);
 
 extern void add_pending_object(struct rev_info *revs, struct object *obj, const char *name);
+extern void add_pending_sha1(struct rev_info *revs, const char *name, const unsigned char *sha1, unsigned int flags);
 
 extern void add_head_to_pending(struct rev_info *);
 

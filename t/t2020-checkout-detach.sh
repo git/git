@@ -12,11 +12,14 @@ check_not_detached () {
 }
 
 ORPHAN_WARNING='you are leaving .* commit.*behind'
+PREV_HEAD_DESC='Previous HEAD position was'
 check_orphan_warning() {
-	test_i18ngrep "$ORPHAN_WARNING" "$1"
+	test_i18ngrep "$ORPHAN_WARNING" "$1" &&
+	test_i18ngrep ! "$PREV_HEAD_DESC" "$1"
 }
 check_no_orphan_warning() {
-	test_i18ngrep ! "$ORPHAN_WARNING" "$1"
+	test_i18ngrep ! "$ORPHAN_WARNING" "$1" &&
+	test_i18ngrep "$PREV_HEAD_DESC" "$1"
 }
 
 reset () {
