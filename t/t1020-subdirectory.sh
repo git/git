@@ -118,7 +118,7 @@ test_expect_success 'alias expansion' '
 	)
 '
 
-test_expect_success '!alias expansion' '
+test_expect_success NOT_MINGW '!alias expansion' '
 	pwd >expect &&
 	(
 		git config alias.test !pwd &&
