@@ -337,8 +337,16 @@ sub read_config {
 	}
 
 	foreach my $setting (keys %config_path_settings) {
-		my $target = $config_path_settings{$setting}->[0];
-		$$target = Git::config_path(@repo, "$prefix.$setting") unless (defined $$target);
+		my $target = $config_path_settings{$setting};
+		if (ref($target) eq "ARRAY") {
+			unless (@$target) {
+				my @values = Git::config_path(@repo, "$prefix.$setting");
+				@$target = @values if (@values && defined $values[0]);
+			}
+		}
+		else {
+			$$target = Git::config_path(@repo, "$prefix.$setting") unless (defined $$target);
+		}
 	}
 
 	foreach my $setting (keys %config_settings) {
