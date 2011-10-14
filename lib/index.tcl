@@ -367,7 +367,19 @@ proc do_add_all {} {
 		}
 	}
 	if {[llength $untracked_paths]} {
-		set reply [ask_popup [mc "Stage also untracked files?"]]
+		set reply 0
+		switch -- [get_config gui.stageuntracked] {
+		no {
+			set reply 0
+		}
+		yes {
+			set reply 1
+		}
+		ask -
+		default {
+			set reply [ask_popup [mc "Stage also untracked files?"]]
+		}
+		}
 		if {$reply} {
 			set paths [concat $paths $untracked_paths]
 		}

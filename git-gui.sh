@@ -859,6 +859,7 @@ set font_descs {
 	{fontui   font_ui   {mc "Main Font"}}
 	{fontdiff font_diff {mc "Diff/Console Font"}}
 }
+set default_config(gui.stageuntracked) ask
 
 ######################################################################
 ##

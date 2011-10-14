@@ -156,6 +156,7 @@ proc do_options {} {
 		{i-0..99 gui.commitmsgwidth {mc "Commit Message Text Width"}}
 		{t gui.newbranchtemplate {mc "New Branch Name Template"}}
 		{c gui.encoding {mc "Default File Contents Encoding"}}
+		{s gui.stageuntracked {mc "Staging of untracked files"} {list "yes" "no" "ask"}}
 		} {
 		set type [lindex $option 0]
 		set name [lindex $option 1]
@@ -206,6 +207,23 @@ proc do_options {} {
 							$w.$f.$optid.m $w.$f.$optid.b]
 					pack $w.$f.$optid.b -side left -anchor w
 				}
+				pack $w.$f.$optid -side top -anchor w -fill x
+			}
+			s {
+				set opts [eval [lindex $option 3]]
+				${NS}::frame $w.$f.$optid
+				${NS}::label $w.$f.$optid.l -text "$text:"
+				if {$use_ttk} {
+					ttk::combobox $w.$f.$optid.v \
+						-textvariable ${f}_config_new($name) \
+						-values $opts -state readonly
+				} else {
+					eval tk_optionMenu $w.$f.$optid.v \
+						${f}_config_new($name) \
+						$opts
+				}
+				pack $w.$f.$optid.l -side left -anchor w -fill x
+				pack $w.$f.$optid.v -side right -anchor e -padx 5
 				pack $w.$f.$optid -side top -anchor w -fill x
 			}
 			}
