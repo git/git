@@ -289,7 +289,7 @@ test_expect_success PERL 'setup with 2 files different' '
 '
 
 test_expect_success PERL 'say no to the first file' '
-	diff=$((echo n; echo) | git difftool -x cat branch) &&
+	diff=$( (echo n; echo) | git difftool -x cat branch ) &&
 
 	echo "$diff" | stdin_contains m2 &&
 	echo "$diff" | stdin_contains br2 &&
@@ -298,7 +298,7 @@ test_expect_success PERL 'say no to the first file' '
 '
 
 test_expect_success PERL 'say no to the second file' '
-	diff=$((echo; echo n) | git difftool -x cat branch) &&
+	diff=$( (echo; echo n) | git difftool -x cat branch ) &&
 
 	echo "$diff" | stdin_contains master &&
 	echo "$diff" | stdin_contains branch &&
