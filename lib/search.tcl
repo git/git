@@ -7,6 +7,8 @@ field w
 field ctext
 
 field searchstring   {}
+field regexpsearch
+field default_regexpsearch
 field casesensitive
 field default_casesensitive
 field searchdirn     -forwards
@@ -19,6 +21,7 @@ constructor new {i_w i_text args} {
 	set w      $i_w
 	set ctext  $i_text
 
+	set default_regexpsearch [is_config_true gui.search.regexp]
 	if {[is_config_true gui.search.smartcase]} {
 		set default_casesensitive 0
 	} else {
@@ -30,10 +33,13 @@ constructor new {i_w i_text args} {
 	entry  $w.ent -textvariable ${__this}::searchstring -background lightgreen
 	${NS}::button $w.bn      -text [mc Next] -command [cb find_next]
 	${NS}::button $w.bp      -text [mc Prev] -command [cb find_prev]
-	${NS}::checkbutton $w.cs -text [mc Case-Sensitive] \
+	${NS}::checkbutton $w.re -text [mc RegExp] \
+		-variable ${__this}::regexpsearch -command [cb _incrsearch]
+	${NS}::checkbutton $w.cs -text [mc Case] \
 		-variable ${__this}::casesensitive -command [cb _incrsearch]
 	pack   $w.l   -side left
 	pack   $w.cs  -side right
+	pack   $w.re  -side right
 	pack   $w.bp  -side right
 	pack   $w.bn  -side right
 	pack   $w.ent -side left -expand 1 -fill x
@@ -52,6 +58,7 @@ constructor new {i_w i_text args} {
 method show {} {
 	if {![visible $this]} {
 		grid $w
+		set regexpsearch  $default_regexpsearch
 		set casesensitive $default_casesensitive
 	}
 	focus -force $w.ent
@@ -105,6 +112,9 @@ method _do_search {start {mlenvar {}} {dir {}} {endbound {}}} {
 	if {$mlenvar ne {}} {
 		upvar $mlenvar mlen
 		lappend cmd -count mlen
+	}
+	if {$regexpsearch} {
+		lappend cmd -regexp
 	}
 	if {!$casesensitive} {
 		lappend cmd -nocase
