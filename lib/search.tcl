@@ -7,7 +7,8 @@ field w
 field ctext
 
 field searchstring   {}
-field casesensitive  1
+field casesensitive
+field default_casesensitive
 field searchdirn     -forwards
 
 field smarktop
@@ -17,6 +18,12 @@ constructor new {i_w i_text args} {
 	global use_ttk NS
 	set w      $i_w
 	set ctext  $i_text
+
+	if {[is_config_true gui.search.smartcase]} {
+		set default_casesensitive 0
+	} else {
+		set default_casesensitive 1
+	}
 
 	${NS}::frame  $w
 	${NS}::label  $w.l       -text [mc Find:]
@@ -45,6 +52,7 @@ constructor new {i_w i_text args} {
 method show {} {
 	if {![visible $this]} {
 		grid $w
+		set casesensitive $default_casesensitive
 	}
 	focus -force $w.ent
 }
@@ -124,6 +132,9 @@ method _incrsearch {} {
 	$ctext tag remove found 1.0 end
 	if {[catch {$ctext index anchor}]} {
 		$ctext mark set anchor [_get_new_anchor $this]
+	}
+	if {[regexp {[[:upper:]]} $searchstring]} {
+		set casesensitive 1
 	}
 	if {$searchstring ne {}} {
 		set here [_do_search $this anchor mlen]
