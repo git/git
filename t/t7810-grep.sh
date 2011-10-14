@@ -554,7 +554,6 @@ test_expect_success 'outside of git repository' '
 	mkdir -p non/git/sub &&
 	echo hello >non/git/file1 &&
 	echo world >non/git/sub/file2 &&
-	echo ".*o*" >non/git/.gitignore &&
 	{
 		echo file1:hello &&
 		echo sub/file2:world
@@ -581,6 +580,7 @@ test_expect_success 'inside git repository but with --no-index' '
 	echo world >is/git/sub/file2 &&
 	echo ".*o*" >is/git/.gitignore &&
 	{
+		echo ".gitignore:.*o*" &&
 		echo file1:hello &&
 		echo sub/file2:world
 	} >is/expect.full &&
