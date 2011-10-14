@@ -1,18 +1,15 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Oct 2011, #04; Wed, 12)
-X-master-at: 8b0e15fa95e11965f18c8d2585dc8ffd9bfc9356
-X-next-at: 6d5841794ba7a676b5918d0bc8cbad836597555b
+Subject: What's cooking in git.git (Oct 2011, #05; Fri, 14)
+X-master-at: 463b0ea22b5b9a882e8140d0308433d8cbd0d1fe
+X-next-at: b91c5812e819aca51af2c0611009f305f0a29b4f
 
-What's cooking in git.git (Oct 2011, #04; Wed, 12)
+What's cooking in git.git (Oct 2011, #05; Fri, 14)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' (proposed updates) while commits prefixed with '+' are in 'next'.
 
-As reported earlier, 'next' has been rebuilt with some topics kicked back
-to 'pu'.  Also, k.org is back.
-
-The second wave of topics are starting to graduate to 'master'.
+The second and third wave of topics have graduated to 'master'.
 
 Here are the repositories that have my integration branches:
 
@@ -35,406 +32,216 @@ With all the topics and integration branches but not todo, html or man:
 --------------------------------------------------
 [New Topics]
 
-* cn/fetch-prune (2011-10-07) 4 commits
- - fetch: treat --tags like refs/tags/*:refs/tags/* when pruning
- - fetch: honor the user-provided refspecs when pruning refs
- - t5510: add tests for fetch --prune
- - fetch: free all the additional refspecs
+* jk/config-test-cleanup (2011-10-12) 2 commits
+  (merged to 'next' on 2011-10-12 at 7c857dd)
+ + t1300: test mixed-case variable retrieval
+ + t1300: put git invocations inside test function
 
-* ef/mingw-syslog (2011-10-07) 1 commit
-  (merged to 'next' on 2011-10-11 at d5d6945)
- + mingw: avoid using strbuf in syslog
+Will merge to 'master' in the fourth wave.
 
-* jk/name-hash-dirent (2011-10-07) 1 commit
-  (merged to 'next' on 2011-10-11 at e2ea68b)
- + fix phantom untracked files when core.ignorecase is set
+* jm/maint-apply-detects-corrupt-patch-header (2011-10-12) 1 commit
+  (merged to 'next' on 2011-10-12 at 80d9503)
+ + fix "git apply --index ..." not to deref NULL
 
-* jn/gitweb-manpages (2011-10-10) 6 commits
- . gitweb: Add gitweb manpages to 'gitweb' package in git.spec
- . Documentation: Add gitweb config variables to git-config(1)
- . Documentation: Link to gitweb(1) and gitweb.conf(5) in other manpages
- . gitweb: Add manpage for gitweb
- . gitweb: Add manpage for gitweb configuration files
- . Documentation: Preparation for gitweb manpages
+Will merge to 'master' in the fifth wave.
 
-A re-roll already being discussed.
+* mh/ref-api (2011-10-12) 7 commits
+ - clear_cached_refs(): inline function
+ - write_ref_sha1(): only invalidate the loose ref cache
+ - clear_cached_refs(): extract two new functions
+ - clear_cached_refs(): rename parameter
+ - invalidate_ref_cache(): expose this function in refs API
+ - invalidate_ref_cache(): take the submodule as parameter
+ - invalidate_ref_cache(): rename function from invalidate_cached_refs()
 
-* js/merge-edit-option (2011-10-10) 2 commits
- - fixup! 0f6adfe2a26287c5c13366975f621c818bb3214d
- - Teach merge the '[-e|--edit]' option
+The first rename felt somewhat inconsistent in that it reworded the object
+of one particular verb "invalidate" to "ref_cache" but otherwise that
+entity is left as "cached_refs" throughout the codebase.
 
-The part to tweak builtin/merge.c in the fix-up should be removed but
-otherwise ready to be squashed into one and merged to 'next'.
+The updated series looked almost all trivial and sensible but they would
+depend on this renaming, so I haven't queued them here yet. Personally I
+think we should either not rename just the function name (i.e. drop the
+first patch in this series) or rename both the function and what it
+operates on (i.e. enhance the first patch in this series).
 
-* mm/maint-config-explicit-bool-display (2011-10-10) 1 commit
-  (merged to 'next' on 2011-10-11 at 795939f)
- + config: display key_delim for config --bool --get-regexp
+* bk/submodule-in-recursive-merge (2011-10-13) 2 commits
+ - submodule: Search for merges only at end of recursive merge
+ - submodule: Demonstrate known breakage during recursive merge
 
-* rr/revert-cherry-pick (2011-10-10) 7 commits
- - fixup! 82d520bd
- - revert: Simplify passing command-line arguments around
- - revert: Allow mixed pick and revert instructions
- - revert: Make commit descriptions in insn sheet optional
- - revert: Fix buffer overflow in insn sheet parser
- - revert: Simplify getting commit subject
- - revert: Free memory after get_message call
+Brad helped resurrecting good bits earlier tangled in the stalled topic
+hv/submodule-merge-search by mistake.
+Will merge to 'next'.
 
-Probably needs a little bit more polish.
+* jk/pull-rebase-with-work-tree (2011-10-13) 1 commit
+ - pull,rebase: handle GIT_WORK_TREE better
 
-* rs/diff-whole-function (2011-10-10) 2 commits
-  (merged to 'next' on 2011-10-11 at 6196752)
- + diff: add option to show whole functions as context
- + xdiff: factor out get_func_line()
+Looked reasonable.
+Will merge to 'next'.
 
-* rs/pickaxe (2011-10-07) 7 commits
-  (merged to 'next' on 2011-10-11 at 27d02b2)
- + pickaxe: factor out pickaxe
- + pickaxe: give diff_grep the same signature as has_changes
- + pickaxe: pass diff_options to contains and has_changes
- + pickaxe: factor out has_changes
- + pickaxe: plug regex/kws leak
- + pickaxe: plug regex leak
- + pickaxe: plug diff filespec leak with empty needle
+* sg/complete-refs (2011-10-12) 10 commits
+ - completion: remove broken dead code from __git_heads() and __git_tags()
+ - completion: fast initial completion for config 'remote.*.fetch' value
+ - completion: improve ls-remote output filtering in __git_refs_remotes()
+ - completion: query only refs/heads/ in __git_refs_remotes()
+ - completion: support full refs from remote repositories
+ - completion: improve ls-remote output filtering in __git_refs()
+ - completion: make refs completion consistent for local and remote repos
+ - completion: optimize refs completion
+ - completion: document __gitcomp()
+ - Merge branches 'tm/completion-push-set-upstream', 'tm/completion-commit-fixup-squash' and 'sg/completion' into HEAD
+ (this branch uses sg/completion, tm/completion-commit-fixup-squash and tm/completion-push-set-upstream.)
 
-* sc/difftool-skip (2011-10-10) 1 commit
-  (merged to 'next' on 2011-10-11 at 38d7e84)
- + git-difftool: allow skipping file by typing 'n' at prompt
+Re-roll expected.
 
-* sg/completion (2011-10-10) 2 commits
-  (merged to 'next' on 2011-10-11 at 4724640)
- + completion: unite --format and --pretty for 'log' and 'show'
- + completion: unite --reuse-message and --reedit-message for 'notes'
- (this branch uses tm/completion-commit-fixup-squash.)
+* jc/unseekable-bundle (2011-10-13) 2 commits
+ - bundle: add parse_bundle_header() helper function
+ - bundle: allowing to read from an unseekable fd
 
-* tc/fetch-leak (2011-10-07) 1 commit
-  (merged to 'next' on 2011-10-11 at d867153)
- + fetch: plug two leaks on error exit in store_updated_refs
+I am not entirely happy with the first patch but it is not so bad either.
 
-* jc/check-ref-format-fixup (2011-10-12) 2 commits
- - Restrict ref-like names immediately below $GIT_DIR
- - refs.c: move dwim_ref()/dwim_log() from sha1_name.c
+* js/check-ref-format-test-mingw (2011-10-13) 1 commit
+ - t1402-check-ref-format: skip tests of refs beginning with slash on Windows
 
-An attempt to fix-up unfortunate side effect of mh/check-ref-format-3
-topic. "git show -s config" is never meant to refer to $GIT_DIR/config
-and treat it as a file that records an object name.
+Will merge to 'next'.
 
-* jc/maint-remove-renamed-ref (2011-10-12) 1 commit
- - branch -m/-M: remove undocumented RENAMED-REF
+* jk/daemon-msgs (2011-10-14) 1 commit
+ - daemon: give friendlier error messages to clients
 
---------------------------------------------------
-[Graduated to "master"]
+Will merge to 'next'.
 
-* cb/common-prefix-unification (2011-09-12) 3 commits
-  (merged to 'next' on 2011-10-06 at 8349bca)
- + rename pathspec_prefix() to common_prefix() and move to dir.[ch]
- + consolidate pathspec_prefix and common_prefix
- + remove prefix argument from pathspec_prefix
-
-Originally merged to 'next' on 2011-09-14.
-
-* dm/tree-walk (2011-09-28) 2 commits
-  (merged to 'next' on 2011-10-06 at 76e90c3)
- + tree-walk: micro-optimization in tree_entry_interesting
- + tree-walk: drop unused parameter from match_dir_prefix
-
-Originally merged to 'next' on 2011-10-05.
-
-* fg/submodule-git-file-git-dir (2011-08-22) 2 commits
-  (merged to 'next' on 2011-10-06 at 3526bb9)
- + Move git-dir for submodules
- + rev-parse: add option --resolve-git-dir <path>
-
-Originally merged to 'next' on 2011-08-23.
-
-* hv/submodule-update-none (2011-08-11) 2 commits
-  (merged to 'next' on 2011-10-06 at 4c105df)
- + add update 'none' flag to disable update of submodule by default
- + submodule: move update configuration variable further up
-
-Originally merged to 'next' on 2011-08-24.
-
-* jc/maint-diffstat-numstat-context (2011-09-22) 1 commit
-  (merged to 'next' on 2011-10-06 at 36c972d)
- + diff: teach --stat/--numstat to honor -U$num
-
-"diff" is allowed to match the common lines differently depending on how
-many context lines it is showing, so running --(num)stat with 0 lines of
-context internally gives a result that may be surprising to some people.
-
-Originally merged to 'next' on 2011-09-26.
-
-* jm/mergetool-pathspec (2011-09-26) 2 commits
-  (merged to 'next' on 2011-10-06 at b8e830f)
- + mergetool: no longer need to save standard input
- + mergetool: Use args as pathspec to unmerged files
-
-Originally merged to 'next' on 2011-09-26.
-
-* jn/maint-http-error-message (2011-09-06) 2 commits
-  (merged to 'next' on 2011-10-06 at 668a706)
- + http: avoid empty error messages for some curl errors
- + http: remove extra newline in error message
-
-Originally merged to 'next' on 2011-09-12.
-
-* jp/get-ref-dir-unsorted (2011-09-30) 2 commits
-  (merged to 'next' on 2011-10-06 at 69fe65d)
- + refs: Use binary search to lookup refs faster
- + Don't sort ref_list too early
-
-* mh/check-ref-format-3 (2011-10-05) 23 commits
-  (merged to 'next' on 2011-10-06 at c277498)
- + add_ref(): verify that the refname is formatted correctly
- + resolve_ref(): expand documentation
- + resolve_ref(): also treat a too-long SHA1 as invalid
- + resolve_ref(): emit warnings for improperly-formatted references
- + resolve_ref(): verify that the input refname has the right format
- + remote: avoid passing NULL to read_ref()
- + remote: use xstrdup() instead of strdup()
- + resolve_ref(): do not follow incorrectly-formatted symbolic refs
- + resolve_ref(): extract a function get_packed_ref()
- + resolve_ref(): turn buffer into a proper string as soon as possible
- + resolve_ref(): only follow a symlink that contains a valid, normalized refname
- + resolve_ref(): use prefixcmp()
- + resolve_ref(): explicitly fail if a symlink is not readable
- + Change check_refname_format() to reject unnormalized refnames
- + Inline function refname_format_print()
- + Make collapse_slashes() allocate memory for its result
- + Do not allow ".lock" at the end of any refname component
- + Refactor check_refname_format()
- + Change check_ref_format() to take a flags argument
- + Change bad_ref_char() to return a boolean value
- + git check-ref-format: add options --allow-onelevel and --refspec-pattern
- + t1402: add some more tests
- + get_sha1_hex(): do not read past a NUL character
-
-An unpleasant minor side effect was discovered with this one. If you try
-"git show -s config", the code warns that $GIT_DIR/config is not formatted
-correctly as a ref, which is technically correct but totally unwarranted.
-
-* mh/iterate-refs (2011-09-11) 7 commits
-  (merged to 'next' on 2011-10-06 at c7a33e5)
- + refs.c: make create_cached_refs() static
- + Retain caches of submodule refs
- + Store the submodule name in struct cached_refs
- + Allocate cached_refs objects dynamically
- + Change the signature of read_packed_refs()
- + Access reference caches only through new function get_cached_refs()
- + Extract a function clear_cached_refs()
-
-Originally merged to 'next' on 2011-09-27.
-
-* mh/maint-notes-merge-pathbuf-fix (2011-09-27) 1 commit
-  (merged to 'next' on 2011-10-06 at 0af69bb)
- + notes_merge_commit(): do not pass temporary buffer to other function
-
-Originally merged to 'next' on 2011-10-05.
-
-* mz/remote-rename (2011-09-11) 4 commits
-  (merged to 'next' on 2011-10-06 at 96db20d)
- + remote: only update remote-tracking branch if updating refspec
- + remote rename: warn when refspec was not updated
- + remote: "rename o foo" should not rename ref "origin/bar"
- + remote: write correct fetch spec when renaming remote 'remote'
-
-Originally merged to 'next' on 2011-09-26.
-
-* nd/sparse-doc (2011-09-26) 1 commit
-  (merged to 'next' on 2011-10-06 at f6b8355)
- + git-read-tree.txt: update sparse checkout examples
-
-Originally merged to 'next' on 2011-10-05.
-
-* ps/gitweb-js-with-lineno (2011-09-27) 1 commit
-  (merged to 'next' on 2011-10-06 at 9236f5e)
- + gitweb: Fix links to lines in blobs when javascript-actions are enabled
-
-Originally merged to 'next' on 2011-10-05.
-
---------------------------------------------------
-[Stalled]
-
-* jk/http-auth-keyring (2011-09-28) 22 commits
- - credential-cache: don't cache items without context
- - check_expirations: don't copy over same element
- - t0300: add missing EOF terminator for <<
- - credential-store: use a better storage format
- - t0300: make alternate username tests more robust
- - t0300: make askpass tests a little more robust
- - credential-cache: fix expiration calculation corner cases
- - docs: minor tweaks to credentials API
- - credentials: make credential_fill_gently() static
- - credentials: add "getpass" helper
- - credentials: add "store" helper
- - credentials: add "cache" helper
- - docs: end-user documentation for the credential subsystem
+* jk/http-auth (2011-10-14) 6 commits
+ - http_init: accept separate URL parameter
  - http: use hostname in credential description
- - allow the user to configure credential helpers
- - look for credentials in config before prompting
- - http: use credential API to get passwords
- - introduce credentials API
  - http: retry authentication failures for all http requests
  - remote-curl: don't retry auth failures with dumb protocol
  - improve httpd auth tests
  - url: decode buffers that are not NUL-terminated
- (this branch is used by js/cred-macos-x-keychain-2.)
+ (this branch is tangled with jk/http-auth-keyring and js/cred-macos-x-keychain-2.)
 
-Kicked back to 'pu' to allow design level discussions to continue.
+Michael helped resurrecting uncontentious bits from the credential series.
+Will merge to 'next'.
 
-* js/cred-macos-x-keychain-2 (2011-10-06) 1 commit
- - contrib: add a pair of credential helpers for Mac OS X's keychain
- (this branch uses jk/http-auth-keyring.)
+* jk/maint-pack-objects-compete-with-delete (2011-10-14) 2 commits
+ - downgrade "packfile cannot be accessed" errors to warnings
+ - pack-objects: protect against disappearing packs
 
-Kicked back to 'pu' to allow design level discussions to continue.
-
-* hv/submodule-merge-search (2011-08-26) 5 commits
- - submodule: Search for merges only at end of recursive merge
- - allow multiple calls to submodule merge search for the same path
- - submodule: Demonstrate known breakage during recursive merge
- - push: Don't push a repository with unpushed submodules
- - push: teach --recurse-submodules the on-demand option
- (this branch is tangled with fg/submodule-auto-push.)
-
-The second from the bottom one needs to be replaced with a properly
-written commit log message.
-
-* fg/submodule-auto-push (2011-09-11) 2 commits
- - submodule.c: make two functions static
- - push: teach --recurse-submodules the on-demand option
- (this branch is tangled with hv/submodule-merge-search.)
-
-What the topic aims to achieve may make sense, but the implementation
-looked somewhat suboptimal.
-
-* sr/transport-helper-fix-rfc (2011-07-19) 2 commits
- - t5800: point out that deleting branches does not work
- - t5800: document inability to push new branch with old content
-
-Perhaps 281eee4 (revision: keep track of the end-user input from the
-command line, 2011-08-25) would help.
+Will merge to 'next'.
 
 --------------------------------------------------
-[Cooking]
+[Graduated to "master"]
 
-* jc/signed-commit (2011-10-05) 4 commits
- - commit: teach --gpg-sign option
- - Split GPG interface into its own helper library
- - rename "match_refs()" to "match_push_refs()"
- - send-pack: typofix error message
+* bw/grep-no-index-no-exclude (2011-09-15) 2 commits
+  (merged to 'next' on 2011-10-06 at 325270b)
+ + grep --no-index: don't use git standard exclusions
+ + grep: do not use --index in the short usage output
+ (this branch is used by jc/grep-untracked-exclude and jc/maint-grep-untracked-exclude.)
 
-This is to replace the earlier "signed push" experiments.
-
-* js/maint-merge-one-file-osx-expr (2011-10-06) 1 commit
-  (merged to 'next' on 2011-10-07 at fbb28a2)
- + merge-one-file: fix "expr: non-numeric argument"
-
-Will merge to 'master' in the third wave.
-
-* tm/completion-commit-fixup-squash (2011-10-06) 2 commits
-  (merged to 'next' on 2011-10-11 at 6bb192e)
- + completion: commit --fixup and --squash
- + completion: unite --reuse-message and --reedit-message handling
- (this branch is used by sg/completion.)
-
-* tm/completion-push-set-upstream (2011-10-06) 1 commit
-  (merged to 'next' on 2011-10-11 at 85544e5)
- + completion: push --set-upstream
-
-* js/no-cherry-pick-head-after-punted (2011-10-06) 1 commit
-  (merged to 'next' on 2011-10-10 at acb29ee)
- + Merge branch 'js/maint-no-cherry-pick-head-after-punted' into js/no-cherry-pick-head-after-punted
- (this branch uses js/maint-no-cherry-pick-head-after-punted.)
-
-Will merge to 'master' in the third wave.
-
-* js/maint-no-cherry-pick-head-after-punted (2011-10-06) 2 commits
- + cherry-pick: do not give irrelevant advice when cherry-pick punted
- + revert.c: defer writing CHERRY_PICK_HEAD till it is safe to do so
- (this branch is used by js/no-cherry-pick-head-after-punted.)
-
-Will merge to 'maint' later.
-
-* sp/smart-http-failure (2011-10-04) 1 commit
-  (merged to 'next' on 2011-10-06 at 02f9982)
- + remote-curl: Fix warning after HTTP failure
-
-Will merge to 'master' in the second wave.
+Originally merged to 'next' on 2011-09-26.
 
 * cb/do-not-pretend-to-hijack-long-help (2011-10-05) 1 commit
   (merged to 'next' on 2011-10-06 at 46851fe)
  + use -h for synopsis and --help for manpage consistently
 
-Will merge to 'master' in the second wave.
-
 * cp/git-web-browse-browsers (2011-10-03) 1 commit
   (merged to 'next' on 2011-10-06 at da42ad0)
  + git-web--browse: avoid the use of eval
 
-Will merge to 'master' in the third wave.
+* cs/perl-config-path-send-email (2011-09-30) 2 commits
+  (merged to 'next' on 2011-10-06 at 93c00f0)
+ + use new Git::config_path() for aliasesfile
+ + Add Git::config_path()
+
+Originally merged to 'next' on 2011-10-05.
+
+* di/fast-import-empty-tag-note-fix (2011-09-22) 2 commits
+  (merged to 'next' on 2011-10-06 at 3a01ef1)
+ + fast-import: don't allow to note on empty branch
+ + fast-import: don't allow to tag empty branch
+
+Originally merged to 'next' on 2011-10-05.
 
 * il/archive-err-signal (2011-10-05) 1 commit
   (merged to 'next' on 2011-10-06 at 7e3083f)
  + Support ERR in remote archive like in fetch/push
 
-Will merge to 'master' in the third wave.
+* jc/apply-blank-at-eof-fix (2011-09-26) 1 commit
+  (merged to 'next' on 2011-10-06 at a9dfd8f)
+ + apply --whitespace=error: correctly report new blank lines at end
 
-* nd/daemon-log-sock-errors (2011-10-03) 1 commit
-  (merged to 'next' on 2011-10-06 at 5f3630f)
- + daemon: log errors if we could not use some sockets
+Originally merged to 'next' on 2011-10-05.
 
-Will merge to 'master' in the third wave.
-
-* nd/document-err-packet (2011-10-03) 1 commit
-  (merged to 'next' on 2011-10-06 at 0c5f5d0)
- + pack-protocol: document "ERR" line
-
-Will merge to 'master' in the second wave.
-
-* nd/git-daemon-error-msgs (2011-10-03) 1 commit
-  (merged to 'next' on 2011-10-06 at 209126d)
- + daemon: return "access denied" if a service is not allowed
-
-Will merge to 'master' in the third wave.
+* jc/grep-untracked-exclude (2011-10-04) 1 commit
+  (merged to 'next' on 2011-10-06 at b16cffe)
+ + Merge branch 'jc/maint-grep-untracked-exclude' into jc/grep-untracked-exclude
+ (this branch uses bw/grep-no-index-no-exclude and jc/maint-grep-untracked-exclude.)
 
 * jc/is-url-simplify (2011-10-03) 1 commit
   (merged to 'next' on 2011-10-06 at d6c6741)
  + url.c: simplify is_url()
 
-Will merge to 'master' in the third wave.
+* jc/maint-grep-untracked-exclude (2011-10-04) 1 commit
+ + grep: teach --untracked and --exclude-standard options
+ (this branch is used by jc/grep-untracked-exclude; uses bw/grep-no-index-no-exclude.)
+
+* jc/parse-options-boolean (2011-09-28) 5 commits
+  (merged to 'next' on 2011-10-06 at dd4936c)
+ + apply: use OPT_NOOP_NOARG
+ + revert: use OPT_NOOP_NOARG
+ + parseopt: add OPT_NOOP_NOARG
+ + archive.c: use OPT_BOOL()
+ + parse-options: deprecate OPT_BOOLEAN
 
 * jn/ident-from-etc-mailname (2011-10-06) 2 commits
   (merged to 'next' on 2011-10-06 at a68770d)
  + ident: do not retrieve default ident when unnecessary
  + ident: check /etc/mailname if email is unknown
 
-Will merge to 'master' in the third wave.
-
 * jn/no-g-plus-s-on-bsd (2011-10-03) 1 commit
   (merged to 'next' on 2011-10-06 at 3d85674)
  + Makefile: do not set setgid bit on directories on GNU/kFreeBSD
 
-Will merge to 'master' in the third wave.
+* js/maint-merge-one-file-osx-expr (2011-10-06) 1 commit
+  (merged to 'next' on 2011-10-07 at fbb28a2)
+ + merge-one-file: fix "expr: non-numeric argument"
 
-* js/log-show-children (2011-10-04) 1 commit
-  (merged to 'next' on 2011-10-06 at de8f6f2)
- + log --children
+* nd/daemon-log-sock-errors (2011-10-03) 1 commit
+  (merged to 'next' on 2011-10-06 at 5f3630f)
+ + daemon: log errors if we could not use some sockets
 
-Will merge to 'master' in the third wave.
+* nd/document-err-packet (2011-10-03) 1 commit
+  (merged to 'next' on 2011-10-06 at 0c5f5d0)
+ + pack-protocol: document "ERR" line
+
+* nd/git-daemon-error-msgs (2011-10-03) 1 commit
+  (merged to 'next' on 2011-10-06 at 209126d)
+ + daemon: return "access denied" if a service is not allowed
+
+* nd/maint-autofix-tag-in-head (2011-09-18) 4 commits
+  (merged to 'next' on 2011-10-06 at c083e69)
+ + Accept tags in HEAD or MERGE_HEAD
+ + merge: remove global variable head[]
+ + merge: use return value of resolve_ref() to determine if HEAD is invalid
+ + merge: keep stash[] a local variable
+
+Originally merged to 'next' on 2011-09-27.
+
+* nd/maint-sparse-errors (2011-09-22) 2 commits
+  (merged to 'next' on 2011-10-06 at e3cbb90)
+ + Add explanation why we do not allow to sparse checkout to empty working tree
+ + sparse checkout: show error messages when worktree shaping fails
+
+Originally merged to 'next' on 2011-09-22.
+
+* rs/diff-cleanup-records-fix (2011-10-03) 2 commits
+  (merged to 'next' on 2011-10-06 at 91f035f)
+ + diff: resurrect XDF_NEED_MINIMAL with --minimal
+ + Revert removal of multi-match discard heuristic in 27af01
 
 * rs/name-rev-usage (2011-10-03) 1 commit
   (merged to 'next' on 2011-10-06 at e51878e)
  + name-rev: split usage string
 
 Originally merged to 'next' on 2011-10-05.
-Will merge to 'master' in the second wave.
-
-* rs/test-ctype (2011-10-03) 2 commits
-  (merged to 'next' on 2011-10-06 at b8c26d2)
- + test-ctype: add test for is_pathspec_magic
- + test-ctype: macrofy
-
-Originally merged to 'next' on 2011-10-05.
-Will merge to 'master' in the second wave.
 
 * rs/pending (2011-10-03) 8 commits
   (merged to 'next' on 2011-10-06 at 998462b)
@@ -447,7 +254,218 @@ Will merge to 'master' in the second wave.
  + revision: factor out add_pending_sha1
  + checkout: check for "Previous HEAD" notice in t2020
 
-Will merge to 'master' in the third wave.
+* rs/test-ctype (2011-10-03) 2 commits
+  (merged to 'next' on 2011-10-06 at b8c26d2)
+ + test-ctype: add test for is_pathspec_magic
+ + test-ctype: macrofy
+
+Originally merged to 'next' on 2011-10-05.
+
+* sp/smart-http-failure (2011-10-04) 1 commit
+  (merged to 'next' on 2011-10-06 at 02f9982)
+ + remote-curl: Fix warning after HTTP failure
+
+* zj/send-email-authen-sasl (2011-09-29) 1 commit
+  (merged to 'next' on 2011-10-06 at 78b31cd)
+ + send-email: auth plain/login fix
+
+Originally merged to 'next' on 2011-10-05.
+
+--------------------------------------------------
+[Stalled]
+
+* hv/submodule-merge-search (2011-10-13) 4 commits
+ - submodule.c: make two functions static
+ - allow multiple calls to submodule merge search for the same path
+ - push: Don't push a repository with unpushed submodules
+ - push: teach --recurse-submodules the on-demand option
+
+What the topic aims to achieve may make sense, but the implementation
+looked somewhat suboptimal.
+
+The fix-up at the tip queued on fg/submodule-auto-push topic has been
+moved to this topic.
+
+* sr/transport-helper-fix-rfc (2011-07-19) 2 commits
+ - t5800: point out that deleting branches does not work
+ - t5800: document inability to push new branch with old content
+
+Perhaps 281eee4 (revision: keep track of the end-user input from the
+command line, 2011-08-25) would help.
+
+* cn/fetch-prune (2011-10-07) 4 commits
+ - fetch: treat --tags like refs/tags/*:refs/tags/* when pruning
+ - fetch: honor the user-provided refspecs when pruning refs
+ - t5510: add tests for fetch --prune
+ - fetch: free all the additional refspecs
+
+Probably needs a little bit more polish to reduce code duplication between
+existing remote_find_tracking() and new find_in_refs().
+
+* jn/gitweb-manpages (2011-10-10) 6 commits
+ . gitweb: Add gitweb manpages to 'gitweb' package in git.spec
+ . Documentation: Add gitweb config variables to git-config(1)
+ . Documentation: Link to gitweb(1) and gitweb.conf(5) in other manpages
+ . gitweb: Add manpage for gitweb
+ . gitweb: Add manpage for gitweb configuration files
+ . Documentation: Preparation for gitweb manpages
+
+A re-roll already being discussed.
+
+* rr/revert-cherry-pick (2011-10-12) 7 commits
+ - revert: further simplify parsing of a line in insn sheet
+ - revert: Simplify passing command-line arguments around
+ - revert: Allow mixed pick and revert instructions
+ - revert: Make commit descriptions in insn sheet optional
+ - revert: Fix buffer overflow in insn sheet parser
+ - revert: Simplify getting commit subject
+ - revert: Free memory after get_message call
+
+Probably needs a little bit more polish, e.g. squashing the tip fixup into
+an earlier one in the series.
+
+* jc/signed-commit (2011-10-05) 4 commits
+ - commit: teach --gpg-sign option
+ - Split GPG interface into its own helper library
+ - rename "match_refs()" to "match_push_refs()"
+ - send-pack: typofix error message
+
+This is to replace the earlier "signed push" experiments. "verify-tag"
+equivalent needs to be written before this can proceed. I suspect that
+teaching "verify-tag" to notice and also handle signed commits would be
+the easiest, but "git tag --verify $commit" might look slightly funny
+from the UI POV. I dunno.
+
+* jc/lookup-object-hash (2011-08-11) 6 commits
+ - object hash: replace linear probing with 4-way cuckoo hashing
+ - object hash: we know the table size is a power of two
+ - object hash: next_size() helper for readability
+ - pack-objects --count-only
+ - object.c: remove duplicated code for object hashing
+ - object.c: code movement for readability
+
+I do not think there is anything fundamentally wrong with this series, but
+the risk of breakage far outweighs observed performance gain in one
+particular workload.
+
+--------------------------------------------------
+[Cooking]
+
+* ef/mingw-syslog (2011-10-07) 1 commit
+  (merged to 'next' on 2011-10-11 at d5d6945)
+ + mingw: avoid using strbuf in syslog
+
+Will merge to 'master' in the fourth wave.
+
+* jk/name-hash-dirent (2011-10-07) 1 commit
+  (merged to 'next' on 2011-10-11 at e2ea68b)
+ + fix phantom untracked files when core.ignorecase is set
+
+Will merge to 'master' in the fourth wave.
+
+* js/merge-edit-option (2011-10-12) 1 commit
+  (merged to 'next' on 2011-10-12 at db28da3)
+ + Teach merge the '[-e|--edit]' option
+
+Will merge to 'master' in the fifth wave.
+
+* mm/maint-config-explicit-bool-display (2011-10-10) 1 commit
+  (merged to 'next' on 2011-10-11 at 795939f)
+ + config: display key_delim for config --bool --get-regexp
+
+Will merge to 'master' in the fourth wave.
+
+* rs/diff-whole-function (2011-10-10) 2 commits
+  (merged to 'next' on 2011-10-11 at 6196752)
+ + diff: add option to show whole functions as context
+ + xdiff: factor out get_func_line()
+
+Will merge to 'master' in the fifth wave.
+
+* rs/pickaxe (2011-10-07) 7 commits
+  (merged to 'next' on 2011-10-11 at 27d02b2)
+ + pickaxe: factor out pickaxe
+ + pickaxe: give diff_grep the same signature as has_changes
+ + pickaxe: pass diff_options to contains and has_changes
+ + pickaxe: factor out has_changes
+ + pickaxe: plug regex/kws leak
+ + pickaxe: plug regex leak
+ + pickaxe: plug diff filespec leak with empty needle
+
+Will merge to 'master' in the fifth wave.
+
+* sc/difftool-skip (2011-10-14) 2 commits
+  (merged to 'next' on 2011-10-14 at b91c581)
+ + t7800: avoid arithmetic expansion notation
+  (merged to 'next' on 2011-10-11 at 38d7e84)
+ + git-difftool: allow skipping file by typing 'n' at prompt
+
+Will merge to 'master' in the fifth wave.
+
+* sg/completion (2011-10-10) 2 commits
+  (merged to 'next' on 2011-10-11 at 4724640)
+ + completion: unite --format and --pretty for 'log' and 'show'
+ + completion: unite --reuse-message and --reedit-message for 'notes'
+ (this branch is used by sg/complete-refs; uses tm/completion-commit-fixup-squash.)
+
+Will merge to 'master' in the fourth wave.
+
+* tc/fetch-leak (2011-10-07) 1 commit
+  (merged to 'next' on 2011-10-11 at d867153)
+ + fetch: plug two leaks on error exit in store_updated_refs
+
+Will merge to 'master' in the fourth wave.
+
+* jc/check-ref-format-fixup (2011-10-12) 2 commits
+ - Restrict ref-like names immediately below $GIT_DIR
+ - refs.c: move dwim_ref()/dwim_log() from sha1_name.c
+
+An attempt to fix-up unfortunate side effect of mh/check-ref-format-3
+topic. "git show -s config" is never meant to refer to $GIT_DIR/config
+and treat it as a file that records an object name.
+
+Will merge to 'next'.
+
+* jc/maint-remove-renamed-ref (2011-10-12) 1 commit
+  (merged to 'next' on 2011-10-12 at 819c3e4)
+ + branch -m/-M: remove undocumented RENAMED-REF
+
+Will merge to 'master' in the fifth wave.
+
+* tm/completion-commit-fixup-squash (2011-10-06) 2 commits
+  (merged to 'next' on 2011-10-11 at 6bb192e)
+ + completion: commit --fixup and --squash
+ + completion: unite --reuse-message and --reedit-message handling
+ (this branch is used by sg/complete-refs and sg/completion.)
+
+Will merge to 'master' in the fourth wave.
+
+* tm/completion-push-set-upstream (2011-10-06) 1 commit
+  (merged to 'next' on 2011-10-11 at 85544e5)
+ + completion: push --set-upstream
+ (this branch is used by sg/complete-refs.)
+
+Will merge to 'master' in the fourth wave.
+
+* js/no-cherry-pick-head-after-punted (2011-10-06) 1 commit
+  (merged to 'next' on 2011-10-10 at acb29ee)
+ + Merge branch 'js/maint-no-cherry-pick-head-after-punted' into js/no-cherry-pick-head-after-punted
+ (this branch uses js/maint-no-cherry-pick-head-after-punted.)
+
+Will merge to 'master' in the fifth wave.
+
+* js/maint-no-cherry-pick-head-after-punted (2011-10-06) 2 commits
+ + cherry-pick: do not give irrelevant advice when cherry-pick punted
+ + revert.c: defer writing CHERRY_PICK_HEAD till it is safe to do so
+ (this branch is used by js/no-cherry-pick-head-after-punted.)
+
+Will merge to 'maint' later.
+
+* js/log-show-children (2011-10-04) 1 commit
+  (merged to 'next' on 2011-10-06 at de8f6f2)
+ + log --children
+
+Will merge to 'master' in the fifth wave.
 
 * ph/transport-with-gitfile (2011-10-11) 5 commits
   (merged to 'next' on 2011-10-12 at 6d58417)
@@ -458,28 +476,7 @@ Will merge to 'master' in the third wave.
  + Learn to handle gitfiles in enter_repo
  + enter_repo: do not modify input
 
-Will merge to 'master' in the third wave.
-
-* jc/grep-untracked-exclude (2011-10-04) 1 commit
-  (merged to 'next' on 2011-10-06 at b16cffe)
- + Merge branch 'jc/maint-grep-untracked-exclude' into jc/grep-untracked-exclude
- (this branch uses bw/grep-no-index-no-exclude and jc/maint-grep-untracked-exclude.)
-
-Will merge to 'master' in the third wave.
-
-* jc/maint-grep-untracked-exclude (2011-10-04) 1 commit
- + grep: teach --untracked and --exclude-standard options
- (this branch is used by jc/grep-untracked-exclude; uses bw/grep-no-index-no-exclude.)
-
-Will merge to 'maint' later.
-
-* cs/perl-config-path-send-email (2011-09-30) 2 commits
-  (merged to 'next' on 2011-10-06 at 93c00f0)
- + use new Git::config_path() for aliasesfile
- + Add Git::config_path()
-
-Originally merged to 'next' on 2011-10-05.
-Will merge to 'master' in the second wave.
+Will merge to 'master' in the fifth wave.
 
 * jc/checkout-from-tree-keep-local-changes (2011-09-30) 1 commit
   (merged to 'next' on 2011-10-06 at 64061aa)
@@ -488,74 +485,18 @@ Will merge to 'master' in the second wave.
 Originally merged to 'next' on 2011-10-05.
 Will merge to 'master' in the fourth wave.
 
-* jc/apply-blank-at-eof-fix (2011-09-26) 1 commit
-  (merged to 'next' on 2011-10-06 at a9dfd8f)
- + apply --whitespace=error: correctly report new blank lines at end
-
-Originally merged to 'next' on 2011-10-05.
-Will merge to 'master' in the third wave.
-
-* jc/parse-options-boolean (2011-09-28) 5 commits
-  (merged to 'next' on 2011-10-06 at dd4936c)
- + apply: use OPT_NOOP_NOARG
- + revert: use OPT_NOOP_NOARG
- + parseopt: add OPT_NOOP_NOARG
- + archive.c: use OPT_BOOL()
- + parse-options: deprecate OPT_BOOLEAN
-
-Will merge to 'master' in the second wave.
-
 * ph/push-to-delete-nothing (2011-09-30) 1 commit
   (merged to 'next' on 2011-10-06 at 33ac777)
  + receive-pack: don't pass non-existent refs to post-{receive,update} hooks
 
 Will merge to 'master' in the fourth wave.
 
-* zj/send-email-authen-sasl (2011-09-29) 1 commit
-  (merged to 'next' on 2011-10-06 at 78b31cd)
- + send-email: auth plain/login fix
-
-Originally merged to 'next' on 2011-10-05.
-Will merge to 'master' in the second wave.
-
-* nd/maint-sparse-errors (2011-09-22) 2 commits
-  (merged to 'next' on 2011-10-06 at e3cbb90)
- + Add explanation why we do not allow to sparse checkout to empty working tree
- + sparse checkout: show error messages when worktree shaping fails
-
-Originally merged to 'next' on 2011-09-22.
-Will merge to 'master' in the third wave.
-
-* rs/diff-cleanup-records-fix (2011-10-03) 2 commits
-  (merged to 'next' on 2011-10-06 at 91f035f)
- + diff: resurrect XDF_NEED_MINIMAL with --minimal
- + Revert removal of multi-match discard heuristic in 27af01
-
-Will merge to 'master' in the third wave.
-
-* di/fast-import-empty-tag-note-fix (2011-09-22) 2 commits
-  (merged to 'next' on 2011-10-06 at 3a01ef1)
- + fast-import: don't allow to note on empty branch
- + fast-import: don't allow to tag empty branch
-
-Originally merged to 'next' on 2011-10-05.
-Will merge to 'master' in the fourth wave.
-
-* bw/grep-no-index-no-exclude (2011-09-15) 2 commits
-  (merged to 'next' on 2011-10-06 at 325270b)
- + grep --no-index: don't use git standard exclusions
- + grep: do not use --index in the short usage output
- (this branch is used by jc/grep-untracked-exclude and jc/maint-grep-untracked-exclude.)
-
-Originally merged to 'next' on 2011-09-26.
-Will merge to 'master' in the third wave.
-
 * js/bisect-no-checkout (2011-09-21) 1 commit
   (merged to 'next' on 2011-10-06 at 0354e94)
  + bisect: fix exiting when checkout failed in bisect_start()
 
 Originally merged to 'next' on 2011-09-21.
-Will merge to 'master' in the third wave.
+Will merge to 'master' in the fourth wave.
 
 * jc/request-pull-show-head-4 (2011-10-09) 10 commits
   (merged to 'next' on 2011-10-10 at 092175e)
@@ -572,17 +513,7 @@ Will merge to 'master' in the third wave.
  + branch: add read_branch_desc() helper function
  + Merge branch 'bk/ancestry-path' into jc/branch-desc
 
-Will merge to 'master' in the fourth wave.
-
-* nd/maint-autofix-tag-in-head (2011-09-18) 4 commits
-  (merged to 'next' on 2011-10-06 at c083e69)
- + Accept tags in HEAD or MERGE_HEAD
- + merge: remove global variable head[]
- + merge: use return value of resolve_ref() to determine if HEAD is invalid
- + merge: keep stash[] a local variable
-
-Originally merged to 'next' on 2011-09-27.
-Will merge to 'master' in the third wave.
+Will merge to 'master' in the fifth wave.
 
 * bc/attr-ignore-case (2011-10-11) 5 commits
   (merged to 'next' on 2011-10-11 at daa6b51)
@@ -592,16 +523,43 @@ Will merge to 'master' in the third wave.
  + cleanup: use internal memory allocation wrapper functions everywhere
  + attr.c: avoid inappropriate access to strbuf "buf" member
 
-Re-rolled.
+Will merge to 'master' in the fourth wave.
 
-* jc/lookup-object-hash (2011-08-11) 6 commits
- - object hash: replace linear probing with 4-way cuckoo hashing
- - object hash: we know the table size is a power of two
- - object hash: next_size() helper for readability
- - pack-objects --count-only
- - object.c: remove duplicated code for object hashing
- - object.c: code movement for readability
+--------------------------------------------------
+[Discarded]
 
-I do not think there is anything fundamentally wrong with this series, but
-the risk of breakage far outweighs observed performance gain in one
-particular workload. Will keep it in 'next' at least for one cycle.
+* jk/http-auth-keyring (2011-10-12) 23 commits
+ . http_init: accept separate URL parameter
+ . credential-cache: don't cache items without context
+ . check_expirations: don't copy over same element
+ . t0300: add missing EOF terminator for <<
+ . credential-store: use a better storage format
+ . t0300: make alternate username tests more robust
+ . t0300: make askpass tests a little more robust
+ . credential-cache: fix expiration calculation corner cases
+ . docs: minor tweaks to credentials API
+ . credentials: make credential_fill_gently() static
+ . credentials: add "getpass" helper
+ . credentials: add "store" helper
+ . credentials: add "cache" helper
+ . docs: end-user documentation for the credential subsystem
+ . http: use hostname in credential description
+ . allow the user to configure credential helpers
+ . look for credentials in config before prompting
+ . http: use credential API to get passwords
+ . introduce credentials API
+ - http: retry authentication failures for all http requests
+ - remote-curl: don't retry auth failures with dumb protocol
+ - improve httpd auth tests
+ - url: decode buffers that are not NUL-terminated
+ (this branch is used by js/cred-macos-x-keychain-2; is tangled with jk/http-auth.)
+
+Discarded without prejudice to allow design level discussions to continue.
+Expecting a re-roll based on jk/http-auth
+
+* js/cred-macos-x-keychain-2 (2011-10-12) 1 commit
+ . contrib: add a pair of credential helpers for Mac OS X's keychain
+ (this branch uses jk/http-auth-keyring; is tangled with jk/http-auth.)
+
+Discarded without prejudice to allow design level discussions to continue.
+Expecting a re-roll based on jk/http-auth
