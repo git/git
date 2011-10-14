@@ -25,6 +25,11 @@ else
 	test_set_prereq SETFACL
 fi
 
+if test -z "$LOGNAME"
+then
+	LOGNAME=$USER
+fi
+
 check_perms_and_acl () {
 	test -r "$1" &&
 	getfacl "$1" > actual &&
