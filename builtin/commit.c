@@ -1393,7 +1393,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 	if (get_sha1("HEAD", sha1))
 		current_head = NULL;
 	else {
-		current_head = lookup_commit(sha1);
+		current_head = lookup_commit_or_die(sha1, "HEAD");
 		if (!current_head || parse_commit(current_head))
 			die(_("could not parse HEAD commit"));
 	}
@@ -1425,6 +1425,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 			pptr = &commit_list_insert(c->item, pptr)->next;
 	} else if (whence == FROM_MERGE) {
 		struct strbuf m = STRBUF_INIT;
+		struct commit *commit;
 		FILE *fp;
 
 		if (!reflog_msg)
@@ -1438,7 +1439,8 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 			unsigned char sha1[20];
 			if (get_sha1_hex(m.buf, sha1) < 0)
 				die(_("Corrupt MERGE_HEAD file (%s)"), m.buf);
-			pptr = &commit_list_insert(lookup_commit(sha1), pptr)->next;
+			commit = lookup_commit_or_die(sha1, "MERGE_HEAD");
+			pptr = &commit_list_insert(commit, pptr)->next;
 		}
 		fclose(fp);
 		strbuf_release(&m);
