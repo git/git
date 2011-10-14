@@ -367,8 +367,7 @@ proc do_add_all {} {
 		}
 	}
 	if {[llength $unknown_paths]} {
-		set reply [ask_popup [mc "There are unknown files do you also want
-to stage those?"]]
+		set reply [ask_popup [mc "There are unknown files do you also want to stage those?"]]
 		if {$reply} {
 			set paths [concat $paths $unknown_paths]
 		}
