@@ -18,35 +18,15 @@ int is_urlschemechar(int first_flag, int ch)
 
 int is_url(const char *url)
 {
-	const char *url2, *first_slash;
-
-	if (!url)
+	/* Is "scheme" part reasonable? */
+	if (!url || !is_urlschemechar(1, *url++))
 		return 0;
-	url2 = url;
-	first_slash = strchr(url, '/');
-
-	/* Input with no slash at all or slash first can't be URL. */
-	if (!first_slash || first_slash == url)
-		return 0;
-	/* Character before must be : and next must be /. */
-	if (first_slash[-1] != ':' || first_slash[1] != '/')
-		return 0;
-	/* There must be something before the :// */
-	if (first_slash == url + 1)
-		return 0;
-	/*
-	 * Check all characters up to first slash - 1. Only alphanum
-	 * is allowed.
-	 */
-	url2 = url;
-	while (url2 < first_slash - 1) {
-		if (!is_urlschemechar(url2 == url, (unsigned char)*url2))
+	while (*url && *url != ':') {
+		if (!is_urlschemechar(0, *url++))
 			return 0;
-		url2++;
 	}
-
-	/* Valid enough. */
-	return 1;
+	/* We've seen "scheme"; we want colon-slash-slash */
+	return (url[0] == ':' && url[1] == '/' && url[2] == '/');
 }
 
 static int url_decode_char(const char *q)
