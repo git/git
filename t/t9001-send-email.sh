@@ -1168,4 +1168,32 @@ test_expect_success $PREREQ '--force sends cover letter template anyway' '
 	test -n "$(ls msgtxt*)"
 '
 
+test_expect_success $PREREQ 'sendemail.aliasfiletype=mailrc' '
+	clean_fake_sendmail &&
+	echo "alias sbd  somebody@example.org" >.mailrc &&
+	git config --replace-all sendemail.aliasesfile "$(pwd)/.mailrc" &&
+	git config sendemail.aliasfiletype mailrc &&
+	git send-email \
+	  --from="Example <nobody@example.com>" \
+	  --to=sbd \
+	  --smtp-server="$(pwd)/fake.sendmail" \
+	  outdir/0001-*.patch \
+	  2>errors >out &&
+	grep "^!somebody@example\.org!$" commandline1
+'
+
+test_expect_success $PREREQ 'sendemail.aliasfile=~/.mailrc' '
+	clean_fake_sendmail &&
+	echo "alias sbd  someone@example.org" >~/.mailrc &&
+	git config --replace-all sendemail.aliasesfile "~/.mailrc" &&
+	git config sendemail.aliasfiletype mailrc &&
+	git send-email \
+	  --from="Example <nobody@example.com>" \
+	  --to=sbd \
+	  --smtp-server="$(pwd)/fake.sendmail" \
+	  outdir/0001-*.patch \
+	  2>errors >out &&
+	grep "^!someone@example\.org!$" commandline1
+'
+
 test_done
