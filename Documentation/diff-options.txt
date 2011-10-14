@@ -45,6 +45,10 @@ ifndef::git-format-patch[]
 	Synonym for `-p --raw`.
 endif::git-format-patch[]
 
+--minimal::
+	Spend extra time to make sure the smallest possible
+	diff is produced.
+
 --patience::
 	Generate a diff using the "patience diff" algorithm.
 
