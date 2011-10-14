@@ -2474,6 +2474,7 @@ proc toggle_or_diff {w x y} {
 				[concat $after [list ui_ready]]
 		}
 	} else {
+		set selected_paths($path) 1
 		show_diff $path $w $lno
 	}
 }
