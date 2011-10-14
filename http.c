@@ -369,7 +369,7 @@ static void set_from_env(const char **var, const char *envname)
 		*var = val;
 }
 
-void http_init(struct remote *remote)
+void http_init(struct remote *remote, const char *url)
 {
 	char *low_speed_limit;
 	char *low_speed_time;
@@ -433,11 +433,11 @@ void http_init(struct remote *remote)
 	if (getenv("GIT_CURL_FTP_NO_EPSV"))
 		curl_ftp_no_epsv = 1;
 
-	if (remote && remote->url && remote->url[0]) {
-		http_auth_init(remote->url[0]);
+	if (url) {
+		http_auth_init(url);
 		if (!ssl_cert_password_required &&
 		    getenv("GIT_SSL_CERT_PASSWORD_PROTECTED") &&
-		    !prefixcmp(remote->url[0], "https://"))
+		    !prefixcmp(url, "https://"))
 			ssl_cert_password_required = 1;
 	}
 
