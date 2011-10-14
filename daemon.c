@@ -257,11 +257,11 @@ static int run_service(char *dir, struct daemon_service *service)
 	if (!enabled && !service->overridable) {
 		logerror("'%s': service not enabled.", service->name);
 		errno = EACCES;
-		return -1;
+		goto failed;
 	}
 
 	if (!(path = path_ok(dir)))
-		return -1;
+		goto failed;
 
 	/*
 	 * Security on the cheap.
@@ -277,7 +277,7 @@ static int run_service(char *dir, struct daemon_service *service)
 	if (!export_all_trees && access("git-daemon-export-ok", F_OK)) {
 		logerror("'%s': repository not exported.", path);
 		errno = EACCES;
-		return -1;
+		goto failed;
 	}
 
 	if (service->overridable) {
@@ -291,7 +291,7 @@ static int run_service(char *dir, struct daemon_service *service)
 		logerror("'%s': service not enabled for '%s'",
 			 service->name, path);
 		errno = EACCES;
-		return -1;
+		goto failed;
 	}
 
 	/*
@@ -301,6 +301,10 @@ static int run_service(char *dir, struct daemon_service *service)
 	signal(SIGTERM, SIG_IGN);
 
 	return service->fn();
+
+failed:
+	packet_write(1, "ERR %s: access denied", dir);
+	return -1;
 }
 
 static void copy_to_log(int fd)
