@@ -51,8 +51,8 @@ test_expect_success 'setup askpass helpers' '
 	GIT_ASKPASS="$PWD/askpass" &&
 	export GIT_ASKPASS &&
 	>askpass-expect-none &&
-	echo "askpass: Password: " >askpass-expect-pass &&
-	{ echo "askpass: Username: " &&
+	echo "askpass: Password for '\''$HTTPD_DEST'\'': " >askpass-expect-pass &&
+	{ echo "askpass: Username for '\''$HTTPD_DEST'\'': " &&
 	  cat askpass-expect-pass
 	} >askpass-expect-both
 '
