@@ -20,6 +20,7 @@
 static int log_syslog;
 static int verbose;
 static int reuseaddr;
+static int informative_errors;
 
 static const char daemon_usage[] =
 "git daemon [--verbose] [--syslog] [--export-all]\n"
@@ -247,6 +248,14 @@ static int git_daemon_config(const char *var, const char *value, void *cb)
 	return 0;
 }
 
+static int daemon_error(const char *dir, const char *msg)
+{
+	if (!informative_errors)
+		msg = "access denied or repository not exported";
+	packet_write(1, "ERR %s: %s", msg, dir);
+	return -1;
+}
+
 static int run_service(char *dir, struct daemon_service *service)
 {
 	const char *path;
@@ -257,11 +266,11 @@ static int run_service(char *dir, struct daemon_service *service)
 	if (!enabled && !service->overridable) {
 		logerror("'%s': service not enabled.", service->name);
 		errno = EACCES;
-		return -1;
+		return daemon_error(dir, "service not enabled");
 	}
 
 	if (!(path = path_ok(dir)))
-		return -1;
+		return daemon_error(dir, "no such repository");
 
 	/*
 	 * Security on the cheap.
@@ -277,7 +286,7 @@ static int run_service(char *dir, struct daemon_service *service)
 	if (!export_all_trees && access("git-daemon-export-ok", F_OK)) {
 		logerror("'%s': repository not exported.", path);
 		errno = EACCES;
-		return -1;
+		return daemon_error(dir, "repository not exported");
 	}
 
 	if (service->overridable) {
@@ -291,7 +300,7 @@ static int run_service(char *dir, struct daemon_service *service)
 		logerror("'%s': service not enabled for '%s'",
 			 service->name, path);
 		errno = EACCES;
-		return -1;
+		return daemon_error(dir, "service not enabled");
 	}
 
 	/*
@@ -1165,6 +1174,14 @@ int main(int argc, char **argv)
 		}
 		if (!prefixcmp(arg, "--forbid-override=")) {
 			make_service_overridable(arg + 18, 0);
+			continue;
+		}
+		if (!prefixcmp(arg, "--informative-errors")) {
+			informative_errors = 1;
+			continue;
+		}
+		if (!prefixcmp(arg, "--no-informative-errors")) {
+			informative_errors = 0;
 			continue;
 		}
 		if (!strcmp(arg, "--")) {
