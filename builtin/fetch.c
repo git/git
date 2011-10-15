@@ -735,10 +735,29 @@ static int do_fetch(struct transport *transport,
 		return 1;
 	}
 	if (prune) {
-		if (ref_count)
+		/* If --tags was specified, pretend the user gave us the canonical tags refspec */
+		if (tags == TAGS_SET) {
+			const char *tags_str = "refs/tags/*:refs/tags/*";
+			struct refspec *tags_refspec, *refspec;
+
+			/* Copy the refspec and add the tags to it */
+			refspec = xcalloc(ref_count + 1, sizeof(struct refspec));
+			tags_refspec = parse_fetch_refspec(1, &tags_str);
+			memcpy(refspec, refs, ref_count * sizeof(struct refspec));
+			memcpy(&refspec[ref_count], tags_refspec, sizeof(struct refspec));
+			ref_count++;
+
+			prune_refs(refspec, ref_count, ref_map);
+
+			ref_count--;
+			/* The rest of the strings belong to fetch_one */
+			free_refspec(1, tags_refspec);
+			free(refspec);
+		} else if (ref_count) {
 			prune_refs(refs, ref_count, ref_map);
-		else
+		} else {
 			prune_refs(transport->remote->fetch, transport->remote->fetch_refspec_nr, ref_map);
+		}
 	}
 	free_refs(ref_map);
 

@@ -105,7 +105,7 @@ test_expect_success 'fetch --prune with a namespace keeps other namespaces' '
 	git rev-parse origin/master
 '
 
-test_expect_failure 'fetch --prune --tags does not delete the remote-tracking branches' '
+test_expect_success 'fetch --prune --tags does not delete the remote-tracking branches' '
 	cd "$D" &&
 	git clone . prune-tags &&
 	cd prune-tags &&
@@ -116,7 +116,7 @@ test_expect_failure 'fetch --prune --tags does not delete the remote-tracking br
 	test_must_fail git rev-parse somebranch
 '
 
-test_expect_failure 'fetch --prune --tags with branch does not delete other remote-tracking branches' '
+test_expect_success 'fetch --prune --tags with branch does not delete other remote-tracking branches' '
 	cd "$D" &&
 	git clone . prune-tags-branch &&
 	cd prune-tags-branch &&
