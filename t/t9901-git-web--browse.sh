@@ -7,31 +7,32 @@ This test checks that git web--browse can handle various valid URLs.'
 
 . ./test-lib.sh
 
+test_web_browse () {
+	# browser=$1 url=$2
+	git web--browse --browser="$1" "$2" >actual &&
+	tr -d '\015' <actual >text &&
+	test_cmp expect text
+}
+
 test_expect_success \
 	'URL with an ampersand in it' '
 	echo http://example.com/foo\&bar >expect &&
 	git config browser.custom.cmd echo &&
-	git web--browse --browser=custom \
-		http://example.com/foo\&bar >actual &&
-	test_cmp expect actual
+	test_web_browse custom http://example.com/foo\&bar
 '
 
 test_expect_success \
 	'URL with a semi-colon in it' '
 	echo http://example.com/foo\;bar >expect &&
 	git config browser.custom.cmd echo &&
-	git web--browse --browser=custom \
-		http://example.com/foo\;bar >actual &&
-	test_cmp expect actual
+	test_web_browse custom http://example.com/foo\;bar
 '
 
 test_expect_success \
 	'URL with a hash in it' '
 	echo http://example.com/foo#bar >expect &&
 	git config browser.custom.cmd echo &&
-	git web--browse --browser=custom \
-		http://example.com/foo#bar >actual &&
-	test_cmp expect actual
+	test_web_browse custom http://example.com/foo#bar
 '
 
 test_expect_success \
@@ -43,9 +44,7 @@ test_expect_success \
 	EOF
 	chmod +x "fake browser" &&
 	git config browser.w3m.path "`pwd`/fake browser" &&
-	git web--browse --browser=w3m \
-		http://example.com/foo >actual &&
-	test_cmp expect actual
+	test_web_browse w3m http://example.com/foo
 '
 
 test_expect_success \
@@ -58,9 +57,7 @@ test_expect_success \
 			done
 		}
 		f" &&
-	git web--browse --browser=custom \
-		http://example.com/foo >actual &&
-	test_cmp expect actual
+	test_web_browse custom http://example.com/foo
 '
 
 test_done
