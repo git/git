@@ -828,57 +828,54 @@ static int match_name_with_pattern(const char *key, const char *name,
 	return ret;
 }
 
-char *apply_refspecs(struct refspec *refspecs, int nr_refspec,
-		     const char *name)
+static int query_refspecs(struct refspec *refs, int ref_count, struct refspec *query)
 {
 	int i;
-	char *ret = NULL;
-	for (i = 0; i < nr_refspec; i++) {
-		struct refspec *refspec = refspecs + i;
-		if (refspec->pattern) {
-			if (match_name_with_pattern(refspec->src, name,
-						    refspec->dst, &ret))
-				return ret;
-		} else if (!strcmp(refspec->src, name))
-			return strdup(refspec->dst);
-	}
-	return NULL;
-}
+	int find_src = !query->src;
 
-int remote_find_tracking(struct remote *remote, struct refspec *refspec)
-{
-	int find_src = refspec->src == NULL;
-	char *needle, **result;
-	int i;
+	if (find_src && !query->dst)
+		return error("query_refspecs: need either src or dst");
 
-	if (find_src) {
+	for (i = 0; i < ref_count; i++) {
+		struct refspec *refspec = &refs[i];
+		const char *key = find_src ? refspec->dst : refspec->src;
+		const char *value = find_src ? refspec->src : refspec->dst;
+		const char *needle = find_src ? query->dst : query->src;
+		char **result = find_src ? &query->src : &query->dst;
+
 		if (!refspec->dst)
-			return error("find_tracking: need either src or dst");
-		needle = refspec->dst;
-		result = &refspec->src;
-	} else {
-		needle = refspec->src;
-		result = &refspec->dst;
-	}
-
-	for (i = 0; i < remote->fetch_refspec_nr; i++) {
-		struct refspec *fetch = &remote->fetch[i];
-		const char *key = find_src ? fetch->dst : fetch->src;
-		const char *value = find_src ? fetch->src : fetch->dst;
-		if (!fetch->dst)
 			continue;
-		if (fetch->pattern) {
+		if (refspec->pattern) {
 			if (match_name_with_pattern(key, needle, value, result)) {
-				refspec->force = fetch->force;
+				query->force = refspec->force;
 				return 0;
 			}
 		} else if (!strcmp(needle, key)) {
 			*result = xstrdup(value);
-			refspec->force = fetch->force;
+			query->force = refspec->force;
 			return 0;
 		}
 	}
 	return -1;
+}
+
+char *apply_refspecs(struct refspec *refspecs, int nr_refspec,
+		     const char *name)
+{
+	struct refspec query;
+
+	memset(&query, 0, sizeof(struct refspec));
+	query.src = (char *)name;
+
+	if (query_refspecs(refspecs, nr_refspec, &query))
+		return NULL;
+
+	return query.dst;
+}
+
+int remote_find_tracking(struct remote *remote, struct refspec *refspec)
+{
+	return query_refspecs(remote->fetch, remote->fetch_refspec_nr, refspec);
 }
 
 static struct ref *alloc_ref_with_prefix(const char *prefix, size_t prefixlen,
