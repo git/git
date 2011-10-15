@@ -37,7 +37,7 @@ struct src_data {
 
 struct origin_data {
 	unsigned char sha1[20];
-	int is_local_branch:1;
+	unsigned is_local_branch:1;
 };
 
 static void init_src_data(struct src_data *data)
