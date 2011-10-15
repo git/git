@@ -164,6 +164,6 @@ struct ref *guess_remote_head(const struct ref *head,
 			      int all);
 
 /* Return refs which no longer exist on remote */
-struct ref *get_stale_heads(struct remote *remote, struct ref *fetch_map);
+struct ref *get_stale_heads(struct refspec *refs, int ref_count, struct ref *fetch_map);
 
 #endif

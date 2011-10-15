@@ -1678,36 +1678,47 @@ struct ref *guess_remote_head(const struct ref *head,
 }
 
 struct stale_heads_info {
-	struct remote *remote;
 	struct string_list *ref_names;
 	struct ref **stale_refs_tail;
+	struct refspec *refs;
+	int ref_count;
 };
 
 static int get_stale_heads_cb(const char *refname,
 	const unsigned char *sha1, int flags, void *cb_data)
 {
 	struct stale_heads_info *info = cb_data;
-	struct refspec refspec;
-	memset(&refspec, 0, sizeof(refspec));
-	refspec.dst = (char *)refname;
-	if (!remote_find_tracking(info->remote, &refspec)) {
-		if (!((flags & REF_ISSYMREF) ||
-		    string_list_has_string(info->ref_names, refspec.src))) {
-			struct ref *ref = make_linked_ref(refname, &info->stale_refs_tail);
-			hashcpy(ref->new_sha1, sha1);
-		}
+	struct refspec query;
+	memset(&query, 0, sizeof(struct refspec));
+	query.dst = (char *)refname;
+
+	if (query_refspecs(info->refs, info->ref_count, &query))
+		return 0; /* No matches */
+
+	/*
+	 * If we did find a suitable refspec and it's not a symref and
+	 * it's not in the list of refs that currently exist in that
+	 * remote we consider it to be stale.
+	 */
+	if (!((flags & REF_ISSYMREF) ||
+	      string_list_has_string(info->ref_names, query.src))) {
+		struct ref *ref = make_linked_ref(refname, &info->stale_refs_tail);
+		hashcpy(ref->new_sha1, sha1);
 	}
+
+	free(query.src);
 	return 0;
 }
 
-struct ref *get_stale_heads(struct remote *remote, struct ref *fetch_map)
+struct ref *get_stale_heads(struct refspec *refs, int ref_count, struct ref *fetch_map)
 {
 	struct ref *ref, *stale_refs = NULL;
 	struct string_list ref_names = STRING_LIST_INIT_NODUP;
 	struct stale_heads_info info;
-	info.remote = remote;
 	info.ref_names = &ref_names;
 	info.stale_refs_tail = &stale_refs;
+	info.refs = refs;
+	info.ref_count = ref_count;
 	for (ref = fetch_map; ref; ref = ref->next)
 		string_list_append(&ref_names, ref->name);
 	sort_string_list(&ref_names);

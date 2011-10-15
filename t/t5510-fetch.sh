@@ -86,7 +86,7 @@ test_expect_success 'fetch --prune on its own works as expected' '
 	test_must_fail git rev-parse origin/extrabranch
 '
 
-test_expect_failure 'fetch --prune with a branch name keeps branches' '
+test_expect_success 'fetch --prune with a branch name keeps branches' '
 	cd "$D" &&
 	git clone . prune-branch &&
 	cd prune-branch &&
@@ -96,7 +96,7 @@ test_expect_failure 'fetch --prune with a branch name keeps branches' '
 	git rev-parse origin/extrabranch
 '
 
-test_expect_failure 'fetch --prune with a namespace keeps other namespaces' '
+test_expect_success 'fetch --prune with a namespace keeps other namespaces' '
 	cd "$D" &&
 	git clone . prune-namespace &&
 	cd prune-namespace &&
