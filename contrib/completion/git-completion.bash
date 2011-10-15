@@ -512,6 +512,31 @@ __gitcomp ()
 	esac
 }
 
+# Generates completion reply with compgen from newline-separated possible
+# completion words by appending a space to all of them.
+# It accepts 1 to 4 arguments:
+# 1: List of possible completion words, separated by a single newline.
+# 2: A prefix to be added to each possible completion word (optional).
+# 3: Generate possible completion matches for this word (optional).
+# 4: A suffix to be appended to each possible completion word instead of
+#    the default space (optional).  If specified but empty, nothing is
+#    appended.
+__gitcomp_nl ()
+{
+	local s=$'\n' IFS=' '$'\t'$'\n'
+	local cur_="$cur" suffix=" "
+
+	if [ $# -gt 2 ]; then
+		cur_="$3"
+		if [ $# -gt 3 ]; then
+			suffix="$4"
+		fi
+	fi
+
+	IFS=$s
+	COMPREPLY=($(compgen -P "${2-}" -S "$suffix" -W "$1" -- "$cur_"))
+}
+
 # __git_heads accepts 0 or 1 arguments (to pass to __gitdir)
 __git_heads ()
 {
@@ -716,15 +741,15 @@ __git_complete_revlist_file ()
 	*...*)
 		pfx="${cur_%...*}..."
 		cur_="${cur_#*...}"
-		__gitcomp "$(__git_refs)" "$pfx" "$cur_"
+		__gitcomp_nl "$(__git_refs)" "$pfx" "$cur_"
 		;;
 	*..*)
 		pfx="${cur_%..*}.."
 		cur_="${cur_#*..}"
-		__gitcomp "$(__git_refs)" "$pfx" "$cur_"
+		__gitcomp_nl "$(__git_refs)" "$pfx" "$cur_"
 		;;
 	*)
-		__gitcomp "$(__git_refs)"
+		__gitcomp_nl "$(__git_refs)"
 		;;
 	esac
 }
@@ -764,7 +789,7 @@ __git_complete_remote_or_refspec ()
 		c=$((++c))
 	done
 	if [ -z "$remote" ]; then
-		__gitcomp "$(__git_remotes)"
+		__gitcomp_nl "$(__git_remotes)"
 		return
 	fi
 	if [ $no_complete_refspec = 1 ]; then
@@ -789,23 +814,23 @@ __git_complete_remote_or_refspec ()
 	case "$cmd" in
 	fetch)
 		if [ $lhs = 1 ]; then
-			__gitcomp "$(__git_refs2 "$remote")" "$pfx" "$cur_"
+			__gitcomp_nl "$(__git_refs2 "$remote")" "$pfx" "$cur_"
 		else
-			__gitcomp "$(__git_refs)" "$pfx" "$cur_"
+			__gitcomp_nl "$(__git_refs)" "$pfx" "$cur_"
 		fi
 		;;
 	pull)
 		if [ $lhs = 1 ]; then
-			__gitcomp "$(__git_refs "$remote")" "$pfx" "$cur_"
+			__gitcomp_nl "$(__git_refs "$remote")" "$pfx" "$cur_"
 		else
-			__gitcomp "$(__git_refs)" "$pfx" "$cur_"
+			__gitcomp_nl "$(__git_refs)" "$pfx" "$cur_"
 		fi
 		;;
 	push)
 		if [ $lhs = 1 ]; then
-			__gitcomp "$(__git_refs)" "$pfx" "$cur_"
+			__gitcomp_nl "$(__git_refs)" "$pfx" "$cur_"
 		else
-			__gitcomp "$(__git_refs "$remote")" "$pfx" "$cur_"
+			__gitcomp_nl "$(__git_refs "$remote")" "$pfx" "$cur_"
 		fi
 		;;
 	esac
@@ -1084,7 +1109,7 @@ _git_archive ()
 		return
 		;;
 	--remote=*)
-		__gitcomp "$(__git_remotes)" "" "${cur##--remote=}"
+		__gitcomp_nl "$(__git_remotes)" "" "${cur##--remote=}"
 		return
 		;;
 	--*)
@@ -1115,7 +1140,7 @@ _git_bisect ()
 
 	case "$subcommand" in
 	bad|good|reset|skip|start)
-		__gitcomp "$(__git_refs)"
+		__gitcomp_nl "$(__git_refs)"
 		;;
 	*)
 		COMPREPLY=()
@@ -1146,9 +1171,9 @@ _git_branch ()
 		;;
 	*)
 		if [ $only_local_ref = "y" -a $has_r = "n" ]; then
-			__gitcomp "$(__git_heads)"
+			__gitcomp_nl "$(__git_heads)"
 		else
-			__gitcomp "$(__git_refs)"
+			__gitcomp_nl "$(__git_refs)"
 		fi
 		;;
 	esac
@@ -1195,7 +1220,7 @@ _git_checkout ()
 		if [ -n "$(__git_find_on_cmdline "$flags")" ]; then
 			track=''
 		fi
-		__gitcomp "$(__git_refs '' $track)"
+		__gitcomp_nl "$(__git_refs '' $track)"
 		;;
 	esac
 }
@@ -1212,7 +1237,7 @@ _git_cherry_pick ()
 		__gitcomp "--edit --no-commit"
 		;;
 	*)
-		__gitcomp "$(__git_refs)"
+		__gitcomp_nl "$(__git_refs)"
 		;;
 	esac
 }
@@ -1266,7 +1291,7 @@ _git_commit ()
 		;;
 	--reuse-message=*|--reedit-message=*|\
 	--fixup=*|--squash=*)
-		__gitcomp "$(__git_refs)" "" "${cur#*=}"
+		__gitcomp_nl "$(__git_refs)" "" "${cur#*=}"
 		return
 		;;
 	--untracked-files=*)
@@ -1297,7 +1322,7 @@ _git_describe ()
 			"
 		return
 	esac
-	__gitcomp "$(__git_refs)"
+	__gitcomp_nl "$(__git_refs)"
 }
 
 __git_diff_common_options="--stat --numstat --shortstat --summary
@@ -1456,7 +1481,7 @@ _git_grep ()
 		;;
 	esac
 
-	__gitcomp "$(__git_refs)"
+	__gitcomp_nl "$(__git_refs)"
 }
 
 _git_help ()
@@ -1514,7 +1539,7 @@ _git_ls_files ()
 
 _git_ls_remote ()
 {
-	__gitcomp "$(__git_remotes)"
+	__gitcomp_nl "$(__git_remotes)"
 }
 
 _git_ls_tree ()
@@ -1610,7 +1635,7 @@ _git_merge ()
 		__gitcomp "$__git_merge_options"
 		return
 	esac
-	__gitcomp "$(__git_refs)"
+	__gitcomp_nl "$(__git_refs)"
 }
 
 _git_mergetool ()
@@ -1630,7 +1655,7 @@ _git_mergetool ()
 
 _git_merge_base ()
 {
-	__gitcomp "$(__git_refs)"
+	__gitcomp_nl "$(__git_refs)"
 }
 
 _git_mv ()
@@ -1661,7 +1686,7 @@ _git_notes ()
 	,*)
 		case "${words[cword-1]}" in
 		--ref)
-			__gitcomp "$(__git_refs)"
+			__gitcomp_nl "$(__git_refs)"
 			;;
 		*)
 			__gitcomp "$subcommands --ref"
@@ -1670,7 +1695,7 @@ _git_notes ()
 		;;
 	add,--reuse-message=*|append,--reuse-message=*|\
 	add,--reedit-message=*|append,--reedit-message=*)
-		__gitcomp "$(__git_refs)" "" "${cur#*=}"
+		__gitcomp_nl "$(__git_refs)" "" "${cur#*=}"
 		;;
 	add,--*|append,--*)
 		__gitcomp '--file= --message= --reedit-message=
@@ -1689,7 +1714,7 @@ _git_notes ()
 		-m|-F)
 			;;
 		*)
-			__gitcomp "$(__git_refs)"
+			__gitcomp_nl "$(__git_refs)"
 			;;
 		esac
 		;;
@@ -1717,12 +1742,12 @@ _git_push ()
 {
 	case "$prev" in
 	--repo)
-		__gitcomp "$(__git_remotes)"
+		__gitcomp_nl "$(__git_remotes)"
 		return
 	esac
 	case "$cur" in
 	--repo=*)
-		__gitcomp "$(__git_remotes)" "" "${cur##--repo=}"
+		__gitcomp_nl "$(__git_remotes)" "" "${cur##--repo=}"
 		return
 		;;
 	--*)
@@ -1760,7 +1785,7 @@ _git_rebase ()
 
 		return
 	esac
-	__gitcomp "$(__git_refs)"
+	__gitcomp_nl "$(__git_refs)"
 }
 
 _git_reflog ()
@@ -1771,7 +1796,7 @@ _git_reflog ()
 	if [ -z "$subcommand" ]; then
 		__gitcomp "$subcommands"
 	else
-		__gitcomp "$(__git_refs)"
+		__gitcomp_nl "$(__git_refs)"
 	fi
 }
 
@@ -1853,23 +1878,23 @@ _git_config ()
 {
 	case "$prev" in
 	branch.*.remote)
-		__gitcomp "$(__git_remotes)"
+		__gitcomp_nl "$(__git_remotes)"
 		return
 		;;
 	branch.*.merge)
-		__gitcomp "$(__git_refs)"
+		__gitcomp_nl "$(__git_refs)"
 		return
 		;;
 	remote.*.fetch)
 		local remote="${prev#remote.}"
 		remote="${remote%.fetch}"
-		__gitcomp "$(__git_refs_remotes "$remote")"
+		__gitcomp_nl "$(__git_refs_remotes "$remote")"
 		return
 		;;
 	remote.*.push)
 		local remote="${prev#remote.}"
 		remote="${remote%.push}"
-		__gitcomp "$(git --git-dir="$(__gitdir)" \
+		__gitcomp_nl "$(git --git-dir="$(__gitdir)" \
 			for-each-ref --format='%(refname):%(refname)' \
 			refs/heads)"
 		return
@@ -1916,7 +1941,7 @@ _git_config ()
 		return
 		;;
 	--get|--get-all|--unset|--unset-all)
-		__gitcomp "$(__git_config_get_set_variables)"
+		__gitcomp_nl "$(__git_config_get_set_variables)"
 		return
 		;;
 	*.*)
@@ -1942,7 +1967,7 @@ _git_config ()
 		;;
 	branch.*)
 		local pfx="${cur%.*}." cur_="${cur#*.}"
-		__gitcomp "$(__git_heads)" "$pfx" "$cur_" "."
+		__gitcomp_nl "$(__git_heads)" "$pfx" "$cur_" "."
 		return
 		;;
 	guitool.*.*)
@@ -1971,7 +1996,7 @@ _git_config ()
 	pager.*)
 		local pfx="${cur%.*}." cur_="${cur#*.}"
 		__git_compute_all_commands
-		__gitcomp "$__git_all_commands" "$pfx" "$cur_"
+		__gitcomp_nl "$__git_all_commands" "$pfx" "$cur_"
 		return
 		;;
 	remote.*.*)
@@ -1984,7 +2009,7 @@ _git_config ()
 		;;
 	remote.*)
 		local pfx="${cur%.*}." cur_="${cur#*.}"
-		__gitcomp "$(__git_remotes)" "$pfx" "$cur_" "."
+		__gitcomp_nl "$(__git_remotes)" "$pfx" "$cur_" "."
 		return
 		;;
 	url.*.*)
@@ -2285,7 +2310,7 @@ _git_remote ()
 
 	case "$subcommand" in
 	rename|rm|show|prune)
-		__gitcomp "$(__git_remotes)"
+		__gitcomp_nl "$(__git_remotes)"
 		;;
 	update)
 		local i c='' IFS=$'\n'
@@ -2303,7 +2328,7 @@ _git_remote ()
 
 _git_replace ()
 {
-	__gitcomp "$(__git_refs)"
+	__gitcomp_nl "$(__git_refs)"
 }
 
 _git_reset ()
@@ -2316,7 +2341,7 @@ _git_reset ()
 		return
 		;;
 	esac
-	__gitcomp "$(__git_refs)"
+	__gitcomp_nl "$(__git_refs)"
 }
 
 _git_revert ()
@@ -2327,7 +2352,7 @@ _git_revert ()
 		return
 		;;
 	esac
-	__gitcomp "$(__git_refs)"
+	__gitcomp_nl "$(__git_refs)"
 }
 
 _git_rm ()
@@ -2426,7 +2451,7 @@ _git_stash ()
 			COMPREPLY=()
 			;;
 		show,*|apply,*|drop,*|pop,*|branch,*)
-			__gitcomp "$(git --git-dir="$(__gitdir)" stash list \
+			__gitcomp_nl "$(git --git-dir="$(__gitdir)" stash list \
 					| sed -n -e 's/:.*//p')"
 			;;
 		*)
@@ -2560,7 +2585,7 @@ _git_tag ()
 		i="${words[c]}"
 		case "$i" in
 		-d|-v)
-			__gitcomp "$(__git_tags)"
+			__gitcomp_nl "$(__git_tags)"
 			return
 			;;
 		-f)
@@ -2576,13 +2601,13 @@ _git_tag ()
 		;;
 	-*|tag)
 		if [ $f = 1 ]; then
-			__gitcomp "$(__git_tags)"
+			__gitcomp_nl "$(__git_tags)"
 		else
 			COMPREPLY=()
 		fi
 		;;
 	*)
-		__gitcomp "$(__git_refs)"
+		__gitcomp_nl "$(__git_refs)"
 		;;
 	esac
 }
