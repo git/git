@@ -971,7 +971,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	}
 
 	if (0 <= opt_exclude)
-		die("--exclude or --no-exclude cannot be used for tracked contents.");
+		die("--[no-]exclude-standard cannot be used for tracked contents.");
 
 	if (!list.nr) {
 		int hit;
