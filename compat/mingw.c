@@ -1321,6 +1321,13 @@ static void ensure_socket_initialization(void)
 	initialized = 1;
 }
 
+#undef gethostname
+int mingw_gethostname(char *name, int namelen)
+{
+    ensure_socket_initialization();
+    return gethostname(name, namelen);
+}
+
 #undef gethostbyname
 struct hostent *mingw_gethostbyname(const char *host)
 {
