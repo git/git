@@ -81,8 +81,7 @@ prepare_httpd() {
 
 	if test -n "$LIB_HTTPD_SSL"
 	then
-		HTTPD_URL=https://127.0.0.1:$LIB_HTTPD_PORT
-		AUTH_HTTPD_URL=https://user%40host:user%40host@127.0.0.1:$LIB_HTTPD_PORT
+		HTTPD_PROTO=https
 
 		RANDFILE_PATH="$HTTPD_ROOT_PATH"/.rnd openssl req \
 			-config "$TEST_PATH/ssl.cnf" \
@@ -93,9 +92,12 @@ prepare_httpd() {
 		export GIT_SSL_NO_VERIFY
 		HTTPD_PARA="$HTTPD_PARA -DSSL"
 	else
-		HTTPD_URL=http://127.0.0.1:$LIB_HTTPD_PORT
-		AUTH_HTTPD_URL=http://user%40host:user%40host@127.0.0.1:$LIB_HTTPD_PORT
+		HTTPD_PROTO=http
 	fi
+	HTTPD_DEST=127.0.0.1:$LIB_HTTPD_PORT
+	HTTPD_URL=$HTTPD_PROTO://$HTTPD_DEST
+	HTTPD_URL_USER=$HTTPD_PROTO://user%40host@$HTTPD_DEST
+	HTTPD_URL_USER_PASS=$HTTPD_PROTO://user%40host:user%40host@$HTTPD_DEST
 
 	if test -n "$LIB_HTTPD_DAV" -o -n "$LIB_HTTPD_SVN"
 	then
