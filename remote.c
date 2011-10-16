@@ -803,57 +803,54 @@ static int match_name_with_pattern(const char *key, const char *name,
 	return ret;
 }
 
-char *apply_refspecs(struct refspec *refspecs, int nr_refspec,
-		     const char *name)
+static int query_refspecs(struct refspec *refs, int ref_count, struct refspec *query)
 {
 	int i;
-	char *ret = NULL;
-	for (i = 0; i < nr_refspec; i++) {
-		struct refspec *refspec = refspecs + i;
-		if (refspec->pattern) {
-			if (match_name_with_pattern(refspec->src, name,
-						    refspec->dst, &ret))
-				return ret;
-		} else if (!strcmp(refspec->src, name))
-			return xstrdup(refspec->dst);
-	}
-	return NULL;
-}
+	int find_src = !query->src;
 
-int remote_find_tracking(struct remote *remote, struct refspec *refspec)
-{
-	int find_src = refspec->src == NULL;
-	char *needle, **result;
-	int i;
+	if (find_src && !query->dst)
+		return error("query_refspecs: need either src or dst");
 
-	if (find_src) {
+	for (i = 0; i < ref_count; i++) {
+		struct refspec *refspec = &refs[i];
+		const char *key = find_src ? refspec->dst : refspec->src;
+		const char *value = find_src ? refspec->src : refspec->dst;
+		const char *needle = find_src ? query->dst : query->src;
+		char **result = find_src ? &query->src : &query->dst;
+
 		if (!refspec->dst)
-			return error("find_tracking: need either src or dst");
-		needle = refspec->dst;
-		result = &refspec->src;
-	} else {
-		needle = refspec->src;
-		result = &refspec->dst;
-	}
-
-	for (i = 0; i < remote->fetch_refspec_nr; i++) {
-		struct refspec *fetch = &remote->fetch[i];
-		const char *key = find_src ? fetch->dst : fetch->src;
-		const char *value = find_src ? fetch->src : fetch->dst;
-		if (!fetch->dst)
 			continue;
-		if (fetch->pattern) {
+		if (refspec->pattern) {
 			if (match_name_with_pattern(key, needle, value, result)) {
-				refspec->force = fetch->force;
+				query->force = refspec->force;
 				return 0;
 			}
 		} else if (!strcmp(needle, key)) {
 			*result = xstrdup(value);
-			refspec->force = fetch->force;
+			query->force = refspec->force;
 			return 0;
 		}
 	}
 	return -1;
+}
+
+char *apply_refspecs(struct refspec *refspecs, int nr_refspec,
+		     const char *name)
+{
+	struct refspec query;
+
+	memset(&query, 0, sizeof(struct refspec));
+	query.src = (char *)name;
+
+	if (query_refspecs(refspecs, nr_refspec, &query))
+		return NULL;
+
+	return query.dst;
+}
+
+int remote_find_tracking(struct remote *remote, struct refspec *refspec)
+{
+	return query_refspecs(remote->fetch, remote->fetch_refspec_nr, refspec);
 }
 
 static struct ref *alloc_ref_with_prefix(const char *prefix, size_t prefixlen,
@@ -1656,36 +1653,47 @@ struct ref *guess_remote_head(const struct ref *head,
 }
 
 struct stale_heads_info {
-	struct remote *remote;
 	struct string_list *ref_names;
 	struct ref **stale_refs_tail;
+	struct refspec *refs;
+	int ref_count;
 };
 
 static int get_stale_heads_cb(const char *refname,
 	const unsigned char *sha1, int flags, void *cb_data)
 {
 	struct stale_heads_info *info = cb_data;
-	struct refspec refspec;
-	memset(&refspec, 0, sizeof(refspec));
-	refspec.dst = (char *)refname;
-	if (!remote_find_tracking(info->remote, &refspec)) {
-		if (!((flags & REF_ISSYMREF) ||
-		    string_list_has_string(info->ref_names, refspec.src))) {
-			struct ref *ref = make_linked_ref(refname, &info->stale_refs_tail);
-			hashcpy(ref->new_sha1, sha1);
-		}
+	struct refspec query;
+	memset(&query, 0, sizeof(struct refspec));
+	query.dst = (char *)refname;
+
+	if (query_refspecs(info->refs, info->ref_count, &query))
+		return 0; /* No matches */
+
+	/*
+	 * If we did find a suitable refspec and it's not a symref and
+	 * it's not in the list of refs that currently exist in that
+	 * remote we consider it to be stale.
+	 */
+	if (!((flags & REF_ISSYMREF) ||
+	      string_list_has_string(info->ref_names, query.src))) {
+		struct ref *ref = make_linked_ref(refname, &info->stale_refs_tail);
+		hashcpy(ref->new_sha1, sha1);
 	}
+
+	free(query.src);
 	return 0;
 }
 
-struct ref *get_stale_heads(struct remote *remote, struct ref *fetch_map)
+struct ref *get_stale_heads(struct refspec *refs, int ref_count, struct ref *fetch_map)
 {
 	struct ref *ref, *stale_refs = NULL;
 	struct string_list ref_names = STRING_LIST_INIT_NODUP;
 	struct stale_heads_info info;
-	info.remote = remote;
 	info.ref_names = &ref_names;
 	info.stale_refs_tail = &stale_refs;
+	info.refs = refs;
+	info.ref_count = ref_count;
 	for (ref = fetch_map; ref; ref = ref->next)
 		string_list_append(&ref_names, ref->name);
 	sort_string_list(&ref_names);
