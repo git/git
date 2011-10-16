@@ -228,4 +228,55 @@ test_expect_success 'merging with a modify/modify conflict between merge bases' 
 	git merge d
 '
 
+# canonical criss-cross history in top and submodule
+test_expect_success 'setup for recursive merge with submodule' '
+	mkdir merge-recursive &&
+	(cd merge-recursive &&
+	 git init &&
+	 mkdir sub &&
+	 (cd sub &&
+	  git init &&
+	  test_commit a &&
+	  git checkout -b sub-b master &&
+	  test_commit b &&
+	  git checkout -b sub-c master &&
+	  test_commit c &&
+	  git checkout -b sub-bc sub-b &&
+	  git merge sub-c &&
+	  git checkout -b sub-cb sub-c &&
+	  git merge sub-b &&
+	  git checkout master) &&
+	 git add sub &&
+	 git commit -m a &&
+	 git checkout -b top-b master &&
+	 (cd sub && git checkout sub-b) &&
+	 git add sub &&
+	 git commit -m b &&
+	 git checkout -b top-c master &&
+	 (cd sub && git checkout sub-c) &&
+	 git add sub &&
+	 git commit -m c &&
+	 git checkout -b top-bc top-b &&
+	 git merge -s ours --no-commit top-c &&
+	 (cd sub && git checkout sub-bc) &&
+	 git add sub &&
+	 git commit -m bc &&
+	 git checkout -b top-cb top-c &&
+	 git merge -s ours --no-commit top-b &&
+	 (cd sub && git checkout sub-cb) &&
+	 git add sub &&
+	 git commit -m cb)
+'
+
+# merge should leave submodule unmerged in index
+test_expect_success 'recursive merge with submodule' '
+	(cd merge-recursive &&
+	 test_must_fail git merge top-bc &&
+	 echo "160000 $(git rev-parse top-cb:sub) 2	sub" > expect2 &&
+	 echo "160000 $(git rev-parse top-bc:sub) 3	sub" > expect3 &&
+	 git ls-files -u > actual &&
+	 grep "$(cat expect2)" actual > /dev/null &&
+	 grep "$(cat expect3)" actual > /dev/null)
+'
+
 test_done
