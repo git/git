@@ -63,7 +63,7 @@ skip!              skip current patch and continue
 "
 . git-sh-setup
 set_reflog_action rebase
-require_work_tree
+require_work_tree_exists
 cd_to_toplevel
 
 LF='
