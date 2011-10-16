@@ -260,7 +260,22 @@ proc commit_prehook_wait {fd_ph curHEAD msg_p} {
 }
 
 proc commit_commitmsg {curHEAD msg_p} {
+	global is_detached repo_config
 	global pch_error
+
+	if {$is_detached && $repo_config(gui.warndetachedcommit)} {
+		set msg [mc "You are about to commit on a detached head.\
+This is a potentially dangerous thing to do because if you switch\
+to another branch you will loose your changes and it can be difficult\
+to retrieve them later from the reflog. You should probably cancel this\
+commit and create a new branch to continue.\n\
+\n\
+Do you really want to proceed with your Commit?"]
+		if {[ask_popup $msg] ne yes} {
+			unlock_index
+			return
+		}
+	}
 
 	# -- Run the commit-msg hook.
 	#

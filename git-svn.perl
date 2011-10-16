@@ -87,14 +87,15 @@ my ($_stdin, $_help, $_edit,
 	$_version, $_fetch_all, $_no_rebase, $_fetch_parent,
 	$_merge, $_strategy, $_dry_run, $_local,
 	$_prefix, $_no_checkout, $_url, $_verbose,
-	$_git_format, $_commit_url, $_tag, $_merge_info);
+	$_git_format, $_commit_url, $_tag, $_merge_info, $_interactive);
 $Git::SVN::_follow_parent = 1;
 $SVN::Git::Fetcher::_placeholder_filename = ".gitignore";
 $_q ||= 0;
 my %remote_opts = ( 'username=s' => \$Git::SVN::Prompt::_username,
                     'config-dir=s' => \$Git::SVN::Ra::config_dir,
                     'no-auth-cache' => \$Git::SVN::Prompt::_no_auth_cache,
-                    'ignore-paths=s' => \$SVN::Git::Fetcher::_ignore_regex );
+                    'ignore-paths=s' => \$SVN::Git::Fetcher::_ignore_regex,
+                    'ignore-refs=s' => \$Git::SVN::Ra::_ignore_refs_regex );
 my %fc_opts = ( 'follow-parent|follow!' => \$Git::SVN::_follow_parent,
 		'authors-file|A=s' => \$_authors,
 		'authors-prog=s' => \$_authors_prog,
@@ -163,6 +164,7 @@ my %cmd = (
 			  'revision|r=i' => \$_revision,
 			  'no-rebase' => \$_no_rebase,
 			  'mergeinfo=s' => \$_merge_info,
+			  'interactive|i' => \$_interactive,
 			%cmt_opts, %fc_opts } ],
 	branch => [ \&cmd_branch,
 	            'Create a branch in the SVN repository',
@@ -255,6 +257,27 @@ my %cmd = (
 		  "index files in .git/svn",
 		{} ],
 );
+
+use Term::ReadLine;
+package FakeTerm;
+sub new {
+	my ($class, $reason) = @_;
+	return bless \$reason, shift;
+}
+sub readline {
+	my $self = shift;
+	die "Cannot use readline on FakeTerm: $$self";
+}
+package main;
+
+my $term = eval {
+	$ENV{"GIT_SVN_NOTTY"}
+		? new Term::ReadLine 'git-svn', \*STDIN, \*STDOUT
+		: new Term::ReadLine 'git-svn';
+};
+if ($@) {
+	$term = new FakeTerm "$@: going non-interactive";
+}
 
 my $cmd;
 for (my $i = 0; $i < @ARGV; $i++) {
@@ -366,6 +389,36 @@ sub version {
 	exit 0;
 }
 
+sub ask {
+	my ($prompt, %arg) = @_;
+	my $valid_re = $arg{valid_re};
+	my $default = $arg{default};
+	my $resp;
+	my $i = 0;
+
+	if ( !( defined($term->IN)
+            && defined( fileno($term->IN) )
+            && defined( $term->OUT )
+            && defined( fileno($term->OUT) ) ) ){
+		return defined($default) ? $default : undef;
+	}
+
+	while ($i++ < 10) {
+		$resp = $term->readline($prompt);
+		if (!defined $resp) { # EOF
+			print "\n";
+			return defined $default ? $default : undef;
+		}
+		if ($resp eq '' and defined $default) {
+			return $default;
+		}
+		if (!defined $valid_re or $resp =~ /$valid_re/) {
+			return $resp;
+		}
+	}
+	return undef;
+}
+
 sub do_git_init_db {
 	unless (-d $ENV{GIT_DIR}) {
 		my @init_db = ('init');
@@ -388,9 +441,12 @@ sub do_git_init_db {
 		command_noisy('config', "$pfx.$i", $icv{$i});
 		$set = $i;
 	}
-	my $ignore_regex = \$SVN::Git::Fetcher::_ignore_regex;
-	command_noisy('config', "$pfx.ignore-paths", $$ignore_regex)
-		if defined $$ignore_regex;
+	my $ignore_paths_regex = \$SVN::Git::Fetcher::_ignore_regex;
+	command_noisy('config', "$pfx.ignore-paths", $$ignore_paths_regex)
+		if defined $$ignore_paths_regex;
+	my $ignore_refs_regex = \$Git::SVN::Ra::_ignore_refs_regex;
+	command_noisy('config', "$pfx.ignore-refs", $$ignore_refs_regex)
+		if defined $$ignore_refs_regex;
 
 	if (defined $SVN::Git::Fetcher::_preserve_empty_dirs) {
 		my $fname = \$SVN::Git::Fetcher::_placeholder_filename;
@@ -746,6 +802,27 @@ sub cmd_dcommit {
 		     "If these changes depend on each other, re-running ",
 		     "without --no-rebase may be required."
 	}
+
+	if (defined $_interactive){
+		my $ask_default = "y";
+		foreach my $d (@$linear_refs){
+			my ($fh, $ctx) = command_output_pipe(qw(show --summary), "$d");
+			while (<$fh>){
+				print $_;
+			}
+			command_close_pipe($fh, $ctx);
+			$_ = ask("Commit this patch to SVN? ([y]es (default)|[n]o|[q]uit|[a]ll): ",
+			         valid_re => qr/^(?:yes|y|no|n|quit|q|all|a)/i,
+			         default => $ask_default);
+			die "Commit this patch reply required" unless defined $_;
+			if (/^[nq]/i) {
+				exit(0);
+			} elsif (/^a/i) {
+				last;
+			}
+		}
+	}
+
 	my $expect_url = $url;
 
 	my $push_merge_info = eval {
@@ -2119,6 +2196,8 @@ sub read_all_remotes {
 			$r->{$1}->{url} = $2;
 		} elsif (m!^(.+)\.pushurl=\s*(.*)\s*$!) {
 			$r->{$1}->{pushurl} = $2;
+		} elsif (m!^(.+)\.ignore-refs=\s*(.*)\s*$!) {
+			$r->{$1}->{ignore_refs_regex} = $2;
 		} elsif (m!^(.+)\.(branches|tags)=$svn_refspec$!) {
 			my ($remote, $t, $local_ref, $remote_ref) =
 			                                     ($1, $2, $3, $4);
@@ -2154,6 +2233,16 @@ sub read_all_remotes {
 			$r->{$_}->{svm} = $svm;
 		}
 	} keys %$r;
+
+	foreach my $remote (keys %$r) {
+		foreach ( grep { defined $_ }
+			  map { $r->{$remote}->{$_} } qw(branches tags) ) {
+			foreach my $rs ( @$_ ) {
+				$rs->{ignore_refs_regex} =
+				    $r->{$remote}->{ignore_refs_regex};
+			}
+		}
+	}
 
 	$r;
 }
@@ -5310,7 +5399,7 @@ sub apply_diff {
 }
 
 package Git::SVN::Ra;
-use vars qw/@ISA $config_dir $_log_window_size/;
+use vars qw/@ISA $config_dir $_ignore_refs_regex $_log_window_size/;
 use strict;
 use warnings;
 my ($ra_invalid, $can_do_switch, %ignored_err, $RA);
@@ -5768,6 +5857,17 @@ sub get_dir_globbed {
 	@finalents;
 }
 
+# return value: 0 -- don't ignore, 1 -- ignore
+sub is_ref_ignored {
+	my ($g, $p) = @_;
+	my $refname = $g->{ref}->full_path($p);
+	return 1 if defined($g->{ignore_refs_regex}) &&
+	            $refname =~ m!$g->{ignore_refs_regex}!;
+	return 0 unless defined($_ignore_refs_regex);
+	return 1 if $refname =~ m!$_ignore_refs_regex!o;
+	return 0;
+}
+
 sub match_globs {
 	my ($self, $exists, $paths, $globs, $r) = @_;
 
@@ -5804,6 +5904,7 @@ sub match_globs {
 			next unless /$g->{path}->{regex}/;
 			my $p = $1;
 			my $pathname = $g->{path}->full_path($p);
+			next if is_ref_ignored($g, $p);
 			next if $exists->{$pathname};
 			next if ($self->check_path($pathname, $r) !=
 			         $SVN::Node::dir);
