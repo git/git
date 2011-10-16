@@ -444,6 +444,7 @@ static int traverse_trees_recursive(int n, unsigned long dirmask,
 
 	newinfo = *info;
 	newinfo.prev = info;
+	newinfo.pathspec = info->pathspec;
 	newinfo.name = *p;
 	newinfo.pathlen += tree_entry_len(p->path, p->sha1) + 1;
 	newinfo.conflicts |= df_conflicts;
@@ -1040,6 +1041,7 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 		info.fn = unpack_callback;
 		info.data = o;
 		info.show_all_errors = o->show_all_errors;
+		info.pathspec = o->pathspec;
 
 		if (o->prefix) {
 			/*
