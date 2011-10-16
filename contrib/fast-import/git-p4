@@ -1247,11 +1247,6 @@ class P4Sync(Command, P4UserMap):
     # - helper for streamP4Files
 
     def streamOneP4File(self, file, contents):
-        if file["type"] == "apple":
-            print "\nfile %s is a strange apple file that forks. Ignoring" % \
-                file['depotFile']
-            return
-
         relPath = self.stripRepoPath(file['depotFile'], self.branchPrefixes)
         relPath = self.wildcard_decode(relPath)
         if verbose:
