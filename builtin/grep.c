@@ -1061,7 +1061,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 			die(_("--no-index or --untracked cannot be used with revs."));
 		hit = grep_directory(&opt, &pathspec, use_exclude);
 	} else if (0 <= opt_exclude) {
-		die(_("--exclude or --no-exclude cannot be used for tracked contents."));
+		die(_("--[no-]exclude-standard cannot be used for tracked contents."));
 	} else if (!list.nr) {
 		if (!cached)
 			setup_work_tree();
