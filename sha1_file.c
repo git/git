@@ -1987,7 +1987,7 @@ off_t find_pack_entry_one(const unsigned char *sha1,
 	return 0;
 }
 
-static int is_pack_valid(struct packed_git *p)
+int is_pack_valid(struct packed_git *p)
 {
 	/* An already open pack is known to be valid. */
 	if (p->pack_fd != -1)
@@ -2038,7 +2038,7 @@ static int find_pack_entry(const unsigned char *sha1, struct pack_entry *e)
 			 * was loaded!
 			 */
 			if (!is_pack_valid(p)) {
-				error("packfile %s cannot be accessed", p->pack_name);
+				warning("packfile %s cannot be accessed", p->pack_name);
 				goto next;
 			}
 			e->offset = offset;
