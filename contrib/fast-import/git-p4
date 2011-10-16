@@ -1285,9 +1285,13 @@ class P4Sync(Command, P4UserMap):
         # even though in theory somebody may want that.
         if type_base in ("text", "unicode", "binary"):
             if "ko" in type_mods:
-                contents = map(lambda text: re.sub(r'(?i)\$(Id|Header):[^$]*\$', r'$\1$', text), contents)
+                text = ''.join(contents)
+                text = re.sub(r'\$(Id|Header):[^$]*\$', r'$\1$', text)
+                contents = [ text ]
             elif "k" in type_mods:
-                contents = map(lambda text: re.sub(r'\$(Id|Header|Author|Date|DateTime|Change|File|Revision):[^$\n]*\$', r'$\1$', text), contents)
+                text = ''.join(contents)
+                text = re.sub(r'\$(Id|Header|Author|Date|DateTime|Change|File|Revision):[^$]*\$', r'$\1$', text)
+                contents = [ text ]
 
         self.gitStream.write("M %s inline %s\n" % (git_mode, relPath))
 
