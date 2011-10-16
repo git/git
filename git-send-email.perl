@@ -1098,7 +1098,7 @@ X-Mailer: git-send-email $gitversion
 					$smtp_encryption = '';
 					# Send EHLO again to receive fresh
 					# supported commands
-					$smtp->hello();
+					$smtp->hello($smtp_domain);
 				} else {
 					die "Server does not support STARTTLS! ".$smtp->message;
 				}
