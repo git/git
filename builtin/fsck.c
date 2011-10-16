@@ -231,12 +231,9 @@ static void check_unreachable_object(struct object *obj)
 				unsigned long size;
 				char *buf = read_sha1_file(obj->sha1,
 						&type, &size);
-				if (buf) {
-					if (fwrite(buf, size, 1, f) != 1)
-						die_errno("Could not write '%s'",
-							  filename);
-					free(buf);
-				}
+				if (buf && fwrite(buf, 1, size, f) != size)
+					die_errno("Could not write '%s'", filename);
+				free(buf);
 			} else
 				fprintf(f, "%s\n", sha1_to_hex(obj->sha1));
 			if (fclose(f))
