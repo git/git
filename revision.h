@@ -24,6 +24,23 @@ struct rev_info;
 struct log_info;
 struct string_list;
 
+struct rev_cmdline_info {
+	unsigned int nr;
+	unsigned int alloc;
+	struct rev_cmdline_entry {
+		struct object *item;
+		const char *name;
+		enum {
+			REV_CMD_REF,
+			REV_CMD_PARENTS_ONLY,
+			REV_CMD_LEFT,
+			REV_CMD_RIGHT,
+			REV_CMD_REV
+		} whence;
+		unsigned flags;
+	} *rev;
+};
+
 struct rev_info {
 	/* Starting list */
 	struct commit_list *commits;
@@ -31,6 +48,9 @@ struct rev_info {
 
 	/* Parents of shown commits */
 	struct object_array boundary_commits;
+
+	/* The end-points specified by the end user */
+	struct rev_cmdline_info cmdline;
 
 	/* Basic information */
 	const char *prefix;
