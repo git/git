@@ -992,12 +992,33 @@ const char *ref_fetch_rules[] = {
 	NULL
 };
 
+static int refname_ok_at_root_level(const char *str, int len)
+{
+	if (len >= 5 && !memcmp(str, "refs/", 5))
+		return 1;
+
+	while (len--) {
+		char ch = *str++;
+
+		/*
+		 * Only accept likes of .git/HEAD, .git/MERGE_HEAD at
+		 * the root level as a ref.
+		 */
+		if (ch != '_' && (ch < 'A' || 'Z' < ch))
+			return 0;
+	}
+	return 1;
+}
+
 int refname_match(const char *abbrev_name, const char *full_name, const char **rules)
 {
 	const char **p;
 	const int abbrev_name_len = strlen(abbrev_name);
 
 	for (p = rules; *p; p++) {
+		if (p == rules &&
+		    !refname_ok_at_root_level(abbrev_name, abbrev_name_len))
+			continue;
 		if (!strcmp(full_name, mkpath(*p, abbrev_name_len, abbrev_name))) {
 			return 1;
 		}
@@ -1063,6 +1084,95 @@ static int is_refname_available(const char *ref, const char *oldref,
 		}
 	}
 	return 1;
+}
+
+/*
+ * *string and *len will only be substituted, and *string returned (for
+ * later free()ing) if the string passed in is a magic short-hand form
+ * to name a branch.
+ */
+static char *substitute_branch_name(const char **string, int *len)
+{
+	struct strbuf buf = STRBUF_INIT;
+	int ret = interpret_branch_name(*string, &buf);
+
+	if (ret == *len) {
+		size_t size;
+		*string = strbuf_detach(&buf, &size);
+		*len = size;
+		return (char *)*string;
+	}
+
+	return NULL;
+}
+
+int dwim_ref(const char *str, int len, unsigned char *sha1, char **ref)
+{
+	char *last_branch = substitute_branch_name(&str, &len);
+	const char **p, *r;
+	int refs_found = 0;
+
+	*ref = NULL;
+	for (p = ref_rev_parse_rules; *p; p++) {
+		char fullref[PATH_MAX];
+		unsigned char sha1_from_ref[20];
+		unsigned char *this_result;
+		int flag;
+
+		if (p == ref_rev_parse_rules && !refname_ok_at_root_level(str, len))
+			continue;
+		this_result = refs_found ? sha1_from_ref : sha1;
+		mksnpath(fullref, sizeof(fullref), *p, len, str);
+		r = resolve_ref(fullref, this_result, 1, &flag);
+		if (r) {
+			if (!refs_found++)
+				*ref = xstrdup(r);
+			if (!warn_ambiguous_refs)
+				break;
+		} else if ((flag & REF_ISSYMREF) && strcmp(fullref, "HEAD"))
+			warning("ignoring dangling symref %s.", fullref);
+	}
+	free(last_branch);
+	return refs_found;
+}
+
+int dwim_log(const char *str, int len, unsigned char *sha1, char **log)
+{
+	char *last_branch = substitute_branch_name(&str, &len);
+	const char **p;
+	int logs_found = 0;
+
+	*log = NULL;
+	for (p = ref_rev_parse_rules; *p; p++) {
+		struct stat st;
+		unsigned char hash[20];
+		char path[PATH_MAX];
+		const char *ref, *it;
+
+		if (p == ref_rev_parse_rules && !refname_ok_at_root_level(str, len))
+			continue;
+		mksnpath(path, sizeof(path), *p, len, str);
+		ref = resolve_ref(path, hash, 1, NULL);
+		if (!ref)
+			continue;
+		if (!stat(git_path("logs/%s", path), &st) &&
+		    S_ISREG(st.st_mode))
+			it = path;
+		else if (strcmp(ref, path) &&
+			 !stat(git_path("logs/%s", ref), &st) &&
+			 S_ISREG(st.st_mode))
+			it = ref;
+		else
+			continue;
+		if (!logs_found++) {
+			*log = xstrdup(it);
+			hashcpy(sha1, hash);
+		}
+		if (!warn_ambiguous_refs)
+			break;
+	}
+	free(last_branch);
+	return logs_found;
 }
 
 static struct ref_lock *lock_ref_sha1_basic(const char *ref, const unsigned char *old_sha1, int flags, int *type_p)
@@ -1947,11 +2057,13 @@ char *shorten_unambiguous_ref(const char *ref, int strict)
 	/* buffer for scanf result, at most ref must fit */
 	short_name = xstrdup(ref);
 
-	/* skip first rule, it will always match */
-	for (i = nr_rules - 1; i > 0 ; --i) {
+	for (i = nr_rules - 1; i >= 0; i--) {
 		int j;
 		int rules_to_fail = i;
 		int short_name_len;
+
+		if (!i && !refname_ok_at_root_level(ref, strlen(ref)))
+			continue;
 
 		if (1 != sscanf(ref, scanf_fmts[i], short_name))
 			continue;
@@ -1976,6 +2088,10 @@ char *shorten_unambiguous_ref(const char *ref, int strict)
 
 			/* skip matched rule */
 			if (i == j)
+				continue;
+
+			if (!j &&
+			    !refname_ok_at_root_level(short_name, short_name_len))
 				continue;
 
 			/*
