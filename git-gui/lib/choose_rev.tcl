@@ -610,9 +610,9 @@ method _position_tooltip {} {
 	set pos_y [expr {[winfo pointery .] + 10}]
 
 	set g "${req_w}x${req_h}"
-	if {$pos_x >= 0} {append g +}
+	if {[tk windowingsystem] eq "win32" || $pos_x >= 0} {append g +}
 	append g $pos_x
-	if {$pos_y >= 0} {append g +}
+	if {[tk windowingsystem] eq "win32" || $pos_y >= 0} {append g +}
 	append g $pos_y
 
 	wm geometry $tooltip_wm $g
