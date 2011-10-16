@@ -84,6 +84,10 @@ If the configuration variable 'instaweb.browser' is not set,
 'web.browser' will be used instead if it is defined. See
 linkgit:git-web{litdd}browse[1] for more information about this.
 
+SEE ALSO
+--------
+linkgit:gitweb[1]
+
 GIT
 ---
 Part of the linkgit:git[1] suite
