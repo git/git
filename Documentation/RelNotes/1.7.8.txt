@@ -130,57 +130,16 @@ included in this release.
    against $a (i.e. source side of the remote nickname).
    (merge b52d00aed mz/remote-rename later to maint).
 
- * "git diff $tree $path" used to apply the pathspec at the output stage,
-   reading the whole tree, wasting resources.
-   (merge 2f88c1970 jc/diff-index-unpack later to maint).
-
  * "git diff --[num]stat" used to use the number of lines of context
    different from the default, potentially giving different results from
    "git diff | diffstat" and confusing the users.
    (merge f01cae918 jc/maint-diffstat-numstat-context later to maint).
-
- * The code to check for updated submodules during a "git fetch" of the
-   superproject had an unnecessary quadratic loop.
-   (merge 6859de45 jk/maint-fetch-submodule-check-fix later to maint).
-
- * "git fetch" from a large bundle did not enable the progress output.
-   (merge be042aff jc/maint-bundle-too-quiet later to maint).
-
- * When "git fsck --lost-and-found" found that an empty blob object in the
-   object store is unreachable, it incorrectly reported an error after
-   writing the lost blob out successfully.
-   (merge eb726f2d jc/maint-fsck-fwrite-size-check later to maint).
-
- * "git filter-branch" did not refresh the index before checking that the
-   working tree was clean.
-   (merge 5347a50f jk/filter-branch-require-clean-work-tree later to maint).
-
- * "git grep $tree" when run with multiple threads had an unsafe access to
-   the object database that should have been protected with mutex.
-   (merge 8cb5775b2 nm/grep-object-sha1-lock later to maint).
-
- * The "--ancestry-path" option to "git log" and friends misbehaved in a
-   history with complex criss-cross merges and showed an uninteresting
-   side history as well.
-   (merge c05b988a6 bk/ancestry-path later to maint).
 
  * "git merge" did not understand ":/<pattern>" as a way to name a commit.
 
  * "git mergetool" learned to use its arguments as pathspec, not a path to
    the file that may not even have any conflict.
    (merge 6d9990a jm/mergetool-pathspec later to maint).
-
- * Tests with --valgrind failed to find "mergetool" scriptlets.
-   (merge ee0d7bf92 tr/mergetool-valgrind later to maint).
-
- * "git patch-id" miscomputed the patch-id in a patch that has a line longer
-   than 1kB.
-   (merge b9ab810b ms/patch-id-with-overlong-line later to maint).
-
- * When an "exec" insn failed after modifying the index and/or the working
-   tree during "rebase -i", we now check and warn that the changes need to
-   be cleaned up.
-   (merge 1686519a mm/rebase-i-exec-edit later to maint).
 
  * "gitweb" used to produce a non-working link while showing the contents
    of a blob, when JavaScript actions are enabled.
