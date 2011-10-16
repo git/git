@@ -130,5 +130,6 @@ git-upload-pack                         synchelpers
 git-var                                 plumbinginterrogators
 git-verify-pack                         plumbinginterrogators
 git-verify-tag                          ancillaryinterrogators
+gitweb                                  ancillaryinterrogators
 git-whatchanged                         ancillaryinterrogators
 git-write-tree                          plumbingmanipulators
