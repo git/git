@@ -7,9 +7,18 @@ The one working on:
 From the git version 1.4.0 gitweb is bundled with git.
 
 
+Build time gitweb configuration
+-------------------------------
+There are many configuration variables which affect building gitweb (among
+others creating gitweb.cgi out of gitweb.perl by replacing placeholders such
+as `++GIT_BINDIR++` by their build-time values).
+
+Building and installing gitweb is described in gitweb's INSTALL file
+(in 'gitweb/INSTALL').
+
+
 Runtime gitweb configuration
 ----------------------------
-
 Gitweb obtains configuration data from the following sources in the
 following order:
 
@@ -44,266 +53,19 @@ as comments inside 'gitweb.cgi'.
 See also gitweb.conf(5) manpage.
 
 
-Projects list file format
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Instead of having gitweb find repositories by scanning filesystem starting
-from $projectroot (or $projects_list, if it points to directory), you can
-provide list of projects by setting $projects_list to a text file with list
-of projects (and some additional info).  This file uses the following
-format:
-
-One record (for project / repository) per line, whitespace separated fields;
-does not support (at least for now) lines continuation (newline escaping).
-Leading and trailing whitespace are ignored, any run of whitespace can be
-used as field separator (rules for Perl's "split(' ', $line)").  Keyed by
-the first field, which is project name, i.e. path to repository GIT_DIR
-relative to $projectroot.  Fields use modified URI encoding, defined in
-RFC 3986, section 2.1 (Percent-Encoding), or rather "Query string encoding"
-(see http://en.wikipedia.org/wiki/Query_string#URL_encoding), the difference
-being that SP (' ') can be encoded as '+' (and therefore '+' has to be also
-percent-encoded).  Reserved characters are: '%' (used for encoding), '+'
-(can be used to encode SPACE), all whitespace characters as defined in Perl,
-including SP, TAB and LF, (used to separate fields in a record).
-
-Currently list of fields is
- * <repository path>  - path to repository GIT_DIR, relative to $projectroot
- * <repository owner> - displayed as repository owner, preferably full name,
-                        or email, or both
-
-You can additionally use $projects_list file to limit which repositories
-are visible, and together with $strict_export to limit access to
-repositories (see "Gitweb repositories" section in gitweb/INSTALL).
-
-
-Per-repository gitweb configuration
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-You can also configure individual repositories shown in gitweb by creating
-file in the GIT_DIR of git repository, or by setting some repo configuration
-variable (in GIT_DIR/config).
-
-You can use the following files in repository:
- * README.html
-   A .html file (HTML fragment) which is included on the gitweb project
-   summary page inside <div> block element. You can use it for longer
-   description of a project, to provide links (for example to project's
-   homepage), etc. This is recognized only if XSS prevention is off
-   ($prevent_xss is false); a way to include a readme safely when XSS
-   prevention is on may be worked out in the future.
- * description (or gitweb.description)
-   Short (shortened by default to 25 characters in the projects list page)
-   single line description of a project (of a repository). Plain text file;
-   HTML will be escaped. By default set to
-     Unnamed repository; edit this file to name it for gitweb.
-   from the template during repository creation. You can use the
-   gitweb.description repo configuration variable, but the file takes
-   precedence.
- * category (or gitweb.category)
-   Singe line category of a project, used to group projects if
-   $projects_list_group_categories is enabled. By default (file and
-   configuration variable absent), uncategorized projects are put in
-   the $project_list_default_category category. You can use the
-   gitweb.category repo configuration variable, but the file takes
-   precedence.
- * cloneurl (or multiple-valued gitweb.url)
-   File with repository URL (used for clone and fetch), one per line.
-   Displayed in the project summary page. You can use multiple-valued
-   gitweb.url repository configuration variable for that, but the file
-   takes precedence.
- * gitweb.owner
-   You can use the gitweb.owner repository configuration variable to set
-   repository's owner. It is displayed in the project list and summary
-   page. If it's not set, filesystem directory's owner is used
-   (via GECOS field / real name field from getpwiud(3)).
- * various gitweb.* config variables (in config)
-   Read description of %feature hash for detailed list, and some
-   descriptions.
-
-
-Webserver configuration
------------------------
-
-If you want to have one URL for both gitweb and your http://
-repositories, you can configure apache like this:
-
-<VirtualHost *:80>
-    ServerName		git.example.org
-    DocumentRoot	/pub/git
-    SetEnv			GITWEB_CONFIG	/etc/gitweb.conf
-
-    # turning on mod rewrite
-    RewriteEngine on
-
-    # make the front page an internal rewrite to the gitweb script
-    RewriteRule ^/$  /cgi-bin/gitweb.cgi
-
-    # make access for "dumb clients" work
-    RewriteRule ^/(.*\.git/(?!/?(HEAD|info|objects|refs)).*)?$ /cgi-bin/gitweb.cgi%{REQUEST_URI}  [L,PT]
-</VirtualHost>
-
-The above configuration expects your public repositories to live under
-/pub/git and will serve them as http://git.domain.org/dir-under-pub-git,
-both as cloneable GIT URL and as browseable gitweb interface.
-If you then start your git-daemon with --base-path=/pub/git --export-all
-then you can even use the git:// URL with exactly the same path.
-
-Setting the environment variable GITWEB_CONFIG will tell gitweb to use
-the named file (i.e. in this example /etc/gitweb.conf) as a
-configuration for gitweb.  Perl variables defined in here will
-override the defaults given at the head of the gitweb.perl (or
-gitweb.cgi).  Look at the comments in that file for information on
-which variables and what they mean.
-
-If you use the rewrite rules from the example you'll likely also need
-something like the following in your gitweb.conf (or gitweb_config.perl) file:
-
-  @stylesheets = ("/some/absolute/path/gitweb.css");
-  $my_uri = "/";
-  $home_link = "/";
-
-
-Webserver configuration with multiple projects' root
-----------------------------------------------------
-
-If you want to use gitweb with several project roots you can edit your apache
-virtual host and gitweb.conf configuration files like this :
-
-virtual host configuration :
-
-<VirtualHost *:80>
-    ServerName			git.example.org
-    DocumentRoot		/pub/git
-    SetEnv				GITWEB_CONFIG	/etc/gitweb.conf
-
-    # turning on mod rewrite
-    RewriteEngine on
-
-    # make the front page an internal rewrite to the gitweb script
-    RewriteRule ^/$ 		/cgi-bin/gitweb.cgi [QSA,L,PT]
-
-    # look for a public_git folder in unix users' home
-    # http://git.example.org/~<user>/
-    RewriteRule ^/\~([^\/]+)(/|/gitweb.cgi)?$	/cgi-bin/gitweb.cgi [QSA,E=GITWEB_PROJECTROOT:/home/$1/public_git/,L,PT]
-
-    # http://git.example.org/+<user>/
-    #RewriteRule ^/\+([^\/]+)(/|/gitweb.cgi)?$	/cgi-bin/gitweb.cgi [QSA,E=GITWEB_PROJECTROOT:/home/$1/public_git/,L,PT]
-
-    # http://git.example.org/user/<user>/
-    #RewriteRule ^/user/([^\/]+)/(gitweb.cgi)?$	/cgi-bin/gitweb.cgi [QSA,E=GITWEB_PROJECTROOT:/home/$1/public_git/,L,PT]
-
-    # defined list of project roots
-    RewriteRule ^/scm(/|/gitweb.cgi)?$		/cgi-bin/gitweb.cgi [QSA,E=GITWEB_PROJECTROOT:/pub/scm/,L,PT]
-    RewriteRule ^/var(/|/gitweb.cgi)?$		/cgi-bin/gitweb.cgi [QSA,E=GITWEB_PROJECTROOT:/var/git/,L,PT]
-
-    # make access for "dumb clients" work
-    RewriteRule ^/(.*\.git/(?!/?(HEAD|info|objects|refs)).*)?$ /cgi-bin/gitweb.cgi%{REQUEST_URI}  [L,PT]
-</VirtualHost>
-
-gitweb.conf configuration :
-
-$projectroot = $ENV{'GITWEB_PROJECTROOT'} || "/pub/git";
-
-These configurations enable two things. First, each unix user (<user>) of the
-server will be able to browse through gitweb git repositories found in
-~/public_git/ with the following url : http://git.example.org/~<user>/
-
-If you do not want this feature on your server just remove the second rewrite rule.
-
-If you already use mod_userdir in your virtual host or you don't want to use
-the '~' as first character just comment or remove the second rewrite rule and
-uncomment one of the following according to what you want.
-
-Second, repositories found in /pub/scm/ and /var/git/ will be accesible
-through http://git.example.org/scm/ and http://git.example.org/var/.
-You can add as many project roots as you want by adding rewrite rules like the
-third and the fourth.
-
-
-PATH_INFO usage
------------------------
-If you enable PATH_INFO usage in gitweb by putting
-
-   $feature{'pathinfo'}{'default'} = [1];
-
-in your gitweb.conf, it is possible to set up your server so that it
-consumes and produces URLs in the form
-
-http://git.example.com/project.git/shortlog/sometag
-
-by using a configuration such as the following, that assumes that
-/var/www/gitweb is the DocumentRoot of your webserver, and that it
-contains the gitweb.cgi script and complementary static files
-(stylesheet, favicon):
-
-<VirtualHost *:80>
-	ServerAlias git.example.com
-
-	DocumentRoot /var/www/gitweb
-
-	<Directory /var/www/gitweb>
-		Options ExecCGI
-		AddHandler cgi-script cgi
-
-		DirectoryIndex gitweb.cgi
-
-		RewriteEngine On
-		RewriteCond %{REQUEST_FILENAME} !-f
-		RewriteCond %{REQUEST_FILENAME} !-d
-		RewriteRule ^.* /gitweb.cgi/$0 [L,PT]
-	</Directory>
-</VirtualHost>
-
-The rewrite rule guarantees that existing static files will be properly
-served, whereas any other URL will be passed to gitweb as PATH_INFO
-parameter.
-
-Notice that in this case you don't need special settings for
-@stylesheets, $my_uri and $home_link, but you lose "dumb client" access
-to your project .git dirs. A possible workaround for the latter is the
-following: in your project root dir (e.g. /pub/git) have the projects
-named without a .git extension (e.g. /pub/git/project instead of
-/pub/git/project.git) and configure Apache as follows:
-
-<VirtualHost *:80>
-	ServerAlias git.example.com
-
-	DocumentRoot /var/www/gitweb
-
-	AliasMatch ^(/.*?)(\.git)(/.*)?$ /pub/git$1$3
-	<Directory /var/www/gitweb>
-		Options ExecCGI
-		AddHandler cgi-script cgi
-
-		DirectoryIndex gitweb.cgi
-
-		RewriteEngine On
-		RewriteCond %{REQUEST_FILENAME} !-f
-		RewriteCond %{REQUEST_FILENAME} !-d
-		RewriteRule ^.* /gitweb.cgi/$0 [L,PT]
-	</Directory>
-</VirtualHost>
-
-The additional AliasMatch makes it so that
-
-http://git.example.com/project.git
-
-will give raw access to the project's git dir (so that the project can
-be cloned), while
-
-http://git.example.com/project
-
-will provide human-friendly gitweb access.
-
-This solution is not 100% bulletproof, in the sense that if some project
-has a named ref (branch, tag) starting with 'git/', then paths such as
-
-http://git.example.com/project/command/abranch..git/abranch
-
-will fail with a 404 error.
-
-
-
+Web server configuration
+------------------------
+Gitweb can be run as CGI script, as legacy mod_perl application (using
+ModPerl::Registry), and as FastCGI script.  You can find some simple examples
+in "Example web server configuration" section in INSTALL file for gitweb (in
+gitweb/INSTALL).
+
+See "Webserver configuration" and "Advanced web server setup" sections in
+gitweb(1) manpage.
+
+
+AUTHORS
+-------
 Originally written by:
   Kay Sievers <kay.sievers@vrfy.org>
 

@@ -35,6 +35,10 @@ CGI script with the default name 'gitweb_config.perl' -- allowing
 one to have multiple gitweb instances with different configurations by
 the use of symlinks.
 
+Note that some configuration can be controlled on per-repository rather than
+gitweb-wide basis: see "Per-repository gitweb configuration" subsection on
+linkgit:gitweb[1] manpage.
+
 
 DISCUSSION
 ----------
@@ -108,6 +112,8 @@ Location of repositories
 ~~~~~~~~~~~~~~~~~~~~~~~~
 The configuration variables described below control how gitweb finds
 git repositories, and how repositories are displayed and accessed.
+
+See also "Repositories" and later subsections in linkgit:gitweb[1] manpage.
 
 $projectroot::
 	Absolute filesystem path which will be prepended to project path;
@@ -193,6 +199,9 @@ our $export_ok = "git-daemon-export-ok";
 ----------------------------------------------------------------------------
 +
 If not set (default), it means that this feature is disabled.
++
+See also more involved example in "Controlling access to git repositories"
+subsection on linkgit:gitweb[1] manpage.
 
 $strict_export::
 	Only allow viewing of repositories also shown on the overview page.
