@@ -1,0 +1,39 @@
+Git v1.7.7.1 Release Notes
+==========================
+
+Fixes since v1.7.7
+------------------
+
+ * "git diff $tree $path" used to apply the pathspec at the output stage,
+   reading the whole tree, wasting resources.
+
+ * The code to check for updated submodules during a "git fetch" of the
+   superproject had an unnecessary quadratic loop.
+
+ * "git fetch" from a large bundle did not enable the progress output.
+
+ * When "git fsck --lost-and-found" found that an empty blob object in the
+   object store is unreachable, it incorrectly reported an error after
+   writing the lost blob out successfully.
+
+ * "git filter-branch" did not refresh the index before checking that the
+   working tree was clean.
+
+ * "git grep $tree" when run with multiple threads had an unsafe access to
+   the object database that should have been protected with mutex.
+
+ * The "--ancestry-path" option to "git log" and friends misbehaved in a
+   history with complex criss-cross merges and showed an uninteresting
+   side history as well.
+
+ * Test t1304 assumed LOGNAME is always set, which may not be true on
+   some systems.
+
+ * Tests with --valgrind failed to find "mergetool" scriptlets.
+
+ * "git patch-id" miscomputed the patch-id in a patch that has a line longer
+   than 1kB.
+
+ * When an "exec" insn failed after modifying the index and/or the working
+   tree during "rebase -i", we now check and warn that the changes need to
+   be cleaned up.
