@@ -16,5 +16,10 @@ merge_cmd () {
 }
 
 translate_merge_tool_path() {
-	echo bcompare
+	if type bcomp >/dev/null 2>/dev/null
+	then
+		echo bcomp
+	else
+		echo bcompare
+	fi
 }
