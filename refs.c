@@ -134,15 +134,15 @@ static struct ref_entry *search_ref_array(struct ref_array *array, const char *n
  * Future: need to be in "struct repository"
  * when doing a full libification.
  */
-static struct cached_refs {
-	struct cached_refs *next;
+static struct ref_cache {
+	struct ref_cache *next;
 	char did_loose;
 	char did_packed;
 	struct ref_array loose;
 	struct ref_array packed;
 	/* The submodule name, or "" for the main repo. */
 	char name[FLEX_ARRAY];
-} *cached_refs;
+} *ref_cache;
 
 static struct ref_entry *current_ref;
 
@@ -158,7 +158,7 @@ static void free_ref_array(struct ref_array *array)
 	array->refs = NULL;
 }
 
-static void clear_cached_refs(struct cached_refs *ca)
+static void clear_ref_cache(struct ref_cache *ca)
 {
 	if (ca->did_loose)
 		free_ref_array(&ca->loose);
@@ -167,27 +167,27 @@ static void clear_cached_refs(struct cached_refs *ca)
 	ca->did_loose = ca->did_packed = 0;
 }
 
-static struct cached_refs *create_cached_refs(const char *submodule)
+static struct ref_cache *create_ref_cache(const char *submodule)
 {
 	int len;
-	struct cached_refs *refs;
+	struct ref_cache *refs;
 	if (!submodule)
 		submodule = "";
 	len = strlen(submodule) + 1;
-	refs = xcalloc(1, sizeof(struct cached_refs) + len);
+	refs = xcalloc(1, sizeof(struct ref_cache) + len);
 	memcpy(refs->name, submodule, len);
 	return refs;
 }
 
 /*
- * Return a pointer to a cached_refs for the specified submodule. For
+ * Return a pointer to a ref_cache for the specified submodule. For
  * the main repository, use submodule==NULL. The returned structure
  * will be allocated and initialized but not necessarily populated; it
  * should not be freed.
  */
-static struct cached_refs *get_cached_refs(const char *submodule)
+static struct ref_cache *get_ref_cache(const char *submodule)
 {
-	struct cached_refs *refs = cached_refs;
+	struct ref_cache *refs = ref_cache;
 	if (!submodule)
 		submodule = "";
 	while (refs) {
@@ -196,17 +196,17 @@ static struct cached_refs *get_cached_refs(const char *submodule)
 		refs = refs->next;
 	}
 
-	refs = create_cached_refs(submodule);
-	refs->next = cached_refs;
-	cached_refs = refs;
+	refs = create_ref_cache(submodule);
+	refs->next = ref_cache;
+	ref_cache = refs;
 	return refs;
 }
 
-static void invalidate_cached_refs(void)
+static void invalidate_ref_cache(void)
 {
-	struct cached_refs *refs = cached_refs;
+	struct ref_cache *refs = ref_cache;
 	while (refs) {
-		clear_cached_refs(refs);
+		clear_ref_cache(refs);
 		refs = refs->next;
 	}
 }
@@ -257,7 +257,7 @@ void clear_extra_refs(void)
 
 static struct ref_array *get_packed_refs(const char *submodule)
 {
-	struct cached_refs *refs = get_cached_refs(submodule);
+	struct ref_cache *refs = get_ref_cache(submodule);
 
 	if (!refs->did_packed) {
 		const char *packed_refs_file;
@@ -379,7 +379,7 @@ void warn_dangling_symref(FILE *fp, const char *msg_fmt, const char *refname)
 
 static struct ref_array *get_loose_refs(const char *submodule)
 {
-	struct cached_refs *refs = get_cached_refs(submodule);
+	struct ref_cache *refs = get_ref_cache(submodule);
 
 	if (!refs->did_loose) {
 		get_ref_dir(submodule, "refs", &refs->loose);
@@ -1228,7 +1228,7 @@ int delete_ref(const char *refname, const unsigned char *sha1, int delopt)
 	ret |= repack_without_ref(refname);
 
 	unlink_or_warn(git_path("logs/%s", lock->ref_name));
-	invalidate_cached_refs();
+	invalidate_ref_cache();
 	unlock_ref(lock);
 	return ret;
 }
@@ -1527,7 +1527,7 @@ int write_ref_sha1(struct ref_lock *lock,
 		unlock_ref(lock);
 		return -1;
 	}
-	invalidate_cached_refs();
+	invalidate_ref_cache();
 	if (log_ref_write(lock->ref_name, lock->old_sha1, sha1, logmsg) < 0 ||
 	    (strcmp(lock->ref_name, lock->orig_ref_name) &&
 	     log_ref_write(lock->orig_ref_name, lock->old_sha1, sha1, logmsg) < 0)) {
