@@ -8,8 +8,8 @@ if test -n "$NO_CURL"; then
 	test_done
 fi
 
-. "$TEST_DIRECTORY"/lib-httpd.sh
 LIB_HTTPD_PORT=${LIB_HTTPD_PORT-'5550'}
+. "$TEST_DIRECTORY"/lib-httpd.sh
 start_httpd
 
 test_expect_success 'setup repository' '
