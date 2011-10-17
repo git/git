@@ -158,13 +158,13 @@ static void free_ref_array(struct ref_array *array)
 	array->refs = NULL;
 }
 
-static void clear_ref_cache(struct ref_cache *ca)
+static void clear_ref_cache(struct ref_cache *refs)
 {
-	if (ca->did_loose)
-		free_ref_array(&ca->loose);
-	if (ca->did_packed)
-		free_ref_array(&ca->packed);
-	ca->did_loose = ca->did_packed = 0;
+	if (refs->did_loose)
+		free_ref_array(&refs->loose);
+	if (refs->did_packed)
+		free_ref_array(&refs->packed);
+	refs->did_loose = refs->did_packed = 0;
 }
 
 static struct ref_cache *create_ref_cache(const char *submodule)
