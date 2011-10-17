@@ -161,6 +161,19 @@ do_with_author () {
 	)
 }
 
+git_sequence_editor () {
+	if test -z "$GIT_SEQUENCE_EDITOR"
+	then
+		GIT_SEQUENCE_EDITOR="$(git config sequence.editor)"
+		if [ -z "$GIT_SEQUENCE_EDITOR" ]
+		then
+			GIT_SEQUENCE_EDITOR="$(git var GIT_EDITOR)" || return $?
+		fi
+	fi
+
+	eval "$GIT_SEQUENCE_EDITOR" '"$@"'
+}
+
 pick_one () {
 	ff=--ff
 	case "$1" in -n) sha1=$2; ff= ;; *) sha1=$1 ;; esac
@@ -832,7 +845,7 @@ has_action "$todo" ||
 	die_abort "Nothing to do"
 
 cp "$todo" "$todo".backup
-git_editor "$todo" ||
+git_sequence_editor "$todo" ||
 	die_abort "Could not execute editor"
 
 has_action "$todo" ||
