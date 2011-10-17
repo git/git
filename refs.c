@@ -414,12 +414,12 @@ static struct ref_array *get_loose_refs(struct ref_cache *refs)
 #define MAXDEPTH 5
 #define MAXREFLEN (1024)
 
-static int resolve_gitlink_packed_ref(char *name, int pathlen,
+static int resolve_gitlink_packed_ref(struct ref_cache *refs,
 				      const char *refname, unsigned char *sha1)
 {
 	int retval = -1;
 	struct ref_entry *ref;
-	struct ref_array *array = get_packed_refs(get_ref_cache(name));
+	struct ref_array *array = get_packed_refs(refs);
 
 	ref = search_ref_array(array, refname);
 	if (ref != NULL) {
@@ -429,7 +429,8 @@ static int resolve_gitlink_packed_ref(char *name, int pathlen,
 	return retval;
 }
 
-static int resolve_gitlink_ref_recursive(char *name, int pathlen,
+static int resolve_gitlink_ref_recursive(struct ref_cache *refs,
+					 char *name, int pathlen,
 					 const char *refname, unsigned char *sha1,
 					 int recursion)
 {
@@ -441,7 +442,7 @@ static int resolve_gitlink_ref_recursive(char *name, int pathlen,
 	memcpy(name + pathlen, refname, len+1);
 	fd = open(name, O_RDONLY);
 	if (fd < 0)
-		return resolve_gitlink_packed_ref(name, pathlen, refname, sha1);
+		return resolve_gitlink_packed_ref(refs, refname, sha1);
 
 	len = read(fd, buffer, sizeof(buffer)-1);
 	close(fd);
@@ -462,19 +463,24 @@ static int resolve_gitlink_ref_recursive(char *name, int pathlen,
 	while (isspace(*p))
 		p++;
 
-	return resolve_gitlink_ref_recursive(name, pathlen, p, sha1, recursion+1);
+	return resolve_gitlink_ref_recursive(refs, name, pathlen, p, sha1, recursion+1);
 }
 
 int resolve_gitlink_ref(const char *path, const char *refname, unsigned char *sha1)
 {
 	int len = strlen(path), retval;
-	char *gitdir;
+	char *submodule, *gitdir;
+	struct ref_cache *refs;
 	const char *tmp;
 
 	while (len && path[len-1] == '/')
 		len--;
 	if (!len)
 		return -1;
+	submodule = xstrndup(path, len);
+	refs = get_ref_cache(submodule);
+	free(submodule);
+
 	gitdir = xmalloc(len + MAXREFLEN + 8);
 	memcpy(gitdir, path, len);
 	memcpy(gitdir + len, "/.git", 6);
@@ -489,7 +495,7 @@ int resolve_gitlink_ref(const char *path, const char *refname, unsigned char *sh
 	}
 	gitdir[len] = '/';
 	gitdir[++len] = '\0';
-	retval = resolve_gitlink_ref_recursive(gitdir, len, refname, sha1, 0);
+	retval = resolve_gitlink_ref_recursive(refs, gitdir, len, refname, sha1, 0);
 	free(gitdir);
 	return retval;
 }
