@@ -20,7 +20,7 @@
 static int log_syslog;
 static int verbose;
 static int reuseaddr;
-static int informative_errors = 1;
+static int informative_errors;
 
 static const char daemon_usage[] =
 "git daemon [--verbose] [--syslog] [--export-all]\n"
