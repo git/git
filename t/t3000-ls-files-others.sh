@@ -65,4 +65,23 @@ test_expect_success '--no-empty-directory hides empty directory' '
 	test_cmp expected3 output
 '
 
+test_expect_success SYMLINKS 'ls-files --others with symlinked submodule' '
+	git init super &&
+	git init sub &&
+	(
+		cd sub &&
+		>a &&
+		git add a &&
+		git commit -m sub &&
+		git pack-refs --all
+	) &&
+	(
+		cd super &&
+		"$TEST_DIRECTORY/../contrib/workdir/git-new-workdir" ../sub sub
+		git ls-files --others --exclude-standard >../actual
+	) &&
+	echo sub/ >expect &&
+	test_cmp expect actual
+'
+
 test_done

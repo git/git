@@ -393,12 +393,22 @@ static struct ref_array *get_loose_refs(const char *submodule)
 #define MAXDEPTH 5
 #define MAXREFLEN (1024)
 
+/*
+ * Called by resolve_gitlink_ref_recursive() after it failed to read
+ * from "name", which is "module/.git/<refname>". Find <refname> in
+ * the packed-refs file for the submodule.
+ */
 static int resolve_gitlink_packed_ref(char *name, int pathlen, const char *refname, unsigned char *result)
 {
 	int retval = -1;
 	struct ref_entry *ref;
-	struct ref_array *array = get_packed_refs(name);
+	struct ref_array *array;
 
+	/* being defensive: resolve_gitlink_ref() did this for us */
+	if (pathlen < 6 || memcmp(name + pathlen - 6, "/.git/", 6))
+		die("Oops");
+	name[pathlen - 6] = '\0'; /* make it path to the submodule */
+	array = get_packed_refs(name);
 	ref = search_ref_array(array, refname);
 	if (ref != NULL) {
 		memcpy(result, ref->sha1, 20);
