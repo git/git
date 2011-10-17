@@ -172,12 +172,6 @@ static void clear_loose_ref_cache(struct ref_cache *refs)
 	refs->did_loose = 0;
 }
 
-static void clear_ref_cache(struct ref_cache *refs)
-{
-	clear_packed_ref_cache(refs);
-	clear_loose_ref_cache(refs);
-}
-
 static struct ref_cache *create_ref_cache(const char *submodule)
 {
 	int len;
@@ -215,7 +209,9 @@ static struct ref_cache *get_ref_cache(const char *submodule)
 
 void invalidate_ref_cache(const char *submodule)
 {
-	clear_ref_cache(get_ref_cache(submodule));
+	struct ref_cache *refs = get_ref_cache(submodule);
+	clear_packed_ref_cache(refs);
+	clear_loose_ref_cache(refs);
 }
 
 static void read_packed_refs(FILE *f, struct ref_array *array)
