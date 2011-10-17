@@ -430,17 +430,19 @@ static int resolve_gitlink_packed_ref(struct ref_cache *refs,
 }
 
 static int resolve_gitlink_ref_recursive(struct ref_cache *refs,
-					 char *name, int pathlen,
 					 const char *refname, unsigned char *sha1,
 					 int recursion)
 {
-	int fd, len = strlen(refname);
+	int fd, len;
 	char buffer[128], *p;
+	char *path;
 
-	if (recursion > MAXDEPTH || len > MAXREFLEN)
+	if (recursion > MAXDEPTH || strlen(refname) > MAXREFLEN)
 		return -1;
-	memcpy(name + pathlen, refname, len+1);
-	fd = open(name, O_RDONLY);
+	path = *refs->name
+		? git_path_submodule(refs->name, "%s", refname)
+		: git_path("%s", refname);
+	fd = open(path, O_RDONLY);
 	if (fd < 0)
 		return resolve_gitlink_packed_ref(refs, refname, sha1);
 
@@ -463,15 +465,14 @@ static int resolve_gitlink_ref_recursive(struct ref_cache *refs,
 	while (isspace(*p))
 		p++;
 
-	return resolve_gitlink_ref_recursive(refs, name, pathlen, p, sha1, recursion+1);
+	return resolve_gitlink_ref_recursive(refs, p, sha1, recursion+1);
 }
 
 int resolve_gitlink_ref(const char *path, const char *refname, unsigned char *sha1)
 {
 	int len = strlen(path), retval;
-	char *submodule, *gitdir;
+	char *submodule;
 	struct ref_cache *refs;
-	const char *tmp;
 
 	while (len && path[len-1] == '/')
 		len--;
@@ -481,22 +482,7 @@ int resolve_gitlink_ref(const char *path, const char *refname, unsigned char *sh
 	refs = get_ref_cache(submodule);
 	free(submodule);
 
-	gitdir = xmalloc(len + MAXREFLEN + 8);
-	memcpy(gitdir, path, len);
-	memcpy(gitdir + len, "/.git", 6);
-	len += 5;
-
-	tmp = read_gitfile(gitdir);
-	if (tmp) {
-		free(gitdir);
-		len = strlen(tmp);
-		gitdir = xmalloc(len + MAXREFLEN + 3);
-		memcpy(gitdir, tmp, len);
-	}
-	gitdir[len] = '/';
-	gitdir[++len] = '\0';
-	retval = resolve_gitlink_ref_recursive(refs, gitdir, len, refname, sha1, 0);
-	free(gitdir);
+	retval = resolve_gitlink_ref_recursive(refs, refname, sha1, 0);
 	return retval;
 }
 
