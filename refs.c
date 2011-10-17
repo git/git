@@ -202,7 +202,7 @@ static struct ref_cache *get_ref_cache(const char *submodule)
 	return refs;
 }
 
-static void invalidate_ref_cache(const char *submodule)
+void invalidate_ref_cache(const char *submodule)
 {
 	clear_ref_cache(get_ref_cache(submodule));
 }
