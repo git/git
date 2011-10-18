@@ -45,9 +45,10 @@ lines.  Variables may belong directly to a section or to a given subsection.
 You can have `[section]` if you have `[section "subsection"]`, but you
 don't need to.
 
-There is also a case insensitive alternative `[section.subsection]` syntax.
-In this syntax, subsection names follow the same restrictions as for section
-names.
+There is also a deprecated `[section.subsection]` syntax. With this
+syntax, the subsection name is converted to lower-case and is also
+compared case sensitively. These subsection names follow the same
+restrictions as section names.
 
 All the other lines (and the remainder of the line after the section
 header) are recognized as setting variables, in the form
