@@ -520,7 +520,7 @@ static void add_family_to_write_order(struct object_entry **wo,
 
 static struct object_entry **compute_write_order(void)
 {
-	unsigned int i, wo_end;
+	unsigned int i, wo_end, last_untagged;
 
 	struct object_entry **wo = xmalloc(nr_objects * sizeof(*wo));
 
@@ -551,7 +551,7 @@ static struct object_entry **compute_write_order(void)
 	for_each_tag_ref(mark_tagged, NULL);
 
 	/*
-	 * Give the commits in the original recency order until
+	 * Give the objects in the original recency order until
 	 * we see a tagged tip.
 	 */
 	for (i = wo_end = 0; i < nr_objects; i++) {
@@ -559,6 +559,7 @@ static struct object_entry **compute_write_order(void)
 			break;
 		add_to_write_order(wo, &wo_end, &objects[i]);
 	}
+	last_untagged = i;
 
 	/*
 	 * Then fill all the tagged tips.
@@ -571,7 +572,7 @@ static struct object_entry **compute_write_order(void)
 	/*
 	 * And then all remaining commits and tags.
 	 */
-	for (i = 0; i < nr_objects; i++) {
+	for (i = last_untagged; i < nr_objects; i++) {
 		if (objects[i].type != OBJ_COMMIT &&
 		    objects[i].type != OBJ_TAG)
 			continue;
@@ -581,7 +582,7 @@ static struct object_entry **compute_write_order(void)
 	/*
 	 * And then all the trees.
 	 */
-	for (i = 0; i < nr_objects; i++) {
+	for (i = last_untagged; i < nr_objects; i++) {
 		if (objects[i].type != OBJ_TREE)
 			continue;
 		add_to_write_order(wo, &wo_end, &objects[i]);
@@ -590,8 +591,13 @@ static struct object_entry **compute_write_order(void)
 	/*
 	 * Finally all the rest in really tight order
 	 */
-	for (i = 0; i < nr_objects; i++)
-		add_family_to_write_order(wo, &wo_end, &objects[i]);
+	for (i = last_untagged; i < nr_objects; i++) {
+		if (!objects[i].filled)
+			add_family_to_write_order(wo, &wo_end, &objects[i]);
+	}
+
+	if (wo_end != nr_objects)
+		die("ordered %u objects, expected %"PRIu32, wo_end, nr_objects);
 
 	return wo;
 }
