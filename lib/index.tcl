@@ -377,7 +377,8 @@ proc do_add_all {} {
 		}
 		ask -
 		default {
-			set reply [ask_popup [mc "Stage also untracked files?"]]
+			set reply [ask_popup [mc "Stage %d untracked files?" \
+									  [llength $untracked_paths]]]
 		}
 		}
 		if {$reply} {
