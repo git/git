@@ -455,7 +455,7 @@ static int mark_tagged(const char *path, const unsigned char *sha1, int flag,
 }
 
 static inline void add_to_write_order(struct object_entry **wo,
-			       int *endp,
+			       unsigned int *endp,
 			       struct object_entry *e)
 {
 	if (e->filled)
@@ -465,7 +465,7 @@ static inline void add_to_write_order(struct object_entry **wo,
 }
 
 static void add_descendants_to_write_order(struct object_entry **wo,
-					   int *endp,
+					   unsigned int *endp,
 					   struct object_entry *e)
 {
 	struct object_entry *child;
@@ -477,7 +477,7 @@ static void add_descendants_to_write_order(struct object_entry **wo,
 }
 
 static void add_family_to_write_order(struct object_entry **wo,
-				      int *endp,
+				      unsigned int *endp,
 				      struct object_entry *e)
 {
 	struct object_entry *root;
@@ -490,7 +490,7 @@ static void add_family_to_write_order(struct object_entry **wo,
 
 static struct object_entry **compute_write_order(void)
 {
-	int i, wo_end;
+	unsigned int i, wo_end;
 
 	struct object_entry **wo = xmalloc(nr_objects * sizeof(*wo));
 
@@ -506,8 +506,8 @@ static struct object_entry **compute_write_order(void)
 	 * Make sure delta_sibling is sorted in the original
 	 * recency order.
 	 */
-	for (i = nr_objects - 1; 0 <= i; i--) {
-		struct object_entry *e = &objects[i];
+	for (i = nr_objects; i > 0;) {
+		struct object_entry *e = &objects[--i];
 		if (!e->delta)
 			continue;
 		/* Mark me as the first child */
