@@ -6,6 +6,8 @@ Updates since v1.7.7
 
  * Some git-svn and git-gui updates.
 
+ * Updates to bash completion scripts.
+
  * The build procedure has been taught to take advantage of computed
    dependency automatically when the complier supports it.
 
@@ -110,6 +112,11 @@ included in this release.
    a corrupt packet.
    (merge 6cdf022 sp/smart-http-failure later to maint).
 
+ * HTTP transport did not use pushurl correctly, and also did not tell
+   what host it is trying to authenticate with when asking for
+   credentials.
+   (merge deba493 jk/http-auth later to maint).
+
  * Adding many refs to the local repository in one go (e.g. "git fetch"
    that fetches many tags) and looking up a ref by name in a repository
    with too many refs were unnecessarily slow.
@@ -122,11 +129,31 @@ included in this release.
    is pointed at by the tag were in HEAD.
    (merge baf18fc nd/maint-autofix-tag-in-head later to maint).
 
+ * Report from "git commit" on untracked files was confused under
+   core.ignorecase option.
+   (merge 2548183b jk/name-hash-dirent later to maint).
+
+ * The attribute mechanism did not use case insensitive match when
+   core.ignorecase was set.
+   (merge 6eba621 bc/attr-ignore-case later to maint).
+
  * "git apply --whitespace=error" did not bother to report the exact
    line number in the patch that introduced new blank lines at the end
    of the file.
    (merge 8557263 jc/apply-blank-at-eof-fix later to maint).
 
+ * "git bisect" did not notice when it failed to update the working tree
+   to the next commit to be tested.
+   (merge 1acf11717 js/bisect-no-checkout later to maint).
+
+ * "git checkout $tree $directory/" resurrected paths locally removed or
+   modified only in the working tree in $directory/ that did not appear
+   in $directory of the given $tree. They should have been kept intact.
+   (merge 0a1283b jc/checkout-from-tree-keep-local-changes later to maint).
+
+ * "git config --bool --get-regexp" failed to separate the variable name
+   and its value "true" when the variable is defined without "= true".
+   (merge 880e3cc mm/maint-config-explicit-bool-display later to maint).
 
  * "git remote rename $a $b" were not careful to match the remote name
    against $a (i.e. source side of the remote nickname).
@@ -143,13 +170,22 @@ included in this release.
    the file that may not even have any conflict.
    (merge 6d9990a jm/mergetool-pathspec later to maint).
 
+ * "git pull" and "git rebase" did not work well even when GIT_WORK_TREE is
+   set correctly with GIT_DIR if the current directory is outside the working
+   tree.
+   (merge 035b5bf jk/pull-rebase-with-work-tree later to maint).
+
+ " "git push" on the receiving end used to call post-receive and post-update
+   hooks for attempted removal of non-existing refs.
+   (merge 160b81ed ph/push-to-delete-nothing later to maint).
+
  * "gitweb" used to produce a non-working link while showing the contents
    of a blob, when JavaScript actions are enabled.
    (merge 2b07ff3ff ps/gitweb-js-with-lineno later to maint).
 
 ---
 exec >/var/tmp/1
-O=v1.7.7-324-g47d45a5
+O=v1.7.7-368-g9638384
 echo O=$(git describe --always master)
 git log --first-parent --oneline --reverse ^$O master
 echo
