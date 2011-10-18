@@ -218,4 +218,6 @@ struct merge_remote_desc {
  */
 struct commit *get_merge_parent(const char *name);
 
+extern int parse_signed_commit(const unsigned char *sha1,
+			       struct strbuf *message, struct strbuf *signature);
 #endif /* COMMIT_H */
