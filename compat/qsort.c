@@ -55,7 +55,7 @@ void git_qsort(void *b, size_t n, size_t s,
 		msort_with_tmp(b, n, s, cmp, buf);
 	} else {
 		/* It's somewhat large, so malloc it.  */
-		char *tmp = malloc(size);
+		char *tmp = xmalloc(size);
 		msort_with_tmp(b, n, s, cmp, tmp);
 		free(tmp);
 	}

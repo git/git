@@ -94,6 +94,8 @@ int cmd_check_attr(int argc, const char **argv, const char *prefix)
 	struct git_attr_check *check;
 	int cnt, i, doubledash, filei;
 
+	git_config(git_default_config, NULL);
+
 	argc = parse_options(argc, argv, prefix, check_attr_options,
 			     check_attr_usage, PARSE_OPT_KEEP_DASHDASH);
 

@@ -7,7 +7,7 @@ test_description=gitattributes
 attr_check () {
 	path="$1" expect="$2"
 
-	git check-attr test -- "$path" >actual 2>err &&
+	git $3 check-attr test -- "$path" >actual 2>err &&
 	echo "$path: test: $2" >expect &&
 	test_cmp expect actual &&
 	test_line_count = 0 err
@@ -23,6 +23,7 @@ test_expect_success 'setup' '
 		echo "onoff test -test"
 		echo "offon -test test"
 		echo "no notest"
+		echo "A/e/F test=A/e/F"
 	) >.gitattributes &&
 	(
 		echo "g test=a/g" &&
@@ -82,6 +83,62 @@ test_expect_success 'attribute test' '
 	attr_check no unspecified &&
 	attr_check a/b/d/no "a/b/d/*" &&
 	attr_check a/b/d/yes unspecified
+'
+
+test_expect_success 'attribute matching is case sensitive when core.ignorecase=0' '
+
+	test_must_fail attr_check F f "-c core.ignorecase=0" &&
+	test_must_fail attr_check a/F f "-c core.ignorecase=0" &&
+	test_must_fail attr_check a/c/F f "-c core.ignorecase=0" &&
+	test_must_fail attr_check a/G a/g "-c core.ignorecase=0" &&
+	test_must_fail attr_check a/B/g a/b/g "-c core.ignorecase=0" &&
+	test_must_fail attr_check a/b/G a/b/g "-c core.ignorecase=0" &&
+	test_must_fail attr_check a/b/H a/b/h "-c core.ignorecase=0" &&
+	test_must_fail attr_check a/b/D/g "a/b/d/*" "-c core.ignorecase=0" &&
+	test_must_fail attr_check oNoFf unset "-c core.ignorecase=0" &&
+	test_must_fail attr_check oFfOn set "-c core.ignorecase=0" &&
+	attr_check NO unspecified "-c core.ignorecase=0" &&
+	test_must_fail attr_check a/b/D/NO "a/b/d/*" "-c core.ignorecase=0" &&
+	attr_check a/b/d/YES a/b/d/* "-c core.ignorecase=0" &&
+	test_must_fail attr_check a/E/f "A/e/F" "-c core.ignorecase=0"
+
+'
+
+test_expect_success 'attribute matching is case insensitive when core.ignorecase=1' '
+
+	attr_check F f "-c core.ignorecase=1" &&
+	attr_check a/F f "-c core.ignorecase=1" &&
+	attr_check a/c/F f "-c core.ignorecase=1" &&
+	attr_check a/G a/g "-c core.ignorecase=1" &&
+	attr_check a/B/g a/b/g "-c core.ignorecase=1" &&
+	attr_check a/b/G a/b/g "-c core.ignorecase=1" &&
+	attr_check a/b/H a/b/h "-c core.ignorecase=1" &&
+	attr_check a/b/D/g "a/b/d/*" "-c core.ignorecase=1" &&
+	attr_check oNoFf unset "-c core.ignorecase=1" &&
+	attr_check oFfOn set "-c core.ignorecase=1" &&
+	attr_check NO unspecified "-c core.ignorecase=1" &&
+	attr_check a/b/D/NO "a/b/d/*" "-c core.ignorecase=1" &&
+	attr_check a/b/d/YES unspecified "-c core.ignorecase=1" &&
+	attr_check a/E/f "A/e/F" "-c core.ignorecase=1"
+
+'
+
+test_expect_success 'check whether FS is case-insensitive' '
+	mkdir junk &&
+	echo good >junk/CamelCase &&
+	echo bad >junk/camelcase &&
+	if test "$(cat junk/CamelCase)" != good
+	then
+		test_set_prereq CASE_INSENSITIVE_FS
+	fi
+'
+
+test_expect_success CASE_INSENSITIVE_FS 'additional case insensitivity tests' '
+	test_must_fail attr_check a/B/D/g "a/b/d/*" "-c core.ignorecase=0" &&
+	test_must_fail attr_check A/B/D/NO "a/b/d/*" "-c core.ignorecase=0" &&
+	attr_check A/b/h a/b/h "-c core.ignorecase=1" &&
+	attr_check a/B/D/g "a/b/d/*" "-c core.ignorecase=1" &&
+	attr_check A/B/D/NO "a/b/d/*" "-c core.ignorecase=1"
 '
 
 test_expect_success 'unnormalized paths' '
