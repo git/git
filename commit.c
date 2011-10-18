@@ -848,6 +848,40 @@ static int do_sign_commit(struct strbuf *buf, const char *keyid)
 	return 0;
 }
 
+int parse_signed_commit(const unsigned char *sha1,
+			struct strbuf *payload, struct strbuf *signature)
+{
+	unsigned long size;
+	enum object_type type;
+	char *buffer = read_sha1_file(sha1, &type, &size);
+	int in_header, saw_signature = -1;
+	char *line;
+
+	if (!buffer || type != OBJ_COMMIT)
+		goto cleanup;
+
+	line = buffer;
+	in_header = 1;
+	saw_signature = 0;
+	while (*line) {
+		char *next = strchrnul(line, '\n');
+		if (*next)
+			next++;
+		if (in_header && !prefixcmp(line, gpg_sig_header)) {
+			const char *sig = line + gpg_sig_header_len;
+			strbuf_add(signature, sig, next - sig);
+			saw_signature = 1;
+		} else {
+			strbuf_add(payload, line, next - line);
+		}
+		if (*line == '\n')
+			in_header = 0;
+		line = next;
+	}
+ cleanup:
+	free(buffer);
+	return saw_signature;
+}
 
 static const char commit_utf8_warn[] =
 "Warning: commit message does not conform to UTF-8.\n"
