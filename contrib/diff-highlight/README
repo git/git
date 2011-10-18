@@ -1,0 +1,57 @@
+diff-highlight
+==============
+
+Line oriented diffs are great for reviewing code, because for most
+hunks, you want to see the old and the new segments of code next to each
+other. Sometimes, though, when an old line and a new line are very
+similar, it's hard to immediately see the difference.
+
+You can use "--color-words" to highlight only the changed portions of
+lines. However, this can often be hard to read for code, as it loses
+the line structure, and you end up with oddly formatted bits.
+
+Instead, this script post-processes the line-oriented diff, finds pairs
+of lines, and highlights the differing segments.  It's currently very
+simple and stupid about doing these tasks. In particular:
+
+  1. It will only highlight a pair of lines if they are the only two
+     lines in a hunk.  It could instead try to match up "before" and
+     "after" lines for a given hunk into pairs of similar lines.
+     However, this may end up visually distracting, as the paired
+     lines would have other highlighted lines in between them. And in
+     practice, the lines which most need attention called to their
+     small, hard-to-see changes are touching only a single line.
+
+  2. It will find the common prefix and suffix of two lines, and
+     consider everything in the middle to be "different". It could
+     instead do a real diff of the characters between the two lines and
+     find common subsequences. However, the point of the highlight is to
+     call attention to a certain area. Even if some small subset of the
+     highlighted area actually didn't change, that's OK. In practice it
+     ends up being more readable to just have a single blob on the line
+     showing the interesting bit.
+
+The goal of the script is therefore not to be exact about highlighting
+changes, but to call attention to areas of interest without being
+visually distracting.  Non-diff lines and existing diff coloration is
+preserved; the intent is that the output should look exactly the same as
+the input, except for the occasional highlight.
+
+Use
+---
+
+You can try out the diff-highlight program with:
+
+---------------------------------------------
+git log -p --color | /path/to/diff-highlight
+---------------------------------------------
+
+If you want to use it all the time, drop it in your $PATH and put the
+following in your git configuration:
+
+---------------------------------------------
+[pager]
+	log = diff-highlight | less
+	show = diff-highlight | less
+	diff = diff-highlight | less
+---------------------------------------------
