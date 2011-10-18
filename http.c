@@ -42,7 +42,7 @@ static long curl_low_speed_time = -1;
 static int curl_ftp_no_epsv;
 static const char *curl_http_proxy;
 static const char *curl_cookie_file;
-static char *user_name, *user_pass;
+static char *user_name, *user_pass, *description;
 static const char *user_agent;
 
 #if LIBCURL_VERSION_NUM >= 0x071700
@@ -139,6 +139,27 @@ static void process_curl_messages(void)
 }
 #endif
 
+static char *git_getpass_with_description(const char *what, const char *desc)
+{
+	struct strbuf prompt = STRBUF_INIT;
+	char *r;
+
+	if (desc)
+		strbuf_addf(&prompt, "%s for '%s': ", what, desc);
+	else
+		strbuf_addf(&prompt, "%s: ", what);
+	/*
+	 * NEEDSWORK: for usernames, we should do something less magical that
+	 * actually echoes the characters. However, we need to read from
+	 * /dev/tty and not stdio, which is not portable (but getpass will do
+	 * it for us). http.c uses the same workaround.
+	 */
+	r = git_getpass(prompt.buf);
+
+	strbuf_release(&prompt);
+	return xstrdup(r);
+}
+
 static int http_options(const char *var, const char *value, void *cb)
 {
 	if (!strcmp("http.sslverify", var)) {
@@ -214,7 +235,7 @@ static void init_curl_http_auth(CURL *result)
 	if (user_name) {
 		struct strbuf up = STRBUF_INIT;
 		if (!user_pass)
-			user_pass = xstrdup(git_getpass("Password: "));
+			user_pass = xstrdup(git_getpass_with_description("Password", description));
 		strbuf_addf(&up, "%s:%s", user_name, user_pass);
 		curl_easy_setopt(result, CURLOPT_USERPWD,
 				 strbuf_detach(&up, NULL));
@@ -229,7 +250,7 @@ static int has_cert_password(void)
 		return 0;
 	/* Only prompt the user once. */
 	ssl_cert_password_required = -1;
-	ssl_cert_password = git_getpass("Certificate Password: ");
+	ssl_cert_password = git_getpass_with_description("Certificate Password", description);
 	if (ssl_cert_password != NULL) {
 		ssl_cert_password = xstrdup(ssl_cert_password);
 		return 1;
@@ -307,8 +328,7 @@ static CURL *get_curl_handle(void)
 
 static void http_auth_init(const char *url)
 {
-	char *at, *colon, *cp, *slash, *decoded;
-	int len;
+	const char *at, *colon, *cp, *slash, *host;
 
 	cp = strstr(url, "://");
 	if (!cp)
@@ -324,34 +344,22 @@ static void http_auth_init(const char *url)
 	at = strchr(cp, '@');
 	colon = strchr(cp, ':');
 	slash = strchrnul(cp, '/');
-	if (!at || slash <= at)
-		return; /* No credentials */
-	if (!colon || at <= colon) {
-		/* Only username */
-		len = at - cp;
-		user_name = xmalloc(len + 1);
-		memcpy(user_name, cp, len);
-		user_name[len] = '\0';
-		decoded = url_decode(user_name);
-		free(user_name);
-		user_name = decoded;
-		user_pass = NULL;
-	} else {
-		len = colon - cp;
-		user_name = xmalloc(len + 1);
-		memcpy(user_name, cp, len);
-		user_name[len] = '\0';
-		decoded = url_decode(user_name);
-		free(user_name);
-		user_name = decoded;
-		len = at - (colon + 1);
-		user_pass = xmalloc(len + 1);
-		memcpy(user_pass, colon + 1, len);
-		user_pass[len] = '\0';
-		decoded = url_decode(user_pass);
-		free(user_pass);
-		user_pass = decoded;
+	if (!at || slash <= at) {
+		/* No credentials, but we may have to ask for some later */
+		host = cp;
 	}
+	else if (!colon || at <= colon) {
+		/* Only username */
+		user_name = url_decode_mem(cp, at - cp);
+		user_pass = NULL;
+		host = at + 1;
+	} else {
+		user_name = url_decode_mem(cp, colon - cp);
+		user_pass = url_decode_mem(colon + 1, at - (colon + 1));
+		host = at + 1;
+	}
+
+	description = url_decode_mem(host, slash - host);
 }
 
 static void set_from_env(const char **var, const char *envname)
@@ -361,7 +369,7 @@ static void set_from_env(const char **var, const char *envname)
 		*var = val;
 }
 
-void http_init(struct remote *remote)
+void http_init(struct remote *remote, const char *url)
 {
 	char *low_speed_limit;
 	char *low_speed_time;
@@ -425,11 +433,11 @@ void http_init(struct remote *remote)
 	if (getenv("GIT_CURL_FTP_NO_EPSV"))
 		curl_ftp_no_epsv = 1;
 
-	if (remote && remote->url && remote->url[0]) {
-		http_auth_init(remote->url[0]);
+	if (url) {
+		http_auth_init(url);
 		if (!ssl_cert_password_required &&
 		    getenv("GIT_SSL_CERT_PASSWORD_PROTECTED") &&
-		    !prefixcmp(remote->url[0], "https://"))
+		    !prefixcmp(url, "https://"))
 			ssl_cert_password_required = 1;
 	}
 
@@ -847,7 +855,7 @@ static int http_request(const char *url, void *result, int target, int options)
 				 * but that is non-portable.  Using git_getpass() can at least be stubbed
 				 * on other platforms with a different implementation if/when necessary.
 				 */
-				user_name = xstrdup(git_getpass("Username: "));
+				user_name = xstrdup(git_getpass_with_description("Username", description));
 				init_curl_http_auth(slot->curl);
 				ret = HTTP_REAUTH;
 			}
@@ -870,13 +878,18 @@ static int http_request(const char *url, void *result, int target, int options)
 	return ret;
 }
 
+static int http_request_reauth(const char *url, void *result, int target,
+			       int options)
+{
+	int ret = http_request(url, result, target, options);
+	if (ret != HTTP_REAUTH)
+		return ret;
+	return http_request(url, result, target, options);
+}
+
 int http_get_strbuf(const char *url, struct strbuf *result, int options)
 {
-	int http_ret = http_request(url, result, HTTP_REQUEST_STRBUF, options);
-	if (http_ret == HTTP_REAUTH) {
-		http_ret = http_request(url, result, HTTP_REQUEST_STRBUF, options);
-	}
-	return http_ret;
+	return http_request_reauth(url, result, HTTP_REQUEST_STRBUF, options);
 }
 
 /*
@@ -899,7 +912,7 @@ static int http_get_file(const char *url, const char *filename, int options)
 		goto cleanup;
 	}
 
-	ret = http_request(url, result, HTTP_REQUEST_FILE, options);
+	ret = http_request_reauth(url, result, HTTP_REQUEST_FILE, options);
 	fclose(result);
 
 	if ((ret == HTTP_OK) && move_temp_to_file(tmpfile.buf, filename))

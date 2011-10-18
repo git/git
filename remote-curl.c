@@ -115,7 +115,7 @@ static struct discovery* discover_refs(const char *service)
 	http_ret = http_get_strbuf(refs_url, &buffer, HTTP_NO_CACHE);
 
 	/* try again with "plain" url (no ? or & appended) */
-	if (http_ret != HTTP_OK) {
+	if (http_ret != HTTP_OK && http_ret != HTTP_NOAUTH) {
 		free(refs_url);
 		strbuf_reset(&buffer);
 
@@ -859,7 +859,7 @@ int main(int argc, const char **argv)
 
 	url = strbuf_detach(&buf, NULL);
 
-	http_init(remote);
+	http_init(remote, url);
 
 	do {
 		if (strbuf_getline(&buf, stdin, '\n') == EOF) {
