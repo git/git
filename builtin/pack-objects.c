@@ -454,7 +454,7 @@ static int mark_tagged(const char *path, const unsigned char *sha1, int flag,
 	return 0;
 }
 
-static void add_to_write_order(struct object_entry **wo,
+static inline void add_to_write_order(struct object_entry **wo,
 			       int *endp,
 			       struct object_entry *e)
 {
