@@ -29,4 +29,18 @@ do
 	fi
 done
 
-git diff --stat next jch
+if	next_tree=$(git rev-parse next^{tree}) &&
+	next_equiv=$(git rev-list jch..pu |
+		xargs -n1 sh -c '
+			echo $(git rev-parse $1^{tree}) $1
+		' - | sed -n -e "s/^$next_tree //p"
+	) &&
+	test -n "$next_equiv"
+then
+	jch=$(git rev-list --first-parent master..jch | wc -l) &&
+	pu=$(git rev-list --first-parent master..pu | wc -l) &&
+	next=$(git rev-list --first-parent master..$next_equiv | wc -l) &&
+	echo $jch..$next..$pu
+else
+	git diff --stat next jch
+fi
