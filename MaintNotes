@@ -212,8 +212,8 @@ I have relied on and expect to continue relying on heavily:
  - David Aguilar and Charles Bailey for taking good care of git-mergetool
    (and Theodore Ts'o for creating it in the first place) and git-difftool.
 
- - Johannes Schindelin, Johannes Sixt, Erik Faye-Lund and others for their
-   effort to move things forward on the Windows front.
+ - Johannes Schindelin, Johannes Sixt, Erik Faye-Lund, Pat Thoyts and others
+   for their effort to move things forward on the Windows front.
 
  - People on non-Linux platforms for keeping their eyes on portability;
    especially, Randal Schwartz, Theodore Ts'o, Jason Riedy, Thomas Glanzmann,
