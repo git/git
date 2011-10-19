@@ -706,8 +706,11 @@ static int do_for_each_ref(const char *submodule, const char *base, each_ref_fn 
 
 	struct ref_array *extra = &extra_refs;
 
-	for (i = 0; i < extra->nr; i++)
+	for (i = 0; i < extra->nr; i++) {
 		retval = do_one_ref(base, fn, trim, flags, cb_data, extra->refs[i]);
+		if (retval)
+			goto end_each;
+	}
 
 	while (p < packed->nr && l < loose->nr) {
 		struct ref_entry *entry;
