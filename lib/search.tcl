@@ -133,14 +133,16 @@ method _do_search {start {mlenvar {}} {dir {}} {endbound {}}} {
 		set dir $searchdirn
 	}
 	lappend cmd $dir -- $searchstring
-	if {$endbound ne {}} {
-		set here [eval $cmd [list $start] [list $endbound]]
-	} else {
-		set here [eval $cmd [list $start]]
-		if {$here eq {}} {
-			set here [eval $cmd [_get_wrap_anchor $this $dir]]
+	if {[catch {
+		if {$endbound ne {}} {
+			set here [eval $cmd [list $start] [list $endbound]]
+		} else {
+			set here [eval $cmd [list $start]]
+			if {$here eq {}} {
+				set here [eval $cmd [_get_wrap_anchor $this $dir]]
+			}
 		}
-	}
+	} err]} { set here {} }
 	return $here
 }
 
