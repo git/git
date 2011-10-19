@@ -946,8 +946,10 @@ static struct merge_file_info merge_file_1(struct merge_options *o,
 			free(result_buf.ptr);
 			result.clean = (merge_status == 0);
 		} else if (S_ISGITLINK(a->mode)) {
-			result.clean = merge_submodule(result.sha, one->path, one->sha1,
-						       a->sha1, b->sha1);
+			result.clean = merge_submodule(result.sha,
+						       one->path, one->sha1,
+						       a->sha1, b->sha1,
+						       !o->call_depth);
 		} else if (S_ISLNK(a->mode)) {
 			hashcpy(result.sha, a->sha1);
 
