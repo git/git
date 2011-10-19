@@ -299,7 +299,9 @@ proc is_config_true {name} {
 	global repo_config
 	if {[catch {set v $repo_config($name)}]} {
 		return 0
-	} elseif {$v eq {true} || $v eq {1} || $v eq {yes}} {
+	}
+	set v [string tolower $v]
+	if {$v eq {} || $v eq {true} || $v eq {1} || $v eq {yes} || $v eq {on}} {
 		return 1
 	} else {
 		return 0
@@ -310,7 +312,9 @@ proc is_config_false {name} {
 	global repo_config
 	if {[catch {set v $repo_config($name)}]} {
 		return 0
-	} elseif {$v eq {false} || $v eq {0} || $v eq {no}} {
+	}
+	set v [string tolower $v]
+	if {$v eq {false} || $v eq {0} || $v eq {no} || $v eq {off}} {
 		return 1
 	} else {
 		return 0
@@ -1061,6 +1065,10 @@ git-version proc _parse_config {arr_name args} {
 				} else {
 					set arr($name) $value
 				}
+			} elseif {[regexp {^([^\n]+)$} $line line name]} {
+				# no value given, but interpreting them as
+				# boolean will be handled as true
+				set arr($name) {}
 			}
 		}
 	}
@@ -1076,6 +1084,10 @@ git-version proc _parse_config {arr_name args} {
 					} else {
 						set arr($name) $value
 					}
+				} elseif {[regexp {^([^=]+)$} $line line name]} {
+					# no value given, but interpreting them as
+					# boolean will be handled as true
+					set arr($name) {}
 				}
 			}
 			close $fd_rc
