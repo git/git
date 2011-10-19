@@ -51,6 +51,9 @@ static const char *parse_ref_line(char *line, unsigned char *sha1)
 		return NULL;
 	line[len] = 0;
 
+	if (check_refname_format(line, REFNAME_ALLOW_ONELEVEL))
+		return NULL;
+
 	return line;
 }
 
