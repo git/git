@@ -199,7 +199,11 @@ rm -rf $RPM_BUILD_ROOT
 
 %files -n gitweb
 %defattr(-,root,root)
+%doc gitweb/README gitweb/INSTALL Documentation/*gitweb*.txt
 %{_datadir}/gitweb
+%{!?_without_docs: %{_mandir}/man1/*gitweb*.1*}
+%{!?_without_docs: %{_mandir}/man5/*gitweb*.5*}
+%{!?_without_docs: %doc Documentation/*gitweb*.html }
 
 %files -n perl-Git -f perl-files
 %defattr(-,root,root)
@@ -208,6 +212,9 @@ rm -rf $RPM_BUILD_ROOT
 # No files for you!
 
 %changelog
+* Sun Sep 18 2011 Jakub Narebski <jnareb@gmail.com>
+- Add gitweb manpages to 'gitweb' subpackage
+
 * Wed Jun 30 2010 Junio C Hamano <gitster@pobox.com>
 - Add 'gitweb' subpackage.
 
