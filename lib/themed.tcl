@@ -123,6 +123,7 @@ proc paddedlabel {w args} {
 # place a themed frame over the surface.
 proc Dialog {w args} {
 	eval [linsert $args 0 toplevel $w -class Dialog]
+	catch {wm attributes $w -type dialog}	
 	pave_toplevel $w
 	return $w
 }

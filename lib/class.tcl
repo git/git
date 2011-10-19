@@ -138,6 +138,7 @@ proc make_dialog {t w args} {
 	upvar $t top $w pfx this this
 	global use_ttk
 	uplevel [linsert $args 0 make_toplevel $t $w]
+	catch {wm attributes $top -type dialog}
 	pave_toplevel $pfx
 }
 

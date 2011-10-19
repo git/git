@@ -1201,6 +1201,7 @@ method _open_tooltip {cur_w} {
 		_hide_tooltip $this
 
 		set tooltip_wm [toplevel $cur_w.tooltip -borderwidth 1]
+		catch {wm attributes $tooltip_wm -type tooltip}
 		wm overrideredirect $tooltip_wm 1
 		wm transient $tooltip_wm [winfo toplevel $cur_w]
 		set tooltip_t $tooltip_wm.label
