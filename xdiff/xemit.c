@@ -100,14 +100,40 @@ static int xdl_emit_common(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
 	return 0;
 }
 
+struct func_line {
+	long len;
+	char buf[80];
+};
+
+static long get_func_line(xdfenv_t *xe, xdemitconf_t const *xecfg,
+			  struct func_line *func_line, long start, long limit)
+{
+	find_func_t ff = xecfg->find_func ? xecfg->find_func : def_ff;
+	long l, size, step = (start > limit) ? -1 : 1;
+	char *buf, dummy[1];
+
+	buf = func_line ? func_line->buf : dummy;
+	size = func_line ? sizeof(func_line->buf) : sizeof(dummy);
+
+	for (l = start; l != limit && 0 <= l && l < xe->xdf1.nrec; l += step) {
+		const char *rec;
+		long reclen = xdl_get_rec(&xe->xdf1, l, &rec);
+		long len = ff(rec, reclen, buf, size, xecfg->find_func_priv);
+		if (len >= 0) {
+			if (func_line)
+				func_line->len = len;
+			return l;
+		}
+	}
+	return -1;
+}
+
 int xdl_emit_diff(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
 		  xdemitconf_t const *xecfg) {
 	long s1, s2, e1, e2, lctx;
 	xdchange_t *xch, *xche;
-	char funcbuf[80];
-	long funclen = 0;
 	long funclineprev = -1;
-	find_func_t ff = xecfg->find_func ?  xecfg->find_func : def_ff;
+	struct func_line func_line = { 0 };
 
 	if (xecfg->flags & XDL_EMIT_COMMON)
 		return xdl_emit_common(xe, xscr, ecb, xecfg);
@@ -118,6 +144,17 @@ int xdl_emit_diff(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
 		s1 = XDL_MAX(xch->i1 - xecfg->ctxlen, 0);
 		s2 = XDL_MAX(xch->i2 - xecfg->ctxlen, 0);
 
+		if (xecfg->flags & XDL_EMIT_FUNCCONTEXT) {
+			long fs1 = get_func_line(xe, xecfg, NULL, xch->i1, -1);
+			if (fs1 < 0)
+				fs1 = 0;
+			if (fs1 < s1) {
+				s2 -= s1 - fs1;
+				s1 = fs1;
+			}
+		}
+
+ again:
 		lctx = xecfg->ctxlen;
 		lctx = XDL_MIN(lctx, xe->xdf1.nrec - (xche->i1 + xche->chg1));
 		lctx = XDL_MIN(lctx, xe->xdf2.nrec - (xche->i2 + xche->chg2));
@@ -125,27 +162,43 @@ int xdl_emit_diff(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
 		e1 = xche->i1 + xche->chg1 + lctx;
 		e2 = xche->i2 + xche->chg2 + lctx;
 
+		if (xecfg->flags & XDL_EMIT_FUNCCONTEXT) {
+			long fe1 = get_func_line(xe, xecfg, NULL,
+						 xche->i1 + xche->chg1,
+						 xe->xdf1.nrec);
+			if (fe1 < 0)
+				fe1 = xe->xdf1.nrec;
+			if (fe1 > e1) {
+				e2 += fe1 - e1;
+				e1 = fe1;
+			}
+
+			/*
+			 * Overlap with next change?  Then include it
+			 * in the current hunk and start over to find
+			 * its new end.
+			 */
+			if (xche->next) {
+				long l = xche->next->i1;
+				if (l <= e1 ||
+				    get_func_line(xe, xecfg, NULL, l, e1) < 0) {
+					xche = xche->next;
+					goto again;
+				}
+			}
+		}
+
 		/*
 		 * Emit current hunk header.
 		 */
 
 		if (xecfg->flags & XDL_EMIT_FUNCNAMES) {
-			long l;
-			for (l = s1 - 1; l >= 0 && l > funclineprev; l--) {
-				const char *rec;
-				long reclen = xdl_get_rec(&xe->xdf1, l, &rec);
-				long newfunclen = ff(rec, reclen, funcbuf,
-						     sizeof(funcbuf),
-						     xecfg->find_func_priv);
-				if (newfunclen >= 0) {
-					funclen = newfunclen;
-					break;
-				}
-			}
+			get_func_line(xe, xecfg, &func_line,
+				      s1 - 1, funclineprev);
 			funclineprev = s1 - 1;
 		}
 		if (xdl_emit_hunk_hdr(s1 + 1, e1 - s1, s2 + 1, e2 - s2,
-				      funcbuf, funclen, ecb) < 0)
+				      func_line.buf, func_line.len, ecb) < 0)
 			return -1;
 
 		/*
