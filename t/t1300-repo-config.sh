@@ -552,8 +552,6 @@ EOF
 test_expect_success "section was removed properly" \
 	"test_cmp expect .git/config"
 
-rm .git/config
-
 cat > expect << EOF
 [gitcvs]
 	enabled = true
@@ -564,6 +562,7 @@ EOF
 
 test_expect_success 'section ending' '
 
+	rm -f .git/config &&
 	git config gitcvs.enabled true &&
 	git config gitcvs.ext.dbname %Ggitcvs1.%a.%m.sqlite &&
 	git config gitcvs.dbname %Ggitcvs2.%a.%m.sqlite &&
@@ -636,8 +635,6 @@ test_expect_success 'invalid bool (set)' '
 
 	test_must_fail git config --bool bool.nobool foobar'
 
-rm .git/config
-
 cat > expect <<\EOF
 [bool]
 	true1 = true
@@ -652,6 +649,7 @@ EOF
 
 test_expect_success 'set --bool' '
 
+	rm -f .git/config &&
 	git config --bool bool.true1 01 &&
 	git config --bool bool.true2 -1 &&
 	git config --bool bool.true3 YeS &&
@@ -662,8 +660,6 @@ test_expect_success 'set --bool' '
 	git config --bool bool.false4 FALSE &&
 	cmp expect .git/config'
 
-rm .git/config
-
 cat > expect <<\EOF
 [int]
 	val1 = 1
@@ -673,12 +669,11 @@ EOF
 
 test_expect_success 'set --int' '
 
+	rm -f .git/config &&
 	git config --int int.val1 01 &&
 	git config --int int.val2 -1 &&
 	git config --int int.val3 5m &&
 	cmp expect .git/config'
-
-rm .git/config
 
 cat >expect <<\EOF
 [bool]
@@ -693,6 +688,7 @@ cat >expect <<\EOF
 EOF
 
 test_expect_success 'get --bool-or-int' '
+	rm -f .git/config &&
 	(
 		echo "[bool]"
 		echo true1
@@ -712,7 +708,6 @@ test_expect_success 'get --bool-or-int' '
 
 '
 
-rm .git/config
 cat >expect <<\EOF
 [bool]
 	true1 = true
@@ -726,6 +721,7 @@ cat >expect <<\EOF
 EOF
 
 test_expect_success 'set --bool-or-int' '
+	rm -f .git/config &&
 	git config --bool-or-int bool.true1 true &&
 	git config --bool-or-int bool.false1 false &&
 	git config --bool-or-int bool.true2 yes &&
@@ -736,8 +732,6 @@ test_expect_success 'set --bool-or-int' '
 	test_cmp expect .git/config
 '
 
-rm .git/config
-
 cat >expect <<\EOF
 [path]
 	home = ~/
@@ -746,6 +740,7 @@ cat >expect <<\EOF
 EOF
 
 test_expect_success NOT_MINGW 'set --path' '
+	rm -f .git/config &&
 	git config --path path.home "~/" &&
 	git config --path path.normal "/dev/null" &&
 	git config --path path.trailingtilde "foo~" &&
@@ -794,7 +789,7 @@ cat > expect << EOF
 	hash = "test#test"
 EOF
 test_expect_success 'quoting' '
-	rm .git/config &&
+	rm -f .git/config &&
 	git config quote.leading " test" &&
 	git config quote.ending "test " &&
 	git config quote.semicolon "test;test" &&
