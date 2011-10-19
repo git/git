@@ -1089,6 +1089,25 @@ static int names_conflict(const char *refname1, const char *refname2)
 		|| (*refname1 == '/' && *refname2 == '\0');
 }
 
+struct name_conflict_cb {
+       const char *refname;
+       const char *oldrefname;
+       const char *conflicting_refname;
+};
+
+static int name_conflict_fn(const char *existingrefname, const unsigned char *sha1,
+			    int flags, void *cb_data)
+{
+       struct name_conflict_cb *data = (struct name_conflict_cb *)cb_data;
+       if (data->oldrefname && !strcmp(data->oldrefname, existingrefname))
+	       return 0;
+       if (names_conflict(data->refname, existingrefname)) {
+	       data->conflicting_refname = existingrefname;
+	       return 1;
+       }
+       return 0;
+}
+
 /*
  * Return true iff a reference named refname could be created without
  * conflicting with the name of an existing reference.  If oldrefname
@@ -1099,18 +1118,19 @@ static int names_conflict(const char *refname1, const char *refname2)
 static int is_refname_available(const char *refname, const char *oldrefname,
 				struct ref_array *array)
 {
-	int i;
-	for (i = 0; i < array->nr; i++ ) {
-		struct ref_entry *entry = array->refs[i];
-		if (oldrefname && !strcmp(oldrefname, entry->name))
-			continue;
-		if (names_conflict(refname, entry->name)) {
-			error("'%s' exists; cannot create '%s'",
-			      entry->name, refname);
-			return 0;
-		}
-	}
-	return 1;
+       struct name_conflict_cb data;
+       data.refname = refname;
+       data.oldrefname = oldrefname;
+       data.conflicting_refname = NULL;
+
+       if (do_for_each_ref_in_array(array, 0, "", name_conflict_fn,
+				    0, DO_FOR_EACH_INCLUDE_BROKEN,
+				    &data)) {
+	       error("'%s' exists; cannot create '%s'",
+		     data.conflicting_refname, refname);
+	       return 0;
+       }
+       return 1;
 }
 
 static struct ref_lock *lock_ref_sha1_basic(const char *refname,
