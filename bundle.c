@@ -23,50 +23,102 @@ static void add_to_ref_list(const unsigned char *sha1, const char *name,
 	list->nr++;
 }
 
-/* returns an fd */
+/* Eventually this should go to strbuf.[ch] */
+static int strbuf_readline_fd(struct strbuf *sb, int fd)
+{
+	strbuf_reset(sb);
+
+	while (1) {
+		char ch;
+		ssize_t len = xread(fd, &ch, 1);
+		if (len < 0)
+			return -1;
+		strbuf_addch(sb, ch);
+		if (ch == '\n')
+			break;
+	}
+	return 0;
+}
+
+static int parse_bundle_header(int fd, struct bundle_header *header,
+			       const char *report_path)
+{
+	struct strbuf buf = STRBUF_INIT;
+	int status = 0;
+
+	/* The bundle header begins with the signature */
+	if (strbuf_readline_fd(&buf, fd) ||
+	    strcmp(buf.buf, bundle_signature)) {
+		if (report_path)
+			error("'%s' does not look like a v2 bundle file",
+			      report_path);
+		status = -1;
+		goto abort;
+	}
+
+	/* The bundle header ends with an empty line */
+	while (!strbuf_readline_fd(&buf, fd) &&
+	       buf.len && buf.buf[0] != '\n') {
+		unsigned char sha1[20];
+		int is_prereq = 0;
+
+		if (*buf.buf == '-') {
+			is_prereq = 1;
+			strbuf_remove(&buf, 0, 1);
+		}
+		strbuf_rtrim(&buf);
+
+		/*
+		 * Tip lines have object name, SP, and refname.
+		 * Prerequisites have object name that is optionally
+		 * followed by SP and subject line.
+		 */
+		if (get_sha1_hex(buf.buf, sha1) ||
+		    (40 <= buf.len && !isspace(buf.buf[40])) ||
+		    (!is_prereq && buf.len <= 40)) {
+			if (report_path)
+				error("unrecognized header: %s%s (%d)",
+				      (is_prereq ? "-" : ""), buf.buf, (int)buf.len);
+			status = -1;
+			break;
+		} else {
+			if (is_prereq)
+				add_to_ref_list(sha1, "", &header->prerequisites);
+			else
+				add_to_ref_list(sha1, buf.buf + 41, &header->references);
+		}
+	}
+
+ abort:
+	if (status) {
+		close(fd);
+		fd = -1;
+	}
+	strbuf_release(&buf);
+	return fd;
+}
+
 int read_bundle_header(const char *path, struct bundle_header *header)
 {
-	char buffer[1024];
-	int fd;
-	long fpos;
-	FILE *ffd = fopen(path, "rb");
+	int fd = open(path, O_RDONLY);
 
-	if (!ffd)
-		return error("could not open '%s'", path);
-	if (!fgets(buffer, sizeof(buffer), ffd) ||
-			strcmp(buffer, bundle_signature)) {
-		fclose(ffd);
-		return error("'%s' does not look like a v2 bundle file", path);
-	}
-	while (fgets(buffer, sizeof(buffer), ffd)
-			&& buffer[0] != '\n') {
-		int is_prereq = buffer[0] == '-';
-		int offset = is_prereq ? 1 : 0;
-		int len = strlen(buffer);
-		unsigned char sha1[20];
-		struct ref_list *list = is_prereq ? &header->prerequisites
-			: &header->references;
-		char delim;
-
-		if (len && buffer[len - 1] == '\n')
-			buffer[len - 1] = '\0';
-		if (get_sha1_hex(buffer + offset, sha1)) {
-			warning("unrecognized header: %s", buffer);
-			continue;
-		}
-		delim = buffer[40 + offset];
-		if (!isspace(delim) && (delim != '\0' || !is_prereq))
-			die ("invalid header: %s", buffer);
-		add_to_ref_list(sha1, isspace(delim) ?
-				buffer + 41 + offset : "", list);
-	}
-	fpos = ftell(ffd);
-	fclose(ffd);
-	fd = open(path, O_RDONLY);
 	if (fd < 0)
 		return error("could not open '%s'", path);
-	lseek(fd, fpos, SEEK_SET);
-	return fd;
+	return parse_bundle_header(fd, header, path);
+}
+
+int is_bundle(const char *path, int quiet)
+{
+	struct bundle_header header;
+	int fd = open(path, O_RDONLY);
+
+	if (fd < 0)
+		return 0;
+	memset(&header, 0, sizeof(header));
+	fd = parse_bundle_header(fd, &header, quiet ? NULL : path);
+	if (fd >= 0)
+		close(fd);
+	return (fd >= 0);
 }
 
 static int list_refs(struct ref_list *r, int argc, const char **argv)
