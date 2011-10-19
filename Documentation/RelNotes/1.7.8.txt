@@ -4,7 +4,7 @@ Git v1.7.8 Release Notes (draft)
 Updates since v1.7.7
 --------------------
 
- * Some git-svn and git-gui updates.
+ * Some git-svn, git-gui and msysgit updates.
 
  * Updates to bash completion scripts.
 
@@ -40,6 +40,9 @@ Updates since v1.7.7
  * "git diff" learned "--minimal" option to spend extra cycles to come
    up with a minimal patch output.
 
+ * "git diff" learned "--function-context" option to show the whole
+   function as context that was affected by a change.
+
  * "git fetch" learned to honor transfer.fsckobjects configuration to
    validate the objects that were received from the other end, just like
    "git receive-pack" (the receiving end of "git push") does.
@@ -63,7 +66,15 @@ Updates since v1.7.7
     files in the working tree, so that matches in new but not yet
     added files do not get missed.
 
+ * The recursive merge backend no longer looks for meaningless
+   existing merges in submodules unless in the outermost merge.
+
+ * "git log" and friends learned "--children" option.
+
  * "git ls-remote" learned to respond to "-h"(elp) requests.
+
+ * "git merge" learned the "--edit" option to allow users to edit the
+   merge commit log message.
 
  * "git send-email" learned to respond to "-h"(elp) requests.
 
@@ -92,6 +103,8 @@ Updates since v1.7.7
 
  * "gitweb" leaked unescaped control characters from syntax hiliter
    outputs.
+
+ * "gitweb" now has its own manual pages.
 
 
 Also contains other documentation updates and minor code cleanups.
@@ -142,6 +155,9 @@ included in this release.
    of the file.
    (merge 8557263 jc/apply-blank-at-eof-fix later to maint).
 
+ * "git apply --index" did not check corrupted patch.
+   (merge 2c93286 jm/maint-apply-detects-corrupt-patch-header later to maint).
+
  * "git bisect" did not notice when it failed to update the working tree
    to the next commit to be tested.
    (merge 1acf11717 js/bisect-no-checkout later to maint).
@@ -179,13 +195,17 @@ included in this release.
    hooks for attempted removal of non-existing refs.
    (merge 160b81ed ph/push-to-delete-nothing later to maint).
 
+ * "git send-email" did not honor the configured hostname when restarting
+   the HELO/EHLO exchange after switching TLS on.
+   (merge 155b940 md/smtp-tls-hello-again later to maint).
+
  * "gitweb" used to produce a non-working link while showing the contents
    of a blob, when JavaScript actions are enabled.
    (merge 2b07ff3ff ps/gitweb-js-with-lineno later to maint).
 
 ---
 exec >/var/tmp/1
-O=v1.7.7-368-g9638384
+O=v1.7.7-418-g40d6987
 echo O=$(git describe --always master)
 git log --first-parent --oneline --reverse ^$O master
 echo
