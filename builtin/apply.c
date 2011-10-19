@@ -1407,6 +1407,9 @@ static int find_header(char *line, unsigned long size, int *hdrsize, struct patc
 					    "%d leading pathname components (line %d)" , p_value, linenr);
 				patch->old_name = patch->new_name = patch->def_name;
 			}
+			if (!patch->is_delete && !patch->new_name)
+				die("git diff header lacks filename information "
+				    "(line %d)", linenr);
 			patch->is_toplevel_relative = 1;
 			*hdrsize = git_hdr_len;
 			return offset;
