@@ -39,9 +39,9 @@ no)
 
 	while read branch eh
 	do
-		case "$branch" in '#'*) continue ;; esac
+		case "$branch" in '#'* | '') continue ;; esac
 		case "$eh" in
-		"")
+		"" | "#"*)
 			save=$(git rev-parse --verify HEAD)
 
 			echo >&2 "* $branch"
