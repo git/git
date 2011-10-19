@@ -1,13 +1,14 @@
 #!/bin/sh
 
-git push repo "$@" &&
-git push gph "$@" &&
-git push github2 "$@" &&
-git push sfjp "$@" &&
-git push sf.net "$@" &&
+for remote in ko repo gph github2 sfjp sf.net
+do
+	printf "%s: " "$remote"
+	git push "$remote" "$@" || exit $?
+done
 
 case "$#" in
 0)
+	printf "github mirror: "
 	git push github "$@" ;;
 *)
 	echo "No push to github" ;;
