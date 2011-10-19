@@ -317,11 +317,11 @@ static void get_ref_dir(struct ref_cache *refs, const char *base,
 	if (dir) {
 		struct dirent *de;
 		int baselen = strlen(base);
-		char *ref = xmalloc(baselen + 257);
+		char *refname = xmalloc(baselen + 257);
 
-		memcpy(ref, base, baselen);
+		memcpy(refname, base, baselen);
 		if (baselen && base[baselen-1] != '/')
-			ref[baselen++] = '/';
+			refname[baselen++] = '/';
 
 		while ((de = readdir(dir)) != NULL) {
 			unsigned char sha1[20];
@@ -337,31 +337,31 @@ static void get_ref_dir(struct ref_cache *refs, const char *base,
 				continue;
 			if (has_extension(de->d_name, ".lock"))
 				continue;
-			memcpy(ref + baselen, de->d_name, namelen+1);
+			memcpy(refname + baselen, de->d_name, namelen+1);
 			refdir = *refs->name
-				? git_path_submodule(refs->name, "%s", ref)
-				: git_path("%s", ref);
+				? git_path_submodule(refs->name, "%s", refname)
+				: git_path("%s", refname);
 			if (stat(refdir, &st) < 0)
 				continue;
 			if (S_ISDIR(st.st_mode)) {
-				get_ref_dir(refs, ref, array);
+				get_ref_dir(refs, refname, array);
 				continue;
 			}
 			if (*refs->name) {
 				hashclr(sha1);
 				flag = 0;
-				if (resolve_gitlink_ref(refs->name, ref, sha1) < 0) {
+				if (resolve_gitlink_ref(refs->name, refname, sha1) < 0) {
 					hashclr(sha1);
 					flag |= REF_BROKEN;
 				}
 			} else
-				if (!resolve_ref(ref, sha1, 1, &flag)) {
+				if (!resolve_ref(refname, sha1, 1, &flag)) {
 					hashclr(sha1);
 					flag |= REF_BROKEN;
 				}
-			add_ref(ref, sha1, flag, array, NULL);
+			add_ref(refname, sha1, flag, array, NULL);
 		}
-		free(ref);
+		free(refname);
 		closedir(dir);
 	}
 }
