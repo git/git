@@ -696,21 +696,31 @@ fallback:
 	return -1;
 }
 
+static int do_for_each_ref_in_array(struct ref_array *array, int offset,
+				    const char *base,
+				    each_ref_fn fn, int trim, int flags, void *cb_data)
+{
+	int i;
+	for (i = offset; i < array->nr; i++) {
+		int retval = do_one_ref(base, fn, trim, flags, cb_data, array->refs[i]);
+		if (retval)
+			return retval;
+	}
+	return 0;
+}
+
 static int do_for_each_ref(const char *submodule, const char *base, each_ref_fn fn,
 			   int trim, int flags, void *cb_data)
 {
-	int retval = 0, i, p = 0, l = 0;
+	int retval = 0, p = 0, l = 0;
 	struct ref_cache *refs = get_ref_cache(submodule);
 	struct ref_array *packed = get_packed_refs(refs);
 	struct ref_array *loose = get_loose_refs(refs);
 
-	struct ref_array *extra = &extra_refs;
-
-	for (i = 0; i < extra->nr; i++) {
-		retval = do_one_ref(base, fn, trim, flags, cb_data, extra->refs[i]);
-		if (retval)
-			goto end_each;
-	}
+	retval = do_for_each_ref_in_array(&extra_refs, 0,
+					  base, fn, trim, flags, cb_data);
+	if (retval)
+		goto end_each;
 
 	while (p < packed->nr && l < loose->nr) {
 		struct ref_entry *entry;
@@ -730,14 +740,11 @@ static int do_for_each_ref(const char *submodule, const char *base, each_ref_fn 
 	}
 
 	if (l < loose->nr) {
-		p = l;
-		packed = loose;
-	}
-
-	for (; p < packed->nr; p++) {
-		retval = do_one_ref(base, fn, trim, flags, cb_data, packed->refs[p]);
-		if (retval)
-			goto end_each;
+		retval = do_for_each_ref_in_array(loose, l,
+						  base, fn, trim, flags, cb_data);
+	} else {
+		retval = do_for_each_ref_in_array(packed, p,
+						  base, fn, trim, flags, cb_data);
 	}
 
 end_each:
