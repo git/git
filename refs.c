@@ -1075,6 +1075,30 @@ static int remove_empty_directories(const char *file)
 }
 
 /*
+ * Return true iff refname1 and refname2 conflict with each other.
+ * Two reference names conflict if one of them exactly matches the
+ * leading components of the other; e.g., "foo/bar" conflicts with
+ * both "foo" and with "foo/bar/baz" but not with "foo/bar" or
+ * "foo/barbados".
+ */
+static int names_conflict(const char *refname1, const char *refname2)
+{
+	int len1 = strlen(refname1);
+	int len2 = strlen(refname2);
+	int cmplen;
+	const char *lead;
+
+	if (len1 < len2) {
+		cmplen = len1;
+		lead = refname2;
+	} else {
+		cmplen = len2;
+		lead = refname1;
+	}
+	return !strncmp(refname1, refname2, cmplen) && lead[cmplen] == '/';
+}
+
+/*
  * Return true iff a reference named refname could be created without
  * conflicting with the name of an existing reference.  If oldrefname
  * is non-NULL, ignore potential conflicts with oldrefname (e.g.,
@@ -1084,20 +1108,15 @@ static int remove_empty_directories(const char *file)
 static int is_refname_available(const char *refname, const char *oldrefname,
 				struct ref_array *array)
 {
-	int i, namlen = strlen(refname); /* e.g. 'foo/bar' */
+	int i;
 	for (i = 0; i < array->nr; i++ ) {
 		struct ref_entry *entry = array->refs[i];
-		/* entry->name could be 'foo' or 'foo/bar/baz' */
-		if (!oldrefname || strcmp(oldrefname, entry->name)) {
-			int len = strlen(entry->name);
-			int cmplen = (namlen < len) ? namlen : len;
-			const char *lead = (namlen < len) ? entry->name : refname;
-			if (!strncmp(refname, entry->name, cmplen) &&
-			    lead[cmplen] == '/') {
-				error("'%s' exists; cannot create '%s'",
-				      entry->name, refname);
-				return 0;
-			}
+		if (oldrefname && !strcmp(oldrefname, entry->name))
+			continue;
+		if (names_conflict(refname, entry->name)) {
+			error("'%s' exists; cannot create '%s'",
+			      entry->name, refname);
+			return 0;
 		}
 	}
 	return 1;
