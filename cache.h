@@ -662,7 +662,25 @@ extern char *git_pathdup(const char *fmt, ...)
 
 /* Return a statically allocated filename matching the sha1 signature */
 extern char *mkpath(const char *fmt, ...) __attribute__((format (printf, 1, 2)));
+
+/*
+ * Return the path of a file within get_git_dir().  The arguments
+ * should be printf-like arguments that produce the filename relative
+ * to get_git_dir().  Return the resulting path, or "/bad-path/" if
+ * there is an error.  The return value is a pointer into a temporary
+ * buffer that will be overwritten without notice.
+ */
 extern char *git_path(const char *fmt, ...) __attribute__((format (printf, 1, 2)));
+
+/*
+ * Return the path of a file within the git_dir of the submodule
+ * located at path.  The other arguments should be printf-like
+ * arguments that produce the filename relative to "<path>/.git".  If
+ * "<path>/.git" is a gitlink file, follow it to find the actual
+ * submodule git_dir.  Return the resulting path, or "/bad-path/" if
+ * there is an error.  The return value is a pointer into a temporary
+ * buffer that will be overwritten without notice.
+ */
 extern char *git_path_submodule(const char *path, const char *fmt, ...)
 	__attribute__((format (printf, 2, 3)));
 
