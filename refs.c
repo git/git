@@ -489,7 +489,6 @@ const char *resolve_ref(const char *ref, unsigned char *sha1, int reading, int *
 	ssize_t len;
 	char buffer[256];
 	static char ref_buffer[256];
-	char path[PATH_MAX];
 
 	if (flag)
 		*flag = 0;
@@ -498,6 +497,7 @@ const char *resolve_ref(const char *ref, unsigned char *sha1, int reading, int *
 		return NULL;
 
 	for (;;) {
+		char path[PATH_MAX];
 		struct stat st;
 		char *buf;
 		int fd;
@@ -570,21 +570,22 @@ const char *resolve_ref(const char *ref, unsigned char *sha1, int reading, int *
 		 */
 		if (prefixcmp(buffer, "ref:"))
 			break;
+		if (flag)
+			*flag |= REF_ISSYMREF;
 		buf = buffer + 4;
 		while (isspace(*buf))
 			buf++;
 		if (check_refname_format(buf, REFNAME_ALLOW_ONELEVEL)) {
-			warning("symbolic reference in %s is formatted incorrectly",
-				path);
+			if (flag)
+				*flag |= REF_ISBROKEN;
 			return NULL;
 		}
 		ref = strcpy(ref_buffer, buf);
-		if (flag)
-			*flag |= REF_ISSYMREF;
 	}
 	/* Please note that FETCH_HEAD has a second line containing other data. */
 	if (get_sha1_hex(buffer, sha1) || (buffer[40] != '\0' && !isspace(buffer[40]))) {
-		warning("reference in %s is formatted incorrectly", path);
+		if (flag)
+			*flag |= REF_ISBROKEN;
 		return NULL;
 	}
 	return ref;
@@ -1107,8 +1108,11 @@ int dwim_ref(const char *str, int len, unsigned char *sha1, char **ref)
 				*ref = xstrdup(r);
 			if (!warn_ambiguous_refs)
 				break;
-		} else if ((flag & REF_ISSYMREF) && strcmp(fullref, "HEAD"))
+		} else if ((flag & REF_ISSYMREF) && strcmp(fullref, "HEAD")) {
 			warning("ignoring dangling symref %s.", fullref);
+		} else if ((flag & REF_ISBROKEN) && strchr(fullref, '/')) {
+			warning("ignoring broken ref %s.", fullref);
+		}
 	}
 	free(last_branch);
 	return refs_found;
