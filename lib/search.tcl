@@ -35,7 +35,7 @@ constructor new {i_w i_text args} {
 
 	${NS}::frame  $w
 	${NS}::label  $w.l       -text [mc Find:]
-	entry  $w.ent -textvariable ${__this}::searchstring -background lightgreen
+	tentry  $w.ent -textvariable ${__this}::searchstring -background lightgreen
 	${NS}::button $w.bn      -text [mc Next] -command [cb find_next]
 	${NS}::button $w.bp      -text [mc Prev] -command [cb find_prev]
 	${NS}::checkbutton $w.re -text [mc RegExp] \
@@ -162,10 +162,12 @@ method _incrsearch {} {
 			$ctext see $here
 			$ctext tag remove sel 1.0 end
 			$ctext tag add sel $here "$here + $mlen c"
-			$w.ent configure -background lightgreen
+			#$w.ent configure -background lightgreen
+			$w.ent state !pressed
 			_set_marks $this 1
 		} else {
-			$w.ent configure -background lightpink
+			#$w.ent configure -background lightpink
+			$w.ent state pressed
 		}
 	}
 }
