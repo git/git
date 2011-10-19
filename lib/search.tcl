@@ -11,6 +11,7 @@ field regexpsearch
 field default_regexpsearch
 field casesensitive
 field default_casesensitive
+field smartcase
 field searchdirn     -forwards
 
 field history
@@ -25,7 +26,8 @@ constructor new {i_w i_text args} {
 	set ctext  $i_text
 
 	set default_regexpsearch [is_config_true gui.search.regexp]
-	if {[is_config_true gui.search.smartcase]} {
+	set smartcase [is_config_true gui.search.smartcase]
+	if {$smartcase} {
 		set default_casesensitive 0
 	} else {
 		set default_casesensitive 1
@@ -155,8 +157,10 @@ method _incrsearch {} {
 	if {[catch {$ctext index anchor}]} {
 		$ctext mark set anchor [_get_new_anchor $this]
 	}
-	if {[regexp {[[:upper:]]} $searchstring]} {
-		set casesensitive 1
+	if {$smartcase} {
+		if {[regexp {[[:upper:]]} $searchstring]} {
+			set casesensitive 1
+		}
 	}
 	if {$searchstring ne {}} {
 		set here [_do_search $this anchor mlen]
