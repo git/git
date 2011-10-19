@@ -4,9 +4,8 @@
 #include "tag.h"
 #include "dir.h"
 
-/* ISSYMREF=01 and ISPACKED=02 are public interfaces */
-#define REF_KNOWS_PEELED 04
-#define REF_BROKEN 010
+/* ISSYMREF=0x01, ISPACKED=0x02 and ISBROKEN=0x04 are public interfaces */
+#define REF_KNOWS_PEELED 0x10
 
 struct ref_list {
 	struct ref_list *next;
@@ -309,12 +308,12 @@ static struct ref_list *get_ref_dir(const char *submodule, const char *base,
 				flag = 0;
 				if (resolve_gitlink_ref(submodule, ref, sha1) < 0) {
 					hashclr(sha1);
-					flag |= REF_BROKEN;
+					flag |= REF_ISBROKEN;
 				}
 			} else
 				if (!resolve_ref(ref, sha1, 1, &flag)) {
 					hashclr(sha1);
-					flag |= REF_BROKEN;
+					flag |= REF_ISBROKEN;
 				}
 			list = add_ref(ref, sha1, flag, list, NULL);
 		}
@@ -613,8 +612,8 @@ static int do_one_ref(const char *base, each_ref_fn fn, int trim,
 		return 0;
 
 	if (!(flags & DO_FOR_EACH_INCLUDE_BROKEN)) {
-		if (entry->flag & REF_BROKEN)
-			return 0; /* ignore dangling symref */
+		if (entry->flag & REF_ISBROKEN)
+			return 0; /* ignore broken refs e.g. dangling symref */
 		if (!has_sha1_file(entry->sha1)) {
 			error("%s does not point to a valid object!", entry->name);
 			return 0;
