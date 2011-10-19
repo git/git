@@ -474,6 +474,12 @@ core.editor::
 	variable when it is set, and the environment variable
 	`GIT_EDITOR` is not set.  See linkgit:git-var[1].
 
+sequence.editor::
+	Text editor used by `git rebase -i` for editing the rebase insn file.
+	The value is meant to be interpreted by the shell when it is used.
+	It can be overridden by the `GIT_SEQUENCE_EDITOR` environment variable.
+	When not configured the default commit message editor is used instead.
+
 core.pager::
 	The command that git will use to paginate output.  Can
 	be overridden with the `GIT_PAGER` environment
