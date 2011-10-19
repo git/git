@@ -165,6 +165,14 @@ static void show_parents(struct commit *commit, int abbrev)
 	}
 }
 
+static void show_children(struct rev_info *opt, struct commit *commit, int abbrev)
+{
+	struct commit_list *p = lookup_decoration(&opt->children, &commit->object);
+	for ( ; p; p = p->next) {
+		printf(" %s", find_unique_abbrev(p->item->object.sha1, abbrev));
+	}
+}
+
 void show_decorations(struct rev_info *opt, struct commit *commit)
 {
 	const char *prefix;
@@ -414,6 +422,8 @@ void show_log(struct rev_info *opt)
 		fputs(find_unique_abbrev(commit->object.sha1, abbrev_commit), stdout);
 		if (opt->print_parents)
 			show_parents(commit, abbrev_commit);
+		if (opt->children.name)
+			show_children(opt, commit, abbrev_commit);
 		show_decorations(opt, commit);
 		if (opt->graph && !graph_is_commit_finished(opt->graph)) {
 			putchar('\n');
@@ -473,6 +483,8 @@ void show_log(struct rev_info *opt)
 		      stdout);
 		if (opt->print_parents)
 			show_parents(commit, abbrev_commit);
+		if (opt->children.name)
+			show_children(opt, commit, abbrev_commit);
 		if (parent)
 			printf(" (from %s)",
 			       find_unique_abbrev(parent->object.sha1,
