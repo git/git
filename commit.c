@@ -854,28 +854,31 @@ int parse_signed_commit(const unsigned char *sha1,
 	unsigned long size;
 	enum object_type type;
 	char *buffer = read_sha1_file(sha1, &type, &size);
-	int in_header, saw_signature = -1;
-	char *line;
+	int saw_signature = -1;
+	char *line, *tail;
 
 	if (!buffer || type != OBJ_COMMIT)
 		goto cleanup;
 
 	line = buffer;
-	in_header = 1;
+	tail = buffer + size;
 	saw_signature = 0;
-	while (*line) {
-		char *next = strchrnul(line, '\n');
-		if (*next)
+	while (line < tail) {
+		char *next = memchr(line, '\n', tail - line);
+		if (!next)
+			next = tail;
+		else
 			next++;
-		if (in_header && !prefixcmp(line, gpg_sig_header)) {
+		if (!prefixcmp(line, gpg_sig_header)) {
 			const char *sig = line + gpg_sig_header_len;
 			strbuf_add(signature, sig, next - sig);
 			saw_signature = 1;
 		} else {
+			if (*line == '\n')
+				/* dump the whole remainder of the buffer */
+				next = tail;
 			strbuf_add(payload, line, next - line);
 		}
-		if (*line == '\n')
-			in_header = 0;
 		line = next;
 	}
  cleanup:

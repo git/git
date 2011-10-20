@@ -50,11 +50,22 @@ test_expect_success GPG 'show signatures' '
 
 test_expect_success GPG 'detect fudged signature' '
 	git cat-file commit master >raw &&
-	sed -e "s/fourth signed/4th forged/" raw >forged &&
-	git hash-object -w -t commit forged >forged.commit &&
-	git show --pretty=short --show-signature $(cat forged.commit) >actual &&
-	grep "BAD signature from" actual &&
-	! grep "Good signature from" actual
+
+	sed -e "s/fourth signed/4th forged/" raw >forged1 &&
+	git hash-object -w -t commit forged1 >forged1.commit &&
+	git show --pretty=short --show-signature $(cat forged1.commit) >actual1 &&
+	grep "BAD signature from" actual1 &&
+	! grep "Good signature from" actual1
+'
+
+test_expect_success GPG 'detect fudged signature with NUL' '
+	git cat-file commit master >raw &&
+	cat raw >forged2 &&
+	echo Qwik | tr "Q" "\000" >>forged2 &&
+	git hash-object -w -t commit forged2 >forged2.commit &&
+	git show --pretty=short --show-signature $(cat forged2.commit) >actual2 &&
+	grep "BAD signature from" actual2 &&
+	! grep "Good signature from" actual2
 '
 
 test_done
