@@ -219,7 +219,8 @@ constructor new {i_commit i_path i_jump} {
 	eval grid $w_columns $w.file_pane.out.sby -sticky nsew
 	grid conf \
 		$w.file_pane.out.sbx \
-		-column [expr {[llength $w_columns] - 1}] \
+		-column 0 \
+		-columnspan [expr {[llength $w_columns] + 1}] \
 		-sticky we
 	grid columnconfigure \
 		$w.file_pane.out \
@@ -229,12 +230,14 @@ constructor new {i_commit i_path i_jump} {
 
 	set finder [::searchbar::new \
 		$w.file_pane.out.ff $w_file \
-		-column [expr {[llength $w_columns] - 1}] \
+		-column 0 \
+		-columnspan [expr {[llength $w_columns] + 1}] \
 		]
 
 	set gotoline [::linebar::new \
 		$w.file_pane.out.lf $w_file \
-		-column [expr {[llength $w_columns] - 1}] \
+		-column 0 \
+		-columnspan [expr {[llength $w_columns] + 1}] \
 		]
 
 	set w_cviewer $w.file_pane.cm.t
