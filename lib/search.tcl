@@ -26,11 +26,20 @@ constructor new {i_w i_text args} {
 	set ctext  $i_text
 
 	set default_regexpsearch [is_config_true gui.search.regexp]
-	set smartcase [is_config_true gui.search.smartcase]
-	if {$smartcase} {
+	switch -- [get_config gui.search.case] {
+	no {
 		set default_casesensitive 0
-	} else {
+		set smartcase 0
+	}
+	smart {
+		set default_casesensitive 0
+		set smartcase 1
+	}
+	yes -
+	default {
 		set default_casesensitive 1
+		set smartcase 0
+	}
 	}
 
 	set history [list]
@@ -157,12 +166,10 @@ method _incrsearch {} {
 	if {[catch {$ctext index anchor}]} {
 		$ctext mark set anchor [_get_new_anchor $this]
 	}
-	if {$smartcase} {
-		if {[regexp {[[:upper:]]} $searchstring]} {
+	if {$searchstring ne {}} {
+		if {$smartcase && [regexp {[[:upper:]]} $searchstring]} {
 			set casesensitive 1
 		}
-	}
-	if {$searchstring ne {}} {
 		set here [_do_search $this anchor mlen]
 		if {$here ne {}} {
 			$ctext see $here
@@ -175,6 +182,9 @@ method _incrsearch {} {
 			#$w.ent configure -background lightpink
 			$w.ent state pressed
 		}
+	} elseif {$smartcase} {
+		# clearing the field resets the smart case detection
+		set casesensitive 0
 	}
 }
 
