@@ -1026,8 +1026,8 @@ int transport_push(struct transport *transport,
 		if (flags & TRANSPORT_PUSH_MIRROR)
 			match_flags |= MATCH_REFS_MIRROR;
 
-		if (match_refs(local_refs, &remote_refs,
-			       refspec_nr, refspec, match_flags)) {
+		if (match_push_refs(local_refs, &remote_refs,
+				    refspec_nr, refspec, match_flags)) {
 			return -1;
 		}
 

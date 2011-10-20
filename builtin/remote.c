@@ -390,8 +390,8 @@ static int get_push_ref_states(const struct ref *remote_refs,
 	local_refs = get_local_heads();
 	push_map = copy_ref_list(remote_refs);
 
-	match_refs(local_refs, &push_map, remote->push_refspec_nr,
-		   remote->push_refspec, MATCH_REFS_NONE);
+	match_push_refs(local_refs, &push_map, remote->push_refspec_nr,
+			remote->push_refspec, MATCH_REFS_NONE);
 
 	states->push.strdup_strings = 1;
 	for (ref = push_map; ref; ref = ref->next) {
