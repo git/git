@@ -110,7 +110,7 @@ proc read_merge_stages {fd cont} {
 		set fcols [split $p "\t"]
 		set cols  [split [lindex $fcols 0] " "]
 		set stage [lindex $cols 2]
-		
+
 		set merge_stages($stage) [lrange $cols 0 1]
 	}
 

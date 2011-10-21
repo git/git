@@ -3,39 +3,39 @@ diff --git a/Documentation/git-ls-tree.txt b/Documentation/git-ls-tree.txt
 --- a/Documentation/git-ls-tree.txt
 +++ b/Documentation/git-ls-tree.txt
 @@ -4,23 +4,26 @@ v0.1, May 2005
- 
+
  NAME
  ----
 -git-ls-tree - Displays a tree object in human readable form
 +git-ls-tree - Lists the contents of a tree object.
- 
- 
+
+
  SYNOPSIS
  --------
 -'git-ls-tree' [-r] [-z] <tree-ish> [paths...]
 +'git-ls-tree' [-d] [-r] [-z] <tree-ish> [paths...]
- 
+
  DESCRIPTION
  -----------
 -Converts the tree object to a human readable (and script processable)
 -form.
 +Lists the contents of a tree object, like what "/bin/ls -a" does
 +in the current working directory.
- 
+
  OPTIONS
  -------
  <tree-ish>::
  	Id of a tree.
- 
+
 +-d::
 +	show only the named tree entry itself, not its children
 +
  -r::
  	recurse into sub-trees
- 
+
 @@ -28,18 +31,19 @@ OPTIONS
  	\0 line termination on output
- 
+
  paths::
 -	Optionally, restrict the output of git-ls-tree to specific
 -	paths. Directories will only list their tree blob ids.
@@ -43,18 +43,18 @@ diff --git a/Documentation/git-ls-tree.txt b/Documentation/git-ls-tree.txt
 +	When paths are given, shows them.  Otherwise implicitly
 +	uses the root level of the tree as the sole path argument.
 +
- 
+
  Output Format
  -------------
 -        <mode>\t	<type>\t	<object>\t	<file>
 +        <mode> SP <type> SP <object> TAB <file>
- 
- 
+
+
  Author
  ------
  Written by Linus Torvalds <torvalds@osdl.org>
 +Completely rewritten from scratch by Junio C Hamano <junkio@cox.net>
- 
+
  Documentation
  --------------
 diff --git a/ls-tree.c b/ls-tree.c
@@ -77,7 +77,7 @@ dissimilarity index 82%
 -	const char *name;
 -};
 -
--#define DEBUG(fmt, ...)	
+-#define DEBUG(fmt, ...)
 -
 -static int string_path_prefix(char *buff, size_t blen, struct path_prefix *prefix)
 -{
@@ -140,7 +140,7 @@ dissimilarity index 82%
 -	}
 -
 -	return -1;
--}	
+-}
 -
 -/*
 - * match may be NULL, or a *sorted* list of paths
@@ -422,7 +422,7 @@ dissimilarity index 82%
 +
 +static int show_entry(struct tree_entry_list *e, int level)
 +{
-+	int err = 0; 
++	int err = 0;
 +
 +	if (e != &root_entry) {
 +		printf("%06o %s %s	", e->mode, entry_type(e),
@@ -435,7 +435,7 @@ dissimilarity index 82%
 +		/* If this is a directory, we have the following cases:
 +		 * (1) This is the top-level request (explicit path from the
 +		 *     command line, or "root" if there is no command line).
-+		 *  a. Without any flag.  We show direct children.  We do not 
++		 *  a. Without any flag.  We show direct children.  We do not
 +		 *     recurse into them.
 +		 *  b. With -r.  We do recurse into children.
 +		 *  c. With -d.  We do not recurse into children.
@@ -533,7 +533,7 @@ diff --git a/t/t3100-ls-tree-restrict.sh b/t/t3100-ls-tree-restrict.sh
 +100644 blob X	path0
  EOF
       test_output'
- 
+
 @@ -85,7 +85,6 @@ test_expect_success \
       cat >expected <<\EOF &&
  040000 tree X	path2
@@ -563,5 +563,5 @@ diff --git a/tree.h b/tree.h
  	} item;
 +	struct tree_entry_list *parent;
  };
- 
+
  struct tree {

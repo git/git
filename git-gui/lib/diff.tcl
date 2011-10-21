@@ -42,7 +42,7 @@ proc reshow_diff {{after {}}} {
 
 proc force_diff_encoding {enc} {
 	global current_diff_path
-	
+
 	if {$current_diff_path ne {}} {
 		force_path_encoding $current_diff_path $enc
 		reshow_diff

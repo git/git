@@ -31,7 +31,7 @@ svn add trunk branches tags
 i=$(commit $i "Setup trunk, branches, and tags")
 
 git cat-file blob 6683463e:Makefile > trunk/Makefile
-svn add trunk/Makefile 
+svn add trunk/Makefile
 
 say "Committing ANCESTOR"
 i=$(commit $i "ancestor")

@@ -75,7 +75,7 @@ test_expect_success 'interact with it via git svn' '
 	(
 		cd work.svn &&
 		svn_cmd up &&
-		
+
 		test $(svn_cmd log -r2:2 | wc -l) = 5 &&
 		test $(svn_cmd log -r4:4 | wc -l) = 7
 	)

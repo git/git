@@ -37,7 +37,7 @@ constructor new {i_w i_text args} {
 	trace add variable searchstring write [cb _incrsearch_cb]
 	bind $w.ent <Return> [cb find_next]
 	bind $w.ent <Shift-Return> [cb find_prev]
-	
+
 	bind $w <Destroy> [list delete_this $this]
 	return $this
 }

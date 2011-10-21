@@ -65,7 +65,7 @@ index 6faa5a3..e3af329 100644
 +++ b/file2
 @@ -1,26 +1,25 @@
  #include <stdio.h>
- 
+
 +int fib(int n)
 +{
 +    if(n > 2)
@@ -85,7 +85,7 @@ index 6faa5a3..e3af329 100644
          printf("%d\n", foo);
      }
  }
- 
+
 -int fact(int n)
 -{
 -    if(n > 1)

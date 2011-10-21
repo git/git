@@ -57,7 +57,7 @@ diff --git a/hello.c b/hello.c
  {
 -	/* Classic. */
  	printf("Hello world.\n");
- 
+
  	/* Success! */
  	return 0;
  }
@@ -73,12 +73,12 @@ diff --git a/hello.c b/hello.c
 --- a/hello.c
 +++ b/hello.c
 @@ -9,9 +9,8 @@ static int a(void)
- 
+
  static int hello_world(void)
  {
 -	/* Classic. */
  	printf("Hello world.\n");
- 
+
  	/* Success! */
  	return 0;
  }

@@ -35,7 +35,7 @@ V 27
 2007-02-17T06:55:00.121647Z
 PROPS-END
 
-Node-path: 
+Node-path:
 Node-kind: dir
 Node-action: change
 Prop-content-length: 44
@@ -340,7 +340,7 @@ V 27
 2007-02-17T06:56:03.703677Z
 PROPS-END
 
-Node-path: 
+Node-path:
 Node-kind: dir
 Node-action: change
 Prop-content-length: 57

@@ -180,23 +180,23 @@ diff a/Documentation/git.txt b/Documentation/git.txt
 @@ -148,7 +148,7 @@ link:git-resolve-script.html[git-resolve
  link:git-tag-script.html[git-tag-script]::
  	An example script to create a tag object signed with GPG
- 
+
 -link:git-rpull.html[git-rpull]::
 +link:git-ssh-pull.html[git-ssh-pull]::
  	Pulls from a remote repository over ssh connection
- 
+
  Interogators:
 @@ -156,8 +156,8 @@ Interogators:
  link:git-diff-helper.html[git-diff-helper]::
  	Generates patch format output for git-diff-*
- 
+
 -link:git-rpush.html[git-rpush]::
 -	Helper "server-side" program used by git-rpull
 +link:git-ssh-push.html[git-ssh-push]::
 +	Helper "server-side" program used by git-ssh-pull
- 
- 
- 
+
+
+
 diff a/Makefile b/Makefile
 --- a/Makefile
 +++ b/Makefile
@@ -208,7 +208,7 @@ diff a/Makefile b/Makefile
 +	git-http-pull git-ssh-push git-ssh-pull git-rev-list git-mktag \
  	git-diff-helper git-tar-tree git-local-pull git-write-blob \
  	git-get-tar-commit-id git-mkdelta git-apply git-stripspace
- 
+
 @@ -105,8 +105,8 @@ git-diff-cache: diff-cache.c
  git-convert-cache: convert-cache.c
  git-http-pull: http-pull.c pull.c
@@ -336,23 +336,23 @@ diff a/rpush.c b/rpush.c
 -			return -1;
 -		posn += size;
 -	} while (posn < 20);
--	
+-
 -	/* fprintf(stderr, "Serving %s\n", sha1_to_hex(sha1)); */
 -	remote = 0;
--	
+-
 -	buf = map_sha1_file(sha1, &objsize);
--	
+-
 -	if (!buf) {
--		fprintf(stderr, "git-rpush: could not find %s\n", 
+-		fprintf(stderr, "git-rpush: could not find %s\n",
 -			sha1_to_hex(sha1));
 -		remote = -1;
 -	}
--	
+-
 -	write(fd_out, &remote, 1);
--	
+-
 -	if (remote < 0)
 -		return 0;
--	
+-
 -	posn = 0;
 -	do {
 -		size = write(fd_out, buf + posn, objsize - posn);
@@ -531,23 +531,23 @@ diff a/ssh-push.c b/ssh-push.c
 +			return -1;
 +		posn += size;
 +	} while (posn < 20);
-+	
++
 +	/* fprintf(stderr, "Serving %s\n", sha1_to_hex(sha1)); */
 +	remote = 0;
-+	
++
 +	buf = map_sha1_file(sha1, &objsize);
-+	
++
 +	if (!buf) {
-+		fprintf(stderr, "git-ssh-push: could not find %s\n", 
++		fprintf(stderr, "git-ssh-push: could not find %s\n",
 +			sha1_to_hex(sha1));
 +		remote = -1;
 +	}
-+	
++
 +	write(fd_out, &remote, 1);
-+	
++
 +	if (remote < 0)
 +		return 0;
-+	
++
 +	posn = 0;
 +	do {
 +		size = write(fd_out, buf + posn, objsize - posn);

@@ -174,13 +174,13 @@ index 65898fa..b002dc6 100644
 --- a/init-db.c
 +++ b/init-db.c
 @@ -7,7 +7,7 @@
- 
+
  int main(int argc, char **argv)
  {
 -	char *sha1_dir = getenv(DB_ENVIRONMENT), *path;
 +	char *sha1_dir, *path;
  	int len, i;
- 
+
  	if (mkdir(".git", 0755) < 0) {
 ------------------------------------------------
 

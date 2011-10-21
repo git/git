@@ -208,7 +208,7 @@ const size_t __re_error_msgid_idx[] attribute_hidden =
 
 /* For ZOS USS we must define btowc */
 
-wchar_t 
+wchar_t
 btowc (int c)
 {
    wchar_t wtmp[2];
