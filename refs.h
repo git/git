@@ -10,8 +10,9 @@ struct ref_lock {
 	int force_write;
 };
 
-#define REF_ISSYMREF 01
-#define REF_ISPACKED 02
+#define REF_ISSYMREF 0x01
+#define REF_ISPACKED 0x02
+#define REF_ISBROKEN 0x04
 
 /*
  * Calls the specified function for each ref file until it returns nonzero,
