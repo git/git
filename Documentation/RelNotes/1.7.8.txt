@@ -14,10 +14,6 @@ Updates since v1.7.7
  * The date parser now accepts timezone designators that lack minutes
    part and also has a colon between "hh:mm".
 
- * On some BSD systems, adding +s bit on directories is detrimental
-   (it is not necessary on BSD to begin with). The installation
-   procedure has been updated to take this into account.
-
  * The contents of the /etc/mailname file, if exists, is used as the
    default value of the hostname part of the committer/author e-mail.
 
@@ -135,13 +131,6 @@ included in this release.
    with too many refs were unnecessarily slow.
    (merge 17d68a54d jp/get-ref-dir-unsorted later to maint).
 
- * After incorrectly written third-party tools store a tag object in
-   HEAD, git diagnosed it as a repository corruption and refused to
-   proceed in order to avoid spreading the damage. We now gracefully
-   recover from such a situation by pretending as if the commit that
-   is pointed at by the tag were in HEAD.
-   (merge baf18fc nd/maint-autofix-tag-in-head later to maint).
-
  * Report from "git commit" on untracked files was confused under
    core.ignorecase option.
    (merge 2548183b jk/name-hash-dirent later to maint).
@@ -150,22 +139,9 @@ included in this release.
    core.ignorecase was set.
    (merge 6eba621 bc/attr-ignore-case later to maint).
 
- * "git apply --whitespace=error" did not bother to report the exact
-   line number in the patch that introduced new blank lines at the end
-   of the file.
-   (merge 8557263 jc/apply-blank-at-eof-fix later to maint).
-
- * "git apply --index" did not check corrupted patch.
-   (merge 2c93286 jm/maint-apply-detects-corrupt-patch-header later to maint).
-
  * "git bisect" did not notice when it failed to update the working tree
    to the next commit to be tested.
    (merge 1acf11717 js/bisect-no-checkout later to maint).
-
- * "git checkout $tree $directory/" resurrected paths locally removed or
-   modified only in the working tree in $directory/ that did not appear
-   in $directory of the given $tree. They should have been kept intact.
-   (merge 0a1283b jc/checkout-from-tree-keep-local-changes later to maint).
 
  * "git config --bool --get-regexp" failed to separate the variable name
    and its value "true" when the variable is defined without "= true".
