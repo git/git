@@ -16,7 +16,7 @@ svk commit -m "Setup trunk and branches"
 cd trunk
 
 git cat-file blob 6683463e:Makefile > Makefile
-svk add Makefile 
+svk add Makefile
 
 svk commit -m "ancestor"
 cd ..

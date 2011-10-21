@@ -117,7 +117,7 @@ Author: A U Thor <author@example.com>
 Date:   Mon Jun 26 00:01:00 2006 +0000
 
     Second
-    
+
     This is the second commit.
 ---
  dir/sub |    2 ++

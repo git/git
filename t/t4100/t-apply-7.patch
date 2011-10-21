@@ -2,39 +2,39 @@ diff a/Documentation/git-ls-tree.txt b/Documentation/git-ls-tree.txt
 --- a/Documentation/git-ls-tree.txt
 +++ b/Documentation/git-ls-tree.txt
 @@ -4,23 +4,26 @@ v0.1, May 2005
- 
+
  NAME
  ----
 -git-ls-tree - Displays a tree object in human readable form
 +git-ls-tree - Lists the contents of a tree object.
- 
- 
+
+
  SYNOPSIS
  --------
 -'git-ls-tree' [-r] [-z] <tree-ish> [paths...]
 +'git-ls-tree' [-d] [-r] [-z] <tree-ish> [paths...]
- 
+
  DESCRIPTION
  -----------
 -Converts the tree object to a human readable (and script processable)
 -form.
 +Lists the contents of a tree object, like what "/bin/ls -a" does
 +in the current working directory.
- 
+
  OPTIONS
  -------
  <tree-ish>::
  	Id of a tree.
- 
+
 +-d::
 +	show only the named tree entry itself, not its children
 +
  -r::
  	recurse into sub-trees
- 
+
 @@ -28,18 +31,19 @@ OPTIONS
  	\0 line termination on output
- 
+
  paths::
 -	Optionally, restrict the output of git-ls-tree to specific
 -	paths. Directories will only list their tree blob ids.
@@ -42,18 +42,18 @@ diff a/Documentation/git-ls-tree.txt b/Documentation/git-ls-tree.txt
 +	When paths are given, shows them.  Otherwise implicitly
 +	uses the root level of the tree as the sole path argument.
 +
- 
+
  Output Format
  -------------
 -        <mode>\t	<type>\t	<object>\t	<file>
 +        <mode> SP <type> SP <object> TAB <file>
- 
- 
+
+
  Author
  ------
  Written by Linus Torvalds <torvalds@osdl.org>
 +Completely rewritten from scratch by Junio C Hamano <junkio@cox.net>
- 
+
  Documentation
  --------------
 diff a/ls-tree.c b/ls-tree.c
@@ -65,19 +65,19 @@ diff a/ls-tree.c b/ls-tree.c
  #include "cache.h"
 +#include "blob.h"
 +#include "tree.h"
- 
+
  static int line_termination = '\n';
 -static int recursive = 0;
 +#define LS_RECURSIVE 1
 +#define LS_TREE_ONLY 2
 +static int ls_options = 0;
- 
+
 -struct path_prefix {
 -	struct path_prefix *prev;
 -	const char *name;
 -};
 -
--#define DEBUG(fmt, ...)	
+-#define DEBUG(fmt, ...)
 -
 -static int string_path_prefix(char *buff, size_t blen, struct path_prefix *prefix)
 -{
@@ -98,7 +98,7 @@ diff a/ls-tree.c b/ls-tree.c
 -		return len + strlen(prefix->name);
 -	}
 +static struct tree_entry_list root_entry;
- 
+
 -	return 0;
 +static void prepare_root(unsigned char *sha1)
 +{
@@ -124,7 +124,7 @@ diff a/ls-tree.c b/ls-tree.c
 +	root_entry.item.tree = root_tree;
 +	root_entry.parent = NULL;
  }
- 
+
 -static void print_path_prefix(struct path_prefix *prefix)
 +static int prepare_children(struct tree_entry_list *elem)
  {
@@ -146,7 +146,7 @@ diff a/ls-tree.c b/ls-tree.c
  	}
 +	return 0;
  }
- 
+
 -/*
 - * return:
 - * 	-1 if prefix is *not* a subset of path
@@ -167,14 +167,14 @@ diff a/ls-tree.c b/ls-tree.c
 +	while (path < path_end) {
 +		if (prepare_children(elem))
 +			return NULL;
- 
+
 -	if (prefix == NULL)
 -		return 1;
 +		/* In elem->tree->entries, find the one that has name
 +		 * that matches what is between path and ep.
 +		 */
 +		elem = elem->item.tree->entries;
- 
+
 -	len = string_path_prefix(buff, sizeof buff, prefix);
 -	slen = strlen(path);
 +		ep = strchr(path, '/');
@@ -196,7 +196,7 @@ diff a/ls-tree.c b/ls-tree.c
 +	}
 +	return NULL;
 +}
- 
+
 -	if (slen < len)
 -		return -1;
 +static struct tree_entry_list *find_entry(const char *path,
@@ -212,7 +212,7 @@ diff a/ls-tree.c b/ls-tree.c
 +	}
 +	return find_entry_0(&root_entry, path, path_end);
 +}
- 
+
 -	if (strncmp(path,buff,len) == 0) {
 -		if (slen == len)
 -			return 0;
@@ -230,14 +230,14 @@ diff a/ls-tree.c b/ls-tree.c
  	}
 +	printf("%s", e->name);
 +}
- 
+
 -	return -1;
--}	
+-}
 +static const char *entry_type(struct tree_entry_list *e)
 +{
 +	return (e->directory ? "tree" : "blob");
 +}
- 
+
 -/*
 - * match may be NULL, or a *sorted* list of paths
 - */
@@ -287,7 +287,7 @@ diff a/ls-tree.c b/ls-tree.c
 +			   ? e->item.tree->object.sha1
 +			   : e->item.blob->object.sha1);
 +}
- 
+
 -		/*
 -		 * If we're not matching, or if this is an exact match,
 -		 * print out the info
@@ -301,7 +301,7 @@ diff a/ls-tree.c b/ls-tree.c
 -		}
 +/* forward declaration for mutually recursive routines */
 +static int show_entry(struct tree_entry_list *, int);
- 
+
 -		if (! recursive || ! S_ISDIR(mode))
 -			continue;
 +static int show_children(struct tree_entry_list *e, int level)
@@ -315,13 +315,13 @@ diff a/ls-tree.c b/ls-tree.c
 +	}
 +	return 0;
 +}
- 
+
 -		if (matches && ! matched)
 -			continue;
 +static int show_entry(struct tree_entry_list *e, int level)
 +{
-+	int err = 0; 
- 
++	int err = 0;
+
 -		if (! (eltbuf = read_sha1_file(sha1, elttype, &eltsize)) ) {
 -			error("cannot read %s", sha1_to_hex(sha1));
 -			continue;
@@ -332,7 +332,7 @@ diff a/ls-tree.c b/ls-tree.c
 +		show_entry_name(e);
 +		putchar(line_termination);
 +	}
- 
+
 -		/* If this is an exact directory match, we may have
 -		 * directory files following this path. Match on them.
 -		 * Otherwise, we're at a pach subcomponent, and we need
@@ -341,7 +341,7 @@ diff a/ls-tree.c b/ls-tree.c
 +		/* If this is a directory, we have the following cases:
 +		 * (1) This is the top-level request (explicit path from the
 +		 *     command line, or "root" if there is no command line).
-+		 *  a. Without any flag.  We show direct children.  We do not 
++		 *  a. Without any flag.  We show direct children.  We do not
 +		 *     recurse into them.
 +		 *  b. With -r.  We do recurse into children.
 +		 *  c. With -d.  We do not recurse into children.
@@ -366,7 +366,7 @@ diff a/ls-tree.c b/ls-tree.c
  	}
 +	return err;
  }
- 
+
 -static int qcmp(const void *a, const void *b)
 +static int list_one(const char *path, const char *path_end)
  {
@@ -383,7 +383,7 @@ diff a/ls-tree.c b/ls-tree.c
 +	err = err | show_entry(e, 0);
 +	return err;
  }
- 
+
 -static int list(unsigned char *sha1,char **path)
 +static int list(char **path)
  {
@@ -412,17 +412,17 @@ diff a/ls-tree.c b/ls-tree.c
 +	}
 +	return err;
  }
- 
+
 -static const char *ls_tree_usage = "git-ls-tree [-r] [-z] <key> [paths...]";
 +static const char *ls_tree_usage =
 +	"git-ls-tree [-d] [-r] [-z] <tree-ish> [path...]";
- 
+
  int main(int argc, char **argv)
  {
 +	static char *path0[] = { "", NULL };
 +	char **path;
  	unsigned char sha1[20];
- 
+
  	while (1 < argc && argv[1][0] == '-') {
 @@ -194,7 +223,10 @@ int main(int argc, char **argv)
  			line_termination = 0;
@@ -460,7 +460,7 @@ diff a/t/t3100-ls-tree-restrict.sh b/t/t3100-ls-tree-restrict.sh
 +100644 blob X	path0
  EOF
       test_output'
- 
+
 @@ -85,7 +85,6 @@ test_expect_success \
       cat >expected <<\EOF &&
  040000 tree X	path2
@@ -490,5 +490,5 @@ diff a/tree.h b/tree.h
  	} item;
 +	struct tree_entry_list *parent;
  };
- 
+
  struct tree {

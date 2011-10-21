@@ -23,8 +23,8 @@ index 3fd3afb..0ee807e 100644
     - imagemagick
 -   - docutils
 +   - python-docutils
- 
+
  #. на машине dinar: добавить свой открытый ssh-ключ в authorized_keys2 пользователя ddev
  #. на своей машине: отредактировать /etc/sudoers (команда ``visudo``) примерно следующим образом::
--- 
+--
 1.5.6.5

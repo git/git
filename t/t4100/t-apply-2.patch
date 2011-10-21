@@ -3,12 +3,12 @@ diff --git a/Makefile b/Makefile
 --- a/Makefile
 +++ b/Makefile
 @@ -20,7 +20,7 @@ INSTALL=install
- 
+
  SCRIPTS=git-apply-patch-script git-merge-one-file-script git-prune-script \
  	git-pull-script git-tag-script git-resolve-script git-whatchanged \
 -	git-deltafy-script
 +	git-deltafy-script git-fetch-script
- 
+
  PROG=   git-update-index git-diff-files git-init-db git-write-tree \
  	git-read-tree git-commit-tree git-cat-file git-fsck-cache \
 diff --git a/git-pull-script b/git-fetch-script
@@ -18,7 +18,7 @@ copy to git-fetch-script
 --- a/git-pull-script
 +++ b/git-fetch-script
 @@ -39,8 +39,3 @@ download_one "$merge_repo/$merge_name" "
- 
+
  echo "Getting object database"
  download_objects "$merge_repo" "$(cat "$GIT_DIR"/MERGE_HEAD)"
 -
@@ -32,7 +32,7 @@ diff --git a/git-pull-script b/git-pull-script
 @@ -6,39 +6,7 @@ merge_name=${2:-HEAD}
  : ${GIT_DIR=.git}
  : ${GIT_OBJECT_DIRECTORY="${SHA1_FILE_DIRECTORY-"$GIT_DIR/objects"}"}
- 
+
 -download_one () {
 -	# remote_path="$1" local_file="$2"
 -	case "$1" in
@@ -67,6 +67,6 @@ diff --git a/git-pull-script b/git-pull-script
 -echo "Getting object database"
 -download_objects "$merge_repo" "$(cat "$GIT_DIR"/MERGE_HEAD)"
 +git-fetch-script "$merge_repo" "$merge_name"
- 
+
  git-resolve-script \
  	"$(cat "$GIT_DIR"/HEAD)" \

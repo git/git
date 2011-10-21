@@ -13,10 +13,10 @@ index 3e5fe51..aabfe5c 100644
 -				handle_filter(&line);
 +			if (prev.len)
 +				handle_filter(&prev);
- 
+
  			if (!handle_boundary())
  				goto handle_body_out;
--- 
+--
 1.6.0.rc2
 
 

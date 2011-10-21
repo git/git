@@ -1,6 +1,6 @@
-    
-	
-    
+
+
+
 From nobody Mon Sep 17 00:00:00 2001
 From: A (zzz)
       U
@@ -22,7 +22,7 @@ index 9123cdc..918dcf8 100644
 @@ -1 +1 @@
 -Fri Jun  9 00:44:04 PDT 2006
 +Fri Jun  9 00:44:13 PDT 2006
--- 
+--
 1.4.0.g6f2b
 
 From nobody Mon Sep 17 00:00:00 2001
@@ -41,13 +41,13 @@ Hopefully this would fix the problem stated there.
 
 
 I have included an extra blank line above, but it does not have to be
-stripped away here, along with the               		   
+stripped away here, along with the
 whitespaces at the end of the above line.  They are expected to be squashed
 when the message is made into a commit log by stripspace,
 Also, there are three blank lines after this paragraph,
 two truly blank and another full of spaces in between.
 
-            
+
 
 Hope this helps.
 
@@ -62,7 +62,7 @@ index 9123cdc..918dcf8 100644
 @@ -1 +1 @@
 -Fri Jun  9 00:44:04 PDT 2006
 +Fri Jun  9 00:44:13 PDT 2006
--- 
+--
 1.4.0.g6f2b
 
 From nobody Mon Sep 17 00:00:00 2001
@@ -93,13 +93,13 @@ index 9123cdc..918dcf8 100644
 @@ -1 +1 @@
 -Fri Jun  9 00:44:04 PDT 2006
 +Fri Jun  9 00:44:13 PDT 2006
--- 
+--
 1.4.0.g6f2b
 
 From nobody Sat Aug 27 23:07:49 2005
 Path: news.gmane.org!not-for-mail
 Message-ID: <20050721.091036.01119516.yoshfuji@linux-ipv6.org>
-From: YOSHIFUJI Hideaki / =?ISO-2022-JP?B?GyRCNUhGIzFRTEAbKEI=?= 
+From: YOSHIFUJI Hideaki / =?ISO-2022-JP?B?GyRCNUhGIzFRTEAbKEI=?=
 	<yoshfuji@linux-ipv6.org>
 Newsgroups: gmane.comp.version-control.git
 Subject: [PATCH 1/2] GIT: Try all addresses for given remote name
@@ -125,10 +125,10 @@ Signed-of-by: Hideaki YOSHIFUJI <yoshfuji@linux-ipv6.org>
 diff --git a/connect.c b/connect.c
 --- a/connect.c
 +++ b/connect.c
-@@ -96,42 +96,57 @@ static enum protocol get_protocol(const 
+@@ -96,42 +96,57 @@ static enum protocol get_protocol(const
  	die("I don't handle protocol '%s'", name);
  }
- 
+
 -static void lookup_host(const char *host, struct sockaddr *in)
 -{
 -	struct addrinfo *res;
@@ -142,7 +142,7 @@ diff --git a/connect.c b/connect.c
 -}
 +#define STR_(s)	# s
 +#define STR(s)	STR_(s)
- 
+
  static int git_tcp_connect(int fd[2], const char *prog, char *host, char *path)
  {
 -	struct sockaddr addr;
@@ -196,11 +196,11 @@ diff --git a/connect.c b/connect.c
  		}
 +		break;
  	}
- 
+
 -	lookup_host(host, &addr);
 -	((struct sockaddr_in *)&addr)->sin_port = htons(port);
 +	freeaddrinfo(ai0);
- 
+
 -	sockfd = socket(PF_INET, SOCK_STREAM, IPPROTO_IP);
  	if (sockfd < 0)
  		die("unable to create socket (%s)", strerror(errno));
@@ -211,7 +211,7 @@ diff --git a/connect.c b/connect.c
  	fd[1] = sockfd;
  	packet_write(sockfd, "%s %s\n", prog, path);
 
--- 
+--
 YOSHIFUJI Hideaki @ USAGI Project  <yoshfuji@linux-ipv6.org>
 GPG-FP  : 9022 65EB 1ECF 3AD1 0BDF  80D8 4807 F894 E062 0EEA
 
@@ -389,7 +389,7 @@ index 9123cdc..918dcf8 100644
 @@ -1 +1 @@
 -Fri Jun  9 00:44:04 PDT 2006
 +Fri Jun  9 00:44:13 PDT 2006
--- 
+--
 1.4.0.g6f2b
 
 From nobody Mon Sep 17 00:00:00 2001
@@ -465,7 +465,7 @@ index 962aa34..2d1520f 100644
  				if (! handle_header(line, hdr_data[i], 0)) {
  					return 1;
  				}
--- 
+--
 1.5.6.2.455.g1efb2
 
 From nobody Fri Aug  8 22:24:03 2008
@@ -551,10 +551,10 @@ index 3fd3afb..0ee807e 100644
     - imagemagick
 -   - docutils
 +   - python-docutils
- 
+
  #. на машине dinar: добавить свой открытый ssh-ключ в authorized_keys2 пользователя ddev
  #. на своей машине: отредактировать /etc/sudoers (команда ``visudo``) примерно следующим образом::
--- 
+--
 1.5.6.5
 From nobody Mon Sep 17 00:00:00 2001
 From: <a.u.thor@example.com> (A U Thor)
@@ -597,7 +597,7 @@ index b0b5d8f..461c47e 100644
 @@ -712,6 +712,34 @@ static inline int patchbreak(const struct strbuf *line)
  	return 0;
  }
- 
+
 +static int scissors(const struct strbuf *line)
 +{
 +	size_t i, len = line->len;
@@ -638,7 +638,7 @@ index b0b5d8f..461c47e 100644
 +		if (still_looking)
  			return 0;
  	}
- 
+
 +	if (scissors(line)) {
 +		fseek(cmitmsg, 0L, SEEK_SET);
 +		still_looking = 1;
@@ -648,7 +648,7 @@ index b0b5d8f..461c47e 100644
  	/* normalize the log message to UTF-8. */
  	if (metainfo_charset)
  		convert_to_utf8(line, charset.buf);
--- 
+--
 1.6.4.1
 From nobody Mon Sep 17 00:00:00 2001
 From: A U Thor <a.u.thor@example.com>

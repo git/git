@@ -1,10 +1,10 @@
 diff --git a/connect.c b/connect.c
 --- a/connect.c
 +++ b/connect.c
-@@ -96,42 +96,57 @@ static enum protocol get_protocol(const 
+@@ -96,42 +96,57 @@ static enum protocol get_protocol(const
  	die("I don't handle protocol '%s'", name);
  }
- 
+
 -static void lookup_host(const char *host, struct sockaddr *in)
 -{
 -	struct addrinfo *res;
@@ -18,7 +18,7 @@ diff --git a/connect.c b/connect.c
 -}
 +#define STR_(s)	# s
 +#define STR(s)	STR_(s)
- 
+
  static int git_tcp_connect(int fd[2], const char *prog, char *host, char *path)
  {
 -	struct sockaddr addr;
@@ -72,11 +72,11 @@ diff --git a/connect.c b/connect.c
  		}
 +		break;
  	}
- 
+
 -	lookup_host(host, &addr);
 -	((struct sockaddr_in *)&addr)->sin_port = htons(port);
 +	freeaddrinfo(ai0);
- 
+
 -	sockfd = socket(PF_INET, SOCK_STREAM, IPPROTO_IP);
  	if (sockfd < 0)
  		die("unable to create socket (%s)", strerror(errno));
@@ -87,7 +87,7 @@ diff --git a/connect.c b/connect.c
  	fd[1] = sockfd;
  	packet_write(sockfd, "%s %s\n", prog, path);
 
--- 
+--
 YOSHIFUJI Hideaki @ USAGI Project  <yoshfuji@linux-ipv6.org>
 GPG-FP  : 9022 65EB 1ECF 3AD1 0BDF  80D8 4807 F894 E062 0EEA
 

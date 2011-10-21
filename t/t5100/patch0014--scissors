@@ -9,7 +9,7 @@ index b0b5d8f..461c47e 100644
 @@ -712,6 +712,34 @@ static inline int patchbreak(const struct strbuf *line)
  	return 0;
  }
- 
+
 +static int scissors(const struct strbuf *line)
 +{
 +	size_t i, len = line->len;
@@ -50,7 +50,7 @@ index b0b5d8f..461c47e 100644
 +		if (still_looking)
  			return 0;
  	}
- 
+
 +	if (scissors(line)) {
 +		fseek(cmitmsg, 0L, SEEK_SET);
 +		still_looking = 1;
@@ -60,5 +60,5 @@ index b0b5d8f..461c47e 100644
  	/* normalize the log message to UTF-8. */
  	if (metainfo_charset)
  		convert_to_utf8(line, charset.buf);
--- 
+--
 1.6.4.1
