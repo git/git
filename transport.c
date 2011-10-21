@@ -859,6 +859,28 @@ static int is_local(const char *url)
 		has_dos_drive_prefix(url);
 }
 
+static int is_gitfile(const char *url)
+{
+	struct stat st;
+	char buf[9];
+	int fd, len;
+	if (stat(url, &st))
+		return 0;
+	if (!S_ISREG(st.st_mode))
+		return 0;
+	if (st.st_size < 10 || st.st_size > 9 + PATH_MAX)
+		return 0;
+
+	fd = open(url, O_RDONLY);
+	if (fd < 0)
+		die_errno("Error opening '%s'", url);
+	len = read_in_full(fd, buf, sizeof(buf));
+	close(fd);
+	if (len != sizeof(buf))
+		die("Error reading %s", url);
+	return !prefixcmp(buf, "gitdir: ");
+}
+
 static int is_file(const char *url)
 {
 	struct stat buf;
@@ -907,7 +929,7 @@ struct transport *transport_get(struct remote *remote, const char *url)
 		ret->fetch = fetch_objs_via_rsync;
 		ret->push = rsync_transport_push;
 		ret->smart_options = NULL;
-	} else if (is_local(url) && is_file(url)) {
+	} else if (is_local(url) && is_file(url) && !is_gitfile(url)) {
 		struct bundle_transport_data *data = xcalloc(1, sizeof(*data));
 		ret->data = data;
 		ret->get_refs_list = get_refs_from_bundle;
