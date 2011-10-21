@@ -117,7 +117,7 @@ case "${1:-.}${2:-.}${3:-.}" in
 
 		# If we do not have enough common material, it is not
 		# worth trying two-file merge using common subsections.
-		expr "$sz0" \< "$sz1" \* 2 >/dev/null || : >$orig
+		expr $sz0 \< $sz1 \* 2 >/dev/null || : >$orig
 		;;
 	*)
 		echo "Auto-merging $4"
