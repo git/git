@@ -334,7 +334,7 @@ int send_pack(struct send_pack_args *args,
 		demux.data = fd;
 		demux.out = -1;
 		if (start_async(&demux))
-			die("receive-pack: unable to fork off sideband demultiplexer");
+			die("send-pack: unable to fork off sideband demultiplexer");
 		in = demux.out;
 	}
 
@@ -509,7 +509,7 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 		flags |= MATCH_REFS_MIRROR;
 
 	/* match them up */
-	if (match_refs(local_refs, &remote_refs, nr_refspecs, refspecs, flags))
+	if (match_push_refs(local_refs, &remote_refs, nr_refspecs, refspecs, flags))
 		return -1;
 
 	set_ref_status_for_push(remote_refs, args.send_mirror,

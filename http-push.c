@@ -1869,8 +1869,8 @@ int main(int argc, char **argv)
 	}
 
 	/* match them up */
-	if (match_refs(local_refs, &remote_refs,
-		       nr_refspec, (const char **) refspec, push_all)) {
+	if (match_push_refs(local_refs, &remote_refs,
+			    nr_refspec, (const char **) refspec, push_all)) {
 		rc = -1;
 		goto cleanup;
 	}

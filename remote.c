@@ -1145,12 +1145,15 @@ static struct ref **tail_ref(struct ref **head)
 }
 
 /*
- * Note. This is used only by "push"; refspec matching rules for
- * push and fetch are subtly different, so do not try to reuse it
- * without thinking.
+ * Given the set of refs the local repository has, the set of refs the
+ * remote repository has, and the refspec used for push, determine
+ * what remote refs we will update and with what value by setting
+ * peer_ref (which object is being pushed) and force (if the push is
+ * forced) in elements of "dst". The function may add new elements to
+ * dst (e.g. pushing to a new branch, done in match_explicit_refs).
  */
-int match_refs(struct ref *src, struct ref **dst,
-	       int nr_refspec, const char **refspec, int flags)
+int match_push_refs(struct ref *src, struct ref **dst,
+		    int nr_refspec, const char **refspec, int flags)
 {
 	struct refspec *rs;
 	int send_all = flags & MATCH_REFS_ALL;
