@@ -2741,7 +2741,7 @@ sub filter_forks_from_projects_list {
 		$path =~ s/\.git$//;      # forks of 'repo.git' are in 'repo/' directory
 		next if ($path =~ m!/$!); # skip non-bare repositories, e.g. 'repo/.git'
 		next unless ($path);      # skip '.git' repository: tests, git-instaweb
-		next unless (-d $path);   # containing directory exists
+		next unless (-d "$projectroot/$path"); # containing directory exists
 		$pr->{'forks'} = [];      # there can be 0 or more forks of project
 
 		# add to trie
