@@ -161,6 +161,16 @@ the facility of inet daemon to achieve the same before spawning
 	repository configuration.  By default, all the services
 	are overridable.
 
+--informative-errors::
+--no-informative-errors::
+	When informative errors are turned on, git-daemon will report
+	more verbose errors to the client, differentiating conditions
+	like "no such repository" from "repository not exported". This
+	is more convenient for clients, but may leak information about
+	the existence of unexported repositories.  When informative
+	errors are not enabled, all errors report "access denied" to the
+	client. The default is --no-informative-errors.
+
 <directory>::
 	A directory to add to the whitelist of allowed directories. Unless
 	--strict-paths is specified this will also include subdirectories
