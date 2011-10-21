@@ -383,7 +383,7 @@ static int xdl_clean_mmatch(char const *dis, long i, long s, long e) {
  * might be potentially discarded if they happear in a run of discardable.
  */
 static int xdl_cleanup_records(xdlclassifier_t *cf, xdfile_t *xdf1, xdfile_t *xdf2) {
-	long i, nm, nreff;
+	long i, nm, nreff, mlim;
 	xrecord_t **recs;
 	xdlclass_t *rcrec;
 	char *dis, *dis1, *dis2;
@@ -396,16 +396,20 @@ static int xdl_cleanup_records(xdlclassifier_t *cf, xdfile_t *xdf1, xdfile_t *xd
 	dis1 = dis;
 	dis2 = dis1 + xdf1->nrec + 1;
 
+	if ((mlim = xdl_bogosqrt(xdf1->nrec)) > XDL_MAX_EQLIMIT)
+		mlim = XDL_MAX_EQLIMIT;
 	for (i = xdf1->dstart, recs = &xdf1->recs[xdf1->dstart]; i <= xdf1->dend; i++, recs++) {
 		rcrec = cf->rcrecs[(*recs)->ha];
 		nm = rcrec ? rcrec->len2 : 0;
-		dis1[i] = (nm == 0) ? 0: 1;
+		dis1[i] = (nm == 0) ? 0: (nm >= mlim) ? 2: 1;
 	}
 
+	if ((mlim = xdl_bogosqrt(xdf2->nrec)) > XDL_MAX_EQLIMIT)
+		mlim = XDL_MAX_EQLIMIT;
 	for (i = xdf2->dstart, recs = &xdf2->recs[xdf2->dstart]; i <= xdf2->dend; i++, recs++) {
 		rcrec = cf->rcrecs[(*recs)->ha];
 		nm = rcrec ? rcrec->len1 : 0;
-		dis2[i] = (nm == 0) ? 0: 1;
+		dis2[i] = (nm == 0) ? 0: (nm >= mlim) ? 2: 1;
 	}
 
 	for (nreff = 0, i = xdf1->dstart, recs = &xdf1->recs[xdf1->dstart];
