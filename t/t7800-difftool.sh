@@ -38,7 +38,17 @@ restore_test_defaults()
 prompt_given()
 {
 	prompt="$1"
-	test "$prompt" = "Hit return to launch 'test-tool': branch"
+	test "$prompt" = "Launch 'test-tool' [Y/n]: branch"
+}
+
+stdin_contains()
+{
+	grep >/dev/null "$1"
+}
+
+stdin_doesnot_contain()
+{
+	! stdin_contains "$1"
 }
 
 # Create a file on master and change it on branch
@@ -263,6 +273,37 @@ test_expect_success PERL 'difftool --extcmd cat arg1' '
 test_expect_success PERL 'difftool --extcmd cat arg2' '
 	diff=$(git difftool --no-prompt --extcmd sh\ -c\ \"cat\ \$2\" branch) &&
 	test "$diff" = branch
+'
+
+# Create a second file on master and a different version on branch
+test_expect_success PERL 'setup with 2 files different' '
+	echo m2 >file2 &&
+	git add file2 &&
+	git commit -m "added file2" &&
+
+	git checkout branch &&
+	echo br2 >file2 &&
+	git add file2 &&
+	git commit -a -m "branch changed file2" &&
+	git checkout master
+'
+
+test_expect_success PERL 'say no to the first file' '
+	diff=$( (echo n; echo) | git difftool -x cat branch ) &&
+
+	echo "$diff" | stdin_contains m2 &&
+	echo "$diff" | stdin_contains br2 &&
+	echo "$diff" | stdin_doesnot_contain master &&
+	echo "$diff" | stdin_doesnot_contain branch
+'
+
+test_expect_success PERL 'say no to the second file' '
+	diff=$( (echo; echo n) | git difftool -x cat branch ) &&
+
+	echo "$diff" | stdin_contains master &&
+	echo "$diff" | stdin_contains branch &&
+	echo "$diff" | stdin_doesnot_contain m2 &&
+	echo "$diff" | stdin_doesnot_contain br2
 '
 
 test_done
