@@ -4,6 +4,26 @@ Git v1.7.7.1 Release Notes
 Fixes since v1.7.7
 ------------------
 
+ * On some BSD systems, adding +s bit on directories is detrimental
+   (it is not necessary on BSD to begin with). The installation
+   procedure has been updated to take this into account.
+
+ * After incorrectly written third-party tools store a tag object in
+   HEAD, git diagnosed it as a repository corruption and refused to
+   proceed in order to avoid spreading the damage. We now gracefully
+   recover from such a situation by pretending as if the commit that
+   is pointed at by the tag were in HEAD.
+
+ * "git apply --whitespace=error" did not bother to report the exact
+   line number in the patch that introduced new blank lines at the end
+   of the file.
+
+ * "git apply --index" did not check corrupted patch.
+
+ * "git checkout $tree $directory/" resurrected paths locally removed or
+   modified only in the working tree in $directory/ that did not appear
+   in $directory of the given $tree. They should have been kept intact.
+
  * "git diff $tree $path" used to apply the pathspec at the output stage,
    reading the whole tree, wasting resources.
 
