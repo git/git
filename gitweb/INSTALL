@@ -130,6 +130,8 @@ You can specify the following configuration variables when building GIT:
    Points to an .html file which is included on the gitweb project
    overview page ('projects_list' view), if it exists.  Relative to
    gitweb.cgi script.  [Default: indextext.html]
+ * GITWEB_SITE_HTML_HEAD_STRING
+   html snippet to include in the <head> section of each page. [No default]
  * GITWEB_SITE_HEADER
    Filename of html text to include at top of each page.  Relative to
    gitweb.cgi script.  [No default]
