@@ -1,124 +1,100 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Oct 2011, #07; Wed, 19)
-X-master-at: 87009edcbd0b4987ccb7ba050a1efe368a315753
-X-next-at: cbf5e0b121e34b6b879a06938b34acda5e1b509d
+Subject: What's cooking in git.git (Oct 2011, #08; Fri, 21)
+X-master-at: 8963314c77af9a4eda5dcbdbab3d4001af83ad81
+X-next-at: debedcddff2f53e631c2ab6fdff41d36fd7381df
 
-What's cooking in git.git (Oct 2011, #07; Wed, 19)
+What's cooking in git.git (Oct 2011, #08; Fri, 21)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' (proposed updates) while commits prefixed with '+' are in 'next'.
 
-The fifth batch of topics started graduating to the master branch. It is
-probably a good point to stop taking new topics and start switching our
-focus to fixing bugs in the topics already in 'master'.
+It probably is a good point to stop taking new topics and start
+switching our focus to fixing bugs in the topics already in 'master'.
 
 Here are the repositories that have my integration branches:
 
 With maint, master, next, pu, todo, html and man:
 
-	git://git.kernel.org/pub/scm/git/git.git
-	git://repo.or.cz/alt-git.git
-	https://code.google.com/p/git-core/
-	https://github.com/git/git
+        git://git.kernel.org/pub/scm/git/git.git
+        git://repo.or.cz/alt-git.git
+        https://code.google.com/p/git-core/
+        https://github.com/git/git
 
 With only maint, master, html and man:
 
-	git://git.sourceforge.jp/gitroot/git-core/git.git
-	git://git-core.git.sourceforge.net/gitroot/git-core/git-core
+        git://git.sourceforge.jp/gitroot/git-core/git.git
+        git://git-core.git.sourceforge.net/gitroot/git-core/git-core
 
 With all the topics and integration branches but not todo, html or man:
 
-	https://github.com/gitster/git
+        https://github.com/gitster/git
+
+By the way, I am planning to stop pushing the generated documentation
+branches to the above repositories in the near term, as they are not
+sources. The only reason the source repository at k.org has hosted these
+branches was because it was the only repository over there that was
+writable by me; it was an ugly historical and administrative workaround
+and not a demonstration of the best practice.
+
+They are pushed to their own separate repositories instead:
+
+        git://git.kernel.org/pub/scm/git/git-{htmldocs,manpages}.git/
+        git://repo.or.cz/git-{htmldocs,manpages}.git/
+        https://code.google.com/p/git-{htmldocs,manpages}.git/
+        https://github.com/gitster/git-{htmldocs,manpages}.git/
 
 --------------------------------------------------
 [New Topics]
 
-* jc/match-refs-clarify (2011-09-12) 2 commits
- - rename "match_refs()" to "match_push_refs()"
- - send-pack: typofix error message
+* fg/submodule-git-file-git-dir (2011-10-21) 2 commits
+ - submodule::module_clone(): silence die() message from module_name()
+ - submodule: whitespace fix
 
-* jn/libperl-git-config (2011-10-18) 1 commit
- - libperl-git: refactor Git::config_*
+* jc/broken-ref-dwim-fix (2011-10-19) 3 commits
+  (merged to 'next' on 2011-10-19 at 40cad95)
+ + resolve_ref(): report breakage to the caller without warning
+ + resolve_ref(): expose REF_ISBROKEN flag
+ + refs.c: move dwim_ref()/dwim_log() from sha1_name.c
+ (this branch is tangled with jc/check-ref-format-fixup.)
 
-* ss/inet-ntop (2011-10-18) 1 commit
- - inet_ntop.c: Work around GCC 4.6's detection of uninitialized variables
+This only takes good bits from the failed jc/check-ref-format-fixup topic
+and implements saner workaround for the recent breakage on the 'master'.
+Will merge to 'master' shortly.
 
---------------------------------------------------
-[Graduated to "master"]
+* jm/maint-gitweb-filter-forks-fix (2011-10-21) 1 commit
+  (merged to 'next' on 2011-10-21 at debedcd)
+ + gitweb: fix regression when filtering out forks
 
-* bk/submodule-in-recursive-merge (2011-10-13) 2 commits
-  (merged to 'next' on 2011-10-15 at e02205c)
- + submodule: Search for merges only at end of recursive merge
- + submodule: Demonstrate known breakage during recursive merge
+Will merge to 'master' shortly.
 
-Brad helped resurrecting good bits earlier tangled in the stalled topic
-hv/submodule-merge-search by mistake.
+* lh/gitweb-site-html-head (2011-10-21) 1 commit
+ - gitweb: provide a way to customize html headers
 
-* cb/httpd-test-fix-port (2011-10-17) 1 commit
-  (merged to 'next' on 2011-10-17 at 84fb7e6)
- + use test number as port number
+Looked Ok.
+Will merge to 'next'.
 
-* jm/maint-apply-detects-corrupt-patch-header (2011-10-12) 1 commit
-  (merged to 'next' on 2011-10-12 at 80d9503)
- + fix "git apply --index ..." not to deref NULL
+* mh/ref-api-3 (2011-10-19) 11 commits
+ - is_refname_available(): reimplement using do_for_each_ref_in_array()
+ - names_conflict(): simplify implementation
+ - names_conflict(): new function, extracted from is_refname_available()
+ - repack_without_ref(): reimplement using do_for_each_ref_in_array()
+ - do_for_each_ref_in_array(): new function
+ - do_for_each_ref(): correctly terminate while processesing extra_refs
+ - add_ref(): take a (struct ref_entry *) parameter
+ - create_ref_entry(): extract function from add_ref()
+ - parse_ref_line(): add a check that the refname is properly formatted
+ - repack_without_ref(): remove temporary
+ - Rename another local variable name -> refname
+ (this branch uses mh/ref-api and mh/ref-api-2.)
 
-* jn/gitweb-manpages (2011-10-16) 5 commits
-  (merged to 'next' on 2011-10-16 at 6555a07)
- + gitweb: Add gitweb manpages to 'gitweb' package in git.spec
- + Documentation: Add gitweb config variables to git-config(1)
- + Documentation: Link to gitweb(1) and gitweb.conf(5) in other manpages
- + gitweb: Add gitweb(1) manpage for gitweb itself
- + gitweb: Add gitweb.conf(5) manpage for gitweb configuration files
+Looked reasonable.
+Will merge to 'next'.
 
-* js/log-show-children (2011-10-04) 1 commit
-  (merged to 'next' on 2011-10-06 at de8f6f2)
- + log --children
+* mm/mediawiki-author-fix (2011-10-20) 1 commit
+ - git-remote-mediawiki: don't include HTTP login/password in author
 
-* js/maint-no-cherry-pick-head-after-punted (2011-10-06) 2 commits
- + cherry-pick: do not give irrelevant advice when cherry-pick punted
- + revert.c: defer writing CHERRY_PICK_HEAD till it is safe to do so
- (this branch is used by js/no-cherry-pick-head-after-punted.)
-
-Will merge to 'maint' later.
-
-* js/merge-edit-option (2011-10-12) 1 commit
-  (merged to 'next' on 2011-10-12 at db28da3)
- + Teach merge the '[-e|--edit]' option
-
-* js/no-cherry-pick-head-after-punted (2011-10-06) 1 commit
-  (merged to 'next' on 2011-10-10 at acb29ee)
- + Merge branch 'js/maint-no-cherry-pick-head-after-punted' into js/no-cherry-pick-head-after-punted
- (this branch uses js/maint-no-cherry-pick-head-after-punted.)
-
-* md/smtp-tls-hello-again (2011-10-15) 1 commit
-  (merged to 'next' on 2011-10-16 at 3e27de4)
- + send-email: Honour SMTP domain when using TLS
-
-* pt/mingw-misc-fixes (2011-10-15) 7 commits
-  (merged to 'next' on 2011-10-16 at 2dc0b55)
- + t9901: fix line-ending dependency on windows
- + mingw: ensure sockets are initialized before calling gethostname
- + mergetools: use the correct tool for Beyond Compare 3 on Windows
- + t9300: do not run --cat-blob-fd related tests on MinGW
- + git-svn: On MSYS, escape and quote SVN_SSH also if set by the user
- + t9001: do not fail only due to CR/LF issues
- + t1020: disable the pwd test on MinGW
-
-* rs/diff-whole-function (2011-10-10) 2 commits
-  (merged to 'next' on 2011-10-11 at 6196752)
- + diff: add option to show whole functions as context
- + xdiff: factor out get_func_line()
-
-* rs/pickaxe (2011-10-07) 7 commits
-  (merged to 'next' on 2011-10-11 at 27d02b2)
- + pickaxe: factor out pickaxe
- + pickaxe: give diff_grep the same signature as has_changes
- + pickaxe: pass diff_options to contains and has_changes
- + pickaxe: factor out has_changes
- + pickaxe: plug regex/kws leak
- + pickaxe: plug regex leak
- + pickaxe: plug diff filespec leak with empty needle
+Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -142,18 +118,6 @@ moved to this topic.
 Perhaps 281eee4 (revision: keep track of the end-user input from the
 command line, 2011-08-25) would help.
 
-* rr/revert-cherry-pick (2011-10-12) 7 commits
- - revert: further simplify parsing of a line in insn sheet
- - revert: Simplify passing command-line arguments around
- - revert: Allow mixed pick and revert instructions
- - revert: Make commit descriptions in insn sheet optional
- - revert: Fix buffer overflow in insn sheet parser
- - revert: Simplify getting commit subject
- - revert: Free memory after get_message call
-
-Probably needs a little bit more polish, e.g. squashing the tip fixup into
-an earlier one in the series.
-
 * jc/lookup-object-hash (2011-08-11) 6 commits
  - object hash: replace linear probing with 4-way cuckoo hashing
  - object hash: we know the table size is a power of two
@@ -169,17 +133,47 @@ particular workload.
 --------------------------------------------------
 [Cooking]
 
-* jc/check-ref-format-fixup (2011-10-12) 2 commits
+* rr/revert-cherry-pick (2011-10-19) 6 commits
+ - revert: simplify communicating command-line arguments
+ - revert: allow mixed pick and revert instructions
+ - revert: make commit subjects in insn sheet optional
+ - revert: fix buffer overflow in insn sheet parser
+ - revert: simplify getting commit subject in format_todo()
+ - revert: free msg in format_todo()
+
+Perhaps 3rd and 4th should be squashed together?
+
+* jc/match-refs-clarify (2011-09-12) 2 commits
+  (merged to 'next' on 2011-10-19 at b295e1e)
+ + rename "match_refs()" to "match_push_refs()"
+ + send-pack: typofix error message
+
+Will merge to 'master' shortly.
+
+* jn/libperl-git-config (2011-10-21) 2 commits
+  (merged to 'next' on 2011-10-21 at 76e2d4b)
+ + Add simple test for Git::config_path() in t/t9700-perl-git.sh
+ + libperl-git: refactor Git::config_*
+
+Will merge to 'master' shortly.
+
+* ss/inet-ntop (2011-10-18) 1 commit
+  (merged to 'next' on 2011-10-19 at 85469f6)
+ + inet_ntop.c: Work around GCC 4.6's detection of uninitialized variables
+
+Will merge to 'master' shortly.
+
+* jc/check-ref-format-fixup (2011-10-19) 3 commits
+  (merged to 'next' on 2011-10-19 at 98981be)
+ + Revert "Restrict ref-like names immediately below $GIT_DIR"
   (merged to 'next' on 2011-10-15 at 8e89bc5)
  + Restrict ref-like names immediately below $GIT_DIR
  + refs.c: move dwim_ref()/dwim_log() from sha1_name.c
+ (this branch is tangled with jc/broken-ref-dwim-fix.)
 
-An attempt to fix-up unfortunate side effect of mh/check-ref-format-3
-topic. "git show -s config" is never meant to refer to $GIT_DIR/config
-and treat it as a file that records an object name. But tightening the
-rule for reading side means we would need to tighten the rule for the
-writing side, too, which turned out to be rather nasty fallout that
-needs to be sorted out before the next release.
+This became a no-op except for the bottom one which is part of the other
+topic now.
+Will discard once the other topic graduates to 'master'.
 
 * pw/p4-update (2011-10-17) 6 commits
   (merged to 'next' on 2011-10-17 at f69f6cc)
@@ -240,36 +234,52 @@ Will keep in 'pu' until the planned re-roll comes.
  + refs: rename "refname" variables
  + struct ref_entry: document name member
  + cache.h: add comments for git_path() and git_path_submodule()
- (this branch uses mh/ref-api.)
+ (this branch is used by mh/ref-api-3; uses mh/ref-api.)
+
+It is either merge this quickly to 'master' and hope there won't be any
+more unexpected breakage that forces us to delay the release, or hold it
+on 'next' until the next cycle. I am inclined to the former, but not quite
+ready to commit to it yet.
 
 * po/insn-editor (2011-10-17) 1 commit
   (merged to 'next' on 2011-10-19 at cbf5e0b)
  + "rebase -i": support special-purpose editor to edit insn sheet
 
-* dm/pack-objects-update (2011-10-18) 4 commits
+Will merge to 'master' shortly.
+
+* dm/pack-objects-update (2011-10-20) 4 commits
  - pack-objects: don't traverse objects unnecessarily
  - pack-objects: rewrite add_descendants_to_write_order() iteratively
  - pack-objects: use unsigned int for counter and offset values
  - pack-objects: mark add_to_write_order() as inline
 
-* jk/git-tricks (2011-10-18) 3 commits
+Need to re-read this before deciding what to do; it came a bit too late in
+the cycle for a series that touches a seriously important part of the
+system.
+
+* jk/git-tricks (2011-10-21) 3 commits
  - completion: match ctags symbol names in grep patterns
  - contrib: add git-jump script
  - contrib: add diff highlight script
 
-* jc/make-tags (2011-10-18) 1 commit
- - Makefile: ask "ls-files" to list source files if available
+Will merge to 'next'.
 
-* jc/signed-commit (2011-10-18) 3 commits
+* jc/make-tags (2011-10-18) 1 commit
+  (merged to 'next' on 2011-10-19 at b0b91bf)
+ + Makefile: ask "ls-files" to list source files if available
+
+Will merge to 'master' shortly.
+
+* jc/signed-commit (2011-10-20) 6 commits
+ - parse_signed_commit: really use the entire commit log message
+ - test "commit -S" and "log --show-signature"
+ - t7004: extract generic "GPG testing" bits
  - log: --show-signature
  - commit: teach --gpg-sign option
  - Split GPG interface into its own helper library
 
-This is to replace the earlier "signed push" experiments. "verify-tag"
-equivalent needs to be written before this can proceed. I suspect that
-teaching "verify-tag" to notice and also handle signed commits would be
-the easiest, but "git tag --verify $commit" might look slightly funny
-from the UI POV. I dunno.
+This is to replace the earlier "signed push" experiments. Probably ready
+for 'next'.
 
 * mh/ref-api (2011-10-16) 7 commits
   (merged to 'next' on 2011-10-17 at 219000f)
@@ -280,11 +290,14 @@ from the UI POV. I dunno.
  + invalidate_ref_cache(): expose this function in the refs API
  + invalidate_ref_cache(): take the submodule as parameter
  + invalidate_ref_cache(): rename function from invalidate_cached_refs()
- (this branch is used by mh/ref-api-2.)
+ (this branch is used by mh/ref-api-2 and mh/ref-api-3.)
 
-Will merge to 'master' in the sixth wave.
+It is either merge this quickly to 'master' and hope there won't be any
+more unexpected breakage that forces us to delay the release, or hold it
+on 'next' until the next cycle. I am inclined to the former, but not quite
+ready to commit to it yet.
 
-* sg/complete-refs (2011-10-15) 10 commits
+* sg/complete-refs (2011-10-21) 9 commits
  - completion: remove broken dead code from __git_heads() and __git_tags()
  - completion: fast initial completion for config 'remote.*.fetch' value
  - completion: improve ls-remote output filtering in __git_refs_remotes()
@@ -294,7 +307,6 @@ Will merge to 'master' in the sixth wave.
  - completion: make refs completion consistent for local and remote repos
  - completion: optimize refs completion
  - completion: document __gitcomp()
- - Merge branches 'tm/completion-push-set-upstream', 'tm/completion-commit-fixup-squash' and 'sg/completion' into HEAD
 
 Rerolled.
 
@@ -306,7 +318,7 @@ completion in the past comes.
  + bundle: add parse_bundle_header() helper function
  + bundle: allowing to read from an unseekable fd
 
-I am not entirely happy with the first patch but it is not so bad either.
+Will merge to 'master' shortly.
 
 * jk/daemon-msgs (2011-10-15) 1 commit
   (merged to 'next' on 2011-10-15 at 415cf53)
@@ -375,38 +387,3 @@ Will merge to 'master' in the fifth wave.
  + Merge branch 'bk/ancestry-path' into jc/branch-desc
 
 Will merge to 'master' in the sixth wave.
-
---------------------------------------------------
-[Discarded]
-
-* jk/http-auth-keyring (2011-10-12) 19 commits
- . http_init: accept separate URL parameter
- . credential-cache: don't cache items without context
- . check_expirations: don't copy over same element
- . t0300: add missing EOF terminator for <<
- . credential-store: use a better storage format
- . t0300: make alternate username tests more robust
- . t0300: make askpass tests a little more robust
- . credential-cache: fix expiration calculation corner cases
- . docs: minor tweaks to credentials API
- . credentials: make credential_fill_gently() static
- . credentials: add "getpass" helper
- . credentials: add "store" helper
- . credentials: add "cache" helper
- . docs: end-user documentation for the credential subsystem
- . http: use hostname in credential description
- . allow the user to configure credential helpers
- . look for credentials in config before prompting
- . http: use credential API to get passwords
- . introduce credentials API
- (this branch is used by js/cred-macos-x-keychain-2.)
-
-Discarded without prejudice to allow design level discussions to continue.
-Expecting a re-roll based on jk/http-auth
-
-* js/cred-macos-x-keychain-2 (2011-10-12) 1 commit
- . contrib: add a pair of credential helpers for Mac OS X's keychain
- (this branch uses jk/http-auth-keyring.)
-
-Discarded without prejudice to allow design level discussions to continue.
-Expecting a re-roll based on jk/http-auth
