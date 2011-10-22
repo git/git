@@ -101,12 +101,15 @@ include::merge-options.txt[]
 
 :git-pull: 1
 
---rebase::
+--rebase[=interactive]::
 	Rebase the current branch on top of the upstream branch after
 	fetching.  If there is a remote-tracking branch corresponding to
 	the upstream branch and the upstream branch was rebased since last
 	fetched, the rebase uses that information to avoid rebasing
 	non-local changes.
++
+The optional mode `interactive` tells Git to switch on rebase's interactive
+mode.
 +
 See `pull.rebase`, `branch.<name>.rebase` and `branch.autosetuprebase` in
 linkgit:git-config[1] if you want to make `git pull` always use
