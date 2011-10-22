@@ -776,6 +776,7 @@ branch.<name>.rebase::
 	instead of merging the default branch from the default remote when
 	"git pull" is run. See "pull.rebase" for doing this in a non
 	branch-specific manner.
+	When the value is `interactive`, the rebase is run in interactive mode.
 +
 	When preserve, also pass `--preserve-merges` along to 'git rebase'
 	so that locally committed merge commits will not be flattened
