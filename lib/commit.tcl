@@ -263,7 +263,7 @@ proc commit_commitmsg {curHEAD msg_p} {
 	global is_detached repo_config
 	global pch_error
 
-	if {$is_detached && $repo_config(gui.warndetachedcommit)} {
+	if {$is_detached && [is_config_true gui.warndetachedcommit]} {
 		set msg [mc "You are about to commit on a detached head.\
 This is a potentially dangerous thing to do because if you switch\
 to another branch you will loose your changes and it can be difficult\
