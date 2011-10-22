@@ -44,7 +44,15 @@ merge_args= edit=
 curr_branch=$(git symbolic-ref -q HEAD)
 curr_branch_short="${curr_branch#refs/heads/}"
 rebase_options=
-rebase=$(git config --bool branch.$curr_branch_short.rebase)
+case "$(git config branch.$curr_branch_short.rebase)" in
+interactive)
+	rebase_options=-i
+	rebase=true
+	;;
+*)
+	rebase=$(git config --bool branch.$curr_branch_short.rebase)
+	;;
+esac
 if test -z "$rebase"
 then
 	rebase=$(git config --bool pull.rebase)
