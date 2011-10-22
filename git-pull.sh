@@ -43,6 +43,7 @@ log_arg= verbosity= progress= recurse_submodules=
 merge_args=
 curr_branch=$(git symbolic-ref -q HEAD)
 curr_branch_short="${curr_branch#refs/heads/}"
+rebase_options=
 rebase=$(git config --bool branch.$curr_branch_short.rebase)
 if test -z "$rebase"
 then
@@ -109,7 +110,12 @@ do
 	-r|--r|--re|--reb|--reba|--rebas|--rebase)
 		rebase=true
 		;;
+	--rebase=i|--rebase=interactive)
+		rebase_options=-i
+		rebase=true
+		;;
 	--no-r|--no-re|--no-reb|--no-reba|--no-rebas|--no-rebase)
+		rebase_options=
 		rebase=false
 		;;
 	--recurse-submodules)
@@ -274,7 +280,7 @@ fi
 merge_name=$(git fmt-merge-msg $log_arg <"$GIT_DIR/FETCH_HEAD") || exit
 case "$rebase" in
 true)
-	eval="git-rebase $diffstat $strategy_args $merge_args"
+	eval="git-rebase $rebase_options $diffstat $strategy_args $merge_args"
 	eval="$eval --onto $merge_head ${oldremoteref:-$merge_head}"
 	;;
 *)
