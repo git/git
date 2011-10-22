@@ -5,8 +5,9 @@ Fixes since v1.7.7
 ------------------
 
  * On some BSD systems, adding +s bit on directories is detrimental
-   (it is not necessary on BSD to begin with). The installation
-   procedure has been updated to take this into account.
+   (it is not necessary on BSD to begin with). "git init --shared"
+   has been updated to take this into account without extra makefile
+   settings on platforms the Makefile knows about.
 
  * After incorrectly written third-party tools store a tag object in
    HEAD, git diagnosed it as a repository corruption and refused to
