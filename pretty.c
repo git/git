@@ -1013,7 +1013,6 @@ void format_commit_message(const struct commit *commit,
 {
 	struct format_commit_context context;
 	static const char utf8[] = "UTF-8";
-	const char *enc;
 	const char *output_enc = pretty_ctx->output_encoding;
 
 	memset(&context, 0, sizeof(context));
@@ -1022,10 +1021,10 @@ void format_commit_message(const struct commit *commit,
 	context.wrap_start = sb->len;
 	context.message = commit->buffer;
 	if (output_enc) {
-		enc = get_header(commit, "encoding");
-		enc = enc ? enc : utf8;
-		if (strcmp(enc, output_enc))
+		char *enc = get_header(commit, "encoding");
+		if (strcmp(enc ? enc : utf8, output_enc))
 			context.message = logmsg_reencode(commit, output_enc);
+		free(enc);
 	}
 
 	strbuf_expand(sb, format, format_commit_item, &context);
