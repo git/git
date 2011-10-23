@@ -1022,8 +1022,11 @@ void format_commit_message(const struct commit *commit,
 	context.message = commit->buffer;
 	if (output_enc) {
 		char *enc = get_header(commit, "encoding");
-		if (strcmp(enc ? enc : utf8, output_enc))
+		if (strcmp(enc ? enc : utf8, output_enc)) {
 			context.message = logmsg_reencode(commit, output_enc);
+			if (!context.message)
+				context.message = commit->buffer;
+		}
 		free(enc);
 	}
 
