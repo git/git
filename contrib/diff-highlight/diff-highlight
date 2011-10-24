@@ -1,0 +1,124 @@
+#!/usr/bin/perl
+
+# Highlight by reversing foreground and background. You could do
+# other things like bold or underline if you prefer.
+my $HIGHLIGHT   = "\x1b[7m";
+my $UNHIGHLIGHT = "\x1b[27m";
+my $COLOR = qr/\x1b\[[0-9;]*m/;
+
+my @window;
+
+while (<>) {
+	# We highlight only single-line changes, so we need
+	# a 4-line window to make a decision on whether
+	# to highlight.
+	push @window, $_;
+	next if @window < 4;
+	if ($window[0] =~ /^$COLOR*(\@| )/ &&
+	    $window[1] =~ /^$COLOR*-/ &&
+	    $window[2] =~ /^$COLOR*\+/ &&
+	    $window[3] !~ /^$COLOR*\+/) {
+		print shift @window;
+		show_pair(shift @window, shift @window);
+	}
+	else {
+		print shift @window;
+	}
+
+	# Most of the time there is enough output to keep things streaming,
+	# but for something like "git log -Sfoo", you can get one early
+	# commit and then many seconds of nothing. We want to show
+	# that one commit as soon as possible.
+	#
+	# Since we can receive arbitrary input, there's no optimal
+	# place to flush. Flushing on a blank line is a heuristic that
+	# happens to match git-log output.
+	if (!length) {
+		local $| = 1;
+	}
+}
+
+# Special case a single-line hunk at the end of file.
+if (@window == 3 &&
+    $window[0] =~ /^$COLOR*(\@| )/ &&
+    $window[1] =~ /^$COLOR*-/ &&
+    $window[2] =~ /^$COLOR*\+/) {
+	print shift @window;
+	show_pair(shift @window, shift @window);
+}
+
+# And then flush any remaining lines.
+while (@window) {
+	print shift @window;
+}
+
+exit 0;
+
+sub show_pair {
+	my @a = split_line(shift);
+	my @b = split_line(shift);
+
+	# Find common prefix, taking care to skip any ansi
+	# color codes.
+	my $seen_plusminus;
+	my ($pa, $pb) = (0, 0);
+	while ($pa < @a && $pb < @b) {
+		if ($a[$pa] =~ /$COLOR/) {
+			$pa++;
+		}
+		elsif ($b[$pb] =~ /$COLOR/) {
+			$pb++;
+		}
+		elsif ($a[$pa] eq $b[$pb]) {
+			$pa++;
+			$pb++;
+		}
+		elsif (!$seen_plusminus && $a[$pa] eq '-' && $b[$pb] eq '+') {
+			$seen_plusminus = 1;
+			$pa++;
+			$pb++;
+		}
+		else {
+			last;
+		}
+	}
+
+	# Find common suffix, ignoring colors.
+	my ($sa, $sb) = ($#a, $#b);
+	while ($sa >= $pa && $sb >= $pb) {
+		if ($a[$sa] =~ /$COLOR/) {
+			$sa--;
+		}
+		elsif ($b[$sb] =~ /$COLOR/) {
+			$sb--;
+		}
+		elsif ($a[$sa] eq $b[$sb]) {
+			$sa--;
+			$sb--;
+		}
+		else {
+			last;
+		}
+	}
+
+	print highlight(\@a, $pa, $sa);
+	print highlight(\@b, $pb, $sb);
+}
+
+sub split_line {
+	local $_ = shift;
+	return map { /$COLOR/ ? $_ : (split //) }
+	       split /($COLOR*)/;
+}
+
+sub highlight {
+	my ($line, $prefix, $suffix) = @_;
+
+	return join('',
+		@{$line}[0..($prefix-1)],
+		$HIGHLIGHT,
+		@{$line}[$prefix..$suffix],
+		$UNHIGHLIGHT,
+		@{$line}[($suffix+1)..$#$line]
+	);
+}
