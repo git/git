@@ -1202,10 +1202,35 @@ int read_index(struct index_state *istate)
 	return read_index_from(istate, get_index_file());
 }
 
-static void convert_from_disk(struct ondisk_cache_entry *ondisk, struct cache_entry *ce)
+static struct cache_entry *create_from_disk(struct ondisk_cache_entry *ondisk)
 {
+	struct cache_entry *ce;
 	size_t len;
 	const char *name;
+	unsigned int flags;
+
+	/* On-disk flags are just 16 bits */
+	flags = ntohs(ondisk->flags);
+	len = flags & CE_NAMEMASK;
+
+	if (flags & CE_EXTENDED) {
+		struct ondisk_cache_entry_extended *ondisk2;
+		int extended_flags;
+		ondisk2 = (struct ondisk_cache_entry_extended *)ondisk;
+		extended_flags = ntohs(ondisk2->flags2) << 16;
+		/* We do not yet understand any bit out of CE_EXTENDED_FLAGS */
+		if (extended_flags & ~CE_EXTENDED_FLAGS)
+			die("Unknown index entry format %08x", extended_flags);
+		flags |= extended_flags;
+		name = ondisk2->name;
+	}
+	else
+		name = ondisk->name;
+
+	if (len == CE_NAMEMASK)
+		len = strlen(name);
+
+	ce = xmalloc(cache_entry_size(len));
 
 	ce->ce_ctime.sec = ntohl(ondisk->ctime.sec);
 	ce->ce_mtime.sec = ntohl(ondisk->mtime.sec);
@@ -1217,48 +1242,13 @@ static void convert_from_disk(struct ondisk_cache_entry *ondisk, struct cache_en
 	ce->ce_uid   = ntohl(ondisk->uid);
 	ce->ce_gid   = ntohl(ondisk->gid);
 	ce->ce_size  = ntohl(ondisk->size);
-	/* On-disk flags are just 16 bits */
-	ce->ce_flags = ntohs(ondisk->flags);
+	ce->ce_flags = flags;
 
 	hashcpy(ce->sha1, ondisk->sha1);
 
-	len = ce->ce_flags & CE_NAMEMASK;
-
-	if (ce->ce_flags & CE_EXTENDED) {
-		struct ondisk_cache_entry_extended *ondisk2;
-		int extended_flags;
-		ondisk2 = (struct ondisk_cache_entry_extended *)ondisk;
-		extended_flags = ntohs(ondisk2->flags2) << 16;
-		/* We do not yet understand any bit out of CE_EXTENDED_FLAGS */
-		if (extended_flags & ~CE_EXTENDED_FLAGS)
-			die("Unknown index entry format %08x", extended_flags);
-		ce->ce_flags |= extended_flags;
-		name = ondisk2->name;
-	}
-	else
-		name = ondisk->name;
-
-	if (len == CE_NAMEMASK)
-		len = strlen(name);
-	/*
-	 * NEEDSWORK: If the original index is crafted, this copy could
-	 * go unchecked.
-	 */
-	memcpy(ce->name, name, len + 1);
-}
-
-static inline size_t estimate_cache_size(size_t ondisk_size, unsigned int entries)
-{
-	long per_entry;
-
-	per_entry = sizeof(struct cache_entry) - sizeof(struct ondisk_cache_entry);
-
-	/*
-	 * Alignment can cause differences. This should be "alignof", but
-	 * since that's a gcc'ism, just use the size of a pointer.
-	 */
-	per_entry += sizeof(void *);
-	return ondisk_size + entries*per_entry;
+	memcpy(ce->name, name, len);
+	ce->name[len] = '\0';
+	return ce;
 }
 
 /* remember to discard_cache() before reading a different cache! */
@@ -1266,7 +1256,7 @@ int read_index_from(struct index_state *istate, const char *path)
 {
 	int fd, i;
 	struct stat st;
-	unsigned long src_offset, dst_offset;
+	unsigned long src_offset;
 	struct cache_header *hdr;
 	void *mmap;
 	size_t mmap_size;
@@ -1305,29 +1295,18 @@ int read_index_from(struct index_state *istate, const char *path)
 	istate->cache_nr = ntohl(hdr->hdr_entries);
 	istate->cache_alloc = alloc_nr(istate->cache_nr);
 	istate->cache = xcalloc(istate->cache_alloc, sizeof(struct cache_entry *));
-
-	/*
-	 * The disk format is actually larger than the in-memory format,
-	 * due to space for nsec etc, so even though the in-memory one
-	 * has room for a few  more flags, we can allocate using the same
-	 * index size
-	 */
-	istate->alloc = xmalloc(estimate_cache_size(mmap_size, istate->cache_nr));
 	istate->initialized = 1;
 
 	src_offset = sizeof(*hdr);
-	dst_offset = 0;
 	for (i = 0; i < istate->cache_nr; i++) {
 		struct ondisk_cache_entry *disk_ce;
 		struct cache_entry *ce;
 
 		disk_ce = (struct ondisk_cache_entry *)((char *)mmap + src_offset);
-		ce = (struct cache_entry *)((char *)istate->alloc + dst_offset);
-		convert_from_disk(disk_ce, ce);
+		ce = create_from_disk(disk_ce);
 		set_index_entry(istate, i, ce);
 
 		src_offset += ondisk_ce_size(ce);
-		dst_offset += ce_size(ce);
 	}
 	istate->timestamp.sec = st.st_mtime;
 	istate->timestamp.nsec = ST_MTIME_NSEC(st);
@@ -1361,11 +1340,15 @@ unmap:
 
 int is_index_unborn(struct index_state *istate)
 {
-	return (!istate->cache_nr && !istate->alloc && !istate->timestamp.sec);
+	return (!istate->cache_nr && !istate->timestamp.sec);
 }
 
 int discard_index(struct index_state *istate)
 {
+	int i;
+
+	for (i = 0; i < istate->cache_nr; i++)
+		free(istate->cache[i]);
 	resolve_undo_clear_index(istate);
 	istate->cache_nr = 0;
 	istate->cache_changed = 0;
@@ -1374,8 +1357,6 @@ int discard_index(struct index_state *istate)
 	istate->name_hash_initialized = 0;
 	free_hash(&istate->name_hash);
 	cache_tree_free(&(istate->cache_tree));
-	free(istate->alloc);
-	istate->alloc = NULL;
 	istate->initialized = 0;
 
 	/* no need to throw away allocated active_cache */
