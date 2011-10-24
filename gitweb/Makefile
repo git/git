@@ -34,6 +34,7 @@ GITWEB_CSS = static/gitweb.css
 GITWEB_LOGO = static/git-logo.png
 GITWEB_FAVICON = static/git-favicon.png
 GITWEB_JS = static/gitweb.js
+GITWEB_SITE_HTML_HEAD_STRING =
 GITWEB_SITE_HEADER =
 GITWEB_SITE_FOOTER =
 HIGHLIGHT_BIN = highlight
@@ -144,6 +145,7 @@ GITWEB_REPLACE = \
 	-e 's|++GITWEB_LOGO++|$(GITWEB_LOGO)|g' \
 	-e 's|++GITWEB_FAVICON++|$(GITWEB_FAVICON)|g' \
 	-e 's|++GITWEB_JS++|$(GITWEB_JS)|g' \
+	-e 's|++GITWEB_SITE_HTML_HEAD_STRING++|$(GITWEB_SITE_HTML_HEAD_STRING)|g' \
 	-e 's|++GITWEB_SITE_HEADER++|$(GITWEB_SITE_HEADER)|g' \
 	-e 's|++GITWEB_SITE_FOOTER++|$(GITWEB_SITE_FOOTER)|g' \
 	-e 's|++HIGHLIGHT_BIN++|$(HIGHLIGHT_BIN)|g'

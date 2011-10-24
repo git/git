@@ -364,6 +364,11 @@ $site_name::
 +
 Can be set using the `GITWEB_SITENAME` at build time.  Unset by default.
 
+$site_html_head_string::
+	HTML snippet to be included in the <head> section of each page.
+	Can be set using `GITWEB_SITE_HTML_HEAD_STRING` at build time.
+	No default value.
+
 $site_header::
 	Name of a file with HTML to be included at the top of each page.
 	Relative to the directory containing the 'gitweb.cgi' script.
