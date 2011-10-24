@@ -125,7 +125,7 @@ Whenever a feature release is made, "maint" branch is forked off from
 release are applied to this branch and maintenance releases are cut from
 it.  The maintenance releases are named with four dotted decimal, named
 after the feature release they are updates to; the last such release was
-1.7.6.4.  New features never go to this branch.  This branch is also
+1.7.7.1.  New features never go to this branch.  This branch is also
 merged into "master" to propagate the fixes forward.
 
 A new development does not usually happen on "master". When you send a
