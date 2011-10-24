@@ -99,7 +99,7 @@ static int read_tree_1(struct tree *tree, struct strbuf *base,
 		else
 			continue;
 
-		len = tree_entry_len(entry.path, entry.sha1);
+		len = tree_entry_len(&entry);
 		strbuf_add(base, entry.path, len);
 		strbuf_addch(base, '/');
 		retval = read_tree_1(lookup_tree(sha1),

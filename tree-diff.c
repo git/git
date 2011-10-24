@@ -21,8 +21,8 @@ static int compare_tree_entry(struct tree_desc *t1, struct tree_desc *t2,
 	sha1 = tree_entry_extract(t1, &path1, &mode1);
 	sha2 = tree_entry_extract(t2, &path2, &mode2);
 
-	pathlen1 = tree_entry_len(path1, sha1);
-	pathlen2 = tree_entry_len(path2, sha2);
+	pathlen1 = tree_entry_len(&t1->entry);
+	pathlen2 = tree_entry_len(&t2->entry);
 	cmp = base_name_compare(path1, pathlen1, mode1, path2, pathlen2, mode2);
 	if (cmp < 0) {
 		show_entry(opt, "-", t1, base);
@@ -85,7 +85,7 @@ static void show_entry(struct diff_options *opt, const char *prefix,
 	unsigned mode;
 	const char *path;
 	const unsigned char *sha1 = tree_entry_extract(desc, &path, &mode);
-	int pathlen = tree_entry_len(path, sha1);
+	int pathlen = tree_entry_len(&desc->entry);
 	int old_baselen = base->len;
 
 	strbuf_add(base, path, pathlen);

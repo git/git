@@ -547,7 +547,7 @@ static int grep_tree(struct grep_opt *opt, const struct pathspec *pathspec,
 	int old_baselen = base->len;
 
 	while (tree_entry(tree, &entry)) {
-		int te_len = tree_entry_len(entry.path, entry.sha1);
+		int te_len = tree_entry_len(&entry);
 
 		if (match != 2) {
 			match = tree_entry_interesting(&entry, base, tn_len, pathspec);

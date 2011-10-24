@@ -116,7 +116,7 @@ void setup_traverse_info(struct traverse_info *info, const char *base)
 
 char *make_traverse_path(char *path, const struct traverse_info *info, const struct name_entry *n)
 {
-	int len = tree_entry_len(n->path, n->sha1);
+	int len = tree_entry_len(n);
 	int pathlen = info->pathlen;
 
 	path[pathlen + len] = 0;
@@ -126,7 +126,7 @@ char *make_traverse_path(char *path, const struct traverse_info *info, const str
 			break;
 		path[--pathlen] = '/';
 		n = &info->name;
-		len = tree_entry_len(n->path, n->sha1);
+		len = tree_entry_len(n);
 		info = info->prev;
 		pathlen -= len;
 	}
@@ -253,7 +253,7 @@ static void extended_entry_extract(struct tree_desc_x *t,
 	 * The caller wants "first" from this tree, or nothing.
 	 */
 	path = a->path;
-	len = tree_entry_len(a->path, a->sha1);
+	len = tree_entry_len(a);
 	switch (check_entry_match(first, first_len, path, len)) {
 	case -1:
 		entry_clear(a);
@@ -271,7 +271,7 @@ static void extended_entry_extract(struct tree_desc_x *t,
 	while (probe.size) {
 		entry_extract(&probe, a);
 		path = a->path;
-		len = tree_entry_len(a->path, a->sha1);
+		len = tree_entry_len(a);
 		switch (check_entry_match(first, first_len, path, len)) {
 		case -1:
 			entry_clear(a);
@@ -362,7 +362,7 @@ int traverse_trees(int n, struct tree_desc *t, struct traverse_info *info)
 			e = entry + i;
 			if (!e->path)
 				continue;
-			len = tree_entry_len(e->path, e->sha1);
+			len = tree_entry_len(e);
 			if (!first) {
 				first = e->path;
 				first_len = len;
@@ -381,7 +381,7 @@ int traverse_trees(int n, struct tree_desc *t, struct traverse_info *info)
 				/* Cull the ones that are not the earliest */
 				if (!e->path)
 					continue;
-				len = tree_entry_len(e->path, e->sha1);
+				len = tree_entry_len(e);
 				if (name_compare(e->path, len, first, first_len))
 					entry_clear(e);
 			}
@@ -434,8 +434,8 @@ static int find_tree_entry(struct tree_desc *t, const char *name, unsigned char 
 		int entrylen, cmp;
 
 		sha1 = tree_entry_extract(t, &entry, mode);
+		entrylen = tree_entry_len(&t->entry);
 		update_tree_entry(t);
-		entrylen = tree_entry_len(entry, sha1);
 		if (entrylen > namelen)
 			continue;
 		cmp = memcmp(name, entry, entrylen);
@@ -596,7 +596,7 @@ int tree_entry_interesting(const struct name_entry *entry,
 				      ps->max_depth);
 	}
 
-	pathlen = tree_entry_len(entry->path, entry->sha1);
+	pathlen = tree_entry_len(entry);
 
 	for (i = ps->nr - 1; i >= 0; i--) {
 		const struct pathspec_item *item = ps->items+i;
