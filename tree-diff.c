@@ -64,14 +64,14 @@ static int compare_tree_entry(struct tree_desc *t1, struct tree_desc *t2,
 static void show_tree(struct diff_options *opt, const char *prefix,
 		      struct tree_desc *desc, struct strbuf *base)
 {
-	int match = 0;
+	enum interesting match = entry_not_interesting;
 	for (; desc->size; update_tree_entry(desc)) {
-		if (match != 2) {
+		if (match != all_entries_interesting) {
 			match = tree_entry_interesting(&desc->entry, base, 0,
 						       &opt->pathspec);
-			if (match < 0)
+			if (match == all_entries_not_interesting)
 				break;
-			if (match == 0)
+			if (match == entry_not_interesting)
 				continue;
 		}
 		show_entry(opt, prefix, desc, base);
@@ -114,12 +114,13 @@ static void show_entry(struct diff_options *opt, const char *prefix,
 }
 
 static void skip_uninteresting(struct tree_desc *t, struct strbuf *base,
-			       struct diff_options *opt, int *match)
+			       struct diff_options *opt,
+			       enum interesting *match)
 {
 	while (t->size) {
 		*match = tree_entry_interesting(&t->entry, base, 0, &opt->pathspec);
 		if (*match) {
-			if (*match < 0)
+			if (*match == all_entries_not_interesting)
 				t->size = 0;
 			break;
 		}
@@ -132,7 +133,8 @@ int diff_tree(struct tree_desc *t1, struct tree_desc *t2,
 {
 	struct strbuf base;
 	int baselen = strlen(base_str);
-	int t1_match = 0, t2_match = 0;
+	enum interesting t1_match = entry_not_interesting;
+	enum interesting t2_match = entry_not_interesting;
 
 	/* Enable recursion indefinitely */
 	opt->pathspec.recursive = DIFF_OPT_TST(opt, RECURSIVE);

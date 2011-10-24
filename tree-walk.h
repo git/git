@@ -61,6 +61,16 @@ static inline int traverse_path_len(const struct traverse_info *info, const stru
 	return info->pathlen + tree_entry_len(n);
 }
 
-extern int tree_entry_interesting(const struct name_entry *, struct strbuf *, int, const struct pathspec *ps);
+/* in general, positive means "kind of interesting" */
+enum interesting {
+	all_entries_not_interesting = -1, /* no, and no subsequent entries will be either */
+	entry_not_interesting = 0,
+	entry_interesting = 1,
+	all_entries_interesting = 2 /* yes, and all subsequent entries will be */
+};
+
+extern enum interesting tree_entry_interesting(const struct name_entry *,
+					       struct strbuf *, int,
+					       const struct pathspec *ps);
 
 #endif

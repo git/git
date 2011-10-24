@@ -577,27 +577,23 @@ static int match_dir_prefix(const char *base,
  *
  * Pre-condition: either baselen == base_offset (i.e. empty path)
  * or base[baselen-1] == '/' (i.e. with trailing slash).
- *
- * Return:
- *  - 2 for "yes, and all subsequent entries will be"
- *  - 1 for yes
- *  - zero for no
- *  - negative for "no, and no subsequent entries will be either"
  */
-int tree_entry_interesting(const struct name_entry *entry,
-			   struct strbuf *base, int base_offset,
-			   const struct pathspec *ps)
+enum interesting tree_entry_interesting(const struct name_entry *entry,
+					struct strbuf *base, int base_offset,
+					const struct pathspec *ps)
 {
 	int i;
 	int pathlen, baselen = base->len - base_offset;
-	int never_interesting = ps->has_wildcard ? 0 : -1;
+	int never_interesting = ps->has_wildcard ?
+		entry_not_interesting : all_entries_not_interesting;
 
 	if (!ps->nr) {
 		if (!ps->recursive || ps->max_depth == -1)
-			return 2;
-		return !!within_depth(base->buf + base_offset, baselen,
-				      !!S_ISDIR(entry->mode),
-				      ps->max_depth);
+			return all_entries_interesting;
+		return within_depth(base->buf + base_offset, baselen,
+				    !!S_ISDIR(entry->mode),
+				    ps->max_depth) ?
+			entry_interesting : entry_not_interesting;
 	}
 
 	pathlen = tree_entry_len(entry);
@@ -614,12 +610,13 @@ int tree_entry_interesting(const struct name_entry *entry,
 				goto match_wildcards;
 
 			if (!ps->recursive || ps->max_depth == -1)
-				return 2;
+				return all_entries_interesting;
 
-			return !!within_depth(base_str + matchlen + 1,
-					      baselen - matchlen - 1,
-					      !!S_ISDIR(entry->mode),
-					      ps->max_depth);
+			return within_depth(base_str + matchlen + 1,
+					    baselen - matchlen - 1,
+					    !!S_ISDIR(entry->mode),
+					    ps->max_depth) ?
+				entry_interesting : entry_not_interesting;
 		}
 
 		/* Either there must be no base, or the base must match. */
@@ -627,18 +624,18 @@ int tree_entry_interesting(const struct name_entry *entry,
 			if (match_entry(entry, pathlen,
 					match + baselen, matchlen - baselen,
 					&never_interesting))
-				return 1;
+				return entry_interesting;
 
 			if (ps->items[i].use_wildcard) {
 				if (!fnmatch(match + baselen, entry->path, 0))
-					return 1;
+					return entry_interesting;
 
 				/*
 				 * Match all directories. We'll try to
 				 * match files later on.
 				 */
 				if (ps->recursive && S_ISDIR(entry->mode))
-					return 1;
+					return entry_interesting;
 			}
 
 			continue;
@@ -657,7 +654,7 @@ match_wildcards:
 
 		if (!fnmatch(match, base->buf + base_offset, 0)) {
 			strbuf_setlen(base, base_offset + baselen);
-			return 1;
+			return entry_interesting;
 		}
 		strbuf_setlen(base, base_offset + baselen);
 
@@ -666,7 +663,7 @@ match_wildcards:
 		 * later on.
 		 */
 		if (ps->recursive && S_ISDIR(entry->mode))
-			return 1;
+			return entry_interesting;
 	}
 	return never_interesting; /* No matches */
 }
