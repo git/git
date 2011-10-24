@@ -4,7 +4,7 @@ Git v1.7.8 Release Notes (draft)
 Updates since v1.7.7
 --------------------
 
- * Some git-svn, git-gui and msysgit updates.
+ * Some git-svn, git-gui, git-p4 (in contrib) and msysgit updates.
 
  * Updates to bash completion scripts.
 
@@ -31,6 +31,9 @@ Updates since v1.7.7
  * Variants of "git cherry-pick" and "git revert" that take multiple
    commits learned to "--continue".
 
+ * "git daemon" gives more human readble error messages to clients
+   using ERR packets when appropriate.
+
  * Errors at the network layer is logged by "git daemon".
 
  * "git diff" learned "--minimal" option to spend extra cycles to come
@@ -38,6 +41,9 @@ Updates since v1.7.7
 
  * "git diff" learned "--function-context" option to show the whole
    function as context that was affected by a change.
+
+ * "git difftool" can be told to skip launching the tool for a path by
+   answering 'n' to its prompt.
 
  * "git fetch" learned to honor transfer.fsckobjects configuration to
    validate the objects that were received from the other end, just like
@@ -47,6 +53,10 @@ Updates since v1.7.7
    other end actually completes the history before updating the refs.
    "git receive-pack" (the receiving end of "git push") learned to do the
    same.
+
+ * "git fetch" learned that fetching/cloning from a regular file on the
+   filesystem is not necessarily a request to unpack a bundle file; the
+   file could be ".git" with "gitdir: <path>" in it.
 
  * "git for-each-ref" learned "%(contents:subject)", "%(contents:body)"
    and "%(contents:signature)". The last one is useful for signed tags.
@@ -71,6 +81,9 @@ Updates since v1.7.7
 
  * "git merge" learned the "--edit" option to allow users to edit the
    merge commit log message.
+
+ * "git rebase -i" can be told to use special purpose editor suitable
+   only for its insn sheet via sequence.editor configuration variable.
 
  * "git send-email" learned to respond to "-h"(elp) requests.
 
@@ -125,6 +138,12 @@ included in this release.
    what host it is trying to authenticate with when asking for
    credentials.
    (merge deba493 jk/http-auth later to maint).
+
+ * "git branch -m/-M" advertised to update RENAME_REF ref in the
+   commit log message that introduced the feature but not anywhere in
+   the documentation, and never did update such a ref anyway. This
+   undocumented misfeature that did not exist has been excised.
+   (merge b0eab01 jc/maint-remove-renamed-ref later to maint).
 
  * Adding many refs to the local repository in one go (e.g. "git fetch"
    that fetches many tags) and looking up a ref by name in a repository
@@ -181,7 +200,7 @@ included in this release.
 
 ---
 exec >/var/tmp/1
-O=v1.7.7-418-g40d6987
+O=v1.7.7-485-g9ee3d37
 echo O=$(git describe --always master)
 git log --first-parent --oneline --reverse ^$O master
 echo
