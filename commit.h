@@ -183,6 +183,9 @@ struct commit_list *reduce_heads(struct commit_list *heads);
 
 extern int commit_tree(const char *msg, unsigned char *tree,
 		struct commit_list *parents, unsigned char *ret,
-		const char *author);
+		       const char *author, const char *sign_commit);
+
+extern int parse_signed_commit(const unsigned char *sha1,
+			       struct strbuf *message, struct strbuf *signature);
 
 #endif /* COMMIT_H */
