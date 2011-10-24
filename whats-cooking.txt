@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Oct 2011, #08; Fri, 21)
-X-master-at: 8963314c77af9a4eda5dcbdbab3d4001af83ad81
-X-next-at: debedcddff2f53e631c2ab6fdff41d36fd7381df
+Subject: What's cooking in git.git (Oct 2011, #09; Sun, 23)
+X-master-at: 10b2a48113b8ab6b8f48229eb40fc3637ce025ae
+X-next-at: 03eec2553f5bdf546687f47517181ada4484cae8
 
-What's cooking in git.git (Oct 2011, #08; Fri, 21)
+What's cooking in git.git (Oct 2011, #09; Sun, 23)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -47,9 +47,16 @@ They are pushed to their own separate repositories instead:
 --------------------------------------------------
 [New Topics]
 
-* fg/submodule-git-file-git-dir (2011-10-21) 2 commits
- - submodule::module_clone(): silence die() message from module_name()
- - submodule: whitespace fix
+* nd/pretty-commit-log-message (2011-10-23) 2 commits
+ - pretty.c: use original commit message if reencoding fails
+ - pretty.c: free get_header() return value
+
+--------------------------------------------------
+[Graduated to "master"]
+
+* cn/doc-config-bare-subsection (2011-10-16) 1 commit
+  (merged to 'next' on 2011-10-17 at a6412d4)
+ + Documentation: update [section.subsection] to reflect what git does
 
 * jc/broken-ref-dwim-fix (2011-10-19) 3 commits
   (merged to 'next' on 2011-10-19 at 40cad95)
@@ -60,41 +67,77 @@ They are pushed to their own separate repositories instead:
 
 This only takes good bits from the failed jc/check-ref-format-fixup topic
 and implements saner workaround for the recent breakage on the 'master'.
-Will merge to 'master' shortly.
 
-* jm/maint-gitweb-filter-forks-fix (2011-10-21) 1 commit
-  (merged to 'next' on 2011-10-21 at debedcd)
- + gitweb: fix regression when filtering out forks
+* jc/maint-remove-renamed-ref (2011-10-12) 1 commit
+  (merged to 'next' on 2011-10-12 at 819c3e4)
+ + branch -m/-M: remove undocumented RENAMED-REF
 
-Will merge to 'master' shortly.
+* jc/make-tags (2011-10-18) 1 commit
+  (merged to 'next' on 2011-10-19 at b0b91bf)
+ + Makefile: ask "ls-files" to list source files if available
 
-* lh/gitweb-site-html-head (2011-10-21) 1 commit
- - gitweb: provide a way to customize html headers
+* jc/match-refs-clarify (2011-09-12) 2 commits
+  (merged to 'next' on 2011-10-19 at b295e1e)
+ + rename "match_refs()" to "match_push_refs()"
+ + send-pack: typofix error message
 
-Looked Ok.
-Will merge to 'next'.
+* jc/unseekable-bundle (2011-10-13) 2 commits
+  (merged to 'next' on 2011-10-19 at 2978ee0)
+ + bundle: add parse_bundle_header() helper function
+ + bundle: allowing to read from an unseekable fd
 
-* mh/ref-api-3 (2011-10-19) 11 commits
- - is_refname_available(): reimplement using do_for_each_ref_in_array()
- - names_conflict(): simplify implementation
- - names_conflict(): new function, extracted from is_refname_available()
- - repack_without_ref(): reimplement using do_for_each_ref_in_array()
- - do_for_each_ref_in_array(): new function
- - do_for_each_ref(): correctly terminate while processesing extra_refs
- - add_ref(): take a (struct ref_entry *) parameter
- - create_ref_entry(): extract function from add_ref()
- - parse_ref_line(): add a check that the refname is properly formatted
- - repack_without_ref(): remove temporary
- - Rename another local variable name -> refname
- (this branch uses mh/ref-api and mh/ref-api-2.)
+* jk/daemon-msgs (2011-10-15) 1 commit
+  (merged to 'next' on 2011-10-15 at 415cf53)
+ + daemon: give friendlier error messages to clients
+ (this branch is used by cb/daemon-permission-errors.)
 
-Looked reasonable.
-Will merge to 'next'.
+* jk/maint-pack-objects-compete-with-delete (2011-10-14) 2 commits
+  (merged to 'next' on 2011-10-15 at 49479e4)
+ + downgrade "packfile cannot be accessed" errors to warnings
+ + pack-objects: protect against disappearing packs
 
-* mm/mediawiki-author-fix (2011-10-20) 1 commit
- - git-remote-mediawiki: don't include HTTP login/password in author
+* mh/ref-api (2011-10-16) 7 commits
+  (merged to 'next' on 2011-10-17 at 219000f)
+ + clear_ref_cache(): inline function
+ + write_ref_sha1(): only invalidate the loose ref cache
+ + clear_ref_cache(): extract two new functions
+ + clear_ref_cache(): rename parameter
+ + invalidate_ref_cache(): expose this function in the refs API
+ + invalidate_ref_cache(): take the submodule as parameter
+ + invalidate_ref_cache(): rename function from invalidate_cached_refs()
+ (this branch is used by mh/ref-api-2 and mh/ref-api-3.)
 
-Will merge to 'next'.
+* ph/transport-with-gitfile (2011-10-11) 5 commits
+  (merged to 'next' on 2011-10-12 at 6d58417)
+ + Fix is_gitfile() for files too small or larger than PATH_MAX to be a gitfile
+  (merged to 'next' on 2011-10-06 at 891b8b6)
+ + Add test showing git-fetch groks gitfiles
+ + Teach transport about the gitfile mechanism
+ + Learn to handle gitfiles in enter_repo
+ + enter_repo: do not modify input
+
+* po/insn-editor (2011-10-17) 1 commit
+  (merged to 'next' on 2011-10-19 at cbf5e0b)
+ + "rebase -i": support special-purpose editor to edit insn sheet
+
+* pw/p4-update (2011-10-17) 6 commits
+  (merged to 'next' on 2011-10-17 at f69f6cc)
+ + git-p4: handle files with shell metacharacters
+ + git-p4: keyword flattening fixes
+ + git-p4: stop ignoring apple filetype
+ + git-p4: recognize all p4 filetypes
+ + git-p4: handle utf16 filetype properly
+ + git-p4 tests: refactor and cleanup
+
+* sc/difftool-skip (2011-10-14) 2 commits
+  (merged to 'next' on 2011-10-14 at b91c581)
+ + t7800: avoid arithmetic expansion notation
+  (merged to 'next' on 2011-10-11 at 38d7e84)
+ + git-difftool: allow skipping file by typing 'n' at prompt
+
+* ss/inet-ntop (2011-10-18) 1 commit
+  (merged to 'next' on 2011-10-19 at 85469f6)
+ + inet_ntop.c: Work around GCC 4.6's detection of uninitialized variables
 
 --------------------------------------------------
 [Stalled]
@@ -130,76 +173,6 @@ I do not think there is anything fundamentally wrong with this series, but
 the risk of breakage far outweighs observed performance gain in one
 particular workload.
 
---------------------------------------------------
-[Cooking]
-
-* rr/revert-cherry-pick (2011-10-19) 6 commits
- - revert: simplify communicating command-line arguments
- - revert: allow mixed pick and revert instructions
- - revert: make commit subjects in insn sheet optional
- - revert: fix buffer overflow in insn sheet parser
- - revert: simplify getting commit subject in format_todo()
- - revert: free msg in format_todo()
-
-Perhaps 3rd and 4th should be squashed together?
-
-* jc/match-refs-clarify (2011-09-12) 2 commits
-  (merged to 'next' on 2011-10-19 at b295e1e)
- + rename "match_refs()" to "match_push_refs()"
- + send-pack: typofix error message
-
-Will merge to 'master' shortly.
-
-* jn/libperl-git-config (2011-10-21) 2 commits
-  (merged to 'next' on 2011-10-21 at 76e2d4b)
- + Add simple test for Git::config_path() in t/t9700-perl-git.sh
- + libperl-git: refactor Git::config_*
-
-Will merge to 'master' shortly.
-
-* ss/inet-ntop (2011-10-18) 1 commit
-  (merged to 'next' on 2011-10-19 at 85469f6)
- + inet_ntop.c: Work around GCC 4.6's detection of uninitialized variables
-
-Will merge to 'master' shortly.
-
-* jc/check-ref-format-fixup (2011-10-19) 3 commits
-  (merged to 'next' on 2011-10-19 at 98981be)
- + Revert "Restrict ref-like names immediately below $GIT_DIR"
-  (merged to 'next' on 2011-10-15 at 8e89bc5)
- + Restrict ref-like names immediately below $GIT_DIR
- + refs.c: move dwim_ref()/dwim_log() from sha1_name.c
- (this branch is tangled with jc/broken-ref-dwim-fix.)
-
-This became a no-op except for the bottom one which is part of the other
-topic now.
-Will discard once the other topic graduates to 'master'.
-
-* pw/p4-update (2011-10-17) 6 commits
-  (merged to 'next' on 2011-10-17 at f69f6cc)
- + git-p4: handle files with shell metacharacters
- + git-p4: keyword flattening fixes
- + git-p4: stop ignoring apple filetype
- + git-p4: recognize all p4 filetypes
- + git-p4: handle utf16 filetype properly
- + git-p4 tests: refactor and cleanup
-
-Will merge to 'master' in the fifth wave.
-
-* cn/doc-config-bare-subsection (2011-10-16) 1 commit
-  (merged to 'next' on 2011-10-17 at a6412d4)
- + Documentation: update [section.subsection] to reflect what git does
-
-Will merge to 'master' in the fifth wave.
-
-* cb/daemon-permission-errors (2011-10-17) 2 commits
- - daemon: report permission denied error to clients
- - daemon: add tests
- (this branch uses jk/daemon-msgs.)
-
-The tip commit might be loosening things a bit too much.
-Will keep in 'pu' until hearing a convincing argument for the patch.
-
 * jc/verbose-checkout (2011-10-16) 2 commits
  - checkout -v: give full status output after switching branches
  - checkout: move the local changes report to the end
@@ -210,6 +183,88 @@ to do this. I suspect people who are new to git that might think they need
 it would soon realize the don't.
 
 Will keep in 'pu' as a showcase for a while and then will drop.
+
+--------------------------------------------------
+[Cooking]
+
+* tc/submodule-clone-name-detection (2011-10-21) 2 commits
+  (merged to 'next' on 2011-10-23 at c18af03)
+ + submodule::module_clone(): silence die() message from module_name()
+ + submodule: whitespace fix
+
+"git submodule clone" used to show unnecessary error message when
+submodule mapping from name to path is not found in .gitmodules file.
+
+Will merge to 'master'.
+
+* jm/maint-gitweb-filter-forks-fix (2011-10-21) 1 commit
+  (merged to 'next' on 2011-10-21 at debedcd)
+ + gitweb: fix regression when filtering out forks
+
+Will merge to 'master' shortly.
+
+* lh/gitweb-site-html-head (2011-10-21) 1 commit
+  (merged to 'next' on 2011-10-23 at 65075df)
+ + gitweb: provide a way to customize html headers
+
+Will merge to 'master' shortly.
+
+* mh/ref-api-3 (2011-10-19) 11 commits
+  (merged to 'next' on 2011-10-23 at 92e2d35)
+ + is_refname_available(): reimplement using do_for_each_ref_in_array()
+ + names_conflict(): simplify implementation
+ + names_conflict(): new function, extracted from is_refname_available()
+ + repack_without_ref(): reimplement using do_for_each_ref_in_array()
+ + do_for_each_ref_in_array(): new function
+ + do_for_each_ref(): correctly terminate while processesing extra_refs
+ + add_ref(): take a (struct ref_entry *) parameter
+ + create_ref_entry(): extract function from add_ref()
+ + parse_ref_line(): add a check that the refname is properly formatted
+ + repack_without_ref(): remove temporary
+ + Rename another local variable name -> refname
+ (this branch uses mh/ref-api-2.)
+
+* mm/mediawiki-author-fix (2011-10-20) 1 commit
+  (merged to 'next' on 2011-10-23 at 9f85b67)
+ + git-remote-mediawiki: don't include HTTP login/password in author
+
+Will merge to 'master' shortly.
+
+* rr/revert-cherry-pick (2011-10-23) 5 commits
+ - revert: simplify communicating command-line arguments
+ - revert: allow mixed pick and revert instructions
+ - revert: make commit subjects in insn sheet optional
+ - revert: simplify getting commit subject in format_todo()
+ - revert: free msg in format_todo()
+
+The internals of "git revert/cherry-pick" has been further refactored to
+serve as the basis for the sequencer.
+
+Will merge to 'next'.
+
+* jn/libperl-git-config (2011-10-21) 2 commits
+  (merged to 'next' on 2011-10-21 at 76e2d4b)
+ + Add simple test for Git::config_path() in t/t9700-perl-git.sh
+ + libperl-git: refactor Git::config_*
+
+Will merge to 'master' shortly.
+
+* jc/check-ref-format-fixup (2011-10-19) 2 commits
+  (merged to 'next' on 2011-10-19 at 98981be)
+ + Revert "Restrict ref-like names immediately below $GIT_DIR"
+  (merged to 'next' on 2011-10-15 at 8e89bc5)
+ + Restrict ref-like names immediately below $GIT_DIR
+
+This became a no-op except for the bottom one which is part of the other
+topic now.
+Will discard once the other topic graduates to 'master'.
+
+* cb/daemon-permission-errors (2011-10-17) 2 commits
+ - daemon: report permission denied error to clients
+ - daemon: add tests
+
+The tip commit might be loosening things a bit too much.
+Will keep in 'pu' until hearing a convincing argument for the patch.
 
 * kk/gitweb-side-by-side-diff (2011-10-17) 2 commits
  - gitweb: add a feature to show side-by-side diff
@@ -234,18 +289,12 @@ Will keep in 'pu' until the planned re-roll comes.
  + refs: rename "refname" variables
  + struct ref_entry: document name member
  + cache.h: add comments for git_path() and git_path_submodule()
- (this branch is used by mh/ref-api-3; uses mh/ref-api.)
+ (this branch is used by mh/ref-api-3.)
 
 It is either merge this quickly to 'master' and hope there won't be any
 more unexpected breakage that forces us to delay the release, or hold it
-on 'next' until the next cycle. I am inclined to the former, but not quite
-ready to commit to it yet.
-
-* po/insn-editor (2011-10-17) 1 commit
-  (merged to 'next' on 2011-10-19 at cbf5e0b)
- + "rebase -i": support special-purpose editor to edit insn sheet
-
-Will merge to 'master' shortly.
+on 'next' until the next cycle. I am inclined to do the former, but not
+quite ready to commit to it yet.
 
 * dm/pack-objects-update (2011-10-20) 4 commits
  - pack-objects: don't traverse objects unnecessarily
@@ -258,44 +307,23 @@ the cycle for a series that touches a seriously important part of the
 system.
 
 * jk/git-tricks (2011-10-21) 3 commits
- - completion: match ctags symbol names in grep patterns
- - contrib: add git-jump script
- - contrib: add diff highlight script
+  (merged to 'next' on 2011-10-23 at 7c9bf71)
+ + completion: match ctags symbol names in grep patterns
+ + contrib: add git-jump script
+ + contrib: add diff highlight script
 
-Will merge to 'next'.
+* jc/signed-commit (2011-10-21) 7 commits
+  (merged to 'next' on 2011-10-23 at 03eec25)
+ + pretty: %G[?GS] placeholders
+ + parse_signed_commit: really use the entire commit log message
+ + test "commit -S" and "log --show-signature"
+ + t7004: extract generic "GPG testing" bits
+ + log: --show-signature
+ + commit: teach --gpg-sign option
+ + Split GPG interface into its own helper library
 
-* jc/make-tags (2011-10-18) 1 commit
-  (merged to 'next' on 2011-10-19 at b0b91bf)
- + Makefile: ask "ls-files" to list source files if available
-
-Will merge to 'master' shortly.
-
-* jc/signed-commit (2011-10-20) 6 commits
- - parse_signed_commit: really use the entire commit log message
- - test "commit -S" and "log --show-signature"
- - t7004: extract generic "GPG testing" bits
- - log: --show-signature
- - commit: teach --gpg-sign option
- - Split GPG interface into its own helper library
-
-This is to replace the earlier "signed push" experiments. Probably ready
-for 'next'.
-
-* mh/ref-api (2011-10-16) 7 commits
-  (merged to 'next' on 2011-10-17 at 219000f)
- + clear_ref_cache(): inline function
- + write_ref_sha1(): only invalidate the loose ref cache
- + clear_ref_cache(): extract two new functions
- + clear_ref_cache(): rename parameter
- + invalidate_ref_cache(): expose this function in the refs API
- + invalidate_ref_cache(): take the submodule as parameter
- + invalidate_ref_cache(): rename function from invalidate_cached_refs()
- (this branch is used by mh/ref-api-2 and mh/ref-api-3.)
-
-It is either merge this quickly to 'master' and hope there won't be any
-more unexpected breakage that forces us to delay the release, or hold it
-on 'next' until the next cycle. I am inclined to the former, but not quite
-ready to commit to it yet.
+This is to replace the earlier "signed push" experiments.
+Will keep in 'next' during this cycle.
 
 * sg/complete-refs (2011-10-21) 9 commits
  - completion: remove broken dead code from __git_heads() and __git_tags()
@@ -308,31 +336,8 @@ ready to commit to it yet.
  - completion: optimize refs completion
  - completion: document __gitcomp()
 
-Rerolled.
-
-Will keep in 'pu' until an Ack or two from people who have worked on the
-completion in the past comes.
-
-* jc/unseekable-bundle (2011-10-13) 2 commits
-  (merged to 'next' on 2011-10-19 at 2978ee0)
- + bundle: add parse_bundle_header() helper function
- + bundle: allowing to read from an unseekable fd
-
-Will merge to 'master' shortly.
-
-* jk/daemon-msgs (2011-10-15) 1 commit
-  (merged to 'next' on 2011-10-15 at 415cf53)
- + daemon: give friendlier error messages to clients
- (this branch is used by cb/daemon-permission-errors.)
-
-Will merge to 'master' in the fifth wave.
-
-* jk/maint-pack-objects-compete-with-delete (2011-10-14) 2 commits
-  (merged to 'next' on 2011-10-15 at 49479e4)
- + downgrade "packfile cannot be accessed" errors to warnings
- + pack-objects: protect against disappearing packs
-
-Will merge to 'master' in the fifth wave.
+Will merge to 'next' but won't merge further until an Ack or two from
+people who have worked on the completion in the past comes.
 
 * cn/fetch-prune (2011-10-15) 5 commits
   (merged to 'next' on 2011-10-16 at 02a449e)
@@ -342,32 +347,11 @@ Will merge to 'master' in the fifth wave.
  + t5510: add tests for fetch --prune
  + fetch: free all the additional refspecs
 
-Will merge to 'master' in the sixth wave.
+"git fetch --prune" used to prune remote tracking branches by comparing
+what was actually fetched and what was configured to be fetched, which was
+wrong.
 
-* sc/difftool-skip (2011-10-14) 2 commits
-  (merged to 'next' on 2011-10-14 at b91c581)
- + t7800: avoid arithmetic expansion notation
-  (merged to 'next' on 2011-10-11 at 38d7e84)
- + git-difftool: allow skipping file by typing 'n' at prompt
-
-Will merge to 'master' in the fifth wave.
-
-* jc/maint-remove-renamed-ref (2011-10-12) 1 commit
-  (merged to 'next' on 2011-10-12 at 819c3e4)
- + branch -m/-M: remove undocumented RENAMED-REF
-
-Will merge to 'master' in the sixth wave.
-
-* ph/transport-with-gitfile (2011-10-11) 5 commits
-  (merged to 'next' on 2011-10-12 at 6d58417)
- + Fix is_gitfile() for files too small or larger than PATH_MAX to be a gitfile
-  (merged to 'next' on 2011-10-06 at 891b8b6)
- + Add test showing git-fetch groks gitfiles
- + Teach transport about the gitfile mechanism
- + Learn to handle gitfiles in enter_repo
- + enter_repo: do not modify input
-
-Will merge to 'master' in the fifth wave.
+Will merge to 'master' shortly.
 
 * jc/request-pull-show-head-4 (2011-10-15) 11 commits
   (merged to 'next' on 2011-10-15 at 7e340ff)
@@ -386,4 +370,7 @@ Will merge to 'master' in the fifth wave.
  + branch: add read_branch_desc() helper function
  + Merge branch 'bk/ancestry-path' into jc/branch-desc
 
-Will merge to 'master' in the sixth wave.
+Allow setting "description" for branches and use it to help communications
+between humans in various workflow elements.
+
+Will keep in 'next' during this cycle.
