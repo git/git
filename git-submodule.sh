@@ -104,9 +104,9 @@ module_name()
 	re=$(printf '%s\n' "$1" | sed -e 's/[].[^$\\*]/\\&/g')
 	name=$( git config -f .gitmodules --get-regexp '^submodule\..*\.path$' |
 		sed -n -e 's|^submodule\.\(.*\)\.path '"$re"'$|\1|p' )
-       test -z "$name" &&
-       die "$(eval_gettext "No submodule mapping found in .gitmodules for path '\$path'")"
-       echo "$name"
+	test -z "$name" &&
+	die "$(eval_gettext "No submodule mapping found in .gitmodules for path '\$path'")"
+	echo "$name"
 }
 
 #
@@ -130,7 +130,7 @@ module_clone()
 
 	gitdir=
 	gitdir_base=
-	name=$(module_name "$path")
+	name=$(module_name "$path" 2>/dev/null)
 	base_path=$(dirname "$path")
 
 	gitdir=$(git rev-parse --git-dir)
