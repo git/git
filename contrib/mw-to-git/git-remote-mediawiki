@@ -109,6 +109,10 @@ $dumb_push = ($dumb_push eq "true");
 
 my $wiki_name = $url;
 $wiki_name =~ s/[^\/]*:\/\///;
+# If URL is like http://user:password@example.com/, we clearly don't
+# want the password in $wiki_name. While we're there, also remove user
+# and '@' sign, to avoid author like MWUser@HTTPUser@host.com
+$wiki_name =~ s/^.*@//;
 
 # Commands parser
 my $entry;
