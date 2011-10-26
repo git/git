@@ -373,13 +373,9 @@ static void *lock_and_read_sha1_file(const unsigned char *sha1, enum object_type
 {
 	void *data;
 
-	if (use_threads) {
-		read_sha1_lock();
-		data = read_sha1_file(sha1, type, size);
-		read_sha1_unlock();
-	} else {
-		data = read_sha1_file(sha1, type, size);
-	}
+	read_sha1_lock();
+	data = read_sha1_file(sha1, type, size);
+	read_sha1_unlock();
 	return data;
 }
 
