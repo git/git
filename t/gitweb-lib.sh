@@ -16,6 +16,7 @@ our \$projectroot = "$safe_pwd";
 our \$project_maxdepth = 8;
 our \$home_link_str = 'projects';
 our \$site_name = '[localhost]';
+our \$site_html_head_string = '';
 our \$site_header = '';
 our \$site_footer = '';
 our \$home_text = 'indextext.html';

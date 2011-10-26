@@ -85,6 +85,8 @@ our $home_link_str = "++GITWEB_HOME_LINK_STR++";
 our $site_name = "++GITWEB_SITENAME++"
                  || ($ENV{'SERVER_NAME'} || "Untitled") . " Git";
 
+# html snippet to include in the <head> section of each page
+our $site_html_head_string = "++GITWEB_SITE_HTML_HEAD_STRING++";
 # filename of html text to include at top of each page
 our $site_header = "++GITWEB_SITE_HEADER++";
 # html text to include at home page
@@ -3879,6 +3881,11 @@ EOF
 		print "<base href=\"".esc_url($base_url)."\" />\n";
 	}
 	print_header_links($status);
+
+	if (defined $site_html_head_string) {
+		print to_utf8($site_html_head_string);
+	}
+
 	print "</head>\n" .
 	      "<body>\n";
 
