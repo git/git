@@ -10,17 +10,12 @@
 #include "log-tree.h"
 #include "bisect.h"
 #include "sha1-array.h"
+#include "argv-array.h"
 
 static struct sha1_array good_revs;
 static struct sha1_array skipped_revs;
 
 static const unsigned char *current_bad_sha1;
-
-struct argv_array {
-	const char **argv;
-	int argv_nr;
-	int argv_alloc;
-};
 
 static const char *argv_checkout[] = {"checkout", "-q", NULL, "--", NULL};
 static const char *argv_show_branch[] = {"show-branch", NULL, NULL};
@@ -405,21 +400,6 @@ struct commit_list *find_bisection(struct commit_list *list,
 	return best;
 }
 
-static void argv_array_push(struct argv_array *array, const char *string)
-{
-	ALLOC_GROW(array->argv, array->argv_nr + 1, array->argv_alloc);
-	array->argv[array->argv_nr++] = string;
-}
-
-static void argv_array_push_sha1(struct argv_array *array,
-				 const unsigned char *sha1,
-				 const char *format)
-{
-	struct strbuf buf = STRBUF_INIT;
-	strbuf_addf(&buf, format, sha1_to_hex(sha1));
-	argv_array_push(array, strbuf_detach(&buf, NULL));
-}
-
 static int register_ref(const char *refname, const unsigned char *sha1,
 			int flags, void *cb_data)
 {
@@ -449,16 +429,10 @@ static void read_bisect_paths(struct argv_array *array)
 		die_errno("Could not open file '%s'", filename);
 
 	while (strbuf_getline(&str, fp, '\n') != EOF) {
-		char *quoted;
-		int res;
-
 		strbuf_trim(&str);
-		quoted = strbuf_detach(&str, NULL);
-		res = sq_dequote_to_argv(quoted, &array->argv,
-					 &array->argv_nr, &array->argv_alloc);
-		if (res)
+		if (sq_dequote_to_argv_array(str.buf, array))
 			die("Badly quoted content in file '%s': %s",
-			    filename, quoted);
+			    filename, str.buf);
 	}
 
 	strbuf_release(&str);
@@ -623,7 +597,7 @@ static void bisect_rev_setup(struct rev_info *revs, const char *prefix,
 			     const char *bad_format, const char *good_format,
 			     int read_paths)
 {
-	struct argv_array rev_argv = { NULL, 0, 0 };
+	struct argv_array rev_argv = ARGV_ARRAY_INIT;
 	int i;
 
 	init_revisions(revs, prefix);
@@ -631,17 +605,17 @@ static void bisect_rev_setup(struct rev_info *revs, const char *prefix,
 	revs->commit_format = CMIT_FMT_UNSPECIFIED;
 
 	/* rev_argv.argv[0] will be ignored by setup_revisions */
-	argv_array_push(&rev_argv, xstrdup("bisect_rev_setup"));
-	argv_array_push_sha1(&rev_argv, current_bad_sha1, bad_format);
+	argv_array_push(&rev_argv, "bisect_rev_setup");
+	argv_array_pushf(&rev_argv, bad_format, sha1_to_hex(current_bad_sha1));
 	for (i = 0; i < good_revs.nr; i++)
-		argv_array_push_sha1(&rev_argv, good_revs.sha1[i],
-				     good_format);
-	argv_array_push(&rev_argv, xstrdup("--"));
+		argv_array_pushf(&rev_argv, good_format,
+				 sha1_to_hex(good_revs.sha1[i]));
+	argv_array_push(&rev_argv, "--");
 	if (read_paths)
 		read_bisect_paths(&rev_argv);
-	argv_array_push(&rev_argv, NULL);
 
-	setup_revisions(rev_argv.argv_nr, rev_argv.argv, revs, NULL);
+	setup_revisions(rev_argv.argc, rev_argv.argv, revs, NULL);
+	/* XXX leak rev_argv, as "revs" may still be pointing to it */
 }
 
 static void bisect_common(struct rev_info *revs)

@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "run-command.h"
 #include "exec_cmd.h"
+#include "argv-array.h"
 
 static inline void close_pair(int fd[2])
 {
@@ -605,26 +606,23 @@ int finish_async(struct async *async)
 int run_hook(const char *index_file, const char *name, ...)
 {
 	struct child_process hook;
-	const char **argv = NULL, *env[2];
+	struct argv_array argv = ARGV_ARRAY_INIT;
+	const char *p, *env[2];
 	char index[PATH_MAX];
 	va_list args;
 	int ret;
-	size_t i = 0, alloc = 0;
 
 	if (access(git_path("hooks/%s", name), X_OK) < 0)
 		return 0;
 
 	va_start(args, name);
-	ALLOC_GROW(argv, i + 1, alloc);
-	argv[i++] = git_path("hooks/%s", name);
-	while (argv[i-1]) {
-		ALLOC_GROW(argv, i + 1, alloc);
-		argv[i++] = va_arg(args, const char *);
-	}
+	argv_array_push(&argv, git_path("hooks/%s", name));
+	while ((p = va_arg(args, const char *)))
+		argv_array_push(&argv, p);
 	va_end(args);
 
 	memset(&hook, 0, sizeof(hook));
-	hook.argv = argv;
+	hook.argv = argv.argv;
 	hook.no_stdin = 1;
 	hook.stdout_to_stderr = 1;
 	if (index_file) {
@@ -635,6 +633,6 @@ int run_hook(const char *index_file, const char *name, ...)
 	}
 
 	ret = run_command(&hook);
-	free(argv);
+	argv_array_clear(&argv);
 	return ret;
 }
