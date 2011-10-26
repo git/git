@@ -187,7 +187,9 @@ install: all
 ### Cleaning rules
 
 clean:
-	$(RM) gitweb.cgi static/gitweb.min.js static/gitweb.min.css GITWEB-BUILD-OPTIONS
+	$(RM) gitweb.cgi static/gitweb.js \
+		static/gitweb.min.js static/gitweb.min.css \
+		GITWEB-BUILD-OPTIONS
 
 .PHONY: all clean install test test-installed .FORCE-GIT-VERSION-FILE FORCE
 
