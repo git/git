@@ -159,7 +159,7 @@ static void display_error_msgs(struct unpack_trees_options *o)
 		string_list_clear(rejects, 0);
 	}
 	if (something_displayed)
-		printf("Aborting\n");
+		fprintf(stderr, "Aborting\n");
 }
 
 /*

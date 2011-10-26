@@ -47,7 +47,7 @@ OPTIONS
 
 -i::
 	Usually a merge requires the index file as well as the
-	files in the working tree are up to date with the
+	files in the working tree to be up to date with the
 	current head commit, in order not to lose local
 	changes.  This flag disables the check with the working
 	tree and is meant to be used when creating a merge of
@@ -71,21 +71,21 @@ OPTIONS
 --aggressive::
 	Usually a three-way merge by 'git read-tree' resolves
 	the merge for really trivial cases and leaves other
-	cases unresolved in the index, so that Porcelains can
+	cases unresolved in the index, so that porcelains can
 	implement different merge policies.  This flag makes the
-	command to resolve a few more cases internally:
+	command resolve a few more cases internally:
 +
 * when one side removes a path and the other side leaves the path
   unmodified.  The resolution is to remove that path.
 * when both sides remove a path.  The resolution is to remove that path.
-* when both sides adds a path identically.  The resolution
+* when both sides add a path identically.  The resolution
   is to add that path.
 
 --prefix=<prefix>/::
 	Keep the current index contents, and read the contents
-	of named tree-ish under directory at `<prefix>`.  The
+	of the named tree-ish under the directory at `<prefix>`. The
 	original index file cannot have anything at the path
-	`<prefix>` itself, and have nothing in `<prefix>/`
+	`<prefix>` itself, nor anything in the `<prefix>/`
 	directory.  Note that the `<prefix>/` value must end
 	with a slash.
 
@@ -379,36 +379,36 @@ have finished your work-in-progress), attempt the merge again.
 Sparse checkout
 ---------------
 
-"Sparse checkout" allows to sparsely populate working directory.
-It uses skip-worktree bit (see linkgit:git-update-index[1]) to tell
-Git whether a file on working directory is worth looking at.
+"Sparse checkout" allows populating the working directory sparsely.
+It uses the skip-worktree bit (see linkgit:git-update-index[1]) to tell
+Git whether a file in the working directory is worth looking at.
 
-"git read-tree" and other merge-based commands ("git merge", "git
-checkout"...) can help maintaining skip-worktree bitmap and working
+'git read-tree' and other merge-based commands ('git merge', 'git
+checkout'...) can help maintaining the skip-worktree bitmap and working
 directory update. `$GIT_DIR/info/sparse-checkout` is used to
-define the skip-worktree reference bitmap. When "git read-tree" needs
-to update working directory, it will reset skip-worktree bit in index
+define the skip-worktree reference bitmap. When 'git read-tree' needs
+to update the working directory, it resets the skip-worktree bit in the index
 based on this file, which uses the same syntax as .gitignore files.
-If an entry matches a pattern in this file, skip-worktree will be
-set on that entry. Otherwise, skip-worktree will be unset.
+If an entry matches a pattern in this file, skip-worktree will not be
+set on that entry. Otherwise, skip-worktree will be set.
 
 Then it compares the new skip-worktree value with the previous one. If
-skip-worktree turns from unset to set, it will add the corresponding
-file back. If it turns from set to unset, that file will be removed.
+skip-worktree turns from set to unset, it will add the corresponding
+file back. If it turns from unset to set, that file will be removed.
 
 While `$GIT_DIR/info/sparse-checkout` is usually used to specify what
-files are in. You can also specify what files are _not_ in, using
-negate patterns. For example, to remove file "unwanted":
+files are in, you can also specify what files are _not_ in, using
+negate patterns. For example, to remove the file `unwanted`:
 
 ----------------
 *
 !unwanted
 ----------------
 
-Another tricky thing is fully repopulating working directory when you
+Another tricky thing is fully repopulating the working directory when you
 no longer want sparse checkout. You cannot just disable "sparse
-checkout" because skip-worktree are still in the index and you working
-directory is still sparsely populated. You should re-populate working
+checkout" because skip-worktree bits are still in the index and your working
+directory is still sparsely populated. You should re-populate the working
 directory with the `$GIT_DIR/info/sparse-checkout` file content as
 follows:
 
@@ -416,8 +416,8 @@ follows:
 *
 ----------------
 
-Then you can disable sparse checkout. Sparse checkout support in "git
-read-tree" and similar commands is disabled by default. You need to
+Then you can disable sparse checkout. Sparse checkout support in 'git
+read-tree' and similar commands is disabled by default. You need to
 turn `core.sparseCheckout` on in order to have sparse checkout
 support.
 

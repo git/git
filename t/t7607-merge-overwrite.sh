@@ -107,6 +107,7 @@ error: The following untracked working tree files would be overwritten by merge:
 	sub
 	sub2
 Please move or remove them before you can merge.
+Aborting
 EOF
 
 test_expect_success 'will not overwrite untracked file in leading path' '

@@ -32,6 +32,7 @@ error: The following untracked working tree files would be overwritten by merge:
 	three
 	two
 Please move or remove them before you can merge.
+Aborting
 EOF
 
 test_expect_success 'untracked files overwritten by merge (fast and non-fast forward)' '
@@ -56,6 +57,7 @@ Please, commit your changes or stash them before you can merge.
 error: The following untracked working tree files would be overwritten by merge:
 	five
 Please move or remove them before you can merge.
+Aborting
 EOF
 
 test_expect_success 'untracked files or local changes ovewritten by merge' '
@@ -71,6 +73,7 @@ error: Your local changes to the following files would be overwritten by checkou
 	rep/one
 	rep/two
 Please, commit your changes or stash them before you can switch branches.
+Aborting
 EOF
 
 test_expect_success 'cannot switch branches because of local changes' '
@@ -92,6 +95,7 @@ error: Your local changes to the following files would be overwritten by checkou
 	rep/one
 	rep/two
 Please, commit your changes or stash them before you can switch branches.
+Aborting
 EOF
 
 test_expect_success 'not uptodate file porcelain checkout error' '
@@ -105,6 +109,7 @@ error: Updating the following directories would lose untracked files in it:
 	rep
 	rep2
 
+Aborting
 EOF
 
 test_expect_success 'not_uptodate_dir porcelain checkout error' '
