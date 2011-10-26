@@ -96,6 +96,9 @@ Updates since v1.7.7
  * "git stash" learned "--include-untracked" option to stash away
    untracked/ignored cruft from the working tree.
 
+ * "git submodule clone" does not leak an error message to the UI
+   level unnecessarily anymore.
+
  * "git submodule update" learned to honor "none" as the value for
    submodule.<name>.update to specify that the named submodule should
    not be checked out by default.
@@ -112,6 +115,9 @@ Updates since v1.7.7
 
  * "gitweb" leaked unescaped control characters from syntax hiliter
    outputs.
+
+ * "gitweb" can be told to give custom string at the end of the HTML
+   HEAD element.
 
  * "gitweb" now has its own manual pages.
 
@@ -149,6 +155,10 @@ included in this release.
    that fetches many tags) and looking up a ref by name in a repository
    with too many refs were unnecessarily slow.
    (merge 17d68a54d jp/get-ref-dir-unsorted later to maint).
+
+ * "git fetch --prune" was unsafe when used with refspecs from the
+   command line.
+   (merge e8c1e6c cn/fetch-prune later to maint).
 
  * Report from "git commit" on untracked files was confused under
    core.ignorecase option.
@@ -198,9 +208,15 @@ included in this release.
    of a blob, when JavaScript actions are enabled.
    (merge 2b07ff3ff ps/gitweb-js-with-lineno later to maint).
 
+ * The logic to filter out forked projects in the project list in
+   "gitweb" was broken for some time.
+   (merge 53c632f jm/maint-gitweb-filter-forks-fix later to maint).
+
+
+
 ---
 exec >/var/tmp/1
-O=v1.7.7-485-g9ee3d37
+O=v1.7.7.1-453-g0b26d1e
 echo O=$(git describe --always master)
 git log --first-parent --oneline --reverse ^$O master
 echo
