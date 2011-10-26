@@ -1249,9 +1249,9 @@ static void convert_from_disk(struct ondisk_cache_entry *ondisk, struct cache_en
 
 static inline size_t estimate_cache_size(size_t ondisk_size, unsigned int entries)
 {
-	long per_entry;
-
-	per_entry = sizeof(struct cache_entry) - sizeof(struct ondisk_cache_entry);
+	size_t fix_size_mem = offsetof(struct cache_entry, name);
+	size_t fix_size_dsk = offsetof(struct ondisk_cache_entry, name);
+	long per_entry = (fix_size_mem - fix_size_dsk + 7) & ~7;
 
 	/*
 	 * Alignment can cause differences. This should be "alignof", but
