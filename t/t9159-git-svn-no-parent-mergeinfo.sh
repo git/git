@@ -2,6 +2,14 @@
 test_description='git svn handling of root commits in merge ranges'
 . ./lib-git-svn.sh
 
+svn_ver="$(svn --version --quiet)"
+case $svn_ver in
+0.* | 1.[0-4].*)
+	skip_all="skipping git-svn test - SVN too old ($svn_ver)"
+	test_done
+	;;
+esac
+
 test_expect_success 'test handling of root commits in merge ranges' '
 	mkdir -p init/trunk init/branches init/tags &&
 	echo "r1" > init/trunk/file.txt &&

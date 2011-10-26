@@ -17,9 +17,10 @@ Use `git mergetool` to run one of several merge utilities to resolve
 merge conflicts.  It is typically run after 'git merge'.
 
 If one or more <file> parameters are given, the merge tool program will
-be run to resolve differences on each file.  If no <file> names are
-specified, 'git mergetool' will run the merge tool program on every file
-with merge conflicts.
+be run to resolve differences on each file (skipping those without
+conflicts).  Specifying a directory will include all unresolved files in
+that path.  If no <file> names are specified, 'git mergetool' will run
+the merge tool program on every file with merge conflicts.
 
 OPTIONS
 -------

@@ -16,7 +16,7 @@
  * and other reasons to not add 'js=1' param at the end of link
  * @constant
  */
-var jsExceptionsRe = /[;?]js=[01]$/;
+var jsExceptionsRe = /[;?]js=[01](#.*)?$/;
 
 /**
  * Add '?js=1' or ';js=1' to the end of every link in the document
@@ -33,9 +33,9 @@ function fixLinks() {
 	var allLinks = document.getElementsByTagName("a") || document.links;
 	for (var i = 0, len = allLinks.length; i < len; i++) {
 		var link = allLinks[i];
-		if (!jsExceptionsRe.test(link)) { // =~ /[;?]js=[01]$/;
-			link.href +=
-				(link.href.indexOf('?') === -1 ? '?' : ';') + 'js=1';
+		if (!jsExceptionsRe.test(link)) {
+			link.href = link.href.replace(/(#|$)/,
+				(link.href.indexOf('?') === -1 ? '?' : ';') + 'js=1$1');
 		}
 	}
 }
