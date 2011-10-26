@@ -43,7 +43,11 @@ test_expect_success \
      git config --add test.booltrue true &&
      git config --add test.boolfalse no &&
      git config --add test.boolother other &&
-     git config --add test.int 2k
+     git config --add test.int 2k &&
+     git config --add test.path "~/foo" &&
+     git config --add test.pathexpanded "$HOME/foo" &&
+     git config --add test.pathmulti foo &&
+     git config --add test.pathmulti bar
      '
 
 # The external test will outputs its own plan

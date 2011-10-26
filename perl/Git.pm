@@ -570,15 +570,68 @@ does. In scalar context requires the variable to be set only one time
 (exception is thrown otherwise), in array context returns allows the
 variable to be set multiple times and returns all the values.
 
-This currently wraps command('config') so it is not so fast.
-
 =cut
 
 sub config {
+	return _config_common({}, @_);
+}
+
+
+=item config_bool ( VARIABLE )
+
+Retrieve the bool configuration C<VARIABLE>. The return value
+is usable as a boolean in perl (and C<undef> if it's not defined,
+of course).
+
+=cut
+
+sub config_bool {
+	my $val = scalar _config_common({'kind' => '--bool'}, @_);
+
+	# Do not rewrite this as return (defined $val && $val eq 'true')
+	# as some callers do care what kind of falsehood they receive.
+	if (!defined $val) {
+		return undef;
+	} else {
+		return $val eq 'true';
+	}
+}
+
+
+=item config_path ( VARIABLE )
+
+Retrieve the path configuration C<VARIABLE>. The return value
+is an expanded path or C<undef> if it's not defined.
+
+=cut
+
+sub config_path {
+	return _config_common({'kind' => '--path'}, @_);
+}
+
+
+=item config_int ( VARIABLE )
+
+Retrieve the integer configuration C<VARIABLE>. The return value
+is simple decimal number.  An optional value suffix of 'k', 'm',
+or 'g' in the config file will cause the value to be multiplied
+by 1024, 1048576 (1024^2), or 1073741824 (1024^3) prior to output.
+It would return C<undef> if configuration variable is not defined,
+
+=cut
+
+sub config_int {
+	return scalar _config_common({'kind' => '--int'}, @_);
+}
+
+# Common subroutine to implement bulk of what the config* family of methods
+# do. This curently wraps command('config') so it is not so fast.
+sub _config_common {
+	my ($opts) = shift @_;
 	my ($self, $var) = _maybe_self(@_);
 
 	try {
-		my @cmd = ('config');
+		my @cmd = ('config', $opts->{'kind'} ? $opts->{'kind'} : ());
 		unshift @cmd, $self if $self;
 		if (wantarray) {
 			return command(@cmd, '--get-all', $var);
@@ -590,99 +643,6 @@ sub config {
 		if ($E->value() == 1) {
 			# Key not found.
 			return;
-		} else {
-			throw $E;
-		}
-	};
-}
-
-
-=item config_bool ( VARIABLE )
-
-Retrieve the bool configuration C<VARIABLE>. The return value
-is usable as a boolean in perl (and C<undef> if it's not defined,
-of course).
-
-This currently wraps command('config') so it is not so fast.
-
-=cut
-
-sub config_bool {
-	my ($self, $var) = _maybe_self(@_);
-
-	try {
-		my @cmd = ('config', '--bool', '--get', $var);
-		unshift @cmd, $self if $self;
-		my $val = command_oneline(@cmd);
-		return undef unless defined $val;
-		return $val eq 'true';
-	} catch Git::Error::Command with {
-		my $E = shift;
-		if ($E->value() == 1) {
-			# Key not found.
-			return undef;
-		} else {
-			throw $E;
-		}
-	};
-}
-
-
-=item config_path ( VARIABLE )
-
-Retrieve the path configuration C<VARIABLE>. The return value
-is an expanded path or C<undef> if it's not defined.
-
-This currently wraps command('config') so it is not so fast.
-
-=cut
-
-sub config_path {
-	my ($self, $var) = _maybe_self(@_);
-
-	try {
-		my @cmd = ('config', '--path');
-		unshift @cmd, $self if $self;
-		if (wantarray) {
-			return command(@cmd, '--get-all', $var);
-		} else {
-			return command_oneline(@cmd, '--get', $var);
-		}
-	} catch Git::Error::Command with {
-		my $E = shift;
-		if ($E->value() == 1) {
-			# Key not found.
-			return undef;
-		} else {
-			throw $E;
-		}
-	};
-}
-
-=item config_int ( VARIABLE )
-
-Retrieve the integer configuration C<VARIABLE>. The return value
-is simple decimal number.  An optional value suffix of 'k', 'm',
-or 'g' in the config file will cause the value to be multiplied
-by 1024, 1048576 (1024^2), or 1073741824 (1024^3) prior to output.
-It would return C<undef> if configuration variable is not defined,
-
-This currently wraps command('config') so it is not so fast.
-
-=cut
-
-sub config_int {
-	my ($self, $var) = _maybe_self(@_);
-
-	try {
-		my @cmd = ('config', '--int', '--get', $var);
-		unshift @cmd, $self if $self;
-		return command_oneline(@cmd);
-	} catch Git::Error::Command with {
-		my $E = shift;
-		if ($E->value() == 1) {
-			# Key not found.
-			return undef;
 		} else {
 			throw $E;
 		}
