@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Oct 2011, #09; Sun, 23)
-X-master-at: 10b2a48113b8ab6b8f48229eb40fc3637ce025ae
-X-next-at: 03eec2553f5bdf546687f47517181ada4484cae8
+Subject: What's cooking in git.git (Oct 2011, #10; Wed, 26)
+X-master-at: 997a1946a55cafb992c4ba8e5e0795aa73f5a4a9
+X-next-at: 6fac2d64191d3ca19e7d16d40b0fc18aeeed373b
 
-What's cooking in git.git (Oct 2011, #09; Sun, 23)
+What's cooking in git.git (Oct 2011, #10; Wed, 26)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -14,14 +14,14 @@ switching our focus to fixing bugs in the topics already in 'master'.
 
 Here are the repositories that have my integration branches:
 
-With maint, master, next, pu, todo, html and man:
+With maint, master, next, pu, todo:
 
         git://git.kernel.org/pub/scm/git/git.git
         git://repo.or.cz/alt-git.git
         https://code.google.com/p/git-core/
         https://github.com/git/git
 
-With only maint, master, html and man:
+With only maint and master:
 
         git://git.sourceforge.jp/gitroot/git-core/git.git
         git://git-core.git.sourceforge.net/gitroot/git-core/git-core
@@ -30,14 +30,14 @@ With all the topics and integration branches but not todo, html or man:
 
         https://github.com/gitster/git
 
-By the way, I am planning to stop pushing the generated documentation
-branches to the above repositories in the near term, as they are not
-sources. The only reason the source repository at k.org has hosted these
-branches was because it was the only repository over there that was
-writable by me; it was an ugly historical and administrative workaround
-and not a demonstration of the best practice.
+I will stop pushing the generated documentation branches to the above
+repositories, as they are not sources. The only reason the source
+repository at k.org has hosted these branches was because it was the only
+repository over there that was writable by me; it was an ugly historical
+and administrative workaround and not a demonstration of the best
+practice.
 
-They are pushed to their own separate repositories instead:
+These branches are pushed to their own separate repositories instead:
 
         git://git.kernel.org/pub/scm/git/git-{htmldocs,manpages}.git/
         git://repo.or.cz/git-{htmldocs,manpages}.git/
@@ -47,97 +47,80 @@ They are pushed to their own separate repositories instead:
 --------------------------------------------------
 [New Topics]
 
-* nd/pretty-commit-log-message (2011-10-23) 2 commits
- - pretty.c: use original commit message if reencoding fails
- - pretty.c: free get_header() return value
+* ef/mingw-upload-archive (2011-10-26) 3 commits
+ - upload-archive: use start_command instead of fork
+ - compat/win32/poll.c: upgrade from upstream
+ - mingw: move poll out of sys-folder
+
+* js/grep-mutex (2011-10-26) 3 commits
+  (merged to 'next' on 2011-10-26 at 6fac2d6)
+ + builtin/grep: simplify lock_and_read_sha1_file()
+ + builtin/grep: make lock/unlock into static inline functions
+ + git grep: be careful to use mutexes only when they are initialized
+
+Will merge to "master" shortly.
+
+* rj/gitweb-clean-js (2011-10-26) 1 commit
+  (merged to 'next' on 2011-10-26 at db36a24)
+ + gitweb/Makefile: Remove static/gitweb.js in the clean target
+
+Will merge to "master" shortly.
+
+* rs/allocate-cache-entry-individually (2011-10-26) 2 commits
+ - cache.h: put single NUL at end of struct cache_entry
+ - read-cache.c: allocate index entries individually
+
+* rs/maint-estimate-cache-size (2011-10-26) 1 commit
+  (merged to 'next' on 2011-10-26 at 2f11375)
+ + read-cache.c: fix index memory allocation
+
+Will merge to "master" shortly.
+
+* sn/complete-bash-wo-process-subst (2011-10-26) 1 commit
+  (merged to 'next' on 2011-10-26 at 8662ed6)
+ + completion: fix issue with process substitution not working on Git for Windows
+
+Will merge to "master" shortly.
 
 --------------------------------------------------
 [Graduated to "master"]
 
-* cn/doc-config-bare-subsection (2011-10-16) 1 commit
-  (merged to 'next' on 2011-10-17 at a6412d4)
- + Documentation: update [section.subsection] to reflect what git does
+* cn/fetch-prune (2011-10-15) 5 commits
+  (merged to 'next' on 2011-10-16 at 02a449e)
+ + fetch: treat --tags like refs/tags/*:refs/tags/* when pruning
+ + fetch: honor the user-provided refspecs when pruning refs
+ + remote: separate out the remote_find_tracking logic into query_refspecs
+ + t5510: add tests for fetch --prune
+ + fetch: free all the additional refspecs
 
-* jc/broken-ref-dwim-fix (2011-10-19) 3 commits
-  (merged to 'next' on 2011-10-19 at 40cad95)
- + resolve_ref(): report breakage to the caller without warning
- + resolve_ref(): expose REF_ISBROKEN flag
- + refs.c: move dwim_ref()/dwim_log() from sha1_name.c
- (this branch is tangled with jc/check-ref-format-fixup.)
+"git fetch --prune" used to prune remote tracking branches by comparing
+what was actually fetched and what was configured to be fetched, which was
+wrong.
 
-This only takes good bits from the failed jc/check-ref-format-fixup topic
-and implements saner workaround for the recent breakage on the 'master'.
+* jm/maint-gitweb-filter-forks-fix (2011-10-21) 1 commit
+  (merged to 'next' on 2011-10-21 at debedcd)
+ + gitweb: fix regression when filtering out forks
 
-* jc/maint-remove-renamed-ref (2011-10-12) 1 commit
-  (merged to 'next' on 2011-10-12 at 819c3e4)
- + branch -m/-M: remove undocumented RENAMED-REF
+* jn/libperl-git-config (2011-10-21) 2 commits
+  (merged to 'next' on 2011-10-21 at 76e2d4b)
+ + Add simple test for Git::config_path() in t/t9700-perl-git.sh
+ + libperl-git: refactor Git::config_*
 
-* jc/make-tags (2011-10-18) 1 commit
-  (merged to 'next' on 2011-10-19 at b0b91bf)
- + Makefile: ask "ls-files" to list source files if available
+* lh/gitweb-site-html-head (2011-10-21) 1 commit
+  (merged to 'next' on 2011-10-23 at 65075df)
+ + gitweb: provide a way to customize html headers
 
-* jc/match-refs-clarify (2011-09-12) 2 commits
-  (merged to 'next' on 2011-10-19 at b295e1e)
- + rename "match_refs()" to "match_push_refs()"
- + send-pack: typofix error message
+* mm/mediawiki-author-fix (2011-10-20) 1 commit
+  (merged to 'next' on 2011-10-23 at 9f85b67)
+ + git-remote-mediawiki: don't include HTTP login/password in author
 
-* jc/unseekable-bundle (2011-10-13) 2 commits
-  (merged to 'next' on 2011-10-19 at 2978ee0)
- + bundle: add parse_bundle_header() helper function
- + bundle: allowing to read from an unseekable fd
+* tc/submodule-clone-name-detection (2011-10-21) 2 commits
+  (merged to 'next' on 2011-10-23 at c18af03)
+ + submodule::module_clone(): silence die() message from module_name()
+ + submodule: whitespace fix
 
-* jk/daemon-msgs (2011-10-15) 1 commit
-  (merged to 'next' on 2011-10-15 at 415cf53)
- + daemon: give friendlier error messages to clients
- (this branch is used by cb/daemon-permission-errors.)
-
-* jk/maint-pack-objects-compete-with-delete (2011-10-14) 2 commits
-  (merged to 'next' on 2011-10-15 at 49479e4)
- + downgrade "packfile cannot be accessed" errors to warnings
- + pack-objects: protect against disappearing packs
-
-* mh/ref-api (2011-10-16) 7 commits
-  (merged to 'next' on 2011-10-17 at 219000f)
- + clear_ref_cache(): inline function
- + write_ref_sha1(): only invalidate the loose ref cache
- + clear_ref_cache(): extract two new functions
- + clear_ref_cache(): rename parameter
- + invalidate_ref_cache(): expose this function in the refs API
- + invalidate_ref_cache(): take the submodule as parameter
- + invalidate_ref_cache(): rename function from invalidate_cached_refs()
- (this branch is used by mh/ref-api-2 and mh/ref-api-3.)
-
-* ph/transport-with-gitfile (2011-10-11) 5 commits
-  (merged to 'next' on 2011-10-12 at 6d58417)
- + Fix is_gitfile() for files too small or larger than PATH_MAX to be a gitfile
-  (merged to 'next' on 2011-10-06 at 891b8b6)
- + Add test showing git-fetch groks gitfiles
- + Teach transport about the gitfile mechanism
- + Learn to handle gitfiles in enter_repo
- + enter_repo: do not modify input
-
-* po/insn-editor (2011-10-17) 1 commit
-  (merged to 'next' on 2011-10-19 at cbf5e0b)
- + "rebase -i": support special-purpose editor to edit insn sheet
-
-* pw/p4-update (2011-10-17) 6 commits
-  (merged to 'next' on 2011-10-17 at f69f6cc)
- + git-p4: handle files with shell metacharacters
- + git-p4: keyword flattening fixes
- + git-p4: stop ignoring apple filetype
- + git-p4: recognize all p4 filetypes
- + git-p4: handle utf16 filetype properly
- + git-p4 tests: refactor and cleanup
-
-* sc/difftool-skip (2011-10-14) 2 commits
-  (merged to 'next' on 2011-10-14 at b91c581)
- + t7800: avoid arithmetic expansion notation
-  (merged to 'next' on 2011-10-11 at 38d7e84)
- + git-difftool: allow skipping file by typing 'n' at prompt
-
-* ss/inet-ntop (2011-10-18) 1 commit
-  (merged to 'next' on 2011-10-19 at 85469f6)
- + inet_ntop.c: Work around GCC 4.6's detection of uninitialized variables
+"git submodule clone" used to show unnecessary error message when
+submodule mapping from name to path is not found in .gitmodules file.
 
 --------------------------------------------------
 [Stalled]
@@ -150,9 +133,6 @@ and implements saner workaround for the recent breakage on the 'master'.
 
 What the topic aims to achieve may make sense, but the implementation
 looked somewhat suboptimal.
-
-The fix-up at the tip queued on fg/submodule-auto-push topic has been
-moved to this topic.
 
 * sr/transport-helper-fix-rfc (2011-07-19) 2 commits
  - t5800: point out that deleting branches does not work
@@ -184,30 +164,19 @@ it would soon realize the don't.
 
 Will keep in 'pu' as a showcase for a while and then will drop.
 
+* kk/gitweb-side-by-side-diff (2011-10-17) 2 commits
+ - gitweb: add a feature to show side-by-side diff
+ - gitweb: change format_diff_line() to remove leading SP from $diff_class
+
+Fun.
+Will keep in 'pu' until the planned re-roll comes.
+
 --------------------------------------------------
 [Cooking]
 
-* tc/submodule-clone-name-detection (2011-10-21) 2 commits
-  (merged to 'next' on 2011-10-23 at c18af03)
- + submodule::module_clone(): silence die() message from module_name()
- + submodule: whitespace fix
-
-"git submodule clone" used to show unnecessary error message when
-submodule mapping from name to path is not found in .gitmodules file.
-
-Will merge to 'master'.
-
-* jm/maint-gitweb-filter-forks-fix (2011-10-21) 1 commit
-  (merged to 'next' on 2011-10-21 at debedcd)
- + gitweb: fix regression when filtering out forks
-
-Will merge to 'master' shortly.
-
-* lh/gitweb-site-html-head (2011-10-21) 1 commit
-  (merged to 'next' on 2011-10-23 at 65075df)
- + gitweb: provide a way to customize html headers
-
-Will merge to 'master' shortly.
+* nd/pretty-commit-log-message (2011-10-23) 2 commits
+ - pretty.c: use original commit message if reencoding fails
+ - pretty.c: free get_header() return value
 
 * mh/ref-api-3 (2011-10-19) 11 commits
   (merged to 'next' on 2011-10-23 at 92e2d35)
@@ -224,30 +193,18 @@ Will merge to 'master' shortly.
  + Rename another local variable name -> refname
  (this branch uses mh/ref-api-2.)
 
-* mm/mediawiki-author-fix (2011-10-20) 1 commit
-  (merged to 'next' on 2011-10-23 at 9f85b67)
- + git-remote-mediawiki: don't include HTTP login/password in author
-
-Will merge to 'master' shortly.
-
 * rr/revert-cherry-pick (2011-10-23) 5 commits
- - revert: simplify communicating command-line arguments
- - revert: allow mixed pick and revert instructions
- - revert: make commit subjects in insn sheet optional
- - revert: simplify getting commit subject in format_todo()
- - revert: free msg in format_todo()
+  (merged to 'next' on 2011-10-26 at 27b7496)
+ + revert: simplify communicating command-line arguments
+ + revert: allow mixed pick and revert instructions
+ + revert: make commit subjects in insn sheet optional
+ + revert: simplify getting commit subject in format_todo()
+ + revert: free msg in format_todo()
 
 The internals of "git revert/cherry-pick" has been further refactored to
 serve as the basis for the sequencer.
 
-Will merge to 'next'.
-
-* jn/libperl-git-config (2011-10-21) 2 commits
-  (merged to 'next' on 2011-10-21 at 76e2d4b)
- + Add simple test for Git::config_path() in t/t9700-perl-git.sh
- + libperl-git: refactor Git::config_*
-
-Will merge to 'master' shortly.
+Will keep in 'next' during this cycle.
 
 * jc/check-ref-format-fixup (2011-10-19) 2 commits
   (merged to 'next' on 2011-10-19 at 98981be)
@@ -265,13 +222,6 @@ Will discard once the other topic graduates to 'master'.
 
 The tip commit might be loosening things a bit too much.
 Will keep in 'pu' until hearing a convincing argument for the patch.
-
-* kk/gitweb-side-by-side-diff (2011-10-17) 2 commits
- - gitweb: add a feature to show side-by-side diff
- - gitweb: change format_diff_line() to remove leading SP from $diff_class
-
-Fun.
-Will keep in 'pu' until the planned re-roll comes.
 
 * mh/ref-api-2 (2011-10-17) 14 commits
   (merged to 'next' on 2011-10-19 at cc89f0e)
@@ -312,6 +262,9 @@ system.
  + contrib: add git-jump script
  + contrib: add diff highlight script
 
+As this stuff is in contrib/ I do not care too much about the stability.
+Will merge to 'master' unless there is strong objection.
+
 * jc/signed-commit (2011-10-21) 7 commits
   (merged to 'next' on 2011-10-23 at 03eec25)
  + pretty: %G[?GS] placeholders
@@ -326,32 +279,18 @@ This is to replace the earlier "signed push" experiments.
 Will keep in 'next' during this cycle.
 
 * sg/complete-refs (2011-10-21) 9 commits
- - completion: remove broken dead code from __git_heads() and __git_tags()
- - completion: fast initial completion for config 'remote.*.fetch' value
- - completion: improve ls-remote output filtering in __git_refs_remotes()
- - completion: query only refs/heads/ in __git_refs_remotes()
- - completion: support full refs from remote repositories
- - completion: improve ls-remote output filtering in __git_refs()
- - completion: make refs completion consistent for local and remote repos
- - completion: optimize refs completion
- - completion: document __gitcomp()
+  (merged to 'next' on 2011-10-26 at d65e2b4)
+ + completion: remove broken dead code from __git_heads() and __git_tags()
+ + completion: fast initial completion for config 'remote.*.fetch' value
+ + completion: improve ls-remote output filtering in __git_refs_remotes()
+ + completion: query only refs/heads/ in __git_refs_remotes()
+ + completion: support full refs from remote repositories
+ + completion: improve ls-remote output filtering in __git_refs()
+ + completion: make refs completion consistent for local and remote repos
+ + completion: optimize refs completion
+ + completion: document __gitcomp()
 
-Will merge to 'next' but won't merge further until an Ack or two from
-people who have worked on the completion in the past comes.
-
-* cn/fetch-prune (2011-10-15) 5 commits
-  (merged to 'next' on 2011-10-16 at 02a449e)
- + fetch: treat --tags like refs/tags/*:refs/tags/* when pruning
- + fetch: honor the user-provided refspecs when pruning refs
- + remote: separate out the remote_find_tracking logic into query_refspecs
- + t5510: add tests for fetch --prune
- + fetch: free all the additional refspecs
-
-"git fetch --prune" used to prune remote tracking branches by comparing
-what was actually fetched and what was configured to be fetched, which was
-wrong.
-
-Will merge to 'master' shortly.
+Will keep in 'next' until an Ack or two from completion folks.
 
 * jc/request-pull-show-head-4 (2011-10-15) 11 commits
   (merged to 'next' on 2011-10-15 at 7e340ff)
