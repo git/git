@@ -212,11 +212,9 @@ included in this release.
    "gitweb" was broken for some time.
    (merge 53c632f jm/maint-gitweb-filter-forks-fix later to maint).
 
-
-
 ---
 exec >/var/tmp/1
-O=v1.7.7.1-453-g0b26d1e
+O=v1.7.7.1-487-g4801546
 echo O=$(git describe --always master)
 git log --first-parent --oneline --reverse ^$O master
 echo
