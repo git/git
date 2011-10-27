@@ -577,9 +577,9 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 
 	if (0 <= option_verbosity) {
 		if (option_bare)
-			printf(_("Cloning into bare repository %s...\n"), dir);
+			printf(_("Cloning into bare repository '%s'...\n"), dir);
 		else
-			printf(_("Cloning into %s...\n"), dir);
+			printf(_("Cloning into '%s'...\n"), dir);
 	}
 	init_db(option_template, INIT_DB_QUIET);
 	write_config(&option_config);
