@@ -74,13 +74,32 @@ static int all_work_added;
 /* This lock protects all the variables above. */
 static pthread_mutex_t grep_mutex;
 
+static inline void grep_lock(void)
+{
+	if (use_threads)
+		pthread_mutex_lock(&grep_mutex);
+}
+
+static inline void grep_unlock(void)
+{
+	if (use_threads)
+		pthread_mutex_unlock(&grep_mutex);
+}
+
 /* Used to serialize calls to read_sha1_file. */
 static pthread_mutex_t read_sha1_mutex;
 
-#define grep_lock() pthread_mutex_lock(&grep_mutex)
-#define grep_unlock() pthread_mutex_unlock(&grep_mutex)
-#define read_sha1_lock() pthread_mutex_lock(&read_sha1_mutex)
-#define read_sha1_unlock() pthread_mutex_unlock(&read_sha1_mutex)
+static inline void read_sha1_lock(void)
+{
+	if (use_threads)
+		pthread_mutex_lock(&read_sha1_mutex);
+}
+
+static inline void read_sha1_unlock(void)
+{
+	if (use_threads)
+		pthread_mutex_unlock(&read_sha1_mutex);
+}
 
 /* Signalled when a new work_item is added to todo. */
 static pthread_cond_t cond_add;
@@ -354,13 +373,9 @@ static void *lock_and_read_sha1_file(const unsigned char *sha1, enum object_type
 {
 	void *data;
 
-	if (use_threads) {
-		read_sha1_lock();
-		data = read_sha1_file(sha1, type, size);
-		read_sha1_unlock();
-	} else {
-		data = read_sha1_file(sha1, type, size);
-	}
+	read_sha1_lock();
+	data = read_sha1_file(sha1, type, size);
+	read_sha1_unlock();
 	return data;
 }
 
