@@ -465,7 +465,6 @@ int get_tree_entry(const unsigned char *tree_sha1, const char *name, unsigned ch
 	int retval;
 	void *tree;
 	unsigned long size;
-	struct tree_desc t;
 	unsigned char root[20];
 
 	tree = read_object_with_reference(tree_sha1, tree_type, &size, root);
@@ -478,8 +477,13 @@ int get_tree_entry(const unsigned char *tree_sha1, const char *name, unsigned ch
 		return 0;
 	}
 
-	init_tree_desc(&t, tree, size);
-	retval = find_tree_entry(&t, name, sha1, mode);
+	if (!size) {
+		retval = -1;
+	} else {
+		struct tree_desc t;
+		init_tree_desc(&t, tree, size);
+		retval = find_tree_entry(&t, name, sha1, mode);
+	}
 	free(tree);
 	return retval;
 }
