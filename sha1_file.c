@@ -1267,7 +1267,8 @@ unsigned long unpack_object_header_buffer(const unsigned char *buf,
 	while (c & 0x80) {
 		if (len <= used || bitsizeof(long) <= shift) {
 			error("bad object header");
-			return 0;
+			size = used = 0;
+			break;
 		}
 		c = buf[used++];
 		size += (c & 0x7f) << shift;
