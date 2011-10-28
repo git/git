@@ -1,3 +1,5 @@
+Subject: A note from the maintainer
+
 Welcome to git development community.
 
 This message is written by the maintainer and talks about how Git
@@ -9,7 +11,7 @@ The development is primarily done on the Git mailing list. Help
 requests, feature proposals, bug reports and patches should be sent to
 the list address <git@vger.kernel.org>.  You don't have to be
 subscribed to send messages.  The convention on the list is to keep
-everybody involved on Cc:, so it is unnecessary to ask "Please Cc: me,
+everybody involved on Cc:, so it is unnecessary to say "Please Cc: me,
 I am not subscribed".
 
 Before sending patches, please read Documentation/SubmittingPatches
@@ -25,13 +27,13 @@ enough mental/time bandwidth to process them right at the moment, and
 it often helps to wait until the list traffic becomes calmer before
 sending such a reminder.
 
-The list archive is available at a few public sites as well:
+The list archive is available at a few public sites:
 
         http://news.gmane.org/gmane.comp.version-control.git/
         http://marc.theaimsgroup.com/?l=git
         http://www.spinics.net/lists/git/
 
-and some people seem to prefer to read it over NNTP:
+Some people seem to prefer to read it over NNTP:
 
         nntp://news.gmane.org/gmane.comp.version-control.git
 
@@ -55,12 +57,12 @@ bug report with just "git does not work".  "I tried to do X but it did not
 work" is not much better, neither is "I tried to do X and git did Y, which
 is broken".  It often is that what you expect is _not_ what other people
 expect, and chances are that what you expect is very different from what
-people who have worked on git have expected (otherwise, the behavior
-would have been changed to match that expectation long time ago).
+people who have worked on git have expected---otherwise, the behavior
+would have been changed to match your expectation long time ago.
 
 Please remember to always state
 
- - what you wanted to do;
+ - what you wanted to achieve;
 
  - what you did (the version of git and the command sequence to reproduce
    the behavior);
@@ -83,32 +85,21 @@ My public git.git repository is at:
 	https://github.com/git/git
 	https://code.google.com/p/git-core/
 
-Impatient people might have better luck with the latter two (there are a
-few other mirrors I push into at sourceforge and github as well).
+There are a few other mirrors I push into at sourceforge and github as
+well.
 
 Their gitweb interfaces are found at:
 
         http://git.kernel.org/?p=git/git.git
         http://repo.or.cz/w/alt-git.git
 
-There are three branches in git.git repository that are not about the
-source tree of git: "html", "man", and "todo".
+Preformatted documentation from the tip of the "master" branch can be
+found in:
 
-The "html" and "man" are preformatted documentation from the tip of
-the "master" branch; the tip of "html" is visible at:
-
-        http://www.kernel.org/pub/software/scm/git/docs/
-	http://git-core.googlecode.com/git-history/html/git.html
-
-The above URL is the top-level documentation page, and it may have
-links to documentation of older releases.
-
-The "todo" branch was originally meant to contain a TODO list for me,
-but is mostly used to keep some helper scripts I use to maintain git.
-For example, the script that was used to maintain the two documentation
-branches are found there as dodoc.sh, which may be a good demonstration
-of how to use a post-update hook to automate a task after pushing into a
-repository.
+        git://git.kernel.org/pub/scm/git/git-{htmldocs,manpages}.git/
+        git://repo.or.cz/git-{htmldocs,manpages}.git/
+        https://code.google.com/p/git-{htmldocs,manpages}.git/
+        https://github.com/gitster/git-{htmldocs,manpages}.git/
 
 There are four branches in git.git repository that track the source tree
 of git: "master", "maint", "next", and "pu".
@@ -131,16 +122,15 @@ merged into "master" to propagate the fixes forward.
 A new development does not usually happen on "master". When you send a
 series of patches, after review on the mailing list, a separate topic
 branch is forked from the tip of "master" and your patches are queued
-there, and kept out of "master" while people test it out.  The quality of
+there, and kept out of "master" while people test it out. The quality of
 topic branches are judged primarily by the mailing list discussions.
 
 Topic branches that are in good shape are merged to the "next" branch. In
 general, the "next" branch always contains the tip of "master".  It might
-not be quite rock-solid production ready, but is expected to work more or
-less without major breakage. The "next" branch is where new and exciting
-things take place. A topic that is in "next" is expected to be polished to
-perfection before it is merged to "master" (that's why "master" can be
-expected to stay more stable than any released version).
+not be quite rock-solid, but is expected to work more or less without major
+breakage. The "next" branch is where new and exciting things take place. A
+topic that is in "next" is expected to be polished to perfection before it
+is merged to "master".
 
 The "pu" (proposed updates) branch bundles all the remaining topic
 branches. The topics on the branch are not complete, well tested, nor well
