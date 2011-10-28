@@ -76,7 +76,7 @@ static struct pack_idx_option pack_idx_opts;
 static const char *base_name;
 static int progress = 1;
 static int window = 10;
-static unsigned long pack_size_limit, pack_size_limit_cfg;
+static unsigned long pack_size_limit;
 static int depth = 50;
 static int delta_search_threads;
 static int pack_to_stdout;
@@ -2007,10 +2007,6 @@ static int git_pack_config(const char *k, const char *v, void *cb)
 		if (pack_idx_opts.version > 2)
 			die("bad pack.indexversion=%"PRIu32,
 			    pack_idx_opts.version);
-		return 0;
-	}
-	if (!strcmp(k, "pack.packsizelimit")) {
-		pack_size_limit_cfg = git_config_ulong(k, v);
 		return 0;
 	}
 	return git_default_config(k, v, cb);
