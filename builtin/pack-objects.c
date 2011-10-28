@@ -1015,7 +1015,7 @@ static void add_pbase_object(struct tree_desc *tree,
 	while (tree_entry(tree,&entry)) {
 		if (S_ISGITLINK(entry.mode))
 			continue;
-		cmp = tree_entry_len(entry.path, entry.sha1) != cmplen ? 1 :
+		cmp = tree_entry_len(&entry) != cmplen ? 1 :
 		      memcmp(name, entry.path, cmplen);
 		if (cmp > 0)
 			continue;
