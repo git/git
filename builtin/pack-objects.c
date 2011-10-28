@@ -571,7 +571,6 @@ static void write_pack_file(void)
 	uint32_t i = 0, j;
 	struct sha1file *f;
 	off_t offset;
-	struct pack_header hdr;
 	uint32_t nr_remaining = nr_result;
 	time_t last_mtime = 0;
 	struct object_entry **write_order;
@@ -596,11 +595,9 @@ static void write_pack_file(void)
 			f = sha1fd(fd, pack_tmp_name);
 		}
 
-		hdr.hdr_signature = htonl(PACK_SIGNATURE);
-		hdr.hdr_version = htonl(PACK_VERSION);
-		hdr.hdr_entries = htonl(nr_remaining);
-		sha1write(f, &hdr, sizeof(hdr));
-		offset = sizeof(hdr);
+		offset = write_pack_header(f, nr_remaining);
+		if (!offset)
+			die_errno("unable to write pack header");
 		nr_written = 0;
 		for (; i < nr_objects; i++) {
 			struct object_entry *e = write_order[i];

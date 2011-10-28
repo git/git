@@ -178,6 +178,18 @@ const char *write_idx_file(const char *index_name, struct pack_idx_entry **objec
 	return index_name;
 }
 
+off_t write_pack_header(struct sha1file *f, uint32_t nr_entries)
+{
+	struct pack_header hdr;
+
+	hdr.hdr_signature = htonl(PACK_SIGNATURE);
+	hdr.hdr_version = htonl(PACK_VERSION);
+	hdr.hdr_entries = htonl(nr_entries);
+	if (sha1write(f, &hdr, sizeof(hdr)))
+		return 0;
+	return sizeof(hdr);
+}
+
 /*
  * Update pack header with object_count and compute new SHA1 for pack data
  * associated to pack_fd, and write that SHA1 at the end.  That new SHA1
