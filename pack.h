@@ -84,4 +84,7 @@ extern int encode_in_pack_object_header(enum object_type, uintmax_t, unsigned ch
 #define PH_ERROR_PACK_SIGNATURE	(-2)
 #define PH_ERROR_PROTOCOL	(-3)
 extern int read_pack_header(int fd, struct pack_header *);
+
+extern struct sha1file *create_tmp_packfile(char **pack_tmp_name);
+
 #endif
