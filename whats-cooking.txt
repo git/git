@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Oct 2011, #10; Wed, 26)
-X-master-at: 997a1946a55cafb992c4ba8e5e0795aa73f5a4a9
-X-next-at: 6fac2d64191d3ca19e7d16d40b0fc18aeeed373b
+Subject: What's cooking in git.git (Oct 2011, #11; Fri, 28)
+X-master-at: e8e1c29021da446d0c50573ef9619bf74f515c20
+X-next-at: 2527a49a5c76e4269d28e410ef11c6c243f1abcb
 
-What's cooking in git.git (Oct 2011, #10; Wed, 26)
+What's cooking in git.git (Oct 2011, #11; Fri, 28)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -47,10 +47,29 @@ These branches are pushed to their own separate repositories instead:
 --------------------------------------------------
 [New Topics]
 
-* ef/mingw-upload-archive (2011-10-26) 3 commits
- - upload-archive: use start_command instead of fork
- - compat/win32/poll.c: upgrade from upstream
- - mingw: move poll out of sys-folder
+* nd/misc-cleanups (2011-10-27) 6 commits
+  (merged to 'next' on 2011-10-28 at 2527a49)
+ + unpack_object_header_buffer(): clear the size field upon error
+ + tree_entry_interesting: make use of local pointer "item"
+ + tree_entry_interesting(): give meaningful names to return values
+ + read_directory_recursive: reduce one indentation level
+ + get_tree_entry(): do not call find_tree_entry() on an empty tree
+ + tree-walk.c: do not leak internal structure in tree_entry_len()
+
+These are unquestionably good parts taken out of a larger series, so that
+we can focus more on the other changes in later rounds of review.
+
+Will keep in 'next' during this cycle.
+
+* ss/blame-textconv-fake-working-tree (2011-10-28) 2 commits
+ - (squash) test for previous
+ - blame.c: Properly initialize strbuf after calling, textconv_object()
+
+A trivial fix for a breakage worth fixing.
+Will merge to 'master' before -rc1.
+
+--------------------------------------------------
+[Graduated to "master"]
 
 * js/grep-mutex (2011-10-26) 3 commits
   (merged to 'next' on 2011-10-26 at 6fac2d6)
@@ -58,69 +77,17 @@ These branches are pushed to their own separate repositories instead:
  + builtin/grep: make lock/unlock into static inline functions
  + git grep: be careful to use mutexes only when they are initialized
 
-Will merge to "master" shortly.
-
 * rj/gitweb-clean-js (2011-10-26) 1 commit
   (merged to 'next' on 2011-10-26 at db36a24)
  + gitweb/Makefile: Remove static/gitweb.js in the clean target
-
-Will merge to "master" shortly.
-
-* rs/allocate-cache-entry-individually (2011-10-26) 2 commits
- - cache.h: put single NUL at end of struct cache_entry
- - read-cache.c: allocate index entries individually
 
 * rs/maint-estimate-cache-size (2011-10-26) 1 commit
   (merged to 'next' on 2011-10-26 at 2f11375)
  + read-cache.c: fix index memory allocation
 
-Will merge to "master" shortly.
-
 * sn/complete-bash-wo-process-subst (2011-10-26) 1 commit
   (merged to 'next' on 2011-10-26 at 8662ed6)
  + completion: fix issue with process substitution not working on Git for Windows
-
-Will merge to "master" shortly.
-
---------------------------------------------------
-[Graduated to "master"]
-
-* cn/fetch-prune (2011-10-15) 5 commits
-  (merged to 'next' on 2011-10-16 at 02a449e)
- + fetch: treat --tags like refs/tags/*:refs/tags/* when pruning
- + fetch: honor the user-provided refspecs when pruning refs
- + remote: separate out the remote_find_tracking logic into query_refspecs
- + t5510: add tests for fetch --prune
- + fetch: free all the additional refspecs
-
-"git fetch --prune" used to prune remote tracking branches by comparing
-what was actually fetched and what was configured to be fetched, which was
-wrong.
-
-* jm/maint-gitweb-filter-forks-fix (2011-10-21) 1 commit
-  (merged to 'next' on 2011-10-21 at debedcd)
- + gitweb: fix regression when filtering out forks
-
-* jn/libperl-git-config (2011-10-21) 2 commits
-  (merged to 'next' on 2011-10-21 at 76e2d4b)
- + Add simple test for Git::config_path() in t/t9700-perl-git.sh
- + libperl-git: refactor Git::config_*
-
-* lh/gitweb-site-html-head (2011-10-21) 1 commit
-  (merged to 'next' on 2011-10-23 at 65075df)
- + gitweb: provide a way to customize html headers
-
-* mm/mediawiki-author-fix (2011-10-20) 1 commit
-  (merged to 'next' on 2011-10-23 at 9f85b67)
- + git-remote-mediawiki: don't include HTTP login/password in author
-
-* tc/submodule-clone-name-detection (2011-10-21) 2 commits
-  (merged to 'next' on 2011-10-23 at c18af03)
- + submodule::module_clone(): silence die() message from module_name()
- + submodule: whitespace fix
-
-"git submodule clone" used to show unnecessary error message when
-submodule mapping from name to path is not found in .gitmodules file.
 
 --------------------------------------------------
 [Stalled]
@@ -174,9 +141,28 @@ Will keep in 'pu' until the planned re-roll comes.
 --------------------------------------------------
 [Cooking]
 
+* ef/mingw-upload-archive (2011-10-26) 3 commits
+ - upload-archive: use start_command instead of fork
+ - compat/win32/poll.c: upgrade from upstream
+ - mingw: move poll out of sys-folder
+
+Are msysgit folks OK with this series (I didn't see msysgit list Cc'ed on
+these patches)? If so let's move this forward, as the changes to the core
+part seem solid.
+
+* rs/allocate-cache-entry-individually (2011-10-26) 2 commits
+  (merged to 'next' on 2011-10-27 at 2e4acd6)
+ + cache.h: put single NUL at end of struct cache_entry
+ + read-cache.c: allocate index entries individually
+
+Will keep in 'next' during this cycle.
+
 * nd/pretty-commit-log-message (2011-10-23) 2 commits
- - pretty.c: use original commit message if reencoding fails
- - pretty.c: free get_header() return value
+  (merged to 'next' on 2011-10-27 at 4b61df7)
+ + pretty.c: use original commit message if reencoding fails
+ + pretty.c: free get_header() return value
+
+Will merge to 'master' before -rc0.
 
 * mh/ref-api-3 (2011-10-19) 11 commits
   (merged to 'next' on 2011-10-23 at 92e2d35)
@@ -192,6 +178,8 @@ Will keep in 'pu' until the planned re-roll comes.
  + repack_without_ref(): remove temporary
  + Rename another local variable name -> refname
  (this branch uses mh/ref-api-2.)
+
+Will keep in 'next' during this cycle.
 
 * rr/revert-cherry-pick (2011-10-23) 5 commits
   (merged to 'next' on 2011-10-26 at 27b7496)
@@ -241,20 +229,16 @@ Will keep in 'pu' until hearing a convincing argument for the patch.
  + cache.h: add comments for git_path() and git_path_submodule()
  (this branch is used by mh/ref-api-3.)
 
-It is either merge this quickly to 'master' and hope there won't be any
-more unexpected breakage that forces us to delay the release, or hold it
-on 'next' until the next cycle. I am inclined to do the former, but not
-quite ready to commit to it yet.
+Will keep in 'next' during this cycle.
 
 * dm/pack-objects-update (2011-10-20) 4 commits
- - pack-objects: don't traverse objects unnecessarily
- - pack-objects: rewrite add_descendants_to_write_order() iteratively
- - pack-objects: use unsigned int for counter and offset values
- - pack-objects: mark add_to_write_order() as inline
+  (merged to 'next' on 2011-10-27 at fa52898)
+ + pack-objects: don't traverse objects unnecessarily
+ + pack-objects: rewrite add_descendants_to_write_order() iteratively
+ + pack-objects: use unsigned int for counter and offset values
+ + pack-objects: mark add_to_write_order() as inline
 
-Need to re-read this before deciding what to do; it came a bit too late in
-the cycle for a series that touches a seriously important part of the
-system.
+Will merge to 'master' before -rc0.
 
 * jk/git-tricks (2011-10-21) 3 commits
   (merged to 'next' on 2011-10-23 at 7c9bf71)
