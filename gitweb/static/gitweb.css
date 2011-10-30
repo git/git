@@ -491,6 +491,19 @@ div.chunk_block div.new {
 	width: 50%;
 }
 
+div.chunk_block.rem div.old div.diff.rem {
+	background-color: #fff5f5;
+}
+div.chunk_block.add div.new div.diff.add {
+	background-color: #f8fff8;
+}
+div.chunk_block.chg div     div.diff {
+	background-color: #fffff0;
+}
+div.chunk_block.ctx div     div.diff.ctx {
+	color: #404040;
+}
+
 
 div.index_include {
 	border: solid #d9d8d1;
