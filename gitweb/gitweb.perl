@@ -2225,40 +2225,47 @@ sub format_diff_cc_simplified {
 	return $result;
 }
 
+sub diff_line_class {
+	my ($line, $from, $to) = @_;
+
+	# ordinary diff
+	my $num_sign = 1;
+	# combined diff
+	if ($from && $to && ref($from->{'href'}) eq "ARRAY") {
+		$num_sign = scalar @{$from->{'href'}};
+	}
+
+	my @diff_line_classifier = (
+		{ regexp => qr/^\@\@{$num_sign} /, class => "chunk_header"},
+		{ regexp => qr/^\\/,               class => "incomplete"  },
+		{ regexp => qr/^ {$num_sign}/,     class => "ctx" },
+		# classifier for context must come before classifier add/rem,
+		# or we would have to use more complicated regexp, for example
+		# qr/(?= {0,$m}\+)[+ ]{$num_sign}/, where $m = $num_sign - 1;
+		{ regexp => qr/^[+ ]{$num_sign}/,   class => "add" },
+		{ regexp => qr/^[- ]{$num_sign}/,   class => "rem" },
+	);
+	for my $clsfy (@diff_line_classifier) {
+		return $clsfy->{'class'}
+			if ($line =~ $clsfy->{'regexp'});
+	}
+
+	# fallback
+	return "";
+}
+
 # format patch (diff) line (not to be used for diff headers)
 sub format_diff_line {
 	my $line = shift;
 	my ($from, $to) = @_;
-	my $diff_class = "";
+
+	my $diff_class = diff_line_class($line, $from, $to);
+	my $diff_classes = "diff";
+	$diff_classes .= " $diff_class" if ($diff_class);
 
 	chomp $line;
-
-	if ($from && $to && ref($from->{'href'}) eq "ARRAY") {
-		# combined diff
-		my $prefix = substr($line, 0, scalar @{$from->{'href'}});
-		if ($line =~ m/^\@{3}/) {
-			$diff_class = " chunk_header";
-		} elsif ($line =~ m/^\\/) {
-			$diff_class = " incomplete";
-		} elsif ($prefix =~ tr/+/+/) {
-			$diff_class = " add";
-		} elsif ($prefix =~ tr/-/-/) {
-			$diff_class = " rem";
-		}
-	} else {
-		# assume ordinary diff
-		my $char = substr($line, 0, 1);
-		if ($char eq '+') {
-			$diff_class = " add";
-		} elsif ($char eq '-') {
-			$diff_class = " rem";
-		} elsif ($char eq '@') {
-			$diff_class = " chunk_header";
-		} elsif ($char eq "\\") {
-			$diff_class = " incomplete";
-		}
-	}
 	$line = untabify($line);
+
 	if ($from && $to && $line =~ m/^\@{2} /) {
 		my ($from_text, $from_start, $from_lines, $to_text, $to_start, $to_lines, $section) =
 			$line =~ m/^\@{2} (-(\d+)(?:,(\d+))?) (\+(\d+)(?:,(\d+))?) \@{2}(.*)$/;
@@ -2276,7 +2283,7 @@ sub format_diff_line {
 		}
 		$line = "<span class=\"chunk_info\">@@ $from_text $to_text @@</span>" .
 		        "<span class=\"section\">" . esc_html($section, -nbsp=>1) . "</span>";
-		return "<div class=\"diff$diff_class\">$line</div>\n";
+		return "<div class=\"$diff_classes\">$line</div>\n";
 	} elsif ($from && $to && $line =~ m/^\@{3}/) {
 		my ($prefix, $ranges, $section) = $line =~ m/^(\@+) (.*?) \@+(.*)$/;
 		my (@from_text, @from_start, @from_nlines, $to_text, $to_start, $to_nlines);
@@ -2309,9 +2316,9 @@ sub format_diff_line {
 		}
 		$line .= " $prefix</span>" .
 		         "<span class=\"section\">" . esc_html($section, -nbsp=>1) . "</span>";
-		return "<div class=\"diff$diff_class\">$line</div>\n";
+		return "<div class=\"$diff_classes\">$line</div>\n";
 	}
-	return "<div class=\"diff$diff_class\">" . esc_html($line, -nbsp=>1) . "</div>\n";
+	return "<div class=\"$diff_classes\">" . esc_html($line, -nbsp=>1) . "</div>\n";
 }
 
 # Generates undef or something like "_snapshot_" or "snapshot (_tbz2_ _zip_)",
