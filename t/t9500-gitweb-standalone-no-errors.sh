@@ -329,7 +329,8 @@ test_expect_success \
 	 git add b &&
 	 git commit -a -m "On branch" &&
 	 git checkout master &&
-	 git pull . b'
+	 git pull . b &&
+	 git tag merge_commit'
 
 test_expect_success \
 	'commit(0): merge commit' \
@@ -377,6 +378,29 @@ test_expect_success \
 test_expect_success \
 	'commitdiff(1): large commit' \
 	'gitweb_run "p=.git;a=commitdiff;h=b"'
+
+# ----------------------------------------------------------------------
+# side-by-side diff
+
+test_expect_success 'side-by-side: addition of incomplete line' '
+	gitweb_run "p=.git;a=commitdiff;h=incomplete_lines_add;ds=sidebyside"
+'
+
+test_expect_success 'side-by-side: incomplete line as context line' '
+	gitweb_run "p=.git;a=commitdiff;h=incomplete_lines_ctx;ds=sidebyside"
+'
+
+test_expect_success 'side-by-side: changed incomplete line' '
+	gitweb_run "p=.git;a=commitdiff;h=incomplete_lines_chg;ds=sidebyside"
+'
+
+test_expect_success 'side-by-side: removal of incomplete line' '
+	gitweb_run "p=.git;a=commitdiff;h=incomplete_lines_rem;ds=sidebyside"
+'
+
+test_expect_success 'side-by-side: merge commit' '
+	gitweb_run "p=.git;a=commitdiff;h=merge_commit;ds=sidebyside"
+'
 
 # ----------------------------------------------------------------------
 # tags testing
