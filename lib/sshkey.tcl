@@ -117,7 +117,7 @@ proc read_sshkey_output {fd w} {
 	} else {
 		set finfo [find_ssh_key]
 		if {$finfo eq {}} {
-			set sshkey_title [mc "Generation succeded, but no keys found."]
+			set sshkey_title [mc "Generation succeeded, but no keys found."]
 			$w.contents insert end $sshkey_output
 		} else {
 			set sshkey_title [mc "Your key is in: %s" [lindex $finfo 0]]
