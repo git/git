@@ -475,6 +475,23 @@ div.diff.nodifferences {
 	color: #600000;
 }
 
+/* side-by-side diff */
+div.chunk_block {
+	overflow: hidden;
+}
+
+div.chunk_block div.old {
+	float: left;
+	width: 50%;
+	overflow: hidden;
+}
+
+div.chunk_block div.new {
+	margin-left: 50%;
+	width: 50%;
+}
+
+
 div.index_include {
 	border: solid #d9d8d1;
 	border-width: 0px 0px 1px;
