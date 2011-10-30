@@ -7164,6 +7164,7 @@ sub git_blobdiff {
 		my $formats_nav =
 			$cgi->a({-href => href(action=>"blobdiff_plain", -replay=>1)},
 			        "raw");
+		$formats_nav .= diff_style_nav($diff_style);
 		git_header_html(undef, $expires);
 		if (defined $hash_base && (my %co = parse_commit($hash_base))) {
 			git_print_page_nav('','', $hash_base,$co{'tree'},$hash_base, $formats_nav);
@@ -7221,6 +7222,27 @@ sub git_blobdiff_plain {
 	git_blobdiff('plain');
 }
 
+# assumes that it is added as later part of already existing navigation,
+# so it returns "| foo | bar" rather than just "foo | bar"
+sub diff_style_nav {
+	my ($diff_style, $is_combined) = @_;
+	$diff_style ||= 'inline';
+
+	return "" if ($is_combined);
+
+	my @styles = (inline => 'inline', 'sidebyside' => 'side by side');
+	my %styles = @styles;
+	@styles =
+		@styles[ map { $_ * 2 } 0..$#styles/2 ];
+
+	return join '',
+		map { " | ".$_ }
+		map {
+			$_ eq $diff_style ? $styles{$_} :
+			$cgi->a({-href => href(-replay=>1, diff_style => $_)}, $styles{$_})
+		} @styles;
+}
+
 sub git_commitdiff {
 	my %params = @_;
 	my $format = $params{-format} || 'html';
@@ -7250,6 +7272,7 @@ sub git_commitdiff {
 				$cgi->a({-href => href(action=>"patch", -replay=>1)},
 					"patch");
 		}
+		$formats_nav .= diff_style_nav($diff_style, @{$co{'parents'}} > 1);
 
 		if (defined $hash_parent &&
 		    $hash_parent ne '-c' && $hash_parent ne '--cc') {
