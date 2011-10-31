@@ -1430,6 +1430,10 @@ _git_gitk ()
 	_gitk
 }
 
+__git_match_ctag() {
+	awk "/^${1////\\/}/ { print \$1 }" "$2"
+}
+
 _git_grep ()
 {
 	__git_has_doubledash && return
@@ -1449,6 +1453,15 @@ _git_grep ()
 			--and --or --not --all-match
 			"
 		return
+		;;
+	esac
+
+	case "$cword,$prev" in
+	2,*|*,-*)
+		if test -r tags; then
+			__gitcomp "$(__git_match_ctag "$cur" tags)"
+			return
+		fi
 		;;
 	esac
 
