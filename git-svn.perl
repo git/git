@@ -684,7 +684,7 @@ sub populate_merge_info {
 				fatal "merge commit $d has ancestor $parent, but that change "
                      ."does not have git-svn metadata!";
 			}
-			unless ($branchurl =~ /^$rooturl(.*)/) {
+			unless ($branchurl =~ /^\Q$rooturl\E(.*)/) {
 				fatal "commit $parent git-svn metadata changed mid-run!";
 			}
 			my $branchpath = $1;
@@ -867,7 +867,7 @@ sub cmd_dcommit {
 							 ."has uuid $uuid!";
 					}
 
-					unless ($branchurl =~ /^$rooturl(.*)/) {
+					unless ($branchurl =~ /^\Q$rooturl\E(.*)/) {
 						# This branch is very strange indeed.
 						fatal "merge parent $parent for $d is on branch "
 							 ."$branchurl, which is not under the "
