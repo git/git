@@ -4,6 +4,7 @@
 #include <direct.h>
 #include <process.h>
 #include <malloc.h>
+#include <io.h>
 
 /* porting function */
 #define inline __inline
