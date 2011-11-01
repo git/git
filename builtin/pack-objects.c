@@ -454,8 +454,8 @@ static int mark_tagged(const char *path, const unsigned char *sha1, int flag,
 	return 0;
 }
 
-static void add_to_write_order(struct object_entry **wo,
-			       int *endp,
+static inline void add_to_write_order(struct object_entry **wo,
+			       unsigned int *endp,
 			       struct object_entry *e)
 {
 	if (e->filled)
@@ -465,32 +465,62 @@ static void add_to_write_order(struct object_entry **wo,
 }
 
 static void add_descendants_to_write_order(struct object_entry **wo,
-					   int *endp,
+					   unsigned int *endp,
 					   struct object_entry *e)
 {
-	struct object_entry *child;
-
-	for (child = e->delta_child; child; child = child->delta_sibling)
-		add_to_write_order(wo, endp, child);
-	for (child = e->delta_child; child; child = child->delta_sibling)
-		add_descendants_to_write_order(wo, endp, child);
+	int add_to_order = 1;
+	while (e) {
+		if (add_to_order) {
+			struct object_entry *s;
+			/* add this node... */
+			add_to_write_order(wo, endp, e);
+			/* all its siblings... */
+			for (s = e->delta_sibling; s; s = s->delta_sibling) {
+				add_to_write_order(wo, endp, s);
+			}
+		}
+		/* drop down a level to add left subtree nodes if possible */
+		if (e->delta_child) {
+			add_to_order = 1;
+			e = e->delta_child;
+		} else {
+			add_to_order = 0;
+			/* our sibling might have some children, it is next */
+			if (e->delta_sibling) {
+				e = e->delta_sibling;
+				continue;
+			}
+			/* go back to our parent node */
+			e = e->delta;
+			while (e && !e->delta_sibling) {
+				/* we're on the right side of a subtree, keep
+				 * going up until we can go right again */
+				e = e->delta;
+			}
+			if (!e) {
+				/* done- we hit our original root node */
+				return;
+			}
+			/* pass it off to sibling at this level */
+			e = e->delta_sibling;
+		}
+	};
 }
 
 static void add_family_to_write_order(struct object_entry **wo,
-				      int *endp,
+				      unsigned int *endp,
 				      struct object_entry *e)
 {
 	struct object_entry *root;
 
 	for (root = e; root->delta; root = root->delta)
 		; /* nothing */
-	add_to_write_order(wo, endp, root);
 	add_descendants_to_write_order(wo, endp, root);
 }
 
 static struct object_entry **compute_write_order(void)
 {
-	int i, wo_end;
+	unsigned int i, wo_end, last_untagged;
 
 	struct object_entry **wo = xmalloc(nr_objects * sizeof(*wo));
 
@@ -506,8 +536,8 @@ static struct object_entry **compute_write_order(void)
 	 * Make sure delta_sibling is sorted in the original
 	 * recency order.
 	 */
-	for (i = nr_objects - 1; 0 <= i; i--) {
-		struct object_entry *e = &objects[i];
+	for (i = nr_objects; i > 0;) {
+		struct object_entry *e = &objects[--i];
 		if (!e->delta)
 			continue;
 		/* Mark me as the first child */
@@ -521,7 +551,7 @@ static struct object_entry **compute_write_order(void)
 	for_each_tag_ref(mark_tagged, NULL);
 
 	/*
-	 * Give the commits in the original recency order until
+	 * Give the objects in the original recency order until
 	 * we see a tagged tip.
 	 */
 	for (i = wo_end = 0; i < nr_objects; i++) {
@@ -529,6 +559,7 @@ static struct object_entry **compute_write_order(void)
 			break;
 		add_to_write_order(wo, &wo_end, &objects[i]);
 	}
+	last_untagged = i;
 
 	/*
 	 * Then fill all the tagged tips.
@@ -541,7 +572,7 @@ static struct object_entry **compute_write_order(void)
 	/*
 	 * And then all remaining commits and tags.
 	 */
-	for (i = 0; i < nr_objects; i++) {
+	for (i = last_untagged; i < nr_objects; i++) {
 		if (objects[i].type != OBJ_COMMIT &&
 		    objects[i].type != OBJ_TAG)
 			continue;
@@ -551,7 +582,7 @@ static struct object_entry **compute_write_order(void)
 	/*
 	 * And then all the trees.
 	 */
-	for (i = 0; i < nr_objects; i++) {
+	for (i = last_untagged; i < nr_objects; i++) {
 		if (objects[i].type != OBJ_TREE)
 			continue;
 		add_to_write_order(wo, &wo_end, &objects[i]);
@@ -560,8 +591,13 @@ static struct object_entry **compute_write_order(void)
 	/*
 	 * Finally all the rest in really tight order
 	 */
-	for (i = 0; i < nr_objects; i++)
-		add_family_to_write_order(wo, &wo_end, &objects[i]);
+	for (i = last_untagged; i < nr_objects; i++) {
+		if (!objects[i].filled)
+			add_family_to_write_order(wo, &wo_end, &objects[i]);
+	}
+
+	if (wo_end != nr_objects)
+		die("ordered %u objects, expected %"PRIu32, wo_end, nr_objects);
 
 	return wo;
 }
