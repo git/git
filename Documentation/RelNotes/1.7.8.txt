@@ -79,6 +79,9 @@ Updates since v1.7.7
 
  * "git ls-remote" learned to respond to "-h"(elp) requests.
 
+ * "mediawiki" remote helper can interact with (surprise!) MediaWiki
+   with "git fetch" & "git push".
+
  * "git merge" learned the "--edit" option to allow users to edit the
    merge commit log message.
 
@@ -110,8 +113,8 @@ Updates since v1.7.7
    between commits in the superproject that has and does not have the
    submodule in the tree without re-cloning.
 
- * "mediawiki" remote helper can interact with (surprise!) MediaWiki
-   with "git fetch" & "git push".
+ * "git upload-archive" (hence "git archive --remote") can be built
+   and used on mingw port of Git.
 
  * "gitweb" leaked unescaped control characters from syntax hiliter
    outputs.
@@ -131,15 +134,6 @@ Fixes since v1.7.7
 Unless otherwise noted, all fixes in the 1.7.7.X maintenance track are
 included in this release.
 
- * We used to drop error messages from libcurl on certain kinds of
-   errors.
-   (merge be22d92eac8 jn/maint-http-error-message later to maint).
-
- * Error report from smart HTTP transport, when the connection was
-   broken in the middle of a transfer, showed a useless message on
-   a corrupt packet.
-   (merge 6cdf022 sp/smart-http-failure later to maint).
-
  * HTTP transport did not use pushurl correctly, and also did not tell
    what host it is trying to authenticate with when asking for
    credentials.
@@ -156,65 +150,27 @@ included in this release.
    with too many refs were unnecessarily slow.
    (merge 17d68a54d jp/get-ref-dir-unsorted later to maint).
 
- * "git fetch --prune" was unsafe when used with refspecs from the
-   command line.
-   (merge e8c1e6c cn/fetch-prune later to maint).
-
  * Report from "git commit" on untracked files was confused under
    core.ignorecase option.
-   (merge 2548183b jk/name-hash-dirent later to maint).
-
- * The attribute mechanism did not use case insensitive match when
-   core.ignorecase was set.
-   (merge 6eba621 bc/attr-ignore-case later to maint).
-
- * "git bisect" did not notice when it failed to update the working tree
-   to the next commit to be tested.
-   (merge 1acf11717 js/bisect-no-checkout later to maint).
-
- * "git config --bool --get-regexp" failed to separate the variable name
-   and its value "true" when the variable is defined without "= true".
-   (merge 880e3cc mm/maint-config-explicit-bool-display later to maint).
-
- * "git remote rename $a $b" were not careful to match the remote name
-   against $a (i.e. source side of the remote nickname).
-   (merge b52d00aed mz/remote-rename later to maint).
-
- * "git diff --[num]stat" used to use the number of lines of context
-   different from the default, potentially giving different results from
-   "git diff | diffstat" and confusing the users.
-   (merge f01cae918 jc/maint-diffstat-numstat-context later to maint).
+   (merge 395c7356 jk/name-hash-dirent later to maint).
 
  * "git merge" did not understand ":/<pattern>" as a way to name a commit.
-
- * "git mergetool" learned to use its arguments as pathspec, not a path to
-   the file that may not even have any conflict.
-   (merge 6d9990a jm/mergetool-pathspec later to maint).
-
- * "git pull" and "git rebase" did not work well even when GIT_WORK_TREE is
-   set correctly with GIT_DIR if the current directory is outside the working
-   tree.
-   (merge 035b5bf jk/pull-rebase-with-work-tree later to maint).
 
  " "git push" on the receiving end used to call post-receive and post-update
    hooks for attempted removal of non-existing refs.
    (merge 160b81ed ph/push-to-delete-nothing later to maint).
 
- * "git send-email" did not honor the configured hostname when restarting
-   the HELO/EHLO exchange after switching TLS on.
-   (merge 155b940 md/smtp-tls-hello-again later to maint).
-
- * "gitweb" used to produce a non-working link while showing the contents
-   of a blob, when JavaScript actions are enabled.
-   (merge 2b07ff3ff ps/gitweb-js-with-lineno later to maint).
-
  * The logic to filter out forked projects in the project list in
    "gitweb" was broken for some time.
    (merge 53c632f jm/maint-gitweb-filter-forks-fix later to maint).
 
+ * The logic to optimize the locality of the data in a pack introduced in
+   1.7.7 was grossly inefficient.
+   (merge 38d4deb dm/pack-objects-update later to maint).
+
 ---
 exec >/var/tmp/1
-O=v1.7.7.1-492-g324bc2a
+O=v1.7.8-rc0-32-g8e3565f
 echo O=$(git describe --always master)
 git log --first-parent --oneline --reverse ^$O master
 echo
