@@ -24,7 +24,7 @@ check() {
 
 check  1
 check  2 p
-check  3 pr
+check  3 px
 check  4 pre
 check  5 pref
 check  6 prefi
