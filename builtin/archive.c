@@ -87,6 +87,7 @@ int cmd_archive(int argc, const char **argv, const char *prefix)
 	const char *exec = "git-upload-archive";
 	const char *output = NULL;
 	const char *remote = NULL;
+	int is_remote = 0;
 	struct option local_opts[] = {
 		OPT_STRING('o', "output", &output, "file",
 			"write the archive to this file"),
@@ -94,6 +95,9 @@ int cmd_archive(int argc, const char **argv, const char *prefix)
 			"retrieve the archive from remote repository <repo>"),
 		OPT_STRING(0, "exec", &exec, "cmd",
 			"path to the remote git-upload-archive command"),
+		{ OPTION_BOOLEAN, 0, "remote-request", &is_remote, NULL,
+			"indicate we are serving a remote request",
+			PARSE_OPT_NOARG | PARSE_OPT_HIDDEN },
 		OPT_END()
 	};
 
@@ -108,5 +112,5 @@ int cmd_archive(int argc, const char **argv, const char *prefix)
 
 	setvbuf(stderr, NULL, _IOLBF, BUFSIZ);
 
-	return write_archive(argc, argv, prefix, 1, output, 0);
+	return write_archive(argc, argv, prefix, 1, output, is_remote);
 }
