@@ -85,6 +85,7 @@
 #define _SGI_SOURCE 1
 
 #ifdef WIN32 /* Both MinGW and MSVC */
+#define _WIN32_WINNT 0x0501
 #define WIN32_LEAN_AND_MEAN  /* stops windows.h including winsock.h */
 #include <winsock2.h>
 #include <windows.h>
