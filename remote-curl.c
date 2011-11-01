@@ -573,7 +573,14 @@ static int rpc_service(struct rpc_state *rpc, struct discovery *heads)
 
 	close(client.in);
 	client.in = -1;
-	strbuf_read(&rpc->result, client.out, 0);
+	if (!err) {
+		strbuf_read(&rpc->result, client.out, 0);
+	} else {
+		char buf[4096];
+		for (;;)
+			if (xread(client.out, buf, sizeof(buf)) <= 0)
+				break;
+	}
 
 	close(client.out);
 	client.out = -1;
