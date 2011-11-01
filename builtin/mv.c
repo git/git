@@ -29,7 +29,11 @@ static const char **copy_pathspec(const char *prefix, const char **pathspec,
 			to_copy--;
 		if (to_copy != length || base_name) {
 			char *it = xmemdupz(result[i], to_copy);
-			result[i] = base_name ? strdup(basename(it)) : it;
+			if (base_name) {
+				result[i] = xstrdup(basename(it));
+				free(it);
+			} else
+				result[i] = it;
 		}
 	}
 	return get_pathspec(prefix, result);
