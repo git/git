@@ -851,8 +851,13 @@ static int http_request(const char *url, void *result, int target, int options)
 				init_curl_http_auth(slot->curl);
 				ret = HTTP_REAUTH;
 			}
-		} else
+		} else {
+			if (!curl_errorstr[0])
+				strlcpy(curl_errorstr,
+					curl_easy_strerror(results.curl_result),
+					sizeof(curl_errorstr));
 			ret = HTTP_ERROR;
+		}
 	} else {
 		error("Unable to start HTTP request for %s", url);
 		ret = HTTP_START_FAILED;
@@ -908,7 +913,7 @@ int http_error(const char *url, int ret)
 {
 	/* http_request has already handled HTTP_START_FAILED. */
 	if (ret != HTTP_START_FAILED)
-		error("%s while accessing %s\n", curl_errorstr, url);
+		error("%s while accessing %s", curl_errorstr, url);
 
 	return ret;
 }
