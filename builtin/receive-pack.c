@@ -634,7 +634,7 @@ static int command_singleton_iterator(void *cb_data, unsigned char sha1[20])
 	struct command **cmd_list = cb_data;
 	struct command *cmd = *cmd_list;
 
-	if (!cmd)
+	if (!cmd || is_null_sha1(cmd->new_sha1))
 		return -1; /* end of list */
 	*cmd_list = NULL; /* this returns only one */
 	hashcpy(sha1, cmd->new_sha1);
@@ -659,11 +659,16 @@ static int iterate_receive_command_list(void *cb_data, unsigned char sha1[20])
 	struct command **cmd_list = cb_data;
 	struct command *cmd = *cmd_list;
 
-	if (!cmd)
-		return -1; /* end of list */
-	*cmd_list = cmd->next;
-	hashcpy(sha1, cmd->new_sha1);
-	return 0;
+	while (cmd) {
+		if (!is_null_sha1(cmd->new_sha1)) {
+			hashcpy(sha1, cmd->new_sha1);
+			*cmd_list = cmd->next;
+			return 0;
+		}
+		cmd = cmd->next;
+	}
+	*cmd_list = NULL;
+	return -1; /* end of list */
 }
 
 static void execute_commands(struct command *commands, const char *unpacker_error)
