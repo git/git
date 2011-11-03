@@ -1,16 +1,13 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Oct 2011, #11; Fri, 28)
-X-master-at: e8e1c29021da446d0c50573ef9619bf74f515c20
-X-next-at: 2527a49a5c76e4269d28e410ef11c6c243f1abcb
+Subject: What's cooking in git.git (Nov 2011, #01; Thu, 3)
+X-master-at: ee6dfb2d83ba1b057943e705f707fa27e34e47f9
+X-next-at: 2ce082cef3fbf0c6614d29a8e7011b09c39899a1
 
-What's cooking in git.git (Oct 2011, #11; Fri, 28)
+What's cooking in git.git (Nov 2011, #01; Thu, 3)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' (proposed updates) while commits prefixed with '+' are in 'next'.
-
-It probably is a good point to stop taking new topics and start
-switching our focus to fixing bugs in the topics already in 'master'.
 
 Here are the repositories that have my integration branches:
 
@@ -47,47 +44,76 @@ These branches are pushed to their own separate repositories instead:
 --------------------------------------------------
 [New Topics]
 
-* nd/misc-cleanups (2011-10-27) 6 commits
-  (merged to 'next' on 2011-10-28 at 2527a49)
- + unpack_object_header_buffer(): clear the size field upon error
- + tree_entry_interesting: make use of local pointer "item"
- + tree_entry_interesting(): give meaningful names to return values
- + read_directory_recursive: reduce one indentation level
- + get_tree_entry(): do not call find_tree_entry() on an empty tree
- + tree-walk.c: do not leak internal structure in tree_entry_len()
+* jc/stream-to-pack (2011-11-03) 4 commits
+ - Bulk check-in
+ - finish_tmp_packfile(): a helper function
+ - create_tmp_packfile(): a helper function
+ - write_pack_header(): a helper function
 
-These are unquestionably good parts taken out of a larger series, so that
-we can focus more on the other changes in later rounds of review.
+Teaches "git add" to send large-ish blob data straight to a packfile.
+This is a continuation to the "large file support" topic. I think this
+codepath to move data from worktree to repository needs to become aware of
+streaming, just like the checkout codepath that goes the other way, which
+was done in the previous "large file support" topic in the 1.7.7 cycle.
 
-Will keep in 'next' during this cycle.
+* jn/gitweb-side-by-side-diff (2011-10-31) 8 commits
+ - gitweb: Add navigation to select side-by-side diff
+ - gitweb: Use href(-replay=>1,...) for formats links in "commitdiff"
+ - t9500: Add basic sanity tests for side-by-side diff in gitweb
+ - t9500: Add test for handling incomplete lines in diff by gitweb
+ - gitweb: Give side-by-side diff extra CSS styling
+ - gitweb: Add a feature to show side-by-side diff
+ - gitweb: Extract formatting of diff chunk header
+ - gitweb: Refactor diff body line classification
 
-* ss/blame-textconv-fake-working-tree (2011-10-28) 2 commits
- - (squash) test for previous
- - blame.c: Properly initialize strbuf after calling, textconv_object()
+Replaces a series from Kato Kazuyoshi on the same topic.
 
-A trivial fix for a breakage worth fixing.
-Will merge to 'master' before -rc1.
+* vr/msvc (2011-10-31) 3 commits
+ - MSVC: Remove unneeded header stubs
+ - Compile fix for MSVC: Include <io.h>
+ - Compile fix for MSVC: Do not include sys/resources.h
+
+It seems this needs to be rehashed with msysgit folks.
+
+* mf/curl-select-fdset (2011-11-02) 2 commits
+ - http.c: Use timeout suggested by curl instead of fixed 50ms timeout
+ - http.c: Use curl_multi_fdset to select on curl fds instead of just sleeping
+
+* na/strtoimax (2011-11-02) 2 commits
+ - Support sizes >=2G in various config options accepting 'g' sizes.
+ - Add strtoimax() compatibility function.
 
 --------------------------------------------------
 [Graduated to "master"]
 
-* js/grep-mutex (2011-10-26) 3 commits
-  (merged to 'next' on 2011-10-26 at 6fac2d6)
- + builtin/grep: simplify lock_and_read_sha1_file()
- + builtin/grep: make lock/unlock into static inline functions
- + git grep: be careful to use mutexes only when they are initialized
+* dm/pack-objects-update (2011-10-20) 4 commits
+  (merged to 'next' on 2011-10-27 at fa52898)
+ + pack-objects: don't traverse objects unnecessarily
+ + pack-objects: rewrite add_descendants_to_write_order() iteratively
+ + pack-objects: use unsigned int for counter and offset values
+ + pack-objects: mark add_to_write_order() as inline
 
-* rj/gitweb-clean-js (2011-10-26) 1 commit
-  (merged to 'next' on 2011-10-26 at db36a24)
- + gitweb/Makefile: Remove static/gitweb.js in the clean target
+* ef/mingw-upload-archive (2011-10-30) 3 commits
+  (merged to 'next' on 2011-10-30 at 5267fa3)
+ + upload-archive: use start_command instead of fork
+ + compat/win32/poll.c: upgrade from upstream
+ + mingw: move poll out of sys-folder
 
-* rs/maint-estimate-cache-size (2011-10-26) 1 commit
-  (merged to 'next' on 2011-10-26 at 2f11375)
- + read-cache.c: fix index memory allocation
+* jk/git-tricks (2011-10-21) 3 commits
+  (merged to 'next' on 2011-10-23 at 7c9bf71)
+ + completion: match ctags symbol names in grep patterns
+ + contrib: add git-jump script
+ + contrib: add diff highlight script
 
-* sn/complete-bash-wo-process-subst (2011-10-26) 1 commit
-  (merged to 'next' on 2011-10-26 at 8662ed6)
- + completion: fix issue with process substitution not working on Git for Windows
+* nd/pretty-commit-log-message (2011-10-23) 2 commits
+  (merged to 'next' on 2011-10-27 at 4b61df7)
+ + pretty.c: use original commit message if reencoding fails
+ + pretty.c: free get_header() return value
+
+* ss/blame-textconv-fake-working-tree (2011-10-28) 2 commits
+  (merged to 'next' on 2011-10-30 at 9588bc1)
+ + (squash) test for previous
+ + blame.c: Properly initialize strbuf after calling, textconv_object()
 
 --------------------------------------------------
 [Stalled]
@@ -131,24 +157,22 @@ it would soon realize the don't.
 
 Will keep in 'pu' as a showcase for a while and then will drop.
 
-* kk/gitweb-side-by-side-diff (2011-10-17) 2 commits
- - gitweb: add a feature to show side-by-side diff
- - gitweb: change format_diff_line() to remove leading SP from $diff_class
-
-Fun.
-Will keep in 'pu' until the planned re-roll comes.
-
 --------------------------------------------------
 [Cooking]
 
-* ef/mingw-upload-archive (2011-10-26) 3 commits
- - upload-archive: use start_command instead of fork
- - compat/win32/poll.c: upgrade from upstream
- - mingw: move poll out of sys-folder
+* nd/misc-cleanups (2011-10-27) 6 commits
+  (merged to 'next' on 2011-10-28 at 2527a49)
+ + unpack_object_header_buffer(): clear the size field upon error
+ + tree_entry_interesting: make use of local pointer "item"
+ + tree_entry_interesting(): give meaningful names to return values
+ + read_directory_recursive: reduce one indentation level
+ + get_tree_entry(): do not call find_tree_entry() on an empty tree
+ + tree-walk.c: do not leak internal structure in tree_entry_len()
 
-Are msysgit folks OK with this series (I didn't see msysgit list Cc'ed on
-these patches)? If so let's move this forward, as the changes to the core
-part seem solid.
+These are unquestionably good parts taken out of a larger series, so that
+we can focus more on the other changes in later rounds of review.
+
+Will keep in 'next' during this cycle.
 
 * rs/allocate-cache-entry-individually (2011-10-26) 2 commits
   (merged to 'next' on 2011-10-27 at 2e4acd6)
@@ -156,13 +180,6 @@ part seem solid.
  + read-cache.c: allocate index entries individually
 
 Will keep in 'next' during this cycle.
-
-* nd/pretty-commit-log-message (2011-10-23) 2 commits
-  (merged to 'next' on 2011-10-27 at 4b61df7)
- + pretty.c: use original commit message if reencoding fails
- + pretty.c: free get_header() return value
-
-Will merge to 'master' before -rc0.
 
 * mh/ref-api-3 (2011-10-19) 11 commits
   (merged to 'next' on 2011-10-23 at 92e2d35)
@@ -231,24 +248,6 @@ Will keep in 'pu' until hearing a convincing argument for the patch.
 
 Will keep in 'next' during this cycle.
 
-* dm/pack-objects-update (2011-10-20) 4 commits
-  (merged to 'next' on 2011-10-27 at fa52898)
- + pack-objects: don't traverse objects unnecessarily
- + pack-objects: rewrite add_descendants_to_write_order() iteratively
- + pack-objects: use unsigned int for counter and offset values
- + pack-objects: mark add_to_write_order() as inline
-
-Will merge to 'master' before -rc0.
-
-* jk/git-tricks (2011-10-21) 3 commits
-  (merged to 'next' on 2011-10-23 at 7c9bf71)
- + completion: match ctags symbol names in grep patterns
- + contrib: add git-jump script
- + contrib: add diff highlight script
-
-As this stuff is in contrib/ I do not care too much about the stability.
-Will merge to 'master' unless there is strong objection.
-
 * jc/signed-commit (2011-10-21) 7 commits
   (merged to 'next' on 2011-10-23 at 03eec25)
  + pretty: %G[?GS] placeholders
@@ -297,3 +296,10 @@ Allow setting "description" for branches and use it to help communications
 between humans in various workflow elements.
 
 Will keep in 'next' during this cycle.
+
+--------------------------------------------------
+[Discarded]
+
+* kk/gitweb-side-by-side-diff (2011-10-17) 2 commits
+ . gitweb: add a feature to show side-by-side diff
+ . gitweb: change format_diff_line() to remove leading SP from $diff_class
