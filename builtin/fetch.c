@@ -436,8 +436,7 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 		}
 		note[note_len] = '\0';
 		fprintf(fp, "%s\t%s\t%s",
-			sha1_to_hex(commit ? commit->object.sha1 :
-				    rm->old_sha1),
+			sha1_to_hex(rm->old_sha1),
 			rm->merge ? "" : "not-for-merge",
 			note);
 		for (i = 0; i < url_len; ++i)
