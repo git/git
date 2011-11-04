@@ -523,7 +523,6 @@ struct active_request_slot *get_active_slot(void)
 
 	active_requests++;
 	slot->in_use = 1;
-	slot->local = NULL;
 	slot->results = NULL;
 	slot->finished = NULL;
 	slot->callback_data = NULL;
@@ -814,7 +813,6 @@ static int http_request(const char *url, void *result, int target, int options)
 				headers = curl_slist_append(headers, buf.buf);
 				strbuf_reset(&buf);
 			}
-			slot->local = result;
 		} else
 			curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION,
 					 fwrite_buffer);
@@ -856,7 +854,6 @@ static int http_request(const char *url, void *result, int target, int options)
 		ret = HTTP_START_FAILED;
 	}
 
-	slot->local = NULL;
 	curl_slist_free_all(headers);
 	strbuf_release(&buf);
 
@@ -1046,7 +1043,6 @@ void release_http_pack_request(struct http_pack_request *preq)
 	if (preq->packfile != NULL) {
 		fclose(preq->packfile);
 		preq->packfile = NULL;
-		preq->slot->local = NULL;
 	}
 	if (preq->range_header != NULL) {
 		curl_slist_free_all(preq->range_header);
@@ -1068,7 +1064,6 @@ int finish_http_pack_request(struct http_pack_request *preq)
 
 	fclose(preq->packfile);
 	preq->packfile = NULL;
-	preq->slot->local = NULL;
 
 	lst = preq->lst;
 	while (*lst != p)
@@ -1138,7 +1133,6 @@ struct http_pack_request *new_http_pack_request(
 	}
 
 	preq->slot = get_active_slot();
-	preq->slot->local = preq->packfile;
 	curl_easy_setopt(preq->slot->curl, CURLOPT_FILE, preq->packfile);
 	curl_easy_setopt(preq->slot->curl, CURLOPT_WRITEFUNCTION, fwrite);
 	curl_easy_setopt(preq->slot->curl, CURLOPT_URL, preq->url);
