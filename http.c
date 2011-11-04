@@ -4,7 +4,6 @@
 #include "run-command.h"
 #include "url.h"
 
-int data_received;
 int active_requests;
 int http_is_verbose;
 size_t http_post_buffer = 16 * LARGE_PACKET_MAX;
@@ -98,13 +97,11 @@ size_t fwrite_buffer(char *ptr, size_t eltsize, size_t nmemb, void *buffer_)
 	struct strbuf *buffer = buffer_;
 
 	strbuf_add(buffer, ptr, size);
-	data_received++;
 	return size;
 }
 
 size_t fwrite_null(char *ptr, size_t eltsize, size_t nmemb, void *strbuf)
 {
-	data_received++;
 	return eltsize * nmemb;
 }
 
@@ -629,8 +626,6 @@ void step_active_slots(void)
 void run_active_slot(struct active_request_slot *slot)
 {
 #ifdef USE_CURL_MULTI
-	long last_pos = 0;
-	long current_pos;
 	fd_set readfds;
 	fd_set writefds;
 	fd_set excfds;
@@ -640,17 +635,9 @@ void run_active_slot(struct active_request_slot *slot)
 
 	slot->finished = &finished;
 	while (!finished) {
-		data_received = 0;
 		step_active_slots();
 
-		if (!data_received && slot->local != NULL) {
-			current_pos = ftell(slot->local);
-			if (current_pos > last_pos)
-				data_received++;
-			last_pos = current_pos;
-		}
-
-		if (slot->in_use && !data_received) {
+		if (slot->in_use) {
 #if LIBCURL_VERSION_NUM >= 0x070f04
 			long curl_timeout;
 			curl_multi_timeout(curlm, &curl_timeout);
@@ -1208,7 +1195,6 @@ static size_t fwrite_sha1_file(char *ptr, size_t eltsize, size_t nmemb,
 		git_SHA1_Update(&freq->c, expn,
 				sizeof(expn) - freq->stream.avail_out);
 	} while (freq->stream.avail_in && freq->zret == Z_OK);
-	data_received++;
 	return size;
 }
 
