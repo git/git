@@ -116,7 +116,7 @@ test_expect_success 'fetch must not resolve short tag name' '
 
 '
 
-test_expect_success 'fetch must not resolve short remote name' '
+test_expect_success 'fetch can now resolve short remote name' '
 
 	cd "$D" &&
 	git update-ref refs/remotes/six/HEAD HEAD &&
@@ -125,8 +125,7 @@ test_expect_success 'fetch must not resolve short remote name' '
 	cd six &&
 	git init &&
 
-	test_must_fail git fetch .. six:six
-
+	git fetch .. six:six
 '
 
 test_expect_success 'create bundle 1' '

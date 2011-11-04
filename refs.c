@@ -995,14 +995,6 @@ const char *ref_rev_parse_rules[] = {
 	NULL
 };
 
-const char *ref_fetch_rules[] = {
-	"%.*s",
-	"refs/%.*s",
-	"refs/tags/%.*s",
-	"refs/heads/%.*s",
-	NULL
-};
-
 int refname_match(const char *abbrev_name, const char *full_name, const char **rules)
 {
 	const char **p;
