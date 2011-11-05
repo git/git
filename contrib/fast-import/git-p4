@@ -1272,6 +1272,19 @@ class P4Sync(Command, P4UserMap):
             text = p4_read_pipe('print -q -o - "%s"' % file['depotFile'])
             contents = [ text ]
 
+        if type_base == "apple":
+            # Apple filetype files will be streamed as a concatenation of
+            # its appledouble header and the contents.  This is useless
+            # on both macs and non-macs.  If using "print -q -o xx", it
+            # will create "xx" with the data, and "%xx" with the header.
+            # This is also not very useful.
+            #
+            # Ideally, someday, this script can learn how to generate
+            # appledouble files directly and import those to git, but
+            # non-mac machines can never find a use for apple filetype.
+            print "\nIgnoring apple filetype file %s" % file['depotFile']
+            return
+
         # Perhaps windows wants unicode, utf16 newlines translated too;
         # but this is not doing it.
         if self.isWindows and type_base == "text":

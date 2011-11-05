@@ -101,6 +101,37 @@ test_expect_success 'keyword file test' '
 	)
 '
 
+build_gendouble() {
+	cat >gendouble.py <<-\EOF
+	import sys
+	import struct
+	import array
+
+	s = array.array("c", '\0' * 26)
+	struct.pack_into(">L", s,  0, 0x00051607)  # AppleDouble
+	struct.pack_into(">L", s,  4, 0x00020000)  # version 2
+	s.tofile(sys.stdout)
+	EOF
+}
+
+test_expect_success 'ignore apple' '
+	test_when_finished rm -f gendouble.py &&
+	build_gendouble &&
+	(
+		cd "$cli" &&
+		test-genrandom apple 1024 >double.png &&
+		"$PYTHON_PATH" "$TRASH_DIRECTORY/gendouble.py" >%double.png &&
+		p4 add -t apple double.png &&
+		p4 submit -d appledouble
+	) &&
+	test_when_finished cleanup_git &&
+	"$GITP4" clone --dest="$git" //depot@all &&
+	(
+		cd "$git" &&
+		test ! -f double.png
+	)
+'
+
 test_expect_success 'kill p4d' '
 	kill_p4d
 '
