@@ -1229,8 +1229,12 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 			merge_name(argv[i], &merge_names);
 
 		if (!have_message || shortlog_len) {
-			fmt_merge_msg(&merge_names, &merge_msg, !have_message,
-				      shortlog_len);
+			struct fmt_merge_msg_opts opts;
+			memset(&opts, 0, sizeof(opts));
+			opts.add_title = !have_message;
+			opts.shortlog_len = shortlog_len;
+
+			fmt_merge_msg(&merge_names, &merge_msg, &opts);
 			if (merge_msg.len)
 				strbuf_setlen(&merge_msg, merge_msg.len - 1);
 		}

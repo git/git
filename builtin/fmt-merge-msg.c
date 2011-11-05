@@ -209,7 +209,7 @@ static void shortlog(const char *name, unsigned char *sha1,
 	string_list_clear(&subjects, 0);
 }
 
-static void do_fmt_merge_msg_title(struct strbuf *out,
+static void fmt_merge_msg_title(struct strbuf *out,
 	const char *current_branch) {
 	int i = 0;
 	char *sep = "";
@@ -262,8 +262,9 @@ static void do_fmt_merge_msg_title(struct strbuf *out,
 		strbuf_addf(out, " into %s\n", current_branch);
 }
 
-static int do_fmt_merge_msg(int merge_title, struct strbuf *in,
-	struct strbuf *out, int shortlog_len) {
+int fmt_merge_msg(struct strbuf *in, struct strbuf *out,
+		  struct fmt_merge_msg_opts *opts)
+{
 	int i = 0, pos = 0;
 	unsigned char head_sha1[20];
 	const char *current_branch;
@@ -289,10 +290,10 @@ static int do_fmt_merge_msg(int merge_title, struct strbuf *in,
 			die ("Error in line %d: %.*s", i, len, p);
 	}
 
-	if (merge_title && srcs.nr)
-		do_fmt_merge_msg_title(out, current_branch);
+	if (opts->add_title && srcs.nr)
+		fmt_merge_msg_title(out, current_branch);
 
-	if (shortlog_len) {
+	if (opts->shortlog_len) {
 		struct commit *head;
 		struct rev_info rev;
 
@@ -307,16 +308,11 @@ static int do_fmt_merge_msg(int merge_title, struct strbuf *in,
 
 		for (i = 0; i < origins.nr; i++)
 			shortlog(origins.items[i].string, origins.items[i].util,
-					head, &rev, shortlog_len, out);
+				 head, &rev, opts->shortlog_len, out);
 	}
 	if (out->len && out->buf[out->len-1] != '\n')
 		strbuf_addch(out, '\n');
 	return 0;
-}
-
-int fmt_merge_msg(struct strbuf *in, struct strbuf *out,
-		  int merge_title, int shortlog_len) {
-	return do_fmt_merge_msg(merge_title, in, out, shortlog_len);
 }
 
 int cmd_fmt_merge_msg(int argc, const char **argv, const char *prefix)
@@ -340,6 +336,7 @@ int cmd_fmt_merge_msg(int argc, const char **argv, const char *prefix)
 	FILE *in = stdin;
 	struct strbuf input = STRBUF_INIT, output = STRBUF_INIT;
 	int ret;
+	struct fmt_merge_msg_opts opts;
 
 	git_config(fmt_merge_msg_config, NULL);
 	argc = parse_options(argc, argv, prefix, options, fmt_merge_msg_usage,
@@ -361,10 +358,12 @@ int cmd_fmt_merge_msg(int argc, const char **argv, const char *prefix)
 
 	if (message)
 		strbuf_addstr(&output, message);
-	ret = fmt_merge_msg(&input, &output,
-			    message ? 0 : 1,
-			    shortlog_len);
 
+	memset(&opts, 0, sizeof(opts));
+	opts.add_title = !message;
+	opts.shortlog_len = shortlog_len;
+
+	ret = fmt_merge_msg(&input, &output, &opts);
 	if (ret)
 		return ret;
 	write_in_full(STDOUT_FILENO, output.buf, output.len);
