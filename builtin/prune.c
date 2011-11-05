@@ -5,6 +5,7 @@
 #include "builtin.h"
 #include "reachable.h"
 #include "parse-options.h"
+#include "progress.h"
 #include "dir.h"
 
 static const char * const prune_usage[] = {
@@ -124,6 +125,7 @@ static void remove_temporary_files(const char *path)
 int cmd_prune(int argc, const char **argv, const char *prefix)
 {
 	struct rev_info revs;
+	struct progress *progress;
 	const struct option options[] = {
 		OPT__DRY_RUN(&show_only, "do not remove, show only"),
 		OPT__VERBOSE(&verbose, "report pruned objects"),
@@ -152,7 +154,9 @@ int cmd_prune(int argc, const char **argv, const char *prefix)
 		else
 			die("unrecognized argument: %s", name);
 	}
-	mark_reachable_objects(&revs, 1);
+	progress = start_progress_delay("Checking connectivity", 0, 0, 2);
+	mark_reachable_objects(&revs, 1, progress);
+	stop_progress(&progress);
 	prune_object_dir(get_object_directory());
 
 	prune_packed_objects(show_only);

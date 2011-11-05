@@ -7,6 +7,7 @@
 #include "revision.h"
 #include "reachable.h"
 #include "cache-tree.h"
+#include "progress.h"
 
 static void process_blob(struct blob *blob,
 			 struct object_array *p,
@@ -81,21 +82,25 @@ static void process_tag(struct tag *tag, struct object_array *p, const char *nam
 		add_object(tag->tagged, p, NULL, name);
 }
 
-static void walk_commit_list(struct rev_info *revs)
+static void walk_commit_list(struct rev_info *revs, struct progress *progress)
 {
 	int i;
 	struct commit *commit;
 	struct object_array objects = OBJECT_ARRAY_INIT;
+	uint32_t count = 0;
 
 	/* Walk all commits, process their trees */
-	while ((commit = get_revision(revs)) != NULL)
+	while ((commit = get_revision(revs)) != NULL) {
 		process_tree(commit->tree, &objects, NULL, "");
+		display_progress(progress, ++count);
+	}
 
 	/* Then walk all the pending objects, recursively processing them too */
 	for (i = 0; i < revs->pending.nr; i++) {
 		struct object_array_entry *pending = revs->pending.objects + i;
 		struct object *obj = pending->item;
 		const char *name = pending->name;
+		display_progress(progress, ++count);
 		if (obj->type == OBJ_TAG) {
 			process_tag((struct tag *) obj, &objects, name);
 			continue;
@@ -191,7 +196,8 @@ static void add_cache_refs(struct rev_info *revs)
 		add_cache_tree(active_cache_tree, revs);
 }
 
-void mark_reachable_objects(struct rev_info *revs, int mark_reflog)
+void mark_reachable_objects(struct rev_info *revs, int mark_reflog,
+			    struct progress *progress)
 {
 	/*
 	 * Set up revision parsing, and mark us as being interested
@@ -217,5 +223,5 @@ void mark_reachable_objects(struct rev_info *revs, int mark_reflog)
 	 */
 	if (prepare_revision_walk(revs))
 		die("revision walk setup failed");
-	walk_commit_list(revs);
+	walk_commit_list(revs, progress);
 }
