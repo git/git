@@ -26,6 +26,7 @@ static int fmt_merge_msg_config(const char *key, const char *value, void *cb)
 	return 0;
 }
 
+/* merge data per repository where the merged tips came from */
 struct src_data {
 	struct string_list branch, tag, r_branch, generic;
 	int head_status;
@@ -71,6 +72,11 @@ static int handle_line(char *line)
 		line[len - 1] = 0;
 	line += 42;
 
+	/*
+	 * At this point, line points at the beginning of comment e.g.
+	 * "branch 'frotz' of git://that/repository.git".
+	 * Find the repository name and point it with src.
+	 */
 	src = strstr(line, " of ");
 	if (src) {
 		*src = 0;
@@ -283,10 +289,7 @@ static int do_fmt_merge_msg(int merge_title, struct strbuf *in,
 			die ("Error in line %d: %.*s", i, len, p);
 	}
 
-	if (!srcs.nr)
-		return 0;
-
-	if (merge_title)
+	if (merge_title && srcs.nr)
 		do_fmt_merge_msg_title(out, current_branch);
 
 	if (shortlog_len) {
@@ -306,6 +309,8 @@ static int do_fmt_merge_msg(int merge_title, struct strbuf *in,
 			shortlog(origins.items[i].string, origins.items[i].util,
 					head, &rev, shortlog_len, out);
 	}
+	if (out->len && out->buf[out->len-1] != '\n')
+		strbuf_addch(out, '\n');
 	return 0;
 }
 
@@ -341,12 +346,7 @@ int cmd_fmt_merge_msg(int argc, const char **argv, const char *prefix)
 			     0);
 	if (argc > 0)
 		usage_with_options(fmt_merge_msg_usage, options);
-	if (message && !shortlog_len) {
-		char nl = '\n';
-		write_in_full(STDOUT_FILENO, message, strlen(message));
-		write_in_full(STDOUT_FILENO, &nl, 1);
-		return 0;
-	}
+
 	if (shortlog_len < 0)
 		die("Negative --log=%d", shortlog_len);
 
