@@ -346,11 +346,11 @@ test_expect_success 'set up more tangled history' '
 '
 
 cat > expect <<\EOF
-*   Merge commit 'reach'
+*   Merge tag 'reach'
 |\
 | \
 |  \
-*-. \   Merge commit 'octopus-a'; commit 'octopus-b'
+*-. \   Merge tags 'octopus-a' and 'octopus-b'
 |\ \ \
 * | | | seventh
 | | * | octopus-b
