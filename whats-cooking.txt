@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Nov 2011, #01; Thu, 3)
+Subject: What's cooking in git.git (Nov 2011, #02; Sun, 6)
 X-master-at: ee6dfb2d83ba1b057943e705f707fa27e34e47f9
-X-next-at: 2ce082cef3fbf0c6614d29a8e7011b09c39899a1
+X-next-at: a49516f7bc4c2895be5b0abffee87963c65486fa
 
-What's cooking in git.git (Nov 2011, #01; Thu, 3)
+What's cooking in git.git (Nov 2011, #02; Sun, 6)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -44,76 +44,75 @@ These branches are pushed to their own separate repositories instead:
 --------------------------------------------------
 [New Topics]
 
-* jc/stream-to-pack (2011-11-03) 4 commits
- - Bulk check-in
- - finish_tmp_packfile(): a helper function
- - create_tmp_packfile(): a helper function
- - write_pack_header(): a helper function
+* jc/pull-signed-tag (2011-11-04) 10 commits
+ - merge: force edit mode when merging a tag object
+ - fmt-merge-msg: Add contents of merged tag in the merge message
+ - fmt-merge-msg: package options into a structure
+ - fmt-merge-msg: avoid early returns
+ - refs DWIMmery: use the same rule for both "git fetch" and others
+ - tests: distinguish merges of tags and commits
+ - fetch: allow "git fetch $there v1.0" to fetch a tag
+ - merge: notice local merging of tags and keep it unwrapped
+ - fetch: do not store peeled tag object names in FETCH_HEAD
+ - Split GPG interface into its own helper library
 
-Teaches "git add" to send large-ish blob data straight to a packfile.
-This is a continuation to the "large file support" topic. I think this
-codepath to move data from worktree to repository needs to become aware of
-streaming, just like the checkout codepath that goes the other way, which
-was done in the previous "large file support" topic in the 1.7.7 cycle.
+Fourth round but needs further updates.
+Will keep in 'pu' for now.
 
-* jn/gitweb-side-by-side-diff (2011-10-31) 8 commits
- - gitweb: Add navigation to select side-by-side diff
- - gitweb: Use href(-replay=>1,...) for formats links in "commitdiff"
- - t9500: Add basic sanity tests for side-by-side diff in gitweb
- - t9500: Add test for handling incomplete lines in diff by gitweb
- - gitweb: Give side-by-side diff extra CSS styling
- - gitweb: Add a feature to show side-by-side diff
- - gitweb: Extract formatting of diff chunk header
- - gitweb: Refactor diff body line classification
+* sn/http-auth-with-netrc-fix (2011-11-04) 1 commit
+  (merged to 'next' on 2011-11-06 at 60b7f96)
+ + http: don't always prompt for password
 
-Replaces a series from Kato Kazuyoshi on the same topic.
+Regression fix for the upcoming release.
+Will merge by 1.7.8 final.
 
-* vr/msvc (2011-10-31) 3 commits
- - MSVC: Remove unneeded header stubs
- - Compile fix for MSVC: Include <io.h>
- - Compile fix for MSVC: Do not include sys/resources.h
+* ab/clang-lints (2011-11-06) 2 commits
+ - cast variable in call to free() in builtin/diff.c and submodule.c
+ - apply: get rid of useless x < 0 comparison on a size_t type
 
-It seems this needs to be rehashed with msysgit folks.
+Not urgent.
 
-* mf/curl-select-fdset (2011-11-02) 2 commits
- - http.c: Use timeout suggested by curl instead of fixed 50ms timeout
- - http.c: Use curl_multi_fdset to select on curl fds instead of just sleeping
+* ab/i18n-test-fix (2011-11-05) 2 commits
+  (merged to 'next' on 2011-11-06 at f1de9a6)
+ + t/t7508-status.sh: use test_i18ncmp
+ + t/t6030-bisect-porcelain.sh: use test_i18ngrep
 
-* na/strtoimax (2011-11-02) 2 commits
- - Support sizes >=2G in various config options accepting 'g' sizes.
- - Add strtoimax() compatibility function.
+Will merge by 1.7.8 final.
 
---------------------------------------------------
-[Graduated to "master"]
+* ab/pull-rebase-config (2011-11-06) 1 commit
+ - pull: introduce a pull.rebase option to enable --rebase
 
-* dm/pack-objects-update (2011-10-20) 4 commits
-  (merged to 'next' on 2011-10-27 at fa52898)
- + pack-objects: don't traverse objects unnecessarily
- + pack-objects: rewrite add_descendants_to_write_order() iteratively
- + pack-objects: use unsigned int for counter and offset values
- + pack-objects: mark add_to_write_order() as inline
+Not urgent.
 
-* ef/mingw-upload-archive (2011-10-30) 3 commits
-  (merged to 'next' on 2011-10-30 at 5267fa3)
- + upload-archive: use start_command instead of fork
- + compat/win32/poll.c: upgrade from upstream
- + mingw: move poll out of sys-folder
+* eh/grep-scale-to-cpunum (2011-11-05) 1 commit
+ - grep: detect number of CPUs for thread spawning
 
-* jk/git-tricks (2011-10-21) 3 commits
-  (merged to 'next' on 2011-10-23 at 7c9bf71)
- + completion: match ctags symbol names in grep patterns
- + contrib: add git-jump script
- + contrib: add diff highlight script
+Kills I/O parallelism and needs to be improved or discarded.
 
-* nd/pretty-commit-log-message (2011-10-23) 2 commits
-  (merged to 'next' on 2011-10-27 at 4b61df7)
- + pretty.c: use original commit message if reencoding fails
- + pretty.c: free get_header() return value
+* nd/fsck-progress (2011-11-05) 4 commits
+ - fsck: print progress
+ - fsck: avoid reading every object twice
+ - Stop verify_packfile() as soon as an error occurs
+ - fsck: return error code when verify_pack() goes wrong
 
-* ss/blame-textconv-fake-working-tree (2011-10-28) 2 commits
-  (merged to 'next' on 2011-10-30 at 9588bc1)
- + (squash) test for previous
- + blame.c: Properly initialize strbuf after calling, textconv_object()
+Not urgent.
+
+* nd/prune-progress (2011-11-05) 1 commit
+ - prune: show progress while marking reachable objects
+
+Not urgent.
+
+* pw/p4-appledouble-fix (2011-11-05) 1 commit
+  (merged to 'next' on 2011-11-06 at 2ec0af3)
+ + git-p4: ignore apple filetype
+
+Regression fix for the upcoming release.
+Will merge by 1.7.8 final.
+
+* sr/fix-fast-export-tips (2011-11-05) 3 commits
+ - fast-export: output reset command for commandline revs
+ - fast-export: do not refer to non-existing marks
+ - t9350: point out that refs are not updated correctly
 
 --------------------------------------------------
 [Stalled]
@@ -159,6 +158,51 @@ Will keep in 'pu' as a showcase for a while and then will drop.
 
 --------------------------------------------------
 [Cooking]
+
+* jc/stream-to-pack (2011-11-03) 4 commits
+ - Bulk check-in
+ - finish_tmp_packfile(): a helper function
+ - create_tmp_packfile(): a helper function
+ - write_pack_header(): a helper function
+
+Teaches "git add" to send large-ish blob data straight to a packfile.
+This is a continuation to the "large file support" topic. I think this
+codepath to move data from worktree to repository needs to become aware of
+streaming, just like the checkout codepath that goes the other way, which
+was done in the previous "large file support" topic in the 1.7.7 cycle.
+
+* jn/gitweb-side-by-side-diff (2011-10-31) 8 commits
+ - gitweb: Add navigation to select side-by-side diff
+ - gitweb: Use href(-replay=>1,...) for formats links in "commitdiff"
+ - t9500: Add basic sanity tests for side-by-side diff in gitweb
+ - t9500: Add test for handling incomplete lines in diff by gitweb
+ - gitweb: Give side-by-side diff extra CSS styling
+ - gitweb: Add a feature to show side-by-side diff
+ - gitweb: Extract formatting of diff chunk header
+ - gitweb: Refactor diff body line classification
+
+Replaces a series from Kato Kazuyoshi on the same topic.
+
+* vr/msvc (2011-10-31) 3 commits
+ - MSVC: Remove unneeded header stubs
+ - Compile fix for MSVC: Include <io.h>
+ - Compile fix for MSVC: Do not include sys/resources.h
+
+It seems this needs to be rehashed with msysgit folks.
+
+* mf/curl-select-fdset (2011-11-04) 4 commits
+  (merged to 'next' on 2011-11-06 at a49516f)
+ + http: drop "local" member from request struct
+ + http.c: Rely on select instead of tracking whether data was received
+ + http.c: Use timeout suggested by curl instead of fixed 50ms timeout
+ + http.c: Use curl_multi_fdset to select on curl fds instead of just sleeping
+
+Reduces unnecessary waits.
+
+* na/strtoimax (2011-11-05) 3 commits
+ - Support sizes >=2G in various config options accepting 'g' sizes.
+ - Compatibility: declare strtoimax() under NO_STRTOUMAX
+ - Add strtoimax() compatibility function.
 
 * nd/misc-cleanups (2011-10-27) 6 commits
   (merged to 'next' on 2011-10-28 at 2527a49)
