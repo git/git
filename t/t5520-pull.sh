@@ -94,13 +94,32 @@ test_expect_success '--rebase' '
 	test $(git rev-parse HEAD^) = $(git rev-parse copy) &&
 	test new = $(git show HEAD:file2)
 '
+test_expect_success 'pull.rebase' '
+	git reset --hard before-rebase &&
+	git config --bool pull.rebase true &&
+	test_when_finished "git config --unset pull.rebase" &&
+	git pull . copy &&
+	test $(git rev-parse HEAD^) = $(git rev-parse copy) &&
+	test new = $(git show HEAD:file2)
+'
 
 test_expect_success 'branch.to-rebase.rebase' '
 	git reset --hard before-rebase &&
-	git config branch.to-rebase.rebase 1 &&
+	git config --bool branch.to-rebase.rebase true &&
+	test_when_finished "git config --unset branch.to-rebase.rebase" &&
 	git pull . copy &&
-	git config branch.to-rebase.rebase 0 &&
 	test $(git rev-parse HEAD^) = $(git rev-parse copy) &&
+	test new = $(git show HEAD:file2)
+'
+
+test_expect_success 'branch.to-rebase.rebase should override pull.rebase' '
+	git reset --hard before-rebase &&
+	git config --bool pull.rebase true &&
+	test_when_finished "git config --unset pull.rebase" &&
+	git config --bool branch.to-rebase.rebase false &&
+	test_when_finished "git config --unset branch.to-rebase.rebase" &&
+	git pull . copy &&
+	test $(git rev-parse HEAD^) != $(git rev-parse copy) &&
 	test new = $(git show HEAD:file2)
 '
 
