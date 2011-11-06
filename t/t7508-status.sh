@@ -189,7 +189,7 @@ test_expect_success 'status with gitignore' '
 	#	untracked
 	EOF
 	git status --ignored >output &&
-	test_cmp expect output
+	test_i18ncmp expect output
 '
 
 test_expect_success 'status with gitignore (nothing untracked)' '
@@ -247,7 +247,7 @@ test_expect_success 'status with gitignore (nothing untracked)' '
 	#	untracked
 	EOF
 	git status --ignored >output &&
-	test_cmp expect output
+	test_i18ncmp expect output
 '
 
 rm -f .gitignore

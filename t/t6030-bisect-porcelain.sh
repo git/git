@@ -164,7 +164,7 @@ test_expect_success 'bisect start: existing ".git/BISECT_START" not modified if 
 	cp .git/BISECT_START saved &&
 	test_must_fail git bisect start $HASH4 foo -- &&
 	git branch > branch.output &&
-	grep "* (no branch)" branch.output > /dev/null &&
+	test_i18ngrep "* (no branch)" branch.output > /dev/null &&
 	test_cmp saved .git/BISECT_START
 '
 test_expect_success 'bisect start: no ".git/BISECT_START" if mistaken rev' '
