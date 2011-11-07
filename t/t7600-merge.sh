@@ -96,7 +96,11 @@ verify_parents () {
 
 verify_mergeheads () {
 	printf '%s\n' "$@" >mergehead.expected &&
-	test_cmp mergehead.expected .git/MERGE_HEAD
+	while read sha1 rest
+	do
+		git rev-parse $sha1
+	done <.git/MERGE_HEAD >mergehead.actual &&
+	test_cmp mergehead.expected mergehead.actual
 }
 
 verify_no_mergehead () {
