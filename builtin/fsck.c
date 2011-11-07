@@ -29,6 +29,7 @@ static int write_lost_and_found;
 static int verbose;
 #define ERROR_OBJECT 01
 #define ERROR_REACHABLE 02
+#define ERROR_PACK 04
 
 #ifdef NO_D_INO_IN_DIRENT
 #define SORT_DIRENT 0
@@ -626,7 +627,8 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 		prepare_packed_git();
 		for (p = packed_git; p; p = p->next)
 			/* verify gives error messages itself */
-			verify_pack(p);
+			if (verify_pack(p))
+				errors_found |= ERROR_PACK;
 
 		for (p = packed_git; p; p = p->next) {
 			uint32_t j, num;
