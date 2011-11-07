@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "pack.h"
 #include "pack-revindex.h"
+#include "progress.h"
 
 struct idx_entry {
 	off_t                offset;
@@ -43,7 +44,9 @@ int check_pack_crc(struct packed_git *p, struct pack_window **w_curs,
 
 static int verify_packfile(struct packed_git *p,
 			   struct pack_window **w_curs,
-			   verify_fn fn)
+			   verify_fn fn,
+			   struct progress *progress, uint32_t base_count)
+
 {
 	off_t index_size = p->index_size;
 	const unsigned char *index_base = p->index_data;
@@ -127,8 +130,12 @@ static int verify_packfile(struct packed_git *p,
 			if (eaten)
 				data = NULL;
 		}
+		if (((base_count + i) & 1023) == 0)
+			display_progress(progress, base_count + i);
 		free(data);
+
 	}
+	display_progress(progress, base_count + i);
 	free(entries);
 
 	return err;
@@ -157,7 +164,8 @@ int verify_pack_index(struct packed_git *p)
 	return err;
 }
 
-int verify_pack(struct packed_git *p, verify_fn fn)
+int verify_pack(struct packed_git *p, verify_fn fn,
+		struct progress *progress, uint32_t base_count)
 {
 	int err = 0;
 	struct pack_window *w_curs = NULL;
@@ -166,7 +174,7 @@ int verify_pack(struct packed_git *p, verify_fn fn)
 	if (!p->index_data)
 		return -1;
 
-	err |= verify_packfile(p, &w_curs, fn);
+	err |= verify_packfile(p, &w_curs, fn, progress, base_count);
 	unuse_pack(&w_curs);
 
 	return err;

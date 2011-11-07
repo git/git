@@ -11,6 +11,7 @@
 #include "fsck.h"
 #include "parse-options.h"
 #include "dir.h"
+#include "progress.h"
 
 #define REACHABLE 0x0001
 #define SEEN      0x0002
@@ -27,6 +28,7 @@ static const char *head_points_at;
 static int errors_found;
 static int write_lost_and_found;
 static int verbose;
+static int show_progress = -1;
 #define ERROR_OBJECT 01
 #define ERROR_REACHABLE 02
 #define ERROR_PACK 04
@@ -138,7 +140,11 @@ static int traverse_one_object(struct object *obj)
 
 static int traverse_reachable(void)
 {
+	struct progress *progress = NULL;
+	unsigned int nr = 0;
 	int result = 0;
+	if (show_progress)
+		progress = start_progress_delay("Checking connectivity", 0, 0, 2);
 	while (pending.nr) {
 		struct object_array_entry *entry;
 		struct object *obj;
@@ -146,7 +152,9 @@ static int traverse_reachable(void)
 		entry = pending.objects + --pending.nr;
 		obj = entry->item;
 		result |= traverse_one_object(obj);
+		display_progress(progress, ++nr);
 	}
+	stop_progress(&progress);
 	return !!result;
 }
 
@@ -530,15 +538,20 @@ static void get_default_heads(void)
 static void fsck_object_dir(const char *path)
 {
 	int i;
+	struct progress *progress = NULL;
 
 	if (verbose)
 		fprintf(stderr, "Checking object directory\n");
 
+	if (show_progress)
+		progress = start_progress("Checking object directories", 256);
 	for (i = 0; i < 256; i++) {
 		static char dir[4096];
 		sprintf(dir, "%s/%02x", path, i);
 		fsck_dir(i, dir);
+		display_progress(progress, i+1);
 	}
+	stop_progress(&progress);
 	fsck_sha1_list();
 }
 
@@ -609,6 +622,7 @@ static struct option fsck_opts[] = {
 	OPT_BOOLEAN(0, "strict", &check_strict, "enable more strict checking"),
 	OPT_BOOLEAN(0, "lost-found", &write_lost_and_found,
 				"write dangling objects in .git/lost-found"),
+	OPT_BOOL(0, "progress", &show_progress, "show progress"),
 	OPT_END(),
 };
 
@@ -621,6 +635,12 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 	read_replace_refs = 0;
 
 	argc = parse_options(argc, argv, prefix, fsck_opts, fsck_usage, 0);
+
+	if (show_progress == -1)
+		show_progress = isatty(2);
+	if (verbose)
+		show_progress = 0;
+
 	if (write_lost_and_found) {
 		check_full = 1;
 		include_reflogs = 0;
@@ -640,12 +660,28 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 
 	if (check_full) {
 		struct packed_git *p;
+		uint32_t total = 0, count = 0;
+		struct progress *progress = NULL;
 
 		prepare_packed_git();
-		for (p = packed_git; p; p = p->next)
+
+		if (show_progress) {
+			for (p = packed_git; p; p = p->next) {
+				if (open_pack_index(p))
+					continue;
+				total += p->num_objects;
+			}
+
+			progress = start_progress("Checking objects", total);
+		}
+		for (p = packed_git; p; p = p->next) {
 			/* verify gives error messages itself */
-			if (verify_pack(p, fsck_obj_buffer))
+			if (verify_pack(p, fsck_obj_buffer,
+					progress, count))
 				errors_found |= ERROR_PACK;
+			count += p->num_objects;
+		}
+		stop_progress(&progress);
 	}
 
 	heads = 0;
