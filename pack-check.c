@@ -42,7 +42,8 @@ int check_pack_crc(struct packed_git *p, struct pack_window **w_curs,
 }
 
 static int verify_packfile(struct packed_git *p,
-		struct pack_window **w_curs)
+			   struct pack_window **w_curs,
+			   verify_fn fn)
 {
 	off_t index_size = p->index_size;
 	const unsigned char *index_base = p->index_data;
@@ -120,6 +121,12 @@ static int verify_packfile(struct packed_git *p,
 		else if (check_sha1_signature(entries[i].sha1, data, size, typename(type)))
 			err = error("packed %s from %s is corrupt",
 				    sha1_to_hex(entries[i].sha1), p->pack_name);
+		else if (fn) {
+			int eaten = 0;
+			fn(entries[i].sha1, type, size, data, &eaten);
+			if (eaten)
+				data = NULL;
+		}
 		free(data);
 	}
 	free(entries);
@@ -150,7 +157,7 @@ int verify_pack_index(struct packed_git *p)
 	return err;
 }
 
-int verify_pack(struct packed_git *p)
+int verify_pack(struct packed_git *p, verify_fn fn)
 {
 	int err = 0;
 	struct pack_window *w_curs = NULL;
@@ -159,7 +166,7 @@ int verify_pack(struct packed_git *p)
 	if (!p->index_data)
 		return -1;
 
-	err |= verify_packfile(p, &w_curs);
+	err |= verify_packfile(p, &w_curs, fn);
 	unuse_pack(&w_curs);
 
 	return err;

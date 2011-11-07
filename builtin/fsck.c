@@ -282,14 +282,8 @@ static void check_connectivity(void)
 	}
 }
 
-static int fsck_sha1(const unsigned char *sha1)
+static int fsck_obj(struct object *obj)
 {
-	struct object *obj = parse_object(sha1);
-	if (!obj) {
-		errors_found |= ERROR_OBJECT;
-		return error("%s: object corrupt or missing",
-			     sha1_to_hex(sha1));
-	}
 	if (obj->flags & SEEN)
 		return 0;
 	obj->flags |= SEEN;
@@ -330,6 +324,29 @@ static int fsck_sha1(const unsigned char *sha1)
 	}
 
 	return 0;
+}
+
+static int fsck_sha1(const unsigned char *sha1)
+{
+	struct object *obj = parse_object(sha1);
+	if (!obj) {
+		errors_found |= ERROR_OBJECT;
+		return error("%s: object corrupt or missing",
+			     sha1_to_hex(sha1));
+	}
+	return fsck_obj(obj);
+}
+
+static int fsck_obj_buffer(const unsigned char *sha1, enum object_type type,
+			   unsigned long size, void *buffer, int *eaten)
+{
+	struct object *obj;
+	obj = parse_object_buffer(sha1, type, size, buffer, eaten);
+	if (!obj) {
+		errors_found |= ERROR_OBJECT;
+		return error("%s: object corrupt or missing", sha1_to_hex(sha1));
+	}
+	return fsck_obj(obj);
 }
 
 /*
@@ -627,17 +644,8 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 		prepare_packed_git();
 		for (p = packed_git; p; p = p->next)
 			/* verify gives error messages itself */
-			if (verify_pack(p))
+			if (verify_pack(p, fsck_obj_buffer))
 				errors_found |= ERROR_PACK;
-
-		for (p = packed_git; p; p = p->next) {
-			uint32_t j, num;
-			if (open_pack_index(p))
-				continue;
-			num = p->num_objects;
-			for (j = 0; j < num; j++)
-				fsck_sha1(nth_packed_object_sha1(p, j));
-		}
 	}
 
 	heads = 0;
