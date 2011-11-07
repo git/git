@@ -1399,7 +1399,7 @@ static int set_branches(int argc, const char **argv)
 			     builtin_remote_setbranches_usage, 0);
 	if (argc == 0) {
 		error("no remote specified");
-		usage_with_options(builtin_remote_seturl_usage, options);
+		usage_with_options(builtin_remote_setbranches_usage, options);
 	}
 	argv[argc] = NULL;
 
