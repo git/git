@@ -139,34 +139,11 @@ Issues of note:
    uses some compatibility wrappers to work on AsciiDoc 8. If you have
    AsciiDoc 7, try "make ASCIIDOC7=YesPlease".
 
-   Alternatively, pre-formatted documentation is available in
-   "html" and "man" branches of the git repository itself.  For
-   example, you could:
-
-	$ mkdir manual && cd manual
-	$ git init
-	$ git fetch-pack git://git.kernel.org/pub/scm/git/git.git man html |
-	  while read a b
-	  do
-	    echo $a >.git/$b
-	  done
-	$ cp .git/refs/heads/man .git/refs/heads/master
-	$ git checkout
-
-   to checkout the pre-built man pages.  Also in this repository:
-
-	$ git checkout html
-
-   would instead give you a copy of what you see at:
-
-	http://www.kernel.org/pub/software/scm/git/docs/
-
    There are also "make quick-install-doc", "make quick-install-man"
    and "make quick-install-html" which install preformatted man pages
-   and html documentation.
-   This does not require asciidoc/xmlto, but it only works from within
-   a cloned checkout of git.git with these two extra branches, and will
-   not work for the maintainer for obvious chicken-and-egg reasons.
+   and html documentation. To use these build targets, you need to
+   clone two separate git-htmldocs and git-manpages repositories next
+   to the clone of git itself.
 
    It has been reported that docbook-xsl version 1.72 and 1.73 are
    buggy; 1.72 misformats manual pages for callouts, and 1.73 needs
