@@ -894,7 +894,72 @@ static void add_extra_header(struct strbuf *buffer,
 			     struct commit_extra_header *extra)
 {
 	strbuf_addstr(buffer, extra->key);
-	strbuf_add_lines(buffer, " ", extra->value, extra->len);
+	if (extra->len)
+		strbuf_add_lines(buffer, " ", extra->value, extra->len);
+	else
+		strbuf_addch(buffer, '\n');
+}
+
+struct commit_extra_header *read_commit_extra_headers(struct commit *commit)
+{
+	struct commit_extra_header *extra = NULL;
+	unsigned long size;
+	enum object_type type;
+	char *buffer = read_sha1_file(commit->object.sha1, &type, &size);
+	if (buffer && type == OBJ_COMMIT)
+		extra = read_commit_extra_header_lines(buffer, size);
+	free(buffer);
+	return extra;
+}
+
+static inline int standard_header_field(const char *field, size_t len)
+{
+	return ((len == 4 && !memcmp(field, "tree ", 5)) ||
+		(len == 6 && !memcmp(field, "parent ", 7)) ||
+		(len == 6 && !memcmp(field, "author ", 7)) ||
+		(len == 9 && !memcmp(field, "committer ", 10)) ||
+		(len == 8 && !memcmp(field, "encoding ", 9)));
+}
+
+struct commit_extra_header *read_commit_extra_header_lines(const char *buffer, size_t size)
+{
+	struct commit_extra_header *extra = NULL, **tail = &extra, *it = NULL;
+	const char *line, *next, *eof, *eob;
+	struct strbuf buf = STRBUF_INIT;
+
+	for (line = buffer, eob = line + size;
+	     line < eob && *line != '\n';
+	     line = next) {
+		next = memchr(line, '\n', eob - line);
+		next = next ? next + 1 : eob;
+		if (*line == ' ') {
+			/* continuation */
+			if (it)
+				strbuf_add(&buf, line + 1, next - (line + 1));
+			continue;
+		}
+		if (it)
+			it->value = strbuf_detach(&buf, &it->len);
+		strbuf_reset(&buf);
+		it = NULL;
+
+		eof = strchr(line, ' ');
+		if (next <= eof)
+			eof = next;
+
+		if (standard_header_field(line, eof - line))
+			continue;
+
+		it = xcalloc(1, sizeof(*it));
+		it->key = xmemdupz(line, eof-line);
+		*tail = it;
+		tail = &it->next;
+		if (eof + 1 < next)
+			strbuf_add(&buf, eof + 1, next - (eof + 1));
+	}
+	if (it)
+		it->value = strbuf_detach(&buf, &it->len);
+	return extra;
 }
 
 void free_commit_extra_headers(struct commit_extra_header *extra)
