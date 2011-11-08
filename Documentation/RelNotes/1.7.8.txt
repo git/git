@@ -139,6 +139,10 @@ included in this release.
    credentials.
    (merge deba493 jk/http-auth later to maint).
 
+ * "git blame" was aborted if started from an uncommitted content and
+   the path had the textconv filter in effect.
+   (merge 8518088 ss/blame-textconv-fake-working-tree later to maint).
+
  * "git branch -m/-M" advertised to update RENAME_REF ref in the
    commit log message that introduced the feature but not anywhere in
    the documentation, and never did update such a ref anyway. This
@@ -170,7 +174,7 @@ included in this release.
 
 ---
 exec >/var/tmp/1
-O=v1.7.8-rc0-32-g8e3565f
+O=v1.7.8-rc0-48-g92622e6
 echo O=$(git describe --always master)
 git log --first-parent --oneline --reverse ^$O master
 echo
