@@ -1425,7 +1425,6 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 			pptr = &commit_list_insert(c->item, pptr)->next;
 	} else if (whence == FROM_MERGE) {
 		struct strbuf m = STRBUF_INIT;
-		struct commit *commit;
 		FILE *fp;
 
 		if (!reflog_msg)
@@ -1436,11 +1435,12 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 			die_errno(_("could not open '%s' for reading"),
 				  git_path("MERGE_HEAD"));
 		while (strbuf_getline(&m, fp, '\n') != EOF) {
-			unsigned char sha1[20];
-			if (get_sha1_hex(m.buf, sha1) < 0)
+			struct commit *parent;
+
+			parent = get_merge_parent(m.buf);
+			if (!parent)
 				die(_("Corrupt MERGE_HEAD file (%s)"), m.buf);
-			commit = lookup_commit_or_die(sha1, "MERGE_HEAD");
-			pptr = &commit_list_insert(commit, pptr)->next;
+			pptr = &commit_list_insert(parent, pptr)->next;
 		}
 		fclose(fp);
 		strbuf_release(&m);

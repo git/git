@@ -840,14 +840,95 @@ struct commit_list *reduce_heads(struct commit_list *heads)
 	return result;
 }
 
+static void handle_signed_tag(struct commit *parent, struct commit_extra_header ***tail)
+{
+	struct merge_remote_desc *desc;
+	struct commit_extra_header *mergetag;
+	char *buf;
+	unsigned long size, len;
+	enum object_type type;
+
+	desc = merge_remote_util(parent);
+	if (!desc || !desc->obj)
+		return;
+	buf = read_sha1_file(desc->obj->sha1, &type, &size);
+	if (!buf || type != OBJ_TAG)
+		goto free_return;
+	len = parse_signature(buf, size);
+	if (size == len)
+		goto free_return;
+	/*
+	 * We could verify this signature and either omit the tag when
+	 * it does not validate, but the integrator may not have the
+	 * public key of the signer of the tag he is merging, while a
+	 * later auditor may have it while auditing, so let's not run
+	 * verify-signed-buffer here for now...
+	 *
+	 * if (verify_signed_buffer(buf, len, buf + len, size - len, ...))
+	 *	warn("warning: signed tag unverified.");
+	 */
+	mergetag = xcalloc(1, sizeof(*mergetag));
+	mergetag->key = xstrdup("mergetag");
+	mergetag->value = buf;
+	mergetag->len = size;
+
+	**tail = mergetag;
+	*tail = &mergetag->next;
+	return;
+
+free_return:
+	free(buf);
+}
+
+void append_merge_tag_headers(struct commit_list *parents,
+			      struct commit_extra_header ***tail)
+{
+	while (parents) {
+		struct commit *parent = parents->item;
+		handle_signed_tag(parent, tail);
+		parents = parents->next;
+	}
+}
+
+static void add_extra_header(struct strbuf *buffer,
+			     struct commit_extra_header *extra)
+{
+	strbuf_addstr(buffer, extra->key);
+	strbuf_add_lines(buffer, " ", extra->value, extra->len);
+}
+
+void free_commit_extra_headers(struct commit_extra_header *extra)
+{
+	while (extra) {
+		struct commit_extra_header *next = extra->next;
+		free(extra->key);
+		free(extra->value);
+		free(extra);
+		extra = next;
+	}
+}
+
+int commit_tree(const char *msg, unsigned char *tree,
+		struct commit_list *parents, unsigned char *ret,
+		const char *author)
+{
+	struct commit_extra_header *extra = NULL, **tail = &extra;
+	int result;
+
+	append_merge_tag_headers(parents, &tail);
+	result = commit_tree_extended(msg, tree, parents, ret, author, extra);
+	free_commit_extra_headers(extra);
+	return result;
+}
+
 static const char commit_utf8_warn[] =
 "Warning: commit message does not conform to UTF-8.\n"
 "You may want to amend it after fixing the message, or set the config\n"
 "variable i18n.commitencoding to the encoding your project uses.\n";
 
-int commit_tree(const char *msg, unsigned char *tree,
-		struct commit_list *parents, unsigned char *ret,
-		const char *author)
+int commit_tree_extended(const char *msg, unsigned char *tree,
+			 struct commit_list *parents, unsigned char *ret,
+			 const char *author, struct commit_extra_header *extra)
 {
 	int result;
 	int encoding_is_utf8;
@@ -868,8 +949,10 @@ int commit_tree(const char *msg, unsigned char *tree,
 	 */
 	while (parents) {
 		struct commit_list *next = parents->next;
+		struct commit *parent = parents->item;
+
 		strbuf_addf(&buffer, "parent %s\n",
-			sha1_to_hex(parents->item->object.sha1));
+			    sha1_to_hex(parent->object.sha1));
 		free(parents);
 		parents = next;
 	}
@@ -881,6 +964,11 @@ int commit_tree(const char *msg, unsigned char *tree,
 	strbuf_addf(&buffer, "committer %s\n", git_committer_info(IDENT_ERROR_ON_NO_NAME));
 	if (!encoding_is_utf8)
 		strbuf_addf(&buffer, "encoding %s\n", git_commit_encoding);
+
+	while (extra) {
+		add_extra_header(&buffer, extra);
+		extra = extra->next;
+	}
 	strbuf_addch(&buffer, '\n');
 
 	/* And add the comment */
