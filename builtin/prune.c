@@ -15,6 +15,7 @@ static const char * const prune_usage[] = {
 static int show_only;
 static int verbose;
 static unsigned long expire;
+static int show_progress = -1;
 
 static int prune_tmp_object(const char *path, const char *filename)
 {
@@ -125,10 +126,11 @@ static void remove_temporary_files(const char *path)
 int cmd_prune(int argc, const char **argv, const char *prefix)
 {
 	struct rev_info revs;
-	struct progress *progress;
+	struct progress *progress = NULL;
 	const struct option options[] = {
 		OPT__DRY_RUN(&show_only, "do not remove, show only"),
 		OPT__VERBOSE(&verbose, "report pruned objects"),
+		OPT_BOOL(0, "progress", &show_progress, "show progress"),
 		OPT_DATE(0, "expire", &expire,
 			 "expire objects older than <time>"),
 		OPT_END()
@@ -154,7 +156,12 @@ int cmd_prune(int argc, const char **argv, const char *prefix)
 		else
 			die("unrecognized argument: %s", name);
 	}
-	progress = start_progress_delay("Checking connectivity", 0, 0, 2);
+
+	if (show_progress == -1)
+		show_progress = isatty(2);
+	if (show_progress)
+		progress = start_progress_delay("Checking connectivity", 0, 0, 2);
+
 	mark_reachable_objects(&revs, 1, progress);
 	stop_progress(&progress);
 	prune_object_dir(get_object_directory());
