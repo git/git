@@ -14,6 +14,15 @@ proc hasworktree {} {
 		  [exec git rev-parse --is-inside-git-dir] == "false"}]
 }
 
+proc reponame {} {
+    global gitdir
+    set n [file normalize $gitdir]
+    if {[string match "*/.git" $n]} {
+	set n [string range $n 0 end-5]
+    }
+    return [file tail $n]
+}
+
 # A simple scheduler for compute-intensive stuff.
 # The aim is to make sure that event handlers for GUI actions can
 # run at least every 50-100 ms.  Unfortunately fileevent handlers are
@@ -11607,6 +11616,8 @@ if {[package vcompare $git_version "1.6.6.2"] >= 0} {
     set show_notes "--show-notes"
 }
 
+set appname "gitk"
+
 set runq {}
 set history {}
 set historyindex 0
@@ -11676,7 +11687,7 @@ catch {
 }
 # wait for the window to become visible
 tkwait visibility .
-wm title . "[file tail $argv0]: [file tail [pwd]]"
+wm title . "$appname: [reponame]"
 update
 readrefs
 
