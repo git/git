@@ -143,12 +143,6 @@ included in this release.
    the path had the textconv filter in effect.
    (merge 8518088 ss/blame-textconv-fake-working-tree later to maint).
 
- * "git branch -m/-M" advertised to update RENAME_REF ref in the
-   commit log message that introduced the feature but not anywhere in
-   the documentation, and never did update such a ref anyway. This
-   undocumented misfeature that did not exist has been excised.
-   (merge b0eab01 jc/maint-remove-renamed-ref later to maint).
-
  * Adding many refs to the local repository in one go (e.g. "git fetch"
    that fetches many tags) and looking up a ref by name in a repository
    with too many refs were unnecessarily slow.
@@ -164,17 +158,14 @@ included in this release.
    hooks for attempted removal of non-existing refs.
    (merge 160b81ed ph/push-to-delete-nothing later to maint).
 
- * The logic to filter out forked projects in the project list in
-   "gitweb" was broken for some time.
-   (merge 53c632f jm/maint-gitweb-filter-forks-fix later to maint).
-
- * The logic to optimize the locality of the data in a pack introduced in
-   1.7.7 was grossly inefficient.
-   (merge 38d4deb dm/pack-objects-update later to maint).
+ * Help text for "git remote set-url" and "git remote set-branches"
+   were misspelled.
+   (merge c49904e fc/remote-seturl-usage-fix later to maint).
+   (merge 656cdf0 jc/remote-setbranches-usage-fix later to maint).
 
 ---
 exec >/var/tmp/1
-O=v1.7.8-rc0-48-g92622e6
+O=v1.7.8-rc1-11-gd7a0129
 echo O=$(git describe --always master)
 git log --first-parent --oneline --reverse ^$O master
 echo
