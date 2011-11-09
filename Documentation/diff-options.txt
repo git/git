@@ -413,6 +413,7 @@ endif::git-format-patch[]
 	Show whole surrounding functions of changes.
 
 ifndef::git-format-patch[]
+ifndef::git-log[]
 --exit-code::
 	Make the program exit with codes similar to diff(1).
 	That is, it exits with 1 if there were differences and
@@ -420,6 +421,7 @@ ifndef::git-format-patch[]
 
 --quiet::
 	Disable all output of the program. Implies `--exit-code`.
+endif::git-log[]
 endif::git-format-patch[]
 
 --ext-diff::
