@@ -9,7 +9,7 @@
 #include "builtin.h"
 #include "utf8.h"
 
-static const char commit_tree_usage[] = "git commit-tree <sha1> [(-p <sha1>)...] < changelog";
+static const char commit_tree_usage[] = "git commit-tree [(-p <sha1>)...] [-m <message>] [-F <file>] <sha1> <changelog";
 
 static void new_parent(struct commit *parent, struct commit_list **parents_p)
 {
@@ -51,6 +51,41 @@ int cmd_commit_tree(int argc, const char **argv, const char *prefix)
 			continue;
 		}
 
+		if (!strcmp(arg, "-m")) {
+			if (argc <= ++i)
+				usage(commit_tree_usage);
+			if (buffer.len)
+				strbuf_addch(&buffer, '\n');
+			strbuf_addstr(&buffer, argv[i]);
+			strbuf_complete_line(&buffer);
+			continue;
+		}
+
+		if (!strcmp(arg, "-F")) {
+			int fd;
+
+			if (argc <= ++i)
+				usage(commit_tree_usage);
+			if (buffer.len)
+				strbuf_addch(&buffer, '\n');
+			if (!strcmp(argv[i], "-"))
+				fd = 0;
+			else {
+				fd = open(argv[i], O_RDONLY);
+				if (fd < 0)
+					die_errno("git commit-tree: failed to open '%s'",
+						  argv[i]);
+			}
+			if (strbuf_read(&buffer, fd, 0) < 0)
+				die_errno("git commit-tree: failed to read '%s'",
+					  argv[i]);
+			if (fd && close(fd))
+				die_errno("git commit-tree: failed to close '%s'",
+					  argv[i]);
+			strbuf_complete_line(&buffer);
+			continue;
+		}
+
 		if (get_sha1(arg, tree_sha1))
 			die("Not a valid object name %s", arg);
 		if (got_tree)
@@ -58,8 +93,10 @@ int cmd_commit_tree(int argc, const char **argv, const char *prefix)
 		got_tree = 1;
 	}
 
-	if (strbuf_read(&buffer, 0, 0) < 0)
-		die_errno("git commit-tree: failed to read");
+	if (!buffer.len) {
+		if (strbuf_read(&buffer, 0, 0) < 0)
+			die_errno("git commit-tree: failed to read");
+	}
 
 	if (commit_tree(buffer.buf, tree_sha1, parents, commit_sha1, NULL)) {
 		strbuf_release(&buffer);
