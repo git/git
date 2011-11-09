@@ -6,7 +6,6 @@
 #include "diff.h"
 #include "revision.h"
 #include "notes.h"
-#include "gpg-interface.h"
 
 int save_commit_buffer = 1;
 
@@ -815,77 +814,6 @@ struct commit_list *reduce_heads(struct commit_list *heads)
 	return result;
 }
 
-static const char gpg_sig_header[] = "gpgsig ";
-static const int gpg_sig_header_len = sizeof(gpg_sig_header) - 1;
-
-static int do_sign_commit(struct strbuf *buf, const char *keyid)
-{
-	struct strbuf sig = STRBUF_INIT;
-	int inspos, copypos;
-
-	/* find the end of the header */
-	inspos = strstr(buf->buf, "\n\n") - buf->buf + 1;
-
-	if (!keyid || !*keyid)
-		keyid = get_signing_key();
-	if (sign_buffer(buf, &sig, keyid)) {
-		strbuf_release(&sig);
-		return -1;
-	}
-
-	for (copypos = 0; sig.buf[copypos]; ) {
-		const char *bol = sig.buf + copypos;
-		const char *eol = strchrnul(bol, '\n');
-		int len = (eol - bol) + !!*eol;
-
-		strbuf_insert(buf, inspos, gpg_sig_header, gpg_sig_header_len);
-		inspos += gpg_sig_header_len;
-		strbuf_insert(buf, inspos, bol, len);
-		inspos += len;
-		copypos += len;
-	}
-	strbuf_release(&sig);
-	return 0;
-}
-
-int parse_signed_commit(const unsigned char *sha1,
-			struct strbuf *payload, struct strbuf *signature)
-{
-	unsigned long size;
-	enum object_type type;
-	char *buffer = read_sha1_file(sha1, &type, &size);
-	int saw_signature = -1;
-	char *line, *tail;
-
-	if (!buffer || type != OBJ_COMMIT)
-		goto cleanup;
-
-	line = buffer;
-	tail = buffer + size;
-	saw_signature = 0;
-	while (line < tail) {
-		char *next = memchr(line, '\n', tail - line);
-		if (!next)
-			next = tail;
-		else
-			next++;
-		if (!prefixcmp(line, gpg_sig_header)) {
-			const char *sig = line + gpg_sig_header_len;
-			strbuf_add(signature, sig, next - sig);
-			saw_signature = 1;
-		} else {
-			if (*line == '\n')
-				/* dump the whole remainder of the buffer */
-				next = tail;
-			strbuf_add(payload, line, next - line);
-		}
-		line = next;
-	}
- cleanup:
-	free(buffer);
-	return saw_signature;
-}
-
 static const char commit_utf8_warn[] =
 "Warning: commit message does not conform to UTF-8.\n"
 "You may want to amend it after fixing the message, or set the config\n"
@@ -893,7 +821,7 @@ static const char commit_utf8_warn[] =
 
 int commit_tree(const char *msg, unsigned char *tree,
 		struct commit_list *parents, unsigned char *ret,
-		const char *author, const char *sign_commit)
+		const char *author)
 {
 	int result;
 	int encoding_is_utf8;
@@ -935,9 +863,6 @@ int commit_tree(const char *msg, unsigned char *tree,
 	/* And check the encoding */
 	if (encoding_is_utf8 && !is_utf8(buffer.buf))
 		fprintf(stderr, commit_utf8_warn);
-
-	if (sign_commit && do_sign_commit(&buffer, sign_commit))
-		return -1;
 
 	result = write_sha1_file(buffer.buf, buffer.len, commit_type, ret);
 	strbuf_release(&buffer);
