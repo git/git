@@ -110,7 +110,7 @@ __git_ps1_show_upstream ()
 	local upstream=git legacy="" verbose=""
 
 	# get some config options from git-config
-	output="$(git config -z --get-regexp '^(svn-remote\..*\.url|bash\.showupstream)$' 2>/dev/null | tr '\0\n' '\n ')"
+	local output="$(git config -z --get-regexp '^(svn-remote\..*\.url|bash\.showupstream)$' 2>/dev/null | tr '\0\n' '\n ')"
 	while read key value; do
 		case "$key" in
 		bash.showupstream)
