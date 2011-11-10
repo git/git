@@ -32,19 +32,13 @@ static int longest_path_match(const char *name_a, int len_a,
 	return match_len;
 }
 
-static struct cache_def {
-	char path[PATH_MAX + 1];
-	int len;
-	int flags;
-	int track_flags;
-	int prefix_len_stat_func;
-} cache;
+static struct cache_def default_cache;
 
-static inline void reset_lstat_cache(void)
+static inline void reset_lstat_cache(struct cache_def *cache)
 {
-	cache.path[0] = '\0';
-	cache.len = 0;
-	cache.flags = 0;
+	cache->path[0] = '\0';
+	cache->len = 0;
+	cache->flags = 0;
 	/*
 	 * The track_flags and prefix_len_stat_func members is only
 	 * set by the safeguard rule inside lstat_cache()
@@ -70,23 +64,23 @@ static inline void reset_lstat_cache(void)
  * of the prefix, where the cache should use the stat() function
  * instead of the lstat() function to test each path component.
  */
-static int lstat_cache(const char *name, int len,
+static int lstat_cache(struct cache_def *cache, const char *name, int len,
 		       int track_flags, int prefix_len_stat_func)
 {
 	int match_len, last_slash, last_slash_dir, previous_slash;
 	int match_flags, ret_flags, save_flags, max_len, ret;
 	struct stat st;
 
-	if (cache.track_flags != track_flags ||
-	    cache.prefix_len_stat_func != prefix_len_stat_func) {
+	if (cache->track_flags != track_flags ||
+	    cache->prefix_len_stat_func != prefix_len_stat_func) {
 		/*
 		 * As a safeguard rule we clear the cache if the
 		 * values of track_flags and/or prefix_len_stat_func
 		 * does not match with the last supplied values.
 		 */
-		reset_lstat_cache();
-		cache.track_flags = track_flags;
-		cache.prefix_len_stat_func = prefix_len_stat_func;
+		reset_lstat_cache(cache);
+		cache->track_flags = track_flags;
+		cache->prefix_len_stat_func = prefix_len_stat_func;
 		match_len = last_slash = 0;
 	} else {
 		/*
@@ -94,10 +88,14 @@ static int lstat_cache(const char *name, int len,
 		 * the 2 "excluding" path types.
 		 */
 		match_len = last_slash =
-			longest_path_match(name, len, cache.path, cache.len,
+			longest_path_match(name, len, cache->path, cache->len,
 					   &previous_slash);
-		match_flags = cache.flags & track_flags & (FL_NOENT|FL_SYMLINK);
-		if (match_flags && match_len == cache.len)
+		match_flags = cache->flags & track_flags & (FL_NOENT|FL_SYMLINK);
+
+		if (!(track_flags & FL_FULLPATH) && match_len == len)
+			match_len = last_slash = previous_slash;
+
+		if (match_flags && match_len == cache->len)
 			return match_flags;
 		/*
 		 * If we now have match_len > 0, we would know that
@@ -121,18 +119,18 @@ static int lstat_cache(const char *name, int len,
 	max_len = len < PATH_MAX ? len : PATH_MAX;
 	while (match_len < max_len) {
 		do {
-			cache.path[match_len] = name[match_len];
+			cache->path[match_len] = name[match_len];
 			match_len++;
 		} while (match_len < max_len && name[match_len] != '/');
 		if (match_len >= max_len && !(track_flags & FL_FULLPATH))
 			break;
 		last_slash = match_len;
-		cache.path[last_slash] = '\0';
+		cache->path[last_slash] = '\0';
 
 		if (last_slash <= prefix_len_stat_func)
-			ret = stat(cache.path, &st);
+			ret = stat(cache->path, &st);
 		else
-			ret = lstat(cache.path, &st);
+			ret = lstat(cache->path, &st);
 
 		if (ret) {
 			ret_flags = FL_LSTATERR;
@@ -156,9 +154,9 @@ static int lstat_cache(const char *name, int len,
 	 */
 	save_flags = ret_flags & track_flags & (FL_NOENT|FL_SYMLINK);
 	if (save_flags && last_slash > 0 && last_slash <= PATH_MAX) {
-		cache.path[last_slash] = '\0';
-		cache.len = last_slash;
-		cache.flags = save_flags;
+		cache->path[last_slash] = '\0';
+		cache->len = last_slash;
+		cache->flags = save_flags;
 	} else if ((track_flags & FL_DIR) &&
 		   last_slash_dir > 0 && last_slash_dir <= PATH_MAX) {
 		/*
@@ -172,41 +170,13 @@ static int lstat_cache(const char *name, int len,
 		 * can still cache the path components before the last
 		 * one (the found symlink or non-existing component).
 		 */
-		cache.path[last_slash_dir] = '\0';
-		cache.len = last_slash_dir;
-		cache.flags = FL_DIR;
+		cache->path[last_slash_dir] = '\0';
+		cache->len = last_slash_dir;
+		cache->flags = FL_DIR;
 	} else {
-		reset_lstat_cache();
+		reset_lstat_cache(cache);
 	}
 	return ret_flags;
-}
-
-/*
- * Invalidate the given 'name' from the cache, if 'name' matches
- * completely with the cache.
- */
-void invalidate_lstat_cache(const char *name, int len)
-{
-	int match_len, previous_slash;
-
-	match_len = longest_path_match(name, len, cache.path, cache.len,
-				       &previous_slash);
-	if (len == match_len) {
-		if ((cache.track_flags & FL_DIR) && previous_slash > 0) {
-			cache.path[previous_slash] = '\0';
-			cache.len = previous_slash;
-			cache.flags = FL_DIR;
-		} else
-			reset_lstat_cache();
-	}
-}
-
-/*
- * Completely clear the contents of the cache
- */
-void clear_lstat_cache(void)
-{
-	reset_lstat_cache();
 }
 
 #define USE_ONLY_LSTAT  0
@@ -214,11 +184,17 @@ void clear_lstat_cache(void)
 /*
  * Return non-zero if path 'name' has a leading symlink component
  */
+int threaded_has_symlink_leading_path(struct cache_def *cache, const char *name, int len)
+{
+	return lstat_cache(cache, name, len, FL_SYMLINK|FL_DIR, USE_ONLY_LSTAT) & FL_SYMLINK;
+}
+
+/*
+ * Return non-zero if path 'name' has a leading symlink component
+ */
 int has_symlink_leading_path(const char *name, int len)
 {
-	return lstat_cache(name, len,
-			   FL_SYMLINK|FL_DIR, USE_ONLY_LSTAT) &
-		FL_SYMLINK;
+	return threaded_has_symlink_leading_path(&default_cache, name, len);
 }
 
 /*
@@ -227,7 +203,8 @@ int has_symlink_leading_path(const char *name, int len)
  */
 int has_symlink_or_noent_leading_path(const char *name, int len)
 {
-	return lstat_cache(name, len,
+	struct cache_def *cache = &default_cache;	/* FIXME */
+	return lstat_cache(cache, name, len,
 			   FL_SYMLINK|FL_NOENT|FL_DIR, USE_ONLY_LSTAT) &
 		(FL_SYMLINK|FL_NOENT);
 }
@@ -241,7 +218,8 @@ int has_symlink_or_noent_leading_path(const char *name, int len)
  */
 int has_dirs_only_path(const char *name, int len, int prefix_len)
 {
-	return lstat_cache(name, len,
+	struct cache_def *cache = &default_cache;	/* FIXME */
+	return lstat_cache(cache, name, len,
 			   FL_DIR|FL_FULLPATH, prefix_len) &
 		FL_DIR;
 }
@@ -263,7 +241,6 @@ static void do_remove_scheduled_dirs(int new_len)
 			 removal.path[removal.len] != '/');
 	}
 	removal.len = new_len;
-	return;
 }
 
 void schedule_dir_for_removal(const char *name, int len)
@@ -296,11 +273,9 @@ void schedule_dir_for_removal(const char *name, int len)
 		       last_slash - match_len);
 		removal.len = last_slash;
 	}
-	return;
 }
 
 void remove_scheduled_dirs(void)
 {
 	do_remove_scheduled_dirs(0);
-	return;
 }

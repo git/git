@@ -13,10 +13,13 @@ SYNOPSIS
 'git remote add' [-t <branch>] [-m <master>] [-f] [--mirror] <name> <url>
 'git remote rename' <old> <new>
 'git remote rm' <name>
-'git remote set-head' <name> [-a | -d | <branch>]
-'git remote show' [-n] <name>
+'git remote set-head' <name> (-a | -d | <branch>)
+'git remote set-url' [--push] <name> <newurl> [<oldurl>]
+'git remote set-url --add' [--push] <name> <newurl>
+'git remote set-url --delete' [--push] <name> <url>
+'git remote' [-v | --verbose] 'show' [-n] <name>
 'git remote prune' [-n | --dry-run] <name>
-'git remote update' [-p | --prune] [group | remote]...
+'git remote' [-v | --verbose] 'update' [-p | --prune] [group | remote]...
 
 DESCRIPTION
 -----------
@@ -30,6 +33,7 @@ OPTIONS
 -v::
 --verbose::
 	Be a little more verbose and show remote url after name.
+	NOTE: This must be placed between `remote` and `subcommand`.
 
 
 COMMANDS
@@ -100,6 +104,20 @@ remote set-head origin master" will set `$GIT_DIR/refs/remotes/origin/HEAD` to
 `refs/remotes/origin/master` already exists; if not it must be fetched first.
 +
 
+'set-url'::
+
+Changes URL remote points to. Sets first URL remote points to matching
+regex <oldurl> (first URL if no <oldurl> is given) to <newurl>. If
+<oldurl> doesn't match any URL, error occurs and nothing is changed.
++
+With '--push', push URLs are manipulated instead of fetch URLs.
++
+With '--add', instead of changing some URL, new URL is added.
++
+With '--delete', instead of changing some URL, all URLs matching
+regex <url> are deleted. Trying to delete all non-push URLs is an
+error.
+
 'show'::
 
 Gives some information about the remote <name>.
@@ -114,14 +132,14 @@ These stale branches have already been removed from the remote repository
 referenced by <name>, but are still locally available in
 "remotes/<name>".
 +
-With `--dry-run` option, report what branches will be pruned, but do no
+With `--dry-run` option, report what branches will be pruned, but do not
 actually prune them.
 
 'update'::
 
 Fetch updates for a named set of remotes in the repository as defined by
 remotes.<group>.  If a named group is not specified on the command line,
-the configuration parameter remotes.default will get used; if
+the configuration parameter remotes.default will be used; if
 remotes.default is not defined, all remotes which do not have the
 configuration parameter remote.<name>.skipDefaultUpdate set to true will
 be updated.  (See linkgit:git-config[1]).
@@ -160,7 +178,7 @@ $ git checkout -b nfs linux-nfs/master
 ...
 ------------
 
-* Imitate 'git-clone' but track only selected branches
+* Imitate 'git clone' but track only selected branches
 +
 ------------
 $ mkdir project.git

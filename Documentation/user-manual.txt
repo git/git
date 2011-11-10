@@ -1183,7 +1183,23 @@ $ git merge branchname
 -------------------------------------------------
 
 merges the development in the branch "branchname" into the current
-branch.  If there are conflicts--for example, if the same file is
+branch.
+
+A merge is made by combining the changes made in "branchname" and the
+changes made up to the latest commit in your current branch since
+their histories forked. The work tree is overwritten by the result of
+the merge when this combining is done cleanly, or overwritten by a
+half-merged results when this combining results in conflicts.
+Therefore, if you have uncommitted changes touching the same files as
+the ones impacted by the merge, Git will refuse to proceed. Most of
+the time, you will want to commit your changes before you can merge,
+and if you don't, then linkgit:git-stash[1] can take these changes
+away while you're doing the merge, and reapply them afterwards.
+
+If the changes are independent enough, Git will automatically complete
+the merge and commit the result (or reuse an existing commit in case
+of <<fast-forwards,fast-forward>>, see below). On the other hand,
+if there are conflicts--for example, if the same file is
 modified in two different ways in the remote branch and the local
 branch--then you are warned; the output may look something like this:
 
@@ -1384,7 +1400,7 @@ were merged.
 
 However, if the current branch is a descendant of the other--so every
 commit present in the one is already contained in the other--then git
-just performs a "fast forward"; the head of the current branch is moved
+just performs a "fast-forward"; the head of the current branch is moved
 forward to point at the head of the merged-in branch, without any new
 commits being created.
 
@@ -1520,10 +1536,10 @@ $ git commit -a -m "blorpl: typofix"
 ------------------------------------------------
 
 After that, you can go back to what you were working on with
-`git stash apply`:
+`git stash pop`:
 
 ------------------------------------------------
-$ git stash apply
+$ git stash pop
 ------------------------------------------------
 
 
@@ -1679,7 +1695,7 @@ Sharing development with others
 Getting updates with git pull
 -----------------------------
 
-After you clone a repository and make a few changes of your own, you
+After you clone a repository and commit a few changes of your own, you
 may wish to check the original repository for updates and merge them
 into your own work.
 
@@ -1719,7 +1735,7 @@ producing a default commit message documenting the branch and
 repository that you pulled from.
 
 (But note that no such commit will be created in the case of a
-<<fast-forwards,fast forward>>; instead, your branch will just be
+<<fast-forwards,fast-forward>>; instead, your branch will just be
 updated to point to the latest commit from the upstream branch.)
 
 The `git pull` command can also be given "." as the "remote" repository,
@@ -1943,7 +1959,7 @@ $ git push ssh://yourserver.com/~you/proj.git master
 -------------------------------------------------
 
 As with `git fetch`, `git push` will complain if this does not result in a
-<<fast-forwards,fast forward>>; see the following section for details on
+<<fast-forwards,fast-forward>>; see the following section for details on
 handling this case.
 
 Note that the target of a "push" is normally a
@@ -1976,7 +1992,7 @@ details.
 What to do when a push fails
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If a push would not result in a <<fast-forwards,fast forward>> of the
+If a push would not result in a <<fast-forwards,fast-forward>> of the
 remote branch, then it will fail with an error like:
 
 -------------------------------------------------
@@ -2115,7 +2131,7 @@ $ git checkout release && git pull
 
 Important note!  If you have any local changes in these branches, then
 this merge will create a commit object in the history (with no local
-changes git will simply do a "Fast forward" merge).  Many people dislike
+changes git will simply do a "fast-forward" merge).  Many people dislike
 the "noise" that this creates in the Linux history, so you should avoid
 doing this capriciously in the "release" branch, as these noisy commits
 will become part of the permanent history when you ask Linus to pull
@@ -2569,7 +2585,7 @@ them again with linkgit:git-am[1].
 Other tools
 -----------
 
-There are numerous other tools, such as StGIT, which exist for the
+There are numerous other tools, such as StGit, which exist for the
 purpose of maintaining a patch series.  These are outside of the scope of
 this manual.
 
@@ -2729,9 +2745,9 @@ In the previous example, when updating an existing branch, "git fetch"
 checks to make sure that the most recent commit on the remote
 branch is a descendant of the most recent commit on your copy of the
 branch before updating your copy of the branch to point at the new
-commit.  Git calls this process a <<fast-forwards,fast forward>>.
+commit.  Git calls this process a <<fast-forwards,fast-forward>>.
 
-A fast forward looks something like this:
+A fast-forward looks something like this:
 
 ................................................
  o--o--o--o <-- old head of the branch
@@ -3624,6 +3640,26 @@ Did you forget to 'git add'?
 Unable to checkout '261dfac35cb99d380eb966e102c1197139f7fa24' in submodule path 'a'
 -------------------------------------------------
 
+In older git versions it could be easily forgotten to commit new or modified
+files in a submodule, which silently leads to similar problems as not pushing
+the submodule changes. Starting with git 1.7.0 both "git status" and "git diff"
+in the superproject show submodules as modified when they contain new or
+modified files to protect against accidentally committing such a state. "git
+diff" will also add a "-dirty" to the work tree side when generating patch
+output or used with the --submodule option:
+
+-------------------------------------------------
+$ git diff
+diff --git a/sub b/sub
+--- a/sub
++++ b/sub
+@@ -1 +1 @@
+-Subproject commit 3f356705649b5d566d97ff843cf193359229a453
++Subproject commit 3f356705649b5d566d97ff843cf193359229a453-dirty
+$ git diff --submodule
+Submodule sub 3f35670..3f35670-dirty:
+-------------------------------------------------
+
 You also should not rewind branches in a submodule beyond commits that were
 ever recorded in any superproject.
 
@@ -4131,7 +4167,7 @@ What does this mean?
 
 `git rev-list` is the original version of the revision walker, which
 _always_ printed a list of revisions to stdout.  It is still functional,
-and needs to, since most new Git programs start out as scripts using
+and needs to, since most new Git commands start out as scripts using
 `git rev-list`.
 
 `git rev-parse` is not as important any more; it was only used to filter out
@@ -4275,7 +4311,7 @@ You see, Git is actually the best tool to find out about the source of Git
 itself!
 
 [[glossary]]
-GIT Glossary
+Git Glossary
 ============
 
 include::glossary-content.txt[]

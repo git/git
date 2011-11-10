@@ -27,10 +27,14 @@ OPTIONS
 -------
 -d::
 	Remove untracked directories in addition to untracked files.
+	If an untracked directory is managed by a different git
+	repository, it is not removed by default.  Use -f option twice
+	if you really want to remove such a directory.
 
 -f::
-	If the git configuration specifies clean.requireForce as true,
-	'git-clean' will refuse to run unless given -f or -n.
+--force::
+	If the git configuration variable clean.requireForce is not set
+	to false, 'git clean' will refuse to run unless given -f or -n.
 
 -n::
 --dry-run::
@@ -44,7 +48,7 @@ OPTIONS
 -x::
 	Don't use the ignore rules.  This allows removing all untracked
 	files, including build products.  This can be used (possibly in
-	conjunction with 'git-reset') to create a pristine
+	conjunction with 'git reset') to create a pristine
 	working directory to test a clean build.
 
 -X::

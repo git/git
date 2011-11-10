@@ -12,7 +12,7 @@ git *
 DESCRIPTION
 -----------
 
-This tutorial explains how to use the "core" git programs to set up and
+This tutorial explains how to use the "core" git commands to set up and
 work with a git repository.
 
 If you just need to use git as a revision control system you may prefer
@@ -26,6 +26,14 @@ The core git is often called "plumbing", with the prettier user
 interfaces on top of it called "porcelain". You may not want to use the
 plumbing directly very often, but it can be good to know what the
 plumbing does for when the porcelain isn't flushing.
+
+Back when this document was originally written, many porcelain
+commands were shell scripts. For simplicity, it still uses them as
+examples to illustrate how plumbing is fit together to form the
+porcelain commands. The source tree includes some of these scripts in
+contrib/examples/ for reference. Although these are not implemented as
+shell scripts anymore, the description of what the plumbing layer
+commands do is still valid.
 
 [NOTE]
 Deeper technical details are often marked as Notes, which you can
@@ -44,7 +52,7 @@ to import into git.
 For our first example, we're going to start a totally new repository from
 scratch, with no pre-existing files, and we'll call it 'git-tutorial'.
 To start up, create a subdirectory for it, change into that
-subdirectory, and initialize the git infrastructure with 'git-init':
+subdirectory, and initialize the git infrastructure with 'git init':
 
 ------------------------------------------------
 $ mkdir git-tutorial
@@ -139,7 +147,7 @@ but to actually check in your hard work, you will have to go through two steps:
  - commit that index file as an object.
 
 The first step is trivial: when you want to tell git about any changes
-to your working tree, you use the 'git-update-index' program. That
+to your working tree, you use the 'git update-index' program. That
 program normally just takes a list of filenames you want to update, but
 to avoid trivial mistakes, it refuses to add new entries to the index
 (or remove existing ones) unless you explicitly tell it that you're
@@ -173,19 +181,19 @@ and see two files:
 which correspond with the objects with names of `557db...` and
 `f24c7...` respectively.
 
-If you want to, you can use 'git-cat-file' to look at those objects, but
+If you want to, you can use 'git cat-file' to look at those objects, but
 you'll have to use the object name, not the filename of the object:
 
 ----------------
 $ git cat-file -t 557db03de997c86a4a028e1ebd3a1ceb225be238
 ----------------
 
-where the `-t` tells 'git-cat-file' to tell you what the "type" of the
+where the `-t` tells 'git cat-file' to tell you what the "type" of the
 object is. git will tell you that you have a "blob" object (i.e., just a
 regular file), and you can see the contents with
 
 ----------------
-$ git cat-file "blob" 557db03
+$ git cat-file blob 557db03
 ----------------
 
 which will print out "Hello World". The object `557db03` is nothing
@@ -205,7 +213,7 @@ hexadecimal digits in most places.
 Anyway, as we mentioned previously, you normally never actually take a
 look at the objects themselves, and typing long 40-character hex
 names is not something you'd normally want to do. The above digression
-was just to show that 'git-update-index' did something magical, and
+was just to show that 'git update-index' did something magical, and
 actually saved away the contents of your files into the git object
 database.
 
@@ -228,7 +236,7 @@ $ echo "It's a new day for git" >>hello
 
 and you can now, since you told git about the previous state of `hello`, ask
 git what has changed in the tree compared to your old index, using the
-'git-diff-files' command:
+'git diff-files' command:
 
 ------------
 $ git diff-files
@@ -239,7 +247,7 @@ version of a 'diff', but that internal version really just tells you
 that it has noticed that "hello" has been modified, and that the old object
 contents it had have been replaced with something else.
 
-To make it readable, we can tell 'git-diff-files' to output the
+To make it readable, we can tell 'git diff-files' to output the
 differences as a patch, using the `-p` flag:
 
 ------------
@@ -255,7 +263,7 @@ index 557db03..263414f 100644
 
 i.e. the diff of the change we caused by adding another line to `hello`.
 
-In other words, 'git-diff-files' always shows us the difference between
+In other words, 'git diff-files' always shows us the difference between
 what is recorded in the index, and what is currently in the working
 tree. That's very useful.
 
@@ -283,7 +291,7 @@ that in two phases: creating a 'tree' object, and committing that 'tree'
 object as a 'commit' object together with an explanation of what the
 tree was all about, along with information of how we came to that state.
 
-Creating a tree object is trivial, and is done with 'git-write-tree'.
+Creating a tree object is trivial, and is done with 'git write-tree'.
 There are no options or other input: `git write-tree` will take the
 current index state, and write an object that describes that whole
 index. In other words, we're now tying together all the different
@@ -307,23 +315,23 @@ is not a "blob" object, but a "tree" object (you can also use
 `git cat-file` to actually output the raw object contents, but you'll see
 mainly a binary mess, so that's less interesting).
 
-However -- normally you'd never use 'git-write-tree' on its own, because
+However -- normally you'd never use 'git write-tree' on its own, because
 normally you always commit a tree into a commit object using the
-'git-commit-tree' command. In fact, it's easier to not actually use
-'git-write-tree' on its own at all, but to just pass its result in as an
-argument to 'git-commit-tree'.
+'git commit-tree' command. In fact, it's easier to not actually use
+'git write-tree' on its own at all, but to just pass its result in as an
+argument to 'git commit-tree'.
 
-'git-commit-tree' normally takes several arguments -- it wants to know
+'git commit-tree' normally takes several arguments -- it wants to know
 what the 'parent' of a commit was, but since this is the first commit
 ever in this new repository, and it has no parents, we only need to pass in
-the object name of the tree. However, 'git-commit-tree' also wants to get a
+the object name of the tree. However, 'git commit-tree' also wants to get a
 commit message on its standard input, and it will write out the resulting
 object name for the commit to its standard output.
 
 And this is where we create the `.git/refs/heads/master` file
 which is pointed at by `HEAD`. This file is supposed to contain
 the reference to the top-of-tree of the master branch, and since
-that's exactly what 'git-commit-tree' spits out, we can do this
+that's exactly what 'git commit-tree' spits out, we can do this
 all with a sequence of simple shell commands:
 
 ------------------------------------------------
@@ -345,11 +353,11 @@ instead, and it would have done the above magic scripting for you.
 Making a change
 ---------------
 
-Remember how we did the 'git-update-index' on file `hello` and then we
+Remember how we did the 'git update-index' on file `hello` and then we
 changed `hello` afterward, and could compare the new state of `hello` with the
 state we saved in the index file?
 
-Further, remember how I said that 'git-write-tree' writes the contents
+Further, remember how I said that 'git write-tree' writes the contents
 of the *index* file to the tree, and thus what we just committed was in
 fact the *original* contents of the file `hello`, not the new ones. We did
 that on purpose, to show the difference between the index state, and the
@@ -360,12 +368,12 @@ As before, if we do `git diff-files -p` in our git-tutorial project,
 we'll still see the same difference we saw last time: the index file
 hasn't changed by the act of committing anything. However, now that we
 have committed something, we can also learn to use a new command:
-'git-diff-index'.
+'git diff-index'.
 
-Unlike 'git-diff-files', which showed the difference between the index
-file and the working tree, 'git-diff-index' shows the differences
+Unlike 'git diff-files', which showed the difference between the index
+file and the working tree, 'git diff-index' shows the differences
 between a committed *tree* and either the index file or the working
-tree. In other words, 'git-diff-index' wants a tree to be diffed
+tree. In other words, 'git diff-index' wants a tree to be diffed
 against, and before we did the commit, we couldn't do that, because we
 didn't have anything to diff against.
 
@@ -375,7 +383,7 @@ But now we can do
 $ git diff-index -p HEAD
 ----------------
 
-(where `-p` has the same meaning as it did in 'git-diff-files'), and it
+(where `-p` has the same meaning as it did in 'git diff-files'), and it
 will show us the same difference, but for a totally different reason.
 Now we're comparing the working tree not against the index file,
 but against the tree we just wrote. It just so happens that those two
@@ -390,7 +398,7 @@ $ git diff HEAD
 
 which ends up doing the above for you.
 
-In other words, 'git-diff-index' normally compares a tree against the
+In other words, 'git diff-index' normally compares a tree against the
 working tree, but when given the `\--cached` flag, it is told to
 instead compare against just the index cache contents, and ignore the
 current working tree state entirely. Since we just wrote the index
@@ -399,7 +407,7 @@ an empty set of differences, and that's exactly what it does.
 
 [NOTE]
 ================
-'git-diff-index' really always uses the index for its
+'git diff-index' really always uses the index for its
 comparisons, and saying that it compares a tree against the working
 tree is thus not strictly accurate. In particular, the list of
 files to compare (the "meta-data") *always* comes from the index file,
@@ -428,11 +436,11 @@ $ git update-index hello
 (note how we didn't need the `\--add` flag this time, since git knew
 about the file already).
 
-Note what happens to the different 'git-diff-\*' versions here. After
+Note what happens to the different 'git diff-\*' versions here. After
 we've updated `hello` in the index, `git diff-files -p` now shows no
 differences, but `git diff-index -p HEAD` still *does* show that the
 current state is different from the state we committed. In fact, now
-'git-diff-index' shows the same difference whether we use the `--cached`
+'git diff-index' shows the same difference whether we use the `--cached`
 flag or not, since now the index is coherent with the working tree.
 
 Now, since we've updated `hello` in the index, we can commit the new
@@ -460,7 +468,7 @@ You've now made your first real git commit. And if you're interested in
 looking at what `git commit` really does, feel free to investigate:
 it's a few very simple shell scripts to generate the helpful (?) commit
 message headers, and a few one-liners that actually do the
-commit itself ('git-commit').
+commit itself ('git commit').
 
 
 Inspecting Changes
@@ -468,9 +476,9 @@ Inspecting Changes
 
 While creating changes is useful, it's even more useful if you can tell
 later what changed. The most useful command for this is another of the
-'diff' family, namely 'git-diff-tree'.
+'diff' family, namely 'git diff-tree'.
 
-'git-diff-tree' can be given two arbitrary trees, and it will tell you the
+'git diff-tree' can be given two arbitrary trees, and it will tell you the
 differences between them. Perhaps even more commonly, though, you can
 give it just a single commit object, and it will figure out the parent
 of that commit itself, and show the difference directly. Thus, to get
@@ -518,15 +526,15 @@ various diff-\* commands compare things.
                     +-----------+
 ============
 
-More interestingly, you can also give 'git-diff-tree' the `--pretty` flag,
+More interestingly, you can also give 'git diff-tree' the `--pretty` flag,
 which tells it to also show the commit message and author and date of the
 commit, and you can tell it to show a whole series of diffs.
 Alternatively, you can tell it to be "silent", and not show the diffs at
 all, but just show the actual commit message.
 
-In fact, together with the 'git-rev-list' program (which generates a
-list of revisions), 'git-diff-tree' ends up being a veritable fount of
-changes. A trivial (but very useful) script called 'git-whatchanged' is
+In fact, together with the 'git rev-list' program (which generates a
+list of revisions), 'git diff-tree' ends up being a veritable fount of
+changes. A trivial (but very useful) script called 'git whatchanged' is
 included with git which does exactly this, and shows a log of recent
 activities.
 
@@ -553,14 +561,14 @@ When using the above two commands, the initial commit will be shown.
 If this is a problem because it is huge, you can hide it by setting
 the log.showroot configuration variable to false. Having this, you
 can still show it for each command just adding the `\--root` option,
-which is a flag for 'git-diff-tree' accepted by both commands.
+which is a flag for 'git diff-tree' accepted by both commands.
 
 With that, you should now be having some inkling of what git does, and
 can explore on your own.
 
 [NOTE]
 Most likely, you are not directly using the core
-git Plumbing commands, but using Porcelain such as 'git-add', `git-rm'
+git Plumbing commands, but using Porcelain such as 'git add', `git-rm'
 and `git-commit'.
 
 
@@ -595,14 +603,14 @@ pointer to the state you want to tag, but also a small tag name and
 message, along with optionally a PGP signature that says that yes,
 you really did
 that tag. You create these annotated tags with either the `-a` or
-`-s` flag to 'git-tag':
+`-s` flag to 'git tag':
 
 ----------------
 $ git tag -s <tagname>
 ----------------
 
 which will sign the current `HEAD` (but you can also give it another
-argument that specifies the thing to tag, i.e., you could have tagged the
+argument that specifies the thing to tag, e.g., you could have tagged the
 current `mybranch` point by using `git tag <tagname> mybranch`).
 
 You normally only do signed tags for major releases or things
@@ -642,7 +650,7 @@ and it will be gone. There's no external repository, and there's no
 history outside the project you created.
 
  - if you want to move or duplicate a git repository, you can do so. There
-   is 'git-clone' command, but if all you want to do is just to
+   is 'git clone' command, but if all you want to do is just to
    create a copy of your repository (with all the full history that
    went along with it), you can do so with a regular
    `cp -a git-tutorial new-git-tutorial`.
@@ -666,7 +674,7 @@ When copying a remote repository, you'll want to at a minimum update the
 index cache when you do this, and especially with other peoples'
 repositories you often want to make sure that the index cache is in some
 known state (you don't know *what* they've done and not yet checked in),
-so usually you'll precede the 'git-update-index' with a
+so usually you'll precede the 'git update-index' with a
 
 ----------------
 $ git read-tree --reset HEAD
@@ -674,7 +682,7 @@ $ git update-index --refresh
 ----------------
 
 which will force a total index re-build from the tree pointed to by `HEAD`.
-It resets the index contents to `HEAD`, and then the 'git-update-index'
+It resets the index contents to `HEAD`, and then the 'git update-index'
 makes sure to match up all index entries with the checked-out files.
 If the original repository had uncommitted changes in its
 working tree, `git update-index --refresh` notices them and
@@ -689,8 +697,8 @@ $ git reset
 and in fact a lot of the common git command combinations can be scripted
 with the `git xyz` interfaces.  You can learn things by just looking
 at what the various git scripts do.  For example, `git reset` used to be
-the above two lines implemented in 'git-reset', but some things like
-'git-status' and 'git-commit' are slightly more complex scripts around
+the above two lines implemented in 'git reset', but some things like
+'git status' and 'git commit' are slightly more complex scripts around
 the basic git commands.
 
 Many (most?) public remote repositories will not contain any of
@@ -729,7 +737,7 @@ where the `-u` flag means that you want the checkout to keep the index
 up-to-date (so that you don't have to refresh it afterward), and the
 `-a` flag means "check out all files" (if you have a stale copy or an
 older version of a checked out tree you may also need to add the `-f`
-flag first, to tell 'git-checkout-index' to *force* overwriting of any old
+flag first, to tell 'git checkout-index' to *force* overwriting of any old
 files).
 
 Again, this can all be simplified with
@@ -776,7 +784,7 @@ to it.
 ================================================
 If you make the decision to start your new branch at some
 other point in the history than the current `HEAD`, you can do so by
-just telling 'git-checkout' what the base of the checkout would be.
+just telling 'git checkout' what the base of the checkout would be.
 In other words, if you have an earlier tag or branch, you'd just do
 
 ------------
@@ -819,7 +827,7 @@ $ git branch <branchname> [startingpoint]
 
 which will simply _create_ the branch, but will not do anything further.
 You can then later -- once you decide that you want to actually develop
-on that branch -- switch to that branch with a regular 'git-checkout'
+on that branch -- switch to that branch with a regular 'git checkout'
 with the branchname as the argument.
 
 
@@ -881,7 +889,7 @@ source.
 Anyway, let's exit 'gitk' (`^Q` or the File menu), and decide that we want
 to merge the work we did on the `mybranch` branch into the `master`
 branch (which is currently our `HEAD` too). To do that, there's a nice
-script called 'git-merge', which wants to know which branches you want
+script called 'git merge', which wants to know which branches you want
 to resolve and what the merge is all about:
 
 ------------
@@ -925,7 +933,7 @@ $ git commit -i hello
 
 which will very loudly warn you that you're now committing a merge
 (which is correct, so never mind), and you can write a small merge
-message about your adventures in 'git-merge'-land.
+message about your adventures in 'git merge'-land.
 
 After you're done, start up `gitk \--all` to see graphically what the
 history looks like. Notice that `mybranch` still exists, and you can
@@ -967,21 +975,21 @@ branch head.  Please see linkgit:git-rev-parse[1] if you want to
 see more complex cases.
 
 [NOTE]
-Without the '--more=1' option, 'git-show-branch' would not output the
+Without the '--more=1' option, 'git show-branch' would not output the
 '[master^]' commit, as '[mybranch]' commit is a common ancestor of
 both 'master' and 'mybranch' tips.  Please see linkgit:git-show-branch[1]
 for details.
 
 [NOTE]
 If there were more commits on the 'master' branch after the merge, the
-merge commit itself would not be shown by 'git-show-branch' by
+merge commit itself would not be shown by 'git show-branch' by
 default.  You would need to provide '--sparse' option to make the
 merge commit visible in this case.
 
 Now, let's pretend you are the one who did all the work in
 `mybranch`, and the fruit of your hard work has finally been merged
 to the `master` branch. Let's go back to `mybranch`, and run
-'git-merge' to get the "upstream changes" back to your branch.
+'git merge' to get the "upstream changes" back to your branch.
 
 ------------
 $ git checkout mybranch
@@ -993,7 +1001,7 @@ would be different)
 
 ----------------
 Updating from ae3a2da... to a80b4aa....
-Fast forward (no commit created; -m option ignored)
+Fast-forward (no commit created; -m option ignored)
  example |    1 +
  hello   |    1 +
  2 files changed, 2 insertions(+), 0 deletions(-)
@@ -1003,7 +1011,7 @@ Because your branch did not contain anything more than what had
 already been merged into the `master` branch, the merge operation did
 not actually do a merge. Instead, it just updated the top of
 the tree of your branch to that of the `master` branch. This is
-often called 'fast forward' merge.
+often called 'fast-forward' merge.
 
 You can run `gitk \--all` again to see how the commit ancestry
 looks like, or run 'show-branch', which tells you this.
@@ -1023,12 +1031,12 @@ Merging external work
 It's usually much more common that you merge with somebody else than
 merging with your own branches, so it's worth pointing out that git
 makes that very easy too, and in fact, it's not that different from
-doing a 'git-merge'. In fact, a remote merge ends up being nothing
+doing a 'git merge'. In fact, a remote merge ends up being nothing
 more than "fetch the work from a remote repository into a temporary tag"
-followed by a 'git-merge'.
+followed by a 'git merge'.
 
 Fetching from a remote repository is done by, unsurprisingly,
-'git-fetch':
+'git fetch':
 
 ----------------
 $ git fetch <remote-repository>
@@ -1095,7 +1103,7 @@ The 'commit walkers' are sometimes also called 'dumb
 transports', because they do not require any git aware smart
 server like git Native transport does.  Any stock HTTP server
 that does not even support directory index would suffice.  But
-you must prepare your repository with 'git-update-server-info'
+you must prepare your repository with 'git update-server-info'
 to help dumb transport downloaders.
 
 Once you fetch from the remote repository, you `merge` that
@@ -1115,7 +1123,7 @@ argument.
 [NOTE]
 You could do without using any branches at all, by
 keeping as many local repositories as you would like to have
-branches, and merging between them with 'git-pull', just like
+branches, and merging between them with 'git pull', just like
 you merge between branches. The advantage of this approach is
 that it lets you keep a set of files for each `branch` checked
 out and you may find it easier to switch back and forth if you
@@ -1132,7 +1140,7 @@ like this:
 $ git config remote.linus.url http://www.kernel.org/pub/scm/git/git.git/
 ------------------------------------------------
 
-and use the "linus" keyword with 'git-pull' instead of the full URL.
+and use the "linus" keyword with 'git pull' instead of the full URL.
 
 Examples.
 
@@ -1168,7 +1176,7 @@ $ git show-branch --more=2 master mybranch
 +* [master^] Some fun.
 ------------
 
-Remember, before running 'git-merge', our `master` head was at
+Remember, before running 'git merge', our `master` head was at
 "Some fun." commit, while our `mybranch` head was at "Some
 work." commit.
 
@@ -1186,16 +1194,16 @@ $ git show-branch
 * [master] Some fun.
  ! [mybranch] Some work.
 --
- + [mybranch] Some work.
 *  [master] Some fun.
-*+ [mybranch^] New day.
+ + [mybranch] Some work.
+*+ [master^] Initial commit
 ------------
 
 Now we are ready to experiment with the merge by hand.
 
 `git merge` command, when merging two branches, uses 3-way merge
 algorithm.  First, it finds the common ancestor between them.
-The command it uses is 'git-merge-base':
+The command it uses is 'git merge-base':
 
 ------------
 $ mb=$(git merge-base HEAD mybranch)
@@ -1204,11 +1212,11 @@ $ mb=$(git merge-base HEAD mybranch)
 The command writes the commit object name of the common ancestor
 to the standard output, so we captured its output to a variable,
 because we will be using it in the next step.  By the way, the common
-ancestor commit is the "New day." commit in this case.  You can
+ancestor commit is the "Initial commit" commit in this case.  You can
 tell it by:
 
 ------------
-$ git name-rev $mb
+$ git name-rev --name-only --tags $mb
 my-first-tag
 ------------
 
@@ -1219,7 +1227,7 @@ this:
 $ git read-tree -m -u $mb HEAD mybranch
 ------------
 
-This is the same 'git-read-tree' command we have already seen,
+This is the same 'git read-tree' command we have already seen,
 but it takes three trees, unlike previous examples.  This reads
 the contents of each tree into different 'stage' in the index
 file (the first tree goes to stage 1, the second to stage 2,
@@ -1237,8 +1245,8 @@ inspect the index file with this command:
 ------------
 $ git ls-files --stage
 100644 7f8b141b65fdcee47321e399a2598a235a032422 0	example
-100644 263414f423d0e4d70dae8fe53fa34614ff3e2860 1	hello
-100644 06fa6a24256dc7e560efa5687fa84b51f0263c3a 2	hello
+100644 557db03de997c86a4a028e1ebd3a1ceb225be238 1	hello
+100644 ba42a2a96e3027f3333e13ede4ccf4498c3ae942 2	hello
 100644 cc44c73eb783565da5831b4d820c962954019b69 3	hello
 ------------
 
@@ -1253,15 +1261,15 @@ To look at only non-zero stages, use `\--unmerged` flag:
 
 ------------
 $ git ls-files --unmerged
-100644 263414f423d0e4d70dae8fe53fa34614ff3e2860 1	hello
-100644 06fa6a24256dc7e560efa5687fa84b51f0263c3a 2	hello
+100644 557db03de997c86a4a028e1ebd3a1ceb225be238 1	hello
+100644 ba42a2a96e3027f3333e13ede4ccf4498c3ae942 2	hello
 100644 cc44c73eb783565da5831b4d820c962954019b69 3	hello
 ------------
 
 The next step of merging is to merge these three versions of the
 file, using 3-way merge.  This is done by giving
-'git-merge-one-file' command as one of the arguments to
-'git-merge-index' command:
+'git merge-one-file' command as one of the arguments to
+'git merge-index' command:
 
 ------------
 $ git merge-index git-merge-one-file hello
@@ -1270,7 +1278,7 @@ ERROR: Merge conflict in hello
 fatal: merge program failed
 ------------
 
-'git-merge-one-file' script is called with parameters to
+'git merge-one-file' script is called with parameters to
 describe those three versions, and is responsible to leave the
 merge results in the working tree.
 It is a fairly straightforward shell script, and
@@ -1283,15 +1291,15 @@ the working tree..  This can be seen if you run `ls-files
 ------------
 $ git ls-files --stage
 100644 7f8b141b65fdcee47321e399a2598a235a032422 0	example
-100644 263414f423d0e4d70dae8fe53fa34614ff3e2860 1	hello
-100644 06fa6a24256dc7e560efa5687fa84b51f0263c3a 2	hello
+100644 557db03de997c86a4a028e1ebd3a1ceb225be238 1	hello
+100644 ba42a2a96e3027f3333e13ede4ccf4498c3ae942 2	hello
 100644 cc44c73eb783565da5831b4d820c962954019b69 3	hello
 ------------
 
 This is the state of the index file and the working file after
-'git-merge' returns control back to you, leaving the conflicting
+'git merge' returns control back to you, leaving the conflicting
 merge for you to resolve.  Notice that the path `hello` is still
-unmerged, and what you see with 'git-diff' at this point is
+unmerged, and what you see with 'git diff' at this point is
 differences since stage 2 (i.e. your version).
 
 
@@ -1328,8 +1336,8 @@ into it later. Obviously, this repository creation needs to be
 done only once.
 
 [NOTE]
-'git-push' uses a pair of programs,
-'git-send-pack' on your local machine, and 'git-receive-pack'
+'git push' uses a pair of commands,
+'git send-pack' on your local machine, and 'git-receive-pack'
 on the remote machine. The communication between the two over
 the network internally uses an SSH connection.
 
@@ -1344,7 +1352,7 @@ $ mkdir my-git.git
 ------------
 
 Then, make that directory into a git repository by running
-'git-init', but this time, since its name is not the usual
+'git init', but this time, since its name is not the usual
 `.git`, we do things slightly differently:
 
 ------------
@@ -1407,7 +1415,7 @@ $ git repack
 
 will do it for you. If you followed the tutorial examples, you
 would have accumulated about 17 objects in `.git/objects/??/`
-directories by now. 'git-repack' tells you how many objects it
+directories by now. 'git repack' tells you how many objects it
 packed, and stores the packed file in `.git/objects/pack`
 directory.
 
@@ -1420,7 +1428,7 @@ them together. The former holds all the data from the objects
 in the pack, and the latter holds the index for random
 access.
 
-If you are paranoid, running 'git-verify-pack' command would
+If you are paranoid, running 'git verify-pack' command would
 detect if you have a corrupt pack, but do not worry too much.
 Our programs are always perfect ;-).
 
@@ -1487,17 +1495,17 @@ If other people are pulling from your repository over dumb
 transport protocols (HTTP), you need to keep this repository
 'dumb transport friendly'.  After `git init`,
 `$GIT_DIR/hooks/post-update.sample` copied from the standard templates
-would contain a call to 'git-update-server-info'
+would contain a call to 'git update-server-info'
 but you need to manually enable the hook with
 `mv post-update.sample post-update`.  This makes sure
-'git-update-server-info' keeps the necessary files up-to-date.
+'git update-server-info' keeps the necessary files up-to-date.
 
 3. Push into the public repository from your primary
    repository.
 
-4. 'git-repack' the public repository. This establishes a big
+4. 'git repack' the public repository. This establishes a big
    pack that contains the initial set of objects as the
-   baseline, and possibly 'git-prune' if the transport
+   baseline, and possibly 'git prune' if the transport
    used for pulling from your repository supports packed
    repositories.
 
@@ -1511,14 +1519,14 @@ You can repack this private repository whenever you feel like.
 6. Push your changes to the public repository, and announce it
    to the public.
 
-7. Every once in a while, 'git-repack' the public repository.
+7. Every once in a while, 'git repack' the public repository.
    Go back to step 5. and continue working.
 
 
 A recommended work cycle for a "subsystem maintainer" who works
 on that project and has an own "public repository" goes like this:
 
-1. Prepare your work repository, by 'git-clone' the public
+1. Prepare your work repository, by 'git clone' the public
    repository of the "project lead". The URL used for the
    initial cloning is stored in the remote.origin.url
    configuration variable.
@@ -1533,7 +1541,7 @@ on that project and has an own "public repository" goes like this:
    point at the repository you are borrowing from.
 
 4. Push into the public repository from your primary
-   repository. Run 'git-repack', and possibly 'git-prune' if the
+   repository. Run 'git repack', and possibly 'git prune' if the
    transport used for pulling from your repository supports
    packed repositories.
 
@@ -1550,7 +1558,7 @@ like.
    "project lead" and possibly your "sub-subsystem
    maintainers" to pull from it.
 
-7. Every once in a while, 'git-repack' the public repository.
+7. Every once in a while, 'git repack' the public repository.
    Go back to step 5. and continue working.
 
 
@@ -1558,7 +1566,7 @@ A recommended work cycle for an "individual developer" who does
 not have a "public" repository is somewhat different. It goes
 like this:
 
-1. Prepare your work repository, by 'git-clone' the public
+1. Prepare your work repository, by 'git clone' the public
    repository of the "project lead" (or a "subsystem
    maintainer", if you work on a subsystem). The URL used for
    the initial cloning is stored in the remote.origin.url
@@ -1656,8 +1664,8 @@ $ git reset --hard master~2
 ------------
 
 You can make sure `git show-branch` matches the state before
-those two 'git-merge' you just did.  Then, instead of running
-two 'git-merge' commands in a row, you would merge these two
+those two 'git merge' you just did.  Then, instead of running
+two 'git merge' commands in a row, you would merge these two
 branch heads (this is known as 'making an Octopus'):
 
 ------------

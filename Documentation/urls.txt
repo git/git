@@ -67,3 +67,21 @@ For example, with this:
 a URL like "work:repo.git" or like "host.xz:/path/to/repo.git" will be
 rewritten in any context that takes a URL to be "git://git.host.xz/repo.git".
 
+If you want to rewrite URLs for push only, you can create a
+configuration section of the form:
+
+------------
+	[url "<actual url base>"]
+		pushInsteadOf = <other url base>
+------------
+
+For example, with this:
+
+------------
+	[url "ssh://example.org/"]
+		pushInsteadOf = git://example.org/
+------------
+
+a URL like "git://example.org/path/to/repo.git" will be rewritten to
+"ssh://example.org/path/to/repo.git" for pushes, but pulls will still
+use the original URL.

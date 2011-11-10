@@ -30,7 +30,7 @@ TZ=UTC
 TERM=dumb
 export LANG LC_ALL PAGER TERM TZ
 EDITOR=:
-VISUAL=:
+unset VISUAL
 unset GIT_EDITOR
 unset AUTHOR_DATE
 unset AUTHOR_EMAIL
@@ -58,7 +58,7 @@ GIT_MERGE_VERBOSITY=5
 export GIT_MERGE_VERBOSITY
 export GIT_AUTHOR_EMAIL GIT_AUTHOR_NAME
 export GIT_COMMITTER_EMAIL GIT_COMMITTER_NAME
-export EDITOR VISUAL
+export EDITOR
 GIT_TEST_CMP=${GIT_TEST_CMP:-diff -u}
 
 # Protect ourselves from common misconfiguration to export
@@ -73,6 +73,12 @@ case $(echo $GIT_TRACE |tr "[A-Z]" "[a-z]") in
 			"other than 1, 2 or true ! *"
 		;;
 esac
+
+# Convenience
+#
+# A regexp to match 5 and 40 hexdigits
+_x05='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
+_x40="$_x05$_x05$_x05$_x05$_x05$_x05$_x05$_x05"
 
 # Each test should start with something like this, after copyright notices:
 #
@@ -105,6 +111,8 @@ do
 		verbose=t; shift ;;
 	-q|--q|--qu|--qui|--quie|--quiet)
 		quiet=t; shift ;;
+	--with-dashes)
+		with_dashes=t; shift ;;
 	--no-color)
 		color=; shift ;;
 	--no-python)
@@ -114,8 +122,11 @@ do
 		valgrind=t; verbose=t; shift ;;
 	--tee)
 		shift ;; # was handled already
+	--root=*)
+		root=$(expr "z$1" : 'z[^=]*=\(.*\)')
+		shift ;;
 	*)
-		break ;;
+		echo "error: unknown test option '$1'" >&2; exit 1 ;;
 	esac
 done
 
@@ -147,7 +158,7 @@ fi
 
 error () {
 	say_color error "error: $*"
-	trap - EXIT
+	GIT_EXIT_OK=t
 	exit 1
 }
 
@@ -179,10 +190,17 @@ test_broken=0
 test_success=0
 
 die () {
-	echo >&5 "FATAL: Unexpected exit with code $?"
-	exit 1
+	code=$?
+	if test -n "$GIT_EXIT_OK"
+	then
+		exit $code
+	else
+		echo >&5 "FATAL: Unexpected exit with code $code"
+		exit 1
+	fi
 }
 
+GIT_EXIT_OK=
 trap 'die' EXIT
 
 # The semantics of the editor variables are that of invoking
@@ -197,8 +215,35 @@ trap 'die' EXIT
 test_set_editor () {
 	FAKE_EDITOR="$1"
 	export FAKE_EDITOR
-	VISUAL='"$FAKE_EDITOR"'
-	export VISUAL
+	EDITOR='"$FAKE_EDITOR"'
+	export EDITOR
+}
+
+test_decode_color () {
+	sed	-e 's/.\[1m/<WHITE>/g' \
+		-e 's/.\[31m/<RED>/g' \
+		-e 's/.\[32m/<GREEN>/g' \
+		-e 's/.\[33m/<YELLOW>/g' \
+		-e 's/.\[34m/<BLUE>/g' \
+		-e 's/.\[35m/<MAGENTA>/g' \
+		-e 's/.\[36m/<CYAN>/g' \
+		-e 's/.\[m/<RESET>/g'
+}
+
+q_to_nul () {
+	perl -pe 'y/Q/\000/'
+}
+
+q_to_cr () {
+	tr Q '\015'
+}
+
+append_cr () {
+	sed -e 's/$/Q/' | tr Q '\015'
+}
+
+remove_cr () {
+	tr '\015' Q | sed -e 's/Q$//'
 }
 
 test_tick () {
@@ -285,7 +330,7 @@ test_failure_ () {
 	say_color error "FAIL $test_count: $1"
 	shift
 	echo "$@" | sed -e 's/^/	/'
-	test "$immediate" = "" || { trap - EXIT; exit 1; }
+	test "$immediate" = "" || { GIT_EXIT_OK=t; exit 1; }
 }
 
 test_known_broken_ok_ () {
@@ -347,7 +392,7 @@ test_expect_failure () {
 		then
 			test_known_broken_ok_ "$1"
 		else
-		    test_known_broken_failure_ "$1"
+			test_known_broken_failure_ "$1"
 		fi
 	fi
 	echo >&3 ""
@@ -498,7 +543,7 @@ test_create_repo () {
 }
 
 test_done () {
-	trap - EXIT
+	GIT_EXIT_OK=t
 	test_results_dir="$TEST_DIRECTORY/test-results"
 	mkdir -p "$test_results_dir"
 	test_results_path="$test_results_dir/${0%.sh}-$$"
@@ -541,19 +586,8 @@ test_done () {
 # Test the binaries we have just built.  The tests are kept in
 # t/ subdirectory and are run in 'trash directory' subdirectory.
 TEST_DIRECTORY=$(pwd)
-if test -z "$valgrind"
+if test -n "$valgrind"
 then
-	if test -z "$GIT_TEST_INSTALLED"
-	then
-		PATH=$TEST_DIRECTORY/..:$PATH
-		GIT_EXEC_PATH=$TEST_DIRECTORY/..
-	else
-		GIT_EXEC_PATH=$($GIT_TEST_INSTALLED/git --exec-path)  ||
-		error "Cannot run git from $GIT_TEST_INSTALLED."
-		PATH=$GIT_TEST_INSTALLED:$TEST_DIRECTORY/..:$PATH
-		GIT_EXEC_PATH=${GIT_TEST_EXEC_PATH:-$GIT_EXEC_PATH}
-	fi
-else
 	make_symlink () {
 		test -h "$2" &&
 		test "$1" = "$(readlink "$2")" || {
@@ -615,6 +649,24 @@ else
 	PATH=$GIT_VALGRIND/bin:$PATH
 	GIT_EXEC_PATH=$GIT_VALGRIND/bin
 	export GIT_VALGRIND
+elif test -n "$GIT_TEST_INSTALLED" ; then
+	GIT_EXEC_PATH=$($GIT_TEST_INSTALLED/git --exec-path)  ||
+	error "Cannot run git from $GIT_TEST_INSTALLED."
+	PATH=$GIT_TEST_INSTALLED:$TEST_DIRECTORY/..:$PATH
+	GIT_EXEC_PATH=${GIT_TEST_EXEC_PATH:-$GIT_EXEC_PATH}
+else # normal case, use ../bin-wrappers only unless $with_dashes:
+	git_bin_dir="$TEST_DIRECTORY/../bin-wrappers"
+	if ! test -x "$git_bin_dir/git" ; then
+		if test -z "$with_dashes" ; then
+			say "$git_bin_dir/git is not executable; using GIT_EXEC_PATH"
+		fi
+		with_dashes=t
+	fi
+	PATH="$git_bin_dir:$PATH"
+	GIT_EXEC_PATH=$TEST_DIRECTORY/..
+	if test -n "$with_dashes" ; then
+		PATH="$TEST_DIRECTORY/..:$PATH"
+	fi
 fi
 GIT_TEMPLATE_DIR=$(pwd)/../templates/blt
 unset GIT_CONFIG
@@ -622,11 +674,22 @@ GIT_CONFIG_NOSYSTEM=1
 GIT_CONFIG_NOGLOBAL=1
 export PATH GIT_EXEC_PATH GIT_TEMPLATE_DIR GIT_CONFIG_NOSYSTEM GIT_CONFIG_NOGLOBAL
 
+. ../GIT-BUILD-OPTIONS
+
 GITPERLLIB=$(pwd)/../perl/blib/lib:$(pwd)/../perl/blib/arch/auto/Git
 export GITPERLLIB
 test -d ../templates/blt || {
 	error "You haven't built things yet, have you?"
 }
+
+if test -z "$GIT_TEST_INSTALLED" && test -z "$NO_PYTHON"
+then
+	GITPYTHONLIB="$(pwd)/../git_remote_helpers/build/lib"
+	export GITPYTHONLIB
+	test -d ../git_remote_helpers/build || {
+		error "You haven't built git_remote_helpers yet, have you?"
+	}
+fi
 
 if ! test -x ../test-chmtime; then
 	echo >&2 'You need to build test-chmtime:'
@@ -634,13 +697,16 @@ if ! test -x ../test-chmtime; then
 	exit 1
 fi
 
-. ../GIT-BUILD-OPTIONS
-
 # Test repository
 test="trash directory.$(basename "$0" .sh)"
-test ! -z "$debug" || remove_trash="$TEST_DIRECTORY/$test"
+test -n "$root" && test="$root/$test"
+case "$test" in
+/*) TRASH_DIRECTORY="$test" ;;
+ *) TRASH_DIRECTORY="$TEST_DIRECTORY/$test" ;;
+esac
+test ! -z "$debug" || remove_trash=$TRASH_DIRECTORY
 rm -fr "$test" || {
-	trap - EXIT
+	GIT_EXIT_OK=t
 	echo >&5 "FATAL: Cannot prepare test area"
 	exit 1
 }
@@ -669,6 +735,21 @@ do
 		test_done
 	esac
 done
+
+# Provide an implementation of the 'yes' utility
+yes () {
+	if test $# = 0
+	then
+		y=y
+	else
+		y="$*"
+	fi
+
+	while echo "$y"
+	do
+		:
+	done
+}
 
 # Fix some commands on Windows
 case $(uname -s) in
@@ -699,6 +780,7 @@ case $(uname -s) in
 esac
 
 test -z "$NO_PERL" && test_set_prereq PERL
+test -z "$NO_PYTHON" && test_set_prereq PYTHON
 
 # test whether the filesystem supports symbolic links
 ln -s x y 2>/dev/null && test -h y 2>/dev/null && test_set_prereq SYMLINKS

@@ -11,7 +11,7 @@ if ! test_have_prereq PERL; then
 	test_done
 fi
 
-perl -MTest::More -e 0 2>/dev/null || {
+"$PERL_PATH" -MTest::More -e 0 2>/dev/null || {
 	say "Perl Test::More unavailable, skipping test"
 	test_done
 }
@@ -29,6 +29,10 @@ test_expect_success \
      git add . &&
      git commit -m "first commit" &&
 
+     echo "new file in subdir 2" > directory2/file2 &&
+     git add . &&
+     git commit -m "commit in directory2" &&
+
      echo "changed file 1" > file1 &&
      git commit -a -m "second commit" &&
 
@@ -44,6 +48,6 @@ test_expect_success \
 
 test_external_without_stderr \
     'Perl API' \
-    perl "$TEST_DIRECTORY"/t9700/test.pl
+    "$PERL_PATH" "$TEST_DIRECTORY"/t9700/test.pl
 
 test_done

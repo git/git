@@ -103,7 +103,7 @@ static char *parse_name_and_email(char *buffer, char **name,
 		char **email, int allow_empty_email)
 {
 	char *left, *right, *nstart, *nend;
-	*name = *email = 0;
+	*name = *email = NULL;
 
 	if ((left = strchr(buffer, '<')) == NULL)
 		return NULL;
@@ -136,7 +136,7 @@ static int read_single_mailmap(struct string_list *map, const char *filename, ch
 	if (f == NULL)
 		return 1;
 	while (fgets(buffer, sizeof(buffer), f) != NULL) {
-		char *name1 = 0, *email1 = 0, *name2 = 0, *email2 = 0;
+		char *name1 = NULL, *email1 = NULL, *name2 = NULL, *email2 = NULL;
 		if (buffer[0] == '#') {
 			static const char abbrev[] = "# repo-abbrev:";
 			int abblen = sizeof(abbrev) - 1;
@@ -200,7 +200,7 @@ int map_user(struct string_list *map,
 	if (!p) {
 		/* email passed in might not be wrapped in <>, but end with a \0 */
 		p = memchr(email, '\0', maxlen_email);
-		if (p == 0)
+		if (!p)
 			return 0;
 	}
 	if (p - email + 1 < sizeof(buf))
@@ -242,9 +242,4 @@ int map_user(struct string_list *map,
 	}
 	debug_mm("map_user:  --\n");
 	return 0;
-}
-
-int map_email(struct string_list *map, const char *email, char *name, int maxlen)
-{
-	return map_user(map, (char *)email, 0, name, maxlen);
 }

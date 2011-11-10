@@ -60,205 +60,36 @@ get_default_remote () {
 	echo ${origin:-origin}
 }
 
-get_remote_default_refs_for_push () {
-	data_source=$(get_data_source "$1")
-	case "$data_source" in
-	'' | branches | self)
-		;; # no default push mapping, just send matching refs.
-	config)
-		git config --get-all "remote.$1.push" ;;
-	remotes)
-		sed -ne '/^Push: */{
-			s///p
-		}' "$GIT_DIR/remotes/$1" ;;
-	*)
-		die "internal error: get-remote-default-ref-for-push $1" ;;
-	esac
-}
-
-# Called from canon_refs_list_for_fetch -d "$remote", which
-# is called from get_remote_default_refs_for_fetch to grok
-# refspecs that are retrieved from the configuration, but not
-# from get_remote_refs_for_fetch when it deals with refspecs
-# supplied on the command line.  $ls_remote_result has the list
-# of refs available at remote.
-#
-# The first token returned is either "explicit" or "glob"; this
-# is to help prevent randomly "globbed" ref from being chosen as
-# a merge candidate
-expand_refs_wildcard () {
-	echo "$ls_remote_result" |
-	git fetch--tool expand-refs-wildcard "-" "$@"
-}
-
-# Subroutine to canonicalize remote:local notation.
-canon_refs_list_for_fetch () {
-	# If called from get_remote_default_refs_for_fetch
-	# leave the branches in branch.${curr_branch}.merge alone,
-	# or the first one otherwise; add prefix . to the rest
-	# to prevent the secondary branches to be merged by default.
-	merge_branches=
-	curr_branch=
-	if test "$1" = "-d"
-	then
-		shift ; remote="$1" ; shift
-		set $(expand_refs_wildcard "$remote" "$@")
-		is_explicit="$1"
-		shift
-		if test "$remote" = "$(get_default_remote)"
-		then
-			curr_branch=$(git symbolic-ref -q HEAD | \
-			    sed -e 's|^refs/heads/||')
-			merge_branches=$(git config \
-			    --get-all "branch.${curr_branch}.merge")
-		fi
-		if test -z "$merge_branches" && test $is_explicit != explicit
-		then
-			merge_branches=..this.will.never.match.any.ref..
-		fi
-	fi
-	for ref
-	do
-		force=
-		case "$ref" in
-		+*)
-			ref=$(expr "z$ref" : 'z+\(.*\)')
-			force=+
-			;;
-		esac
-		expr "z$ref" : 'z.*:' >/dev/null || ref="${ref}:"
-		remote=$(expr "z$ref" : 'z\([^:]*\):')
-		local=$(expr "z$ref" : 'z[^:]*:\(.*\)')
-		dot_prefix=.
-		if test -z "$merge_branches"
-		then
-			merge_branches=$remote
-			dot_prefix=
-		else
-			for merge_branch in $merge_branches
-			do
-			    [ "$remote" = "$merge_branch" ] &&
-			    dot_prefix= && break
-			done
-		fi
-		case "$remote" in
-		'' | HEAD ) remote=HEAD ;;
-		refs/*) ;;
-		heads/* | tags/* | remotes/* ) remote="refs/$remote" ;;
-		*) remote="refs/heads/$remote" ;;
-		esac
-		case "$local" in
-		'') local= ;;
-		refs/*) ;;
-		heads/* | tags/* | remotes/* ) local="refs/$local" ;;
-		*) local="refs/heads/$local" ;;
-		esac
-
-		if local_ref_name=$(expr "z$local" : 'zrefs/\(.*\)')
-		then
-		   git check-ref-format "$local_ref_name" ||
-		   die "* refusing to create funny ref '$local_ref_name' locally"
-		fi
-		echo "${dot_prefix}${force}${remote}:${local}"
-	done
-}
-
-# Returns list of src: (no store), or src:dst (store)
-get_remote_default_refs_for_fetch () {
-	data_source=$(get_data_source "$1")
-	case "$data_source" in
-	'')
-		echo "HEAD:" ;;
-	self)
-	        canon_refs_list_for_fetch -d "$1" \
-			$(git for-each-ref --format='%(refname):')
-		;;
-	config)
-		canon_refs_list_for_fetch -d "$1" \
-			$(git config --get-all "remote.$1.fetch") ;;
-	branches)
-		remote_branch=$(sed -ne '/#/s/.*#//p' "$GIT_DIR/branches/$1")
-		case "$remote_branch" in '') remote_branch=master ;; esac
-		echo "refs/heads/${remote_branch}:refs/heads/$1"
-		;;
-	remotes)
-		canon_refs_list_for_fetch -d "$1" $(sed -ne '/^Pull: */{
-						s///p
-					}' "$GIT_DIR/remotes/$1")
-		;;
-	*)
-		die "internal error: get-remote-default-ref-for-fetch $1" ;;
-	esac
-}
-
-get_remote_refs_for_push () {
+get_remote_merge_branch () {
 	case "$#" in
-	0) die "internal error: get-remote-refs-for-push." ;;
-	1) get_remote_default_refs_for_push "$@" ;;
-	*) shift; echo "$@" ;;
-	esac
-}
-
-get_remote_refs_for_fetch () {
-	case "$#" in
-	0)
-	    die "internal error: get-remote-refs-for-fetch." ;;
-	1)
-	    get_remote_default_refs_for_fetch "$@" ;;
-	*)
-	    shift
-	    tag_just_seen=
-	    for ref
-	    do
-		if test "$tag_just_seen"
-		then
-		    echo "refs/tags/${ref}:refs/tags/${ref}"
-		    tag_just_seen=
-		    continue
-		else
-		    case "$ref" in
-		    tag)
-			tag_just_seen=yes
-			continue
-			;;
-		    esac
-		fi
-		canon_refs_list_for_fetch "$ref"
-	    done
+	0|1)
+	    origin="$1"
+	    default=$(get_default_remote)
+	    test -z "$origin" && origin=$default
+	    curr_branch=$(git symbolic-ref -q HEAD)
+	    [ "$origin" = "$default" ] &&
+	    echo $(git for-each-ref --format='%(upstream)' $curr_branch)
 	    ;;
-	esac
-}
-
-resolve_alternates () {
-	# original URL (xxx.git)
-	top_=`expr "z$1" : 'z\([^:]*:/*[^/]*\)/'`
-	while read path
-	do
-		case "$path" in
-		\#* | '')
-			continue ;;
-		/*)
-			echo "$top_$path/" ;;
-		../*)
-			# relative -- ugly but seems to work.
-			echo "$1/objects/$path/" ;;
-		*)
-			# exit code may not be caught by the reader.
-			echo "bad alternate: $path"
-			exit 1 ;;
-		esac
-	done
-}
-
-get_uploadpack () {
-	data_source=$(get_data_source "$1")
-	case "$data_source" in
-	config)
-		uplp=$(git config --get "remote.$1.uploadpack")
-		echo ${uplp:-git-upload-pack}
-		;;
 	*)
-		echo "git-upload-pack"
+	    repo=$1
+	    shift
+	    ref=$1
+	    # FIXME: It should return the tracking branch
+	    #        Currently only works with the default mapping
+	    case "$ref" in
+	    +*)
+		ref=$(expr "z$ref" : 'z+\(.*\)')
 		;;
+	    esac
+	    expr "z$ref" : 'z.*:' >/dev/null || ref="${ref}:"
+	    remote=$(expr "z$ref" : 'z\([^:]*\):')
+	    case "$remote" in
+	    '' | HEAD ) remote=HEAD ;;
+	    heads/*) remote=${remote#heads/} ;;
+	    refs/heads/*) remote=${remote#refs/heads/} ;;
+	    refs/* | tags/* | remotes/* ) remote=
+	    esac
+
+	    [ -n "$remote" ] && echo "refs/remotes/$repo/$remote"
 	esac
 }

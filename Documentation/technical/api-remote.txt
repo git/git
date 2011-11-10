@@ -18,6 +18,10 @@ struct remote
 
 	An array of all of the url_nr URLs configured for the remote
 
+`pushurl`::
+
+	An array of all of the pushurl_nr push URLs configured for the remote
+
 `push`::
 
 	 An array of refspecs configured for pushing, with

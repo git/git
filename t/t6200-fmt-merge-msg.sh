@@ -208,4 +208,36 @@ test_expect_success 'merge-msg test #5-2' '
 	test_cmp expected actual
 '
 
+test_expect_success 'merge-msg -F' '
+
+	git config --unset-all merge.log
+	git config --unset-all merge.summary
+	git config merge.summary yes &&
+
+	git checkout master &&
+	setdate &&
+	git fetch . left right &&
+
+	git fmt-merge-msg -F .git/FETCH_HEAD >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'merge-msg -F in subdirectory' '
+
+	git config --unset-all merge.log
+	git config --unset-all merge.summary
+	git config merge.summary yes &&
+
+	git checkout master &&
+	setdate &&
+	git fetch . left right &&
+	mkdir sub &&
+	cp .git/FETCH_HEAD sub/FETCH_HEAD &&
+	(
+		cd sub &&
+		git fmt-merge-msg -F FETCH_HEAD >../actual
+	) &&
+	test_cmp expected actual
+'
+
 test_done

@@ -398,6 +398,17 @@ test_expect_success 'alternative GIT_CONFIG' 'cmp output expect'
 test_expect_success 'alternative GIT_CONFIG (--file)' \
 	'git config --file other-config -l > output && cmp output expect'
 
+test_expect_success 'refer config from subdirectory' '
+	mkdir x &&
+	(
+		cd x &&
+		echo strasse >expect
+		git config --get --file ../other-config ein.bahn >actual &&
+		test_cmp expect actual
+	)
+
+'
+
 GIT_CONFIG=other-config git config anwohner.park ausweis
 
 cat > expect << EOF
@@ -455,6 +466,28 @@ cat > expect << EOF
 	y = 1
 [branch "drei"]
 weird
+EOF
+
+test_expect_success "rename succeeded" "test_cmp expect .git/config"
+
+cat >> .git/config << EOF
+[branch "vier"] z = 1
+EOF
+
+test_expect_success "rename a section with a var on the same line" \
+	'git config --rename-section branch.vier branch.zwei'
+
+cat > expect << EOF
+# Hallo
+	#Bello
+[branch "zwei"]
+	x = 1
+[branch "zwei"]
+	y = 1
+[branch "drei"]
+weird
+[branch "zwei"]
+	z = 1
 EOF
 
 test_expect_success "rename succeeded" "test_cmp expect .git/config"
@@ -661,6 +694,34 @@ test_expect_success 'set --bool-or-int' '
 
 rm .git/config
 
+cat >expect <<\EOF
+[path]
+	home = ~/
+	normal = /dev/null
+	trailingtilde = foo~
+EOF
+
+test_expect_success 'set --path' '
+	git config --path path.home "~/" &&
+	git config --path path.normal "/dev/null" &&
+	git config --path path.trailingtilde "foo~" &&
+	test_cmp expect .git/config'
+
+cat >expect <<EOF
+$HOME/
+/dev/null
+foo~
+EOF
+
+test_expect_success 'get --path' '
+	git config --get --path path.home > result &&
+	git config --get --path path.normal >> result &&
+	git config --get --path path.trailingtilde >> result &&
+	test_cmp expect result
+'
+
+rm .git/config
+
 git config quote.leading " test"
 git config quote.ending "test "
 git config quote.semicolon "test;test"
@@ -732,6 +793,11 @@ git config --null --get-regexp 'val[0-9]' | perl -pe 'y/\000/Q/' > result
 echo >>result
 
 test_expect_success '--null --get-regexp' 'cmp result expect'
+
+test_expect_success 'inner whitespace kept verbatim' '
+	git config section.val "foo 	  bar" &&
+	test "z$(git config section.val)" = "zfoo 	  bar"
+'
 
 test_expect_success SYMLINKS 'symlinked configuration' '
 

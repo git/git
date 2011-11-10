@@ -62,7 +62,8 @@ static char *parse_value(void)
 		if (comment)
 			continue;
 		if (isspace(c) && !quote) {
-			space = 1;
+			if (len)
+				space++;
 			continue;
 		}
 		if (!quote) {
@@ -71,11 +72,8 @@ static char *parse_value(void)
 				continue;
 			}
 		}
-		if (space) {
-			if (len)
-				value[len++] = ' ';
-			space = 0;
-		}
+		for (; space; space--)
+			value[len++] = ' ';
 		if (c == '\\') {
 			c = get_next_char();
 			switch (c) {
@@ -353,6 +351,16 @@ int git_config_string(const char **dest, const char *var, const char *value)
 	return 0;
 }
 
+int git_config_pathname(const char **dest, const char *var, const char *value)
+{
+	if (!value)
+		return config_error_nonbool(var);
+	*dest = expand_user_path(value);
+	if (!*dest)
+		die("Failed to expand user dir in: '%s'", value);
+	return 0;
+}
+
 static int git_default_core_config(const char *var, const char *value)
 {
 	/* This needs a better name */
@@ -469,6 +477,11 @@ static int git_default_core_config(const char *var, const char *value)
 		return 0;
 	}
 
+	if (!strcmp(var, "core.notesref")) {
+		notes_ref_name = xstrdup(value);
+		return 0;
+	}
+
 	if (!strcmp(var, "core.pager"))
 		return git_config_string(&pager_program, var, value);
 
@@ -476,7 +489,7 @@ static int git_default_core_config(const char *var, const char *value)
 		return git_config_string(&editor_program, var, value);
 
 	if (!strcmp(var, "core.excludesfile"))
-		return git_config_string(&excludes_file, var, value);
+		return git_config_pathname(&excludes_file, var, value);
 
 	if (!strcmp(var, "core.whitespace")) {
 		if (!value)
@@ -505,6 +518,11 @@ static int git_default_core_config(const char *var, const char *value)
 		return 0;
 	}
 
+	if (!strcmp(var, "core.sparsecheckout")) {
+		core_apply_sparse_checkout = git_config_bool(var, value);
+		return 0;
+	}
+
 	/* Add other config variables here and to Documentation/config.txt. */
 	return 0;
 }
@@ -515,8 +533,7 @@ static int git_default_user_config(const char *var, const char *value)
 		if (!value)
 			return config_error_nonbool(var);
 		strlcpy(git_default_name, value, sizeof(git_default_name));
-		if (git_default_email[0])
-			user_ident_explicitly_given = 1;
+		user_ident_explicitly_given |= IDENT_NAME_GIVEN;
 		return 0;
 	}
 
@@ -524,8 +541,7 @@ static int git_default_user_config(const char *var, const char *value)
 		if (!value)
 			return config_error_nonbool(var);
 		strlcpy(git_default_email, value, sizeof(git_default_email));
-		if (git_default_name[0])
-			user_ident_explicitly_given = 1;
+		user_ident_explicitly_given |= IDENT_MAIL_GIVEN;
 		return 0;
 	}
 
@@ -628,6 +644,9 @@ int git_default_config(const char *var, const char *value, void *dummy)
 
 	if (!prefixcmp(var, "mailmap."))
 		return git_default_mailmap_config(var, value);
+
+	if (!prefixcmp(var, "advice."))
+		return git_default_advice_config(var, value);
 
 	if (!strcmp(var, "pager.color") || !strcmp(var, "color.pager")) {
 		pager_use_color = git_config_bool(var,value);
@@ -1118,7 +1137,7 @@ int git_config_set_multivar(const char *key, const char *value,
 				    copy_end - copy_begin)
 					goto write_err_out;
 				if (new_line &&
-				    write_in_full(fd, "\n", 1) != 1)
+				    write_str_in_full(fd, "\n") != 1)
 					goto write_err_out;
 			}
 			copy_begin = store.offset[i];
@@ -1174,7 +1193,9 @@ write_err_out:
 static int section_name_match (const char *buf, const char *name)
 {
 	int i = 0, j = 0, dot = 0;
-	for (; buf[i] && buf[i] != ']'; i++) {
+	if (buf[i] != '[')
+		return 0;
+	for (i = 1; buf[i] && buf[i] != ']'; i++) {
 		if (!dot && isspace(buf[i])) {
 			dot = 1;
 			if (name[j++] != '.')
@@ -1195,7 +1216,17 @@ static int section_name_match (const char *buf, const char *name)
 		if (buf[i] != name[j++])
 			break;
 	}
-	return (buf[i] == ']' && name[j] == 0);
+	if (buf[i] == ']' && name[j] == 0) {
+		/*
+		 * We match, now just find the right length offset by
+		 * gobbling up any whitespace after it, as well
+		 */
+		i++;
+		for (; buf[i] && isspace(buf[i]); i++)
+			; /* do nothing */
+		return i;
+	}
+	return 0;
 }
 
 /* if new_name == NULL, the section is removed instead */
@@ -1225,11 +1256,13 @@ int git_config_rename_section(const char *old_name, const char *new_name)
 	while (fgets(buf, sizeof(buf), config_file)) {
 		int i;
 		int length;
+		char *output = buf;
 		for (i = 0; buf[i] && isspace(buf[i]); i++)
 			; /* do nothing */
 		if (buf[i] == '[') {
 			/* it's a section */
-			if (section_name_match (&buf[i+1], old_name)) {
+			int offset = section_name_match(&buf[i], old_name);
+			if (offset > 0) {
 				ret++;
 				if (new_name == NULL) {
 					remove = 1;
@@ -1240,14 +1273,29 @@ int git_config_rename_section(const char *old_name, const char *new_name)
 					ret = write_error(lock->filename);
 					goto out;
 				}
-				continue;
+				/*
+				 * We wrote out the new section, with
+				 * a newline, now skip the old
+				 * section's length
+				 */
+				output += offset + i;
+				if (strlen(output) > 0) {
+					/*
+					 * More content means there's
+					 * a declaration to put on the
+					 * next line; indent with a
+					 * tab
+					 */
+					output -= 1;
+					output[0] = '\t';
+				}
 			}
 			remove = 0;
 		}
 		if (remove)
 			continue;
-		length = strlen(buf);
-		if (write_in_full(out_fd, buf, length) != length) {
+		length = strlen(output);
+		if (write_in_full(out_fd, output, length) != length) {
 			ret = write_error(lock->filename);
 			goto out;
 		}

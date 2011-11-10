@@ -2,6 +2,10 @@
 #include "run-command.h"
 #include "sigchain.h"
 
+#ifndef DEFAULT_PAGER
+#define DEFAULT_PAGER "less"
+#endif
+
 /*
  * This is split up from the rest of git so that we can do
  * something different on Windows.
@@ -9,7 +13,7 @@
 
 static int spawned_pager;
 
-#ifndef __MINGW32__
+#ifndef WIN32
 static void pager_preexec(void)
 {
 	/*
@@ -21,12 +25,10 @@ static void pager_preexec(void)
 	FD_ZERO(&in);
 	FD_SET(0, &in);
 	select(1, &in, NULL, &in, NULL);
-
-	setenv("LESS", "FRSX", 0);
 }
 #endif
 
-static const char *pager_argv[] = { "sh", "-c", NULL, NULL };
+static const char *pager_argv[] = { NULL, NULL };
 static struct child_process pager_process;
 
 static void wait_for_pager(void)
@@ -46,12 +48,14 @@ static void wait_for_pager_signal(int signo)
 	raise(signo);
 }
 
-void setup_pager(void)
+const char *git_pager(void)
 {
-	const char *pager = getenv("GIT_PAGER");
+	const char *pager;
 
 	if (!isatty(1))
-		return;
+		return NULL;
+
+	pager = getenv("GIT_PAGER");
 	if (!pager) {
 		if (!pager_program)
 			git_config(git_default_config, NULL);
@@ -60,17 +64,32 @@ void setup_pager(void)
 	if (!pager)
 		pager = getenv("PAGER");
 	if (!pager)
-		pager = "less";
+		pager = DEFAULT_PAGER;
 	else if (!*pager || !strcmp(pager, "cat"))
+		pager = NULL;
+
+	return pager;
+}
+
+void setup_pager(void)
+{
+	const char *pager = git_pager();
+
+	if (!pager)
 		return;
 
 	spawned_pager = 1; /* means we are emitting to terminal */
 
 	/* spawn the pager */
-	pager_argv[2] = pager;
+	pager_argv[0] = pager;
+	pager_process.use_shell = 1;
 	pager_process.argv = pager_argv;
 	pager_process.in = -1;
-#ifndef __MINGW32__
+	if (!getenv("LESS")) {
+		static const char *env[] = { "LESS=FRSX", NULL };
+		pager_process.env = env;
+	}
+#ifndef WIN32
 	pager_process.preexec_cb = pager_preexec;
 #endif
 	if (start_command(&pager_process))

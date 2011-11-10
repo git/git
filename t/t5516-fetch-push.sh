@@ -12,6 +12,7 @@ mk_empty () {
 	(
 		cd testrepo &&
 		git init &&
+		git config receive.denyCurrentBranch warn &&
 		mv .git/hooks .git/hooks-disabled
 	)
 }
@@ -122,6 +123,23 @@ test_expect_success 'fetch with insteadOf' '
 	)
 '
 
+test_expect_success 'fetch with pushInsteadOf (should not rewrite)' '
+	mk_empty &&
+	(
+		TRASH=$(pwd)/ &&
+		cd testrepo &&
+		git config "url.trash/.pushInsteadOf" "$TRASH" &&
+		git config remote.up.url "$TRASH." &&
+		git config remote.up.fetch "refs/heads/*:refs/remotes/origin/*" &&
+		git fetch up &&
+
+		r=$(git show-ref -s --verify refs/remotes/origin/master) &&
+		test "z$r" = "z$the_commit" &&
+
+		test 1 = $(git for-each-ref refs/remotes/origin | wc -l)
+	)
+'
+
 test_expect_success 'push without wildcard' '
 	mk_empty &&
 
@@ -153,6 +171,36 @@ test_expect_success 'push with insteadOf' '
 	TRASH="$(pwd)/" &&
 	git config "url.$TRASH.insteadOf" trash/ &&
 	git push trash/testrepo refs/heads/master:refs/remotes/origin/master &&
+	(
+		cd testrepo &&
+		r=$(git show-ref -s --verify refs/remotes/origin/master) &&
+		test "z$r" = "z$the_commit" &&
+
+		test 1 = $(git for-each-ref refs/remotes/origin | wc -l)
+	)
+'
+
+test_expect_success 'push with pushInsteadOf' '
+	mk_empty &&
+	TRASH="$(pwd)/" &&
+	git config "url.$TRASH.pushInsteadOf" trash/ &&
+	git push trash/testrepo refs/heads/master:refs/remotes/origin/master &&
+	(
+		cd testrepo &&
+		r=$(git show-ref -s --verify refs/remotes/origin/master) &&
+		test "z$r" = "z$the_commit" &&
+
+		test 1 = $(git for-each-ref refs/remotes/origin | wc -l)
+	)
+'
+
+test_expect_success 'push with pushInsteadOf and explicit pushurl (pushInsteadOf should not rewrite)' '
+	mk_empty &&
+	TRASH="$(pwd)/" &&
+	git config "url.trash2/.pushInsteadOf" trash/ &&
+	git config remote.r.url trash/wrong &&
+	git config remote.r.pushurl "$TRASH/testrepo" &&
+	git push r refs/heads/master:refs/remotes/origin/master &&
 	(
 		cd testrepo &&
 		r=$(git show-ref -s --verify refs/remotes/origin/master) &&
@@ -419,6 +467,19 @@ test_expect_success 'push with config remote.*.push = HEAD' '
 git config --remove-section remote.there
 git config --remove-section branch.master
 
+test_expect_success 'push with config remote.*.pushurl' '
+
+	mk_test heads/master &&
+	git checkout master &&
+	git config remote.there.url test2repo &&
+	git config remote.there.pushurl testrepo &&
+	git push there &&
+	check_push_result $the_commit heads/master
+'
+
+# clean up the cruft left with the previous one
+git config --remove-section remote.there
+
 test_expect_success 'push with dry-run' '
 
 	mk_test heads/master &&
@@ -484,6 +545,32 @@ test_expect_success 'allow deleting an invalid remote ref' '
 	git push testrepo :refs/heads/master &&
 	(cd testrepo && test_must_fail git rev-parse --verify refs/heads/master)
 
+'
+
+test_expect_success 'allow deleting a ref using --delete' '
+	mk_test heads/master &&
+	(cd testrepo && git config receive.denyDeleteCurrent warn) &&
+	git push testrepo --delete master &&
+	(cd testrepo && test_must_fail git rev-parse --verify refs/heads/master)
+'
+
+test_expect_success 'allow deleting a tag using --delete' '
+	mk_test heads/master &&
+	git tag -a -m dummy_message deltag heads/master &&
+	git push testrepo --tags &&
+	(cd testrepo && git rev-parse --verify -q refs/tags/deltag) &&
+	git push testrepo --delete tag deltag &&
+	(cd testrepo && test_must_fail git rev-parse --verify refs/tags/deltag)
+'
+
+test_expect_success 'push --delete without args aborts' '
+	mk_test heads/master &&
+	test_must_fail git push testrepo --delete
+'
+
+test_expect_success 'push --delete refuses src:dest refspecs' '
+	mk_test heads/master &&
+	test_must_fail git push testrepo --delete master:foo
 '
 
 test_expect_success 'warn on push to HEAD of non-bare repository' '

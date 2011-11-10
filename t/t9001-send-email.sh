@@ -95,6 +95,40 @@ test_expect_success \
     'Verify commandline' \
     'test_cmp expected commandline1'
 
+test_expect_success 'Send patches with --envelope-sender' '
+    clean_fake_sendmail &&
+     git send-email --envelope-sender="Patch Contributer <patch@example.com>" --suppress-cc=sob --from="Example <nobody@example.com>" --to=nobody@example.com --smtp-server="$(pwd)/fake.sendmail" $patches 2>errors
+'
+
+cat >expected <<\EOF
+!patch@example.com!
+!-i!
+!nobody@example.com!
+!author@example.com!
+!one@example.com!
+!two@example.com!
+EOF
+test_expect_success \
+    'Verify commandline' \
+    'test_cmp expected commandline1'
+
+test_expect_success 'Send patches with --envelope-sender=auto' '
+    clean_fake_sendmail &&
+     git send-email --envelope-sender=auto --suppress-cc=sob --from="Example <nobody@example.com>" --to=nobody@example.com --smtp-server="$(pwd)/fake.sendmail" $patches 2>errors
+'
+
+cat >expected <<\EOF
+!nobody@example.com!
+!-i!
+!nobody@example.com!
+!author@example.com!
+!one@example.com!
+!two@example.com!
+EOF
+test_expect_success \
+    'Verify commandline' \
+    'test_cmp expected commandline1'
+
 cat >expected-show-all-headers <<\EOF
 0001-Second.patch
 (mbox) Adding cc: A <author@example.com> from line 'From: A <author@example.com>'
@@ -103,10 +137,18 @@ cat >expected-show-all-headers <<\EOF
 Dry-OK. Log says:
 Server: relay.example.com
 MAIL FROM:<from@example.com>
-RCPT TO:<to@example.com>,<cc@example.com>,<author@example.com>,<one@example.com>,<two@example.com>,<bcc@example.com>
+RCPT TO:<to@example.com>
+RCPT TO:<cc@example.com>
+RCPT TO:<author@example.com>
+RCPT TO:<one@example.com>
+RCPT TO:<two@example.com>
+RCPT TO:<bcc@example.com>
 From: Example <from@example.com>
 To: to@example.com
-Cc: cc@example.com, A <author@example.com>, One <one@example.com>, two@example.com
+Cc: cc@example.com,
+	A <author@example.com>,
+	One <one@example.com>,
+	two@example.com
 Subject: [PATCH 1/1] Second.
 Date: DATE-STRING
 Message-Id: MESSAGE-ID-STRING
@@ -144,8 +186,27 @@ test_expect_success 'Prompting works' '
 		--smtp-server="$(pwd)/fake.sendmail" \
 		$patches \
 		2>errors &&
-		grep "^From: Example <from@example.com>$" msgtxt1 &&
-		grep "^To: to@example.com$" msgtxt1
+		grep "^From: Example <from@example.com>\$" msgtxt1 &&
+		grep "^To: to@example.com\$" msgtxt1
+'
+
+test_expect_success 'cccmd works' '
+	clean_fake_sendmail &&
+	cp $patches cccmd.patch &&
+	echo cccmd--cccmd@example.com >>cccmd.patch &&
+	{
+	  echo "#!$SHELL_PATH"
+	  echo sed -n -e s/^cccmd--//p \"\$1\"
+	} > cccmd-sed &&
+	chmod +x cccmd-sed &&
+	git send-email \
+		--from="Example <nobody@example.com>" \
+		--to=nobody@example.com \
+		--cc-cmd=./cccmd-sed \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		cccmd.patch \
+		&&
+	grep "^	cccmd@example.com" msgtxt1
 '
 
 z8=zzzzzzzz
@@ -175,7 +236,7 @@ test_expect_success 'Author From: in message body' '
 		--to=nobody@example.com \
 		--smtp-server="$(pwd)/fake.sendmail" \
 		$patches &&
-	sed "1,/^$/d" < msgtxt1 > msgbody1
+	sed "1,/^\$/d" < msgtxt1 > msgbody1
 	grep "From: A <author@example.com>" msgbody1
 '
 
@@ -186,7 +247,7 @@ test_expect_success 'Author From: not in message body' '
 		--to=nobody@example.com \
 		--smtp-server="$(pwd)/fake.sendmail" \
 		$patches &&
-	sed "1,/^$/d" < msgtxt1 > msgbody1
+	sed "1,/^\$/d" < msgtxt1 > msgbody1
 	! grep "From: A <author@example.com>" msgbody1
 '
 
@@ -259,10 +320,17 @@ cat >expected-suppress-sob <<\EOF
 Dry-OK. Log says:
 Server: relay.example.com
 MAIL FROM:<from@example.com>
-RCPT TO:<to@example.com>,<cc@example.com>,<author@example.com>,<one@example.com>,<two@example.com>
+RCPT TO:<to@example.com>
+RCPT TO:<cc@example.com>
+RCPT TO:<author@example.com>
+RCPT TO:<one@example.com>
+RCPT TO:<two@example.com>
 From: Example <from@example.com>
 To: to@example.com
-Cc: cc@example.com, A <author@example.com>, One <one@example.com>, two@example.com
+Cc: cc@example.com,
+	A <author@example.com>,
+	One <one@example.com>,
+	two@example.com
 Subject: [PATCH 1/1] Second.
 Date: DATE-STRING
 Message-Id: MESSAGE-ID-STRING
@@ -274,7 +342,7 @@ EOF
 test_suppression () {
 	git send-email \
 		--dry-run \
-		--suppress-cc=$1 \
+		--suppress-cc=$1 ${2+"--suppress-cc=$2"} \
 		--from="Example <from@example.com>" \
 		--to=to@example.com \
 		--smtp-server relay.example.com \
@@ -282,8 +350,8 @@ test_suppression () {
 	sed	-e "s/^\(Date:\).*/\1 DATE-STRING/" \
 		-e "s/^\(Message-Id:\).*/\1 MESSAGE-ID-STRING/" \
 		-e "s/^\(X-Mailer:\).*/\1 X-MAILER-STRING/" \
-		>actual-suppress-$1 &&
-	test_cmp expected-suppress-$1 actual-suppress-$1
+		>actual-suppress-$1${2+"-$2"} &&
+	test_cmp expected-suppress-$1${2+"-$2"} actual-suppress-$1${2+"-$2"}
 }
 
 test_expect_success 'sendemail.cc set' '
@@ -299,10 +367,15 @@ cat >expected-suppress-sob <<\EOF
 Dry-OK. Log says:
 Server: relay.example.com
 MAIL FROM:<from@example.com>
-RCPT TO:<to@example.com>,<author@example.com>,<one@example.com>,<two@example.com>
+RCPT TO:<to@example.com>
+RCPT TO:<author@example.com>
+RCPT TO:<one@example.com>
+RCPT TO:<two@example.com>
 From: Example <from@example.com>
 To: to@example.com
-Cc: A <author@example.com>, One <one@example.com>, two@example.com
+Cc: A <author@example.com>,
+	One <one@example.com>,
+	two@example.com
 Subject: [PATCH 1/1] Second.
 Date: DATE-STRING
 Message-Id: MESSAGE-ID-STRING
@@ -314,6 +387,41 @@ EOF
 test_expect_success 'sendemail.cc unset' '
 	git config --unset sendemail.cc &&
 	test_suppression sob
+'
+
+cat >expected-suppress-cccmd <<\EOF
+0001-Second.patch
+(mbox) Adding cc: A <author@example.com> from line 'From: A <author@example.com>'
+(mbox) Adding cc: One <one@example.com> from line 'Cc: One <one@example.com>, two@example.com'
+(mbox) Adding cc: two@example.com from line 'Cc: One <one@example.com>, two@example.com'
+(body) Adding cc: C O Mitter <committer@example.com> from line 'Signed-off-by: C O Mitter <committer@example.com>'
+Dry-OK. Log says:
+Server: relay.example.com
+MAIL FROM:<from@example.com>
+RCPT TO:<to@example.com>
+RCPT TO:<author@example.com>
+RCPT TO:<one@example.com>
+RCPT TO:<two@example.com>
+RCPT TO:<committer@example.com>
+From: Example <from@example.com>
+To: to@example.com
+Cc: A <author@example.com>,
+	One <one@example.com>,
+	two@example.com,
+	C O Mitter <committer@example.com>
+Subject: [PATCH 1/1] Second.
+Date: DATE-STRING
+Message-Id: MESSAGE-ID-STRING
+X-Mailer: X-MAILER-STRING
+
+Result: OK
+EOF
+
+test_expect_success 'sendemail.cccmd' '
+	echo echo cc-cmd@example.com > cccmd &&
+	chmod +x cccmd &&
+	git config sendemail.cccmd ./cccmd &&
+	test_suppression cccmd
 '
 
 cat >expected-suppress-all <<\EOF
@@ -341,13 +449,21 @@ cat >expected-suppress-body <<\EOF
 (mbox) Adding cc: A <author@example.com> from line 'From: A <author@example.com>'
 (mbox) Adding cc: One <one@example.com> from line 'Cc: One <one@example.com>, two@example.com'
 (mbox) Adding cc: two@example.com from line 'Cc: One <one@example.com>, two@example.com'
+(cc-cmd) Adding cc: cc-cmd@example.com from: './cccmd'
 Dry-OK. Log says:
 Server: relay.example.com
 MAIL FROM:<from@example.com>
-RCPT TO:<to@example.com>,<author@example.com>,<one@example.com>,<two@example.com>
+RCPT TO:<to@example.com>
+RCPT TO:<author@example.com>
+RCPT TO:<one@example.com>
+RCPT TO:<two@example.com>
+RCPT TO:<cc-cmd@example.com>
 From: Example <from@example.com>
 To: to@example.com
-Cc: A <author@example.com>, One <one@example.com>, two@example.com
+Cc: A <author@example.com>,
+	One <one@example.com>,
+	two@example.com,
+	cc-cmd@example.com
 Subject: [PATCH 1/1] Second.
 Date: DATE-STRING
 Message-Id: MESSAGE-ID-STRING
@@ -360,6 +476,35 @@ test_expect_success '--suppress-cc=body' '
 	test_suppression body
 '
 
+cat >expected-suppress-body-cccmd <<\EOF
+0001-Second.patch
+(mbox) Adding cc: A <author@example.com> from line 'From: A <author@example.com>'
+(mbox) Adding cc: One <one@example.com> from line 'Cc: One <one@example.com>, two@example.com'
+(mbox) Adding cc: two@example.com from line 'Cc: One <one@example.com>, two@example.com'
+Dry-OK. Log says:
+Server: relay.example.com
+MAIL FROM:<from@example.com>
+RCPT TO:<to@example.com>
+RCPT TO:<author@example.com>
+RCPT TO:<one@example.com>
+RCPT TO:<two@example.com>
+From: Example <from@example.com>
+To: to@example.com
+Cc: A <author@example.com>,
+	One <one@example.com>,
+	two@example.com
+Subject: [PATCH 1/1] Second.
+Date: DATE-STRING
+Message-Id: MESSAGE-ID-STRING
+X-Mailer: X-MAILER-STRING
+
+Result: OK
+EOF
+
+test_expect_success '--suppress-cc=body --suppress-cc=cccmd' '
+	test_suppression body cccmd
+'
+
 cat >expected-suppress-sob <<\EOF
 0001-Second.patch
 (mbox) Adding cc: A <author@example.com> from line 'From: A <author@example.com>'
@@ -368,10 +513,15 @@ cat >expected-suppress-sob <<\EOF
 Dry-OK. Log says:
 Server: relay.example.com
 MAIL FROM:<from@example.com>
-RCPT TO:<to@example.com>,<author@example.com>,<one@example.com>,<two@example.com>
+RCPT TO:<to@example.com>
+RCPT TO:<author@example.com>
+RCPT TO:<one@example.com>
+RCPT TO:<two@example.com>
 From: Example <from@example.com>
 To: to@example.com
-Cc: A <author@example.com>, One <one@example.com>, two@example.com
+Cc: A <author@example.com>,
+	One <one@example.com>,
+	two@example.com
 Subject: [PATCH 1/1] Second.
 Date: DATE-STRING
 Message-Id: MESSAGE-ID-STRING
@@ -381,6 +531,7 @@ Result: OK
 EOF
 
 test_expect_success '--suppress-cc=sob' '
+	git config --unset sendemail.cccmd
 	test_suppression sob
 '
 
@@ -393,10 +544,17 @@ cat >expected-suppress-bodycc <<\EOF
 Dry-OK. Log says:
 Server: relay.example.com
 MAIL FROM:<from@example.com>
-RCPT TO:<to@example.com>,<author@example.com>,<one@example.com>,<two@example.com>,<committer@example.com>
+RCPT TO:<to@example.com>
+RCPT TO:<author@example.com>
+RCPT TO:<one@example.com>
+RCPT TO:<two@example.com>
+RCPT TO:<committer@example.com>
 From: Example <from@example.com>
 To: to@example.com
-Cc: A <author@example.com>, One <one@example.com>, two@example.com, C O Mitter <committer@example.com>
+Cc: A <author@example.com>,
+	One <one@example.com>,
+	two@example.com,
+	C O Mitter <committer@example.com>
 Subject: [PATCH 1/1] Second.
 Date: DATE-STRING
 Message-Id: MESSAGE-ID-STRING
@@ -416,10 +574,13 @@ cat >expected-suppress-cc <<\EOF
 Dry-OK. Log says:
 Server: relay.example.com
 MAIL FROM:<from@example.com>
-RCPT TO:<to@example.com>,<author@example.com>,<committer@example.com>
+RCPT TO:<to@example.com>
+RCPT TO:<author@example.com>
+RCPT TO:<committer@example.com>
 From: Example <from@example.com>
 To: to@example.com
-Cc: A <author@example.com>, C O Mitter <committer@example.com>
+Cc: A <author@example.com>,
+	C O Mitter <committer@example.com>
 Subject: [PATCH 1/1] Second.
 Date: DATE-STRING
 Message-Id: MESSAGE-ID-STRING
@@ -532,8 +693,8 @@ test_expect_success 'utf8 Cc is rfc2047 encoded' '
 	--to=nobody@example.com \
 	--smtp-server="$(pwd)/fake.sendmail" \
 	outdir/*.patch &&
-	grep "^Cc:" msgtxt1 |
-	grep "=?utf-8?q?=C3=A0=C3=A9=C3=AC=C3=B6=C3=BA?= <utf8@example.com>"
+	grep "^	" msgtxt1 |
+	grep "=?UTF-8?q?=C3=A0=C3=A9=C3=AC=C3=B6=C3=BA?= <utf8@example.com>"
 '
 
 test_expect_success '--compose adds MIME for utf8 body' '
@@ -550,7 +711,7 @@ test_expect_success '--compose adds MIME for utf8 body' '
 	  --smtp-server="$(pwd)/fake.sendmail" \
 	  $patches &&
 	grep "^utf8 body" msgtxt1 &&
-	grep "^Content-Type: text/plain; charset=utf-8" msgtxt1
+	grep "^Content-Type: text/plain; charset=UTF-8" msgtxt1
 '
 
 test_expect_success '--compose respects user mime type' '
@@ -573,7 +734,7 @@ test_expect_success '--compose respects user mime type' '
 	  $patches &&
 	grep "^utf8 body" msgtxt1 &&
 	grep "^Content-Type: text/plain; charset=iso-8859-1" msgtxt1 &&
-	! grep "^Content-Type: text/plain; charset=utf-8" msgtxt1
+	! grep "^Content-Type: text/plain; charset=UTF-8" msgtxt1
 '
 
 test_expect_success '--compose adds MIME for utf8 subject' '
@@ -586,7 +747,7 @@ test_expect_success '--compose adds MIME for utf8 subject' '
 	  --smtp-server="$(pwd)/fake.sendmail" \
 	  $patches &&
 	grep "^fake edit" msgtxt1 &&
-	grep "^Subject: =?utf-8?q?utf8-s=C3=BCbj=C3=ABct?=" msgtxt1
+	grep "^Subject: =?UTF-8?q?utf8-s=C3=BCbj=C3=ABct?=" msgtxt1
 '
 
 test_expect_success 'detects ambiguous reference/file conflict' '
@@ -619,6 +780,76 @@ test_expect_success 'in-reply-to but no threading' '
 		--nothread \
 		$patches |
 	grep "In-Reply-To: <in-reply-id@example.com>"
+'
+
+test_expect_success 'no in-reply-to and no threading' '
+	git send-email \
+		--dry-run \
+		--from="Example <nobody@example.com>" \
+		--to=nobody@example.com \
+		--nothread \
+		$patches $patches >stdout &&
+	! grep "In-Reply-To: " stdout
+'
+
+test_expect_success 'threading but no chain-reply-to' '
+	git send-email \
+		--dry-run \
+		--from="Example <nobody@example.com>" \
+		--to=nobody@example.com \
+		--thread \
+		--nochain-reply-to \
+		$patches $patches >stdout &&
+	grep "In-Reply-To: " stdout
+'
+
+test_expect_success 'warning with an implicit --chain-reply-to' '
+	git send-email \
+	--dry-run \
+	--from="Example <nobody@example.com>" \
+	--to=nobody@example.com \
+	outdir/000?-*.patch 2>errors >out &&
+	grep "no-chain-reply-to" errors
+'
+
+test_expect_success 'no warning with an explicit --chain-reply-to' '
+	git send-email \
+	--dry-run \
+	--from="Example <nobody@example.com>" \
+	--to=nobody@example.com \
+	--chain-reply-to \
+	outdir/000?-*.patch 2>errors >out &&
+	! grep "no-chain-reply-to" errors
+'
+
+test_expect_success 'no warning with an explicit --no-chain-reply-to' '
+	git send-email \
+	--dry-run \
+	--from="Example <nobody@example.com>" \
+	--to=nobody@example.com \
+	--nochain-reply-to \
+	outdir/000?-*.patch 2>errors >out &&
+	! grep "no-chain-reply-to" errors
+'
+
+test_expect_success 'no warning with sendemail.chainreplyto = false' '
+	git config sendemail.chainreplyto false &&
+	git send-email \
+	--dry-run \
+	--from="Example <nobody@example.com>" \
+	--to=nobody@example.com \
+	outdir/000?-*.patch 2>errors >out &&
+	! grep "no-chain-reply-to" errors
+'
+
+test_expect_success 'no warning with sendemail.chainreplyto = true' '
+	git config sendemail.chainreplyto true &&
+	git send-email \
+	--dry-run \
+	--from="Example <nobody@example.com>" \
+	--to=nobody@example.com \
+	outdir/000?-*.patch 2>errors >out &&
+	! grep "no-chain-reply-to" errors
 '
 
 test_done

@@ -9,6 +9,11 @@ test_description='Per branch config variables affects "git fetch".
 
 D=`pwd`
 
+test_bundle_object_count () {
+	git verify-pack -v "$1" >verify.out &&
+	test "$2" = $(grep '^[0-9a-f]\{40\} ' verify.out | wc -l)
+}
+
 test_expect_success setup '
 	echo >file original &&
 	git add file &&
@@ -146,6 +151,7 @@ test_expect_success 'unbundle 1' '
 	test_must_fail git fetch "$D/bundle1" master:master
 '
 
+
 test_expect_success 'bundle 1 has only 3 files ' '
 	cd "$D" &&
 	(
@@ -156,8 +162,7 @@ test_expect_success 'bundle 1 has only 3 files ' '
 		cat
 	) <bundle1 >bundle.pack &&
 	git index-pack bundle.pack &&
-	verify=$(git verify-pack -v bundle.pack) &&
-	test 4 = $(echo "$verify" | wc -l)
+	test_bundle_object_count bundle.pack 3
 '
 
 test_expect_success 'unbundle 2' '
@@ -180,7 +185,7 @@ test_expect_success 'bundle does not prerequisite objects' '
 		cat
 	) <bundle3 >bundle.pack &&
 	git index-pack bundle.pack &&
-	test 4 = $(git verify-pack -v bundle.pack | wc -l)
+	test_bundle_object_count bundle.pack 3
 '
 
 test_expect_success 'bundle should be able to create a full history' '
@@ -334,6 +339,17 @@ test_expect_success 'fetch into the current branch with --update-head-ok' '
 
 	git fetch --update-head-ok . side:master
 
+'
+
+test_expect_success "should be able to fetch with duplicate refspecs" '
+        mkdir dups &&
+        cd dups &&
+        git init &&
+        git config branch.master.remote three &&
+        git config remote.three.url ../three/.git &&
+        git config remote.three.fetch +refs/heads/*:refs/remotes/origin/* &&
+        git config --add remote.three.fetch +refs/heads/*:refs/remotes/origin/* &&
+        git fetch three
 '
 
 test_done

@@ -6,7 +6,6 @@ struct git_graph;
 
 /*
  * Create a new struct git_graph.
- * The graph should be freed with graph_release() when no longer needed.
  */
 struct git_graph *graph_init(struct rev_info *opt);
 

@@ -20,7 +20,7 @@ on the subcommand:
  git bisect bad [<rev>]
  git bisect good [<rev>...]
  git bisect skip [(<rev>|<range>)...]
- git bisect reset [<branch>]
+ git bisect reset [<commit>]
  git bisect visualize
  git bisect replay <logfile>
  git bisect log
@@ -81,16 +81,27 @@ will have been left with the first bad kernel revision in "refs/bisect/bad".
 Bisect reset
 ~~~~~~~~~~~~
 
-To return to the original head after a bisect session, issue the
-following command:
+After a bisect session, to clean up the bisection state and return to
+the original HEAD, issue the following command:
 
 ------------------------------------------------
 $ git bisect reset
 ------------------------------------------------
 
-This resets the tree to the original branch instead of being on the
-bisection commit ("git bisect start" will also do that, as it resets
-the bisection state).
+By default, this will return your tree to the commit that was checked
+out before `git bisect start`.  (A new `git bisect start` will also do
+that, as it cleans up the old bisection state.)
+
+With an optional argument, you can return to a different commit
+instead:
+
+------------------------------------------------
+$ git bisect reset <commit>
+------------------------------------------------
+
+For example, `git bisect reset HEAD` will leave you on the current
+bisection commit and avoid switching commits at all, while `git bisect
+reset bisect/bad` will check out the first bad revision.
 
 Bisect visualize
 ~~~~~~~~~~~~~~~~
@@ -164,9 +175,8 @@ to do it for you by issuing the command:
 $ git bisect skip                 # Current version cannot be tested
 ------------
 
-But computing the commit to test may be slower afterwards and git may
-eventually not be able to tell the first bad commit among a bad commit
-and one or more skipped commits.
+But git may eventually be unable to tell the first bad commit among
+a bad commit and one or more skipped commits.
 
 You can even skip a range of commits, instead of just one commit,
 using the "'<commit1>'..'<commit2>'" notation. For example:
@@ -319,6 +329,11 @@ Written by Linus Torvalds <torvalds@osdl.org>
 Documentation
 -------------
 Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
+
+SEE ALSO
+--------
+link:git-bisect-lk2009.html[Fighting regressions with git bisect],
+linkgit:git-blame[1].
 
 GIT
 ---

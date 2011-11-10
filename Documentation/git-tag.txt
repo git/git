@@ -10,14 +10,15 @@ SYNOPSIS
 --------
 [verse]
 'git tag' [-a | -s | -u <key-id>] [-f] [-m <msg> | -F <file>]
-	<name> [<commit> | <object>]
-'git tag' -d <name>...
+	<tagname> [<commit> | <object>]
+'git tag' -d <tagname>...
 'git tag' [-n[<num>]] -l [--contains <commit>] [<pattern>]
-'git tag' -v <name>...
+'git tag' -v <tagname>...
 
 DESCRIPTION
 -----------
-Adds a 'tag' reference in `.git/refs/tags/`
+
+Adds a tag reference in `.git/refs/tags/`.
 
 Unless `-f` is given, the tag must not yet exist in
 `.git/refs/tags/` directory.
@@ -50,6 +51,7 @@ OPTIONS
 	Make a GPG-signed tag, using the given key
 
 -f::
+--force::
 	Replace an existing tag with the given name (instead of failing)
 
 -d::
@@ -85,9 +87,15 @@ OPTIONS
 	Implies `-a` if none of `-a`, `-s`, or `-u <key-id>`
 	is given.
 
+<tagname>::
+	The name of the tag to create, delete, or describe.
+	The new tag name must pass all checks defined by
+	linkgit:git-check-ref-format[1].  Some of these checks
+	may restrict the characters allowed in a tag name.
+
 CONFIGURATION
 -------------
-By default, 'git-tag' in sign-with-default mode (-s) will use your
+By default, 'git tag' in sign-with-default mode (-s) will use your
 committer identity (of the form "Your Name <your@email.address>") to
 find a key.  If you want to use a different default key, you can specify
 it in the repository configuration as follows:
@@ -123,12 +131,12 @@ and be done with it.
 
 . The insane thing.
 You really want to call the new version "X" too, 'even though'
-others have already seen the old one. So just use 'git-tag -f'
+others have already seen the old one. So just use 'git tag -f'
 again, as if you hadn't already published the old one.
 
 However, Git does *not* (and it should not) change tags behind
 users back. So if somebody already got the old tag, doing a
-'git-pull' on your tree shouldn't just make them overwrite the old
+'git pull' on your tree shouldn't just make them overwrite the old
 one.
 
 If somebody got a release tag from you, you cannot just change
@@ -182,7 +190,7 @@ private anchor point tags from the other person.
 
 You would notice "please pull" messages on the mailing list says
 repo URL and branch name alone.  This is designed to be easily
-cut&pasted to a 'git-fetch' command line:
+cut&pasted to a 'git fetch' command line:
 
 ------------
 Linus, please pull from
@@ -248,6 +256,10 @@ An example follows.
 $ GIT_COMMITTER_DATE="2006-10-02 10:31" git tag -s v1.0.1
 ------------
 
+
+SEE ALSO
+--------
+linkgit:git-check-ref-format[1].
 
 Author
 ------

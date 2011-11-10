@@ -11,6 +11,7 @@ SYNOPSIS
 'git checkout' [-q] [-f] [-m] [<branch>]
 'git checkout' [-q] [-f] [-m] [-b <new_branch>] [<start_point>]
 'git checkout' [-f|--ours|--theirs|-m|--conflict=<style>] [<tree-ish>] [--] <paths>...
+'git checkout' --patch [<tree-ish>] [--] [<paths>...]
 
 DESCRIPTION
 -----------
@@ -25,7 +26,7 @@ use the --track or --no-track options, which will be passed to `git
 branch`.  As a convenience, --track without `-b` implies branch
 creation; see the description of --track below.
 
-When <paths> are given, this command does *not* switch
+When <paths> or --patch are given, this command does *not* switch
 branches.  It updates the named paths in the working tree from
 the index file, or from a named <tree-ish> (most often a commit).  In
 this case, the `-b` and `--track` options are meaningless and giving
@@ -45,9 +46,11 @@ file can be discarded to recreate the original conflicted merge result.
 OPTIONS
 -------
 -q::
+--quiet::
 	Quiet, suppress feedback messages.
 
 -f::
+--force::
 	When switching branches, proceed even if the index or the
 	working tree differs from HEAD.  This is used to throw away
 	local changes.
@@ -112,6 +115,16 @@ the conflicted merge in the specified paths.
 	merge.conflictstyle configuration variable.  Possible values are
 	"merge" (default) and "diff3" (in addition to what is shown by
 	"merge" style, shows the original contents).
+
+-p::
+--patch::
+	Interactively select hunks in the difference between the
+	<tree-ish> (or the index, if unspecified) and the working
+	tree.  The chosen hunks are then applied in reverse to the
+	working tree (and if a <tree-ish> was specified, the index).
++
+This means that you can use `git checkout -p` to selectively discard
+edits from your current working tree.
 
 <branch>::
 	Branch to checkout; if it refers to a branch (i.e., a name that,

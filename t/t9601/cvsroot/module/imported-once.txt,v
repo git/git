@@ -1,0 +1,43 @@
+head	1.1;
+branch	1.1.1;
+access;
+symbols
+	vtag-1:1.1.1.1
+	vbranchA:1.1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2004.02.09.15.43.13;	author kfogel;	state Exp;
+branches
+	1.1.1.1;
+next	;
+
+1.1.1.1
+date	2004.02.09.15.43.13;	author kfogel;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@This is vtag-1 (on vbranchA) of imported-once.txt.
+@
+
+
+1.1.1.1
+log
+@Import (vbranchA, vtag-1).
+@
+text
+@@
+
+

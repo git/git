@@ -97,12 +97,12 @@ set_ident () {
 	echo "case \"\$GIT_${uid}_NAME\" in \"\") GIT_${uid}_NAME=\"\${GIT_${uid}_EMAIL%%@*}\" && export GIT_${uid}_NAME;; esac"
 }
 
-USAGE="[--env-filter <command>] [--tree-filter <command>] \
-[--index-filter <command>] [--parent-filter <command>] \
-[--msg-filter <command>] [--commit-filter <command>] \
-[--tag-name-filter <command>] [--subdirectory-filter <directory>] \
-[--original <namespace>] [-d <directory>] [-f | --force] \
-[<rev-list options>...]"
+USAGE="[--env-filter <command>] [--tree-filter <command>]
+            [--index-filter <command>] [--parent-filter <command>]
+            [--msg-filter <command>] [--commit-filter <command>]
+            [--tag-name-filter <command>] [--subdirectory-filter <directory>]
+            [--original <namespace>] [-d <directory>] [-f | --force]
+            [<rev-list options>...]"
 
 OPTIONS_SPEC=
 . git-sh-setup
@@ -125,6 +125,7 @@ filter_subdir=
 orig_namespace=refs/original/
 force=
 prune_empty=
+remap_to_ancestor=
 while :
 do
 	case "$1" in
@@ -135,6 +136,11 @@ do
 	--force|-f)
 		shift
 		force=t
+		continue
+		;;
+	--remap-to-ancestor)
+		shift
+		remap_to_ancestor=t
 		continue
 		;;
 	--prune-empty)
@@ -182,6 +188,7 @@ do
 		;;
 	--subdirectory-filter)
 		filter_subdir="$OPTARG"
+		remap_to_ancestor=t
 		;;
 	--original)
 		orig_namespace=$(expr "$OPTARG/" : '\(.*[^/]\)/*$')/
@@ -200,7 +207,7 @@ t,)
 ,*)
 	;;
 *)
-	die "Cannot set --prune-empty and --filter-commit at the same time"
+	die "Cannot set --prune-empty and --commit-filter at the same time"
 esac
 
 case "$force" in
@@ -252,20 +259,28 @@ test -s "$tempdir"/heads ||
 
 GIT_INDEX_FILE="$(pwd)/../index"
 export GIT_INDEX_FILE
-git read-tree || die "Could not seed the index"
 
 # map old->new commit ids for rewriting parents
 mkdir ../map || die "Could not create map/ directory"
 
+# we need "--" only if there are no path arguments in $@
+nonrevs=$(git rev-parse --no-revs "$@") || exit
+test -z "$nonrevs" && dashdash=-- || dashdash=
+rev_args=$(git rev-parse --revs-only "$@")
+
 case "$filter_subdir" in
 "")
-	git rev-list --reverse --topo-order --default HEAD \
-		--parents --simplify-merges "$@"
+	eval set -- "$(git rev-parse --sq --no-revs "$@")"
 	;;
 *)
-	git rev-list --reverse --topo-order --default HEAD \
-		--parents --simplify-merges "$@" -- "$filter_subdir"
-esac > ../revs || die "Could not get the commits"
+	eval set -- "$(git rev-parse --sq --no-revs "$@" $dashdash \
+		"$filter_subdir")"
+	;;
+esac
+
+git rev-list --reverse --topo-order --default HEAD \
+	--parents --simplify-merges $rev_args "$@" > ../revs ||
+	die "Could not get the commits"
 commits=$(wc -l <../revs | tr -d " ")
 
 test $commits -eq 0 && die "Found nothing to rewrite"
@@ -316,7 +331,7 @@ while read commit parents; do
 			die "tree filter failed: $filter_tree"
 
 		(
-			git diff-index -r --name-only $commit &&
+			git diff-index -r --name-only --ignore-submodules $commit &&
 			git ls-files --others
 		) > "$tempdir"/tree-state || exit
 		git update-index --add --replace --remove --stdin \
@@ -345,19 +360,19 @@ while read commit parents; do
 			die "could not write rewritten commit"
 done <../revs
 
-# In case of a subdirectory filter, it is possible that a specified head
-# is not in the set of rewritten commits, because it was pruned by the
-# revision walker.  Fix it by mapping these heads to the unique nearest
-# ancestor that survived the pruning.
+# If we are filtering for paths, as in the case of a subdirectory
+# filter, it is possible that a specified head is not in the set of
+# rewritten commits, because it was pruned by the revision walker.
+# Ancestor remapping fixes this by mapping these heads to the unique
+# nearest ancestor that survived the pruning.
 
-if test "$filter_subdir"
+if test "$remap_to_ancestor" = t
 then
 	while read ref
 	do
 		sha1=$(git rev-parse "$ref"^0)
 		test -f "$workdir"/../map/$sha1 && continue
-		ancestor=$(git rev-list --simplify-merges -1 \
-				$ref -- "$filter_subdir")
+		ancestor=$(git rev-list --simplify-merges -1 "$ref" "$@")
 		test "$ancestor" && echo $(map $ancestor) >> "$workdir"/../map/$sha1
 	done < "$tempdir"/heads
 fi
@@ -447,17 +462,17 @@ if [ "$filter_tag_name" ]; then
 						"$new_sha1" "$new_ref"
 				git cat-file tag "$ref" |
 				sed -n \
-				    -e "1,/^$/{
+				    -e '1,/^$/{
 					  /^object /d
 					  /^type /d
 					  /^tag /d
-					}" \
+					}' \
 				    -e '/^-----BEGIN PGP SIGNATURE-----/q' \
 				    -e 'p' ) |
 				git mktag) ||
 				die "Could not create new tag object for $ref"
 			if git cat-file tag "$ref" | \
-			   grep '^-----BEGIN PGP SIGNATURE-----' >/dev/null 2>&1
+			   sane_grep '^-----BEGIN PGP SIGNATURE-----' >/dev/null 2>&1
 			then
 				warn "gpg signature stripped from tag object $sha1t"
 			fi

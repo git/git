@@ -24,6 +24,7 @@
 
 #include "cache.h"
 #include "exec_cmd.h"
+#include "run-command.h"
 #ifdef NO_OPENSSL
 typedef void *SSL;
 #endif
@@ -90,9 +91,11 @@ struct msg_data {
 	char *data;
 	int len;
 	unsigned char flags;
-	unsigned int crlf:1;
 };
 
+static const char imap_send_usage[] = "git imap-send < <mbox>";
+
+#undef DRV_OK
 #define DRV_OK          0
 #define DRV_MSG_BAD     -1
 #define DRV_BOX_BAD     -2
@@ -100,13 +103,16 @@ struct msg_data {
 
 static int Verbose, Quiet;
 
+__attribute__((format (printf, 1, 2)))
 static void imap_info(const char *, ...);
+__attribute__((format (printf, 1, 2)))
 static void imap_warn(const char *, ...);
 
 static char *next_arg(char **);
 
 static void free_generic_messages(struct message *);
 
+__attribute__((format (printf, 3, 4)))
 static int nfsnprintf(char *buf, int blen, const char *fmt, ...);
 
 static int nfvasprintf(char **strp, const char *fmt, va_list ap)
@@ -122,9 +128,6 @@ static int nfvasprintf(char **strp, const char *fmt, va_list ap)
 	*strp = xmemdupz(tmp, len);
 	return len;
 }
-
-static void arc4_init(void);
-static unsigned char arc4_getbyte(void);
 
 struct imap_server_conf {
 	char *name;
@@ -154,7 +157,7 @@ struct imap_list {
 };
 
 struct imap_socket {
-	int fd;
+	int fd[2];
 	SSL *ssl;
 };
 
@@ -238,7 +241,7 @@ static const char *Flags[] = {
 #ifndef NO_OPENSSL
 static void ssl_socket_perror(const char *func)
 {
-	fprintf(stderr, "%s: %s\n", func, ERR_error_string(ERR_get_error(), 0));
+	fprintf(stderr, "%s: %s\n", func, ERR_error_string(ERR_get_error(), NULL));
 }
 #endif
 
@@ -273,7 +276,11 @@ static int ssl_socket_connect(struct imap_socket *sock, int use_tls_only, int ve
 	fprintf(stderr, "SSL requested but SSL support not compiled in\n");
 	return -1;
 #else
+#if (OPENSSL_VERSION_NUMBER >= 0x10000000L)
+	const SSL_METHOD *meth;
+#else
 	SSL_METHOD *meth;
+#endif
 	SSL_CTX *ctx;
 	int ret;
 
@@ -304,8 +311,12 @@ static int ssl_socket_connect(struct imap_socket *sock, int use_tls_only, int ve
 		ssl_socket_perror("SSL_new");
 		return -1;
 	}
-	if (!SSL_set_fd(sock->ssl, sock->fd)) {
-		ssl_socket_perror("SSL_set_fd");
+	if (!SSL_set_rfd(sock->ssl, sock->fd[0])) {
+		ssl_socket_perror("SSL_set_rfd");
+		return -1;
+	}
+	if (!SSL_set_wfd(sock->ssl, sock->fd[1])) {
+		ssl_socket_perror("SSL_set_wfd");
 		return -1;
 	}
 
@@ -327,11 +338,12 @@ static int socket_read(struct imap_socket *sock, char *buf, int len)
 		n = SSL_read(sock->ssl, buf, len);
 	else
 #endif
-		n = xread(sock->fd, buf, len);
+		n = xread(sock->fd[0], buf, len);
 	if (n <= 0) {
 		socket_perror("read", sock, n);
-		close(sock->fd);
-		sock->fd = -1;
+		close(sock->fd[0]);
+		close(sock->fd[1]);
+		sock->fd[0] = sock->fd[1] = -1;
 	}
 	return n;
 }
@@ -344,11 +356,12 @@ static int socket_write(struct imap_socket *sock, const char *buf, int len)
 		n = SSL_write(sock->ssl, buf, len);
 	else
 #endif
-		n = write_in_full(sock->fd, buf, len);
+		n = write_in_full(sock->fd[1], buf, len);
 	if (n != len) {
 		socket_perror("write", sock, n);
-		close(sock->fd);
-		sock->fd = -1;
+		close(sock->fd[0]);
+		close(sock->fd[1]);
+		sock->fd[0] = sock->fd[1] = -1;
 	}
 	return n;
 }
@@ -361,7 +374,8 @@ static void socket_shutdown(struct imap_socket *sock)
 		SSL_free(sock->ssl);
 	}
 #endif
-	close(sock->fd);
+	close(sock->fd[0]);
+	close(sock->fd[1]);
 }
 
 /* simple line buffering */
@@ -489,52 +503,6 @@ static int nfsnprintf(char *buf, int blen, const char *fmt, ...)
 	return ret;
 }
 
-static struct {
-	unsigned char i, j, s[256];
-} rs;
-
-static void arc4_init(void)
-{
-	int i, fd;
-	unsigned char j, si, dat[128];
-
-	if ((fd = open("/dev/urandom", O_RDONLY)) < 0 && (fd = open("/dev/random", O_RDONLY)) < 0) {
-		fprintf(stderr, "Fatal: no random number source available.\n");
-		exit(3);
-	}
-	if (read_in_full(fd, dat, 128) != 128) {
-		fprintf(stderr, "Fatal: cannot read random number source.\n");
-		exit(3);
-	}
-	close(fd);
-
-	for (i = 0; i < 256; i++)
-		rs.s[i] = i;
-	for (i = j = 0; i < 256; i++) {
-		si = rs.s[i];
-		j += si + dat[i & 127];
-		rs.s[i] = rs.s[j];
-		rs.s[j] = si;
-	}
-	rs.i = rs.j = 0;
-
-	for (i = 0; i < 256; i++)
-		arc4_getbyte();
-}
-
-static unsigned char arc4_getbyte(void)
-{
-	unsigned char si, sj;
-
-	rs.i++;
-	si = rs.s[rs.i];
-	rs.j += si;
-	sj = rs.s[rs.j];
-	rs.s[rs.i] = sj;
-	rs.s[rs.j] = si;
-	return rs.s[(si + sj) & 0xff];
-}
-
 static struct imap_cmd *v_issue_imap_cmd(struct imap_store *ctx,
 					 struct imap_cmd_cb *cb,
 					 const char *fmt, va_list ap)
@@ -596,6 +564,7 @@ static struct imap_cmd *v_issue_imap_cmd(struct imap_store *ctx,
 	return cmd;
 }
 
+__attribute__((format (printf, 3, 4)))
 static struct imap_cmd *issue_imap_cmd(struct imap_store *ctx,
 				       struct imap_cmd_cb *cb,
 				       const char *fmt, ...)
@@ -609,6 +578,7 @@ static struct imap_cmd *issue_imap_cmd(struct imap_store *ctx,
 	return ret;
 }
 
+__attribute__((format (printf, 3, 4)))
 static int imap_exec(struct imap_store *ctx, struct imap_cmd_cb *cb,
 		     const char *fmt, ...)
 {
@@ -624,6 +594,7 @@ static int imap_exec(struct imap_store *ctx, struct imap_cmd_cb *cb,
 	return get_cmd_result(ctx, cmdp);
 }
 
+__attribute__((format (printf, 3, 4)))
 static int imap_exec_m(struct imap_store *ctx, struct imap_cmd_cb *cb,
 		       const char *fmt, ...)
 {
@@ -914,7 +885,7 @@ static int get_cmd_result(struct imap_store *ctx, struct imap_cmd *tcmd)
 				if (!strcmp("NO", arg)) {
 					if (cmdp->cb.create && cmd && (cmdp->cb.trycreate || !memcmp(cmd, "[TRYCREATE]", 11))) { /* SELECT, APPEND or UID COPY */
 						p = strchr(cmdp->cmd, '"');
-						if (!issue_imap_cmd(ctx, NULL, "CREATE \"%.*s\"", strchr(p + 1, '"') - p + 1, p)) {
+						if (!issue_imap_cmd(ctx, NULL, "CREATE \"%.*s\"", (int)(strchr(p + 1, '"') - p + 1), p)) {
 							resp = RESP_BAD;
 							goto normal;
 						}
@@ -960,7 +931,7 @@ static void imap_close_server(struct imap_store *ictx)
 {
 	struct imap *imap = ictx->imap;
 
-	if (imap->buf.sock.fd != -1) {
+	if (imap->buf.sock.fd[0] != -1) {
 		imap_exec(ictx, NULL, "LOGOUT");
 		socket_shutdown(&imap->buf.sock);
 	}
@@ -982,45 +953,79 @@ static struct store *imap_open_store(struct imap_server_conf *srvc)
 	struct imap_store *ctx;
 	struct imap *imap;
 	char *arg, *rsp;
-	struct hostent *he;
-	struct sockaddr_in addr;
-	int s, a[2], preauth;
-	pid_t pid;
+	int s = -1, preauth;
 
 	ctx = xcalloc(sizeof(*ctx), 1);
 
 	ctx->imap = imap = xcalloc(sizeof(*imap), 1);
-	imap->buf.sock.fd = -1;
+	imap->buf.sock.fd[0] = imap->buf.sock.fd[1] = -1;
 	imap->in_progress_append = &imap->in_progress;
 
 	/* open connection to IMAP server */
 
 	if (srvc->tunnel) {
+		const char *argv[] = { srvc->tunnel, NULL };
+		struct child_process tunnel = {0};
+
 		imap_info("Starting tunnel '%s'... ", srvc->tunnel);
 
-		if (socketpair(PF_UNIX, SOCK_STREAM, 0, a)) {
-			perror("socketpair");
-			exit(1);
-		}
+		tunnel.argv = argv;
+		tunnel.use_shell = 1;
+		tunnel.in = -1;
+		tunnel.out = -1;
+		if (start_command(&tunnel))
+			die("cannot start proxy %s", argv[0]);
 
-		pid = fork();
-		if (pid < 0)
-			_exit(127);
-		if (!pid) {
-			if (dup2(a[0], 0) == -1 || dup2(a[0], 1) == -1)
-				_exit(127);
-			close(a[0]);
-			close(a[1]);
-			execl("/bin/sh", "sh", "-c", srvc->tunnel, NULL);
-			_exit(127);
-		}
-
-		close(a[0]);
-
-		imap->buf.sock.fd = a[1];
+		imap->buf.sock.fd[0] = tunnel.out;
+		imap->buf.sock.fd[1] = tunnel.in;
 
 		imap_info("ok\n");
 	} else {
+#ifndef NO_IPV6
+		struct addrinfo hints, *ai0, *ai;
+		int gai;
+		char portstr[6];
+
+		snprintf(portstr, sizeof(portstr), "%hu", srvc->port);
+
+		memset(&hints, 0, sizeof(hints));
+		hints.ai_socktype = SOCK_STREAM;
+		hints.ai_protocol = IPPROTO_TCP;
+
+		imap_info("Resolving %s... ", srvc->host);
+		gai = getaddrinfo(srvc->host, portstr, &hints, &ai);
+		if (gai) {
+			fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(gai));
+			goto bail;
+		}
+		imap_info("ok\n");
+
+		for (ai0 = ai; ai; ai = ai->ai_next) {
+			char addr[NI_MAXHOST];
+
+			s = socket(ai->ai_family, ai->ai_socktype,
+				   ai->ai_protocol);
+			if (s < 0)
+				continue;
+
+			getnameinfo(ai->ai_addr, ai->ai_addrlen, addr,
+				    sizeof(addr), NULL, 0, NI_NUMERICHOST);
+			imap_info("Connecting to [%s]:%s... ", addr, portstr);
+
+			if (connect(s, ai->ai_addr, ai->ai_addrlen) < 0) {
+				close(s);
+				s = -1;
+				perror("connect");
+				continue;
+			}
+
+			break;
+		}
+		freeaddrinfo(ai0);
+#else /* NO_IPV6 */
+		struct hostent *he;
+		struct sockaddr_in addr;
+
 		memset(&addr, 0, sizeof(addr));
 		addr.sin_port = htons(srvc->port);
 		addr.sin_family = AF_INET;
@@ -1040,11 +1045,17 @@ static struct store *imap_open_store(struct imap_server_conf *srvc)
 		imap_info("Connecting to %s:%hu... ", inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
 		if (connect(s, (struct sockaddr *)&addr, sizeof(addr))) {
 			close(s);
+			s = -1;
 			perror("connect");
+		}
+#endif
+		if (s < 0) {
+			fputs("Error: unable to connect to server.\n", stderr);
 			goto bail;
 		}
 
-		imap->buf.sock.fd = s;
+		imap->buf.sock.fd[0] = s;
+		imap->buf.sock.fd[1] = dup(s);
 
 		if (srvc->use_ssl &&
 		    ssl_socket_connect(&imap->buf.sock, 0, srvc->ssl_verify)) {
@@ -1150,88 +1161,59 @@ static int imap_make_flags(int flags, char *buf)
 	return d;
 }
 
-#define TUIDL 8
+static void lf_to_crlf(struct msg_data *msg)
+{
+	char *new;
+	int i, j, lfnum = 0;
 
-static int imap_store_msg(struct store *gctx, struct msg_data *data, int *uid)
+	if (msg->data[0] == '\n')
+		lfnum++;
+	for (i = 1; i < msg->len; i++) {
+		if (msg->data[i - 1] != '\r' && msg->data[i] == '\n')
+			lfnum++;
+	}
+
+	new = xmalloc(msg->len + lfnum);
+	if (msg->data[0] == '\n') {
+		new[0] = '\r';
+		new[1] = '\n';
+		i = 1;
+		j = 2;
+	} else {
+		new[0] = msg->data[0];
+		i = 1;
+		j = 1;
+	}
+	for ( ; i < msg->len; i++) {
+		if (msg->data[i] != '\n') {
+			new[j++] = msg->data[i];
+			continue;
+		}
+		if (msg->data[i - 1] != '\r')
+			new[j++] = '\r';
+		/* otherwise it already had CR before */
+		new[j++] = '\n';
+	}
+	msg->len += lfnum;
+	free(msg->data);
+	msg->data = new;
+}
+
+static int imap_store_msg(struct store *gctx, struct msg_data *data)
 {
 	struct imap_store *ctx = (struct imap_store *)gctx;
 	struct imap *imap = ctx->imap;
 	struct imap_cmd_cb cb;
-	char *fmap, *buf;
 	const char *prefix, *box;
-	int ret, i, j, d, len, extra, nocr;
-	int start, sbreak = 0, ebreak = 0;
-	char flagstr[128], tuid[TUIDL * 2 + 1];
+	int ret, d;
+	char flagstr[128];
 
+	lf_to_crlf(data);
 	memset(&cb, 0, sizeof(cb));
 
-	fmap = data->data;
-	len = data->len;
-	nocr = !data->crlf;
-	extra = 0, i = 0;
-	if (!CAP(UIDPLUS) && uid) {
-	nloop:
-		start = i;
-		while (i < len)
-			if (fmap[i++] == '\n') {
-				extra += nocr;
-				if (i - 2 + nocr == start) {
-					sbreak = ebreak = i - 2 + nocr;
-					goto mktid;
-				}
-				if (!memcmp(fmap + start, "X-TUID: ", 8)) {
-					extra -= (ebreak = i) - (sbreak = start) + nocr;
-					goto mktid;
-				}
-				goto nloop;
-			}
-		/* invalid message */
-		free(fmap);
-		return DRV_MSG_BAD;
-	mktid:
-		for (j = 0; j < TUIDL; j++)
-			sprintf(tuid + j * 2, "%02x", arc4_getbyte());
-		extra += 8 + TUIDL * 2 + 2;
-	}
-	if (nocr)
-		for (; i < len; i++)
-			if (fmap[i] == '\n')
-				extra++;
-
-	cb.dlen = len + extra;
-	buf = cb.data = xmalloc(cb.dlen);
-	i = 0;
-	if (!CAP(UIDPLUS) && uid) {
-		if (nocr) {
-			for (; i < sbreak; i++)
-				if (fmap[i] == '\n') {
-					*buf++ = '\r';
-					*buf++ = '\n';
-				} else
-					*buf++ = fmap[i];
-		} else {
-			memcpy(buf, fmap, sbreak);
-			buf += sbreak;
-		}
-		memcpy(buf, "X-TUID: ", 8);
-		buf += 8;
-		memcpy(buf, tuid, TUIDL * 2);
-		buf += TUIDL * 2;
-		*buf++ = '\r';
-		*buf++ = '\n';
-		i = ebreak;
-	}
-	if (nocr) {
-		for (; i < len; i++)
-			if (fmap[i] == '\n') {
-				*buf++ = '\r';
-				*buf++ = '\n';
-			} else
-				*buf++ = fmap[i];
-	} else
-		memcpy(buf, fmap + i, len - i);
-
-	free(fmap);
+	cb.dlen = data->len;
+	cb.data = xmalloc(cb.dlen);
+	memcpy(cb.data, data->data, data->len);
 
 	d = 0;
 	if (data->flags) {
@@ -1240,26 +1222,14 @@ static int imap_store_msg(struct store *gctx, struct msg_data *data, int *uid)
 	}
 	flagstr[d] = 0;
 
-	if (!uid) {
-		box = gctx->conf->trash;
-		prefix = ctx->prefix;
-		cb.create = 1;
-		if (ctx->trashnc)
-			imap->caps = imap->rcaps & ~(1 << LITERALPLUS);
-	} else {
-		box = gctx->name;
-		prefix = !strcmp(box, "INBOX") ? "" : ctx->prefix;
-		cb.create = 0;
-	}
-	cb.ctx = uid;
+	box = gctx->name;
+	prefix = !strcmp(box, "INBOX") ? "" : ctx->prefix;
+	cb.create = 0;
 	ret = imap_exec_m(ctx, &cb, "APPEND \"%s%s\" %s", prefix, box, flagstr);
 	imap->caps = imap->rcaps;
 	if (ret != DRV_OK)
 		return ret;
-	if (!uid)
-		ctx->trashnc = 0;
-	else
-		gctx->count++;
+	gctx->count++;
 
 	return DRV_OK;
 }
@@ -1399,10 +1369,15 @@ static int git_imap_config(const char *key, const char *val, void *cb)
 	if (strncmp(key, imap_key, sizeof imap_key - 1))
 		return 0;
 
-	if (!val)
-		return config_error_nonbool(key);
-
 	key += sizeof imap_key - 1;
+
+	/* check booleans first, and barf on others */
+	if (!strcmp("sslverify", key))
+		server.ssl_verify = git_config_bool(key, val);
+	else if (!strcmp("preformattedhtml", key))
+		server.use_html = git_config_bool(key, val);
+	else if (!val)
+		return config_error_nonbool(key);
 
 	if (!strcmp("folder", key)) {
 		imap_folder = xstrdup(val);
@@ -1424,10 +1399,6 @@ static int git_imap_config(const char *key, const char *val, void *cb)
 		server.port = git_config_int(key, val);
 	else if (!strcmp("tunnel", key))
 		server.tunnel = xstrdup(val);
-	else if (!strcmp("sslverify", key))
-		server.ssl_verify = git_config_bool(key, val);
-	else if (!strcmp("preformattedHTML", key))
-		server.use_html = git_config_bool(key, val);
 	return 0;
 }
 
@@ -1435,7 +1406,6 @@ int main(int argc, char **argv)
 {
 	struct msg_data all_msgs, msg;
 	struct store *ctx = NULL;
-	int uid = 0;
 	int ofs = 0;
 	int r;
 	int total, n = 0;
@@ -1443,8 +1413,8 @@ int main(int argc, char **argv)
 
 	git_extract_argv0_path(argv[0]);
 
-	/* init the random number generator */
-	arc4_init();
+	if (argc != 1)
+		usage(imap_send_usage);
 
 	setup_git_directory_gently(&nongit_ok);
 	git_config(git_imap_config, NULL);
@@ -1492,7 +1462,7 @@ int main(int argc, char **argv)
 			break;
 		if (server.use_html)
 			wrap_in_html(&msg);
-		r = imap_store_msg(ctx, &msg, &uid);
+		r = imap_store_msg(ctx, &msg);
 		if (r != DRV_OK)
 			break;
 		n++;

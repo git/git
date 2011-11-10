@@ -107,27 +107,6 @@ int server_supports(const char *feature)
 		strstr(server_capabilities, feature) != NULL;
 }
 
-int get_ack(int fd, unsigned char *result_sha1)
-{
-	static char line[1000];
-	int len = packet_read_line(fd, line, sizeof(line));
-
-	if (!len)
-		die("git fetch-pack: expected ACK/NAK, got EOF");
-	if (line[len-1] == '\n')
-		line[--len] = 0;
-	if (!strcmp(line, "NAK"))
-		return 0;
-	if (!prefixcmp(line, "ACK ")) {
-		if (!get_sha1_hex(line+4, result_sha1)) {
-			if (strstr(line+45, "continue"))
-				return 2;
-			return 1;
-		}
-	}
-	die("git fetch_pack: expected ACK/NAK, got '%s'", line);
-}
-
 int path_match(const char *path, int nr, char **match)
 {
 	int i;
@@ -464,7 +443,7 @@ static void git_proxy_connect(int fd[2], char *host)
 
 #define MAX_CMD_LEN 1024
 
-char *get_port(char *host)
+static char *get_port(char *host)
 {
 	char *end;
 	char *p = strchr(host, ':');
@@ -513,7 +492,7 @@ struct child_process *git_connect(int fd[2], const char *url_orig,
 	signal(SIGCHLD, SIG_DFL);
 
 	host = strstr(url, "://");
-	if(host) {
+	if (host) {
 		*host = '\0';
 		protocol = get_protocol(url);
 		host += 3;
@@ -523,12 +502,18 @@ struct child_process *git_connect(int fd[2], const char *url_orig,
 		c = ':';
 	}
 
+	/*
+	 * Don't do destructive transforms with git:// as that
+	 * protocol code does '[]' unwrapping of its own.
+	 */
 	if (host[0] == '[') {
 		end = strchr(host + 1, ']');
 		if (end) {
-			*end = 0;
+			if (protocol != PROTO_GIT) {
+				*end = 0;
+				host++;
+			}
 			end++;
-			host++;
 		} else
 			end = host;
 	} else
@@ -579,7 +564,10 @@ struct child_process *git_connect(int fd[2], const char *url_orig,
 			git_tcp_connect(fd, host, flags);
 		/*
 		 * Separate original protocol components prog and path
-		 * from extended components with a NUL byte.
+		 * from extended host header with a NUL byte.
+		 *
+		 * Note: Do not add any other headers here!  Doing so
+		 * will cause older git-daemon servers to crash.
 		 */
 		packet_write(fd[1],
 			     "%s %s%chost=%s%c",
@@ -602,14 +590,18 @@ struct child_process *git_connect(int fd[2], const char *url_orig,
 		die("command line too long");
 
 	conn->in = conn->out = -1;
-	conn->argv = arg = xcalloc(6, sizeof(*arg));
+	conn->argv = arg = xcalloc(7, sizeof(*arg));
 	if (protocol == PROTO_SSH) {
 		const char *ssh = getenv("GIT_SSH");
+		int putty = ssh && strcasestr(ssh, "plink");
 		if (!ssh) ssh = "ssh";
 
 		*arg++ = ssh;
+		if (putty && !strcasestr(ssh, "tortoiseplink"))
+			*arg++ = "-batch";
 		if (port) {
-			*arg++ = "-p";
+			/* P is for PuTTY, p is for OpenSSH */
+			*arg++ = putty ? "-P" : "-p";
 			*arg++ = port;
 		}
 		*arg++ = host;
@@ -623,11 +615,11 @@ struct child_process *git_connect(int fd[2], const char *url_orig,
 			GIT_WORK_TREE_ENVIRONMENT,
 			GRAFT_ENVIRONMENT,
 			INDEX_ENVIRONMENT,
+			NO_REPLACE_OBJECTS_ENVIRONMENT,
 			NULL
 		};
 		conn->env = env;
-		*arg++ = "sh";
-		*arg++ = "-c";
+		conn->use_shell = 1;
 	}
 	*arg++ = cmd.buf;
 	*arg = NULL;

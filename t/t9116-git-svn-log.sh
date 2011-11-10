@@ -14,7 +14,7 @@ test_expect_success 'setup repository and import' '
 			mkdir -p $i && \
 			echo hello >> $i/README || exit 1
 		done && \
-		svn import -m test . "$svnrepo"
+		svn_cmd import -m test . "$svnrepo"
 		cd .. &&
 	git svn init "$svnrepo" -T trunk -b branches -t tags &&
 	git svn fetch &&

@@ -82,7 +82,7 @@ objecttype::
 	The type of the object (`blob`, `tree`, `commit`, `tag`).
 
 objectsize::
-	The size of the object (the same as 'git-cat-file -s' reports).
+	The size of the object (the same as 'git cat-file -s' reports).
 
 objectname::
 	The object name (aka SHA-1).

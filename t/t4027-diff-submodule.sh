@@ -32,7 +32,8 @@ test_expect_success setup '
 		cd sub &&
 		git rev-list HEAD
 	) &&
-	echo ":160000 160000 $3 $_z40 M	sub" >expect
+	echo ":160000 160000 $3 $_z40 M	sub" >expect &&
+	subtip=$3 subprev=$2
 '
 
 test_expect_success 'git diff --raw HEAD' '
@@ -48,6 +49,87 @@ test_expect_success 'git diff-index --raw HEAD' '
 test_expect_success 'git diff-files --raw' '
 	git diff-files --raw >actual.files &&
 	test_cmp expect actual.files
+'
+
+expect_from_to () {
+	printf "%sSubproject commit %s\n+Subproject commit %s\n" \
+		"-" "$1" "$2"
+}
+
+test_expect_success 'git diff HEAD' '
+	git diff HEAD >actual &&
+	sed -e "1,/^@@/d" actual >actual.body &&
+	expect_from_to >expect.body $subtip $subprev &&
+	test_cmp expect.body actual.body
+'
+
+test_expect_success 'git diff HEAD with dirty submodule (work tree)' '
+	echo >>sub/world &&
+	git diff HEAD >actual &&
+	sed -e "1,/^@@/d" actual >actual.body &&
+	expect_from_to >expect.body $subtip $subprev-dirty &&
+	test_cmp expect.body actual.body
+'
+
+test_expect_success 'git diff HEAD with dirty submodule (index)' '
+	(
+		cd sub &&
+		git reset --hard &&
+		echo >>world &&
+		git add world
+	) &&
+	git diff HEAD >actual &&
+	sed -e "1,/^@@/d" actual >actual.body &&
+	expect_from_to >expect.body $subtip $subprev-dirty &&
+	test_cmp expect.body actual.body
+'
+
+test_expect_success 'git diff HEAD with dirty submodule (untracked)' '
+	(
+		cd sub &&
+		git reset --hard &&
+		git clean -qfdx &&
+		>cruft
+	) &&
+	git diff HEAD >actual &&
+	sed -e "1,/^@@/d" actual >actual.body &&
+	expect_from_to >expect.body $subtip $subprev-dirty &&
+	test_cmp expect.body actual.body
+'
+
+test_expect_success 'git diff HEAD with dirty submodule (work tree, refs match)' '
+	git commit -m "x" sub &&
+	echo >>sub/world &&
+	git diff HEAD >actual &&
+	sed -e "1,/^@@/d" actual >actual.body &&
+	expect_from_to >expect.body $subprev $subprev-dirty &&
+	test_cmp expect.body actual.body
+'
+
+test_expect_success 'git diff HEAD with dirty submodule (index, refs match)' '
+	(
+		cd sub &&
+		git reset --hard &&
+		echo >>world &&
+		git add world
+	) &&
+	git diff HEAD >actual &&
+	sed -e "1,/^@@/d" actual >actual.body &&
+	expect_from_to >expect.body $subprev $subprev-dirty &&
+	test_cmp expect.body actual.body
+'
+
+test_expect_success 'git diff HEAD with dirty submodule (untracked, refs match)' '
+	(
+		cd sub &&
+		git reset --hard &&
+		git clean -qfdx &&
+		>cruft
+	) &&
+	git diff HEAD >actual &&
+	sed -e "1,/^@@/d" actual >actual.body &&
+	expect_from_to >expect.body $subprev $subprev-dirty &&
+	test_cmp expect.body actual.body
 '
 
 test_expect_success 'git diff (empty submodule dir)' '

@@ -14,8 +14,9 @@ if ! test_have_prereq PERL; then
 fi
 
 GIT_DIR=$PWD/.git
-GIT_SVN_DIR=$GIT_DIR/svn/git-svn
+GIT_SVN_DIR=$GIT_DIR/svn/refs/remotes/git-svn
 SVN_TREE=$GIT_SVN_DIR/svn-tree
+PERL=${PERL:-perl}
 
 svn >/dev/null 2>&1
 if test $? -ne 1
@@ -26,8 +27,10 @@ fi
 
 svnrepo=$PWD/svnrepo
 export svnrepo
+svnconf=$PWD/svnconf
+export svnconf
 
-perl -w -e "
+$PERL -w -e "
 use SVN::Core;
 use SVN::Repos;
 \$SVN::Core::VERSION gt '1.1.0' or exit(42);
@@ -52,6 +55,19 @@ svnrepo="file://$svnrepo"
 
 poke() {
 	test-chmtime +1 "$1"
+}
+
+# We need this, because we should pass empty configuration directory to
+# the 'svn commit' to avoid automated property changes and other stuff
+# that could be set from user's configuration files in ~/.subversion.
+svn_cmd () {
+	[ -d "$svnconf" ] || mkdir "$svnconf"
+	orig_svncmd="$1"; shift
+	if [ -z "$orig_svncmd" ]; then
+		svn
+		return
+	fi
+	svn "$orig_svncmd" --config-dir "$svnconf" "$@"
 }
 
 for d in \
@@ -115,7 +131,7 @@ stop_httpd () {
 }
 
 convert_to_rev_db () {
-	perl -w -- - "$@" <<\EOF
+	$PERL -w -- - "$@" <<\EOF
 use strict;
 @ARGV == 2 or die "Usage: convert_to_rev_db <input> <output>";
 open my $wr, '+>', $ARGV[1] or die "$!: couldn't open: $ARGV[1]";

@@ -8,19 +8,19 @@ test_description='git svn property tests'
 . ./lib-git-svn.sh
 
 test_expect_success 'setup test repository' '
-	svn co "$svnrepo" s &&
+	svn_cmd co "$svnrepo" s &&
 	(
 		cd s &&
 		mkdir qqq www &&
 		echo test_qqq > qqq/test_qqq.txt &&
 		echo test_www > www/test_www.txt &&
-		svn add qqq &&
-		svn add www &&
-		svn commit -m "create some files" &&
-		svn up &&
+		svn_cmd add qqq &&
+		svn_cmd add www &&
+		svn_cmd commit -m "create some files" &&
+		svn_cmd up &&
 		echo hi >> www/test_www.txt &&
-		svn commit -m "modify www/test_www.txt" &&
-		svn up
+		svn_cmd commit -m "modify www/test_www.txt" &&
+		svn_cmd up
 	)
 '
 
@@ -51,9 +51,9 @@ test_expect_success 'SVN-side change outside of www' '
 	(
 		cd s &&
 		echo b >> qqq/test_qqq.txt &&
-		svn commit -m "SVN-side change outside of www" &&
-		svn up &&
-		svn log -v | fgrep "SVN-side change outside of www"
+		svn_cmd commit -m "SVN-side change outside of www" &&
+		svn_cmd up &&
+		svn_cmd log -v | fgrep "SVN-side change outside of www"
 	)
 '
 
@@ -83,9 +83,9 @@ test_expect_success 'SVN-side change inside of ignored www' '
 	(
 		cd s &&
 		echo zaq >> www/test_www.txt
-		svn commit -m "SVN-side change inside of www/test_www.txt" &&
-		svn up &&
-		svn log -v | fgrep "SVN-side change inside of www/test_www.txt"
+		svn_cmd commit -m "SVN-side change inside of www/test_www.txt" &&
+		svn_cmd up &&
+		svn_cmd log -v | fgrep "SVN-side change inside of www/test_www.txt"
 	)
 '
 
@@ -116,9 +116,9 @@ test_expect_success 'SVN-side change in and out of ignored www' '
 		cd s &&
 		echo cvf >> www/test_www.txt
 		echo ygg >> qqq/test_qqq.txt
-		svn commit -m "SVN-side change in and out of ignored www" &&
-		svn up &&
-		svn log -v | fgrep "SVN-side change in and out of ignored www"
+		svn_cmd commit -m "SVN-side change in and out of ignored www" &&
+		svn_cmd up &&
+		svn_cmd log -v | fgrep "SVN-side change in and out of ignored www"
 	)
 '
 

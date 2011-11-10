@@ -31,7 +31,7 @@ test_expect_success \
 	echo "zzz" > bar/zzz &&
 	echo "#!/bin/sh" > exec.sh &&
 	chmod +x exec.sh &&
-	svn import -m "import for git svn" . "$svnrepo" >/dev/null &&
+	svn_cmd import -m "import for git svn" . "$svnrepo" >/dev/null &&
 	cd .. &&
 	rm -rf import &&
 	git svn init "$svnrepo"'
@@ -51,7 +51,7 @@ test_expect_success "$name" '
 	git commit -m "$name" &&
 	git svn set-tree --find-copies-harder --rmdir \
 		${remotes_git_svn}..mybranch &&
-	svn up "$SVN_TREE" &&
+	svn_cmd up "$SVN_TREE" &&
 	test -d "$SVN_TREE"/dir && test ! -d "$SVN_TREE"/dir/a'
 
 
@@ -118,7 +118,7 @@ test_expect_success "$name" '
 	git commit -m "$name" &&
 	git svn set-tree --find-copies-harder --rmdir \
 		${remotes_git_svn}..mybranch5 &&
-	svn up "$SVN_TREE" &&
+	svn_cmd up "$SVN_TREE" &&
 	test ! -x "$SVN_TREE"/exec.sh'
 
 
@@ -129,7 +129,7 @@ test_expect_success "$name" '
 	git commit -m "$name" &&
 	git svn set-tree --find-copies-harder --rmdir \
 		${remotes_git_svn}..mybranch5 &&
-	svn up "$SVN_TREE" &&
+	svn_cmd up "$SVN_TREE" &&
 	test -x "$SVN_TREE"/exec.sh'
 
 
@@ -141,7 +141,7 @@ test_expect_success "$name" '
 	git commit -m "$name" &&
 	git svn set-tree --find-copies-harder --rmdir \
 		${remotes_git_svn}..mybranch5 &&
-	svn up "$SVN_TREE" &&
+	svn_cmd up "$SVN_TREE" &&
 	test -L "$SVN_TREE"/exec.sh'
 
 name='new symlink is added to a file that was also just made executable'
@@ -153,7 +153,7 @@ test_expect_success "$name" '
 	git commit -m "$name" &&
 	git svn set-tree --find-copies-harder --rmdir \
 		${remotes_git_svn}..mybranch5 &&
-	svn up "$SVN_TREE" &&
+	svn_cmd up "$SVN_TREE" &&
 	test -x "$SVN_TREE"/bar/zzz &&
 	test -L "$SVN_TREE"/exec-2.sh'
 
@@ -166,7 +166,7 @@ test_expect_success "$name" '
 	git commit -m "$name" &&
 	git svn set-tree --find-copies-harder --rmdir \
 		${remotes_git_svn}..mybranch5 &&
-	svn up "$SVN_TREE" &&
+	svn_cmd up "$SVN_TREE" &&
 	test -f "$SVN_TREE"/exec-2.sh &&
 	test ! -L "$SVN_TREE"/exec-2.sh &&
 	test_cmp help "$SVN_TREE"/exec-2.sh'
@@ -230,6 +230,25 @@ test_expect_success \
         git config --get svn-remote.svn.fetch \
                               "^:refs/${remotes_git_svn}$"
         '
+
+test_expect_success 'dcommit $rev does not clobber current branch' '
+	git svn fetch -i bar &&
+	git checkout -b my-bar refs/remotes/bar &&
+	echo 1 > foo &&
+	git add foo &&
+	git commit -m "change 1" &&
+	echo 2 > foo &&
+	git add foo &&
+	git commit -m "change 2" &&
+	old_head=$(git rev-parse HEAD) &&
+	git svn dcommit -i bar HEAD^ &&
+	test $old_head = $(git rev-parse HEAD) &&
+	test refs/heads/my-bar = $(git symbolic-ref HEAD) &&
+	git log refs/remotes/bar | grep "change 1" &&
+	! git log refs/remotes/bar | grep "change 2" &&
+	git checkout master &&
+	git branch -D my-bar
+	'
 
 test_expect_success 'able to dcommit to a subdirectory' "
 	git svn fetch -i bar &&

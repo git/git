@@ -48,7 +48,7 @@ EOF
 	printf "\r\n" > empty_crlf
 	a_empty_crlf=`git hash-object -w empty_crlf`
 
-	svn import --no-auto-props -m 'import for git svn' . "$svnrepo" >/dev/null
+	svn_cmd import --no-auto-props -m 'import for git svn' . "$svnrepo" >/dev/null
 cd ..
 
 rm -rf import
@@ -57,13 +57,13 @@ test_expect_success 'setup some commits to svn' \
 	'cd test_wc &&
 		echo Greetings >> kw.c &&
 		poke kw.c &&
-		svn commit -m "Not yet an Id" &&
+		svn_cmd commit -m "Not yet an Id" &&
 		echo Hello world >> kw.c &&
 		poke kw.c &&
-		svn commit -m "Modified file, but still not yet an Id" &&
-		svn propset svn:keywords Id kw.c &&
+		svn_cmd commit -m "Modified file, but still not yet an Id" &&
+		svn_cmd propset svn:keywords Id kw.c &&
 		poke kw.c &&
-		svn commit -m "Propset Id" &&
+		svn_cmd commit -m "Propset Id" &&
 	cd ..'
 
 test_expect_success 'initialize git svn' 'git svn init "$svnrepo"'
@@ -83,16 +83,16 @@ test_expect_success 'raw $Id$ found in kw.c' "test '$expect' = '$got'"
 
 test_expect_success "propset CR on crlf files" \
 	'cd test_wc &&
-		svn propset svn:eol-style CR empty &&
-		svn propset svn:eol-style CR crlf &&
-		svn propset svn:eol-style CR ne_crlf &&
-		svn commit -m "propset CR on crlf files" &&
+		svn_cmd propset svn:eol-style CR empty &&
+		svn_cmd propset svn:eol-style CR crlf &&
+		svn_cmd propset svn:eol-style CR ne_crlf &&
+		svn_cmd commit -m "propset CR on crlf files" &&
 	 cd ..'
 
 test_expect_success 'fetch and pull latest from svn and checkout a new wc' \
 	'git svn fetch &&
 	 git pull . ${remotes_git_svn} &&
-	 svn co "$svnrepo" new_wc'
+	 svn_cmd co "$svnrepo" new_wc'
 
 for i in crlf ne_crlf lf ne_lf cr ne_cr empty_cr empty_lf empty empty_crlf
 do
@@ -106,11 +106,11 @@ cd test_wc
 	a_cr=`printf '$Id$\r\nHello\r\nWorld\r\n' | git hash-object --stdin`
 	a_ne_cr=`printf '$Id$\r\nHello\r\nWorld' | git hash-object --stdin`
 	test_expect_success 'Set CRLF on cr files' \
-	'svn propset svn:eol-style CRLF cr &&
-	 svn propset svn:eol-style CRLF ne_cr &&
-	 svn propset svn:keywords Id cr &&
-	 svn propset svn:keywords Id ne_cr &&
-	 svn commit -m "propset CRLF on cr files"'
+	'svn_cmd propset svn:eol-style CRLF cr &&
+	 svn_cmd propset svn:eol-style CRLF ne_cr &&
+	 svn_cmd propset svn:keywords Id cr &&
+	 svn_cmd propset svn:keywords Id ne_cr &&
+	 svn_cmd commit -m "propset CRLF on cr files"'
 cd ..
 test_expect_success 'fetch and pull latest from svn' \
 	'git svn fetch && git pull . ${remotes_git_svn}'
@@ -140,10 +140,12 @@ test_expect_success 'test show-ignore' "
 	cd test_wc &&
 	mkdir -p deeply/nested/directory &&
 	touch deeply/nested/directory/.keep &&
-	svn add deeply &&
-	svn up &&
-	svn propset -R svn:ignore 'no-such-file*' .
-	svn commit -m 'propset svn:ignore'
+	svn_cmd add deeply &&
+	svn_cmd up &&
+	svn_cmd propset -R svn:ignore '
+no-such-file*
+' .
+	svn_cmd commit -m 'propset svn:ignore'
 	cd .. &&
 	git svn show-ignore > show-ignore.got &&
 	cmp show-ignore.expect show-ignore.got
@@ -171,6 +173,7 @@ test_expect_success 'test create-ignore' "
 	"
 
 cat >prop.expect <<\EOF
+
 no-such-file*
 
 EOF

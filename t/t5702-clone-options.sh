@@ -27,7 +27,8 @@ test_expect_success 'redirected clone' '
 '
 test_expect_success 'redirected clone -v' '
 
-	git clone -v "file://$(pwd)/parent" clone-redirected-v >out 2>err &&
+	git clone --progress "file://$(pwd)/parent" clone-redirected-progress \
+		>out 2>err &&
 	test -s err
 
 '

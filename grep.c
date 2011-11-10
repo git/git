@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "grep.h"
+#include "userdiff.h"
 #include "xdiff-interface.h"
 
 void append_header_grep_pattern(struct grep_opt *opt, enum grep_header_field field, const char *pat)
@@ -28,11 +29,26 @@ void append_grep_pattern(struct grep_opt *opt, const char *pat,
 	p->next = NULL;
 }
 
-static int is_fixed(const char *s)
+struct grep_opt *grep_opt_dup(const struct grep_opt *opt)
 {
-	while (*s && !is_regex_special(*s))
-		s++;
-	return !*s;
+	struct grep_pat *pat;
+	struct grep_opt *ret = xmalloc(sizeof(struct grep_opt));
+	*ret = *opt;
+
+	ret->pattern_list = NULL;
+	ret->pattern_tail = &ret->pattern_list;
+
+	for(pat = opt->pattern_list; pat != NULL; pat = pat->next)
+	{
+		if(pat->token == GREP_PATTERN_HEAD)
+			append_header_grep_pattern(ret, pat->field,
+						   pat->pattern);
+		else
+			append_grep_pattern(ret, pat->pattern, pat->origin,
+					    pat->no, pat->token);
+	}
+
+	return ret;
 }
 
 static void compile_regexp(struct grep_pat *p, struct grep_opt *opt)
@@ -40,11 +56,9 @@ static void compile_regexp(struct grep_pat *p, struct grep_opt *opt)
 	int err;
 
 	p->word_regexp = opt->word_regexp;
+	p->ignore_case = opt->ignore_case;
+	p->fixed = opt->fixed;
 
-	if (opt->fixed || is_fixed(p->pattern))
-		p->fixed = 1;
-	if (opt->regflags & REG_ICASE)
-		p->fixed = 0;
 	if (p->fixed)
 		return;
 
@@ -258,12 +272,19 @@ static int word_char(char ch)
 
 static void show_name(struct grep_opt *opt, const char *name)
 {
-	printf("%s%c", name, opt->null_following_name ? '\0' : '\n');
+	opt->output(opt, name, strlen(name));
+	opt->output(opt, opt->null_following_name ? "\0" : "\n", 1);
 }
 
-static int fixmatch(const char *pattern, char *line, regmatch_t *match)
+
+static int fixmatch(const char *pattern, char *line, int ignore_case, regmatch_t *match)
 {
-	char *hit = strstr(line, pattern);
+	char *hit;
+	if (ignore_case)
+		hit = strcasestr(line, pattern);
+	else
+		hit = strstr(line, pattern);
+
 	if (!hit) {
 		match->rm_so = match->rm_eo = -1;
 		return REG_NOMATCH;
@@ -305,6 +326,7 @@ static int match_one_pattern(struct grep_pat *p, char *bol, char *eol,
 {
 	int hit = 0;
 	int saved_ch = 0;
+	const char *start = bol;
 
 	if ((p->token != GREP_PATTERN) &&
 	    ((p->token == GREP_PATTERN_HEAD) != (ctx == GREP_CONTEXT_HEAD)))
@@ -324,13 +346,13 @@ static int match_one_pattern(struct grep_pat *p, char *bol, char *eol,
 
  again:
 	if (p->fixed)
-		hit = !fixmatch(p->pattern, bol, pmatch);
+		hit = !fixmatch(p->pattern, bol, p->ignore_case, pmatch);
 	else
 		hit = !regexec(&p->regexp, bol, 1, pmatch, eflags);
 
 	if (hit && p->word_regexp) {
 		if ((pmatch[0].rm_so < 0) ||
-		    (eol - bol) <= pmatch[0].rm_so ||
+		    (eol - bol) < pmatch[0].rm_so ||
 		    (pmatch[0].rm_eo < 0) ||
 		    (eol - bol) < pmatch[0].rm_eo)
 			die("regexp returned nonsense");
@@ -349,6 +371,10 @@ static int match_one_pattern(struct grep_pat *p, char *bol, char *eol,
 		else
 			hit = 0;
 
+		/* Words consist of at least one character. */
+		if (pmatch->rm_so == pmatch->rm_eo)
+			hit = 0;
+
 		if (!hit && pmatch[0].rm_so + bol + 1 < eol) {
 			/* There could be more than one match on the
 			 * line, and the first match might not be
@@ -359,12 +385,17 @@ static int match_one_pattern(struct grep_pat *p, char *bol, char *eol,
 			bol = pmatch[0].rm_so + bol + 1;
 			while (word_char(bol[-1]) && bol < eol)
 				bol++;
+			eflags |= REG_NOTBOL;
 			if (bol < eol)
 				goto again;
 		}
 	}
 	if (p->token == GREP_PATTERN_HEAD && saved_ch)
 		*eol = saved_ch;
+	if (hit) {
+		pmatch[0].rm_so += bol - start;
+		pmatch[0].rm_eo += bol - start;
+	}
 	return hit;
 }
 
@@ -479,13 +510,32 @@ static void show_line(struct grep_opt *opt, char *bol, char *eol,
 		      const char *name, unsigned lno, char sign)
 {
 	int rest = eol - bol;
+	char sign_str[1];
+
+	sign_str[0] = sign;
+	if (opt->pre_context || opt->post_context) {
+		if (opt->last_shown == 0) {
+			if (opt->show_hunk_mark)
+				opt->output(opt, "--\n", 3);
+			else
+				opt->show_hunk_mark = 1;
+		} else if (lno > opt->last_shown + 1)
+			opt->output(opt, "--\n", 3);
+	}
+	opt->last_shown = lno;
 
 	if (opt->null_following_name)
-		sign = '\0';
-	if (opt->pathname)
-		printf("%s%c", name, sign);
-	if (opt->linenum)
-		printf("%d%c", lno, sign);
+		sign_str[0] = '\0';
+	if (opt->pathname) {
+		opt->output(opt, name, strlen(name));
+		opt->output(opt, sign_str, 1);
+	}
+	if (opt->linenum) {
+		char buf[32];
+		snprintf(buf, sizeof(buf), "%d", lno);
+		opt->output(opt, buf, strlen(buf));
+		opt->output(opt, sign_str, 1);
+	}
 	if (opt->color) {
 		regmatch_t match;
 		enum grep_context ctx = GREP_CONTEXT_BODY;
@@ -494,18 +544,192 @@ static void show_line(struct grep_opt *opt, char *bol, char *eol,
 
 		*eol = '\0';
 		while (next_match(opt, bol, eol, ctx, &match, eflags)) {
-			printf("%.*s%s%.*s%s",
-			       (int)match.rm_so, bol,
-			       opt->color_match,
-			       (int)(match.rm_eo - match.rm_so), bol + match.rm_so,
-			       GIT_COLOR_RESET);
+			if (match.rm_so == match.rm_eo)
+				break;
+
+			opt->output(opt, bol, match.rm_so);
+			opt->output(opt, opt->color_match,
+				    strlen(opt->color_match));
+			opt->output(opt, bol + match.rm_so,
+				    (int)(match.rm_eo - match.rm_so));
+			opt->output(opt, GIT_COLOR_RESET,
+				    strlen(GIT_COLOR_RESET));
 			bol += match.rm_eo;
 			rest -= match.rm_eo;
 			eflags = REG_NOTBOL;
 		}
 		*eol = ch;
 	}
-	printf("%.*s\n", rest, bol);
+	opt->output(opt, bol, rest);
+	opt->output(opt, "\n", 1);
+}
+
+static int match_funcname(struct grep_opt *opt, char *bol, char *eol)
+{
+	xdemitconf_t *xecfg = opt->priv;
+	if (xecfg && xecfg->find_func) {
+		char buf[1];
+		return xecfg->find_func(bol, eol - bol, buf, 1,
+					xecfg->find_func_priv) >= 0;
+	}
+
+	if (bol == eol)
+		return 0;
+	if (isalpha(*bol) || *bol == '_' || *bol == '$')
+		return 1;
+	return 0;
+}
+
+static void show_funcname_line(struct grep_opt *opt, const char *name,
+			       char *buf, char *bol, unsigned lno)
+{
+	while (bol > buf) {
+		char *eol = --bol;
+
+		while (bol > buf && bol[-1] != '\n')
+			bol--;
+		lno--;
+
+		if (lno <= opt->last_shown)
+			break;
+
+		if (match_funcname(opt, bol, eol)) {
+			show_line(opt, bol, eol, name, lno, '=');
+			break;
+		}
+	}
+}
+
+static void show_pre_context(struct grep_opt *opt, const char *name, char *buf,
+			     char *bol, unsigned lno)
+{
+	unsigned cur = lno, from = 1, funcname_lno = 0;
+	int funcname_needed = opt->funcname;
+
+	if (opt->pre_context < lno)
+		from = lno - opt->pre_context;
+	if (from <= opt->last_shown)
+		from = opt->last_shown + 1;
+
+	/* Rewind. */
+	while (bol > buf && cur > from) {
+		char *eol = --bol;
+
+		while (bol > buf && bol[-1] != '\n')
+			bol--;
+		cur--;
+		if (funcname_needed && match_funcname(opt, bol, eol)) {
+			funcname_lno = cur;
+			funcname_needed = 0;
+		}
+	}
+
+	/* We need to look even further back to find a function signature. */
+	if (opt->funcname && funcname_needed)
+		show_funcname_line(opt, name, buf, bol, cur);
+
+	/* Back forward. */
+	while (cur < lno) {
+		char *eol = bol, sign = (cur == funcname_lno) ? '=' : '-';
+
+		while (*eol != '\n')
+			eol++;
+		show_line(opt, bol, eol, name, cur, sign);
+		bol = eol + 1;
+		cur++;
+	}
+}
+
+static int should_lookahead(struct grep_opt *opt)
+{
+	struct grep_pat *p;
+
+	if (opt->extended)
+		return 0; /* punt for too complex stuff */
+	if (opt->invert)
+		return 0;
+	for (p = opt->pattern_list; p; p = p->next) {
+		if (p->token != GREP_PATTERN)
+			return 0; /* punt for "header only" and stuff */
+	}
+	return 1;
+}
+
+static int look_ahead(struct grep_opt *opt,
+		      unsigned long *left_p,
+		      unsigned *lno_p,
+		      char **bol_p)
+{
+	unsigned lno = *lno_p;
+	char *bol = *bol_p;
+	struct grep_pat *p;
+	char *sp, *last_bol;
+	regoff_t earliest = -1;
+
+	for (p = opt->pattern_list; p; p = p->next) {
+		int hit;
+		regmatch_t m;
+
+		if (p->fixed)
+			hit = !fixmatch(p->pattern, bol, p->ignore_case, &m);
+		else {
+#ifdef REG_STARTEND
+			m.rm_so = 0;
+			m.rm_eo = *left_p;
+			hit = !regexec(&p->regexp, bol, 1, &m, REG_STARTEND);
+#else
+			hit = !regexec(&p->regexp, bol, 1, &m, 0);
+#endif
+		}
+		if (!hit || m.rm_so < 0 || m.rm_eo < 0)
+			continue;
+		if (earliest < 0 || m.rm_so < earliest)
+			earliest = m.rm_so;
+	}
+
+	if (earliest < 0) {
+		*bol_p = bol + *left_p;
+		*left_p = 0;
+		return 1;
+	}
+	for (sp = bol + earliest; bol < sp && sp[-1] != '\n'; sp--)
+		; /* find the beginning of the line */
+	last_bol = sp;
+
+	for (sp = bol; sp < last_bol; sp++) {
+		if (*sp == '\n')
+			lno++;
+	}
+	*left_p -= last_bol - bol;
+	*bol_p = last_bol;
+	*lno_p = lno;
+	return 0;
+}
+
+int grep_threads_ok(const struct grep_opt *opt)
+{
+	/* If this condition is true, then we may use the attribute
+	 * machinery in grep_buffer_1. The attribute code is not
+	 * thread safe, so we disable the use of threads.
+	 */
+	if (opt->funcname && !opt->unmatch_name_only && !opt->status_only &&
+	    !opt->name_only)
+		return 0;
+
+	/* If we are showing hunk marks, we should not do it for the
+	 * first match. The synchronization problem we get for this
+	 * constraint is not yet solved, so we disable threading in
+	 * this case.
+	 */
+	if (opt->pre_context || opt->post_context)
+		return 0;
+
+	return 1;
+}
+
+static void std_output(struct grep_opt *opt, const void *buf, size_t size)
+{
+	fwrite(buf, size, 1, stdout);
 }
 
 static int grep_buffer_1(struct grep_opt *opt, const char *name,
@@ -514,16 +738,17 @@ static int grep_buffer_1(struct grep_opt *opt, const char *name,
 	char *bol = buf;
 	unsigned long left = size;
 	unsigned lno = 1;
-	struct pre_context_line {
-		char *bol;
-		char *eol;
-	} *prev = NULL, *pcl;
 	unsigned last_hit = 0;
-	unsigned last_shown = 0;
 	int binary_match_only = 0;
-	const char *hunk_mark = "";
 	unsigned count = 0;
+	int try_lookahead = 0;
 	enum grep_context ctx = GREP_CONTEXT_HEAD;
+	xdemitconf_t xecfg;
+
+	opt->last_shown = 0;
+
+	if (!opt->output)
+		opt->output = std_output;
 
 	if (buffer_is_binary(buf, size)) {
 		switch (opt->binary) {
@@ -538,15 +763,36 @@ static int grep_buffer_1(struct grep_opt *opt, const char *name,
 		}
 	}
 
-	if (opt->pre_context)
-		prev = xcalloc(opt->pre_context, sizeof(*prev));
-	if (opt->pre_context || opt->post_context)
-		hunk_mark = "--\n";
+	memset(&xecfg, 0, sizeof(xecfg));
+	if (opt->funcname && !opt->unmatch_name_only && !opt->status_only &&
+	    !opt->name_only && !binary_match_only && !collect_hits) {
+		struct userdiff_driver *drv = userdiff_find_by_path(name);
+		if (drv && drv->funcname.pattern) {
+			const struct userdiff_funcname *pe = &drv->funcname;
+			xdiff_set_find_func(&xecfg, pe->pattern, pe->cflags);
+			opt->priv = &xecfg;
+		}
+	}
+	try_lookahead = should_lookahead(opt);
 
 	while (left) {
 		char *eol, ch;
 		int hit;
 
+		/*
+		 * look_ahead() skips quicly to the line that possibly
+		 * has the next hit; don't call it if we need to do
+		 * something more than just skipping the current line
+		 * in response to an unmatch for the current line.  E.g.
+		 * inside a post-context window, we will show the current
+		 * line as a context around the previous hit when it
+		 * doesn't hit.
+		 */
+		if (try_lookahead
+		    && !(last_hit
+			 && lno <= last_hit + opt->post_context)
+		    && look_ahead(opt, &left, &lno, &bol))
+			break;
 		eol = end_of_line(bol, &left);
 		ch = *eol;
 		*eol = 0;
@@ -576,7 +822,9 @@ static int grep_buffer_1(struct grep_opt *opt, const char *name,
 			if (opt->status_only)
 				return 1;
 			if (binary_match_only) {
-				printf("Binary file %s matches\n", name);
+				opt->output(opt, "Binary file ", 12);
+				opt->output(opt, name, strlen(name));
+				opt->output(opt, " matches\n", 9);
 				return 1;
 			}
 			if (opt->name_only) {
@@ -589,45 +837,20 @@ static int grep_buffer_1(struct grep_opt *opt, const char *name,
 			 * the context which is nonsense, but the user
 			 * deserves to get that ;-).
 			 */
-			if (opt->pre_context) {
-				unsigned from;
-				if (opt->pre_context < lno)
-					from = lno - opt->pre_context;
-				else
-					from = 1;
-				if (from <= last_shown)
-					from = last_shown + 1;
-				if (last_shown && from != last_shown + 1)
-					fputs(hunk_mark, stdout);
-				while (from < lno) {
-					pcl = &prev[lno-from-1];
-					show_line(opt, pcl->bol, pcl->eol,
-						  name, from, '-');
-					from++;
-				}
-				last_shown = lno-1;
-			}
-			if (last_shown && lno != last_shown + 1)
-				fputs(hunk_mark, stdout);
+			if (opt->pre_context)
+				show_pre_context(opt, name, buf, bol, lno);
+			else if (opt->funcname)
+				show_funcname_line(opt, name, buf, bol, lno);
 			if (!opt->count)
 				show_line(opt, bol, eol, name, lno, ':');
-			last_shown = last_hit = lno;
+			last_hit = lno;
 		}
 		else if (last_hit &&
 			 lno <= last_hit + opt->post_context) {
 			/* If the last hit is within the post context,
 			 * we need to show this line.
 			 */
-			if (last_shown && lno != last_shown + 1)
-				fputs(hunk_mark, stdout);
 			show_line(opt, bol, eol, name, lno, '-');
-			last_shown = lno;
-		}
-		if (opt->pre_context) {
-			memmove(prev+1, prev,
-				(opt->pre_context-1) * sizeof(*prev));
-			prev->bol = bol;
-			prev->eol = eol;
 		}
 
 	next_line:
@@ -638,7 +861,6 @@ static int grep_buffer_1(struct grep_opt *opt, const char *name,
 		lno++;
 	}
 
-	free(prev);
 	if (collect_hits)
 		return 0;
 
@@ -650,14 +872,21 @@ static int grep_buffer_1(struct grep_opt *opt, const char *name,
 		return 1;
 	}
 
+	xdiff_clear_find_func(&xecfg);
+	opt->priv = NULL;
+
 	/* NEEDSWORK:
 	 * The real "grep -c foo *.c" gives many "bar.c:0" lines,
 	 * which feels mostly useless but sometimes useful.  Maybe
 	 * make it another option?  For now suppress them.
 	 */
-	if (opt->count && count)
-		printf("%s%c%u\n", name,
-		       opt->null_following_name ? '\0' : ':', count);
+	if (opt->count && count) {
+		char buf[32];
+		opt->output(opt, name, strlen(name));
+		snprintf(buf, sizeof(buf), "%c%u\n",
+			 opt->null_following_name ? '\0' : ':', count);
+		opt->output(opt, buf, strlen(buf));
+	}
 	return !!last_hit;
 }
 

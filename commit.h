@@ -63,19 +63,28 @@ enum cmit_fmt {
 	CMIT_FMT_UNSPECIFIED,
 };
 
-extern int non_ascii(int);
+struct pretty_print_context
+{
+	int abbrev;
+	const char *subject;
+	const char *after_subject;
+	enum date_mode date_mode;
+	int need_8bit_cte;
+	int show_notes;
+	struct reflog_walk_info *reflog_info;
+};
+
+extern int has_non_ascii(const char *text);
 struct rev_info; /* in revision.h, it circularly uses enum cmit_fmt */
 extern char *reencode_commit_message(const struct commit *commit,
 				     const char **encoding_p);
 extern void get_commit_format(const char *arg, struct rev_info *);
 extern void format_commit_message(const struct commit *commit,
-				  const void *format, struct strbuf *sb,
-				  enum date_mode dmode);
-extern void pretty_print_commit(enum cmit_fmt fmt, const struct commit*,
-                                struct strbuf *,
-                                int abbrev, const char *subject,
-                                const char *after_subject, enum date_mode,
-				int need_8bit_cte);
+				  const char *format, struct strbuf *sb,
+				  const struct pretty_print_context *context);
+extern void pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit,
+				struct strbuf *sb,
+				const struct pretty_print_context *context);
 void pp_user_info(const char *what, enum cmit_fmt fmt, struct strbuf *sb,
 		   const char *line, enum date_mode dmode,
 		   const char *encoding);
@@ -122,13 +131,15 @@ struct commit_graft *read_graft_line(char *buf, int len);
 int register_commit_graft(struct commit_graft *, int);
 struct commit_graft *lookup_commit_graft(const unsigned char *sha1);
 
+const unsigned char *lookup_replace_object(const unsigned char *sha1);
+
 extern struct commit_list *get_merge_bases(struct commit *rev1, struct commit *rev2, int cleanup);
 extern struct commit_list *get_merge_bases_many(struct commit *one, int n, struct commit **twos, int cleanup);
 extern struct commit_list *get_octopus_merge_bases(struct commit_list *in);
 
 extern int register_shallow(const unsigned char *sha1);
 extern int unregister_shallow(const unsigned char *sha1);
-extern int write_shallow_commits(int fd, int use_pack_protocol);
+extern int write_shallow_commits(struct strbuf *out, int use_pack_protocol);
 extern int is_repository_shallow(void);
 extern struct commit_list *get_shallow_commits(struct object_array *heads,
 		int depth, int shallow_flag, int not_shallow_flag);
@@ -137,6 +148,8 @@ int is_descendant_of(struct commit *, struct commit_list *);
 int in_merge_bases(struct commit *, struct commit **, int);
 
 extern int interactive_add(int argc, const char **argv, const char *prefix);
+extern int run_add_interactive(const char *revision, const char *patch_mode,
+			       const char **pathspec);
 
 static inline int single_parent(struct commit *commit)
 {

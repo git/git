@@ -276,8 +276,13 @@ test_expect_success 'fail if the index has unresolved entries' '
 
 	test_must_fail git merge "$c5" &&
 	test_must_fail git merge "$c5" 2> out &&
-	grep "You are in the middle of a conflicted merge" out
-
+	grep "not possible because you have unmerged files" out &&
+	git add -u &&
+	test_must_fail git merge "$c5" 2> out &&
+	grep "You have not concluded your merge" out &&
+	rm -f .git/MERGE_HEAD &&
+	test_must_fail git merge "$c5" 2> out &&
+	grep "Your local changes to .* would be overwritten by merge." out
 '
 
 test_expect_success 'merge-recursive remove conflict' '

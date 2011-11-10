@@ -15,7 +15,7 @@ EOF
 test_expect_success 'setup svnrepo' '
 	for i in aa bb cc dd
 	do
-		svn mkdir -m $i --username $i "$svnrepo"/$i
+		svn_cmd mkdir -m $i --username $i "$svnrepo"/$i
 	done
 	'
 
@@ -52,13 +52,13 @@ test_expect_success 'continues to import once authors have been added' '
 	'
 
 test_expect_success 'authors-file against globs' '
-	svn mkdir -m globs --username aa \
+	svn_cmd mkdir -m globs --username aa \
 	  "$svnrepo"/aa/trunk "$svnrepo"/aa/branches "$svnrepo"/aa/tags &&
 	git svn clone --authors-file=svn-authors -s "$svnrepo"/aa aa-work &&
 	for i in bb ee cc
 	do
 		branch="aa/branches/$i"
-		svn mkdir -m "$branch" --username $i "$svnrepo/$branch"
+		svn_cmd mkdir -m "$branch" --username $i "$svnrepo/$branch"
 	done
 	'
 
@@ -90,5 +90,28 @@ test_expect_success 'fetch continues after authors-file is fixed' '
 		test 8 -eq "`tmp_config_get svn-remote.svn.tags-maxRev`"
 	)
 	'
+
+test_expect_success 'fresh clone with svn.authors-file in config' '
+	(
+		rm -r "$GIT_DIR" &&
+		test x = x"$(git config svn.authorsfile)" &&
+		HOME="`pwd`" &&
+		export HOME &&
+		test_config="$HOME"/.gitconfig &&
+		unset GIT_CONFIG_NOGLOBAL &&
+		unset GIT_DIR &&
+		unset GIT_CONFIG &&
+		git config --global \
+		  svn.authorsfile "$HOME"/svn-authors &&
+		test x"$HOME"/svn-authors = x"$(git config svn.authorsfile)" &&
+		git svn clone "$svnrepo" gitconfig.clone &&
+		cd gitconfig.clone &&
+		nr_ex=$(git log | grep "^Author:.*example.com" | wc -l) &&
+		nr_rev=$(git rev-list HEAD | wc -l) &&
+		test $nr_rev -eq $nr_ex
+	)
+'
+
+test_debug 'GIT_DIR=gitconfig.clone/.git git log'
 
 test_done

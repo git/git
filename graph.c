@@ -47,20 +47,6 @@ static void graph_show_strbuf(struct git_graph *graph, struct strbuf const *sb);
  * - Limit the number of columns, similar to the way gitk does.
  *   If we reach more than a specified number of columns, omit
  *   sections of some columns.
- *
- * - The output during the GRAPH_PRE_COMMIT and GRAPH_COLLAPSING states
- *   could be made more compact by printing horizontal lines, instead of
- *   long diagonal lines.  For example, during collapsing, something like
- *   this:          instead of this:
- *   | | | | |      | | | | |
- *   | |_|_|/       | | | |/
- *   |/| | |        | | |/|
- *   | | | |        | |/| |
- *                  |/| | |
- *                  | | | |
- *
- *   If there are several parallel diagonal lines, they will need to be
- *   replaced with horizontal lines on subsequent rows.
  */
 
 struct column {
@@ -239,7 +225,12 @@ struct git_graph *graph_init(struct rev_info *opt)
 	graph->num_columns = 0;
 	graph->num_new_columns = 0;
 	graph->mapping_size = 0;
-	graph->default_column_color = 0;
+	/*
+	 * Start the column color at the maximum value, since we'll
+	 * always increment it for the first commit we output.
+	 * This way we start at 0 for the first commit.
+	 */
+	graph->default_column_color = COLUMN_COLORS_MAX - 1;
 
 	/*
 	 * Allocate a reasonably large default number of columns
@@ -300,9 +291,10 @@ static int graph_is_interesting(struct git_graph *graph, struct commit *commit)
 	}
 
 	/*
-	 * Uninteresting and pruned commits won't be printed
+	 * Otherwise, use get_commit_action() to see if this commit is
+	 * interesting
 	 */
-	return (commit->object.flags & (UNINTERESTING | TREESAME)) ? 0 : 1;
+	return get_commit_action(graph->revs, commit) == commit_show;
 }
 
 static struct commit_list *next_interesting_parent(struct git_graph *graph,
@@ -513,11 +505,14 @@ static void graph_update_columns(struct git_graph *graph)
 			     parent;
 			     parent = next_interesting_parent(graph, parent)) {
 				/*
-				 * If this is a merge increment the current
+				 * If this is a merge, or the start of a new
+				 * childless column, increment the current
 				 * color.
 				 */
-				if (graph->num_parents > 1)
+				if (graph->num_parents > 1 ||
+				    !is_commit_in_columns) {
 					graph_increment_column_color(graph);
+				}
 				graph_insert_into_new_columns(graph,
 							      parent->item,
 							      &mapping_idx);
@@ -907,7 +902,7 @@ static struct column *find_new_column_by_commit(struct git_graph *graph,
 		if (graph->new_columns[i].commit == commit)
 			return &graph->new_columns[i];
 	}
-	return 0;
+	return NULL;
 }
 
 static void graph_output_post_merge_line(struct git_graph *graph, struct strbuf *sb)
@@ -982,6 +977,9 @@ static void graph_output_collapsing_line(struct git_graph *graph, struct strbuf 
 {
 	int i;
 	int *tmp_mapping;
+	short used_horizontal = 0;
+	int horizontal_edge = -1;
+	int horizontal_edge_target = -1;
 
 	/*
 	 * Clear out the new_mapping array
@@ -1019,6 +1017,23 @@ static void graph_output_collapsing_line(struct git_graph *graph, struct strbuf 
 			 * Move to the left by one
 			 */
 			graph->new_mapping[i - 1] = target;
+			/*
+			 * If there isn't already an edge moving horizontally
+			 * select this one.
+			 */
+			if (horizontal_edge == -1) {
+				int j;
+				horizontal_edge = i;
+				horizontal_edge_target = target;
+				/*
+				 * The variable target is the index of the graph
+				 * column, and therefore target*2+3 is the
+				 * actual screen column of the first horizontal
+				 * line.
+				 */
+				for (j = (target * 2)+3; j < (i - 2); j += 2)
+					graph->new_mapping[j] = target;
+			}
 		} else if (graph->new_mapping[i - 1] == target) {
 			/*
 			 * There is a branch line to our left
@@ -1039,10 +1054,21 @@ static void graph_output_collapsing_line(struct git_graph *graph, struct strbuf 
 			 *
 			 * The space just to the left of this
 			 * branch should always be empty.
+			 *
+			 * The branch to the left of that space
+			 * should be our eventual target.
 			 */
 			assert(graph->new_mapping[i - 1] > target);
 			assert(graph->new_mapping[i - 2] < 0);
+			assert(graph->new_mapping[i - 3] == target);
 			graph->new_mapping[i - 2] = target;
+			/*
+			 * Mark this branch as the horizontal edge to
+			 * prevent any other edges from moving
+			 * horizontally.
+			 */
+			if (horizontal_edge == -1)
+				horizontal_edge = i;
 		}
 	}
 
@@ -1061,8 +1087,23 @@ static void graph_output_collapsing_line(struct git_graph *graph, struct strbuf 
 			strbuf_addch(sb, ' ');
 		else if (target * 2 == i)
 			strbuf_write_column(sb, &graph->new_columns[target], '|');
-		else
+		else if (target == horizontal_edge_target &&
+			 i != horizontal_edge - 1) {
+				/*
+				 * Set the mappings for all but the
+				 * first segment to -1 so that they
+				 * won't continue into the next line.
+				 */
+				if (i != (target * 2)+3)
+					graph->new_mapping[i] = -1;
+				used_horizontal = 1;
+			strbuf_write_column(sb, &graph->new_columns[target], '_');
+		} else {
+			if (used_horizontal && i < horizontal_edge)
+				graph->new_mapping[i] = -1;
 			strbuf_write_column(sb, &graph->new_columns[target], '/');
+
+		}
 	}
 
 	graph_pad_horizontally(graph, sb, graph->mapping_size);

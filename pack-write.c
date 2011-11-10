@@ -17,8 +17,8 @@ static int sha1_compare(const void *_a, const void *_b)
  * the SHA1 hash of sorted object names. The objects array passed in
  * will be sorted by SHA1 on exit.
  */
-char *write_idx_file(char *index_name, struct pack_idx_entry **objects,
-		     int nr_objects, unsigned char *sha1)
+const char *write_idx_file(const char *index_name, struct pack_idx_entry **objects,
+			   int nr_objects, unsigned char *sha1)
 {
 	struct sha1file *f;
 	struct pack_idx_entry **sorted_by_sha, **list, **last;
@@ -51,7 +51,7 @@ char *write_idx_file(char *index_name, struct pack_idx_entry **objects,
 		fd = open(index_name, O_CREAT|O_EXCL|O_WRONLY, 0600);
 	}
 	if (fd < 0)
-		die("unable to create %s: %s", index_name, strerror(errno));
+		die_errno("unable to create '%s'", index_name);
 	f = sha1fd(fd, index_name);
 
 	/* if last object's offset is >= 2^31 we should use index V2 */
@@ -174,11 +174,11 @@ void fixup_pack_header_footer(int pack_fd,
 	git_SHA1_Init(&new_sha1_ctx);
 
 	if (lseek(pack_fd, 0, SEEK_SET) != 0)
-		die("Failed seeking to start of %s: %s", pack_name, strerror(errno));
+		die_errno("Failed seeking to start of '%s'", pack_name);
 	if (read_in_full(pack_fd, &hdr, sizeof(hdr)) != sizeof(hdr))
-		die("Unable to reread header of %s: %s", pack_name, strerror(errno));
+		die_errno("Unable to reread header of '%s'", pack_name);
 	if (lseek(pack_fd, 0, SEEK_SET) != 0)
-		die("Failed seeking to start of %s: %s", pack_name, strerror(errno));
+		die_errno("Failed seeking to start of '%s'", pack_name);
 	git_SHA1_Update(&old_sha1_ctx, &hdr, sizeof(hdr));
 	hdr.hdr_entries = htonl(object_count);
 	git_SHA1_Update(&new_sha1_ctx, &hdr, sizeof(hdr));
@@ -195,7 +195,7 @@ void fixup_pack_header_footer(int pack_fd,
 		if (!n)
 			break;
 		if (n < 0)
-			die("Failed to checksum %s: %s", pack_name, strerror(errno));
+			die_errno("Failed to checksum '%s'", pack_name);
 		git_SHA1_Update(&new_sha1_ctx, buf, n);
 
 		aligned_sz -= n;

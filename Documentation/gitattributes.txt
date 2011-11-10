@@ -88,9 +88,9 @@ Checking-out and checking-in
 
 These attributes affect how the contents stored in the
 repository are copied to the working tree files when commands
-such as 'git-checkout' and 'git-merge' run.  They also affect how
+such as 'git checkout' and 'git merge' run.  They also affect how
 git stores the contents you prepare in the working tree in the
-repository upon 'git-add' and 'git-commit'.
+repository upon 'git add' and 'git commit'.
 
 `crlf`
 ^^^^^^
@@ -148,16 +148,16 @@ an irreversible conversion.  The safety triggers to prevent such
 a conversion done to the files in the work tree, but there are a
 few exceptions.  Even though...
 
-- 'git-add' itself does not touch the files in the work tree, the
+- 'git add' itself does not touch the files in the work tree, the
   next checkout would, so the safety triggers;
 
-- 'git-apply' to update a text file with a patch does touch the files
+- 'git apply' to update a text file with a patch does touch the files
   in the work tree, but the operation is about text files and CRLF
   conversion is about fixing the line ending inconsistencies, so the
   safety does not trigger;
 
-- 'git-diff' itself does not touch the files in the work tree, it is
-  often run to inspect the changes you intend to next 'git-add'.  To
+- 'git diff' itself does not touch the files in the work tree, it is
+  often run to inspect the changes you intend to next 'git add'.  To
   catch potential problems early, safety triggers.
 
 
@@ -196,6 +196,25 @@ the user to use.  The key phrase here is "more convenient" and not
 intent is that if someone unsets the filter driver definition,
 or does not have the appropriate filter program, the project
 should still be usable.
+
+For example, in .gitattributes, you would assign the `filter`
+attribute for paths.
+
+------------------------
+*.c	filter=indent
+------------------------
+
+Then you would define a "filter.indent.clean" and "filter.indent.smudge"
+configuration in your .git/config to specify a pair of commands to
+modify the contents of C programs when the source files are checked
+in ("clean" is run) and checked out (no change is made because the
+command is "cat").
+
+------------------------
+[filter "indent"]
+	clean = indent
+	smudge = cat
+------------------------
 
 
 Interaction between checkin/checkout attributes
@@ -404,7 +423,7 @@ Performing a three-way merge
 
 The attribute `merge` affects how three versions of a file is
 merged when a file-level merge is necessary during `git merge`,
-and other programs such as `git revert` and `git cherry-pick`.
+and other commands such as `git revert` and `git cherry-pick`.
 
 Set::
 
@@ -506,6 +525,23 @@ When left unspecified, the driver itself is used for both
 internal merge and the final merge.
 
 
+`conflict-marker-size`
+^^^^^^^^^^^^^^^^^^^^^^
+
+This attribute controls the length of conflict markers left in
+the work tree file during a conflicted merge.  Only setting to
+the value to a positive integer has any meaningful effect.
+
+For example, this line in `.gitattributes` can be used to tell the merge
+machinery to leave much longer (instead of the usual 7-character-long)
+conflict markers when merging the file `Documentation/git-merge.txt`
+results in a conflict.
+
+------------------------
+Documentation/git-merge.txt	conflict-marker-size=32
+------------------------
+
+
 Checking whitespace errors
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -558,6 +594,16 @@ as those for the option `--pretty=format:` of linkgit:git-log[1],
 except that they need to be wrapped like this: `$Format:PLACEHOLDERS$`
 in the file.  E.g. the string `$Format:%H$` will be replaced by the
 commit hash.
+
+
+Packing objects
+~~~~~~~~~~~~~~~
+
+`delta`
+^^^^^^^
+
+Delta compression will not be attempted for blobs for paths with the
+attribute `delta` set to false.
 
 
 Viewing files in GUI tools

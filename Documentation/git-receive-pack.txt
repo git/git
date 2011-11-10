@@ -8,19 +8,19 @@ git-receive-pack - Receive what is pushed into the repository
 
 SYNOPSIS
 --------
-'git receive-pack' <directory>
+'git-receive-pack' <directory>
 
 DESCRIPTION
 -----------
-Invoked by 'git-send-pack' and updates the repository with the
+Invoked by 'git send-pack' and updates the repository with the
 information fed from the remote end.
 
 This command is usually not invoked directly by the end user.
-The UI for the protocol is on the 'git-send-pack' side, and the
+The UI for the protocol is on the 'git send-pack' side, and the
 program pair is meant to be used to push updates to remote
 repository.  For pull operations, see linkgit:git-fetch-pack[1].
 
-The command allows for creation and fast forwarding of sha1 refs
+The command allows for creation and fast-forwarding of sha1 refs
 (heads/tags) on the remote end (strictly speaking, it is the
 local end 'git-receive-pack' runs, but to the user who is sitting at
 the send-pack end, it is updating the remote.  Confused?)

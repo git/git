@@ -14,9 +14,9 @@ DESCRIPTION
 -----------
 Shows the commit logs.
 
-The command takes options applicable to the 'git-rev-list'
+The command takes options applicable to the 'git rev-list'
 command to control what is shown and how, and options applicable to
-the 'git-diff-*' commands to control how the changes
+the 'git diff-*' commands to control how the changes
 each commit introduces are shown.
 
 
@@ -37,8 +37,12 @@ include::diff-options.txt[]
 	and <until>, see "SPECIFYING REVISIONS" section in
 	linkgit:git-rev-parse[1].
 
---decorate::
-	Print out the ref names of any commits that are shown.
+--decorate[=short|full]::
+	Print out the ref names of any commits that are shown. If 'short' is
+	specified, the ref name prefixes 'refs/heads/', 'refs/tags/' and
+	'refs/remotes/' will not be printed. If 'full' is specified, the
+	full ref name (including prefix) will be printed. The default option
+	is 'short'.
 
 --source::
 	Print out the ref name given on the command line by which each
@@ -102,6 +106,17 @@ git log --follow builtin-rev-list.c::
 	Shows the commits that changed builtin-rev-list.c, including
 	those commits that occurred before the file was given its
 	present name.
+
+git log --branches --not --remotes=origin::
+
+	Shows all commits that are in any of local branches but not in
+	any of remote tracking branches for 'origin' (what you have that
+	origin doesn't).
+
+git log master --not --remotes=*/master::
+
+	Shows all commits that are in local master but not in any remote
+	repository master branches.
 
 Discussion
 ----------

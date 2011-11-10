@@ -34,7 +34,9 @@ static void *preload_thread(void *_data)
 	struct thread_data *p = _data;
 	struct index_state *index = p->index;
 	struct cache_entry **cep = index->cache + p->offset;
+	struct cache_def cache;
 
+	memset(&cache, 0, sizeof(cache));
 	nr = p->nr;
 	if (nr + p->offset > index->cache_nr)
 		nr = index->cache_nr - p->offset;
@@ -45,9 +47,13 @@ static void *preload_thread(void *_data)
 
 		if (ce_stage(ce))
 			continue;
+		if (S_ISGITLINK(ce->ce_mode))
+			continue;
 		if (ce_uptodate(ce))
 			continue;
 		if (!ce_path_match(ce, p->pathspec))
+			continue;
+		if (threaded_has_symlink_leading_path(&cache, ce->name, ce_namelen(ce)))
 			continue;
 		if (lstat(ce->name, &st))
 			continue;
@@ -72,7 +78,7 @@ static void preload_index(struct index_state *index, const char **pathspec)
 	if (threads > MAX_PARALLEL)
 		threads = MAX_PARALLEL;
 	offset = 0;
-	work = (index->cache_nr + threads - 1) / threads;
+	work = DIV_ROUND_UP(index->cache_nr, threads);
 	for (i = 0; i < threads; i++) {
 		struct thread_data *p = data+i;
 		p->index = index;

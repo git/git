@@ -329,7 +329,8 @@ static int update_one(struct cache_tree *it,
 			entlen = pathlen - baselen;
 		}
 		if (mode != S_IFGITLINK && !missing_ok && !has_sha1_file(sha1))
-			return error("invalid object %s", sha1_to_hex(sha1));
+			return error("invalid object %06o %s for '%.*s'",
+				mode, sha1_to_hex(sha1), entlen+baselen, path);
 
 		if (ce->ce_flags & CE_REMOVE)
 			continue; /* entry being removed */
@@ -514,6 +515,8 @@ struct cache_tree *cache_tree_read(const char *buffer, unsigned long size)
 
 static struct cache_tree *cache_tree_find(struct cache_tree *it, const char *path)
 {
+	if (!it)
+		return NULL;
 	while (*path) {
 		const char *slash;
 		struct cache_tree_sub *sub;
@@ -538,28 +541,32 @@ static struct cache_tree *cache_tree_find(struct cache_tree *it, const char *pat
 	return it;
 }
 
-int write_cache_as_tree(unsigned char *sha1, int missing_ok, const char *prefix)
+int write_cache_as_tree(unsigned char *sha1, int flags, const char *prefix)
 {
 	int entries, was_valid, newfd;
+	struct lock_file *lock_file;
 
 	/*
 	 * We can't free this memory, it becomes part of a linked list
 	 * parsed atexit()
 	 */
-	struct lock_file *lock_file = xcalloc(1, sizeof(struct lock_file));
+	lock_file = xcalloc(1, sizeof(struct lock_file));
 
 	newfd = hold_locked_index(lock_file, 1);
 
 	entries = read_cache();
 	if (entries < 0)
 		return WRITE_TREE_UNREADABLE_INDEX;
+	if (flags & WRITE_TREE_IGNORE_CACHE_TREE)
+		cache_tree_free(&(active_cache_tree));
 
 	if (!active_cache_tree)
 		active_cache_tree = cache_tree();
 
 	was_valid = cache_tree_fully_valid(active_cache_tree);
-
 	if (!was_valid) {
+		int missing_ok = flags & WRITE_TREE_MISSING_OK;
+
 		if (cache_tree_update(active_cache_tree,
 				      active_cache, active_nr,
 				      missing_ok, 0) < 0)
@@ -624,4 +631,36 @@ void prime_cache_tree(struct cache_tree **it, struct tree *tree)
 	cache_tree_free(it);
 	*it = cache_tree();
 	prime_cache_tree_rec(*it, tree);
+}
+
+/*
+ * find the cache_tree that corresponds to the current level without
+ * exploding the full path into textual form.  The root of the
+ * cache tree is given as "root", and our current level is "info".
+ * (1) When at root level, info->prev is NULL, so it is "root" itself.
+ * (2) Otherwise, find the cache_tree that corresponds to one level
+ *     above us, and find ourselves in there.
+ */
+static struct cache_tree *find_cache_tree_from_traversal(struct cache_tree *root,
+							 struct traverse_info *info)
+{
+	struct cache_tree *our_parent;
+
+	if (!info->prev)
+		return root;
+	our_parent = find_cache_tree_from_traversal(root, info->prev);
+	return cache_tree_find(our_parent, info->name.path);
+}
+
+int cache_tree_matches_traversal(struct cache_tree *root,
+				 struct name_entry *ent,
+				 struct traverse_info *info)
+{
+	struct cache_tree *it;
+
+	it = find_cache_tree_from_traversal(root, info);
+	it = cache_tree_find(it, ent->path);
+	if (it && it->entry_count > 0 && !hashcmp(ent->sha1, it->sha1))
+		return it->entry_count;
+	return 0;
 }

@@ -119,7 +119,9 @@ test_expect_success 'bundle clone with nonexistent HEAD' '
 test_expect_success 'clone empty repository' '
 	cd "$D" &&
 	mkdir empty &&
-	(cd empty && git init) &&
+	(cd empty &&
+	 git init &&
+	 git config receive.denyCurrentBranch warn) &&
 	git clone empty empty-clone &&
 	test_tick &&
 	(cd empty-clone

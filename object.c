@@ -45,13 +45,14 @@ int type_from_string(const char *str)
 
 static unsigned int hash_obj(struct object *obj, unsigned int n)
 {
-	unsigned int hash = *(unsigned int *)obj->sha1;
+	unsigned int hash;
+	memcpy(&hash, obj->sha1, sizeof(unsigned int));
 	return hash % n;
 }
 
 static void insert_obj_hash(struct object *obj, struct object **hash, unsigned int size)
 {
-	int j = hash_obj(obj, size);
+	unsigned int j = hash_obj(obj, size);
 
 	while (hash[j]) {
 		j++;
@@ -61,16 +62,16 @@ static void insert_obj_hash(struct object *obj, struct object **hash, unsigned i
 	hash[j] = obj;
 }
 
-static int hashtable_index(const unsigned char *sha1)
+static unsigned int hashtable_index(const unsigned char *sha1)
 {
 	unsigned int i;
 	memcpy(&i, sha1, sizeof(unsigned int));
-	return (int)(i % obj_hash_size);
+	return i % obj_hash_size;
 }
 
 struct object *lookup_object(const unsigned char *sha1)
 {
-	int i;
+	unsigned int i;
 	struct object *obj;
 
 	if (!obj_hash)
@@ -187,17 +188,18 @@ struct object *parse_object(const unsigned char *sha1)
 	unsigned long size;
 	enum object_type type;
 	int eaten;
-	void *buffer = read_sha1_file(sha1, &type, &size);
+	const unsigned char *repl;
+	void *buffer = read_sha1_file_repl(sha1, &type, &size, &repl);
 
 	if (buffer) {
 		struct object *obj;
-		if (check_sha1_signature(sha1, buffer, size, typename(type)) < 0) {
+		if (check_sha1_signature(repl, buffer, size, typename(type)) < 0) {
 			free(buffer);
-			error("sha1 mismatch %s\n", sha1_to_hex(sha1));
+			error("sha1 mismatch %s\n", sha1_to_hex(repl));
 			return NULL;
 		}
 
-		obj = parse_object_buffer(sha1, type, size, buffer, &eaten);
+		obj = parse_object_buffer(repl, type, size, buffer, &eaten);
 		if (!eaten)
 			free(buffer);
 		return obj;
@@ -213,27 +215,6 @@ struct object_list *object_list_insert(struct object *item,
         new_list->next = *list_p;
         *list_p = new_list;
         return new_list;
-}
-
-void object_list_append(struct object *item,
-			struct object_list **list_p)
-{
-	while (*list_p) {
-		list_p = &((*list_p)->next);
-	}
-	*list_p = xmalloc(sizeof(struct object_list));
-	(*list_p)->next = NULL;
-	(*list_p)->item = item;
-}
-
-unsigned object_list_length(struct object_list *list)
-{
-	unsigned ret = 0;
-	while (list) {
-		list = list->next;
-		ret++;
-	}
-	return ret;
 }
 
 int object_list_contains(struct object_list *list, struct object *obj)

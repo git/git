@@ -25,7 +25,7 @@ for_each_name () {
 	for name in \
 	    Name "Name and a${LF}LF" "Name and an${HT}HT" "Name${DQ}" \
 	    "$FN$HT$GN" "$FN$LF$GN" "$FN $GN" "$FN$GN" "$FN$DQ$GN" \
-	    "With SP in it"
+	    "With SP in it" "$FN/file"
 	do
 		eval "$1"
 	done
@@ -33,6 +33,7 @@ for_each_name () {
 
 test_expect_success setup '
 
+	mkdir "$FN" &&
 	for_each_name "echo initial >\"\$name\""
 	git add . &&
 	git commit -q -m Initial &&
@@ -54,6 +55,7 @@ With SP in it
 "\346\277\261\351\207\216\n\347\264\224"
 "\346\277\261\351\207\216 \347\264\224"
 "\346\277\261\351\207\216\"\347\264\224"
+"\346\277\261\351\207\216/file"
 "\346\277\261\351\207\216\347\264\224"
 EOF
 
@@ -67,6 +69,7 @@ With SP in it
 "濱野\n純"
 濱野 純
 "濱野\"純"
+濱野/file
 濱野純
 EOF
 
@@ -93,6 +96,13 @@ test_expect_success 'check fully quoted output from diff-index' '
 test_expect_success 'check fully quoted output from diff-tree' '
 
 	git diff --name-only HEAD^ HEAD >current &&
+	test_cmp expect.quoted current
+
+'
+
+test_expect_success 'check fully quoted output from ls-tree' '
+
+	git ls-tree --name-only -r HEAD >current &&
 	test_cmp expect.quoted current
 
 '
@@ -126,6 +136,13 @@ test_expect_success 'check fully quoted output from diff-index' '
 test_expect_success 'check fully quoted output from diff-tree' '
 
 	git diff --name-only HEAD^ HEAD >current &&
+	test_cmp expect.raw current
+
+'
+
+test_expect_success 'check fully quoted output from ls-tree' '
+
+	git ls-tree --name-only -r HEAD >current &&
 	test_cmp expect.raw current
 
 '

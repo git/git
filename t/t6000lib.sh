@@ -1,3 +1,5 @@
+: included from 6002 and others
+
 [ -d .git/refs/tags ] || mkdir -p .git/refs/tags
 
 :> sed.script

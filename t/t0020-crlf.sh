@@ -4,21 +4,8 @@ test_description='CRLF conversion'
 
 . ./test-lib.sh
 
-q_to_nul () {
-	perl -pe 'y/Q/\000/'
-}
-
-q_to_cr () {
-	tr Q '\015'
-}
-
-append_cr () {
-	sed -e 's/$/Q/' | tr Q '\015'
-}
-
-remove_cr () {
-	tr '\015' Q <"$1" | grep Q >/dev/null &&
-	tr '\015' Q <"$1" | sed -ne 's/Q$//p'
+has_cr() {
+	tr '\015' Q <"$1" | grep Q >/dev/null
 }
 
 test_expect_success setup '
@@ -156,7 +143,7 @@ test_expect_success 'checkout with autocrlf=true' '
 
 	for f in one dir/two
 	do
-		remove_cr "$f" >tmp && mv -f tmp $f &&
+		remove_cr <"$f" >tmp && mv -f tmp $f &&
 		git update-index -- $f || {
 			echo "Eh? $f"
 			false
@@ -180,7 +167,7 @@ test_expect_success 'checkout with autocrlf=input' '
 
 	for f in one dir/two
 	do
-		if remove_cr "$f" >/dev/null
+		if has_cr "$f"
 		then
 			echo "Eh? $f"
 			false
@@ -245,7 +232,7 @@ test_expect_success 'apply patch (autocrlf=true)' '
 	git read-tree --reset -u HEAD &&
 
 	git apply patch.file &&
-	test "$patched" = "`remove_cr one | git hash-object --stdin`" || {
+	test "$patched" = "`remove_cr <one | git hash-object --stdin`" || {
 		echo "Eh?  apply without index"
 		false
 	}
@@ -272,7 +259,7 @@ test_expect_success 'apply patch --index (autocrlf=true)' '
 
 	git apply --index patch.file &&
 	test "$patched" = `git rev-parse :one` &&
-	test "$patched" = "`remove_cr one | git hash-object --stdin`" || {
+	test "$patched" = "`remove_cr <one | git hash-object --stdin`" || {
 		echo "Eh?  apply with --index"
 		false
 	}
@@ -285,7 +272,7 @@ test_expect_success '.gitattributes says two is binary' '
 	git config core.autocrlf true &&
 	git read-tree --reset -u HEAD &&
 
-	if remove_cr dir/two >/dev/null
+	if has_cr dir/two
 	then
 		echo "Huh?"
 		false
@@ -293,7 +280,7 @@ test_expect_success '.gitattributes says two is binary' '
 		: happy
 	fi &&
 
-	if remove_cr one >/dev/null
+	if has_cr one
 	then
 		: happy
 	else
@@ -301,7 +288,7 @@ test_expect_success '.gitattributes says two is binary' '
 		false
 	fi &&
 
-	if remove_cr three >/dev/null
+	if has_cr three
 	then
 		echo "Huh?"
 		false
@@ -316,7 +303,7 @@ test_expect_success '.gitattributes says two is input' '
 	echo "two crlf=input" >.gitattributes &&
 	git read-tree --reset -u HEAD &&
 
-	if remove_cr dir/two >/dev/null
+	if has_cr dir/two
 	then
 		echo "Huh?"
 		false
@@ -331,7 +318,7 @@ test_expect_success '.gitattributes says two and three are text' '
 	echo "t* crlf" >.gitattributes &&
 	git read-tree --reset -u HEAD &&
 
-	if remove_cr dir/two >/dev/null
+	if has_cr dir/two
 	then
 		: happy
 	else
@@ -339,7 +326,7 @@ test_expect_success '.gitattributes says two and three are text' '
 		false
 	fi &&
 
-	if remove_cr three >/dev/null
+	if has_cr three
 	then
 		: happy
 	else
@@ -357,14 +344,14 @@ test_expect_success 'in-tree .gitattributes (1)' '
 	rm -rf tmp one dir .gitattributes patch.file three &&
 	git read-tree --reset -u HEAD &&
 
-	if remove_cr one >/dev/null
+	if has_cr one
 	then
 		echo "Eh? one should not have CRLF"
 		false
 	else
 		: happy
 	fi &&
-	remove_cr three >/dev/null || {
+	has_cr three || {
 		echo "Eh? three should still have CRLF"
 		false
 	}
@@ -376,14 +363,14 @@ test_expect_success 'in-tree .gitattributes (2)' '
 	git read-tree --reset HEAD &&
 	git checkout-index -f -q -u -a &&
 
-	if remove_cr one >/dev/null
+	if has_cr one
 	then
 		echo "Eh? one should not have CRLF"
 		false
 	else
 		: happy
 	fi &&
-	remove_cr three >/dev/null || {
+	has_cr three || {
 		echo "Eh? three should still have CRLF"
 		false
 	}
@@ -396,14 +383,14 @@ test_expect_success 'in-tree .gitattributes (3)' '
 	git checkout-index -u .gitattributes &&
 	git checkout-index -u one dir/two three &&
 
-	if remove_cr one >/dev/null
+	if has_cr one
 	then
 		echo "Eh? one should not have CRLF"
 		false
 	else
 		: happy
 	fi &&
-	remove_cr three >/dev/null || {
+	has_cr three || {
 		echo "Eh? three should still have CRLF"
 		false
 	}
@@ -416,14 +403,14 @@ test_expect_success 'in-tree .gitattributes (4)' '
 	git checkout-index -u one dir/two three &&
 	git checkout-index -u .gitattributes &&
 
-	if remove_cr one >/dev/null
+	if has_cr one
 	then
 		echo "Eh? one should not have CRLF"
 		false
 	else
 		: happy
 	fi &&
-	remove_cr three >/dev/null || {
+	has_cr three || {
 		echo "Eh? three should still have CRLF"
 		false
 	}
@@ -456,7 +443,7 @@ test_expect_success 'checkout when deleting .gitattributes' '
 
 	git checkout master~1 &&
 	git checkout master &&
-	remove_cr .file2 >/dev/null
+	has_cr .file2
 
 '
 

@@ -17,7 +17,7 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-If <branch> is specified, 'git-rebase' will perform an automatic
+If <branch> is specified, 'git rebase' will perform an automatic
 `git checkout <branch>` before doing anything else.  Otherwise
 it remains on the current branch.
 
@@ -170,8 +170,8 @@ This is useful if F and G were flawed in some way, or should not be
 part of topicA.  Note that the argument to --onto and the <upstream>
 parameter can be any valid commit-ish.
 
-In case of conflict, 'git-rebase' will stop at the first problematic commit
-and leave conflict markers in the tree.  You can use 'git-diff' to locate
+In case of conflict, 'git rebase' will stop at the first problematic commit
+and leave conflict markers in the tree.  You can use 'git diff' to locate
 the markers (<<<<<<) and make edits to resolve the conflict.  For each
 file you edit, you need to tell git that the conflict has been resolved,
 typically this would be done with
@@ -187,7 +187,7 @@ desired resolution, you can continue the rebasing process with
     git rebase --continue
 
 
-Alternatively, you can undo the 'git-rebase' with
+Alternatively, you can undo the 'git rebase' with
 
 
     git rebase --abort
@@ -228,14 +228,27 @@ OPTIONS
 	Use merging strategies to rebase.  When the recursive (default) merge
 	strategy is used, this allows rebase to be aware of renames on the
 	upstream side.
++
+Note that a rebase merge works by replaying each commit from the working
+branch on top of the <upstream> branch.  Because of this, when a merge
+conflict happens, the side reported as 'ours' is the so-far rebased
+series, starting with <upstream>, and 'theirs' is the working branch.  In
+other words, the sides are swapped.
 
 -s <strategy>::
 --strategy=<strategy>::
-	Use the given merge strategy; can be supplied more than
-	once to specify them in the order they should be tried.
-	If there is no `-s` option, a built-in list of strategies
-	is used instead ('git-merge-recursive' when merging a single
-	head, 'git-merge-octopus' otherwise).  This implies --merge.
+	Use the given merge strategy.
+	If there is no `-s` option 'git merge-recursive' is used
+	instead.  This implies --merge.
++
+Because 'git rebase' replays each commit from the working branch
+on top of the <upstream> branch using the given strategy, using
+the 'ours' strategy simply discards all patches from the <branch>,
+which makes little sense.
+
+-q::
+--quiet::
+	Be quiet. Implies --no-stat.
 
 -v::
 --verbose::
@@ -265,14 +278,15 @@ OPTIONS
 	exit with the message "Current branch is up to date" in such a
 	situation.
 
+--ignore-whitespace::
 --whitespace=<option>::
-	This flag is passed to the 'git-apply' program
+	These flag are passed to the 'git apply' program
 	(see linkgit:git-apply[1]) that applies the patch.
 	Incompatible with the --interactive option.
 
 --committer-date-is-author-date::
 --ignore-date::
-	These flags are passed to 'git-am' to easily change the dates
+	These flags are passed to 'git am' to easily change the dates
 	of the rebased commits (see linkgit:git-am[1]).
 
 -i::
@@ -294,12 +308,22 @@ OPTIONS
 	root commits will be rewritten to have <newbase> as parent
 	instead.
 
+--autosquash::
+	When the commit log message begins with "squash! ..." (or
+	"fixup! ..."), and there is a commit whose title begins with
+	the same ..., automatically modify the todo list of rebase -i
+	so that the commit marked for squashing comes right after the
+	commit to be modified, and change the action of the moved
+	commit from `pick` to `squash` (or `fixup`).
++
+This option is only valid when '--interactive' option is used.
+
 include::merge-strategies.txt[]
 
 NOTES
 -----
 
-You should understand the implications of using 'git-rebase' on a
+You should understand the implications of using 'git rebase' on a
 repository that you share.  See also RECOVERING FROM UPSTREAM REBASE
 below.
 
@@ -355,27 +379,33 @@ pick fa1afe1 The oneline of the next commit
 ...
 -------------------------------------------
 
-The oneline descriptions are purely for your pleasure; 'git-rebase' will
+The oneline descriptions are purely for your pleasure; 'git rebase' will
 not look at them but at the commit names ("deadbee" and "fa1afe1" in this
 example), so do not delete or edit the names.
 
 By replacing the command "pick" with the command "edit", you can tell
-'git-rebase' to stop after applying that commit, so that you can edit
+'git rebase' to stop after applying that commit, so that you can edit
 the files and/or the commit message, amend the commit, and continue
 rebasing.
 
-If you want to fold two or more commits into one, replace the command
-"pick" with "squash" for the second and subsequent commit.  If the
-commits had different authors, it will attribute the squashed commit to
-the author of the first commit.
+If you just want to edit the commit message for a commit, replace the
+command "pick" with the command "reword".
 
-In both cases, or when a "pick" does not succeed (because of merge
-errors), the loop will stop to let you fix things, and you can continue
-the loop with `git rebase --continue`.
+If you want to fold two or more commits into one, replace the command
+"pick" for the second and subsequent commits with "squash" or "fixup".
+If the commits had different authors, the folded commit will be
+attributed to the author of the first commit.  The suggested commit
+message for the folded commit is the concatenation of the commit
+messages of the first commit and of those with the "squash" command,
+but omits the commit messages of commits with the "fixup" command.
+
+'git rebase' will stop when "pick" has been replaced with "edit" or
+when a command fails due to merge errors. When you are done editing
+and/or resolving conflicts you can continue with `git rebase --continue`.
 
 For example, if you want to reorder the last 5 commits, such that what
 was HEAD~4 becomes the new HEAD. To achieve that, you would call
-'git-rebase' like this:
+'git rebase' like this:
 
 ----------------------
 $ git rebase -i HEAD~5
@@ -405,7 +435,7 @@ SPLITTING COMMITS
 -----------------
 
 In interactive mode, you can mark commits with the action "edit".  However,
-this does not necessarily mean that 'git-rebase' expects the result of this
+this does not necessarily mean that 'git rebase' expects the result of this
 edit to be exactly one commit.  Indeed, you can undo the commit, or you can
 add other commits.  This can be used to split a commit into two:
 
@@ -421,7 +451,7 @@ add other commits.  This can be used to split a commit into two:
 
 - Now add the changes to the index that you want to have in the first
   commit.  You can use `git add` (possibly interactively) or
-  'git-gui' (or both) to do that.
+  'git gui' (or both) to do that.
 
 - Commit the now-current index with whatever commit message is appropriate
   now.
@@ -432,7 +462,7 @@ add other commits.  This can be used to split a commit into two:
 
 If you are not absolutely sure that the intermediate revisions are
 consistent (they compile, pass the testsuite, etc.) you should use
-'git-stash' to stash away the not-yet-committed changes
+'git stash' to stash away the not-yet-committed changes
 after each commit, test, and amend the commit if fixes are necessary.
 
 
@@ -495,8 +525,8 @@ Easy case: The changes are literally the same.::
 Hard case: The changes are not the same.::
 
 	This happens if the 'subsystem' rebase had conflicts, or used
-	`\--interactive` to omit, edit, or squash commits; or if the
-	upstream used one of `commit \--amend`, `reset`, or
+	`\--interactive` to omit, edit, squash, or fixup commits; or
+	if the upstream used one of `commit \--amend`, `reset`, or
 	`filter-branch`.
 
 
@@ -507,7 +537,7 @@ Only works if the changes (patch IDs based on the diff contents) on
 'subsystem' are literally the same before and after the rebase
 'subsystem' did.
 
-In that case, the fix is easy because 'git-rebase' knows to skip
+In that case, the fix is easy because 'git rebase' knows to skip
 changes that are already present in the new upstream.  So if you say
 (assuming you're on 'topic')
 ------------
@@ -534,12 +564,12 @@ NOTE: While an "easy case recovery" sometimes appears to be successful
       example, a commit that was removed via `git rebase
       \--interactive` will be **resurrected**!
 
-The idea is to manually tell 'git-rebase' "where the old 'subsystem'
+The idea is to manually tell 'git rebase' "where the old 'subsystem'
 ended and your 'topic' began", that is, what the old merge-base
 between them was.  You will have to find a way to name the last commit
 of the old 'subsystem', for example:
 
-* With the 'subsystem' reflog: after 'git-fetch', the old tip of
+* With the 'subsystem' reflog: after 'git fetch', the old tip of
   'subsystem' is at `subsystem@\{1}`.  Subsequent fetches will
   increase the number.  (See linkgit:git-reflog[1].)
 

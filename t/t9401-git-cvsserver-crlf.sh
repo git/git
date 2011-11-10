@@ -11,14 +11,6 @@ repository using cvs CLI client via git-cvsserver server'
 
 . ./test-lib.sh
 
-q_to_nul () {
-    perl -pe 'y/Q/\000/'
-}
-
-q_to_cr () {
-    tr Q '\015'
-}
-
 marked_as () {
     foundEntry="$(grep "^/$2/" "$1/CVS/Entries")"
     if [ x"$foundEntry" = x"" ] ; then
@@ -57,7 +49,7 @@ then
     say 'skipping git-cvsserver tests, perl not available'
     test_done
 fi
-perl -e 'use DBI; use DBD::SQLite' >/dev/null 2>&1 || {
+"$PERL_PATH" -e 'use DBI; use DBD::SQLite' >/dev/null 2>&1 || {
     say 'skipping git-cvsserver tests, Perl SQLite interface unavailable'
     test_done
 }

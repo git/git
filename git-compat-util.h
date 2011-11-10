@@ -7,7 +7,7 @@
 /*
  * See if our compiler is known to support flexible array members.
  */
-#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)
+#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L) && (!defined(__SUNPRO_C) || (__SUNPRO_C > 0x580))
 # define FLEX_ARRAY /* empty */
 #elif defined(__GNUC__)
 # if (__GNUC__ >= 3)
@@ -26,6 +26,7 @@
 #endif
 
 #define ARRAY_SIZE(x) (sizeof(x)/sizeof(x[0]))
+#define bitsizeof(x)  (CHAR_BIT * sizeof(x))
 
 #ifdef __GNUC__
 #define TYPEOF(x) (__typeof__(x))
@@ -33,13 +34,28 @@
 #define TYPEOF(x)
 #endif
 
-#define MSB(x, bits) ((x) & TYPEOF(x)(~0ULL << (sizeof(x) * 8 - (bits))))
+#define MSB(x, bits) ((x) & TYPEOF(x)(~0ULL << (bitsizeof(x) - (bits))))
 #define HAS_MULTI_BITS(i)  ((i) & ((i) - 1))  /* checks if an integer has more than 1 bit set */
+
+#define DIV_ROUND_UP(n,d) (((n) + (d) - 1) / (d))
 
 /* Approximation of the length of the decimal representation of this type. */
 #define decimal_length(x)	((int)(sizeof(x) * 2.56 + 0.5) + 1)
 
-#if !defined(__APPLE__) && !defined(__FreeBSD__)  && !defined(__USLC__) && !defined(_M_UNIX)
+#if defined(__sun__)
+ /*
+  * On Solaris, when _XOPEN_EXTENDED is set, its header file
+  * forces the programs to be XPG4v2, defeating any _XOPEN_SOURCE
+  * setting to say we are XPG5 or XPG6.  Also on Solaris,
+  * XPG6 programs must be compiled with a c99 compiler, while
+  * non XPG6 programs must be compiled with a pre-c99 compiler.
+  */
+# if __STDC_VERSION__ - 0 >= 199901L
+# define _XOPEN_SOURCE 600
+# else
+# define _XOPEN_SOURCE 500
+# endif
+#elif !defined(__APPLE__) && !defined(__FreeBSD__)  && !defined(__USLC__) && !defined(_M_UNIX) && !defined(sgi)
 #define _XOPEN_SOURCE 600 /* glibc2 and AIX 5.3L need 500, OpenBSD needs 600 for S_ISLNK() */
 #define _XOPEN_SOURCE_EXTENDED 1 /* AIX 5.3L needs this */
 #endif
@@ -47,6 +63,13 @@
 #define _GNU_SOURCE 1
 #define _BSD_SOURCE 1
 #define _NETBSD_SOURCE 1
+#define _SGI_SOURCE 1
+
+#ifdef WIN32 /* Both MinGW and MSVC */
+#define WIN32_LEAN_AND_MEAN  /* stops windows.h including winsock.h */
+#include <winsock2.h>
+#include <windows.h>
+#endif
 
 #include <unistd.h>
 #include <stdio.h>
@@ -73,6 +96,7 @@
 #include <sys/poll.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
+#include <termios.h>
 #ifndef NO_SYS_SELECT_H
 #include <sys/select.h>
 #endif
@@ -96,6 +120,16 @@
 /* pull in Windows compatibility stuff */
 #include "compat/mingw.h"
 #endif	/* __MINGW32__ */
+#ifdef _MSC_VER
+#include "compat/msvc.h"
+#endif
+
+#ifndef NO_LIBGEN_H
+#include <libgen.h>
+#else
+#define basename gitbasename
+extern char *gitbasename(char *);
+#endif
 
 #ifndef NO_ICONV
 #include <iconv.h>
@@ -143,23 +177,32 @@
 
 #ifdef __GNUC__
 #define NORETURN __attribute__((__noreturn__))
+#define NORETURN_PTR __attribute__((__noreturn__))
+#elif defined(_MSC_VER)
+#define NORETURN __declspec(noreturn)
+#define NORETURN_PTR
 #else
 #define NORETURN
+#define NORETURN_PTR
 #ifndef __attribute__
 #define __attribute__(x)
 #endif
 #endif
 
+#include "compat/bswap.h"
+
 /* General helper functions */
-extern void usage(const char *err) NORETURN;
-extern void die(const char *err, ...) NORETURN __attribute__((format (printf, 1, 2)));
+extern NORETURN void usage(const char *err);
+extern NORETURN void usagef(const char *err, ...) __attribute__((format (printf, 1, 2)));
+extern NORETURN void die(const char *err, ...) __attribute__((format (printf, 1, 2)));
+extern NORETURN void die_errno(const char *err, ...) __attribute__((format (printf, 1, 2)));
 extern int error(const char *err, ...) __attribute__((format (printf, 1, 2)));
 extern void warning(const char *err, ...) __attribute__((format (printf, 1, 2)));
 
-extern void set_die_routine(void (*routine)(const char *err, va_list params) NORETURN);
+extern void set_die_routine(NORETURN_PTR void (*routine)(const char *err, va_list params));
 
 extern int prefixcmp(const char *str, const char *prefix);
-extern time_t tm_to_time_t(const struct tm *tm);
+extern int suffixcmp(const char *str, const char *suffix);
 
 static inline const char *skip_prefix(const char *str, const char *prefix)
 {
@@ -232,6 +275,11 @@ extern int gitsetenv(const char *, const char *, int);
 extern char *gitmkdtemp(char *);
 #endif
 
+#ifdef NO_MKSTEMPS
+#define mkstemps gitmkstemps
+extern int gitmkstemps(char *, int);
+#endif
+
 #ifdef NO_UNSETENV
 #define unsetenv gitunsetenv
 extern void gitunsetenv(const char *);
@@ -300,6 +348,7 @@ extern void release_pack_memory(size_t, int);
 
 extern char *xstrdup(const char *str);
 extern void *xmalloc(size_t size);
+extern void *xmallocz(size_t size);
 extern void *xmemdupz(const void *data, size_t len);
 extern char *xstrndup(const char *str, size_t len);
 extern void *xrealloc(void *ptr, size_t size);
@@ -414,5 +463,11 @@ void git_qsort(void *base, size_t nmemb, size_t size,
 #else
 #define fstat_is_reliable() 1
 #endif
+
+/*
+ * Preserves errno, prints a message, but gives no warning for ENOENT.
+ * Always returns the return value of unlink(2).
+ */
+int unlink_or_warn(const char *path);
 
 #endif

@@ -7,7 +7,7 @@ test_description='git svn info'
 . ./lib-git-svn.sh
 
 # Tested with: svn, version 1.4.4 (r25188)
-v=`svn --version | sed -n -e 's/^svn, version \(1\.[0-9]*\.[0-9]*\).*$/\1/p'`
+v=`svn_cmd --version | sed -n -e 's/^svn, version \(1\.[0-9]*\.[0-9]*\).*$/\1/p'`
 case $v in
 1.[45].*)
 	;;
@@ -31,7 +31,7 @@ ptouch() {
 			my $atime = $mtime;
 			utime $atime, $mtime, $git_file;
 		}
-	' "`svn info $2 | grep '^Text Last Updated:'`" "$1"
+	' "`svn_cmd info $2 | grep '^Text Last Updated:'`" "$1"
 }
 
 quoted_svnrepo="$(echo $svnrepo | sed 's/ /%20/')"
@@ -45,14 +45,14 @@ test_expect_success 'setup repository and import' '
 		mkdir directory &&
 		touch directory/.placeholder &&
 		ln -s directory symlink-directory &&
-		svn import -m "initial" . "$svnrepo" &&
+		svn_cmd import -m "initial" . "$svnrepo" &&
 	cd .. &&
-	svn co "$svnrepo" svnwc &&
+	svn_cmd co "$svnrepo" svnwc &&
 	cd svnwc &&
 		echo foo > foo &&
-		svn add foo &&
-		svn commit -m "change outside directory" &&
-		svn update &&
+		svn_cmd add foo &&
+		svn_cmd commit -m "change outside directory" &&
+		svn_cmd update &&
 	cd .. &&
 	mkdir gitwc &&
 	cd gitwc &&
@@ -143,7 +143,7 @@ test_expect_success 'info added-file' "
 	cp gitwc/added-file svnwc/added-file &&
 	ptouch gitwc/added-file svnwc/added-file &&
 	cd svnwc &&
-		svn add added-file > /dev/null &&
+		svn_cmd add added-file > /dev/null &&
 	cd .. &&
 	(cd svnwc; svn info added-file) > expected.info-added-file &&
 	(cd gitwc; git svn info added-file) > actual.info-added-file &&
@@ -160,7 +160,7 @@ test_expect_success 'info added-directory' "
 	ptouch gitwc/added-directory svnwc/added-directory &&
 	touch gitwc/added-directory/.placeholder &&
 	cd svnwc &&
-		svn add added-directory > /dev/null &&
+		svn_cmd add added-directory > /dev/null &&
 	cd .. &&
 	cd gitwc &&
 		git add added-directory &&
@@ -184,7 +184,7 @@ test_expect_success 'info added-symlink-file' "
 	cd .. &&
 	cd svnwc &&
 		ln -s added-file added-symlink-file &&
-		svn add added-symlink-file > /dev/null &&
+		svn_cmd add added-symlink-file > /dev/null &&
 	cd .. &&
 	ptouch gitwc/added-symlink-file svnwc/added-symlink-file &&
 	(cd svnwc; svn info added-symlink-file) \
@@ -207,7 +207,7 @@ test_expect_success 'info added-symlink-directory' "
 	cd .. &&
 	cd svnwc &&
 		ln -s added-directory added-symlink-directory &&
-		svn add added-symlink-directory > /dev/null &&
+		svn_cmd add added-symlink-directory > /dev/null &&
 	cd .. &&
 	ptouch gitwc/added-symlink-directory svnwc/added-symlink-directory &&
 	(cd svnwc; svn info added-symlink-directory) \
@@ -233,7 +233,7 @@ test_expect_success 'info deleted-file' "
 		git rm -f file > /dev/null &&
 	cd .. &&
 	cd svnwc &&
-		svn rm --force file > /dev/null &&
+		svn_cmd rm --force file > /dev/null &&
 	cd .. &&
 	(cd svnwc; svn info file) |
 	sed -e 's/^\(Text Last Updated:\).*/\1 TEXT-LAST-UPDATED-STRING/' \
@@ -254,7 +254,7 @@ test_expect_success 'info deleted-directory' "
 		git rm -r -f directory > /dev/null &&
 	cd .. &&
 	cd svnwc &&
-		svn rm --force directory > /dev/null &&
+		svn_cmd rm --force directory > /dev/null &&
 	cd .. &&
 	(cd svnwc; svn info directory) |
 	sed -e 's/^\(Text Last Updated:\).*/\1 TEXT-LAST-UPDATED-STRING/' \
@@ -275,7 +275,7 @@ test_expect_success 'info deleted-symlink-file' "
 		git rm -f symlink-file > /dev/null &&
 	cd .. &&
 	cd svnwc &&
-		svn rm --force symlink-file > /dev/null &&
+		svn_cmd rm --force symlink-file > /dev/null &&
 	cd .. &&
 	(cd svnwc; svn info symlink-file) |
 	sed -e 's/^\(Text Last Updated:\).*/\1 TEXT-LAST-UPDATED-STRING/' \
@@ -297,7 +297,7 @@ test_expect_success 'info deleted-symlink-directory' "
 		git rm -f symlink-directory > /dev/null &&
 	cd .. &&
 	cd svnwc &&
-		svn rm --force symlink-directory > /dev/null &&
+		svn_cmd rm --force symlink-directory > /dev/null &&
 	cd .. &&
 	(cd svnwc; svn info symlink-directory) |
 	sed -e 's/^\(Text Last Updated:\).*/\1 TEXT-LAST-UPDATED-STRING/' \

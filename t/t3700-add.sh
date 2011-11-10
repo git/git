@@ -221,6 +221,19 @@ test_expect_success POSIXPERM 'git add (add.ignore-errors = false)' '
 	test_must_fail git add --verbose . &&
 	! ( git ls-files foo1 | grep foo1 )
 '
+rm -f foo2
+
+test_expect_success POSIXPERM '--no-ignore-errors overrides config' '
+       git config add.ignore-errors 1 &&
+       git reset --hard &&
+       date >foo1 &&
+       date >foo2 &&
+       chmod 0 foo2 &&
+       test_must_fail git add --verbose --no-ignore-errors . &&
+       ! ( git ls-files foo1 | grep foo1 ) &&
+       git config add.ignore-errors 0
+'
+rm -f foo2
 
 test_expect_success BSLASHPSPEC "git add 'fo\\[ou\\]bar' ignores foobar" '
 	git reset --hard &&
@@ -228,6 +241,18 @@ test_expect_success BSLASHPSPEC "git add 'fo\\[ou\\]bar' ignores foobar" '
 	git add '\''fo\[ou\]bar'\'' &&
 	git ls-files fo\[ou\]bar | fgrep fo\[ou\]bar &&
 	! ( git ls-files foobar | grep foobar )
+'
+
+test_expect_success 'git add to resolve conflicts on otherwise ignored path' '
+	git reset --hard &&
+	H=$(git rev-parse :1/2/a) &&
+	(
+		echo "100644 $H 1	track-this"
+		echo "100644 $H 3	track-this"
+	) | git update-index --index-info &&
+	echo track-this >>.gitignore &&
+	echo resolved >track-this &&
+	git add track-this
 '
 
 test_done

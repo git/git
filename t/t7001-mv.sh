@@ -189,6 +189,18 @@ test_expect_success 'absolute pathname outside should fail' '(
 
 )'
 
+test_expect_success 'git mv to move multiple sources into a directory' '
+	rm -fr .git && git init &&
+	mkdir dir other &&
+	>dir/a.txt &&
+	>dir/b.txt &&
+	git add dir/?.txt &&
+	git mv dir/a.txt dir/b.txt other &&
+	git ls-files >actual &&
+	{ echo other/a.txt; echo other/b.txt; } >expect &&
+	test_cmp expect actual
+'
+
 test_expect_success 'git mv should not change sha1 of moved cache entry' '
 
 	rm -fr .git &&

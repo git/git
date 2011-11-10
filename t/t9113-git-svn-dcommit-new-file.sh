@@ -15,7 +15,7 @@ test_description='git svn dcommit new files over svn:// test'
 require_svnserve
 
 test_expect_success 'start tracking an empty repo' '
-	svn mkdir -m "empty dir" "$svnrepo"/empty-dir &&
+	svn_cmd mkdir -m "empty dir" "$svnrepo"/empty-dir &&
 	echo "[general]" > "$rawsvnrepo"/conf/svnserve.conf &&
 	echo anon-access = write >> "$rawsvnrepo"/conf/svnserve.conf &&
 	start_svnserve &&

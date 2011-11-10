@@ -468,4 +468,30 @@ test_expect_success 'detect misconfigured autosetuprebase (no value)' '
 	git config --unset branch.autosetuprebase
 '
 
+test_expect_success 'attempt to delete a branch without base and unmerged to HEAD' '
+	git checkout my9 &&
+	git config --unset branch.my8.merge &&
+	test_must_fail git branch -d my8
+'
+
+test_expect_success 'attempt to delete a branch merged to its base' '
+	# we are on my9 which is the initial commit; traditionally
+	# we would not have allowed deleting my8 that is not merged
+	# to my9, but it is set to track master that already has my8
+	git config branch.my8.merge refs/heads/master &&
+	git branch -d my8
+'
+
+test_expect_success 'attempt to delete a branch merged to its base' '
+	git checkout master &&
+	echo Third >>A &&
+	git commit -m "Third commit" A &&
+	git branch -t my10 my9 &&
+	git branch -f my10 HEAD^ &&
+	# we are on master which is at the third commit, and my10
+	# is behind us, so traditionally we would have allowed deleting
+	# it; but my10 is set to track my9 that is further behind.
+	test_must_fail git branch -d my10
+'
+
 test_done

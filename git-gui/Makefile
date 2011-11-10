@@ -7,7 +7,7 @@ all::
 # TCL_PATH must be vaild for this to work.
 #
 
-GIT-VERSION-FILE: .FORCE-GIT-VERSION-FILE
+GIT-VERSION-FILE: FORCE
 	@$(SHELL_PATH) ./GIT-VERSION-GEN
 -include GIT-VERSION-FILE
 
@@ -270,7 +270,7 @@ TRACK_VARS = \
 	GITGUI_MACOSXAPP=$(GITGUI_MACOSXAPP) \
 #end TRACK_VARS
 
-GIT-GUI-VARS: .FORCE-GIT-GUI-VARS
+GIT-GUI-VARS: FORCE
 	@VARS='$(TRACK_VARS)'; \
 	if test x"$$VARS" != x"`cat $@ 2>/dev/null`" ; then \
 		echo 1>&2 "    * new locations or Tcl/Tk interpreter"; \
@@ -340,5 +340,4 @@ ifdef GITGUI_WINDOWS_WRAPPER
 endif
 
 .PHONY: all install uninstall dist-version clean
-.PHONY: .FORCE-GIT-VERSION-FILE
-.PHONY: .FORCE-GIT-GUI-VARS
+.PHONY: FORCE

@@ -185,7 +185,7 @@ sub repository {
 
 		if ($dir) {
 			$dir =~ m#^/# or $dir = $opts{Directory} . '/' . $dir;
-			$opts{Repository} = $dir;
+			$opts{Repository} = abs_path($dir);
 
 			# If --git-dir went ok, this shouldn't die either.
 			my $prefix = $search->command_oneline('rev-parse', '--show-prefix');
@@ -204,14 +204,14 @@ sub repository {
 			$dir = $opts{Directory};
 
 			unless (-d "$dir/refs" and -d "$dir/objects" and -e "$dir/HEAD") {
-				# Mimick git-rev-parse --git-dir error message:
+				# Mimic git-rev-parse --git-dir error message:
 				throw Error::Simple("fatal: Not a git repository: $dir");
 			}
 			my $search = Git->repository(Repository => $dir);
 			try {
 				$search->command('symbolic-ref', 'HEAD');
 			} catch Git::Error::Command with {
-				# Mimick git-rev-parse --git-dir error message:
+				# Mimic git-rev-parse --git-dir error message:
 				throw Error::Simple("fatal: Not a git repository: $dir");
 			}
 
@@ -1280,6 +1280,8 @@ sub _cmd_exec {
 	my ($self, @args) = @_;
 	if ($self) {
 		$self->repo_path() and $ENV{'GIT_DIR'} = $self->repo_path();
+		$self->repo_path() and $self->wc_path()
+			and $ENV{'GIT_WORK_TREE'} = $self->wc_path();
 		$self->wc_path() and chdir($self->wc_path());
 		$self->wc_subdir() and chdir($self->wc_subdir());
 	}

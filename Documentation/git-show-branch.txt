@@ -8,17 +8,20 @@ git-show-branch - Show branches and their commits
 SYNOPSIS
 --------
 [verse]
-'git show-branch' [--all] [--remotes] [--topo-order] [--current]
+'git show-branch' [-a|--all] [-r|--remotes] [--topo-order | --date-order]
+		[--current] [--color | --no-color] [--sparse]
 		[--more=<n> | --list | --independent | --merge-base]
-		[--no-name | --sha1-name] [--topics] [<rev> | <glob>]...
+		[--no-name | --sha1-name] [--topics]
+		[<rev> | <glob>]...
+
 'git show-branch' (-g|--reflog)[=<n>[,<base>]] [--list] [<ref>]
 
 DESCRIPTION
 -----------
 
 Shows the commit ancestry graph starting from the commits named
-with <rev>s or <globs>s (or all refs under $GIT_DIR/refs/heads
-and/or $GIT_DIR/refs/tags) semi-visually.
+with <rev>s or <globs>s (or all refs under refs/heads
+and/or refs/tags) semi-visually.
 
 It cannot show more than 29 branches and commits at a time.
 
@@ -34,8 +37,8 @@ OPTIONS
 
 <glob>::
 	A glob pattern that matches branch or tag names under
-	$GIT_DIR/refs.  For example, if you have many topic
-	branches under $GIT_DIR/refs/heads/topic, giving
+	refs/.  For example, if you have many topic
+	branches under refs/heads/topic, giving
 	`topic/*` would show all of them.
 
 -r::
@@ -57,6 +60,11 @@ OPTIONS
         appear in topological order (i.e., descendant commits
         are shown before their parents).
 
+--date-order::
+	This option is similar to '--topo-order' in the sense that no
+	parent comes before all of its children, but otherwise commits
+	are ordered according to their commit date.
+
 --sparse::
 	By default, the output omits merges that are reachable
 	from only one tip being shown.  This option makes them
@@ -74,9 +82,11 @@ OPTIONS
 	Synonym to `--more=-1`
 
 --merge-base::
-	Instead of showing the commit list, just act like the
-	'git-merge-base -a' command, except that it can accept
-	more than two heads.
+	Instead of showing the commit list, determine possible
+	merge bases for the specified commits. All merge bases
+	will be contained in all specified commits. This is
+	different from how linkgit:git-merge-base[1] handles
+	the case of three or more commits.
 
 --independent::
 	Among the <reference>s given, display only the ones that
@@ -106,6 +116,14 @@ OPTIONS
 	that entry.  <base> can be specified as count or date.
 	When no explicit <ref> parameter is given, it defaults to the
 	current branch (or `HEAD` if it is detached).
+
+--color::
+	Color the status sign (one of these: `*` `!` `+` `-`) of each commit
+	corresponding to the branch it's in.
+
+--no-color::
+	Turn off colored output, even when the configuration file gives the
+	default to color output.
 
 Note that --more, --list, --independent and --merge-base options
 are mutually exclusive.
@@ -158,7 +176,7 @@ EXAMPLE
 -------
 
 If you keep your primary branches immediately under
-`$GIT_DIR/refs/heads`, and topic branches in subdirectories of
+`refs/heads`, and topic branches in subdirectories of
 it, having the following in the configuration file may help:
 
 ------------

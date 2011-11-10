@@ -185,7 +185,7 @@ static void match_trees(const unsigned char *hash1,
  * tree object by replacing it with another tree "hash2".
  */
 static int splice_tree(const unsigned char *hash1,
-		       char *prefix,
+		       const char *prefix,
 		       const unsigned char *hash2,
 		       unsigned char *result)
 {
@@ -264,6 +264,13 @@ void shift_tree(const unsigned char *hash1,
 	char *del_prefix;
 	int add_score, del_score;
 
+	/*
+	 * NEEDSWORK: this limits the recursion depth to hardcoded
+	 * value '2' to avoid excessive overhead.
+	 */
+	if (!depth_limit)
+		depth_limit = 2;
+
 	add_score = del_score = score_trees(hash1, hash2);
 	add_prefix = xcalloc(1, 1);
 	del_prefix = xcalloc(1, 1);
@@ -300,4 +307,64 @@ void shift_tree(const unsigned char *hash1,
 		return;
 
 	splice_tree(hash1, add_prefix, hash2, shifted);
+}
+
+/*
+ * The user says the trees will be shifted by this much.
+ * Unfortunately we cannot fundamentally tell which one to
+ * be prefixed, as recursive merge can work in either direction.
+ */
+void shift_tree_by(const unsigned char *hash1,
+		   const unsigned char *hash2,
+		   unsigned char *shifted,
+		   const char *shift_prefix)
+{
+	unsigned char sub1[20], sub2[20];
+	unsigned mode1, mode2;
+	unsigned candidate = 0;
+
+	/* Can hash2 be a tree at shift_prefix in tree hash1? */
+	if (!get_tree_entry(hash1, shift_prefix, sub1, &mode1) &&
+	    S_ISDIR(mode1))
+		candidate |= 1;
+
+	/* Can hash1 be a tree at shift_prefix in tree hash2? */
+	if (!get_tree_entry(hash2, shift_prefix, sub2, &mode2) &&
+	    S_ISDIR(mode2))
+		candidate |= 2;
+
+	if (candidate == 3) {
+		/* Both are plausible -- we need to evaluate the score */
+		int best_score = score_trees(hash1, hash2);
+		int score;
+
+		candidate = 0;
+		score = score_trees(sub1, hash2);
+		if (score > best_score) {
+			candidate = 1;
+			best_score = score;
+		}
+		score = score_trees(sub2, hash1);
+		if (score > best_score)
+			candidate = 2;
+	}
+
+	if (!candidate) {
+		/* Neither is plausible -- do not shift */
+		hashcpy(shifted, hash2);
+		return;
+	}
+
+	if (candidate == 1)
+		/*
+		 * shift tree2 down by adding shift_prefix above it
+		 * to match tree1.
+		 */
+		splice_tree(hash1, shift_prefix, hash2, shifted);
+	else
+		/*
+		 * shift tree2 up by removing shift_prefix from it
+		 * to match tree1.
+		 */
+		hashcpy(shifted, sub2);
 }

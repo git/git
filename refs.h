@@ -24,11 +24,14 @@ extern int for_each_ref_in(const char *, each_ref_fn, void *);
 extern int for_each_tag_ref(each_ref_fn, void *);
 extern int for_each_branch_ref(each_ref_fn, void *);
 extern int for_each_remote_ref(each_ref_fn, void *);
+extern int for_each_replace_ref(each_ref_fn, void *);
+extern int for_each_glob_ref(each_ref_fn, const char *pattern, void *);
+extern int for_each_glob_ref_in(each_ref_fn, const char *pattern, const char* prefix, void *);
 
 /* can be used to learn about broken ref and symref */
 extern int for_each_rawref(each_ref_fn, void *);
 
-extern void warn_dangling_symref(const char *msg_fmt, const char *refname);
+extern void warn_dangling_symref(FILE *fp, const char *msg_fmt, const char *refname);
 
 /*
  * Extra refs will be listed by for_each_ref() before any actual refs
@@ -80,7 +83,7 @@ extern int for_each_reflog(each_ref_fn, void *);
 #define CHECK_REF_FORMAT_WILDCARD (-3)
 extern int check_ref_format(const char *target);
 
-extern const char *prettify_ref(const struct ref *ref);
+extern const char *prettify_refname(const char *refname);
 extern char *shorten_unambiguous_ref(const char *ref, int strict);
 
 /** rename ref, return 0 on success **/

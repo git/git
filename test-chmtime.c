@@ -1,7 +1,7 @@
 /*
  * This program can either change modification time of the given
  * file(s) or just print it. The program does not change atime nor
- * ctime (their values are explicitely preserved).
+ * ctime (their values are explicitly preserved).
  *
  * The mtime can be changed to an absolute value:
  *
@@ -86,6 +86,15 @@ int main(int argc, const char *argv[])
 			        argv[i], strerror(errno));
 			return -1;
 		}
+
+#ifdef WIN32
+		if (!(sb.st_mode & S_IWUSR) &&
+				chmod(argv[i], sb.st_mode | S_IWUSR)) {
+			fprintf(stderr, "Could not make user-writable %s: %s",
+				argv[i], strerror(errno));
+			return -1;
+		}
+#endif
 
 		utb.actime = sb.st_atime;
 		utb.modtime = set_eq ? set_time : sb.st_mtime + set_time;

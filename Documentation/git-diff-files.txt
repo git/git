@@ -15,7 +15,7 @@ DESCRIPTION
 Compares the files in the working tree and the index.  When paths
 are specified, compares only those named paths.  Otherwise all
 entries in the index are compared.  The output format is the
-same as for 'git-diff-index' and 'git-diff-tree'.
+same as for 'git diff-index' and 'git diff-tree'.
 
 OPTIONS
 -------
@@ -43,8 +43,7 @@ omit diff output for unmerged entries and just show "Unmerged".
 -q::
 	Remain silent even on nonexistent files
 
-Output format
--------------
+
 include::diff-format.txt[]
 
 

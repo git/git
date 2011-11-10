@@ -286,6 +286,7 @@ static struct ref_list *get_ref_dir(const char *base, struct ref_list *list)
 }
 
 struct warn_if_dangling_data {
+	FILE *fp;
 	const char *refname;
 	const char *msg_fmt;
 };
@@ -304,13 +305,13 @@ static int warn_if_dangling_symref(const char *refname, const unsigned char *sha
 	if (!resolves_to || strcmp(resolves_to, d->refname))
 		return 0;
 
-	printf(d->msg_fmt, refname);
+	fprintf(d->fp, d->msg_fmt, refname);
 	return 0;
 }
 
-void warn_dangling_symref(const char *msg_fmt, const char *refname)
+void warn_dangling_symref(FILE *fp, const char *msg_fmt, const char *refname)
 {
-	struct warn_if_dangling_data data = { refname, msg_fmt };
+	struct warn_if_dangling_data data = { fp, refname, msg_fmt };
 	for_each_rawref(warn_if_dangling_symref, &data);
 }
 
@@ -518,6 +519,13 @@ const char *resolve_ref(const char *ref, unsigned char *sha1, int reading, int *
 	return ref;
 }
 
+/* The argument to filter_refs */
+struct ref_filter {
+	const char *pattern;
+	each_ref_fn *fn;
+	void *cb_data;
+};
+
 int read_ref(const char *ref, unsigned char *sha1)
 {
 	if (resolve_ref(ref, sha1, 1, NULL))
@@ -531,9 +539,10 @@ static int do_one_ref(const char *base, each_ref_fn fn, int trim,
 {
 	if (strncmp(base, entry->name, trim))
 		return 0;
+	/* Is this a "negative ref" that represents a deleted ref? */
+	if (is_null_sha1(entry->sha1))
+		return 0;
 	if (!(flags & DO_FOR_EACH_INCLUDE_BROKEN)) {
-		if (is_null_sha1(entry->sha1))
-			return 0;
 		if (!has_sha1_file(entry->sha1)) {
 			error("%s does not point to a valid object!", entry->name);
 			return 0;
@@ -541,6 +550,15 @@ static int do_one_ref(const char *base, each_ref_fn fn, int trim,
 	}
 	current_ref = entry;
 	return fn(entry->name + trim, entry->sha1, entry->flag, cb_data);
+}
+
+static int filter_refs(const char *ref, const unsigned char *sha, int flags,
+	void *data)
+{
+	struct ref_filter *filter = (struct ref_filter *)data;
+	if (fnmatch(filter->pattern, ref, 0))
+		return 0;
+	return filter->fn(ref, sha, flags, filter->cb_data);
 }
 
 int peel_ref(const char *ref, unsigned char *sha1)
@@ -667,6 +685,48 @@ int for_each_remote_ref(each_ref_fn fn, void *cb_data)
 	return for_each_ref_in("refs/remotes/", fn, cb_data);
 }
 
+int for_each_replace_ref(each_ref_fn fn, void *cb_data)
+{
+	return do_for_each_ref("refs/replace/", fn, 13, 0, cb_data);
+}
+
+int for_each_glob_ref_in(each_ref_fn fn, const char *pattern,
+	const char *prefix, void *cb_data)
+{
+	struct strbuf real_pattern = STRBUF_INIT;
+	struct ref_filter filter;
+	const char *has_glob_specials;
+	int ret;
+
+	if (!prefix && prefixcmp(pattern, "refs/"))
+		strbuf_addstr(&real_pattern, "refs/");
+	else if (prefix)
+		strbuf_addstr(&real_pattern, prefix);
+	strbuf_addstr(&real_pattern, pattern);
+
+	has_glob_specials = strpbrk(pattern, "?*[");
+	if (!has_glob_specials) {
+		/* Append implied '/' '*' if not present. */
+		if (real_pattern.buf[real_pattern.len - 1] != '/')
+			strbuf_addch(&real_pattern, '/');
+		/* No need to check for '*', there is none. */
+		strbuf_addch(&real_pattern, '*');
+	}
+
+	filter.pattern = real_pattern.buf;
+	filter.fn = fn;
+	filter.cb_data = cb_data;
+	ret = for_each_ref(filter_refs, &filter);
+
+	strbuf_release(&real_pattern);
+	return ret;
+}
+
+int for_each_glob_ref(each_ref_fn fn, const char *pattern, void *cb_data)
+{
+	return for_each_glob_ref_in(fn, pattern, NULL, cb_data);
+}
+
 int for_each_rawref(each_ref_fn fn, void *cb_data)
 {
 	return do_for_each_ref("refs/", fn, 0,
@@ -682,12 +742,13 @@ int for_each_rawref(each_ref_fn fn, void *cb_data)
  * - it has ASCII control character, "~", "^", ":" or SP, anywhere, or
  * - it ends with a "/".
  * - it ends with ".lock"
+ * - it contains a "\" (backslash)
  */
 
 static inline int bad_ref_char(int ch)
 {
 	if (((unsigned) ch) <= ' ' ||
-	    ch == '~' || ch == '^' || ch == ':')
+	    ch == '~' || ch == '^' || ch == ':' || ch == '\\')
 		return 1;
 	/* 2.13 Pattern Matching Notation */
 	if (ch == '?' || ch == '[') /* Unsupported */
@@ -750,9 +811,8 @@ int check_ref_format(const char *ref)
 	}
 }
 
-const char *prettify_ref(const struct ref *ref)
+const char *prettify_refname(const char *name)
 {
-	const char *name = ref->name;
 	return name + (
 		!prefixcmp(name, "refs/heads/") ? 11 :
 		!prefixcmp(name, "refs/tags/") ? 10 :
@@ -820,7 +880,7 @@ static int remove_empty_directories(const char *file)
 	strbuf_init(&path, 20);
 	strbuf_addstr(&path, file);
 
-	result = remove_dir_recursively(&path, 1);
+	result = remove_dir_recursively(&path, REMOVE_DIR_EMPTY_ONLY);
 
 	strbuf_release(&path);
 
@@ -893,8 +953,10 @@ static struct ref_lock *lock_ref_sha1_basic(const char *ref, const unsigned char
 	 * name is a proper prefix of our refname.
 	 */
 	if (missing &&
-            !is_refname_available(ref, NULL, get_packed_refs(), 0))
+	     !is_refname_available(ref, NULL, get_packed_refs(), 0)) {
+		last_errno = ENOTDIR;
 		goto error_return;
+	}
 
 	lock->lk = xcalloc(1, sizeof(struct lock_file));
 
@@ -964,8 +1026,10 @@ static int repack_without_ref(const char *refname)
 	if (!found)
 		return 0;
 	fd = hold_lock_file_for_update(&packlock, git_path("packed-refs"), 0);
-	if (fd < 0)
+	if (fd < 0) {
+		unable_to_lock_error(git_path("packed-refs"), errno);
 		return error("cannot delete '%s' from packed refs", refname);
+	}
 
 	for (list = packed_ref_list; list; list = list->next) {
 		char line[PATH_MAX + 100];
@@ -1002,12 +1066,10 @@ int delete_ref(const char *refname, const unsigned char *sha1, int delopt)
 		} else {
 			path = git_path("%s", refname);
 		}
-		err = unlink(path);
-		if (err && errno != ENOENT) {
+		err = unlink_or_warn(path);
+		if (err && errno != ENOENT)
 			ret = 1;
-			error("unlink(%s) failed: %s",
-			      path, strerror(errno));
-		}
+
 		if (!(delopt & REF_NODEREF))
 			lock->lk->filename[i] = '.';
 	}
@@ -1017,10 +1079,7 @@ int delete_ref(const char *refname, const unsigned char *sha1, int delopt)
 	 */
 	ret |= repack_without_ref(refname);
 
-	err = unlink(git_path("logs/%s", lock->ref_name));
-	if (err && errno != ENOENT)
-		warning("unlink(%s) failed: %s",
-			git_path("logs/%s", lock->ref_name), strerror(errno));
+	unlink_or_warn(git_path("logs/%s", lock->ref_name));
 	invalidate_cached_refs();
 	unlock_ref(lock);
 	return ret;
@@ -1381,7 +1440,7 @@ int create_symref(const char *ref_target, const char *refs_heads_master,
 	if (adjust_shared_perm(git_HEAD)) {
 		error("Unable to fix permissions on %s", lockpath);
 	error_unlink_return:
-		unlink(lockpath);
+		unlink_or_warn(lockpath);
 	error_free_return:
 		free(git_HEAD);
 		return -1;
@@ -1421,7 +1480,7 @@ int read_ref_at(const char *ref, unsigned long at_time, int cnt, unsigned char *
 	logfile = git_path("logs/%s", ref);
 	logfd = open(logfile, O_RDONLY, 0);
 	if (logfd < 0)
-		die("Unable to read log %s: %s", logfile, strerror(errno));
+		die_errno("Unable to read log '%s'", logfile);
 	fstat(logfd, &st);
 	if (!st.st_size)
 		die("Log %s is empty.", logfile);
@@ -1528,8 +1587,10 @@ int for_each_recent_reflog_ent(const char *ref, each_reflog_ent_fn fn, long ofs,
 		if (fstat(fileno(logfp), &statbuf) ||
 		    statbuf.st_size < ofs ||
 		    fseek(logfp, -ofs, SEEK_END) ||
-		    fgets(buf, sizeof(buf), logfp))
+		    fgets(buf, sizeof(buf), logfp)) {
+			fclose(logfp);
 			return -1;
+		}
 	}
 
 	while (fgets(buf, sizeof(buf), logfp)) {

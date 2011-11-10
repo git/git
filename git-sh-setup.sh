@@ -11,9 +11,46 @@
 # exporting it.
 unset CDPATH
 
+git_broken_path_fix () {
+	case ":$PATH:" in
+	*:$1:*) : ok ;;
+	*)
+		PATH=$(
+			SANE_TOOL_PATH="$1"
+			IFS=: path= sep=
+			set x $PATH
+			shift
+			for elem
+			do
+				case "$SANE_TOOL_PATH:$elem" in
+				(?*:/bin | ?*:/usr/bin)
+					path="$path$sep$SANE_TOOL_PATH"
+					sep=:
+					SANE_TOOL_PATH=
+				esac
+				path="$path$sep$elem"
+				sep=:
+			done
+			echo "$path"
+		)
+		;;
+	esac
+}
+
+# @@BROKEN_PATH_FIX@@
+
 die() {
 	echo >&2 "$@"
 	exit 1
+}
+
+GIT_QUIET=
+
+say () {
+	if test -z "$GIT_QUIET"
+	then
+		printf '%s\n' "$*"
+	fi
 }
 
 if test -n "$OPTIONS_SPEC"; then
@@ -62,19 +99,20 @@ set_reflog_action() {
 }
 
 git_editor() {
-	: "${GIT_EDITOR:=$(git config core.editor)}"
-	: "${GIT_EDITOR:=${VISUAL:-${EDITOR}}}"
-	case "$GIT_EDITOR,$TERM" in
-	,dumb)
-		echo >&2 "No editor specified in GIT_EDITOR, core.editor, VISUAL,"
-		echo >&2 "or EDITOR. Tried to fall back to vi but terminal is dumb."
-		echo >&2 "Please set one of these variables to an appropriate"
-		echo >&2 "editor or run $0 with options that will not cause an"
-		echo >&2 "editor to be invoked (e.g., -m or -F for git-commit)."
-		exit 1
-		;;
-	esac
-	eval "${GIT_EDITOR:=vi}" '"$@"'
+	if test -z "${GIT_EDITOR:+set}"
+	then
+		GIT_EDITOR="$(git var GIT_EDITOR)" || return $?
+	fi
+
+	eval "$GIT_EDITOR" '"$@"'
+}
+
+sane_grep () {
+	GREP_OPTIONS= LC_ALL=C grep "$@"
+}
+
+sane_egrep () {
+	GREP_OPTIONS= LC_ALL=C egrep "$@"
 }
 
 is_bare_repository () {
@@ -82,20 +120,11 @@ is_bare_repository () {
 }
 
 cd_to_toplevel () {
-	cdup=$(git rev-parse --show-cdup)
-	if test ! -z "$cdup"
-	then
-		# The "-P" option says to follow "physical" directory
-		# structure instead of following symbolic links.  When cdup is
-		# "../", this means following the ".." entry in the current
-		# directory instead textually removing a symlink path element
-		# from the PWD shell variable.  The "-P" behavior is more
-		# consistent with the C-style chdir used by most of Git.
-		cd -P "$cdup" || {
-			echo >&2 "Cannot chdir to $cdup, the toplevel of the working tree"
-			exit 1
-		}
-	fi
+	cdup=$(git rev-parse --show-toplevel) &&
+	cd "$cdup" || {
+		echo >&2 "Cannot chdir to $cdup, the toplevel of the working tree"
+		exit 1
+	}
 }
 
 require_work_tree () {

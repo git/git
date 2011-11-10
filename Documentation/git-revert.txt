@@ -20,8 +20,8 @@ effect of an earlier commit (often a faulty one).  If you want to
 throw away all uncommitted changes in your working directory, you
 should see linkgit:git-reset[1], particularly the '--hard' option.  If
 you want to extract specific files as they were in another commit, you
-should see linkgit:git-checkout[1], specifically the 'git checkout
-<commit> -- <filename>' syntax.  Take care with these alternatives as
+should see linkgit:git-checkout[1], specifically the `git checkout
+<commit> -- <filename>` syntax.  Take care with these alternatives as
 both will discard uncommitted changes in your working directory.
 
 OPTIONS
@@ -33,7 +33,7 @@ OPTIONS
 
 -e::
 --edit::
-	With this option, 'git-revert' will let you edit the commit
+	With this option, 'git revert' will let you edit the commit
 	message prior to committing the revert. This is the default if
 	you run the command from a terminal.
 
@@ -54,7 +54,7 @@ See the link:howto/revert-a-faulty-merge.txt[revert-a-faulty-merge How-To] for
 more details.
 
 --no-edit::
-	With this option, 'git-revert' will not start the commit
+	With this option, 'git revert' will not start the commit
 	message editor.
 
 -n::

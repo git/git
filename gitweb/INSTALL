@@ -123,6 +123,15 @@ GITWEB_CONFIG file:
 	$feature{'snapshot'}{'default'} = ['zip', 'tgz'];
 	$feature{'snapshot'}{'override'} = 1;
 
+If you allow overriding for the snapshot feature, you can specify which
+snapshot formats are globally disabled. You can also add any command line
+options you want (such as setting the compression level). For instance,
+you can disable Zip compressed snapshots and set GZip to run at level 6 by
+adding the following lines to your $GITWEB_CONFIG:
+
+	$known_snapshot_formats{'zip'}{'disabled'} = 1;
+	$known_snapshot_formats{'tgz'}{'compressor'} = ['gzip','-6'];
+
 
 Gitweb repositories
 -------------------

@@ -72,7 +72,7 @@ void sq_quote_argv(struct strbuf *dst, const char** argv, size_t maxlen)
 	}
 }
 
-char *sq_dequote_step(char *arg, char **next)
+static char *sq_dequote_step(char *arg, char **next)
 {
 	char *dst = arg;
 	char *src = arg;
@@ -213,7 +213,7 @@ static size_t quote_c_style_counted(const char *name, ssize_t maxlen,
 		int ch;
 
 		len = next_quote_pos(p, maxlen);
-		if (len == maxlen || !p[len])
+		if (len == maxlen || (maxlen < 0 && !p[len]))
 			break;
 
 		if (!no_dq && p == name)
@@ -223,6 +223,8 @@ static size_t quote_c_style_counted(const char *name, ssize_t maxlen,
 		EMIT('\\');
 		p += len;
 		ch = (unsigned char)*p++;
+		if (maxlen >= 0)
+			maxlen -= len + 1;
 		if (sq_lookup[ch] >= ' ') {
 			EMIT(sq_lookup[ch]);
 		} else {
@@ -272,8 +274,8 @@ void write_name_quoted(const char *name, FILE *fp, int terminator)
 	fputc(terminator, fp);
 }
 
-extern void write_name_quotedpfx(const char *pfx, size_t pfxlen,
-                                 const char *name, FILE *fp, int terminator)
+void write_name_quotedpfx(const char *pfx, size_t pfxlen,
+			  const char *name, FILE *fp, int terminator)
 {
 	int needquote = 0;
 

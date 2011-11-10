@@ -1,4 +1,5 @@
 #include "git-compat-util.h"
+#include "strbuf.h"
 #include "utf8.h"
 
 /* This code is originally from http://www.cl.cam.ac.uk/~mgk25/ucs/ */
@@ -162,7 +163,7 @@ static int git_wcwidth(ucs_char_t ch)
  * If the string was not a valid UTF-8, *start pointer is set to NULL
  * and the return value is undefined.
  */
-ucs_char_t pick_one_utf8_char(const char **start, size_t *remainder_p)
+static ucs_char_t pick_one_utf8_char(const char **start, size_t *remainder_p)
 {
 	unsigned char *s = (unsigned char *)*start;
 	ucs_char_t ch;
@@ -279,14 +280,52 @@ int is_utf8(const char *text)
 	return 1;
 }
 
-static void print_spaces(int count)
+static inline void strbuf_write(struct strbuf *sb, const char *buf, int len)
+{
+	if (sb)
+		strbuf_insert(sb, sb->len, buf, len);
+	else
+		fwrite(buf, len, 1, stdout);
+}
+
+static void print_spaces(struct strbuf *buf, int count)
 {
 	static const char s[] = "                    ";
 	while (count >= sizeof(s)) {
-		fwrite(s, sizeof(s) - 1, 1, stdout);
+		strbuf_write(buf, s, sizeof(s) - 1);
 		count -= sizeof(s) - 1;
 	}
-	fwrite(s, count, 1, stdout);
+	strbuf_write(buf, s, count);
+}
+
+static void strbuf_add_indented_text(struct strbuf *buf, const char *text,
+				     int indent, int indent2)
+{
+	if (indent < 0)
+		indent = 0;
+	while (*text) {
+		const char *eol = strchrnul(text, '\n');
+		if (*eol == '\n')
+			eol++;
+		print_spaces(buf, indent);
+		strbuf_write(buf, text, eol - text);
+		text = eol;
+		indent = indent2;
+	}
+}
+
+static size_t display_mode_esc_sequence_len(const char *s)
+{
+	const char *p = s;
+	if (*p++ != '\033')
+		return 0;
+	if (*p++ != '[')
+		return 0;
+	while (isdigit(*p) || *p == ';')
+		p++;
+	if (*p++ != 'm')
+		return 0;
+	return p - s;
 }
 
 /*
@@ -295,10 +334,16 @@ static void print_spaces(int count)
  * If indent is negative, assume that already -indent columns have been
  * consumed (and no extra indent is necessary for the first line).
  */
-int print_wrapped_text(const char *text, int indent, int indent2, int width)
+int strbuf_add_wrapped_text(struct strbuf *buf,
+		const char *text, int indent, int indent2, int width)
 {
 	int w = indent, assume_utf8 = is_utf8(text);
 	const char *bol = text, *space = NULL;
+
+	if (width <= 0) {
+		strbuf_add_indented_text(buf, text, indent, indent2);
+		return 1;
+	}
 
 	if (indent < 0) {
 		w = -indent;
@@ -306,25 +351,45 @@ int print_wrapped_text(const char *text, int indent, int indent2, int width)
 	}
 
 	for (;;) {
-		char c = *text;
+		char c;
+		size_t skip;
+
+		while ((skip = display_mode_esc_sequence_len(text)))
+			text += skip;
+
+		c = *text;
 		if (!c || isspace(c)) {
 			if (w < width || !space) {
 				const char *start = bol;
+				if (!c && text == start)
+					return w;
 				if (space)
 					start = space;
 				else
-					print_spaces(indent);
-				fwrite(start, text - start, 1, stdout);
+					print_spaces(buf, indent);
+				strbuf_write(buf, start, text - start);
 				if (!c)
 					return w;
-				else if (c == '\t')
-					w |= 0x07;
 				space = text;
+				if (c == '\t')
+					w |= 0x07;
+				else if (c == '\n') {
+					space++;
+					if (*space == '\n') {
+						strbuf_write(buf, "\n", 1);
+						goto new_line;
+					}
+					else if (!isalnum(*space))
+						goto new_line;
+					else
+						strbuf_write(buf, " ", 1);
+				}
 				w++;
 				text++;
 			}
 			else {
-				putchar('\n');
+new_line:
+				strbuf_write(buf, "\n", 1);
 				text = bol = space + isspace(*space);
 				space = NULL;
 				w = indent = indent2;
@@ -338,6 +403,11 @@ int print_wrapped_text(const char *text, int indent, int indent2, int width)
 			text++;
 		}
 	}
+}
+
+int print_wrapped_text(const char *text, int indent, int indent2, int width)
+{
+	return strbuf_add_wrapped_text(NULL, text, indent, indent2, width);
 }
 
 int is_encoding_utf8(const char *name)
@@ -354,7 +424,7 @@ int is_encoding_utf8(const char *name)
  * with iconv.  If the conversion fails, returns NULL.
  */
 #ifndef NO_ICONV
-#ifdef OLD_ICONV
+#if defined(OLD_ICONV) || (defined(__sun__) && !defined(_XPG6))
 	typedef const char * iconv_ibp;
 #else
 	typedef char * iconv_ibp;

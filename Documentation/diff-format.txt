@@ -1,4 +1,7 @@
-The output format from "git-diff-index", "git-diff-tree",
+Raw output format
+-----------------
+
+The raw output format from "git-diff-index", "git-diff-tree",
 "git-diff-files" and "git diff --raw" are very similar.
 
 These commands all compare two sets of things; what is
@@ -16,6 +19,9 @@ git-diff-tree [-r] <tree-ish-1> <tree-ish-2> [<pattern>...]::
 git-diff-files [<pattern>...]::
         compares the index and the files on the filesystem.
 
+The "git-diff-tree" command begins its output by printing the hash of
+what is being compared. After that, all the commands print one output
+line per changed file.
 
 An output line is formatted this way:
 

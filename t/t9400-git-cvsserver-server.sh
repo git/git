@@ -20,7 +20,7 @@ then
     say 'skipping git-cvsserver tests, cvs not found'
     test_done
 fi
-perl -e 'use DBI; use DBD::SQLite' >/dev/null 2>&1 || {
+"$PERL_PATH" -e 'use DBI; use DBD::SQLite' >/dev/null 2>&1 || {
     say 'skipping git-cvsserver tests, Perl SQLite interface unavailable'
     test_done
 }
@@ -96,7 +96,7 @@ EOF
 
 test_expect_success 'pserver authentication' \
   'cat request-anonymous | git-cvsserver pserver >log 2>&1 &&
-   sed -ne \$p log | grep "^I LOVE YOU$"'
+   sed -ne \$p log | grep "^I LOVE YOU\$"'
 
 test_expect_success 'pserver authentication failure (non-anonymous user)' \
   'if cat request-git | git-cvsserver pserver >log 2>&1
@@ -105,11 +105,11 @@ test_expect_success 'pserver authentication failure (non-anonymous user)' \
    else
        true
    fi &&
-   sed -ne \$p log | grep "^I HATE YOU$"'
+   sed -ne \$p log | grep "^I HATE YOU\$"'
 
 test_expect_success 'pserver authentication (login)' \
   'cat login-anonymous | git-cvsserver pserver >log 2>&1 &&
-   sed -ne \$p log | grep "^I LOVE YOU$"'
+   sed -ne \$p log | grep "^I LOVE YOU\$"'
 
 test_expect_success 'pserver authentication failure (login/non-anonymous user)' \
   'if cat login-git | git-cvsserver pserver >log 2>&1
@@ -118,7 +118,7 @@ test_expect_success 'pserver authentication failure (login/non-anonymous user)' 
    else
        true
    fi &&
-   sed -ne \$p log | grep "^I HATE YOU$"'
+   sed -ne \$p log | grep "^I HATE YOU\$"'
 
 
 # misuse pserver authentication for testing of req_Root
@@ -156,7 +156,7 @@ test_expect_success 'req_Root failure (conflicting roots)' \
 
 test_expect_success 'req_Root (strict paths)' \
   'cat request-anonymous | git-cvsserver --strict-paths pserver "$SERVERDIR" >log 2>&1 &&
-   sed -ne \$p log | grep "^I LOVE YOU$"'
+   sed -ne \$p log | grep "^I LOVE YOU\$"'
 
 test_expect_success 'req_Root failure (strict-paths)' '
     ! cat request-anonymous |
@@ -165,7 +165,7 @@ test_expect_success 'req_Root failure (strict-paths)' '
 
 test_expect_success 'req_Root (w/o strict-paths)' \
   'cat request-anonymous | git-cvsserver pserver "$WORKDIR/" >log 2>&1 &&
-   sed -ne \$p log | grep "^I LOVE YOU$"'
+   sed -ne \$p log | grep "^I LOVE YOU\$"'
 
 test_expect_success 'req_Root failure (w/o strict-paths)' '
     ! cat request-anonymous |
@@ -183,7 +183,7 @@ EOF
 
 test_expect_success 'req_Root (base-path)' \
   'cat request-base | git-cvsserver --strict-paths --base-path "$WORKDIR/" pserver "$SERVERDIR" >log 2>&1 &&
-   sed -ne \$p log | grep "^I LOVE YOU$"'
+   sed -ne \$p log | grep "^I LOVE YOU\$"'
 
 test_expect_success 'req_Root failure (base-path)' '
     ! cat request-anonymous |
@@ -194,14 +194,14 @@ GIT_DIR="$SERVERDIR" git config --bool gitcvs.enabled false || exit 1
 
 test_expect_success 'req_Root (export-all)' \
   'cat request-anonymous | git-cvsserver --export-all pserver "$WORKDIR" >log 2>&1 &&
-   sed -ne \$p log | grep "^I LOVE YOU$"'
+   sed -ne \$p log | grep "^I LOVE YOU\$"'
 
 test_expect_success 'req_Root failure (export-all w/o whitelist)' \
   '! (cat request-anonymous | git-cvsserver --export-all pserver >log 2>&1 || false)'
 
 test_expect_success 'req_Root (everything together)' \
   'cat request-base | git-cvsserver --export-all --strict-paths --base-path "$WORKDIR/" pserver "$SERVERDIR" >log 2>&1 &&
-   sed -ne \$p log | grep "^I LOVE YOU$"'
+   sed -ne \$p log | grep "^I LOVE YOU\$"'
 
 GIT_DIR="$SERVERDIR" git config --bool gitcvs.enabled true || exit 1
 

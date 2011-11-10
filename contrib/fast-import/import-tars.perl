@@ -8,9 +8,20 @@
 ##  perl import-tars.perl *.tar.bz2
 ##  git whatchanged import-tars
 ##
+## Use --metainfo to specify the extension for a meta data file, where
+## import-tars can read the commit message and optionally author and
+## committer information.
+##
+##  echo 'This is the commit message' > myfile.tar.bz2.msg
+##  perl import-tars.perl --metainfo=msg myfile.tar.bz2
 
 use strict;
-die "usage: import-tars *.tar.{gz,bz2,Z}\n" unless @ARGV;
+use Getopt::Long;
+
+my $metaext = '';
+
+die "usage: import-tars [--metainfo=extension] *.tar.{gz,bz2,lzma,xz,Z}\n"
+	unless GetOptions('metainfo=s' => \$metaext) && @ARGV;
 
 my $branch_name = 'import-tars';
 my $branch_ref = "refs/heads/$branch_name";
@@ -38,6 +49,9 @@ foreach my $tar_file (@ARGV)
 	} elsif ($tar_name =~ s/\.tar\.Z$//) {
 		open(I, '-|', 'uncompress', '-c', $tar_file)
 			or die "Unable to uncompress -c $tar_file: $!\n";
+	} elsif ($tar_name =~ s/\.(tar\.(lzma|xz)|(tlz|txz))$//) {
+		open(I, '-|', 'xz', '-dc', $tar_file)
+			or die "Unable to xz -dc $tar_file: $!\n";
 	} elsif ($tar_name =~ s/\.tar$//) {
 		open(I, $tar_file) or die "Unable to open $tar_file: $!\n";
 	} else {
@@ -82,10 +96,16 @@ foreach my $tar_file (@ARGV)
 		$mtime = oct $mtime;
 		next if $typeflag == 5; # directory
 
-		print FI "blob\n", "mark :$next_mark\n", "data $size\n";
-		while ($size > 0 && read(I, $_, 512) == 512) {
-			print FI substr($_, 0, $size);
-			$size -= 512;
+		print FI "blob\n", "mark :$next_mark\n";
+		if ($typeflag == 2) { # symbolic link
+			print FI "data ", length($linkname), "\n", $linkname;
+			$mode = 0120000;
+		} else {
+			print FI "data $size\n";
+			while ($size > 0 && read(I, $_, 512) == 512) {
+				print FI substr($_, 0, $size);
+				$size -= 512;
+			}
 		}
 		print FI "\n";
 
@@ -103,12 +123,43 @@ foreach my $tar_file (@ARGV)
 		$have_top_dir = 0 if $top_dir ne $1;
 	}
 
+	my $commit_msg = "Imported from $tar_file.";
+	my $this_committer_name = $committer_name;
+	my $this_committer_email = $committer_email;
+	my $this_author_name = $author_name;
+	my $this_author_email = $author_email;
+	if ($metaext ne '') {
+		# Optionally read a commit message from <filename.tar>.msg
+		# Add a line on the form "Committer: name <e-mail>" to override
+		# the committer and "Author: name <e-mail>" to override the
+		# author for this tar ball.
+		if (open MSG, '<', "${tar_file}.${metaext}") {
+			my $header_done = 0;
+			$commit_msg = '';
+			while (<MSG>) {
+				if (!$header_done && /^Committer:\s+([^<>]*)\s+<(.*)>\s*$/i) {
+					$this_committer_name = $1;
+					$this_committer_email = $2;
+				} elsif (!$header_done && /^Author:\s+([^<>]*)\s+<(.*)>\s*$/i) {
+					$this_author_name = $1;
+					$this_author_email = $2;
+				} elsif (!$header_done && /^$/) { # empty line ends header.
+					$header_done = 1;
+				} else {
+					$commit_msg .= $_;
+					$header_done = 1;
+				}
+			}
+			close MSG;
+		}
+	}
+
 	print FI <<EOF;
 commit $branch_ref
-author $author_name <$author_email> $author_time +0000
-committer $committer_name <$committer_email> $commit_time +0000
+author $this_author_name <$this_author_email> $author_time +0000
+committer $this_committer_name <$this_committer_email> $commit_time +0000
 data <<END_OF_COMMIT_MESSAGE
-Imported from $tar_file.
+$commit_msg
 END_OF_COMMIT_MESSAGE
 
 deleteall
@@ -118,7 +169,8 @@ EOF
 	{
 		my ($mark, $mode) = @{$files{$path}};
 		$path =~ s,^([^/]+)/,, if $have_top_dir;
-		printf FI "M %o :%i %s\n", $mode & 0111 ? 0755 : 0644, $mark, $path;
+		$mode = $mode & 0111 ? 0755 : 0644 unless $mode == 0120000;
+		printf FI "M %o :%i %s\n", $mode, $mark, $path;
 	}
 	print FI "\n";
 

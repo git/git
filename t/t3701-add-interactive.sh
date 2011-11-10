@@ -138,6 +138,20 @@ test_expect_success 'real edit works' '
 	test_cmp expected output
 '
 
+test_expect_success 'skip files similarly as commit -a' '
+	git reset &&
+	echo file >.gitignore &&
+	echo changed >file &&
+	echo y | git add -p file &&
+	git diff >output &&
+	git reset &&
+	git commit -am commit &&
+	git diff >expected &&
+	test_cmp expected output &&
+	git reset --hard HEAD^
+'
+rm -f .gitignore
+
 if test "$(git config --bool core.filemode)" = false
 then
 	say 'skipping filemode tests (filesystem does not properly support modes)'
@@ -163,6 +177,92 @@ test_expect_success FILEMODE 'stage mode but not hunk' '
 	git diff          file | grep "+content"
 '
 
+
+test_expect_success FILEMODE 'stage mode and hunk' '
+	git reset --hard &&
+	echo content >>file &&
+	chmod +x file &&
+	printf "y\\ny\\n" | git add -p &&
+	git diff --cached file | grep "new mode" &&
+	git diff --cached file | grep "+content" &&
+	test -z "$(git diff file)"
+'
+
 # end of tests disabled when filemode is not usable
+
+test_expect_success 'setup again' '
+	git reset --hard &&
+	test_chmod +x file &&
+	echo content >>file
+'
+
+# Write the patch file with a new line at the top and bottom
+cat >patch <<EOF
+index 180b47c..b6f2c08 100644
+--- a/file
++++ b/file
+@@ -1,2 +1,4 @@
++firstline
+ baseline
+ content
++lastline
+EOF
+# Expected output, similar to the patch but w/ diff at the top
+cat >expected <<EOF
+diff --git a/file b/file
+index b6f2c08..61b9053 100755
+--- a/file
++++ b/file
+@@ -1,2 +1,4 @@
++firstline
+ baseline
+ content
++lastline
+EOF
+# Test splitting the first patch, then adding both
+test_expect_success 'add first line works' '
+	git commit -am "clear local changes" &&
+	git apply patch &&
+	(echo s; echo y; echo y) | git add -p file &&
+	git diff --cached > diff &&
+	test_cmp expected diff
+'
+
+cat >expected <<EOF
+diff --git a/non-empty b/non-empty
+deleted file mode 100644
+index d95f3ad..0000000
+--- a/non-empty
++++ /dev/null
+@@ -1 +0,0 @@
+-content
+EOF
+test_expect_success 'deleting a non-empty file' '
+	git reset --hard &&
+	echo content >non-empty &&
+	git add non-empty &&
+	git commit -m non-empty &&
+	rm non-empty &&
+	echo y | git add -p non-empty &&
+	git diff --cached >diff &&
+	test_cmp expected diff
+'
+
+cat >expected <<EOF
+diff --git a/empty b/empty
+deleted file mode 100644
+index e69de29..0000000
+EOF
+
+test_expect_success 'deleting an empty file' '
+	git reset --hard &&
+	> empty &&
+	git add empty &&
+	git commit -m empty &&
+	rm empty &&
+	echo y | git add -p empty &&
+	git diff --cached >diff &&
+	test_cmp expected diff
+'
 
 test_done

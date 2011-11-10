@@ -149,11 +149,13 @@ test_expect_success 'clone a void' '
 	(
 		cd src-0 && git init
 	) &&
-	git clone src-0 target-6 &&
+	git clone "file://$(pwd)/src-0" target-6 2>err-6 &&
+	! grep "fatal:" err-6 &&
 	(
 		cd src-0 && test_commit A
 	) &&
-	git clone src-0 target-7 &&
+	git clone "file://$(pwd)/src-0" target-7 2>err-7 &&
+	! grep "fatal:" err-7 &&
 	# There is no reason to insist they are bit-for-bit
 	# identical, but this test should suffice for now.
 	test_cmp target-6/.git/config target-7/.git/config

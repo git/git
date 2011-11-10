@@ -1,17 +1,6 @@
 #ifndef RUN_COMMAND_H
 #define RUN_COMMAND_H
 
-enum {
-	ERR_RUN_COMMAND_FORK = 10000,
-	ERR_RUN_COMMAND_EXEC,
-	ERR_RUN_COMMAND_PIPE,
-	ERR_RUN_COMMAND_WAITPID,
-	ERR_RUN_COMMAND_WAITPID_WRONG_PID,
-	ERR_RUN_COMMAND_WAITPID_SIGNAL,
-	ERR_RUN_COMMAND_WAITPID_NOEXIT,
-};
-#define IS_RUN_COMMAND_ERR(x) (-(x) >= ERR_RUN_COMMAND_FORK)
-
 struct child_process {
 	const char **argv;
 	pid_t pid;
@@ -29,7 +18,7 @@ struct child_process {
 	 * - Specify > 0 to set a channel to a particular FD as follows:
 	 *     .in: a readable FD, becomes child's stdin
 	 *     .out: a writable FD, becomes child's stdout/stderr
-	 *     .err > 0 not supported
+	 *     .err: a writable FD, becomes child's stderr
 	 *   The specified FD is closed by start_command(), even in case
 	 *   of errors!
 	 */
@@ -42,7 +31,9 @@ struct child_process {
 	unsigned no_stdout:1;
 	unsigned no_stderr:1;
 	unsigned git_cmd:1; /* if this is to be git sub-command */
+	unsigned silent_exec_failure:1;
 	unsigned stdout_to_stderr:1;
+	unsigned use_shell:1;
 	void (*preexec_cb)(void);
 };
 
@@ -55,6 +46,8 @@ extern int run_hook(const char *index_file, const char *name, ...);
 #define RUN_COMMAND_NO_STDIN 1
 #define RUN_GIT_CMD	     2	/*If this is to be git sub-command */
 #define RUN_COMMAND_STDOUT_TO_STDERR 4
+#define RUN_SILENT_EXEC_FAILURE 8
+#define RUN_USING_SHELL 16
 int run_command_v_opt(const char **argv, int opt);
 
 /*
@@ -73,17 +66,20 @@ int run_command_v_opt_cd_env(const char **argv, int opt, const char *dir, const 
  */
 struct async {
 	/*
-	 * proc writes to fd and closes it;
+	 * proc reads from in; closes it before return
+	 * proc writes to out; closes it before return
 	 * returns 0 on success, non-zero on failure
 	 */
-	int (*proc)(int fd, void *data);
+	int (*proc)(int in, int out, void *data);
 	void *data;
+	int in;		/* caller writes here and closes it */
 	int out;	/* caller reads from here and closes it */
-#ifndef __MINGW32__
+#ifndef WIN32
 	pid_t pid;
 #else
 	HANDLE tid;
-	int fd_for_proc;
+	int proc_in;
+	int proc_out;
 #endif
 };
 

@@ -23,21 +23,32 @@ AC_DEFUN([GIT_CONF_APPEND_LINE],
 # GIT_ARG_SET_PATH(PROGRAM)
 # -------------------------
 # Provide --with-PROGRAM=PATH option to set PATH to PROGRAM
+# Optional second argument allows setting NO_PROGRAM=YesPlease if
+# --without-PROGRAM version used.
 AC_DEFUN([GIT_ARG_SET_PATH],
 [AC_ARG_WITH([$1],
  [AS_HELP_STRING([--with-$1=PATH],
                  [provide PATH to $1])],
- [GIT_CONF_APPEND_PATH($1)],[])
+ [GIT_CONF_APPEND_PATH($1,$2)],[])
 ])# GIT_ARG_SET_PATH
 #
 # GIT_CONF_APPEND_PATH(PROGRAM)
 # ------------------------------
 # Parse --with-PROGRAM=PATH option to set PROGRAM_PATH=PATH
 # Used by GIT_ARG_SET_PATH(PROGRAM)
+# Optional second argument allows setting NO_PROGRAM=YesPlease if
+# --without-PROGRAM is used.
 AC_DEFUN([GIT_CONF_APPEND_PATH],
 [PROGRAM=m4_toupper($1); \
 if test "$withval" = "no"; then \
-	AC_MSG_ERROR([You cannot use git without $1]); \
+	if test -n "$2"; then \
+		m4_toupper($1)_PATH=$withval; \
+		AC_MSG_NOTICE([Disabling use of ${PROGRAM}]); \
+		GIT_CONF_APPEND_LINE(NO_${PROGRAM}=YesPlease); \
+		GIT_CONF_APPEND_LINE(${PROGRAM}_PATH=); \
+	else \
+		AC_MSG_ERROR([You cannot use git without $1]); \
+	fi; \
 else \
 	if test "$withval" = "yes"; then \
 		AC_MSG_WARN([You should provide path for --with-$1=PATH]); \
@@ -68,6 +79,26 @@ else \
 	GIT_CONF_APPEND_LINE(${PACKAGE}DIR=$withval); \
 fi \
 ])# GIT_PARSE_WITH
+#
+# GIT_PARSE_WITH_SET_MAKE_VAR(WITHNAME, VAR, HELP_TEXT)
+# ---------------------
+# Set VAR to the value specied by --with-WITHNAME.
+# No verification of arguments is performed, but warnings are issued
+# if either 'yes' or 'no' is specified.
+# HELP_TEXT is presented when --help is called.
+# This is a direct way to allow setting variables in the Makefile.
+AC_DEFUN([GIT_PARSE_WITH_SET_MAKE_VAR],
+[AC_ARG_WITH([$1],
+ [AS_HELP_STRING([--with-$1=VALUE], $3)],
+ if test -n "$withval"; then \
+  if test "$withval" = "yes" -o "$withval" = "no"; then \
+    AC_MSG_WARN([You likely do not want either 'yes' or 'no' as]
+		     [a value for $1 ($2).  Maybe you do...?]); \
+  fi; \
+  \
+  AC_MSG_NOTICE([Setting $2 to $withval]); \
+  GIT_CONF_APPEND_LINE($2=$withval); \
+ fi)])# GIT_PARSE_WITH_SET_MAKE_VAR
 
 dnl
 dnl GIT_CHECK_FUNC(FUNCTION, IFTRUE, IFFALSE)
@@ -156,19 +187,11 @@ AC_MSG_NOTICE([CHECKS for site configuration])
 # tests.  These tests take up a significant amount of the total test time
 # but are not needed unless you plan to talk to SVN repos.
 #
-# Define MOZILLA_SHA1 environment variable when running make to make use of
-# a bundled SHA1 routine coming from Mozilla. It is GPL'd and should be fast
-# on non-x86 architectures (e.g. PowerPC), while the OpenSSL version (default
-# choice) has very fast version optimized for i586.
-#
 # Define PPC_SHA1 environment variable when running make to make use of
 # a bundled SHA1 routine optimized for PowerPC.
 #
-# Define ARM_SHA1 environment variable when running make to make use of
-# a bundled SHA1 routine optimized for ARM.
-#
 # Define NO_OPENSSL environment variable if you do not have OpenSSL.
-# This also implies MOZILLA_SHA1.
+# This also implies BLK_SHA1.
 #
 # Define OPENSSLDIR=/foo/bar if your openssl header and library files are in
 # /foo/bar/include and /foo/bar/lib directories.
@@ -235,11 +258,37 @@ GIT_PARSE_WITH(iconv))
 # change being considered an inode change from the update-index perspective.
 
 #
+# Allow user to set ETC_GITCONFIG variable
+GIT_PARSE_WITH_SET_MAKE_VAR(gitconfig, ETC_GITCONFIG,
+			Use VALUE instead of /etc/gitconfig as the
+			global git configuration file.
+			If VALUE is not fully qualified it will be interpretted
+			as a path relative to the computed prefix at runtime.)
+
+#
+# Allow user to set the default pager
+GIT_PARSE_WITH_SET_MAKE_VAR(pager, DEFAULT_PAGER,
+			Use VALUE as the fall-back pager instead of 'less'.
+			This is used by things like 'git log' when the user
+			does not specify a pager to use through alternate
+			methods. eg: /usr/bin/pager)
+#
+# Allow user to set the default editor
+GIT_PARSE_WITH_SET_MAKE_VAR(editor, DEFAULT_EDITOR,
+			Use VALUE as the fall-back editor instead of 'vi'.
+			This is used by things like 'git commit' when the user
+			does not specify a preferred editor through other
+			methods. eg: /usr/bin/editor)
+
+#
 # Define SHELL_PATH to provide path to shell.
 GIT_ARG_SET_PATH(shell)
 #
 # Define PERL_PATH to provide path to Perl.
 GIT_ARG_SET_PATH(perl)
+#
+# Define PYTHON_PATH to provide path to Python.
+GIT_ARG_SET_PATH(python, allow-without)
 #
 # Define ZLIB_PATH to provide path to zlib.
 GIT_ARG_SET_PATH(zlib)
@@ -342,9 +391,8 @@ GIT_STASH_FLAGS($OPENSSLDIR)
 AC_CHECK_LIB([crypto], [SHA1_Init],
 [NEEDS_SSL_WITH_CRYPTO=],
 [AC_CHECK_LIB([ssl], [SHA1_Init],
- [NEEDS_SSL_WITH_CRYPTO=YesPlease
-  NEEDS_SSL_WITH_CRYPTO=],
- [NO_OPENSSL=YesPlease])])
+ [NEEDS_SSL_WITH_CRYPTO=YesPlease],
+ [NEEDS_SSL_WITH_CRYPTO= NO_OPENSSL=YesPlease])])
 
 GIT_UNSTASH_FLAGS($OPENSSLDIR)
 
@@ -384,6 +432,8 @@ AC_SUBST(NO_EXPAT)
 # Define NEEDS_LIBICONV if linking with libc is not enough (Darwin and
 # some Solaris installations).
 # Define NO_ICONV if neither libc nor libiconv support iconv.
+
+if test -z "$NO_ICONV"; then
 
 GIT_STASH_FLAGS($ICONVDIR)
 
@@ -431,6 +481,12 @@ GIT_UNSTASH_FLAGS($ICONVDIR)
 AC_SUBST(NEEDS_LIBICONV)
 AC_SUBST(NO_ICONV)
 
+if test -n "$NO_ICONV"; then
+    NEEDS_LIBICONV=
+fi
+
+fi
+
 #
 # Define NO_DEFLATE_BOUND if deflateBound is missing from zlib.
 
@@ -467,6 +523,21 @@ AC_CHECK_LIB([c], [socket],
 AC_SUBST(NEEDS_SOCKET)
 test -n "$NEEDS_SOCKET" && LIBS="$LIBS -lsocket"
 
+#
+# Define NEEDS_RESOLV if linking with -lnsl and/or -lsocket is not enough.
+# Notably on Solaris hstrerror resides in libresolv and on Solaris 7
+# inet_ntop and inet_pton additionally reside there.
+AC_CHECK_LIB([c], [hstrerror],
+[NEEDS_RESOLV=],
+[NEEDS_RESOLV=YesPlease])
+AC_SUBST(NEEDS_RESOLV)
+test -n "$NEEDS_RESOLV" && LIBS="$LIBS -lresolv"
+
+AC_CHECK_LIB([c], [basename],
+[NEEDS_LIBGEN=],
+[NEEDS_LIBGEN=YesPlease])
+AC_SUBST(NEEDS_LIBGEN)
+test -n "$NEEDS_LIBGEN" && LIBS="$LIBS -lgen"
 
 ## Checks for header files.
 AC_MSG_NOTICE([CHECKS for header files])
@@ -627,6 +698,12 @@ AC_SUBST(SNPRINTF_RETURNS_BOGUS)
 ## (in default C library and libraries checked by AC_CHECK_LIB)
 AC_MSG_NOTICE([CHECKS for library functions])
 #
+# Define NO_LIBGEN_H if you don't have libgen.h.
+AC_CHECK_HEADER([libgen.h],
+[NO_LIBGEN_H=],
+[NO_LIBGEN_H=YesPlease])
+AC_SUBST(NO_LIBGEN_H)
+#
 # Define NO_STRCASESTR if you don't have strcasestr.
 GIT_CHECK_FUNC(strcasestr,
 [NO_STRCASESTR=],
@@ -677,6 +754,13 @@ GIT_CHECK_FUNC(mkdtemp,
 [NO_MKDTEMP=YesPlease])
 AC_SUBST(NO_MKDTEMP)
 #
+# Define NO_MKSTEMPS if you don't have mkstemps in the C library.
+GIT_CHECK_FUNC(mkstemps,
+[NO_MKSTEMPS=],
+[NO_MKSTEMPS=YesPlease])
+AC_SUBST(NO_MKSTEMPS)
+#
+#
 # Define NO_MMAP if you want to avoid mmap.
 #
 # Define NO_ICONV if your libc does not properly support iconv.
@@ -689,10 +773,9 @@ AC_SUBST(NO_MKDTEMP)
 # Define NO_SYMLINK_HEAD if you never want .git/HEAD to be a symbolic link.
 # Enable it on Windows.  By default, symrefs are still used.
 #
-# Define NO_PTHREADS if we do not have pthreads
+# Define NO_PTHREADS if we do not have pthreads.
 #
-# Define PTHREAD_LIBS to the linker flag used for Pthread support and define
-# THREADED_DELTA_SEARCH if Pthreads are available.
+# Define PTHREAD_LIBS to the linker flag used for Pthread support.
 AC_DEFUN([PTHREADTEST_SRC], [
 #include <pthread.h>
 
@@ -709,7 +792,6 @@ dnl   [[pthread_mutex_t test_mutex;]]
 dnl )])
 
 NO_PTHREADS=UnfortunatelyYes
-THREADED_DELTA_SEARCH=
 PTHREAD_LIBS=
 
 if test -n "$USER_NOPTHREAD"; then
@@ -725,7 +807,6 @@ elif test -z "$PTHREAD_CFLAGS"; then
 	[AC_MSG_RESULT([yes])
 		NO_PTHREADS=
 		PTHREAD_LIBS="$opt"
-		THREADED_DELTA_SEARCH=YesPlease
 		break
 	],
 	[AC_MSG_RESULT([no])])
@@ -739,7 +820,6 @@ else
 	[AC_MSG_RESULT([yes])
 		NO_PTHREADS=
 		PTHREAD_LIBS="$PTHREAD_CFLAGS"
-		THREADED_DELTA_SEARCH=YesPlease
 	],
 	[AC_MSG_RESULT([no])])
 
@@ -750,7 +830,6 @@ CFLAGS="$old_CFLAGS"
 
 AC_SUBST(PTHREAD_LIBS)
 AC_SUBST(NO_PTHREADS)
-AC_SUBST(THREADED_DELTA_SEARCH)
 
 ## Output files
 AC_CONFIG_FILES(["${config_file}":"${config_in}":"${config_append}"])

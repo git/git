@@ -66,7 +66,7 @@ test_expect_success 'revert forbidden on dirty working tree' '
 	echo content >extra_file &&
 	git add extra_file &&
 	test_must_fail git revert HEAD 2>errors &&
-	grep "Dirty index" errors
+	grep "Your local changes would be overwritten by " errors
 
 '
 

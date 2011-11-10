@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='test fetching over http'
+test_description='test dumb fetching over http via static file'
 . ./test-lib.sh
 
 if test -n "$NO_CURL"; then
@@ -30,7 +30,7 @@ test_expect_success 'create http-accessible bare repository' '
 '
 
 test_expect_success 'clone http repository' '
-	git clone $HTTPD_URL/repo.git clone &&
+	git clone $HTTPD_URL/dumb/repo.git clone &&
 	test_cmp file clone/file
 '
 
@@ -51,6 +51,20 @@ test_expect_success 'http remote detects correct HEAD' '
 	 echo refs/remotes/origin/master > expect &&
 	 test_cmp expect output
 	)
+'
+
+test_expect_success 'fetch packed objects' '
+	cp -R "$HTTPD_DOCUMENT_ROOT_PATH"/repo.git "$HTTPD_DOCUMENT_ROOT_PATH"/repo_pack.git &&
+	cd "$HTTPD_DOCUMENT_ROOT_PATH"/repo_pack.git &&
+	git --bare repack &&
+	git --bare prune-packed &&
+	git clone $HTTPD_URL/dumb/repo_pack.git
+'
+
+test_expect_success 'did not use upload-pack service' '
+	grep '/git-upload-pack' <"$HTTPD_ROOT_PATH"/access.log >act
+	: >exp
+	test_cmp exp act
 '
 
 stop_httpd

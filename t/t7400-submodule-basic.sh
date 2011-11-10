@@ -299,11 +299,36 @@ test_expect_success 'ls-files gracefully handles trailing slash' '
 
 '
 
+test_expect_success 'moving to a commit without submodule does not leave empty dir' '
+	rm -rf init &&
+	mkdir init &&
+	git reset --hard &&
+	git checkout initial &&
+	test ! -d init &&
+	git checkout second
+'
+
 test_expect_success 'submodule <invalid-path> warns' '
 
 	git submodule no-such-submodule 2> output.err &&
 	grep "^error: .*no-such-submodule" output.err
 
+'
+
+test_expect_success 'add submodules without specifying an explicit path' '
+	mkdir repo &&
+	cd repo &&
+	git init &&
+	echo r >r &&
+	git add r &&
+	git commit -m "repo commit 1" &&
+	cd .. &&
+	git clone --bare repo/ bare.git &&
+	cd addtest &&
+	git submodule add "$submodurl/repo" &&
+	git config -f .gitmodules submodule.repo.path repo &&
+	git submodule add "$submodurl/bare.git" &&
+	git config -f .gitmodules submodule.bare.path bare
 '
 
 test_done

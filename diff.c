@@ -13,6 +13,7 @@
 #include "utf8.h"
 #include "userdiff.h"
 #include "sigchain.h"
+#include "submodule.h"
 
 #ifdef NO_FAST_WORKING_DIRECTORY
 #define FAST_WORKING_DIRECTORY 0
@@ -38,6 +39,7 @@ static char diff_colors[][COLOR_MAXLEN] = {
 	GIT_COLOR_GREEN,	/* NEW */
 	GIT_COLOR_YELLOW,	/* COMMIT */
 	GIT_COLOR_BG_RED,	/* WHITESPACE */
+	GIT_COLOR_NORMAL,	/* FUNCINFO */
 };
 
 static void diff_filespec_load_driver(struct diff_filespec *one);
@@ -59,7 +61,9 @@ static int parse_diff_color_slot(const char *var, int ofs)
 		return DIFF_COMMIT;
 	if (!strcasecmp(var+ofs, "whitespace"))
 		return DIFF_WHITESPACE;
-	die("bad config variable '%s'", var);
+	if (!strcasecmp(var+ofs, "func"))
+		return DIFF_FUNCINFO;
+	return -1;
 }
 
 static int git_config_rename(const char *var, const char *value)
@@ -118,6 +122,8 @@ int git_diff_basic_config(const char *var, const char *value, void *cb)
 
 	if (!prefixcmp(var, "diff.color.") || !prefixcmp(var, "color.diff.")) {
 		int slot = parse_diff_color_slot(var, 11);
+		if (slot < 0)
+			return 0;
 		if (!value)
 			return config_error_nonbool(var);
 		color_parse(value, var, diff_colors[slot]);
@@ -174,32 +180,22 @@ static struct diff_tempfile {
 	char tmp_path[PATH_MAX];
 } diff_temp[2];
 
-static struct diff_tempfile *claim_diff_tempfile(void) {
-	int i;
-	for (i = 0; i < ARRAY_SIZE(diff_temp); i++)
-		if (!diff_temp[i].name)
-			return diff_temp + i;
-	die("BUG: diff is failing to clean up its tempfiles");
-}
+typedef unsigned long (*sane_truncate_fn)(char *line, unsigned long len);
 
-static int remove_tempfile_installed;
-
-static void remove_tempfile(void)
-{
-	int i;
-	for (i = 0; i < ARRAY_SIZE(diff_temp); i++) {
-		if (diff_temp[i].name == diff_temp[i].tmp_path)
-			unlink(diff_temp[i].name);
-		diff_temp[i].name = NULL;
-	}
-}
-
-static void remove_tempfile_on_signal(int signo)
-{
-	remove_tempfile();
-	sigchain_pop(signo);
-	raise(signo);
-}
+struct emit_callback {
+	int color_diff;
+	unsigned ws_rule;
+	int blank_at_eof_in_preimage;
+	int blank_at_eof_in_postimage;
+	int lno_in_preimage;
+	int lno_in_postimage;
+	sane_truncate_fn truncate;
+	const char **label_path;
+	struct diff_words_data *diff_words;
+	int *found_changesp;
+	FILE *file;
+	struct strbuf *header;
+};
 
 static int count_lines(const char *data, int size)
 {
@@ -224,6 +220,200 @@ static int count_lines(const char *data, int size)
 	return count;
 }
 
+static int fill_mmfile(mmfile_t *mf, struct diff_filespec *one)
+{
+	if (!DIFF_FILE_VALID(one)) {
+		mf->ptr = (char *)""; /* does not matter */
+		mf->size = 0;
+		return 0;
+	}
+	else if (diff_populate_filespec(one, 0))
+		return -1;
+
+	mf->ptr = one->data;
+	mf->size = one->size;
+	return 0;
+}
+
+static int count_trailing_blank(mmfile_t *mf, unsigned ws_rule)
+{
+	char *ptr = mf->ptr;
+	long size = mf->size;
+	int cnt = 0;
+
+	if (!size)
+		return cnt;
+	ptr += size - 1; /* pointing at the very end */
+	if (*ptr != '\n')
+		; /* incomplete line */
+	else
+		ptr--; /* skip the last LF */
+	while (mf->ptr < ptr) {
+		char *prev_eol;
+		for (prev_eol = ptr; mf->ptr <= prev_eol; prev_eol--)
+			if (*prev_eol == '\n')
+				break;
+		if (!ws_blank_line(prev_eol + 1, ptr - prev_eol, ws_rule))
+			break;
+		cnt++;
+		ptr = prev_eol - 1;
+	}
+	return cnt;
+}
+
+static void check_blank_at_eof(mmfile_t *mf1, mmfile_t *mf2,
+			       struct emit_callback *ecbdata)
+{
+	int l1, l2, at;
+	unsigned ws_rule = ecbdata->ws_rule;
+	l1 = count_trailing_blank(mf1, ws_rule);
+	l2 = count_trailing_blank(mf2, ws_rule);
+	if (l2 <= l1) {
+		ecbdata->blank_at_eof_in_preimage = 0;
+		ecbdata->blank_at_eof_in_postimage = 0;
+		return;
+	}
+	at = count_lines(mf1->ptr, mf1->size);
+	ecbdata->blank_at_eof_in_preimage = (at - l1) + 1;
+
+	at = count_lines(mf2->ptr, mf2->size);
+	ecbdata->blank_at_eof_in_postimage = (at - l2) + 1;
+}
+
+static void emit_line_0(FILE *file, const char *set, const char *reset,
+			int first, const char *line, int len)
+{
+	int has_trailing_newline, has_trailing_carriage_return;
+	int nofirst;
+
+	if (len == 0) {
+		has_trailing_newline = (first == '\n');
+		has_trailing_carriage_return = (!has_trailing_newline &&
+						(first == '\r'));
+		nofirst = has_trailing_newline || has_trailing_carriage_return;
+	} else {
+		has_trailing_newline = (len > 0 && line[len-1] == '\n');
+		if (has_trailing_newline)
+			len--;
+		has_trailing_carriage_return = (len > 0 && line[len-1] == '\r');
+		if (has_trailing_carriage_return)
+			len--;
+		nofirst = 0;
+	}
+
+	if (len || !nofirst) {
+		fputs(set, file);
+		if (!nofirst)
+			fputc(first, file);
+		fwrite(line, len, 1, file);
+		fputs(reset, file);
+	}
+	if (has_trailing_carriage_return)
+		fputc('\r', file);
+	if (has_trailing_newline)
+		fputc('\n', file);
+}
+
+static void emit_line(FILE *file, const char *set, const char *reset,
+		      const char *line, int len)
+{
+	emit_line_0(file, set, reset, line[0], line+1, len-1);
+}
+
+static int new_blank_line_at_eof(struct emit_callback *ecbdata, const char *line, int len)
+{
+	if (!((ecbdata->ws_rule & WS_BLANK_AT_EOF) &&
+	      ecbdata->blank_at_eof_in_preimage &&
+	      ecbdata->blank_at_eof_in_postimage &&
+	      ecbdata->blank_at_eof_in_preimage <= ecbdata->lno_in_preimage &&
+	      ecbdata->blank_at_eof_in_postimage <= ecbdata->lno_in_postimage))
+		return 0;
+	return ws_blank_line(line, len, ecbdata->ws_rule);
+}
+
+static void emit_add_line(const char *reset,
+			  struct emit_callback *ecbdata,
+			  const char *line, int len)
+{
+	const char *ws = diff_get_color(ecbdata->color_diff, DIFF_WHITESPACE);
+	const char *set = diff_get_color(ecbdata->color_diff, DIFF_FILE_NEW);
+
+	if (!*ws)
+		emit_line_0(ecbdata->file, set, reset, '+', line, len);
+	else if (new_blank_line_at_eof(ecbdata, line, len))
+		/* Blank line at EOF - paint '+' as well */
+		emit_line_0(ecbdata->file, ws, reset, '+', line, len);
+	else {
+		/* Emit just the prefix, then the rest. */
+		emit_line_0(ecbdata->file, set, reset, '+', "", 0);
+		ws_check_emit(line, len, ecbdata->ws_rule,
+			      ecbdata->file, set, reset, ws);
+	}
+}
+
+static void emit_hunk_header(struct emit_callback *ecbdata,
+			     const char *line, int len)
+{
+	const char *plain = diff_get_color(ecbdata->color_diff, DIFF_PLAIN);
+	const char *frag = diff_get_color(ecbdata->color_diff, DIFF_FRAGINFO);
+	const char *func = diff_get_color(ecbdata->color_diff, DIFF_FUNCINFO);
+	const char *reset = diff_get_color(ecbdata->color_diff, DIFF_RESET);
+	static const char atat[2] = { '@', '@' };
+	const char *cp, *ep;
+
+	/*
+	 * As a hunk header must begin with "@@ -<old>, +<new> @@",
+	 * it always is at least 10 bytes long.
+	 */
+	if (len < 10 ||
+	    memcmp(line, atat, 2) ||
+	    !(ep = memmem(line + 2, len - 2, atat, 2))) {
+		emit_line(ecbdata->file, plain, reset, line, len);
+		return;
+	}
+	ep += 2; /* skip over @@ */
+
+	/* The hunk header in fraginfo color */
+	emit_line(ecbdata->file, frag, reset, line, ep - line);
+
+	/* blank before the func header */
+	for (cp = ep; ep - line < len; ep++)
+		if (*ep != ' ' && *ep != '\t')
+			break;
+	if (ep != cp)
+		emit_line(ecbdata->file, plain, reset, cp, ep - cp);
+
+	if (ep < line + len)
+		emit_line(ecbdata->file, func, reset, ep, line + len - ep);
+}
+
+static struct diff_tempfile *claim_diff_tempfile(void) {
+	int i;
+	for (i = 0; i < ARRAY_SIZE(diff_temp); i++)
+		if (!diff_temp[i].name)
+			return diff_temp + i;
+	die("BUG: diff is failing to clean up its tempfiles");
+}
+
+static int remove_tempfile_installed;
+
+static void remove_tempfile(void)
+{
+	int i;
+	for (i = 0; i < ARRAY_SIZE(diff_temp); i++) {
+		if (diff_temp[i].name == diff_temp[i].tmp_path)
+			unlink_or_warn(diff_temp[i].name);
+		diff_temp[i].name = NULL;
+	}
+}
+
+static void remove_tempfile_on_signal(int signo)
+{
+	remove_tempfile();
+	sigchain_pop(signo);
+	raise(signo);
+}
+
 static void print_line_count(FILE *file, int count)
 {
 	switch (count) {
@@ -239,26 +429,36 @@ static void print_line_count(FILE *file, int count)
 	}
 }
 
-static void copy_file_with_prefix(FILE *file,
-				  int prefix, const char *data, int size,
-				  const char *set, const char *reset)
+static void emit_rewrite_lines(struct emit_callback *ecb,
+			       int prefix, const char *data, int size)
 {
-	int ch, nl_just_seen = 1;
-	while (0 < size--) {
-		ch = *data++;
-		if (nl_just_seen) {
-			fputs(set, file);
-			putc(prefix, file);
+	const char *endp = NULL;
+	static const char *nneof = " No newline at end of file\n";
+	const char *old = diff_get_color(ecb->color_diff, DIFF_FILE_OLD);
+	const char *reset = diff_get_color(ecb->color_diff, DIFF_RESET);
+
+	while (0 < size) {
+		int len;
+
+		endp = memchr(data, '\n', size);
+		len = endp ? (endp - data + 1) : size;
+		if (prefix != '+') {
+			ecb->lno_in_preimage++;
+			emit_line_0(ecb->file, old, reset, '-',
+				    data, len);
+		} else {
+			ecb->lno_in_postimage++;
+			emit_add_line(reset, ecb, data, len);
 		}
-		if (ch == '\n') {
-			nl_just_seen = 1;
-			fputs(reset, file);
-		} else
-			nl_just_seen = 0;
-		putc(ch, file);
+		size -= len;
+		data += len;
 	}
-	if (!nl_just_seen)
-		fprintf(file, "%s\n\\ No newline at end of file\n", reset);
+	if (!endp) {
+		const char *plain = diff_get_color(ecb->color_diff,
+						   DIFF_PLAIN);
+		emit_line_0(ecb->file, plain, reset, '\\',
+			    nneof, strlen(nneof));
+	}
 }
 
 static void emit_rewrite_diff(const char *name_a,
@@ -274,13 +474,12 @@ static void emit_rewrite_diff(const char *name_a,
 	const char *name_a_tab, *name_b_tab;
 	const char *metainfo = diff_get_color(color_diff, DIFF_METAINFO);
 	const char *fraginfo = diff_get_color(color_diff, DIFF_FRAGINFO);
-	const char *old = diff_get_color(color_diff, DIFF_FILE_OLD);
-	const char *new = diff_get_color(color_diff, DIFF_FILE_NEW);
 	const char *reset = diff_get_color(color_diff, DIFF_RESET);
 	static struct strbuf a_name = STRBUF_INIT, b_name = STRBUF_INIT;
 	const char *a_prefix, *b_prefix;
 	const char *data_one, *data_two;
 	size_t size_one, size_two;
+	struct emit_callback ecbdata;
 
 	if (diff_mnemonic_prefix && DIFF_OPT_TST(o, REVERSE_DIFF)) {
 		a_prefix = o->b_prefix;
@@ -321,6 +520,22 @@ static void emit_rewrite_diff(const char *name_a,
 		size_two = two->size;
 	}
 
+	memset(&ecbdata, 0, sizeof(ecbdata));
+	ecbdata.color_diff = color_diff;
+	ecbdata.found_changesp = &o->found_changes;
+	ecbdata.ws_rule = whitespace_rule(name_b ? name_b : name_a);
+	ecbdata.file = o->file;
+	if (ecbdata.ws_rule & WS_BLANK_AT_EOF) {
+		mmfile_t mf1, mf2;
+		mf1.ptr = (char *)data_one;
+		mf2.ptr = (char *)data_two;
+		mf1.size = size_one;
+		mf2.size = size_two;
+		check_blank_at_eof(&mf1, &mf2, &ecbdata);
+	}
+	ecbdata.lno_in_preimage = 1;
+	ecbdata.lno_in_postimage = 1;
+
 	lc_a = count_lines(data_one, size_one);
 	lc_b = count_lines(data_two, size_two);
 	fprintf(o->file,
@@ -332,24 +547,9 @@ static void emit_rewrite_diff(const char *name_a,
 	print_line_count(o->file, lc_b);
 	fprintf(o->file, " @@%s\n", reset);
 	if (lc_a)
-		copy_file_with_prefix(o->file, '-', data_one, size_one, old, reset);
+		emit_rewrite_lines(&ecbdata, '-', data_one, size_one);
 	if (lc_b)
-		copy_file_with_prefix(o->file, '+', data_two, size_two, new, reset);
-}
-
-static int fill_mmfile(mmfile_t *mf, struct diff_filespec *one)
-{
-	if (!DIFF_FILE_VALID(one)) {
-		mf->ptr = (char *)""; /* does not matter */
-		mf->size = 0;
-		return 0;
-	}
-	else if (diff_populate_filespec(one, 0))
-		return -1;
-
-	mf->ptr = one->data;
-	mf->size = one->size;
-	return 0;
+		emit_rewrite_lines(&ecbdata, '+', data_two, size_two);
 }
 
 struct diff_words_buffer {
@@ -529,26 +729,18 @@ static void diff_words_show(struct diff_words_data *diff_words)
 	diff_words->minus.text.size = diff_words->plus.text.size = 0;
 }
 
-typedef unsigned long (*sane_truncate_fn)(char *line, unsigned long len);
-
-struct emit_callback {
-	int nparents, color_diff;
-	unsigned ws_rule;
-	sane_truncate_fn truncate;
-	const char **label_path;
-	struct diff_words_data *diff_words;
-	int *found_changesp;
-	FILE *file;
-};
+/* In "color-words" mode, show word-diff of words accumulated in the buffer */
+static void diff_words_flush(struct emit_callback *ecbdata)
+{
+	if (ecbdata->diff_words->minus.text.size ||
+	    ecbdata->diff_words->plus.text.size)
+		diff_words_show(ecbdata->diff_words);
+}
 
 static void free_diff_words_data(struct emit_callback *ecbdata)
 {
 	if (ecbdata->diff_words) {
-		/* flush buffers */
-		if (ecbdata->diff_words->minus.text.size ||
-				ecbdata->diff_words->plus.text.size)
-			diff_words_show(ecbdata->diff_words);
-
+		diff_words_flush(ecbdata);
 		free (ecbdata->diff_words->minus.text.ptr);
 		free (ecbdata->diff_words->minus.orig);
 		free (ecbdata->diff_words->plus.text.ptr);
@@ -564,42 +756,6 @@ const char *diff_get_color(int diff_use_color, enum color_diff ix)
 	if (diff_use_color)
 		return diff_colors[ix];
 	return "";
-}
-
-static void emit_line(FILE *file, const char *set, const char *reset, const char *line, int len)
-{
-	int has_trailing_newline, has_trailing_carriage_return;
-
-	has_trailing_newline = (len > 0 && line[len-1] == '\n');
-	if (has_trailing_newline)
-		len--;
-	has_trailing_carriage_return = (len > 0 && line[len-1] == '\r');
-	if (has_trailing_carriage_return)
-		len--;
-
-	fputs(set, file);
-	fwrite(line, len, 1, file);
-	fputs(reset, file);
-	if (has_trailing_carriage_return)
-		fputc('\r', file);
-	if (has_trailing_newline)
-		fputc('\n', file);
-}
-
-static void emit_add_line(const char *reset, struct emit_callback *ecbdata, const char *line, int len)
-{
-	const char *ws = diff_get_color(ecbdata->color_diff, DIFF_WHITESPACE);
-	const char *set = diff_get_color(ecbdata->color_diff, DIFF_FILE_NEW);
-
-	if (!*ws)
-		emit_line(ecbdata->file, set, reset, line, len);
-	else {
-		/* Emit just the prefix, then the rest. */
-		emit_line(ecbdata->file, set, reset, line, ecbdata->nparents);
-		ws_check_emit(line + ecbdata->nparents,
-			      len - ecbdata->nparents, ecbdata->ws_rule,
-			      ecbdata->file, set, reset, ws);
-	}
 }
 
 static unsigned long sane_truncate_line(struct emit_callback *ecb, char *line, unsigned long len)
@@ -620,15 +776,33 @@ static unsigned long sane_truncate_line(struct emit_callback *ecb, char *line, u
 	return allot - l;
 }
 
+static void find_lno(const char *line, struct emit_callback *ecbdata)
+{
+	const char *p;
+	ecbdata->lno_in_preimage = 0;
+	ecbdata->lno_in_postimage = 0;
+	p = strchr(line, '-');
+	if (!p)
+		return; /* cannot happen */
+	ecbdata->lno_in_preimage = strtol(p + 1, NULL, 10);
+	p = strchr(p, '+');
+	if (!p)
+		return; /* cannot happen */
+	ecbdata->lno_in_postimage = strtol(p + 1, NULL, 10);
+}
+
 static void fn_out_consume(void *priv, char *line, unsigned long len)
 {
-	int i;
-	int color;
 	struct emit_callback *ecbdata = priv;
 	const char *meta = diff_get_color(ecbdata->color_diff, DIFF_METAINFO);
 	const char *plain = diff_get_color(ecbdata->color_diff, DIFF_PLAIN);
 	const char *reset = diff_get_color(ecbdata->color_diff, DIFF_RESET);
 
+	if (ecbdata->header) {
+		fprintf(ecbdata->file, "%s", ecbdata->header->buf);
+		strbuf_reset(ecbdata->header);
+		ecbdata->header = NULL;
+	}
 	*(ecbdata->found_changesp) = 1;
 
 	if (ecbdata->label_path[0]) {
@@ -650,31 +824,22 @@ static void fn_out_consume(void *priv, char *line, unsigned long len)
 		len = 1;
 	}
 
-	/* This is not really necessary for now because
-	 * this codepath only deals with two-way diffs.
-	 */
-	for (i = 0; i < len && line[i] == '@'; i++)
-		;
-	if (2 <= i && i < len && line[i] == ' ') {
-		ecbdata->nparents = i - 1;
+	if (line[0] == '@') {
+		if (ecbdata->diff_words)
+			diff_words_flush(ecbdata);
 		len = sane_truncate_line(ecbdata, line, len);
-		emit_line(ecbdata->file,
-			  diff_get_color(ecbdata->color_diff, DIFF_FRAGINFO),
-			  reset, line, len);
+		find_lno(line, ecbdata);
+		emit_hunk_header(ecbdata, line, len);
 		if (line[len-1] != '\n')
 			putc('\n', ecbdata->file);
 		return;
 	}
 
-	if (len < ecbdata->nparents) {
+	if (len < 1) {
 		emit_line(ecbdata->file, reset, reset, line, len);
 		return;
 	}
 
-	color = DIFF_PLAIN;
-	if (ecbdata->diff_words && ecbdata->nparents != 1)
-		/* fall back to normal diff */
-		free_diff_words_data(ecbdata);
 	if (ecbdata->diff_words) {
 		if (line[0] == '-') {
 			diff_words_append(line, len,
@@ -685,28 +850,25 @@ static void fn_out_consume(void *priv, char *line, unsigned long len)
 					  &ecbdata->diff_words->plus);
 			return;
 		}
-		if (ecbdata->diff_words->minus.text.size ||
-		    ecbdata->diff_words->plus.text.size)
-			diff_words_show(ecbdata->diff_words);
+		diff_words_flush(ecbdata);
 		line++;
 		len--;
 		emit_line(ecbdata->file, plain, reset, line, len);
 		return;
 	}
-	for (i = 0; i < ecbdata->nparents && len; i++) {
-		if (line[i] == '-')
-			color = DIFF_FILE_OLD;
-		else if (line[i] == '+')
-			color = DIFF_FILE_NEW;
-	}
 
-	if (color != DIFF_FILE_NEW) {
-		emit_line(ecbdata->file,
-			  diff_get_color(ecbdata->color_diff, color),
-			  reset, line, len);
-		return;
+	if (line[0] != '+') {
+		const char *color =
+			diff_get_color(ecbdata->color_diff,
+				       line[0] == '-' ? DIFF_FILE_OLD : DIFF_PLAIN);
+		ecbdata->lno_in_preimage++;
+		if (line[0] == ' ')
+			ecbdata->lno_in_postimage++;
+		emit_line(ecbdata->file, color, reset, line, len);
+	} else {
+		ecbdata->lno_in_postimage++;
+		emit_add_line(reset, ecbdata, line + 1, len - 1);
 	}
-	emit_add_line(reset, ecbdata, line, len);
 }
 
 static char *pprint_rename(const char *a, const char *b)
@@ -839,10 +1001,9 @@ static int scale_linear(int it, int width, int max_change)
 }
 
 static void show_name(FILE *file,
-		      const char *prefix, const char *name, int len,
-		      const char *reset, const char *set)
+		      const char *prefix, const char *name, int len)
 {
-	fprintf(file, " %s%s%-*s%s |", set, prefix, len, name, reset);
+	fprintf(file, " %s%-*s |", prefix, len, name);
 }
 
 static void show_graph(FILE *file, char ch, int cnt, const char *set, const char *reset)
@@ -956,7 +1117,7 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 		}
 
 		if (data->files[i]->is_binary) {
-			show_name(options->file, prefix, name, len, reset, set);
+			show_name(options->file, prefix, name, len);
 			fprintf(options->file, "  Bin ");
 			fprintf(options->file, "%s%d%s", del_c, deleted, reset);
 			fprintf(options->file, " -> ");
@@ -966,7 +1127,7 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 			continue;
 		}
 		else if (data->files[i]->is_unmerged) {
-			show_name(options->file, prefix, name, len, reset, set);
+			show_name(options->file, prefix, name, len);
 			fprintf(options->file, "  Unmerged\n");
 			continue;
 		}
@@ -988,7 +1149,7 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 			add = scale_linear(add, width, max_change);
 			del = scale_linear(del, width, max_change);
 		}
-		show_name(options->file, prefix, name, len, reset, set);
+		show_name(options->file, prefix, name, len);
 		fprintf(options->file, "%5d%s", added + deleted,
 				added + deleted ? " " : "");
 		show_graph(options->file, '+', add, add_c, reset);
@@ -996,11 +1157,11 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 		fprintf(options->file, "\n");
 	}
 	fprintf(options->file,
-	       "%s %d files changed, %d insertions(+), %d deletions(-)%s\n",
-	       set, total_files, adds, dels, reset);
+	       " %d files changed, %d insertions(+), %d deletions(-)\n",
+	       total_files, adds, dels);
 }
 
-static void show_shortstats(struct diffstat_t* data, struct diff_options *options)
+static void show_shortstats(struct diffstat_t *data, struct diff_options *options)
 {
 	int i, adds = 0, dels = 0, total_files = data->nr;
 
@@ -1212,7 +1373,6 @@ struct checkdiff_t {
 	struct diff_options *o;
 	unsigned ws_rule;
 	unsigned status;
-	int trailing_blanks_start;
 };
 
 static int is_conflict_marker(const char *line, unsigned long len)
@@ -1256,10 +1416,6 @@ static void checkdiff_consume(void *priv, char *line, unsigned long len)
 	if (line[0] == '+') {
 		unsigned bad;
 		data->lineno++;
-		if (!ws_blank_line(line + 1, len - 1, data->ws_rule))
-			data->trailing_blanks_start = 0;
-		else if (!data->trailing_blanks_start)
-			data->trailing_blanks_start = data->lineno;
 		if (is_conflict_marker(line + 1, len - 1)) {
 			data->status |= 1;
 			fprintf(data->o->file,
@@ -1279,14 +1435,12 @@ static void checkdiff_consume(void *priv, char *line, unsigned long len)
 			      data->o->file, set, reset, ws);
 	} else if (line[0] == ' ') {
 		data->lineno++;
-		data->trailing_blanks_start = 0;
 	} else if (line[0] == '@') {
 		char *plus = strchr(line, '+');
 		if (plus)
 			data->lineno = strtol(plus, NULL, 10) - 1;
 		else
 			die("invalid diff");
-		data->trailing_blanks_start = 0;
 	}
 }
 
@@ -1453,6 +1607,18 @@ static void builtin_diff(const char *name_a,
 	const char *reset = diff_get_color_opt(o, DIFF_RESET);
 	const char *a_prefix, *b_prefix;
 	const char *textconv_one = NULL, *textconv_two = NULL;
+	struct strbuf header = STRBUF_INIT;
+
+	if (DIFF_OPT_TST(o, SUBMODULE_LOG) &&
+			(!one->mode || S_ISGITLINK(one->mode)) &&
+			(!two->mode || S_ISGITLINK(two->mode))) {
+		const char *del = diff_get_color_opt(o, DIFF_FILE_OLD);
+		const char *add = diff_get_color_opt(o, DIFF_FILE_NEW);
+		show_submodule_summary(o->file, one ? one->path : two->path,
+				one->sha1, two->sha1, two->dirty_submodule,
+				del, add, reset);
+		return;
+	}
 
 	if (DIFF_OPT_TST(o, ALLOW_TEXTCONV)) {
 		textconv_one = get_textconv(one);
@@ -1476,25 +1642,26 @@ static void builtin_diff(const char *name_a,
 	b_two = quote_two(b_prefix, name_b + (*name_b == '/'));
 	lbl[0] = DIFF_FILE_VALID(one) ? a_one : "/dev/null";
 	lbl[1] = DIFF_FILE_VALID(two) ? b_two : "/dev/null";
-	fprintf(o->file, "%sdiff --git %s %s%s\n", set, a_one, b_two, reset);
+	strbuf_addf(&header, "%sdiff --git %s %s%s\n", set, a_one, b_two, reset);
 	if (lbl[0][0] == '/') {
 		/* /dev/null */
-		fprintf(o->file, "%snew file mode %06o%s\n", set, two->mode, reset);
+		strbuf_addf(&header, "%snew file mode %06o%s\n", set, two->mode, reset);
 		if (xfrm_msg && xfrm_msg[0])
-			fprintf(o->file, "%s%s%s\n", set, xfrm_msg, reset);
+			strbuf_addf(&header, "%s%s%s\n", set, xfrm_msg, reset);
 	}
 	else if (lbl[1][0] == '/') {
-		fprintf(o->file, "%sdeleted file mode %06o%s\n", set, one->mode, reset);
+		strbuf_addf(&header, "%sdeleted file mode %06o%s\n", set, one->mode, reset);
 		if (xfrm_msg && xfrm_msg[0])
-			fprintf(o->file, "%s%s%s\n", set, xfrm_msg, reset);
+			strbuf_addf(&header, "%s%s%s\n", set, xfrm_msg, reset);
 	}
 	else {
 		if (one->mode != two->mode) {
-			fprintf(o->file, "%sold mode %06o%s\n", set, one->mode, reset);
-			fprintf(o->file, "%snew mode %06o%s\n", set, two->mode, reset);
+			strbuf_addf(&header, "%sold mode %06o%s\n", set, one->mode, reset);
+			strbuf_addf(&header, "%snew mode %06o%s\n", set, two->mode, reset);
 		}
 		if (xfrm_msg && xfrm_msg[0])
-			fprintf(o->file, "%s%s%s\n", set, xfrm_msg, reset);
+			strbuf_addf(&header, "%s%s%s\n", set, xfrm_msg, reset);
+
 		/*
 		 * we do not run diff between different kind
 		 * of objects.
@@ -1504,6 +1671,8 @@ static void builtin_diff(const char *name_a,
 		if (complete_rewrite &&
 		    (textconv_one || !diff_filespec_is_binary(one)) &&
 		    (textconv_two || !diff_filespec_is_binary(two))) {
+			fprintf(o->file, "%s", header.buf);
+			strbuf_reset(&header);
 			emit_rewrite_diff(name_a, name_b, one, two,
 						textconv_one, textconv_two, o);
 			o->found_changes = 1;
@@ -1521,6 +1690,8 @@ static void builtin_diff(const char *name_a,
 		if (mf1.size == mf2.size &&
 		    !memcmp(mf1.ptr, mf2.ptr, mf1.size))
 			goto free_ab_and_return;
+		fprintf(o->file, "%s", header.buf);
+		strbuf_reset(&header);
 		if (DIFF_OPT_TST(o, BINARY))
 			emit_binary_diff(o->file, &mf1, &mf2);
 		else
@@ -1536,6 +1707,11 @@ static void builtin_diff(const char *name_a,
 		xdemitcb_t ecb;
 		struct emit_callback ecbdata;
 		const struct userdiff_funcname *pe;
+
+		if (!DIFF_XDL_TST(o, WHITESPACE_FLAGS)) {
+			fprintf(o->file, "%s", header.buf);
+			strbuf_reset(&header);
+		}
 
 		if (textconv_one) {
 			size_t size;
@@ -1563,7 +1739,10 @@ static void builtin_diff(const char *name_a,
 		ecbdata.color_diff = DIFF_OPT_TST(o, COLOR_DIFF);
 		ecbdata.found_changesp = &o->found_changes;
 		ecbdata.ws_rule = whitespace_rule(name_b ? name_b : name_a);
+		if (ecbdata.ws_rule & WS_BLANK_AT_EOF)
+			check_blank_at_eof(&mf1, &mf2, &ecbdata);
 		ecbdata.file = o->file;
+		ecbdata.header = header.len ? &header : NULL;
 		xpp.flags = XDF_NEED_MINIMAL | o->xdl_opts;
 		xecfg.ctxlen = o->context;
 		xecfg.interhunkctxlen = o->interhunkcontext;
@@ -1604,9 +1783,11 @@ static void builtin_diff(const char *name_a,
 			free(mf1.ptr);
 		if (textconv_two)
 			free(mf2.ptr);
+		xdiff_clear_find_func(&xecfg);
 	}
 
  free_ab_and_return:
+	strbuf_release(&header);
 	diff_free_filespec_data(one);
 	diff_free_filespec_data(two);
 	free(a_one);
@@ -1704,11 +1885,22 @@ static void builtin_checkdiff(const char *name_a, const char *name_b,
 		xdi_diff_outf(&mf1, &mf2, checkdiff_consume, &data,
 			      &xpp, &xecfg, &ecb);
 
-		if ((data.ws_rule & WS_TRAILING_SPACE) &&
-		    data.trailing_blanks_start) {
-			fprintf(o->file, "%s:%d: ends with blank lines.\n",
-				data.filename, data.trailing_blanks_start);
-			data.status = 1; /* report errors */
+		if (data.ws_rule & WS_BLANK_AT_EOF) {
+			struct emit_callback ecbdata;
+			int blank_at_eof;
+
+			ecbdata.ws_rule = data.ws_rule;
+			check_blank_at_eof(&mf1, &mf2, &ecbdata);
+			blank_at_eof = ecbdata.blank_at_eof_in_preimage;
+
+			if (blank_at_eof) {
+				static char *err;
+				if (!err)
+					err = whitespace_error_string(WS_BLANK_AT_EOF);
+				fprintf(o->file, "%s:%d: %s.\n",
+					data.filename, blank_at_eof, err);
+				data.status = 1; /* report errors */
+			}
 		}
 	}
  free_and_return:
@@ -1805,7 +1997,7 @@ static int reuse_worktree_file(const char *name, const unsigned char *sha1, int 
 	 * If ce is marked as "assume unchanged", there is no
 	 * guarantee that work tree matches what we are looking for.
 	 */
-	if (ce->ce_flags & CE_VALID)
+	if ((ce->ce_flags & CE_VALID) || ce_skip_worktree(ce))
 		return 0;
 
 	/*
@@ -1837,9 +2029,14 @@ static int populate_from_stdin(struct diff_filespec *s)
 static int diff_populate_gitlink(struct diff_filespec *s, int size_only)
 {
 	int len;
-	char *data = xmalloc(100);
+	char *data = xmalloc(100), *dirty = "";
+
+	/* Are we looking at the work tree? */
+	if (!s->sha1_valid && s->dirty_submodule)
+		dirty = "-dirty";
+
 	len = snprintf(data, 100,
-		"Subproject commit %s\n", sha1_to_hex(s->sha1));
+		       "Subproject commit %s%s\n", sha1_to_hex(s->sha1), dirty);
 	s->data = data;
 	s->size = len;
 	s->should_free = 1;
@@ -1965,23 +2162,33 @@ static void prep_temp_blob(const char *path, struct diff_tempfile *temp,
 {
 	int fd;
 	struct strbuf buf = STRBUF_INIT;
+	struct strbuf template = STRBUF_INIT;
+	char *path_dup = xstrdup(path);
+	const char *base = basename(path_dup);
 
-	fd = git_mkstemp(temp->tmp_path, PATH_MAX, ".diff_XXXXXX");
+	/* Generate "XXXXXX_basename.ext" */
+	strbuf_addstr(&template, "XXXXXX_");
+	strbuf_addstr(&template, base);
+
+	fd = git_mkstemps(temp->tmp_path, PATH_MAX, template.buf,
+			strlen(base) + 1);
 	if (fd < 0)
-		die("unable to create temp-file: %s", strerror(errno));
+		die_errno("unable to create temp-file");
 	if (convert_to_working_tree(path,
 			(const char *)blob, (size_t)size, &buf)) {
 		blob = buf.buf;
 		size = buf.len;
 	}
 	if (write_in_full(fd, blob, size) != size)
-		die("unable to write temp-file");
+		die_errno("unable to write temp-file");
 	close(fd);
 	temp->name = temp->tmp_path;
 	strcpy(temp->hex, sha1_to_hex(sha1));
 	temp->hex[40] = 0;
 	sprintf(temp->mode, "%06o", mode);
 	strbuf_release(&buf);
+	strbuf_release(&template);
+	free(path_dup);
 }
 
 static struct diff_tempfile *prepare_temp_file(const char *name,
@@ -2012,21 +2219,18 @@ static struct diff_tempfile *prepare_temp_file(const char *name,
 		if (lstat(name, &st) < 0) {
 			if (errno == ENOENT)
 				goto not_a_valid_file;
-			die("stat(%s): %s", name, strerror(errno));
+			die_errno("stat(%s)", name);
 		}
 		if (S_ISLNK(st.st_mode)) {
-			int ret;
-			char buf[PATH_MAX + 1]; /* ought to be SYMLINK_MAX */
-			ret = readlink(name, buf, sizeof(buf));
-			if (ret < 0)
-				die("readlink(%s)", name);
-			if (ret == sizeof(buf))
-				die("symlink too long: %s", name);
-			prep_temp_blob(name, temp, buf, ret,
+			struct strbuf sb = STRBUF_INIT;
+			if (strbuf_readlink(&sb, name, st.st_size) < 0)
+				die_errno("readlink(%s)", name);
+			prep_temp_blob(name, temp, sb.buf, sb.len,
 				       (one->sha1_valid ?
 					one->sha1 : null_sha1),
 				       (one->sha1_valid ?
 					one->mode : S_IFLNK));
+			strbuf_release(&sb);
 		}
 		else {
 			/* we can borrow from the file in the work tree */
@@ -2095,7 +2299,7 @@ static void run_external_diff(const char *pgm,
 	}
 	*arg = NULL;
 	fflush(NULL);
-	retval = run_command_v_opt(spawn_arg, 0);
+	retval = run_command_v_opt(spawn_arg, RUN_USING_SHELL);
 	remove_tempfile();
 	if (retval) {
 		fprintf(stderr, "external diff died, stopping at %s.\n", name);
@@ -2213,7 +2417,7 @@ static void diff_fill_sha1_info(struct diff_filespec *one)
 				return;
 			}
 			if (lstat(one->path, &st) < 0)
-				die("stat %s", one->path);
+				die_errno("stat '%s'", one->path);
 			if (index_path(one->sha1, one->path, &st, 0))
 				die("cannot hash %s", one->path);
 		}
@@ -2371,6 +2575,20 @@ int diff_setup_done(struct diff_options *options)
 	if (count > 1)
 		die("--name-only, --name-status, --check and -s are mutually exclusive");
 
+	/*
+	 * Most of the time we can say "there are changes"
+	 * only by checking if there are changed paths, but
+	 * --ignore-whitespace* options force us to look
+	 * inside contents.
+	 */
+
+	if (DIFF_XDL_TST(options, IGNORE_WHITESPACE) ||
+	    DIFF_XDL_TST(options, IGNORE_WHITESPACE_CHANGE) ||
+	    DIFF_XDL_TST(options, IGNORE_WHITESPACE_AT_EOL))
+		DIFF_OPT_SET(options, DIFF_FROM_CONTENTS);
+	else
+		DIFF_OPT_CLR(options, DIFF_FROM_CONTENTS);
+
 	if (DIFF_OPT_TST(options, FIND_COPIES_HARDER))
 		options->detect_rename = DIFF_DETECT_COPY;
 
@@ -2431,7 +2649,7 @@ int diff_setup_done(struct diff_options *options)
 	 * to have found.  It does not make sense not to return with
 	 * exit code in such a case either.
 	 */
-	if (DIFF_OPT_TST(options, QUIET)) {
+	if (DIFF_OPT_TST(options, QUICK)) {
 		options->output_format = DIFF_FORMAT_NO_OUTPUT;
 		DIFF_OPT_SET(options, EXIT_WITH_STATUS);
 	}
@@ -2622,7 +2840,7 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 	else if (!strcmp(arg, "--exit-code"))
 		DIFF_OPT_SET(options, EXIT_WITH_STATUS);
 	else if (!strcmp(arg, "--quiet"))
-		DIFF_OPT_SET(options, QUIET);
+		DIFF_OPT_SET(options, QUICK);
 	else if (!strcmp(arg, "--ext-diff"))
 		DIFF_OPT_SET(options, ALLOW_EXTERNAL);
 	else if (!strcmp(arg, "--no-ext-diff"))
@@ -2633,6 +2851,12 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 		DIFF_OPT_CLR(options, ALLOW_TEXTCONV);
 	else if (!strcmp(arg, "--ignore-submodules"))
 		DIFF_OPT_SET(options, IGNORE_SUBMODULES);
+	else if (!strcmp(arg, "--submodule"))
+		DIFF_OPT_SET(options, SUBMODULE_LOG);
+	else if (!prefixcmp(arg, "--submodule=")) {
+		if (!strcmp(arg + 12, "log"))
+			DIFF_OPT_SET(options, SUBMODULE_LOG);
+	}
 
 	/* misc options */
 	else if (!strcmp(arg, "-z"))
@@ -2669,6 +2893,8 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 		;
 	else if (!prefixcmp(arg, "--output=")) {
 		options->file = fopen(arg + strlen("--output="), "w");
+		if (!options->file)
+			die_errno("Could not open '%s'", arg + strlen("--output="));
 		options->close_file = 1;
 	} else
 		return 0;
@@ -2684,7 +2910,7 @@ static int parse_num(const char **cp_p)
 	num = 0;
 	scale = 1;
 	dot = 0;
-	for(;;) {
+	for (;;) {
 		ch = *cp;
 		if ( !dot && ch == '.' ) {
 			scale = 1;
@@ -3323,6 +3549,18 @@ free_queue:
 	q->nr = q->alloc = 0;
 	if (options->close_file)
 		fclose(options->file);
+
+	/*
+	 * Report the content-level differences with HAS_CHANGES;
+	 * diff_addremove/diff_change does not set the bit when
+	 * DIFF_FROM_CONTENTS is in effect (e.g. with -w).
+	 */
+	if (DIFF_OPT_TST(options, DIFF_FROM_CONTENTS)) {
+		if (options->found_changes)
+			DIFF_OPT_SET(options, HAS_CHANGES);
+		else
+			DIFF_OPT_CLR(options, HAS_CHANGES);
+	}
 }
 
 static void diffcore_apply_filter(const char *filter)
@@ -3406,7 +3644,7 @@ static void diffcore_skip_stat_unmatch(struct diff_options *diffopt)
 		struct diff_filepair *p = q->queue[i];
 
 		/*
-		 * 1. Entries that come from stat info dirtyness
+		 * 1. Entries that come from stat info dirtiness
 		 *    always have both sides (iow, not create/delete),
 		 *    one side of the object name is unknown, with
 		 *    the same mode and size.  Keep the ones that
@@ -3442,6 +3680,23 @@ static void diffcore_skip_stat_unmatch(struct diff_options *diffopt)
 	*q = outq;
 }
 
+static int diffnamecmp(const void *a_, const void *b_)
+{
+	const struct diff_filepair *a = *((const struct diff_filepair **)a_);
+	const struct diff_filepair *b = *((const struct diff_filepair **)b_);
+	const char *name_a, *name_b;
+
+	name_a = a->one ? a->one->path : a->two->path;
+	name_b = b->one ? b->one->path : b->two->path;
+	return strcmp(name_a, name_b);
+}
+
+void diffcore_fix_diff_index(struct diff_options *options)
+{
+	struct diff_queue_struct *q = &diff_queued_diff;
+	qsort(q->queue, q->nr, sizeof(q->queue[0]), diffnamecmp);
+}
+
 void diffcore_std(struct diff_options *options)
 {
 	if (options->skip_stat_unmatch)
@@ -3459,7 +3714,7 @@ void diffcore_std(struct diff_options *options)
 	diff_resolve_rename_copy();
 	diffcore_apply_filter(options->filter);
 
-	if (diff_queued_diff.nr)
+	if (diff_queued_diff.nr && !DIFF_OPT_TST(options, DIFF_FROM_CONTENTS))
 		DIFF_OPT_SET(options, HAS_CHANGES);
 	else
 		DIFF_OPT_CLR(options, HAS_CHANGES);
@@ -3483,7 +3738,7 @@ int diff_result_code(struct diff_options *opt, int status)
 void diff_addremove(struct diff_options *options,
 		    int addremove, unsigned mode,
 		    const unsigned char *sha1,
-		    const char *concatpath)
+		    const char *concatpath, unsigned dirty_submodule)
 {
 	struct diff_filespec *one, *two;
 
@@ -3515,18 +3770,22 @@ void diff_addremove(struct diff_options *options,
 
 	if (addremove != '+')
 		fill_filespec(one, sha1, mode);
-	if (addremove != '-')
+	if (addremove != '-') {
 		fill_filespec(two, sha1, mode);
+		two->dirty_submodule = dirty_submodule;
+	}
 
 	diff_queue(&diff_queued_diff, one, two);
-	DIFF_OPT_SET(options, HAS_CHANGES);
+	if (!DIFF_OPT_TST(options, DIFF_FROM_CONTENTS))
+		DIFF_OPT_SET(options, HAS_CHANGES);
 }
 
 void diff_change(struct diff_options *options,
 		 unsigned old_mode, unsigned new_mode,
 		 const unsigned char *old_sha1,
 		 const unsigned char *new_sha1,
-		 const char *concatpath)
+		 const char *concatpath,
+		 unsigned old_dirty_submodule, unsigned new_dirty_submodule)
 {
 	struct diff_filespec *one, *two;
 
@@ -3539,6 +3798,8 @@ void diff_change(struct diff_options *options,
 		const unsigned char *tmp_c;
 		tmp = old_mode; old_mode = new_mode; new_mode = tmp;
 		tmp_c = old_sha1; old_sha1 = new_sha1; new_sha1 = tmp_c;
+		tmp = old_dirty_submodule; old_dirty_submodule = new_dirty_submodule;
+			new_dirty_submodule = tmp;
 	}
 
 	if (options->prefix &&
@@ -3549,9 +3810,12 @@ void diff_change(struct diff_options *options,
 	two = alloc_filespec(concatpath);
 	fill_filespec(one, old_sha1, old_mode);
 	fill_filespec(two, new_sha1, new_mode);
+	one->dirty_submodule = old_dirty_submodule;
+	two->dirty_submodule = new_dirty_submodule;
 
 	diff_queue(&diff_queued_diff, one, two);
-	DIFF_OPT_SET(options, HAS_CHANGES);
+	if (!DIFF_OPT_TST(options, DIFF_FROM_CONTENTS))
+		DIFF_OPT_SET(options, HAS_CHANGES);
 }
 
 void diff_unmerge(struct diff_options *options,
@@ -3585,15 +3849,19 @@ static char *run_textconv(const char *pgm, struct diff_filespec *spec,
 	*arg = NULL;
 
 	memset(&child, 0, sizeof(child));
+	child.use_shell = 1;
 	child.argv = argv;
 	child.out = -1;
 	if (start_command(&child) != 0 ||
 	    strbuf_read(&buf, child.out, 0) < 0 ||
 	    finish_command(&child) != 0) {
+		close(child.out);
+		strbuf_release(&buf);
 		remove_tempfile();
 		error("error running textconv command '%s'", pgm);
 		return NULL;
 	}
+	close(child.out);
 	remove_tempfile();
 
 	return strbuf_detach(&buf, outsize);

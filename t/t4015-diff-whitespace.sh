@@ -93,8 +93,6 @@ git diff > out
 test_expect_success 'another test, without options' 'test_cmp expect out'
 
 cat << EOF > expect
-diff --git a/x b/x
-index d99af23..8b32fb5 100644
 EOF
 git diff -w > out
 test_expect_success 'another test, with -w' 'test_cmp expect out'
@@ -362,10 +360,17 @@ test_expect_success 'line numbers in --check output are correct' '
 
 '
 
-test_expect_success 'checkdiff detects trailing blank lines' '
+test_expect_success 'checkdiff detects new trailing blank lines (1)' '
 	echo "foo();" >x &&
 	echo "" >>x &&
-	git diff --check | grep "ends with blank"
+	git diff --check | grep "new blank line"
+'
+
+test_expect_success 'checkdiff detects new trailing blank lines (2)' '
+	{ echo a; echo b; echo; echo; } >x &&
+	git add x &&
+	{ echo a; echo; echo; echo; echo; } >x &&
+	git diff --check | grep "new blank line"
 '
 
 test_expect_success 'checkdiff allows new blank lines' '
@@ -377,6 +382,18 @@ test_expect_success 'checkdiff allows new blank lines' '
 		cat y
 	) >x &&
 	git diff --check
+'
+
+cat <<EOF >expect
+EOF
+test_expect_success 'whitespace-only changes not reported' '
+	git reset --hard &&
+	echo >x "hello world" &&
+	git add x &&
+	git commit -m "hello 1" &&
+	echo >x "hello  world" &&
+	git diff -b >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'combined diff with autocrlf conversion' '

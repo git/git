@@ -15,6 +15,7 @@ SYNOPSIS
 	     [--cacheinfo <mode> <object> <file>]\*
 	     [--chmod=(+|-)x]
 	     [--assume-unchanged | --no-assume-unchanged]
+	     [--skip-worktree | --no-skip-worktree]
 	     [--ignore-submodules]
 	     [--really-refresh] [--unresolve] [--again | -g]
 	     [--info-only] [--index-info]
@@ -31,7 +32,7 @@ cleared.
 See also linkgit:git-add[1] for a more user-friendly way to do some of
 the most common operations on the index.
 
-The way 'git-update-index' handles files it is told about can be modified
+The way 'git update-index' handles files it is told about can be modified
 using the various options:
 
 OPTIONS
@@ -53,7 +54,7 @@ OPTIONS
 -q::
         Quiet.  If --refresh finds that the index needs an update, the
         default behavior is to error out.  This option makes
-	'git-update-index' continue anyway.
+	'git update-index' continue anyway.
 
 --ignore-submodules::
 	Do not try to update submodules.  This option is only respected
@@ -61,7 +62,7 @@ OPTIONS
 
 --unmerged::
         If --refresh finds unmerged changes in the index, the default
-	behavior is to error out.  This option makes 'git-update-index'
+	behavior is to error out.  This option makes 'git update-index'
         continue anyway.
 
 --ignore-missing::
@@ -99,9 +100,20 @@ in the index e.g. when merging in a commit;
 thus, in case the assumed-untracked file is changed upstream,
 you will need to handle the situation manually.
 
+--really-refresh::
+	Like '--refresh', but checks stat information unconditionally,
+	without regard to the "assume unchanged" setting.
+
+--skip-worktree::
+--no-skip-worktree::
+	When one of these flags is specified, the object name recorded
+	for the paths are not updated. Instead, these options
+	set and unset the "skip-worktree" bit for the paths. See
+	section "Skip-worktree bit" below for more information.
+
 -g::
 --again::
-	Runs 'git-update-index' itself on the paths whose index
+	Runs 'git update-index' itself on the paths whose index
 	entries are different from those from the `HEAD` commit.
 
 --unresolve::
@@ -119,7 +131,7 @@ you will need to handle the situation manually.
 
 --replace::
 	By default, when a file `path` exists in the index,
-	'git-update-index' refuses an attempt to add `path/file`.
+	'git update-index' refuses an attempt to add `path/file`.
 	Similarly if a file `path/file` exists, a file `path`
 	cannot be added.  With --replace flag, existing entries
 	that conflict with the entry being added are
@@ -155,7 +167,7 @@ up-to-date for mode/content changes. But what it *does* do is to
 can refresh the index for a file that hasn't been changed but where
 the stat entry is out of date.
 
-For example, you'd want to do this after doing a 'git-read-tree', to link
+For example, you'd want to do this after doing a 'git read-tree', to link
 up the stat index details with the proper files.
 
 Using --cacheinfo or --info-only
@@ -196,13 +208,13 @@ back on 3-way merge.
 
     . mode SP type SP sha1          TAB path
 +
-The second format is to stuff 'git-ls-tree' output
+The second format is to stuff 'git ls-tree' output
 into the index file.
 
     . mode         SP sha1 SP stage TAB path
 +
 This format is to put higher order stages into the
-index file and matches 'git-ls-files --stage' output.
+index file and matches 'git ls-files --stage' output.
 
 To place a higher stage entry to the index, the path should
 first be removed by feeding a mode=0 entry for the path, and
@@ -259,8 +271,8 @@ option.  To unset, use `--no-assume-unchanged`.
 The command looks at `core.ignorestat` configuration variable.  When
 this is true, paths updated with `git update-index paths...` and
 paths updated with other git commands that update both index and
-working tree (e.g. 'git-apply --index', 'git-checkout-index -u',
-and 'git-read-tree -u') are automatically marked as "assume
+working tree (e.g. 'git apply --index', 'git checkout-index -u',
+and 'git read-tree -u') are automatically marked as "assume
 unchanged".  Note that "assume unchanged" bit is *not* set if
 `git update-index --refresh` finds the working tree file matches
 the index (use `git update-index --really-refresh` if you want
@@ -304,16 +316,37 @@ M foo.c
 <9> now it checks with lstat(2) and finds it has been changed.
 
 
+Skip-worktree bit
+-----------------
+
+Skip-worktree bit can be defined in one (long) sentence: When reading
+an entry, if it is marked as skip-worktree, then Git pretends its
+working directory version is up to date and read the index version
+instead.
+
+To elaborate, "reading" means checking for file existence, reading
+file attributes or file content. The working directory version may be
+present or absent. If present, its content may match against the index
+version or not. Writing is not affected by this bit, content safety
+is still first priority. Note that Git _can_ update working directory
+file, that is marked skip-worktree, if it is safe to do so (i.e.
+working directory version matches index version)
+
+Although this bit looks similar to assume-unchanged bit, its goal is
+different from assume-unchanged bit's. Skip-worktree also takes
+precedence over assume-unchanged bit when both are set.
+
+
 Configuration
 -------------
 
 The command honors `core.filemode` configuration variable.  If
-your repository is on an filesystem whose executable bits are
+your repository is on a filesystem whose executable bits are
 unreliable, this should be set to 'false' (see linkgit:git-config[1]).
 This causes the command to ignore differences in file modes recorded
 in the index and the file mode on the filesystem if they differ only on
 executable bit.   On such an unfortunate filesystem, you may
-need to use 'git-update-index --chmod='.
+need to use 'git update-index --chmod='.
 
 Quite similarly, if `core.symlinks` configuration variable is set
 to 'false' (see linkgit:git-config[1]), symbolic links are checked out

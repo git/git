@@ -10,6 +10,15 @@ int prefixcmp(const char *str, const char *prefix)
 			return (unsigned char)*prefix - (unsigned char)*str;
 }
 
+int suffixcmp(const char *str, const char *suffix)
+{
+	int len = strlen(str), suflen = strlen(suffix);
+	if (len < suflen)
+		return -1;
+	else
+		return strcmp(str + len - suflen, suffix);
+}
+
 /*
  * Used as the default ->buf value, so that people can always assume
  * buf is non NULL and ->buf is NUL terminated even for a freshly
@@ -89,13 +98,6 @@ void strbuf_ltrim(struct strbuf *sb)
 	}
 	memmove(sb->buf, b, sb->len);
 	sb->buf[sb->len] = '\0';
-}
-
-void strbuf_tolower(struct strbuf *sb)
-{
-	int i;
-	for (i = 0; i < sb->len; i++)
-		sb->buf[i] = tolower(sb->buf[i]);
 }
 
 struct strbuf **strbuf_split(const struct strbuf *sb, int delim)
@@ -227,6 +229,12 @@ void strbuf_expand(struct strbuf *sb, const char *format, expand_fn_t fn,
 			break;
 		format = percent + 1;
 
+		if (*format == '%') {
+			strbuf_addch(sb, '%');
+			format++;
+			continue;
+		}
+
 		consumed = fn(sb, format, context);
 		if (consumed)
 			format += consumed;
@@ -251,6 +259,17 @@ size_t strbuf_expand_dict_cb(struct strbuf *sb, const char *placeholder,
 	return 0;
 }
 
+void strbuf_addbuf_percentquote(struct strbuf *dst, const struct strbuf *src)
+{
+	int i, len = src->len;
+
+	for (i = 0; i < len; i++) {
+		if (src->buf[i] == '%')
+			strbuf_addch(dst, '%');
+		strbuf_addch(dst, src->buf[i]);
+	}
+}
+
 size_t strbuf_fread(struct strbuf *sb, size_t size, FILE *f)
 {
 	size_t res;
@@ -260,7 +279,7 @@ size_t strbuf_fread(struct strbuf *sb, size_t size, FILE *f)
 	res = fread(sb->buf + sb->len, 1, size, f);
 	if (res > 0)
 		strbuf_setlen(sb, sb->len + res);
-	else if (res < 0 && oldalloc == 0)
+	else if (oldalloc == 0)
 		strbuf_release(sb);
 	return res;
 }
@@ -322,7 +341,7 @@ int strbuf_readlink(struct strbuf *sb, const char *path, size_t hint)
 	return -1;
 }
 
-int strbuf_getline(struct strbuf *sb, FILE *fp, int term)
+int strbuf_getwholeline(struct strbuf *sb, FILE *fp, int term)
 {
 	int ch;
 
@@ -332,15 +351,24 @@ int strbuf_getline(struct strbuf *sb, FILE *fp, int term)
 
 	strbuf_reset(sb);
 	while ((ch = fgetc(fp)) != EOF) {
-		if (ch == term)
-			break;
 		strbuf_grow(sb, 1);
 		sb->buf[sb->len++] = ch;
+		if (ch == term)
+			break;
 	}
 	if (ch == EOF && sb->len == 0)
 		return EOF;
 
 	sb->buf[sb->len] = '\0';
+	return 0;
+}
+
+int strbuf_getline(struct strbuf *sb, FILE *fp, int term)
+{
+	if (strbuf_getwholeline(sb, fp, term))
+		return EOF;
+	if (sb->buf[sb->len-1] == term)
+		strbuf_setlen(sb, sb->len-1);
 	return 0;
 }
 

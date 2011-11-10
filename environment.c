@@ -26,6 +26,7 @@ const char *git_commit_encoding;
 const char *git_log_output_encoding;
 int shared_repository = PERM_UMASK;
 const char *apply_default_whitespace;
+const char *apply_default_ignorewhitespace;
 int zlib_compression_level = Z_BEST_SPEED;
 int core_compression_level;
 int core_compression_seen;
@@ -38,15 +39,19 @@ int pager_use_color = 1;
 const char *editor_program;
 const char *excludes_file;
 int auto_crlf = 0;	/* 1: both ways, -1: only when adding git objects */
+int read_replace_refs = 1;
 enum safe_crlf safe_crlf = SAFE_CRLF_WARN;
 unsigned whitespace_rule_cfg = WS_DEFAULT_RULE;
 enum branch_track git_branch_track = BRANCH_TRACK_REMOTE;
 enum rebase_setup_type autorebase = AUTOREBASE_NEVER;
-enum push_default_type push_default = PUSH_DEFAULT_UNSPECIFIED;
+enum push_default_type push_default = PUSH_DEFAULT_MATCHING;
 #ifndef OBJECT_CREATION_MODE
 #define OBJECT_CREATION_MODE OBJECT_CREATION_USES_HARDLINKS
 #endif
 enum object_creation_mode object_creation_mode = OBJECT_CREATION_MODE;
+char *notes_ref_name;
+int grafts_replace_parents = 1;
+int core_apply_sparse_checkout;
 
 /* Parallel index stat data preload? */
 int core_preload_index = 0;
@@ -80,6 +85,8 @@ static void setup_git_env(void)
 	git_graft_file = getenv(GRAFT_ENVIRONMENT);
 	if (!git_graft_file)
 		git_graft_file = git_pathdup("info/grafts");
+	if (getenv(NO_REPLACE_OBJECTS_ENVIRONMENT))
+		read_replace_refs = 0;
 }
 
 int is_bare_repository(void)

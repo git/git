@@ -60,13 +60,13 @@ Steps to parse options
 . in `cmd_foo(int argc, const char **argv, const char *prefix)`
   call
 
-	argc = parse_options(argc, argv, builtin_foo_options, builtin_foo_usage, flags);
+	argc = parse_options(argc, argv, prefix, builtin_foo_options, builtin_foo_usage, flags);
 +
 `parse_options()` will filter out the processed options of `argv[]` and leave the
 non-option arguments in `argv[]`.
 `argc` is updated appropriately because of the assignment.
 +
-You can also pass NULL instead of a usage array as fourth parameter of
+You can also pass NULL instead of a usage array as the fifth parameter of
 parse_options(), to avoid displaying a help screen with usage info and
 option list.  This should only be done if necessary, e.g. to implement
 a limited parser for only a subset of the options that needs to be run
@@ -137,6 +137,10 @@ There are some macros to easily define options:
 	Introduce a boolean option.
 	If used, `int_var` is bitwise-ored with `mask`.
 
+`OPT_NEGBIT(short, long, &int_var, description, mask)`::
+	Introduce a boolean option.
+	If used, `int_var` is bitwise-anded with the inverted `mask`.
+
 `OPT_SET_INT(short, long, &int_var, description, integer)`::
 	Introduce a boolean option.
 	If used, set `int_var` to `integer`.
@@ -163,8 +167,21 @@ There are some macros to easily define options:
 	and the result will be put into `var`.
 	See 'Option Callbacks' below for a more elaborate description.
 
+`OPT_FILENAME(short, long, &var, description)`::
+	Introduce an option with a filename argument.
+	The filename will be prefixed by passing the filename along with
+	the prefix argument of `parse_options()` to `prefix_filename()`.
+
 `OPT_ARGUMENT(long, description)`::
 	Introduce a long-option argument that will be kept in `argv[]`.
+
+`OPT_NUMBER_CALLBACK(&var, description, func_ptr)`::
+	Recognize numerical options like -123 and feed the integer as
+	if it was an argument to the function given by `func_ptr`.
+	The result will be put into `var`.  There can be only one such
+	option definition.  It cannot be negated and it takes no
+	arguments.  Short options that happen to be digits take
+	precedence over it.
 
 
 The last element of the array must be `OPT_END()`.
@@ -198,7 +215,7 @@ The function must be defined in this form:
 
 The callback mechanism is as follows:
 
-* Inside `funct`, the only interesting member of the structure
+* Inside `func`, the only interesting member of the structure
   given by `opt` is the void pointer `opt->value`.
   `\*opt->value` will be the value that is saved into `var`, if you
   use `OPT_CALLBACK()`.

@@ -100,7 +100,7 @@ static void pretty_print_string_list(struct cmdnames *cmds, int longest)
 
 	if (space < max_cols)
 		cols = max_cols / space;
-	rows = (cmds->cnt + cols - 1) / cols;
+	rows = DIV_ROUND_UP(cmds->cnt, cols);
 
 	for (i = 0; i < rows; i++) {
 		printf("  ");
@@ -126,8 +126,8 @@ static int is_executable(const char *name)
 	    !S_ISREG(st.st_mode))
 		return 0;
 
-#ifdef __MINGW32__
-	/* cannot trust the executable bit, peek into the file instead */
+#ifdef WIN32
+{	/* cannot trust the executable bit, peek into the file instead */
 	char buf[3] = { 0 };
 	int n;
 	int fd = open(name, O_RDONLY);
@@ -140,6 +140,7 @@ static int is_executable(const char *name)
 				st.st_mode |= S_IXUSR;
 		close(fd);
 	}
+}
 #endif
 	return st.st_mode & S_IXUSR;
 }
@@ -296,13 +297,16 @@ static void add_cmd_list(struct cmdnames *cmds, struct cmdnames *old)
 	old->names = NULL;
 }
 
+/* An empirically derived magic number */
+#define SIMILAR_ENOUGH(x) ((x) < 6)
+
 const char *help_unknown_cmd(const char *cmd)
 {
 	int i, n, best_similarity = 0;
 	struct cmdnames main_cmds, other_cmds;
 
 	memset(&main_cmds, 0, sizeof(main_cmds));
-	memset(&other_cmds, 0, sizeof(main_cmds));
+	memset(&other_cmds, 0, sizeof(other_cmds));
 	memset(&aliases, 0, sizeof(aliases));
 
 	git_config(git_unknown_cmd_config, NULL);
@@ -330,11 +334,11 @@ const char *help_unknown_cmd(const char *cmd)
 	n = 1;
 	while (n < main_cmds.cnt && best_similarity == main_cmds.names[n]->len)
 		++n;
-	if (autocorrect && n == 1) {
+	if (autocorrect && n == 1 && SIMILAR_ENOUGH(best_similarity)) {
 		const char *assumed = main_cmds.names[0]->name;
 		main_cmds.names[0] = NULL;
 		clean_cmdnames(&main_cmds);
-		fprintf(stderr, "WARNING: You called a Git program named '%s', "
+		fprintf(stderr, "WARNING: You called a Git command named '%s', "
 			"which does not exist.\n"
 			"Continuing under the assumption that you meant '%s'\n",
 			cmd, assumed);
@@ -346,9 +350,9 @@ const char *help_unknown_cmd(const char *cmd)
 		return assumed;
 	}
 
-	fprintf(stderr, "git: '%s' is not a git-command. See 'git --help'.\n", cmd);
+	fprintf(stderr, "git: '%s' is not a git command. See 'git --help'.\n", cmd);
 
-	if (best_similarity < 6) {
+	if (SIMILAR_ENOUGH(best_similarity)) {
 		fprintf(stderr, "\nDid you mean %s?\n",
 			n < 2 ? "this": "one of these");
 

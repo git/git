@@ -208,4 +208,87 @@ test_expect_success 'init rejects insanely long --template' '
 	)
 '
 
+test_expect_success 'init creates a new directory' '
+	rm -fr newdir &&
+	(
+		git init newdir &&
+		test -d newdir/.git/refs
+	)
+'
+
+test_expect_success 'init creates a new bare directory' '
+	rm -fr newdir &&
+	(
+		git init --bare newdir &&
+		test -d newdir/refs
+	)
+'
+
+test_expect_success 'init recreates a directory' '
+	rm -fr newdir &&
+	(
+		mkdir newdir &&
+		git init newdir &&
+		test -d newdir/.git/refs
+	)
+'
+
+test_expect_success 'init recreates a new bare directory' '
+	rm -fr newdir &&
+	(
+		mkdir newdir &&
+		git init --bare newdir &&
+		test -d newdir/refs
+	)
+'
+
+test_expect_success 'init creates a new deep directory' '
+	rm -fr newdir &&
+	git init newdir/a/b/c &&
+	test -d newdir/a/b/c/.git/refs
+'
+
+test_expect_success POSIXPERM 'init creates a new deep directory (umask vs. shared)' '
+	rm -fr newdir &&
+	(
+		# Leading directories should honor umask while
+		# the repository itself should follow "shared"
+		umask 002 &&
+		git init --bare --shared=0660 newdir/a/b/c &&
+		test -d newdir/a/b/c/refs &&
+		ls -ld newdir/a newdir/a/b > lsab.out &&
+		! grep -v "^drwxrw[sx]r-x" lsab.out &&
+		ls -ld newdir/a/b/c > lsc.out &&
+		! grep -v "^drwxrw[sx]---" lsc.out
+	)
+'
+
+test_expect_success 'init notices EEXIST (1)' '
+	rm -fr newdir &&
+	(
+		>newdir &&
+		test_must_fail git init newdir &&
+		test -f newdir
+	)
+'
+
+test_expect_success 'init notices EEXIST (2)' '
+	rm -fr newdir &&
+	(
+		mkdir newdir &&
+		>newdir/a
+		test_must_fail git init newdir/a/b &&
+		test -f newdir/a
+	)
+'
+
+test_expect_success POSIXPERM 'init notices EPERM' '
+	rm -fr newdir &&
+	(
+		mkdir newdir &&
+		chmod -w newdir &&
+		test_must_fail git init newdir/a/b
+	)
+'
+
 test_done

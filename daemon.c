@@ -1,6 +1,8 @@
 #include "cache.h"
 #include "pkt-line.h"
 #include "exec_cmd.h"
+#include "run-command.h"
+#include "strbuf.h"
 
 #include <syslog.h>
 
@@ -75,6 +77,7 @@ static void logreport(int priority, const char *err, va_list params)
 	}
 }
 
+__attribute__((format (printf, 1, 2)))
 static void logerror(const char *err, ...)
 {
 	va_list params;
@@ -83,6 +86,7 @@ static void logerror(const char *err, ...)
 	va_end(params);
 }
 
+__attribute__((format (printf, 1, 2)))
 static void loginfo(const char *err, ...)
 {
 	va_list params;
@@ -99,53 +103,6 @@ static void NORETURN daemon_die(const char *err, va_list params)
 	exit(1);
 }
 
-static int avoid_alias(char *p)
-{
-	int sl, ndot;
-
-	/*
-	 * This resurrects the belts and suspenders paranoia check by HPA
-	 * done in <435560F7.4080006@zytor.com> thread, now enter_repo()
-	 * does not do getcwd() based path canonicalizations.
-	 *
-	 * sl becomes true immediately after seeing '/' and continues to
-	 * be true as long as dots continue after that without intervening
-	 * non-dot character.
-	 */
-	if (!p || (*p != '/' && *p != '~'))
-		return -1;
-	sl = 1; ndot = 0;
-	p++;
-
-	while (1) {
-		char ch = *p++;
-		if (sl) {
-			if (ch == '.')
-				ndot++;
-			else if (ch == '/') {
-				if (ndot < 3)
-					/* reject //, /./ and /../ */
-					return -1;
-				ndot = 0;
-			}
-			else if (ch == 0) {
-				if (0 < ndot && ndot < 3)
-					/* reject /.$ and /..$ */
-					return -1;
-				return 0;
-			}
-			else
-				sl = ndot = 0;
-		}
-		else if (ch == 0)
-			return 0;
-		else if (ch == '/') {
-			sl = 1;
-			ndot = 0;
-		}
-	}
-}
-
 static char *path_ok(char *directory)
 {
 	static char rpath[PATH_MAX];
@@ -155,7 +112,7 @@ static char *path_ok(char *directory)
 
 	dir = directory;
 
-	if (avoid_alias(dir)) {
+	if (daemon_avoid_alias(dir)) {
 		logerror("'%s': aliased", dir);
 		return NULL;
 	}
@@ -190,7 +147,6 @@ static char *path_ok(char *directory)
 			{ "IP", ip_address },
 			{ "P", tcp_port },
 			{ "D", directory },
-			{ "%", "%" },
 			{ NULL }
 		};
 
@@ -343,28 +299,66 @@ static int run_service(char *dir, struct daemon_service *service)
 	return service->fn();
 }
 
+static void copy_to_log(int fd)
+{
+	struct strbuf line = STRBUF_INIT;
+	FILE *fp;
+
+	fp = fdopen(fd, "r");
+	if (fp == NULL) {
+		logerror("fdopen of error channel failed");
+		close(fd);
+		return;
+	}
+
+	while (strbuf_getline(&line, fp, '\n') != EOF) {
+		logerror("%s", line.buf);
+		strbuf_setlen(&line, 0);
+	}
+
+	strbuf_release(&line);
+	fclose(fp);
+}
+
+static int run_service_command(const char **argv)
+{
+	struct child_process cld;
+
+	memset(&cld, 0, sizeof(cld));
+	cld.argv = argv;
+	cld.git_cmd = 1;
+	cld.err = -1;
+	if (start_command(&cld))
+		return -1;
+
+	close(0);
+	close(1);
+
+	copy_to_log(cld.err);
+
+	return finish_command(&cld);
+}
+
 static int upload_pack(void)
 {
 	/* Timeout as string */
 	char timeout_buf[64];
+	const char *argv[] = { "upload-pack", "--strict", timeout_buf, ".", NULL };
 
 	snprintf(timeout_buf, sizeof timeout_buf, "--timeout=%u", timeout);
-
-	/* git-upload-pack only ever reads stuff, so this is safe */
-	execl_git_cmd("upload-pack", "--strict", timeout_buf, ".", NULL);
-	return -1;
+	return run_service_command(argv);
 }
 
 static int upload_archive(void)
 {
-	execl_git_cmd("upload-archive", ".", NULL);
-	return -1;
+	static const char *argv[] = { "upload-archive", ".", NULL };
+	return run_service_command(argv);
 }
 
 static int receive_pack(void)
 {
-	execl_git_cmd("receive-pack", ".", NULL);
-	return -1;
+	static const char *argv[] = { "receive-pack", ".", NULL };
+	return run_service_command(argv);
 }
 
 static struct daemon_service daemon_service[] = {
@@ -405,27 +399,53 @@ static char *xstrdup_tolower(const char *str)
 	return dup;
 }
 
+static void parse_host_and_port(char *hostport, char **host,
+	char **port)
+{
+	if (*hostport == '[') {
+		char *end;
+
+		end = strchr(hostport, ']');
+		if (!end)
+			die("Invalid request ('[' without ']')");
+		*end = '\0';
+		*host = hostport + 1;
+		if (!end[1])
+			*port = NULL;
+		else if (end[1] == ':')
+			*port = end + 2;
+		else
+			die("Garbage after end of host part");
+	} else {
+		*host = hostport;
+		*port = strrchr(hostport, ':');
+		if (*port) {
+			*port = '\0';
+			++*port;
+		}
+	}
+}
+
 /*
- * Separate the "extra args" information as supplied by the client connection.
+ * Read the host as supplied by the client connection.
  */
-static void parse_extra_args(char *extra_args, int buflen)
+static void parse_host_arg(char *extra_args, int buflen)
 {
 	char *val;
 	int vallen;
 	char *end = extra_args + buflen;
 
-	while (extra_args < end && *extra_args) {
+	if (extra_args < end && *extra_args) {
 		saw_extended_args = 1;
 		if (strncasecmp("host=", extra_args, 5) == 0) {
 			val = extra_args + 5;
 			vallen = strlen(val) + 1;
 			if (*val) {
 				/* Split <host>:<port> at colon. */
-				char *host = val;
-				char *port = strrchr(host, ':');
+				char *host;
+				char *port;
+				parse_host_and_port(val, &host, &port);
 				if (port) {
-					*port = 0;
-					port++;
 					free(tcp_port);
 					tcp_port = xstrdup(port);
 				}
@@ -436,6 +456,8 @@ static void parse_extra_args(char *extra_args, int buflen)
 			/* On to the next one */
 			extra_args = val + vallen;
 		}
+		if (extra_args < end && *extra_args)
+			die("Invalid request");
 	}
 
 	/*
@@ -451,7 +473,7 @@ static void parse_extra_args(char *extra_args, int buflen)
 		memset(&hints, 0, sizeof(hints));
 		hints.ai_flags = AI_CANONNAME;
 
-		gai = getaddrinfo(hostname, 0, &hints, &ai);
+		gai = getaddrinfo(hostname, NULL, &hints, &ai);
 		if (!gai) {
 			struct sockaddr_in *sin_addr = (void *)ai->ai_addr;
 
@@ -545,7 +567,7 @@ static int execute(struct sockaddr *addr)
 	hostname = canon_hostname = ip_address = tcp_port = NULL;
 
 	if (len != pktlen)
-		parse_extra_args(line + len + 1, pktlen - len - 1);
+		parse_host_arg(line + len + 1, pktlen - len - 1);
 
 	for (i = 0; i < ARRAY_SIZE(daemon_service); i++) {
 		struct daemon_service *s = &(daemon_service[i]);
@@ -565,6 +587,24 @@ static int execute(struct sockaddr *addr)
 	return -1;
 }
 
+static int addrcmp(const struct sockaddr_storage *s1,
+    const struct sockaddr_storage *s2)
+{
+	if (s1->ss_family != s2->ss_family)
+		return s1->ss_family - s2->ss_family;
+	if (s1->ss_family == AF_INET)
+		return memcmp(&((struct sockaddr_in *)s1)->sin_addr,
+		    &((struct sockaddr_in *)s2)->sin_addr,
+		    sizeof(struct in_addr));
+#ifndef NO_IPV6
+	if (s1->ss_family == AF_INET6)
+		return memcmp(&((struct sockaddr_in6 *)s1)->sin6_addr,
+		    &((struct sockaddr_in6 *)s2)->sin6_addr,
+		    sizeof(struct in6_addr));
+#endif
+	return 0;
+}
+
 static int max_connections = 32;
 
 static unsigned int live_children;
@@ -579,17 +619,12 @@ static void add_child(pid_t pid, struct sockaddr *addr, int addrlen)
 {
 	struct child *newborn, **cradle;
 
-	/*
-	 * This must be xcalloc() -- we'll compare the whole sockaddr_storage
-	 * but individual address may be shorter.
-	 */
 	newborn = xcalloc(1, sizeof(*newborn));
 	live_children++;
 	newborn->pid = pid;
 	memcpy(&newborn->address, addr, addrlen);
 	for (cradle = &firstborn; *cradle; cradle = &(*cradle)->next)
-		if (!memcmp(&(*cradle)->address, &newborn->address,
-			    sizeof(newborn->address)))
+		if (!addrcmp(&(*cradle)->address, &newborn->address))
 			break;
 	newborn->next = *cradle;
 	*cradle = newborn;
@@ -622,8 +657,7 @@ static void kill_some_child(void)
 		return;
 
 	for (; (next = blanket->next); blanket = next)
-		if (!memcmp(&blanket->address, &next->address,
-			    sizeof(next->address))) {
+		if (!addrcmp(&blanket->address, &next->address)) {
 			kill(blanket->pid, SIGTERM);
 			break;
 		}
@@ -860,7 +894,7 @@ static int service_loop(int socknum, int *socklist)
 					case ECONNABORTED:
 						continue;
 					default:
-						die("accept returned %s", strerror(errno));
+						die_errno("accept returned");
 					}
 				}
 				handle(incoming, (struct sockaddr *)&ss, sslen);
@@ -876,7 +910,7 @@ static void sanitize_stdfds(void)
 	while (fd != -1 && fd < 2)
 		fd = dup(fd);
 	if (fd == -1)
-		die("open /dev/null or dup failed: %s", strerror(errno));
+		die_errno("open /dev/null or dup failed");
 	if (fd > 2)
 		close(fd);
 }
@@ -887,12 +921,12 @@ static void daemonize(void)
 		case 0:
 			break;
 		case -1:
-			die("fork failed: %s", strerror(errno));
+			die_errno("fork failed");
 		default:
 			exit(0);
 	}
 	if (setsid() == -1)
-		die("setsid failed: %s", strerror(errno));
+		die_errno("setsid failed");
 	close(0);
 	close(1);
 	close(2);
@@ -903,9 +937,9 @@ static void store_pid(const char *path)
 {
 	FILE *f = fopen(path, "w");
 	if (!f)
-		die("cannot open pid file %s: %s", path, strerror(errno));
+		die_errno("cannot open pid file '%s'", path);
 	if (fprintf(f, "%"PRIuMAX"\n", (uintmax_t) getpid()) < 0 || fclose(f) != 0)
-		die("failed to write pid file %s: %s", path, strerror(errno));
+		die_errno("failed to write pid file '%s'", path);
 }
 
 static int serve(char *listen_addr, int listen_port, struct passwd *pass, gid_t gid)
@@ -1105,8 +1139,7 @@ int main(int argc, char **argv)
 		socklen_t slen = sizeof(ss);
 
 		if (!freopen("/dev/null", "w", stderr))
-			die("failed to redirect stderr to /dev/null: %s",
-			    strerror(errno));
+			die_errno("failed to redirect stderr to /dev/null");
 
 		if (getpeername(0, peer, &slen))
 			peer = NULL;

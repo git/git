@@ -31,11 +31,14 @@ OPTIONS
 	Instead of incrementally packing the unpacked objects,
 	pack everything referenced into a single pack.
 	Especially useful when packing a repository that is used
-	for private development and there is no need to worry
-	about people fetching via dumb protocols from it.  Use
+	for private development. Use
 	with '-d'.  This will clean up the objects that `git prune`
 	leaves behind, but `git fsck --full` shows as
 	dangling.
++
+Note that users fetching over dumb protocols will have to fetch the
+whole new pack in order to get any contained object, no matter how many
+other objects in that pack they already have locally.
 
 -A::
 	Same as `-a`, unless '-d' is used.  Then any unreachable
@@ -46,16 +49,16 @@ OPTIONS
 	deleted by way of being left in the old pack and then
 	removed.  Instead, the loose unreachable objects
 	will be pruned according to normal expiry rules
-	with the next 'git-gc' invocation. See linkgit:git-gc[1].
+	with the next 'git gc' invocation. See linkgit:git-gc[1].
 
 -d::
 	After packing, if the newly created packs make some
 	existing packs redundant, remove the redundant packs.
-	Also run  'git-prune-packed' to remove redundant
+	Also run  'git prune-packed' to remove redundant
 	loose object files.
 
 -l::
-	Pass the `--local` option to 'git-pack-objects'. See
+	Pass the `--local` option to 'git pack-objects'. See
 	linkgit:git-pack-objects[1].
 
 -f::
@@ -63,12 +66,12 @@ OPTIONS
 	linkgit:git-pack-objects[1].
 
 -q::
-	Pass the `-q` option to 'git-pack-objects'. See
+	Pass the `-q` option to 'git pack-objects'. See
 	linkgit:git-pack-objects[1].
 
 -n::
 	Do not update the server information with
-	'git-update-server-info'.  This option skips
+	'git update-server-info'.  This option skips
 	updating local catalog files needed to publish
 	this repository (or a direct copy of it)
 	over HTTP or FTP.  See linkgit:git-update-server-info[1].
@@ -95,24 +98,26 @@ OPTIONS
 	`--window-memory=0` makes memory usage unlimited, which is the
 	default.
 
---max-pack-size=<n>::
-	Maximum size of each output packfile, expressed in MiB.
+--max-pack-size=[N]::
+	Maximum size of each output pack file. The size can be suffixed with
+	"k", "m", or "g". The minimum size allowed is limited to 1 MiB.
 	If specified,  multiple packfiles may be created.
-	The default is unlimited.
+	The default is unlimited, unless the config variable
+	`pack.packSizeLimit` is set.
 
 
 Configuration
 -------------
 
-When configuration variable `repack.UseDeltaBaseOffset` is set
-for the repository, the command passes `--delta-base-offset`
-option to 'git-pack-objects'; this typically results in slightly
-smaller packs, but the generated packs are incompatible with
-versions of git older than (and including) v1.4.3; do not set
-the variable in a repository that older version of git needs to
-be able to read (this includes repositories from which packs can
-be copied out over http or rsync, and people who obtained packs
-that way can try to use older git with it).
+By default, the command passes `--delta-base-offset` option to
+'git pack-objects'; this typically results in slightly smaller packs,
+but the generated packs are incompatible with versions of Git older than
+version 1.4.4. If you need to share your repository with such ancient Git
+versions, either directly or via the dumb http or rsync protocol, then you
+need to set the configuration variable `repack.UseDeltaBaseOffset` to
+"false" and repack. Access from old Git versions over the native protocol
+is unaffected by this option as the conversion is performed on the fly
+as needed in that case.
 
 
 Author

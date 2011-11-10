@@ -27,10 +27,13 @@ config file would appear like this:
 ------------
 	[remote "<name>"]
 		url = <url>
+		pushurl = <pushurl>
 		push = <refspec>
 		fetch = <refspec>
 ------------
 
+The `<pushurl>` is used for pushes only. It is optional and defaults
+to `<url>`.
 
 Named file in `$GIT_DIR/remotes`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -49,8 +52,8 @@ following format:
 
 ------------
 
-`Push:` lines are used by 'git-push' and
-`Pull:` lines are used by 'git-pull' and 'git-fetch'.
+`Push:` lines are used by 'git push' and
+`Pull:` lines are used by 'git pull' and 'git fetch'.
 Multiple `Push:` and `Pull:` lines may
 be specified for additional branch mappings.
 

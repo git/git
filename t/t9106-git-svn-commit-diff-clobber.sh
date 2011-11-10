@@ -8,18 +8,18 @@ test_expect_success 'initialize repo' '
 	mkdir import &&
 	cd import &&
 	echo initial > file &&
-	svn import -m "initial" . "$svnrepo" &&
+	svn_cmd import -m "initial" . "$svnrepo" &&
 	cd .. &&
 	echo initial > file &&
 	git update-index --add file &&
 	git commit -a -m "initial"
 	'
 test_expect_success 'commit change from svn side' '
-	svn co "$svnrepo" t.svn &&
+	svn_cmd co "$svnrepo" t.svn &&
 	cd t.svn &&
 	echo second line from svn >> file &&
 	poke file &&
-	svn commit -m "second line from svn" &&
+	svn_cmd commit -m "second line from svn" &&
 	cd .. &&
 	rm -rf t.svn
 	'
@@ -43,11 +43,11 @@ test_expect_success 'dcommit fails to commit because of conflict' '
 	git svn init "$svnrepo" &&
 	git svn fetch &&
 	git reset --hard refs/${remotes_git_svn} &&
-	svn co "$svnrepo" t.svn &&
+	svn_cmd co "$svnrepo" t.svn &&
 	cd t.svn &&
 	echo fourth line from svn >> file &&
 	poke file &&
-	svn commit -m "fourth line from svn" &&
+	svn_cmd commit -m "fourth line from svn" &&
 	cd .. &&
 	rm -rf t.svn &&
 	echo "fourth line from git" >> file &&
@@ -67,11 +67,11 @@ test_expect_success 'dcommit does the svn equivalent of an index merge' "
 	"
 
 test_expect_success 'commit another change from svn side' '
-	svn co "$svnrepo" t.svn &&
+	svn_cmd co "$svnrepo" t.svn &&
 	cd t.svn &&
 		echo third line from svn >> file &&
 		poke file &&
-		svn commit -m "third line from svn" &&
+		svn_cmd commit -m "third line from svn" &&
 	cd .. &&
 	rm -rf t.svn
 	'

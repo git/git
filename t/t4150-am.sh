@@ -77,6 +77,18 @@ test_expect_success setup '
 	git commit -s -F msg &&
 	git tag second &&
 	git format-patch --stdout first >patch1 &&
+	{
+		echo "X-Fake-Field: Line One" &&
+		echo "X-Fake-Field: Line Two" &&
+		echo "X-Fake-Field: Line Three" &&
+		git format-patch --stdout first | sed -e "1d"
+	} > patch1.eml &&
+	{
+		echo "X-Fake-Field: Line One" &&
+		echo "X-Fake-Field: Line Two" &&
+		echo "X-Fake-Field: Line Three" &&
+		git format-patch --stdout first | sed -e "1d"
+	} | append_cr >patch1-crlf.eml &&
 	sed -n -e "3,\$p" msg >file &&
 	git add file &&
 	test_tick &&
@@ -102,6 +114,24 @@ test_expect_success 'am applies patch correctly' '
 	git checkout first &&
 	test_tick &&
 	git am <patch1 &&
+	! test -d .git/rebase-apply &&
+	test -z "$(git diff second)" &&
+	test "$(git rev-parse second)" = "$(git rev-parse HEAD)" &&
+	test "$(git rev-parse second^)" = "$(git rev-parse HEAD^)"
+'
+
+test_expect_success 'am applies patch e-mail not in a mbox' '
+	git checkout first &&
+	git am patch1.eml &&
+	! test -d .git/rebase-apply &&
+	test -z "$(git diff second)" &&
+	test "$(git rev-parse second)" = "$(git rev-parse HEAD)" &&
+	test "$(git rev-parse second^)" = "$(git rev-parse HEAD^)"
+'
+
+test_expect_success 'am applies patch e-mail not in a mbox with CRLF' '
+	git checkout first &&
+	git am patch1-crlf.eml &&
 	! test -d .git/rebase-apply &&
 	test -z "$(git diff second)" &&
 	test "$(git rev-parse second)" = "$(git rev-parse HEAD)" &&
@@ -178,6 +208,17 @@ test_expect_success 'am -3 falls back to 3-way merge' '
 	git am -3 lorem-move.patch &&
 	! test -d .git/rebase-apply &&
 	test -z "$(git diff lorem)"
+'
+
+test_expect_success 'am -3 -q is quiet' '
+	git reset master2 --hard &&
+	sed -n -e "3,\$p" msg >file &&
+	head -n 9 msg >>file &&
+	git add file &&
+	test_tick &&
+	git commit -m "copied stuff" &&
+	git am -3 -q lorem-move.patch > output.out 2>&1 &&
+	! test -s output.out
 '
 
 test_expect_success 'am pauses on conflict' '
@@ -261,7 +302,7 @@ test_expect_success 'am --committer-date-is-author-date' '
 	git checkout first &&
 	test_tick &&
 	git am --committer-date-is-author-date patch1 &&
-	git cat-file commit HEAD | sed -e "/^$/q" >head1 &&
+	git cat-file commit HEAD | sed -e "/^\$/q" >head1 &&
 	at=$(sed -ne "/^author /s/.*> //p" head1) &&
 	ct=$(sed -ne "/^committer /s/.*> //p" head1) &&
 	test "$at" = "$ct"
@@ -271,7 +312,7 @@ test_expect_success 'am without --committer-date-is-author-date' '
 	git checkout first &&
 	test_tick &&
 	git am patch1 &&
-	git cat-file commit HEAD | sed -e "/^$/q" >head1 &&
+	git cat-file commit HEAD | sed -e "/^\$/q" >head1 &&
 	at=$(sed -ne "/^author /s/.*> //p" head1) &&
 	ct=$(sed -ne "/^committer /s/.*> //p" head1) &&
 	test "$at" != "$ct"
@@ -285,7 +326,7 @@ test_expect_success 'am --ignore-date' '
 	git checkout first &&
 	test_tick &&
 	git am --ignore-date patch1 &&
-	git cat-file commit HEAD | sed -e "/^$/q" >head1 &&
+	git cat-file commit HEAD | sed -e "/^\$/q" >head1 &&
 	at=$(sed -ne "/^author /s/.*> //p" head1) &&
 	echo "$at" | grep "+0000"
 '
@@ -303,6 +344,21 @@ test_expect_success 'am into an unborn branch' '
 		cd subdir && git rev-parse HEAD^{tree}
 	) &&
 	test "z$result" = "z$(git rev-parse first^{tree})"
+'
+
+test_expect_success 'am newline in subject' '
+	git checkout first &&
+	test_tick &&
+	sed -e "s/second/second \\\n foo/" patch1 > patchnl &&
+	git am < patchnl > output.out 2>&1 &&
+	grep "^Applying: second \\\n foo$" output.out
+'
+
+test_expect_success 'am -q is quiet' '
+	git checkout first &&
+	test_tick &&
+	git am -q < patch1 > output.out 2>&1 &&
+	! test -s output.out
 '
 
 test_done

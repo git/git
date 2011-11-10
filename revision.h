@@ -15,6 +15,9 @@
 #define SYMMETRIC_LEFT	(1u<<8)
 #define ALL_REV_FLAGS	((1u<<9)-1)
 
+#define DECORATE_SHORT_REFS	1
+#define DECORATE_FULL_REFS	2
+
 struct rev_info;
 struct log_info;
 
@@ -36,6 +39,7 @@ struct rev_info {
 	unsigned int	dense:1,
 			prune:1,
 			no_merges:1,
+			merges_only:1,
 			no_walk:1,
 			show_all:1,
 			remove_empty_trees:1,
@@ -59,6 +63,7 @@ struct rev_info {
 			reverse:1,
 			reverse_output_stage:1,
 			cherry_pick:1,
+			bisect:1,
 			first_parent_only:1;
 
 	/* Diff flags */
@@ -75,9 +80,15 @@ struct rev_info {
 	/* Format info */
 	unsigned int	shown_one:1,
 			show_merge:1,
+			show_notes:1,
+			show_notes_given:1,
+			pretty_given:1,
 			abbrev_commit:1,
 			use_terminator:1,
-			missing_newline:1;
+			missing_newline:1,
+			date_mode_explicit:1;
+	unsigned int	disable_stdin:1;
+
 	enum date_mode date_mode;
 
 	unsigned int	abbrev;
@@ -118,12 +129,11 @@ struct rev_info {
 };
 
 #define REV_TREE_SAME		0
-#define REV_TREE_NEW		1
-#define REV_TREE_DIFFERENT	2
+#define REV_TREE_NEW		1	/* Only new files */
+#define REV_TREE_OLD		2	/* Only files removed */
+#define REV_TREE_DIFFERENT	3	/* Mixed changes */
 
 /* revision.c */
-void read_revisions_from_stdin(struct rev_info *revs);
-
 typedef void (*show_early_output_fn_t)(struct rev_info *, struct commit_list *);
 extern volatile show_early_output_fn_t show_early_output;
 
@@ -163,6 +173,7 @@ enum commit_action {
 	commit_error
 };
 
+extern enum commit_action get_commit_action(struct rev_info *revs, struct commit *commit);
 extern enum commit_action simplify_commit(struct rev_info *revs, struct commit *commit);
 
 #endif

@@ -8,12 +8,12 @@ git-merge-one-file - The standard helper program to use with git-merge-index
 
 SYNOPSIS
 --------
-'git-merge-one-file'
+'git merge-one-file'
 
 DESCRIPTION
 -----------
-This is the standard helper program to use with 'git-merge-index'
-to resolve a merge after the trivial merge done with 'git-read-tree -m'.
+This is the standard helper program to use with 'git merge-index'
+to resolve a merge after the trivial merge done with 'git read-tree -m'.
 
 Author
 ------

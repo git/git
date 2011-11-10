@@ -45,7 +45,6 @@ extern char *sq_dequote(char *);
  * next argument that should be passed as first parameter. When there
  * is no more argument to be dequoted, "next" is updated to point to NULL.
  */
-extern char *sq_dequote_step(char *arg, char **next);
 extern int sq_dequote_to_argv(char *arg, const char ***argv, int *nr, int *alloc);
 
 extern int unquote_c_style(struct strbuf *, const char *quoted, const char **endp);

@@ -1,5 +1,5 @@
-#ifndef PATH_LIST_H
-#define PATH_LIST_H
+#ifndef STRING_LIST_H
+#define STRING_LIST_H
 
 struct string_list_item {
 	char *string;
@@ -39,4 +39,4 @@ struct string_list_item *string_list_append(const char *string, struct string_li
 void sort_string_list(struct string_list *list);
 int unsorted_string_list_has_string(struct string_list *list, const char *string);
 
-#endif /* PATH_LIST_H */
+#endif /* STRING_LIST_H */

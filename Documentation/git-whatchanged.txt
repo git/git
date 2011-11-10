@@ -13,8 +13,8 @@ SYNOPSIS
 DESCRIPTION
 -----------
 Shows commit logs and diff output each commit introduces.  The
-command internally invokes 'git-rev-list' piped to
-'git-diff-tree', and takes command line options for both of
+command internally invokes 'git rev-list' piped to
+'git diff-tree', and takes command line options for both of
 these commands.
 
 This manual page describes only the most frequently used options.

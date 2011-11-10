@@ -43,8 +43,6 @@ test_expect_success \
      tree=`git write-tree` &&
      echo $tree'
 
-_x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
-_x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
 test_output () {
     sed -e "s/ $_x40	/ X	/" <current >check
     test_cmp expected check

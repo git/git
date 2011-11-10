@@ -28,7 +28,7 @@ in the current working directory.  Note that:
    in a directory 'sub' that has a directory 'dir', you can run 'git
    ls-tree -r HEAD dir' to list the contents of the tree (that is
    'sub/dir' in 'HEAD').  You don't want to give a tree that is not at the
-   root level (e.g. 'git ls-tree -r HEAD:sub dir') in this case, as that
+   root level (e.g. `git ls-tree -r HEAD:sub dir`) in this case, as that
    would result in asking for 'sub/sub/dir' in the 'HEAD' commit.
    However, the current working directory can be ignored by passing
    --full-tree option.
@@ -82,8 +82,10 @@ Output Format
 -------------
         <mode> SP <type> SP <object> TAB <file>
 
-When the `-z` option is not used, TAB, LF, and backslash characters
+Unless the `-z` option is used, TAB, LF, and backslash characters
 in pathnames are represented as `\t`, `\n`, and `\\`, respectively.
+This output format is compatible with what `--index-info --stdin` of
+'git update-index' expects.
 
 When the `-l` option is used, format changes to
 

@@ -14,15 +14,16 @@ field smarktop
 field smarkbot
 
 constructor new {i_w i_text args} {
+	global use_ttk NS
 	set w      $i_w
 	set ctext  $i_text
 
-	frame  $w
-	label  $w.l       -text [mc Find:]
+	${NS}::frame  $w
+	${NS}::label  $w.l       -text [mc Find:]
 	entry  $w.ent -textvariable ${__this}::searchstring -background lightgreen
-	button $w.bn      -text [mc Next] -command [cb find_next]
-	button $w.bp      -text [mc Prev] -command [cb find_prev]
-	checkbutton $w.cs -text [mc Case-Sensitive] \
+	${NS}::button $w.bn      -text [mc Next] -command [cb find_next]
+	${NS}::button $w.bp      -text [mc Prev] -command [cb find_prev]
+	${NS}::checkbutton $w.cs -text [mc Case-Sensitive] \
 		-variable ${__this}::casesensitive -command [cb _incrsearch]
 	pack   $w.l   -side left
 	pack   $w.cs  -side right

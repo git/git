@@ -75,6 +75,28 @@ appropriately before running "make".
 	As the names depend on the tests' file names, it is safe to
 	run the tests with this option in parallel.
 
+--with-dashes::
+	By default tests are run without dashed forms of
+	commands (like git-commit) in the PATH (it only uses
+	wrappers from ../bin-wrappers).  Use this option to include
+	the build directory (..) in the PATH, which contains all
+	the dashed forms of commands.  This option is currently
+	implied by other options like --valgrind and
+	GIT_TEST_INSTALLED.
+
+You can also set the GIT_TEST_INSTALLED environment variable to
+the bindir of an existing git installation to test that installation.
+You still need to have built this git sandbox, from which various
+test-* support programs, templates, and perl libraries are used.
+If your installed git is incomplete, it will silently test parts of
+your built version instead.
+
+When using GIT_TEST_INSTALLED, you can also set GIT_TEST_EXEC_PATH to
+override the location of the dashed-form subcommands (what
+GIT_EXEC_PATH would be used for during normal operation).
+GIT_TEST_EXEC_PATH defaults to `$GIT_TEST_INSTALLED/git --exec-path`.
+
+
 Skipping Tests
 --------------
 

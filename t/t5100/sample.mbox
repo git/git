@@ -99,7 +99,7 @@ index 9123cdc..918dcf8 100644
 From nobody Sat Aug 27 23:07:49 2005
 Path: news.gmane.org!not-for-mail
 Message-ID: <20050721.091036.01119516.yoshfuji@linux-ipv6.org>
-From: YOSHIFUJI Hideaki / =?iso-2022-jp?B?GyRCNUhGIzFRTEAbKEI=?= 
+From: YOSHIFUJI Hideaki / =?ISO-2022-JP?B?GyRCNUhGIzFRTEAbKEI=?= 
 	<yoshfuji@linux-ipv6.org>
 Newsgroups: gmane.comp.version-control.git
 Subject: [PATCH 1/2] GIT: Try all addresses for given remote name
@@ -218,7 +218,7 @@ GPG-FP  : 9022 65EB 1ECF 3AD1 0BDF  80D8 4807 F894 E062 0EEA
 From nobody Sat Aug 27 23:07:49 2005
 Path: news.gmane.org!not-for-mail
 Message-ID: <u5tacjjdpxq.fsf@lysator.liu.se>
-From: =?iso-8859-1?Q?David_K=E5gedal?= <davidk@lysator.liu.se>
+From: =?ISO8859-1?Q?David_K=E5gedal?= <davidk@lysator.liu.se>
 Newsgroups: gmane.comp.version-control.git
 Subject: [PATCH] Fixed two bugs in git-cvsimport-script.
 Date: Mon, 15 Aug 2005 20:18:25 +0200
@@ -226,7 +226,7 @@ Lines: 83
 Approved: news@gmane.org
 NNTP-Posting-Host: main.gmane.org
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
+Content-Type: text/plain; charset=ISO8859-1
 Content-Transfer-Encoding: QUOTED-PRINTABLE
 X-Trace: sea.gmane.org 1124130247 31839 80.91.229.2 (15 Aug 2005 18:24:07 GMT)
 X-Complaints-To: usenet@sea.gmane.org
@@ -476,7 +476,7 @@ MIME-Version: 1.0
 Content-Type: multipart/mixed; boundary="=-=-="
 
 --=-=-=
-Content-Type: text/plain; charset=iso-8859-15
+Content-Type: text/plain; charset=ISO8859-15
 Content-Transfer-Encoding: quoted-printable
 
 Here comes a commit log message, and
@@ -560,4 +560,126 @@ From nobody Mon Sep 17 00:00:00 2001
 From: <a.u.thor@example.com> (A U Thor)
 Date: Fri, 9 Jun 2006 00:44:16 -0700
 Subject: [PATCH] a patch
+
+From nobody Mon Sep 17 00:00:00 2001
+From: Junio Hamano <junkio@cox.net>
+Date: Thu, 20 Aug 2009 17:18:22 -0700
+Subject: Why doesn't git-am does not like >8 scissors mark?
+
+Subject: [PATCH] BLAH ONE
+
+In real life, we will see a discussion that inspired this patch
+discussing related and unrelated things around >8 scissors mark
+in this part of the message.
+
+Subject: [PATCH] BLAH TWO
+
+And then we will see the scissors.
+
+ This line is not a scissors mark -- >8 -- but talks about it.
+ - - >8 - - please remove everything above this line - - >8 - -
+
+Subject: [PATCH] Teach mailinfo to ignore everything before -- >8 -- mark
+From: Junio C Hamano <gitster@pobox.com>
+
+This teaches mailinfo the scissors -- >8 -- mark; the command ignores
+everything before it in the message body.
+
+Signed-off-by: Junio C Hamano <gitster@pobox.com>
+---
+ builtin-mailinfo.c |   37 ++++++++++++++++++++++++++++++++++++-
+ 1 files changed, 36 insertions(+), 1 deletions(-)
+
+diff --git a/builtin-mailinfo.c b/builtin-mailinfo.c
+index b0b5d8f..461c47e 100644
+--- a/builtin-mailinfo.c
++++ b/builtin-mailinfo.c
+@@ -712,6 +712,34 @@ static inline int patchbreak(const struct strbuf *line)
+ 	return 0;
+ }
+ 
++static int scissors(const struct strbuf *line)
++{
++	size_t i, len = line->len;
++	int scissors_dashes_seen = 0;
++	const char *buf = line->buf;
++
++	for (i = 0; i < len; i++) {
++		if (isspace(buf[i]))
++			continue;
++		if (buf[i] == '-') {
++			scissors_dashes_seen |= 02;
++			continue;
++		}
++		if (i + 1 < len && !memcmp(buf + i, ">8", 2)) {
++			scissors_dashes_seen |= 01;
++			i++;
++			continue;
++		}
++		if (i + 7 < len && !memcmp(buf + i, "cut here", 8)) {
++			i += 7;
++			continue;
++		}
++		/* everything else --- not scissors */
++		break;
++	}
++	return scissors_dashes_seen == 03;
++}
++
+ static int handle_commit_msg(struct strbuf *line)
+ {
+ 	static int still_looking = 1;
+@@ -723,10 +751,17 @@ static int handle_commit_msg(struct strbuf *line)
+ 		strbuf_ltrim(line);
+ 		if (!line->len)
+ 			return 0;
+-		if ((still_looking = check_header(line, s_hdr_data, 0)) != 0)
++		still_looking = check_header(line, s_hdr_data, 0);
++		if (still_looking)
+ 			return 0;
+ 	}
+ 
++	if (scissors(line)) {
++		fseek(cmitmsg, 0L, SEEK_SET);
++		still_looking = 1;
++		return 0;
++	}
++
+ 	/* normalize the log message to UTF-8. */
+ 	if (metainfo_charset)
+ 		convert_to_utf8(line, charset.buf);
+-- 
+1.6.4.1
+From nobody Mon Sep 17 00:00:00 2001
+From: A U Thor <a.u.thor@example.com>
+Subject: check bogus body header (from)
+Date: Fri, 9 Jun 2006 00:44:16 -0700
+
+From: bogosity
+  - a list
+  - of stuff
+---
+diff --git a/foo b/foo
+index e69de29..d95f3ad 100644
+--- a/foo
++++ b/foo
+@@ -0,0 +1 @@
++content
+
+From nobody Mon Sep 17 00:00:00 2001
+From: A U Thor <a.u.thor@example.com>
+Subject: check bogus body header (date)
+Date: Fri, 9 Jun 2006 00:44:16 -0700
+
+Date: bogus
+
+and some content
+
+---
+diff --git a/foo b/foo
+index e69de29..d95f3ad 100644
+--- a/foo
++++ b/foo
+@@ -0,0 +1 @@
++content
 

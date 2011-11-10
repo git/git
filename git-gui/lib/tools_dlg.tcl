@@ -16,53 +16,50 @@ field ask_branch    0; # ask for a revision
 field ask_args      0; # ask for additional args
 
 constructor dialog {} {
-	global repo_config
+	global repo_config use_ttk NS
 
-	make_toplevel top w
+	make_dialog top w
 	wm title $top [append "[appname] ([reponame]): " [mc "Add Tool"]]
 	if {$top ne {.}} {
 		wm geometry $top "+[winfo rootx .]+[winfo rooty .]"
 		wm transient $top .
 	}
 
-	label $w.header -text [mc "Add New Tool Command"] -font font_uibold
+	${NS}::label $w.header -text [mc "Add New Tool Command"] \
+		-font font_uibold -anchor center
 	pack $w.header -side top -fill x
 
-	frame $w.buttons
-	checkbutton $w.buttons.global \
+	${NS}::frame $w.buttons
+	${NS}::checkbutton $w.buttons.global \
 		-text [mc "Add globally"] \
 		-variable @add_global
 	pack $w.buttons.global -side left -padx 5
-	button $w.buttons.create -text [mc Add] \
+	${NS}::button $w.buttons.create -text [mc Add] \
 		-default active \
 		-command [cb _add]
 	pack $w.buttons.create -side right
-	button $w.buttons.cancel -text [mc Cancel] \
+	${NS}::button $w.buttons.cancel -text [mc Cancel] \
 		-command [list destroy $w]
 	pack $w.buttons.cancel -side right -padx 5
 	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
 
-	labelframe $w.desc -text [mc "Tool Details"]
+	${NS}::labelframe $w.desc -text [mc "Tool Details"]
 
-	label $w.desc.name_cmnt -anchor w\
+	${NS}::label $w.desc.name_cmnt -anchor w\
 		-text [mc "Use '/' separators to create a submenu tree:"]
 	grid x $w.desc.name_cmnt -sticky we -padx {0 5} -pady {0 2}
-	label $w.desc.name_l -text [mc "Name:"]
+	${NS}::label $w.desc.name_l -text [mc "Name:"]
 	set w_name $w.desc.name_t
-	entry $w_name \
-		-borderwidth 1 \
-		-relief sunken \
+	${NS}::entry $w_name \
 		-width 40 \
 		-textvariable @name \
 		-validate key \
 		-validatecommand [cb _validate_name %d %S]
 	grid $w.desc.name_l $w_name -sticky we -padx {0 5}
 
-	label $w.desc.cmd_l -text [mc "Command:"]
+	${NS}::label $w.desc.cmd_l -text [mc "Command:"]
 	set w_cmd $w.desc.cmd_t
-	entry $w_cmd \
-		-borderwidth 1 \
-		-relief sunken \
+	${NS}::entry $w_cmd \
 		-width 40 \
 		-textvariable @command
 	grid $w.desc.cmd_l $w_cmd -sticky we -padx {0 5} -pady {0 3}
@@ -70,30 +67,30 @@ constructor dialog {} {
 	grid columnconfigure $w.desc 1 -weight 1
 	pack $w.desc -anchor nw -fill x -pady 5 -padx 5
 
-	checkbutton $w.confirm \
+	${NS}::checkbutton $w.confirm \
 		-text [mc "Show a dialog before running"] \
 		-variable @confirm -command [cb _check_enable_dlg]
 
-	labelframe $w.dlg -labelwidget $w.confirm
+	${NS}::labelframe $w.dlg -labelwidget $w.confirm
 
-	checkbutton $w.dlg.askbranch \
+	${NS}::checkbutton $w.dlg.askbranch \
 		-text [mc "Ask the user to select a revision (sets \$REVISION)"] \
 		-variable @ask_branch -state disabled
 	pack $w.dlg.askbranch -anchor w -padx 15
 
-	checkbutton $w.dlg.askargs \
+	${NS}::checkbutton $w.dlg.askargs \
 		-text [mc "Ask the user for additional arguments (sets \$ARGS)"] \
 		-variable @ask_args -state disabled
 	pack $w.dlg.askargs -anchor w -padx 15
 
 	pack $w.dlg -anchor nw -fill x -pady {0 8} -padx 5
 
-	checkbutton $w.noconsole \
+	${NS}::checkbutton $w.noconsole \
 		-text [mc "Don't show the command output window"] \
 		-variable @no_console
 	pack $w.noconsole -anchor w -padx 5
 
-	checkbutton $w.needsfile \
+	${NS}::checkbutton $w.needsfile \
 		-text [mc "Run only if a diff is selected (\$FILENAME not empty)"] \
 		-variable @needs_file
 	pack $w.needsfile -anchor w -padx 5
@@ -182,40 +179,38 @@ field w              ; # widget path
 field w_names        ; # name list
 
 constructor dialog {} {
-	global repo_config global_config system_config
+	global repo_config global_config system_config use_ttk NS
 
 	load_config 1
 
-	make_toplevel top w
+	make_dialog top w
 	wm title $top [append "[appname] ([reponame]): " [mc "Remove Tool"]]
 	if {$top ne {.}} {
 		wm geometry $top "+[winfo rootx .]+[winfo rooty .]"
 		wm transient $top .
 	}
 
-	label $w.header -text [mc "Remove Tool Commands"] -font font_uibold
+	${NS}::label $w.header -text [mc "Remove Tool Commands"] \
+		-font font_uibold -anchor center
 	pack $w.header -side top -fill x
 
-	frame $w.buttons
-	button $w.buttons.create -text [mc Remove] \
+	${NS}::frame $w.buttons
+	${NS}::button $w.buttons.create -text [mc Remove] \
 		-default active \
 		-command [cb _remove]
 	pack $w.buttons.create -side right
-	button $w.buttons.cancel -text [mc Cancel] \
+	${NS}::button $w.buttons.cancel -text [mc Cancel] \
 		-command [list destroy $w]
 	pack $w.buttons.cancel -side right -padx 5
 	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
 
-	frame $w.list
+	${NS}::frame $w.list
 	set w_names $w.list.l
-	listbox $w_names \
+	slistbox $w_names \
 		-height 10 \
 		-width 30 \
 		-selectmode extended \
-		-exportselection false \
-		-yscrollcommand [list $w.list.sby set]
-	scrollbar $w.list.sby -command [list $w.list.l yview]
-	pack $w.list.sby -side right -fill y
+		-exportselection false
 	pack $w.list.l -side left -fill both -expand 1
 	pack $w.list -fill both -expand 1 -pady 5 -padx 5
 
@@ -232,7 +227,7 @@ constructor dialog {} {
 	}
 
 	if {$local_cnt > 0} {
-		label $w.colorlbl -foreground blue \
+		${NS}::label $w.colorlbl -foreground blue \
 			-text [mc "(Blue denotes repository-local tools)"]
 		pack $w.colorlbl -fill x -pady 5 -padx 5
 	}
@@ -277,14 +272,14 @@ field is_ok         0; # ok to start
 field argstr       {}; # arguments
 
 constructor dialog {fullname} {
-	global M1B
+	global M1B use_ttk NS
 
 	set title [get_config "guitool.$fullname.title"]
 	if {$title eq {}} {
 		regsub {/} $fullname { / } title
 	}
 
-	make_toplevel top w -autodelete 0
+	make_dialog top w -autodelete 0
 	wm title $top [append "[appname] ([reponame]): " $title]
 	if {$top ne {.}} {
 		wm geometry $top "+[winfo rootx .]+[winfo rooty .]"
@@ -297,7 +292,7 @@ constructor dialog {fullname} {
 		set prompt [mc "Run Command: %s" $command]
 	}
 
-	label $w.header -text $prompt -font font_uibold
+	${NS}::label $w.header -text $prompt -font font_uibold -anchor center
 	pack $w.header -side top -fill x
 
 	set argprompt [get_config "guitool.$fullname.argprompt"]
@@ -311,12 +306,10 @@ constructor dialog {fullname} {
 			set argprompt [mc "Arguments"]
 		}
 
-		labelframe $w.arg -text $argprompt
+		${NS}::labelframe $w.arg -text $argprompt
 
 		set w_args $w.arg.txt
-		entry $w_args \
-			-borderwidth 1 \
-			-relief sunken \
+		${NS}::entry $w_args \
 			-width 40 \
 			-textvariable @argstr
 		pack $w_args -padx 5 -pady 5 -fill both
@@ -337,18 +330,18 @@ constructor dialog {fullname} {
 		pack $w.rev -anchor nw -fill both -expand 1 -pady 5 -padx 5
 	}
 
-	frame $w.buttons
+	${NS}::frame $w.buttons
 	if {$is_ask_revs} {
-		button $w.buttons.visualize \
+		${NS}::button $w.buttons.visualize \
 			-text [mc Visualize] \
 			-command [cb _visualize]
 		pack $w.buttons.visualize -side left
 	}
-	button $w.buttons.ok \
+	${NS}::button $w.buttons.ok \
 		-text [mc OK] \
 		-command [cb _start]
 	pack $w.buttons.ok -side right
-	button $w.buttons.cancel \
+	${NS}::button $w.buttons.cancel \
 		-text [mc "Cancel"] \
 		-command [cb _cancel]
 	pack $w.buttons.cancel -side right -padx 5

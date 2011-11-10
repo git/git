@@ -84,8 +84,7 @@ include::diff-options.txt[]
 	the diff to the named paths (you can give directory
 	names and get diff for all files under them).
 
-Output format
--------------
+
 include::diff-format.txt[]
 
 EXAMPLES
@@ -158,6 +157,10 @@ $ git diff -R                          <2>
 rewrites (very expensive).
 <2> Output diff in reverse.
 
+SEE ALSO
+--------
+linkgit:git-difftool[1]::
+	Show changes using common diff tools
 
 Author
 ------

@@ -29,7 +29,7 @@ OPTIONS
 	The HTTP daemon command-line that will be executed.
 	Command-line options may be specified here, and the
 	configuration file will be added at the end of the command-line.
-	Currently lighttpd, apache2 and webrick are supported.
+	Currently apache2, lighttpd, mongoose and webrick are supported.
 	(Default: lighttpd)
 
 -m::
@@ -44,7 +44,7 @@ OPTIONS
 -b::
 --browser::
 	The web browser that should be used to view the gitweb
-	page. This will be passed to the 'git-web--browse' helper
+	page. This will be passed to the 'git web--browse' helper
 	script along with the URL of the gitweb instance. See
 	linkgit:git-web--browse[1] for more information about this. If
 	the script fails, the URL will be printed to stdout.

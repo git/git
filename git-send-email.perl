@@ -71,7 +71,7 @@ git send-email [options] <file | directory | rev-list options >
     --suppress-cc           <str>  * author, self, sob, cc, cccmd, body, bodycc, all.
     --[no-]signed-off-by-cc        * Send to Signed-off-by: addresses. Default on.
     --[no-]suppress-from           * Send to self. Default off.
-    --[no-]chain-reply-to          * Chain In-Reply-To: fields. Default on.
+    --[no-]chain-reply-to          * Chain In-Reply-To: fields. Default off.
     --[no-]thread                  * Use In-Reply-To: field. Default on.
 
   Administering:
@@ -162,7 +162,8 @@ my $compose_filename;
 
 # Handle interactive edition of files.
 my $multiedit;
-my $editor = $ENV{GIT_EDITOR} || Git::config(@repo, "core.editor") || $ENV{VISUAL} || $ENV{EDITOR} || "vi";
+my $editor = Git::command_oneline('var', 'GIT_EDITOR');
+
 sub do_edit {
 	if (defined($multiedit) && !$multiedit) {
 		map {
@@ -186,9 +187,11 @@ my ($identity, $aliasfiletype, @alias_files, @smtp_host_parts);
 my ($validate, $confirm);
 my (@suppress_cc);
 
+my $not_set_by_user = "true but not set by the user";
+
 my %config_bool_settings = (
     "thread" => [\$thread, 1],
-    "chainreplyto" => [\$chain_reply_to, 1],
+    "chainreplyto" => [\$chain_reply_to, $not_set_by_user],
     "suppressfrom" => [\$suppress_from, undef],
     "signedoffbycc" => [\$signed_off_by_cc, undef],
     "signedoffcc" => [\$signed_off_by_cc, undef],      # Deprecated
@@ -210,7 +213,21 @@ my %config_settings = (
     "envelopesender" => \$envelope_sender,
     "multiedit" => \$multiedit,
     "confirm"   => \$confirm,
+    "from" => \$sender,
 );
+
+# Help users prepare for 1.7.0
+sub chain_reply_to {
+	if (defined $chain_reply_to &&
+	    $chain_reply_to eq $not_set_by_user) {
+		print STDERR
+		    "In git 1.7.0, the default has changed to --no-chain-reply-to\n" .
+		    "Set sendemail.chainreplyto configuration variable to true if\n" .
+		    "you want to keep --chain-reply-to as your default.\n";
+		$chain_reply_to = 0;
+	}
+	return $chain_reply_to;
+}
 
 # Handle Uncouth Termination
 sub signal_handler {
@@ -333,7 +350,7 @@ if (@suppress_cc) {
 }
 
 if ($suppress_cc{'all'}) {
-	foreach my $entry (qw (ccmd cc author self sob body bodycc)) {
+	foreach my $entry (qw (cccmd cc author self sob body bodycc)) {
 		$suppress_cc{$entry} = 1;
 	}
 	delete $suppress_cc{'all'};
@@ -400,7 +417,7 @@ my %aliases;
 my %parse_alias = (
 	# multiline formats can be supported in the future
 	mutt => sub { my $fh = shift; while (<$fh>) {
-		if (/^\s*alias\s+(\S+)\s+(.*)$/) {
+		if (/^\s*alias\s+(?:-group\s+\S+\s+)*(\S+)\s+(.*)$/) {
 			my ($alias, $addr) = ($1, $2);
 			$addr =~ s/#.*$//; # mutt allows # comments
 			 # commas delimit multiple addresses
@@ -409,7 +426,7 @@ my %parse_alias = (
 	mailrc => sub { my $fh = shift; while (<$fh>) {
 		if (/^alias\s+(\S+)\s+(.*)$/) {
 			# spaces delimit multiple addresses
-			$aliases{$1} = [ split(/\s+/, $2) ];
+			$aliases{$1} = [ quotewords('\s+', 0, $2) ];
 		}}},
 	pine => sub { my $fh = shift; my $f='\t[^\t]*';
 	        for (my $x = ''; defined($x); $x = $_) {
@@ -449,7 +466,6 @@ sub check_file_rev_conflict($) {
 	try {
 		$repo->command('rev-parse', '--verify', '--quiet', $f);
 		if (defined($format_patch)) {
-			print "foo\n";
 			return $format_patch;
 		}
 		die(<<EOF);
@@ -537,7 +553,7 @@ if ($compose) {
 
 	print C <<EOT;
 From $tpl_sender # This line is ignored.
-GIT: Lines beginning in "GIT: " will be removed.
+GIT: Lines beginning in "GIT:" will be removed.
 GIT: Consider including an overall diffstat or table of contents
 GIT: for the patch you are writing.
 GIT:
@@ -551,8 +567,6 @@ EOT
 		print C get_patch_subject($f);
 	}
 	close(C);
-
-	my $editor = $ENV{GIT_EDITOR} || Git::config(@repo, "core.editor") || $ENV{VISUAL} || $ENV{EDITOR} || "vi";
 
 	if ($annotate) {
 		do_edit($compose_filename, @files);
@@ -570,7 +584,7 @@ EOT
 	my $in_body = 0;
 	my $summary_empty = 1;
 	while(<C>) {
-		next if m/^GIT: /;
+		next if m/^GIT:/;
 		if ($in_body) {
 			$summary_empty = 0 unless (/^\n$/);
 		} elsif (/^\n$/) {
@@ -578,7 +592,7 @@ EOT
 			if ($need_8bit_cte) {
 				print C2 "MIME-Version: 1.0\n",
 					 "Content-Type: text/plain; ",
-					   "charset=utf-8\n",
+					   "charset=UTF-8\n",
 					 "Content-Transfer-Encoding: 8bit\n";
 			}
 		} elsif (/^MIME-Version:/i) {
@@ -655,13 +669,17 @@ if (!@to) {
 }
 
 sub expand_aliases {
-	my @cur = @_;
-	my @last;
-	do {
-		@last = @cur;
-		@cur = map { $aliases{$_} ? @{$aliases{$_}} : $_ } @last;
-	} while (join(',',@cur) ne join(',',@last));
-	return @cur;
+	return map { expand_one_alias($_) } @_;
+}
+
+my %EXPANDED_ALIASES;
+sub expand_one_alias {
+	my $alias = shift;
+	if ($EXPANDED_ALIASES{$alias}) {
+		die "fatal: alias '$alias' expands to itself\n";
+	}
+	local $EXPANDED_ALIASES{$alias} = 1;
+	return $aliases{$alias} ? expand_aliases(@{$aliases{$alias}}) : $alias;
 }
 
 @to = expand_aliases(@to);
@@ -767,10 +785,18 @@ sub unquote_rfc2047 {
 
 sub quote_rfc2047 {
 	local $_ = shift;
-	my $encoding = shift || 'utf-8';
+	my $encoding = shift || 'UTF-8';
 	s/([^-a-zA-Z0-9!*+\/])/sprintf("=%02X", ord($1))/eg;
 	s/(.*)/=\?$encoding\?q\?$1\?=/;
 	return $_;
+}
+
+sub is_rfc2047_quoted {
+	my $s = shift;
+	my $token = '[^][()<>@,;:"\/?.= \000-\037\177-\377]+';
+	my $encoded_text = '[!->@-~]+';
+	length($s) <= 75 &&
+	$s =~ m/^(?:"[[:ascii:]]*"|=\?$token\?$token\?$encoded_text\?=)$/o;
 }
 
 # use the simplest quoting being able to handle the recipient
@@ -784,7 +810,7 @@ sub sanitize_address
 	}
 
 	# if recipient_name is already quoted, do nothing
-	if ($recipient_name =~ /^("[[:ascii:]]*"|=\?utf-8\?q\?.*\?=)$/) {
+	if (is_rfc2047_quoted($recipient_name)) {
 		return $recipient;
 	}
 
@@ -804,6 +830,10 @@ sub sanitize_address
 
 }
 
+# Returns 1 if the message was sent, and 0 otherwise.
+# In actuality, the whole program dies when there
+# is an error sending a message.
+
 sub send_message
 {
 	my @recipients = unique_email_list(@to);
@@ -821,7 +851,7 @@ sub send_message
 	    $gitversion = Git::version();
 	}
 
-	my $cc = join(", ", unique_email_list(@cc));
+	my $cc = join(",\n\t", unique_email_list(@cc));
 	my $ccline = "";
 	if ($cc ne '') {
 		$ccline = "\nCc: $cc";
@@ -847,7 +877,9 @@ X-Mailer: git-send-email $gitversion
 
 	my @sendmail_parameters = ('-i', @recipients);
 	my $raw_from = $sanitized_sender;
-	$raw_from = $envelope_sender if (defined $envelope_sender);
+	if (defined $envelope_sender && $envelope_sender ne "auto") {
+		$raw_from = $envelope_sender;
+	}
 	$raw_from = extract_valid_address($raw_from);
 	unshift (@sendmail_parameters,
 			'-f', $raw_from) if(defined $envelope_sender);
@@ -872,7 +904,7 @@ X-Mailer: git-send-email $gitversion
 		         default => $ask_default);
 		die "Send this email reply required" unless defined $_;
 		if (/^n/i) {
-			return;
+			return 0;
 		} elsif (/^q/i) {
 			cleanup_compose_files();
 			exit(0);
@@ -907,7 +939,7 @@ X-Mailer: git-send-email $gitversion
 			$smtp ||= Net::SMTP->new((defined $smtp_server_port)
 						 ? "$smtp_server:$smtp_server_port"
 						 : $smtp_server);
-			if ($smtp_encryption eq 'tls') {
+			if ($smtp_encryption eq 'tls' && $smtp) {
 				require Net::SMTP::SSL;
 				$smtp->command('STARTTLS');
 				$smtp->response();
@@ -953,7 +985,7 @@ X-Mailer: git-send-email $gitversion
 		$smtp->data or die $smtp->message;
 		$smtp->datasend("$header\n$message") or die $smtp->message;
 		$smtp->dataend() or die $smtp->message;
-		$smtp->ok or die "Failed to send $subject\n".$smtp->message;
+		$smtp->code =~ /250|200/ or die "Failed to send $subject\n".$smtp->message;
 	}
 	if ($quiet) {
 		printf (($dry_run ? "Dry-" : "")."Sent %s\n", $subject);
@@ -962,7 +994,9 @@ X-Mailer: git-send-email $gitversion
 		if ($smtp_server !~ m#^/#) {
 			print "Server: $smtp_server\n";
 			print "MAIL FROM:<$raw_from>\n";
-			print "RCPT TO:".join(',',(map { "<$_>" } @recipients))."\n";
+			foreach my $entry (@recipients) {
+			    print "RCPT TO:<$entry>\n";
+			}
 		} else {
 			print "Sendmail: $smtp_server ".join(' ',@sendmail_parameters)."\n";
 		}
@@ -974,6 +1008,8 @@ X-Mailer: git-send-email $gitversion
 			print "Result: OK\n";
 		}
 	}
+
+	return 1;
 }
 
 $reply_to = $initial_reply_to;
@@ -1091,7 +1127,7 @@ foreach my $t (@files) {
 	close F;
 
 	if (defined $cc_cmd && !$suppress_cc{'cccmd'}) {
-		open(F, "$cc_cmd $t |")
+		open(F, "$cc_cmd \Q$t\E |")
 			or die "(cc-cmd) Could not execute '$cc_cmd'";
 		while(<F>) {
 			my $c = $_;
@@ -1134,10 +1170,11 @@ foreach my $t (@files) {
 
 	@cc = (@initial_cc, @cc);
 
-	send_message();
+	my $message_was_sent = send_message();
 
 	# set up for the next message
-	if ($chain_reply_to || !defined $reply_to || length($reply_to) == 0) {
+	if ($thread && $message_was_sent &&
+		(chain_reply_to() || !defined $reply_to || length($reply_to) == 0)) {
 		$reply_to = $message_id;
 		if (length $references > 0) {
 			$references .= "\n $message_id";

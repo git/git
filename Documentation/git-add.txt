@@ -9,33 +9,37 @@ SYNOPSIS
 --------
 [verse]
 'git add' [-n] [-v] [--force | -f] [--interactive | -i] [--patch | -p]
-	  [--all | [--update | -u]] [--intent-to-add | -N]
-	  [--refresh] [--ignore-errors] [--] <filepattern>...
+	  [--edit | -e] [--all | [--update | -u]] [--intent-to-add | -N]
+	  [--refresh] [--ignore-errors] [--] [<filepattern>...]
 
 DESCRIPTION
 -----------
-This command adds the current content of new or modified files to the
-index, thus staging that content for inclusion in the next commit.
+This command updates the index using the current content found in
+the working tree, to prepare the content staged for the next commit.
+It typically adds the current content of existing paths as a whole,
+but with some options it can also be used to add content with
+only part of the changes made to the working tree files applied, or
+remove paths that do not exist in the working tree anymore.
 
 The "index" holds a snapshot of the content of the working tree, and it
 is this snapshot that is taken as the contents of the next commit.  Thus
 after making any changes to the working directory, and before running
-the commit command, you must use the 'add' command to add any new or
+the commit command, you must use the `add` command to add any new or
 modified files to the index.
 
 This command can be performed multiple times before a commit.  It only
 adds the content of the specified file(s) at the time the add command is
 run; if you want subsequent changes included in the next commit, then
-you must run 'git add' again to add the new content to the index.
+you must run `git add` again to add the new content to the index.
 
-The 'git status' command can be used to obtain a summary of which
+The `git status` command can be used to obtain a summary of which
 files have changes that are staged for the next commit.
 
-The 'git add' command will not add ignored files by default.  If any
-ignored files were explicitly specified on the command line, 'git add'
+The `git add` command will not add ignored files by default.  If any
+ignored files were explicitly specified on the command line, `git add`
 will fail with a list of ignored files.  Ignored files reached by
 directory recursion or filename globbing performed by Git (quote your
-globs before the shell) will be silently ignored.  The 'add' command can
+globs before the shell) will be silently ignored.  The 'git add' command can
 be used to add ignored files with the `-f` (force) option.
 
 Please see linkgit:git-commit[1] for alternative ways to add content to a
@@ -72,34 +76,51 @@ OPTIONS
 
 -p::
 --patch::
-	Similar to Interactive mode but the initial command loop is
-	bypassed and the 'patch' subcommand is invoked using each of
-	the specified filepatterns before exiting.
+	Interactively choose hunks of patch between the index and the
+	work tree and add them to the index. This gives the user a chance
+	to review the difference before adding modified contents to the
+	index.
++
+This effectively runs `add --interactive`, but bypasses the
+initial command menu and directly jumps to the `patch` subcommand.
+See ``Interactive mode'' for details.
+
+-e, \--edit::
+	Open the diff vs. the index in an editor and let the user
+	edit it.  After the editor was closed, adjust the hunk headers
+	and apply the patch to the index.
++
+*NOTE*: Obviously, if you change anything else than the first character
+on lines beginning with a space or a minus, the patch will no longer
+apply.
 
 -u::
 --update::
-	Update only files that git already knows about, staging modified
-	content for commit and marking deleted files for removal. This
-	is similar
-	to what "git commit -a" does in preparation for making a commit,
-	except that the update is limited to paths specified on the
-	command line. If no paths are specified, all tracked files in the
-	current directory and its subdirectories are updated.
+	Only match <filepattern> against already tracked files in
+	the index rather than the working tree. That means that it
+	will never stage new files, but that it will stage modified
+	new contents of tracked files and that it will remove files
+	from the index if the corresponding files in the working tree
+	have been removed.
++
+If no <filepattern> is given, default to "."; in other words,
+update all tracked files in the current directory and its
+subdirectories.
 
 -A::
 --all::
-	Update files that git already knows about (same as '\--update')
-	and add all untracked files that are not ignored by '.gitignore'
-	mechanism.
-
+	Like `-u`, but match <filepattern> against files in the
+	working tree in addition to the index. That means that it
+	will find new files as well as staging modified content and
+	removing files that are no longer in the working tree.
 
 -N::
 --intent-to-add::
 	Record only the fact that the path will be added later. An entry
 	for the path is placed in the index with no content. This is
 	useful for, among other things, showing the unstaged content of
-	such files with 'git diff' and committing them with 'git commit
-	-a'.
+	such files with `git diff` and committing them with `git commit
+	-a`.
 
 --refresh::
 	Don't add the file(s), but only refresh their stat()
@@ -119,7 +140,7 @@ OPTIONS
 Configuration
 -------------
 
-The optional configuration variable 'core.excludesfile' indicates a path to a
+The optional configuration variable `core.excludesfile` indicates a path to a
 file containing patterns of file names to exclude from git-add, similar to
 $GIT_DIR/info/exclude.  Patterns in the exclude file are used in addition to
 those in info/exclude.  See linkgit:gitrepository-layout[5].
@@ -132,7 +153,7 @@ EXAMPLES
 and its subdirectories:
 +
 ------------
-$ git add Documentation/\\*.txt
+$ git add Documentation/\*.txt
 ------------
 +
 Note that the asterisk `\*` is quoted from the shell in this
@@ -167,7 +188,7 @@ and type return, like this:
     What now> 1
 ------------
 
-You also could say "s" or "sta" or "status" above as long as the
+You also could say `s` or `sta` or `status` above as long as the
 choice is unique.
 
 The main command loop has 6 subcommands (plus help and quit).
@@ -175,9 +196,9 @@ The main command loop has 6 subcommands (plus help and quit).
 status::
 
    This shows the change between HEAD and index (i.e. what will be
-   committed if you say "git commit"), and between index and
+   committed if you say `git commit`), and between index and
    working tree files (i.e. what you could stage further before
-   "git commit" using "git-add") for each path.  A sample output
+   `git commit` using `git add`) for each path.  A sample output
    looks like this:
 +
 ------------

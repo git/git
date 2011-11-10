@@ -8,7 +8,7 @@ test_expect_success 'initialize repo' '
 	mkdir import &&
 	cd import &&
 	awk "BEGIN { for (i = 1; i < 64; i++) { print i } }" > file
-	svn import -m "initial" . "$svnrepo" &&
+	svn_cmd import -m "initial" . "$svnrepo" &&
 	cd .. &&
 	git svn init "$svnrepo" &&
 	git svn fetch &&
@@ -18,14 +18,14 @@ test_expect_success 'initialize repo' '
 test_expect_success '(supposedly) non-conflicting change from SVN' '
 	test x"`sed -n -e 58p < file`" = x58 &&
 	test x"`sed -n -e 61p < file`" = x61 &&
-	svn co "$svnrepo" tmp &&
+	svn_cmd co "$svnrepo" tmp &&
 	cd tmp &&
 		perl -i.bak -p -e "s/^58$/5588/" file &&
 		perl -i.bak -p -e "s/^61$/6611/" file &&
 		poke file &&
 		test x"`sed -n -e 58p < file`" = x5588 &&
 		test x"`sed -n -e 61p < file`" = x6611 &&
-		svn commit -m "58 => 5588, 61 => 6611" &&
+		svn_cmd commit -m "58 => 5588, 61 => 6611" &&
 		cd ..
 	'
 
@@ -46,7 +46,7 @@ test_expect_success 'change file but in unrelated area' "
 	test x\"\`sed -n -e 7p < file\`\" = x7777 &&
 	git commit -m '4 => 4444, 7 => 7777' file &&
 	git svn dcommit &&
-	svn up tmp &&
+	svn_cmd up tmp &&
 	cd tmp &&
 		test x\"\`sed -n -e 4p < file\`\" = x4444 &&
 		test x\"\`sed -n -e 7p < file\`\" = x7777 &&

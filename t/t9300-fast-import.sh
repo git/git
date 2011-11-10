@@ -1088,4 +1088,498 @@ INPUT_END
 test_expect_success 'P: fail on blob mark in gitlink' '
     test_must_fail git fast-import <input'
 
+###
+### series Q (notes)
+###
+
+note1_data="The first note for the first commit"
+note2_data="The first note for the second commit"
+note3_data="The first note for the third commit"
+note1b_data="The second note for the first commit"
+note1c_data="The third note for the first commit"
+note2b_data="The second note for the second commit"
+
+test_tick
+cat >input <<INPUT_END
+blob
+mark :2
+data <<EOF
+$file2_data
+EOF
+
+commit refs/heads/notes-test
+mark :3
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+first (:3)
+COMMIT
+
+M 644 :2 file2
+
+blob
+mark :4
+data $file4_len
+$file4_data
+commit refs/heads/notes-test
+mark :5
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+second (:5)
+COMMIT
+
+M 644 :4 file4
+
+commit refs/heads/notes-test
+mark :6
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+third (:6)
+COMMIT
+
+M 644 inline file5
+data <<EOF
+$file5_data
+EOF
+
+M 755 inline file6
+data <<EOF
+$file6_data
+EOF
+
+blob
+mark :7
+data <<EOF
+$note1_data
+EOF
+
+blob
+mark :8
+data <<EOF
+$note2_data
+EOF
+
+commit refs/notes/foobar
+mark :9
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+notes (:9)
+COMMIT
+
+N :7 :3
+N :8 :5
+N inline :6
+data <<EOF
+$note3_data
+EOF
+
+commit refs/notes/foobar
+mark :10
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+notes (:10)
+COMMIT
+
+N inline :3
+data <<EOF
+$note1b_data
+EOF
+
+commit refs/notes/foobar2
+mark :11
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+notes (:11)
+COMMIT
+
+N inline :3
+data <<EOF
+$note1c_data
+EOF
+
+commit refs/notes/foobar
+mark :12
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+notes (:12)
+COMMIT
+
+deleteall
+N inline :5
+data <<EOF
+$note2b_data
+EOF
+
+INPUT_END
+
+test_expect_success \
+	'Q: commit notes' \
+	'git fast-import <input &&
+	 git whatchanged notes-test'
+test_expect_success \
+	'Q: verify pack' \
+	'for p in .git/objects/pack/*.pack;do git verify-pack $p||exit;done'
+
+commit1=$(git rev-parse notes-test~2)
+commit2=$(git rev-parse notes-test^)
+commit3=$(git rev-parse notes-test)
+
+cat >expect <<EOF
+author $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+
+first (:3)
+EOF
+test_expect_success \
+	'Q: verify first commit' \
+	'git cat-file commit notes-test~2 | sed 1d >actual &&
+	test_cmp expect actual'
+
+cat >expect <<EOF
+parent $commit1
+author $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+
+second (:5)
+EOF
+test_expect_success \
+	'Q: verify second commit' \
+	'git cat-file commit notes-test^ | sed 1d >actual &&
+	test_cmp expect actual'
+
+cat >expect <<EOF
+parent $commit2
+author $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+
+third (:6)
+EOF
+test_expect_success \
+	'Q: verify third commit' \
+	'git cat-file commit notes-test | sed 1d >actual &&
+	test_cmp expect actual'
+
+cat >expect <<EOF
+author $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+
+notes (:9)
+EOF
+test_expect_success \
+	'Q: verify first notes commit' \
+	'git cat-file commit refs/notes/foobar~2 | sed 1d >actual &&
+	test_cmp expect actual'
+
+cat >expect.unsorted <<EOF
+100644 blob $commit1
+100644 blob $commit2
+100644 blob $commit3
+EOF
+cat expect.unsorted | sort >expect
+test_expect_success \
+	'Q: verify first notes tree' \
+	'git cat-file -p refs/notes/foobar~2^{tree} | sed "s/ [0-9a-f]*	/ /" >actual &&
+	 test_cmp expect actual'
+
+echo "$note1_data" >expect
+test_expect_success \
+	'Q: verify first note for first commit' \
+	'git cat-file blob refs/notes/foobar~2:$commit1 >actual && test_cmp expect actual'
+
+echo "$note2_data" >expect
+test_expect_success \
+	'Q: verify first note for second commit' \
+	'git cat-file blob refs/notes/foobar~2:$commit2 >actual && test_cmp expect actual'
+
+echo "$note3_data" >expect
+test_expect_success \
+	'Q: verify first note for third commit' \
+	'git cat-file blob refs/notes/foobar~2:$commit3 >actual && test_cmp expect actual'
+
+cat >expect <<EOF
+parent `git rev-parse --verify refs/notes/foobar~2`
+author $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+
+notes (:10)
+EOF
+test_expect_success \
+	'Q: verify second notes commit' \
+	'git cat-file commit refs/notes/foobar^ | sed 1d >actual &&
+	test_cmp expect actual'
+
+cat >expect.unsorted <<EOF
+100644 blob $commit1
+100644 blob $commit2
+100644 blob $commit3
+EOF
+cat expect.unsorted | sort >expect
+test_expect_success \
+	'Q: verify second notes tree' \
+	'git cat-file -p refs/notes/foobar^^{tree} | sed "s/ [0-9a-f]*	/ /" >actual &&
+	 test_cmp expect actual'
+
+echo "$note1b_data" >expect
+test_expect_success \
+	'Q: verify second note for first commit' \
+	'git cat-file blob refs/notes/foobar^:$commit1 >actual && test_cmp expect actual'
+
+echo "$note2_data" >expect
+test_expect_success \
+	'Q: verify first note for second commit' \
+	'git cat-file blob refs/notes/foobar^:$commit2 >actual && test_cmp expect actual'
+
+echo "$note3_data" >expect
+test_expect_success \
+	'Q: verify first note for third commit' \
+	'git cat-file blob refs/notes/foobar^:$commit3 >actual && test_cmp expect actual'
+
+cat >expect <<EOF
+author $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+
+notes (:11)
+EOF
+test_expect_success \
+	'Q: verify third notes commit' \
+	'git cat-file commit refs/notes/foobar2 | sed 1d >actual &&
+	test_cmp expect actual'
+
+cat >expect.unsorted <<EOF
+100644 blob $commit1
+EOF
+cat expect.unsorted | sort >expect
+test_expect_success \
+	'Q: verify third notes tree' \
+	'git cat-file -p refs/notes/foobar2^{tree} | sed "s/ [0-9a-f]*	/ /" >actual &&
+	 test_cmp expect actual'
+
+echo "$note1c_data" >expect
+test_expect_success \
+	'Q: verify third note for first commit' \
+	'git cat-file blob refs/notes/foobar2:$commit1 >actual && test_cmp expect actual'
+
+cat >expect <<EOF
+parent `git rev-parse --verify refs/notes/foobar^`
+author $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+
+notes (:12)
+EOF
+test_expect_success \
+	'Q: verify fourth notes commit' \
+	'git cat-file commit refs/notes/foobar | sed 1d >actual &&
+	test_cmp expect actual'
+
+cat >expect.unsorted <<EOF
+100644 blob $commit2
+EOF
+cat expect.unsorted | sort >expect
+test_expect_success \
+	'Q: verify fourth notes tree' \
+	'git cat-file -p refs/notes/foobar^{tree} | sed "s/ [0-9a-f]*	/ /" >actual &&
+	 test_cmp expect actual'
+
+echo "$note2b_data" >expect
+test_expect_success \
+	'Q: verify second note for second commit' \
+	'git cat-file blob refs/notes/foobar:$commit2 >actual && test_cmp expect actual'
+
+###
+### series R (feature and option)
+###
+
+cat >input <<EOF
+feature no-such-feature-exists
+EOF
+
+test_expect_success 'R: abort on unsupported feature' '
+	test_must_fail git fast-import <input
+'
+
+cat >input <<EOF
+feature date-format=now
+EOF
+
+test_expect_success 'R: supported feature is accepted' '
+	git fast-import <input
+'
+
+cat >input << EOF
+blob
+data 3
+hi
+feature date-format=now
+EOF
+
+test_expect_success 'R: abort on receiving feature after data command' '
+	test_must_fail git fast-import <input
+'
+
+cat >input << EOF
+feature import-marks=git.marks
+feature import-marks=git2.marks
+EOF
+
+test_expect_success 'R: only one import-marks feature allowed per stream' '
+	test_must_fail git fast-import <input
+'
+
+cat >input << EOF
+feature export-marks=git.marks
+blob
+mark :1
+data 3
+hi
+
+EOF
+
+test_expect_success \
+    'R: export-marks feature results in a marks file being created' \
+    'cat input | git fast-import &&
+    grep :1 git.marks'
+
+test_expect_success \
+    'R: export-marks options can be overriden by commandline options' \
+    'cat input | git fast-import --export-marks=other.marks &&
+    grep :1 other.marks'
+
+cat >input << EOF
+feature import-marks=marks.out
+feature export-marks=marks.new
+EOF
+
+test_expect_success \
+    'R: import to output marks works without any content' \
+    'cat input | git fast-import &&
+    test_cmp marks.out marks.new'
+
+cat >input <<EOF
+feature import-marks=nonexistant.marks
+feature export-marks=marks.new
+EOF
+
+test_expect_success \
+    'R: import marks prefers commandline marks file over the stream' \
+    'cat input | git fast-import --import-marks=marks.out &&
+    test_cmp marks.out marks.new'
+
+
+cat >input <<EOF
+feature import-marks=nonexistant.marks
+feature export-marks=combined.marks
+EOF
+
+test_expect_success 'R: multiple --import-marks= should be honoured' '
+    head -n2 marks.out > one.marks &&
+    tail -n +3 marks.out > two.marks &&
+    git fast-import --import-marks=one.marks --import-marks=two.marks <input &&
+    test_cmp marks.out combined.marks
+'
+
+cat >input <<EOF
+feature relative-marks
+feature import-marks=relative.in
+feature export-marks=relative.out
+EOF
+
+test_expect_success 'R: feature relative-marks should be honoured' '
+    mkdir -p .git/info/fast-import/ &&
+    cp marks.new .git/info/fast-import/relative.in &&
+    git fast-import <input &&
+    test_cmp marks.new .git/info/fast-import/relative.out
+'
+
+cat >input <<EOF
+feature relative-marks
+feature import-marks=relative.in
+feature no-relative-marks
+feature export-marks=non-relative.out
+EOF
+
+test_expect_success 'R: feature no-relative-marks should be honoured' '
+    git fast-import <input &&
+    test_cmp marks.new non-relative.out
+'
+
+cat >input << EOF
+option git quiet
+blob
+data 3
+hi
+
+EOF
+
+touch empty
+
+test_expect_success 'R: quiet option results in no stats being output' '
+    cat input | git fast-import 2> output &&
+    test_cmp empty output
+'
+
+cat >input <<EOF
+option git non-existing-option
+EOF
+
+test_expect_success 'R: die on unknown option' '
+    test_must_fail git fast-import <input
+'
+
+test_expect_success 'R: unknown commandline options are rejected' '\
+    test_must_fail git fast-import --non-existing-option < /dev/null
+'
+
+cat >input <<EOF
+option non-existing-vcs non-existing-option
+EOF
+
+test_expect_success 'R: ignore non-git options' '
+    git fast-import <input
+'
+
+##
+## R: very large blobs
+##
+blobsize=$((2*1024*1024 + 53))
+test-genrandom bar $blobsize >expect
+cat >input <<INPUT_END
+commit refs/heads/big-file
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+R - big file
+COMMIT
+
+M 644 inline big1
+data $blobsize
+INPUT_END
+cat expect >>input
+cat >>input <<INPUT_END
+M 644 inline big2
+data $blobsize
+INPUT_END
+cat expect >>input
+echo >>input
+
+test_expect_success \
+	'R: blob bigger than threshold' \
+	'test_create_repo R &&
+	 git --git-dir=R/.git fast-import --big-file-threshold=1 <input'
+test_expect_success \
+	'R: verify created pack' \
+	': >verify &&
+	 for p in R/.git/objects/pack/*.pack;
+	 do
+	   git verify-pack -v $p >>verify || exit;
+	 done'
+test_expect_success \
+	'R: verify written objects' \
+	'git --git-dir=R/.git cat-file blob big-file:big1 >actual &&
+	 test_cmp expect actual &&
+	 a=$(git --git-dir=R/.git rev-parse big-file:big1) &&
+	 b=$(git --git-dir=R/.git rev-parse big-file:big2) &&
+	 test $a = $b'
+test_expect_success \
+	'R: blob appears only once' \
+	'n=$(grep $a verify | wc -l) &&
+	 test 1 = $n'
+
 test_done

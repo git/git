@@ -3,7 +3,7 @@
 # Copyright (c) 2005 Junio C Hamano.
 #
 
-USAGE='[--interactive | -i] [-v] [--force-rebase | -f] [--onto <newbase>] [<upstream>|--root] [<branch>]'
+USAGE='[--interactive | -i] [-v] [--force-rebase | -f] [--onto <newbase>] [<upstream>|--root] [<branch>] [--quiet | -q]'
 LONG_USAGE='git-rebase replaces <branch> with a new branch of the
 same name.  When the --onto option is provided the new branch starts
 out with a HEAD equal to <newbase>, otherwise it is equal to <upstream>
@@ -34,6 +34,8 @@ set_reflog_action rebase
 require_work_tree
 cd_to_toplevel
 
+LF='
+'
 OK_TO_SKIP_PRE_REBASE=
 RESOLVEMSG="
 When you have resolved this problem run \"git rebase --continue\".
@@ -50,6 +52,7 @@ diffstat=$(git config --bool rebase.stat)
 git_am_opt=
 rebase_root=
 force_rebase=
+allow_rerere_autoupdate=
 
 continue_merge () {
 	test -n "$prev_head" || die "prev_head must be defined"
@@ -72,11 +75,18 @@ continue_merge () {
 			echo "directly, but instead do one of the following: "
 			die "$RESOLVEMSG"
 		fi
-		printf "Committed: %0${prec}d " $msgnum
+		if test -z "$GIT_QUIET"
+		then
+			printf "Committed: %0${prec}d " $msgnum
+		fi
 	else
-		printf "Already applied: %0${prec}d " $msgnum
+		if test -z "$GIT_QUIET"
+		then
+			printf "Already applied: %0${prec}d " $msgnum
+		fi
 	fi
-	git rev-list --pretty=oneline -1 "$cmt" | sed -e 's/^[^ ]* //'
+	test -z "$GIT_QUIET" &&
+	GIT_PAGER='' git log --format=%s -1 "$cmt"
 
 	prev_head=`git rev-parse HEAD^0`
 	# save the resulting commit so we can read-tree on it later
@@ -97,6 +107,10 @@ call_merge () {
 	eval GITHEAD_$cmt='"${cmt_name##refs/heads/}~$(($end - $msgnum))"'
 	eval GITHEAD_$hd='$(cat "$dotest/onto_name")'
 	export GITHEAD_$cmt GITHEAD_$hd
+	if test -n "$GIT_QUIET"
+	then
+		export GIT_MERGE_VERBOSITY=1
+	fi
 	git-merge-$strategy "$cmt^" -- "$hd" "$cmt"
 	rv=$?
 	case "$rv" in
@@ -105,7 +119,7 @@ call_merge () {
 		return
 		;;
 	1)
-		git rerere
+		git rerere $allow_rerere_autoupdate
 		die "$RESOLVEMSG"
 		;;
 	2)
@@ -138,7 +152,7 @@ move_to_original_branch () {
 finish_rb_merge () {
 	move_to_original_branch
 	rm -r "$dotest"
-	echo "All done."
+	say All done.
 }
 
 is_interactive () {
@@ -168,10 +182,8 @@ run_pre_rebase_hook () {
 	if test -z "$OK_TO_SKIP_PRE_REBASE" &&
 	   test -x "$GIT_DIR/hooks/pre-rebase"
 	then
-		"$GIT_DIR/hooks/pre-rebase" ${1+"$@"} || {
-			echo >&2 "The pre-rebase hook refused to rebase."
-			exit 1
-		}
+		"$GIT_DIR/hooks/pre-rebase" ${1+"$@"} ||
+		die "The pre-rebase hook refused to rebase."
 	fi
 }
 
@@ -209,6 +221,7 @@ do
 			end=$(cat "$dotest/end")
 			msgnum=$(cat "$dotest/msgnum")
 			onto=$(cat "$dotest/onto")
+			GIT_QUIET=$(cat "$dotest/quiet")
 			continue_merge
 			while test "$msgnum" -le "$end"
 			do
@@ -221,6 +234,7 @@ do
 		head_name=$(cat "$GIT_DIR"/rebase-apply/head-name) &&
 		onto=$(cat "$GIT_DIR"/rebase-apply/onto) &&
 		orig_head=$(cat "$GIT_DIR"/rebase-apply/orig-head) &&
+		GIT_QUIET=$(cat "$GIT_DIR"/rebase-apply/quiet)
 		git am --resolved --3way --resolvemsg="$RESOLVEMSG" &&
 		move_to_original_branch
 		exit
@@ -238,6 +252,7 @@ do
 			msgnum=$(cat "$dotest/msgnum")
 			msgnum=$(($msgnum + 1))
 			onto=$(cat "$dotest/onto")
+			GIT_QUIET=$(cat "$dotest/quiet")
 			while test "$msgnum" -le "$end"
 			do
 				call_merge "$msgnum"
@@ -249,6 +264,7 @@ do
 		head_name=$(cat "$GIT_DIR"/rebase-apply/head-name) &&
 		onto=$(cat "$GIT_DIR"/rebase-apply/onto) &&
 		orig_head=$(cat "$GIT_DIR"/rebase-apply/orig-head) &&
+		GIT_QUIET=$(cat "$GIT_DIR"/rebase-apply/quiet)
 		git am -3 --skip --resolvemsg="$RESOLVEMSG" &&
 		move_to_original_branch
 		exit
@@ -260,9 +276,11 @@ do
 		git rerere clear
 		if test -d "$dotest"
 		then
+			GIT_QUIET=$(cat "$dotest/quiet")
 			move_to_original_branch
 		else
 			dotest="$GIT_DIR"/rebase-apply
+			GIT_QUIET=$(cat "$dotest/quiet")
 			move_to_original_branch
 		fi
 		git reset --hard $(cat "$dotest/orig-head")
@@ -300,6 +318,13 @@ do
 	-v|--verbose)
 		verbose=t
 		diffstat=t
+		GIT_QUIET=
+		;;
+	-q|--quiet)
+		GIT_QUIET=t
+		git_am_opt="$git_am_opt -q"
+		verbose=
+		diffstat=
 		;;
 	--whitespace=*)
 		git_am_opt="$git_am_opt $1"
@@ -308,6 +333,9 @@ do
 			force_rebase=t
 			;;
 		esac
+		;;
+	--ignore-whitespace)
+		git_am_opt="$git_am_opt $1"
 		;;
 	--committer-date-is-author-date|--ignore-date)
 		git_am_opt="$git_am_opt $1"
@@ -321,6 +349,9 @@ do
 		;;
 	-f|--f|--fo|--for|--forc|force|--force-r|--force-re|--force-reb|--force-reba|--force-rebas|--force-rebase)
 		force_rebase=t
+		;;
+	--rerere-autoupdate|--no-rerere-autoupdate)
+		allow_rerere_autoupdate="$1"
 		;;
 	-*)
 		usage
@@ -358,8 +389,9 @@ else
 fi
 
 # The tree must be really really clean.
-if ! git update-index --ignore-submodules --refresh; then
+if ! git update-index --ignore-submodules --refresh > /dev/null; then
 	echo >&2 "cannot rebase: you have unstaged changes"
+	git diff-files --name-status -r --ignore-submodules -- >&2
 	exit 1
 fi
 diff=$(git diff-index --cached --name-status -r --ignore-submodules HEAD --)
@@ -389,7 +421,27 @@ fi
 
 # Make sure the branch to rebase onto is valid.
 onto_name=${newbase-"$upstream_name"}
-onto=$(git rev-parse --verify "${onto_name}^0") || exit
+case "$onto_name" in
+*...*)
+	if	left=${onto_name%...*} right=${onto_name#*...} &&
+		onto=$(git merge-base --all ${left:-HEAD} ${right:-HEAD})
+	then
+		case "$onto" in
+		?*"$LF"?*)
+			die "$onto_name: there are more than one merge bases"
+			;;
+		'')
+			die "$onto_name: there is no merge base"
+			;;
+		esac
+	else
+		die "$onto_name: there is no merge base"
+	fi
+	;;
+*)
+	onto=$(git rev-parse --verify "${onto_name}^0") || exit
+	;;
+esac
 
 # If a hook exists, give it a chance to interrupt
 run_pre_rebase_hook "$upstream_arg" "$@"
@@ -439,21 +491,21 @@ orig_head=$branch
 mb=$(git merge-base "$onto" "$branch")
 if test "$upstream" = "$onto" && test "$mb" = "$onto" &&
 	# linear history?
-	! (git rev-list --parents "$onto".."$branch" | grep " .* ") > /dev/null
+	! (git rev-list --parents "$onto".."$branch" | sane_grep " .* ") > /dev/null
 then
 	if test -z "$force_rebase"
 	then
 		# Lazily switch to the target branch if needed...
 		test -z "$switch_to" || git checkout "$switch_to"
-		echo >&2 "Current branch $branch_name is up to date."
+		say "Current branch $branch_name is up to date."
 		exit 0
 	else
-		echo "Current branch $branch_name is up to date, rebase forced."
+		say "Current branch $branch_name is up to date, rebase forced."
 	fi
 fi
 
 # Detach HEAD and reset the tree
-echo "First, rewinding head to replay your work on top of it..."
+say "First, rewinding head to replay your work on top of it..."
 git checkout -q "$onto^0" || die "could not detach HEAD"
 git update-ref ORIG_HEAD $branch
 
@@ -468,10 +520,10 @@ then
 fi
 
 # If the $onto is a proper descendant of the tip of the branch, then
-# we just fast forwarded.
+# we just fast-forwarded.
 if test "$mb" = "$branch"
 then
-	echo >&2 "Fast-forwarded $branch_name to $onto_name."
+	say "Fast-forwarded $branch_name to $onto_name."
 	move_to_original_branch
 	exit 0
 fi
@@ -493,7 +545,8 @@ then
 	test 0 != $ret -a -d "$GIT_DIR"/rebase-apply &&
 		echo $head_name > "$GIT_DIR"/rebase-apply/head-name &&
 		echo $onto > "$GIT_DIR"/rebase-apply/onto &&
-		echo $orig_head > "$GIT_DIR"/rebase-apply/orig-head
+		echo $orig_head > "$GIT_DIR"/rebase-apply/orig-head &&
+		echo "$GIT_QUIET" > "$GIT_DIR"/rebase-apply/quiet
 	exit $ret
 fi
 
@@ -507,6 +560,7 @@ prev_head=$orig_head
 echo "$prev_head" > "$dotest/prev_head"
 echo "$orig_head" > "$dotest/orig-head"
 echo "$head_name" > "$dotest/head-name"
+echo "$GIT_QUIET" > "$dotest/quiet"
 
 msgnum=0
 for cmt in `git rev-list --reverse --no-merges "$revisions"`

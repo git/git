@@ -190,48 +190,66 @@ int xdl_recmatch(const char *l1, long s1, const char *l2, long s2, long flags)
 {
 	int i1, i2;
 
+	if (!(flags & XDF_WHITESPACE_FLAGS))
+		return s1 == s2 && !memcmp(l1, l2, s1);
+
+	i1 = 0;
+	i2 = 0;
+
+	/*
+	 * -w matches everything that matches with -b, and -b in turn
+	 * matches everything that matches with --ignore-space-at-eol.
+	 *
+	 * Each flavor of ignoring needs different logic to skip whitespaces
+	 * while we have both sides to compare.
+	 */
 	if (flags & XDF_IGNORE_WHITESPACE) {
-		for (i1 = i2 = 0; i1 < s1 && i2 < s2; ) {
-			if (isspace(l1[i1]))
-				while (isspace(l1[i1]) && i1 < s1)
-					i1++;
-			if (isspace(l2[i2]))
-				while (isspace(l2[i2]) && i2 < s2)
-					i2++;
-			if (i1 < s1 && i2 < s2 && l1[i1++] != l2[i2++])
+		goto skip_ws;
+		while (i1 < s1 && i2 < s2) {
+			if (l1[i1++] != l2[i2++])
 				return 0;
+		skip_ws:
+			while (i1 < s1 && isspace(l1[i1]))
+				i1++;
+			while (i2 < s2 && isspace(l2[i2]))
+				i2++;
 		}
-		return (i1 >= s1 && i2 >= s2);
 	} else if (flags & XDF_IGNORE_WHITESPACE_CHANGE) {
-		for (i1 = i2 = 0; i1 < s1 && i2 < s2; ) {
-			if (isspace(l1[i1])) {
-				if (!isspace(l2[i2]))
-					return 0;
-				while (isspace(l1[i1]) && i1 < s1)
-					i1++;
-				while (isspace(l2[i2]) && i2 < s2)
-					i2++;
-			} else if (l1[i1++] != l2[i2++])
-				return 0;
-		}
-		return (i1 >= s1 && i2 >= s2);
-	} else if (flags & XDF_IGNORE_WHITESPACE_AT_EOL) {
-		for (i1 = i2 = 0; i1 < s1 && i2 < s2; ) {
-			if (l1[i1] != l2[i2]) {
+		while (i1 < s1 && i2 < s2) {
+			if (isspace(l1[i1]) && isspace(l2[i2])) {
+				/* Skip matching spaces and try again */
 				while (i1 < s1 && isspace(l1[i1]))
 					i1++;
 				while (i2 < s2 && isspace(l2[i2]))
 					i2++;
-				if (i1 < s1 || i2 < s2)
-					return 0;
-				return 1;
+				continue;
 			}
-			i1++;
-			i2++;
+			if (l1[i1++] != l2[i2++])
+				return 0;
 		}
-		return i1 >= s1 && i2 >= s2;
-	} else
-		return s1 == s2 && !memcmp(l1, l2, s1);
+	} else if (flags & XDF_IGNORE_WHITESPACE_AT_EOL) {
+		while (i1 < s1 && i2 < s2 && l1[i1++] == l2[i2++])
+			; /* keep going */
+	}
+
+	/*
+	 * After running out of one side, the remaining side must have
+	 * nothing but whitespace for the lines to match.  Note that
+	 * ignore-whitespace-at-eol case may break out of the loop
+	 * while there still are characters remaining on both lines.
+	 */
+	if (i1 < s1) {
+		while (i1 < s1 && isspace(l1[i1]))
+			i1++;
+		if (s1 != i1)
+			return 0;
+	}
+	if (i2 < s2) {
+		while (i2 < s2 && isspace(l2[i2]))
+			i2++;
+		return (s2 == i2);
+	}
+	return 1;
 }
 
 static unsigned long xdl_hash_record_with_whitespace(char const **data,
@@ -242,18 +260,20 @@ static unsigned long xdl_hash_record_with_whitespace(char const **data,
 	for (; ptr < top && *ptr != '\n'; ptr++) {
 		if (isspace(*ptr)) {
 			const char *ptr2 = ptr;
+			int at_eol;
 			while (ptr + 1 < top && isspace(ptr[1])
 					&& ptr[1] != '\n')
 				ptr++;
+			at_eol = (top <= ptr + 1 || ptr[1] == '\n');
 			if (flags & XDF_IGNORE_WHITESPACE)
 				; /* already handled */
 			else if (flags & XDF_IGNORE_WHITESPACE_CHANGE
-					&& ptr[1] != '\n') {
+				 && !at_eol) {
 				ha += (ha << 5);
 				ha ^= (unsigned long) ' ';
 			}
 			else if (flags & XDF_IGNORE_WHITESPACE_AT_EOL
-					&& ptr[1] != '\n') {
+				 && !at_eol) {
 				while (ptr2 != ptr + 1) {
 					ha += (ha << 5);
 					ha ^= (unsigned long) *ptr2;

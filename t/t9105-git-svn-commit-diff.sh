@@ -8,7 +8,7 @@ test_expect_success 'initialize repo' '
 	mkdir import &&
 	cd import &&
 	echo hello > readme &&
-	svn import -m "initial" . "$svnrepo" &&
+	svn_cmd import -m "initial" . "$svnrepo" &&
 	cd .. &&
 	echo hello > readme &&
 	git update-index --add readme &&
@@ -27,16 +27,16 @@ prev=`git rev-parse --verify HEAD^1`
 test_expect_success 'test the commit-diff command' '
 	test -n "$prev" && test -n "$head" &&
 	git svn commit-diff -r1 "$prev" "$head" "$svnrepo" &&
-	svn co "$svnrepo" wc &&
+	svn_cmd co "$svnrepo" wc &&
 	cmp readme wc/readme
 	'
 
 test_expect_success 'commit-diff to a sub-directory (with git svn config)' '
-	svn import -m "sub-directory" import "$svnrepo"/subdir &&
+	svn_cmd import -m "sub-directory" import "$svnrepo"/subdir &&
 	git svn init --minimize-url "$svnrepo"/subdir &&
 	git svn fetch &&
 	git svn commit-diff -r3 "$prev" "$head" &&
-	svn cat "$svnrepo"/subdir/readme > readme.2 &&
+	svn_cmd cat "$svnrepo"/subdir/readme > readme.2 &&
 	cmp readme readme.2
 	'
 

@@ -177,4 +177,55 @@ test_expect_success 'stash branch' '
 	test 0 = $(git stash list | wc -l)
 '
 
+test_expect_success 'apply -q is quiet' '
+	echo foo > file &&
+	git stash &&
+	git stash apply -q > output.out 2>&1 &&
+	test ! -s output.out
+'
+
+test_expect_success 'save -q is quiet' '
+	git stash save --quiet > output.out 2>&1 &&
+	test ! -s output.out
+'
+
+test_expect_success 'pop -q is quiet' '
+	git stash pop -q > output.out 2>&1 &&
+	test ! -s output.out
+'
+
+test_expect_success 'pop -q --index works and is quiet' '
+	echo foo > file &&
+	git add file &&
+	git stash save --quiet &&
+	git stash pop -q --index > output.out 2>&1 &&
+	test foo = "$(git show :file)" &&
+	test ! -s output.out
+'
+
+test_expect_success 'drop -q is quiet' '
+	git stash &&
+	git stash drop -q > output.out 2>&1 &&
+	test ! -s output.out
+'
+
+test_expect_success 'stash -k' '
+	echo bar3 > file &&
+	echo bar4 > file2 &&
+	git add file2 &&
+	git stash -k &&
+	test bar,bar4 = $(cat file),$(cat file2)
+'
+
+test_expect_success 'stash --invalid-option' '
+	echo bar5 > file &&
+	echo bar6 > file2 &&
+	git add file2 &&
+	test_must_fail git stash --invalid-option &&
+	test_must_fail git stash save --invalid-option &&
+	test bar5,bar6 = $(cat file),$(cat file2) &&
+	git stash -- -message-starting-with-dash &&
+	test bar,bar2 = $(cat file),$(cat file2)
+'
+
 test_done

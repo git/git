@@ -11,18 +11,18 @@ test_expect_success 'initialize repo' '
 	cd import &&
 	mkdir -p trunk &&
 	echo hello > trunk/readme &&
-	svn import -m "initial" . "$svnrepo" &&
+	svn_cmd import -m "initial" . "$svnrepo" &&
 	cd .. &&
-	svn co "$svnrepo" wc &&
+	svn_cmd co "$svnrepo" wc &&
 	cd wc &&
 	echo world >> trunk/readme &&
 	poke trunk/readme &&
-	svn commit -m "another commit" &&
-	svn up &&
-	svn mv trunk thunk &&
+	svn_cmd commit -m "another commit" &&
+	svn_cmd up &&
+	svn_cmd mv trunk thunk &&
 	echo goodbye >> thunk/readme &&
 	poke thunk/readme &&
-	svn commit -m "bye now" &&
+	svn_cmd commit -m "bye now" &&
 	cd ..
 	'
 
@@ -51,7 +51,7 @@ test_expect_success 'init and fetch from one svn-remote' '
         '
 
 test_expect_success 'follow deleted parent' '
-        (svn cp -m "resurrecting trunk as junk" \
+        (svn_cmd cp -m "resurrecting trunk as junk" \
                "$svnrepo"/trunk@2 "$svnrepo"/junk ||
          svn cp -m "resurrecting trunk as junk" \
                -r2 "$svnrepo"/trunk "$svnrepo"/junk) &&
@@ -97,8 +97,8 @@ test_expect_success 'follow higher-level parent' '
         '
 
 test_expect_success 'follow deleted directory' '
-	svn mv -m "bye!" "$svnrepo"/glob/blob/hi "$svnrepo"/glob/blob/bye &&
-	svn rm -m "remove glob" "$svnrepo"/glob &&
+	svn_cmd mv -m "bye!" "$svnrepo"/glob/blob/hi "$svnrepo"/glob/blob/bye &&
+	svn_cmd rm -m "remove glob" "$svnrepo"/glob &&
 	git svn init --minimize-url -i glob "$svnrepo"/glob &&
 	git svn fetch -i glob &&
 	test "`git cat-file blob refs/remotes/glob:blob/bye`" = hi &&
@@ -120,7 +120,7 @@ test_expect_success 'follow-parent avoids deleting relevant info' '
 	cd import &&
 	  svn import -m "r9270 test" . "$svnrepo"/r9270 &&
 	cd .. &&
-	svn co "$svnrepo"/r9270/trunk/subversion/bindings/swig/perl r9270 &&
+	svn_cmd co "$svnrepo"/r9270/trunk/subversion/bindings/swig/perl r9270 &&
 	cd r9270 &&
 	  svn mkdir native &&
 	  svn mv t native/t &&
@@ -138,7 +138,7 @@ test_expect_success 'follow-parent avoids deleting relevant info' '
 	'
 
 test_expect_success "track initial change if it was only made to parent" '
-	svn cp -m "wheee!" "$svnrepo"/r9270/trunk "$svnrepo"/r9270/drunk &&
+	svn_cmd cp -m "wheee!" "$svnrepo"/r9270/trunk "$svnrepo"/r9270/drunk &&
 	git svn init --minimize-url -i r9270-d \
 	  "$svnrepo"/r9270/drunk/subversion/bindings/swig/perl/native/t &&
 	git svn fetch -i r9270-d &&
@@ -152,31 +152,31 @@ test_expect_success "track initial change if it was only made to parent" '
 test_expect_success "follow-parent is atomic" '
 	(
 		cd wc &&
-		svn up &&
-		svn mkdir stunk &&
+		svn_cmd up &&
+		svn_cmd mkdir stunk &&
 		echo "trunk stunk" > stunk/readme &&
-		svn add stunk/readme &&
-		svn ci -m "trunk stunk" &&
+		svn_cmd add stunk/readme &&
+		svn_cmd ci -m "trunk stunk" &&
 		echo "stunk like junk" >> stunk/readme &&
-		svn ci -m "really stunk" &&
+		svn_cmd ci -m "really stunk" &&
 		echo "stink stank stunk" >> stunk/readme &&
-		svn ci -m "even the grinch agrees"
+		svn_cmd ci -m "even the grinch agrees"
 	) &&
-	svn copy -m "stunk flunked" "$svnrepo"/stunk "$svnrepo"/flunk &&
+	svn_cmd copy -m "stunk flunked" "$svnrepo"/stunk "$svnrepo"/flunk &&
 	{ svn cp -m "early stunk flunked too" \
 		"$svnrepo"/stunk@17 "$svnrepo"/flunked ||
-	svn cp -m "early stunk flunked too" \
+	svn_cmd cp -m "early stunk flunked too" \
 		-r17 "$svnrepo"/stunk "$svnrepo"/flunked; } &&
 	git svn init --minimize-url -i stunk "$svnrepo"/stunk &&
 	git svn fetch -i stunk &&
 	git update-ref refs/remotes/flunk@18 refs/remotes/stunk~2 &&
 	git update-ref -d refs/remotes/stunk &&
 	git config --unset svn-remote.svn.fetch stunk &&
-	mkdir -p "$GIT_DIR"/svn/flunk@18 &&
-	rev_map=$(cd "$GIT_DIR"/svn/stunk && ls .rev_map*) &&
-	dd if="$GIT_DIR"/svn/stunk/$rev_map \
-	   of="$GIT_DIR"/svn/flunk@18/$rev_map bs=24 count=1 &&
-	rm -rf "$GIT_DIR"/svn/stunk &&
+	mkdir -p "$GIT_DIR"/svn/refs/remotes/flunk@18 &&
+	rev_map=$(cd "$GIT_DIR"/svn/refs/remotes/stunk && ls .rev_map*) &&
+	dd if="$GIT_DIR"/svn/refs/remotes/stunk/$rev_map \
+	   of="$GIT_DIR"/svn/refs/remotes/flunk@18/$rev_map bs=24 count=1 &&
+	rm -rf "$GIT_DIR"/svn/refs/remotes/stunk &&
 	git svn init --minimize-url -i flunk "$svnrepo"/flunk &&
 	git svn fetch -i flunk &&
 	git svn init --minimize-url -i stunk "$svnrepo"/stunk &&
@@ -192,7 +192,7 @@ test_expect_success "follow-parent is atomic" '
 	'
 
 test_expect_success "track multi-parent paths" '
-	svn cp -m "resurrect /glob" "$svnrepo"/r9270 "$svnrepo"/glob &&
+	svn_cmd cp -m "resurrect /glob" "$svnrepo"/r9270 "$svnrepo"/glob &&
 	git svn multi-fetch &&
 	test `git cat-file commit refs/remotes/glob | \
 	       grep "^parent " | wc -l` -eq 2

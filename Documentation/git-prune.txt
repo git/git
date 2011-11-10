@@ -8,21 +8,21 @@ git-prune - Prune all unreachable objects from the object database
 
 SYNOPSIS
 --------
-'git-prune' [-n] [-v] [--expire <expire>] [--] [<head>...]
+'git prune' [-n] [-v] [--expire <expire>] [--] [<head>...]
 
 DESCRIPTION
 -----------
 
-NOTE: In most cases, users should run 'git-gc', which calls
-'git-prune'. See the section "NOTES", below.
+NOTE: In most cases, users should run 'git gc', which calls
+'git prune'. See the section "NOTES", below.
 
-This runs 'git-fsck --unreachable' using all the refs
-available in `$GIT_DIR/refs`, optionally with additional set of
+This runs 'git fsck --unreachable' using all the refs
+available in `refs/`, optionally with additional set of
 objects specified on the command line, and prunes all unpacked
 objects unreachable from any of these head objects from the object database.
 In addition, it
 prunes the unpacked objects that are also found in packs by
-running 'git-prune-packed'.
+running 'git prune-packed'.
 
 Note that unreachable, packed objects will remain.  If this is
 not desired, see linkgit:git-repack[1].
@@ -62,12 +62,12 @@ $ git prune $(cd ../another && $(git rev-parse --all))
 Notes
 -----
 
-In most cases, users will not need to call 'git-prune' directly, but
-should instead call 'git-gc', which handles pruning along with
+In most cases, users will not need to call 'git prune' directly, but
+should instead call 'git gc', which handles pruning along with
 many other housekeeping tasks.
 
 For a description of which objects are considered for pruning, see
-'git-fsck''s --unreachable option.
+'git fsck''s --unreachable option.
 
 SEE ALSO
 --------

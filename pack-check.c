@@ -49,7 +49,7 @@ static int verify_packfile(struct packed_git *p,
 	const unsigned char *index_base = p->index_data;
 	git_SHA_CTX ctx;
 	unsigned char sha1[20], *pack_sig;
-	off_t offset = 0, pack_sig_ofs = p->pack_size - 20;
+	off_t offset = 0, pack_sig_ofs = 0;
 	uint32_t nr_objects, i;
 	int err = 0;
 	struct idx_entry *entries;
@@ -61,14 +61,16 @@ static int verify_packfile(struct packed_git *p,
 	 */
 
 	git_SHA1_Init(&ctx);
-	while (offset < pack_sig_ofs) {
+	do {
 		unsigned int remaining;
 		unsigned char *in = use_pack(p, w_curs, offset, &remaining);
 		offset += remaining;
+		if (!pack_sig_ofs)
+			pack_sig_ofs = p->pack_size - 20;
 		if (offset > pack_sig_ofs)
 			remaining -= (unsigned int)(offset - pack_sig_ofs);
 		git_SHA1_Update(&ctx, in, remaining);
-	}
+	} while (offset < pack_sig_ofs);
 	git_SHA1_Final(sha1, &ctx);
 	pack_sig = use_pack(p, w_curs, pack_sig_ofs, NULL);
 	if (hashcmp(sha1, pack_sig))

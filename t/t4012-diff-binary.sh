@@ -77,10 +77,6 @@ test_expect_success 'apply binary patch' \
 	 tree1=`git write-tree` &&
 	 test "$tree1" = "$tree0"'
 
-q_to_nul() {
-	perl -pe 'y/Q/\000/'
-}
-
 nul_to_q() {
 	perl -pe 'y/\000/Q/'
 }

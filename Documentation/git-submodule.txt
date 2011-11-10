@@ -9,12 +9,14 @@ git-submodule - Initialize, update or inspect submodules
 SYNOPSIS
 --------
 [verse]
-'git submodule' [--quiet] add [-b branch] [--] <repository> <path>
-'git submodule' [--quiet] status [--cached] [--] [<path>...]
+'git submodule' [--quiet] add [-b branch]
+	      [--reference <repository>] [--] <repository> [<path>]
+'git submodule' [--quiet] status [--cached] [--recursive] [--] [<path>...]
 'git submodule' [--quiet] init [--] [<path>...]
-'git submodule' [--quiet] update [--init] [-N|--no-fetch] [--] [<path>...]
-'git submodule' [--quiet] summary [--summary-limit <n>] [commit] [--] [<path>...]
-'git submodule' [--quiet] foreach <command>
+'git submodule' [--quiet] update [--init] [-N|--no-fetch] [--rebase]
+	      [--reference <repository>] [--merge] [--recursive] [--] [<path>...]
+'git submodule' [--quiet] summary [--cached|--files] [--summary-limit <n>] [commit] [--] [<path>...]
+'git submodule' [--quiet] foreach [--recursive] <command>
 'git submodule' [--quiet] sync [--] [<path>...]
 
 
@@ -67,7 +69,11 @@ add::
 	to the changeset to be committed next to the current
 	project: the current project is termed the "superproject".
 +
-This requires two arguments: <repository> and <path>.
+This requires at least one argument: <repository>. The optional
+argument <path> is the relative location for the cloned submodule
+to exist in the superproject. If <path> is not given, the
+"humanish" part of the source repository is used ("repo" for
+"/path/to/repo.git" and "foo" for "host.xz:foo/.git").
 +
 <repository> is the URL of the new submodule's origin repository.
 This may be either an absolute URL, or (if it begins with ./
@@ -93,11 +99,14 @@ locate the submodule using the relative URL in .gitmodules.
 status::
 	Show the status of the submodules. This will print the SHA-1 of the
 	currently checked out commit for each submodule, along with the
-	submodule path and the output of 'git-describe' for the
+	submodule path and the output of 'git describe' for the
 	SHA-1. Each SHA-1 will be prefixed with `-` if the submodule is not
 	initialized and `+` if the currently checked out submodule commit
 	does not match the SHA-1 found in the index of the containing
-	repository. This command is the default command for 'git-submodule'.
+	repository. This command is the default command for 'git submodule'.
++
+If '--recursive' is specified, this command will recurse into nested
+submodules, and show their status as well.
 
 init::
 	Initialize the submodules, i.e. register each submodule name
@@ -105,40 +114,53 @@ init::
 	The key used in .git/config is `submodule.$name.url`.
 	This command does not alter existing information in .git/config.
 	You can then customize the submodule clone URLs in .git/config
-	for your local setup and proceed to 'git submodule update';
-	you can also just use 'git submodule update --init' without
+	for your local setup and proceed to `git submodule update`;
+	you can also just use `git submodule update --init` without
 	the explicit 'init' step if you do not intend to customize
 	any submodule locations.
 
 update::
 	Update the registered submodules, i.e. clone missing submodules and
 	checkout the commit specified in the index of the containing repository.
-	This will make the submodules HEAD be detached.
+	This will make the submodules HEAD be detached unless '--rebase' or
+	'--merge' is specified or the key `submodule.$name.update` is set to
+	`rebase` or `merge`.
 +
 If the submodule is not yet initialized, and you just want to use the
 setting as stored in .gitmodules, you can automatically initialize the
 submodule with the --init option.
++
+If '--recursive' is specified, this command will recurse into the
+registered submodules, and update any nested submodules within.
 
 summary::
 	Show commit summary between the given commit (defaults to HEAD) and
 	working tree/index. For a submodule in question, a series of commits
 	in the submodule between the given super project commit and the
-	index or working tree (switched by --cached) are shown.
+	index or working tree (switched by --cached) are shown. If the option
+	--files is given, show the series of commits in the submodule between
+	the index of the super project and the working tree of the submodule
+	(this option doesn't allow to use the --cached option or to provide an
+	explicit commit).
 
 foreach::
 	Evaluates an arbitrary shell command in each checked out submodule.
-	The command has access to the variables $path and $sha1:
+	The command has access to the variables $name, $path and $sha1:
+	$name is the name of the relevant submodule section in .gitmodules,
 	$path is the name of the submodule directory relative to the
 	superproject, and $sha1 is the commit as recorded in the superproject.
 	Any submodules defined in the superproject but not checked out are
 	ignored by this command. Unless given --quiet, foreach prints the name
 	of each submodule before evaluating the command.
+	If --recursive is given, submodules are traversed recursively (i.e.
+	the given shell command is evaluated in nested submodules as well).
 	A non-zero return from the command in any submodule causes
 	the processing to terminate. This can be overridden by adding '|| :'
 	to the end of the command.
 +
-As an example, "git submodule foreach 'echo $path `git rev-parse HEAD`' will
-show the path and currently checked out commit for each submodule.
+As an example, +git submodule foreach \'echo $path {backtick}git
+rev-parse HEAD{backtick}'+ will show the path and currently checked out
+commit for each submodule.
 
 sync::
 	Synchronizes submodules' remote URL configuration setting
@@ -164,6 +186,11 @@ OPTIONS
 	commands typically use the commit found in the submodule HEAD, but
 	with this option, the commit stored in the index is used instead.
 
+--files::
+	This option is only valid for the summary command. This command
+	compares the commit in the index with that in the submodule HEAD
+	when this option is used.
+
 -n::
 --summary-limit::
 	This option is only valid for the summary command.
@@ -176,6 +203,39 @@ OPTIONS
 --no-fetch::
 	This option is only valid for the update command.
 	Don't fetch new objects from the remote site.
+
+--merge::
+	This option is only valid for the update command.
+	Merge the commit recorded in the superproject into the current branch
+	of the submodule. If this option is given, the submodule's HEAD will
+	not be detached. If a merge failure prevents this process, you will
+	have to resolve the resulting conflicts within the submodule with the
+	usual conflict resolution tools.
+	If the key `submodule.$name.update` is set to `merge`, this option is
+	implicit.
+
+--rebase::
+	This option is only valid for the update command.
+	Rebase the current branch onto the commit recorded in the
+	superproject. If this option is given, the submodule's HEAD will not
+	be detached. If a merge failure prevents this process, you will have
+	to resolve these failures with linkgit:git-rebase[1].
+	If the key `submodule.$name.update` is set to `rebase`, this option is
+	implicit.
+
+--reference <repository>::
+	This option is only valid for add and update commands.  These
+	commands sometimes need to clone a remote repository. In this case,
+	this option will be passed to the linkgit:git-clone[1] command.
++
+*NOTE*: Do *not* use this option unless you have read the note
+for linkgit:git-clone[1]'s --reference and --shared options carefully.
+
+--recursive::
+	This option is only valid for foreach, update and status commands.
+	Traverse submodules recursively. The operation is performed not
+	only in the submodules of the current repo, but also
+	in any nested submodules inside those submodules (and so on).
 
 <path>...::
 	Paths to submodule(s). When specified this will restrict the command

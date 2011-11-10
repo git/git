@@ -10,20 +10,21 @@ SYNOPSIS
 --------
 [verse]
 'git merge-file' [-L <current-name> [-L <base-name> [-L <other-name>]]]
-	[-p|--stdout] [-q|--quiet] <current-file> <base-file> <other-file>
+	[--ours|--theirs] [-p|--stdout] [-q|--quiet]
+	<current-file> <base-file> <other-file>
 
 
 DESCRIPTION
 -----------
-'git-merge-file' incorporates all changes that lead from the `<base-file>`
+'git merge-file' incorporates all changes that lead from the `<base-file>`
 to `<other-file>` into `<current-file>`. The result ordinarily goes into
-`<current-file>`. 'git-merge-file' is useful for combining separate changes
+`<current-file>`. 'git merge-file' is useful for combining separate changes
 to an original. Suppose `<base-file>` is the original, and both
 `<current-file>` and `<other-file>` are modifications of `<base-file>`,
-then 'git-merge-file' combines both changes.
+then 'git merge-file' combines both changes.
 
 A conflict occurs if both `<current-file>` and `<other-file>` have changes
-in a common segment of lines. If a conflict is found, 'git-merge-file'
+in a common segment of lines. If a conflict is found, 'git merge-file'
 normally outputs a warning and brackets the conflict with lines containing
 <<<<<<< and >>>>>>> markers. A typical conflict will look like this:
 
@@ -34,12 +35,14 @@ normally outputs a warning and brackets the conflict with lines containing
 	>>>>>>> B
 
 If there are conflicts, the user should edit the result and delete one of
-the alternatives.
+the alternatives.  When `--ours` or `--theirs` option is in effect, however,
+these conflicts are resolved favouring lines from `<current-file>` or
+lines from `<other-file>` respectively.
 
 The exit value of this program is negative on error, and the number of
 conflicts otherwise. If the merge was clean, the exit value is 0.
 
-'git-merge-file' is designed to be a minimal clone of RCS 'merge'; that is, it
+'git merge-file' is designed to be a minimal clone of RCS 'merge'; that is, it
 implements all of RCS 'merge''s functionality which is needed by
 linkgit:git[1].
 
@@ -61,6 +64,11 @@ OPTIONS
 
 -q::
 	Quiet; do not warn about conflicts.
+
+--ours::
+--theirs::
+	Instead of leaving conflicts in the file, resolve conflicts
+	favouring our (or their) side of the lines.
 
 
 EXAMPLES

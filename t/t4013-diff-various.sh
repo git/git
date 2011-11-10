@@ -207,6 +207,7 @@ log --root --cc --patch-with-stat --summary master
 log -SF master
 log -SF -p master
 log --decorate --all
+log --decorate=full --all
 
 rev-list --parents HEAD
 rev-list --children HEAD

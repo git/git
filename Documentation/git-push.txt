@@ -9,8 +9,8 @@ git-push - Update remote refs along with associated objects
 SYNOPSIS
 --------
 [verse]
-'git push' [--all | --mirror | --tags] [--dry-run] [--receive-pack=<git-receive-pack>]
-	   [--repo=<repository>] [-f | --force] [-v | --verbose]
+'git push' [--all | --mirror | --tags] [-n | --dry-run] [--receive-pack=<git-receive-pack>]
+	   [--repo=<repository>] [-f | --force] [-v | --verbose] [-u | --set-upstream]
 	   [<repository> <refspec>...]
 
 DESCRIPTION
@@ -50,9 +50,9 @@ updated.
 +
 The object referenced by <src> is used to update the <dst> reference
 on the remote side, but by default this is only allowed if the
-update can fast forward <dst>.  By having the optional leading `{plus}`,
+update can fast-forward <dst>.  By having the optional leading `{plus}`,
 you can tell git to update the <dst> ref even when the update is not a
-fast forward.  This does *not* attempt to merge <src> into <dst>.  See
+fast-forward.  This does *not* attempt to merge <src> into <dst>.  See
 EXAMPLES below for details.
 +
 `tag <tag>` means the same as `refs/tags/<tag>:refs/tags/<tag>`.
@@ -60,7 +60,7 @@ EXAMPLES below for details.
 Pushing an empty <src> allows you to delete the <dst> ref from
 the remote repository.
 +
-The special refspec `:` (or `{plus}:` to allow non-fast forward updates)
+The special refspec `:` (or `{plus}:` to allow non-fast-forward updates)
 directs git to push "matching" branches: for every branch that exists on
 the local side, the remote side is updated if a branch of the same name
 already exists on the remote side.  This is the default operation mode
@@ -69,11 +69,11 @@ nor in any Push line of the corresponding remotes file---see below).
 
 --all::
 	Instead of naming each ref to push, specifies that all
-	refs under `$GIT_DIR/refs/heads/` be pushed.
+	refs under `refs/heads/` be pushed.
 
 --mirror::
 	Instead of naming each ref to push, specifies that all
-	refs under `$GIT_DIR/refs/` (which includes but is not
+	refs under `refs/` (which includes but is not
 	limited to `refs/heads/`, `refs/remotes/`, and `refs/tags/`)
 	be mirrored to the remote repository.  Newly created local
 	refs will be pushed to the remote end, locally updated refs
@@ -82,11 +82,21 @@ nor in any Push line of the corresponding remotes file---see below).
 	if the configuration option `remote.<remote>.mirror` is
 	set.
 
+-n::
 --dry-run::
 	Do everything except actually send the updates.
 
+--porcelain::
+	Produce machine-readable output.  The output status line for each ref
+	will be tab-separated and sent to stdout instead of stderr.  The full
+	symbolic names of the refs will be given.
+
+--delete::
+	All listed refs are deleted from the remote repository. This is
+	the same as prefixing all refs with a colon.
+
 --tags::
-	All refs under `$GIT_DIR/refs/tags` are pushed, in
+	All refs under `refs/tags` are pushed, in
 	addition to refspecs explicitly listed on the command
 	line.
 
@@ -106,7 +116,7 @@ nor in any Push line of the corresponding remotes file---see below).
 
 --repo=<repository>::
 	This option is only relevant if no <repository> argument is
-	passed in the invocation. In this case, 'git-push' derives the
+	passed in the invocation. In this case, 'git push' derives the
 	remote name from the current branch: If it tracks a remote
 	branch, then that remote repository is pushed to. Otherwise,
 	the name "origin" is used. For this latter case, this option
@@ -120,17 +130,30 @@ git push --repo=public  #2
 +
 is that #1 always pushes to "public" whereas #2 pushes to "public"
 only if the current branch does not track a remote branch. This is
-useful if you write an alias or script around 'git-push'.
+useful if you write an alias or script around 'git push'.
+
+-u::
+--set-upstream::
+	For every branch that is up to date or successfully pushed, add
+	upstream (tracking) reference, used by argument-less
+	linkgit:git-pull[1] and other commands. For more information,
+	see 'branch.<name>.merge' in linkgit:git-config[1].
 
 --thin::
 --no-thin::
-	These options are passed to 'git-send-pack'.  Thin
-	transfer spends extra cycles to minimize the number of
-	objects to be sent and meant to be used on slower connection.
+	These options are passed to linkgit:git-send-pack[1]. A thin transfer
+	significantly reduces the amount of sent data when the sender and
+	receiver share many of the same objects in common. The default is
+	\--thin.
 
 -v::
 --verbose::
 	Run verbosely.
+
+-q::
+--quiet::
+	Suppress all output, including the listing of updated refs,
+	unless an error occurs.
 
 include::urls-remotes.txt[]
 
@@ -148,21 +171,32 @@ representing the status of a single ref. Each line is of the form:
  <flag> <summary> <from> -> <to> (<reason>)
 -------------------------------
 
+If --porcelain is used, then each line of the output is of the form:
+
+-------------------------------
+ <flag> \t <from>:<to> \t <summary> (<reason>)
+-------------------------------
+
+The status of up-to-date refs is shown only if --porcelain or --verbose
+option is used.
+
 flag::
-	A single character indicating the status of the ref. This is
-	blank for a successfully pushed ref, `!` for a ref that was
-	rejected or failed to push, and '=' for a ref that was up to
-	date and did not need pushing (note that the status of up to
-	date refs is shown only when `git push` is running verbosely).
+	A single character indicating the status of the ref:
+(space);; for a successfully pushed fast-forward;
+`{plus}`;; for a successful forced update;
+`-`;; for a successfully deleted ref;
+`*`;; for a successfully pushed new ref;
+`!`;; for a ref that was rejected or failed to push; and
+`=`;; for a ref that was up to date and did not need pushing.
 
 summary::
 	For a successfully pushed ref, the summary shows the old and new
 	values of the ref in a form suitable for using as an argument to
 	`git log` (this is `<old>..<new>` in most cases, and
-	`<old>...<new>` for forced non-fast forward updates). For a
+	`<old>...<new>` for forced non-fast-forward updates). For a
 	failed update, more details are given for the failure.
 	The string `rejected` indicates that git did not try to send the
-	ref at all (typically because it is not a fast forward). The
+	ref at all (typically because it is not a fast-forward). The
 	string `remote rejected` indicates that the remote end refused
 	the update; this rejection is typically caused by a hook on the
 	remote side. The string `remote failure` indicates that the
@@ -183,6 +217,92 @@ reason::
 	A human-readable explanation. In the case of successfully pushed
 	refs, no explanation is needed. For a failed ref, the reason for
 	failure is described.
+
+Note about fast-forwards
+------------------------
+
+When an update changes a branch (or more in general, a ref) that used to
+point at commit A to point at another commit B, it is called a
+fast-forward update if and only if B is a descendant of A.
+
+In a fast-forward update from A to B, the set of commits that the original
+commit A built on top of is a subset of the commits the new commit B
+builds on top of.  Hence, it does not lose any history.
+
+In contrast, a non-fast-forward update will lose history.  For example,
+suppose you and somebody else started at the same commit X, and you built
+a history leading to commit B while the other person built a history
+leading to commit A.  The history looks like this:
+
+----------------
+
+      B
+     /
+ ---X---A
+
+----------------
+
+Further suppose that the other person already pushed changes leading to A
+back to the original repository you two obtained the original commit X.
+
+The push done by the other person updated the branch that used to point at
+commit X to point at commit A.  It is a fast-forward.
+
+But if you try to push, you will attempt to update the branch (that
+now points at A) with commit B.  This does _not_ fast-forward.  If you did
+so, the changes introduced by commit A will be lost, because everybody
+will now start building on top of B.
+
+The command by default does not allow an update that is not a fast-forward
+to prevent such loss of history.
+
+If you do not want to lose your work (history from X to B) nor the work by
+the other person (history from X to A), you would need to first fetch the
+history from the repository, create a history that contains changes done
+by both parties, and push the result back.
+
+You can perform "git pull", resolve potential conflicts, and "git push"
+the result.  A "git pull" will create a merge commit C between commits A
+and B.
+
+----------------
+
+      B---C
+     /   /
+ ---X---A
+
+----------------
+
+Updating A with the resulting merge commit will fast-forward and your
+push will be accepted.
+
+Alternatively, you can rebase your change between X and B on top of A,
+with "git pull --rebase", and push the result back.  The rebase will
+create a new commit D that builds the change between X and B on top of
+A.
+
+----------------
+
+      B   D
+     /   /
+ ---X---A
+
+----------------
+
+Again, updating A with this commit will fast-forward and your push will be
+accepted.
+
+There is another common situation where you may encounter non-fast-forward
+rejection when you try to push, and it is possible even when you are
+pushing into a repository nobody else pushes into. After you push commit
+A yourself (in the first picture in this section), replace it with "git
+commit --amend" to produce commit B, and you try to push it out, because
+forgot that you have pushed A out already. In such a case, and only if
+you are certain that nobody in the meantime fetched your earlier commit A
+(and started building on top of it), you can run "git push --force" to
+overwrite it. In other words, "git push --force" is a method reserved for
+a case where you do mean to lose history.
+
 
 Examples
 --------
@@ -244,9 +364,9 @@ git push origin :experimental::
 
 git push origin {plus}dev:master::
 	Update the origin repository's master branch with the dev branch,
-	allowing non-fast forward updates.  *This can leave unreferenced
+	allowing non-fast-forward updates.  *This can leave unreferenced
 	commits dangling in the origin repository.*  Consider the
-	following situation, where a fast forward is not possible:
+	following situation, where a fast-forward is not possible:
 +
 ----
 	    o---o---o---A---B  origin/master

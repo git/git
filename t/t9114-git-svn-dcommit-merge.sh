@@ -35,12 +35,12 @@ EOF
 }
 
 test_expect_success 'setup svn repository' '
-	svn co "$svnrepo" mysvnwork &&
+	svn_cmd co "$svnrepo" mysvnwork &&
 	mkdir -p mysvnwork/trunk &&
 	cd mysvnwork &&
 		big_text_block >> trunk/README &&
-		svn add trunk &&
-		svn ci -m "first commit" trunk &&
+		svn_cmd add trunk &&
+		svn_cmd ci -m "first commit" trunk &&
 		cd ..
 	'
 

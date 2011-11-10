@@ -8,11 +8,9 @@
 # License: MIT <http://www.opensource.org/licenses/mit-license.php>
 #
 
-import optparse, sys, os, marshal, popen2, subprocess, shelve
-import tempfile, getopt, sha, os.path, time, platform
+import optparse, sys, os, marshal, subprocess, shelve
+import tempfile, getopt, os.path, time, platform
 import re
-
-from sets import Set;
 
 verbose = False
 
@@ -201,7 +199,7 @@ def isModeExec(mode):
 def isModeExecChanged(src_mode, dst_mode):
     return isModeExec(src_mode) != isModeExec(dst_mode)
 
-def p4CmdList(cmd, stdin=None, stdin_mode='w+b'):
+def p4CmdList(cmd, stdin=None, stdin_mode='w+b', cb=None):
     cmd = p4_build_cmd("-G %s" % (cmd))
     if verbose:
         sys.stderr.write("Opening pipe: %s\n" % cmd)
@@ -224,7 +222,10 @@ def p4CmdList(cmd, stdin=None, stdin_mode='w+b'):
     try:
         while True:
             entry = marshal.load(p4.stdout)
-            result.append(entry)
+	    if cb is not None:
+		cb(entry)
+	    else:
+		result.append(entry)
     except EOFError:
         pass
     exitCode = p4.wait()
@@ -728,13 +729,10 @@ class P4Submit(Command):
             tmpFile.write(submitTemplate + separatorLine + diff + newdiff)
             tmpFile.close()
             mtime = os.stat(fileName).st_mtime
-            defaultEditor = "vi"
-            if platform.system() == "Windows":
-                defaultEditor = "notepad"
             if os.environ.has_key("P4EDITOR"):
                 editor = os.environ.get("P4EDITOR")
             else:
-                editor = os.environ.get("EDITOR", defaultEditor);
+                editor = read_pipe("git var GIT_EDITOR").strip()
             system(editor + " " + fileName)
 
             response = "y"
@@ -861,8 +859,8 @@ class P4Sync(Command):
 
         self.usage += " //depot/path[@revRange]"
         self.silent = False
-        self.createdBranches = Set()
-        self.committedChanges = Set()
+        self.createdBranches = set()
+        self.committedChanges = set()
         self.branch = ""
         self.detectBranches = False
         self.detectLabels = False
@@ -950,10 +948,83 @@ class P4Sync(Command):
 
         return branches
 
-    ## Should move this out, doesn't use SELF.
-    def readP4Files(self, files):
+    # output one file from the P4 stream
+    # - helper for streamP4Files
+
+    def streamOneP4File(self, file, contents):
+	if file["type"] == "apple":
+	    print "\nfile %s is a strange apple file that forks. Ignoring" % \
+		file['depotFile']
+	    return
+
+        relPath = self.stripRepoPath(file['depotFile'], self.branchPrefixes)
+        if verbose:
+            sys.stderr.write("%s\n" % relPath)
+
+        mode = "644"
+        if isP4Exec(file["type"]):
+            mode = "755"
+        elif file["type"] == "symlink":
+            mode = "120000"
+            # p4 print on a symlink contains "target\n", so strip it off
+            data = ''.join(contents)
+            contents = [data[:-1]]
+
+        if self.isWindows and file["type"].endswith("text"):
+            mangled = []
+            for data in contents:
+                data = data.replace("\r\n", "\n")
+                mangled.append(data)
+            contents = mangled
+
+        if file['type'] in ('text+ko', 'unicode+ko', 'binary+ko'):
+            contents = map(lambda text: re.sub(r'(?i)\$(Id|Header):[^$]*\$',r'$\1$', text), contents)
+        elif file['type'] in ('text+k', 'ktext', 'kxtext', 'unicode+k', 'binary+k'):
+            contents = map(lambda text: re.sub(r'\$(Id|Header|Author|Date|DateTime|Change|File|Revision):[^$\n]*\$',r'$\1$', text), contents)
+
+        self.gitStream.write("M %s inline %s\n" % (mode, relPath))
+
+        # total length...
+        length = 0
+        for d in contents:
+            length = length + len(d)
+
+        self.gitStream.write("data %d\n" % length)
+        for d in contents:
+            self.gitStream.write(d)
+        self.gitStream.write("\n")
+
+    def streamOneP4Deletion(self, file):
+        relPath = self.stripRepoPath(file['path'], self.branchPrefixes)
+        if verbose:
+            sys.stderr.write("delete %s\n" % relPath)
+        self.gitStream.write("D %s\n" % relPath)
+
+    # handle another chunk of streaming data
+    def streamP4FilesCb(self, marshalled):
+
+	if marshalled.has_key('depotFile') and self.stream_have_file_info:
+	    # start of a new file - output the old one first
+	    self.streamOneP4File(self.stream_file, self.stream_contents)
+	    self.stream_file = {}
+	    self.stream_contents = []
+	    self.stream_have_file_info = False
+
+	# pick up the new file information... for the
+	# 'data' field we need to append to our array
+	for k in marshalled.keys():
+	    if k == 'data':
+		self.stream_contents.append(marshalled['data'])
+	    else:
+		self.stream_file[k] = marshalled[k]
+
+	self.stream_have_file_info = True
+
+    # Stream directly from "p4 files" into "git fast-import"
+    def streamP4Files(self, files):
         filesForCommit = []
         filesToRead = []
+        filesToDelete = []
 
         for f in files:
             includeFile = True
@@ -965,52 +1036,37 @@ class P4Sync(Command):
 
             if includeFile:
                 filesForCommit.append(f)
-                if f['action'] not in ('delete', 'purge'):
+                if f['action'] not in ('delete', 'move/delete', 'purge'):
                     filesToRead.append(f)
+                else:
+                    filesToDelete.append(f)
 
-        filedata = []
+        # deleted files...
+        for f in filesToDelete:
+            self.streamOneP4Deletion(f)
+
         if len(filesToRead) > 0:
-            filedata = p4CmdList('-x - print',
-                                 stdin='\n'.join(['%s#%s' % (f['path'], f['rev'])
+            self.stream_file = {}
+            self.stream_contents = []
+            self.stream_have_file_info = False
+
+	    # curry self argument
+	    def streamP4FilesCbSelf(entry):
+		self.streamP4FilesCb(entry)
+
+	    p4CmdList("-x - print",
+		'\n'.join(['%s#%s' % (f['path'], f['rev'])
                                                   for f in filesToRead]),
-                                 stdin_mode='w+')
+	        cb=streamP4FilesCbSelf)
 
-            if "p4ExitCode" in filedata[0]:
-                die("Problems executing p4. Error: [%d]."
-                    % (filedata[0]['p4ExitCode']));
-
-        j = 0;
-        contents = {}
-        while j < len(filedata):
-            stat = filedata[j]
-            j += 1
-            text = ''
-            while j < len(filedata) and filedata[j]['code'] in ('text', 'unicode', 'binary'):
-                text += filedata[j]['data']
-                del filedata[j]['data']
-                j += 1
-
-            if not stat.has_key('depotFile'):
-                sys.stderr.write("p4 print fails with: %s\n" % repr(stat))
-                continue
-
-            if stat['type'] in ('text+ko', 'unicode+ko', 'binary+ko'):
-                text = re.sub(r'(?i)\$(Id|Header):[^$]*\$',r'$\1$', text)
-            elif stat['type'] in ('text+k', 'ktext', 'kxtext', 'unicode+k', 'binary+k'):
-                text = re.sub(r'\$(Id|Header|Author|Date|DateTime|Change|File|Revision):[^$\n]*\$',r'$\1$', text)
-
-            contents[stat['depotFile']] = text
-
-        for f in filesForCommit:
-            path = f['path']
-            if contents.has_key(path):
-                f['data'] = contents[path]
-
-        return filesForCommit
+            # do the last chunk
+            if self.stream_file.has_key('depotFile'):
+                self.streamOneP4File(self.stream_file, self.stream_contents)
 
     def commit(self, details, files, branch, branchPrefixes, parent = ""):
         epoch = details["time"]
         author = details["user"]
+	self.branchPrefixes = branchPrefixes
 
         if self.verbose:
             print "commit into %s" % branch
@@ -1023,7 +1079,6 @@ class P4Sync(Command):
                 new_files.append (f)
             else:
                 sys.stderr.write("Ignoring file outside of prefix: %s\n" % path)
-        files = self.readP4Files(new_files)
 
         self.gitStream.write("commit %s\n" % branch)
 #        gitStream.write("mark :%s\n" % details["change"])
@@ -1051,33 +1106,7 @@ class P4Sync(Command):
                 print "parent %s" % parent
             self.gitStream.write("from %s\n" % parent)
 
-        for file in files:
-            if file["type"] == "apple":
-                print "\nfile %s is a strange apple file that forks. Ignoring!" % file['path']
-                continue
-
-            relPath = self.stripRepoPath(file['path'], branchPrefixes)
-            if file["action"] in ("delete", "purge"):
-                self.gitStream.write("D %s\n" % relPath)
-            else:
-                data = file['data']
-
-                mode = "644"
-                if isP4Exec(file["type"]):
-                    mode = "755"
-                elif file["type"] == "symlink":
-                    mode = "120000"
-                    # p4 print on a symlink contains "target\n", so strip it off
-                    data = data[:-1]
-
-                if self.isWindows and file["type"].endswith("text"):
-                    data = data.replace("\r\n", "\n")
-
-                self.gitStream.write("M %s inline %s\n" % (mode, relPath))
-                self.gitStream.write("data %s\n" % len(data))
-                self.gitStream.write(data)
-                self.gitStream.write("\n")
-
+        self.streamP4Files(new_files)
         self.gitStream.write("\n")
 
         change = int(details["change"])
@@ -1627,7 +1656,7 @@ class P4Sync(Command):
 
             if len(self.changesFile) > 0:
                 output = open(self.changesFile).readlines()
-                changeSet = Set()
+                changeSet = set()
                 for line in output:
                     changeSet.add(int(line))
 

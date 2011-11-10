@@ -1,13 +1,5 @@
 #!/bin/sh
 
-append_cr () {
-	sed -e 's/$/Q/' | tr Q '\015'
-}
-
-remove_cr () {
-	tr '\015' Q | sed -e 's/Q$//'
-}
-
 test_description='merge conflict in crlf repo
 
 		b---M

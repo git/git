@@ -4,12 +4,12 @@ test_description='git svn authorship'
 . ./lib-git-svn.sh
 
 test_expect_success 'setup svn repository' '
-	svn checkout "$svnrepo" work.svn &&
+	svn_cmd checkout "$svnrepo" work.svn &&
 	(
 		cd work.svn &&
 		echo >file
-		svn add file
-		svn commit -m "first commit" file
+		svn_cmd add file
+		svn_cmd commit -m "first commit" file
 	)
 '
 
@@ -74,10 +74,10 @@ test_expect_success 'interact with it via git svn' '
 	# Make sure there are no svn commit messages with excess blank lines
 	(
 		cd work.svn &&
-		svn up &&
+		svn_cmd up &&
 		
-		test $(svn log -r2:2 | wc -l) = 5 &&
-		test $(svn log -r4:4 | wc -l) = 7
+		test $(svn_cmd log -r2:2 | wc -l) = 5 &&
+		test $(svn_cmd log -r4:4 | wc -l) = 7
 	)
 '
 

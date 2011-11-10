@@ -14,7 +14,7 @@ DESCRIPTION
 The changeset (or "diff") of each commit between the fork-point and <head>
 is compared against each commit between the fork-point and <upstream>.
 The commits are compared with their 'patch id', obtained from
-the 'git-patch-id' program.
+the 'git patch-id' program.
 
 Every commit that doesn't exist in the <upstream> branch
 has its id (sha1) reported, prefixed by a symbol.  The ones that have
@@ -37,8 +37,8 @@ to and including <limit> are not reported:
               \__*__*__<limit>__-__+__> <head>
 
 
-Because 'git-cherry' compares the changeset rather than the commit id
-(sha1), you can use 'git-cherry' to find out if a commit you made locally
+Because 'git cherry' compares the changeset rather than the commit id
+(sha1), you can use 'git cherry' to find out if a commit you made locally
 has been applied <upstream> under a different commit id.  For example,
 this will happen if you're feeding patches <upstream> via email rather
 than pushing or pulling commits directly.

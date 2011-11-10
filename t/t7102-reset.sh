@@ -139,19 +139,19 @@ test_expect_success \
 test_expect_success \
 	'resetting to HEAD with no changes should succeed and do nothing' '
 	git reset --hard &&
-		check_changes 3ec39651e7f44ea531a5de18a9fa791c0fd370fc
+		check_changes 3ec39651e7f44ea531a5de18a9fa791c0fd370fc &&
 	git reset --hard HEAD &&
-		check_changes 3ec39651e7f44ea531a5de18a9fa791c0fd370fc
+		check_changes 3ec39651e7f44ea531a5de18a9fa791c0fd370fc &&
 	git reset --soft &&
-		check_changes 3ec39651e7f44ea531a5de18a9fa791c0fd370fc
+		check_changes 3ec39651e7f44ea531a5de18a9fa791c0fd370fc &&
 	git reset --soft HEAD &&
-		check_changes 3ec39651e7f44ea531a5de18a9fa791c0fd370fc
+		check_changes 3ec39651e7f44ea531a5de18a9fa791c0fd370fc &&
 	git reset --mixed &&
-		check_changes 3ec39651e7f44ea531a5de18a9fa791c0fd370fc
+		check_changes 3ec39651e7f44ea531a5de18a9fa791c0fd370fc &&
 	git reset --mixed HEAD &&
-		check_changes 3ec39651e7f44ea531a5de18a9fa791c0fd370fc
+		check_changes 3ec39651e7f44ea531a5de18a9fa791c0fd370fc &&
 	git reset &&
-		check_changes 3ec39651e7f44ea531a5de18a9fa791c0fd370fc
+		check_changes 3ec39651e7f44ea531a5de18a9fa791c0fd370fc &&
 	git reset HEAD &&
 		check_changes 3ec39651e7f44ea531a5de18a9fa791c0fd370fc
 '
@@ -419,7 +419,8 @@ test_expect_success 'resetting an unmodified path is a no-op' '
 '
 
 cat > expect << EOF
-file2: locally modified
+Unstaged changes after reset:
+M	file2
 EOF
 
 test_expect_success '--mixed refreshes the index' '

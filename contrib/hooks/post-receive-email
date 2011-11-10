@@ -44,6 +44,10 @@
 #   --pretty %s", displaying the commit id, author, date and log
 #   message.  To list full patches separated by a blank line, you
 #   could set this to "git show -C %s; echo".
+#   To list a gitweb/cgit URL *and* a full patch for each change set, use this:
+#     "t=%s; printf 'http://.../?id=%%s' \$t; echo;echo; git show -C \$t; echo"
+#   Be careful if "..." contains things that will be expanded by shell "eval"
+#   or printf.
 #
 # Notes
 # -----
@@ -311,8 +315,8 @@ generate_update_branch_email()
 	# "remotes/" will be ignored as well.
 
 	# List all of the revisions that were removed by this update, in a
-	# fast forward update, this list will be empty, because rev-list O
-	# ^N is empty.  For a non fast forward, O ^N is the list of removed
+	# fast-forward update, this list will be empty, because rev-list O
+	# ^N is empty.  For a non-fast-forward, O ^N is the list of removed
 	# revisions
 	fast_forward=""
 	rev=""
@@ -407,7 +411,7 @@ generate_update_branch_email()
 	# revision because the base is effectively a random revision at this
 	# point - the user will be interested in what this revision changed
 	# - including the undoing of previous revisions in the case of
-	# non-fast forward updates.
+	# non-fast-forward updates.
 	echo ""
 	echo "Summary of changes:"
 	git diff-tree --stat --summary --find-copies-harder $oldrev..$newrev

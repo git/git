@@ -241,7 +241,7 @@ struct filter_params {
 	const char *cmd;
 };
 
-static int filter_buffer(int fd, void *data)
+static int filter_buffer(int in, int out, void *data)
 {
 	/*
 	 * Spawn cmd and feed the buffer contents through its stdin.
@@ -249,12 +249,13 @@ static int filter_buffer(int fd, void *data)
 	struct child_process child_process;
 	struct filter_params *params = (struct filter_params *)data;
 	int write_err, status;
-	const char *argv[] = { "sh", "-c", params->cmd, NULL };
+	const char *argv[] = { params->cmd, NULL };
 
 	memset(&child_process, 0, sizeof(child_process));
 	child_process.argv = argv;
+	child_process.use_shell = 1;
 	child_process.in = -1;
-	child_process.out = fd;
+	child_process.out = out;
 
 	if (start_command(&child_process))
 		return error("cannot fork to run external filter %s", params->cmd);
@@ -267,7 +268,7 @@ static int filter_buffer(int fd, void *data)
 
 	status = finish_command(&child_process);
 	if (status)
-		error("external filter %s failed %d", params->cmd, -status);
+		error("external filter %s failed %d", params->cmd, status);
 	return (write_err || status);
 }
 
@@ -291,6 +292,7 @@ static int apply_filter(const char *path, const char *src, size_t len,
 	memset(&async, 0, sizeof(async));
 	async.proc = filter_buffer;
 	async.data = &params;
+	async.out = -1;
 	params.src = src;
 	params.size = len;
 	params.cmd = cmd;
@@ -377,9 +379,9 @@ static void setup_convert_check(struct git_attr_check *check)
 	static struct git_attr *attr_filter;
 
 	if (!attr_crlf) {
-		attr_crlf = git_attr("crlf", 4);
-		attr_ident = git_attr("ident", 5);
-		attr_filter = git_attr("filter", 6);
+		attr_crlf = git_attr("crlf");
+		attr_ident = git_attr("ident");
+		attr_filter = git_attr("filter");
 		user_convert_tail = &user_convert;
 		git_config(read_convert_config, NULL);
 	}

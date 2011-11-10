@@ -35,8 +35,7 @@ static struct git_attr *(git_attr_hash[HASHSIZE]);
 
 static unsigned hash_name(const char *name, int namelen)
 {
-	unsigned val = 0;
-	unsigned char c;
+	unsigned val = 0, c;
 
 	while (namelen--) {
 		c = *name++;
@@ -66,7 +65,7 @@ static int invalid_attr_name(const char *name, int namelen)
 	return 0;
 }
 
-struct git_attr *git_attr(const char *name, int len)
+static struct git_attr *git_attr_internal(const char *name, int len)
 {
 	unsigned hval = hash_name(name, len);
 	unsigned pos = hval % HASHSIZE;
@@ -94,6 +93,11 @@ struct git_attr *git_attr(const char *name, int len)
 	check_all_attr[a->attr_nr].attr = a;
 	check_all_attr[a->attr_nr].value = ATTR__UNKNOWN;
 	return a;
+}
+
+struct git_attr *git_attr(const char *name)
+{
+	return git_attr_internal(name, strlen(name));
 }
 
 /*
@@ -163,7 +167,7 @@ static const char *parse_attr(const char *src, int lineno, const char *cp,
 		else {
 			e->setto = xmemdupz(equals + 1, ep - equals - 1);
 		}
-		e->attr = git_attr(cp, len);
+		e->attr = git_attr_internal(cp, len);
 	}
 	(*num_attr)++;
 	return ep + strspn(ep, blank);
@@ -222,7 +226,7 @@ static struct match_attr *parse_attr_line(const char *line, const char *src,
 			      sizeof(struct attr_state) * num_attr +
 			      (is_macro ? 0 : namelen + 1));
 		if (is_macro)
-			res->u.attr = git_attr(name, namelen);
+			res->u.attr = git_attr_internal(name, namelen);
 		else {
 			res->u.pattern = (char *)&(res->state[num_attr]);
 			memcpy(res->u.pattern, name, namelen);
@@ -555,6 +559,8 @@ static void prepare_attr_stack(const char *path, int dirlen)
 			debug_push(elem);
 		}
 	}
+
+	strbuf_release(&pathbuf);
 
 	/*
 	 * Finally push the "info" one at the top of the stack.
