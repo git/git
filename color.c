@@ -1,7 +1,7 @@
 #include "cache.h"
 #include "color.h"
 
-#define COLOR_RESET "\033[m"
+int git_use_color_default = 0;
 
 static int parse_color(const char *name, int len)
 {
@@ -17,7 +17,7 @@ static int parse_color(const char *name, int len)
 			return i - 1;
 	}
 	i = strtol(name, &end, 10);
-	if (*name && !*end && i >= -1 && i <= 255)
+	if (end - name == len && i >= -1 && i <= 255)
 		return i;
 	return -2;
 }
@@ -39,29 +39,40 @@ static int parse_attr(const char *name, int len)
 
 void color_parse(const char *value, const char *var, char *dst)
 {
+	color_parse_mem(value, strlen(value), var, dst);
+}
+
+void color_parse_mem(const char *value, int value_len, const char *var,
+		char *dst)
+{
 	const char *ptr = value;
+	int len = value_len;
 	int attr = -1;
 	int fg = -2;
 	int bg = -2;
 
-	if (!strcasecmp(value, "reset")) {
-		strcpy(dst, "\033[m");
+	if (!strncasecmp(value, "reset", len)) {
+		strcpy(dst, GIT_COLOR_RESET);
 		return;
 	}
 
 	/* [fg [bg]] [attr] */
-	while (*ptr) {
+	while (len > 0) {
 		const char *word = ptr;
-		int val, len = 0;
+		int val, wordlen = 0;
 
-		while (word[len] && !isspace(word[len]))
-			len++;
+		while (len > 0 && !isspace(word[wordlen])) {
+			wordlen++;
+			len--;
+		}
 
-		ptr = word + len;
-		while (*ptr && isspace(*ptr))
+		ptr = word + wordlen;
+		while (len > 0 && isspace(*ptr)) {
 			ptr++;
+			len--;
+		}
 
-		val = parse_color(word, len);
+		val = parse_color(word, wordlen);
 		if (val >= -1) {
 			if (fg == -2) {
 				fg = val;
@@ -73,7 +84,7 @@ void color_parse(const char *value, const char *var, char *dst)
 			}
 			goto bad;
 		}
-		val = parse_attr(word, len);
+		val = parse_attr(word, wordlen);
 		if (val < 0 || attr != -1)
 			goto bad;
 		attr = val;
@@ -113,61 +124,107 @@ void color_parse(const char *value, const char *var, char *dst)
 	*dst = 0;
 	return;
 bad:
-	die("bad config value '%s' for variable '%s'", value, var);
+	die("bad color value '%.*s' for variable '%s'", value_len, value, var);
 }
 
-int git_config_colorbool(const char *var, const char *value)
+int git_config_colorbool(const char *var, const char *value, int stdout_is_tty)
 {
-	if (!value)
-		return 1;
-	if (!strcasecmp(value, "auto")) {
-		if (isatty(1) || (pager_in_use && pager_use_color)) {
-			char *term = getenv("TERM");
-			if (term && strcmp(term, "dumb"))
-				return 1;
-		}
+	if (value) {
+		if (!strcasecmp(value, "never"))
+			return 0;
+		if (!strcasecmp(value, "always"))
+			return 1;
+		if (!strcasecmp(value, "auto"))
+			goto auto_color;
+	}
+
+	/* Missing or explicit false to turn off colorization */
+	if (!git_config_bool(var, value))
+		return 0;
+
+	/* any normal truth value defaults to 'auto' */
+ auto_color:
+	if (stdout_is_tty < 0)
+		stdout_is_tty = isatty(1);
+	if (stdout_is_tty || (pager_in_use() && pager_use_color)) {
+		char *term = getenv("TERM");
+		if (term && strcmp(term, "dumb"))
+			return 1;
+	}
+	return 0;
+}
+
+int git_color_default_config(const char *var, const char *value, void *cb)
+{
+	if (!strcmp(var, "color.ui")) {
+		git_use_color_default = git_config_colorbool(var, value, -1);
 		return 0;
 	}
-	if (!strcasecmp(value, "never"))
-		return 0;
-	if (!strcasecmp(value, "always"))
-		return 1;
-	return git_config_bool(var, value);
+
+	return git_default_config(var, value, cb);
 }
 
-static int color_vprintf(const char *color, const char *fmt,
+static int color_vfprintf(FILE *fp, const char *color, const char *fmt,
 		va_list args, const char *trail)
 {
 	int r = 0;
 
 	if (*color)
-		r += printf("%s", color);
-	r += vprintf(fmt, args);
+		r += fprintf(fp, "%s", color);
+	r += vfprintf(fp, fmt, args);
 	if (*color)
-		r += printf("%s", COLOR_RESET);
+		r += fprintf(fp, "%s", GIT_COLOR_RESET);
 	if (trail)
-		r += printf("%s", trail);
+		r += fprintf(fp, "%s", trail);
 	return r;
 }
 
 
 
-int color_printf(const char *color, const char *fmt, ...)
+int color_fprintf(FILE *fp, const char *color, const char *fmt, ...)
 {
 	va_list args;
 	int r;
 	va_start(args, fmt);
-	r = color_vprintf(color, fmt, args, NULL);
+	r = color_vfprintf(fp, color, fmt, args, NULL);
 	va_end(args);
 	return r;
 }
 
-int color_printf_ln(const char *color, const char *fmt, ...)
+int color_fprintf_ln(FILE *fp, const char *color, const char *fmt, ...)
 {
 	va_list args;
 	int r;
 	va_start(args, fmt);
-	r = color_vprintf(color, fmt, args, "\n");
+	r = color_vfprintf(fp, color, fmt, args, "\n");
 	va_end(args);
 	return r;
 }
+
+/*
+ * This function splits the buffer by newlines and colors the lines individually.
+ *
+ * Returns 0 on success.
+ */
+int color_fwrite_lines(FILE *fp, const char *color,
+		size_t count, const char *buf)
+{
+	if (!*color)
+		return fwrite(buf, count, 1, fp) != 1;
+	while (count) {
+		char *p = memchr(buf, '\n', count);
+		if (p != buf && (fputs(color, fp) < 0 ||
+				fwrite(buf, p ? p - buf : count, 1, fp) != 1 ||
+				fputs(GIT_COLOR_RESET, fp) < 0))
+			return -1;
+		if (!p)
+			return 0;
+		if (fputc('\n', fp) < 0)
+			return -1;
+		count -= p + 1 - buf;
+		buf = p + 1;
+	}
+	return 0;
+}
+
+

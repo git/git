@@ -10,31 +10,32 @@ checks that git cherry only returns the second patch in the local branch
 '
 . ./test-lib.sh
 
-export GIT_AUTHOR_EMAIL=bogus_email_address
+GIT_AUTHOR_EMAIL=bogus_email_address
+export GIT_AUTHOR_EMAIL
 
 test_expect_success \
     'prepare repository with topic branch, and check cherry finds the 2 patches from there' \
     'echo First > A &&
      git update-index --add A &&
-     git-commit -m "Add A." &&
+     git commit -m "Add A." &&
 
-     git-checkout -b my-topic-branch &&
+     git checkout -b my-topic-branch &&
 
      echo Second > B &&
      git update-index --add B &&
-     git-commit -m "Add B." &&
+     git commit -m "Add B." &&
 
      sleep 2 &&
      echo AnotherSecond > C &&
      git update-index --add C &&
-     git-commit -m "Add C." &&
+     git commit -m "Add C." &&
 
-     git-checkout -f master &&
+     git checkout -f master &&
      rm -f B C &&
 
      echo Third >> A &&
      git update-index A &&
-     git-commit -m "Modify A." &&
+     git commit -m "Modify A." &&
 
      expr "$(echo $(git cherry master my-topic-branch) )" : "+ [^ ]* + .*"
 '

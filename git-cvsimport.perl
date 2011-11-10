@@ -15,7 +15,7 @@
 
 use strict;
 use warnings;
-use Getopt::Std;
+use Getopt::Long;
 use File::Spec;
 use File::Temp qw(tempfile tmpnam);
 use File::Path qw(mkpath);
@@ -29,14 +29,14 @@ use IPC::Open2;
 $SIG{'PIPE'}="IGNORE";
 $ENV{'TZ'}="UTC";
 
-our ($opt_h,$opt_o,$opt_v,$opt_k,$opt_u,$opt_d,$opt_p,$opt_C,$opt_z,$opt_i,$opt_P, $opt_s,$opt_m,$opt_M,$opt_A,$opt_S,$opt_L, $opt_a, $opt_r);
+our ($opt_h,$opt_o,$opt_v,$opt_k,$opt_u,$opt_d,$opt_p,$opt_C,$opt_z,$opt_i,$opt_P, $opt_s,$opt_m,@opt_M,$opt_A,$opt_S,$opt_L, $opt_a, $opt_r);
 my (%conv_author_name, %conv_author_email);
 
 sub usage(;$) {
 	my $msg = shift;
 	print(STDERR "Error: $msg\n") if $msg;
 	print STDERR <<END;
-Usage: ${\basename $0}     # fetch/update GIT from CVS
+Usage: git cvsimport     # fetch/update GIT from CVS
        [-o branch-for-HEAD] [-h] [-v] [-d CVSROOT] [-A author-conv-file]
        [-p opts-for-cvsps] [-P file] [-C GIT_repository] [-z fuzz] [-i] [-k]
        [-u] [-s subst] [-a] [-m] [-M regex] [-S regex] [-L commitlimit]
@@ -88,7 +88,7 @@ sub write_author_info($) {
 	close ($f);
 }
 
-# convert getopts specs for use by git-repo-config
+# convert getopts specs for use by git config
 sub read_repo_config {
     # Split the string between characters, unless there is a ':'
     # So "abc:de" becomes ["a", "b", "c:", "d", "e"]
@@ -96,7 +96,7 @@ sub read_repo_config {
 	foreach my $o (@opts) {
 		my $key = $o;
 		$key =~ s/://g;
-		my $arg = 'git-repo-config';
+		my $arg = 'git config';
 		$arg .= ' --bool' if ($o !~ /:$/);
 
         chomp(my $tmp = `$arg --get cvsimport.$key`);
@@ -108,17 +108,22 @@ sub read_repo_config {
             }
 		}
 	}
-    if (@ARGV == 0) {
-        chomp(my $module = `git-repo-config --get cvsimport.module`);
-        push(@ARGV, $module);
-    }
 }
 
 my $opts = "haivmkuo:d:p:r:C:z:s:M:P:A:S:L:";
 read_repo_config($opts);
-getopts($opts) or usage();
+Getopt::Long::Configure( 'no_ignore_case', 'bundling' );
+
+# turn the Getopt::Std specification in a Getopt::Long one,
+# with support for multiple -M options
+GetOptions( map { s/:/=s/; /M/ ? "$_\@" : $_ } split( /(?!:)/, $opts ) )
+    or usage();
 usage if $opt_h;
 
+if (@ARGV == 0) {
+		chomp(my $module = `git config --get cvsimport.module`);
+		push(@ARGV, $module) if $? == 0;
+}
 @ARGV <= 1 or usage("You can't specify more than one CVS module");
 
 if ($opt_d) {
@@ -164,10 +169,10 @@ if ($#ARGV == 0) {
 
 our @mergerx = ();
 if ($opt_m) {
-	@mergerx = ( qr/\W(?:from|of|merge|merging|merged) (\w+)/i );
+	@mergerx = ( qr/\b(?:from|of|merge|merging|merged) ([-\w]+)/i );
 }
-if ($opt_M) {
-	push (@mergerx, qr/$opt_M/);
+if (@opt_M) {
+	push (@mergerx, map { qr/$_/ } @opt_M);
 }
 
 # Remember UTC of our starting time
@@ -222,8 +227,10 @@ sub conn {
 				$proxyport = $1;
 			}
 		}
+		$repo ||= '/';
 
-		$user="anonymous" unless defined $user;
+		# if username is not explicit in CVSROOT, then use current user, as cvs would
+		$user=(getlogin() || $ENV{'LOGNAME'} || $ENV{'USER'} || "anonymous") unless $user;
 		my $rr2 = "-";
 		unless ($port) {
 			$rr2 = ":pserver:$user\@$serv:$repo";
@@ -526,18 +533,12 @@ sub is_sha1 {
 	return $s =~ /^[a-f0-9]{40}$/;
 }
 
-sub get_headref ($$) {
-    my $name    = shift;
-    my $git_dir = shift;
-
-    my $f = "$git_dir/$remote/$name";
-    if (open(my $fh, $f)) {
-	    chomp(my $r = <$fh>);
-	    is_sha1($r) or die "Cannot get head id for $name ($r): $!";
-	    return $r;
-    }
-    die "unable to open $f: $!" unless $! == POSIX::ENOENT;
-    return undef;
+sub get_headref ($) {
+	my $name = shift;
+	my $r = `git rev-parse --verify '$name' 2>/dev/null`;
+	return undef unless $? == 0;
+	chomp $r;
+	return $r;
 }
 
 -d $git_tree
@@ -637,6 +638,7 @@ unless ($opt_P) {
 	    print $cvspsfh $_;
 	}
 	close CVSPS;
+	$? == 0 or die "git-cvsimport: fatal: cvsps reported error\n";
 	close $cvspsfh;
 } else {
 	$cvspsfile = $opt_P;
@@ -697,7 +699,8 @@ my (@old,@new,@skipped,%ignorebranch);
 $ignorebranch{'#CVSPS_NO_BRANCH'} = 1;
 
 sub commit {
-	if ($branch eq $opt_o && !$index{branch} && !get_headref($branch, $git_dir)) {
+	if ($branch eq $opt_o && !$index{branch} &&
+		!get_headref("$remote/$branch")) {
 	    # looks like an initial commit
 	    # use the index primed by git-init
 	    $ENV{GIT_INDEX_FILE} = "$git_dir/index";
@@ -721,7 +724,7 @@ sub commit {
 	update_index(@old, @new);
 	@old = @new = ();
 	my $tree = write_tree();
-	my $parent = get_headref($last_branch, $git_dir);
+	my $parent = get_headref("$remote/$last_branch");
 	print "Parent ID " . ($parent ? $parent : "(empty)") . "\n" if $opt_v;
 
 	my @commit_args;
@@ -732,8 +735,8 @@ sub commit {
 	foreach my $rx (@mergerx) {
 		next unless $logmsg =~ $rx && $1;
 		my $mparent = $1 eq 'HEAD' ? $opt_o : $1;
-		if (my $sha1 = get_headref($mparent, $git_dir)) {
-			push @commit_args, '-p', $mparent;
+		if (my $sha1 = get_headref("$remote/$mparent")) {
+			push @commit_args, '-p', "$remote/$mparent";
 			print "Merge parent branch: $mparent\n" if $opt_v;
 		}
 	}
@@ -770,7 +773,7 @@ sub commit {
 	waitpid($pid,0);
 	die "Error running git-commit-tree: $?\n" if $?;
 
-	system("git-update-ref $remote/$branch $cid") == 0
+	system('git-update-ref', "$remote/$branch", $cid) == 0
 		or die "Cannot write branch $branch for update: $!\n";
 
 	if ($tag) {
@@ -778,8 +781,9 @@ sub commit {
 		$xtag =~ s/\s+\*\*.*$//; # Remove stuff like ** INVALID ** and ** FUNKY **
 		$xtag =~ tr/_/\./ if ( $opt_u );
 		$xtag =~ s/[\/]/$opt_s/g;
+		$xtag =~ s/\[//g;
 
-		system('git-tag', $xtag, $cid) == 0
+		system('git-tag', '-f', $xtag, $cid) == 0
 			or die "Cannot create tag $xtag: $!\n";
 
 		print "Created tag '$xtag' on '$branch'\n" if $opt_v;
@@ -818,6 +822,7 @@ while (<CVS>) {
 		$state = 4;
 	} elsif ($state == 4 and s/^Branch:\s+//) {
 		s/\s+$//;
+		tr/_/\./ if ( $opt_u );
 		s/[\/]/$opt_s/g;
 		$branch = $_;
 		$state = 5;
@@ -851,7 +856,7 @@ while (<CVS>) {
 		}
 		if (!$opt_a && $starttime - 300 - (defined $opt_z ? $opt_z : 300) <= $date) {
 			# skip if the commit is too recent
-			# that the cvsps default fuzz is 300s, we give ourselves another
+			# given that the cvsps default fuzz is 300s, we give ourselves another
 			# 300s just in case -- this also prevents skipping commits
 			# due to server clock drift
 			print "skip patchset $patchset: $date too recent\n" if $opt_v;
@@ -868,29 +873,27 @@ while (<CVS>) {
 				print STDERR "Branch $branch erroneously stems from itself -- changed ancestor to $opt_o\n";
 				$ancestor = $opt_o;
 			}
-			if (-f "$git_dir/$remote/$branch") {
+			if (defined get_headref("$remote/$branch")) {
 				print STDERR "Branch $branch already exists!\n";
 				$state=11;
 				next;
 			}
-			unless (open(H,"$git_dir/$remote/$ancestor")) {
+			my $id = get_headref("$remote/$ancestor");
+			if (!$id) {
 				print STDERR "Branch $ancestor does not exist!\n";
 				$ignorebranch{$branch} = 1;
 				$state=11;
 				next;
 			}
-			chomp(my $id = <H>);
-			close(H);
-			unless (open(H,"> $git_dir/$remote/$branch")) {
-				print STDERR "Could not create branch $branch: $!\n";
+
+			system(qw(git update-ref -m cvsimport),
+				"$remote/$branch", $id);
+			if($? != 0) {
+				print STDERR "Could not create branch $branch\n";
 				$ignorebranch{$branch} = 1;
 				$state=11;
 				next;
 			}
-			print H "$id\n"
-				or die "Could not write branch $branch: $!";
-			close(H)
-				or die "Could not write branch $branch: $!";
 		}
 		$last_branch = $branch if $branch ne $last_branch;
 		$state = 9;
@@ -949,7 +952,7 @@ while (<CVS>) {
 	} elsif (/^-+$/) { # end of unknown-line processing
 		$state = 1;
 	} elsif ($state != 11) { # ignore stuff when skipping
-		print "* UNKNOWN LINE * $_\n";
+		print STDERR "* UNKNOWN LINE * $_\n";
 	}
 }
 commit() if $branch and $state != 11;
@@ -1002,7 +1005,7 @@ if ($orig_branch) {
 	$orig_branch = "master";
 	print "DONE; creating $orig_branch branch\n" if $opt_v;
 	system("git-update-ref", "refs/heads/master", "$remote/$opt_o")
-		unless -f "$git_dir/refs/heads/master";
+		unless defined get_headref('refs/heads/master');
 	system("git-symbolic-ref", "$remote/HEAD", "$remote/$opt_o")
 		if ($opt_r && $opt_o ne 'HEAD');
 	system('git-update-ref', 'HEAD', "$orig_branch");

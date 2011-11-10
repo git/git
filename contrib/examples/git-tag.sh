@@ -14,7 +14,7 @@ username=
 list=
 verify=
 LINES=0
-while case "$#" in 0) break ;; esac
+while test $# != 0
 do
     case "$1" in
     -a)
@@ -164,10 +164,10 @@ git check-ref-format "tags/$name" ||
 
 object=$(git rev-parse --verify --default HEAD "$@") || exit 1
 type=$(git cat-file -t $object) || exit 1
-tagger=$(git-var GIT_COMMITTER_IDENT) || exit 1
+tagger=$(git var GIT_COMMITTER_IDENT) || exit 1
 
 test -n "$username" ||
-	username=$(git repo-config user.signingkey) ||
+	username=$(git config user.signingkey) ||
 	username=$(expr "z$tagger" : 'z\(.*>\)')
 
 trap 'rm -f "$GIT_DIR"/TAG_TMP* "$GIT_DIR"/TAG_FINALMSG "$GIT_DIR"/TAG_EDITMSG' 0

@@ -4,7 +4,6 @@
  * Copyright (C) Linus Torvalds, 2005
  */
 #include "cache.h"
-#include "strbuf.h"
 #include "quote.h"
 #include "cache-tree.h"
 #include "tree-walk.h"
@@ -15,7 +14,7 @@
  * Default to not allowing changes to the list of files. The
  * tool doesn't actually care, but this makes it harder to add
  * files to the revision control by mistake by doing something
- * like "git-update-index *" and suddenly having all the object
+ * like "git update-index *" and suddenly having all the object
  * files be revision controlled.
  */
 static int allow_add;
@@ -48,10 +47,10 @@ static int mark_valid(const char *path)
 	if (0 <= pos) {
 		switch (mark_valid_only) {
 		case MARK_VALID:
-			active_cache[pos]->ce_flags |= htons(CE_VALID);
+			active_cache[pos]->ce_flags |= CE_VALID;
 			break;
 		case UNMARK_VALID:
-			active_cache[pos]->ce_flags &= ~htons(CE_VALID);
+			active_cache[pos]->ce_flags &= ~CE_VALID;
 			break;
 		}
 		cache_tree_invalidate_path(active_cache_tree, path);
@@ -96,7 +95,7 @@ static int add_one_path(struct cache_entry *old, const char *path, int len, stru
 	size = cache_entry_size(len);
 	ce = xcalloc(1, size);
 	memcpy(ce->name, path, len);
-	ce->ce_flags = htons(len);
+	ce->ce_flags = len;
 	fill_stat_cache_info(ce, st);
 	ce->ce_mode = ce_mode_from_stat(old, st->st_mode);
 
@@ -140,7 +139,7 @@ static int process_directory(const char *path, int len, struct stat *st)
 	/* Exact match: file or existing gitlink */
 	if (pos >= 0) {
 		struct cache_entry *ce = active_cache[pos];
-		if (S_ISGITLINK(ntohl(ce->ce_mode))) {
+		if (S_ISGITLINK(ce->ce_mode)) {
 
 			/* Do nothing to the index if there is no HEAD! */
 			if (resolve_gitlink_ref(path, "HEAD", sha1) < 0)
@@ -184,7 +183,7 @@ static int process_file(const char *path, int len, struct stat *st)
 	int pos = cache_name_pos(path, len);
 	struct cache_entry *ce = pos < 0 ? NULL : active_cache[pos];
 
-	if (ce && S_ISGITLINK(ntohl(ce->ce_mode)))
+	if (ce && S_ISGITLINK(ce->ce_mode))
 		return error("%s is already a gitlink, not replacing", path);
 
 	return add_one_path(ce, path, len, st);
@@ -195,10 +194,9 @@ static int process_path(const char *path)
 	int len;
 	struct stat st;
 
-	/* We probably want to do this in remove_file_from_cache() and
-	 * add_cache_entry() instead...
-	 */
-	cache_tree_invalidate_path(active_cache_tree, path);
+	len = strlen(path);
+	if (has_symlink_leading_path(path, len))
+		return error("'%s' is beyond a symbolic link", path);
 
 	/*
 	 * First things first: get the stat information, to decide
@@ -207,7 +205,6 @@ static int process_path(const char *path)
 	if (lstat(path, &st) < 0)
 		return process_lstat_error(path, errno);
 
-	len = strlen(path);
 	if (S_ISDIR(st.st_mode))
 		return process_directory(path, len, &st);
 
@@ -221,7 +218,7 @@ static int add_cacheinfo(unsigned int mode, const unsigned char *sha1,
 	struct cache_entry *ce;
 
 	if (!verify_path(path))
-		return -1;
+		return error("Invalid path '%s'", path);
 
 	len = strlen(path);
 	size = cache_entry_size(len);
@@ -232,14 +229,13 @@ static int add_cacheinfo(unsigned int mode, const unsigned char *sha1,
 	ce->ce_flags = create_ce_flags(len, stage);
 	ce->ce_mode = create_ce_mode(mode);
 	if (assume_unchanged)
-		ce->ce_flags |= htons(CE_VALID);
+		ce->ce_flags |= CE_VALID;
 	option = allow_add ? ADD_CACHE_OK_TO_ADD : 0;
 	option |= allow_replace ? ADD_CACHE_OK_TO_REPLACE : 0;
 	if (add_cache_entry(ce, option))
 		return error("%s: cannot add to the index - missing --add option?",
 			     path);
 	report("add '%s'", path);
-	cache_tree_invalidate_path(active_cache_tree, path);
 	return 0;
 }
 
@@ -253,14 +249,14 @@ static void chmod_path(int flip, const char *path)
 	if (pos < 0)
 		goto fail;
 	ce = active_cache[pos];
-	mode = ntohl(ce->ce_mode);
+	mode = ce->ce_mode;
 	if (!S_ISREG(mode))
 		goto fail;
 	switch (flip) {
 	case '+':
-		ce->ce_mode |= htonl(0111); break;
+		ce->ce_mode |= 0111; break;
 	case '-':
-		ce->ce_mode &= htonl(~0111); break;
+		ce->ce_mode &= ~0111; break;
 	default:
 		goto fail;
 	}
@@ -269,7 +265,7 @@ static void chmod_path(int flip, const char *path)
 	report("chmod %cx '%s'", flip, path);
 	return;
  fail:
-	die("git-update-index: cannot chmod %cx '%s'", flip, path);
+	die("git update-index: cannot chmod %cx '%s'", flip, path);
 }
 
 static void update_one(const char *path, const char *prefix, int prefix_length)
@@ -284,11 +280,10 @@ static void update_one(const char *path, const char *prefix, int prefix_length)
 			die("Unable to mark file %s", path);
 		goto free_return;
 	}
-	cache_tree_invalidate_path(active_cache_tree, path);
 
 	if (force_remove) {
 		if (remove_file_from_cache(p))
-			die("git-update-index: unable to remove %s", path);
+			die("git update-index: unable to remove %s", path);
 		report("remove '%s'", path);
 		goto free_return;
 	}
@@ -297,14 +292,15 @@ static void update_one(const char *path, const char *prefix, int prefix_length)
 	report("add '%s'", path);
  free_return:
 	if (p < path || p > path + strlen(path))
-		free((char*)p);
+		free((char *)p);
 }
 
 static void read_index_info(int line_termination)
 {
-	struct strbuf buf;
-	strbuf_init(&buf);
-	while (1) {
+	struct strbuf buf = STRBUF_INIT;
+	struct strbuf uq = STRBUF_INIT;
+
+	while (strbuf_getline(&buf, stdin, line_termination) != EOF) {
 		char *ptr, *tab;
 		char *path_name;
 		unsigned char sha1[20];
@@ -315,23 +311,19 @@ static void read_index_info(int line_termination)
 		/* This reads lines formatted in one of three formats:
 		 *
 		 * (1) mode         SP sha1          TAB path
-		 * The first format is what "git-apply --index-info"
+		 * The first format is what "git apply --index-info"
 		 * reports, and used to reconstruct a partial tree
 		 * that is used for phony merge base tree when falling
 		 * back on 3-way merge.
 		 *
 		 * (2) mode SP type SP sha1          TAB path
-		 * The second format is to stuff git-ls-tree output
+		 * The second format is to stuff "git ls-tree" output
 		 * into the index file.
 		 *
 		 * (3) mode         SP sha1 SP stage TAB path
 		 * This format is to put higher order stages into the
-		 * index file and matches git-ls-files --stage output.
+		 * index file and matches "git ls-files --stage" output.
 		 */
-		read_line(&buf, stdin, line_termination);
-		if (buf.eof)
-			break;
-
 		errno = 0;
 		ul = strtoul(buf.buf, &ptr, 8);
 		if (ptr == buf.buf || *ptr != ' '
@@ -356,23 +348,24 @@ static void read_index_info(int line_termination)
 		if (get_sha1_hex(tab - 40, sha1) || tab[-41] != ' ')
 			goto bad_line;
 
-		if (line_termination && ptr[0] == '"')
-			path_name = unquote_c_style(ptr, NULL);
-		else
-			path_name = ptr;
+		path_name = ptr;
+		if (line_termination && path_name[0] == '"') {
+			strbuf_reset(&uq);
+			if (unquote_c_style(&uq, path_name, NULL)) {
+				die("git update-index: bad quoting of path name");
+			}
+			path_name = uq.buf;
+		}
 
 		if (!verify_path(path_name)) {
 			fprintf(stderr, "Ignoring path %s\n", path_name);
-			if (path_name != ptr)
-				free(path_name);
 			continue;
 		}
-		cache_tree_invalidate_path(active_cache_tree, path_name);
 
 		if (!mode) {
 			/* mode == 0 means there is no such path -- remove */
 			if (remove_file_from_cache(path_name))
-				die("git-update-index: unable to remove %s",
+				die("git update-index: unable to remove %s",
 				    ptr);
 		}
 		else {
@@ -382,20 +375,20 @@ static void read_index_info(int line_termination)
 			 */
 			ptr[-42] = ptr[-1] = 0;
 			if (add_cacheinfo(mode, sha1, path_name, stage))
-				die("git-update-index: unable to update %s",
+				die("git update-index: unable to update %s",
 				    path_name);
 		}
-		if (path_name != ptr)
-			free(path_name);
 		continue;
 
 	bad_line:
 		die("malformed index info %s", buf.buf);
 	}
+	strbuf_release(&buf);
+	strbuf_release(&uq);
 }
 
 static const char update_index_usage[] =
-"git-update-index [-q] [--add] [--replace] [--remove] [--unmerged] [--refresh] [--really-refresh] [--cacheinfo] [--chmod=(+|-)x] [--assume-unchanged] [--info-only] [--force-remove] [--stdin] [--index-info] [--unresolve] [--again | -g] [--ignore-missing] [-z] [--verbose] [--] <file>...";
+"git update-index [-q] [--add] [--replace] [--remove] [--unmerged] [--refresh] [--really-refresh] [--cacheinfo] [--chmod=(+|-)x] [--assume-unchanged] [--info-only] [--force-remove] [--stdin] [--index-info] [--unresolve] [--again | -g] [--ignore-missing] [-z] [--verbose] [--] <file>...";
 
 static unsigned char head_sha1[20];
 static unsigned char merge_head_sha1[20];
@@ -474,7 +467,6 @@ static int unresolve_one(const char *path)
 		goto free_return;
 	}
 
-	cache_tree_invalidate_path(active_cache_tree, path);
 	remove_file_from_cache(path);
 	if (add_cache_entry(ce_2, ADD_CACHE_OK_TO_ADD)) {
 		error("%s: cannot add our version to the index.", path);
@@ -494,7 +486,7 @@ static int unresolve_one(const char *path)
 static void read_head_pointers(void)
 {
 	if (read_ref("HEAD", head_sha1))
-		die("No HEAD -- no initial commit yet?\n");
+		die("No HEAD -- no initial commit yet?");
 	if (read_ref("MERGE_HEAD", merge_head_sha1)) {
 		fprintf(stderr, "Not in the middle of a merge.\n");
 		exit(0);
@@ -517,7 +509,7 @@ static int do_unresolve(int ac, const char **av,
 		const char *p = prefix_path(prefix, prefix_length, arg);
 		err |= unresolve_one(p);
 		if (p < arg || p > arg + strlen(arg))
-			free((char*)p);
+			free((char *)p);
 	}
 	return err;
 }
@@ -576,7 +568,7 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 	int lock_error = 0;
 	struct lock_file *lock_file;
 
-	git_config(git_default_config);
+	git_config(git_default_config, NULL);
 
 	/* We can't free this memory, it becomes part of a linked list parsed atexit() */
 	lock_file = xcalloc(1, sizeof(struct lock_file));
@@ -602,6 +594,10 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 				refresh_flags |= REFRESH_QUIET;
 				continue;
 			}
+			if (!strcmp(path, "--ignore-submodules")) {
+				refresh_flags |= REFRESH_IGNORE_SUBMODULES;
+				continue;
+			}
 			if (!strcmp(path, "--add")) {
 				allow_add = 1;
 				continue;
@@ -619,10 +615,12 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 				continue;
 			}
 			if (!strcmp(path, "--refresh")) {
+				setup_work_tree();
 				has_errors |= refresh_cache(refresh_flags);
 				continue;
 			}
 			if (!strcmp(path, "--really-refresh")) {
+				setup_work_tree();
 				has_errors |= refresh_cache(REFRESH_REALLY | refresh_flags);
 				continue;
 			}
@@ -631,12 +629,12 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 				unsigned int mode;
 
 				if (i+3 >= argc)
-					die("git-update-index: --cacheinfo <mode> <sha1> <path>");
+					die("git update-index: --cacheinfo <mode> <sha1> <path>");
 
 				if (strtoul_ui(argv[i+1], 8, &mode) ||
 				    get_sha1_hex(argv[i+2], sha1) ||
 				    add_cacheinfo(mode, sha1, argv[i+3], 0))
-					die("git-update-index: --cacheinfo"
+					die("git update-index: --cacheinfo"
 					    " cannot add %s", argv[i+3]);
 				i += 3;
 				continue;
@@ -644,7 +642,7 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 			if (!strcmp(path, "--chmod=-x") ||
 			    !strcmp(path, "--chmod=+x")) {
 				if (argc <= i+1)
-					die("git-update-index: %s <path>", path);
+					die("git update-index: %s <path>", path);
 				set_executable_bit = path[8];
 				continue;
 			}
@@ -689,6 +687,7 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 				goto finish;
 			}
 			if (!strcmp(path, "--again") || !strcmp(path, "-g")) {
+				setup_work_tree();
 				has_errors = do_reupdate(argc - i, argv + i,
 							 prefix, prefix_length);
 				if (has_errors)
@@ -707,35 +706,35 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 				usage(update_index_usage);
 			die("unknown option %s", path);
 		}
+		setup_work_tree();
 		p = prefix_path(prefix, prefix_length, path);
 		update_one(p, NULL, 0);
 		if (set_executable_bit)
 			chmod_path(set_executable_bit, p);
 		if (p < path || p > path + strlen(path))
-			free((char*)p);
+			free((char *)p);
 	}
 	if (read_from_stdin) {
-		struct strbuf buf;
-		strbuf_init(&buf);
-		while (1) {
-			char *path_name;
+		struct strbuf buf = STRBUF_INIT, nbuf = STRBUF_INIT;
+
+		setup_work_tree();
+		while (strbuf_getline(&buf, stdin, line_termination) != EOF) {
 			const char *p;
-			read_line(&buf, stdin, line_termination);
-			if (buf.eof)
-				break;
-			if (line_termination && buf.buf[0] == '"')
-				path_name = unquote_c_style(buf.buf, NULL);
-			else
-				path_name = buf.buf;
-			p = prefix_path(prefix, prefix_length, path_name);
+			if (line_termination && buf.buf[0] == '"') {
+				strbuf_reset(&nbuf);
+				if (unquote_c_style(&nbuf, buf.buf, NULL))
+					die("line is badly quoted");
+				strbuf_swap(&buf, &nbuf);
+			}
+			p = prefix_path(prefix, prefix_length, buf.buf);
 			update_one(p, NULL, 0);
 			if (set_executable_bit)
 				chmod_path(set_executable_bit, p);
-			if (p < path_name || p > path_name + strlen(path_name))
-				free((char*) p);
-			if (path_name != buf.buf)
-				free(path_name);
+			if (p < buf.buf || p > buf.buf + buf.len)
+				free((char *)p);
 		}
+		strbuf_release(&nbuf);
+		strbuf_release(&buf);
 	}
 
  finish:
@@ -743,11 +742,10 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 		if (newfd < 0) {
 			if (refresh_flags & REFRESH_QUIET)
 				exit(128);
-			die("unable to create '%s.lock': %s",
-			    get_index_file(), strerror(lock_error));
+			unable_to_lock_index_die(get_index_file(), lock_error);
 		}
 		if (write_cache(newfd, active_cache, active_nr) ||
-		    close(newfd) || commit_locked_index(lock_file))
+		    commit_locked_index(lock_file))
 			die("Unable to write new index file");
 	}
 

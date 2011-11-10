@@ -8,24 +8,23 @@ git-log - Show commit logs
 
 SYNOPSIS
 --------
-'git-log' <option>...
+'git log' [<options>] [<since>..<until>] [[\--] <path>...]
 
 DESCRIPTION
 -----------
 Shows the commit logs.
 
-The command takes options applicable to the gitlink:git-rev-list[1]
+The command takes options applicable to the 'git-rev-list'
 command to control what is shown and how, and options applicable to
-the gitlink:git-diff-tree[1] commands to control how the changes
+the 'git-diff-*' commands to control how the changes
 each commit introduces are shown.
-
-This manual page describes only the most frequently used options.
 
 
 OPTIONS
 -------
 
-include::pretty-options.txt[]
+:git-log: 1
+include::diff-options.txt[]
 
 -<n>::
 	Limits the number of commits to show.
@@ -36,30 +35,20 @@ include::pretty-options.txt[]
 	`HEAD`, i.e. the tip of the current branch.
 	For a more complete list of ways to spell <since>
 	and <until>, see "SPECIFYING REVISIONS" section in
-	gitlink:git-rev-parse[1].
-
---first-parent::
-	Follow only the first parent commit upon seeing a merge
-	commit.  This  option gives a better overview of the
-	evolution of a particular branch.
-
--p::
-	Show the change the commit introduces in a patch form.
-
--g, \--walk-reflogs::
-	Show commits as they were recorded in the reflog. The log contains
-	a record about how the tip of a reference was changed.
-	Cannot be combined with --reverse.
-	See also gitlink:git-reflog[1].
+	linkgit:git-rev-parse[1].
 
 --decorate::
 	Print out the ref names of any commits that are shown.
 
+--source::
+	Print out the ref name given on the command line by which each
+	commit was reached.
+
 --full-diff::
-	Without this flag, "git log -p <paths>..." shows commits that
+	Without this flag, "git log -p <path>..." shows commits that
 	touch the specified paths, and diffs about the same specified
 	paths.  With this, the full diff is shown for commits that touch
-	the specified paths; this means that "<paths>..." limits only
+	the specified paths; this means that "<path>..." limits only
 	commits, and doesn't limit diff for those commits.
 
 --follow::
@@ -72,12 +61,18 @@ include::pretty-options.txt[]
 	Note that only message is considered, if also a diff is shown
 	its size is not included.
 
-<paths>...::
-	Show only commits that affect the specified paths.
+[\--] <path>...::
+	Show only commits that affect any of the specified paths. To
+	prevent confusion with options and branch names, paths may need
+	to be prefixed with "\-- " to separate them from options or
+	refnames.
 
+
+include::rev-list-options.txt[]
 
 include::pretty-formats.txt[]
 
+include::diff-generate-patch.txt[]
 
 Examples
 --------
@@ -124,4 +119,4 @@ Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[1] suite

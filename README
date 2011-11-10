@@ -24,10 +24,18 @@ It was originally written by Linus Torvalds with help of a group of
 hackers around the net. It is currently maintained by Junio C Hamano.
 
 Please read the file INSTALL for installation instructions.
-See Documentation/tutorial.txt to get started, then see
-Documentation/everyday.txt for a useful minimum set of commands,
-and "man git-commandname" for documentation of each command.
-CVS users may also want to read Documentation/cvs-migration.txt.
+
+See Documentation/gittutorial.txt to get started, then see
+Documentation/everyday.txt for a useful minimum set of commands, and
+Documentation/git-commandname.txt for documentation of each command.
+If git has been correctly installed, then the tutorial can also be
+read with "man gittutorial" or "git help tutorial", and the
+documentation of each command with "man git-commandname" or "git help
+commandname".
+
+CVS users may also want to read Documentation/gitcvs-migration.txt
+("man gitcvs-migration" or "git help cvs-migration" if git is
+installed).
 
 Many Git online resources are accessible from http://git.or.cz/
 including full documentation and Git related tools.

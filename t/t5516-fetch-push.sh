@@ -39,6 +39,11 @@ mk_test () {
 	)
 }
 
+mk_child() {
+	rm -rf "$1" &&
+	git clone testrepo "$1"
+}
+
 check_push_result () {
 	(
 		cd testrepo &&
@@ -100,6 +105,23 @@ test_expect_success 'fetch with wildcard' '
 	)
 '
 
+test_expect_success 'fetch with insteadOf' '
+	mk_empty &&
+	(
+		TRASH=$(pwd)/ &&
+		cd testrepo &&
+		git config "url.$TRASH.insteadOf" trash/ &&
+		git config remote.up.url trash/. &&
+		git config remote.up.fetch "refs/heads/*:refs/remotes/origin/*" &&
+		git fetch up &&
+
+		r=$(git show-ref -s --verify refs/remotes/origin/master) &&
+		test "z$r" = "z$the_commit" &&
+
+		test 1 = $(git for-each-ref refs/remotes/origin | wc -l)
+	)
+'
+
 test_expect_success 'push without wildcard' '
 	mk_empty &&
 
@@ -126,11 +148,66 @@ test_expect_success 'push with wildcard' '
 	)
 '
 
+test_expect_success 'push with insteadOf' '
+	mk_empty &&
+	TRASH="$(pwd)/" &&
+	git config "url.$TRASH.insteadOf" trash/ &&
+	git push trash/testrepo refs/heads/master:refs/remotes/origin/master &&
+	(
+		cd testrepo &&
+		r=$(git show-ref -s --verify refs/remotes/origin/master) &&
+		test "z$r" = "z$the_commit" &&
+
+		test 1 = $(git for-each-ref refs/remotes/origin | wc -l)
+	)
+'
+
 test_expect_success 'push with matching heads' '
 
 	mk_test heads/master &&
 	git push testrepo &&
 	check_push_result $the_commit heads/master
+
+'
+
+test_expect_success 'push with matching heads on the command line' '
+
+	mk_test heads/master &&
+	git push testrepo : &&
+	check_push_result $the_commit heads/master
+
+'
+
+test_expect_success 'failed (non-fast-forward) push with matching heads' '
+
+	mk_test heads/master &&
+	git push testrepo : &&
+	git commit --amend -massaged &&
+	test_must_fail git push testrepo &&
+	check_push_result $the_commit heads/master &&
+	git reset --hard $the_commit
+
+'
+
+test_expect_success 'push --force with matching heads' '
+
+	mk_test heads/master &&
+	git push testrepo : &&
+	git commit --amend -massaged &&
+	git push --force testrepo &&
+	! check_push_result $the_commit heads/master &&
+	git reset --hard $the_commit
+
+'
+
+test_expect_success 'push with matching heads and forced update' '
+
+	mk_test heads/master &&
+	git push testrepo : &&
+	git commit --amend -massaged &&
+	git push testrepo +: &&
+	! check_push_result $the_commit heads/master &&
+	git reset --hard $the_commit
 
 '
 
@@ -145,8 +222,18 @@ test_expect_success 'push with no ambiguity (1)' '
 test_expect_success 'push with no ambiguity (2)' '
 
 	mk_test remotes/origin/master &&
-	git push testrepo master:master &&
+	git push testrepo master:origin/master &&
 	check_push_result $the_commit remotes/origin/master
+
+'
+
+test_expect_success 'push with colon-less refspec, no ambiguity' '
+
+	mk_test heads/master heads/t/master &&
+	git branch -f t/master master &&
+	git push testrepo master &&
+	check_push_result $the_commit heads/master &&
+	check_push_result $the_first_commit heads/t/master
 
 '
 
@@ -168,19 +255,7 @@ test_expect_success 'push with weak ambiguity (2)' '
 
 '
 
-test_expect_success 'push with ambiguity (1)' '
-
-	mk_test remotes/origin/master remotes/frotz/master &&
-	if git push testrepo master:master
-	then
-		echo "Oops, should have failed"
-		false
-	else
-		check_push_result $the_first_commit remotes/origin/master remotes/frotz/master
-	fi
-'
-
-test_expect_success 'push with ambiguity (2)' '
+test_expect_success 'push with ambiguity' '
 
 	mk_test heads/frotz tags/frotz &&
 	if git push testrepo master:frotz
@@ -242,6 +317,260 @@ test_expect_success 'push with colon-less refspec (4)' '
 	check_push_result $the_commit tags/frotz &&
 	test 1 = $( cd testrepo && git show-ref | wc -l )
 
+'
+
+test_expect_success 'push head with non-existant, incomplete dest' '
+
+	mk_test &&
+	git push testrepo master:branch &&
+	check_push_result $the_commit heads/branch
+
+'
+
+test_expect_success 'push tag with non-existant, incomplete dest' '
+
+	mk_test &&
+	git tag -f v1.0 &&
+	git push testrepo v1.0:tag &&
+	check_push_result $the_commit tags/tag
+
+'
+
+test_expect_success 'push sha1 with non-existant, incomplete dest' '
+
+	mk_test &&
+	test_must_fail git push testrepo `git rev-parse master`:foo
+
+'
+
+test_expect_success 'push ref expression with non-existant, incomplete dest' '
+
+	mk_test &&
+	test_must_fail git push testrepo master^:branch
+
+'
+
+test_expect_success 'push with HEAD' '
+
+	mk_test heads/master &&
+	git checkout master &&
+	git push testrepo HEAD &&
+	check_push_result $the_commit heads/master
+
+'
+
+test_expect_success 'push with HEAD nonexisting at remote' '
+
+	mk_test heads/master &&
+	git checkout -b local master &&
+	git push testrepo HEAD &&
+	check_push_result $the_commit heads/local
+'
+
+test_expect_success 'push with +HEAD' '
+
+	mk_test heads/master &&
+	git checkout master &&
+	git branch -D local &&
+	git checkout -b local &&
+	git push testrepo master local &&
+	check_push_result $the_commit heads/master &&
+	check_push_result $the_commit heads/local &&
+
+	# Without force rewinding should fail
+	git reset --hard HEAD^ &&
+	test_must_fail git push testrepo HEAD &&
+	check_push_result $the_commit heads/local &&
+
+	# With force rewinding should succeed
+	git push testrepo +HEAD &&
+	check_push_result $the_first_commit heads/local
+
+'
+
+test_expect_success 'push HEAD with non-existant, incomplete dest' '
+
+	mk_test &&
+	git checkout master &&
+	git push testrepo HEAD:branch &&
+	check_push_result $the_commit heads/branch
+
+'
+
+test_expect_success 'push with config remote.*.push = HEAD' '
+
+	mk_test heads/local &&
+	git checkout master &&
+	git branch -f local $the_commit &&
+	(
+		cd testrepo &&
+		git checkout local &&
+		git reset --hard $the_first_commit
+	) &&
+	git config remote.there.url testrepo &&
+	git config remote.there.push HEAD &&
+	git config branch.master.remote there &&
+	git push &&
+	check_push_result $the_commit heads/master &&
+	check_push_result $the_first_commit heads/local
+'
+
+# clean up the cruft left with the previous one
+git config --remove-section remote.there
+git config --remove-section branch.master
+
+test_expect_success 'push with dry-run' '
+
+	mk_test heads/master &&
+	(cd testrepo &&
+	 old_commit=$(git show-ref -s --verify refs/heads/master)) &&
+	git push --dry-run testrepo &&
+	check_push_result $old_commit heads/master
+'
+
+test_expect_success 'push updates local refs' '
+
+	mk_test heads/master &&
+	mk_child child &&
+	(cd child &&
+		git pull .. master &&
+		git push &&
+	test $(git rev-parse master) = $(git rev-parse remotes/origin/master))
+
+'
+
+test_expect_success 'push updates up-to-date local refs' '
+
+	mk_test heads/master &&
+	mk_child child1 &&
+	mk_child child2 &&
+	(cd child1 && git pull .. master && git push) &&
+	(cd child2 &&
+		git pull ../child1 master &&
+		git push &&
+	test $(git rev-parse master) = $(git rev-parse remotes/origin/master))
+
+'
+
+test_expect_success 'push preserves up-to-date packed refs' '
+
+	mk_test heads/master &&
+	mk_child child &&
+	(cd child &&
+		git push &&
+	! test -f .git/refs/remotes/origin/master)
+
+'
+
+test_expect_success 'push does not update local refs on failure' '
+
+	mk_test heads/master &&
+	mk_child child &&
+	mkdir testrepo/.git/hooks &&
+	echo exit 1 >testrepo/.git/hooks/pre-receive &&
+	chmod +x testrepo/.git/hooks/pre-receive &&
+	(cd child &&
+		git pull .. master
+		test_must_fail git push &&
+		test $(git rev-parse master) != \
+			$(git rev-parse remotes/origin/master))
+
+'
+
+test_expect_success 'allow deleting an invalid remote ref' '
+
+	mk_test heads/master &&
+	rm -f testrepo/.git/objects/??/* &&
+	git push testrepo :refs/heads/master &&
+	(cd testrepo && test_must_fail git rev-parse --verify refs/heads/master)
+
+'
+
+test_expect_success 'warn on push to HEAD of non-bare repository' '
+	mk_test heads/master
+	(cd testrepo &&
+		git checkout master &&
+		git config receive.denyCurrentBranch warn) &&
+	git push testrepo master 2>stderr &&
+	grep "warning: updating the current branch" stderr
+'
+
+test_expect_success 'deny push to HEAD of non-bare repository' '
+	mk_test heads/master
+	(cd testrepo &&
+		git checkout master &&
+		git config receive.denyCurrentBranch true) &&
+	test_must_fail git push testrepo master
+'
+
+test_expect_success 'allow push to HEAD of bare repository (bare)' '
+	mk_test heads/master
+	(cd testrepo &&
+		git checkout master &&
+		git config receive.denyCurrentBranch true &&
+		git config core.bare true) &&
+	git push testrepo master 2>stderr &&
+	! grep "warning: updating the current branch" stderr
+'
+
+test_expect_success 'allow push to HEAD of non-bare repository (config)' '
+	mk_test heads/master
+	(cd testrepo &&
+		git checkout master &&
+		git config receive.denyCurrentBranch false
+	) &&
+	git push testrepo master 2>stderr &&
+	! grep "warning: updating the current branch" stderr
+'
+
+test_expect_success 'fetch with branches' '
+	mk_empty &&
+	git branch second $the_first_commit &&
+	git checkout second &&
+	echo ".." > testrepo/.git/branches/branch1 &&
+	(cd testrepo &&
+		git fetch branch1 &&
+		r=$(git show-ref -s --verify refs/heads/branch1) &&
+		test "z$r" = "z$the_commit" &&
+		test 1 = $(git for-each-ref refs/heads | wc -l)
+	) &&
+	git checkout master
+'
+
+test_expect_success 'fetch with branches containing #' '
+	mk_empty &&
+	echo "..#second" > testrepo/.git/branches/branch2 &&
+	(cd testrepo &&
+		git fetch branch2 &&
+		r=$(git show-ref -s --verify refs/heads/branch2) &&
+		test "z$r" = "z$the_first_commit" &&
+		test 1 = $(git for-each-ref refs/heads | wc -l)
+	) &&
+	git checkout master
+'
+
+test_expect_success 'push with branches' '
+	mk_empty &&
+	git checkout second &&
+	echo "testrepo" > .git/branches/branch1 &&
+	git push branch1 &&
+	(cd testrepo &&
+		r=$(git show-ref -s --verify refs/heads/master) &&
+		test "z$r" = "z$the_first_commit" &&
+		test 1 = $(git for-each-ref refs/heads | wc -l)
+	)
+'
+
+test_expect_success 'push with branches containing #' '
+	mk_empty &&
+	echo "testrepo#branch3" > .git/branches/branch2 &&
+	git push branch2 &&
+	(cd testrepo &&
+		r=$(git show-ref -s --verify refs/heads/branch3) &&
+		test "z$r" = "z$the_first_commit" &&
+		test 1 = $(git for-each-ref refs/heads | wc -l)
+	) &&
+	git checkout master
 '
 
 test_done

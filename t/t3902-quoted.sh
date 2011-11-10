@@ -7,18 +7,19 @@ test_description='quoted output'
 
 . ./test-lib.sh
 
-P1='pathname	with HT'
-: >"$P1" 2>&1 && test -f "$P1" && rm -f "$P1" || {
-	echo >&2 'Filesystem does not support HT in names'
-	test_done
-}
-
 FN='濱野'
 GN='純'
 HT='	'
 LF='
 '
 DQ='"'
+
+echo foo 2>/dev/null > "Name and an${HT}HT"
+test -f "Name and an${HT}HT" || {
+	# since FAT/NTFS does not allow tabs in filenames, skip this test
+	say 'Your filesystem does not allow tabs in filenames, test skipped.'
+	test_done
+}
 
 for_each_name () {
 	for name in \
@@ -71,28 +72,28 @@ EOF
 
 test_expect_success 'check fully quoted output from ls-files' '
 
-	git ls-files >current && diff -u expect.quoted current
+	git ls-files >current && test_cmp expect.quoted current
 
 '
 
 test_expect_success 'check fully quoted output from diff-files' '
 
 	git diff --name-only >current &&
-	diff -u expect.quoted current
+	test_cmp expect.quoted current
 
 '
 
 test_expect_success 'check fully quoted output from diff-index' '
 
 	git diff --name-only HEAD >current &&
-	diff -u expect.quoted current
+	test_cmp expect.quoted current
 
 '
 
 test_expect_success 'check fully quoted output from diff-tree' '
 
 	git diff --name-only HEAD^ HEAD >current &&
-	diff -u expect.quoted current
+	test_cmp expect.quoted current
 
 '
 
@@ -104,28 +105,28 @@ test_expect_success 'setting core.quotepath' '
 
 test_expect_success 'check fully quoted output from ls-files' '
 
-	git ls-files >current && diff -u expect.raw current
+	git ls-files >current && test_cmp expect.raw current
 
 '
 
 test_expect_success 'check fully quoted output from diff-files' '
 
 	git diff --name-only >current &&
-	diff -u expect.raw current
+	test_cmp expect.raw current
 
 '
 
 test_expect_success 'check fully quoted output from diff-index' '
 
 	git diff --name-only HEAD >current &&
-	diff -u expect.raw current
+	test_cmp expect.raw current
 
 '
 
 test_expect_success 'check fully quoted output from diff-tree' '
 
 	git diff --name-only HEAD^ HEAD >current &&
-	diff -u expect.raw current
+	test_cmp expect.raw current
 
 '
 

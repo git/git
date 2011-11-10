@@ -1,0 +1,113 @@
+#!/bin/sh
+#
+# Copyright (c) 2008 Clemens Buchacher <drizzd@aon.at>
+#
+
+if test -z "$GIT_TEST_HTTPD"
+then
+	say "skipping test, network testing disabled by default"
+	say "(define GIT_TEST_HTTPD to enable)"
+	test_done
+fi
+
+HTTPD_PARA=""
+
+case $(uname) in
+	Darwin)
+		DEFAULT_HTTPD_PATH='/usr/sbin/httpd'
+		DEFAULT_HTTPD_MODULE_PATH='/usr/libexec/apache2'
+		HTTPD_PARA="$HTTPD_PARA -DDarwin"
+	;;
+	*)
+		DEFAULT_HTTPD_PATH='/usr/sbin/apache2'
+		DEFAULT_HTTPD_MODULE_PATH='/usr/lib/apache2/modules'
+	;;
+esac
+
+LIB_HTTPD_PATH=${LIB_HTTPD_PATH-"$DEFAULT_HTTPD_PATH"}
+LIB_HTTPD_PORT=${LIB_HTTPD_PORT-'8111'}
+
+TEST_PATH="$TEST_DIRECTORY"/lib-httpd
+HTTPD_ROOT_PATH="$PWD"/httpd
+HTTPD_DOCUMENT_ROOT_PATH=$HTTPD_ROOT_PATH/www
+
+if ! test -x "$LIB_HTTPD_PATH"
+then
+	say "skipping test, no web server found at '$LIB_HTTPD_PATH'"
+	test_done
+fi
+
+HTTPD_VERSION=`$LIB_HTTPD_PATH -v | \
+	sed -n 's/^Server version: Apache\/\([0-9]*\)\..*$/\1/p; q'`
+
+if test -n "$HTTPD_VERSION"
+then
+	if test -z "$LIB_HTTPD_MODULE_PATH"
+	then
+		if ! test $HTTPD_VERSION -ge 2
+		then
+			say "skipping test, at least Apache version 2 is required"
+			test_done
+		fi
+
+		LIB_HTTPD_MODULE_PATH="$DEFAULT_HTTPD_MODULE_PATH"
+	fi
+else
+	error "Could not identify web server at '$LIB_HTTPD_PATH'"
+fi
+
+prepare_httpd() {
+	mkdir -p "$HTTPD_DOCUMENT_ROOT_PATH"
+
+	ln -s "$LIB_HTTPD_MODULE_PATH" "$HTTPD_ROOT_PATH/modules"
+
+	if test -n "$LIB_HTTPD_SSL"
+	then
+		HTTPD_URL=https://127.0.0.1:$LIB_HTTPD_PORT
+
+		RANDFILE_PATH="$HTTPD_ROOT_PATH"/.rnd openssl req \
+			-config "$TEST_PATH/ssl.cnf" \
+			-new -x509 -nodes \
+			-out "$HTTPD_ROOT_PATH/httpd.pem" \
+			-keyout "$HTTPD_ROOT_PATH/httpd.pem"
+		GIT_SSL_NO_VERIFY=t
+		export GIT_SSL_NO_VERIFY
+		HTTPD_PARA="$HTTPD_PARA -DSSL"
+	else
+		HTTPD_URL=http://127.0.0.1:$LIB_HTTPD_PORT
+	fi
+
+	if test -n "$LIB_HTTPD_DAV" -o -n "$LIB_HTTPD_SVN"
+	then
+		HTTPD_PARA="$HTTPD_PARA -DDAV"
+
+		if test -n "$LIB_HTTPD_SVN"
+		then
+			HTTPD_PARA="$HTTPD_PARA -DSVN"
+			rawsvnrepo="$HTTPD_ROOT_PATH/svnrepo"
+			svnrepo="http://127.0.0.1:$LIB_HTTPD_PORT/svn"
+		fi
+	fi
+}
+
+start_httpd() {
+	prepare_httpd >&3 2>&4
+
+	trap 'stop_httpd; die' EXIT
+
+	"$LIB_HTTPD_PATH" -d "$HTTPD_ROOT_PATH" \
+		-f "$TEST_PATH/apache.conf" $HTTPD_PARA \
+		-c "Listen 127.0.0.1:$LIB_HTTPD_PORT" -k start \
+		>&3 2>&4
+	if ! test $? = 0; then
+		say "skipping test, web server setup failed"
+		test_done
+	fi
+}
+
+stop_httpd() {
+	trap 'die' EXIT
+
+	"$LIB_HTTPD_PATH" -d "$HTTPD_ROOT_PATH" \
+		-f "$TEST_PATH/apache.conf" $HTTPD_PARA -k stop
+}

@@ -45,15 +45,17 @@ static int should_break(struct diff_filespec *src,
 	 * The value we return is 1 if we want the pair to be broken,
 	 * or 0 if we do not.
 	 */
-	unsigned long delta_size, base_size, src_copied, literal_added,
-		src_removed;
+	unsigned long delta_size, max_size;
+	unsigned long src_copied, literal_added, src_removed;
 
 	*merge_score_p = 0; /* assume no deletion --- "do not break"
 			     * is the default.
 			     */
 
-	if (!S_ISREG(src->mode) || !S_ISREG(dst->mode))
-		return 0; /* leave symlink rename alone */
+	if (S_ISREG(src->mode) != S_ISREG(dst->mode)) {
+		*merge_score_p = (int)MAX_SCORE;
+		return 1; /* even their types are different */
+	}
 
 	if (src->sha1_valid && dst->sha1_valid &&
 	    !hashcmp(src->sha1, dst->sha1))
@@ -62,8 +64,8 @@ static int should_break(struct diff_filespec *src,
 	if (diff_populate_filespec(src, 0) || diff_populate_filespec(dst, 0))
 		return 0; /* error but caught downstream */
 
-	base_size = ((src->size < dst->size) ? src->size : dst->size);
-	if (base_size < MINIMUM_BREAK_SIZE)
+	max_size = ((src->size > dst->size) ? src->size : dst->size);
+	if (max_size < MINIMUM_BREAK_SIZE)
 		return 0; /* we do not break too small filepair */
 
 	if (diffcore_count_changes(src, dst,
@@ -89,12 +91,14 @@ static int should_break(struct diff_filespec *src,
 	 * less than the minimum, after rename/copy runs.
 	 */
 	*merge_score_p = (int)(src_removed * MAX_SCORE / src->size);
+	if (*merge_score_p > break_score)
+		return 1;
 
 	/* Extent of damage, which counts both inserts and
 	 * deletes.
 	 */
 	delta_size = src_removed + literal_added;
-	if (delta_size * MAX_SCORE / base_size < break_score)
+	if (delta_size * MAX_SCORE / max_size < break_score)
 		return 0;
 
 	/* If you removed a lot without adding new material, that is
@@ -165,11 +169,13 @@ void diffcore_break(int break_score)
 		struct diff_filepair *p = q->queue[i];
 		int score;
 
-		/* We deal only with in-place edit of non directory.
+		/*
+		 * We deal only with in-place edit of blobs.
 		 * We do not break anything else.
 		 */
 		if (DIFF_FILE_VALID(p->one) && DIFF_FILE_VALID(p->two) &&
-		    !S_ISDIR(p->one->mode) && !S_ISDIR(p->two->mode) &&
+		    object_type(p->one->mode) == OBJ_BLOB &&
+		    object_type(p->two->mode) == OBJ_BLOB &&
 		    !strcmp(p->one->path, p->two->path)) {
 			if (should_break(p->one, p->two,
 					 break_score, &score)) {

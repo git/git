@@ -5,7 +5,7 @@
 #include "builtin.h"
 
 static const char diff_cache_usage[] =
-"git-diff-index [-m] [--cached] "
+"git diff-index [-m] [--cached] "
 "[<common diff options>] <tree-ish> [<path>...]"
 COMMON_DIFF_OPTIONS_HELP;
 
@@ -17,7 +17,7 @@ int cmd_diff_index(int argc, const char **argv, const char *prefix)
 	int result;
 
 	init_revisions(&rev, prefix);
-	git_config(git_default_config); /* no "diff" UI options */
+	git_config(git_diff_basic_config, NULL); /* no "diff" UI options */
 	rev.abbrev = 0;
 
 	argc = setup_revisions(argc, argv, &rev, NULL);
@@ -39,10 +39,12 @@ int cmd_diff_index(int argc, const char **argv, const char *prefix)
 	if (rev.pending.nr != 1 ||
 	    rev.max_count != -1 || rev.min_age != -1 || rev.max_age != -1)
 		usage(diff_cache_usage);
+	if (!cached)
+		setup_work_tree();
 	if (read_cache() < 0) {
 		perror("read_cache");
 		return -1;
 	}
 	result = run_diff_index(&rev, cached);
-	return rev.diffopt.exit_with_status ? rev.diffopt.has_changes: result;
+	return diff_result_code(&rev.diffopt, result);
 }

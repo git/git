@@ -6,13 +6,13 @@
 #include "object.h"
 #include "decorate.h"
 
-static unsigned int hash_obj(struct object *obj, unsigned int n)
+static unsigned int hash_obj(const struct object *obj, unsigned int n)
 {
 	unsigned int hash = *(unsigned int *)obj->sha1;
 	return hash % n;
 }
 
-static void *insert_decoration(struct decoration *n, struct object *base, void *decoration)
+static void *insert_decoration(struct decoration *n, const struct object *base, void *decoration)
 {
 	int size = n->size;
 	struct object_decoration *hash = n->hash;
@@ -37,17 +37,14 @@ static void grow_decoration(struct decoration *n)
 {
 	int i;
 	int old_size = n->size;
-	struct object_decoration *old_hash;
-
-	old_size = n->size;
-	old_hash = n->hash;
+	struct object_decoration *old_hash = n->hash;
 
 	n->size = (old_size + 1000) * 3 / 2;
 	n->hash = xcalloc(n->size, sizeof(struct object_decoration));
 	n->nr = 0;
 
 	for (i = 0; i < old_size; i++) {
-		struct object *base = old_hash[i].base;
+		const struct object *base = old_hash[i].base;
 		void *decoration = old_hash[i].decoration;
 
 		if (!base)
@@ -58,7 +55,8 @@ static void grow_decoration(struct decoration *n)
 }
 
 /* Add a decoration pointer, return any old one */
-void *add_decoration(struct decoration *n, struct object *obj, void *decoration)
+void *add_decoration(struct decoration *n, const struct object *obj,
+		void *decoration)
 {
 	int nr = n->nr + 1;
 
@@ -68,7 +66,7 @@ void *add_decoration(struct decoration *n, struct object *obj, void *decoration)
 }
 
 /* Lookup a decoration pointer */
-void *lookup_decoration(struct decoration *n, struct object *obj)
+void *lookup_decoration(struct decoration *n, const struct object *obj)
 {
 	int j;
 

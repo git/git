@@ -232,8 +232,6 @@ int xdl_recmatch(const char *l1, long s1, const char *l2, long s2, long flags)
 		return i1 >= s1 && i2 >= s2;
 	} else
 		return s1 == s2 && !memcmp(l1, l2, s1);
-
-	return 0;
 }
 
 static unsigned long xdl_hash_record_with_whitespace(char const **data,
@@ -247,12 +245,14 @@ static unsigned long xdl_hash_record_with_whitespace(char const **data,
 			while (ptr + 1 < top && isspace(ptr[1])
 					&& ptr[1] != '\n')
 				ptr++;
-			if (flags & XDF_IGNORE_WHITESPACE_CHANGE
+			if (flags & XDF_IGNORE_WHITESPACE)
+				; /* already handled */
+			else if (flags & XDF_IGNORE_WHITESPACE_CHANGE
 					&& ptr[1] != '\n') {
 				ha += (ha << 5);
 				ha ^= (unsigned long) ' ';
 			}
-			if (flags & XDF_IGNORE_WHITESPACE_AT_EOL
+			else if (flags & XDF_IGNORE_WHITESPACE_AT_EOL
 					&& ptr[1] != '\n') {
 				while (ptr2 != ptr + 1) {
 					ha += (ha << 5);

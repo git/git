@@ -35,9 +35,9 @@
 
 #include "sha1.h"
 
-static void shaHashBlock(SHA_CTX *ctx);
+static void shaHashBlock(moz_SHA_CTX *ctx);
 
-void SHA1_Init(SHA_CTX *ctx) {
+void moz_SHA1_Init(moz_SHA_CTX *ctx) {
   int i;
 
   ctx->lenW = 0;
@@ -56,7 +56,7 @@ void SHA1_Init(SHA_CTX *ctx) {
 }
 
 
-void SHA1_Update(SHA_CTX *ctx, const void *_dataIn, int len) {
+void moz_SHA1_Update(moz_SHA_CTX *ctx, const void *_dataIn, int len) {
   const unsigned char *dataIn = _dataIn;
   int i;
 
@@ -75,7 +75,7 @@ void SHA1_Update(SHA_CTX *ctx, const void *_dataIn, int len) {
 }
 
 
-void SHA1_Final(unsigned char hashout[20], SHA_CTX *ctx) {
+void moz_SHA1_Final(unsigned char hashout[20], moz_SHA_CTX *ctx) {
   unsigned char pad0x80 = 0x80;
   unsigned char pad0x00 = 0x00;
   unsigned char padlen[8];
@@ -91,10 +91,10 @@ void SHA1_Final(unsigned char hashout[20], SHA_CTX *ctx) {
   padlen[5] = (unsigned char)((ctx->sizeLo >> 16) & 255);
   padlen[6] = (unsigned char)((ctx->sizeLo >> 8) & 255);
   padlen[7] = (unsigned char)((ctx->sizeLo >> 0) & 255);
-  SHA1_Update(ctx, &pad0x80, 1);
+  moz_SHA1_Update(ctx, &pad0x80, 1);
   while (ctx->lenW != 56)
-    SHA1_Update(ctx, &pad0x00, 1);
-  SHA1_Update(ctx, padlen, 8);
+    moz_SHA1_Update(ctx, &pad0x00, 1);
+  moz_SHA1_Update(ctx, padlen, 8);
 
   /* Output hash
    */
@@ -106,13 +106,13 @@ void SHA1_Final(unsigned char hashout[20], SHA_CTX *ctx) {
   /*
    *  Re-initialize the context (also zeroizes contents)
    */
-  SHA1_Init(ctx);
+  moz_SHA1_Init(ctx);
 }
 
 
 #define SHA_ROT(X,n) (((X) << (n)) | ((X) >> (32-(n))))
 
-static void shaHashBlock(SHA_CTX *ctx) {
+static void shaHashBlock(moz_SHA_CTX *ctx) {
   int t;
   unsigned int A,B,C,D,E,TEMP;
 

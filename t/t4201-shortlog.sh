@@ -22,7 +22,7 @@ echo 3 > a1
 git commit --quiet -m "$(echo "This is a very, very long first line for the commit message to see if it is wrapped correctly" | sed "s/i/1234/g" | tr 1234 '\360\235\204\236')" a1
 
 # now fsck up the utf8
-git repo-config i18n.commitencoding non-utf-8
+git config i18n.commitencoding non-utf-8
 echo 4 > a1
 git commit --quiet -m "$(echo "This is a very, very long first line for the commit message to see if it is wrapped correctly" | sed "s/i/1234/g" | tr 1234 '\370\235\204\236')" a1
 
@@ -45,6 +45,11 @@ A U Thor (5):
 
 EOF
 
-test_expect_success 'shortlog wrapping' 'diff -u expect out'
+test_expect_success 'shortlog wrapping' 'test_cmp expect out'
+
+git log HEAD > log
+GIT_DIR=non-existing git shortlog -w < log > out
+
+test_expect_success 'shortlog from non-git directory' 'test_cmp expect out'
 
 test_done

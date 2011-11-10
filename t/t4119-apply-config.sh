@@ -19,12 +19,12 @@ test_expect_success setup '
 '
 
 # Also handcraft GNU diff output; note this has trailing whitespace.
-cat >gpatch.file <<\EOF &&
+tr '_' ' ' >gpatch.file <<\EOF &&
 --- file1	2007-02-21 01:04:24.000000000 -0800
 +++ file1+	2007-02-21 01:07:44.000000000 -0800
 @@ -1 +1 @@
 -A
-+B
++B_
 EOF
 
 sed -e 's|file1|sub/&|' gpatch.file >gpatch-sub.file &&

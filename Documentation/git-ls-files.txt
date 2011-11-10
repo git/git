@@ -9,13 +9,14 @@ git-ls-files - Show information about files in the index and the working tree
 SYNOPSIS
 --------
 [verse]
-'git-ls-files' [-z] [-t] [-v]
+'git ls-files' [-z] [-t] [-v]
 		(--[cached|deleted|others|ignored|stage|unmerged|killed|modified])\*
 		(-[c|d|o|i|s|u|k|m])\*
 		[-x <pattern>|--exclude=<pattern>]
 		[-X <file>|--exclude-from=<file>]
 		[--exclude-per-directory=<file>]
-		[--error-unmatch]
+		[--exclude-standard]
+		[--error-unmatch] [--with-tree=<tree-ish>]
 		[--full-name] [--abbrev] [--] [<file>]\*
 
 DESCRIPTION
@@ -29,24 +30,30 @@ shown:
 
 OPTIONS
 -------
--c|--cached::
+-c::
+--cached::
 	Show cached files in the output (default)
 
--d|--deleted::
+-d::
+--deleted::
 	Show deleted files in the output
 
--m|--modified::
+-m::
+--modified::
 	Show modified files in the output
 
--o|--others::
+-o::
+--others::
 	Show other files in the output
 
--i|--ignored::
+-i::
+--ignored::
 	Show ignored files in the output.
 	Note that this also reverses any exclude list present.
 
--s|--stage::
-	Show stage files in the output
+-s::
+--stage::
+	Show staged contents' object name, mode bits and stage number in the output.
 
 --directory::
 	If a whole directory is classified as "other", show just its
@@ -55,10 +62,12 @@ OPTIONS
 --no-empty-directory::
 	Do not list empty directories. Has no effect without --directory.
 
--u|--unmerged::
+-u::
+--unmerged::
 	Show unmerged files in the output (forces --stage)
 
--k|--killed::
+-k::
+--killed::
 	Show files on the filesystem that need to be removed due
 	to file/directory conflicts for checkout-index to
 	succeed.
@@ -66,20 +75,33 @@ OPTIONS
 -z::
 	\0 line termination on output.
 
--x|--exclude=<pattern>::
+-x <pattern>::
+--exclude=<pattern>::
 	Skips files matching pattern.
 	Note that pattern is a shell wildcard pattern.
 
--X|--exclude-from=<file>::
+-X <file>::
+--exclude-from=<file>::
 	exclude patterns are read from <file>; 1 per line.
 
 --exclude-per-directory=<file>::
 	read additional exclude patterns that apply only to the
 	directory and its subdirectories in <file>.
 
+--exclude-standard::
+	Add the standard git exclusions: .git/info/exclude, .gitignore
+	in each directory, and the user's global exclusion file.
+
 --error-unmatch::
 	If any <file> does not appear in the index, treat this as an
 	error (return 1).
+
+--with-tree=<tree-ish>::
+	When using --error-unmatch to expand the user supplied
+	<file> (i.e. path pattern) arguments to paths, pretend
+	that paths which were removed in the index since the
+	named <tree-ish> are still present.  Using this option
+	with `-s` or `-u` options does not make any sense.
 
 -t::
 	Identify the file status with the following tags (followed by
@@ -93,7 +115,8 @@ OPTIONS
 
 -v::
 	Similar to `-t`, but use lowercase letters for files
-	that are marked as 'always matching index'.
+	that are marked as 'assume unchanged' (see
+	linkgit:git-update-index[1]).
 
 --full-name::
 	When run from a subdirectory, the command usually
@@ -103,7 +126,7 @@ OPTIONS
 
 --abbrev[=<n>]::
 	Instead of showing the full 40-byte hexadecimal object
-	lines, show only handful hexdigits prefix.
+	lines, show only a partial prefix.
 	Non default number of digits can be specified with --abbrev=<n>.
 
 \--::
@@ -120,14 +143,14 @@ which case it outputs:
 
         [<tag> ]<mode> <object> <stage> <file>
 
-"git-ls-files --unmerged" and "git-ls-files --stage" can be used to examine
+'git-ls-files --unmerged' and 'git-ls-files --stage' can be used to examine
 detailed information on unmerged paths.
 
 For an unmerged path, instead of recording a single mode/SHA1 pair,
 the index records up to three such pairs; one from tree O in stage
 1, A in stage 2, and B in stage 3.  This information can be used by
 the user (or the porcelain) to see what should eventually be recorded at the
-path. (see git-read-tree for more information on state)
+path. (see linkgit:git-read-tree[1] for more information on state)
 
 When `-z` option is not used, TAB, LF, and backslash characters
 in pathnames are represented as `\t`, `\n`, and `\\`,
@@ -139,7 +162,7 @@ Exclude Patterns
 
 'git-ls-files' can use a list of "exclude patterns" when
 traversing the directory tree and finding files to show when the
-flags --others or --ignored are specified.  gitlink:gitignore[5]
+flags --others or --ignored are specified.  linkgit:gitignore[5]
 specifies the format of exclude patterns.
 
 These exclude patterns come from these places, in order:
@@ -164,9 +187,9 @@ top of the directory tree.  A pattern read from a file specified
 by --exclude-per-directory is relative to the directory that the
 pattern file appears in.
 
-See Also
+SEE ALSO
 --------
-gitlink:git-read-tree[1], gitlink:gitignore[5]
+linkgit:git-read-tree[1], linkgit:gitignore[5]
 
 
 Author
@@ -179,4 +202,4 @@ Documentation by David Greaves, Junio C Hamano, Josh Triplett, and the git-list 
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[1] suite

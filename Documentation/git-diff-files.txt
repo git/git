@@ -8,20 +8,23 @@ git-diff-files - Compares files in the working tree and the index
 
 SYNOPSIS
 --------
-'git-diff-files' [-q] [-0|-1|-2|-3|-c|--cc|--no-index] [<common diff options>] [<path>...]
+'git diff-files' [-q] [-0|-1|-2|-3|-c|--cc] [<common diff options>] [<path>...]
 
 DESCRIPTION
 -----------
 Compares the files in the working tree and the index.  When paths
 are specified, compares only those named paths.  Otherwise all
 entries in the index are compared.  The output format is the
-same as "git-diff-index" and "git-diff-tree".
+same as for 'git-diff-index' and 'git-diff-tree'.
 
 OPTIONS
 -------
 include::diff-options.txt[]
 
--1 -2 -3 or --base --ours --theirs, and -0::
+-1 --base::
+-2 --ours::
+-3 --theirs::
+-0::
 	Diff against the "base" version, "our branch" or "their
 	branch" respectively.  With these options, diffs for
 	merged entries are not shown.
@@ -30,14 +33,12 @@ The default is to diff against our branch (-2) and the
 cleanly resolved paths.  The option -0 can be given to
 omit diff output for unmerged entries and just show "Unmerged".
 
--c,--cc::
+-c::
+--cc::
 	This compares stage 2 (our branch), stage 3 (their
 	branch) and the working tree file and outputs a combined
 	diff, similar to the way 'diff-tree' shows a merge
 	commit with these flags.
-
---no-index::
-	Compare the two given files / directories.
 
 -q::
 	Remain silent even on nonexistent files
@@ -57,4 +58,4 @@ Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[1] suite

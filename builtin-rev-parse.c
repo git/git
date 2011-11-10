@@ -8,6 +8,7 @@
 #include "refs.h"
 #include "quote.h"
 #include "builtin.h"
+#include "parse-options.h"
 
 #define DO_REVS		1
 #define DO_NOREV	2
@@ -20,11 +21,14 @@ static const char *def;
 #define NORMAL 0
 #define REVERSED 1
 static int show_type = NORMAL;
+
+#define SHOW_SYMBOLIC_ASIS 1
+#define SHOW_SYMBOLIC_FULL 2
 static int symbolic;
 static int abbrev;
+static int abbrev_ref;
+static int abbrev_ref_strict;
 static int output_sq;
-
-static int revs_count;
 
 /*
  * Some arguments are relevant "revision" arguments,
@@ -92,22 +96,54 @@ static void show(const char *arg)
 		puts(arg);
 }
 
+/* Like show(), but with a negation prefix according to type */
+static void show_with_type(int type, const char *arg)
+{
+	if (type != show_type)
+		putchar('^');
+	show(arg);
+}
+
 /* Output a revision, only if filter allows it */
 static void show_rev(int type, const unsigned char *sha1, const char *name)
 {
 	if (!(filter & DO_REVS))
 		return;
 	def = NULL;
-	revs_count++;
 
-	if (type != show_type)
-		putchar('^');
-	if (symbolic && name)
-		show(name);
+	if ((symbolic || abbrev_ref) && name) {
+		if (symbolic == SHOW_SYMBOLIC_FULL || abbrev_ref) {
+			unsigned char discard[20];
+			char *full;
+
+			switch (dwim_ref(name, strlen(name), discard, &full)) {
+			case 0:
+				/*
+				 * Not found -- not a ref.  We could
+				 * emit "name" here, but symbolic-full
+				 * users are interested in finding the
+				 * refs spelled in full, and they would
+				 * need to filter non-refs if we did so.
+				 */
+				break;
+			case 1: /* happy */
+				if (abbrev_ref)
+					full = shorten_unambiguous_ref(full,
+						abbrev_ref_strict);
+				show_with_type(type, full);
+				break;
+			default: /* ambiguous */
+				error("refname '%s' is ambiguous", name);
+				break;
+			}
+		} else {
+			show_with_type(type, name);
+		}
+	}
 	else if (abbrev)
-		show(find_unique_abbrev(sha1, abbrev));
+		show_with_type(type, find_unique_abbrev(sha1, abbrev));
 	else
-		show(sha1_to_hex(sha1));
+		show_with_type(type, sha1_to_hex(sha1));
 }
 
 /* Output a flag, only if filter allows it. */
@@ -122,7 +158,7 @@ static int show_flag(const char *arg)
 	return 0;
 }
 
-static void show_default(void)
+static int show_default(void)
 {
 	const char *s = def;
 
@@ -132,9 +168,10 @@ static void show_default(void)
 		def = NULL;
 		if (!get_sha1(s, sha1)) {
 			show_rev(NORMAL, sha1, s);
-			return;
+			return 1;
 		}
 	}
+	return 0;
 }
 
 static int show_reference(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
@@ -209,13 +246,181 @@ static int try_difference(const char *arg)
 	return 0;
 }
 
+static int try_parent_shorthands(const char *arg)
+{
+	char *dotdot;
+	unsigned char sha1[20];
+	struct commit *commit;
+	struct commit_list *parents;
+	int parents_only;
+
+	if ((dotdot = strstr(arg, "^!")))
+		parents_only = 0;
+	else if ((dotdot = strstr(arg, "^@")))
+		parents_only = 1;
+
+	if (!dotdot || dotdot[2])
+		return 0;
+
+	*dotdot = 0;
+	if (get_sha1(arg, sha1))
+		return 0;
+
+	if (!parents_only)
+		show_rev(NORMAL, sha1, arg);
+	commit = lookup_commit_reference(sha1);
+	for (parents = commit->parents; parents; parents = parents->next)
+		show_rev(parents_only ? NORMAL : REVERSED,
+				parents->item->object.sha1, arg);
+
+	return 1;
+}
+
+static int parseopt_dump(const struct option *o, const char *arg, int unset)
+{
+	struct strbuf *parsed = o->value;
+	if (unset)
+		strbuf_addf(parsed, " --no-%s", o->long_name);
+	else if (o->short_name)
+		strbuf_addf(parsed, " -%c", o->short_name);
+	else
+		strbuf_addf(parsed, " --%s", o->long_name);
+	if (arg) {
+		strbuf_addch(parsed, ' ');
+		sq_quote_buf(parsed, arg);
+	}
+	return 0;
+}
+
+static const char *skipspaces(const char *s)
+{
+	while (isspace(*s))
+		s++;
+	return s;
+}
+
+static int cmd_parseopt(int argc, const char **argv, const char *prefix)
+{
+	static int keep_dashdash = 0;
+	static char const * const parseopt_usage[] = {
+		"git rev-parse --parseopt [options] -- [<args>...]",
+		NULL
+	};
+	static struct option parseopt_opts[] = {
+		OPT_BOOLEAN(0, "keep-dashdash", &keep_dashdash,
+					"keep the `--` passed as an arg"),
+		OPT_END(),
+	};
+
+	struct strbuf sb = STRBUF_INIT, parsed = STRBUF_INIT;
+	const char **usage = NULL;
+	struct option *opts = NULL;
+	int onb = 0, osz = 0, unb = 0, usz = 0;
+
+	strbuf_addstr(&parsed, "set --");
+	argc = parse_options(argc, argv, parseopt_opts, parseopt_usage,
+	                     PARSE_OPT_KEEP_DASHDASH);
+	if (argc < 1 || strcmp(argv[0], "--"))
+		usage_with_options(parseopt_usage, parseopt_opts);
+
+	/* get the usage up to the first line with a -- on it */
+	for (;;) {
+		if (strbuf_getline(&sb, stdin, '\n') == EOF)
+			die("premature end of input");
+		ALLOC_GROW(usage, unb + 1, usz);
+		if (!strcmp("--", sb.buf)) {
+			if (unb < 1)
+				die("no usage string given before the `--' separator");
+			usage[unb] = NULL;
+			break;
+		}
+		usage[unb++] = strbuf_detach(&sb, NULL);
+	}
+
+	/* parse: (<short>|<short>,<long>|<long>)[=?]? SP+ <help> */
+	while (strbuf_getline(&sb, stdin, '\n') != EOF) {
+		const char *s;
+		struct option *o;
+
+		if (!sb.len)
+			continue;
+
+		ALLOC_GROW(opts, onb + 1, osz);
+		memset(opts + onb, 0, sizeof(opts[onb]));
+
+		o = &opts[onb++];
+		s = strchr(sb.buf, ' ');
+		if (!s || *sb.buf == ' ') {
+			o->type = OPTION_GROUP;
+			o->help = xstrdup(skipspaces(sb.buf));
+			continue;
+		}
+
+		o->type = OPTION_CALLBACK;
+		o->help = xstrdup(skipspaces(s));
+		o->value = &parsed;
+		o->flags = PARSE_OPT_NOARG;
+		o->callback = &parseopt_dump;
+		while (s > sb.buf && strchr("*=?!", s[-1])) {
+			switch (*--s) {
+			case '=':
+				o->flags &= ~PARSE_OPT_NOARG;
+				break;
+			case '?':
+				o->flags &= ~PARSE_OPT_NOARG;
+				o->flags |= PARSE_OPT_OPTARG;
+				break;
+			case '!':
+				o->flags |= PARSE_OPT_NONEG;
+				break;
+			case '*':
+				o->flags |= PARSE_OPT_HIDDEN;
+				break;
+			}
+		}
+
+		if (s - sb.buf == 1) /* short option only */
+			o->short_name = *sb.buf;
+		else if (sb.buf[1] != ',') /* long option only */
+			o->long_name = xmemdupz(sb.buf, s - sb.buf);
+		else {
+			o->short_name = *sb.buf;
+			o->long_name = xmemdupz(sb.buf + 2, s - sb.buf - 2);
+		}
+	}
+	strbuf_release(&sb);
+
+	/* put an OPT_END() */
+	ALLOC_GROW(opts, onb + 1, osz);
+	memset(opts + onb, 0, sizeof(opts[onb]));
+	argc = parse_options(argc, argv, opts, usage,
+	                     keep_dashdash ? PARSE_OPT_KEEP_DASHDASH : 0);
+
+	strbuf_addf(&parsed, " --");
+	sq_quote_argv(&parsed, argv, 0);
+	puts(parsed.buf);
+	return 0;
+}
+
+static void die_no_single_rev(int quiet)
+{
+	if (quiet)
+		exit(1);
+	else
+		die("Needed a single revision");
+}
+
 int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 {
-	int i, as_is = 0, verify = 0;
+	int i, as_is = 0, verify = 0, quiet = 0, revs_count = 0, type = 0;
 	unsigned char sha1[20];
+	const char *name = NULL;
 
-	git_config(git_default_config);
+	if (argc > 1 && !strcmp("--parseopt", argv[1]))
+		return cmd_parseopt(argc - 1, argv + 1, prefix);
 
+	prefix = setup_git_directory();
+	git_config(git_default_config, NULL);
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
 
@@ -273,6 +478,10 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 				verify = 1;
 				continue;
 			}
+			if (!strcmp(arg, "--quiet") || !strcmp(arg, "-q")) {
+				quiet = 1;
+				continue;
+			}
 			if (!strcmp(arg, "--short") ||
 			    !prefixcmp(arg, "--short=")) {
 				filter &= ~(DO_FLAGS|DO_NOREV);
@@ -295,7 +504,25 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 				continue;
 			}
 			if (!strcmp(arg, "--symbolic")) {
-				symbolic = 1;
+				symbolic = SHOW_SYMBOLIC_ASIS;
+				continue;
+			}
+			if (!strcmp(arg, "--symbolic-full-name")) {
+				symbolic = SHOW_SYMBOLIC_FULL;
+				continue;
+			}
+			if (!prefixcmp(arg, "--abbrev-ref") &&
+			    (!arg[12] || arg[12] == '=')) {
+				abbrev_ref = 1;
+				abbrev_ref_strict = warn_ambiguous_refs;
+				if (arg[12] == '=') {
+					if (!strcmp(arg + 13, "strict"))
+						abbrev_ref_strict = 1;
+					else if (!strcmp(arg + 13, "loose"))
+						abbrev_ref_strict = 0;
+					else
+						die("unknown mode for %s", arg);
+				}
 				continue;
 			}
 			if (!strcmp(arg, "--all")) {
@@ -386,30 +613,43 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 				continue;
 			}
 			if (show_flag(arg) && verify)
-				die("Needed a single revision");
+				die_no_single_rev(quiet);
 			continue;
 		}
 
 		/* Not a flag argument */
 		if (try_difference(arg))
 			continue;
-		if (!get_sha1(arg, sha1)) {
-			show_rev(NORMAL, sha1, arg);
+		if (try_parent_shorthands(arg))
+			continue;
+		name = arg;
+		type = NORMAL;
+		if (*arg == '^') {
+			name++;
+			type = REVERSED;
+		}
+		if (!get_sha1(name, sha1)) {
+			if (verify)
+				revs_count++;
+			else
+				show_rev(type, sha1, name);
 			continue;
 		}
-		if (*arg == '^' && !get_sha1(arg+1, sha1)) {
-			show_rev(REVERSED, sha1, arg+1);
-			continue;
-		}
+		if (verify)
+			die_no_single_rev(quiet);
 		as_is = 1;
 		if (!show_file(arg))
 			continue;
-		if (verify)
-			die("Needed a single revision");
 		verify_filename(prefix, arg);
 	}
-	show_default();
-	if (verify && revs_count != 1)
-		die("Needed a single revision");
+	if (verify) {
+		if (revs_count == 1) {
+			show_rev(type, sha1, name);
+			return 0;
+		} else if (revs_count == 0 && show_default())
+			return 0;
+		die_no_single_rev(quiet);
+	} else
+		show_default();
 	return 0;
 }

@@ -11,7 +11,7 @@ constructor dialog {} {
 	global current_branch
 
 	make_toplevel top w
-	wm title $top "[appname] ([reponame]): Rename Branch"
+	wm title $top [append "[appname] ([reponame]): " [mc "Rename Branch"]]
 	if {$top ne {.}} {
 		wm geometry $top "+[winfo rootx .]+[winfo rooty .]"
 	}
@@ -19,24 +19,24 @@ constructor dialog {} {
 	set oldname $current_branch
 	set newname [get_config gui.newbranchtemplate]
 
-	label $w.header -text {Rename Branch} -font font_uibold
+	label $w.header -text [mc "Rename Branch"] -font font_uibold
 	pack $w.header -side top -fill x
 
 	frame $w.buttons
-	button $w.buttons.rename -text Rename \
+	button $w.buttons.rename -text [mc Rename] \
 		-default active \
 		-command [cb _rename]
 	pack $w.buttons.rename -side right
-	button $w.buttons.cancel -text {Cancel} \
+	button $w.buttons.cancel -text [mc Cancel] \
 		-command [list destroy $w]
 	pack $w.buttons.cancel -side right -padx 5
 	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
 
 	frame $w.rename
-	label $w.rename.oldname_l -text {Branch:}
+	label $w.rename.oldname_l -text [mc "Branch:"]
 	eval tk_optionMenu $w.rename.oldname_m @oldname [load_all_heads]
 
-	label $w.rename.newname_l -text {New Name:}
+	label $w.rename.newname_l -text [mc "New Name:"]
 	entry $w.rename.newname_t \
 		-borderwidth 1 \
 		-relief sunken \
@@ -72,7 +72,7 @@ method _rename {} {
 			-type ok \
 			-title [wm title $w] \
 			-parent $w \
-			-message "Please select a branch to rename."
+			-message [mc "Please select a branch to rename."]
 		focus $w.rename.oldname_m
 		return
 	}
@@ -83,7 +83,7 @@ method _rename {} {
 			-type ok \
 			-title [wm title $w] \
 			-parent $w \
-			-message "Please supply a branch name."
+			-message [mc "Please supply a branch name."]
 		focus $w.rename.newname_t
 		return
 	}
@@ -93,7 +93,7 @@ method _rename {} {
 			-type ok \
 			-title [wm title $w] \
 			-parent $w \
-			-message "Branch '$newname' already exists."
+			-message [mc "Branch '%s' already exists." $newname]
 		focus $w.rename.newname_t
 		return
 	}
@@ -103,7 +103,7 @@ method _rename {} {
 			-type ok \
 			-title [wm title $w] \
 			-parent $w \
-			-message "We do not like '$newname' as a branch name."
+			-message [mc "'%s' is not an acceptable branch name." $newname]
 		focus $w.rename.newname_t
 		return
 	}
@@ -114,7 +114,7 @@ method _rename {} {
 			-type ok \
 			-title [wm title $w] \
 			-parent $w \
-			-message "Failed to rename '$oldname'.\n\n$err"
+			-message [strcat [mc "Failed to rename '%s'." $oldname] "\n\n$err"]
 		return
 	}
 

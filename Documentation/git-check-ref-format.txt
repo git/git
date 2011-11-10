@@ -3,53 +3,71 @@ git-check-ref-format(1)
 
 NAME
 ----
-git-check-ref-format - Make sure ref name is well formed
+git-check-ref-format - Ensures that a reference name is well formed
 
 SYNOPSIS
 --------
-'git-check-ref-format' <refname>
+[verse]
+'git check-ref-format' <refname>
+'git check-ref-format' [--branch] <branchname-shorthand>
 
 DESCRIPTION
 -----------
-Checks if a given 'refname' is acceptable, and exits non-zero if
-it is not.
+Checks if a given 'refname' is acceptable, and exits with a non-zero
+status if it is not.
 
 A reference is used in git to specify branches and tags.  A
-branch head is stored under `$GIT_DIR/refs/heads` directory, and
-a tag is stored under `$GIT_DIR/refs/tags` directory.  git
-imposes the following rules on how refs are named:
+branch head is stored under the `$GIT_DIR/refs/heads` directory, and
+a tag is stored under the `$GIT_DIR/refs/tags` directory.  git
+imposes the following rules on how references are named:
 
-. It can include slash `/` for hierarchical (directory)
+. They can include slash `/` for hierarchical (directory)
   grouping, but no slash-separated component can begin with a
-  dot `.`;
+  dot `.`.
 
-. It cannot have two consecutive dots `..` anywhere;
+. They cannot have two consecutive dots `..` anywhere.
 
-. It cannot have ASCII control character (i.e. bytes whose
+. They cannot have ASCII control characters (i.e. bytes whose
   values are lower than \040, or \177 `DEL`), space, tilde `~`,
   caret `{caret}`, colon `:`, question-mark `?`, asterisk `*`,
-  or open bracket `[` anywhere;
+  or open bracket `[` anywhere.
 
-. It cannot end with a slash `/`.
+. They cannot end with a slash `/` nor a dot `.`.
 
-These rules makes it easy for shell script based tools to parse
-refnames, pathname expansion by the shell when a refname is used
+. They cannot end with the sequence `.lock`.
+
+. They cannot contain a sequence `@{`.
+
+These rules make it easy for shell script based tools to parse
+reference names, pathname expansion by the shell when a reference name is used
 unquoted (by mistake), and also avoids ambiguities in certain
-refname expressions (see gitlink:git-rev-parse[1]).  Namely:
+reference name expressions (see linkgit:git-rev-parse[1]):
 
-. double-dot `..` are often used as in `ref1..ref2`, and in some
-  context this notation means `{caret}ref1 ref2` (i.e. not in
-  ref1 and in ref2).
+. A double-dot `..` is often used as in `ref1..ref2`, and in some
+  contexts this notation means `{caret}ref1 ref2` (i.e. not in
+  `ref1` and in `ref2`).
 
-. tilde `~` and caret `{caret}` are used to introduce postfix
+. A tilde `~` and caret `{caret}` are used to introduce the postfix
   'nth parent' and 'peel onion' operation.
 
-. colon `:` is used as in `srcref:dstref` to mean "use srcref\'s
+. A colon `:` is used as in `srcref:dstref` to mean "use srcref\'s
   value and store it in dstref" in fetch and push operations.
   It may also be used to select a specific object such as with
-  gitlink:git-cat-file[1] "git-cat-file blob v1.3.3:refs.c".
+  'git-cat-file': "git cat-file blob v1.3.3:refs.c".
+
+. at-open-brace `@{` is used as a notation to access a reflog entry.
+
+With the `--branch` option, it expands a branch name shorthand and
+prints the name of the branch the shorthand refers to.
+
+EXAMPLE
+-------
+
+git check-ref-format --branch @{-1}::
+
+Print the name of the previous branch.
 
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[1] suite

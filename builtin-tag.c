@@ -11,61 +11,22 @@
 #include "refs.h"
 #include "tag.h"
 #include "run-command.h"
+#include "parse-options.h"
 
-static const char builtin_tag_usage[] =
-  "git-tag [-n [<num>]] -l [<pattern>] | [-a | -s | -u <key-id>] [-f | -d | -v] [-m <msg> | -F <file>] <tagname> [<head>]";
+static const char * const git_tag_usage[] = {
+	"git tag [-a|-s|-u <key-id>] [-f] [-m <msg>|-F <file>] <tagname> [<head>]",
+	"git tag -d <tagname>...",
+	"git tag -l [-n[<num>]] [<pattern>]",
+	"git tag -v <tagname>...",
+	NULL
+};
 
 static char signingkey[1000];
-
-static void launch_editor(const char *path, char **buffer, unsigned long *len)
-{
-	const char *editor, *terminal;
-	struct child_process child;
-	const char *args[3];
-	int fd;
-
-	editor = getenv("GIT_EDITOR");
-	if (!editor && editor_program)
-		editor = editor_program;
-	if (!editor)
-		editor = getenv("VISUAL");
-	if (!editor)
-		editor = getenv("EDITOR");
-
-	terminal = getenv("TERM");
-	if (!editor && (!terminal || !strcmp(terminal, "dumb"))) {
-		fprintf(stderr,
-		"Terminal is dumb but no VISUAL nor EDITOR defined.\n"
-		"Please supply the message using either -m or -F option.\n");
-		exit(1);
-	}
-
-	if (!editor)
-		editor = "vi";
-
-	memset(&child, 0, sizeof(child));
-	child.argv = args;
-	args[0] = editor;
-	args[1] = path;
-	args[2] = NULL;
-
-	if (run_command(&child))
-		die("There was a problem with the editor %s.", editor);
-
-	fd = open(path, O_RDONLY);
-	if (fd < 0)
-		die("could not open '%s': %s", path, strerror(errno));
-	if (read_fd(fd, buffer, len)) {
-		free(*buffer);
-		die("could not read message file '%s': %s",
-						path, strerror(errno));
-	}
-	close(fd);
-}
 
 struct tag_filter {
 	const char *pattern;
 	int lines;
+	struct commit_list *with_commit;
 };
 
 #define PGP_SIGNATURE "-----BEGIN PGP SIGNATURE-----"
@@ -82,23 +43,32 @@ static int show_reference(const char *refname, const unsigned char *sha1,
 		char *buf, *sp, *eol;
 		size_t len;
 
+		if (filter->with_commit) {
+			struct commit *commit;
+
+			commit = lookup_commit_reference_gently(sha1, 1);
+			if (!commit)
+				return 0;
+			if (!is_descendant_of(commit, filter->with_commit))
+				return 0;
+		}
+
 		if (!filter->lines) {
 			printf("%s\n", refname);
 			return 0;
 		}
 		printf("%-15s ", refname);
 
-		sp = buf = read_sha1_file(sha1, &type, &size);
-		if (!buf)
+		buf = read_sha1_file(sha1, &type, &size);
+		if (!buf || !size)
 			return 0;
-		if (!size) {
+
+		/* skip header */
+		sp = strstr(buf, "\n\n");
+		if (!sp) {
 			free(buf);
 			return 0;
 		}
-		/* skip header */
-		while (sp + 1 < buf + size &&
-				!(sp[0] == '\n' && sp[1] == '\n'))
-			sp++;
 		/* only take up to "lines" lines, and strip the signature */
 		for (i = 0, sp += 2;
 				i < filter->lines && sp < buf + size &&
@@ -120,7 +90,8 @@ static int show_reference(const char *refname, const unsigned char *sha1,
 	return 0;
 }
 
-static int list_tags(const char *pattern, int lines)
+static int list_tags(const char *pattern, int lines,
+			struct commit_list *with_commit)
 {
 	struct tag_filter filter;
 
@@ -129,6 +100,7 @@ static int list_tags(const char *pattern, int lines)
 
 	filter.pattern = pattern;
 	filter.lines = lines;
+	filter.with_commit = with_commit;
 
 	for_each_tag_ref(show_reference, (void *) &filter);
 
@@ -166,7 +138,7 @@ static int for_each_tag_name(const char **argv, each_tag_name_fn fn)
 static int delete_tag(const char *name, const char *ref,
 				const unsigned char *sha1)
 {
-	if (delete_ref(ref, sha1))
+	if (delete_ref(ref, sha1, 0))
 		return 1;
 	printf("Deleted tag '%s'\n", name);
 	return 0;
@@ -184,21 +156,26 @@ static int verify_tag(const char *name, const char *ref,
 	return 0;
 }
 
-static ssize_t do_sign(char *buffer, size_t size, size_t max)
+static int do_sign(struct strbuf *buffer)
 {
 	struct child_process gpg;
 	const char *args[4];
 	char *bracket;
 	int len;
+	int i, j;
 
 	if (!*signingkey) {
-		if (strlcpy(signingkey, git_committer_info(1),
+		if (strlcpy(signingkey, git_committer_info(IDENT_ERROR_ON_NO_NAME),
 				sizeof(signingkey)) > sizeof(signingkey) - 1)
 			return error("committer info too long.");
 		bracket = strchr(signingkey, '>');
 		if (bracket)
 			bracket[1] = '\0';
 	}
+
+	/* When the username signingkey is bad, program could be terminated
+	 * because gpg exits without reading and then write gets SIGPIPE. */
+	signal(SIGPIPE, SIG_IGN);
 
 	memset(&gpg, 0, sizeof(gpg));
 	gpg.argv = args;
@@ -212,17 +189,29 @@ static ssize_t do_sign(char *buffer, size_t size, size_t max)
 	if (start_command(&gpg))
 		return error("could not run gpg.");
 
-	write_or_die(gpg.in, buffer, size);
+	if (write_in_full(gpg.in, buffer->buf, buffer->len) != buffer->len) {
+		close(gpg.in);
+		close(gpg.out);
+		finish_command(&gpg);
+		return error("gpg did not accept the tag data");
+	}
 	close(gpg.in);
-	gpg.close_in = 0;
-	len = read_in_full(gpg.out, buffer + size, max - size);
+	len = strbuf_read(buffer, gpg.out, 1024);
+	close(gpg.out);
 
-	finish_command(&gpg);
+	if (finish_command(&gpg) || !len || len < 0)
+		return error("gpg failed to sign the tag");
 
-	if (len == max - size)
-		return error("could not read the entire signature from gpg.");
+	/* Strip CR from the line endings, in case we are on Windows. */
+	for (i = j = 0; i < buffer->len; i++)
+		if (buffer->buf[i] != '\r') {
+			if (i != j)
+				buffer->buf[j] = buffer->buf[i];
+			j++;
+		}
+	strbuf_setlen(buffer, j);
 
-	return size + len;
+	return 0;
 }
 
 static const char tag_template[] =
@@ -231,29 +220,69 @@ static const char tag_template[] =
 	"# Write a tag message\n"
 	"#\n";
 
-static int git_tag_config(const char *var, const char *value)
+static void set_signingkey(const char *value)
+{
+	if (strlcpy(signingkey, value, sizeof(signingkey)) >= sizeof(signingkey))
+		die("signing key value too long (%.10s...)", value);
+}
+
+static int git_tag_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, "user.signingkey")) {
 		if (!value)
-			die("user.signingkey without value");
-		if (strlcpy(signingkey, value, sizeof(signingkey))
-						>= sizeof(signingkey))
-			die("user.signingkey value too long");
+			return config_error_nonbool(var);
+		set_signingkey(value);
 		return 0;
 	}
 
-	return git_default_config(var, value);
+	return git_default_config(var, value, cb);
 }
 
-#define MAX_SIGNATURE_LENGTH 1024
-/* message must be NULL or allocated, it will be reallocated and freed */
+static void write_tag_body(int fd, const unsigned char *sha1)
+{
+	unsigned long size;
+	enum object_type type;
+	char *buf, *sp, *eob;
+	size_t len;
+
+	buf = read_sha1_file(sha1, &type, &size);
+	if (!buf)
+		return;
+	/* skip header */
+	sp = strstr(buf, "\n\n");
+
+	if (!sp || !size || type != OBJ_TAG) {
+		free(buf);
+		return;
+	}
+	sp += 2; /* skip the 2 LFs */
+	eob = strstr(sp, "\n" PGP_SIGNATURE "\n");
+	if (eob)
+		len = eob - sp;
+	else
+		len = buf + size - sp;
+	write_or_die(fd, sp, len);
+
+	free(buf);
+}
+
+static int build_tag_object(struct strbuf *buf, int sign, unsigned char *result)
+{
+	if (sign && do_sign(buf) < 0)
+		return error("unable to sign the tag");
+	if (write_sha1_file(buf->buf, buf->len, tag_type, result) < 0)
+		return error("unable to write tag file");
+	return 0;
+}
+
 static void create_tag(const unsigned char *object, const char *tag,
-		       char *message, int sign, unsigned char *result)
+		       struct strbuf *buf, int message, int sign,
+		       unsigned char *prev, unsigned char *result)
 {
 	enum object_type type;
-	char header_buf[1024], *buffer = NULL;
-	int header_len, max_size;
-	unsigned long size = 0;
+	char header_buf[1024];
+	int header_len;
+	char *path = NULL;
 
 	type = sha1_object_info(object, NULL);
 	if (type <= OBJ_NONE)
@@ -267,164 +296,167 @@ static void create_tag(const unsigned char *object, const char *tag,
 			  sha1_to_hex(object),
 			  typename(type),
 			  tag,
-			  git_committer_info(1));
+			  git_committer_info(IDENT_ERROR_ON_NO_NAME));
 
 	if (header_len > sizeof(header_buf) - 1)
 		die("tag header too big.");
 
 	if (!message) {
-		char *path;
 		int fd;
 
 		/* write the template message before editing: */
-		path = xstrdup(git_path("TAG_EDITMSG"));
+		path = git_pathdup("TAG_EDITMSG");
 		fd = open(path, O_CREAT | O_TRUNC | O_WRONLY, 0600);
 		if (fd < 0)
 			die("could not create file '%s': %s",
 						path, strerror(errno));
-		write_or_die(fd, tag_template, strlen(tag_template));
+
+		if (!is_null_sha1(prev))
+			write_tag_body(fd, prev);
+		else
+			write_or_die(fd, tag_template, strlen(tag_template));
 		close(fd);
 
-		launch_editor(path, &buffer, &size);
+		if (launch_editor(path, buf, NULL)) {
+			fprintf(stderr,
+			"Please supply the message using either -m or -F option.\n");
+			exit(1);
+		}
+	}
 
+	stripspace(buf, 1);
+
+	if (!message && !buf->len)
+		die("no tag message?");
+
+	strbuf_insert(buf, 0, header_buf, header_len);
+
+	if (build_tag_object(buf, sign, result) < 0) {
+		if (path)
+			fprintf(stderr, "The tag message has been left in %s\n",
+				path);
+		exit(128);
+	}
+	if (path) {
 		unlink(path);
 		free(path);
 	}
-	else {
-		buffer = message;
-		size = strlen(message);
-	}
+}
 
-	size = stripspace(buffer, size, 1);
+struct msg_arg {
+	int given;
+	struct strbuf buf;
+};
 
-	if (!message && !size)
-		die("no tag message?");
+static int parse_msg_arg(const struct option *opt, const char *arg, int unset)
+{
+	struct msg_arg *msg = opt->value;
 
-	/* insert the header and add the '\n' if needed: */
-	max_size = header_len + size + (sign ? MAX_SIGNATURE_LENGTH : 0) + 1;
-	buffer = xrealloc(buffer, max_size);
-	if (size)
-		buffer[size++] = '\n';
-	memmove(buffer + header_len, buffer, size);
-	memcpy(buffer, header_buf, header_len);
-	size += header_len;
-
-	if (sign) {
-		size = do_sign(buffer, size, max_size);
-		if (size < 0)
-			die("unable to sign the tag");
-	}
-
-	if (write_sha1_file(buffer, size, tag_type, result) < 0)
-		die("unable to write tag file");
-	free(buffer);
+	if (!arg)
+		return -1;
+	if (msg->buf.len)
+		strbuf_addstr(&(msg->buf), "\n\n");
+	strbuf_addstr(&(msg->buf), arg);
+	msg->given = 1;
+	return 0;
 }
 
 int cmd_tag(int argc, const char **argv, const char *prefix)
 {
+	struct strbuf buf = STRBUF_INIT;
 	unsigned char object[20], prev[20];
-	int annotate = 0, sign = 0, force = 0, lines = 0;
-	char *message = NULL;
 	char ref[PATH_MAX];
 	const char *object_ref, *tag;
-	int i;
 	struct ref_lock *lock;
 
-	git_config(git_tag_config);
+	int annotate = 0, sign = 0, force = 0, lines = -1,
+		list = 0, delete = 0, verify = 0;
+	const char *msgfile = NULL, *keyid = NULL;
+	struct msg_arg msg = { 0, STRBUF_INIT };
+	struct commit_list *with_commit = NULL;
+	struct option options[] = {
+		OPT_BOOLEAN('l', NULL, &list, "list tag names"),
+		{ OPTION_INTEGER, 'n', NULL, &lines, NULL,
+				"print n lines of each tag message",
+				PARSE_OPT_OPTARG, NULL, 1 },
+		OPT_BOOLEAN('d', NULL, &delete, "delete tags"),
+		OPT_BOOLEAN('v', NULL, &verify, "verify tags"),
 
-	for (i = 1; i < argc; i++) {
-		const char *arg = argv[i];
+		OPT_GROUP("Tag creation options"),
+		OPT_BOOLEAN('a', NULL, &annotate,
+					"annotated tag, needs a message"),
+		OPT_CALLBACK('m', NULL, &msg, "msg",
+			     "message for the tag", parse_msg_arg),
+		OPT_STRING('F', NULL, &msgfile, "file", "message in a file"),
+		OPT_BOOLEAN('s', NULL, &sign, "annotated and GPG-signed tag"),
+		OPT_STRING('u', NULL, &keyid, "key-id",
+					"use another key to sign the tag"),
+		OPT_BOOLEAN('f', NULL, &force, "replace the tag if exists"),
 
-		if (arg[0] != '-')
-			break;
-		if (!strcmp(arg, "-a")) {
-			annotate = 1;
-			continue;
-		}
-		if (!strcmp(arg, "-s")) {
-			annotate = 1;
-			sign = 1;
-			continue;
-		}
-		if (!strcmp(arg, "-f")) {
-			force = 1;
-			continue;
-		}
-		if (!strcmp(arg, "-n")) {
-			if (i + 1 == argc || *argv[i + 1] == '-')
-				/* no argument */
-				lines = 1;
-			else
-				lines = isdigit(*argv[++i]) ?
-					atoi(argv[i]) : 1;
-			continue;
-		}
-		if (!strcmp(arg, "-m")) {
-			annotate = 1;
-			i++;
-			if (i == argc)
-				die("option -m needs an argument.");
-			if (message)
-				die("only one -F or -m option is allowed.");
-			message = xstrdup(argv[i]);
-			continue;
-		}
-		if (!strcmp(arg, "-F")) {
-			unsigned long len;
-			int fd;
+		OPT_GROUP("Tag listing options"),
+		{
+			OPTION_CALLBACK, 0, "contains", &with_commit, "commit",
+			"print only tags that contain the commit",
+			PARSE_OPT_LASTARG_DEFAULT,
+			parse_opt_with_commit, (intptr_t)"HEAD",
+		},
+		OPT_END()
+	};
 
-			annotate = 1;
-			i++;
-			if (i == argc)
-				die("option -F needs an argument.");
-			if (message)
-				die("only one -F or -m option is allowed.");
+	git_config(git_tag_config, NULL);
 
-			if (!strcmp(argv[i], "-"))
-				fd = 0;
-			else {
-				fd = open(argv[i], O_RDONLY);
-				if (fd < 0)
-					die("could not open '%s': %s",
-						argv[i], strerror(errno));
+	argc = parse_options(argc, argv, options, git_tag_usage, 0);
+	msgfile = parse_options_fix_filename(prefix, msgfile);
+
+	if (keyid) {
+		sign = 1;
+		set_signingkey(keyid);
+	}
+	if (sign)
+		annotate = 1;
+	if (argc == 0 && !(delete || verify))
+		list = 1;
+
+	if ((annotate || msg.given || msgfile || force) &&
+	    (list || delete || verify))
+		usage_with_options(git_tag_usage, options);
+
+	if (list + delete + verify > 1)
+		usage_with_options(git_tag_usage, options);
+	if (list)
+		return list_tags(argv[0], lines == -1 ? 0 : lines,
+				 with_commit);
+	if (lines != -1)
+		die("-n option is only allowed with -l.");
+	if (with_commit)
+		die("--contains option is only allowed with -l.");
+	if (delete)
+		return for_each_tag_name(argv, delete_tag);
+	if (verify)
+		return for_each_tag_name(argv, verify_tag);
+
+	if (msg.given || msgfile) {
+		if (msg.given && msgfile)
+			die("only one -F or -m option is allowed.");
+		annotate = 1;
+		if (msg.given)
+			strbuf_addbuf(&buf, &(msg.buf));
+		else {
+			if (!strcmp(msgfile, "-")) {
+				if (strbuf_read(&buf, 0, 1024) < 0)
+					die("cannot read %s", msgfile);
+			} else {
+				if (strbuf_read_file(&buf, msgfile, 1024) < 0)
+					die("could not open or read '%s': %s",
+						msgfile, strerror(errno));
 			}
-			len = 1024;
-			message = xmalloc(len);
-			if (read_fd(fd, &message, &len)) {
-				free(message);
-				die("cannot read %s", argv[i]);
-			}
-			continue;
 		}
-		if (!strcmp(arg, "-u")) {
-			annotate = 1;
-			sign = 1;
-			i++;
-			if (i == argc)
-				die("option -u needs an argument.");
-			if (strlcpy(signingkey, argv[i], sizeof(signingkey))
-							>= sizeof(signingkey))
-				die("argument to option -u too long");
-			continue;
-		}
-		if (!strcmp(arg, "-l"))
-			return list_tags(argv[i + 1], lines);
-		if (!strcmp(arg, "-d"))
-			return for_each_tag_name(argv + i + 1, delete_tag);
-		if (!strcmp(arg, "-v"))
-			return for_each_tag_name(argv + i + 1, verify_tag);
-		usage(builtin_tag_usage);
 	}
 
-	if (i == argc) {
-		if (annotate)
-			usage(builtin_tag_usage);
-		return list_tags(NULL, lines);
-	}
-	tag = argv[i++];
+	tag = argv[0];
 
-	object_ref = i < argc ? argv[i] : "HEAD";
-	if (i + 1 < argc)
+	object_ref = argc == 2 ? argv[1] : "HEAD";
+	if (argc > 2)
 		die("too many params");
 
 	if (get_sha1(object_ref, object))
@@ -441,7 +473,8 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 		die("tag '%s' already exists", tag);
 
 	if (annotate)
-		create_tag(object, tag, message, sign, object);
+		create_tag(object, tag, &buf, msg.given || msgfile,
+			   sign, prev, object);
 
 	lock = lock_any_ref_for_update(ref, prev, 0);
 	if (!lock)
@@ -449,5 +482,6 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 	if (write_ref_sha1(lock, object, NULL) < 0)
 		die("%s: cannot update the ref", ref);
 
+	strbuf_release(&buf);
 	return 0;
 }

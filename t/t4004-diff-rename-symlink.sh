@@ -10,7 +10,13 @@ copy of symbolic links, but should not produce rename/copy followed
 by an edit for them.
 '
 . ./test-lib.sh
-. ../diff-lib.sh
+. "$TEST_DIRECTORY"/diff-lib.sh
+
+if ! test_have_prereq SYMLINKS
+then
+	say 'Symbolic links not supported, skipping tests.'
+	test_done
+fi
 
 test_expect_success \
     'prepare reference tree' \

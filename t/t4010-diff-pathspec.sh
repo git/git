@@ -10,7 +10,7 @@ Prepare:
         path1/file1
 '
 . ./test-lib.sh
-. ../diff-lib.sh ;# test-lib chdir's into trash
+. "$TEST_DIRECTORY"/diff-lib.sh ;# test-lib chdir's into trash
 
 test_expect_success \
     setup \
@@ -61,5 +61,13 @@ test_expect_success \
     'limit to file0/ should emit nothing.' \
     'git diff-index --cached $tree -- file0/ >current &&
      compare_diff_raw current expected'
+
+test_expect_success 'diff-tree pathspec' '
+	tree2=$(git write-tree) &&
+	echo "$tree2" &&
+	git diff-tree -r --name-only $tree $tree2 -- pa path1/a >current &&
+	>expected &&
+	test_cmp expected current
+'
 
 test_done

@@ -2,7 +2,10 @@
 
 USAGE=''
 SUBDIRECTORY_OK='Yes'
+OPTIONS_SPEC=
 . git-sh-setup
+
+echo "WARNING: '$0' is deprecated in favor of 'git fsck --lost-found'" >&2
 
 if [ "$#" != "0" ]
 then
@@ -17,7 +20,7 @@ while read dangling type sha1
 do
 	case "$dangling" in
 	dangling)
-		if git rev-parse --verify "$sha1^0" >/dev/null 2>/dev/null
+		if git rev-parse -q --verify "$sha1^0" >/dev/null
 		then
 			dir="$laf/commit"
 			git show-branch "$sha1"

@@ -1,6 +1,7 @@
 #include "cache.h"
+#include "exec_cmd.h"
 
-static void flush_current_id(int patchlen, unsigned char *id, SHA_CTX *c)
+static void flush_current_id(int patchlen, unsigned char *id, git_SHA_CTX *c)
 {
 	unsigned char result[20];
 	char name[50];
@@ -8,10 +9,10 @@ static void flush_current_id(int patchlen, unsigned char *id, SHA_CTX *c)
 	if (!patchlen)
 		return;
 
-	SHA1_Final(result, c);
+	git_SHA1_Final(result, c);
 	memcpy(name, sha1_to_hex(id), 41);
 	printf("%s %s\n", sha1_to_hex(result), name);
-	SHA1_Init(c);
+	git_SHA1_Init(c);
 }
 
 static int remove_space(char *line)
@@ -31,10 +32,10 @@ static void generate_id_list(void)
 {
 	static unsigned char sha1[20];
 	static char line[1000];
-	SHA_CTX ctx;
+	git_SHA_CTX ctx;
 	int patchlen = 0;
 
-	SHA1_Init(&ctx);
+	git_SHA1_Init(&ctx);
 	while (fgets(line, sizeof(line), stdin) != NULL) {
 		unsigned char n[20];
 		char *p = line;
@@ -67,17 +68,19 @@ static void generate_id_list(void)
 		/* Compute the sha without whitespace */
 		len = remove_space(line);
 		patchlen += len;
-		SHA1_Update(&ctx, line, len);
+		git_SHA1_Update(&ctx, line, len);
 	}
 	flush_current_id(patchlen, sha1, &ctx);
 }
 
-static const char patch_id_usage[] = "git-patch-id < patch";
+static const char patch_id_usage[] = "git patch-id < patch";
 
 int main(int argc, char **argv)
 {
 	if (argc != 1)
 		usage(patch_id_usage);
+
+	git_extract_argv0_path(argv[0]);
 
 	generate_id_list();
 	return 0;

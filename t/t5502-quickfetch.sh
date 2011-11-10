@@ -86,4 +86,37 @@ test_expect_success 'quickfetch should not leave a corrupted repository' '
 
 '
 
+test_expect_success 'quickfetch should not copy from alternate' '
+
+	(
+		mkdir quickclone &&
+		cd quickclone &&
+		git init-db &&
+		(cd ../.git/objects && pwd) >.git/objects/info/alternates &&
+		git remote add origin .. &&
+		git fetch -k -k
+	) &&
+	obj_cnt=$( (
+		cd quickclone &&
+		git count-objects | sed -e "s/ *objects,.*//"
+	) ) &&
+	pck_cnt=$( (
+		cd quickclone &&
+		git count-objects -v | sed -n -e "/packs:/{
+				s/packs://
+				p
+				q
+			}"
+	) ) &&
+	origin_master=$( (
+		cd quickclone &&
+		git rev-parse origin/master
+	) ) &&
+	echo "loose objects: $obj_cnt, packfiles: $pck_cnt" &&
+	test $obj_cnt -eq 0 &&
+	test $pck_cnt -eq 0 &&
+	test z$origin_master = z$(git rev-parse master)
+
+'
+
 test_done

@@ -39,7 +39,8 @@ this:
     * passed all 3 test(s)
 
 You can pass --verbose (or -v), --debug (or -d), and --immediate
-(or -i) command line argument to the test.
+(or -i) command line argument to the test, or by setting GIT_TEST_OPTS
+appropriately before running "make".
 
 --verbose::
 	This makes the test more verbose.  Specifically, the
@@ -53,6 +54,53 @@ You can pass --verbose (or -v), --debug (or -d), and --immediate
 --immediate::
 	This causes the test to immediately exit upon the first
 	failed test.
+
+--long-tests::
+	This causes additional long-running tests to be run (where
+	available), for more exhaustive testing.
+
+--valgrind::
+	Execute all Git binaries with valgrind and exit with status
+	126 on errors (just like regular tests, this will only stop
+	the test script when running under -i).  Valgrind errors
+	go to stderr, so you might want to pass the -v option, too.
+
+	Since it makes no sense to run the tests with --valgrind and
+	not see any output, this option implies --verbose.  For
+	convenience, it also implies --tee.
+
+--tee::
+	In addition to printing the test output to the terminal,
+	write it to files named 't/test-results/$TEST_NAME.out'.
+	As the names depend on the tests' file names, it is safe to
+	run the tests with this option in parallel.
+
+Skipping Tests
+--------------
+
+In some environments, certain tests have no way of succeeding
+due to platform limitation, such as lack of 'unzip' program, or
+filesystem that do not allow arbitrary sequence of non-NUL bytes
+as pathnames.
+
+You should be able to say something like
+
+    $ GIT_SKIP_TESTS=t9200.8 sh ./t9200-git-cvsexport-commit.sh
+
+and even:
+
+    $ GIT_SKIP_TESTS='t[0-4]??? t91?? t9200.8' make
+
+to omit such tests.  The value of the environment variable is a
+SP separated list of patterns that tells which tests to skip,
+and either can match the "t[0-9]{4}" part to skip the whole
+test, or t[0-9]{4} followed by ".$number" to say which
+particular test to skip.
+
+Note that some tests in the existing test suite rely on previous
+test item, so you cannot arbitrarily disable one and expect the
+remainder of test to check what the test originally was intended
+to check.
 
 
 Naming Tests
@@ -123,7 +171,7 @@ This test harness library does the following things:
    (or -h), it shows the test_description and exits.
 
  - Creates an empty test directory with an empty .git/objects
-   database and chdir(2) into it.  This directory is 't/trash'
+   database and chdir(2) into it.  This directory is 't/trash directory'
    if you must know, but I do not think you care.
 
  - Defines standard test helper functions for your scripts to
@@ -160,14 +208,12 @@ library for your script to use.
 
  - test_expect_failure <message> <script>
 
-   This is the opposite of test_expect_success.  If <script>
-   yields success, test is considered a failure.
-
-   Example:
-
-	test_expect_failure \
-	    'git-update-index without --add should fail adding.' \
-	    'git-update-index should-be-empty'
+   This is NOT the opposite of test_expect_success, but is used
+   to mark a test that demonstrates a known breakage.  Unlike
+   the usual test_expect_success tests, which say "ok" on
+   success and "FAIL" on failure, this will say "FIXED" on
+   success and "still broken" on failure.  Failures from these
+   tests won't cause -i (immediate) to stop.
 
  - test_debug <script>
 
@@ -182,6 +228,24 @@ library for your script to use.
    is to summarize successes and failures in the test script and
    exit with an appropriate error code.
 
+ - test_tick
+
+   Make commit and tag names consistent by setting the author and
+   committer times to defined stated.  Subsequent calls will
+   advance the times by a fixed amount.
+
+ - test_commit <message> [<filename> [<contents>]]
+
+   Creates a commit with the given message, committing the given
+   file with the given contents (default for both is to reuse the
+   message string), and adds a tag (again reusing the message
+   string as name).  Calls test_tick to make the SHA-1s
+   reproducible.
+
+ - test_merge <message> <commit-or-tag>
+
+   Merges the given rev using the given message.  Like test_commit,
+   creates a tag and calls test_tick before committing.
 
 Tips for Writing Tests
 ----------------------

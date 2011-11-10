@@ -29,7 +29,7 @@ static int read_one_entry_opt(const unsigned char *sha1, const char *base, int b
 	return add_cache_entry(ce, opt);
 }
 
-static int read_one_entry(const unsigned char *sha1, const char *base, int baselen, const char *pathname, unsigned mode, int stage)
+static int read_one_entry(const unsigned char *sha1, const char *base, int baselen, const char *pathname, unsigned mode, int stage, void *context)
 {
 	return read_one_entry_opt(sha1, base, baselen, pathname, mode, stage,
 				  ADD_CACHE_OK_TO_ADD|ADD_CACHE_SKIP_DFCHECK);
@@ -39,7 +39,7 @@ static int read_one_entry(const unsigned char *sha1, const char *base, int basel
  * This is used when the caller knows there is no existing entries at
  * the stage that will conflict with the entry being added.
  */
-static int read_one_entry_quick(const unsigned char *sha1, const char *base, int baselen, const char *pathname, unsigned mode, int stage)
+static int read_one_entry_quick(const unsigned char *sha1, const char *base, int baselen, const char *pathname, unsigned mode, int stage, void *context)
 {
 	return read_one_entry_opt(sha1, base, baselen, pathname, mode, stage,
 				  ADD_CACHE_JUST_APPEND);
@@ -60,8 +60,13 @@ static int match_tree_entry(const char *base, int baselen, const char *path, uns
 			/* If it doesn't match, move along... */
 			if (strncmp(base, match, matchlen))
 				continue;
-			/* The base is a subdirectory of a path which was specified. */
-			return 1;
+			/* pathspecs match only at the directory boundaries */
+			if (!matchlen ||
+			    baselen == matchlen ||
+			    base[matchlen] == '/' ||
+			    match[matchlen - 1] == '/')
+				return 1;
+			continue;
 		}
 
 		/* Does the base match? */
@@ -92,7 +97,7 @@ static int match_tree_entry(const char *base, int baselen, const char *path, uns
 int read_tree_recursive(struct tree *tree,
 			const char *base, int baselen,
 			int stage, const char **match,
-			read_tree_fn_t fn)
+			read_tree_fn_t fn, void *context)
 {
 	struct tree_desc desc;
 	struct name_entry entry;
@@ -106,11 +111,11 @@ int read_tree_recursive(struct tree *tree,
 		if (!match_tree_entry(base, baselen, entry.path, entry.mode, match))
 			continue;
 
-		switch (fn(entry.sha1, base, baselen, entry.path, entry.mode, stage)) {
+		switch (fn(entry.sha1, base, baselen, entry.path, entry.mode, stage, context)) {
 		case 0:
 			continue;
 		case READ_TREE_RECURSIVE:
-			break;;
+			break;
 		default:
 			return -1;
 		}
@@ -126,8 +131,36 @@ int read_tree_recursive(struct tree *tree,
 			retval = read_tree_recursive(lookup_tree(entry.sha1),
 						     newbase,
 						     baselen + pathlen + 1,
-						     stage, match, fn);
+						     stage, match, fn, context);
 			free(newbase);
+			if (retval)
+				return -1;
+			continue;
+		} else if (S_ISGITLINK(entry.mode)) {
+			int retval;
+			struct strbuf path;
+			unsigned int entrylen;
+			struct commit *commit;
+
+			entrylen = tree_entry_len(entry.path, entry.sha1);
+			strbuf_init(&path, baselen + entrylen + 1);
+			strbuf_add(&path, base, baselen);
+			strbuf_add(&path, entry.path, entrylen);
+			strbuf_addch(&path, '/');
+
+			commit = lookup_commit(entry.sha1);
+			if (!commit)
+				die("Commit %s in submodule path %s not found",
+				    sha1_to_hex(entry.sha1), path.buf);
+
+			if (parse_commit(commit))
+				die("Invalid commit %s in submodule path %s",
+				    sha1_to_hex(entry.sha1), path.buf);
+
+			retval = read_tree_recursive(commit->tree,
+						     path.buf, path.len,
+						     stage, match, fn, context);
+			strbuf_release(&path);
 			if (retval)
 				return -1;
 			continue;
@@ -142,8 +175,8 @@ static int cmp_cache_name_compare(const void *a_, const void *b_)
 
 	ce1 = *((const struct cache_entry **)a_);
 	ce2 = *((const struct cache_entry **)b_);
-	return cache_name_compare(ce1->name, ntohs(ce1->ce_flags),
-				  ce2->name, ntohs(ce2->ce_flags));
+	return cache_name_compare(ce1->name, ce1->ce_flags,
+				  ce2->name, ce2->ce_flags);
 }
 
 int read_tree(struct tree *tree, int stage, const char **match)
@@ -174,7 +207,7 @@ int read_tree(struct tree *tree, int stage, const char **match)
 
 	if (!fn)
 		fn = read_one_entry_quick;
-	err = read_tree_recursive(tree, "", 0, stage, match, fn);
+	err = read_tree_recursive(tree, "", 0, stage, match, fn, NULL);
 	if (fn == read_one_entry || err)
 		return err;
 
@@ -202,52 +235,6 @@ struct tree *lookup_tree(const unsigned char *sha1)
 	return (struct tree *) obj;
 }
 
-/*
- * NOTE! Tree refs to external git repositories
- * (ie gitlinks) do not count as real references.
- *
- * You don't have to have those repositories
- * available at all, much less have the objects
- * accessible from the current repository.
- */
-static void track_tree_refs(struct tree *item)
-{
-	int n_refs = 0, i;
-	struct object_refs *refs;
-	struct tree_desc desc;
-	struct name_entry entry;
-
-	/* Count how many entries there are.. */
-	init_tree_desc(&desc, item->buffer, item->size);
-	while (tree_entry(&desc, &entry)) {
-		if (S_ISGITLINK(entry.mode))
-			continue;
-		n_refs++;
-	}
-
-	/* Allocate object refs and walk it again.. */
-	i = 0;
-	refs = alloc_object_refs(n_refs);
-	init_tree_desc(&desc, item->buffer, item->size);
-	while (tree_entry(&desc, &entry)) {
-		struct object *obj;
-
-		if (S_ISGITLINK(entry.mode))
-			continue;
-		if (S_ISDIR(entry.mode))
-			obj = &lookup_tree(entry.sha1)->object;
-		else if (S_ISREG(entry.mode) || S_ISLNK(entry.mode))
-			obj = &lookup_blob(entry.sha1)->object;
-		else {
-			warning("in tree %s: entry %s has bad mode %.6o\n",
-			     sha1_to_hex(item->object.sha1), entry.path, entry.mode);
-			obj = lookup_unknown_object(entry.sha1);
-		}
-		refs->ref[i++] = obj;
-	}
-	set_object_refs(&item->object, refs);
-}
-
 int parse_tree_buffer(struct tree *item, void *buffer, unsigned long size)
 {
 	if (item->object.parsed)
@@ -256,8 +243,6 @@ int parse_tree_buffer(struct tree *item, void *buffer, unsigned long size)
 	item->buffer = buffer;
 	item->size = size;
 
-	if (track_object_refs)
-		track_tree_refs(item);
 	return 0;
 }
 

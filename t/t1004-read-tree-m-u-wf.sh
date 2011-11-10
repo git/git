@@ -116,4 +116,126 @@ test_expect_success 'three-way not complaining on an untracked file' '
 	git read-tree -m -u --exclude-per-directory=.gitignore branch-point master side
 '
 
+test_expect_success '3-way not overwriting local changes (setup)' '
+
+	git reset --hard &&
+	git checkout -b side-a branch-point &&
+	echo >>file1 "new line to be kept in the merge result" &&
+	git commit -a -m "side-a changes file1" &&
+	git checkout -b side-b branch-point &&
+	echo >>file2 "new line to be kept in the merge result" &&
+	git commit -a -m "side-b changes file2" &&
+	git checkout side-a
+
+'
+
+test_expect_success '3-way not overwriting local changes (our side)' '
+
+	# At this point, file1 from side-a should be kept as side-b
+	# did not touch it.
+
+	git reset --hard &&
+
+	echo >>file1 "local changes" &&
+	git read-tree -m -u branch-point side-a side-b &&
+	grep "new line to be kept" file1 &&
+	grep "local changes" file1
+
+'
+
+test_expect_success '3-way not overwriting local changes (their side)' '
+
+	# At this point, file2 from side-b should be taken as side-a
+	# did not touch it.
+
+	git reset --hard &&
+
+	echo >>file2 "local changes" &&
+	test_must_fail git read-tree -m -u branch-point side-a side-b &&
+	! grep "new line to be kept" file2 &&
+	grep "local changes" file2
+
+'
+
+test_expect_success SYMLINKS 'funny symlink in work tree' '
+
+	git reset --hard &&
+	git checkout -b sym-b side-b &&
+	mkdir -p a &&
+	>a/b &&
+	git add a/b &&
+	git commit -m "side adds a/b" &&
+
+	rm -fr a &&
+	git checkout -b sym-a side-a &&
+	mkdir -p a &&
+	ln -s ../b a/b &&
+	git add a/b &&
+	git commit -m "we add a/b" &&
+
+	git read-tree -m -u sym-a sym-a sym-b
+
+'
+
+test_expect_success SYMLINKS 'funny symlink in work tree, un-unlink-able' '
+
+	rm -fr a b &&
+	git reset --hard &&
+
+	git checkout sym-a &&
+	chmod a-w a &&
+	test_must_fail git read-tree -m -u sym-a sym-a sym-b
+
+'
+
+# clean-up from the above test
+chmod a+w a 2>/dev/null
+rm -fr a b
+
+test_expect_success 'D/F setup' '
+
+	git reset --hard &&
+
+	git checkout side-a &&
+	rm -f subdir/file2 &&
+	mkdir subdir/file2 &&
+	echo qfwfq >subdir/file2/another &&
+	git add subdir/file2/another &&
+	test_tick &&
+	git commit -m "side-a changes file2 to directory"
+
+'
+
+test_expect_success 'D/F' '
+
+	git checkout side-b &&
+	git read-tree -m -u branch-point side-b side-a &&
+	git ls-files -u >actual &&
+	(
+		a=$(git rev-parse branch-point:subdir/file2)
+		b=$(git rev-parse side-a:subdir/file2/another)
+		echo "100644 $a 1	subdir/file2"
+		echo "100644 $a 2	subdir/file2"
+		echo "100644 $b 3	subdir/file2/another"
+	) >expect &&
+	test_cmp actual expect
+
+'
+
+test_expect_success 'D/F resolve' '
+
+	git reset --hard &&
+	git checkout side-b &&
+	git merge-resolve branch-point -- side-b side-a
+
+'
+
+test_expect_success 'D/F recursive' '
+
+	git reset --hard &&
+	git checkout side-b &&
+	git merge-recursive branch-point -- side-b side-a
+
+'
+
 test_done

@@ -8,28 +8,34 @@ git-describe - Show the most recent tag that is reachable from a commit
 
 SYNOPSIS
 --------
-'git-describe' [--all] [--tags] [--contains] [--abbrev=<n>] <committish>...
+'git describe' [--all] [--tags] [--contains] [--abbrev=<n>] <committish>...
 
 DESCRIPTION
 -----------
 The command finds the most recent tag that is reachable from a
-commit, and if the commit itself is pointed at by the tag, shows
-the tag.  Otherwise, it suffixes the tag name with the number of
-additional commits and the abbreviated object name of the commit.
+commit.  If the tag points to the commit, then only the tag is
+shown.  Otherwise, it suffixes the tag name with the number of
+additional commits on top of the tagged object and the
+abbreviated object name of the most recent commit.
 
+By default (without --all or --tags) `git describe` only shows
+annotated tags.  For more information about creating annotated tags
+see the -a and -s options to linkgit:git-tag[1].
 
 OPTIONS
 -------
-<committish>::
-	The object name of the committish.
+<committish>...::
+	Committish object names to describe.
 
 --all::
 	Instead of using only the annotated tags, use any ref
-	found in `.git/refs/`.
+	found in `.git/refs/`.  This option enables matching
+	any known branch, remote branch, or lightweight tag.
 
 --tags::
 	Instead of using only the annotated tags, use any tag
-	found in `.git/refs/tags`.
+	found in `.git/refs/tags`.  This option enables matching
+	a lightweight (non-annotated) tag.
 
 --contains::
 	Instead of finding the tag that predates the commit, find
@@ -37,7 +43,7 @@ OPTIONS
 	Automatically implies --tags.
 
 --abbrev=<n>::
-	Instead of using the default 8 hexadecimal digits as the
+	Instead of using the default 7 hexadecimal digits as the
 	abbreviated object name, use <n> digits.
 
 --candidates=<n>::
@@ -45,22 +51,43 @@ OPTIONS
 	candidates to describe the input committish consider
 	up to <n> candidates.  Increasing <n> above 10 will take
 	slightly longer but may produce a more accurate result.
+	An <n> of 0 will cause only exact matches to be output.
+
+--exact-match::
+	Only output exact matches (a tag directly references the
+	supplied commit).  This is a synonym for --candidates=0.
 
 --debug::
 	Verbosely display information about the searching strategy
 	being employed to standard error.  The tag name will still
 	be printed to standard out.
 
+--long::
+	Always output the long format (the tag, the number of commits
+	and the abbreviated commit name) even when it matches a tag.
+	This is useful when you want to see parts of the commit object name
+	in "describe" output, even when the commit in question happens to be
+	a tagged version.  Instead of just emitting the tag name, it will
+	describe such a commit as v1.2-0-deadbeef (0th commit since tag v1.2
+	that points at object deadbeef....).
+
+--match <pattern>::
+	Only consider tags matching the given pattern (can be used to avoid
+	leaking private tags made from the repository).
+
+--always::
+	Show uniquely abbreviated commit object as fallback.
+
 EXAMPLES
 --------
 
 With something like git.git current tree, I get:
 
-	[torvalds@g5 git]$ git-describe parent
+	[torvalds@g5 git]$ git describe parent
 	v1.0.4-14-g2414721
 
 i.e. the current head of my "parent" branch is based on v1.0.4,
-but since it has a handful commits on top of that,
+but since it has a few commits on top of that,
 describe has added the number of additional commits ("14") and
 an abbreviated object name for the commit itself ("2414721")
 at the end.
@@ -70,9 +97,9 @@ of commits which would be displayed by "git log v1.0.4..parent".
 The hash suffix is "-g" + 7-char abbreviation for the tip commit
 of parent (which was `2414721b194453f058079d897d13c4e377f92dc6`).
 
-Doing a "git-describe" on a tag-name will just show the tag name:
+Doing a 'git-describe' on a tag-name will just show the tag name:
 
-	[torvalds@g5 git]$ git-describe v1.0.4
+	[torvalds@g5 git]$ git describe v1.0.4
 	v1.0.4
 
 With --all, the command can use branch heads as references, so
@@ -93,13 +120,13 @@ closest tagname without any suffix:
 SEARCH STRATEGY
 ---------------
 
-For each committish supplied "git describe" will first look for
+For each committish supplied, 'git-describe' will first look for
 a tag which tags exactly that commit.  Annotated tags will always
 be preferred over lightweight tags, and tags with newer dates will
 always be preferred over tags with older dates.  If an exact match
 is found, its name will be output and searching will stop.
 
-If an exact match was not found "git describe" will walk back
+If an exact match was not found, 'git-describe' will walk back
 through the commit history to locate an ancestor commit which
 has been tagged.  The ancestor's tag will be output along with an
 abbreviation of the input committish's SHA1.
@@ -107,14 +134,14 @@ abbreviation of the input committish's SHA1.
 If multiple tags were found during the walk then the tag which
 has the fewest commits different from the input committish will be
 selected and output.  Here fewest commits different is defined as
-the number of commits which would be shown by "git log tag..input"
+the number of commits which would be shown by `git log tag..input`
 will be the smallest number of commits possible.
 
 
 Author
 ------
 Written by Linus Torvalds <torvalds@osdl.org>, but somewhat
-butchered by Junio C Hamano <junkio@cox.net>.  Later significantly
+butchered by Junio C Hamano <gitster@pobox.com>.  Later significantly
 updated by Shawn Pearce <spearce@spearce.org>.
 
 Documentation
@@ -123,4 +150,4 @@ Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[1] suite

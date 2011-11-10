@@ -34,48 +34,22 @@ void maybe_flush_or_die(FILE *f, const char *desc)
 			return;
 	}
 	if (fflush(f)) {
-		if (errno == EPIPE)
+		/*
+		 * On Windows, EPIPE is returned only by the first write()
+		 * after the reading end has closed its handle; subsequent
+		 * write()s return EINVAL.
+		 */
+		if (errno == EPIPE || errno == EINVAL)
 			exit(0);
 		die("write failure on %s: %s", desc, strerror(errno));
 	}
 }
 
-int read_in_full(int fd, void *buf, size_t count)
+void fsync_or_die(int fd, const char *msg)
 {
-	char *p = buf;
-	ssize_t total = 0;
-
-	while (count > 0) {
-		ssize_t loaded = xread(fd, p, count);
-		if (loaded <= 0)
-			return total ? total : loaded;
-		count -= loaded;
-		p += loaded;
-		total += loaded;
+	if (fsync(fd) < 0) {
+		die("%s: fsync error (%s)", msg, strerror(errno));
 	}
-
-	return total;
-}
-
-int write_in_full(int fd, const void *buf, size_t count)
-{
-	const char *p = buf;
-	ssize_t total = 0;
-
-	while (count > 0) {
-		ssize_t written = xwrite(fd, p, count);
-		if (written < 0)
-			return -1;
-		if (!written) {
-			errno = ENOSPC;
-			return -1;
-		}
-		count -= written;
-		p += written;
-		total += written;
-	}
-
-	return total;
 }
 
 void write_or_die(int fd, const void *buf, size_t count)

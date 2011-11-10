@@ -106,9 +106,9 @@ test_expect_success 'custom merge backend' '
 
 	cmp binary union &&
 	sed -e 1,3d text >check-1 &&
-	o=$(git-unpack-file master^:text) &&
-	a=$(git-unpack-file side^:text) &&
-	b=$(git-unpack-file master:text) &&
+	o=$(git unpack-file master^:text) &&
+	a=$(git unpack-file side^:text) &&
+	b=$(git unpack-file master:text) &&
 	sh -c "./custom-merge $o $a $b 0" &&
 	sed -e 1,3d $a >check-2 &&
 	cmp check-1 check-2 &&
@@ -133,13 +133,35 @@ test_expect_success 'custom merge backend' '
 
 	cmp binary union &&
 	sed -e 1,3d text >check-1 &&
-	o=$(git-unpack-file master^:text) &&
-	a=$(git-unpack-file anchor:text) &&
-	b=$(git-unpack-file master:text) &&
+	o=$(git unpack-file master^:text) &&
+	a=$(git unpack-file anchor:text) &&
+	b=$(git unpack-file master:text) &&
 	sh -c "./custom-merge $o $a $b 0" &&
 	sed -e 1,3d $a >check-2 &&
 	cmp check-1 check-2 &&
 	rm -f $o $a $b
+'
+
+test_expect_success 'up-to-date merge without common ancestor' '
+	test_create_repo repo1 &&
+	test_create_repo repo2 &&
+	test_tick &&
+	(
+		cd repo1 &&
+		>a &&
+		git add a &&
+		git commit -m initial
+	) &&
+	test_tick &&
+	(
+		cd repo2 &&
+		git commit --allow-empty -m initial
+	) &&
+	test_tick &&
+	(
+		cd repo1 &&
+		git pull ../repo2 master
+	)
 '
 
 test_done

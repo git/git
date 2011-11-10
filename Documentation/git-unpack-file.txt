@@ -9,7 +9,7 @@ git-unpack-file - Creates a temporary file with a blob's contents
 
 SYNOPSIS
 --------
-'git-unpack-file' <blob>
+'git unpack-file' <blob>
 
 DESCRIPTION
 -----------
@@ -32,4 +32,4 @@ Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[1] suite

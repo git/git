@@ -18,7 +18,7 @@ int main(int ac, char **av)
 
 		if (ce_match_stat(ce, &st, 0))
 			dirty++;
-		else if (ce_match_stat(ce, &st, 2))
+		else if (ce_match_stat(ce, &st, CE_MATCH_RACY_IS_DIRTY))
 			racy++;
 		else
 			clean++;

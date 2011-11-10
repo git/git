@@ -1,9 +1,9 @@
 #!/usr/bin/perl
 #
 # This tool will print vaguely pretty information about a pack.  It
-# expects the output of "git-verify-pack -v" as input on stdin.
+# expects the output of "git verify-pack -v" as input on stdin.
 #
-# $ git-verify-pack -v | packinfo.pl
+# $ git verify-pack -v | packinfo.pl
 #
 # This prints some full-pack statistics; currently "all sizes", "all
 # path sizes", "tree sizes", "tree path sizes", and "depths".
@@ -20,7 +20,7 @@
 #
 # When run as:
 #
-# $ git-verify-pack -v | packinfo.pl -tree
+# $ git verify-pack -v | packinfo.pl -tree
 #
 # the trees of objects are output along with the stats.  This looks
 # like:
@@ -43,7 +43,7 @@
 #
 # When run as:
 #
-# $ git-verify-pack -v | packinfo.pl -tree -filenames
+# $ git verify-pack -v | packinfo.pl -tree -filenames
 #
 # it adds filenames to the tree.  Getting this information is slow:
 #
@@ -58,7 +58,7 @@
 #
 # When run as:
 #
-# $ git-verify-pack -v | packinfo.pl -dump
+# $ git verify-pack -v | packinfo.pl -dump
 #
 # it prints out "sha1 size pathsize depth" for each sha1 in lexical
 # order.
@@ -93,7 +93,7 @@ my %depths;
 my @depths;
 
 while (<STDIN>) {
-    my ($sha1, $type, $size, $offset, $depth, $parent) = split(/\s+/, $_);
+    my ($sha1, $type, $size, $space, $offset, $depth, $parent) = split(/\s+/, $_);
     next unless ($sha1 =~ /^[0-9a-f]{40}$/);
     $depths{$sha1} = $depth || 0;
     push(@depths, $depth || 0);
@@ -106,7 +106,7 @@ while (<STDIN>) {
 }
 
 if ($filenames && ($tree || $dump)) {
-    open(NAMES, "git-name-rev --all|");
+    open(NAMES, "git name-rev --all|");
     while (<NAMES>) {
         if (/^(\S+)\s+(.*)$/) {
             my ($sha1, $name) = ($1, $2);
@@ -117,7 +117,7 @@ if ($filenames && ($tree || $dump)) {
 
     for my $commit (@commits) {
         my $name = $names{$commit};
-        open(TREE, "git-ls-tree -t -r $commit|");
+        open(TREE, "git ls-tree -t -r $commit|");
         print STDERR "Plumbing tree $name\n";
         while (<TREE>) {
             if (/^(\S+)\s+(\S+)\s+(\S+)\s+(.*)$/) {

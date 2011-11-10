@@ -30,7 +30,7 @@ test_expect_success \
 	 *) echo fail; git ls-files --stage xfoo1; (exit 1);;
 	 esac'
 
-test_expect_success 'git add: filemode=0 should not get confused by symlink' '
+test_expect_success SYMLINKS 'git add: filemode=0 should not get confused by symlink' '
 	rm -f xfoo1 &&
 	ln -s foo xfoo1 &&
 	git add xfoo1 &&
@@ -51,7 +51,7 @@ test_expect_success \
 	 *) echo fail; git ls-files --stage xfoo2; (exit 1);;
 	 esac'
 
-test_expect_success 'git add: filemode=0 should not get confused by symlink' '
+test_expect_success SYMLINKS 'git add: filemode=0 should not get confused by symlink' '
 	rm -f xfoo2 &&
 	ln -s foo xfoo2 &&
 	git update-index --add xfoo2 &&
@@ -61,7 +61,7 @@ test_expect_success 'git add: filemode=0 should not get confused by symlink' '
 	esac
 '
 
-test_expect_success \
+test_expect_success SYMLINKS \
 	'git update-index --add: Test that executable bit is not used...' \
 	'git config core.filemode 0 &&
 	 ln -s xfoo2 xfoo3 &&
@@ -81,17 +81,17 @@ test_expect_success '.gitignore test setup' '
 
 test_expect_success '.gitignore is honored' '
 	git add . &&
-	! git ls-files | grep "\\.ig"
+	! (git ls-files | grep "\\.ig")
 '
 
 test_expect_success 'error out when attempting to add ignored ones without -f' '
-	! git add a.?? &&
-	! git ls-files | grep "\\.ig"
+	test_must_fail git add a.?? &&
+	! (git ls-files | grep "\\.ig")
 '
 
 test_expect_success 'error out when attempting to add ignored ones without -f' '
-	! git add d.?? &&
-	! git ls-files | grep "\\.ig"
+	test_must_fail git add d.?? &&
+	! (git ls-files | grep "\\.ig")
 '
 
 test_expect_success 'add ignored ones with -f' '
@@ -104,9 +104,33 @@ test_expect_success 'add ignored ones with -f' '
 	git ls-files --error-unmatch d.ig/d.if d.ig/d.ig
 '
 
+test_expect_success 'add ignored ones with -f' '
+	rm -f .git/index &&
+	git add -f d.?? &&
+	git ls-files --error-unmatch d.ig/d.if d.ig/d.ig
+'
+
+test_expect_success '.gitignore with subdirectory' '
+
+	rm -f .git/index &&
+	mkdir -p sub/dir &&
+	echo "!dir/a.*" >sub/.gitignore &&
+	>sub/a.ig &&
+	>sub/dir/a.ig &&
+	git add sub/dir &&
+	git ls-files --error-unmatch sub/dir/a.ig &&
+	rm -f .git/index &&
+	(
+		cd sub/dir &&
+		git add .
+	) &&
+	git ls-files --error-unmatch sub/dir/a.ig
+'
+
 mkdir 1 1/2 1/3
 touch 1/2/a 1/3/b 1/2/c
 test_expect_success 'check correct prefix detection' '
+	rm -f .git/index &&
 	git add 1/2/a 1/3/b 1/2/c
 '
 
@@ -153,6 +177,57 @@ test_expect_success 'git add --refresh' '
 	esac &&
 	git add --refresh -- foo &&
 	test -z "`git diff-index HEAD -- foo`"
+'
+
+test_expect_success POSIXPERM 'git add should fail atomically upon an unreadable file' '
+	git reset --hard &&
+	date >foo1 &&
+	date >foo2 &&
+	chmod 0 foo2 &&
+	test_must_fail git add --verbose . &&
+	! ( git ls-files foo1 | grep foo1 )
+'
+
+rm -f foo2
+
+test_expect_success POSIXPERM 'git add --ignore-errors' '
+	git reset --hard &&
+	date >foo1 &&
+	date >foo2 &&
+	chmod 0 foo2 &&
+	test_must_fail git add --verbose --ignore-errors . &&
+	git ls-files foo1 | grep foo1
+'
+
+rm -f foo2
+
+test_expect_success POSIXPERM 'git add (add.ignore-errors)' '
+	git config add.ignore-errors 1 &&
+	git reset --hard &&
+	date >foo1 &&
+	date >foo2 &&
+	chmod 0 foo2 &&
+	test_must_fail git add --verbose . &&
+	git ls-files foo1 | grep foo1
+'
+rm -f foo2
+
+test_expect_success POSIXPERM 'git add (add.ignore-errors = false)' '
+	git config add.ignore-errors 0 &&
+	git reset --hard &&
+	date >foo1 &&
+	date >foo2 &&
+	chmod 0 foo2 &&
+	test_must_fail git add --verbose . &&
+	! ( git ls-files foo1 | grep foo1 )
+'
+
+test_expect_success BSLASHPSPEC "git add 'fo\\[ou\\]bar' ignores foobar" '
+	git reset --hard &&
+	touch fo\[ou\]bar foobar &&
+	git add '\''fo\[ou\]bar'\'' &&
+	git ls-files fo\[ou\]bar | fgrep fo\[ou\]bar &&
+	! ( git ls-files foobar | grep foobar )
 '
 
 test_done

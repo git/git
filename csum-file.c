@@ -8,15 +8,16 @@
  * able to verify hasn't been messed with afterwards.
  */
 #include "cache.h"
+#include "progress.h"
 #include "csum-file.h"
 
-static void sha1flush(struct sha1file *f, unsigned int count)
+static void flush(struct sha1file *f, void * buf, unsigned int count)
 {
-	void *buf = f->buffer;
-
 	for (;;) {
 		int ret = xwrite(f->fd, buf, count);
 		if (ret > 0) {
+			f->total += ret;
+			display_throughput(f->tp, f->total);
 			buf = (char *) buf + ret;
 			count -= ret;
 			if (count)
@@ -29,43 +30,66 @@ static void sha1flush(struct sha1file *f, unsigned int count)
 	}
 }
 
-int sha1close(struct sha1file *f, unsigned char *result, int final)
+void sha1flush(struct sha1file *f)
 {
 	unsigned offset = f->offset;
+
 	if (offset) {
-		SHA1_Update(&f->ctx, f->buffer, offset);
-		sha1flush(f, offset);
+		git_SHA1_Update(&f->ctx, f->buffer, offset);
+		flush(f, f->buffer, offset);
 		f->offset = 0;
 	}
-	if (!final)
-		return 0;	/* only want to flush (no checksum write, no close) */
-	SHA1_Final(f->buffer, &f->ctx);
+}
+
+int sha1close(struct sha1file *f, unsigned char *result, unsigned int flags)
+{
+	int fd;
+
+	sha1flush(f);
+	git_SHA1_Final(f->buffer, &f->ctx);
 	if (result)
 		hashcpy(result, f->buffer);
-	sha1flush(f, 20);
-	if (close(f->fd))
-		die("%s: sha1 file error on close (%s)", f->name, strerror(errno));
+	if (flags & (CSUM_CLOSE | CSUM_FSYNC)) {
+		/* write checksum and close fd */
+		flush(f, f->buffer, 20);
+		if (flags & CSUM_FSYNC)
+			fsync_or_die(f->fd, f->name);
+		if (close(f->fd))
+			die("%s: sha1 file error on close (%s)",
+			    f->name, strerror(errno));
+		fd = 0;
+	} else
+		fd = f->fd;
 	free(f);
-	return 0;
+	return fd;
 }
 
 int sha1write(struct sha1file *f, void *buf, unsigned int count)
 {
-	if (f->do_crc)
-		f->crc32 = crc32(f->crc32, buf, count);
 	while (count) {
 		unsigned offset = f->offset;
 		unsigned left = sizeof(f->buffer) - offset;
 		unsigned nr = count > left ? left : count;
+		void *data;
 
-		memcpy(f->buffer + offset, buf, nr);
+		if (f->do_crc)
+			f->crc32 = crc32(f->crc32, buf, nr);
+
+		if (nr == sizeof(f->buffer)) {
+			/* process full buffer directly without copy */
+			data = buf;
+		} else {
+			memcpy(f->buffer + offset, buf, nr);
+			data = f->buffer;
+		}
+
 		count -= nr;
 		offset += nr;
 		buf = (char *) buf + nr;
 		left -= nr;
 		if (!left) {
-			SHA1_Update(&f->ctx, f->buffer, offset);
-			sha1flush(f, offset);
+			git_SHA1_Update(&f->ctx, data, offset);
+			flush(f, data, offset);
 			offset = 0;
 		}
 		f->offset = offset;
@@ -75,22 +99,19 @@ int sha1write(struct sha1file *f, void *buf, unsigned int count)
 
 struct sha1file *sha1fd(int fd, const char *name)
 {
-	struct sha1file *f;
-	unsigned len;
+	return sha1fd_throughput(fd, name, NULL);
+}
 
-	f = xmalloc(sizeof(*f));
-
-	len = strlen(name);
-	if (len >= PATH_MAX)
-		die("you wascally wabbit, you");
-	f->namelen = len;
-	memcpy(f->name, name, len+1);
-
+struct sha1file *sha1fd_throughput(int fd, const char *name, struct progress *tp)
+{
+	struct sha1file *f = xmalloc(sizeof(*f));
 	f->fd = fd;
-	f->error = 0;
 	f->offset = 0;
+	f->total = 0;
+	f->tp = tp;
+	f->name = name;
 	f->do_crc = 0;
-	SHA1_Init(&f->ctx);
+	git_SHA1_Init(&f->ctx);
 	return f;
 }
 

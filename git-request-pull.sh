@@ -4,10 +4,11 @@
 # This file is licensed under the GPL v2, or a later version
 # at the discretion of Linus Torvalds.
 
-USAGE='<commit> <url> [<head>]'
-LONG_USAGE='Summarizes the changes since <commit> to the standard output,
-and includes <url> in the message generated.'
+USAGE='<start> <url> [<end>]'
+LONG_USAGE='Summarizes the changes between two commits to the standard output,
+and includes the given URL in the generated summary.'
 SUBDIRECTORY_OK='Yes'
+OPTIONS_SPEC=
 . git-sh-setup
 . git-parse-remote
 
@@ -24,13 +25,13 @@ headrev=`git rev-parse --verify "$head"^0` || exit
 merge_base=`git merge-base $baserev $headrev` ||
 die "fatal: No commits in common between $base and $head"
 
-url="`get_remote_url "$url"`"
-branch=`git peek-remote "$url" \
+url=$(get_remote_url "$url")
+branch=$(git ls-remote "$url" \
 	| sed -n -e "/^$headrev	refs.heads./{
 		s/^.*	refs.heads.//
 		p
 		q
-	}"`
+	}")
 if [ -z "$branch" ]; then
 	echo "warn: No branch of $url is at:" >&2
 	git log --max-count=1 --pretty='format:warn:   %h: %s' $headrev >&2

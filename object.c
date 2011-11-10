@@ -136,29 +136,42 @@ struct object *parse_object_buffer(const unsigned char *sha1, enum object_type t
 	struct object *obj;
 	int eaten = 0;
 
+	obj = NULL;
 	if (type == OBJ_BLOB) {
 		struct blob *blob = lookup_blob(sha1);
-		parse_blob_buffer(blob, buffer, size);
-		obj = &blob->object;
+		if (blob) {
+			if (parse_blob_buffer(blob, buffer, size))
+				return NULL;
+			obj = &blob->object;
+		}
 	} else if (type == OBJ_TREE) {
 		struct tree *tree = lookup_tree(sha1);
-		obj = &tree->object;
-		if (!tree->object.parsed) {
-			parse_tree_buffer(tree, buffer, size);
-			eaten = 1;
+		if (tree) {
+			obj = &tree->object;
+			if (!tree->object.parsed) {
+				if (parse_tree_buffer(tree, buffer, size))
+					return NULL;
+				eaten = 1;
+			}
 		}
 	} else if (type == OBJ_COMMIT) {
 		struct commit *commit = lookup_commit(sha1);
-		parse_commit_buffer(commit, buffer, size);
-		if (!commit->buffer) {
-			commit->buffer = buffer;
-			eaten = 1;
+		if (commit) {
+			if (parse_commit_buffer(commit, buffer, size))
+				return NULL;
+			if (!commit->buffer) {
+				commit->buffer = buffer;
+				eaten = 1;
+			}
+			obj = &commit->object;
 		}
-		obj = &commit->object;
 	} else if (type == OBJ_TAG) {
 		struct tag *tag = lookup_tag(sha1);
-		parse_tag_buffer(tag, buffer, size);
-		obj = &tag->object;
+		if (tag) {
+			if (parse_tag_buffer(tag, buffer, size))
+			       return NULL;
+			obj = &tag->object;
+		}
 	} else {
 		warning("object %s has unknown type id %d\n", sha1_to_hex(sha1), type);
 		obj = NULL;
@@ -254,4 +267,23 @@ void add_object_array_with_mode(struct object *obj, const char *name, struct obj
 	objects[nr].name = name;
 	objects[nr].mode = mode;
 	array->nr = ++nr;
+}
+
+void object_array_remove_duplicates(struct object_array *array)
+{
+	int ref, src, dst;
+	struct object_array_entry *objects = array->objects;
+
+	for (ref = 0; ref < array->nr - 1; ref++) {
+		for (src = ref + 1, dst = src;
+		     src < array->nr;
+		     src++) {
+			if (!strcmp(objects[ref].name, objects[src].name))
+				continue;
+			if (src != dst)
+				objects[dst] = objects[src];
+			dst++;
+		}
+		array->nr = dst;
+	}
 }

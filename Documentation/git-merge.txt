@@ -9,103 +9,80 @@ git-merge - Join two or more development histories together
 SYNOPSIS
 --------
 [verse]
-'git-merge' [-n] [--summary] [--no-commit] [--squash] [-s <strategy>]...
+'git merge' [-n] [--stat] [--no-commit] [--squash] [-s <strategy>]...
 	[-m <msg>] <remote> <remote>...
+'git merge' <msg> HEAD <remote>...
 
 DESCRIPTION
 -----------
 This is the top-level interface to the merge machinery
 which drives multiple merge strategy scripts.
 
+The second syntax (<msg> `HEAD` <remote>) is supported for
+historical reasons.  Do not use it from the command line or in
+new scripts.  It is the same as `git merge -m <msg> <remote>`.
+
 
 OPTIONS
 -------
 include::merge-options.txt[]
 
-<msg>::
+-m <msg>::
 	The commit message to be used for the merge commit (in case
-	it is created). The `git-fmt-merge-msg` script can be used
-	to give a good default for automated `git-merge` invocations.
+	it is created). The 'git-fmt-merge-msg' script can be used
+	to give a good default for automated 'git-merge' invocations.
 
-<head>::
-	Our branch head commit.  This has to be `HEAD`, so new
-	syntax does not require it
-
-<remote>::
-	Other branch head merged into our branch.  You need at
+<remote>...::
+	Other branch heads to merge into our branch.  You need at
 	least one <remote>.  Specifying more than one <remote>
 	obviously means you are trying an Octopus.
 
 include::merge-strategies.txt[]
 
 
-If you tried a merge which resulted in a complex conflicts and
-would want to start over, you can recover with
-gitlink:git-reset[1].
+If you tried a merge which resulted in complex conflicts and
+want to start over, you can recover with 'git-reset'.
 
 CONFIGURATION
 -------------
+include::merge-config.txt[]
 
-merge.summary::
-	Whether to include summaries of merged commits in newly
-	created merge commit. False by default.
-
-merge.verbosity::
-	Controls the amount of output shown by the recursive merge
-	strategy.  Level 0 outputs nothing except a final error
-	message if conflicts were detected. Level 1 outputs only
-	conflicts, 2 outputs conflicts and file changes.  Level 5 and
-	above outputs debugging information.  The default is level 2.
-	Can be overriden by 'GIT_MERGE_VERBOSITY' environment variable.
-
+branch.<name>.mergeoptions::
+	Sets default options for merging into branch <name>. The syntax and
+	supported options are equal to that of 'git-merge', but option values
+	containing whitespace characters are currently not supported.
 
 HOW MERGE WORKS
 ---------------
 
 A merge is always between the current `HEAD` and one or more
-remote branch heads, and the index file must exactly match the
-tree of `HEAD` commit (i.e. the contents of the last commit) when
-it happens.  In other words, `git-diff --cached HEAD` must
-report no changes.
+commits (usually, branch head or tag), and the index file must
+match the tree of `HEAD` commit (i.e. the contents of the last commit)
+when it starts out.  In other words, `git diff --cached HEAD` must
+report no changes.  (One exception is when the changed index
+entries are already in the same state that would result from
+the merge anyway.)
 
-[NOTE]
-This is a bit of lie.  In certain special cases, your index are
-allowed to be different from the tree of `HEAD` commit.  The most
-notable case is when your `HEAD` commit is already ahead of what
-is being merged, in which case your index can have arbitrary
-difference from your `HEAD` commit.  Otherwise, your index entries
-are allowed have differences from your `HEAD` commit that match
-the result of trivial merge (e.g. you received the same patch
-from external source to produce the same result as what you are
-merging).  For example, if a path did not exist in the common
-ancestor and your head commit but exists in the tree you are
-merging into your repository, and if you already happen to have
-that path exactly in your index, the merge does not have to
-fail.
+Three kinds of merge can happen:
 
-Otherwise, merge will refuse to do any harm to your repository
-(that is, it may fetch the objects from remote, and it may even
-update the local branch used to keep track of the remote branch
-with `git pull remote rbranch:lbranch`, but your working tree,
-`.git/HEAD` pointer and index file are left intact).
+* The merged commit is already contained in `HEAD`. This is the
+  simplest case, called "Already up-to-date."
 
-You may have local modifications in the working tree files.  In
-other words, `git-diff` is allowed to report changes.
-However, the merge uses your working tree as the working area,
-and in order to prevent the merge operation from losing such
-changes, it makes sure that they do not interfere with the
-merge. Those complex tables in read-tree documentation define
-what it means for a path to "interfere with the merge".  And if
-your local modifications interfere with the merge, again, it
-stops before touching anything.
+* `HEAD` is already contained in the merged commit. This is the
+  most common case especially when invoked from 'git pull':
+  you are tracking an upstream repository, have committed no local
+  changes and now you want to update to a newer upstream revision.
+  Your `HEAD` (and the index) is updated to point at the merged
+  commit, without creating an extra merge commit.  This is
+  called "Fast-forward".
 
-So in the above two "failed merge" case, you do not have to
-worry about loss of data --- you simply were not ready to do
-a merge, so no merge happened at all.  You may want to finish
-whatever you were in the middle of doing, and retry the same
-pull after you are done and ready.
+* Both the merged commit and `HEAD` are independent and must be
+  tied together by a merge commit that has both of them as its parents.
+  The rest of this section describes this "True merge" case.
 
-When things cleanly merge, these things happen:
+The chosen merge strategy merges the two commits into a single
+new source tree.
+When things merge cleanly, this is what happens:
 
 1. The results are updated both in the index file and in your
    working tree;
@@ -114,16 +91,16 @@ When things cleanly merge, these things happen:
 4. The `HEAD` pointer gets advanced.
 
 Because of 2., we require that the original state of the index
-file to match exactly the current `HEAD` commit; otherwise we
+file matches exactly the current `HEAD` commit; otherwise we
 will write out your local changes already registered in your
 index file along with the merge result, which is not good.
-Because 1. involves only the paths different between your
+Because 1. involves only those paths differing between your
 branch and the remote branch you are pulling from during the
 merge (which is typically a fraction of the whole tree), you can
 have local modifications in your working tree as long as they do
 not overlap with what the merge updates.
 
-When there are conflicts, these things happen:
+When there are conflicts, the following happens:
 
 1. `HEAD` stays the same.
 
@@ -133,37 +110,119 @@ When there are conflicts, these things happen:
 3. For conflicting paths, the index file records up to three
    versions; stage1 stores the version from the common ancestor,
    stage2 from `HEAD`, and stage3 from the remote branch (you
-   can inspect the stages with `git-ls-files -u`).  The working
-   tree files have the result of "merge" program; i.e. 3-way
-   merge result with familiar conflict markers `<<< === >>>`.
+   can inspect the stages with `git ls-files -u`).  The working
+   tree files contain the result of the "merge" program; i.e. 3-way
+   merge results with familiar conflict markers `<<< === >>>`.
 
 4. No other changes are done.  In particular, the local
    modifications you had before you started merge will stay the
    same and the index entries for them stay as they were,
    i.e. matching `HEAD`.
 
+HOW CONFLICTS ARE PRESENTED
+---------------------------
+
+During a merge, the working tree files are updated to reflect the result
+of the merge.  Among the changes made to the common ancestor's version,
+non-overlapping ones (that is, you changed an area of the file while the
+other side left that area intact, or vice versa) are incorporated in the
+final result verbatim.  When both sides made changes to the same area,
+however, git cannot randomly pick one side over the other, and asks you to
+resolve it by leaving what both sides did to that area.
+
+By default, git uses the same style as that is used by "merge" program
+from the RCS suite to present such a conflicted hunk, like this:
+
+------------
+Here are lines that are either unchanged from the common
+ancestor, or cleanly resolved because only one side changed.
+<<<<<<< yours:sample.txt
+Conflict resolution is hard;
+let's go shopping.
+=======
+Git makes conflict resolution easy.
+>>>>>>> theirs:sample.txt
+And here is another line that is cleanly resolved or unmodified.
+------------
+
+The area where a pair of conflicting changes happened is marked with markers
+`<<<<<<<`, `=======`, and `>>>>>>>`.  The part before the `=======`
+is typically your side, and the part afterwards is typically their side.
+
+The default format does not show what the original said in the conflicting
+area.  You cannot tell how many lines are deleted and replaced with
+Barbie's remark on your side.  The only thing you can tell is that your
+side wants to say it is hard and you'd prefer to go shopping, while the
+other side wants to claim it is easy.
+
+An alternative style can be used by setting the "merge.conflictstyle"
+configuration variable to "diff3".  In "diff3" style, the above conflict
+may look like this:
+
+------------
+Here are lines that are either unchanged from the common
+ancestor, or cleanly resolved because only one side changed.
+<<<<<<< yours:sample.txt
+Conflict resolution is hard;
+let's go shopping.
+|||||||
+Conflict resolution is hard.
+=======
+Git makes conflict resolution easy.
+>>>>>>> theirs:sample.txt
+And here is another line that is cleanly resolved or unmodified.
+------------
+
+In addition to the `<<<<<<<`, `=======`, and `>>>>>>>` markers, it uses
+another `|||||||` marker that is followed by the original text.  You can
+tell that the original just stated a fact, and your side simply gave in to
+that statement and gave up, while the other side tried to have a more
+positive attitude.  You can sometimes come up with a better resolution by
+viewing the original.
+
+
+HOW TO RESOLVE CONFLICTS
+------------------------
+
 After seeing a conflict, you can do two things:
 
- * Decide not to merge.  The only clean-up you need are to reset
+ * Decide not to merge.  The only clean-ups you need are to reset
    the index file to the `HEAD` commit to reverse 2. and to clean
-   up working tree changes made by 2. and 3.; `git-reset` can
+   up working tree changes made by 2. and 3.; 'git-reset --hard' can
    be used for this.
 
- * Resolve the conflicts.  `git-diff` would report only the
-   conflicting paths because of the above 2. and 3..  Edit the
-   working tree files into a desirable shape, `git-add` or `git-rm`
-   them, to make the index file contain what the merge result
-   should be, and run `git-commit` to commit the result.
+ * Resolve the conflicts.  Git will mark the conflicts in
+   the working tree.  Edit the files into shape and
+   'git-add' them to the index.  Use 'git-commit' to seal the deal.
 
+You can work through the conflict with a number of tools:
+
+ * Use a mergetool.  'git mergetool' to launch a graphical
+   mergetool which will work you through the merge.
+
+ * Look at the diffs.  'git diff' will show a three-way diff,
+   highlighting changes from both the HEAD and remote versions.
+
+ * Look at the diffs on their own. 'git log --merge -p <path>'
+   will show diffs first for the HEAD version and then the
+   remote version.
+
+ * Look at the originals.  'git show :1:filename' shows the
+   common ancestor, 'git show :2:filename' shows the HEAD
+   version and 'git show :3:filename' shows the remote version.
 
 SEE ALSO
 --------
-gitlink:git-fmt-merge-msg[1], gitlink:git-pull[1]
-
+linkgit:git-fmt-merge-msg[1], linkgit:git-pull[1],
+linkgit:gitattributes[5],
+linkgit:git-reset[1],
+linkgit:git-diff[1], linkgit:git-ls-files[1],
+linkgit:git-add[1], linkgit:git-rm[1],
+linkgit:git-mergetool[1]
 
 Author
 ------
-Written by Junio C Hamano <junkio@cox.net>
+Written by Junio C Hamano <gitster@pobox.com>
 
 
 Documentation
@@ -172,4 +231,4 @@ Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[1] suite

@@ -46,22 +46,6 @@ struct spanhash_top {
 	struct spanhash data[FLEX_ARRAY];
 };
 
-static struct spanhash *spanhash_find(struct spanhash_top *top,
-				      unsigned int hashval)
-{
-	int sz = 1 << top->alloc_log2;
-	int bucket = hashval & (sz - 1);
-	while (1) {
-		struct spanhash *h = &(top->data[bucket++]);
-		if (!h->cnt)
-			return NULL;
-		if (h->hashval == hashval)
-			return h;
-		if (sz <= bucket)
-			bucket = 0;
-	}
-}
-
 static struct spanhash_top *spanhash_rehash(struct spanhash_top *orig)
 {
 	struct spanhash_top *new;
@@ -122,6 +106,20 @@ static struct spanhash_top *add_spanhash(struct spanhash_top *top,
 	}
 }
 
+static int spanhash_cmp(const void *a_, const void *b_)
+{
+	const struct spanhash *a = a_;
+	const struct spanhash *b = b_;
+
+	/* A count of zero compares at the end.. */
+	if (!a->cnt)
+		return !b->cnt ? 0 : 1;
+	if (!b->cnt)
+		return -1;
+	return a->hashval < b->hashval ? -1 :
+		a->hashval > b->hashval ? 1 : 0;
+}
+
 static struct spanhash_top *hash_chars(struct diff_filespec *one)
 {
 	int i, n;
@@ -158,6 +156,10 @@ static struct spanhash_top *hash_chars(struct diff_filespec *one)
 		n = 0;
 		accum1 = accum2 = 0;
 	}
+	qsort(hash->data,
+		1ul << hash->alloc_log2,
+		sizeof(hash->data[0]),
+		spanhash_cmp);
 	return hash;
 }
 
@@ -169,7 +171,7 @@ int diffcore_count_changes(struct diff_filespec *src,
 			   unsigned long *src_copied,
 			   unsigned long *literal_added)
 {
-	int i, ssz;
+	struct spanhash *s, *d;
 	struct spanhash_top *src_count, *dst_count;
 	unsigned long sc, la;
 
@@ -190,22 +192,26 @@ int diffcore_count_changes(struct diff_filespec *src,
 	}
 	sc = la = 0;
 
-	ssz = 1 << src_count->alloc_log2;
-	for (i = 0; i < ssz; i++) {
-		struct spanhash *s = &(src_count->data[i]);
-		struct spanhash *d;
+	s = src_count->data;
+	d = dst_count->data;
+	for (;;) {
 		unsigned dst_cnt, src_cnt;
 		if (!s->cnt)
-			continue;
+			break; /* we checked all in src */
+		while (d->cnt) {
+			if (d->hashval >= s->hashval)
+				break;
+			d++;
+		}
 		src_cnt = s->cnt;
-		d = spanhash_find(dst_count, s->hashval);
-		dst_cnt = d ? d->cnt : 0;
+		dst_cnt = d->hashval == s->hashval ? d->cnt : 0;
 		if (src_cnt < dst_cnt) {
 			la += dst_cnt - src_cnt;
 			sc += src_cnt;
 		}
 		else
 			sc += dst_cnt;
+		s++;
 	}
 
 	if (!src_count_p)

@@ -20,13 +20,13 @@ test_expect_success setup '
 '
 
 test_expect_success clone '
-	git clone file://`pwd`/.git cloned &&
+	git clone "file://$(pwd)/.git" cloned &&
 	(git rev-parse HEAD; git ls-files -s) >expected &&
 	(
 		cd cloned &&
 		(git rev-parse HEAD; git ls-files -s) >../actual
 	) &&
-	diff -u expected actual
+	test_cmp expected actual
 '
 
 test_expect_success advance '
@@ -46,7 +46,7 @@ test_expect_success fetch '
 		git pull &&
 		(git rev-parse HEAD; git ls-files -s) >../actual
 	) &&
-	diff -u expected actual
+	test_cmp expected actual
 '
 
 test_done

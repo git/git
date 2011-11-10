@@ -48,11 +48,8 @@ static void prepare_order(const char *orderfile)
 				if (*ep == '\n') {
 					*ep = 0;
 					order[cnt] = cp;
-				}
-				else {
-					order[cnt] = xmalloc(ep-cp+1);
-					memcpy(order[cnt], cp, ep-cp);
-					order[cnt][ep-cp] = 0;
+				} else {
+					order[cnt] = xmemdupz(cp, ep - cp);
 				}
 				cnt++;
 			}

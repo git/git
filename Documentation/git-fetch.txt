@@ -8,7 +8,7 @@ git-fetch - Download objects and refs from another repository
 
 SYNOPSIS
 --------
-'git-fetch' <options> <repository> <refspec>...
+'git fetch' <options> <repository> <refspec>...
 
 
 DESCRIPTION
@@ -18,7 +18,7 @@ the objects necessary to complete them.
 
 The ref names and their object names of fetched refs are stored
 in `.git/FETCH_HEAD`.  This information is left for a later merge
-operation done by "git merge".
+operation done by 'git-merge'.
 
 When <refspec> stores the fetched result in tracking branches,
 the tags that point at these branches are automatically
@@ -39,13 +39,13 @@ include::urls-remotes.txt[]
 
 SEE ALSO
 --------
-gitlink:git-pull[1]
+linkgit:git-pull[1]
 
 
 Author
 ------
 Written by Linus Torvalds <torvalds@osdl.org> and
-Junio C Hamano <junkio@cox.net>
+Junio C Hamano <gitster@pobox.com>
 
 Documentation
 -------------
@@ -53,4 +53,4 @@ Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[1] suite

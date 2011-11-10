@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "run-command.h"
+#include "exec_cmd.h"
 
 static const char *pgm;
 static const char *arguments[9];
@@ -27,7 +28,7 @@ static int merge_entry(int pos, const char *path)
 	int found;
 
 	if (pos >= active_nr)
-		die("git-merge-index: %s not in the cache", path);
+		die("git merge-index: %s not in the cache", path);
 	arguments[0] = pgm;
 	arguments[1] = "";
 	arguments[2] = "";
@@ -48,12 +49,12 @@ static int merge_entry(int pos, const char *path)
 			break;
 		found++;
 		strcpy(hexbuf[stage], sha1_to_hex(ce->sha1));
-		sprintf(ownbuf[stage], "%o", ntohl(ce->ce_mode));
+		sprintf(ownbuf[stage], "%o", ce->ce_mode);
 		arguments[stage] = hexbuf[stage];
 		arguments[stage + 4] = ownbuf[stage];
 	} while (++pos < active_nr);
 	if (!found)
-		die("git-merge-index: %s not in the cache", path);
+		die("git merge-index: %s not in the cache", path);
 	run_program();
 	return found;
 }
@@ -91,7 +92,9 @@ int main(int argc, char **argv)
 	signal(SIGCHLD, SIG_DFL);
 
 	if (argc < 3)
-		usage("git-merge-index [-o] [-q] <merge-program> (-a | <filename>*)");
+		usage("git merge-index [-o] [-q] <merge-program> (-a | [--] <filename>*)");
+
+	git_extract_argv0_path(argv[0]);
 
 	setup_git_directory();
 	read_cache();
@@ -117,7 +120,7 @@ int main(int argc, char **argv)
 				merge_all();
 				continue;
 			}
-			die("git-merge-index: unknown option %s", arg);
+			die("git merge-index: unknown option %s", arg);
 		}
 		merge_file(arg);
 	}

@@ -7,32 +7,43 @@ git-rm - Remove files from the working tree and from the index
 
 SYNOPSIS
 --------
-'git-rm' [-f] [-n] [-r] [--cached] [--ignore-unmatch] [--quiet] [--] <file>...
+'git rm' [-f | --force] [-n] [-r] [--cached] [--ignore-unmatch] [--quiet] [--] <file>...
 
 DESCRIPTION
 -----------
-Remove files from the working tree and from the index.  The
-files have to be identical to the tip of the branch, and no
-updates to its contents must have been placed in the staging
-area (aka index).  When --cached is given, the staged content has to
-match either the tip of the branch *or* the file on disk.
+Remove files from the index, or from the working tree and the index.
+'git-rm' will not remove a file from just your working directory.
+(There is no option to remove a file only from the work tree
+and yet keep it in the index; use `/bin/rm` if you want to do that.)
+The files being removed have to be identical to the tip of the branch,
+and no updates to their contents can be staged in the index,
+though that default behavior can be overridden with the `-f` option.
+When '--cached' is given, the staged content has to
+match either the tip of the branch or the file on disk,
+allowing the file to be removed from just the index.
 
 
 OPTIONS
 -------
 <file>...::
 	Files to remove.  Fileglobs (e.g. `*.c`) can be given to
-	remove all matching files.  Also a leading directory name
-	(e.g. `dir` to add `dir/file1` and `dir/file2`) can be
-	given to remove all files in the directory, recursively,
-	but this requires `-r` option to be given for safety.
+	remove all matching files.  If you want git to expand
+	file glob characters, you may need to shell-escape them.
+	A leading directory name
+	(e.g. `dir` to remove `dir/file1` and `dir/file2`) can be
+	given to remove all files in the directory, and recursively
+	all sub-directories,
+	but this requires the `-r` option to be explicitly given.
 
 -f::
+--force::
 	Override the up-to-date check.
 
 -n::
-        Don't actually remove the file(s), just show if they exist in
-        the index.
+--dry-run::
+	Don't actually remove any file(s).  Instead, just show
+	if they exist in the index and would otherwise be removed
+	by the command.
 
 -r::
         Allow recursive removal when a leading directory name is
@@ -43,47 +54,51 @@ OPTIONS
 	the list of files, (useful when filenames might be mistaken
 	for command-line options).
 
-\--cached::
-	This option can be used to tell the command to remove
-	the paths only from the index, leaving working tree
-	files.
+--cached::
+	Use this option to unstage and remove paths only from the index.
+	Working tree files, whether modified or not, will be
+	left alone.
 
-\--ignore-unmatch::
+--ignore-unmatch::
 	Exit with a zero status even if no files matched.
 
-\--quiet::
-	git-rm normally outputs one line (in the form of an "rm" command)
+-q::
+--quiet::
+	'git-rm' normally outputs one line (in the form of an "rm" command)
 	for each file removed. This option suppresses that output.
 
 
 DISCUSSION
 ----------
 
-The list of <file> given to the command can be exact pathnames,
-file glob patterns, or leading directory name.  The command
-removes only the paths that is known to git.  Giving the name of
+The <file> list given to the command can be exact pathnames,
+file glob patterns, or leading directory names.  The command
+removes only the paths that are known to git.  Giving the name of
 a file that you have not told git about does not remove that file.
 
+File globbing matches across directory boundaries.  Thus, given
+two directories `d` and `d2`, there is a difference between
+using `git rm \'d\*\'` and `git rm \'d/\*\'`, as the former will
+also remove all of directory `d2`.
 
 EXAMPLES
 --------
-git-rm Documentation/\\*.txt::
+git rm Documentation/\\*.txt::
 	Removes all `\*.txt` files from the index that are under the
 	`Documentation` directory and any of its subdirectories.
 +
 Note that the asterisk `\*` is quoted from the shell in this
-example; this lets the command include the files from
-subdirectories of `Documentation/` directory.
+example; this lets git, and not the shell, expand the pathnames
+of files and subdirectories under the `Documentation/` directory.
 
-git-rm -f git-*.sh::
-	Remove all git-*.sh scripts that are in the index.
+git rm -f git-*.sh::
 	Because this example lets the shell expand the asterisk
 	(i.e. you are listing the files explicitly), it
 	does not remove `subdir/git-foo.sh`.
 
-See Also
+SEE ALSO
 --------
-gitlink:git-add[1]
+linkgit:git-add[1]
 
 Author
 ------
@@ -95,4 +110,4 @@ Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[1] suite

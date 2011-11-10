@@ -9,10 +9,10 @@ git-clone - Clone a repository into a new directory
 SYNOPSIS
 --------
 [verse]
-'git-clone' [--template=<template_directory>]
-	  [-l] [-s] [--no-hardlinks] [-q] [-n] [--bare]
+'git clone' [--template=<template_directory>]
+	  [-l] [-s] [--no-hardlinks] [-q] [-n] [--bare] [--mirror]
 	  [-o <name>] [-u <upload-pack>] [--reference <repository>]
-	  [--depth <depth>] <repository> [<directory>]
+	  [--depth <depth>] [--] <repository> [<directory>]
 
 DESCRIPTION
 -----------
@@ -62,19 +62,38 @@ OPTIONS
 	.git/objects/info/alternates to share the objects
 	with the source repository.  The resulting repository
 	starts out without any object of its own.
++
+*NOTE*: this is a possibly dangerous operation; do *not* use
+it unless you understand what it does. If you clone your
+repository using this option and then delete branches (or use any
+other git command that makes any existing commit unreferenced) in the
+source repository, some objects may become unreferenced (or dangling).
+These objects may be removed by normal git operations (such as 'git-commit')
+which automatically call `git gc --auto`. (See linkgit:git-gc[1].)
+If these objects are removed and were referenced by the cloned repository,
+then the cloned repository will become corrupt.
+
+
 
 --reference <repository>::
 	If the reference repository is on the local machine
 	automatically setup .git/objects/info/alternates to
 	obtain objects from the reference repository.  Using
 	an already existing repository as an alternate will
-	require less objects to be copied from the repository
+	require fewer objects to be copied from the repository
 	being cloned, reducing network and local storage costs.
++
+*NOTE*: see NOTE to --shared option.
 
 --quiet::
 -q::
-	Operate quietly.  This flag is passed to "rsync" and
-	"git-fetch-pack" commands when given.
+	Operate quietly.  This flag is also passed to the `rsync'
+	command when given.
+
+--verbose::
+-v::
+	Display the progressbar, even in case the standard output is not
+	a terminal.
 
 --no-checkout::
 -n::
@@ -92,16 +111,18 @@ OPTIONS
 	used, neither remote-tracking branches nor the related
 	configuration variables are created.
 
+--mirror::
+	Set up a mirror of the remote repository.  This implies --bare.
+
 --origin <name>::
 -o <name>::
 	Instead of using the remote name 'origin' to keep track
-	of the upstream repository, use <name> instead.
+	of the upstream repository, use <name>.
 
 --upload-pack <upload-pack>::
 -u <upload-pack>::
-	When given, and the repository to clone from is handled
-	by 'git-fetch-pack', '--exec=<upload-pack>' is passed to
-	the command to specify non-default path for the command
+	When given, and the repository to clone from is accessed
+	via ssh, this specifies a non-default path for the command
 	run on the other end.
 
 --template=<template_directory>::
@@ -111,11 +132,11 @@ OPTIONS
 
 --depth <depth>::
 	Create a 'shallow' clone with a history truncated to the
-	specified number of revs.  A shallow repository has
+	specified number of revisions.  A shallow repository has a
 	number of limitations (you cannot clone or fetch from
 	it, nor push from nor into it), but is adequate if you
-	want to only look at near the tip of a large project
-	with a long history, and would want to send in a fixes
+	are only interested in the recent history of a large project
+	with a long history, and would want to send in fixes
 	as patches.
 
 <repository>::
@@ -128,8 +149,9 @@ OPTIONS
 	part of the source repository is used if no directory is
 	explicitly given ("repo" for "/path/to/repo.git" and "foo"
 	for "host.xz:foo/.git").  Cloning into an existing directory
-	is not allowed.
+	is only allowed if the directory is empty.
 
+:git-clone: 1
 include::urls.txt[]
 
 Examples
@@ -190,4 +212,4 @@ Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[1] suite

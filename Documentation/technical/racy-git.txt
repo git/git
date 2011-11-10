@@ -135,7 +135,7 @@ them, and give the same timestamp to the index file:
 
 This will make all index entries racily clean.  The linux-2.6
 project, for example, there are over 20,000 files in the working
-tree.  On my Athron 64X2 3800+, after the above:
+tree.  On my Athlon 64 X2 3800+, after the above:
 
   $ /usr/bin/time git diff-files
   1.68user 0.54system 0:02.22elapsed 100%CPU (0avgtext+0avgdata 0maxresident)k
@@ -184,7 +184,7 @@ In a large project where raciness avoidance cost really matters,
 however, the initial computation of all object names in the
 index takes more than one second, and the index file is written
 out after all that happens.  Therefore the timestamp of the
-index file will be more than one seconds later than the the
+index file will be more than one seconds later than the
 youngest file in the working tree.  This means that in these
 cases there actually will not be any racily clean entry in
 the resulting index.

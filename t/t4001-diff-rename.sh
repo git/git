@@ -7,7 +7,7 @@ test_description='Test rename detection in diff engine.
 
 '
 . ./test-lib.sh
-. ../diff-lib.sh
+. "$TEST_DIRECTORY"/diff-lib.sh
 
 echo >path0 'Line 1
 Line 2
@@ -27,7 +27,7 @@ Line 15
 '
 
 test_expect_success \
-    'update-cache --add a file.' \
+    'update-index --add a file.' \
     'git update-index --add path0'
 
 test_expect_success \
@@ -71,10 +71,10 @@ test_expect_success 'favour same basenames over different ones' '
 	git rm path1 &&
 	mkdir subdir &&
 	git mv another-path subdir/path1 &&
-	git runstatus | grep "renamed: .*path1 -> subdir/path1"'
+	git status | grep "renamed: .*path1 -> subdir/path1"'
 
 test_expect_success  'favour same basenames even with minor differences' '
 	git show HEAD:path1 | sed "s/15/16/" > subdir/path1 &&
-	git runstatus | grep "renamed: .*path1 -> subdir/path1"'
+	git status | grep "renamed: .*path1 -> subdir/path1"'
 
 test_done

@@ -61,7 +61,7 @@ do
 		exit 2
 	esac
 
-	common=$(git merge-base --all $MRC $SHA1) ||
+	common=$(git merge-base --all $SHA1 $MRC) ||
 		die "Unable to find common commit with $SHA1"
 
 	case "$LF$common$LF" in
@@ -100,14 +100,7 @@ do
 		next=$(git write-tree 2>/dev/null)
 	fi
 
-	# We have merged the other branch successfully.  Ideally
-	# we could implement OR'ed heads in merge-base, and keep
-	# a list of commits we have merged so far in MRC to feed
-	# them to merge-base, but we approximate it by keep using
-	# the current MRC.  We used to update it to $common, which
-	# was incorrectly doing AND'ed merge-base here, which was
-	# unneeded.
-
+	MRC="$MRC $SHA1"
 	MRT=$next
 done
 

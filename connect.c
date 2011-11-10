@@ -36,12 +36,25 @@ static int check_ref(const char *name, int len, unsigned int flags)
 	return !(flags & ~REF_NORMAL);
 }
 
+int check_ref_type(const struct ref *ref, int flags)
+{
+	return check_ref(ref->name, strlen(ref->name), flags);
+}
+
+static void add_extra_have(struct extra_have_objects *extra, unsigned char *sha1)
+{
+	ALLOC_GROW(extra->array, extra->nr + 1, extra->alloc);
+	hashcpy(&(extra->array[extra->nr][0]), sha1);
+	extra->nr++;
+}
+
 /*
  * Read all the refs from the other end
  */
 struct ref **get_remote_heads(int in, struct ref **list,
 			      int nr_match, char **match,
-			      unsigned int flags)
+			      unsigned int flags,
+			      struct extra_have_objects *extra_have)
 {
 	*list = NULL;
 	for (;;) {
@@ -57,24 +70,31 @@ struct ref **get_remote_heads(int in, struct ref **list,
 		if (buffer[len-1] == '\n')
 			buffer[--len] = 0;
 
+		if (len > 4 && !prefixcmp(buffer, "ERR "))
+			die("remote error: %s", buffer + 4);
+
 		if (len < 42 || get_sha1_hex(buffer, old_sha1) || buffer[40] != ' ')
 			die("protocol error: expected sha/ref, got '%s'", buffer);
 		name = buffer + 41;
 
 		name_len = strlen(name);
 		if (len != name_len + 41) {
-			if (server_capabilities)
-				free(server_capabilities);
+			free(server_capabilities);
 			server_capabilities = xstrdup(name + name_len + 1);
+		}
+
+		if (extra_have &&
+		    name_len == 5 && !memcmp(".have", name, 5)) {
+			add_extra_have(extra_have, old_sha1);
+			continue;
 		}
 
 		if (!check_ref(name, name_len, flags))
 			continue;
 		if (nr_match && !path_match(name, nr_match, match))
 			continue;
-		ref = alloc_ref(len - 40);
+		ref = alloc_ref(buffer + 41);
 		hashcpy(ref->old_sha1, old_sha1);
-		memcpy(ref->name, buffer + 41, len - 40);
 		*list = ref;
 		list = &ref->next;
 	}
@@ -93,7 +113,7 @@ int get_ack(int fd, unsigned char *result_sha1)
 	int len = packet_read_line(fd, line, sizeof(line));
 
 	if (!len)
-		die("git-fetch-pack: expected ACK/NAK, got EOF");
+		die("git fetch-pack: expected ACK/NAK, got EOF");
 	if (line[len-1] == '\n')
 		line[--len] = 0;
 	if (!strcmp(line, "NAK"))
@@ -105,7 +125,7 @@ int get_ack(int fd, unsigned char *result_sha1)
 			return 1;
 		}
 	}
-	die("git-fetch_pack: expected ACK/NAK, got '%s'", line);
+	die("git fetch_pack: expected ACK/NAK, got '%s'", line);
 }
 
 int path_match(const char *path, int nr, char **match)
@@ -157,18 +177,11 @@ static enum protocol get_protocol(const char *name)
 
 static const char *ai_name(const struct addrinfo *ai)
 {
-	static char addr[INET_ADDRSTRLEN];
-	if ( AF_INET == ai->ai_family ) {
-		struct sockaddr_in *in;
-		in = (struct sockaddr_in *)ai->ai_addr;
-		inet_ntop(ai->ai_family, &in->sin_addr, addr, sizeof(addr));
-	} else if ( AF_INET6 == ai->ai_family ) {
-		struct sockaddr_in6 *in;
-		in = (struct sockaddr_in6 *)ai->ai_addr;
-		inet_ntop(ai->ai_family, &in->sin6_addr, addr, sizeof(addr));
-	} else {
+	static char addr[NI_MAXHOST];
+	if (getnameinfo(ai->ai_addr, ai->ai_addrlen, addr, sizeof(addr), NULL, 0,
+			NI_NUMERICHOST) != 0)
 		strcpy(addr, "(unknown)");
-	}
+
 	return addr;
 }
 
@@ -295,7 +308,7 @@ static int git_tcp_connect_sock(char *host, int flags)
 		/* Not numeric */
 		struct servent *se = getservbyname(port,"tcp");
 		if ( !se )
-			die("Unknown port %s\n", port);
+			die("Unknown port %s", port);
 		nport = se->s_port;
 	}
 
@@ -353,18 +366,21 @@ static void git_tcp_connect(int fd[2], char *host, int flags)
 
 
 static char *git_proxy_command;
-static const char *rhost_name;
-static int rhost_len;
 
-static int git_proxy_command_options(const char *var, const char *value)
+static int git_proxy_command_options(const char *var, const char *value,
+		void *cb)
 {
 	if (!strcmp(var, "core.gitproxy")) {
 		const char *for_pos;
 		int matchlen = -1;
 		int hostlen;
+		const char *rhost_name = cb;
+		int rhost_len = strlen(rhost_name);
 
 		if (git_proxy_command)
 			return 0;
+		if (!value)
+			return config_error_nonbool(var);
 		/* [core]
 		 * ;# matches www.kernel.org as well
 		 * gitproxy = netcatter-1 for kernel.org
@@ -393,23 +409,18 @@ static int git_proxy_command_options(const char *var, const char *value)
 			if (matchlen == 4 &&
 			    !memcmp(value, "none", 4))
 				matchlen = 0;
-			git_proxy_command = xmalloc(matchlen + 1);
-			memcpy(git_proxy_command, value, matchlen);
-			git_proxy_command[matchlen] = 0;
+			git_proxy_command = xmemdupz(value, matchlen);
 		}
 		return 0;
 	}
 
-	return git_default_config(var, value);
+	return git_default_config(var, value, cb);
 }
 
 static int git_use_proxy(const char *host)
 {
-	rhost_name = host;
-	rhost_len = strlen(host);
 	git_proxy_command = getenv("GIT_PROXY_COMMAND");
-	git_config(git_proxy_command_options);
-	rhost_name = NULL;
+	git_config(git_proxy_command_options, (void*)host);
 	return (git_proxy_command && *git_proxy_command);
 }
 
@@ -459,8 +470,8 @@ char *get_port(char *host)
 	char *p = strchr(host, ':');
 
 	if (p) {
-		strtol(p+1, &end, 10);
-		if (*end == '\0') {
+		long port = strtol(p + 1, &end, 10);
+		if (end != p + 1 && *end == '\0' && 0 <= port && port < 65536) {
 			*p = '\0';
 			return p+1;
 		}
@@ -469,25 +480,32 @@ char *get_port(char *host)
 	return NULL;
 }
 
+static struct child_process no_fork;
+
 /*
- * This returns 0 if the transport protocol does not need fork(2),
- * or a process id if it does.  Once done, finish the connection
- * with finish_connect() with the value returned from this function
- * (it is safe to call finish_connect() with 0 to support the former
- * case).
+ * This returns a dummy child_process if the transport protocol does not
+ * need fork(2), or a struct child_process object if it does.  Once done,
+ * finish the connection with finish_connect() with the value returned from
+ * this function (it is safe to call finish_connect() with NULL to support
+ * the former case).
  *
- * Does not return a negative value on error; it just dies.
+ * If it returns, the connect is successful; it just dies on errors (this
+ * will hopefully be changed in a libification effort, to return NULL when
+ * the connection failed).
  */
-pid_t git_connect(int fd[2], char *url, const char *prog, int flags)
+struct child_process *git_connect(int fd[2], const char *url_orig,
+				  const char *prog, int flags)
 {
-	char *host, *path = url;
+	char *url = xstrdup(url_orig);
+	char *host, *path;
 	char *end;
 	int c;
-	int pipefd[2][2];
-	pid_t pid;
+	struct child_process *conn;
 	enum protocol protocol = PROTO_LOCAL;
 	int free_path = 0;
 	char *port = NULL;
+	const char **arg;
+	struct strbuf cmd;
 
 	/* Without this we cannot rely on waitpid() to tell
 	 * what happened to our children.
@@ -517,7 +535,7 @@ pid_t git_connect(int fd[2], char *url, const char *prog, int flags)
 		end = host;
 
 	path = strchr(end, c);
-	if (path) {
+	if (path && !has_dos_drive_prefix(end)) {
 		if (c == ':') {
 			protocol = PROTO_SSH;
 			*path++ = '\0';
@@ -568,79 +586,72 @@ pid_t git_connect(int fd[2], char *url, const char *prog, int flags)
 			     prog, path, 0,
 			     target_host, 0);
 		free(target_host);
+		free(url);
 		if (free_path)
 			free(path);
-		return 0;
+		return &no_fork;
 	}
 
-	if (pipe(pipefd[0]) < 0 || pipe(pipefd[1]) < 0)
-		die("unable to create pipe pair for communication");
-	pid = fork();
-	if (pid < 0)
+	conn = xcalloc(1, sizeof(*conn));
+
+	strbuf_init(&cmd, MAX_CMD_LEN);
+	strbuf_addstr(&cmd, prog);
+	strbuf_addch(&cmd, ' ');
+	sq_quote_buf(&cmd, path);
+	if (cmd.len >= MAX_CMD_LEN)
+		die("command line too long");
+
+	conn->in = conn->out = -1;
+	conn->argv = arg = xcalloc(6, sizeof(*arg));
+	if (protocol == PROTO_SSH) {
+		const char *ssh = getenv("GIT_SSH");
+		if (!ssh) ssh = "ssh";
+
+		*arg++ = ssh;
+		if (port) {
+			*arg++ = "-p";
+			*arg++ = port;
+		}
+		*arg++ = host;
+	}
+	else {
+		/* remove these from the environment */
+		const char *env[] = {
+			ALTERNATE_DB_ENVIRONMENT,
+			DB_ENVIRONMENT,
+			GIT_DIR_ENVIRONMENT,
+			GIT_WORK_TREE_ENVIRONMENT,
+			GRAFT_ENVIRONMENT,
+			INDEX_ENVIRONMENT,
+			NULL
+		};
+		conn->env = env;
+		*arg++ = "sh";
+		*arg++ = "-c";
+	}
+	*arg++ = cmd.buf;
+	*arg = NULL;
+
+	if (start_command(conn))
 		die("unable to fork");
-	if (!pid) {
-		char command[MAX_CMD_LEN];
-		char *posn = command;
-		int size = MAX_CMD_LEN;
-		int of = 0;
 
-		of |= add_to_string(&posn, &size, prog, 0);
-		of |= add_to_string(&posn, &size, " ", 0);
-		of |= add_to_string(&posn, &size, path, 1);
-
-		if (of)
-			die("command line too long");
-
-		dup2(pipefd[1][0], 0);
-		dup2(pipefd[0][1], 1);
-		close(pipefd[0][0]);
-		close(pipefd[0][1]);
-		close(pipefd[1][0]);
-		close(pipefd[1][1]);
-		if (protocol == PROTO_SSH) {
-			const char *ssh, *ssh_basename;
-			ssh = getenv("GIT_SSH");
-			if (!ssh) ssh = "ssh";
-			ssh_basename = strrchr(ssh, '/');
-			if (!ssh_basename)
-				ssh_basename = ssh;
-			else
-				ssh_basename++;
-
-			if (!port)
-				execlp(ssh, ssh_basename, host, command, NULL);
-			else
-				execlp(ssh, ssh_basename, "-p", port, host,
-				       command, NULL);
-		}
-		else {
-			unsetenv(ALTERNATE_DB_ENVIRONMENT);
-			unsetenv(DB_ENVIRONMENT);
-			unsetenv(GIT_DIR_ENVIRONMENT);
-			unsetenv(GIT_WORK_TREE_ENVIRONMENT);
-			unsetenv(GRAFT_ENVIRONMENT);
-			unsetenv(INDEX_ENVIRONMENT);
-			execlp("sh", "sh", "-c", command, NULL);
-		}
-		die("exec failed");
-	}
-	fd[0] = pipefd[0][0];
-	fd[1] = pipefd[1][1];
-	close(pipefd[0][1]);
-	close(pipefd[1][0]);
+	fd[0] = conn->out; /* read from child's stdout */
+	fd[1] = conn->in;  /* write to child's stdin */
+	strbuf_release(&cmd);
+	free(url);
 	if (free_path)
 		free(path);
-	return pid;
+	return conn;
 }
 
-int finish_connect(pid_t pid)
+int finish_connect(struct child_process *conn)
 {
-	if (pid == 0)
+	int code;
+	if (!conn || conn == &no_fork)
 		return 0;
 
-	while (waitpid(pid, NULL, 0) < 0) {
-		if (errno != EINTR)
-			return -1;
-	}
-	return 0;
+	code = finish_command(conn);
+	free(conn->argv);
+	free(conn);
+	return code;
 }

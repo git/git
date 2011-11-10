@@ -21,11 +21,13 @@ git repository.
 
 OPTIONS
 -------
-To control which revisions to shown, the command takes options applicable to
-the gitlink:git-rev-list[1] command. This manual page describes only the most
+To control which revisions to show, the command takes options applicable to
+the 'git-rev-list' command (see linkgit:git-rev-list[1]).
+This manual page describes only the most
 frequently used options.
 
--n <number>, --max-count=<number>::
+-n <number>::
+--max-count=<number>::
 
 	Limits the number of commits to show.
 
@@ -41,6 +43,25 @@ frequently used options.
 
 	Show all branches.
 
+--merge::
+
+	After an attempt to merge stops with conflicts, show the commits on
+	the history between two branches (i.e. the HEAD and the MERGE_HEAD)
+	that modify the conflicted files and do not exist on all the heads
+	being merged.
+
+--argscmd=<command>::
+	Command to be run each time gitk has to determine the list of
+	<revs> to show.  The command is expected to print on its standard
+	output a list of additional revs to be shown, one per line.
+	Use this instead of explicitly specifying <revs> if the set of
+	commits to show may vary between refreshes.
+
+--select-commit=<ref>::
+
+	Automatically select the specified commit after loading the graph.
+	Default behavior is equivalent to specifying '--select-commit=HEAD'.
+
 <revs>::
 
 	Limit the revisions to show. This can be either a single revision
@@ -48,19 +69,19 @@ frequently used options.
 	the form "'<from>'..'<to>'" to show all revisions between '<from>' and
 	back to '<to>'. Note, more advanced revision selection can be applied.
 	For a more complete list of ways to spell object names, see
-	"SPECIFYING REVISIONS" section in gitlink:git-rev-parse[1].
+	"SPECIFYING REVISIONS" section in linkgit:git-rev-parse[1].
 
-<path>::
+<path>...::
 
 	Limit commits to the ones touching files in the given paths. Note, to
-	avoid ambiguity wrt. revision names use "--" to separate the paths
+	avoid ambiguity with respect to revision names use "--" to separate the paths
 	from any preceding options.
 
 Examples
 --------
 gitk v2.6.12.. include/scsi drivers/scsi::
 
-	Show as the changes since version 'v2.6.12' that changed any
+	Show the changes since version 'v2.6.12' that changed any
 	file in the include/scsi or drivers/scsi subdirectories
 
 gitk --since="2 weeks ago" \-- gitk::
@@ -69,12 +90,17 @@ gitk --since="2 weeks ago" \-- gitk::
 	The "--" is necessary to avoid confusion with the *branch* named
 	'gitk'
 
-gitk --max-count=100 --all -- Makefile::
+gitk --max-count=100 --all \-- Makefile::
 
 	Show at most 100 changes made to the file 'Makefile'. Instead of only
 	looking for changes in the current branch look in all branches.
 
-See Also
+Files
+-----
+Gitk creates the .gitk file in your $HOME directory to store preferences
+such as display options, font, and colors.
+
+SEE ALSO
 --------
 'qgit(1)'::
 	A repository browser written in C++ using Qt.
@@ -98,4 +124,4 @@ Documentation by Junio C Hamano, Jonas Fonseca, and the git-list
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[1] suite

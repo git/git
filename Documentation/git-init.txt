@@ -8,7 +8,7 @@ git-init - Create an empty git repository or reinitialize an existing one
 
 SYNOPSIS
 --------
-'git-init' [-q | --quiet] [--template=<template_directory>] [--shared[=<permissions>]]
+'git init' [-q | --quiet] [--bare] [--template=<template_directory>] [--shared[=<permissions>]]
 
 
 OPTIONS
@@ -16,9 +16,15 @@ OPTIONS
 
 --
 
--q, \--quiet::
+-q::
+--quiet::
 
 Only print error and warning messages, all other output will be suppressed.
+
+--bare::
+
+Create a bare repository. If GIT_DIR environment is not set, it is set to the
+current working directory.
 
 --template=<template_directory>::
 
@@ -31,7 +37,7 @@ structure, some suggested "exclude patterns", and copies of non-executing
 "hook" files.  The suggested patterns and hook files are all modifiable and
 extensible.
 
---shared[={false|true|umask|group|all|world|everybody}]::
+--shared[={false|true|umask|group|all|world|everybody|0xxx}]::
 
 Specify that the git repository is to be shared amongst several users.  This
 allows users belonging to the same group to push into that
@@ -48,11 +54,23 @@ is given:
 
  - 'group' (or 'true'): Make the repository group-writable, (and g+sx, since
    the git group may be not the primary group of all users).
+   This is used to loosen the permissions of an otherwise safe umask(2) value.
+   Note that the umask still applies to the other permission bits (e.g. if
+   umask is '0022', using 'group' will not remove read privileges from other
+   (non-group) users). See '0xxx' for how to exactly specify the repository
+   permissions.
 
  - 'all' (or 'world' or 'everybody'): Same as 'group', but make the repository
    readable by all users.
 
-By default, the configuration flag receive.denyNonFastforward is enabled
+ - '0xxx': '0xxx' is an octal number and each file will have mode '0xxx'.
+   '0xxx' will override users' umask(2) value (and not only loosen permissions
+   as 'group' and 'all' does). '0640' will create a repository which is
+   group-readable, but not group-writable or accessible to others. '0660' will
+   create a repo that is readable and writable to the current user and group,
+   but inaccessible to others.
+
+By default, the configuration flag receive.denyNonFastForwards is enabled
 in shared repositories, so that you cannot force a non fast-forwarding push
 into it.
 
@@ -74,11 +92,11 @@ If the object storage directory is specified via the `$GIT_OBJECT_DIRECTORY`
 environment variable then the sha1 directories are created underneath -
 otherwise the default `$GIT_DIR/objects` directory is used.
 
-Running `git-init` in an existing repository is safe. It will not overwrite
-things that are already there. The primary reason for rerunning `git-init`
+Running 'git-init' in an existing repository is safe. It will not overwrite
+things that are already there. The primary reason for rerunning 'git-init'
 is to pick up newly added templates.
 
-Note that `git-init` is the same as `git-init-db`.  The command
+Note that 'git-init' is the same as 'git-init-db'.  The command
 was primarily meant to initialize the object database, but over
 time it has become responsible for setting up the other aspects
 of the repository, such as installing the default hooks and
@@ -93,8 +111,8 @@ Start a new git repository for an existing code base::
 +
 ----------------
 $ cd /path/to/my/codebase
-$ git-init      <1>
-$ git-add .     <2>
+$ git init      <1>
+$ git add .     <2>
 ----------------
 +
 <1> prepare /path/to/my/codebase/.git directory
@@ -111,4 +129,4 @@ Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[1] suite

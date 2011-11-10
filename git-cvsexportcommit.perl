@@ -1,27 +1,47 @@
 #!/usr/bin/perl -w
 
-# Known limitations:
-# - does not propagate permissions
-# - error handling has not been extensively tested
-#
-
 use strict;
 use Getopt::Std;
 use File::Temp qw(tempdir);
 use Data::Dumper;
 use File::Basename qw(basename dirname);
+use File::Spec;
+use Git;
 
-unless ($ENV{GIT_DIR} && -r $ENV{GIT_DIR}){
-    die "GIT_DIR is not defined or is unreadable";
-}
+our ($opt_h, $opt_P, $opt_p, $opt_v, $opt_c, $opt_f, $opt_a, $opt_m, $opt_d, $opt_u, $opt_w, $opt_W);
 
-our ($opt_h, $opt_P, $opt_p, $opt_v, $opt_c, $opt_f, $opt_a, $opt_m, $opt_d, $opt_u);
-
-getopts('uhPpvcfam:d:');
+getopts('uhPpvcfam:d:w:W');
 
 $opt_h && usage();
 
 die "Need at least one commit identifier!" unless @ARGV;
+
+# Get git-config settings
+my $repo = Git->repository();
+$opt_w = $repo->config('cvsexportcommit.cvsdir') unless defined $opt_w;
+
+if ($opt_w || $opt_W) {
+	# Remember where GIT_DIR is before changing to CVS checkout
+	unless ($ENV{GIT_DIR}) {
+		# No GIT_DIR set. Figure it out for ourselves
+		my $gd =`git-rev-parse --git-dir`;
+		chomp($gd);
+		$ENV{GIT_DIR} = $gd;
+	}
+	# Make sure GIT_DIR is absolute
+	$ENV{GIT_DIR} = File::Spec->rel2abs($ENV{GIT_DIR});
+}
+
+if ($opt_w) {
+	if (! -d $opt_w."/CVS" ) {
+		die "$opt_w is not a CVS checkout";
+	}
+	chdir $opt_w or die "Cannot change to CVS checkout at $opt_w";
+}
+unless ($ENV{GIT_DIR} && -r $ENV{GIT_DIR}){
+    die "GIT_DIR is not defined or is unreadable";
+}
+
 
 my @cvs;
 if ($opt_d) {
@@ -29,11 +49,6 @@ if ($opt_d) {
 } else {
 	@cvs = ('cvs');
 }
-
-# setup a tempdir
-our ($tmpdir, $tmpdirname) = tempdir('git-cvsapplycommit-XXXXXX',
-				     TMPDIR => 1,
-				     CLEANUP => 1);
 
 # resolve target commit
 my $commit;
@@ -87,6 +102,7 @@ foreach my $line (@commit) {
     }
 }
 
+my $noparent = "0000000000000000000000000000000000000000";
 if ($parent) {
     my $found;
     # double check that it's a valid parent
@@ -100,9 +116,20 @@ if ($parent) {
 } else { # we don't have a parent from the cmdline...
     if (@parents == 1) { # it's safe to get it from the commit
 	$parent = $parents[0];
-    } else { # or perhaps not!
-	die "This commit has more than one parent -- please name the parent you want to use explicitly";
+    } elsif (@parents == 0) { # there is no parent
+        $parent = $noparent;
+    } else { # cannot choose automatically from multiple parents
+        die "This commit has more than one parent -- please name the parent you want to use explicitly";
     }
+}
+
+my $go_back_to = 0;
+
+if ($opt_W) {
+    $opt_v && print "Resetting to $parent\n";
+    $go_back_to = `git symbolic-ref HEAD 2> /dev/null ||
+	git rev-parse HEAD` || die "Could not determine current branch";
+    system("git checkout -q $parent^0") && die "Could not check out $parent^0";
 }
 
 $opt_v && print "Applying to CVS commit $commit from parent $parent\n";
@@ -121,7 +148,11 @@ if ($opt_a) {
 }
 close MSG;
 
-`git-diff-tree --binary -p $parent $commit >.cvsexportcommit.diff`;# || die "Cannot diff";
+if ($parent eq $noparent) {
+    `git-diff-tree --binary -p --root $commit >.cvsexportcommit.diff`;# || die "Cannot diff";
+} else {
+    `git-diff-tree --binary -p $parent $commit >.cvsexportcommit.diff`;# || die "Cannot diff";
+}
 
 ## apply non-binary changes
 
@@ -134,7 +165,7 @@ my $context = $opt_p ? '' : '-C1';
 print "Checking if patch will apply\n";
 
 my @stat;
-open APPLY, "GIT_DIR= git-apply $context --binary --summary --numstat<.cvsexportcommit.diff|" || die "cannot patch";
+open APPLY, "GIT_DIR= git-apply $context --summary --numstat<.cvsexportcommit.diff|" || die "cannot patch";
 @stat=<APPLY>;
 close APPLY || die "Cannot patch";
 my (@bfiles,@files,@afiles,@dfiles);
@@ -179,18 +210,43 @@ foreach my $f (@files) {
 my %cvsstat;
 if (@canstatusfiles) {
     if ($opt_u) {
-      my @updated = safe_pipe_capture(@cvs, 'update', @canstatusfiles);
+      my @updated = xargs_safe_pipe_capture([@cvs, 'update'], @canstatusfiles);
       print @updated;
     }
-    my @cvsoutput;
-    @cvsoutput= safe_pipe_capture(@cvs, 'status', @canstatusfiles);
-    my $matchcount = 0;
-    foreach my $l (@cvsoutput) {
-        chomp $l;
-        if ( $l =~ /^File:/ and  $l =~ /Status: (.*)$/ ) {
-            $cvsstat{$canstatusfiles[$matchcount]} = $1;
-            $matchcount++;
+    # "cvs status" reorders the parameters, notably when there are multiple
+    # arguments with the same basename.  So be precise here.
+
+    my %added = map { $_ => 1 } @afiles;
+    my %todo = map { $_ => 1 } @canstatusfiles;
+
+    while (%todo) {
+      my @canstatusfiles2 = ();
+      my %fullname = ();
+      foreach my $name (keys %todo) {
+	my $basename = basename($name);
+
+	$basename = "no file " . $basename if (exists($added{$basename}));
+	$basename =~ s/^\s+//;
+	$basename =~ s/\s+$//;
+
+	if (!exists($fullname{$basename})) {
+	  $fullname{$basename} = $name;
+	  push (@canstatusfiles2, $name);
+	  delete($todo{$name});
         }
+      }
+      my @cvsoutput;
+      @cvsoutput = xargs_safe_pipe_capture([@cvs, 'status'], @canstatusfiles2);
+      foreach my $l (@cvsoutput) {
+        chomp $l;
+        if ($l =~ /^File:\s+(.*\S)\s+Status: (.*)$/) {
+	  if (!exists($fullname{$1})) {
+	    print STDERR "Huh? Status reported for unexpected file '$1'\n";
+	  } else {
+	    $cvsstat{$fullname{$1}} = $2;
+	  }
+	}
+      }
     }
 }
 
@@ -220,10 +276,25 @@ if ($dirty) {
 }
 
 print "Applying\n";
-`GIT_DIR= git-apply $context --binary --summary --numstat --apply <.cvsexportcommit.diff` || die "cannot patch";
+if ($opt_W) {
+    system("git checkout -q $commit^0") && die "cannot patch";
+} else {
+    `GIT_DIR= git-apply $context --summary --numstat --apply <.cvsexportcommit.diff` || die "cannot patch";
+}
 
 print "Patch applied successfully. Adding new files and directories to CVS\n";
 my $dirtypatch = 0;
+
+#
+# We have to add the directories in order otherwise we will have
+# problems when we try and add the sub-directory of a directory we
+# have not added yet.
+#
+# Luckily this is easy to deal with by sorting the directories and
+# dealing with the shortest ones first.
+#
+@dirs = sort { length $a <=> length $b} @dirs;
+
 foreach my $d (@dirs) {
     if (system(@cvs,'add',$d)) {
 	$dirtypatch = 1;
@@ -261,13 +332,16 @@ if ($dirtypatch) {
     print "You'll need to apply the patch in .cvsexportcommit.diff manually\n";
     print "using a patch program. After applying the patch and resolving the\n";
     print "problems you may commit using:";
-    print "\n    $cmd\n\n";
+    print "\n    cd \"$opt_w\"" if $opt_w;
+    print "\n    $cmd\n";
+    print "\n    git checkout $go_back_to\n" if $go_back_to;
+    print "\n";
     exit(1);
 }
 
 if ($opt_c) {
     print "Autocommit\n  $cmd\n";
-    print safe_pipe_capture(@cvs, 'commit', '-F', '.msg', @files);
+    print xargs_safe_pipe_capture([@cvs, 'commit', '-F', '.msg'], @files);
     if ($?) {
 	die "Exiting: The commit did not succeed";
     }
@@ -281,6 +355,14 @@ if ($opt_c) {
 # clean up
 unlink(".cvsexportcommit.diff");
 
+if ($opt_W) {
+    system("git checkout $go_back_to") && die "cannot move back to $go_back_to";
+    if (!($go_back_to =~ /^[0-9a-fA-F]{40}$/)) {
+	system("git symbolic-ref HEAD $go_back_to") &&
+	    die "cannot move back to $go_back_to";
+    }
+}
+
 # CVS version 1.11.x and 1.12.x sleeps the wrong way to ensure the timestamp
 # used by CVS and the one set by subsequence file modifications are different.
 # If they are not different CVS will not detect changes.
@@ -288,7 +370,7 @@ sleep(1);
 
 sub usage {
 	print STDERR <<END;
-Usage: GIT_DIR=/path/to/.git ${\basename $0} [-h] [-p] [-v] [-c] [-f] [-m msgprefix] [ parent ] commit
+Usage: GIT_DIR=/path/to/.git git cvsexportcommit [-h] [-p] [-v] [-c] [-f] [-u] [-w cvsworkdir] [-m msgprefix] [ parent ] commit
 END
 	exit(1);
 }
@@ -307,15 +389,24 @@ sub safe_pipe_capture {
     return wantarray ? @output : join('',@output);
 }
 
-sub safe_pipe_capture_blob {
-    my $output;
-    if (my $pid = open my $child, '-|') {
-        local $/;
-	undef $/;
-	$output = (<$child>);
-	close $child or die join(' ',@_).": $! $?";
-    } else {
-	exec(@_) or die "$! $?"; # exec() can fail the executable can't be found
-    }
-    return $output;
+sub xargs_safe_pipe_capture {
+	my $MAX_ARG_LENGTH = 65536;
+	my $cmd = shift;
+	my @output;
+	my $output;
+	while(@_) {
+		my @args;
+		my $length = 0;
+		while(@_ && $length < $MAX_ARG_LENGTH) {
+			push @args, shift;
+			$length += length($args[$#args]);
+		}
+		if (wantarray) {
+			push @output, safe_pipe_capture(@$cmd, @args);
+		}
+		else {
+			$output .= safe_pipe_capture(@$cmd, @args);
+		}
+	}
+	return wantarray ? @output : $output;
 }

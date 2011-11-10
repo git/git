@@ -7,11 +7,11 @@ At the core level, git is character encoding agnostic.
    to be what lstat(2) and creat(2) accepts.  There is no such
    thing as pathname encoding translation.
 
- - The contents of the blob objects are uninterpreted sequence
+ - The contents of the blob objects are uninterpreted sequences
    of bytes.  There is no encoding translation at the core
    level.
 
- - The commit log messages are uninterpreted sequence of non-NUL
+ - The commit log messages are uninterpreted sequences of non-NUL
    bytes.
 
 Although we encourage that the commit log messages are encoded
@@ -21,8 +21,8 @@ project find it more convenient to use legacy encodings, git
 does not forbid it.  However, there are a few things to keep in
 mind.
 
-. `git-commit-tree` (hence, `git-commit` which uses it) issues
-  an warning if the commit log message given to it does not look
+. 'git-commit' and 'git-commit-tree' issues
+  a warning if the commit log message given to it does not look
   like a valid UTF-8 string, unless you explicitly say your
   project uses a legacy encoding.  The way to say this is to
   have i18n.commitencoding in `.git/config` file, like this:
@@ -37,9 +37,9 @@ of `i18n.commitencoding` in its `encoding` header.  This is to
 help other people who look at them later.  Lack of this header
 implies that the commit log message is encoded in UTF-8.
 
-. `git-log`, `git-show` and friends looks at the `encoding`
-  header of a commit object, and tries to re-code the log
-  message into UTF-8 unless otherwise specified.  You can
+. 'git-log', 'git-show', 'git-blame' and friends look at the
+  `encoding` header of a commit object, and try to re-code the
+  log message into UTF-8 unless otherwise specified.  You can
   specify the desired output encoding with
   `i18n.logoutputencoding` in `.git/config` file, like this:
 +

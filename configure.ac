@@ -42,6 +42,8 @@ else \
 	if test "$withval" = "yes"; then \
 		AC_MSG_WARN([You should provide path for --with-$1=PATH]); \
 	else \
+		m4_toupper($1)_PATH=$withval; \
+		AC_MSG_NOTICE([Setting m4_toupper($1)_PATH to $withval]); \
 		GIT_CONF_APPEND_LINE(${PROGRAM}_PATH=$withval); \
 	fi; \
 fi; \
@@ -61,10 +63,48 @@ elif test "$withval" = "yes"; then \
 	m4_toupper(NO_$1)=; \
 else \
 	m4_toupper(NO_$1)=; \
+	m4_toupper($1)DIR=$withval; \
+	AC_MSG_NOTICE([Setting m4_toupper($1)DIR to $withval]); \
 	GIT_CONF_APPEND_LINE(${PACKAGE}DIR=$withval); \
 fi \
 ])# GIT_PARSE_WITH
 
+dnl
+dnl GIT_CHECK_FUNC(FUNCTION, IFTRUE, IFFALSE)
+dnl -----------------------------------------
+dnl Similar to AC_CHECK_FUNC, but on systems that do not generate
+dnl warnings for missing prototypes (e.g. FreeBSD when compiling without
+dnl -Wall), it does not work.  By looking for function definition in
+dnl libraries, this problem can be worked around.
+AC_DEFUN([GIT_CHECK_FUNC],[AC_CHECK_FUNC([$1],[
+  AC_SEARCH_LIBS([$1],,
+  [$2],[$3])
+],[$3])])
+
+dnl
+dnl GIT_STASH_FLAGS(BASEPATH_VAR)
+dnl -----------------------------
+dnl Allow for easy stashing of LDFLAGS and CPPFLAGS before running
+dnl tests that may want to take user settings into account.
+AC_DEFUN([GIT_STASH_FLAGS],[
+if test -n "$1"; then
+   old_CPPFLAGS="$CPPFLAGS"
+   old_LDFLAGS="$LDFLAGS"
+   CPPFLAGS="-I$1/include $CPPFLAGS"
+   LDFLAGS="-L$1/$lib $LDFLAGS"
+fi
+])
+
+dnl
+dnl GIT_UNSTASH_FLAGS(BASEPATH_VAR)
+dnl -----------------------------
+dnl Restore the stashed *FLAGS values.
+AC_DEFUN([GIT_UNSTASH_FLAGS],[
+if test -n "$1"; then
+   CPPFLAGS="$old_CPPFLAGS"
+   LDFLAGS="$old_LDFLAGS"
+fi
+])
 
 ## Site configuration related to programs (before tests)
 ## --with-PACKAGE[=ARG] and --without-PACKAGE
@@ -73,225 +113,40 @@ fi \
 AC_ARG_WITH([lib],
  [AS_HELP_STRING([--with-lib=ARG],
                  [ARG specifies alternative name for lib directory])],
- [if test "$withval" = "no" -o "$withval" = "yes"; then \
+ [if test "$withval" = "no" || test "$withval" = "yes"; then \
 	AC_MSG_WARN([You should provide name for --with-lib=ARG]); \
 else \
+	lib=$withval; \
+	AC_MSG_NOTICE([Setting lib to '$lib']); \
 	GIT_CONF_APPEND_LINE(lib=$withval); \
 fi; \
 ],[])
-#
-# Define SHELL_PATH to provide path to shell.
-GIT_ARG_SET_PATH(shell)
-#
-# Define PERL_PATH to provide path to Perl.
-GIT_ARG_SET_PATH(perl)
-#
-# Define ZLIB_PATH to provide path to zlib.
-GIT_ARG_SET_PATH(zlib)
-#
-# Declare the with-tcltk/without-tcltk options.
-AC_ARG_WITH(tcltk,
-AS_HELP_STRING([--with-tcltk],[use Tcl/Tk GUI (default is YES)])
-AS_HELP_STRING([],[ARG is the full path to the Tcl/Tk interpreter.])
-AS_HELP_STRING([],[Bare --with-tcltk will make the GUI part only if])
-AS_HELP_STRING([],[Tcl/Tk interpreter will be found in a system.]),\
-GIT_PARSE_WITH(tcltk))
-#
 
-
-## Checks for programs.
-AC_MSG_NOTICE([CHECKS for programs])
-#
-AC_PROG_CC([cc gcc])
-#AC_PROG_INSTALL		# needs install-sh or install.sh in sources
-AC_CHECK_TOOL(AR, ar, :)
-AC_CHECK_PROGS(TAR, [gtar tar])
-# TCLTK_PATH will be set to some value if we want Tcl/Tk
-# or will be empty otherwise.
-if test -z "$NO_TCLTK"; then
-  if test "$with_tcltk" = ""; then
-  # No Tcl/Tk switches given. Do not check for Tcl/Tk, use bare 'wish'.
-    TCLTK_PATH=wish
-    AC_SUBST(TCLTK_PATH)
-  elif test "$with_tcltk" = "yes"; then
-  # Tcl/Tk check requested.
-    AC_CHECK_PROGS(TCLTK_PATH, [wish], )
-  else
-    AC_MSG_RESULT([Using Tcl/Tk interpreter $with_tcltk])
-    TCLTK_PATH="$with_tcltk"
-    AC_SUBST(TCLTK_PATH)
-  fi
+if test -z "$lib"; then
+   AC_MSG_NOTICE([Setting lib to 'lib' (the default)])
+   lib=lib
 fi
 
-## Checks for libraries.
-AC_MSG_NOTICE([CHECKS for libraries])
-#
-# Define NO_OPENSSL environment variable if you do not have OpenSSL.
-# Define NEEDS_SSL_WITH_CRYPTO if you need -lcrypto with -lssl (Darwin).
-AC_CHECK_LIB([crypto], [SHA1_Init],
-[NEEDS_SSL_WITH_CRYPTO=],
-[AC_CHECK_LIB([ssl], [SHA1_Init],
- [NEEDS_SSL_WITH_CRYPTO=YesPlease
-  NEEDS_SSL_WITH_CRYPTO=],
- [NO_OPENSSL=YesPlease])])
-AC_SUBST(NEEDS_SSL_WITH_CRYPTO)
-AC_SUBST(NO_OPENSSL)
-#
-# Define NO_CURL if you do not have curl installed.  git-http-pull and
-# git-http-push are not built, and you cannot use http:// and https://
-# transports.
-AC_CHECK_LIB([curl], [curl_global_init],
-[NO_CURL=],
-[NO_CURL=YesPlease])
-AC_SUBST(NO_CURL)
-#
-# Define NO_EXPAT if you do not have expat installed.  git-http-push is
-# not built, and you cannot push using http:// and https:// transports.
-AC_CHECK_LIB([expat], [XML_ParserCreate],
-[NO_EXPAT=],
-[NO_EXPAT=YesPlease])
-AC_SUBST(NO_EXPAT)
-#
-# Define NEEDS_LIBICONV if linking with libc is not enough (Darwin and
-# some Solaris installations).
-# Define NO_ICONV if neither libc nor libiconv support iconv.
-AC_DEFUN([ICONVTEST_SRC], [
-#include <iconv.h>
-
-int main(void)
-{
-	iconv_open("", "");
-	return 0;
-}
-])
-AC_MSG_CHECKING([for iconv in -lc])
-AC_LINK_IFELSE(ICONVTEST_SRC,
-	[AC_MSG_RESULT([yes])
-	NEEDS_LIBICONV=],
-	[AC_MSG_RESULT([no])
-	old_LIBS="$LIBS"
-	LIBS="$LIBS -liconv"
-	AC_MSG_CHECKING([for iconv in -liconv])
-	AC_LINK_IFELSE(ICONVTEST_SRC,
-		[AC_MSG_RESULT([yes])
-		NEEDS_LIBICONV=YesPlease],
-		[AC_MSG_RESULT([no])
-		NO_ICONV=YesPlease])
-	LIBS="$old_LIBS"])
-AC_SUBST(NEEDS_LIBICONV)
-AC_SUBST(NO_ICONV)
-test -n "$NEEDS_LIBICONV" && LIBS="$LIBS -liconv"
-#
-# Define NEEDS_SOCKET if linking with libc is not enough (SunOS,
-# Patrick Mauritz).
-AC_CHECK_LIB([c], [socket],
-[NEEDS_SOCKET=],
-[NEEDS_SOCKET=YesPlease])
-AC_SUBST(NEEDS_SOCKET)
-test -n "$NEEDS_SOCKET" && LIBS="$LIBS -lsocket"
-
-
-## Checks for header files.
-
-
-## Checks for typedefs, structures, and compiler characteristics.
-AC_MSG_NOTICE([CHECKS for typedefs, structures, and compiler characteristics])
-#
-# Define NO_D_INO_IN_DIRENT if you don't have d_ino in your struct dirent.
-AC_CHECK_MEMBER(struct dirent.d_ino,
-[NO_D_INO_IN_DIRENT=],
-[NO_D_INO_IN_DIRENT=YesPlease],
-[#include <dirent.h>])
-AC_SUBST(NO_D_INO_IN_DIRENT)
-#
-# Define NO_D_TYPE_IN_DIRENT if your platform defines DT_UNKNOWN but lacks
-# d_type in struct dirent (latest Cygwin -- will be fixed soonish).
-AC_CHECK_MEMBER(struct dirent.d_type,
-[NO_D_TYPE_IN_DIRENT=],
-[NO_D_TYPE_IN_DIRENT=YesPlease],
-[#include <dirent.h>])
-AC_SUBST(NO_D_TYPE_IN_DIRENT)
-#
-# Define NO_SOCKADDR_STORAGE if your platform does not have struct
-# sockaddr_storage.
-AC_CHECK_TYPE(struct sockaddr_storage,
-[NO_SOCKADDR_STORAGE=],
-[NO_SOCKADDR_STORAGE=YesPlease],[
-#include <sys/types.h>
-#include <sys/socket.h>
-])
-AC_SUBST(NO_SOCKADDR_STORAGE)
-#
-# Define NO_IPV6 if you lack IPv6 support and getaddrinfo().
-AC_CHECK_TYPE([struct addrinfo],[
- AC_CHECK_FUNC([getaddrinfo],
-  [NO_IPV6=],
-  [NO_IPV6=YesPlease])
-],[NO_IPV6=YesPlease],[
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
-])
-AC_SUBST(NO_IPV6)
-#
-# Define NO_C99_FORMAT if your formatted IO functions (printf/scanf et.al.)
-# do not support the 'size specifiers' introduced by C99, namely ll, hh,
-# j, z, t. (representing long long int, char, intmax_t, size_t, ptrdiff_t).
-# some C compilers supported these specifiers prior to C99 as an extension.
-AC_CACHE_CHECK([whether formatted IO functions support C99 size specifiers],
- [ac_cv_c_c99_format],
-[# Actually git uses only %z (%zu) in alloc.c, and %t (%td) in mktag.c
-AC_RUN_IFELSE(
-	[AC_LANG_PROGRAM([AC_INCLUDES_DEFAULT],
-		[[char buf[64];
-		if (sprintf(buf, "%lld%hhd%jd%zd%td", (long long int)1, (char)2, (intmax_t)3, (size_t)4, (ptrdiff_t)5) != 5)
-		  exit(1);
-		else if (strcmp(buf, "12345"))
-		  exit(2);]])],
-	[ac_cv_c_c99_format=yes],
-	[ac_cv_c_c99_format=no])
-])
-if test $ac_cv_c_c99_format = no; then
-	NO_C99_FORMAT=YesPlease
+AC_ARG_ENABLE([pthreads],
+ [AS_HELP_STRING([--enable-pthreads=FLAGS],
+  [FLAGS is the value to pass to the compiler to enable POSIX Threads.]
+  [The default if FLAGS is not specified is to try first -pthread]
+  [and then -lpthread.]
+  [--without-pthreads will disable threading.])],
+[
+if test "x$enableval" = "xyes"; then
+   AC_MSG_NOTICE([Will try -pthread then -lpthread to enable POSIX Threads])
+elif test "x$enableval" != "xno"; then
+   PTHREAD_CFLAGS=$enableval
+   AC_MSG_NOTICE([Setting '$PTHREAD_CFLAGS' as the FLAGS to enable POSIX Threads])
 else
-	NO_C99_FORMAT=
-fi
-AC_SUBST(NO_C99_FORMAT)
-
-
-## Checks for library functions.
-## (in default C library and libraries checked by AC_CHECK_LIB)
-AC_MSG_NOTICE([CHECKS for library functions])
-#
-# Define NO_STRCASESTR if you don't have strcasestr.
-AC_CHECK_FUNC(strcasestr,
-[NO_STRCASESTR=],
-[NO_STRCASESTR=YesPlease])
-AC_SUBST(NO_STRCASESTR)
-#
-# Define NO_STRLCPY if you don't have strlcpy.
-AC_CHECK_FUNC(strlcpy,
-[NO_STRLCPY=],
-[NO_STRLCPY=YesPlease])
-AC_SUBST(NO_STRLCPY)
-#
-# Define NO_SETENV if you don't have setenv in the C library.
-AC_CHECK_FUNC(setenv,
-[NO_SETENV=],
-[NO_SETENV=YesPlease])
-AC_SUBST(NO_SETENV)
-#
-# Define NO_MMAP if you want to avoid mmap.
-#
-# Define NO_ICONV if your libc does not properly support iconv.
-
-
-## Other checks.
-# Define USE_PIC if you need the main git objects to be built with -fPIC
-# in order to build and link perl/Git.so.  x86-64 seems to need this.
-#
-# Define NO_SYMLINK_HEAD if you never want .git/HEAD to be a symbolic link.
-# Enable it on Windows.  By default, symrefs are still used.
+   AC_MSG_NOTICE([POSIX Threads will be disabled.])
+   NO_PTHREADS=YesPlease
+   USER_NOPTHREAD=1
+fi],
+[
+   AC_MSG_NOTICE([Will try -pthread then -lpthread to enable POSIX Threads.])
+])
 
 ## Site configuration (override autodetection)
 ## --with-PACKAGE[=ARG] and --without-PACKAGE
@@ -377,8 +232,525 @@ GIT_PARSE_WITH(iconv))
 # times (my ext3 doesn't).
 #
 # Define USE_STDEV below if you want git to care about the underlying device
-# change being considered an inode change from the update-cache perspective.
+# change being considered an inode change from the update-index perspective.
 
+#
+# Define SHELL_PATH to provide path to shell.
+GIT_ARG_SET_PATH(shell)
+#
+# Define PERL_PATH to provide path to Perl.
+GIT_ARG_SET_PATH(perl)
+#
+# Define ZLIB_PATH to provide path to zlib.
+GIT_ARG_SET_PATH(zlib)
+#
+# Declare the with-tcltk/without-tcltk options.
+AC_ARG_WITH(tcltk,
+AS_HELP_STRING([--with-tcltk],[use Tcl/Tk GUI (default is YES)])
+AS_HELP_STRING([],[ARG is the full path to the Tcl/Tk interpreter.])
+AS_HELP_STRING([],[Bare --with-tcltk will make the GUI part only if])
+AS_HELP_STRING([],[Tcl/Tk interpreter will be found in a system.]),\
+GIT_PARSE_WITH(tcltk))
+#
+
+
+## Checks for programs.
+AC_MSG_NOTICE([CHECKS for programs])
+#
+AC_PROG_CC([cc gcc])
+# which switch to pass runtime path to dynamic libraries to the linker
+AC_CACHE_CHECK([if linker supports -R], git_cv_ld_dashr, [
+   SAVE_LDFLAGS="${LDFLAGS}"
+   LDFLAGS="${SAVE_LDFLAGS} -R /"
+   AC_LINK_IFELSE(AC_LANG_PROGRAM([], []), [git_cv_ld_dashr=yes], [git_cv_ld_dashr=no])
+   LDFLAGS="${SAVE_LDFLAGS}"
+])
+if test "$git_cv_ld_dashr" = "yes"; then
+   AC_SUBST(CC_LD_DYNPATH, [-R])
+else
+   AC_CACHE_CHECK([if linker supports -Wl,-rpath,], git_cv_ld_wl_rpath, [
+      SAVE_LDFLAGS="${LDFLAGS}"
+      LDFLAGS="${SAVE_LDFLAGS} -Wl,-rpath,/"
+      AC_LINK_IFELSE(AC_LANG_PROGRAM([], []), [git_cv_ld_wl_rpath=yes], [git_cv_ld_wl_rpath=no])
+      LDFLAGS="${SAVE_LDFLAGS}"
+   ])
+   if test "$git_cv_ld_wl_rpath" = "yes"; then
+      AC_SUBST(CC_LD_DYNPATH, [-Wl,-rpath,])
+   else
+      AC_CACHE_CHECK([if linker supports -rpath], git_cv_ld_rpath, [
+         SAVE_LDFLAGS="${LDFLAGS}"
+         LDFLAGS="${SAVE_LDFLAGS} -rpath /"
+         AC_LINK_IFELSE(AC_LANG_PROGRAM([], []), [git_cv_ld_rpath=yes], [git_cv_ld_rpath=no])
+         LDFLAGS="${SAVE_LDFLAGS}"
+      ])
+      if test "$git_cv_ld_rpath" = "yes"; then
+         AC_SUBST(CC_LD_DYNPATH, [-rpath])
+      else
+         AC_MSG_WARN([linker does not support runtime path to dynamic libraries])
+      fi
+   fi
+fi
+#AC_PROG_INSTALL		# needs install-sh or install.sh in sources
+AC_CHECK_TOOLS(AR, [gar ar], :)
+AC_CHECK_PROGS(TAR, [gtar tar])
+# TCLTK_PATH will be set to some value if we want Tcl/Tk
+# or will be empty otherwise.
+if test -z "$NO_TCLTK"; then
+  if test "$with_tcltk" = ""; then
+  # No Tcl/Tk switches given. Do not check for Tcl/Tk, use bare 'wish'.
+    TCLTK_PATH=wish
+    AC_SUBST(TCLTK_PATH)
+  elif test "$with_tcltk" = "yes"; then
+  # Tcl/Tk check requested.
+    AC_CHECK_PROGS(TCLTK_PATH, [wish], )
+  else
+    AC_MSG_RESULT([Using Tcl/Tk interpreter $with_tcltk])
+    TCLTK_PATH="$with_tcltk"
+    AC_SUBST(TCLTK_PATH)
+  fi
+fi
+AC_CHECK_PROGS(ASCIIDOC, [asciidoc])
+if test -n "$ASCIIDOC"; then
+	AC_MSG_CHECKING([for asciidoc version])
+	asciidoc_version=`$ASCIIDOC --version 2>/dev/null`
+	case "${asciidoc_version}" in
+	asciidoc' '8*)
+		ASCIIDOC8=YesPlease
+		AC_MSG_RESULT([${asciidoc_version} > 7])
+		;;
+	asciidoc' '7*)
+		ASCIIDOC8=
+		AC_MSG_RESULT([${asciidoc_version}])
+		;;
+	*)
+		ASCIIDOC8=
+		AC_MSG_RESULT([${asciidoc_version} (unknown)])
+		;;
+	esac
+fi
+AC_SUBST(ASCIIDOC8)
+
+
+## Checks for libraries.
+AC_MSG_NOTICE([CHECKS for libraries])
+#
+# Define NO_OPENSSL environment variable if you do not have OpenSSL.
+# Define NEEDS_SSL_WITH_CRYPTO if you need -lcrypto with -lssl (Darwin).
+
+GIT_STASH_FLAGS($OPENSSLDIR)
+
+AC_CHECK_LIB([crypto], [SHA1_Init],
+[NEEDS_SSL_WITH_CRYPTO=],
+[AC_CHECK_LIB([ssl], [SHA1_Init],
+ [NEEDS_SSL_WITH_CRYPTO=YesPlease
+  NEEDS_SSL_WITH_CRYPTO=],
+ [NO_OPENSSL=YesPlease])])
+
+GIT_UNSTASH_FLAGS($OPENSSLDIR)
+
+AC_SUBST(NEEDS_SSL_WITH_CRYPTO)
+AC_SUBST(NO_OPENSSL)
+
+#
+# Define NO_CURL if you do not have libcurl installed.  git-http-pull and
+# git-http-push are not built, and you cannot use http:// and https://
+# transports.
+
+GIT_STASH_FLAGS($CURLDIR)
+
+AC_CHECK_LIB([curl], [curl_global_init],
+[NO_CURL=],
+[NO_CURL=YesPlease])
+
+GIT_UNSTASH_FLAGS($CURLDIR)
+
+AC_SUBST(NO_CURL)
+
+#
+# Define NO_EXPAT if you do not have expat installed.  git-http-push is
+# not built, and you cannot push using http:// and https:// transports.
+
+GIT_STASH_FLAGS($EXPATDIR)
+
+AC_CHECK_LIB([expat], [XML_ParserCreate],
+[NO_EXPAT=],
+[NO_EXPAT=YesPlease])
+
+GIT_UNSTASH_FLAGS($EXPATDIR)
+
+AC_SUBST(NO_EXPAT)
+
+#
+# Define NEEDS_LIBICONV if linking with libc is not enough (Darwin and
+# some Solaris installations).
+# Define NO_ICONV if neither libc nor libiconv support iconv.
+
+GIT_STASH_FLAGS($ICONVDIR)
+
+AC_DEFUN([ICONVTEST_SRC], [
+#include <iconv.h>
+
+int main(void)
+{
+	iconv_open("", "");
+	return 0;
+}
+])
+
+if test -n "$ICONVDIR"; then
+   lib_order="-liconv -lc"
+else
+   lib_order="-lc -liconv"
+fi
+
+NO_ICONV=YesPlease
+
+for l in $lib_order; do
+    if test "$l" = "-liconv"; then
+       NEEDS_LIBICONV=YesPlease
+    else
+       NEEDS_LIBICONV=
+    fi
+
+    old_LIBS="$LIBS"
+    LIBS="$LIBS $l"
+    AC_MSG_CHECKING([for iconv in $l])
+    AC_LINK_IFELSE(ICONVTEST_SRC,
+	[AC_MSG_RESULT([yes])
+	NO_ICONV=
+	break],
+	[AC_MSG_RESULT([no])])
+    LIBS="$old_LIBS"
+done
+
+#in case of break
+LIBS="$old_LIBS"
+
+GIT_UNSTASH_FLAGS($ICONVDIR)
+
+AC_SUBST(NEEDS_LIBICONV)
+AC_SUBST(NO_ICONV)
+
+#
+# Define NO_DEFLATE_BOUND if deflateBound is missing from zlib.
+
+GIT_STASH_FLAGS($ZLIB_PATH)
+
+AC_DEFUN([ZLIBTEST_SRC], [
+#include <zlib.h>
+
+int main(void)
+{
+	deflateBound(0, 0);
+	return 0;
+}
+])
+AC_MSG_CHECKING([for deflateBound in -lz])
+old_LIBS="$LIBS"
+LIBS="$LIBS -lz"
+AC_LINK_IFELSE(ZLIBTEST_SRC,
+	[AC_MSG_RESULT([yes])],
+	[AC_MSG_RESULT([no])
+	NO_DEFLATE_BOUND=yes])
+LIBS="$old_LIBS"
+
+GIT_UNSTASH_FLAGS($ZLIB_PATH)
+
+AC_SUBST(NO_DEFLATE_BOUND)
+
+#
+# Define NEEDS_SOCKET if linking with libc is not enough (SunOS,
+# Patrick Mauritz).
+AC_CHECK_LIB([c], [socket],
+[NEEDS_SOCKET=],
+[NEEDS_SOCKET=YesPlease])
+AC_SUBST(NEEDS_SOCKET)
+test -n "$NEEDS_SOCKET" && LIBS="$LIBS -lsocket"
+
+
+## Checks for header files.
+AC_MSG_NOTICE([CHECKS for header files])
+#
+# Define NO_SYS_SELECT_H if you don't have sys/select.h.
+AC_CHECK_HEADER([sys/select.h],
+[NO_SYS_SELECT_H=],
+[NO_SYS_SELECT_H=UnfortunatelyYes])
+AC_SUBST(NO_SYS_SELECT_H)
+#
+# Define OLD_ICONV if your library has an old iconv(), where the second
+# (input buffer pointer) parameter is declared with type (const char **).
+AC_DEFUN([OLDICONVTEST_SRC], [[
+#include <iconv.h>
+
+extern size_t iconv(iconv_t cd,
+		    char **inbuf, size_t *inbytesleft,
+		    char **outbuf, size_t *outbytesleft);
+
+int main(void)
+{
+	return 0;
+}
+]])
+
+GIT_STASH_FLAGS($ICONVDIR)
+
+AC_MSG_CHECKING([for old iconv()])
+AC_COMPILE_IFELSE(OLDICONVTEST_SRC,
+	[AC_MSG_RESULT([no])],
+	[AC_MSG_RESULT([yes])
+	OLD_ICONV=UnfortunatelyYes])
+
+GIT_UNSTASH_FLAGS($ICONVDIR)
+
+AC_SUBST(OLD_ICONV)
+
+## Checks for typedefs, structures, and compiler characteristics.
+AC_MSG_NOTICE([CHECKS for typedefs, structures, and compiler characteristics])
+#
+# Define NO_D_INO_IN_DIRENT if you don't have d_ino in your struct dirent.
+AC_CHECK_MEMBER(struct dirent.d_ino,
+[NO_D_INO_IN_DIRENT=],
+[NO_D_INO_IN_DIRENT=YesPlease],
+[#include <dirent.h>])
+AC_SUBST(NO_D_INO_IN_DIRENT)
+#
+# Define NO_D_TYPE_IN_DIRENT if your platform defines DT_UNKNOWN but lacks
+# d_type in struct dirent (latest Cygwin -- will be fixed soonish).
+AC_CHECK_MEMBER(struct dirent.d_type,
+[NO_D_TYPE_IN_DIRENT=],
+[NO_D_TYPE_IN_DIRENT=YesPlease],
+[#include <dirent.h>])
+AC_SUBST(NO_D_TYPE_IN_DIRENT)
+#
+# Define NO_SOCKADDR_STORAGE if your platform does not have struct
+# sockaddr_storage.
+AC_CHECK_TYPE(struct sockaddr_storage,
+[NO_SOCKADDR_STORAGE=],
+[NO_SOCKADDR_STORAGE=YesPlease],[
+#include <sys/types.h>
+#include <sys/socket.h>
+])
+AC_SUBST(NO_SOCKADDR_STORAGE)
+#
+# Define NO_IPV6 if you lack IPv6 support and getaddrinfo().
+AC_CHECK_TYPE([struct addrinfo],[
+ GIT_CHECK_FUNC([getaddrinfo],
+  [NO_IPV6=],
+  [NO_IPV6=YesPlease])
+],[NO_IPV6=YesPlease],[
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+])
+AC_SUBST(NO_IPV6)
+#
+# Define NO_C99_FORMAT if your formatted IO functions (printf/scanf et.al.)
+# do not support the 'size specifiers' introduced by C99, namely ll, hh,
+# j, z, t. (representing long long int, char, intmax_t, size_t, ptrdiff_t).
+# some C compilers supported these specifiers prior to C99 as an extension.
+AC_CACHE_CHECK([whether formatted IO functions support C99 size specifiers],
+ [ac_cv_c_c99_format],
+[# Actually git uses only %z (%zu) in alloc.c, and %t (%td) in mktag.c
+AC_RUN_IFELSE(
+	[AC_LANG_PROGRAM([AC_INCLUDES_DEFAULT],
+		[[char buf[64];
+		if (sprintf(buf, "%lld%hhd%jd%zd%td", (long long int)1, (char)2, (intmax_t)3, (size_t)4, (ptrdiff_t)5) != 5)
+		  return 1;
+		else if (strcmp(buf, "12345"))
+		  return 2;]])],
+	[ac_cv_c_c99_format=yes],
+	[ac_cv_c_c99_format=no])
+])
+if test $ac_cv_c_c99_format = no; then
+	NO_C99_FORMAT=YesPlease
+else
+	NO_C99_FORMAT=
+fi
+AC_SUBST(NO_C99_FORMAT)
+#
+# Define FREAD_READS_DIRECTORIES if your are on a system which succeeds
+# when attempting to read from an fopen'ed directory.
+AC_CACHE_CHECK([whether system succeeds to read fopen'ed directory],
+ [ac_cv_fread_reads_directories],
+[
+AC_RUN_IFELSE(
+	[AC_LANG_PROGRAM([AC_INCLUDES_DEFAULT],
+		[[char c;
+		FILE *f = fopen(".", "r");
+		return f && fread(&c, 1, 1, f)]])],
+	[ac_cv_fread_reads_directories=no],
+	[ac_cv_fread_reads_directories=yes])
+])
+if test $ac_cv_fread_reads_directories = yes; then
+	FREAD_READS_DIRECTORIES=UnfortunatelyYes
+else
+	FREAD_READS_DIRECTORIES=
+fi
+AC_SUBST(FREAD_READS_DIRECTORIES)
+#
+# Define SNPRINTF_RETURNS_BOGUS if your are on a system which snprintf()
+# or vsnprintf() return -1 instead of number of characters which would
+# have been written to the final string if enough space had been available.
+AC_CACHE_CHECK([whether snprintf() and/or vsnprintf() return bogus value],
+ [ac_cv_snprintf_returns_bogus],
+[
+AC_RUN_IFELSE(
+	[AC_LANG_PROGRAM([AC_INCLUDES_DEFAULT
+		#include "stdarg.h"
+
+		int test_vsnprintf(char *str, size_t maxsize, const char *format, ...)
+		{
+		  int ret;
+		  va_list ap;
+		  va_start(ap, format);
+		  ret = vsnprintf(str, maxsize, format, ap);
+		  va_end(ap);
+		  return ret;
+		}],
+		[[char buf[6];
+		  if (test_vsnprintf(buf, 3, "%s", "12345") != 5
+		      || strcmp(buf, "12")) return 1;
+		  if (snprintf(buf, 3, "%s", "12345") != 5
+		      || strcmp(buf, "12")) return 1]])],
+	[ac_cv_snprintf_returns_bogus=no],
+	[ac_cv_snprintf_returns_bogus=yes])
+])
+if test $ac_cv_snprintf_returns_bogus = yes; then
+	SNPRINTF_RETURNS_BOGUS=UnfortunatelyYes
+else
+	SNPRINTF_RETURNS_BOGUS=
+fi
+AC_SUBST(SNPRINTF_RETURNS_BOGUS)
+
+
+## Checks for library functions.
+## (in default C library and libraries checked by AC_CHECK_LIB)
+AC_MSG_NOTICE([CHECKS for library functions])
+#
+# Define NO_STRCASESTR if you don't have strcasestr.
+GIT_CHECK_FUNC(strcasestr,
+[NO_STRCASESTR=],
+[NO_STRCASESTR=YesPlease])
+AC_SUBST(NO_STRCASESTR)
+#
+# Define NO_MEMMEM if you don't have memmem.
+GIT_CHECK_FUNC(memmem,
+[NO_MEMMEM=],
+[NO_MEMMEM=YesPlease])
+AC_SUBST(NO_MEMMEM)
+#
+# Define NO_STRLCPY if you don't have strlcpy.
+GIT_CHECK_FUNC(strlcpy,
+[NO_STRLCPY=],
+[NO_STRLCPY=YesPlease])
+AC_SUBST(NO_STRLCPY)
+#
+# Define NO_UINTMAX_T if your platform does not have uintmax_t
+AC_CHECK_TYPE(uintmax_t,
+[NO_UINTMAX_T=],
+[NO_UINTMAX_T=YesPlease],[
+#include <inttypes.h>
+])
+AC_SUBST(NO_UINTMAX_T)
+#
+# Define NO_STRTOUMAX if you don't have strtoumax in the C library.
+GIT_CHECK_FUNC(strtoumax,
+[NO_STRTOUMAX=],
+[NO_STRTOUMAX=YesPlease])
+AC_SUBST(NO_STRTOUMAX)
+#
+# Define NO_SETENV if you don't have setenv in the C library.
+GIT_CHECK_FUNC(setenv,
+[NO_SETENV=],
+[NO_SETENV=YesPlease])
+AC_SUBST(NO_SETENV)
+#
+# Define NO_UNSETENV if you don't have unsetenv in the C library.
+GIT_CHECK_FUNC(unsetenv,
+[NO_UNSETENV=],
+[NO_UNSETENV=YesPlease])
+AC_SUBST(NO_UNSETENV)
+#
+# Define NO_MKDTEMP if you don't have mkdtemp in the C library.
+GIT_CHECK_FUNC(mkdtemp,
+[NO_MKDTEMP=],
+[NO_MKDTEMP=YesPlease])
+AC_SUBST(NO_MKDTEMP)
+#
+# Define NO_MMAP if you want to avoid mmap.
+#
+# Define NO_ICONV if your libc does not properly support iconv.
+
+
+## Other checks.
+# Define USE_PIC if you need the main git objects to be built with -fPIC
+# in order to build and link perl/Git.so.  x86-64 seems to need this.
+#
+# Define NO_SYMLINK_HEAD if you never want .git/HEAD to be a symbolic link.
+# Enable it on Windows.  By default, symrefs are still used.
+#
+# Define NO_PTHREADS if we do not have pthreads
+#
+# Define PTHREAD_LIBS to the linker flag used for Pthread support and define
+# THREADED_DELTA_SEARCH if Pthreads are available.
+AC_DEFUN([PTHREADTEST_SRC], [
+#include <pthread.h>
+
+int main(void)
+{
+	pthread_mutex_t test_mutex;
+	return (0);
+}
+])
+
+dnl AC_LANG_CONFTEST([AC_LANG_PROGRAM(
+dnl   [[#include <pthread.h>]],
+dnl   [[pthread_mutex_t test_mutex;]]
+dnl )])
+
+NO_PTHREADS=UnfortunatelyYes
+THREADED_DELTA_SEARCH=
+PTHREAD_LIBS=
+
+if test -n "$USER_NOPTHREAD"; then
+   AC_MSG_NOTICE([Skipping POSIX Threads at user request.])
+# handle these separately since PTHREAD_CFLAGS could be '-lpthreads
+# -D_REENTRANT' or some such.
+elif test -z "$PTHREAD_CFLAGS"; then
+  for opt in -pthread -lpthread; do
+     old_CFLAGS="$CFLAGS"
+     CFLAGS="$opt $CFLAGS"
+     AC_MSG_CHECKING([Checking for POSIX Threads with '$opt'])
+     AC_LINK_IFELSE(PTHREADTEST_SRC,
+	[AC_MSG_RESULT([yes])
+		NO_PTHREADS=
+		PTHREAD_LIBS="$opt"
+		THREADED_DELTA_SEARCH=YesPlease
+		break
+	],
+	[AC_MSG_RESULT([no])])
+      CFLAGS="$old_CFLAGS"
+  done
+else
+  old_CFLAGS="$CFLAGS"
+  CFLAGS="$PTHREAD_CFLAGS $CFLAGS"
+  AC_MSG_CHECKING([Checking for POSIX Threads with '$PTHREAD_CFLAGS'])
+  AC_LINK_IFELSE(PTHREADTEST_SRC,
+	[AC_MSG_RESULT([yes])
+		NO_PTHREADS=
+		PTHREAD_LIBS="$PTHREAD_CFLAGS"
+		THREADED_DELTA_SEARCH=YesPlease
+	],
+	[AC_MSG_RESULT([no])])
+
+  CFLAGS="$old_CFLAGS"
+fi
+
+CFLAGS="$old_CFLAGS"
+
+AC_SUBST(PTHREAD_LIBS)
+AC_SUBST(NO_PTHREADS)
+AC_SUBST(THREADED_DELTA_SEARCH)
 
 ## Output files
 AC_CONFIG_FILES(["${config_file}":"${config_in}":"${config_append}"])

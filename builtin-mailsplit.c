@@ -6,10 +6,10 @@
  */
 #include "cache.h"
 #include "builtin.h"
-#include "path-list.h"
+#include "string-list.h"
 
 static const char git_mailsplit_usage[] =
-"git-mailsplit [-d<prec>] [-f<n>] [-b] -o<directory> <mbox>|<Maildir>...";
+"git mailsplit [-d<prec>] [-f<n>] [-b] -o<directory> [<mbox>|<Maildir>...]";
 
 static int is_from_line(const char *line, int len)
 {
@@ -45,6 +45,24 @@ static int is_from_line(const char *line, int len)
 /* Could be as small as 64, enough to hold a Unix "From " line. */
 static char buf[4096];
 
+/* We cannot use fgets() because our lines can contain NULs */
+int read_line_with_nul(char *buf, int size, FILE *in)
+{
+	int len = 0, c;
+
+	for (;;) {
+		c = getc(in);
+		if (c == EOF)
+			break;
+		buf[len++] = c;
+		if (c == '\n' || len + 1 >= size)
+			break;
+	}
+	buf[len] = '\0';
+
+	return len;
+}
+
 /* Called with the first line (potentially partial)
  * already in buf[] -- normally that should begin with
  * the Unix "From " line.  Write it into the specified
@@ -70,19 +88,19 @@ static int split_one(FILE *mbox, const char *name, int allow_bare)
 	 * "From " and having something that looks like a date format.
 	 */
 	for (;;) {
-		int is_partial = (buf[len-1] != '\n');
+		int is_partial = len && buf[len-1] != '\n';
 
-		if (fputs(buf, output) == EOF)
+		if (fwrite(buf, 1, len, output) != len)
 			die("cannot write output");
 
-		if (fgets(buf, sizeof(buf), mbox) == NULL) {
+		len = read_line_with_nul(buf, sizeof(buf), mbox);
+		if (len == 0) {
 			if (feof(mbox)) {
 				status = 1;
 				break;
 			}
 			die("cannot read mbox");
 		}
-		len = strlen(buf);
 		if (!is_partial && !is_bare && is_from_line(buf, len))
 			break; /* done with one message */
 	}
@@ -97,23 +115,32 @@ static int split_one(FILE *mbox, const char *name, int allow_bare)
 	exit(1);
 }
 
-static int populate_maildir_list(struct path_list *list, const char *path)
+static int populate_maildir_list(struct string_list *list, const char *path)
 {
 	DIR *dir;
 	struct dirent *dent;
+	char name[PATH_MAX];
+	char *subs[] = { "cur", "new", NULL };
+	char **sub;
 
-	if ((dir = opendir(path)) == NULL) {
-		error("cannot opendir %s (%s)", path, strerror(errno));
-		return -1;
+	for (sub = subs; *sub; ++sub) {
+		snprintf(name, sizeof(name), "%s/%s", path, *sub);
+		if ((dir = opendir(name)) == NULL) {
+			if (errno == ENOENT)
+				continue;
+			error("cannot opendir %s (%s)", name, strerror(errno));
+			return -1;
+		}
+
+		while ((dent = readdir(dir)) != NULL) {
+			if (dent->d_name[0] == '.')
+				continue;
+			snprintf(name, sizeof(name), "%s/%s", *sub, dent->d_name);
+			string_list_insert(name, list);
+		}
+
+		closedir(dir);
 	}
-
-	while ((dent = readdir(dir)) != NULL) {
-		if (dent->d_name[0] == '.')
-			continue;
-		path_list_insert(dent->d_name, list);
-	}
-
-	closedir(dir);
 
 	return 0;
 }
@@ -122,19 +149,17 @@ static int split_maildir(const char *maildir, const char *dir,
 	int nr_prec, int skip)
 {
 	char file[PATH_MAX];
-	char curdir[PATH_MAX];
 	char name[PATH_MAX];
 	int ret = -1;
 	int i;
-	struct path_list list = {NULL, 0, 0, 1};
+	struct string_list list = {NULL, 0, 0, 1};
 
-	snprintf(curdir, sizeof(curdir), "%s/cur", maildir);
-	if (populate_maildir_list(&list, curdir) < 0)
+	if (populate_maildir_list(&list, maildir) < 0)
 		goto out;
 
 	for (i = 0; i < list.nr; i++) {
 		FILE *f;
-		snprintf(file, sizeof(file), "%s/%s", curdir, list.items[i].path);
+		snprintf(file, sizeof(file), "%s/%s", maildir, list.items[i].string);
 		f = fopen(file, "r");
 		if (!f) {
 			error("cannot open mail %s (%s)", file, strerror(errno));
@@ -152,10 +177,9 @@ static int split_maildir(const char *maildir, const char *dir,
 		fclose(f);
 	}
 
-	path_list_clear(&list, 1);
-
 	ret = skip;
 out:
+	string_list_clear(&list, 1);
 	return ret;
 }
 
@@ -164,6 +188,7 @@ static int split_mbox(const char *file, const char *dir, int allow_bare,
 {
 	char name[PATH_MAX];
 	int ret = -1;
+	int peek;
 
 	FILE *f = !strcmp(file, "-") ? stdin : fopen(file, "r");
 	int file_done = 0;
@@ -172,6 +197,11 @@ static int split_mbox(const char *file, const char *dir, int allow_bare,
 		error("cannot open mbox %s", file);
 		goto out;
 	}
+
+	do {
+		peek = fgetc(f);
+	} while (isspace(peek));
+	ungetc(peek, f);
 
 	if (fgets(buf, sizeof(buf), f) == NULL) {
 		/* empty stdin is OK */

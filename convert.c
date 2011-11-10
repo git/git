@@ -17,8 +17,8 @@
 #define CRLF_INPUT	2
 
 struct text_stat {
-	/* CR, LF and CRLF counts */
-	unsigned cr, lf, crlf;
+	/* NUL, CR, LF and CRLF counts */
+	unsigned nul, cr, lf, crlf;
 
 	/* These are just approximations! */
 	unsigned printable, nonprintable;
@@ -51,6 +51,9 @@ static void gather_stats(const char *buf, unsigned long size, struct text_stat *
 			case '\b': case '\t': case '\033': case '\014':
 				stats->printable++;
 				break;
+			case 0:
+				stats->nul++;
+				/* fall through */
 			default:
 				stats->nonprintable++;
 			}
@@ -58,6 +61,10 @@ static void gather_stats(const char *buf, unsigned long size, struct text_stat *
 		else
 			stats->printable++;
 	}
+
+	/* If file ends with EOF then don't count this EOF as non-printable. */
+	if (size >= 1 && buf[size-1] == '\032')
+		stats->nonprintable--;
 }
 
 /*
@@ -66,6 +73,8 @@ static void gather_stats(const char *buf, unsigned long size, struct text_stat *
 static int is_binary(unsigned long size, struct text_stat *stats)
 {
 
+	if (stats->nul)
+		return 1;
 	if ((stats->printable >> 7) < stats->nonprintable)
 		return 1;
 	/*
@@ -80,24 +89,47 @@ static int is_binary(unsigned long size, struct text_stat *stats)
 	return 0;
 }
 
-static char *crlf_to_git(const char *path, const char *src, unsigned long *sizep, int action)
+static void check_safe_crlf(const char *path, int action,
+                            struct text_stat *stats, enum safe_crlf checksafe)
 {
-	char *buffer, *dst;
-	unsigned long size, nsize;
+	if (!checksafe)
+		return;
+
+	if (action == CRLF_INPUT || auto_crlf <= 0) {
+		/*
+		 * CRLFs would not be restored by checkout:
+		 * check if we'd remove CRLFs
+		 */
+		if (stats->crlf) {
+			if (checksafe == SAFE_CRLF_WARN)
+				warning("CRLF will be replaced by LF in %s.", path);
+			else /* i.e. SAFE_CRLF_FAIL */
+				die("CRLF would be replaced by LF in %s.", path);
+		}
+	} else if (auto_crlf > 0) {
+		/*
+		 * CRLFs would be added by checkout:
+		 * check if we have "naked" LFs
+		 */
+		if (stats->lf != stats->crlf) {
+			if (checksafe == SAFE_CRLF_WARN)
+				warning("LF will be replaced by CRLF in %s", path);
+			else /* i.e. SAFE_CRLF_FAIL */
+				die("LF would be replaced by CRLF in %s", path);
+		}
+	}
+}
+
+static int crlf_to_git(const char *path, const char *src, size_t len,
+                       struct strbuf *buf, int action, enum safe_crlf checksafe)
+{
 	struct text_stat stats;
+	char *dst;
 
-	if ((action == CRLF_BINARY) || !auto_crlf)
-		return NULL;
+	if ((action == CRLF_BINARY) || !auto_crlf || !len)
+		return 0;
 
-	size = *sizep;
-	if (!size)
-		return NULL;
-
-	gather_stats(src, size, &stats);
-
-	/* No CR? Nothing to convert, regardless. */
-	if (!stats.cr)
-		return NULL;
+	gather_stats(src, len, &stats);
 
 	if (action == CRLF_GUESS) {
 		/*
@@ -106,24 +138,25 @@ static char *crlf_to_git(const char *path, const char *src, unsigned long *sizep
 		 * stuff?
 		 */
 		if (stats.cr != stats.crlf)
-			return NULL;
+			return 0;
 
 		/*
 		 * And add some heuristics for binary vs text, of course...
 		 */
-		if (is_binary(size, &stats))
-			return NULL;
+		if (is_binary(len, &stats))
+			return 0;
 	}
 
-	/*
-	 * Ok, allocate a new buffer, fill it in, and return it
-	 * to let the caller know that we switched buffers.
-	 */
-	nsize = size - stats.crlf;
-	buffer = xmalloc(nsize);
-	*sizep = nsize;
+	check_safe_crlf(path, action, &stats, checksafe);
 
-	dst = buffer;
+	/* Optimization: No CR? Nothing to convert, regardless. */
+	if (!stats.cr)
+		return 0;
+
+	/* only grow if not in place */
+	if (strbuf_avail(buf) + buf->len < len)
+		strbuf_grow(buf, len - buf->len);
+	dst = buf->buf;
 	if (action == CRLF_GUESS) {
 		/*
 		 * If we guessed, we already know we rejected a file with
@@ -134,120 +167,112 @@ static char *crlf_to_git(const char *path, const char *src, unsigned long *sizep
 			unsigned char c = *src++;
 			if (c != '\r')
 				*dst++ = c;
-		} while (--size);
+		} while (--len);
 	} else {
 		do {
 			unsigned char c = *src++;
-			if (! (c == '\r' && (1 < size && *src == '\n')))
+			if (! (c == '\r' && (1 < len && *src == '\n')))
 				*dst++ = c;
-		} while (--size);
+		} while (--len);
 	}
-
-	return buffer;
+	strbuf_setlen(buf, dst - buf->buf);
+	return 1;
 }
 
-static char *crlf_to_worktree(const char *path, const char *src, unsigned long *sizep, int action)
+static int crlf_to_worktree(const char *path, const char *src, size_t len,
+                            struct strbuf *buf, int action)
 {
-	char *buffer, *dst;
-	unsigned long size, nsize;
+	char *to_free = NULL;
 	struct text_stat stats;
-	unsigned char last;
 
 	if ((action == CRLF_BINARY) || (action == CRLF_INPUT) ||
 	    auto_crlf <= 0)
-		return NULL;
+		return 0;
 
-	size = *sizep;
-	if (!size)
-		return NULL;
+	if (!len)
+		return 0;
 
-	gather_stats(src, size, &stats);
+	gather_stats(src, len, &stats);
 
 	/* No LF? Nothing to convert, regardless. */
 	if (!stats.lf)
-		return NULL;
+		return 0;
 
 	/* Was it already in CRLF format? */
 	if (stats.lf == stats.crlf)
-		return NULL;
+		return 0;
 
 	if (action == CRLF_GUESS) {
 		/* If we have any bare CR characters, we're not going to touch it */
 		if (stats.cr != stats.crlf)
-			return NULL;
+			return 0;
 
-		if (is_binary(size, &stats))
-			return NULL;
+		if (is_binary(len, &stats))
+			return 0;
 	}
 
-	/*
-	 * Ok, allocate a new buffer, fill it in, and return it
-	 * to let the caller know that we switched buffers.
-	 */
-	nsize = size + stats.lf - stats.crlf;
-	buffer = xmalloc(nsize);
-	*sizep = nsize;
-	last = 0;
+	/* are we "faking" in place editing ? */
+	if (src == buf->buf)
+		to_free = strbuf_detach(buf, NULL);
 
-	dst = buffer;
-	do {
-		unsigned char c = *src++;
-		if (c == '\n' && last != '\r')
-			*dst++ = '\r';
-		*dst++ = c;
-		last = c;
-	} while (--size);
+	strbuf_grow(buf, len + stats.lf - stats.crlf);
+	for (;;) {
+		const char *nl = memchr(src, '\n', len);
+		if (!nl)
+			break;
+		if (nl > src && nl[-1] == '\r') {
+			strbuf_add(buf, src, nl + 1 - src);
+		} else {
+			strbuf_add(buf, src, nl - src);
+			strbuf_addstr(buf, "\r\n");
+		}
+		len -= nl + 1 - src;
+		src  = nl + 1;
+	}
+	strbuf_add(buf, src, len);
 
-	return buffer;
+	free(to_free);
+	return 1;
 }
 
-static int filter_buffer(const char *path, const char *src,
-			 unsigned long size, const char *cmd)
+struct filter_params {
+	const char *src;
+	unsigned long size;
+	const char *cmd;
+};
+
+static int filter_buffer(int fd, void *data)
 {
 	/*
 	 * Spawn cmd and feed the buffer contents through its stdin.
 	 */
 	struct child_process child_process;
-	int pipe_feed[2];
+	struct filter_params *params = (struct filter_params *)data;
 	int write_err, status;
+	const char *argv[] = { "sh", "-c", params->cmd, NULL };
 
 	memset(&child_process, 0, sizeof(child_process));
+	child_process.argv = argv;
+	child_process.in = -1;
+	child_process.out = fd;
 
-	if (pipe(pipe_feed) < 0) {
-		error("cannot create pipe to run external filter %s", cmd);
-		return 1;
-	}
+	if (start_command(&child_process))
+		return error("cannot fork to run external filter %s", params->cmd);
 
-	child_process.pid = fork();
-	if (child_process.pid < 0) {
-		error("cannot fork to run external filter %s", cmd);
-		close(pipe_feed[0]);
-		close(pipe_feed[1]);
-		return 1;
-	}
-	if (!child_process.pid) {
-		dup2(pipe_feed[0], 0);
-		close(pipe_feed[0]);
-		close(pipe_feed[1]);
-		execlp("sh", "sh", "-c", cmd, NULL);
-		return 1;
-	}
-	close(pipe_feed[0]);
-
-	write_err = (write_in_full(pipe_feed[1], src, size) < 0);
-	if (close(pipe_feed[1]))
+	write_err = (write_in_full(child_process.in, params->src, params->size) < 0);
+	if (close(child_process.in))
 		write_err = 1;
 	if (write_err)
-		error("cannot feed the input to external filter %s", cmd);
+		error("cannot feed the input to external filter %s", params->cmd);
 
 	status = finish_command(&child_process);
 	if (status)
-		error("external filter %s failed %d", cmd, -status);
+		error("external filter %s failed %d", params->cmd, -status);
 	return (write_err || status);
 }
 
-static char *apply_filter(const char *path, const char *src,
-			  unsigned long *sizep, const char *cmd)
+static int apply_filter(const char *path, const char *src, size_t len,
+                        struct strbuf *dst, const char *cmd)
 {
 	/*
 	 * Create a pipeline to have the command filter the buffer's
@@ -255,87 +280,53 @@ static char *apply_filter(const char *path, const char *src,
 	 *
 	 * (child --> cmd) --> us
 	 */
-	const int SLOP = 4096;
-	int pipe_feed[2];
-	int status;
-	char *dst;
-	unsigned long dstsize, dstalloc;
-	struct child_process child_process;
+	int ret = 1;
+	struct strbuf nbuf = STRBUF_INIT;
+	struct async async;
+	struct filter_params params;
 
 	if (!cmd)
-		return NULL;
+		return 0;
 
-	memset(&child_process, 0, sizeof(child_process));
-
-	if (pipe(pipe_feed) < 0) {
-		error("cannot create pipe to run external filter %s", cmd);
-		return NULL;
-	}
+	memset(&async, 0, sizeof(async));
+	async.proc = filter_buffer;
+	async.data = &params;
+	params.src = src;
+	params.size = len;
+	params.cmd = cmd;
 
 	fflush(NULL);
-	child_process.pid = fork();
-	if (child_process.pid < 0) {
-		error("cannot fork to run external filter %s", cmd);
-		close(pipe_feed[0]);
-		close(pipe_feed[1]);
-		return NULL;
-	}
-	if (!child_process.pid) {
-		dup2(pipe_feed[1], 1);
-		close(pipe_feed[0]);
-		close(pipe_feed[1]);
-		exit(filter_buffer(path, src, *sizep, cmd));
-	}
-	close(pipe_feed[1]);
+	if (start_async(&async))
+		return 0;	/* error was already reported */
 
-	dstalloc = *sizep;
-	dst = xmalloc(dstalloc);
-	dstsize = 0;
-
-	while (1) {
-		ssize_t numread = xread(pipe_feed[0], dst + dstsize,
-					dstalloc - dstsize);
-
-		if (numread <= 0) {
-			if (!numread)
-				break;
-			error("read from external filter %s failed", cmd);
-			free(dst);
-			dst = NULL;
-			break;
-		}
-		dstsize += numread;
-		if (dstalloc <= dstsize + SLOP) {
-			dstalloc = dstsize + SLOP;
-			dst = xrealloc(dst, dstalloc);
-		}
-	}
-	if (close(pipe_feed[0])) {
+	if (strbuf_read(&nbuf, async.out, len) < 0) {
 		error("read from external filter %s failed", cmd);
-		free(dst);
-		dst = NULL;
+		ret = 0;
+	}
+	if (close(async.out)) {
+		error("read from external filter %s failed", cmd);
+		ret = 0;
+	}
+	if (finish_async(&async)) {
+		error("external filter %s failed", cmd);
+		ret = 0;
 	}
 
-	status = finish_command(&child_process);
-	if (status) {
-		error("external filter %s failed %d", cmd, -status);
-		free(dst);
-		dst = NULL;
+	if (ret) {
+		strbuf_swap(dst, &nbuf);
 	}
-
-	if (dst)
-		*sizep = dstsize;
-	return dst;
+	strbuf_release(&nbuf);
+	return ret;
 }
 
 static struct convert_driver {
 	const char *name;
 	struct convert_driver *next;
-	char *smudge;
-	char *clean;
+	const char *smudge;
+	const char *clean;
 } *user_convert, **user_convert_tail;
 
-static int read_convert_config(const char *var, const char *value)
+static int read_convert_config(const char *var, const char *value, void *cb)
 {
 	const char *ep, *name;
 	int namelen;
@@ -353,13 +344,8 @@ static int read_convert_config(const char *var, const char *value)
 		if (!strncmp(drv->name, name, namelen) && !drv->name[namelen])
 			break;
 	if (!drv) {
-		char *namebuf;
 		drv = xcalloc(1, sizeof(struct convert_driver));
-		namebuf = xmalloc(namelen + 1);
-		memcpy(namebuf, name, namelen);
-		namebuf[namelen] = 0;
-		drv->name = namebuf;
-		drv->next = NULL;
+		drv->name = xmemdupz(name, namelen);
 		*user_convert_tail = drv;
 		user_convert_tail = &(drv->next);
 	}
@@ -375,19 +361,12 @@ static int read_convert_config(const char *var, const char *value)
 	 * The command-line will not be interpolated in any way.
 	 */
 
-	if (!strcmp("smudge", ep)) {
-		if (!value)
-			return error("%s: lacks value", var);
-		drv->smudge = strdup(value);
-		return 0;
-	}
+	if (!strcmp("smudge", ep))
+		return git_config_string(&drv->smudge, var, value);
 
-	if (!strcmp("clean", ep)) {
-		if (!value)
-			return error("%s: lacks value", var);
-		drv->clean = strdup(value);
-		return 0;
-	}
+	if (!strcmp("clean", ep))
+		return git_config_string(&drv->clean, var, value);
+
 	return 0;
 }
 
@@ -402,7 +381,7 @@ static void setup_convert_check(struct git_attr_check *check)
 		attr_ident = git_attr("ident", 5);
 		attr_filter = git_attr("filter", 6);
 		user_convert_tail = &user_convert;
-		git_config(read_convert_config);
+		git_config(read_convert_config, NULL);
 	}
 	check[0].attr = attr_crlf;
 	check[1].attr = attr_ident;
@@ -449,137 +428,106 @@ static int count_ident(const char *cp, unsigned long size)
 	return cnt;
 }
 
-static char *ident_to_git(const char *path, const char *src, unsigned long *sizep, int ident)
+static int ident_to_git(const char *path, const char *src, size_t len,
+                        struct strbuf *buf, int ident)
 {
-	int cnt;
-	unsigned long size;
-	char *dst, *buf;
+	char *dst, *dollar;
 
-	if (!ident)
-		return NULL;
-	size = *sizep;
-	cnt = count_ident(src, size);
-	if (!cnt)
-		return NULL;
-	buf = xmalloc(size);
+	if (!ident || !count_ident(src, len))
+		return 0;
 
-	for (dst = buf; size; size--) {
-		char ch = *src++;
-		*dst++ = ch;
-		if ((ch == '$') && (3 <= size) &&
-		    !memcmp("Id:", src, 3)) {
-			unsigned long rem = size - 3;
-			const char *cp = src + 3;
-			do {
-				ch = *cp++;
-				if (ch == '$')
-					break;
-				rem--;
-			} while (rem);
-			if (!rem)
-				continue;
+	/* only grow if not in place */
+	if (strbuf_avail(buf) + buf->len < len)
+		strbuf_grow(buf, len - buf->len);
+	dst = buf->buf;
+	for (;;) {
+		dollar = memchr(src, '$', len);
+		if (!dollar)
+			break;
+		memcpy(dst, src, dollar + 1 - src);
+		dst += dollar + 1 - src;
+		len -= dollar + 1 - src;
+		src  = dollar + 1;
+
+		if (len > 3 && !memcmp(src, "Id:", 3)) {
+			dollar = memchr(src + 3, '$', len - 3);
+			if (!dollar)
+				break;
 			memcpy(dst, "Id$", 3);
 			dst += 3;
-			size -= (cp - src);
-			src = cp;
+			len -= dollar + 1 - src;
+			src  = dollar + 1;
 		}
 	}
-
-	*sizep = dst - buf;
-	return buf;
+	memcpy(dst, src, len);
+	strbuf_setlen(buf, dst + len - buf->buf);
+	return 1;
 }
 
-static char *ident_to_worktree(const char *path, const char *src, unsigned long *sizep, int ident)
+static int ident_to_worktree(const char *path, const char *src, size_t len,
+                             struct strbuf *buf, int ident)
 {
-	int cnt;
-	unsigned long size;
-	char *dst, *buf;
 	unsigned char sha1[20];
+	char *to_free = NULL, *dollar;
+	int cnt;
 
 	if (!ident)
-		return NULL;
+		return 0;
 
-	size = *sizep;
-	cnt = count_ident(src, size);
+	cnt = count_ident(src, len);
 	if (!cnt)
-		return NULL;
+		return 0;
 
-	hash_sha1_file(src, size, "blob", sha1);
-	buf = xmalloc(size + cnt * 43);
+	/* are we "faking" in place editing ? */
+	if (src == buf->buf)
+		to_free = strbuf_detach(buf, NULL);
+	hash_sha1_file(src, len, "blob", sha1);
 
-	for (dst = buf; size; size--) {
-		const char *cp;
-		/* Fetch next source character, move the pointer on */
-		char ch = *src++;
-		/* Copy the current character to the destination */
-		*dst++ = ch;
-		/* If the current character is "$" or there are less than three
-		 * remaining bytes or the two bytes following this one are not
-		 * "Id", then simply read the next character */
-		if ((ch != '$') || (size < 3) || memcmp("Id", src, 2))
+	strbuf_grow(buf, len + cnt * 43);
+	for (;;) {
+		/* step 1: run to the next '$' */
+		dollar = memchr(src, '$', len);
+		if (!dollar)
+			break;
+		strbuf_add(buf, src, dollar + 1 - src);
+		len -= dollar + 1 - src;
+		src  = dollar + 1;
+
+		/* step 2: does it looks like a bit like Id:xxx$ or Id$ ? */
+		if (len < 3 || memcmp("Id", src, 2))
 			continue;
-		/*
-		 * Here when
-		 *  - There are more than 2 bytes remaining
-		 *  - The current three bytes are "$Id"
-		 * with
-		 *  - ch == "$"
-		 *  - src[0] == "I"
-		 */
 
-		/*
-		 * It's possible that an expanded Id has crept its way into the
-		 * repository, we cope with that by stripping the expansion out
-		 */
-		if (src[2] == ':') {
-			/* Expanded keywords have "$Id:" at the front */
-
-			/* discard up to but not including the closing $ */
-			unsigned long rem = size - 3;
-			/* Point at first byte after the ":" */
-			cp = src + 3;
+		/* step 3: skip over Id$ or Id:xxxxx$ */
+		if (src[2] == '$') {
+			src += 3;
+			len -= 3;
+		} else if (src[2] == ':') {
 			/*
-			 * Throw away characters until either
-			 *  - we reach a "$"
-			 *  - we run out of bytes (rem == 0)
+			 * It's possible that an expanded Id has crept its way into the
+			 * repository, we cope with that by stripping the expansion out
 			 */
-			do {
-				ch = *cp;
-				if (ch == '$')
-					break;
-				cp++;
-				rem--;
-			} while (rem);
-			/* If the above finished because it ran out of characters, then
-			 * this is an incomplete keyword, so don't run the expansion */
-			if (!rem)
-				continue;
-		} else if (src[2] == '$')
-			cp = src + 2;
-		else
-			/* Anything other than "$Id:XXX$" or $Id$ and we skip the
-			 * expansion */
+			dollar = memchr(src + 3, '$', len - 3);
+			if (!dollar) {
+				/* incomplete keyword, no more '$', so just quit the loop */
+				break;
+			}
+
+			len -= dollar + 1 - src;
+			src  = dollar + 1;
+		} else {
+			/* it wasn't a "Id$" or "Id:xxxx$" */
 			continue;
+		}
 
-		/* cp is now pointing at the last $ of the keyword */
-
-		memcpy(dst, "Id: ", 4);
-		dst += 4;
-		memcpy(dst, sha1_to_hex(sha1), 40);
-		dst += 40;
-		*dst++ = ' ';
-
-		/* Adjust for the characters we've discarded */
-		size -= (cp - src);
-		src = cp;
-
-		/* Copy the final "$" */
-		*dst++ = *src++;
-		size--;
+		/* step 4: substitute */
+		strbuf_addstr(buf, "Id: ");
+		strbuf_add(buf, sha1_to_hex(sha1), 40);
+		strbuf_addstr(buf, " $");
 	}
+	strbuf_add(buf, src, len);
 
-	*sizep = dst - buf;
-	return buf;
+	free(to_free);
+	return 1;
 }
 
 static int git_path_check_crlf(const char *path, struct git_attr_check *check)
@@ -618,13 +566,13 @@ static int git_path_check_ident(const char *path, struct git_attr_check *check)
 	return !!ATTR_TRUE(value);
 }
 
-char *convert_to_git(const char *path, const char *src, unsigned long *sizep)
+int convert_to_git(const char *path, const char *src, size_t len,
+                   struct strbuf *dst, enum safe_crlf checksafe)
 {
 	struct git_attr_check check[3];
 	int crlf = CRLF_GUESS;
-	int ident = 0;
-	char *filter = NULL;
-	char *buf, *buf2;
+	int ident = 0, ret = 0;
+	const char *filter = NULL;
 
 	setup_convert_check(check);
 	if (!git_checkattr(path, ARRAY_SIZE(check), check)) {
@@ -636,30 +584,25 @@ char *convert_to_git(const char *path, const char *src, unsigned long *sizep)
 			filter = drv->clean;
 	}
 
-	buf = apply_filter(path, src, sizep, filter);
-
-	buf2 = crlf_to_git(path, buf ? buf : src, sizep, crlf);
-	if (buf2) {
-		free(buf);
-		buf = buf2;
+	ret |= apply_filter(path, src, len, dst, filter);
+	if (ret) {
+		src = dst->buf;
+		len = dst->len;
 	}
-
-	buf2 = ident_to_git(path, buf ? buf : src, sizep, ident);
-	if (buf2) {
-		free(buf);
-		buf = buf2;
+	ret |= crlf_to_git(path, src, len, dst, crlf, checksafe);
+	if (ret) {
+		src = dst->buf;
+		len = dst->len;
 	}
-
-	return buf;
+	return ret | ident_to_git(path, src, len, dst, ident);
 }
 
-char *convert_to_working_tree(const char *path, const char *src, unsigned long *sizep)
+int convert_to_working_tree(const char *path, const char *src, size_t len, struct strbuf *dst)
 {
 	struct git_attr_check check[3];
 	int crlf = CRLF_GUESS;
-	int ident = 0;
-	char *filter = NULL;
-	char *buf, *buf2;
+	int ident = 0, ret = 0;
+	const char *filter = NULL;
 
 	setup_convert_check(check);
 	if (!git_checkattr(path, ARRAY_SIZE(check), check)) {
@@ -671,34 +614,15 @@ char *convert_to_working_tree(const char *path, const char *src, unsigned long *
 			filter = drv->smudge;
 	}
 
-	buf = ident_to_worktree(path, src, sizep, ident);
-
-	buf2 = crlf_to_worktree(path, buf ? buf : src, sizep, crlf);
-	if (buf2) {
-		free(buf);
-		buf = buf2;
+	ret |= ident_to_worktree(path, src, len, dst, ident);
+	if (ret) {
+		src = dst->buf;
+		len = dst->len;
 	}
-
-	buf2 = apply_filter(path, buf ? buf : src, sizep, filter);
-	if (buf2) {
-		free(buf);
-		buf = buf2;
+	ret |= crlf_to_worktree(path, src, len, dst, crlf);
+	if (ret) {
+		src = dst->buf;
+		len = dst->len;
 	}
-
-	return buf;
-}
-
-void *convert_sha1_file(const char *path, const unsigned char *sha1,
-                        unsigned int mode, enum object_type *type,
-                        unsigned long *size)
-{
-	void *buffer = read_sha1_file(sha1, type, size);
-	if (S_ISREG(mode) && buffer) {
-		void *converted = convert_to_working_tree(path, buffer, size);
-		if (converted) {
-			free(buffer);
-			buffer = converted;
-		}
-	}
-	return buffer;
+	return ret | apply_filter(path, src, len, dst, filter);
 }

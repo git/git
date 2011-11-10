@@ -3,34 +3,44 @@ git-checkout(1)
 
 NAME
 ----
-git-checkout - Checkout and switch to a branch
+git-checkout - Checkout a branch or paths to the working tree
 
 SYNOPSIS
 --------
 [verse]
-'git-checkout' [-q] [-f] [[--track | --no-track] -b <new_branch> [-l]] [-m] [<branch>]
-'git-checkout' [<tree-ish>] <paths>...
+'git checkout' [-q] [-f] [-m] [<branch>]
+'git checkout' [-q] [-f] [-m] [-b <new_branch>] [<start_point>]
+'git checkout' [-f|--ours|--theirs|-m|--conflict=<style>] [<tree-ish>] [--] <paths>...
 
 DESCRIPTION
 -----------
 
 When <paths> are not given, this command switches branches by
-updating the index and working tree to reflect the specified
-branch, <branch>, and updating HEAD to be <branch> or, if
-specified, <new_branch>.  Using -b will cause <new_branch> to
-be created; in this case you can use the --track or --no-track
-options, which will be passed to `git branch`.
+updating the index, working tree, and HEAD to reflect the specified
+branch.
+
+If `-b` is given, a new branch is created and checked out, as if
+linkgit:git-branch[1] were called; in this case you can
+use the --track or --no-track options, which will be passed to `git
+branch`.  As a convenience, --track without `-b` implies branch
+creation; see the description of --track below.
 
 When <paths> are given, this command does *not* switch
 branches.  It updates the named paths in the working tree from
-the index file (i.e. it runs `git-checkout-index -f -u`), or
-from a named commit.  In
-this case, the `-f` and `-b` options are meaningless and giving
-either of them results in an error.  <tree-ish> argument can be
+the index file, or from a named <tree-ish> (most often a commit).  In
+this case, the `-b` and `--track` options are meaningless and giving
+either of them results in an error. The <tree-ish> argument can be
 used to specify a specific tree-ish (i.e. commit, tag or tree)
 to update the index for the given paths before updating the
 working tree.
 
+The index may contain unmerged entries after a failed merge.  By
+default, if you try to check out such an entry from the index, the
+checkout operation will fail and nothing will be checked out.
+Using -f will ignore these unmerged entries.  The contents from a
+specific side of the merge can be checked out of the index by
+using --ours or --theirs.  With -m, changes made to the working tree
+file can be discarded to recreate the original conflicted merge result.
 
 OPTIONS
 -------
@@ -38,36 +48,49 @@ OPTIONS
 	Quiet, suppress feedback messages.
 
 -f::
-	Proceed even if the index or the working tree differs
-	from HEAD.  This is used to throw away local changes.
+	When switching branches, proceed even if the index or the
+	working tree differs from HEAD.  This is used to throw away
+	local changes.
++
+When checking out paths from the index, do not fail upon unmerged
+entries; instead, unmerged entries are ignored.
+
+--ours::
+--theirs::
+	When checking out paths from the index, check out stage #2
+	('ours') or #3 ('theirs') for unmerged paths.
 
 -b::
 	Create a new branch named <new_branch> and start it at
-	<branch>.  The new branch name must pass all checks defined
-	by gitlink:git-check-ref-format[1].  Some of these checks
-	may restrict the characters allowed in a branch name.
+	<start_point>; see linkgit:git-branch[1] for details.
 
+-t::
 --track::
-	When -b is given and a branch is created off a remote branch,
-	set up configuration so that git-pull will automatically
-	retrieve data from the remote branch.  Set the
-	branch.autosetupmerge configuration variable to true if you
-	want git-checkout and git-branch to always behave as if
-	'--track' were given.
+	When creating a new branch, set up "upstream" configuration. See
+	"--track" in linkgit:git-branch[1] for details.
++
+If no '-b' option is given, the name of the new branch will be
+derived from the remote branch.  If "remotes/" or "refs/remotes/"
+is prefixed it is stripped away, and then the part up to the
+next slash (which would be the nickname of the remote) is removed.
+This would tell us to use "hack" as the local branch when branching
+off of "origin/hack" (or "remotes/origin/hack", or even
+"refs/remotes/origin/hack").  If the given name has no slash, or the above
+guessing results in an empty name, the guessing is aborted.  You can
+explicitly give a name with '-b' in such a case.
 
 --no-track::
-	When -b is given and a branch is created off a remote branch,
-	set up configuration so that git-pull will not retrieve data
-	from the remote branch, ignoring the branch.autosetupmerge
-	configuration variable.
+	Do not set up "upstream" configuration, even if the
+	branch.autosetupmerge configuration variable is true.
 
 -l::
-	Create the new branch's reflog.  This activates recording of
-	all changes made to the branch ref, enabling use of date
-	based sha1 expressions such as "<branchname>@\{yesterday}".
+	Create the new branch's reflog; see linkgit:git-branch[1] for
+	details.
 
 -m::
-	If you have local modifications to one or more files that
+--merge::
+	When switching branches,
+	if you have local modifications to one or more files that
 	are different between the current branch and the branch to
 	which you are switching, the command refuses to switch
 	branches in order to preserve your modifications in context.
@@ -79,16 +102,39 @@ When a merge conflict happens, the index entries for conflicting
 paths are left unmerged, and you need to resolve the conflicts
 and mark the resolved paths with `git add` (or `git rm` if the merge
 should result in deletion of the path).
++
+When checking out paths from the index, this option lets you recreate
+the conflicted merge in the specified paths.
+
+--conflict=<style>::
+	The same as --merge option above, but changes the way the
+	conflicting hunks are presented, overriding the
+	merge.conflictstyle configuration variable.  Possible values are
+	"merge" (default) and "diff3" (in addition to what is shown by
+	"merge" style, shows the original contents).
+
+<branch>::
+	Branch to checkout; if it refers to a branch (i.e., a name that,
+	when prepended with "refs/heads/", is a valid ref), then that
+	branch is checked out. Otherwise, if it refers to a valid
+	commit, your HEAD becomes "detached" and you are no longer on
+	any branch (see below for details).
++
+As a special case, the `"@\{-N\}"` syntax for the N-th last branch
+checks out the branch (instead of detaching).  You may also specify
+`-` which is synonymous with `"@\{-1\}"`.
 
 <new_branch>::
 	Name for the new branch.
 
-<branch>::
-	Branch to checkout; may be any object ID that resolves to a
-	commit.  Defaults to HEAD.
-+
-When this parameter names a non-branch (but still a valid commit object),
-your HEAD becomes 'detached'.
+<start_point>::
+	The name of a commit at which to start the new branch; see
+	linkgit:git-branch[1] for details. Defaults to HEAD.
+
+<tree-ish>::
+	Tree to checkout from (when paths are given). If not specified,
+	the index will be used.
+
 
 
 Detached HEAD
@@ -104,13 +150,13 @@ $ git checkout v2.6.18
 ------------
 
 Earlier versions of git did not allow this and asked you to
-create a temporary branch using `-b` option, but starting from
+create a temporary branch using the `-b` option, but starting from
 version 1.5.0, the above command 'detaches' your HEAD from the
-current branch and directly point at the commit named by the tag
-(`v2.6.18` in the above example).
+current branch and directly points at the commit named by the tag
+(`v2.6.18` in the example above).
 
-You can use usual git commands while in this state.  You can use
-`git-reset --hard $othercommit` to further move around, for
+You can use all git commands while in this state.  You can use
+`git reset --hard $othercommit` to further move around, for
 example.  You can make changes and create a new commit on top of
 a detached HEAD.  You can even create a merge by using `git
 merge $othercommit`.
@@ -143,8 +189,8 @@ $ git checkout hello.c            <3>
 ------------
 +
 <1> switch branch
-<2> take out a file out of other commit
-<3> restore hello.c from HEAD of current branch
+<2> take a file out of another commit
+<3> restore hello.c from the index
 +
 If you have an unfortunate branch that is named `hello.c`, this
 step would be confused as an instruction to switch to that branch.
@@ -154,7 +200,7 @@ You should instead write:
 $ git checkout -- hello.c
 ------------
 
-. After working in a wrong branch, switching to the correct
+. After working in the wrong branch, switching to the correct
 branch would be done using:
 +
 ------------
@@ -162,7 +208,7 @@ $ git checkout mytopic
 ------------
 +
 However, your "wrong" branch and correct "mytopic" branch may
-differ in files that you have locally modified, in which case,
+differ in files that you have modified locally, in which case
 the above checkout would fail like this:
 +
 ------------
@@ -188,7 +234,6 @@ the `-m` option, you would see something like this:
 ------------
 $ git checkout -m mytopic
 Auto-merging frotz
-merge: warning: conflicts during merge
 ERROR: Merge conflict in frotz
 fatal: merge program failed
 ------------
@@ -214,4 +259,4 @@ Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[1] suite

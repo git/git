@@ -6,7 +6,7 @@ head="$1"
 mandir="$2"
 SUBDIRECTORY_OK=t
 USAGE='<refname> <target directory>'
-. git-sh-setup
+. "$(git --exec-path)"/git-sh-setup
 cd_to_toplevel
 
 test -z "$mandir" && usage

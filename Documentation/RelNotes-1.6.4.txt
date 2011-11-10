@@ -1,0 +1,59 @@
+GIT v1.6.4 Release Notes
+========================
+
+With the next major release, "git push" into a branch that is
+currently checked out will be refused by default.  You can choose
+what should happen upon such a push by setting the configuration
+variable receive.denyCurrentBranch in the receiving repository.
+
+To ease the transition plan, the receiving repository of such a
+push running this release will issue a big warning when the
+configuration variable is missing.  Please refer to:
+
+  http://git.or.cz/gitwiki/GitFaq#non-bare
+  http://thread.gmane.org/gmane.comp.version-control.git/107758/focus=108007
+
+for more details on the reason why this change is needed and the
+transition plan.
+
+For a similar reason, "git push $there :$killed" to delete the branch
+$killed in a remote repository $there, if $killed branch is the current
+branch pointed at by its HEAD, gets a large warning.  You can choose what
+should happen upon such a push by setting the configuration variable
+receive.denyDeleteCurrent in the receiving repository.
+
+When the user does not tell "git push" what to push, it has always
+pushed matching refs.  For some people it is unexpected, and a new
+configuration variable push.default has been introduced to allow
+changing a different default behaviour.  To advertise the new feature,
+a big warning is issued if this is not configured and a git push without
+arguments is attempted.
+
+
+Updates since v1.6.3
+--------------------
+
+(subsystems)
+
+(performance)
+
+(usability, bells and whistles)
+
+(developers)
+
+
+Fixes since v1.6.3
+------------------
+
+All of the fixes in v1.6.3.X maintenance series are included in this
+release, unless otherwise noted.
+
+Here are fixes that this release has, but have not been backported to
+v1.6.3.X series.
+
+
+---
+exec >/var/tmp/1
+echo O=$(git describe master)
+O=v1.6.3
+git shortlog --no-merges $O..master ^maint

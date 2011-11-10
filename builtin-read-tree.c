@@ -13,16 +13,15 @@
 #include "dir.h"
 #include "builtin.h"
 
-#define MAX_TREES 8
 static int nr_trees;
-static struct tree *trees[MAX_TREES];
+static struct tree *trees[MAX_UNPACK_TREES];
 
 static int list_tree(unsigned char *sha1)
 {
 	struct tree *tree;
 
-	if (nr_trees >= MAX_TREES)
-		die("I cannot read more than %d trees", MAX_TREES);
+	if (nr_trees >= MAX_UNPACK_TREES)
+		die("I cannot read more than %d trees", MAX_UNPACK_TREES);
 	tree = parse_tree_indirect(sha1);
 	if (!tree)
 		return -1;
@@ -30,66 +29,7 @@ static int list_tree(unsigned char *sha1)
 	return 0;
 }
 
-static int read_cache_unmerged(void)
-{
-	int i;
-	struct cache_entry **dst;
-	struct cache_entry *last = NULL;
-
-	read_cache();
-	dst = active_cache;
-	for (i = 0; i < active_nr; i++) {
-		struct cache_entry *ce = active_cache[i];
-		if (ce_stage(ce)) {
-			if (last && !strcmp(ce->name, last->name))
-				continue;
-			cache_tree_invalidate_path(active_cache_tree, ce->name);
-			last = ce;
-			ce->ce_mode = 0;
-			ce->ce_flags &= ~htons(CE_STAGEMASK);
-		}
-		*dst++ = ce;
-	}
-	active_nr = dst - active_cache;
-	return !!last;
-}
-
-static void prime_cache_tree_rec(struct cache_tree *it, struct tree *tree)
-{
-	struct tree_desc desc;
-	struct name_entry entry;
-	int cnt;
-
-	hashcpy(it->sha1, tree->object.sha1);
-	init_tree_desc(&desc, tree->buffer, tree->size);
-	cnt = 0;
-	while (tree_entry(&desc, &entry)) {
-		if (!S_ISDIR(entry.mode))
-			cnt++;
-		else {
-			struct cache_tree_sub *sub;
-			struct tree *subtree = lookup_tree(entry.sha1);
-			if (!subtree->object.parsed)
-				parse_tree(subtree);
-			sub = cache_tree_sub(it, entry.path);
-			sub->cache_tree = cache_tree();
-			prime_cache_tree_rec(sub->cache_tree, subtree);
-			cnt += sub->cache_tree->entry_count;
-		}
-	}
-	it->entry_count = cnt;
-}
-
-static void prime_cache_tree(void)
-{
-	if (!nr_trees)
-		return;
-	active_cache_tree = cache_tree();
-	prime_cache_tree_rec(active_cache_tree, trees[0]);
-
-}
-
-static const char read_tree_usage[] = "git-read-tree (<sha> | [[-m [--trivial] [--aggressive] | --reset | --prefix=<prefix>] [-u | -i]] [--exclude-per-directory=<gitignore>] [--index-output=<file>] <sha1> [<sha2> [<sha3>]])";
+static const char read_tree_usage[] = "git read-tree (<sha> | [[-m [--trivial] [--aggressive] | --reset | --prefix=<prefix>] [-u | -i]] [--exclude-per-directory=<gitignore>] [--index-output=<file>] <sha1> [<sha2> [<sha3>]])";
 
 static struct lock_file lock_file;
 
@@ -97,17 +37,17 @@ int cmd_read_tree(int argc, const char **argv, const char *unused_prefix)
 {
 	int i, newfd, stage = 0;
 	unsigned char sha1[20];
-	struct tree_desc t[MAX_TREES];
+	struct tree_desc t[MAX_UNPACK_TREES];
 	struct unpack_trees_options opts;
 
 	memset(&opts, 0, sizeof(opts));
 	opts.head_idx = -1;
+	opts.src_index = &the_index;
+	opts.dst_index = &the_index;
 
-	git_config(git_default_config);
+	git_config(git_default_config, NULL);
 
 	newfd = hold_locked_index(&lock_file, 1);
-
-	git_config(git_default_config);
 
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
@@ -195,7 +135,7 @@ int cmd_read_tree(int argc, const char **argv, const char *unused_prefix)
 				die("more than one --exclude-per-directory are given.");
 
 			dir = xcalloc(1, sizeof(*opts.dir));
-			dir->show_ignored = 1;
+			dir->flags |= DIR_SHOW_IGNORED;
 			dir->exclude_per_dir = arg + 24;
 			opts.dir = dir;
 			/* We do not need to nor want to do read-directory
@@ -219,27 +159,8 @@ int cmd_read_tree(int argc, const char **argv, const char *unused_prefix)
 		usage(read_tree_usage);
 	if ((opts.dir && !opts.update))
 		die("--exclude-per-directory is meaningless unless -u");
-
-	if (opts.prefix) {
-		int pfxlen = strlen(opts.prefix);
-		int pos;
-		if (opts.prefix[pfxlen-1] != '/')
-			die("prefix must end with /");
-		if (stage != 2)
-			die("binding merge takes only one tree");
-		pos = cache_name_pos(opts.prefix, pfxlen);
-		if (0 <= pos)
-			die("corrupt index file");
-		pos = -pos-1;
-		if (pos < active_nr &&
-		    !strncmp(active_cache[pos]->name, opts.prefix, pfxlen))
-			die("subdirectory '%s' already exists.", opts.prefix);
-		pos = cache_name_pos(opts.prefix, pfxlen-1);
-		if (0 <= pos)
-			die("file '%.*s' already exists.",
-					pfxlen-1, opts.prefix);
-		opts.pos = -1 - pos;
-	}
+	if (opts.merge && !opts.index_only)
+		setup_work_tree();
 
 	if (opts.merge) {
 		if (stage < 2)
@@ -250,11 +171,11 @@ int cmd_read_tree(int argc, const char **argv, const char *unused_prefix)
 			break;
 		case 2:
 			opts.fn = twoway_merge;
+			opts.initial_checkout = is_cache_unborn();
 			break;
 		case 3:
 		default:
 			opts.fn = threeway_merge;
-			cache_tree_free(&active_cache_tree);
 			break;
 		}
 
@@ -264,26 +185,31 @@ int cmd_read_tree(int argc, const char **argv, const char *unused_prefix)
 			opts.head_idx = 1;
 	}
 
+	cache_tree_free(&active_cache_tree);
 	for (i = 0; i < nr_trees; i++) {
 		struct tree *tree = trees[i];
 		parse_tree(tree);
 		init_tree_desc(t+i, tree->buffer, tree->size);
 	}
-	unpack_trees(nr_trees, t, &opts);
+	if (unpack_trees(nr_trees, t, &opts))
+		return 128;
 
 	/*
 	 * When reading only one tree (either the most basic form,
 	 * "-m ent" or "--reset ent" form), we can obtain a fully
 	 * valid cache-tree because the index must match exactly
 	 * what came from the tree.
+	 *
+	 * The same holds true if we are switching between two trees
+	 * using read-tree -m A B.  The index must match B after that.
 	 */
-	if (nr_trees && !opts.prefix && (!opts.merge || (stage == 2))) {
-		cache_tree_free(&active_cache_tree);
-		prime_cache_tree();
-	}
+	if (nr_trees == 1 && !opts.prefix)
+		prime_cache_tree(&active_cache_tree, trees[0]);
+	else if (nr_trees == 2 && opts.merge)
+		prime_cache_tree(&active_cache_tree, trees[1]);
 
 	if (write_cache(newfd, active_cache, active_nr) ||
-	    close(newfd) || commit_locked_index(&lock_file))
+	    commit_locked_index(&lock_file))
 		die("unable to write new index file");
 	return 0;
 }

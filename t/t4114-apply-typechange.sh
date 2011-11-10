@@ -9,6 +9,12 @@ test_description='git apply should not get confused with type changes.
 
 . ./test-lib.sh
 
+if ! test_have_prereq SYMLINKS
+then
+	say 'Symbolic links not supported, skipping tests.'
+	test_done
+fi
+
 test_expect_success 'setup repository and commits' '
 	echo "hello world" > foo &&
 	echo "hi planet" > bar &&
@@ -25,6 +31,10 @@ test_expect_success 'setup repository and commits' '
 	git update-index foo &&
 	git commit -m "foo back to file" &&
 	git branch foo-back-to-file &&
+	printf "\0" > foo &&
+	git update-index foo &&
+	git commit -m "foo becomes binary" &&
+	git branch foo-becomes-binary &&
 	rm -f foo &&
 	git update-index --remove foo &&
 	mkdir foo &&
@@ -81,6 +91,20 @@ test_debug 'cat patch'
 test_expect_success 'symlink becomes file' '
 	git checkout -f foo-symlinked-to-bar &&
 	git diff-tree -p HEAD foo-back-to-file > patch &&
+	git apply --index < patch
+	'
+test_debug 'cat patch'
+
+test_expect_success 'binary file becomes symlink' '
+	git checkout -f foo-becomes-binary &&
+	git diff-tree -p --binary HEAD foo-symlinked-to-bar > patch &&
+	git apply --index < patch
+	'
+test_debug 'cat patch'
+
+test_expect_success 'symlink becomes binary file' '
+	git checkout -f foo-symlinked-to-bar &&
+	git diff-tree -p --binary HEAD foo-becomes-binary > patch &&
 	git apply --index < patch
 	'
 test_debug 'cat patch'

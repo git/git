@@ -20,14 +20,26 @@ struct ref_lock {
 typedef int each_ref_fn(const char *refname, const unsigned char *sha1, int flags, void *cb_data);
 extern int head_ref(each_ref_fn, void *);
 extern int for_each_ref(each_ref_fn, void *);
+extern int for_each_ref_in(const char *, each_ref_fn, void *);
 extern int for_each_tag_ref(each_ref_fn, void *);
 extern int for_each_branch_ref(each_ref_fn, void *);
 extern int for_each_remote_ref(each_ref_fn, void *);
 
-extern int peel_ref(const char *, unsigned char *);
+/* can be used to learn about broken ref and symref */
+extern int for_each_rawref(each_ref_fn, void *);
 
-/** Reads the refs file specified into sha1 **/
-extern int get_ref_sha1(const char *ref, unsigned char *sha1);
+extern void warn_dangling_symref(const char *msg_fmt, const char *refname);
+
+/*
+ * Extra refs will be listed by for_each_ref() before any actual refs
+ * for the duration of this process or until clear_extra_refs() is
+ * called. Only extra refs added before for_each_ref() is called will
+ * be listed on a given call of for_each_ref().
+ */
+extern void add_extra_ref(const char *refname, const unsigned char *sha1, int flags);
+extern void clear_extra_refs(void);
+
+extern int peel_ref(const char *, unsigned char *);
 
 /** Locks a "refs/" ref returning the lock on success and NULL on failure. **/
 extern struct ref_lock *lock_ref_sha1(const char *ref, const unsigned char *old_sha1);
@@ -35,6 +47,12 @@ extern struct ref_lock *lock_ref_sha1(const char *ref, const unsigned char *old_
 /** Locks any ref (for 'HEAD' type refs). */
 #define REF_NODEREF	0x01
 extern struct ref_lock *lock_any_ref_for_update(const char *ref, const unsigned char *old_sha1, int flags);
+
+/** Close the file descriptor owned by a lock and return the status */
+extern int close_ref(struct ref_lock *lock);
+
+/** Close and commit the ref locked by the lock */
+extern int commit_ref(struct ref_lock *lock);
 
 /** Release any lock taken but not written. **/
 extern void unlock_ref(struct ref_lock *lock);
@@ -48,6 +66,7 @@ extern int read_ref_at(const char *ref, unsigned long at_time, int cnt, unsigned
 /* iterate over reflog entries */
 typedef int each_reflog_ent_fn(unsigned char *osha1, unsigned char *nsha1, const char *, unsigned long, int, const char *, void *);
 int for_each_reflog_ent(const char *ref, each_reflog_ent_fn fn, void *cb_data);
+int for_each_recent_reflog_ent(const char *ref, each_reflog_ent_fn fn, long, void *cb_data);
 
 /*
  * Calls the specified function for each reflog file until it returns nonzero,
@@ -55,8 +74,14 @@ int for_each_reflog_ent(const char *ref, each_reflog_ent_fn fn, void *cb_data);
  */
 extern int for_each_reflog(each_ref_fn, void *);
 
-/** Returns 0 if target has the right format for a ref. **/
+#define CHECK_REF_FORMAT_OK 0
+#define CHECK_REF_FORMAT_ERROR (-1)
+#define CHECK_REF_FORMAT_ONELEVEL (-2)
+#define CHECK_REF_FORMAT_WILDCARD (-3)
 extern int check_ref_format(const char *target);
+
+extern const char *prettify_ref(const struct ref *ref);
+extern char *shorten_unambiguous_ref(const char *ref, int strict);
 
 /** rename ref, return 0 on success **/
 extern int rename_ref(const char *oldref, const char *newref, const char *logmsg);

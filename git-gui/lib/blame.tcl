@@ -21,8 +21,10 @@ field w_amov     ; # text column: annotations + move tracking
 field w_asim     ; # text column: annotations (simple computation)
 field w_file     ; # text column: actual file data
 field w_cviewer  ; # pane showing commit message
+field finder     ; # find mini-dialog frame
 field status     ; # status mega-widget instance
 field old_height ; # last known height of $w.file_pane
+
 
 # Tk UI colors
 #
@@ -31,13 +33,6 @@ variable group_colors {
 	#d6d6d6
 	#e1e1e1
 	#ececec
-}
-
-# Switches for original location detection
-#
-variable original_options [list -C -C]
-if {[git-version >= 1.5.3]} {
-	lappend original_options -w ; # ignore indentation changes
 }
 
 # Current blame data; cleared/reset on each load
@@ -65,8 +60,8 @@ field tooltip_t         {} ; # Text widget in $tooltip_wm
 field tooltip_timer     {} ; # Current timer event for our tooltip
 field tooltip_commit    {} ; # Commit(s) in tooltip
 
-constructor new {i_commit i_path} {
-	global cursor_ptr
+constructor new {i_commit i_path i_jump} {
+	global cursor_ptr M1B M1T have_tk85
 	variable active_color
 	variable group_colors
 
@@ -74,12 +69,15 @@ constructor new {i_commit i_path} {
 	set path   $i_path
 
 	make_toplevel top w
-	wm title $top "[appname] ([reponame]): File Viewer"
+	wm title $top [append "[appname] ([reponame]): " [mc "File Viewer"]]
+
+	set font_w [font measure font_diff "0"]
 
 	frame $w.header -background gold
 	label $w.header.commit_l \
-		-text {Commit:} \
+		-text [mc "Commit:"] \
 		-background gold \
+		-foreground black \
 		-anchor w \
 		-justify left
 	set w_back $w.header.commit_b
@@ -89,6 +87,7 @@ constructor new {i_commit i_path} {
 		-relief flat \
 		-state disabled \
 		-background gold \
+		-foreground black \
 		-activebackground gold
 	bind $w_back <Button-1> "
 		if {\[$w_back cget -state\] eq {normal}} {
@@ -98,16 +97,19 @@ constructor new {i_commit i_path} {
 	label $w.header.commit \
 		-textvariable @commit \
 		-background gold \
+		-foreground black \
 		-anchor w \
 		-justify left
 	label $w.header.path_l \
-		-text {File:} \
+		-text [mc "File:"] \
 		-background gold \
+		-foreground black \
 		-anchor w \
 		-justify left
 	set w_path $w.header.path
 	label $w_path \
 		-background gold \
+		-foreground black \
 		-anchor w \
 		-justify left
 	pack $w.header.commit_l -side left
@@ -116,9 +118,9 @@ constructor new {i_commit i_path} {
 	pack $w_path -fill x -side right
 	pack $w.header.path_l -side right
 
-	panedwindow $w.file_pane -orient vertical
-	frame $w.file_pane.out
-	frame $w.file_pane.cm
+	panedwindow $w.file_pane -orient vertical -borderwidth 0 -sashwidth 3
+	frame $w.file_pane.out -relief flat -borderwidth 1
+	frame $w.file_pane.cm -relief sunken -borderwidth 1
 	$w.file_pane add $w.file_pane.out \
 		-sticky nsew \
 		-minsize 100 \
@@ -135,7 +137,9 @@ constructor new {i_commit i_path} {
 		-takefocus 0 \
 		-highlightthickness 0 \
 		-padx 0 -pady 0 \
-		-background white -borderwidth 0 \
+		-background white \
+		-foreground black \
+		-borderwidth 0 \
 		-state disabled \
 		-wrap none \
 		-height 40 \
@@ -148,7 +152,9 @@ constructor new {i_commit i_path} {
 		-takefocus 0 \
 		-highlightthickness 0 \
 		-padx 0 -pady 0 \
-		-background white -borderwidth 0 \
+		-background white \
+		-foreground black \
+		-borderwidth 0 \
 		-state disabled \
 		-wrap none \
 		-height 40 \
@@ -166,7 +172,9 @@ constructor new {i_commit i_path} {
 		-takefocus 0 \
 		-highlightthickness 0 \
 		-padx 0 -pady 0 \
-		-background white -borderwidth 0 \
+		-background white \
+		-foreground black \
+		-borderwidth 0 \
 		-state disabled \
 		-wrap none \
 		-height 40 \
@@ -184,13 +192,20 @@ constructor new {i_commit i_path} {
 		-takefocus 0 \
 		-highlightthickness 0 \
 		-padx 0 -pady 0 \
-		-background white -borderwidth 0 \
+		-background white \
+		-foreground black \
+		-borderwidth 0 \
 		-state disabled \
 		-wrap none \
 		-height 40 \
 		-width 80 \
 		-xscrollcommand [list $w.file_pane.out.sbx set] \
 		-font font_diff
+	if {$have_tk85} {
+		$w_file configure -inactiveselectbackground darkblue
+	}
+	$w_file tag conf found \
+		-background yellow
 
 	set w_columns [list $w_amov $w_asim $w_line $w_file]
 
@@ -211,9 +226,16 @@ constructor new {i_commit i_path} {
 		-weight 1
 	grid rowconfigure $w.file_pane.out 0 -weight 1
 
+	set finder [::searchbar::new \
+		$w.file_pane.out.ff $w_file \
+		-column [expr {[llength $w_columns] - 1}] \
+		]
+
 	set w_cviewer $w.file_pane.cm.t
 	text $w_cviewer \
-		-background white -borderwidth 0 \
+		-background white \
+		-foreground black \
+		-borderwidth 0 \
 		-state disabled \
 		-wrap none \
 		-height 10 \
@@ -246,17 +268,43 @@ constructor new {i_commit i_path} {
 
 	menu $w.ctxm -tearoff 0
 	$w.ctxm add command \
-		-label "Copy Commit" \
+		-label [mc "Copy Commit"] \
 		-command [cb _copycommit]
+	$w.ctxm add separator
+	$w.ctxm add command \
+		-label [mc "Find Text..."] \
+		-accelerator F7 \
+		-command [list searchbar::show $finder]
+	menu $w.ctxm.enc
+	build_encoding_menu $w.ctxm.enc [cb _setencoding]
+	$w.ctxm add cascade \
+		-label [mc "Encoding"] \
+		-menu $w.ctxm.enc
+	$w.ctxm add command \
+		-label [mc "Do Full Copy Detection"] \
+		-command [cb _fullcopyblame]
+	$w.ctxm add separator
+	$w.ctxm add command \
+		-label [mc "Show History Context"] \
+		-command [cb _gitkcommit]
+	$w.ctxm add command \
+		-label [mc "Blame Parent Commit"] \
+		-command [cb _blameparent]
 
 	foreach i $w_columns {
 		for {set g 0} {$g < [llength $group_colors]} {incr g} {
 			$i tag conf color$g -background [lindex $group_colors $g]
 		}
 
+		if {$i eq $w_file} {
+			$w_file tag raise found
+		}
+		$i tag raise sel
+
 		$i conf -cursor $cursor_ptr
-		$i conf -yscrollcommand [list many2scrollbar \
-			$w_columns yview $w.file_pane.out.sby]
+		$i conf -yscrollcommand \
+			"[list ::searchbar::scrolled $finder]
+			 [list many2scrollbar $w_columns yview $w.file_pane.out.sby]"
 		bind $i <Button-1> "
 			[cb _hide_tooltip]
 			[cb _click $i @%x,%y]
@@ -273,7 +321,7 @@ constructor new {i_commit i_path} {
 			tk_popup $w.ctxm %X %Y
 		"
 		bind $i <Shift-Tab> "[list focus $w_cviewer];break"
-		bind $i <Tab>       "[list focus $w_cviewer];break"
+		bind $i <Tab>       "[cb _focus_search $w_cviewer];break"
 	}
 
 	foreach i [concat $w_columns $w_cviewer] {
@@ -289,10 +337,15 @@ constructor new {i_commit i_path} {
 		bind $i <Control-Key-f> {catch {%W yview scroll  1 pages};break}
 	}
 
-	bind $w_cviewer <Shift-Tab> "[list focus $w_file];break"
+	bind $w_cviewer <Shift-Tab> "[cb _focus_search $w_file];break"
 	bind $w_cviewer <Tab>       "[list focus $w_file];break"
-	bind $w_cviewer <Button-1> [list focus $w_cviewer]
-	bind $w_file    <Visibility> [list focus $w_file]
+	bind $w_cviewer <Button-1>   [list focus $w_cviewer]
+	bind $w_file    <Visibility> [cb _focus_search $w_file]
+	bind $top       <F7>         [list searchbar::show $finder]
+	bind $top       <Escape>     [list searchbar::hide $finder]
+	bind $top       <F3>         [list searchbar::find_next $finder]
+	bind $top       <Shift-F3>   [list searchbar::find_prev $finder]
+	catch { bind $top <Shift-Key-XF86_Switch_VT_3> [list searchbar::find_prev $finder] }
 
 	grid configure $w.header -sticky ew
 	grid configure $w.file_pane -sticky nsew
@@ -304,9 +357,14 @@ constructor new {i_commit i_path} {
 
 	set req_w [winfo reqwidth  $top]
 	set req_h [winfo reqheight $top]
-	set scr_h [expr {[winfo screenheight $top] - 100}]
-	if {$req_w < 600} {set req_w 600}
+	set scr_w [expr {[winfo screenwidth $top] - 40}]
+	set scr_h [expr {[winfo screenheight $top] - 120}]
+	set opt_w [expr {$font_w * (80 + 5*3 + 3)}]
+	if {$req_w < $opt_w} {set req_w $opt_w}
+	if {$req_w > $scr_w} {set req_w $scr_w}
+	set opt_h [expr {$req_w*4/3}]
 	if {$req_h < $scr_h} {set req_h $scr_h}
+	if {$req_h > $opt_h} {set req_h $opt_h}
 	set g "${req_w}x${req_h}"
 	wm geometry $top $g
 	update
@@ -314,11 +372,37 @@ constructor new {i_commit i_path} {
 	set old_height [winfo height $w.file_pane]
 	$w.file_pane sash place 0 \
 		[lindex [$w.file_pane sash coord 0] 0] \
-		[expr {int($old_height * 0.70)}]
+		[expr {int($old_height * 0.80)}]
 	bind $w.file_pane <Configure> \
 	"if {{$w.file_pane} eq {%W}} {[cb _resize %h]}"
 
-	_load $this {}
+	wm protocol $top WM_DELETE_WINDOW "destroy $top"
+	bind $top <Destroy> [cb _handle_destroy %W]
+
+	_load $this $i_jump
+}
+
+method _focus_search {win} {
+	if {[searchbar::visible $finder]} {
+		focus [searchbar::editor $finder]
+	} else {
+		focus $win
+	}
+}
+
+method _handle_destroy {win} {
+	if {$win eq $w} {
+		_kill $this
+		delete_this
+	}
+}
+
+method _kill {} {
+	if {$current_fd ne {}} {
+		kill_file_process $current_fd
+		catch {close $current_fd}
+		set current_fd {}
+	}
 }
 
 method _load {jump} {
@@ -327,10 +411,7 @@ method _load {jump} {
 	_hide_tooltip $this
 
 	if {$total_lines != 0 || $current_fd ne {}} {
-		if {$current_fd ne {}} {
-			catch {close $current_fd}
-			set current_fd {}
-		}
+		_kill $this
 
 		foreach i $w_columns {
 			$i conf -state normal
@@ -366,7 +447,7 @@ method _load {jump} {
 	set amov_data [list [list]]
 	set asim_data [list [list]]
 
-	$status show "Reading $commit:[escape_path $path]..."
+	$status show [mc "Reading %s..." "$commit:[escape_path $path]"]
 	$w_path conf -text [escape_path $path]
 	if {$commit eq {}} {
 		set fd [open $path r]
@@ -374,7 +455,10 @@ method _load {jump} {
 	} else {
 		set fd [git_read cat-file blob "$commit:$path"]
 	}
-	fconfigure $fd -blocking 0 -translation lf -encoding binary
+	fconfigure $fd \
+		-blocking 0 \
+		-translation lf \
+		-encoding [get_path_encoding $path]
 	fileevent $fd readable [cb _read_file $fd $jump]
 	set current_fd $fd
 }
@@ -470,12 +554,12 @@ method _read_file {fd jump} {
 
 		_exec_blame $this $w_asim @asim_data \
 			[list] \
-			{ copy/move tracking}
+			[mc "Loading copy/move tracking annotations..."]
 	}
 } ifdeleted { catch {close $fd} }
 
 method _exec_blame {cur_w cur_d options cur_s} {
-	lappend options --incremental
+	lappend options --incremental --encoding=utf-8
 	if {$commit eq {}} {
 		lappend options --contents $path
 	} else {
@@ -483,20 +567,19 @@ method _exec_blame {cur_w cur_d options cur_s} {
 	}
 	lappend options -- $path
 	set fd [eval git_read --nice blame $options]
-	fconfigure $fd -blocking 0 -translation lf -encoding binary
+	fconfigure $fd -blocking 0 -translation lf -encoding utf-8
 	fileevent $fd readable [cb _read_blame $fd $cur_w $cur_d]
 	set current_fd $fd
 	set blame_lines 0
 
 	$status start \
-		"Loading$cur_s annotations..." \
-		{lines annotated}
+		$cur_s \
+		[mc "lines annotated"]
 }
 
 method _read_blame {fd cur_w cur_d} {
 	upvar #0 $cur_d line_data
 	variable group_colors
-	variable original_options
 
 	if {$fd ne $current_fd} {
 		catch {close $fd}
@@ -669,21 +752,109 @@ method _read_blame {fd cur_w cur_d} {
 	if {[eof $fd]} {
 		close $fd
 		if {$cur_w eq $w_asim} {
+			# Switches for original location detection
+			set threshold [get_config gui.copyblamethreshold]
+			set original_options [list "-C$threshold"]
+
+			if {![is_config_true gui.fastcopyblame]} {
+				# thorough copy search; insert before the threshold
+				set original_options [linsert $original_options 0 -C]
+			}
+			if {[git-version >= 1.5.3]} {
+				lappend original_options -w ; # ignore indentation changes
+			}
+
 			_exec_blame $this $w_amov @amov_data \
 				$original_options \
-				{ original location}
+				[mc "Loading original location annotations..."]
 		} else {
 			set current_fd {}
-			$status stop {Annotation complete.}
+			$status stop [mc "Annotation complete."]
 		}
 	} else {
 		$status update $blame_lines $total_lines
 	}
 } ifdeleted { catch {close $fd} }
 
+method _find_commit_bound {data_list start_idx delta} {
+	upvar #0 $data_list line_data
+	set pos $start_idx
+	set limit       [expr {[llength $line_data] - 1}]
+	set base_commit [lindex $line_data $pos 0]
+
+	while {$pos > 0 && $pos < $limit} {
+		set new_pos [expr {$pos + $delta}]
+		if {[lindex $line_data $new_pos 0] ne $base_commit} {
+			return $pos
+		}
+
+		set pos $new_pos
+	}
+
+	return $pos
+}
+
+method _fullcopyblame {} {
+	if {$current_fd ne {}} {
+		tk_messageBox \
+			-icon error \
+			-type ok \
+			-title [mc "Busy"] \
+			-message [mc "Annotation process is already running."]
+
+		return
+	}
+
+	# Switches for original location detection
+	set threshold [get_config gui.copyblamethreshold]
+	set original_options [list -C -C "-C$threshold"]
+
+	if {[git-version >= 1.5.3]} {
+		lappend original_options -w ; # ignore indentation changes
+	}
+
+	# Find the line range
+	set pos @$::cursorX,$::cursorY
+	set lno [lindex [split [$::cursorW index $pos] .] 0]
+	set min_amov_lno [_find_commit_bound $this @amov_data $lno -1]
+	set max_amov_lno [_find_commit_bound $this @amov_data $lno 1]
+	set min_asim_lno [_find_commit_bound $this @asim_data $lno -1]
+	set max_asim_lno [_find_commit_bound $this @asim_data $lno 1]
+
+	if {$min_asim_lno < $min_amov_lno} {
+		set min_amov_lno $min_asim_lno
+	}
+
+	if {$max_asim_lno > $max_amov_lno} {
+		set max_amov_lno $max_asim_lno
+	}
+
+	lappend original_options -L "$min_amov_lno,$max_amov_lno"
+
+	# Clear lines
+	for {set i $min_amov_lno} {$i <= $max_amov_lno} {incr i} {
+		lset amov_data $i [list ]
+	}
+
+	# Start the back-end process
+	_exec_blame $this $w_amov @amov_data \
+		$original_options \
+		[mc "Running thorough copy detection..."]
+}
+
 method _click {cur_w pos} {
 	set lno [lindex [split [$cur_w index $pos] .] 0]
 	_showcommit $this $cur_w $lno
+}
+
+method _setencoding {enc} {
+	force_path_encoding $path $enc
+	_load $this [list \
+		$highlight_column \
+		$highlight_line \
+		[lindex [$w_file xview] 0] \
+		[lindex [$w_file yview] 0] \
+		]
 }
 
 method _load_commit {cur_w cur_d pos} {
@@ -691,17 +862,25 @@ method _load_commit {cur_w cur_d pos} {
 	set lno [lindex [split [$cur_w index $pos] .] 0]
 	set dat [lindex $line_data $lno]
 	if {$dat ne {}} {
-		lappend history [list \
-			$commit $path \
-			$highlight_column \
-			$highlight_line \
-			[lindex [$w_file xview] 0] \
-			[lindex [$w_file yview] 0] \
-			]
-		set commit [lindex $dat 0]
-		set path   [lindex $dat 1]
-		_load $this [list [lindex $dat 2]]
+		_load_new_commit $this  \
+			[lindex $dat 0] \
+			[lindex $dat 1] \
+			[list [lindex $dat 2]]
 	}
+}
+
+method _load_new_commit {new_commit new_path jump} {
+	lappend history [list \
+		$commit $path \
+		$highlight_column \
+		$highlight_line \
+		[lindex [$w_file xview] 0] \
+		[lindex [$w_file yview] 0] \
+		]
+
+	set commit $new_commit
+	set path   $new_path
+	_load $this $jump
 }
 
 method _showcommit {cur_w lno} {
@@ -728,7 +907,7 @@ method _showcommit {cur_w lno} {
 
 	if {$dat eq {}} {
 		set cmit {}
-		$w_cviewer insert end "Loading annotation..." still_loading
+		$w_cviewer insert end [mc "Loading annotation..."] still_loading
 	} else {
 		set cmit [lindex $dat 0]
 		set file [lindex $dat 1]
@@ -736,6 +915,10 @@ method _showcommit {cur_w lno} {
 		foreach i $w_columns {
 			$i tag conf g$cmit -background $active_color
 			$i tag raise g$cmit
+			if {$i eq $w_file} {
+				$w_file tag raise found
+			}
+			$i tag raise sel
 		}
 
 		set author_name {}
@@ -743,29 +926,22 @@ method _showcommit {cur_w lno} {
 		set author_time {}
 		catch {set author_name $header($cmit,author)}
 		catch {set author_email $header($cmit,author-mail)}
-		catch {set author_time [clock format \
-			$header($cmit,author-time) \
-			-format {%Y-%m-%d %H:%M:%S}
-		]}
+		catch {set author_time [format_date $header($cmit,author-time)]}
 
 		set committer_name {}
 		set committer_email {}
 		set committer_time {}
 		catch {set committer_name $header($cmit,committer)}
 		catch {set committer_email $header($cmit,committer-mail)}
-		catch {set committer_time [clock format \
-			$header($cmit,committer-time) \
-			-format {%Y-%m-%d %H:%M:%S}
-		]}
+		catch {set committer_time [format_date $header($cmit,committer-time)]}
 
 		if {[catch {set msg $header($cmit,message)}]} {
 			set msg {}
 			catch {
 				set fd [git_read cat-file commit $cmit]
 				fconfigure $fd -encoding binary -translation lf
-				if {[catch {set enc $repo_config(i18n.commitencoding)}]} {
-					set enc utf-8
-				}
+				# By default commits are assumed to be in utf-8
+				set enc utf-8
 				while {[gets $fd line] > 0} {
 					if {[string match {encoding *} $line]} {
 						set enc [string tolower [string range $line 9 end]]
@@ -777,12 +953,6 @@ method _showcommit {cur_w lno} {
 				set enc [tcl_encoding $enc]
 				if {$enc ne {}} {
 					set msg [encoding convertfrom $enc $msg]
-					set author_name [encoding convertfrom $enc $author_name]
-					set committer_name [encoding convertfrom $enc $committer_name]
-					set header($cmit,author) $author_name
-					set header($cmit,committer) $committer_name
-					set header($cmit,summary) \
-					[encoding convertfrom $enc $header($cmit,summary)]
 				}
 				set msg [string trim $msg]
 			}
@@ -790,16 +960,16 @@ method _showcommit {cur_w lno} {
 		}
 
 		$w_cviewer insert end "commit $cmit\n" header_key
-		$w_cviewer insert end "Author:\t" header_key
+		$w_cviewer insert end [strcat [mc "Author:"] "\t"] header_key
 		$w_cviewer insert end "$author_name $author_email" header_val
 		$w_cviewer insert end "  $author_time\n" header_val
 
-		$w_cviewer insert end "Committer:\t" header_key
+		$w_cviewer insert end [strcat [mc "Committer:"] "\t"] header_key
 		$w_cviewer insert end "$committer_name $committer_email" header_val
 		$w_cviewer insert end "  $committer_time\n" header_val
 
 		if {$file ne $path} {
-			$w_cviewer insert end "Original File:\t" header_key
+			$w_cviewer insert end [strcat [mc "Original File:"] "\t"] header_key
 			$w_cviewer insert end "[escape_path $file]\n" header_val
 		}
 
@@ -815,10 +985,14 @@ method _showcommit {cur_w lno} {
 	}
 }
 
-method _copycommit {} {
+method _get_click_amov_info {} {
 	set pos @$::cursorX,$::cursorY
 	set lno [lindex [split [$::cursorW index $pos] .] 0]
-	set dat [lindex $amov_data $lno]
+	return [lindex $amov_data $lno]
+}
+
+method _copycommit {} {
+	set dat [_get_click_amov_info $this]
 	if {$dat ne {}} {
 		clipboard clear
 		clipboard append \
@@ -827,6 +1001,147 @@ method _copycommit {} {
 			-- [lindex $dat 0]
 	}
 }
+
+method _format_offset_date {base offset} {
+	set exval [expr {$base + $offset*24*60*60}]
+	return [clock format $exval -format {%Y-%m-%d}]
+}
+
+method _gitkcommit {} {
+	global nullid
+
+	set dat [_get_click_amov_info $this]
+	if {$dat ne {}} {
+		set cmit [lindex $dat 0]
+
+		# If the line belongs to the working copy, use HEAD instead
+		if {$cmit eq $nullid} {
+			if {[catch {set cmit [git rev-parse --verify HEAD]} err]} {
+				error_popup [strcat [mc "Cannot find HEAD commit:"] "\n\n$err"]
+				return;
+			}
+		}
+
+		set radius [get_config gui.blamehistoryctx]
+		set cmdline [list --select-commit=$cmit]
+
+                if {$radius > 0} {
+			set author_time {}
+			set committer_time {}
+
+			catch {set author_time $header($cmit,author-time)}
+			catch {set committer_time $header($cmit,committer-time)}
+
+			if {$committer_time eq {}} {
+				set committer_time $author_time
+			}
+
+			set after_time [_format_offset_date $this $committer_time [expr {-$radius}]]
+			set before_time [_format_offset_date $this $committer_time $radius]
+
+			lappend cmdline --after=$after_time --before=$before_time
+		}
+
+		lappend cmdline $cmit
+
+		set base_rev "HEAD"
+		if {$commit ne {}} {
+			set base_rev $commit
+		}
+
+		if {$base_rev ne $cmit} {
+			lappend cmdline $base_rev
+		}
+
+		do_gitk $cmdline
+	}
+}
+
+method _blameparent {} {
+	global nullid
+
+	set dat [_get_click_amov_info $this]
+	if {$dat ne {}} {
+		set cmit [lindex $dat 0]
+		set new_path [lindex $dat 1]
+
+		# Allow using Blame Parent on lines modified in the working copy
+		if {$cmit eq $nullid} {
+			set parent_ref "HEAD"
+		} else {
+			set parent_ref "$cmit^"
+		}
+		if {[catch {set cparent [git rev-parse --verify $parent_ref]} err]} {
+			error_popup [strcat [mc "Cannot find parent commit:"] "\n\n$err"]
+			return;
+		}
+
+		_kill $this
+
+		# Generate a diff between the commit and its parent,
+		# and use the hunks to update the line number.
+		# Request zero context to simplify calculations.
+		if {$cmit eq $nullid} {
+			set diffcmd [list diff-index --unified=0 $cparent -- $new_path]
+		} else {
+			set diffcmd [list diff-tree --unified=0 $cparent $cmit -- $new_path]
+		}
+		if {[catch {set fd [eval git_read $diffcmd]} err]} {
+			$status stop [mc "Unable to display parent"]
+			error_popup [strcat [mc "Error loading diff:"] "\n\n$err"]
+			return
+		}
+
+		set r_orig_line [lindex $dat 2]
+
+		fconfigure $fd \
+			-blocking 0 \
+			-encoding binary \
+			-translation binary
+		fileevent $fd readable [cb _read_diff_load_commit \
+			$fd $cparent $new_path $r_orig_line]
+		set current_fd $fd
+	}
+}
+
+method _read_diff_load_commit {fd cparent new_path tline} {
+	if {$fd ne $current_fd} {
+		catch {close $fd}
+		return
+	}
+
+	while {[gets $fd line] >= 0} {
+		if {[regexp {^@@ -(\d+)(,(\d+))? \+(\d+)(,(\d+))? @@} $line line \
+			old_line osz old_size new_line nsz new_size]} {
+
+			if {$osz eq {}} { set old_size 1 }
+			if {$nsz eq {}} { set new_size 1 }
+
+			if {$new_line <= $tline} {
+				if {[expr {$new_line + $new_size}] > $tline} {
+					# Target line within the hunk
+					set line_shift [expr {
+						($new_size-$old_size)*($tline-$new_line)/$new_size
+						}]
+				} else {
+					set line_shift [expr {$new_size-$old_size}]
+				}
+
+				set r_orig_line [expr {$r_orig_line - $line_shift}]
+			}
+		}
+	}
+
+	if {[eof $fd]} {
+		close $fd;
+		set current_fd {}
+
+		_load_new_commit $this  \
+			$cparent        \
+			$new_path       \
+			[list $r_orig_line]
+	}
+} ifdeleted { catch {close $fd} }
 
 method _show_tooltip {cur_w pos} {
 	if {$tooltip_wm ne {}} {
@@ -892,10 +1207,7 @@ method _open_tooltip {cur_w} {
 	set author_time {}
 	catch {set author_name $header($cmit,author)}
 	catch {set summary     $header($cmit,summary)}
-	catch {set author_time [clock format \
-		$header($cmit,author-time) \
-		-format {%Y-%m-%d %H:%M:%S}
-	]}
+	catch {set author_time [format_date $header($cmit,author-time)]}
 
 	$tooltip_t insert end "commit $cmit\n"
 	$tooltip_t insert end "$author_name  $author_time\n"
@@ -914,23 +1226,20 @@ method _open_tooltip {cur_w} {
 		set author_time {}
 		catch {set author_name $header($cmit,author)}
 		catch {set summary     $header($cmit,summary)}
-		catch {set author_time [clock format \
-			$header($cmit,author-time) \
-			-format {%Y-%m-%d %H:%M:%S}
-		]}
+		catch {set author_time [format_date $header($cmit,author-time)]}
 
-		$tooltip_t insert end "Originally By:\n" section_header
+		$tooltip_t insert end [strcat [mc "Originally By:"] "\n"] section_header
 		$tooltip_t insert end "commit $cmit\n"
 		$tooltip_t insert end "$author_name  $author_time\n"
 		$tooltip_t insert end "$summary\n"
 
 		if {$file ne $path} {
-			$tooltip_t insert end "In File: " section_header
+			$tooltip_t insert end [strcat [mc "In File:"] " "] section_header
 			$tooltip_t insert end "$file\n"
 		}
 
 		$tooltip_t insert end "\n"
-		$tooltip_t insert end "Copied Or Moved Here By:\n" section_header
+		$tooltip_t insert end [strcat [mc "Copied Or Moved Here By:"] "\n"] section_header
 		$tooltip_t insert end $save
 	}
 

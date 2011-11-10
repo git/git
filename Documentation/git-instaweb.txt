@@ -8,40 +8,46 @@ git-instaweb - Instantly browse your working repository in gitweb
 SYNOPSIS
 --------
 [verse]
-'git-instaweb' [--local] [--httpd=<httpd>] [--port=<port>]
+'git instaweb' [--local] [--httpd=<httpd>] [--port=<port>]
                [--browser=<browser>]
-'git-instaweb' [--start] [--stop] [--restart]
+'git instaweb' [--start] [--stop] [--restart]
 
 DESCRIPTION
 -----------
-A simple script to setup gitweb and a web server for browsing the local
+A simple script to set up `gitweb` and a web server for browsing the local
 repository.
 
 OPTIONS
 -------
 
--l|--local::
+-l::
+--local::
 	Only bind the web server to the local IP (127.0.0.1).
 
--d|--httpd::
+-d::
+--httpd::
 	The HTTP daemon command-line that will be executed.
 	Command-line options may be specified here, and the
 	configuration file will be added at the end of the command-line.
-	Currently, lighttpd and apache2 are the only supported servers.
+	Currently lighttpd, apache2 and webrick are supported.
 	(Default: lighttpd)
 
--m|--module-path::
+-m::
+--module-path::
 	The module path (only needed if httpd is Apache).
 	(Default: /usr/lib/apache2/modules)
 
--p|--port::
+-p::
+--port::
 	The port number to bind the httpd to.  (Default: 1234)
 
--b|--browser::
-
-	The web browser command-line to execute to view the gitweb page.
-	If blank, the URL of the gitweb instance will be printed to
-	stdout.  (Default: 'firefox')
+-b::
+--browser::
+	The web browser that should be used to view the gitweb
+	page. This will be passed to the 'git-web--browse' helper
+	script along with the URL of the gitweb instance. See
+	linkgit:git-web--browse[1] for more information about this. If
+	the script fails, the URL will be printed to stdout.
 
 --start::
 	Start the httpd instance and exit.  This does not generate
@@ -71,6 +77,10 @@ You may specify configuration in your .git/config
 
 -----------------------------------------------------------------------
 
+If the configuration variable 'instaweb.browser' is not set,
+'web.browser' will be used instead if it is defined. See
+linkgit:git-web--browse[1] for more information about this.
+
 Author
 ------
 Written by Eric Wong <normalperson@yhbt.net>
@@ -81,4 +91,4 @@ Documentation by Eric Wong <normalperson@yhbt.net>.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[1] suite

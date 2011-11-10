@@ -8,20 +8,20 @@ git-commit-tree - Create a new commit object
 
 SYNOPSIS
 --------
-'git-commit-tree' <tree> [-p <parent commit>]\* < changelog
+'git commit-tree' <tree> [-p <parent commit>]\* < changelog
 
 DESCRIPTION
 -----------
 This is usually not what an end user wants to run directly.  See
-gitlink:git-commit[1] instead.
+linkgit:git-commit[1] instead.
 
 Creates a new commit object based on the provided tree object and
-emits the new commit object id on stdout. If no parent is given then
-it is considered to be an initial tree.
+emits the new commit object id on stdout.
 
-A commit object usually has 1 parent (a commit after a change) or up
-to 16 parents.  More than one parent represents a merge of branches
-that led to them.
+A commit object may have any number of parents. With exactly one
+parent, it is an ordinary commit. Having more than one parent makes
+the commit a merge between several lines of history. Initial (root)
+commits have no parents.
 
 While a tree represents a particular directory state of a working
 directory, a commit represents that state in "time", and explains how
@@ -70,7 +70,7 @@ is taken from the configuration items user.name and user.email, or, if not
 present, system user name and fully qualified hostname.
 
 A commit comment is read from stdin. If a changelog
-entry is not provided via "<" redirection, "git-commit-tree" will just wait
+entry is not provided via "<" redirection, 'git-commit-tree' will just wait
 for one to be entered and terminated with ^D.
 
 
@@ -79,18 +79,18 @@ Diagnostics
 You don't exist. Go away!::
     The passwd(5) gecos field couldn't be read
 Your parents must have hated you!::
-    The password(5) gecos field is longer than a giant static buffer.
+    The passwd(5) gecos field is longer than a giant static buffer.
 Your sysadmin must hate you!::
-    The password(5) name field is longer than a giant static buffer.
+    The passwd(5) name field is longer than a giant static buffer.
 
 Discussion
 ----------
 
 include::i18n.txt[]
 
-See Also
+SEE ALSO
 --------
-gitlink:git-write-tree[1]
+linkgit:git-write-tree[1]
 
 
 Author
@@ -103,4 +103,4 @@ Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[1] suite

@@ -1,18 +1,142 @@
 #include "cache.h"
-#include "path-list.h"
+#include "string-list.h"
 #include "mailmap.h"
 
-int read_mailmap(struct path_list *map, const char *filename, char **repo_abbrev)
+#define DEBUG_MAILMAP 0
+#if DEBUG_MAILMAP
+#define debug_mm(...) fprintf(stderr, __VA_ARGS__)
+#else
+static inline void debug_mm(const char *format, ...) {}
+#endif
+
+const char *git_mailmap_file;
+
+struct mailmap_info {
+	char *name;
+	char *email;
+};
+
+struct mailmap_entry {
+	/* name and email for the simple mail-only case */
+	char *name;
+	char *email;
+
+	/* name and email for the complex mail and name matching case */
+	struct string_list namemap;
+};
+
+static void free_mailmap_info(void *p, const char *s)
+{
+	struct mailmap_info *mi = (struct mailmap_info *)p;
+	debug_mm("mailmap: -- complex: '%s' -> '%s' <%s>\n", s, mi->name, mi->email);
+	free(mi->name);
+	free(mi->email);
+}
+
+static void free_mailmap_entry(void *p, const char *s)
+{
+	struct mailmap_entry *me = (struct mailmap_entry *)p;
+	debug_mm("mailmap: removing entries for <%s>, with %d sub-entries\n", s, me->namemap.nr);
+	debug_mm("mailmap: - simple: '%s' <%s>\n", me->name, me->email);
+	free(me->name);
+	free(me->email);
+
+	me->namemap.strdup_strings = 1;
+	string_list_clear_func(&me->namemap, free_mailmap_info);
+}
+
+static void add_mapping(struct string_list *map,
+			char *new_name, char *new_email, char *old_name, char *old_email)
+{
+	struct mailmap_entry *me;
+	int index;
+	char *p;
+
+	if (old_email)
+		for (p = old_email; *p; p++)
+			*p = tolower(*p);
+	if (new_email)
+		for (p = new_email; *p; p++)
+			*p = tolower(*p);
+
+	if (old_email == NULL) {
+		old_email = new_email;
+		new_email = NULL;
+	}
+
+	if ((index = string_list_find_insert_index(map, old_email, 1)) < 0) {
+		/* mailmap entry exists, invert index value */
+		index = -1 - index;
+	} else {
+		/* create mailmap entry */
+		struct string_list_item *item = string_list_insert_at_index(index, old_email, map);
+		item->util = xmalloc(sizeof(struct mailmap_entry));
+		memset(item->util, 0, sizeof(struct mailmap_entry));
+		((struct mailmap_entry *)item->util)->namemap.strdup_strings = 1;
+	}
+	me = (struct mailmap_entry *)map->items[index].util;
+
+	if (old_name == NULL) {
+		debug_mm("mailmap: adding (simple) entry for %s at index %d\n", old_email, index);
+		/* Replace current name and new email for simple entry */
+		free(me->name);
+		free(me->email);
+		if (new_name)
+			me->name = xstrdup(new_name);
+		if (new_email)
+			me->email = xstrdup(new_email);
+	} else {
+		struct mailmap_info *mi = xmalloc(sizeof(struct mailmap_info));
+		debug_mm("mailmap: adding (complex) entry for %s at index %d\n", old_email, index);
+		if (new_name)
+			mi->name = xstrdup(new_name);
+		if (new_email)
+			mi->email = xstrdup(new_email);
+		string_list_insert(old_name, &me->namemap)->util = mi;
+	}
+
+	debug_mm("mailmap:  '%s' <%s> -> '%s' <%s>\n",
+		 old_name, old_email, new_name, new_email);
+}
+
+static char *parse_name_and_email(char *buffer, char **name,
+		char **email, int allow_empty_email)
+{
+	char *left, *right, *nstart, *nend;
+	*name = *email = 0;
+
+	if ((left = strchr(buffer, '<')) == NULL)
+		return NULL;
+	if ((right = strchr(left+1, '>')) == NULL)
+		return NULL;
+	if (!allow_empty_email && (left+1 == right))
+		return NULL;
+
+	/* remove whitespace from beginning and end of name */
+	nstart = buffer;
+	while (isspace(*nstart) && nstart < left)
+		++nstart;
+	nend = left-1;
+	while (isspace(*nend) && nend > nstart)
+		--nend;
+
+	*name = (nstart < nend ? nstart : NULL);
+	*email = left+1;
+	*(nend+1) = '\0';
+	*right++ = '\0';
+
+	return (*right == '\0' ? NULL : right);
+}
+
+static int read_single_mailmap(struct string_list *map, const char *filename, char **repo_abbrev)
 {
 	char buffer[1024];
-	FILE *f = fopen(filename, "r");
+	FILE *f = (filename == NULL ? NULL : fopen(filename, "r"));
 
 	if (f == NULL)
 		return 1;
 	while (fgets(buffer, sizeof(buffer), f) != NULL) {
-		char *end_of_name, *left_bracket, *right_bracket;
-		char *name, *email;
-		int i;
+		char *name1 = 0, *email1 = 0, *name2 = 0, *email2 = 0;
 		if (buffer[0] == '#') {
 			static const char abbrev[] = "# repo-abbrev:";
 			int abblen = sizeof(abbrev) - 1;
@@ -36,40 +160,49 @@ int read_mailmap(struct path_list *map, const char *filename, char **repo_abbrev
 			}
 			continue;
 		}
-		if ((left_bracket = strchr(buffer, '<')) == NULL)
-			continue;
-		if ((right_bracket = strchr(left_bracket + 1, '>')) == NULL)
-			continue;
-		if (right_bracket == left_bracket + 1)
-			continue;
-		for (end_of_name = left_bracket; end_of_name != buffer
-				&& isspace(end_of_name[-1]); end_of_name--)
-			/* keep on looking */
-		if (end_of_name == buffer)
-			continue;
-		name = xmalloc(end_of_name - buffer + 1);
-		strlcpy(name, buffer, end_of_name - buffer + 1);
-		email = xmalloc(right_bracket - left_bracket);
-		for (i = 0; i < right_bracket - left_bracket - 1; i++)
-			email[i] = tolower(left_bracket[i + 1]);
-		email[right_bracket - left_bracket - 1] = '\0';
-		path_list_insert(email, map)->util = name;
+		if ((name2 = parse_name_and_email(buffer, &name1, &email1, 0)) != NULL)
+			parse_name_and_email(name2, &name2, &email2, 1);
+
+		if (email1)
+			add_mapping(map, name1, email1, name2, email2);
 	}
 	fclose(f);
 	return 0;
 }
 
-int map_email(struct path_list *map, const char *email, char *name, int maxlen)
+int read_mailmap(struct string_list *map, char **repo_abbrev)
+{
+	map->strdup_strings = 1;
+	/* each failure returns 1, so >1 means both calls failed */
+	return read_single_mailmap(map, ".mailmap", repo_abbrev) +
+	       read_single_mailmap(map, git_mailmap_file, repo_abbrev) > 1;
+}
+
+void clear_mailmap(struct string_list *map)
+{
+	debug_mm("mailmap: clearing %d entries...\n", map->nr);
+	map->strdup_strings = 1;
+	string_list_clear_func(map, free_mailmap_entry);
+	debug_mm("mailmap: cleared\n");
+}
+
+int map_user(struct string_list *map,
+	     char *email, int maxlen_email, char *name, int maxlen_name)
 {
 	char *p;
-	struct path_list_item *item;
+	struct string_list_item *item;
+	struct mailmap_entry *me;
 	char buf[1024], *mailbuf;
 	int i;
 
-	/* autocomplete common developers */
+	/* figure out space requirement for email */
 	p = strchr(email, '>');
-	if (!p)
-		return 0;
+	if (!p) {
+		/* email passed in might not be wrapped in <>, but end with a \0 */
+		p = memchr(email, '\0', maxlen_email);
+		if (p == 0)
+			return 0;
+	}
 	if (p - email + 1 < sizeof(buf))
 		mailbuf = buf;
 	else
@@ -79,13 +212,39 @@ int map_email(struct path_list *map, const char *email, char *name, int maxlen)
 	for (i = 0; i < p - email; i++)
 		mailbuf[i] = tolower(email[i]);
 	mailbuf[i] = 0;
-	item = path_list_lookup(mailbuf, map);
+
+	debug_mm("map_user: map '%s' <%s>\n", name, mailbuf);
+	item = string_list_lookup(mailbuf, map);
+	if (item != NULL) {
+		me = (struct mailmap_entry *)item->util;
+		if (me->namemap.nr) {
+			/* The item has multiple items, so we'll look up on name too */
+			/* If the name is not found, we choose the simple entry      */
+			struct string_list_item *subitem = string_list_lookup(name, &me->namemap);
+			if (subitem)
+				item = subitem;
+		}
+	}
 	if (mailbuf != buf)
 		free(mailbuf);
 	if (item != NULL) {
-		const char *realname = (const char *)item->util;
-		strlcpy(name, realname, maxlen);
+		struct mailmap_info *mi = (struct mailmap_info *)item->util;
+		if (mi->name == NULL && (mi->email == NULL || maxlen_email == 0)) {
+			debug_mm("map_user:  -- (no simple mapping)\n");
+			return 0;
+		}
+		if (maxlen_email && mi->email)
+			strlcpy(email, mi->email, maxlen_email);
+		if (maxlen_name && mi->name)
+			strlcpy(name, mi->name, maxlen_name);
+		debug_mm("map_user:  to '%s' <%s>\n", name, mi->email ? mi->email : "");
 		return 1;
 	}
+	debug_mm("map_user:  --\n");
 	return 0;
+}
+
+int map_email(struct string_list *map, const char *email, char *name, int maxlen)
+{
+	return map_user(map, (char *)email, 0, name, maxlen);
 }

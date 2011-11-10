@@ -3,9 +3,9 @@
 # Copyright (c) 2007 Shawn Pearce
 #
 
-test_description='test git-fast-import utility'
+test_description='test git fast-import utility'
 . ./test-lib.sh
-. ../diff-lib.sh ;# test-lib chdir's into trash
+. "$TEST_DIRECTORY"/diff-lib.sh ;# test-lib chdir's into trash
 
 file2_data='file2
 second line of EOF'
@@ -56,10 +56,16 @@ M 644 :2 file2
 M 644 :3 file3
 M 755 :4 file4
 
+tag series-A
+from :5
+data <<EOF
+An annotated tag without a tagger
+EOF
+
 INPUT_END
 test_expect_success \
     'A: create pack from stdin' \
-    'git-fast-import --export-marks=marks.out <input &&
+    'git fast-import --export-marks=marks.out <input &&
 	 git whatchanged master'
 test_expect_success \
 	'A: verify pack' \
@@ -74,7 +80,7 @@ EOF
 test_expect_success \
 	'A: verify commit' \
 	'git cat-file commit master | sed 1d >actual &&
-	git diff expect actual'
+	test_cmp expect actual'
 
 cat >expect <<EOF
 100644 blob file2
@@ -84,22 +90,34 @@ EOF
 test_expect_success \
 	'A: verify tree' \
 	'git cat-file -p master^{tree} | sed "s/ [0-9a-f]*	/ /" >actual &&
-	 git diff expect actual'
+	 test_cmp expect actual'
 
 echo "$file2_data" >expect
 test_expect_success \
 	'A: verify file2' \
-	'git cat-file blob master:file2 >actual && git diff expect actual'
+	'git cat-file blob master:file2 >actual && test_cmp expect actual'
 
 echo "$file3_data" >expect
 test_expect_success \
 	'A: verify file3' \
-	'git cat-file blob master:file3 >actual && git diff expect actual'
+	'git cat-file blob master:file3 >actual && test_cmp expect actual'
 
 printf "$file4_data" >expect
 test_expect_success \
 	'A: verify file4' \
-	'git cat-file blob master:file4 >actual && git diff expect actual'
+	'git cat-file blob master:file4 >actual && test_cmp expect actual'
+
+cat >expect <<EOF
+object $(git rev-parse refs/heads/master)
+type commit
+tag series-A
+
+An annotated tag without a tagger
+EOF
+test_expect_success 'A: verify tag/series-A' '
+	git cat-file tag tags/series-A >actual &&
+	test_cmp expect actual
+'
 
 cat >expect <<EOF
 :2 `git rev-parse --verify master:file2`
@@ -109,15 +127,15 @@ cat >expect <<EOF
 EOF
 test_expect_success \
 	'A: verify marks output' \
-	'git diff expect marks.out'
+	'test_cmp expect marks.out'
 
 test_expect_success \
 	'A: verify marks import' \
-	'git-fast-import \
+	'git fast-import \
 		--import-marks=marks.out \
 		--export-marks=marks.new \
 		</dev/null &&
-	git diff -u expect marks.new'
+	test_cmp expect marks.new'
 
 test_tick
 cat >input <<INPUT_END
@@ -133,7 +151,7 @@ M 755 :2 copy-of-file2
 INPUT_END
 test_expect_success \
 	'A: verify marks import does not crash' \
-	'git-fast-import --import-marks=marks.out <input &&
+	'git fast-import --import-marks=marks.out <input &&
 	 git whatchanged verify--import-marks'
 test_expect_success \
 	'A: verify pack' \
@@ -165,9 +183,9 @@ from refs/heads/master
 M 755 0000000000000000000000000000000000000001 zero1
 
 INPUT_END
-test_expect_failure \
-    'B: fail on invalid blob sha1' \
-    'git-fast-import <input'
+test_expect_success 'B: fail on invalid blob sha1' '
+    test_must_fail git fast-import <input
+'
 rm -f .git/objects/pack_* .git/objects/index_*
 
 cat >input <<INPUT_END
@@ -180,9 +198,9 @@ COMMIT
 from refs/heads/master
 
 INPUT_END
-test_expect_failure \
-    'B: fail on invalid branch name ".badbranchname"' \
-    'git-fast-import <input'
+test_expect_success 'B: fail on invalid branch name ".badbranchname"' '
+    test_must_fail git fast-import <input
+'
 rm -f .git/objects/pack_* .git/objects/index_*
 
 cat >input <<INPUT_END
@@ -195,9 +213,9 @@ COMMIT
 from refs/heads/master
 
 INPUT_END
-test_expect_failure \
-    'B: fail on invalid branch name "bad[branch]name"' \
-    'git-fast-import <input'
+test_expect_success 'B: fail on invalid branch name "bad[branch]name"' '
+    test_must_fail git fast-import <input
+'
 rm -f .git/objects/pack_* .git/objects/index_*
 
 cat >input <<INPUT_END
@@ -212,7 +230,7 @@ from refs/heads/master
 INPUT_END
 test_expect_success \
     'B: accept branch name "TEMP_TAG"' \
-    'git-fast-import <input &&
+    'git fast-import <input &&
 	 test -f .git/TEMP_TAG &&
 	 test `git rev-parse master` = `git rev-parse TEMP_TAG^`'
 rm -f .git/TEMP_TAG
@@ -221,7 +239,7 @@ rm -f .git/TEMP_TAG
 ### series C
 ###
 
-newf=`echo hi newf | git-hash-object -w --stdin`
+newf=`echo hi newf | git hash-object -w --stdin`
 oldf=`git rev-parse --verify master:file2`
 test_tick
 cat >input <<INPUT_END
@@ -239,7 +257,7 @@ D file3
 INPUT_END
 test_expect_success \
     'C: incremental import create pack from stdin' \
-    'git-fast-import <input &&
+    'git fast-import <input &&
 	 git whatchanged branch'
 test_expect_success \
 	'C: verify pack' \
@@ -259,7 +277,7 @@ EOF
 test_expect_success \
 	'C: verify commit' \
 	'git cat-file commit branch | sed 1d >actual &&
-	 git diff expect actual'
+	 test_cmp expect actual'
 
 cat >expect <<EOF
 :000000 100755 0000000000000000000000000000000000000000 f1fb5da718392694d0076d677d6d0e364c79b0bc A	file2/newf
@@ -297,7 +315,7 @@ EOF
 INPUT_END
 test_expect_success \
     'D: inline data in commit' \
-    'git-fast-import <input &&
+    'git fast-import <input &&
 	 git whatchanged branch'
 test_expect_success \
 	'D: verify pack' \
@@ -316,13 +334,13 @@ echo "$file5_data" >expect
 test_expect_success \
 	'D: verify file5' \
 	'git cat-file blob branch:newdir/interesting >actual &&
-	 git diff expect actual'
+	 test_cmp expect actual'
 
 echo "$file6_data" >expect
 test_expect_success \
 	'D: verify file6' \
 	'git cat-file blob branch:newdir/exec.sh >actual &&
-	 git diff expect actual'
+	 test_cmp expect actual'
 
 ###
 ### series E
@@ -339,12 +357,12 @@ COMMIT
 from refs/heads/branch^0
 
 INPUT_END
-test_expect_failure \
-    'E: rfc2822 date, --date-format=raw' \
-    'git-fast-import --date-format=raw <input'
+test_expect_success 'E: rfc2822 date, --date-format=raw' '
+    test_must_fail git fast-import --date-format=raw <input
+'
 test_expect_success \
     'E: rfc2822 date, --date-format=rfc2822' \
-    'git-fast-import --date-format=rfc2822 <input'
+    'git fast-import --date-format=rfc2822 <input'
 test_expect_success \
 	'E: verify pack' \
 	'for p in .git/objects/pack/*.pack;do git verify-pack $p||exit;done'
@@ -358,7 +376,7 @@ EOF
 test_expect_success \
 	'E: verify commit' \
 	'git cat-file commit branch | sed 1,2d >actual &&
-	git diff expect actual'
+	test_cmp expect actual'
 
 ###
 ### series F
@@ -381,7 +399,7 @@ from refs/heads/branch
 INPUT_END
 test_expect_success \
     'F: non-fast-forward update skips' \
-    'if git-fast-import <input
+    'if git fast-import <input
 	 then
 		echo BAD gfi did not fail
 		return 1
@@ -411,7 +429,7 @@ EOF
 test_expect_success \
 	'F: verify other commit' \
 	'git cat-file commit other >actual &&
-	git diff expect actual'
+	test_cmp expect actual'
 
 ###
 ### series G
@@ -431,7 +449,7 @@ from refs/heads/branch~1
 INPUT_END
 test_expect_success \
     'G: non-fast-forward update forced' \
-    'git-fast-import --force <input'
+    'git fast-import --force <input'
 test_expect_success \
 	'G: verify pack' \
 	'for p in .git/objects/pack/*.pack;do git verify-pack $p||exit;done'
@@ -467,7 +485,7 @@ EOF
 INPUT_END
 test_expect_success \
     'H: deletall, add 1' \
-    'git-fast-import <input &&
+    'git fast-import <input &&
 	 git whatchanged H'
 test_expect_success \
 	'H: verify pack' \
@@ -489,7 +507,7 @@ echo "$file5_data" >expect
 test_expect_success \
 	'H: verify file' \
 	'git cat-file blob H:h/e/l/lo >actual &&
-	 git diff expect actual'
+	 test_cmp expect actual'
 
 ###
 ### series I
@@ -507,7 +525,7 @@ from refs/heads/branch
 INPUT_END
 test_expect_success \
     'I: export-pack-edges' \
-    'git-fast-import --export-pack-edges=edges.list <input'
+    'git fast-import --export-pack-edges=edges.list <input'
 
 cat >expect <<EOF
 .git/objects/pack/pack-.pack: `git rev-parse --verify export-boundary`
@@ -515,7 +533,7 @@ EOF
 test_expect_success \
 	'I: verify edge list' \
 	'sed -e s/pack-.*pack/pack-.pack/ edges.list >actual &&
-	 git diff expect actual'
+	 test_cmp expect actual'
 
 ###
 ### series J
@@ -541,7 +559,7 @@ COMMIT
 INPUT_END
 test_expect_success \
     'J: reset existing branch creates empty commit' \
-    'git-fast-import <input'
+    'git fast-import <input'
 test_expect_success \
 	'J: branch has 1 commit, empty tree' \
 	'test 1 = `git rev-list J | wc -l` &&
@@ -571,7 +589,7 @@ from refs/heads/branch^1
 INPUT_END
 test_expect_success \
     'K: reinit branch with from' \
-    'git-fast-import <input'
+    'git fast-import <input'
 test_expect_success \
     'K: verify K^1 = branch^1' \
     'test `git rev-parse --verify branch^1` \
@@ -623,9 +641,9 @@ EXPECT_END
 
 test_expect_success \
     'L: verify internal tree sorting' \
-	'git-fast-import <input &&
+	'git fast-import <input &&
 	 git diff-tree --abbrev --raw L^ L >output &&
-	 git diff expect output'
+	 test_cmp expect output'
 
 ###
 ### series M
@@ -649,7 +667,7 @@ cat >expect <<EOF
 EOF
 test_expect_success \
 	'M: rename file in same subdirectory' \
-	'git-fast-import <input &&
+	'git fast-import <input &&
 	 git diff-tree -M -r M1^ M1 >actual &&
 	 compare_diff_raw expect actual'
 
@@ -670,7 +688,7 @@ cat >expect <<EOF
 EOF
 test_expect_success \
 	'M: rename file to new subdirectory' \
-	'git-fast-import <input &&
+	'git fast-import <input &&
 	 git diff-tree -M -r M2^ M2 >actual &&
 	 compare_diff_raw expect actual'
 
@@ -691,7 +709,7 @@ cat >expect <<EOF
 EOF
 test_expect_success \
 	'M: rename subdirectory to new subdirectory' \
-	'git-fast-import <input &&
+	'git fast-import <input &&
 	 git diff-tree -M -r M3^ M3 >actual &&
 	 compare_diff_raw expect actual'
 
@@ -717,7 +735,7 @@ cat >expect <<EOF
 EOF
 test_expect_success \
 	'N: copy file in same subdirectory' \
-	'git-fast-import <input &&
+	'git fast-import <input &&
 	 git diff-tree -C --find-copies-harder -r N1^ N1 >actual &&
 	 compare_diff_raw expect actual'
 
@@ -751,7 +769,7 @@ cat >expect <<EOF
 EOF
 test_expect_success \
 	'N: copy then modify subdirectory' \
-	'git-fast-import <input &&
+	'git fast-import <input &&
 	 git diff-tree -C --find-copies-harder -r N2^^ N2 >actual &&
 	 compare_diff_raw expect actual'
 
@@ -775,8 +793,8 @@ INPUT_END
 
 test_expect_success \
 	'N: copy dirty subdirectory' \
-	'git-fast-import <input &&
-	 test `git-rev-parse N2^{tree}` = `git-rev-parse N3^{tree}`'
+	'git fast-import <input &&
+	 test `git rev-parse N2^{tree}` = `git rev-parse N3^{tree}`'
 
 ###
 ### series O
@@ -815,8 +833,8 @@ INPUT_END
 
 test_expect_success \
 	'O: comments are all skipped' \
-	'git-fast-import <input &&
-	 test `git-rev-parse N3` = `git-rev-parse O1`'
+	'git fast-import <input &&
+	 test `git rev-parse N3` = `git rev-parse O1`'
 
 cat >input <<INPUT_END
 commit refs/heads/O2
@@ -836,8 +854,8 @@ INPUT_END
 
 test_expect_success \
 	'O: blank lines not necessary after data commands' \
-	'git-fast-import <input &&
-	 test `git-rev-parse N3` = `git-rev-parse O2`'
+	'git fast-import <input &&
+	 test `git rev-parse N3` = `git rev-parse O2`'
 
 test_expect_success \
 	'O: repack before next test' \
@@ -869,6 +887,8 @@ zcommits
 COMMIT
 reset refs/tags/O3-2nd
 from :5
+reset refs/tags/O3-3rd
+from :5
 INPUT_END
 
 cat >expect <<INPUT_END
@@ -879,11 +899,11 @@ commits
 INPUT_END
 test_expect_success \
 	'O: blank lines not necessary after other commands' \
-	'git-fast-import <input &&
+	'git fast-import <input &&
 	 test 8 = `find .git/objects/pack -type f | wc -l` &&
 	 test `git rev-parse refs/tags/O3-2nd` = `git rev-parse O3^` &&
 	 git log --reverse --pretty=oneline O3 | sed s/^.*z// >actual &&
-	 git diff expect actual'
+	 test_cmp expect actual'
 
 cat >input <<INPUT_END
 commit refs/heads/O4
@@ -912,8 +932,160 @@ progress I'm done!
 INPUT_END
 test_expect_success \
 	'O: progress outputs as requested by input' \
-	'git-fast-import <input >actual &&
+	'git fast-import <input >actual &&
 	 grep "progress " <input >expect &&
-	 git diff expect actual'
+	 test_cmp expect actual'
+
+###
+### series P (gitlinks)
+###
+
+cat >input <<INPUT_END
+blob
+mark :1
+data 10
+test file
+
+reset refs/heads/sub
+commit refs/heads/sub
+mark :2
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data 12
+sub_initial
+M 100644 :1 file
+
+blob
+mark :3
+data <<DATAEND
+[submodule "sub"]
+	path = sub
+	url = "`pwd`/sub"
+DATAEND
+
+commit refs/heads/subuse1
+mark :4
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data 8
+initial
+from refs/heads/master
+M 100644 :3 .gitmodules
+M 160000 :2 sub
+
+blob
+mark :5
+data 20
+test file
+more data
+
+commit refs/heads/sub
+mark :6
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data 11
+sub_second
+from :2
+M 100644 :5 file
+
+commit refs/heads/subuse1
+mark :7
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data 7
+second
+from :4
+M 160000 :6 sub
+
+INPUT_END
+
+test_expect_success \
+	'P: supermodule & submodule mix' \
+	'git fast-import <input &&
+	 git checkout subuse1 &&
+	 rm -rf sub && mkdir sub && cd sub &&
+	 git init &&
+	 git fetch --update-head-ok .. refs/heads/sub:refs/heads/master &&
+	 git checkout master &&
+	 cd .. &&
+	 git submodule init &&
+	 git submodule update'
+
+SUBLAST=$(git rev-parse --verify sub)
+SUBPREV=$(git rev-parse --verify sub^)
+
+cat >input <<INPUT_END
+blob
+mark :1
+data <<DATAEND
+[submodule "sub"]
+	path = sub
+	url = "`pwd`/sub"
+DATAEND
+
+commit refs/heads/subuse2
+mark :2
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data 8
+initial
+from refs/heads/master
+M 100644 :1 .gitmodules
+M 160000 $SUBPREV sub
+
+commit refs/heads/subuse2
+mark :3
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data 7
+second
+from :2
+M 160000 $SUBLAST sub
+
+INPUT_END
+
+test_expect_success \
+	'P: verbatim SHA gitlinks' \
+	'git branch -D sub &&
+	 git gc && git prune &&
+	 git fast-import <input &&
+	 test $(git rev-parse --verify subuse2) = $(git rev-parse --verify subuse1)'
+
+test_tick
+cat >input <<INPUT_END
+commit refs/heads/subuse3
+mark :1
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+corrupt
+COMMIT
+
+from refs/heads/subuse2
+M 160000 inline sub
+data <<DATA
+$SUBPREV
+DATA
+
+INPUT_END
+
+test_expect_success 'P: fail on inline gitlink' '
+    test_must_fail git fast-import <input'
+
+test_tick
+cat >input <<INPUT_END
+blob
+mark :1
+data <<DATA
+$SUBPREV
+DATA
+
+commit refs/heads/subuse3
+mark :2
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+corrupt
+COMMIT
+
+from refs/heads/subuse2
+M 160000 :1 sub
+
+INPUT_END
+
+test_expect_success 'P: fail on blob mark in gitlink' '
+    test_must_fail git fast-import <input'
 
 test_done

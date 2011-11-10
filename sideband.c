@@ -11,40 +11,108 @@
  * stream, aka "verbose").  A message over band #3 is a signal that
  * the remote died unexpectedly.  A flush() concludes the stream.
  */
-int recv_sideband(const char *me, int in_stream, int out, int err)
+
+#define PREFIX "remote:"
+
+#define ANSI_SUFFIX "\033[K"
+#define DUMB_SUFFIX "        "
+
+#define FIX_SIZE 10  /* large enough for any of the above */
+
+int recv_sideband(const char *me, int in_stream, int out)
 {
-	char buf[7 + LARGE_PACKET_MAX + 1];
-	strcpy(buf, "remote:");
+	unsigned pf = strlen(PREFIX);
+	unsigned sf;
+	char buf[LARGE_PACKET_MAX + 2*FIX_SIZE];
+	char *suffix, *term;
+	int skip_pf = 0;
+
+	memcpy(buf, PREFIX, pf);
+	term = getenv("TERM");
+	if (term && strcmp(term, "dumb"))
+		suffix = ANSI_SUFFIX;
+	else
+		suffix = DUMB_SUFFIX;
+	sf = strlen(suffix);
+
 	while (1) {
 		int band, len;
-		len	= packet_read_line(in_stream, buf+7, LARGE_PACKET_MAX);
+		len = packet_read_line(in_stream, buf + pf, LARGE_PACKET_MAX);
 		if (len == 0)
 			break;
 		if (len < 1) {
-			len = sprintf(buf, "%s: protocol error: no band designator\n", me);
-			safe_write(err, buf, len);
+			fprintf(stderr, "%s: protocol error: no band designator\n", me);
 			return SIDEBAND_PROTOCOL_ERROR;
 		}
-		band = buf[7] & 0xff;
+		band = buf[pf] & 0xff;
 		len--;
 		switch (band) {
 		case 3:
-			buf[7] = ' ';
-			buf[8+len] = '\n';
-			safe_write(err, buf, 8+len+1);
+			buf[pf] = ' ';
+			buf[pf+1+len] = '\0';
+			fprintf(stderr, "%s\n", buf);
 			return SIDEBAND_REMOTE_ERROR;
 		case 2:
-			buf[7] = ' ';
-			safe_write(err, buf, 8+len);
+			buf[pf] = ' ';
+			do {
+				char *b = buf;
+				int brk = 0;
+
+				/*
+				 * If the last buffer didn't end with a line
+				 * break then we should not print a prefix
+				 * this time around.
+				 */
+				if (skip_pf) {
+					b += pf+1;
+				} else {
+					len += pf+1;
+					brk += pf+1;
+				}
+
+				/* Look for a line break. */
+				for (;;) {
+					brk++;
+					if (brk > len) {
+						brk = 0;
+						break;
+					}
+					if (b[brk-1] == '\n' ||
+					    b[brk-1] == '\r')
+						break;
+				}
+
+				/*
+				 * Let's insert a suffix to clear the end
+				 * of the screen line if a line break was
+				 * found.  Also, if we don't skip the
+				 * prefix, then a non-empty string must be
+				 * present too.
+				 */
+				if (brk > (skip_pf ? 0 : (pf+1 + 1))) {
+					char save[FIX_SIZE];
+					memcpy(save, b + brk, sf);
+					b[brk + sf - 1] = b[brk - 1];
+					memcpy(b + brk - 1, suffix, sf);
+					fprintf(stderr, "%.*s", brk + sf, b);
+					memcpy(b + brk, save, sf);
+					len -= brk;
+				} else {
+					int l = brk ? brk : len;
+					fprintf(stderr, "%.*s", l, b);
+					len -= l;
+				}
+
+				skip_pf = !brk;
+				memmove(buf + pf+1, b + brk, len);
+			} while (len);
 			continue;
 		case 1:
-			safe_write(out, buf+8, len);
+			safe_write(out, buf + pf+1, len);
 			continue;
 		default:
-			len = sprintf(buf,
-				      "%s: protocol error: bad band #%d\n",
-				      me, band);
-			safe_write(err, buf, len);
+			fprintf(stderr, "%s: protocol error: bad band #%d\n",
+				me, band);
 			return SIDEBAND_PROTOCOL_ERROR;
 		}
 	}

@@ -8,20 +8,29 @@
 #include "tree.h"
 #include "delta.h"
 #include "pack.h"
+#include "pack-revindex.h"
 #include "csum-file.h"
 #include "tree-walk.h"
 #include "diff.h"
 #include "revision.h"
 #include "list-objects.h"
 #include "progress.h"
+#include "refs.h"
+
+#ifdef THREADED_DELTA_SEARCH
+#include "thread-utils.h"
+#include <pthread.h>
+#endif
 
 static const char pack_usage[] = "\
-git-pack-objects [{ -q | --progress | --all-progress }] \n\
+git pack-objects [{ -q | --progress | --all-progress }] \n\
 	[--max-pack-size=N] [--local] [--incremental] \n\
 	[--window=N] [--window-memory=N] [--depth=N] \n\
 	[--no-reuse-delta] [--no-reuse-object] [--delta-base-offset] \n\
-	[--non-empty] [--revs [--unpacked | --all]*] [--reflog] \n\
-	[--stdout | base-name] [<ref-list | <object-list]";
+	[--threads=N] [--non-empty] [--revs [--unpacked | --all]*] [--reflog] \n\
+	[--stdout | base-name] [--include-tag] \n\
+	[--keep-unreachable | --unpack-unreachable] \n\
+	[<ref-list | <object-list]";
 
 struct object_entry {
 	struct pack_idx_entry idx;
@@ -35,6 +44,7 @@ struct object_entry {
 					     */
 	void *delta_data;	/* cached delta (uncompressed) */
 	unsigned long delta_size;	/* delta data size (uncompressed) */
+	unsigned long z_delta_size;	/* delta data size (compressed) */
 	unsigned int hash;	/* name hint hash */
 	enum object_type type;
 	enum object_type in_pack_type;	/* could be delta */
@@ -53,24 +63,25 @@ struct object_entry {
  * nice "minimum seek" order.
  */
 static struct object_entry *objects;
-static struct object_entry **written_list;
+static struct pack_idx_entry **written_list;
 static uint32_t nr_objects, nr_alloc, nr_result, nr_written;
 
 static int non_empty;
-static int no_reuse_delta, no_reuse_object;
+static int reuse_delta = 1, reuse_object = 1;
+static int keep_unreachable, unpack_unreachable, include_tag;
 static int local;
 static int incremental;
+static int ignore_packed_keep;
 static int allow_ofs_delta;
-static const char *pack_tmp_name, *idx_tmp_name;
-static char tmpname[PATH_MAX];
 static const char *base_name;
 static int progress = 1;
 static int window = 10;
-static uint32_t pack_size_limit;
+static uint32_t pack_size_limit, pack_size_limit_cfg;
 static int depth = 50;
+static int delta_search_threads;
 static int pack_to_stdout;
 static int num_preferred_base;
-static struct progress progress_state;
+static struct progress *progress_state;
 static int pack_compression_level = Z_DEFAULT_COMPRESSION;
 static int pack_compression_seen;
 
@@ -78,7 +89,6 @@ static unsigned long delta_cache_size = 0;
 static unsigned long max_delta_cache_size = 0;
 static unsigned long cache_max_small_delta_size = 1000;
 
-static unsigned long window_memory_usage = 0;
 static unsigned long window_memory_limit = 0;
 
 /*
@@ -90,174 +100,57 @@ static int *object_ix;
 static int object_ix_hashsz;
 
 /*
- * Pack index for existing packs give us easy access to the offsets into
- * corresponding pack file where each object's data starts, but the entries
- * do not store the size of the compressed representation (uncompressed
- * size is easily available by examining the pack entry header).  It is
- * also rather expensive to find the sha1 for an object given its offset.
- *
- * We build a hashtable of existing packs (pack_revindex), and keep reverse
- * index here -- pack index file is sorted by object name mapping to offset;
- * this pack_revindex[].revindex array is a list of offset/index_nr pairs
- * ordered by offset, so if you know the offset of an object, next offset
- * is where its packed representation ends and the index_nr can be used to
- * get the object sha1 from the main index.
- */
-struct revindex_entry {
-	off_t offset;
-	unsigned int nr;
-};
-struct pack_revindex {
-	struct packed_git *p;
-	struct revindex_entry *revindex;
-};
-static struct  pack_revindex *pack_revindex;
-static int pack_revindex_hashsz;
-
-/*
  * stats
  */
 static uint32_t written, written_delta;
 static uint32_t reused, reused_delta;
 
-static int pack_revindex_ix(struct packed_git *p)
+
+static void *get_delta(struct object_entry *entry)
 {
-	unsigned long ui = (unsigned long)p;
-	int i;
-
-	ui = ui ^ (ui >> 16); /* defeat structure alignment */
-	i = (int)(ui % pack_revindex_hashsz);
-	while (pack_revindex[i].p) {
-		if (pack_revindex[i].p == p)
-			return i;
-		if (++i == pack_revindex_hashsz)
-			i = 0;
-	}
-	return -1 - i;
-}
-
-static void prepare_pack_ix(void)
-{
-	int num;
-	struct packed_git *p;
-	for (num = 0, p = packed_git; p; p = p->next)
-		num++;
-	if (!num)
-		return;
-	pack_revindex_hashsz = num * 11;
-	pack_revindex = xcalloc(sizeof(*pack_revindex), pack_revindex_hashsz);
-	for (p = packed_git; p; p = p->next) {
-		num = pack_revindex_ix(p);
-		num = - 1 - num;
-		pack_revindex[num].p = p;
-	}
-	/* revindex elements are lazily initialized */
-}
-
-static int cmp_offset(const void *a_, const void *b_)
-{
-	const struct revindex_entry *a = a_;
-	const struct revindex_entry *b = b_;
-	return (a->offset < b->offset) ? -1 : (a->offset > b->offset) ? 1 : 0;
-}
-
-/*
- * Ordered list of offsets of objects in the pack.
- */
-static void prepare_pack_revindex(struct pack_revindex *rix)
-{
-	struct packed_git *p = rix->p;
-	int num_ent = p->num_objects;
-	int i;
-	const char *index = p->index_data;
-
-	rix->revindex = xmalloc(sizeof(*rix->revindex) * (num_ent + 1));
-	index += 4 * 256;
-
-	if (p->index_version > 1) {
-		const uint32_t *off_32 =
-			(uint32_t *)(index + 8 + p->num_objects * (20 + 4));
-		const uint32_t *off_64 = off_32 + p->num_objects;
-		for (i = 0; i < num_ent; i++) {
-			uint32_t off = ntohl(*off_32++);
-			if (!(off & 0x80000000)) {
-				rix->revindex[i].offset = off;
-			} else {
-				rix->revindex[i].offset =
-					((uint64_t)ntohl(*off_64++)) << 32;
-				rix->revindex[i].offset |=
-					ntohl(*off_64++);
-			}
-			rix->revindex[i].nr = i;
-		}
-	} else {
-		for (i = 0; i < num_ent; i++) {
-			uint32_t hl = *((uint32_t *)(index + 24 * i));
-			rix->revindex[i].offset = ntohl(hl);
-			rix->revindex[i].nr = i;
-		}
-	}
-
-	/* This knows the pack format -- the 20-byte trailer
-	 * follows immediately after the last object data.
-	 */
-	rix->revindex[num_ent].offset = p->pack_size - 20;
-	rix->revindex[num_ent].nr = -1;
-	qsort(rix->revindex, num_ent, sizeof(*rix->revindex), cmp_offset);
-}
-
-static struct revindex_entry * find_packed_object(struct packed_git *p,
-						  off_t ofs)
-{
-	int num;
-	int lo, hi;
-	struct pack_revindex *rix;
-	struct revindex_entry *revindex;
-	num = pack_revindex_ix(p);
-	if (num < 0)
-		die("internal error: pack revindex uninitialized");
-	rix = &pack_revindex[num];
-	if (!rix->revindex)
-		prepare_pack_revindex(rix);
-	revindex = rix->revindex;
-	lo = 0;
-	hi = p->num_objects + 1;
-	do {
-		int mi = (lo + hi) / 2;
-		if (revindex[mi].offset == ofs) {
-			return revindex + mi;
-		}
-		else if (ofs < revindex[mi].offset)
-			hi = mi;
-		else
-			lo = mi + 1;
-	} while (lo < hi);
-	die("internal error: pack revindex corrupt");
-}
-
-static const unsigned char *find_packed_object_name(struct packed_git *p,
-						    off_t ofs)
-{
-	struct revindex_entry *entry = find_packed_object(p, ofs);
-	return nth_packed_object_sha1(p, entry->nr);
-}
-
-static void *delta_against(void *buf, unsigned long size, struct object_entry *entry)
-{
-	unsigned long othersize, delta_size;
+	unsigned long size, base_size, delta_size;
+	void *buf, *base_buf, *delta_buf;
 	enum object_type type;
-	void *otherbuf = read_sha1_file(entry->delta->idx.sha1, &type, &othersize);
-	void *delta_buf;
 
-	if (!otherbuf)
+	buf = read_sha1_file(entry->idx.sha1, &type, &size);
+	if (!buf)
+		die("unable to read %s", sha1_to_hex(entry->idx.sha1));
+	base_buf = read_sha1_file(entry->delta->idx.sha1, &type, &base_size);
+	if (!base_buf)
 		die("unable to read %s", sha1_to_hex(entry->delta->idx.sha1));
-        delta_buf = diff_delta(otherbuf, othersize,
+	delta_buf = diff_delta(base_buf, base_size,
 			       buf, size, &delta_size, 0);
-        if (!delta_buf || delta_size != entry->delta_size)
+	if (!delta_buf || delta_size != entry->delta_size)
 		die("delta size changed");
-        free(buf);
-        free(otherbuf);
+	free(buf);
+	free(base_buf);
 	return delta_buf;
+}
+
+static unsigned long do_compress(void **pptr, unsigned long size)
+{
+	z_stream stream;
+	void *in, *out;
+	unsigned long maxsize;
+
+	memset(&stream, 0, sizeof(stream));
+	deflateInit(&stream, pack_compression_level);
+	maxsize = deflateBound(&stream, size);
+
+	in = *pptr;
+	out = xmalloc(maxsize);
+	*pptr = out;
+
+	stream.next_in = in;
+	stream.avail_in = size;
+	stream.next_out = out;
+	stream.avail_out = maxsize;
+	while (deflate(&stream, Z_FINISH) == Z_OK)
+		; /* nothing */
+	deflateEnd(&stream);
+
+	free(in);
+	return stream.total_out;
 }
 
 /*
@@ -302,41 +195,19 @@ static int check_pack_inflate(struct packed_git *p,
 	int st;
 
 	memset(&stream, 0, sizeof(stream));
-	inflateInit(&stream);
+	git_inflate_init(&stream);
 	do {
 		in = use_pack(p, w_curs, offset, &stream.avail_in);
 		stream.next_in = in;
 		stream.next_out = fakebuf;
 		stream.avail_out = sizeof(fakebuf);
-		st = inflate(&stream, Z_FINISH);
+		st = git_inflate(&stream, Z_FINISH);
 		offset += stream.next_in - in;
 	} while (st == Z_OK || st == Z_BUF_ERROR);
-	inflateEnd(&stream);
+	git_inflate_end(&stream);
 	return (st == Z_STREAM_END &&
 		stream.total_out == expect &&
 		stream.total_in == len) ? 0 : -1;
-}
-
-static int check_pack_crc(struct packed_git *p, struct pack_window **w_curs,
-			  off_t offset, off_t len, unsigned int nr)
-{
-	const uint32_t *index_crc;
-	uint32_t data_crc = crc32(0, Z_NULL, 0);
-
-	do {
-		unsigned int avail;
-		void *data = use_pack(p, w_curs, offset, &avail);
-		if (avail > len)
-			avail = len;
-		data_crc = crc32(data_crc, data, avail);
-		offset += avail;
-		len -= avail;
-	} while (len);
-
-	index_crc = p->index_data;
-	index_crc += 2 + 256 + p->num_objects * (20/4) + nr;
-
-	return data_crc != ntohl(*index_crc);
 }
 
 static void copy_pack_data(struct sha1file *f,
@@ -362,42 +233,50 @@ static unsigned long write_object(struct sha1file *f,
 				  struct object_entry *entry,
 				  off_t write_offset)
 {
-	unsigned long size;
-	enum object_type type;
+	unsigned long size, limit, datalen;
 	void *buf;
-	unsigned char header[10];
-	unsigned char dheader[10];
+	unsigned char header[10], dheader[10];
 	unsigned hdrlen;
-	off_t datalen;
-	enum object_type obj_type;
-	int to_reuse = 0;
-	/* write limit if limited packsize and not first object */
-	unsigned long limit = pack_size_limit && nr_written ?
-				pack_size_limit - write_offset : 0;
-				/* no if no delta */
-	int usable_delta =	!entry->delta ? 0 :
-				/* yes if unlimited packfile */
-				!pack_size_limit ? 1 :
-				/* no if base written to previous pack */
-				entry->delta->idx.offset == (off_t)-1 ? 0 :
-				/* otherwise double-check written to this
-				 * pack,  like we do below
-				 */
-				entry->delta->idx.offset ? 1 : 0;
+	enum object_type type;
+	int usable_delta, to_reuse;
 
 	if (!pack_to_stdout)
 		crc32_begin(f);
 
-	obj_type = entry->type;
-	if (no_reuse_object)
+	type = entry->type;
+
+	/* write limit if limited packsize and not first object */
+	if (!pack_size_limit || !nr_written)
+		limit = 0;
+	else if (pack_size_limit <= write_offset)
+		/*
+		 * the earlier object did not fit the limit; avoid
+		 * mistaking this with unlimited (i.e. limit = 0).
+		 */
+		limit = 1;
+	else
+		limit = pack_size_limit - write_offset;
+
+	if (!entry->delta)
+		usable_delta = 0;	/* no delta */
+	else if (!pack_size_limit)
+	       usable_delta = 1;	/* unlimited packfile */
+	else if (entry->delta->idx.offset == (off_t)-1)
+		usable_delta = 0;	/* base was written to another pack */
+	else if (entry->delta->idx.offset)
+		usable_delta = 1;	/* base already exists in this pack */
+	else
+		usable_delta = 0;	/* base could end up in another pack */
+
+	if (!reuse_object)
 		to_reuse = 0;	/* explicit */
 	else if (!entry->in_pack)
 		to_reuse = 0;	/* can't reuse what we don't have */
-	else if (obj_type == OBJ_REF_DELTA || obj_type == OBJ_OFS_DELTA)
+	else if (type == OBJ_REF_DELTA || type == OBJ_OFS_DELTA)
 				/* check_object() decided it for us ... */
 		to_reuse = usable_delta;
 				/* ... but pack split may override that */
-	else if (obj_type != entry->in_pack_type)
+	else if (type != entry->in_pack_type)
 		to_reuse = 0;	/* pack has delta which is unusable */
 	else if (entry->delta)
 		to_reuse = 0;	/* we want to pack afresh */
@@ -407,50 +286,43 @@ static unsigned long write_object(struct sha1file *f,
 				 */
 
 	if (!to_reuse) {
-		z_stream stream;
-		unsigned long maxsize;
-		void *out;
+		no_reuse:
 		if (!usable_delta) {
-			buf = read_sha1_file(entry->idx.sha1, &obj_type, &size);
+			buf = read_sha1_file(entry->idx.sha1, &type, &size);
 			if (!buf)
 				die("unable to read %s", sha1_to_hex(entry->idx.sha1));
+			/*
+			 * make sure no cached delta data remains from a
+			 * previous attempt before a pack split occurred.
+			 */
+			free(entry->delta_data);
+			entry->delta_data = NULL;
+			entry->z_delta_size = 0;
 		} else if (entry->delta_data) {
 			size = entry->delta_size;
 			buf = entry->delta_data;
 			entry->delta_data = NULL;
-			obj_type = (allow_ofs_delta && entry->delta->idx.offset) ?
+			type = (allow_ofs_delta && entry->delta->idx.offset) ?
 				OBJ_OFS_DELTA : OBJ_REF_DELTA;
 		} else {
-			buf = read_sha1_file(entry->idx.sha1, &type, &size);
-			if (!buf)
-				die("unable to read %s", sha1_to_hex(entry->idx.sha1));
-			buf = delta_against(buf, size, entry);
+			buf = get_delta(entry);
 			size = entry->delta_size;
-			obj_type = (allow_ofs_delta && entry->delta->idx.offset) ?
+			type = (allow_ofs_delta && entry->delta->idx.offset) ?
 				OBJ_OFS_DELTA : OBJ_REF_DELTA;
 		}
-		/* compress the data to store and put compressed length in datalen */
-		memset(&stream, 0, sizeof(stream));
-		deflateInit(&stream, pack_compression_level);
-		maxsize = deflateBound(&stream, size);
-		out = xmalloc(maxsize);
-		/* Compress it */
-		stream.next_in = buf;
-		stream.avail_in = size;
-		stream.next_out = out;
-		stream.avail_out = maxsize;
-		while (deflate(&stream, Z_FINISH) == Z_OK)
-			/* nothing */;
-		deflateEnd(&stream);
-		datalen = stream.total_out;
-		deflateEnd(&stream);
+
+		if (entry->z_delta_size)
+			datalen = entry->z_delta_size;
+		else
+			datalen = do_compress(&buf, size);
+
 		/*
 		 * The object header is a byte of 'type' followed by zero or
 		 * more bytes of length.
 		 */
-		hdrlen = encode_header(obj_type, size, header);
+		hdrlen = encode_header(type, size, header);
 
-		if (obj_type == OBJ_OFS_DELTA) {
+		if (type == OBJ_OFS_DELTA) {
 			/*
 			 * Deltas with relative base contain an additional
 			 * encoding of the relative offset for the delta
@@ -462,20 +334,18 @@ static unsigned long write_object(struct sha1file *f,
 			while (ofs >>= 7)
 				dheader[--pos] = 128 | (--ofs & 127);
 			if (limit && hdrlen + sizeof(dheader) - pos + datalen + 20 >= limit) {
-				free(out);
 				free(buf);
 				return 0;
 			}
 			sha1write(f, header, hdrlen);
 			sha1write(f, dheader + pos, sizeof(dheader) - pos);
 			hdrlen += sizeof(dheader) - pos;
-		} else if (obj_type == OBJ_REF_DELTA) {
+		} else if (type == OBJ_REF_DELTA) {
 			/*
 			 * Deltas with a base reference contain
 			 * an additional 20 bytes for the base sha1.
 			 */
 			if (limit && hdrlen + 20 + datalen + 20 >= limit) {
-				free(out);
 				free(buf);
 				return 0;
 			}
@@ -484,14 +354,12 @@ static unsigned long write_object(struct sha1file *f,
 			hdrlen += 20;
 		} else {
 			if (limit && hdrlen + datalen + 20 >= limit) {
-				free(out);
 				free(buf);
 				return 0;
 			}
 			sha1write(f, header, hdrlen);
 		}
-		sha1write(f, out, datalen);
-		free(out);
+		sha1write(f, buf, datalen);
 		free(buf);
 	}
 	else {
@@ -500,46 +368,60 @@ static unsigned long write_object(struct sha1file *f,
 		struct revindex_entry *revidx;
 		off_t offset;
 
-		if (entry->delta) {
-			obj_type = (allow_ofs_delta && entry->delta->idx.offset) ?
+		if (entry->delta)
+			type = (allow_ofs_delta && entry->delta->idx.offset) ?
 				OBJ_OFS_DELTA : OBJ_REF_DELTA;
-			reused_delta++;
-		}
-		hdrlen = encode_header(obj_type, entry->size, header);
+		hdrlen = encode_header(type, entry->size, header);
+
 		offset = entry->in_pack_offset;
-		revidx = find_packed_object(p, offset);
+		revidx = find_pack_revindex(p, offset);
 		datalen = revidx[1].offset - offset;
 		if (!pack_to_stdout && p->index_version > 1 &&
-		    check_pack_crc(p, &w_curs, offset, datalen, revidx->nr))
-			die("bad packed object CRC for %s", sha1_to_hex(entry->idx.sha1));
+		    check_pack_crc(p, &w_curs, offset, datalen, revidx->nr)) {
+			error("bad packed object CRC for %s", sha1_to_hex(entry->idx.sha1));
+			unuse_pack(&w_curs);
+			goto no_reuse;
+		}
+
 		offset += entry->in_pack_header_size;
 		datalen -= entry->in_pack_header_size;
-		if (obj_type == OBJ_OFS_DELTA) {
+		if (!pack_to_stdout && p->index_version == 1 &&
+		    check_pack_inflate(p, &w_curs, offset, datalen, entry->size)) {
+			error("corrupt packed object for %s", sha1_to_hex(entry->idx.sha1));
+			unuse_pack(&w_curs);
+			goto no_reuse;
+		}
+
+		if (type == OBJ_OFS_DELTA) {
 			off_t ofs = entry->idx.offset - entry->delta->idx.offset;
 			unsigned pos = sizeof(dheader) - 1;
 			dheader[pos] = ofs & 127;
 			while (ofs >>= 7)
 				dheader[--pos] = 128 | (--ofs & 127);
-			if (limit && hdrlen + sizeof(dheader) - pos + datalen + 20 >= limit)
+			if (limit && hdrlen + sizeof(dheader) - pos + datalen + 20 >= limit) {
+				unuse_pack(&w_curs);
 				return 0;
+			}
 			sha1write(f, header, hdrlen);
 			sha1write(f, dheader + pos, sizeof(dheader) - pos);
 			hdrlen += sizeof(dheader) - pos;
-		} else if (obj_type == OBJ_REF_DELTA) {
-			if (limit && hdrlen + 20 + datalen + 20 >= limit)
+			reused_delta++;
+		} else if (type == OBJ_REF_DELTA) {
+			if (limit && hdrlen + 20 + datalen + 20 >= limit) {
+				unuse_pack(&w_curs);
 				return 0;
+			}
 			sha1write(f, header, hdrlen);
 			sha1write(f, entry->delta->idx.sha1, 20);
 			hdrlen += 20;
+			reused_delta++;
 		} else {
-			if (limit && hdrlen + datalen + 20 >= limit)
+			if (limit && hdrlen + datalen + 20 >= limit) {
+				unuse_pack(&w_curs);
 				return 0;
+			}
 			sha1write(f, header, hdrlen);
 		}
-
-		if (!pack_to_stdout && p->index_version == 1 &&
-		    check_pack_inflate(p, &w_curs, offset, datalen, entry->size))
-			die("corrupt packed object for %s", sha1_to_hex(entry->idx.sha1));
 		copy_pack_data(f, p, &w_curs, offset, datalen);
 		unuse_pack(&w_curs);
 		reused++;
@@ -552,41 +434,33 @@ static unsigned long write_object(struct sha1file *f,
 	return hdrlen + datalen;
 }
 
-static off_t write_one(struct sha1file *f,
+static int write_one(struct sha1file *f,
 			       struct object_entry *e,
-			       off_t offset)
+			       off_t *offset)
 {
 	unsigned long size;
 
 	/* offset is non zero if object is written already. */
 	if (e->idx.offset || e->preferred_base)
-		return offset;
+		return 1;
 
 	/* if we are deltified, write out base object first. */
-	if (e->delta) {
-		offset = write_one(f, e->delta, offset);
-		if (!offset)
-			return 0;
-	}
+	if (e->delta && !write_one(f, e->delta, offset))
+		return 0;
 
-	e->idx.offset = offset;
-	size = write_object(f, e, offset);
+	e->idx.offset = *offset;
+	size = write_object(f, e, *offset);
 	if (!size) {
 		e->idx.offset = 0;
 		return 0;
 	}
-	written_list[nr_written++] = e;
+	written_list[nr_written++] = &e->idx;
 
 	/* make sure off_t is sufficiently large not to wrap */
-	if (offset > offset + size)
+	if (*offset > *offset + size)
 		die("pack too large for current definition of off_t");
-	return offset + size;
-}
-
-static int open_object_dir_tmp(const char *path)
-{
-    snprintf(tmpname, sizeof(tmpname), "%s/%s", get_object_directory(), path);
-    return xmkstemp(tmpname);
+	*offset += size;
+	return 1;
 }
 
 /* forward declaration for write_pack_file */
@@ -596,22 +470,26 @@ static void write_pack_file(void)
 {
 	uint32_t i = 0, j;
 	struct sha1file *f;
-	off_t offset, offset_one, last_obj_offset = 0;
+	off_t offset;
 	struct pack_header hdr;
-	int do_progress = progress >> pack_to_stdout;
 	uint32_t nr_remaining = nr_result;
+	time_t last_mtime = 0;
 
-	if (do_progress)
-		start_progress(&progress_state, "Writing %u objects...", "", nr_result);
-	written_list = xmalloc(nr_objects * sizeof(struct object_entry *));
+	if (progress > pack_to_stdout)
+		progress_state = start_progress("Writing objects", nr_result);
+	written_list = xmalloc(nr_objects * sizeof(*written_list));
 
 	do {
 		unsigned char sha1[20];
+		char *pack_tmp_name = NULL;
 
 		if (pack_to_stdout) {
-			f = sha1fd(1, "<stdout>");
+			f = sha1fd_throughput(1, "<stdout>", progress_state);
 		} else {
-			int fd = open_object_dir_tmp("tmp_pack_XXXXXX");
+			char tmpname[PATH_MAX];
+			int fd;
+			fd = odb_mkstemp(tmpname, sizeof(tmpname),
+					 "pack/tmp_pack_XXXXXX");
 			pack_tmp_name = xstrdup(tmpname);
 			f = sha1fd(fd, pack_tmp_name);
 		}
@@ -623,43 +501,68 @@ static void write_pack_file(void)
 		offset = sizeof(hdr);
 		nr_written = 0;
 		for (; i < nr_objects; i++) {
-			last_obj_offset = offset;
-			offset_one = write_one(f, objects + i, offset);
-			if (!offset_one)
+			if (!write_one(f, objects + i, &offset))
 				break;
-			offset = offset_one;
-			if (do_progress)
-				display_progress(&progress_state, written);
+			display_progress(progress_state, written);
 		}
 
 		/*
 		 * Did we write the wrong # entries in the header?
 		 * If so, rewrite it like in fast-import
 		 */
-		if (pack_to_stdout || nr_written == nr_remaining) {
-			sha1close(f, sha1, 1);
+		if (pack_to_stdout) {
+			sha1close(f, sha1, CSUM_CLOSE);
+		} else if (nr_written == nr_remaining) {
+			sha1close(f, sha1, CSUM_FSYNC);
 		} else {
-			sha1close(f, sha1, 0);
-			fixup_pack_header_footer(f->fd, sha1, pack_tmp_name, nr_written);
-			close(f->fd);
+			int fd = sha1close(f, sha1, 0);
+			fixup_pack_header_footer(fd, sha1, pack_tmp_name,
+						 nr_written, sha1, offset);
+			close(fd);
 		}
 
 		if (!pack_to_stdout) {
 			mode_t mode = umask(0);
+			struct stat st;
+			char *idx_tmp_name, tmpname[PATH_MAX];
 
 			umask(mode);
 			mode = 0444 & ~mode;
 
-			idx_tmp_name = write_idx_file(NULL,
-				(struct pack_idx_entry **) written_list, nr_written, sha1);
+			idx_tmp_name = write_idx_file(NULL, written_list,
+						      nr_written, sha1);
+
 			snprintf(tmpname, sizeof(tmpname), "%s-%s.pack",
 				 base_name, sha1_to_hex(sha1));
+			free_pack_by_name(tmpname);
 			if (adjust_perm(pack_tmp_name, mode))
 				die("unable to make temporary pack file readable: %s",
 				    strerror(errno));
 			if (rename(pack_tmp_name, tmpname))
 				die("unable to rename temporary pack file: %s",
 				    strerror(errno));
+
+			/*
+			 * Packs are runtime accessed in their mtime
+			 * order since newer packs are more likely to contain
+			 * younger objects.  So if we are creating multiple
+			 * packs then we should modify the mtime of later ones
+			 * to preserve this property.
+			 */
+			if (stat(tmpname, &st) < 0) {
+				warning("failed to stat %s: %s",
+					tmpname, strerror(errno));
+			} else if (!last_mtime) {
+				last_mtime = st.st_mtime;
+			} else {
+				struct utimbuf utb;
+				utb.actime = st.st_atime;
+				utb.modtime = --last_mtime;
+				if (utime(tmpname, &utb) < 0)
+					warning("failed utime() on %s: %s",
+						tmpname, strerror(errno));
+			}
+
 			snprintf(tmpname, sizeof(tmpname), "%s-%s.idx",
 				 base_name, sha1_to_hex(sha1));
 			if (adjust_perm(idx_tmp_name, mode))
@@ -668,21 +571,24 @@ static void write_pack_file(void)
 			if (rename(idx_tmp_name, tmpname))
 				die("unable to rename temporary index file: %s",
 				    strerror(errno));
+
+			free(idx_tmp_name);
+			free(pack_tmp_name);
 			puts(sha1_to_hex(sha1));
 		}
 
 		/* mark written objects as written to previous pack */
 		for (j = 0; j < nr_written; j++) {
-			written_list[j]->idx.offset = (off_t)-1;
+			written_list[j]->offset = (off_t)-1;
 		}
 		nr_remaining -= nr_written;
 	} while (nr_remaining && i < nr_objects);
 
 	free(written_list);
-	if (do_progress)
-		stop_progress(&progress_state);
+	stop_progress(&progress_state);
 	if (written != nr_result)
-		die("wrote %u objects while expecting %u", written, nr_result);
+		die("wrote %"PRIu32" objects while expecting %"PRIu32,
+			written, nr_result);
 	/*
 	 * We have scanned through [0 ... i).  Since we have written
 	 * the correct number of objects,  the remaining [i ... nr_objects)
@@ -694,7 +600,8 @@ static void write_pack_file(void)
 		j += !e->idx.offset && !e->preferred_base;
 	}
 	if (j)
-		die("wrote %u objects as expected but %u unwritten", written, j);
+		die("wrote %"PRIu32" objects as expected but %"PRIu32
+			" unwritten", written, j);
 }
 
 static int locate_object_entry_hash(const unsigned char *sha1)
@@ -807,6 +714,9 @@ static int add_object_entry(const unsigned char *sha1, enum object_type type,
 		return 0;
 	}
 
+	if (!exclude && local && has_loose_object_nonlocal(sha1))
+		return 0;
+
 	for (p = packed_git; p; p = p->next) {
 		off_t offset = find_pack_entry_one(sha1, p);
 		if (offset) {
@@ -819,6 +729,8 @@ static int add_object_entry(const unsigned char *sha1, enum object_type type,
 			if (incremental)
 				return 0;
 			if (local && !p->pack_local)
+				return 0;
+			if (ignore_packed_keep && p->pack_local && p->pack_keep)
 				return 0;
 		}
 	}
@@ -848,8 +760,7 @@ static int add_object_entry(const unsigned char *sha1, enum object_type type,
 	else
 		object_ix[-1 - ix] = nr_objects;
 
-	if (progress)
-		display_progress(&progress_state, nr_objects);
+	display_progress(progress_state, nr_objects);
 
 	if (name && no_try_delta(name))
 		entry->no_try_delta = 1;
@@ -989,7 +900,7 @@ static void add_pbase_object(struct tree_desc *tree,
 			return;
 		if (name[cmplen] != '/') {
 			add_object_entry(entry.sha1,
-					 S_ISDIR(entry.mode) ? OBJ_TREE : OBJ_BLOB,
+					 object_type(entry.mode),
 					 fullname, 1);
 			return;
 		}
@@ -1120,9 +1031,11 @@ static void check_object(struct object_entry *entry)
 		 * We want in_pack_type even if we do not reuse delta
 		 * since non-delta representations could still be reused.
 		 */
-		used = unpack_object_header_gently(buf, avail,
+		used = unpack_object_header_buffer(buf, avail,
 						   &entry->in_pack_type,
 						   &entry->size);
+		if (used == 0)
+			goto give_up;
 
 		/*
 		 * Determine if this is a delta and if so whether we can
@@ -1134,10 +1047,12 @@ static void check_object(struct object_entry *entry)
 			/* Not a delta hence we've already got all we need. */
 			entry->type = entry->in_pack_type;
 			entry->in_pack_header_size = used;
+			if (entry->type < OBJ_COMMIT || entry->type > OBJ_BLOB)
+				goto give_up;
 			unuse_pack(&w_curs);
 			return;
 		case OBJ_REF_DELTA:
-			if (!no_reuse_delta && !entry->preferred_base)
+			if (reuse_delta && !entry->preferred_base)
 				base_ref = use_pack(p, &w_curs,
 						entry->in_pack_offset + used, NULL);
 			entry->in_pack_header_size = used + 20;
@@ -1150,18 +1065,27 @@ static void check_object(struct object_entry *entry)
 			ofs = c & 127;
 			while (c & 128) {
 				ofs += 1;
-				if (!ofs || MSB(ofs, 7))
-					die("delta base offset overflow in pack for %s",
-					    sha1_to_hex(entry->idx.sha1));
+				if (!ofs || MSB(ofs, 7)) {
+					error("delta base offset overflow in pack for %s",
+					      sha1_to_hex(entry->idx.sha1));
+					goto give_up;
+				}
 				c = buf[used_0++];
 				ofs = (ofs << 7) + (c & 127);
 			}
-			if (ofs >= entry->in_pack_offset)
-				die("delta base offset out of bound for %s",
-				    sha1_to_hex(entry->idx.sha1));
 			ofs = entry->in_pack_offset - ofs;
-			if (!no_reuse_delta && !entry->preferred_base)
-				base_ref = find_packed_object_name(p, ofs);
+			if (ofs <= 0 || ofs >= entry->in_pack_offset) {
+				error("delta base offset out of bound for %s",
+				      sha1_to_hex(entry->idx.sha1));
+				goto give_up;
+			}
+			if (reuse_delta && !entry->preferred_base) {
+				struct revindex_entry *revidx;
+				revidx = find_pack_revindex(p, ofs);
+				if (!revidx)
+					goto give_up;
+				base_ref = nth_packed_object_sha1(p, revidx->nr);
+			}
 			entry->in_pack_header_size = used + used_0;
 			break;
 		}
@@ -1179,6 +1103,7 @@ static void check_object(struct object_entry *entry)
 			 */
 			entry->type = entry->in_pack_type;
 			entry->delta = base_entry;
+			entry->delta_size = entry->size;
 			entry->delta_sibling = base_entry->delta_child;
 			base_entry->delta_child = entry;
 			unuse_pack(&w_curs);
@@ -1193,6 +1118,8 @@ static void check_object(struct object_entry *entry)
 			 */
 			entry->size = get_size_from_delta(p, &w_curs,
 					entry->in_pack_offset + entry->in_pack_header_size);
+			if (entry->size == 0)
+				goto give_up;
 			unuse_pack(&w_curs);
 			return;
 		}
@@ -1202,13 +1129,17 @@ static void check_object(struct object_entry *entry)
 		 * with sha1_object_info() to find about the object type
 		 * at this point...
 		 */
+		give_up:
 		unuse_pack(&w_curs);
 	}
 
 	entry->type = sha1_object_info(entry->idx.sha1, &entry->size);
-	if (entry->type < 0)
-		die("unable to get type of object %s",
-		    sha1_to_hex(entry->idx.sha1));
+	/*
+	 * The error condition is checked in prepare_pack().  This is
+	 * to permit a missing preferred base object to be ignored
+	 * as a preferred base.  Doing so can result in a larger
+	 * pack file, but the transfer will still take place.
+	 */
 }
 
 static int pack_offset_sort(const void *_a, const void *_b)
@@ -1238,34 +1169,43 @@ static void get_object_details(void)
 		sorted_by_offset[i] = objects + i;
 	qsort(sorted_by_offset, nr_objects, sizeof(*sorted_by_offset), pack_offset_sort);
 
-	prepare_pack_ix();
 	for (i = 0; i < nr_objects; i++)
 		check_object(sorted_by_offset[i]);
+
 	free(sorted_by_offset);
 }
 
+/*
+ * We search for deltas in a list sorted by type, by filename hash, and then
+ * by size, so that we see progressively smaller and smaller files.
+ * That's because we prefer deltas to be from the bigger file
+ * to the smaller -- deletes are potentially cheaper, but perhaps
+ * more importantly, the bigger file is likely the more recent
+ * one.  The deepest deltas are therefore the oldest objects which are
+ * less susceptible to be accessed often.
+ */
 static int type_size_sort(const void *_a, const void *_b)
 {
 	const struct object_entry *a = *(struct object_entry **)_a;
 	const struct object_entry *b = *(struct object_entry **)_b;
 
-	if (a->type < b->type)
-		return -1;
 	if (a->type > b->type)
-		return 1;
-	if (a->hash < b->hash)
 		return -1;
+	if (a->type < b->type)
+		return 1;
 	if (a->hash > b->hash)
-		return 1;
-	if (a->preferred_base < b->preferred_base)
 		return -1;
+	if (a->hash < b->hash)
+		return 1;
 	if (a->preferred_base > b->preferred_base)
-		return 1;
-	if (a->size < b->size)
 		return -1;
-	if (a->size > b->size)
+	if (a->preferred_base < b->preferred_base)
 		return 1;
-	return a > b ? -1 : (a < b);  /* newest last */
+	if (a->size > b->size)
+		return -1;
+	if (a->size < b->size)
+		return 1;
+	return a < b ? -1 : (a > b);  /* newest first */
 }
 
 struct unpacked {
@@ -1291,16 +1231,33 @@ static int delta_cacheable(unsigned long src_size, unsigned long trg_size,
 	return 0;
 }
 
-/*
- * We search for deltas _backwards_ in a list sorted by type and
- * by size, so that we see progressively smaller and smaller files.
- * That's because we prefer deltas to be from the bigger file
- * to the smaller - deletes are potentially cheaper, but perhaps
- * more importantly, the bigger file is likely the more recent
- * one.
- */
+#ifdef THREADED_DELTA_SEARCH
+
+static pthread_mutex_t read_mutex = PTHREAD_MUTEX_INITIALIZER;
+#define read_lock()		pthread_mutex_lock(&read_mutex)
+#define read_unlock()		pthread_mutex_unlock(&read_mutex)
+
+static pthread_mutex_t cache_mutex = PTHREAD_MUTEX_INITIALIZER;
+#define cache_lock()		pthread_mutex_lock(&cache_mutex)
+#define cache_unlock()		pthread_mutex_unlock(&cache_mutex)
+
+static pthread_mutex_t progress_mutex = PTHREAD_MUTEX_INITIALIZER;
+#define progress_lock()		pthread_mutex_lock(&progress_mutex)
+#define progress_unlock()	pthread_mutex_unlock(&progress_mutex)
+
+#else
+
+#define read_lock()		(void)0
+#define read_unlock()		(void)0
+#define cache_lock()		(void)0
+#define cache_unlock()		(void)0
+#define progress_lock()		(void)0
+#define progress_unlock()	(void)0
+
+#endif
+
 static int try_delta(struct unpacked *trg, struct unpacked *src,
-		     unsigned max_depth)
+		     unsigned max_depth, unsigned long *mem_usage)
 {
 	struct object_entry *trg_entry = trg->entry;
 	struct object_entry *src_entry = src->entry;
@@ -1313,17 +1270,11 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 	if (trg_entry->type != src_entry->type)
 		return -1;
 
-	/* We do not compute delta to *create* objects we are not
-	 * going to pack.
-	 */
-	if (trg_entry->preferred_base)
-		return -1;
-
 	/*
 	 * We do not bother to try a delta that we discarded
 	 * on an earlier try, but only when reusing delta data.
 	 */
-	if (!no_reuse_delta && trg_entry->in_pack &&
+	if (reuse_delta && trg_entry->in_pack &&
 	    trg_entry->in_pack == src_entry->in_pack &&
 	    trg_entry->in_pack_type != OBJ_REF_DELTA &&
 	    trg_entry->in_pack_type != OBJ_OFS_DELTA)
@@ -1342,7 +1293,7 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 		max_size = trg_entry->delta_size;
 		ref_depth = trg->depth;
 	}
-	max_size = max_size * (max_depth - src->depth) /
+	max_size = (uint64_t)max_size * (max_depth - src->depth) /
 						(max_depth - ref_depth + 1);
 	if (max_size == 0)
 		return 0;
@@ -1355,24 +1306,28 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 
 	/* Load data if not already done */
 	if (!trg->data) {
+		read_lock();
 		trg->data = read_sha1_file(trg_entry->idx.sha1, &type, &sz);
+		read_unlock();
 		if (!trg->data)
 			die("object %s cannot be read",
 			    sha1_to_hex(trg_entry->idx.sha1));
 		if (sz != trg_size)
 			die("object %s inconsistent object length (%lu vs %lu)",
 			    sha1_to_hex(trg_entry->idx.sha1), sz, trg_size);
-		window_memory_usage += sz;
+		*mem_usage += sz;
 	}
 	if (!src->data) {
+		read_lock();
 		src->data = read_sha1_file(src_entry->idx.sha1, &type, &sz);
+		read_unlock();
 		if (!src->data)
 			die("object %s cannot be read",
 			    sha1_to_hex(src_entry->idx.sha1));
 		if (sz != src_size)
 			die("object %s inconsistent object length (%lu vs %lu)",
 			    sha1_to_hex(src_entry->idx.sha1), sz, src_size);
-		window_memory_usage += sz;
+		*mem_usage += sz;
 	}
 	if (!src->index) {
 		src->index = create_delta_index(src->data, src_size);
@@ -1382,7 +1337,7 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 				warning("suboptimal pack - out of memory");
 			return 0;
 		}
-		window_memory_usage += sizeof_delta_index(src->index);
+		*mem_usage += sizeof_delta_index(src->index);
 	}
 
 	delta_buf = create_delta(src->index, trg->data, trg_size, &delta_size, max_size);
@@ -1398,21 +1353,30 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 		}
 	}
 
+	/*
+	 * Handle memory allocation outside of the cache
+	 * accounting lock.  Compiler will optimize the strangeness
+	 * away when THREADED_DELTA_SEARCH is not defined.
+	 */
+	free(trg_entry->delta_data);
+	cache_lock();
+	if (trg_entry->delta_data) {
+		delta_cache_size -= trg_entry->delta_size;
+		trg_entry->delta_data = NULL;
+	}
+	if (delta_cacheable(src_size, trg_size, delta_size)) {
+		delta_cache_size += delta_size;
+		cache_unlock();
+		trg_entry->delta_data = xrealloc(delta_buf, delta_size);
+	} else {
+		cache_unlock();
+		free(delta_buf);
+	}
+
 	trg_entry->delta = src_entry;
 	trg_entry->delta_size = delta_size;
 	trg->depth = src->depth + 1;
 
-	if (trg_entry->delta_data) {
-		delta_cache_size -= trg_entry->delta_size;
-		free(trg_entry->delta_data);
-		trg_entry->delta_data = NULL;
-	}
-
-	if (delta_cacheable(src_size, trg_size, delta_size)) {
-		trg_entry->delta_data = xrealloc(delta_buf, delta_size);
-		delta_cache_size += trg_entry->delta_size;
-	} else
-		free(delta_buf);
 	return 1;
 }
 
@@ -1429,67 +1393,64 @@ static unsigned int check_delta_limit(struct object_entry *me, unsigned int n)
 	return m;
 }
 
-static void free_unpacked(struct unpacked *n)
+static unsigned long free_unpacked(struct unpacked *n)
 {
-	window_memory_usage -= sizeof_delta_index(n->index);
+	unsigned long freed_mem = sizeof_delta_index(n->index);
 	free_delta_index(n->index);
 	n->index = NULL;
 	if (n->data) {
+		freed_mem += n->entry->size;
 		free(n->data);
 		n->data = NULL;
-		window_memory_usage -= n->entry->size;
 	}
 	n->entry = NULL;
 	n->depth = 0;
+	return freed_mem;
 }
 
-static void find_deltas(struct object_entry **list, int window, int depth)
+static void find_deltas(struct object_entry **list, unsigned *list_size,
+			int window, int depth, unsigned *processed)
 {
-	uint32_t i = nr_objects, idx = 0, count = 0, processed = 0;
-	unsigned int array_size = window * sizeof(struct unpacked);
+	uint32_t i, idx = 0, count = 0;
 	struct unpacked *array;
-	int max_depth;
+	unsigned long mem_usage = 0;
 
-	if (!nr_objects)
-		return;
-	array = xmalloc(array_size);
-	memset(array, 0, array_size);
-	if (progress)
-		start_progress(&progress_state, "Deltifying %u objects...", "", nr_result);
+	array = xcalloc(window, sizeof(struct unpacked));
 
-	do {
-		struct object_entry *entry = list[--i];
+	for (;;) {
+		struct object_entry *entry;
 		struct unpacked *n = array + idx;
-		int j;
+		int j, max_depth, best_base = -1;
 
-		if (!entry->preferred_base)
-			processed++;
+		progress_lock();
+		if (!*list_size) {
+			progress_unlock();
+			break;
+		}
+		entry = *list++;
+		(*list_size)--;
+		if (!entry->preferred_base) {
+			(*processed)++;
+			display_progress(progress_state, *processed);
+		}
+		progress_unlock();
 
-		if (progress)
-			display_progress(&progress_state, processed);
-
-		if (entry->delta)
-			/* This happens if we decided to reuse existing
-			 * delta from a pack.  "!no_reuse_delta &&" is implied.
-			 */
-			continue;
-
-		if (entry->size < 50)
-			continue;
-
-		if (entry->no_try_delta)
-			continue;
-
-		free_unpacked(n);
+		mem_usage -= free_unpacked(n);
 		n->entry = entry;
 
 		while (window_memory_limit &&
-		       window_memory_usage > window_memory_limit &&
+		       mem_usage > window_memory_limit &&
 		       count > 1) {
 			uint32_t tail = (idx + window - count) % window;
-			free_unpacked(array + tail);
+			mem_usage -= free_unpacked(array + tail);
 			count--;
 		}
+
+		/* We do not compute delta to *create* objects we are not
+		 * going to pack.
+		 */
+		if (entry->preferred_base)
+			goto next;
 
 		/*
 		 * If the current object is at pack edge, take the depth the
@@ -1505,6 +1466,7 @@ static void find_deltas(struct object_entry **list, int window, int depth)
 
 		j = window;
 		while (--j > 0) {
+			int ret;
 			uint32_t other_idx = idx + j;
 			struct unpacked *m;
 			if (other_idx >= window)
@@ -1512,16 +1474,59 @@ static void find_deltas(struct object_entry **list, int window, int depth)
 			m = array + other_idx;
 			if (!m->entry)
 				break;
-			if (try_delta(n, m, max_depth) < 0)
+			ret = try_delta(n, m, max_depth, &mem_usage);
+			if (ret < 0)
 				break;
+			else if (ret > 0)
+				best_base = other_idx;
+		}
+
+		/*
+		 * If we decided to cache the delta data, then it is best
+		 * to compress it right away.  First because we have to do
+		 * it anyway, and doing it here while we're threaded will
+		 * save a lot of time in the non threaded write phase,
+		 * as well as allow for caching more deltas within
+		 * the same cache size limit.
+		 * ...
+		 * But only if not writing to stdout, since in that case
+		 * the network is most likely throttling writes anyway,
+		 * and therefore it is best to go to the write phase ASAP
+		 * instead, as we can afford spending more time compressing
+		 * between writes at that moment.
+		 */
+		if (entry->delta_data && !pack_to_stdout) {
+			entry->z_delta_size = do_compress(&entry->delta_data,
+							  entry->delta_size);
+			cache_lock();
+			delta_cache_size -= entry->delta_size;
+			delta_cache_size += entry->z_delta_size;
+			cache_unlock();
 		}
 
 		/* if we made n a delta, and if n is already at max
 		 * depth, leaving it in the window is pointless.  we
 		 * should evict it first.
 		 */
-		if (entry->delta && depth <= n->depth)
+		if (entry->delta && max_depth <= n->depth)
 			continue;
+
+		/*
+		 * Move the best delta base up in the window, after the
+		 * currently deltified object, to keep it longer.  It will
+		 * be the first base object to be attempted next.
+		 */
+		if (entry->delta) {
+			struct unpacked swap = array[best_base];
+			int dist = (window + idx - best_base) % window;
+			int dst = best_base;
+			while (dist--) {
+				int src = (dst + 1) % window;
+				array[dst] = array[src];
+				dst = src;
+			}
+			array[dst] = swap;
+		}
 
 		next:
 		idx++;
@@ -1529,10 +1534,7 @@ static void find_deltas(struct object_entry **list, int window, int depth)
 			count++;
 		if (idx >= window)
 			idx = 0;
-	} while (i > 0);
-
-	if (progress)
-		stop_progress(&progress_state);
+	}
 
 	for (i = 0; i < window; ++i) {
 		free_delta_index(array[i].index);
@@ -1541,25 +1543,275 @@ static void find_deltas(struct object_entry **list, int window, int depth)
 	free(array);
 }
 
+#ifdef THREADED_DELTA_SEARCH
+
+/*
+ * The main thread waits on the condition that (at least) one of the workers
+ * has stopped working (which is indicated in the .working member of
+ * struct thread_params).
+ * When a work thread has completed its work, it sets .working to 0 and
+ * signals the main thread and waits on the condition that .data_ready
+ * becomes 1.
+ */
+
+struct thread_params {
+	pthread_t thread;
+	struct object_entry **list;
+	unsigned list_size;
+	unsigned remaining;
+	int window;
+	int depth;
+	int working;
+	int data_ready;
+	pthread_mutex_t mutex;
+	pthread_cond_t cond;
+	unsigned *processed;
+};
+
+static pthread_cond_t progress_cond = PTHREAD_COND_INITIALIZER;
+
+static void *threaded_find_deltas(void *arg)
+{
+	struct thread_params *me = arg;
+
+	while (me->remaining) {
+		find_deltas(me->list, &me->remaining,
+			    me->window, me->depth, me->processed);
+
+		progress_lock();
+		me->working = 0;
+		pthread_cond_signal(&progress_cond);
+		progress_unlock();
+
+		/*
+		 * We must not set ->data_ready before we wait on the
+		 * condition because the main thread may have set it to 1
+		 * before we get here. In order to be sure that new
+		 * work is available if we see 1 in ->data_ready, it
+		 * was initialized to 0 before this thread was spawned
+		 * and we reset it to 0 right away.
+		 */
+		pthread_mutex_lock(&me->mutex);
+		while (!me->data_ready)
+			pthread_cond_wait(&me->cond, &me->mutex);
+		me->data_ready = 0;
+		pthread_mutex_unlock(&me->mutex);
+	}
+	/* leave ->working 1 so that this doesn't get more work assigned */
+	return NULL;
+}
+
+static void ll_find_deltas(struct object_entry **list, unsigned list_size,
+			   int window, int depth, unsigned *processed)
+{
+	struct thread_params p[delta_search_threads];
+	int i, ret, active_threads = 0;
+
+	if (delta_search_threads <= 1) {
+		find_deltas(list, &list_size, window, depth, processed);
+		return;
+	}
+	if (progress > pack_to_stdout)
+		fprintf(stderr, "Delta compression using up to %d threads.\n",
+				delta_search_threads);
+
+	/* Partition the work amongst work threads. */
+	for (i = 0; i < delta_search_threads; i++) {
+		unsigned sub_size = list_size / (delta_search_threads - i);
+
+		/* don't use too small segments or no deltas will be found */
+		if (sub_size < 2*window && i+1 < delta_search_threads)
+			sub_size = 0;
+
+		p[i].window = window;
+		p[i].depth = depth;
+		p[i].processed = processed;
+		p[i].working = 1;
+		p[i].data_ready = 0;
+
+		/* try to split chunks on "path" boundaries */
+		while (sub_size && sub_size < list_size &&
+		       list[sub_size]->hash &&
+		       list[sub_size]->hash == list[sub_size-1]->hash)
+			sub_size++;
+
+		p[i].list = list;
+		p[i].list_size = sub_size;
+		p[i].remaining = sub_size;
+
+		list += sub_size;
+		list_size -= sub_size;
+	}
+
+	/* Start work threads. */
+	for (i = 0; i < delta_search_threads; i++) {
+		if (!p[i].list_size)
+			continue;
+		pthread_mutex_init(&p[i].mutex, NULL);
+		pthread_cond_init(&p[i].cond, NULL);
+		ret = pthread_create(&p[i].thread, NULL,
+				     threaded_find_deltas, &p[i]);
+		if (ret)
+			die("unable to create thread: %s", strerror(ret));
+		active_threads++;
+	}
+
+	/*
+	 * Now let's wait for work completion.  Each time a thread is done
+	 * with its work, we steal half of the remaining work from the
+	 * thread with the largest number of unprocessed objects and give
+	 * it to that newly idle thread.  This ensure good load balancing
+	 * until the remaining object list segments are simply too short
+	 * to be worth splitting anymore.
+	 */
+	while (active_threads) {
+		struct thread_params *target = NULL;
+		struct thread_params *victim = NULL;
+		unsigned sub_size = 0;
+
+		progress_lock();
+		for (;;) {
+			for (i = 0; !target && i < delta_search_threads; i++)
+				if (!p[i].working)
+					target = &p[i];
+			if (target)
+				break;
+			pthread_cond_wait(&progress_cond, &progress_mutex);
+		}
+
+		for (i = 0; i < delta_search_threads; i++)
+			if (p[i].remaining > 2*window &&
+			    (!victim || victim->remaining < p[i].remaining))
+				victim = &p[i];
+		if (victim) {
+			sub_size = victim->remaining / 2;
+			list = victim->list + victim->list_size - sub_size;
+			while (sub_size && list[0]->hash &&
+			       list[0]->hash == list[-1]->hash) {
+				list++;
+				sub_size--;
+			}
+			if (!sub_size) {
+				/*
+				 * It is possible for some "paths" to have
+				 * so many objects that no hash boundary
+				 * might be found.  Let's just steal the
+				 * exact half in that case.
+				 */
+				sub_size = victim->remaining / 2;
+				list -= sub_size;
+			}
+			target->list = list;
+			victim->list_size -= sub_size;
+			victim->remaining -= sub_size;
+		}
+		target->list_size = sub_size;
+		target->remaining = sub_size;
+		target->working = 1;
+		progress_unlock();
+
+		pthread_mutex_lock(&target->mutex);
+		target->data_ready = 1;
+		pthread_cond_signal(&target->cond);
+		pthread_mutex_unlock(&target->mutex);
+
+		if (!sub_size) {
+			pthread_join(target->thread, NULL);
+			pthread_cond_destroy(&target->cond);
+			pthread_mutex_destroy(&target->mutex);
+			active_threads--;
+		}
+	}
+}
+
+#else
+#define ll_find_deltas(l, s, w, d, p)	find_deltas(l, &s, w, d, p)
+#endif
+
+static int add_ref_tag(const char *path, const unsigned char *sha1, int flag, void *cb_data)
+{
+	unsigned char peeled[20];
+
+	if (!prefixcmp(path, "refs/tags/") && /* is a tag? */
+	    !peel_ref(path, peeled)        && /* peelable? */
+	    !is_null_sha1(peeled)          && /* annotated tag? */
+	    locate_object_entry(peeled))      /* object packed? */
+		add_object_entry(sha1, OBJ_TAG, NULL, 0);
+	return 0;
+}
+
 static void prepare_pack(int window, int depth)
 {
 	struct object_entry **delta_list;
-	uint32_t i;
+	uint32_t i, nr_deltas;
+	unsigned n;
 
 	get_object_details();
 
-	if (!window || !depth)
+	/*
+	 * If we're locally repacking then we need to be doubly careful
+	 * from now on in order to make sure no stealth corruption gets
+	 * propagated to the new pack.  Clients receiving streamed packs
+	 * should validate everything they get anyway so no need to incur
+	 * the additional cost here in that case.
+	 */
+	if (!pack_to_stdout)
+		do_check_packed_object_crc = 1;
+
+	if (!nr_objects || !window || !depth)
 		return;
 
 	delta_list = xmalloc(nr_objects * sizeof(*delta_list));
-	for (i = 0; i < nr_objects; i++)
-		delta_list[i] = objects + i;
-	qsort(delta_list, nr_objects, sizeof(*delta_list), type_size_sort);
-	find_deltas(delta_list, window+1, depth);
+	nr_deltas = n = 0;
+
+	for (i = 0; i < nr_objects; i++) {
+		struct object_entry *entry = objects + i;
+
+		if (entry->delta)
+			/* This happens if we decided to reuse existing
+			 * delta from a pack.  "reuse_delta &&" is implied.
+			 */
+			continue;
+
+		if (entry->size < 50)
+			continue;
+
+		if (entry->no_try_delta)
+			continue;
+
+		if (!entry->preferred_base) {
+			nr_deltas++;
+			if (entry->type < 0)
+				die("unable to get type of object %s",
+				    sha1_to_hex(entry->idx.sha1));
+		} else {
+			if (entry->type < 0) {
+				/*
+				 * This object is not found, but we
+				 * don't have to include it anyway.
+				 */
+				continue;
+			}
+		}
+
+		delta_list[n++] = entry;
+	}
+
+	if (nr_deltas && n > 1) {
+		unsigned nr_done = 0;
+		if (progress)
+			progress_state = start_progress("Compressing objects",
+							nr_deltas);
+		qsort(delta_list, n, sizeof(*delta_list), type_size_sort);
+		ll_find_deltas(delta_list, n, window+1, depth, &nr_done);
+		stop_progress(&progress_state);
+		if (nr_done != nr_deltas)
+			die("inconsistency with delta count");
+	}
 	free(delta_list);
 }
 
-static int git_pack_config(const char *k, const char *v)
+static int git_pack_config(const char *k, const char *v, void *cb)
 {
 	if(!strcmp(k, "pack.window")) {
 		window = git_config_int(k, v);
@@ -1591,7 +1843,29 @@ static int git_pack_config(const char *k, const char *v)
 		cache_max_small_delta_size = git_config_int(k, v);
 		return 0;
 	}
-	return git_default_config(k, v);
+	if (!strcmp(k, "pack.threads")) {
+		delta_search_threads = git_config_int(k, v);
+		if (delta_search_threads < 0)
+			die("invalid number of threads specified (%d)",
+			    delta_search_threads);
+#ifndef THREADED_DELTA_SEARCH
+		if (delta_search_threads != 1)
+			warning("no threads support, ignoring %s", k);
+#endif
+		return 0;
+	}
+	if (!strcmp(k, "pack.indexversion")) {
+		pack_idx_default_version = git_config_int(k, v);
+		if (pack_idx_default_version > 2)
+			die("bad pack.indexversion=%"PRIu32,
+				pack_idx_default_version);
+		return 0;
+	}
+	if (!strcmp(k, "pack.packsizelimit")) {
+		pack_size_limit_cfg = git_config_ulong(k, v);
+		return 0;
+	}
+	return git_default_config(k, v, cb);
 }
 
 static void read_object_list_from_stdin(void)
@@ -1625,20 +1899,154 @@ static void read_object_list_from_stdin(void)
 	}
 }
 
-static void show_commit(struct commit *commit)
+#define OBJECT_ADDED (1u<<20)
+
+static void show_commit(struct commit *commit, void *data)
 {
 	add_object_entry(commit->object.sha1, OBJ_COMMIT, NULL, 0);
+	commit->object.flags |= OBJECT_ADDED;
 }
 
-static void show_object(struct object_array_entry *p)
+static void show_object(struct object *obj, const struct name_path *path, const char *last)
 {
-	add_preferred_base_object(p->name);
-	add_object_entry(p->item->sha1, p->item->type, p->name, 0);
+	char *name = path_name(path, last);
+
+	add_preferred_base_object(name);
+	add_object_entry(obj->sha1, obj->type, name, 0);
+	obj->flags |= OBJECT_ADDED;
+
+	/*
+	 * We will have generated the hash from the name,
+	 * but not saved a pointer to it - we can free it
+	 */
+	free((char *)name);
 }
 
 static void show_edge(struct commit *commit)
 {
 	add_preferred_base(commit->object.sha1);
+}
+
+struct in_pack_object {
+	off_t offset;
+	struct object *object;
+};
+
+struct in_pack {
+	int alloc;
+	int nr;
+	struct in_pack_object *array;
+};
+
+static void mark_in_pack_object(struct object *object, struct packed_git *p, struct in_pack *in_pack)
+{
+	in_pack->array[in_pack->nr].offset = find_pack_entry_one(object->sha1, p);
+	in_pack->array[in_pack->nr].object = object;
+	in_pack->nr++;
+}
+
+/*
+ * Compare the objects in the offset order, in order to emulate the
+ * "git rev-list --objects" output that produced the pack originally.
+ */
+static int ofscmp(const void *a_, const void *b_)
+{
+	struct in_pack_object *a = (struct in_pack_object *)a_;
+	struct in_pack_object *b = (struct in_pack_object *)b_;
+
+	if (a->offset < b->offset)
+		return -1;
+	else if (a->offset > b->offset)
+		return 1;
+	else
+		return hashcmp(a->object->sha1, b->object->sha1);
+}
+
+static void add_objects_in_unpacked_packs(struct rev_info *revs)
+{
+	struct packed_git *p;
+	struct in_pack in_pack;
+	uint32_t i;
+
+	memset(&in_pack, 0, sizeof(in_pack));
+
+	for (p = packed_git; p; p = p->next) {
+		const unsigned char *sha1;
+		struct object *o;
+
+		if (!p->pack_local || p->pack_keep)
+			continue;
+		if (open_pack_index(p))
+			die("cannot open pack index");
+
+		ALLOC_GROW(in_pack.array,
+			   in_pack.nr + p->num_objects,
+			   in_pack.alloc);
+
+		for (i = 0; i < p->num_objects; i++) {
+			sha1 = nth_packed_object_sha1(p, i);
+			o = lookup_unknown_object(sha1);
+			if (!(o->flags & OBJECT_ADDED))
+				mark_in_pack_object(o, p, &in_pack);
+			o->flags |= OBJECT_ADDED;
+		}
+	}
+
+	if (in_pack.nr) {
+		qsort(in_pack.array, in_pack.nr, sizeof(in_pack.array[0]),
+		      ofscmp);
+		for (i = 0; i < in_pack.nr; i++) {
+			struct object *o = in_pack.array[i].object;
+			add_object_entry(o->sha1, o->type, "", 0);
+		}
+	}
+	free(in_pack.array);
+}
+
+static int has_sha1_pack_kept_or_nonlocal(const unsigned char *sha1)
+{
+	static struct packed_git *last_found = (void *)1;
+	struct packed_git *p;
+
+	p = (last_found != (void *)1) ? last_found : packed_git;
+
+	while (p) {
+		if ((!p->pack_local || p->pack_keep) &&
+			find_pack_entry_one(sha1, p)) {
+			last_found = p;
+			return 1;
+		}
+		if (p == last_found)
+			p = packed_git;
+		else
+			p = p->next;
+		if (p == last_found)
+			p = p->next;
+	}
+	return 0;
+}
+
+static void loosen_unused_packed_objects(struct rev_info *revs)
+{
+	struct packed_git *p;
+	uint32_t i;
+	const unsigned char *sha1;
+
+	for (p = packed_git; p; p = p->next) {
+		if (!p->pack_local || p->pack_keep)
+			continue;
+
+		if (open_pack_index(p))
+			die("cannot open pack index");
+
+		for (i = 0; i < p->num_objects; i++) {
+			sha1 = nth_packed_object_sha1(p, i);
+			if (!locate_object_entry(sha1) &&
+				!has_sha1_pack_kept_or_nonlocal(sha1))
+				if (force_object_loose(sha1, p->mtime))
+					die("unable to force loose object");
+		}
+	}
 }
 
 static void get_object_list(int ac, const char **av)
@@ -1649,12 +2057,11 @@ static void get_object_list(int ac, const char **av)
 
 	init_revisions(&revs, NULL);
 	save_commit_buffer = 0;
-	track_object_refs = 0;
 	setup_revisions(ac, av, &revs, NULL);
 
 	while (fgets(line, sizeof(line), stdin) != NULL) {
 		int len = strlen(line);
-		if (line[len - 1] == '\n')
+		if (len && line[len - 1] == '\n')
 			line[--len] = 0;
 		if (!len)
 			break;
@@ -1669,9 +2076,15 @@ static void get_object_list(int ac, const char **av)
 			die("bad revision '%s'", line);
 	}
 
-	prepare_revision_walk(&revs);
+	if (prepare_revision_walk(&revs))
+		die("revision walk setup failed");
 	mark_edges_uninteresting(revs.commits, &revs, show_edge);
-	traverse_commit_list(&revs, show_commit, show_object);
+	traverse_commit_list(&revs, show_commit, show_object, NULL);
+
+	if (keep_unreachable)
+		add_objects_in_unpacked_packs(&revs);
+	if (unpack_unreachable)
+		loosen_unused_packed_objects(&revs);
 }
 
 static int adjust_perm(const char *path, mode_t mode)
@@ -1696,7 +2109,7 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 	rp_av[1] = "--objects"; /* --thin will make it --objects-edge */
 	rp_ac = 2;
 
-	git_config(git_pack_config);
+	git_config(git_pack_config, NULL);
 	if (!pack_compression_seen && core_compression_seen)
 		pack_compression_level = core_compression_level;
 
@@ -1719,6 +2132,10 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 			incremental = 1;
 			continue;
 		}
+		if (!strcmp("--honor-pack-keep", arg)) {
+			ignore_packed_keep = 1;
+			continue;
+		}
 		if (!prefixcmp(arg, "--compression=")) {
 			char *end;
 			int level = strtoul(arg+14, &end, 0);
@@ -1733,6 +2150,7 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		}
 		if (!prefixcmp(arg, "--max-pack-size=")) {
 			char *end;
+			pack_size_limit_cfg = 0;
 			pack_size_limit = strtoul(arg+16, &end, 0) * 1024 * 1024;
 			if (!arg[16] || *end)
 				usage(pack_usage);
@@ -1748,6 +2166,18 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		if (!prefixcmp(arg, "--window-memory=")) {
 			if (!git_parse_ulong(arg+16, &window_memory_limit))
 				usage(pack_usage);
+			continue;
+		}
+		if (!prefixcmp(arg, "--threads=")) {
+			char *end;
+			delta_search_threads = strtoul(arg+10, &end, 0);
+			if (!arg[10] || *end || delta_search_threads < 0)
+				usage(pack_usage);
+#ifndef THREADED_DELTA_SEARCH
+			if (delta_search_threads != 1)
+				warning("no threads support, "
+					"ignoring %s", arg);
+#endif
 			continue;
 		}
 		if (!prefixcmp(arg, "--depth=")) {
@@ -1770,11 +2200,11 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 			continue;
 		}
 		if (!strcmp("--no-reuse-delta", arg)) {
-			no_reuse_delta = 1;
+			reuse_delta = 0;
 			continue;
 		}
 		if (!strcmp("--no-reuse-object", arg)) {
-			no_reuse_object = no_reuse_delta = 1;
+			reuse_object = reuse_delta = 0;
 			continue;
 		}
 		if (!strcmp("--delta-base-offset", arg)) {
@@ -1789,8 +2219,19 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 			use_internal_rev_list = 1;
 			continue;
 		}
+		if (!strcmp("--keep-unreachable", arg)) {
+			keep_unreachable = 1;
+			continue;
+		}
+		if (!strcmp("--unpack-unreachable", arg)) {
+			unpack_unreachable = 1;
+			continue;
+		}
+		if (!strcmp("--include-tag", arg)) {
+			include_tag = 1;
+			continue;
+		}
 		if (!strcmp("--unpacked", arg) ||
-		    !prefixcmp(arg, "--unpacked=") ||
 		    !strcmp("--reflog", arg) ||
 		    !strcmp("--all", arg)) {
 			use_internal_rev_list = 1;
@@ -1841,37 +2282,45 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 	if (pack_to_stdout != !base_name)
 		usage(pack_usage);
 
+	if (!pack_to_stdout && !pack_size_limit)
+		pack_size_limit = pack_size_limit_cfg;
+
 	if (pack_to_stdout && pack_size_limit)
 		die("--max-pack-size cannot be used to build a pack for transfer.");
 
 	if (!pack_to_stdout && thin)
 		die("--thin cannot be used to build an indexable pack.");
 
+	if (keep_unreachable && unpack_unreachable)
+		die("--keep-unreachable and --unpack-unreachable are incompatible.");
+
+#ifdef THREADED_DELTA_SEARCH
+	if (!delta_search_threads)	/* --threads=0 means autodetect */
+		delta_search_threads = online_cpus();
+#endif
+
 	prepare_packed_git();
 
 	if (progress)
-		start_progress(&progress_state, "Generating pack...",
-			       "Counting objects: ", 0);
+		progress_state = start_progress("Counting objects", 0);
 	if (!use_internal_rev_list)
 		read_object_list_from_stdin();
 	else {
 		rp_av[rp_ac] = NULL;
 		get_object_list(rp_ac, rp_av);
 	}
-	if (progress) {
-		stop_progress(&progress_state);
-		fprintf(stderr, "Done counting %u objects.\n", nr_objects);
-	}
+	if (include_tag && nr_result)
+		for_each_ref(add_ref_tag, NULL);
+	stop_progress(&progress_state);
 
 	if (non_empty && !nr_result)
 		return 0;
-	if (progress && (nr_objects != nr_result))
-		fprintf(stderr, "Result has %u objects.\n", nr_result);
 	if (nr_result)
 		prepare_pack(window, depth);
 	write_pack_file();
 	if (progress)
-		fprintf(stderr, "Total %u (delta %u), reused %u (delta %u)\n",
+		fprintf(stderr, "Total %"PRIu32" (delta %"PRIu32"),"
+			" reused %"PRIu32" (delta %"PRIu32")\n",
 			written, written_delta, reused, reused_delta);
 	return 0;
 }

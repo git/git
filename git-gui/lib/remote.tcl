@@ -132,80 +132,145 @@ proc load_all_remotes {} {
 	set all_remotes [lsort -unique $all_remotes]
 }
 
-proc populate_fetch_menu {} {
-	global all_remotes repo_config
-
-	set m .mbar.fetch
-	set prune_list [list]
-	foreach r $all_remotes {
-		set enable 0
-		if {![catch {set a $repo_config(remote.$r.url)}]} {
-			if {![catch {set a $repo_config(remote.$r.fetch)}]} {
-				set enable 1
-			}
-		} else {
-			catch {
-				set fd [open [gitdir remotes $r] r]
-				while {[gets $fd n] >= 0} {
-					if {[regexp {^Pull:[ \t]*([^:]+):} $n]} {
-						set enable 1
-						break
-					}
+proc add_fetch_entry {r} {
+	global repo_config
+	set remote_m .mbar.remote
+	set fetch_m $remote_m.fetch
+	set prune_m $remote_m.prune
+	set remove_m $remote_m.remove
+	set enable 0
+	if {![catch {set a $repo_config(remote.$r.url)}]} {
+		if {![catch {set a $repo_config(remote.$r.fetch)}]} {
+			set enable 1
+		}
+	} else {
+		catch {
+			set fd [open [gitdir remotes $r] r]
+			while {[gets $fd n] >= 0} {
+				if {[regexp {^Pull:[ \t]*([^:]+):} $n]} {
+					set enable 1
+					break
 				}
-				close $fd
 			}
-		}
-
-		if {$enable} {
-			lappend prune_list $r
-			$m add command \
-				-label "Fetch from $r..." \
-				-command [list fetch_from $r]
+			close $fd
 		}
 	}
 
-	if {$prune_list ne {}} {
-		$m add separator
-	}
-	foreach r $prune_list {
-		$m add command \
-			-label "Prune from $r..." \
+	if {$enable} {
+		if {![winfo exists $fetch_m]} {
+			menu $remove_m
+			$remote_m insert 0 cascade \
+				-label [mc "Remove Remote"] \
+				-menu $remove_m
+
+			menu $prune_m
+			$remote_m insert 0 cascade \
+				-label [mc "Prune from"] \
+				-menu $prune_m
+
+			menu $fetch_m
+			$remote_m insert 0 cascade \
+				-label [mc "Fetch from"] \
+				-menu $fetch_m
+		}
+
+		$fetch_m add command \
+			-label $r \
+			-command [list fetch_from $r]
+		$prune_m add command \
+			-label $r \
 			-command [list prune_from $r]
+		$remove_m add command \
+			-label $r \
+			-command [list remove_remote $r]
 	}
 }
 
-proc populate_push_menu {} {
-	global all_remotes repo_config
-
-	set m .mbar.push
-	set fast_count 0
-	foreach r $all_remotes {
-		set enable 0
-		if {![catch {set a $repo_config(remote.$r.url)}]} {
-			if {![catch {set a $repo_config(remote.$r.push)}]} {
-				set enable 1
-			}
-		} else {
-			catch {
-				set fd [open [gitdir remotes $r] r]
-				while {[gets $fd n] >= 0} {
-					if {[regexp {^Push:[ \t]*([^:]+):} $n]} {
-						set enable 1
-						break
-					}
-				}
-				close $fd
-			}
+proc add_push_entry {r} {
+	global repo_config
+	set remote_m .mbar.remote
+	set push_m $remote_m.push
+	set enable 0
+	if {![catch {set a $repo_config(remote.$r.url)}]} {
+		if {![catch {set a $repo_config(remote.$r.push)}]} {
+			set enable 1
 		}
-
-		if {$enable} {
-			if {!$fast_count} {
-				$m add separator
+	} else {
+		catch {
+			set fd [open [gitdir remotes $r] r]
+			while {[gets $fd n] >= 0} {
+				if {[regexp {^Push:[ \t]*([^:]+):} $n]} {
+					set enable 1
+					break
+				}
 			}
-			$m add command \
-				-label "Push to $r..." \
-				-command [list push_to $r]
-			incr fast_count
+			close $fd
 		}
 	}
+
+	if {$enable} {
+		if {![winfo exists $push_m]} {
+			menu $push_m
+			$remote_m insert 0 cascade \
+				-label [mc "Push to"] \
+				-menu $push_m
+		}
+
+		$push_m add command \
+			-label $r \
+			-command [list push_to $r]
+	}
+}
+
+proc populate_remotes_menu {} {
+	global all_remotes
+
+	foreach r $all_remotes {
+		add_fetch_entry $r
+		add_push_entry $r
+	}
+}
+
+proc add_single_remote {name location} {
+	global all_remotes repo_config
+	lappend all_remotes $name
+
+	git remote add $name $location
+
+	# XXX: Better re-read the config so that we will never get out
+	# of sync with git remote implementation?
+	set repo_config(remote.$name.url) $location
+	set repo_config(remote.$name.fetch) "+refs/heads/*:refs/remotes/$name/*"
+
+	add_fetch_entry $name
+	add_push_entry $name
+}
+
+proc delete_from_menu {menu name} {
+	if {[winfo exists $menu]} {
+		$menu delete $name
+	}
+}
+
+proc remove_remote {name} {
+	global all_remotes repo_config
+
+	git remote rm $name
+
+	catch {
+		# Missing values are ok
+		unset repo_config(remote.$name.url)
+		unset repo_config(remote.$name.fetch)
+		unset repo_config(remote.$name.push)
+	}
+
+	set i [lsearch -exact all_remotes $name]
+	lreplace all_remotes $i $i
+
+	set remote_m .mbar.remote
+	delete_from_menu $remote_m.fetch $name
+	delete_from_menu $remote_m.prune $name
+	delete_from_menu $remote_m.remove $name
+	# Not all remotes are in the push menu
+	catch { delete_from_menu $remote_m.push $name }
 }

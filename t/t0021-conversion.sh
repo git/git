@@ -5,7 +5,9 @@ test_description='blob conversion via gitattributes'
 . ./test-lib.sh
 
 cat <<\EOF >rot13.sh
-tr '[a-zA-Z]' '[n-za-mN-ZA-M]'
+tr \
+  'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ' \
+  'nopqrstuvwxyzabcdefghijklmNOPQRSTUVWXYZABCDEFGHIJKLM'
 EOF
 chmod +x rot13.sh
 
@@ -42,7 +44,12 @@ test_expect_success check '
 	git diff --raw --exit-code :test :test.i &&
 	id=$(git rev-parse --verify :test) &&
 	embedded=$(sed -ne "$script" test.i) &&
-	test "z$id" = "z$embedded"
+	test "z$id" = "z$embedded" &&
+
+	git cat-file blob :test.t > test.r &&
+
+	./rot13.sh < test.o > test.t &&
+	cmp test.r test.t
 '
 
 # If an expanded ident ever gets into the repository, we want to make sure that

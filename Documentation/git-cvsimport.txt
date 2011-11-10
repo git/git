@@ -9,7 +9,7 @@ git-cvsimport - Salvage your data out of another SCM people love to hate
 SYNOPSIS
 --------
 [verse]
-'git-cvsimport' [-o <branch-for-HEAD>] [-h] [-v] [-d <CVSROOT>]
+'git cvsimport' [-o <branch-for-HEAD>] [-h] [-v] [-d <CVSROOT>]
 	      [-A <author-conv-file>] [-p <options-for-cvsps>] [-P <file>]
 	      [-C <git_repository>] [-z <fuzz>] [-i] [-k] [-u] [-s <subst>]
 	      [-a] [-m] [-M <regex>] [-S <regex>] [-L <commitlimit>]
@@ -24,12 +24,21 @@ repository, or incrementally import into an existing one.
 Splitting the CVS log into patch sets is done by 'cvsps'.
 At least version 2.1 is required.
 
+*WARNING:* for certain situations the import leads to incorrect results.
+Please see the section <<issues,ISSUES>> for further reference.
+
 You should *never* do any work of your own on the branches that are
-created by git-cvsimport.  By default initial import will create and populate a
+created by 'git-cvsimport'.  By default initial import will create and populate a
 "master" branch from the CVS repository's main branch which you're free
-to work with; after that, you need to 'git merge' incremental imports, or
+to work with; after that, you need to 'git-merge' incremental imports, or
 any CVS branches, yourself.  It is advisable to specify a named remote via
 -r to separate and protect the incoming branches.
+
+If you intend to set up a shared public repository that all developers can
+read/write, or if you want to use linkgit:git-cvsserver[1], then you
+probably want to make a bare clone of the imported repository,
+and use the clone as the shared repository.
+See linkgit:gitcvs-migration[7].
 
 
 OPTIONS
@@ -40,13 +49,13 @@ OPTIONS
 -d <CVSROOT>::
 	The root of the CVS archive. May be local (a simple path) or remote;
 	currently, only the :local:, :ext: and :pserver: access methods
-	are supported. If not given, git-cvsimport will try to read it
+	are supported. If not given, 'git-cvsimport' will try to read it
 	from `CVS/Root`. If no such file exists, it checks for the
 	`CVSROOT` environment variable.
 
 <CVS_module>::
 	The CVS module you want to import. Relative to <CVSROOT>.
-	If not given, git-cvsimport tries to read it from
+	If not given, 'git-cvsimport' tries to read it from
 	`CVS/Repository`.
 
 -C <target-dir>::
@@ -56,14 +65,14 @@ OPTIONS
 -r <remote>::
 	The git remote to import this CVS repository into.
 	Moves all CVS branches into remotes/<remote>/<branch>
-	akin to the git-clone --use-separate-remote option.
+	akin to the way 'git-clone' uses 'origin' by default.
 
 -o <branch-for-HEAD>::
 	When no remote is specified (via -r) the 'HEAD' branch
 	from CVS is imported to the 'origin' branch within the git
 	repository, as 'HEAD' already has a special meaning for git.
 	When a remote is specified the 'HEAD' branch is named
-	remotes/<remote>/master mirroring git-clone behaviour.
+	remotes/<remote>/master mirroring 'git-clone' behaviour.
 	Use this option if you want to import into a different
 	branch.
 +
@@ -102,13 +111,17 @@ If you need to pass multiple options, separate them with a comma.
 
 -m::
 	Attempt to detect merges based on the commit message. This option
-	will enable default regexes that try to capture the name source
+	will enable default regexes that try to capture the source
 	branch name from the commit message.
 
 -M <regex>::
 	Attempt to detect merges based on the commit message with a custom
-	regex. It can be used with '-m' to also see the default regexes.
-	You must escape forward slashes.
+	regex. It can be used with '-m' to enable the default regexes
+	as well. You must escape forward slashes.
++
+The regex must capture the source branch name in $1.
++
+This option can be used several times to provide several detection regexes.
 
 -S <regex>::
 	Skip paths matching the regex.
@@ -132,17 +145,17 @@ If you need to pass multiple options, separate them with a comma.
 
 ---------
 +
-git-cvsimport will make it appear as those authors had
+'git-cvsimport' will make it appear as those authors had
 their GIT_AUTHOR_NAME and GIT_AUTHOR_EMAIL set properly
 all along.
 +
 For convenience, this data is saved to `$GIT_DIR/cvs-authors`
 each time the '-A' option is provided and read from that same
-file each time git-cvsimport is run.
+file each time 'git-cvsimport' is run.
 +
 It is not recommended to use this feature if you intend to
 export changes back to CVS again later with
-gitlink:git-cvsexportcommit[1].
+'git-cvsexportcommit'.
 
 -h::
 	Print a short usage message and exit.
@@ -154,6 +167,39 @@ If '-v' is specified, the script reports what it is doing.
 Otherwise, success is indicated the Unix way, i.e. by simply exiting with
 a zero exit status.
 
+[[issues]]
+ISSUES
+------
+Problems related to timestamps:
+
+ * If timestamps of commits in the cvs repository are not stable enough
+   to be used for ordering commits changes may show up in the wrong
+   order.
+ * If any files were ever "cvs import"ed more than once (e.g., import of
+   more than one vendor release) the HEAD contains the wrong content.
+ * If the timestamp order of different files cross the revision order
+   within the commit matching time window the order of commits may be
+   wrong.
+
+Problems related to branches:
+
+ * Branches on which no commits have been made are not imported.
+ * All files from the branching point are added to a branch even if
+   never added in cvs.
+ * This applies to files added to the source branch *after* a daughter
+   branch was created: if previously no commit was made on the daughter
+   branch they will erroneously be added to the daughter branch in git.
+
+Problems related to tags:
+
+* Multiple tags on the same revision are not imported.
+
+If you suspect that any of these issues may apply to the repository you
+want to import consider using these alternative tools which proved to be
+more stable in practice:
+
+* cvs2git (part of cvs2svn), `http://cvs2svn.tigris.org`
+* parsecvs, `http://cgit.freedesktop.org/~keithp/parsecvs`
 
 Author
 ------
@@ -166,4 +212,4 @@ Documentation by Matthias Urlichs <smurf@smurf.noris.de>.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[1] suite

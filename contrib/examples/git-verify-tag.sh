@@ -5,7 +5,7 @@ SUBDIRECTORY_OK='Yes'
 . git-sh-setup
 
 verbose=
-while case $# in 0) break;; esac
+while test $# != 0
 do
 	case "$1" in
 	-v|--v|--ve|--ver|--verb|--verbo|--verbos|--verbose)

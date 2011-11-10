@@ -12,7 +12,7 @@
 #include <signal.h>
 
 static const char builtin_verify_tag_usage[] =
-		"git-verify-tag [-v|--verbose] <tag>...";
+		"git verify-tag [-v|--verbose] <tag>...";
 
 #define PGP_SIGNATURE "-----BEGIN PGP SIGNATURE-----"
 
@@ -35,7 +35,7 @@ static int run_gpg_verify(const char *buf, unsigned long size, int verbose)
 
 	/* find the length without signature */
 	len = 0;
-	while (len < size && prefixcmp(buf + len, PGP_SIGNATURE "\n")) {
+	while (len < size && prefixcmp(buf + len, PGP_SIGNATURE)) {
 		eol = memchr(buf + len, '\n', size - len);
 		len += eol ? eol - (buf + len) + 1 : size - len;
 	}
@@ -45,14 +45,14 @@ static int run_gpg_verify(const char *buf, unsigned long size, int verbose)
 	memset(&gpg, 0, sizeof(gpg));
 	gpg.argv = args_gpg;
 	gpg.in = -1;
-	gpg.out = 1;
 	args_gpg[2] = path;
-	if (start_command(&gpg))
+	if (start_command(&gpg)) {
+		unlink(path);
 		return error("could not run gpg.");
+	}
 
 	write_in_full(gpg.in, buf, len);
 	close(gpg.in);
-	gpg.close_in = 0;
 	ret = finish_command(&gpg);
 
 	unlink(path);
@@ -90,15 +90,16 @@ int cmd_verify_tag(int argc, const char **argv, const char *prefix)
 {
 	int i = 1, verbose = 0, had_error = 0;
 
-	git_config(git_default_config);
+	git_config(git_default_config, NULL);
 
-	if (argc == 1)
-		usage(builtin_verify_tag_usage);
-
-	if (!strcmp(argv[i], "-v") || !strcmp(argv[i], "--verbose")) {
+	if (argc > 1 &&
+	    (!strcmp(argv[i], "-v") || !strcmp(argv[i], "--verbose"))) {
 		verbose = 1;
 		i++;
 	}
+
+	if (argc <= i)
+		usage(builtin_verify_tag_usage);
 
 	/* sometimes the program was terminated because this signal
 	 * was received in the process of writing the gpg input: */

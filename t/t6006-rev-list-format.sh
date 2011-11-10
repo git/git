@@ -6,16 +6,16 @@ test_description='git rev-list --pretty=format test'
 
 test_tick
 test_expect_success 'setup' '
-touch foo && git add foo && git-commit -m "added foo" &&
-  echo changed >foo && git-commit -a -m "changed foo"
+touch foo && git add foo && git commit -m "added foo" &&
+  echo changed >foo && git commit -a -m "changed foo"
 '
 
 # usage: test_format name format_string <expected_output
 test_format() {
 	cat >expect.$1
 	test_expect_success "format $1" "
-git rev-list --pretty=format:$2 master >output.$1 &&
-git diff expect.$1 output.$1
+git rev-list --pretty=format:'$2' master >output.$1 &&
+test_cmp expect.$1 output.$1
 "
 }
 
@@ -79,9 +79,7 @@ EOF
 
 test_format encoding %e <<'EOF'
 commit 131a310eb913d107dd3c09a65d1651175898735d
-<unknown>
 commit 86c75cfd708a0e5868dc876ed5b8bb66c80b4873
-<unknown>
 EOF
 
 test_format subject %s <<'EOF'
@@ -93,9 +91,7 @@ EOF
 
 test_format body %b <<'EOF'
 commit 131a310eb913d107dd3c09a65d1651175898735d
-<unknown>
 commit 86c75cfd708a0e5868dc876ed5b8bb66c80b4873
-<unknown>
 EOF
 
 test_format colors %Credfoo%Cgreenbar%Cbluebaz%Cresetxyzzy <<'EOF'
@@ -103,6 +99,13 @@ commit 131a310eb913d107dd3c09a65d1651175898735d
 [31mfoo[32mbar[34mbaz[mxyzzy
 commit 86c75cfd708a0e5868dc876ed5b8bb66c80b4873
 [31mfoo[32mbar[34mbaz[mxyzzy
+EOF
+
+test_format advanced-colors '%C(red yellow bold)foo%C(reset)' <<'EOF'
+commit 131a310eb913d107dd3c09a65d1651175898735d
+[1;31;43mfoo[m
+commit 86c75cfd708a0e5868dc876ed5b8bb66c80b4873
+[1;31;43mfoo[m
 EOF
 
 cat >commit-msg <<'EOF'
@@ -114,16 +117,14 @@ include an iso8859 character: ¡bueno!
 EOF
 test_expect_success 'setup complex body' '
 git config i18n.commitencoding iso8859-1 &&
-  echo change2 >foo && git-commit -a -F commit-msg
+  echo change2 >foo && git commit -a -F commit-msg
 '
 
 test_format complex-encoding %e <<'EOF'
 commit f58db70b055c5718631e5c61528b28b12090cdea
 iso8859-1
 commit 131a310eb913d107dd3c09a65d1651175898735d
-<unknown>
 commit 86c75cfd708a0e5868dc876ed5b8bb66c80b4873
-<unknown>
 EOF
 
 test_format complex-subject %s <<'EOF'
@@ -142,9 +143,23 @@ and it will be encoded in iso8859-1. We should therefore
 include an iso8859 character: ¡bueno!
 
 commit 131a310eb913d107dd3c09a65d1651175898735d
-<unknown>
 commit 86c75cfd708a0e5868dc876ed5b8bb66c80b4873
-<unknown>
 EOF
+
+test_expect_success '%ad respects --date=' '
+	echo 2005-04-07 >expect.ad-short &&
+	git log -1 --date=short --pretty=tformat:%ad >output.ad-short master &&
+	test_cmp expect.ad-short output.ad-short
+'
+
+test_expect_success 'empty email' '
+	test_tick &&
+	C=$(GIT_AUTHOR_EMAIL= git commit-tree HEAD^{tree} </dev/null) &&
+	A=$(git show --pretty=format:%an,%ae,%ad%n -s $C) &&
+	test "$A" = "A U Thor,,Thu Apr 7 15:14:13 2005 -0700" || {
+		echo "Eh? $A" >failure
+		false
+	}
+'
 
 test_done

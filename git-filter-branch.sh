@@ -8,6 +8,9 @@
 # a new branch. You can specify a number of filters to modify the commits,
 # files and trees.
 
+# The following functions will also be available in the commit filter:
+
+functions=$(cat << \EOF
 warn () {
         echo "$*" >&2
 }
@@ -37,6 +40,16 @@ skip_commit()
 	done;
 }
 
+# if you run 'git_commit_non_empty_tree "$@"' in a commit filter,
+# it will skip commits that leave the tree untouched, commit the other.
+git_commit_non_empty_tree()
+{
+	if test $# = 3 && test "$1" = $(git rev-parse "$3^{tree}"); then
+		map "$3"
+	else
+		git commit-tree "$@"
+	fi
+}
 # override die(): this version puts in an extra line break, so that
 # the progress is still visible
 
@@ -46,30 +59,34 @@ die()
 	echo "$*" >&2
 	exit 1
 }
+EOF
+)
+
+eval "$functions"
 
 # When piped a commit, output a script to set the ident of either
 # "author" or "committer
 
 set_ident () {
-	lid="$(echo "$1" | tr "A-Z" "a-z")"
-	uid="$(echo "$1" | tr "a-z" "A-Z")"
+	lid="$(echo "$1" | tr "[A-Z]" "[a-z]")"
+	uid="$(echo "$1" | tr "[a-z]" "[A-Z]")"
 	pick_id_script='
 		/^'$lid' /{
 			s/'\''/'\''\\'\'\''/g
 			h
 			s/^'$lid' \([^<]*\) <[^>]*> .*$/\1/
 			s/'\''/'\''\'\'\''/g
-			s/.*/export GIT_'$uid'_NAME='\''&'\''/p
+			s/.*/GIT_'$uid'_NAME='\''&'\''; export GIT_'$uid'_NAME/p
 
 			g
 			s/^'$lid' [^<]* <\([^>]*\)> .*$/\1/
 			s/'\''/'\''\'\'\''/g
-			s/.*/export GIT_'$uid'_EMAIL='\''&'\''/p
+			s/.*/GIT_'$uid'_EMAIL='\''&'\''; export GIT_'$uid'_EMAIL/p
 
 			g
 			s/^'$lid' [^<]* <[^>]*> \(.*\)$/\1/
 			s/'\''/'\''\'\'\''/g
-			s/.*/export GIT_'$uid'_DATE='\''&'\''/p
+			s/.*/GIT_'$uid'_DATE='\''&'\''; export GIT_'$uid'_DATE/p
 
 			q
 		}
@@ -77,13 +94,8 @@ set_ident () {
 
 	LANG=C LC_ALL=C sed -ne "$pick_id_script"
 	# Ensure non-empty id name.
-	echo "[ -n \"\$GIT_${uid}_NAME\" ] || export GIT_${uid}_NAME=\"\${GIT_${uid}_EMAIL%%@*}\""
+	echo "case \"\$GIT_${uid}_NAME\" in \"\") GIT_${uid}_NAME=\"\${GIT_${uid}_EMAIL%%@*}\" && export GIT_${uid}_NAME;; esac"
 }
-
-# This script can be sourced by the commit filter to get the functions
-test "a$SOURCE_FUNCTIONS" = a1 && return
-this_script="$(cd "$(dirname "$0")"; pwd)"/$(basename "$0")
-export this_script
 
 USAGE="[--env-filter <command>] [--tree-filter <command>] \
 [--index-filter <command>] [--parent-filter <command>] \
@@ -92,7 +104,14 @@ USAGE="[--env-filter <command>] [--tree-filter <command>] \
 [--original <namespace>] [-d <directory>] [-f | --force] \
 [<rev-list options>...]"
 
+OPTIONS_SPEC=
 . git-sh-setup
+
+if [ "$(is_bare_repository)" = false ]; then
+	git diff-files --ignore-submodules --quiet &&
+	git diff-index --cached --quiet HEAD -- ||
+	die "Cannot rewrite branch(es) with a dirty working directory."
+fi
 
 tempdir=.git-rewrite
 filter_env=
@@ -100,12 +119,13 @@ filter_tree=
 filter_index=
 filter_parent=
 filter_msg=cat
-filter_commit='git commit-tree "$@"'
+filter_commit=
 filter_tag_name=
 filter_subdir=
 orig_namespace=refs/original/
 force=
-while case "$#" in 0) usage;; esac
+prune_empty=
+while :
 do
 	case "$1" in
 	--)
@@ -115,6 +135,11 @@ do
 	--force|-f)
 		shift
 		force=t
+		continue
+		;;
+	--prune-empty)
+		shift
+		prune_empty=t
 		continue
 		;;
 	-*)
@@ -150,7 +175,7 @@ do
 		filter_msg="$OPTARG"
 		;;
 	--commit-filter)
-		filter_commit='SOURCE_FUNCTIONS=1 . "$this_script";'" $OPTARG"
+		filter_commit="$functions; $OPTARG"
 		;;
 	--tag-name-filter)
 		filter_tag_name="$OPTARG"
@@ -167,6 +192,17 @@ do
 	esac
 done
 
+case "$prune_empty,$filter_commit" in
+,)
+	filter_commit='git commit-tree "$@"';;
+t,)
+	filter_commit="$functions;"' git_commit_non_empty_tree "$@"';;
+,*)
+	;;
+*)
+	die "Cannot set --prune-empty and --filter-commit at the same time"
+esac
+
 case "$force" in
 t)
 	rm -rf "$tempdir"
@@ -181,13 +217,24 @@ cd "$tempdir/t" &&
 workdir="$(pwd)" ||
 die ""
 
+# Remove tempdir on exit
+trap 'cd ../..; rm -rf "$tempdir"' 0
+
+ORIG_GIT_DIR="$GIT_DIR"
+ORIG_GIT_WORK_TREE="$GIT_WORK_TREE"
+ORIG_GIT_INDEX_FILE="$GIT_INDEX_FILE"
+GIT_WORK_TREE=.
+export GIT_DIR GIT_WORK_TREE
+
 # Make sure refs/original is empty
-git for-each-ref > "$tempdir"/backup-refs
+git for-each-ref > "$tempdir"/backup-refs || exit
 while read sha1 type name
 do
 	case "$force,$name" in
 	,$orig_namespace*)
-		die "Namespace $orig_namespace not empty"
+		die "Cannot create a new backup.
+A previous backup already exists in $orig_namespace
+Force overwriting the backup with -f"
 	;;
 	t,$orig_namespace*)
 		git update-ref -d "$name" $sha1
@@ -195,35 +242,17 @@ do
 	esac
 done < "$tempdir"/backup-refs
 
-export GIT_DIR GIT_WORK_TREE=.
-
-# These refs should be updated if their heads were rewritten
-
-git rev-parse --revs-only --symbolic "$@" |
-while read ref
-do
-	# normalize ref
-	case "$ref" in
-	HEAD)
-		ref="$(git symbolic-ref "$ref")"
-	;;
-	refs/*)
-	;;
-	*)
-		ref="$(git for-each-ref --format='%(refname)' |
-			grep /"$ref")"
-	esac
-
-	git check-ref-format "$ref" && echo "$ref"
-done > "$tempdir"/heads
+# The refs should be updated if their heads were rewritten
+git rev-parse --no-flags --revs-only --symbolic-full-name \
+	--default HEAD "$@" > "$tempdir"/raw-heads || exit
+sed -e '/^^/d' "$tempdir"/raw-heads >"$tempdir"/heads
 
 test -s "$tempdir"/heads ||
 	die "Which ref do you want to rewrite?"
 
-export GIT_INDEX_FILE="$(pwd)/../index"
+GIT_INDEX_FILE="$(pwd)/../index"
+export GIT_INDEX_FILE
 git read-tree || die "Could not seed the index"
-
-ret=0
 
 # map old->new commit ids for rewriting parents
 mkdir ../map || die "Could not create map/ directory"
@@ -231,11 +260,11 @@ mkdir ../map || die "Could not create map/ directory"
 case "$filter_subdir" in
 "")
 	git rev-list --reverse --topo-order --default HEAD \
-		--parents "$@"
+		--parents --simplify-merges "$@"
 	;;
 *)
 	git rev-list --reverse --topo-order --default HEAD \
-		--parents --full-history "$@" -- "$filter_subdir"
+		--parents --simplify-merges "$@" -- "$filter_subdir"
 esac > ../revs || die "Could not get the commits"
 commits=$(wc -l <../revs | tr -d " ")
 
@@ -243,20 +272,30 @@ test $commits -eq 0 && die "Found nothing to rewrite"
 
 # Rewrite the commits
 
-i=0
+git_filter_branch__commit_count=0
 while read commit parents; do
-	i=$(($i+1))
-	printf "\rRewrite $commit ($i/$commits)"
+	git_filter_branch__commit_count=$(($git_filter_branch__commit_count+1))
+	printf "\rRewrite $commit ($git_filter_branch__commit_count/$commits)"
 
 	case "$filter_subdir" in
 	"")
 		git read-tree -i -m $commit
 		;;
 	*)
-		git read-tree -i -m $commit:"$filter_subdir"
+		# The commit may not have the subdirectory at all
+		err=$(git read-tree -i -m $commit:"$filter_subdir" 2>&1) || {
+			if ! git rev-parse -q --verify $commit:"$filter_subdir"
+			then
+				rm -f "$GIT_INDEX_FILE"
+			else
+				echo >&2 "$err"
+				false
+			fi
+		}
 	esac || die "Could not initialize the index"
 
-	export GIT_COMMIT=$commit
+	GIT_COMMIT=$commit
+	export GIT_COMMIT
 	git cat-file commit "$commit" >../commit ||
 		die "Cannot read commit $commit"
 
@@ -272,14 +311,16 @@ while read commit parents; do
 			die "Could not checkout the index"
 		# files that $commit removed are now still in the working tree;
 		# remove them, else they would be added again
-		git ls-files -z --others | xargs -0 rm -f
+		git clean -d -q -f -x
 		eval "$filter_tree" < /dev/null ||
 			die "tree filter failed: $filter_tree"
 
-		git diff-index -r $commit | cut -f 2- | tr '\n' '\0' | \
-			xargs -0 git update-index --add --replace --remove
-		git ls-files -z --others | \
-			xargs -0 git update-index --add --replace --remove
+		(
+			git diff-index -r --name-only $commit &&
+			git ls-files --others
+		) > "$tempdir"/tree-state || exit
+		git update-index --add --replace --remove --stdin \
+			< "$tempdir"/tree-state || exit
 	fi
 
 	eval "$filter_index" < /dev/null ||
@@ -299,36 +340,32 @@ while read commit parents; do
 	sed -e '1,/^$/d' <../commit | \
 		eval "$filter_msg" > ../message ||
 			die "msg filter failed: $filter_msg"
-	sh -c "$filter_commit" "git commit-tree" \
-		$(git write-tree) $parentstr < ../message > ../map/$commit
+	@SHELL_PATH@ -c "$filter_commit" "git commit-tree" \
+		$(git write-tree) $parentstr < ../message > ../map/$commit ||
+			die "could not write rewritten commit"
 done <../revs
 
 # In case of a subdirectory filter, it is possible that a specified head
 # is not in the set of rewritten commits, because it was pruned by the
-# revision walker.  Fix it by mapping these heads to the next rewritten
-# ancestor(s), i.e. the boundaries in the set of rewritten commits.
+# revision walker.  Fix it by mapping these heads to the unique nearest
+# ancestor that survived the pruning.
 
-# NEEDSWORK: we should sort the unmapped refs topologically first
-while read ref
-do
-	sha1=$(git rev-parse "$ref"^0)
-	test -f "$workdir"/../map/$sha1 && continue
-	# Assign the boundarie(s) in the set of rewritten commits
-	# as the replacement commit(s).
-	# (This would look a bit nicer if --not --stdin worked.)
-	for p in $( (cd "$workdir"/../map; ls | sed "s/^/^/") |
-		git rev-list $ref --boundary --stdin |
-		sed -n "s/^-//p")
+if test "$filter_subdir"
+then
+	while read ref
 	do
-		map $p >> "$workdir"/../map/$sha1
-	done
-done < "$tempdir"/heads
+		sha1=$(git rev-parse "$ref"^0)
+		test -f "$workdir"/../map/$sha1 && continue
+		ancestor=$(git rev-list --simplify-merges -1 \
+				$ref -- "$filter_subdir")
+		test "$ancestor" && echo $(map $ancestor) >> "$workdir"/../map/$sha1
+	done < "$tempdir"/heads
+fi
 
 # Finally update the refs
 
 _x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
 _x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
-count=0
 echo
 while read ref
 do
@@ -350,9 +387,17 @@ do
 	;;
 	$_x40)
 		echo "Ref '$ref' was rewritten"
-		git update-ref -m "filter-branch: rewrite" \
-				"$ref" $rewritten $sha1 ||
-			die "Could not rewrite $ref"
+		if ! git update-ref -m "filter-branch: rewrite" \
+					"$ref" $rewritten $sha1 2>/dev/null; then
+			if test $(git cat-file -t "$ref") = tag; then
+				if test -z "$filter_tag_name"; then
+					warn "WARNING: You said to rewrite tagged commits, but not the corresponding tag."
+					warn "WARNING: Perhaps use '--tag-name-filter cat' to rewrite the tag."
+				fi
+			else
+				die "Could not rewrite $ref"
+			fi
+		fi
 	;;
 	*)
 		# NEEDSWORK: possibly add -Werror, making this an error
@@ -365,8 +410,8 @@ do
 			die "Could not rewrite $ref"
 	;;
 	esac
-	git update-ref -m "filter-branch: backup" "$orig_namespace$ref" $sha1
-	count=$(($count+1))
+	git update-ref -m "filter-branch: backup" "$orig_namespace$ref" $sha1 ||
+		 exit
 done < "$tempdir"/heads
 
 # TODO: This should possibly go, with the semantics that all positive given
@@ -385,20 +430,37 @@ if [ "$filter_tag_name" ]; then
 		if [ "$type" = "tag" ]; then
 			# Dereference to a commit
 			sha1t="$sha1"
-			sha1="$(git rev-parse "$sha1"^{commit} 2>/dev/null)" || continue
+			sha1="$(git rev-parse -q "$sha1"^{commit})" || continue
 		fi
 
 		[ -f "../map/$sha1" ] || continue
 		new_sha1="$(cat "../map/$sha1")"
-		export GIT_COMMIT="$sha1"
+		GIT_COMMIT="$sha1"
+		export GIT_COMMIT
 		new_ref="$(echo "$ref" | eval "$filter_tag_name")" ||
 			die "tag name filter failed: $filter_tag_name"
 
 		echo "$ref -> $new_ref ($sha1 -> $new_sha1)"
 
 		if [ "$type" = "tag" ]; then
-			# Warn that we are not rewriting the tag object itself.
-			warn "unreferencing tag object $sha1t"
+			new_sha1=$( ( printf 'object %s\ntype commit\ntag %s\n' \
+						"$new_sha1" "$new_ref"
+				git cat-file tag "$ref" |
+				sed -n \
+				    -e "1,/^$/{
+					  /^object /d
+					  /^type /d
+					  /^tag /d
+					}" \
+				    -e '/^-----BEGIN PGP SIGNATURE-----/q' \
+				    -e 'p' ) |
+				git mktag) ||
+				die "Could not create new tag object for $ref"
+			if git cat-file tag "$ref" | \
+			   grep '^-----BEGIN PGP SIGNATURE-----' >/dev/null 2>&1
+			then
+				warn "gpg signature stripped from tag object $sha1t"
+			fi
 		fi
 
 		git update-ref "refs/tags/$new_ref" "$new_sha1" ||
@@ -408,8 +470,24 @@ fi
 
 cd ../..
 rm -rf "$tempdir"
-echo
-test $count -gt 0 && echo "These refs were rewritten:"
-git show-ref | grep ^"$orig_namespace"
 
-exit $ret
+trap - 0
+
+unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE
+test -z "$ORIG_GIT_DIR" || {
+	GIT_DIR="$ORIG_GIT_DIR" && export GIT_DIR
+}
+test -z "$ORIG_GIT_WORK_TREE" || {
+	GIT_WORK_TREE="$ORIG_GIT_WORK_TREE" &&
+	export GIT_WORK_TREE
+}
+test -z "$ORIG_GIT_INDEX_FILE" || {
+	GIT_INDEX_FILE="$ORIG_GIT_INDEX_FILE" &&
+	export GIT_INDEX_FILE
+}
+
+if [ "$(is_bare_repository)" = false ]; then
+	git read-tree -u -m HEAD || exit
+fi
+
+exit 0

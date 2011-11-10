@@ -54,7 +54,7 @@ test_expect_success 'apply without --reject should fail' '
 		exit 1
 	fi
 
-	git diff file1 saved.file1
+	test_cmp file1 saved.file1
 '
 
 test_expect_success 'apply without --reject should fail' '
@@ -65,7 +65,7 @@ test_expect_success 'apply without --reject should fail' '
 		exit 1
 	fi
 
-	git diff file1 saved.file1
+	test_cmp file1 saved.file1
 '
 
 test_expect_success 'apply with --reject should fail but update the file' '
@@ -79,7 +79,7 @@ test_expect_success 'apply with --reject should fail but update the file' '
 		exit 1
 	fi
 
-	git diff file1 expected &&
+	test_cmp file1 expected &&
 
 	cat file1.rej &&
 
@@ -105,7 +105,7 @@ test_expect_success 'apply with --reject should fail but update the file' '
 		echo "file1 still exists?"
 		exit 1
 	}
-	git diff file2 expected &&
+	test_cmp file2 expected &&
 
 	cat file2.rej &&
 
@@ -132,7 +132,7 @@ test_expect_success 'the same test with --verbose' '
 		echo "file1 still exists?"
 		exit 1
 	}
-	git diff file2 expected &&
+	test_cmp file2 expected &&
 
 	cat file2.rej &&
 
@@ -151,7 +151,7 @@ test_expect_success 'apply cleanly with --verbose' '
 
 	git apply --verbose patch.1 &&
 
-	git diff file1 clean
+	test_cmp file1 clean
 '
 
 test_done

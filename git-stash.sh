@@ -1,9 +1,16 @@
 #!/bin/sh
 # Copyright (c) 2007, Nanako Shiraishi
 
-USAGE='[ | list | show | apply | clear]'
+dashless=$(basename "$0" | sed -e 's/-/ /')
+USAGE="list [<options>]
+   or: $dashless (show | drop | pop ) [<stash>]
+   or: $dashless apply [--index] [<stash>]
+   or: $dashless branch <branchname> [<stash>]
+   or: $dashless [save [--keep-index] [<message>]]
+   or: $dashless clear"
 
 SUBDIRECTORY_OK=Yes
+OPTIONS_SPEC=
 . git-sh-setup
 require_work_tree
 cd_to_toplevel
@@ -14,35 +21,34 @@ trap 'rm -f "$TMP-*"' 0
 ref_stash=refs/stash
 
 no_changes () {
-	git diff-index --quiet --cached HEAD &&
-	git diff-files --quiet
+	git diff-index --quiet --cached HEAD --ignore-submodules -- &&
+	git diff-files --quiet --ignore-submodules
 }
 
 clear_stash () {
+	if test $# != 0
+	then
+		die "git stash clear with parameters is unimplemented"
+	fi
 	if current=$(git rev-parse --verify $ref_stash 2>/dev/null)
 	then
-		git update-ref -d refs/stash $current
+		git update-ref -d $ref_stash $current
 	fi
 }
 
-save_stash () {
+create_stash () {
 	stash_msg="$1"
 
+	git update-index -q --refresh
 	if no_changes
 	then
-		echo >&2 'No local changes to save'
 		exit 0
 	fi
-	test -f "$GIT_DIR/logs/$ref_stash" ||
-		clear_stash || die "Cannot initialize stash"
-
-	# Make sure the reflog for stash is kept.
-	: >>"$GIT_DIR/logs/$ref_stash"
 
 	# state of the base commit
 	if b_commit=$(git rev-parse --verify HEAD)
 	then
-		head=$(git log --abbrev-commit --pretty=oneline -n 1 HEAD)
+		head=$(git log --no-color --abbrev-commit --pretty=oneline -n 1 HEAD --)
 	else
 		die "You do not have the initial commit yet"
 	fi
@@ -57,7 +63,7 @@ save_stash () {
 
 	# state of the index
 	i_tree=$(git write-tree) &&
-	i_commit=$(printf 'index on %s' "$msg" |
+	i_commit=$(printf 'index on %s\n' "$msg" |
 		git commit-tree $i_tree -p $b_commit) ||
 		die "Cannot save the current index state"
 
@@ -84,10 +90,42 @@ save_stash () {
 	w_commit=$(printf '%s\n' "$stash_msg" |
 		git commit-tree $w_tree -p $b_commit -p $i_commit) ||
 		die "Cannot record working tree state"
+}
+
+save_stash () {
+	keep_index=
+	case "$1" in
+	--keep-index)
+		keep_index=t
+		shift
+	esac
+
+	stash_msg="$*"
+
+	git update-index -q --refresh
+	if no_changes
+	then
+		echo 'No local changes to save'
+		exit 0
+	fi
+	test -f "$GIT_DIR/logs/$ref_stash" ||
+		clear_stash || die "Cannot initialize stash"
+
+	create_stash "$stash_msg"
+
+	# Make sure the reflog for stash is kept.
+	: >>"$GIT_DIR/logs/$ref_stash"
 
 	git update-ref -m "$stash_msg" $ref_stash $w_commit ||
 		die "Cannot save the current status"
-	printf >&2 'Saved "%s"\n' "$stash_msg"
+	printf 'Saved working directory and index state "%s"\n' "$stash_msg"
+
+	git reset --hard
+
+	if test -n "$keep_index" && test -n $i_tree
+	then
+		git read-tree --reset -u $i_tree
+	fi
 }
 
 have_stash () {
@@ -96,7 +134,7 @@ have_stash () {
 
 list_stash () {
 	have_stash || return 0
-	git log --pretty=oneline -g "$@" $ref_stash |
+	git log --no-color --pretty=oneline -g "$@" $ref_stash -- |
 	sed -n -e 's/^[.0-9a-f]* refs\///p'
 }
 
@@ -106,16 +144,16 @@ show_stash () {
 	then
 		flags=--stat
 	fi
-	s=$(git rev-parse --revs-only --no-flags --default $ref_stash "$@")
 
-	w_commit=$(git rev-parse --verify "$s") &&
-	b_commit=$(git rev-parse --verify "$s^") &&
+	w_commit=$(git rev-parse --verify --default $ref_stash "$@") &&
+	b_commit=$(git rev-parse --verify "$w_commit^") &&
 	git diff $flags $b_commit $w_commit
 }
 
 apply_stash () {
-	git diff-files --quiet ||
-		die 'Cannot restore on top of a dirty state'
+	git update-index -q --refresh &&
+	git diff-files --quiet --ignore-submodules ||
+		die 'Cannot apply to a dirty working tree, please stage your changes'
 
 	unstash_index=
 	case "$1" in
@@ -130,16 +168,17 @@ apply_stash () {
 
 	# stash records the work tree, and is a merge between the
 	# base commit (first parent) and the index tree (second parent).
-	s=$(git rev-parse --revs-only --no-flags --default $ref_stash "$@") &&
+	s=$(git rev-parse --verify --default $ref_stash "$@") &&
 	w_tree=$(git rev-parse --verify "$s:") &&
 	b_tree=$(git rev-parse --verify "$s^1:") &&
 	i_tree=$(git rev-parse --verify "$s^2:") ||
 		die "$*: no valid stashed state found"
 
 	unstashed_index_tree=
-	if test -n "$unstash_index" && test "$b_tree" != "$i_tree"
+	if test -n "$unstash_index" && test "$b_tree" != "$i_tree" &&
+			test "$c_tree" != "$i_tree"
 	then
-		git diff --binary $s^2^..$s^2 | git apply --cached
+		git diff-tree --binary $s^2^..$s^2 | git apply --cached
 		test $? -ne 0 &&
 			die 'Conflicts in index. Try without --index.'
 		unstashed_index_tree=$(git-write-tree) ||
@@ -162,7 +201,7 @@ apply_stash () {
 			git read-tree "$unstashed_index_tree"
 		else
 			a="$TMP-added" &&
-			git diff --cached --name-only --diff-filter=A $c_tree >"$a" &&
+			git diff-index --cached --name-only --diff-filter=A $c_tree >"$a" &&
 			git read-tree --reset $c_tree &&
 			git update-index --add --stdin <"$a" ||
 				die "Cannot unstage modified files"
@@ -180,6 +219,45 @@ apply_stash () {
 	fi
 }
 
+drop_stash () {
+	have_stash || die 'No stash entries to drop'
+
+	if test $# = 0
+	then
+		set x "$ref_stash@{0}"
+		shift
+	fi
+	# Verify supplied argument looks like a stash entry
+	s=$(git rev-parse --verify "$@") &&
+	git rev-parse --verify "$s:"   > /dev/null 2>&1 &&
+	git rev-parse --verify "$s^1:" > /dev/null 2>&1 &&
+	git rev-parse --verify "$s^2:" > /dev/null 2>&1 ||
+		die "$*: not a valid stashed state"
+
+	git reflog delete --updateref --rewrite "$@" &&
+		echo "Dropped $* ($s)" || die "$*: Could not drop stash entry"
+
+	# clear_stash if we just dropped the last stash entry
+	git rev-parse --verify "$ref_stash@{0}" > /dev/null 2>&1 || clear_stash
+}
+
+apply_to_branch () {
+	have_stash || die 'Nothing to apply'
+
+	test -n "$1" || die 'No branch name specified'
+	branch=$1
+
+	if test -z "$2"
+	then
+		set x "$ref_stash@{0}"
+	fi
+	stash=$2
+
+	git-checkout -b $branch $stash^ &&
+	apply_stash --index $stash &&
+	drop_stash $stash
+}
+
 # Main command set
 case "$1" in
 list)
@@ -195,21 +273,48 @@ show)
 	shift
 	show_stash "$@"
 	;;
+save)
+	shift
+	save_stash "$@"
+	;;
 apply)
 	shift
 	apply_stash "$@"
 	;;
 clear)
-	clear_stash
+	shift
+	clear_stash "$@"
 	;;
-help | usage)
-	usage
-	;;
-*)
-	if test $# -gt 0 && test "$1" = save
+create)
+	if test $# -gt 0 && test "$1" = create
 	then
 		shift
 	fi
-	save_stash "$*" && git-reset --hard
+	create_stash "$*" && echo "$w_commit"
+	;;
+drop)
+	shift
+	drop_stash "$@"
+	;;
+pop)
+	shift
+	if apply_stash "$@"
+	then
+		test -z "$unstash_index" || shift
+		drop_stash "$@"
+	fi
+	;;
+branch)
+	shift
+	apply_to_branch "$@"
+	;;
+*)
+	if test $# -eq 0
+	then
+		save_stash &&
+		echo '(To restore them type "git stash apply")'
+	else
+		usage
+	fi
 	;;
 esac

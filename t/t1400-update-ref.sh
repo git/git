@@ -7,12 +7,19 @@ test_description='Test git update-ref and basic ref logging'
 . ./test-lib.sh
 
 Z=0000000000000000000000000000000000000000
-A=1111111111111111111111111111111111111111
-B=2222222222222222222222222222222222222222
-C=3333333333333333333333333333333333333333
-D=4444444444444444444444444444444444444444
-E=5555555555555555555555555555555555555555
-F=6666666666666666666666666666666666666666
+
+test_expect_success setup '
+
+	for name in A B C D E F
+	do
+		test_tick &&
+		T=$(git write-tree) &&
+		sha1=$(echo $name | git commit-tree $T) &&
+		eval $name=$sha1
+	done
+
+'
+
 m=refs/heads/master
 n_dir=refs/heads/gu
 n=$n_dir/fixes
@@ -25,6 +32,22 @@ test_expect_success \
 	"create $m" \
 	"git update-ref $m $B $A &&
 	 test $B"' = $(cat .git/'"$m"')'
+test_expect_success "fail to delete $m with stale ref" '
+	test_must_fail git update-ref -d $m $A &&
+	test $B = "$(cat .git/$m)"
+'
+test_expect_success "delete $m" '
+	git update-ref -d $m $B &&
+	! test -f .git/$m
+'
+rm -f .git/$m
+
+test_expect_success "delete $m without oldvalue verification" "
+	git update-ref $m $A &&
+	test $A = \$(cat .git/$m) &&
+	git update-ref -d $m &&
+	! test -f .git/$m
+"
 rm -f .git/$m
 
 test_expect_success \
@@ -42,25 +65,51 @@ test_expect_success \
 	"create $m (by HEAD)" \
 	"git update-ref HEAD $B $A &&
 	 test $B"' = $(cat .git/'"$m"')'
+test_expect_success "fail to delete $m (by HEAD) with stale ref" '
+	test_must_fail git update-ref -d HEAD $A &&
+	test $B = $(cat .git/$m)
+'
+test_expect_success "delete $m (by HEAD)" '
+	git update-ref -d HEAD $B &&
+	! test -f .git/$m
+'
 rm -f .git/$m
 
-test_expect_failure \
-	'(not) create HEAD with old sha1' \
-	"git update-ref HEAD $A $B"
-test_expect_failure \
-	"(not) prior created .git/$m" \
-	"test -f .git/$m"
+cp -f .git/HEAD .git/HEAD.orig
+test_expect_success "delete symref without dereference" '
+	git update-ref --no-deref -d HEAD &&
+	! test -f .git/HEAD
+'
+cp -f .git/HEAD.orig .git/HEAD
+
+test_expect_success "delete symref without dereference when the referred ref is packed" '
+	echo foo >foo.c &&
+	git add foo.c &&
+	git commit -m foo &&
+	git pack-refs --all &&
+	git update-ref --no-deref -d HEAD &&
+	! test -f .git/HEAD
+'
+cp -f .git/HEAD.orig .git/HEAD
+git update-ref -d $m
+
+test_expect_success '(not) create HEAD with old sha1' "
+	test_must_fail git update-ref HEAD $A $B
+"
+test_expect_success "(not) prior created .git/$m" "
+	! test -f .git/$m
+"
 rm -f .git/$m
 
 test_expect_success \
 	"create HEAD" \
 	"git update-ref HEAD $A"
-test_expect_failure \
-	'(not) change HEAD with wrong SHA1' \
-	"git update-ref HEAD $B $Z"
-test_expect_failure \
-	"(not) changed .git/$m" \
-	"test $B"' = $(cat .git/'"$m"')'
+test_expect_success '(not) change HEAD with wrong SHA1' "
+	test_must_fail git update-ref HEAD $B $Z
+"
+test_expect_success "(not) changed .git/$m" "
+	! test $B"' = $(cat .git/'"$m"')
+'
 rm -f .git/$m
 
 : a repository with working tree always has reflog these days...
@@ -88,7 +137,7 @@ $B $A $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150860 +0000
 EOF
 test_expect_success \
 	"verifying $m's log" \
-	"diff expect .git/logs/$m"
+	"test_cmp expect .git/logs/$m"
 rm -rf .git/$m .git/logs expect
 
 test_expect_success \
@@ -119,12 +168,13 @@ $B $A $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150980 +0000
 EOF
 test_expect_success \
 	"verifying $m's log" \
-	'diff expect .git/logs/$m'
+	'test_cmp expect .git/logs/$m'
 rm -f .git/$m .git/logs/$m expect
 
 git update-ref $m $D
 cat >.git/logs/$m <<EOF
-$C $A $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150320 -0500
+0000000000000000000000000000000000000000 $C $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150320 -0500
+$C $A $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150350 -0500
 $A $B $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150380 -0500
 $F $Z $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150680 -0500
 $Z $E $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150980 -0500
@@ -155,6 +205,12 @@ test_expect_success \
 	'Query "master@{May 26 2005 23:32:00}" (exactly history start)' \
 	'rm -f o e
 	 git rev-parse --verify "master@{May 26 2005 23:32:00}" >o 2>e &&
+	 test '"$C"' = $(cat o) &&
+	 test "" = "$(cat e)"'
+test_expect_success \
+	'Query "master@{May 26 2005 23:32:30}" (first non-creation change)' \
+	'rm -f o e
+	 git rev-parse --verify "master@{May 26 2005 23:32:30}" >o 2>e &&
 	 test '"$A"' = $(cat o) &&
 	 test "" = "$(cat e)"'
 test_expect_success \
@@ -190,22 +246,22 @@ test_expect_success \
     'echo TEST >F &&
      git add F &&
 	 GIT_AUTHOR_DATE="2005-05-26 23:30" \
-	 GIT_COMMITTER_DATE="2005-05-26 23:30" git-commit -m add -a &&
+	 GIT_COMMITTER_DATE="2005-05-26 23:30" git commit -m add -a &&
 	 h_TEST=$(git rev-parse --verify HEAD)
 	 echo The other day this did not work. >M &&
 	 echo And then Bob told me how to fix it. >>M &&
 	 echo OTHER >F &&
 	 GIT_AUTHOR_DATE="2005-05-26 23:41" \
-	 GIT_COMMITTER_DATE="2005-05-26 23:41" git-commit -F M -a &&
+	 GIT_COMMITTER_DATE="2005-05-26 23:41" git commit -F M -a &&
 	 h_OTHER=$(git rev-parse --verify HEAD) &&
 	 GIT_AUTHOR_DATE="2005-05-26 23:44" \
-	 GIT_COMMITTER_DATE="2005-05-26 23:44" git-commit --amend &&
+	 GIT_COMMITTER_DATE="2005-05-26 23:44" git commit --amend &&
 	 h_FIXED=$(git rev-parse --verify HEAD) &&
 	 echo Merged initial commit and a later commit. >M &&
 	 echo $h_TEST >.git/MERGE_HEAD &&
 	 GIT_AUTHOR_DATE="2005-05-26 23:45" \
-	 GIT_COMMITTER_DATE="2005-05-26 23:45" git-commit -F M &&
-	 h_MERGED=$(git rev-parse --verify HEAD)
+	 GIT_COMMITTER_DATE="2005-05-26 23:45" git commit -F M &&
+	 h_MERGED=$(git rev-parse --verify HEAD) &&
 	 rm -f M'
 
 cat >expect <<EOF
@@ -215,8 +271,8 @@ $h_OTHER $h_FIXED $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117151040 +0000	co
 $h_FIXED $h_MERGED $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117151100 +0000	commit (merge): Merged initial commit and a later commit.
 EOF
 test_expect_success \
-	'git-commit logged updates' \
-	"diff expect .git/logs/$m"
+	'git commit logged updates' \
+	"test_cmp expect .git/logs/$m"
 unset h_TEST h_OTHER h_FIXED h_MERGED
 
 test_expect_success \

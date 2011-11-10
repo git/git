@@ -7,7 +7,7 @@ git-mailsplit - Simple UNIX mbox splitter program
 
 SYNOPSIS
 --------
-'git-mailsplit' [-b] [-f<nn>] [-d<prec>] -o<directory> [--] [<mbox>|<Maildir>...]
+'git mailsplit' [-b] [-f<nn>] [-d<prec>] -o<directory> [--] [<mbox>|<Maildir>...]
 
 DESCRIPTION
 -----------
@@ -27,7 +27,7 @@ OPTIONS
 	Root of the Maildir to split. This directory should contain the cur, tmp
 	and new subdirectories.
 
-<directory>::
+-o<directory>::
 	Directory in which to place the individual messages.
 
 -b::
@@ -46,7 +46,7 @@ OPTIONS
 Author
 ------
 Written by Linus Torvalds <torvalds@osdl.org>
-and Junio C Hamano <junkio@cox.net>
+and Junio C Hamano <gitster@pobox.com>
 
 
 Documentation
@@ -55,4 +55,4 @@ Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[1] suite

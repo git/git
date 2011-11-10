@@ -1,35 +1,45 @@
--q, \--quiet::
+-q::
+--quiet::
 	Pass --quiet to git-fetch-pack and silence any other internally
 	used programs.
 
--v, \--verbose::
+-v::
+--verbose::
 	Be verbose.
 
--a, \--append::
+-a::
+--append::
 	Append ref names and object names of fetched refs to the
 	existing contents of `.git/FETCH_HEAD`.  Without this
 	option old data in `.git/FETCH_HEAD` will be overwritten.
 
-\--upload-pack <upload-pack>::
+--upload-pack <upload-pack>::
 	When given, and the repository to fetch from is handled
 	by 'git-fetch-pack', '--exec=<upload-pack>' is passed to
 	the command to specify non-default path for the command
 	run on the other end.
 
--f, \--force::
-	When `git-fetch` is used with `<rbranch>:<lbranch>`
+-f::
+--force::
+	When 'git-fetch' is used with `<rbranch>:<lbranch>`
 	refspec, it refuses to update the local branch
 	`<lbranch>` unless the remote branch `<rbranch>` it
 	fetches is a descendant of `<lbranch>`.  This option
 	overrides that check.
 
--n, \--no-tags::
-	By default, `git-fetch` fetches tags that point at
-	objects that are downloaded from the remote repository
-	and stores them locally.  This option disables this
-	automatic tag following.
+ifdef::git-pull[]
+--no-tags::
+endif::git-pull[]
+ifndef::git-pull[]
+-n::
+--no-tags::
+endif::git-pull[]
+	By default, tags that point at objects that are downloaded
+	from the remote repository are fetched and stored locally.
+	This option disables this automatic tag following.
 
--t, \--tags::
+-t::
+--tags::
 	Most of the tags are fetched automatically as branch
 	heads are downloaded, but tags that do not point at
 	objects reachable from the branch heads that are being
@@ -37,18 +47,20 @@
 	flag lets all tags and their associated objects be
 	downloaded.
 
--k, \--keep::
+-k::
+--keep::
 	Keep downloaded pack.
 
--u, \--update-head-ok::
-	By default `git-fetch` refuses to update the head which
+-u::
+--update-head-ok::
+	By default 'git-fetch' refuses to update the head which
 	corresponds to the current branch.  This flag disables the
-	check.  This is purely for the internal use for `git-pull`
-	to communicate with `git-fetch`, and unless you are
+	check.  This is purely for the internal use for 'git-pull'
+	to communicate with 'git-fetch', and unless you are
 	implementing your own Porcelain you are not supposed to
 	use it.
 
-\--depth=<depth>::
+--depth=<depth>::
 	Deepen the history of a 'shallow' repository created by
-	`git clone` with `--depth=<depth>` option (see gitlink:git-clone[1])
+	`git clone` with `--depth=<depth>` option (see linkgit:git-clone[1])
 	by the specified number of commits.

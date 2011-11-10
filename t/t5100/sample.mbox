@@ -1,5 +1,11 @@
+    
+	
+    
 From nobody Mon Sep 17 00:00:00 2001
-From: A U Thor <a.u.thor@example.com>
+From: A (zzz)
+      U
+      Thor
+      <a.u.thor@example.com> (Comment)
 Date: Fri, 9 Jun 2006 00:44:16 -0700
 Subject: [PATCH] a commit.
 
@@ -403,4 +409,155 @@ Subject: [PATCH] another patch
 >Here is an empty patch from A U Thor.
 
 Hey you forgot the patch!
+
+From nobody Mon Sep 17 00:00:00 2001
+From: A U Thor <a.u.thor@example.com>
+Date: Mon, 17 Sep 2001 00:00:00 +0900
+Mime-Version: 1.0
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: Quoted-Printable
+
+=0A=0AFrom: F U Bar <f.u.bar@example.com>
+Subject: [PATCH] updates=0A=0AThis is to fix diff-format documentation.
+
+diff --git a/Documentation/diff-format.txt b/Documentation/diff-format.txt
+index b426a14..97756ec 100644
+--- a/Documentation/diff-format.txt
++++ b/Documentation/diff-format.txt
+@@ -81,7 +81,7 @@ The "diff" formatting options can be customized via the
+ environment variable 'GIT_DIFF_OPTS'.  For example, if you
+ prefer context diff:
+=20
+-      GIT_DIFF_OPTS=3D-c git-diff-index -p $(cat .git/HEAD)
++      GIT_DIFF_OPTS=3D-c git-diff-index -p HEAD
+=20
+=20
+ 2. When the environment variable 'GIT_EXTERNAL_DIFF' is set, the
+From b9704a518e21158433baa2cc2d591fea687967f6 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Lukas=20Sandstr=C3=B6m?= <lukass@etek.chalmers.se>
+Date: Thu, 10 Jul 2008 23:41:33 +0200
+Subject: Re: discussion that lead to this patch
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+[PATCH] git-mailinfo: Fix getting the subject from the body
+
+"Subject: " isn't in the static array "header", and thus
+memcmp("Subject: ", header[i], 7) will never match.
+
+Signed-off-by: Lukas Sandström <lukass@etek.chalmers.se>
+Signed-off-by: Junio C Hamano <gitster@pobox.com>
+---
+ builtin-mailinfo.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/builtin-mailinfo.c b/builtin-mailinfo.c
+index 962aa34..2d1520f 100644
+--- a/builtin-mailinfo.c
++++ b/builtin-mailinfo.c
+@@ -334,7 +334,7 @@ static int check_header(char *line, unsigned linesize, char **hdr_data, int over
+ 		return 1;
+ 	if (!memcmp("[PATCH]", line, 7) && isspace(line[7])) {
+ 		for (i = 0; header[i]; i++) {
+-			if (!memcmp("Subject: ", header[i], 9)) {
++			if (!memcmp("Subject", header[i], 7)) {
+ 				if (! handle_header(line, hdr_data[i], 0)) {
+ 					return 1;
+ 				}
+-- 
+1.5.6.2.455.g1efb2
+
+From nobody Fri Aug  8 22:24:03 2008
+Date: Fri, 8 Aug 2008 13:08:37 +0200 (CEST)
+From: A U Thor <a.u.thor@example.com>
+Subject: [PATCH 3/3 v2] Xyzzy
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="=-=-="
+
+--=-=-=
+Content-Type: text/plain; charset=iso-8859-15
+Content-Transfer-Encoding: quoted-printable
+
+Here comes a commit log message, and
+its second line is here.
+---
+ builtin-mailinfo.c  |    4 ++--
+
+diff --git a/builtin-mailinfo.c b/builtin-mailinfo.c
+index 3e5fe51..aabfe5c 100644
+--- a/builtin-mailinfo.c
++++ b/builtin-mailinfo.c
+@@ -758,8 +758,8 @@ static void handle_body(void)
+ 		/* process any boundary lines */
+ 		if (*content_top && is_multipart_boundary(&line)) {
+ 			/* flush any leftover */
+-			if (line.len)
+-				handle_filter(&line);
++			if (prev.len)
++				handle_filter(&prev);
+=20
+ 			if (!handle_boundary())
+ 				goto handle_body_out;
+--=20
+1.6.0.rc2
+
+--=-=-=--
+
+From bda@mnsspb.ru Wed Nov 12 17:54:41 2008
+From: Dmitriy Blinov <bda@mnsspb.ru>
+To: navy-patches@dinar.mns.mnsspb.ru
+Date: Wed, 12 Nov 2008 17:54:41 +0300
+Message-Id: <1226501681-24923-1-git-send-email-bda@mnsspb.ru>
+X-Mailer: git-send-email 1.5.6.5
+MIME-Version: 1.0
+Content-Type: text/plain;
+  charset=utf-8
+Content-Transfer-Encoding: 8bit
+Subject: [Navy-patches] [PATCH]
+	=?utf-8?b?0JjQt9C80LXQvdGR0L0g0YHQv9C40YHQvtC6INC/0LA=?=
+	=?utf-8?b?0LrQtdGC0L7QsiDQvdC10L7QsdGF0L7QtNC40LzRi9GFINC00LvRjyA=?=
+	=?utf-8?b?0YHQsdC+0YDQutC4?=
+
+textlive-* исправлены на texlive-*
+docutils заменён на python-docutils
+
+Действительно, оказалось, что rest2web вытягивает за собой
+python-docutils. В то время как сам rest2web не нужен.
+
+Signed-off-by: Dmitriy Blinov <bda@mnsspb.ru>
+---
+ howto/build_navy.txt |    6 +++---
+ 1 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/howto/build_navy.txt b/howto/build_navy.txt
+index 3fd3afb..0ee807e 100644
+--- a/howto/build_navy.txt
++++ b/howto/build_navy.txt
+@@ -119,8 +119,8 @@
+    - libxv-dev
+    - libusplash-dev
+    - latex-make
+-   - textlive-lang-cyrillic
+-   - textlive-latex-extra
++   - texlive-lang-cyrillic
++   - texlive-latex-extra
+    - dia
+    - python-pyrex
+    - libtool
+@@ -128,7 +128,7 @@
+    - sox
+    - cython
+    - imagemagick
+-   - docutils
++   - python-docutils
+ 
+ #. на машине dinar: добавить свой открытый ssh-ключ в authorized_keys2 пользователя ddev
+ #. на своей машине: отредактировать /etc/sudoers (команда ``visudo``) примерно следующим образом::
+-- 
+1.5.6.5
+From nobody Mon Sep 17 00:00:00 2001
+From: <a.u.thor@example.com> (A U Thor)
+Date: Fri, 9 Jun 2006 00:44:16 -0700
+Subject: [PATCH] a patch
 

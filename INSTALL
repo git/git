@@ -6,7 +6,7 @@ will install the git programs in your own ~/bin/ directory.  If you want
 to do a global install, you can do
 
 	$ make prefix=/usr all doc info ;# as yourself
-	# make prefix=/usr install install-doc install-info ;# as root
+	# make prefix=/usr install install-doc install-html install-info ;# as root
 
 (or prefix=/usr/local, of course).  Just like any program suite
 that uses $prefix, the built results have some paths encoded,
@@ -19,24 +19,20 @@ set up install paths (via config.mak.autogen), so you can write instead
 	$ make configure ;# as yourself
 	$ ./configure --prefix=/usr ;# as yourself
 	$ make all doc ;# as yourself
-	# make install install-doc ;# as root
+	# make install install-doc install-html;# as root
 
 
 Issues of note:
 
- - git normally installs a helper script wrapper called "git", which
-   conflicts with a similarly named "GNU interactive tools" program.
+ - Ancient versions of GNU Interactive Tools (pre-4.9.2) installed a
+   program "git", whose name conflicts with this program.  But with
+   version 4.9.2, after long hiatus without active maintenance (since
+   around 1997), it changed its name to gnuit and the name conflict is no
+   longer a problem.
 
-   Tough.  Either don't use the wrapper script, or delete the old GNU
-   interactive tools.  None of the core git stuff needs the wrapper,
-   it's just a convenient shorthand and while it is documented in some
-   places, you can always replace "git commit" with "git-commit"
-   instead.
-
-   But let's face it, most of us don't have GNU interactive tools, and
-   even if we had it, we wouldn't know what it does.  I don't think it
-   has been actively developed since 1997, and people have moved over to
-   graphical file managers.
+   NOTE: When compiled with backward compatibility option, the GNU
+   Interactive Tools package still can install "git", but you can build it
+   with --disable-transition option to avoid this.
 
  - You can use git after building but without installing if you
    wanted to.  Various git commands need to find other git
@@ -63,10 +59,10 @@ Issues of note:
 	  that come with git (git includes the one from Mozilla, and has
 	  its own PowerPC and ARM optimized ones too - see the Makefile).
 
-	- "libcurl" and "curl" executable.  git-http-fetch and
-	  git-fetch use them.  If you do not use http
-	  transfer, you are probably OK if you do not have
-	  them.
+	- libcurl library; git-http-fetch and git-fetch use them.  You
+	  might also want the "curl" executable for debugging purposes.
+	  If you do not use http transfer, you are probably OK if you
+	  do not have them.
 
 	- expat library; git-http-push uses it for remote lock
 	  management over DAV.  Similar to "curl" above, this is optional.
@@ -77,7 +73,7 @@ Issues of note:
 	- "ssh" is used to push and pull over the net
 
 	- "perl" and POSIX-compliant shells are needed to use most of
-	  the barebone Porcelainish scripts.
+	  the bare-bones Porcelainish scripts.
 
  - Some platform specific issues are dealt with Makefile rules,
    but depending on your specific installation, you may not
@@ -93,13 +89,25 @@ Issues of note:
    inclined to install the tools, the default build target
    ("make all") does _not_ build them.
 
+   "make doc" builds documentation in man and html formats; there are
+   also "make man", "make html" and "make info". Note that "make html"
+   requires asciidoc, but not xmlto. "make man" (and thus make doc)
+   requires both.
+
+   "make install-doc" installs documentation in man format only; there
+   are also "make install-man", "make install-html" and "make
+   install-info".
+
    Building and installing the info file additionally requires
    makeinfo and docbook2X.  Version 0.8.3 is known to work.
+
+   Building and installing the pdf file additionally requires
+   dblatex.  Version 0.2.7 with asciidoc >= 8.2.7 is known to work.
 
    The documentation is written for AsciiDoc 7, but "make
    ASCIIDOC8=YesPlease doc" will let you format with AsciiDoc 8.
 
-   Alternatively, pre-formatted documentation are available in
+   Alternatively, pre-formatted documentation is available in
    "html" and "man" branches of the git repository itself.  For
    example, you could:
 
@@ -120,6 +128,13 @@ Issues of note:
    would instead give you a copy of what you see at:
 
 	http://www.kernel.org/pub/software/scm/git/docs/
+
+   There are also "make quick-install-doc", "make quick-install-man"
+   and "make quick-install-html" which install preformatted man pages
+   and html documentation.
+   This does not require asciidoc/xmlto, but it only works from within
+   a cloned checkout of git.git with these two extra branches, and will
+   not work for the maintainer for obvious chicken-and-egg reasons.
 
    It has been reported that docbook-xsl version 1.72 and 1.73 are
    buggy; 1.72 misformats manual pages for callouts, and 1.73 needs

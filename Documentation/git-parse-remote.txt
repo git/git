@@ -8,7 +8,7 @@ git-parse-remote - Routines to help parsing remote repository access parameters
 
 SYNOPSIS
 --------
-'. git-parse-remote'
+'. "$(git --exec-path)/git-parse-remote"'
 
 DESCRIPTION
 -----------
@@ -32,7 +32,7 @@ get_remote_refs_for_fetch::
 get_remote_refs_for_push::
 	Given the list of user-supplied `<repo> <refspec>...`,
 	return the list of refs to push in a form suitable to be
-	fed to the `git-send-pack` command.  When `<refspec>...`
+	fed to the 'git-send-pack' command.  When `<refspec>...`
 	is empty the returned list of refs consists of the
 	defaults for the given `<repo>`, if specified in
 	`$GIT_DIR/remotes/`.
@@ -47,4 +47,4 @@ Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[1] suite

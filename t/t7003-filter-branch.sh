@@ -1,10 +1,10 @@
 #!/bin/sh
 
-test_description='git-filter-branch'
+test_description='git filter-branch'
 . ./test-lib.sh
 
 make_commit () {
-	lower=$(echo $1 | tr A-Z a-z)
+	lower=$(echo $1 | tr '[A-Z]' '[a-z]')
 	echo $lower > $lower
 	git add $lower
 	test_tick
@@ -17,6 +17,8 @@ test_expect_success 'setup' '
 	make_commit B
 	git checkout -b branch B
 	make_commit D
+	mkdir dir
+	make_commit dir/D
 	make_commit E
 	git checkout master
 	make_commit C
@@ -30,24 +32,66 @@ test_expect_success 'setup' '
 H=$(git rev-parse H)
 
 test_expect_success 'rewrite identically' '
-	git-filter-branch branch
+	git filter-branch branch
 '
 test_expect_success 'result is really identical' '
 	test $H = $(git rev-parse HEAD)
 '
 
+test_expect_success 'rewrite bare repository identically' '
+	(git config core.bare true && cd .git &&
+	 git filter-branch branch > filter-output 2>&1 &&
+	! fgrep fatal filter-output)
+'
+git config core.bare false
+test_expect_success 'result is really identical' '
+	test $H = $(git rev-parse HEAD)
+'
+
+TRASHDIR=$(pwd)
+test_expect_success 'correct GIT_DIR while using -d' '
+	mkdir drepo &&
+	( cd drepo &&
+	git init &&
+	test_commit drepo &&
+	git filter-branch -d "$TRASHDIR/dfoo" \
+		--index-filter "cp \"$TRASHDIR\"/dfoo/backup-refs \"$TRASHDIR\"" \
+	) &&
+	grep drepo "$TRASHDIR/backup-refs"
+'
+
+test_expect_success 'Fail if commit filter fails' '
+	test_must_fail git filter-branch -f --commit-filter "exit 1" HEAD
+'
+
 test_expect_success 'rewrite, renaming a specific file' '
-	git-filter-branch -f --tree-filter "mv d doh || :" HEAD
+	git filter-branch -f --tree-filter "mv d doh || :" HEAD
 '
 
 test_expect_success 'test that the file was renamed' '
-	test d = $(git show HEAD:doh)
+	test d = "$(git show HEAD:doh --)" &&
+	! test -f d &&
+	test -f doh &&
+	test d = "$(cat doh)"
+'
+
+test_expect_success 'rewrite, renaming a specific directory' '
+	git filter-branch -f --tree-filter "mv dir diroh || :" HEAD
+'
+
+test_expect_success 'test that the directory was renamed' '
+	test dir/d = "$(git show HEAD:diroh/d --)" &&
+	! test -d dir &&
+	test -d diroh &&
+	! test -d diroh/dir &&
+	test -f diroh/d &&
+	test dir/d = "$(cat diroh/d)"
 '
 
 git tag oldD HEAD~4
 test_expect_success 'rewrite one branch, keeping a side branch' '
 	git branch modD oldD &&
-	git-filter-branch -f --tree-filter "mv b boh || :" D..modD
+	git filter-branch -f --tree-filter "mv b boh || :" D..modD
 '
 
 test_expect_success 'common ancestor is still common (unchanged)' '
@@ -70,16 +114,20 @@ test_expect_success 'filter subdirectory only' '
 	test_tick &&
 	git commit -m "again not subdir" &&
 	git branch sub &&
-	git-filter-branch -f --subdirectory-filter subdir refs/heads/sub
+	git branch sub-earlier HEAD~2 &&
+	git filter-branch -f --subdirectory-filter subdir \
+		refs/heads/sub refs/heads/sub-earlier
 '
 
 test_expect_success 'subdirectory filter result looks okay' '
 	test 2 = $(git rev-list sub | wc -l) &&
 	git show sub:new &&
-	! git show sub:subdir
+	test_must_fail git show sub:subdir &&
+	git show sub-earlier:new &&
+	test_must_fail git show sub-earlier:subdir
 '
 
-test_expect_success 'setup and filter history that requires --full-history' '
+test_expect_success 'more setup' '
 	git checkout master &&
 	mkdir subdir &&
 	echo A > subdir/new &&
@@ -89,30 +137,21 @@ test_expect_success 'setup and filter history that requires --full-history' '
 	git rm a &&
 	test_tick &&
 	git commit -m "again subdir on master" &&
-	git merge branch &&
-	git branch sub-master &&
-	git-filter-branch -f --subdirectory-filter subdir sub-master
-'
-
-test_expect_success 'subdirectory filter result looks okay' '
-	test 3 = $(git rev-list -1 --parents sub-master | wc -w) &&
-	git show sub-master^:new &&
-	git show sub-master^2:new &&
-	! git show sub:subdir
+	git merge branch
 '
 
 test_expect_success 'use index-filter to move into a subdirectory' '
 	git branch directorymoved &&
-	git-filter-branch -f --index-filter \
+	git filter-branch -f --index-filter \
 		 "git ls-files -s | sed \"s-\\t-&newsubdir/-\" |
 	          GIT_INDEX_FILE=\$GIT_INDEX_FILE.new \
 			git update-index --index-info &&
-		  mv \$GIT_INDEX_FILE.new \$GIT_INDEX_FILE" directorymoved &&
+		  mv \"\$GIT_INDEX_FILE.new\" \"\$GIT_INDEX_FILE\"" directorymoved &&
 	test -z "$(git diff HEAD directorymoved:newsubdir)"'
 
 test_expect_success 'stops when msg filter fails' '
 	old=$(git rev-parse HEAD) &&
-	! git-filter-branch -f --msg-filter false &&
+	test_must_fail git filter-branch -f --msg-filter false HEAD &&
 	test $old = $(git rev-parse HEAD) &&
 	rm -rf .git-rewrite
 '
@@ -123,7 +162,7 @@ test_expect_success 'author information is preserved' '
 	test_tick &&
 	GIT_AUTHOR_NAME="B V Uips" git commit -m bvuips &&
 	git branch preserved-author &&
-	git-filter-branch -f --msg-filter "cat; \
+	git filter-branch -f --msg-filter "cat; \
 			test \$GIT_COMMIT != $(git rev-parse master) || \
 			echo Hallo" \
 		preserved-author &&
@@ -135,7 +174,7 @@ test_expect_success "remove a certain author's commits" '
 	test_tick &&
 	git commit -m i i &&
 	git branch removed-author &&
-	git-filter-branch -f --commit-filter "\
+	git filter-branch -f --commit-filter "\
 		if [ \"\$GIT_AUTHOR_NAME\" = \"B V Uips\" ];\
 		then\
 			skip_commit \"\$@\";
@@ -149,8 +188,8 @@ test_expect_success "remove a certain author's commits" '
 '
 
 test_expect_success 'barf on invalid name' '
-	! git filter-branch -f master xy-problem &&
-	! git filter-branch -f HEAD^
+	test_must_fail git filter-branch -f master xy-problem &&
+	test_must_fail git filter-branch -f HEAD^
 '
 
 test_expect_success '"map" works in commit filter' '
@@ -161,6 +200,92 @@ test_expect_success '"map" works in commit filter' '
 		test \$mapped = \$actual &&
 		git commit-tree \"\$@\";" master~2..master &&
 	git rev-parse --verify master
+'
+
+test_expect_success 'Name needing quotes' '
+
+	git checkout -b rerere A &&
+	mkdir foo &&
+	name="れれれ" &&
+	>foo/$name &&
+	git add foo &&
+	git commit -m "Adding a file" &&
+	git filter-branch --tree-filter "rm -fr foo" &&
+	test_must_fail git ls-files --error-unmatch "foo/$name" &&
+	test $(git rev-parse --verify rerere) != $(git rev-parse --verify A)
+
+'
+
+test_expect_success 'Subdirectory filter with disappearing trees' '
+	git reset --hard &&
+	git checkout master &&
+
+	mkdir foo &&
+	touch foo/bar &&
+	git add foo &&
+	test_tick &&
+	git commit -m "Adding foo" &&
+
+	git rm -r foo &&
+	test_tick &&
+	git commit -m "Removing foo" &&
+
+	mkdir foo &&
+	touch foo/bar &&
+	git add foo &&
+	test_tick &&
+	git commit -m "Re-adding foo" &&
+
+	git filter-branch -f --subdirectory-filter foo &&
+	test $(git rev-list master | wc -l) = 3
+'
+
+test_expect_success 'Tag name filtering retains tag message' '
+	git tag -m atag T &&
+	git cat-file tag T > expect &&
+	git filter-branch -f --tag-name-filter cat &&
+	git cat-file tag T > actual &&
+	test_cmp expect actual
+'
+
+faux_gpg_tag='object XXXXXX
+type commit
+tag S
+tagger T A Gger <tagger@example.com> 1206026339 -0500
+
+This is a faux gpg signed tag.
+-----BEGIN PGP SIGNATURE-----
+Version: FauxGPG v0.0.0 (FAUX/Linux)
+
+gdsfoewhxu/6l06f1kxyxhKdZkrcbaiOMtkJUA9ITAc1mlamh0ooasxkH1XwMbYQ
+acmwXaWET20H0GeAGP+7vow=
+=agpO
+-----END PGP SIGNATURE-----
+'
+test_expect_success 'Tag name filtering strips gpg signature' '
+	sha1=$(git rev-parse HEAD) &&
+	sha1t=$(echo "$faux_gpg_tag" | sed -e s/XXXXXX/$sha1/ | git mktag) &&
+	git update-ref "refs/tags/S" "$sha1t" &&
+	echo "$faux_gpg_tag" | sed -e s/XXXXXX/$sha1/ | head -n 6 > expect &&
+	git filter-branch -f --tag-name-filter cat &&
+	git cat-file tag S > actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'Tag name filtering allows slashes in tag names' '
+	git tag -m tag-with-slash X/1 &&
+	git cat-file tag X/1 | sed -e s,X/1,X/2, > expect &&
+	git filter-branch -f --tag-name-filter "echo X/2" &&
+	git cat-file tag X/2 > actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'Prune empty commits' '
+	git rev-list HEAD > expect &&
+	make_commit to_remove &&
+	git filter-branch -f --index-filter "git update-index --remove to_remove" --prune-empty HEAD &&
+	git rev-list HEAD > actual &&
+	test_cmp expect actual
 '
 
 test_done

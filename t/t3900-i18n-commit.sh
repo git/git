@@ -8,17 +8,17 @@ test_description='commit and log output encodings'
 . ./test-lib.sh
 
 compare_with () {
-	git show -s $1 | sed -e '1,/^$/d' -e 's/^    //' -e '$d' >current &&
-	git diff current "$2"
+	git show -s $1 | sed -e '1,/^$/d' -e 's/^    //' >current &&
+	test_cmp current "$2"
 }
 
 test_expect_success setup '
 	: >F &&
 	git add F &&
 	T=$(git write-tree) &&
-	C=$(git commit-tree $T <../t3900/1-UTF-8.txt) &&
+	C=$(git commit-tree $T <"$TEST_DIRECTORY"/t3900/1-UTF-8.txt) &&
 	git update-ref HEAD $C &&
-	git-tag C0
+	git tag C0
 '
 
 test_expect_success 'no encoding header for base case' '
@@ -30,9 +30,9 @@ for H in ISO-8859-1 EUCJP ISO-2022-JP
 do
 	test_expect_success "$H setup" '
 		git config i18n.commitencoding $H &&
-		git-checkout -b $H C0 &&
+		git checkout -b $H C0 &&
 		echo $H >F &&
-		git-commit -a -F ../t3900/$H.txt
+		git commit -a -F "$TEST_DIRECTORY"/t3900/$H.txt
 	'
 done
 
@@ -57,13 +57,13 @@ test_expect_success 'config to remove customization' '
 '
 
 test_expect_success 'ISO-8859-1 should be shown in UTF-8 now' '
-	compare_with ISO-8859-1 ../t3900/1-UTF-8.txt
+	compare_with ISO-8859-1 "$TEST_DIRECTORY"/t3900/1-UTF-8.txt
 '
 
 for H in EUCJP ISO-2022-JP
 do
 	test_expect_success "$H should be shown in UTF-8 now" '
-		compare_with '$H' ../t3900/2-UTF-8.txt
+		compare_with '$H' "$TEST_DIRECTORY"/t3900/2-UTF-8.txt
 	'
 done
 
@@ -82,7 +82,7 @@ for H in ISO-8859-1 EUCJP ISO-2022-JP
 do
 	test_expect_success "$H should be shown in itself now" '
 		git config i18n.commitencoding '$H' &&
-		compare_with '$H' ../t3900/'$H'.txt
+		compare_with '$H' "$TEST_DIRECTORY"/t3900/'$H'.txt
 	'
 done
 
@@ -91,13 +91,13 @@ test_expect_success 'config to tweak customization' '
 '
 
 test_expect_success 'ISO-8859-1 should be shown in UTF-8 now' '
-	compare_with ISO-8859-1 ../t3900/1-UTF-8.txt
+	compare_with ISO-8859-1 "$TEST_DIRECTORY"/t3900/1-UTF-8.txt
 '
 
 for H in EUCJP ISO-2022-JP
 do
 	test_expect_success "$H should be shown in UTF-8 now" '
-		compare_with '$H' ../t3900/2-UTF-8.txt
+		compare_with '$H' "$TEST_DIRECTORY"/t3900/2-UTF-8.txt
 	'
 done
 
@@ -107,7 +107,7 @@ do
 	for H in EUCJP ISO-2022-JP
 	do
 		test_expect_success "$H should be shown in $J now" '
-			compare_with '$H' ../t3900/'$J'.txt
+			compare_with '$H' "$TEST_DIRECTORY"/t3900/'$J'.txt
 		'
 	done
 done
@@ -115,7 +115,7 @@ done
 for H in ISO-8859-1 EUCJP ISO-2022-JP
 do
 	test_expect_success "No conversion with $H" '
-		compare_with "--encoding=none '$H'" ../t3900/'$H'.txt
+		compare_with "--encoding=none '$H'" "$TEST_DIRECTORY"/t3900/'$H'.txt
 	'
 done
 

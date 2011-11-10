@@ -4,10 +4,24 @@
 #define _FILE_OFFSET_BITS 64
 
 #ifndef FLEX_ARRAY
-#if defined(__GNUC__) && (__GNUC__ < 3)
-#define FLEX_ARRAY 0
-#else
-#define FLEX_ARRAY /* empty */
+/*
+ * See if our compiler is known to support flexible array members.
+ */
+#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)
+# define FLEX_ARRAY /* empty */
+#elif defined(__GNUC__)
+# if (__GNUC__ >= 3)
+#  define FLEX_ARRAY /* empty */
+# else
+#  define FLEX_ARRAY 0 /* older GNU extension */
+# endif
+#endif
+
+/*
+ * Otherwise, default to safer but a bit wasteful traditional style
+ */
+#ifndef FLEX_ARRAY
+# define FLEX_ARRAY 1
 #endif
 #endif
 
@@ -20,17 +34,19 @@
 #endif
 
 #define MSB(x, bits) ((x) & TYPEOF(x)(~0ULL << (sizeof(x) * 8 - (bits))))
+#define HAS_MULTI_BITS(i)  ((i) & ((i) - 1))  /* checks if an integer has more than 1 bit set */
 
 /* Approximation of the length of the decimal representation of this type. */
 #define decimal_length(x)	((int)(sizeof(x) * 2.56 + 0.5) + 1)
 
-#if !defined(__APPLE__) && !defined(__FreeBSD__)
+#if !defined(__APPLE__) && !defined(__FreeBSD__)  && !defined(__USLC__) && !defined(_M_UNIX)
 #define _XOPEN_SOURCE 600 /* glibc2 and AIX 5.3L need 500, OpenBSD needs 600 for S_ISLNK() */
 #define _XOPEN_SOURCE_EXTENDED 1 /* AIX 5.3L needs this */
 #endif
 #define _ALL_SOURCE 1
 #define _GNU_SOURCE 1
 #define _BSD_SOURCE 1
+#define _NETBSD_SOURCE 1
 
 #include <unistd.h>
 #include <stdio.h>
@@ -48,12 +64,18 @@
 #include <sys/time.h>
 #include <time.h>
 #include <signal.h>
-#include <sys/wait.h>
 #include <fnmatch.h>
-#include <sys/poll.h>
-#include <sys/socket.h>
 #include <assert.h>
 #include <regex.h>
+#include <utime.h>
+#ifndef __MINGW32__
+#include <sys/wait.h>
+#include <sys/poll.h>
+#include <sys/socket.h>
+#include <sys/ioctl.h>
+#ifndef NO_SYS_SELECT_H
+#include <sys/select.h>
+#endif
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
@@ -64,14 +86,24 @@
 #undef _XOPEN_SOURCE
 #include <grp.h>
 #define _XOPEN_SOURCE 600
+#include "compat/cygwin.h"
 #else
 #undef _ALL_SOURCE /* AIX 5.3L defines a struct list with _ALL_SOURCE. */
 #include <grp.h>
 #define _ALL_SOURCE 1
 #endif
+#else 	/* __MINGW32__ */
+/* pull in Windows compatibility stuff */
+#include "compat/mingw.h"
+#endif	/* __MINGW32__ */
 
 #ifndef NO_ICONV
 #include <iconv.h>
+#endif
+
+#ifndef NO_OPENSSL
+#include <openssl/ssl.h>
+#include <openssl/err.h>
 #endif
 
 /* On most systems <limits.h> would have given us this, but
@@ -83,6 +115,30 @@
 
 #ifndef PRIuMAX
 #define PRIuMAX "llu"
+#endif
+
+#ifndef PRIu32
+#define PRIu32 "u"
+#endif
+
+#ifndef PRIx32
+#define PRIx32 "x"
+#endif
+
+#ifndef PATH_SEP
+#define PATH_SEP ':'
+#endif
+
+#ifndef STRIP_EXTENSION
+#define STRIP_EXTENSION ""
+#endif
+
+#ifndef has_dos_drive_prefix
+#define has_dos_drive_prefix(path) 0
+#endif
+
+#ifndef is_dir_sep
+#define is_dir_sep(c) ((c) == '/')
 #endif
 
 #ifdef __GNUC__
@@ -100,12 +156,18 @@ extern void die(const char *err, ...) NORETURN __attribute__((format (printf, 1,
 extern int error(const char *err, ...) __attribute__((format (printf, 1, 2)));
 extern void warning(const char *err, ...) __attribute__((format (printf, 1, 2)));
 
-extern void set_usage_routine(void (*routine)(const char *err) NORETURN);
 extern void set_die_routine(void (*routine)(const char *err, va_list params) NORETURN);
-extern void set_error_routine(void (*routine)(const char *err, va_list params));
-extern void set_warn_routine(void (*routine)(const char *warn, va_list params));
 
-#ifdef NO_MMAP
+extern int prefixcmp(const char *str, const char *prefix);
+extern time_t tm_to_time_t(const struct tm *tm);
+
+static inline const char *skip_prefix(const char *str, const char *prefix)
+{
+	size_t len = strlen(prefix);
+	return strncmp(str, prefix, len) ? NULL : str + len;
+}
+
+#if defined(NO_MMAP) || defined(USE_WIN32_MMAP)
 
 #ifndef PROT_READ
 #define PROT_READ 1
@@ -119,12 +181,18 @@ extern void set_warn_routine(void (*routine)(const char *warn, va_list params));
 extern void *git_mmap(void *start, size_t length, int prot, int flags, int fd, off_t offset);
 extern int git_munmap(void *start, size_t length);
 
+#else /* NO_MMAP || USE_WIN32_MMAP */
+
+#include <sys/mman.h>
+
+#endif /* NO_MMAP || USE_WIN32_MMAP */
+
+#ifdef NO_MMAP
+
 /* This value must be multiple of (pagesize * 2) */
 #define DEFAULT_PACKED_GIT_WINDOW_SIZE (1 * 1024 * 1024)
 
 #else /* NO_MMAP */
-
-#include <sys/mman.h>
 
 /* This value must be multiple of (pagesize * 2) */
 #define DEFAULT_PACKED_GIT_WINDOW_SIZE \
@@ -134,6 +202,12 @@ extern int git_munmap(void *start, size_t length);
 
 #endif /* NO_MMAP */
 
+#ifdef NO_ST_BLOCKS_IN_STRUCT_STAT
+#define on_disk_bytes(st) ((st).st_size)
+#else
+#define on_disk_bytes(st) ((st).st_blocks * 512)
+#endif
+
 #define DEFAULT_PACKED_GIT_LIMIT \
 	((1024L * 1024L) * (sizeof(void*) >= 8 ? 8192 : 256))
 
@@ -141,10 +215,21 @@ extern int git_munmap(void *start, size_t length);
 #define pread git_pread
 extern ssize_t git_pread(int fd, void *buf, size_t count, off_t offset);
 #endif
+/*
+ * Forward decl that will remind us if its twin in cache.h changes.
+ * This function is used in compat/pread.c.  But we can't include
+ * cache.h there.
+ */
+extern ssize_t read_in_full(int fd, void *buf, size_t count);
 
 #ifdef NO_SETENV
 #define setenv gitsetenv
 extern int gitsetenv(const char *, const char *, int);
+#endif
+
+#ifdef NO_MKDTEMP
+#define mkdtemp gitmkdtemp
+extern char *gitmkdtemp(char *);
 #endif
 
 #ifdef NO_UNSETENV
@@ -172,146 +257,61 @@ extern uintmax_t gitstrtoumax(const char *, char **, int);
 extern const char *githstrerror(int herror);
 #endif
 
+#ifdef NO_MEMMEM
+#define memmem gitmemmem
+void *gitmemmem(const void *haystack, size_t haystacklen,
+                const void *needle, size_t needlelen);
+#endif
+
+#ifdef FREAD_READS_DIRECTORIES
+#ifdef fopen
+#undef fopen
+#endif
+#define fopen(a,b) git_fopen(a,b)
+extern FILE *git_fopen(const char*, const char*);
+#endif
+
+#ifdef SNPRINTF_RETURNS_BOGUS
+#define snprintf git_snprintf
+extern int git_snprintf(char *str, size_t maxsize,
+			const char *format, ...);
+#define vsnprintf git_vsnprintf
+extern int git_vsnprintf(char *str, size_t maxsize,
+			 const char *format, va_list ap);
+#endif
+
+#ifdef __GLIBC_PREREQ
+#if __GLIBC_PREREQ(2, 1)
+#define HAVE_STRCHRNUL
+#endif
+#endif
+
+#ifndef HAVE_STRCHRNUL
+#define strchrnul gitstrchrnul
+static inline char *gitstrchrnul(const char *s, int c)
+{
+	while (*s && *s != c)
+		s++;
+	return (char *)s;
+}
+#endif
+
 extern void release_pack_memory(size_t, int);
 
-static inline char* xstrdup(const char *str)
-{
-	char *ret = strdup(str);
-	if (!ret) {
-		release_pack_memory(strlen(str) + 1, -1);
-		ret = strdup(str);
-		if (!ret)
-			die("Out of memory, strdup failed");
-	}
-	return ret;
-}
-
-static inline void *xmalloc(size_t size)
-{
-	void *ret = malloc(size);
-	if (!ret && !size)
-		ret = malloc(1);
-	if (!ret) {
-		release_pack_memory(size, -1);
-		ret = malloc(size);
-		if (!ret && !size)
-			ret = malloc(1);
-		if (!ret)
-			die("Out of memory, malloc failed");
-	}
-#ifdef XMALLOC_POISON
-	memset(ret, 0xA5, size);
-#endif
-	return ret;
-}
-
-static inline char *xstrndup(const char *str, size_t len)
-{
-	char *p;
-
-	p = memchr(str, '\0', len);
-	if (p)
-		len = p - str;
-	p = xmalloc(len + 1);
-	memcpy(p, str, len);
-	p[len] = '\0';
-	return p;
-}
-
-static inline void *xrealloc(void *ptr, size_t size)
-{
-	void *ret = realloc(ptr, size);
-	if (!ret && !size)
-		ret = realloc(ptr, 1);
-	if (!ret) {
-		release_pack_memory(size, -1);
-		ret = realloc(ptr, size);
-		if (!ret && !size)
-			ret = realloc(ptr, 1);
-		if (!ret)
-			die("Out of memory, realloc failed");
-	}
-	return ret;
-}
-
-static inline void *xcalloc(size_t nmemb, size_t size)
-{
-	void *ret = calloc(nmemb, size);
-	if (!ret && (!nmemb || !size))
-		ret = calloc(1, 1);
-	if (!ret) {
-		release_pack_memory(nmemb * size, -1);
-		ret = calloc(nmemb, size);
-		if (!ret && (!nmemb || !size))
-			ret = calloc(1, 1);
-		if (!ret)
-			die("Out of memory, calloc failed");
-	}
-	return ret;
-}
-
-static inline void *xmmap(void *start, size_t length,
-	int prot, int flags, int fd, off_t offset)
-{
-	void *ret = mmap(start, length, prot, flags, fd, offset);
-	if (ret == MAP_FAILED) {
-		if (!length)
-			return NULL;
-		release_pack_memory(length, fd);
-		ret = mmap(start, length, prot, flags, fd, offset);
-		if (ret == MAP_FAILED)
-			die("Out of memory? mmap failed: %s", strerror(errno));
-	}
-	return ret;
-}
-
-static inline ssize_t xread(int fd, void *buf, size_t len)
-{
-	ssize_t nr;
-	while (1) {
-		nr = read(fd, buf, len);
-		if ((nr < 0) && (errno == EAGAIN || errno == EINTR))
-			continue;
-		return nr;
-	}
-}
-
-static inline ssize_t xwrite(int fd, const void *buf, size_t len)
-{
-	ssize_t nr;
-	while (1) {
-		nr = write(fd, buf, len);
-		if ((nr < 0) && (errno == EAGAIN || errno == EINTR))
-			continue;
-		return nr;
-	}
-}
-
-static inline int xdup(int fd)
-{
-	int ret = dup(fd);
-	if (ret < 0)
-		die("dup failed: %s", strerror(errno));
-	return ret;
-}
-
-static inline FILE *xfdopen(int fd, const char *mode)
-{
-	FILE *stream = fdopen(fd, mode);
-	if (stream == NULL)
-		die("Out of memory? fdopen failed: %s", strerror(errno));
-	return stream;
-}
-
-static inline int xmkstemp(char *template)
-{
-	int fd;
-
-	fd = mkstemp(template);
-	if (fd < 0)
-		die("Unable to create temporary file: %s", strerror(errno));
-	return fd;
-}
+extern char *xstrdup(const char *str);
+extern void *xmalloc(size_t size);
+extern void *xmemdupz(const void *data, size_t len);
+extern char *xstrndup(const char *str, size_t len);
+extern void *xrealloc(void *ptr, size_t size);
+extern void *xcalloc(size_t nmemb, size_t size);
+extern void *xmmap(void *start, size_t length, int prot, int flags, int fd, off_t offset);
+extern ssize_t xread(int fd, void *buf, size_t len);
+extern ssize_t xwrite(int fd, const void *buf, size_t len);
+extern int xdup(int fd);
+extern FILE *xfdopen(int fd, const char *mode);
+extern int xmkstemp(char *template);
+extern int odb_mkstemp(char *template, size_t limit, const char *pattern);
+extern int odb_pack_keep(char *name, size_t namesz, unsigned char *sha1);
 
 static inline size_t xsize_t(off_t len)
 {
@@ -326,6 +326,7 @@ static inline int has_extension(const char *filename, const char *ext)
 }
 
 /* Sane ctype - no locale, and works with signed chars */
+#undef isascii
 #undef isspace
 #undef isdigit
 #undef isalpha
@@ -336,11 +337,16 @@ extern unsigned char sane_ctype[256];
 #define GIT_SPACE 0x01
 #define GIT_DIGIT 0x02
 #define GIT_ALPHA 0x04
+#define GIT_GLOB_SPECIAL 0x08
+#define GIT_REGEX_SPECIAL 0x10
 #define sane_istest(x,mask) ((sane_ctype[(unsigned char)(x)] & (mask)) != 0)
+#define isascii(x) (((x) & ~0x7f) == 0)
 #define isspace(x) sane_istest(x,GIT_SPACE)
 #define isdigit(x) sane_istest(x,GIT_DIGIT)
 #define isalpha(x) sane_istest(x,GIT_ALPHA)
 #define isalnum(x) sane_istest(x,GIT_ALPHA | GIT_DIGIT)
+#define is_glob_special(x) sane_istest(x,GIT_GLOB_SPECIAL)
+#define is_regex_special(x) sane_istest(x,GIT_GLOB_SPECIAL | GIT_REGEX_SPECIAL)
 #define tolower(x) sane_case((unsigned char)(x), 0x20)
 #define toupper(x) sane_case((unsigned char)(x), 0)
 
@@ -349,11 +355,6 @@ static inline int sane_case(int x, int high)
 	if (sane_istest(x, GIT_ALPHA))
 		x = (x & ~0x20) | high;
 	return x;
-}
-
-static inline int prefixcmp(const char *str, const char *prefix)
-{
-	return strncmp(str, prefix, strlen(prefix));
 }
 
 static inline int strtoul_ui(char const *s, int base, unsigned int *result)
@@ -368,5 +369,50 @@ static inline int strtoul_ui(char const *s, int base, unsigned int *result)
 	*result = ul;
 	return 0;
 }
+
+static inline int strtol_i(char const *s, int base, int *result)
+{
+	long ul;
+	char *p;
+
+	errno = 0;
+	ul = strtol(s, &p, base);
+	if (errno || *p || p == s || (int) ul != ul)
+		return -1;
+	*result = ul;
+	return 0;
+}
+
+#ifdef INTERNAL_QSORT
+void git_qsort(void *base, size_t nmemb, size_t size,
+	       int(*compar)(const void *, const void *));
+#define qsort git_qsort
+#endif
+
+#ifndef DIR_HAS_BSD_GROUP_SEMANTICS
+# define FORCE_DIR_SET_GID S_ISGID
+#else
+# define FORCE_DIR_SET_GID 0
+#endif
+
+#ifdef NO_NSEC
+#undef USE_NSEC
+#define ST_CTIME_NSEC(st) 0
+#define ST_MTIME_NSEC(st) 0
+#else
+#ifdef USE_ST_TIMESPEC
+#define ST_CTIME_NSEC(st) ((unsigned int)((st).st_ctimespec.tv_nsec))
+#define ST_MTIME_NSEC(st) ((unsigned int)((st).st_mtimespec.tv_nsec))
+#else
+#define ST_CTIME_NSEC(st) ((unsigned int)((st).st_ctim.tv_nsec))
+#define ST_MTIME_NSEC(st) ((unsigned int)((st).st_mtim.tv_nsec))
+#endif
+#endif
+
+#ifdef UNRELIABLE_FSTAT
+#define fstat_is_reliable() 0
+#else
+#define fstat_is_reliable() 1
+#endif
 
 #endif

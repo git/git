@@ -3,17 +3,17 @@ git-shortlog(1)
 
 NAME
 ----
-git-shortlog - Summarize 'git log' output
+git-shortlog - Summarize 'git-log' output
 
 SYNOPSIS
 --------
 [verse]
-git-log --pretty=short | 'git-shortlog' [-h] [-n] [-s]
-git-shortlog [-n|--numbered] [-s|--summary] [<committish>...]
+git log --pretty=short | 'git shortlog' [-h] [-n] [-s] [-e] [-w]
+git shortlog [-n|--numbered] [-s|--summary] [-e|--email] [-w[<width>[,<indent1>[,<indent2>]]]] [<committish>...]
 
 DESCRIPTION
 -----------
-Summarizes 'git log' output in a format suitable for inclusion
+Summarizes 'git-log' output in a format suitable for inclusion
 in release announcements. Each commit will be grouped by author and
 the first line of the commit message will be shown.
 
@@ -22,28 +22,39 @@ Additionally, "[PATCH]" will be stripped from the commit description.
 OPTIONS
 -------
 
--h, \--help::
+-h::
+--help::
 	Print a short usage message and exit.
 
--n, \--numbered::
+-n::
+--numbered::
 	Sort output according to the number of commits per author instead
 	of author alphabetic order.
 
--s, \--summary::
+-s::
+--summary::
 	Suppress commit description and provide a commit count summary only.
 
-FILES
------
+-e::
+--email::
+	Show the email address of each author.
 
-.mailmap::
-	If this file exists, it will be used for mapping author email
-	addresses to a real author name. One mapping per line, first
-	the author name followed by the email address enclosed by
-	'<' and '>'. Use hash '#' for comments. Example:
+-w[<width>[,<indent1>[,<indent2>]]]::
+	Linewrap the output by wrapping each line at `width`.  The first
+	line of each entry is indented by `indent1` spaces, and the second
+	and subsequent lines are indented by `indent2` spaces. `width`,
+	`indent1`, and `indent2` default to 76, 6 and 9 respectively.
 
-		# Keep alphabetized
-		Adam Morrow <adam@localhost.localdomain>
-		Eve Jones <eve@laptop.(none)>
+
+MAPPING AUTHORS
+---------------
+
+The `.mailmap` feature is used to coalesce together commits by the same
+person in the shortlog, where their name and/or email address was
+spelled differently.
+
+include::mailmap.txt[]
+
 
 Author
 ------
@@ -55,4 +66,4 @@ Documentation by Junio C Hamano.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[1] suite

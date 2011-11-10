@@ -5,9 +5,9 @@
  */
 
 #include "cache.h"
+#include "dir.h"
 #include "builtin.h"
-
-static const char count_objects_usage[] = "git-count-objects [-v]";
+#include "parse-options.h"
 
 static void count_objects(DIR *d, char *path, int len, int verbose,
 			  unsigned long *loose,
@@ -22,9 +22,7 @@ static void count_objects(DIR *d, char *path, int len, int verbose,
 		const char *cp;
 		int bad = 0;
 
-		if ((ent->d_name[0] == '.') &&
-		    (ent->d_name[1] == 0 ||
-		     ((ent->d_name[1] == '.') && (ent->d_name[2] == 0))))
+		if (is_dot_or_dotdot(ent->d_name))
 			continue;
 		for (cp = ent->d_name; *cp; cp++) {
 			int ch = *cp;
@@ -44,7 +42,7 @@ static void count_objects(DIR *d, char *path, int len, int verbose,
 			if (lstat(path, &st) || !S_ISREG(st.st_mode))
 				bad = 1;
 			else
-				(*loose_size) += xsize_t(st.st_blocks);
+				(*loose_size) += xsize_t(on_disk_bytes(st));
 		}
 		if (bad) {
 			if (verbose) {
@@ -62,34 +60,33 @@ static void count_objects(DIR *d, char *path, int len, int verbose,
 		hex[40] = 0;
 		if (get_sha1_hex(hex, sha1))
 			die("internal error");
-		if (has_sha1_pack(sha1, NULL))
+		if (has_sha1_pack(sha1))
 			(*packed_loose)++;
 	}
 }
 
-int cmd_count_objects(int ac, const char **av, const char *prefix)
+static char const * const count_objects_usage[] = {
+	"git count-objects [-v]",
+	NULL
+};
+
+int cmd_count_objects(int argc, const char **argv, const char *prefix)
 {
-	int i;
-	int verbose = 0;
+	int i, verbose = 0;
 	const char *objdir = get_object_directory();
 	int len = strlen(objdir);
 	char *path = xmalloc(len + 50);
 	unsigned long loose = 0, packed = 0, packed_loose = 0, garbage = 0;
 	unsigned long loose_size = 0;
+	struct option opts[] = {
+		OPT__VERBOSE(&verbose),
+		OPT_END(),
+	};
 
-	for (i = 1; i < ac; i++) {
-		const char *arg = av[i];
-		if (*arg != '-')
-			break;
-		else if (!strcmp(arg, "-v"))
-			verbose = 1;
-		else
-			usage(count_objects_usage);
-	}
-
+	argc = parse_options(argc, argv, opts, count_objects_usage, 0);
 	/* we do not take arguments other than flags for now */
-	if (i < ac)
-		usage(count_objects_usage);
+	if (argc)
+		usage_with_options(count_objects_usage, opts);
 	memcpy(path, objdir, len);
 	if (len && objdir[len-1] != '/')
 		path[len++] = '/';
@@ -106,6 +103,7 @@ int cmd_count_objects(int ac, const char **av, const char *prefix)
 	if (verbose) {
 		struct packed_git *p;
 		unsigned long num_pack = 0;
+		unsigned long size_pack = 0;
 		if (!packed_git)
 			prepare_packed_git();
 		for (p = packed_git; p; p = p->next) {
@@ -114,17 +112,19 @@ int cmd_count_objects(int ac, const char **av, const char *prefix)
 			if (open_pack_index(p))
 				continue;
 			packed += p->num_objects;
+			size_pack += p->pack_size + p->index_size;
 			num_pack++;
 		}
 		printf("count: %lu\n", loose);
-		printf("size: %lu\n", loose_size / 2);
+		printf("size: %lu\n", loose_size / 1024);
 		printf("in-pack: %lu\n", packed);
 		printf("packs: %lu\n", num_pack);
+		printf("size-pack: %lu\n", size_pack / 1024);
 		printf("prune-packable: %lu\n", packed_loose);
 		printf("garbage: %lu\n", garbage);
 	}
 	else
 		printf("%lu objects, %lu kilobytes\n",
-		       loose, loose_size / 2);
+		       loose, loose_size / 1024);
 	return 0;
 }

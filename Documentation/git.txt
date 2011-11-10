@@ -1,4 +1,4 @@
-git(7)
+git(1)
 ======
 
 NAME
@@ -9,7 +9,7 @@ git - the stupid content tracker
 SYNOPSIS
 --------
 [verse]
-'git' [--version] [--exec-path[=GIT_EXEC_PATH]]
+'git' [--version] [--exec-path[=GIT_EXEC_PATH]] [--html-path]
     [-p|--paginate|--no-pager]
     [--bare] [--git-dir=GIT_DIR] [--work-tree=GIT_WORK_TREE]
     [--help] COMMAND [ARGS]
@@ -20,15 +20,15 @@ Git is a fast, scalable, distributed revision control system with an
 unusually rich command set that provides both high-level operations
 and full access to internals.
 
-See this link:tutorial.html[tutorial] to get started, then see
+See linkgit:gittutorial[7] to get started, then see
 link:everyday.html[Everyday Git] for a useful minimum set of commands, and
 "man git-commandname" for documentation of each command.  CVS users may
-also want to read link:cvs-migration.html[CVS migration].  See
-link:user-manual.html[Git User's Manual] for a more in-depth
+also want to read linkgit:gitcvs-migration[7].  See
+the link:user-manual.html[Git User's Manual] for a more in-depth
 introduction.
 
 The COMMAND is either a name of a Git command (see below) or an alias
-as defined in the configuration file (see gitlink:git-config[1]).
+as defined in the configuration file (see linkgit:git-config[1]).
 
 Formatted and hyperlinked version of the latest git
 documentation can be viewed at
@@ -43,10 +43,83 @@ unreleased) version of git, that is available from 'master'
 branch of the `git.git` repository.
 Documentation for older releases are available here:
 
-* link:v1.5.3/git.html[documentation for release 1.5.3]
+* link:v1.6.3/git.html[documentation for release 1.6.3]
 
 * release notes for
-  link:RelNotes-1.5.3.1.txt[1.5.3.1].
+  link:RelNotes-1.6.2.5.txt[1.6.2.5],
+  link:RelNotes-1.6.2.4.txt[1.6.2.4],
+  link:RelNotes-1.6.2.3.txt[1.6.2.3],
+  link:RelNotes-1.6.2.2.txt[1.6.2.2],
+  link:RelNotes-1.6.2.1.txt[1.6.2.1],
+  link:RelNotes-1.6.2.txt[1.6.2].
+
+* link:v1.6.1.3/git.html[documentation for release 1.6.1.3]
+
+* release notes for
+  link:RelNotes-1.6.1.3.txt[1.6.1.3],
+  link:RelNotes-1.6.1.2.txt[1.6.1.2],
+  link:RelNotes-1.6.1.1.txt[1.6.1.1],
+  link:RelNotes-1.6.1.txt[1.6.1].
+
+* link:v1.6.0.6/git.html[documentation for release 1.6.0.6]
+
+* release notes for
+  link:RelNotes-1.6.0.6.txt[1.6.0.6],
+  link:RelNotes-1.6.0.5.txt[1.6.0.5],
+  link:RelNotes-1.6.0.4.txt[1.6.0.4],
+  link:RelNotes-1.6.0.3.txt[1.6.0.3],
+  link:RelNotes-1.6.0.2.txt[1.6.0.2],
+  link:RelNotes-1.6.0.1.txt[1.6.0.1],
+  link:RelNotes-1.6.0.txt[1.6.0].
+
+* link:v1.5.6.6/git.html[documentation for release 1.5.6.6]
+
+* release notes for
+  link:RelNotes-1.5.6.6.txt[1.5.6.6],
+  link:RelNotes-1.5.6.5.txt[1.5.6.5],
+  link:RelNotes-1.5.6.4.txt[1.5.6.4],
+  link:RelNotes-1.5.6.3.txt[1.5.6.3],
+  link:RelNotes-1.5.6.2.txt[1.5.6.2],
+  link:RelNotes-1.5.6.1.txt[1.5.6.1],
+  link:RelNotes-1.5.6.txt[1.5.6].
+
+* link:v1.5.5.6/git.html[documentation for release 1.5.5.6]
+
+* release notes for
+  link:RelNotes-1.5.5.6.txt[1.5.5.6],
+  link:RelNotes-1.5.5.5.txt[1.5.5.5],
+  link:RelNotes-1.5.5.4.txt[1.5.5.4],
+  link:RelNotes-1.5.5.3.txt[1.5.5.3],
+  link:RelNotes-1.5.5.2.txt[1.5.5.2],
+  link:RelNotes-1.5.5.1.txt[1.5.5.1],
+  link:RelNotes-1.5.5.txt[1.5.5].
+
+* link:v1.5.4.7/git.html[documentation for release 1.5.4.7]
+
+* release notes for
+  link:RelNotes-1.5.4.7.txt[1.5.4.7],
+  link:RelNotes-1.5.4.6.txt[1.5.4.6],
+  link:RelNotes-1.5.4.5.txt[1.5.4.5],
+  link:RelNotes-1.5.4.4.txt[1.5.4.4],
+  link:RelNotes-1.5.4.3.txt[1.5.4.3],
+  link:RelNotes-1.5.4.2.txt[1.5.4.2],
+  link:RelNotes-1.5.4.1.txt[1.5.4.1],
+  link:RelNotes-1.5.4.txt[1.5.4].
+
+* link:v1.5.3.8/git.html[documentation for release 1.5.3.8]
+
+* release notes for
+  link:RelNotes-1.5.3.8.txt[1.5.3.8],
+  link:RelNotes-1.5.3.7.txt[1.5.3.7],
+  link:RelNotes-1.5.3.6.txt[1.5.3.6],
+  link:RelNotes-1.5.3.5.txt[1.5.3.5],
+  link:RelNotes-1.5.3.4.txt[1.5.3.4],
+  link:RelNotes-1.5.3.3.txt[1.5.3.3],
+  link:RelNotes-1.5.3.2.txt[1.5.3.2],
+  link:RelNotes-1.5.3.1.txt[1.5.3.1],
+  link:RelNotes-1.5.3.txt[1.5.3].
+
+* link:v1.5.2.5/git.html[documentation for release 1.5.2.5]
 
 * release notes for
   link:RelNotes-1.5.2.5.txt[1.5.2.5],
@@ -94,17 +167,27 @@ OPTIONS
 
 --help::
 	Prints the synopsis and a list of the most commonly used
-	commands.  If a git command is named this option will bring up
-	the man-page for that command. If the option '--all' or '-a' is
-	given then all available commands are printed.
+	commands. If the option '--all' or '-a' is given then all
+	available commands are printed. If a git command is named this
+	option will bring up the manual page for that command.
++
+Other options are available to control how the manual page is
+displayed. See linkgit:git-help[1] for more information,
+because `git --help ...` is converted internally into `git
+help ...`.
 
 --exec-path::
 	Path to wherever your core git programs are installed.
 	This can also be controlled by setting the GIT_EXEC_PATH
-	environment variable. If no path is given 'git' will print
+	environment variable. If no path is given, 'git' will print
 	the current setting and then exit.
 
--p|--paginate::
+--html-path::
+	Print the path to wherever your git HTML documentation is installed
+	and exit.
+
+-p::
+--paginate::
 	Pipe all output into 'less' (or if set, $PAGER).
 
 --no-pager::
@@ -112,7 +195,8 @@ OPTIONS
 
 --git-dir=<path>::
 	Set the path to the repository. This can also be controlled by
-	setting the GIT_DIR environment variable.
+	setting the GIT_DIR environment variable. It can be an absolute
+	path or relative path to current working directory.
 
 --work-tree=<path>::
 	Set the path to the working tree.  The value will not be
@@ -120,7 +204,12 @@ OPTIONS
 	a .git directory (i.e. $GIT_DIR is not set).
 	This can also be controlled by setting the GIT_WORK_TREE
 	environment variable and the core.worktree configuration
-	variable.
+	variable. It can be an absolute path or relative path to
+	the directory specified by --git-dir or GIT_DIR.
+	Note: If --git-dir or GIT_DIR are specified but none of
+	--work-tree, GIT_WORK_TREE and core.worktree is specified,
+	the current working directory is regarded as the top directory
+	of your working tree.
 
 --bare::
 	Treat the repository as a bare repository.  If GIT_DIR
@@ -134,12 +223,15 @@ FURTHER DOCUMENTATION
 See the references above to get started using git.  The following is
 probably more detail than necessary for a first-time user.
 
-The <<Discussion,Discussion>> section below and the
-link:core-tutorial.html[Core tutorial] both provide introductions to the
-underlying git architecture.
+The link:user-manual.html#git-concepts[git concepts chapter of the
+user-manual] and linkgit:gitcore-tutorial[7] both provide
+introductions to the underlying git architecture.
 
 See also the link:howto-index.html[howto] documents for some useful
 examples.
+
+The internals are documented in the
+link:technical/api-index.html[GIT API documentation].
 
 GIT COMMANDS
 ------------
@@ -184,8 +276,8 @@ Low-level commands (plumbing)
 Although git includes its
 own porcelain layer, its low-level commands are sufficient to support
 development of alternative porcelains.  Developers of such porcelains
-might start by reading about gitlink:git-update-index[1] and
-gitlink:git-read-tree[1].
+might start by reading about linkgit:git-update-index[1] and
+linkgit:git-read-tree[1].
 
 The interface (input, output, set of options and the semantics)
 to these low-level commands are meant to be a lot more stable
@@ -317,15 +409,15 @@ HEAD::
 	(i.e. the contents of `$GIT_DIR/refs/heads/<head>`).
 
 For a more complete list of ways to spell object names, see
-"SPECIFYING REVISIONS" section in gitlink:git-rev-parse[1].
+"SPECIFYING REVISIONS" section in linkgit:git-rev-parse[1].
 
 
 File/Directory Structure
 ------------------------
 
-Please see link:repository-layout.html[repository layout] document.
+Please see the linkgit:gitrepository-layout[5] document.
 
-Read link:hooks.html[hooks] for more details about each hook.
+Read linkgit:githooks[5] for more details about each hook.
 
 Higher level SCMs may provide and manage additional information in the
 `$GIT_DIR`.
@@ -333,7 +425,7 @@ Higher level SCMs may provide and manage additional information in the
 
 Terminology
 -----------
-Please see link:glossary.html[glossary] document.
+Please see linkgit:gitglossary[7].
 
 
 Environment Variables
@@ -360,9 +452,9 @@ git so take care if using Cogito etc.
 'GIT_ALTERNATE_OBJECT_DIRECTORIES'::
 	Due to the immutable nature of git objects, old objects can be
 	archived into shared, read-only directories. This variable
-	specifies a ":" separated list of git object directories which
-	can be used to search for git objects. New objects will not be
-	written to these directories.
+	specifies a ":" separated (on Windows ";" separated) list
+	of git object directories which can be used to search for git
+	objects. New objects will not be written to these directories.
 
 'GIT_DIR'::
 	If the 'GIT_DIR' environment variable is set then it
@@ -376,6 +468,14 @@ git so take care if using Cogito etc.
 	This can also be controlled by the '--work-tree' command line
 	option and the core.worktree configuration variable.
 
+'GIT_CEILING_DIRECTORIES'::
+	This should be a colon-separated list of absolute paths.
+	If set, it is a list of directories that git should not chdir
+	up into while looking for a repository directory.
+	It will not exclude the current working directory or
+	a GIT_DIR set on the command line or in the environment.
+	(Useful for excluding slow-loading network directories.)
+
 git Commits
 ~~~~~~~~~~~
 'GIT_AUTHOR_NAME'::
@@ -385,7 +485,7 @@ git Commits
 'GIT_COMMITTER_EMAIL'::
 'GIT_COMMITTER_DATE'::
 'EMAIL'::
-	see gitlink:git-commit-tree[1]
+	see linkgit:git-commit-tree[1]
 
 git Diffs
 ~~~~~~~~~
@@ -425,18 +525,19 @@ other
 'GIT_MERGE_VERBOSITY'::
 	A number controlling the amount of output shown by
 	the recursive merge strategy.  Overrides merge.verbosity.
-	See gitlink:git-merge[1]
+	See linkgit:git-merge[1]
 
 'GIT_PAGER'::
 	This environment variable overrides `$PAGER`. If it is set
 	to an empty string or to the value "cat", git will not launch
-	a pager.
+	a pager.  See also the `core.pager` option in
+	linkgit:git-config[1].
 
 'GIT_SSH'::
-	If this environment variable is set then gitlink:git-fetch[1]
-	and gitlink:git-push[1] will use this command instead
-	of `ssh` when they need to connect to a remote system.
-	The 'GIT_SSH' command will be given exactly two arguments:
+	If this environment variable is set then 'git-fetch'
+	and 'git-push' will use this command instead
+	of 'ssh' when they need to connect to a remote system.
+	The '$GIT_SSH' command will be given exactly two arguments:
 	the 'username@host' (or just 'host') from the URL and the
 	shell command to execute on that remote system.
 +
@@ -450,8 +551,8 @@ for further details.
 
 'GIT_FLUSH'::
 	If this environment variable is set to "1", then commands such
-	as git-blame (in incremental mode), git-rev-list, git-log,
-	git-whatchanged, etc., will force a flush of the output stream
+	as 'git-blame' (in incremental mode), 'git-rev-list', 'git-log',
+	and 'git-whatchanged' will force a flush of the output stream
 	after each commit-oriented record have been flushed.   If this
 	variable is set to "0", the output of these commands will be done
 	using completely buffered I/O.   If this environment variable is
@@ -474,13 +575,62 @@ for further details.
 
 Discussion[[Discussion]]
 ------------------------
-include::core-intro.txt[]
+
+More detail on the following is available from the
+link:user-manual.html#git-concepts[git concepts chapter of the
+user-manual] and linkgit:gitcore-tutorial[7].
+
+A git project normally consists of a working directory with a ".git"
+subdirectory at the top level.  The .git directory contains, among other
+things, a compressed object database representing the complete history
+of the project, an "index" file which links that history to the current
+contents of the working tree, and named pointers into that history such
+as tags and branch heads.
+
+The object database contains objects of three main types: blobs, which
+hold file data; trees, which point to blobs and other trees to build up
+directory hierarchies; and commits, which each reference a single tree
+and some number of parent commits.
+
+The commit, equivalent to what other systems call a "changeset" or
+"version", represents a step in the project's history, and each parent
+represents an immediately preceding step.  Commits with more than one
+parent represent merges of independent lines of development.
+
+All objects are named by the SHA1 hash of their contents, normally
+written as a string of 40 hex digits.  Such names are globally unique.
+The entire history leading up to a commit can be vouched for by signing
+just that commit.  A fourth object type, the tag, is provided for this
+purpose.
+
+When first created, objects are stored in individual files, but for
+efficiency may later be compressed together into "pack files".
+
+Named pointers called refs mark interesting points in history.  A ref
+may contain the SHA1 name of an object or the name of another ref.  Refs
+with names beginning `ref/head/` contain the SHA1 name of the most
+recent commit (or "head") of a branch under development.  SHA1 names of
+tags of interest are stored under `ref/tags/`.  A special ref named
+`HEAD` contains the name of the currently checked-out branch.
+
+The index file is initialized with a list of all paths and, for each
+path, a blob object and a set of attributes.  The blob object represents
+the contents of the file as of the head of the current branch.  The
+attributes (last modified time, size, etc.) are taken from the
+corresponding file in the working tree.  Subsequent changes to the
+working tree can be found by comparing these attributes.  The index may
+be updated with new content, and new commits may be created from the
+content stored in the index.
+
+The index is also capable of storing multiple entries (called "stages")
+for a given pathname.  These stages are used to hold the various
+unmerged version of a file when a merge is in progress.
 
 Authors
 -------
 * git's founding father is Linus Torvalds <torvalds@osdl.org>.
 * The current git nurse is Junio C Hamano <gitster@pobox.com>.
-* The git potty was written by Andres Ericsson <ae@op5.se>.
+* The git potty was written by Andreas Ericsson <ae@op5.se>.
 * General upbringing is handled by the git-list <git@vger.kernel.org>.
 
 Documentation
@@ -489,6 +639,13 @@ The documentation for git suite was started by David Greaves
 <david@dgreaves.com>, and later enhanced greatly by the
 contributors on the git-list <git@vger.kernel.org>.
 
+SEE ALSO
+--------
+linkgit:gittutorial[7], linkgit:gittutorial-2[7],
+link:everyday.html[Everyday Git], linkgit:gitcvs-migration[7],
+linkgit:gitglossary[7], linkgit:gitcore-tutorial[7],
+linkgit:gitcli[7], link:user-manual.html[The Git User's Manual]
+
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[1] suite

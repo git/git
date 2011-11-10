@@ -90,7 +90,7 @@ diff --git a/Documentation/git.txt b/Documentation/git.txt
 diff --git a/Makefile b/Makefile
 --- a/Makefile
 +++ b/Makefile
-@@ -30,7 +30,7 @@ PROG=   git-update-cache git-diff-files 
+@@ -30,7 +30,7 @@ PROG=   git-update-index git-diff-files
  	git-checkout-cache git-diff-tree git-rev-tree git-ls-files \
  	git-check-files git-ls-tree git-merge-base git-merge-cache \
  	git-unpack-file git-export git-diff-cache git-convert-cache \

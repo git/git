@@ -7,13 +7,15 @@
 #include "tree.h"
 #include "blob.h"
 #include "quote.h"
+#include "parse-options.h"
+#include "remote.h"
 
 /* Quoting styles */
 #define QUOTE_NONE 0
 #define QUOTE_SHELL 1
 #define QUOTE_PERL 2
-#define QUOTE_PYTHON 3
-#define QUOTE_TCL 4
+#define QUOTE_PYTHON 4
+#define QUOTE_TCL 8
 
 typedef enum { FIELD_STR, FIELD_ULONG, FIELD_TIME } cmp_type;
 
@@ -43,7 +45,7 @@ static struct {
 	{ "objectsize", FIELD_ULONG },
 	{ "objectname" },
 	{ "tree" },
-	{ "parent" }, /* NEEDSWORK: how to address 2nd and later parents? */
+	{ "parent" },
 	{ "numparent", FIELD_ULONG },
 	{ "object" },
 	{ "type" },
@@ -65,6 +67,7 @@ static struct {
 	{ "subject" },
 	{ "body" },
 	{ "contents" },
+	{ "upstream" },
 };
 
 /*
@@ -87,7 +90,6 @@ static int used_atom_cnt, sort_atom_limit, need_tagged;
 static int parse_atom(const char *atom, const char *ep)
 {
 	const char *sp;
-	char *n;
 	int i, at;
 
 	sp = atom;
@@ -106,7 +108,16 @@ static int parse_atom(const char *atom, const char *ep)
 	/* Is the atom a valid one? */
 	for (i = 0; i < ARRAY_SIZE(valid_atom); i++) {
 		int len = strlen(valid_atom[i].name);
-		if (len == ep - sp && !memcmp(valid_atom[i].name, sp, len))
+		/*
+		 * If the atom name has a colon, strip it and everything after
+		 * it off - it specifies the format for this entry, and
+		 * shouldn't be used for checking against the valid_atom
+		 * table.
+		 */
+		const char *formatp = strchr(sp, ':');
+		if (!formatp || ep < formatp)
+			formatp = ep;
+		if (len == formatp - sp && !memcmp(valid_atom[i].name, sp, len))
 			break;
 	}
 
@@ -120,10 +131,7 @@ static int parse_atom(const char *atom, const char *ep)
 			     (sizeof *used_atom) * used_atom_cnt);
 	used_atom_type = xrealloc(used_atom_type,
 				  (sizeof(*used_atom_type) * used_atom_cnt));
-	n = xmalloc(ep - atom + 1);
-	memcpy(n, atom, ep - atom);
-	n[ep-atom] = 0;
-	used_atom[at] = n;
+	used_atom[at] = xmemdupz(atom, ep - atom);
 	used_atom_type[at] = valid_atom[i].cmp_type;
 	return at;
 }
@@ -153,17 +161,18 @@ static const char *find_next(const char *cp)
  * Make sure the format string is well formed, and parse out
  * the used atoms.
  */
-static void verify_format(const char *format)
+static int verify_format(const char *format)
 {
 	const char *cp, *sp;
 	for (cp = format; *cp && (sp = find_next(cp)); ) {
 		const char *ep = strchr(sp, ')');
 		if (!ep)
-			die("malformatted format string %s", sp);
+			return error("malformed format string %s", sp);
 		/* sp points at "%(" and ep points at the closing ")" */
 		parse_atom(sp + 2, ep);
 		cp = ep + 1;
 	}
+	return 0;
 }
 
 /*
@@ -227,6 +236,13 @@ static void grab_tag_values(struct atom_value *val, int deref, struct object *ob
 			name++;
 		if (!strcmp(name, "tag"))
 			v->s = tag->tag;
+		else if (!strcmp(name, "type") && tag->tagged)
+			v->s = typename(tag->tagged->type);
+		else if (!strcmp(name, "object") && tag->tagged) {
+			char *s = xmalloc(41);
+			strcpy(s, sha1_to_hex(tag->tagged->sha1));
+			v->s = s;
+		}
 	}
 }
 
@@ -262,24 +278,26 @@ static void grab_commit_values(struct atom_value *val, int deref, struct object 
 		}
 		if (!strcmp(name, "numparent")) {
 			char *s = xmalloc(40);
+			v->ul = num_parents(commit);
 			sprintf(s, "%lu", v->ul);
 			v->s = s;
-			v->ul = num_parents(commit);
 		}
 		else if (!strcmp(name, "parent")) {
 			int num = num_parents(commit);
 			int i;
 			struct commit_list *parents;
-			char *s = xmalloc(42 * num);
+			char *s = xmalloc(41 * num + 1);
 			v->s = s;
 			for (i = 0, parents = commit->parents;
 			     parents;
-			     parents = parents->next, i = i + 42) {
+			     parents = parents->next, i = i + 41) {
 				struct commit *parent = parents->item;
 				strcpy(s+i, sha1_to_hex(parent->object.sha1));
 				if (parents->next)
 					s[i+40] = ' ';
 			}
+			if (!i)
+				*s = '\0';
 		}
 	}
 }
@@ -295,7 +313,7 @@ static const char *find_wholine(const char *who, int wholen, const char *buf, un
 		if (!eol)
 			return "";
 		eol++;
-		if (eol[1] == '\n')
+		if (*eol == '\n')
 			return ""; /* end of header */
 		buf = eol;
 	}
@@ -304,55 +322,49 @@ static const char *find_wholine(const char *who, int wholen, const char *buf, un
 
 static const char *copy_line(const char *buf)
 {
-	const char *eol = strchr(buf, '\n');
-	char *line;
-	int len;
-	if (!eol)
-		return "";
-	len = eol - buf;
-	line = xmalloc(len + 1);
-	memcpy(line, buf, len);
-	line[len] = 0;
-	return line;
+	const char *eol = strchrnul(buf, '\n');
+	return xmemdupz(buf, eol - buf);
 }
 
 static const char *copy_name(const char *buf)
 {
-	const char *eol = strchr(buf, '\n');
-	const char *eoname = strstr(buf, " <");
-	char *line;
-	int len;
-	if (!(eoname && eol && eoname < eol))
-		return "";
-	len = eoname - buf;
-	line = xmalloc(len + 1);
-	memcpy(line, buf, len);
-	line[len] = 0;
-	return line;
+	const char *cp;
+	for (cp = buf; *cp && *cp != '\n'; cp++) {
+		if (!strncmp(cp, " <", 2))
+			return xmemdupz(buf, cp - buf);
+	}
+	return "";
 }
 
 static const char *copy_email(const char *buf)
 {
 	const char *email = strchr(buf, '<');
 	const char *eoemail = strchr(email, '>');
-	char *line;
-	int len;
 	if (!email || !eoemail)
 		return "";
-	eoemail++;
-	len = eoemail - email;
-	line = xmalloc(len + 1);
-	memcpy(line, email, len);
-	line[len] = 0;
-	return line;
+	return xmemdupz(email, eoemail + 1 - email);
 }
 
-static void grab_date(const char *buf, struct atom_value *v)
+static void grab_date(const char *buf, struct atom_value *v, const char *atomname)
 {
 	const char *eoemail = strstr(buf, "> ");
 	char *zone;
 	unsigned long timestamp;
 	long tz;
+	enum date_mode date_mode = DATE_NORMAL;
+	const char *formatp;
+
+	/*
+	 * We got here because atomname ends in "date" or "date<something>";
+	 * it's not possible that <something> is not ":<format>" because
+	 * parse_atom() wouldn't have allowed it, so we can assume that no
+	 * ":" means no format is specified, and use the default.
+	 */
+	formatp = strchr(atomname, ':');
+	if (formatp != NULL) {
+		formatp++;
+		date_mode = parse_date_format(formatp);
+	}
 
 	if (!eoemail)
 		goto bad;
@@ -362,7 +374,7 @@ static void grab_date(const char *buf, struct atom_value *v)
 	tz = strtol(zone, NULL, 10);
 	if ((tz == LONG_MIN || tz == LONG_MAX) && errno == ERANGE)
 		goto bad;
-	v->s = xstrdup(show_date(timestamp, tz, 0));
+	v->s = xstrdup(show_date(timestamp, tz, date_mode));
 	v->ul = timestamp;
 	return;
  bad:
@@ -389,7 +401,7 @@ static void grab_person(const char *who, struct atom_value *val, int deref, stru
 		if (name[wholen] != 0 &&
 		    strcmp(name + wholen, "name") &&
 		    strcmp(name + wholen, "email") &&
-		    strcmp(name + wholen, "date"))
+		    prefixcmp(name + wholen, "date"))
 			continue;
 		if (!wholine)
 			wholine = find_wholine(who, wholen, buf, sz);
@@ -401,8 +413,8 @@ static void grab_person(const char *who, struct atom_value *val, int deref, stru
 			v->s = copy_name(wholine);
 		else if (!strcmp(name + wholen, "email"))
 			v->s = copy_email(wholine);
-		else if (!strcmp(name + wholen, "date"))
-			grab_date(wholine, v);
+		else if (!prefixcmp(name + wholen, "date"))
+			grab_date(wholine, v, name);
 	}
 
 	/* For a tag or a commit object, if "creator" or "creatordate" is
@@ -422,8 +434,8 @@ static void grab_person(const char *who, struct atom_value *val, int deref, stru
 		if (deref)
 			name++;
 
-		if (!strcmp(name, "creatordate"))
-			grab_date(wholine, v);
+		if (!prefixcmp(name, "creatordate"))
+			grab_date(wholine, v, name);
 		else if (!strcmp(name, "creator"))
 			v->s = copy_line(wholine);
 	}
@@ -447,8 +459,10 @@ static void find_subpos(const char *buf, unsigned long sz, const char **sub, con
 		return;
 	*sub = buf; /* first non-empty line */
 	buf = strchr(buf, '\n');
-	if (!buf)
+	if (!buf) {
+		*body = "";
 		return; /* no body */
+	}
 	while (*buf == '\n')
 		buf++; /* skip blank between subject and body */
 	*body = buf;
@@ -556,12 +570,50 @@ static void populate_value(struct refinfo *ref)
 	for (i = 0; i < used_atom_cnt; i++) {
 		const char *name = used_atom[i];
 		struct atom_value *v = &ref->value[i];
-		if (!strcmp(name, "refname"))
-			v->s = ref->refname;
-		else if (!strcmp(name, "*refname")) {
-			int len = strlen(ref->refname);
+		int deref = 0;
+		const char *refname;
+		const char *formatp;
+
+		if (*name == '*') {
+			deref = 1;
+			name++;
+		}
+
+		if (!prefixcmp(name, "refname"))
+			refname = ref->refname;
+		else if(!prefixcmp(name, "upstream")) {
+			struct branch *branch;
+			/* only local branches may have an upstream */
+			if (prefixcmp(ref->refname, "refs/heads/"))
+				continue;
+			branch = branch_get(ref->refname + 11);
+
+			if (!branch || !branch->merge || !branch->merge[0] ||
+			    !branch->merge[0]->dst)
+				continue;
+			refname = branch->merge[0]->dst;
+		}
+		else
+			continue;
+
+		formatp = strchr(name, ':');
+		/* look for "short" refname format */
+		if (formatp) {
+			formatp++;
+			if (!strcmp(formatp, "short"))
+				refname = shorten_unambiguous_ref(refname,
+						      warn_ambiguous_refs);
+			else
+				die("unknown %.*s format %s",
+				    (int)(formatp - name), name, formatp);
+		}
+
+		if (!deref)
+			v->s = refname;
+		else {
+			int len = strlen(refname);
 			char *s = xmalloc(len + 4);
-			sprintf(s, "%s^{}", ref->refname);
+			sprintf(s, "%s^{}", refname);
 			v->s = s;
 		}
 	}
@@ -638,7 +690,8 @@ static int grab_single_ref(const char *refname, const unsigned char *sha1, int f
 			if ((plen <= namelen) &&
 			    !strncmp(refname, p, plen) &&
 			    (refname[plen] == '\0' ||
-			     refname[plen] == '/'))
+			     refname[plen] == '/' ||
+			     p[plen-1] == '/'))
 				break;
 			if (!fnmatch(p, refname, FNM_PATHNAME))
 				break;
@@ -797,94 +850,79 @@ static struct ref_sort *default_sort(void)
 	return sort;
 }
 
-int cmd_for_each_ref(int ac, const char **av, const char *prefix)
+static int opt_parse_sort(const struct option *opt, const char *arg, int unset)
+{
+	struct ref_sort **sort_tail = opt->value;
+	struct ref_sort *s;
+	int len;
+
+	if (!arg) /* should --no-sort void the list ? */
+		return -1;
+
+	*sort_tail = s = xcalloc(1, sizeof(*s));
+
+	if (*arg == '-') {
+		s->reverse = 1;
+		arg++;
+	}
+	len = strlen(arg);
+	s->atom = parse_atom(arg, arg+len);
+	return 0;
+}
+
+static char const * const for_each_ref_usage[] = {
+	"git for-each-ref [options] [<pattern>]",
+	NULL
+};
+
+int cmd_for_each_ref(int argc, const char **argv, const char *prefix)
 {
 	int i, num_refs;
-	const char *format = NULL;
+	const char *format = "%(objectname) %(objecttype)\t%(refname)";
 	struct ref_sort *sort = NULL, **sort_tail = &sort;
-	int maxcount = 0;
-	int quote_style = -1; /* unspecified yet */
+	int maxcount = 0, quote_style = 0;
 	struct refinfo **refs;
 	struct grab_ref_cbdata cbdata;
 
-	for (i = 1; i < ac; i++) {
-		const char *arg = av[i];
-		if (arg[0] != '-')
-			break;
-		if (!strcmp(arg, "--")) {
-			i++;
-			break;
-		}
-		if (!prefixcmp(arg, "--format=")) {
-			if (format)
-				die("more than one --format?");
-			format = arg + 9;
-			continue;
-		}
-		if (!strcmp(arg, "-s") || !strcmp(arg, "--shell") ) {
-			if (0 <= quote_style)
-				die("more than one quoting style?");
-			quote_style = QUOTE_SHELL;
-			continue;
-		}
-		if (!strcmp(arg, "-p") || !strcmp(arg, "--perl") ) {
-			if (0 <= quote_style)
-				die("more than one quoting style?");
-			quote_style = QUOTE_PERL;
-			continue;
-		}
-		if (!strcmp(arg, "--python") ) {
-			if (0 <= quote_style)
-				die("more than one quoting style?");
-			quote_style = QUOTE_PYTHON;
-			continue;
-		}
-		if (!strcmp(arg, "--tcl") ) {
-			if (0 <= quote_style)
-				die("more than one quoting style?");
-			quote_style = QUOTE_TCL;
-			continue;
-		}
-		if (!prefixcmp(arg, "--count=")) {
-			if (maxcount)
-				die("more than one --count?");
-			maxcount = atoi(arg + 8);
-			if (maxcount <= 0)
-				die("The number %s did not parse", arg);
-			continue;
-		}
-		if (!prefixcmp(arg, "--sort=")) {
-			struct ref_sort *s = xcalloc(1, sizeof(*s));
-			int len;
+	struct option opts[] = {
+		OPT_BIT('s', "shell", &quote_style,
+		        "quote placeholders suitably for shells", QUOTE_SHELL),
+		OPT_BIT('p', "perl",  &quote_style,
+		        "quote placeholders suitably for perl", QUOTE_PERL),
+		OPT_BIT(0 , "python", &quote_style,
+		        "quote placeholders suitably for python", QUOTE_PYTHON),
+		OPT_BIT(0 , "tcl",  &quote_style,
+		        "quote placeholders suitably for tcl", QUOTE_TCL),
 
-			s->next = NULL;
-			*sort_tail = s;
-			sort_tail = &s->next;
+		OPT_GROUP(""),
+		OPT_INTEGER( 0 , "count", &maxcount, "show only <n> matched refs"),
+		OPT_STRING(  0 , "format", &format, "format", "format to use for the output"),
+		OPT_CALLBACK(0 , "sort", sort_tail, "key",
+		            "field name to sort on", &opt_parse_sort),
+		OPT_END(),
+	};
 
-			arg += 7;
-			if (*arg == '-') {
-				s->reverse = 1;
-				arg++;
-			}
-			len = strlen(arg);
-			sort->atom = parse_atom(arg, arg+len);
-			continue;
-		}
-		break;
+	parse_options(argc, argv, opts, for_each_ref_usage, 0);
+	if (maxcount < 0) {
+		error("invalid --count argument: `%d'", maxcount);
+		usage_with_options(for_each_ref_usage, opts);
 	}
-	if (quote_style < 0)
-		quote_style = QUOTE_NONE;
+	if (HAS_MULTI_BITS(quote_style)) {
+		error("more than one quoting style?");
+		usage_with_options(for_each_ref_usage, opts);
+	}
+	if (verify_format(format))
+		usage_with_options(for_each_ref_usage, opts);
 
 	if (!sort)
 		sort = default_sort();
 	sort_atom_limit = used_atom_cnt;
-	if (!format)
-		format = "%(objectname) %(objecttype)\t%(refname)";
 
-	verify_format(format);
+	/* for warn_ambiguous_refs */
+	git_config(git_default_config, NULL);
 
 	memset(&cbdata, 0, sizeof(cbdata));
-	cbdata.grab_pattern = av + i;
+	cbdata.grab_pattern = argv;
 	for_each_ref(grab_single_ref, &cbdata);
 	refs = cbdata.grab_array;
 	num_refs = cbdata.grab_cnt;

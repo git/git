@@ -40,4 +40,18 @@ test_expect_success '--cherry-pick bar does not come up empty' '
 	! test -z "$(git rev-list --left-right --cherry-pick B...C -- bar)"
 '
 
+test_expect_success '--cherry-pick with independent, but identical branches' '
+	git symbolic-ref HEAD refs/heads/independent &&
+	rm .git/index &&
+	echo Hallo > foo &&
+	git add foo &&
+	test_tick &&
+	git commit -m "independent" &&
+	echo Bello > foo &&
+	test_tick &&
+	git commit -m "independent, too" foo &&
+	test -z "$(git rev-list --left-right --cherry-pick \
+		HEAD...master -- foo)"
+'
+
 test_done

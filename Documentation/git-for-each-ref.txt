@@ -8,16 +8,15 @@ git-for-each-ref - Output information on each ref
 SYNOPSIS
 --------
 [verse]
-'git-for-each-ref' [--count=<count>]\*
-                   [--shell|--perl|--python|--tcl]
-                   [--sort=<key>]\* [--format=<format>] [<pattern>]
+'git for-each-ref' [--count=<count>] [--shell|--perl|--python|--tcl]
+		   [--sort=<key>]\* [--format=<format>] [<pattern>...]
 
 DESCRIPTION
 -----------
 
 Iterate over all refs that match `<pattern>` and show them
 according to the given `<format>`, after sorting them according
-to the given set of `<key>`.  If `<max>` is given, stop after
+to the given set of `<key>`.  If `<count>` is given, stop after
 showing that many refs.  The interpolated values in `<format>`
 can optionally be quoted as string literals in the specified
 host language allowing their direct evaluation in that language.
@@ -32,8 +31,9 @@ OPTIONS
 <key>::
 	A field name to sort on.  Prefix `-` to sort in
 	descending order of the value.  When unspecified,
-	`refname` is used.  More than one sort keys can be
-	given.
+	`refname` is used.  You may use the --sort=<key> option
+	multiple times, in which case the last key becomes the primary
+	key.
 
 <format>::
 	A string that interpolates `%(fieldname)` from the
@@ -47,12 +47,16 @@ OPTIONS
 	`xx`; for example `%00` interpolates to `\0` (NUL),
 	`%09` to `\t` (TAB) and `%0a` to `\n` (LF).
 
-<pattern>::
-	If given, the name of the ref is matched against this
-	using fnmatch(3).  Refs that do not match the pattern
-	are not shown.
+<pattern>...::
+	If one or more patterns are given, only refs are shown that
+	match against at least one pattern, either using fnmatch(3) or
+	literally, in the latter case matching completely or from the
+	beginning up to a slash.
 
---shell, --perl, --python, --tcl::
+--shell::
+--perl::
+--python::
+--tcl::
 	If given, strings that substitute `%(fieldname)`
 	placeholders are quoted as string literals suitable for
 	the specified host language.  This is meant to produce
@@ -70,15 +74,23 @@ For all objects, the following names can be used:
 
 refname::
 	The name of the ref (the part after $GIT_DIR/).
+	For a non-ambiguous short name of the ref append `:short`.
+	The option core.warnAmbiguousRefs is used to select the strict
+	abbreviation mode.
 
 objecttype::
 	The type of the object (`blob`, `tree`, `commit`, `tag`).
 
 objectsize::
-	The size of the object (the same as `git-cat-file -s` reports).
+	The size of the object (the same as 'git-cat-file -s' reports).
 
 objectname::
 	The object name (aka SHA-1).
+
+upstream::
+	The name of a local ref which can be considered ``upstream''
+	from the displayed ref. Respects `:short` in the same way as
+	`refname` above.
 
 In addition to the above, for commit and tag objects, the header
 field names (`tree`, `parent`, `object`, `type`, and `tag`) can
@@ -100,6 +112,11 @@ In any case, a field name that refers to a field inapplicable to
 the object referred by the ref does not cause an error.  It
 returns an empty string instead.
 
+As a special case for the date-type fields, you may specify a format for
+the date by adding one of `:default`, `:relative`, `:short`, `:local`,
+`:iso8601` or `:rfc2822` to the end of the fieldname; e.g.
+`%(taggerdate:relative)`.
+
 
 EXAMPLES
 --------
@@ -110,7 +127,7 @@ An example directly producing formatted text.  Show the most recent
 ------------
 #!/bin/sh
 
-git-for-each-ref --count=3 --sort='-*authordate' \
+git for-each-ref --count=3 --sort='-*authordate' \
 --format='From: %(*authorname) %(*authoremail)
 Subject: %(*subject)
 Date: %(*authordate)
@@ -126,7 +143,7 @@ demonstrating the use of --shell.  List the prefixes of all heads::
 ------------
 #!/bin/sh
 
-git-for-each-ref --shell --format="ref=%(refname)" refs/heads | \
+git for-each-ref --shell --format="ref=%(refname)" refs/heads | \
 while read entry
 do
 	eval "$entry"
@@ -180,7 +197,7 @@ Its message reads as:
 	fi
 '
 
-eval=`git-for-each-ref --shell --format="$fmt" \
+eval=`git for-each-ref --shell --format="$fmt" \
 	--sort='*objecttype' \
 	--sort=-taggerdate \
 	refs/tags`

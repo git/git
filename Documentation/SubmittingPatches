@@ -6,11 +6,15 @@ Checklist (and a short version for the impatient):
 	- check for unnecessary whitespace with "git diff --check"
 	  before committing
 	- do not check in commented out code or unneeded files
-	- provide a meaningful commit message
 	- the first line of the commit message should be a short
 	  description and should skip the full stop
+	- the body should provide a meaningful commit message, which:
+		- uses the imperative, present tense: "change",
+		  not "changed" or "changes".
+		- includes motivation for the change, and contrasts
+		  its implementation with previous behaviour
 	- if you want your work included in git.git, add a
-	  "Signed-off-by: Your Name <your@email.com>" line to the
+	  "Signed-off-by: Your Name <you@example.com>" line to the
 	  commit message (or just use the option "-s" when
 	  committing) to confirm that you agree to the Developer's
 	  Certificate of Origin
@@ -20,9 +24,6 @@ Checklist (and a short version for the impatient):
 	Patch:
 
 	- use "git format-patch -M" to create the patch
-	- send your patch to <git@vger.kernel.org>. If you use
-	  git-send-email(1), please test it first by sending
-	  email to yourself.
 	- do not PGP sign your patch
 	- do not attach your patch, but read in the mail
 	  body, unless you cannot teach your mailer to
@@ -31,13 +32,15 @@ Checklist (and a short version for the impatient):
 	  corrupt whitespaces.
 	- provide additional information (which is unsuitable for
 	  the commit message) between the "---" and the diffstat
-	- send the patch to the list (git@vger.kernel.org) and the
-	  maintainer (gitster@pobox.com).
 	- if you change, add, or remove a command line option or
 	  make some other user interface change, the associated
 	  documentation should be updated as well.
 	- if your name is not writable in ASCII, make sure that
 	  you send off a message in the correct encoding.
+	- send the patch to the list (git@vger.kernel.org) and the
+	  maintainer (gitster@pobox.com) if (and only if) the patch
+	  is ready for inclusion. If you use git-send-email(1),
+	  please test it first by sending email to yourself.
 
 Long version:
 
@@ -63,6 +66,14 @@ Describe the technical detail of the change(s).
 
 If your description starts to get too long, that's a sign that you
 probably need to split up your commit to finer grained pieces.
+That being said, patches which plainly describe the things that
+help reviewers check the patch, and future maintainers understand
+the code, are the most beautiful patches.  Descriptions that summarise
+the point in the subject well, and describe the motivation for the
+change, the approach taken by the change, and if relevant how this
+differs substantially from the prior version, can be found on Usenet
+archives back into the late 80's.  Consider it like good Netiquette,
+but for code.
 
 Oh, another thing.  I am picky about whitespaces.  Make sure your
 changes do not trigger errors with the sample pre-commit hook shipped
@@ -72,7 +83,7 @@ run git diff --check on your changes before you commit.
 
 (1a) Try to be nice to older C compilers
 
-We try to support wide range of C compilers to compile
+We try to support a wide range of C compilers to compile
 git with. That means that you should not use C99 initializers, even
 if a lot of compilers grok it.
 
@@ -113,7 +124,12 @@ lose tabs that way if you are not careful.
 
 It is a common convention to prefix your subject line with
 [PATCH].  This lets people easily distinguish patches from other
-e-mail discussions.
+e-mail discussions.  Use of additional markers after PATCH and
+the closing bracket to mark the nature of the patch is also
+encouraged.  E.g. [PATCH/RFC] is often used when the patch is
+not ready to be applied but it is for discussion, [PATCH v2],
+[PATCH v3] etc. are often seen when you are sending an update to
+what you have previously sent.
 
 "git format-patch" command follows the best current practice to
 format the body of an e-mail message.  At the beginning of the
@@ -158,7 +174,8 @@ Note that your maintainer does not necessarily read everything
 on the git mailing list.  If your patch is for discussion first,
 send it "To:" the mailing list, and optionally "cc:" him.  If it
 is trivially correct or after the list reached a consensus, send
-it "To:" the maintainer and optionally "cc:" the list.
+it "To:" the maintainer and optionally "cc:" the list for
+inclusion.
 
 Also note that your maintainer does not actively involve himself in
 maintaining what are in contrib/ hierarchy.  When you send fixes and
@@ -211,10 +228,56 @@ then you just add a line saying
 This line can be automatically added by git if you run the git-commit
 command with the -s option.
 
-Some people also put extra tags at the end.  They'll just be ignored for
-now, but you can do this to mark internal company procedures or just
-point out some special detail about the sign-off.
+Notice that you can place your own Signed-off-by: line when
+forwarding somebody else's patch with the above rules for
+D-C-O.  Indeed you are encouraged to do so.  Do not forget to
+place an in-body "From: " line at the beginning to properly attribute
+the change to its true author (see (2) above).
 
+Also notice that a real name is used in the Signed-off-by: line. Please
+don't hide your real name.
+
+Some people also put extra tags at the end.
+
+"Acked-by:" says that the patch was reviewed by the person who
+is more familiar with the issues and the area the patch attempts
+to modify.  "Tested-by:" says the patch was tested by the person
+and found to have the desired effect.
+
+------------------------------------------------
+An ideal patch flow
+
+Here is an ideal patch flow for this project the current maintainer
+suggests to the contributors:
+
+ (0) You come up with an itch.  You code it up.
+
+ (1) Send it to the list and cc people who may need to know about
+     the change.
+
+     The people who may need to know are the ones whose code you
+     are butchering.  These people happen to be the ones who are
+     most likely to be knowledgeable enough to help you, but
+     they have no obligation to help you (i.e. you ask for help,
+     don't demand).  "git log -p -- $area_you_are_modifying" would
+     help you find out who they are.
+
+ (2) You get comments and suggestions for improvements.  You may
+     even get them in a "on top of your change" patch form.
+
+ (3) Polish, refine, and re-send to the list and the people who
+     spend their time to improve your patch.  Go back to step (2).
+
+ (4) The list forms consensus that the last round of your patch is
+     good.  Send it to the list and cc the maintainer.
+
+ (5) A topic branch is created with the patch and is merged to 'next',
+     and cooked further and eventually graduates to 'master'.
+
+In any time between the (2)-(3) cycle, the maintainer may pick it up
+from the list and queue it to 'pu', in order to make it easier for
+people play with it without having to pick up and apply the patch to
+their trees themselves.
 
 ------------------------------------------------
 MUA specific hints
@@ -253,7 +316,7 @@ If it does not apply correctly, there can be various reasons.
   patch appropriately.
 
 * Your MUA corrupted your patch; "am" would complain that
-  the patch does not apply.  Look at .dotest/ subdirectory and
+  the patch does not apply.  Look at .git/rebase-apply/ subdirectory and
   see what 'patch' file contains and check for the common
   corruption patterns mentioned above.
 
@@ -325,8 +388,35 @@ Thunderbird
 
 (A Large Angry SCM)
 
+By default, Thunderbird will both wrap emails as well as flag them as
+being 'format=flowed', both of which will make the resulting email unusable
+by git.
+
 Here are some hints on how to successfully submit patches inline using
 Thunderbird.
+
+There are two different approaches.  One approach is to configure
+Thunderbird to not mangle patches.  The second approach is to use
+an external editor to keep Thunderbird from mangling the patches.
+
+Approach #1 (configuration):
+
+This recipe is current as of Thunderbird 2.0.0.19.  Three steps:
+  1.  Configure your mail server composition as plain text
+      Edit...Account Settings...Composition & Addressing,
+        uncheck 'Compose Messages in HTML'.
+  2.  Configure your general composition window to not wrap
+      Edit..Preferences..Composition, wrap plain text messages at 0
+  3.  Disable the use of format=flowed
+      Edit..Preferences..Advanced..Config Editor.  Search for:
+        mailnews.send_plaintext_flowed
+      toggle it to make sure it is set to 'false'.
+
+After that is done, you should be able to compose email as you
+otherwise would (cut + paste, git-format-patch | git-imap-send, etc),
+and the patches should not be mangled.
+
+Approach #2 (external editor):
 
 This recipe appears to work with the current [*1*] Thunderbird from Suse.
 
@@ -371,6 +461,11 @@ settings but I haven't tried, yet.
 	mail.identity.default.compose_html	=> false
 	mail.identity.id?.compose_html		=> false
 
+(Lukas Sandström)
+
+There is a script in contrib/thunderbird-patch-inline which can help
+you include patches with Thunderbird in an easy way. To use it, do the
+steps above and then use the script as the external editor.
 
 Gnus
 ----
@@ -403,3 +498,40 @@ This should help you to submit patches inline using KMail.
 
 5) Back in the compose window: add whatever other text you wish to the
 message, complete the addressing and subject fields, and press send.
+
+
+Gmail
+-----
+
+GMail does not appear to have any way to turn off line wrapping in the web
+interface, so this will mangle any emails that you send.  You can however
+use any IMAP email client to connect to the google imap server, and forward
+the emails through that.  Just make sure to disable line wrapping in that
+email client.  Alternatively, use "git send-email" instead.
+
+Submitting properly formatted patches via Gmail is simple now that
+IMAP support is available. First, edit your ~/.gitconfig to specify your
+account settings:
+
+[imap]
+	folder = "[Gmail]/Drafts"
+	host = imaps://imap.gmail.com
+	user = user@gmail.com
+	pass = p4ssw0rd
+	port = 993
+	sslverify = false
+
+You might need to instead use: folder = "[Google Mail]/Drafts" if you get an error
+that the "Folder doesn't exist".
+
+Next, ensure that your Gmail settings are correct. In "Settings" the
+"Use Unicode (UTF-8) encoding for outgoing messages" should be checked.
+
+Once your commits are ready to send to the mailing list, run the following
+command to send the patch emails to your Gmail Drafts folder.
+
+	$ git format-patch -M --stdout origin/master | git imap-send
+
+Go to your Gmail account, open the Drafts folder, find the patch email, fill
+in the To: and CC: fields and send away!
+

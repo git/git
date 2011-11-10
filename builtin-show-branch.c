@@ -4,7 +4,7 @@
 #include "builtin.h"
 
 static const char show_branch_usage[] =
-"git-show-branch [--sparse] [--current] [--all] [--remotes] [--topo-order] [--more=count | --list | --independent | --merge-base ] [--topics] [<refs>...] | --reflog[=n[,b]] <branch>";
+"git show-branch [--sparse] [--current] [--all] [--remotes] [--topo-order] [--more=count | --list | --independent | --merge-base ] [--topics] [<refs>...] | --reflog[=n[,b]] <branch>";
 static const char show_branch_usage_reflog[] =
 "--reflog is incompatible with --all, --remotes, --independent or --merge-base";
 
@@ -259,16 +259,14 @@ static void join_revs(struct commit_list **list_p,
 
 static void show_one_commit(struct commit *commit, int no_name)
 {
-	char *pretty = NULL;
+	struct strbuf pretty = STRBUF_INIT;
 	const char *pretty_str = "(unavailable)";
-	unsigned long pretty_len = 0;
 	struct commit_name *name = commit->util;
 
 	if (commit->object.parsed) {
-		pretty_print_commit(CMIT_FMT_ONELINE, commit, ~0,
-				    &pretty, &pretty_len,
-				    0, NULL, NULL, 0);
-		pretty_str = pretty;
+		pretty_print_commit(CMIT_FMT_ONELINE, commit,
+				    &pretty, 0, NULL, NULL, 0, 0);
+		pretty_str = pretty.buf;
 	}
 	if (!prefixcmp(pretty_str, "[PATCH] "))
 		pretty_str += 8;
@@ -289,7 +287,7 @@ static void show_one_commit(struct commit *commit, int no_name)
 			       find_unique_abbrev(commit->object.sha1, 7));
 	}
 	puts(pretty_str);
-	free(pretty);
+	strbuf_release(&pretty);
 }
 
 static char *ref_name[MAX_REVS + 1];
@@ -367,8 +365,7 @@ static int append_ref(const char *refname, const unsigned char *sha1,
 				return 0;
 	}
 	if (MAX_REVS <= ref_name_cnt) {
-		fprintf(stderr, "warning: ignoring %s; "
-			"cannot handle more than %d refs\n",
+		warning("ignoring %s; cannot handle more than %d refs",
 			refname, MAX_REVS);
 		return 0;
 	}
@@ -534,9 +531,11 @@ static void append_one_rev(const char *av)
 	die("bad sha1 reference %s", av);
 }
 
-static int git_show_branch_config(const char *var, const char *value)
+static int git_show_branch_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, "showbranch.default")) {
+		if (!value)
+			return config_error_nonbool(var);
 		if (default_alloc <= default_num + 1) {
 			default_alloc = default_alloc * 3 / 2 + 20;
 			default_arg = xrealloc(default_arg, sizeof *default_arg * default_alloc);
@@ -546,7 +545,7 @@ static int git_show_branch_config(const char *var, const char *value)
 		return 0;
 	}
 
-	return git_default_config(var, value);
+	return git_default_config(var, value, cb);
 }
 
 static int omit_in_dense(struct commit *commit, struct commit **rev, int n)
@@ -610,7 +609,7 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 	int reflog = 0;
 	const char *reflog_base = NULL;
 
-	git_config(git_show_branch_config);
+	git_config(git_show_branch_config, NULL);
 
 	/* If nothing is specified, try the default first */
 	if (ac == 1 && default_num) {
@@ -781,8 +780,8 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 				has_head++;
 		}
 		if (!has_head) {
-			int pfxlen = strlen("refs/heads/");
-			append_one_rev(head + pfxlen);
+			int offset = !prefixcmp(head, "refs/heads/") ? 11 : 0;
+			append_one_rev(head + offset);
 		}
 	}
 

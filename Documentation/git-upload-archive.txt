@@ -8,7 +8,7 @@ git-upload-archive - Send archive back to git-archive
 
 SYNOPSIS
 --------
-'git-upload-archive' <directory>
+'git upload-archive' <directory>
 
 DESCRIPTION
 -----------
@@ -34,4 +34,4 @@ Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[1] suite

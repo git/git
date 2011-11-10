@@ -23,71 +23,75 @@
  */
 
 #include "cache.h"
+#include "exec_cmd.h"
+#ifdef NO_OPENSSL
+typedef void *SSL;
+#endif
 
-typedef struct store_conf {
+struct store_conf {
 	char *name;
 	const char *path; /* should this be here? its interpretation is driver-specific */
 	char *map_inbox;
 	char *trash;
 	unsigned max_size; /* off_t is overkill */
 	unsigned trash_remote_new:1, trash_only_new:1;
-} store_conf_t;
+};
 
-typedef struct string_list {
+struct string_list {
 	struct string_list *next;
 	char string[1];
-} string_list_t;
+};
 
-typedef struct channel_conf {
+struct channel_conf {
 	struct channel_conf *next;
 	char *name;
-	store_conf_t *master, *slave;
+	struct store_conf *master, *slave;
 	char *master_name, *slave_name;
 	char *sync_state;
-	string_list_t *patterns;
+	struct string_list *patterns;
 	int mops, sops;
 	unsigned max_messages; /* for slave only */
-} channel_conf_t;
+};
 
-typedef struct group_conf {
+struct group_conf {
 	struct group_conf *next;
 	char *name;
-	string_list_t *channels;
-} group_conf_t;
+	struct string_list *channels;
+};
 
 /* For message->status */
 #define M_RECENT       (1<<0) /* unsyncable flag; maildir_* depend on this being 1<<0 */
 #define M_DEAD         (1<<1) /* expunged */
 #define M_FLAGS        (1<<2) /* flags fetched */
 
-typedef struct message {
+struct message {
 	struct message *next;
-	/* string_list_t *keywords; */
+	/* struct string_list *keywords; */
 	size_t size; /* zero implies "not fetched" */
 	int uid;
 	unsigned char flags, status;
-} message_t;
+};
 
-typedef struct store {
-	store_conf_t *conf; /* foreign */
+struct store {
+	struct store_conf *conf; /* foreign */
 
 	/* currently open mailbox */
 	const char *name; /* foreign! maybe preset? */
 	char *path; /* own */
-	message_t *msgs; /* own */
+	struct message *msgs; /* own */
 	int uidvalidity;
 	unsigned char opts; /* maybe preset? */
 	/* note that the following do _not_ reflect stats from msgs, but mailbox totals */
 	int count; /* # of messages */
 	int recent; /* # of recent messages - don't trust this beyond the initial read */
-} store_t;
+};
 
-typedef struct {
+struct msg_data {
 	char *data;
 	int len;
 	unsigned char flags;
 	unsigned int crlf:1;
-} msg_data_t;
+};
 
 #define DRV_OK          0
 #define DRV_MSG_BAD     -1
@@ -96,77 +100,94 @@ typedef struct {
 
 static int Verbose, Quiet;
 
-static void imap_info( const char *, ... );
-static void imap_warn( const char *, ... );
+static void imap_info(const char *, ...);
+static void imap_warn(const char *, ...);
 
-static char *next_arg( char ** );
+static char *next_arg(char **);
 
-static void free_generic_messages( message_t * );
+static void free_generic_messages(struct message *);
 
-static int nfsnprintf( char *buf, int blen, const char *fmt, ... );
+static int nfsnprintf(char *buf, int blen, const char *fmt, ...);
 
+static int nfvasprintf(char **strp, const char *fmt, va_list ap)
+{
+	int len;
+	char tmp[8192];
 
-static void arc4_init( void );
-static unsigned char arc4_getbyte( void );
+	len = vsnprintf(tmp, sizeof(tmp), fmt, ap);
+	if (len < 0)
+		die("Fatal: Out of memory");
+	if (len >= sizeof(tmp))
+		die("imap command overflow!");
+	*strp = xmemdupz(tmp, len);
+	return len;
+}
 
-typedef struct imap_server_conf {
+static void arc4_init(void);
+static unsigned char arc4_getbyte(void);
+
+struct imap_server_conf {
 	char *name;
 	char *tunnel;
 	char *host;
 	int port;
 	char *user;
 	char *pass;
-} imap_server_conf_t;
+	int use_ssl;
+	int ssl_verify;
+	int use_html;
+};
 
-typedef struct imap_store_conf {
-	store_conf_t gen;
-	imap_server_conf_t *server;
+struct imap_store_conf {
+	struct store_conf gen;
+	struct imap_server_conf *server;
 	unsigned use_namespace:1;
-} imap_store_conf_t;
+};
 
-#define NIL	(void*)0x1
-#define LIST	(void*)0x2
+#define NIL	(void *)0x1
+#define LIST	(void *)0x2
 
-typedef struct _list {
-	struct _list *next, *child;
+struct imap_list {
+	struct imap_list *next, *child;
 	char *val;
 	int len;
-} list_t;
+};
 
-typedef struct {
+struct imap_socket {
 	int fd;
-} Socket_t;
+	SSL *ssl;
+};
 
-typedef struct {
-	Socket_t sock;
+struct imap_buffer {
+	struct imap_socket sock;
 	int bytes;
 	int offset;
 	char buf[1024];
-} buffer_t;
+};
 
 struct imap_cmd;
 
-typedef struct imap {
+struct imap {
 	int uidnext; /* from SELECT responses */
-	list_t *ns_personal, *ns_other, *ns_shared; /* NAMESPACE info */
+	struct imap_list *ns_personal, *ns_other, *ns_shared; /* NAMESPACE info */
 	unsigned caps, rcaps; /* CAPABILITY results */
 	/* command queue */
 	int nexttag, num_in_progress, literal_pending;
 	struct imap_cmd *in_progress, **in_progress_append;
-	buffer_t buf; /* this is BIG, so put it last */
-} imap_t;
+	struct imap_buffer buf; /* this is BIG, so put it last */
+};
 
-typedef struct imap_store {
-	store_t gen;
+struct imap_store {
+	struct store gen;
 	int uidvalidity;
-	imap_t *imap;
+	struct imap *imap;
 	const char *prefix;
 	unsigned /*currentnc:1,*/ trashnc:1;
-} imap_store_t;
+};
 
 struct imap_cmd_cb {
-	int (*cont)( imap_store_t *ctx, struct imap_cmd *cmd, const char *prompt );
-	void (*done)( imap_store_t *ctx, struct imap_cmd *cmd, int response);
+	int (*cont)(struct imap_store *ctx, struct imap_cmd *cmd, const char *prompt);
+	void (*done)(struct imap_store *ctx, struct imap_cmd *cmd, int response);
 	void *ctx;
 	char *data;
 	int dlen;
@@ -188,6 +209,7 @@ enum CAPABILITY {
 	UIDPLUS,
 	LITERALPLUS,
 	NAMESPACE,
+	STARTTLS,
 };
 
 static const char *cap_list[] = {
@@ -195,13 +217,14 @@ static const char *cap_list[] = {
 	"UIDPLUS",
 	"LITERAL+",
 	"NAMESPACE",
+	"STARTTLS",
 };
 
 #define RESP_OK    0
 #define RESP_NO    1
 #define RESP_BAD   2
 
-static int get_cmd_result( imap_store_t *ctx, struct imap_cmd *tcmd );
+static int get_cmd_result(struct imap_store *ctx, struct imap_cmd *tcmd);
 
 
 static const char *Flags[] = {
@@ -212,42 +235,137 @@ static const char *Flags[] = {
 	"Deleted",
 };
 
-static void
-socket_perror( const char *func, Socket_t *sock, int ret )
+#ifndef NO_OPENSSL
+static void ssl_socket_perror(const char *func)
 {
-	if (ret < 0)
-		perror( func );
+	fprintf(stderr, "%s: %s\n", func, ERR_error_string(ERR_get_error(), 0));
+}
+#endif
+
+static void socket_perror(const char *func, struct imap_socket *sock, int ret)
+{
+#ifndef NO_OPENSSL
+	if (sock->ssl) {
+		int sslerr = SSL_get_error(sock->ssl, ret);
+		switch (sslerr) {
+		case SSL_ERROR_NONE:
+			break;
+		case SSL_ERROR_SYSCALL:
+			perror("SSL_connect");
+			break;
+		default:
+			ssl_socket_perror("SSL_connect");
+			break;
+		}
+	} else
+#endif
+	{
+		if (ret < 0)
+			perror(func);
+		else
+			fprintf(stderr, "%s: unexpected EOF\n", func);
+	}
+}
+
+static int ssl_socket_connect(struct imap_socket *sock, int use_tls_only, int verify)
+{
+#ifdef NO_OPENSSL
+	fprintf(stderr, "SSL requested but SSL support not compiled in\n");
+	return -1;
+#else
+	SSL_METHOD *meth;
+	SSL_CTX *ctx;
+	int ret;
+
+	SSL_library_init();
+	SSL_load_error_strings();
+
+	if (use_tls_only)
+		meth = TLSv1_method();
 	else
-		fprintf( stderr, "%s: unexpected EOF\n", func );
+		meth = SSLv23_method();
+
+	if (!meth) {
+		ssl_socket_perror("SSLv23_method");
+		return -1;
+	}
+
+	ctx = SSL_CTX_new(meth);
+
+	if (verify)
+		SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, NULL);
+
+	if (!SSL_CTX_set_default_verify_paths(ctx)) {
+		ssl_socket_perror("SSL_CTX_set_default_verify_paths");
+		return -1;
+	}
+	sock->ssl = SSL_new(ctx);
+	if (!sock->ssl) {
+		ssl_socket_perror("SSL_new");
+		return -1;
+	}
+	if (!SSL_set_fd(sock->ssl, sock->fd)) {
+		ssl_socket_perror("SSL_set_fd");
+		return -1;
+	}
+
+	ret = SSL_connect(sock->ssl);
+	if (ret <= 0) {
+		socket_perror("SSL_connect", sock, ret);
+		return -1;
+	}
+
+	return 0;
+#endif
 }
 
-static int
-socket_read( Socket_t *sock, char *buf, int len )
+static int socket_read(struct imap_socket *sock, char *buf, int len)
 {
-	ssize_t n = xread( sock->fd, buf, len );
+	ssize_t n;
+#ifndef NO_OPENSSL
+	if (sock->ssl)
+		n = SSL_read(sock->ssl, buf, len);
+	else
+#endif
+		n = xread(sock->fd, buf, len);
 	if (n <= 0) {
-		socket_perror( "read", sock, n );
-		close( sock->fd );
+		socket_perror("read", sock, n);
+		close(sock->fd);
 		sock->fd = -1;
 	}
 	return n;
 }
 
-static int
-socket_write( Socket_t *sock, const char *buf, int len )
+static int socket_write(struct imap_socket *sock, const char *buf, int len)
 {
-	int n = write_in_full( sock->fd, buf, len );
+	int n;
+#ifndef NO_OPENSSL
+	if (sock->ssl)
+		n = SSL_write(sock->ssl, buf, len);
+	else
+#endif
+		n = write_in_full(sock->fd, buf, len);
 	if (n != len) {
-		socket_perror( "write", sock, n );
-		close( sock->fd );
+		socket_perror("write", sock, n);
+		close(sock->fd);
 		sock->fd = -1;
 	}
 	return n;
+}
+
+static void socket_shutdown(struct imap_socket *sock)
+{
+#ifndef NO_OPENSSL
+	if (sock->ssl) {
+		SSL_shutdown(sock->ssl);
+		SSL_free(sock->ssl);
+	}
+#endif
+	close(sock->fd);
 }
 
 /* simple line buffering */
-static int
-buffer_gets( buffer_t * b, char **s )
+static int buffer_gets(struct imap_buffer *b, char **s)
 {
 	int n;
 	int start = b->offset;
@@ -261,7 +379,7 @@ buffer_gets( buffer_t * b, char **s )
 				/* shift down used bytes */
 				*s = b->buf;
 
-				assert( start <= b->bytes );
+				assert(start <= b->bytes);
 				n = b->bytes - start;
 
 				if (n)
@@ -271,8 +389,8 @@ buffer_gets( buffer_t * b, char **s )
 				start = 0;
 			}
 
-			n = socket_read( &b->sock, b->buf + b->bytes,
-					 sizeof(b->buf) - b->bytes );
+			n = socket_read(&b->sock, b->buf + b->bytes,
+					 sizeof(b->buf) - b->bytes);
 
 			if (n <= 0)
 				return -1;
@@ -281,12 +399,12 @@ buffer_gets( buffer_t * b, char **s )
 		}
 
 		if (b->buf[b->offset] == '\r') {
-			assert( b->offset + 1 < b->bytes );
+			assert(b->offset + 1 < b->bytes);
 			if (b->buf[b->offset + 1] == '\n') {
 				b->buf[b->offset] = 0;  /* terminate the string */
 				b->offset += 2; /* next line */
 				if (Verbose)
-					puts( *s );
+					puts(*s);
 				return 0;
 			}
 		}
@@ -296,39 +414,36 @@ buffer_gets( buffer_t * b, char **s )
 	/* not reached */
 }
 
-static void
-imap_info( const char *msg, ... )
+static void imap_info(const char *msg, ...)
 {
 	va_list va;
 
 	if (!Quiet) {
-		va_start( va, msg );
-		vprintf( msg, va );
-		va_end( va );
-		fflush( stdout );
+		va_start(va, msg);
+		vprintf(msg, va);
+		va_end(va);
+		fflush(stdout);
 	}
 }
 
-static void
-imap_warn( const char *msg, ... )
+static void imap_warn(const char *msg, ...)
 {
 	va_list va;
 
 	if (Quiet < 2) {
-		va_start( va, msg );
-		vfprintf( stderr, msg, va );
-		va_end( va );
+		va_start(va, msg);
+		vfprintf(stderr, msg, va);
+		va_end(va);
 	}
 }
 
-static char *
-next_arg( char **s )
+static char *next_arg(char **s)
 {
 	char *ret;
 
 	if (!s || !*s)
 		return NULL;
-	while (isspace( (unsigned char) **s ))
+	while (isspace((unsigned char) **s))
 		(*s)++;
 	if (!**s) {
 		*s = NULL;
@@ -337,10 +452,10 @@ next_arg( char **s )
 	if (**s == '"') {
 		++*s;
 		ret = *s;
-		*s = strchr( *s, '"' );
+		*s = strchr(*s, '"');
 	} else {
 		ret = *s;
-		while (**s && !isspace( (unsigned char) **s ))
+		while (**s && !isspace((unsigned char) **s))
 			(*s)++;
 	}
 	if (*s) {
@@ -352,27 +467,25 @@ next_arg( char **s )
 	return ret;
 }
 
-static void
-free_generic_messages( message_t *msgs )
+static void free_generic_messages(struct message *msgs)
 {
-	message_t *tmsg;
+	struct message *tmsg;
 
 	for (; msgs; msgs = tmsg) {
 		tmsg = msgs->next;
-		free( msgs );
+		free(msgs);
 	}
 }
 
-static int
-nfsnprintf( char *buf, int blen, const char *fmt, ... )
+static int nfsnprintf(char *buf, int blen, const char *fmt, ...)
 {
 	int ret;
 	va_list va;
 
-	va_start( va, fmt );
-	if (blen <= 0 || (unsigned)(ret = vsnprintf( buf, blen, fmt, va )) >= (unsigned)blen)
-		die( "Fatal: buffer too small. Please report a bug.\n");
-	va_end( va );
+	va_start(va, fmt);
+	if (blen <= 0 || (unsigned)(ret = vsnprintf(buf, blen, fmt, va)) >= (unsigned)blen)
+		die("Fatal: buffer too small. Please report a bug.");
+	va_end(va);
 	return ret;
 }
 
@@ -380,21 +493,20 @@ static struct {
 	unsigned char i, j, s[256];
 } rs;
 
-static void
-arc4_init( void )
+static void arc4_init(void)
 {
 	int i, fd;
 	unsigned char j, si, dat[128];
 
-	if ((fd = open( "/dev/urandom", O_RDONLY )) < 0 && (fd = open( "/dev/random", O_RDONLY )) < 0) {
-		fprintf( stderr, "Fatal: no random number source available.\n" );
-		exit( 3 );
+	if ((fd = open("/dev/urandom", O_RDONLY)) < 0 && (fd = open("/dev/random", O_RDONLY)) < 0) {
+		fprintf(stderr, "Fatal: no random number source available.\n");
+		exit(3);
 	}
-	if (read_in_full( fd, dat, 128 ) != 128) {
-		fprintf( stderr, "Fatal: cannot read random number source.\n" );
-		exit( 3 );
+	if (read_in_full(fd, dat, 128) != 128) {
+		fprintf(stderr, "Fatal: cannot read random number source.\n");
+		exit(3);
 	}
-	close( fd );
+	close(fd);
 
 	for (i = 0; i < 256; i++)
 		rs.s[i] = i;
@@ -410,8 +522,7 @@ arc4_init( void )
 		arc4_getbyte();
 }
 
-static unsigned char
-arc4_getbyte( void )
+static unsigned char arc4_getbyte(void)
 {
 	unsigned char si, sj;
 
@@ -424,54 +535,53 @@ arc4_getbyte( void )
 	return rs.s[(si + sj) & 0xff];
 }
 
-static struct imap_cmd *
-v_issue_imap_cmd( imap_store_t *ctx, struct imap_cmd_cb *cb,
-		  const char *fmt, va_list ap )
+static struct imap_cmd *v_issue_imap_cmd(struct imap_store *ctx,
+					 struct imap_cmd_cb *cb,
+					 const char *fmt, va_list ap)
 {
-	imap_t *imap = ctx->imap;
+	struct imap *imap = ctx->imap;
 	struct imap_cmd *cmd;
 	int n, bufl;
 	char buf[1024];
 
-	cmd = xmalloc( sizeof(struct imap_cmd) );
-	nfvasprintf( &cmd->cmd, fmt, ap );
+	cmd = xmalloc(sizeof(struct imap_cmd));
+	nfvasprintf(&cmd->cmd, fmt, ap);
 	cmd->tag = ++imap->nexttag;
 
 	if (cb)
 		cmd->cb = *cb;
 	else
-		memset( &cmd->cb, 0, sizeof(cmd->cb) );
+		memset(&cmd->cb, 0, sizeof(cmd->cb));
 
 	while (imap->literal_pending)
-		get_cmd_result( ctx, NULL );
+		get_cmd_result(ctx, NULL);
 
-	bufl = nfsnprintf( buf, sizeof(buf), cmd->cb.data ? CAP(LITERALPLUS) ?
+	bufl = nfsnprintf(buf, sizeof(buf), cmd->cb.data ? CAP(LITERALPLUS) ?
 			   "%d %s{%d+}\r\n" : "%d %s{%d}\r\n" : "%d %s\r\n",
-			   cmd->tag, cmd->cmd, cmd->cb.dlen );
+			   cmd->tag, cmd->cmd, cmd->cb.dlen);
 	if (Verbose) {
 		if (imap->num_in_progress)
-			printf( "(%d in progress) ", imap->num_in_progress );
-		if (memcmp( cmd->cmd, "LOGIN", 5 ))
-			printf( ">>> %s", buf );
+			printf("(%d in progress) ", imap->num_in_progress);
+		if (memcmp(cmd->cmd, "LOGIN", 5))
+			printf(">>> %s", buf);
 		else
-			printf( ">>> %d LOGIN <user> <pass>\n", cmd->tag );
+			printf(">>> %d LOGIN <user> <pass>\n", cmd->tag);
 	}
-	if (socket_write( &imap->buf.sock, buf, bufl ) != bufl) {
-		free( cmd->cmd );
-		free( cmd );
-		if (cb && cb->data)
-			free( cb->data );
+	if (socket_write(&imap->buf.sock, buf, bufl) != bufl) {
+		free(cmd->cmd);
+		free(cmd);
+		if (cb)
+			free(cb->data);
 		return NULL;
 	}
 	if (cmd->cb.data) {
 		if (CAP(LITERALPLUS)) {
-			n = socket_write( &imap->buf.sock, cmd->cb.data, cmd->cb.dlen );
-			free( cmd->cb.data );
+			n = socket_write(&imap->buf.sock, cmd->cb.data, cmd->cb.dlen);
+			free(cmd->cb.data);
 			if (n != cmd->cb.dlen ||
-			    (n = socket_write( &imap->buf.sock, "\r\n", 2 )) != 2)
-			{
-				free( cmd->cmd );
-				free( cmd );
+			    socket_write(&imap->buf.sock, "\r\n", 2) != 2) {
+				free(cmd->cmd);
+				free(cmd);
 				return NULL;
 			}
 			cmd->cb.data = NULL;
@@ -486,109 +596,106 @@ v_issue_imap_cmd( imap_store_t *ctx, struct imap_cmd_cb *cb,
 	return cmd;
 }
 
-static struct imap_cmd *
-issue_imap_cmd( imap_store_t *ctx, struct imap_cmd_cb *cb, const char *fmt, ... )
+static struct imap_cmd *issue_imap_cmd(struct imap_store *ctx,
+				       struct imap_cmd_cb *cb,
+				       const char *fmt, ...)
 {
 	struct imap_cmd *ret;
 	va_list ap;
 
-	va_start( ap, fmt );
-	ret = v_issue_imap_cmd( ctx, cb, fmt, ap );
-	va_end( ap );
+	va_start(ap, fmt);
+	ret = v_issue_imap_cmd(ctx, cb, fmt, ap);
+	va_end(ap);
 	return ret;
 }
 
-static int
-imap_exec( imap_store_t *ctx, struct imap_cmd_cb *cb, const char *fmt, ... )
+static int imap_exec(struct imap_store *ctx, struct imap_cmd_cb *cb,
+		     const char *fmt, ...)
 {
 	va_list ap;
 	struct imap_cmd *cmdp;
 
-	va_start( ap, fmt );
-	cmdp = v_issue_imap_cmd( ctx, cb, fmt, ap );
-	va_end( ap );
+	va_start(ap, fmt);
+	cmdp = v_issue_imap_cmd(ctx, cb, fmt, ap);
+	va_end(ap);
 	if (!cmdp)
 		return RESP_BAD;
 
-	return get_cmd_result( ctx, cmdp );
+	return get_cmd_result(ctx, cmdp);
 }
 
-static int
-imap_exec_m( imap_store_t *ctx, struct imap_cmd_cb *cb, const char *fmt, ... )
+static int imap_exec_m(struct imap_store *ctx, struct imap_cmd_cb *cb,
+		       const char *fmt, ...)
 {
 	va_list ap;
 	struct imap_cmd *cmdp;
 
-	va_start( ap, fmt );
-	cmdp = v_issue_imap_cmd( ctx, cb, fmt, ap );
-	va_end( ap );
+	va_start(ap, fmt);
+	cmdp = v_issue_imap_cmd(ctx, cb, fmt, ap);
+	va_end(ap);
 	if (!cmdp)
 		return DRV_STORE_BAD;
 
-	switch (get_cmd_result( ctx, cmdp )) {
+	switch (get_cmd_result(ctx, cmdp)) {
 	case RESP_BAD: return DRV_STORE_BAD;
 	case RESP_NO: return DRV_MSG_BAD;
 	default: return DRV_OK;
 	}
 }
 
-static int
-is_atom( list_t *list )
+static int is_atom(struct imap_list *list)
 {
 	return list && list->val && list->val != NIL && list->val != LIST;
 }
 
-static int
-is_list( list_t *list )
+static int is_list(struct imap_list *list)
 {
 	return list && list->val == LIST;
 }
 
-static void
-free_list( list_t *list )
+static void free_list(struct imap_list *list)
 {
-	list_t *tmp;
+	struct imap_list *tmp;
 
 	for (; list; list = tmp) {
 		tmp = list->next;
-		if (is_list( list ))
-			free_list( list->child );
-		else if (is_atom( list ))
-			free( list->val );
-		free( list );
+		if (is_list(list))
+			free_list(list->child);
+		else if (is_atom(list))
+			free(list->val);
+		free(list);
 	}
 }
 
-static int
-parse_imap_list_l( imap_t *imap, char **sp, list_t **curp, int level )
+static int parse_imap_list_l(struct imap *imap, char **sp, struct imap_list **curp, int level)
 {
-	list_t *cur;
+	struct imap_list *cur;
 	char *s = *sp, *p;
 	int n, bytes;
 
 	for (;;) {
-		while (isspace( (unsigned char)*s ))
+		while (isspace((unsigned char)*s))
 			s++;
 		if (level && *s == ')') {
 			s++;
 			break;
 		}
-		*curp = cur = xmalloc( sizeof(*cur) );
+		*curp = cur = xmalloc(sizeof(*cur));
 		curp = &cur->next;
 		cur->val = NULL; /* for clean bail */
 		if (*s == '(') {
 			/* sublist */
 			s++;
 			cur->val = LIST;
-			if (parse_imap_list_l( imap, &s, &cur->child, level + 1 ))
+			if (parse_imap_list_l(imap, &s, &cur->child, level + 1))
 				goto bail;
 		} else if (imap && *s == '{') {
 			/* literal */
-			bytes = cur->len = strtol( s + 1, &s, 10 );
+			bytes = cur->len = strtol(s + 1, &s, 10);
 			if (*s != '}')
 				goto bail;
 
-			s = cur->val = xmalloc( cur->len );
+			s = cur->val = xmalloc(cur->len);
 
 			/* dump whats left over in the input buffer */
 			n = imap->buf.bytes - imap->buf.offset;
@@ -597,7 +704,7 @@ parse_imap_list_l( imap_t *imap, char **sp, list_t **curp, int level )
 				/* the entire message fit in the buffer */
 				n = bytes;
 
-			memcpy( s, imap->buf.buf + imap->buf.offset, n );
+			memcpy(s, imap->buf.buf + imap->buf.offset, n);
 			s += n;
 			bytes -= n;
 
@@ -606,13 +713,13 @@ parse_imap_list_l( imap_t *imap, char **sp, list_t **curp, int level )
 
 			/* now read the rest of the message */
 			while (bytes > 0) {
-				if ((n = socket_read (&imap->buf.sock, s, bytes)) <= 0)
+				if ((n = socket_read(&imap->buf.sock, s, bytes)) <= 0)
 					goto bail;
 				s += n;
 				bytes -= n;
 			}
 
-			if (buffer_gets( &imap->buf, &s ))
+			if (buffer_gets(&imap->buf, &s))
 				goto bail;
 		} else if (*s == '"') {
 			/* quoted string */
@@ -623,23 +730,18 @@ parse_imap_list_l( imap_t *imap, char **sp, list_t **curp, int level )
 					goto bail;
 			cur->len = s - p;
 			s++;
-			cur->val = xmalloc( cur->len + 1 );
-			memcpy( cur->val, p, cur->len );
-			cur->val[cur->len] = 0;
+			cur->val = xmemdupz(p, cur->len);
 		} else {
 			/* atom */
 			p = s;
-			for (; *s && !isspace( (unsigned char)*s ); s++)
+			for (; *s && !isspace((unsigned char)*s); s++)
 				if (level && *s == ')')
 					break;
 			cur->len = s - p;
-			if (cur->len == 3 && !memcmp ("NIL", p, 3))
+			if (cur->len == 3 && !memcmp("NIL", p, 3))
 				cur->val = NIL;
-			else {
-				cur->val = xmalloc( cur->len + 1 );
-				memcpy( cur->val, p, cur->len );
-				cur->val[cur->len] = 0;
-			}
+			else
+				cur->val = xmemdupz(p, cur->len);
 		}
 
 		if (!level)
@@ -651,127 +753,122 @@ parse_imap_list_l( imap_t *imap, char **sp, list_t **curp, int level )
 	*curp = NULL;
 	return 0;
 
-  bail:
+bail:
 	*curp = NULL;
 	return -1;
 }
 
-static list_t *
-parse_imap_list( imap_t *imap, char **sp )
+static struct imap_list *parse_imap_list(struct imap *imap, char **sp)
 {
-	list_t *head;
+	struct imap_list *head;
 
-	if (!parse_imap_list_l( imap, sp, &head, 0 ))
+	if (!parse_imap_list_l(imap, sp, &head, 0))
 		return head;
-	free_list( head );
+	free_list(head);
 	return NULL;
 }
 
-static list_t *
-parse_list( char **sp )
+static struct imap_list *parse_list(char **sp)
 {
-	return parse_imap_list( NULL, sp );
+	return parse_imap_list(NULL, sp);
 }
 
-static void
-parse_capability( imap_t *imap, char *cmd )
+static void parse_capability(struct imap *imap, char *cmd)
 {
 	char *arg;
 	unsigned i;
 
 	imap->caps = 0x80000000;
-	while ((arg = next_arg( &cmd )))
+	while ((arg = next_arg(&cmd)))
 		for (i = 0; i < ARRAY_SIZE(cap_list); i++)
-			if (!strcmp( cap_list[i], arg ))
+			if (!strcmp(cap_list[i], arg))
 				imap->caps |= 1 << i;
 	imap->rcaps = imap->caps;
 }
 
-static int
-parse_response_code( imap_store_t *ctx, struct imap_cmd_cb *cb, char *s )
+static int parse_response_code(struct imap_store *ctx, struct imap_cmd_cb *cb,
+			       char *s)
 {
-	imap_t *imap = ctx->imap;
+	struct imap *imap = ctx->imap;
 	char *arg, *p;
 
 	if (*s != '[')
 		return RESP_OK;		/* no response code */
 	s++;
-	if (!(p = strchr( s, ']' ))) {
-		fprintf( stderr, "IMAP error: malformed response code\n" );
+	if (!(p = strchr(s, ']'))) {
+		fprintf(stderr, "IMAP error: malformed response code\n");
 		return RESP_BAD;
 	}
 	*p++ = 0;
-	arg = next_arg( &s );
-	if (!strcmp( "UIDVALIDITY", arg )) {
-		if (!(arg = next_arg( &s )) || !(ctx->gen.uidvalidity = atoi( arg ))) {
-			fprintf( stderr, "IMAP error: malformed UIDVALIDITY status\n" );
+	arg = next_arg(&s);
+	if (!strcmp("UIDVALIDITY", arg)) {
+		if (!(arg = next_arg(&s)) || !(ctx->gen.uidvalidity = atoi(arg))) {
+			fprintf(stderr, "IMAP error: malformed UIDVALIDITY status\n");
 			return RESP_BAD;
 		}
-	} else if (!strcmp( "UIDNEXT", arg )) {
-		if (!(arg = next_arg( &s )) || !(imap->uidnext = atoi( arg ))) {
-			fprintf( stderr, "IMAP error: malformed NEXTUID status\n" );
+	} else if (!strcmp("UIDNEXT", arg)) {
+		if (!(arg = next_arg(&s)) || !(imap->uidnext = atoi(arg))) {
+			fprintf(stderr, "IMAP error: malformed NEXTUID status\n");
 			return RESP_BAD;
 		}
-	} else if (!strcmp( "CAPABILITY", arg )) {
-		parse_capability( imap, s );
-	} else if (!strcmp( "ALERT", arg )) {
+	} else if (!strcmp("CAPABILITY", arg)) {
+		parse_capability(imap, s);
+	} else if (!strcmp("ALERT", arg)) {
 		/* RFC2060 says that these messages MUST be displayed
 		 * to the user
 		 */
-		for (; isspace( (unsigned char)*p ); p++);
-		fprintf( stderr, "*** IMAP ALERT *** %s\n", p );
-	} else if (cb && cb->ctx && !strcmp( "APPENDUID", arg )) {
-		if (!(arg = next_arg( &s )) || !(ctx->gen.uidvalidity = atoi( arg )) ||
-		    !(arg = next_arg( &s )) || !(*(int *)cb->ctx = atoi( arg )))
-		{
-			fprintf( stderr, "IMAP error: malformed APPENDUID status\n" );
+		for (; isspace((unsigned char)*p); p++);
+		fprintf(stderr, "*** IMAP ALERT *** %s\n", p);
+	} else if (cb && cb->ctx && !strcmp("APPENDUID", arg)) {
+		if (!(arg = next_arg(&s)) || !(ctx->gen.uidvalidity = atoi(arg)) ||
+		    !(arg = next_arg(&s)) || !(*(int *)cb->ctx = atoi(arg))) {
+			fprintf(stderr, "IMAP error: malformed APPENDUID status\n");
 			return RESP_BAD;
 		}
 	}
 	return RESP_OK;
 }
 
-static int
-get_cmd_result( imap_store_t *ctx, struct imap_cmd *tcmd )
+static int get_cmd_result(struct imap_store *ctx, struct imap_cmd *tcmd)
 {
-	imap_t *imap = ctx->imap;
+	struct imap *imap = ctx->imap;
 	struct imap_cmd *cmdp, **pcmdp, *ncmdp;
 	char *cmd, *arg, *arg1, *p;
 	int n, resp, resp2, tag;
 
 	for (;;) {
-		if (buffer_gets( &imap->buf, &cmd ))
+		if (buffer_gets(&imap->buf, &cmd))
 			return RESP_BAD;
 
-		arg = next_arg( &cmd );
+		arg = next_arg(&cmd);
 		if (*arg == '*') {
-			arg = next_arg( &cmd );
+			arg = next_arg(&cmd);
 			if (!arg) {
-				fprintf( stderr, "IMAP error: unable to parse untagged response\n" );
+				fprintf(stderr, "IMAP error: unable to parse untagged response\n");
 				return RESP_BAD;
 			}
 
-			if (!strcmp( "NAMESPACE", arg )) {
-				imap->ns_personal = parse_list( &cmd );
-				imap->ns_other = parse_list( &cmd );
-				imap->ns_shared = parse_list( &cmd );
-			} else if (!strcmp( "OK", arg ) || !strcmp( "BAD", arg ) ||
-				   !strcmp( "NO", arg ) || !strcmp( "BYE", arg )) {
-				if ((resp = parse_response_code( ctx, NULL, cmd )) != RESP_OK)
+			if (!strcmp("NAMESPACE", arg)) {
+				imap->ns_personal = parse_list(&cmd);
+				imap->ns_other = parse_list(&cmd);
+				imap->ns_shared = parse_list(&cmd);
+			} else if (!strcmp("OK", arg) || !strcmp("BAD", arg) ||
+				   !strcmp("NO", arg) || !strcmp("BYE", arg)) {
+				if ((resp = parse_response_code(ctx, NULL, cmd)) != RESP_OK)
 					return resp;
-			} else if (!strcmp( "CAPABILITY", arg ))
-				parse_capability( imap, cmd );
-			else if ((arg1 = next_arg( &cmd ))) {
-				if (!strcmp( "EXISTS", arg1 ))
-					ctx->gen.count = atoi( arg );
-				else if (!strcmp( "RECENT", arg1 ))
-					ctx->gen.recent = atoi( arg );
+			} else if (!strcmp("CAPABILITY", arg))
+				parse_capability(imap, cmd);
+			else if ((arg1 = next_arg(&cmd))) {
+				if (!strcmp("EXISTS", arg1))
+					ctx->gen.count = atoi(arg);
+				else if (!strcmp("RECENT", arg1))
+					ctx->gen.recent = atoi(arg);
 			} else {
-				fprintf( stderr, "IMAP error: unable to parse untagged response\n" );
+				fprintf(stderr, "IMAP error: unable to parse untagged response\n");
 				return RESP_BAD;
 			}
 		} else if (!imap->in_progress) {
-			fprintf( stderr, "IMAP error: unexpected reply: %s %s\n", arg, cmd ? cmd : "" );
+			fprintf(stderr, "IMAP error: unexpected reply: %s %s\n", arg, cmd ? cmd : "");
 			return RESP_BAD;
 		} else if (*arg == '+') {
 			/* This can happen only with the last command underway, as
@@ -779,57 +876,57 @@ get_cmd_result( imap_store_t *ctx, struct imap_cmd *tcmd )
 			cmdp = (struct imap_cmd *)((char *)imap->in_progress_append -
 			       offsetof(struct imap_cmd, next));
 			if (cmdp->cb.data) {
-				n = socket_write( &imap->buf.sock, cmdp->cb.data, cmdp->cb.dlen );
-				free( cmdp->cb.data );
+				n = socket_write(&imap->buf.sock, cmdp->cb.data, cmdp->cb.dlen);
+				free(cmdp->cb.data);
 				cmdp->cb.data = NULL;
 				if (n != (int)cmdp->cb.dlen)
 					return RESP_BAD;
 			} else if (cmdp->cb.cont) {
-				if (cmdp->cb.cont( ctx, cmdp, cmd ))
+				if (cmdp->cb.cont(ctx, cmdp, cmd))
 					return RESP_BAD;
 			} else {
-				fprintf( stderr, "IMAP error: unexpected command continuation request\n" );
+				fprintf(stderr, "IMAP error: unexpected command continuation request\n");
 				return RESP_BAD;
 			}
-			if (socket_write( &imap->buf.sock, "\r\n", 2 ) != 2)
+			if (socket_write(&imap->buf.sock, "\r\n", 2) != 2)
 				return RESP_BAD;
 			if (!cmdp->cb.cont)
 				imap->literal_pending = 0;
 			if (!tcmd)
 				return DRV_OK;
 		} else {
-			tag = atoi( arg );
+			tag = atoi(arg);
 			for (pcmdp = &imap->in_progress; (cmdp = *pcmdp); pcmdp = &cmdp->next)
 				if (cmdp->tag == tag)
 					goto gottag;
-			fprintf( stderr, "IMAP error: unexpected tag %s\n", arg );
+			fprintf(stderr, "IMAP error: unexpected tag %s\n", arg);
 			return RESP_BAD;
-		  gottag:
+		gottag:
 			if (!(*pcmdp = cmdp->next))
 				imap->in_progress_append = pcmdp;
 			imap->num_in_progress--;
 			if (cmdp->cb.cont || cmdp->cb.data)
 				imap->literal_pending = 0;
-			arg = next_arg( &cmd );
-			if (!strcmp( "OK", arg ))
+			arg = next_arg(&cmd);
+			if (!strcmp("OK", arg))
 				resp = DRV_OK;
 			else {
-				if (!strcmp( "NO", arg )) {
-					if (cmdp->cb.create && cmd && (cmdp->cb.trycreate || !memcmp( cmd, "[TRYCREATE]", 11 ))) { /* SELECT, APPEND or UID COPY */
-						p = strchr( cmdp->cmd, '"' );
-						if (!issue_imap_cmd( ctx, NULL, "CREATE \"%.*s\"", strchr( p + 1, '"' ) - p + 1, p )) {
+				if (!strcmp("NO", arg)) {
+					if (cmdp->cb.create && cmd && (cmdp->cb.trycreate || !memcmp(cmd, "[TRYCREATE]", 11))) { /* SELECT, APPEND or UID COPY */
+						p = strchr(cmdp->cmd, '"');
+						if (!issue_imap_cmd(ctx, NULL, "CREATE \"%.*s\"", strchr(p + 1, '"') - p + 1, p)) {
 							resp = RESP_BAD;
 							goto normal;
 						}
 						/* not waiting here violates the spec, but a server that does not
 						   grok this nonetheless violates it too. */
 						cmdp->cb.create = 0;
-						if (!(ncmdp = issue_imap_cmd( ctx, &cmdp->cb, "%s", cmdp->cmd ))) {
+						if (!(ncmdp = issue_imap_cmd(ctx, &cmdp->cb, "%s", cmdp->cmd))) {
 							resp = RESP_BAD;
 							goto normal;
 						}
-						free( cmdp->cmd );
-						free( cmdp );
+						free(cmdp->cmd);
+						free(cmdp);
 						if (!tcmd)
 							return 0;	/* ignored */
 						if (cmdp == tcmd)
@@ -837,22 +934,21 @@ get_cmd_result( imap_store_t *ctx, struct imap_cmd *tcmd )
 						continue;
 					}
 					resp = RESP_NO;
-				} else /*if (!strcmp( "BAD", arg ))*/
+				} else /*if (!strcmp("BAD", arg))*/
 					resp = RESP_BAD;
-				fprintf( stderr, "IMAP command '%s' returned response (%s) - %s\n",
-					 memcmp (cmdp->cmd, "LOGIN", 5) ?
+				fprintf(stderr, "IMAP command '%s' returned response (%s) - %s\n",
+					 memcmp(cmdp->cmd, "LOGIN", 5) ?
 							cmdp->cmd : "LOGIN <user> <pass>",
 							arg, cmd ? cmd : "");
 			}
-			if ((resp2 = parse_response_code( ctx, &cmdp->cb, cmd )) > resp)
+			if ((resp2 = parse_response_code(ctx, &cmdp->cb, cmd)) > resp)
 				resp = resp2;
-		  normal:
+		normal:
 			if (cmdp->cb.done)
-				cmdp->cb.done( ctx, cmdp, resp );
-			if (cmdp->cb.data)
-				free( cmdp->cb.data );
-			free( cmdp->cmd );
-			free( cmdp );
+				cmdp->cb.done(ctx, cmdp, resp);
+			free(cmdp->cb.data);
+			free(cmdp->cmd);
+			free(cmdp);
 			if (!tcmd || tcmd == cmdp)
 				return resp;
 		}
@@ -860,170 +956,184 @@ get_cmd_result( imap_store_t *ctx, struct imap_cmd *tcmd )
 	/* not reached */
 }
 
-static void
-imap_close_server( imap_store_t *ictx )
+static void imap_close_server(struct imap_store *ictx)
 {
-	imap_t *imap = ictx->imap;
+	struct imap *imap = ictx->imap;
 
 	if (imap->buf.sock.fd != -1) {
-		imap_exec( ictx, NULL, "LOGOUT" );
-		close( imap->buf.sock.fd );
+		imap_exec(ictx, NULL, "LOGOUT");
+		socket_shutdown(&imap->buf.sock);
 	}
-	free_list( imap->ns_personal );
-	free_list( imap->ns_other );
-	free_list( imap->ns_shared );
-	free( imap );
+	free_list(imap->ns_personal);
+	free_list(imap->ns_other);
+	free_list(imap->ns_shared);
+	free(imap);
 }
 
-static void
-imap_close_store( store_t *ctx )
+static void imap_close_store(struct store *ctx)
 {
-	imap_close_server( (imap_store_t *)ctx );
-	free_generic_messages( ctx->msgs );
-	free( ctx );
+	imap_close_server((struct imap_store *)ctx);
+	free_generic_messages(ctx->msgs);
+	free(ctx);
 }
 
-static store_t *
-imap_open_store( imap_server_conf_t *srvc )
+static struct store *imap_open_store(struct imap_server_conf *srvc)
 {
-	imap_store_t *ctx;
-	imap_t *imap;
+	struct imap_store *ctx;
+	struct imap *imap;
 	char *arg, *rsp;
 	struct hostent *he;
 	struct sockaddr_in addr;
 	int s, a[2], preauth;
 	pid_t pid;
 
-	ctx = xcalloc( sizeof(*ctx), 1 );
+	ctx = xcalloc(sizeof(*ctx), 1);
 
-	ctx->imap = imap = xcalloc( sizeof(*imap), 1 );
+	ctx->imap = imap = xcalloc(sizeof(*imap), 1);
 	imap->buf.sock.fd = -1;
 	imap->in_progress_append = &imap->in_progress;
 
 	/* open connection to IMAP server */
 
 	if (srvc->tunnel) {
-		imap_info( "Starting tunnel '%s'... ", srvc->tunnel );
+		imap_info("Starting tunnel '%s'... ", srvc->tunnel);
 
-		if (socketpair( PF_UNIX, SOCK_STREAM, 0, a )) {
-			perror( "socketpair" );
-			exit( 1 );
+		if (socketpair(PF_UNIX, SOCK_STREAM, 0, a)) {
+			perror("socketpair");
+			exit(1);
 		}
 
 		pid = fork();
 		if (pid < 0)
-			_exit( 127 );
+			_exit(127);
 		if (!pid) {
-			if (dup2( a[0], 0 ) == -1 || dup2( a[0], 1 ) == -1)
-				_exit( 127 );
-			close( a[0] );
-			close( a[1] );
-			execl( "/bin/sh", "sh", "-c", srvc->tunnel, NULL );
-			_exit( 127 );
+			if (dup2(a[0], 0) == -1 || dup2(a[0], 1) == -1)
+				_exit(127);
+			close(a[0]);
+			close(a[1]);
+			execl("/bin/sh", "sh", "-c", srvc->tunnel, NULL);
+			_exit(127);
 		}
 
-		close (a[0]);
+		close(a[0]);
 
 		imap->buf.sock.fd = a[1];
 
-		imap_info( "ok\n" );
+		imap_info("ok\n");
 	} else {
-		memset( &addr, 0, sizeof(addr) );
-		addr.sin_port = htons( srvc->port );
+		memset(&addr, 0, sizeof(addr));
+		addr.sin_port = htons(srvc->port);
 		addr.sin_family = AF_INET;
 
-		imap_info( "Resolving %s... ", srvc->host );
-		he = gethostbyname( srvc->host );
+		imap_info("Resolving %s... ", srvc->host);
+		he = gethostbyname(srvc->host);
 		if (!he) {
-			perror( "gethostbyname" );
+			perror("gethostbyname");
 			goto bail;
 		}
-		imap_info( "ok\n" );
+		imap_info("ok\n");
 
 		addr.sin_addr.s_addr = *((int *) he->h_addr_list[0]);
 
-		s = socket( PF_INET, SOCK_STREAM, 0 );
+		s = socket(PF_INET, SOCK_STREAM, 0);
 
-		imap_info( "Connecting to %s:%hu... ", inet_ntoa( addr.sin_addr ), ntohs( addr.sin_port ) );
-		if (connect( s, (struct sockaddr *)&addr, sizeof(addr) )) {
-			close( s );
-			perror( "connect" );
+		imap_info("Connecting to %s:%hu... ", inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
+		if (connect(s, (struct sockaddr *)&addr, sizeof(addr))) {
+			close(s);
+			perror("connect");
 			goto bail;
 		}
-		imap_info( "ok\n" );
 
 		imap->buf.sock.fd = s;
 
+		if (srvc->use_ssl &&
+		    ssl_socket_connect(&imap->buf.sock, 0, srvc->ssl_verify)) {
+			close(s);
+			goto bail;
+		}
+		imap_info("ok\n");
 	}
 
 	/* read the greeting string */
-	if (buffer_gets( &imap->buf, &rsp )) {
-		fprintf( stderr, "IMAP error: no greeting response\n" );
+	if (buffer_gets(&imap->buf, &rsp)) {
+		fprintf(stderr, "IMAP error: no greeting response\n");
 		goto bail;
 	}
-	arg = next_arg( &rsp );
-	if (!arg || *arg != '*' || (arg = next_arg( &rsp )) == NULL) {
-		fprintf( stderr, "IMAP error: invalid greeting response\n" );
+	arg = next_arg(&rsp);
+	if (!arg || *arg != '*' || (arg = next_arg(&rsp)) == NULL) {
+		fprintf(stderr, "IMAP error: invalid greeting response\n");
 		goto bail;
 	}
 	preauth = 0;
-	if (!strcmp( "PREAUTH", arg ))
+	if (!strcmp("PREAUTH", arg))
 		preauth = 1;
-	else if (strcmp( "OK", arg ) != 0) {
-		fprintf( stderr, "IMAP error: unknown greeting response\n" );
+	else if (strcmp("OK", arg) != 0) {
+		fprintf(stderr, "IMAP error: unknown greeting response\n");
 		goto bail;
 	}
-	parse_response_code( ctx, NULL, rsp );
-	if (!imap->caps && imap_exec( ctx, NULL, "CAPABILITY" ) != RESP_OK)
+	parse_response_code(ctx, NULL, rsp);
+	if (!imap->caps && imap_exec(ctx, NULL, "CAPABILITY") != RESP_OK)
 		goto bail;
 
 	if (!preauth) {
-
-		imap_info ("Logging in...\n");
+#ifndef NO_OPENSSL
+		if (!srvc->use_ssl && CAP(STARTTLS)) {
+			if (imap_exec(ctx, 0, "STARTTLS") != RESP_OK)
+				goto bail;
+			if (ssl_socket_connect(&imap->buf.sock, 1,
+					       srvc->ssl_verify))
+				goto bail;
+			/* capabilities may have changed, so get the new capabilities */
+			if (imap_exec(ctx, 0, "CAPABILITY") != RESP_OK)
+				goto bail;
+		}
+#endif
+		imap_info("Logging in...\n");
 		if (!srvc->user) {
-			fprintf( stderr, "Skipping server %s, no user\n", srvc->host );
+			fprintf(stderr, "Skipping server %s, no user\n", srvc->host);
 			goto bail;
 		}
 		if (!srvc->pass) {
 			char prompt[80];
-			sprintf( prompt, "Password (%s@%s): ", srvc->user, srvc->host );
-			arg = getpass( prompt );
+			sprintf(prompt, "Password (%s@%s): ", srvc->user, srvc->host);
+			arg = getpass(prompt);
 			if (!arg) {
-				perror( "getpass" );
-				exit( 1 );
+				perror("getpass");
+				exit(1);
 			}
 			if (!*arg) {
-				fprintf( stderr, "Skipping account %s@%s, no password\n", srvc->user, srvc->host );
+				fprintf(stderr, "Skipping account %s@%s, no password\n", srvc->user, srvc->host);
 				goto bail;
 			}
 			/*
 			 * getpass() returns a pointer to a static buffer.  make a copy
 			 * for long term storage.
 			 */
-			srvc->pass = xstrdup( arg );
+			srvc->pass = xstrdup(arg);
 		}
 		if (CAP(NOLOGIN)) {
-			fprintf( stderr, "Skipping account %s@%s, server forbids LOGIN\n", srvc->user, srvc->host );
+			fprintf(stderr, "Skipping account %s@%s, server forbids LOGIN\n", srvc->user, srvc->host);
 			goto bail;
 		}
-		imap_warn( "*** IMAP Warning *** Password is being sent in the clear\n" );
-		if (imap_exec( ctx, NULL, "LOGIN \"%s\" \"%s\"", srvc->user, srvc->pass ) != RESP_OK) {
-			fprintf( stderr, "IMAP error: LOGIN failed\n" );
+		if (!imap->buf.sock.ssl)
+			imap_warn("*** IMAP Warning *** Password is being "
+				  "sent in the clear\n");
+		if (imap_exec(ctx, NULL, "LOGIN \"%s\" \"%s\"", srvc->user, srvc->pass) != RESP_OK) {
+			fprintf(stderr, "IMAP error: LOGIN failed\n");
 			goto bail;
 		}
 	} /* !preauth */
 
 	ctx->prefix = "";
 	ctx->trashnc = 1;
-	return (store_t *)ctx;
+	return (struct store *)ctx;
 
-  bail:
-	imap_close_store( &ctx->gen );
+bail:
+	imap_close_store(&ctx->gen);
 	return NULL;
 }
 
-static int
-imap_make_flags( int flags, char *buf )
+static int imap_make_flags(int flags, char *buf)
 {
 	const char *s;
 	unsigned i, d;
@@ -1042,11 +1152,10 @@ imap_make_flags( int flags, char *buf )
 
 #define TUIDL 8
 
-static int
-imap_store_msg( store_t *gctx, msg_data_t *data, int *uid )
+static int imap_store_msg(struct store *gctx, struct msg_data *data, int *uid)
 {
-	imap_store_t *ctx = (imap_store_t *)gctx;
-	imap_t *imap = ctx->imap;
+	struct imap_store *ctx = (struct imap_store *)gctx;
+	struct imap *imap = ctx->imap;
 	struct imap_cmd_cb cb;
 	char *fmap, *buf;
 	const char *prefix, *box;
@@ -1054,14 +1163,14 @@ imap_store_msg( store_t *gctx, msg_data_t *data, int *uid )
 	int start, sbreak = 0, ebreak = 0;
 	char flagstr[128], tuid[TUIDL * 2 + 1];
 
-	memset( &cb, 0, sizeof(cb) );
+	memset(&cb, 0, sizeof(cb));
 
 	fmap = data->data;
 	len = data->len;
 	nocr = !data->crlf;
 	extra = 0, i = 0;
 	if (!CAP(UIDPLUS) && uid) {
-	  nloop:
+	nloop:
 		start = i;
 		while (i < len)
 			if (fmap[i++] == '\n') {
@@ -1070,18 +1179,18 @@ imap_store_msg( store_t *gctx, msg_data_t *data, int *uid )
 					sbreak = ebreak = i - 2 + nocr;
 					goto mktid;
 				}
-				if (!memcmp( fmap + start, "X-TUID: ", 8 )) {
+				if (!memcmp(fmap + start, "X-TUID: ", 8)) {
 					extra -= (ebreak = i) - (sbreak = start) + nocr;
 					goto mktid;
 				}
 				goto nloop;
 			}
 		/* invalid message */
-		free( fmap );
+		free(fmap);
 		return DRV_MSG_BAD;
-	 mktid:
+	mktid:
 		for (j = 0; j < TUIDL; j++)
-			sprintf( tuid + j * 2, "%02x", arc4_getbyte() );
+			sprintf(tuid + j * 2, "%02x", arc4_getbyte());
 		extra += 8 + TUIDL * 2 + 2;
 	}
 	if (nocr)
@@ -1090,7 +1199,7 @@ imap_store_msg( store_t *gctx, msg_data_t *data, int *uid )
 				extra++;
 
 	cb.dlen = len + extra;
-	buf = cb.data = xmalloc( cb.dlen );
+	buf = cb.data = xmalloc(cb.dlen);
 	i = 0;
 	if (!CAP(UIDPLUS) && uid) {
 		if (nocr) {
@@ -1101,12 +1210,12 @@ imap_store_msg( store_t *gctx, msg_data_t *data, int *uid )
 				} else
 					*buf++ = fmap[i];
 		} else {
-			memcpy( buf, fmap, sbreak );
+			memcpy(buf, fmap, sbreak);
 			buf += sbreak;
 		}
-		memcpy( buf, "X-TUID: ", 8 );
+		memcpy(buf, "X-TUID: ", 8);
 		buf += 8;
-		memcpy( buf, tuid, TUIDL * 2 );
+		memcpy(buf, tuid, TUIDL * 2);
 		buf += TUIDL * 2;
 		*buf++ = '\r';
 		*buf++ = '\n';
@@ -1120,13 +1229,13 @@ imap_store_msg( store_t *gctx, msg_data_t *data, int *uid )
 			} else
 				*buf++ = fmap[i];
 	} else
-		memcpy( buf, fmap + i, len - i );
+		memcpy(buf, fmap + i, len - i);
 
-	free( fmap );
+	free(fmap);
 
 	d = 0;
 	if (data->flags) {
-		d = imap_make_flags( data->flags, flagstr );
+		d = imap_make_flags(data->flags, flagstr);
 		flagstr[d++] = ' ';
 	}
 	flagstr[d] = 0;
@@ -1139,11 +1248,11 @@ imap_store_msg( store_t *gctx, msg_data_t *data, int *uid )
 			imap->caps = imap->rcaps & ~(1 << LITERALPLUS);
 	} else {
 		box = gctx->name;
-		prefix = !strcmp( box, "INBOX" ) ? "" : ctx->prefix;
+		prefix = !strcmp(box, "INBOX") ? "" : ctx->prefix;
 		cb.create = 0;
 	}
 	cb.ctx = uid;
-	ret = imap_exec_m( ctx, &cb, "APPEND \"%s%s\" %s", prefix, box, flagstr );
+	ret = imap_exec_m(ctx, &cb, "APPEND \"%s%s\" %s", prefix, box, flagstr);
 	imap->caps = imap->rcaps;
 	if (ret != DRV_OK)
 		return ret;
@@ -1155,38 +1264,72 @@ imap_store_msg( store_t *gctx, msg_data_t *data, int *uid )
 	return DRV_OK;
 }
 
+static void encode_html_chars(struct strbuf *p)
+{
+	int i;
+	for (i = 0; i < p->len; i++) {
+		if (p->buf[i] == '&')
+			strbuf_splice(p, i, 1, "&amp;", 5);
+		if (p->buf[i] == '<')
+			strbuf_splice(p, i, 1, "&lt;", 4);
+		if (p->buf[i] == '>')
+			strbuf_splice(p, i, 1, "&gt;", 4);
+		if (p->buf[i] == '"')
+			strbuf_splice(p, i, 1, "&quot;", 6);
+	}
+}
+static void wrap_in_html(struct msg_data *msg)
+{
+	struct strbuf buf = STRBUF_INIT;
+	struct strbuf **lines;
+	struct strbuf **p;
+	static char *content_type = "Content-Type: text/html;\n";
+	static char *pre_open = "<pre>\n";
+	static char *pre_close = "</pre>\n";
+	int added_header = 0;
+
+	strbuf_attach(&buf, msg->data, msg->len, msg->len);
+	lines = strbuf_split(&buf, '\n');
+	strbuf_release(&buf);
+	for (p = lines; *p; p++) {
+		if (! added_header) {
+			if ((*p)->len == 1 && *((*p)->buf) == '\n') {
+				strbuf_addstr(&buf, content_type);
+				strbuf_addbuf(&buf, *p);
+				strbuf_addstr(&buf, pre_open);
+				added_header = 1;
+				continue;
+			}
+		}
+		else
+			encode_html_chars(*p);
+		strbuf_addbuf(&buf, *p);
+	}
+	strbuf_addstr(&buf, pre_close);
+	strbuf_list_free(lines);
+	msg->len  = buf.len;
+	msg->data = strbuf_detach(&buf, NULL);
+}
+
 #define CHUNKSIZE 0x1000
 
-static int
-read_message( FILE *f, msg_data_t *msg )
+static int read_message(FILE *f, struct msg_data *msg)
 {
-	int len, r;
+	struct strbuf buf = STRBUF_INIT;
 
-	memset( msg, 0, sizeof *msg );
-	len = CHUNKSIZE;
-	msg->data = xmalloc( len+1 );
-	msg->data[0] = 0;
+	memset(msg, 0, sizeof(*msg));
 
-	while(!feof( f )) {
-		if (msg->len >= len) {
-			void *p;
-			len += CHUNKSIZE;
-			p = xrealloc(msg->data, len+1);
-			if (!p)
-				break;
-			msg->data = p;
-		}
-		r = fread( &msg->data[msg->len], 1, len - msg->len, f );
-		if (r <= 0)
+	do {
+		if (strbuf_fread(&buf, CHUNKSIZE, f) <= 0)
 			break;
-		msg->len += r;
-	}
-	msg->data[msg->len] = 0;
+	} while (!feof(f));
+
+	msg->len  = buf.len;
+	msg->data = strbuf_detach(&buf, NULL);
 	return msg->len;
 }
 
-static int
-count_messages( msg_data_t *msg )
+static int count_messages(struct msg_data *msg)
 {
 	int count = 0;
 	char *p = msg->data;
@@ -1196,7 +1339,7 @@ count_messages( msg_data_t *msg )
 			count++;
 			p += 5;
 		}
-		p = strstr( p+5, "\nFrom ");
+		p = strstr(p+5, "\nFrom ");
 		if (!p)
 			break;
 		p++;
@@ -1204,22 +1347,21 @@ count_messages( msg_data_t *msg )
 	return count;
 }
 
-static int
-split_msg( msg_data_t *all_msgs, msg_data_t *msg, int *ofs )
+static int split_msg(struct msg_data *all_msgs, struct msg_data *msg, int *ofs)
 {
 	char *p, *data;
 
-	memset( msg, 0, sizeof *msg );
+	memset(msg, 0, sizeof *msg);
 	if (*ofs >= all_msgs->len)
 		return 0;
 
-	data = &all_msgs->data[ *ofs ];
+	data = &all_msgs->data[*ofs];
 	msg->len = all_msgs->len - *ofs;
 
 	if (msg->len < 5 || prefixcmp(data, "From "))
 		return 0;
 
-	p = strchr( data, '\n' );
+	p = strchr(data, '\n');
 	if (p) {
 		p = &p[1];
 		msg->len -= p-data;
@@ -1227,119 +1369,137 @@ split_msg( msg_data_t *all_msgs, msg_data_t *msg, int *ofs )
 		data = p;
 	}
 
-	p = strstr( data, "\nFrom " );
+	p = strstr(data, "\nFrom ");
 	if (p)
 		msg->len = &p[1] - data;
 
-	msg->data = xmalloc( msg->len + 1 );
-	if (!msg->data)
-		return 0;
-
-	memcpy( msg->data, data, msg->len );
-	msg->data[ msg->len ] = 0;
-
+	msg->data = xmemdupz(data, msg->len);
 	*ofs += msg->len;
 	return 1;
 }
 
-static imap_server_conf_t server =
-{
+static struct imap_server_conf server = {
 	NULL,	/* name */
 	NULL,	/* tunnel */
 	NULL,	/* host */
 	0,	/* port */
 	NULL,	/* user */
 	NULL,	/* pass */
+	0,   	/* use_ssl */
+	1,   	/* ssl_verify */
+	0,   	/* use_html */
 };
 
 static char *imap_folder;
 
-static int
-git_imap_config(const char *key, const char *val)
+static int git_imap_config(const char *key, const char *val, void *cb)
 {
 	char imap_key[] = "imap.";
 
-	if (strncmp( key, imap_key, sizeof imap_key - 1 ))
+	if (strncmp(key, imap_key, sizeof imap_key - 1))
 		return 0;
+
+	if (!val)
+		return config_error_nonbool(key);
+
 	key += sizeof imap_key - 1;
 
-	if (!strcmp( "folder", key )) {
-		imap_folder = xstrdup( val );
-	} else if (!strcmp( "host", key )) {
-		{
-			if (!prefixcmp(val, "imap:"))
-				val += 5;
-			if (!server.port)
-				server.port = 143;
+	if (!strcmp("folder", key)) {
+		imap_folder = xstrdup(val);
+	} else if (!strcmp("host", key)) {
+		if (!prefixcmp(val, "imap:"))
+			val += 5;
+		else if (!prefixcmp(val, "imaps:")) {
+			val += 6;
+			server.use_ssl = 1;
 		}
 		if (!prefixcmp(val, "//"))
 			val += 2;
-		server.host = xstrdup( val );
-	}
-	else if (!strcmp( "user", key ))
-		server.user = xstrdup( val );
-	else if (!strcmp( "pass", key ))
-		server.pass = xstrdup( val );
-	else if (!strcmp( "port", key ))
-		server.port = git_config_int( key, val );
-	else if (!strcmp( "tunnel", key ))
-		server.tunnel = xstrdup( val );
+		server.host = xstrdup(val);
+	} else if (!strcmp("user", key))
+		server.user = xstrdup(val);
+	else if (!strcmp("pass", key))
+		server.pass = xstrdup(val);
+	else if (!strcmp("port", key))
+		server.port = git_config_int(key, val);
+	else if (!strcmp("tunnel", key))
+		server.tunnel = xstrdup(val);
+	else if (!strcmp("sslverify", key))
+		server.ssl_verify = git_config_bool(key, val);
+	else if (!strcmp("preformattedHTML", key))
+		server.use_html = git_config_bool(key, val);
 	return 0;
 }
 
-int
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
-	msg_data_t all_msgs, msg;
-	store_t *ctx = NULL;
+	struct msg_data all_msgs, msg;
+	struct store *ctx = NULL;
 	int uid = 0;
 	int ofs = 0;
 	int r;
 	int total, n = 0;
+	int nongit_ok;
+
+	git_extract_argv0_path(argv[0]);
 
 	/* init the random number generator */
 	arc4_init();
 
-	git_config( git_imap_config );
+	setup_git_directory_gently(&nongit_ok);
+	git_config(git_imap_config, NULL);
+
+	if (!server.port)
+		server.port = server.use_ssl ? 993 : 143;
 
 	if (!imap_folder) {
-		fprintf( stderr, "no imap store specified\n" );
+		fprintf(stderr, "no imap store specified\n");
 		return 1;
+	}
+	if (!server.host) {
+		if (!server.tunnel) {
+			fprintf(stderr, "no imap host specified\n");
+			return 1;
+		}
+		server.host = "tunnel";
 	}
 
 	/* read the messages */
-	if (!read_message( stdin, &all_msgs )) {
-		fprintf(stderr,"nothing to send\n");
+	if (!read_message(stdin, &all_msgs)) {
+		fprintf(stderr, "nothing to send\n");
 		return 1;
 	}
 
-	total = count_messages( &all_msgs );
+	total = count_messages(&all_msgs);
 	if (!total) {
-		fprintf(stderr,"no messages to send\n");
+		fprintf(stderr, "no messages to send\n");
 		return 1;
 	}
 
 	/* write it to the imap server */
-	ctx = imap_open_store( &server );
+	ctx = imap_open_store(&server);
 	if (!ctx) {
-		fprintf( stderr,"failed to open store\n");
+		fprintf(stderr, "failed to open store\n");
 		return 1;
 	}
 
-	fprintf( stderr, "sending %d message%s\n", total, (total!=1)?"s":"" );
+	fprintf(stderr, "sending %d message%s\n", total, (total != 1) ? "s" : "");
 	ctx->name = imap_folder;
 	while (1) {
 		unsigned percent = n * 100 / total;
-		fprintf( stderr, "%4u%% (%d/%d) done\r", percent, n, total );
-		if (!split_msg( &all_msgs, &msg, &ofs ))
+		fprintf(stderr, "%4u%% (%d/%d) done\r", percent, n, total);
+		if (!split_msg(&all_msgs, &msg, &ofs))
 			break;
-		r = imap_store_msg( ctx, &msg, &uid );
-		if (r != DRV_OK) break;
+		if (server.use_html)
+			wrap_in_html(&msg);
+		r = imap_store_msg(ctx, &msg, &uid);
+		if (r != DRV_OK)
+			break;
 		n++;
 	}
-	fprintf( stderr,"\n" );
+	fprintf(stderr, "\n");
 
-	imap_close_store( ctx );
+	imap_close_store(ctx);
 
 	return 0;
 }

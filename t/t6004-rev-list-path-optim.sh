@@ -45,7 +45,7 @@ test_expect_success 'further setup' '
 test_expect_success 'path optimization 2' '
 	( echo "$side"; echo "$initial" ) >expected &&
 	git rev-list HEAD -- a >actual &&
-	diff -u expected actual
+	test_cmp expected actual
 '
 
 test_done

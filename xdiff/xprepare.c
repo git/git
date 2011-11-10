@@ -23,10 +23,9 @@
 #include "xinclude.h"
 
 
-
 #define XDL_KPDIS_RUN 4
 #define XDL_MAX_EQLIMIT 1024
-
+#define XDL_SIMSCAN_WINDOW 100
 
 
 typedef struct s_xdlclass {
@@ -291,7 +290,8 @@ int xdl_prepare_env(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp,
 
 	xdl_free_classifier(&cf);
 
-	if (xdl_optimize_ctxs(&xe->xdf1, &xe->xdf2) < 0) {
+	if (!(xpp->flags & XDF_PATIENCE_DIFF) &&
+			xdl_optimize_ctxs(&xe->xdf1, &xe->xdf2) < 0) {
 
 		xdl_free_ctx(&xe->xdf2);
 		xdl_free_ctx(&xe->xdf1);
@@ -311,6 +311,18 @@ void xdl_free_env(xdfenv_t *xe) {
 
 static int xdl_clean_mmatch(char const *dis, long i, long s, long e) {
 	long r, rdis0, rpdis0, rdis1, rpdis1;
+
+	/*
+	 * Limits the window the is examined during the similar-lines
+	 * scan. The loops below stops when dis[i - r] == 1 (line that
+	 * has no match), but there are corner cases where the loop
+	 * proceed all the way to the extremities by causing huge
+	 * performance penalties in case of big files.
+	 */
+	if (i - s > XDL_SIMSCAN_WINDOW)
+		s = i - XDL_SIMSCAN_WINDOW;
+	if (e - i > XDL_SIMSCAN_WINDOW)
+		e = i + XDL_SIMSCAN_WINDOW;
 
 	/*
 	 * Scans the lines before 'i' to find a run of lines that either

@@ -7,13 +7,13 @@ test_description='GIT_EDITOR, core.editor, and stuff'
 for i in GIT_EDITOR core_editor EDITOR VISUAL vi
 do
 	cat >e-$i.sh <<-EOF
+	#!$SHELL_PATH
 	echo "Edited by $i" >"\$1"
 	EOF
 	chmod +x e-$i.sh
 done
 unset vi
 mv e-vi.sh vi
-PATH=".:$PATH"
 unset EDITOR VISUAL GIT_EDITOR
 
 test_expect_success setup '
@@ -36,7 +36,7 @@ test_expect_success 'dumb should error out when falling back on vi' '
 	if git commit --amend
 	then
 		echo "Oops?"
-		exit 1
+		false
 	else
 		: happy
 	fi
@@ -59,7 +59,7 @@ do
 		;;
 	esac
 	test_expect_success "Using $i" '
-		git commit --amend &&
+		git --exec-path=. commit --amend &&
 		git show -s --pretty=oneline |
 		sed -e "s/^[0-9a-f]* //" >actual &&
 		diff actual expect
@@ -81,11 +81,34 @@ do
 		;;
 	esac
 	test_expect_success "Using $i (override)" '
-		git commit --amend &&
+		git --exec-path=. commit --amend &&
 		git show -s --pretty=oneline |
 		sed -e "s/^[0-9a-f]* //" >actual &&
 		diff actual expect
 	'
 done
+
+if ! echo 'echo space > "$1"' > "e space.sh"
+then
+	say "Skipping; FS does not support spaces in filenames"
+	test_done
+fi
+
+test_expect_success 'editor with a space' '
+
+	chmod a+x "e space.sh" &&
+	GIT_EDITOR="./e\ space.sh" git commit --amend &&
+	test space = "$(git show -s --pretty=format:%s)"
+
+'
+
+unset GIT_EDITOR
+test_expect_success 'core.editor with a space' '
+
+	git config core.editor \"./e\ space.sh\" &&
+	git commit --amend &&
+	test space = "$(git show -s --pretty=format:%s)"
+
+'
 
 test_done

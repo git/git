@@ -22,12 +22,12 @@ four changes in total.
 Further, with -B and -M together, these should turn into two renames.
 '
 . ./test-lib.sh
-. ../diff-lib.sh ;# test-lib chdir's into trash
+. "$TEST_DIRECTORY"/diff-lib.sh ;# test-lib chdir's into trash
 
 test_expect_success \
     setup \
-    'cat ../../README >file0 &&
-     cat ../../COPYING >file1 &&
+    'cat "$TEST_DIRECTORY"/../README >file0 &&
+     cat "$TEST_DIRECTORY"/../COPYING >file1 &&
     git update-index --add file0 file1 &&
     tree=$(git write-tree) &&
     echo "$tree"'
@@ -99,7 +99,7 @@ test_expect_success \
     'validate result of -B -M (#4)' \
     'compare_diff_raw expected current'
 
-test_expect_success \
+test_expect_success SYMLINKS \
     'make file0 into something completely different' \
     'rm -f file0 &&
      ln -s frotz file0 &&
@@ -114,22 +114,22 @@ cat >expected <<\EOF
 :100644 100644 6ff87c4664981e4397625791c8ea3bbb5f2279a3 f5deac7be59e7eeab8657fd9ae706fd6a57daed2 M100	file1
 EOF
 
-test_expect_success \
+test_expect_success SYMLINKS \
     'validate result of -B (#5)' \
     'compare_diff_raw expected current'
 
 test_expect_success \
-    'run diff with -B' \
+    'run diff with -B -M' \
     'git diff-index -B -M "$tree" >current'
 
-# This should not mistake file0 as the copy source of new file1
-# due to type differences.
+# file0 changed from regular to symlink.  file1 is very close to the preimage of file0.
+# because we break file0, file1 can become a rename of it.
 cat >expected <<\EOF
 :100644 120000 f5deac7be59e7eeab8657fd9ae706fd6a57daed2 67be421f88824578857624f7b3dc75e99a8a1481 T	file0
-:100644 100644 6ff87c4664981e4397625791c8ea3bbb5f2279a3 f5deac7be59e7eeab8657fd9ae706fd6a57daed2 M100	file1
+:100644 100644 6ff87c4664981e4397625791c8ea3bbb5f2279a3 f5deac7be59e7eeab8657fd9ae706fd6a57daed2 R	file0	file1
 EOF
 
-test_expect_success \
+test_expect_success SYMLINKS \
     'validate result of -B -M (#6)' \
     'compare_diff_raw expected current'
 
@@ -144,7 +144,7 @@ cat >expected <<\EOF
 :100644 100644 6ff87c4664981e4397625791c8ea3bbb5f2279a3 f5deac7be59e7eeab8657fd9ae706fd6a57daed2 M	file1
 EOF
 
-test_expect_success \
+test_expect_success SYMLINKS \
     'validate result of -M (#7)' \
     'compare_diff_raw expected current'
 

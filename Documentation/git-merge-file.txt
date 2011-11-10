@@ -9,23 +9,23 @@ git-merge-file - Run a three-way file merge
 SYNOPSIS
 --------
 [verse]
-'git-merge-file' [-L <current-name> [-L <base-name> [-L <other-name>]]]
+'git merge-file' [-L <current-name> [-L <base-name> [-L <other-name>]]]
 	[-p|--stdout] [-q|--quiet] <current-file> <base-file> <other-file>
 
 
 DESCRIPTION
 -----------
-git-file-merge incorporates all changes that lead from the `<base-file>`
+'git-merge-file' incorporates all changes that lead from the `<base-file>`
 to `<other-file>` into `<current-file>`. The result ordinarily goes into
-`<current-file>`. git-merge-file is useful for combining separate changes
+`<current-file>`. 'git-merge-file' is useful for combining separate changes
 to an original. Suppose `<base-file>` is the original, and both
-`<current-file>` and `<other-file>` are modifications of `<base-file>`.
-Then git-merge-file combines both changes.
+`<current-file>` and `<other-file>` are modifications of `<base-file>`,
+then 'git-merge-file' combines both changes.
 
 A conflict occurs if both `<current-file>` and `<other-file>` have changes
-in a common segment of lines. If a conflict is found, git-merge-file
-normally outputs a warning and brackets the conflict with <<<<<<< and
->>>>>>> lines. A typical conflict will look like this:
+in a common segment of lines. If a conflict is found, 'git-merge-file'
+normally outputs a warning and brackets the conflict with lines containing
+<<<<<<< and >>>>>>> markers. A typical conflict will look like this:
 
 	<<<<<<< A
 	lines in file A
@@ -39,9 +39,9 @@ the alternatives.
 The exit value of this program is negative on error, and the number of
 conflicts otherwise. If the merge was clean, the exit value is 0.
 
-git-merge-file is designed to be a minimal clone of RCS merge, that is, it
-implements all of RCS merge's functionality which is needed by
-gitlink:git[1].
+'git-merge-file' is designed to be a minimal clone of RCS 'merge'; that is, it
+implements all of RCS 'merge''s functionality which is needed by
+linkgit:git[1].
 
 
 OPTIONS
@@ -51,7 +51,7 @@ OPTIONS
 	This option may be given up to three times, and
 	specifies labels to be used in place of the
 	corresponding file names in conflict reports. That is,
-	`git-merge-file -L x -L y -L z a b c` generates output that
+	`git merge-file -L x -L y -L z a b c` generates output that
 	looks like it came from files x, y and z instead of
 	from files a, b and c.
 
@@ -60,7 +60,7 @@ OPTIONS
 	`<current-file>`.
 
 -q::
-	Quiet;  do  not  warn about conflicts.
+	Quiet; do not warn about conflicts.
 
 
 EXAMPLES
@@ -85,8 +85,8 @@ Written by Johannes Schindelin <johannes.schindelin@gmx.de>
 Documentation
 --------------
 Documentation by Johannes Schindelin and the git-list <git@vger.kernel.org>,
-with parts copied from the original documentation of RCS merge.
+with parts copied from the original documentation of RCS 'merge'.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[1] suite

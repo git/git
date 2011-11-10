@@ -6,10 +6,15 @@
 #include "run-command.h"
 #include "builtin.h"
 #include "remote.h"
+#include "transport.h"
+#include "parse-options.h"
 
-static const char push_usage[] = "git-push [--all] [--tags] [--receive-pack=<git-receive-pack>] [--repo=all] [-f | --force] [-v] [<repository> <refspec>...]";
+static const char * const push_usage[] = {
+	"git push [--all | --mirror] [--dry-run] [--tags] [--receive-pack=<git-receive-pack>] [--repo=<repository>] [-f | --force] [-v] [<repository> <refspec>...]",
+	NULL,
+};
 
-static int all, force, thin = 1, verbose;
+static int thin;
 static const char *receivepack;
 
 static const char **refspec;
@@ -43,80 +48,129 @@ static void set_refspecs(const char **refs, int nr)
 	}
 }
 
-static int do_push(const char *repo)
+static void setup_push_tracking(void)
+{
+	struct strbuf refspec = STRBUF_INIT;
+	struct branch *branch = branch_get(NULL);
+	if (!branch)
+		die("You are not currently on a branch.");
+	if (!branch->merge_nr)
+		die("The current branch %s is not tracking anything.",
+		    branch->name);
+	if (branch->merge_nr != 1)
+		die("The current branch %s is tracking multiple branches, "
+		    "refusing to push.", branch->name);
+	strbuf_addf(&refspec, "%s:%s", branch->name, branch->merge[0]->src);
+	add_refspec(refspec.buf);
+}
+
+static const char *warn_unconfigured_push_msg[] = {
+	"You did not specify any refspecs to push, and the current remote",
+	"has not configured any push refspecs. The default action in this",
+	"case is to push all matching refspecs, that is, all branches",
+	"that exist both locally and remotely will be updated.  This may",
+	"not necessarily be what you want to happen.",
+	"",
+	"You can specify what action you want to take in this case, and",
+	"avoid seeing this message again, by configuring 'push.default' to:",
+	"  'nothing'  : Do not push anything",
+	"  'matching' : Push all matching branches (default)",
+	"  'tracking' : Push the current branch to whatever it is tracking",
+	"  'current'  : Push the current branch"
+};
+
+static void warn_unconfigured_push(void)
+{
+	int i;
+	for (i = 0; i < ARRAY_SIZE(warn_unconfigured_push_msg); i++)
+		warning("%s", warn_unconfigured_push_msg[i]);
+}
+
+static void setup_default_push_refspecs(void)
+{
+	git_config(git_default_config, NULL);
+	switch (push_default) {
+	case PUSH_DEFAULT_UNSPECIFIED:
+		warn_unconfigured_push();
+		/* fallthrough */
+
+	case PUSH_DEFAULT_MATCHING:
+		add_refspec(":");
+		break;
+
+	case PUSH_DEFAULT_TRACKING:
+		setup_push_tracking();
+		break;
+
+	case PUSH_DEFAULT_CURRENT:
+		add_refspec("HEAD");
+		break;
+
+	case PUSH_DEFAULT_NOTHING:
+		die("You didn't specify any refspecs to push, and "
+		    "push.default is \"nothing\".");
+		break;
+	}
+}
+
+static int do_push(const char *repo, int flags)
 {
 	int i, errs;
-	int common_argc;
-	const char **argv;
-	int argc;
 	struct remote *remote = remote_get(repo);
 
-	if (!remote)
-		die("bad repository '%s'", repo);
-
-	if (remote->receivepack) {
-		char *rp = xmalloc(strlen(remote->receivepack) + 16);
-		sprintf(rp, "--receive-pack=%s", remote->receivepack);
-		receivepack = rp;
-	}
-	if (!refspec && !all && remote->push_refspec_nr) {
-		refspec = remote->push_refspec;
-		refspec_nr = remote->push_refspec_nr;
+	if (!remote) {
+		if (repo)
+			die("bad repository '%s'", repo);
+		die("No destination configured to push to.");
 	}
 
-	argv = xmalloc((refspec_nr + 10) * sizeof(char *));
-	argv[0] = "dummy-send-pack";
-	argc = 1;
-	if (all)
-		argv[argc++] = "--all";
-	if (force)
-		argv[argc++] = "--force";
-	if (receivepack)
-		argv[argc++] = receivepack;
-	common_argc = argc;
+	if (remote->mirror)
+		flags |= (TRANSPORT_PUSH_MIRROR|TRANSPORT_PUSH_FORCE);
 
+	if ((flags & TRANSPORT_PUSH_ALL) && refspec) {
+		if (!strcmp(*refspec, "refs/tags/*"))
+			return error("--all and --tags are incompatible");
+		return error("--all can't be combined with refspecs");
+	}
+
+	if ((flags & TRANSPORT_PUSH_MIRROR) && refspec) {
+		if (!strcmp(*refspec, "refs/tags/*"))
+			return error("--mirror and --tags are incompatible");
+		return error("--mirror can't be combined with refspecs");
+	}
+
+	if ((flags & (TRANSPORT_PUSH_ALL|TRANSPORT_PUSH_MIRROR)) ==
+				(TRANSPORT_PUSH_ALL|TRANSPORT_PUSH_MIRROR)) {
+		return error("--all and --mirror are incompatible");
+	}
+
+	if (!refspec && !(flags & TRANSPORT_PUSH_ALL)) {
+		if (remote->push_refspec_nr) {
+			refspec = remote->push_refspec;
+			refspec_nr = remote->push_refspec_nr;
+		} else if (!(flags & TRANSPORT_PUSH_MIRROR))
+			setup_default_push_refspecs();
+	}
 	errs = 0;
-	for (i = 0; i < remote->uri_nr; i++) {
+	for (i = 0; i < remote->url_nr; i++) {
+		struct transport *transport =
+			transport_get(remote, remote->url[i]);
 		int err;
-		int dest_argc = common_argc;
-		int dest_refspec_nr = refspec_nr;
-		const char **dest_refspec = refspec;
-		const char *dest = remote->uri[i];
-		const char *sender = "send-pack";
-		if (!prefixcmp(dest, "http://") ||
-		    !prefixcmp(dest, "https://"))
-			sender = "http-push";
-		else {
-			char *rem = xmalloc(strlen(remote->name) + 10);
-			sprintf(rem, "--remote=%s", remote->name);
-			argv[dest_argc++] = rem;
-			if (thin)
-				argv[dest_argc++] = "--thin";
-		}
-		argv[0] = sender;
-		argv[dest_argc++] = dest;
-		while (dest_refspec_nr--)
-			argv[dest_argc++] = *dest_refspec++;
-		argv[dest_argc] = NULL;
-		if (verbose)
-			fprintf(stderr, "Pushing to %s\n", dest);
-		err = run_command_v_opt(argv, RUN_GIT_CMD);
+		if (receivepack)
+			transport_set_option(transport,
+					     TRANS_OPT_RECEIVEPACK, receivepack);
+		if (thin)
+			transport_set_option(transport, TRANS_OPT_THIN, "yes");
+
+		if (flags & TRANSPORT_PUSH_VERBOSE)
+			fprintf(stderr, "Pushing to %s\n", remote->url[i]);
+		err = transport_push(transport, refspec_nr, refspec, flags);
+		err |= transport_disconnect(transport);
+
 		if (!err)
 			continue;
 
-		error("failed to push to '%s'", remote->uri[i]);
-		switch (err) {
-		case -ERR_RUN_COMMAND_FORK:
-			error("unable to fork for %s", sender);
-		case -ERR_RUN_COMMAND_EXEC:
-			error("unable to exec %s", sender);
-			break;
-		case -ERR_RUN_COMMAND_WAITPID:
-		case -ERR_RUN_COMMAND_WAITPID_WRONG_PID:
-		case -ERR_RUN_COMMAND_WAITPID_SIGNAL:
-		case -ERR_RUN_COMMAND_WAITPID_NOEXIT:
-			error("%s died with strange error", sender);
-		}
+		error("failed to push some refs to '%s'", remote->url[i]);
 		errs++;
 	}
 	return !!errs;
@@ -124,58 +178,39 @@ static int do_push(const char *repo)
 
 int cmd_push(int argc, const char **argv, const char *prefix)
 {
-	int i;
+	int flags = 0;
+	int tags = 0;
+	int rc;
 	const char *repo = NULL;	/* default repository */
 
-	for (i = 1; i < argc; i++) {
-		const char *arg = argv[i];
+	struct option options[] = {
+		OPT_BIT('v', "verbose", &flags, "be verbose", TRANSPORT_PUSH_VERBOSE),
+		OPT_STRING( 0 , "repo", &repo, "repository", "repository"),
+		OPT_BIT( 0 , "all", &flags, "push all refs", TRANSPORT_PUSH_ALL),
+		OPT_BIT( 0 , "mirror", &flags, "mirror all refs",
+			    (TRANSPORT_PUSH_MIRROR|TRANSPORT_PUSH_FORCE)),
+		OPT_BOOLEAN( 0 , "tags", &tags, "push tags"),
+		OPT_BIT( 0 , "dry-run", &flags, "dry run", TRANSPORT_PUSH_DRY_RUN),
+		OPT_BIT('f', "force", &flags, "force updates", TRANSPORT_PUSH_FORCE),
+		OPT_BOOLEAN( 0 , "thin", &thin, "use thin pack"),
+		OPT_STRING( 0 , "receive-pack", &receivepack, "receive-pack", "receive pack program"),
+		OPT_STRING( 0 , "exec", &receivepack, "receive-pack", "receive pack program"),
+		OPT_END()
+	};
 
-		if (arg[0] != '-') {
-			repo = arg;
-			i++;
-			break;
-		}
-		if (!strcmp(arg, "-v")) {
-			verbose=1;
-			continue;
-		}
-		if (!prefixcmp(arg, "--repo=")) {
-			repo = arg+7;
-			continue;
-		}
-		if (!strcmp(arg, "--all")) {
-			all = 1;
-			continue;
-		}
-		if (!strcmp(arg, "--tags")) {
-			add_refspec("refs/tags/*");
-			continue;
-		}
-		if (!strcmp(arg, "--force") || !strcmp(arg, "-f")) {
-			force = 1;
-			continue;
-		}
-		if (!strcmp(arg, "--thin")) {
-			thin = 1;
-			continue;
-		}
-		if (!strcmp(arg, "--no-thin")) {
-			thin = 0;
-			continue;
-		}
-		if (!prefixcmp(arg, "--receive-pack=")) {
-			receivepack = arg;
-			continue;
-		}
-		if (!prefixcmp(arg, "--exec=")) {
-			receivepack = arg;
-			continue;
-		}
-		usage(push_usage);
+	argc = parse_options(argc, argv, options, push_usage, 0);
+
+	if (tags)
+		add_refspec("refs/tags/*");
+
+	if (argc > 0) {
+		repo = argv[0];
+		set_refspecs(argv + 1, argc - 1);
 	}
-	set_refspecs(argv + i, argc - i);
-	if (all && refspec)
-		usage(push_usage);
 
-	return do_push(repo);
+	rc = do_push(repo, flags);
+	if (rc == -1)
+		usage_with_options(push_usage, options);
+	else
+		return rc;
 }

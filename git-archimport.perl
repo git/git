@@ -9,7 +9,7 @@
 
 =head1 Invocation
 
-    git-archimport [ -h ] [ -v ] [ -o ] [ -a ] [ -f ] [ -T ]
+    git archimport [ -h ] [ -v ] [ -o ] [ -a ] [ -f ] [ -T ]
 	[ -D depth] [ -t tempdir ] <archive>/<branch> [ <archive>/<branch> ]
 
 Imports a project from one or more Arch repositories. It will follow branches
@@ -74,7 +74,7 @@ our($opt_h,$opt_f,$opt_v,$opt_T,$opt_t,$opt_D,$opt_a,$opt_o);
 
 sub usage() {
     print STDERR <<END;
-Usage: ${\basename $0}     # fetch/update GIT from Arch
+Usage: git archimport     # fetch/update GIT from Arch
        [ -h ] [ -v ] [ -o ] [ -a ] [ -f ] [ -T ] [ -D depth ] [ -t tempdir ]
        repository/arch-branch [ repository/arch-branch] ...
 END

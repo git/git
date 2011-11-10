@@ -1,0 +1,15 @@
+object access API
+=================
+
+Talk about <sha1_file.c> and <object.h> family, things like
+
+* read_sha1_file()
+* read_object_with_reference()
+* has_sha1_file()
+* write_sha1_file()
+* pretend_sha1_file()
+* lookup_{object,commit,tag,blob,tree}
+* parse_{object,commit,tag,blob,tree}
+* Use of object flags
+
+(JC, Shawn, Daniel, Dscho, Linus)

@@ -8,17 +8,13 @@
  */
 static size_t cleanup(char *line, size_t len)
 {
-	if (len) {
-		if (line[len - 1] == '\n')
-			len--;
-
-		while (len) {
-			unsigned char c = line[len - 1];
-			if (!isspace(c))
-				break;
-			len--;
-		}
+	while (len) {
+		unsigned char c = line[len - 1];
+		if (!isspace(c))
+			break;
+		len--;
 	}
+
 	return len;
 }
 
@@ -34,66 +30,59 @@ static size_t cleanup(char *line, size_t len)
  * If the input has only empty lines and spaces,
  * no output will be produced.
  *
- * If last line has a newline at the end, it will be removed.
+ * If last line does not have a newline at the end, one is added.
  *
  * Enable skip_comments to skip every line starting with "#".
  */
-size_t stripspace(char *buffer, size_t length, int skip_comments)
+void stripspace(struct strbuf *sb, int skip_comments)
 {
-	int empties = -1;
+	int empties = 0;
 	size_t i, j, len, newlen;
 	char *eol;
 
-	for (i = j = 0; i < length; i += len, j += newlen) {
-		eol = memchr(buffer + i, '\n', length - i);
-		len = eol ? eol - (buffer + i) + 1 : length - i;
+	/* We may have to add a newline. */
+	strbuf_grow(sb, 1);
 
-		if (skip_comments && len && buffer[i] == '#') {
+	for (i = j = 0; i < sb->len; i += len, j += newlen) {
+		eol = memchr(sb->buf + i, '\n', sb->len - i);
+		len = eol ? eol - (sb->buf + i) + 1 : sb->len - i;
+
+		if (skip_comments && len && sb->buf[i] == '#') {
 			newlen = 0;
 			continue;
 		}
-		newlen = cleanup(buffer + i, len);
+		newlen = cleanup(sb->buf + i, len);
 
 		/* Not just an empty line? */
 		if (newlen) {
-			if (empties != -1)
-				buffer[j++] = '\n';
-			if (empties > 0)
-				buffer[j++] = '\n';
+			if (empties > 0 && j > 0)
+				sb->buf[j++] = '\n';
 			empties = 0;
-			memmove(buffer + j, buffer + i, newlen);
-			continue;
+			memmove(sb->buf + j, sb->buf + i, newlen);
+			sb->buf[newlen + j++] = '\n';
+		} else {
+			empties++;
 		}
-		if (empties < 0)
-			continue;
-		empties++;
 	}
 
-	return j;
+	strbuf_setlen(sb, j);
 }
 
 int cmd_stripspace(int argc, const char **argv, const char *prefix)
 {
-	char *buffer;
-	unsigned long size;
+	struct strbuf buf = STRBUF_INIT;
 	int strip_comments = 0;
 
 	if (argc > 1 && (!strcmp(argv[1], "-s") ||
 				!strcmp(argv[1], "--strip-comments")))
 		strip_comments = 1;
 
-	size = 1024;
-	buffer = xmalloc(size);
-	if (read_fd(0, &buffer, &size)) {
-		free(buffer);
+	if (strbuf_read(&buf, 0, 1024) < 0)
 		die("could not read the input");
-	}
 
-	size = stripspace(buffer, size, strip_comments);
-	write_or_die(1, buffer, size);
-	if (size)
-		putc('\n', stdout);
+	stripspace(&buf, strip_comments);
 
-	free(buffer);
+	write_or_die(1, buf.buf, buf.len);
+	strbuf_release(&buf);
 	return 0;
 }

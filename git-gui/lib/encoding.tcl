@@ -206,7 +206,7 @@ set encoding_aliases {
     { ISO-8859-16 iso-ir-226 ISO_8859-16:2001 ISO_8859-16 latin10 l10 }
     { GBK CP936 MS936 windows-936 }
     { JIS_Encoding csJISEncoding }
-    { Shift_JIS MS_Kanji csShiftJIS }
+    { Shift_JIS MS_Kanji csShiftJIS ShiftJIS Shift-JIS }
     { Extended_UNIX_Code_Packed_Format_for_Japanese csEUCPkdFmtJapanese
       EUC-JP }
     { Extended_UNIX_Code_Fixed_Width_for_Japanese csEUCFixWidJapanese }
@@ -240,37 +240,227 @@ set encoding_aliases {
     { Big5 csBig5 }
 }
 
-proc tcl_encoding {enc} {
-    global encoding_aliases
-    set names [encoding names]
-    set lcnames [string tolower $names]
-    set enc [string tolower $enc]
-    set i [lsearch -exact $lcnames $enc]
-    if {$i < 0} {
-	# look for "isonnn" instead of "iso-nnn" or "iso_nnn"
-	if {[regsub {^iso[-_]} $enc iso encx]} {
-	    set i [lsearch -exact $lcnames $encx]
+set encoding_groups {
+    {"" ""
+	{"Unicode" UTF-8}
+	{"Western" ISO-8859-1}}
+    {we "West European"
+	{"Western" ISO-8859-15 CP-437 CP-850 MacRoman CP-1252 Windows-1252}
+	{"Celtic" ISO-8859-14}
+	{"Greek" ISO-8859-14 ISO-8859-7 CP-737 CP-869 MacGreek CP-1253 Windows-1253}
+	{"Icelandic" MacIceland MacIcelandic CP-861}
+	{"Nordic" ISO-8859-10 CP-865}
+	{"Portuguese" CP-860}
+	{"South European" ISO-8859-3}}
+    {ee "East European"
+	{"Baltic" CP-775 ISO-8859-4 ISO-8859-13 CP-1257 Windows-1257}
+	{"Central European" CP-852 ISO-8859-2 MacCE CP-1250 Windows-1250}
+	{"Croatian" MacCroatian}
+	{"Cyrillic" CP-855 ISO-8859-5 ISO-IR-111 KOI8-R MacCyrillic CP-1251 Windows-1251}
+	{"Russian" CP-866}
+	{"Ukrainian" KOI8-U MacUkraine MacUkrainian}
+	{"Romanian" ISO-8859-16 MacRomania MacRomanian}}
+    {ea "East Asian"
+	{"Generic" ISO-2022}
+	{"Chinese Simplified" GB2312 GB1988 GB12345 GB2312-RAW GBK EUC-CN GB18030 HZ ISO-2022-CN}
+	{"Chinese Traditional" Big5 Big5-HKSCS EUC-TW CP-950}
+	{"Japanese" EUC-JP ISO-2022-JP Shift-JIS JIS-0212 JIS-0208 JIS-0201 CP-932 MacJapan}
+	{"Korean" EUC-KR UHC JOHAB ISO-2022-KR CP-949 KSC5601}}
+    {sa "SE & SW Asian"
+	{"Armenian" ARMSCII-8}
+	{"Georgian" GEOSTD8}
+	{"Thai" TIS-620 ISO-8859-11 CP-874 Windows-874 MacThai}
+	{"Turkish" CP-857 CP857 ISO-8859-9 MacTurkish CP-1254 Windows-1254}
+	{"Vietnamese" TCVN VISCII VPS CP-1258 Windows-1258}
+	{"Hindi" MacDevanagari}
+	{"Gujarati" MacGujarati}
+	{"Gurmukhi" MacGurmukhi}}
+    {me "Middle Eastern"
+	{"Arabic" ISO-8859-6 Windows-1256 CP-1256 CP-864 MacArabic}
+	{"Farsi" MacFarsi}
+	{"Hebrew" ISO-8859-8-I Windows-1255 CP-1255 ISO-8859-8 CP-862 MacHebrew}}
+    {mi "Misc"
+	{"7-bit" ASCII}
+	{"16-bit" Unicode}
+	{"Legacy" CP-863 EBCDIC}
+	{"Symbol" Symbol Dingbats MacDingbats MacCentEuro}}
+}
+
+proc build_encoding_table {} {
+	global encoding_aliases encoding_lookup_table
+
+	# Prepare the lookup list; cannot use lsort -nocase because
+	# of compatibility issues with older Tcl (e.g. in msysgit)
+	set names [list]
+	foreach item [encoding names] {
+		lappend names [list [string tolower $item] $item]
 	}
-    }
-    if {$i < 0} {
-	foreach l $encoding_aliases {
-	    set ll [string tolower $l]
-	    if {[lsearch -exact $ll $enc] < 0} continue
-	    # look through the aliases for one that tcl knows about
-	    foreach e $ll {
-		set i [lsearch -exact $lcnames $e]
-		if {$i < 0} {
-		    if {[regsub {^iso[-_]} $e iso ex]} {
-			set i [lsearch -exact $lcnames $ex]
-		    }
+	set names [lsort -ascii -index 0 $names]
+	# neither can we use lsearch -index
+	set lnames [list]
+	foreach item $names {
+		lappend lnames [lindex $item 0]
+	}
+
+	foreach grp $encoding_aliases {
+		set target {}
+		foreach item $grp {
+			set i [lsearch -sorted -ascii $lnames \
+					[string tolower $item]]
+			if {$i >= 0} {
+				set target [lindex $names $i 1]
+				break
+			}
 		}
-		if {$i >= 0} break
-	    }
-	    break
+		if {$target eq {}} continue
+		foreach item $grp {
+			set encoding_lookup_table([string tolower $item]) $target
+		}
 	}
-    }
-    if {$i >= 0} {
-	return [lindex $names $i]
-    }
-    return {}
+
+	foreach item $names {
+		set encoding_lookup_table([lindex $item 0]) [lindex $item 1]
+	}
+}
+
+proc tcl_encoding {enc} {
+	global encoding_lookup_table
+	if {$enc eq {}} {
+		return {}
+	}
+	if {![info exists encoding_lookup_table]} {
+		build_encoding_table
+	}
+	set enc [string tolower $enc]
+	if {![info exists encoding_lookup_table($enc)]} {
+		# look for "isonnn" instead of "iso-nnn" or "iso_nnn"
+		if {[regsub {^(iso|cp|ibm|jis)[-_]} $enc {\1} encx]} {
+			set enc $encx
+		}
+	}
+	if {[info exists encoding_lookup_table($enc)]} {
+		return $encoding_lookup_table($enc)
+	} else {
+		return {}
+	}
+}
+
+proc force_path_encoding {path enc} {
+	global path_encoding_overrides last_encoding_override
+
+	set enc [tcl_encoding $enc]
+	if {$enc eq {}} {
+		catch { unset last_encoding_override }
+		catch { unset path_encoding_overrides($path) }
+	} else {
+		set last_encoding_override $enc
+		if {$path ne {}} {
+			set path_encoding_overrides($path) $enc
+		}
+	}
+}
+
+proc get_path_encoding {path} {
+	global path_encoding_overrides last_encoding_override
+
+	if {[info exists last_encoding_override]} {
+		set tcl_enc $last_encoding_override
+	} else {
+		set tcl_enc [tcl_encoding [get_config gui.encoding]]
+	}
+	if {$tcl_enc eq {}} {
+		set tcl_enc [encoding system]
+	}
+	if {$path ne {}} {
+		if {[info exists path_encoding_overrides($path)]} {
+			set enc2 $path_encoding_overrides($path)
+		} else {
+			set enc2 [tcl_encoding [gitattr $path encoding $tcl_enc]]
+		}
+		if {$enc2 ne {}} {
+			set tcl_enc $enc2
+		}
+	}
+	return $tcl_enc
+}
+
+proc build_encoding_submenu {parent grp cmd} {
+	global used_encodings
+
+	set mid [lindex $grp 0]
+	set gname [mc [lindex $grp 1]]
+
+	set smenu {}
+	foreach subset [lrange $grp 2 end] {
+		set name [mc [lindex $subset 0]]
+
+		foreach enc [lrange $subset 1 end] {
+			set tcl_enc [tcl_encoding $enc]
+			if {$tcl_enc eq {}} continue
+
+			if {$smenu eq {}} {
+				if {$mid eq {}} {
+					set smenu $parent
+				} else {
+					set smenu "$parent.$mid"
+					menu $smenu
+					$parent add cascade \
+						-label $gname \
+						-menu $smenu
+				}
+			}
+
+			if {$name ne {}} {
+				set lbl "$name ($enc)"
+			} else {
+				set lbl $enc
+			}
+			$smenu add command \
+				-label $lbl \
+				-command [concat $cmd [list $tcl_enc]]
+
+			lappend used_encodings $tcl_enc
+		}
+	}
+}
+
+proc popup_btn_menu {m b} {
+	tk_popup $m [winfo pointerx $b] [winfo pointery $b]
+}
+
+proc build_encoding_menu {emenu cmd {nodef 0}} {
+	$emenu configure -postcommand \
+		[list do_build_encoding_menu $emenu $cmd $nodef]
+}
+
+proc do_build_encoding_menu {emenu cmd {nodef 0}} {
+	global used_encodings encoding_groups
+
+	$emenu configure -postcommand {}
+
+	if {!$nodef} {
+		$emenu add command \
+			-label [mc "Default"] \
+			-command [concat $cmd [list {}]]
+	}
+	set sysenc [encoding system]
+	$emenu add command \
+		-label [mc "System (%s)" $sysenc] \
+		-command [concat $cmd [list $sysenc]]
+
+	# Main encoding tree
+	set used_encodings [list identity]
+	$emenu add separator
+	foreach grp $encoding_groups {
+		build_encoding_submenu $emenu $grp $cmd
+	}
+
+	# Add unclassified encodings
+	set unused_grp [list [mc Other]]
+	foreach enc [encoding names] {
+		if {[lsearch -exact $used_encodings $enc] < 0} {
+			lappend unused_grp $enc
+		}
+	}
+	build_encoding_submenu $emenu [list other [mc Other] $unused_grp] $cmd
 }

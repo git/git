@@ -7,7 +7,7 @@ git-cherry-pick - Apply the change introduced by an existing commit
 
 SYNOPSIS
 --------
-'git-cherry-pick' [--edit] [-n] [-x] <commit>
+'git cherry-pick' [--edit] [-n] [-m parent-number] [-s] [-x] <commit>
 
 DESCRIPTION
 -----------
@@ -19,19 +19,21 @@ OPTIONS
 -------
 <commit>::
 	Commit to cherry-pick.
-	For a more complete list of ways to spell commits, see
-	"SPECIFYING REVISIONS" section in gitlink:git-rev-parse[1].
+	For a more complete list of ways to spell commits, see the
+	"SPECIFYING REVISIONS" section in linkgit:git-rev-parse[1].
 
--e|--edit::
-	With this option, `git-cherry-pick` will let you edit the commit
-	message prior committing.
+-e::
+--edit::
+	With this option, 'git-cherry-pick' will let you edit the commit
+	message prior to committing.
 
 -x::
-	Cause the command to append which commit was
-	cherry-picked after the original commit message when
-	making a commit.  Do not use this option if you are
-	cherry-picking from your private branch because the
-	information is useless to the recipient.  If on the
+	When recording the commit, append to the original commit
+	message a note that indicates which commit this change
+	was cherry-picked from.  Append the note only for cherry
+	picks without conflicts.  Do not use this option if
+	you are cherry-picking from your private branch because
+	the information is useless to the recipient.  If on the
 	other hand you are cherry-picking between two publicly
 	visible branches (e.g. backporting a fix to a
 	maintenance branch for an older release from a
@@ -43,23 +45,35 @@ OPTIONS
 	described above, and `-r` was to disable it.  Now the
 	default is not to do `-x` so this option is a no-op.
 
--n|--no-commit::
-	Usually the command automatically creates a commit with
-	a commit log message stating which commit was
-	cherry-picked.  This flag applies the change necessary
-	to cherry-pick the named commit to your working tree,
+-m parent-number::
+--mainline parent-number::
+	Usually you cannot cherry-pick a merge because you do not know which
+	side of the merge should be considered the mainline.  This
+	option specifies the parent number (starting from 1) of
+	the mainline and allows cherry-pick to replay the change
+	relative to the specified parent.
+
+-n::
+--no-commit::
+	Usually the command automatically creates a commit.
+	This flag applies the change necessary to cherry-pick
+	the named commit to your working tree and the index,
 	but does not make the commit.  In addition, when this
-	option is used, your working tree does not have to match
-	the HEAD commit.  The cherry-pick is done against the
-	beginning state of your working tree.
+	option is used, your index does not have to match the
+	HEAD commit.  The cherry-pick is done against the
+	beginning state of your index.
 +
 This is useful when cherry-picking more than one commits'
-effect to your working tree in a row.
+effect to your index in a row.
+
+-s::
+--signoff::
+	Add Signed-off-by line at the end of the commit message.
 
 
 Author
 ------
-Written by Junio C Hamano <junkio@cox.net>
+Written by Junio C Hamano <gitster@pobox.com>
 
 Documentation
 --------------
@@ -67,4 +81,4 @@ Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[1] suite

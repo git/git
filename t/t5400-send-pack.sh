@@ -31,10 +31,8 @@ test_expect_success setup '
 	    parent=$commit || return 1
 	done &&
 	git update-ref HEAD "$commit" &&
-	git-clone ./. victim &&
-	cd victim &&
-	git log &&
-	cd .. &&
+	git clone ./. victim &&
+	( cd victim && git log ) &&
 	git update-ref HEAD "$zero" &&
 	parent=$zero &&
 	i=0 &&
@@ -59,58 +57,150 @@ test_expect_success 'pack the source repository' '
 '
 
 test_expect_success 'pack the destination repository' '
+    (
 	cd victim &&
 	git repack -a -d &&
-	git prune &&
-	cd ..
+	git prune
+    )
 '
 
-test_expect_success \
-        'pushing rewound head should not barf but require --force' '
-	# should not fail but refuse to update.
-	if git-send-pack ./victim/.git/ master
-	then
-		# now it should fail with Pasky patch
-		echo >&2 Gaah, it should have failed.
-		false
-	else
-		echo >&2 Thanks, it correctly failed.
-		true
-	fi &&
-	if cmp victim/.git/refs/heads/master .git/refs/heads/master
-	then
-		# should have been left as it was!
-		false
-	else
-		true
-	fi &&
+test_expect_success 'refuse pushing rewound head without --force' '
+	pushed_head=$(git rev-parse --verify master) &&
+	victim_orig=$(cd victim && git rev-parse --verify master) &&
+	test_must_fail git send-pack ./victim master &&
+	victim_head=$(cd victim && git rev-parse --verify master) &&
+	test "$victim_head" = "$victim_orig" &&
 	# this should update
-	git-send-pack --force ./victim/.git/ master &&
-	cmp victim/.git/refs/heads/master .git/refs/heads/master
+	git send-pack --force ./victim master &&
+	victim_head=$(cd victim && git rev-parse --verify master) &&
+	test "$victim_head" = "$pushed_head"
 '
 
 test_expect_success \
         'push can be used to delete a ref' '
-	cd victim &&
-	git branch extra master &&
-	cd .. &&
-	test -f victim/.git/refs/heads/extra &&
-	git-send-pack ./victim/.git/ :extra master &&
-	! test -f victim/.git/refs/heads/extra
+	( cd victim && git branch extra master ) &&
+	git send-pack ./victim :extra master &&
+	( cd victim &&
+	  test_must_fail git rev-parse --verify extra )
 '
 
-unset GIT_CONFIG GIT_CONFIG_LOCAL
-HOME=`pwd`/no-such-directory
-export HOME ;# this way we force the victim/.git/config to be used.
+test_expect_success 'refuse deleting push with denyDeletes' '
+	(
+	    cd victim &&
+	    ( git branch -D extra || : ) &&
+	    git config receive.denyDeletes true &&
+	    git branch extra master
+	) &&
+	test_must_fail git send-pack ./victim :extra master
+'
 
-test_expect_success \
-        'pushing with --force should be denied with denyNonFastforwards' '
-	cd victim &&
-	git config receive.denyNonFastforwards true &&
-	cd .. &&
-	git update-ref refs/heads/master master^ || return 1
-	git-send-pack --force ./victim/.git/ master && return 1
-	! git diff .git/refs/heads/master victim/.git/refs/heads/master
+test_expect_success 'denyNonFastforwards trumps --force' '
+	(
+	    cd victim &&
+	    ( git branch -D extra || : ) &&
+	    git config receive.denyNonFastforwards true
+	) &&
+	victim_orig=$(cd victim && git rev-parse --verify master) &&
+	test_must_fail git send-pack --force ./victim master^:master &&
+	victim_head=$(cd victim && git rev-parse --verify master) &&
+	test "$victim_orig" = "$victim_head"
+'
+
+test_expect_success 'push --all excludes remote tracking hierarchy' '
+	mkdir parent &&
+	(
+	    cd parent &&
+	    git init && : >file && git add file && git commit -m add
+	) &&
+	git clone parent child &&
+	(
+	    cd child && git push --all
+	) &&
+	(
+	    cd parent &&
+	    test -z "$(git for-each-ref refs/remotes/origin)"
+	)
+'
+
+rewound_push_setup() {
+	rm -rf parent child &&
+	mkdir parent &&
+	(
+	    cd parent &&
+	    git init &&
+	    echo one >file && git add file && git commit -m one &&
+	    echo two >file && git commit -a -m two
+	) &&
+	git clone parent child &&
+	(
+	    cd child && git reset --hard HEAD^
+	)
+}
+
+rewound_push_succeeded() {
+	cmp ../parent/.git/refs/heads/master .git/refs/heads/master
+}
+
+rewound_push_failed() {
+	if rewound_push_succeeded
+	then
+		false
+	else
+		true
+	fi
+}
+
+test_expect_success 'pushing explicit refspecs respects forcing' '
+	rewound_push_setup &&
+	parent_orig=$(cd parent && git rev-parse --verify master) &&
+	(
+	    cd child &&
+	    test_must_fail git send-pack ../parent \
+		refs/heads/master:refs/heads/master
+	) &&
+	parent_head=$(cd parent && git rev-parse --verify master) &&
+	test "$parent_orig" = "$parent_head" &&
+	(
+	    cd child &&
+	    git send-pack ../parent \
+	        +refs/heads/master:refs/heads/master
+	) &&
+	parent_head=$(cd parent && git rev-parse --verify master) &&
+	child_head=$(cd parent && git rev-parse --verify master) &&
+	test "$parent_head" = "$child_head"
+'
+
+test_expect_success 'pushing wildcard refspecs respects forcing' '
+	rewound_push_setup &&
+	parent_orig=$(cd parent && git rev-parse --verify master) &&
+	(
+	    cd child &&
+	    test_must_fail git send-pack ../parent \
+	        "refs/heads/*:refs/heads/*"
+	) &&
+	parent_head=$(cd parent && git rev-parse --verify master) &&
+	test "$parent_orig" = "$parent_head" &&
+	(
+	    cd child &&
+	    git send-pack ../parent \
+	        "+refs/heads/*:refs/heads/*"
+	) &&
+	parent_head=$(cd parent && git rev-parse --verify master) &&
+	child_head=$(cd parent && git rev-parse --verify master) &&
+	test "$parent_head" = "$child_head"
+'
+
+test_expect_success 'warn pushing to delete current branch' '
+	rewound_push_setup &&
+	(
+	    cd child &&
+	    git send-pack ../parent :refs/heads/master 2>errs
+	) &&
+	grep "warning: to refuse deleting" child/errs &&
+	(
+		cd parent &&
+		test_must_fail git rev-parse --verify master
+	)
 '
 
 test_done

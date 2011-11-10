@@ -7,7 +7,7 @@ test_description='Test special whitespace in diff engine.
 
 '
 . ./test-lib.sh
-. ../diff-lib.sh
+. "$TEST_DIRECTORY"/diff-lib.sh
 
 # Ray Lehtiniemi's example
 
@@ -43,13 +43,13 @@ index adf3937..6edc172 100644
 EOF
 
 git diff > out
-test_expect_success "Ray's example without options" 'git diff expect out'
+test_expect_success "Ray's example without options" 'test_cmp expect out'
 
 git diff -w > out
-test_expect_success "Ray's example with -w" 'git diff expect out'
+test_expect_success "Ray's example with -w" 'test_cmp expect out'
 
 git diff -b > out
-test_expect_success "Ray's example with -b" 'git diff expect out'
+test_expect_success "Ray's example with -b" 'test_cmp expect out'
 
 tr 'Q' '\015' << EOF > x
 whitespace at beginning
@@ -62,16 +62,16 @@ EOF
 
 git update-index x
 
-cat << EOF > x
+tr '_' ' ' << EOF > x
 	whitespace at beginning
 whitespace 	 change
 white space in the middle
-whitespace at end  
+whitespace at end__
 unchanged line
 CR at end
 EOF
 
-tr 'Q' '\015' << EOF > expect
+tr 'Q_' '\015 ' << EOF > expect
 diff --git a/x b/x
 index d99af23..8b32fb5 100644
 --- a/x
@@ -84,20 +84,26 @@ index d99af23..8b32fb5 100644
 +	whitespace at beginning
 +whitespace 	 change
 +white space in the middle
-+whitespace at end  
++whitespace at end__
  unchanged line
 -CR at endQ
 +CR at end
 EOF
 git diff > out
-test_expect_success 'another test, without options' 'git diff expect out'
+test_expect_success 'another test, without options' 'test_cmp expect out'
 
 cat << EOF > expect
 diff --git a/x b/x
 index d99af23..8b32fb5 100644
 EOF
 git diff -w > out
-test_expect_success 'another test, with -w' 'git diff expect out'
+test_expect_success 'another test, with -w' 'test_cmp expect out'
+git diff -w -b > out
+test_expect_success 'another test, with -w -b' 'test_cmp expect out'
+git diff -w --ignore-space-at-eol > out
+test_expect_success 'another test, with -w --ignore-space-at-eol' 'test_cmp expect out'
+git diff -w -b --ignore-space-at-eol > out
+test_expect_success 'another test, with -w -b --ignore-space-at-eol' 'test_cmp expect out'
 
 tr 'Q' '\015' << EOF > expect
 diff --git a/x b/x
@@ -115,6 +121,278 @@ index d99af23..8b32fb5 100644
  CR at endQ
 EOF
 git diff -b > out
-test_expect_success 'another test, with -b' 'git diff expect out'
+test_expect_success 'another test, with -b' 'test_cmp expect out'
+git diff -b --ignore-space-at-eol > out
+test_expect_success 'another test, with -b --ignore-space-at-eol' 'test_cmp expect out'
+
+tr 'Q' '\015' << EOF > expect
+diff --git a/x b/x
+index d99af23..8b32fb5 100644
+--- a/x
++++ b/x
+@@ -1,6 +1,6 @@
+-whitespace at beginning
+-whitespace change
+-whitespace in the middle
++	whitespace at beginning
++whitespace 	 change
++white space in the middle
+ whitespace at end
+ unchanged line
+ CR at endQ
+EOF
+git diff --ignore-space-at-eol > out
+test_expect_success 'another test, with --ignore-space-at-eol' 'test_cmp expect out'
+
+test_expect_success 'check mixed spaces and tabs in indent' '
+
+	# This is indented with SP HT SP.
+	echo " 	 foo();" > x &&
+	git diff --check | grep "space before tab in indent"
+
+'
+
+test_expect_success 'check mixed tabs and spaces in indent' '
+
+	# This is indented with HT SP HT.
+	echo "	 	foo();" > x &&
+	git diff --check | grep "space before tab in indent"
+
+'
+
+test_expect_success 'check with no whitespace errors' '
+
+	git commit -m "snapshot" &&
+	echo "foo();" > x &&
+	git diff --check
+
+'
+
+test_expect_success 'check with trailing whitespace' '
+
+	echo "foo(); " > x &&
+	test_must_fail git diff --check
+
+'
+
+test_expect_success 'check with space before tab in indent' '
+
+	# indent has space followed by hard tab
+	echo " 	foo();" > x &&
+	test_must_fail git diff --check
+
+'
+
+test_expect_success '--check and --exit-code are not exclusive' '
+
+	git checkout x &&
+	git diff --check --exit-code
+
+'
+
+test_expect_success '--check and --quiet are not exclusive' '
+
+	git diff --check --quiet
+
+'
+
+test_expect_success 'check staged with no whitespace errors' '
+
+	echo "foo();" > x &&
+	git add x &&
+	git diff --cached --check
+
+'
+
+test_expect_success 'check staged with trailing whitespace' '
+
+	echo "foo(); " > x &&
+	git add x &&
+	test_must_fail git diff --cached --check
+
+'
+
+test_expect_success 'check staged with space before tab in indent' '
+
+	# indent has space followed by hard tab
+	echo " 	foo();" > x &&
+	git add x &&
+	test_must_fail git diff --cached --check
+
+'
+
+test_expect_success 'check with no whitespace errors (diff-index)' '
+
+	echo "foo();" > x &&
+	git add x &&
+	git diff-index --check HEAD
+
+'
+
+test_expect_success 'check with trailing whitespace (diff-index)' '
+
+	echo "foo(); " > x &&
+	git add x &&
+	test_must_fail git diff-index --check HEAD
+
+'
+
+test_expect_success 'check with space before tab in indent (diff-index)' '
+
+	# indent has space followed by hard tab
+	echo " 	foo();" > x &&
+	git add x &&
+	test_must_fail git diff-index --check HEAD
+
+'
+
+test_expect_success 'check staged with no whitespace errors (diff-index)' '
+
+	echo "foo();" > x &&
+	git add x &&
+	git diff-index --cached --check HEAD
+
+'
+
+test_expect_success 'check staged with trailing whitespace (diff-index)' '
+
+	echo "foo(); " > x &&
+	git add x &&
+	test_must_fail git diff-index --cached --check HEAD
+
+'
+
+test_expect_success 'check staged with space before tab in indent (diff-index)' '
+
+	# indent has space followed by hard tab
+	echo " 	foo();" > x &&
+	git add x &&
+	test_must_fail git diff-index --cached --check HEAD
+
+'
+
+test_expect_success 'check with no whitespace errors (diff-tree)' '
+
+	echo "foo();" > x &&
+	git commit -m "new commit" x &&
+	git diff-tree --check HEAD^ HEAD
+
+'
+
+test_expect_success 'check with trailing whitespace (diff-tree)' '
+
+	echo "foo(); " > x &&
+	git commit -m "another commit" x &&
+	test_must_fail git diff-tree --check HEAD^ HEAD
+
+'
+
+test_expect_success 'check with space before tab in indent (diff-tree)' '
+
+	# indent has space followed by hard tab
+	echo " 	foo();" > x &&
+	git commit -m "yet another" x &&
+	test_must_fail git diff-tree --check HEAD^ HEAD
+
+'
+
+test_expect_success 'check trailing whitespace (trailing-space: off)' '
+
+	git config core.whitespace "-trailing-space" &&
+	echo "foo ();   " > x &&
+	git diff --check
+
+'
+
+test_expect_success 'check trailing whitespace (trailing-space: on)' '
+
+	git config core.whitespace "trailing-space" &&
+	echo "foo ();   " > x &&
+	test_must_fail git diff --check
+
+'
+
+test_expect_success 'check space before tab in indent (space-before-tab: off)' '
+
+	# indent contains space followed by HT
+	git config core.whitespace "-space-before-tab" &&
+	echo " 	foo ();" > x &&
+	git diff --check
+
+'
+
+test_expect_success 'check space before tab in indent (space-before-tab: on)' '
+
+	# indent contains space followed by HT
+	git config core.whitespace "space-before-tab" &&
+	echo " 	foo ();   " > x &&
+	test_must_fail git diff --check
+
+'
+
+test_expect_success 'check spaces as indentation (indent-with-non-tab: off)' '
+
+	git config core.whitespace "-indent-with-non-tab"
+	echo "        foo ();" > x &&
+	git diff --check
+
+'
+
+test_expect_success 'check spaces as indentation (indent-with-non-tab: on)' '
+
+	git config core.whitespace "indent-with-non-tab" &&
+	echo "        foo ();" > x &&
+	test_must_fail git diff --check
+
+'
+
+test_expect_success 'check tabs and spaces as indentation (indent-with-non-tab: on)' '
+
+	git config core.whitespace "indent-with-non-tab" &&
+	echo "	                foo ();" > x &&
+	test_must_fail git diff --check
+
+'
+
+test_expect_success 'line numbers in --check output are correct' '
+
+	echo "" > x &&
+	echo "foo(); " >> x &&
+	git diff --check | grep "x:2:"
+
+'
+
+test_expect_success 'checkdiff detects trailing blank lines' '
+	echo "foo();" >x &&
+	echo "" >>x &&
+	git diff --check | grep "ends with blank"
+'
+
+test_expect_success 'checkdiff allows new blank lines' '
+	git checkout x &&
+	mv x y &&
+	(
+		echo "/* This is new */" &&
+		echo "" &&
+		cat y
+	) >x &&
+	git diff --check
+'
+
+test_expect_success 'combined diff with autocrlf conversion' '
+
+	git reset --hard &&
+	echo >x hello &&
+	git commit -m "one side" x &&
+	git checkout HEAD^ &&
+	echo >x goodbye &&
+	git commit -m "the other side" x &&
+	git config core.autocrlf true &&
+	test_must_fail git merge master &&
+
+	git diff | sed -e "1,/^@@@/d" >actual &&
+	! grep "^-" actual
+
+'
 
 test_done

@@ -32,6 +32,7 @@ extern "C" {
 #define XDF_IGNORE_WHITESPACE (1 << 2)
 #define XDF_IGNORE_WHITESPACE_CHANGE (1 << 3)
 #define XDF_IGNORE_WHITESPACE_AT_EOL (1 << 4)
+#define XDF_PATIENCE_DIFF (1 << 5)
 #define XDF_WHITESPACE_FLAGS (XDF_IGNORE_WHITESPACE | XDF_IGNORE_WHITESPACE_CHANGE | XDF_IGNORE_WHITESPACE_AT_EOL)
 
 #define XDL_PATCH_NORMAL '-'
@@ -50,9 +51,16 @@ extern "C" {
 #define XDL_BDOP_CPY 2
 #define XDL_BDOP_INSB 3
 
+/* merge simplification levels */
 #define XDL_MERGE_MINIMAL 0
 #define XDL_MERGE_EAGER 1
 #define XDL_MERGE_ZEALOUS 2
+#define XDL_MERGE_ZEALOUS_ALNUM 3
+#define XDL_MERGE_LEVEL_MASK 0x0f
+
+/* merge output styles */
+#define XDL_MERGE_DIFF3 0x8000
+#define XDL_MERGE_STYLE_MASK 0x8000
 
 typedef struct s_mmfile {
 	char *ptr;
@@ -77,9 +85,11 @@ typedef long (*find_func_t)(const char *line, long line_len, char *buffer, long 
 
 typedef struct s_xdemitconf {
 	long ctxlen;
+	long interhunkctxlen;
 	unsigned long flags;
 	find_func_t find_func;
 	void *find_func_priv;
+	void (*emit_func)();
 } xdemitconf_t;
 
 typedef struct s_bdiffparam {

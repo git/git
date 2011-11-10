@@ -22,7 +22,8 @@ test_expect_success setup '
 	git checkout topic &&
 	quick_one A &&
 	quick_one B &&
-	quick_one Z
+	quick_one Z &&
+	git tag start
 
 '
 
@@ -37,8 +38,28 @@ test_expect_success 'rebase -m' '
 	git rebase -m master >report &&
 	sed -n -e "/^Already applied: /p" \
 		-e "/^Committed: /p" report >actual &&
-	diff -u expect actual
+	test_cmp expect actual
 
+'
+
+test_expect_success 'rebase --stat' '
+        git reset --hard start
+        git rebase --stat master >diffstat.txt &&
+        grep "^ fileX |  *1 +$" diffstat.txt
+'
+
+test_expect_success 'rebase w/config rebase.stat' '
+        git reset --hard start
+        git config rebase.stat true &&
+        git rebase master >diffstat.txt &&
+        grep "^ fileX |  *1 +$" diffstat.txt
+'
+
+test_expect_success 'rebase -n overrides config rebase.stat config' '
+        git reset --hard start
+        git config rebase.stat true &&
+        git rebase -n master >diffstat.txt &&
+        ! grep "^ fileX |  *1 +$" diffstat.txt
 '
 
 test_done

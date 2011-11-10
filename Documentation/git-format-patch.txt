@@ -9,13 +9,18 @@ git-format-patch - Prepare patches for e-mail submission
 SYNOPSIS
 --------
 [verse]
-'git-format-patch' [-n | -k] [-o <dir> | --stdout] [--thread]
-                   [--attach[=<boundary>] | --inline[=<boundary>]]
-                   [-s | --signoff] [<common diff options>]
-                   [--start-number <n>] [--numbered-files]
-                   [--in-reply-to=Message-Id] [--suffix=.<sfx>]
-                   [--ignore-if-in-upstream]
-                   [--subject-prefix=Subject-Prefix]
+'git format-patch' [-k] [(-o|--output-directory) <dir> | --stdout]
+		   [--thread[=<style>]]
+		   [(--attach|--inline)[=<boundary>] | --no-attach]
+		   [-s | --signoff]
+		   [-n | --numbered | -N | --no-numbered]
+		   [--start-number <n>] [--numbered-files]
+		   [--in-reply-to=Message-Id] [--suffix=.<sfx>]
+		   [--ignore-if-in-upstream]
+		   [--subject-prefix=Subject-Prefix]
+		   [--cc=<email>]
+		   [--cover-letter]
+		   [<common diff options>]
 		   [ <since> | <revision range> ]
 
 DESCRIPTION
@@ -24,7 +29,7 @@ DESCRIPTION
 Prepare each commit with its patch in
 one file per commit, formatted to resemble UNIX mailbox format.
 The output of this command is convenient for e-mail submission or
-for use with gitlink:git-am[1].
+for use with 'git-am'.
 
 There are two ways to specify which commits to operate on.
 
@@ -33,17 +38,14 @@ There are two ways to specify which commits to operate on.
    that leads to the <since> to be output.
 
 2. Generic <revision range> expression (see "SPECIFYING
-   REVISIONS" section in gitlink:git-rev-parse[1]) means the
+   REVISIONS" section in linkgit:git-rev-parse[1]) means the
    commits in the specified range.
 
-A single commit, when interpreted as a <revision range>
-expression, means "everything that leads to that commit", but
-if you write 'git format-patch <commit>', the previous rule
-applies to that command line and you do not get "everything
-since the beginning of the time".  If you want to format
-everything since project inception to one commit, say "git
-format-patch \--root <commit>" to make it clear that it is the
-latter case.
+The first rule takes precedence in the case of a single <commit>.  To
+apply the second rule, i.e., format everything since the beginning of
+history up until <commit>, use the '\--root' option: "git format-patch
+\--root <commit>".  If you want to format only <commit> itself, you
+can do this with "git format-patch -1 <commit>".
 
 By default, each output file is numbered sequentially from 1, and uses the
 first line of the commit message (massaged for pathname safety) as
@@ -55,27 +57,36 @@ output, unless the --stdout option is specified.
 If -o is specified, output files are created in <dir>.  Otherwise
 they are created in the current working directory.
 
-If -n is specified, instead of "[PATCH] Subject", the first line
-is formatted as "[PATCH n/m] Subject".
+By default, the subject of a single patch is "[PATCH] First Line" and
+the subject when multiple patches are output is "[PATCH n/m] First
+Line". To force 1/1 to be added for a single patch, use -n.  To omit
+patch numbers from the subject, use -N
 
-If given --thread, git-format-patch will generate In-Reply-To and
+If given --thread, 'git-format-patch' will generate In-Reply-To and
 References headers to make the second and subsequent patch mails appear
 as replies to the first mail; this also generates a Message-Id header to
 reference.
 
 OPTIONS
 -------
+:git-format-patch: 1
 include::diff-options.txt[]
 
 -<n>::
 	Limits the number of patches to prepare.
 
--o|--output-directory <dir>::
+-o <dir>::
+--output-directory <dir>::
 	Use <dir> to store the resulting files, instead of the
 	current working directory.
 
--n|--numbered::
-	Name output in '[PATCH n/m]' format.
+-n::
+--numbered::
+	Name output in '[PATCH n/m]' format, even with a single patch.
+
+-N::
+--no-numbered::
+	Name output in '[PATCH]' format.
 
 --start-number <n>::
 	Start numbering the patches at <n> instead of 1.
@@ -83,13 +94,14 @@ include::diff-options.txt[]
 --numbered-files::
 	Output file names will be a simple number sequence
 	without the default first line of the commit appended.
-	Mutually exclusive with the --stdout option.
 
--k|--keep-subject::
+-k::
+--keep-subject::
 	Do not strip/add '[PATCH]' from the first line of the
 	commit log message.
 
--s|--signoff::
+-s::
+--signoff::
 	Add `Signed-off-by:` line to the commit message, using
 	the committer identity of yourself.
 
@@ -102,15 +114,27 @@ include::diff-options.txt[]
 	which is the commit message and the patch itself in the
 	second part, with "Content-Disposition: attachment".
 
+--no-attach::
+	Disable the creation of an attachment, overriding the
+	configuration setting.
+
 --inline[=<boundary>]::
 	Create multipart/mixed attachment, the first part of
 	which is the commit message and the patch itself in the
 	second part, with "Content-Disposition: inline".
 
---thread::
+--thread[=<style>]::
 	Add In-Reply-To and References headers to make the second and
 	subsequent mails appear as replies to the first.  Also generates
 	the Message-Id header to reference.
++
+The optional <style> argument can be either `shallow` or `deep`.
+'shallow' threading makes every mail a reply to the head of the
+series, where the head is chosen from the cover letter, the
+`\--in-reply-to`, and the first patch mail, in this order.  'deep'
+threading makes every mail a reply to the previous one.  If not
+specified, defaults to the 'format.thread' configuration, or `shallow`
+if that is not set.
 
 --in-reply-to=Message-Id::
 	Make the first mail (or all the mails with --no-thread) appear as a
@@ -130,68 +154,114 @@ include::diff-options.txt[]
 	allows for useful naming of a patch series, and can be
 	combined with the --numbered option.
 
+--cc=<email>::
+	Add a "Cc:" header to the email headers. This is in addition
+	to any configured headers, and may be used multiple times.
+
+--add-header=<header>::
+	Add an arbitrary header to the email headers.  This is in addition
+	to any configured headers, and may be used multiple times.
+	For example, --add-header="Organization: git-foo"
+
+--cover-letter::
+	In addition to the patches, generate a cover letter file
+	containing the shortlog and the overall diffstat.  You can
+	fill in a description in the file before sending it out.
+
 --suffix=.<sfx>::
 	Instead of using `.patch` as the suffix for generated
 	filenames, use specified suffix.  A common alternative is
-	`--suffix=.txt`.
+	`--suffix=.txt`.  Leaving this empty will remove the `.patch`
+	suffix.
 +
-Note that you would need to include the leading dot `.` if you
-want a filename like `0001-description-of-my-change.patch`, and
-the first letter does not have to be a dot.  Leaving it empty would
-not add any suffix.
+Note that the leading character does not have to be a dot; for example,
+you can use `--suffix=-patch` to get `0001-description-of-my-change-patch`.
+
+--no-binary::
+	Do not output contents of changes in binary files, instead
+	display a notice that those files changed.  Patches generated
+	using this option cannot be applied properly, but they are
+	still useful for code review.
+
+--root::
+	Treat the revision argument as a <revision range>, even if it
+	is just a single commit (that would normally be treated as a
+	<since>).  Note that root commits included in the specified
+	range are always formatted as creation patches, independently
+	of this flag.
 
 CONFIGURATION
 -------------
-You can specify extra mail header lines to be added to each
-message in the repository configuration.  You can also specify
-new defaults for the subject prefix and file suffix.
+You can specify extra mail header lines to be added to each message,
+defaults for the subject prefix and file suffix, number patches when
+outputting more than one patch, add "Cc:" headers, configure attachments,
+and sign off patches with configuration variables.
 
 ------------
 [format]
-        headers = "Organization: git-foo\n"
-        subjectprefix = CHANGE
-        suffix = .txt
+	headers = "Organization: git-foo\n"
+	subjectprefix = CHANGE
+	suffix = .txt
+	numbered = auto
+	cc = <email>
+	attach [ = mime-boundary-string ]
+	signoff = true
 ------------
 
 
 EXAMPLES
 --------
 
-git-format-patch -k --stdout R1..R2 | git-am -3 -k::
-	Extract commits between revisions R1 and R2, and apply
-	them on top of the current branch using `git-am` to
-	cherry-pick them.
+* Extract commits between revisions R1 and R2, and apply them on top of
+the current branch using 'git-am' to cherry-pick them:
++
+------------
+$ git format-patch -k --stdout R1..R2 | git am -3 -k
+------------
 
-git-format-patch origin::
-	Extract all commits which are in the current branch but
-	not in the origin branch.  For each commit a separate file
-	is created in the current directory.
+* Extract all commits which are in the current branch but not in the
+origin branch:
++
+------------
+$ git format-patch origin
+------------
++
+For each commit a separate file is created in the current directory.
 
-git-format-patch \--root origin::
-	Extract all commits which that leads to 'origin' since the
-	inception of the project.
+* Extract all commits that lead to 'origin' since the inception of the
+project:
++
+------------
+$ git format-patch --root origin
+------------
 
-git-format-patch -M -B origin::
-	The same as the previous one.  Additionally, it detects
-	and handles renames and complete rewrites intelligently to
-	produce a renaming patch.  A renaming patch reduces the
-	amount of text output, and generally makes it easier to
-	review it.  Note that the "patch" program does not
-	understand renaming patches, so use it only when you know
-	the recipient uses git to apply your patch.
+* The same as the previous one:
++
+------------
+$ git format-patch -M -B origin
+------------
++
+Additionally, it detects and handles renames and complete rewrites
+intelligently to produce a renaming patch.  A renaming patch reduces
+the amount of text output, and generally makes it easier to review.
+Note that non-git "patch" programs won't understand renaming patches, so
+use it only when you know the recipient uses git to apply your patch.
 
-git-format-patch -3::
-	Extract three topmost commits from the current branch
-	and format them as e-mailable patches.
+* Extract three topmost commits from the current branch and format them
+as e-mailable patches:
++
+------------
+$ git format-patch -3
+------------
 
-See Also
+SEE ALSO
 --------
-gitlink:git-am[1], gitlink:git-send-email[1]
+linkgit:git-am[1], linkgit:git-send-email[1]
 
 
 Author
 ------
-Written by Junio C Hamano <junkio@cox.net>
+Written by Junio C Hamano <gitster@pobox.com>
 
 Documentation
 --------------
@@ -199,4 +269,4 @@ Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[1] suite

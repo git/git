@@ -4,18 +4,50 @@
 #include "revision.h"
 #include "builtin.h"
 #include "reachable.h"
+#include "parse-options.h"
+#include "dir.h"
 
-static const char prune_usage[] = "git-prune [-n]";
+static const char * const prune_usage[] = {
+	"git prune [-n] [-v] [--expire <time>] [--] [<head>...]",
+	NULL
+};
 static int show_only;
+static int verbose;
+static unsigned long expire;
+
+static int prune_tmp_object(const char *path, const char *filename)
+{
+	const char *fullpath = mkpath("%s/%s", path, filename);
+	if (expire) {
+		struct stat st;
+		if (lstat(fullpath, &st))
+			return error("Could not stat '%s'", fullpath);
+		if (st.st_mtime > expire)
+			return 0;
+	}
+	printf("Removing stale temporary file %s\n", fullpath);
+	if (!show_only)
+		unlink(fullpath);
+	return 0;
+}
 
 static int prune_object(char *path, const char *filename, const unsigned char *sha1)
 {
-	if (show_only) {
+	const char *fullpath = mkpath("%s/%s", path, filename);
+	if (expire) {
+		struct stat st;
+		if (lstat(fullpath, &st))
+			return error("Could not stat '%s'", fullpath);
+		if (st.st_mtime > expire)
+			return 0;
+	}
+	if (show_only || verbose) {
 		enum object_type type = sha1_object_info(sha1, NULL);
 		printf("%s %s\n", sha1_to_hex(sha1),
 		       (type > 0) ? typename(type) : "unknown");
-	} else
-		unlink(mkpath("%s/%s", path, filename));
+	}
+	if (!show_only)
+		unlink(fullpath);
 	return 0;
 }
 
@@ -30,19 +62,12 @@ static int prune_dir(int i, char *path)
 	while ((de = readdir(dir)) != NULL) {
 		char name[100];
 		unsigned char sha1[20];
-		int len = strlen(de->d_name);
 
-		switch (len) {
-		case 2:
-			if (de->d_name[1] != '.')
-				break;
-		case 1:
-			if (de->d_name[0] != '.')
-				break;
+		if (is_dot_or_dotdot(de->d_name))
 			continue;
-		case 38:
+		if (strlen(de->d_name) == 38) {
 			sprintf(name, "%02x", i);
-			memcpy(name+2, de->d_name, len+1);
+			memcpy(name+2, de->d_name, 39);
 			if (get_sha1_hex(name, sha1) < 0)
 				break;
 
@@ -54,6 +79,10 @@ static int prune_dir(int i, char *path)
 				continue;
 
 			prune_object(path, de->d_name, sha1);
+			continue;
+		}
+		if (!prefixcmp(de->d_name, "tmp_obj_")) {
+			prune_tmp_object(path, de->d_name);
 			continue;
 		}
 		fprintf(stderr, "bad sha1 file: %s/%s\n", path, de->d_name);
@@ -74,27 +103,66 @@ static void prune_object_dir(const char *path)
 	}
 }
 
+/*
+ * Write errors (particularly out of space) can result in
+ * failed temporary packs (and more rarely indexes and other
+ * files begining with "tmp_") accumulating in the object
+ * and the pack directories.
+ */
+static void remove_temporary_files(const char *path)
+{
+	DIR *dir;
+	struct dirent *de;
+
+	dir = opendir(path);
+	if (!dir) {
+		fprintf(stderr, "Unable to open directory %s\n", path);
+		return;
+	}
+	while ((de = readdir(dir)) != NULL)
+		if (!prefixcmp(de->d_name, "tmp_"))
+			prune_tmp_object(path, de->d_name);
+	closedir(dir);
+}
+
 int cmd_prune(int argc, const char **argv, const char *prefix)
 {
-	int i;
 	struct rev_info revs;
-
-	for (i = 1; i < argc; i++) {
-		const char *arg = argv[i];
-		if (!strcmp(arg, "-n")) {
-			show_only = 1;
-			continue;
-		}
-		usage(prune_usage);
-	}
+	const struct option options[] = {
+		OPT_BOOLEAN('n', NULL, &show_only,
+			    "do not remove, show only"),
+		OPT_BOOLEAN('v', NULL, &verbose,
+			"report pruned objects"),
+		OPT_DATE(0, "expire", &expire,
+			 "expire objects older than <time>"),
+		OPT_END()
+	};
+	char *s;
 
 	save_commit_buffer = 0;
 	init_revisions(&revs, prefix);
-	mark_reachable_objects(&revs, 1);
 
+	argc = parse_options(argc, argv, options, prune_usage, 0);
+	while (argc--) {
+		unsigned char sha1[20];
+		const char *name = *argv++;
+
+		if (!get_sha1(name, sha1)) {
+			struct object *object = parse_object(sha1);
+			if (!object)
+				die("bad object: %s", name);
+			add_pending_object(&revs, object, "");
+		}
+		else
+			die("unrecognized argument: %s", name);
+	}
+	mark_reachable_objects(&revs, 1);
 	prune_object_dir(get_object_directory());
 
-	sync();
 	prune_packed_objects(show_only);
+	remove_temporary_files(get_object_directory());
+	s = xstrdup(mkpath("%s/pack", get_object_directory()));
+	remove_temporary_files(s);
+	free(s);
 	return 0;
 }

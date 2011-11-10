@@ -1,10 +1,33 @@
 # git-gui options editor
 # Copyright (C) 2006, 2007 Shawn Pearce
 
+proc config_check_encodings {} {
+	global repo_config_new global_config_new
+
+	set enc $global_config_new(gui.encoding)
+	if {$enc eq {}} {
+		set global_config_new(gui.encoding) [encoding system]
+	} elseif {[tcl_encoding $enc] eq {}} {
+		error_popup [mc "Invalid global encoding '%s'" $enc]
+		return 0
+	}
+
+	set enc $repo_config_new(gui.encoding)
+	if {$enc eq {}} {
+		set repo_config_new(gui.encoding) [encoding system]
+	} elseif {[tcl_encoding $enc] eq {}} {
+		error_popup [mc "Invalid repo encoding '%s'" $enc]
+		return 0
+	}
+
+	return 1
+}
+
 proc save_config {} {
 	global default_config font_descs
-	global repo_config global_config
+	global repo_config global_config system_config
 	global repo_config_new global_config_new
+	global ui_comm_spell
 
 	foreach option $font_descs {
 		set name [lindex $option 0]
@@ -26,7 +49,7 @@ proc save_config {} {
 	foreach name [array names default_config] {
 		set value $global_config_new($name)
 		if {$value ne $global_config($name)} {
-			if {$value eq $default_config($name)} {
+			if {$value eq $system_config($name)} {
 				catch {git config --global --unset $name}
 			} else {
 				regsub -all "\[{}\]" $value {"} value
@@ -52,90 +75,23 @@ proc save_config {} {
 			set repo_config($name) $value
 		}
 	}
-}
 
-proc do_about {} {
-	global appvers copyright oguilib
-	global tcl_patchLevel tk_patchLevel
-
-	set w .about_dialog
-	toplevel $w
-	wm geometry $w "+[winfo rootx .]+[winfo rooty .]"
-
-	label $w.header -text "About [appname]" \
-		-font font_uibold
-	pack $w.header -side top -fill x
-
-	frame $w.buttons
-	button $w.buttons.close -text {Close} \
-		-default active \
-		-command [list destroy $w]
-	pack $w.buttons.close -side right
-	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
-
-	label $w.desc \
-		-text "git-gui - a graphical user interface for Git.
-$copyright" \
-		-padx 5 -pady 5 \
-		-justify left \
-		-anchor w \
-		-borderwidth 1 \
-		-relief solid
-	pack $w.desc -side top -fill x -padx 5 -pady 5
-
-	set v {}
-	append v "git-gui version $appvers\n"
-	append v "[git version]\n"
-	append v "\n"
-	if {$tcl_patchLevel eq $tk_patchLevel} {
-		append v "Tcl/Tk version $tcl_patchLevel"
-	} else {
-		append v "Tcl version $tcl_patchLevel"
-		append v ", Tk version $tk_patchLevel"
+	if {[info exists repo_config(gui.spellingdictionary)]} {
+		set value $repo_config(gui.spellingdictionary)
+		if {$value eq {none}} {
+			if {[info exists ui_comm_spell]} {
+				$ui_comm_spell stop
+			}
+		} elseif {[info exists ui_comm_spell]} {
+			$ui_comm_spell lang $value
+		}
 	}
-
-	set d {}
-	append d "git wrapper: $::_git\n"
-	append d "git exec dir: [gitexec]\n"
-	append d "git-gui lib: $oguilib"
-
-	label $w.vers \
-		-text $v \
-		-padx 5 -pady 5 \
-		-justify left \
-		-anchor w \
-		-borderwidth 1 \
-		-relief solid
-	pack $w.vers -side top -fill x -padx 5 -pady 5
-
-	label $w.dirs \
-		-text $d \
-		-padx 5 -pady 5 \
-		-justify left \
-		-anchor w \
-		-borderwidth 1 \
-		-relief solid
-	pack $w.dirs -side top -fill x -padx 5 -pady 5
-
-	menu $w.ctxm -tearoff 0
-	$w.ctxm add command \
-		-label {Copy} \
-		-command "
-		clipboard clear
-		clipboard append -format STRING -type STRING -- \[$w.vers cget -text\]
-	"
-
-	bind $w <Visibility> "grab $w; focus $w.buttons.close"
-	bind $w <Key-Escape> "destroy $w"
-	bind $w <Key-Return> "destroy $w"
-	bind_button3 $w.vers "tk_popup $w.ctxm %X %Y; grab $w; focus $w"
-	wm title $w "About [appname]"
-	tkwait window $w
 }
 
 proc do_options {} {
 	global repo_config global_config font_descs
 	global repo_config_new global_config_new
+	global ui_comm_spell
 
 	array unset repo_config_new
 	array unset global_config_new
@@ -157,48 +113,50 @@ proc do_options {} {
 	toplevel $w
 	wm geometry $w "+[winfo rootx .]+[winfo rooty .]"
 
-	label $w.header -text "Options" \
-		-font font_uibold
-	pack $w.header -side top -fill x
-
 	frame $w.buttons
-	button $w.buttons.restore -text {Restore Defaults} \
+	button $w.buttons.restore -text [mc "Restore Defaults"] \
 		-default normal \
 		-command do_restore_defaults
 	pack $w.buttons.restore -side left
-	button $w.buttons.save -text Save \
+	button $w.buttons.save -text [mc Save] \
 		-default active \
 		-command [list do_save_config $w]
 	pack $w.buttons.save -side right
-	button $w.buttons.cancel -text {Cancel} \
+	button $w.buttons.cancel -text [mc "Cancel"] \
 		-default normal \
 		-command [list destroy $w]
 	pack $w.buttons.cancel -side right -padx 5
 	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
 
-	labelframe $w.repo -text "[reponame] Repository"
-	labelframe $w.global -text {Global (All Repositories)}
+	labelframe $w.repo -text [mc "%s Repository" [reponame]]
+	labelframe $w.global -text [mc "Global (All Repositories)"]
 	pack $w.repo -side left -fill both -expand 1 -pady 5 -padx 5
 	pack $w.global -side right -fill both -expand 1 -pady 5 -padx 5
 
 	set optid 0
 	foreach option {
-		{t user.name {User Name}}
-		{t user.email {Email Address}}
+		{t user.name {mc "User Name"}}
+		{t user.email {mc "Email Address"}}
 
-		{b merge.summary {Summarize Merge Commits}}
-		{i-1..5 merge.verbosity {Merge Verbosity}}
-		{b merge.diffstat {Show Diffstat After Merge}}
+		{b merge.summary {mc "Summarize Merge Commits"}}
+		{i-1..5 merge.verbosity {mc "Merge Verbosity"}}
+		{b merge.diffstat {mc "Show Diffstat After Merge"}}
+		{t merge.tool {mc "Use Merge Tool"}}
 
-		{b gui.trustmtime  {Trust File Modification Timestamps}}
-		{b gui.pruneduringfetch {Prune Tracking Branches During Fetch}}
-		{b gui.matchtrackingbranch {Match Tracking Branches}}
-		{i-0..99 gui.diffcontext {Number of Diff Context Lines}}
-		{t gui.newbranchtemplate {New Branch Name Template}}
+		{b gui.trustmtime  {mc "Trust File Modification Timestamps"}}
+		{b gui.pruneduringfetch {mc "Prune Tracking Branches During Fetch"}}
+		{b gui.matchtrackingbranch {mc "Match Tracking Branches"}}
+		{b gui.fastcopyblame {mc "Blame Copy Only On Changed Files"}}
+		{i-20..200 gui.copyblamethreshold {mc "Minimum Letters To Blame Copy On"}}
+		{i-0..300 gui.blamehistoryctx {mc "Blame History Context Radius (days)"}}
+		{i-1..99 gui.diffcontext {mc "Number of Diff Context Lines"}}
+		{i-0..99 gui.commitmsgwidth {mc "Commit Message Text Width"}}
+		{t gui.newbranchtemplate {mc "New Branch Name Template"}}
+		{c gui.encoding {mc "Default File Contents Encoding"}}
 		} {
 		set type [lindex $option 0]
 		set name [lindex $option 1]
-		set text [lindex $option 2]
+		set text [eval [lindex $option 2]]
 		incr optid
 		foreach f {repo global} {
 			switch -glob -- $type {
@@ -224,6 +182,7 @@ proc do_options {} {
 				pack $w.$f.$optid.v -side right -anchor e -padx 5
 				pack $w.$f.$optid -side top -anchor w -fill x
 			}
+			c -
 			t {
 				frame $w.$f.$optid
 				label $w.$f.$optid.l -text "$text:"
@@ -236,17 +195,53 @@ proc do_options {} {
 				pack $w.$f.$optid.v -side left -anchor w \
 					-fill x -expand 1 \
 					-padx 5
+				if {$type eq {c}} {
+					menu $w.$f.$optid.m
+					build_encoding_menu $w.$f.$optid.m \
+						[list set ${f}_config_new($name)] 1
+					button $w.$f.$optid.b \
+						-text [mc "Change"] \
+						-command [list popup_btn_menu \
+							$w.$f.$optid.m $w.$f.$optid.b]
+					pack $w.$f.$optid.b -side left -anchor w
+				}
 				pack $w.$f.$optid -side top -anchor w -fill x
 			}
 			}
 		}
 	}
 
+	set all_dicts [linsert \
+		[spellcheck::available_langs] \
+		0 \
+		none]
+	incr optid
+	foreach f {repo global} {
+		if {![info exists ${f}_config_new(gui.spellingdictionary)]} {
+			if {[info exists ui_comm_spell]} {
+				set value [$ui_comm_spell lang]
+			} else {
+				set value none
+			}
+			set ${f}_config_new(gui.spellingdictionary) $value
+		}
+
+		frame $w.$f.$optid
+		label $w.$f.$optid.l -text [mc "Spelling Dictionary:"]
+		eval tk_optionMenu $w.$f.$optid.v \
+			${f}_config_new(gui.spellingdictionary) \
+			$all_dicts
+		pack $w.$f.$optid.l -side left -anchor w -fill x
+		pack $w.$f.$optid.v -side right -anchor e -padx 5
+		pack $w.$f.$optid -side top -anchor w -fill x
+	}
+	unset all_dicts
+
 	set all_fonts [lsort [font families]]
 	foreach option $font_descs {
 		set name [lindex $option 0]
 		set font [lindex $option 1]
-		set text [lindex $option 2]
+		set text [eval [lindex $option 2]]
 
 		set global_config_new(gui.$font^^family) \
 			[font configure $font -family]
@@ -255,39 +250,51 @@ proc do_options {} {
 
 		frame $w.global.$name
 		label $w.global.$name.l -text "$text:"
-		pack $w.global.$name.l -side left -anchor w -fill x
-		eval tk_optionMenu $w.global.$name.family \
-			global_config_new(gui.$font^^family) \
-			$all_fonts
-		spinbox $w.global.$name.size \
-			-textvariable global_config_new(gui.$font^^size) \
-			-from 2 -to 80 -increment 1 \
-			-width 3
-		bind $w.global.$name.size <FocusIn> {%W selection range 0 end}
-		pack $w.global.$name.size -side right -anchor e
-		pack $w.global.$name.family -side right -anchor e
+		button $w.global.$name.b \
+			-text [mc "Change Font"] \
+			-command [list \
+				choose_font::pick \
+				$w \
+				[mc "Choose %s" $text] \
+				global_config_new(gui.$font^^family) \
+				global_config_new(gui.$font^^size) \
+				]
+		label $w.global.$name.f -textvariable global_config_new(gui.$font^^family)
+		label $w.global.$name.s -textvariable global_config_new(gui.$font^^size)
+		label $w.global.$name.pt -text [mc "pt."]
+		pack $w.global.$name.l -side left -anchor w
+		pack $w.global.$name.b -side right -anchor e
+		pack $w.global.$name.pt -side right -anchor w
+		pack $w.global.$name.s -side right -anchor w
+		pack $w.global.$name.f -side right -anchor w
 		pack $w.global.$name -side top -anchor w -fill x
 	}
 
 	bind $w <Visibility> "grab $w; focus $w.buttons.save"
 	bind $w <Key-Escape> "destroy $w"
 	bind $w <Key-Return> [list do_save_config $w]
-	wm title $w "[appname] ([reponame]): Options"
+
+	if {[is_MacOSX]} {
+		set t [mc "Preferences"]
+	} else {
+		set t [mc "Options"]
+	}
+	wm title $w "[appname] ([reponame]): $t"
 	tkwait window $w
 }
 
 proc do_restore_defaults {} {
-	global font_descs default_config repo_config
+	global font_descs default_config repo_config system_config
 	global repo_config_new global_config_new
 
 	foreach name [array names default_config] {
-		set repo_config_new($name) $default_config($name)
-		set global_config_new($name) $default_config($name)
+		set repo_config_new($name) $system_config($name)
+		set global_config_new($name) $system_config($name)
 	}
 
 	foreach option $font_descs {
 		set name [lindex $option 0]
-		set repo_config(gui.$name) $default_config(gui.$name)
+		set repo_config(gui.$name) $system_config(gui.$name)
 	}
 	apply_config
 
@@ -302,8 +309,9 @@ proc do_restore_defaults {} {
 }
 
 proc do_save_config {w} {
+	if {![config_check_encodings]} return
 	if {[catch {save_config} err]} {
-		error_popup "Failed to completely save options:\n\n$err"
+		error_popup [strcat [mc "Failed to completely save options:"] "\n\n$err"]
 	}
 	reshow_diff
 	destroy $w

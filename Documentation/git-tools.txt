@@ -22,6 +22,9 @@ Alternative/Augmentative Porcelains
    providing generally smoother user experience than the "raw" Core GIT
    itself and indeed many other version control systems.
 
+   Cogito is no longer maintained as most of its functionality
+   is now in core GIT.
+
 
    - *pg* (http://www.spearce.org/category/projects/scm/pg/)
 
@@ -33,7 +36,7 @@ Alternative/Augmentative Porcelains
    - *StGit* (http://www.procode.org/stgit/)
 
    Stacked GIT provides a quilt-like patch management functionality in the
-    GIT environment. You can easily manage your patches in the scope of GIT
+   GIT environment. You can easily manage your patches in the scope of GIT
    until they get merged upstream.
 
 

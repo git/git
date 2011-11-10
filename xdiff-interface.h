@@ -3,23 +3,25 @@
 
 #include "xdiff/xdiff.h"
 
-struct xdiff_emit_state;
-
 typedef void (*xdiff_emit_consume_fn)(void *, char *, unsigned long);
+typedef void (*xdiff_emit_hunk_consume_fn)(void *, long, long, long);
 
-struct xdiff_emit_state {
-	xdiff_emit_consume_fn consume;
-	char *remainder;
-	unsigned long remainder_size;
-};
-
-int xdiff_outf(void *priv_, mmbuffer_t *mb, int nbuf);
+int xdi_diff(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp, xdemitconf_t const *xecfg, xdemitcb_t *ecb);
+int xdi_diff_outf(mmfile_t *mf1, mmfile_t *mf2,
+		  xdiff_emit_consume_fn fn, void *consume_callback_data,
+		  xpparam_t const *xpp,
+		  xdemitconf_t const *xecfg, xdemitcb_t *xecb);
+int xdi_diff_hunks(mmfile_t *mf1, mmfile_t *mf2,
+		   xdiff_emit_hunk_consume_fn fn, void *consume_callback_data,
+		   xpparam_t const *xpp, xdemitconf_t *xecfg);
 int parse_hunk_header(char *line, int len,
 		      int *ob, int *on,
 		      int *nb, int *nn);
 int read_mmfile(mmfile_t *ptr, const char *filename);
 int buffer_is_binary(const char *ptr, unsigned long size);
 
-extern void xdiff_set_find_func(xdemitconf_t *xecfg, const char *line);
+extern void xdiff_set_find_func(xdemitconf_t *xecfg, const char *line, int cflags);
+extern int git_xmerge_config(const char *var, const char *value, void *cb);
+extern int git_xmerge_style;
 
 #endif

@@ -112,7 +112,7 @@ test_expect_success 'blame wholesale copy' '
 		echo mouse-Second
 		echo mouse-Third
 	} >expected &&
-	diff -u expected current
+	test_cmp expected current
 
 '
 
@@ -125,7 +125,7 @@ test_expect_success 'blame wholesale copy and more' '
 		echo cow-Fifth
 		echo mouse-Third
 	} >expected &&
-	diff -u expected current
+	test_cmp expected current
 
 '
 

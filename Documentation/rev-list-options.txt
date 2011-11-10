@@ -1,0 +1,634 @@
+Commit Formatting
+~~~~~~~~~~~~~~~~~
+
+ifdef::git-rev-list[]
+Using these options, linkgit:git-rev-list[1] will act similar to the
+more specialized family of commit log tools: linkgit:git-log[1],
+linkgit:git-show[1], and linkgit:git-whatchanged[1]
+endif::git-rev-list[]
+
+include::pretty-options.txt[]
+
+--relative-date::
+
+	Synonym for `--date=relative`.
+
+--date={relative,local,default,iso,rfc,short,raw}::
+
+	Only takes effect for dates shown in human-readable format, such
+	as when using "--pretty". `log.date` config variable sets a default
+	value for log command's --date option.
++
+`--date=relative` shows dates relative to the current time,
+e.g. "2 hours ago".
++
+`--date=local` shows timestamps in user's local timezone.
++
+`--date=iso` (or `--date=iso8601`) shows timestamps in ISO 8601 format.
++
+`--date=rfc` (or `--date=rfc2822`) shows timestamps in RFC 2822
+format, often found in E-mail messages.
++
+`--date=short` shows only date but not time, in `YYYY-MM-DD` format.
++
+`--date=raw` shows the date in the internal raw git format `%s %z` format.
++
+`--date=default` shows timestamps in the original timezone
+(either committer's or author's).
+
+ifdef::git-rev-list[]
+--header::
+
+	Print the contents of the commit in raw-format; each record is
+	separated with a NUL character.
+endif::git-rev-list[]
+
+--parents::
+
+	Print the parents of the commit.  Also enables parent
+	rewriting, see 'History Simplification' below.
+
+--children::
+
+	Print the children of the commit.  Also enables parent
+	rewriting, see 'History Simplification' below.
+
+ifdef::git-rev-list[]
+--timestamp::
+	Print the raw commit timestamp.
+endif::git-rev-list[]
+
+--left-right::
+
+	Mark which side of a symmetric diff a commit is reachable from.
+	Commits from the left side are prefixed with `<` and those from
+	the right with `>`.  If combined with `--boundary`, those
+	commits are prefixed with `-`.
++
+For example, if you have this topology:
++
+-----------------------------------------------------------------------
+             y---b---b  branch B
+            / \ /
+           /   .
+          /   / \
+         o---x---a---a  branch A
+-----------------------------------------------------------------------
++
+you would get an output like this:
++
+-----------------------------------------------------------------------
+	$ git rev-list --left-right --boundary --pretty=oneline A...B
+
+	>bbbbbbb... 3rd on b
+	>bbbbbbb... 2nd on b
+	<aaaaaaa... 3rd on a
+	<aaaaaaa... 2nd on a
+	-yyyyyyy... 1st on b
+	-xxxxxxx... 1st on a
+-----------------------------------------------------------------------
+
+--graph::
+
+	Draw a text-based graphical representation of the commit history
+	on the left hand side of the output.  This may cause extra lines
+	to be printed in between commits, in order for the graph history
+	to be drawn properly.
++
+This implies the '--topo-order' option by default, but the
+'--date-order' option may also be specified.
+
+ifndef::git-rev-list[]
+Diff Formatting
+~~~~~~~~~~~~~~~
+
+Below are listed options that control the formatting of diff output.
+Some of them are specific to linkgit:git-rev-list[1], however other diff
+options may be given. See linkgit:git-diff-files[1] for more options.
+
+-c::
+
+	This flag changes the way a merge commit is displayed.  It shows
+	the differences from each of the parents to the merge result
+	simultaneously instead of showing pairwise diff between a parent
+	and the result one at a time. Furthermore, it lists only files
+	which were modified from all parents.
+
+--cc::
+
+	This flag implies the '-c' options and further compresses the
+	patch output by omitting uninteresting hunks whose contents in
+	the parents have only two variants and the merge result picks
+	one of them without modification.
+
+-r::
+
+	Show recursive diffs.
+
+-t::
+
+	Show the tree objects in the diff output. This implies '-r'.
+endif::git-rev-list[]
+
+Commit Limiting
+~~~~~~~~~~~~~~~
+
+Besides specifying a range of commits that should be listed using the
+special notations explained in the description, additional commit
+limiting may be applied.
+
+--
+
+-n 'number'::
+--max-count=<number>::
+
+	Limit the number of commits output.
+
+--skip=<number>::
+
+	Skip 'number' commits before starting to show the commit output.
+
+--since=<date>::
+--after=<date>::
+
+	Show commits more recent than a specific date.
+
+--until=<date>::
+--before=<date>::
+
+	Show commits older than a specific date.
+
+ifdef::git-rev-list[]
+--max-age=<timestamp>::
+--min-age=<timestamp>::
+
+	Limit the commits output to specified time range.
+endif::git-rev-list[]
+
+--author=<pattern>::
+--committer=<pattern>::
+
+	Limit the commits output to ones with author/committer
+	header lines that match the specified pattern (regular expression).
+
+--grep=<pattern>::
+
+	Limit the commits output to ones with log message that
+	matches the specified pattern (regular expression).
+
+--all-match::
+	Limit the commits output to ones that match all given --grep,
+	--author and --committer instead of ones that match at least one.
+
+-i::
+--regexp-ignore-case::
+
+	Match the regexp limiting patterns without regard to letters case.
+
+-E::
+--extended-regexp::
+
+	Consider the limiting patterns to be extended regular expressions
+	instead of the default basic regular expressions.
+
+-F::
+--fixed-strings::
+
+	Consider the limiting patterns to be fixed strings (don't interpret
+	pattern as a regular expression).
+
+--remove-empty::
+
+	Stop when a given path disappears from the tree.
+
+--no-merges::
+
+	Do not print commits with more than one parent.
+
+--first-parent::
+	Follow only the first parent commit upon seeing a merge
+	commit.  This option can give a better overview when
+	viewing the evolution of a particular topic branch,
+	because merges into a topic branch tend to be only about
+	adjusting to updated upstream from time to time, and
+	this option allows you to ignore the individual commits
+	brought in to your history by such a merge.
+
+--not::
+
+	Reverses the meaning of the '{caret}' prefix (or lack thereof)
+	for all following revision specifiers, up to the next '--not'.
+
+--all::
+
+	Pretend as if all the refs in `$GIT_DIR/refs/` are listed on the
+	command line as '<commit>'.
+
+--branches::
+
+	Pretend as if all the refs in `$GIT_DIR/refs/heads` are listed
+	on the command line as '<commit>'.
+
+--tags::
+
+	Pretend as if all the refs in `$GIT_DIR/refs/tags` are listed
+	on the command line as '<commit>'.
+
+--remotes::
+
+	Pretend as if all the refs in `$GIT_DIR/refs/remotes` are listed
+	on the command line as '<commit>'.
+
+ifdef::git-rev-list[]
+--stdin::
+
+	In addition to the '<commit>' listed on the command
+	line, read them from the standard input.
+
+--quiet::
+
+	Don't print anything to standard output.  This form
+	is primarily meant to allow the caller to
+	test the exit status to see if a range of objects is fully
+	connected (or not).  It is faster than redirecting stdout
+	to /dev/null as the output does not have to be formatted.
+endif::git-rev-list[]
+
+--cherry-pick::
+
+	Omit any commit that introduces the same change as
+	another commit on the "other side" when the set of
+	commits are limited with symmetric difference.
++
+For example, if you have two branches, `A` and `B`, a usual way
+to list all commits on only one side of them is with
+`--left-right`, like the example above in the description of
+that option.  It however shows the commits that were cherry-picked
+from the other branch (for example, "3rd on b" may be cherry-picked
+from branch A).  With this option, such pairs of commits are
+excluded from the output.
+
+-g::
+--walk-reflogs::
+
+	Instead of walking the commit ancestry chain, walk
+	reflog entries from the most recent one to older ones.
+	When this option is used you cannot specify commits to
+	exclude (that is, '{caret}commit', 'commit1..commit2',
+	nor 'commit1...commit2' notations cannot be used).
++
+With '\--pretty' format other than oneline (for obvious reasons),
+this causes the output to have two extra lines of information
+taken from the reflog.  By default, 'commit@\{Nth}' notation is
+used in the output.  When the starting commit is specified as
+'commit@\{now}', output also uses 'commit@\{timestamp}' notation
+instead.  Under '\--pretty=oneline', the commit message is
+prefixed with this information on the same line.
+This option cannot be combined with '\--reverse'.
+See also linkgit:git-reflog[1].
+
+--merge::
+
+	After a failed merge, show refs that touch files having a
+	conflict and don't exist on all heads to merge.
+
+--boundary::
+
+	Output uninteresting commits at the boundary, which are usually
+	not shown.
+
+--
+
+History Simplification
+~~~~~~~~~~~~~~~~~~~~~~
+
+Sometimes you are only interested in parts of the history, for example the
+commits modifying a particular <path>. But there are two parts of
+'History Simplification', one part is selecting the commits and the other
+is how to do it, as there are various strategies to simplify the history.
+
+The following options select the commits to be shown:
+
+<paths>::
+
+	Commits modifying the given <paths> are selected.
+
+--simplify-by-decoration::
+
+	Commits that are referred by some branch or tag are selected.
+
+Note that extra commits can be shown to give a meaningful history.
+
+The following options affect the way the simplification is performed:
+
+Default mode::
+
+	Simplifies the history to the simplest history explaining the
+	final state of the tree. Simplest because it prunes some side
+	branches if the end result is the same (i.e. merging branches
+	with the same content)
+
+--full-history::
+
+	As the default mode but does not prune some history.
+
+--dense::
+
+	Only the selected commits are shown, plus some to have a
+	meaningful history.
+
+--sparse::
+
+	All commits in the simplified history are shown.
+
+--simplify-merges::
+
+	Additional option to '--full-history' to remove some needless
+	merges from the resulting history, as there are no selected
+	commits contributing to this merge.
+
+A more detailed explanation follows.
+
+Suppose you specified `foo` as the <paths>.  We shall call commits
+that modify `foo` !TREESAME, and the rest TREESAME.  (In a diff
+filtered for `foo`, they look different and equal, respectively.)
+
+In the following, we will always refer to the same example history to
+illustrate the differences between simplification settings.  We assume
+that you are filtering for a file `foo` in this commit graph:
+-----------------------------------------------------------------------
+	  .-A---M---N---O---P
+	 /     /   /   /   /
+	I     B   C   D   E
+	 \   /   /   /   /
+	  `-------------'
+-----------------------------------------------------------------------
+The horizontal line of history A--P is taken to be the first parent of
+each merge.  The commits are:
+
+* `I` is the initial commit, in which `foo` exists with contents
+  "asdf", and a file `quux` exists with contents "quux".  Initial
+  commits are compared to an empty tree, so `I` is !TREESAME.
+
+* In `A`, `foo` contains just "foo".
+
+* `B` contains the same change as `A`.  Its merge `M` is trivial and
+  hence TREESAME to all parents.
+
+* `C` does not change `foo`, but its merge `N` changes it to "foobar",
+  so it is not TREESAME to any parent.
+
+* `D` sets `foo` to "baz".  Its merge `O` combines the strings from
+  `N` and `D` to "foobarbaz"; i.e., it is not TREESAME to any parent.
+
+* `E` changes `quux` to "xyzzy", and its merge `P` combines the
+  strings to "quux xyzzy".  Despite appearing interesting, `P` is
+  TREESAME to all parents.
+
+'rev-list' walks backwards through history, including or excluding
+commits based on whether '\--full-history' and/or parent rewriting
+(via '\--parents' or '\--children') are used.  The following settings
+are available.
+
+Default mode::
+
+	Commits are included if they are not TREESAME to any parent
+	(though this can be changed, see '\--sparse' below).  If the
+	commit was a merge, and it was TREESAME to one parent, follow
+	only that parent.  (Even if there are several TREESAME
+	parents, follow only one of them.)  Otherwise, follow all
+	parents.
++
+This results in:
++
+-----------------------------------------------------------------------
+	  .-A---N---O
+	 /         /
+	I---------D
+-----------------------------------------------------------------------
++
+Note how the rule to only follow the TREESAME parent, if one is
+available, removed `B` from consideration entirely.  `C` was
+considered via `N`, but is TREESAME.  Root commits are compared to an
+empty tree, so `I` is !TREESAME.
++
+Parent/child relations are only visible with --parents, but that does
+not affect the commits selected in default mode, so we have shown the
+parent lines.
+
+--full-history without parent rewriting::
+
+	This mode differs from the default in one point: always follow
+	all parents of a merge, even if it is TREESAME to one of them.
+	Even if more than one side of the merge has commits that are
+	included, this does not imply that the merge itself is!  In
+	the example, we get
++
+-----------------------------------------------------------------------
+	I  A  B  N  D  O
+-----------------------------------------------------------------------
++
+`P` and `M` were excluded because they are TREESAME to a parent.  `E`,
+`C` and `B` were all walked, but only `B` was !TREESAME, so the others
+do not appear.
++
+Note that without parent rewriting, it is not really possible to talk
+about the parent/child relationships between the commits, so we show
+them disconnected.
+
+--full-history with parent rewriting::
+
+	Ordinary commits are only included if they are !TREESAME
+	(though this can be changed, see '\--sparse' below).
++
+Merges are always included.  However, their parent list is rewritten:
+Along each parent, prune away commits that are not included
+themselves.  This results in
++
+-----------------------------------------------------------------------
+	  .-A---M---N---O---P
+	 /     /   /   /   /
+	I     B   /   D   /
+	 \   /   /   /   /
+	  `-------------'
+-----------------------------------------------------------------------
++
+Compare to '\--full-history' without rewriting above.  Note that `E`
+was pruned away because it is TREESAME, but the parent list of P was
+rewritten to contain `E`'s parent `I`.  The same happened for `C` and
+`N`.  Note also that `P` was included despite being TREESAME.
+
+In addition to the above settings, you can change whether TREESAME
+affects inclusion:
+
+--dense::
+
+	Commits that are walked are included if they are not TREESAME
+	to any parent.
+
+--sparse::
+
+	All commits that are walked are included.
++
+Note that without '\--full-history', this still simplifies merges: if
+one of the parents is TREESAME, we follow only that one, so the other
+sides of the merge are never walked.
+
+Finally, there is a fourth simplification mode available:
+
+--simplify-merges::
+
+	First, build a history graph in the same way that
+	'\--full-history' with parent rewriting does (see above).
++
+Then simplify each commit `C` to its replacement `C'` in the final
+history according to the following rules:
++
+--
+* Set `C'` to `C`.
++
+* Replace each parent `P` of `C'` with its simplification `P'`.  In
+  the process, drop parents that are ancestors of other parents, and
+  remove duplicates.
++
+* If after this parent rewriting, `C'` is a root or merge commit (has
+  zero or >1 parents), a boundary commit, or !TREESAME, it remains.
+  Otherwise, it is replaced with its only parent.
+--
++
+The effect of this is best shown by way of comparing to
+'\--full-history' with parent rewriting.  The example turns into:
++
+-----------------------------------------------------------------------
+	  .-A---M---N---O
+	 /     /       /
+	I     B       D
+	 \   /       /
+	  `---------'
+-----------------------------------------------------------------------
++
+Note the major differences in `N` and `P` over '\--full-history':
++
+--
+* `N`'s parent list had `I` removed, because it is an ancestor of the
+  other parent `M`.  Still, `N` remained because it is !TREESAME.
++
+* `P`'s parent list similarly had `I` removed.  `P` was then
+  removed completely, because it had one parent and is TREESAME.
+--
+
+The '\--simplify-by-decoration' option allows you to view only the
+big picture of the topology of the history, by omitting commits
+that are not referenced by tags.  Commits are marked as !TREESAME
+(in other words, kept after history simplification rules described
+above) if (1) they are referenced by tags, or (2) they change the
+contents of the paths given on the command line.  All other
+commits are marked as TREESAME (subject to be simplified away).
+
+ifdef::git-rev-list[]
+Bisection Helpers
+~~~~~~~~~~~~~~~~~
+
+--bisect::
+
+Limit output to the one commit object which is roughly halfway between
+the included and excluded commits. Thus, if
+
+-----------------------------------------------------------------------
+	$ git rev-list --bisect foo ^bar ^baz
+-----------------------------------------------------------------------
+
+outputs 'midpoint', the output of the two commands
+
+-----------------------------------------------------------------------
+	$ git rev-list foo ^midpoint
+	$ git rev-list midpoint ^bar ^baz
+-----------------------------------------------------------------------
+
+would be of roughly the same length.  Finding the change which
+introduces a regression is thus reduced to a binary search: repeatedly
+generate and test new 'midpoint's until the commit chain is of length
+one.
+
+--bisect-vars::
+
+This calculates the same as `--bisect`, but outputs text ready
+to be eval'ed by the shell. These lines will assign the name of
+the midpoint revision to the variable `bisect_rev`, and the
+expected number of commits to be tested after `bisect_rev` is
+tested to `bisect_nr`, the expected number of commits to be
+tested if `bisect_rev` turns out to be good to `bisect_good`,
+the expected number of commits to be tested if `bisect_rev`
+turns out to be bad to `bisect_bad`, and the number of commits
+we are bisecting right now to `bisect_all`.
+
+--bisect-all::
+
+This outputs all the commit objects between the included and excluded
+commits, ordered by their distance to the included and excluded
+commits. The farthest from them is displayed first. (This is the only
+one displayed by `--bisect`.)
++
+This is useful because it makes it easy to choose a good commit to
+test when you want to avoid to test some of them for some reason (they
+may not compile for example).
++
+This option can be used along with `--bisect-vars`, in this case,
+after all the sorted commit objects, there will be the same text as if
+`--bisect-vars` had been used alone.
+endif::git-rev-list[]
+
+
+Commit Ordering
+~~~~~~~~~~~~~~~
+
+By default, the commits are shown in reverse chronological order.
+
+--topo-order::
+
+	This option makes them appear in topological order (i.e.
+	descendant commits are shown before their parents).
+
+--date-order::
+
+	This option is similar to '--topo-order' in the sense that no
+	parent comes before all of its children, but otherwise things
+	are still ordered in the commit timestamp order.
+
+--reverse::
+
+	Output the commits in reverse order.
+	Cannot be combined with '\--walk-reflogs'.
+
+Object Traversal
+~~~~~~~~~~~~~~~~
+
+These options are mostly targeted for packing of git repositories.
+
+--objects::
+
+	Print the object IDs of any object referenced by the listed
+	commits.  '--objects foo ^bar' thus means "send me
+	all object IDs which I need to download if I have the commit
+	object 'bar', but not 'foo'".
+
+--objects-edge::
+
+	Similar to '--objects', but also print the IDs of excluded
+	commits prefixed with a "-" character.  This is used by
+	linkgit:git-pack-objects[1] to build "thin" pack, which records
+	objects in deltified form based on objects contained in these
+	excluded commits to reduce network traffic.
+
+--unpacked::
+
+	Only useful with '--objects'; print the object IDs that are not
+	in packs.
+
+--no-walk::
+
+	Only show the given revs, but do not traverse their ancestors.
+
+--do-walk::
+
+	Overrides a previous --no-walk.

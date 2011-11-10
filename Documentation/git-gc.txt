@@ -8,40 +8,67 @@ git-gc - Cleanup unnecessary files and optimize the local repository
 
 SYNOPSIS
 --------
-'git-gc' [--prune] [--aggressive]
+'git gc' [--aggressive] [--auto] [--quiet] [--prune=<date> | --no-prune]
 
 DESCRIPTION
 -----------
 Runs a number of housekeeping tasks within the current repository,
 such as compressing file revisions (to reduce disk space and increase
 performance) and removing unreachable objects which may have been
-created from prior invocations of gitlink:git-add[1].
+created from prior invocations of 'git-add'.
 
 Users are encouraged to run this task on a regular basis within
 each repository to maintain good disk space utilization and good
 operating performance.
 
+Some git commands may automatically run 'git-gc'; see the `--auto` flag
+below for details. If you know what you're doing and all you want is to
+disable this behavior permanently without further considerations, just do:
+
+----------------------
+$ git config --global gc.auto 0
+----------------------
+
 OPTIONS
 -------
-
---prune::
-	Usually `git-gc` packs refs, expires old reflog entries,
-	packs loose objects,
-	and removes old 'rerere' records.  Removal
-	of unreferenced loose objects is an unsafe operation
-	while other git operations are in progress, so it is not
-	done by default.  Pass this option if you want it, and only
-	when you know nobody else is creating new objects in the
-	repository at the same time (e.g. never use this option
-	in a cron script).
 
 --aggressive::
 	Usually 'git-gc' runs very quickly while providing good disk
 	space utilization and performance.  This option will cause
-	git-gc to more aggressively optimize the repository at the expense
+	'git-gc' to more aggressively optimize the repository at the expense
 	of taking much more time.  The effects of this optimization are
 	persistent, so this option only needs to be used occasionally; every
 	few hundred changesets or so.
+
+--auto::
+	With this option, 'git-gc' checks whether any housekeeping is
+	required; if not, it exits without performing any work.
+	Some git commands run `git gc --auto` after performing
+	operations that could create many loose objects.
++
+Housekeeping is required if there are too many loose objects or
+too many packs in the repository. If the number of loose objects
+exceeds the value of the `gc.auto` configuration variable, then
+all loose objects are combined into a single pack using
+'git-repack -d -l'.  Setting the value of `gc.auto` to 0
+disables automatic packing of loose objects.
++
+If the number of packs exceeds the value of `gc.autopacklimit`,
+then existing packs (except those marked with a `.keep` file)
+are consolidated into a single pack by using the `-A` option of
+'git-repack'. Setting `gc.autopacklimit` to 0 disables
+automatic consolidation of packs.
+
+--prune=<date>::
+	Prune loose objects older than date (default is 2 weeks ago,
+	overrideable by the config variable `gc.pruneExpire`).  This
+	option is on by default.
+
+--no-prune::
+	Do not prune any loose objects.
+
+--quiet::
+	Suppress all progress reports.
 
 Configuration
 -------------
@@ -70,23 +97,42 @@ how long records of conflicted merge you have not resolved are
 kept.  This defaults to 15 days.
 
 The optional configuration variable 'gc.packrefs' determines if
-`git gc` runs `git-pack-refs`.  Without the configuration, `git-pack-refs`
-is not run in bare repositories by default, to allow older dumb-transport
-clients fetch from the repository,  but this will change in the future.
+'git-gc' runs 'git-pack-refs'. This can be set to "nobare" to enable
+it within all non-bare repos or it can be set to a boolean value.
+This defaults to true.
 
 The optional configuration variable 'gc.aggressiveWindow' controls how
 much time is spent optimizing the delta compression of the objects in
 the repository when the --aggressive option is specified.  The larger
 the value, the more time is spent optimizing the delta compression.  See
-the documentation for the --window' option in gitlink:git-repack[1] for
+the documentation for the --window' option in linkgit:git-repack[1] for
 more details.  This defaults to 10.
 
-See Also
+The optional configuration variable 'gc.pruneExpire' controls how old
+the unreferenced loose objects have to be before they are pruned.  The
+default is "2 weeks ago".
+
+
+Notes
+-----
+
+'git-gc' tries very hard to be safe about the garbage it collects. In
+particular, it will keep not only objects referenced by your current set
+of branches and tags, but also objects referenced by the index, remote
+tracking branches, refs saved by 'git-filter-branch' in
+refs/original/, or reflogs (which may references commits in branches
+that were later amended or rewound).
+
+If you are expecting some objects to be collected and they aren't, check
+all of those locations and decide whether it makes sense in your case to
+remove those references.
+
+SEE ALSO
 --------
-gitlink:git-prune[1]
-gitlink:git-reflog[1]
-gitlink:git-repack[1]
-gitlink:git-rerere[1]
+linkgit:git-prune[1]
+linkgit:git-reflog[1]
+linkgit:git-repack[1]
+linkgit:git-rerere[1]
 
 Author
 ------
@@ -94,4 +140,4 @@ Written by Shawn O. Pearce <spearce@spearce.org>
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[1] suite

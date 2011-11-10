@@ -39,6 +39,10 @@ $VERSION = '0.01';
   my $lastrev = $repo->command_oneline( [ 'rev-list', '--all' ],
                                         STDERR => 0 );
 
+  my $sha1 = $repo->hash_and_insert_object('file.txt');
+  my $tempfile = tempfile();
+  my $size = $repo->cat_blob($sha1, $tempfile);
+
 =cut
 
 
@@ -51,7 +55,10 @@ require Exporter;
 # Methods which can be called as standalone functions as well:
 @EXPORT_OK = qw(command command_oneline command_noisy
                 command_output_pipe command_input_pipe command_close_pipe
-                version exec_path hash_object git_cmd_try);
+                command_bidi_pipe command_close_bidi_pipe
+                version exec_path html_path hash_object git_cmd_try
+                remote_refs
+                temp_acquire temp_release temp_reset temp_path);
 
 
 =head1 DESCRIPTION
@@ -84,7 +91,7 @@ TODO: In the future, we might also do
 Currently, the module merely wraps calls to external Git tools. In the future,
 it will provide a much faster way to interact with Git by linking directly
 to libgit. This should be completely opaque to the user, though (performance
-increate nonwithstanding).
+increase notwithstanding).
 
 =cut
 
@@ -92,7 +99,8 @@ increate nonwithstanding).
 use Carp qw(carp croak); # but croak is bad - throw instead
 use Error qw(:try);
 use Cwd qw(abs_path);
-
+use IPC::Open2 qw(open2);
+use Fcntl qw(SEEK_SET SEEK_CUR);
 }
 
 
@@ -158,11 +166,12 @@ sub repository {
 		}
 	}
 
-	if (not defined $opts{Repository} and not defined $opts{WorkingCopy}) {
-		$opts{Directory} ||= '.';
+	if (not defined $opts{Repository} and not defined $opts{WorkingCopy}
+		and not defined $opts{Directory}) {
+		$opts{Directory} = '.';
 	}
 
-	if ($opts{Directory}) {
+	if (defined $opts{Directory}) {
 		-d $opts{Directory} or throw Error::Simple("Directory not found: $!");
 
 		my $search = Git->repository(WorkingCopy => $opts{Directory});
@@ -196,14 +205,14 @@ sub repository {
 
 			unless (-d "$dir/refs" and -d "$dir/objects" and -e "$dir/HEAD") {
 				# Mimick git-rev-parse --git-dir error message:
-				throw Error::Simple('fatal: Not a git repository');
+				throw Error::Simple("fatal: Not a git repository: $dir");
 			}
 			my $search = Git->repository(Repository => $dir);
 			try {
 				$search->command('symbolic-ref', 'HEAD');
 			} catch Git::Error::Command with {
 				# Mimick git-rev-parse --git-dir error message:
-				throw Error::Simple('fatal: Not a git repository');
+				throw Error::Simple("fatal: Not a git repository: $dir");
 			}
 
 			$opts{Repository} = abs_path($dir);
@@ -215,7 +224,6 @@ sub repository {
 	$self = { opts => \%opts };
 	bless $self, $class;
 }
-
 
 =back
 
@@ -375,6 +383,61 @@ sub command_close_pipe {
 	_cmd_close($fh, $ctx);
 }
 
+=item command_bidi_pipe ( COMMAND [, ARGUMENTS... ] )
+
+Execute the given C<COMMAND> in the same way as command_output_pipe()
+does but return both an input pipe filehandle and an output pipe filehandle.
+
+The function will return return C<($pid, $pipe_in, $pipe_out, $ctx)>.
+See C<command_close_bidi_pipe()> for details.
+
+=cut
+
+sub command_bidi_pipe {
+	my ($pid, $in, $out);
+	$pid = open2($in, $out, 'git', @_);
+	return ($pid, $in, $out, join(' ', @_));
+}
+
+=item command_close_bidi_pipe ( PID, PIPE_IN, PIPE_OUT [, CTX] )
+
+Close the C<PIPE_IN> and C<PIPE_OUT> as returned from C<command_bidi_pipe()>,
+checking whether the command finished successfully. The optional C<CTX>
+argument is required if you want to see the command name in the error message,
+and it is the fourth value returned by C<command_bidi_pipe()>.  The call idiom
+is:
+
+	my ($pid, $in, $out, $ctx) = $r->command_bidi_pipe('cat-file --batch-check');
+	print "000000000\n" $out;
+	while (<$in>) { ... }
+	$r->command_close_bidi_pipe($pid, $in, $out, $ctx);
+
+Note that you should not rely on whatever actually is in C<CTX>;
+currently it is simply the command name but in future the context might
+have more complicated structure.
+
+=cut
+
+sub command_close_bidi_pipe {
+	local $?;
+	my ($pid, $in, $out, $ctx) = @_;
+	foreach my $fh ($in, $out) {
+		unless (close $fh) {
+			if ($!) {
+				carp "error closing pipe: $!";
+			} elsif ($? >> 8) {
+				throw Git::Error::Command($ctx, $? >>8);
+			}
+		}
+	}
+
+	waitpid $pid, 0;
+
+	if ($? >> 8) {
+		throw Git::Error::Command($ctx, $? >>8);
+	}
+}
+
 
 =item command_noisy ( COMMAND [, ARGUMENTS... ] )
 
@@ -427,6 +490,16 @@ C<git --exec-path>). Useful mostly only internally.
 =cut
 
 sub exec_path { command_oneline('--exec-path') }
+
+
+=item html_path ()
+
+Return path to the Git html documentation (the same as
+C<git --html-path>). Useful mostly only internally.
+
+=cut
+
+sub html_path { command_oneline('--html-path') }
 
 
 =item repo_path ()
@@ -487,28 +560,26 @@ does. In scalar context requires the variable to be set only one time
 (exception is thrown otherwise), in array context returns allows the
 variable to be set multiple times and returns all the values.
 
-Must be called on a repository instance.
-
 This currently wraps command('config') so it is not so fast.
 
 =cut
 
 sub config {
-	my ($self, $var) = @_;
-	$self->repo_path()
-		or throw Error::Simple("not a repository");
+	my ($self, $var) = _maybe_self(@_);
 
 	try {
+		my @cmd = ('config');
+		unshift @cmd, $self if $self;
 		if (wantarray) {
-			return $self->command('config', '--get-all', $var);
+			return command(@cmd, '--get-all', $var);
 		} else {
-			return $self->command_oneline('config', '--get', $var);
+			return command_oneline(@cmd, '--get', $var);
 		}
 	} catch Git::Error::Command with {
 		my $E = shift;
 		if ($E->value() == 1) {
 			# Key not found.
-			return undef;
+			return;
 		} else {
 			throw $E;
 		}
@@ -522,20 +593,17 @@ Retrieve the bool configuration C<VARIABLE>. The return value
 is usable as a boolean in perl (and C<undef> if it's not defined,
 of course).
 
-Must be called on a repository instance.
-
 This currently wraps command('config') so it is not so fast.
 
 =cut
 
 sub config_bool {
-	my ($self, $var) = @_;
-	$self->repo_path()
-		or throw Error::Simple("not a repository");
+	my ($self, $var) = _maybe_self(@_);
 
 	try {
-		my $val = $self->command_oneline('config', '--bool', '--get',
-					      $var);
+		my @cmd = ('config', '--bool', '--get', $var);
+		unshift @cmd, $self if $self;
+		my $val = command_oneline(@cmd);
 		return undef unless defined $val;
 		return $val eq 'true';
 	} catch Git::Error::Command with {
@@ -549,6 +617,123 @@ sub config_bool {
 	};
 }
 
+=item config_int ( VARIABLE )
+
+Retrieve the integer configuration C<VARIABLE>. The return value
+is simple decimal number.  An optional value suffix of 'k', 'm',
+or 'g' in the config file will cause the value to be multiplied
+by 1024, 1048576 (1024^2), or 1073741824 (1024^3) prior to output.
+It would return C<undef> if configuration variable is not defined,
+
+This currently wraps command('config') so it is not so fast.
+
+=cut
+
+sub config_int {
+	my ($self, $var) = _maybe_self(@_);
+
+	try {
+		my @cmd = ('config', '--int', '--get', $var);
+		unshift @cmd, $self if $self;
+		return command_oneline(@cmd);
+	} catch Git::Error::Command with {
+		my $E = shift;
+		if ($E->value() == 1) {
+			# Key not found.
+			return undef;
+		} else {
+			throw $E;
+		}
+	};
+}
+
+=item get_colorbool ( NAME )
+
+Finds if color should be used for NAMEd operation from the configuration,
+and returns boolean (true for "use color", false for "do not use color").
+
+=cut
+
+sub get_colorbool {
+	my ($self, $var) = @_;
+	my $stdout_to_tty = (-t STDOUT) ? "true" : "false";
+	my $use_color = $self->command_oneline('config', '--get-colorbool',
+					       $var, $stdout_to_tty);
+	return ($use_color eq 'true');
+}
+
+=item get_color ( SLOT, COLOR )
+
+Finds color for SLOT from the configuration, while defaulting to COLOR,
+and returns the ANSI color escape sequence:
+
+	print $repo->get_color("color.interactive.prompt", "underline blue white");
+	print "some text";
+	print $repo->get_color("", "normal");
+
+=cut
+
+sub get_color {
+	my ($self, $slot, $default) = @_;
+	my $color = $self->command_oneline('config', '--get-color', $slot, $default);
+	if (!defined $color) {
+		$color = "";
+	}
+	return $color;
+}
+
+=item remote_refs ( REPOSITORY [, GROUPS [, REFGLOBS ] ] )
+
+This function returns a hashref of refs stored in a given remote repository.
+The hash is in the format C<refname =\> hash>. For tags, the C<refname> entry
+contains the tag object while a C<refname^{}> entry gives the tagged objects.
+
+C<REPOSITORY> has the same meaning as the appropriate C<git-ls-remote>
+argument; either an URL or a remote name (if called on a repository instance).
+C<GROUPS> is an optional arrayref that can contain 'tags' to return all the
+tags and/or 'heads' to return all the heads. C<REFGLOB> is an optional array
+of strings containing a shell-like glob to further limit the refs returned in
+the hash; the meaning is again the same as the appropriate C<git-ls-remote>
+argument.
+
+This function may or may not be called on a repository instance. In the former
+case, remote names as defined in the repository are recognized as repository
+specifiers.
+
+=cut
+
+sub remote_refs {
+	my ($self, $repo, $groups, $refglobs) = _maybe_self(@_);
+	my @args;
+	if (ref $groups eq 'ARRAY') {
+		foreach (@$groups) {
+			if ($_ eq 'heads') {
+				push (@args, '--heads');
+			} elsif ($_ eq 'tags') {
+				push (@args, '--tags');
+			} else {
+				# Ignore unknown groups for future
+				# compatibility
+			}
+		}
+	}
+	push (@args, $repo);
+	if (ref $refglobs eq 'ARRAY') {
+		push (@args, @$refglobs);
+	}
+
+	my @self = $self ? ($self) : (); # Ultra trickery
+	my ($fh, $ctx) = Git::command_output_pipe(@self, 'ls-remote', @args);
+	my %refs;
+	while (<$fh>) {
+		chomp;
+		my ($hash, $ref) = split(/\t/, $_, 2);
+		$refs{$ref} = $hash;
+	}
+	Git::command_close_pipe(@self, $fh, $ctx);
+	return \%refs;
+}
+
 
 =item ident ( TYPE | IDENTSTR )
 
@@ -558,7 +743,7 @@ This suite of functions retrieves and parses ident information, as stored
 in the commit and tag objects or produced by C<var GIT_type_IDENT> (thus
 C<TYPE> can be either I<author> or I<committer>; case is insignificant).
 
-The C<ident> method retrieves the ident information from C<git-var>
+The C<ident> method retrieves the ident information from C<git var>
 and either returns it as a scalar string or as an array with the fields parsed.
 Alternatively, it can take a prepared ident string (e.g. from the commit
 object) and just parse it.
@@ -573,15 +758,15 @@ The synopsis is like:
 	"$name <$email>" eq ident_person($name);
 	$time_tz =~ /^\d+ [+-]\d{4}$/;
 
-Both methods must be called on a repository instance.
-
 =cut
 
 sub ident {
-	my ($self, $type) = @_;
+	my ($self, $type) = _maybe_self(@_);
 	my $identstr;
 	if (lc $type eq lc 'committer' or lc $type eq lc 'author') {
-		$identstr = $self->command_oneline('var', 'GIT_'.uc($type).'_IDENT');
+		my @cmd = ('var', 'GIT_'.uc($type).'_IDENT');
+		unshift @cmd, $self if $self;
+		$identstr = command_oneline(@cmd);
 	} else {
 		$identstr = $type;
 	}
@@ -593,17 +778,16 @@ sub ident {
 }
 
 sub ident_person {
-	my ($self, @ident) = @_;
-	$#ident == 0 and @ident = $self->ident($ident[0]);
+	my ($self, @ident) = _maybe_self(@_);
+	$#ident == 0 and @ident = $self ? $self->ident($ident[0]) : ident($ident[0]);
 	return "$ident[0] <$ident[1]>";
 }
 
 
 =item hash_object ( TYPE, FILENAME )
 
-Compute the SHA1 object id of the given C<FILENAME> (or data waiting in
-C<FILEHANDLE>) considering it is of the C<TYPE> object type (C<blob>,
-C<commit>, C<tree>).
+Compute the SHA1 object id of the given C<FILENAME> considering it is
+of the C<TYPE> object type (C<blob>, C<commit>, C<tree>).
 
 The method can be called without any instance or on a specified Git repository,
 it makes zero difference.
@@ -619,6 +803,295 @@ sub hash_object {
 }
 
 
+=item hash_and_insert_object ( FILENAME )
+
+Compute the SHA1 object id of the given C<FILENAME> and add the object to the
+object database.
+
+The function returns the SHA1 hash.
+
+=cut
+
+# TODO: Support for passing FILEHANDLE instead of FILENAME
+sub hash_and_insert_object {
+	my ($self, $filename) = @_;
+
+	carp "Bad filename \"$filename\"" if $filename =~ /[\r\n]/;
+
+	$self->_open_hash_and_insert_object_if_needed();
+	my ($in, $out) = ($self->{hash_object_in}, $self->{hash_object_out});
+
+	unless (print $out $filename, "\n") {
+		$self->_close_hash_and_insert_object();
+		throw Error::Simple("out pipe went bad");
+	}
+
+	chomp(my $hash = <$in>);
+	unless (defined($hash)) {
+		$self->_close_hash_and_insert_object();
+		throw Error::Simple("in pipe went bad");
+	}
+
+	return $hash;
+}
+
+sub _open_hash_and_insert_object_if_needed {
+	my ($self) = @_;
+
+	return if defined($self->{hash_object_pid});
+
+	($self->{hash_object_pid}, $self->{hash_object_in},
+	 $self->{hash_object_out}, $self->{hash_object_ctx}) =
+		command_bidi_pipe(qw(hash-object -w --stdin-paths));
+}
+
+sub _close_hash_and_insert_object {
+	my ($self) = @_;
+
+	return unless defined($self->{hash_object_pid});
+
+	my @vars = map { 'hash_object_' . $_ } qw(pid in out ctx);
+
+	command_close_bidi_pipe(@$self{@vars});
+	delete @$self{@vars};
+}
+
+=item cat_blob ( SHA1, FILEHANDLE )
+
+Prints the contents of the blob identified by C<SHA1> to C<FILEHANDLE> and
+returns the number of bytes printed.
+
+=cut
+
+sub cat_blob {
+	my ($self, $sha1, $fh) = @_;
+
+	$self->_open_cat_blob_if_needed();
+	my ($in, $out) = ($self->{cat_blob_in}, $self->{cat_blob_out});
+
+	unless (print $out $sha1, "\n") {
+		$self->_close_cat_blob();
+		throw Error::Simple("out pipe went bad");
+	}
+
+	my $description = <$in>;
+	if ($description =~ / missing$/) {
+		carp "$sha1 doesn't exist in the repository";
+		return -1;
+	}
+
+	if ($description !~ /^[0-9a-fA-F]{40} \S+ (\d+)$/) {
+		carp "Unexpected result returned from git cat-file";
+		return -1;
+	}
+
+	my $size = $1;
+
+	my $blob;
+	my $bytesRead = 0;
+
+	while (1) {
+		my $bytesLeft = $size - $bytesRead;
+		last unless $bytesLeft;
+
+		my $bytesToRead = $bytesLeft < 1024 ? $bytesLeft : 1024;
+		my $read = read($in, $blob, $bytesToRead, $bytesRead);
+		unless (defined($read)) {
+			$self->_close_cat_blob();
+			throw Error::Simple("in pipe went bad");
+		}
+
+		$bytesRead += $read;
+	}
+
+	# Skip past the trailing newline.
+	my $newline;
+	my $read = read($in, $newline, 1);
+	unless (defined($read)) {
+		$self->_close_cat_blob();
+		throw Error::Simple("in pipe went bad");
+	}
+	unless ($read == 1 && $newline eq "\n") {
+		$self->_close_cat_blob();
+		throw Error::Simple("didn't find newline after blob");
+	}
+
+	unless (print $fh $blob) {
+		$self->_close_cat_blob();
+		throw Error::Simple("couldn't write to passed in filehandle");
+	}
+
+	return $size;
+}
+
+sub _open_cat_blob_if_needed {
+	my ($self) = @_;
+
+	return if defined($self->{cat_blob_pid});
+
+	($self->{cat_blob_pid}, $self->{cat_blob_in},
+	 $self->{cat_blob_out}, $self->{cat_blob_ctx}) =
+		command_bidi_pipe(qw(cat-file --batch));
+}
+
+sub _close_cat_blob {
+	my ($self) = @_;
+
+	return unless defined($self->{cat_blob_pid});
+
+	my @vars = map { 'cat_blob_' . $_ } qw(pid in out ctx);
+
+	command_close_bidi_pipe(@$self{@vars});
+	delete @$self{@vars};
+}
+
+
+{ # %TEMP_* Lexical Context
+
+my (%TEMP_FILEMAP, %TEMP_FILES);
+
+=item temp_acquire ( NAME )
+
+Attempts to retreive the temporary file mapped to the string C<NAME>. If an
+associated temp file has not been created this session or was closed, it is
+created, cached, and set for autoflush and binmode.
+
+Internally locks the file mapped to C<NAME>. This lock must be released with
+C<temp_release()> when the temp file is no longer needed. Subsequent attempts
+to retrieve temporary files mapped to the same C<NAME> while still locked will
+cause an error. This locking mechanism provides a weak guarantee and is not
+threadsafe. It does provide some error checking to help prevent temp file refs
+writing over one another.
+
+In general, the L<File::Handle> returned should not be closed by consumers as
+it defeats the purpose of this caching mechanism. If you need to close the temp
+file handle, then you should use L<File::Temp> or another temp file faculty
+directly. If a handle is closed and then requested again, then a warning will
+issue.
+
+=cut
+
+sub temp_acquire {
+	my $temp_fd = _temp_cache(@_);
+
+	$TEMP_FILES{$temp_fd}{locked} = 1;
+	$temp_fd;
+}
+
+=item temp_release ( NAME )
+
+=item temp_release ( FILEHANDLE )
+
+Releases a lock acquired through C<temp_acquire()>. Can be called either with
+the C<NAME> mapping used when acquiring the temp file or with the C<FILEHANDLE>
+referencing a locked temp file.
+
+Warns if an attempt is made to release a file that is not locked.
+
+The temp file will be truncated before being released. This can help to reduce
+disk I/O where the system is smart enough to detect the truncation while data
+is in the output buffers. Beware that after the temp file is released and
+truncated, any operations on that file may fail miserably until it is
+re-acquired. All contents are lost between each release and acquire mapped to
+the same string.
+
+=cut
+
+sub temp_release {
+	my ($self, $temp_fd, $trunc) = _maybe_self(@_);
+
+	if (exists $TEMP_FILEMAP{$temp_fd}) {
+		$temp_fd = $TEMP_FILES{$temp_fd};
+	}
+	unless ($TEMP_FILES{$temp_fd}{locked}) {
+		carp "Attempt to release temp file '",
+			$temp_fd, "' that has not been locked";
+	}
+	temp_reset($temp_fd) if $trunc and $temp_fd->opened;
+
+	$TEMP_FILES{$temp_fd}{locked} = 0;
+	undef;
+}
+
+sub _temp_cache {
+	my ($self, $name) = _maybe_self(@_);
+
+	_verify_require();
+
+	my $temp_fd = \$TEMP_FILEMAP{$name};
+	if (defined $$temp_fd and $$temp_fd->opened) {
+		if ($TEMP_FILES{$$temp_fd}{locked}) {
+			throw Error::Simple("Temp file with moniker '" .
+				$name . "' already in use");
+		}
+	} else {
+		if (defined $$temp_fd) {
+			# then we're here because of a closed handle.
+			carp "Temp file '", $name,
+				"' was closed. Opening replacement.";
+		}
+		my $fname;
+
+		my $tmpdir;
+		if (defined $self) {
+			$tmpdir = $self->repo_path();
+		}
+
+		($$temp_fd, $fname) = File::Temp->tempfile(
+			'Git_XXXXXX', UNLINK => 1, DIR => $tmpdir,
+			) or throw Error::Simple("couldn't open new temp file");
+
+		$$temp_fd->autoflush;
+		binmode $$temp_fd;
+		$TEMP_FILES{$$temp_fd}{fname} = $fname;
+	}
+	$$temp_fd;
+}
+
+sub _verify_require {
+	eval { require File::Temp; require File::Spec; };
+	$@ and throw Error::Simple($@);
+}
+
+=item temp_reset ( FILEHANDLE )
+
+Truncates and resets the position of the C<FILEHANDLE>.
+
+=cut
+
+sub temp_reset {
+	my ($self, $temp_fd) = _maybe_self(@_);
+
+	truncate $temp_fd, 0
+		or throw Error::Simple("couldn't truncate file");
+	sysseek($temp_fd, 0, SEEK_SET) and seek($temp_fd, 0, SEEK_SET)
+		or throw Error::Simple("couldn't seek to beginning of file");
+	sysseek($temp_fd, 0, SEEK_CUR) == 0 and tell($temp_fd) == 0
+		or throw Error::Simple("expected file position to be reset");
+}
+
+=item temp_path ( NAME )
+
+=item temp_path ( FILEHANDLE )
+
+Returns the filename associated with the given tempfile.
+
+=cut
+
+sub temp_path {
+	my ($self, $temp_fd) = _maybe_self(@_);
+
+	if (exists $TEMP_FILEMAP{$temp_fd}) {
+		$temp_fd = $TEMP_FILEMAP{$temp_fd};
+	}
+	$TEMP_FILES{$temp_fd}{fname};
+}
+
+sub END {
+	unlink values %TEMP_FILEMAP if %TEMP_FILEMAP;
+}
+
+} # %TEMP_* Lexical Context
 
 =back
 
@@ -746,8 +1219,7 @@ either version 2, or (at your option) any later version.
 # the method was called upon an instance and (undef, @args) if
 # it was called directly.
 sub _maybe_self {
-	# This breaks inheritance. Oh well.
-	ref $_[0] eq 'Git' ? @_ : (undef, @_);
+	UNIVERSAL::isa($_[0], 'Git') ? @_ : (undef, @_);
 }
 
 # Check if the command id is something reasonable.
@@ -812,7 +1284,7 @@ sub _cmd_exec {
 		$self->wc_subdir() and chdir($self->wc_subdir());
 	}
 	_execv_git_cmd(@args);
-	die "exec failed: $!";
+	die qq[exec "@args" failed: $!];
 }
 
 # Execute the given Git command ($_[0]) with arguments ($_[1..])
@@ -836,7 +1308,11 @@ sub _cmd_close {
 }
 
 
-sub DESTROY { }
+sub DESTROY {
+	my ($self) = @_;
+	$self->_close_hash_and_insert_object();
+	$self->_close_cat_blob();
+}
 
 
 # Pipe implementation for ActiveState Perl.

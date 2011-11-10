@@ -21,7 +21,7 @@ LF='
 '
 
 test_expect_success 'update-index and ls-files' '
-	cd $HERE &&
+	cd "$HERE" &&
 	git update-index --add one &&
 	case "`git ls-files`" in
 	one) echo ok one ;;
@@ -41,7 +41,7 @@ test_expect_success 'update-index and ls-files' '
 '
 
 test_expect_success 'cat-file' '
-	cd $HERE &&
+	cd "$HERE" &&
 	two=`git ls-files -s dir/two` &&
 	two=`expr "$two" : "[0-7]* \\([0-9a-f]*\\)"` &&
 	echo "$two" &&
@@ -54,7 +54,7 @@ test_expect_success 'cat-file' '
 rm -f actual dir/actual
 
 test_expect_success 'diff-files' '
-	cd $HERE &&
+	cd "$HERE" &&
 	echo a >>one &&
 	echo d >>dir/two &&
 	case "`git diff-files --name-only`" in
@@ -74,7 +74,7 @@ test_expect_success 'diff-files' '
 '
 
 test_expect_success 'write-tree' '
-	cd $HERE &&
+	cd "$HERE" &&
 	top=`git write-tree` &&
 	echo $top &&
 	cd dir &&
@@ -84,7 +84,7 @@ test_expect_success 'write-tree' '
 '
 
 test_expect_success 'checkout-index' '
-	cd $HERE &&
+	cd "$HERE" &&
 	git checkout-index -f -u one &&
 	cmp one original.one &&
 	cd dir &&
@@ -93,7 +93,7 @@ test_expect_success 'checkout-index' '
 '
 
 test_expect_success 'read-tree' '
-	cd $HERE &&
+	cd "$HERE" &&
 	rm -f one dir/two &&
 	tree=`git write-tree` &&
 	git read-tree --reset -u "$tree" &&
@@ -107,27 +107,27 @@ test_expect_success 'read-tree' '
 '
 
 test_expect_success 'no file/rev ambiguity check inside .git' '
-	cd $HERE &&
+	cd "$HERE" &&
 	git commit -a -m 1 &&
-	cd $HERE/.git &&
+	cd "$HERE"/.git &&
 	git show -s HEAD
 '
 
 test_expect_success 'no file/rev ambiguity check inside a bare repo' '
-	cd $HERE &&
+	cd "$HERE" &&
 	git clone -s --bare .git foo.git &&
 	cd foo.git && GIT_DIR=. git show -s HEAD
 '
 
 # This still does not work as it should...
 : test_expect_success 'no file/rev ambiguity check inside a bare repo' '
-	cd $HERE &&
+	cd "$HERE" &&
 	git clone -s --bare .git foo.git &&
 	cd foo.git && git show -s HEAD
 '
 
-test_expect_success 'detection should not be fooled by a symlink' '
-	cd $HERE &&
+test_expect_success SYMLINKS 'detection should not be fooled by a symlink' '
+	cd "$HERE" &&
 	rm -fr foo.git &&
 	git clone -s .git another &&
 	ln -s another yetanother &&

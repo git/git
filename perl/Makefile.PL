@@ -17,9 +17,6 @@ if ($@ || $Error::VERSION < 0.15009) {
 	$pm{'private-Error.pm'} = '$(INST_LIBDIR)/Error.pm';
 }
 
-my %extra;
-$extra{DESTDIR} = $ENV{DESTDIR} if $ENV{DESTDIR};
-
 # redirect stdout, otherwise the message "Writing perl.mak for Git"
 # disrupts the output for the target 'instlibdir'
 open STDOUT, ">&STDERR";
@@ -29,6 +26,5 @@ WriteMakefile(
 	VERSION_FROM    => 'Git.pm',
 	PM		=> \%pm,
 	MAKEFILE	=> 'perl.mak',
-	INSTALLSITEMAN3DIR => '$(SITEPREFIX)/share/man/man3',
-	%extra
+	INSTALLSITEMAN3DIR => '$(SITEPREFIX)/share/man/man3'
 );

@@ -1,46 +1,39 @@
 #!/bin/sh
-USAGE='--dry-run --author <author> --patches </path/to/quilt/patch/directory>'
+OPTIONS_KEEPDASHDASH=
+OPTIONS_SPEC="\
+git quiltimport [options]
+--
+n,dry-run     dry run
+author=       author name and email address for patches without any
+patches=      path to the quilt series and patches
+"
 SUBDIRECTORY_ON=Yes
 . git-sh-setup
 
 dry_run=""
 quilt_author=""
-while case "$#" in 0) break;; esac
+while test $# != 0
 do
 	case "$1" in
-	--au=*|--aut=*|--auth=*|--autho=*|--author=*)
-		quilt_author=$(expr "z$1" : 'z-[^=]*\(.*\)')
-		shift
-		;;
-
-	--au|--aut|--auth|--autho|--author)
-		case "$#" in 1) usage ;; esac
+	--author)
 		shift
 		quilt_author="$1"
-		shift
 		;;
-
-	--dry-run)
-		shift
+	-n|--dry-run)
 		dry_run=1
 		;;
-
-	--pa=*|--pat=*|--patc=*|--patch=*|--patche=*|--patches=*)
-		QUILT_PATCHES=$(expr "z$1" : 'z-[^=]*\(.*\)')
-		shift
-		;;
-
-	--pa|--pat|--patc|--patch|--patche|--patches)
-		case "$#" in 1) usage ;; esac
+	--patches)
 		shift
 		QUILT_PATCHES="$1"
-		shift
 		;;
-
+	--)
+		shift
+		break;;
 	*)
-		break
+		usage
 		;;
 	esac
+	shift
 done
 
 # Quilt Author
@@ -60,7 +53,7 @@ if ! [ -d "$QUILT_PATCHES" ] ; then
 fi
 
 # Temporary directories
-tmp_dir=.dotest
+tmp_dir="$GIT_DIR"/rebase-apply
 tmp_msg="$tmp_dir/msg"
 tmp_patch="$tmp_dir/patch"
 tmp_info="$tmp_dir/info"
@@ -70,7 +63,27 @@ tmp_info="$tmp_dir/info"
 commit=$(git rev-parse HEAD)
 
 mkdir $tmp_dir || exit 2
-for patch_name in $(grep -v '^#' < "$QUILT_PATCHES/series" ); do
+while read patch_name level garbage <&3
+do
+	case "$patch_name" in ''|'#'*) continue;; esac
+	case "$level" in
+	-p*)	;;
+	''|'#'*)
+		level=;;
+	*)
+		echo "unable to parse patch level, ignoring it."
+		level=;;
+	esac
+	case "$garbage" in
+	''|'#'*);;
+	*)
+		echo "trailing garbage found in series file: $garbage"
+		exit 1;;
+	esac
+	if ! [ -f "$QUILT_PATCHES/$patch_name" ] ; then
+		echo "$patch_name doesn't exist. Skipping."
+		continue
+	fi
 	echo $patch_name
 	git mailinfo "$tmp_msg" "$tmp_patch" \
 		<"$QUILT_PATCHES/$patch_name" >"$tmp_info" || exit 3
@@ -80,8 +93,9 @@ for patch_name in $(grep -v '^#' < "$QUILT_PATCHES/series" ); do
 	}
 
 	# Parse the author information
-	export GIT_AUTHOR_NAME=$(sed -ne 's/Author: //p' "$tmp_info")
-	export GIT_AUTHOR_EMAIL=$(sed -ne 's/Email: //p' "$tmp_info")
+	GIT_AUTHOR_NAME=$(sed -ne 's/Author: //p' "$tmp_info")
+	GIT_AUTHOR_EMAIL=$(sed -ne 's/Email: //p' "$tmp_info")
+	export GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL
 	while test -z "$GIT_AUTHOR_EMAIL" && test -z "$GIT_AUTHOR_NAME" ; do
 		if [ -n "$quilt_author" ] ; then
 			GIT_AUTHOR_NAME="$quilt_author_name";
@@ -107,17 +121,18 @@ for patch_name in $(grep -v '^#' < "$QUILT_PATCHES/series" ); do
 			GIT_AUTHOR_EMAIL="$patch_author_email"
 		fi
 	done
-	export GIT_AUTHOR_DATE=$(sed -ne 's/Date: //p' "$tmp_info")
-	export SUBJECT=$(sed -ne 's/Subject: //p' "$tmp_info")
+	GIT_AUTHOR_DATE=$(sed -ne 's/Date: //p' "$tmp_info")
+	SUBJECT=$(sed -ne 's/Subject: //p' "$tmp_info")
+	export GIT_AUTHOR_DATE SUBJECT
 	if [ -z "$SUBJECT" ] ; then
 		SUBJECT=$(echo $patch_name | sed -e 's/.patch$//')
 	fi
 
 	if [ -z "$dry_run" ] ; then
-		git apply --index -C1 "$tmp_patch" &&
+		git apply --index -C1 ${level:+"$level"} "$tmp_patch" &&
 		tree=$(git write-tree) &&
 		commit=$( (echo "$SUBJECT"; echo; cat "$tmp_msg") | git commit-tree $tree -p $commit) &&
 		git update-ref -m "quiltimport: $patch_name" HEAD $commit || exit 4
 	fi
-done
+done 3<"$QUILT_PATCHES/series"
 rm -rf $tmp_dir || exit 5

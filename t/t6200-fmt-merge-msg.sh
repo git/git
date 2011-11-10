@@ -79,20 +79,20 @@ test_expect_success 'merge-msg test #1' '
 	git fetch . left &&
 
 	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
-	git diff actual expected
+	test_cmp expected actual
 '
 
-cat >expected <<\EOF
-Merge branch 'left' of ../trash
+cat >expected <<EOF
+Merge branch 'left' of $(pwd)
 EOF
 
 test_expect_success 'merge-msg test #2' '
 
 	git checkout master &&
-	git fetch ../trash left &&
+	git fetch "$(pwd)" left &&
 
 	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
-	git diff actual expected
+	test_cmp expected actual
 '
 
 cat >expected <<\EOF
@@ -106,8 +106,24 @@ Merge branch 'left'
   Common #1
 EOF
 
-test_expect_success 'merge-msg test #3' '
+test_expect_success 'merge-msg test #3-1' '
 
+	git config --unset-all merge.log
+	git config --unset-all merge.summary
+	git config merge.log true &&
+
+	git checkout master &&
+	setdate &&
+	git fetch . left &&
+
+	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'merge-msg test #3-2' '
+
+	git config --unset-all merge.log
+	git config --unset-all merge.summary
 	git config merge.summary true &&
 
 	git checkout master &&
@@ -115,7 +131,7 @@ test_expect_success 'merge-msg test #3' '
 	git fetch . left &&
 
 	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
-	git diff actual expected
+	test_cmp expected actual
 '
 
 cat >expected <<\EOF
@@ -136,8 +152,24 @@ Merge branches 'left' and 'right'
   Common #1
 EOF
 
-test_expect_success 'merge-msg test #4' '
+test_expect_success 'merge-msg test #4-1' '
 
+	git config --unset-all merge.log
+	git config --unset-all merge.summary
+	git config merge.log true &&
+
+	git checkout master &&
+	setdate &&
+	git fetch . left right &&
+
+	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'merge-msg test #4-2' '
+
+	git config --unset-all merge.log
+	git config --unset-all merge.summary
 	git config merge.summary true &&
 
 	git checkout master &&
@@ -145,11 +177,27 @@ test_expect_success 'merge-msg test #4' '
 	git fetch . left right &&
 
 	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
-	git diff actual expected
+	test_cmp expected actual
 '
 
-test_expect_success 'merge-msg test #5' '
+test_expect_success 'merge-msg test #5-1' '
 
+	git config --unset-all merge.log
+	git config --unset-all merge.summary
+	git config merge.log yes &&
+
+	git checkout master &&
+	setdate &&
+	git fetch . left right &&
+
+	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'merge-msg test #5-2' '
+
+	git config --unset-all merge.log
+	git config --unset-all merge.summary
 	git config merge.summary yes &&
 
 	git checkout master &&
@@ -157,7 +205,7 @@ test_expect_success 'merge-msg test #5' '
 	git fetch . left right &&
 
 	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
-	git diff actual expected
+	test_cmp expected actual
 '
 
 test_done

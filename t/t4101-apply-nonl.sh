@@ -21,9 +21,10 @@ do
   do
     test $i -eq $j && continue
     cat frotz.$i >frotz
-    test_expect_success \
-        "apply diff between $i and $j" \
-	"git apply <../t4101/diff.$i-$j && diff frotz.$j frotz"
+    test_expect_success "apply diff between $i and $j" '
+	git apply <"$TEST_DIRECTORY"/t4101/diff.$i-$j &&
+	test_cmp frotz.$j frotz
+    '
   done
 done
 

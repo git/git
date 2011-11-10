@@ -3,6 +3,7 @@
 
 #include "object.h"
 #include "tree.h"
+#include "strbuf.h"
 #include "decorate.h"
 
 struct commit_list {
@@ -13,6 +14,7 @@ struct commit_list {
 struct commit {
 	struct object object;
 	void *util;
+	unsigned int indegree;
 	unsigned long date;
 	struct commit_list *parents;
 	struct tree *tree;
@@ -39,6 +41,7 @@ int parse_commit_buffer(struct commit *item, void *buffer, unsigned long size);
 int parse_commit(struct commit *item);
 
 struct commit_list * commit_list_insert(struct commit *item, struct commit_list **list_p);
+unsigned commit_list_count(const struct commit_list *l);
 struct commit_list * insert_by_date(struct commit *item, struct commit_list **list);
 
 void free_commit_list(struct commit_list *list);
@@ -60,8 +63,34 @@ enum cmit_fmt {
 	CMIT_FMT_UNSPECIFIED,
 };
 
-extern enum cmit_fmt get_commit_format(const char *arg);
-extern unsigned long pretty_print_commit(enum cmit_fmt fmt, const struct commit *, unsigned long len, char **buf_p, unsigned long *space_p, int abbrev, const char *subject, const char *after_subject, enum date_mode dmode);
+extern int non_ascii(int);
+struct rev_info; /* in revision.h, it circularly uses enum cmit_fmt */
+extern char *reencode_commit_message(const struct commit *commit,
+				     const char **encoding_p);
+extern void get_commit_format(const char *arg, struct rev_info *);
+extern void format_commit_message(const struct commit *commit,
+				  const void *format, struct strbuf *sb,
+				  enum date_mode dmode);
+extern void pretty_print_commit(enum cmit_fmt fmt, const struct commit*,
+                                struct strbuf *,
+                                int abbrev, const char *subject,
+                                const char *after_subject, enum date_mode,
+				int need_8bit_cte);
+void pp_user_info(const char *what, enum cmit_fmt fmt, struct strbuf *sb,
+		   const char *line, enum date_mode dmode,
+		   const char *encoding);
+void pp_title_line(enum cmit_fmt fmt,
+		   const char **msg_p,
+		   struct strbuf *sb,
+		   const char *subject,
+		   const char *after_subject,
+		   const char *encoding,
+		   int need_8bit_cte);
+void pp_remainder(enum cmit_fmt fmt,
+		  const char **msg_p,
+		  struct strbuf *sb,
+		  int indent);
+
 
 /** Removes the first commit from a list sorted by date, and adds all
  * of its parents.
@@ -76,31 +105,12 @@ void clear_commit_marks(struct commit *commit, unsigned int mark);
 /*
  * Performs an in-place topological sort of list supplied.
  *
- * Pre-conditions for sort_in_topological_order:
- *   all commits in input list and all parents of those
- *   commits must have object.util == NULL
- *
- * Pre-conditions for sort_in_topological_order_fn:
- *   all commits in input list and all parents of those
- *   commits must have getter(commit) == NULL
- *
- * Post-conditions:
  *   invariant of resulting list is:
  *      a reachable from b => ord(b) < ord(a)
  *   in addition, when lifo == 0, commits on parallel tracks are
  *   sorted in the dates order.
  */
-
-typedef void (*topo_sort_set_fn_t)(struct commit*, void *data);
-typedef void* (*topo_sort_get_fn_t)(struct commit*);
-
-void topo_sort_default_setter(struct commit *c, void *data);
-void *topo_sort_default_getter(struct commit *c);
-
 void sort_in_topological_order(struct commit_list ** list, int lifo);
-void sort_in_topological_order_fn(struct commit_list ** list, int lifo,
-				  topo_sort_set_fn_t setter,
-				  topo_sort_get_fn_t getter);
 
 struct commit_graft {
 	unsigned char sha1[20];
@@ -110,9 +120,11 @@ struct commit_graft {
 
 struct commit_graft *read_graft_line(char *buf, int len);
 int register_commit_graft(struct commit_graft *, int);
-int read_graft_file(const char *graft_file);
+struct commit_graft *lookup_commit_graft(const unsigned char *sha1);
 
 extern struct commit_list *get_merge_bases(struct commit *rev1, struct commit *rev2, int cleanup);
+extern struct commit_list *get_merge_bases_many(struct commit *one, int n, struct commit **twos, int cleanup);
+extern struct commit_list *get_octopus_merge_bases(struct commit_list *in);
 
 extern int register_shallow(const unsigned char *sha1);
 extern int unregister_shallow(const unsigned char *sha1);
@@ -121,5 +133,16 @@ extern int is_repository_shallow(void);
 extern struct commit_list *get_shallow_commits(struct object_array *heads,
 		int depth, int shallow_flag, int not_shallow_flag);
 
+int is_descendant_of(struct commit *, struct commit_list *);
 int in_merge_bases(struct commit *, struct commit **, int);
+
+extern int interactive_add(int argc, const char **argv, const char *prefix);
+
+static inline int single_parent(struct commit *commit)
+{
+	return commit->parents && !commit->parents->next;
+}
+
+struct commit_list *reduce_heads(struct commit_list *heads);
+
 #endif /* COMMIT_H */

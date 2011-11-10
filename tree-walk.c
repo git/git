@@ -7,6 +7,9 @@ static const char *get_mode(const char *str, unsigned int *modep)
 	unsigned char c;
 	unsigned int mode = 0;
 
+	if (*str == ' ')
+		return NULL;
+
 	while ((c = *str++) != ' ') {
 		if (c < '0' || c > '7')
 			return NULL;
@@ -16,13 +19,16 @@ static const char *get_mode(const char *str, unsigned int *modep)
 	return str;
 }
 
-static void decode_tree_entry(struct tree_desc *desc, const void *buf, unsigned long size)
+static void decode_tree_entry(struct tree_desc *desc, const char *buf, unsigned long size)
 {
 	const char *path;
 	unsigned int mode, len;
 
+	if (size < 24 || buf[size - 21])
+		die("corrupt tree file");
+
 	path = get_mode(buf, &mode);
-	if (!path)
+	if (!path || !*path)
 		die("corrupt tree file");
 	len = strlen(path) + 1;
 
@@ -56,7 +62,7 @@ void *fill_tree_descriptor(struct tree_desc *desc, const unsigned char *sha1)
 
 static int entry_compare(struct name_entry *a, struct name_entry *b)
 {
-	return base_name_compare(
+	return df_name_compare(
 			a->path, tree_entry_len(a->path, a->sha1), a->mode,
 			b->path, tree_entry_len(b->path, b->sha1), b->mode);
 }
@@ -98,12 +104,48 @@ int tree_entry(struct tree_desc *desc, struct name_entry *entry)
 	return 1;
 }
 
-void traverse_trees(int n, struct tree_desc *t, const char *base, traverse_callback_t callback)
+void setup_traverse_info(struct traverse_info *info, const char *base)
 {
+	int pathlen = strlen(base);
+	static struct traverse_info dummy;
+
+	memset(info, 0, sizeof(*info));
+	if (pathlen && base[pathlen-1] == '/')
+		pathlen--;
+	info->pathlen = pathlen ? pathlen + 1 : 0;
+	info->name.path = base;
+	info->name.sha1 = (void *)(base + pathlen + 1);
+	if (pathlen)
+		info->prev = &dummy;
+}
+
+char *make_traverse_path(char *path, const struct traverse_info *info, const struct name_entry *n)
+{
+	int len = tree_entry_len(n->path, n->sha1);
+	int pathlen = info->pathlen;
+
+	path[pathlen + len] = 0;
+	for (;;) {
+		memcpy(path + pathlen, n->path, len);
+		if (!pathlen)
+			break;
+		path[--pathlen] = '/';
+		n = &info->name;
+		len = tree_entry_len(n->path, n->sha1);
+		info = info->prev;
+		pathlen -= len;
+	}
+	return path;
+}
+
+int traverse_trees(int n, struct tree_desc *t, struct traverse_info *info)
+{
+	int ret = 0;
 	struct name_entry *entry = xmalloc(n*sizeof(*entry));
 
 	for (;;) {
 		unsigned long mask = 0;
+		unsigned long dirmask = 0;
 		int i, last;
 
 		last = -1;
@@ -128,25 +170,35 @@ void traverse_trees(int n, struct tree_desc *t, const char *base, traverse_callb
 					mask = 0;
 			}
 			mask |= 1ul << i;
+			if (S_ISDIR(entry[i].mode))
+				dirmask |= 1ul << i;
 			last = i;
 		}
 		if (!mask)
 			break;
+		dirmask &= mask;
 
 		/*
-		 * Update the tree entries we've walked, and clear
-		 * all the unused name-entries.
+		 * Clear all the unused name-entries.
 		 */
 		for (i = 0; i < n; i++) {
-			if (mask & (1ul << i)) {
-				update_tree_entry(t+i);
+			if (mask & (1ul << i))
 				continue;
-			}
 			entry_clear(entry + i);
 		}
-		callback(n, mask, entry, base);
+		ret = info->fn(n, mask, dirmask, entry, info);
+		if (ret < 0)
+			break;
+		if (ret)
+			mask &= ret;
+		ret = 0;
+		for (i = 0; i < n; i++) {
+			if (mask & (1ul << i))
+				update_tree_entry(t + i);
+		}
 	}
 	free(entry);
+	return ret;
 }
 
 static int find_tree_entry(struct tree_desc *t, const char *name, unsigned char *result, unsigned *mode)
