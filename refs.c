@@ -334,7 +334,7 @@ static void get_ref_dir(const char *submodule, const char *base,
 					flag |= REF_ISBROKEN;
 				}
 			} else
-				if (!resolve_ref(ref, sha1, 1, &flag)) {
+				if (read_ref_full(ref, sha1, 1, &flag)) {
 					hashclr(sha1);
 					flag |= REF_ISBROKEN;
 				}
@@ -612,11 +612,16 @@ struct ref_filter {
 	void *cb_data;
 };
 
-int read_ref(const char *ref, unsigned char *sha1)
+int read_ref_full(const char *ref, unsigned char *sha1, int reading, int *flags)
 {
-	if (resolve_ref(ref, sha1, 1, NULL))
+	if (resolve_ref(ref, sha1, reading, flags))
 		return 0;
 	return -1;
+}
+
+int read_ref(const char *ref, unsigned char *sha1)
+{
+	return read_ref_full(ref, sha1, 1, NULL);
 }
 
 #define DO_FOR_EACH_INCLUDE_BROKEN 01
@@ -663,7 +668,7 @@ int peel_ref(const char *ref, unsigned char *sha1)
 		goto fallback;
 	}
 
-	if (!resolve_ref(ref, base, 1, &flag))
+	if (read_ref_full(ref, base, 1, &flag))
 		return -1;
 
 	if ((flag & REF_ISPACKED)) {
@@ -746,7 +751,7 @@ static int do_head_ref(const char *submodule, each_ref_fn fn, void *cb_data)
 		return 0;
 	}
 
-	if (resolve_ref("HEAD", sha1, 1, &flag))
+	if (!read_ref_full("HEAD", sha1, 1, &flag))
 		return fn("HEAD", sha1, flag, cb_data);
 
 	return 0;
@@ -826,7 +831,7 @@ int head_ref_namespaced(each_ref_fn fn, void *cb_data)
 	int flag;
 
 	strbuf_addf(&buf, "%sHEAD", get_git_namespace());
-	if (resolve_ref(buf.buf, sha1, 1, &flag))
+	if (!read_ref_full(buf.buf, sha1, 1, &flag))
 		ret = fn(buf.buf, sha1, flag, cb_data);
 	strbuf_release(&buf);
 
@@ -1022,7 +1027,7 @@ int refname_match(const char *abbrev_name, const char *full_name, const char **r
 static struct ref_lock *verify_lock(struct ref_lock *lock,
 	const unsigned char *old_sha1, int mustexist)
 {
-	if (!resolve_ref(lock->ref_name, lock->old_sha1, mustexist, NULL)) {
+	if (read_ref_full(lock->ref_name, lock->old_sha1, mustexist, NULL)) {
 		error("Can't verify ref %s", lock->ref_name);
 		unlock_ref(lock);
 		return NULL;
@@ -1377,7 +1382,8 @@ int rename_ref(const char *oldref, const char *newref, const char *logmsg)
 		goto rollback;
 	}
 
-	if (resolve_ref(newref, sha1, 1, &flag) && delete_ref(newref, sha1, REF_NODEREF)) {
+	if (!read_ref_full(newref, sha1, 1, &flag) &&
+	    delete_ref(newref, sha1, REF_NODEREF)) {
 		if (errno==EISDIR) {
 			if (remove_empty_directories(git_path("%s", newref))) {
 				error("Directory not empty: %s", newref);
@@ -1929,7 +1935,7 @@ static int do_for_each_reflog(const char *base, each_ref_fn fn, void *cb_data)
 				retval = do_for_each_reflog(log, fn, cb_data);
 			} else {
 				unsigned char sha1[20];
-				if (!resolve_ref(log, sha1, 0, NULL))
+				if (read_ref_full(log, sha1, 0, NULL))
 					retval = error("bad ref for %s", log);
 				else
 					retval = fn(log, sha1, 0, cb_data);
@@ -2072,7 +2078,6 @@ char *shorten_unambiguous_ref(const char *ref, int strict)
 		 */
 		for (j = 0; j < rules_to_fail; j++) {
 			const char *rule = ref_rev_parse_rules[j];
-			unsigned char short_objectname[20];
 			char refname[PATH_MAX];
 
 			/* skip matched rule */
@@ -2086,7 +2091,7 @@ char *shorten_unambiguous_ref(const char *ref, int strict)
 			 */
 			mksnpath(refname, sizeof(refname),
 				 rule, short_name_len, short_name);
-			if (!read_ref(refname, short_objectname))
+			if (ref_exists(refname))
 				break;
 		}
 

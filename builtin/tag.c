@@ -174,7 +174,7 @@ static int for_each_tag_name(const char **argv, each_tag_name_fn fn)
 			had_error = 1;
 			continue;
 		}
-		if (!resolve_ref(ref, sha1, 1, NULL)) {
+		if (read_ref(ref, sha1)) {
 			error(_("tag '%s' not found."), *p);
 			had_error = 1;
 			continue;
@@ -518,7 +518,7 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 	if (strbuf_check_tag_ref(&ref, tag))
 		die(_("'%s' is not a valid tag name."), tag);
 
-	if (!resolve_ref(ref.buf, prev, 1, NULL))
+	if (read_ref(ref.buf, prev))
 		hashclr(prev);
 	else if (!force)
 		die(_("tag '%s' already exists"), tag);

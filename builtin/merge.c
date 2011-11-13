@@ -420,7 +420,7 @@ static struct object *want_commit(const char *name)
 static void merge_name(const char *remote, struct strbuf *msg)
 {
 	struct object *remote_head;
-	unsigned char branch_head[20], buf_sha[20];
+	unsigned char branch_head[20];
 	struct strbuf buf = STRBUF_INIT;
 	struct strbuf bname = STRBUF_INIT;
 	const char *ptr;
@@ -479,7 +479,7 @@ static void merge_name(const char *remote, struct strbuf *msg)
 		strbuf_addstr(&truname, "refs/heads/");
 		strbuf_addstr(&truname, remote);
 		strbuf_setlen(&truname, truname.len - len);
-		if (resolve_ref(truname.buf, buf_sha, 1, NULL)) {
+		if (ref_exists(truname.buf)) {
 			strbuf_addf(msg,
 				    "%s\t\tbranch '%s'%s of .\n",
 				    sha1_to_hex(remote_head->sha1),
