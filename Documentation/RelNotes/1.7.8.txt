@@ -165,7 +165,7 @@ included in this release.
 
 ---
 exec >/var/tmp/1
-O=v1.7.8-rc1-11-gd7a0129
+O=v1.7.8-rc1-23-gdc865af
 echo O=$(git describe --always master)
 git log --first-parent --oneline --reverse ^$O master
 echo
