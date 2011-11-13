@@ -60,6 +60,7 @@ static void write_tree(unsigned char *sha1)
 	}
 
 	write_sha1_file(buf.buf, buf.len, tree_type, sha1);
+	strbuf_release(&buf);
 }
 
 static const char *mktree_usage[] = {
