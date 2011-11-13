@@ -115,8 +115,10 @@ static int branch_merged(int kind, const char *name,
 		    branch->merge[0] &&
 		    branch->merge[0]->dst &&
 		    (reference_name =
-		     resolve_ref(branch->merge[0]->dst, sha1, 1, NULL)) != NULL)
+		     resolve_ref(branch->merge[0]->dst, sha1, 1, NULL)) != NULL) {
+			reference_name = xstrdup(reference_name);
 			reference_rev = lookup_commit_reference(sha1);
+		}
 	}
 	if (!reference_rev)
 		reference_rev = head_rev;
@@ -141,6 +143,7 @@ static int branch_merged(int kind, const char *name,
 				"         '%s', even though it is merged to HEAD."),
 				name, reference_name);
 	}
+	free((char *)reference_name);
 	return merged;
 }
 

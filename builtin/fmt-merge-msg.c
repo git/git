@@ -268,6 +268,7 @@ static int do_fmt_merge_msg(int merge_title, struct strbuf *in,
 		die("No current branch");
 	if (!prefixcmp(current_branch, "refs/heads/"))
 		current_branch += 11;
+	current_branch = xstrdup(current_branch);
 
 	/* get a line */
 	while (pos < in->len) {
@@ -283,8 +284,10 @@ static int do_fmt_merge_msg(int merge_title, struct strbuf *in,
 			die ("Error in line %d: %.*s", i, len, p);
 	}
 
-	if (!srcs.nr)
+	if (!srcs.nr) {
+		free((char*)current_branch);
 		return 0;
+	}
 
 	if (merge_title)
 		do_fmt_merge_msg_title(out, current_branch);
@@ -306,6 +309,7 @@ static int do_fmt_merge_msg(int merge_title, struct strbuf *in,
 			shortlog(origins.items[i].string, origins.items[i].util,
 					head, &rev, shortlog_len, out);
 	}
+	free((char *)current_branch);
 	return 0;
 }
 

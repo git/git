@@ -804,6 +804,7 @@ static int merge_commit(struct notes_merge_options *o)
 	struct notes_tree *t;
 	struct commit *partial;
 	struct pretty_print_context pretty_ctx;
+	int ret;
 
 	/*
 	 * Read partial merge result from .git/NOTES_MERGE_PARTIAL,
@@ -828,6 +829,7 @@ static int merge_commit(struct notes_merge_options *o)
 	o->local_ref = resolve_ref("NOTES_MERGE_REF", sha1, 0, NULL);
 	if (!o->local_ref)
 		die("Failed to resolve NOTES_MERGE_REF");
+	o->local_ref = xstrdup(o->local_ref);
 
 	if (notes_merge_commit(o, t, partial, sha1))
 		die("Failed to finalize notes merge");
@@ -843,7 +845,9 @@ static int merge_commit(struct notes_merge_options *o)
 
 	free_notes(t);
 	strbuf_release(&msg);
-	return merge_abort(o);
+	ret = merge_abort(o);
+	free((char *)o->local_ref);
+	return ret;
 }
 
 static int merge(int argc, const char **argv, const char *prefix)

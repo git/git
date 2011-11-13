@@ -695,7 +695,10 @@ static void execute_commands(struct command *commands, const char *unpacker_erro
 
 	check_aliased_updates(commands);
 
+	free((char *)head_name);
 	head_name = resolve_ref("HEAD", sha1, 0, NULL);
+	if (head_name)
+		head_name = xstrdup(head_name);
 
 	for (cmd = commands; cmd; cmd = cmd->next)
 		if (!cmd->skip_update)

@@ -1259,7 +1259,7 @@ static void print_summary(const char *prefix, const unsigned char *sha1,
 	struct commit *commit;
 	struct strbuf format = STRBUF_INIT;
 	unsigned char junk_sha1[20];
-	const char *head = resolve_ref("HEAD", junk_sha1, 0, NULL);
+	const char *head;
 	struct pretty_print_context pctx = {0};
 	struct strbuf author_ident = STRBUF_INIT;
 	struct strbuf committer_ident = STRBUF_INIT;
@@ -1304,6 +1304,7 @@ static void print_summary(const char *prefix, const unsigned char *sha1,
 	rev.diffopt.break_opt = 0;
 	diff_setup_done(&rev.diffopt);
 
+	head = resolve_ref("HEAD", junk_sha1, 0, NULL);
 	printf("[%s%s ",
 		!prefixcmp(head, "refs/heads/") ?
 			head + 11 :
