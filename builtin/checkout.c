@@ -699,7 +699,9 @@ static int switch_branches(struct checkout_opts *opts, struct branch_info *new)
 	unsigned char rev[20];
 	int flag;
 	memset(&old, 0, sizeof(old));
-	old.path = xstrdup(resolve_ref("HEAD", rev, 0, &flag));
+	old.path = resolve_ref("HEAD", rev, 0, &flag);
+	if (old.path)
+		old.path = xstrdup(old.path);
 	old.commit = lookup_commit_reference_gently(rev, 1);
 	if (!(flag & REF_ISSYMREF)) {
 		free((char *)old.path);
