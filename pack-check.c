@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "pack.h"
 #include "pack-revindex.h"
+#include "progress.h"
 
 struct idx_entry {
 	off_t                offset;
@@ -42,7 +43,10 @@ int check_pack_crc(struct packed_git *p, struct pack_window **w_curs,
 }
 
 static int verify_packfile(struct packed_git *p,
-		struct pack_window **w_curs)
+			   struct pack_window **w_curs,
+			   verify_fn fn,
+			   struct progress *progress, uint32_t base_count)
+
 {
 	off_t index_size = p->index_size;
 	const unsigned char *index_base = p->index_data;
@@ -113,20 +117,25 @@ static int verify_packfile(struct packed_git *p,
 					    p->pack_name, (uintmax_t)offset);
 		}
 		data = unpack_entry(p, entries[i].offset, &type, &size);
-		if (!data) {
+		if (!data)
 			err = error("cannot unpack %s from %s at offset %"PRIuMAX"",
 				    sha1_to_hex(entries[i].sha1), p->pack_name,
 				    (uintmax_t)entries[i].offset);
-			break;
-		}
-		if (check_sha1_signature(entries[i].sha1, data, size, typename(type))) {
+		else if (check_sha1_signature(entries[i].sha1, data, size, typename(type)))
 			err = error("packed %s from %s is corrupt",
 				    sha1_to_hex(entries[i].sha1), p->pack_name);
-			free(data);
-			break;
+		else if (fn) {
+			int eaten = 0;
+			fn(entries[i].sha1, type, size, data, &eaten);
+			if (eaten)
+				data = NULL;
 		}
+		if (((base_count + i) & 1023) == 0)
+			display_progress(progress, base_count + i);
 		free(data);
+
 	}
+	display_progress(progress, base_count + i);
 	free(entries);
 
 	return err;
@@ -155,7 +164,8 @@ int verify_pack_index(struct packed_git *p)
 	return err;
 }
 
-int verify_pack(struct packed_git *p)
+int verify_pack(struct packed_git *p, verify_fn fn,
+		struct progress *progress, uint32_t base_count)
 {
 	int err = 0;
 	struct pack_window *w_curs = NULL;
@@ -164,7 +174,7 @@ int verify_pack(struct packed_git *p)
 	if (!p->index_data)
 		return -1;
 
-	err |= verify_packfile(p, &w_curs);
+	err |= verify_packfile(p, &w_curs, fn, progress, base_count);
 	unuse_pack(&w_curs);
 
 	return err;
