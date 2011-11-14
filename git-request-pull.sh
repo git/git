@@ -48,6 +48,8 @@ then
 	fi
 fi
 
+tag_name=$(git describe --exact "$head^0" 2>/dev/null)
+
 test -n "$base" && test -n "$url" || usage
 baserev=$(git rev-parse --verify "$base"^0) &&
 headrev=$(git rev-parse --verify "$head"^0) || exit
@@ -82,8 +84,20 @@ then
 	echo "(from the branch description for $branch local branch)"
 	echo
 	git config "branch.$branch_name.description"
+fi &&
+
+if test -n "$tag_name"
+then
+	git cat-file tag "$tag_name" |
+	sed -n -e '1,/^$/d' -e '/^-----BEGIN PGP /q' -e p
+	echo
+fi &&
+
+if test -n "$branch_name" || test -n "$tag_name"
+then
 	echo "----------------------------------------------------------------"
 fi &&
+
 git shortlog ^$baserev $headrev &&
 git diff -M --stat --summary $patch $merge_base..$headrev || status=1
 

@@ -86,6 +86,7 @@ test_expect_success 'setup: two scripts for reading pull requests' '
 	s/$downstream_url_for_sed/URL/g
 	s/for-upstream/BRANCH/g
 	s/mnemonic.txt/FILENAME/g
+	s/^version [0-9]/VERSION/
 	/^ FILENAME | *[0-9]* [-+]*\$/ b diffstat
 	/^AUTHOR ([0-9]*):\$/ b shortlog
 	p
@@ -199,6 +200,9 @@ test_expect_success 'pull request format' '
 	for you to fetch changes up to OBJECT_NAME:
 
 	  SUBJECT (DATE)
+
+	----------------------------------------------------------------
+	VERSION
 
 	----------------------------------------------------------------
 	SHORTLOG
