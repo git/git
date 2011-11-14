@@ -677,10 +677,12 @@ branch.<name>.mergeoptions::
 branch.<name>.rebase::
 	When true, rebase the branch <name> on top of the fetched branch,
 	instead of merging the default branch from the default remote when
-	"git pull" is run.
-	*NOTE*: this is a possibly dangerous operation; do *not* use
-	it unless you understand the implications (see linkgit:git-rebase[1]
-	for details).
+	"git pull" is run. See "pull.rebase" for doing this in a non
+	branch-specific manner.
++
+*NOTE*: this is a possibly dangerous operation; do *not* use
+it unless you understand the implications (see linkgit:git-rebase[1]
+for details).
 
 browser.<tool>.cmd::
 	Specify the command to invoke the specified browser. The
@@ -1589,6 +1591,16 @@ pretty.<name>::
 	to be equivalent to running `git log "--pretty=format:{asterisk} %H %s"`.
 	Note that an alias with the same name as a built-in format
 	will be silently ignored.
+
+pull.rebase::
+	When true, rebase branches on top of the fetched branch, instead
+	of merging the default branch from the default remote when "git
+	pull" is run. See "branch.<name>.rebase" for setting this on a
+	per-branch basis.
++
+*NOTE*: this is a possibly dangerous operation; do *not* use
+it unless you understand the implications (see linkgit:git-rebase[1]
+for details).
 
 pull.octopus::
 	The default merge strategy to use when pulling multiple branches
