@@ -333,7 +333,7 @@ static int git_parse_file(config_fn_t fn, void *data)
 	die("bad config file line %d in %s", cf->linenr, cf->name);
 }
 
-static int parse_unit_factor(const char *end, unsigned long *val)
+static int parse_unit_factor(const char *end, uintmax_t *val)
 {
 	if (!*end)
 		return 1;
@@ -356,11 +356,23 @@ static int git_parse_long(const char *value, long *ret)
 {
 	if (value && *value) {
 		char *end;
-		long val = strtol(value, &end, 0);
-		unsigned long factor = 1;
+		intmax_t val;
+		uintmax_t uval;
+		uintmax_t factor = 1;
+
+		errno = 0;
+		val = strtoimax(value, &end, 0);
+		if (errno == ERANGE)
+			return 0;
 		if (!parse_unit_factor(end, &factor))
 			return 0;
-		*ret = val * factor;
+		uval = abs(val);
+		uval *= factor;
+		if ((uval > maximum_signed_value_of_type(long)) ||
+		    (abs(val) > uval))
+			return 0;
+		val *= factor;
+		*ret = val;
 		return 1;
 	}
 	return 0;
@@ -370,8 +382,18 @@ int git_parse_ulong(const char *value, unsigned long *ret)
 {
 	if (value && *value) {
 		char *end;
-		unsigned long val = strtoul(value, &end, 0);
+		uintmax_t val;
+		uintmax_t oldval;
+
+		errno = 0;
+		val = strtoumax(value, &end, 0);
+		if (errno == ERANGE)
+			return 0;
+		oldval = val;
 		if (!parse_unit_factor(end, &val))
+			return 0;
+		if ((val > maximum_unsigned_value_of_type(long)) ||
+		    (oldval > val))
 			return 0;
 		*ret = val;
 		return 1;
@@ -553,7 +575,7 @@ static int git_default_core_config(const char *var, const char *value)
 
 	if (!strcmp(var, "core.packedgitwindowsize")) {
 		int pgsz_x2 = getpagesize() * 2;
-		packed_git_window_size = git_config_int(var, value);
+		packed_git_window_size = git_config_ulong(var, value);
 
 		/* This value must be multiple of (pagesize * 2) */
 		packed_git_window_size /= pgsz_x2;
@@ -564,18 +586,17 @@ static int git_default_core_config(const char *var, const char *value)
 	}
 
 	if (!strcmp(var, "core.bigfilethreshold")) {
-		long n = git_config_int(var, value);
-		big_file_threshold = 0 < n ? n : 0;
+		big_file_threshold = git_config_ulong(var, value);
 		return 0;
 	}
 
 	if (!strcmp(var, "core.packedgitlimit")) {
-		packed_git_limit = git_config_int(var, value);
+		packed_git_limit = git_config_ulong(var, value);
 		return 0;
 	}
 
 	if (!strcmp(var, "core.deltabasecachelimit")) {
-		delta_base_cache_limit = git_config_int(var, value);
+		delta_base_cache_limit = git_config_ulong(var, value);
 		return 0;
 	}
 
