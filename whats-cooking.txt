@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Nov 2011, #02; Sun, 6)
-X-master-at: ee6dfb2d83ba1b057943e705f707fa27e34e47f9
-X-next-at: a49516f7bc4c2895be5b0abffee87963c65486fa
+Subject: What's cooking in git.git (Nov 2011, #03; Sun, 13)
+X-master-at: bc1bbe0c19a6ff39522b4fa3259f34150e308e1f
+X-next-at: 72bb2d5b6710462dbf2e8d479ac63e2a74695332
 
-What's cooking in git.git (Nov 2011, #02; Sun, 6)
+What's cooking in git.git (Nov 2011, #03; Sun, 13)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -23,18 +23,11 @@ With only maint and master:
         git://git.sourceforge.jp/gitroot/git-core/git.git
         git://git-core.git.sourceforge.net/gitroot/git-core/git-core
 
-With all the topics and integration branches but not todo, html or man:
+With all the topics and integration branches:
 
         https://github.com/gitster/git
 
-I will stop pushing the generated documentation branches to the above
-repositories, as they are not sources. The only reason the source
-repository at k.org has hosted these branches was because it was the only
-repository over there that was writable by me; it was an ugly historical
-and administrative workaround and not a demonstration of the best
-practice.
-
-These branches are pushed to their own separate repositories instead:
+The preformatted documentation in HTML and man format are found in:
 
         git://git.kernel.org/pub/scm/git/git-{htmldocs,manpages}.git/
         git://repo.or.cz/git-{htmldocs,manpages}.git/
@@ -44,75 +37,42 @@ These branches are pushed to their own separate repositories instead:
 --------------------------------------------------
 [New Topics]
 
-* jc/pull-signed-tag (2011-11-04) 10 commits
- - merge: force edit mode when merging a tag object
- - fmt-merge-msg: Add contents of merged tag in the merge message
- - fmt-merge-msg: package options into a structure
- - fmt-merge-msg: avoid early returns
- - refs DWIMmery: use the same rule for both "git fetch" and others
- - tests: distinguish merges of tags and commits
- - fetch: allow "git fetch $there v1.0" to fetch a tag
- - merge: notice local merging of tags and keep it unwrapped
- - fetch: do not store peeled tag object names in FETCH_HEAD
- - Split GPG interface into its own helper library
+* jc/commit-tree-extra (2011-11-12) 2 commits
+ - commit-tree: teach -C <extra-commit>
+ - commit-tree: teach -x <extra>
+ (this branch uses jc/pull-signed-tag; is tangled with jc/signed-commit.)
 
-Fourth round but needs further updates.
-Will keep in 'pu' for now.
+* nd/resolve-ref (2011-11-13) 2 commits
+ - Copy resolve_ref() return value for longer use
+ - Convert many resolve_ref() calls to read_ref*() and ref_exists()
 
-* sn/http-auth-with-netrc-fix (2011-11-04) 1 commit
-  (merged to 'next' on 2011-11-06 at 60b7f96)
- + http: don't always prompt for password
-
-Regression fix for the upcoming release.
-Will merge by 1.7.8 final.
-
-* ab/clang-lints (2011-11-06) 2 commits
- - cast variable in call to free() in builtin/diff.c and submodule.c
- - apply: get rid of useless x < 0 comparison on a size_t type
-
-Not urgent.
+--------------------------------------------------
+[Graduated to "master"]
 
 * ab/i18n-test-fix (2011-11-05) 2 commits
   (merged to 'next' on 2011-11-06 at f1de9a6)
  + t/t7508-status.sh: use test_i18ncmp
  + t/t6030-bisect-porcelain.sh: use test_i18ngrep
 
-Will merge by 1.7.8 final.
+* fc/remote-seturl-usage-fix (2011-11-06) 1 commit
+  (merged to 'next' on 2011-11-06 at 6c8328c)
+ + remote: fix remote set-url usage
 
-* ab/pull-rebase-config (2011-11-06) 1 commit
- - pull: introduce a pull.rebase option to enable --rebase
-
-Not urgent.
-
-* eh/grep-scale-to-cpunum (2011-11-05) 1 commit
- - grep: detect number of CPUs for thread spawning
-
-Kills I/O parallelism and needs to be improved or discarded.
-
-* nd/fsck-progress (2011-11-05) 4 commits
- - fsck: print progress
- - fsck: avoid reading every object twice
- - Stop verify_packfile() as soon as an error occurs
- - fsck: return error code when verify_pack() goes wrong
-
-Not urgent.
-
-* nd/prune-progress (2011-11-05) 1 commit
- - prune: show progress while marking reachable objects
-
-Not urgent.
+* jc/remote-setbranches-usage-fix (2011-11-06) 1 commit
+  (merged to 'next' on 2011-11-06 at 017606d)
+ + remote: fix set-branches usage
 
 * pw/p4-appledouble-fix (2011-11-05) 1 commit
   (merged to 'next' on 2011-11-06 at 2ec0af3)
  + git-p4: ignore apple filetype
 
 Regression fix for the upcoming release.
-Will merge by 1.7.8 final.
 
-* sr/fix-fast-export-tips (2011-11-05) 3 commits
- - fast-export: output reset command for commandline revs
- - fast-export: do not refer to non-existing marks
- - t9350: point out that refs are not updated correctly
+* sn/http-auth-with-netrc-fix (2011-11-04) 1 commit
+  (merged to 'next' on 2011-11-06 at 60b7f96)
+ + http: don't always prompt for password
+
+Regression fix for the upcoming release.
 
 --------------------------------------------------
 [Stalled]
@@ -130,8 +90,22 @@ looked somewhat suboptimal.
  - t5800: point out that deleting branches does not work
  - t5800: document inability to push new branch with old content
 
-Perhaps 281eee4 (revision: keep track of the end-user input from the
-command line, 2011-08-25) would help.
+See comments on sr/fix-fast-export-tips topic.
+
+* sr/fix-fast-export-tips (2011-11-05) 3 commits
+ - fast-export: output reset command for commandline revs
+ - fast-export: do not refer to non-existing marks
+ - t9350: point out that refs are not updated correctly
+
+The bottom commit from the stalled sr/transport-helper-fix-rfc topic is
+fixed with this. It may make sense to drop the other topic and include
+that commit in this series.
+
+The command line parser is still too lax and accepts malformed input, but
+this is a step in the right direction and tightening the command line now
+should be doable without a low level surgery that touches codepaths that
+are unrelated to the command line processing like the previous attempt
+used to do.
 
 * jc/lookup-object-hash (2011-08-11) 6 commits
  - object hash: replace linear probing with 4-way cuckoo hashing
@@ -156,8 +130,88 @@ it would soon realize the don't.
 
 Will keep in 'pu' as a showcase for a while and then will drop.
 
+* eh/grep-scale-to-cpunum (2011-11-05) 1 commit
+ - grep: detect number of CPUs for thread spawning
+
+Kills I/O parallelism and needs to be improved or discarded.
+
+* vr/msvc (2011-10-31) 3 commits
+ - MSVC: Remove unneeded header stubs
+ - Compile fix for MSVC: Include <io.h>
+ - Compile fix for MSVC: Do not include sys/resources.h
+
+It seems this needs to be rehashed with msysgit folks.
+
+* na/strtoimax (2011-11-05) 3 commits
+ - Support sizes >=2G in various config options accepting 'g' sizes.
+ - Compatibility: declare strtoimax() under NO_STRTOUMAX
+ - Add strtoimax() compatibility function.
+
+It seems this needs to be rehashed with msysgit folks.
+
 --------------------------------------------------
 [Cooking]
+
+* jc/signed-commit (2011-11-12) 4 commits
+ - pretty: %G[?GS] placeholders
+ - test "commit -S" and "log --show-signature"
+ - log: --show-signature
+ - commit: teach --gpg-sign option
+ (this branch uses jc/pull-signed-tag; is tangled with jc/commit-tree-extra.)
+
+Rebased on top of jc/pull-signed-tag topic, after reverting the old one
+out of 'next'.
+
+* jc/pull-signed-tag (2011-11-12) 15 commits
+ - commit-tree: teach -m/-F options to read logs from elsewhere
+ - commit-tree: update the command line parsing
+ - commit: teach --amend to carry forward extra headers
+ - merge: force edit and no-ff mode when merging a tag object
+ - commit: copy merged signed tags to headers of merge commit
+ - merge: record tag objects without peeling in MERGE_HEAD
+ - merge: make usage of commit->util more extensible
+ - fmt-merge-msg: Add contents of merged tag in the merge message
+ - fmt-merge-msg: package options into a structure
+ - fmt-merge-msg: avoid early returns
+ - refs DWIMmery: use the same rule for both "git fetch" and others
+ - fetch: allow "git fetch $there v1.0" to fetch a tag
+ - merge: notice local merging of tags and keep it unwrapped
+ - fetch: do not store peeled tag object names in FETCH_HEAD
+ - Split GPG interface into its own helper library
+ (this branch is used by jc/commit-tree-extra and jc/signed-commit.)
+
+Further updated to allow "commit --amend" to retain the mergetag
+headers. I think this is ready for the cycle after upcoming 1.7.8.
+
+* ab/clang-lints (2011-11-06) 2 commits
+  (merged to 'next' on 2011-11-13 at a573aec)
+ + cast variable in call to free() in builtin/diff.c and submodule.c
+ + apply: get rid of useless x < 0 comparison on a size_t type
+
+Will keep in 'next' during this cycle.
+
+* ab/pull-rebase-config (2011-11-07) 1 commit
+  (merged to 'next' on 2011-11-13 at 72bb2d5)
+ + pull: introduce a pull.rebase option to enable --rebase
+
+Will keep in 'next' during this cycle.
+
+* nd/fsck-progress (2011-11-06) 4 commits
+  (merged to 'next' on 2011-11-13 at 8831811)
+ + fsck: print progress
+ + fsck: avoid reading every object twice
+ + verify_packfile(): check as many object as possible in a pack
+ + fsck: return error code when verify_pack() goes wrong
+
+Will keep in 'next' during this cycle.
+
+* nd/prune-progress (2011-11-07) 3 commits
+  (merged to 'next' on 2011-11-13 at c5722ac)
+ + reachable: per-object progress
+ + prune: handle --progress/no-progress
+ + prune: show progress while marking reachable objects
+
+Will keep in 'next' during this cycle.
 
 * jc/stream-to-pack (2011-11-03) 4 commits
  - Bulk check-in
@@ -183,13 +237,6 @@ was done in the previous "large file support" topic in the 1.7.7 cycle.
 
 Replaces a series from Kato Kazuyoshi on the same topic.
 
-* vr/msvc (2011-10-31) 3 commits
- - MSVC: Remove unneeded header stubs
- - Compile fix for MSVC: Include <io.h>
- - Compile fix for MSVC: Do not include sys/resources.h
-
-It seems this needs to be rehashed with msysgit folks.
-
 * mf/curl-select-fdset (2011-11-04) 4 commits
   (merged to 'next' on 2011-11-06 at a49516f)
  + http: drop "local" member from request struct
@@ -198,11 +245,6 @@ It seems this needs to be rehashed with msysgit folks.
  + http.c: Use curl_multi_fdset to select on curl fds instead of just sleeping
 
 Reduces unnecessary waits.
-
-* na/strtoimax (2011-11-05) 3 commits
- - Support sizes >=2G in various config options accepting 'g' sizes.
- - Compatibility: declare strtoimax() under NO_STRTOUMAX
- - Add strtoimax() compatibility function.
 
 * nd/misc-cleanups (2011-10-27) 6 commits
   (merged to 'next' on 2011-10-28 at 2527a49)
@@ -255,16 +297,6 @@ serve as the basis for the sequencer.
 
 Will keep in 'next' during this cycle.
 
-* jc/check-ref-format-fixup (2011-10-19) 2 commits
-  (merged to 'next' on 2011-10-19 at 98981be)
- + Revert "Restrict ref-like names immediately below $GIT_DIR"
-  (merged to 'next' on 2011-10-15 at 8e89bc5)
- + Restrict ref-like names immediately below $GIT_DIR
-
-This became a no-op except for the bottom one which is part of the other
-topic now.
-Will discard once the other topic graduates to 'master'.
-
 * cb/daemon-permission-errors (2011-10-17) 2 commits
  - daemon: report permission denied error to clients
  - daemon: add tests
@@ -292,19 +324,6 @@ Will keep in 'pu' until hearing a convincing argument for the patch.
 
 Will keep in 'next' during this cycle.
 
-* jc/signed-commit (2011-10-21) 7 commits
-  (merged to 'next' on 2011-10-23 at 03eec25)
- + pretty: %G[?GS] placeholders
- + parse_signed_commit: really use the entire commit log message
- + test "commit -S" and "log --show-signature"
- + t7004: extract generic "GPG testing" bits
- + log: --show-signature
- + commit: teach --gpg-sign option
- + Split GPG interface into its own helper library
-
-This is to replace the earlier "signed push" experiments.
-Will keep in 'next' during this cycle.
-
 * sg/complete-refs (2011-10-21) 9 commits
   (merged to 'next' on 2011-10-26 at d65e2b4)
  + completion: remove broken dead code from __git_heads() and __git_tags()
@@ -319,7 +338,9 @@ Will keep in 'next' during this cycle.
 
 Will keep in 'next' until an Ack or two from completion folks.
 
-* jc/request-pull-show-head-4 (2011-10-15) 11 commits
+* jc/request-pull-show-head-4 (2011-11-09) 12 commits
+  (merged to 'next' on 2011-11-13 at e473fd2)
+ + request-pull: use the annotated tag contents
   (merged to 'next' on 2011-10-15 at 7e340ff)
  + fmt-merge-msg.c: Fix an "dubious one-bit signed bitfield" sparse error
   (merged to 'next' on 2011-10-10 at 092175e)
@@ -337,7 +358,8 @@ Will keep in 'next' until an Ack or two from completion folks.
  + Merge branch 'bk/ancestry-path' into jc/branch-desc
 
 Allow setting "description" for branches and use it to help communications
-between humans in various workflow elements.
+between humans in various workflow elements. It also allows requesting for
+a signed tag to be pulled and shows the tag message in the generated message.
 
 Will keep in 'next' during this cycle.
 
@@ -347,3 +369,12 @@ Will keep in 'next' during this cycle.
 * kk/gitweb-side-by-side-diff (2011-10-17) 2 commits
  . gitweb: add a feature to show side-by-side diff
  . gitweb: change format_diff_line() to remove leading SP from $diff_class
+
+* jc/check-ref-format-fixup (2011-10-19) 2 commits
+  (merged to 'next' on 2011-10-19 at 98981be)
+ + Revert "Restrict ref-like names immediately below $GIT_DIR"
+  (merged to 'next' on 2011-10-15 at 8e89bc5)
+ + Restrict ref-like names immediately below $GIT_DIR
+
+This became a no-op except for the bottom one which is part of the other
+topic now.
