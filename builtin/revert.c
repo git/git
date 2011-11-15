@@ -331,7 +331,7 @@ static void write_message(struct strbuf *msgbuf, const char *filename)
 	int msg_fd = hold_lock_file_for_update(&msg_file, filename,
 					       LOCK_DIE_ON_ERROR);
 	if (write_in_full(msg_fd, msgbuf->buf, msgbuf->len) < 0)
-		die_errno(_("Could not write to %s."), filename);
+		die_errno(_("Could not write to %s"), filename);
 	strbuf_release(msgbuf);
 	if (commit_lock_file(&msg_file) < 0)
 		die(_("Error wrapping up %s"), filename);
@@ -767,7 +767,7 @@ static void read_populate_todo(struct commit_list **todo_list,
 
 	fd = open(todo_file, O_RDONLY);
 	if (fd < 0)
-		die_errno(_("Could not open %s."), todo_file);
+		die_errno(_("Could not open %s"), todo_file);
 	if (strbuf_read(&buf, fd, 0) < 0) {
 		close(fd);
 		strbuf_release(&buf);
@@ -845,7 +845,7 @@ static int create_seq_dir(void)
 	if (file_exists(seq_dir))
 		return error(_("%s already exists."), seq_dir);
 	else if (mkdir(seq_dir, 0777) < 0)
-		die_errno(_("Could not create sequencer directory '%s'."), seq_dir);
+		die_errno(_("Could not create sequencer directory %s"), seq_dir);
 	return 0;
 }
 
@@ -859,7 +859,7 @@ static void save_head(const char *head)
 	fd = hold_lock_file_for_update(&head_lock, head_file, LOCK_DIE_ON_ERROR);
 	strbuf_addf(&buf, "%s\n", head);
 	if (write_in_full(fd, buf.buf, buf.len) < 0)
-		die_errno(_("Could not write to %s."), head_file);
+		die_errno(_("Could not write to %s"), head_file);
 	if (commit_lock_file(&head_lock) < 0)
 		die(_("Error wrapping up %s."), head_file);
 }
@@ -876,7 +876,7 @@ static void save_todo(struct commit_list *todo_list, struct replay_opts *opts)
 		die(_("Could not format %s."), todo_file);
 	if (write_in_full(fd, buf.buf, buf.len) < 0) {
 		strbuf_release(&buf);
-		die_errno(_("Could not write to %s."), todo_file);
+		die_errno(_("Could not write to %s"), todo_file);
 	}
 	if (commit_lock_file(&todo_lock) < 0) {
 		strbuf_release(&buf);
