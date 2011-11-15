@@ -840,14 +840,160 @@ struct commit_list *reduce_heads(struct commit_list *heads)
 	return result;
 }
 
+static void handle_signed_tag(struct commit *parent, struct commit_extra_header ***tail)
+{
+	struct merge_remote_desc *desc;
+	struct commit_extra_header *mergetag;
+	char *buf;
+	unsigned long size, len;
+	enum object_type type;
+
+	desc = merge_remote_util(parent);
+	if (!desc || !desc->obj)
+		return;
+	buf = read_sha1_file(desc->obj->sha1, &type, &size);
+	if (!buf || type != OBJ_TAG)
+		goto free_return;
+	len = parse_signature(buf, size);
+	if (size == len)
+		goto free_return;
+	/*
+	 * We could verify this signature and either omit the tag when
+	 * it does not validate, but the integrator may not have the
+	 * public key of the signer of the tag he is merging, while a
+	 * later auditor may have it while auditing, so let's not run
+	 * verify-signed-buffer here for now...
+	 *
+	 * if (verify_signed_buffer(buf, len, buf + len, size - len, ...))
+	 *	warn("warning: signed tag unverified.");
+	 */
+	mergetag = xcalloc(1, sizeof(*mergetag));
+	mergetag->key = xstrdup("mergetag");
+	mergetag->value = buf;
+	mergetag->len = size;
+
+	**tail = mergetag;
+	*tail = &mergetag->next;
+	return;
+
+free_return:
+	free(buf);
+}
+
+void append_merge_tag_headers(struct commit_list *parents,
+			      struct commit_extra_header ***tail)
+{
+	while (parents) {
+		struct commit *parent = parents->item;
+		handle_signed_tag(parent, tail);
+		parents = parents->next;
+	}
+}
+
+static void add_extra_header(struct strbuf *buffer,
+			     struct commit_extra_header *extra)
+{
+	strbuf_addstr(buffer, extra->key);
+	if (extra->len)
+		strbuf_add_lines(buffer, " ", extra->value, extra->len);
+	else
+		strbuf_addch(buffer, '\n');
+}
+
+struct commit_extra_header *read_commit_extra_headers(struct commit *commit)
+{
+	struct commit_extra_header *extra = NULL;
+	unsigned long size;
+	enum object_type type;
+	char *buffer = read_sha1_file(commit->object.sha1, &type, &size);
+	if (buffer && type == OBJ_COMMIT)
+		extra = read_commit_extra_header_lines(buffer, size);
+	free(buffer);
+	return extra;
+}
+
+static inline int standard_header_field(const char *field, size_t len)
+{
+	return ((len == 4 && !memcmp(field, "tree ", 5)) ||
+		(len == 6 && !memcmp(field, "parent ", 7)) ||
+		(len == 6 && !memcmp(field, "author ", 7)) ||
+		(len == 9 && !memcmp(field, "committer ", 10)) ||
+		(len == 8 && !memcmp(field, "encoding ", 9)));
+}
+
+struct commit_extra_header *read_commit_extra_header_lines(const char *buffer, size_t size)
+{
+	struct commit_extra_header *extra = NULL, **tail = &extra, *it = NULL;
+	const char *line, *next, *eof, *eob;
+	struct strbuf buf = STRBUF_INIT;
+
+	for (line = buffer, eob = line + size;
+	     line < eob && *line != '\n';
+	     line = next) {
+		next = memchr(line, '\n', eob - line);
+		next = next ? next + 1 : eob;
+		if (*line == ' ') {
+			/* continuation */
+			if (it)
+				strbuf_add(&buf, line + 1, next - (line + 1));
+			continue;
+		}
+		if (it)
+			it->value = strbuf_detach(&buf, &it->len);
+		strbuf_reset(&buf);
+		it = NULL;
+
+		eof = strchr(line, ' ');
+		if (next <= eof)
+			eof = next;
+
+		if (standard_header_field(line, eof - line))
+			continue;
+
+		it = xcalloc(1, sizeof(*it));
+		it->key = xmemdupz(line, eof-line);
+		*tail = it;
+		tail = &it->next;
+		if (eof + 1 < next)
+			strbuf_add(&buf, eof + 1, next - (eof + 1));
+	}
+	if (it)
+		it->value = strbuf_detach(&buf, &it->len);
+	return extra;
+}
+
+void free_commit_extra_headers(struct commit_extra_header *extra)
+{
+	while (extra) {
+		struct commit_extra_header *next = extra->next;
+		free(extra->key);
+		free(extra->value);
+		free(extra);
+		extra = next;
+	}
+}
+
+int commit_tree(const char *msg, unsigned char *tree,
+		struct commit_list *parents, unsigned char *ret,
+		const char *author)
+{
+	struct commit_extra_header *extra = NULL, **tail = &extra;
+	int result;
+
+	append_merge_tag_headers(parents, &tail);
+	result = commit_tree_extended(msg, tree, parents, ret, author, extra);
+	free_commit_extra_headers(extra);
+	return result;
+}
+
 static const char commit_utf8_warn[] =
 "Warning: commit message does not conform to UTF-8.\n"
 "You may want to amend it after fixing the message, or set the config\n"
 "variable i18n.commitencoding to the encoding your project uses.\n";
 
-int commit_tree(const char *msg, unsigned char *tree,
-		struct commit_list *parents, unsigned char *ret,
-		const char *author)
+int commit_tree_extended(const char *msg, unsigned char *tree,
+			 struct commit_list *parents, unsigned char *ret,
+			 const char *author, struct commit_extra_header *extra)
 {
 	int result;
 	int encoding_is_utf8;
@@ -868,8 +1014,10 @@ int commit_tree(const char *msg, unsigned char *tree,
 	 */
 	while (parents) {
 		struct commit_list *next = parents->next;
+		struct commit *parent = parents->item;
+
 		strbuf_addf(&buffer, "parent %s\n",
-			sha1_to_hex(parents->item->object.sha1));
+			    sha1_to_hex(parent->object.sha1));
 		free(parents);
 		parents = next;
 	}
@@ -881,6 +1029,11 @@ int commit_tree(const char *msg, unsigned char *tree,
 	strbuf_addf(&buffer, "committer %s\n", git_committer_info(IDENT_ERROR_ON_NO_NAME));
 	if (!encoding_is_utf8)
 		strbuf_addf(&buffer, "encoding %s\n", git_commit_encoding);
+
+	while (extra) {
+		add_extra_header(&buffer, extra);
+		extra = extra->next;
+	}
 	strbuf_addch(&buffer, '\n');
 
 	/* And add the comment */
@@ -893,4 +1046,23 @@ int commit_tree(const char *msg, unsigned char *tree,
 	result = write_sha1_file(buffer.buf, buffer.len, commit_type, ret);
 	strbuf_release(&buffer);
 	return result;
+}
+
+struct commit *get_merge_parent(const char *name)
+{
+	struct object *obj;
+	struct commit *commit;
+	unsigned char sha1[20];
+	if (get_sha1(name, sha1))
+		return NULL;
+	obj = parse_object(sha1);
+	commit = (struct commit *)peel_to_type(name, 0, obj, OBJ_COMMIT);
+	if (commit && !commit->util) {
+		struct merge_remote_desc *desc;
+		desc = xmalloc(sizeof(*desc));
+		desc->obj = obj;
+		desc->name = strdup(name);
+		commit->util = desc;
+	}
+	return commit;
 }

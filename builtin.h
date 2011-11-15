@@ -14,8 +14,14 @@ extern const char git_usage_string[];
 extern const char git_more_info_string[];
 
 extern void prune_packed_objects(int);
+
+struct fmt_merge_msg_opts {
+	unsigned add_title:1;
+	int shortlog_len;
+};
+
 extern int fmt_merge_msg(struct strbuf *in, struct strbuf *out,
-			 int merge_title, int shortlog_len);
+			 struct fmt_merge_msg_opts *);
 extern void commit_notes(struct notes_tree *t, const char *msg);
 
 struct notes_rewrite_cfg {

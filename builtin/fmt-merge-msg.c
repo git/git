@@ -7,6 +7,7 @@
 #include "string-list.h"
 #include "branch.h"
 #include "fmt-merge-msg.h"
+#include "gpg-interface.h"
 
 static const char * const fmt_merge_msg_usage[] = {
 	"git fmt-merge-msg [-m <message>] [--log[=<n>]|--no-log] [--file <file>]",
@@ -30,6 +31,7 @@ int fmt_merge_msg_config(const char *key, const char *value, void *cb)
 	return 0;
 }
 
+/* merge data per repository where the merged tips came from */
 struct src_data {
 	struct string_list branch, tag, r_branch, generic;
 	int head_status;
@@ -82,6 +84,11 @@ static int handle_line(char *line)
 		line[len - 1] = 0;
 	line += 42;
 
+	/*
+	 * At this point, line points at the beginning of comment e.g.
+	 * "branch 'frotz' of git://that/repository.git".
+	 * Find the repository name and point it with src.
+	 */
 	src = strstr(line, " of ");
 	if (src) {
 		*src = 0;
@@ -242,7 +249,7 @@ static void shortlog(const char *name,
 	string_list_clear(&subjects, 0);
 }
 
-static void do_fmt_merge_msg_title(struct strbuf *out,
+static void fmt_merge_msg_title(struct strbuf *out,
 	const char *current_branch) {
 	int i = 0;
 	char *sep = "";
@@ -295,8 +302,73 @@ static void do_fmt_merge_msg_title(struct strbuf *out,
 		strbuf_addf(out, " into %s\n", current_branch);
 }
 
-static int do_fmt_merge_msg(int merge_title, struct strbuf *in,
-	struct strbuf *out, int shortlog_len) {
+static void fmt_tag_signature(struct strbuf *tagbuf,
+			      struct strbuf *sig,
+			      const char *buf,
+			      unsigned long len)
+{
+	const char *tag_body = strstr(buf, "\n\n");
+	if (tag_body) {
+		tag_body += 2;
+		strbuf_add(tagbuf, tag_body, buf + len - tag_body);
+	}
+	strbuf_complete_line(tagbuf);
+	strbuf_add_lines(tagbuf, "# ", sig->buf, sig->len);
+}
+
+static void fmt_merge_msg_sigs(struct strbuf *out)
+{
+	int i, tag_number = 0, first_tag = 0;
+	struct strbuf tagbuf = STRBUF_INIT;
+
+	for (i = 0; i < origins.nr; i++) {
+		unsigned char *sha1 = origins.items[i].util;
+		enum object_type type;
+		unsigned long size, len;
+		char *buf = read_sha1_file(sha1, &type, &size);
+		struct strbuf sig = STRBUF_INIT;
+
+		if (!buf || type != OBJ_TAG)
+			goto next;
+		len = parse_signature(buf, size);
+
+		if (size == len)
+			; /* merely annotated */
+		else if (verify_signed_buffer(buf, len, buf + len, size - len, &sig)) {
+			if (!sig.len)
+				strbuf_addstr(&sig, "gpg verification failed.\n");
+		}
+
+		if (!tag_number++) {
+			fmt_tag_signature(&tagbuf, &sig, buf, len);
+			first_tag = i;
+		} else {
+			if (tag_number == 2) {
+				struct strbuf tagline = STRBUF_INIT;
+				strbuf_addf(&tagline, "\n# %s\n",
+					    origins.items[first_tag].string);
+				strbuf_insert(&tagbuf, 0, tagline.buf,
+					      tagline.len);
+				strbuf_release(&tagline);
+			}
+			strbuf_addf(&tagbuf, "\n# %s\n",
+				    origins.items[i].string);
+			fmt_tag_signature(&tagbuf, &sig, buf, len);
+		}
+		strbuf_release(&sig);
+	next:
+		free(buf);
+	}
+	if (tagbuf.len) {
+		strbuf_addch(out, '\n');
+		strbuf_addbuf(out, &tagbuf);
+	}
+	strbuf_release(&tagbuf);
+}
+
+int fmt_merge_msg(struct strbuf *in, struct strbuf *out,
+		  struct fmt_merge_msg_opts *opts)
+{
 	int i = 0, pos = 0;
 	unsigned char head_sha1[20];
 	const char *current_branch;
@@ -322,13 +394,13 @@ static int do_fmt_merge_msg(int merge_title, struct strbuf *in,
 			die ("Error in line %d: %.*s", i, len, p);
 	}
 
-	if (!srcs.nr)
-		return 0;
+	if (opts->add_title && srcs.nr)
+		fmt_merge_msg_title(out, current_branch);
 
-	if (merge_title)
-		do_fmt_merge_msg_title(out, current_branch);
+	if (origins.nr)
+		fmt_merge_msg_sigs(out);
 
-	if (shortlog_len) {
+	if (opts->shortlog_len) {
 		struct commit *head;
 		struct rev_info rev;
 
@@ -344,14 +416,11 @@ static int do_fmt_merge_msg(int merge_title, struct strbuf *in,
 		for (i = 0; i < origins.nr; i++)
 			shortlog(origins.items[i].string,
 				 origins.items[i].util,
-				 head, &rev, shortlog_len, out);
+				 head, &rev, opts->shortlog_len, out);
 	}
-	return 0;
-}
 
-int fmt_merge_msg(struct strbuf *in, struct strbuf *out,
-		  int merge_title, int shortlog_len) {
-	return do_fmt_merge_msg(merge_title, in, out, shortlog_len);
+	strbuf_complete_line(out);
+	return 0;
 }
 
 int cmd_fmt_merge_msg(int argc, const char **argv, const char *prefix)
@@ -376,6 +445,7 @@ int cmd_fmt_merge_msg(int argc, const char **argv, const char *prefix)
 	FILE *in = stdin;
 	struct strbuf input = STRBUF_INIT, output = STRBUF_INIT;
 	int ret;
+	struct fmt_merge_msg_opts opts;
 
 	git_config(fmt_merge_msg_config, NULL);
 	argc = parse_options(argc, argv, prefix, options, fmt_merge_msg_usage,
@@ -384,14 +454,6 @@ int cmd_fmt_merge_msg(int argc, const char **argv, const char *prefix)
 		usage_with_options(fmt_merge_msg_usage, options);
 	if (shortlog_len < 0)
 		shortlog_len = (merge_log_config > 0) ? merge_log_config : 0;
-	if (message && !shortlog_len) {
-		char nl = '\n';
-		write_in_full(STDOUT_FILENO, message, strlen(message));
-		write_in_full(STDOUT_FILENO, &nl, 1);
-		return 0;
-	}
-	if (shortlog_len < 0)
-		die("Negative --log=%d", shortlog_len);
 
 	if (inpath && strcmp(inpath, "-")) {
 		in = fopen(inpath, "r");
@@ -404,10 +466,12 @@ int cmd_fmt_merge_msg(int argc, const char **argv, const char *prefix)
 
 	if (message)
 		strbuf_addstr(&output, message);
-	ret = fmt_merge_msg(&input, &output,
-			    message ? 0 : 1,
-			    shortlog_len);
 
+	memset(&opts, 0, sizeof(opts));
+	opts.add_title = !message;
+	opts.shortlog_len = shortlog_len;
+
+	ret = fmt_merge_msg(&input, &output, &opts);
 	if (ret)
 		return ret;
 	write_in_full(STDOUT_FILENO, output.buf, output.len);

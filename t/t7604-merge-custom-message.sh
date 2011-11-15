@@ -11,7 +11,7 @@ create_merge_msgs() {
 
 	cp exp.subject exp.log &&
 	echo >>exp.log "" &&
-	echo >>exp.log "* commit 'c2':" &&
+	echo >>exp.log "* tag 'c2':" &&
 	echo >>exp.log "  c2"
 }
 

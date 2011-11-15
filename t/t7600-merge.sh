@@ -38,8 +38,8 @@ printf '%s\n' '1 X' 2 3 4 '5 X' 6 7 8 '9 X' >result.1-5-9
 >empty
 
 create_merge_msgs () {
-	echo "Merge commit 'c2'" >msg.1-5 &&
-	echo "Merge commit 'c2'; commit 'c3'" >msg.1-5-9 &&
+	echo "Merge tag 'c2'" >msg.1-5 &&
+	echo "Merge tags 'c2' and 'c3'" >msg.1-5-9 &&
 	{
 		echo "Squashed commit of the following:" &&
 		echo &&
@@ -57,7 +57,7 @@ create_merge_msgs () {
 	} >squash.1-5-9 &&
 	echo >msg.nolog &&
 	{
-		echo "* commit 'c3':" &&
+		echo "* tag 'c3':" &&
 		echo "  commit 3" &&
 		echo
 	} >msg.log
@@ -96,7 +96,11 @@ verify_parents () {
 
 verify_mergeheads () {
 	printf '%s\n' "$@" >mergehead.expected &&
-	test_cmp mergehead.expected .git/MERGE_HEAD
+	while read sha1 rest
+	do
+		git rev-parse $sha1
+	done <.git/MERGE_HEAD >mergehead.actual &&
+	test_cmp mergehead.expected mergehead.actual
 }
 
 verify_no_mergehead () {

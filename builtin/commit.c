@@ -1382,6 +1382,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 	int allow_fast_forward = 1;
 	struct wt_status s;
 	struct commit *current_head = NULL;
+	struct commit_extra_header *extra = NULL;
 
 	if (argc == 2 && !strcmp(argv[1], "-h"))
 		usage_with_options(builtin_commit_usage, builtin_commit_options);
@@ -1425,7 +1426,6 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 			pptr = &commit_list_insert(c->item, pptr)->next;
 	} else if (whence == FROM_MERGE) {
 		struct strbuf m = STRBUF_INIT;
-		struct commit *commit;
 		FILE *fp;
 
 		if (!reflog_msg)
@@ -1436,11 +1436,12 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 			die_errno(_("could not open '%s' for reading"),
 				  git_path("MERGE_HEAD"));
 		while (strbuf_getline(&m, fp, '\n') != EOF) {
-			unsigned char sha1[20];
-			if (get_sha1_hex(m.buf, sha1) < 0)
+			struct commit *parent;
+
+			parent = get_merge_parent(m.buf);
+			if (!parent)
 				die(_("Corrupt MERGE_HEAD file (%s)"), m.buf);
-			commit = lookup_commit_or_die(sha1, "MERGE_HEAD");
-			pptr = &commit_list_insert(commit, pptr)->next;
+			pptr = &commit_list_insert(parent, pptr)->next;
 		}
 		fclose(fp);
 		strbuf_release(&m);
@@ -1483,12 +1484,16 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 		exit(1);
 	}
 
-	if (commit_tree(sb.buf, active_cache_tree->sha1, parents, sha1,
-			author_ident.buf)) {
+	if (amend)
+		extra = read_commit_extra_headers(current_head);
+
+	if (commit_tree_extended(sb.buf, active_cache_tree->sha1, parents, sha1,
+				 author_ident.buf, extra)) {
 		rollback_index_files();
 		die(_("failed to write commit object"));
 	}
 	strbuf_release(&author_ident);
+	free_commit_extra_headers(extra);
 
 	ref_lock = lock_any_ref_for_update("HEAD",
 					   !current_head
