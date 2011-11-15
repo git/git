@@ -6,7 +6,6 @@
 #include "archive.h"
 #include "pkt-line.h"
 #include "sideband.h"
-#include "run-command.h"
 
 static const char upload_archive_usage[] =
 	"git upload-archive <repo>";
@@ -19,17 +18,28 @@ static const char lostchild[] =
 
 #define MAX_ARGS (64)
 
-static void prepare_argv(const char **sent_argv, const char **argv)
+static int run_upload_archive(int argc, const char **argv, const char *prefix)
 {
+	const char *sent_argv[MAX_ARGS];
 	const char *arg_cmd = "argument ";
 	char *p, buf[4096];
 	int sent_argc;
 	int len;
 
+	if (argc != 2)
+		usage(upload_archive_usage);
+
+	if (strlen(argv[1]) + 1 > sizeof(buf))
+		die("insanely long repository name");
+
+	strcpy(buf, argv[1]); /* enter-repo smudges its argument */
+
+	if (!enter_repo(buf, 0))
+		die("'%s' does not appear to be a git repository", buf);
+
 	/* put received options in sent_argv[] */
-	sent_argc = 2;
-	sent_argv[0] = "archive";
-	sent_argv[1] = "--remote-request";
+	sent_argc = 1;
+	sent_argv[0] = "git-upload-archive";
 	for (p = buf;;) {
 		/* This will die if not enough free space in buf */
 		len = packet_read_line(0, p, (buf + sizeof buf) - p);
@@ -52,6 +62,9 @@ static void prepare_argv(const char **sent_argv, const char **argv)
 		*p++ = 0;
 	}
 	sent_argv[sent_argc] = NULL;
+
+	/* parse all options sent by the client */
+	return write_archive(sent_argc, sent_argv, prefix, 0, NULL, 1);
 }
 
 __attribute__((format (printf, 1, 2)))
@@ -83,25 +96,38 @@ static ssize_t process_input(int child_fd, int band)
 
 int cmd_upload_archive(int argc, const char **argv, const char *prefix)
 {
-	const char *sent_argv[MAX_ARGS];
-	struct child_process cld = { sent_argv };
-	cld.out = cld.err = -1;
-	cld.git_cmd = 1;
-
-	if (argc != 2)
-		usage(upload_archive_usage);
-
-	if (!enter_repo(argv[1], 0))
-		die("'%s' does not appear to be a git repository", argv[1]);
-
-	prepare_argv(sent_argv, argv);
-	if (start_command(&cld)) {
+	pid_t writer;
+	int fd1[2], fd2[2];
+	/*
+	 * Set up sideband subprocess.
+	 *
+	 * We (parent) monitor and read from child, sending its fd#1 and fd#2
+	 * multiplexed out to our fd#1.  If the child dies, we tell the other
+	 * end over channel #3.
+	 */
+	if (pipe(fd1) < 0 || pipe(fd2) < 0) {
+		int err = errno;
+		packet_write(1, "NACK pipe failed on the remote side\n");
+		die("upload-archive: %s", strerror(err));
+	}
+	writer = fork();
+	if (writer < 0) {
 		int err = errno;
 		packet_write(1, "NACK fork failed on the remote side\n");
 		die("upload-archive: %s", strerror(err));
 	}
+	if (!writer) {
+		/* child - connect fd#1 and fd#2 to the pipe */
+		dup2(fd1[1], 1);
+		dup2(fd2[1], 2);
+		close(fd1[1]); close(fd2[1]);
+		close(fd1[0]); close(fd2[0]); /* we do not read from pipe */
+
+		exit(run_upload_archive(argc, argv, prefix));
+	}
 
 	/* parent - read from child, multiplex and send out to fd#1 */
+	close(fd1[1]); close(fd2[1]); /* we do not write to pipe */
 	packet_write(1, "ACK\n");
 	packet_flush(1);
 
@@ -109,9 +135,9 @@ int cmd_upload_archive(int argc, const char **argv, const char *prefix)
 		struct pollfd pfd[2];
 		int status;
 
-		pfd[0].fd = cld.out;
+		pfd[0].fd = fd1[0];
 		pfd[0].events = POLLIN;
-		pfd[1].fd = cld.err;
+		pfd[1].fd = fd2[0];
 		pfd[1].events = POLLIN;
 		if (poll(pfd, 2, -1) < 0) {
 			if (errno != EINTR) {
@@ -130,7 +156,7 @@ int cmd_upload_archive(int argc, const char **argv, const char *prefix)
 			if (process_input(pfd[0].fd, 1))
 				continue;
 
-		if (waitpid(cld.pid, &status, 0) < 0)
+		if (waitpid(writer, &status, 0) < 0)
 			error_clnt("%s", lostchild);
 		else if (!WIFEXITED(status) || WEXITSTATUS(status) > 0)
 			error_clnt("%s", deadchild);
