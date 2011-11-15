@@ -500,6 +500,8 @@ patterns are available:
 
 - `java` suitable for source code in the Java language.
 
+- `matlab` suitable for source code in the MATLAB language.
+
 - `objc` suitable for source code in the Objective-C language.
 
 - `pascal` suitable for source code in the Pascal/Delphi language.
