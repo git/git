@@ -316,13 +316,15 @@ static void squash_message(struct commit *commit)
 	struct rev_info rev;
 	struct strbuf out = STRBUF_INIT;
 	struct commit_list *j;
+	const char *filename;
 	int fd;
 	struct pretty_print_context ctx = {0};
 
 	printf(_("Squash commit -- not updating HEAD\n"));
-	fd = open(git_path("SQUASH_MSG"), O_WRONLY | O_CREAT, 0666);
+	filename = git_path("SQUASH_MSG");
+	fd = open(filename, O_WRONLY | O_CREAT, 0666);
 	if (fd < 0)
-		die_errno(_("Could not write to '%s'"), git_path("SQUASH_MSG"));
+		die_errno(_("Could not write to '%s'"), filename);
 
 	init_revisions(&rev, NULL);
 	rev.ignore_merges = 1;
@@ -492,14 +494,16 @@ static void merge_name(const char *remote, struct strbuf *msg)
 
 	if (!strcmp(remote, "FETCH_HEAD") &&
 			!access(git_path("FETCH_HEAD"), R_OK)) {
+		const char *filename;
 		FILE *fp;
 		struct strbuf line = STRBUF_INIT;
 		char *ptr;
 
-		fp = fopen(git_path("FETCH_HEAD"), "r");
+		filename = git_path("FETCH_HEAD");
+		fp = fopen(filename, "r");
 		if (!fp)
 			die_errno(_("could not open '%s' for reading"),
-				  git_path("FETCH_HEAD"));
+				  filename);
 		strbuf_getline(&line, fp, '\n');
 		fclose(fp);
 		ptr = strstr(line.buf, "\tnot-for-merge\t");
@@ -847,20 +851,22 @@ static void add_strategies(const char *string, unsigned attr)
 
 static void write_merge_msg(struct strbuf *msg)
 {
-	int fd = open(git_path("MERGE_MSG"), O_WRONLY | O_CREAT, 0666);
+	const char *filename = git_path("MERGE_MSG");
+	int fd = open(filename, O_WRONLY | O_CREAT, 0666);
 	if (fd < 0)
 		die_errno(_("Could not open '%s' for writing"),
-			  git_path("MERGE_MSG"));
+			  filename);
 	if (write_in_full(fd, msg->buf, msg->len) != msg->len)
-		die_errno(_("Could not write to '%s'"), git_path("MERGE_MSG"));
+		die_errno(_("Could not write to '%s'"), filename);
 	close(fd);
 }
 
 static void read_merge_msg(struct strbuf *msg)
 {
+	const char *filename = git_path("MERGE_MSG");
 	strbuf_reset(msg);
-	if (strbuf_read_file(msg, git_path("MERGE_MSG"), 0) < 0)
-		die_errno(_("Could not read from '%s'"), git_path("MERGE_MSG"));
+	if (strbuf_read_file(msg, filename, 0) < 0)
+		die_errno(_("Could not read from '%s'"), filename);
 }
 
 static void write_merge_state(void);
@@ -948,13 +954,14 @@ static int finish_automerge(struct commit *head,
 
 static int suggest_conflicts(int renormalizing)
 {
+	const char *filename;
 	FILE *fp;
 	int pos;
 
-	fp = fopen(git_path("MERGE_MSG"), "a");
+	filename = git_path("MERGE_MSG");
+	fp = fopen(filename, "a");
 	if (!fp)
-		die_errno(_("Could not open '%s' for writing"),
-			  git_path("MERGE_MSG"));
+		die_errno(_("Could not open '%s' for writing"), filename);
 	fprintf(fp, "\nConflicts:\n");
 	for (pos = 0; pos < active_nr; pos++) {
 		struct cache_entry *ce = active_cache[pos];
@@ -1046,6 +1053,7 @@ static int setup_with_upstream(const char ***argv)
 
 static void write_merge_state(void)
 {
+	const char *filename;
 	int fd;
 	struct commit_list *j;
 	struct strbuf buf = STRBUF_INIT;
@@ -1053,24 +1061,25 @@ static void write_merge_state(void)
 	for (j = remoteheads; j; j = j->next)
 		strbuf_addf(&buf, "%s\n",
 			sha1_to_hex(j->item->object.sha1));
-	fd = open(git_path("MERGE_HEAD"), O_WRONLY | O_CREAT, 0666);
+	filename = git_path("MERGE_HEAD");
+	fd = open(filename, O_WRONLY | O_CREAT, 0666);
 	if (fd < 0)
-		die_errno(_("Could not open '%s' for writing"),
-			  git_path("MERGE_HEAD"));
+		die_errno(_("Could not open '%s' for writing"), filename);
 	if (write_in_full(fd, buf.buf, buf.len) != buf.len)
-		die_errno(_("Could not write to '%s'"), git_path("MERGE_HEAD"));
+		die_errno(_("Could not write to '%s'"), filename);
 	close(fd);
 	strbuf_addch(&merge_msg, '\n');
 	write_merge_msg(&merge_msg);
-	fd = open(git_path("MERGE_MODE"), O_WRONLY | O_CREAT | O_TRUNC, 0666);
+
+	filename = git_path("MERGE_MODE");
+	fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, 0666);
 	if (fd < 0)
-		die_errno(_("Could not open '%s' for writing"),
-			  git_path("MERGE_MODE"));
+		die_errno(_("Could not open '%s' for writing"), filename);
 	strbuf_reset(&buf);
 	if (!allow_fast_forward)
 		strbuf_addf(&buf, "no-ff");
 	if (write_in_full(fd, buf.buf, buf.len) != buf.len)
-		die_errno(_("Could not write to '%s'"), git_path("MERGE_MODE"));
+		die_errno(_("Could not write to '%s'"), filename);
 	close(fd);
 }
 
