@@ -196,7 +196,8 @@ static void parse_pathspec_arg(const char **pathspec,
 }
 
 static void parse_treeish_arg(const char **argv,
-		struct archiver_args *ar_args, const char *prefix)
+		struct archiver_args *ar_args, const char *prefix,
+		int remote)
 {
 	const char *name = argv[0];
 	const unsigned char *commit_sha1;
@@ -205,8 +206,17 @@ static void parse_treeish_arg(const char **argv,
 	const struct commit *commit;
 	unsigned char sha1[20];
 
-	if (get_sha1(name, sha1))
-		die("Not a valid object name");
+	/* Remotes are only allowed to fetch actual refs */
+	if (remote) {
+		char *ref = NULL;
+		if (!dwim_ref(name, strlen(name), sha1, &ref))
+			die("no such ref: %s", name);
+		free(ref);
+	}
+	else {
+		if (get_sha1(name, sha1))
+			die("Not a valid object name");
+	}
 
 	commit = lookup_commit_reference_gently(sha1, 1);
 	if (commit) {
@@ -324,7 +334,7 @@ static int parse_archive_args(int argc, const char **argv,
 }
 
 int write_archive(int argc, const char **argv, const char *prefix,
-		int setup_prefix)
+		  int setup_prefix, int remote)
 {
 	const struct archiver *ar = NULL;
 	struct archiver_args args;
@@ -333,7 +343,7 @@ int write_archive(int argc, const char **argv, const char *prefix,
 	if (setup_prefix && prefix == NULL)
 		prefix = setup_git_directory();
 
-	parse_treeish_arg(argv, &args, prefix);
+	parse_treeish_arg(argv, &args, prefix, remote);
 	parse_pathspec_arg(argv + 1, &args);
 
 	git_config(git_default_config, NULL);
