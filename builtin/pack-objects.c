@@ -404,25 +404,56 @@ static unsigned long write_object(struct sha1file *f,
 	return hdrlen + datalen;
 }
 
-static int write_one(struct sha1file *f,
-			       struct object_entry *e,
-			       off_t *offset)
+enum write_one_status {
+	WRITE_ONE_SKIP = -1, /* already written */
+	WRITE_ONE_BREAK = 0, /* writing this will bust the limit; not written */
+	WRITE_ONE_WRITTEN = 1, /* normal */
+	WRITE_ONE_RECURSIVE = 2 /* already scheduled to be written */
+};
+
+static enum write_one_status write_one(struct sha1file *f,
+				       struct object_entry *e,
+				       off_t *offset)
 {
 	unsigned long size;
+	int recursing;
 
-	/* offset is non zero if object is written already. */
-	if (e->idx.offset || e->preferred_base)
-		return -1;
+	/*
+	 * we set offset to 1 (which is an impossible value) to mark
+	 * the fact that this object is involved in "write its base
+	 * first before writing a deltified object" recursion.
+	 */
+	recursing = (e->idx.offset == 1);
+	if (recursing) {
+		warning("recursive delta detected for object %s",
+			sha1_to_hex(e->idx.sha1));
+		return WRITE_ONE_RECURSIVE;
+	} else if (e->idx.offset || e->preferred_base) {
+		/* offset is non zero if object is written already. */
+		return WRITE_ONE_SKIP;
+	}
 
 	/* if we are deltified, write out base object first. */
-	if (e->delta && !write_one(f, e->delta, offset))
-		return 0;
+	if (e->delta) {
+		e->idx.offset = 1; /* now recurse */
+		switch (write_one(f, e->delta, offset)) {
+		case WRITE_ONE_RECURSIVE:
+			/* we cannot depend on this one */
+			e->delta = NULL;
+			break;
+		default:
+			break;
+		case WRITE_ONE_BREAK:
+			e->idx.offset = recursing;
+			return WRITE_ONE_BREAK;
+		}
+	}
 
 	e->idx.offset = *offset;
 	size = write_object(f, e, *offset);
 	if (!size) {
-		e->idx.offset = 0;
-		return 0;
+		e->idx.offset = recursing;
+		return WRITE_ONE_BREAK;
 	}
 	written_list[nr_written++] = &e->idx;
 
@@ -430,7 +461,7 @@ static int write_one(struct sha1file *f,
 	if (signed_add_overflows(*offset, size))
 		die("pack too large for current definition of off_t");
 	*offset += size;
-	return 1;
+	return WRITE_ONE_WRITTEN;
 }
 
 static void write_pack_file(void)
@@ -468,7 +499,7 @@ static void write_pack_file(void)
 		offset = sizeof(hdr);
 		nr_written = 0;
 		for (; i < nr_objects; i++) {
-			if (!write_one(f, objects + i, &offset))
+			if (write_one(f, objects + i, &offset) == WRITE_ONE_BREAK)
 				break;
 			display_progress(progress_state, written);
 		}
