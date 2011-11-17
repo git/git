@@ -149,6 +149,8 @@ struct object *parse_object_buffer(const unsigned char *sha1, enum object_type t
 		struct tree *tree = lookup_tree(sha1);
 		if (tree) {
 			obj = &tree->object;
+			if (!tree->buffer)
+				tree->object.parsed = 0;
 			if (!tree->object.parsed) {
 				if (parse_tree_buffer(tree, buffer, size))
 					return NULL;
