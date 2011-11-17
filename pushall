@@ -9,7 +9,11 @@ done
 case "$#" in
 0)
 	printf "github mirror: "
-	git push github "$@" ;;
-*)
-	echo "No push to github" ;;
+	git push github "$@" || exit $?
+	for topic in htmldocs manpages
+	do
+		printf "%s: " "$topic"
+		( cd ../git-$topic.git && git push ) || exit
+	done
+	;;
 esac
