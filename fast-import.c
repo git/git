@@ -3292,6 +3292,8 @@ int main(int argc, const char **argv)
 
 	git_extract_argv0_path(argv[0]);
 
+	git_setup_gettext();
+
 	if (argc == 2 && !strcmp(argv[1], "-h"))
 		usage(fast_import_usage);
 

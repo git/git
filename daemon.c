@@ -1099,6 +1099,8 @@ int main(int argc, char **argv)
 	struct credentials *cred = NULL;
 	int i;
 
+	git_setup_gettext();
+
 	git_extract_argv0_path(argv[0]);
 
 	for (i = 1; i < argc; i++) {

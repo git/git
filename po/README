@@ -1,0 +1,229 @@
+Core GIT Translations
+=====================
+
+This directory holds the translations for the core of Git. This
+document describes how to add to and maintain these translations, and
+how to mark source strings for translation.
+
+
+Generating a .pot file
+----------------------
+
+The po/git.pot file contains a message catalog extracted from Git's
+sources. You need to generate it to add new translations with
+msginit(1), or update existing ones with msgmerge(1).
+
+Since the file can be automatically generated it's not checked into
+git.git. To generate it do, at the top-level:
+
+    make pot
+
+
+Initializing a .po file
+-----------------------
+
+To add a new translation first generate git.pot (see above) and then
+in the po/ directory do:
+
+    msginit --locale=XX
+
+Where XX is your locale, e.g. "is", "de" or "pt_BR".
+
+Then edit the automatically generated copyright info in your new XX.po
+to be correct, e.g. for Icelandic:
+
+    @@ -1,6 +1,6 @@
+    -# Icelandic translations for PACKAGE package.
+    -# Copyright (C) 2010 THE PACKAGE'S COPYRIGHT HOLDER
+    -# This file is distributed under the same license as the PACKAGE package.
+    +# Icelandic translations for Git.
+    +# Copyright (C) 2010 Ævar Arnfjörð Bjarmason <avarab@gmail.com>
+    +# This file is distributed under the same license as the Git package.
+     # Ævar Arnfjörð Bjarmason <avarab@gmail.com>, 2010.
+
+And change references to PACKAGE VERSION in the PO Header Entry to
+just "Git":
+
+    perl -pi -e 's/(?<="Project-Id-Version: )PACKAGE VERSION/Git/' XX.po
+
+
+Updating a .po file
+-------------------
+
+If there's an existing *.po file for your language but you need to
+update the translation you first need to generate git.pot (see above)
+and then in the po/ directory do:
+
+    msgmerge --add-location --backup=off -U XX.po git.pot
+
+Where XX.po is the file you want to update.
+
+Testing your changes
+--------------------
+
+Before you submit your changes go back to the top-level and do:
+
+    make
+
+On systems with GNU gettext (i.e. not Solaris) this will compile your
+changed PO file with `msgfmt --check`, the --check option flags many
+common errors, e.g. missing printf format strings, or translated
+messages that deviate from the originals in whether they begin/end
+with a newline or not.
+
+
+Marking strings for translation
+-------------------------------
+
+Before strings can be translated they first have to be marked for
+translation.
+
+Git uses an internationalization interface that wraps the system's
+gettext library, so most of the advice in your gettext documentation
+(on GNU systems `info gettext` in a terminal) applies.
+
+General advice:
+
+ - Don't mark everything for translation, only strings which will be
+   read by humans (the porcelain interface) should be translated.
+
+   The output from Git's plumbing utilities will primarily be read by
+   programs and would break scripts under non-C locales if it was
+   translated. Plumbing strings should not be translated, since
+   they're part of Git's API.
+
+ - Adjust the strings so that they're easy to translate. Most of the
+   advice in `info '(gettext)Preparing Strings'` applies here.
+
+ - If something is unclear or ambiguous you can use a "TRANSLATORS"
+   comment to tell the translators what to make of it. These will be
+   extracted by xgettext(1) and put in the po/*.po files, e.g. from
+   git-am.sh:
+
+       # TRANSLATORS: Make sure to include [y], [n], [e], [v] and [a]
+       # in your translation. The program will only accept English
+       # input at this point.
+       gettext "Apply? [y]es/[n]o/[e]dit/[v]iew patch/[a]ccept all "
+
+   Or in C, from builtin/revert.c:
+
+       /* TRANSLATORS: %s will be "revert" or "cherry-pick" */
+       die(_("%s: Unable to write new index file"), action_name(opts));
+
+We provide wrappers for C, Shell and Perl programs. Here's how they're
+used:
+
+C:
+
+ - Include builtin.h at the top, it'll pull in in gettext.h, which
+   defines the gettext interface. Consult with the list if you need to
+   use gettext.h directly.
+
+ - The C interface is a subset of the normal GNU gettext
+   interface. We currently export these functions:
+
+   - _()
+
+    Mark and translate a string. E.g.:
+
+        printf(_("HEAD is now at %s"), hex);
+
+   - Q_()
+
+    Mark and translate a plural string. E.g.:
+
+        printf(Q_("%d commit", "%d commits", number_of_commits));
+
+    This is just a wrapper for the ngettext() function.
+
+   - N_()
+
+    A no-op pass-through macro for marking strings inside static
+    initializations, e.g.:
+
+        static const char *reset_type_names[] = {
+            N_("mixed"), N_("soft"), N_("hard"), N_("merge"), N_("keep"), NULL
+        };
+
+    And then, later:
+
+        die(_("%s reset is not allowed in a bare repository"),
+               _(reset_type_names[reset_type]));
+
+    Here _() couldn't have statically determined what the translation
+    string will be, but since it was already marked for translation
+    with N_() the look-up in the message catalog will succeed.
+
+Shell:
+
+ - The Git gettext shell interface is just a wrapper for
+   gettext.sh. Import it right after git-sh-setup like this:
+
+       . git-sh-setup
+       . git-sh-i18n
+
+   And then use the gettext or eval_gettext functions:
+
+       # For constant interface messages:
+       gettext "A message for the user"; echo
+
+       # To interpolate variables:
+       details="oh noes"
+       eval_gettext "An error occured: \$details"; echo
+
+   In addition we have wrappers for messages that end with a trailing
+   newline. I.e. you could write the above as:
+
+       # For constant interface messages:
+       gettextln "A message for the user"
+
+       # To interpolate variables:
+       details="oh noes"
+       eval_gettextln "An error occured: \$details"
+
+   More documentation about the interface is available in the GNU info
+   page: `info '(gettext)sh'`. Looking at git-am.sh (the first shell
+   command to be translated) for examples is also useful:
+
+       git log --reverse -p --grep=i18n git-am.sh
+
+Perl:
+
+ - The Git::I18N module provides a limited subset of the
+   Locale::Messages functionality, e.g.:
+
+       use Git::I18N;
+       print __("Welcome to Git!\n");
+       printf __("The following error occured: %s\n"), $error;
+
+   Run `perldoc perl/Git/I18N.pm` for more info.
+
+
+Testing marked strings
+----------------------
+
+Even if you've correctly marked porcelain strings for translation
+something in the test suite might still depend on the US English
+version of the strings, e.g. to grep some error message or other
+output.
+
+To smoke out issues like these Git can be compiled with gettext poison
+support, at the top-level:
+
+    make GETTEXT_POISON=YesPlease
+
+That'll give you a git which emits gibberish on every call to
+gettext. It's obviously not meant to be installed, but you should run
+the test suite with it:
+
+    cd t && prove -j 9 ./t[0-9]*.sh
+
+If tests break with it you should inspect them manually and see if
+what you're translating is sane, i.e. that you're not translating
+plumbing output.
+
+If not you should replace calls to grep with test_i18ngrep, or
+test_cmp calls with test_i18ncmp. If that's not enough you can skip
+the whole test by making it depend on the C_LOCALE_OUTPUT
+prerequisite. See existing test files with this prerequisite for
+examples.

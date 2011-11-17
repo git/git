@@ -22,6 +22,8 @@ int main(int argc, const char **argv)
 	int get_verbosely = 0;
 	int get_recover = 0;
 
+	git_setup_gettext();
+
 	git_extract_argv0_path(argv[0]);
 
 	while (arg < argc && argv[arg][0] == '-') {
