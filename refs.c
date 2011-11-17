@@ -48,7 +48,7 @@ static const char *parse_ref_line(char *line, unsigned char *sha1)
 }
 
 static void add_ref(const char *name, const unsigned char *sha1,
-		    int flag, struct ref_array *refs,
+		    int flag, int check_name, struct ref_array *refs,
 		    struct ref_entry **new_entry)
 {
 	int len;
@@ -59,7 +59,8 @@ static void add_ref(const char *name, const unsigned char *sha1,
 	entry = xmalloc(sizeof(struct ref_entry) + len);
 	hashcpy(entry->sha1, sha1);
 	hashclr(entry->peeled);
-	if (check_refname_format(name, REFNAME_ALLOW_ONELEVEL|REFNAME_DOT_COMPONENT))
+	if (check_name &&
+	    check_refname_format(name, REFNAME_ALLOW_ONELEVEL|REFNAME_DOT_COMPONENT))
 		die("Reference has invalid format: '%s'", name);
 	memcpy(entry->name, name, len);
 	entry->flag = flag;
@@ -234,7 +235,7 @@ static void read_packed_refs(FILE *f, struct ref_array *array)
 
 		name = parse_ref_line(refline, sha1);
 		if (name) {
-			add_ref(name, sha1, flag, array, &last);
+			add_ref(name, sha1, flag, 1, array, &last);
 			continue;
 		}
 		if (last &&
@@ -249,7 +250,7 @@ static void read_packed_refs(FILE *f, struct ref_array *array)
 
 void add_extra_ref(const char *name, const unsigned char *sha1, int flag)
 {
-	add_ref(name, sha1, flag, &extra_refs, NULL);
+	add_ref(name, sha1, flag, 0, &extra_refs, NULL);
 }
 
 void clear_extra_refs(void)
@@ -333,12 +334,11 @@ static void get_ref_dir(const char *submodule, const char *base,
 					hashclr(sha1);
 					flag |= REF_ISBROKEN;
 				}
-			} else
-				if (!resolve_ref(ref, sha1, 1, &flag)) {
-					hashclr(sha1);
-					flag |= REF_ISBROKEN;
-				}
-			add_ref(ref, sha1, flag, array, NULL);
+			} else if (!resolve_ref(ref, sha1, 1, &flag)) {
+				hashclr(sha1);
+				flag |= REF_ISBROKEN;
+			}
+			add_ref(ref, sha1, flag, 1, array, NULL);
 		}
 		free(ref);
 		closedir(dir);
