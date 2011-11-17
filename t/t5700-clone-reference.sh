@@ -146,4 +146,11 @@ test_expect_success 'cloning with reference being subset of source (-l -s)' \
 
 cd "$base_dir"
 
+test_expect_success 'clone with reference from a tagged repository' '
+	(
+		cd A && git tag -a -m 'tagged' HEAD
+	) &&
+	git clone --reference=A A I
+'
+
 test_done
