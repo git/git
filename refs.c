@@ -56,7 +56,7 @@ static const char *parse_ref_line(char *line, unsigned char *sha1)
 
 /* Add a ref_entry to the end of the ref_array (unsorted). */
 static void add_ref(const char *refname, const unsigned char *sha1,
-		    int flag, struct ref_array *refs,
+		    int flag, int check_name, struct ref_array *refs,
 		    struct ref_entry **new_entry)
 {
 	int len;
@@ -67,7 +67,8 @@ static void add_ref(const char *refname, const unsigned char *sha1,
 	entry = xmalloc(sizeof(struct ref_entry) + len);
 	hashcpy(entry->sha1, sha1);
 	hashclr(entry->peeled);
-	if (check_refname_format(refname, REFNAME_ALLOW_ONELEVEL|REFNAME_DOT_COMPONENT))
+	if (check_name &&
+	    check_refname_format(refname, REFNAME_ALLOW_ONELEVEL|REFNAME_DOT_COMPONENT))
 		die("Reference has invalid format: '%s'", refname);
 	memcpy(entry->name, refname, len);
 	entry->flag = flag;
@@ -257,7 +258,7 @@ static void read_packed_refs(FILE *f, struct ref_array *array)
 
 		refname = parse_ref_line(refline, sha1);
 		if (refname) {
-			add_ref(refname, sha1, flag, array, &last);
+			add_ref(refname, sha1, flag, 1, array, &last);
 			continue;
 		}
 		if (last &&
@@ -272,7 +273,7 @@ static void read_packed_refs(FILE *f, struct ref_array *array)
 
 void add_extra_ref(const char *refname, const unsigned char *sha1, int flag)
 {
-	add_ref(refname, sha1, flag, &extra_refs, NULL);
+	add_ref(refname, sha1, flag, 0, &extra_refs, NULL);
 }
 
 void clear_extra_refs(void)
@@ -359,7 +360,7 @@ static void get_ref_dir(struct ref_cache *refs, const char *base,
 					hashclr(sha1);
 					flag |= REF_BROKEN;
 				}
-			add_ref(ref, sha1, flag, array, NULL);
+			add_ref(ref, sha1, flag, 1, array, NULL);
 		}
 		free(ref);
 		closedir(dir);
