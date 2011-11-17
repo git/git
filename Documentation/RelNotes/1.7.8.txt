@@ -113,9 +113,6 @@ Updates since v1.7.7
    between commits in the superproject that has and does not have the
    submodule in the tree without re-cloning.
 
- * "git upload-archive" (hence "git archive --remote") can be built
-   and used on mingw port of Git.
-
  * "gitweb" leaked unescaped control characters from syntax hiliter
    outputs.
 
@@ -165,7 +162,7 @@ included in this release.
 
 ---
 exec >/var/tmp/1
-O=v1.7.8-rc1-23-gdc865af
+O=v1.7.8-rc2-3-g09116a1
 echo O=$(git describe --always master)
 git log --first-parent --oneline --reverse ^$O master
 echo
