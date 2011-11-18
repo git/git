@@ -1001,7 +1001,8 @@ int add_index_entry(struct index_state *istate, struct cache_entry *ce, int opti
  */
 static struct cache_entry *refresh_cache_ent(struct index_state *istate,
 					     struct cache_entry *ce,
-					     unsigned int options, int *err)
+					     unsigned int options, int *err,
+					     int *changed_ret)
 {
 	struct stat st;
 	struct cache_entry *updated;
@@ -1033,6 +1034,8 @@ static struct cache_entry *refresh_cache_ent(struct index_state *istate,
 	}
 
 	changed = ie_match_stat(istate, ce, &st, options);
+	if (changed_ret)
+		*changed_ret = changed;
 	if (!changed) {
 		/*
 		 * The path is unchanged.  If we were told to ignore
@@ -1130,7 +1133,7 @@ int refresh_index(struct index_state *istate, unsigned int flags, const char **p
 		if (pathspec && !match_pathspec(pathspec, ce->name, strlen(ce->name), 0, seen))
 			continue;
 
-		new = refresh_cache_ent(istate, ce, options, &cache_errno);
+		new = refresh_cache_ent(istate, ce, options, &cache_errno, NULL);
 		if (new == ce)
 			continue;
 		if (!new) {
@@ -1157,7 +1160,7 @@ int refresh_index(struct index_state *istate, unsigned int flags, const char **p
 
 static struct cache_entry *refresh_cache_entry(struct cache_entry *ce, int really)
 {
-	return refresh_cache_ent(&the_index, ce, really, NULL);
+	return refresh_cache_ent(&the_index, ce, really, NULL, NULL);
 }
 
 static int verify_hdr(struct cache_header *hdr, unsigned long size)
