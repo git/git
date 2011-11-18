@@ -1507,13 +1507,13 @@ int stat_tracking_info(struct branch *branch, int *num_ours, int *num_theirs)
 	 * nothing to report.
 	 */
 	base = branch->merge[0]->dst;
-	if (!resolve_ref(base, sha1, 1, NULL))
+	if (read_ref(base, sha1))
 		return 0;
 	theirs = lookup_commit_reference(sha1);
 	if (!theirs)
 		return 0;
 
-	if (!resolve_ref(branch->refname, sha1, 1, NULL))
+	if (read_ref(branch->refname, sha1))
 		return 0;
 	ours = lookup_commit_reference(sha1);
 	if (!ours)

@@ -58,7 +58,7 @@ static int for_each_replace_name(const char **argv, each_replace_name_fn fn)
 			had_error = 1;
 			continue;
 		}
-		if (!resolve_ref(ref, sha1, 1, NULL)) {
+		if (read_ref(ref, sha1)) {
 			error("replace ref '%s' not found.", *p);
 			had_error = 1;
 			continue;
@@ -97,7 +97,7 @@ static int replace_object(const char *object_ref, const char *replace_ref,
 	if (check_refname_format(ref, 0))
 		die("'%s' is not a valid ref name.", ref);
 
-	if (!resolve_ref(ref, prev, 1, NULL))
+	if (read_ref(ref, prev))
 		hashclr(prev);
 	else if (!force)
 		die("replace ref '%s' already exists", ref);
