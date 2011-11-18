@@ -250,6 +250,12 @@ all::
 #   DEFAULT_EDITOR='$GIT_FALLBACK_EDITOR',
 #   DEFAULT_EDITOR='"C:\Program Files\Vim\gvim.exe" --nofork'
 #
+# Define COMPUTE_HEADER_DEPENDENCIES to "yes" if you want dependencies on
+# header files to be automatically computed, to avoid rebuilding objects when
+# an unrelated header file changes.  Define it to "no" to use the hard-coded
+# dependency rules.  The default is "auto", which means to use computed header
+# dependencies if your compiler is detected to support it.
+#
 # Define CHECK_HEADER_DEPENDENCIES to check for problems in the hard-coded
 # dependency rules.
 #
@@ -1246,21 +1252,32 @@ endif
 endif
 
 ifdef CHECK_HEADER_DEPENDENCIES
-COMPUTE_HEADER_DEPENDENCIES =
+COMPUTE_HEADER_DEPENDENCIES = no
 USE_COMPUTED_HEADER_DEPENDENCIES =
-else
+endif
+
 ifndef COMPUTE_HEADER_DEPENDENCIES
+COMPUTE_HEADER_DEPENDENCIES = auto
+endif
+
+ifeq ($(COMPUTE_HEADER_DEPENDENCIES),auto)
 dep_check = $(shell $(CC) $(ALL_CFLAGS) \
 	-c -MF /dev/null -MMD -MP -x c /dev/null -o /dev/null 2>&1; \
 	echo $$?)
 ifeq ($(dep_check),0)
-COMPUTE_HEADER_DEPENDENCIES=YesPlease
-endif
+override COMPUTE_HEADER_DEPENDENCIES = yes
+else
+override COMPUTE_HEADER_DEPENDENCIES = no
 endif
 endif
 
-ifdef COMPUTE_HEADER_DEPENDENCIES
+ifeq ($(COMPUTE_HEADER_DEPENDENCIES),yes)
 USE_COMPUTED_HEADER_DEPENDENCIES = YesPlease
+else
+ifneq ($(COMPUTE_HEADER_DEPENDENCIES),no)
+$(error please set COMPUTE_HEADER_DEPENDENCIES to yes, no, or auto \
+(not "$(COMPUTE_HEADER_DEPENDENCIES)"))
+endif
 endif
 
 ifdef SANE_TOOL_PATH
@@ -1907,7 +1924,7 @@ OBJECTS := $(GIT_OBJS) $(XDIFF_OBJS) $(VCSSVN_OBJS)
 dep_files := $(foreach f,$(OBJECTS),$(dir $f).depend/$(notdir $f).d)
 dep_dirs := $(addsuffix .depend,$(sort $(dir $(OBJECTS))))
 
-ifdef COMPUTE_HEADER_DEPENDENCIES
+ifeq ($(COMPUTE_HEADER_DEPENDENCIES),yes)
 $(dep_dirs):
 	@mkdir -p $@
 
@@ -1920,7 +1937,7 @@ Please unset CHECK_HEADER_DEPENDENCIES and try again)
 endif
 endif
 
-ifndef COMPUTE_HEADER_DEPENDENCIES
+ifneq ($(COMPUTE_HEADER_DEPENDENCIES),yes)
 ifndef CHECK_HEADER_DEPENDENCIES
 dep_dirs =
 missing_dep_dirs =
