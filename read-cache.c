@@ -1105,11 +1105,11 @@ int refresh_index(struct index_state *istate, unsigned int flags, const char **p
 	int first = 1;
 	int in_porcelain = (flags & REFRESH_IN_PORCELAIN);
 	unsigned int options = really ? CE_MATCH_IGNORE_VALID : 0;
-	const char *needs_update_fmt;
-	const char *needs_merge_fmt;
+	const char *modified_fmt;
+	const char *unmerged_fmt;
 
-	needs_update_fmt = (in_porcelain ? "M\t%s\n" : "%s: needs update\n");
-	needs_merge_fmt = (in_porcelain ? "U\t%s\n" : "%s: needs merge\n");
+	modified_fmt = (in_porcelain ? "M\t%s\n" : "%s: needs update\n");
+	unmerged_fmt = (in_porcelain ? "U\t%s\n" : "%s: needs merge\n");
 	for (i = 0; i < istate->cache_nr; i++) {
 		struct cache_entry *ce, *new;
 		int cache_errno = 0;
@@ -1125,7 +1125,7 @@ int refresh_index(struct index_state *istate, unsigned int flags, const char **p
 			i--;
 			if (allow_unmerged)
 				continue;
-			show_file(needs_merge_fmt, ce->name, in_porcelain, &first, header_msg);
+			show_file(unmerged_fmt, ce->name, in_porcelain, &first, header_msg);
 			has_errors = 1;
 			continue;
 		}
@@ -1148,7 +1148,7 @@ int refresh_index(struct index_state *istate, unsigned int flags, const char **p
 			}
 			if (quiet)
 				continue;
-			show_file(needs_update_fmt, ce->name, in_porcelain, &first, header_msg);
+			show_file(modified_fmt, ce->name, in_porcelain, &first, header_msg);
 			has_errors = 1;
 			continue;
 		}
