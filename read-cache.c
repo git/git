@@ -1001,7 +1001,8 @@ int add_index_entry(struct index_state *istate, struct cache_entry *ce, int opti
  */
 static struct cache_entry *refresh_cache_ent(struct index_state *istate,
 					     struct cache_entry *ce,
-					     unsigned int options, int *err)
+					     unsigned int options, int *err,
+					     int *changed_ret)
 {
 	struct stat st;
 	struct cache_entry *updated;
@@ -1033,6 +1034,8 @@ static struct cache_entry *refresh_cache_ent(struct index_state *istate,
 	}
 
 	changed = ie_match_stat(istate, ce, &st, options);
+	if (changed_ret)
+		*changed_ret = changed;
 	if (!changed) {
 		/*
 		 * The path is unchanged.  If we were told to ignore
@@ -1102,14 +1105,21 @@ int refresh_index(struct index_state *istate, unsigned int flags, const char **p
 	int first = 1;
 	int in_porcelain = (flags & REFRESH_IN_PORCELAIN);
 	unsigned int options = really ? CE_MATCH_IGNORE_VALID : 0;
-	const char *needs_update_fmt;
-	const char *needs_merge_fmt;
+	const char *modified_fmt;
+	const char *deleted_fmt;
+	const char *typechange_fmt;
+	const char *added_fmt;
+	const char *unmerged_fmt;
 
-	needs_update_fmt = (in_porcelain ? "M\t%s\n" : "%s: needs update\n");
-	needs_merge_fmt = (in_porcelain ? "U\t%s\n" : "%s: needs merge\n");
+	modified_fmt = (in_porcelain ? "M\t%s\n" : "%s: needs update\n");
+	deleted_fmt = (in_porcelain ? "D\t%s\n" : "%s: needs update\n");
+	typechange_fmt = (in_porcelain ? "T\t%s\n" : "%s needs update\n");
+	added_fmt = (in_porcelain ? "A\t%s\n" : "%s needs update\n");
+	unmerged_fmt = (in_porcelain ? "U\t%s\n" : "%s: needs merge\n");
 	for (i = 0; i < istate->cache_nr; i++) {
 		struct cache_entry *ce, *new;
 		int cache_errno = 0;
+		int changed = 0;
 
 		ce = istate->cache[i];
 		if (ignore_submodules && S_ISGITLINK(ce->ce_mode))
@@ -1122,7 +1132,7 @@ int refresh_index(struct index_state *istate, unsigned int flags, const char **p
 			i--;
 			if (allow_unmerged)
 				continue;
-			show_file(needs_merge_fmt, ce->name, in_porcelain, &first, header_msg);
+			show_file(unmerged_fmt, ce->name, in_porcelain, &first, header_msg);
 			has_errors = 1;
 			continue;
 		}
@@ -1130,10 +1140,12 @@ int refresh_index(struct index_state *istate, unsigned int flags, const char **p
 		if (pathspec && !match_pathspec(pathspec, ce->name, strlen(ce->name), 0, seen))
 			continue;
 
-		new = refresh_cache_ent(istate, ce, options, &cache_errno);
+		new = refresh_cache_ent(istate, ce, options, &cache_errno, &changed);
 		if (new == ce)
 			continue;
 		if (!new) {
+			const char *fmt;
+
 			if (not_new && cache_errno == ENOENT)
 				continue;
 			if (really && cache_errno == EINVAL) {
@@ -1145,7 +1157,17 @@ int refresh_index(struct index_state *istate, unsigned int flags, const char **p
 			}
 			if (quiet)
 				continue;
-			show_file(needs_update_fmt, ce->name, in_porcelain, &first, header_msg);
+
+			if (cache_errno == ENOENT)
+				fmt = deleted_fmt;
+			else if (ce->ce_flags & CE_INTENT_TO_ADD)
+				fmt = added_fmt; /* must be before other checks */
+			else if (changed & TYPE_CHANGED)
+				fmt = typechange_fmt;
+			else
+				fmt = modified_fmt;
+			show_file(fmt,
+				  ce->name, in_porcelain, &first, header_msg);
 			has_errors = 1;
 			continue;
 		}
@@ -1157,7 +1179,7 @@ int refresh_index(struct index_state *istate, unsigned int flags, const char **p
 
 static struct cache_entry *refresh_cache_entry(struct cache_entry *ce, int really)
 {
-	return refresh_cache_ent(&the_index, ce, really, NULL);
+	return refresh_cache_ent(&the_index, ce, really, NULL, NULL);
 }
 
 static int verify_hdr(struct cache_header *hdr, unsigned long size)
