@@ -52,13 +52,13 @@ on the #git IRC channel on Freenode.  Its log is available at:
 
 * Reporting bugs
 
-When you think git does not behave as you expect, please do not stop your
-bug report with just "git does not work".  "I tried to do X but it did not
-work" is not much better, neither is "I tried to do X and git did Y, which
-is broken".  It often is that what you expect is _not_ what other people
-expect, and chances are that what you expect is very different from what
-people who have worked on git have expected---otherwise, the behavior
-would have been changed to match your expectation long time ago.
+When you think git does not behave as you expect, please do not stop
+your bug report with just "git does not work".  "I used git in this
+way, but it did not work" is not much better, neither is "I used git
+in this way, and X happend, which is broken".  It often is that git is
+correct to cause X happen in such a case, and it is your expectation
+that is broken. People would not know what other result Y you expected
+to see instead of X, if you left it unsaid.
 
 Please remember to always state
 
@@ -67,9 +67,9 @@ Please remember to always state
  - what you did (the version of git and the command sequence to reproduce
    the behavior);
 
- - what you saw happen;
+ - what you saw happen (X above);
 
- - what you expected to see; and
+ - what you expected to see (Y above); and
 
  - how the last two are different.
 
@@ -78,17 +78,16 @@ hints.
 
 * Repositories, branches and documentation.
 
-My public git.git repository is at:
+My public git.git repositories are at:
 
         git://git.kernel.org/pub/scm/git/git.git/
-	git://repo.or.cz/alt-git.git
-	https://github.com/git/git
+	git://repo.or.cz/alt-git.git/
+	https://github.com/git/git/
 	https://code.google.com/p/git-core/
+	git://git.sourceforge.jp/gitroot/git-core/git.git/
+	git://git-core.git.sourceforge.net/gitroot/git-core/git-core/
 
-There are a few other mirrors I push into at sourceforge and github as
-well.
-
-Their gitweb interfaces are found at:
+A few gitweb interfaces are found at:
 
         http://git.kernel.org/?p=git/git.git
         http://repo.or.cz/w/alt-git.git
@@ -116,7 +115,7 @@ Whenever a feature release is made, "maint" branch is forked off from
 release are applied to this branch and maintenance releases are cut from
 it.  The maintenance releases are named with four dotted decimal, named
 after the feature release they are updates to; the last such release was
-1.7.7.1.  New features never go to this branch.  This branch is also
+1.7.7.4.  New features never go to this branch.  This branch is also
 merged into "master" to propagate the fixes forward.
 
 A new development does not usually happen on "master". When you send a
@@ -208,8 +207,3 @@ I have relied on and expect to continue relying on heavily:
  - People on non-Linux platforms for keeping their eyes on portability;
    especially, Randal Schwartz, Theodore Ts'o, Jason Riedy, Thomas Glanzmann,
    Brandon Casey, Jeff King, Alex Riesen and countless others.
-
-* This document
-
-The latest copy of this document is found in git.git repository,
-on 'todo' branch, as MaintNotes.
