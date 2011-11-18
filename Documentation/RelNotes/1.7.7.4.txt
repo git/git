@@ -1,0 +1,14 @@
+Git v1.7.7.4 Release Notes
+==========================
+
+Fixes since v1.7.7.3
+--------------------
+
+ * A few header dependencies were missing from the Makefile.
+
+ * Some newer parts of the code used C99 __VA_ARGS__ while we still
+   try to cater to older compilers.
+
+ * "git name-rev --all" tried to name all _objects_, naturally failing to
+   describe many blobs and trees, instead of showing only commits as
+   advertised in its documentation.

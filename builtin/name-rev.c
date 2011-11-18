@@ -291,7 +291,7 @@ int cmd_name_rev(int argc, const char **argv, const char *prefix)
 		max = get_max_object_index();
 		for (i = 0; i < max; i++) {
 			struct object *obj = get_indexed_object(i);
-			if (!obj)
+			if (!obj || obj->type != OBJ_COMMIT)
 				continue;
 			show_name(obj, NULL,
 				  always, allow_undefined, data.name_only);
