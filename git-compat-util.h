@@ -219,7 +219,7 @@ extern char *gitbasename(char *);
 #define find_last_dir_sep(path) strrchr(path, '/')
 #endif
 
-#if __HP_cc >= 61000
+#if defined(__HP_cc) && (__HP_cc >= 61000)
 #define NORETURN __attribute__((noreturn))
 #define NORETURN_PTR
 #elif defined(__GNUC__) && !defined(NO_NORETURN)

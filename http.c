@@ -747,14 +747,6 @@ static inline int needs_quote(int ch)
 	return 1;
 }
 
-static inline int hex(int v)
-{
-	if (v < 10)
-		return '0' + v;
-	else
-		return 'A' + v - 10;
-}
-
 static char *quote_ref_url(const char *base, const char *ref)
 {
 	struct strbuf buf = STRBUF_INIT;
