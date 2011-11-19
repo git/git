@@ -865,12 +865,12 @@ int git_config_early(config_fn_t fn, void *data, const char *repo_config)
 
 	home = getenv("HOME");
 	if (home) {
-		char *user_config = xstrdup(mkpath("%s/.gitconfig", home));
+		char buf[PATH_MAX];
+		char *user_config = mksnpath(buf, sizeof(buf), "%s/.gitconfig", home);
 		if (!access(user_config, R_OK)) {
 			ret += git_config_from_file(fn, user_config, data);
 			found += 1;
 		}
-		free(user_config);
 	}
 
 	if (repo_config && !access(repo_config, R_OK)) {
