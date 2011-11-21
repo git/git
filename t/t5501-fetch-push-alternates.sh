@@ -28,7 +28,7 @@ test_expect_success setup '
 		done
 	) &&
 	(
-		git clone --reference=original "file:///$(pwd)/original" one &&
+		git clone --reference=original "file://$(pwd)/original" one &&
 		cd one &&
 		echo Z >count &&
 		git add count &&
