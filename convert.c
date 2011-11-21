@@ -658,7 +658,7 @@ static enum crlf_action git_path_check_crlf(const char *path, struct git_attr_ch
 	return CRLF_GUESS;
 }
 
-static enum crlf_action git_path_check_eol(const char *path, struct git_attr_check *check)
+static enum eol git_path_check_eol(const char *path, struct git_attr_check *check)
 {
 	const char *value = check->value;
 
