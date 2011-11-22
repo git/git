@@ -95,7 +95,7 @@ test_expect_success '--quit cleans up sequencer state' '
 	test_path_is_missing .git/sequencer
 '
 
-test_expect_success 'cherry-pick --reset (another name for --quit)' '
+test_expect_success '--quit keeps HEAD and conflicted index intact' '
 	pristine_detach initial &&
 	cat >expect <<-\EOF &&
 	OBJID
@@ -105,7 +105,7 @@ test_expect_success 'cherry-pick --reset (another name for --quit)' '
 	:000000 100644 OBJID OBJID A	unrelated
 	EOF
 	test_must_fail git cherry-pick base..picked &&
-	git cherry-pick --reset &&
+	git cherry-pick --quit &&
 	test_path_is_missing .git/sequencer &&
 	test_must_fail git update-index --refresh &&
 	{
