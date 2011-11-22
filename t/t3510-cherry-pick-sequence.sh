@@ -13,7 +13,7 @@ test_description='Test cherry-pick continuation features
 . ./test-lib.sh
 
 pristine_detach () {
-	git cherry-pick --reset &&
+	git cherry-pick --quit &&
 	git checkout -f "$1^0" &&
 	git read-tree -u --reset HEAD &&
 	git clean -d -f -f -q -x
@@ -70,16 +70,37 @@ test_expect_success 'cherry-pick cleans up sequencer state upon success' '
 	test_path_is_missing .git/sequencer
 '
 
-test_expect_success '--reset does not complain when no cherry-pick is in progress' '
+test_expect_success '--quit does not complain when no cherry-pick is in progress' '
 	pristine_detach initial &&
-	git cherry-pick --reset
+	git cherry-pick --quit
 '
 
-test_expect_success '--reset cleans up sequencer state' '
+test_expect_success '--quit cleans up sequencer state' '
 	pristine_detach initial &&
 	test_must_fail git cherry-pick base..picked &&
-	git cherry-pick --reset &&
+	git cherry-pick --quit &&
 	test_path_is_missing .git/sequencer
+'
+
+test_expect_success 'cherry-pick --reset (another name for --quit)' '
+	pristine_detach initial &&
+	cat >expect <<-\EOF &&
+	OBJID
+	:100644 100644 OBJID OBJID M	unrelated
+	OBJID
+	:000000 100644 OBJID OBJID A	foo
+	:000000 100644 OBJID OBJID A	unrelated
+	EOF
+	test_must_fail git cherry-pick base..picked &&
+	git cherry-pick --reset &&
+	test_path_is_missing .git/sequencer &&
+	test_must_fail git update-index --refresh &&
+	{
+		git rev-list HEAD |
+		git diff-tree --root --stdin |
+		sed "s/$_x40/OBJID/g"
+	} >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'cherry-pick cleans up sequencer state when one commit is left' '

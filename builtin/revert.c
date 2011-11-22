@@ -40,7 +40,7 @@ static const char * const cherry_pick_usage[] = {
 };
 
 enum replay_action { REVERT, CHERRY_PICK };
-enum replay_subcommand { REPLAY_NONE, REPLAY_RESET, REPLAY_CONTINUE };
+enum replay_subcommand { REPLAY_NONE, REPLAY_REMOVE_STATE, REPLAY_CONTINUE };
 
 struct replay_opts {
 	enum replay_action action;
@@ -133,11 +133,11 @@ static void parse_args(int argc, const char **argv, struct replay_opts *opts)
 {
 	const char * const * usage_str = revert_or_cherry_pick_usage(opts);
 	const char *me = action_name(opts);
-	int reset = 0;
+	int remove_state = 0;
 	int contin = 0;
 	struct option options[] = {
-		OPT_BOOLEAN(0, "reset", &reset, "forget the current operation"),
-		OPT_BOOLEAN(0, "continue", &contin, "continue the current operation"),
+		OPT_BOOLEAN(0, "quit", &remove_state, "end revert or cherry-pick sequence"),
+		OPT_BOOLEAN(0, "continue", &contin, "resume revert or cherry-pick sequence"),
 		OPT_BOOLEAN('n', "no-commit", &opts->no_commit, "don't automatically commit"),
 		OPT_BOOLEAN('e', "edit", &opts->edit, "edit the commit message"),
 		OPT_NOOP_NOARG('r', NULL),
@@ -147,6 +147,9 @@ static void parse_args(int argc, const char **argv, struct replay_opts *opts)
 		OPT_STRING(0, "strategy", &opts->strategy, "strategy", "merge strategy"),
 		OPT_CALLBACK('X', "strategy-option", &opts, "option",
 			"option for merge strategy", option_parse_x),
+		{ OPTION_BOOLEAN, 0, "reset", &remove_state, NULL,
+			"alias for --quit (deprecated)",
+			PARSE_OPT_HIDDEN | PARSE_OPT_NOARG },
 		OPT_END(),
 		OPT_END(),
 		OPT_END(),
@@ -168,13 +171,13 @@ static void parse_args(int argc, const char **argv, struct replay_opts *opts)
 
 	/* Check for incompatible subcommands */
 	verify_opt_mutually_compatible(me,
-				"--reset", reset,
+				"--quit", remove_state,
 				"--continue", contin,
 				NULL);
 
 	/* Set the subcommand */
-	if (reset)
-		opts->subcommand = REPLAY_RESET;
+	if (remove_state)
+		opts->subcommand = REPLAY_REMOVE_STATE;
 	else if (contin)
 		opts->subcommand = REPLAY_CONTINUE;
 	else
@@ -183,8 +186,8 @@ static void parse_args(int argc, const char **argv, struct replay_opts *opts)
 	/* Check for incompatible command line arguments */
 	if (opts->subcommand != REPLAY_NONE) {
 		char *this_operation;
-		if (opts->subcommand == REPLAY_RESET)
-			this_operation = "--reset";
+		if (opts->subcommand == REPLAY_REMOVE_STATE)
+			this_operation = "--quit";
 		else
 			this_operation = "--continue";
 
@@ -965,7 +968,7 @@ static int pick_revisions(struct replay_opts *opts)
 	 * cherry-pick should be handled differently from an existing
 	 * one that is being continued
 	 */
-	if (opts->subcommand == REPLAY_RESET) {
+	if (opts->subcommand == REPLAY_REMOVE_STATE) {
 		remove_sequencer_state(1);
 		return 0;
 	} else if (opts->subcommand == REPLAY_CONTINUE) {
@@ -988,7 +991,7 @@ static int pick_revisions(struct replay_opts *opts)
 		if (create_seq_dir() < 0) {
 			error(_("A cherry-pick or revert is in progress."));
 			advise(_("Use --continue to continue the operation"));
-			advise(_("or --reset to forget about it"));
+			advise(_("or --quit to forget about it"));
 			return -1;
 		}
 		if (get_sha1("HEAD", sha1)) {
