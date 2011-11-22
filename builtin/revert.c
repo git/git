@@ -846,8 +846,11 @@ static int create_seq_dir(void)
 {
 	const char *seq_dir = git_path(SEQ_DIR);
 
-	if (file_exists(seq_dir))
-		return error(_("%s already exists."), seq_dir);
+	if (file_exists(seq_dir)) {
+		error(_("a cherry-pick or revert is already in progress"));
+		advise(_("try \"git cherry-pick (--continue | --quit)\""));
+		return -1;
+	}
 	else if (mkdir(seq_dir, 0777) < 0)
 		die_errno(_("Could not create sequencer directory %s"), seq_dir);
 	return 0;
@@ -991,12 +994,8 @@ static int pick_revisions(struct replay_opts *opts)
 	 */
 
 	walk_revs_populate_todo(&todo_list, opts);
-	if (create_seq_dir() < 0) {
-		error(_("A cherry-pick or revert is in progress."));
-		advise(_("Use --continue to continue the operation"));
-		advise(_("or --quit to forget about it"));
+	if (create_seq_dir() < 0)
 		return -1;
-	}
 	if (get_sha1("HEAD", sha1)) {
 		if (opts->action == REVERT)
 			return error(_("Can't revert as initial commit"));
