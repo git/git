@@ -289,7 +289,7 @@ static char *get_encoding(const char *message)
 	return NULL;
 }
 
-static void write_cherry_pick_head(struct commit *commit)
+static void write_cherry_pick_head(struct commit *commit, const char *pseudoref)
 {
 	const char *filename;
 	int fd;
@@ -297,7 +297,7 @@ static void write_cherry_pick_head(struct commit *commit)
 
 	strbuf_addf(&buf, "%s\n", sha1_to_hex(commit->object.sha1));
 
-	filename = git_path("CHERRY_PICK_HEAD");
+	filename = git_path(pseudoref);
 	fd = open(filename, O_WRONLY | O_CREAT, 0666);
 	if (fd < 0)
 		die_errno(_("Could not open '%s' for writing"), filename);
@@ -597,7 +597,9 @@ static int do_pick_commit(struct commit *commit, struct replay_opts *opts)
 	 * write it at all.
 	 */
 	if (opts->action == CHERRY_PICK && !opts->no_commit && (res == 0 || res == 1))
-		write_cherry_pick_head(commit);
+		write_cherry_pick_head(commit, "CHERRY_PICK_HEAD");
+	if (opts->action == REVERT && ((opts->no_commit && res == 0) || res == 1))
+		write_cherry_pick_head(commit, "REVERT_HEAD");
 
 	if (res) {
 		error(opts->action == REVERT
