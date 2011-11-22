@@ -971,40 +971,40 @@ static int pick_revisions(struct replay_opts *opts)
 	if (opts->subcommand == REPLAY_REMOVE_STATE) {
 		remove_sequencer_state(1);
 		return 0;
-	} else if (opts->subcommand == REPLAY_CONTINUE) {
+	}
+	if (opts->subcommand == REPLAY_CONTINUE) {
 		if (!file_exists(git_path(SEQ_TODO_FILE)))
-			goto error;
+			return error(_("No %s in progress"), action_name(opts));
 		read_populate_opts(&opts);
 		read_populate_todo(&todo_list, opts);
 
 		/* Verify that the conflict has been resolved */
 		if (!index_differs_from("HEAD", 0))
 			todo_list = todo_list->next;
-	} else {
-		/*
-		 * Start a new cherry-pick/ revert sequence; but
-		 * first, make sure that an existing one isn't in
-		 * progress
-		 */
-
-		walk_revs_populate_todo(&todo_list, opts);
-		if (create_seq_dir() < 0) {
-			error(_("A cherry-pick or revert is in progress."));
-			advise(_("Use --continue to continue the operation"));
-			advise(_("or --quit to forget about it"));
-			return -1;
-		}
-		if (get_sha1("HEAD", sha1)) {
-			if (opts->action == REVERT)
-				return error(_("Can't revert as initial commit"));
-			return error(_("Can't cherry-pick into empty head"));
-		}
-		save_head(sha1_to_hex(sha1));
-		save_opts(opts);
+		return pick_commits(todo_list, opts);
 	}
+
+	/*
+	 * Start a new cherry-pick/ revert sequence; but
+	 * first, make sure that an existing one isn't in
+	 * progress
+	 */
+
+	walk_revs_populate_todo(&todo_list, opts);
+	if (create_seq_dir() < 0) {
+		error(_("A cherry-pick or revert is in progress."));
+		advise(_("Use --continue to continue the operation"));
+		advise(_("or --quit to forget about it"));
+		return -1;
+	}
+	if (get_sha1("HEAD", sha1)) {
+		if (opts->action == REVERT)
+			return error(_("Can't revert as initial commit"));
+		return error(_("Can't cherry-pick into empty head"));
+	}
+	save_head(sha1_to_hex(sha1));
+	save_opts(opts);
 	return pick_commits(todo_list, opts);
-error:
-	return error(_("No %s in progress"), action_name(opts));
 }
 
 int cmd_revert(int argc, const char **argv, const char *prefix)
