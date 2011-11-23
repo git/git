@@ -40,7 +40,12 @@ static const char * const cherry_pick_usage[] = {
 };
 
 enum replay_action { REVERT, CHERRY_PICK };
-enum replay_subcommand { REPLAY_NONE, REPLAY_REMOVE_STATE, REPLAY_CONTINUE };
+enum replay_subcommand {
+	REPLAY_NONE,
+	REPLAY_REMOVE_STATE,
+	REPLAY_CONTINUE,
+	REPLAY_ROLLBACK
+};
 
 struct replay_opts {
 	enum replay_action action;
@@ -135,9 +140,11 @@ static void parse_args(int argc, const char **argv, struct replay_opts *opts)
 	const char *me = action_name(opts);
 	int remove_state = 0;
 	int contin = 0;
+	int rollback = 0;
 	struct option options[] = {
 		OPT_BOOLEAN(0, "quit", &remove_state, "end revert or cherry-pick sequence"),
 		OPT_BOOLEAN(0, "continue", &contin, "resume revert or cherry-pick sequence"),
+		OPT_BOOLEAN(0, "abort", &rollback, "cancel revert or cherry-pick sequence"),
 		OPT_BOOLEAN('n', "no-commit", &opts->no_commit, "don't automatically commit"),
 		OPT_BOOLEAN('e', "edit", &opts->edit, "edit the commit message"),
 		OPT_NOOP_NOARG('r', NULL),
@@ -173,6 +180,7 @@ static void parse_args(int argc, const char **argv, struct replay_opts *opts)
 	verify_opt_mutually_compatible(me,
 				"--quit", remove_state,
 				"--continue", contin,
+				"--abort", rollback,
 				NULL);
 
 	/* Set the subcommand */
@@ -180,6 +188,8 @@ static void parse_args(int argc, const char **argv, struct replay_opts *opts)
 		opts->subcommand = REPLAY_REMOVE_STATE;
 	else if (contin)
 		opts->subcommand = REPLAY_CONTINUE;
+	else if (rollback)
+		opts->subcommand = REPLAY_ROLLBACK;
 	else
 		opts->subcommand = REPLAY_NONE;
 
@@ -188,8 +198,12 @@ static void parse_args(int argc, const char **argv, struct replay_opts *opts)
 		char *this_operation;
 		if (opts->subcommand == REPLAY_REMOVE_STATE)
 			this_operation = "--quit";
-		else
+		else if (opts->subcommand == REPLAY_CONTINUE)
 			this_operation = "--continue";
+		else {
+			assert(opts->subcommand == REPLAY_ROLLBACK);
+			this_operation = "--abort";
+		}
 
 		verify_opt_compatible(me, this_operation,
 				"--no-commit", opts->no_commit,
@@ -850,7 +864,7 @@ static int create_seq_dir(void)
 
 	if (file_exists(seq_dir)) {
 		error(_("a cherry-pick or revert is already in progress"));
-		advise(_("try \"git cherry-pick (--continue | --quit)\""));
+		advise(_("try \"git cherry-pick (--continue | --quit | --abort)\""));
 		return -1;
 	}
 	else if (mkdir(seq_dir, 0777) < 0)
@@ -871,6 +885,71 @@ static void save_head(const char *head)
 		die_errno(_("Could not write to %s"), head_file);
 	if (commit_lock_file(&head_lock) < 0)
 		die(_("Error wrapping up %s."), head_file);
+}
+
+static int reset_for_rollback(const unsigned char *sha1)
+{
+	const char *argv[4];	/* reset --merge <arg> + NULL */
+	argv[0] = "reset";
+	argv[1] = "--merge";
+	argv[2] = sha1_to_hex(sha1);
+	argv[3] = NULL;
+	return run_command_v_opt(argv, RUN_GIT_CMD);
+}
+
+static int rollback_single_pick(void)
+{
+	unsigned char head_sha1[20];
+
+	if (!file_exists(git_path("CHERRY_PICK_HEAD")) &&
+	    !file_exists(git_path("REVERT_HEAD")))
+		return error(_("no cherry-pick or revert in progress"));
+	if (!resolve_ref("HEAD", head_sha1, 0, NULL))
+		return error(_("cannot resolve HEAD"));
+	if (is_null_sha1(head_sha1))
+		return error(_("cannot abort from a branch yet to be born"));
+	return reset_for_rollback(head_sha1);
+}
+
+static int sequencer_rollback(struct replay_opts *opts)
+{
+	const char *filename;
+	FILE *f;
+	unsigned char sha1[20];
+	struct strbuf buf = STRBUF_INIT;
+
+	filename = git_path(SEQ_HEAD_FILE);
+	f = fopen(filename, "r");
+	if (!f && errno == ENOENT) {
+		/*
+		 * There is no multiple-cherry-pick in progress.
+		 * If CHERRY_PICK_HEAD or REVERT_HEAD indicates
+		 * a single-cherry-pick in progress, abort that.
+		 */
+		return rollback_single_pick();
+	}
+	if (!f)
+		return error(_("cannot open %s: %s"), filename,
+						strerror(errno));
+	if (strbuf_getline(&buf, f, '\n')) {
+		error(_("cannot read %s: %s"), filename, ferror(f) ?
+			strerror(errno) : _("unexpected end of file"));
+		goto fail;
+	}
+	if (get_sha1_hex(buf.buf, sha1) || buf.buf[40] != '\0') {
+		error(_("stored pre-cherry-pick HEAD file '%s' is corrupt"),
+			filename);
+		goto fail;
+	}
+	if (reset_for_rollback(sha1))
+		goto fail;
+	strbuf_release(&buf);
+	fclose(f);
+	return 0;
+fail:
+	strbuf_release(&buf);
+	fclose(f);
+	return -1;
 }
 
 static void save_todo(struct commit_list *todo_list, struct replay_opts *opts)
@@ -977,6 +1056,8 @@ static int pick_revisions(struct replay_opts *opts)
 		remove_sequencer_state(1);
 		return 0;
 	}
+	if (opts->subcommand == REPLAY_ROLLBACK)
+		return sequencer_rollback(opts);
 	if (opts->subcommand == REPLAY_CONTINUE) {
 		if (!file_exists(git_path(SEQ_TODO_FILE)))
 			return error(_("No %s in progress"), action_name(opts));

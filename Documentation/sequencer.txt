@@ -7,3 +7,6 @@
 	Forget about the current operation in progress.  Can be used
 	to clear the sequencer state after a failed cherry-pick or
 	revert.
+
+--abort::
+	Cancel the operation and return to the pre-sequence state.
