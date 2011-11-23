@@ -128,7 +128,6 @@ typedef struct imap_server_conf {
 typedef struct imap_store_conf {
 	store_conf_t gen;
 	imap_server_conf_t *server;
-	unsigned use_namespace:1;
 } imap_store_conf_t;
 
 #define NIL	(void*)0x1
