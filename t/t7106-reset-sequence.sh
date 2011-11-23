@@ -12,7 +12,7 @@ test_description='Test interaction of reset --hard with sequencer
 . ./test-lib.sh
 
 pristine_detach () {
-	git cherry-pick --reset &&
+	git cherry-pick --quit &&
 	git checkout -f "$1^0" &&
 	git read-tree -u --reset HEAD &&
 	git clean -d -f -f -q -x

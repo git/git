@@ -1520,6 +1520,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 	}
 
 	unlink(git_path("CHERRY_PICK_HEAD"));
+	unlink(git_path("REVERT_HEAD"));
 	unlink(git_path("MERGE_HEAD"));
 	unlink(git_path("MERGE_MSG"));
 	unlink(git_path("MERGE_MODE"));
