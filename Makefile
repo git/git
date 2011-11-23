@@ -1263,7 +1263,6 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	NO_FNMATCH = YesPlease
 	NO_MEMMEM = YesPlease
 	NEEDS_LIBICONV = YesPlease
-	OLD_ICONV = YesPlease
 	NO_STRTOUMAX = YesPlease
 	NO_MKDTEMP = YesPlease
 	NO_MKSTEMPS = YesPlease
