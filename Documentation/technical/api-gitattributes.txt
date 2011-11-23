@@ -1,0 +1,128 @@
+gitattributes API
+=================
+
+gitattributes mechanism gives a uniform way to associate various
+attributes to set of paths.
+
+
+Data Structure
+--------------
+
+`struct git_attr`::
+
+	An attribute is an opaque object that is identified by its name.
+	Pass the name to `git_attr()` function to obtain the object of
+	this type.  The internal representation of this structure is
+	of no interest to the calling programs.  The name of the
+	attribute can be retrieved by calling `git_attr_name()`.
+
+`struct git_attr_check`::
+
+	This structure represents a set of attributes to check in a call
+	to `git_check_attr()` function, and receives the results.
+
+
+Attribute Values
+----------------
+
+An attribute for a path can be in one of four states: Set, Unset,
+Unspecified or set to a string, and `.value` member of `struct
+git_attr_check` records it.  There are three macros to check these:
+
+`ATTR_TRUE()`::
+
+	Returns true if the attribute is Set for the path.
+
+`ATTR_FALSE()`::
+
+	Returns true if the attribute is Unset for the path.
+
+`ATTR_UNSET()`::
+
+	Returns true if the attribute is Unspecified for the path.
+
+If none of the above returns true, `.value` member points at a string
+value of the attribute for the path.
+
+
+Querying Specific Attributes
+----------------------------
+
+* Prepare an array of `struct git_attr_check` to define the list of
+  attributes you would want to check.  To populate this array, you would
+  need to define necessary attributes by calling `git_attr()` function.
+
+* Call `git_check_attr()` to check the attributes for the path.
+
+* Inspect `git_attr_check` structure to see how each of the attribute in
+  the array is defined for the path.
+
+
+Example
+-------
+
+To see how attributes "crlf" and "indent" are set for different paths.
+
+. Prepare an array of `struct git_attr_check` with two elements (because
+  we are checking two attributes).  Initialize their `attr` member with
+  pointers to `struct git_attr` obtained by calling `git_attr()`:
+
+------------
+static struct git_attr_check check[2];
+static void setup_check(void)
+{
+	if (check[0].attr)
+		return; /* already done */
+	check[0].attr = git_attr("crlf");
+	check[1].attr = git_attr("ident");
+}
+------------
+
+. Call `git_check_attr()` with the prepared array of `struct git_attr_check`:
+
+------------
+	const char *path;
+
+	setup_check();
+	git_check_attr(path, ARRAY_SIZE(check), check);
+------------
+
+. Act on `.value` member of the result, left in `check[]`:
+
+------------
+	const char *value = check[0].value;
+
+	if (ATTR_TRUE(value)) {
+		The attribute is Set, by listing only the name of the
+		attribute in the gitattributes file for the path.
+	} else if (ATTR_FALSE(value)) {
+		The attribute is Unset, by listing the name of the
+		attribute prefixed with a dash - for the path.
+	} else if (ATTR_UNSET(value)) {
+		The attribute is not set nor unset for the path.
+	} else if (!strcmp(value, "input")) {
+		If none of ATTR_TRUE(), ATTR_FALSE(), or ATTR_UNSET() is
+		true, the value is a string set in the gitattributes
+		file for the path by saying "attr=value".
+	} else if (... other check using value as string ...) {
+		...
+	}
+------------
+
+
+Querying All Attributes
+-----------------------
+
+To get the values of all attributes associated with a file:
+
+* Call `git_all_attrs()`, which returns an array of `git_attr_check`
+  structures.
+
+* Iterate over the `git_attr_check` array to examine the attribute
+  names and values.  The name of the attribute described by a
+  `git_attr_check` object can be retrieved via
+  `git_attr_name(check[i].attr)`.  (Please note that no items will be
+  returned for unset attributes, so `ATTR_UNSET()` will return false
+  for all returned `git_array_check` objects.)
+
+* Free the `git_array_check` array.

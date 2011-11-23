@@ -7,7 +7,7 @@ test_description='Test diff raw-output.
 
 '
 . ./test-lib.sh
-. ../lib-read-tree-m-3way.sh
+. "$TEST_DIRECTORY"/lib-read-tree-m-3way.sh
 
 cat >.test-plain-OA <<\EOF
 :000000 100644 0000000000000000000000000000000000000000 ccba72ad3888a3520b39efcf780b9ee64167535d A	AA
@@ -126,94 +126,105 @@ cat >.test-recursive-AB <<\EOF
 :100644 100644 3fdbe17fd013303a2e981e1ca1c6cd6e72789087 7e09d6a3a14bd630913e8c75693cea32157b606d M	Z/NM
 EOF
 
-x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
-x40="$x40$x40$x40$x40$x40$x40$x40$x40"
-z40='0000000000000000000000000000000000000000'
 cmp_diff_files_output () {
     # diff-files never reports additions.  Also it does not fill in the
     # object ID for the changed files because it wants you to look at the
     # filesystem.
     sed <"$2" >.test-tmp \
-	-e '/^:000000 /d;s/'$x40'\( [MCRNDU][0-9]*\)	/'$z40'\1	/' &&
-    diff "$1" .test-tmp
+	-e '/^:000000 /d;s/'$_x40'\( [MCRNDU][0-9]*\)	/'$_z40'\1	/' &&
+    test_cmp "$1" .test-tmp
 }
 
 test_expect_success \
     'diff-tree of known trees.' \
-    'git-diff-tree $tree_O $tree_A >.test-a &&
+    'git diff-tree $tree_O $tree_A >.test-a &&
      cmp -s .test-a .test-plain-OA'
 
 test_expect_success \
     'diff-tree of known trees.' \
-    'git-diff-tree -r $tree_O $tree_A >.test-a &&
+    'git diff-tree -r $tree_O $tree_A >.test-a &&
      cmp -s .test-a .test-recursive-OA'
 
 test_expect_success \
     'diff-tree of known trees.' \
-    'git-diff-tree $tree_O $tree_B >.test-a &&
+    'git diff-tree $tree_O $tree_B >.test-a &&
      cmp -s .test-a .test-plain-OB'
 
 test_expect_success \
     'diff-tree of known trees.' \
-    'git-diff-tree -r $tree_O $tree_B >.test-a &&
+    'git diff-tree -r $tree_O $tree_B >.test-a &&
      cmp -s .test-a .test-recursive-OB'
 
 test_expect_success \
     'diff-tree of known trees.' \
-    'git-diff-tree $tree_A $tree_B >.test-a &&
+    'git diff-tree $tree_A $tree_B >.test-a &&
      cmp -s .test-a .test-plain-AB'
 
 test_expect_success \
     'diff-tree of known trees.' \
-    'git-diff-tree -r $tree_A $tree_B >.test-a &&
+    'git diff-tree -r $tree_A $tree_B >.test-a &&
      cmp -s .test-a .test-recursive-AB'
 
 test_expect_success \
+    'diff-tree --stdin of known trees.' \
+    'echo $tree_A $tree_B | git diff-tree --stdin > .test-a &&
+     echo $tree_A $tree_B > .test-plain-ABx &&
+     cat .test-plain-AB >> .test-plain-ABx &&
+     cmp -s .test-a .test-plain-ABx'
+
+test_expect_success \
+    'diff-tree --stdin of known trees.' \
+    'echo $tree_A $tree_B | git diff-tree -r --stdin > .test-a &&
+     echo $tree_A $tree_B > .test-recursive-ABx &&
+     cat .test-recursive-AB >> .test-recursive-ABx &&
+     cmp -s .test-a .test-recursive-ABx'
+
+test_expect_success \
     'diff-cache O with A in cache' \
-    'git-read-tree $tree_A &&
-     git-diff-index --cached $tree_O >.test-a &&
+    'git read-tree $tree_A &&
+     git diff-index --cached $tree_O >.test-a &&
      cmp -s .test-a .test-recursive-OA'
 
 test_expect_success \
     'diff-cache O with B in cache' \
-    'git-read-tree $tree_B &&
-     git-diff-index --cached $tree_O >.test-a &&
+    'git read-tree $tree_B &&
+     git diff-index --cached $tree_O >.test-a &&
      cmp -s .test-a .test-recursive-OB'
 
 test_expect_success \
     'diff-cache A with B in cache' \
-    'git-read-tree $tree_B &&
-     git-diff-index --cached $tree_A >.test-a &&
+    'git read-tree $tree_B &&
+     git diff-index --cached $tree_A >.test-a &&
      cmp -s .test-a .test-recursive-AB'
 
 test_expect_success \
     'diff-files with O in cache and A checked out' \
     'rm -fr Z [A-Z][A-Z] &&
-     git-read-tree $tree_A &&
-     git-checkout-index -f -a &&
-     git-read-tree -m $tree_O || return 1
-     git-update-index --refresh >/dev/null ;# this can exit non-zero
-     git-diff-files >.test-a &&
+     git read-tree $tree_A &&
+     git checkout-index -f -a &&
+     git read-tree --reset $tree_O &&
+     test_must_fail git update-index --refresh -q &&
+     git diff-files >.test-a &&
      cmp_diff_files_output .test-a .test-recursive-OA'
 
 test_expect_success \
     'diff-files with O in cache and B checked out' \
     'rm -fr Z [A-Z][A-Z] &&
-     git-read-tree $tree_B &&
-     git-checkout-index -f -a &&
-     git-read-tree -m $tree_O || return 1
-     git-update-index --refresh >/dev/null ;# this can exit non-zero
-     git-diff-files >.test-a &&
+     git read-tree $tree_B &&
+     git checkout-index -f -a &&
+     git read-tree --reset $tree_O &&
+     test_must_fail git update-index --refresh -q &&
+     git diff-files >.test-a &&
      cmp_diff_files_output .test-a .test-recursive-OB'
 
 test_expect_success \
     'diff-files with A in cache and B checked out' \
     'rm -fr Z [A-Z][A-Z] &&
-     git-read-tree $tree_B &&
-     git-checkout-index -f -a &&
-     git-read-tree -m $tree_A || return 1
-     git-update-index --refresh >/dev/null ;# this can exit non-zero
-     git-diff-files >.test-a &&
+     git read-tree $tree_B &&
+     git checkout-index -f -a &&
+     git read-tree --reset $tree_A &&
+     test_must_fail git update-index --refresh -q &&
+     git diff-files >.test-a &&
      cmp_diff_files_output .test-a .test-recursive-AB'
 
 ################################################################
@@ -222,26 +233,34 @@ test_expect_success \
 
 test_expect_success \
     'diff-tree O A == diff-tree -R A O' \
-    'git-diff-tree $tree_O $tree_A >.test-a &&
-    git-diff-tree -R $tree_A $tree_O >.test-b &&
+    'git diff-tree $tree_O $tree_A >.test-a &&
+    git diff-tree -R $tree_A $tree_O >.test-b &&
     cmp -s .test-a .test-b'
 
 test_expect_success \
     'diff-tree -r O A == diff-tree -r -R A O' \
-    'git-diff-tree -r $tree_O $tree_A >.test-a &&
-    git-diff-tree -r -R $tree_A $tree_O >.test-b &&
+    'git diff-tree -r $tree_O $tree_A >.test-a &&
+    git diff-tree -r -R $tree_A $tree_O >.test-b &&
     cmp -s .test-a .test-b'
 
 test_expect_success \
     'diff-tree B A == diff-tree -R A B' \
-    'git-diff-tree $tree_B $tree_A >.test-a &&
-    git-diff-tree -R $tree_A $tree_B >.test-b &&
+    'git diff-tree $tree_B $tree_A >.test-a &&
+    git diff-tree -R $tree_A $tree_B >.test-b &&
     cmp -s .test-a .test-b'
 
 test_expect_success \
     'diff-tree -r B A == diff-tree -r -R A B' \
-    'git-diff-tree -r $tree_B $tree_A >.test-a &&
-    git-diff-tree -r -R $tree_A $tree_B >.test-b &&
+    'git diff-tree -r $tree_B $tree_A >.test-a &&
+    git diff-tree -r -R $tree_A $tree_B >.test-b &&
     cmp -s .test-a .test-b'
+
+test_expect_success \
+    'diff can read from stdin' \
+    'test_must_fail git diff --no-index -- MN - < NN |
+        grep -v "^index" | sed "s#/-#/NN#" >.test-a &&
+    test_must_fail git diff --no-index -- MN NN |
+        grep -v "^index" >.test-b &&
+    test_cmp .test-a .test-b'
 
 test_done

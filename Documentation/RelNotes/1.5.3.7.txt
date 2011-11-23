@@ -1,0 +1,45 @@
+GIT v1.5.3.7 Release Notes
+==========================
+
+Fixes since v1.5.3.6
+--------------------
+
+ * git-send-email added 8-bit contents to the payload without
+   marking it as 8-bit in a CTE header.
+
+ * "git-bundle create a.bndl HEAD" dereferenced the symref and
+   did not record the ref as 'HEAD'; this prevented a bundle
+   from being used as a normal source of git-clone.
+
+ * The code to reject nonsense command line of the form
+   "git-commit -a paths..." and "git-commit --interactive
+   paths..." were broken.
+
+ * Adding a signature that is not ASCII-only to an original
+   commit that is ASCII-only would make the result non-ASCII.
+   "git-format-patch -s" did not mark such a message correctly
+   with MIME encoding header.
+
+ * git-add sometimes did not mark the resulting index entry
+   stat-clean.  This affected only cases when adding the
+   contents with the same length as the previously staged
+   contents, and the previous staging made the index entry
+   "racily clean".
+
+ * git-commit did not honor GIT_INDEX_FILE the user had in the
+   environment.
+
+ * When checking out a revision, git-checkout did not report where the
+   updated HEAD is if you happened to have a file called HEAD in the
+   work tree.
+
+ * "git-rev-list --objects" mishandled a tree that points at a
+   submodule.
+
+ * "git cvsimport" was not ready for packed refs that "git gc" can
+   produce and gave incorrect results.
+
+ * Many scripted Porcelains were confused when you happened to have a
+   file called "HEAD" in your work tree.
+
+Also it contains updates to the user manual and documentation.

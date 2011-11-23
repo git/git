@@ -1,21 +1,21 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
 #
 # This tool is copyright (c) 2005, Martin Langhoff.
 # It is released under the Gnu Public License, version 2.
 #
-# The basic idea is to walk the output of tla abrowse, 
-# fetch the changesets and apply them. 
+# The basic idea is to walk the output of tla abrowse,
+# fetch the changesets and apply them.
 #
 
 =head1 Invocation
 
-    git-archimport [ -h ] [ -v ] [ -o ] [ -a ] [ -f ] [ -T ] 
-    	[ -D depth] [ -t tempdir ] <archive>/<branch> [ <archive>/<branch> ]
+    git archimport [ -h ] [ -v ] [ -o ] [ -a ] [ -f ] [ -T ]
+	[ -D depth] [ -t tempdir ] <archive>/<branch> [ <archive>/<branch> ]
 
 Imports a project from one or more Arch repositories. It will follow branches
 and repositories within the namespaces defined by the <archive/branch>
-parameters suppplied. If it cannot find the remote branch a merge comes from
-it will just import it as a regular commit. If it can find it, it will mark it 
+parameters supplied. If it cannot find the remote branch a merge comes from
+it will just import it as a regular commit. If it can find it, it will mark it
 as a merge whenever possible.
 
 See man (1) git-archimport for more details.
@@ -25,14 +25,14 @@ See man (1) git-archimport for more details.
  - create tag objects instead of ref tags
  - audit shell-escaping of filenames
  - hide our private tags somewhere smarter
- - find a way to make "cat *patches | patch" safe even when patchfiles are missing newlines  
+ - find a way to make "cat *patches | patch" safe even when patchfiles are missing newlines
  - sort and apply patches by graphing ancestry relations instead of just
    relying in dates supplied in the changeset itself.
    tla ancestry-graph -m could be helpful here...
 
 =head1 Devel tricks
 
-Add print in front of the shell commands invoked via backticks. 
+Add print in front of the shell commands invoked via backticks.
 
 =head1 Devel Notes
 
@@ -54,6 +54,7 @@ and can contain multiple, unrelated branches.
 
 =cut
 
+use 5.008;
 use strict;
 use warnings;
 use Getopt::Std;
@@ -74,7 +75,7 @@ our($opt_h,$opt_f,$opt_v,$opt_T,$opt_t,$opt_D,$opt_a,$opt_o);
 
 sub usage() {
     print STDERR <<END;
-Usage: ${\basename $0}     # fetch/update GIT from Arch
+Usage: git archimport     # fetch/update GIT from Arch
        [ -h ] [ -v ] [ -o ] [ -a ] [ -f ] [ -T ] [ -D depth ] [ -t tempdir ]
        repository/arch-branch [ repository/arch-branch] ...
 END
@@ -88,13 +89,27 @@ usage if $opt_h;
 # $arch_branches:
 # values associated with keys:
 #   =1 - Arch version / git 'branch' detected via abrowse on a limit
-#   >1 - Arch version / git 'branch' of an auxilliary branch we've merged
-my %arch_branches = map { $_ => 1 } @ARGV;
+#   >1 - Arch version / git 'branch' of an auxiliary branch we've merged
+my %arch_branches = map { my $branch = $_; $branch =~ s/:[^:]*$//; $branch => 1 } @ARGV;
+
+# $branch_name_map:
+# maps arch branches to git branch names
+my %branch_name_map = map { m/^(.*):([^:]*)$/; $1 => $2 } grep { m/:/ } @ARGV;
 
 $ENV{'TMPDIR'} = $opt_t if $opt_t; # $ENV{TMPDIR} will affect tempdir() calls:
 my $tmp = tempdir('git-archimport-XXXXXX', TMPDIR => 1, CLEANUP => 1);
 $opt_v && print "+ Using $tmp as temporary directory\n";
 
+unless (-d $git_dir) { # initial import needs empty directory
+    opendir DIR, '.' or die "Unable to open current directory: $!\n";
+    while (my $entry = readdir DIR) {
+        $entry =~ /^\.\.?$/ or
+            die "Initial import needs an empty current working directory.\n"
+    }
+    closedir DIR
+}
+
+my $default_archive;		# default Arch archive
 my %reachable = ();             # Arch repositories we can access
 my %unreachable = ();           # Arch repositories we can't access :<
 my @psets  = ();                # the collection
@@ -112,16 +127,16 @@ sub do_abrowse {
     my $stage = shift;
     while (my ($limit, $level) = each %arch_branches) {
         next unless $level == $stage;
-        
-	open ABROWSE, "$TLA abrowse -fkD --merges $limit |" 
+
+	open ABROWSE, "$TLA abrowse -fkD --merges $limit |"
                                 or die "Problems with tla abrowse: $!";
-    
+
         my %ps        = ();         # the current one
         my $lastseen  = '';
-    
+
         while (<ABROWSE>) {
             chomp;
-            
+
             # first record padded w 8 spaces
             if (s/^\s{8}\b//) {
                 my ($id, $type) = split(m/\s+/, $_, 2);
@@ -133,13 +148,13 @@ sub do_abrowse {
                     push (@psets, \%last_ps);
                     $psets{ $last_ps{id} } = \%last_ps;
                 }
-                
+
                 my $branch = extract_versionname($id);
                 %ps = ( id => $id, branch => $branch );
                 if (%last_ps && ($last_ps{branch} eq $branch)) {
                     $ps{parent_id} = $last_ps{id};
                 }
-                
+
                 $arch_branches{$branch} = 1;
                 $lastseen = 'id';
 
@@ -152,16 +167,16 @@ sub do_abrowse {
                     $ps{type} = 't';
                     # read which revision we've tagged when we parse the log
                     $ps{tag}  = $1;
-                } else { 
+                } else {
                     warn "Unknown type $type";
                 }
 
                 $arch_branches{$branch} = 1;
                 $lastseen = 'id';
-            } elsif (s/^\s{10}//) { 
-                # 10 leading spaces or more 
+            } elsif (s/^\s{10}//) {
+                # 10 leading spaces or more
                 # indicate commit metadata
-                
+
                 # date
                 if ($lastseen eq 'id' && m/^(\d{4}-\d\d-\d\d \d\d:\d\d:\d\d)/){
                     $ps{date}   = $1;
@@ -172,12 +187,12 @@ sub do_abrowse {
                 } elsif ($lastseen eq 'merges' && s/^\s{2}//) {
                     my $id = $_;
                     push (@{$ps{merges}}, $id);
-                   
+
                     # aggressive branch finding:
                     if ($opt_D) {
                         my $branch = extract_versionname($id);
                         my $repo = extract_reponame($branch);
-                        
+
                         if (archive_reachable($repo) &&
                                 !defined $arch_branches{$branch}) {
                             $arch_branches{$branch} = $stage + 1;
@@ -194,10 +209,10 @@ sub do_abrowse {
             if (@psets && $psets[$#psets]{branch} eq $ps{branch}) {
                 $temp{parent_id} = $psets[$#psets]{id};
             }
-            push (@psets, \%temp);  
+            push (@psets, \%temp);
             $psets{ $temp{id} } = \%temp;
-        }    
-        
+        }
+
         close ABROWSE or die "$TLA abrowse failed on $limit\n";
     }
 }                               # end foreach $root
@@ -226,7 +241,7 @@ my $import = 0;
 unless (-d $git_dir) { # initial import
     if ($psets[0]{type} eq 'i' || $psets[0]{type} eq 't') {
         print "Starting import from $psets[0]{id}\n";
-	`git-init-db`;
+	`git-init`;
 	die $! if $?;
 	$import = 1;
     } else {
@@ -239,7 +254,7 @@ unless (-d $git_dir) { # initial import
     while (my $file = readdir(DIR)) {
         # skip non-interesting-files
         next unless -f "$ptag_dir/$file";
-   
+
         # convert first '--' to '/' from old git-archimport to use
         # as an archivename/c--b--v private tag
         if ($file !~ m!,!) {
@@ -261,7 +276,7 @@ sub extract_reponame {
     my $fq_cvbr = shift; # archivename/[[[[category]branch]version]revision]
     return (split(/\//, $fq_cvbr))[0];
 }
- 
+
 sub extract_versionname {
     my $name = shift;
     $name =~ s/--(?:patch|version(?:fix)?|base)-\d+$//;
@@ -269,7 +284,7 @@ sub extract_versionname {
 }
 
 # convert a fully-qualified revision or version to a unique dirname:
-#   normalperson@yhbt.net-05/mpd--uclinux--1--patch-2 
+#   normalperson@yhbt.net-05/mpd--uclinux--1--patch-2
 # becomes: normalperson@yhbt.net-05,mpd--uclinux--1
 #
 # the git notion of a branch is closer to
@@ -294,11 +309,38 @@ sub old_style_branchname {
     return $ret;
 }
 
-*git_branchname = $opt_o ? *old_style_branchname : *tree_dirname;
+*git_default_branchname = $opt_o ? *old_style_branchname : *tree_dirname;
+
+# retrieve default archive, since $branch_name_map keys might not include it
+sub get_default_archive {
+    if (!defined $default_archive) {
+        $default_archive = safe_pipe_capture($TLA,'my-default-archive');
+        chomp $default_archive;
+    }
+    return $default_archive;
+}
+
+sub git_branchname {
+    my $revision = shift;
+    my $name = extract_versionname($revision);
+
+    if (exists $branch_name_map{$name}) {
+	return $branch_name_map{$name};
+
+    } elsif ($name =~ m#^([^/]*)/(.*)$#
+	     && $1 eq get_default_archive()
+	     && exists $branch_name_map{$2}) {
+	# the names given in the command-line lacked the archive.
+	return $branch_name_map{$2};
+
+    } else {
+	return git_default_branchname($revision);
+    }
+}
 
 sub process_patchset_accurate {
     my $ps = shift;
-    
+
     # switch to that branch if we're not already in that branch:
     if (-e "$git_dir/refs/heads/$ps->{branch}") {
        system('git-checkout','-f',$ps->{branch}) == 0 or die "$! $?\n";
@@ -307,7 +349,7 @@ sub process_patchset_accurate {
        my $rm = safe_pipe_capture('git-ls-files','--others','-z');
        rmtree(split(/\0/,$rm)) if $rm;
     }
-    
+
     # Apply the import/changeset/merge into the working tree
     my $dir = sync_to_ps($ps);
     # read the new log entry:
@@ -320,31 +362,35 @@ sub process_patchset_accurate {
     parselog($ps, \@commitlog);
 
     if ($ps->{id} =~ /--base-0$/ && $ps->{id} ne $psets[0]{id}) {
-        # this should work when importing continuations 
+        # this should work when importing continuations
         if ($ps->{tag} && (my $branchpoint = eval { ptag($ps->{tag}) })) {
-            
+
             # find where we are supposed to branch from
-            system('git-checkout','-f','-b',$ps->{branch},
-                            $branchpoint) == 0 or die "$! $?\n";
-            
+	    if (! -e "$git_dir/refs/heads/$ps->{branch}") {
+		system('git-branch',$ps->{branch},$branchpoint) == 0 or die "$! $?\n";
+
+		# We trust Arch with the fact that this is just a tag,
+		# and it does not affect the state of the tree, so
+		# we just tag and move on.  If the user really wants us
+		# to consolidate more branches into one, don't tag because
+		# the tag name would be already taken.
+		tag($ps->{id}, $branchpoint);
+		ptag($ps->{id}, $branchpoint);
+		print " * Tagged $ps->{id} at $branchpoint\n";
+	    }
+	    system('git-checkout','-f',$ps->{branch}) == 0 or die "$! $?\n";
+
             # remove any old stuff that got leftover:
             my $rm = safe_pipe_capture('git-ls-files','--others','-z');
             rmtree(split(/\0/,$rm)) if $rm;
-
-            # If we trust Arch with the fact that this is just 
-            # a tag, and it does not affect the state of the tree
-            # then we just tag and move on
-            tag($ps->{id}, $branchpoint);
-            ptag($ps->{id}, $branchpoint);
-            print " * Tagged $ps->{id} at $branchpoint\n";
             return 0;
         } else {
             warn "Tagging from unknown id unsupported\n" if $ps->{tag};
         }
         # allow multiple bases/imports here since Arch supports cherry-picks
         # from unrelated trees
-    } 
-    
+    }
+
     # update the index with all the changes we got
     system('git-diff-files --name-only -z | '.
             'git-update-index --remove -z --stdin') == 0 or die "$! $?\n";
@@ -357,7 +403,7 @@ sub process_patchset_accurate {
 # does not handle permissions or any renames involving directories
 sub process_patchset_fast {
     my $ps = shift;
-    # 
+    #
     # create the branch if needed
     #
     if ($ps->{type} eq 'i' && !$import) {
@@ -372,26 +418,31 @@ sub process_patchset_fast {
             # new branch! we need to verify a few things
             die "Branch on a non-tag!" unless $ps->{type} eq 't';
             my $branchpoint = ptag($ps->{tag});
-            die "Tagging from unknown id unsupported: $ps->{tag}" 
+            die "Tagging from unknown id unsupported: $ps->{tag}"
                 unless $branchpoint;
-            
-            # find where we are supposed to branch from
-            system('git-checkout','-b',$ps->{branch},$branchpoint);
 
-            # If we trust Arch with the fact that this is just 
-            # a tag, and it does not affect the state of the tree
-            # then we just tag and move on
-            tag($ps->{id}, $branchpoint);
-            ptag($ps->{id}, $branchpoint);
-            print " * Tagged $ps->{id} at $branchpoint\n";
+            # find where we are supposed to branch from
+	    if (! -e "$git_dir/refs/heads/$ps->{branch}") {
+		system('git-branch',$ps->{branch},$branchpoint) == 0 or die "$! $?\n";
+
+		# We trust Arch with the fact that this is just a tag,
+		# and it does not affect the state of the tree, so
+		# we just tag and move on.  If the user really wants us
+		# to consolidate more branches into one, don't tag because
+		# the tag name would be already taken.
+		tag($ps->{id}, $branchpoint);
+		ptag($ps->{id}, $branchpoint);
+		print " * Tagged $ps->{id} at $branchpoint\n";
+            }
+            system('git-checkout',$ps->{branch}) == 0 or die "$! $?\n";
             return 0;
-        } 
+        }
         die $! if $?;
-    } 
+    }
 
     #
     # Apply the import/changeset/merge into the working tree
-    # 
+    #
     if ($ps->{type} eq 'i' || $ps->{type} eq 't') {
         apply_import($ps) or die $!;
         $stats{import_or_tag}++;
@@ -405,10 +456,10 @@ sub process_patchset_fast {
     # prepare update git's index, based on what arch knows
     # about the pset, resolve parents, etc
     #
-    
-    my @commitlog = safe_pipe_capture($TLA,'cat-archive-log',$ps->{id}); 
+
+    my @commitlog = safe_pipe_capture($TLA,'cat-archive-log',$ps->{id});
     die "Error in cat-archive-log: $!" if $?;
-        
+
     parselog($ps,\@commitlog);
 
     # imports don't give us good info
@@ -435,10 +486,10 @@ sub process_patchset_fast {
         if (@$ren % 2) {
             die "Odd number of entries in rename!?";
         }
-        
+
         while (@$ren) {
             my $from = shift @$ren;
-            my $to   = shift @$ren;           
+            my $to   = shift @$ren;
 
             unless (-d dirname($to)) {
                 mkpath(dirname($to)); # will die on err
@@ -479,20 +530,20 @@ if ($opt_f) {
             "Things may be a bit slow\n";
     *process_patchset = *process_patchset_accurate;
 }
-    
+
 foreach my $ps (@psets) {
     # process patchsets
     $ps->{branch} = git_branchname($ps->{id});
 
     #
-    # ensure we have a clean state 
-    # 
+    # ensure we have a clean state
+    #
     if (my $dirty = `git-diff-files`) {
         die "Unclean tree when about to process $ps->{id} " .
             " - did we fail to commit cleanly before?\n$dirty";
     }
     die $! if $?;
-    
+
     #
     # skip commits already in repo
     #
@@ -509,7 +560,7 @@ foreach my $ps (@psets) {
     my $tree = `git-write-tree`;
     die "cannot write tree $!" if $?;
     chomp $tree;
-    
+
     #
     # Who's your daddy?
     #
@@ -520,18 +571,18 @@ foreach my $ps (@psets) {
             close HEAD;
             chomp $p;
             push @par, '-p', $p;
-        } else { 
+        } else {
             if ($ps->{type} eq 's') {
                 warn "Could not find the right head for the branch $ps->{branch}";
             }
         }
     }
-    
+
     if ($ps->{merges}) {
         push @par, find_parents($ps);
     }
 
-    #    
+    #
     # Commit, tag and clean state
     #
     $ENV{TZ}                  = 'GMT';
@@ -542,14 +593,18 @@ foreach my $ps (@psets) {
     $ENV{GIT_COMMITTER_EMAIL} = $ps->{email};
     $ENV{GIT_COMMITTER_DATE}  = $ps->{date};
 
-    my $pid = open2(*READER, *WRITER,'git-commit-tree',$tree,@par) 
+    my $pid = open2(*READER, *WRITER,'git-commit-tree',$tree,@par)
         or die $!;
-    print WRITER $ps->{summary},"\n";
-    print WRITER $ps->{message},"\n";
-    
+    print WRITER $ps->{summary},"\n\n";
+
+    # only print message if it's not empty, to avoid a spurious blank line;
+    # also append an extra newline, so there's a blank line before the
+    # following "git-archimport-id:" line.
+    print WRITER $ps->{message},"\n\n" if ($ps->{message} ne "");
+
     # make it easy to backtrack and figure out which Arch revision this was:
     print WRITER 'git-archimport-id: ',$ps->{id},"\n";
-    
+
     close WRITER;
     my $commitid = <READER>;    # read
     chomp $commitid;
@@ -561,7 +616,7 @@ foreach my $ps (@psets) {
     }
     #
     # Update the branch
-    # 
+    #
     open  HEAD, ">","$git_dir/refs/heads/$ps->{branch}";
     print HEAD $commitid;
     close HEAD;
@@ -590,7 +645,7 @@ exit 0;
 sub sync_to_ps {
     my $ps = shift;
     my $tree_dir = $tmp.'/'.tree_dirname($ps->{id});
-    
+
     $opt_v && print "sync_to_ps($ps->{id}) method: ";
 
     if (-d $tree_dir) {
@@ -624,7 +679,7 @@ sub sync_to_ps {
         safe_pipe_capture($TLA,'get','--no-pristine',$ps->{id},$tree_dir);
         $stats{get_new}++;
     }
-   
+
     # added -I flag to rsync since we're going to fast! AIEEEEE!!!!
     system('rsync','-aI','--delete','--exclude',$git_dir,
 #               '--exclude','.arch-inventory',
@@ -641,15 +696,15 @@ sub apply_import {
     mkpath($tmp);
 
     safe_pipe_capture($TLA,'get','-s','--no-pristine',$ps->{id},"$tmp/import");
-    die "Cannot get import: $!" if $?;    
+    die "Cannot get import: $!" if $?;
     system('rsync','-aI','--delete', '--exclude',$git_dir,
 		'--exclude','.arch-ids','--exclude','{arch}',
 		"$tmp/import/", './');
     die "Cannot rsync import:$!" if $?;
-    
+
     rmtree("$tmp/import");
     die "Cannot remove tempdir: $!" if $?;
-    
+
 
     return 1;
 }
@@ -662,13 +717,13 @@ sub apply_cset {
     # get the changeset
     safe_pipe_capture($TLA,'get-changeset',$ps->{id},"$tmp/changeset");
     die "Cannot get changeset: $!" if $?;
-    
+
     # apply patches
     if (`find $tmp/changeset/patches -type f -name '*.patch'`) {
         # this can be sped up considerably by doing
         #    (find | xargs cat) | patch
-        # but that cna get mucked up by patches
-        # with missing trailing newlines or the standard 
+        # but that can get mucked up by patches
+        # with missing trailing newlines or the standard
         # 'missing newline' flag in the patch - possibly
         # produced with an old/buggy diff.
         # slow and safe, we invoke patch once per patchfile
@@ -691,7 +746,7 @@ sub apply_cset {
 
     # bring in new files
     system('rsync','-aI','--exclude',$git_dir,
-    		'--exclude','.arch-ids',
+		'--exclude','.arch-ids',
 		'--exclude', '{arch}',
 		"$tmp/changeset/new-files-archive/",'./');
 
@@ -739,14 +794,15 @@ sub parselog {
         removed_files => 1,
         removed_directories => 1,
     );
-    
+
     chomp (@$log);
     while ($_ = shift @$log) {
         if (/^Continuation-of:\s*(.*)/) {
             $ps->{tag} = $1;
             $key = undef;
         } elsif (/^Summary:\s*(.*)$/ ) {
-            # summary can be multiline as long as it has a leading space
+            # summary can be multiline as long as it has a leading space.
+	    # we squeeze it onto a single line, though.
             $ps->{summary} = [ $1 ];
             $key = 'summary';
         } elsif (/^Creator: (.*)\s*<([^\>]+)>/) {
@@ -777,11 +833,21 @@ sub parselog {
             }
         }
     }
-   
-    # post-processing:
-    $ps->{summary} = join("\n",@{$ps->{summary}})."\n";
+
+    # drop leading empty lines from the log message
+    while (@$log && $log->[0] eq '') {
+	shift @$log;
+    }
+    if (exists $ps->{summary} && @{$ps->{summary}}) {
+	$ps->{summary} = join(' ', @{$ps->{summary}});
+    }
+    elsif (@$log == 0) {
+	$ps->{summary} = 'empty commit message';
+    } else {
+	$ps->{summary} = $log->[0] . '...';
+    }
     $ps->{message} = join("\n",@$log);
-    
+
     # skip Arch control files, unescape pika-escaped files
     foreach my $k (keys %want_headers) {
         next unless (defined $ps->{$k});
@@ -806,14 +872,15 @@ sub parselog {
 # write/read a tag
 sub tag {
     my ($tag, $commit) = @_;
- 
+
     if ($opt_o) {
         $tag =~ s|/|--|g;
     } else {
-        # don't use subdirs for tags yet, it could screw up other porcelains
-        $tag =~ s|/|,|g;
+	my $patchname = $tag;
+	$patchname =~ s/.*--//;
+        $tag = git_branchname ($tag) . '--' . $patchname;
     }
-    
+
     if ($commit) {
         open(C,">","$git_dir/refs/tags/$tag")
             or die "Cannot create tag $tag: $!\n";
@@ -840,8 +907,8 @@ sub ptag {
     my ($tag, $commit) = @_;
 
     # don't use subdirs for tags yet, it could screw up other porcelains
-    $tag =~ s|/|,|g; 
-    
+    $tag =~ s|/|,|g;
+
     my $tag_file = "$ptag_dir/$tag";
     my $tag_branch_dir = dirname($tag_file);
     mkpath($tag_branch_dir) unless (-d $tag_branch_dir);
@@ -853,7 +920,7 @@ sub ptag {
             or die "Cannot write tag $tag: $!\n";
         close(C)
             or die "Cannot write tag $tag: $!\n";
-	$rptags{$commit} = $tag 
+	$rptags{$commit} = $tag
 	    unless $tag =~ m/--base-0$/;
     } else {                    # read
         # if the tag isn't there, return 0
@@ -879,7 +946,7 @@ sub find_parents {
     # Identify what branches are merging into me
     # and whether we are fully merged
     # git-merge-base <headsha> <headsha> should tell
-    # me what the base of the merge should be 
+    # me what the base of the merge should be
     #
     my $ps = shift;
 
@@ -901,14 +968,14 @@ sub find_parents {
     }
 
     #
-    # foreach branch find a merge base and walk it to the 
+    # foreach branch find a merge base and walk it to the
     # head where we are, collecting the merged patchsets that
     # Arch has recorded. Keep that in @have
     # Compare that with the commits on the other branch
     # between merge-base and the tip of the branch (@need)
     # and see if we have a series of consecutive patches
     # starting from the merge base. The tip of the series
-    # of consecutive patches merged is our new parent for 
+    # of consecutive patches merged is our new parent for
     # that branch.
     #
     foreach my $branch (keys %branches) {
@@ -917,13 +984,13 @@ sub find_parents {
 	next unless -e "$git_dir/refs/heads/$branch";
 
 	my $mergebase = `git-merge-base $branch $ps->{branch}`;
- 	if ($?) { 
- 	    # Don't die here, Arch supports one-way cherry-picking
- 	    # between branches with no common base (or any relationship
- 	    # at all beforehand)
- 	    warn "Cannot find merge base for $branch and $ps->{branch}";
- 	    next;
- 	}
+	if ($?) {
+	    # Don't die here, Arch supports one-way cherry-picking
+	    # between branches with no common base (or any relationship
+	    # at all beforehand)
+	    warn "Cannot find merge base for $branch and $ps->{branch}";
+	    next;
+	}
 	chomp $mergebase;
 
 	# now walk up to the mergepoint collecting what patches we have
@@ -948,7 +1015,7 @@ sub find_parents {
 	# merge what we have with what ancestors have
 	%have = (%have, %ancestorshave);
 
-	# see what the remote branch has - these are the merges we 
+	# see what the remote branch has - these are the merges we
 	# will want to have in a consecutive series from the mergebase
 	my $otherbranchtip = git_rev_parse($branch);
 	my @needraw = `git-rev-list --topo-order $otherbranchtip ^$mergebase`;
@@ -956,7 +1023,7 @@ sub find_parents {
 	foreach my $needps (@needraw) { 	# get the psets
 	    $needps = commitid2pset($needps);
 	    # git-rev-list will also
-	    # list commits merged in via earlier 
+	    # list commits merged in via earlier
 	    # merges. we are only interested in commits
 	    # from the branch we're looking at
 	    if ($branch eq $needps->{branch}) {
@@ -992,7 +1059,7 @@ sub find_parents {
 	next unless ref    $psets{$p}{merges};
 	my @merges = @{$psets{$p}{merges}};
 	foreach my $merge (@merges) {
-	    if ($parents{$merge}) { 
+	    if ($parents{$merge}) {
 		delete $parents{$merge};
 	    }
 	}
@@ -1017,16 +1084,16 @@ sub git_rev_parse {
 sub commitid2pset {
     my $commitid = shift;
     chomp $commitid;
-    my $name = $rptags{$commitid} 
+    my $name = $rptags{$commitid}
 	|| die "Cannot find reverse tag mapping for $commitid";
     $name =~ s|,|/|;
-    my $ps   = $psets{$name} 
+    my $ps   = $psets{$name}
 	|| (print Dumper(sort keys %psets)) && die "Cannot find patchset for $name";
     return $ps;
 }
 
 
-# an alterative to `command` that allows input to be passed as an array
+# an alternative to `command` that allows input to be passed as an array
 # to work around shell problems with weird characters in arguments
 sub safe_pipe_capture {
     my @output;
@@ -1050,7 +1117,7 @@ sub archive_reachable {
     my $archive = shift;
     return 1 if $reachable{$archive};
     return 0 if $unreachable{$archive};
-    
+
     if (system "$TLA whereis-archive $archive >/dev/null") {
         if ($opt_a && (system($TLA,'register-archive',
                       "http://mirrors.sourcecontrol.net/$archive") == 0)) {
@@ -1065,4 +1132,3 @@ sub archive_reachable {
         return 1;
     }
 }
-

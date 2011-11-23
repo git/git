@@ -1,5 +1,4 @@
-#include <stdlib.h>
-#include <string.h>
+#include "../git-compat-util.h"
 
 void gitunsetenv (const char *name)
 {

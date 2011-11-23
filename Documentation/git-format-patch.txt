@@ -9,107 +9,512 @@ git-format-patch - Prepare patches for e-mail submission
 SYNOPSIS
 --------
 [verse]
-'git-format-patch' [-n | -k] [-o <dir> | --stdout] [--attach] [-s] [-c]
-		 [--diff-options] <his> [<mine>]
+'git format-patch' [-k] [(-o|--output-directory) <dir> | --stdout]
+		   [--no-thread | --thread[=<style>]]
+		   [(--attach|--inline)[=<boundary>] | --no-attach]
+		   [-s | --signoff]
+		   [--signature=<signature> | --no-signature]
+		   [-n | --numbered | -N | --no-numbered]
+		   [--start-number <n>] [--numbered-files]
+		   [--in-reply-to=Message-Id] [--suffix=.<sfx>]
+		   [--ignore-if-in-upstream]
+		   [--subject-prefix=Subject-Prefix]
+		   [--to=<email>] [--cc=<email>]
+		   [--cover-letter] [--quiet]
+		   [<common diff options>]
+		   [ <since> | <revision range> ]
 
 DESCRIPTION
 -----------
-Prepare each commit with its patch since <mine> head forked from
-<his> head, one file per patch formatted to resemble UNIX mailbox
-format, for e-mail submission or use with gitlink:git-am[1].
 
-Each output file is numbered sequentially from 1, and uses the
-first line of the commit message (massaged for pathname safety)
-as the filename.
+Prepare each commit with its patch in
+one file per commit, formatted to resemble UNIX mailbox format.
+The output of this command is convenient for e-mail submission or
+for use with 'git am'.
 
-When -o is specified, output files are created in <dir>; otherwise
-they are created in the current working directory.  This option
-is ignored if --stdout is specified.
+There are two ways to specify which commits to operate on.
 
-When -n is specified, instead of "[PATCH] Subject", the first
-line is formatted as "[PATCH N/M] Subject", unless you have only
-one patch.
+1. A single commit, <since>, specifies that the commits leading
+   to the tip of the current branch that are not in the history
+   that leads to the <since> to be output.
 
+2. Generic <revision range> expression (see "SPECIFYING
+   REVISIONS" section in linkgit:gitrevisions[7]) means the
+   commits in the specified range.
+
+The first rule takes precedence in the case of a single <commit>.  To
+apply the second rule, i.e., format everything since the beginning of
+history up until <commit>, use the '\--root' option: `git format-patch
+\--root <commit>`.  If you want to format only <commit> itself, you
+can do this with `git format-patch -1 <commit>`.
+
+By default, each output file is numbered sequentially from 1, and uses the
+first line of the commit message (massaged for pathname safety) as
+the filename. With the `--numbered-files` option, the output file names
+will only be numbers, without the first line of the commit appended.
+The names of the output files are printed to standard
+output, unless the `--stdout` option is specified.
+
+If `-o` is specified, output files are created in <dir>.  Otherwise
+they are created in the current working directory.
+
+By default, the subject of a single patch is "[PATCH] First Line" and
+the subject when multiple patches are output is "[PATCH n/m] First
+Line". To force 1/1 to be added for a single patch, use `-n`.  To omit
+patch numbers from the subject, use `-N`.
+
+If given `--thread`, `git-format-patch` will generate `In-Reply-To` and
+`References` headers to make the second and subsequent patch mails appear
+as replies to the first mail; this also generates a `Message-Id` header to
+reference.
 
 OPTIONS
 -------
--o|--output-directory <dir>::
+:git-format-patch: 1
+include::diff-options.txt[]
+
+-<n>::
+	Prepare patches from the topmost <n> commits.
+
+-o <dir>::
+--output-directory <dir>::
 	Use <dir> to store the resulting files, instead of the
 	current working directory.
 
--n|--numbered::
-	Name output in '[PATCH n/m]' format.
+-n::
+--numbered::
+	Name output in '[PATCH n/m]' format, even with a single patch.
 
--k|--keep-subject::
+-N::
+--no-numbered::
+	Name output in '[PATCH]' format.
+
+--start-number <n>::
+	Start numbering the patches at <n> instead of 1.
+
+--numbered-files::
+	Output file names will be a simple number sequence
+	without the default first line of the commit appended.
+
+-k::
+--keep-subject::
 	Do not strip/add '[PATCH]' from the first line of the
 	commit log message.
 
--s|--signoff::
+-s::
+--signoff::
 	Add `Signed-off-by:` line to the commit message, using
 	the committer identity of yourself.
 
--c|--check::
-        Display suspicious lines in the patch.  The definition
-        of 'suspicious lines' is currently the lines that has
-        trailing whitespaces, and the lines whose indentation
-        has a SP character immediately followed by a TAB
-        character.
-
 --stdout::
-	This flag generates the mbox formatted output to the
-	standard output, instead of saving them into a file per
-	patch and implies --mbox.
+	Print all commits to the standard output in mbox format,
+	instead of creating a file for each one.
 
---attach::
-	Create attachments instead of inlining patches.
+--attach[=<boundary>]::
+	Create multipart/mixed attachment, the first part of
+	which is the commit message and the patch itself in the
+	second part, with `Content-Disposition: attachment`.
 
+--no-attach::
+	Disable the creation of an attachment, overriding the
+	configuration setting.
+
+--inline[=<boundary>]::
+	Create multipart/mixed attachment, the first part of
+	which is the commit message and the patch itself in the
+	second part, with `Content-Disposition: inline`.
+
+--thread[=<style>]::
+--no-thread::
+	Controls addition of `In-Reply-To` and `References` headers to
+	make the second and subsequent mails appear as replies to the
+	first.  Also controls generation of the `Message-Id` header to
+	reference.
++
+The optional <style> argument can be either `shallow` or `deep`.
+'shallow' threading makes every mail a reply to the head of the
+series, where the head is chosen from the cover letter, the
+`\--in-reply-to`, and the first patch mail, in this order.  'deep'
+threading makes every mail a reply to the previous one.
++
+The default is `--no-thread`, unless the 'format.thread' configuration
+is set.  If `--thread` is specified without a style, it defaults to the
+style specified by 'format.thread' if any, or else `shallow`.
++
+Beware that the default for 'git send-email' is to thread emails
+itself.  If you want `git format-patch` to take care of threading, you
+will want to ensure that threading is disabled for `git send-email`.
+
+--in-reply-to=Message-Id::
+	Make the first mail (or all the mails with `--no-thread`) appear as a
+	reply to the given Message-Id, which avoids breaking threads to
+	provide a new patch series.
+
+--ignore-if-in-upstream::
+	Do not include a patch that matches a commit in
+	<until>..<since>.  This will examine all patches reachable
+	from <since> but not from <until> and compare them with the
+	patches being generated, and any patch that matches is
+	ignored.
+
+--subject-prefix=<Subject-Prefix>::
+	Instead of the standard '[PATCH]' prefix in the subject
+	line, instead use '[<Subject-Prefix>]'. This
+	allows for useful naming of a patch series, and can be
+	combined with the `--numbered` option.
+
+--to=<email>::
+	Add a `To:` header to the email headers. This is in addition
+	to any configured headers, and may be used multiple times.
+	The negated form `--no-to` discards all `To:` headers added so
+	far (from config or command line).
+
+--cc=<email>::
+	Add a `Cc:` header to the email headers. This is in addition
+	to any configured headers, and may be used multiple times.
+	The negated form `--no-cc` discards all `Cc:` headers added so
+	far (from config or command line).
+
+--add-header=<header>::
+	Add an arbitrary header to the email headers.  This is in addition
+	to any configured headers, and may be used multiple times.
+	For example, `--add-header="Organization: git-foo"`.
+	The negated form `--no-add-header` discards *all* (`To:`,
+	`Cc:`, and custom) headers added so far from config or command
+	line.
+
+--cover-letter::
+	In addition to the patches, generate a cover letter file
+	containing the shortlog and the overall diffstat.  You can
+	fill in a description in the file before sending it out.
+
+--[no]-signature=<signature>::
+	Add a signature to each message produced. Per RFC 3676 the signature
+	is separated from the body by a line with '-- ' on it. If the
+	signature option is omitted the signature defaults to the git version
+	number.
+
+--suffix=.<sfx>::
+	Instead of using `.patch` as the suffix for generated
+	filenames, use specified suffix.  A common alternative is
+	`--suffix=.txt`.  Leaving this empty will remove the `.patch`
+	suffix.
++
+Note that the leading character does not have to be a dot; for example,
+you can use `--suffix=-patch` to get `0001-description-of-my-change-patch`.
+
+--quiet::
+	Do not print the names of the generated files to standard output.
+
+--no-binary::
+	Do not output contents of changes in binary files, instead
+	display a notice that those files changed.  Patches generated
+	using this option cannot be applied properly, but they are
+	still useful for code review.
+
+--root::
+	Treat the revision argument as a <revision range>, even if it
+	is just a single commit (that would normally be treated as a
+	<since>).  Note that root commits included in the specified
+	range are always formatted as creation patches, independently
+	of this flag.
 
 CONFIGURATION
 -------------
-You can specify extra mail header lines to be added to each
-message in the repository configuration as follows:
+You can specify extra mail header lines to be added to each message,
+defaults for the subject prefix and file suffix, number patches when
+outputting more than one patch, add "To" or "Cc:" headers, configure
+attachments, and sign off patches with configuration variables.
 
+------------
 [format]
-        headers = "Organization: git-foo\n"
+	headers = "Organization: git-foo\n"
+	subjectprefix = CHANGE
+	suffix = .txt
+	numbered = auto
+	to = <email>
+	cc = <email>
+	attach [ = mime-boundary-string ]
+	signoff = true
+------------
+
+
+DISCUSSION
+----------
+
+The patch produced by 'git format-patch' is in UNIX mailbox format,
+with a fixed "magic" time stamp to indicate that the file is output
+from format-patch rather than a real mailbox, like so:
+
+------------
+From 8f72bad1baf19a53459661343e21d6491c3908d3 Mon Sep 17 00:00:00 2001
+From: Tony Luck <tony.luck@intel.com>
+Date: Tue, 13 Jul 2010 11:42:54 -0700
+Subject: [PATCH] =?UTF-8?q?[IA64]=20Put=20ia64=20config=20files=20on=20the=20?=
+ =?UTF-8?q?Uwe=20Kleine-K=C3=B6nig=20diet?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+arch/arm config files were slimmed down using a python script
+(See commit c2330e286f68f1c408b4aa6515ba49d57f05beae comment)
+
+Do the same for ia64 so we can have sleek & trim looking
+...
+------------
+
+Typically it will be placed in a MUA's drafts folder, edited to add
+timely commentary that should not go in the changelog after the three
+dashes, and then sent as a message whose body, in our example, starts
+with "arch/arm config files were...".  On the receiving end, readers
+can save interesting patches in a UNIX mailbox and apply them with
+linkgit:git-am[1].
+
+When a patch is part of an ongoing discussion, the patch generated by
+'git format-patch' can be tweaked to take advantage of the 'git am
+--scissors' feature.  After your response to the discussion comes a
+line that consists solely of "`-- >8 --`" (scissors and perforation),
+followed by the patch with unnecessary header fields removed:
+
+------------
+...
+> So we should do such-and-such.
+
+Makes sense to me.  How about this patch?
+
+-- >8 --
+Subject: [IA64] Put ia64 config files on the Uwe Kleine-König diet
+
+arch/arm config files were slimmed down using a python script
+...
+------------
+
+When sending a patch this way, most often you are sending your own
+patch, so in addition to the "`From $SHA1 $magic_timestamp`" marker you
+should omit `From:` and `Date:` lines from the patch file.  The patch
+title is likely to be different from the subject of the discussion the
+patch is in response to, so it is likely that you would want to keep
+the Subject: line, like the example above.
+
+Checking for patch corruption
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Many mailers if not set up properly will corrupt whitespace.  Here are
+two common types of corruption:
+
+* Empty context lines that do not have _any_ whitespace.
+
+* Non-empty context lines that have one extra whitespace at the
+  beginning.
+
+One way to test if your MUA is set up correctly is:
+
+* Send the patch to yourself, exactly the way you would, except
+  with To: and Cc: lines that do not contain the list and
+  maintainer address.
+
+* Save that patch to a file in UNIX mailbox format.  Call it a.patch,
+  say.
+
+* Apply it:
+
+    $ git fetch <project> master:test-apply
+    $ git checkout test-apply
+    $ git reset --hard
+    $ git am a.patch
+
+If it does not apply correctly, there can be various reasons.
+
+* The patch itself does not apply cleanly.  That is _bad_ but
+  does not have much to do with your MUA.  You might want to rebase
+  the patch with linkgit:git-rebase[1] before regenerating it in
+  this case.
+
+* The MUA corrupted your patch; "am" would complain that
+  the patch does not apply.  Look in the .git/rebase-apply/ subdirectory and
+  see what 'patch' file contains and check for the common
+  corruption patterns mentioned above.
+
+* While at it, check the 'info' and 'final-commit' files as well.
+  If what is in 'final-commit' is not exactly what you would want to
+  see in the commit log message, it is very likely that the
+  receiver would end up hand editing the log message when applying
+  your patch.  Things like "Hi, this is my first patch.\n" in the
+  patch e-mail should come after the three-dash line that signals
+  the end of the commit message.
+
+MUA-SPECIFIC HINTS
+------------------
+Here are some hints on how to successfully submit patches inline using
+various mailers.
+
+GMail
+~~~~~
+GMail does not have any way to turn off line wrapping in the web
+interface, so it will mangle any emails that you send.  You can however
+use "git send-email" and send your patches through the GMail SMTP server, or
+use any IMAP email client to connect to the google IMAP server and forward
+the emails through that.
+
+For hints on using 'git send-email' to send your patches through the
+GMail SMTP server, see the EXAMPLE section of linkgit:git-send-email[1].
+
+For hints on submission using the IMAP interface, see the EXAMPLE
+section of linkgit:git-imap-send[1].
+
+Thunderbird
+~~~~~~~~~~~
+By default, Thunderbird will both wrap emails as well as flag
+them as being 'format=flowed', both of which will make the
+resulting email unusable by git.
+
+There are three different approaches: use an add-on to turn off line wraps,
+configure Thunderbird to not mangle patches, or use
+an external editor to keep Thunderbird from mangling the patches.
+
+Approach #1 (add-on)
+^^^^^^^^^^^^^^^^^^^^
+
+Install the Toggle Word Wrap add-on that is available from
+https://addons.mozilla.org/thunderbird/addon/toggle-word-wrap/
+It adds a menu entry "Enable Word Wrap" in the composer's "Options" menu
+that you can tick off. Now you can compose the message as you otherwise do
+(cut + paste, 'git format-patch' | 'git imap-send', etc), but you have to
+insert line breaks manually in any text that you type.
+
+Approach #2 (configuration)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Three steps:
+
+1. Configure your mail server composition as plain text:
+   Edit...Account Settings...Composition & Addressing,
+   uncheck "Compose Messages in HTML".
+
+2. Configure your general composition window to not wrap.
++
+In Thunderbird 2:
+Edit..Preferences..Composition, wrap plain text messages at 0
++
+In Thunderbird 3:
+Edit..Preferences..Advanced..Config Editor.  Search for
+"mail.wrap_long_lines".
+Toggle it to make sure it is set to `false`.
+
+3. Disable the use of format=flowed:
+Edit..Preferences..Advanced..Config Editor.  Search for
+"mailnews.send_plaintext_flowed".
+Toggle it to make sure it is set to `false`.
+
+After that is done, you should be able to compose email as you
+otherwise would (cut + paste, 'git format-patch' | 'git imap-send', etc),
+and the patches will not be mangled.
+
+Approach #3 (external editor)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The following Thunderbird extensions are needed:
+AboutConfig from http://aboutconfig.mozdev.org/ and
+External Editor from http://globs.org/articles.php?lng=en&pg=8
+
+1. Prepare the patch as a text file using your method of choice.
+
+2. Before opening a compose window, use Edit->Account Settings to
+   uncheck the "Compose messages in HTML format" setting in the
+   "Composition & Addressing" panel of the account to be used to
+   send the patch.
+
+3. In the main Thunderbird window, 'before' you open the compose
+   window for the patch, use Tools->about:config to set the
+   following to the indicated values:
++
+----------
+	mailnews.send_plaintext_flowed  => false
+	mailnews.wraplength             => 0
+----------
+
+4. Open a compose window and click the external editor icon.
+
+5. In the external editor window, read in the patch file and exit
+   the editor normally.
+
+Side note: it may be possible to do step 2 with
+about:config and the following settings but no one's tried yet.
+
+----------
+	mail.html_compose                       => false
+	mail.identity.default.compose_html      => false
+	mail.identity.id?.compose_html          => false
+----------
+
+There is a script in contrib/thunderbird-patch-inline which can help
+you include patches with Thunderbird in an easy way. To use it, do the
+steps above and then use the script as the external editor.
+
+KMail
+~~~~~
+This should help you to submit patches inline using KMail.
+
+1. Prepare the patch as a text file.
+
+2. Click on New Mail.
+
+3. Go under "Options" in the Composer window and be sure that
+   "Word wrap" is not set.
+
+4. Use Message -> Insert file... and insert the patch.
+
+5. Back in the compose window: add whatever other text you wish to the
+   message, complete the addressing and subject fields, and press send.
 
 
 EXAMPLES
 --------
 
-git-format-patch -k --stdout R1..R2 | git-am -3 -k::
-	Extract commits between revisions R1 and R2, and apply
-	them on top of the current branch using `git-am` to
-	cherry-pick them.
+* Extract commits between revisions R1 and R2, and apply them on top of
+the current branch using 'git am' to cherry-pick them:
++
+------------
+$ git format-patch -k --stdout R1..R2 | git am -3 -k
+------------
 
-git-format-patch origin::
-	Extract commits the current branch accumulated since it
-	pulled from origin the last time in a patch form for
-	e-mail submission.
+* Extract all commits which are in the current branch but not in the
+origin branch:
++
+------------
+$ git format-patch origin
+------------
++
+For each commit a separate file is created in the current directory.
 
-git-format-patch -M -B origin::
-	The same as the previous one, except detect and handle
-	renames and complete rewrites intelligently to produce
-	renaming patch.  A renaming patch reduces the amount of
-	text output, and generally makes it easier to review
-	it.  Note that the "patch" program does not understand
-	renaming patch well, so use it only when you know the
-	recipient uses git to apply your patch.
+* Extract all commits that lead to 'origin' since the inception of the
+project:
++
+------------
+$ git format-patch --root origin
+------------
 
+* The same as the previous one:
++
+------------
+$ git format-patch -M -B origin
+------------
++
+Additionally, it detects and handles renames and complete rewrites
+intelligently to produce a renaming patch.  A renaming patch reduces
+the amount of text output, and generally makes it easier to review.
+Note that non-git "patch" programs won't understand renaming patches, so
+use it only when you know the recipient uses git to apply your patch.
 
-See Also
+* Extract three topmost commits from the current branch and format them
+as e-mailable patches:
++
+------------
+$ git format-patch -3
+------------
+
+SEE ALSO
 --------
-gitlink:git-am[1], gitlink:git-send-email[1]
-
-
-Author
-------
-Written by Junio C Hamano <junkio@cox.net>
-
-Documentation
---------------
-Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
+linkgit:git-am[1], linkgit:git-send-email[1]
 
 GIT
 ---
-Part of the gitlink:git[7] suite
-
+Part of the linkgit:git[1] suite

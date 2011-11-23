@@ -1,14 +1,20 @@
 #include "cache.h"
 #include "quote.h"
 #include "exec_cmd.h"
+#include "strbuf.h"
+#include "run-command.h"
+
+#define COMMAND_DIR "git-shell-commands"
+#define HELP_COMMAND COMMAND_DIR "/help"
 
 static int do_generic_cmd(const char *me, char *arg)
 {
 	const char *my_argv[4];
 
+	setup_path();
 	if (!arg || !(arg = sq_dequote(arg)))
 		die("bad argument");
-	if (strncmp(me, "git-", 4))
+	if (prefixcmp(me, "git-"))
 		die("bad command");
 
 	my_argv[0] = me + 4;
@@ -18,27 +24,162 @@ static int do_generic_cmd(const char *me, char *arg)
 	return execv_git_cmd(my_argv);
 }
 
+static int do_cvs_cmd(const char *me, char *arg)
+{
+	const char *cvsserver_argv[3] = {
+		"cvsserver", "server", NULL
+	};
+
+	if (!arg || strcmp(arg, "server"))
+		die("git-cvsserver only handles server: %s", arg);
+
+	setup_path();
+	return execv_git_cmd(cvsserver_argv);
+}
+
+static int is_valid_cmd_name(const char *cmd)
+{
+	/* Test command contains no . or / characters */
+	return cmd[strcspn(cmd, "./")] == '\0';
+}
+
+static char *make_cmd(const char *prog)
+{
+	char *prefix = xmalloc((strlen(prog) + strlen(COMMAND_DIR) + 2));
+	strcpy(prefix, COMMAND_DIR);
+	strcat(prefix, "/");
+	strcat(prefix, prog);
+	return prefix;
+}
+
+static void cd_to_homedir(void)
+{
+	const char *home = getenv("HOME");
+	if (!home)
+		die("could not determine user's home directory; HOME is unset");
+	if (chdir(home) == -1)
+		die("could not chdir to user's home directory");
+}
+
+static void run_shell(void)
+{
+	int done = 0;
+	static const char *help_argv[] = { HELP_COMMAND, NULL };
+	/* Print help if enabled */
+	run_command_v_opt(help_argv, RUN_SILENT_EXEC_FAILURE);
+
+	do {
+		struct strbuf line = STRBUF_INIT;
+		const char *prog;
+		char *full_cmd;
+		char *rawargs;
+		char *split_args;
+		const char **argv;
+		int code;
+		int count;
+
+		fprintf(stderr, "git> ");
+		if (strbuf_getline(&line, stdin, '\n') == EOF) {
+			fprintf(stderr, "\n");
+			strbuf_release(&line);
+			break;
+		}
+		strbuf_trim(&line);
+		rawargs = strbuf_detach(&line, NULL);
+		split_args = xstrdup(rawargs);
+		count = split_cmdline(split_args, &argv);
+		if (count < 0) {
+			fprintf(stderr, "invalid command format '%s': %s\n", rawargs,
+				split_cmdline_strerror(count));
+			free(split_args);
+			free(rawargs);
+			continue;
+		}
+
+		prog = argv[0];
+		if (!strcmp(prog, "")) {
+		} else if (!strcmp(prog, "quit") || !strcmp(prog, "logout") ||
+			   !strcmp(prog, "exit") || !strcmp(prog, "bye")) {
+			done = 1;
+		} else if (is_valid_cmd_name(prog)) {
+			full_cmd = make_cmd(prog);
+			argv[0] = full_cmd;
+			code = run_command_v_opt(argv, RUN_SILENT_EXEC_FAILURE);
+			if (code == -1 && errno == ENOENT) {
+				fprintf(stderr, "unrecognized command '%s'\n", prog);
+			}
+			free(full_cmd);
+		} else {
+			fprintf(stderr, "invalid command format '%s'\n", prog);
+		}
+
+		free(argv);
+		free(rawargs);
+	} while (!done);
+}
+
 static struct commands {
 	const char *name;
 	int (*exec)(const char *me, char *arg);
 } cmd_list[] = {
 	{ "git-receive-pack", do_generic_cmd },
 	{ "git-upload-pack", do_generic_cmd },
+	{ "git-upload-archive", do_generic_cmd },
+	{ "cvs", do_cvs_cmd },
 	{ NULL },
 };
 
 int main(int argc, char **argv)
 {
 	char *prog;
+	const char **user_argv;
 	struct commands *cmd;
+	int devnull_fd;
+	int count;
 
-	/* We want to see "-c cmd args", and nothing else */
-	if (argc != 3 || strcmp(argv[1], "-c"))
-		die("What do you think I am? A shell?");
+	git_extract_argv0_path(argv[0]);
 
-	prog = argv[2];
-	argv += 2;
-	argc -= 2;
+	/*
+	 * Always open file descriptors 0/1/2 to avoid clobbering files
+	 * in die().  It also avoids not messing up when the pipes are
+	 * dup'ed onto stdin/stdout/stderr in the child processes we spawn.
+	 */
+	devnull_fd = open("/dev/null", O_RDWR);
+	while (devnull_fd >= 0 && devnull_fd <= 2)
+		devnull_fd = dup(devnull_fd);
+	if (devnull_fd == -1)
+		die_errno("opening /dev/null failed");
+	close (devnull_fd);
+
+	/*
+	 * Special hack to pretend to be a CVS server
+	 */
+	if (argc == 2 && !strcmp(argv[1], "cvs server")) {
+		argv--;
+	} else if (argc == 1) {
+		/* Allow the user to run an interactive shell */
+		cd_to_homedir();
+		if (access(COMMAND_DIR, R_OK | X_OK) == -1) {
+			die("Interactive git shell is not enabled.\n"
+			    "hint: ~/" COMMAND_DIR " should exist "
+			    "and have read and execute access.");
+		}
+		run_shell();
+		exit(0);
+	} else if (argc != 3 || strcmp(argv[1], "-c")) {
+		/*
+		 * We do not accept any other modes except "-c" followed by
+		 * "cmd arg", where "cmd" is a very limited subset of git
+		 * commands or a command in the COMMAND_DIR
+		 */
+		die("Run with no arguments or with -c cmd");
+	}
+
+	prog = xstrdup(argv[2]);
+	if (!strncmp(prog, "git", 3) && isspace(prog[3]))
+		/* Accept "git foo" as if the caller said "git-foo". */
+		prog[3] = '-';
+
 	for (cmd = cmd_list ; cmd->name ; cmd++) {
 		int len = strlen(cmd->name);
 		char *arg;
@@ -57,5 +198,21 @@ int main(int argc, char **argv)
 		}
 		exit(cmd->exec(cmd->name, arg));
 	}
-	die("unrecognized command '%s'", prog);
+
+	cd_to_homedir();
+	count = split_cmdline(prog, &user_argv);
+	if (count >= 0) {
+		if (is_valid_cmd_name(user_argv[0])) {
+			prog = make_cmd(user_argv[0]);
+			user_argv[0] = prog;
+			execv(user_argv[0], (char *const *) user_argv);
+		}
+		free(prog);
+		free(user_argv);
+		die("unrecognized command '%s'", argv[2]);
+	} else {
+		free(prog);
+		die("invalid command format '%s': %s", argv[2],
+		    split_cmdline_strerror(count));
+	}
 }

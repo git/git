@@ -1,0 +1,52 @@
+hash API
+========
+
+The hash API is a collection of simple hash table functions. Users are expected
+to implement their own hashing.
+
+Data Structures
+---------------
+
+`struct hash_table`::
+
+	The hash table structure. The `array` member points to the hash table
+	entries. The `size` member counts the total number of valid and invalid
+	entries in the table. The `nr` member keeps track of the number of
+	valid entries.
+
+`struct hash_table_entry`::
+
+	An opaque structure representing an entry in the hash table. The `hash`
+	member is the entry's hash key and the `ptr` member is the entry's
+	value.
+
+Functions
+---------
+
+`init_hash`::
+
+	Initialize the hash table.
+
+`free_hash`::
+
+	Release memory associated with the hash table.
+
+`insert_hash`::
+
+	Insert a pointer into the hash table. If an entry with that hash
+	already exists, a pointer to the existing entry's value is returned.
+	Otherwise NULL is returned.  This allows callers to implement
+	chaining, etc.
+
+`lookup_hash`::
+
+	Lookup an entry in the hash table. If an entry with that hash exists
+	the entry's value is returned. Otherwise NULL is returned.
+
+`for_each_hash`::
+
+	Call a function for each entry in the hash table. The function is
+	expected to take the entry's value as its only argument and return an
+	int. If the function returns a negative int the loop is aborted
+	immediately.  Otherwise, the return value is accumulated and the sum
+	returned upon completion of the loop.

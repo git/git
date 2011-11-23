@@ -1,0 +1,69 @@
+#
+# This list is used by git-shortlog to fix a few botched name translations
+# in the git archive, either because the author's full name was messed up
+# and/or not always written the same way, making contributions from the
+# same person appearing not to be so.
+#
+
+Alex Bennée <kernel-hacker@bennee.com>
+Alexander Gavrilov <angavrilov@gmail.com>
+Aneesh Kumar K.V <aneesh.kumar@gmail.com>
+Brian M. Carlson <sandals@crustytoothpaste.ath.cx>
+Chris Shoemaker <c.shoemaker@cox.net>
+Dana L. How <danahow@gmail.com>
+Dana L. How <how@deathvalley.cswitch.com>
+Daniel Barkalow <barkalow@iabervon.org>
+David D. Kilzer <ddkilzer@kilzer.net>
+David Kågedal <davidk@lysator.liu.se>
+David S. Miller <davem@davemloft.net>
+Deskin Miller <deskinm@umich.edu>
+Dirk Süsserott <newsletter@dirk.my1.cc>
+Fredrik Kuivinen <freku045@student.liu.se>
+H. Peter Anvin <hpa@bonde.sc.orionmulti.com>
+H. Peter Anvin <hpa@tazenda.sc.orionmulti.com>
+H. Peter Anvin <hpa@trantor.hos.anvin.org>
+Horst H. von Brand <vonbrand@inf.utfsm.cl>
+İsmail Dönmez <ismail@pardus.org.tr>
+Jay Soffian <jaysoffian+git@gmail.com>
+Joachim Berdal Haga <cjhaga@fys.uio.no>
+Jon Loeliger <jdl@freescale.com>
+Jon Seymour <jon@blackcubes.dyndns.org>
+Jonathan Nieder <jrnieder@uchicago.edu>
+Junio C Hamano <junio@twinsun.com>
+Karl Hasselström <kha@treskal.com>
+Kent Engstrom <kent@lysator.liu.se>
+Lars Doelle <lars.doelle@on-line ! de>
+Lars Doelle <lars.doelle@on-line.de>
+Li Hong <leehong@pku.edu.cn>
+Lukas Sandström <lukass@etek.chalmers.se>
+Martin Langhoff <martin@laptop.org>
+Michael Coleman <tutufan@gmail.com>
+Michael J Gruber <git@drmicha.warpmail.net> <michaeljgruber+gmane@fastmail.fm>
+Michael W. Olson <mwolson@gnu.org>
+Michele Ballabio <barra_cuda@katamail.com>
+Nanako Shiraishi <nanako3@bluebottle.com>
+Nanako Shiraishi <nanako3@lavabit.com>
+Nguyễn Thái Ngọc Duy <pclouds@gmail.com>
+<nico@fluxnic.net> <nico@cam.org>
+Philippe Bruhat <book@cpan.org>
+Ramsay Allan Jones <ramsay@ramsay1.demon.co.uk>
+René Scharfe <rene.scharfe@lsrfire.ath.cx>
+Robert Fitzsimons <robfitz@273k.net>
+Sam Vilain <sam@vilain.net>
+Santi Béjar <sbejar@gmail.com>
+Sean Estabrooks <seanlkml@sympatico.ca>
+Shawn O. Pearce <spearce@spearce.org>
+Steven Grimm <koreth@midwinter.com>
+Theodore Ts'o <tytso@mit.edu>
+Tony Luck <tony.luck@intel.com>
+Uwe Kleine-König <Uwe_Zeisberger@digi.com>
+Uwe Kleine-König <Uwe.Kleine-Koenig@digi.com>
+Uwe Kleine-König <ukleinek@informatik.uni-freiburg.de>
+Uwe Kleine-König <uzeisberger@io.fsforth.de>
+Uwe Kleine-König <zeisberg@informatik.uni-freiburg.de>
+Ville Skyttä <scop@xemacs.org>
+Vitaly "_Vi" Shukela <public_vi@tut.by>
+William Pursell <bill.pursell@gmail.com>
+YOSHIFUJI Hideaki <yoshfuji@linux-ipv6.org>
+anonymous <linux@horizon.com>
+anonymous <linux@horizon.net>

@@ -2,19 +2,20 @@
 
 EMACS = emacs
 
-ELC = git.elc vc-git.elc
-INSTALL = install
+ELC = git.elc git-blame.elc
+INSTALL ?= install
 INSTALL_ELC = $(INSTALL) -m 644
-prefix = $(HOME)
+prefix ?= $(HOME)
 emacsdir = $(prefix)/share/emacs/site-lisp
+RM ?= rm -f
 
 all: $(ELC)
 
 install: all
-	$(INSTALL) -d $(emacsdir)
-	$(INSTALL_ELC) $(ELC) $(emacsdir)
+	$(INSTALL) -d $(DESTDIR)$(emacsdir)
+	$(INSTALL_ELC) $(ELC:.elc=.el) $(ELC) $(DESTDIR)$(emacsdir)
 
 %.elc: %.el
-	$(EMACS) --batch --eval '(byte-compile-file "$<")'
+	$(EMACS) -batch -f batch-byte-compile $<
 
-clean:; rm -f $(ELC)
+clean:; $(RM) $(ELC)

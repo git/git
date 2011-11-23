@@ -8,19 +8,25 @@
 #### Copyright The Open University UK - 2006.
 ####
 #### Authors: Martyn Smith    <martyn@catalyst.net.nz>
-####          Martin Langhoff <martin@catalyst.net.nz>
+####          Martin Langhoff <martin@laptop.org>
 ####
 ####
 #### Released under the GNU Public License, version 2.
 ####
 ####
 
+use 5.008;
 use strict;
 use warnings;
+use bytes;
 
 use Fcntl;
 use File::Temp qw/tempdir tempfile/;
+use File::Path qw/rmtree/;
 use File::Basename;
+use Getopt::Long qw(:config require_order no_ignore_case);
+
+my $VERSION = '@@GIT_VERSION@@';
 
 my $log = GITCVS::log->new();
 my $cfg;
@@ -69,8 +75,9 @@ my $methods = {
     'status'          => \&req_status,
     'admin'           => \&req_CATCHALL,
     'history'         => \&req_CATCHALL,
-    'watchers'        => \&req_CATCHALL,
-    'editors'         => \&req_CATCHALL,
+    'watchers'        => \&req_EMPTY,
+    'editors'         => \&req_EMPTY,
+    'noop'            => \&req_EMPTY,
     'annotate'        => \&req_annotate,
     'Global_option'   => \&req_Globaloption,
     #'annotate'        => \&req_CATCHALL,
@@ -81,34 +88,160 @@ my $methods = {
 
 # $state holds all the bits of information the clients sends us that could
 # potentially be useful when it comes to actually _doing_ something.
-my $state = {};
+my $state = { prependdir => '' };
+
+# Work is for managing temporary working directory
+my $work =
+    {
+        state => undef,  # undef, 1 (empty), 2 (with stuff)
+        workDir => undef,
+        index => undef,
+        emptyDir => undef,
+        tmpDir => undef
+    };
+
 $log->info("--------------- STARTING -----------------");
+
+my $usage =
+    "Usage: git cvsserver [options] [pserver|server] [<directory> ...]\n".
+    "    --base-path <path>  : Prepend to requested CVSROOT\n".
+    "                          Can be read from GIT_CVSSERVER_BASE_PATH\n".
+    "    --strict-paths      : Don't allow recursing into subdirectories\n".
+    "    --export-all        : Don't check for gitcvs.enabled in config\n".
+    "    --version, -V       : Print version information and exit\n".
+    "    --help, -h, -H      : Print usage information and exit\n".
+    "\n".
+    "<directory> ... is a list of allowed directories. If no directories\n".
+    "are given, all are allowed. This is an additional restriction, gitcvs\n".
+    "access still needs to be enabled by the gitcvs.enabled config option.\n".
+    "Alternately, one directory may be specified in GIT_CVSSERVER_ROOT.\n";
+
+my @opts = ( 'help|h|H', 'version|V',
+	     'base-path=s', 'strict-paths', 'export-all' );
+GetOptions( $state, @opts )
+    or die $usage;
+
+if ($state->{version}) {
+    print "git-cvsserver version $VERSION\n";
+    exit;
+}
+if ($state->{help}) {
+    print $usage;
+    exit;
+}
 
 my $TEMP_DIR = tempdir( CLEANUP => 1 );
 $log->debug("Temporary directory is '$TEMP_DIR'");
 
+$state->{method} = 'ext';
+if (@ARGV) {
+    if ($ARGV[0] eq 'pserver') {
+	$state->{method} = 'pserver';
+	shift @ARGV;
+    } elsif ($ARGV[0] eq 'server') {
+	shift @ARGV;
+    }
+}
+
+# everything else is a directory
+$state->{allowed_roots} = [ @ARGV ];
+
+# don't export the whole system unless the users requests it
+if ($state->{'export-all'} && !@{$state->{allowed_roots}}) {
+    die "--export-all can only be used together with an explicit whitelist\n";
+}
+
+# Environment handling for running under git-shell
+if (exists $ENV{GIT_CVSSERVER_BASE_PATH}) {
+    if ($state->{'base-path'}) {
+	die "Cannot specify base path both ways.\n";
+    }
+    my $base_path = $ENV{GIT_CVSSERVER_BASE_PATH};
+    $state->{'base-path'} = $base_path;
+    $log->debug("Picked up base path '$base_path' from environment.\n");
+}
+if (exists $ENV{GIT_CVSSERVER_ROOT}) {
+    if (@{$state->{allowed_roots}}) {
+	die "Cannot specify roots both ways: @ARGV\n";
+    }
+    my $allowed_root = $ENV{GIT_CVSSERVER_ROOT};
+    $state->{allowed_roots} = [ $allowed_root ];
+    $log->debug("Picked up allowed root '$allowed_root' from environment.\n");
+}
+
 # if we are called with a pserver argument,
-# deal with the authentication cat before entereing the
+# deal with the authentication cat before entering the
 # main loop
-if (@ARGV && $ARGV[0] eq 'pserver') {
+if ($state->{method} eq 'pserver') {
     my $line = <STDIN>; chomp $line;
-    unless( $line eq 'BEGIN AUTH REQUEST') {
+    unless( $line =~ /^BEGIN (AUTH|VERIFICATION) REQUEST$/) {
        die "E Do not understand $line - expecting BEGIN AUTH REQUEST\n";
     }
+    my $request = $1;
     $line = <STDIN>; chomp $line;
-    req_Root('root', $line) # reuse Root
-       or die "E Invalid root $line \n";
-    $line = <STDIN>; chomp $line;
-    unless ($line eq 'anonymous') {
-       print "E Only anonymous user allowed via pserver\n";
-       print "I HATE YOU\n";
+    unless (req_Root('root', $line)) { # reuse Root
+       print "E Invalid root $line \n";
+       exit 1;
     }
-    $line = <STDIN>; chomp $line;    # validate the password?
     $line = <STDIN>; chomp $line;
-    unless ($line eq 'END AUTH REQUEST') {
-       die "E Do not understand $line -- expecting END AUTH REQUEST\n";
+    my $user = $line;
+    $line = <STDIN>; chomp $line;
+    my $password = $line;
+
+    if ($user eq 'anonymous') {
+        # "A" will be 1 byte, use length instead in case the
+        # encryption method ever changes (yeah, right!)
+        if (length($password) > 1 ) {
+            print "E Don't supply a password for the `anonymous' user\n";
+            print "I HATE YOU\n";
+            exit 1;
+        }
+
+        # Fall through to LOVE
+    } else {
+        # Trying to authenticate a user
+        if (not exists $cfg->{gitcvs}->{authdb}) {
+            print "E the repo config file needs a [gitcvs] section with an 'authdb' parameter set to the filename of the authentication database\n";
+            print "I HATE YOU\n";
+            exit 1;
+        }
+
+        my $authdb = $cfg->{gitcvs}->{authdb};
+
+        unless (-e $authdb) {
+            print "E The authentication database specified in [gitcvs.authdb] does not exist\n";
+            print "I HATE YOU\n";
+            exit 1;
+        }
+
+        my $auth_ok;
+        open my $passwd, "<", $authdb or die $!;
+        while (<$passwd>) {
+            if (m{^\Q$user\E:(.*)}) {
+                if (crypt($user, descramble($password)) eq $1) {
+                    $auth_ok = 1;
+                }
+            };
+        }
+        close $passwd;
+
+        unless ($auth_ok) {
+            print "I HATE YOU\n";
+            exit 1;
+        }
+
+        # Fall through to LOVE
+    }
+
+    # For checking whether the user is anonymous on commit
+    $state->{user} = $user;
+
+    $line = <STDIN>; chomp $line;
+    unless ($line eq "END $request REQUEST") {
+       die "E Do not understand $line -- expecting END $request REQUEST\n";
     }
     print "I LOVE YOU\n";
+    exit if $request eq 'VERIFICATION'; # cvs login
     # and now back to our regular programme...
 }
 
@@ -117,7 +250,7 @@ while (<STDIN>)
 {
     chomp;
 
-    # Check to see if we've seen this method, and call appropiate function.
+    # Check to see if we've seen this method, and call appropriate function.
     if ( /^([\w-]+)(?:\s+(.*))?$/ and defined($methods->{$1}) )
     {
         # use the $methods hash to call the appropriate sub for this command
@@ -136,6 +269,9 @@ while (<STDIN>)
 $log->debug("Processing time : user=" . (times)[0] . " system=" . (times)[1]);
 $log->info("--------------- FINISH -----------------");
 
+chdir '/';
+exit 0;
+
 # Magic catchall method.
 #    This is the method that will handle all commands we haven't yet
 #    implemented. It simply sends a warning to the log file indicating a
@@ -146,6 +282,11 @@ sub req_CATCHALL
     $log->warn("Unhandled command : req_$cmd : $data");
 }
 
+# This method invariably succeeds with an empty response.
+sub req_EMPTY
+{
+    print "ok\n";
+}
 
 # Root pathname \n
 #     Response expected: no. Tell the server which CVSROOT to use. Note that
@@ -161,31 +302,77 @@ sub req_Root
     my ( $cmd, $data ) = @_;
     $log->debug("req_Root : $data");
 
-    $state->{CVSROOT} = $data;
+    unless ($data =~ m#^/#) {
+	print "error 1 Root must be an absolute pathname\n";
+	return 0;
+    }
+
+    my $cvsroot = $state->{'base-path'} || '';
+    $cvsroot =~ s#/+$##;
+    $cvsroot .= $data;
+
+    if ($state->{CVSROOT}
+	&& ($state->{CVSROOT} ne $cvsroot)) {
+	print "error 1 Conflicting roots specified\n";
+	return 0;
+    }
+
+    $state->{CVSROOT} = $cvsroot;
 
     $ENV{GIT_DIR} = $state->{CVSROOT} . "/";
+
+    if (@{$state->{allowed_roots}}) {
+	my $allowed = 0;
+	foreach my $dir (@{$state->{allowed_roots}}) {
+	    next unless $dir =~ m#^/#;
+	    $dir =~ s#/+$##;
+	    if ($state->{'strict-paths'}) {
+		if ($ENV{GIT_DIR} =~ m#^\Q$dir\E/?$#) {
+		    $allowed = 1;
+		    last;
+		}
+	    } elsif ($ENV{GIT_DIR} =~ m#^\Q$dir\E(/?$|/)#) {
+		$allowed = 1;
+		last;
+	    }
+	}
+
+	unless ($allowed) {
+	    print "E $ENV{GIT_DIR} does not seem to be a valid GIT repository\n";
+	    print "E \n";
+	    print "error 1 $ENV{GIT_DIR} is not a valid repository\n";
+	    return 0;
+	}
+    }
+
     unless (-d $ENV{GIT_DIR} && -e $ENV{GIT_DIR}.'HEAD') {
        print "E $ENV{GIT_DIR} does not seem to be a valid GIT repository\n";
-        print "E \n";
-        print "error 1 $ENV{GIT_DIR} is not a valid repository\n";
+       print "E \n";
+       print "error 1 $ENV{GIT_DIR} is not a valid repository\n";
        return 0;
     }
 
-    my @gitvars = `git-var -l`;
+    my @gitvars = `git config -l`;
     if ($?) {
-       print "E problems executing git-var on the server -- this is not a git repository or the PATH is not set correcly.\n";
+       print "E problems executing git-config on the server -- this is not a git repository or the PATH is not set correctly.\n";
         print "E \n";
-        print "error 1 - problem executing git-var\n";
+        print "error 1 - problem executing git-config\n";
        return 0;
     }
     foreach my $line ( @gitvars )
     {
-        next unless ( $line =~ /^(.*?)\.(.*?)=(.*)$/ );
-        $cfg->{$1}{$2} = $3;
+        next unless ( $line =~ /^(gitcvs)\.(?:(ext|pserver)\.)?([\w-]+)=(.*)$/ );
+        unless ($2) {
+            $cfg->{$1}{$3} = $4;
+        } else {
+            $cfg->{$1}{$2}{$3} = $4;
+        }
     }
 
-    unless ( defined ( $cfg->{gitcvs}{enabled} ) and $cfg->{gitcvs}{enabled} =~ /^\s*(1|true|yes)\s*$/i )
-    {
+    my $enabled = ($cfg->{gitcvs}{$state->{method}}{enabled}
+		   || $cfg->{gitcvs}{enabled});
+    unless ($state->{'export-all'} ||
+	    ($enabled && $enabled =~ /^\s*(1|true|yes)\s*$/i)) {
         print "E GITCVS emulation needs to be enabled on this repo\n";
         print "E the repo config file needs a [gitcvs] section added, and the parameter 'enabled' set to 1\n";
         print "E \n";
@@ -193,9 +380,10 @@ sub req_Root
         return 0;
     }
 
-    if ( defined ( $cfg->{gitcvs}{logfile} ) )
+    my $logfile = $cfg->{gitcvs}{$state->{method}}{logfile} || $cfg->{gitcvs}{logfile};
+    if ( $logfile )
     {
-        $log->setfile($cfg->{gitcvs}{logfile});
+        $log->setfile($logfile);
     } else {
         $log->nofile();
     }
@@ -214,8 +402,7 @@ sub req_Globaloption
 {
     my ( $cmd, $data ) = @_;
     $log->debug("req_Globaloption : $data");
-
-    # TODO : is this data useful ???
+    $state->{globaloptions}{$data} = 1;
 }
 
 # Valid-responses request-list \n
@@ -224,7 +411,7 @@ sub req_Globaloption
 sub req_Validresponses
 {
     my ( $cmd, $data ) = @_;
-    $log->debug("req_Validrepsonses : $data");
+    $log->debug("req_Validresponses : $data");
 
     # TODO : re-enable this, currently it's not particularly useful
     #$state->{validresponses} = [ split /\s+/, $data ];
@@ -267,12 +454,32 @@ sub req_Directory
 
     $state->{localdir} = $data;
     $state->{repository} = $repository;
-    $state->{directory} = $repository;
-    $state->{directory} =~ s/^$state->{CVSROOT}\///;
-    $state->{module} = $1 if ($state->{directory} =~ s/^(.*?)(\/|$)//);
+    $state->{path} = $repository;
+    $state->{path} =~ s/^\Q$state->{CVSROOT}\E\///;
+    $state->{module} = $1 if ($state->{path} =~ s/^(.*?)(\/|$)//);
+    $state->{path} .= "/" if ( $state->{path} =~ /\S/ );
+
+    $state->{directory} = $state->{localdir};
+    $state->{directory} = "" if ( $state->{directory} eq "." );
     $state->{directory} .= "/" if ( $state->{directory} =~ /\S/ );
 
-    $log->debug("req_Directory : localdir=$data repository=$repository directory=$state->{directory} module=$state->{module}");
+    if ( (not defined($state->{prependdir}) or $state->{prependdir} eq '') and $state->{localdir} eq "." and $state->{path} =~ /\S/ )
+    {
+        $log->info("Setting prepend to '$state->{path}'");
+        $state->{prependdir} = $state->{path};
+        foreach my $entry ( keys %{$state->{entries}} )
+        {
+            $state->{entries}{$state->{prependdir} . $entry} = $state->{entries}{$entry};
+            delete $state->{entries}{$entry};
+        }
+    }
+
+    if ( defined ( $state->{prependdir} ) )
+    {
+        $log->debug("Prepending '$state->{prependdir}' to state|directory");
+        $state->{directory} = $state->{prependdir} . $state->{directory}
+    }
+    $log->debug("req_Directory : localdir=$data repository=$repository path=$state->{path} directory=$state->{directory} module=$state->{module}");
 }
 
 # Entry entry-line \n
@@ -290,7 +497,7 @@ sub req_Entry
 {
     my ( $cmd, $data ) = @_;
 
-    $log->debug("req_Entry : $data");
+    #$log->debug("req_Entry : $data");
 
     my @data = split(/\//, $data);
 
@@ -300,6 +507,22 @@ sub req_Entry
         options     => $data[4],
         tag_or_date => $data[5],
     };
+
+    $log->info("Received entry line '$data' => '" . $state->{directory} . $data[1] . "'");
+}
+
+# Questionable filename \n
+#     Response expected: no. Additional data: no. Tell the server to check
+#     whether filename should be ignored, and if not, next time the server
+#     sends responses, send (in a M response) `?' followed by the directory and
+#     filename. filename must not contain `/'; it needs to be a file in the
+#     directory named by the most recent Directory request.
+sub req_Questionable
+{
+    my ( $cmd, $data ) = @_;
+
+    $log->debug("req_Questionable : $data");
+    $state->{entries}{$state->{directory}.$data}{questionable} = 1;
 }
 
 # add \n
@@ -314,11 +537,51 @@ sub req_add
 
     argsplit("add");
 
+    my $updater = GITCVS::updater->new($state->{CVSROOT}, $state->{module}, $log);
+    $updater->update();
+
+    argsfromdir($updater);
+
     my $addcount = 0;
 
     foreach my $filename ( @{$state->{args}} )
     {
         $filename = filecleanup($filename);
+
+        my $meta = $updater->getmeta($filename);
+        my $wrev = revparse($filename);
+
+        if ($wrev && $meta && ($wrev < 0))
+        {
+            # previously removed file, add back
+            $log->info("added file $filename was previously removed, send 1.$meta->{revision}");
+
+            print "MT +updated\n";
+            print "MT text U \n";
+            print "MT fname $filename\n";
+            print "MT newline\n";
+            print "MT -updated\n";
+
+            unless ( $state->{globaloptions}{-n} )
+            {
+                my ( $filepart, $dirpart ) = filenamesplit($filename,1);
+
+                print "Created $dirpart\n";
+                print $state->{CVSROOT} . "/$state->{module}/$filename\n";
+
+                # this is an "entries" line
+                my $kopts = kopts_from_path($filename,"sha1",$meta->{filehash});
+                $log->debug("/$filepart/1.$meta->{revision}//$kopts/");
+                print "/$filepart/1.$meta->{revision}//$kopts/\n";
+                # permissions
+                $log->debug("SEND : u=$meta->{mode},g=$meta->{mode},o=$meta->{mode}");
+                print "u=$meta->{mode},g=$meta->{mode},o=$meta->{mode}\n";
+                # transmit file
+                transmitfile($meta->{filehash});
+            }
+
+            next;
+        }
 
         unless ( defined ( $state->{entries}{$filename}{modified_filename} ) )
         {
@@ -332,14 +595,31 @@ sub req_add
             next;
         }
 
-
-        my ( $filepart, $dirpart ) = filenamesplit($filename);
+        my ( $filepart, $dirpart ) = filenamesplit($filename, 1);
 
         print "E cvs add: scheduling file `$filename' for addition\n";
 
         print "Checked-in $dirpart\n";
         print "$filename\n";
-        print "/$filepart/0///\n";
+        my $kopts = kopts_from_path($filename,"file",
+                        $state->{entries}{$filename}{modified_filename});
+        print "/$filepart/0//$kopts/\n";
+
+        my $requestedKopts = $state->{opt}{k};
+        if(defined($requestedKopts))
+        {
+            $requestedKopts = "-k$requestedKopts";
+        }
+        else
+        {
+            $requestedKopts = "";
+        }
+        if( $kopts ne $requestedKopts )
+        {
+            $log->warn("Ignoring requested -k='$requestedKopts'"
+                        . " for '$filename'; detected -k='$kopts' instead");
+            #TODO: Also have option to send warning to user?
+        }
 
         $addcount++;
     }
@@ -414,13 +694,14 @@ sub req_remove
         }
 
 
-        my ( $filepart, $dirpart ) = filenamesplit($filename);
+        my ( $filepart, $dirpart ) = filenamesplit($filename, 1);
 
         print "E cvs remove: scheduling `$filename' for removal\n";
 
         print "Checked-in $dirpart\n";
         print "$filename\n";
-        print "/$filepart/-1.$wrev///\n";
+        my $kopts = kopts_from_path($filename,"sha1",$meta->{filehash});
+        print "/$filepart/-1.$wrev//$kopts/\n";
 
         $rmcount++;
     }
@@ -449,8 +730,12 @@ sub req_Modified
     my ( $cmd, $data ) = @_;
 
     my $mode = <STDIN>;
+    defined $mode
+        or (print "E end of file reading mode for $data\n"), return;
     chomp $mode;
     my $size = <STDIN>;
+    defined $size
+        or (print "E end of file reading size of $data\n"), return;
     chomp $size;
 
     # Grab config information
@@ -470,7 +755,8 @@ sub req_Modified
         $bytesleft -= $blocksize;
     }
 
-    close $fh;
+    close $fh
+        or (print "E failed to write temporary, $filename: $!\n"), return;
 
     # Ensure we have something sensible for the file mode
     if ( $mode =~ /u=(\w+)/ )
@@ -483,7 +769,7 @@ sub req_Modified
     # Save the file data in $state
     $state->{entries}{$state->{directory}.$data}{modified_filename} = $filename;
     $state->{entries}{$state->{directory}.$data}{modified_mode} = $mode;
-    $state->{entries}{$state->{directory}.$data}{modified_hash} = `git-hash-object $filename`;
+    $state->{entries}{$state->{directory}.$data}{modified_hash} = `git hash-object $filename`;
     $state->{entries}{$state->{directory}.$data}{modified_hash} =~ s/\s.*$//s;
 
     #$log->debug("req_Modified : file=$data mode=$mode size=$size");
@@ -502,22 +788,6 @@ sub req_Unchanged
     #$log->debug("req_Unchanged : $data");
 }
 
-# Questionable filename \n
-#     Response expected: no. Additional data: no.
-#     Tell the server to check whether filename should be ignored,
-#     and if not, next time the server sends responses, send (in
-#     a M response) `?' followed by the directory and filename.
-#     filename must not contain `/'; it needs to be a file in the
-#     directory named by the most recent Directory request.
-sub req_Questionable
-{
-    my ( $cmd, $data ) = @_;
-
-    $state->{entries}{$state->{directory}.$data}{questionable} = 1;
-
-    #$log->debug("req_Questionable : $data");
-}
-
 # Argument text \n
 #     Response expected: no. Save argument for use in a subsequent command.
 #     Arguments accumulate until an argument-using command is given, at which
@@ -529,12 +799,15 @@ sub req_Argument
 {
     my ( $cmd, $data ) = @_;
 
-    # TODO :  Not quite sure how Argument and Argumentx differ, but I assume
-    # it's for multi-line arguments ... somehow ...
+    # Argumentx means: append to last Argument (with a newline in front)
 
     $log->debug("$cmd : $data");
 
-    push @{$state->{arguments}}, $data;
+    if ( $cmd eq 'Argumentx') {
+        ${$state->{arguments}}[$#{$state->{arguments}}] .= "\n" . $data;
+    } else {
+        push @{$state->{arguments}}, $data;
+    }
 }
 
 # expand-modules \n
@@ -596,7 +869,20 @@ sub req_co
 
     argsplit("co");
 
+    # Provide list of modules, if -c was used.
+    if (exists $state->{opt}{c}) {
+        my $showref = `git show-ref --heads`;
+        for my $line (split '\n', $showref) {
+            if ( $line =~ m% refs/heads/(.*)$% ) {
+                print "M $1\t$1\n";
+            }
+        }
+        print "ok\n";
+        return 1;
+    }
+
     my $module = $state->{args}[0];
+    $state->{module} = $module;
     my $checkout_path = $module;
 
     # use the user specified directory if we're given it
@@ -674,6 +960,7 @@ sub req_co
         # Don't want to check out deleted files
         next if ( $git->{filehash} eq "deleted" );
 
+        my $fullName = $git->{name};
         ( $git->{name}, $git->{dir} ) = filenamesplit($git->{name});
 
        if (length($git->{dir}) && $git->{dir} ne './'
@@ -704,7 +991,8 @@ sub req_co
        print $state->{CVSROOT} . "/$module/" . ( defined ( $git->{dir} ) and $git->{dir} ne "./" ? $git->{dir} . "/" : "" ) . "$git->{name}\n";
 
         # this is an "entries" line
-        print "/$git->{name}/1.$git->{revision}///\n";
+        my $kopts = kopts_from_path($fullName,"sha1",$git->{filehash});
+        print "/$git->{name}/1.$git->{revision}//$kopts/\n";
         # permissions
         print "u=$git->{mode},g=$git->{mode},o=$git->{mode}\n";
 
@@ -733,22 +1021,21 @@ sub req_update
     argsplit("update");
 
     #
-    # It may just be a client exploring the available heads/modukles
+    # It may just be a client exploring the available heads/modules
     # in that case, list them as top level directories and leave it
     # at that. Eclipse uses this technique to offer you a list of
     # projects (heads in this case) to checkout.
     #
     if ($state->{module} eq '') {
+        my $showref = `git show-ref --heads`;
         print "E cvs update: Updating .\n";
-	opendir HEADS, $state->{CVSROOT} . '/refs/heads';
-	while (my $head = readdir(HEADS)) {
-	    if (-f $state->{CVSROOT} . '/refs/heads/' . $head) {
-	        print "E cvs update: New directory `$head'\n";
-	    }
-	}
-	closedir HEADS;
-	print "ok\n";
-	return 1;
+        for my $line (split '\n', $showref) {
+            if ( $line =~ m% refs/heads/(.*)$% ) {
+                print "E cvs update: New directory `$1'\n";
+            }
+        }
+        print "ok\n";
+        return 1;
     }
 
 
@@ -757,15 +1044,32 @@ sub req_update
 
     $updater->update();
 
-    # if no files were specified, we need to work out what files we should be providing status on ...
-    argsfromdir($updater) if ( scalar ( @{$state->{args}} ) == 0 );
+    argsfromdir($updater);
 
     #$log->debug("update state : " . Dumper($state));
 
-    # foreach file specified on the commandline ...
+    my $last_dirname = "///";
+
+    # foreach file specified on the command line ...
     foreach my $filename ( @{$state->{args}} )
     {
         $filename = filecleanup($filename);
+
+        $log->debug("Processing file $filename");
+
+        unless ( $state->{globaloptions}{-Q} || $state->{globaloptions}{-q} )
+        {
+            my $cur_dirname = dirname($filename);
+            if ( $cur_dirname ne $last_dirname )
+            {
+                $last_dirname = $cur_dirname;
+                if ( $cur_dirname eq "" )
+                {
+                    $cur_dirname = ".";
+                }
+                print "E cvs update: Updating $cur_dirname\n";
+            }
+        }
 
         # if we have a -C we should pretend we never saw modified stuff
         if ( exists ( $state->{opt}{C} ) )
@@ -783,7 +1087,25 @@ sub req_update
             $meta = $updater->getmeta($filename);
         }
 
-        next unless ( $meta->{revision} );
+        # If -p was given, "print" the contents of the requested revision.
+        if ( exists ( $state->{opt}{p} ) ) {
+            if ( defined ( $meta->{revision} ) ) {
+                $log->info("Printing '$filename' revision " . $meta->{revision});
+
+                transmitfile($meta->{filehash}, { print => 1 });
+            }
+
+            next;
+        }
+
+	if ( ! defined $meta )
+	{
+	    $meta = {
+	        name => $filename,
+	        revision => 0,
+	        filehash => 'added'
+	    };
+	}
 
         my $oldmeta = $meta;
 
@@ -810,10 +1132,11 @@ sub req_update
         if ( defined ( $wrev )
              and defined($meta->{revision})
              and $wrev == $meta->{revision}
+             and defined($state->{entries}{$filename}{modified_hash})
              and not exists ( $state->{opt}{C} ) )
         {
             $log->info("Tell the client the file is modified");
-            print "MT text U\n";
+            print "MT text M \n";
             print "MT fname $filename\n";
             print "MT newline\n";
             next;
@@ -821,90 +1144,141 @@ sub req_update
 
         if ( $meta->{filehash} eq "deleted" )
         {
-            my ( $filepart, $dirpart ) = filenamesplit($filename);
+            my ( $filepart, $dirpart ) = filenamesplit($filename,1);
 
             $log->info("Removing '$filename' from working copy (no longer in the repo)");
 
             print "E cvs update: `$filename' is no longer in the repository\n";
-            print "Removed $dirpart\n";
-            print "$filepart\n";
+            # Don't want to actually _DO_ the update if -n specified
+            unless ( $state->{globaloptions}{-n} ) {
+		print "Removed $dirpart\n";
+		print "$filepart\n";
+	    }
         }
         elsif ( not defined ( $state->{entries}{$filename}{modified_hash} )
-		or $state->{entries}{$filename}{modified_hash} eq $oldmeta->{filehash} )
+		or $state->{entries}{$filename}{modified_hash} eq $oldmeta->{filehash}
+		or $meta->{filehash} eq 'added' )
         {
-            $log->info("Updating '$filename'");
-            # normal update, just send the new revision (either U=Update, or A=Add, or R=Remove)
-            print "MT +updated\n";
-            print "MT text U\n";
-            print "MT fname $filename\n";
-            print "MT newline\n";
-            print "MT -updated\n";
+            # normal update, just send the new revision (either U=Update,
+            # or A=Add, or R=Remove)
+	    if ( defined($wrev) && $wrev < 0 )
+	    {
+	        $log->info("Tell the client the file is scheduled for removal");
+		print "MT text R \n";
+                print "MT fname $filename\n";
+                print "MT newline\n";
+		next;
+	    }
+	    elsif ( (!defined($wrev) || $wrev == 0) && (!defined($meta->{revision}) || $meta->{revision} == 0) )
+	    {
+	        $log->info("Tell the client the file is scheduled for addition");
+		print "MT text A \n";
+                print "MT fname $filename\n";
+                print "MT newline\n";
+		next;
 
-            my ( $filepart, $dirpart ) = filenamesplit($filename);
-            $dirpart =~ s/^$state->{directory}//;
+	    }
+	    else {
+                $log->info("Updating '$filename' to ".$meta->{revision});
+                print "MT +updated\n";
+                print "MT text U \n";
+                print "MT fname $filename\n";
+                print "MT newline\n";
+		print "MT -updated\n";
+	    }
 
-            if ( defined ( $wrev ) )
-            {
-                # instruct client we're sending a file to put in this path as a replacement
-                print "Update-existing $dirpart\n";
-                $log->debug("Updating existing file 'Update-existing $dirpart'");
-            } else {
-                # instruct client we're sending a file to put in this path as a new file
-                print "Created $dirpart\n";
-                $log->debug("Creating new file 'Created $dirpart'");
-            }
-            print $state->{CVSROOT} . "/$state->{module}/$filename\n";
+            my ( $filepart, $dirpart ) = filenamesplit($filename,1);
 
-            # this is an "entries" line
-            $log->debug("/$filepart/1.$meta->{revision}///");
-            print "/$filepart/1.$meta->{revision}///\n";
+	    # Don't want to actually _DO_ the update if -n specified
+	    unless ( $state->{globaloptions}{-n} )
+	    {
+		if ( defined ( $wrev ) )
+		{
+		    # instruct client we're sending a file to put in this path as a replacement
+		    print "Update-existing $dirpart\n";
+		    $log->debug("Updating existing file 'Update-existing $dirpart'");
+		} else {
+		    # instruct client we're sending a file to put in this path as a new file
+		    print "Clear-static-directory $dirpart\n";
+		    print $state->{CVSROOT} . "/$state->{module}/$dirpart\n";
+		    print "Clear-sticky $dirpart\n";
+		    print $state->{CVSROOT} . "/$state->{module}/$dirpart\n";
 
-            # permissions
-            $log->debug("SEND : u=$meta->{mode},g=$meta->{mode},o=$meta->{mode}");
-            print "u=$meta->{mode},g=$meta->{mode},o=$meta->{mode}\n";
+		    $log->debug("Creating new file 'Created $dirpart'");
+		    print "Created $dirpart\n";
+		}
+		print $state->{CVSROOT} . "/$state->{module}/$filename\n";
 
-            # transmit file
-            transmitfile($meta->{filehash});
+		# this is an "entries" line
+		my $kopts = kopts_from_path($filename,"sha1",$meta->{filehash});
+		$log->debug("/$filepart/1.$meta->{revision}//$kopts/");
+		print "/$filepart/1.$meta->{revision}//$kopts/\n";
+
+		# permissions
+		$log->debug("SEND : u=$meta->{mode},g=$meta->{mode},o=$meta->{mode}");
+		print "u=$meta->{mode},g=$meta->{mode},o=$meta->{mode}\n";
+
+		# transmit file
+		transmitfile($meta->{filehash});
+	    }
         } else {
             $log->info("Updating '$filename'");
-            my ( $filepart, $dirpart ) = filenamesplit($meta->{name});
+            my ( $filepart, $dirpart ) = filenamesplit($meta->{name},1);
 
-            my $dir = tempdir( DIR => $TEMP_DIR, CLEANUP => 1 ) . "/";
+            my $mergeDir = setupTmpDir();
 
-            chdir $dir;
             my $file_local = $filepart . ".mine";
+            my $mergedFile = "$mergeDir/$file_local";
             system("ln","-s",$state->{entries}{$filename}{modified_filename}, $file_local);
             my $file_old = $filepart . "." . $oldmeta->{revision};
-            transmitfile($oldmeta->{filehash}, $file_old);
+            transmitfile($oldmeta->{filehash}, { targetfile => $file_old });
             my $file_new = $filepart . "." . $meta->{revision};
-            transmitfile($meta->{filehash}, $file_new);
+            transmitfile($meta->{filehash}, { targetfile => $file_new });
 
             # we need to merge with the local changes ( M=successful merge, C=conflict merge )
             $log->info("Merging $file_local, $file_old, $file_new");
+            print "M Merging differences between 1.$oldmeta->{revision} and 1.$meta->{revision} into $filename\n";
 
-            $log->debug("Temporary directory for merge is $dir");
+            $log->debug("Temporary directory for merge is $mergeDir");
 
-            my $return = system("merge", $file_local, $file_old, $file_new);
+            my $return = system("git", "merge-file", $file_local, $file_old, $file_new);
             $return >>= 8;
+
+            cleanupTmpDir();
 
             if ( $return == 0 )
             {
                 $log->info("Merged successfully");
                 print "M M $filename\n";
-                $log->debug("Update-existing $dirpart");
-                print "Update-existing $dirpart\n";
-                $log->debug($state->{CVSROOT} . "/$state->{module}/$filename");
-                print $state->{CVSROOT} . "/$state->{module}/$filename\n";
-                $log->debug("/$filepart/1.$meta->{revision}///");
-                print "/$filepart/1.$meta->{revision}///\n";
+                $log->debug("Merged $dirpart");
+
+                # Don't want to actually _DO_ the update if -n specified
+                unless ( $state->{globaloptions}{-n} )
+                {
+                    print "Merged $dirpart\n";
+                    $log->debug($state->{CVSROOT} . "/$state->{module}/$filename");
+                    print $state->{CVSROOT} . "/$state->{module}/$filename\n";
+                    my $kopts = kopts_from_path("$dirpart/$filepart",
+                                                "file",$mergedFile);
+                    $log->debug("/$filepart/1.$meta->{revision}//$kopts/");
+                    print "/$filepart/1.$meta->{revision}//$kopts/\n";
+                }
             }
             elsif ( $return == 1 )
             {
                 $log->info("Merged with conflicts");
+                print "E cvs update: conflicts found in $filename\n";
                 print "M C $filename\n";
-                print "Update-existing $dirpart\n";
-                print $state->{CVSROOT} . "/$state->{module}/$filename\n";
-                print "/$filepart/1.$meta->{revision}/+//\n";
+
+                # Don't want to actually _DO_ the update if -n specified
+                unless ( $state->{globaloptions}{-n} )
+                {
+                    print "Merged $dirpart\n";
+                    print $state->{CVSROOT} . "/$state->{module}/$filename\n";
+                    my $kopts = kopts_from_path("$dirpart/$filepart",
+                                                "file",$mergedFile);
+                    print "/$filepart/1.$meta->{revision}/+/$kopts/\n";
+                }
             }
             else
             {
@@ -912,19 +1286,21 @@ sub req_update
                 next;
             }
 
-            # permissions
-            $log->debug("SEND : u=$meta->{mode},g=$meta->{mode},o=$meta->{mode}");
-            print "u=$meta->{mode},g=$meta->{mode},o=$meta->{mode}\n";
+            # Don't want to actually _DO_ the update if -n specified
+            unless ( $state->{globaloptions}{-n} )
+            {
+                # permissions
+                $log->debug("SEND : u=$meta->{mode},g=$meta->{mode},o=$meta->{mode}");
+                print "u=$meta->{mode},g=$meta->{mode},o=$meta->{mode}\n";
 
-            # transmit file, format is single integer on a line by itself (file
-            # size) followed by the file contents
-            # TODO : we should copy files in blocks
-            my $data = `cat $file_local`;
-            $log->debug("File size : " . length($data));
-            print length($data) . "\n";
-            print $data;
-
-            chdir "/";
+                # transmit file, format is single integer on a line by itself (file
+                # size) followed by the file contents
+                # TODO : we should copy files in blocks
+                my $data = `cat $mergedFile`;
+                $log->debug("File size : " . length($data));
+                print length($data) . "\n";
+                print $data;
+            }
         }
 
     }
@@ -942,22 +1318,18 @@ sub req_ci
 
     $log->info("req_ci : " . ( defined($data) ? $data : "[NULL]" ));
 
-    if ( @ARGV && $ARGV[0] eq 'pserver')
+    if ( $state->{method} eq 'pserver' and $state->{user} eq 'anonymous' )
     {
-        print "error 1 pserver access cannot commit\n";
+        print "error 1 anonymous user cannot commit via pserver\n";
+        cleanupWorkTree();
         exit;
     }
 
     if ( -e $state->{CVSROOT} . "/index" )
     {
+        $log->warn("file 'index' already exists in the git repository");
         print "error 1 Index already exists in git repo\n";
-        exit;
-    }
-
-    my $lockfile = "$state->{CVSROOT}/refs/heads/$state->{module}.lock";
-    unless ( sysopen(LOCKFILE,$lockfile,O_EXCL|O_CREAT|O_WRONLY) )
-    {
-        print "error 1 Lock file '$lockfile' already exists, please try again\n";
+        cleanupWorkTree();
         exit;
     }
 
@@ -965,42 +1337,42 @@ sub req_ci
     my $updater = GITCVS::updater->new($state->{CVSROOT}, $state->{module}, $log);
     $updater->update();
 
-    my $tmpdir = tempdir ( DIR => $TEMP_DIR );
-    my ( undef, $file_index ) = tempfile ( DIR => $TEMP_DIR, OPEN => 0 );
-    $log->info("Lock successful, basing commit on '$tmpdir', index file is '$file_index'");
-
-    $ENV{GIT_DIR} = $state->{CVSROOT} . "/";
-    $ENV{GIT_INDEX_FILE} = $file_index;
-
-    chdir $tmpdir;
-
-    # populate the temporary index based
-    system("git-read-tree", $state->{module});
-    unless ($? == 0)
-    {
-	die "Error running git-read-tree $state->{module} $file_index $!";
+    # Remember where the head was at the beginning.
+    my $parenthash = `git show-ref -s refs/heads/$state->{module}`;
+    chomp $parenthash;
+    if ($parenthash !~ /^[0-9a-f]{40}$/) {
+	    print "error 1 pserver cannot find the current HEAD of module";
+	    cleanupWorkTree();
+	    exit;
     }
-    $log->info("Created index '$file_index' with for head $state->{module} - exit status $?");
 
+    setupWorkTree($parenthash);
+
+    $log->info("Lockless commit start, basing commit on '$work->{workDir}', index file is '$work->{index}'");
+
+    $log->info("Created index '$work->{index}' for head $state->{module} - exit status $?");
 
     my @committedfiles = ();
+    my %oldmeta;
 
-    # foreach file specified on the commandline ...
+    # foreach file specified on the command line ...
     foreach my $filename ( @{$state->{args}} )
     {
+        my $committedfile = $filename;
         $filename = filecleanup($filename);
 
         next unless ( exists $state->{entries}{$filename}{modified_filename} or not $state->{entries}{$filename}{unchanged} );
 
         my $meta = $updater->getmeta($filename);
+	$oldmeta{$filename} = $meta;
 
         my $wrev = revparse($filename);
 
         my ( $filepart, $dirpart ) = filenamesplit($filename);
 
-        # do a checkout of the file if it part of this tree
+	# do a checkout of the file if it is part of this tree
         if ($wrev) {
-            system('git-checkout-index', '-f', '-u', $filename);
+            system('git', 'checkout-index', '-f', '-u', $filename);
             unless ($? == 0) {
                 die "Error running git-checkout-index -f -u $filename : $!";
             }
@@ -1016,13 +1388,11 @@ sub req_ci
         {
             # fail everything if an up to date check fails
             print "error 1 Up to date check failed for $filename\n";
-            close LOCKFILE;
-            unlink($lockfile);
-            chdir "/";
+            cleanupWorkTree();
             exit;
         }
 
-        push @committedfiles, $filename;
+        push @committedfiles, $committedfile;
         $log->info("Committing $filename");
 
         system("mkdir","-p",$dirpart) unless ( -d $dirpart );
@@ -1044,15 +1414,15 @@ sub req_ci
         {
             $log->info("Removing file '$filename'");
             unlink($filename);
-            system("git-update-index", "--remove", $filename);
+            system("git", "update-index", "--remove", $filename);
         }
         elsif ( $addflag )
         {
             $log->info("Adding file '$filename'");
-            system("git-update-index", "--add", $filename);
+            system("git", "update-index", "--add", $filename);
         } else {
             $log->info("Updating file '$filename'");
-            system("git-update-index", $filename);
+            system("git", "update-index", $filename);
         }
     }
 
@@ -1060,70 +1430,115 @@ sub req_ci
     {
         print "E No files to commit\n";
         print "ok\n";
-        close LOCKFILE;
-        unlink($lockfile);
-        chdir "/";
+        cleanupWorkTree();
         return;
     }
 
-    my $treehash = `git-write-tree`;
-    my $parenthash = `cat $ENV{GIT_DIR}refs/heads/$state->{module}`;
+    my $treehash = `git write-tree`;
     chomp $treehash;
-    chomp $parenthash;
 
     $log->debug("Treehash : $treehash, Parenthash : $parenthash");
 
     # write our commit message out if we have one ...
     my ( $msg_fh, $msg_filename ) = tempfile( DIR => $TEMP_DIR );
     print $msg_fh $state->{opt}{m};# if ( exists ( $state->{opt}{m} ) );
-    print $msg_fh "\n\nvia git-CVS emulator\n";
+    if ( defined ( $cfg->{gitcvs}{commitmsgannotation} ) ) {
+        if ($cfg->{gitcvs}{commitmsgannotation} !~ /^\s*$/ ) {
+            print $msg_fh "\n\n".$cfg->{gitcvs}{commitmsgannotation}."\n"
+        }
+    } else {
+        print $msg_fh "\n\nvia git-CVS emulator\n";
+    }
     close $msg_fh;
 
-    my $commithash = `git-commit-tree $treehash -p $parenthash < $msg_filename`;
+    my $commithash = `git commit-tree $treehash -p $parenthash < $msg_filename`;
+    chomp($commithash);
     $log->info("Commit hash : $commithash");
 
     unless ( $commithash =~ /[a-zA-Z0-9]{40}/ )
     {
         $log->warn("Commit failed (Invalid commit hash)");
         print "error 1 Commit failed (unknown reason)\n";
-        close LOCKFILE;
-        unlink($lockfile);
-        chdir "/";
+        cleanupWorkTree();
         exit;
     }
 
-    open FILE, ">", "$ENV{GIT_DIR}refs/heads/$state->{module}";
-    print FILE $commithash;
-    close FILE;
+	### Emulate git-receive-pack by running hooks/update
+	my @hook = ( $ENV{GIT_DIR}.'hooks/update', "refs/heads/$state->{module}",
+			$parenthash, $commithash );
+	if( -x $hook[0] ) {
+		unless( system( @hook ) == 0 )
+		{
+			$log->warn("Commit failed (update hook declined to update ref)");
+			print "error 1 Commit failed (update hook declined)\n";
+			cleanupWorkTree();
+			exit;
+		}
+	}
+
+	### Update the ref
+	if (system(qw(git update-ref -m), "cvsserver ci",
+			"refs/heads/$state->{module}", $commithash, $parenthash)) {
+		$log->warn("update-ref for $state->{module} failed.");
+		print "error 1 Cannot commit -- update first\n";
+		cleanupWorkTree();
+		exit;
+	}
+
+	### Emulate git-receive-pack by running hooks/post-receive
+	my $hook = $ENV{GIT_DIR}.'hooks/post-receive';
+	if( -x $hook ) {
+		open(my $pipe, "| $hook") || die "can't fork $!";
+
+		local $SIG{PIPE} = sub { die 'pipe broke' };
+
+		print $pipe "$parenthash $commithash refs/heads/$state->{module}\n";
+
+		close $pipe || die "bad pipe: $! $?";
+	}
 
     $updater->update();
 
-    # foreach file specified on the commandline ...
+	### Then hooks/post-update
+	$hook = $ENV{GIT_DIR}.'hooks/post-update';
+	if (-x $hook) {
+		system($hook, "refs/heads/$state->{module}");
+	}
+
+    # foreach file specified on the command line ...
     foreach my $filename ( @committedfiles )
     {
         $filename = filecleanup($filename);
 
         my $meta = $updater->getmeta($filename);
+	unless (defined $meta->{revision}) {
+	  $meta->{revision} = 1;
+	}
 
-        my ( $filepart, $dirpart ) = filenamesplit($filename);
+        my ( $filepart, $dirpart ) = filenamesplit($filename, 1);
 
         $log->debug("Checked-in $dirpart : $filename");
 
-        if ( $meta->{filehash} eq "deleted" )
+	print "M $state->{CVSROOT}/$state->{module}/$filename,v  <--  $dirpart$filepart\n";
+        if ( defined $meta->{filehash} && $meta->{filehash} eq "deleted" )
         {
+            print "M new revision: delete; previous revision: 1.$oldmeta{$filename}{revision}\n";
             print "Remove-entry $dirpart\n";
             print "$filename\n";
         } else {
+            if ($meta->{revision} == 1) {
+	        print "M initial revision: 1.1\n";
+            } else {
+	        print "M new revision: 1.$meta->{revision}; previous revision: 1.$oldmeta{$filename}{revision}\n";
+            }
             print "Checked-in $dirpart\n";
             print "$filename\n";
-            print "/$filepart/1.$meta->{revision}///\n";
+            my $kopts = kopts_from_path($filename,"sha1",$meta->{filehash});
+            print "/$filepart/1.$meta->{revision}//$kopts/\n";
         }
     }
 
-    close LOCKFILE;
-    unlink($lockfile);
-    chdir "/";
-
+    cleanupWorkTree();
     print "ok\n";
 }
 
@@ -1141,12 +1556,14 @@ sub req_status
     $updater->update();
 
     # if no files were specified, we need to work out what files we should be providing status on ...
-    argsfromdir($updater) if ( scalar ( @{$state->{args}} ) == 0 );
+    argsfromdir($updater);
 
-    # foreach file specified on the commandline ...
+    # foreach file specified on the command line ...
     foreach my $filename ( @{$state->{args}} )
     {
         $filename = filecleanup($filename);
+
+        next if exists($state->{opt}{l}) && index($filename, '/', length($state->{prependdir})) >= 0;
 
         my $meta = $updater->getmeta($filename);
         my $oldmeta = $meta;
@@ -1191,8 +1608,10 @@ sub req_status
 
         $status ||= "Unknown";
 
+        my ($filepart) = filenamesplit($filename);
+
         print "M ===================================================================\n";
-        print "M File: $filename\tStatus: $status\n";
+        print "M File: $filepart\tStatus: $status\n";
         if ( defined($state->{entries}{$filename}{revision}) )
         {
             print "M Working revision:\t" . $state->{entries}{$filename}{revision} . "\n";
@@ -1201,7 +1620,7 @@ sub req_status
         }
         if ( defined($meta->{revision}) )
         {
-            print "M Repository revision:\t1." . $meta->{revision} . "\t$state->{repository}/$filename,v\n";
+            print "M Repository revision:\t1." . $meta->{revision} . "\t$state->{CVSROOT}/$state->{module}/$filename,v\n";
             print "M Sticky Tag:\t\t(none)\n";
             print "M Sticky Date:\t\t(none)\n";
             print "M Sticky Options:\t\t(none)\n";
@@ -1242,9 +1661,9 @@ sub req_diff
     $updater->update();
 
     # if no files were specified, we need to work out what files we should be providing status on ...
-    argsfromdir($updater) if ( scalar ( @{$state->{args}} ) == 0 );
+    argsfromdir($updater);
 
-    # foreach file specified on the commandline ...
+    # foreach file specified on the command line ...
     foreach my $filename ( @{$state->{args}} )
     {
         $filename = filecleanup($filename);
@@ -1266,14 +1685,14 @@ sub req_diff
                 print "E File $filename at revision 1.$revision1 doesn't exist\n";
                 next;
             }
-            transmitfile($meta1->{filehash}, $file1);
+            transmitfile($meta1->{filehash}, { targetfile => $file1 });
         }
         # otherwise we just use the working copy revision
         else
         {
             ( undef, $file1 ) = tempfile( DIR => $TEMP_DIR, OPEN => 0 );
             $meta1 = $updater->getmeta($filename, $wrev);
-            transmitfile($meta1->{filehash}, $file1);
+            transmitfile($meta1->{filehash}, { targetfile => $file1 });
         }
 
         # if we have a second -r switch, use it too
@@ -1288,7 +1707,7 @@ sub req_diff
                 next;
             }
 
-            transmitfile($meta2->{filehash}, $file2);
+            transmitfile($meta2->{filehash}, { targetfile => $file2 });
         }
         # otherwise we just use the working copy
         else
@@ -1301,7 +1720,7 @@ sub req_diff
         {
             ( undef, $file2 ) = tempfile( DIR => $TEMP_DIR, OPEN => 0 );
             $meta2 = $updater->getmeta($filename, $wrev);
-            transmitfile($meta2->{filehash}, $file2);
+            transmitfile($meta2->{filehash}, { targetfile => $file2 });
         }
 
         # We need to have retrieved something useful
@@ -1384,9 +1803,9 @@ sub req_log
     $updater->update();
 
     # if no files were specified, we need to work out what files we should be providing status on ...
-    argsfromdir($updater) if ( scalar ( @{$state->{args}} ) == 0 );
+    argsfromdir($updater);
 
-    # foreach file specified on the commandline ...
+    # foreach file specified on the command line ...
     foreach my $filename ( @{$state->{args}} )
     {
         $filename = filecleanup($filename);
@@ -1433,8 +1852,7 @@ sub req_log
             print "M revision 1.$revision->{revision}\n";
             # reformat the date for log output
             $revision->{modified} = sprintf('%04d/%02d/%02d %s', $3, $DATE_LIST->{$2}, $1, $4 ) if ( $revision->{modified} =~ /(\d+)\s+(\w+)\s+(\d+)\s+(\S+)/ and defined($DATE_LIST->{$2}) );
-            $revision->{author} =~ s/\s+.*//;
-            $revision->{author} =~ s/^(.{8}).*/$1/;
+            $revision->{author} = cvs_author($revision->{author});
             print "M date: $revision->{modified};  author: $revision->{author};  state: " . ( $revision->{filehash} eq "deleted" ? "dead" : "Exp" ) . ";  lines: +2 -3\n";
             my $commitmessage = $updater->commitmessage($revision->{commithash});
             $commitmessage =~ s/^/M /mg;
@@ -1460,19 +1878,14 @@ sub req_annotate
     $updater->update();
 
     # if no files were specified, we need to work out what files we should be providing annotate on ...
-    argsfromdir($updater) if ( scalar ( @{$state->{args}} ) == 0 );
+    argsfromdir($updater);
 
     # we'll need a temporary checkout dir
-    my $tmpdir = tempdir ( DIR => $TEMP_DIR );
-    my ( undef, $file_index ) = tempfile ( DIR => $TEMP_DIR, OPEN => 0 );
-    $log->info("Temp checkoutdir creation successful, basing annotate session work on '$tmpdir', index file is '$file_index'");
+    setupWorkTree();
 
-    $ENV{GIT_DIR} = $state->{CVSROOT} . "/";
-    $ENV{GIT_INDEX_FILE} = $file_index;
+    $log->info("Temp checkoutdir creation successful, basing annotate session work on '$work->{workDir}', index file is '$ENV{GIT_INDEX_FILE}'");
 
-    chdir $tmpdir;
-
-    # foreach file specified on the commandline ...
+    # foreach file specified on the command line ...
     foreach my $filename ( @{$state->{args}} )
     {
         $filename = filecleanup($filename);
@@ -1491,17 +1904,19 @@ sub req_annotate
 	# TODO: if we got a revision from the client, use that instead
 	# to look up the commithash in sqlite (still good to default to
 	# the current head as we do now)
-	system("git-read-tree", $lastseenin);
+	system("git", "read-tree", $lastseenin);
 	unless ($? == 0)
 	{
-	    die "Error running git-read-tree $lastseenin $file_index $!";
+	    print "E error running git-read-tree $lastseenin $ENV{GIT_INDEX_FILE} $!\n";
+	    return;
 	}
-	$log->info("Created index '$file_index' with commit $lastseenin - exit status $?");
+	$log->info("Created index '$ENV{GIT_INDEX_FILE}' with commit $lastseenin - exit status $?");
 
         # do a checkout of the file
-        system('git-checkout-index', '-f', '-u', $filename);
+        system('git', 'checkout-index', '-f', '-u', $filename);
         unless ($? == 0) {
-            die "Error running git-checkout-index -f -u $filename : $!";
+            print "E error running git-checkout-index -f -u $filename : $!\n";
+            return;
         }
 
         $log->info("Annotate $filename");
@@ -1511,7 +1926,11 @@ sub req_annotate
         # git-jsannotate telling us about commits we are hiding
         # from the client.
 
-        open(ANNOTATEHINTS, ">$tmpdir/.annotate_hints") or die "Error opening > $tmpdir/.annotate_hints $!";
+        my $a_hints = "$work->{workDir}/.annotate_hints";
+        if (!open(ANNOTATEHINTS, '>', $a_hints)) {
+            print "E failed to open '$a_hints' for writing: $!\n";
+            return;
+        }
         for (my $i=0; $i < @$revisions; $i++)
         {
             print ANNOTATEHINTS $revisions->[$i][2];
@@ -1522,11 +1941,14 @@ sub req_annotate
         }
 
         print ANNOTATEHINTS "\n";
-        close ANNOTATEHINTS;
+        close ANNOTATEHINTS
+            or (print "E failed to write $a_hints: $!\n"), return;
 
-        my $annotatecmd = 'git-annotate';
-        open(ANNOTATE, "-|", $annotatecmd, '-l', '-S', "$tmpdir/.annotate_hints", $filename)
-	    or die "Error invoking $annotatecmd -l -S $tmpdir/.annotate_hints $filename : $!";
+        my @cmd = (qw(git annotate -l -S), $a_hints, $filename);
+        if (!open(ANNOTATE, "-|", @cmd)) {
+            print "E error invoking ". join(' ',@cmd) .": $!\n";
+            return;
+        }
         my $metadata = {};
         print "E Annotations for $filename\n";
         print "E ***************\n";
@@ -1539,8 +1961,7 @@ sub req_annotate
                 unless ( defined ( $metadata->{$commithash} ) )
                 {
                     $metadata->{$commithash} = $updater->getmeta($filename, $commithash);
-                    $metadata->{$commithash}{author} =~ s/\s+.*//;
-                    $metadata->{$commithash}{author} =~ s/^(.{8}).*/$1/;
+                    $metadata->{$commithash}{author} = cvs_author($metadata->{$commithash}{author});
                     $metadata->{$commithash}{modified} = sprintf("%02d-%s-%02d", $1, $2, $3) if ( $metadata->{$commithash}{modified} =~ /^(\d+)\s(\w+)\s\d\d(\d\d)/ );
                 }
                 printf("M 1.%-5d      (%-8s %10s): %s\n",
@@ -1559,7 +1980,7 @@ sub req_annotate
     }
 
     # done; get out of the tempdir
-    chdir "/";
+    cleanupWorkTree();
 
     print "ok\n";
 
@@ -1570,13 +1991,13 @@ sub req_annotate
 # the second is $state->{files} which is everything after it.
 sub argsplit
 {
-    return unless( defined($state->{arguments}) and ref $state->{arguments} eq "ARRAY" );
-
-    my $type = shift;
-
     $state->{args} = [];
     $state->{files} = [];
     $state->{opt} = {};
+
+    return unless( defined($state->{arguments}) and ref $state->{arguments} eq "ARRAY" );
+
+    my $type = shift;
 
     if ( defined($type) )
     {
@@ -1655,13 +2076,47 @@ sub argsfromdir
 {
     my $updater = shift;
 
-    $state->{args} = [];
+    $state->{args} = [] if ( scalar(@{$state->{args}}) == 1 and $state->{args}[0] eq "." );
 
-    foreach my $file ( @{$updater->gethead} )
+    return if ( scalar ( @{$state->{args}} ) > 1 );
+
+    my @gethead = @{$updater->gethead};
+
+    # push added files
+    foreach my $file (keys %{$state->{entries}}) {
+	if ( exists $state->{entries}{$file}{revision} &&
+		$state->{entries}{$file}{revision} == 0 )
+	{
+	    push @gethead, { name => $file, filehash => 'added' };
+	}
+    }
+
+    if ( scalar(@{$state->{args}}) == 1 )
     {
-        next if ( $file->{filehash} eq "deleted" and not defined ( $state->{entries}{$file->{name}} ) );
-        next unless ( $file->{name} =~ s/^$state->{directory}// );
-        push @{$state->{args}}, $file->{name};
+        my $arg = $state->{args}[0];
+        $arg .= $state->{prependdir} if ( defined ( $state->{prependdir} ) );
+
+        $log->info("Only one arg specified, checking for directory expansion on '$arg'");
+
+        foreach my $file ( @gethead )
+        {
+            next if ( $file->{filehash} eq "deleted" and not defined ( $state->{entries}{$file->{name}} ) );
+            next unless ( $file->{name} =~ /^$arg\// or $file->{name} eq $arg  );
+            push @{$state->{args}}, $file->{name};
+        }
+
+        shift @{$state->{args}} if ( scalar(@{$state->{args}}) > 1 );
+    } else {
+        $log->info("Only one arg specified, populating file list automatically");
+
+        $state->{args} = [];
+
+        foreach my $file ( @gethead )
+        {
+            next if ( $file->{filehash} eq "deleted" and not defined ( $state->{entries}{$file->{name}} ) );
+            next unless ( $file->{name} =~ s/^$state->{prependdir}// );
+            push @{$state->{args}}, $file->{name};
+        }
     }
 }
 
@@ -1686,14 +2141,17 @@ sub revparse
     return undef;
 }
 
-# This method takes a file hash and does a CVS "file transfer" which transmits the
-# size of the file, and then the file contents.
-# If a second argument $targetfile is given, the file is instead written out to
-# a file by the name of $targetfile
+# This method takes a file hash and does a CVS "file transfer".  Its
+# exact behaviour depends on a second, optional hash table argument:
+# - If $options->{targetfile}, dump the contents to that file;
+# - If $options->{print}, use M/MT to transmit the contents one line
+#   at a time;
+# - Otherwise, transmit the size of the file, followed by the file
+#   contents.
 sub transmitfile
 {
     my $filehash = shift;
-    my $targetfile = shift;
+    my $options = shift;
 
     if ( defined ( $filehash ) and $filehash eq "deleted" )
     {
@@ -1703,43 +2161,58 @@ sub transmitfile
 
     die "Need filehash" unless ( defined ( $filehash ) and $filehash =~ /^[a-zA-Z0-9]{40}$/ );
 
-    my $type = `git-cat-file -t $filehash`;
+    my $type = `git cat-file -t $filehash`;
     chomp $type;
 
     die ( "Invalid type '$type' (expected 'blob')" ) unless ( defined ( $type ) and $type eq "blob" );
 
-    my $size = `git-cat-file -s $filehash`;
+    my $size = `git cat-file -s $filehash`;
     chomp $size;
 
     $log->debug("transmitfile($filehash) size=$size, type=$type");
 
-    if ( open my $fh, '-|', "git-cat-file", "blob", $filehash )
+    if ( open my $fh, '-|', "git", "cat-file", "blob", $filehash )
     {
-        if ( defined ( $targetfile ) )
+        if ( defined ( $options->{targetfile} ) )
         {
+            my $targetfile = $options->{targetfile};
             open NEWFILE, ">", $targetfile or die("Couldn't open '$targetfile' for writing : $!");
             print NEWFILE $_ while ( <$fh> );
-            close NEWFILE;
+            close NEWFILE or die("Failed to write '$targetfile': $!");
+        } elsif ( defined ( $options->{print} ) && $options->{print} ) {
+            while ( <$fh> ) {
+                if( /\n\z/ ) {
+                    print 'M ', $_;
+                } else {
+                    print 'MT text ', $_, "\n";
+                }
+            }
         } else {
             print "$size\n";
             print while ( <$fh> );
         }
-        close $fh or die ("Couldn't close filehandle for transmitfile()");
+        close $fh or die ("Couldn't close filehandle for transmitfile(): $!");
     } else {
         die("Couldn't execute git-cat-file");
     }
 }
 
 # This method takes a file name, and returns ( $dirpart, $filepart ) which
-# refers to the directory porition and the file portion of the filename
+# refers to the directory portion and the file portion of the filename
 # respectively
 sub filenamesplit
 {
     my $filename = shift;
+    my $fixforlocaldir = shift;
 
     my ( $filepart, $dirpart ) = ( $filename, "." );
     ( $filepart, $dirpart ) = ( $2, $1 ) if ( $filename =~ /(.*)\/(.*)/ );
     $dirpart .= "/";
+
+    if ( $fixforlocaldir )
+    {
+        $dirpart =~ s/^$state->{prependdir}//;
+    }
 
     return ( $filepart, $dirpart );
 }
@@ -1756,10 +2229,451 @@ sub filecleanup
     }
 
     $filename =~ s/^\.\///g;
-    $filename = $state->{directory} . $filename;
-
+    $filename = $state->{prependdir} . $filename;
     return $filename;
 }
+
+sub validateGitDir
+{
+    if( !defined($state->{CVSROOT}) )
+    {
+        print "error 1 CVSROOT not specified\n";
+        cleanupWorkTree();
+        exit;
+    }
+    if( $ENV{GIT_DIR} ne ($state->{CVSROOT} . '/') )
+    {
+        print "error 1 Internally inconsistent CVSROOT\n";
+        cleanupWorkTree();
+        exit;
+    }
+}
+
+# Setup working directory in a work tree with the requested version
+# loaded in the index.
+sub setupWorkTree
+{
+    my ($ver) = @_;
+
+    validateGitDir();
+
+    if( ( defined($work->{state}) && $work->{state} != 1 ) ||
+        defined($work->{tmpDir}) )
+    {
+        $log->warn("Bad work tree state management");
+        print "error 1 Internal setup multiple work trees without cleanup\n";
+        cleanupWorkTree();
+        exit;
+    }
+
+    $work->{workDir} = tempdir ( DIR => $TEMP_DIR );
+
+    if( !defined($work->{index}) )
+    {
+        (undef, $work->{index}) = tempfile ( DIR => $TEMP_DIR, OPEN => 0 );
+    }
+
+    chdir $work->{workDir} or
+        die "Unable to chdir to $work->{workDir}\n";
+
+    $log->info("Setting up GIT_WORK_TREE as '.' in '$work->{workDir}', index file is '$work->{index}'");
+
+    $ENV{GIT_WORK_TREE} = ".";
+    $ENV{GIT_INDEX_FILE} = $work->{index};
+    $work->{state} = 2;
+
+    if($ver)
+    {
+        system("git","read-tree",$ver);
+        unless ($? == 0)
+        {
+            $log->warn("Error running git-read-tree");
+            die "Error running git-read-tree $ver in $work->{workDir} $!\n";
+        }
+    }
+    # else # req_annotate reads tree for each file
+}
+
+# Ensure current directory is in some kind of working directory,
+# with a recent version loaded in the index.
+sub ensureWorkTree
+{
+    if( defined($work->{tmpDir}) )
+    {
+        $log->warn("Bad work tree state management [ensureWorkTree()]");
+        print "error 1 Internal setup multiple dirs without cleanup\n";
+        cleanupWorkTree();
+        exit;
+    }
+    if( $work->{state} )
+    {
+        return;
+    }
+
+    validateGitDir();
+
+    if( !defined($work->{emptyDir}) )
+    {
+        $work->{emptyDir} = tempdir ( DIR => $TEMP_DIR, OPEN => 0);
+    }
+    chdir $work->{emptyDir} or
+        die "Unable to chdir to $work->{emptyDir}\n";
+
+    my $ver = `git show-ref -s refs/heads/$state->{module}`;
+    chomp $ver;
+    if ($ver !~ /^[0-9a-f]{40}$/)
+    {
+        $log->warn("Error from git show-ref -s refs/head$state->{module}");
+        print "error 1 cannot find the current HEAD of module";
+        cleanupWorkTree();
+        exit;
+    }
+
+    if( !defined($work->{index}) )
+    {
+        (undef, $work->{index}) = tempfile ( DIR => $TEMP_DIR, OPEN => 0 );
+    }
+
+    $ENV{GIT_WORK_TREE} = ".";
+    $ENV{GIT_INDEX_FILE} = $work->{index};
+    $work->{state} = 1;
+
+    system("git","read-tree",$ver);
+    unless ($? == 0)
+    {
+        die "Error running git-read-tree $ver $!\n";
+    }
+}
+
+# Cleanup working directory that is not needed any longer.
+sub cleanupWorkTree
+{
+    if( ! $work->{state} )
+    {
+        return;
+    }
+
+    chdir "/" or die "Unable to chdir '/'\n";
+
+    if( defined($work->{workDir}) )
+    {
+        rmtree( $work->{workDir} );
+        undef $work->{workDir};
+    }
+    undef $work->{state};
+}
+
+# Setup a temporary directory (not a working tree), typically for
+# merging dirty state as in req_update.
+sub setupTmpDir
+{
+    $work->{tmpDir} = tempdir ( DIR => $TEMP_DIR );
+    chdir $work->{tmpDir} or die "Unable to chdir $work->{tmpDir}\n";
+
+    return $work->{tmpDir};
+}
+
+# Clean up a previously setupTmpDir.  Restore previous work tree if
+# appropriate.
+sub cleanupTmpDir
+{
+    if ( !defined($work->{tmpDir}) )
+    {
+        $log->warn("cleanup tmpdir that has not been setup");
+        die "Cleanup tmpDir that has not been setup\n";
+    }
+    if( defined($work->{state}) )
+    {
+        if( $work->{state} == 1 )
+        {
+            chdir $work->{emptyDir} or
+                die "Unable to chdir to $work->{emptyDir}\n";
+        }
+        elsif( $work->{state} == 2 )
+        {
+            chdir $work->{workDir} or
+                die "Unable to chdir to $work->{emptyDir}\n";
+        }
+        else
+        {
+            $log->warn("Inconsistent work dir state");
+            die "Inconsistent work dir state\n";
+        }
+    }
+    else
+    {
+        chdir "/" or die "Unable to chdir '/'\n";
+    }
+}
+
+# Given a path, this function returns a string containing the kopts
+# that should go into that path's Entries line.  For example, a binary
+# file should get -kb.
+sub kopts_from_path
+{
+    my ($path, $srcType, $name) = @_;
+
+    if ( defined ( $cfg->{gitcvs}{usecrlfattr} ) and
+         $cfg->{gitcvs}{usecrlfattr} =~ /\s*(1|true|yes)\s*$/i )
+    {
+        my ($val) = check_attr( "text", $path );
+        if ( $val eq "unspecified" )
+        {
+            $val = check_attr( "crlf", $path );
+        }
+        if ( $val eq "unset" )
+        {
+            return "-kb"
+        }
+        elsif ( check_attr( "eol", $path ) ne "unspecified" ||
+                $val eq "set" || $val eq "input" )
+        {
+            return "";
+        }
+        else
+        {
+            $log->info("Unrecognized check_attr crlf $path : $val");
+        }
+    }
+
+    if ( defined ( $cfg->{gitcvs}{allbinary} ) )
+    {
+        if( ($cfg->{gitcvs}{allbinary} =~ /^\s*(1|true|yes)\s*$/i) )
+        {
+            return "-kb";
+        }
+        elsif( ($cfg->{gitcvs}{allbinary} =~ /^\s*guess\s*$/i) )
+        {
+            if( $srcType eq "sha1Or-k" &&
+                !defined($name) )
+            {
+                my ($ret)=$state->{entries}{$path}{options};
+                if( !defined($ret) )
+                {
+                    $ret=$state->{opt}{k};
+                    if(defined($ret))
+                    {
+                        $ret="-k$ret";
+                    }
+                    else
+                    {
+                        $ret="";
+                    }
+                }
+                if( ! ($ret=~/^(|-kb|-kkv|-kkvl|-kk|-ko|-kv)$/) )
+                {
+                    print "E Bad -k option\n";
+                    $log->warn("Bad -k option: $ret");
+                    die "Error: Bad -k option: $ret\n";
+                }
+
+                return $ret;
+            }
+            else
+            {
+                if( is_binary($srcType,$name) )
+                {
+                    $log->debug("... as binary");
+                    return "-kb";
+                }
+                else
+                {
+                    $log->debug("... as text");
+                }
+            }
+        }
+    }
+    # Return "" to give no special treatment to any path
+    return "";
+}
+
+sub check_attr
+{
+    my ($attr,$path) = @_;
+    ensureWorkTree();
+    if ( open my $fh, '-|', "git", "check-attr", $attr, "--", $path )
+    {
+        my $val = <$fh>;
+        close $fh;
+        $val =~ s/.*: ([^:\r\n]*)\s*$/$1/;
+        return $val;
+    }
+    else
+    {
+        return undef;
+    }
+}
+
+# This should have the same heuristics as convert.c:is_binary() and related.
+# Note that the bare CR test is done by callers in convert.c.
+sub is_binary
+{
+    my ($srcType,$name) = @_;
+    $log->debug("is_binary($srcType,$name)");
+
+    # Minimize amount of interpreted code run in the inner per-character
+    # loop for large files, by totalling each character value and
+    # then analyzing the totals.
+    my @counts;
+    my $i;
+    for($i=0;$i<256;$i++)
+    {
+        $counts[$i]=0;
+    }
+
+    my $fh = open_blob_or_die($srcType,$name);
+    my $line;
+    while( defined($line=<$fh>) )
+    {
+        # Any '\0' and bare CR are considered binary.
+        if( $line =~ /\0|(\r[^\n])/ )
+        {
+            close($fh);
+            return 1;
+        }
+
+        # Count up each character in the line:
+        my $len=length($line);
+        for($i=0;$i<$len;$i++)
+        {
+            $counts[ord(substr($line,$i,1))]++;
+        }
+    }
+    close $fh;
+
+    # Don't count CR and LF as either printable/nonprintable
+    $counts[ord("\n")]=0;
+    $counts[ord("\r")]=0;
+
+    # Categorize individual character count into printable and nonprintable:
+    my $printable=0;
+    my $nonprintable=0;
+    for($i=0;$i<256;$i++)
+    {
+        if( $i < 32 &&
+            $i != ord("\b") &&
+            $i != ord("\t") &&
+            $i != 033 &&       # ESC
+            $i != 014 )        # FF
+        {
+            $nonprintable+=$counts[$i];
+        }
+        elsif( $i==127 )  # DEL
+        {
+            $nonprintable+=$counts[$i];
+        }
+        else
+        {
+            $printable+=$counts[$i];
+        }
+    }
+
+    return ($printable >> 7) < $nonprintable;
+}
+
+# Returns open file handle.  Possible invocations:
+#  - open_blob_or_die("file",$filename);
+#  - open_blob_or_die("sha1",$filehash);
+sub open_blob_or_die
+{
+    my ($srcType,$name) = @_;
+    my ($fh);
+    if( $srcType eq "file" )
+    {
+        if( !open $fh,"<",$name )
+        {
+            $log->warn("Unable to open file $name: $!");
+            die "Unable to open file $name: $!\n";
+        }
+    }
+    elsif( $srcType eq "sha1" || $srcType eq "sha1Or-k" )
+    {
+        unless ( defined ( $name ) and $name =~ /^[a-zA-Z0-9]{40}$/ )
+        {
+            $log->warn("Need filehash");
+            die "Need filehash\n";
+        }
+
+        my $type = `git cat-file -t $name`;
+        chomp $type;
+
+        unless ( defined ( $type ) and $type eq "blob" )
+        {
+            $log->warn("Invalid type '$type' for '$name'");
+            die ( "Invalid type '$type' (expected 'blob')" )
+        }
+
+        my $size = `git cat-file -s $name`;
+        chomp $size;
+
+        $log->debug("open_blob_or_die($name) size=$size, type=$type");
+
+        unless( open $fh, '-|', "git", "cat-file", "blob", $name )
+        {
+            $log->warn("Unable to open sha1 $name");
+            die "Unable to open sha1 $name\n";
+        }
+    }
+    else
+    {
+        $log->warn("Unknown type of blob source: $srcType");
+        die "Unknown type of blob source: $srcType\n";
+    }
+    return $fh;
+}
+
+# Generate a CVS author name from Git author information, by taking the local
+# part of the email address and replacing characters not in the Portable
+# Filename Character Set (see IEEE Std 1003.1-2001, 3.276) by underscores. CVS
+# Login names are Unix login names, which should be restricted to this
+# character set.
+sub cvs_author
+{
+    my $author_line = shift;
+    (my $author) = $author_line =~ /<([^@>]*)/;
+
+    $author =~ s/[^-a-zA-Z0-9_.]/_/g;
+    $author =~ s/^-/_/;
+
+    $author;
+}
+
+
+sub descramble
+{
+    # This table is from src/scramble.c in the CVS source
+    my @SHIFTS = (
+        0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
+        16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
+        114,120, 53, 79, 96,109, 72,108, 70, 64, 76, 67,116, 74, 68, 87,
+        111, 52, 75,119, 49, 34, 82, 81, 95, 65,112, 86,118,110,122,105,
+        41, 57, 83, 43, 46,102, 40, 89, 38,103, 45, 50, 42,123, 91, 35,
+        125, 55, 54, 66,124,126, 59, 47, 92, 71,115, 78, 88,107,106, 56,
+        36,121,117,104,101,100, 69, 73, 99, 63, 94, 93, 39, 37, 61, 48,
+        58,113, 32, 90, 44, 98, 60, 51, 33, 97, 62, 77, 84, 80, 85,223,
+        225,216,187,166,229,189,222,188,141,249,148,200,184,136,248,190,
+        199,170,181,204,138,232,218,183,255,234,220,247,213,203,226,193,
+        174,172,228,252,217,201,131,230,197,211,145,238,161,179,160,212,
+        207,221,254,173,202,146,224,151,140,196,205,130,135,133,143,246,
+        192,159,244,239,185,168,215,144,139,165,180,157,147,186,214,176,
+        227,231,219,169,175,156,206,198,129,164,150,210,154,177,134,127,
+        182,128,158,208,162,132,167,209,149,241,153,251,237,236,171,195,
+        243,233,253,240,194,250,191,155,142,137,245,235,163,242,178,152
+    );
+    my ($str) = @_;
+
+    # This should never happen, the same password format (A) has been
+    # used by CVS since the beginning of time
+    {
+        my $fmt = substr($str, 0, 1);
+        die "invalid password format `$fmt'" unless $fmt eq 'A';
+    }
+
+    my @str = unpack "C*", substr($str, 1);
+    my $ret = join '', map { chr $SHIFTS[$_] } @str;
+    return $ret;
+}
+
 
 package GITCVS::log;
 
@@ -1767,7 +2681,7 @@ package GITCVS::log;
 #### Copyright The Open University UK - 2006.
 ####
 #### Authors: Martyn Smith    <martyn@catalyst.net.nz>
-####          Martin Langhoff <martin@catalyst.net.nz>
+####          Martin Langhoff <martin@laptop.org>
 ####
 ####
 
@@ -1790,7 +2704,7 @@ Log::Log4perl
 =head2 new
 
 Creates a new log object, optionally you can specify a filename here to
-indicate the file to log to. If no log file is specified, you can specifiy one
+indicate the file to log to. If no log file is specified, you can specify one
 later with method setfile, or indicate you no longer want logging with method
 nofile.
 
@@ -1934,7 +2848,7 @@ package GITCVS::updater;
 #### Copyright The Open University UK - 2006.
 ####
 #### Authors: Martyn Smith    <martyn@catalyst.net.nz>
-####          Martin Langhoff <martin@catalyst.net.nz>
+####          Martin Langhoff <martin@laptop.org>
 ####
 ####
 
@@ -1965,33 +2879,63 @@ sub new
 
     bless $self, $class;
 
-    $self->{dbdir} = $config . "/";
-    die "Database dir '$self->{dbdir}' isn't a directory" unless ( defined($self->{dbdir}) and -d $self->{dbdir} );
+    $self->{valid_tables} = {'revision' => 1,
+                             'revision_ix1' => 1,
+                             'revision_ix2' => 1,
+                             'head' => 1,
+                             'head_ix1' => 1,
+                             'properties' => 1,
+                             'commitmsgs' => 1};
 
     $self->{module} = $module;
-    $self->{file} = $self->{dbdir} . "/gitcvs.$module.sqlite";
-
     $self->{git_path} = $config . "/";
 
     $self->{log} = $log;
 
     die "Git repo '$self->{git_path}' doesn't exist" unless ( -d $self->{git_path} );
 
-    $self->{dbh} = DBI->connect("dbi:SQLite:dbname=" . $self->{file},"","");
+    $self->{dbdriver} = $cfg->{gitcvs}{$state->{method}}{dbdriver} ||
+        $cfg->{gitcvs}{dbdriver} || "SQLite";
+    $self->{dbname} = $cfg->{gitcvs}{$state->{method}}{dbname} ||
+        $cfg->{gitcvs}{dbname} || "%Ggitcvs.%m.sqlite";
+    $self->{dbuser} = $cfg->{gitcvs}{$state->{method}}{dbuser} ||
+        $cfg->{gitcvs}{dbuser} || "";
+    $self->{dbpass} = $cfg->{gitcvs}{$state->{method}}{dbpass} ||
+        $cfg->{gitcvs}{dbpass} || "";
+    $self->{dbtablenameprefix} = $cfg->{gitcvs}{$state->{method}}{dbtablenameprefix} ||
+        $cfg->{gitcvs}{dbtablenameprefix} || "";
+    my %mapping = ( m => $module,
+                    a => $state->{method},
+                    u => getlogin || getpwuid($<) || $<,
+                    G => $self->{git_path},
+                    g => mangle_dirname($self->{git_path}),
+                    );
+    $self->{dbname} =~ s/%([mauGg])/$mapping{$1}/eg;
+    $self->{dbuser} =~ s/%([mauGg])/$mapping{$1}/eg;
+    $self->{dbtablenameprefix} =~ s/%([mauGg])/$mapping{$1}/eg;
+    $self->{dbtablenameprefix} = mangle_tablename($self->{dbtablenameprefix});
+
+    die "Invalid char ':' in dbdriver" if $self->{dbdriver} =~ /:/;
+    die "Invalid char ';' in dbname" if $self->{dbname} =~ /;/;
+    $self->{dbh} = DBI->connect("dbi:$self->{dbdriver}:dbname=$self->{dbname}",
+                                $self->{dbuser},
+                                $self->{dbpass});
+    die "Error connecting to database\n" unless defined $self->{dbh};
 
     $self->{tables} = {};
-    foreach my $table ( $self->{dbh}->tables )
+    foreach my $table ( keys %{$self->{dbh}->table_info(undef,undef,undef,'TABLE')->fetchall_hashref('TABLE_NAME')} )
     {
-        $table =~ s/^"//;
-        $table =~ s/"$//;
         $self->{tables}{$table} = 1;
     }
 
     # Construct the revision table if required
-    unless ( $self->{tables}{revision} )
+    unless ( $self->{tables}{$self->tablename("revision")} )
     {
+        my $tablename = $self->tablename("revision");
+        my $ix1name = $self->tablename("revision_ix1");
+        my $ix2name = $self->tablename("revision_ix2");
         $self->{dbh}->do("
-            CREATE TABLE revision (
+            CREATE TABLE $tablename (
                 name       TEXT NOT NULL,
                 revision   INTEGER NOT NULL,
                 filehash   TEXT NOT NULL,
@@ -2001,13 +2945,23 @@ sub new
                 mode       TEXT NOT NULL
             )
         ");
+        $self->{dbh}->do("
+            CREATE INDEX $ix1name
+            ON $tablename (name,revision)
+        ");
+        $self->{dbh}->do("
+            CREATE INDEX $ix2name
+            ON $tablename (name,commithash)
+        ");
     }
 
-    # Construct the revision table if required
-    unless ( $self->{tables}{head} )
+    # Construct the head table if required
+    unless ( $self->{tables}{$self->tablename("head")} )
     {
+        my $tablename = $self->tablename("head");
+        my $ix1name = $self->tablename("head_ix1");
         $self->{dbh}->do("
-            CREATE TABLE head (
+            CREATE TABLE $tablename (
                 name       TEXT NOT NULL,
                 revision   INTEGER NOT NULL,
                 filehash   TEXT NOT NULL,
@@ -2016,14 +2970,19 @@ sub new
                 modified   TEXT NOT NULL,
                 mode       TEXT NOT NULL
             )
+        ");
+        $self->{dbh}->do("
+            CREATE INDEX $ix1name
+            ON $tablename (name)
         ");
     }
 
     # Construct the properties table if required
-    unless ( $self->{tables}{properties} )
+    unless ( $self->{tables}{$self->tablename("properties")} )
     {
+        my $tablename = $self->tablename("properties");
         $self->{dbh}->do("
-            CREATE TABLE properties (
+            CREATE TABLE $tablename (
                 key        TEXT NOT NULL PRIMARY KEY,
                 value      TEXT
             )
@@ -2031,10 +2990,11 @@ sub new
     }
 
     # Construct the commitmsgs table if required
-    unless ( $self->{tables}{commitmsgs} )
+    unless ( $self->{tables}{$self->tablename("commitmsgs")} )
     {
+        my $tablename = $self->tablename("commitmsgs");
         $self->{dbh}->do("
-            CREATE TABLE commitmsgs (
+            CREATE TABLE $tablename (
                 key        TEXT NOT NULL PRIMARY KEY,
                 value      TEXT
             )
@@ -2042,6 +3002,21 @@ sub new
     }
 
     return $self;
+}
+
+=head2 tablename
+
+=cut
+sub tablename
+{
+    my $self = shift;
+    my $name = shift;
+
+    if (exists $self->{valid_tables}{$name}) {
+        return $self->{dbtablenameprefix} . $name;
+    } else {
+        return undef;
+    }
 }
 
 =head2 update
@@ -2054,13 +3029,10 @@ sub update
     # first lets get the commit list
     $ENV{GIT_DIR} = $self->{git_path};
 
-    # prepare database queries
-    my $db_insert_rev = $self->{dbh}->prepare_cached("INSERT INTO revision (name, revision, filehash, commithash, modified, author, mode) VALUES (?,?,?,?,?,?,?)",{},1);
-    my $db_insert_mergelog = $self->{dbh}->prepare_cached("INSERT INTO commitmsgs (key, value) VALUES (?,?)",{},1);
-    my $db_delete_head = $self->{dbh}->prepare_cached("DELETE FROM head",{},1);
-    my $db_insert_head = $self->{dbh}->prepare_cached("INSERT INTO head (name, revision, filehash, commithash, modified, author, mode) VALUES (?,?,?,?,?,?,?)",{},1);
+    my $commitsha1 = `git rev-parse $self->{module}`;
+    chomp $commitsha1;
 
-    my $commitinfo = `git-cat-file commit $self->{module} 2>&1`;
+    my $commitinfo = `git cat-file commit $self->{module} 2>&1`;
     unless ( $commitinfo =~ /tree\s+[a-zA-Z0-9]{40}/ )
     {
         die("Invalid module '$self->{module}'");
@@ -2070,20 +3042,25 @@ sub update
     my $git_log;
     my $lastcommit = $self->_get_prop("last_commit");
 
+    if (defined $lastcommit && $lastcommit eq $commitsha1) { # up-to-date
+         return 1;
+    }
+
     # Start exclusive lock here...
     $self->{dbh}->begin_work() or die "Cannot lock database for BEGIN";
 
     # TODO: log processing is memory bound
     # if we can parse into a 2nd file that is in reverse order
     # we can probably do something really efficient
-    my @git_log_params = ('--parents', '--topo-order');
+    my @git_log_params = ('--pretty', '--parents', '--topo-order');
 
     if (defined $lastcommit) {
         push @git_log_params, "$lastcommit..$self->{module}";
     } else {
         push @git_log_params, $self->{module};
     }
-    open(GITLOG, '-|', 'git-log', @git_log_params) or die "Cannot call git-log: $!";
+    # git-rev-list is the backend / plumbing version of git-log
+    open(GITLOG, '-|', 'git', 'rev-list', @git_log_params) or die "Cannot call git-rev-list: $!";
 
     my @commits;
 
@@ -2168,17 +3145,21 @@ sub update
                     if ($parent eq $lastpicked) {
                         next;
                     }
-                    open my $p, 'git-merge-base '. $lastpicked . ' '
-                    . $parent . '|';
-                    my @output = (<$p>);
-                    close $p;
-                    my $base = join('', @output);
+		    my $base = eval {
+			    safe_pipe_capture('git', 'merge-base',
+						 $lastpicked, $parent);
+		    };
+		    # The two branches may not be related at all,
+		    # in which case merge base simply fails to find
+		    # any, but that's Ok.
+		    next if ($@);
+
                     chomp $base;
                     if ($base) {
                         my @merged;
                         # print "want to log between  $base $parent \n";
-                        open(GITLOG, '-|', 'git-log', "$base..$parent")
-                        or die "Cannot call git-log: $!";
+                        open(GITLOG, '-|', 'git', 'log', '--pretty=medium', "$base..$parent")
+			  or die "Cannot call git-log: $!";
                         my $mergedhash;
                         while (<GITLOG>) {
                             chomp;
@@ -2219,67 +3200,72 @@ sub update
 
         if ( defined ( $lastpicked ) )
         {
-            my $filepipe = open(FILELIST, '-|', 'git-diff-tree', '-r', $lastpicked, $commit->{hash}) or die("Cannot call git-diff-tree : $!");
+            my $filepipe = open(FILELIST, '-|', 'git', 'diff-tree', '-z', '-r', $lastpicked, $commit->{hash}) or die("Cannot call git-diff-tree : $!");
+	    local ($/) = "\0";
             while ( <FILELIST> )
             {
-                unless ( /^:\d{6}\s+\d{3}(\d)\d{2}\s+[a-zA-Z0-9]{40}\s+([a-zA-Z0-9]{40})\s+(\w)\s+(.*)$/o )
+		chomp;
+                unless ( /^:\d{6}\s+\d{3}(\d)\d{2}\s+[a-zA-Z0-9]{40}\s+([a-zA-Z0-9]{40})\s+(\w)$/o )
                 {
                     die("Couldn't process git-diff-tree line : $_");
                 }
+		my ($mode, $hash, $change) = ($1, $2, $3);
+		my $name = <FILELIST>;
+		chomp($name);
 
-                # $log->debug("File mode=$1, hash=$2, change=$3, name=$4");
+                # $log->debug("File mode=$mode, hash=$hash, change=$change, name=$name");
 
                 my $git_perms = "";
-                $git_perms .= "r" if ( $1 & 4 );
-                $git_perms .= "w" if ( $1 & 2 );
-                $git_perms .= "x" if ( $1 & 1 );
+                $git_perms .= "r" if ( $mode & 4 );
+                $git_perms .= "w" if ( $mode & 2 );
+                $git_perms .= "x" if ( $mode & 1 );
                 $git_perms = "rw" if ( $git_perms eq "" );
 
-                if ( $3 eq "D" )
+                if ( $change eq "D" )
                 {
-                    #$log->debug("DELETE   $4");
-                    $head->{$4} = {
-                        name => $4,
-                        revision => $head->{$4}{revision} + 1,
+                    #$log->debug("DELETE   $name");
+                    $head->{$name} = {
+                        name => $name,
+                        revision => $head->{$name}{revision} + 1,
                         filehash => "deleted",
                         commithash => $commit->{hash},
                         modified => $commit->{date},
                         author => $commit->{author},
                         mode => $git_perms,
                     };
-                    $db_insert_rev->execute($4, $head->{$4}{revision}, $2, $commit->{hash}, $commit->{date}, $commit->{author}, $git_perms);
+                    $self->insert_rev($name, $head->{$name}{revision}, $hash, $commit->{hash}, $commit->{date}, $commit->{author}, $git_perms);
                 }
-                elsif ( $3 eq "M" )
+                elsif ( $change eq "M" || $change eq "T" )
                 {
-                    #$log->debug("MODIFIED $4");
-                    $head->{$4} = {
-                        name => $4,
-                        revision => $head->{$4}{revision} + 1,
-                        filehash => $2,
+                    #$log->debug("MODIFIED $name");
+                    $head->{$name} = {
+                        name => $name,
+                        revision => $head->{$name}{revision} + 1,
+                        filehash => $hash,
                         commithash => $commit->{hash},
                         modified => $commit->{date},
                         author => $commit->{author},
                         mode => $git_perms,
                     };
-                    $db_insert_rev->execute($4, $head->{$4}{revision}, $2, $commit->{hash}, $commit->{date}, $commit->{author}, $git_perms);
+                    $self->insert_rev($name, $head->{$name}{revision}, $hash, $commit->{hash}, $commit->{date}, $commit->{author}, $git_perms);
                 }
-                elsif ( $3 eq "A" )
+                elsif ( $change eq "A" )
                 {
-                    #$log->debug("ADDED    $4");
-                    $head->{$4} = {
-                        name => $4,
-                        revision => 1,
-                        filehash => $2,
+                    #$log->debug("ADDED    $name");
+                    $head->{$name} = {
+                        name => $name,
+                        revision => $head->{$name}{revision} ? $head->{$name}{revision}+1 : 1,
+                        filehash => $hash,
                         commithash => $commit->{hash},
                         modified => $commit->{date},
                         author => $commit->{author},
                         mode => $git_perms,
                     };
-                    $db_insert_rev->execute($4, $head->{$4}{revision}, $2, $commit->{hash}, $commit->{date}, $commit->{author}, $git_perms);
+                    $self->insert_rev($name, $head->{$name}{revision}, $hash, $commit->{hash}, $commit->{date}, $commit->{author}, $git_perms);
                 }
                 else
                 {
-                    $log->warn("UNKNOWN FILE CHANGE mode=$1, hash=$2, change=$3, name=$4");
+                    $log->warn("UNKNOWN FILE CHANGE mode=$mode, hash=$hash, change=$change, name=$name");
                     die;
                 }
             }
@@ -2288,10 +3274,12 @@ sub update
             # this is used to detect files removed from the repo
             my $seen_files = {};
 
-            my $filepipe = open(FILELIST, '-|', 'git-ls-tree', '-r', $commit->{hash}) or die("Cannot call git-ls-tree : $!");
+            my $filepipe = open(FILELIST, '-|', 'git', 'ls-tree', '-z', '-r', $commit->{hash}) or die("Cannot call git-ls-tree : $!");
+	    local $/ = "\0";
             while ( <FILELIST> )
             {
-                unless ( /^(\d+)\s+(\w+)\s+([a-zA-Z0-9]+)\s+(.*)$/o )
+		chomp;
+                unless ( /^(\d+)\s+(\w+)\s+([a-zA-Z0-9]+)\t(.*)$/o )
                 {
                     die("Couldn't process git-ls-tree line : $_");
                 }
@@ -2332,7 +3320,7 @@ sub update
                     };
 
 
-                    $db_insert_rev->execute($git_filename, $newrevision, $git_hash, $commit->{hash}, $commit->{date}, $commit->{author}, $git_perms);
+                    $self->insert_rev($git_filename, $newrevision, $git_hash, $commit->{hash}, $commit->{date}, $commit->{author}, $git_perms);
                 }
             }
             close FILELIST;
@@ -2348,7 +3336,7 @@ sub update
                     $head->{$file}{modified} = $commit->{date};
                     $head->{$file}{author} = $commit->{author};
 
-                    $db_insert_rev->execute($file, $head->{$file}{revision}, $head->{$file}{filehash}, $commit->{hash}, $commit->{date}, $commit->{author}, $head->{$file}{mode});
+                    $self->insert_rev($file, $head->{$file}{revision}, $head->{$file}{filehash}, $commit->{hash}, $commit->{date}, $commit->{author}, $head->{$file}{mode});
                 }
             }
             # END : "Detect deleted files"
@@ -2357,7 +3345,7 @@ sub update
 
         if (exists $commit->{mergemsg})
         {
-            $db_insert_mergelog->execute($commit->{hash}, $commit->{mergemsg});
+            $self->insert_mergelog($commit->{hash}, $commit->{mergemsg});
         }
 
         $lastpicked = $commit->{hash};
@@ -2365,10 +3353,10 @@ sub update
         $self->_set_prop("last_commit", $commit->{hash});
     }
 
-    $db_delete_head->execute();
+    $self->delete_head();
     foreach my $file ( keys %$head )
     {
-        $db_insert_head->execute(
+        $self->insert_head(
             $file,
             $head->{$file}{revision},
             $head->{$file}{filehash},
@@ -2386,12 +3374,65 @@ sub update
     $self->{dbh}->commit() or die "Failed to commit changes to SQLite";
 }
 
+sub insert_rev
+{
+    my $self = shift;
+    my $name = shift;
+    my $revision = shift;
+    my $filehash = shift;
+    my $commithash = shift;
+    my $modified = shift;
+    my $author = shift;
+    my $mode = shift;
+    my $tablename = $self->tablename("revision");
+
+    my $insert_rev = $self->{dbh}->prepare_cached("INSERT INTO $tablename (name, revision, filehash, commithash, modified, author, mode) VALUES (?,?,?,?,?,?,?)",{},1);
+    $insert_rev->execute($name, $revision, $filehash, $commithash, $modified, $author, $mode);
+}
+
+sub insert_mergelog
+{
+    my $self = shift;
+    my $key = shift;
+    my $value = shift;
+    my $tablename = $self->tablename("commitmsgs");
+
+    my $insert_mergelog = $self->{dbh}->prepare_cached("INSERT INTO $tablename (key, value) VALUES (?,?)",{},1);
+    $insert_mergelog->execute($key, $value);
+}
+
+sub delete_head
+{
+    my $self = shift;
+    my $tablename = $self->tablename("head");
+
+    my $delete_head = $self->{dbh}->prepare_cached("DELETE FROM $tablename",{},1);
+    $delete_head->execute();
+}
+
+sub insert_head
+{
+    my $self = shift;
+    my $name = shift;
+    my $revision = shift;
+    my $filehash = shift;
+    my $commithash = shift;
+    my $modified = shift;
+    my $author = shift;
+    my $mode = shift;
+    my $tablename = $self->tablename("head");
+
+    my $insert_head = $self->{dbh}->prepare_cached("INSERT INTO $tablename (name, revision, filehash, commithash, modified, author, mode) VALUES (?,?,?,?,?,?,?)",{},1);
+    $insert_head->execute($name, $revision, $filehash, $commithash, $modified, $author, $mode);
+}
+
 sub _headrev
 {
     my $self = shift;
     my $filename = shift;
+    my $tablename = $self->tablename("head");
 
-    my $db_query = $self->{dbh}->prepare_cached("SELECT filehash, revision, mode FROM head WHERE name=?",{},1);
+    my $db_query = $self->{dbh}->prepare_cached("SELECT filehash, revision, mode FROM $tablename WHERE name=?",{},1);
     $db_query->execute($filename);
     my ( $hash, $revision, $mode ) = $db_query->fetchrow_array;
 
@@ -2402,8 +3443,9 @@ sub _get_prop
 {
     my $self = shift;
     my $key = shift;
+    my $tablename = $self->tablename("properties");
 
-    my $db_query = $self->{dbh}->prepare_cached("SELECT value FROM properties WHERE key=?",{},1);
+    my $db_query = $self->{dbh}->prepare_cached("SELECT value FROM $tablename WHERE key=?",{},1);
     $db_query->execute($key);
     my ( $value ) = $db_query->fetchrow_array;
 
@@ -2415,13 +3457,14 @@ sub _set_prop
     my $self = shift;
     my $key = shift;
     my $value = shift;
+    my $tablename = $self->tablename("properties");
 
-    my $db_query = $self->{dbh}->prepare_cached("UPDATE properties SET value=? WHERE key=?",{},1);
+    my $db_query = $self->{dbh}->prepare_cached("UPDATE $tablename SET value=? WHERE key=?",{},1);
     $db_query->execute($value, $key);
 
     unless ( $db_query->rows )
     {
-        $db_query = $self->{dbh}->prepare_cached("INSERT INTO properties (key, value) VALUES (?,?)",{},1);
+        $db_query = $self->{dbh}->prepare_cached("INSERT INTO $tablename (key, value) VALUES (?,?)",{},1);
         $db_query->execute($key, $value);
     }
 
@@ -2435,10 +3478,11 @@ sub _set_prop
 sub gethead
 {
     my $self = shift;
+    my $tablename = $self->tablename("head");
 
     return $self->{gethead_cache} if ( defined ( $self->{gethead_cache} ) );
 
-    my $db_query = $self->{dbh}->prepare_cached("SELECT name, filehash, mode, revision, modified, commithash, author FROM head ORDER BY name ASC",{},1);
+    my $db_query = $self->{dbh}->prepare_cached("SELECT name, filehash, mode, revision, modified, commithash, author FROM $tablename ORDER BY name ASC",{},1);
     $db_query->execute();
 
     my $tree = [];
@@ -2460,8 +3504,9 @@ sub getlog
 {
     my $self = shift;
     my $filename = shift;
+    my $tablename = $self->tablename("revision");
 
-    my $db_query = $self->{dbh}->prepare_cached("SELECT name, filehash, author, mode, revision, modified, commithash FROM revision WHERE name=? ORDER BY revision DESC",{},1);
+    my $db_query = $self->{dbh}->prepare_cached("SELECT name, filehash, author, mode, revision, modified, commithash FROM $tablename WHERE name=? ORDER BY revision DESC",{},1);
     $db_query->execute($filename);
 
     my $tree = [];
@@ -2485,19 +3530,21 @@ sub getmeta
     my $self = shift;
     my $filename = shift;
     my $revision = shift;
+    my $tablename_rev = $self->tablename("revision");
+    my $tablename_head = $self->tablename("head");
 
     my $db_query;
     if ( defined($revision) and $revision =~ /^\d+$/ )
     {
-        $db_query = $self->{dbh}->prepare_cached("SELECT * FROM revision WHERE name=? AND revision=?",{},1);
+        $db_query = $self->{dbh}->prepare_cached("SELECT * FROM $tablename_rev WHERE name=? AND revision=?",{},1);
         $db_query->execute($filename, $revision);
     }
     elsif ( defined($revision) and $revision =~ /^[a-zA-Z0-9]{40}$/ )
     {
-        $db_query = $self->{dbh}->prepare_cached("SELECT * FROM revision WHERE name=? AND commithash=?",{},1);
+        $db_query = $self->{dbh}->prepare_cached("SELECT * FROM $tablename_rev WHERE name=? AND commithash=?",{},1);
         $db_query->execute($filename, $revision);
     } else {
-        $db_query = $self->{dbh}->prepare_cached("SELECT * FROM head WHERE name=?",{},1);
+        $db_query = $self->{dbh}->prepare_cached("SELECT * FROM $tablename_head WHERE name=?",{},1);
         $db_query->execute($filename);
     }
 
@@ -2513,11 +3560,12 @@ sub commitmessage
 {
     my $self = shift;
     my $commithash = shift;
+    my $tablename = $self->tablename("commitmsgs");
 
     die("Need commithash") unless ( defined($commithash) and $commithash =~ /^[a-zA-Z0-9]{40}$/ );
 
     my $db_query;
-    $db_query = $self->{dbh}->prepare_cached("SELECT value FROM commitmsgs WHERE key=?",{},1);
+    $db_query = $self->{dbh}->prepare_cached("SELECT value FROM $tablename WHERE key=?",{},1);
     $db_query->execute($commithash);
 
     my ( $message ) = $db_query->fetchrow_array;
@@ -2528,7 +3576,7 @@ sub commitmessage
         return $message;
     }
 
-    my @lines = safe_pipe_capture("git-cat-file", "commit", $commithash);
+    my @lines = safe_pipe_capture("git", "cat-file", "commit", $commithash);
     shift @lines while ( $lines[0] =~ /\S/ );
     $message = join("",@lines);
     $message .= " " if ( $message =~ /\n$/ );
@@ -2545,9 +3593,10 @@ sub gethistory
 {
     my $self = shift;
     my $filename = shift;
+    my $tablename = $self->tablename("revision");
 
     my $db_query;
-    $db_query = $self->{dbh}->prepare_cached("SELECT revision, filehash, commithash FROM revision WHERE name=? ORDER BY revision DESC",{},1);
+    $db_query = $self->{dbh}->prepare_cached("SELECT revision, filehash, commithash FROM $tablename WHERE name=? ORDER BY revision DESC",{},1);
     $db_query->execute($filename);
 
     return $db_query->fetchall_arrayref;
@@ -2567,9 +3616,10 @@ sub gethistorydense
 {
     my $self = shift;
     my $filename = shift;
+    my $tablename = $self->tablename("revision");
 
     my $db_query;
-    $db_query = $self->{dbh}->prepare_cached("SELECT revision, filehash, commithash FROM revision WHERE name=? AND filehash!='deleted' ORDER BY revision DESC",{},1);
+    $db_query = $self->{dbh}->prepare_cached("SELECT revision, filehash, commithash FROM $tablename WHERE name=? AND filehash!='deleted' ORDER BY revision DESC",{},1);
     $db_query->execute($filename);
 
     return $db_query->fetchall_arrayref;
@@ -2595,7 +3645,7 @@ sub in_array
 
 =head2 safe_pipe_capture
 
-an alterative to `command` that allows input to be passed as an array
+an alternative to `command` that allows input to be passed as an array
 to work around shell problems with weird characters in arguments
 
 =cut
@@ -2612,5 +3662,34 @@ sub safe_pipe_capture {
     return wantarray ? @output : join('',@output);
 }
 
+=head2 mangle_dirname
+
+create a string from a directory name that is suitable to use as
+part of a filename, mainly by converting all chars except \w.- to _
+
+=cut
+sub mangle_dirname {
+    my $dirname = shift;
+    return unless defined $dirname;
+
+    $dirname =~ s/[^\w.-]/_/g;
+
+    return $dirname;
+}
+
+=head2 mangle_tablename
+
+create a string from a that is suitable to use as part of an SQL table
+name, mainly by converting all chars except \w to _
+
+=cut
+sub mangle_tablename {
+    my $tablename = shift;
+    return unless defined $tablename;
+
+    $tablename =~ s/[^\w_]/_/g;
+
+    return $tablename;
+}
 
 1;

@@ -1,0 +1,16 @@
+Git v1.7.0.7 Release Notes
+==========================
+
+Fixes since v1.7.0.6
+--------------------
+
+ * "make NO_CURL=NoThanks install" was broken.
+
+ * An overlong line after ".gitdir: " in a git file caused out of bounds
+   access to an array on the stack.
+
+ * "git config --path conf.var" to attempt to expand a variable conf.var
+   that uses "~/" short-hand segfaulted when $HOME environment variable
+   was not set.
+
+And other minor fixes and documentation updates.

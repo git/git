@@ -3,7 +3,7 @@
 # Copyright (c) 2005 Junio C Hamano
 #
 
-test_description='git-apply should handle files with incomplete lines.
+test_description='git apply should handle files with incomplete lines.
 
 '
 . ./test-lib.sh
@@ -20,14 +20,11 @@ do
   for j in 0 1 2 3
   do
     test $i -eq $j && continue
-    diff -u frotz.$i frotz.$j |
-    sed -e '
-	/^---/s|.*|--- a/frotz|
-	/^+++/s|.*|+++ b/frotz|' >diff.$i-$j
     cat frotz.$i >frotz
-    test_expect_success \
-        "apply diff between $i and $j" \
-	"git-apply <diff.$i-$j && diff frotz.$j frotz"
+    test_expect_success "apply diff between $i and $j" '
+	git apply <"$TEST_DIRECTORY"/t4101/diff.$i-$j &&
+	test_cmp frotz.$j frotz
+    '
   done
 done
 

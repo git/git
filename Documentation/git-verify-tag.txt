@@ -3,30 +3,26 @@ git-verify-tag(1)
 
 NAME
 ----
-git-verify-tag - Check the GPG signature of tag
+git-verify-tag - Check the GPG signature of tags
 
 SYNOPSIS
 --------
-'git-verify-tag' <tag>
+[verse]
+'git verify-tag' <tag>...
 
 DESCRIPTION
 -----------
-Validates the gpg signature created by git-tag.
+Validates the gpg signature created by 'git tag'.
 
 OPTIONS
 -------
-<tag>::
-	SHA1 identifier of a git tag object.
+-v::
+--verbose::
+	Print the contents of the tag object before validating it.
 
-Author
-------
-Written by Jan Harkes <jaharkes@cs.cmu.edu> and Eric W. Biederman <ebiederm@xmission.com>
-
-Documentation
---------------
-Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
+<tag>...::
+	SHA1 identifiers of git tag objects.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
-
+Part of the linkgit:git[1] suite

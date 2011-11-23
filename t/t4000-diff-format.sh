@@ -7,7 +7,7 @@ test_description='Test built-in diff output engine.
 
 '
 . ./test-lib.sh
-. ../diff-lib.sh
+. "$TEST_DIRECTORY"/diff-lib.sh
 
 echo >path0 'Line 1
 Line 2
@@ -16,19 +16,19 @@ cat path0 >path1
 chmod +x path1
 
 test_expect_success \
-    'update-cache --add two files with and without +x.' \
-    'git-update-index --add path0 path1'
+    'update-index --add two files with and without +x.' \
+    'git update-index --add path0 path1'
 
 mv path0 path0-
 sed -e 's/line/Line/' <path0- >path0
 chmod +x path0
 rm -f path1
 test_expect_success \
-    'git-diff-files -p after editing work tree.' \
-    'git-diff-files -p >current'
+    'git diff-files -p after editing work tree.' \
+    'git diff-files -p >current'
 
 # that's as far as it comes
-if [ "$(git repo-config --get core.filemode)" = false ]
+if [ "$(git config --get core.filemode)" = false ]
 then
 	say 'filemode disabled on the filesystem'
 	test_done
@@ -56,7 +56,7 @@ deleted file mode 100755
 EOF
 
 test_expect_success \
-    'validate git-diff-files -p output.' \
+    'validate git diff-files -p output.' \
     'compare_diff_patch current expected'
 
 test_done

@@ -1,0 +1,47 @@
+git-mergetool{litdd}lib(1)
+==========================
+
+NAME
+----
+git-mergetool--lib - Common git merge tool shell scriptlets
+
+SYNOPSIS
+--------
+[verse]
+'TOOL_MODE=(diff|merge) . "$(git --exec-path)/git-mergetool{litdd}lib"'
+
+DESCRIPTION
+-----------
+
+This is not a command the end user would want to run.  Ever.
+This documentation is meant for people who are studying the
+Porcelain-ish scripts and/or are writing new ones.
+
+The 'git-mergetool{litdd}lib' scriptlet is designed to be sourced (using
+`.`) by other shell scripts to set up functions for working
+with git merge tools.
+
+Before sourcing 'git-mergetool{litdd}lib', your script must set `TOOL_MODE`
+to define the operation mode for the functions listed below.
+'diff' and 'merge' are valid values.
+
+FUNCTIONS
+---------
+get_merge_tool::
+	returns a merge tool.
+
+get_merge_tool_cmd::
+	returns the custom command for a merge tool.
+
+get_merge_tool_path::
+	returns the custom path for a merge tool.
+
+run_merge_tool::
+	launches a merge tool given the tool name and a true/false
+	flag to indicate whether a merge base is present.
+	'$MERGED', '$LOCAL', '$REMOTE', and '$BASE' must be defined
+	for use by the merge tool.
+
+GIT
+---
+Part of the linkgit:git[1] suite

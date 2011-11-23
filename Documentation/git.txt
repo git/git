@@ -1,4 +1,4 @@
-git(7)
+git(1)
 ======
 
 NAME
@@ -8,14 +8,274 @@ git - the stupid content tracker
 
 SYNOPSIS
 --------
-'git' [--version] [--exec-path[=GIT_EXEC_PATH]] [--help] COMMAND [ARGS]
+[verse]
+'git' [--version] [--exec-path[=<path>]] [--html-path] [--man-path] [--info-path]
+    [-p|--paginate|--no-pager] [--no-replace-objects] [--bare]
+    [--git-dir=<path>] [--work-tree=<path>] [--namespace=<name>]
+    [-c <name>=<value>]
+    [--help] <command> [<args>]
 
 DESCRIPTION
 -----------
-'git' is both a program and a directory content tracker system.
-The program 'git' is just a wrapper to reach the core git programs
-(or a potty if you like, as it's not exactly porcelain but still
-brings your stuff to the plumbing).
+Git is a fast, scalable, distributed revision control system with an
+unusually rich command set that provides both high-level operations
+and full access to internals.
+
+See linkgit:gittutorial[7] to get started, then see
+link:everyday.html[Everyday Git] for a useful minimum set of commands, and
+"man git-commandname" for documentation of each command.  CVS users may
+also want to read linkgit:gitcvs-migration[7].  See
+the link:user-manual.html[Git User's Manual] for a more in-depth
+introduction.
+
+The '<command>' is either a name of a Git command (see below) or an alias
+as defined in the configuration file (see linkgit:git-config[1]).
+
+Formatted and hyperlinked version of the latest git
+documentation can be viewed at
+`http://www.kernel.org/pub/software/scm/git/docs/`.
+
+ifdef::stalenotes[]
+[NOTE]
+============
+
+You are reading the documentation for the latest (possibly
+unreleased) version of git, that is available from 'master'
+branch of the `git.git` repository.
+Documentation for older releases are available here:
+
+* link:v1.7.7.1/git.html[documentation for release 1.7.7.1]
+
+* release notes for
+  link:RelNotes/1.7.7.1.txt[1.7.7.1],
+  link:RelNotes/1.7.7.txt[1.7.7].
+
+* link:v1.7.6.4/git.html[documentation for release 1.7.6.4]
+
+* release notes for
+  link:RelNotes/1.7.6.4.txt[1.7.6.4],
+  link:RelNotes/1.7.6.3.txt[1.7.6.3],
+  link:RelNotes/1.7.6.2.txt[1.7.6.2],
+  link:RelNotes/1.7.6.1.txt[1.7.6.1],
+  link:RelNotes/1.7.6.txt[1.7.6].
+
+* link:v1.7.5.4/git.html[documentation for release 1.7.5.4]
+
+* release notes for
+  link:RelNotes/1.7.5.4.txt[1.7.5.4],
+  link:RelNotes/1.7.5.3.txt[1.7.5.3],
+  link:RelNotes/1.7.5.2.txt[1.7.5.2],
+  link:RelNotes/1.7.5.1.txt[1.7.5.1],
+  link:RelNotes/1.7.5.txt[1.7.5].
+
+* link:v1.7.4.5/git.html[documentation for release 1.7.4.5]
+
+* release notes for
+  link:RelNotes/1.7.4.5.txt[1.7.4.5],
+  link:RelNotes/1.7.4.4.txt[1.7.4.4],
+  link:RelNotes/1.7.4.3.txt[1.7.4.3],
+  link:RelNotes/1.7.4.2.txt[1.7.4.2],
+  link:RelNotes/1.7.4.1.txt[1.7.4.1],
+  link:RelNotes/1.7.4.txt[1.7.4].
+
+* link:v1.7.3.5/git.html[documentation for release 1.7.3.5]
+
+* release notes for
+  link:RelNotes/1.7.3.5.txt[1.7.3.5],
+  link:RelNotes/1.7.3.4.txt[1.7.3.4],
+  link:RelNotes/1.7.3.3.txt[1.7.3.3],
+  link:RelNotes/1.7.3.2.txt[1.7.3.2],
+  link:RelNotes/1.7.3.1.txt[1.7.3.1],
+  link:RelNotes/1.7.3.txt[1.7.3].
+
+* link:v1.7.2.5/git.html[documentation for release 1.7.2.5]
+
+* release notes for
+  link:RelNotes/1.7.2.5.txt[1.7.2.5],
+  link:RelNotes/1.7.2.4.txt[1.7.2.4],
+  link:RelNotes/1.7.2.3.txt[1.7.2.3],
+  link:RelNotes/1.7.2.2.txt[1.7.2.2],
+  link:RelNotes/1.7.2.1.txt[1.7.2.1],
+  link:RelNotes/1.7.2.txt[1.7.2].
+
+* link:v1.7.1.4/git.html[documentation for release 1.7.1.4]
+
+* release notes for
+  link:RelNotes/1.7.1.4.txt[1.7.1.4],
+  link:RelNotes/1.7.1.3.txt[1.7.1.3],
+  link:RelNotes/1.7.1.2.txt[1.7.1.2],
+  link:RelNotes/1.7.1.1.txt[1.7.1.1],
+  link:RelNotes/1.7.1.txt[1.7.1].
+
+* link:v1.7.0.9/git.html[documentation for release 1.7.0.9]
+
+* release notes for
+  link:RelNotes/1.7.0.9.txt[1.7.0.9],
+  link:RelNotes/1.7.0.8.txt[1.7.0.8],
+  link:RelNotes/1.7.0.7.txt[1.7.0.7],
+  link:RelNotes/1.7.0.6.txt[1.7.0.6],
+  link:RelNotes/1.7.0.5.txt[1.7.0.5],
+  link:RelNotes/1.7.0.4.txt[1.7.0.4],
+  link:RelNotes/1.7.0.3.txt[1.7.0.3],
+  link:RelNotes/1.7.0.2.txt[1.7.0.2],
+  link:RelNotes/1.7.0.1.txt[1.7.0.1],
+  link:RelNotes/1.7.0.txt[1.7.0].
+
+* link:v1.6.6.3/git.html[documentation for release 1.6.6.3]
+
+* release notes for
+  link:RelNotes/1.6.6.3.txt[1.6.6.3],
+  link:RelNotes/1.6.6.2.txt[1.6.6.2],
+  link:RelNotes/1.6.6.1.txt[1.6.6.1],
+  link:RelNotes/1.6.6.txt[1.6.6].
+
+* link:v1.6.5.9/git.html[documentation for release 1.6.5.9]
+
+* release notes for
+  link:RelNotes/1.6.5.9.txt[1.6.5.9],
+  link:RelNotes/1.6.5.8.txt[1.6.5.8],
+  link:RelNotes/1.6.5.7.txt[1.6.5.7],
+  link:RelNotes/1.6.5.6.txt[1.6.5.6],
+  link:RelNotes/1.6.5.5.txt[1.6.5.5],
+  link:RelNotes/1.6.5.4.txt[1.6.5.4],
+  link:RelNotes/1.6.5.3.txt[1.6.5.3],
+  link:RelNotes/1.6.5.2.txt[1.6.5.2],
+  link:RelNotes/1.6.5.1.txt[1.6.5.1],
+  link:RelNotes/1.6.5.txt[1.6.5].
+
+* link:v1.6.4.5/git.html[documentation for release 1.6.4.5]
+
+* release notes for
+  link:RelNotes/1.6.4.5.txt[1.6.4.5],
+  link:RelNotes/1.6.4.4.txt[1.6.4.4],
+  link:RelNotes/1.6.4.3.txt[1.6.4.3],
+  link:RelNotes/1.6.4.2.txt[1.6.4.2],
+  link:RelNotes/1.6.4.1.txt[1.6.4.1],
+  link:RelNotes/1.6.4.txt[1.6.4].
+
+* link:v1.6.3.4/git.html[documentation for release 1.6.3.4]
+
+* release notes for
+  link:RelNotes/1.6.3.4.txt[1.6.3.4],
+  link:RelNotes/1.6.3.3.txt[1.6.3.3],
+  link:RelNotes/1.6.3.2.txt[1.6.3.2],
+  link:RelNotes/1.6.3.1.txt[1.6.3.1],
+  link:RelNotes/1.6.3.txt[1.6.3].
+
+* release notes for
+  link:RelNotes/1.6.2.5.txt[1.6.2.5],
+  link:RelNotes/1.6.2.4.txt[1.6.2.4],
+  link:RelNotes/1.6.2.3.txt[1.6.2.3],
+  link:RelNotes/1.6.2.2.txt[1.6.2.2],
+  link:RelNotes/1.6.2.1.txt[1.6.2.1],
+  link:RelNotes/1.6.2.txt[1.6.2].
+
+* link:v1.6.1.3/git.html[documentation for release 1.6.1.3]
+
+* release notes for
+  link:RelNotes/1.6.1.3.txt[1.6.1.3],
+  link:RelNotes/1.6.1.2.txt[1.6.1.2],
+  link:RelNotes/1.6.1.1.txt[1.6.1.1],
+  link:RelNotes/1.6.1.txt[1.6.1].
+
+* link:v1.6.0.6/git.html[documentation for release 1.6.0.6]
+
+* release notes for
+  link:RelNotes/1.6.0.6.txt[1.6.0.6],
+  link:RelNotes/1.6.0.5.txt[1.6.0.5],
+  link:RelNotes/1.6.0.4.txt[1.6.0.4],
+  link:RelNotes/1.6.0.3.txt[1.6.0.3],
+  link:RelNotes/1.6.0.2.txt[1.6.0.2],
+  link:RelNotes/1.6.0.1.txt[1.6.0.1],
+  link:RelNotes/1.6.0.txt[1.6.0].
+
+* link:v1.5.6.6/git.html[documentation for release 1.5.6.6]
+
+* release notes for
+  link:RelNotes/1.5.6.6.txt[1.5.6.6],
+  link:RelNotes/1.5.6.5.txt[1.5.6.5],
+  link:RelNotes/1.5.6.4.txt[1.5.6.4],
+  link:RelNotes/1.5.6.3.txt[1.5.6.3],
+  link:RelNotes/1.5.6.2.txt[1.5.6.2],
+  link:RelNotes/1.5.6.1.txt[1.5.6.1],
+  link:RelNotes/1.5.6.txt[1.5.6].
+
+* link:v1.5.5.6/git.html[documentation for release 1.5.5.6]
+
+* release notes for
+  link:RelNotes/1.5.5.6.txt[1.5.5.6],
+  link:RelNotes/1.5.5.5.txt[1.5.5.5],
+  link:RelNotes/1.5.5.4.txt[1.5.5.4],
+  link:RelNotes/1.5.5.3.txt[1.5.5.3],
+  link:RelNotes/1.5.5.2.txt[1.5.5.2],
+  link:RelNotes/1.5.5.1.txt[1.5.5.1],
+  link:RelNotes/1.5.5.txt[1.5.5].
+
+* link:v1.5.4.7/git.html[documentation for release 1.5.4.7]
+
+* release notes for
+  link:RelNotes/1.5.4.7.txt[1.5.4.7],
+  link:RelNotes/1.5.4.6.txt[1.5.4.6],
+  link:RelNotes/1.5.4.5.txt[1.5.4.5],
+  link:RelNotes/1.5.4.4.txt[1.5.4.4],
+  link:RelNotes/1.5.4.3.txt[1.5.4.3],
+  link:RelNotes/1.5.4.2.txt[1.5.4.2],
+  link:RelNotes/1.5.4.1.txt[1.5.4.1],
+  link:RelNotes/1.5.4.txt[1.5.4].
+
+* link:v1.5.3.8/git.html[documentation for release 1.5.3.8]
+
+* release notes for
+  link:RelNotes/1.5.3.8.txt[1.5.3.8],
+  link:RelNotes/1.5.3.7.txt[1.5.3.7],
+  link:RelNotes/1.5.3.6.txt[1.5.3.6],
+  link:RelNotes/1.5.3.5.txt[1.5.3.5],
+  link:RelNotes/1.5.3.4.txt[1.5.3.4],
+  link:RelNotes/1.5.3.3.txt[1.5.3.3],
+  link:RelNotes/1.5.3.2.txt[1.5.3.2],
+  link:RelNotes/1.5.3.1.txt[1.5.3.1],
+  link:RelNotes/1.5.3.txt[1.5.3].
+
+* link:v1.5.2.5/git.html[documentation for release 1.5.2.5]
+
+* release notes for
+  link:RelNotes/1.5.2.5.txt[1.5.2.5],
+  link:RelNotes/1.5.2.4.txt[1.5.2.4],
+  link:RelNotes/1.5.2.3.txt[1.5.2.3],
+  link:RelNotes/1.5.2.2.txt[1.5.2.2],
+  link:RelNotes/1.5.2.1.txt[1.5.2.1],
+  link:RelNotes/1.5.2.txt[1.5.2].
+
+* link:v1.5.1.6/git.html[documentation for release 1.5.1.6]
+
+* release notes for
+  link:RelNotes/1.5.1.6.txt[1.5.1.6],
+  link:RelNotes/1.5.1.5.txt[1.5.1.5],
+  link:RelNotes/1.5.1.4.txt[1.5.1.4],
+  link:RelNotes/1.5.1.3.txt[1.5.1.3],
+  link:RelNotes/1.5.1.2.txt[1.5.1.2],
+  link:RelNotes/1.5.1.1.txt[1.5.1.1],
+  link:RelNotes/1.5.1.txt[1.5.1].
+
+* link:v1.5.0.7/git.html[documentation for release 1.5.0.7]
+
+* release notes for
+  link:RelNotes/1.5.0.7.txt[1.5.0.7],
+  link:RelNotes/1.5.0.6.txt[1.5.0.6],
+  link:RelNotes/1.5.0.5.txt[1.5.0.5],
+  link:RelNotes/1.5.0.3.txt[1.5.0.3],
+  link:RelNotes/1.5.0.2.txt[1.5.0.2],
+  link:RelNotes/1.5.0.1.txt[1.5.0.1],
+  link:RelNotes/1.5.0.txt[1.5.0].
+
+* documentation for release link:v1.4.4.4/git.html[1.4.4.4],
+  link:v1.3.3/git.html[1.3.3],
+  link:v1.2.6/git.html[1.2.6],
+  link:v1.0.13/git.html[1.0.13].
+
+============
+
+endif::stalenotes[]
 
 OPTIONS
 -------
@@ -24,173 +284,165 @@ OPTIONS
 
 --help::
 	Prints the synopsis and a list of the most commonly used
-	commands.  If a git command is named this option will bring up
-	the man-page for that command. If the option '--all' or '-a' is
-	given then all available commands are printed.
+	commands. If the option '--all' or '-a' is given then all
+	available commands are printed. If a git command is named this
+	option will bring up the manual page for that command.
++
+Other options are available to control how the manual page is
+displayed. See linkgit:git-help[1] for more information,
+because `git --help ...` is converted internally into `git
+help ...`.
 
---exec-path::
+-c <name>=<value>::
+	Pass a configuration parameter to the command. The value
+	given will override values from configuration files.
+	The <name> is expected in the same format as listed by
+	'git config' (subkeys separated by dots).
+
+--exec-path[=<path>]::
 	Path to wherever your core git programs are installed.
 	This can also be controlled by setting the GIT_EXEC_PATH
-	environment variable. If no path is given 'git' will print
+	environment variable. If no path is given, 'git' will print
 	the current setting and then exit.
 
+--html-path::
+	Print the path, without trailing slash, where git's HTML
+	documentation is installed and exit.
 
-NOT LEARNING CORE GIT COMMANDS
-------------------------------
+--man-path::
+	Print the manpath (see `man(1)`) for the man pages for
+	this version of git and exit.
 
-This manual is intended to give complete background information
-and internal workings of git, which may be too much for most
-people.  The <<Discussion>> section below contains much useful
-definition and clarification - read that first.
+--info-path::
+	Print the path where the Info files documenting this
+	version of git are installed and exit.
 
-If you are interested in using git to manage (version control)
-projects, use link:tutorial.html[The Tutorial] to get you started,
-and then link:everyday.html[Everyday GIT] as a guide to the
-minimum set of commands you need to know for day-to-day work.
-Most likely, that will get you started, and you can go a long
-way without knowing the low level details too much.
+-p::
+--paginate::
+	Pipe all output into 'less' (or if set, $PAGER) if standard
+	output is a terminal.  This overrides the `pager.<cmd>`
+	configuration options (see the "Configuration Mechanism" section
+	below).
 
-The link:core-tutorial.html[Core tutorial] document covers how things
-internally work.
+--no-pager::
+	Do not pipe git output into a pager.
 
-If you are migrating from CVS, link:cvs-migration.html[cvs
-migration] document may be helpful after you finish the
-tutorial.
+--git-dir=<path>::
+	Set the path to the repository. This can also be controlled by
+	setting the GIT_DIR environment variable. It can be an absolute
+	path or relative path to current working directory.
 
-After you get the general feel from the tutorial and this
-overview page, you may want to take a look at the
-link:howto-index.html[howto] documents.
+--work-tree=<path>::
+	Set the path to the working tree. It can be an absolute path
+	or a path relative to the current working directory.
+	This can also be controlled by setting the GIT_WORK_TREE
+	environment variable and the core.worktree configuration
+	variable (see core.worktree in linkgit:git-config[1] for a
+	more detailed discussion).
+
+--namespace=<path>::
+	Set the git namespace.  See linkgit:gitnamespaces[7] for more
+	details.  Equivalent to setting the `GIT_NAMESPACE` environment
+	variable.
+
+--bare::
+	Treat the repository as a bare repository.  If GIT_DIR
+	environment is not set, it is set to the current working
+	directory.
+
+--no-replace-objects::
+	Do not use replacement refs to replace git objects. See
+	linkgit:git-replace[1] for more information.
 
 
-CORE GIT COMMANDS
------------------
+FURTHER DOCUMENTATION
+---------------------
 
-If you are writing your own Porcelain, you need to be familiar
-with most of the low level commands --- I suggest starting from
-gitlink:git-update-index[1] and gitlink:git-read-tree[1].
+See the references above to get started using git.  The following is
+probably more detail than necessary for a first-time user.
+
+The link:user-manual.html#git-concepts[git concepts chapter of the
+user-manual] and linkgit:gitcore-tutorial[7] both provide
+introductions to the underlying git architecture.
+
+See linkgit:gitworkflows[7] for an overview of recommended workflows.
+
+See also the link:howto-index.html[howto] documents for some useful
+examples.
+
+The internals are documented in the
+link:technical/api-index.html[GIT API documentation].
+
+GIT COMMANDS
+------------
+
+We divide git into high level ("porcelain") commands and low level
+("plumbing") commands.
+
+High-level commands (porcelain)
+-------------------------------
+
+We separate the porcelain commands into the main commands and some
+ancillary user utilities.
+
+Main porcelain commands
+~~~~~~~~~~~~~~~~~~~~~~~
+
+include::cmds-mainporcelain.txt[]
+
+Ancillary Commands
+~~~~~~~~~~~~~~~~~~
+Manipulators:
+
+include::cmds-ancillarymanipulators.txt[]
+
+Interrogators:
+
+include::cmds-ancillaryinterrogators.txt[]
 
 
-Commands Overview
------------------
-The git commands can helpfully be split into those that manipulate
-the repository, the index and the files in the working tree, those that
-interrogate and compare them, and those that moves objects and
-references between repositories.
+Interacting with Others
+~~~~~~~~~~~~~~~~~~~~~~~
 
-In addition, git itself comes with a spartan set of porcelain
-commands.  They are usable but are not meant to compete with real
-Porcelains.
+These commands are to interact with foreign SCM and with other
+people via patch over e-mail.
 
-There are also some ancillary programs that can be viewed as useful
-aids for using the core commands but which are unlikely to be used by
-SCMs layered over git.
+include::cmds-foreignscminterface.txt[]
+
+
+Low-level commands (plumbing)
+-----------------------------
+
+Although git includes its
+own porcelain layer, its low-level commands are sufficient to support
+development of alternative porcelains.  Developers of such porcelains
+might start by reading about linkgit:git-update-index[1] and
+linkgit:git-read-tree[1].
+
+The interface (input, output, set of options and the semantics)
+to these low-level commands are meant to be a lot more stable
+than Porcelain level commands, because these commands are
+primarily for scripted use.  The interface to Porcelain commands
+on the other hand are subject to change in order to improve the
+end user experience.
+
+The following description divides
+the low-level commands into commands that manipulate objects (in
+the repository, index, and working tree), commands that interrogate and
+compare objects, and commands that move objects and references between
+repositories.
+
 
 Manipulation commands
 ~~~~~~~~~~~~~~~~~~~~~
-gitlink:git-apply[1]::
-	Reads a "diff -up1" or git generated patch file and
-	applies it to the working tree.
 
-gitlink:git-checkout-index[1]::
-	Copy files from the index to the working tree.
-
-gitlink:git-commit-tree[1]::
-	Creates a new commit object.
-
-gitlink:git-hash-object[1]::
-	Computes the object ID from a file.
-
-gitlink:git-index-pack[1]::
-	Build pack idx file for an existing packed archive.
-
-gitlink:git-init-db[1]::
-	Creates an empty git object database, or reinitialize an
-	existing one.
-
-gitlink:git-merge-index[1]::
-	Runs a merge for files needing merging.
-
-gitlink:git-mktag[1]::
-	Creates a tag object.
-
-gitlink:git-pack-objects[1]::
-	Creates a packed archive of objects.
-
-gitlink:git-prune-packed[1]::
-	Remove extra objects that are already in pack files.
-
-gitlink:git-read-tree[1]::
-	Reads tree information into the index.
-
-gitlink:git-repo-config[1]::
-	Get and set options in .git/config.
-
-gitlink:git-unpack-objects[1]::
-	Unpacks objects out of a packed archive.
-
-gitlink:git-update-index[1]::
-	Registers files in the working tree to the index.
-
-gitlink:git-write-tree[1]::
-	Creates a tree from the index.
+include::cmds-plumbingmanipulators.txt[]
 
 
 Interrogation commands
 ~~~~~~~~~~~~~~~~~~~~~~
 
-gitlink:git-cat-file[1]::
-	Provide content or type/size information for repository objects.
-
-gitlink:git-describe[1]::
-	Show the most recent tag that is reachable from a commit.
-
-gitlink:git-diff-index[1]::
-	Compares content and mode of blobs between the index and repository.
-
-gitlink:git-diff-files[1]::
-	Compares files in the working tree and the index.
-
-gitlink:git-diff-stages[1]::
-	Compares two "merge stages" in the index.
-
-gitlink:git-diff-tree[1]::
-	Compares the content and mode of blobs found via two tree objects.
-
-gitlink:git-fsck-objects[1]::
-	Verifies the connectivity and validity of the objects in the database.
-
-gitlink:git-ls-files[1]::
-	Information about files in the index and the working tree.
-
-gitlink:git-ls-tree[1]::
-	Displays a tree object in human readable form.
-
-gitlink:git-merge-base[1]::
-	Finds as good common ancestors as possible for a merge.
-
-gitlink:git-name-rev[1]::
-	Find symbolic names for given revs.
-
-gitlink:git-pack-redundant[1]::
-	Find redundant pack files.
-
-gitlink:git-rev-list[1]::
-	Lists commit objects in reverse chronological order.
-
-gitlink:git-show-index[1]::
-	Displays contents of a pack idx file.
-
-gitlink:git-tar-tree[1]::
-	Creates a tar archive of the files in the named tree object.
-
-gitlink:git-unpack-file[1]::
-	Creates a temporary file with a blob's contents.
-
-gitlink:git-var[1]::
-	Displays a git logical variable.
-
-gitlink:git-verify-pack[1]::
-	Validates packed git archive files.
+include::cmds-plumbinginterrogators.txt[]
 
 In general, the interrogate commands do not touch the files in
 the working tree.
@@ -199,249 +451,21 @@ the working tree.
 Synching repositories
 ~~~~~~~~~~~~~~~~~~~~~
 
-gitlink:git-clone-pack[1]::
-	Clones a repository into the current repository (engine
-	for ssh and local transport).
+include::cmds-synchingrepositories.txt[]
 
-gitlink:git-fetch-pack[1]::
-	Updates from a remote repository (engine for ssh and
-	local transport).
+The following are helper commands used by the above; end users
+typically do not use them directly.
 
-gitlink:git-http-fetch[1]::
-	Downloads a remote git repository via HTTP by walking
-	commit chain.
+include::cmds-synchelpers.txt[]
 
-gitlink:git-local-fetch[1]::
-	Duplicates another git repository on a local system by
-	walking commit chain.
 
-gitlink:git-peek-remote[1]::
-	Lists references on a remote repository using
-	upload-pack protocol (engine for ssh and local
-	transport).
+Internal helper commands
+~~~~~~~~~~~~~~~~~~~~~~~~
 
-gitlink:git-receive-pack[1]::
-	Invoked by 'git-send-pack' to receive what is pushed to it.
+These are internal helper commands used by other commands; end
+users typically do not use them directly.
 
-gitlink:git-send-pack[1]::
-	Pushes to a remote repository, intelligently.
-
-gitlink:git-http-push[1]::
-	Push missing objects using HTTP/DAV.
-
-gitlink:git-shell[1]::
-	Restricted shell for GIT-only SSH access.
-
-gitlink:git-ssh-fetch[1]::
-	Pulls from a remote repository over ssh connection by
-	walking commit chain.
-
-gitlink:git-ssh-upload[1]::
-	Helper "server-side" program used by git-ssh-fetch.
-
-gitlink:git-update-server-info[1]::
-	Updates auxiliary information on a dumb server to help
-	clients discover references and packs on it.
-
-gitlink:git-upload-pack[1]::
-	Invoked by 'git-clone-pack' and 'git-fetch-pack' to push
-	what are asked for.
-
-
-Porcelain-ish Commands
-----------------------
-
-gitlink:git-add[1]::
-	Add paths to the index.
-
-gitlink:git-am[1]::
-	Apply patches from a mailbox, but cooler.
-
-gitlink:git-applymbox[1]::
-	Apply patches from a mailbox, original version by Linus.
-
-gitlink:git-bisect[1]::
-	Find the change that introduced a bug by binary search.
-
-gitlink:git-branch[1]::
-	Create and Show branches.
-
-gitlink:git-checkout[1]::
-	Checkout and switch to a branch.
-
-gitlink:git-cherry-pick[1]::
-	Cherry-pick the effect of an existing commit.
-
-gitlink:git-clone[1]::
-	Clones a repository into a new directory.
-
-gitlink:git-commit[1]::
-	Record changes to the repository.
-
-gitlink:git-diff[1]::
-	Show changes between commits, commit and working tree, etc.
-
-gitlink:git-fetch[1]::
-	Download from a remote repository via various protocols.
-
-gitlink:git-format-patch[1]::
-	Prepare patches for e-mail submission.
-
-gitlink:git-grep[1]::
-	Print lines matching a pattern.
-
-gitlink:git-log[1]::
-	Shows commit logs.
-
-gitlink:git-ls-remote[1]::
-	Shows references in a remote or local repository.
-
-gitlink:git-merge[1]::
-	Grand unified merge driver.
-
-gitlink:git-mv[1]::
-	Move or rename a file, a directory, or a symlink.
-
-gitlink:git-pull[1]::
-	Fetch from and merge with a remote repository.
-
-gitlink:git-push[1]::
-	Update remote refs along with associated objects.
-
-gitlink:git-rebase[1]::
-	Rebase local commits to the updated upstream head.
-
-gitlink:git-repack[1]::
-	Pack unpacked objects in a repository.
-
-gitlink:git-rerere[1]::
-	Reuse recorded resolution of conflicted merges.
-
-gitlink:git-reset[1]::
-	Reset current HEAD to the specified state.
-
-gitlink:git-resolve[1]::
-	Merge two commits.
-
-gitlink:git-revert[1]::
-	Revert an existing commit.
-
-gitlink:git-shortlog[1]::
-	Summarizes 'git log' output.
-
-gitlink:git-show-branch[1]::
-	Show branches and their commits.
-
-gitlink:git-status[1]::
-	Shows the working tree status.
-
-gitlink:git-verify-tag[1]::
-	Check the GPG signature of tag.
-
-gitlink:git-whatchanged[1]::
-	Shows commit logs and differences they introduce.
-
-
-Ancillary Commands
-------------------
-Manipulators:
-
-gitlink:git-applypatch[1]::
-	Apply one patch extracted from an e-mail.
-
-gitlink:git-archimport[1]::
-	Import an arch repository into git.
-
-gitlink:git-convert-objects[1]::
-	Converts old-style git repository.
-
-gitlink:git-cvsimport[1]::
-	Salvage your data out of another SCM people love to hate.
-
-gitlink:git-cvsexportcommit[1]::
-	Export a single commit to a CVS checkout.
-
-gitlink:git-lost-found[1]::
-	Recover lost refs that luckily have not yet been pruned.
-
-gitlink:git-merge-one-file[1]::
-	The standard helper program to use with `git-merge-index`.
-
-gitlink:git-prune[1]::
-	Prunes all unreachable objects from the object database.
-
-gitlink:git-relink[1]::
-	Hardlink common objects in local repositories.
-
-gitlink:git-svnimport[1]::
-	Import a SVN repository into git.
-
-gitlink:git-sh-setup[1]::
-	Common git shell script setup code.
-
-gitlink:git-symbolic-ref[1]::
-	Read and modify symbolic refs.
-
-gitlink:git-tag[1]::
-	An example script to create a tag object signed with GPG.
-
-gitlink:git-update-ref[1]::
-	Update the object name stored in a ref safely.
-
-
-Interrogators:
-
-gitlink:git-check-ref-format[1]::
-	Make sure ref name is well formed.
-
-gitlink:git-cherry[1]::
-	Find commits not merged upstream.
-
-gitlink:git-count-objects[1]::
-	Count unpacked number of objects and their disk consumption.
-
-gitlink:git-daemon[1]::
-	A really simple server for git repositories.
-
-gitlink:git-get-tar-commit-id[1]::
-	Extract commit ID from an archive created using git-tar-tree.
-
-gitlink:git-mailinfo[1]::
-	Extracts patch and authorship information from a single
-	e-mail message, optionally transliterating the commit
-	message into utf-8.
-
-gitlink:git-mailsplit[1]::
-	A stupid program to split UNIX mbox format mailbox into
-	individual pieces of e-mail.
-
-gitlink:git-patch-id[1]::
-	Compute unique ID for a patch.
-
-gitlink:git-parse-remote[1]::
-	Routines to help parsing `$GIT_DIR/remotes/` files.
-
-gitlink:git-request-pull[1]::
-	git-request-pull.
-
-gitlink:git-rev-parse[1]::
-	Pick out and massage parameters.
-
-gitlink:git-send-email[1]::
-	Send patch e-mails out of "format-patch --mbox" output.
-
-gitlink:git-symbolic-ref[1]::
-	Read and modify symbolic refs.
-
-gitlink:git-stripspace[1]::
-	Filter out empty lines.
-
-
-Commands not yet documented
----------------------------
-
-gitlink:gitk[1]::
-	The gitk repository browser.
+include::cmds-purehelpers.txt[]
 
 
 Configuration Mechanism
@@ -449,7 +473,7 @@ Configuration Mechanism
 
 Starting from 0.99.9 (actually mid 0.99.8.GIT), `.git/config` file
 is used to hold per-repository configuration options.  It is a
-simple text file modelled after `.ini` format familiar to some
+simple text file modeled after `.ini` format familiar to some
 people.  Here is an example:
 
 ------------
@@ -470,7 +494,8 @@ people.  Here is an example:
 ------------
 
 Various commands read from the configuration file and adjust
-their operation accordingly.
+their operation accordingly.  See linkgit:git-config[1] for a
+list.
 
 
 Identifier Terminology
@@ -493,6 +518,12 @@ Identifier Terminology
 	operate on a <tree> object but automatically dereferences
 	<commit> and <tag> objects that point at a <tree>.
 
+<commit-ish>::
+	Indicates a commit or tag object name.  A
+	command that takes a <commit-ish> argument ultimately wants to
+	operate on a <commit> object but automatically dereferences
+	<tag> objects that point at a <commit>.
+
 <type>::
 	Indicates that an object type is required.
 	Currently one of: `blob`, `tree`, `commit`, or `tag`.
@@ -507,26 +538,26 @@ Any git command accepting any <object> can also use the following
 symbolic notation:
 
 HEAD::
-	indicates the head of the current branch (i.e. the
-	contents of `$GIT_DIR/HEAD`).
+	indicates the head of the current branch.
 
 <tag>::
 	a valid tag 'name'
-	(i.e. the contents of `$GIT_DIR/refs/tags/<tag>`).
+	(i.e. a `refs/tags/<tag>` reference).
 
 <head>::
 	a valid head 'name'
-	(i.e. the contents of `$GIT_DIR/refs/heads/<head>`).
+	(i.e. a `refs/heads/<head>` reference).
 
-<snap>::
-	a valid snapshot 'name'
-	(i.e. the contents of `$GIT_DIR/refs/snap/<snap>`).
+For a more complete list of ways to spell object names, see
+"SPECIFYING REVISIONS" section in linkgit:gitrevisions[7].
 
 
 File/Directory Structure
 ------------------------
 
-Please see link:repository-layout.html[repository layout] document.
+Please see the linkgit:gitrepository-layout[5] document.
+
+Read linkgit:githooks[5] for more details about each hook.
 
 Higher level SCMs may provide and manage additional information in the
 `$GIT_DIR`.
@@ -534,7 +565,7 @@ Higher level SCMs may provide and manage additional information in the
 
 Terminology
 -----------
-Please see link:glossary.html[glossary] document.
+Please see linkgit:gitglossary[7].
 
 
 Environment Variables
@@ -561,14 +592,43 @@ git so take care if using Cogito etc.
 'GIT_ALTERNATE_OBJECT_DIRECTORIES'::
 	Due to the immutable nature of git objects, old objects can be
 	archived into shared, read-only directories. This variable
-	specifies a ":" separated list of git object directories which
-	can be used to search for git objects. New objects will not be
-	written to these directories.
+	specifies a ":" separated (on Windows ";" separated) list
+	of git object directories which can be used to search for git
+	objects. New objects will not be written to these directories.
 
 'GIT_DIR'::
 	If the 'GIT_DIR' environment variable is set then it
 	specifies a path to use instead of the default `.git`
 	for the base of the repository.
+
+'GIT_WORK_TREE'::
+	Set the path to the working tree.  The value will not be
+	used in combination with repositories found automatically in
+	a .git directory (i.e. $GIT_DIR is not set).
+	This can also be controlled by the '--work-tree' command line
+	option and the core.worktree configuration variable.
+
+'GIT_NAMESPACE'::
+	Set the git namespace; see linkgit:gitnamespaces[7] for details.
+	The '--namespace' command-line option also sets this value.
+
+'GIT_CEILING_DIRECTORIES'::
+	This should be a colon-separated list of absolute paths.
+	If set, it is a list of directories that git should not chdir
+	up into while looking for a repository directory.
+	It will not exclude the current working directory or
+	a GIT_DIR set on the command line or in the environment.
+	(Useful for excluding slow-loading network directories.)
+
+'GIT_DISCOVERY_ACROSS_FILESYSTEM'::
+	When run in a directory that does not have ".git" repository
+	directory, git tries to find such a directory in the parent
+	directories to find the top of the working tree, but by default it
+	does not cross filesystem boundaries.  This environment variable
+	can be set to true to tell git not to stop at filesystem
+	boundaries.  Like 'GIT_CEILING_DIRECTORIES', this will not affect
+	an explicit repository directory set via 'GIT_DIR' or on the
+	command line.
 
 git Commits
 ~~~~~~~~~~~
@@ -577,35 +637,179 @@ git Commits
 'GIT_AUTHOR_DATE'::
 'GIT_COMMITTER_NAME'::
 'GIT_COMMITTER_EMAIL'::
-	see gitlink:git-commit-tree[1]
+'GIT_COMMITTER_DATE'::
+'EMAIL'::
+	see linkgit:git-commit-tree[1]
 
 git Diffs
 ~~~~~~~~~
 'GIT_DIFF_OPTS'::
+	Only valid setting is "--unified=??" or "-u??" to set the
+	number of context lines shown when a unified diff is created.
+	This takes precedence over any "-U" or "--unified" option
+	value passed on the git diff command line.
+
 'GIT_EXTERNAL_DIFF'::
-	see the "generating patches" section in :
-	gitlink:git-diff-index[1];
-	gitlink:git-diff-files[1];
-	gitlink:git-diff-tree[1]
+	When the environment variable 'GIT_EXTERNAL_DIFF' is set, the
+	program named by it is called, instead of the diff invocation
+	described above.  For a path that is added, removed, or modified,
+        'GIT_EXTERNAL_DIFF' is called with 7 parameters:
+
+	path old-file old-hex old-mode new-file new-hex new-mode
++
+where:
+
+	<old|new>-file:: are files GIT_EXTERNAL_DIFF can use to read the
+                         contents of <old|new>,
+	<old|new>-hex:: are the 40-hexdigit SHA1 hashes,
+	<old|new>-mode:: are the octal representation of the file modes.
++
+The file parameters can point at the user's working file
+(e.g. `new-file` in "git-diff-files"), `/dev/null` (e.g. `old-file`
+when a new file is added), or a temporary file (e.g. `old-file` in the
+index).  'GIT_EXTERNAL_DIFF' should not worry about unlinking the
+temporary file --- it is removed when 'GIT_EXTERNAL_DIFF' exits.
++
+For a path that is unmerged, 'GIT_EXTERNAL_DIFF' is called with 1
+parameter, <path>.
+
+other
+~~~~~
+'GIT_MERGE_VERBOSITY'::
+	A number controlling the amount of output shown by
+	the recursive merge strategy.  Overrides merge.verbosity.
+	See linkgit:git-merge[1]
+
+'GIT_PAGER'::
+	This environment variable overrides `$PAGER`. If it is set
+	to an empty string or to the value "cat", git will not launch
+	a pager.  See also the `core.pager` option in
+	linkgit:git-config[1].
+
+'GIT_SSH'::
+	If this environment variable is set then 'git fetch'
+	and 'git push' will use this command instead
+	of 'ssh' when they need to connect to a remote system.
+	The '$GIT_SSH' command will be given exactly two arguments:
+	the 'username@host' (or just 'host') from the URL and the
+	shell command to execute on that remote system.
++
+To pass options to the program that you want to list in GIT_SSH
+you will need to wrap the program and options into a shell script,
+then set GIT_SSH to refer to the shell script.
++
+Usually it is easier to configure any desired options through your
+personal `.ssh/config` file.  Please consult your ssh documentation
+for further details.
+
+'GIT_ASKPASS'::
+	If this environment variable is set, then git commands which need to
+	acquire passwords or passphrases (e.g. for HTTP or IMAP authentication)
+	will call this program with a suitable prompt as command line argument
+	and read the password from its STDOUT. See also the 'core.askpass'
+	option in linkgit:git-config[1].
+
+'GIT_FLUSH'::
+	If this environment variable is set to "1", then commands such
+	as 'git blame' (in incremental mode), 'git rev-list', 'git log',
+	and 'git whatchanged' will force a flush of the output stream
+	after each commit-oriented record have been flushed.   If this
+	variable is set to "0", the output of these commands will be done
+	using completely buffered I/O.   If this environment variable is
+	not set, git will choose buffered or record-oriented flushing
+	based on whether stdout appears to be redirected to a file or not.
+
+'GIT_TRACE'::
+	If this variable is set to "1", "2" or "true" (comparison
+	is case insensitive), git will print `trace:` messages on
+	stderr telling about alias expansion, built-in command
+	execution and external command execution.
+	If this variable is set to an integer value greater than 1
+	and lower than 10 (strictly) then git will interpret this
+	value as an open file descriptor and will try to write the
+	trace messages into this file descriptor.
+	Alternatively, if this variable is set to an absolute path
+	(starting with a '/' character), git will interpret this
+	as a file path and will try to write the trace messages
+	into it.
 
 Discussion[[Discussion]]
 ------------------------
-include::README[]
+
+More detail on the following is available from the
+link:user-manual.html#git-concepts[git concepts chapter of the
+user-manual] and linkgit:gitcore-tutorial[7].
+
+A git project normally consists of a working directory with a ".git"
+subdirectory at the top level.  The .git directory contains, among other
+things, a compressed object database representing the complete history
+of the project, an "index" file which links that history to the current
+contents of the working tree, and named pointers into that history such
+as tags and branch heads.
+
+The object database contains objects of three main types: blobs, which
+hold file data; trees, which point to blobs and other trees to build up
+directory hierarchies; and commits, which each reference a single tree
+and some number of parent commits.
+
+The commit, equivalent to what other systems call a "changeset" or
+"version", represents a step in the project's history, and each parent
+represents an immediately preceding step.  Commits with more than one
+parent represent merges of independent lines of development.
+
+All objects are named by the SHA1 hash of their contents, normally
+written as a string of 40 hex digits.  Such names are globally unique.
+The entire history leading up to a commit can be vouched for by signing
+just that commit.  A fourth object type, the tag, is provided for this
+purpose.
+
+When first created, objects are stored in individual files, but for
+efficiency may later be compressed together into "pack files".
+
+Named pointers called refs mark interesting points in history.  A ref
+may contain the SHA1 name of an object or the name of another ref.  Refs
+with names beginning `ref/head/` contain the SHA1 name of the most
+recent commit (or "head") of a branch under development.  SHA1 names of
+tags of interest are stored under `ref/tags/`.  A special ref named
+`HEAD` contains the name of the currently checked-out branch.
+
+The index file is initialized with a list of all paths and, for each
+path, a blob object and a set of attributes.  The blob object represents
+the contents of the file as of the head of the current branch.  The
+attributes (last modified time, size, etc.) are taken from the
+corresponding file in the working tree.  Subsequent changes to the
+working tree can be found by comparing these attributes.  The index may
+be updated with new content, and new commits may be created from the
+content stored in the index.
+
+The index is also capable of storing multiple entries (called "stages")
+for a given pathname.  These stages are used to hold the various
+unmerged version of a file when a merge is in progress.
 
 Authors
 -------
-* git's founding father is Linus Torvalds <torvalds@osdl.org>.
-* The current git nurse is Junio C Hamano <junkio@cox.net>.
-* The git potty was written by Andres Ericsson <ae@op5.se>.
-* General upbringing is handled by the git-list <git@vger.kernel.org>.
+Git was started by Linus Torvalds, and is currently maintained by Junio
+C Hamano. Numerous contributions have come from the git mailing list
+<git@vger.kernel.org>. For a more complete list of contributors, see
+http://git-scm.com/about. If you have a clone of git.git itself, the
+output of linkgit:git-shortlog[1] and linkgit:git-blame[1] can show you
+the authors for specific parts of the project.
 
-Documentation
+Reporting Bugs
 --------------
-The documentation for git suite was started by David Greaves
-<david@dgreaves.com>, and later enhanced greatly by the
-contributors on the git-list <git@vger.kernel.org>.
+
+Report bugs to the Git mailing list <git@vger.kernel.org> where the
+development and maintenance is primarily done.  You do not have to be
+subscribed to the list to send a message there.
+
+SEE ALSO
+--------
+linkgit:gittutorial[7], linkgit:gittutorial-2[7],
+link:everyday.html[Everyday Git], linkgit:gitcvs-migration[7],
+linkgit:gitglossary[7], linkgit:gitcore-tutorial[7],
+linkgit:gitcli[7], link:user-manual.html[The Git User's Manual],
+linkgit:gitworkflows[7]
 
 GIT
 ---
-Part of the gitlink:git[7] suite
-
+Part of the linkgit:git[1] suite

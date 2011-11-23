@@ -3,12 +3,13 @@ git-var(1)
 
 NAME
 ----
-git-var - Print the git users identity
+git-var - Show a git logical variable
 
 
 SYNOPSIS
 --------
-'git-var' [ -l | <variable> ]
+[verse]
+'git var' ( -l | <variable> )
 
 DESCRIPTION
 -----------
@@ -17,11 +18,14 @@ Prints a git logical variable.
 OPTIONS
 -------
 -l::
-	Cause the logical variables to be listed.
+	Cause the logical variables to be listed. In addition, all the
+	variables of the git configuration file .git/config are listed
+	as well. (However, the configuration variables listing functionality
+	is deprecated in favor of `git config -l`.)
 
 EXAMPLE
 --------
-	$ git-var GIT_AUTHOR_IDENT
+	$ git var GIT_AUTHOR_IDENT
 	Eric W. Biederman <ebiederm@lnxi.com> 1121223278 -0600
 
 
@@ -33,29 +37,35 @@ GIT_AUTHOR_IDENT::
 GIT_COMMITTER_IDENT::
     The person who put a piece of code into git.
 
+GIT_EDITOR::
+    Text editor for use by git commands.  The value is meant to be
+    interpreted by the shell when it is used.  Examples: `~/bin/vi`,
+    `$SOME_ENVIRONMENT_VARIABLE`, `"C:\Program Files\Vim\gvim.exe"
+    --nofork`.  The order of preference is the `$GIT_EDITOR`
+    environment variable, then `core.editor` configuration, then
+    `$VISUAL`, then `$EDITOR`, and then finally 'vi'.
+
+GIT_PAGER::
+    Text viewer for use by git commands (e.g., 'less').  The value
+    is meant to be interpreted by the shell.  The order of preference
+    is the `$GIT_PAGER` environment variable, then `core.pager`
+    configuration, then `$PAGER`, and then finally 'less'.
+
 Diagnostics
 -----------
 You don't exist. Go away!::
     The passwd(5) gecos field couldn't be read
 Your parents must have hated you!::
-    The password(5) gecos field is longer than a giant static buffer.
+    The passwd(5) gecos field is longer than a giant static buffer.
 Your sysadmin must hate you!::
-    The password(5) name field is longer than a giant static buffer.
+    The passwd(5) name field is longer than a giant static buffer.
 
-See Also
+SEE ALSO
 --------
-gitlink:git-commit-tree[1]
-gitlink:git-tag[1]
-
-Author
-------
-Written by Eric Biederman <ebiederm@xmission.com>
-
-Documentation
---------------
-Documentation by Eric Biederman and the git-list <git@vger.kernel.org>.
+linkgit:git-commit-tree[1]
+linkgit:git-tag[1]
+linkgit:git-config[1]
 
 GIT
 ---
-Part of the gitlink:git[7] suite
-
+Part of the linkgit:git[1] suite

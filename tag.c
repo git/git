@@ -1,12 +1,21 @@
 #include "cache.h"
 #include "tag.h"
+#include "commit.h"
+#include "tree.h"
+#include "blob.h"
+
+#define PGP_SIGNATURE "-----BEGIN PGP SIGNATURE-----"
+#define PGP_MESSAGE "-----BEGIN PGP MESSAGE-----"
 
 const char *tag_type = "tag";
 
 struct object *deref_tag(struct object *o, const char *warn, int warnlen)
 {
-	while (o && o->type == tag_type)
-		o = parse_object(((struct tag *)o)->tagged->sha1);
+	while (o && o->type == OBJ_TAG)
+		if (((struct tag *)o)->tagged)
+			o = parse_object(((struct tag *)o)->tagged->sha1);
+		else
+			o = NULL;
 	if (!o && warn) {
 		if (!warnlen)
 			warnlen = strlen(warn);
@@ -17,87 +26,110 @@ struct object *deref_tag(struct object *o, const char *warn, int warnlen)
 
 struct tag *lookup_tag(const unsigned char *sha1)
 {
-        struct object *obj = lookup_object(sha1);
-        if (!obj) {
-                struct tag *ret = xmalloc(sizeof(struct tag));
-                memset(ret, 0, sizeof(struct tag));
-                created_object(sha1, &ret->object);
-                ret->object.type = tag_type;
-                return ret;
-        }
+	struct object *obj = lookup_object(sha1);
+	if (!obj)
+		return create_object(sha1, OBJ_TAG, alloc_tag_node());
 	if (!obj->type)
-		obj->type = tag_type;
-        if (obj->type != tag_type) {
-                error("Object %s is a %s, not a tree", 
-                      sha1_to_hex(sha1), obj->type);
-                return NULL;
-        }
-        return (struct tag *) obj;
+		obj->type = OBJ_TAG;
+	if (obj->type != OBJ_TAG) {
+		error("Object %s is a %s, not a tag",
+		      sha1_to_hex(sha1), typename(obj->type));
+		return NULL;
+	}
+	return (struct tag *) obj;
 }
 
-int parse_tag_buffer(struct tag *item, void *data, unsigned long size)
+static unsigned long parse_tag_date(const char *buf, const char *tail)
 {
-	int typelen, taglen;
-	unsigned char object[20];
-	const char *type_line, *tag_line, *sig_line;
-	char type[20];
+	const char *dateptr;
 
-        if (item->object.parsed)
-                return 0;
-        item->object.parsed = 1;
+	while (buf < tail && *buf++ != '>')
+		/* nada */;
+	if (buf >= tail)
+		return 0;
+	dateptr = buf;
+	while (buf < tail && *buf++ != '\n')
+		/* nada */;
+	if (buf >= tail)
+		return 0;
+	/* dateptr < buf && buf[-1] == '\n', so strtoul will stop at buf-1 */
+	return strtoul(dateptr, NULL, 10);
+}
+
+int parse_tag_buffer(struct tag *item, const void *data, unsigned long size)
+{
+	unsigned char sha1[20];
+	char type[20];
+	const char *bufptr = data;
+	const char *tail = bufptr + size;
+	const char *nl;
+
+	if (item->object.parsed)
+		return 0;
+	item->object.parsed = 1;
 
 	if (size < 64)
 		return -1;
-	if (memcmp("object ", data, 7) || get_sha1_hex(data + 7, object))
+	if (memcmp("object ", bufptr, 7) || get_sha1_hex(bufptr + 7, sha1) || bufptr[47] != '\n')
 		return -1;
+	bufptr += 48; /* "object " + sha1 + "\n" */
 
-	type_line = data + 48;
-	if (memcmp("\ntype ", type_line-1, 6))
+	if (prefixcmp(bufptr, "type "))
 		return -1;
-
-	tag_line = strchr(type_line, '\n');
-	if (!tag_line || memcmp("tag ", ++tag_line, 4))
+	bufptr += 5;
+	nl = memchr(bufptr, '\n', tail - bufptr);
+	if (!nl || sizeof(type) <= (nl - bufptr))
 		return -1;
+	strncpy(type, bufptr, nl - bufptr);
+	type[nl - bufptr] = '\0';
+	bufptr = nl + 1;
 
-	sig_line = strchr(tag_line, '\n');
-	if (!sig_line)
-		return -1;
-	sig_line++;
-
-	typelen = tag_line - type_line - strlen("type \n");
-	if (typelen >= 20)
-		return -1;
-	memcpy(type, type_line + 5, typelen);
-	type[typelen] = '\0';
-	taglen = sig_line - tag_line - strlen("tag \n");
-	item->tag = xmalloc(taglen + 1);
-	memcpy(item->tag, tag_line + 4, taglen);
-	item->tag[taglen] = '\0';
-
-	item->tagged = lookup_object_type(object, type);
-	if (item->tagged && track_object_refs) {
-		struct object_refs *refs = alloc_object_refs(1);
-		refs->ref[0] = item->tagged;
-		set_object_refs(&item->object, refs);
+	if (!strcmp(type, blob_type)) {
+		item->tagged = &lookup_blob(sha1)->object;
+	} else if (!strcmp(type, tree_type)) {
+		item->tagged = &lookup_tree(sha1)->object;
+	} else if (!strcmp(type, commit_type)) {
+		item->tagged = &lookup_commit(sha1)->object;
+	} else if (!strcmp(type, tag_type)) {
+		item->tagged = &lookup_tag(sha1)->object;
+	} else {
+		error("Unknown type %s", type);
+		item->tagged = NULL;
 	}
+
+	if (bufptr + 4 < tail && !prefixcmp(bufptr, "tag "))
+		; 		/* good */
+	else
+		return -1;
+	bufptr += 4;
+	nl = memchr(bufptr, '\n', tail - bufptr);
+	if (!nl)
+		return -1;
+	item->tag = xmemdupz(bufptr, nl - bufptr);
+	bufptr = nl + 1;
+
+	if (bufptr + 7 < tail && !prefixcmp(bufptr, "tagger "))
+		item->date = parse_tag_date(bufptr, tail);
+	else
+		item->date = 0;
 
 	return 0;
 }
 
 int parse_tag(struct tag *item)
 {
-	char type[20];
+	enum object_type type;
 	void *data;
 	unsigned long size;
 	int ret;
 
 	if (item->object.parsed)
 		return 0;
-	data = read_sha1_file(item->object.sha1, type, &size);
+	data = read_sha1_file(item->object.sha1, &type, &size);
 	if (!data)
 		return error("Could not read %s",
 			     sha1_to_hex(item->object.sha1));
-	if (strcmp(type, tag_type)) {
+	if (type != OBJ_TAG) {
 		free(data);
 		return error("Object %s not a tag",
 			     sha1_to_hex(item->object.sha1));
@@ -105,4 +137,16 @@ int parse_tag(struct tag *item)
 	ret = parse_tag_buffer(item, data, size);
 	free(data);
 	return ret;
+}
+
+size_t parse_signature(const char *buf, unsigned long size)
+{
+	char *eol;
+	size_t len = 0;
+	while (len < size && prefixcmp(buf + len, PGP_SIGNATURE) &&
+			prefixcmp(buf + len, PGP_MESSAGE)) {
+		eol = memchr(buf + len, '\n', size - len);
+		len += eol ? eol - (buf + len) + 1 : size - len;
+	}
+	return len;
 }

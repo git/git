@@ -4,7 +4,6 @@
 #include "cache.h"
 #include "diff.h"
 #include "diffcore.h"
-#include <fnmatch.h>
 
 static char **order;
 static int order_cnt;
@@ -15,6 +14,7 @@ static void prepare_order(const char *orderfile)
 	void *map;
 	char *cp, *endp;
 	struct stat st;
+	size_t sz;
 
 	if (order)
 		return;
@@ -26,11 +26,12 @@ static void prepare_order(const char *orderfile)
 		close(fd);
 		return;
 	}
-	map = mmap(NULL, st.st_size, PROT_READ|PROT_WRITE, MAP_PRIVATE, fd, 0);
+	sz = xsize_t(st.st_size);
+	map = mmap(NULL, sz, PROT_READ|PROT_WRITE, MAP_PRIVATE, fd, 0);
 	close(fd);
 	if (map == MAP_FAILED)
 		return;
-	endp = map + st.st_size;
+	endp = (char *) map + sz;
 	for (pass = 0; pass < 2; pass++) {
 		cnt = 0;
 		cp = map;
@@ -47,11 +48,8 @@ static void prepare_order(const char *orderfile)
 				if (*ep == '\n') {
 					*ep = 0;
 					order[cnt] = cp;
-				}
-				else {
-					order[cnt] = xmalloc(ep-cp+1);
-					memcpy(order[cnt], cp, ep-cp);
-					order[cnt][ep-cp] = 0;
+				} else {
+					order[cnt] = xmemdupz(cp, ep - cp);
 				}
 				cnt++;
 			}

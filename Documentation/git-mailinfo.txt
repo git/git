@@ -3,22 +3,23 @@ git-mailinfo(1)
 
 NAME
 ----
-git-mailinfo - Extracts patch from a single e-mail message
+git-mailinfo - Extracts patch and authorship from a single e-mail message
 
 
 SYNOPSIS
 --------
-'git-mailinfo' [-k] [-u | --encoding=<encoding>] <msg> <patch>
+[verse]
+'git mailinfo' [-k|-b] [-u | --encoding=<encoding> | -n] [--scissors] <msg> <patch>
 
 
 DESCRIPTION
 -----------
-Reading a single e-mail message from the standard input, and
+Reads a single e-mail message from the standard input, and
 writes the commit log message in <msg> file, and the patches in
 <patch> file.  The author name, e-mail and e-mail subject are
-written out to the standard output to be used by git-applypatch
+written out to the standard output to be used by 'git am'
 to create a commit.  It is usually not necessary to use this
-command directly.
+command directly.  See linkgit:git-am[1] instead.
 
 
 OPTIONS
@@ -29,24 +30,49 @@ OPTIONS
 	among which (1) remove 'Re:' or 're:', (2) leading
 	whitespaces, (3) '[' up to ']', typically '[PATCH]', and
 	then prepends "[PATCH] ".  This flag forbids this
-	munging, and is most useful when used to read back 'git
-	format-patch --mbox' output.
+	munging, and is most useful when used to read back
+	'git format-patch -k' output.
+
+-b::
+	When -k is not in effect, all leading strings bracketed with '['
+	and ']' pairs are stripped.  This option limits the stripping to
+	only the pairs whose bracketed string contains the word "PATCH".
 
 -u::
-	By default, the commit log message, author name and
-	author email are taken from the e-mail without any
-	charset conversion, after minimally decoding MIME
-	transfer encoding.  This flag causes the resulting
-	commit to be encoded in the encoding specified by
-	i18n.commitencoding configuration (defaults to utf-8) by
-	transliterating them. 
-	Note that the patch is always used as is without charset
-	conversion, even with this flag.
+	The commit log message, author name and author email are
+	taken from the e-mail, and after minimally decoding MIME
+	transfer encoding, re-coded in the charset specified by
+	i18n.commitencoding (defaulting to UTF-8) by transliterating
+	them.  This used to be optional but now it is the default.
++
+Note that the patch is always used as-is without charset
+conversion, even with this flag.
 
 --encoding=<encoding>::
-	Similar to -u but if the local convention is different
-	from what is specified by i18n.commitencoding, this flag
-	can be used to override it.
+	Similar to -u.  But when re-coding, the charset specified here is
+	used instead of the one specified by i18n.commitencoding or UTF-8.
+
+-n::
+	Disable all charset re-coding of the metadata.
+
+--scissors::
+	Remove everything in body before a scissors line.  A line that
+	mainly consists of scissors (either ">8" or "8<") and perforation
+	(dash "-") marks is called a scissors line, and is used to request
+	the reader to cut the message at that line.  If such a line
+	appears in the body of the message before the patch, everything
+	before it (including the scissors line itself) is ignored when
+	this option is used.
++
+This is useful if you want to begin your message in a discussion thread
+with comments and suggestions on the message you are responding to, and to
+conclude it with a patch submission, separating the discussion and the
+beginning of the proposed commit log message with a scissors line.
++
+This can enabled by default with the configuration option mailinfo.scissors.
+
+--no-scissors::
+	Ignore scissors lines. Useful for overriding mailinfo.scissors settings.
 
 <msg>::
 	The commit log message extracted from e-mail, usually
@@ -55,18 +81,6 @@ OPTIONS
 <patch>::
 	The patch extracted from e-mail.
 
-
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org> and
-Junio C Hamano <junkio@cox.net>
-
-
-Documentation
---------------
-Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
-
 GIT
 ---
-Part of the gitlink:git[7] suite
-
+Part of the linkgit:git[1] suite

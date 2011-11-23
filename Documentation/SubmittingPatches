@@ -1,3 +1,57 @@
+Checklist (and a short version for the impatient):
+
+	Commits:
+
+	- make commits of logical units
+	- check for unnecessary whitespace with "git diff --check"
+	  before committing
+	- do not check in commented out code or unneeded files
+	- the first line of the commit message should be a short
+	  description (50 characters is the soft limit, see DISCUSSION
+	  in git-commit(1)), and should skip the full stop
+	- the body should provide a meaningful commit message, which:
+	  . explains the problem the change tries to solve, iow, what
+	    is wrong with the current code without the change.
+	  . justifies the way the change solves the problem, iow, why
+	    the result with the change is better.
+	  . alternate solutions considered but discarded, if any.
+	- describe changes in imperative mood, e.g. "make xyzzy do frotz"
+	  instead of "[This patch] makes xyzzy do frotz" or "[I] changed
+	  xyzzy to do frotz", as if you are giving orders to the codebase
+	  to change its behaviour.
+	- try to make sure your explanation can be understood without
+	  external resources. Instead of giving a URL to a mailing list
+	  archive, summarize the relevant points of the discussion.
+	- add a "Signed-off-by: Your Name <you@example.com>" line to the
+	  commit message (or just use the option "-s" when committing)
+	  to confirm that you agree to the Developer's Certificate of Origin
+	- make sure that you have tests for the bug you are fixing
+	- make sure that the test suite passes after your commit
+
+	Patch:
+
+	- use "git format-patch -M" to create the patch
+	- do not PGP sign your patch
+	- do not attach your patch, but read in the mail
+	  body, unless you cannot teach your mailer to
+	  leave the formatting of the patch alone.
+	- be careful doing cut & paste into your mailer, not to
+	  corrupt whitespaces.
+	- provide additional information (which is unsuitable for
+	  the commit message) between the "---" and the diffstat
+	- if you change, add, or remove a command line option or
+	  make some other user interface change, the associated
+	  documentation should be updated as well.
+	- if your name is not writable in ASCII, make sure that
+	  you send off a message in the correct encoding.
+	- send the patch to the list (git@vger.kernel.org) and the
+	  maintainer (gitster@pobox.com) if (and only if) the patch
+	  is ready for inclusion. If you use git-send-email(1),
+	  please test it first by sending email to yourself.
+	- see below for instructions specific to your mailer
+
+Long version:
+
 I started reading over the SubmittingPatches document for Linux
 kernel, primarily because I wanted to have a document similar to
 it for the core GIT to make sure people understand what they are
@@ -7,6 +61,34 @@ But the patch submission requirements are a lot more relaxed
 here on the technical/contents front, because the core GIT is
 thousand times smaller ;-).  So here is only the relevant bits.
 
+(0) Decide what to base your work on.
+
+In general, always base your work on the oldest branch that your
+change is relevant to.
+
+ - A bugfix should be based on 'maint' in general. If the bug is not
+   present in 'maint', base it on 'master'. For a bug that's not yet
+   in 'master', find the topic that introduces the regression, and
+   base your work on the tip of the topic.
+
+ - A new feature should be based on 'master' in general. If the new
+   feature depends on a topic that is in 'pu', but not in 'master',
+   base your work on the tip of that topic.
+
+ - Corrections and enhancements to a topic not yet in 'master' should
+   be based on the tip of that topic. If the topic has not been merged
+   to 'next', it's alright to add a note to squash minor corrections
+   into the series.
+
+ - In the exceptional case that a new feature depends on several topics
+   not in 'master', start working on 'next' or 'pu' privately and send
+   out patches for discussion. Before the final merge, you may have to
+   wait until some of the dependent topics graduate to 'master', and
+   rebase your work.
+
+To find the tip of a topic branch, run "git log --first-parent
+master..pu" and look for the merge commit. The second parent of this
+commit is the tip of the topic branch.
 
 (1) Make separate commits for logically separate changes.
 
@@ -16,20 +98,43 @@ your commit head.  Instead, always make a commit with complete
 commit message and generate a series of patches from your
 repository.  It is a good discipline.
 
-Describe the technical detail of the change(s).
+Give an explanation for the change(s) that is detailed enough so
+that people can judge if it is good thing to do, without reading
+the actual patch text to determine how well the code does what
+the explanation promises to do.
 
 If your description starts to get too long, that's a sign that you
 probably need to split up your commit to finer grained pieces.
+That being said, patches which plainly describe the things that
+help reviewers check the patch, and future maintainers understand
+the code, are the most beautiful patches.  Descriptions that summarise
+the point in the subject well, and describe the motivation for the
+change, the approach taken by the change, and if relevant how this
+differs substantially from the prior version, are all good things
+to have.
 
 Oh, another thing.  I am picky about whitespaces.  Make sure your
 changes do not trigger errors with the sample pre-commit hook shipped
-in templates/hooks--pre-commit.
+in templates/hooks--pre-commit.  To help ensure this does not happen,
+run git diff --check on your changes before you commit.
+
+
+(1a) Try to be nice to older C compilers
+
+We try to support a wide range of C compilers to compile
+git with. That means that you should not use C99 initializers, even
+if a lot of compilers grok it.
+
+Also, variables have to be declared at the beginning of the block
+(you can check this with gcc, using the -Wdeclaration-after-statement
+option).
+
+Another thing: NULL pointers shall be written as NULL, not as 0.
 
 
 (2) Generate your patch using git tools out of your commits.
 
-git based diff tools (git, Cogito, and StGIT included) generate
-unidiff which is the preferred format.
+git based diff tools generate unidiff which is the preferred format.
 
 You do not have to be afraid to use -M option to "git diff" or
 "git format-patch", if your patch involves file renames.  The
@@ -49,14 +154,19 @@ People on the git mailing list need to be able to read and
 comment on the changes you are submitting.  It is important for
 a developer to be able to "quote" your changes, using standard
 e-mail tools, so that they may comment on specific portions of
-your code.  For this reason, all patches should be submited
+your code.  For this reason, all patches should be submitted
 "inline".  WARNING: Be wary of your MUAs word-wrap
 corrupting your patch.  Do not cut-n-paste your patch; you can
 lose tabs that way if you are not careful.
 
 It is a common convention to prefix your subject line with
 [PATCH].  This lets people easily distinguish patches from other
-e-mail discussions.
+e-mail discussions.  Use of additional markers after PATCH and
+the closing bracket to mark the nature of the patch is also
+encouraged.  E.g. [PATCH/RFC] is often used when the patch is
+not ready to be applied but it is for discussion, [PATCH v2],
+[PATCH v3] etc. are often seen when you are sending an update to
+what you have previously sent.
 
 "git format-patch" command follows the best current practice to
 format the body of an e-mail message.  At the beginning of the
@@ -72,7 +182,9 @@ other than the commit message itself.  Place such "cover letter"
 material between the three dash lines and the diffstat.
 
 Do not attach the patch as a MIME attachment, compressed or not.
-Do not let your e-mail client send quoted-printable.  Many
+Do not let your e-mail client send quoted-printable.  Do not let
+your e-mail client send format=flowed which would destroy
+whitespaces in your patches. Many
 popular e-mail applications will not always transmit a MIME
 attachment as plain text, making it impossible to comment on
 your code.  A MIME attachment also takes a bit more time to
@@ -95,14 +207,19 @@ patch, format it as "multipart/signed", not a text/plain message
 that starts with '-----BEGIN PGP SIGNED MESSAGE-----'.  That is
 not a text/plain, it's something else.
 
-Note that your maintainer does not necessarily read everything
-on the git mailing list.  If your patch is for discussion first,
-send it "To:" the mailing list, and optionally "cc:" him.  If it
-is trivially correct or after the list reached a consensus, send
-it "To:" the maintainer and optionally "cc:" the list.
+Unless your patch is a very trivial and an obviously correct one,
+first send it with "To:" set to the mailing list, with "cc:" listing
+people who are involved in the area you are touching (the output from
+"git blame $path" and "git shortlog --no-merges $path" would help to
+identify them), to solicit comments and reviews.  After the list
+reached a consensus that it is a good idea to apply the patch, re-send
+it with "To:" set to the maintainer and optionally "cc:" the list for
+inclusion.  Do not forget to add trailers such as "Acked-by:",
+"Reviewed-by:" and "Tested-by:" after your "Signed-off-by:" line as
+necessary.
 
 
-(6) Sign your work
+(4) Sign your work
 
 To improve tracking of who did what, we've borrowed the
 "sign-off" procedure from the Linux kernel project on patches
@@ -144,60 +261,102 @@ then you just add a line saying
 
 	Signed-off-by: Random J Developer <random@developer.example.org>
 
-Some people also put extra tags at the end.  They'll just be ignored for
-now, but you can do this to mark internal company procedures or just
-point out some special detail about the sign-off.
+This line can be automatically added by git if you run the git-commit
+command with the -s option.
 
+Notice that you can place your own Signed-off-by: line when
+forwarding somebody else's patch with the above rules for
+D-C-O.  Indeed you are encouraged to do so.  Do not forget to
+place an in-body "From: " line at the beginning to properly attribute
+the change to its true author (see (2) above).
+
+Also notice that a real name is used in the Signed-off-by: line. Please
+don't hide your real name.
+
+If you like, you can put extra tags at the end:
+
+1. "Reported-by:" is used to credit someone who found the bug that
+   the patch attempts to fix.
+2. "Acked-by:" says that the person who is more familiar with the area
+   the patch attempts to modify liked the patch.
+3. "Reviewed-by:", unlike the other tags, can only be offered by the
+   reviewer and means that she is completely satisfied that the patch
+   is ready for application.  It is usually offered only after a
+   detailed review.
+4. "Tested-by:" is used to indicate that the person applied the patch
+   and found it to have the desired effect.
+
+You can also create your own tag or use one that's in common usage
+such as "Thanks-to:", "Based-on-patch-by:", or "Mentored-by:".
+
+------------------------------------------------
+An ideal patch flow
+
+Here is an ideal patch flow for this project the current maintainer
+suggests to the contributors:
+
+ (0) You come up with an itch.  You code it up.
+
+ (1) Send it to the list and cc people who may need to know about
+     the change.
+
+     The people who may need to know are the ones whose code you
+     are butchering.  These people happen to be the ones who are
+     most likely to be knowledgeable enough to help you, but
+     they have no obligation to help you (i.e. you ask for help,
+     don't demand).  "git log -p -- $area_you_are_modifying" would
+     help you find out who they are.
+
+ (2) You get comments and suggestions for improvements.  You may
+     even get them in a "on top of your change" patch form.
+
+ (3) Polish, refine, and re-send to the list and the people who
+     spend their time to improve your patch.  Go back to step (2).
+
+ (4) The list forms consensus that the last round of your patch is
+     good.  Send it to the list and cc the maintainer.
+
+ (5) A topic branch is created with the patch and is merged to 'next',
+     and cooked further and eventually graduates to 'master'.
+
+In any time between the (2)-(3) cycle, the maintainer may pick it up
+from the list and queue it to 'pu', in order to make it easier for
+people play with it without having to pick up and apply the patch to
+their trees themselves.
+
+------------------------------------------------
+Know the status of your patch after submission
+
+* You can use Git itself to find out when your patch is merged in
+  master. 'git pull --rebase' will automatically skip already-applied
+  patches, and will let you know. This works only if you rebase on top
+  of the branch in which your patch has been merged (i.e. it will not
+  tell you if your patch is merged in pu if you rebase on top of
+  master).
+
+* Read the git mailing list, the maintainer regularly posts messages
+  entitled "What's cooking in git.git" and "What's in git.git" giving
+  the status of various proposed changes.
 
 ------------------------------------------------
 MUA specific hints
 
 Some of patches I receive or pick up from the list share common
 patterns of breakage.  Please make sure your MUA is set up
-properly not to corrupt whitespaces.  Here are two common ones
-I have seen:
+properly not to corrupt whitespaces.
 
-* Empty context lines that do not have _any_ whitespace.
+See the DISCUSSION section of git-format-patch(1) for hints on
+checking your patch by mailing it to yourself and applying with
+git-am(1).
 
-* Non empty context lines that have one extra whitespace at the
-  beginning.
-
-One test you could do yourself if your MUA is set up correctly is:
-
-* Send the patch to yourself, exactly the way you would, except
-  To: and Cc: lines, which would not contain the list and
-  maintainer address.
-
-* Save that patch to a file in UNIX mailbox format.  Call it say
-  a.patch.
-
-* Try to apply to the tip of the "master" branch from the
-  git.git public repository:
-
-    $ git fetch http://kernel.org/pub/scm/git/git.git master:test-apply
-    $ git checkout test-apply
-    $ git reset --hard
-    $ git applymbox a.patch
-
-If it does not apply correctly, there can be various reasons.
-
-* Your patch itself does not apply cleanly.  That is _bad_ but
-  does not have much to do with your MUA.  Please rebase the
-  patch appropriately.
-
-* Your MUA corrupted your patch; applymbox would complain that
-  the patch does not apply.  Look at .dotest/ subdirectory and
-  see what 'patch' file contains and check for the common
-  corruption patterns mentioned above.
-
-* While you are at it, check what are in 'info' and
-  'final-commit' files as well.  If what is in 'final-commit' is
-  not exactly what you would want to see in the commit log
-  message, it is very likely that your maintainer would end up
-  hand editing the log message when he applies your patch.
-  Things like "Hi, this is my first patch.\n", if you really
-  want to put in the patch e-mail, should come after the
-  three-dash line that signals the end of the commit message.
+While you are at it, check the resulting commit log message from
+a trial run of applying the patch.  If what is in the resulting
+commit is not exactly what you would want to see, it is very
+likely that your maintainer would end up hand editing the log
+message when he applies your patch.  Things like "Hi, this is my
+first patch.\n", if you really want to put in the patch e-mail,
+should come after the three-dash line that signals the end of the
+commit message.
 
 
 Pine
@@ -230,15 +389,15 @@ diff --git a/pico/pico.c b/pico/pico.c
 --- a/pico/pico.c
 +++ b/pico/pico.c
 @@ -219,7 +219,9 @@ PICO *pm;
- 	    switch(pico_all_done){	/* prepare for/handle final events */
- 	      case COMP_EXIT :		/* already confirmed */
- 		packheader();
+	    switch(pico_all_done){	/* prepare for/handle final events */
+	      case COMP_EXIT :		/* already confirmed */
+		packheader();
 +#if 0
- 		stripwhitespace();
+		stripwhitespace();
 +#endif
- 		c |= COMP_EXIT;
- 		break;
- 
+		c |= COMP_EXIT;
+		break;
+
 
 (Daniel Barkalow)
 
@@ -253,54 +412,21 @@ that or Gentoo did it.) So you need to set the
 it.
 
 
-Thunderbird
------------
+Thunderbird, KMail, GMail
+-------------------------
 
-(A Large Angry SCM)
+See the MUA-SPECIFIC HINTS section of git-format-patch(1).
 
-Here are some hints on how to successfully submit patches inline using
-Thunderbird.
+Gnus
+----
 
-This recipe appears to work with the current [*1*] Thunderbird from Suse.
-
-The following Thunderbird extensions are needed:
-	AboutConfig 0.5
-		http://aboutconfig.mozdev.org/
-	External Editor 0.5.4
-		http://extensionroom.mozdev.org/more-info/exteditor
-
-1) Prepare the patch as a text file using your method of choice.
-
-2) Before opening a compose window, use Edit->Account Settings to
-uncheck the "Compose messages in HTML format" setting in the
-"Composition & Addressing" panel of the account to be used to send the
-patch. [*2*]
-
-3) In the main Thunderbird window, _before_ you open the compose window
-for the patch, use Tools->about:config to set the following to the
-indicated values:
-	mailnews.send_plaintext_flowed	=> false
-	mailnews.wraplength		=> 0
-
-4) Open a compose window and click the external editor icon.
-
-5) In the external editor window, read in the patch file and exit the
-editor normally.
-
-6) Back in the compose window: Add whatever other text you wish to the
-message, complete the addressing and subject fields, and press send.
-
-7) Optionally, undo the about:config/account settings changes made in
-steps 2 & 3.
-
-
-[Footnotes]
-*1* Version 1.0 (20041207) from the MozillaThunderbird-1.0-5 rpm of Suse
-9.3 professional updates.
-
-*2* It may be possible to do this with about:config and the following
-settings but I haven't tried, yet.
-	mail.html_compose			=> false
-	mail.identity.default.compose_html	=> false
-	mail.identity.id?.compose_html		=> false
-
+'|' in the *Summary* buffer can be used to pipe the current
+message to an external program, and this is a handy way to drive
+"git am".  However, if the message is MIME encoded, what is
+piped into the program is the representation you see in your
+*Article* buffer after unwrapping MIME.  This is often not what
+you would want for two reasons.  It tends to screw up non ASCII
+characters (most notably in people's names), and also
+whitespaces (fatal in patches).  Running 'C-u g' to display the
+message in raw form before using '|' to run the pipe can work
+this problem around.

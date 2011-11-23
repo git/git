@@ -8,13 +8,14 @@ git-whatchanged - Show logs with difference each commit introduces
 
 SYNOPSIS
 --------
-'git-whatchanged' <option>...
+[verse]
+'git whatchanged' <option>...
 
 DESCRIPTION
 -----------
 Shows commit logs and diff output each commit introduces.  The
-command internally invokes 'git-rev-list' piped to
-'git-diff-tree', and takes command line options for both of
+command internally invokes 'git rev-list' piped to
+'git diff-tree', and takes command line options for both of
 these commands.
 
 This manual page describes only the most frequently used options.
@@ -27,7 +28,7 @@ OPTIONS
 	output format that is useful only to tell the changed
 	paths and their nature of changes.
 
---max-count=<n>::
+-<n>::
 	Limit output to <n> commits.
 
 <since>..<until>::
@@ -38,44 +39,31 @@ OPTIONS
 	Show git internal diff output, but for the whole tree,
 	not just the top level.
 
---pretty=<format>::
-	Controls the output format for the commit logs.
-	<format> can be one of 'raw', 'medium', 'short', 'full',
-	and 'oneline'.
-
 -m::
 	By default, differences for merge commits are not shown.
 	With this flag, show differences to that commit from all
 	of its parents.
++
+However, it is not very useful in general, although it
+*is* useful on a file-by-file basis.
 
-	However, it is not very useful in general, although it
-	*is* useful on a file-by-file basis.
+include::pretty-options.txt[]
+
+include::pretty-formats.txt[]
 
 Examples
 --------
-git-whatchanged -p v2.6.12.. include/scsi drivers/scsi::
+`git whatchanged -p v2.6.12.. include/scsi drivers/scsi`::
 
 	Show as patches the commits since version 'v2.6.12' that changed
 	any file in the include/scsi or drivers/scsi subdirectories
 
-git-whatchanged --since="2 weeks ago" -- gitk::
+`git whatchanged --since="2 weeks ago" \-- gitk`::
 
 	Show the changes during the last two weeks to the file 'gitk'.
 	The "--" is necessary to avoid confusion with the *branch* named
 	'gitk'
 
-
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org> and
-Junio C Hamano <junkio@cox.net>
-
-
-Documentation
---------------
-Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
-
 GIT
 ---
-Part of the gitlink:git[7] suite
-
+Part of the linkgit:git[1] suite

@@ -1,0 +1,70 @@
+builtin API
+===========
+
+Adding a new built-in
+---------------------
+
+There are 4 things to do to add a built-in command implementation to
+git:
+
+. Define the implementation of the built-in command `foo` with
+  signature:
+
+	int cmd_foo(int argc, const char **argv, const char *prefix);
+
+. Add the external declaration for the function to `builtin.h`.
+
+. Add the command to `commands[]` table in `handle_internal_command()`,
+  defined in `git.c`.  The entry should look like:
+
+	{ "foo", cmd_foo, <options> },
++
+where options is the bitwise-or of:
+
+`RUN_SETUP`::
+
+	Make sure there is a git directory to work on, and if there is a
+	work tree, chdir to the top of it if the command was invoked
+	in a subdirectory.  If there is no work tree, no chdir() is
+	done.
+
+`USE_PAGER`::
+
+	If the standard output is connected to a tty, spawn a pager and
+	feed our output to it.
+
+`NEED_WORK_TREE`::
+
+	Make sure there is a work tree, i.e. the command cannot act
+	on bare repositories.
+	This only makes sense when `RUN_SETUP` is also set.
+
+. Add `builtin-foo.o` to `BUILTIN_OBJS` in `Makefile`.
+
+Additionally, if `foo` is a new command, there are 3 more things to do:
+
+. Add tests to `t/` directory.
+
+. Write documentation in `Documentation/git-foo.txt`.
+
+. Add an entry for `git-foo` to `command-list.txt`.
+
+. Add an entry for `/git-foo` to `.gitignore`.
+
+
+How a built-in is called
+------------------------
+
+The implementation `cmd_foo()` takes three parameters, `argc`, `argv,
+and `prefix`.  The first two are similar to what `main()` of a
+standalone command would be called with.
+
+When `RUN_SETUP` is specified in the `commands[]` table, and when you
+were started from a subdirectory of the work tree, `cmd_foo()` is called
+after chdir(2) to the top of the work tree, and `prefix` gets the path
+to the subdirectory the command started from.  This allows you to
+convert a user-supplied pathname (typically relative to that directory)
+to a pathname relative to the top of the work tree.
+
+The return value from `cmd_foo()` becomes the exit status of the
+command.

@@ -5,221 +5,203 @@
 #include "commit.h"
 #include "tag.h"
 
-struct object **objs;
-static int nr_objs;
-int obj_allocs;
+static struct object **obj_hash;
+static int nr_objs, obj_hash_size;
 
-int track_object_refs = 1;
-
-static int hashtable_index(const unsigned char *sha1)
+unsigned int get_max_object_index(void)
 {
-	unsigned int i;
-	memcpy(&i, sha1, sizeof(unsigned int));
-	return (int)(i % obj_allocs);
+	return obj_hash_size;
 }
 
-static int find_object(const unsigned char *sha1)
+struct object *get_indexed_object(unsigned int idx)
+{
+	return obj_hash[idx];
+}
+
+static const char *object_type_strings[] = {
+	NULL,		/* OBJ_NONE = 0 */
+	"commit",	/* OBJ_COMMIT = 1 */
+	"tree",		/* OBJ_TREE = 2 */
+	"blob",		/* OBJ_BLOB = 3 */
+	"tag",		/* OBJ_TAG = 4 */
+};
+
+const char *typename(unsigned int type)
+{
+	if (type >= ARRAY_SIZE(object_type_strings))
+		return NULL;
+	return object_type_strings[type];
+}
+
+int type_from_string(const char *str)
 {
 	int i;
 
-	if (!objs)
-		return -1;
-
-	i = hashtable_index(sha1);
-	while (objs[i]) {
-		if (memcmp(sha1, objs[i]->sha1, 20) == 0)
+	for (i = 1; i < ARRAY_SIZE(object_type_strings); i++)
+		if (!strcmp(str, object_type_strings[i]))
 			return i;
-		i++;
-		if (i == obj_allocs)
-			i = 0;
+	die("invalid object type \"%s\"", str);
+}
+
+static unsigned int hash_obj(struct object *obj, unsigned int n)
+{
+	unsigned int hash;
+	memcpy(&hash, obj->sha1, sizeof(unsigned int));
+	return hash % n;
+}
+
+static void insert_obj_hash(struct object *obj, struct object **hash, unsigned int size)
+{
+	unsigned int j = hash_obj(obj, size);
+
+	while (hash[j]) {
+		j++;
+		if (j >= size)
+			j = 0;
 	}
-	return -1 - i;
+	hash[j] = obj;
+}
+
+static unsigned int hashtable_index(const unsigned char *sha1)
+{
+	unsigned int i;
+	memcpy(&i, sha1, sizeof(unsigned int));
+	return i % obj_hash_size;
 }
 
 struct object *lookup_object(const unsigned char *sha1)
 {
-	int pos = find_object(sha1);
-	if (pos >= 0)
-		return objs[pos];
-	return NULL;
+	unsigned int i;
+	struct object *obj;
+
+	if (!obj_hash)
+		return NULL;
+
+	i = hashtable_index(sha1);
+	while ((obj = obj_hash[i]) != NULL) {
+		if (!hashcmp(sha1, obj->sha1))
+			break;
+		i++;
+		if (i == obj_hash_size)
+			i = 0;
+	}
+	return obj;
 }
 
-void created_object(const unsigned char *sha1, struct object *obj)
+static void grow_object_hash(void)
 {
-	int pos;
+	int i;
+	int new_hash_size = obj_hash_size < 32 ? 32 : 2 * obj_hash_size;
+	struct object **new_hash;
+
+	new_hash = xcalloc(new_hash_size, sizeof(struct object *));
+	for (i = 0; i < obj_hash_size; i++) {
+		struct object *obj = obj_hash[i];
+		if (!obj)
+			continue;
+		insert_obj_hash(obj, new_hash, new_hash_size);
+	}
+	free(obj_hash);
+	obj_hash = new_hash;
+	obj_hash_size = new_hash_size;
+}
+
+void *create_object(const unsigned char *sha1, int type, void *o)
+{
+	struct object *obj = o;
 
 	obj->parsed = 0;
-	memcpy(obj->sha1, sha1, 20);
-	obj->type = NULL;
-	obj->refs = NULL;
 	obj->used = 0;
+	obj->type = type;
+	obj->flags = 0;
+	hashcpy(obj->sha1, sha1);
 
-	if (obj_allocs - 1 <= nr_objs * 2) {
-		int i, count = obj_allocs;
-		obj_allocs = (obj_allocs < 32 ? 32 : 2 * obj_allocs);
-		objs = xrealloc(objs, obj_allocs * sizeof(struct object *));
-		memset(objs + count, 0, (obj_allocs - count)
-				* sizeof(struct object *));
-		for (i = 0; i < obj_allocs; i++)
-			if (objs[i]) {
-				int j = find_object(objs[i]->sha1);
-				if (j != i) {
-					j = -1 - j;
-					objs[j] = objs[i];
-					objs[i] = NULL;
-				}
-			}
-	}
+	if (obj_hash_size - 1 <= nr_objs * 2)
+		grow_object_hash();
 
-	pos = find_object(sha1);
-	if (pos >= 0)
-		die("Inserting %s twice\n", sha1_to_hex(sha1));
-	pos = -pos-1;
-
-	objs[pos] = obj;
+	insert_obj_hash(obj, obj_hash, obj_hash_size);
 	nr_objs++;
+	return obj;
 }
-
-struct object_refs *alloc_object_refs(unsigned count)
-{
-	struct object_refs *refs;
-	size_t size = sizeof(*refs) + count*sizeof(struct object *);
-
-	refs = xmalloc(size);
-	memset(refs, 0, size);
-	refs->count = count;
-	return refs;
-}
-
-static int compare_object_pointers(const void *a, const void *b)
-{
-	const struct object * const *pa = a;
-	const struct object * const *pb = b;
-	if (*pa == *pb)
-		return 0;
-	else if (*pa < *pb)
-		return -1;
-	else
-		return 1;
-}
-
-void set_object_refs(struct object *obj, struct object_refs *refs)
-{
-	unsigned int i, j;
-
-	/* Do not install empty list of references */
-	if (refs->count < 1) {
-		free(refs);
-		return;
-	}
-
-	/* Sort the list and filter out duplicates */
-	qsort(refs->ref, refs->count, sizeof(refs->ref[0]),
-	      compare_object_pointers);
-	for (i = j = 1; i < refs->count; i++) {
-		if (refs->ref[i] != refs->ref[i - 1])
-			refs->ref[j++] = refs->ref[i];
-	}
-	if (j < refs->count) {
-		/* Duplicates were found - reallocate list */
-		size_t size = sizeof(*refs) + j*sizeof(struct object *);
-		refs->count = j;
-		refs = xrealloc(refs, size);
-	}
-
-	for (i = 0; i < refs->count; i++)
-		refs->ref[i]->used = 1;
-	obj->refs = refs;
-}
-
-void mark_reachable(struct object *obj, unsigned int mask)
-{
-	if (!track_object_refs)
-		die("cannot do reachability with object refs turned off");
-	/* If we've been here already, don't bother */
-	if (obj->flags & mask)
-		return;
-	obj->flags |= mask;
-	if (obj->refs) {
-		const struct object_refs *refs = obj->refs;
-		unsigned i;
-		for (i = 0; i < refs->count; i++)
-			mark_reachable(refs->ref[i], mask);
-	}
-}
-
-struct object *lookup_object_type(const unsigned char *sha1, const char *type)
-{
-	if (!type) {
-		return lookup_unknown_object(sha1);
-	} else if (!strcmp(type, blob_type)) {
-		return &lookup_blob(sha1)->object;
-	} else if (!strcmp(type, tree_type)) {
-		return &lookup_tree(sha1)->object;
-	} else if (!strcmp(type, commit_type)) {
-		return &lookup_commit(sha1)->object;
-	} else if (!strcmp(type, tag_type)) {
-		return &lookup_tag(sha1)->object;
-	} else {
-		error("Unknown type %s", type);
-		return NULL;
-	}
-}
-
-union any_object {
-	struct object object;
-	struct commit commit;
-	struct tree tree;
-	struct blob blob;
-	struct tag tag;
-};
 
 struct object *lookup_unknown_object(const unsigned char *sha1)
 {
 	struct object *obj = lookup_object(sha1);
-	if (!obj) {
-		union any_object *ret = xmalloc(sizeof(*ret));
-		memset(ret, 0, sizeof(*ret));
-		created_object(sha1, &ret->object);
-		ret->object.type = NULL;
-		return &ret->object;
+	if (!obj)
+		obj = create_object(sha1, OBJ_NONE, alloc_object_node());
+	return obj;
+}
+
+struct object *parse_object_buffer(const unsigned char *sha1, enum object_type type, unsigned long size, void *buffer, int *eaten_p)
+{
+	struct object *obj;
+	int eaten = 0;
+
+	obj = NULL;
+	if (type == OBJ_BLOB) {
+		struct blob *blob = lookup_blob(sha1);
+		if (blob) {
+			if (parse_blob_buffer(blob, buffer, size))
+				return NULL;
+			obj = &blob->object;
+		}
+	} else if (type == OBJ_TREE) {
+		struct tree *tree = lookup_tree(sha1);
+		if (tree) {
+			obj = &tree->object;
+			if (!tree->object.parsed) {
+				if (parse_tree_buffer(tree, buffer, size))
+					return NULL;
+				eaten = 1;
+			}
+		}
+	} else if (type == OBJ_COMMIT) {
+		struct commit *commit = lookup_commit(sha1);
+		if (commit) {
+			if (parse_commit_buffer(commit, buffer, size))
+				return NULL;
+			if (!commit->buffer) {
+				commit->buffer = buffer;
+				eaten = 1;
+			}
+			obj = &commit->object;
+		}
+	} else if (type == OBJ_TAG) {
+		struct tag *tag = lookup_tag(sha1);
+		if (tag) {
+			if (parse_tag_buffer(tag, buffer, size))
+			       return NULL;
+			obj = &tag->object;
+		}
+	} else {
+		warning("object %s has unknown type id %d\n", sha1_to_hex(sha1), type);
+		obj = NULL;
 	}
+	if (obj && obj->type == OBJ_NONE)
+		obj->type = type;
+	*eaten_p = eaten;
 	return obj;
 }
 
 struct object *parse_object(const unsigned char *sha1)
 {
 	unsigned long size;
-	char type[20];
-	void *buffer = read_sha1_file(sha1, type, &size);
+	enum object_type type;
+	int eaten;
+	const unsigned char *repl = lookup_replace_object(sha1);
+	void *buffer = read_sha1_file(sha1, &type, &size);
+
 	if (buffer) {
 		struct object *obj;
-		if (check_sha1_signature(sha1, buffer, size, type) < 0)
-			printf("sha1 mismatch %s\n", sha1_to_hex(sha1));
-		if (!strcmp(type, "blob")) {
-			struct blob *blob = lookup_blob(sha1);
-			parse_blob_buffer(blob, buffer, size);
-			obj = &blob->object;
-		} else if (!strcmp(type, "tree")) {
-			struct tree *tree = lookup_tree(sha1);
-			parse_tree_buffer(tree, buffer, size);
-			obj = &tree->object;
-		} else if (!strcmp(type, "commit")) {
-			struct commit *commit = lookup_commit(sha1);
-			parse_commit_buffer(commit, buffer, size);
-			if (!commit->buffer) {
-				commit->buffer = buffer;
-				buffer = NULL;
-			}
-			obj = &commit->object;
-		} else if (!strcmp(type, "tag")) {
-			struct tag *tag = lookup_tag(sha1);
-			parse_tag_buffer(tag, buffer, size);
-			obj = &tag->object;
-		} else {
-			obj = NULL;
+		if (check_sha1_signature(repl, buffer, size, typename(type)) < 0) {
+			free(buffer);
+			error("sha1 mismatch %s\n", sha1_to_hex(repl));
+			return NULL;
 		}
-		free(buffer);
+
+		obj = parse_object_buffer(sha1, type, size, buffer, &eaten);
+		if (!eaten)
+			free(buffer);
 		return obj;
 	}
 	return NULL;
@@ -229,31 +211,10 @@ struct object_list *object_list_insert(struct object *item,
 				       struct object_list **list_p)
 {
 	struct object_list *new_list = xmalloc(sizeof(struct object_list));
-        new_list->item = item;
-        new_list->next = *list_p;
-        *list_p = new_list;
-        return new_list;
-}
-
-void object_list_append(struct object *item,
-			struct object_list **list_p)
-{
-	while (*list_p) {
-		list_p = &((*list_p)->next);
-	}
-	*list_p = xmalloc(sizeof(struct object_list));
-	(*list_p)->next = NULL;
-	(*list_p)->item = item;
-}
-
-unsigned object_list_length(struct object_list *list)
-{
-	unsigned ret = 0;
-	while (list) {
-		list = list->next;
-		ret++;
-	}
-	return ret;
+	new_list->item = item;
+	new_list->next = *list_p;
+	*list_p = new_list;
+	return new_list;
 }
 
 int object_list_contains(struct object_list *list, struct object *obj)
@@ -264,4 +225,46 @@ int object_list_contains(struct object_list *list, struct object *obj)
 		list = list->next;
 	}
 	return 0;
+}
+
+void add_object_array(struct object *obj, const char *name, struct object_array *array)
+{
+	add_object_array_with_mode(obj, name, array, S_IFINVALID);
+}
+
+void add_object_array_with_mode(struct object *obj, const char *name, struct object_array *array, unsigned mode)
+{
+	unsigned nr = array->nr;
+	unsigned alloc = array->alloc;
+	struct object_array_entry *objects = array->objects;
+
+	if (nr >= alloc) {
+		alloc = (alloc + 32) * 2;
+		objects = xrealloc(objects, alloc * sizeof(*objects));
+		array->alloc = alloc;
+		array->objects = objects;
+	}
+	objects[nr].item = obj;
+	objects[nr].name = name;
+	objects[nr].mode = mode;
+	array->nr = ++nr;
+}
+
+void object_array_remove_duplicates(struct object_array *array)
+{
+	unsigned int ref, src, dst;
+	struct object_array_entry *objects = array->objects;
+
+	for (ref = 0; ref + 1 < array->nr; ref++) {
+		for (src = ref + 1, dst = src;
+		     src < array->nr;
+		     src++) {
+			if (!strcmp(objects[ref].name, objects[src].name))
+				continue;
+			if (src != dst)
+				objects[dst] = objects[src];
+			dst++;
+		}
+		array->nr = dst;
+	}
 }

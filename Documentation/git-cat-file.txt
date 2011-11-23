@@ -3,23 +3,31 @@ git-cat-file(1)
 
 NAME
 ----
-git-cat-file - Provide content or type information for repository objects
+git-cat-file - Provide content or type and size information for repository objects
 
 
 SYNOPSIS
 --------
-'git-cat-file' [-t | -s | -e | <type>] <object>
+[verse]
+'git cat-file' (-t | -s | -e | -p | <type> | --textconv ) <object>
+'git cat-file' (--batch | --batch-check) < <list-of-objects>
 
 DESCRIPTION
 -----------
-Provides content or type of objects in the repository. The type
-is required unless '-t' is used to find the object type,
-or '-s' is used to find the object size.
+In its first form, the command provides the content or the type of an object in
+the repository. The type is required unless '-t' or '-p' is used to find the
+object type, or '-s' is used to find the object size, or '--textconv' is used
+(which implies type "blob").
+
+In the second form, a list of objects (separated by linefeeds) is provided on
+stdin, and the SHA1, type, and size of each object is printed on stdout.
 
 OPTIONS
 -------
 <object>::
-	The sha1 identifier of the object.
+	The name of the object to show.
+	For a more complete list of ways to spell object names, see
+	the "SPECIFYING REVISIONS" section in linkgit:gitrevisions[7].
 
 -t::
 	Instead of the content, show the object type identified by
@@ -33,6 +41,9 @@ OPTIONS
 	Suppress all output; instead exit with zero status if <object>
 	exists and is a valid object.
 
+-p::
+	Pretty-print the contents of <object> based on its type.
+
 <type>::
 	Typically this matches the real type of <object> but asking
 	for a type that can trivially be dereferenced from the given
@@ -40,6 +51,19 @@ OPTIONS
 	"tree" with <object> being a commit object that contains it,
 	or to ask for a "blob" with <object> being a tag object that
 	points at it.
+
+--textconv::
+	Show the content as transformed by a textconv filter. In this case,
+	<object> has be of the form <treeish>:<path>, or :<path> in order
+	to apply the filter to the content recorded in the index at <path>.
+
+--batch::
+	Print the SHA1, type, size, and contents of each object provided on
+	stdin. May not be combined with any other options or arguments.
+
+--batch-check::
+	Print the SHA1, type, and size of each object provided on stdin. May not
+	be combined with any other options or arguments.
 
 OUTPUT
 ------
@@ -49,19 +73,33 @@ If '-s' is specified, the size of the <object> in bytes.
 
 If '-e' is specified, no output.
 
-Otherwise the raw (though uncompressed) contents of the <object> will
-be returned.
+If '-p' is specified, the contents of <object> are pretty-printed.
 
+If <type> is specified, the raw (though uncompressed) contents of the <object>
+will be returned.
 
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org>
+If '--batch' is specified, output of the following form is printed for each
+object specified on stdin:
 
-Documentation
---------------
-Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
+------------
+<sha1> SP <type> SP <size> LF
+<contents> LF
+------------
+
+If '--batch-check' is specified, output of the following form is printed for
+each object specified on stdin:
+
+------------
+<sha1> SP <type> SP <size> LF
+------------
+
+For both '--batch' and '--batch-check', output of the following form is printed
+for each object specified on stdin that does not exist in the repository:
+
+------------
+<object> SP missing LF
+------------
 
 GIT
 ---
-Part of the gitlink:git[7] suite
-
+Part of the linkgit:git[1] suite

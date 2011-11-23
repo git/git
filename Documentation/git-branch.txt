@@ -3,73 +3,236 @@ git-branch(1)
 
 NAME
 ----
-git-branch - Create a new branch, or remove an old one
+git-branch - List, create, or delete branches
 
 SYNOPSIS
 --------
-'git-branch' [(-d | -D) <branchname>] | [[-f] <branchname> [<start-point>]]
+[verse]
+'git branch' [--color[=<when>] | --no-color] [-r | -a]
+	[-v [--abbrev=<length> | --no-abbrev]]
+	[(--merged | --no-merged | --contains) [<commit>]]
+'git branch' [--set-upstream | --track | --no-track] [-l] [-f] <branchname> [<start-point>]
+'git branch' (-m | -M) [<oldbranch>] <newbranch>
+'git branch' (-d | -D) [-r] <branchname>...
 
 DESCRIPTION
 -----------
-If no argument is provided, show available branches and mark current
-branch with star. Otherwise, create a new branch of name <branchname>.
 
-If a starting point is also specified, that will be where the branch is
-created, otherwise it will be created at the current HEAD.
+With no arguments, existing branches are listed and the current branch will
+be highlighted with an asterisk.  Option `-r` causes the remote-tracking
+branches to be listed, and option `-a` shows both.
+
+With `--contains`, shows only the branches that contain the named commit
+(in other words, the branches whose tip commits are descendants of the
+named commit).  With `--merged`, only branches merged into the named
+commit (i.e. the branches whose tip commits are reachable from the named
+commit) will be listed.  With `--no-merged` only branches not merged into
+the named commit will be listed.  If the <commit> argument is missing it
+defaults to 'HEAD' (i.e. the tip of the current branch).
+
+The command's second form creates a new branch head named <branchname>
+which points to the current 'HEAD', or <start-point> if given.
+
+Note that this will create the new branch, but it will not switch the
+working tree to it; use "git checkout <newbranch>" to switch to the
+new branch.
+
+When a local branch is started off a remote-tracking branch, git sets up the
+branch so that 'git pull' will appropriately merge from
+the remote-tracking branch. This behavior may be changed via the global
+`branch.autosetupmerge` configuration flag. That setting can be
+overridden by using the `--track` and `--no-track` options, and
+changed later using `git branch --set-upstream`.
+
+With a '-m' or '-M' option, <oldbranch> will be renamed to <newbranch>.
+If <oldbranch> had a corresponding reflog, it is renamed to match
+<newbranch>, and a reflog entry is created to remember the branch
+renaming. If <newbranch> exists, -M must be used to force the rename
+to happen.
+
+With a `-d` or `-D` option, `<branchname>` will be deleted.  You may
+specify more than one branch for deletion.  If the branch currently
+has a reflog then the reflog will also be deleted.
+
+Use -r together with -d to delete remote-tracking branches. Note, that it
+only makes sense to delete remote-tracking branches if they no longer exist
+in the remote repository or if 'git fetch' was configured not to fetch
+them again. See also the 'prune' subcommand of linkgit:git-remote[1] for a
+way to clean up all obsolete remote-tracking branches.
+
 
 OPTIONS
 -------
 -d::
-	Delete a branch. The branch must be fully merged.
+	Delete a branch. The branch must be fully merged in its
+	upstream branch, or in `HEAD` if no upstream was set with
+	`--track` or `--set-upstream`.
 
 -D::
-	Delete a branch irrespective of its index status.
+	Delete a branch irrespective of its merged status.
+
+-l::
+	Create the branch's reflog.  This activates recording of
+	all changes made to the branch ref, enabling use of date
+	based sha1 expressions such as "<branchname>@\{yesterday}".
+	Note that in non-bare repositories, reflogs are usually
+	enabled by default by the `core.logallrefupdates` config option.
 
 -f::
-	Force a reset of <branchname> to <start-point> (or current head).
+--force::
+	Reset <branchname> to <startpoint> if <branchname> exists
+	already. Without `-f` 'git branch' refuses to change an existing branch.
+
+-m::
+	Move/rename a branch and the corresponding reflog.
+
+-M::
+	Move/rename a branch even if the new branch name already exists.
+
+--color[=<when>]::
+	Color branches to highlight current, local, and
+	remote-tracking branches.
+	The value must be always (the default), never, or auto.
+
+--no-color::
+	Turn off branch colors, even when the configuration file gives the
+	default to color output.
+	Same as `--color=never`.
+
+-r::
+	List or delete (if used with -d) the remote-tracking branches.
+
+-a::
+	List both remote-tracking branches and local branches.
+
+-v::
+--verbose::
+	Show sha1 and commit subject line for each head, along with
+	relationship to upstream branch (if any). If given twice, print
+	the name of the upstream branch, as well.
+
+--abbrev=<length>::
+	Alter the sha1's minimum display length in the output listing.
+	The default value is 7 and can be overridden by the `core.abbrev`
+	config option.
+
+--no-abbrev::
+	Display the full sha1s in the output listing rather than abbreviating them.
+
+-t::
+--track::
+	When creating a new branch, set up configuration to mark the
+	start-point branch as "upstream" from the new branch. This
+	configuration will tell git to show the relationship between the
+	two branches in `git status` and `git branch -v`. Furthermore,
+	it directs `git pull` without arguments to pull from the
+	upstream when the new branch is checked out.
++
+This behavior is the default when the start point is a remote-tracking branch.
+Set the branch.autosetupmerge configuration variable to `false` if you
+want `git checkout` and `git branch` to always behave as if '--no-track'
+were given. Set it to `always` if you want this behavior when the
+start-point is either a local or remote-tracking branch.
+
+--no-track::
+	Do not set up "upstream" configuration, even if the
+	branch.autosetupmerge configuration variable is true.
+
+--set-upstream::
+	If specified branch does not exist yet or if '--force' has been
+	given, acts exactly like '--track'. Otherwise sets up configuration
+	like '--track' would when creating the branch, except that where
+	branch points to is not changed.
+
+--contains <commit>::
+	Only list branches which contain the specified commit.
+
+--merged [<commit>]::
+	Only list branches whose tips are reachable from the
+	specified commit (HEAD if not specified).
+
+--no-merged [<commit>]::
+	Only list branches whose tips are not reachable from the
+	specified commit (HEAD if not specified).
 
 <branchname>::
 	The name of the branch to create or delete.
+	The new branch name must pass all checks defined by
+	linkgit:git-check-ref-format[1].  Some of these checks
+	may restrict the characters allowed in a branch name.
 
 <start-point>::
-	Where to create the branch; defaults to HEAD. This
-	option has no meaning with -d and -D.
+	The new branch head will point to this commit.  It may be
+	given as a branch name, a commit-id, or a tag.  If this
+	option is omitted, the current HEAD will be used instead.
+
+<oldbranch>::
+	The name of an existing branch to rename.
+
+<newbranch>::
+	The new name for an existing branch. The same restrictions as for
+	<branchname> apply.
 
 
 Examples
-~~~~~~~~
+--------
 
-Start development off of a know tag::
+Start development from a known tag::
 +
 ------------
 $ git clone git://git.kernel.org/pub/scm/.../linux-2.6 my2.6
 $ cd my2.6
-$ git branch my2.6.14 v2.6.14 <1>
+$ git branch my2.6.14 v2.6.14   <1>
 $ git checkout my2.6.14
-
-<1> These two steps are the same as "checkout -b my2.6.14 v2.6.14".
 ------------
++
+<1> This step and the next one could be combined into a single step with
+"checkout -b my2.6.14 v2.6.14".
 
-Delete unneeded branch::
+Delete an unneeded branch::
 +
 ------------
 $ git clone git://git.kernel.org/.../git.git my.git
 $ cd my.git
-$ git branch -D todo <1>
-
-<1> delete todo branch even if the "master" branch does not have all
-commits from todo branch.
+$ git branch -d -r origin/todo origin/html origin/man   <1>
+$ git branch -D test                                    <2>
 ------------
++
+<1> Delete the remote-tracking branches "todo", "html" and "man". The next
+'fetch' or 'pull' will create them again unless you configure them not to.
+See linkgit:git-fetch[1].
+<2> Delete the "test" branch even if the "master" branch (or whichever branch
+is currently checked out) does not have all commits from the test branch.
 
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org> and Junio C Hamano <junkio@cox.net>
 
-Documentation
---------------
-Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
+Notes
+-----
+
+If you are creating a branch that you want to checkout immediately, it is
+easier to use the git checkout command with its `-b` option to create
+a branch and check it out with a single command.
+
+The options `--contains`, `--merged` and `--no-merged` serve three related
+but different purposes:
+
+- `--contains <commit>` is used to find all branches which will need
+  special attention if <commit> were to be rebased or amended, since those
+  branches contain the specified <commit>.
+
+- `--merged` is used to find all branches which can be safely deleted,
+  since those branches are fully contained by HEAD.
+
+- `--no-merged` is used to find branches which are candidates for merging
+  into HEAD, since those branches are not fully contained by HEAD.
+
+SEE ALSO
+--------
+linkgit:git-check-ref-format[1],
+linkgit:git-fetch[1],
+linkgit:git-remote[1],
+link:user-manual.html#what-is-a-branch[``Understanding history: What is
+a branch?''] in the Git User's Manual.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
-
+Part of the linkgit:git[1] suite

@@ -1,16 +1,29 @@
 # make and install sample templates
 
+ifndef V
+	QUIET = @
+endif
+
 INSTALL ?= install
 TAR ?= tar
+RM ?= rm -f
 prefix ?= $(HOME)
-template_dir ?= $(prefix)/share/git-core/templates/
+template_instdir ?= $(prefix)/share/git-core/templates
 # DESTDIR=
 
-# Shell quote;
-# Result of this needs to be placed inside ''
-shq = $(subst ','\'',$(1))
-# This has surrounding ''
-shellquote = '$(call shq,$(1))'
+ifndef SHELL_PATH
+	SHELL_PATH = /bin/sh
+endif
+ifndef PERL_PATH
+	PERL_PATH = perl
+endif
+
+SHELL_PATH_SQ = $(subst ','\'',$(SHELL_PATH))
+PERL_PATH_SQ = $(subst ','\'',$(PERL_PATH))
+
+# Shell quote (do not use $(call) to accommodate ancient setups);
+DESTDIR_SQ = $(subst ','\'',$(DESTDIR))
+template_instdir_SQ = $(subst ','\'',$(template_instdir))
 
 all: boilerplates.made custom
 
@@ -20,7 +33,7 @@ all: boilerplates.made custom
 
 bpsrc = $(filter-out %~,$(wildcard *--*))
 boilerplates.made : $(bpsrc)
-	ls *--* 2>/dev/null | \
+	$(QUIET)umask 022 && ls *--* 2>/dev/null | \
 	while read boilerplate; \
 	do \
 		case "$$boilerplate" in *~) continue ;; esac && \
@@ -28,21 +41,26 @@ boilerplates.made : $(bpsrc)
 		dir=`expr "$$dst" : '\(.*\)/'` && \
 		mkdir -p blt/$$dir && \
 		case "$$boilerplate" in \
-		*--) ;; \
-		*) cp $$boilerplate blt/$$dst ;; \
-		esac || exit; \
-	done || exit
+		*--) continue;; \
+		esac && \
+		sed -e '1s|#!.*/sh|#!$(SHELL_PATH_SQ)|' \
+		    -e 's|@SHELL_PATH@|$(SHELL_PATH_SQ)|' \
+		    -e 's|@PERL_PATH@|$(PERL_PATH_SQ)|g' $$boilerplate > \
+			blt/$$dst && \
+		if test -x "$$boilerplate"; then rx=rx; else rx=r; fi && \
+		chmod a+$$rx "blt/$$dst" || exit; \
+	done && \
 	date >$@
 
 # If you need build-tailored templates, build them into blt/
 # directory yourself here.
 custom:
-	: no custom templates yet
+	$(QUIET): no custom templates yet
 
 clean:
-	rm -rf blt boilerplates.made
+	$(RM) -r blt boilerplates.made
 
 install: all
-	$(INSTALL) -d -m755 $(call shellquote,$(DESTDIR)$(template_dir))
+	$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(template_instdir_SQ)'
 	(cd blt && $(TAR) cf - .) | \
-	(cd $(call shellquote,$(DESTDIR)$(template_dir)) && $(TAR) xf -)
+	(cd '$(DESTDIR_SQ)$(template_instdir_SQ)' && umask 022 && $(TAR) xof -)

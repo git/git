@@ -8,13 +8,14 @@ git-verify-pack - Validate packed git archive files
 
 SYNOPSIS
 --------
-'git-verify-pack' [-v] [--] <pack>.idx ...
+[verse]
+'git verify-pack' [-v|--verbose] [-s|--stat-only] [--] <pack>.idx ...
 
 
 DESCRIPTION
 -----------
-Reads given idx file for packed git archive created with
-git-pack-objects command and verifies idx file and the
+Reads given idx file for packed git archive created with the
+'git pack-objects' command and verifies idx file and the
 corresponding pack file.
 
 OPTIONS
@@ -23,32 +24,30 @@ OPTIONS
 	The idx files to verify.
 
 -v::
+--verbose::
 	After verifying the pack, show list of objects contained
-	in the pack.
---::
+	in the pack and a histogram of delta chain length.
+
+-s::
+--stat-only::
+	Do not verify the pack contents; only show the histogram of delta
+	chain length.  With `--verbose`, list of objects is also shown.
+
+\--::
 	Do not interpret any more arguments as options.
 
 OUTPUT FORMAT
 -------------
 When specifying the -v option the format used is:
 
-	SHA1 type size offset-in-packfile
+	SHA1 type size size-in-pack-file offset-in-packfile
 
 for objects that are not deltified in the pack, and
 
-	SHA1 type size offset-in-packfile depth base-SHA1
+	SHA1 type size size-in-packfile offset-in-packfile depth base-SHA1
 
 for objects that are deltified.
 
-Author
-------
-Written by Junio C Hamano <junkio@cox.net>
-
-Documentation
---------------
-Documentation by Junio C Hamano
-
 GIT
 ---
-Part of the gitlink:git[7] suite
-
+Part of the linkgit:git[1] suite

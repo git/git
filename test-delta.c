@@ -1,23 +1,18 @@
 /*
  * test-delta.c: test code to exercise diff-delta.c and patch-delta.c
  *
- * (C) 2005 Nicolas Pitre <nico@cam.org>
+ * (C) 2005 Nicolas Pitre <nico@fluxnic.net>
  *
  * This code is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  */
 
-#include <stdio.h>
-#include <unistd.h>
-#include <string.h>
-#include <fcntl.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/mman.h>
+#include "git-compat-util.h"
 #include "delta.h"
+#include "cache.h"
 
-static const char usage[] =
+static const char usage_str[] =
 	"test-delta (-d|-p) <from_file> <data_file> <out_file>";
 
 int main(int argc, char *argv[])
@@ -28,7 +23,7 @@ int main(int argc, char *argv[])
 	unsigned long from_size, data_size, out_size;
 
 	if (argc != 5 || (strcmp(argv[1], "-d") && strcmp(argv[1], "-p"))) {
-		fprintf(stderr, "Usage: %s\n", usage);
+		fprintf(stderr, "Usage: %s\n", usage_str);
 		return 1;
 	}
 
@@ -74,7 +69,7 @@ int main(int argc, char *argv[])
 	}
 
 	fd = open (argv[4], O_WRONLY|O_CREAT|O_TRUNC, 0666);
-	if (fd < 0 || write(fd, out_buf, out_size) != out_size) {
+	if (fd < 0 || write_in_full(fd, out_buf, out_size) != out_size) {
 		perror(argv[4]);
 		return 1;
 	}

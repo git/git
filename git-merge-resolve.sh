@@ -3,7 +3,7 @@
 # Copyright (c) 2005 Linus Torvalds
 # Copyright (c) 2005 Junio C Hamano
 #
-# Resolve two trees, using enhancd multi-base read-tree.
+# Resolve two trees, using enhanced multi-base read-tree.
 
 # The first parameters up to -- are merge bases; the rest are heads.
 bases= head= remotes= sep_seen=
@@ -25,7 +25,7 @@ do
 	esac
 done
 
-# Give up if we are given more than two remotes -- not handling octopus.
+# Give up if we are given two or more remotes -- not handling octopus.
 case "$remotes" in
 ?*' '?*)
 	exit 2 ;;
@@ -37,10 +37,10 @@ then
 	exit 2
 fi
 
-git-update-index --refresh 2>/dev/null
-git-read-tree -u -m --aggressive $bases $head $remotes || exit 2
+git update-index -q --refresh
+git read-tree -u -m --aggressive $bases $head $remotes || exit 2
 echo "Trying simple merge."
-if result_tree=$(git-write-tree  2>/dev/null)
+if result_tree=$(git write-tree 2>/dev/null)
 then
 	exit 0
 else

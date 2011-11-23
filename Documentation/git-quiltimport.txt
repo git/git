@@ -1,0 +1,54 @@
+git-quiltimport(1)
+================
+
+NAME
+----
+git-quiltimport - Applies a quilt patchset onto the current branch
+
+
+SYNOPSIS
+--------
+[verse]
+'git quiltimport' [--dry-run | -n] [--author <author>] [--patches <dir>]
+
+
+DESCRIPTION
+-----------
+Applies a quilt patchset onto the current git branch, preserving
+the patch boundaries, patch order, and patch descriptions present
+in the quilt patchset.
+
+For each patch the code attempts to extract the author from the
+patch description.  If that fails it falls back to the author
+specified with --author.  If the --author flag was not given
+the patch description is displayed and the user is asked to
+interactively enter the author of the patch.
+
+If a subject is not found in the patch description the patch name is
+preserved as the 1 line subject in the git description.
+
+OPTIONS
+-------
+
+-n::
+--dry-run::
+	Walk through the patches in the series and warn
+	if we cannot find all of the necessary information to commit
+	a patch.  At the time of this writing only missing author
+	information is warned about.
+
+--author Author Name <Author Email>::
+	The author name and email address to use when no author
+	information can be found in the patch description.
+
+--patches <dir>::
+	The directory to find the quilt patches and the
+	quilt series file.
++
+The default for the patch directory is patches
+or the value of the $QUILT_PATCHES environment
+variable.
+
+GIT
+---
+Part of the linkgit:git[1] suite

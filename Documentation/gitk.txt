@@ -3,49 +3,117 @@ gitk(1)
 
 NAME
 ----
-gitk - Some git command not yet documented.
-
+gitk - The git repository browser
 
 SYNOPSIS
 --------
-'gitk' [ --option ] <args>...
+[verse]
+'gitk' [<option>...] [<revs>] [--] [<path>...]
 
 DESCRIPTION
 -----------
-Does something not yet documented.
+Displays changes in a repository or a selected set of commits. This includes
+visualizing the commit graph, showing information related to each commit, and
+the files in the trees of each revision.
 
+Historically, gitk was the first repository browser. It's written in tcl/tk
+and started off in a separate repository but was later merged into the main
+git repository.
 
 OPTIONS
 -------
---option::
-	Some option not yet documented.
+To control which revisions to show, the command takes options applicable to
+the 'git rev-list' command (see linkgit:git-rev-list[1]).
+This manual page describes only the most
+frequently used options.
 
-<args>...::
-	Some argument not yet documented.
+-n <number>::
+--max-count=<number>::
 
+	Limits the number of commits to show.
+
+--since=<date>::
+
+	Show commits more recent than a specific date.
+
+--until=<date>::
+
+	Show commits older than a specific date.
+
+--all::
+
+	Show all branches.
+
+--merge::
+
+	After an attempt to merge stops with conflicts, show the commits on
+	the history between two branches (i.e. the HEAD and the MERGE_HEAD)
+	that modify the conflicted files and do not exist on all the heads
+	being merged.
+
+--argscmd=<command>::
+	Command to be run each time gitk has to determine the list of
+	<revs> to show.  The command is expected to print on its standard
+	output a list of additional revs to be shown, one per line.
+	Use this instead of explicitly specifying <revs> if the set of
+	commits to show may vary between refreshes.
+
+--select-commit=<ref>::
+
+	Automatically select the specified commit after loading the graph.
+	Default behavior is equivalent to specifying '--select-commit=HEAD'.
+
+<revs>::
+
+	Limit the revisions to show. This can be either a single revision
+	meaning show from the given revision and back, or it can be a range in
+	the form "'<from>'..'<to>'" to show all revisions between '<from>' and
+	back to '<to>'. Note, more advanced revision selection can be applied.
+	For a more complete list of ways to spell object names, see
+	linkgit:gitrevisions[7].
+
+<path>...::
+
+	Limit commits to the ones touching files in the given paths. Note, to
+	avoid ambiguity with respect to revision names use "--" to separate the paths
+	from any preceding options.
 
 Examples
 --------
 gitk v2.6.12.. include/scsi drivers/scsi::
 
-	Show as the changes since version 'v2.6.12' that changed any
+	Show the changes since version 'v2.6.12' that changed any
 	file in the include/scsi or drivers/scsi subdirectories
 
-gitk --since="2 weeks ago" -- gitk::
+gitk --since="2 weeks ago" \-- gitk::
 
 	Show the changes during the last two weeks to the file 'gitk'.
 	The "--" is necessary to avoid confusion with the *branch* named
 	'gitk'
 
-Author
-------
-Written by Paul Mackerras <paulus@samba.org>
+gitk --max-count=100 --all \-- Makefile::
 
-Documentation
---------------
-Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
+	Show at most 100 changes made to the file 'Makefile'. Instead of only
+	looking for changes in the current branch look in all branches.
+
+Files
+-----
+Gitk creates the .gitk file in your $HOME directory to store preferences
+such as display options, font, and colors.
+
+SEE ALSO
+--------
+'qgit(1)'::
+	A repository browser written in C++ using Qt.
+
+'gitview(1)'::
+	A repository browser written in Python using Gtk. It's based on
+	'bzrk(1)' and distributed in the contrib area of the git repository.
+
+'tig(1)'::
+	A minimal repository browser and git tool output highlighter written
+	in C using Ncurses.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
-
+Part of the linkgit:git[1] suite

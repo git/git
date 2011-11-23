@@ -1,0 +1,272 @@
+strbuf API
+==========
+
+strbuf's are meant to be used with all the usual C string and memory
+APIs. Given that the length of the buffer is known, it's often better to
+use the mem* functions than a str* one (memchr vs. strchr e.g.).
+Though, one has to be careful about the fact that str* functions often
+stop on NULs and that strbufs may have embedded NULs.
+
+An strbuf is NUL terminated for convenience, but no function in the
+strbuf API actually relies on the string being free of NULs.
+
+strbufs has some invariants that are very important to keep in mind:
+
+. The `buf` member is never NULL, so it can be used in any usual C
+string operations safely. strbuf's _have_ to be initialized either by
+`strbuf_init()` or by `= STRBUF_INIT` before the invariants, though.
++
+Do *not* assume anything on what `buf` really is (e.g. if it is
+allocated memory or not), use `strbuf_detach()` to unwrap a memory
+buffer from its strbuf shell in a safe way. That is the sole supported
+way. This will give you a malloced buffer that you can later `free()`.
++
+However, it is totally safe to modify anything in the string pointed by
+the `buf` member, between the indices `0` and `len-1` (inclusive).
+
+. The `buf` member is a byte array that has at least `len + 1` bytes
+  allocated. The extra byte is used to store a `'\0'`, allowing the
+  `buf` member to be a valid C-string. Every strbuf function ensure this
+  invariant is preserved.
++
+NOTE: It is OK to "play" with the buffer directly if you work it this
+      way:
++
+----
+strbuf_grow(sb, SOME_SIZE); <1>
+strbuf_setlen(sb, sb->len + SOME_OTHER_SIZE);
+----
+<1> Here, the memory array starting at `sb->buf`, and of length
+`strbuf_avail(sb)` is all yours, and you can be sure that
+`strbuf_avail(sb)` is at least `SOME_SIZE`.
++
+NOTE: `SOME_OTHER_SIZE` must be smaller or equal to `strbuf_avail(sb)`.
++
+Doing so is safe, though if it has to be done in many places, adding the
+missing API to the strbuf module is the way to go.
++
+WARNING: Do _not_ assume that the area that is yours is of size `alloc
+- 1` even if it's true in the current implementation. Alloc is somehow a
+"private" member that should not be messed with. Use `strbuf_avail()`
+instead.
+
+Data structures
+---------------
+
+* `struct strbuf`
+
+This is the string buffer structure. The `len` member can be used to
+determine the current length of the string, and `buf` member provides access to
+the string itself.
+
+Functions
+---------
+
+* Life cycle
+
+`strbuf_init`::
+
+	Initialize the structure. The second parameter can be zero or a bigger
+	number to allocate memory, in case you want to prevent further reallocs.
+
+`strbuf_release`::
+
+	Release a string buffer and the memory it used. You should not use the
+	string buffer after using this function, unless you initialize it again.
+
+`strbuf_detach`::
+
+	Detach the string from the strbuf and returns it; you now own the
+	storage the string occupies and it is your responsibility from then on
+	to release it with `free(3)` when you are done with it.
+
+`strbuf_attach`::
+
+	Attach a string to a buffer. You should specify the string to attach,
+	the current length of the string and the amount of allocated memory.
+	The amount must be larger than the string length, because the string you
+	pass is supposed to be a NUL-terminated string.  This string _must_ be
+	malloc()ed, and after attaching, the pointer cannot be relied upon
+	anymore, and neither be free()d directly.
+
+`strbuf_swap`::
+
+	Swap the contents of two string buffers.
+
+* Related to the size of the buffer
+
+`strbuf_avail`::
+
+	Determine the amount of allocated but unused memory.
+
+`strbuf_grow`::
+
+	Ensure that at least this amount of unused memory is available after
+	`len`. This is used when you know a typical size for what you will add
+	and want to avoid repetitive automatic resizing of the underlying buffer.
+	This is never a needed operation, but can be critical for performance in
+	some cases.
+
+`strbuf_setlen`::
+
+	Set the length of the buffer to a given value. This function does *not*
+	allocate new memory, so you should not perform a `strbuf_setlen()` to a
+	length that is larger than `len + strbuf_avail()`. `strbuf_setlen()` is
+	just meant as a 'please fix invariants from this strbuf I just messed
+	with'.
+
+`strbuf_reset`::
+
+	Empty the buffer by setting the size of it to zero.
+
+* Related to the contents of the buffer
+
+`strbuf_rtrim`::
+
+	Strip whitespace from the end of a string.
+
+`strbuf_cmp`::
+
+	Compare two buffers. Returns an integer less than, equal to, or greater
+	than zero if the first buffer is found, respectively, to be less than,
+	to match, or be greater than the second buffer.
+
+* Adding data to the buffer
+
+NOTE: All of the functions in this section will grow the buffer as necessary.
+If they fail for some reason other than memory shortage and the buffer hadn't
+been allocated before (i.e. the `struct strbuf` was set to `STRBUF_INIT`),
+then they will free() it.
+
+`strbuf_addch`::
+
+	Add a single character to the buffer.
+
+`strbuf_insert`::
+
+	Insert data to the given position of the buffer. The remaining contents
+	will be shifted, not overwritten.
+
+`strbuf_remove`::
+
+	Remove given amount of data from a given position of the buffer.
+
+`strbuf_splice`::
+
+	Remove the bytes between `pos..pos+len` and replace it with the given
+	data.
+
+`strbuf_add`::
+
+	Add data of given length to the buffer.
+
+`strbuf_addstr`::
+
+Add a NUL-terminated string to the buffer.
++
+NOTE: This function will *always* be implemented as an inline or a macro
+that expands to:
++
+----
+strbuf_add(..., s, strlen(s));
+----
++
+Meaning that this is efficient to write things like:
++
+----
+strbuf_addstr(sb, "immediate string");
+----
+
+`strbuf_addbuf`::
+
+	Copy the contents of an other buffer at the end of the current one.
+
+`strbuf_adddup`::
+
+	Copy part of the buffer from a given position till a given length to the
+	end of the buffer.
+
+`strbuf_expand`::
+
+	This function can be used to expand a format string containing
+	placeholders. To that end, it parses the string and calls the specified
+	function for every percent sign found.
++
+The callback function is given a pointer to the character after the `%`
+and a pointer to the struct strbuf.  It is expected to add the expanded
+version of the placeholder to the strbuf, e.g. to add a newline
+character if the letter `n` appears after a `%`.  The function returns
+the length of the placeholder recognized and `strbuf_expand()` skips
+over it.
++
+The format `%%` is automatically expanded to a single `%` as a quoting
+mechanism; callers do not need to handle the `%` placeholder themselves,
+and the callback function will not be invoked for this placeholder.
++
+All other characters (non-percent and not skipped ones) are copied
+verbatim to the strbuf.  If the callback returned zero, meaning that the
+placeholder is unknown, then the percent sign is copied, too.
++
+In order to facilitate caching and to make it possible to give
+parameters to the callback, `strbuf_expand()` passes a context pointer,
+which can be used by the programmer of the callback as she sees fit.
+
+`strbuf_expand_dict_cb`::
+
+	Used as callback for `strbuf_expand()`, expects an array of
+	struct strbuf_expand_dict_entry as context, i.e. pairs of
+	placeholder and replacement string.  The array needs to be
+	terminated by an entry with placeholder set to NULL.
+
+`strbuf_addbuf_percentquote`::
+
+	Append the contents of one strbuf to another, quoting any
+	percent signs ("%") into double-percents ("%%") in the
+	destination. This is useful for literal data to be fed to either
+	strbuf_expand or to the *printf family of functions.
+
+`strbuf_addf`::
+
+	Add a formatted string to the buffer.
+
+`strbuf_fread`::
+
+	Read a given size of data from a FILE* pointer to the buffer.
++
+NOTE: The buffer is rewound if the read fails. If -1 is returned,
+`errno` must be consulted, like you would do for `read(3)`.
+`strbuf_read()`, `strbuf_read_file()` and `strbuf_getline()` has the
+same behaviour as well.
+
+`strbuf_read`::
+
+	Read the contents of a given file descriptor. The third argument can be
+	used to give a hint about the file size, to avoid reallocs.
+
+`strbuf_read_file`::
+
+	Read the contents of a file, specified by its path. The third argument
+	can be used to give a hint about the file size, to avoid reallocs.
+
+`strbuf_readlink`::
+
+	Read the target of a symbolic link, specified by its path.  The third
+	argument can be used to give a hint about the size, to avoid reallocs.
+
+`strbuf_getline`::
+
+	Read a line from a FILE* pointer. The second argument specifies the line
+	terminator character, typically `'\n'`.
+
+`stripspace`::
+
+	Strip whitespace from a buffer. The second parameter controls if
+	comments are considered contents to be removed or not.
+
+`launch_editor`::
+
+	Launch the user preferred editor to edit a file and fill the buffer
+	with the file's contents upon the user completing their editing. The
+	third argument can be used to set the environment which the editor is
+	run in. If the buffer is NULL the editor is launched as usual but the
+	file's contents are not read into the buffer upon completion.

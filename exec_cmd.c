@@ -1,14 +1,69 @@
 #include "cache.h"
 #include "exec_cmd.h"
+#include "quote.h"
 #define MAX_ARGS	32
 
-extern char **environ;
-static const char *builtin_exec_path = GIT_EXEC_PATH;
-static const char *current_exec_path = NULL;
+static const char *argv_exec_path;
+static const char *argv0_path;
 
-void git_set_exec_path(const char *exec_path)
+const char *system_path(const char *path)
 {
-	current_exec_path = exec_path;
+#ifdef RUNTIME_PREFIX
+	static const char *prefix;
+#else
+	static const char *prefix = PREFIX;
+#endif
+	struct strbuf d = STRBUF_INIT;
+
+	if (is_absolute_path(path))
+		return path;
+
+#ifdef RUNTIME_PREFIX
+	assert(argv0_path);
+	assert(is_absolute_path(argv0_path));
+
+	if (!prefix &&
+	    !(prefix = strip_path_suffix(argv0_path, GIT_EXEC_PATH)) &&
+	    !(prefix = strip_path_suffix(argv0_path, BINDIR)) &&
+	    !(prefix = strip_path_suffix(argv0_path, "git"))) {
+		prefix = PREFIX;
+		trace_printf("RUNTIME_PREFIX requested, "
+				"but prefix computation failed.  "
+				"Using static fallback '%s'.\n", prefix);
+	}
+#endif
+
+	strbuf_addf(&d, "%s/%s", prefix, path);
+	path = strbuf_detach(&d, NULL);
+	return path;
+}
+
+const char *git_extract_argv0_path(const char *argv0)
+{
+	const char *slash;
+
+	if (!argv0 || !*argv0)
+		return NULL;
+	slash = argv0 + strlen(argv0);
+
+	while (argv0 <= slash && !is_dir_sep(*slash))
+		slash--;
+
+	if (slash >= argv0) {
+		argv0_path = xstrndup(argv0, slash - argv0);
+		return slash + 1;
+	}
+
+	return argv0;
+}
+
+void git_set_argv_exec_path(const char *exec_path)
+{
+	argv_exec_path = exec_path;
+	/*
+	 * Propagate this setting to external programs.
+	 */
+	setenv(EXEC_PATH_ENVIRONMENT, exec_path, 1);
 }
 
 
@@ -17,80 +72,74 @@ const char *git_exec_path(void)
 {
 	const char *env;
 
-	if (current_exec_path)
-		return current_exec_path;
+	if (argv_exec_path)
+		return argv_exec_path;
 
-	env = getenv("GIT_EXEC_PATH");
-	if (env) {
+	env = getenv(EXEC_PATH_ENVIRONMENT);
+	if (env && *env) {
 		return env;
 	}
 
-	return builtin_exec_path;
+	return system_path(GIT_EXEC_PATH);
 }
 
-
-int execv_git_cmd(const char **argv)
+static void add_path(struct strbuf *out, const char *path)
 {
-	char git_command[PATH_MAX + 1];
-	int len, err, i;
-	const char *paths[] = { current_exec_path,
-				getenv("GIT_EXEC_PATH"),
-				builtin_exec_path };
+	if (path && *path) {
+		if (is_absolute_path(path))
+			strbuf_addstr(out, path);
+		else
+			strbuf_addstr(out, absolute_path(path));
 
-	for (i = 0; i < ARRAY_SIZE(paths); ++i) {
-		const char *exec_dir = paths[i];
-		const char *tmp;
-
-		if (!exec_dir) continue;
-
-		if (*exec_dir != '/') {
-			if (!getcwd(git_command, sizeof(git_command))) {
-				fprintf(stderr, "git: cannot determine "
-					"current directory\n");
-				exit(1);
-			}
-			len = strlen(git_command);
-
-			/* Trivial cleanup */
-			while (!strncmp(exec_dir, "./", 2)) {
-				exec_dir += 2;
-				while (*exec_dir == '/')
-					exec_dir++;
-			}
-			snprintf(git_command + len, sizeof(git_command) - len,
-				 "/%s", exec_dir);
-		} else {
-			strcpy(git_command, exec_dir);
-		}
-
-		len = strlen(git_command);
-		len += snprintf(git_command + len, sizeof(git_command) - len,
-				"/git-%s", argv[0]);
-
-		if (sizeof(git_command) <= len) {
-			fprintf(stderr,
-				"git: command name given is too long.\n");
-			break;
-		}
-
-		/* argv[0] must be the git command, but the argv array
-		 * belongs to the caller, and my be reused in
-		 * subsequent loop iterations. Save argv[0] and
-		 * restore it on error.
-		 */
-
-		tmp = argv[0];
-		argv[0] = git_command;
-
-		/* execve() can only ever return if it fails */
-		execve(git_command, (char **)argv, environ);
-
-		err = errno;
-
-		argv[0] = tmp;
+		strbuf_addch(out, PATH_SEP);
 	}
-	return -1;
+}
 
+void setup_path(void)
+{
+	const char *old_path = getenv("PATH");
+	struct strbuf new_path = STRBUF_INIT;
+
+	add_path(&new_path, git_exec_path());
+	add_path(&new_path, argv0_path);
+
+	if (old_path)
+		strbuf_addstr(&new_path, old_path);
+	else
+		strbuf_addstr(&new_path, _PATH_DEFPATH);
+
+	setenv("PATH", new_path.buf, 1);
+
+	strbuf_release(&new_path);
+}
+
+const char **prepare_git_cmd(const char **argv)
+{
+	int argc;
+	const char **nargv;
+
+	for (argc = 0; argv[argc]; argc++)
+		; /* just counting */
+	nargv = xmalloc(sizeof(*nargv) * (argc + 2));
+
+	nargv[0] = "git";
+	for (argc = 0; argv[argc]; argc++)
+		nargv[argc + 1] = argv[argc];
+	nargv[argc + 1] = NULL;
+	return nargv;
+}
+
+int execv_git_cmd(const char **argv) {
+	const char **nargv = prepare_git_cmd(argv);
+	trace_argv_printf(nargv, "trace: exec:");
+
+	/* execvp() can only ever return if it fails */
+	execvp("git", (char **)nargv);
+
+	trace_printf("trace: exec failed: %s\n", strerror(errno));
+
+	free(nargv);
+	return -1;
 }
 
 

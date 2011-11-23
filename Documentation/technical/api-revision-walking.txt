@@ -1,0 +1,67 @@
+revision walking API
+====================
+
+The revision walking API offers functions to build a list of revisions
+and then iterate over that list.
+
+Calling sequence
+----------------
+
+The walking API has a given calling sequence: first you need to
+initialize a rev_info structure, then add revisions to control what kind
+of revision list do you want to get, finally you can iterate over the
+revision list.
+
+Functions
+---------
+
+`init_revisions`::
+
+	Initialize a rev_info structure with default values. The second
+	parameter may be NULL or can be prefix path, and then the `.prefix`
+	variable will be set to it. This is typically the first function you
+	want to call when you want to deal with a revision list. After calling
+	this function, you are free to customize options, like set
+	`.ignore_merges` to 0 if you don't want to ignore merges, and so on. See
+	`revision.h` for a complete list of available options.
+
+`add_pending_object`::
+
+	This function can be used if you want to add commit objects as revision
+	information. You can use the `UNINTERESTING` object flag to indicate if
+	you want to include or exclude the given commit (and commits reachable
+	from the given commit) from the revision list.
++
+NOTE: If you have the commits as a string list then you probably want to
+use setup_revisions(), instead of parsing each string and using this
+function.
+
+`setup_revisions`::
+
+	Parse revision information, filling in the `rev_info` structure, and
+	removing the used arguments from the argument list. Returns the number
+	of arguments left that weren't recognized, which are also moved to the
+	head of the argument list. The last parameter is used in case no
+	parameter given by the first two arguments.
+
+`prepare_revision_walk`::
+
+	Prepares the rev_info structure for a walk. You should check if it
+	returns any error (non-zero return code) and if it does not, you can
+	start using get_revision() to do the iteration.
+
+`get_revision`::
+
+	Takes a pointer to a `rev_info` structure and iterates over it,
+	returning a `struct commit *` each time you call it. The end of the
+	revision list is indicated by returning a NULL pointer.
+
+Data structures
+---------------
+
+Talk about <revision.h>, things like:
+
+* two diff_options, one for path limiting, another for output;
+* remaining functions;
+
+(Linus, JC, Dscho)

@@ -1,0 +1,90 @@
+SVN-fs-dump-format-version: 2
+
+UUID: 06b9b3ad-f546-4fbe-8328-fcb4e6ef5c3f
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2008-04-02T09:11:59.778557Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 117
+Content-length: 117
+
+K 7
+svn:log
+V 14
+initial import
+K 10
+svn:author
+V 8
+santhosh
+K 8
+svn:date
+V 27
+2008-04-02T09:13:03.170863Z
+PROPS-END
+
+Node-path: name
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: name/a.txt
+Node-kind: file
+Node-action: add
+Prop-content-length: 71
+Text-content-length: 6
+Text-content-md5: b1946ac92492d2347c6235b4d2611184
+Content-length: 77
+
+K 13
+svn:mime-type
+V 10
+text/plain
+K 13
+svn:eol-style
+V 2
+LF
+PROPS-END
+hello
+
+
+Revision-number: 2
+Prop-content-length: 109
+Content-length: 109
+
+K 7
+svn:log
+V 7
+renamed
+K 10
+svn:author
+V 8
+santhosh
+K 8
+svn:date
+V 27
+2008-04-02T09:14:22.952186Z
+PROPS-END
+
+Node-path: newname
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 1
+Node-copyfrom-path: name
+
+
+Node-path: name
+Node-action: delete
+
+

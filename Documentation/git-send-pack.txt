@@ -3,30 +3,40 @@ git-send-pack(1)
 
 NAME
 ----
-git-send-pack - Push missing objects packed
+git-send-pack - Push objects over git protocol to another repository
 
 
 SYNOPSIS
 --------
-'git-send-pack' [--all] [--force] [--exec=<git-receive-pack>] [<host>:]<directory> [<ref>...]
+[verse]
+'git send-pack' [--all] [--dry-run] [--force] [--receive-pack=<git-receive-pack>] [--verbose] [--thin] [<host>:]<directory> [<ref>...]
 
 DESCRIPTION
 -----------
+Usually you would want to use 'git push', which is a
+higher-level wrapper of this command, instead. See linkgit:git-push[1].
+
 Invokes 'git-receive-pack' on a possibly remote repository, and
 updates it from the current repository, sending named refs.
 
 
 OPTIONS
 -------
---exec=<git-receive-pack>::
+--receive-pack=<git-receive-pack>::
 	Path to the 'git-receive-pack' program on the remote
 	end.  Sometimes useful when pushing to a remote
 	repository over ssh, and you do not have the program in
 	a directory on the default $PATH.
 
+--exec=<git-receive-pack>::
+	Same as \--receive-pack=<git-receive-pack>.
+
 --all::
 	Instead of explicitly specifying which refs to update,
-	update all refs that locally exist.
+	update all heads that locally exist.
+
+--dry-run::
+	Do everything except actually send the updates.
 
 --force::
 	Usually, the command refuses to update a remote ref that
@@ -34,6 +44,13 @@ OPTIONS
 	This flag disables the check.  What this means is that
 	the remote repository can lose commits; use it with
 	care.
+
+--verbose::
+	Run verbosely.
+
+--thin::
+	Send a "thin" pack, which records objects in deltified form based
+	on objects not included in the pack to reduce network traffic.
 
 <host>::
 	A remote host to house the repository.  When this
@@ -43,7 +60,7 @@ OPTIONS
 <directory>::
 	The repository to update.
 
-<ref>...:
+<ref>...::
 	The remote refs to update.
 
 
@@ -53,11 +70,11 @@ Specifying the Refs
 There are three ways to specify which refs to update on the
 remote end.
 
-With '--all' flag, all refs that exist locally are transfered to
+With '--all' flag, all refs that exist locally are transferred to
 the remote side.  You cannot specify any '<ref>' if you use
 this flag.
 
-Without '--all' and without any '<ref>', the refs that exist
+Without '--all' and without any '<ref>', the heads that exist
 both on the local side and on the remote side are updated.
 
 When one or more '<ref>' are specified explicitly, it can be either a
@@ -69,7 +86,9 @@ Each pattern pair consists of the source side (before the colon)
 and the destination side (after the colon).  The ref to be
 pushed is determined by finding a match that matches the source
 side, and where it is pushed is determined by using the
-destination side.
+destination side. The rules used to match a ref are the same
+rules used by 'git rev-parse' to resolve a symbolic ref
+name. See linkgit:git-rev-parse[1].
 
  - It is an error if <src> does not match exactly one of the
    local refs.
@@ -87,24 +106,15 @@ destination side.
 
 Without '--force', the <src> ref is stored at the remote only if
 <dst> does not exist, or <dst> is a proper subset (i.e. an
-ancestor) of <src>.  This check, known as "fast forward check",
+ancestor) of <src>.  This check, known as "fast-forward check",
 is performed in order to avoid accidentally overwriting the
 remote ref and lose other peoples' commits from there.
 
-With '--force', the fast forward check is disabled for all refs.
+With '--force', the fast-forward check is disabled for all refs.
 
 Optionally, a <ref> parameter can be prefixed with a plus '+' sign
 to disable the fast-forward check only on that ref.
 
-
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org>
-
-Documentation
---------------
-Documentation by Junio C Hamano.
-
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[1] suite

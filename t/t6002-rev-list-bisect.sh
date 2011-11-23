@@ -2,10 +2,10 @@
 #
 # Copyright (c) 2005 Jon Seymour
 #
-test_description='Tests git-rev-list --bisect functionality'
+test_description='Tests git rev-list --bisect functionality'
 
 . ./test-lib.sh
-. ../t6000lib.sh # t6xxx specific functions
+. "$TEST_DIRECTORY"/lib-t6000.sh # t6xxx specific functions
 
 # usage: test_bisection max-diff bisect-option head ^prune...
 #
@@ -16,17 +16,17 @@ test_bisection_diff()
 	_max_diff=$1
 	_bisect_option=$2
 	shift 2
-	_bisection=$(git-rev-list $_bisect_option "$@")
-	_list_size=$(git-rev-list "$@" | wc -l)
+	_bisection=$(git rev-list $_bisect_option "$@")
+	_list_size=$(git rev-list "$@" | wc -l)
         _head=$1
 	shift 1
-	_bisection_size=$(git-rev-list $_bisection "$@" | wc -l)
+	_bisection_size=$(git rev-list $_bisection "$@" | wc -l)
 	[ -n "$_list_size" -a -n "$_bisection_size" ] ||
 	error "test_bisection_diff failed"
 
 	# Test if bisection size is close to half of list size within
 	# tolerance.
-	# 
+	#
 	_bisect_err=`expr $_list_size - $_bisection_size \* 2`
 	test "$_bisect_err" -lt 0 && _bisect_err=`expr 0 - $_bisect_err`
 	_bisect_err=`expr $_bisect_err / 2` ; # floor
@@ -37,8 +37,8 @@ test_bisection_diff()
 }
 
 date >path0
-git-update-index --add path0
-save_tag tree git-write-tree
+git update-index --add path0
+save_tag tree git write-tree
 on_committer_date "1971-08-16 00:00:00" hide_error save_tag root unique_commit root tree
 on_committer_date "1971-08-16 00:00:01" save_tag l0 unique_commit l0 tree -p root
 on_committer_date "1971-08-16 00:00:02" save_tag l1 unique_commit l1 tree -p l0
@@ -58,7 +58,7 @@ on_committer_date "1971-08-16 00:00:15" save_tag a4 unique_commit a4 tree -p a3 
 on_committer_date "1971-08-16 00:00:16" save_tag l3 unique_commit l3 tree -p a4
 on_committer_date "1971-08-16 00:00:17" save_tag l4 unique_commit l4 tree -p l3
 on_committer_date "1971-08-16 00:00:18" save_tag l5 unique_commit l5 tree -p l4
-git-update-ref HEAD $(tag l5)
+git update-ref HEAD $(tag l5)
 
 
 #     E
@@ -116,8 +116,8 @@ on_committer_date "1971-08-16 00:00:06" save_tag V unique_commit V tree -p u1 -p
 
 test_sequence()
 {
-	_bisect_option=$1	
-	
+	_bisect_option=$1
+
 	test_bisection_diff 0 $_bisect_option l0 ^root
 	test_bisection_diff 0 $_bisect_option l1 ^root
 	test_bisection_diff 0 $_bisect_option l2 ^root
@@ -152,9 +152,9 @@ test_sequence()
 	test_bisection_diff 0 $_bisect_option u3 ^U
 	test_bisection_diff 0 $_bisect_option u4 ^U
 	test_bisection_diff 0 $_bisect_option u5 ^U
-	
+
 #
-# the following illustrate's Linus' binary bug blatt idea. 
+# the following illustrates Linus' binary bug blatt idea.
 #
 # assume the bug is actually at l3, but you don't know that - all you know is that l3 is broken
 # and it wasn't broken before
@@ -163,23 +163,23 @@ test_sequence()
 # the bisection point is the head - this is the bad point.
 #
 
-test_output_expect_success "--bisect l5 ^root" 'git-rev-list $_bisect_option l5 ^root' <<EOF
+test_output_expect_success "$_bisect_option l5 ^root" 'git rev-list $_bisect_option l5 ^root' <<EOF
 c3
 EOF
 
-test_output_expect_success "$_bisect_option l5 ^root ^c3" 'git-rev-list $_bisect_option l5 ^root ^c3' <<EOF
+test_output_expect_success "$_bisect_option l5 ^root ^c3" 'git rev-list $_bisect_option l5 ^root ^c3' <<EOF
 b4
 EOF
 
-test_output_expect_success "$_bisect_option l5 ^root ^c3 ^b4" 'git-rev-list $_bisect_option l5 ^c3 ^b4' <<EOF
+test_output_expect_success "$_bisect_option l5 ^root ^c3 ^b4" 'git rev-list $_bisect_option l5 ^c3 ^b4' <<EOF
 l3
 EOF
 
-test_output_expect_success "$_bisect_option l3 ^root ^c3 ^b4" 'git-rev-list $_bisect_option l3 ^root ^c3 ^b4' <<EOF
+test_output_expect_success "$_bisect_option l3 ^root ^c3 ^b4" 'git rev-list $_bisect_option l3 ^root ^c3 ^b4' <<EOF
 a4
 EOF
 
-test_output_expect_success "$_bisect_option l5 ^b3 ^a3 ^b4 ^a4" 'git-rev-list $_bisect_option l3 ^b3 ^a3 ^a4' <<EOF
+test_output_expect_success "$_bisect_option l5 ^b3 ^a3 ^b4 ^a4" 'git rev-list $_bisect_option l3 ^b3 ^a3 ^a4' <<EOF
 l3
 EOF
 
@@ -187,11 +187,11 @@ EOF
 # if l3 is bad, then l4 is bad too - so advance the bad pointer by making b4 the known bad head
 #
 
-test_output_expect_success "$_bisect_option l4 ^a2 ^a3 ^b ^a4" 'git-rev-list $_bisect_option l4 ^a2 ^a3 ^a4' <<EOF
+test_output_expect_success "$_bisect_option l4 ^a2 ^a3 ^b ^a4" 'git rev-list $_bisect_option l4 ^a2 ^a3 ^a4' <<EOF
 l3
 EOF
 
-test_output_expect_success "$_bisect_option l3 ^a2 ^a3 ^b ^a4" 'git-rev-list $_bisect_option l3 ^a2 ^a3 ^a4' <<EOF
+test_output_expect_success "$_bisect_option l3 ^a2 ^a3 ^b ^a4" 'git rev-list $_bisect_option l3 ^a2 ^a3 ^a4' <<EOF
 l3
 EOF
 
@@ -201,15 +201,15 @@ EOF
 # as another example, let's consider a4 to be the bad head, in which case
 #
 
-test_output_expect_success "$_bisect_option a4 ^a2 ^a3 ^b4" 'git-rev-list $_bisect_option a4 ^a2 ^a3 ^b4' <<EOF
+test_output_expect_success "$_bisect_option a4 ^a2 ^a3 ^b4" 'git rev-list $_bisect_option a4 ^a2 ^a3 ^b4' <<EOF
 c2
 EOF
 
-test_output_expect_success "$_bisect_option a4 ^a2 ^a3 ^b4 ^c2" 'git-rev-list $_bisect_option a4 ^a2 ^a3 ^b4 ^c2' <<EOF
+test_output_expect_success "$_bisect_option a4 ^a2 ^a3 ^b4 ^c2" 'git rev-list $_bisect_option a4 ^a2 ^a3 ^b4 ^c2' <<EOF
 c3
 EOF
 
-test_output_expect_success "$_bisect_option a4 ^a2 ^a3 ^b4 ^c2 ^c3" 'git-rev-list $_bisect_option a4 ^a2 ^a3 ^b4 ^c2 ^c3' <<EOF
+test_output_expect_success "$_bisect_option a4 ^a2 ^a3 ^b4 ^c2 ^c3" 'git rev-list $_bisect_option a4 ^a2 ^a3 ^b4 ^c2 ^c3' <<EOF
 a4
 EOF
 
@@ -219,11 +219,11 @@ EOF
 # or consider c3 to be the bad head
 #
 
-test_output_expect_success "$_bisect_option a4 ^a2 ^a3 ^b4" 'git-rev-list $_bisect_option a4 ^a2 ^a3 ^b4' <<EOF
+test_output_expect_success "$_bisect_option a4 ^a2 ^a3 ^b4" 'git rev-list $_bisect_option a4 ^a2 ^a3 ^b4' <<EOF
 c2
 EOF
 
-test_output_expect_success "$_bisect_option c3 ^a2 ^a3 ^b4 ^c2" 'git-rev-list $_bisect_option c3 ^a2 ^a3 ^b4 ^c2' <<EOF
+test_output_expect_success "$_bisect_option c3 ^a2 ^a3 ^b4 ^c2" 'git rev-list $_bisect_option c3 ^a2 ^a3 ^b4 ^c2' <<EOF
 c3
 EOF
 

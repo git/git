@@ -1,4 +1,4 @@
-From: Junio C Hamano <junkio@cox.net>
+From: Junio C Hamano <gitster@pobox.com>
 To: git@vger.kernel.org
 Subject: [HOWTO] Reverting an existing commit
 Abstract: In this article, JC gives a small real-life example of using
@@ -85,7 +85,7 @@ Fortunately I did not have to; what I have in the current branch
 
 ------------------------------------------------
 $ git checkout master
-$ git resolve master revert-c99 fast ;# this should be a fast forward
+$ git merge revert-c99 ;# this should be a fast-forward
 Updating from 10d781b9caa4f71495c7b34963bef137216f86a8 to e3a693c...
  cache.h        |    8 ++++----
  commit.c       |    2 +-
@@ -95,14 +95,7 @@ Updating from 10d781b9caa4f71495c7b34963bef137216f86a8 to e3a693c...
  5 files changed, 8 insertions(+), 8 deletions(-)
 ------------------------------------------------
 
-The 'fast' in the above 'git resolve' is not a magic.  I knew this
-'resolve' would result in a fast forward merge, and if not, there is
-something very wrong (so I would do 'git reset' on the 'master' branch
-and examine the situation).  When a fast forward merge is done, the
-message parameter to 'git resolve' is discarded, because no new commit
-is created.  You could have said 'junk' or 'nothing' there as well.
-
-There is no need to redo the test at this point.  We fast forwarded
+There is no need to redo the test at this point.  We fast-forwarded
 and we know 'master' matches 'revert-c99' exactly.  In fact:
 
 ------------------------------------------------
@@ -119,25 +112,19 @@ $ git tag pu-anchor pu
 $ git rebase master
 * Applying: Redo "revert" using three-way merge machinery.
 First trying simple merge strategy to cherry-pick.
-Finished one cherry-pick.
 * Applying: Remove git-apply-patch-script.
 First trying simple merge strategy to cherry-pick.
 Simple cherry-pick fails; trying Automatic cherry-pick.
 Removing Documentation/git-apply-patch-script.txt
 Removing git-apply-patch-script
-Finished one cherry-pick.
 * Applying: Document "git cherry-pick" and "git revert"
 First trying simple merge strategy to cherry-pick.
-Finished one cherry-pick.
 * Applying: mailinfo and applymbox updates
 First trying simple merge strategy to cherry-pick.
-Finished one cherry-pick.
 * Applying: Show commits in topo order and name all commits.
 First trying simple merge strategy to cherry-pick.
-Finished one cherry-pick.
 * Applying: More documentation updates.
 First trying simple merge strategy to cherry-pick.
-Finished one cherry-pick.
 ------------------------------------------------
 
 The temporary tag 'pu-anchor' is me just being careful, in case 'git
@@ -153,7 +140,7 @@ Everything is in the good order.  I do not need the temporary branch
 nor tag anymore, so remove them:
 
 ------------------------------------------------
-$ rm -f .git/refs/tags/pu-anchor 
+$ rm -f .git/refs/tags/pu-anchor
 $ git branch -d revert-c99
 ------------------------------------------------
 

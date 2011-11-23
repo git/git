@@ -9,108 +9,110 @@ git-rev-list - Lists commit objects in reverse chronological order
 SYNOPSIS
 --------
 [verse]
-'git-rev-list' [ \--max-count=number ]
-	     [ \--max-age=timestamp ]
-	     [ \--min-age=timestamp ]
+'git rev-list' [ \--max-count=<number> ]
+	     [ \--skip=<number> ]
+	     [ \--max-age=<timestamp> ]
+	     [ \--min-age=<timestamp> ]
 	     [ \--sparse ]
+	     [ \--merges ]
 	     [ \--no-merges ]
+	     [ \--min-parents=<number> ]
+	     [ \--no-min-parents ]
+	     [ \--max-parents=<number> ]
+	     [ \--no-max-parents ]
+	     [ \--first-parent ]
 	     [ \--remove-empty ]
+	     [ \--full-history ]
+	     [ \--not ]
 	     [ \--all ]
+	     [ \--branches[=<pattern>] ]
+	     [ \--tags[=<pattern>] ]
+	     [ \--remotes[=<pattern>] ]
+	     [ \--glob=<glob-pattern> ]
+	     [ \--ignore-missing ]
+	     [ \--stdin ]
+	     [ \--quiet ]
 	     [ \--topo-order ]
 	     [ \--parents ]
+	     [ \--timestamp ]
+	     [ \--left-right ]
+	     [ \--left-only ]
+	     [ \--right-only ]
+	     [ \--cherry-mark ]
+	     [ \--cherry-pick ]
+	     [ \--encoding[=<encoding>] ]
+	     [ \--(author|committer|grep)=<pattern> ]
+	     [ \--regexp-ignore-case | -i ]
+	     [ \--extended-regexp | -E ]
+	     [ \--fixed-strings | -F ]
+	     [ \--date=(local|relative|default|iso|rfc|short) ]
 	     [ [\--objects | \--objects-edge] [ \--unpacked ] ]
 	     [ \--pretty | \--header ]
 	     [ \--bisect ]
+	     [ \--bisect-vars ]
+	     [ \--bisect-all ]
+	     [ \--merge ]
+	     [ \--reverse ]
+	     [ \--walk-reflogs ]
+	     [ \--no-walk ] [ \--do-walk ]
 	     <commit>... [ \-- <paths>... ]
 
 DESCRIPTION
 -----------
-Lists commit objects in reverse chronological order starting at the
-given commit(s), taking ancestry relationship into account.  This is
-useful to produce human-readable log output.
 
-Commits which are stated with a preceding '{caret}' cause listing to stop at
-that point. Their parents are implied. "git-rev-list foo bar {caret}baz" thus
-means "list all the commits which are included in 'foo' and 'bar', but
-not in 'baz'".
+List commits that are reachable by following the `parent` links from the
+given commit(s), but exclude commits that are reachable from the one(s)
+given with a '{caret}' in front of them.  The output is given in reverse
+chronological order by default.
 
-A special notation <commit1>..<commit2> can be used as a
-short-hand for {caret}<commit1> <commit2>.
+You can think of this as a set operation.  Commits given on the command
+line form a set of commits that are reachable from any of them, and then
+commits reachable from any of the ones given with '{caret}' in front are
+subtracted from that set.  The remaining commits are what comes out in the
+command's output.  Various other options and paths parameters can be used
+to further limit the result.
 
+Thus, the following command:
+
+-----------------------------------------------------------------------
+	$ git rev-list foo bar ^baz
+-----------------------------------------------------------------------
+
+means "list all the commits which are reachable from 'foo' or 'bar', but
+not from 'baz'".
+
+A special notation "'<commit1>'..'<commit2>'" can be used as a
+short-hand for "{caret}'<commit1>' '<commit2>'". For example, either of
+the following may be used interchangeably:
+
+-----------------------------------------------------------------------
+	$ git rev-list origin..HEAD
+	$ git rev-list HEAD ^origin
+-----------------------------------------------------------------------
+
+Another special notation is "'<commit1>'...'<commit2>'" which is useful
+for merges.  The resulting set of commits is the symmetric difference
+between the two operands.  The following two commands are equivalent:
+
+-----------------------------------------------------------------------
+	$ git rev-list A B --not $(git merge-base --all A B)
+	$ git rev-list A...B
+-----------------------------------------------------------------------
+
+'rev-list' is a very essential git command, since it
+provides the ability to build and traverse commit ancestry graphs. For
+this reason, it has a lot of different options that enables it to be
+used by commands as different as 'git bisect' and
+'git repack'.
 
 OPTIONS
 -------
---pretty::
-	Print the contents of the commit changesets in human-readable form.
 
---header::
-	Print the contents of the commit in raw-format; each
-	record is separated with a NUL character.
+:git-rev-list: 1
+include::rev-list-options.txt[]
 
---objects::
-	Print the object IDs of any object referenced by the listed commits.
-	'git-rev-list --objects foo ^bar' thus means "send me all object IDs
-	which I need to download if I have the commit object 'bar', but
-	not 'foo'".
-
---objects-edge::
-	Similar to `--objects`, but also print the IDs of
-	excluded commits refixed with a `-` character.  This is
-	used by `git-pack-objects` to build 'thin' pack, which
-	records objects in deltified form based on objects
-	contained in these excluded commits to reduce network
-	traffic.
-
---unpacked::
-	Only useful with `--objects`; print the object IDs that
-	are not in packs.
-
---bisect::
-	Limit output to the one commit object which is roughly halfway
-	between the included and excluded commits. Thus, if 'git-rev-list
-	--bisect foo ^bar ^baz' outputs 'midpoint', the output
-	of 'git-rev-list foo ^midpoint' and 'git-rev-list midpoint
-	^bar ^baz' would be of roughly the same length. Finding the change
-	which introduces a regression is thus reduced to a binary search:
-	repeatedly generate and test new 'midpoint's until the commit chain
-	is of length one.
-
---max-count::
-	Limit the number of commits output.
-
---max-age=timestamp, --min-age=timestamp::
-	Limit the commits output to specified time range.
-
---sparse::
-	When optional paths are given, the command outputs only
-	the commits that changes at least one of them, and also
-	ignores merges that do not touch the given paths.  This
-	flag makes the command output all eligible commits
-	(still subject to count and age limitation), but apply
-	merge simplification nevertheless.
-
---remove-empty::
-	Stop when a given path disappears from the tree.
-
---all::
-	Pretend as if all the refs in `$GIT_DIR/refs/` are
-	listed on the command line as <commit>.
-
---topo-order::
-	By default, the commits are shown in reverse
-	chronological order.  This option makes them appear in
-	topological order (i.e. descendant commits are shown
-	before their parents).
-
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org>
-
-Documentation
---------------
-Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
+include::pretty-formats.txt[]
 
 GIT
 ---
-Part of the gitlink:git[7] suite
-
+Part of the linkgit:git[1] suite

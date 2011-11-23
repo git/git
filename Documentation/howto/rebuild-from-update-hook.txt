@@ -1,6 +1,6 @@
 Subject: [HOWTO] Using post-update hook
 Message-ID: <7vy86o6usx.fsf@assigned-by-dhcp.cox.net>
-From: Junio C Hamano <junkio@cox.net>
+From: Junio C Hamano <gitster@pobox.com>
 Date: Fri, 26 Aug 2005 18:19:10 -0700
 Abstract: In this how-to article, JC talks about how he
  uses the post-update hook to automate git documentation page
@@ -84,4 +84,3 @@ There are four things worth mentioning:
  - This is still crude and does not protect against simultaneous
    make invocations stomping on each other.  I would need to add
    some locking mechanism for this.
-

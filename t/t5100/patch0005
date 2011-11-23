@@ -1,0 +1,69 @@
+---
+
+ Documentation/git-cvsimport-script.txt |    9 ++++++++-
+ git-cvsimport-script                   |    4 ++--
+ 2 files changed, 10 insertions(+), 3 deletions(-)
+
+50452f9c0c2df1f04d83a26266ba704b13861632
+diff --git a/Documentation/git-cvsimport-script.txt b/Documentation/git-cvsimport-script.txt
+--- a/Documentation/git-cvsimport-script.txt
++++ b/Documentation/git-cvsimport-script.txt
+@@ -29,6 +29,10 @@ OPTIONS
+ 	currently, only the :local:, :ext: and :pserver: access methods 
+ 	are supported.
+ 
++-C <target-dir>::
++        The GIT repository to import to.  If the directory doesn't
++        exist, it will be created.  Default is the current directory.
++
+ -i::
+ 	Import-only: don't perform a checkout after importing.  This option
+ 	ensures the working directory and cache remain untouched and will
+@@ -44,7 +48,7 @@ OPTIONS
+ 
+ -p <options-for-cvsps>::
+ 	Additional options for cvsps.
+-	The options '-x' and '-A' are implicit and should not be used here.
++	The options '-u' and '-A' are implicit and should not be used here.
+ 
+ 	If you need to pass multiple options, separate them with a comma.
+ 
+@@ -57,6 +61,9 @@ OPTIONS
+ -h::
+ 	Print a short usage message and exit.
+ 
++-z <fuzz>::
++        Pass the timestamp fuzz factor to cvsps.
++
+ OUTPUT
+ ------
+ If '-v' is specified, the script reports what it is doing.
+diff --git a/git-cvsimport-script b/git-cvsimport-script
+--- a/git-cvsimport-script
++++ b/git-cvsimport-script
+@@ -190,7 +190,7 @@ sub conn {
+ 	$self->{'socketo'}->write("Root $repo\n");
+ 
+ 	# Trial and error says that this probably is the minimum set
+-	$self->{'socketo'}->write("Valid-responses ok error Valid-requests Mode M Mbinary E F Checked-in Created Updated Merged Removed\n");
++	$self->{'socketo'}->write("Valid-responses ok error Valid-requests Mode M Mbinary E Checked-in Created Updated Merged Removed\n");
+ 
+ 	$self->{'socketo'}->write("valid-requests\n");
+ 	$self->{'socketo'}->flush();
+@@ -691,7 +691,7 @@ while(<CVS>) {
+ 		unlink($tmpname);
+ 		my $mode = pmode($cvs->{'mode'});
+ 		push(@new,[$mode, $sha, $fn]); # may be resurrected!
+-	} elsif($state == 9 and /^\s+(\S+):\d(?:\.\d+)+->(\d(?:\.\d+)+)\(DEAD\)\s*$/) {
++	} elsif($state == 9 and /^\s+(\S+):\d+(?:\.\d+)+->(\d+(?:\.\d+)+)\(DEAD\)\s*$/) {
+ 		my $fn = $1;
+ 		$fn =~ s#^/+##;
+ 		push(@old,$fn);
+
+-- 
+David Kågedal
+-
+To unsubscribe from this list: send the line "unsubscribe git" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
+

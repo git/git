@@ -3,24 +3,27 @@ git-update-ref(1)
 
 NAME
 ----
-git-update-ref - update the object name stored in a ref safely
+git-update-ref - Update the object name stored in a ref safely
 
 SYNOPSIS
 --------
-'git-update-ref' <ref> <newvalue> [<oldvalue>]
+[verse]
+'git update-ref' [-m <reason>] (-d <ref> [<oldvalue>] | [--no-deref] <ref> <newvalue> [<oldvalue>])
 
 DESCRIPTION
 -----------
 Given two arguments, stores the <newvalue> in the <ref>, possibly
-dereferencing the symbolic refs.  E.g. `git-update-ref HEAD
+dereferencing the symbolic refs.  E.g. `git update-ref HEAD
 <newvalue>` updates the current branch head to the new object.
 
 Given three arguments, stores the <newvalue> in the <ref>,
 possibly dereferencing the symbolic refs, after verifying that
 the current value of the <ref> matches <oldvalue>.
-E.g. `git-update-ref refs/heads/master <newvalue> <oldvalue>`
+E.g. `git update-ref refs/heads/master <newvalue> <oldvalue>`
 updates the master branch head to <newvalue> only if its current
-value is <oldvalue>.
+value is <oldvalue>.  You can specify 40 "0" or an empty string
+as <oldvalue> to make sure that the ref you are creating does
+not exist.
 
 It also allows a "ref" file to be a symbolic pointer to another
 ref file by starting with the four-byte header sequence of
@@ -34,9 +37,12 @@ them and update them as a regular file (i.e. it will allow the
 filesystem to follow them, but will overwrite such a symlink to
 somewhere else with a regular filename).
 
+If --no-deref is given, <ref> itself is overwritten, rather than
+the result of following the symbolic pointers.
+
 In general, using
 
-	git-update-ref HEAD "$head"
+	git update-ref HEAD "$head"
 
 should be a _lot_ safer than doing
 
@@ -49,10 +55,37 @@ for reading but not for writing (so we'll never write through a
 ref symlink to some other tree, if you have copied a whole
 archive by creating a symlink tree).
 
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org>.
+With `-d` flag, it deletes the named <ref> after verifying it
+still contains <oldvalue>.
+
+
+Logging Updates
+---------------
+If config parameter "core.logAllRefUpdates" is true and the ref is one under
+"refs/heads/", "refs/remotes/", "refs/notes/", or the symbolic ref HEAD; or
+the file "$GIT_DIR/logs/<ref>" exists then `git update-ref` will append
+a line to the log file "$GIT_DIR/logs/<ref>" (dereferencing all
+symbolic refs before creating the log name) describing the change
+in ref value.  Log lines are formatted as:
+
+    . oldsha1 SP newsha1 SP committer LF
++
+Where "oldsha1" is the 40 character hexadecimal value previously
+stored in <ref>, "newsha1" is the 40 character hexadecimal value of
+<newvalue> and "committer" is the committer's name, email address
+and date in the standard GIT committer ident format.
+
+Optionally with -m:
+
+    . oldsha1 SP newsha1 SP committer TAB message LF
++
+Where all fields are as described above and "message" is the
+value supplied to the -m option.
+
+An update will fail (without changing <ref>) if the current user is
+unable to create a new log file, append to the existing log file
+or does not have committer information available.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[1] suite

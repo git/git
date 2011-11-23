@@ -3,7 +3,7 @@
 # Copyright (c) 2005 Junio C Hamano
 #
 
-test_description='git-ls-files -k and -m flags test.
+test_description='git ls-files -k and -m flags test.
 
 This test prepares the following in the cache:
 
@@ -22,7 +22,7 @@ and the following on the filesystem:
     path5	- a symlink
     path6/file6 - a file in a directory
 
-git-ls-files -k should report that existing filesystem
+git ls-files -k should report that existing filesystem
 objects except path4, path5 and path6/file6 to be killed.
 
 Also for modification test, the cache and working tree have:
@@ -38,7 +38,12 @@ modified without reporting path9 and path10.
 . ./test-lib.sh
 
 date >path0
-ln -s xyzzy path1
+if test_have_prereq SYMLINKS
+then
+	ln -s xyzzy path1
+else
+	date > path1
+fi
 mkdir path2 path3
 date >path2/file2
 date >path3/file3
@@ -47,13 +52,19 @@ date >path8
 : >path9
 date >path10
 test_expect_success \
-    'git-update-index --add to add various paths.' \
-    "git-update-index --add -- path0 path1 path?/file? path7 path8 path9 path10"
+    'git update-index --add to add various paths.' \
+    "git update-index --add -- path0 path1 path?/file? path7 path8 path9 path10"
 
 rm -fr path? ;# leave path10 alone
 date >path2
-ln -s frotz path3
-ln -s nitfol path5
+if test_have_prereq SYMLINKS
+then
+	ln -s frotz path3
+	ln -s nitfol path5
+else
+	date > path3
+	date > path5
+fi
 mkdir path0 path1 path6
 date >path0/file0
 date >path1/file1
@@ -64,8 +75,8 @@ date >path7
 touch path10
 
 test_expect_success \
-    'git-ls-files -k to show killed files.' \
-    'git-ls-files -k >.output'
+    'git ls-files -k to show killed files.' \
+    'git ls-files -k >.output'
 cat >.expected <<EOF
 path0/file0
 path1/file1
@@ -74,12 +85,12 @@ path3
 EOF
 
 test_expect_success \
-    'validate git-ls-files -k output.' \
-    'diff .output .expected'
+    'validate git ls-files -k output.' \
+    'test_cmp .expected .output'
 
 test_expect_success \
-    'git-ls-files -m to show modified files.' \
-    'git-ls-files -m >.output'
+    'git ls-files -m to show modified files.' \
+    'git ls-files -m >.output'
 cat >.expected <<EOF
 path0
 path1
@@ -90,7 +101,7 @@ path8
 EOF
 
 test_expect_success \
-    'validate git-ls-files -m output.' \
-    'diff .output .expected'
+    'validate git ls-files -m output.' \
+    'test_cmp .expected .output'
 
 test_done

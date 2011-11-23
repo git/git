@@ -1,0 +1,79 @@
+directory listing API
+=====================
+
+The directory listing API is used to enumerate paths in the work tree,
+optionally taking `.git/info/exclude` and `.gitignore` files per
+directory into account.
+
+Data structure
+--------------
+
+`struct dir_struct` structure is used to pass directory traversal
+options to the library and to record the paths discovered.  The notable
+options are:
+
+`exclude_per_dir`::
+
+	The name of the file to be read in each directory for excluded
+	files (typically `.gitignore`).
+
+`collect_ignored`::
+
+	Include paths that are to be excluded in the result.
+
+`show_ignored`::
+
+	The traversal is for finding just ignored files, not unignored
+	files.
+
+`show_other_directories`::
+
+	Include a directory that is not tracked.
+
+`hide_empty_directories`::
+
+	Do not include a directory that is not tracked and is empty.
+
+`no_gitlinks`::
+
+	If set, recurse into a directory that looks like a git
+	directory.  Otherwise it is shown as a directory.
+
+The result of the enumeration is left in these fields::
+
+`entries[]`::
+
+	An array of `struct dir_entry`, each element of which describes
+	a path.
+
+`nr`::
+
+	The number of members in `entries[]` array.
+
+`alloc`::
+
+	Internal use; keeps track of allocation of `entries[]` array.
+
+
+Calling sequence
+----------------
+
+Note: index may be looked at for .gitignore files that are CE_SKIP_WORKTREE
+marked. If you to exclude files, make sure you have loaded index first.
+
+* Prepare `struct dir_struct dir` and clear it with `memset(&dir, 0,
+  sizeof(dir))`.
+
+* Call `add_exclude()` to add single exclude pattern,
+  `add_excludes_from_file()` to add patterns from a file
+  (e.g. `.git/info/exclude`), and/or set `dir.exclude_per_dir`.  A
+  short-hand function `setup_standard_excludes()` can be used to set up
+  the standard set of exclude settings.
+
+* Set options described in the Data Structure section above.
+
+* Call `read_directory()`.
+
+* Use `dir.entries[]`.
+
+(JC)

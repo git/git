@@ -8,28 +8,46 @@ git-rev-parse - Pick out and massage parameters
 
 SYNOPSIS
 --------
-'git-rev-parse' [ --option ] <args>...
+[verse]
+'git rev-parse' [ --option ] <args>...
 
 DESCRIPTION
 -----------
 
-Many git Porcelainish commands take mixture of flags
+Many git porcelainish commands take mixture of flags
 (i.e. parameters that begin with a dash '-') and parameters
-meant for underlying `git-rev-list` command they use internally
-and flags and parameters for other commands they use as the
-downstream of `git-rev-list`.  This command is used to
+meant for the underlying 'git rev-list' command they use internally
+and flags and parameters for the other commands they use
+downstream of 'git rev-list'.  This command is used to
 distinguish between them.
 
 
 OPTIONS
 -------
+--parseopt::
+	Use 'git rev-parse' in option parsing mode (see PARSEOPT section below).
+
+--keep-dashdash::
+	Only meaningful in `--parseopt` mode. Tells the option parser to echo
+	out the first `--` met instead of skipping it.
+
+--stop-at-non-option::
+	Only meaningful in `--parseopt` mode.  Lets the option parser stop at
+	the first non-option argument.  This can be used to parse sub-commands
+	that take options themselves.
+
+--sq-quote::
+	Use 'git rev-parse' in shell quoting mode (see SQ-QUOTE
+	section below). In contrast to the `--sq` option below, this
+	mode does only quoting. Nothing else is done to command input.
+
 --revs-only::
 	Do not output flags and parameters not meant for
-	`git-rev-list` command.
+	'git rev-list' command.
 
 --no-revs::
 	Do not output flags and parameters meant for
-	`git-rev-list` command.
+	'git rev-list' command.
 
 --flags::
 	Do not output non-flag parameters.
@@ -45,13 +63,20 @@ OPTIONS
 	The parameter given must be usable as a single, valid
 	object name.  Otherwise barf and abort.
 
+-q::
+--quiet::
+	Only meaningful in `--verify` mode. Do not output an error
+	message if the first argument is not a valid object name;
+	instead exit with non-zero status silently.
+
 --sq::
 	Usually the output is made one line per flag and
 	parameter.  This option makes output a single line,
 	properly quoted for consumption by shell.  Useful when
 	you expect your parameter to contain whitespaces and
 	newlines (e.g. when using pickaxe `-S` with
-	`git-diff-\*`).
+	'git diff-{asterisk}'). In contrast to the `--sq-quote` option,
+	the command input is still interpreted as usual.
 
 --not::
 	When showing object names, prefix them with '{caret}' and
@@ -63,9 +88,43 @@ OPTIONS
 	possible '{caret}' prefix); this option makes them output in a
 	form as close to the original input as possible.
 
+--symbolic-full-name::
+	This is similar to \--symbolic, but it omits input that
+	are not refs (i.e. branch or tag names; or more
+	explicitly disambiguating "heads/master" form, when you
+	want to name the "master" branch when there is an
+	unfortunately named tag "master"), and show them as full
+	refnames (e.g. "refs/heads/master").
+
+--abbrev-ref[=(strict|loose)]::
+	A non-ambiguous short name of the objects name.
+	The option core.warnAmbiguousRefs is used to select the strict
+	abbreviation mode.
 
 --all::
-	Show all refs found in `$GIT_DIR/refs`.
+	Show all refs found in `refs/`.
+
+--branches[=pattern]::
+--tags[=pattern]::
+--remotes[=pattern]::
+	Show all branches, tags, or remote-tracking branches,
+	respectively (i.e., refs found in `refs/heads`,
+	`refs/tags`, or `refs/remotes`, respectively).
++
+If a `pattern` is given, only refs matching the given shell glob are
+shown.  If the pattern does not contain a globbing character (`?`,
+`{asterisk}`, or `[`), it is turned into a prefix match by
+appending `/{asterisk}`.
+
+--glob=pattern::
+	Show all refs matching the shell glob pattern `pattern`. If
+	the pattern does not start with `refs/`, this is automatically
+	prepended.  If the pattern does not contain a globbing
+	character (`?`, `{asterisk}`, or `[`), it is turned into a prefix
+	match by appending `/{asterisk}`.
+
+--show-toplevel::
+	Show the absolute path of the top-level directory.
 
 --show-prefix::
 	When the command is invoked from a subdirectory, show the
@@ -78,110 +137,178 @@ OPTIONS
 	directory (typically a sequence of "../", or an empty string).
 
 --git-dir::
-	Show `$GIT_DIR` if defined else show the path to the .git directory.
+	Show `$GIT_DIR` if defined. Otherwise show the path to
+	the .git directory, relative to the current directory.
++
+If `$GIT_DIR` is not defined and the current directory
+is not detected to lie in a git repository or work tree
+print a message to stderr and exit with nonzero status.
 
---short, --short=number::
+--is-inside-git-dir::
+	When the current working directory is below the repository
+	directory print "true", otherwise "false".
+
+--is-inside-work-tree::
+	When the current working directory is inside the work tree of the
+	repository print "true", otherwise "false".
+
+--is-bare-repository::
+	When the repository is bare print "true", otherwise "false".
+
+--local-env-vars::
+	List the GIT_* environment variables that are local to the
+	repository (e.g. GIT_DIR or GIT_WORK_TREE, but not GIT_EDITOR).
+	Only the names of the variables are listed, not their value,
+	even if they are set.
+
+--short::
+--short=number::
 	Instead of outputting the full SHA1 values of object names try to
-	abbriviate them to a shorter unique name. When no length is specified
+	abbreviate them to a shorter unique name. When no length is specified
 	7 is used. The minimum length is 4.
 
---since=datestring, --after=datestring::
-	Parses the date string, and outputs corresponding
-	--max-age= parameter for git-rev-list command.
+--since=datestring::
+--after=datestring::
+	Parse the date string, and output the corresponding
+	--max-age= parameter for 'git rev-list'.
 
---until=datestring, --before=datestring::
-	Parses the date string, and outputs corresponding
-	--min-age= parameter for git-rev-list command.
+--until=datestring::
+--before=datestring::
+	Parse the date string, and output the corresponding
+	--min-age= parameter for 'git rev-list'.
 
 <args>...::
 	Flags and parameters to be parsed.
 
 
-SPECIFYING REVISIONS
---------------------
+include::revisions.txt[]
 
-A revision parameter typically, but not necessarily, names a
-commit object.  They use what is called an 'extended SHA1'
-syntax.
+PARSEOPT
+--------
 
-* The full SHA1 object name (40-byte hexadecimal string), or
-  a substring of such that is unique within the repository.
-  E.g. dae86e1950b1277e545cee180551750029cfe735 and dae86e both
-  name the same commit object if there are no other object in
-  your repository whose object name starts with dae86e.
+In `--parseopt` mode, 'git rev-parse' helps massaging options to bring to shell
+scripts the same facilities C builtins have. It works as an option normalizer
+(e.g. splits single switches aggregate values), a bit like `getopt(1)` does.
 
-* A symbolic ref name.  E.g. 'master' typically means the commit
-  object referenced by $GIT_DIR/refs/heads/master.  If you
-  happen to have both heads/master and tags/master, you can
-  explicitly say 'heads/master' to tell git which one you mean.
+It takes on the standard input the specification of the options to parse and
+understand, and echoes on the standard output a string suitable for `sh(1)` `eval`
+to replace the arguments with normalized ones.  In case of error, it outputs
+usage on the standard error stream, and exits with code 129.
 
-* A suffix '{caret}' to a revision parameter means the first parent of
-  that commit object.  '{caret}<n>' means the <n>th parent (i.e.
-  'rev{caret}'
-  is equivalent to 'rev{caret}1').  As a special rule,
-  'rev{caret}0' means the commit itself and is used when 'rev' is the
-  object name of a tag object that refers to a commit object.
+Note: Make sure you quote the result when passing it to `eval`.  See
+below for an example.
 
-* A suffix '~<n>' to a revision parameter means the commit
-  object that is the <n>th generation grand-parent of the named
-  commit object, following only the first parent.  I.e. rev~3 is
-  equivalent to rev{caret}{caret}{caret} which is equivalent to\
-  rev{caret}1{caret}1{caret}1.
+Input Format
+~~~~~~~~~~~~
 
-* A suffix '{caret}' followed by an object type name enclosed in
-  brace pair (e.g. `v0.99.8{caret}\{commit\}`) means the object
-  could be a tag, and dereference the tag recursively until an
-  object of that type is found or the object cannot be
-  dereferenced anymore (in which case, barf).  `rev{caret}0`
-  introduced earlier is a short-hand for `rev{caret}\{commit\}`.
+'git rev-parse --parseopt' input format is fully text based. It has two parts,
+separated by a line that contains only `--`. The lines before the separator
+(should be more than one) are used for the usage.
+The lines after the separator describe the options.
 
-* A suffix '{caret}' followed by an empty brace pair
-  (e.g. `v0.99.8{caret}\{\}`) means the object could be a tag,
-  and dereference the tag recursively until a non-tag object is
-  found.
+Each line of options has this format:
 
-'git-rev-parse' also accepts a prefix '{caret}' to revision parameter,
-which is passed to 'git-rev-list'.  Two revision parameters
-concatenated with '..' is a short-hand for writing a range
-between them.  I.e. 'r1..r2' is equivalent to saying '{caret}r1 r2'
+------------
+<opt_spec><flags>* SP+ help LF
+------------
 
-Here is an illustration, by Jon Loeliger.  Both node B and C are
-a commit parents of commit node A.  Parent commits are ordered
-left-to-right.
+`<opt_spec>`::
+	its format is the short option character, then the long option name
+	separated by a comma. Both parts are not required, though at least one
+	is necessary. `h,help`, `dry-run` and `f` are all three correct
+	`<opt_spec>`.
 
-    G   H   I   J
-     \ /     \ /
-      D   E   F
-       \  |  /
-        \ | /
-         \|/
-          B     C
-           \   /
-            \ /
-             A
+`<flags>`::
+	`<flags>` are of `*`, `=`, `?` or `!`.
+	* Use `=` if the option takes an argument.
 
-    A =      = A^0
-    B = A^   = A^1     = A~1
-    C = A^2  = A^2
-    D = A^^  = A^1^1   = A~2
-    E = B^2  = A^^2
-    F = B^3  = A^^3
-    G = A^^^ = A^1^1^1 = A~3
-    H = D^2  = B^^2    = A^^^2  = A~2^2
-    I = F^   = B^3^    = A^^3^
-    J = F^2  = B^3^2   = A^^3^2
+	* Use `?` to mean that the option is optional (though its use is discouraged).
 
+	* Use `*` to mean that this option should not be listed in the usage
+	  generated for the `-h` argument. It's shown for `--help-all` as
+	  documented in linkgit:gitcli[7].
 
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org> and
-Junio C Hamano <junkio@cox.net>
+	* Use `!` to not make the corresponding negated long option available.
 
-Documentation
---------------
-Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
+The remainder of the line, after stripping the spaces, is used
+as the help associated to the option.
+
+Blank lines are ignored, and lines that don't match this specification are used
+as option group headers (start the line with a space to create such
+lines on purpose).
+
+Example
+~~~~~~~
+
+------------
+OPTS_SPEC="\
+some-command [options] <args>...
+
+some-command does foo and bar!
+--
+h,help    show the help
+
+foo       some nifty option --foo
+bar=      some cool option --bar with an argument
+
+  An option group Header
+C?        option C with an optional argument"
+
+eval "$(echo "$OPTS_SPEC" | git rev-parse --parseopt -- "$@" || echo exit $?)"
+------------
+
+SQ-QUOTE
+--------
+
+In `--sq-quote` mode, 'git rev-parse' echoes on the standard output a
+single line suitable for `sh(1)` `eval`. This line is made by
+normalizing the arguments following `--sq-quote`. Nothing other than
+quoting the arguments is done.
+
+If you want command input to still be interpreted as usual by
+'git rev-parse' before the output is shell quoted, see the `--sq`
+option.
+
+Example
+~~~~~~~
+
+------------
+$ cat >your-git-script.sh <<\EOF
+#!/bin/sh
+args=$(git rev-parse --sq-quote "$@")   # quote user-supplied arguments
+command="git frotz -n24 $args"          # and use it inside a handcrafted
+					# command line
+eval "$command"
+EOF
+
+$ sh your-git-script.sh "a b'c"
+------------
+
+EXAMPLES
+--------
+
+* Print the object name of the current commit:
++
+------------
+$ git rev-parse --verify HEAD
+------------
+
+* Print the commit object name from the revision in the $REV shell variable:
++
+------------
+$ git rev-parse --verify $REV
+------------
++
+This will error out if $REV is empty or not a valid revision.
+
+* Same as above:
++
+------------
+$ git rev-parse --default master --verify $REV
+------------
++
+but if $REV is empty, the commit object name from master will be printed.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
-
+Part of the linkgit:git[1] suite

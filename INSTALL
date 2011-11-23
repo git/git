@@ -5,80 +5,106 @@ Normally you can just do "make" followed by "make install", and that
 will install the git programs in your own ~/bin/ directory.  If you want
 to do a global install, you can do
 
-	$ make prefix=/usr all doc ;# as yourself
-	# make prefix=/usr install install-doc ;# as root
+	$ make prefix=/usr all doc info ;# as yourself
+	# make prefix=/usr install install-doc install-html install-info ;# as root
 
 (or prefix=/usr/local, of course).  Just like any program suite
 that uses $prefix, the built results have some paths encoded,
 which are derived from $prefix, so "make all; make prefix=/usr
 install" would not work.
 
+The beginning of the Makefile documents many variables that affect the way
+git is built.  You can override them either from the command line, or in a
+config.mak file.
+
+Alternatively you can use autoconf generated ./configure script to
+set up install paths (via config.mak.autogen), so you can write instead
+
+	$ make configure ;# as yourself
+	$ ./configure --prefix=/usr ;# as yourself
+	$ make all doc ;# as yourself
+	# make install install-doc install-html;# as root
+
+If you're willing to trade off (much) longer build time for a later
+faster git you can also do a profile feedback build with
+
+	$ make profile-all
+	# make prefix=... install
+
+This will run the complete test suite as training workload and then
+rebuild git with the generated profile feedback. This results in a git
+which is a few percent faster on CPU intensive workloads.  This
+may be a good tradeoff for distribution packagers.
+
+Note that the profile feedback build stage currently generates
+a lot of additional compiler warnings.
+
 Issues of note:
 
- - git normally installs a helper script wrapper called "git", which
-   conflicts with a similarly named "GNU interactive tools" program.
+ - Ancient versions of GNU Interactive Tools (pre-4.9.2) installed a
+   program "git", whose name conflicts with this program.  But with
+   version 4.9.2, after long hiatus without active maintenance (since
+   around 1997), it changed its name to gnuit and the name conflict is no
+   longer a problem.
 
-   Tough.  Either don't use the wrapper script, or delete the old GNU
-   interactive tools.  None of the core git stuff needs the wrapper,
-   it's just a convenient shorthand and while it is documented in some
-   places, you can always replace "git commit" with "git-commit"
-   instead. 
+   NOTE: When compiled with backward compatibility option, the GNU
+   Interactive Tools package still can install "git", but you can build it
+   with --disable-transition option to avoid this.
 
-   But let's face it, most of us don't have GNU interactive tools, and
-   even if we had it, we wouldn't know what it does.  I don't think it
-   has been actively developed since 1997, and people have moved over to
-   graphical file managers.
+ - You can use git after building but without installing if you want
+   to test drive it.  Simply run git found in bin-wrappers directory
+   in the build directory, or prepend that directory to your $PATH.
+   This however is less efficient than running an installed git, as
+   you always need an extra fork+exec to run any git subcommand.
+
+   It is still possible to use git without installing by setting a few
+   environment variables, which was the way this was done
+   traditionally.  But using git found in bin-wrappers directory in
+   the build directory is far simpler.  As a historical reference, the
+   old way went like this:
+
+	GIT_EXEC_PATH=`pwd`
+	PATH=`pwd`:$PATH
+	GITPERLLIB=`pwd`/perl/blib/lib
+	export GIT_EXEC_PATH PATH GITPERLLIB
 
  - Git is reasonably self-sufficient, but does depend on a few external
-   programs and libraries:
+   programs and libraries.  Git can be used without most of them by adding
+   the approriate "NO_<LIBRARY>=YesPlease" to the make command line or
+   config.mak file.
 
 	- "zlib", the compression library. Git won't build without it.
 
-	- "openssl".  The git-rev-list program uses bignum support from
-	  openssl, and unless you specify otherwise, you'll also get the
-	  SHA1 library from here.
+	- "ssh" is used to push and pull over the net.
 
-	  If you don't have openssl, you can use one of the SHA1 libraries
-	  that come with git (git includes the one from Mozilla, and has
-	  its own PowerPC and ARM optimized ones too - see the Makefile).
+	- A POSIX-compliant shell is required to run many scripts needed
+	  for everyday use (e.g. "bisect", "pull").
 
-	- "libcurl" and "curl" executable.  git-http-fetch and
-	  git-fetch use them.  If you do not use http
-	  transfer, you are probabaly OK if you do not have
-	  them.
+	- "Perl" version 5.8 or later is needed to use some of the
+	  features (e.g. preparing a partial commit using "git add -i/-p",
+	  interacting with svn repositories with "git svn").  If you can
+	  live without these, use NO_PERL.
 
-	- expat library; git-http-push uses it for remote lock
-	  management over DAV.  Similar to "curl" above, this is optional.
+	- "openssl" library is used by git-imap-send to use IMAP over SSL.
+	  If you don't need it, use NO_OPENSSL.
 
-	- "GNU diff" to generate patches.  Of course, you don't _have_ to
-	  generate patches if you don't want to, but let's face it, you'll
-	  be wanting to. Or why did you get git in the first place?
+	  By default, git uses OpenSSL for SHA1 but it will use it's own
+	  library (inspired by Mozilla's) with either NO_OPENSSL or
+	  BLK_SHA1.  Also included is a version optimized for PowerPC
+	  (PPC_SHA1).
 
-	  Non-GNU versions of the diff/patch programs don't generally support
-	  the unified patch format (which is the one git uses), so you
-	  really do want to get the GNU one.  Trust me, you will want to
-	  do that even if it wasn't for git.  There's no point in living
-	  in the dark ages any more. 
+	- "libcurl" library is used by git-http-fetch and git-fetch.  You
+	  might also want the "curl" executable for debugging purposes.
+	  If you do not use http:// or https:// repositories, you do not
+	  have to have them (use NO_CURL).
 
-	- "merge", the standard UNIX three-way merge program.  It usually
-	  comes with the "rcs" package on most Linux distributions, so if
-	  you have a developer install you probably have it already, but a
-	  "graphical user desktop" install might have left it out.
+	- "expat" library; git-http-push uses it for remote lock
+	  management over DAV.  Similar to "curl" above, this is optional
+	  (with NO_EXPAT).
 
-	  You'll only need the merge program if you do development using
-	  git, and if you only use git to track other peoples work you'll
-	  never notice the lack of it. 
-
-        - "wish", the TCL/Tk windowing shell is used in gitk to show the
-          history graphically
-
-	- "ssh" is used to push and pull over the net
-
-	- "perl" and POSIX-compliant shells are needed to use most of
-	  the barebone Porcelainish scripts.
-
-	- "python" 2.3 or more recent; if you have 2.3, you may need
-          to build with "make WITH_OWN_SUBPROCESS_PY=YesPlease".
+	- "wish", the Tcl/Tk windowing shell is used in gitk to show the
+	  history graphically, and in git-gui.  If you don't want gitk or
+	  git-gui, you can use NO_TCLTK.
 
  - Some platform specific issues are dealt with Makefile rules,
    but depending on your specific installation, you may not
@@ -89,26 +115,69 @@ Issues of note:
    will include them.  Note that config.mak is not distributed;
    the name is reserved for local settings.
 
- - To build and install documentation suite, you need to have the
-   asciidoc/xmlto toolchain.  Alternatively, pre-formatted
-   documentation are available in "html" and "man" branches of the git
-   repository itself.  For example, you could:
+ - To build and install documentation suite, you need to have
+   the asciidoc/xmlto toolchain.  Because not many people are
+   inclined to install the tools, the default build target
+   ("make all") does _not_ build them.
 
-	$ mkdir manual && cd manual
-	$ git init-db
-	$ git clone-pack git://git.kernel.org/pub/scm/git/git.git man html |
-	  while read a b
-	  do
-	    echo $a >.git/$b
-	  done
-	$ cp .git/refs/heads/man .git/refs/heads/master
-	$ git checkout
+   "make doc" builds documentation in man and html formats; there are
+   also "make man", "make html" and "make info". Note that "make html"
+   requires asciidoc, but not xmlto. "make man" (and thus make doc)
+   requires both.
 
-   to checkout the pre-built man pages.  Also in this repository:
+   "make install-doc" installs documentation in man format only; there
+   are also "make install-man", "make install-html" and "make
+   install-info".
 
-	$ git checkout html
+   Building and installing the info file additionally requires
+   makeinfo and docbook2X.  Version 0.8.3 is known to work.
 
-   would instead give you a copy of what you see at:
+   Building and installing the pdf file additionally requires
+   dblatex.  Version 0.2.7 with asciidoc >= 8.2.7 is known to work.
 
-	http://www.kernel.org/pub/software/scm/git/docs/
+   The documentation is written for AsciiDoc 7, but by default
+   uses some compatibility wrappers to work on AsciiDoc 8. If you have
+   AsciiDoc 7, try "make ASCIIDOC7=YesPlease".
 
+   There are also "make quick-install-doc", "make quick-install-man"
+   and "make quick-install-html" which install preformatted man pages
+   and html documentation. To use these build targets, you need to
+   clone two separate git-htmldocs and git-manpages repositories next
+   to the clone of git itself.
+
+   It has been reported that docbook-xsl version 1.72 and 1.73 are
+   buggy; 1.72 misformats manual pages for callouts, and 1.73 needs
+   the patch in contrib/patches/docbook-xsl-manpages-charmap.patch
+
+   Users attempting to build the documentation on Cygwin may need to ensure
+   that the /etc/xml/catalog file looks something like this:
+
+   <?xml version="1.0"?>
+   <!DOCTYPE catalog PUBLIC
+      "-//OASIS//DTD Entity Resolution XML Catalog V1.0//EN"
+      "http://www.oasis-open.org/committees/entity/release/1.0/catalog.dtd"
+   >
+   <catalog xmlns="urn:oasis:names:tc:entity:xmlns:xml:catalog">
+     <rewriteURI
+       uriStartString = "http://docbook.sourceforge.net/release/xsl/current"
+       rewritePrefix = "/usr/share/sgml/docbook/xsl-stylesheets"
+     />
+     <rewriteURI
+       uriStartString="http://www.oasis-open.org/docbook/xml/4.5"
+       rewritePrefix="/usr/share/sgml/docbook/xml-dtd-4.5"
+     />
+  </catalog>
+
+  This can be achieved with the following two xmlcatalog commands:
+
+  xmlcatalog --noout \
+     --add rewriteURI \
+        http://docbook.sourceforge.net/release/xsl/current \
+        /usr/share/sgml/docbook/xsl-stylesheets \
+     /etc/xml/catalog
+
+  xmlcatalog --noout \
+     --add rewriteURI \
+         http://www.oasis-open.org/docbook/xml/4.5/xsl/current \
+         /usr/share/sgml/docbook/xml-dtd-4.5 \
+     /etc/xml/catalog

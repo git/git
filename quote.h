@@ -1,8 +1,7 @@
 #ifndef QUOTE_H
 #define QUOTE_H
 
-#include <stddef.h>
-#include <stdio.h>
+struct strbuf;
 
 /* Help to copy the thing properly quoted for the shell safety.
  * any single quote is replaced with '\'', any exclamation point
@@ -28,8 +27,10 @@
  * excluding the final null regardless of the buffer size.
  */
 
-extern char *sq_quote(const char *src);
-extern size_t sq_quote_buf(char *dst, size_t n, const char *src);
+extern void sq_quote_print(FILE *stream, const char *src);
+
+extern void sq_quote_buf(struct strbuf *, const char *src);
+extern void sq_quote_argv(struct strbuf *, const char **argv, size_t maxlen);
 
 /* This unwraps what sq_quote() produces in place, but returns
  * NULL if the input does not look like what sq_quote would have
@@ -37,11 +38,39 @@ extern size_t sq_quote_buf(char *dst, size_t n, const char *src);
  */
 extern char *sq_dequote(char *);
 
-extern int quote_c_style(const char *name, char *outbuf, FILE *outfp,
-			 int nodq);
-extern char *unquote_c_style(const char *quoted, const char **endp);
+/*
+ * Same as the above, but can be used to unwrap many arguments in the
+ * same string separated by space. Like sq_quote, it works in place,
+ * modifying arg and appending pointers into it to argv.
+ */
+extern int sq_dequote_to_argv(char *arg, const char ***argv, int *nr, int *alloc);
 
-extern void write_name_quoted(const char *prefix, int prefix_len,
-			      const char *name, int quote, FILE *out);
+/*
+ * Same as above, but store the unquoted strings in an argv_array. We will
+ * still modify arg in place, but unlike sq_dequote_to_argv, the argv_array
+ * will duplicate and take ownership of the strings.
+ */
+struct argv_array;
+extern int sq_dequote_to_argv_array(char *arg, struct argv_array *);
+
+extern int unquote_c_style(struct strbuf *, const char *quoted, const char **endp);
+extern size_t quote_c_style(const char *name, struct strbuf *, FILE *, int no_dq);
+extern void quote_two_c_style(struct strbuf *, const char *, const char *, int);
+
+extern void write_name_quoted(const char *name, FILE *, int terminator);
+extern void write_name_quotedpfx(const char *pfx, size_t pfxlen,
+                                 const char *name, FILE *, int terminator);
+extern void write_name_quoted_relative(const char *name, size_t len,
+		const char *prefix, size_t prefix_len,
+		FILE *fp, int terminator);
+
+/* quote path as relative to the given prefix */
+extern char *quote_path_relative(const char *in, int len,
+			  struct strbuf *out, const char *prefix);
+
+/* quoting as a string literal for other languages */
+extern void perl_quote_print(FILE *stream, const char *src);
+extern void python_quote_print(FILE *stream, const char *src);
+extern void tcl_quote_print(FILE *stream, const char *src);
 
 #endif

@@ -1,0 +1,48 @@
+From nobody Mon Sep 17 00:00:00 2001
+From: =?US-ASCII?Q?Keith_Moore?= <moore@cs.utk.edu>
+To: =?ISO8859-1?Q?Keld_J=F8rn_Simonsen?= <keld@dkuug.dk>
+CC: =?ISO8859-1?Q?Andr=E9?= Pirard <PIRARD@vm1.ulg.ac.be>
+Subject: =?ISO8859-1?B?SWYgeW91IGNhbiByZWFkIHRoaXMgeW8=?=
+ =?ISO8859-2?B?dSB1bmRlcnN0YW5kIHRoZSBleGFtcGxlLg==?=
+
+From nobody Mon Sep 17 00:00:00 2001
+From: =?ISO8859-1?Q?Olle_J=E4rnefors?= <ojarnef@admin.kth.se>
+To: ietf-822@dimacs.rutgers.edu, ojarnef@admin.kth.se
+Subject: Time for ISO 10646?
+
+From nobody Mon Sep 17 00:00:00 2001
+To: Dave Crocker <dcrocker@mordor.stanford.edu>
+Cc: ietf-822@dimacs.rutgers.edu, paf@comsol.se
+From: =?ISO8859-1?Q?Patrik_F=E4ltstr=F6m?= <paf@nada.kth.se>
+Subject: Re: RFC-HDR care and feeding
+
+From nobody Mon Sep 17 00:00:00 2001
+From: Nathaniel Borenstein <nsb@thumper.bellcore.com>
+      (=?ISO8859-8?b?7eXs+SDv4SDp7Oj08A==?=)
+To: Greg Vaudreuil <gvaudre@NRI.Reston.VA.US>, Ned Freed
+   <ned@innosoft.com>, Keith Moore <moore@cs.utk.edu>
+Subject: Test of new header generator
+MIME-Version: 1.0
+Content-type: text/plain; charset=ISO8859-1
+
+From nobody Mon Sep 17 00:00:00 2001
+Subject: (=?ISO8859-1?Q?a?=)
+
+From nobody Mon Sep 17 00:00:00 2001
+Subject: (=?ISO8859-1?Q?a?= b)
+
+From nobody Mon Sep 17 00:00:00 2001
+Subject: (=?ISO8859-1?Q?a?= =?ISO8859-1?Q?b?=)
+
+From nobody Mon Sep 17 00:00:00 2001
+Subject: (=?ISO8859-1?Q?a?=  =?ISO8859-1?Q?b?=)
+
+From nobody Mon Sep 17 00:00:00 2001
+Subject: (=?ISO8859-1?Q?a?=
+    =?ISO8859-1?Q?b?=)
+
+From nobody Mon Sep 17 00:00:00 2001
+Subject: (=?ISO8859-1?Q?a_b?=)
+
+From nobody Mon Sep 17 00:00:00 2001
+Subject: (=?ISO8859-1?Q?a?= =?ISO8859-2?Q?_b?=)

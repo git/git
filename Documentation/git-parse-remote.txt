@@ -3,46 +3,21 @@ git-parse-remote(1)
 
 NAME
 ----
-git-parse-remote - Routines to help parsing $GIT_DIR/remotes/
+git-parse-remote - Routines to help parsing remote repository access parameters
 
 
 SYNOPSIS
 --------
-'. git-parse-remote'
+[verse]
+'. "$(git --exec-path)/git-parse-remote"'
 
 DESCRIPTION
 -----------
 This script is included in various scripts to supply
 routines to parse files under $GIT_DIR/remotes/ and
-$GIT_DIR/branches/.
-
-The primary entry points are:
-
-get_remote_refs_for_fetch::
-	Given the list of user-supplied `<repo> <refspec>...`,
-	return the list of refs to fetch after canonicalizing
-	them into `$GIT_DIR` relative paths
-	(e.g. `refs/heads/foo`).  When `<refspec>...` is empty
-	the returned list of refs consists of the defaults
-	for the given `<repo>`, if specified in
-	`$GIT_DIR/remotes/` or `$GIT_DIR/branches/`.
-
-get_remote_refs_for_push::
-	Given the list of user-supplied `<repo> <refspec>...`,
-	return the list of refs to push in a form suitable to be
-	fed to the `git-send-pack` command.  When `<refspec>...`
-	is empty the returned list of refs consists of the
-	defaults for the given `<repo>`, if specified in
-	`$GIT_DIR/remotes/`.
-
-Author
-------
-Written by Junio C Hamano.
-
-Documentation
---------------
-Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
+$GIT_DIR/branches/ and configuration variables that are related
+to fetching, pulling and pushing.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[1] suite

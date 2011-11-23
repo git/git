@@ -1,0 +1,58 @@
+GIT v1.5.0.3 Release Notes
+==========================
+
+Fixes since v1.5.0.2
+--------------------
+
+* Bugfixes
+
+  - 'git.el' honors the commit coding system from the configuration.
+
+  - 'blameview' in contrib/ correctly digs deeper when a line is
+    clicked.
+
+  - 'http-push' correctly makes sure the remote side has leading
+    path.  Earlier it started in the middle of the path, and
+    incorrectly.
+
+  - 'git-merge' did not exit with non-zero status when the
+    working tree was dirty and cannot fast forward.  It does
+    now.
+
+  - 'cvsexportcommit' does not lose yet-to-be-used message file.
+
+  - int-vs-size_t typefix when running combined diff on files
+    over 2GB long.
+
+  - 'git apply --whitespace=strip' should not touch unmodified
+    lines.
+
+  - 'git-mailinfo' choke when a logical header line was too long.
+
+  - 'git show A..B' did not error out.  Negative ref ("not A" in
+    this example) does not make sense for the purpose of the
+    command, so now it errors out.
+
+  - 'git fmt-merge-msg --file' without file parameter did not
+    correctly error out.
+
+  - 'git archimport' barfed upon encountering a commit without
+    summary.
+
+  - 'git index-pack' did not protect itself from getting a short
+    read out of pread(2).
+
+  - 'git http-push' had a few buffer overruns.
+
+  - Build dependency fixes to rebuild fetch.o when other headers
+    change.
+
+* Documentation updates
+
+  - user-manual updates.
+
+  - Options to 'git remote add' were described insufficiently.
+
+  - Configuration format.suffix was not documented.
+
+  - Other formatting and spelling fixes.

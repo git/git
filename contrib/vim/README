@@ -1,0 +1,32 @@
+Syntax highlighting for git commit messages, config files, etc. is
+included with the vim distribution as of vim 7.2, and should work
+automatically.
+
+If you have an older version of vim, you can get the latest syntax
+files from the vim project:
+
+  http://ftp.vim.org/pub/vim/runtime/syntax/git.vim
+  http://ftp.vim.org/pub/vim/runtime/syntax/gitcommit.vim
+  http://ftp.vim.org/pub/vim/runtime/syntax/gitconfig.vim
+  http://ftp.vim.org/pub/vim/runtime/syntax/gitrebase.vim
+  http://ftp.vim.org/pub/vim/runtime/syntax/gitsendemail.vim
+
+These files are also available via FTP at the same location.
+
+To install:
+
+  1. Copy these files to vim's syntax directory $HOME/.vim/syntax
+  2. To auto-detect the editing of various git-related filetypes:
+	$ cat >>$HOME/.vim/filetype.vim <<'EOF'
+	autocmd BufNewFile,BufRead *.git/COMMIT_EDITMSG    setf gitcommit
+	autocmd BufNewFile,BufRead *.git/config,.gitconfig setf gitconfig
+	autocmd BufNewFile,BufRead git-rebase-todo         setf gitrebase
+	autocmd BufNewFile,BufRead .msg.[0-9]*
+		\ if getline(1) =~ '^From.*# This line is ignored.$' |
+		\   setf gitsendemail |
+		\ endif
+	autocmd BufNewFile,BufRead *.git/**
+		\ if getline(1) =~ '^\x\{40\}\>\|^ref: ' |
+		\   setf git |
+		\ endif
+	EOF

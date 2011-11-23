@@ -8,16 +8,19 @@ git-show-branch - Show branches and their commits
 SYNOPSIS
 --------
 [verse]
-'git-show-branch' [--all] [--heads] [--tags] [--topo-order] [--current]
+'git show-branch' [-a|--all] [-r|--remotes] [--topo-order | --date-order]
+		[--current] [--color[=<when>] | --no-color] [--sparse]
 		[--more=<n> | --list | --independent | --merge-base]
-		[--no-name | --sha1-name] [<rev> | <glob>]...
+		[--no-name | --sha1-name] [--topics]
+		[(<rev> | <glob>)...]
+'git show-branch' (-g|--reflog)[=<n>[,<base>]] [--list] [<ref>]
 
 DESCRIPTION
 -----------
 
 Shows the commit ancestry graph starting from the commits named
-with <rev>s or <globs>s (or all refs under $GIT_DIR/refs/heads
-and/or $GIT_DIR/refs/tags) semi-visually.
+with <rev>s or <globs>s (or all refs under refs/heads
+and/or refs/tags) semi-visually.
 
 It cannot show more than 29 branches and commits at a time.
 
@@ -28,18 +31,22 @@ no <rev> nor <glob> is given on the command line.
 OPTIONS
 -------
 <rev>::
-	Arbitrary extended SHA1 expression (see `git-rev-parse`)
-	that typically names a branch HEAD or a tag.
+	Arbitrary extended SHA1 expression (see linkgit:gitrevisions[7])
+	that typically names a branch head or a tag.
 
 <glob>::
 	A glob pattern that matches branch or tag names under
-	$GIT_DIR/refs.  For example, if you have many topic
-	branches under $GIT_DIR/refs/heads/topic, giving
+	refs/.  For example, if you have many topic
+	branches under refs/heads/topic, giving
 	`topic/*` would show all of them.
 
---all --heads --tags::
-	Show all refs under $GIT_DIR/refs, $GIT_DIR/refs/heads,
-	and $GIT_DIR/refs/tags, respectively.
+-r::
+--remotes::
+	Show the remote-tracking branches.
+
+-a::
+--all::
+	Show both remote-tracking branches and local branches.
 
 --current::
 	With this option, the command includes the current
@@ -51,6 +58,16 @@ OPTIONS
         reverse chronological order.  This option makes them
         appear in topological order (i.e., descendant commits
         are shown before their parents).
+
+--date-order::
+	This option is similar to '--topo-order' in the sense that no
+	parent comes before all of its children, but otherwise commits
+	are ordered according to their commit date.
+
+--sparse::
+	By default, the output omits merges that are reachable
+	from only one tip being shown.  This option makes them
+	visible.
 
 --more=<n>::
 	Usually the command stops output upon showing the commit
@@ -64,9 +81,11 @@ OPTIONS
 	Synonym to `--more=-1`
 
 --merge-base::
-	Instead of showing the commit list, just act like the
-	'git-merge-base -a' command, except that it can accept
-	more than two heads.
+	Instead of showing the commit list, determine possible
+	merge bases for the specified commits. All merge bases
+	will be contained in all specified commits. This is
+	different from how linkgit:git-merge-base[1] handles
+	the case of three or more commits.
 
 --independent::
 	Among the <reference>s given, display only the ones that
@@ -80,6 +99,32 @@ OPTIONS
 	them from heads (e.g. "master~2" to mean the grandparent
 	of "master"), name them with the unique prefix of their
 	object names.
+
+--topics::
+	Shows only commits that are NOT on the first branch given.
+	This helps track topic branches by hiding any commit that
+	is already in the main line of development.  When given
+	"git show-branch --topics master topic1 topic2", this
+	will show the revisions given by "git rev-list {caret}master
+	topic1 topic2"
+
+-g::
+--reflog[=<n>[,<base>]] [<ref>]::
+	Shows <n> most recent ref-log entries for the given
+	ref.  If <base> is given, <n> entries going back from
+	that entry.  <base> can be specified as count or date.
+	When no explicit <ref> parameter is given, it defaults to the
+	current branch (or `HEAD` if it is detached).
+
+--color[=<when>]::
+	Color the status sign (one of these: `*` `!` `+` `-`) of each commit
+	corresponding to the branch it's in.
+	The value must be always (the default), never, or auto.
+
+--no-color::
+	Turn off colored output, even when the configuration file gives the
+	default to color output.
+	Same as `--color=never`.
 
 Note that --more, --list, --independent and --merge-base options
 are mutually exclusive.
@@ -122,16 +167,17 @@ $ git show-branch master fixes mhf
 ------------------------------------------------
 
 These three branches all forked from a common commit, [master],
-whose commit message is "Add 'git show-branch'.  "fixes" branch
-adds one commit 'Introduce "reset type"'.  "mhf" branch has many
-other commits.  The current branch is "master".
+whose commit message is "Add {apostrophe}git show-branch{apostrophe}".
+The "fixes" branch adds one commit "Introduce "reset type" flag to
+"git reset"". The "mhf" branch adds many other commits.
+The current branch is "master".
 
 
 EXAMPLE
 -------
 
 If you keep your primary branches immediately under
-`$GIT_DIR/refs/heads`, and topic branches in subdirectories of
+`refs/heads`, and topic branches in subdirectories of
 it, having the following in the configuration file may help:
 
 ------------
@@ -141,22 +187,18 @@ it, having the following in the configuration file may help:
 
 ------------
 
-With this,`git show-branch` without extra parameters would show
+With this, `git show-branch` without extra parameters would show
 only the primary branches.  In addition, if you happen to be on
 your topic branch, it is shown as well.
 
+------------
+$ git show-branch --reflog="10,1 hour ago" --list master
+------------
 
-
-Author
-------
-Written by Junio C Hamano <junkio@cox.net>
-
-
-Documentation
---------------
-Documentation by Junio C Hamano.
-
+shows 10 reflog entries going back from the tip as of 1 hour ago.
+Without `--list`, the output also shows how these tips are
+topologically related with each other.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
+Part of the linkgit:git[1] suite

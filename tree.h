@@ -5,24 +5,10 @@
 
 extern const char *tree_type;
 
-struct tree_entry_list {
-	struct tree_entry_list *next;
-	unsigned directory : 1;
-	unsigned executable : 1;
-	unsigned symlink : 1;
-	unsigned zeropad : 1;
-	unsigned int mode;
-	char *name;
-	union {
-		struct object *any;
-		struct tree *tree;
-		struct blob *blob;
-	} item;
-};
-
 struct tree {
 	struct object object;
-	struct tree_entry_list *entries;
+	void *buffer;
+	unsigned long size;
 };
 
 struct tree *lookup_tree(const unsigned char *sha1);
@@ -35,13 +21,13 @@ int parse_tree(struct tree *tree);
 struct tree *parse_tree_indirect(const unsigned char *sha1);
 
 #define READ_TREE_RECURSIVE 1
-typedef int (*read_tree_fn_t)(unsigned char *, const char *, int, const char *, unsigned int, int);
+typedef int (*read_tree_fn_t)(const unsigned char *, const char *, int, const char *, unsigned int, int, void *);
 
 extern int read_tree_recursive(struct tree *tree,
 			       const char *base, int baselen,
-			       int stage, const char **match,
-			       read_tree_fn_t fn);
+			       int stage, struct pathspec *pathspec,
+			       read_tree_fn_t fn, void *context);
 
-extern int read_tree(struct tree *tree, int stage, const char **paths);
+extern int read_tree(struct tree *tree, int stage, struct pathspec *pathspec);
 
 #endif /* TREE_H */

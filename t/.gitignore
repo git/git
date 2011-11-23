@@ -1,1 +1,3 @@
-trash
+/trash directory*
+/test-results
+/.prove

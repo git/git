@@ -45,60 +45,71 @@ static int should_break(struct diff_filespec *src,
 	 * The value we return is 1 if we want the pair to be broken,
 	 * or 0 if we do not.
 	 */
-	unsigned long delta_size, base_size, src_copied, literal_added;
-	int to_break = 0;
+	unsigned long delta_size, max_size;
+	unsigned long src_copied, literal_added, src_removed;
 
 	*merge_score_p = 0; /* assume no deletion --- "do not break"
 			     * is the default.
 			     */
 
-	if (!S_ISREG(src->mode) || !S_ISREG(dst->mode))
-		return 0; /* leave symlink rename alone */
+	if (S_ISREG(src->mode) != S_ISREG(dst->mode)) {
+		*merge_score_p = (int)MAX_SCORE;
+		return 1; /* even their types are different */
+	}
 
 	if (src->sha1_valid && dst->sha1_valid &&
-	    !memcmp(src->sha1, dst->sha1, 20))
+	    !hashcmp(src->sha1, dst->sha1))
 		return 0; /* they are the same */
 
 	if (diff_populate_filespec(src, 0) || diff_populate_filespec(dst, 0))
 		return 0; /* error but caught downstream */
 
-	base_size = ((src->size < dst->size) ? src->size : dst->size);
-	if (base_size < MINIMUM_BREAK_SIZE)
+	max_size = ((src->size > dst->size) ? src->size : dst->size);
+	if (max_size < MINIMUM_BREAK_SIZE)
 		return 0; /* we do not break too small filepair */
 
-	if (diffcore_count_changes(src->data, src->size,
-				   dst->data, dst->size,
+	if (diffcore_count_changes(src, dst,
+				   &src->cnt_data, &dst->cnt_data,
 				   0,
 				   &src_copied, &literal_added))
 		return 0;
+
+	/* sanity */
+	if (src->size < src_copied)
+		src_copied = src->size;
+	if (dst->size < literal_added + src_copied) {
+		if (src_copied < dst->size)
+			literal_added = dst->size - src_copied;
+		else
+			literal_added = 0;
+	}
+	src_removed = src->size - src_copied;
 
 	/* Compute merge-score, which is "how much is removed
 	 * from the source material".  The clean-up stage will
 	 * merge the surviving pair together if the score is
 	 * less than the minimum, after rename/copy runs.
 	 */
-	if (src->size <= src_copied)
-		; /* all copied, nothing removed */
-	else {
-		delta_size = src->size - src_copied;
-		*merge_score_p = delta_size * MAX_SCORE / src->size;
-	}
-	
+	*merge_score_p = (int)(src_removed * MAX_SCORE / src->size);
+	if (*merge_score_p > break_score)
+		return 1;
+
 	/* Extent of damage, which counts both inserts and
 	 * deletes.
 	 */
-	if (src->size + literal_added <= src_copied)
-		delta_size = 0; /* avoid wrapping around */
-	else
-		delta_size = (src->size - src_copied) + literal_added;
-	
-	/* We break if the edit exceeds the minimum.
-	 * i.e. (break_score / MAX_SCORE < delta_size / base_size)
-	 */
-	if (break_score * base_size < delta_size * MAX_SCORE)
-		to_break = 1;
+	delta_size = src_removed + literal_added;
+	if (delta_size * MAX_SCORE / max_size < break_score)
+		return 0;
 
-	return to_break;
+	/* If you removed a lot without adding new material, that is
+	 * not really a rewrite.
+	 */
+	if ((src->size * break_score < src_removed * MAX_SCORE) &&
+	    (literal_added * 20 < src_removed) &&
+	    (literal_added * 20 < src_copied))
+		return 0;
+
+	return 1;
 }
 
 void diffcore_break(int break_score)
@@ -151,18 +162,19 @@ void diffcore_break(int break_score)
 	if (!merge_score)
 		merge_score = DEFAULT_MERGE_SCORE;
 
-	outq.nr = outq.alloc = 0;
-	outq.queue = NULL;
+	DIFF_QUEUE_CLEAR(&outq);
 
 	for (i = 0; i < q->nr; i++) {
 		struct diff_filepair *p = q->queue[i];
 		int score;
 
-		/* We deal only with in-place edit of non directory.
+		/*
+		 * We deal only with in-place edit of blobs.
 		 * We do not break anything else.
 		 */
 		if (DIFF_FILE_VALID(p->one) && DIFF_FILE_VALID(p->two) &&
-		    !S_ISDIR(p->one->mode) && !S_ISDIR(p->two->mode) &&
+		    object_type(p->one->mode) == OBJ_BLOB &&
+		    object_type(p->two->mode) == OBJ_BLOB &&
 		    !strcmp(p->one->path, p->two->path)) {
 			if (should_break(p->one, p->two,
 					 break_score, &score)) {
@@ -191,12 +203,16 @@ void diffcore_break(int break_score)
 				dp->score = score;
 				dp->broken_pair = 1;
 
+				diff_free_filespec_blob(p->one);
+				diff_free_filespec_blob(p->two);
 				free(p); /* not diff_free_filepair(), we are
 					  * reusing one and two here.
 					  */
 				continue;
 			}
 		}
+		diff_free_filespec_data(p->one);
+		diff_free_filespec_data(p->two);
 		diff_q(&outq, p);
 	}
 	free(q->queue);
@@ -239,8 +255,7 @@ void diffcore_merge_broken(void)
 	struct diff_queue_struct outq;
 	int i, j;
 
-	outq.nr = outq.alloc = 0;
-	outq.queue = NULL;
+	DIFF_QUEUE_CLEAR(&outq);
 
 	for (i = 0; i < q->nr; i++) {
 		struct diff_filepair *p = q->queue[i];

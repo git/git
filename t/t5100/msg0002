@@ -1,0 +1,21 @@
+Here is a patch from A U Thor.  This addresses the issue raised in the
+message:
+
+From: Nit Picker <nit.picker@example.net>
+Subject: foo is too old
+Message-Id: <nitpicker.12121212@example.net>
+
+Hopefully this would fix the problem stated there.
+
+
+I have included an extra blank line above, but it does not have to be
+stripped away here, along with the               		   
+whitespaces at the end of the above line.  They are expected to be squashed
+when the message is made into a commit log by stripspace,
+Also, there are three blank lines after this paragraph,
+two truly blank and another full of spaces in between.
+
+            
+
+Hope this helps.
+

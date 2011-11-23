@@ -18,28 +18,58 @@ The easiest way to run tests is to say "make".  This runs all
 the tests.
 
     *** t0000-basic.sh ***
-    *   ok 1: .git/objects should be empty after git-init-db in an empty repo.
-    *   ok 2: .git/objects should have 256 subdirectories.
-    *   ok 3: git-update-index without --add should fail adding.
+    ok 1 - .git/objects should be empty after git init in an empty repo.
+    ok 2 - .git/objects should have 3 subdirectories.
+    ok 3 - success is reported like this
     ...
-    *   ok 23: no diff after checkout and git-update-index --refresh.
-    * passed all 23 test(s)
-    *** t0100-environment-names.sh ***
-    *   ok 1: using old names should issue warnings.
-    *   ok 2: using old names but having new names should not issue warnings.
-    ...
+    ok 43 - very long name in the index handled sanely
+    # fixed 1 known breakage(s)
+    # still have 1 known breakage(s)
+    # passed all remaining 42 test(s)
+    1..43
+    *** t0001-init.sh ***
+    ok 1 - plain
+    ok 2 - plain with GIT_WORK_TREE
+    ok 3 - plain bare
 
-Or you can run each test individually from command line, like
-this:
+Since the tests all output TAP (see http://testanything.org) they can
+be run with any TAP harness. Here's an example of parallel testing
+powered by a recent version of prove(1):
 
-    $ sh ./t3001-ls-files-killed.sh
-    *   ok 1: git-update-index --add to add various paths.
-    *   ok 2: git-ls-files -k to show killed files.
-    *   ok 3: validate git-ls-files -k output.
-    * passed all 3 test(s)
+    $ prove --timer --jobs 15 ./t[0-9]*.sh
+    [19:17:33] ./t0005-signals.sh ................................... ok       36 ms
+    [19:17:33] ./t0022-crlf-rename.sh ............................... ok       69 ms
+    [19:17:33] ./t0024-crlf-archive.sh .............................. ok      154 ms
+    [19:17:33] ./t0004-unwritable.sh ................................ ok      289 ms
+    [19:17:33] ./t0002-gitfile.sh ................................... ok      480 ms
+    ===(     102;0  25/?  6/?  5/?  16/?  1/?  4/?  2/?  1/?  3/?  1... )===
+
+prove and other harnesses come with a lot of useful options. The
+--state option in particular is very useful:
+
+    # Repeat until no more failures
+    $ prove -j 15 --state=failed,save ./t[0-9]*.sh
+
+You can give DEFAULT_TEST_TARGET=prove on the make command (or define it
+in config.mak) to cause "make test" to run tests under prove.
+GIT_PROVE_OPTS can be used to pass additional options, e.g.
+
+    $ make DEFAULT_TEST_TARGET=prove GIT_PROVE_OPTS='--timer --jobs 16' test
+
+You can also run each test individually from command line, like this:
+
+    $ sh ./t3010-ls-files-killed-modified.sh
+    ok 1 - git update-index --add to add various paths.
+    ok 2 - git ls-files -k to show killed files.
+    ok 3 - validate git ls-files -k output.
+    ok 4 - git ls-files -m to show modified files.
+    ok 5 - validate git ls-files -m output.
+    # passed all 5 test(s)
+    1..5
 
 You can pass --verbose (or -v), --debug (or -d), and --immediate
-(or -i) command line argument to the test.
+(or -i) command line argument to the test, or by setting GIT_TEST_OPTS
+appropriately before running "make".
 
 --verbose::
 	This makes the test more verbose.  Specifically, the
@@ -49,10 +79,96 @@ You can pass --verbose (or -v), --debug (or -d), and --immediate
 --debug::
 	This may help the person who is developing a new test.
 	It causes the command defined with test_debug to run.
+	The "trash" directory (used to store all temporary data
+	during testing) is not deleted even if there are no
+	failed tests so that you can inspect its contents after
+	the test finished.
 
 --immediate::
 	This causes the test to immediately exit upon the first
 	failed test.
+
+--long-tests::
+	This causes additional long-running tests to be run (where
+	available), for more exhaustive testing.
+
+--valgrind::
+	Execute all Git binaries with valgrind and exit with status
+	126 on errors (just like regular tests, this will only stop
+	the test script when running under -i).  Valgrind errors
+	go to stderr, so you might want to pass the -v option, too.
+
+	Since it makes no sense to run the tests with --valgrind and
+	not see any output, this option implies --verbose.  For
+	convenience, it also implies --tee.
+
+	Note that valgrind is run with the option --leak-check=no,
+	as the git process is short-lived and some errors are not
+	interesting. In order to run a single command under the same
+	conditions manually, you should set GIT_VALGRIND to point to
+	the 't/valgrind/' directory and use the commands under
+	't/valgrind/bin/'.
+
+--tee::
+	In addition to printing the test output to the terminal,
+	write it to files named 't/test-results/$TEST_NAME.out'.
+	As the names depend on the tests' file names, it is safe to
+	run the tests with this option in parallel.
+
+--with-dashes::
+	By default tests are run without dashed forms of
+	commands (like git-commit) in the PATH (it only uses
+	wrappers from ../bin-wrappers).  Use this option to include
+	the build directory (..) in the PATH, which contains all
+	the dashed forms of commands.  This option is currently
+	implied by other options like --valgrind and
+	GIT_TEST_INSTALLED.
+
+--root=<directory>::
+	Create "trash" directories used to store all temporary data during
+	testing under <directory>, instead of the t/ directory.
+	Using this option with a RAM-based filesystem (such as tmpfs)
+	can massively speed up the test suite.
+
+You can also set the GIT_TEST_INSTALLED environment variable to
+the bindir of an existing git installation to test that installation.
+You still need to have built this git sandbox, from which various
+test-* support programs, templates, and perl libraries are used.
+If your installed git is incomplete, it will silently test parts of
+your built version instead.
+
+When using GIT_TEST_INSTALLED, you can also set GIT_TEST_EXEC_PATH to
+override the location of the dashed-form subcommands (what
+GIT_EXEC_PATH would be used for during normal operation).
+GIT_TEST_EXEC_PATH defaults to `$GIT_TEST_INSTALLED/git --exec-path`.
+
+
+Skipping Tests
+--------------
+
+In some environments, certain tests have no way of succeeding
+due to platform limitation, such as lack of 'unzip' program, or
+filesystem that do not allow arbitrary sequence of non-NUL bytes
+as pathnames.
+
+You should be able to say something like
+
+    $ GIT_SKIP_TESTS=t9200.8 sh ./t9200-git-cvsexport-commit.sh
+
+and even:
+
+    $ GIT_SKIP_TESTS='t[0-4]??? t91?? t9200.8' make
+
+to omit such tests.  The value of the environment variable is a
+SP separated list of patterns that tells which tests to skip,
+and either can match the "t[0-9]{4}" part to skip the whole
+test, or t[0-9]{4} followed by ".$number" to say which
+particular test to skip.
+
+Note that some tests in the existing test suite rely on previous
+test item, so you cannot arbitrarily disable one and expect the
+remainder of test to check what the test originally was intended
+to check.
 
 
 Naming Tests
@@ -73,6 +189,9 @@ First digit tells the family:
 	4 - the diff commands
 	5 - the pull and exporting commands
 	6 - the revision tree commands (even e.g. merge-base)
+	7 - the porcelainish commands concerning the working tree
+	8 - the porcelainish commands concerning forensics
+	9 - the git tools
 
 Second digit tells the particular command we are testing.
 
@@ -82,7 +201,7 @@ we are testing.
 If you create files under t/ directory (i.e. here) that is not
 the top-level test script, never name the file to match the above
 pattern.  The Makefile here considers all such files as the
-top-level test script and tries to run all of them.  A care is
+top-level test script and tries to run all of them.  Care is
 especially needed if you are creating a common test library
 file, similar to test-lib.sh, because such a library file may
 not be suitable for standalone execution.
@@ -119,15 +238,130 @@ This test harness library does the following things:
  - If the script is invoked with command line argument --help
    (or -h), it shows the test_description and exits.
 
- - Creates an empty test directory with an empty .git/objects
-   database and chdir(2) into it.  This directory is 't/trash'
-   if you must know, but I do not think you care.
+ - Creates an empty test directory with an empty .git/objects database
+   and chdir(2) into it.  This directory is 't/trash
+   directory.$test_name_without_dotsh', with t/ subject to change by
+   the --root option documented above.
 
  - Defines standard test helper functions for your scripts to
    use.  These functions are designed to make all scripts behave
    consistently when command line arguments --verbose (or -v),
    --debug (or -d), and --immediate (or -i) is given.
 
+Do's, don'ts & things to keep in mind
+-------------------------------------
+
+Here are a few examples of things you probably should and shouldn't do
+when writing tests.
+
+Do:
+
+ - Put all code inside test_expect_success and other assertions.
+
+   Even code that isn't a test per se, but merely some setup code
+   should be inside a test assertion.
+
+ - Chain your test assertions
+
+   Write test code like this:
+
+	git merge foo &&
+	git push bar &&
+	test ...
+
+   Instead of:
+
+	git merge hla
+	git push gh
+	test ...
+
+   That way all of the commands in your tests will succeed or fail. If
+   you must ignore the return value of something, consider using a
+   helper function (e.g. use sane_unset instead of unset, in order
+   to avoid unportable return value for unsetting a variable that was
+   already unset), or prepending the command with test_might_fail or
+   test_must_fail.
+
+ - Check the test coverage for your tests. See the "Test coverage"
+   below.
+
+   Don't blindly follow test coverage metrics; if a new function you added
+   doesn't have any coverage, then you're probably doing something wrong,
+   but having 100% coverage doesn't necessarily mean that you tested
+   everything.
+
+   Tests that are likely to smoke out future regressions are better
+   than tests that just inflate the coverage metrics.
+
+ - When a test checks for an absolute path that a git command generated,
+   construct the expected value using $(pwd) rather than $PWD,
+   $TEST_DIRECTORY, or $TRASH_DIRECTORY. It makes a difference on
+   Windows, where the shell (MSYS bash) mangles absolute path names.
+   For details, see the commit message of 4114156ae9.
+
+Don't:
+
+ - exit() within a <script> part.
+
+   The harness will catch this as a programming error of the test.
+   Use test_done instead if you need to stop the tests early (see
+   "Skipping tests" below).
+
+ - Break the TAP output
+
+   The raw output from your test may be interpreted by a TAP harness. TAP
+   harnesses will ignore everything they don't know about, but don't step
+   on their toes in these areas:
+
+   - Don't print lines like "$x..$y" where $x and $y are integers.
+
+   - Don't print lines that begin with "ok" or "not ok".
+
+   TAP harnesses expect a line that begins with either "ok" and "not
+   ok" to signal a test passed or failed (and our harness already
+   produces such lines), so your script shouldn't emit such lines to
+   their output.
+
+   You can glean some further possible issues from the TAP grammar
+   (see http://search.cpan.org/perldoc?TAP::Parser::Grammar#TAP_Grammar)
+   but the best indication is to just run the tests with prove(1),
+   it'll complain if anything is amiss.
+
+Keep in mind:
+
+ - Inside <script> part, the standard output and standard error
+   streams are discarded, and the test harness only reports "ok" or
+   "not ok" to the end user running the tests. Under --verbose, they
+   are shown to help debugging the tests.
+
+
+Skipping tests
+--------------
+
+If you need to skip tests you should do so by using the three-arg form
+of the test_* functions (see the "Test harness library" section
+below), e.g.:
+
+    test_expect_success PERL 'I need Perl' "
+        '$PERL_PATH' -e 'hlagh() if unf_unf()'
+    "
+
+The advantage of skipping tests like this is that platforms that don't
+have the PERL and other optional dependencies get an indication of how
+many tests they're missing.
+
+If the test code is too hairy for that (i.e. does a lot of setup work
+outside test assertions) you can also skip all remaining tests by
+setting skip_all and immediately call test_done:
+
+	if ! test_have_prereq PERL
+	then
+	    skip_all='skipping perl interface tests, perl not available'
+	    test_done
+	fi
+
+The string you give to skip_all will be used as an explanation for why
+the test was skipped.
 
 End with test_done
 ------------------
@@ -143,9 +377,9 @@ Test harness library
 There are a handful helper functions defined in the test harness
 library for your script to use.
 
- - test_expect_success <message> <script>
+ - test_expect_success [<prereq>] <message> <script>
 
-   This takes two strings as parameter, and evaluates the
+   Usually takes two strings as parameters, and evaluates the
    <script>.  If it yields success, test is considered
    successful.  <message> should state what it is testing.
 
@@ -155,16 +389,30 @@ library for your script to use.
 	    'git-write-tree should be able to write an empty tree.' \
 	    'tree=$(git-write-tree)'
 
- - test_expect_failure <message> <script>
+   If you supply three parameters the first will be taken to be a
+   prerequisite; see the test_set_prereq and test_have_prereq
+   documentation below:
 
-   This is the opposite of test_expect_success.  If <script>
-   yields success, test is considered a failure.
+	test_expect_success TTY 'git --paginate rev-list uses a pager' \
+	    ' ... '
 
-   Example:
+   You can also supply a comma-separated list of prerequisites, in the
+   rare case where your test depends on more than one:
 
-	test_expect_failure \
-	    'git-update-index without --add should fail adding.' \
-	    'git-update-index should-be-empty'
+	test_expect_success PERL,PYTHON 'yo dawg' \
+	    ' test $(perl -E 'print eval "1 +" . qx[python -c "print 2"]') == "4" '
+
+ - test_expect_failure [<prereq>] <message> <script>
+
+   This is NOT the opposite of test_expect_success, but is used
+   to mark a test that demonstrates a known breakage.  Unlike
+   the usual test_expect_success tests, which say "ok" on
+   success and "FAIL" on failure, this will say "FIXED" on
+   success and "still broken" on failure.  Failures from these
+   tests won't cause -i (immediate) to stop.
+
+   Like test_expect_success this function can optionally use a three
+   argument invocation with a prerequisite as the first argument.
 
  - test_debug <script>
 
@@ -179,6 +427,171 @@ library for your script to use.
    is to summarize successes and failures in the test script and
    exit with an appropriate error code.
 
+ - test_tick
+
+   Make commit and tag names consistent by setting the author and
+   committer times to defined state.  Subsequent calls will
+   advance the times by a fixed amount.
+
+ - test_commit <message> [<filename> [<contents>]]
+
+   Creates a commit with the given message, committing the given
+   file with the given contents (default for both is to reuse the
+   message string), and adds a tag (again reusing the message
+   string as name).  Calls test_tick to make the SHA-1s
+   reproducible.
+
+ - test_merge <message> <commit-or-tag>
+
+   Merges the given rev using the given message.  Like test_commit,
+   creates a tag and calls test_tick before committing.
+
+ - test_set_prereq <prereq>
+
+   Set a test prerequisite to be used later with test_have_prereq. The
+   test-lib will set some prerequisites for you, see the
+   "Prerequisites" section below for a full list of these.
+
+   Others you can set yourself and use later with either
+   test_have_prereq directly, or the three argument invocation of
+   test_expect_success and test_expect_failure.
+
+ - test_have_prereq <prereq>
+
+   Check if we have a prerequisite previously set with
+   test_set_prereq. The most common use of this directly is to skip
+   all the tests if we don't have some essential prerequisite:
+
+	if ! test_have_prereq PERL
+	then
+	    skip_all='skipping perl interface tests, perl not available'
+	    test_done
+	fi
+
+ - test_external [<prereq>] <message> <external> <script>
+
+   Execute a <script> with an <external> interpreter (like perl). This
+   was added for tests like t9700-perl-git.sh which do most of their
+   work in an external test script.
+
+	test_external \
+	    'GitwebCache::*FileCache*' \
+	    "$PERL_PATH" "$TEST_DIRECTORY"/t9503/test_cache_interface.pl
+
+   If the test is outputting its own TAP you should set the
+   test_external_has_tap variable somewhere before calling the first
+   test_external* function. See t9700-perl-git.sh for an example.
+
+	# The external test will outputs its own plan
+	test_external_has_tap=1
+
+ - test_external_without_stderr [<prereq>] <message> <external> <script>
+
+   Like test_external but fail if there's any output on stderr,
+   instead of checking the exit code.
+
+	test_external_without_stderr \
+	    'Perl API' \
+	    "$PERL_PATH" "$TEST_DIRECTORY"/t9700/test.pl
+
+ - test_expect_code <exit-code> <command>
+
+   Run a command and ensure that it exits with the given exit code.
+   For example:
+
+	test_expect_success 'Merge with d/f conflicts' '
+		test_expect_code 1 git merge "merge msg" B master
+	'
+
+ - test_must_fail <git-command>
+
+   Run a git command and ensure it fails in a controlled way.  Use
+   this instead of "! <git-command>".  When git-command dies due to a
+   segfault, test_must_fail diagnoses it as an error; "! <git-command>"
+   treats it as just another expected failure, which would let such a
+   bug go unnoticed.
+
+ - test_might_fail <git-command>
+
+   Similar to test_must_fail, but tolerate success, too.  Use this
+   instead of "<git-command> || :" to catch failures due to segv.
+
+ - test_cmp <expected> <actual>
+
+   Check whether the content of the <actual> file matches the
+   <expected> file.  This behaves like "cmp" but produces more
+   helpful output when the test is run with "-v" option.
+
+ - test_line_count (= | -lt | -ge | ...) <length> <file>
+
+   Check whether a file has the length it is expected to.
+
+ - test_path_is_file <path> [<diagnosis>]
+   test_path_is_dir <path> [<diagnosis>]
+   test_path_is_missing <path> [<diagnosis>]
+
+   Check if the named path is a file, if the named path is a
+   directory, or if the named path does not exist, respectively,
+   and fail otherwise, showing the <diagnosis> text.
+
+ - test_when_finished <script>
+
+   Prepend <script> to a list of commands to run to clean up
+   at the end of the current test.  If some clean-up command
+   fails, the test will not pass.
+
+   Example:
+
+	test_expect_success 'branch pointing to non-commit' '
+		git rev-parse HEAD^{tree} >.git/refs/heads/invalid &&
+		test_when_finished "git update-ref -d refs/heads/invalid" &&
+		...
+	'
+
+Prerequisites
+-------------
+
+These are the prerequisites that the test library predefines with
+test_have_prereq.
+
+See the prereq argument to the test_* functions in the "Test harness
+library" section above and the "test_have_prereq" function for how to
+use these, and "test_set_prereq" for how to define your own.
+
+ - PERL & PYTHON
+
+   Git wasn't compiled with NO_PERL=YesPlease or
+   NO_PYTHON=YesPlease. Wrap any tests that need Perl or Python in
+   these.
+
+ - POSIXPERM
+
+   The filesystem supports POSIX style permission bits.
+
+ - BSLASHPSPEC
+
+   Backslashes in pathspec are not directory separators. This is not
+   set on Windows. See 6fd1106a for details.
+
+ - EXECKEEPSPID
+
+   The process retains the same pid across exec(2). See fb9a2bea for
+   details.
+
+ - SYMLINKS
+
+   The filesystem we're on supports symbolic links. E.g. a FAT
+   filesystem doesn't support these. See 704a3143 for details.
+
+ - SANITY
+
+   Test is not run by root user, and an attempt to write to an
+   unwritable file is expected to fail correctly.
+
+ - LIBPCRE
+
+   Git was compiled with USE_LIBPCRE=YesPlease. Wrap any tests
+   that use git-grep --perl-regexp or git-grep -P in these.
 
 Tips for Writing Tests
 ----------------------
@@ -206,3 +619,115 @@ the purpose of t0000-basic.sh, which is to isolate that level of
 validation in one place.  Your test also ends up needing
 updating when such a change to the internal happens, so do _not_
 do it and leave the low level of validation to t0000-basic.sh.
+
+Test coverage
+-------------
+
+You can use the coverage tests to find code paths that are not being
+used or properly exercised yet.
+
+To do that, run the coverage target at the top-level (not in the t/
+directory):
+
+    make coverage
+
+That'll compile Git with GCC's coverage arguments, and generate a test
+report with gcov after the tests finish. Running the coverage tests
+can take a while, since running the tests in parallel is incompatible
+with GCC's coverage mode.
+
+After the tests have run you can generate a list of untested
+functions:
+
+    make coverage-untested-functions
+
+You can also generate a detailed per-file HTML report using the
+Devel::Cover module. To install it do:
+
+   # On Debian or Ubuntu:
+   sudo aptitude install libdevel-cover-perl
+
+   # From the CPAN with cpanminus
+   curl -L http://cpanmin.us | perl - --sudo --self-upgrade
+   cpanm --sudo Devel::Cover
+
+Then, at the top-level:
+
+    make cover_db_html
+
+That'll generate a detailed cover report in the "cover_db_html"
+directory, which you can then copy to a webserver, or inspect locally
+in a browser.
+
+Smoke testing
+-------------
+
+The Git test suite has support for smoke testing. Smoke testing is
+when you submit the results of a test run to a central server for
+analysis and aggregation.
+
+Running a smoke tester is an easy and valuable way of contributing to
+Git development, particularly if you have access to an uncommon OS on
+obscure hardware.
+
+After building Git you can generate a smoke report like this in the
+"t" directory:
+
+    make clean smoke
+
+You can also pass arguments via the environment. This should make it
+faster:
+
+    GIT_TEST_OPTS='--root=/dev/shm' TEST_JOBS=10 make clean smoke
+
+The "smoke" target will run the Git test suite with Perl's
+"TAP::Harness" module, and package up the results in a .tar.gz archive
+with "TAP::Harness::Archive". The former is included with Perl v5.10.1
+or later, but you'll need to install the latter from the CPAN. See the
+"Test coverage" section above for how you might do that.
+
+Once the "smoke" target finishes you'll see a message like this:
+
+    TAP Archive created at <path to git>/t/test-results/git-smoke.tar.gz
+
+To upload the smoke report you need to have curl(1) installed, then
+do:
+
+    make smoke_report
+
+To upload the report anonymously. Hopefully that'll return something
+like "Reported #7 added.".
+
+If you're going to be uploading reports frequently please request a
+user account by E-Mailing gitsmoke@v.nix.is. Once you have a username
+and password you'll be able to do:
+
+    SMOKE_USERNAME=<username> SMOKE_PASSWORD=<password> make smoke_report
+
+You can also add an additional comment to attach to the report, and/or
+a comma separated list of tags:
+
+    SMOKE_USERNAME=<username> SMOKE_PASSWORD=<password> \
+        SMOKE_COMMENT=<comment> SMOKE_TAGS=<tags> \
+        make smoke_report
+
+Once the report is uploaded it'll be made available at
+http://smoke.git.nix.is, here's an overview of Recent Smoke Reports
+for Git:
+
+    http://smoke.git.nix.is/app/projects/smoke_reports/1
+
+The reports will also be mirrored to GitHub every few hours:
+
+    http://github.com/gitsmoke/smoke-reports
+
+The Smolder SQLite database is also mirrored and made available for
+download:
+
+    http://github.com/gitsmoke/smoke-database
+
+Note that the database includes hashed (with crypt()) user passwords
+and E-Mail addresses. Don't use a valuable password for the smoke
+service if you have an account, or an E-Mail address you don't want to
+be publicly known. The user accounts are just meant to be convenient
+labels, they're not meant to be secure.

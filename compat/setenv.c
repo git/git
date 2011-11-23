@@ -1,5 +1,4 @@
-#include <stdlib.h>
-#include <string.h>
+#include "../git-compat-util.h"
 
 int gitsetenv(const char *name, const char *value, int replace)
 {

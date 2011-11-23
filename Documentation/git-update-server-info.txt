@@ -8,7 +8,8 @@ git-update-server-info - Update auxiliary info file to help dumb servers
 
 SYNOPSIS
 --------
-'git-update-server-info' [--force]
+[verse]
+'git update-server-info' [--force]
 
 DESCRIPTION
 -----------
@@ -22,7 +23,8 @@ generates such auxiliary files.
 OPTIONS
 -------
 
--f|--force::
+-f::
+--force::
 	Update the info files from scratch.
 
 
@@ -30,29 +32,13 @@ OUTPUT
 ------
 
 Currently the command updates the following files.  Please see
-link:repository-layout.html[repository-layout] for description
-of what they are for:
+linkgit:gitrepository-layout[5] for description of
+what they are for:
 
 * objects/info/packs
 
 * info/refs
 
-
-BUGS
-----
-When you remove an existing ref, the command fails to update
-info/refs file unless `--force` flag is given.
-
-
-Author
-------
-Written by Junio C Hamano <junkio@cox.net>
-
-Documentation
---------------
-Documentation by Junio C Hamano.
-
 GIT
 ---
-Part of the gitlink:git[7] suite
-
+Part of the linkgit:git[1] suite

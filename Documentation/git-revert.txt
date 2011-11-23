@@ -3,55 +3,113 @@ git-revert(1)
 
 NAME
 ----
-git-revert - Revert an existing commit
+git-revert - Revert some existing commits
 
 SYNOPSIS
 --------
-'git-revert' [--edit | --no-edit] [-n] <commit>
+[verse]
+'git revert' [--edit | --no-edit] [-n] [-m parent-number] [-s] <commit>...
 
 DESCRIPTION
 -----------
-Given one existing commit, revert the change the patch introduces, and record a
-new commit that records it.  This requires your working tree to be clean (no
-modifications from the HEAD commit).
+
+Given one or more existing commits, revert the changes that the
+related patches introduce, and record some new commits that record
+them.  This requires your working tree to be clean (no modifications
+from the HEAD commit).
+
+Note: 'git revert' is used to record some new commits to reverse the
+effect of some earlier commits (often only a faulty one).  If you want to
+throw away all uncommitted changes in your working directory, you
+should see linkgit:git-reset[1], particularly the '--hard' option.  If
+you want to extract specific files as they were in another commit, you
+should see linkgit:git-checkout[1], specifically the `git checkout
+<commit> \-- <filename>` syntax.  Take care with these alternatives as
+both will discard uncommitted changes in your working directory.
 
 OPTIONS
 -------
-<commit>::
-	Commit to revert.
+<commit>...::
+	Commits to revert.
+	For a more complete list of ways to spell commit names, see
+	linkgit:gitrevisions[7].
+	Sets of commits can also be given but no traversal is done by
+	default, see linkgit:git-rev-list[1] and its '--no-walk'
+	option.
 
--e|--edit::
-	With this option, `git-revert` will let you edit the commit
-	message prior committing the revert. This is the default if
+-e::
+--edit::
+	With this option, 'git revert' will let you edit the commit
+	message prior to committing the revert. This is the default if
 	you run the command from a terminal.
 
+-m parent-number::
+--mainline parent-number::
+	Usually you cannot revert a merge because you do not know which
+	side of the merge should be considered the mainline.  This
+	option specifies the parent number (starting from 1) of
+	the mainline and allows revert to reverse the change
+	relative to the specified parent.
++
+Reverting a merge commit declares that you will never want the tree changes
+brought in by the merge.  As a result, later merges will only bring in tree
+changes introduced by commits that are not ancestors of the previously
+reverted merge.  This may or may not be what you want.
++
+See the link:howto/revert-a-faulty-merge.txt[revert-a-faulty-merge How-To] for
+more details.
+
 --no-edit::
-	With this option, `git-revert` will not start the commit
+	With this option, 'git revert' will not start the commit
 	message editor.
 
--n|--no-commit::
-	Usually the command automatically creates a commit with
-	a commit log message stating which commit was reverted.
-	This flag applies the change necessary to revert the
-	named commit to your working tree, but does not make the
-	commit.  In addition, when this option is used, your
-	working tree does not have to match the HEAD commit.
-	The revert is done against the beginning state of your
-	working tree.
+-n::
+--no-commit::
+	Usually the command automatically creates some commits with
+	commit log messages stating which commits were
+	reverted.  This flag applies the changes necessary
+	to revert the named commits to your working tree
+	and the index, but does not make the commits.  In addition,
+	when this option is used, your index does not have to match
+	the HEAD commit.  The revert is done against the
+	beginning state of your index.
 +
 This is useful when reverting more than one commits'
-effect to your working tree in a row.
+effect to your index in a row.
 
+-s::
+--signoff::
+	Add Signed-off-by line at the end of the commit message.
 
-Author
-------
-Written by Junio C Hamano <junkio@cox.net>
+--strategy=<strategy>::
+	Use the given merge strategy.  Should only be used once.
+	See the MERGE STRATEGIES section in linkgit:git-merge[1]
+	for details.
 
-Documentation
---------------
-Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
+-X<option>::
+--strategy-option=<option>::
+	Pass the merge strategy-specific option through to the
+	merge strategy.  See linkgit:git-merge[1] for details.
+
+EXAMPLES
+--------
+`git revert HEAD~3`::
+
+	Revert the changes specified by the fourth last commit in HEAD
+	and create a new commit with the reverted changes.
+
+`git revert -n master{tilde}5..master{tilde}2`::
+
+	Revert the changes done by commits from the fifth last commit
+	in master (included) to the third last commit in master
+	(included), but do not create any commit with the reverted
+	changes. The revert only modifies the working tree and the
+	index.
+
+SEE ALSO
+--------
+linkgit:git-cherry-pick[1]
 
 GIT
 ---
-Part of the gitlink:git[7] suite
-
+Part of the linkgit:git[1] suite

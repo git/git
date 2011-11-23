@@ -1,0 +1,6 @@
+$ git diff-tree --root -r --abbrev=4 initial
+444ac553ac7612cc88969031b02b3767fb8a353a
+:000000 100644 0000... 35d2... A	dir/sub
+:000000 100644 0000... 01e7... A	file0
+:000000 100644 0000... 01e7... A	file2
+$

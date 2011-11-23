@@ -3,20 +3,21 @@ git-ls-files(1)
 
 NAME
 ----
-git-ls-files - Information about files in the index/working directory
+git-ls-files - Show information about files in the index and the working tree
 
 
 SYNOPSIS
 --------
 [verse]
-'git-ls-files' [-z] [-t] [-v]
-		(--[cached|deleted|others|ignored|stage|unmerged|killed|modified])\*
-		(-[c|d|o|i|s|u|k|m])\*
+'git ls-files' [-z] [-t] [-v]
+		(--[cached|deleted|others|ignored|stage|unmerged|killed|modified])*
+		(-[c|d|o|i|s|u|k|m])*
 		[-x <pattern>|--exclude=<pattern>]
 		[-X <file>|--exclude-from=<file>]
-		[--exclude-per-directory=<file>] 
-		[--error-unmatch]
-		[--full-name] [--] [<file>]\*
+		[--exclude-per-directory=<file>]
+		[--exclude-standard]
+		[--error-unmatch] [--with-tree=<tree-ish>]
+		[--full-name] [--abbrev] [--] [<file>...]
 
 DESCRIPTION
 -----------
@@ -29,33 +30,46 @@ shown:
 
 OPTIONS
 -------
--c|--cached::
+-c::
+--cached::
 	Show cached files in the output (default)
 
--d|--deleted::
+-d::
+--deleted::
 	Show deleted files in the output
 
--m|--modified::
+-m::
+--modified::
 	Show modified files in the output
 
--o|--others::
-	Show other files in the output
+-o::
+--others::
+	Show other (i.e. untracked) files in the output
 
--i|--ignored::
-	Show ignored files in the output
-	Note the this also reverses any exclude list present.
+-i::
+--ignored::
+	Show only ignored files in the output. When showing files in the
+	index, print only those matched by an exclude pattern. When
+	showing "other" files, show only those matched by an exclude
+	pattern.
 
--s|--stage::
-	Show stage files in the output
+-s::
+--stage::
+	Show staged contents' object name, mode bits and stage number in the output.
 
 --directory::
 	If a whole directory is classified as "other", show just its
 	name (with a trailing slash) and not its whole contents.
 
--u|--unmerged::
+--no-empty-directory::
+	Do not list empty directories. Has no effect without --directory.
+
+-u::
+--unmerged::
 	Show unmerged files in the output (forces --stage)
 
--k|--killed::
+-k::
+--killed::
 	Show files on the filesystem that need to be removed due
 	to file/directory conflicts for checkout-index to
 	succeed.
@@ -63,25 +77,48 @@ OPTIONS
 -z::
 	\0 line termination on output.
 
--x|--exclude=<pattern>::
-	Skips files matching pattern.
-	Note that pattern is a shell wildcard pattern.
+-x <pattern>::
+--exclude=<pattern>::
+	Skip untracked files matching pattern.
+	Note that pattern is a shell wildcard pattern. See EXCLUDE PATTERNS
+	below for more information.
 
--X|--exclude-from=<file>::
-	exclude patterns are read from <file>; 1 per line.
+-X <file>::
+--exclude-from=<file>::
+	Read exclude patterns from <file>; 1 per line.
 
 --exclude-per-directory=<file>::
-	read additional exclude patterns that apply only to the
+	Read additional exclude patterns that apply only to the
 	directory and its subdirectories in <file>.
+
+--exclude-standard::
+	Add the standard git exclusions: .git/info/exclude, .gitignore
+	in each directory, and the user's global exclusion file.
 
 --error-unmatch::
 	If any <file> does not appear in the index, treat this as an
 	error (return 1).
 
+--with-tree=<tree-ish>::
+	When using --error-unmatch to expand the user supplied
+	<file> (i.e. path pattern) arguments to paths, pretend
+	that paths which were removed in the index since the
+	named <tree-ish> are still present.  Using this option
+	with `-s` or `-u` options does not make any sense.
+
 -t::
-	Identify the file status with the following tags (followed by
-	a space) at the start of each line:
+	This feature is semi-deprecated. For scripting purpose,
+	linkgit:git-status[1] `--porcelain` and
+	linkgit:git-diff-files[1] `--name-status` are almost always
+	superior alternatives, and users should look at
+	linkgit:git-status[1] `--short` or linkgit:git-diff[1]
+	`--name-status` for more user-friendly alternatives.
++
+This option identifies the file status with the following tags (followed by
+a space) at the start of each line:
+
 	H::	cached
+	S::	skip-worktree
 	M::	unmerged
 	R::	removed/deleted
 	C::	modified/changed
@@ -90,7 +127,8 @@ OPTIONS
 
 -v::
 	Similar to `-t`, but use lowercase letters for files
-	that are marked as 'always matching index'.
+	that are marked as 'assume unchanged' (see
+	linkgit:git-update-index[1]).
 
 --full-name::
 	When run from a subdirectory, the command usually
@@ -98,7 +136,18 @@ OPTIONS
 	option forces paths to be output relative to the project
 	top directory.
 
---::
+--abbrev[=<n>]::
+	Instead of showing the full 40-byte hexadecimal object
+	lines, show only a partial prefix.
+	Non default number of digits can be specified with --abbrev=<n>.
+
+--debug::
+	After each line that describes a file, add more data about its
+	cache entry.  This is intended to show as much information as
+	possible for manual inspection; the exact format may change at
+	any time.
+
+\--::
 	Do not interpret any more arguments as options.
 
 <file>::
@@ -107,19 +156,19 @@ OPTIONS
 
 Output
 ------
-show files just outputs the filename unless '--stage' is specified in
+'git ls-files' just outputs the filenames unless '--stage' is specified in
 which case it outputs:
 
         [<tag> ]<mode> <object> <stage> <file>
 
-"git-ls-files --unmerged" and "git-ls-files --stage" can be used to examine
+'git ls-files --unmerged' and 'git ls-files --stage' can be used to examine
 detailed information on unmerged paths.
 
 For an unmerged path, instead of recording a single mode/SHA1 pair,
-the dircache records up to three such pairs; one from tree O in stage
+the index records up to three such pairs; one from tree O in stage
 1, A in stage 2, and B in stage 3.  This information can be used by
 the user (or the porcelain) to see what should eventually be recorded at the
-path. (see git-read-tree for more information on state)
+path. (see linkgit:git-read-tree[1] for more information on state)
 
 When `-z` option is not used, TAB, LF, and backslash characters
 in pathnames are represented as `\t`, `\n`, and `\\`,
@@ -129,48 +178,26 @@ respectively.
 Exclude Patterns
 ----------------
 
-'git-ls-files' can use a list of "exclude patterns" when
+'git ls-files' can use a list of "exclude patterns" when
 traversing the directory tree and finding files to show when the
-flags --others or --ignored are specified.
+flags --others or --ignored are specified.  linkgit:gitignore[5]
+specifies the format of exclude patterns.
 
-These exclude patterns come from these places:
+These exclude patterns come from these places, in order:
 
-  1. command line flag --exclude=<pattern> specifies a single
-     pattern.
+  1. The command line flag --exclude=<pattern> specifies a
+     single pattern.  Patterns are ordered in the same order
+     they appear in the command line.
 
-  2. command line flag --exclude-from=<file> specifies a list of
-     patterns stored in a file.
+  2. The command line flag --exclude-from=<file> specifies a
+     file containing a list of patterns.  Patterns are ordered
+     in the same order they appear in the file.
 
-  3. command line flag --exclude-per-directory=<name> specifies
-     a name of the file in each directory 'git-ls-files'
-     examines, and if exists, its contents are used as an
-     additional list of patterns.
-
-An exclude pattern file used by (2) and (3) contains one pattern
-per line.  A line that starts with a '#' can be used as comment
-for readability.
-
-There are three lists of patterns that are in effect at a given
-time.  They are built and ordered in the following way:
-
- * --exclude=<pattern> from the command line; patterns are
-   ordered in the same order as they appear on the command line.
-
- * lines read from --exclude-from=<file>; patterns are ordered
-   in the same order as they appear in the file.
-
- * When --exclude-per-directory=<name> is specified, upon
-   entering a directory that has such a file, its contents are
-   appended at the end of the current "list of patterns".  They
-   are popped off when leaving the directory.
-
-Each pattern in the pattern list specifies "a match pattern" and
-optionally the fate; either a file that matches the pattern is
-considered excluded or included.  A filename is matched against
-the patterns in the three lists; the --exclude-from list is
-checked first, then the --exclude-per-directory list, and then
-finally the --exclude list. The last match determines its fate.
-If there is no match in the three lists, the fate is "included".
+  3. The command line flag --exclude-per-directory=<name> specifies
+     a name of the file in each directory 'git ls-files'
+     examines, normally `.gitignore`.  Files in deeper
+     directories take precedence.  Patterns are ordered in the
+     same order they appear in the files.
 
 A pattern specified on the command line with --exclude or read
 from the file specified with --exclude-from is relative to the
@@ -178,57 +205,10 @@ top of the directory tree.  A pattern read from a file specified
 by --exclude-per-directory is relative to the directory that the
 pattern file appears in.
 
-An exclude pattern is of the following format:
-
- - an optional prefix '!' which means that the fate this pattern
-   specifies is "include", not the usual "exclude"; the
-   remainder of the pattern string is interpreted according to
-   the following rules.
-
- - if it does not contain a slash '/', it is a shell glob
-   pattern and used to match against the filename without
-   leading directories (i.e. the same way as the current
-   implementation).
-
- - otherwise, it is a shell glob pattern, suitable for
-   consumption by fnmatch(3) with FNM_PATHNAME flag.  I.e. a
-   slash in the pattern must match a slash in the pathname.
-   "Documentation/\*.html" matches "Documentation/git.html" but
-   not "ppc/ppc.html".  As a natural exception, "/*.c" matches
-   "cat-file.c" but not "mozilla-sha1/sha1.c".
-
-An example:
-
---------------------------------------------------------------
-    $ cat .git/ignore
-    # ignore objects and archives, anywhere in the tree.
-    *.[oa]
-    $ cat Documentation/.gitignore
-    # ignore generated html files,
-    *.html
-    # except foo.html which is maintained by hand
-    !foo.html
-    $ git-ls-files --ignored \
-        --exclude='Documentation/*.[0-9]' \
-        --exclude-from=.git/ignore \
-        --exclude-per-directory=.gitignore
---------------------------------------------------------------
-
-
-See Also
+SEE ALSO
 --------
-gitlink:git-read-tree[1]
-
-
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org>
-
-Documentation
---------------
-Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
+linkgit:git-read-tree[1], linkgit:gitignore[5]
 
 GIT
 ---
-Part of the gitlink:git[7] suite
-
+Part of the linkgit:git[1] suite

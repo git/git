@@ -1,4 +1,4 @@
-From: Junio C Hamano <junkio@cox.net> and Carl Baldwin <cnb@fc.hp.com>
+From: Junio C Hamano <gitster@pobox.com> and Carl Baldwin <cnb@fc.hp.com>
 Subject: control access to branches.
 Date: Thu, 17 Nov 2005 23:55:32 -0800
 Message-ID: <7vfypumlu3.fsf@assigned-by-dhcp.cox.net>
@@ -65,10 +65,10 @@ function info {
 
 # Implement generic branch and tag policies.
 # - Tags should not be updated once created.
-# - Branches should only be fast-forwarded.
+# - Branches should only be fast-forwarded unless their pattern starts with '+'
 case "$1" in
   refs/tags/*)
-    [ -f "$GIT_DIR/$1" ] &&
+    git rev-parse --verify -q "$1" &&
     deny >/dev/null "You can't overwrite an existing tag"
     ;;
   refs/heads/*)
@@ -76,11 +76,11 @@ case "$1" in
     if expr "$2" : '0*$' >/dev/null; then
       info "The branch '$1' is new..."
     else
-      # updating -- make sure it is a fast forward
+      # updating -- make sure it is a fast-forward
       mb=$(git-merge-base "$2" "$3")
       case "$mb,$2" in
         "$2,$mb") info "Update is fast-forward" ;;
-        *)        deny >/dev/null  "This is not a fast-forward update." ;;
+	*)	  noff=y; info "This is not a fast-forward update.";;
       esac
     fi
     ;;
@@ -95,21 +95,30 @@ allowed_users_file=$GIT_DIR/info/allowed-users
 username=$(id -u -n)
 info "The user is: '$username'"
 
-if [ -f "$allowed_users_file" ]; then
+if test -f "$allowed_users_file"
+then
   rc=$(cat $allowed_users_file | grep -v '^#' | grep -v '^$' |
-    while read head_pattern user_patterns; do
-      matchlen=$(expr "$1" : "$head_pattern")
-      if [ "$matchlen" == "${#1}" ]; then
-        info "Found matching head pattern: '$head_pattern'"
-        for user_pattern in $user_patterns; do
-          info "Checking user: '$username' against pattern: '$user_pattern'"
-          matchlen=$(expr "$username" : "$user_pattern")
-          if [ "$matchlen" == "${#username}" ]; then
-            grant "Allowing user: '$username' with pattern: '$user_pattern'"
-          fi
-        done
-        deny "The user is not in the access list for this branch"
-      fi
+    while read heads user_patterns
+    do
+      # does this rule apply to us?
+      head_pattern=${heads#+}
+      matchlen=$(expr "$1" : "${head_pattern#+}")
+      test "$matchlen" = ${#1} || continue
+
+      # if non-ff, $heads must be with the '+' prefix
+      test -n "$noff" &&
+      test "$head_pattern" = "$heads" && continue
+
+      info "Found matching head pattern: '$head_pattern'"
+      for user_pattern in $user_patterns; do
+	info "Checking user: '$username' against pattern: '$user_pattern'"
+	matchlen=$(expr "$username" : "$user_pattern")
+	if test "$matchlen" = "${#username}"
+	then
+	  grant "Allowing user: '$username' with pattern: '$user_pattern'"
+	fi
+      done
+      deny "The user is not in the access list for this branch"
     done
   )
   case "$rc" in
@@ -124,23 +133,32 @@ groups=$(id -G -n)
 info "The user belongs to the following groups:"
 info "'$groups'"
 
-if [ -f "$allowed_groups_file" ]; then
+if test -f "$allowed_groups_file"
+then
   rc=$(cat $allowed_groups_file | grep -v '^#' | grep -v '^$' |
-    while read head_pattern group_patterns; do
-      matchlen=$(expr "$1" : "$head_pattern")
-      if [ "$matchlen" == "${#1}" ]; then
-        info "Found matching head pattern: '$head_pattern'"
-        for group_pattern in $group_patterns; do
-          for groupname in $groups; do
-            info "Checking group: '$groupname' against pattern: '$group_pattern'"
-            matchlen=$(expr "$groupname" : "$group_pattern")
-            if [ "$matchlen" == "${#groupname}" ]; then
-              grant "Allowing group: '$groupname' with pattern: '$group_pattern'"
-            fi
-          done
+    while read heads group_patterns
+    do
+      # does this rule apply to us?
+      head_pattern=${heads#+}
+      matchlen=$(expr "$1" : "${head_pattern#+}")
+      test "$matchlen" = ${#1} || continue
+
+      # if non-ff, $heads must be with the '+' prefix
+      test -n "$noff" &&
+      test "$head_pattern" = "$heads" && continue
+
+      info "Found matching head pattern: '$head_pattern'"
+      for group_pattern in $group_patterns; do
+	for groupname in $groups; do
+	  info "Checking group: '$groupname' against pattern: '$group_pattern'"
+	  matchlen=$(expr "$groupname" : "$group_pattern")
+	  if test "$matchlen" = "${#groupname}"
+	  then
+	    grant "Allowing group: '$groupname' with pattern: '$group_pattern'"
+	  fi
         done
-        deny "None of the user's groups are in the access list for this branch"
-      fi
+      done
+      deny "None of the user's groups are in the access list for this branch"
     done
   )
   case "$rc" in
@@ -158,15 +176,17 @@ This uses two files, $GIT_DIR/info/allowed-users and
 allowed-groups, to describe which heads can be pushed into by
 whom.  The format of each file would look like this:
 
-	refs/heads/master	junio
+        refs/heads/master	junio
+	+refs/heads/pu		junio
         refs/heads/cogito$	pasky
-	refs/heads/bw/		linus
-        refs/heads/tmp/		*
-        refs/tags/v[0-9]*	junio
+        refs/heads/bw/.*	linus
+        refs/heads/tmp/.*	.*
+        refs/tags/v[0-9].*	junio
 
 With this, Linus can push or create "bw/penguin" or "bw/zebra"
 or "bw/panda" branches, Pasky can do only "cogito", and JC can
-do master branch and make versioned tags.  And anybody can do
-tmp/blah branches.
+do master and pu branches and make versioned tags.  And anybody
+can do tmp/blah branches. The '+' sign at the pu record means
+that JC can make non-fast-forward pushes on it.
 
 ------------

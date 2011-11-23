@@ -1,0 +1,46 @@
+# Redefined by builtin tools
+can_merge () {
+	return 0
+}
+
+can_diff () {
+	return 0
+}
+
+diff_cmd () {
+	merge_tool_cmd="$(get_merge_tool_cmd "$1")"
+	if test -z "$merge_tool_cmd"
+	then
+		status=1
+		break
+	fi
+	( eval $merge_tool_cmd )
+	status=$?
+	return $status
+}
+
+merge_cmd () {
+	merge_tool_cmd="$(get_merge_tool_cmd "$1")"
+	if test -z "$merge_tool_cmd"
+	then
+		status=1
+		break
+	fi
+	trust_exit_code="$(git config --bool \
+		mergetool."$1".trustExitCode || echo false)"
+	if test "$trust_exit_code" = "false"
+	then
+		touch "$BACKUP"
+		( eval $merge_tool_cmd )
+		status=$?
+		check_unchanged
+	else
+		( eval $merge_tool_cmd )
+		status=$?
+	fi
+	return $status
+}
+
+translate_merge_tool_path () {
+	echo "$1"
+}

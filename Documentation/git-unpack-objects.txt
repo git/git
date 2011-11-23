@@ -8,35 +8,42 @@ git-unpack-objects - Unpack objects from a packed archive
 
 SYNOPSIS
 --------
-'git-unpack-objects' [-n] [-q] <pack-file
+[verse]
+'git unpack-objects' [-n] [-q] [-r] [--strict] <pack-file
 
 
 DESCRIPTION
 -----------
-Reads a packed archive (.pack) from the standard input, and
-expands the objects contained in the pack into "one-file
-one-object" format in $GIT_OBJECT_DIRECTORY.
+Read a packed archive (.pack) from the standard input, expanding
+the objects contained within and writing them into the repository in
+"loose" (one object per file) format.
+
+Objects that already exist in the repository will *not* be unpacked
+from the pack-file.  Therefore, nothing will be unpacked if you use
+this command on a pack-file that exists within the target repository.
+
+See linkgit:git-repack[1] for options to generate
+new packs and replace existing ones.
 
 OPTIONS
 -------
 -n::
-        Only list the objects that would be unpacked, don't actually unpack
-        them.
+        Dry run.  Check the pack file without actually unpacking
+	the objects.
 
 -q::
 	The command usually shows percentage progress.  This
 	flag suppresses it.
 
+-r::
+	When unpacking a corrupt packfile, the command dies at
+	the first corruption.  This flag tells it to keep going
+	and make the best effort to recover as many objects as
+	possible.
 
-Author
-------
-Written by Linus Torvalds <torvalds@osdl.org>
-
-Documentation
--------------
-Documentation by Junio C Hamano
+--strict::
+	Don't write objects with broken content or links.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
-
+Part of the linkgit:git[1] suite

@@ -3,12 +3,14 @@ git-hash-object(1)
 
 NAME
 ----
-git-hash-object - Computes object ID and optionally creates a blob from a file
+git-hash-object - Compute object ID and optionally creates a blob from a file
 
 
 SYNOPSIS
 --------
-'git-hash-object' [-t <type>] [-w] [--stdin] [--] <file>...
+[verse]
+'git hash-object' [-t <type>] [-w] [--path=<file>|--no-filters] [--stdin] [--] <file>...
+'git hash-object' [-t <type>] [-w] --stdin-paths [--no-filters] < <list-of-paths>
 
 DESCRIPTION
 -----------
@@ -16,9 +18,9 @@ Computes the object ID value for an object with specified type
 with the contents of the named file (which can be outside of the
 work tree), and optionally writes the resulting object into the
 object database.  Reports its object ID to its standard output.
-This is used by "git-cvsimport" to update the index
+This is used by 'git cvsimport' to update the index
 without modifying files in the work tree.  When <type> is not
-specified, it defaults to "blob". 
+specified, it defaults to "blob".
 
 OPTIONS
 -------
@@ -32,15 +34,25 @@ OPTIONS
 --stdin::
 	Read the object from standard input instead of from a file.
 
-Author
-------
-Written by Junio C Hamano <junkio@cox.net>
+--stdin-paths::
+	Read file names from stdin instead of from the command-line.
 
-Documentation
---------------
-Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
+--path::
+	Hash object as it were located at the given path. The location of
+	file does not directly influence on the hash value, but path is
+	used to determine what git filters should be applied to the object
+	before it can be placed to the object database, and, as result of
+	applying filters, the actual blob put into the object database may
+	differ from the given file. This option is mainly useful for hashing
+	temporary files located outside of the working directory or files
+	read from stdin.
+
+--no-filters::
+	Hash the contents as is, ignoring any input filter that would
+	have been chosen by the attributes mechanism, including the end-of-line
+	conversion. If the file is read from standard input then this
+	is always implied, unless the --path option is given.
 
 GIT
 ---
-Part of the gitlink:git[7] suite
-
+Part of the linkgit:git[1] suite

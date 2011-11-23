@@ -1,0 +1,8 @@
+Git v1.7.6.2 Release Notes
+==========================
+
+Fixes since v1.7.6.1
+--------------------
+
+ * v1.7.6.1 broke "git push --quiet"; it used to be a no-op against an old
+   version of Git running on the other end, but v1.7.6.1 made it abort.

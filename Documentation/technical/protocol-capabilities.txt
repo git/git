@@ -1,0 +1,187 @@
+Git Protocol Capabilities
+=========================
+
+Servers SHOULD support all capabilities defined in this document.
+
+On the very first line of the initial server response of either
+receive-pack and upload-pack the first reference is followed by
+a NUL byte and then a list of space delimited server capabilities.
+These allow the server to declare what it can and cannot support
+to the client.
+
+Client will then send a space separated list of capabilities it wants
+to be in effect. The client MUST NOT ask for capabilities the server
+did not say it supports.
+
+Server MUST diagnose and abort if capabilities it does not understand
+was sent.  Server MUST NOT ignore capabilities that client requested
+and server advertised.  As a consequence of these rules, server MUST
+NOT advertise capabilities it does not understand.
+
+The 'report-status' and 'delete-refs' capabilities are sent and
+recognized by the receive-pack (push to server) process.
+
+The 'ofs-delta' capability is sent and recognized by both upload-pack
+and receive-pack protocols.
+
+All other capabilities are only recognized by the upload-pack (fetch
+from server) process.
+
+multi_ack
+---------
+
+The 'multi_ack' capability allows the server to return "ACK obj-id
+continue" as soon as it finds a commit that it can use as a common
+base, between the client's wants and the client's have set.
+
+By sending this early, the server can potentially head off the client
+from walking any further down that particular branch of the client's
+repository history.  The client may still need to walk down other
+branches, sending have lines for those, until the server has a
+complete cut across the DAG, or the client has said "done".
+
+Without multi_ack, a client sends have lines in --date-order until
+the server has found a common base.  That means the client will send
+have lines that are already known by the server to be common, because
+they overlap in time with another branch that the server hasn't found
+a common base on yet.
+
+For example suppose the client has commits in caps that the server
+doesn't and the server has commits in lower case that the client
+doesn't, as in the following diagram:
+
+       +---- u ---------------------- x
+      /              +----- y
+     /              /
+    a -- b -- c -- d -- E -- F
+       \
+	+--- Q -- R -- S
+
+If the client wants x,y and starts out by saying have F,S, the server
+doesn't know what F,S is.  Eventually the client says "have d" and
+the server sends "ACK d continue" to let the client know to stop
+walking down that line (so don't send c-b-a), but it's not done yet,
+it needs a base for x. The client keeps going with S-R-Q, until a
+gets reached, at which point the server has a clear base and it all
+ends.
+
+Without multi_ack the client would have sent that c-b-a chain anyway,
+interleaved with S-R-Q.
+
+thin-pack
+---------
+
+This capability means that the server can send a 'thin' pack, a pack
+which does not contain base objects; if those base objects are available
+on client side. Client requests 'thin-pack' capability when it
+understands how to "thicken" it by adding required delta bases making
+it self-contained.
+
+Client MUST NOT request 'thin-pack' capability if it cannot turn a thin
+pack into a self-contained pack.
+
+
+side-band, side-band-64k
+------------------------
+
+This capability means that server can send, and client understand multiplexed
+progress reports and error info interleaved with the packfile itself.
+
+These two options are mutually exclusive. A modern client always
+favors 'side-band-64k'.
+
+Either mode indicates that the packfile data will be streamed broken
+up into packets of up to either 1000 bytes in the case of 'side_band',
+or 65520 bytes in the case of 'side_band_64k'. Each packet is made up
+of a leading 4-byte pkt-line length of how much data is in the packet,
+followed by a 1-byte stream code, followed by the actual data.
+
+The stream code can be one of:
+
+ 1 - pack data
+ 2 - progress messages
+ 3 - fatal error message just before stream aborts
+
+The "side-band-64k" capability came about as a way for newer clients
+that can handle much larger packets to request packets that are
+actually crammed nearly full, while maintaining backward compatibility
+for the older clients.
+
+Further, with side-band and its up to 1000-byte messages, it's actually
+999 bytes of payload and 1 byte for the stream code. With side-band-64k,
+same deal, you have up to 65519 bytes of data and 1 byte for the stream
+code.
+
+The client MUST send only maximum of one of "side-band" and "side-
+band-64k".  Server MUST diagnose it as an error if client requests
+both.
+
+ofs-delta
+---------
+
+Server can send, and client understand PACKv2 with delta referring to
+its base by position in pack rather than by an obj-id.  That is, they can
+send/read OBJ_OFS_DELTA (aka type 6) in a packfile.
+
+shallow
+-------
+
+This capability adds "deepen", "shallow" and "unshallow" commands to
+the  fetch-pack/upload-pack protocol so clients can request shallow
+clones.
+
+no-progress
+-----------
+
+The client was started with "git clone -q" or something, and doesn't
+want that side band 2.  Basically the client just says "I do not
+wish to receive stream 2 on sideband, so do not send it to me, and if
+you did, I will drop it on the floor anyway".  However, the sideband
+channel 3 is still used for error responses.
+
+include-tag
+-----------
+
+The 'include-tag' capability is about sending annotated tags if we are
+sending objects they point to.  If we pack an object to the client, and
+a tag object points exactly at that object, we pack the tag object too.
+In general this allows a client to get all new annotated tags when it
+fetches a branch, in a single network connection.
+
+Clients MAY always send include-tag, hardcoding it into a request when
+the server advertises this capability. The decision for a client to
+request include-tag only has to do with the client's desires for tag
+data, whether or not a server had advertised objects in the
+refs/tags/* namespace.
+
+Servers MUST pack the tags if their referrant is packed and the client
+has requested include-tags.
+
+Clients MUST be prepared for the case where a server has ignored
+include-tag and has not actually sent tags in the pack.  In such
+cases the client SHOULD issue a subsequent fetch to acquire the tags
+that include-tag would have otherwise given the client.
+
+The server SHOULD send include-tag, if it supports it, regardless
+of whether or not there are tags available.
+
+report-status
+-------------
+
+The upload-pack process can receive a 'report-status' capability,
+which tells it that the client wants a report of what happened after
+a packfile upload and reference update.  If the pushing client requests
+this capability, after unpacking and updating references the server
+will respond with whether the packfile unpacked successfully and if
+each reference was updated successfully.  If any of those were not
+successful, it will send back an error message.  See pack-protocol.txt
+for example messages.
+
+delete-refs
+-----------
+
+If the server sends back the 'delete-refs' capability, it means that
+it is capable of accepting a zero-id value as the target
+value of a reference update.  It is not sent back by the client, it
+simply informs the client that it can be sent zero-id values
+to delete references.

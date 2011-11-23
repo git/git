@@ -6,7 +6,7 @@
 #
 # Scan two git object-trees, and hardlink any common objects between them.
 
-use 5.006;
+use 5.008;
 use strict;
 use warnings;
 use Getopt::Long;
@@ -40,7 +40,7 @@ my $master_dir = pop @dirs;
 opendir(D,$master_dir . "objects/")
 	or die "Failed to open $master_dir/objects/ : $!";
 
-my @hashdirs = grep !/^\.{1,2}$/, readdir(D);
+my @hashdirs = grep { ($_ eq 'pack') || /^[0-9a-f]{2}$/ } readdir(D);
 
 foreach my $repo (@dirs) {
 	$linked = 0;
@@ -163,7 +163,7 @@ sub link_two_files($$) {
 
 
 sub usage() {
-	print("Usage: $0 [--safe] <dir> [<dir> ...] <master_dir> \n");
+	print("Usage: git relink [--safe] <dir>... <master_dir> \n");
 	print("All directories should contain a .git/objects/ subdirectory.\n");
 	print("Options\n");
 	print("\t--safe\t" .

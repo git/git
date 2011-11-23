@@ -1,5 +1,8 @@
 #include "cache.h"
 #include "quote.h"
+#include "argv-array.h"
+
+int quote_path_fully = 1;
 
 /* Help to copy the thing properly quoted for the shell safety.
  * any single quote is replaced with '\'', any exclamation point
@@ -12,52 +15,65 @@
  *  a'b      ==> a'\''b    ==> 'a'\''b'
  *  a!b      ==> a'\!'b    ==> 'a'\!'b'
  */
-#undef EMIT
-#define EMIT(x) ( (++len < n) && (*bp++ = (x)) )
-
 static inline int need_bs_quote(char c)
 {
 	return (c == '\'' || c == '!');
 }
 
-size_t sq_quote_buf(char *dst, size_t n, const char *src)
+void sq_quote_buf(struct strbuf *dst, const char *src)
 {
-	char c;
-	char *bp = dst;
-	size_t len = 0;
+	char *to_free = NULL;
 
-	EMIT('\'');
-	while ((c = *src++)) {
-		if (need_bs_quote(c)) {
-			EMIT('\'');
-			EMIT('\\');
-			EMIT(c);
-			EMIT('\'');
-		} else {
-			EMIT(c);
+	if (dst->buf == src)
+		to_free = strbuf_detach(dst, NULL);
+
+	strbuf_addch(dst, '\'');
+	while (*src) {
+		size_t len = strcspn(src, "'!");
+		strbuf_add(dst, src, len);
+		src += len;
+		while (need_bs_quote(*src)) {
+			strbuf_addstr(dst, "'\\");
+			strbuf_addch(dst, *src++);
+			strbuf_addch(dst, '\'');
 		}
 	}
-	EMIT('\'');
-
-	if ( n )
-		*bp = 0;
-
-	return len;
+	strbuf_addch(dst, '\'');
+	free(to_free);
 }
 
-char *sq_quote(const char *src)
+void sq_quote_print(FILE *stream, const char *src)
 {
-	char *buf;
-	size_t cnt;
+	char c;
 
-	cnt = sq_quote_buf(NULL, 0, src) + 1;
-	buf = xmalloc(cnt);
-	sq_quote_buf(buf, cnt, src);
-
-	return buf;
+	fputc('\'', stream);
+	while ((c = *src++)) {
+		if (need_bs_quote(c)) {
+			fputs("'\\", stream);
+			fputc(c, stream);
+			fputc('\'', stream);
+		} else {
+			fputc(c, stream);
+		}
+	}
+	fputc('\'', stream);
 }
 
-char *sq_dequote(char *arg)
+void sq_quote_argv(struct strbuf *dst, const char** argv, size_t maxlen)
+{
+	int i;
+
+	/* Copy into destination buffer. */
+	strbuf_grow(dst, 255);
+	for (i = 0; argv[i]; ++i) {
+		strbuf_addch(dst, ' ');
+		sq_quote_buf(dst, argv[i]);
+		if (maxlen && dst->len > maxlen)
+			die("Too many or long arguments");
+	}
+}
+
+static char *sq_dequote_step(char *arg, char **next)
 {
 	char *dst = arg;
 	char *src = arg;
@@ -77,6 +93,8 @@ char *sq_dequote(char *arg)
 		switch (*++src) {
 		case '\0':
 			*dst = 0;
+			if (next)
+				*next = NULL;
 			return arg;
 		case '\\':
 			c = *++src;
@@ -86,183 +104,431 @@ char *sq_dequote(char *arg)
 			}
 		/* Fallthrough */
 		default:
-			return NULL;
+			if (!next || !isspace(*src))
+				return NULL;
+			do {
+				c = *++src;
+			} while (isspace(c));
+			*dst = 0;
+			*next = src;
+			return arg;
 		}
 	}
+}
+
+char *sq_dequote(char *arg)
+{
+	return sq_dequote_step(arg, NULL);
+}
+
+static int sq_dequote_to_argv_internal(char *arg,
+				       const char ***argv, int *nr, int *alloc,
+				       struct argv_array *array)
+{
+	char *next = arg;
+
+	if (!*arg)
+		return 0;
+	do {
+		char *dequoted = sq_dequote_step(next, &next);
+		if (!dequoted)
+			return -1;
+		if (argv) {
+			ALLOC_GROW(*argv, *nr + 1, *alloc);
+			(*argv)[(*nr)++] = dequoted;
+		}
+		if (array)
+			argv_array_push(array, dequoted);
+	} while (next);
+
+	return 0;
+}
+
+int sq_dequote_to_argv(char *arg, const char ***argv, int *nr, int *alloc)
+{
+	return sq_dequote_to_argv_internal(arg, argv, nr, alloc, NULL);
+}
+
+int sq_dequote_to_argv_array(char *arg, struct argv_array *array)
+{
+	return sq_dequote_to_argv_internal(arg, NULL, NULL, NULL, array);
+}
+
+/* 1 means: quote as octal
+ * 0 means: quote as octal if (quote_path_fully)
+ * -1 means: never quote
+ * c: quote as "\\c"
+ */
+#define X8(x)   x, x, x, x, x, x, x, x
+#define X16(x)  X8(x), X8(x)
+static signed char const sq_lookup[256] = {
+	/*           0    1    2    3    4    5    6    7 */
+	/* 0x00 */   1,   1,   1,   1,   1,   1,   1, 'a',
+	/* 0x08 */ 'b', 't', 'n', 'v', 'f', 'r',   1,   1,
+	/* 0x10 */ X16(1),
+	/* 0x20 */  -1,  -1, '"',  -1,  -1,  -1,  -1,  -1,
+	/* 0x28 */ X16(-1), X16(-1), X16(-1),
+	/* 0x58 */  -1,  -1,  -1,  -1,'\\',  -1,  -1,  -1,
+	/* 0x60 */ X16(-1), X8(-1),
+	/* 0x78 */  -1,  -1,  -1,  -1,  -1,  -1,  -1,   1,
+	/* 0x80 */ /* set to 0 */
+};
+
+static inline int sq_must_quote(char c)
+{
+	return sq_lookup[(unsigned char)c] + quote_path_fully > 0;
+}
+
+/* returns the longest prefix not needing a quote up to maxlen if positive.
+   This stops at the first \0 because it's marked as a character needing an
+   escape */
+static size_t next_quote_pos(const char *s, ssize_t maxlen)
+{
+	size_t len;
+	if (maxlen < 0) {
+		for (len = 0; !sq_must_quote(s[len]); len++);
+	} else {
+		for (len = 0; len < maxlen && !sq_must_quote(s[len]); len++);
+	}
+	return len;
 }
 
 /*
  * C-style name quoting.
  *
- * Does one of three things:
+ * (1) if sb and fp are both NULL, inspect the input name and counts the
+ *     number of bytes that are needed to hold c_style quoted version of name,
+ *     counting the double quotes around it but not terminating NUL, and
+ *     returns it.
+ *     However, if name does not need c_style quoting, it returns 0.
  *
- * (1) if outbuf and outfp are both NULL, inspect the input name and
- *     counts the number of bytes that are needed to hold c_style
- *     quoted version of name, counting the double quotes around
- *     it but not terminating NUL, and returns it.  However, if name
- *     does not need c_style quoting, it returns 0.
- *
- * (2) if outbuf is not NULL, it must point at a buffer large enough
- *     to hold the c_style quoted version of name, enclosing double
- *     quotes, and terminating NUL.  Fills outbuf with c_style quoted
- *     version of name enclosed in double-quote pair.  Return value
- *     is undefined.
- *
- * (3) if outfp is not NULL, outputs c_style quoted version of name,
- *     but not enclosed in double-quote pair.  Return value is undefined.
+ * (2) if sb or fp are not NULL, it emits the c_style quoted version
+ *     of name, enclosed with double quotes if asked and needed only.
+ *     Return value is the same as in (1).
  */
-
-static int quote_c_style_counted(const char *name, int namelen,
-				 char *outbuf, FILE *outfp, int no_dq)
+static size_t quote_c_style_counted(const char *name, ssize_t maxlen,
+                                    struct strbuf *sb, FILE *fp, int no_dq)
 {
 #undef EMIT
-#define EMIT(c) \
-	(outbuf ? (*outbuf++ = (c)) : outfp ? fputc(c, outfp) : (count++))
+#define EMIT(c)                                 \
+	do {                                        \
+		if (sb) strbuf_addch(sb, (c));          \
+		if (fp) fputc((c), fp);                 \
+		count++;                                \
+	} while (0)
+#define EMITBUF(s, l)                           \
+	do {                                        \
+		if (sb) strbuf_add(sb, (s), (l));       \
+		if (fp) fwrite((s), (l), 1, fp);        \
+		count += (l);                           \
+	} while (0)
 
-#define EMITQ() EMIT('\\')
+	size_t len, count = 0;
+	const char *p = name;
 
-	const char *sp;
-	int ch, count = 0, needquote = 0;
+	for (;;) {
+		int ch;
 
-	if (!no_dq)
-		EMIT('"');
-	for (sp = name; sp < name + namelen; sp++) {
-		ch = *sp;
-		if (!ch)
+		len = next_quote_pos(p, maxlen);
+		if (len == maxlen || (maxlen < 0 && !p[len]))
 			break;
-		if ((ch < ' ') || (ch == '"') || (ch == '\\') ||
-		    (ch == 0177)) {
-			needquote = 1;
-			switch (ch) {
-			case '\a': EMITQ(); ch = 'a'; break;
-			case '\b': EMITQ(); ch = 'b'; break;
-			case '\f': EMITQ(); ch = 'f'; break;
-			case '\n': EMITQ(); ch = 'n'; break;
-			case '\r': EMITQ(); ch = 'r'; break;
-			case '\t': EMITQ(); ch = 't'; break;
-			case '\v': EMITQ(); ch = 'v'; break;
 
-			case '\\': /* fallthru */
-			case '"': EMITQ(); break;
-			case ' ':
-				break;
-			default:
-				/* octal */
-				EMITQ();
-				EMIT(((ch >> 6) & 03) + '0');
-				EMIT(((ch >> 3) & 07) + '0');
-				ch = (ch & 07) + '0';
-				break;
-			}
+		if (!no_dq && p == name)
+			EMIT('"');
+
+		EMITBUF(p, len);
+		EMIT('\\');
+		p += len;
+		ch = (unsigned char)*p++;
+		if (maxlen >= 0)
+			maxlen -= len + 1;
+		if (sq_lookup[ch] >= ' ') {
+			EMIT(sq_lookup[ch]);
+		} else {
+			EMIT(((ch >> 6) & 03) + '0');
+			EMIT(((ch >> 3) & 07) + '0');
+			EMIT(((ch >> 0) & 07) + '0');
 		}
-		EMIT(ch);
 	}
+
+	EMITBUF(p, len);
+	if (p == name)   /* no ending quote needed */
+		return 0;
+
 	if (!no_dq)
 		EMIT('"');
-	if (outbuf)
-		*outbuf = 0;
-
-	return needquote ? count : 0;
+	return count;
 }
 
-int quote_c_style(const char *name, char *outbuf, FILE *outfp, int no_dq)
+size_t quote_c_style(const char *name, struct strbuf *sb, FILE *fp, int nodq)
 {
-	int cnt = strlen(name);
-	return quote_c_style_counted(name, cnt, outbuf, outfp, no_dq);
+	return quote_c_style_counted(name, -1, sb, fp, nodq);
+}
+
+void quote_two_c_style(struct strbuf *sb, const char *prefix, const char *path, int nodq)
+{
+	if (quote_c_style(prefix, NULL, NULL, 0) ||
+	    quote_c_style(path, NULL, NULL, 0)) {
+		if (!nodq)
+			strbuf_addch(sb, '"');
+		quote_c_style(prefix, sb, NULL, 1);
+		quote_c_style(path, sb, NULL, 1);
+		if (!nodq)
+			strbuf_addch(sb, '"');
+	} else {
+		strbuf_addstr(sb, prefix);
+		strbuf_addstr(sb, path);
+	}
+}
+
+void write_name_quoted(const char *name, FILE *fp, int terminator)
+{
+	if (terminator) {
+		quote_c_style(name, NULL, fp, 0);
+	} else {
+		fputs(name, fp);
+	}
+	fputc(terminator, fp);
+}
+
+void write_name_quotedpfx(const char *pfx, size_t pfxlen,
+			  const char *name, FILE *fp, int terminator)
+{
+	int needquote = 0;
+
+	if (terminator) {
+		needquote = next_quote_pos(pfx, pfxlen) < pfxlen
+			|| name[next_quote_pos(name, -1)];
+	}
+	if (needquote) {
+		fputc('"', fp);
+		quote_c_style_counted(pfx, pfxlen, NULL, fp, 1);
+		quote_c_style(name, NULL, fp, 1);
+		fputc('"', fp);
+	} else {
+		fwrite(pfx, pfxlen, 1, fp);
+		fputs(name, fp);
+	}
+	fputc(terminator, fp);
+}
+
+static const char *path_relative(const char *in, int len,
+				 struct strbuf *sb, const char *prefix,
+				 int prefix_len);
+
+void write_name_quoted_relative(const char *name, size_t len,
+				const char *prefix, size_t prefix_len,
+				FILE *fp, int terminator)
+{
+	struct strbuf sb = STRBUF_INIT;
+
+	name = path_relative(name, len, &sb, prefix, prefix_len);
+	write_name_quoted(name, fp, terminator);
+
+	strbuf_release(&sb);
+}
+
+/*
+ * Give path as relative to prefix.
+ *
+ * The strbuf may or may not be used, so do not assume it contains the
+ * returned path.
+ */
+static const char *path_relative(const char *in, int len,
+				 struct strbuf *sb, const char *prefix,
+				 int prefix_len)
+{
+	int off, i;
+
+	if (len < 0)
+		len = strlen(in);
+	if (prefix_len < 0) {
+		if (prefix)
+			prefix_len = strlen(prefix);
+		else
+			prefix_len = 0;
+	}
+
+	off = 0;
+	i = 0;
+	while (i < prefix_len && i < len && prefix[i] == in[i]) {
+		if (prefix[i] == '/')
+			off = i + 1;
+		i++;
+	}
+	in += off;
+	len -= off;
+
+	if (i >= prefix_len)
+		return in;
+
+	strbuf_reset(sb);
+	strbuf_grow(sb, len);
+
+	while (i < prefix_len) {
+		if (prefix[i] == '/')
+			strbuf_addstr(sb, "../");
+		i++;
+	}
+	strbuf_add(sb, in, len);
+
+	return sb->buf;
+}
+
+/* quote path as relative to the given prefix */
+char *quote_path_relative(const char *in, int len,
+			  struct strbuf *out, const char *prefix)
+{
+	struct strbuf sb = STRBUF_INIT;
+	const char *rel = path_relative(in, len, &sb, prefix, -1);
+	strbuf_reset(out);
+	quote_c_style_counted(rel, strlen(rel), out, NULL, 0);
+	strbuf_release(&sb);
+
+	if (!out->len)
+		strbuf_addstr(out, "./");
+
+	return out->buf;
 }
 
 /*
  * C-style name unquoting.
  *
- * Quoted should point at the opening double quote.  Returns
- * an allocated memory that holds unquoted name, which the caller
- * should free when done.  Updates endp pointer to point at
- * one past the ending double quote if given.
+ * Quoted should point at the opening double quote.
+ * + Returns 0 if it was able to unquote the string properly, and appends the
+ *   result in the strbuf `sb'.
+ * + Returns -1 in case of error, and doesn't touch the strbuf. Though note
+ *   that this function will allocate memory in the strbuf, so calling
+ *   strbuf_release is mandatory whichever result unquote_c_style returns.
+ *
+ * Updates endp pointer to point at one past the ending double quote if given.
  */
-
-char *unquote_c_style(const char *quoted, const char **endp)
+int unquote_c_style(struct strbuf *sb, const char *quoted, const char **endp)
 {
-	const char *sp;
-	char *name = NULL, *outp = NULL;
-	int count = 0, ch, ac;
-
-#undef EMIT
-#define EMIT(c) (outp ? (*outp++ = (c)) : (count++))
+	size_t oldlen = sb->len, len;
+	int ch, ac;
 
 	if (*quoted++ != '"')
-		return NULL;
+		return -1;
 
-	while (1) {
-		/* first pass counts and allocates, second pass fills */
-		for (sp = quoted; (ch = *sp++) != '"'; ) {
-			if (ch == '\\') {
-				switch (ch = *sp++) {
-				case 'a': ch = '\a'; break;
-				case 'b': ch = '\b'; break;
-				case 'f': ch = '\f'; break;
-				case 'n': ch = '\n'; break;
-				case 'r': ch = '\r'; break;
-				case 't': ch = '\t'; break;
-				case 'v': ch = '\v'; break;
+	for (;;) {
+		len = strcspn(quoted, "\"\\");
+		strbuf_add(sb, quoted, len);
+		quoted += len;
 
-				case '\\': case '"':
-					break; /* verbatim */
+		switch (*quoted++) {
+		  case '"':
+			if (endp)
+				*endp = quoted;
+			return 0;
+		  case '\\':
+			break;
+		  default:
+			goto error;
+		}
 
-				case '0'...'7':
-					/* octal */
+		switch ((ch = *quoted++)) {
+		case 'a': ch = '\a'; break;
+		case 'b': ch = '\b'; break;
+		case 'f': ch = '\f'; break;
+		case 'n': ch = '\n'; break;
+		case 'r': ch = '\r'; break;
+		case 't': ch = '\t'; break;
+		case 'v': ch = '\v'; break;
+
+		case '\\': case '"':
+			break; /* verbatim */
+
+		/* octal values with first digit over 4 overflow */
+		case '0': case '1': case '2': case '3':
 					ac = ((ch - '0') << 6);
-					if ((ch = *sp++) < '0' || '7' < ch)
-						return NULL;
+			if ((ch = *quoted++) < '0' || '7' < ch)
+				goto error;
 					ac |= ((ch - '0') << 3);
-					if ((ch = *sp++) < '0' || '7' < ch)
-						return NULL;
+			if ((ch = *quoted++) < '0' || '7' < ch)
+				goto error;
 					ac |= (ch - '0');
 					ch = ac;
 					break;
 				default:
-					return NULL; /* malformed */
-				}
+			goto error;
 			}
-			EMIT(ch);
+		strbuf_addch(sb, ch);
 		}
 
-		if (name) {
-			*outp = 0;
-			if (endp)
-				*endp = sp;
-			return name;
-		}
-		outp = name = xmalloc(count + 1);
-	}
+  error:
+	strbuf_setlen(sb, oldlen);
+	return -1;
 }
 
-void write_name_quoted(const char *prefix, int prefix_len,
-		       const char *name, int quote, FILE *out)
+/* quoting as a string literal for other languages */
+
+void perl_quote_print(FILE *stream, const char *src)
 {
-	int needquote;
+	const char sq = '\'';
+	const char bq = '\\';
+	char c;
 
-	if (!quote) {
-	no_quote:
-		if (prefix_len)
-			fprintf(out, "%.*s", prefix_len, prefix);
-		fputs(name, out);
-		return;
+	fputc(sq, stream);
+	while ((c = *src++)) {
+		if (c == sq || c == bq)
+			fputc(bq, stream);
+		fputc(c, stream);
 	}
+	fputc(sq, stream);
+}
 
-	needquote = 0;
-	if (prefix_len)
-		needquote = quote_c_style_counted(prefix, prefix_len,
-						  NULL, NULL, 0);
-	if (!needquote)
-		needquote = quote_c_style(name, NULL, NULL, 0);
-	if (needquote) {
-		fputc('"', out);
-		if (prefix_len)
-			quote_c_style_counted(prefix, prefix_len,
-					      NULL, out, 1);
-		quote_c_style(name, NULL, out, 1);
-		fputc('"', out);
+void python_quote_print(FILE *stream, const char *src)
+{
+	const char sq = '\'';
+	const char bq = '\\';
+	const char nl = '\n';
+	char c;
+
+	fputc(sq, stream);
+	while ((c = *src++)) {
+		if (c == nl) {
+			fputc(bq, stream);
+			fputc('n', stream);
+			continue;
+		}
+		if (c == sq || c == bq)
+			fputc(bq, stream);
+		fputc(c, stream);
 	}
-	else
-		goto no_quote;
+	fputc(sq, stream);
+}
+
+void tcl_quote_print(FILE *stream, const char *src)
+{
+	char c;
+
+	fputc('"', stream);
+	while ((c = *src++)) {
+		switch (c) {
+		case '[': case ']':
+		case '{': case '}':
+		case '$': case '\\': case '"':
+			fputc('\\', stream);
+		default:
+			fputc(c, stream);
+			break;
+		case '\f':
+			fputs("\\f", stream);
+			break;
+		case '\r':
+			fputs("\\r", stream);
+			break;
+		case '\n':
+			fputs("\\n", stream);
+			break;
+		case '\t':
+			fputs("\\t", stream);
+			break;
+		case '\v':
+			fputs("\\v", stream);
+			break;
+		}
+	}
+	fputc('"', stream);
 }
