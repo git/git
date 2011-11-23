@@ -931,8 +931,10 @@ static int sequencer_rollback(struct replay_opts *opts)
 	if (strbuf_getline(&buf, f, '\n')) {
 		error(_("cannot read %s: %s"), filename, ferror(f) ?
 			strerror(errno) : _("unexpected end of file"));
+		fclose(f);
 		goto fail;
 	}
+	fclose(f);
 	if (get_sha1_hex(buf.buf, sha1) || buf.buf[40] != '\0') {
 		error(_("stored pre-cherry-pick HEAD file '%s' is corrupt"),
 			filename);
@@ -941,11 +943,9 @@ static int sequencer_rollback(struct replay_opts *opts)
 	if (reset_for_rollback(sha1))
 		goto fail;
 	strbuf_release(&buf);
-	fclose(f);
 	return 0;
 fail:
 	strbuf_release(&buf);
-	fclose(f);
 	return -1;
 }
 
