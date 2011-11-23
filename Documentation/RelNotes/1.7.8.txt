@@ -29,7 +29,7 @@ Updates since v1.7.7
    files from the index, not from the working tree.
 
  * Variants of "git cherry-pick" and "git revert" that take multiple
-   commits learned to "--continue".
+   commits learned to "--continue" and "--abort".
 
  * "git daemon" gives more human readble error messages to clients
    using ERR packets when appropriate.
