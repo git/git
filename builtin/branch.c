@@ -705,7 +705,7 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 	argc = parse_options(argc, argv, prefix, options, builtin_branch_usage,
 			     0);
 
-	if (!delete && !rename && !force_create && argc == 0)
+	if (!delete && !rename && argc == 0)
 		list = 1;
 
 	if (!!delete + !!rename + !!force_create + !!list > 1)
@@ -726,7 +726,7 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 			rename_branch(argv[0], argv[1], rename > 1);
 		else
 			usage_with_options(builtin_branch_usage, options);
-	} else if (argc <= 2) {
+	} else if (argc > 0 && argc <= 2) {
 		if (kinds != REF_LOCAL_BRANCH)
 			die(_("-a and -r options to 'git branch' do not make sense with a branch name"));
 		create_branch(head, argv[0], (argc == 2) ? argv[1] : head,
