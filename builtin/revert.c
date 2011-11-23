@@ -942,6 +942,7 @@ static int sequencer_rollback(struct replay_opts *opts)
 	}
 	if (reset_for_rollback(sha1))
 		goto fail;
+	remove_sequencer_state(1);
 	strbuf_release(&buf);
 	return 0;
 fail:
