@@ -2,6 +2,7 @@
 
 test_description='Test cherry-pick continuation features
 
+  + yetanotherpick: rewrites foo to e
   + anotherpick: rewrites foo to d
   + picked: rewrites foo to c
   + unrelatedpick: rewrites unrelated to reallyunrelated
@@ -13,10 +14,16 @@ test_description='Test cherry-pick continuation features
 . ./test-lib.sh
 
 pristine_detach () {
-	git cherry-pick --reset &&
+	git cherry-pick --quit &&
 	git checkout -f "$1^0" &&
 	git read-tree -u --reset HEAD &&
 	git clean -d -f -f -q -x
+}
+
+test_cmp_rev () {
+	git rev-parse --verify "$1" >expect.rev &&
+	git rev-parse --verify "$2" >actual.rev &&
+	test_cmp expect.rev actual.rev
 }
 
 test_expect_success setup '
@@ -27,6 +34,7 @@ test_expect_success setup '
 	test_commit unrelatedpick unrelated reallyunrelated &&
 	test_commit picked foo c &&
 	test_commit anotherpick foo d &&
+	test_commit yetanotherpick foo e &&
 	git config advice.detachedhead false
 
 '
@@ -70,16 +78,115 @@ test_expect_success 'cherry-pick cleans up sequencer state upon success' '
 	test_path_is_missing .git/sequencer
 '
 
-test_expect_success '--reset does not complain when no cherry-pick is in progress' '
+test_expect_success '--quit does not complain when no cherry-pick is in progress' '
 	pristine_detach initial &&
-	git cherry-pick --reset
+	git cherry-pick --quit
 '
 
-test_expect_success '--reset cleans up sequencer state' '
+test_expect_success '--abort requires cherry-pick in progress' '
+	pristine_detach initial &&
+	test_must_fail git cherry-pick --abort
+'
+
+test_expect_success '--quit cleans up sequencer state' '
 	pristine_detach initial &&
 	test_must_fail git cherry-pick base..picked &&
-	git cherry-pick --reset &&
+	git cherry-pick --quit &&
 	test_path_is_missing .git/sequencer
+'
+
+test_expect_success '--quit keeps HEAD and conflicted index intact' '
+	pristine_detach initial &&
+	cat >expect <<-\EOF &&
+	OBJID
+	:100644 100644 OBJID OBJID M	unrelated
+	OBJID
+	:000000 100644 OBJID OBJID A	foo
+	:000000 100644 OBJID OBJID A	unrelated
+	EOF
+	test_must_fail git cherry-pick base..picked &&
+	git cherry-pick --quit &&
+	test_path_is_missing .git/sequencer &&
+	test_must_fail git update-index --refresh &&
+	{
+		git rev-list HEAD |
+		git diff-tree --root --stdin |
+		sed "s/$_x40/OBJID/g"
+	} >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--abort to cancel multiple cherry-pick' '
+	pristine_detach initial &&
+	test_must_fail git cherry-pick base..anotherpick &&
+	git cherry-pick --abort &&
+	test_path_is_missing .git/sequencer &&
+	test_cmp_rev initial HEAD &&
+	git update-index --refresh &&
+	git diff-index --exit-code HEAD
+'
+
+test_expect_success '--abort to cancel single cherry-pick' '
+	pristine_detach initial &&
+	test_must_fail git cherry-pick picked &&
+	git cherry-pick --abort &&
+	test_path_is_missing .git/sequencer &&
+	test_cmp_rev initial HEAD &&
+	git update-index --refresh &&
+	git diff-index --exit-code HEAD
+'
+
+test_expect_success 'cherry-pick --abort to cancel multiple revert' '
+	pristine_detach anotherpick &&
+	test_must_fail git revert base..picked &&
+	git cherry-pick --abort &&
+	test_path_is_missing .git/sequencer &&
+	test_cmp_rev anotherpick HEAD &&
+	git update-index --refresh &&
+	git diff-index --exit-code HEAD
+'
+
+test_expect_success 'revert --abort works, too' '
+	pristine_detach anotherpick &&
+	test_must_fail git revert base..picked &&
+	git revert --abort &&
+	test_path_is_missing .git/sequencer &&
+	test_cmp_rev anotherpick HEAD
+'
+
+test_expect_success '--abort to cancel single revert' '
+	pristine_detach anotherpick &&
+	test_must_fail git revert picked &&
+	git revert --abort &&
+	test_path_is_missing .git/sequencer &&
+	test_cmp_rev anotherpick HEAD &&
+	git update-index --refresh &&
+	git diff-index --exit-code HEAD
+'
+
+test_expect_success '--abort keeps unrelated change, easy case' '
+	pristine_detach unrelatedpick &&
+	echo changed >expect &&
+	test_must_fail git cherry-pick picked..yetanotherpick &&
+	echo changed >unrelated &&
+	git cherry-pick --abort &&
+	test_cmp expect unrelated
+'
+
+test_expect_success '--abort refuses to clobber unrelated change, harder case' '
+	pristine_detach initial &&
+	echo changed >expect &&
+	test_must_fail git cherry-pick base..anotherpick &&
+	echo changed >unrelated &&
+	test_must_fail git cherry-pick --abort &&
+	test_cmp expect unrelated &&
+	git rev-list HEAD >log &&
+	test_line_count = 2 log &&
+	test_must_fail git update-index --refresh &&
+
+	git checkout unrelated &&
+	git cherry-pick --abort &&
+	test_cmp_rev initial HEAD
 '
 
 test_expect_success 'cherry-pick cleans up sequencer state when one commit is left' '
@@ -104,6 +211,16 @@ test_expect_success 'cherry-pick cleans up sequencer state when one commit is le
 	:000000 100644 OBJID OBJID A	unrelated
 	EOF
 	test_cmp expect actual
+'
+
+test_expect_failure '--abort after last commit in sequence' '
+	pristine_detach initial &&
+	test_must_fail git cherry-pick base..picked &&
+	git cherry-pick --abort &&
+	test_path_is_missing .git/sequencer &&
+	test_cmp_rev initial HEAD &&
+	git update-index --refresh &&
+	git diff-index --exit-code HEAD
 '
 
 test_expect_success 'cherry-pick does not implicitly stomp an existing operation' '

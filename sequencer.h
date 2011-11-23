@@ -13,7 +13,7 @@
  *
  * With the aggressive flag, it additionally removes SEQ_OLD_DIR,
  * ignoring any errors.  Inteded to be used by the sequencer's
- * '--reset' subcommand.
+ * '--quit' subcommand.
  */
 void remove_sequencer_state(int aggressive);
 
