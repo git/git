@@ -1159,7 +1159,6 @@ ifeq ($(uname_S),Windows)
 	NO_IPV6 = YesPlease
 	NO_UNIX_SOCKETS = YesPlease
 	NO_SETENV = YesPlease
-	NO_UNSETENV = YesPlease
 	NO_STRCASESTR = YesPlease
 	NO_STRLCPY = YesPlease
 	NO_STRTOK_R = YesPlease
@@ -1256,7 +1255,6 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	NO_SYMLINK_HEAD = YesPlease
 	NO_UNIX_SOCKETS = YesPlease
 	NO_SETENV = YesPlease
-	NO_UNSETENV = YesPlease
 	NO_STRCASESTR = YesPlease
 	NO_STRLCPY = YesPlease
 	NO_STRTOK_R = YesPlease
