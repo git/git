@@ -536,7 +536,7 @@ EXPECT_END
 	j=$(($j + 1))
 done
 
-test_expect_failure 'change a few existing notes' '
+test_expect_success 'change a few existing notes' '
 
 	git fast-import <input &&
 	GIT_NOTES_REF=refs/notes/many_notes git log -n3 refs/heads/many_commits |
@@ -545,7 +545,7 @@ test_expect_failure 'change a few existing notes' '
 
 '
 
-test_expect_failure 'verify that changing notes respect existing fanout' '
+test_expect_success 'verify that changing notes respect existing fanout' '
 
 	# None of the entries in the top-level notes tree should be a full SHA1
 	git ls-tree --name-only refs/notes/many_notes |
@@ -594,7 +594,7 @@ EXPECT_END
 	i=$(($i - 1))
 done
 
-test_expect_failure 'remove lots of notes' '
+test_expect_success 'remove lots of notes' '
 
 	git fast-import <input &&
 	GIT_NOTES_REF=refs/notes/many_notes git log refs/heads/many_commits |
@@ -603,7 +603,7 @@ test_expect_failure 'remove lots of notes' '
 
 '
 
-test_expect_failure 'verify that removing notes trigger fanout consolidation' '
+test_expect_success 'verify that removing notes trigger fanout consolidation' '
 
 	# All entries in the top-level notes tree should be a full SHA1
 	git ls-tree --name-only -r refs/notes/many_notes |
