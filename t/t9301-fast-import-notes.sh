@@ -507,7 +507,7 @@ test_expect_success 'verify that non-notes are untouched by a fanout change' '
 '
 remaining_notes=10
 test_tick
-cat >>input <<INPUT_END
+cat >input <<INPUT_END
 commit refs/notes/many_notes
 committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
 data <<COMMIT
@@ -516,12 +516,11 @@ COMMIT
 from refs/notes/many_notes^0
 INPUT_END
 
-i=$remaining_notes
-while test $i -lt $num_commits
+i=$(($num_commits - $remaining_notes))
+for sha1 in $(git rev-list -n $i refs/heads/many_commits)
 do
-	i=$(($i + 1))
 	cat >>input <<INPUT_END
-N 0000000000000000000000000000000000000000 :$i
+N 0000000000000000000000000000000000000000 $sha1
 INPUT_END
 done
 
@@ -541,7 +540,7 @@ EXPECT_END
 	i=$(($i - 1))
 done
 
-test_expect_success 'remove lots of notes' '
+test_expect_failure 'remove lots of notes' '
 
 	git fast-import <input &&
 	GIT_NOTES_REF=refs/notes/many_notes git log refs/heads/many_commits |
@@ -550,7 +549,7 @@ test_expect_success 'remove lots of notes' '
 
 '
 
-test_expect_success 'verify that removing notes trigger fanout consolidation' '
+test_expect_failure 'verify that removing notes trigger fanout consolidation' '
 
 	# All entries in the top-level notes tree should be a full SHA1
 	git ls-tree --name-only -r refs/notes/many_notes |
