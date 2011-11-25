@@ -505,6 +505,60 @@ test_expect_success 'verify that non-notes are untouched by a fanout change' '
 	test_cmp expect_non-note3 actual
 
 '
+
+# Change the notes for the three top commits
+test_tick
+cat >input <<INPUT_END
+commit refs/notes/many_notes
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+changing notes for the top three commits
+COMMIT
+from refs/notes/many_notes^0
+INPUT_END
+
+rm expect
+i=$num_commits
+j=0
+while test $j -lt 3
+do
+	cat >>input <<INPUT_END
+N inline refs/heads/many_commits~$j
+data <<EOF
+changed note for commit #$i
+EOF
+INPUT_END
+	cat >>expect <<EXPECT_END
+    commit #$i
+    changed note for commit #$i
+EXPECT_END
+	i=$(($i - 1))
+	j=$(($j + 1))
+done
+
+test_expect_failure 'change a few existing notes' '
+
+	git fast-import <input &&
+	GIT_NOTES_REF=refs/notes/many_notes git log -n3 refs/heads/many_commits |
+	    grep "^    " > actual &&
+	test_cmp expect actual
+
+'
+
+test_expect_failure 'verify that changing notes respect existing fanout' '
+
+	# None of the entries in the top-level notes tree should be a full SHA1
+	git ls-tree --name-only refs/notes/many_notes |
+	while read path
+	do
+		if test $(expr length "$path") -ge 40
+		then
+			return 1
+		fi
+	done
+
+'
+
 remaining_notes=10
 test_tick
 cat >input <<INPUT_END
