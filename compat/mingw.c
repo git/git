@@ -941,10 +941,9 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **env,
 	return (pid_t)pi.dwProcessId;
 }
 
-static pid_t mingw_spawnve(const char *cmd, const char **argv, char **env,
-			   int prepend_cmd)
+static pid_t mingw_spawnv(const char *cmd, const char **argv, int prepend_cmd)
 {
-	return mingw_spawnve_fd(cmd, argv, env, NULL, prepend_cmd, 0, 1, 2);
+	return mingw_spawnve_fd(cmd, argv, environ, NULL, prepend_cmd, 0, 1, 2);
 }
 
 pid_t mingw_spawnvpe(const char *cmd, const char **argv, char **env,
@@ -986,7 +985,7 @@ pid_t mingw_spawnvpe(const char *cmd, const char **argv, char **env,
 	return pid;
 }
 
-static int try_shell_exec(const char *cmd, char *const *argv, char **env)
+static int try_shell_exec(const char *cmd, char *const *argv)
 {
 	const char *interpr = parse_interpreter(cmd);
 	char **path;
@@ -1004,7 +1003,7 @@ static int try_shell_exec(const char *cmd, char *const *argv, char **env)
 		argv2 = xmalloc(sizeof(*argv) * (argc+1));
 		argv2[0] = (char *)cmd;	/* full path to the script file */
 		memcpy(&argv2[1], &argv[1], sizeof(*argv) * argc);
-		pid = mingw_spawnve(prog, argv2, env, 1);
+		pid = mingw_spawnv(prog, argv2, 1);
 		if (pid >= 0) {
 			int status;
 			if (waitpid(pid, &status, 0) < 0)
@@ -1019,13 +1018,13 @@ static int try_shell_exec(const char *cmd, char *const *argv, char **env)
 	return pid;
 }
 
-static int mingw_execve(const char *cmd, char *const *argv, char *const *env)
+int mingw_execv(const char *cmd, char *const *argv)
 {
 	/* check if git_command is a shell script */
-	if (!try_shell_exec(cmd, argv, (char **)env)) {
+	if (!try_shell_exec(cmd, argv)) {
 		int pid, status;
 
-		pid = mingw_spawnve(cmd, (const char **)argv, (char **)env, 0);
+		pid = mingw_spawnv(cmd, (const char **)argv, 0);
 		if (pid < 0)
 			return -1;
 		if (waitpid(pid, &status, 0) < 0)
@@ -1041,18 +1040,12 @@ int mingw_execvp(const char *cmd, char *const *argv)
 	char *prog = path_lookup(cmd, path, 0);
 
 	if (prog) {
-		mingw_execve(prog, argv, environ);
+		mingw_execv(prog, argv);
 		free(prog);
 	} else
 		errno = ENOENT;
 
 	free_path_split(path);
-	return -1;
-}
-
-int mingw_execv(const char *cmd, char *const *argv)
-{
-	mingw_execve(cmd, argv, environ);
 	return -1;
 }
 
