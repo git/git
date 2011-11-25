@@ -120,8 +120,7 @@ static void write_console(unsigned char *str, size_t len)
 	static wchar_t wbuf[2 * BUFFER_SIZE + 1];
 
 	/* convert utf-8 to utf-16 */
-	int wlen = MultiByteToWideChar(CP_UTF8, 0, (char*) str, len, wbuf,
-			ARRAY_SIZE(wbuf));
+	int wlen = xutftowcsn(wbuf, (char*) str, ARRAY_SIZE(wbuf), len);
 
 	/* write directly to console */
 	WriteConsoleW(console, wbuf, wlen, NULL, NULL);
