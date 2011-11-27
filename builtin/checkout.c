@@ -401,7 +401,7 @@ static int merge_working_tree(struct checkout_opts *opts,
 		topts.fn = twoway_merge;
 		topts.dir = xcalloc(1, sizeof(*topts.dir));
 		topts.dir->flags |= DIR_SHOW_IGNORED;
-		topts.dir->exclude_per_dir = ".gitignore";
+		setup_standard_excludes(topts.dir);
 		tree = parse_tree_indirect(old->commit ?
 					   old->commit->object.sha1 :
 					   (unsigned char *)EMPTY_TREE_SHA1_BIN);
