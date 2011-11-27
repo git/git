@@ -34,6 +34,7 @@ struct checkout_opts {
 	int force_detach;
 	int writeout_stage;
 	int writeout_error;
+	int overwrite_ignore;
 
 	/* not set by parse_options */
 	int branch_exists;
@@ -409,9 +410,11 @@ static int merge_working_tree(struct checkout_opts *opts,
 		topts.gently = opts->merge && old->commit;
 		topts.verbose_update = !opts->quiet;
 		topts.fn = twoway_merge;
-		topts.dir = xcalloc(1, sizeof(*topts.dir));
-		topts.dir->flags |= DIR_SHOW_IGNORED;
-		setup_standard_excludes(topts.dir);
+		if (opts->overwrite_ignore) {
+			topts.dir = xcalloc(1, sizeof(*topts.dir));
+			topts.dir->flags |= DIR_SHOW_IGNORED;
+			setup_standard_excludes(topts.dir);
+		}
 		tree = parse_tree_indirect(old->commit ?
 					   old->commit->object.sha1 :
 					   EMPTY_TREE_SHA1_BIN);
@@ -926,6 +929,7 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 			    3),
 		OPT__FORCE(&opts.force, "force checkout (throw away local modifications)"),
 		OPT_BOOLEAN('m', "merge", &opts.merge, "perform a 3-way merge with the new branch"),
+		OPT_BOOLEAN(0, "overwrite-ignore", &opts.overwrite_ignore, "update ignored files (default)"),
 		OPT_STRING(0, "conflict", &conflict_style, "style",
 			   "conflict style (merge or diff3)"),
 		OPT_BOOLEAN('p', "patch", &patch_mode, "select hunks interactively"),
@@ -937,6 +941,7 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 
 	memset(&opts, 0, sizeof(opts));
 	memset(&new, 0, sizeof(new));
+	opts.overwrite_ignore = 1;
 
 	gitmodules_config();
 	git_config(git_checkout_config, &opts);
