@@ -318,7 +318,7 @@ static void write_cherry_pick_head(struct commit *commit, const char *pseudoref)
 
 	strbuf_addf(&buf, "%s\n", sha1_to_hex(commit->object.sha1));
 
-	filename = git_path(pseudoref);
+	filename = git_path("%s", pseudoref);
 	fd = open(filename, O_WRONLY | O_CREAT, 0666);
 	if (fd < 0)
 		die_errno(_("Could not open '%s' for writing"), filename);
@@ -924,8 +924,10 @@ static int sequencer_rollback(struct replay_opts *opts)
 	if (strbuf_getline(&buf, f, '\n')) {
 		error(_("cannot read %s: %s"), filename, ferror(f) ?
 			strerror(errno) : _("unexpected end of file"));
+		fclose(f);
 		goto fail;
 	}
+	fclose(f);
 	if (get_sha1_hex(buf.buf, sha1) || buf.buf[40] != '\0') {
 		error(_("stored pre-cherry-pick HEAD file '%s' is corrupt"),
 			filename);
@@ -933,12 +935,11 @@ static int sequencer_rollback(struct replay_opts *opts)
 	}
 	if (reset_for_rollback(sha1))
 		goto fail;
+	remove_sequencer_state(1);
 	strbuf_release(&buf);
-	fclose(f);
 	return 0;
 fail:
 	strbuf_release(&buf);
-	fclose(f);
 	return -1;
 }
 

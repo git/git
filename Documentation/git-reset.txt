@@ -9,8 +9,8 @@ SYNOPSIS
 --------
 [verse]
 'git reset' [-q] [<commit>] [--] <paths>...
-'git reset' [--patch|-p] [<commit>] [--] [<paths>...]
-'git reset' [--soft | --mixed | --hard | --merge | --keep] [-q] [<commit>]
+'git reset' (--patch | -p) [<commit>] [--] [<paths>...]
+'git reset' (--soft | --mixed | --hard | --merge | --keep) [-q] [<commit>]
 
 DESCRIPTION
 -----------
@@ -34,7 +34,7 @@ Alternatively, using linkgit:git-checkout[1] and specifying a commit, you
 can copy the contents of a path out of a commit to the index and to the
 working tree in one go.
 
-'git reset' --patch|-p [<commit>] [--] [<paths>...]::
+'git reset' (--patch | -p) [<commit>] [--] [<paths>...]::
 	Interactively select hunks in the difference between the index
 	and <commit> (defaults to HEAD).  The chosen hunks are applied
 	in reverse to the index.
@@ -43,7 +43,7 @@ This means that `git reset -p` is the opposite of `git add -p`, i.e.
 you can use it to selectively reset hunks. See the ``Interactive Mode''
 section of linkgit:git-add[1] to learn how to operate the `\--patch` mode.
 
-'git reset' [--<mode>] [<commit>]::
+'git reset' --<mode> [<commit>]::
 	This form resets the current branch head to <commit> and
 	possibly updates the index (resetting it to the tree of <commit>) and
 	the working tree depending on <mode>, which

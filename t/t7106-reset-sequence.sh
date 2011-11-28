@@ -41,4 +41,12 @@ test_expect_success 'reset --hard cleans up sequencer state, providing one-level
 	test_path_is_missing .git/sequencer-old
 '
 
+test_expect_success 'cherry-pick --abort does not leave sequencer-old dir' '
+	pristine_detach initial &&
+	test_must_fail git cherry-pick base..anotherpick &&
+	git cherry-pick --abort &&
+	test_path_is_missing .git/sequencer &&
+	test_path_is_missing .git/sequencer-old
+'
+
 test_done
