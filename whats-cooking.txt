@@ -1,16 +1,13 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Nov 2011, #04; Wed, 16)
-X-master-at: 09116a1c31e3754cb18bb69ef057342cd7808935
-X-next-at: cc761519149511482c8cf0afc615993437266af7
+Subject: What's cooking in git.git (Nov 2011, #05; Mon, 28)
+X-master-at: fc14b89a7e6899b8ac3b5751ec2d8c98203ea4c2
+X-next-at: 9ef225745e2777b46364afc3297e5b06d1e29033
 
-What's cooking in git.git (Nov 2011, #04; Wed, 16)
+What's cooking in git.git (Nov 2011, #05; Mon, 28)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' (proposed updates) while commits prefixed with '+' are in 'next'.
-
-One nasty regression killed, hopefully we are good to go for the third
-release candidate tomorrow.
 
 Here are the repositories that have my integration branches:
 
@@ -40,50 +37,90 @@ The preformatted documentation in HTML and man format are found in:
 --------------------------------------------------
 [New Topics]
 
-* jk/refresh-porcelain-output (2011-11-14) 5 commits
- - perhaps squash? show intent-to-add entries as "A" in verbose refresh
- - refresh_index: notice typechanges in output
- - read-cache: let refresh_cache_ent pass up changed flags
- - refresh_index: mark deletions in porcelain output
- - refresh_index: rename format variables
+* cn/maint-lf-to-crlf-filter (2011-11-28) 1 commit
+ - convert: track state in LF-to-CRLF filter
 
-The tip two commits need to be squashed into one.
+Candidate for early next cycle.
 
-* ab/enable-i18n (2011-11-14) 1 commit
- - i18n: add infrastructure for translating Git with gettext
+* nd/maint-ignore-exclude (2011-11-28) 1 commit
+ - checkout,merge: loosen overwriting untracked file check based on info/exclude
+ (this branch is used by nd/ignore-might-be-precious.)
 
-* gh/userdiff-matlab (2011-11-15) 1 commit
- - Add built-in diff patterns for MATLAB code
+Candidate for early next cycle.
 
-* jc/maint-pack-object-cycle (2011-11-16) 1 commit
- - pack-object: tolerate broken packs that have duplicated objects
+* vr/git-merge-doc (2011-11-21) 1 commit
+ - Show error for 'git merge' with unset merge.defaultToUpstream
 
-Make the client side more robust against bogus pack stream; the problem
-was discovered by accident while repacking a clone obtained from somewhat
-buggy test server.
+Candidate for early next cycle.
 
-* jc/index-pack-reject-dups (2011-11-16) 1 commit
- - receive-pack, fetch-pack: reject bogus pack that records objects twice
+* jn/branch-move-to-self (2011-11-28) 2 commits
+ - Allow checkout -B <current-branch> to update the current branch
+ - branch: allow a no-op "branch -M <current-branch> HEAD"
 
-And this is the prevention to reject such pack stream in the first place.
+* jk/credentials (2011-11-28) 19 commits
+ - compat/getpass: add a /dev/tty implementation
+ - credential: use git_prompt instead of git_getpass
+ - prompt: add PROMPT_ECHO flag
+ - stub out getpass_echo function
+ - refactor git_getpass into generic prompt function
+ - move git_getpass to its own source file
+ - t: add test harness for external credential helpers
+ - credentials: add "store" helper
+ - strbuf: add strbuf_add*_urlencode
+ - credentials: add "cache" helper
+ - docs: end-user documentation for the credential subsystem
+ - credential: make relevance of http path configurable
+ - credential: add credential.*.username
+ - credential: apply helper config
+ - http: use credential API to get passwords
+ - credential: add function for parsing url components
+ - introduce credentials API
+ - t5550: fix typo
+ - test-lib: add test_config_global variant
+
+* nd/ignore-might-be-precious (2011-11-28) 2 commits
+ - checkout,merge: disallow overwriting ignored files with --no-overwrite-ignore
+ - Merge branch 'nd/maint-ignore-exclude' into nd/ignore-might-be-precious
+ (this branch uses nd/maint-ignore-exclude.)
+
+* jk/upload-archive-use-start-command (2011-11-21) 1 commit
+ - upload-archive: use start_command instead of fork
+
+* jk/maint-1.6.2-upload-archive (2011-11-21) 1 commit
+ - archive: don't let remote clients get unreachable commits
+ (this branch is used by jk/maint-upload-archive.)
+
+* jk/maint-upload-archive (2011-11-21) 1 commit
+ - Merge branch 'jk/maint-1.6.2-upload-archive' into jk/maint-upload-archive
+ (this branch uses jk/maint-1.6.2-upload-archive.)
+
+--------------------------------------------------
+[Graduated to "master"]
 
 * jc/maint-name-rev-all (2011-11-15) 1 commit
- - name-rev --all: do not even attempt to describe non-commit object
+ + name-rev --all: do not even attempt to describe non-commit object
 
-Fix for a corner-case bug? that was present from day one of the command.
+Fix for a corner-case bug that was present from day one of the command.
+
+* jn/revert-quit (2011-11-21) 3 commits
+ + revert: improve error message for cherry-pick during cherry-pick
+ + revert: rearrange pick_revisions() for clarity
+ + revert: rename --reset option to --quit
+
+Late fix for a recent feature.
 
 * ml/mailmap (2011-11-16) 1 commit
- - mailmap: xcalloc mailmap_info
+ + mailmap: xcalloc mailmap_info
 
-An obvious(ly correct) cleanup.
+An obvious(ly correct) and trivial cleanup.
 
 * rr/misc-fixes (2011-11-15) 4 commits
- - git-compat-util: don't assume value for undefined variable
- - sha1_file: don't mix enum with int
- - convert: don't mix enum with int
- - http: remove unused function hex()
+ + git-compat-util: don't assume value for undefined variable
+ + sha1_file: don't mix enum with int
+ + convert: don't mix enum with int
+ + http: remove unused function hex()
 
-Obvious(ly correct) cleanups.
+Obvious(ly correct) and trivial cleanups.
 
 --------------------------------------------------
 [Stalled]
@@ -171,12 +208,52 @@ Not absolutely needed; parked in 'pu' but may drop.
 --------------------------------------------------
 [Cooking]
 
+* jk/refresh-porcelain-output (2011-11-18) 3 commits
+  (merged to 'next' on 2011-11-18 at 872f25e)
+ + refresh_index: make porcelain output more specific
+ + refresh_index: rename format variables
+ + read-cache: let refresh_cache_ent pass up changed flags
+
+Will keep in 'next' during this cycle.
+
+* ab/enable-i18n (2011-11-18) 1 commit
+ - i18n: add infrastructure for translating Git with gettext
+
+Not urgent.
+
+* gh/userdiff-matlab (2011-11-15) 1 commit
+  (merged to 'next' on 2011-11-18 at 10cd275)
+ + Add built-in diff patterns for MATLAB code
+
+Will keep in 'next' during this cycle.
+
+* jc/maint-pack-object-cycle (2011-11-16) 1 commit
+  (merged to 'next' on 2011-11-18 at 3715a81)
+ + pack-object: tolerate broken packs that have duplicated objects
+
+Make the client side more robust against bogus pack stream; the problem
+was discovered by accident while repacking a clone obtained from somewhat
+buggy test server.
+
+Will keep in 'next' during this cycle.
+
+* jc/index-pack-reject-dups (2011-11-16) 1 commit
+  (merged to 'next' on 2011-11-18 at 2090221)
+ + receive-pack, fetch-pack: reject bogus pack that records objects twice
+
+And this is the prevention to reject such pack stream in the first place.
+
+Will keep in 'next' during this cycle.
+
 * nd/resolve-ref (2011-11-13) 2 commits
- - Copy resolve_ref() return value for longer use
- - Convert many resolve_ref() calls to read_ref*() and ref_exists()
+  (merged to 'next' on 2011-11-18 at 8e17b34)
+ + Copy resolve_ref() return value for longer use
+ + Convert many resolve_ref() calls to read_ref*() and ref_exists()
 
 A fix for an error-reporting codepath that is not a regression, that
 turned into a patch that touches many callsite.
+
+Will keep in 'next' during this cycle.
 
 * vr/msvc (2011-10-31) 3 commits
   (merged to 'next' on 2011-11-14 at f46d021)
@@ -283,7 +360,11 @@ Will keep in 'next' during this cycle.
 
 Will keep in 'next' during this cycle.
 
-* jc/stream-to-pack (2011-11-03) 4 commits
+* jc/stream-to-pack (2011-11-23) 8 commits
+ - bulk-checkin: honor pack.packsizelimit
+ - bulk-checkin: do not write an object that already exists
+ - bulk-checkin: do not write the same object twice
+ - csum-file: introduce sha1file_checkpoint
  - Bulk check-in
  - finish_tmp_packfile(): a helper function
  - create_tmp_packfile(): a helper function
