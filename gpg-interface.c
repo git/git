@@ -5,6 +5,7 @@
 #include "sigchain.h"
 
 static char *configured_signing_key;
+static const char *gpg_program = "gpg";
 
 void set_signing_key(const char *key)
 {
@@ -15,9 +16,12 @@ void set_signing_key(const char *key)
 int git_gpg_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, "user.signingkey")) {
+		set_signing_key(value);
+	}
+	if (!strcmp(var, "gpg.program")) {
 		if (!value)
 			return config_error_nonbool(var);
-		set_signing_key(value);
+		gpg_program = xstrdup(value);
 	}
 	return 0;
 }
@@ -46,7 +50,7 @@ int sign_buffer(struct strbuf *buffer, struct strbuf *signature, const char *sig
 	gpg.argv = args;
 	gpg.in = -1;
 	gpg.out = -1;
-	args[0] = "gpg";
+	args[0] = gpg_program;
 	args[1] = "-bsau";
 	args[2] = signing_key;
 	args[3] = NULL;
@@ -101,10 +105,11 @@ int verify_signed_buffer(const char *payload, size_t payload_size,
 			 struct strbuf *gpg_output)
 {
 	struct child_process gpg;
-	const char *args_gpg[] = {"gpg", "--verify", "FILE", "-", NULL};
+	const char *args_gpg[] = {NULL, "--verify", "FILE", "-", NULL};
 	char path[PATH_MAX];
 	int fd, ret;
 
+	args_gpg[0] = gpg_program;
 	fd = git_mkstemp(path, PATH_MAX, ".git_vtag_tmpXXXXXX");
 	if (fd < 0)
 		return error("could not create temporary file '%s': %s",
