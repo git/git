@@ -3894,7 +3894,7 @@ after 1 {
 		$ui_comm configure -state disabled -background gray
 	}
 }
-if {[is_enabled multicommit]} {
+if {[is_enabled multicommit] && ![is_config_false gui.gcwarning]} {
 	after 1000 hint_gc
 }
 if {[is_enabled retcode]} {
