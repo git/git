@@ -1,5 +1,6 @@
 perl.mak
 perl.mak.old
+MYMETA.yml
 blib
 blibdirs
 pm_to_blib
