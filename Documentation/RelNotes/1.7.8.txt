@@ -1,5 +1,5 @@
-Git v1.7.8 Release Notes (draft)
-================================
+Git v1.7.8 Release Notes
+========================
 
 Updates since v1.7.7
 --------------------
@@ -159,11 +159,3 @@ included in this release.
    were misspelled.
    (merge c49904e fc/remote-seturl-usage-fix later to maint).
    (merge 656cdf0 jc/remote-setbranches-usage-fix later to maint).
-
----
-exec >/var/tmp/1
-O=v1.7.8-rc4
-echo O=$(git describe --always master)
-git log --first-parent --oneline --reverse ^$O master
-echo
-git shortlog --no-merges ^$O master
