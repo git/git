@@ -1,0 +1,27 @@
+Git v1.7.9 Release Notes (draft)
+========================
+
+Updates since v1.7.8
+--------------------
+
+ * Porcelain commands like "git reset" did not distinguish deletions
+   and type-changes from ordinary modification, and reported them with
+   the same 'M' moniker. They now use 'D' (for deletion) and 'T' (for
+   type-change) to match "git status -s" and "git diff --name-status".
+
+ * fsck and prune are relatively lengthy operations that still go
+   silent while making the end-user wait. They learned to give progress
+   output like other slow operations.
+
+ * The set of built-in function-header patterns for various languages
+   knows MATLAB.
+
+May also contain documentation updates and code clean-ups.
+
+
+Fixes since v1.7.8
+------------------
+
+ * In some codepaths (notably, checkout and merge), the ignore patterns
+   recorded in $GIT_DIR/info/exclude were not honored. They now are.
+   (merge fc001b5 nd/maint-ignore-exclude later to maint).
