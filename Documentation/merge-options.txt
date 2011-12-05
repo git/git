@@ -9,7 +9,6 @@ inspect and further tweak the merge result before committing.
 
 --edit::
 -e::
-+
 	Invoke editor before committing successful merge to further
 	edit the default merge message.
 
