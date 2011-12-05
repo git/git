@@ -52,7 +52,8 @@ static int read_tree_1(struct tree *tree, struct strbuf *base,
 	struct tree_desc desc;
 	struct name_entry entry;
 	unsigned char sha1[20];
-	int len, retval = 0, oldlen = base->len;
+	int len, oldlen = base->len;
+	enum interesting retval = entry_not_interesting;
 
 	if (parse_tree(tree))
 		return -1;
@@ -60,11 +61,11 @@ static int read_tree_1(struct tree *tree, struct strbuf *base,
 	init_tree_desc(&desc, tree->buffer, tree->size);
 
 	while (tree_entry(&desc, &entry)) {
-		if (retval != 2) {
+		if (retval != all_entries_interesting) {
 			retval = tree_entry_interesting(&entry, base, 0, pathspec);
-			if (retval < 0)
+			if (retval == all_entries_not_interesting)
 				break;
-			if (retval == 0)
+			if (retval == entry_not_interesting)
 				continue;
 		}
 
@@ -99,7 +100,7 @@ static int read_tree_1(struct tree *tree, struct strbuf *base,
 		else
 			continue;
 
-		len = tree_entry_len(entry.path, entry.sha1);
+		len = tree_entry_len(&entry);
 		strbuf_add(base, entry.path, len);
 		strbuf_addch(base, '/');
 		retval = read_tree_1(lookup_tree(sha1),

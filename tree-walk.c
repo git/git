@@ -116,7 +116,7 @@ void setup_traverse_info(struct traverse_info *info, const char *base)
 
 char *make_traverse_path(char *path, const struct traverse_info *info, const struct name_entry *n)
 {
-	int len = tree_entry_len(n->path, n->sha1);
+	int len = tree_entry_len(n);
 	int pathlen = info->pathlen;
 
 	path[pathlen + len] = 0;
@@ -126,7 +126,7 @@ char *make_traverse_path(char *path, const struct traverse_info *info, const str
 			break;
 		path[--pathlen] = '/';
 		n = &info->name;
-		len = tree_entry_len(n->path, n->sha1);
+		len = tree_entry_len(n);
 		info = info->prev;
 		pathlen -= len;
 	}
@@ -253,7 +253,7 @@ static void extended_entry_extract(struct tree_desc_x *t,
 	 * The caller wants "first" from this tree, or nothing.
 	 */
 	path = a->path;
-	len = tree_entry_len(a->path, a->sha1);
+	len = tree_entry_len(a);
 	switch (check_entry_match(first, first_len, path, len)) {
 	case -1:
 		entry_clear(a);
@@ -271,7 +271,7 @@ static void extended_entry_extract(struct tree_desc_x *t,
 	while (probe.size) {
 		entry_extract(&probe, a);
 		path = a->path;
-		len = tree_entry_len(a->path, a->sha1);
+		len = tree_entry_len(a);
 		switch (check_entry_match(first, first_len, path, len)) {
 		case -1:
 			entry_clear(a);
@@ -362,7 +362,7 @@ int traverse_trees(int n, struct tree_desc *t, struct traverse_info *info)
 			e = entry + i;
 			if (!e->path)
 				continue;
-			len = tree_entry_len(e->path, e->sha1);
+			len = tree_entry_len(e);
 			if (!first) {
 				first = e->path;
 				first_len = len;
@@ -381,7 +381,7 @@ int traverse_trees(int n, struct tree_desc *t, struct traverse_info *info)
 				/* Cull the ones that are not the earliest */
 				if (!e->path)
 					continue;
-				len = tree_entry_len(e->path, e->sha1);
+				len = tree_entry_len(e);
 				if (name_compare(e->path, len, first, first_len))
 					entry_clear(e);
 			}
@@ -434,8 +434,8 @@ static int find_tree_entry(struct tree_desc *t, const char *name, unsigned char 
 		int entrylen, cmp;
 
 		sha1 = tree_entry_extract(t, &entry, mode);
+		entrylen = tree_entry_len(&t->entry);
 		update_tree_entry(t);
-		entrylen = tree_entry_len(entry, sha1);
 		if (entrylen > namelen)
 			continue;
 		cmp = memcmp(name, entry, entrylen);
@@ -465,7 +465,6 @@ int get_tree_entry(const unsigned char *tree_sha1, const char *name, unsigned ch
 	int retval;
 	void *tree;
 	unsigned long size;
-	struct tree_desc t;
 	unsigned char root[20];
 
 	tree = read_object_with_reference(tree_sha1, tree_type, &size, root);
@@ -478,8 +477,13 @@ int get_tree_entry(const unsigned char *tree_sha1, const char *name, unsigned ch
 		return 0;
 	}
 
-	init_tree_desc(&t, tree, size);
-	retval = find_tree_entry(&t, name, sha1, mode);
+	if (!size) {
+		retval = -1;
+	} else {
+		struct tree_desc t;
+		init_tree_desc(&t, tree, size);
+		retval = find_tree_entry(&t, name, sha1, mode);
+	}
 	free(tree);
 	return retval;
 }
@@ -573,30 +577,26 @@ static int match_dir_prefix(const char *base,
  *
  * Pre-condition: either baselen == base_offset (i.e. empty path)
  * or base[baselen-1] == '/' (i.e. with trailing slash).
- *
- * Return:
- *  - 2 for "yes, and all subsequent entries will be"
- *  - 1 for yes
- *  - zero for no
- *  - negative for "no, and no subsequent entries will be either"
  */
-int tree_entry_interesting(const struct name_entry *entry,
-			   struct strbuf *base, int base_offset,
-			   const struct pathspec *ps)
+enum interesting tree_entry_interesting(const struct name_entry *entry,
+					struct strbuf *base, int base_offset,
+					const struct pathspec *ps)
 {
 	int i;
 	int pathlen, baselen = base->len - base_offset;
-	int never_interesting = ps->has_wildcard ? 0 : -1;
+	int never_interesting = ps->has_wildcard ?
+		entry_not_interesting : all_entries_not_interesting;
 
 	if (!ps->nr) {
 		if (!ps->recursive || ps->max_depth == -1)
-			return 2;
-		return !!within_depth(base->buf + base_offset, baselen,
-				      !!S_ISDIR(entry->mode),
-				      ps->max_depth);
+			return all_entries_interesting;
+		return within_depth(base->buf + base_offset, baselen,
+				    !!S_ISDIR(entry->mode),
+				    ps->max_depth) ?
+			entry_interesting : entry_not_interesting;
 	}
 
-	pathlen = tree_entry_len(entry->path, entry->sha1);
+	pathlen = tree_entry_len(entry);
 
 	for (i = ps->nr - 1; i >= 0; i--) {
 		const struct pathspec_item *item = ps->items+i;
@@ -610,12 +610,13 @@ int tree_entry_interesting(const struct name_entry *entry,
 				goto match_wildcards;
 
 			if (!ps->recursive || ps->max_depth == -1)
-				return 2;
+				return all_entries_interesting;
 
-			return !!within_depth(base_str + matchlen + 1,
-					      baselen - matchlen - 1,
-					      !!S_ISDIR(entry->mode),
-					      ps->max_depth);
+			return within_depth(base_str + matchlen + 1,
+					    baselen - matchlen - 1,
+					    !!S_ISDIR(entry->mode),
+					    ps->max_depth) ?
+				entry_interesting : entry_not_interesting;
 		}
 
 		/* Either there must be no base, or the base must match. */
@@ -623,25 +624,25 @@ int tree_entry_interesting(const struct name_entry *entry,
 			if (match_entry(entry, pathlen,
 					match + baselen, matchlen - baselen,
 					&never_interesting))
-				return 1;
+				return entry_interesting;
 
-			if (ps->items[i].use_wildcard) {
+			if (item->use_wildcard) {
 				if (!fnmatch(match + baselen, entry->path, 0))
-					return 1;
+					return entry_interesting;
 
 				/*
 				 * Match all directories. We'll try to
 				 * match files later on.
 				 */
 				if (ps->recursive && S_ISDIR(entry->mode))
-					return 1;
+					return entry_interesting;
 			}
 
 			continue;
 		}
 
 match_wildcards:
-		if (!ps->items[i].use_wildcard)
+		if (!item->use_wildcard)
 			continue;
 
 		/*
@@ -653,7 +654,7 @@ match_wildcards:
 
 		if (!fnmatch(match, base->buf + base_offset, 0)) {
 			strbuf_setlen(base, base_offset + baselen);
-			return 1;
+			return entry_interesting;
 		}
 		strbuf_setlen(base, base_offset + baselen);
 
@@ -662,7 +663,7 @@ match_wildcards:
 		 * later on.
 		 */
 		if (ps->recursive && S_ISDIR(entry->mode))
-			return 1;
+			return entry_interesting;
 	}
 	return never_interesting; /* No matches */
 }

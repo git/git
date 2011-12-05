@@ -446,7 +446,7 @@ static int traverse_trees_recursive(int n, unsigned long dirmask,
 	newinfo.prev = info;
 	newinfo.pathspec = info->pathspec;
 	newinfo.name = *p;
-	newinfo.pathlen += tree_entry_len(p->path, p->sha1) + 1;
+	newinfo.pathlen += tree_entry_len(p) + 1;
 	newinfo.conflicts |= df_conflicts;
 
 	for (i = 0; i < n; i++, dirmask >>= 1) {
@@ -495,7 +495,7 @@ static int do_compare_entry(const struct cache_entry *ce, const struct traverse_
 	ce_len -= pathlen;
 	ce_name = ce->name + pathlen;
 
-	len = tree_entry_len(n->path, n->sha1);
+	len = tree_entry_len(n);
 	return df_name_compare(ce_name, ce_len, S_IFREG, n->path, len, n->mode);
 }
 
@@ -626,7 +626,7 @@ static int find_cache_pos(struct traverse_info *info,
 	struct unpack_trees_options *o = info->data;
 	struct index_state *index = o->src_index;
 	int pfxlen = info->pathlen;
-	int p_len = tree_entry_len(p->path, p->sha1);
+	int p_len = tree_entry_len(p);
 
 	for (pos = o->cache_bottom; pos < index->cache_nr; pos++) {
 		struct cache_entry *ce = index->cache[pos];
