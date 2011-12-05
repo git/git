@@ -847,6 +847,38 @@ class P4Submit(Command, P4UserMap):
 
         return template
 
+    def edit_template(self, template_file):
+        """Invoke the editor to let the user change the submission
+           message.  Return true if okay to continue with the submit."""
+
+        # if configured to skip the editing part, just submit
+        if gitConfig("git-p4.skipSubmitEdit") == "true":
+            return True
+
+        # look at the modification time, to check later if the user saved
+        # the file
+        mtime = os.stat(template_file).st_mtime
+
+        # invoke the editor
+        if os.environ.has_key("P4EDITOR"):
+            editor = os.environ.get("P4EDITOR")
+        else:
+            editor = read_pipe("git var GIT_EDITOR").strip()
+        system(editor + " " + template_file)
+
+        # If the file was not saved, prompt to see if this patch should
+        # be skipped.  But skip this verification step if configured so.
+        if gitConfig("git-p4.skipSubmitEditCheck") == "true":
+            return True
+
+        if os.stat(template_file).st_mtime <= mtime:
+            while True:
+                response = raw_input("Submit template unchanged. Submit anyway? [y]es, [n]o (skip this patch) ")
+                if response == 'y':
+                    return True
+                if response == 'n':
+                    return False
+
     def applyCommit(self, id):
         print "Applying %s" % (read_pipe("git log --max-count=1 --pretty=oneline %s" % id))
 
@@ -1001,7 +1033,7 @@ class P4Submit(Command, P4UserMap):
 
             separatorLine = "######## everything below this line is just the diff #######\n"
 
-            [handle, fileName] = tempfile.mkstemp()
+            (handle, fileName) = tempfile.mkstemp()
             tmpFile = os.fdopen(handle, "w+")
             if self.isWindows:
                 submitTemplate = submitTemplate.replace("\n", "\r\n")
@@ -1009,25 +1041,9 @@ class P4Submit(Command, P4UserMap):
                 newdiff = newdiff.replace("\n", "\r\n")
             tmpFile.write(submitTemplate + separatorLine + diff + newdiff)
             tmpFile.close()
-            mtime = os.stat(fileName).st_mtime
-            if os.environ.has_key("P4EDITOR"):
-                editor = os.environ.get("P4EDITOR")
-            else:
-                editor = read_pipe("git var GIT_EDITOR").strip()
-            system(editor + " " + fileName)
 
-            if gitConfig("git-p4.skipSubmitEditCheck") == "true":
-                checkModTime = False
-            else:
-                checkModTime = True
-
-            response = "y"
-            if checkModTime and (os.stat(fileName).st_mtime <= mtime):
-                response = "x"
-                while response != "y" and response != "n":
-                    response = raw_input("Submit template unchanged. Submit anyway? [y]es, [n]o (skip this patch) ")
-
-            if response == "y":
+            if self.edit_template(fileName):
+                # read the edited message and submit
                 tmpFile = open(fileName, "rb")
                 message = tmpFile.read()
                 tmpFile.close()
@@ -1039,11 +1055,12 @@ class P4Submit(Command, P4UserMap):
                 if self.preserveUser:
                     if p4User:
                         # Get last changelist number. Cannot easily get it from
-                        # the submit command output as the output is unmarshalled.
+                        # the submit command output as the output is
+                        # unmarshalled.
                         changelist = self.lastP4Changelist()
                         self.modifyChangelistUser(changelist, p4User)
-
             else:
+                # skip this patch
                 for f in editedFiles:
                     p4_revert(f)
                 for f in filesToAdd:

@@ -202,11 +202,24 @@ able to find the relevant client.  This client spec will be used to
 both filter the files cloned by git and set the directory layout as
 specified in the client (this implies --keep-path style semantics).
 
-git-p4.skipSubmitModTimeCheck
+git-p4.skipSubmitEdit
 
-  git config [--global] git-p4.skipSubmitModTimeCheck false
+  git config [--global] git-p4.skipSubmitEdit false
 
-If true, submit will not check if the p4 change template has been modified.
+Normally, git-p4 invokes an editor after each commit is applied so
+that you can make changes to the submit message.  Setting this
+variable to true will skip the editing step, submitting the change as is.
+
+git-p4.skipSubmitEditCheck
+
+  git config [--global] git-p4.skipSubmitEditCheck false
+
+After the editor is invoked, git-p4 normally makes sure you saved the
+change description, as an indication that you did indeed read it over
+and edit it.  You can quit without saving to abort the submit (or skip
+this change and continue).  Setting this variable to true will cause
+git-p4 not to check if you saved the change description.  This variable
+only matters if git-p4.skipSubmitEdit has not been set to true.
 
 git-p4.preserveUser
 
