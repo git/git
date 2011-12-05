@@ -22,8 +22,6 @@ static size_t cleanup(char *line, size_t len)
  * Remove empty lines from the beginning and end
  * and also trailing spaces from every line.
  *
- * Note that the buffer will not be NUL-terminated.
- *
  * Turn multiple consecutive empty lines between paragraphs
  * into just one empty line.
  *
