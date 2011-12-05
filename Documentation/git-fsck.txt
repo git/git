@@ -10,7 +10,8 @@ SYNOPSIS
 --------
 [verse]
 'git fsck' [--tags] [--root] [--unreachable] [--cache] [--no-reflogs]
-	 [--[no-]full] [--strict] [--verbose] [--lost-found] [<object>*]
+	 [--[no-]full] [--strict] [--verbose] [--lost-found]
+	 [--[no-]progress] [<object>*]
 
 DESCRIPTION
 -----------
@@ -71,6 +72,14 @@ index file, all SHA1 references in .git/refs/*, and all reflogs (unless
 	.git/lost-found/other/, depending on type.  If the object is
 	a blob, the contents are written into the file, rather than
 	its object name.
+
+--progress::
+--no-progress::
+	Progress status is reported on the standard error stream by
+	default when it is attached to a terminal, unless
+	--no-progress or --verbose is specified. --progress forces
+	progress status even if the standard error stream is not
+	directed to a terminal.
 
 It tests SHA1 and general object sanity, and it does full tracking of
 the resulting reachability and everything else. It prints out any
