@@ -351,6 +351,8 @@ extern size_t gitstrlcpy(char *, const char *, size_t);
 #ifdef NO_STRTOUMAX
 #define strtoumax gitstrtoumax
 extern uintmax_t gitstrtoumax(const char *, char **, int);
+#define strtoimax gitstrtoimax
+extern intmax_t gitstrtoimax(const char *, char **, int);
 #endif
 
 #ifdef NO_STRTOK_R
