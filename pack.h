@@ -37,7 +37,8 @@ struct pack_header {
 struct pack_idx_option {
 	unsigned flags;
 	/* flag bits */
-#define WRITE_IDX_VERIFY 01
+#define WRITE_IDX_VERIFY 01 /* verify only, do not write the idx file */
+#define WRITE_IDX_STRICT 02
 
 	uint32_t version;
 	uint32_t off32_limit;

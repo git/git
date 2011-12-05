@@ -1122,8 +1122,10 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 		if (!index_name)
 			die("--verify with no packfile name given");
 		read_idx_option(&opts, index_name);
-		opts.flags |= WRITE_IDX_VERIFY;
+		opts.flags |= WRITE_IDX_VERIFY | WRITE_IDX_STRICT;
 	}
+	if (strict)
+		opts.flags |= WRITE_IDX_STRICT;
 
 	curr_pack = open_pack_file(pack_name);
 	parse_pack_header();
