@@ -106,8 +106,8 @@ of git: "master", "maint", "next", and "pu".
 The "master" branch is meant to contain what are very well tested and
 ready to be used in a production setting.  Every now and then, a "feature
 release" is cut from the tip of this branch and they typically are named
-with three dotted decimal digits.  The last such release was 1.7.7 done on
-Sept 30, 2011. You can expect that the tip of the "master" branch is always
+with three dotted decimal digits.  The last such release was 1.7.8 done on
+Dec 2, 2011. You can expect that the tip of the "master" branch is always
 more stable than any of the released versions.
 
 Whenever a feature release is made, "maint" branch is forked off from
