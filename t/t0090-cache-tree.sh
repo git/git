@@ -70,7 +70,7 @@ test_expect_success 'test-scrap-cache-tree works' '
 	test_no_cache_tree
 '
 
-test_expect_failure 'second commit has cache-tree' '
+test_expect_success 'second commit has cache-tree' '
 	test_commit bar &&
 	test_shallow_cache_tree
 '
