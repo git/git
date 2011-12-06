@@ -306,7 +306,7 @@ static inline unsigned int canon_mode(unsigned int mode)
 }
 
 #define flexible_size(STRUCT,len) ((offsetof(struct STRUCT,name) + (len) + 8) & ~7)
-#define cache_entry_size(len) flexible_size(cache_entry,len)
+#define cache_entry_size(len) (offsetof(struct cache_entry,name) + (len) + 1)
 #define ondisk_cache_entry_size(len) flexible_size(ondisk_cache_entry,len)
 #define ondisk_cache_entry_extended_size(len) flexible_size(ondisk_cache_entry_extended,len)
 
@@ -316,7 +316,6 @@ struct index_state {
 	struct string_list *resolve_undo;
 	struct cache_tree *cache_tree;
 	struct cache_time timestamp;
-	void *alloc;
 	unsigned name_hash_initialized : 1,
 		 initialized : 1;
 	struct hash_table name_hash;
