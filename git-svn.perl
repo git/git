@@ -5389,7 +5389,7 @@ sub apply_diff {
 			               $self->{mergeinfo});
 	}
 	$self->rmdirs if $_rmdir;
-	if (@$mods == 0) {
+	if (@$mods == 0 && !defined($self->{mergeinfo})) {
 		$self->abort_edit;
 	} else {
 		$self->close_edit;
