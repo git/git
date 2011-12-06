@@ -9,7 +9,8 @@ git-commit-tree - Create a new commit object
 SYNOPSIS
 --------
 [verse]
-'git commit-tree' <tree> [(-p <parent commit>)...] < changelog
+'git commit-tree' <tree> [(-p <parent>)...] < changelog
+'git commit-tree' [(-p <parent>)...] [(-m <message>)...] [(-F <file>)...] <tree>
 
 DESCRIPTION
 -----------
@@ -17,7 +18,8 @@ This is usually not what an end user wants to run directly.  See
 linkgit:git-commit[1] instead.
 
 Creates a new commit object based on the provided tree object and
-emits the new commit object id on stdout.
+emits the new commit object id on stdout. The log message is read
+from the standard input, unless `-m` or `-F` options are given.
 
 A commit object may have any number of parents. With exactly one
 parent, it is an ordinary commit. Having more than one parent makes
@@ -39,8 +41,16 @@ OPTIONS
 <tree>::
 	An existing tree object
 
--p <parent commit>::
+-p <parent>::
 	Each '-p' indicates the id of a parent commit object.
+
+-m <message>::
+	A paragraph in the commig log message. This can be given more than
+	once and each <message> becomes its own paragraph.
+
+-F <file>::
+	Read the commit log message from the given file. Use `-` to read
+	from the standard input.
 
 
 Commit Information

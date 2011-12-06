@@ -181,8 +181,41 @@ static inline int single_parent(struct commit *commit)
 
 struct commit_list *reduce_heads(struct commit_list *heads);
 
+struct commit_extra_header {
+	struct commit_extra_header *next;
+	char *key;
+	char *value;
+	size_t len;
+};
+
+extern void append_merge_tag_headers(struct commit_list *parents,
+				     struct commit_extra_header ***tail);
+
 extern int commit_tree(const char *msg, unsigned char *tree,
-		struct commit_list *parents, unsigned char *ret,
-		const char *author);
+		       struct commit_list *parents, unsigned char *ret,
+		       const char *author);
+
+extern int commit_tree_extended(const char *msg, unsigned char *tree,
+				struct commit_list *parents, unsigned char *ret,
+				const char *author,
+				struct commit_extra_header *);
+
+extern struct commit_extra_header *read_commit_extra_headers(struct commit *);
+extern struct commit_extra_header *read_commit_extra_header_lines(const char *buf, size_t len);
+
+extern void free_commit_extra_headers(struct commit_extra_header *extra);
+
+struct merge_remote_desc {
+	struct object *obj; /* the named object, could be a tag */
+	const char *name;
+};
+#define merge_remote_util(commit) ((struct merge_remote_desc *)((commit)->util))
+
+/*
+ * Given "name" from the command line to merge, find the commit object
+ * and return it, while storing merge_remote_desc in its ->util field,
+ * to allow callers to tell if we are told to merge a tag.
+ */
+struct commit *get_merge_parent(const char *name);
 
 #endif /* COMMIT_H */

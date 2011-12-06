@@ -139,6 +139,11 @@ int parse_tag(struct tag *item)
 	return ret;
 }
 
+/*
+ * Look at a signed tag object, and return the offset where
+ * the embedded detached signature begins, or the end of the
+ * data when there is no such signature.
+ */
 size_t parse_signature(const char *buf, unsigned long size)
 {
 	char *eol;
