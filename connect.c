@@ -175,6 +175,15 @@ static void get_host_and_port(char **host, const char **port)
 	}
 }
 
+static void enable_keepalive(int sockfd)
+{
+	int ka = 1;
+
+	if (setsockopt(sockfd, SOL_SOCKET, SO_KEEPALIVE, &ka, sizeof(ka)) < 0)
+		fprintf(stderr, "unable to set SO_KEEPALIVE on socket: %s\n",
+			strerror(errno));
+}
+
 #ifndef NO_IPV6
 
 static const char *ai_name(const struct addrinfo *ai)
@@ -238,6 +247,8 @@ static int git_tcp_connect_sock(char *host, int flags)
 
 	if (sockfd < 0)
 		die("unable to connect to %s:\n%s", host, error_message.buf);
+
+	enable_keepalive(sockfd);
 
 	if (flags & CONNECT_VERBOSE)
 		fprintf(stderr, "done.\n");
@@ -314,6 +325,8 @@ static int git_tcp_connect_sock(char *host, int flags)
 
 	if (sockfd < 0)
 		die("unable to connect a socket (%s)", strerror(saved_errno));
+
+	enable_keepalive(sockfd);
 
 	if (flags & CONNECT_VERBOSE)
 		fprintf(stderr, "done.\n");
