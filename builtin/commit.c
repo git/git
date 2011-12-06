@@ -81,7 +81,8 @@ static const char *template_file;
 static const char *author_message, *author_message_buffer;
 static char *edit_message, *use_message;
 static char *fixup_message, *squash_message;
-static int all, edit_flag, also, interactive, patch_interactive, only, amend, signoff;
+static int all, also, interactive, patch_interactive, only, amend, signoff;
+static int edit_flag = -1; /* unspecified */
 static int quiet, verbose, no_verify, allow_empty, dry_run, renew_authorship;
 static int no_post_rewrite, allow_empty_message;
 static char *untracked_files_arg, *force_date, *ignore_submodule_arg;
@@ -141,7 +142,7 @@ static struct option builtin_commit_options[] = {
 	OPT_BOOLEAN(0, "reset-author", &renew_authorship, "the commit is authored by me now (used with -C-c/--amend)"),
 	OPT_BOOLEAN('s', "signoff", &signoff, "add Signed-off-by:"),
 	OPT_FILENAME('t', "template", &template_file, "use specified template file"),
-	OPT_BOOLEAN('e', "edit", &edit_flag, "force edit of commit"),
+	OPT_BOOL('e', "edit", &edit_flag, "force edit of commit"),
 	OPT_STRING(0, "cleanup", &cleanup_arg, "default", "how to strip spaces and #comments from message"),
 	OPT_BOOLEAN(0, "status", &include_status, "include status in commit message template"),
 	/* end commit message options */
@@ -1020,8 +1021,8 @@ static int parse_and_validate_options(int argc, const char *argv[],
 
 	if (logfile || message.len || use_message || fixup_message)
 		use_editor = 0;
-	if (edit_flag)
-		use_editor = 1;
+	if (0 <= edit_flag)
+		use_editor = edit_flag;
 	if (!use_editor)
 		setenv("GIT_EDITOR", ":", 1);
 
