@@ -19,6 +19,7 @@
 #include "remote.h"
 #include "string-list.h"
 #include "parse-options.h"
+#include "branch.h"
 
 /* Set a default date-time format for git log ("log.date" config variable) */
 static const char *default_date_mode = NULL;
@@ -746,10 +747,24 @@ static void print_signature(void)
 		printf("-- \n%s\n\n", signature);
 }
 
+static void add_branch_description(struct strbuf *buf, const char *branch_name)
+{
+	struct strbuf desc = STRBUF_INIT;
+	if (!branch_name || !*branch_name)
+		return;
+	read_branch_desc(&desc, branch_name);
+	if (desc.len) {
+		strbuf_addch(buf, '\n');
+		strbuf_add(buf, desc.buf, desc.len);
+		strbuf_addch(buf, '\n');
+	}
+}
+
 static void make_cover_letter(struct rev_info *rev, int use_stdout,
 			      int numbered, int numbered_files,
 			      struct commit *origin,
 			      int nr, struct commit **list, struct commit *head,
+			      const char *branch_name,
 			      int quiet)
 {
 	const char *committer;
@@ -807,6 +822,7 @@ static void make_cover_letter(struct rev_info *rev, int use_stdout,
 	pp_user_info(&pp, NULL, &sb, committer, encoding);
 	pp_title_line(&pp, &msg, &sb, encoding, need_8bit_cte);
 	pp_remainder(&pp, &msg, &sb, 0);
+	add_branch_description(&sb, branch_name);
 	printf("%s\n", sb.buf);
 
 	strbuf_release(&sb);
@@ -1006,6 +1022,35 @@ static int cc_callback(const struct option *opt, const char *arg, int unset)
 	return 0;
 }
 
+static char *find_branch_name(struct rev_info *rev)
+{
+	int i, positive = -1;
+	unsigned char branch_sha1[20];
+	struct strbuf buf = STRBUF_INIT;
+	const char *branch;
+
+	for (i = 0; i < rev->cmdline.nr; i++) {
+		if (rev->cmdline.rev[i].flags & UNINTERESTING)
+			continue;
+		if (positive < 0)
+			positive = i;
+		else
+			return NULL;
+	}
+	if (positive < 0)
+		return NULL;
+	strbuf_addf(&buf, "refs/heads/%s", rev->cmdline.rev[positive].name);
+	branch = resolve_ref(buf.buf, branch_sha1, 1, NULL);
+	if (!branch ||
+	    prefixcmp(branch, "refs/heads/") ||
+	    hashcmp(rev->cmdline.rev[positive].item->sha1, branch_sha1))
+		branch = NULL;
+	strbuf_release(&buf);
+	if (branch)
+		return xstrdup(rev->cmdline.rev[positive].name);
+	return NULL;
+}
+
 int cmd_format_patch(int argc, const char **argv, const char *prefix)
 {
 	struct commit *commit;
@@ -1027,6 +1072,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	struct strbuf buf = STRBUF_INIT;
 	int use_patch_format = 0;
 	int quiet = 0;
+	char *branch_name = NULL;
 	const struct option builtin_format_patch_options[] = {
 		{ OPTION_CALLBACK, 'n', "numbered", &numbered, NULL,
 			    "use [PATCH n/m] even with a single patch",
@@ -1217,8 +1263,16 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			 * origin" that prepares what the origin side still
 			 * does not have.
 			 */
+			unsigned char sha1[20];
+			const char *ref;
+
 			rev.pending.objects[0].item->flags |= UNINTERESTING;
 			add_head_to_pending(&rev);
+			ref = resolve_ref("HEAD", sha1, 1, NULL);
+			if (ref && !prefixcmp(ref, "refs/heads/"))
+				branch_name = xstrdup(ref + strlen("refs/heads/"));
+			else
+				branch_name = xstrdup(""); /* no branch */
 		}
 		/*
 		 * Otherwise, it is "format-patch -22 HEAD", and/or
@@ -1234,16 +1288,26 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	rev.show_root_diff = 1;
 
 	if (cover_letter) {
-		/* remember the range */
+		/*
+		 * NEEDSWORK:randomly pick one positive commit to show
+		 * diffstat; this is often the tip and the command
+		 * happens to do the right thing in most cases, but a
+		 * complex command like "--cover-letter a b c ^bottom"
+		 * picks "c" and shows diffstat between bottom..c
+		 * which may not match what the series represents at
+		 * all and totally broken.
+		 */
 		int i;
 		for (i = 0; i < rev.pending.nr; i++) {
 			struct object *o = rev.pending.objects[i].item;
 			if (!(o->flags & UNINTERESTING))
 				head = (struct commit *)o;
 		}
-		/* We can't generate a cover letter without any patches */
+		/* There is nothing to show; it is not an error, though. */
 		if (!head)
 			return 0;
+		if (!branch_name)
+			branch_name = find_branch_name(&rev);
 	}
 
 	if (ignore_if_in_upstream) {
@@ -1294,7 +1358,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		if (thread)
 			gen_message_id(&rev, "cover");
 		make_cover_letter(&rev, use_stdout, numbered, numbered_files,
-				  origin, nr, list, head, quiet);
+				  origin, nr, list, head, branch_name, quiet);
 		total++;
 		start_number--;
 	}
@@ -1366,6 +1430,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			fclose(stdout);
 	}
 	free(list);
+	free(branch_name);
 	string_list_clear(&extra_to, 0);
 	string_list_clear(&extra_cc, 0);
 	string_list_clear(&extra_hdr, 0);

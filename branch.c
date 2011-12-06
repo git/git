@@ -136,6 +136,37 @@ static int setup_tracking(const char *new_ref, const char *orig_ref,
 	return 0;
 }
 
+struct branch_desc_cb {
+	const char *config_name;
+	const char *value;
+};
+
+static int read_branch_desc_cb(const char *var, const char *value, void *cb)
+{
+	struct branch_desc_cb *desc = cb;
+	if (strcmp(desc->config_name, var))
+		return 0;
+	free((char *)desc->value);
+	return git_config_string(&desc->value, var, value);
+}
+
+int read_branch_desc(struct strbuf *buf, const char *branch_name)
+{
+	struct branch_desc_cb cb;
+	struct strbuf name = STRBUF_INIT;
+	strbuf_addf(&name, "branch.%s.description", branch_name);
+	cb.config_name = name.buf;
+	cb.value = NULL;
+	if (git_config(read_branch_desc_cb, &cb) < 0) {
+		strbuf_release(&name);
+		return -1;
+	}
+	if (cb.value)
+		strbuf_addstr(buf, cb.value);
+	strbuf_release(&name);
+	return 0;
+}
+
 int validate_new_branchname(const char *name, struct strbuf *ref,
 			    int force, int attr_only)
 {
