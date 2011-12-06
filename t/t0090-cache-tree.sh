@@ -75,13 +75,13 @@ test_expect_success 'second commit has cache-tree' '
 	test_shallow_cache_tree
 '
 
-test_expect_failure 'reset --hard gives cache-tree' '
+test_expect_success 'reset --hard gives cache-tree' '
 	test-scrap-cache-tree &&
 	git reset --hard &&
 	test_shallow_cache_tree
 '
 
-test_expect_failure 'reset --hard without index gives cache-tree' '
+test_expect_success 'reset --hard without index gives cache-tree' '
 	rm -f .git/index &&
 	git reset --hard &&
 	test_shallow_cache_tree
