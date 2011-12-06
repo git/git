@@ -51,8 +51,11 @@ static struct complete_reflogs *read_complete_reflog(const char *ref)
 	if (reflogs->nr == 0) {
 		unsigned char sha1[20];
 		const char *name = resolve_ref(ref, sha1, 1, NULL);
-		if (name)
+		if (name) {
+			name = xstrdup(name);
 			for_each_reflog_ent(name, read_one_reflog, reflogs);
+			free((char *)name);
+		}
 	}
 	if (reflogs->nr == 0) {
 		int len = strlen(ref);

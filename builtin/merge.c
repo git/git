@@ -413,7 +413,7 @@ static void finish(struct commit *head_commit,
 static void merge_name(const char *remote, struct strbuf *msg)
 {
 	struct commit *remote_head;
-	unsigned char branch_head[20], buf_sha[20];
+	unsigned char branch_head[20];
 	struct strbuf buf = STRBUF_INIT;
 	struct strbuf bname = STRBUF_INIT;
 	const char *ptr;
@@ -477,7 +477,7 @@ static void merge_name(const char *remote, struct strbuf *msg)
 		strbuf_addstr(&truname, "refs/heads/");
 		strbuf_addstr(&truname, remote);
 		strbuf_setlen(&truname, truname.len - len);
-		if (resolve_ref(truname.buf, buf_sha, 1, NULL)) {
+		if (ref_exists(truname.buf)) {
 			strbuf_addf(msg,
 				    "%s\t\tbranch '%s'%s of .\n",
 				    sha1_to_hex(remote_head->object.sha1),
@@ -1091,7 +1091,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 	struct commit *head_commit;
 	struct strbuf buf = STRBUF_INIT;
 	const char *head_arg;
-	int flag, i;
+	int flag, i, ret = 0;
 	int best_cnt = -1, merge_was_ok = 0, automerge_was_ok = 0;
 	struct commit_list *common = NULL;
 	const char *best_strategy = NULL, *wt_strategy = NULL;
@@ -1105,8 +1105,11 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 	 * current branch.
 	 */
 	branch = resolve_ref("HEAD", head_sha1, 0, &flag);
-	if (branch && !prefixcmp(branch, "refs/heads/"))
-		branch += 11;
+	if (branch) {
+		if (!prefixcmp(branch, "refs/heads/"))
+			branch += 11;
+		branch = xstrdup(branch);
+	}
 	if (!branch || is_null_sha1(head_sha1))
 		head_commit = NULL;
 	else
@@ -1132,7 +1135,8 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 			die(_("There is no merge to abort (MERGE_HEAD missing)."));
 
 		/* Invoke 'git reset --merge' */
-		return cmd_reset(nargc, nargv, prefix);
+		ret = cmd_reset(nargc, nargv, prefix);
+		goto done;
 	}
 
 	if (read_cache_unmerged())
@@ -1219,7 +1223,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		read_empty(remote_head->object.sha1, 0);
 		update_ref("initial pull", "HEAD", remote_head->object.sha1,
 			   NULL, 0, DIE_ON_ERR);
-		return 0;
+		goto done;
 	} else {
 		struct strbuf merge_names = STRBUF_INIT;
 
@@ -1308,7 +1312,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		 * but first the most common case of merging one remote.
 		 */
 		finish_up_to_date("Already up-to-date.");
-		return 0;
+		goto done;
 	} else if (allow_fast_forward && !remoteheads->next &&
 			!common->next &&
 			!hashcmp(common->item->object.sha1, head_commit->object.sha1)) {
@@ -1329,16 +1333,20 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 			strbuf_addstr(&msg,
 				" (no commit created; -m option ignored)");
 		commit = remoteheads->item;
-		if (!commit)
-			return 1;
+		if (!commit) {
+			ret = 1;
+			goto done;
+		}
 
 		if (checkout_fast_forward(head_commit->object.sha1,
-					  commit->object.sha1))
-			return 1;
+					  commit->object.sha1)) {
+			ret = 1;
+			goto done;
+		}
 
 		finish(head_commit, commit->object.sha1, msg.buf);
 		drop_save();
-		return 0;
+		goto done;
 	} else if (!remoteheads->next && common->next)
 		;
 		/*
@@ -1356,8 +1364,11 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 			git_committer_info(IDENT_ERROR_ON_NO_NAME);
 			printf(_("Trying really trivial in-index merge...\n"));
 			if (!read_tree_trivial(common->item->object.sha1,
-					head_commit->object.sha1, remoteheads->item->object.sha1))
-				return merge_trivial(head_commit);
+					       head_commit->object.sha1,
+					       remoteheads->item->object.sha1)) {
+				ret = merge_trivial(head_commit);
+				goto done;
+			}
 			printf(_("Nope.\n"));
 		}
 	} else {
@@ -1385,7 +1396,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		}
 		if (up_to_date) {
 			finish_up_to_date("Already up-to-date. Yeeah!");
-			return 0;
+			goto done;
 		}
 	}
 
@@ -1467,9 +1478,11 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 	 * If we have a resulting tree, that means the strategy module
 	 * auto resolved the merge cleanly.
 	 */
-	if (automerge_was_ok)
-		return finish_automerge(head_commit, common, result_tree,
-					wt_strategy);
+	if (automerge_was_ok) {
+		ret = finish_automerge(head_commit, common, result_tree,
+				       wt_strategy);
+		goto done;
+	}
 
 	/*
 	 * Pick the result from the best strategy and have the user fix
@@ -1483,7 +1496,8 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		else
 			fprintf(stderr, _("Merge with strategy %s failed.\n"),
 				use_strategies[0]->name);
-		return 2;
+		ret = 2;
+		goto done;
 	} else if (best_strategy == wt_strategy)
 		; /* We already have its result in the working tree. */
 	else {
@@ -1499,10 +1513,13 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 	else
 		write_merge_state();
 
-	if (merge_was_ok) {
+	if (merge_was_ok)
 		fprintf(stderr, _("Automatic merge went well; "
 			"stopped before committing as requested\n"));
-		return 0;
-	} else
-		return suggest_conflicts(option_renormalize);
+	else
+		ret = suggest_conflicts(option_renormalize);
+
+done:
+	free((char *)branch);
+	return ret;
 }
