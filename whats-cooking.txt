@@ -1,17 +1,22 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Dec 2011, #01; Fri, 2)
-X-master-at: 406da7803217998ff6bf5dc69c55b1613556c2f4
-X-next-at: 56e79320f3d9b044c380dfebf136584aaa17ac5b
+Subject: What's cooking in git.git (Dec 2011, #02; Mon, 5)
+X-master-at: 7e02a6c63a183270b726bb21640059ae16fa48ae
+X-next-at: 9aa1b8aa9a5d12968b637b29c5a1d307f945171d
 
-What's cooking in git.git (Dec 2011, #01; Fri, 2)
+What's cooking in git.git (Dec 2011, #02; Mon, 5)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
-only in 'pu' (proposed updates) while commits prefixed with '+' are in 'next'.
+only in 'pu' (proposed updates) while commits prefixed with '+' are in
+'next'.
 
-Now that 1.7.8 is tagged, I'll start planning to rewind 'next' by kicking
-topics back to 'pu' and/or dropping them, but let's give the new release a
-couple of days of calm.
+The tip of 'next' will be rewound soonish, kicking a handful of topics
+back to 'pu' that are important enough to get them right rather than
+piling "oops, that was a mistake" fix-ups in 'next'.
+
+All of the topics in Stalled section will be purged without prejudice;
+owners of respective topics are free to re-submit after addressing the
+issues raised during the previous reviews and re-ignite the discussion.
 
 Here are the repositories that have my integration branches:
 
@@ -41,37 +46,99 @@ The preformatted documentation in HTML and man format are found in:
 --------------------------------------------------
 [New Topics]
 
-* aw/rebase-i-stop-on-failure-to-amend (2011-11-30) 1 commit
- - rebase -i: interrupt rebase when "commit --amend" failed during "reword"
+* bc/maint-apply-check-no-patch (2011-12-05) 2 commits
+ - builtin/apply.c: report error on failure to recognize input
+ - t/t4131-apply-fake-ancestor.sh: fix broken test
 
-* jc/split-blob (2011-12-01) 6 commits
- . WIP (streaming chunked)
- - chunked-object: fallback checkout codepaths
- - bulk-checkin: support chunked-object encoding
- - bulk-checkin: allow the same data to be multiply hashed
- - new representation types in the packstream
- - varint-in-pack: refactor varint encoding/decoding
- (this branch uses jc/stream-to-pack.)
+Will merge to 'next'.
 
-* jh/fast-import-notes (2011-11-28) 3 commits
- - fast-import: Fix incorrect fanout level when modifying existing notes refs
- - t9301: Add 2nd testcase exposing bugs in fast-import's notes fanout handling
- - t9301: Fix testcase covering up a bug in fast-import's notes fanout handling
+--------------------------------------------------
+[Graduated to "master"]
 
-* ld/p4-labels-branches (2011-11-30) 4 commits
- - git-p4: importing labels should cope with missing owner
- - git-p4: add test for p4 labels
- - git-p4: cope with labels with empty descriptions
- - git-p4: handle p4 branches and labels containing shell chars
+* ab/clang-lints (2011-11-06) 2 commits
+  (merged to 'next' on 2011-11-13 at a573aec)
+ + cast variable in call to free() in builtin/diff.c and submodule.c
+ + apply: get rid of useless x < 0 comparison on a size_t type
 
-Retracted?
+* gh/userdiff-matlab (2011-11-15) 1 commit
+  (merged to 'next' on 2011-11-18 at 10cd275)
+ + Add built-in diff patterns for MATLAB code
 
-* tj/maint-imap-send-remove-unused (2011-11-23) 2 commits
- - Merge branch 'maint' into tj/imap-send-remove-unused
- - imap-send: Remove unused 'use_namespace' variable
+* jc/maint-pack-object-cycle (2011-11-16) 1 commit
+  (merged to 'next' on 2011-11-18 at 3715a81)
+ + pack-object: tolerate broken packs that have duplicated objects
+
+Make the client side more robust against bogus pack stream; the problem
+was discovered by accident while repacking a clone obtained from somewhat
+buggy test server.
+
+* jc/index-pack-reject-dups (2011-11-16) 1 commit
+  (merged to 'next' on 2011-11-18 at 2090221)
+ + receive-pack, fetch-pack: reject bogus pack that records objects twice
+
+And this is the prevention to reject such pack stream in the first place.
+
+* jk/refresh-porcelain-output (2011-11-18) 3 commits
+  (merged to 'next' on 2011-11-18 at 872f25e)
+ + refresh_index: make porcelain output more specific
+ + refresh_index: rename format variables
+ + read-cache: let refresh_cache_ent pass up changed flags
+
+* mf/curl-select-fdset (2011-11-04) 4 commits
+  (merged to 'next' on 2011-11-06 at a49516f)
+ + http: drop "local" member from request struct
+ + http.c: Rely on select instead of tracking whether data was received
+ + http.c: Use timeout suggested by curl instead of fixed 50ms timeout
+ + http.c: Use curl_multi_fdset to select on curl fds instead of just sleeping
+
+Reduces unnecessary waits.
+
+* na/strtoimax (2011-11-05) 3 commits
+  (merged to 'next' on 2011-11-14 at b64e1cb)
+ + Support sizes >=2G in various config options accepting 'g' sizes.
+ + Compatibility: declare strtoimax() under NO_STRTOUMAX
+ + Add strtoimax() compatibility function.
+
+* nd/fsck-progress (2011-11-06) 4 commits
+  (merged to 'next' on 2011-11-13 at 8831811)
+ + fsck: print progress
+ + fsck: avoid reading every object twice
+ + verify_packfile(): check as many object as possible in a pack
+ + fsck: return error code when verify_pack() goes wrong
+
+* nd/maint-ignore-exclude (2011-11-28) 1 commit
+ + checkout,merge: loosen overwriting untracked file check based on info/exclude
+ (this branch is used by nd/ignore-might-be-precious.)
+
+* nd/misc-cleanups (2011-10-27) 6 commits
+  (merged to 'next' on 2011-10-28 at 2527a49)
+ + unpack_object_header_buffer(): clear the size field upon error
+ + tree_entry_interesting: make use of local pointer "item"
+ + tree_entry_interesting(): give meaningful names to return values
+ + read_directory_recursive: reduce one indentation level
+ + get_tree_entry(): do not call find_tree_entry() on an empty tree
+ + tree-walk.c: do not leak internal structure in tree_entry_len()
+
+* nd/prune-progress (2011-11-07) 3 commits
+  (merged to 'next' on 2011-11-13 at c5722ac)
+ + reachable: per-object progress
+ + prune: handle --progress/no-progress
+ + prune: show progress while marking reachable objects
+
+* vr/git-merge-doc (2011-11-21) 1 commit
+ + Show error for 'git merge' with unset merge.defaultToUpstream
+
+* vr/msvc (2011-10-31) 3 commits
+  (merged to 'next' on 2011-11-14 at f46d021)
+ + MSVC: Remove unneeded header stubs
+ + Compile fix for MSVC: Include <io.h>
+ + Compile fix for MSVC: Do not include sys/resources.h
 
 --------------------------------------------------
 [Stalled]
+
+All of the topics in Stalled section will be discarded soonish (see the
+cover).
 
 * hv/submodule-merge-search (2011-10-13) 4 commits
  - submodule.c: make two functions static
@@ -81,20 +148,6 @@ Retracted?
 
 What the topic aims to achieve may make sense, but the implementation
 looked somewhat suboptimal.
-
-* sg/complete-refs (2011-10-21) 9 commits
-  (merged to 'next' on 2011-10-26 at d65e2b4)
- + completion: remove broken dead code from __git_heads() and __git_tags()
- + completion: fast initial completion for config 'remote.*.fetch' value
- + completion: improve ls-remote output filtering in __git_refs_remotes()
- + completion: query only refs/heads/ in __git_refs_remotes()
- + completion: support full refs from remote repositories
- + completion: improve ls-remote output filtering in __git_refs()
- + completion: make refs completion consistent for local and remote repos
- + completion: optimize refs completion
- + completion: document __gitcomp()
-
-Needs an Ack or two from completion folks before going forward.
 
 * sr/transport-helper-fix-rfc (2011-07-19) 2 commits
  - t5800: point out that deleting branches does not work
@@ -161,27 +214,68 @@ The tip commit might be loosening things a bit too much.
 --------------------------------------------------
 [Cooking]
 
+* sg/complete-refs (2011-10-21) 9 commits
+  (merged to 'next' on 2011-10-26 at d65e2b4)
+ + completion: remove broken dead code from __git_heads() and __git_tags()
+ + completion: fast initial completion for config 'remote.*.fetch' value
+ + completion: improve ls-remote output filtering in __git_refs_remotes()
+ + completion: query only refs/heads/ in __git_refs_remotes()
+ + completion: support full refs from remote repositories
+ + completion: improve ls-remote output filtering in __git_refs()
+ + completion: make refs completion consistent for local and remote repos
+ + completion: optimize refs completion
+ + completion: document __gitcomp()
+
+Will merge to 'master.
+
+* aw/rebase-i-stop-on-failure-to-amend (2011-11-30) 1 commit
+ - rebase -i: interrupt rebase when "commit --amend" failed during "reword"
+
+Will merge to 'next'.
+
+* jc/split-blob (2011-12-01) 6 commits
+ . WIP (streaming chunked)
+ - chunked-object: fallback checkout codepaths
+ - bulk-checkin: support chunked-object encoding
+ - bulk-checkin: allow the same data to be multiply hashed
+ - new representation types in the packstream
+ - varint-in-pack: refactor varint encoding/decoding
+ (this branch uses jc/stream-to-pack.)
+
+Not ready.
+
+* jh/fast-import-notes (2011-11-28) 3 commits
+ - fast-import: Fix incorrect fanout level when modifying existing notes refs
+ - t9301: Add 2nd testcase exposing bugs in fast-import's notes fanout handling
+ - t9301: Fix testcase covering up a bug in fast-import's notes fanout handling
+
+Will merge to 'next'.
+
+* ld/p4-labels-branches (2011-11-30) 4 commits
+ - git-p4: importing labels should cope with missing owner
+ - git-p4: add test for p4 labels
+ - git-p4: cope with labels with empty descriptions
+ - git-p4: handle p4 branches and labels containing shell chars
+
+I understand this has been retracted---please correct me otherwise.
+Will discard, expecting a reroll.
+
+* tj/maint-imap-send-remove-unused (2011-11-23) 2 commits
+ - Merge branch 'maint' into tj/imap-send-remove-unused
+ - imap-send: Remove unused 'use_namespace' variable
+
+Will merge to 'next'.
+
 * cn/maint-lf-to-crlf-filter (2011-11-28) 1 commit
  - convert: track state in LF-to-CRLF filter
 
-Candidate for early next cycle.
-
-* nd/maint-ignore-exclude (2011-11-28) 1 commit
- - checkout,merge: loosen overwriting untracked file check based on info/exclude
- (this branch is used by nd/ignore-might-be-precious.)
-
-Candidate for early next cycle.
-
-* vr/git-merge-doc (2011-11-21) 1 commit
- - Show error for 'git merge' with unset merge.defaultToUpstream
-
-Candidate for early next cycle.
+Will merge to 'next' after taking another look.
 
 * jn/branch-move-to-self (2011-11-28) 2 commits
  - Allow checkout -B <current-branch> to update the current branch
  - branch: allow a no-op "branch -M <current-branch> HEAD"
 
-Candidate for early next cycle.
+Will merge to 'next' after taking another look.
 
 * jk/credentials (2011-11-28) 20 commits
  - fixup! 034c066e
@@ -205,13 +299,18 @@ Candidate for early next cycle.
  - t5550: fix typo
  - test-lib: add test_config_global variant
 
+Expecting a reroll?
+
 * nd/ignore-might-be-precious (2011-11-28) 2 commits
  - checkout,merge: disallow overwriting ignored files with --no-overwrite-ignore
  - Merge branch 'nd/maint-ignore-exclude' into nd/ignore-might-be-precious
- (this branch uses nd/maint-ignore-exclude.)
+
+Will merge to 'next' after taking another look.
 
 * jk/upload-archive-use-start-command (2011-11-21) 1 commit
  - upload-archive: use start_command instead of fork
+
+What's the status of this one?
 
 * jk/maint-1.6.2-upload-archive (2011-11-21) 1 commit
  - archive: don't let remote clients get unreachable commits
@@ -221,52 +320,21 @@ Candidate for early next cycle.
  - Merge branch 'jk/maint-1.6.2-upload-archive' into jk/maint-upload-archive
  (this branch uses jk/maint-1.6.2-upload-archive.)
 
-* jk/refresh-porcelain-output (2011-11-18) 3 commits
-  (merged to 'next' on 2011-11-18 at 872f25e)
- + refresh_index: make porcelain output more specific
- + refresh_index: rename format variables
- + read-cache: let refresh_cache_ent pass up changed flags
+Will merge to 'next' after taking another look.
 
-* ab/enable-i18n (2011-11-18) 1 commit
+* ab/enable-i18n (2011-12-05) 2 commits
+ - Makefile: Add missing "sparse object" to gettext target-specific rule
  - i18n: add infrastructure for translating Git with gettext
 
-* gh/userdiff-matlab (2011-11-15) 1 commit
-  (merged to 'next' on 2011-11-18 at 10cd275)
- + Add built-in diff patterns for MATLAB code
+Will merge to 'next' after squashing the two and re-sending to the list
+for review comments.
 
-* jc/maint-pack-object-cycle (2011-11-16) 1 commit
-  (merged to 'next' on 2011-11-18 at 3715a81)
- + pack-object: tolerate broken packs that have duplicated objects
-
-Make the client side more robust against bogus pack stream; the problem
-was discovered by accident while repacking a clone obtained from somewhat
-buggy test server.
-
-* jc/index-pack-reject-dups (2011-11-16) 1 commit
-  (merged to 'next' on 2011-11-18 at 2090221)
- + receive-pack, fetch-pack: reject bogus pack that records objects twice
-
-And this is the prevention to reject such pack stream in the first place.
-
-* nd/resolve-ref (2011-11-13) 2 commits
-  (merged to 'next' on 2011-11-18 at 8e17b34)
+* nd/resolve-ref (2011-12-05) 2 commits
+  (merged to 'next' on 2011-12-05 at cc79e86)
  + Copy resolve_ref() return value for longer use
  + Convert many resolve_ref() calls to read_ref*() and ref_exists()
 
-A fix for an error-reporting codepath that is not a regression, that
-turned into a patch that touches many callsite.
-
-* vr/msvc (2011-10-31) 3 commits
-  (merged to 'next' on 2011-11-14 at f46d021)
- + MSVC: Remove unneeded header stubs
- + Compile fix for MSVC: Include <io.h>
- + Compile fix for MSVC: Do not include sys/resources.h
-
-* na/strtoimax (2011-11-05) 3 commits
-  (merged to 'next' on 2011-11-14 at b64e1cb)
- + Support sizes >=2G in various config options accepting 'g' sizes.
- + Compatibility: declare strtoimax() under NO_STRTOUMAX
- + Add strtoimax() compatibility function.
+Will merge to 'master'.
 
 * jc/signed-commit (2011-11-29) 5 commits
  - gpg-interface: allow use of a custom GPG binary
@@ -276,8 +344,8 @@ turned into a patch that touches many callsite.
  - commit: teach --gpg-sign option
  (this branch uses jc/pull-signed-tag; is tangled with jc/commit-tree-extra.)
 
-Rebased on top of jc/pull-signed-tag topic, after reverting the old one
-out of 'next'.
+Not exactly urgent.
+Will concentrate on getting jc/pull-signed-tag in first.
 
 * jc/pull-signed-tag (2011-11-12) 15 commits
   (merged to 'next' on 2011-11-14 at 25e8838)
@@ -298,8 +366,10 @@ out of 'next'.
  + Split GPG interface into its own helper library
  (this branch is used by jc/commit-tree-extra and jc/signed-commit.)
 
-Further updated to allow "commit --amend" to retain the mergetag
-headers. I think this is ready for the cycle after upcoming 1.7.8.
+Allow pulling/merging a signed tag instead of a branch tip, and record
+the GPG signature in the merge commit for later audit.
+
+Will merge to 'master'.
 
 * jc/request-pull-show-head-4 (2011-11-09) 12 commits
   (merged to 'next' on 2011-11-13 at e473fd2)
@@ -324,27 +394,13 @@ Allow setting "description" for branches and use it to help communications
 between humans in various workflow elements. It also allows requesting for
 a signed tag to be pulled and shows the tag message in the generated message.
 
-* ab/clang-lints (2011-11-06) 2 commits
-  (merged to 'next' on 2011-11-13 at a573aec)
- + cast variable in call to free() in builtin/diff.c and submodule.c
- + apply: get rid of useless x < 0 comparison on a size_t type
+Will merge to 'master'.
 
 * ab/pull-rebase-config (2011-11-07) 1 commit
   (merged to 'next' on 2011-11-13 at 72bb2d5)
  + pull: introduce a pull.rebase option to enable --rebase
 
-* nd/fsck-progress (2011-11-06) 4 commits
-  (merged to 'next' on 2011-11-13 at 8831811)
- + fsck: print progress
- + fsck: avoid reading every object twice
- + verify_packfile(): check as many object as possible in a pack
- + fsck: return error code when verify_pack() goes wrong
-
-* nd/prune-progress (2011-11-07) 3 commits
-  (merged to 'next' on 2011-11-13 at c5722ac)
- + reachable: per-object progress
- + prune: handle --progress/no-progress
- + prune: show progress while marking reachable objects
+Will merge to 'master'.
 
 * jc/stream-to-pack (2011-12-01) 5 commits
  - bulk-checkin: replace fast-import based implementation
@@ -360,6 +416,8 @@ move data from worktree to repository is made aware of streaming, just
 like the checkout codepath that goes the other way, which was done in the
 previous "large file support" topic in the 1.7.7 cycle.
 
+Will merge to 'next'.
+
 * jn/gitweb-side-by-side-diff (2011-10-31) 8 commits
  - gitweb: Add navigation to select side-by-side diff
  - gitweb: Use href(-replay=>1,...) for formats links in "commitdiff"
@@ -371,32 +429,51 @@ previous "large file support" topic in the 1.7.7 cycle.
  - gitweb: Refactor diff body line classification
 
 Replaces a series from Kato Kazuyoshi on the same topic.
-
-* mf/curl-select-fdset (2011-11-04) 4 commits
-  (merged to 'next' on 2011-11-06 at a49516f)
- + http: drop "local" member from request struct
- + http.c: Rely on select instead of tracking whether data was received
- + http.c: Use timeout suggested by curl instead of fixed 50ms timeout
- + http.c: Use curl_multi_fdset to select on curl fds instead of just sleeping
-
-Reduces unnecessary waits.
-
-* nd/misc-cleanups (2011-10-27) 6 commits
-  (merged to 'next' on 2011-10-28 at 2527a49)
- + unpack_object_header_buffer(): clear the size field upon error
- + tree_entry_interesting: make use of local pointer "item"
- + tree_entry_interesting(): give meaningful names to return values
- + read_directory_recursive: reduce one indentation level
- + get_tree_entry(): do not call find_tree_entry() on an empty tree
- + tree-walk.c: do not leak internal structure in tree_entry_len()
-
-These are unquestionably good parts taken out of a larger series, so that
-we can focus more on the other changes in later rounds of review.
+Is this ready for 'next'?
 
 * rs/allocate-cache-entry-individually (2011-10-26) 2 commits
   (merged to 'next' on 2011-10-27 at 2e4acd6)
  + cache.h: put single NUL at end of struct cache_entry
  + read-cache.c: allocate index entries individually
+
+Will merge to 'master'.
+
+* rr/revert-cherry-pick (2011-10-23) 5 commits
+  (merged to 'next' on 2011-10-26 at 27b7496)
+ + revert: simplify communicating command-line arguments
+ + revert: allow mixed pick and revert instructions
+ + revert: make commit subjects in insn sheet optional
+ + revert: simplify getting commit subject in format_todo()
+ + revert: free msg in format_todo()
+
+The internals of "git revert/cherry-pick" has been further refactored to
+serve as the basis for the sequencer.
+
+Is this ready for 'master', or should we eject it to 'pu', expecing a
+re-roll?
+
+* mh/ref-api-2 (2011-11-16) 15 commits
+  (merged to 'next' on 2011-11-16 at 511457f)
+ + refs: loosen over-strict "format" check
+  (merged to 'next' on 2011-10-19 at cc89f0e)
+ + resolve_gitlink_ref_recursive(): change to work with struct ref_cache
+ + Pass a (ref_cache *) to the resolve_gitlink_*() helper functions
+ + resolve_gitlink_ref(): improve docstring
+ + get_ref_dir(): change signature
+ + refs: change signatures of get_packed_refs() and get_loose_refs()
+ + is_dup_ref(): extract function from sort_ref_array()
+ + add_ref(): add docstring
+ + parse_ref_line(): add docstring
+ + is_refname_available(): remove the "quiet" argument
+ + clear_ref_array(): rename from free_ref_array()
+ + refs: rename parameters result -> sha1
+ + refs: rename "refname" variables
+ + struct ref_entry: document name member
+ + cache.h: add comments for git_path() and git_path_submodule()
+ (this branch is tangled with mh/ref-api-3.)
+
+Expecting a re-roll; will eject from 'pu' so that the topic can lose the
+hot-fix at the tip.
 
 * mh/ref-api-3 (2011-11-16) 26 commits
   (merged to 'next' on 2011-11-16 at cc76151)
@@ -430,33 +507,5 @@ we can focus more on the other changes in later rounds of review.
  + cache.h: add comments for git_path() and git_path_submodule()
  (this branch is tangled with mh/ref-api-2.)
 
-* rr/revert-cherry-pick (2011-10-23) 5 commits
-  (merged to 'next' on 2011-10-26 at 27b7496)
- + revert: simplify communicating command-line arguments
- + revert: allow mixed pick and revert instructions
- + revert: make commit subjects in insn sheet optional
- + revert: simplify getting commit subject in format_todo()
- + revert: free msg in format_todo()
-
-The internals of "git revert/cherry-pick" has been further refactored to
-serve as the basis for the sequencer.
-
-* mh/ref-api-2 (2011-11-16) 15 commits
-  (merged to 'next' on 2011-11-16 at 511457f)
- + refs: loosen over-strict "format" check
-  (merged to 'next' on 2011-10-19 at cc89f0e)
- + resolve_gitlink_ref_recursive(): change to work with struct ref_cache
- + Pass a (ref_cache *) to the resolve_gitlink_*() helper functions
- + resolve_gitlink_ref(): improve docstring
- + get_ref_dir(): change signature
- + refs: change signatures of get_packed_refs() and get_loose_refs()
- + is_dup_ref(): extract function from sort_ref_array()
- + add_ref(): add docstring
- + parse_ref_line(): add docstring
- + is_refname_available(): remove the "quiet" argument
- + clear_ref_array(): rename from free_ref_array()
- + refs: rename parameters result -> sha1
- + refs: rename "refname" variables
- + struct ref_entry: document name member
- + cache.h: add comments for git_path() and git_path_submodule()
- (this branch is tangled with mh/ref-api-3.)
+Expecting a re-roll; will eject from 'pu' so that the topioc can lose the
+hot-fix at the tip.
