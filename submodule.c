@@ -148,13 +148,13 @@ int is_submodule_modified(const char *path)
 	cp.no_stdin = 1;
 	cp.out = -1;
 	if (start_command(&cp))
-		die("Could not run git status --porcelain");
+		die("Could not run 'git status --porcelain' in submodule %s", path);
 
 	len = strbuf_read(&buf, cp.out, 1024);
 	close(cp.out);
 
 	if (finish_command(&cp))
-		die("git status --porcelain failed");
+		die("'git status --porcelain' failed in submodule %s", path);
 
 	free(env[0]);
 	free(env[1]);
