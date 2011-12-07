@@ -94,6 +94,46 @@ test_expect_success 'amend commit' '
 	EDITOR=./editor git commit --amend
 '
 
+test_expect_success 'set up editor' '
+	cat >editor <<-\EOF &&
+	#!/bin/sh
+	sed -e "s/unamended/amended/g" <"$1" >"$1-"
+	mv "$1-" "$1"
+	EOF
+	chmod 755 editor
+'
+
+test_expect_success 'amend without launching editor' '
+	echo unamended >expect &&
+	git commit --allow-empty -m "unamended" &&
+	echo needs more bongo >file &&
+	git add file &&
+	EDITOR=./editor git commit --no-edit --amend &&
+	git diff --exit-code HEAD -- file &&
+	git diff-tree -s --format=%s HEAD >msg &&
+	test_cmp expect msg
+'
+
+test_expect_success '--amend --edit' '
+	echo amended >expect &&
+	git commit --allow-empty -m "unamended" &&
+	echo bongo again >file &&
+	git add file &&
+	EDITOR=./editor git commit --edit --amend &&
+	git diff-tree -s --format=%s HEAD >msg &&
+	test_cmp expect msg
+'
+
+test_expect_success '-m --edit' '
+	echo amended >expect &&
+	git commit --allow-empty -m buffer &&
+	echo bongo bongo >file &&
+	git add file &&
+	EDITOR=./editor git commit -m unamended --edit &&
+	git diff-tree -s  --format=%s HEAD >msg &&
+	test_cmp expect msg
+'
+
 test_expect_success '-m and -F do not mix' '
 	echo enough with the bongos >file &&
 	test_must_fail git commit -F msg -m amending .
