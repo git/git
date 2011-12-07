@@ -144,10 +144,6 @@ test_expect_success PERL \
 	git diff >diff2 &&
 	test_cmp diff1 diff2"
 
-test_expect_success \
-	"showing committed revisions" \
-	"git rev-list HEAD >current"
-
 cat >editor <<\EOF
 #!/bin/sh
 sed -e "s/good/bad/g" < "$1" > "$1-"
@@ -168,22 +164,6 @@ test_expect_success \
 	 echo "Another good message." | EDITOR=./editor git commit -a -F - &&
 	 git show -s --pretty=format:"%s" | grep -q good
 	 '
-# We could just check the head sha1, but checking each commit makes it
-# easier to isolate bugs.
-
-cat >expected <<\EOF
-285fcf7ec0d61b14249dfdb4c1e1fe03eaf15ee0
-0b8148b9afce917b87d71199b900466dc8ea8b6e
-43fb8826314939ce79a856face7953557fdca3d1
-eaa04bc3ae0f0b003f7f1d86bf869ec5d73eaf3e
-ee1963b250ee0f02a3fe37be0e4a02bb5af6a1ad
-b49f306003c627361a0304d151a6b4c8b26af6a1
-402702b49136e7587daa9280e91e4bb7cb2179f7
-EOF
-
-test_expect_success \
-    'validate git rev-list output.' \
-    'test_cmp expected current'
 
 test_expect_success 'partial commit that involves removal (1)' '
 
