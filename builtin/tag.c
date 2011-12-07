@@ -268,6 +268,15 @@ static const char tag_template[] =
 	N_("\n"
 	"#\n"
 	"# Write a tag message\n"
+	"# Lines starting with '#' will be ignored.\n"
+	"#\n");
+
+static const char tag_template_nocleanup[] =
+	N_("\n"
+	"#\n"
+	"# Write a tag message\n"
+	"# Lines starting with '#' will be kept; you may remove them"
+	" yourself if you want to.\n"
 	"#\n");
 
 static void set_signingkey(const char *value)
@@ -319,8 +328,18 @@ static int build_tag_object(struct strbuf *buf, int sign, unsigned char *result)
 	return 0;
 }
 
+struct create_tag_options {
+	unsigned int message_given:1;
+	unsigned int sign;
+	enum {
+		CLEANUP_NONE,
+		CLEANUP_SPACE,
+		CLEANUP_ALL
+	} cleanup_mode;
+};
+
 static void create_tag(const unsigned char *object, const char *tag,
-		       struct strbuf *buf, int message, int sign,
+		       struct strbuf *buf, struct create_tag_options *opt,
 		       unsigned char *prev, unsigned char *result)
 {
 	enum object_type type;
@@ -345,7 +364,7 @@ static void create_tag(const unsigned char *object, const char *tag,
 	if (header_len > sizeof(header_buf) - 1)
 		die(_("tag header too big."));
 
-	if (!message) {
+	if (!opt->message_given) {
 		int fd;
 
 		/* write the template message before editing: */
@@ -356,8 +375,12 @@ static void create_tag(const unsigned char *object, const char *tag,
 
 		if (!is_null_sha1(prev))
 			write_tag_body(fd, prev);
+		else if (opt->cleanup_mode == CLEANUP_ALL)
+			write_or_die(fd, _(tag_template),
+					strlen(_(tag_template)));
 		else
-			write_or_die(fd, _(tag_template), strlen(_(tag_template)));
+			write_or_die(fd, _(tag_template_nocleanup),
+					strlen(_(tag_template_nocleanup)));
 		close(fd);
 
 		if (launch_editor(path, buf, NULL)) {
@@ -367,14 +390,15 @@ static void create_tag(const unsigned char *object, const char *tag,
 		}
 	}
 
-	stripspace(buf, 1);
+	if (opt->cleanup_mode != CLEANUP_NONE)
+		stripspace(buf, opt->cleanup_mode == CLEANUP_ALL);
 
-	if (!message && !buf->len)
+	if (!opt->message_given && !buf->len)
 		die(_("no tag message?"));
 
 	strbuf_insert(buf, 0, header_buf, header_len);
 
-	if (build_tag_object(buf, sign, result) < 0) {
+	if (build_tag_object(buf, opt->sign, result) < 0) {
 		if (path)
 			fprintf(stderr, _("The tag message has been left in %s\n"),
 				path);
@@ -422,9 +446,10 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 	unsigned char object[20], prev[20];
 	const char *object_ref, *tag;
 	struct ref_lock *lock;
-
-	int annotate = 0, sign = 0, force = 0, lines = -1,
-		list = 0, delete = 0, verify = 0;
+	struct create_tag_options opt;
+	char *cleanup_arg = NULL;
+	int annotate = 0, force = 0, lines = -1, list = 0,
+		delete = 0, verify = 0;
 	const char *msgfile = NULL, *keyid = NULL;
 	struct msg_arg msg = { 0, STRBUF_INIT };
 	struct commit_list *with_commit = NULL;
@@ -442,7 +467,9 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 		OPT_CALLBACK('m', "message", &msg, "message",
 			     "tag message", parse_msg_arg),
 		OPT_FILENAME('F', "file", &msgfile, "read message from file"),
-		OPT_BOOLEAN('s', "sign", &sign, "annotated and GPG-signed tag"),
+		OPT_BOOLEAN('s', "sign", &opt.sign, "annotated and GPG-signed tag"),
+		OPT_STRING(0, "cleanup", &cleanup_arg, "mode",
+			"how to strip spaces and #comments from message"),
 		OPT_STRING('u', "local-user", &keyid, "key-id",
 					"use another key to sign the tag"),
 		OPT__FORCE(&force, "replace the tag if exists"),
@@ -459,13 +486,15 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 
 	git_config(git_tag_config, NULL);
 
+	memset(&opt, 0, sizeof(opt));
+
 	argc = parse_options(argc, argv, prefix, options, git_tag_usage, 0);
 
 	if (keyid) {
-		sign = 1;
+		opt.sign = 1;
 		set_signingkey(keyid);
 	}
-	if (sign)
+	if (opt.sign)
 		annotate = 1;
 	if (argc == 0 && !(delete || verify))
 		list = 1;
@@ -523,9 +552,19 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 	else if (!force)
 		die(_("tag '%s' already exists"), tag);
 
+	opt.message_given = msg.given || msgfile;
+
+	if (!cleanup_arg || !strcmp(cleanup_arg, "strip"))
+		opt.cleanup_mode = CLEANUP_ALL;
+	else if (!strcmp(cleanup_arg, "verbatim"))
+		opt.cleanup_mode = CLEANUP_NONE;
+	else if (!strcmp(cleanup_arg, "whitespace"))
+		opt.cleanup_mode = CLEANUP_SPACE;
+	else
+		die(_("Invalid cleanup mode %s"), cleanup_arg);
+
 	if (annotate)
-		create_tag(object, tag, &buf, msg.given || msgfile,
-			   sign, prev, object);
+		create_tag(object, tag, &buf, &opt, prev, object);
 
 	lock = lock_any_ref_for_update(ref.buf, prev, 0);
 	if (!lock)
