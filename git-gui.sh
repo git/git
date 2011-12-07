@@ -729,7 +729,10 @@ if {[is_Windows]} {
 		gitlogo put gray26  -to  5 15 11 16
 		gitlogo redither
 
-		wm iconphoto . -default gitlogo
+		image create photo gitlogo32 -width 32 -height 32
+		gitlogo32 copy gitlogo -zoom 2 2
+
+		wm iconphoto . -default gitlogo gitlogo32
 	}
 }
 
