@@ -60,7 +60,7 @@ test_expect_success \
 
 test_expect_success \
 	"next commit" \
-	"echo 'bongo bongo bongo' >file \
+	"echo 'bongo bongo bongo' >file && \
 	 git commit -m next -a"
 
 test_expect_success \
@@ -172,11 +172,12 @@ test_expect_success \
 # easier to isolate bugs.
 
 cat >expected <<\EOF
-72c0dc9855b0c9dadcbfd5a31cab072e0cb774ca
-9b88fc14ce6b32e3d9ee021531a54f18a5cf38a2
-3536bbb352c3a1ef9a420f5b4242d48578b92aa7
-d381ac431806e53f3dd7ac2f1ae0534f36d738b9
-4fd44095ad6334f3ef72e4c5ec8ddf108174b54a
+285fcf7ec0d61b14249dfdb4c1e1fe03eaf15ee0
+0b8148b9afce917b87d71199b900466dc8ea8b6e
+43fb8826314939ce79a856face7953557fdca3d1
+eaa04bc3ae0f0b003f7f1d86bf869ec5d73eaf3e
+ee1963b250ee0f02a3fe37be0e4a02bb5af6a1ad
+b49f306003c627361a0304d151a6b4c8b26af6a1
 402702b49136e7587daa9280e91e4bb7cb2179f7
 EOF
 
