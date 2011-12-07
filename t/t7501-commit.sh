@@ -8,39 +8,39 @@
 
 test_description='git commit'
 . ./test-lib.sh
+. "$TEST_DIRECTORY/diff-lib.sh"
+
+author='The Real Author <someguy@his.email.org>'
 
 test_tick
 
-test_expect_success \
-	"initial status" \
-	"echo 'bongo bongo' >file &&
-	 git add file"
-
-test_expect_success "Constructing initial commit" '
+test_expect_success 'initial status' '
+	echo bongo bongo >file &&
+	git add file &&
 	git status >actual &&
 	test_i18ngrep "Initial commit" actual
 '
 
-test_expect_success \
-	"fail initial amend" \
-	"test_must_fail git commit --amend"
+test_expect_success 'fail initial amend' '
+	test_must_fail git commit --amend
+'
 
-test_expect_success \
-	"initial commit" \
-	"git commit -m initial"
+test_expect_success 'setup: initial commit' '
+	git commit -m initial
+'
 
-test_expect_success \
-	"invalid options 1" \
-	"test_must_fail git commit -m foo -m bar -F file"
+test_expect_success '-m and -F do not mix' '
+	test_must_fail git commit -m foo -m bar -F file
+'
 
-test_expect_success \
-	"invalid options 2" \
-	"test_must_fail git commit -C HEAD -m illegal"
+test_expect_success '-m and -C do not mix' '
+	test_must_fail git commit -C HEAD -m illegal
+'
 
-test_expect_success \
-	"using paths with -a" \
-	"echo King of the bongo >file &&
-	test_must_fail git commit -m foo -a file"
+test_expect_success 'paths and -a do not mix' '
+	echo King of the bongo >file &&
+	test_must_fail git commit -m foo -a file
+'
 
 test_expect_success PERL 'can use paths with --interactive' '
 	echo bong-o-bong >file &&
@@ -50,120 +50,123 @@ test_expect_success PERL 'can use paths with --interactive' '
 	git reset --hard HEAD^
 '
 
-test_expect_success \
-	"using invalid commit with -C" \
-	"test_must_fail git commit -C bogus"
+test_expect_success 'using invalid commit with -C' '
+	test_must_fail git commit -C bogus
+'
 
-test_expect_success \
-	"testing nothing to commit" \
-	"test_must_fail git commit -m initial"
+test_expect_success 'nothing to commit' '
+	test_must_fail git commit -m initial
+'
 
-test_expect_success \
-	"next commit" \
-	"echo 'bongo bongo bongo' >file && \
-	 git commit -m next -a"
+test_expect_success 'setup: non-initial commit' '
+	echo bongo bongo bongo >file &&
+	git commit -m next -a
+'
 
-test_expect_success \
-	"commit message from non-existing file" \
-	"echo 'more bongo: bongo bongo bongo bongo' >file && \
-	 test_must_fail git commit -F gah -a"
+test_expect_success 'commit message from non-existing file' '
+	echo more bongo: bongo bongo bongo bongo >file &&
+	test_must_fail git commit -F gah -a
+'
 
-# Empty except stray tabs and spaces on a few lines.
-sed -e 's/@$//' >msg <<EOF
-		@
+test_expect_success 'empty commit message' '
+	# Empty except stray tabs and spaces on a few lines.
+	sed -e "s/@//g" >msg <<-\EOF &&
+		@		@
+		@@
+		@  @
+		@Signed-off-by: hula@
+	EOF
+	test_must_fail git commit -F msg -a
+'
 
-  @
-Signed-off-by: hula
-EOF
-test_expect_success \
-	"empty commit message" \
-	"test_must_fail git commit -F msg -a"
+test_expect_success 'setup: commit message from file' '
+	echo this is the commit message, coming from a file >msg &&
+	git commit -F msg -a
+'
 
-test_expect_success \
-	"commit message from file" \
-	"echo 'this is the commit message, coming from a file' >msg && \
-	 git commit -F msg -a"
+test_expect_success 'amend commit' '
+	cat >editor <<-\EOF &&
+	#!/bin/sh
+	sed -e "s/a file/an amend commit/g" < "$1" > "$1-"
+	mv "$1-" "$1"
+	EOF
+	chmod 755 editor &&
+	EDITOR=./editor git commit --amend
+'
 
-cat >editor <<\EOF
-#!/bin/sh
-sed -e "s/a file/an amend commit/g" < "$1" > "$1-"
-mv "$1-" "$1"
-EOF
-chmod 755 editor
+test_expect_success '-m and -F do not mix' '
+	echo enough with the bongos >file &&
+	test_must_fail git commit -F msg -m amending .
+'
 
-test_expect_success \
-	"amend commit" \
-	"EDITOR=./editor git commit --amend"
+test_expect_success 'using message from other commit' '
+	git commit -C HEAD^ .
+'
 
-test_expect_success \
-	"passing -m and -F" \
-	"echo 'enough with the bongos' >file && \
-	 test_must_fail git commit -F msg -m amending ."
+test_expect_success 'editing message from other commit' '
+	cat >editor <<-\EOF &&
+	#!/bin/sh
+	sed -e "s/amend/older/g"  < "$1" > "$1-"
+	mv "$1-" "$1"
+	EOF
+	chmod 755 editor &&
+	echo hula hula >file &&
+	EDITOR=./editor git commit -c HEAD^ -a
+'
 
-test_expect_success \
-	"using message from other commit" \
-	"git commit -C HEAD^ ."
+test_expect_success 'message from stdin' '
+	echo silly new contents >file &&
+	echo commit message from stdin |
+	git commit -F - -a
+'
 
-cat >editor <<\EOF
-#!/bin/sh
-sed -e "s/amend/older/g"  < "$1" > "$1-"
-mv "$1-" "$1"
-EOF
-chmod 755 editor
+test_expect_success 'overriding author from command line' '
+	echo gak >file &&
+	git commit -m author \
+		--author "Rubber Duck <rduck@convoy.org>" -a >output 2>&1 &&
+	grep Rubber.Duck output
+'
 
-test_expect_success \
-	"editing message from other commit" \
-	"echo 'hula hula' >file && \
-	 EDITOR=./editor git commit -c HEAD^ -a"
+test_expect_success PERL 'interactive add' '
+	echo 7 |
+	git commit --interactive |
+	grep "What now"
+'
 
-test_expect_success \
-	"message from stdin" \
-	"echo 'silly new contents' >file && \
-	 echo commit message from stdin | git commit -F - -a"
-
-test_expect_success \
-	"overriding author from command line" \
-	"echo 'gak' >file && \
-	 git commit -m 'author' --author 'Rubber Duck <rduck@convoy.org>' -a >output 2>&1"
-
-test_expect_success \
-	"commit --author output mentions author" \
-	"grep Rubber.Duck output"
-
-test_expect_success PERL \
-	"interactive add" \
-	"echo 7 | git commit --interactive | grep 'What now'"
-
-test_expect_success PERL \
-	"commit --interactive doesn't change index if editor aborts" \
-	"echo zoo >file &&
+test_expect_success PERL "commit --interactive doesn't change index if editor aborts" '
+	echo zoo >file &&
 	test_must_fail git diff --exit-code >diff1 &&
-	(echo u ; echo '*' ; echo q) |
-	(EDITOR=: && export EDITOR &&
-	 test_must_fail git commit --interactive) &&
+	(echo u ; echo "*" ; echo q) |
+	(
+		EDITOR=: &&
+		export EDITOR &&
+		test_must_fail git commit --interactive
+	) &&
 	git diff >diff2 &&
-	test_cmp diff1 diff2"
+	compare_diff_patch diff1 diff2
+'
 
-cat >editor <<\EOF
-#!/bin/sh
-sed -e "s/good/bad/g" < "$1" > "$1-"
-mv "$1-" "$1"
-EOF
-chmod 755 editor
+test_expect_success 'editor not invoked if -F is given' '
+	cat >editor <<-\EOF &&
+	#!/bin/sh
+	sed -e s/good/bad/g <"$1" >"$1-"
+	mv "$1-" "$1"
+	EOF
+	chmod 755 editor &&
 
-cat >msg <<EOF
-A good commit message.
-EOF
+	echo A good commit message. >msg &&
+	echo moo >file &&
 
-test_expect_success \
-	'editor not invoked if -F is given' '
-	 echo "moo" >file &&
-	 EDITOR=./editor git commit -a -F msg &&
-	 git show -s --pretty=format:"%s" | grep -q good &&
-	 echo "quack" >file &&
-	 echo "Another good message." | EDITOR=./editor git commit -a -F - &&
-	 git show -s --pretty=format:"%s" | grep -q good
-	 '
+	EDITOR=./editor git commit -a -F msg &&
+	git show -s --pretty=format:%s >subject &&
+	grep -q good subject &&
+
+	echo quack >file &&
+	echo Another good message. |
+	EDITOR=./editor git commit -a -F - &&
+	git show -s --pretty=format:%s >subject &&
+	grep -q good subject
+'
 
 test_expect_success 'partial commit that involves removal (1)' '
 
@@ -197,7 +200,6 @@ test_expect_success 'partial commit that involves removal (3)' '
 
 '
 
-author="The Real Author <someguy@his.email.org>"
 test_expect_success 'amend commit to fix author' '
 
 	oldtick=$GIT_AUTHOR_DATE &&
@@ -326,7 +328,6 @@ test_expect_success 'multiple -m' '
 
 '
 
-author="The Real Author <someguy@his.email.org>"
 test_expect_success 'amend commit to fix author' '
 
 	oldtick=$GIT_AUTHOR_DATE &&
@@ -353,15 +354,8 @@ test_expect_success 'git commit <file> with dirty index' '
 
 test_expect_success 'same tree (single parent)' '
 
-	git reset --hard
-
-	if git commit -m empty
-	then
-		echo oops -- should have complained
-		false
-	else
-		: happy
-	fi
+	git reset --hard &&
+	test_must_fail git commit -m empty
 
 '
 
