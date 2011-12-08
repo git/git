@@ -172,8 +172,8 @@ test_expect_success 'fail when upstream arg is missing and not configured' '
 
 test_expect_success 'default to @{upstream} when upstream arg is missing' '
 	git checkout -b default topic &&
-	git config branch.default.remote .
-	git config branch.default.merge refs/heads/master
+	git config branch.default.remote . &&
+	git config branch.default.merge refs/heads/master &&
 	git rebase &&
 	test "$(git rev-parse default~1)" = "$(git rev-parse master)"
 '
