@@ -1705,7 +1705,7 @@ char *getpass(const char *prompt)
 	return strbuf_detach(&buf, NULL);
 }
 
-pid_t waitpid(pid_t pid, int *status, unsigned options)
+pid_t waitpid(pid_t pid, int *status, int options)
 {
 	HANDLE h = OpenProcess(SYNCHRONIZE | PROCESS_QUERY_INFORMATION,
 	    FALSE, pid);
