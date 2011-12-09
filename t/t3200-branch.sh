@@ -115,6 +115,22 @@ test_expect_success 'git branch -M baz bam should succeed when baz is checked ou
 	git branch -M baz bam
 '
 
+test_expect_success 'git branch -M master should work when master is checked out' '
+	git checkout master &&
+	git branch -M master
+'
+
+test_expect_success 'git branch -M master master should work when master is checked out' '
+	git checkout master &&
+	git branch -M master master
+'
+
+test_expect_success 'git branch -M master2 master2 should work when master is checked out' '
+	git checkout master &&
+	git branch master2 &&
+	git branch -M master2 master2
+'
+
 test_expect_success 'git branch -v -d t should work' '
 	git branch t &&
 	test_path_is_file .git/refs/heads/t &&

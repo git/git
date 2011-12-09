@@ -570,6 +570,7 @@ static void rename_branch(const char *oldname, const char *newname, int force)
 	struct strbuf oldref = STRBUF_INIT, newref = STRBUF_INIT, logmsg = STRBUF_INIT;
 	struct strbuf oldsection = STRBUF_INIT, newsection = STRBUF_INIT;
 	int recovery = 0;
+	int clobber_head_ok;
 
 	if (!oldname)
 		die(_("cannot rename the current branch while not on any."));
@@ -585,7 +586,13 @@ static void rename_branch(const char *oldname, const char *newname, int force)
 			die(_("Invalid branch name: '%s'"), oldname);
 	}
 
-	validate_new_branchname(newname, &newref, force, 0);
+	/*
+	 * A command like "git branch -M currentbranch currentbranch" cannot
+	 * cause the worktree to become inconsistent with HEAD, so allow it.
+	 */
+	clobber_head_ok = !strcmp(oldname, newname);
+
+	validate_new_branchname(newname, &newref, force, clobber_head_ok);
 
 	strbuf_addf(&logmsg, "Branch: renamed %s to %s",
 		 oldref.buf, newref.buf);
@@ -784,7 +791,7 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 		if (kinds != REF_LOCAL_BRANCH)
 			die(_("-a and -r options to 'git branch' do not make sense with a branch name"));
 		create_branch(head, argv[0], (argc == 2) ? argv[1] : head,
-			      force_create, reflog, track);
+			      force_create, reflog, 0, track);
 	} else
 		usage_with_options(builtin_branch_usage, options);
 
