@@ -99,6 +99,13 @@ OPTIONS
 	Implies `-a` if none of `-a`, `-s`, or `-u <key-id>`
 	is given.
 
+--cleanup=<mode>::
+	This option sets how the tag message is cleaned up.
+	The  '<mode>' can be one of 'verbatim', 'whitespace' and 'strip'.  The
+	'strip' mode is default. The 'verbatim' mode does not change message at
+	all, 'whitespace' removes just leading/trailing whitespace lines and
+	'strip' removes both whitespace and commentary.
+
 <tagname>::
 	The name of the tag to create, delete, or describe.
 	The new tag name must pass all checks defined by
