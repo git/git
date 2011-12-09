@@ -464,6 +464,35 @@ proc _which {what args} {
 	return {}
 }
 
+# Test a file for a hashbang to identify executable scripts on Windows.
+proc is_shellscript {filename} {
+	if {![file exists $filename]} {return 0}
+	set f [open $filename r]
+	fconfigure $f -encoding binary
+	set magic [read $f 2]
+	close $f
+	return [expr {$magic eq "#!"}]
+}
+
+# Run a command connected via pipes on stdout.
+# This is for use with textconv filters and uses sh -c "..." to allow it to
+# contain a command with arguments. On windows we must check for shell
+# scripts specifically otherwise just call the filter command.
+proc open_cmd_pipe {cmd path} {
+	global env
+	if {![file executable [shellpath]]} {
+		set exe [auto_execok [lindex $cmd 0]]
+		if {[is_shellscript [lindex $exe 0]]} {
+			set run [linsert [auto_execok sh] end -c "$cmd \"\$0\"" $path]
+		} else {
+			set run [concat $exe [lrange $cmd 1 end] $path]
+		}
+	} else {
+		set run [list [shellpath] -c "$cmd \"\$0\"" $path]
+	}
+	return [open |$run r]
+}
+
 proc _lappend_nice {cmd_var} {
 	global _nice
 	upvar $cmd_var cmd

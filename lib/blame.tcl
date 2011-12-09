@@ -476,14 +476,7 @@ method _load {jump} {
 	}
 	if {$commit eq {}} {
 		if {$do_textconv ne 0} {
-			# Run textconv with sh -c "..." to allow it to
-			# contain command + arguments. On windows, just
-			# call the filter command.
-			if {![file executable [shellpath]]} {
-				set fd [open |[linsert $textconv end $path] r]
-			} else {
-				set fd [open |[list [shellpath] -c "$textconv \"\$0\"" $path] r]
-			}
+			set fd [open_cmd_pipe $textconv $path]
 		} else {
 			set fd [open $path r]
 		}
@@ -575,7 +568,11 @@ method _read_file {fd jump} {
 	foreach i $w_columns {$i conf -state disabled}
 
 	if {[eof $fd]} {
-		close $fd
+		fconfigure $fd -blocking 1; # enable error reporting on close
+		if {[catch {close $fd} err]} {
+			tk_messageBox -icon error -title [mc Error] \
+				-message $err
+		}
 
 		# If we don't force Tk to update the widgets *right now*
 		# none of our jump commands will cause a change in the UI.
@@ -1065,7 +1062,7 @@ method _gitkcommit {} {
 		set radius [get_config gui.blamehistoryctx]
 		set cmdline [list --select-commit=$cmit]
 
-                if {$radius > 0} {
+		if {$radius > 0} {
 			set author_time {}
 			set committer_time {}
 
@@ -1173,7 +1170,7 @@ method _read_diff_load_commit {fd cparent new_path tline} {
 	}
 
 	if {[eof $fd]} {
-		close $fd;
+		close $fd
 		set current_fd {}
 
 		_load_new_commit $this  \
