@@ -288,7 +288,7 @@ static int checkout_paths(struct tree *source_tree, const char **pathspec,
 	    commit_locked_index(lock_file))
 		die(_("unable to write new index file"));
 
-	resolve_ref("HEAD", rev, 0, &flag);
+	read_ref_full("HEAD", rev, 0, &flag);
 	head = lookup_commit_reference_gently(rev, 1);
 
 	errs |= post_checkout_hook(head, head, 0);
@@ -699,7 +699,9 @@ static int switch_branches(struct checkout_opts *opts, struct branch_info *new)
 	unsigned char rev[20];
 	int flag;
 	memset(&old, 0, sizeof(old));
-	old.path = xstrdup(resolve_ref("HEAD", rev, 0, &flag));
+	old.path = resolve_ref("HEAD", rev, 0, &flag);
+	if (old.path)
+		old.path = xstrdup(old.path);
 	old.commit = lookup_commit_reference_gently(rev, 1);
 	if (!(flag & REF_ISSYMREF)) {
 		free((char *)old.path);
@@ -866,7 +868,7 @@ static int parse_branchname_arg(int argc, const char **argv,
 	setup_branch_path(new);
 
 	if (!check_refname_format(new->path, 0) &&
-	    resolve_ref(new->path, branch_rev, 1, NULL))
+	    !read_ref(new->path, branch_rev))
 		hashcpy(rev, branch_rev);
 	else
 		new->path = NULL; /* not an existing branch */

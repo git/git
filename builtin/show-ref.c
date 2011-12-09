@@ -225,7 +225,7 @@ int cmd_show_ref(int argc, const char **argv, const char *prefix)
 			unsigned char sha1[20];
 
 			if (!prefixcmp(*pattern, "refs/") &&
-			    resolve_ref(*pattern, sha1, 1, NULL)) {
+			    !read_ref(*pattern, sha1)) {
 				if (!quiet)
 					show_one(*pattern, sha1);
 			}
