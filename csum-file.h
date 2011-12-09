@@ -17,6 +17,15 @@ struct sha1file {
 	unsigned char buffer[8192];
 };
 
+/* Checkpoint */
+struct sha1file_checkpoint {
+	off_t offset;
+	git_SHA_CTX ctx;
+};
+
+extern void sha1file_checkpoint(struct sha1file *, struct sha1file_checkpoint *);
+extern int sha1file_truncate(struct sha1file *, struct sha1file_checkpoint *);
+
 /* sha1close flags */
 #define CSUM_CLOSE	1
 #define CSUM_FSYNC	2
