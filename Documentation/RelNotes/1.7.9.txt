@@ -16,7 +16,33 @@ Updates since v1.7.8
  * The set of built-in function-header patterns for various languages
    knows MATLAB.
 
-May also contain documentation updates and code clean-ups.
+ * "git pull" can be used to fetch and merge an annotated/signed tag,
+   instead of the tip of a topic branch. The GPG signature from the
+   signed tag is recorded in the resulting merge commit for later
+   auditing.
+
+ * "git branch --edit-description" can be used to add descriptive text
+   to explain what a topic branch is about.
+
+ * "git fmt-merge-msg" learned to take the branch description into
+   account when preparing a merge summary that "git merge" records
+   when merging a local branch.
+
+ * "git request-pull" has been updated to convey more information
+   useful for integrators to decide if a topic is worth merging and
+   what is pulled is indeed what the requestor asked to pull,
+   including:
+
+   - the tip of the branch being requested to be merged;
+   - the branch description describing what the topic is about;
+   - the contents of the annotated tag, when requesting to pull a tag.
+
+ * "git pull" learned to notice 'pull.rebase' configuration variable,
+   which serves as a global fallback for setting 'branch.<name>.rebase'
+   configuration variable per branch.
+
+
+Also contains minor documentation updates and code clean-ups.
 
 
 Fixes since v1.7.8
@@ -25,3 +51,12 @@ Fixes since v1.7.8
  * In some codepaths (notably, checkout and merge), the ignore patterns
    recorded in $GIT_DIR/info/exclude were not honored. They now are.
    (merge fc001b5 nd/maint-ignore-exclude later to maint).
+
+
+--
+exec >/var/tmp/1
+O=v1.7.8-162-gd2c7807
+echo O=$(git describe master)
+git log --first-parent --oneline --reverse ^$O master
+echo
+git shortlog --no-merges ^$O ^maint master
