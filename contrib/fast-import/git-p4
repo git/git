@@ -1116,6 +1116,10 @@ class P4Submit(Command, P4UserMap):
         print "Perforce checkout for depot path %s located at %s" % (self.depotPath, self.clientPath)
         self.oldWorkingDirectory = os.getcwd()
 
+        # ensure the clientPath exists
+        if not os.path.exists(self.clientPath):
+            os.makedirs(self.clientPath)
+
         chdir(self.clientPath)
         print "Synchronizing p4 checkout..."
         p4_sync("...")
