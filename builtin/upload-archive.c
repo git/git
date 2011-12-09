@@ -6,6 +6,7 @@
 #include "archive.h"
 #include "pkt-line.h"
 #include "sideband.h"
+#include "run-command.h"
 
 static const char upload_archive_usage[] =
 	"git upload-archive <repo>";
@@ -13,12 +14,9 @@ static const char upload_archive_usage[] =
 static const char deadchild[] =
 "git upload-archive: archiver died with error";
 
-static const char lostchild[] =
-"git upload-archive: archiver process was lost";
-
 #define MAX_ARGS (64)
 
-static int run_upload_archive(int argc, const char **argv, const char *prefix)
+int cmd_upload_archive_writer(int argc, const char **argv, const char *prefix)
 {
 	const char *sent_argv[MAX_ARGS];
 	const char *arg_cmd = "argument ";
@@ -96,8 +94,8 @@ static ssize_t process_input(int child_fd, int band)
 
 int cmd_upload_archive(int argc, const char **argv, const char *prefix)
 {
-	pid_t writer;
-	int fd1[2], fd2[2];
+	struct child_process writer = { argv };
+
 	/*
 	 * Set up sideband subprocess.
 	 *
@@ -105,39 +103,24 @@ int cmd_upload_archive(int argc, const char **argv, const char *prefix)
 	 * multiplexed out to our fd#1.  If the child dies, we tell the other
 	 * end over channel #3.
 	 */
-	if (pipe(fd1) < 0 || pipe(fd2) < 0) {
+	argv[0] = "upload-archive--writer";
+	writer.out = writer.err = -1;
+	writer.git_cmd = 1;
+	if (start_command(&writer)) {
 		int err = errno;
-		packet_write(1, "NACK pipe failed on the remote side\n");
+		packet_write(1, "NACK unable to spawn subprocess\n");
 		die("upload-archive: %s", strerror(err));
 	}
-	writer = fork();
-	if (writer < 0) {
-		int err = errno;
-		packet_write(1, "NACK fork failed on the remote side\n");
-		die("upload-archive: %s", strerror(err));
-	}
-	if (!writer) {
-		/* child - connect fd#1 and fd#2 to the pipe */
-		dup2(fd1[1], 1);
-		dup2(fd2[1], 2);
-		close(fd1[1]); close(fd2[1]);
-		close(fd1[0]); close(fd2[0]); /* we do not read from pipe */
 
-		exit(run_upload_archive(argc, argv, prefix));
-	}
-
-	/* parent - read from child, multiplex and send out to fd#1 */
-	close(fd1[1]); close(fd2[1]); /* we do not write to pipe */
 	packet_write(1, "ACK\n");
 	packet_flush(1);
 
 	while (1) {
 		struct pollfd pfd[2];
-		int status;
 
-		pfd[0].fd = fd1[0];
+		pfd[0].fd = writer.out;
 		pfd[0].events = POLLIN;
-		pfd[1].fd = fd2[0];
+		pfd[1].fd = writer.err;
 		pfd[1].events = POLLIN;
 		if (poll(pfd, 2, -1) < 0) {
 			if (errno != EINTR) {
@@ -156,9 +139,7 @@ int cmd_upload_archive(int argc, const char **argv, const char *prefix)
 			if (process_input(pfd[0].fd, 1))
 				continue;
 
-		if (waitpid(writer, &status, 0) < 0)
-			error_clnt("%s", lostchild);
-		else if (!WIFEXITED(status) || WEXITSTATUS(status) > 0)
+		if (finish_command(&writer))
 			error_clnt("%s", deadchild);
 		packet_flush(1);
 		break;
