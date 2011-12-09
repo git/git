@@ -11,7 +11,7 @@ test_expect_success 'setup' '
 	test_commit 1 &&
 	test_commit 2 &&
 	mkdir sub &&
-	test_commit 3 sub/3 &&
+	test_commit 3 sub/3.t &&
 	test_commit 4
 '
 

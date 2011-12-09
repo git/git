@@ -3587,14 +3587,11 @@ static int write_out_one_reject(struct patch *patch)
 	return -1;
 }
 
-static int write_out_results(struct patch *list, int skipped_patch)
+static int write_out_results(struct patch *list)
 {
 	int phase;
 	int errs = 0;
 	struct patch *l;
-
-	if (!list && !skipped_patch)
-		return error("No changes");
 
 	for (phase = 0; phase < 2; phase++) {
 		l = list;
@@ -3721,6 +3718,9 @@ static int apply_patch(int fd, const char *filename, int options)
 		offset += nr;
 	}
 
+	if (!list && !skipped_patch)
+		die("unrecognized input");
+
 	if (whitespace_error && (ws_error_action == die_on_ws_error))
 		apply = 0;
 
@@ -3738,7 +3738,7 @@ static int apply_patch(int fd, const char *filename, int options)
 	    !apply_with_reject)
 		exit(1);
 
-	if (apply && write_out_results(list, skipped_patch))
+	if (apply && write_out_results(list))
 		exit(1);
 
 	if (fake_ancestor)
