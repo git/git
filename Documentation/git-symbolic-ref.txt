@@ -43,12 +43,9 @@ In the past, `.git/HEAD` was a symbolic link pointing at
 `refs/heads/master`.  When we wanted to switch to another branch,
 we did `ln -sf refs/heads/newbranch .git/HEAD`, and when we wanted
 to find out which branch we are on, we did `readlink .git/HEAD`.
-This was fine, and internally that is what still happens by
-default, but on platforms that do not have working symlinks,
-or that do not have the `readlink(1)` command, this was a bit
-cumbersome.  On some platforms, `ln -sf` does not even work as
-advertised (horrors).  Therefore symbolic links are now deprecated
-and symbolic refs are used by default.
+But symbolic links are not entirely portable, so they are now
+deprecated and symbolic refs (as described above) are used by
+default.
 
 'git symbolic-ref' will exit with status 0 if the contents of the
 symbolic ref were printed correctly, with status 1 if the requested
