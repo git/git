@@ -100,6 +100,14 @@ extern void strbuf_addf(struct strbuf *sb, const char *fmt, ...);
 __attribute__((format (printf,2,0)))
 extern void strbuf_vaddf(struct strbuf *sb, const char *fmt, va_list ap);
 
+extern void strbuf_add_lines(struct strbuf *sb, const char *prefix, const char *buf, size_t size);
+
+static inline void strbuf_complete_line(struct strbuf *sb)
+{
+	if (sb->len && sb->buf[sb->len - 1] != '\n')
+		strbuf_addch(sb, '\n');
+}
+
 extern size_t strbuf_fread(struct strbuf *, size_t, FILE *);
 /* XXX: if read fails, any partial read is undone */
 extern ssize_t strbuf_read(struct strbuf *, int fd, size_t hint);

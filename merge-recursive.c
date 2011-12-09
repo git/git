@@ -38,16 +38,15 @@ static struct tree *shift_tree_object(struct tree *one, struct tree *two,
 	return lookup_tree(shifted);
 }
 
-/*
- * A virtual commit has (const char *)commit->util set to the name.
- */
-
 static struct commit *make_virtual_commit(struct tree *tree, const char *comment)
 {
 	struct commit *commit = xcalloc(1, sizeof(struct commit));
+	struct merge_remote_desc *desc = xmalloc(sizeof(*desc));
+
+	desc->name = comment;
+	desc->obj = (struct object *)commit;
 	commit->tree = tree;
-	commit->util = (void*)comment;
-	/* avoid warnings */
+	commit->util = desc;
 	commit->object.parsed = 1;
 	return commit;
 }
@@ -184,7 +183,7 @@ static void output_commit_title(struct merge_options *o, struct commit *commit)
 	for (i = o->call_depth; i--;)
 		fputs("  ", stdout);
 	if (commit->util)
-		printf("virtual %s\n", (char *)commit->util);
+		printf("virtual %s\n", merge_remote_util(commit)->name);
 	else {
 		printf("%s ", find_unique_abbrev(commit->object.sha1, DEFAULT_ABBREV));
 		if (parse_commit(commit) != 0)
