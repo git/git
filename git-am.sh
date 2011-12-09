@@ -530,7 +530,6 @@ else
 	echo "$sign" >"$dotest/sign"
 	echo "$utf8" >"$dotest/utf8"
 	echo "$keep" >"$dotest/keep"
-	echo "$keepcr" >"$dotest/keepcr"
 	echo "$scissors" >"$dotest/scissors"
 	echo "$no_inbody_headers" >"$dotest/no_inbody_headers"
 	echo "$GIT_QUIET" >"$dotest/quiet"
@@ -576,12 +575,6 @@ if test "$(cat "$dotest/keep")" = t
 then
 	keep=-k
 fi
-case "$(cat "$dotest/keepcr")" in
-t)
-	keepcr=--keep-cr ;;
-f)
-	keepcr=--no-keep-cr ;;
-esac
 case "$(cat "$dotest/scissors")" in
 t)
 	scissors=--scissors ;;
