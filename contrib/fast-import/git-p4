@@ -53,9 +53,10 @@ def p4_build_cmd(cmd):
 
 def chdir(dir):
     # P4 uses the PWD environment variable rather than getcwd(). Since we're
-    # not using the shell, we have to set it ourselves.
-    os.environ['PWD']=dir
+    # not using the shell, we have to set it ourselves.  This path could
+    # be relative, so go there first, then figure out where we ended up.
     os.chdir(dir)
+    os.environ['PWD'] = os.getcwd()
 
 def die(msg):
     if verbose:
