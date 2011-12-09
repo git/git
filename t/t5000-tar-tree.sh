@@ -242,6 +242,14 @@ test_expect_success \
     'git archive --list outside of a git repo' \
     'GIT_DIR=some/non-existing/directory git archive --list'
 
+test_expect_success 'clients cannot access unreachable commits' '
+	test_commit unreachable &&
+	sha1=`git rev-parse HEAD` &&
+	git reset --hard HEAD^ &&
+	git archive $sha1 >remote.tar &&
+	test_must_fail git archive --remote=. $sha1 >remote.tar
+'
+
 test_expect_success 'git-archive --prefix=olde-' '
 	git archive --prefix=olde- >h.tar HEAD &&
 	(
