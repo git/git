@@ -14,6 +14,7 @@ SYNOPSIS
 'git branch' [--set-upstream | --track | --no-track] [-l] [-f] <branchname> [<start-point>]
 'git branch' (-m | -M) [<oldbranch>] <newbranch>
 'git branch' (-d | -D) [-r] <branchname>...
+'git branch' --edit-description [<branchname>]
 
 DESCRIPTION
 -----------
@@ -157,6 +158,10 @@ start-point is either a local or remote-tracking branch.
 	given, acts exactly like '--track'. Otherwise sets up configuration
 	like '--track' would when creating the branch, except that where
 	branch points to is not changed.
+
+--edit-description::
+	Open an editor and edit the text to explain what the branch is
+	for, to be used by various other commands (e.g. `request-pull`).
 
 --contains <commit>::
 	Only list branches which contain the specified commit.

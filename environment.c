@@ -9,6 +9,7 @@
  */
 #include "cache.h"
 #include "refs.h"
+#include "fmt-merge-msg.h"
 
 char git_default_email[MAX_GITNAME];
 char git_default_name[MAX_GITNAME];
@@ -59,6 +60,7 @@ enum object_creation_mode object_creation_mode = OBJECT_CREATION_MODE;
 char *notes_ref_name;
 int grafts_replace_parents = 1;
 int core_apply_sparse_checkout;
+int merge_log_config = -1;
 struct startup_info *startup_info;
 
 /* Parallel index stat data preload? */
