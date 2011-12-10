@@ -898,6 +898,7 @@ ifeq ($(uname_S),Darwin)
 	endif
 	NO_MEMMEM = YesPlease
 	USE_ST_TIMESPEC = YesPlease
+	HAVE_DEV_TTY = YesPlease
 endif
 ifeq ($(uname_S),SunOS)
 	NEEDS_SOCKET = YesPlease
