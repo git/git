@@ -3,6 +3,7 @@
 #include "string-list.h"
 #include "run-command.h"
 #include "url.h"
+#include "prompt.h"
 
 void credential_init(struct credential *c)
 {

@@ -25,6 +25,7 @@
 #include "cache.h"
 #include "exec_cmd.h"
 #include "run-command.h"
+#include "prompt.h"
 #ifdef NO_OPENSSL
 typedef void *SSL;
 #else
