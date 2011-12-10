@@ -3,26 +3,13 @@
 #include "strbuf.h"
 #include "prompt.h"
 
-char *git_getpass(const char *prompt)
+static char *do_askpass(const char *cmd, const char *prompt)
 {
-	const char *askpass;
 	struct child_process pass;
 	const char *args[3];
 	static struct strbuf buffer = STRBUF_INIT;
 
-	askpass = getenv("GIT_ASKPASS");
-	if (!askpass)
-		askpass = askpass_program;
-	if (!askpass)
-		askpass = getenv("SSH_ASKPASS");
-	if (!askpass || !(*askpass)) {
-		char *result = getpass(prompt);
-		if (!result)
-			die_errno("Could not read password");
-		return result;
-	}
-
-	args[0] = askpass;
+	args[0] = cmd;
 	args[1]	= prompt;
 	args[2] = NULL;
 
@@ -35,7 +22,7 @@ char *git_getpass(const char *prompt)
 
 	strbuf_reset(&buffer);
 	if (strbuf_read(&buffer, pass.out, 20) < 0)
-		die("failed to read password from %s\n", askpass);
+		die("failed to get '%s' from %s\n", prompt, cmd);
 
 	close(pass.out);
 
@@ -45,4 +32,31 @@ char *git_getpass(const char *prompt)
 	strbuf_setlen(&buffer, strcspn(buffer.buf, "\r\n"));
 
 	return buffer.buf;
+}
+
+char *git_prompt(const char *prompt, int flags)
+{
+	char *r;
+
+	if (flags & PROMPT_ASKPASS) {
+		const char *askpass;
+
+		askpass = getenv("GIT_ASKPASS");
+		if (!askpass)
+			askpass = askpass_program;
+		if (!askpass)
+			askpass = getenv("SSH_ASKPASS");
+		if (askpass && *askpass)
+			return do_askpass(askpass, prompt);
+	}
+
+	r = getpass(prompt);
+	if (!r)
+		die_errno("could not read '%s'", prompt);
+	return r;
+}
+
+char *git_getpass(const char *prompt)
+{
+	return git_prompt(prompt, PROMPT_ASKPASS);
 }
