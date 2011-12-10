@@ -353,7 +353,7 @@ test_expect_success '--continue asks for help after resolving patch to nil' '
 	test_i18ngrep "The previous cherry-pick is now empty" msg
 '
 
-test_expect_failure 'follow advice and skip nil patch' '
+test_expect_success 'follow advice and skip nil patch' '
 	pristine_detach conflicting &&
 	test_must_fail git cherry-pick initial..picked &&
 
