@@ -53,7 +53,7 @@ test_expect_success 'setup askpass helpers' '
 '
 
 expect_askpass() {
-	dest=$HTTPD_DEST/auth/repo.git
+	dest=$HTTPD_DEST
 	{
 		case "$1" in
 		none)

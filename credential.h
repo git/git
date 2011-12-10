@@ -6,7 +6,8 @@
 struct credential {
 	struct string_list helpers;
 	unsigned approved:1,
-		 configured:1;
+		 configured:1,
+		 use_http_path:1;
 
 	char *username;
 	char *password;

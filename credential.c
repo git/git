@@ -69,8 +69,17 @@ static int credential_config_callback(const char *var, const char *value,
 		if (!c->username)
 			c->username = xstrdup(value);
 	}
+	else if (!strcmp(key, "usehttppath"))
+		c->use_http_path = git_config_bool(var, value);
 
 	return 0;
+}
+
+static int proto_is_http(const char *s)
+{
+	if (!s)
+		return 0;
+	return !strcmp(s, "https") || !strcmp(s, "http");
 }
 
 static void credential_apply_config(struct credential *c)
@@ -79,6 +88,11 @@ static void credential_apply_config(struct credential *c)
 		return;
 	git_config(credential_config_callback, c);
 	c->configured = 1;
+
+	if (!c->use_http_path && proto_is_http(c->protocol)) {
+		free(c->path);
+		c->path = NULL;
+	}
 }
 
 static void credential_describe(struct credential *c, struct strbuf *out)

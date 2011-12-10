@@ -247,4 +247,33 @@ test_expect_success 'pull username from config' '
 	EOF
 '
 
+test_expect_success 'http paths can be part of context' '
+	check fill "verbatim foo bar" <<-\EOF &&
+	protocol=https
+	host=example.com
+	path=foo.git
+	--
+	username=foo
+	password=bar
+	--
+	verbatim: get
+	verbatim: protocol=https
+	verbatim: host=example.com
+	EOF
+	test_config credential.https://example.com.useHttpPath true &&
+	check fill "verbatim foo bar" <<-\EOF
+	protocol=https
+	host=example.com
+	path=foo.git
+	--
+	username=foo
+	password=bar
+	--
+	verbatim: get
+	verbatim: protocol=https
+	verbatim: host=example.com
+	verbatim: path=foo.git
+	EOF
+'
+
 test_done
