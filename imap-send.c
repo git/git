@@ -1209,9 +1209,10 @@ static struct store *imap_open_store(struct imap_server_conf *srvc)
 			goto bail;
 		}
 		if (!srvc->pass) {
-			char prompt[80];
-			sprintf(prompt, "Password (%s@%s): ", srvc->user, srvc->host);
-			arg = git_getpass(prompt);
+			struct strbuf prompt = STRBUF_INIT;
+			strbuf_addf(&prompt, "Password (%s@%s): ", srvc->user, srvc->host);
+			arg = git_getpass(prompt.buf);
+			strbuf_release(&prompt);
 			if (!arg) {
 				perror("getpass");
 				exit(1);
