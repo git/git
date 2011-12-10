@@ -1,22 +1,18 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Dec 2011, #02; Mon, 5)
-X-master-at: 7e02a6c63a183270b726bb21640059ae16fa48ae
-X-next-at: 9aa1b8aa9a5d12968b637b29c5a1d307f945171d
+Subject: What's cooking in git.git (Dec 2011, #03; Fri, 9)
+X-master-at: 9859a023fef30ffebdd22ad9639c587ac720b8b6
+X-next-at: b9cfa4e96be9817e744fb728360e7f37c730d133
 
-What's cooking in git.git (Dec 2011, #02; Mon, 5)
+What's cooking in git.git (Dec 2011, #03; Fri, 9)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' (proposed updates) while commits prefixed with '+' are in
 'next'.
 
-The tip of 'next' will be rewound soonish, kicking a handful of topics
-back to 'pu' that are important enough to get them right rather than
-piling "oops, that was a mistake" fix-ups in 'next'.
-
-All of the topics in Stalled section will be purged without prejudice;
-owners of respective topics are free to re-submit after addressing the
-issues raised during the previous reviews and re-ignite the discussion.
+Two of the more important topics slated for 1.7.9 have been merged to
+'master'. Let's hope the other ones also will stabilize soonish, so that
+we can smoothly close this cycle early.
 
 Here are the repositories that have my integration branches:
 
@@ -44,311 +40,14 @@ The preformatted documentation in HTML and man format are found in:
         https://github.com/gitster/git-{htmldocs,manpages}.git/
 
 --------------------------------------------------
-[New Topics]
-
-* bc/maint-apply-check-no-patch (2011-12-05) 2 commits
- - builtin/apply.c: report error on failure to recognize input
- - t/t4131-apply-fake-ancestor.sh: fix broken test
-
-Will merge to 'next'.
-
---------------------------------------------------
 [Graduated to "master"]
 
-* ab/clang-lints (2011-11-06) 2 commits
-  (merged to 'next' on 2011-11-13 at a573aec)
- + cast variable in call to free() in builtin/diff.c and submodule.c
- + apply: get rid of useless x < 0 comparison on a size_t type
-
-* gh/userdiff-matlab (2011-11-15) 1 commit
-  (merged to 'next' on 2011-11-18 at 10cd275)
- + Add built-in diff patterns for MATLAB code
-
-* jc/maint-pack-object-cycle (2011-11-16) 1 commit
-  (merged to 'next' on 2011-11-18 at 3715a81)
- + pack-object: tolerate broken packs that have duplicated objects
-
-Make the client side more robust against bogus pack stream; the problem
-was discovered by accident while repacking a clone obtained from somewhat
-buggy test server.
-
-* jc/index-pack-reject-dups (2011-11-16) 1 commit
-  (merged to 'next' on 2011-11-18 at 2090221)
- + receive-pack, fetch-pack: reject bogus pack that records objects twice
-
-And this is the prevention to reject such pack stream in the first place.
-
-* jk/refresh-porcelain-output (2011-11-18) 3 commits
-  (merged to 'next' on 2011-11-18 at 872f25e)
- + refresh_index: make porcelain output more specific
- + refresh_index: rename format variables
- + read-cache: let refresh_cache_ent pass up changed flags
-
-* mf/curl-select-fdset (2011-11-04) 4 commits
-  (merged to 'next' on 2011-11-06 at a49516f)
- + http: drop "local" member from request struct
- + http.c: Rely on select instead of tracking whether data was received
- + http.c: Use timeout suggested by curl instead of fixed 50ms timeout
- + http.c: Use curl_multi_fdset to select on curl fds instead of just sleeping
-
-Reduces unnecessary waits.
-
-* na/strtoimax (2011-11-05) 3 commits
-  (merged to 'next' on 2011-11-14 at b64e1cb)
- + Support sizes >=2G in various config options accepting 'g' sizes.
- + Compatibility: declare strtoimax() under NO_STRTOUMAX
- + Add strtoimax() compatibility function.
-
-* nd/fsck-progress (2011-11-06) 4 commits
-  (merged to 'next' on 2011-11-13 at 8831811)
- + fsck: print progress
- + fsck: avoid reading every object twice
- + verify_packfile(): check as many object as possible in a pack
- + fsck: return error code when verify_pack() goes wrong
-
-* nd/maint-ignore-exclude (2011-11-28) 1 commit
- + checkout,merge: loosen overwriting untracked file check based on info/exclude
- (this branch is used by nd/ignore-might-be-precious.)
-
-* nd/misc-cleanups (2011-10-27) 6 commits
-  (merged to 'next' on 2011-10-28 at 2527a49)
- + unpack_object_header_buffer(): clear the size field upon error
- + tree_entry_interesting: make use of local pointer "item"
- + tree_entry_interesting(): give meaningful names to return values
- + read_directory_recursive: reduce one indentation level
- + get_tree_entry(): do not call find_tree_entry() on an empty tree
- + tree-walk.c: do not leak internal structure in tree_entry_len()
-
-* nd/prune-progress (2011-11-07) 3 commits
-  (merged to 'next' on 2011-11-13 at c5722ac)
- + reachable: per-object progress
- + prune: handle --progress/no-progress
- + prune: show progress while marking reachable objects
-
-* vr/git-merge-doc (2011-11-21) 1 commit
- + Show error for 'git merge' with unset merge.defaultToUpstream
-
-* vr/msvc (2011-10-31) 3 commits
-  (merged to 'next' on 2011-11-14 at f46d021)
- + MSVC: Remove unneeded header stubs
- + Compile fix for MSVC: Include <io.h>
- + Compile fix for MSVC: Do not include sys/resources.h
-
---------------------------------------------------
-[Stalled]
-
-All of the topics in Stalled section will be discarded soonish (see the
-cover).
-
-* hv/submodule-merge-search (2011-10-13) 4 commits
- - submodule.c: make two functions static
- - allow multiple calls to submodule merge search for the same path
- - push: Don't push a repository with unpushed submodules
- - push: teach --recurse-submodules the on-demand option
-
-What the topic aims to achieve may make sense, but the implementation
-looked somewhat suboptimal.
-
-* sr/transport-helper-fix-rfc (2011-07-19) 2 commits
- - t5800: point out that deleting branches does not work
- - t5800: document inability to push new branch with old content
-
-See comments on sr/fix-fast-export-tips topic.
-
-* sr/fix-fast-export-tips (2011-11-05) 3 commits
- - fast-export: output reset command for commandline revs
- - fast-export: do not refer to non-existing marks
- - t9350: point out that refs are not updated correctly
-
-The bottom commit from the stalled sr/transport-helper-fix-rfc topic is
-fixed with this. It may make sense to drop the other topic and include
-that commit in this series.
-
-The command line parser is still too lax and accepts malformed input, but
-this is a step in the right direction and tightening the command line now
-should be doable without a low level surgery that touches codepaths that
-are unrelated to the command line processing like the previous attempt
-used to do.
-
-* jc/lookup-object-hash (2011-08-11) 6 commits
- - object hash: replace linear probing with 4-way cuckoo hashing
- - object hash: we know the table size is a power of two
- - object hash: next_size() helper for readability
- - pack-objects --count-only
- - object.c: remove duplicated code for object hashing
- - object.c: code movement for readability
-
-I do not think there is anything fundamentally wrong with this series, but
-the risk of breakage far outweighs observed performance gain in one
-particular workload.
-
-* jc/verbose-checkout (2011-10-16) 2 commits
- - checkout -v: give full status output after switching branches
- - checkout: move the local changes report to the end
-
-This is just to leave a record that the reason why we do not do this not
-because we are incapable of coding this, but because it is not a good idea
-to do this. I suspect people who are new to git that might think they need
-it would soon realize the don't.
-
-Will drop.
-
-* eh/grep-scale-to-cpunum (2011-11-05) 1 commit
- - grep: detect number of CPUs for thread spawning
-
-Kills I/O parallelism and needs to be improved or discarded.
-
-* jc/commit-tree-extra (2011-11-12) 2 commits
- - commit-tree: teach -C <extra-commit>
- - commit-tree: teach -x <extra>
- (this branch uses jc/pull-signed-tag; is tangled with jc/signed-commit.)
-
-Not absolutely needed; parked in 'pu' but may drop.
-
-* cb/daemon-permission-errors (2011-10-17) 2 commits
- - daemon: report permission denied error to clients
- - daemon: add tests
-
-The tip commit might be loosening things a bit too much.
-
---------------------------------------------------
-[Cooking]
-
-* sg/complete-refs (2011-10-21) 9 commits
-  (merged to 'next' on 2011-10-26 at d65e2b4)
- + completion: remove broken dead code from __git_heads() and __git_tags()
- + completion: fast initial completion for config 'remote.*.fetch' value
- + completion: improve ls-remote output filtering in __git_refs_remotes()
- + completion: query only refs/heads/ in __git_refs_remotes()
- + completion: support full refs from remote repositories
- + completion: improve ls-remote output filtering in __git_refs()
- + completion: make refs completion consistent for local and remote repos
- + completion: optimize refs completion
- + completion: document __gitcomp()
-
-Will merge to 'master.
-
-* aw/rebase-i-stop-on-failure-to-amend (2011-11-30) 1 commit
- - rebase -i: interrupt rebase when "commit --amend" failed during "reword"
-
-Will merge to 'next'.
-
-* jc/split-blob (2011-12-01) 6 commits
- . WIP (streaming chunked)
- - chunked-object: fallback checkout codepaths
- - bulk-checkin: support chunked-object encoding
- - bulk-checkin: allow the same data to be multiply hashed
- - new representation types in the packstream
- - varint-in-pack: refactor varint encoding/decoding
- (this branch uses jc/stream-to-pack.)
-
-Not ready.
-
-* jh/fast-import-notes (2011-11-28) 3 commits
- - fast-import: Fix incorrect fanout level when modifying existing notes refs
- - t9301: Add 2nd testcase exposing bugs in fast-import's notes fanout handling
- - t9301: Fix testcase covering up a bug in fast-import's notes fanout handling
-
-Will merge to 'next'.
-
-* ld/p4-labels-branches (2011-11-30) 4 commits
- - git-p4: importing labels should cope with missing owner
- - git-p4: add test for p4 labels
- - git-p4: cope with labels with empty descriptions
- - git-p4: handle p4 branches and labels containing shell chars
-
-I understand this has been retracted---please correct me otherwise.
-Will discard, expecting a reroll.
-
-* tj/maint-imap-send-remove-unused (2011-11-23) 2 commits
- - Merge branch 'maint' into tj/imap-send-remove-unused
- - imap-send: Remove unused 'use_namespace' variable
-
-Will merge to 'next'.
-
-* cn/maint-lf-to-crlf-filter (2011-11-28) 1 commit
- - convert: track state in LF-to-CRLF filter
-
-Will merge to 'next' after taking another look.
-
-* jn/branch-move-to-self (2011-11-28) 2 commits
- - Allow checkout -B <current-branch> to update the current branch
- - branch: allow a no-op "branch -M <current-branch> HEAD"
-
-Will merge to 'next' after taking another look.
-
-* jk/credentials (2011-11-28) 20 commits
- - fixup! 034c066e
- - compat/getpass: add a /dev/tty implementation
- - credential: use git_prompt instead of git_getpass
- - prompt: add PROMPT_ECHO flag
- - stub out getpass_echo function
- - refactor git_getpass into generic prompt function
- - move git_getpass to its own source file
- - t: add test harness for external credential helpers
- - credentials: add "store" helper
- - strbuf: add strbuf_add*_urlencode
- - credentials: add "cache" helper
- - docs: end-user documentation for the credential subsystem
- - credential: make relevance of http path configurable
- - credential: add credential.*.username
- - credential: apply helper config
- - http: use credential API to get passwords
- - credential: add function for parsing url components
- - introduce credentials API
- - t5550: fix typo
- - test-lib: add test_config_global variant
-
-Expecting a reroll?
-
-* nd/ignore-might-be-precious (2011-11-28) 2 commits
- - checkout,merge: disallow overwriting ignored files with --no-overwrite-ignore
- - Merge branch 'nd/maint-ignore-exclude' into nd/ignore-might-be-precious
-
-Will merge to 'next' after taking another look.
-
-* jk/upload-archive-use-start-command (2011-11-21) 1 commit
- - upload-archive: use start_command instead of fork
-
-What's the status of this one?
-
-* jk/maint-1.6.2-upload-archive (2011-11-21) 1 commit
- - archive: don't let remote clients get unreachable commits
- (this branch is used by jk/maint-upload-archive.)
-
-* jk/maint-upload-archive (2011-11-21) 1 commit
- - Merge branch 'jk/maint-1.6.2-upload-archive' into jk/maint-upload-archive
- (this branch uses jk/maint-1.6.2-upload-archive.)
-
-Will merge to 'next' after taking another look.
-
-* ab/enable-i18n (2011-12-05) 2 commits
- - Makefile: Add missing "sparse object" to gettext target-specific rule
- - i18n: add infrastructure for translating Git with gettext
-
-Will merge to 'next' after squashing the two and re-sending to the list
-for review comments.
-
-* nd/resolve-ref (2011-12-05) 2 commits
-  (merged to 'next' on 2011-12-05 at cc79e86)
- + Copy resolve_ref() return value for longer use
- + Convert many resolve_ref() calls to read_ref*() and ref_exists()
-
-Will merge to 'master'.
-
-* jc/signed-commit (2011-11-29) 5 commits
- - gpg-interface: allow use of a custom GPG binary
- - pretty: %G[?GS] placeholders
- - test "commit -S" and "log --show-signature"
- - log: --show-signature
- - commit: teach --gpg-sign option
- (this branch uses jc/pull-signed-tag; is tangled with jc/commit-tree-extra.)
-
-Not exactly urgent.
-Will concentrate on getting jc/pull-signed-tag in first.
+* ab/pull-rebase-config (2011-11-07) 1 commit
+  (merged to 'next' on 2011-12-05 at 6d235a4)
+ + pull: introduce a pull.rebase option to enable --rebase
 
 * jc/pull-signed-tag (2011-11-12) 15 commits
-  (merged to 'next' on 2011-11-14 at 25e8838)
+  (merged to 'next' on 2011-12-05 at c949bd1)
  + commit-tree: teach -m/-F options to read logs from elsewhere
  + commit-tree: update the command line parsing
  + commit: teach --amend to carry forward extra headers
@@ -364,24 +63,18 @@ Will concentrate on getting jc/pull-signed-tag in first.
  + merge: notice local merging of tags and keep it unwrapped
  + fetch: do not store peeled tag object names in FETCH_HEAD
  + Split GPG interface into its own helper library
- (this branch is used by jc/commit-tree-extra and jc/signed-commit.)
+ (this branch is used by jc/signed-commit.)
 
 Allow pulling/merging a signed tag instead of a branch tip, and record
 the GPG signature in the merge commit for later audit.
 
-Will merge to 'master'.
-
 * jc/request-pull-show-head-4 (2011-11-09) 12 commits
-  (merged to 'next' on 2011-11-13 at e473fd2)
+  (merged to 'next' on 2011-12-05 at 8f05b45)
  + request-pull: use the annotated tag contents
-  (merged to 'next' on 2011-10-15 at 7e340ff)
  + fmt-merge-msg.c: Fix an "dubious one-bit signed bitfield" sparse error
-  (merged to 'next' on 2011-10-10 at 092175e)
  + environment.c: Fix an sparse "symbol not declared" warning
  + builtin/log.c: Fix an "Using plain integer as NULL pointer" warning
-  (merged to 'next' on 2011-10-07 at fcaeca0)
  + fmt-merge-msg: use branch.$name.description
-  (merged to 'next' on 2011-10-06 at fa5e0fe)
  + request-pull: use the branch description
  + request-pull: state what commit to expect
  + request-pull: modernize style
@@ -394,20 +87,201 @@ Allow setting "description" for branches and use it to help communications
 between humans in various workflow elements. It also allows requesting for
 a signed tag to be pulled and shows the tag message in the generated message.
 
-Will merge to 'master'.
+* nd/resolve-ref (2011-12-05) 2 commits
+  (merged to 'next' on 2011-12-05 at d55637f)
+ + Copy resolve_ref() return value for longer use
+ + Convert many resolve_ref() calls to read_ref*() and ref_exists()
 
-* ab/pull-rebase-config (2011-11-07) 1 commit
-  (merged to 'next' on 2011-11-13 at 72bb2d5)
- + pull: introduce a pull.rebase option to enable --rebase
+* rs/allocate-cache-entry-individually (2011-10-26) 2 commits
+  (merged to 'next' on 2011-12-05 at 241e711)
+ + cache.h: put single NUL at end of struct cache_entry
+ + read-cache.c: allocate index entries individually
 
-Will merge to 'master'.
+* sg/complete-refs (2011-10-21) 9 commits
+  (merged to 'next' on 2011-12-05 at 03e5527)
+ + completion: remove broken dead code from __git_heads() and __git_tags()
+ + completion: fast initial completion for config 'remote.*.fetch' value
+ + completion: improve ls-remote output filtering in __git_refs_remotes()
+ + completion: query only refs/heads/ in __git_refs_remotes()
+ + completion: support full refs from remote repositories
+ + completion: improve ls-remote output filtering in __git_refs()
+ + completion: make refs completion consistent for local and remote repos
+ + completion: optimize refs completion
+ + completion: document __gitcomp()
+
+--------------------------------------------------
+[New Topics]
+
+* rr/revert-cherry-pick (2011-12-09) 9 commits
+ - revert: simplify communicating command-line arguments
+ - revert: report fine-grained error messages from insn parser
+ - revert: allow mixed pick and revert instructions
+ - t3510 (cherry-pick-sequencer): remove malformed sheet 2
+ - t3510 (cherry-pick-sequencer): use exit status
+ - revert: simplify getting commit subject in format_todo()
+ - revert: tolerate extra spaces, tabs in insn sheet
+ - revert: make commit subjects in insn sheet optional
+ - revert: free msg in format_todo()
+
+This is not the latest one but the last one posted to the list.
+
+* ew/keepalive (2011-12-05) 1 commit
+ - enable SO_KEEPALIVE for connected TCP sockets
+
+Comments?
+
+* jc/checkout-m-twoway (2011-12-06) 1 commit
+  (merged to 'next' on 2011-12-09 at c946009)
+ + checkout -m: no need to insist on having all 3 stages
+
+* tr/cache-tree (2011-12-06) 5 commits
+ - reset: update cache-tree data when appropriate
+ - commit: write cache-tree data when writing index anyway
+ - Refactor cache_tree_update idiom from commit
+ - Test the current state of the cache-tree optimization
+ - Add test-scrap-cache-tree
+
+Will merge to 'next' after taking another look.
+
+* tr/userdiff-c-returns-pointer (2011-12-06) 1 commit
+  (merged to 'next' on 2011-12-09 at 0b6a092)
+ + userdiff: allow * between cpp funcname words
+
+* jc/commit-amend-no-edit (2011-12-08) 5 commits
+  (merged to 'next' on 2011-12-09 at b9cfa4e)
+ + test: commit --amend should honor --no-edit
+ + commit: honour --no-edit
+ + t7501 (commit): modernize style
+ + test: remove a porcelain test that hard-codes commit names
+ + test: add missing "&&" after echo command
+
+* jl/submodule-status-failure-report (2011-12-08) 1 commit
+  (merged to 'next' on 2011-12-09 at 53eb3b3)
+ + diff/status: print submodule path when looking for changes fails
+
+* ks/tag-cleanup (2011-12-09) 1 commit
+  (merged to 'next' on 2011-12-09 at cbea045)
+ + git-tag: introduce --cleanup option
+
+* rr/test-chaining (2011-12-09) 5 commits
+ - t3040 (subprojects-basic): fix '&&' chaining, modernize style
+ - t1510 (worktree): fix '&&' chaining
+ - t3030 (merge-recursive): use test_expect_code
+ - test: fix '&&' chaining
+ - t3200 (branch): fix '&&' chaining
+
+I think Martin's patches to t3401 should also be queued here.
+
+--------------------------------------------------
+[Cooking]
+
+* bc/maint-apply-check-no-patch (2011-12-05) 2 commits
+  (merged to 'next' on 2011-12-09 at fc780cd)
+ + builtin/apply.c: report error on failure to recognize input
+ + t/t4131-apply-fake-ancestor.sh: fix broken test
+
+* aw/rebase-i-stop-on-failure-to-amend (2011-11-30) 1 commit
+  (merged to 'next' on 2011-12-09 at a117e83)
+ + rebase -i: interrupt rebase when "commit --amend" failed during "reword"
+
+* jc/split-blob (2011-12-01) 6 commits
+ . WIP (streaming chunked)
+ - chunked-object: fallback checkout codepaths
+ - bulk-checkin: support chunked-object encoding
+ - bulk-checkin: allow the same data to be multiply hashed
+ - new representation types in the packstream
+ - varint-in-pack: refactor varint encoding/decoding
+ (this branch uses jc/stream-to-pack.)
+
+Not ready. At least pack-objects and fsck need to learn the new encoding
+for the series to be usable locally, and then index-pack/unpack-objects
+needs to learn it to be used remotely.
+
+* jh/fast-import-notes (2011-11-28) 3 commits
+  (merged to 'next' on 2011-12-09 at 2b01132)
+ + fast-import: Fix incorrect fanout level when modifying existing notes refs
+ + t9301: Add 2nd testcase exposing bugs in fast-import's notes fanout handling
+ + t9301: Fix testcase covering up a bug in fast-import's notes fanout handling
+
+Comments?
+
+* tj/maint-imap-send-remove-unused (2011-11-23) 2 commits
+  (merged to 'next' on 2011-12-09 at 877cc11)
+ + Merge branch 'maint' into tj/imap-send-remove-unused
+ + imap-send: Remove unused 'use_namespace' variable
+
+* cn/maint-lf-to-crlf-filter (2011-11-28) 1 commit
+  (merged to 'next' on 2011-12-09 at c374d14)
+ + convert: track state in LF-to-CRLF filter
+
+* jn/branch-move-to-self (2011-11-28) 2 commits
+  (merged to 'next' on 2011-12-09 at 7d27260)
+ + Allow checkout -B <current-branch> to update the current branch
+ + branch: allow a no-op "branch -M <current-branch> HEAD"
+
+* jk/credentials (2011-12-09) 20 commits
+ - credential: use git_prompt instead of git_getpass
+ - prompt: use git_terminal_prompt
+ - add generic terminal prompt function
+ - refactor git_getpass into generic prompt function
+ - move git_getpass to its own source file
+ - imap-send: don't check return value of git_getpass
+ - imap-send: avoid buffer overflow
+ - t: add test harness for external credential helpers
+ - credentials: add "store" helper
+ - strbuf: add strbuf_add*_urlencode
+ - credentials: add "cache" helper
+ - docs: end-user documentation for the credential subsystem
+ - credential: make relevance of http path configurable
+ - credential: add credential.*.username
+ - credential: apply helper config
+ - http: use credential API to get passwords
+ - credential: add function for parsing url components
+ - introduce credentials API
+ - t5550: fix typo
+ - test-lib: add test_config_global variant
+
+Looking good.
+
+* nd/ignore-might-be-precious (2011-11-28) 2 commits
+  (merged to 'next' on 2011-12-09 at 1a94553)
+ + checkout,merge: disallow overwriting ignored files with --no-overwrite-ignore
+ + Merge branch 'nd/maint-ignore-exclude' into nd/ignore-might-be-precious
+
+* jk/upload-archive-use-start-command (2011-11-21) 1 commit
+  (merged to 'next' on 2011-12-09 at 88cb83a)
+ + upload-archive: use start_command instead of fork
+
+* jk/maint-1.6.2-upload-archive (2011-11-21) 1 commit
+ + archive: don't let remote clients get unreachable commits
+ (this branch is used by jk/maint-upload-archive.)
+
+* jk/maint-upload-archive (2011-11-21) 1 commit
+  (merged to 'next' on 2011-12-09 at 03deb16)
+ + Merge branch 'jk/maint-1.6.2-upload-archive' into jk/maint-upload-archive
+ (this branch uses jk/maint-1.6.2-upload-archive.)
+
+* ab/enable-i18n (2011-12-05) 1 commit
+ - i18n: add infrastructure for translating Git with gettext
+
+Will merge to 'next'.
+
+* jc/signed-commit (2011-11-29) 5 commits
+ - gpg-interface: allow use of a custom GPG binary
+ - pretty: %G[?GS] placeholders
+ - test "commit -S" and "log --show-signature"
+ - log: --show-signature
+ - commit: teach --gpg-sign option
+
+Not exactly urgent.
 
 * jc/stream-to-pack (2011-12-01) 5 commits
- - bulk-checkin: replace fast-import based implementation
- - csum-file: introduce sha1file_checkpoint
- - finish_tmp_packfile(): a helper function
- - create_tmp_packfile(): a helper function
- - write_pack_header(): a helper function
+  (merged to 'next' on 2011-12-09 at d0fd605)
+ + bulk-checkin: replace fast-import based implementation
+ + csum-file: introduce sha1file_checkpoint
+ + finish_tmp_packfile(): a helper function
+ + create_tmp_packfile(): a helper function
+ + write_pack_header(): a helper function
  (this branch is used by jc/split-blob.)
 
 Teaches "git add" to send large-ish blob data straight to a packfile.
@@ -415,8 +289,6 @@ This is a continuation to the "large file support" topic. The codepath to
 move data from worktree to repository is made aware of streaming, just
 like the checkout codepath that goes the other way, which was done in the
 previous "large file support" topic in the 1.7.7 cycle.
-
-Will merge to 'next'.
 
 * jn/gitweb-side-by-side-diff (2011-10-31) 8 commits
  - gitweb: Add navigation to select side-by-side diff
@@ -431,81 +303,97 @@ Will merge to 'next'.
 Replaces a series from Kato Kazuyoshi on the same topic.
 Is this ready for 'next'?
 
-* rs/allocate-cache-entry-individually (2011-10-26) 2 commits
-  (merged to 'next' on 2011-10-27 at 2e4acd6)
- + cache.h: put single NUL at end of struct cache_entry
- + read-cache.c: allocate index entries individually
+--------------------------------------------------
+[Discarded]
 
-Will merge to 'master'.
+* hv/submodule-merge-search (2011-10-13) 4 commits
+ . submodule.c: make two functions static
+ . allow multiple calls to submodule merge search for the same path
+ . push: Don't push a repository with unpushed submodules
+ . push: teach --recurse-submodules the on-demand option
 
-* rr/revert-cherry-pick (2011-10-23) 5 commits
-  (merged to 'next' on 2011-10-26 at 27b7496)
- + revert: simplify communicating command-line arguments
- + revert: allow mixed pick and revert instructions
- + revert: make commit subjects in insn sheet optional
- + revert: simplify getting commit subject in format_todo()
- + revert: free msg in format_todo()
+* sr/transport-helper-fix-rfc (2011-07-19) 2 commits
+ . t5800: point out that deleting branches does not work
+ . t5800: document inability to push new branch with old content
 
-The internals of "git revert/cherry-pick" has been further refactored to
-serve as the basis for the sequencer.
+* sr/fix-fast-export-tips (2011-11-05) 3 commits
+ . fast-export: output reset command for commandline revs
+ . fast-export: do not refer to non-existing marks
+ . t9350: point out that refs are not updated correctly
 
-Is this ready for 'master', or should we eject it to 'pu', expecing a
-re-roll?
+* jc/lookup-object-hash (2011-08-11) 6 commits
+ . object hash: replace linear probing with 4-way cuckoo hashing
+ . object hash: we know the table size is a power of two
+ . object hash: next_size() helper for readability
+ . pack-objects --count-only
+ . object.c: remove duplicated code for object hashing
+ . object.c: code movement for readability
+
+* jc/verbose-checkout (2011-10-16) 2 commits
+ . checkout -v: give full status output after switching branches
+ . checkout: move the local changes report to the end
+
+* eh/grep-scale-to-cpunum (2011-11-05) 1 commit
+ . grep: detect number of CPUs for thread spawning
+
+* jc/commit-tree-extra (2011-11-12) 2 commits
+ . commit-tree: teach -C <extra-commit>
+ . commit-tree: teach -x <extra>
+ (this branch uses jc/pull-signed-tag; is tangled with jc/signed-commit.)
+
+* cb/daemon-permission-errors (2011-10-17) 2 commits
+ . daemon: report permission denied error to clients
+ . daemon: add tests
+
+* ld/p4-labels-branches (2011-11-30) 4 commits
+ . git-p4: importing labels should cope with missing owner
+ . git-p4: add test for p4 labels
+ . git-p4: cope with labels with empty descriptions
+ . git-p4: handle p4 branches and labels containing shell chars
 
 * mh/ref-api-2 (2011-11-16) 15 commits
-  (merged to 'next' on 2011-11-16 at 511457f)
- + refs: loosen over-strict "format" check
-  (merged to 'next' on 2011-10-19 at cc89f0e)
- + resolve_gitlink_ref_recursive(): change to work with struct ref_cache
- + Pass a (ref_cache *) to the resolve_gitlink_*() helper functions
- + resolve_gitlink_ref(): improve docstring
- + get_ref_dir(): change signature
- + refs: change signatures of get_packed_refs() and get_loose_refs()
- + is_dup_ref(): extract function from sort_ref_array()
- + add_ref(): add docstring
- + parse_ref_line(): add docstring
- + is_refname_available(): remove the "quiet" argument
- + clear_ref_array(): rename from free_ref_array()
- + refs: rename parameters result -> sha1
- + refs: rename "refname" variables
- + struct ref_entry: document name member
- + cache.h: add comments for git_path() and git_path_submodule()
+ . refs: loosen over-strict "format" check
+ . resolve_gitlink_ref_recursive(): change to work with struct ref_cache
+ . Pass a (ref_cache *) to the resolve_gitlink_*() helper functions
+ . resolve_gitlink_ref(): improve docstring
+ . get_ref_dir(): change signature
+ . refs: change signatures of get_packed_refs() and get_loose_refs()
+ . is_dup_ref(): extract function from sort_ref_array()
+ . add_ref(): add docstring
+ . parse_ref_line(): add docstring
+ . is_refname_available(): remove the "quiet" argument
+ . clear_ref_array(): rename from free_ref_array()
+ . refs: rename parameters result -> sha1
+ . refs: rename "refname" variables
+ . struct ref_entry: document name member
+ . cache.h: add comments for git_path() and git_path_submodule()
  (this branch is tangled with mh/ref-api-3.)
 
-Expecting a re-roll; will eject from 'pu' so that the topic can lose the
-hot-fix at the tip.
-
 * mh/ref-api-3 (2011-11-16) 26 commits
-  (merged to 'next' on 2011-11-16 at cc76151)
- + refs: loosen over-strict "format" check
-  (merged to 'next' on 2011-10-23 at 92e2d35)
- + is_refname_available(): reimplement using do_for_each_ref_in_array()
- + names_conflict(): simplify implementation
- + names_conflict(): new function, extracted from is_refname_available()
- + repack_without_ref(): reimplement using do_for_each_ref_in_array()
- + do_for_each_ref_in_array(): new function
- + do_for_each_ref(): correctly terminate while processesing extra_refs
- + add_ref(): take a (struct ref_entry *) parameter
- + create_ref_entry(): extract function from add_ref()
- + parse_ref_line(): add a check that the refname is properly formatted
- + repack_without_ref(): remove temporary
- + Rename another local variable name -> refname
-  (merged to 'next' on 2011-10-19 at cc89f0e)
- + resolve_gitlink_ref_recursive(): change to work with struct ref_cache
- + Pass a (ref_cache *) to the resolve_gitlink_*() helper functions
- + resolve_gitlink_ref(): improve docstring
- + get_ref_dir(): change signature
- + refs: change signatures of get_packed_refs() and get_loose_refs()
- + is_dup_ref(): extract function from sort_ref_array()
- + add_ref(): add docstring
- + parse_ref_line(): add docstring
- + is_refname_available(): remove the "quiet" argument
- + clear_ref_array(): rename from free_ref_array()
- + refs: rename parameters result -> sha1
- + refs: rename "refname" variables
- + struct ref_entry: document name member
- + cache.h: add comments for git_path() and git_path_submodule()
+ . refs: loosen over-strict "format" check
+ . is_refname_available(): reimplement using do_for_each_ref_in_array()
+ . names_conflict(): simplify implementation
+ . names_conflict(): new function, extracted from is_refname_available()
+ . repack_without_ref(): reimplement using do_for_each_ref_in_array()
+ . do_for_each_ref_in_array(): new function
+ . do_for_each_ref(): correctly terminate while processesing extra_refs
+ . add_ref(): take a (struct ref_entry *) parameter
+ . create_ref_entry(): extract function from add_ref()
+ . parse_ref_line(): add a check that the refname is properly formatted
+ . repack_without_ref(): remove temporary
+ . Rename another local variable name -> refname
+ . resolve_gitlink_ref_recursive(): change to work with struct ref_cache
+ . Pass a (ref_cache *) to the resolve_gitlink_*() helper functions
+ . resolve_gitlink_ref(): improve docstring
+ . get_ref_dir(): change signature
+ . refs: change signatures of get_packed_refs() and get_loose_refs()
+ . is_dup_ref(): extract function from sort_ref_array()
+ . add_ref(): add docstring
+ . parse_ref_line(): add docstring
+ . is_refname_available(): remove the "quiet" argument
+ . clear_ref_array(): rename from free_ref_array()
+ . refs: rename parameters result -> sha1
+ . refs: rename "refname" variables
+ . struct ref_entry: document name member
+ . cache.h: add comments for git_path() and git_path_submodule()
  (this branch is tangled with mh/ref-api-2.)
-
-Expecting a re-roll; will eject from 'pu' so that the topioc can lose the
-hot-fix at the tip.
