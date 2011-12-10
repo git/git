@@ -115,4 +115,9 @@ extern int launch_editor(const char *path, struct strbuf *buffer, const char *co
 extern int strbuf_branchname(struct strbuf *sb, const char *name);
 extern int strbuf_check_branch_ref(struct strbuf *sb, const char *name);
 
+extern void strbuf_add_urlencode(struct strbuf *, const char *, size_t,
+				 int reserved);
+extern void strbuf_addstr_urlencode(struct strbuf *, const char *,
+				    int reserved);
+
 #endif /* STRBUF_H */
