@@ -24,5 +24,6 @@ void credential_approve(struct credential *);
 void credential_reject(struct credential *);
 
 int credential_read(struct credential *, FILE *);
+void credential_from_url(struct credential *, const char *url);
 
 #endif /* CREDENTIAL_H */
