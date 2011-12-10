@@ -203,10 +203,10 @@ test_expect_success '--abort refuses to clobber unrelated change, harder case' '
 	test_cmp_rev initial HEAD
 '
 
-test_expect_success 'cherry-pick cleans up sequencer state when one commit is left' '
+test_expect_success 'cherry-pick still writes sequencer state when one commit is left' '
 	pristine_detach initial &&
 	test_must_fail git cherry-pick base..picked &&
-	test_path_is_missing .git/sequencer &&
+	test_path_is_dir .git/sequencer &&
 	echo "resolved" >foo &&
 	git add foo &&
 	git commit &&
@@ -227,7 +227,7 @@ test_expect_success 'cherry-pick cleans up sequencer state when one commit is le
 	test_cmp expect actual
 '
 
-test_expect_failure '--abort after last commit in sequence' '
+test_expect_success '--abort after last commit in sequence' '
 	pristine_detach initial &&
 	test_must_fail git cherry-pick base..picked &&
 	git cherry-pick --abort &&
