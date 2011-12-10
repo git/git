@@ -944,7 +944,7 @@ static int sequencer_rollback(struct replay_opts *opts)
 	}
 	if (reset_for_rollback(sha1))
 		goto fail;
-	remove_sequencer_state(1);
+	remove_sequencer_state();
 	strbuf_release(&buf);
 	return 0;
 fail:
@@ -1026,7 +1026,7 @@ static int pick_commits(struct commit_list *todo_list, struct replay_opts *opts)
 	 * Sequence of picks finished successfully; cleanup by
 	 * removing the .git/sequencer directory
 	 */
-	remove_sequencer_state(1);
+	remove_sequencer_state();
 	return 0;
 }
 
@@ -1084,7 +1084,7 @@ static int pick_revisions(struct replay_opts *opts)
 	 * one that is being continued
 	 */
 	if (opts->subcommand == REPLAY_REMOVE_STATE) {
-		remove_sequencer_state(1);
+		remove_sequencer_state();
 		return 0;
 	}
 	if (opts->subcommand == REPLAY_ROLLBACK)
