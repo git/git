@@ -50,6 +50,18 @@ test_expect_success 'cherry-pick persists data on failure' '
 	test_path_is_file .git/sequencer/opts
 '
 
+test_expect_success 'cherry-pick mid-cherry-pick-sequence' '
+	pristine_detach initial &&
+	test_must_fail git cherry-pick base..anotherpick &&
+	test_cmp_rev picked CHERRY_PICK_HEAD &&
+	# "oops, I forgot that these patches rely on the change from base"
+	git checkout HEAD foo &&
+	git cherry-pick base &&
+	git cherry-pick picked &&
+	git cherry-pick --continue &&
+	git diff --exit-code anotherpick
+'
+
 test_expect_success 'cherry-pick persists opts correctly' '
 	pristine_detach initial &&
 	test_must_fail git cherry-pick -s -m 1 --strategy=recursive -X patience -X ours base..anotherpick &&
