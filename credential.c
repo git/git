@@ -65,6 +65,10 @@ static int credential_config_callback(const char *var, const char *value,
 
 	if (!strcmp(key, "helper"))
 		string_list_append(&c->helpers, value);
+	else if (!strcmp(key, "username")) {
+		if (!c->username)
+			c->username = xstrdup(value);
+	}
 
 	return 0;
 }

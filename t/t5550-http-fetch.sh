@@ -113,6 +113,22 @@ test_expect_success 'http auth respects credential helper config' '
 	expect_askpass none
 '
 
+test_expect_success 'http auth can get username from config' '
+	test_config_global "credential.$HTTPD_URL.username" user@host &&
+	>askpass-query &&
+	echo user@host >askpass-response &&
+	git clone "$HTTPD_URL/auth/repo.git" clone-auth-user &&
+	expect_askpass pass user@host
+'
+
+test_expect_success 'configured username does not override URL' '
+	test_config_global "credential.$HTTPD_URL.username" wrong &&
+	>askpass-query &&
+	echo user@host >askpass-response &&
+	git clone "$HTTPD_URL_USER/auth/repo.git" clone-auth-user2 &&
+	expect_askpass pass user@host
+'
+
 test_expect_success 'fetch changes via http' '
 	echo content >>file &&
 	git commit -a -m two &&

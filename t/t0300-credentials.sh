@@ -234,4 +234,17 @@ test_expect_success 'do not match configured credential' '
 	EOF
 '
 
+test_expect_success 'pull username from config' '
+	test_config credential.https://example.com.username foo &&
+	check fill <<-\EOF
+	protocol=https
+	host=example.com
+	--
+	username=foo
+	password=askpass-password
+	--
+	askpass: Password for '\''https://foo@example.com'\'':
+	EOF
+'
+
 test_done
