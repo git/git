@@ -49,40 +49,56 @@ test_expect_success 'setup askpass helpers' '
 	EOF
 	chmod +x askpass &&
 	GIT_ASKPASS="$PWD/askpass" &&
-	export GIT_ASKPASS &&
-	>askpass-expect-none &&
-	echo "askpass: Password for '\''$HTTPD_DEST'\'': " >askpass-expect-pass &&
-	{ echo "askpass: Username for '\''$HTTPD_DEST'\'': " &&
-	  cat askpass-expect-pass
-	} >askpass-expect-both
+	export GIT_ASKPASS
 '
+
+expect_askpass() {
+	dest=$HTTPD_DEST/auth/repo.git
+	{
+		case "$1" in
+		none)
+			;;
+		pass)
+			echo "askpass: Password for 'http://$2@$dest': "
+			;;
+		both)
+			echo "askpass: Username for 'http://$dest': "
+			echo "askpass: Password for 'http://$2@$dest': "
+			;;
+		*)
+			false
+			;;
+		esac
+	} >askpass-expect &&
+	test_cmp askpass-expect askpass-query
+}
 
 test_expect_success 'cloning password-protected repository can fail' '
 	>askpass-query &&
 	echo wrong >askpass-response &&
 	test_must_fail git clone "$HTTPD_URL/auth/repo.git" clone-auth-fail &&
-	test_cmp askpass-expect-both askpass-query
+	expect_askpass both wrong
 '
 
 test_expect_success 'http auth can use user/pass in URL' '
 	>askpass-query &&
 	echo wrong >askpass-response &&
 	git clone "$HTTPD_URL_USER_PASS/auth/repo.git" clone-auth-none &&
-	test_cmp askpass-expect-none askpass-query
+	expect_askpass none
 '
 
 test_expect_success 'http auth can use just user in URL' '
 	>askpass-query &&
 	echo user@host >askpass-response &&
 	git clone "$HTTPD_URL_USER/auth/repo.git" clone-auth-pass &&
-	test_cmp askpass-expect-pass askpass-query
+	expect_askpass pass user@host
 '
 
 test_expect_success 'http auth can request both user and pass' '
 	>askpass-query &&
 	echo user@host >askpass-response &&
 	git clone "$HTTPD_URL/auth/repo.git" clone-auth-both &&
-	test_cmp askpass-expect-both askpass-query
+	expect_askpass both user@host
 '
 
 test_expect_success 'fetch changes via http' '
