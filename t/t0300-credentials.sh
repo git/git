@@ -192,4 +192,46 @@ test_expect_success 'internal getpass does not ask for known username' '
 	EOF
 '
 
+HELPER="!f() {
+		cat >/dev/null
+		echo username=foo
+		echo password=bar
+	}; f"
+test_expect_success 'respect configured credentials' '
+	test_config credential.helper "$HELPER" &&
+	check fill <<-\EOF
+	--
+	username=foo
+	password=bar
+	--
+	EOF
+'
+
+test_expect_success 'match configured credential' '
+	test_config credential.https://example.com.helper "$HELPER" &&
+	check fill <<-\EOF
+	protocol=https
+	host=example.com
+	path=repo.git
+	--
+	username=foo
+	password=bar
+	--
+	EOF
+'
+
+test_expect_success 'do not match configured credential' '
+	test_config credential.https://foo.helper "$HELPER" &&
+	check fill <<-\EOF
+	protocol=https
+	host=bar
+	--
+	username=askpass-username
+	password=askpass-password
+	--
+	askpass: Username for '\''https://bar'\'':
+	askpass: Password for '\''https://askpass-username@bar'\'':
+	EOF
+'
+
 test_done

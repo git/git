@@ -101,6 +101,18 @@ test_expect_success 'http auth can request both user and pass' '
 	expect_askpass both user@host
 '
 
+test_expect_success 'http auth respects credential helper config' '
+	test_config_global credential.helper "!f() {
+		cat >/dev/null
+		echo username=user@host
+		echo password=user@host
+	}; f" &&
+	>askpass-query &&
+	echo wrong >askpass-response &&
+	git clone "$HTTPD_URL/auth/repo.git" clone-auth-helper &&
+	expect_askpass none
+'
+
 test_expect_success 'fetch changes via http' '
 	echo content >>file &&
 	git commit -a -m two &&

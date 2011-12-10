@@ -22,6 +22,61 @@ void credential_clear(struct credential *c)
 	credential_init(c);
 }
 
+int credential_match(const struct credential *want,
+		     const struct credential *have)
+{
+#define CHECK(x) (!want->x || (have->x && !strcmp(want->x, have->x)))
+	return CHECK(protocol) &&
+	       CHECK(host) &&
+	       CHECK(path) &&
+	       CHECK(username);
+#undef CHECK
+}
+
+static int credential_config_callback(const char *var, const char *value,
+				      void *data)
+{
+	struct credential *c = data;
+	const char *key, *dot;
+
+	key = skip_prefix(var, "credential.");
+	if (!key)
+		return 0;
+
+	if (!value)
+		return config_error_nonbool(var);
+
+	dot = strrchr(key, '.');
+	if (dot) {
+		struct credential want = CREDENTIAL_INIT;
+		char *url = xmemdupz(key, dot - key);
+		int matched;
+
+		credential_from_url(&want, url);
+		matched = credential_match(&want, c);
+
+		credential_clear(&want);
+		free(url);
+
+		if (!matched)
+			return 0;
+		key = dot + 1;
+	}
+
+	if (!strcmp(key, "helper"))
+		string_list_append(&c->helpers, value);
+
+	return 0;
+}
+
+static void credential_apply_config(struct credential *c)
+{
+	if (c->configured)
+		return;
+	git_config(credential_config_callback, c);
+	c->configured = 1;
+}
+
 static void credential_describe(struct credential *c, struct strbuf *out)
 {
 	if (!c->protocol)
@@ -195,6 +250,8 @@ void credential_fill(struct credential *c)
 	if (c->username && c->password)
 		return;
 
+	credential_apply_config(c);
+
 	for (i = 0; i < c->helpers.nr; i++) {
 		credential_do(c, c->helpers.items[i].string, "get");
 		if (c->username && c->password)
@@ -215,6 +272,8 @@ void credential_approve(struct credential *c)
 	if (!c->username || !c->password)
 		return;
 
+	credential_apply_config(c);
+
 	for (i = 0; i < c->helpers.nr; i++)
 		credential_do(c, c->helpers.items[i].string, "store");
 	c->approved = 1;
@@ -223,6 +282,8 @@ void credential_approve(struct credential *c)
 void credential_reject(struct credential *c)
 {
 	int i;
+
+	credential_apply_config(c);
 
 	for (i = 0; i < c->helpers.nr; i++)
 		credential_do(c, c->helpers.items[i].string, "erase");

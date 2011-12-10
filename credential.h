@@ -5,7 +5,8 @@
 
 struct credential {
 	struct string_list helpers;
-	unsigned approved:1;
+	unsigned approved:1,
+		 configured:1;
 
 	char *username;
 	char *password;
@@ -25,5 +26,7 @@ void credential_reject(struct credential *);
 
 int credential_read(struct credential *, FILE *);
 void credential_from_url(struct credential *, const char *url);
+int credential_match(const struct credential *have,
+		     const struct credential *want);
 
 #endif /* CREDENTIAL_H */
