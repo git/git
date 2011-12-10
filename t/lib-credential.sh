@@ -21,6 +21,227 @@ read_chunk() {
 	done
 }
 
+# Clear any residual data from previous tests. We only
+# need this when testing third-party helpers which read and
+# write outside of our trash-directory sandbox.
+#
+# Don't bother checking for success here, as it is
+# outside the scope of tests and represents a best effort to
+# clean up after ourselves.
+helper_test_clean() {
+	reject $1 https example.com store-user
+	reject $1 https example.com user1
+	reject $1 https example.com user2
+	reject $1 http path.tld user
+	reject $1 https timeout.tld user
+}
+
+reject() {
+	(
+		echo protocol=$2
+		echo host=$3
+		echo username=$4
+	) | test-credential reject $1
+}
+
+helper_test() {
+	HELPER=$1
+
+	test_expect_success "helper ($HELPER) has no existing data" '
+		check fill $HELPER <<-\EOF
+		protocol=https
+		host=example.com
+		--
+		username=askpass-username
+		password=askpass-password
+		--
+		askpass: Username for '\''https://example.com'\'':
+		askpass: Password for '\''https://askpass-username@example.com'\'':
+		EOF
+	'
+
+	test_expect_success "helper ($HELPER) stores password" '
+		check approve $HELPER <<-\EOF
+		protocol=https
+		host=example.com
+		username=store-user
+		password=store-pass
+		EOF
+	'
+
+	test_expect_success "helper ($HELPER) can retrieve password" '
+		check fill $HELPER <<-\EOF
+		protocol=https
+		host=example.com
+		--
+		username=store-user
+		password=store-pass
+		--
+		EOF
+	'
+
+	test_expect_success "helper ($HELPER) requires matching protocol" '
+		check fill $HELPER <<-\EOF
+		protocol=http
+		host=example.com
+		--
+		username=askpass-username
+		password=askpass-password
+		--
+		askpass: Username for '\''http://example.com'\'':
+		askpass: Password for '\''http://askpass-username@example.com'\'':
+		EOF
+	'
+
+	test_expect_success "helper ($HELPER) requires matching host" '
+		check fill $HELPER <<-\EOF
+		protocol=https
+		host=other.tld
+		--
+		username=askpass-username
+		password=askpass-password
+		--
+		askpass: Username for '\''https://other.tld'\'':
+		askpass: Password for '\''https://askpass-username@other.tld'\'':
+		EOF
+	'
+
+	test_expect_success "helper ($HELPER) requires matching username" '
+		check fill $HELPER <<-\EOF
+		protocol=https
+		host=example.com
+		username=other
+		--
+		username=other
+		password=askpass-password
+		--
+		askpass: Password for '\''https://other@example.com'\'':
+		EOF
+	'
+
+	test_expect_success "helper ($HELPER) requires matching path" '
+		test_config credential.usehttppath true &&
+		check approve $HELPER <<-\EOF &&
+		protocol=http
+		host=path.tld
+		path=foo.git
+		username=user
+		password=pass
+		EOF
+		check fill $HELPER <<-\EOF
+		protocol=http
+		host=path.tld
+		path=bar.git
+		--
+		username=askpass-username
+		password=askpass-password
+		--
+		askpass: Username for '\''http://path.tld/bar.git'\'':
+		askpass: Password for '\''http://askpass-username@path.tld/bar.git'\'':
+		EOF
+	'
+
+	test_expect_success "helper ($HELPER) can forget host" '
+		check reject $HELPER <<-\EOF &&
+		protocol=https
+		host=example.com
+		EOF
+		check fill $HELPER <<-\EOF
+		protocol=https
+		host=example.com
+		--
+		username=askpass-username
+		password=askpass-password
+		--
+		askpass: Username for '\''https://example.com'\'':
+		askpass: Password for '\''https://askpass-username@example.com'\'':
+		EOF
+	'
+
+	test_expect_success "helper ($HELPER) can store multiple users" '
+		check approve $HELPER <<-\EOF &&
+		protocol=https
+		host=example.com
+		username=user1
+		password=pass1
+		EOF
+		check approve $HELPER <<-\EOF &&
+		protocol=https
+		host=example.com
+		username=user2
+		password=pass2
+		EOF
+		check fill $HELPER <<-\EOF &&
+		protocol=https
+		host=example.com
+		username=user1
+		--
+		username=user1
+		password=pass1
+		EOF
+		check fill $HELPER <<-\EOF
+		protocol=https
+		host=example.com
+		username=user2
+		--
+		username=user2
+		password=pass2
+		EOF
+	'
+
+	test_expect_success "helper ($HELPER) can forget user" '
+		check reject $HELPER <<-\EOF &&
+		protocol=https
+		host=example.com
+		username=user1
+		EOF
+		check fill $HELPER <<-\EOF
+		protocol=https
+		host=example.com
+		username=user1
+		--
+		username=user1
+		password=askpass-password
+		--
+		askpass: Password for '\''https://user1@example.com'\'':
+		EOF
+	'
+
+	test_expect_success "helper ($HELPER) remembers other user" '
+		check fill $HELPER <<-\EOF
+		protocol=https
+		host=example.com
+		username=user2
+		--
+		username=user2
+		password=pass2
+		EOF
+	'
+}
+
+helper_test_timeout() {
+	HELPER="$*"
+
+	test_expect_success "helper ($HELPER) times out" '
+		check approve "$HELPER" <<-\EOF &&
+		protocol=https
+		host=timeout.tld
+		username=user
+		password=pass
+		EOF
+		sleep 2 &&
+		check fill "$HELPER" <<-\EOF
+		protocol=https
+		host=timeout.tld
+		--
+		username=askpass-username
+		password=askpass-password
+		--
+		askpass: Username for '\''https://timeout.tld'\'':
+		askpass: Password for '\''https://askpass-username@timeout.tld'\'':
+		EOF
+	'
+}
 
 cat >askpass <<\EOF
 #!/bin/sh
