@@ -143,6 +143,8 @@ all::
 #
 # Define NO_IPV6 if you lack IPv6 support and getaddrinfo().
 #
+# Define NO_UNIX_SOCKETS if your system does not offer unix sockets.
+#
 # Define NO_SOCKADDR_STORAGE if your platform does not have struct
 # sockaddr_storage.
 #
@@ -427,8 +429,6 @@ PROGRAM_OBJS += show-index.o
 PROGRAM_OBJS += upload-pack.o
 PROGRAM_OBJS += http-backend.o
 PROGRAM_OBJS += sh-i18n--envsubst.o
-PROGRAM_OBJS += credential-cache.o
-PROGRAM_OBJS += credential-cache--daemon.o
 
 PROGRAMS += $(patsubst %.o,git-%$X,$(PROGRAM_OBJS))
 
@@ -701,7 +701,6 @@ LIB_OBJS += transport-helper.o
 LIB_OBJS += tree-diff.o
 LIB_OBJS += tree.o
 LIB_OBJS += tree-walk.o
-LIB_OBJS += unix-socket.o
 LIB_OBJS += unpack-trees.o
 LIB_OBJS += url.o
 LIB_OBJS += usage.o
@@ -1104,6 +1103,7 @@ ifeq ($(uname_S),Windows)
 	NO_SYS_POLL_H = YesPlease
 	NO_SYMLINK_HEAD = YesPlease
 	NO_IPV6 = YesPlease
+	NO_UNIX_SOCKETS = YesPlease
 	NO_SETENV = YesPlease
 	NO_UNSETENV = YesPlease
 	NO_STRCASESTR = YesPlease
@@ -1197,6 +1197,7 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	NO_LIBGEN_H = YesPlease
 	NO_SYS_POLL_H = YesPlease
 	NO_SYMLINK_HEAD = YesPlease
+	NO_UNIX_SOCKETS = YesPlease
 	NO_SETENV = YesPlease
 	NO_UNSETENV = YesPlease
 	NO_STRCASESTR = YesPlease
@@ -1573,6 +1574,12 @@ endif
 ifdef NO_INET_PTON
 	LIB_OBJS += compat/inet_pton.o
 	BASIC_CFLAGS += -DNO_INET_PTON
+endif
+ifndef NO_UNIX_SOCKETS
+	LIB_OBJS += unix-socket.o
+	LIB_H += unix-socket.h
+	PROGRAM_OBJS += credential-cache.o
+	PROGRAM_OBJS += credential-cache--daemon.o
 endif
 
 ifdef NO_ICONV
@@ -2209,6 +2216,7 @@ ifdef GIT_TEST_CMP_USE_COPIED_CONTEXT
 	@echo GIT_TEST_CMP_USE_COPIED_CONTEXT=YesPlease >>$@
 endif
 	@echo GETTEXT_POISON=\''$(subst ','\'',$(subst ','\'',$(GETTEXT_POISON)))'\' >>$@
+	@echo NO_UNIX_SOCKETS=\''$(subst ','\'',$(subst ','\'',$(NO_UNIX_SOCKETS)))'\' >>$@
 
 ### Detect Tck/Tk interpreter path changes
 ifndef NO_TCLTK

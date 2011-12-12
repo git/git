@@ -4,6 +4,11 @@ test_description='credential-cache tests'
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-credential.sh
 
+test -z "$NO_UNIX_SOCKETS" || {
+	skip_all='skipping credential-cache tests, unix sockets not available'
+	test_done
+}
+
 # don't leave a stale daemon running
 trap 'code=$?; git credential-cache exit; (exit $code); die' EXIT
 
