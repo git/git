@@ -53,9 +53,10 @@ def p4_build_cmd(cmd):
 
 def chdir(dir):
     # P4 uses the PWD environment variable rather than getcwd(). Since we're
-    # not using the shell, we have to set it ourselves.
-    os.environ['PWD']=dir
+    # not using the shell, we have to set it ourselves.  This path could
+    # be relative, so go there first, then figure out where we ended up.
     os.chdir(dir)
+    os.environ['PWD'] = os.getcwd()
 
 def die(msg):
     if verbose:
@@ -1115,6 +1116,10 @@ class P4Submit(Command, P4UserMap):
 
         print "Perforce checkout for depot path %s located at %s" % (self.depotPath, self.clientPath)
         self.oldWorkingDirectory = os.getcwd()
+
+        # ensure the clientPath exists
+        if not os.path.exists(self.clientPath):
+            os.makedirs(self.clientPath)
 
         chdir(self.clientPath)
         print "Synchronizing p4 checkout..."
