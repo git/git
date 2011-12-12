@@ -53,28 +53,35 @@ static const char *parse_ref_line(char *line, unsigned char *sha1)
 	return line;
 }
 
-/* Add a ref_entry to the end of the ref_array (unsorted). */
-static void add_ref(const char *refname, const unsigned char *sha1,
-		    int flag, int check_name, struct ref_array *refs,
-		    struct ref_entry **new_entry)
+static struct ref_entry *create_ref_entry(const char *refname,
+					  const unsigned char *sha1, int flag,
+					  int check_name)
 {
 	int len;
-	struct ref_entry *entry;
+	struct ref_entry *ref;
 
-	/* Allocate it and add it in.. */
-	len = strlen(refname) + 1;
-	entry = xmalloc(sizeof(struct ref_entry) + len);
-	hashcpy(entry->sha1, sha1);
-	hashclr(entry->peeled);
 	if (check_name &&
 	    check_refname_format(refname, REFNAME_ALLOW_ONELEVEL|REFNAME_DOT_COMPONENT))
 		die("Reference has invalid format: '%s'", refname);
-	memcpy(entry->name, refname, len);
-	entry->flag = flag;
-	if (new_entry)
-		*new_entry = entry;
+	len = strlen(refname) + 1;
+	ref = xmalloc(sizeof(struct ref_entry) + len);
+	hashcpy(ref->sha1, sha1);
+	hashclr(ref->peeled);
+	memcpy(ref->name, refname, len);
+	ref->flag = flag;
+	return ref;
+}
+
+/* Add a ref_entry to the end of the ref_array (unsorted). */
+static void add_ref(const char *refname, const unsigned char *sha1,
+		    int flag, int check_name, struct ref_array *refs,
+		    struct ref_entry **new_ref)
+{
+	struct ref_entry *ref = create_ref_entry(refname, sha1, flag, check_name);
+	if (new_ref)
+		*new_ref = ref;
 	ALLOC_GROW(refs->refs, refs->nr + 1, refs->alloc);
-	refs->refs[refs->nr++] = entry;
+	refs->refs[refs->nr++] = ref;
 }
 
 static int ref_entry_cmp(const void *a, const void *b)
