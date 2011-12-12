@@ -831,9 +831,9 @@ static inline int get_sha1_with_context(const char *str, unsigned char *sha1, st
 extern int get_sha1_hex(const char *hex, unsigned char *sha1);
 
 extern char *sha1_to_hex(const unsigned char *sha1);	/* static buffer result! */
-extern int read_ref_full(const char *filename, unsigned char *sha1,
+extern int read_ref_full(const char *refname, unsigned char *sha1,
 			 int reading, int *flags);
-extern int read_ref(const char *filename, unsigned char *sha1);
+extern int read_ref(const char *refname, unsigned char *sha1);
 
 /*
  * Resolve a reference, recursively following symbolic refererences.
@@ -865,7 +865,7 @@ extern int read_ref(const char *filename, unsigned char *sha1);
  *
  * errno is sometimes set on errors, but not always.
  */
-extern const char *resolve_ref(const char *ref, unsigned char *sha1, int reading, int *flag);
+extern const char *resolve_ref(const char *refname, unsigned char *sha1, int reading, int *flag);
 
 extern int dwim_ref(const char *str, int len, unsigned char *sha1, char **ref);
 extern int dwim_log(const char *str, int len, unsigned char *sha1, char **ref);
