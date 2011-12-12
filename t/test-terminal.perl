@@ -69,6 +69,10 @@ if ($#ARGV < 1) {
 }
 my $master_out = new IO::Pty;
 my $master_err = new IO::Pty;
+$master_out->set_raw();
+$master_err->set_raw();
+$master_out->slave->set_raw();
+$master_err->slave->set_raw();
 my $pid = start_child(\@ARGV, $master_out->slave, $master_err->slave);
 close $master_out->slave;
 close $master_err->slave;
