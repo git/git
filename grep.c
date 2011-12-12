@@ -948,8 +948,8 @@ int grep_threads_ok(const struct grep_opt *opt)
 	 * machinery in grep_buffer_1. The attribute code is not
 	 * thread safe, so we disable the use of threads.
 	 */
-	if (opt->funcname && !opt->unmatch_name_only && !opt->status_only &&
-	    !opt->name_only)
+	if ((opt->funcname || opt->funcbody)
+	    && !opt->unmatch_name_only && !opt->status_only && !opt->name_only)
 		return 0;
 
 	return 1;
@@ -1008,7 +1008,8 @@ static int grep_buffer_1(struct grep_opt *opt, const char *name,
 	}
 
 	memset(&xecfg, 0, sizeof(xecfg));
-	if (opt->funcname && !opt->unmatch_name_only && !opt->status_only &&
+	if ((opt->funcname || opt->funcbody)
+	    && !opt->unmatch_name_only && !opt->status_only &&
 	    !opt->name_only && !binary_match_only && !collect_hits) {
 		struct userdiff_driver *drv = userdiff_find_by_path(name);
 		if (drv && drv->funcname.pattern) {
