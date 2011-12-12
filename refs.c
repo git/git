@@ -149,7 +149,7 @@ static struct ref_entry *current_ref;
 
 static struct ref_array extra_refs;
 
-static void free_ref_array(struct ref_array *array)
+static void clear_ref_array(struct ref_array *array)
 {
 	int i;
 	for (i = 0; i < array->nr; i++)
@@ -162,14 +162,14 @@ static void free_ref_array(struct ref_array *array)
 static void clear_packed_ref_cache(struct ref_cache *refs)
 {
 	if (refs->did_packed)
-		free_ref_array(&refs->packed);
+		clear_ref_array(&refs->packed);
 	refs->did_packed = 0;
 }
 
 static void clear_loose_ref_cache(struct ref_cache *refs)
 {
 	if (refs->did_loose)
-		free_ref_array(&refs->loose);
+		clear_ref_array(&refs->loose);
 	refs->did_loose = 0;
 }
 
@@ -256,7 +256,7 @@ void add_extra_ref(const char *refname, const unsigned char *sha1, int flag)
 
 void clear_extra_refs(void)
 {
-	free_ref_array(&extra_refs);
+	clear_ref_array(&extra_refs);
 }
 
 static struct ref_array *get_packed_refs(const char *submodule)
