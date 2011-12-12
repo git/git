@@ -1278,12 +1278,10 @@ static struct lock_file packlock;
 static int repack_without_ref(const char *refname)
 {
 	struct ref_array *packed;
-	struct ref_entry *ref;
 	int fd, i;
 
 	packed = get_packed_refs(get_ref_cache(NULL));
-	ref = search_ref_array(packed, refname);
-	if (ref == NULL)
+	if (search_ref_array(packed, refname) == NULL)
 		return 0;
 	fd = hold_lock_file_for_update(&packlock, git_path("packed-refs"), 0);
 	if (fd < 0) {
@@ -1294,8 +1292,7 @@ static int repack_without_ref(const char *refname)
 	for (i = 0; i < packed->nr; i++) {
 		char line[PATH_MAX + 100];
 		int len;
-
-		ref = packed->refs[i];
+		struct ref_entry *ref = packed->refs[i];
 
 		if (!strcmp(refname, ref->name))
 			continue;
