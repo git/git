@@ -1002,24 +1002,6 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	if (!opt.fixed && opt.ignore_case)
 		opt.regflags |= REG_ICASE;
 
-#ifndef NO_PTHREADS
-	if (online_cpus() == 1)
-		use_threads = 0;
-#else
-	use_threads = 0;
-#endif
-
-	opt.use_threads = use_threads;
-
-#ifndef NO_PTHREADS
-	if (use_threads) {
-		if (opt.pre_context || opt.post_context || opt.file_break ||
-		    opt.funcbody)
-			skip_first_line = 1;
-		start_threads(&opt);
-	}
-#endif
-
 	compile_grep_patterns(&opt);
 
 	/* Check revs and then paths */
@@ -1040,6 +1022,24 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		}
 		break;
 	}
+
+#ifndef NO_PTHREADS
+	if (list.nr || cached || online_cpus() == 1)
+		use_threads = 0;
+#else
+	use_threads = 0;
+#endif
+
+	opt.use_threads = use_threads;
+
+#ifndef NO_PTHREADS
+	if (use_threads) {
+		if (opt.pre_context || opt.post_context || opt.file_break ||
+		    opt.funcbody)
+			skip_first_line = 1;
+		start_threads(&opt);
+	}
+#endif
 
 	/* The rest are paths */
 	if (!seen_dashdash) {
