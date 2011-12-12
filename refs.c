@@ -402,7 +402,7 @@ static struct ref_array *get_loose_refs(const char *submodule)
  * the packed-refs file for the submodule.
  */
 static int resolve_gitlink_packed_ref(char *name, int pathlen,
-				      const char *refname, unsigned char *result)
+				      const char *refname, unsigned char *sha1)
 {
 	int retval = -1;
 	struct ref_entry *ref;
@@ -415,14 +415,14 @@ static int resolve_gitlink_packed_ref(char *name, int pathlen,
 	array = get_packed_refs(name);
 	ref = search_ref_array(array, refname);
 	if (ref != NULL) {
-		memcpy(result, ref->sha1, 20);
+		memcpy(sha1, ref->sha1, 20);
 		retval = 0;
 	}
 	return retval;
 }
 
 static int resolve_gitlink_ref_recursive(char *name, int pathlen,
-					 const char *refname, unsigned char *result,
+					 const char *refname, unsigned char *sha1,
 					 int recursion)
 {
 	int fd, len = strlen(refname);
@@ -433,7 +433,7 @@ static int resolve_gitlink_ref_recursive(char *name, int pathlen,
 	memcpy(name + pathlen, refname, len+1);
 	fd = open(name, O_RDONLY);
 	if (fd < 0)
-		return resolve_gitlink_packed_ref(name, pathlen, refname, result);
+		return resolve_gitlink_packed_ref(name, pathlen, refname, sha1);
 
 	len = read(fd, buffer, sizeof(buffer)-1);
 	close(fd);
@@ -444,7 +444,7 @@ static int resolve_gitlink_ref_recursive(char *name, int pathlen,
 	buffer[len] = 0;
 
 	/* Was it a detached head or an old-fashioned symlink? */
-	if (!get_sha1_hex(buffer, result))
+	if (!get_sha1_hex(buffer, sha1))
 		return 0;
 
 	/* Symref? */
@@ -454,10 +454,10 @@ static int resolve_gitlink_ref_recursive(char *name, int pathlen,
 	while (isspace(*p))
 		p++;
 
-	return resolve_gitlink_ref_recursive(name, pathlen, p, result, recursion+1);
+	return resolve_gitlink_ref_recursive(name, pathlen, p, sha1, recursion+1);
 }
 
-int resolve_gitlink_ref(const char *path, const char *refname, unsigned char *result)
+int resolve_gitlink_ref(const char *path, const char *refname, unsigned char *sha1)
 {
 	int len = strlen(path), retval;
 	char *gitdir;
@@ -481,7 +481,7 @@ int resolve_gitlink_ref(const char *path, const char *refname, unsigned char *re
 	}
 	gitdir[len] = '/';
 	gitdir[++len] = '\0';
-	retval = resolve_gitlink_ref_recursive(gitdir, len, refname, result, 0);
+	retval = resolve_gitlink_ref_recursive(gitdir, len, refname, sha1, 0);
 	free(gitdir);
 	return retval;
 }
@@ -647,13 +647,13 @@ static int do_one_ref(const char *base, each_ref_fn fn, int trim,
 	return fn(entry->name + trim, entry->sha1, entry->flag, cb_data);
 }
 
-static int filter_refs(const char *refname, const unsigned char *sha, int flags,
+static int filter_refs(const char *refname, const unsigned char *sha1, int flags,
 		       void *data)
 {
 	struct ref_filter *filter = (struct ref_filter *)data;
 	if (fnmatch(filter->pattern, refname, 0))
 		return 0;
-	return filter->fn(refname, sha, flags, filter->cb_data);
+	return filter->fn(refname, sha1, flags, filter->cb_data);
 }
 
 int peel_ref(const char *refname, unsigned char *sha1)
