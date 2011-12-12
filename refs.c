@@ -53,6 +53,7 @@ static const char *parse_ref_line(char *line, unsigned char *sha1)
 	return line;
 }
 
+/* Add a ref_entry to the end of the ref_array (unsorted). */
 static void add_ref(const char *refname, const unsigned char *sha1,
 		    int flag, int check_name, struct ref_array *refs,
 		    struct ref_entry **new_entry)
