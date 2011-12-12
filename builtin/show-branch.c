@@ -789,7 +789,7 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 		}
 	}
 
-	head_p = resolve_ref("HEAD", head_sha1, 1, NULL);
+	head_p = resolve_ref_unsafe("HEAD", head_sha1, 1, NULL);
 	if (head_p) {
 		head_len = strlen(head_p);
 		memcpy(head, head_p, head_len + 1);

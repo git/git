@@ -361,7 +361,7 @@ static int warn_if_dangling_symref(const char *refname, const unsigned char *sha
 	if (!(flags & REF_ISSYMREF))
 		return 0;
 
-	resolves_to = resolve_ref(refname, junk, 0, NULL);
+	resolves_to = resolve_ref_unsafe(refname, junk, 0, NULL);
 	if (!resolves_to || strcmp(resolves_to, d->refname))
 		return 0;
 
@@ -497,7 +497,7 @@ static int get_packed_ref(const char *ref, unsigned char *sha1)
 	return -1;
 }
 
-const char *resolve_ref(const char *ref, unsigned char *sha1, int reading, int *flag)
+const char *resolve_ref_unsafe(const char *ref, unsigned char *sha1, int reading, int *flag)
 {
 	int depth = MAXDEPTH;
 	ssize_t len;
@@ -607,7 +607,7 @@ const char *resolve_ref(const char *ref, unsigned char *sha1, int reading, int *
 
 char *resolve_refdup(const char *ref, unsigned char *sha1, int reading, int *flag)
 {
-	const char *ret = resolve_ref(ref, sha1, reading, flag);
+	const char *ret = resolve_ref_unsafe(ref, sha1, reading, flag);
 	return ret ? xstrdup(ret) : NULL;
 }
 
@@ -620,7 +620,7 @@ struct ref_filter {
 
 int read_ref_full(const char *ref, unsigned char *sha1, int reading, int *flags)
 {
-	if (resolve_ref(ref, sha1, reading, flags))
+	if (resolve_ref_unsafe(ref, sha1, reading, flags))
 		return 0;
 	return -1;
 }
@@ -1117,7 +1117,7 @@ int dwim_ref(const char *str, int len, unsigned char *sha1, char **ref)
 
 		this_result = refs_found ? sha1_from_ref : sha1;
 		mksnpath(fullref, sizeof(fullref), *p, len, str);
-		r = resolve_ref(fullref, this_result, 1, &flag);
+		r = resolve_ref_unsafe(fullref, this_result, 1, &flag);
 		if (r) {
 			if (!refs_found++)
 				*ref = xstrdup(r);
@@ -1147,7 +1147,7 @@ int dwim_log(const char *str, int len, unsigned char *sha1, char **log)
 		const char *ref, *it;
 
 		mksnpath(path, sizeof(path), *p, len, str);
-		ref = resolve_ref(path, hash, 1, NULL);
+		ref = resolve_ref_unsafe(path, hash, 1, NULL);
 		if (!ref)
 			continue;
 		if (!stat(git_path("logs/%s", path), &st) &&
@@ -1183,7 +1183,7 @@ static struct ref_lock *lock_ref_sha1_basic(const char *ref, const unsigned char
 	lock = xcalloc(1, sizeof(struct ref_lock));
 	lock->lock_fd = -1;
 
-	ref = resolve_ref(ref, lock->old_sha1, mustexist, &type);
+	ref = resolve_ref_unsafe(ref, lock->old_sha1, mustexist, &type);
 	if (!ref && errno == EISDIR) {
 		/* we are trying to lock foo but we used to
 		 * have foo/bar which now does not exist;
@@ -1196,7 +1196,7 @@ static struct ref_lock *lock_ref_sha1_basic(const char *ref, const unsigned char
 			error("there are still refs under '%s'", orig_ref);
 			goto error_return;
 		}
-		ref = resolve_ref(orig_ref, lock->old_sha1, mustexist, &type);
+		ref = resolve_ref_unsafe(orig_ref, lock->old_sha1, mustexist, &type);
 	}
 	if (type_p)
 	    *type_p = type;
@@ -1359,7 +1359,7 @@ int rename_ref(const char *oldref, const char *newref, const char *logmsg)
 	if (log && S_ISLNK(loginfo.st_mode))
 		return error("reflog for %s is a symlink", oldref);
 
-	symref = resolve_ref(oldref, orig_sha1, 1, &flag);
+	symref = resolve_ref_unsafe(oldref, orig_sha1, 1, &flag);
 	if (flag & REF_ISSYMREF)
 		return error("refname %s is a symbolic ref, renaming it is not supported",
 			oldref);
@@ -1648,7 +1648,7 @@ int write_ref_sha1(struct ref_lock *lock,
 		unsigned char head_sha1[20];
 		int head_flag;
 		const char *head_ref;
-		head_ref = resolve_ref("HEAD", head_sha1, 1, &head_flag);
+		head_ref = resolve_ref_unsafe("HEAD", head_sha1, 1, &head_flag);
 		if (head_ref && (head_flag & REF_ISSYMREF) &&
 		    !strcmp(head_ref, lock->ref_name))
 			log_ref_write("HEAD", lock->old_sha1, sha1, logmsg);
@@ -1985,7 +1985,7 @@ int update_ref(const char *action, const char *refname,
 int ref_exists(const char *refname)
 {
 	unsigned char sha1[20];
-	return !!resolve_ref(refname, sha1, 1, NULL);
+	return !!resolve_ref_unsafe(refname, sha1, 1, NULL);
 }
 
 struct ref *find_ref_by_name(const struct ref *list, const char *name)
