@@ -15,7 +15,7 @@ DESCRIPTION
 -----------
 This script is used to move or rename a file, directory or symlink.
 
- git mv [-f] [-n] <source> <destination>
+ git mv [-f] [-n] [-k] <source> <destination>
  git mv [-f] [-n] [-k] <source> ... <destination directory>
 
 In the first form, it renames <source>, which must exist and be either
