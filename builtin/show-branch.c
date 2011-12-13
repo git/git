@@ -726,10 +726,8 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 
 		if (ac == 0) {
 			static const char *fake_av[2];
-			const char *refname;
 
-			refname = resolve_ref("HEAD", sha1, 1, NULL);
-			fake_av[0] = xstrdup(refname);
+			fake_av[0] = resolve_refdup("HEAD", sha1, 1, NULL);
 			fake_av[1] = NULL;
 			av = fake_av;
 			ac = 1;

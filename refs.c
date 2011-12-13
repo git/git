@@ -605,6 +605,12 @@ const char *resolve_ref(const char *ref, unsigned char *sha1, int reading, int *
 	return ref;
 }
 
+char *resolve_refdup(const char *ref, unsigned char *sha1, int reading, int *flag)
+{
+	const char *ret = resolve_ref(ref, sha1, reading, flag);
+	return ret ? xstrdup(ret) : NULL;
+}
+
 /* The argument to filter_refs */
 struct ref_filter {
 	const char *pattern;
