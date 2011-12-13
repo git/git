@@ -556,11 +556,16 @@ static void filter_refs(struct ref **refs, int nr_match, char **match)
 			continue;
 		}
 		else {
-			int order = path_match(ref->name, nr_match, match);
-			if (order) {
-				return_refs[order-1] = ref;
-				continue; /* we will link it later */
+			int i;
+			for (i = 0; i < nr_match; i++) {
+				if (!strcmp(ref->name, match[i])) {
+					match[i][0] = '\0';
+					return_refs[i] = ref;
+					break;
+				}
 			}
+			if (i < nr_match)
+				continue; /* we will link it later */
 		}
 		free(ref);
 	}
