@@ -717,17 +717,14 @@ static int switch_branches(struct checkout_opts *opts, struct branch_info *new)
 {
 	int ret = 0;
 	struct branch_info old;
+	void *path_to_free;
 	unsigned char rev[20];
 	int flag;
 	memset(&old, 0, sizeof(old));
-	old.path = resolve_ref("HEAD", rev, 0, &flag);
-	if (old.path)
-		old.path = xstrdup(old.path);
+	old.path = path_to_free = resolve_refdup("HEAD", rev, 0, &flag);
 	old.commit = lookup_commit_reference_gently(rev, 1);
-	if (!(flag & REF_ISSYMREF)) {
-		free((char *)old.path);
+	if (!(flag & REF_ISSYMREF))
 		old.path = NULL;
-	}
 
 	if (old.path && !prefixcmp(old.path, "refs/heads/"))
 		old.name = old.path + strlen("refs/heads/");
@@ -741,8 +738,10 @@ static int switch_branches(struct checkout_opts *opts, struct branch_info *new)
 	}
 
 	ret = merge_working_tree(opts, &old, new);
-	if (ret)
+	if (ret) {
+		free(path_to_free);
 		return ret;
+	}
 
 	if (!opts->quiet && !old.path && old.commit && new->commit != old.commit)
 		orphaned_commit_warning(old.commit);
@@ -750,7 +749,7 @@ static int switch_branches(struct checkout_opts *opts, struct branch_info *new)
 	update_refs_for_switch(opts, &old, new);
 
 	ret = post_checkout_hook(old.commit, new->commit, 1);
-	free((char *)old.path);
+	free(path_to_free);
 	return ret || opts->writeout_error;
 }
 

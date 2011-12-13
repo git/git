@@ -726,10 +726,8 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 
 		if (ac == 0) {
 			static const char *fake_av[2];
-			const char *refname;
 
-			refname = resolve_ref("HEAD", sha1, 1, NULL);
-			fake_av[0] = xstrdup(refname);
+			fake_av[0] = resolve_refdup("HEAD", sha1, 1, NULL);
 			fake_av[1] = NULL;
 			av = fake_av;
 			ac = 1;
@@ -791,7 +789,7 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 		}
 	}
 
-	head_p = resolve_ref("HEAD", head_sha1, 1, NULL);
+	head_p = resolve_ref_unsafe("HEAD", head_sha1, 1, NULL);
 	if (head_p) {
 		head_len = strlen(head_p);
 		memcpy(head, head_p, head_len + 1);

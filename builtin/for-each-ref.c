@@ -628,11 +628,8 @@ static void populate_value(struct refinfo *ref)
 
 	if (need_symref && (ref->flag & REF_ISSYMREF) && !ref->symref) {
 		unsigned char unused1[20];
-		const char *symref;
-		symref = resolve_ref(ref->refname, unused1, 1, NULL);
-		if (symref)
-			ref->symref = xstrdup(symref);
-		else
+		ref->symref = resolve_refdup(ref->refname, unused1, 1, NULL);
+		if (!ref->symref)
 			ref->symref = "";
 	}
 

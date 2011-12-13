@@ -182,7 +182,7 @@ int validate_new_branchname(const char *name, struct strbuf *ref,
 		const char *head;
 		unsigned char sha1[20];
 
-		head = resolve_ref("HEAD", sha1, 0, NULL);
+		head = resolve_ref_unsafe("HEAD", sha1, 0, NULL);
 		if (!is_bare_repository() && head && !strcmp(head, ref->buf))
 			die("Cannot force update the current branch.");
 	}

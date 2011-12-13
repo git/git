@@ -104,6 +104,7 @@ static int branch_merged(int kind, const char *name,
 	 */
 	struct commit *reference_rev = NULL;
 	const char *reference_name = NULL;
+	void *reference_name_to_free = NULL;
 	int merged;
 
 	if (kind == REF_LOCAL_BRANCH) {
@@ -114,11 +115,9 @@ static int branch_merged(int kind, const char *name,
 		    branch->merge &&
 		    branch->merge[0] &&
 		    branch->merge[0]->dst &&
-		    (reference_name =
-		     resolve_ref(branch->merge[0]->dst, sha1, 1, NULL)) != NULL) {
-			reference_name = xstrdup(reference_name);
+		    (reference_name = reference_name_to_free =
+		     resolve_refdup(branch->merge[0]->dst, sha1, 1, NULL)) != NULL)
 			reference_rev = lookup_commit_reference(sha1);
-		}
 	}
 	if (!reference_rev)
 		reference_rev = head_rev;
@@ -143,7 +142,7 @@ static int branch_merged(int kind, const char *name,
 				"         '%s', even though it is merged to HEAD."),
 				name, reference_name);
 	}
-	free((char *)reference_name);
+	free(reference_name_to_free);
 	return merged;
 }
 
@@ -253,7 +252,7 @@ static char *resolve_symref(const char *src, const char *prefix)
 	int flag;
 	const char *dst, *cp;
 
-	dst = resolve_ref(src, sha1, 0, &flag);
+	dst = resolve_ref_unsafe(src, sha1, 0, &flag);
 	if (!(dst && (flag & REF_ISSYMREF)))
 		return NULL;
 	if (prefix && (cp = skip_prefix(dst, prefix)))
@@ -738,10 +737,9 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 
 	track = git_branch_track;
 
-	head = resolve_ref("HEAD", head_sha1, 0, NULL);
+	head = resolve_refdup("HEAD", head_sha1, 0, NULL);
 	if (!head)
 		die(_("Failed to resolve HEAD as a valid ref."));
-	head = xstrdup(head);
 	if (!strcmp(head, "HEAD")) {
 		detached = 1;
 	} else {

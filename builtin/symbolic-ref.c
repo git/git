@@ -12,7 +12,7 @@ static void check_symref(const char *HEAD, int quiet)
 {
 	unsigned char sha1[20];
 	int flag;
-	const char *refs_heads_master = resolve_ref(HEAD, sha1, 0, &flag);
+	const char *refs_heads_master = resolve_ref_unsafe(HEAD, sha1, 0, &flag);
 
 	if (!refs_heads_master)
 		die("No such ref: %s", HEAD);
