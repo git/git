@@ -53,7 +53,6 @@ static void add_extra_have(struct extra_have_objects *extra, unsigned char *sha1
  * Read all the refs from the other end
  */
 struct ref **get_remote_heads(int in, struct ref **list,
-			      int nr_match, char **match,
 			      unsigned int flags,
 			      struct extra_have_objects *extra_have)
 {
@@ -91,8 +90,6 @@ struct ref **get_remote_heads(int in, struct ref **list,
 		}
 
 		if (!check_ref(name, name_len, flags))
-			continue;
-		if (nr_match && !path_match(name, nr_match, match))
 			continue;
 		ref = alloc_ref(buffer + 41);
 		hashcpy(ref->old_sha1, old_sha1);
