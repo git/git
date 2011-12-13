@@ -105,27 +105,6 @@ int server_supports(const char *feature)
 		strstr(server_capabilities, feature) != NULL;
 }
 
-int path_match(const char *path, int nr, char **match)
-{
-	int i;
-	int pathlen = strlen(path);
-
-	for (i = 0; i < nr; i++) {
-		char *s = match[i];
-		int len = strlen(s);
-
-		if (!len || len > pathlen)
-			continue;
-		if (memcmp(path + pathlen - len, s, len))
-			continue;
-		if (pathlen > len && path[pathlen - len - 1] != '/')
-			continue;
-		*s = 0;
-		return (i + 1);
-	}
-	return 0;
-}
-
 enum protocol {
 	PROTO_LOCAL = 1,
 	PROTO_SSH,

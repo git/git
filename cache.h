@@ -1028,7 +1028,6 @@ extern char *git_getpass(const char *prompt);
 extern struct child_process *git_connect(int fd[2], const char *url, const char *prog, int flags);
 extern int finish_connect(struct child_process *conn);
 extern int git_connection_is_socket(struct child_process *conn);
-extern int path_match(const char *path, int nr, char **match);
 struct extra_have_objects {
 	int nr, alloc;
 	unsigned char (*array)[20];
