@@ -6,7 +6,7 @@ test_description='tests for ref^{stuff}'
 
 test_expect_success 'setup' '
 	echo blob >a-blob &&
-	git tag -a -m blob blob-tag `git hash-object -w a-blob`
+	git tag -a -m blob blob-tag `git hash-object -w a-blob` &&
 	mkdir a-tree &&
 	echo moreblobs >a-tree/another-blob &&
 	git add . &&

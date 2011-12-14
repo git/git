@@ -48,7 +48,7 @@ test_expect_success 'setup: helper for testing rev-parse' '
 '
 
 test_expect_success 'setup: core.worktree = relative path' '
-	unset GIT_WORK_TREE;
+	sane_unset GIT_WORK_TREE &&
 	GIT_DIR=repo.git &&
 	GIT_CONFIG="$(pwd)"/$GIT_DIR/config &&
 	export GIT_DIR GIT_CONFIG &&
@@ -89,7 +89,7 @@ test_expect_success 'subdir of work tree' '
 '
 
 test_expect_success 'setup: core.worktree = absolute path' '
-	unset GIT_WORK_TREE;
+	sane_unset GIT_WORK_TREE &&
 	GIT_DIR=$(pwd)/repo.git &&
 	GIT_CONFIG=$GIT_DIR/config &&
 	export GIT_DIR GIT_CONFIG &&
@@ -334,7 +334,7 @@ test_expect_success 'absolute pathspec should fail gracefully' '
 '
 
 test_expect_success 'make_relative_path handles double slashes in GIT_DIR' '
-	>dummy_file
+	>dummy_file &&
 	echo git --git-dir="$(pwd)//repo.git" --work-tree="$(pwd)" add dummy_file &&
 	git --git-dir="$(pwd)//repo.git" --work-tree="$(pwd)" add dummy_file
 '

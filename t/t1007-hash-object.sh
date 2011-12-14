@@ -189,7 +189,7 @@ for args in "-w --stdin-paths" "--stdin-paths -w"; do
 done
 
 test_expect_success 'corrupt tree' '
-	echo abc >malformed-tree
+	echo abc >malformed-tree &&
 	test_must_fail git hash-object -t tree malformed-tree
 '
 

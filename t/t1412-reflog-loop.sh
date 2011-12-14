@@ -20,7 +20,7 @@ test_expect_success 'setup reflog with alternating commits' '
 '
 
 test_expect_success 'reflog shows all entries' '
-	cat >expect <<-\EOF
+	cat >expect <<-\EOF &&
 		topic@{0} reset: moving to two
 		topic@{1} reset: moving to one
 		topic@{2} reset: moving to two

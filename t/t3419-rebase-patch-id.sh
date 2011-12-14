@@ -39,7 +39,7 @@ run()
 }
 
 test_expect_success 'setup' '
-	git commit --allow-empty -m initial
+	git commit --allow-empty -m initial &&
 	git tag root
 '
 

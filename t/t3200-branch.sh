@@ -22,7 +22,7 @@ test_expect_success \
 
 test_expect_success \
     'git branch --help should not have created a bogus branch' '
-     git branch --help </dev/null >/dev/null 2>/dev/null;
+     test_might_fail git branch --help </dev/null >/dev/null 2>/dev/null &&
      test_path_is_missing .git/refs/heads/--help
 '
 
@@ -88,7 +88,7 @@ test_expect_success \
 test_expect_success \
     'git branch -m n/n n should work' \
        'git branch -l n/n &&
-        git branch -m n/n n
+	git branch -m n/n n &&
 	test_path_is_file .git/logs/refs/heads/n'
 
 test_expect_success 'git branch -m o/o o should fail when o/p exists' '

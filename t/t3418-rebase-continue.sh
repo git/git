@@ -51,7 +51,7 @@ test_expect_success 'rebase --continue remembers merge strategy and options' '
 	test_commit "commit-new-file-F3-on-topic-branch" F3 32 &&
 	test_when_finished "rm -fr test-bin funny.was.run" &&
 	mkdir test-bin &&
-	cat >test-bin/git-merge-funny <<-EOF
+	cat >test-bin/git-merge-funny <<-EOF &&
 	#!$SHELL_PATH
 	case "\$1" in --opt) ;; *) exit 2 ;; esac
 	shift &&
@@ -77,7 +77,7 @@ test_expect_success 'rebase --continue remembers merge strategy and options' '
 test_expect_success 'rebase --continue remembers --rerere-autoupdate' '
 	rm -fr .git/rebase-* &&
 	git reset --hard commit-new-file-F3-on-topic-branch &&
-	git checkout master
+	git checkout master &&
 	test_commit "commit-new-file-F3" F3 3 &&
 	git config rerere.enabled true &&
 	test_must_fail git rebase -m master topic &&
