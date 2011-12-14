@@ -49,7 +49,6 @@ struct slot_results {
 
 struct active_request_slot {
 	CURL *curl;
-	FILE *local;
 	int in_use;
 	CURLcode curl_result;
 	long http_code;
@@ -89,7 +88,6 @@ extern void step_active_slots(void);
 extern void http_init(struct remote *remote, const char *url);
 extern void http_cleanup(void);
 
-extern int data_received;
 extern int active_requests;
 extern int http_is_verbose;
 extern size_t http_post_buffer;

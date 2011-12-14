@@ -4,7 +4,6 @@
 #include "run-command.h"
 #include "url.h"
 
-int data_received;
 int active_requests;
 int http_is_verbose;
 size_t http_post_buffer = 16 * LARGE_PACKET_MAX;
@@ -99,13 +98,11 @@ size_t fwrite_buffer(char *ptr, size_t eltsize, size_t nmemb, void *buffer_)
 	struct strbuf *buffer = buffer_;
 
 	strbuf_add(buffer, ptr, size);
-	data_received++;
 	return size;
 }
 
 size_t fwrite_null(char *ptr, size_t eltsize, size_t nmemb, void *strbuf)
 {
-	data_received++;
 	return eltsize * nmemb;
 }
 
@@ -536,7 +533,6 @@ struct active_request_slot *get_active_slot(void)
 
 	active_requests++;
 	slot->in_use = 1;
-	slot->local = NULL;
 	slot->results = NULL;
 	slot->finished = NULL;
 	slot->callback_data = NULL;
@@ -640,8 +636,6 @@ void step_active_slots(void)
 void run_active_slot(struct active_request_slot *slot)
 {
 #ifdef USE_CURL_MULTI
-	long last_pos = 0;
-	long current_pos;
 	fd_set readfds;
 	fd_set writefds;
 	fd_set excfds;
@@ -651,25 +645,33 @@ void run_active_slot(struct active_request_slot *slot)
 
 	slot->finished = &finished;
 	while (!finished) {
-		data_received = 0;
 		step_active_slots();
 
-		if (!data_received && slot->local != NULL) {
-			current_pos = ftell(slot->local);
-			if (current_pos > last_pos)
-				data_received++;
-			last_pos = current_pos;
-		}
+		if (slot->in_use) {
+#if LIBCURL_VERSION_NUM >= 0x070f04
+			long curl_timeout;
+			curl_multi_timeout(curlm, &curl_timeout);
+			if (curl_timeout == 0) {
+				continue;
+			} else if (curl_timeout == -1) {
+				select_timeout.tv_sec  = 0;
+				select_timeout.tv_usec = 50000;
+			} else {
+				select_timeout.tv_sec  =  curl_timeout / 1000;
+				select_timeout.tv_usec = (curl_timeout % 1000) * 1000;
+			}
+#else
+			select_timeout.tv_sec  = 0;
+			select_timeout.tv_usec = 50000;
+#endif
 
-		if (slot->in_use && !data_received) {
-			max_fd = 0;
+			max_fd = -1;
 			FD_ZERO(&readfds);
 			FD_ZERO(&writefds);
 			FD_ZERO(&excfds);
-			select_timeout.tv_sec = 0;
-			select_timeout.tv_usec = 50000;
-			select(max_fd, &readfds, &writefds,
-			       &excfds, &select_timeout);
+			curl_multi_fdset(curlm, &readfds, &writefds, &excfds, &max_fd);
+
+			select(max_fd+1, &readfds, &writefds, &excfds, &select_timeout);
 		}
 	}
 #else
@@ -814,7 +816,6 @@ static int http_request(const char *url, void *result, int target, int options)
 				headers = curl_slist_append(headers, buf.buf);
 				strbuf_reset(&buf);
 			}
-			slot->local = result;
 		} else
 			curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION,
 					 fwrite_buffer);
@@ -862,7 +863,6 @@ static int http_request(const char *url, void *result, int target, int options)
 		ret = HTTP_START_FAILED;
 	}
 
-	slot->local = NULL;
 	curl_slist_free_all(headers);
 	strbuf_release(&buf);
 
@@ -1057,7 +1057,6 @@ void release_http_pack_request(struct http_pack_request *preq)
 	if (preq->packfile != NULL) {
 		fclose(preq->packfile);
 		preq->packfile = NULL;
-		preq->slot->local = NULL;
 	}
 	if (preq->range_header != NULL) {
 		curl_slist_free_all(preq->range_header);
@@ -1079,7 +1078,6 @@ int finish_http_pack_request(struct http_pack_request *preq)
 
 	fclose(preq->packfile);
 	preq->packfile = NULL;
-	preq->slot->local = NULL;
 
 	lst = preq->lst;
 	while (*lst != p)
@@ -1148,7 +1146,6 @@ struct http_pack_request *new_http_pack_request(
 	}
 
 	preq->slot = get_active_slot();
-	preq->slot->local = preq->packfile;
 	curl_easy_setopt(preq->slot->curl, CURLOPT_FILE, preq->packfile);
 	curl_easy_setopt(preq->slot->curl, CURLOPT_WRITEFUNCTION, fwrite);
 	curl_easy_setopt(preq->slot->curl, CURLOPT_URL, preq->url);
@@ -1205,7 +1202,6 @@ static size_t fwrite_sha1_file(char *ptr, size_t eltsize, size_t nmemb,
 		git_SHA1_Update(&freq->c, expn,
 				sizeof(expn) - freq->stream.avail_out);
 	} while (freq->stream.avail_in && freq->zret == Z_OK);
-	data_received++;
 	return size;
 }
 
