@@ -714,31 +714,27 @@ static int format_todo(struct strbuf *buf, struct commit_list *todo_list,
 	return 0;
 }
 
-static struct commit *parse_insn_line(char *start, struct replay_opts *opts)
+static struct commit *parse_insn_line(char *bol, char *eol, struct replay_opts *opts)
 {
 	unsigned char commit_sha1[20];
-	char sha1_abbrev[40];
 	enum replay_action action;
-	int insn_len = 0;
-	char *p, *q;
+	char *end_of_object_name;
+	int saved, status;
 
-	if (!prefixcmp(start, "pick ")) {
+	if (!prefixcmp(bol, "pick ")) {
 		action = CHERRY_PICK;
-		insn_len = strlen("pick");
-		p = start + insn_len + 1;
-	} else if (!prefixcmp(start, "revert ")) {
+		bol += strlen("pick ");
+	} else if (!prefixcmp(bol, "revert ")) {
 		action = REVERT;
-		insn_len = strlen("revert");
-		p = start + insn_len + 1;
+		bol += strlen("revert ");
 	} else
 		return NULL;
 
-	q = strchr(p, ' ');
-	if (!q)
-		return NULL;
-	q++;
-
-	strlcpy(sha1_abbrev, p, q - p);
+	end_of_object_name = bol + strcspn(bol, " \n");
+	saved = *end_of_object_name;
+	*end_of_object_name = '\0';
+	status = get_sha1(bol, commit_sha1);
+	*end_of_object_name = saved;
 
 	/*
 	 * Verify that the action matches up with the one in
@@ -751,7 +747,7 @@ static struct commit *parse_insn_line(char *start, struct replay_opts *opts)
 		return NULL;
 	}
 
-	if (get_sha1(sha1_abbrev, commit_sha1) < 0)
+	if (status < 0)
 		return NULL;
 
 	return lookup_commit_reference(commit_sha1);
@@ -766,13 +762,12 @@ static int parse_insn_buffer(char *buf, struct commit_list **todo_list,
 	int i;
 
 	for (i = 1; *p; i++) {
-		commit = parse_insn_line(p, opts);
+		char *eol = strchrnul(p, '\n');
+		commit = parse_insn_line(p, eol, opts);
 		if (!commit)
 			return error(_("Could not parse line %d."), i);
 		next = commit_list_append(commit, next);
-		p = strchrnul(p, '\n');
-		if (*p)
-			p++;
+		p = *eol ? eol + 1 : eol;
 	}
 	if (!*todo_list)
 		return error(_("No commits parsed."));
