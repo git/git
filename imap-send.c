@@ -161,7 +161,6 @@ static struct imap_server_conf server = {
 struct imap_store_conf {
 	struct store_conf gen;
 	struct imap_server_conf *server;
-	unsigned use_namespace:1;
 };
 
 #define NIL	(void *)0x1
