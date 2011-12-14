@@ -182,7 +182,7 @@ static int builtin_diff_combined(struct rev_info *revs,
 		hashcpy((unsigned char *)(parent + i), ent[i].item->sha1);
 	diff_tree_combined(parent[0], parent + 1, ents - 1,
 			   revs->dense_combined_merges, revs);
-	free(parent);
+	free((void *)parent);
 	return 0;
 }
 
