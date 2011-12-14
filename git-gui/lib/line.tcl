@@ -15,7 +15,7 @@ constructor new {i_w i_text args} {
 
 	${NS}::frame  $w
 	${NS}::label  $w.l       -text [mc "Goto Line:"]
-	entry  $w.ent \
+	tentry  $w.ent \
 		-textvariable ${__this}::linenum \
 		-background lightgreen \
 		-validate key \

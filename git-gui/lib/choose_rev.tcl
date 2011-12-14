@@ -497,6 +497,7 @@ method _open_tooltip {} {
 
 	if {$tooltip_wm eq {}} {
 		set tooltip_wm [toplevel $w_list.tooltip -borderwidth 1]
+		catch {wm attributes $tooltip_wm -type tooltip}
 		wm overrideredirect $tooltip_wm 1
 		wm transient $tooltip_wm [winfo toplevel $w_list]
 		set tooltip_t $tooltip_wm.label
