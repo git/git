@@ -70,8 +70,7 @@ static void add_mapping(struct string_list *map,
 	} else {
 		/* create mailmap entry */
 		struct string_list_item *item = string_list_insert_at_index(map, index, old_email);
-		item->util = xmalloc(sizeof(struct mailmap_entry));
-		memset(item->util, 0, sizeof(struct mailmap_entry));
+		item->util = xcalloc(1, sizeof(struct mailmap_entry));
 		((struct mailmap_entry *)item->util)->namemap.strdup_strings = 1;
 	}
 	me = (struct mailmap_entry *)map->items[index].util;
@@ -88,7 +87,7 @@ static void add_mapping(struct string_list *map,
 			me->email = xstrdup(new_email);
 		}
 	} else {
-		struct mailmap_info *mi = xmalloc(sizeof(struct mailmap_info));
+		struct mailmap_info *mi = xcalloc(1, sizeof(struct mailmap_info));
 		debug_mm("mailmap: adding (complex) entry for %s at index %d\n", old_email, index);
 		if (new_name)
 			mi->name = xstrdup(new_name);
