@@ -775,7 +775,7 @@ int checkout_fast_forward(const unsigned char *head, const unsigned char *remote
 	memset(&t, 0, sizeof(t));
 	memset(&dir, 0, sizeof(dir));
 	dir.flags |= DIR_SHOW_IGNORED;
-	dir.exclude_per_dir = ".gitignore";
+	setup_standard_excludes(&dir);
 	opts.dir = &dir;
 
 	opts.head_idx = 1;
