@@ -60,13 +60,14 @@ struct replay_opts {
 	int allow_rerere_auto;
 
 	int mainline;
-	int commit_argc;
-	const char **commit_argv;
 
 	/* Merge strategy */
 	const char *strategy;
 	const char **xopts;
 	size_t xopts_nr, xopts_alloc;
+
+	/* Only used by REPLAY_NONE */
+	struct rev_info *revs;
 };
 
 #define GIT_REFLOG_ACTION "GIT_REFLOG_ACTION"
@@ -169,9 +170,9 @@ static void parse_args(int argc, const char **argv, struct replay_opts *opts)
 			die(_("program error"));
 	}
 
-	opts->commit_argc = parse_options(argc, argv, NULL, options, usage_str,
-					PARSE_OPT_KEEP_ARGV0 |
-					PARSE_OPT_KEEP_UNKNOWN);
+	argc = parse_options(argc, argv, NULL, options, usage_str,
+			PARSE_OPT_KEEP_ARGV0 |
+			PARSE_OPT_KEEP_UNKNOWN);
 
 	/* Check for incompatible subcommands */
 	verify_opt_mutually_compatible(me,
@@ -213,9 +214,6 @@ static void parse_args(int argc, const char **argv, struct replay_opts *opts)
 				NULL);
 	}
 
-	else if (opts->commit_argc < 2)
-		usage_with_options(usage_str, options);
-
 	if (opts->allow_ff)
 		verify_opt_compatible(me, "--ff",
 				"--signoff", opts->signoff,
@@ -223,7 +221,20 @@ static void parse_args(int argc, const char **argv, struct replay_opts *opts)
 				"-x", opts->record_origin,
 				"--edit", opts->edit,
 				NULL);
-	opts->commit_argv = argv;
+
+	if (opts->subcommand != REPLAY_NONE) {
+		opts->revs = NULL;
+	} else {
+		opts->revs = xmalloc(sizeof(*opts->revs));
+		init_revisions(opts->revs, NULL);
+		opts->revs->no_walk = 1;
+		if (argc < 2)
+			usage_with_options(usage_str, options);
+		argc = setup_revisions(argc, argv, opts->revs, NULL);
+	}
+
+	if (argc > 1)
+		usage_with_options(usage_str, options);
 }
 
 struct commit_message {
@@ -631,23 +642,15 @@ static int do_pick_commit(struct commit *commit, struct replay_opts *opts)
 	return res;
 }
 
-static void prepare_revs(struct rev_info *revs, struct replay_opts *opts)
+static void prepare_revs(struct replay_opts *opts)
 {
-	int argc;
-
-	init_revisions(revs, NULL);
-	revs->no_walk = 1;
 	if (opts->action != REVERT)
-		revs->reverse = 1;
+		opts->revs->reverse ^= 1;
 
-	argc = setup_revisions(opts->commit_argc, opts->commit_argv, revs, NULL);
-	if (argc > 1)
-		usage(*revert_or_cherry_pick_usage(opts));
-
-	if (prepare_revision_walk(revs))
+	if (prepare_revision_walk(opts->revs))
 		die(_("revision walk setup failed"));
 
-	if (!revs->commits)
+	if (!opts->revs->commits)
 		die(_("empty commit set passed"));
 }
 
@@ -844,14 +847,13 @@ static void read_populate_opts(struct replay_opts **opts_ptr)
 static void walk_revs_populate_todo(struct commit_list **todo_list,
 				struct replay_opts *opts)
 {
-	struct rev_info revs;
 	struct commit *commit;
 	struct commit_list **next;
 
-	prepare_revs(&revs, opts);
+	prepare_revs(opts);
 
 	next = todo_list;
-	while ((commit = get_revision(&revs)))
+	while ((commit = get_revision(opts->revs)))
 		next = commit_list_append(commit, next);
 }
 
@@ -942,7 +944,7 @@ static int sequencer_rollback(struct replay_opts *opts)
 	}
 	if (reset_for_rollback(sha1))
 		goto fail;
-	remove_sequencer_state(1);
+	remove_sequencer_state();
 	strbuf_release(&buf);
 	return 0;
 fail:
@@ -1016,32 +1018,63 @@ static int pick_commits(struct commit_list *todo_list, struct replay_opts *opts)
 	for (cur = todo_list; cur; cur = cur->next) {
 		save_todo(cur, opts);
 		res = do_pick_commit(cur->item, opts);
-		if (res) {
-			if (!cur->next)
-				/*
-				 * An error was encountered while
-				 * picking the last commit; the
-				 * sequencer state is useless now --
-				 * the user simply needs to resolve
-				 * the conflict and commit
-				 */
-				remove_sequencer_state(0);
+		if (res)
 			return res;
-		}
 	}
 
 	/*
 	 * Sequence of picks finished successfully; cleanup by
 	 * removing the .git/sequencer directory
 	 */
-	remove_sequencer_state(1);
+	remove_sequencer_state();
 	return 0;
+}
+
+static int continue_single_pick(void)
+{
+	const char *argv[] = { "commit", NULL };
+
+	if (!file_exists(git_path("CHERRY_PICK_HEAD")) &&
+	    !file_exists(git_path("REVERT_HEAD")))
+		return error(_("no cherry-pick or revert in progress"));
+	return run_command_v_opt(argv, RUN_GIT_CMD);
+}
+
+static int sequencer_continue(struct replay_opts *opts)
+{
+	struct commit_list *todo_list = NULL;
+
+	if (!file_exists(git_path(SEQ_TODO_FILE)))
+		return continue_single_pick();
+	read_populate_opts(&opts);
+	read_populate_todo(&todo_list, opts);
+
+	/* Verify that the conflict has been resolved */
+	if (file_exists(git_path("CHERRY_PICK_HEAD")) ||
+	    file_exists(git_path("REVERT_HEAD"))) {
+		int ret = continue_single_pick();
+		if (ret)
+			return ret;
+	}
+	if (index_differs_from("HEAD", 0))
+		return error_dirty_index(opts);
+	todo_list = todo_list->next;
+	return pick_commits(todo_list, opts);
+}
+
+static int single_pick(struct commit *cmit, struct replay_opts *opts)
+{
+	setenv(GIT_REFLOG_ACTION, action_name(opts), 0);
+	return do_pick_commit(cmit, opts);
 }
 
 static int pick_revisions(struct replay_opts *opts)
 {
 	struct commit_list *todo_list = NULL;
 	unsigned char sha1[20];
+
+	if (opts->subcommand == REPLAY_NONE)
+		assert(opts->revs);
 
 	read_and_refresh_cache(opts);
 
@@ -1051,21 +1084,32 @@ static int pick_revisions(struct replay_opts *opts)
 	 * one that is being continued
 	 */
 	if (opts->subcommand == REPLAY_REMOVE_STATE) {
-		remove_sequencer_state(1);
+		remove_sequencer_state();
 		return 0;
 	}
 	if (opts->subcommand == REPLAY_ROLLBACK)
 		return sequencer_rollback(opts);
-	if (opts->subcommand == REPLAY_CONTINUE) {
-		if (!file_exists(git_path(SEQ_TODO_FILE)))
-			return error(_("No %s in progress"), action_name(opts));
-		read_populate_opts(&opts);
-		read_populate_todo(&todo_list, opts);
+	if (opts->subcommand == REPLAY_CONTINUE)
+		return sequencer_continue(opts);
 
-		/* Verify that the conflict has been resolved */
-		if (!index_differs_from("HEAD", 0))
-			todo_list = todo_list->next;
-		return pick_commits(todo_list, opts);
+	/*
+	 * If we were called as "git cherry-pick <commit>", just
+	 * cherry-pick/revert it, set CHERRY_PICK_HEAD /
+	 * REVERT_HEAD, and don't touch the sequencer state.
+	 * This means it is possible to cherry-pick in the middle
+	 * of a cherry-pick sequence.
+	 */
+	if (opts->revs->cmdline.nr == 1 &&
+	    opts->revs->cmdline.rev->whence == REV_CMD_REV &&
+	    opts->revs->no_walk &&
+	    !opts->revs->cmdline.rev->flags) {
+		struct commit *cmit;
+		if (prepare_revision_walk(opts->revs))
+			die(_("revision walk setup failed"));
+		cmit = get_revision(opts->revs);
+		if (!cmit || get_revision(opts->revs))
+			die("BUG: expected exactly one commit from walk");
+		return single_pick(cmit, opts);
 	}
 
 	/*
