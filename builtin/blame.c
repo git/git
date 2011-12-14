@@ -1598,7 +1598,7 @@ static const char *format_time(unsigned long time, const char *tz_str,
 	int tz;
 
 	if (show_raw_time) {
-		sprintf(time_buf, "%lu %s", time, tz_str);
+		snprintf(time_buf, sizeof(time_buf), "%lu %s", time, tz_str);
 	}
 	else {
 		tz = atoi(tz_str);
