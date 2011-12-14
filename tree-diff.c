@@ -21,8 +21,8 @@ static int compare_tree_entry(struct tree_desc *t1, struct tree_desc *t2,
 	sha1 = tree_entry_extract(t1, &path1, &mode1);
 	sha2 = tree_entry_extract(t2, &path2, &mode2);
 
-	pathlen1 = tree_entry_len(path1, sha1);
-	pathlen2 = tree_entry_len(path2, sha2);
+	pathlen1 = tree_entry_len(&t1->entry);
+	pathlen2 = tree_entry_len(&t2->entry);
 	cmp = base_name_compare(path1, pathlen1, mode1, path2, pathlen2, mode2);
 	if (cmp < 0) {
 		show_entry(opt, "-", t1, base);
@@ -64,14 +64,14 @@ static int compare_tree_entry(struct tree_desc *t1, struct tree_desc *t2,
 static void show_tree(struct diff_options *opt, const char *prefix,
 		      struct tree_desc *desc, struct strbuf *base)
 {
-	int match = 0;
+	enum interesting match = entry_not_interesting;
 	for (; desc->size; update_tree_entry(desc)) {
-		if (match != 2) {
+		if (match != all_entries_interesting) {
 			match = tree_entry_interesting(&desc->entry, base, 0,
 						       &opt->pathspec);
-			if (match < 0)
+			if (match == all_entries_not_interesting)
 				break;
-			if (match == 0)
+			if (match == entry_not_interesting)
 				continue;
 		}
 		show_entry(opt, prefix, desc, base);
@@ -85,7 +85,7 @@ static void show_entry(struct diff_options *opt, const char *prefix,
 	unsigned mode;
 	const char *path;
 	const unsigned char *sha1 = tree_entry_extract(desc, &path, &mode);
-	int pathlen = tree_entry_len(path, sha1);
+	int pathlen = tree_entry_len(&desc->entry);
 	int old_baselen = base->len;
 
 	strbuf_add(base, path, pathlen);
@@ -114,12 +114,13 @@ static void show_entry(struct diff_options *opt, const char *prefix,
 }
 
 static void skip_uninteresting(struct tree_desc *t, struct strbuf *base,
-			       struct diff_options *opt, int *match)
+			       struct diff_options *opt,
+			       enum interesting *match)
 {
 	while (t->size) {
 		*match = tree_entry_interesting(&t->entry, base, 0, &opt->pathspec);
 		if (*match) {
-			if (*match < 0)
+			if (*match == all_entries_not_interesting)
 				t->size = 0;
 			break;
 		}
@@ -132,7 +133,8 @@ int diff_tree(struct tree_desc *t1, struct tree_desc *t2,
 {
 	struct strbuf base;
 	int baselen = strlen(base_str);
-	int t1_match = 0, t2_match = 0;
+	enum interesting t1_match = entry_not_interesting;
+	enum interesting t2_match = entry_not_interesting;
 
 	/* Enable recursion indefinitely */
 	opt->pathspec.recursive = DIFF_OPT_TST(opt, RECURSIVE);

@@ -71,7 +71,8 @@ static void process_tree(struct rev_info *revs,
 	struct tree_desc desc;
 	struct name_entry entry;
 	struct name_path me;
-	int match = revs->diffopt.pathspec.nr == 0 ? 2 : 0;
+	enum interesting match = revs->diffopt.pathspec.nr == 0 ?
+		all_entries_interesting: entry_not_interesting;
 	int baselen = base->len;
 
 	if (!revs->tree_objects)
@@ -97,12 +98,12 @@ static void process_tree(struct rev_info *revs,
 	init_tree_desc(&desc, tree->buffer, tree->size);
 
 	while (tree_entry(&desc, &entry)) {
-		if (match != 2) {
+		if (match != all_entries_interesting) {
 			match = tree_entry_interesting(&entry, base, 0,
 						       &revs->diffopt.pathspec);
-			if (match < 0)
+			if (match == all_entries_not_interesting)
 				break;
-			if (match == 0)
+			if (match == entry_not_interesting)
 				continue;
 		}
 

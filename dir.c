@@ -968,34 +968,34 @@ static int read_directory_recursive(struct dir_struct *dir,
 {
 	DIR *fdir = opendir(*base ? base : ".");
 	int contents = 0;
+	struct dirent *de;
+	char path[PATH_MAX + 1];
 
-	if (fdir) {
-		struct dirent *de;
-		char path[PATH_MAX + 1];
-		memcpy(path, base, baselen);
+	if (!fdir)
+		return 0;
 
-		while ((de = readdir(fdir)) != NULL) {
-			int len;
-			switch (treat_path(dir, de, path, sizeof(path),
-					   baselen, simplify, &len)) {
-			case path_recurse:
-				contents += read_directory_recursive
-					(dir, path, len, 0, simplify);
-				continue;
-			case path_ignored:
-				continue;
-			case path_handled:
-				break;
-			}
-			contents++;
-			if (check_only)
-				goto exit_early;
-			else
-				dir_add_name(dir, path, len);
+	memcpy(path, base, baselen);
+
+	while ((de = readdir(fdir)) != NULL) {
+		int len;
+		switch (treat_path(dir, de, path, sizeof(path),
+				   baselen, simplify, &len)) {
+		case path_recurse:
+			contents += read_directory_recursive(dir, path, len, 0, simplify);
+			continue;
+		case path_ignored:
+			continue;
+		case path_handled:
+			break;
 		}
-exit_early:
-		closedir(fdir);
+		contents++;
+		if (check_only)
+			goto exit_early;
+		else
+			dir_add_name(dir, path, len);
 	}
+exit_early:
+	closedir(fdir);
 
 	return contents;
 }
