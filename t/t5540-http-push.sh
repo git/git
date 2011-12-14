@@ -160,7 +160,7 @@ test_expect_success 'PUT and MOVE sends object to URLs with SHA-1 hash suffix' '
 test_http_push_nonff "$HTTPD_DOCUMENT_ROOT_PATH"/test_repo.git \
 	"$ROOT_PATH"/test_repo_clone master
 
-test_expect_failure 'push to password-protected repository (user in URL)' '
+test_expect_success 'push to password-protected repository (user in URL)' '
 	test_commit pw-user &&
 	git push "$HTTPD_URL_USER/auth/dumb/test_repo.git" HEAD &&
 	git rev-parse --verify HEAD >expect &&

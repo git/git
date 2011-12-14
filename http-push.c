@@ -1820,7 +1820,7 @@ int main(int argc, char **argv)
 
 	memset(remote_dir_exists, -1, 256);
 
-	http_init(NULL, repo->url);
+	http_init(NULL, repo->url, 1);
 
 #ifdef USE_CURL_MULTI
 	is_running_queue = 0;
