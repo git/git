@@ -6,7 +6,7 @@ int gitsetenv(const char *name, const char *value, int replace)
 	size_t namelen, valuelen;
 	char *envstr;
 
-	if (!name || !value) {
+	if (!name || strchr(name, '=') || !value) {
 		errno = EINVAL;
 		return -1;
 	}
