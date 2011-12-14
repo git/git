@@ -689,7 +689,7 @@ unsigned is_submodule_modified(const char *path, int ignore_untracked)
 	cp.out = -1;
 	cp.dir = path;
 	if (start_command(&cp))
-		die("Could not run git status --porcelain");
+		die("Could not run 'git status --porcelain' in submodule %s", path);
 
 	len = strbuf_read(&buf, cp.out, 1024);
 	line = buf.buf;
@@ -714,7 +714,7 @@ unsigned is_submodule_modified(const char *path, int ignore_untracked)
 	close(cp.out);
 
 	if (finish_command(&cp))
-		die("git status --porcelain failed");
+		die("'git status --porcelain' failed in submodule %s", path);
 
 	strbuf_release(&buf);
 	return dirty_submodule;
