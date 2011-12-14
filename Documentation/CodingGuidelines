@@ -81,6 +81,10 @@ For shell scripts specifically (not exhaustive):
      are ERE elements not BRE (note that \? and \+ are not even part
      of BRE -- making them accessible from BRE is a GNU extension).
 
+ - Use Git's gettext wrappers in git-sh-i18n to make the user
+   interface translatable. See "Marking strings for translation" in
+   po/README.
+
 For C programs:
 
  - We use tabs to indent, and interpret tabs as taking up to
@@ -143,6 +147,9 @@ For C programs:
 
  - When we pass <string, length> pair to functions, we should try to
    pass them in that order.
+
+ - Use Git's gettext wrappers to make the user interface
+   translatable. See "Marking strings for translation" in po/README.
 
 Writing Documentation:
 

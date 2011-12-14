@@ -538,6 +538,8 @@ int main(int argc, const char **argv)
 	if (!cmd)
 		cmd = "git-help";
 
+	git_setup_gettext();
+
 	/*
 	 * "git-xxxx" is the same as "git xxxx", but we obviously:
 	 *

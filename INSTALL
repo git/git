@@ -106,6 +106,18 @@ Issues of note:
 	  history graphically, and in git-gui.  If you don't want gitk or
 	  git-gui, you can use NO_TCLTK.
 
+	- A gettext library is used by default for localizing Git. The
+	  primary target is GNU libintl, but the Solaris gettext
+	  implementation also works.
+
+	  We need a gettext.h on the system for C code, gettext.sh (or
+	  Solaris gettext(1)) for shell scripts, and libintl-perl for Perl
+	  programs.
+
+	  Set NO_GETTEXT to disable localization support and make Git only
+	  use English. Under autoconf the configure script will do this
+	  automatically if it can't find libintl on the system.
+
  - Some platform specific issues are dealt with Makefile rules,
    but depending on your specific installation, you may not
    have all the libraries/tools needed, or you may have
