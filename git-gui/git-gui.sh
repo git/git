@@ -299,7 +299,9 @@ proc is_config_true {name} {
 	global repo_config
 	if {[catch {set v $repo_config($name)}]} {
 		return 0
-	} elseif {$v eq {true} || $v eq {1} || $v eq {yes}} {
+	}
+	set v [string tolower $v]
+	if {$v eq {} || $v eq {true} || $v eq {1} || $v eq {yes} || $v eq {on}} {
 		return 1
 	} else {
 		return 0
@@ -310,7 +312,9 @@ proc is_config_false {name} {
 	global repo_config
 	if {[catch {set v $repo_config($name)}]} {
 		return 0
-	} elseif {$v eq {false} || $v eq {0} || $v eq {no}} {
+	}
+	set v [string tolower $v]
+	if {$v eq {false} || $v eq {0} || $v eq {no} || $v eq {off}} {
 		return 1
 	} else {
 		return 0
@@ -458,6 +462,35 @@ proc _which {what args} {
 		}
 	}
 	return {}
+}
+
+# Test a file for a hashbang to identify executable scripts on Windows.
+proc is_shellscript {filename} {
+	if {![file exists $filename]} {return 0}
+	set f [open $filename r]
+	fconfigure $f -encoding binary
+	set magic [read $f 2]
+	close $f
+	return [expr {$magic eq "#!"}]
+}
+
+# Run a command connected via pipes on stdout.
+# This is for use with textconv filters and uses sh -c "..." to allow it to
+# contain a command with arguments. On windows we must check for shell
+# scripts specifically otherwise just call the filter command.
+proc open_cmd_pipe {cmd path} {
+	global env
+	if {![file executable [shellpath]]} {
+		set exe [auto_execok [lindex $cmd 0]]
+		if {[is_shellscript [lindex $exe 0]]} {
+			set run [linsert [auto_execok sh] end -c "$cmd \"\$0\"" $path]
+		} else {
+			set run [concat $exe [lrange $cmd 1 end] $path]
+		}
+	} else {
+		set run [list [shellpath] -c "$cmd \"\$0\"" $path]
+	}
+	return [open |$run r]
 }
 
 proc _lappend_nice {cmd_var} {
@@ -725,7 +758,10 @@ if {[is_Windows]} {
 		gitlogo put gray26  -to  5 15 11 16
 		gitlogo redither
 
-		wm iconphoto . -default gitlogo
+		image create photo gitlogo32 -width 32 -height 32
+		gitlogo32 copy gitlogo -zoom 2 2
+
+		wm iconphoto . -default gitlogo gitlogo32
 	}
 }
 
@@ -846,6 +882,7 @@ set default_config(gui.fastcopyblame) false
 set default_config(gui.copyblamethreshold) 40
 set default_config(gui.blamehistoryctx) 7
 set default_config(gui.diffcontext) 5
+set default_config(gui.diffopts) {}
 set default_config(gui.commitmsgwidth) 75
 set default_config(gui.newbranchtemplate) {}
 set default_config(gui.spellingdictionary) {}
@@ -859,6 +896,7 @@ set font_descs {
 	{fontui   font_ui   {mc "Main Font"}}
 	{fontdiff font_diff {mc "Diff/Console Font"}}
 }
+set default_config(gui.stageuntracked) ask
 
 ######################################################################
 ##
@@ -1060,6 +1098,10 @@ git-version proc _parse_config {arr_name args} {
 				} else {
 					set arr($name) $value
 				}
+			} elseif {[regexp {^([^\n]+)$} $line line name]} {
+				# no value given, but interpreting them as
+				# boolean will be handled as true
+				set arr($name) {}
 			}
 		}
 	}
@@ -1075,6 +1117,10 @@ git-version proc _parse_config {arr_name args} {
 					} else {
 						set arr($name) $value
 					}
+				} elseif {[regexp {^([^=]+)$} $line line name]} {
+					# no value given, but interpreting them as
+					# boolean will be handled as true
+					set arr($name) {}
 				}
 			}
 			close $fd_rc
@@ -2474,6 +2520,7 @@ proc toggle_or_diff {w x y} {
 				[concat $after [list ui_ready]]
 		}
 	} else {
+		set selected_paths($path) 1
 		show_diff $path $w $lno
 	}
 }
@@ -3362,6 +3409,7 @@ foreach {n c} {0 black 1 red4 2 green4 3 yellow4 4 blue4 5 magenta4 6 cyan4 7 gr
 	$ui_diff tag configure clri3$n -background $c
 }
 $ui_diff tag configure clr1 -font font_diffbold
+$ui_diff tag configure clr4 -underline 1
 
 $ui_diff tag conf d_info -foreground blue -font font_diffbold
 
@@ -3878,7 +3926,7 @@ after 1 {
 		$ui_comm configure -state disabled -background gray
 	}
 }
-if {[is_enabled multicommit]} {
+if {[is_enabled multicommit] && ![is_config_false gui.gcwarning]} {
 	after 1000 hint_gc
 }
 if {[is_enabled retcode]} {

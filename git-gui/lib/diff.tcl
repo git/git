@@ -309,6 +309,7 @@ proc start_show_diff {cont_info {add_opts {}}} {
 
 	lappend cmd -p
 	lappend cmd --color
+	set cmd [concat $cmd $repo_config(gui.diffopts)]
 	if {$repo_config(gui.diffcontext) >= 1} {
 		lappend cmd "-U$repo_config(gui.diffcontext)"
 	}
@@ -502,9 +503,9 @@ proc read_diff {fd conflict_size cont_info} {
 
 		foreach {posbegin colbegin posend colend} $markup {
 			set prefix clr
-			foreach style [split $colbegin ";"] {
+			foreach style [lsort -integer [split $colbegin ";"]] {
 				if {$style eq "7"} {append prefix i; continue}
-				if {$style < 30 || $style > 47} {continue}
+				if {$style != 4 && ($style < 30 || $style > 47)} {continue}
 				set a "$mark linestart + $posbegin chars"
 				set b "$mark linestart + $posend chars"
 				catch {$ui_diff tag add $prefix$style $a $b}

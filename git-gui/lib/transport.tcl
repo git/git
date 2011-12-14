@@ -124,6 +124,7 @@ proc do_push_anywhere {} {
 
 	set w .push_setup
 	toplevel $w
+	catch {wm attributes $w -type dialog}
 	wm withdraw $w
 	wm geometry $w "+[winfo rootx .]+[winfo rooty .]"
 	pave_toplevel $w

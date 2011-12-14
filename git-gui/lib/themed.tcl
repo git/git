@@ -23,10 +23,59 @@ proc InitTheme {} {
 	ttk::style configure Gold.TFrame -background gold -relief flat
 	# listboxes should have a theme border so embed in ttk::frame
 	ttk::style layout SListbox.TFrame {
-        SListbox.Frame.Entry.field -sticky news -border true -children {
-            SListbox.Frame.padding -sticky news
-        }
-    }
+		SListbox.Frame.Entry.field -sticky news -border true -children {
+			SListbox.Frame.padding -sticky news
+		}
+	}
+
+	# Handle either current Tk or older versions of 8.5
+	if {[catch {set theme [ttk::style theme use]}]} {
+		set theme  $::ttk::currentTheme
+	}
+
+	if {[lsearch -exact {default alt classic clam} $theme] != -1} {
+		# Simple override of standard ttk::entry to change the field
+		# packground according to a state flag. We should use 'user1'
+		# but not all versions of 8.5 support that so make use of 'pressed'
+		# which is not normally in use for entry widgets.
+		ttk::style layout Edged.Entry [ttk::style layout TEntry]
+		ttk::style map Edged.Entry {*}[ttk::style map TEntry]
+		ttk::style configure Edged.Entry {*}[ttk::style configure TEntry] \
+			-fieldbackground lightgreen
+		ttk::style map Edged.Entry -fieldbackground {
+			{pressed !disabled} lightpink
+		}
+	} else {
+		# For fancier themes, in particular the Windows ones, the field
+		# element may not support changing the background color. So instead
+		# override the fill using the default fill element. If we overrode
+		# the vista theme field element we would loose the themed border
+		# of the widget.
+		catch {
+			ttk::style element create color.fill from default
+		}
+
+		ttk::style layout Edged.Entry {
+			Edged.Entry.field -sticky nswe -border 0 -children {
+				Edged.Entry.border -sticky nswe -border 1 -children {
+					Edged.Entry.padding -sticky nswe -children {
+						Edged.Entry.color.fill -sticky nswe -children {
+							Edged.Entry.textarea -sticky nswe
+						}
+					}
+				}
+			}
+		}
+
+		ttk::style configure Edged.Entry {*}[ttk::style configure TEntry] \
+			-background lightgreen -padding 0 -borderwidth 0
+		ttk::style map Edged.Entry {*}[ttk::style map TEntry] \
+			-background {{pressed !disabled} lightpink}
+	}
+
+	if {[lsearch [bind . <<ThemeChanged>>] InitTheme] == -1} {
+		bind . <<ThemeChanged>> +[namespace code [list InitTheme]]
+	}
 }
 
 proc gold_frame {w args} {
@@ -74,6 +123,7 @@ proc paddedlabel {w args} {
 # place a themed frame over the surface.
 proc Dialog {w args} {
 	eval [linsert $args 0 toplevel $w -class Dialog]
+	catch {wm attributes $w -type dialog}	
 	pave_toplevel $w
 	return $w
 }
@@ -140,6 +190,47 @@ proc tspinbox {w args} {
 		eval [linsert $args 0 ttk::spinbox $w]
 	} else {
 		eval [linsert $args 0 spinbox $w]
+	}
+}
+
+proc tentry {w args} {
+	global use_ttk
+	if {$use_ttk} {
+		InitTheme
+		ttk::entry $w -style Edged.Entry
+	} else {
+		entry $w
+	}
+
+	rename $w _$w
+	interp alias {} $w {} tentry_widgetproc $w
+	eval [linsert $args 0 tentry_widgetproc $w configure]
+	return $w
+}
+proc tentry_widgetproc {w cmd args} {
+	global use_ttk
+	switch -- $cmd {
+		state {
+			if {$use_ttk} {
+				return [uplevel 1 [list _$w $cmd] $args]
+			} else {
+				if {[lsearch -exact $args pressed] != -1} {
+					_$w configure -background lightpink
+				} else {
+					_$w configure -background lightgreen
+				}
+			}
+		}
+		configure {
+			if {$use_ttk} {
+				if {[set n [lsearch -exact $args -background]] != -1} {
+					set args [lreplace $args $n [incr n]]
+					if {[llength $args] == 0} {return}
+				}
+			}
+			return [uplevel 1 [list _$w $cmd] $args]
+		}
+		default { return [uplevel 1 [list _$w $cmd] $args] }
 	}
 }
 

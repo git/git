@@ -26,8 +26,14 @@ constructor new {commit {path {}}} {
 	wm withdraw $top
 	wm title $top [append "[appname] ([reponame]): " [mc "File Browser"]]
 
+	if {$path ne {}} {
+		if {[string index $path end] ne {/}} {
+			append path /
+		}
+	}
+
 	set browser_commit $commit
-	set browser_path $browser_commit:$path
+	set browser_path "$browser_commit:[escape_path $path]"
 
 	${NS}::label $w.path \
 		-textvariable @browser_path \
