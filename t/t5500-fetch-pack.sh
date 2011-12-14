@@ -97,7 +97,7 @@ test_expect_success 'setup' '
 	git symbolic-ref HEAD refs/heads/B
 '
 
-pull_to_client 1st "B A" $((11*3))
+pull_to_client 1st "refs/heads/B refs/heads/A" $((11*3))
 
 test_expect_success 'post 1st pull setup' '
 	add A11 $A10 &&
@@ -110,9 +110,9 @@ test_expect_success 'post 1st pull setup' '
 	done
 '
 
-pull_to_client 2nd "B" $((64*3))
+pull_to_client 2nd "refs/heads/B" $((64*3))
 
-pull_to_client 3rd "A" $((1*3))
+pull_to_client 3rd "refs/heads/A" $((1*3))
 
 test_expect_success 'clone shallow' '
 	git clone --depth 2 "file://$(pwd)/." shallow
