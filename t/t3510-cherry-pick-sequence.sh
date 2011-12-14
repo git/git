@@ -492,6 +492,17 @@ test_expect_success 'malformed instruction sheet 3' '
 	test_must_fail git cherry-pick --continue
 '
 
+test_expect_success 'instruction sheet, fat-fingers version' '
+	pristine_detach initial &&
+	test_must_fail git cherry-pick base..anotherpick &&
+	echo "c" >foo &&
+	git add foo &&
+	git commit &&
+	sed "s/pick \([0-9a-f]*\)/pick 	 \1 	/" .git/sequencer/todo >new_sheet &&
+	cp new_sheet .git/sequencer/todo &&
+	git cherry-pick --continue
+'
+
 test_expect_success 'commit descriptions in insn sheet are optional' '
 	pristine_detach initial &&
 	test_must_fail git cherry-pick base..anotherpick &&

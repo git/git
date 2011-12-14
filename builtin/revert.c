@@ -719,18 +719,24 @@ static struct commit *parse_insn_line(char *bol, char *eol, struct replay_opts *
 	unsigned char commit_sha1[20];
 	enum replay_action action;
 	char *end_of_object_name;
-	int saved, status;
+	int saved, status, padding;
 
-	if (!prefixcmp(bol, "pick ")) {
+	if (!prefixcmp(bol, "pick")) {
 		action = CHERRY_PICK;
-		bol += strlen("pick ");
-	} else if (!prefixcmp(bol, "revert ")) {
+		bol += strlen("pick");
+	} else if (!prefixcmp(bol, "revert")) {
 		action = REVERT;
-		bol += strlen("revert ");
+		bol += strlen("revert");
 	} else
 		return NULL;
 
-	end_of_object_name = bol + strcspn(bol, " \n");
+	/* Eat up extra spaces/ tabs before object name */
+	padding = strspn(bol, " \t");
+	if (!padding)
+		return NULL;
+	bol += padding;
+
+	end_of_object_name = bol + strcspn(bol, " \t\n");
 	saved = *end_of_object_name;
 	*end_of_object_name = '\0';
 	status = get_sha1(bol, commit_sha1);
