@@ -191,6 +191,7 @@ then
 fi
 
 exec 5>&1
+exec 6<&0
 if test "$verbose" = "t"
 then
 	exec 4>&2 3>&1
@@ -469,7 +470,7 @@ test_debug () {
 test_eval_ () {
 	# This is a separate function because some tests use
 	# "return" to end a test_expect_success block early.
-	eval >&3 2>&4 "$*"
+	eval </dev/null >&3 2>&4 "$*"
 }
 
 test_run_ () {
