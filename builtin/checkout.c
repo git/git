@@ -157,7 +157,7 @@ static int checkout_merged(int pos, struct checkout *state)
 	unsigned char sha1[20];
 	mmbuffer_t result_buf;
 	unsigned char threeway[3][20];
-	unsigned mode;
+	unsigned mode = 0;
 
 	memset(threeway, 0, sizeof(threeway));
 	while (pos < active_nr) {
