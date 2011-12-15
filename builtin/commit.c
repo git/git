@@ -1483,7 +1483,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 		exit(1);
 	}
 
-	if (commit_tree(sb.buf, active_cache_tree->sha1, parents, sha1,
+	if (commit_tree(&sb, active_cache_tree->sha1, parents, sha1,
 			author_ident.buf)) {
 		rollback_index_files();
 		die(_("failed to write commit object"));

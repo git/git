@@ -913,7 +913,7 @@ static int merge_trivial(struct commit *head)
 	parent->next->item = remoteheads->item;
 	parent->next->next = NULL;
 	prepare_to_commit();
-	if (commit_tree(merge_msg.buf, result_tree, parent, result_commit, NULL))
+	if (commit_tree(&merge_msg, result_tree, parent, result_commit, NULL))
 		die(_("failed to write commit object"));
 	finish(head, result_commit, "In-index merge");
 	drop_save();
@@ -945,7 +945,7 @@ static int finish_automerge(struct commit *head,
 	strbuf_addch(&merge_msg, '\n');
 	prepare_to_commit();
 	free_commit_list(remoteheads);
-	if (commit_tree(merge_msg.buf, result_tree, parents, result_commit, NULL))
+	if (commit_tree(&merge_msg, result_tree, parents, result_commit, NULL))
 		die(_("failed to write commit object"));
 	strbuf_addf(&buf, "Merge made by the '%s' strategy.", wt_strategy);
 	finish(head, result_commit, buf.buf);

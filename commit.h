@@ -181,7 +181,7 @@ static inline int single_parent(struct commit *commit)
 
 struct commit_list *reduce_heads(struct commit_list *heads);
 
-extern int commit_tree(const char *msg, unsigned char *tree,
+extern int commit_tree(const struct strbuf *msg, unsigned char *tree,
 		struct commit_list *parents, unsigned char *ret,
 		const char *author);
 

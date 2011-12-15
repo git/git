@@ -37,7 +37,7 @@ void init_notes_merge_options(struct notes_merge_options *o);
  * The resulting commit SHA1 is stored in result_sha1.
  */
 void create_notes_commit(struct notes_tree *t, struct commit_list *parents,
-			 const char *msg, unsigned char *result_sha1);
+			 const struct strbuf *msg, unsigned char *result_sha1);
 
 /*
  * Merge notes from o->remote_ref into o->local_ref

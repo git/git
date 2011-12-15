@@ -845,7 +845,7 @@ static const char commit_utf8_warn[] =
 "You may want to amend it after fixing the message, or set the config\n"
 "variable i18n.commitencoding to the encoding your project uses.\n";
 
-int commit_tree(const char *msg, unsigned char *tree,
+int commit_tree(const struct strbuf *msg, unsigned char *tree,
 		struct commit_list *parents, unsigned char *ret,
 		const char *author)
 {
@@ -884,7 +884,7 @@ int commit_tree(const char *msg, unsigned char *tree,
 	strbuf_addch(&buffer, '\n');
 
 	/* And add the comment */
-	strbuf_addstr(&buffer, msg);
+	strbuf_addbuf(&buffer, msg);
 
 	/* And check the encoding */
 	if (encoding_is_utf8 && !is_utf8(buffer.buf))
