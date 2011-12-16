@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Dec 2011, #04; Tue, 13)
-X-master-at: 73c6b3575bc638b7096ec913bd91193707e2265d
-X-next-at: 1fd576a2d00312e74195662cae445c4463ca87e7
+Subject: What's cooking in git.git (Dec 2011, #05; Thu, 15)
+X-master-at: 10f4eb652ee4e592f91f638e579d1afcb96c0408
+X-next-at: d65a830db872dde05a0cb8e8d289f4f5a50b7818
 
-What's cooking in git.git (Dec 2011, #04; Tue, 13)
+What's cooking in git.git (Dec 2011, #05; Thu, 15)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -38,39 +38,38 @@ The preformatted documentation in HTML and man format are found in:
 --------------------------------------------------
 [New Topics]
 
-* jk/maint-fetch-status-table (2011-12-09) 1 commit
-  (merged to 'next' on 2011-12-09 at 159415e)
- + fetch: create status table using strbuf
+* ef/setenv-putenv (2011-12-14) 2 commits
+ - compat/setenv.c: error if name contains '='
+ - compat/setenv.c: update errno when erroring out
+ (this branch is used by ef/x-setenv-putenv.)
 
-Will merge to 'master'.
+* jk/maint-do-not-feed-stdin-to-tests (2011-12-15) 1 commit
+ - test-lib: redirect stdin of tests
 
-* ci/stripspace-docs (2011-12-12) 1 commit
-  (merged to 'next' on 2011-12-13 at 35b2cdf)
- + Update documentation for stripspace
+* jn/test-cleanup-7006 (2011-12-14) 1 commit
+ - test: errors preparing for a test are not special
 
-* jk/maint-mv (2011-12-12) 5 commits
-  (merged to 'next' on 2011-12-13 at 58caedb)
- + mv: be quiet about overwriting
- + mv: improve overwrite warning
- + mv: make non-directory destination error more clear
- + mv: honor --verbose flag
- + docs: mention "-k" for both forms of "git mv"
+* nd/war-on-nul-in-commit (2011-12-15) 3 commits
+ - commit_tree(): refuse commit messages that contain NULs
+ - Convert commit_tree() to take strbuf as message
+ - merge: abort if fails to commit
 
-* jk/maint-snprintf-va-copy (2011-12-12) 1 commit
-  (merged to 'next' on 2011-12-13 at d37a7e1)
- + compat/snprintf: don't look at va_list twice
+* jk/git-prompt (2011-12-12) 10 commits
+ - contrib: add credential helper for OS X Keychain
+ - Makefile: OS X has /dev/tty
+ - Makefile: linux has /dev/tty
+ - credential: use git_prompt instead of git_getpass
+ - prompt: use git_terminal_prompt
+ - add generic terminal prompt function
+ - refactor git_getpass into generic prompt function
+ - move git_getpass to its own source file
+ - imap-send: don't check return value of git_getpass
+ - imap-send: avoid buffer overflow
+ (this branch uses jk/credentials.)
 
-* jn/maint-sequencer-fixes (2011-12-12) 7 commits
-  (merged to 'next' on 2011-12-13 at 5b3950c)
- + revert: stop creating and removing sequencer-old directory
- + Revert "reset: Make reset remove the sequencer state"
- + revert: do not remove state until sequence is finished
- + revert: allow single-pick in the middle of cherry-pick sequence
- + revert: pass around rev-list args in already-parsed form
- + revert: allow cherry-pick --continue to commit before resuming
- + revert: give --continue handling its own function
+Will merge to 'next' after taking another look.
 
-* mh/ref-api (2011-12-12) 51 commits
+* mh/ref-api-rest (2011-12-12) 35 commits
  - repack_without_ref(): call clear_packed_ref_cache()
  - read_packed_refs(): keep track of the directory being worked in
  - is_refname_available(): query only possibly-conflicting references
@@ -106,22 +105,127 @@ Will merge to 'master'.
  - do_for_each_ref_in_arrays(): new function
  - do_for_each_ref_in_array(): new function
  - do_for_each_ref(): correctly terminate while processesing extra_refs
- - add_ref(): take a (struct ref_entry *) parameter
- - create_ref_entry(): extract function from add_ref()
- - repack_without_ref(): remove temporary
- - resolve_gitlink_ref_recursive(): change to work with struct ref_cache
- - Pass a (ref_cache *) to the resolve_gitlink_*() helper functions
- - resolve_gitlink_ref(): improve docstring
- - get_ref_dir(): change signature
- - refs: change signatures of get_packed_refs() and get_loose_refs()
- - is_dup_ref(): extract function from sort_ref_array()
- - add_ref(): add docstring
- - parse_ref_line(): add docstring
- - is_refname_available(): remove the "quiet" argument
- - clear_ref_array(): rename from free_ref_array()
- - refs: rename parameters result -> sha1
- - refs: rename "refname" variables
- - struct ref_entry: document name member
+ (this branch uses mh/ref-api.)
+
+The API for extra anchoring points may require rethought first; that would
+hopefully make the "ref" part a lot simpler.
+
+--------------------------------------------------
+[Graduated to "master"]
+
+* bc/maint-apply-check-no-patch (2011-12-05) 2 commits
+  (merged to 'next' on 2011-12-09 at fc780cd)
+ + builtin/apply.c: report error on failure to recognize input
+ + t/t4131-apply-fake-ancestor.sh: fix broken test
+
+* cn/maint-lf-to-crlf-filter (2011-11-28) 1 commit
+  (merged to 'next' on 2011-12-09 at c374d14)
+ + convert: track state in LF-to-CRLF filter
+
+* jk/maint-1.6.2-upload-archive (2011-11-21) 1 commit
+ + archive: don't let remote clients get unreachable commits
+ (this branch is used by jk/maint-upload-archive.)
+
+* jk/maint-fetch-status-table (2011-12-09) 1 commit
+  (merged to 'next' on 2011-12-09 at 159415e)
+ + fetch: create status table using strbuf
+
+* jk/maint-upload-archive (2011-11-21) 1 commit
+  (merged to 'next' on 2011-12-09 at 03deb16)
+ + Merge branch 'jk/maint-1.6.2-upload-archive' into jk/maint-upload-archive
+ (this branch uses jk/maint-1.6.2-upload-archive.)
+
+* jl/submodule-status-failure-report (2011-12-08) 1 commit
+  (merged to 'next' on 2011-12-09 at 53eb3b3)
+ + diff/status: print submodule path when looking for changes fails
+
+* jn/branch-move-to-self (2011-11-28) 2 commits
+  (merged to 'next' on 2011-12-09 at 7d27260)
+ + Allow checkout -B <current-branch> to update the current branch
+ + branch: allow a no-op "branch -M <current-branch> HEAD"
+
+* jn/gitweb-side-by-side-diff (2011-10-31) 8 commits
+  (merged to 'next' on 2011-12-09 at 7662e58)
+ + gitweb: Add navigation to select side-by-side diff
+ + gitweb: Use href(-replay=>1,...) for formats links in "commitdiff"
+ + t9500: Add basic sanity tests for side-by-side diff in gitweb
+ + t9500: Add test for handling incomplete lines in diff by gitweb
+ + gitweb: Give side-by-side diff extra CSS styling
+ + gitweb: Add a feature to show side-by-side diff
+ + gitweb: Extract formatting of diff chunk header
+ + gitweb: Refactor diff body line classification
+
+Replaces a series from Kato Kazuyoshi on the same topic.
+
+* ks/tag-cleanup (2011-12-09) 1 commit
+  (merged to 'next' on 2011-12-09 at cbea045)
+ + git-tag: introduce --cleanup option
+
+* nd/ignore-might-be-precious (2011-11-28) 2 commits
+  (merged to 'next' on 2011-12-09 at 1a94553)
+ + checkout,merge: disallow overwriting ignored files with --no-overwrite-ignore
+ + Merge branch 'nd/maint-ignore-exclude' into nd/ignore-might-be-precious
+
+* tj/maint-imap-send-remove-unused (2011-11-23) 2 commits
+  (merged to 'next' on 2011-12-09 at 877cc11)
+ + Merge branch 'maint' into tj/imap-send-remove-unused
+ + imap-send: Remove unused 'use_namespace' variable
+
+* tr/userdiff-c-returns-pointer (2011-12-06) 1 commit
+  (merged to 'next' on 2011-12-09 at 0b6a092)
+ + userdiff: allow * between cpp funcname words
+
+--------------------------------------------------
+[Cooking]
+
+* ci/stripspace-docs (2011-12-12) 1 commit
+  (merged to 'next' on 2011-12-13 at 35b2cdf)
+ + Update documentation for stripspace
+
+* jk/maint-mv (2011-12-12) 5 commits
+  (merged to 'next' on 2011-12-13 at 58caedb)
+ + mv: be quiet about overwriting
+ + mv: improve overwrite warning
+ + mv: make non-directory destination error more clear
+ + mv: honor --verbose flag
+ + docs: mention "-k" for both forms of "git mv"
+
+* jk/maint-snprintf-va-copy (2011-12-12) 1 commit
+  (merged to 'next' on 2011-12-13 at d37a7e1)
+ + compat/snprintf: don't look at va_list twice
+
+* jn/maint-sequencer-fixes (2011-12-12) 7 commits
+  (merged to 'next' on 2011-12-13 at 5b3950c)
+ + revert: stop creating and removing sequencer-old directory
+ + Revert "reset: Make reset remove the sequencer state"
+ + revert: do not remove state until sequence is finished
+ + revert: allow single-pick in the middle of cherry-pick sequence
+ + revert: pass around rev-list args in already-parsed form
+ + revert: allow cherry-pick --continue to commit before resuming
+ + revert: give --continue handling its own function
+ (this branch is used by rr/revert-cherry-pick.)
+
+* mh/ref-api (2011-12-12) 16 commits
+  (merged to 'next' on 2011-12-15 at d65a830)
+ + add_ref(): take a (struct ref_entry *) parameter
+ + create_ref_entry(): extract function from add_ref()
+ + repack_without_ref(): remove temporary
+ + resolve_gitlink_ref_recursive(): change to work with struct ref_cache
+ + Pass a (ref_cache *) to the resolve_gitlink_*() helper functions
+ + resolve_gitlink_ref(): improve docstring
+ + get_ref_dir(): change signature
+ + refs: change signatures of get_packed_refs() and get_loose_refs()
+ + is_dup_ref(): extract function from sort_ref_array()
+ + add_ref(): add docstring
+ + parse_ref_line(): add docstring
+ + is_refname_available(): remove the "quiet" argument
+ + clear_ref_array(): rename from free_ref_array()
+ + refs: rename parameters result -> sha1
+ + refs: rename "refname" variables
+ + struct ref_entry: document name member
+ (this branch is used by mh/ref-api-rest.)
+
+Later part split out to expedite moving the earlier good bits forward.
 
 * nd/resolve-ref (2011-12-13) 3 commits
   (merged to 'next' on 2011-12-13 at c7002e9)
@@ -141,9 +245,7 @@ Will merge to 'next' after taking another look.
  - test-terminal: set output terminals to raw mode
  - test-terminal: give the child an empty stdin TTY
 
-Will merge to 'next' after taking another look.
-
-* jc/push-ignore-stale (2011-12-13) 2 commits
+* jc/push-ignore-stale (2011-12-14) 2 commits
  - push: --ignore-stale option
  - set_ref_status_for_push(): use transport-flags abstraction
 
@@ -159,28 +261,24 @@ Will merge to 'next' after taking another look.
  + http-push: enable "proactive auth"
  + t5540: test DAV push with authentication
 
---------------------------------------------------
-[Cooking]
+* rr/revert-cherry-pick (2011-12-15) 6 commits
+ - t3502, t3510: clarify cherry-pick -m failure
+ - t3510 (cherry-pick-sequencer): use exit status
+ - revert: simplify getting commit subject in format_todo()
+ - revert: tolerate extra spaces, tabs in insn sheet
+ - revert: make commit subjects in insn sheet optional
+ - revert: free msg in format_todo()
+ (this branch uses jn/maint-sequencer-fixes.)
 
-* rr/revert-cherry-pick (2011-12-09) 9 commits
- . revert: simplify communicating command-line arguments
- . revert: report fine-grained error messages from insn parser
- . revert: allow mixed pick and revert instructions
- . t3510 (cherry-pick-sequencer): remove malformed sheet 2
- . t3510 (cherry-pick-sequencer): use exit status
- . revert: simplify getting commit subject in format_todo()
- . revert: tolerate extra spaces, tabs in insn sheet
- . revert: make commit subjects in insn sheet optional
- . revert: free msg in format_todo()
-
-Ejected for now, to give higher priority to jn/maint-sequencer-fixes
-topic.
+Picked up only the earlier bits that are reasonably clear for now.
 
 * ew/keepalive (2011-12-05) 1 commit
   (merged to 'next' on 2011-12-13 at 1b5d5c4)
  + enable SO_KEEPALIVE for connected TCP sockets
 
-* jc/checkout-m-twoway (2011-12-11) 2 commits
+* jc/checkout-m-twoway (2011-12-15) 3 commits
+  (merged to 'next' on 2011-12-15 at cc64fed)
+ + checkout_merged(): squelch false warning from some gcc
   (merged to 'next' on 2011-12-11 at b61057f)
  + Test 'checkout -m -- path'
   (merged to 'next' on 2011-12-09 at c946009)
@@ -194,12 +292,6 @@ topic.
  + Test the current state of the cache-tree optimization
  + Add test-scrap-cache-tree
 
-* tr/userdiff-c-returns-pointer (2011-12-06) 1 commit
-  (merged to 'next' on 2011-12-09 at 0b6a092)
- + userdiff: allow * between cpp funcname words
-
-Will merge to 'master'.
-
 * jc/commit-amend-no-edit (2011-12-08) 5 commits
   (merged to 'next' on 2011-12-09 at b9cfa4e)
  + test: commit --amend should honor --no-edit
@@ -207,16 +299,6 @@ Will merge to 'master'.
  + t7501 (commit): modernize style
  + test: remove a porcelain test that hard-codes commit names
  + test: add missing "&&" after echo command
-
-* jl/submodule-status-failure-report (2011-12-08) 1 commit
-  (merged to 'next' on 2011-12-09 at 53eb3b3)
- + diff/status: print submodule path when looking for changes fails
-
-Will merge to 'master'.
-
-* ks/tag-cleanup (2011-12-09) 1 commit
-  (merged to 'next' on 2011-12-09 at cbea045)
- + git-tag: introduce --cleanup option
 
 Will merge to 'master'.
 
@@ -230,16 +312,11 @@ Will merge to 'master'.
  + test: fix '&&' chaining
  + t3200 (branch): fix '&&' chaining
 
-* bc/maint-apply-check-no-patch (2011-12-05) 2 commits
-  (merged to 'next' on 2011-12-09 at fc780cd)
- + builtin/apply.c: report error on failure to recognize input
- + t/t4131-apply-fake-ancestor.sh: fix broken test
-
-Will merge to 'master'.
-
 * aw/rebase-i-stop-on-failure-to-amend (2011-11-30) 1 commit
   (merged to 'next' on 2011-12-09 at a117e83)
  + rebase -i: interrupt rebase when "commit --amend" failed during "reword"
+
+Will merge to 'master'.
 
 * jc/split-blob (2011-12-01) 6 commits
  . WIP (streaming chunked)
@@ -262,37 +339,7 @@ needs to learn it to be used remotely.
 
 Will merge to 'master'.
 
-* tj/maint-imap-send-remove-unused (2011-11-23) 2 commits
-  (merged to 'next' on 2011-12-09 at 877cc11)
- + Merge branch 'maint' into tj/imap-send-remove-unused
- + imap-send: Remove unused 'use_namespace' variable
-
-Will merge to 'master'.
-
-* cn/maint-lf-to-crlf-filter (2011-11-28) 1 commit
-  (merged to 'next' on 2011-12-09 at c374d14)
- + convert: track state in LF-to-CRLF filter
-
-Will merge to 'master'.
-
-* jn/branch-move-to-self (2011-11-28) 2 commits
-  (merged to 'next' on 2011-12-09 at 7d27260)
- + Allow checkout -B <current-branch> to update the current branch
- + branch: allow a no-op "branch -M <current-branch> HEAD"
-
-Will merge to 'master'.
-
-* jk/credentials (2011-12-12) 24 commits
- - contrib: add credential helper for OS X Keychain
- - Makefile: OS X has /dev/tty
- - Makefile: linux has /dev/tty
- - credential: use git_prompt instead of git_getpass
- - prompt: use git_terminal_prompt
- - add generic terminal prompt function
- - refactor git_getpass into generic prompt function
- - move git_getpass to its own source file
- - imap-send: don't check return value of git_getpass
- - imap-send: avoid buffer overflow
+* jk/credentials (2011-12-12) 14 commits
   (merged to 'next' on 2011-12-12 at 7a6d658)
  + t: add test harness for external credential helpers
  + credentials: add "store" helper
@@ -308,29 +355,13 @@ Will merge to 'master'.
  + introduce credentials API
  + t5550: fix typo
  + test-lib: add test_config_global variant
+ (this branch is used by jk/git-prompt.)
 
-Looking good. Probably split the later part into its own topic and
-merge the parts already in 'next' to 'master' soonish.
-
-* nd/ignore-might-be-precious (2011-11-28) 2 commits
-  (merged to 'next' on 2011-12-09 at 1a94553)
- + checkout,merge: disallow overwriting ignored files with --no-overwrite-ignore
- + Merge branch 'nd/maint-ignore-exclude' into nd/ignore-might-be-precious
-
-Will merge to 'master'.
+Later part split out to expedite moving the earlier good bits forward.
 
 * jk/upload-archive-use-start-command (2011-11-21) 1 commit
   (merged to 'next' on 2011-12-09 at 88cb83a)
  + upload-archive: use start_command instead of fork
-
-* jk/maint-1.6.2-upload-archive (2011-11-21) 1 commit
- + archive: don't let remote clients get unreachable commits
- (this branch is used by jk/maint-upload-archive.)
-
-* jk/maint-upload-archive (2011-11-21) 1 commit
-  (merged to 'next' on 2011-12-09 at 03deb16)
- + Merge branch 'jk/maint-1.6.2-upload-archive' into jk/maint-upload-archive
- (this branch uses jk/maint-1.6.2-upload-archive.)
 
 Will merge to 'master'.
 
@@ -361,18 +392,5 @@ This is a continuation to the "large file support" topic. The codepath to
 move data from worktree to repository is made aware of streaming, just
 like the checkout codepath that goes the other way, which was done in the
 previous "large file support" topic in the 1.7.7 cycle.
-
-* jn/gitweb-side-by-side-diff (2011-10-31) 8 commits
-  (merged to 'next' on 2011-12-09 at 7662e58)
- + gitweb: Add navigation to select side-by-side diff
- + gitweb: Use href(-replay=>1,...) for formats links in "commitdiff"
- + t9500: Add basic sanity tests for side-by-side diff in gitweb
- + t9500: Add test for handling incomplete lines in diff by gitweb
- + gitweb: Give side-by-side diff extra CSS styling
- + gitweb: Add a feature to show side-by-side diff
- + gitweb: Extract formatting of diff chunk header
- + gitweb: Refactor diff body line classification
-
-Replaces a series from Kato Kazuyoshi on the same topic.
 
 Will merge to 'master'.
