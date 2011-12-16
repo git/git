@@ -267,6 +267,12 @@ test_expect_success '%gd shortens ref name' '
 	test_cmp expect.gd-short actual.gd-short
 '
 
+test_expect_success 'reflog identity' '
+	echo "C O Mitter:committer@example.com" >expect &&
+	git log -g -1 --format="%gn:%ge" >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'oneline with empty message' '
 	git commit -m "dummy" --allow-empty &&
 	git commit -m "dummy" --allow-empty &&

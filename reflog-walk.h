@@ -14,6 +14,7 @@ extern void show_reflog_message(struct reflog_walk_info *info, int,
 		enum date_mode);
 extern void get_reflog_message(struct strbuf *sb,
 		struct reflog_walk_info *reflog_info);
+extern const char *get_reflog_ident(struct reflog_walk_info *reflog_info);
 extern void get_reflog_selector(struct strbuf *sb,
 		struct reflog_walk_info *reflog_info,
 		enum date_mode dmode,
