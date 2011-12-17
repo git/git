@@ -188,13 +188,20 @@ void git_deflate_init_gzip(git_zstream *strm, int level)
 	    strm->z.msg ? strm->z.msg : "no message");
 }
 
-void git_deflate_end(git_zstream *strm)
+int git_deflate_abort(git_zstream *strm)
 {
 	int status;
 
 	zlib_pre_call(strm);
 	status = deflateEnd(&strm->z);
 	zlib_post_call(strm);
+	return status;
+}
+
+void git_deflate_end(git_zstream *strm)
+{
+	int status = git_deflate_abort(strm);
+
 	if (status == Z_OK)
 		return;
 	error("deflateEnd: %s (%s)", zerr_to_string(status),

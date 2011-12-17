@@ -13,6 +13,7 @@
 #include "diff.h"
 #include "diffcore.h"
 #include "revision.h"
+#include "bulk-checkin.h"
 
 static const char * const builtin_add_usage[] = {
 	"git add [options] [--] <filepattern>...",
@@ -458,10 +459,14 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 		free(seen);
 	}
 
+	plug_bulk_checkin();
+
 	exit_status |= add_files_to_cache(prefix, pathspec, flags);
 
 	if (add_new_files)
 		exit_status |= add_files(&dir, flags);
+
+	unplug_bulk_checkin();
 
  finish:
 	if (active_cache_changed) {

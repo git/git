@@ -182,6 +182,18 @@ const char *write_idx_file(const char *index_name, struct pack_idx_entry **objec
 	return index_name;
 }
 
+off_t write_pack_header(struct sha1file *f, uint32_t nr_entries)
+{
+	struct pack_header hdr;
+
+	hdr.hdr_signature = htonl(PACK_SIGNATURE);
+	hdr.hdr_version = htonl(PACK_VERSION);
+	hdr.hdr_entries = htonl(nr_entries);
+	if (sha1write(f, &hdr, sizeof(hdr)))
+		return 0;
+	return sizeof(hdr);
+}
+
 /*
  * Update pack header with object_count and compute new SHA1 for pack data
  * associated to pack_fd, and write that SHA1 at the end.  That new SHA1
@@ -319,4 +331,45 @@ int encode_in_pack_object_header(enum object_type type, uintmax_t size, unsigned
 	}
 	*hdr = c;
 	return n;
+}
+
+struct sha1file *create_tmp_packfile(char **pack_tmp_name)
+{
+	char tmpname[PATH_MAX];
+	int fd;
+
+	fd = odb_mkstemp(tmpname, sizeof(tmpname), "pack/tmp_pack_XXXXXX");
+	*pack_tmp_name = xstrdup(tmpname);
+	return sha1fd(fd, *pack_tmp_name);
+}
+
+void finish_tmp_packfile(char *name_buffer,
+			 const char *pack_tmp_name,
+			 struct pack_idx_entry **written_list,
+			 uint32_t nr_written,
+			 struct pack_idx_option *pack_idx_opts,
+			 unsigned char sha1[])
+{
+	const char *idx_tmp_name;
+	char *end_of_name_prefix = strrchr(name_buffer, 0);
+
+	if (adjust_shared_perm(pack_tmp_name))
+		die_errno("unable to make temporary pack file readable");
+
+	idx_tmp_name = write_idx_file(NULL, written_list, nr_written,
+				      pack_idx_opts, sha1);
+	if (adjust_shared_perm(idx_tmp_name))
+		die_errno("unable to make temporary index file readable");
+
+	sprintf(end_of_name_prefix, "%s.pack", sha1_to_hex(sha1));
+	free_pack_by_name(name_buffer);
+
+	if (rename(pack_tmp_name, name_buffer))
+		die_errno("unable to rename temporary pack file");
+
+	sprintf(end_of_name_prefix, "%s.idx", sha1_to_hex(sha1));
+	if (rename(idx_tmp_name, name_buffer))
+		die_errno("unable to rename temporary index file");
+
+	free((void *)idx_tmp_name);
 }
