@@ -1695,6 +1695,7 @@ sub chop_and_escape_str {
 	my ($str) = @_;
 
 	my $chopped = chop_str(@_);
+	$str = to_utf8($str);
 	if ($chopped eq $str) {
 		return esc_html($chopped);
 	} else {
