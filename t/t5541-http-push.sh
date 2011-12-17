@@ -154,5 +154,37 @@ test_expect_success 'push (chunked)' '
 	 test $HEAD = $(git rev-parse --verify HEAD))
 '
 
+test_expect_success 'push --all can push to empty repo' '
+	d=$HTTPD_DOCUMENT_ROOT_PATH/empty-all.git &&
+	git init --bare "$d" &&
+	git --git-dir="$d" config http.receivepack true &&
+	git push --all "$HTTPD_URL"/smart/empty-all.git
+'
+
+test_expect_success 'push --mirror can push to empty repo' '
+	d=$HTTPD_DOCUMENT_ROOT_PATH/empty-mirror.git &&
+	git init --bare "$d" &&
+	git --git-dir="$d" config http.receivepack true &&
+	git push --mirror "$HTTPD_URL"/smart/empty-mirror.git
+'
+
+test_expect_success 'push --all to repo with alternates' '
+	s=$HTTPD_DOCUMENT_ROOT_PATH/test_repo.git &&
+	d=$HTTPD_DOCUMENT_ROOT_PATH/alternates-all.git &&
+	git clone --bare --shared "$s" "$d" &&
+	git --git-dir="$d" config http.receivepack true &&
+	git --git-dir="$d" repack -adl &&
+	git push --all "$HTTPD_URL"/smart/alternates-all.git
+'
+
+test_expect_success 'push --mirror to repo with alternates' '
+	s=$HTTPD_DOCUMENT_ROOT_PATH/test_repo.git &&
+	d=$HTTPD_DOCUMENT_ROOT_PATH/alternates-mirror.git &&
+	git clone --bare --shared "$s" "$d" &&
+	git --git-dir="$d" config http.receivepack true &&
+	git --git-dir="$d" repack -adl &&
+	git push --mirror "$HTTPD_URL"/smart/alternates-mirror.git
+'
+
 stop_httpd
 test_done

@@ -188,7 +188,7 @@ static int write_discovery(int in, int out, void *data)
 	return err;
 }
 
-static struct ref *parse_git_refs(struct discovery *heads)
+static struct ref *parse_git_refs(struct discovery *heads, int for_push)
 {
 	struct ref *list = NULL;
 	struct async async;
@@ -200,7 +200,8 @@ static struct ref *parse_git_refs(struct discovery *heads)
 
 	if (start_async(&async))
 		die("cannot start thread to parse advertised refs");
-	get_remote_heads(async.out, &list, 0, NULL, 0, NULL);
+	get_remote_heads(async.out, &list, 0, NULL,
+			for_push ? REF_NORMAL : 0, NULL);
 	close(async.out);
 	if (finish_async(&async))
 		die("ref parsing thread failed");
@@ -268,7 +269,7 @@ static struct ref *get_refs(int for_push)
 		heads = discover_refs("git-upload-pack");
 
 	if (heads->proto_git)
-		return parse_git_refs(heads);
+		return parse_git_refs(heads, for_push);
 	return parse_info_refs(heads);
 }
 
