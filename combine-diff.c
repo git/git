@@ -1196,10 +1196,9 @@ void diff_tree_combined(const unsigned char *sha1,
 	}
 }
 
-void diff_tree_combined_merge(const unsigned char *sha1,
-			     int dense, struct rev_info *rev)
+void diff_tree_combined_merge(const struct commit *commit, int dense,
+			      struct rev_info *rev)
 {
-	struct commit *commit = lookup_commit(sha1);
 	struct commit_list *parent = commit->parents;
 	struct sha1_array parents = SHA1_ARRAY_INIT;
 
@@ -1207,6 +1206,6 @@ void diff_tree_combined_merge(const unsigned char *sha1,
 		sha1_array_append(&parents, parent->item->object.sha1);
 		parent = parent->next;
 	}
-	diff_tree_combined(sha1, &parents, dense, rev);
+	diff_tree_combined(commit->object.sha1, &parents, dense, rev);
 	sha1_array_clear(&parents);
 }

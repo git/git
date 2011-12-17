@@ -13,6 +13,7 @@ struct strbuf;
 struct diff_filespec;
 struct userdiff_driver;
 struct sha1_array;
+struct commit;
 
 typedef void (*change_fn_t)(struct diff_options *options,
 		 unsigned old_mode, unsigned new_mode,
@@ -198,7 +199,7 @@ extern void show_combined_diff(struct combine_diff_path *elem, int num_parent,
 
 extern void diff_tree_combined(const unsigned char *sha1, const struct sha1_array *parents, int dense, struct rev_info *rev);
 
-extern void diff_tree_combined_merge(const unsigned char *sha1, int, struct rev_info *);
+extern void diff_tree_combined_merge(const struct commit *commit, int dense, struct rev_info *rev);
 
 void diff_set_mnemonic_prefix(struct diff_options *options, const char *a, const char *b);
 

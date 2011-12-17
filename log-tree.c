@@ -599,9 +599,7 @@ int log_tree_diff_flush(struct rev_info *opt)
 
 static int do_diff_combined(struct rev_info *opt, struct commit *commit)
 {
-	unsigned const char *sha1 = commit->object.sha1;
-
-	diff_tree_combined_merge(sha1, opt->dense_combined_merges, opt);
+	diff_tree_combined_merge(commit, opt->dense_combined_merges, opt);
 	return !opt->loginfo;
 }
 
