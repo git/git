@@ -371,23 +371,15 @@ static void collect_submodules_from_diff(struct diff_queue_struct *q,
 }
 
 
-static void commit_need_pushing(struct commit *commit, struct commit_list *parent, int *needs_pushing)
+static void commit_need_pushing(struct commit *commit, int *needs_pushing)
 {
-	struct sha1_array parents = SHA1_ARRAY_INIT;
 	struct rev_info rev;
-
-	while (parent) {
-		sha1_array_append(&parents, parent->item->object.sha1);
-		parent = parent->next;
-	}
 
 	init_revisions(&rev, NULL);
 	rev.diffopt.output_format |= DIFF_FORMAT_CALLBACK;
 	rev.diffopt.format_callback = collect_submodules_from_diff;
 	rev.diffopt.format_callback_data = needs_pushing;
-	diff_tree_combined(commit->object.sha1, &parents, 1, &rev);
-
-	sha1_array_clear(&parents);
+	diff_tree_combined_merge(commit, 1, &rev);
 }
 
 int check_submodule_needs_pushing(unsigned char new_sha1[20], const char *remotes_name)
@@ -410,7 +402,7 @@ int check_submodule_needs_pushing(unsigned char new_sha1[20], const char *remote
 		die("revision walk setup failed");
 
 	while ((commit = get_revision(&rev)) && !needs_pushing)
-		commit_need_pushing(commit, commit->parents, &needs_pushing);
+		commit_need_pushing(commit, &needs_pushing);
 
 	free(sha1_copy);
 	strbuf_release(&remotes_arg);
