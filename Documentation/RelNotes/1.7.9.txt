@@ -4,6 +4,8 @@ Git v1.7.9 Release Notes (draft)
 Updates since v1.7.8
 --------------------
 
+ * gitk updates accumulated since early 2011.
+
  * git-gui updated to 0.16.0.
 
  * git-p4 (in contrib/) updates.
@@ -13,6 +15,9 @@ Updates since v1.7.8
    the same 'M' moniker. They now use 'D' (for deletion) and 'T' (for
    type-change) to match "git status -s" and "git diff --name-status".
 
+ * "git add" learned to stream large files directly into a packfile
+   instead of writing them into individual loose object files.
+
  * "git branch -m <current branch> HEAD" is an obvious no-op and is
    now allowed.
 
@@ -21,6 +26,10 @@ Updates since v1.7.8
 
  * "git checkout" and "git merge" learned "--no-overwrite-ignore" option
    to tell Git that untracked and ignored files are not expendable.
+
+ * "git commit --amend" learned "--no-edit" option to say that the
+   user is amending the tree being recorded, without updating the
+   commit log message.
 
  * fsck and prune are relatively lengthy operations that still go
    silent while making the end-user wait. They learned to give progress
@@ -87,9 +96,17 @@ Fixes since v1.7.8
    had trouble with.
    (merge 6a5ceda jl/submodule-status-failure-report later to maint).
 
+ * "fast-import" did not correctly update an existing notes tree,
+   possibly corrupting the fan-out.
+
+ * When a "reword" action in "git rebase -i" failed to run "commit --amend",
+   we did not give the control back to the user to resolve the situation, and
+   instead kept the original commit log message.
+   (merge 0becb3e aw/rebase-i-stop-on-failure-to-amend later to maint).
+
 --
 exec >/var/tmp/1
-O=v1.7.8-246-gb3f17ac
+O=v1.7.8-282-ga2add85
 echo O=$(git describe master)
 git log --first-parent --oneline --reverse ^$O master
 echo
