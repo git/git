@@ -7700,11 +7700,12 @@ sub git_opml {
 		-charset => 'utf-8',
 		-content_disposition => 'inline; filename="opml.xml"');
 
+	my $title = esc_html($site_name);
 	print <<XML;
 <?xml version="1.0" encoding="utf-8"?>
 <opml version="1.0">
 <head>
-  <title>$site_name OPML Export</title>
+  <title>$title OPML Export</title>
 </head>
 <body>
 <outline text="git RSS feeds">
