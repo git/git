@@ -6108,7 +6108,9 @@ sub git_blame_common {
 			-type=>"text/plain", -charset => "utf-8",
 			-status=> "200 OK");
 		local $| = 1; # output autoflush
-		print while <$fd>;
+		while (my $line = <$fd>) {
+			print to_utf8($line);
+		}
 		close $fd
 			or print "ERROR $!\n";
 
