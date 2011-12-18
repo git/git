@@ -69,7 +69,7 @@ static char *cleanup_arg;
 
 static int use_editor = 1, initial_commit, in_merge;
 static const char *only_include_assumed;
-static struct strbuf message;
+static struct strbuf message = STRBUF_INIT;
 
 static int opt_parse_m(const struct option *opt, const char *arg, int unset)
 {
