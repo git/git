@@ -27,7 +27,7 @@ the kind of task StGIT is designed to do.
 I just have done a simpler one, this time using only the core
 GIT tools.
 
-I had a handful commits that were ahead of master in pu, and I
+I had a handful of commits that were ahead of master in pu, and I
 wanted to add some documentation bypassing my usual habit of
 placing new things in pu first.  At the beginning, the commit
 ancestry graph looked like this:

@@ -114,9 +114,9 @@ due to SVN memory leaks. (These have been worked around.)
 -R <repack_each_revs>::
 	Specify how often git repository should be repacked.
 +
-The default value is 1000. git-svnimport will do import in chunks of 1000
-revisions, after each chunk git repository will be repacked. To disable
-this behavior specify some big value here which is mote than number of
+The default value is 1000. git-svnimport will do imports in chunks of 1000
+revisions, after each chunk the git repository will be repacked. To disable
+this behavior specify some large value here which is greater than the number of
 revisions to import.
 
 -P <path_from_trunk>::

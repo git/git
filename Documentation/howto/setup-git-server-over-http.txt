@@ -143,7 +143,7 @@ Then, add something like this to your httpd.conf
        Require valid-user
     </Location>
 
-    Debian automatically reads all files under /etc/apach2/conf.d.
+    Debian automatically reads all files under /etc/apache2/conf.d.
 
 The password file can be somewhere else, but it has to be readable by
 Apache and preferably not readable by the world.

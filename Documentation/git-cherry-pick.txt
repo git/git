@@ -24,7 +24,7 @@ OPTIONS
 
 -e::
 --edit::
-	With this option, 'git-cherry-pick' will let you edit the commit
+	With this option, 'git cherry-pick' will let you edit the commit
 	message prior to committing.
 
 -x::
@@ -55,13 +55,12 @@ OPTIONS
 
 -n::
 --no-commit::
-	Usually the command automatically creates a commit with
-	a commit log message stating which commit was
-	cherry-picked.  This flag applies the change necessary
-	to cherry-pick the named commit to your working tree
-	and the index, but does not make the commit.  In addition,
-	when this option is used, your index does not have to match
-	the HEAD commit.  The cherry-pick is done against the
+	Usually the command automatically creates a commit.
+	This flag applies the change necessary to cherry-pick
+	the named commit to your working tree and the index,
+	but does not make the commit.  In addition, when this
+	option is used, your index does not have to match the
+	HEAD commit.  The cherry-pick is done against the
 	beginning state of your index.
 +
 This is useful when cherry-picking more than one commits'

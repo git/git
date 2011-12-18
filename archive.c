@@ -1,18 +1,41 @@
 #include "cache.h"
 #include "commit.h"
+#include "tree-walk.h"
 #include "attr.h"
 #include "archive.h"
+#include "parse-options.h"
+#include "unpack-trees.h"
+
+static char const * const archive_usage[] = {
+	"git archive [options] <tree-ish> [path...]",
+	"git archive --list",
+	"git archive --remote <repo> [--exec <cmd>] [options] <tree-ish> [path...]",
+	"git archive --remote <repo> [--exec <cmd>] --list",
+	NULL
+};
+
+#define USES_ZLIB_COMPRESSION 1
+
+static const struct archiver {
+	const char *name;
+	write_archive_fn_t write_archive;
+	unsigned int flags;
+} archivers[] = {
+	{ "tar", write_tar_archive },
+	{ "zip", write_zip_archive, USES_ZLIB_COMPRESSION },
+};
 
 static void format_subst(const struct commit *commit,
                          const char *src, size_t len,
                          struct strbuf *buf)
 {
 	char *to_free = NULL;
-	struct strbuf fmt;
+	struct strbuf fmt = STRBUF_INIT;
+	struct pretty_print_context ctx = {0};
+	ctx.date_mode = DATE_NORMAL;
 
 	if (src == buf->buf)
 		to_free = strbuf_detach(buf, NULL);
-	strbuf_init(&fmt, 0);
 	for (;;) {
 		const char *b, *c;
 
@@ -27,7 +50,7 @@ static void format_subst(const struct commit *commit,
 		strbuf_add(&fmt, b + 8, c - b - 8);
 
 		strbuf_add(buf, src, b - src);
-		format_commit_message(commit, fmt.buf, buf);
+		format_commit_message(commit, fmt.buf, buf, &ctx);
 		len -= c + 1 - src;
 		src  = c + 1;
 	}
@@ -44,10 +67,9 @@ static void *sha1_file_to_archive(const char *path, const unsigned char *sha1,
 
 	buffer = read_sha1_file(sha1, type, sizep);
 	if (buffer && S_ISREG(mode)) {
-		struct strbuf buf;
+		struct strbuf buf = STRBUF_INIT;
 		size_t size = 0;
 
-		strbuf_init(&buf, 0);
 		strbuf_attach(&buf, buffer, *sizep, *sizep + 1);
 		convert_to_working_tree(path, buf.buf, buf.len, &buf);
 		if (commit)
@@ -65,8 +87,8 @@ static void setup_archive_check(struct git_attr_check *check)
 	static struct git_attr *attr_export_subst;
 
 	if (!attr_export_ignore) {
-		attr_export_ignore = git_attr("export-ignore", 13);
-		attr_export_subst = git_attr("export-subst", 12);
+		attr_export_ignore = git_attr("export-ignore");
+		attr_export_subst = git_attr("export-subst");
 	}
 	check[0].attr = attr_export_ignore;
 	check[1].attr = attr_export_subst;
@@ -95,6 +117,7 @@ static int write_archive_entry(const unsigned char *sha1, const char *base,
 
 	strbuf_reset(&path);
 	strbuf_grow(&path, PATH_MAX);
+	strbuf_add(&path, args->base, args->baselen);
 	strbuf_add(&path, base, baselen);
 	strbuf_addstr(&path, filename);
 	path_without_prefix = path.buf + args->baselen;
@@ -113,7 +136,7 @@ static int write_archive_entry(const unsigned char *sha1, const char *base,
 		err = write_entry(args, sha1, path.buf, path.len, mode, NULL, 0);
 		if (err)
 			return err;
-		return READ_TREE_RECURSIVE;
+		return (S_ISDIR(mode) ? READ_TREE_RECURSIVE : 0);
 	}
 
 	buffer = sha1_file_to_archive(path_without_prefix, sha1, mode,
@@ -131,6 +154,8 @@ int write_archive_entries(struct archiver_args *args,
 		write_archive_entry_fn_t write_entry)
 {
 	struct archiver_context context;
+	struct unpack_trees_options opts;
+	struct tree_desc t;
 	int err;
 
 	if (args->baselen > 0 && args->base[args->baselen - 1] == '/') {
@@ -149,9 +174,223 @@ int write_archive_entries(struct archiver_args *args,
 	context.args = args;
 	context.write_entry = write_entry;
 
-	err =  read_tree_recursive(args->tree, args->base, args->baselen, 0,
-			args->pathspec, write_archive_entry, &context);
+	/*
+	 * Setup index and instruct attr to read index only
+	 */
+	if (!args->worktree_attributes) {
+		memset(&opts, 0, sizeof(opts));
+		opts.index_only = 1;
+		opts.head_idx = -1;
+		opts.src_index = &the_index;
+		opts.dst_index = &the_index;
+		opts.fn = oneway_merge;
+		init_tree_desc(&t, args->tree->buffer, args->tree->size);
+		if (unpack_trees(1, &t, &opts))
+			return -1;
+		git_attr_set_direction(GIT_ATTR_INDEX, &the_index);
+	}
+
+	err = read_tree_recursive(args->tree, "", 0, 0, args->pathspec,
+				  write_archive_entry, &context);
 	if (err == READ_TREE_RECURSIVE)
 		err = 0;
 	return err;
+}
+
+static const struct archiver *lookup_archiver(const char *name)
+{
+	int i;
+
+	if (!name)
+		return NULL;
+
+	for (i = 0; i < ARRAY_SIZE(archivers); i++) {
+		if (!strcmp(name, archivers[i].name))
+			return &archivers[i];
+	}
+	return NULL;
+}
+
+static int reject_entry(const unsigned char *sha1, const char *base,
+			int baselen, const char *filename, unsigned mode,
+			int stage, void *context)
+{
+	return -1;
+}
+
+static int path_exists(struct tree *tree, const char *path)
+{
+	const char *pathspec[] = { path, NULL };
+
+	if (read_tree_recursive(tree, "", 0, 0, pathspec, reject_entry, NULL))
+		return 1;
+	return 0;
+}
+
+static void parse_pathspec_arg(const char **pathspec,
+		struct archiver_args *ar_args)
+{
+	ar_args->pathspec = pathspec = get_pathspec("", pathspec);
+	if (pathspec) {
+		while (*pathspec) {
+			if (!path_exists(ar_args->tree, *pathspec))
+				die("path not found: %s", *pathspec);
+			pathspec++;
+		}
+	}
+}
+
+static void parse_treeish_arg(const char **argv,
+		struct archiver_args *ar_args, const char *prefix)
+{
+	const char *name = argv[0];
+	const unsigned char *commit_sha1;
+	time_t archive_time;
+	struct tree *tree;
+	const struct commit *commit;
+	unsigned char sha1[20];
+
+	if (get_sha1(name, sha1))
+		die("Not a valid object name");
+
+	commit = lookup_commit_reference_gently(sha1, 1);
+	if (commit) {
+		commit_sha1 = commit->object.sha1;
+		archive_time = commit->date;
+	} else {
+		commit_sha1 = NULL;
+		archive_time = time(NULL);
+	}
+
+	tree = parse_tree_indirect(sha1);
+	if (tree == NULL)
+		die("not a tree object");
+
+	if (prefix) {
+		unsigned char tree_sha1[20];
+		unsigned int mode;
+		int err;
+
+		err = get_tree_entry(tree->object.sha1, prefix,
+				     tree_sha1, &mode);
+		if (err || !S_ISDIR(mode))
+			die("current working directory is untracked");
+
+		tree = parse_tree_indirect(tree_sha1);
+	}
+	ar_args->tree = tree;
+	ar_args->commit_sha1 = commit_sha1;
+	ar_args->commit = commit;
+	ar_args->time = archive_time;
+}
+
+#define OPT__COMPR(s, v, h, p) \
+	{ OPTION_SET_INT, (s), NULL, (v), NULL, (h), \
+	  PARSE_OPT_NOARG | PARSE_OPT_NONEG, NULL, (p) }
+#define OPT__COMPR_HIDDEN(s, v, p) \
+	{ OPTION_SET_INT, (s), NULL, (v), NULL, "", \
+	  PARSE_OPT_NOARG | PARSE_OPT_NONEG | PARSE_OPT_HIDDEN, NULL, (p) }
+
+static int parse_archive_args(int argc, const char **argv,
+		const struct archiver **ar, struct archiver_args *args)
+{
+	const char *format = "tar";
+	const char *base = NULL;
+	const char *remote = NULL;
+	const char *exec = NULL;
+	const char *output = NULL;
+	int compression_level = -1;
+	int verbose = 0;
+	int i;
+	int list = 0;
+	int worktree_attributes = 0;
+	struct option opts[] = {
+		OPT_GROUP(""),
+		OPT_STRING(0, "format", &format, "fmt", "archive format"),
+		OPT_STRING(0, "prefix", &base, "prefix",
+			"prepend prefix to each pathname in the archive"),
+		OPT_STRING('o', "output", &output, "file",
+			"write the archive to this file"),
+		OPT_BOOLEAN(0, "worktree-attributes", &worktree_attributes,
+			"read .gitattributes in working directory"),
+		OPT__VERBOSE(&verbose),
+		OPT__COMPR('0', &compression_level, "store only", 0),
+		OPT__COMPR('1', &compression_level, "compress faster", 1),
+		OPT__COMPR_HIDDEN('2', &compression_level, 2),
+		OPT__COMPR_HIDDEN('3', &compression_level, 3),
+		OPT__COMPR_HIDDEN('4', &compression_level, 4),
+		OPT__COMPR_HIDDEN('5', &compression_level, 5),
+		OPT__COMPR_HIDDEN('6', &compression_level, 6),
+		OPT__COMPR_HIDDEN('7', &compression_level, 7),
+		OPT__COMPR_HIDDEN('8', &compression_level, 8),
+		OPT__COMPR('9', &compression_level, "compress better", 9),
+		OPT_GROUP(""),
+		OPT_BOOLEAN('l', "list", &list,
+			"list supported archive formats"),
+		OPT_GROUP(""),
+		OPT_STRING(0, "remote", &remote, "repo",
+			"retrieve the archive from remote repository <repo>"),
+		OPT_STRING(0, "exec", &exec, "cmd",
+			"path to the remote git-upload-archive command"),
+		OPT_END()
+	};
+
+	argc = parse_options(argc, argv, NULL, opts, archive_usage, 0);
+
+	if (remote)
+		die("Unexpected option --remote");
+	if (exec)
+		die("Option --exec can only be used together with --remote");
+	if (output)
+		die("Unexpected option --output");
+
+	if (!base)
+		base = "";
+
+	if (list) {
+		for (i = 0; i < ARRAY_SIZE(archivers); i++)
+			printf("%s\n", archivers[i].name);
+		exit(0);
+	}
+
+	/* We need at least one parameter -- tree-ish */
+	if (argc < 1)
+		usage_with_options(archive_usage, opts);
+	*ar = lookup_archiver(format);
+	if (!*ar)
+		die("Unknown archive format '%s'", format);
+
+	args->compression_level = Z_DEFAULT_COMPRESSION;
+	if (compression_level != -1) {
+		if ((*ar)->flags & USES_ZLIB_COMPRESSION)
+			args->compression_level = compression_level;
+		else {
+			die("Argument not supported for format '%s': -%d",
+					format, compression_level);
+		}
+	}
+	args->verbose = verbose;
+	args->base = base;
+	args->baselen = strlen(base);
+	args->worktree_attributes = worktree_attributes;
+
+	return argc;
+}
+
+int write_archive(int argc, const char **argv, const char *prefix,
+		int setup_prefix)
+{
+	const struct archiver *ar = NULL;
+	struct archiver_args args;
+
+	argc = parse_archive_args(argc, argv, &ar, &args);
+	if (setup_prefix && prefix == NULL)
+		prefix = setup_git_directory();
+
+	parse_treeish_arg(argv, &args, prefix);
+	parse_pathspec_arg(argv + 1, &args);
+
+	git_config(git_default_config, NULL);
+
+	return ar->write_archive(&args);
 }

@@ -2,7 +2,7 @@
 
 int main(int ac, char **av)
 {
-	SHA_CTX ctx;
+	git_SHA_CTX ctx;
 	unsigned char sha1[20];
 	unsigned bufsz = 8192;
 	char *buffer;
@@ -20,7 +20,7 @@ int main(int ac, char **av)
 			die("OOPS");
 	}
 
-	SHA1_Init(&ctx);
+	git_SHA1_Init(&ctx);
 
 	while (1) {
 		ssize_t sz, this_sz;
@@ -32,16 +32,16 @@ int main(int ac, char **av)
 			if (sz == 0)
 				break;
 			if (sz < 0)
-				die("test-sha1: %s", strerror(errno));
+				die_errno("test-sha1");
 			this_sz += sz;
 			cp += sz;
 			room -= sz;
 		}
 		if (this_sz == 0)
 			break;
-		SHA1_Update(&ctx, buffer, this_sz);
+		git_SHA1_Update(&ctx, buffer, this_sz);
 	}
-	SHA1_Final(sha1, &ctx);
+	git_SHA1_Final(sha1, &ctx);
 	puts(sha1_to_hex(sha1));
 	exit(0);
 }

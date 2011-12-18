@@ -80,6 +80,57 @@
 
 (eval-when-compile (require 'cl))			      ; to use `push', `pop'
 
+(defface git-blame-prefix-face
+  '((((background dark)) (:foreground "gray"
+                          :background "black"))
+    (((background light)) (:foreground "gray"
+                           :background "white"))
+    (t (:weight bold)))
+  "The face used for the hash prefix."
+  :group 'git-blame)
+
+(defgroup git-blame nil
+  "A minor mode showing Git blame information."
+  :group 'git
+  :link '(function-link git-blame-mode))
+
+
+(defcustom git-blame-use-colors t
+  "Use colors to indicate commits in `git-blame-mode'."
+  :type 'boolean
+  :group 'git-blame)
+
+(defcustom git-blame-prefix-format
+  "%h %20A:"
+  "The format of the prefix added to each line in `git-blame'
+mode. The format is passed to `format-spec' with the following format keys:
+
+  %h - the abbreviated hash
+  %H - the full hash
+  %a - the author name
+  %A - the author email
+  %c - the committer name
+  %C - the committer email
+  %s - the commit summary
+"
+  :group 'git-blame)
+
+(defcustom git-blame-mouseover-format
+  "%h %a %A: %s"
+  "The format of the description shown when pointing at a line in
+`git-blame' mode. The format string is passed to `format-spec'
+with the following format keys:
+
+  %h - the abbreviated hash
+  %H - the full hash
+  %a - the author name
+  %A - the author email
+  %c - the committer name
+  %C - the committer email
+  %s - the commit summary
+"
+  :group 'git-blame)
+
 
 (defun git-blame-color-scale (&rest elements)
   "Given a list, returns a list of triples formed with each
@@ -302,72 +353,69 @@ See also function `git-blame-mode'."
                (src-line (string-to-number (match-string 2)))
                (res-line (string-to-number (match-string 3)))
                (num-lines (string-to-number (match-string 4))))
-           (setq git-blame-current
-                 (if (string= hash "0000000000000000000000000000000000000000")
-                     nil
-                   (git-blame-new-commit
-                    hash src-line res-line num-lines))))
-         (delete-region (point) (match-end 0))
-         t)
-        ((looking-at "filename \\(.+\\)\n")
-         (let ((filename (match-string 1)))
-           (git-blame-add-info "filename" filename))
-         (delete-region (point) (match-end 0))
+           (delete-region (point) (match-end 0))
+           (setq git-blame-current (list (git-blame-new-commit hash)
+                                         src-line res-line num-lines)))
          t)
         ((looking-at "\\([a-z-]+\\) \\(.+\\)\n")
          (let ((key (match-string 1))
                (value (match-string 2)))
-           (git-blame-add-info key value))
-         (delete-region (point) (match-end 0))
-         t)
-        ((looking-at "boundary\n")
-         (setq git-blame-current nil)
-         (delete-region (point) (match-end 0))
+           (delete-region (point) (match-end 0))
+           (git-blame-add-info (car git-blame-current) key value)
+           (when (string= key "filename")
+             (git-blame-create-overlay (car git-blame-current)
+                                       (caddr git-blame-current)
+                                       (cadddr git-blame-current))
+             (setq git-blame-current nil)))
          t)
         (t
          nil)))
 
-(defun git-blame-new-commit (hash src-line res-line num-lines)
+(defun git-blame-new-commit (hash)
+  (with-current-buffer git-blame-file
+    (or (gethash hash git-blame-cache)
+        ;; Assign a random color to each new commit info
+        ;; Take care not to select the same color multiple times
+        (let* ((color (if git-blame-colors
+                          (git-blame-random-pop git-blame-colors)
+                        git-blame-ancient-color))
+               (info `(,hash (color . ,color))))
+          (puthash hash info git-blame-cache)
+          info))))
+
+(defun git-blame-create-overlay (info start-line num-lines)
   (save-excursion
     (set-buffer git-blame-file)
-    (let ((info (gethash hash git-blame-cache))
-          (inhibit-point-motion-hooks t)
+    (let ((inhibit-point-motion-hooks t)
           (inhibit-modification-hooks t))
-      (when (not info)
-	;; Assign a random color to each new commit info
-	;; Take care not to select the same color multiple times
-	(let ((color (if git-blame-colors
-			 (git-blame-random-pop git-blame-colors)
-		       git-blame-ancient-color)))
-          (setq info (list hash src-line res-line num-lines
-                           (git-describe-commit hash)
-                           (cons 'color color))))
-        (puthash hash info git-blame-cache))
-      (goto-line res-line)
-      (while (> num-lines 0)
-        (if (get-text-property (point) 'git-blame)
-            (forward-line)
-          (let* ((start (point))
-                 (end (progn (forward-line 1) (point)))
-                 (ovl (make-overlay start end)))
-            (push ovl git-blame-overlays)
-            (overlay-put ovl 'git-blame info)
-            (overlay-put ovl 'help-echo hash)
+      (goto-line start-line)
+      (let* ((start (point))
+             (end (progn (forward-line num-lines) (point)))
+             (ovl (make-overlay start end))
+             (hash (car info))
+             (spec `((?h . ,(substring hash 0 6))
+                     (?H . ,hash)
+                     (?a . ,(git-blame-get-info info 'author))
+                     (?A . ,(git-blame-get-info info 'author-mail))
+                     (?c . ,(git-blame-get-info info 'committer))
+                     (?C . ,(git-blame-get-info info 'committer-mail))
+                     (?s . ,(git-blame-get-info info 'summary)))))
+        (push ovl git-blame-overlays)
+        (overlay-put ovl 'git-blame info)
+        (overlay-put ovl 'help-echo
+                     (format-spec git-blame-mouseover-format spec))
+        (if git-blame-use-colors
             (overlay-put ovl 'face (list :background
-                                         (cdr (assq 'color (nthcdr 5 info)))))
-            ;; the point-entered property doesn't seem to work in overlays
-            ;;(overlay-put ovl 'point-entered
-            ;;             `(lambda (x y) (git-blame-identify ,hash)))
-            (let ((modified (buffer-modified-p)))
-              (put-text-property (if (= start 1) start (1- start)) (1- end)
-                                 'point-entered
-                                 `(lambda (x y) (git-blame-identify ,hash)))
-              (set-buffer-modified-p modified))))
-        (setq num-lines (1- num-lines))))))
+                                         (cdr (assq 'color (cdr info))))))
+        (overlay-put ovl 'line-prefix
+                     (propertize (format-spec git-blame-prefix-format spec)
+                                 'face 'git-blame-prefix-face))))))
 
-(defun git-blame-add-info (key value)
-  (if git-blame-current
-      (nconc git-blame-current (list (cons (intern key) value)))))
+(defun git-blame-add-info (info key value)
+  (nconc info (list (cons (intern key) value))))
+
+(defun git-blame-get-info (info key)
+  (cdr (assq key (cdr info))))
 
 (defun git-blame-current-commit ()
   (let ((info (get-char-property (point) 'git-blame)))

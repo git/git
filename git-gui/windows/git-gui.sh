@@ -3,14 +3,22 @@
 exec wish "$0" -- "$@"
 
 if { $argc >=2 && [lindex $argv 0] == "--working-dir" } {
-	cd [lindex $argv 1]
+	set workdir [lindex $argv 1]
+	cd $workdir
+	if {[lindex [file split $workdir] end] eq {.git}} {
+		# Workaround for Explorer right click "Git GUI Here" on .git/
+		cd ..
+	}
 	set argv [lrange $argv 2 end]
 	incr argc -2
 }
 
-set gitguidir [file dirname [info script]]
-regsub -all ";" $gitguidir "\\;" gitguidir
-set env(PATH) "$gitguidir;$env(PATH)"
-unset gitguidir
+set bindir [file dirname \
+            [file dirname \
+             [file dirname [info script]]]]
+set bindir [file join $bindir bin]
+regsub -all ";" $bindir "\\;" bindir
+set env(PATH) "$bindir;$env(PATH)"
+unset bindir
 
 source [file join [file dirname [info script]] git-gui.tcl]

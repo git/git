@@ -11,7 +11,7 @@ SYNOPSIS
 SSH:
 
 [verse]
-export CVS_SERVER=git-cvsserver
+export CVS_SERVER="git cvsserver"
 'cvs' -d :ext:user@server/path/repo.git co <HEAD_name>
 
 pserver (/etc/inetd.conf):
@@ -22,7 +22,7 @@ cvspserver stream tcp nowait nobody /usr/bin/git-cvsserver git-cvsserver pserver
 Usage:
 
 [verse]
-'git cvsserver' [options] [pserver|server] [<directory> ...]
+'git-cvsserver' [options] [pserver|server] [<directory> ...]
 
 OPTIONS
 -------
@@ -109,7 +109,7 @@ Note: Newer CVS versions (>= 1.12.11) also support specifying
 CVS_SERVER directly in CVSROOT like
 
 ------
-cvs -d ":ext;CVS_SERVER=git-cvsserver:user@server/path/repo.git" co <HEAD_name>
+cvs -d ":ext;CVS_SERVER=git cvsserver:user@server/path/repo.git" co <HEAD_name>
 ------
 This has the advantage that it will be saved in your 'CVS/Root' files and
 you don't need to worry about always setting the correct environment
@@ -158,7 +158,7 @@ allowing access over SSH.
 --
 ------
      export CVSROOT=:ext:user@server:/var/git/project.git
-     export CVS_SERVER=git-cvsserver
+     export CVS_SERVER="git cvsserver"
 ------
 --
 4. For SSH clients that will make commits, make sure their server-side
@@ -182,10 +182,9 @@ Database Backend
 ----------------
 
 'git-cvsserver' uses one database per git head (i.e. CVS module) to
-store information about the repository for faster access. The
-database doesn't contain any persistent data and can be completely
-regenerated from the git repository at any time. The database
-needs to be updated (i.e. written to) after every commit.
+store information about the repository to maintain consistent
+CVS revision numbers. The database needs to be
+updated (i.e. written to) after every commit.
 
 If the commit is done directly by using `git` (as opposed to
 using 'git-cvsserver') the update will need to happen on the
@@ -203,6 +202,18 @@ temporary files in the same directory as the database file on
 write so it might not be enough to grant the users using
 'git-cvsserver' write access to the database file without granting
 them write access to the directory, too.
+
+The database can not be reliably regenerated in a
+consistent form after the branch it is tracking has changed.
+Example: For merged branches, 'git-cvsserver' only tracks
+one branch of development, and after a 'git merge' an
+incrementally updated database may track a different branch
+than a database regenerated from scratch, causing inconsistent
+CVS revision numbers. `git-cvsserver` has no way of knowing which
+branch it would have picked if it had been run incrementally
+pre-merge. So if you have to fully or partially (from old
+backup) regenerate the database, you should be suspicious
+of pre-existing CVS sandboxes.
 
 You can configure the database backend with the following
 configuration variables:
@@ -266,6 +277,21 @@ In `dbdriver` and `dbuser` you can use the following variables:
 	If no name can be determined, the
 	numeric uid is used.
 
+ENVIRONMENT
+-----------
+
+These variables obviate the need for command-line options in some
+circumstances, allowing easier restricted usage through git-shell.
+
+GIT_CVSSERVER_BASE_PATH takes the place of the argument to --base-path.
+
+GIT_CVSSERVER_ROOT specifies a single-directory whitelist. The
+repository must still be configured to allow access through
+git-cvsserver, as described above.
+
+When these environment variables are set, the corresponding
+command-line arguments may not be used.
+
 Eclipse CVS Client Notes
 ------------------------
 
@@ -283,7 +309,7 @@ To get a checkout with the Eclipse CVS client:
 Protocol notes: If you are using anonymous access via pserver, just select that.
 Those using SSH access should choose the 'ext' protocol, and configure 'ext'
 access on the Preferences->Team->CVS->ExtConnection pane. Set CVS_SERVER to
-'git-cvsserver'. Note that password support is not good when using 'ext',
+"`git cvsserver`". Note that password support is not good when using 'ext',
 you will definitely want to have SSH keys setup.
 
 Alternatively, you can just use the non-standard extssh protocol that Eclipse

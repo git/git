@@ -6,13 +6,13 @@ test_description='ignore CR in CRLF sequence while computing similiarity'
 
 test_expect_success setup '
 
-	cat ../t0022-crlf-rename.sh >sample &&
+	cat "$TEST_DIRECTORY"/t0022-crlf-rename.sh >sample &&
 	git add sample &&
 
 	test_tick &&
 	git commit -m Initial &&
 
-	sed -e "s/\$//" ../t0022-crlf-rename.sh >elpmas &&
+	append_cr <"$TEST_DIRECTORY"/t0022-crlf-rename.sh >elpmas &&
 	git add elpmas &&
 	rm -f sample &&
 

@@ -27,10 +27,13 @@ config file would appear like this:
 ------------
 	[remote "<name>"]
 		url = <url>
+		pushurl = <pushurl>
 		push = <refspec>
 		fetch = <refspec>
 ------------
 
+The `<pushurl>` is used for pushes only. It is optional and defaults
+to `<url>`.
 
 Named file in `$GIT_DIR/remotes`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -49,8 +52,8 @@ following format:
 
 ------------
 
-`Push:` lines are used by 'git-push' and
-`Pull:` lines are used by 'git-pull' and 'git-fetch'.
+`Push:` lines are used by 'git push' and
+`Pull:` lines are used by 'git pull' and 'git fetch'.
 Multiple `Push:` and `Pull:` lines may
 be specified for additional branch mappings.
 
@@ -68,13 +71,22 @@ This file should have the following format:
 ------------
 
 `<url>` is required; `#<head>` is optional.
-When you do not provide a refspec on the command line,
-git will use the following refspec, where `<head>` defaults to `master`,
-and `<repository>` is the name of this file
-you provided in the command line.
+
+Depending on the operation, git will use one of the following
+refspecs, if you don't provide one on the command line.
+`<branch>` is the name of this file in `$GIT_DIR/branches` and
+`<head>` defaults to `master`.
+
+git fetch uses:
 
 ------------
-	refs/heads/<head>:<repository>
+	refs/heads/<head>:refs/heads/<branch>
+------------
+
+git push uses:
+
+------------
+	HEAD:refs/heads/<head>
 ------------
 
 

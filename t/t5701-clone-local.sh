@@ -11,8 +11,8 @@ test_expect_success 'preparing origin repository' '
 	git clone --bare . x &&
 	test "$(GIT_CONFIG=a.git/config git config --bool core.bare)" = true &&
 	test "$(GIT_CONFIG=x/config git config --bool core.bare)" = true
-	git bundle create b1.bundle --all HEAD &&
-	git bundle create b2.bundle --all &&
+	git bundle create b1.bundle --all &&
+	git bundle create b2.bundle master &&
 	mkdir dir &&
 	cp b1.bundle dir/b3
 	cp b1.bundle b4
@@ -114,6 +114,34 @@ test_expect_success 'bundle clone with nonexistent HEAD' '
 	cd b2 &&
 	git fetch
 	test ! -e .git/refs/heads/master
+'
+
+test_expect_success 'clone empty repository' '
+	cd "$D" &&
+	mkdir empty &&
+	(cd empty &&
+	 git init &&
+	 git config receive.denyCurrentBranch warn) &&
+	git clone empty empty-clone &&
+	test_tick &&
+	(cd empty-clone
+	 echo "content" >> foo &&
+	 git add foo &&
+	 git commit -m "Initial commit" &&
+	 git push origin master &&
+	 expected=$(git rev-parse master) &&
+	 actual=$(git --git-dir=../empty/.git rev-parse master) &&
+	 test $actual = $expected)
+'
+
+test_expect_success 'clone empty repository, and then push should not segfault.' '
+	cd "$D" &&
+	rm -fr empty/ empty-clone/ &&
+	mkdir empty &&
+	(cd empty && git init) &&
+	git clone empty empty-clone &&
+	(cd empty-clone &&
+	test_must_fail git push)
 '
 
 test_done

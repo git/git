@@ -69,7 +69,7 @@ test_expect_success '--no-verify with failing hook' '
 '
 
 chmod -x "$HOOK"
-test_expect_success 'with non-executable hook' '
+test_expect_success POSIXPERM 'with non-executable hook' '
 
 	echo "content" >> file &&
 	git add file &&
@@ -77,7 +77,7 @@ test_expect_success 'with non-executable hook' '
 
 '
 
-test_expect_success '--no-verify with non-executable hook' '
+test_expect_success POSIXPERM '--no-verify with non-executable hook' '
 
 	echo "more content" >> file &&
 	git add file &&

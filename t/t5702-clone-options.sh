@@ -19,4 +19,18 @@ test_expect_success 'clone -o' '
 
 '
 
+test_expect_success 'redirected clone' '
+
+	git clone "file://$(pwd)/parent" clone-redirected >out 2>err &&
+	test ! -s err
+
+'
+test_expect_success 'redirected clone -v' '
+
+	git clone --progress "file://$(pwd)/parent" clone-redirected-progress \
+		>out 2>err &&
+	test -s err
+
+'
+
 test_done

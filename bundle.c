@@ -98,7 +98,7 @@ int verify_bundle(struct bundle_header *header, int verbose)
 	 */
 	struct ref_list *p = &header->prerequisites;
 	struct rev_info revs;
-	const char *argv[] = {NULL, "--all"};
+	const char *argv[] = {NULL, "--all", NULL};
 	struct object_array refs;
 	struct commit *commit;
 	int i, ret = 0, req_nr;
@@ -114,7 +114,7 @@ int verify_bundle(struct bundle_header *header, int verbose)
 			continue;
 		}
 		if (++ret == 1)
-			error(message);
+			error("%s", message);
 		error("%s %s", sha1_to_hex(e->sha1), e->name);
 	}
 	if (revs.pending.nr != p->nr)
@@ -139,7 +139,7 @@ int verify_bundle(struct bundle_header *header, int verbose)
 	for (i = 0; i < req_nr; i++)
 		if (!(refs.objects[i].item->flags & SHOWN)) {
 			if (++ret == 1)
-				error(message);
+				error("%s", message);
 			error("%s %s", sha1_to_hex(refs.objects[i].item->sha1),
 				refs.objects[i].name);
 		}
@@ -167,6 +167,32 @@ int list_bundle_refs(struct bundle_header *header, int argc, const char **argv)
 	return list_refs(&header->references, argc, argv);
 }
 
+static int is_tag_in_date_range(struct object *tag, struct rev_info *revs)
+{
+	unsigned long size;
+	enum object_type type;
+	char *buf, *line, *lineend;
+	unsigned long date;
+
+	if (revs->max_age == -1 && revs->min_age == -1)
+		return 1;
+
+	buf = read_sha1_file(tag->sha1, &type, &size);
+	if (!buf)
+		return 1;
+	line = memmem(buf, size, "\ntagger ", 8);
+	if (!line++)
+		return 1;
+	lineend = memchr(line, buf + size - line, '\n');
+	line = memchr(line, lineend ? lineend - line : buf + size - line, '>');
+	if (!line++)
+		return 1;
+	date = strtoul(line, NULL, 10);
+	free(buf);
+	return (revs->max_age == -1 || revs->max_age < date) &&
+		(revs->min_age == -1 || revs->min_age > date);
+}
+
 int create_bundle(struct bundle_header *header, const char *path,
 		int argc, const char **argv)
 {
@@ -178,7 +204,6 @@ int create_bundle(struct bundle_header *header, const char *path,
 	int i, ref_count = 0;
 	char buffer[1024];
 	struct rev_info revs;
-	int read_from_stdin = 0;
 	struct child_process rls;
 	FILE *rls_fout;
 
@@ -186,7 +211,8 @@ int create_bundle(struct bundle_header *header, const char *path,
 	if (bundle_to_stdout)
 		bundle_fd = 1;
 	else
-		bundle_fd = hold_lock_file_for_update(&lock, path, 1);
+		bundle_fd = hold_lock_file_for_update(&lock, path,
+						      LOCK_DIE_ON_ERROR);
 
 	/* write signature */
 	write_or_die(bundle_fd, bundle_signature, strlen(bundle_signature));
@@ -207,7 +233,7 @@ int create_bundle(struct bundle_header *header, const char *path,
 	rls.git_cmd = 1;
 	if (start_command(&rls))
 		return -1;
-	rls_fout = fdopen(rls.out, "r");
+	rls_fout = xfdopen(rls.out, "r");
 	while (fgets(buffer, sizeof(buffer), rls_fout)) {
 		unsigned char sha1[20];
 		if (buffer[0] == '-') {
@@ -229,15 +255,10 @@ int create_bundle(struct bundle_header *header, const char *path,
 	/* write references */
 	argc = setup_revisions(argc, argv, &revs, NULL);
 
-	for (i = 1; i < argc; i++) {
-		if (!strcmp(argv[i], "--stdin")) {
-			if (read_from_stdin++)
-				die("--stdin given twice?");
-			read_revisions_from_stdin(&revs);
-			continue;
-		}
-		return error("unrecognized argument: %s'", argv[i]);
-	}
+	if (argc > 1)
+		return error("unrecognized argument: %s'", argv[1]);
+
+	object_array_remove_duplicates(&revs.pending);
 
 	for (i = 0; i < revs.pending.nr; i++) {
 		struct object_array_entry *e = revs.pending.objects + i;
@@ -253,6 +274,12 @@ int create_bundle(struct bundle_header *header, const char *path,
 		if (!resolve_ref(e->name, sha1, 1, &flag))
 			flag = 0;
 		display_ref = (flag & REF_ISSYMREF) ? e->name : ref;
+
+		if (e->item->type == OBJ_TAG &&
+				!is_tag_in_date_range(e->item, &revs)) {
+			e->item->flags |= UNINTERESTING;
+			continue;
+		}
 
 		/*
 		 * Make sure the refs we wrote out is correct; --max-count and
@@ -316,7 +343,7 @@ int create_bundle(struct bundle_header *header, const char *path,
 
 	/* write pack */
 	argv_pack[0] = "pack-objects";
-	argv_pack[1] = "--all-progress";
+	argv_pack[1] = "--all-progress-implied";
 	argv_pack[2] = "--stdout";
 	argv_pack[3] = "--thin";
 	argv_pack[4] = NULL;

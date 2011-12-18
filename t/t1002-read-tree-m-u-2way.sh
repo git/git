@@ -10,10 +10,10 @@ This is identical to t1001, but uses -u to update the work tree as well.
 '
 . ./test-lib.sh
 
-_x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
-_x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
 compare_change () {
 	sed >current \
+	    -e '1{/^diff --git /d;}' \
+	    -e '2{/^index /d;}' \
 	    -e '/^--- /d; /^+++ /d; /^@@ /d;' \
 	    -e 's/^\(.[0-7][0-7][0-7][0-7][0-7][0-7]\) '"$_x40"' /\1 X /' "$1"
 	test_cmp expected current
@@ -75,7 +75,7 @@ test_expect_success \
      git update-index --add yomin &&
      git read-tree -m -u $treeH $treeM &&
      git ls-files --stage >4.out || return 1
-     diff -U0 M.out 4.out >4diff.out
+     git diff -U0 --no-index M.out 4.out >4diff.out
      compare_change 4diff.out expected &&
      check_cache_at yomin clean &&
      sum bozbar frotz nitfol >actual4.sum &&
@@ -94,7 +94,7 @@ test_expect_success \
      echo yomin yomin >yomin &&
      git read-tree -m -u $treeH $treeM &&
      git ls-files --stage >5.out || return 1
-     diff -U0 M.out 5.out >5diff.out
+     git diff -U0 --no-index M.out 5.out >5diff.out
      compare_change 5diff.out expected &&
      check_cache_at yomin dirty &&
      sum bozbar frotz nitfol >actual5.sum &&
@@ -206,7 +206,7 @@ test_expect_success \
      git update-index --add nitfol &&
      git read-tree -m -u $treeH $treeM &&
      git ls-files --stage >14.out || return 1
-     diff -U0 M.out 14.out >14diff.out
+     git diff -U0 --no-index M.out 14.out >14diff.out
      compare_change 14diff.out expected &&
      sum bozbar frotz >actual14.sum &&
      grep -v nitfol M.sum > expected14.sum &&
@@ -227,7 +227,7 @@ test_expect_success \
      echo nitfol nitfol nitfol >nitfol &&
      git read-tree -m -u $treeH $treeM &&
      git ls-files --stage >15.out || return 1
-     diff -U0 M.out 15.out >15diff.out
+     git diff -U0 --no-index M.out 15.out >15diff.out
      compare_change 15diff.out expected &&
      check_cache_at nitfol dirty &&
      sum bozbar frotz >actual15.sum &&

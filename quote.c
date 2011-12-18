@@ -72,7 +72,7 @@ void sq_quote_argv(struct strbuf *dst, const char** argv, size_t maxlen)
 	}
 }
 
-char *sq_dequote(char *arg)
+static char *sq_dequote_step(char *arg, char **next)
 {
 	char *dst = arg;
 	char *src = arg;
@@ -92,6 +92,8 @@ char *sq_dequote(char *arg)
 		switch (*++src) {
 		case '\0':
 			*dst = 0;
+			if (next)
+				*next = NULL;
 			return arg;
 		case '\\':
 			c = *++src;
@@ -101,9 +103,38 @@ char *sq_dequote(char *arg)
 			}
 		/* Fallthrough */
 		default:
-			return NULL;
+			if (!next || !isspace(*src))
+				return NULL;
+			do {
+				c = *++src;
+			} while (isspace(c));
+			*dst = 0;
+			*next = src;
+			return arg;
 		}
 	}
+}
+
+char *sq_dequote(char *arg)
+{
+	return sq_dequote_step(arg, NULL);
+}
+
+int sq_dequote_to_argv(char *arg, const char ***argv, int *nr, int *alloc)
+{
+	char *next = arg;
+
+	if (!*arg)
+		return 0;
+	do {
+		char *dequoted = sq_dequote_step(next, &next);
+		if (!dequoted)
+			return -1;
+		ALLOC_GROW(*argv, *nr + 1, *alloc);
+		(*argv)[(*nr)++] = dequoted;
+	} while (next);
+
+	return 0;
 }
 
 /* 1 means: quote as octal
@@ -182,7 +213,7 @@ static size_t quote_c_style_counted(const char *name, ssize_t maxlen,
 		int ch;
 
 		len = next_quote_pos(p, maxlen);
-		if (len == maxlen || !p[len])
+		if (len == maxlen || (maxlen < 0 && !p[len]))
 			break;
 
 		if (!no_dq && p == name)
@@ -192,6 +223,8 @@ static size_t quote_c_style_counted(const char *name, ssize_t maxlen,
 		EMIT('\\');
 		p += len;
 		ch = (unsigned char)*p++;
+		if (maxlen >= 0)
+			maxlen -= len + 1;
 		if (sq_lookup[ch] >= ' ') {
 			EMIT(sq_lookup[ch]);
 		} else {
@@ -241,8 +274,8 @@ void write_name_quoted(const char *name, FILE *fp, int terminator)
 	fputc(terminator, fp);
 }
 
-extern void write_name_quotedpfx(const char *pfx, size_t pfxlen,
-                                 const char *name, FILE *fp, int terminator)
+void write_name_quotedpfx(const char *pfx, size_t pfxlen,
+			  const char *name, FILE *fp, int terminator)
 {
 	int needquote = 0;
 

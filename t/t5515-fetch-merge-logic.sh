@@ -129,11 +129,10 @@ do
 	'' | '#'*) continue ;;
 	esac
 	test=`echo "$cmd" | sed -e 's|[/ ][/ ]*|_|g'`
-	cnt=`expr $test_count + 1`
-	pfx=`printf "%04d" $cnt`
-	expect_f="../../t5515/fetch.$test"
+	pfx=`printf "%04d" $test_count`
+	expect_f="$TEST_DIRECTORY/t5515/fetch.$test"
 	actual_f="$pfx-fetch.$test"
-	expect_r="../../t5515/refs.$test"
+	expect_r="$TEST_DIRECTORY/t5515/refs.$test"
 	actual_r="$pfx-refs.$test"
 
 	test_expect_success "$cmd" '

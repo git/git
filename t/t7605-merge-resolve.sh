@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='git-merge
+test_description='git merge
 
 Testing the resolve strategy.'
 
@@ -36,7 +36,9 @@ test_expect_success 'merge c1 to c2' '
 	git diff --exit-code &&
 	test -f c0.c &&
 	test -f c1.c &&
-	test -f c2.c
+	test -f c2.c &&
+	test 3 = $(git ls-tree -r HEAD | wc -l) &&
+	test 3 = $(git ls-files | wc -l)
 '
 
 test_expect_success 'merge c2 to c3 (fails)' '

@@ -26,10 +26,10 @@ static int get_entry_index(const struct string_list *list, const char *string,
 }
 
 /* returns -1-index if already exists */
-static int add_entry(struct string_list *list, const char *string)
+static int add_entry(int insert_at, struct string_list *list, const char *string)
 {
-	int exact_match;
-	int index = get_entry_index(list, string, &exact_match);
+	int exact_match = 0;
+	int index = insert_at != -1 ? insert_at : get_entry_index(list, string, &exact_match);
 
 	if (exact_match)
 		return -1 - index;
@@ -53,7 +53,13 @@ static int add_entry(struct string_list *list, const char *string)
 
 struct string_list_item *string_list_insert(const char *string, struct string_list *list)
 {
-	int index = add_entry(list, string);
+	return string_list_insert_at_index(-1, string, list);
+}
+
+struct string_list_item *string_list_insert_at_index(int insert_at,
+						     const char *string, struct string_list *list)
+{
+	int index = add_entry(insert_at, list, string);
 
 	if (index < 0)
 		index = -1 - index;
@@ -68,12 +74,32 @@ int string_list_has_string(const struct string_list *list, const char *string)
 	return exact_match;
 }
 
+int string_list_find_insert_index(const struct string_list *list, const char *string,
+				  int negative_existing_index)
+{
+	int exact_match;
+	int index = get_entry_index(list, string, &exact_match);
+	if (exact_match)
+		index = -1 - (negative_existing_index ? index : 0);
+	return index;
+}
+
 struct string_list_item *string_list_lookup(const char *string, struct string_list *list)
 {
 	int exact_match, i = get_entry_index(list, string, &exact_match);
 	if (!exact_match)
 		return NULL;
 	return list->items + i;
+}
+
+int for_each_string_list(string_list_each_func_t fn,
+			 struct string_list *list, void *cb_data)
+{
+	int i, ret = 0;
+	for (i = 0; i < list->nr; i++)
+		if ((ret = fn(&list->items[i], cb_data)))
+			break;
+	return ret;
 }
 
 void string_list_clear(struct string_list *list, int free_util)
@@ -93,6 +119,25 @@ void string_list_clear(struct string_list *list, int free_util)
 	list->items = NULL;
 	list->nr = list->alloc = 0;
 }
+
+void string_list_clear_func(struct string_list *list, string_list_clear_func_t clearfunc)
+{
+	if (list->items) {
+		int i;
+		if (clearfunc) {
+			for (i = 0; i < list->nr; i++)
+				clearfunc(list->items[i].util, list->items[i].string);
+		}
+		if (list->strdup_strings) {
+			for (i = 0; i < list->nr; i++)
+				free(list->items[i].string);
+		}
+		free(list->items);
+	}
+	list->items = NULL;
+	list->nr = list->alloc = 0;
+}
+
 
 void print_string_list(const char *text, const struct string_list *p)
 {

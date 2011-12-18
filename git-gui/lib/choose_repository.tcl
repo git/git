@@ -22,9 +22,9 @@ field readtree_err        ; # Error output from read-tree (if any)
 field sorted_recent       ; # recent repositories (sorted)
 
 constructor pick {} {
-	global M1T M1B
+	global M1T M1B use_ttk NS
 
-	make_toplevel top w
+	make_dialog top w
 	wm title $top [mc "Git Gui"]
 
 	if {$top eq {.}} {
@@ -43,12 +43,18 @@ constructor pick {} {
 			$w.mbar.apple add command \
 				-label [mc "About %s" [appname]] \
 				-command do_about
+			$w.mbar.apple add command \
+				-label [mc "Show SSH Key"] \
+				-command do_ssh_key
 		} else {
 			$w.mbar add cascade -label [mc Help] -menu $w.mbar.help
 			menu $w.mbar.help
 			$w.mbar.help add command \
 				-label [mc "About %s" [appname]] \
 				-command do_about
+			$w.mbar.help add command \
+				-label [mc "Show SSH Key"] \
+				-command do_ssh_key
 		}
 
 		wm protocol $top WM_DELETE_WINDOW exit
@@ -65,11 +71,11 @@ constructor pick {} {
 
 	set w_body $w.body
 	set opts $w_body.options
-	frame $w_body
+	${NS}::frame $w_body
 	text $opts \
 		-cursor $::cursor_ptr \
 		-relief flat \
-		-background [$w_body cget -background] \
+		-background [get_bg_color $w_body] \
 		-wrap none \
 		-spacing1 5 \
 		-width 50 \
@@ -126,15 +132,15 @@ constructor pick {} {
 				-label [mc "Recent Repositories"]
 		}
 
-		label $w_body.space
-		label $w_body.recentlabel \
+		${NS}::label $w_body.space
+		${NS}::label $w_body.recentlabel \
 			-anchor w \
 			-text [mc "Open Recent Repository:"]
 		set w_recentlist $w_body.recentlist
 		text $w_recentlist \
 			-cursor $::cursor_ptr \
 			-relief flat \
-			-background [$w_body.recentlabel cget -background] \
+			-background [get_bg_color $w_body.recentlabel] \
 			-wrap none \
 			-width 50 \
 			-height 10
@@ -170,10 +176,10 @@ constructor pick {} {
 	}
 	pack $w_body -fill x -padx 10 -pady 10
 
-	frame $w.buttons
+	${NS}::frame $w.buttons
 	set w_next $w.buttons.next
 	set w_quit $w.buttons.quit
-	button $w_quit \
+	${NS}::button $w_quit \
 		-text [mc "Quit"] \
 		-command exit
 	pack $w_quit -side right -padx 5
@@ -197,6 +203,7 @@ constructor pick {} {
 	wm deiconify $top
 	tkwait variable @done
 
+	grab release $top
 	if {$top eq {.}} {
 		eval destroy [winfo children $top]
 	}
@@ -229,6 +236,8 @@ proc _get_recentrepos {} {
 	foreach p [get_config gui.recentrepo] {
 		if {[_is_git [file join $p .git]]} {
 			lappend recent $p
+		} else {
+			_unset_recentrepo $p
 		}
 	}
 	return [lsort $recent]
@@ -237,6 +246,7 @@ proc _get_recentrepos {} {
 proc _unset_recentrepo {p} {
 	regsub -all -- {([()\[\]{}\.^$+*?\\])} $p {\\\1} p
 	git config --global --unset gui.recentrepo "^$p\$"
+	load_config 1
 }
 
 proc _append_recentrepos {path} {
@@ -255,6 +265,7 @@ proc _append_recentrepos {path} {
 
 	lappend recent $path
 	git config --global --add gui.recentrepo $path
+	load_config 1
 
 	while {[llength $recent] > 10} {
 		_unset_recentrepo [lindex $recent 0]
@@ -274,9 +285,10 @@ method _open_recent_path {p} {
 }
 
 method _next {action} {
+	global NS
 	destroy $w_body
 	if {![winfo exists $w_next]} {
-		button $w_next -default active
+		${NS}::button $w_next -default active
 		pack $w_next -side right -padx 5 -before $w_quit
 	}
 	_do_$action $this
@@ -365,31 +377,33 @@ proc _objdir {path} {
 ## Create New Repository
 
 method _do_new {} {
+	global use_ttk NS
 	$w_next conf \
 		-state disabled \
 		-command [cb _do_new2] \
 		-text [mc "Create"]
 
-	frame $w_body
-	label $w_body.h \
-		-font font_uibold \
+	${NS}::frame $w_body
+	${NS}::label $w_body.h \
+		-font font_uibold -anchor center \
 		-text [mc "Create New Repository"]
 	pack $w_body.h -side top -fill x -pady 10
 	pack $w_body -fill x -padx 10
 
-	frame $w_body.where
-	label $w_body.where.l -text [mc "Directory:"]
-	entry $w_body.where.t \
+	${NS}::frame $w_body.where
+	${NS}::label $w_body.where.l -text [mc "Directory:"]
+	${NS}::entry $w_body.where.t \
 		-textvariable @local_path \
-		-font font_diff \
 		-width 50
-	button $w_body.where.b \
+	${NS}::button $w_body.where.b \
 		-text [mc "Browse"] \
 		-command [cb _new_local_path]
 	set w_localpath $w_body.where.t
 
 	grid $w_body.where.l $w_body.where.t $w_body.where.b -sticky ew
 	pack $w_body.where -fill x
+
+	grid columnconfigure $w_body.where 1 -weight 1
 
 	trace add variable @local_path write [cb _write_local_path]
 	bind $w_body.h <Destroy> [list trace remove variable @local_path write [cb _write_local_path]]
@@ -447,61 +461,57 @@ proc _new_ok {p} {
 ## Clone Existing Repository
 
 method _do_clone {} {
+	global use_ttk NS
 	$w_next conf \
 		-state disabled \
 		-command [cb _do_clone2] \
 		-text [mc "Clone"]
 
-	frame $w_body
-	label $w_body.h \
-		-font font_uibold \
+	${NS}::frame $w_body
+	${NS}::label $w_body.h \
+		-font font_uibold -anchor center \
 		-text [mc "Clone Existing Repository"]
 	pack $w_body.h -side top -fill x -pady 10
 	pack $w_body -fill x -padx 10
 
 	set args $w_body.args
-	frame $w_body.args
+	${NS}::frame $w_body.args
 	pack $args -fill both
 
-	label $args.origin_l -text [mc "URL:"]
-	entry $args.origin_t \
+	${NS}::label $args.origin_l -text [mc "Source Location:"]
+	${NS}::entry $args.origin_t \
 		-textvariable @origin_url \
-		-font font_diff \
 		-width 50
-	button $args.origin_b \
+	${NS}::button $args.origin_b \
 		-text [mc "Browse"] \
 		-command [cb _open_origin]
 	grid $args.origin_l $args.origin_t $args.origin_b -sticky ew
 
-	label $args.where_l -text [mc "Directory:"]
-	entry $args.where_t \
+	${NS}::label $args.where_l -text [mc "Target Directory:"]
+	${NS}::entry $args.where_t \
 		-textvariable @local_path \
-		-font font_diff \
 		-width 50
-	button $args.where_b \
+	${NS}::button $args.where_b \
 		-text [mc "Browse"] \
 		-command [cb _new_local_path]
 	grid $args.where_l $args.where_t $args.where_b -sticky ew
 	set w_localpath $args.where_t
 
-	label $args.type_l -text [mc "Clone Type:"]
-	frame $args.type_f
+	${NS}::label $args.type_l -text [mc "Clone Type:"]
+	${NS}::frame $args.type_f
 	set w_types [list]
-	lappend w_types [radiobutton $args.type_f.hardlink \
+	lappend w_types [${NS}::radiobutton $args.type_f.hardlink \
 		-state disabled \
-		-anchor w \
 		-text [mc "Standard (Fast, Semi-Redundant, Hardlinks)"] \
 		-variable @clone_type \
 		-value hardlink]
-	lappend w_types [radiobutton $args.type_f.full \
+	lappend w_types [${NS}::radiobutton $args.type_f.full \
 		-state disabled \
-		-anchor w \
 		-text [mc "Full Copy (Slower, Redundant Backup)"] \
 		-variable @clone_type \
 		-value full]
-	lappend w_types [radiobutton $args.type_f.shared \
+	lappend w_types [${NS}::radiobutton $args.type_f.shared \
 		-state disabled \
-		-anchor w \
 		-text [mc "Shared (Fastest, Not Recommended, No Backup)"] \
 		-variable @clone_type \
 		-value shared]
@@ -955,7 +965,34 @@ method _readtree_wait {fd} {
 		return
 	}
 
-	set done 1
+	# -- Run the post-checkout hook.
+	#
+	set fd_ph [githook_read post-checkout [string repeat 0 40] \
+		[git rev-parse HEAD] 1]
+	if {$fd_ph ne {}} {
+		global pch_error
+		set pch_error {}
+		fconfigure $fd_ph -blocking 0 -translation binary -eofchar {}
+		fileevent $fd_ph readable [cb _postcheckout_wait $fd_ph]
+	} else {
+		set done 1
+	}
+}
+
+method _postcheckout_wait {fd_ph} {
+	global pch_error
+
+	append pch_error [read $fd_ph]
+	fconfigure $fd_ph -blocking 1
+	if {[eof $fd_ph]} {
+		if {[catch {close $fd_ph}]} {
+			hook_failed_popup post-checkout $pch_error 0
+		}
+		unset pch_error
+		set done 1
+		return
+	}
+	fconfigure $fd_ph -blocking 0
 }
 
 ######################################################################
@@ -963,30 +1000,32 @@ method _readtree_wait {fd} {
 ## Open Existing Repository
 
 method _do_open {} {
+	global NS
 	$w_next conf \
 		-state disabled \
 		-command [cb _do_open2] \
 		-text [mc "Open"]
 
-	frame $w_body
-	label $w_body.h \
-		-font font_uibold \
+	${NS}::frame $w_body
+	${NS}::label $w_body.h \
+		-font font_uibold -anchor center \
 		-text [mc "Open Existing Repository"]
 	pack $w_body.h -side top -fill x -pady 10
 	pack $w_body -fill x -padx 10
 
-	frame $w_body.where
-	label $w_body.where.l -text [mc "Repository:"]
-	entry $w_body.where.t \
+	${NS}::frame $w_body.where
+	${NS}::label $w_body.where.l -text [mc "Repository:"]
+	${NS}::entry $w_body.where.t \
 		-textvariable @local_path \
-		-font font_diff \
 		-width 50
-	button $w_body.where.b \
+	${NS}::button $w_body.where.b \
 		-text [mc "Browse"] \
 		-command [cb _open_local_path]
 
 	grid $w_body.where.l $w_body.where.t $w_body.where.b -sticky ew
 	pack $w_body.where -fill x
+
+	grid columnconfigure $w_body.where 1 -weight 1
 
 	trace add variable @local_path write [cb _write_local_path]
 	bind $w_body.h <Destroy> [list trace remove variable @local_path write [cb _write_local_path]]

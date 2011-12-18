@@ -18,8 +18,9 @@ of server-side GIT commands implementing the pull/push functionality.
 The commands can be executed only by the '-c' option; the shell is not
 interactive.
 
-Currently, only the 'git-receive-pack' and 'git-upload-pack' commands
-are permitted to be called, with a single required argument.
+Currently, only four commands are permitted to be called, 'git-receive-pack'
+'git-upload-pack' and 'git-upload-archive' with a single required argument, or
+'cvs server' (to invoke 'git-cvsserver').
 
 Author
 ------

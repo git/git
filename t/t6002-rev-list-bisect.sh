@@ -5,7 +5,7 @@
 test_description='Tests git rev-list --bisect functionality'
 
 . ./test-lib.sh
-. ../t6000lib.sh # t6xxx specific functions
+. "$TEST_DIRECTORY"/t6000lib.sh # t6xxx specific functions
 
 # usage: test_bisection max-diff bisect-option head ^prune...
 #

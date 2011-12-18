@@ -19,12 +19,13 @@
 
 #define FIX_SIZE 10  /* large enough for any of the above */
 
-int recv_sideband(const char *me, int in_stream, int out, int err)
+int recv_sideband(const char *me, int in_stream, int out)
 {
 	unsigned pf = strlen(PREFIX);
 	unsigned sf;
 	char buf[LARGE_PACKET_MAX + 2*FIX_SIZE];
 	char *suffix, *term;
+	int skip_pf = 0;
 
 	memcpy(buf, PREFIX, pf);
 	term = getenv("TERM");
@@ -40,8 +41,7 @@ int recv_sideband(const char *me, int in_stream, int out, int err)
 		if (len == 0)
 			break;
 		if (len < 1) {
-			len = sprintf(buf, "%s: protocol error: no band designator\n", me);
-			safe_write(err, buf, len);
+			fprintf(stderr, "%s: protocol error: no band designator\n", me);
 			return SIDEBAND_PROTOCOL_ERROR;
 		}
 		band = buf[pf] & 0xff;
@@ -49,53 +49,70 @@ int recv_sideband(const char *me, int in_stream, int out, int err)
 		switch (band) {
 		case 3:
 			buf[pf] = ' ';
-			buf[pf+1+len] = '\n';
-			safe_write(err, buf, pf+1+len+1);
+			buf[pf+1+len] = '\0';
+			fprintf(stderr, "%s\n", buf);
 			return SIDEBAND_REMOTE_ERROR;
 		case 2:
 			buf[pf] = ' ';
-			len += pf+1;
-			while (1) {
-				int brk = pf+1;
+			do {
+				char *b = buf;
+				int brk = 0;
 
-				/* Break the buffer into separate lines. */
-				while (brk < len) {
+				/*
+				 * If the last buffer didn't end with a line
+				 * break then we should not print a prefix
+				 * this time around.
+				 */
+				if (skip_pf) {
+					b += pf+1;
+				} else {
+					len += pf+1;
+					brk += pf+1;
+				}
+
+				/* Look for a line break. */
+				for (;;) {
 					brk++;
-					if (buf[brk-1] == '\n' ||
-					    buf[brk-1] == '\r')
+					if (brk > len) {
+						brk = 0;
+						break;
+					}
+					if (b[brk-1] == '\n' ||
+					    b[brk-1] == '\r')
 						break;
 				}
 
 				/*
 				 * Let's insert a suffix to clear the end
-				 * of the screen line, but only if current
-				 * line data actually contains something.
+				 * of the screen line if a line break was
+				 * found.  Also, if we don't skip the
+				 * prefix, then a non-empty string must be
+				 * present too.
 				 */
-				if (brk > pf+1 + 1) {
+				if (brk > (skip_pf ? 0 : (pf+1 + 1))) {
 					char save[FIX_SIZE];
-					memcpy(save, buf + brk, sf);
-					buf[brk + sf - 1] = buf[brk - 1];
-					memcpy(buf + brk - 1, suffix, sf);
-					safe_write(err, buf, brk + sf);
-					memcpy(buf + brk, save, sf);
-				} else
-					safe_write(err, buf, brk);
+					memcpy(save, b + brk, sf);
+					b[brk + sf - 1] = b[brk - 1];
+					memcpy(b + brk - 1, suffix, sf);
+					fprintf(stderr, "%.*s", brk + sf, b);
+					memcpy(b + brk, save, sf);
+					len -= brk;
+				} else {
+					int l = brk ? brk : len;
+					fprintf(stderr, "%.*s", l, b);
+					len -= l;
+				}
 
-				if (brk < len) {
-					memmove(buf + pf+1, buf + brk, len - brk);
-					len = len - brk + pf+1;
-				} else
-					break;
-			}
+				skip_pf = !brk;
+				memmove(buf + pf+1, b + brk, len);
+			} while (len);
 			continue;
 		case 1:
 			safe_write(out, buf + pf+1, len);
 			continue;
 		default:
-			len = sprintf(buf,
-				      "%s: protocol error: bad band #%d\n",
-				      me, band);
-			safe_write(err, buf, len);
+			fprintf(stderr, "%s: protocol error: bad band #%d\n",
+				me, band);
 			return SIDEBAND_PROTOCOL_ERROR;
 		}
 	}
@@ -118,9 +135,14 @@ ssize_t send_sideband(int fd, int band, const char *data, ssize_t sz, int packet
 		n = sz;
 		if (packet_max - 5 < n)
 			n = packet_max - 5;
-		sprintf(hdr, "%04x", n + 5);
-		hdr[4] = band;
-		safe_write(fd, hdr, 5);
+		if (0 <= band) {
+			sprintf(hdr, "%04x", n + 5);
+			hdr[4] = band;
+			safe_write(fd, hdr, 5);
+		} else {
+			sprintf(hdr, "%04x", n + 4);
+			safe_write(fd, hdr, 4);
+		}
 		safe_write(fd, p, n);
 		p += n;
 		sz -= n;

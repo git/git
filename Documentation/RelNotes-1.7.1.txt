@@ -1,0 +1,20 @@
+Git v1.7.1 Release Notes
+========================
+
+Updates since v1.7.0
+--------------------
+
+ * "git grep" learned "--no-index" option, to search inside contents that
+   are not managed by git.
+
+Fixes since v1.7.0
+------------------
+
+All of the fixes in v1.7.0.X maintenance series are included in this
+release, unless otherwise noted.
+
+---
+exec >/var/tmp/1
+echo O=$(git describe)
+O=v1.7.0-36-gfaa3b47
+git shortlog --no-merges ^maint $O..

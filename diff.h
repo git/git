@@ -14,12 +14,13 @@ typedef void (*change_fn_t)(struct diff_options *options,
 		 unsigned old_mode, unsigned new_mode,
 		 const unsigned char *old_sha1,
 		 const unsigned char *new_sha1,
-		 const char *fullpath);
+		 const char *fullpath,
+		 unsigned old_dirty_submodule, unsigned new_dirty_submodule);
 
 typedef void (*add_remove_fn_t)(struct diff_options *options,
 		    int addremove, unsigned mode,
 		    const unsigned char *sha1,
-		    const char *fullpath);
+		    const char *fullpath, unsigned dirty_submodule);
 
 typedef void (*diff_format_fn_t)(struct diff_queue_struct *q,
 		struct diff_options *options, void *data);
@@ -31,7 +32,6 @@ typedef void (*diff_format_fn_t)(struct diff_queue_struct *q,
 #define DIFF_FORMAT_PATCH	0x0010
 #define DIFF_FORMAT_SHORTSTAT	0x0020
 #define DIFF_FORMAT_DIRSTAT	0x0040
-#define DIFF_FORMAT_CUMULATIVE	0x0080
 
 /* These override all above */
 #define DIFF_FORMAT_NAME	0x0100
@@ -56,7 +56,7 @@ typedef void (*diff_format_fn_t)(struct diff_queue_struct *q,
 #define DIFF_OPT_COLOR_DIFF          (1 <<  8)
 #define DIFF_OPT_COLOR_DIFF_WORDS    (1 <<  9)
 #define DIFF_OPT_HAS_CHANGES         (1 << 10)
-#define DIFF_OPT_QUIET               (1 << 11)
+#define DIFF_OPT_QUICK               (1 << 11)
 #define DIFF_OPT_NO_INDEX            (1 << 12)
 #define DIFF_OPT_ALLOW_EXTERNAL      (1 << 13)
 #define DIFF_OPT_EXIT_WITH_STATUS    (1 << 14)
@@ -64,9 +64,18 @@ typedef void (*diff_format_fn_t)(struct diff_queue_struct *q,
 #define DIFF_OPT_CHECK_FAILED        (1 << 16)
 #define DIFF_OPT_RELATIVE_NAME       (1 << 17)
 #define DIFF_OPT_IGNORE_SUBMODULES   (1 << 18)
+#define DIFF_OPT_DIRSTAT_CUMULATIVE  (1 << 19)
+#define DIFF_OPT_DIRSTAT_BY_FILE     (1 << 20)
+#define DIFF_OPT_ALLOW_TEXTCONV      (1 << 21)
+#define DIFF_OPT_DIFF_FROM_CONTENTS  (1 << 22)
+#define DIFF_OPT_SUBMODULE_LOG       (1 << 23)
+
 #define DIFF_OPT_TST(opts, flag)    ((opts)->flags & DIFF_OPT_##flag)
 #define DIFF_OPT_SET(opts, flag)    ((opts)->flags |= DIFF_OPT_##flag)
 #define DIFF_OPT_CLR(opts, flag)    ((opts)->flags &= ~DIFF_OPT_##flag)
+#define DIFF_XDL_TST(opts, flag)    ((opts)->xdl_opts & XDF_##flag)
+#define DIFF_XDL_SET(opts, flag)    ((opts)->xdl_opts |= XDF_##flag)
+#define DIFF_XDL_CLR(opts, flag)    ((opts)->xdl_opts &= ~XDF_##flag)
 
 struct diff_options {
 	const char *filter;
@@ -76,6 +85,7 @@ struct diff_options {
 	const char *a_prefix, *b_prefix;
 	unsigned flags;
 	int context;
+	int interhunkcontext;
 	int break_opt;
 	int detect_rename;
 	int skip_stat_unmatch;
@@ -95,6 +105,7 @@ struct diff_options {
 
 	int stat_width;
 	int stat_name_width;
+	const char *word_regex;
 
 	/* this is set by diffcore for DIFF_FORMAT_PATCH */
 	int found_changes;
@@ -120,6 +131,7 @@ enum color_diff {
 	DIFF_FILE_NEW = 5,
 	DIFF_COMMIT = 6,
 	DIFF_WHITESPACE = 7,
+	DIFF_FUNCINFO = 8,
 };
 const char *diff_get_color(int diff_use_color, enum color_diff ix);
 #define diff_get_color_opt(o, ix) \
@@ -160,17 +172,20 @@ extern void diff_tree_combined(const unsigned char *sha1, const unsigned char pa
 
 extern void diff_tree_combined_merge(const unsigned char *sha1, int, struct rev_info *);
 
+void diff_set_mnemonic_prefix(struct diff_options *options, const char *a, const char *b);
+
 extern void diff_addremove(struct diff_options *,
 			   int addremove,
 			   unsigned mode,
 			   const unsigned char *sha1,
-			   const char *fullpath);
+			   const char *fullpath, unsigned dirty_submodule);
 
 extern void diff_change(struct diff_options *,
 			unsigned mode1, unsigned mode2,
 			const unsigned char *sha1,
 			const unsigned char *sha2,
-			const char *fullpath);
+			const char *fullpath,
+			unsigned dirty_submodule1, unsigned dirty_submodule2);
 
 extern void diff_unmerge(struct diff_options *,
 			 const char *path,
@@ -195,6 +210,7 @@ extern int diff_setup_done(struct diff_options *);
 #define DIFF_PICKAXE_REGEX	2
 
 extern void diffcore_std(struct diff_options *);
+extern void diffcore_fix_diff_index(struct diff_options *);
 
 #define COMMON_DIFF_OPTIONS_HELP \
 "\ncommon diff options:\n" \
@@ -258,5 +274,7 @@ extern int diff_flush_patch_id(struct diff_options *, unsigned char *);
 extern int diff_result_code(struct diff_options *, int);
 
 extern void diff_no_index(struct rev_info *, int, const char **, int, const char *);
+
+extern int index_differs_from(const char *def, int diff_flags);
 
 #endif /* DIFF_H */

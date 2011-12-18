@@ -3,22 +3,22 @@
 # Copyright (c) 2007 Eric Wong
 #
 
-test_description='git-svn tracking removed top-level path'
+test_description='git svn tracking removed top-level path'
 . ./lib-git-svn.sh
 
 test_expect_success 'make history for tracking' '
 	mkdir import &&
 	mkdir import/trunk &&
 	echo hello >> import/trunk/README &&
-	svn import -m initial import "$svnrepo" &&
+	svn_cmd import -m initial import "$svnrepo" &&
 	rm -rf import &&
-	svn co "$svnrepo"/trunk trunk &&
+	svn_cmd co "$svnrepo"/trunk trunk &&
 	echo bye bye >> trunk/README &&
-	svn rm -m "gone" "$svnrepo"/trunk &&
+	svn_cmd rm -m "gone" "$svnrepo"/trunk &&
 	rm -rf trunk &&
 	mkdir trunk &&
 	echo "new" > trunk/FOLLOWME &&
-	svn import -m "new trunk" trunk "$svnrepo"/trunk
+	svn_cmd import -m "new trunk" trunk "$svnrepo"/trunk
 '
 
 test_expect_success 'clone repo with git' '

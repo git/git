@@ -129,4 +129,42 @@ test_expect_success 'blame wholesale copy and more' '
 
 '
 
+test_expect_success 'blame path that used to be a directory' '
+	mkdir path &&
+	echo A A A A A >path/file &&
+	echo B B B B B >path/elif &&
+	git add path &&
+	test_tick &&
+	git commit -m "path was a directory" &&
+	rm -fr path &&
+	echo A A A A A >path &&
+	git add path &&
+	test_tick &&
+	git commit -m "path is a regular file" &&
+	git blame HEAD^.. -- path
+'
+
+test_expect_success 'blame to a commit with no author name' '
+  TREE=`git rev-parse HEAD:`
+  cat >badcommit <<EOF
+tree $TREE
+author <noname> 1234567890 +0000
+committer David Reiss <dreiss@facebook.com> 1234567890 +0000
+
+some message
+EOF
+  COMMIT=`git hash-object -t commit -w badcommit`
+  git --no-pager blame $COMMIT -- uno >/dev/null
+'
+
+test_expect_success 'blame -L with invalid start' '
+	test_must_fail git blame -L5 tres 2>errors &&
+	grep "has only 2 lines" errors
+'
+
+test_expect_success 'blame -L with invalid end' '
+	test_must_fail git blame -L1,5 tres 2>errors &&
+	grep "has only 2 lines" errors
+'
+
 test_done

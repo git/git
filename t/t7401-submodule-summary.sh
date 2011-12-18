@@ -5,7 +5,7 @@
 
 test_description='Summary support for submodules
 
-This test tries to verify the sanity of summary subcommand of git-submodule.
+This test tries to verify the sanity of summary subcommand of git submodule.
 '
 
 . ./test-lib.sh
@@ -49,6 +49,15 @@ head2=$(add_file sm1 foo3)
 
 test_expect_success 'modified submodule(forward)' "
 	git submodule summary >actual &&
+	diff actual - <<-EOF
+* sm1 $head1...$head2 (1):
+  > Add foo3
+
+EOF
+"
+
+test_expect_success 'modified submodule(forward), --files' "
+	git submodule summary --files >actual &&
 	diff actual - <<-EOF
 * sm1 $head1...$head2 (1):
   > Add foo3
@@ -110,6 +119,15 @@ test_expect_success 'typechanged submodule(submodule->blob), --cached' "
     diff actual - <<-EOF
 * sm1 $head4(submodule)->$head5(blob) (3):
   < Add foo5
+
+EOF
+"
+
+test_expect_success 'typechanged submodule(submodule->blob), --files' "
+    git submodule summary --files >actual &&
+    diff actual - <<-EOF
+* sm1 $head5(blob)->$head4(submodule) (3):
+  > Add foo5
 
 EOF
 "
@@ -195,7 +213,7 @@ EOF
 test_expect_success '--for-status' "
     git submodule summary --for-status HEAD^ >actual &&
     test_cmp actual - <<EOF
-# Modified submodules:
+# Submodule changes to be committed:
 #
 # * sm1 $head6...0000000:
 #
@@ -203,6 +221,10 @@ test_expect_success '--for-status' "
 #   > Add foo9
 #
 EOF
+"
+
+test_expect_success 'fail when using --files together with --cached' "
+    test_must_fail git submodule summary --files --cached
 "
 
 test_done

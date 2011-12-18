@@ -108,4 +108,70 @@ test_expect_success 'compute merge-base (all)' \
     'MB=$(git merge-base --all PL PR) &&
      expr "$(git name-rev "$MB")" : "[0-9a-f]* tags/C2"'
 
+# Another set to demonstrate base between one commit and a merge
+# in the documentation.
+#
+# * C (MMC) * B (MMB) * A  (MMA)
+# * o       * o       * o
+# * o       * o       * o
+# * o       * o       * o
+# * o       | _______/
+# |         |/
+# |         * 1 (MM1)
+# | _______/
+# |/
+# * root (MMR)
+
+
+test_expect_success 'merge-base for octopus-step (setup)' '
+	test_tick && git commit --allow-empty -m root && git tag MMR &&
+	test_tick && git commit --allow-empty -m 1 && git tag MM1 &&
+	test_tick && git commit --allow-empty -m o &&
+	test_tick && git commit --allow-empty -m o &&
+	test_tick && git commit --allow-empty -m o &&
+	test_tick && git commit --allow-empty -m A && git tag MMA &&
+	git checkout MM1 &&
+	test_tick && git commit --allow-empty -m o &&
+	test_tick && git commit --allow-empty -m o &&
+	test_tick && git commit --allow-empty -m o &&
+	test_tick && git commit --allow-empty -m B && git tag MMB &&
+	git checkout MMR &&
+	test_tick && git commit --allow-empty -m o &&
+	test_tick && git commit --allow-empty -m o &&
+	test_tick && git commit --allow-empty -m o &&
+	test_tick && git commit --allow-empty -m o &&
+	test_tick && git commit --allow-empty -m C && git tag MMC
+'
+
+test_expect_success 'merge-base A B C' '
+	MB=$(git merge-base --all MMA MMB MMC) &&
+	MM1=$(git rev-parse --verify MM1) &&
+	test "$MM1" = "$MB"
+'
+
+test_expect_success 'merge-base A B C using show-branch' '
+	MB=$(git show-branch --merge-base MMA MMB MMC) &&
+	MMR=$(git rev-parse --verify MMR) &&
+	test "$MMR" = "$MB"
+'
+
+test_expect_success 'criss-cross merge-base for octopus-step (setup)' '
+	git reset --hard MMR &&
+	test_tick && git commit --allow-empty -m 1 && git tag CC1 &&
+	git reset --hard E &&
+	test_tick && git commit --allow-empty -m 2 && git tag CC2 &&
+	test_tick && git merge -s ours CC1 &&
+	test_tick && git commit --allow-empty -m o &&
+	test_tick && git commit --allow-empty -m B && git tag CCB &&
+	git reset --hard CC1 &&
+	test_tick && git merge -s ours CC2 &&
+	test_tick && git commit --allow-empty -m A && git tag CCA
+'
+
+test_expect_success 'merge-base B A^^ A^^2' '
+	MB0=$(git merge-base --all CCB CCA^^ CCA^^2 | sort) &&
+	MB1=$(git rev-parse CC1 CC2 | sort) &&
+	test "$MB0" = "$MB1"
+'
+
 test_done

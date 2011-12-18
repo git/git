@@ -1,28 +1,36 @@
 . ./test-lib.sh
 
+remotes_git_svn=remotes/git""-svn
+git_svn_id=git""-svn-id
+
 if test -n "$NO_SVN_TESTS"
 then
-	test_expect_success 'skipping git-svn tests, NO_SVN_TESTS defined' :
+	say 'skipping git svn tests, NO_SVN_TESTS defined'
 	test_done
-	exit
+fi
+if ! test_have_prereq PERL; then
+	say 'skipping git svn tests, perl not available'
+	test_done
 fi
 
 GIT_DIR=$PWD/.git
-GIT_SVN_DIR=$GIT_DIR/svn/git-svn
+GIT_SVN_DIR=$GIT_DIR/svn/refs/remotes/git-svn
 SVN_TREE=$GIT_SVN_DIR/svn-tree
+PERL=${PERL:-perl}
 
 svn >/dev/null 2>&1
 if test $? -ne 1
 then
-    test_expect_success 'skipping git-svn tests, svn not found' :
+    say 'skipping git svn tests, svn not found'
     test_done
-    exit
 fi
 
 svnrepo=$PWD/svnrepo
 export svnrepo
+svnconf=$PWD/svnconf
+export svnconf
 
-perl -w -e "
+$PERL -w -e "
 use SVN::Core;
 use SVN::Repos;
 \$SVN::Core::VERSION gt '1.1.0' or exit(42);
@@ -38,9 +46,8 @@ then
 	else
 		err='Perl SVN libraries not found or unusable, skipping test'
 	fi
-	test_expect_success "$err" :
+	say "$err"
 	test_done
-	exit
 fi
 
 rawsvnrepo="$svnrepo"
@@ -48,6 +55,19 @@ svnrepo="file://$svnrepo"
 
 poke() {
 	test-chmtime +1 "$1"
+}
+
+# We need this, because we should pass empty configuration directory to
+# the 'svn commit' to avoid automated property changes and other stuff
+# that could be set from user's configuration files in ~/.subversion.
+svn_cmd () {
+	[ -d "$svnconf" ] || mkdir "$svnconf"
+	orig_svncmd="$1"; shift
+	if [ -z "$orig_svncmd" ]; then
+		svn
+		return
+	fi
+	svn "$orig_svncmd" --config-dir "$svnconf" "$@"
 }
 
 for d in \
@@ -88,7 +108,7 @@ start_httpd () {
 	mkdir "$GIT_DIR"/logs
 
 	cat > "$GIT_DIR/httpd.conf" <<EOF
-ServerName "git-svn test"
+ServerName "git svn test"
 ServerRoot "$GIT_DIR"
 DocumentRoot "$GIT_DIR"
 PidFile "$GIT_DIR/httpd.pid"
@@ -111,7 +131,7 @@ stop_httpd () {
 }
 
 convert_to_rev_db () {
-	perl -w -- - "$@" <<\EOF
+	$PERL -w -- - "$@" <<\EOF
 use strict;
 @ARGV == 2 or die "Usage: convert_to_rev_db <input> <output>";
 open my $wr, '+>', $ARGV[1] or die "$!: couldn't open: $ARGV[1]";
@@ -135,3 +155,19 @@ close $wr or die $!;
 close $rd or die $!;
 EOF
 }
+
+require_svnserve () {
+    if test -z "$SVNSERVE_PORT"
+    then
+        say 'skipping svnserve test. (set $SVNSERVE_PORT to enable)'
+        test_done
+    fi
+}
+
+start_svnserve () {
+    svnserve --listen-port $SVNSERVE_PORT \
+             --root "$rawsvnrepo" \
+             --listen-once \
+             --listen-host 127.0.0.1 &
+}
+

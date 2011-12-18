@@ -3,33 +3,33 @@
 # Copyright (c) 2006 Shawn Pearce
 #
 
-test_description='git-reset should cull empty subdirs'
+test_description='git reset should cull empty subdirs'
 . ./test-lib.sh
 
 test_expect_success \
     'creating initial files' \
     'mkdir path0 &&
-     cp ../../COPYING path0/COPYING &&
+     cp "$TEST_DIRECTORY"/../COPYING path0/COPYING &&
      git add path0/COPYING &&
-     git-commit -m add -a'
+     git commit -m add -a'
 
 test_expect_success \
     'creating second files' \
     'mkdir path1 &&
      mkdir path1/path2 &&
-     cp ../../COPYING path1/path2/COPYING &&
-     cp ../../COPYING path1/COPYING &&
-     cp ../../COPYING COPYING &&
-     cp ../../COPYING path0/COPYING-TOO &&
+     cp "$TEST_DIRECTORY"/../COPYING path1/path2/COPYING &&
+     cp "$TEST_DIRECTORY"/../COPYING path1/COPYING &&
+     cp "$TEST_DIRECTORY"/../COPYING COPYING &&
+     cp "$TEST_DIRECTORY"/../COPYING path0/COPYING-TOO &&
      git add path1/path2/COPYING &&
      git add path1/COPYING &&
      git add COPYING &&
      git add path0/COPYING-TOO &&
-     git-commit -m change -a'
+     git commit -m change -a'
 
 test_expect_success \
     'resetting tree HEAD^' \
-    'git-reset --hard HEAD^'
+    'git reset --hard HEAD^'
 
 test_expect_success \
     'checking initial files exist after rewind' \

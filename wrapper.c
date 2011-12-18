@@ -34,6 +34,16 @@ void *xmalloc(size_t size)
 	return ret;
 }
 
+void *xmallocz(size_t size)
+{
+	void *ret;
+	if (size + 1 < size)
+		die("Data too large to fit into virtual memory space.");
+	ret = xmalloc(size + 1);
+	((char*)ret)[size] = 0;
+	return ret;
+}
+
 /*
  * xmemdupz() allocates (len + 1) bytes of memory, duplicates "len" bytes of
  * "data" to the allocated memory, zero terminates the allocated memory,
@@ -42,10 +52,7 @@ void *xmalloc(size_t size)
  */
 void *xmemdupz(const void *data, size_t len)
 {
-	char *p = xmalloc(len + 1);
-	memcpy(p, data, len);
-	p[len] = '\0';
-	return p;
+	return memcpy(xmallocz(len), data, len);
 }
 
 char *xstrndup(const char *str, size_t len)
@@ -96,7 +103,7 @@ void *xmmap(void *start, size_t length,
 		release_pack_memory(length, fd);
 		ret = mmap(start, length, prot, flags, fd, offset);
 		if (ret == MAP_FAILED)
-			die("Out of memory? mmap failed: %s", strerror(errno));
+			die_errno("Out of memory? mmap failed");
 	}
 	return ret;
 }
@@ -175,7 +182,7 @@ int xdup(int fd)
 {
 	int ret = dup(fd);
 	if (ret < 0)
-		die("dup failed: %s", strerror(errno));
+		die_errno("dup failed");
 	return ret;
 }
 
@@ -183,7 +190,7 @@ FILE *xfdopen(int fd, const char *mode)
 {
 	FILE *stream = fdopen(fd, mode);
 	if (stream == NULL)
-		die("Out of memory? fdopen failed: %s", strerror(errno));
+		die_errno("Out of memory? fdopen failed");
 	return stream;
 }
 
@@ -193,6 +200,115 @@ int xmkstemp(char *template)
 
 	fd = mkstemp(template);
 	if (fd < 0)
-		die("Unable to create temporary file: %s", strerror(errno));
+		die_errno("Unable to create temporary file");
 	return fd;
 }
+
+/*
+ * zlib wrappers to make sure we don't silently miss errors
+ * at init time.
+ */
+void git_inflate_init(z_streamp strm)
+{
+	const char *err;
+
+	switch (inflateInit(strm)) {
+	case Z_OK:
+		return;
+
+	case Z_MEM_ERROR:
+		err = "out of memory";
+		break;
+	case Z_VERSION_ERROR:
+		err = "wrong version";
+		break;
+	default:
+		err = "error";
+	}
+	die("inflateInit: %s (%s)", err, strm->msg ? strm->msg : "no message");
+}
+
+void git_inflate_end(z_streamp strm)
+{
+	if (inflateEnd(strm) != Z_OK)
+		error("inflateEnd: %s", strm->msg ? strm->msg : "failed");
+}
+
+int git_inflate(z_streamp strm, int flush)
+{
+	int ret = inflate(strm, flush);
+	const char *err;
+
+	switch (ret) {
+	/* Out of memory is fatal. */
+	case Z_MEM_ERROR:
+		die("inflate: out of memory");
+
+	/* Data corruption errors: we may want to recover from them (fsck) */
+	case Z_NEED_DICT:
+		err = "needs dictionary"; break;
+	case Z_DATA_ERROR:
+		err = "data stream error"; break;
+	case Z_STREAM_ERROR:
+		err = "stream consistency error"; break;
+	default:
+		err = "unknown error"; break;
+
+	/* Z_BUF_ERROR: normal, needs more space in the output buffer */
+	case Z_BUF_ERROR:
+	case Z_OK:
+	case Z_STREAM_END:
+		return ret;
+	}
+	error("inflate: %s (%s)", err, strm->msg ? strm->msg : "no message");
+	return ret;
+}
+
+int odb_mkstemp(char *template, size_t limit, const char *pattern)
+{
+	int fd;
+
+	snprintf(template, limit, "%s/%s",
+		 get_object_directory(), pattern);
+	fd = mkstemp(template);
+	if (0 <= fd)
+		return fd;
+
+	/* slow path */
+	/* some mkstemp implementations erase template on failure */
+	snprintf(template, limit, "%s/%s",
+		 get_object_directory(), pattern);
+	safe_create_leading_directories(template);
+	return xmkstemp(template);
+}
+
+int odb_pack_keep(char *name, size_t namesz, unsigned char *sha1)
+{
+	int fd;
+
+	snprintf(name, namesz, "%s/pack/pack-%s.keep",
+		 get_object_directory(), sha1_to_hex(sha1));
+	fd = open(name, O_RDWR|O_CREAT|O_EXCL, 0600);
+	if (0 <= fd)
+		return fd;
+
+	/* slow path */
+	safe_create_leading_directories(name);
+	return open(name, O_RDWR|O_CREAT|O_EXCL, 0600);
+}
+
+int unlink_or_warn(const char *file)
+{
+	int rc = unlink(file);
+
+	if (rc < 0) {
+		int err = errno;
+		if (ENOENT != err) {
+			warning("unable to unlink %s: %s",
+				file, strerror(errno));
+			errno = err;
+		}
+	}
+	return rc;
+}
+

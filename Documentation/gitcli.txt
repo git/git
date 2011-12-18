@@ -46,20 +46,20 @@ Here are the rules regarding the "flags" that you should follow when you are
 scripting git:
 
  * it's preferred to use the non dashed form of git commands, which means that
-   you should prefer `"git foo"` to `"git-foo"`.
+   you should prefer `git foo` to `git-foo`.
 
- * splitting short options to separate words (prefer `"git foo -a -b"`
-   to `"git foo -ab"`, the latter may not even work).
+ * splitting short options to separate words (prefer `git foo -a -b`
+   to `git foo -ab`, the latter may not even work).
 
  * when a command line option takes an argument, use the 'sticked' form.  In
-   other words, write `"git foo -oArg"` instead of `"git foo -o Arg"` for short
-   options, and `"git foo --long-opt=Arg"` instead of `"git foo --long-opt Arg"`
+   other words, write `git foo -oArg` instead of `git foo -o Arg` for short
+   options, and `git foo --long-opt=Arg` instead of `git foo --long-opt Arg`
    for long options.  An option that takes optional option-argument must be
    written in the 'sticked' form.
 
  * when you give a revision parameter to a command, make sure the parameter is
    not ambiguous with a name of a file in the work tree.  E.g. do not write
-   `"git log -1 HEAD"` but write `"git log -1 HEAD --"`; the former will not work
+   `git log -1 HEAD` but write `git log -1 HEAD --`; the former will not work
    if you happen to have a file called `HEAD` in the work tree.
 
 
@@ -81,7 +81,7 @@ couple of magic command line options:
 +
 ---------------------------------------------
 $ git describe -h
-usage: git-describe [options] <committish>*
+usage: git describe [options] <committish>*
 
     --contains            find the tag that comes after the commit
     --debug               debug search strategy on stderr
@@ -99,17 +99,17 @@ usage: git-describe [options] <committish>*
 
 Negating options
 ~~~~~~~~~~~~~~~~
-Options with long option names can be negated by prefixing `"--no-"`. For
-example, `"git branch"` has the option `"--track"` which is 'on' by default. You
-can use `"--no-track"` to override that behaviour. The same goes for `"--color"`
-and `"--no-color"`.
+Options with long option names can be negated by prefixing `--no-`. For
+example, `git branch` has the option `--track` which is 'on' by default. You
+can use `--no-track` to override that behaviour. The same goes for `--color`
+and `--no-color`.
 
 
 Aggregating short options
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 Commands that support the enhanced option parser allow you to aggregate short
-options. This means that you can for example use `"git rm -rf"` or
-`"git clean -fdx"`.
+options. This means that you can for example use `git rm -rf` or
+`git clean -fdx`.
 
 
 Separating argument from the option

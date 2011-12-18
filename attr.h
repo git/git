@@ -8,7 +8,7 @@ struct git_attr;
  * Given a string, return the gitattribute object that
  * corresponds to it.
  */
-struct git_attr *git_attr(const char *, int);
+struct git_attr *git_attr(const char *);
 
 /* Internal use */
 extern const char git_attr__true[];
@@ -30,5 +30,12 @@ struct git_attr_check {
 };
 
 int git_checkattr(const char *path, int, struct git_attr_check *);
+
+enum git_attr_direction {
+	GIT_ATTR_CHECKIN,
+	GIT_ATTR_CHECKOUT,
+	GIT_ATTR_INDEX,
+};
+void git_attr_set_direction(enum git_attr_direction, struct index_state *);
 
 #endif /* ATTR_H */

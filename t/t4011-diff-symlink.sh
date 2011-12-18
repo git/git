@@ -7,7 +7,13 @@ test_description='Test diff of symlinks.
 
 '
 . ./test-lib.sh
-. ../diff-lib.sh
+. "$TEST_DIRECTORY"/diff-lib.sh
+
+if ! test_have_prereq SYMLINKS
+then
+	say 'Symbolic links not supported, skipping tests.'
+	test_done
+fi
 
 cat > expected << EOF
 diff --git a/frotz b/frotz
@@ -82,4 +88,11 @@ test_expect_success \
     git diff-index -M -p $tree > current &&
     compare_diff_patch current expected'
 
+test_expect_success \
+    'diff symlinks with non-existing targets' \
+    'ln -s narf pinky &&
+    ln -s take\ over brain &&
+    test_must_fail git diff --no-index pinky brain > output 2> output.err &&
+    grep narf output &&
+    ! grep error output.err'
 test_done

@@ -45,7 +45,7 @@ Fixes since v1.5.2.1
     correctly when the branch name had slash in it.
 
   - The email address of the user specified with user.email
-    configuration was overriden by EMAIL environment variable.
+    configuration was overridden by EMAIL environment variable.
 
   - The tree parser did not warn about tree entries with
     nonsense file modes, and assumed they must be blobs.

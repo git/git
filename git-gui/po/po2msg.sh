@@ -11,8 +11,8 @@ proc u2a {s} {
 	foreach i [split $s ""] {
 		scan $i %c c
 		if {$c<128} {
-			# escape '[', '\' and ']'
-			if {$c == 0x5b || $c == 0x5d} {
+			# escape '[', '\', '$' and ']'
+			if {$c == 0x5b || $c == 0x5d || $c == 0x24} {
 				append res "\\"
 			}
 			append res $i

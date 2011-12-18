@@ -6,7 +6,7 @@
 # FIXME: Test the various index usages, -i and -o, test reflog,
 # signoff
 
-test_description='git-commit'
+test_description='git commit'
 . ./test-lib.sh
 
 test_tick
@@ -14,52 +14,52 @@ test_tick
 test_expect_success \
 	"initial status" \
 	"echo 'bongo bongo' >file &&
-	 git-add file && \
-	 git-status | grep 'Initial commit'"
+	 git add file && \
+	 git status | grep 'Initial commit'"
 
 test_expect_success \
 	"fail initial amend" \
-	"test_must_fail git-commit --amend"
+	"test_must_fail git commit --amend"
 
 test_expect_success \
 	"initial commit" \
-	"git-commit -m initial"
+	"git commit -m initial"
 
 test_expect_success \
 	"invalid options 1" \
-	"test_must_fail git-commit -m foo -m bar -F file"
+	"test_must_fail git commit -m foo -m bar -F file"
 
 test_expect_success \
 	"invalid options 2" \
-	"test_must_fail git-commit -C HEAD -m illegal"
+	"test_must_fail git commit -C HEAD -m illegal"
 
 test_expect_success \
 	"using paths with -a" \
 	"echo King of the bongo >file &&
-	test_must_fail git-commit -m foo -a file"
+	test_must_fail git commit -m foo -a file"
 
-test_expect_success \
+test_expect_success PERL \
 	"using paths with --interactive" \
 	"echo bong-o-bong >file &&
-	! (echo 7 | git-commit -m foo --interactive file)"
+	! (echo 7 | git commit -m foo --interactive file)"
 
 test_expect_success \
 	"using invalid commit with -C" \
-	"test_must_fail git-commit -C bogus"
+	"test_must_fail git commit -C bogus"
 
 test_expect_success \
 	"testing nothing to commit" \
-	"test_must_fail git-commit -m initial"
+	"test_must_fail git commit -m initial"
 
 test_expect_success \
 	"next commit" \
 	"echo 'bongo bongo bongo' >file \
-	 git-commit -m next -a"
+	 git commit -m next -a"
 
 test_expect_success \
 	"commit message from non-existing file" \
 	"echo 'more bongo: bongo bongo bongo bongo' >file && \
-	 test_must_fail git-commit -F gah -a"
+	 test_must_fail git commit -F gah -a"
 
 # Empty except stray tabs and spaces on a few lines.
 sed -e 's/@$//' >msg <<EOF
@@ -70,12 +70,12 @@ Signed-off-by: hula
 EOF
 test_expect_success \
 	"empty commit message" \
-	"test_must_fail git-commit -F msg -a"
+	"test_must_fail git commit -F msg -a"
 
 test_expect_success \
 	"commit message from file" \
 	"echo 'this is the commit message, coming from a file' >msg && \
-	 git-commit -F msg -a"
+	 git commit -F msg -a"
 
 cat >editor <<\EOF
 #!/bin/sh
@@ -86,16 +86,16 @@ chmod 755 editor
 
 test_expect_success \
 	"amend commit" \
-	"VISUAL=./editor git-commit --amend"
+	"EDITOR=./editor git commit --amend"
 
 test_expect_success \
 	"passing -m and -F" \
 	"echo 'enough with the bongos' >file && \
-	 test_must_fail git-commit -F msg -m amending ."
+	 test_must_fail git commit -F msg -m amending ."
 
 test_expect_success \
 	"using message from other commit" \
-	"git-commit -C HEAD^ ."
+	"git commit -C HEAD^ ."
 
 cat >editor <<\EOF
 #!/bin/sh
@@ -107,26 +107,50 @@ chmod 755 editor
 test_expect_success \
 	"editing message from other commit" \
 	"echo 'hula hula' >file && \
-	 VISUAL=./editor git-commit -c HEAD^ -a"
+	 EDITOR=./editor git commit -c HEAD^ -a"
 
 test_expect_success \
 	"message from stdin" \
 	"echo 'silly new contents' >file && \
-	 echo commit message from stdin | git-commit -F - -a"
+	 echo commit message from stdin | git commit -F - -a"
 
 test_expect_success \
 	"overriding author from command line" \
 	"echo 'gak' >file && \
-	 git-commit -m 'author' --author 'Rubber Duck <rduck@convoy.org>' -a"
+	 git commit -m 'author' --author 'Rubber Duck <rduck@convoy.org>' -a >output 2>&1"
 
 test_expect_success \
+	"commit --author output mentions author" \
+	"grep Rubber.Duck output"
+
+test_expect_success PERL \
 	"interactive add" \
-	"echo 7 | git-commit --interactive | grep 'What now'"
+	"echo 7 | git commit --interactive | grep 'What now'"
 
 test_expect_success \
 	"showing committed revisions" \
-	"git-rev-list HEAD >current"
+	"git rev-list HEAD >current"
 
+cat >editor <<\EOF
+#!/bin/sh
+sed -e "s/good/bad/g" < "$1" > "$1-"
+mv "$1-" "$1"
+EOF
+chmod 755 editor
+
+cat >msg <<EOF
+A good commit message.
+EOF
+
+test_expect_success \
+	'editor not invoked if -F is given' '
+	 echo "moo" >file &&
+	 EDITOR=./editor git commit -a -F msg &&
+	 git show -s --pretty=format:"%s" | grep -q good &&
+	 echo "quack" >file &&
+	 echo "Another good message." | EDITOR=./editor git commit -a -F - &&
+	 git show -s --pretty=format:"%s" | grep -q good
+	 '
 # We could just check the head sha1, but checking each commit makes it
 # easier to isolate bugs.
 
@@ -140,8 +164,8 @@ d381ac431806e53f3dd7ac2f1ae0534f36d738b9
 EOF
 
 test_expect_success \
-    'validate git-rev-list output.' \
-    'diff current expected'
+    'validate git rev-list output.' \
+    'test_cmp expected current'
 
 test_expect_success 'partial commit that involves removal (1)' '
 
@@ -151,7 +175,7 @@ test_expect_success 'partial commit that involves removal (1)' '
 	git commit -m "Partial: add elif" elif &&
 	git diff-tree --name-status HEAD^ HEAD >current &&
 	echo "A	elif" >expected &&
-	diff expected current
+	test_cmp expected current
 
 '
 
@@ -160,7 +184,7 @@ test_expect_success 'partial commit that involves removal (2)' '
 	git commit -m "Partial: remove file" file &&
 	git diff-tree --name-status HEAD^ HEAD >current &&
 	echo "D	file" >expected &&
-	diff expected current
+	test_cmp expected current
 
 '
 
@@ -171,7 +195,7 @@ test_expect_success 'partial commit that involves removal (3)' '
 	git commit -m "Partial: modify elif" elif &&
 	git diff-tree --name-status HEAD^ HEAD >current &&
 	echo "M	elif" >expected &&
-	diff expected current
+	test_cmp expected current
 
 '
 
@@ -187,7 +211,22 @@ test_expect_success 'amend commit to fix author' '
 		expected &&
 	git commit --amend --author="$author" &&
 	git cat-file -p HEAD > current &&
-	diff expected current
+	test_cmp expected current
+
+'
+
+test_expect_success 'amend commit to fix date' '
+
+	test_tick &&
+	newtick=$GIT_AUTHOR_DATE &&
+	git reset --hard &&
+	git cat-file -p HEAD |
+	sed -e "s/author.*/author $author $newtick/" \
+		-e "s/^\(committer.*> \).*$/\1$GIT_COMMITTER_DATE/" > \
+		expected &&
+	git commit --amend --date="$newtick" &&
+	git cat-file -p HEAD > current &&
+	test_cmp expected current
 
 '
 
@@ -227,6 +266,47 @@ $existing" &&
 
 '
 
+test_expect_success 'signoff gap' '
+
+	echo 3 >positive &&
+	git add positive &&
+	alt="Alt-RFC-822-Header: Value" &&
+	git commit -s -m "welcome
+
+$alt" &&
+	git cat-file commit HEAD | sed -e "1,/^\$/d" > actual &&
+	(
+		echo welcome
+		echo
+		echo $alt
+		git var GIT_COMMITTER_IDENT |
+		sed -e "s/>.*/>/" -e "s/^/Signed-off-by: /"
+	) >expected &&
+	test_cmp expected actual
+'
+
+test_expect_success 'signoff gap 2' '
+
+	echo 4 >positive &&
+	git add positive &&
+	alt="fixed: 34" &&
+	git commit -s -m "welcome
+
+We have now
+$alt" &&
+	git cat-file commit HEAD | sed -e "1,/^\$/d" > actual &&
+	(
+		echo welcome
+		echo
+		echo We have now
+		echo $alt
+		echo
+		git var GIT_COMMITTER_IDENT |
+		sed -e "s/>.*/>/" -e "s/^/Signed-off-by: /"
+	) >expected &&
+	test_cmp expected actual
+'
+
 test_expect_success 'multiple -m' '
 
 	>negative &&
@@ -256,7 +336,7 @@ test_expect_success 'amend commit to fix author' '
 		expected &&
 	git commit --amend --author="$author" &&
 	git cat-file -p HEAD > current &&
-	diff expected current
+	test_cmp expected current
 
 '
 

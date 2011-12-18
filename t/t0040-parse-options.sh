@@ -12,12 +12,14 @@ usage: test-parse-options <options>
 
     -b, --boolean         get a boolean
     -4, --or4             bitwise-or boolean with ...0100
+    --neg-or4             same as --no-or4
 
     -i, --integer <n>     get a integer
     -j <n>                get a integer, too
     --set23               set integer to 23
     -t <time>             get timestamp of <time>
     -L, --length <str>    get length of <str>
+    -F, --file <FILE>     set file to <FILE>
 
 String options
     -s, --string <string>
@@ -29,6 +31,10 @@ String options
 
 Magic arguments
     --quux                means --quux
+    -NUM                  set integer to NUM
+    +                     same as -b
+    --ambiguous           positive ambiguity
+    --no-ambiguous        negative ambiguity
 
 Standard options
     --abbrev[=<n>]        use <n> digits to display SHA-1s
@@ -47,15 +53,18 @@ test_expect_success 'test help' '
 cat > expect << EOF
 boolean: 2
 integer: 1729
+timestamp: 0
 string: 123
 abbrev: 7
 verbose: 2
 quiet: no
 dry run: yes
+file: prefix/my.file
 EOF
 
 test_expect_success 'short options' '
-	test-parse-options -s123 -b -i 1729 -b -vv -n > output 2> output.err &&
+	test-parse-options -s123 -b -i 1729 -b -vv -n -F my.file \
+	> output 2> output.err &&
 	test_cmp expect output &&
 	test ! -s output.err
 '
@@ -63,16 +72,18 @@ test_expect_success 'short options' '
 cat > expect << EOF
 boolean: 2
 integer: 1729
+timestamp: 0
 string: 321
 abbrev: 10
 verbose: 2
 quiet: no
 dry run: no
+file: prefix/fi.le
 EOF
 
 test_expect_success 'long options' '
 	test-parse-options --boolean --integer 1729 --boolean --string2=321 \
-		--verbose --verbose --no-dry-run --abbrev=10 \
+		--verbose --verbose --no-dry-run --abbrev=10 --file fi.le\
 		> output 2> output.err &&
 	test ! -s output.err &&
 	test_cmp expect output
@@ -82,17 +93,21 @@ test_expect_success 'missing required value' '
 	test-parse-options -s;
 	test $? = 129 &&
 	test-parse-options --string;
+	test $? = 129 &&
+	test-parse-options --file;
 	test $? = 129
 '
 
 cat > expect << EOF
 boolean: 1
 integer: 13
+timestamp: 0
 string: 123
 abbrev: 7
 verbose: 0
 quiet: no
 dry run: no
+file: (not set)
 arg 00: a1
 arg 01: b1
 arg 02: --boolean
@@ -108,11 +123,13 @@ test_expect_success 'intermingled arguments' '
 cat > expect << EOF
 boolean: 0
 integer: 2
+timestamp: 0
 string: (not set)
 abbrev: 7
 verbose: 0
 quiet: no
 dry run: no
+file: (not set)
 EOF
 
 test_expect_success 'unambiguously abbreviated option' '
@@ -135,11 +152,13 @@ test_expect_success 'ambiguously abbreviated option' '
 cat > expect << EOF
 boolean: 0
 integer: 0
+timestamp: 0
 string: 123
 abbrev: 7
 verbose: 0
 quiet: no
 dry run: no
+file: (not set)
 EOF
 
 test_expect_success 'non ambiguous option (after two options it abbreviates)' '
@@ -161,11 +180,13 @@ test_expect_success 'detect possible typos' '
 cat > expect <<EOF
 boolean: 0
 integer: 0
+timestamp: 0
 string: (not set)
 abbrev: 7
 verbose: 0
 quiet: no
 dry run: no
+file: (not set)
 arg 00: --quux
 EOF
 
@@ -177,12 +198,14 @@ test_expect_success 'keep some options as arguments' '
 
 cat > expect <<EOF
 boolean: 0
-integer: 1
+integer: 0
+timestamp: 1
 string: default
 abbrev: 7
 verbose: 0
 quiet: yes
 dry run: no
+file: (not set)
 arg 00: foo
 EOF
 
@@ -197,11 +220,13 @@ cat > expect <<EOF
 Callback: "four", 0
 boolean: 5
 integer: 4
+timestamp: 0
 string: (not set)
 abbrev: 7
 verbose: 0
 quiet: no
 dry run: no
+file: (not set)
 EOF
 
 test_expect_success 'OPT_CALLBACK() and OPT_BIT() work' '
@@ -223,11 +248,13 @@ test_expect_success 'OPT_CALLBACK() and callback errors work' '
 cat > expect <<EOF
 boolean: 1
 integer: 23
+timestamp: 0
 string: (not set)
 abbrev: 7
 verbose: 0
 quiet: no
 dry run: no
+file: (not set)
 EOF
 
 test_expect_success 'OPT_BIT() and OPT_SET_INT() work' '
@@ -236,7 +263,76 @@ test_expect_success 'OPT_BIT() and OPT_SET_INT() work' '
 	test_cmp expect output
 '
 
-# --or4
-# --no-or4
+test_expect_success 'OPT_NEGBIT() and OPT_SET_INT() work' '
+	test-parse-options --set23 -bbbbb --neg-or4 > output 2> output.err &&
+	test ! -s output.err &&
+	test_cmp expect output
+'
+
+cat > expect <<EOF
+boolean: 6
+integer: 0
+timestamp: 0
+string: (not set)
+abbrev: 7
+verbose: 0
+quiet: no
+dry run: no
+file: (not set)
+EOF
+
+test_expect_success 'OPT_BIT() works' '
+	test-parse-options -bb --or4 > output 2> output.err &&
+	test ! -s output.err &&
+	test_cmp expect output
+'
+
+test_expect_success 'OPT_NEGBIT() works' '
+	test-parse-options -bb --no-neg-or4 > output 2> output.err &&
+	test ! -s output.err &&
+	test_cmp expect output
+'
+
+test_expect_success 'OPT_BOOLEAN() with PARSE_OPT_NODASH works' '
+	test-parse-options + + + + + + > output 2> output.err &&
+	test ! -s output.err &&
+	test_cmp expect output
+'
+
+cat > expect <<EOF
+boolean: 0
+integer: 12345
+timestamp: 0
+string: (not set)
+abbrev: 7
+verbose: 0
+quiet: no
+dry run: no
+file: (not set)
+EOF
+
+test_expect_success 'OPT_NUMBER_CALLBACK() works' '
+	test-parse-options -12345 > output 2> output.err &&
+	test ! -s output.err &&
+	test_cmp expect output
+'
+
+cat >expect <<EOF
+boolean: 0
+integer: 0
+timestamp: 0
+string: (not set)
+abbrev: 7
+verbose: 0
+quiet: no
+dry run: no
+file: (not set)
+EOF
+
+test_expect_success 'negation of OPT_NONEG flags is not ambiguous' '
+	test-parse-options --no-ambig >output 2>output.err &&
+	test ! -s output.err &&
+	test_cmp expect output
+'
 
 test_done

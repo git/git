@@ -16,10 +16,10 @@ DESCRIPTION
 -----------
 Takes the list of merged objects on stdin and produces a suitable
 commit message to be used for the merge commit, usually to be
-passed as the '<merge-message>' argument of 'git-merge'.
+passed as the '<merge-message>' argument of 'git merge'.
 
-This script is intended mostly for internal use by scripts
-automatically invoking 'git-merge'.
+This command is intended mostly for internal use by scripts
+automatically invoking 'git merge'.
 
 OPTIONS
 -------

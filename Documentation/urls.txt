@@ -6,10 +6,10 @@ to name the remote repository:
 
 ===============================================================
 - rsync://host.xz/path/to/repo.git/
-- http://host.xz/path/to/repo.git/
-- https://host.xz/path/to/repo.git/
-- git://host.xz/path/to/repo.git/
-- git://host.xz/~user/path/to/repo.git/
+- http://host.xz{startsb}:port{endsb}/path/to/repo.git/
+- https://host.xz{startsb}:port{endsb}/path/to/repo.git/
+- git://host.xz{startsb}:port{endsb}/path/to/repo.git/
+- git://host.xz{startsb}:port{endsb}/~user/path/to/repo.git/
 - ssh://{startsb}user@{endsb}host.xz{startsb}:port{endsb}/path/to/repo.git/
 - ssh://{startsb}user@{endsb}host.xz/path/to/repo.git/
 - ssh://{startsb}user@{endsb}host.xz/~user/path/to/repo.git/
@@ -67,3 +67,21 @@ For example, with this:
 a URL like "work:repo.git" or like "host.xz:/path/to/repo.git" will be
 rewritten in any context that takes a URL to be "git://git.host.xz/repo.git".
 
+If you want to rewrite URLs for push only, you can create a
+configuration section of the form:
+
+------------
+	[url "<actual url base>"]
+		pushInsteadOf = <other url base>
+------------
+
+For example, with this:
+
+------------
+	[url "ssh://example.org/"]
+		pushInsteadOf = git://example.org/
+------------
+
+a URL like "git://example.org/path/to/repo.git" will be rewritten to
+"ssh://example.org/path/to/repo.git" for pushes, but pulls will still
+use the original URL.

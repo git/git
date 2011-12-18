@@ -4,31 +4,26 @@
 proc do_about {} {
 	global appvers copyright oguilib
 	global tcl_patchLevel tk_patchLevel
-	global ui_comm_spell
+	global ui_comm_spell NS use_ttk
 
 	set w .about_dialog
-	toplevel $w
+	Dialog $w
 	wm geometry $w "+[winfo rootx .]+[winfo rooty .]"
 
 	pack [git_logo $w.git_logo] -side left -fill y -padx 10 -pady 10
-	label $w.header -text [mc "About %s" [appname]] \
-		-font font_uibold
+	${NS}::label $w.header -text [mc "About %s" [appname]] \
+		-font font_uibold -anchor center
 	pack $w.header -side top -fill x
 
-	frame $w.buttons
-	button $w.buttons.close -text {Close} \
+	${NS}::frame $w.buttons
+	${NS}::button $w.buttons.close -text {Close} \
 		-default active \
 		-command [list destroy $w]
 	pack $w.buttons.close -side right
 	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
 
-	label $w.desc \
-		-text "[mc "git-gui - a graphical user interface for Git."]\n$copyright" \
-		-padx 5 -pady 5 \
-		-justify left \
-		-anchor w \
-		-borderwidth 1 \
-		-relief solid
+	paddedlabel $w.desc \
+		-text "[mc "git-gui - a graphical user interface for Git."]\n$copyright"
 	pack $w.desc -side top -fill x -padx 5 -pady 5
 
 	set v {}
@@ -52,22 +47,10 @@ proc do_about {} {
 	append d "git exec dir: [gitexec]\n"
 	append d "git-gui lib: $oguilib"
 
-	label $w.vers \
-		-text $v \
-		-padx 5 -pady 5 \
-		-justify left \
-		-anchor w \
-		-borderwidth 1 \
-		-relief solid
+	paddedlabel $w.vers -text $v
 	pack $w.vers -side top -fill x -padx 5 -pady 5
 
-	label $w.dirs \
-		-text $d \
-		-padx 5 -pady 5 \
-		-justify left \
-		-anchor w \
-		-borderwidth 1 \
-		-relief solid
+	paddedlabel $w.dirs -text $d
 	pack $w.dirs -side top -fill x -padx 5 -pady 5
 
 	menu $w.ctxm -tearoff 0

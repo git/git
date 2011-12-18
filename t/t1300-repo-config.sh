@@ -118,7 +118,14 @@ EOF
 
 test_expect_success 'multiple unset is correct' 'cmp .git/config expect'
 
-mv .git/config2 .git/config
+cp .git/config2 .git/config
+
+test_expect_success '--replace-all missing value' '
+	test_must_fail git config --replace-all beta.haha &&
+	test_cmp .git/config2 .git/config
+'
+
+rm .git/config2
 
 test_expect_success '--replace-all' \
 	'git config --replace-all beta.haha gamma'
@@ -336,10 +343,10 @@ test_expect_success 'get bool variable with empty value' \
 	'git config --bool emptyvalue.variable > output &&
 	 cmp output expect'
 
-git config > output 2>&1
-
-test_expect_success 'no arguments, but no crash' \
-	"test $? = 129 && grep usage output"
+test_expect_success 'no arguments, but no crash' '
+	test_must_fail git config >output 2>&1 &&
+	grep usage output
+'
 
 cat > .git/config << EOF
 [a.b]
@@ -373,7 +380,7 @@ EOF
 test_expect_success 'new variable inserts into proper section' 'cmp .git/config expect'
 
 test_expect_success 'alternative GIT_CONFIG (non-existing file should fail)' \
-	'git config --file non-existing-config -l; test $? != 0'
+	'test_must_fail git config --file non-existing-config -l'
 
 cat > other-config << EOF
 [ein]
@@ -390,6 +397,17 @@ test_expect_success 'alternative GIT_CONFIG' 'cmp output expect'
 
 test_expect_success 'alternative GIT_CONFIG (--file)' \
 	'git config --file other-config -l > output && cmp output expect'
+
+test_expect_success 'refer config from subdirectory' '
+	mkdir x &&
+	(
+		cd x &&
+		echo strasse >expect
+		git config --get --file ../other-config ein.bahn >actual &&
+		test_cmp expect actual
+	)
+
+'
 
 GIT_CONFIG=other-config git config anwohner.park ausweis
 
@@ -448,6 +466,28 @@ cat > expect << EOF
 	y = 1
 [branch "drei"]
 weird
+EOF
+
+test_expect_success "rename succeeded" "test_cmp expect .git/config"
+
+cat >> .git/config << EOF
+[branch "vier"] z = 1
+EOF
+
+test_expect_success "rename a section with a var on the same line" \
+	'git config --rename-section branch.vier branch.zwei'
+
+cat > expect << EOF
+# Hallo
+	#Bello
+[branch "zwei"]
+	x = 1
+[branch "zwei"]
+	y = 1
+[branch "drei"]
+weird
+[branch "zwei"]
+	z = 1
 EOF
 
 test_expect_success "rename succeeded" "test_cmp expect .git/config"
@@ -654,6 +694,34 @@ test_expect_success 'set --bool-or-int' '
 
 rm .git/config
 
+cat >expect <<\EOF
+[path]
+	home = ~/
+	normal = /dev/null
+	trailingtilde = foo~
+EOF
+
+test_expect_success 'set --path' '
+	git config --path path.home "~/" &&
+	git config --path path.normal "/dev/null" &&
+	git config --path path.trailingtilde "foo~" &&
+	test_cmp expect .git/config'
+
+cat >expect <<EOF
+$HOME/
+/dev/null
+foo~
+EOF
+
+test_expect_success 'get --path' '
+	git config --get --path path.home > result &&
+	git config --get --path path.normal >> result &&
+	git config --get --path path.trailingtilde >> result &&
+	test_cmp expect result
+'
+
+rm .git/config
+
 git config quote.leading " test"
 git config quote.ending "test "
 git config quote.semicolon "test;test"
@@ -726,7 +794,12 @@ echo >>result
 
 test_expect_success '--null --get-regexp' 'cmp result expect'
 
-test_expect_success 'symlinked configuration' '
+test_expect_success 'inner whitespace kept verbatim' '
+	git config section.val "foo 	  bar" &&
+	test "z$(git config section.val)" = "zfoo 	  bar"
+'
+
+test_expect_success SYMLINKS 'symlinked configuration' '
 
 	ln -s notyet myconfig &&
 	GIT_CONFIG=myconfig git config test.frotz nitfol &&
@@ -740,5 +813,15 @@ test_expect_success 'symlinked configuration' '
 	test "z$(GIT_CONFIG=notyet git config test.xyzzy)" = zrezrov
 
 '
+
+test_expect_success 'check split_cmdline return' "
+	git config alias.split-cmdline-fix 'echo \"' &&
+	test_must_fail git split-cmdline-fix &&
+	echo foo > foo &&
+	git add foo &&
+	git commit -m 'initial commit' &&
+	git config branch.master.mergeoptions 'echo \"' &&
+	test_must_fail git merge master
+	"
 
 test_done

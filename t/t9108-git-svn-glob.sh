@@ -1,6 +1,6 @@
 #!/bin/sh
 # Copyright (c) 2007 Eric Wong
-test_description='git-svn globbing refspecs'
+test_description='git svn globbing refspecs'
 . ./lib-git-svn.sh
 
 cat > expect.end <<EOF
@@ -14,30 +14,31 @@ test_expect_success 'test refspec globbing' '
 	mkdir -p trunk/src/a trunk/src/b trunk/doc &&
 	echo "hello world" > trunk/src/a/readme &&
 	echo "goodbye world" > trunk/src/b/readme &&
-	svn import -m "initial" trunk "$svnrepo"/trunk &&
-	svn co "$svnrepo" tmp &&
-	cd tmp &&
+	svn_cmd import -m "initial" trunk "$svnrepo"/trunk &&
+	svn_cmd co "$svnrepo" tmp &&
+	(
+		cd tmp &&
 		mkdir branches tags &&
-		svn add branches tags &&
-		svn cp trunk branches/start &&
-		svn commit -m "start a new branch" &&
-		svn up &&
+		svn_cmd add branches tags &&
+		svn_cmd cp trunk branches/start &&
+		svn_cmd commit -m "start a new branch" &&
+		svn_cmd up &&
 		echo "hi" >> branches/start/src/b/readme &&
 		poke branches/start/src/b/readme &&
 		echo "hey" >> branches/start/src/a/readme &&
 		poke branches/start/src/a/readme &&
-		svn commit -m "hi" &&
-		svn up &&
-		svn cp branches/start tags/end &&
+		svn_cmd commit -m "hi" &&
+		svn_cmd up &&
+		svn_cmd cp branches/start tags/end &&
 		echo "bye" >> tags/end/src/b/readme &&
 		poke tags/end/src/b/readme &&
 		echo "aye" >> tags/end/src/a/readme &&
 		poke tags/end/src/a/readme &&
-		svn commit -m "the end" &&
+		svn_cmd commit -m "the end" &&
 		echo "byebye" >> tags/end/src/b/readme &&
 		poke tags/end/src/b/readme &&
-		svn commit -m "nothing to see here"
-		cd .. &&
+		svn_cmd commit -m "nothing to see here"
+	) &&
 	git config --add svn-remote.svn.url "$svnrepo" &&
 	git config --add svn-remote.svn.fetch \
 	                 "trunk/src/a:refs/remotes/trunk" &&
@@ -45,14 +46,15 @@ test_expect_success 'test refspec globbing' '
 	                 "branches/*/src/a:refs/remotes/branches/*" &&
 	git config --add svn-remote.svn.tags\
 	                 "tags/*/src/a:refs/remotes/tags/*" &&
-	git-svn multi-fetch &&
+	git svn multi-fetch &&
 	git log --pretty=oneline refs/remotes/tags/end | \
 	    sed -e "s/^.\{41\}//" > output.end &&
-	cmp expect.end output.end &&
+	test_cmp expect.end output.end &&
 	test "`git rev-parse refs/remotes/tags/end~1`" = \
 		"`git rev-parse refs/remotes/branches/start`" &&
 	test "`git rev-parse refs/remotes/branches/start~2`" = \
-		"`git rev-parse refs/remotes/trunk`"
+		"`git rev-parse refs/remotes/trunk`" &&
+	test_must_fail git rev-parse refs/remotes/tags/end@3
 	'
 
 echo try to try > expect.two
@@ -66,12 +68,13 @@ test_expect_success 'test left-hand-side only globbing' '
 	                 "branches/*:refs/remotes/two/branches/*" &&
 	git config --add svn-remote.two.tags \
 	                 "tags/*:refs/remotes/two/tags/*" &&
-	cd tmp &&
+	(
+		cd tmp &&
 		echo "try try" >> tags/end/src/b/readme &&
 		poke tags/end/src/b/readme &&
-		svn commit -m "try to try"
-		cd .. &&
-	git-svn fetch two &&
+		svn_cmd commit -m "try to try"
+	) &&
+	git svn fetch two &&
 	test `git rev-list refs/remotes/two/tags/end | wc -l` -eq 6 &&
 	test `git rev-list refs/remotes/two/branches/start | wc -l` -eq 3 &&
 	test `git rev-parse refs/remotes/two/branches/start~2` = \
@@ -80,7 +83,29 @@ test_expect_success 'test left-hand-side only globbing' '
 	     `git rev-parse refs/remotes/two/branches/start` &&
 	git log --pretty=oneline refs/remotes/two/tags/end | \
 	    sed -e "s/^.\{41\}//" > output.two &&
-	cmp expect.two output.two
+	test_cmp expect.two output.two
+	'
+
+echo "Only one set of wildcard directories" \
+     "(e.g. '*' or '*/*/*') is supported: 'branches/*/t/*'" > expect.three
+echo "" >> expect.three
+
+test_expect_success 'test disallow multi-globs' '
+	git config --add svn-remote.three.url "$svnrepo" &&
+	git config --add svn-remote.three.fetch \
+	                 trunk:refs/remotes/three/trunk &&
+	git config --add svn-remote.three.branches \
+	                 "branches/*/t/*:refs/remotes/three/branches/*" &&
+	git config --add svn-remote.three.tags \
+	                 "tags/*/*:refs/remotes/three/tags/*" &&
+	(
+		cd tmp &&
+		echo "try try" >> tags/end/src/b/readme &&
+		poke tags/end/src/b/readme &&
+		svn_cmd commit -m "try to try"
+	) &&
+	test_must_fail git svn fetch three 2> stderr.three &&
+	test_cmp expect.three stderr.three
 	'
 
 test_done

@@ -1,4 +1,7 @@
-The output format from "git-diff-index", "git-diff-tree",
+Raw output format
+-----------------
+
+The raw output format from "git-diff-index", "git-diff-tree",
 "git-diff-files" and "git diff --raw" are very similar.
 
 These commands all compare two sets of things; what is
@@ -16,6 +19,9 @@ git-diff-tree [-r] <tree-ish-1> <tree-ish-2> [<pattern>...]::
 git-diff-files [<pattern>...]::
         compares the index and the files on the filesystem.
 
+The "git-diff-tree" command begins its output by printing the hash of
+what is being compared. After that, all the commands print one output
+line per changed file.
 
 An output line is formatted this way:
 
@@ -45,6 +51,22 @@ That is, from the left to the right:
 . a tab or a NUL when '-z' option is used; only exists for C or R.
 . path for "dst"; only exists for C or R.
 . an LF or a NUL when '-z' option is used, to terminate the record.
+
+Possible status letters are:
+
+- A: addition of a file
+- C: copy of a file into a new one
+- D: deletion of a file
+- M: modification of the contents or mode of a file
+- R: renaming of a file
+- T: change in the type of the file
+- U: file is unmerged (you must complete the merge before it can
+be committed)
+- X: "unknown" change type (most probably a bug, please report it)
+
+Status letters C and R are always followed by a score (denoting the
+percentage of similarity between the source and target of the move or
+copy), and are the only ones to be so.
 
 <sha1> is shown as all 0's if a file is new on the filesystem
 and it is out of sync with the index.

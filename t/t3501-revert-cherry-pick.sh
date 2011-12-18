@@ -45,6 +45,7 @@ test_expect_success 'cherry-pick after renaming branch' '
 
 	git checkout rename2 &&
 	git cherry-pick added &&
+	test $(git rev-parse HEAD^) = $(git rev-parse rename2) &&
 	test -f opos &&
 	grep "Add extra line at the end" opos
 
@@ -54,6 +55,7 @@ test_expect_success 'revert after renaming branch' '
 
 	git checkout rename1 &&
 	git revert added &&
+	test $(git rev-parse HEAD^) = $(git rev-parse rename1) &&
 	test -f spoo &&
 	! grep "Add extra line at the end" spoo
 
@@ -64,7 +66,7 @@ test_expect_success 'revert forbidden on dirty working tree' '
 	echo content >extra_file &&
 	git add extra_file &&
 	test_must_fail git revert HEAD 2>errors &&
-	grep "Dirty index" errors
+	grep "Your local changes would be overwritten by " errors
 
 '
 

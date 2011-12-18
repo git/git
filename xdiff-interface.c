@@ -1,15 +1,24 @@
 #include "cache.h"
 #include "xdiff-interface.h"
+#include "xdiff/xtypes.h"
+#include "xdiff/xdiffi.h"
+#include "xdiff/xemit.h"
+#include "xdiff/xmacros.h"
+
+struct xdiff_emit_state {
+	xdiff_emit_consume_fn consume;
+	void *consume_callback_data;
+	struct strbuf remainder;
+};
 
 static int parse_num(char **cp_p, int *num_p)
 {
 	char *cp = *cp_p;
 	int num = 0;
-	int read_some;
 
 	while ('0' <= *cp && *cp <= '9')
 		num = num * 10 + *cp++ - '0';
-	if (!(read_some = cp - *cp_p))
+	if (!(cp - *cp_p))
 		return -1;
 	*cp_p = cp;
 	*num_p = num;
@@ -55,13 +64,13 @@ static void consume_one(void *priv_, char *s, unsigned long size)
 		unsigned long this_size;
 		ep = memchr(s, '\n', size);
 		this_size = (ep == NULL) ? size : (ep - s + 1);
-		priv->consume(priv, s, this_size);
+		priv->consume(priv->consume_callback_data, s, this_size);
 		size -= this_size;
 		s += this_size;
 	}
 }
 
-int xdiff_outf(void *priv_, mmbuffer_t *mb, int nbuf)
+static int xdiff_outf(void *priv_, mmbuffer_t *mb, int nbuf)
 {
 	struct xdiff_emit_state *priv = priv_;
 	int i;
@@ -69,36 +78,22 @@ int xdiff_outf(void *priv_, mmbuffer_t *mb, int nbuf)
 	for (i = 0; i < nbuf; i++) {
 		if (mb[i].ptr[mb[i].size-1] != '\n') {
 			/* Incomplete line */
-			priv->remainder = xrealloc(priv->remainder,
-						   priv->remainder_size +
-						   mb[i].size);
-			memcpy(priv->remainder + priv->remainder_size,
-			       mb[i].ptr, mb[i].size);
-			priv->remainder_size += mb[i].size;
+			strbuf_add(&priv->remainder, mb[i].ptr, mb[i].size);
 			continue;
 		}
 
 		/* we have a complete line */
-		if (!priv->remainder) {
+		if (!priv->remainder.len) {
 			consume_one(priv, mb[i].ptr, mb[i].size);
 			continue;
 		}
-		priv->remainder = xrealloc(priv->remainder,
-					   priv->remainder_size +
-					   mb[i].size);
-		memcpy(priv->remainder + priv->remainder_size,
-		       mb[i].ptr, mb[i].size);
-		consume_one(priv, priv->remainder,
-			    priv->remainder_size + mb[i].size);
-		free(priv->remainder);
-		priv->remainder = NULL;
-		priv->remainder_size = 0;
+		strbuf_add(&priv->remainder, mb[i].ptr, mb[i].size);
+		consume_one(priv, priv->remainder.buf, priv->remainder.len);
+		strbuf_reset(&priv->remainder);
 	}
-	if (priv->remainder) {
-		consume_one(priv, priv->remainder, priv->remainder_size);
-		free(priv->remainder);
-		priv->remainder = NULL;
-		priv->remainder_size = 0;
+	if (priv->remainder.len) {
+		consume_one(priv, priv->remainder.buf, priv->remainder.len);
+		strbuf_reset(&priv->remainder);
 	}
 	return 0;
 }
@@ -141,6 +136,69 @@ int xdi_diff(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp, xdemitconf_t co
 	return xdl_diff(&a, &b, xpp, xecfg, xecb);
 }
 
+int xdi_diff_outf(mmfile_t *mf1, mmfile_t *mf2,
+		  xdiff_emit_consume_fn fn, void *consume_callback_data,
+		  xpparam_t const *xpp,
+		  xdemitconf_t const *xecfg, xdemitcb_t *xecb)
+{
+	int ret;
+	struct xdiff_emit_state state;
+
+	memset(&state, 0, sizeof(state));
+	state.consume = fn;
+	state.consume_callback_data = consume_callback_data;
+	xecb->outf = xdiff_outf;
+	xecb->priv = &state;
+	strbuf_init(&state.remainder, 0);
+	ret = xdi_diff(mf1, mf2, xpp, xecfg, xecb);
+	strbuf_release(&state.remainder);
+	return ret;
+}
+
+struct xdiff_emit_hunk_state {
+	xdiff_emit_hunk_consume_fn consume;
+	void *consume_callback_data;
+};
+
+static int process_diff(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
+			xdemitconf_t const *xecfg)
+{
+	long s1, s2, same, p_next, t_next;
+	xdchange_t *xch, *xche;
+	struct xdiff_emit_hunk_state *state = ecb->priv;
+	xdiff_emit_hunk_consume_fn fn = state->consume;
+	void *consume_callback_data = state->consume_callback_data;
+
+	for (xch = xscr; xch; xch = xche->next) {
+		xche = xdl_get_hunk(xch, xecfg);
+
+		s1 = XDL_MAX(xch->i1 - xecfg->ctxlen, 0);
+		s2 = XDL_MAX(xch->i2 - xecfg->ctxlen, 0);
+		same = s2 + XDL_MAX(xch->i1 - s1, 0);
+		p_next = xche->i1 + xche->chg1;
+		t_next = xche->i2 + xche->chg2;
+
+		fn(consume_callback_data, same, p_next, t_next);
+	}
+	return 0;
+}
+
+int xdi_diff_hunks(mmfile_t *mf1, mmfile_t *mf2,
+		   xdiff_emit_hunk_consume_fn fn, void *consume_callback_data,
+		   xpparam_t const *xpp, xdemitconf_t *xecfg)
+{
+	struct xdiff_emit_hunk_state state;
+	xdemitcb_t ecb;
+
+	memset(&state, 0, sizeof(state));
+	memset(&ecb, 0, sizeof(ecb));
+	state.consume = fn;
+	state.consume_callback_data = consume_callback_data;
+	xecfg->emit_func = (void (*)())process_diff;
+	ecb.priv = &state;
+	return xdi_diff(mf1, mf2, xpp, xecfg, &ecb);
+}
+
 int read_mmfile(mmfile_t *ptr, const char *filename)
 {
 	struct stat st;
@@ -179,34 +237,47 @@ struct ff_regs {
 static long ff_regexp(const char *line, long len,
 		char *buffer, long buffer_size, void *priv)
 {
-	char *line_buffer = xstrndup(line, len); /* make NUL terminated */
+	char *line_buffer;
 	struct ff_regs *regs = priv;
 	regmatch_t pmatch[2];
-	int result = 0, i;
+	int i;
+	int result = -1;
+
+	/* Exclude terminating newline (and cr) from matching */
+	if (len > 0 && line[len-1] == '\n') {
+		if (len > 1 && line[len-2] == '\r')
+			len -= 2;
+		else
+			len--;
+	}
+
+	line_buffer = xstrndup(line, len); /* make NUL terminated */
 
 	for (i = 0; i < regs->nr; i++) {
 		struct ff_reg *reg = regs->array + i;
-		if (reg->negate ^ !!regexec(&reg->re,
-					line_buffer, 2, pmatch, 0)) {
-			free(line_buffer);
-			return -1;
+		if (!regexec(&reg->re, line_buffer, 2, pmatch, 0)) {
+			if (reg->negate)
+				goto fail;
+			break;
 		}
 	}
+	if (regs->nr <= i)
+		goto fail;
 	i = pmatch[1].rm_so >= 0 ? 1 : 0;
 	line += pmatch[i].rm_so;
 	result = pmatch[i].rm_eo - pmatch[i].rm_so;
 	if (result > buffer_size)
 		result = buffer_size;
 	else
-		while (result > 0 && (isspace(line[result - 1]) ||
-					line[result - 1] == '\n'))
+		while (result > 0 && (isspace(line[result - 1])))
 			result--;
 	memcpy(buffer, line, result);
+ fail:
 	free(line_buffer);
 	return result;
 }
 
-void xdiff_set_find_func(xdemitconf_t *xecfg, const char *value)
+void xdiff_set_find_func(xdemitconf_t *xecfg, const char *value, int cflags)
 {
 	int i;
 	struct ff_regs *regs;
@@ -231,9 +302,43 @@ void xdiff_set_find_func(xdemitconf_t *xecfg, const char *value)
 			expression = buffer = xstrndup(value, ep - value);
 		else
 			expression = value;
-		if (regcomp(&reg->re, expression, 0))
+		if (regcomp(&reg->re, expression, cflags))
 			die("Invalid regexp to look for hunk header: %s", expression);
 		free(buffer);
 		value = ep + 1;
 	}
+}
+
+void xdiff_clear_find_func(xdemitconf_t *xecfg)
+{
+	if (xecfg->find_func) {
+		int i;
+		struct ff_regs *regs = xecfg->find_func_priv;
+
+		for (i = 0; i < regs->nr; i++)
+			regfree(&regs->array[i].re);
+		free(regs->array);
+		free(regs);
+		xecfg->find_func = NULL;
+		xecfg->find_func_priv = NULL;
+	}
+}
+
+int git_xmerge_style = -1;
+
+int git_xmerge_config(const char *var, const char *value, void *cb)
+{
+	if (!strcasecmp(var, "merge.conflictstyle")) {
+		if (!value)
+			die("'%s' is not a boolean", var);
+		if (!strcmp(value, "diff3"))
+			git_xmerge_style = XDL_MERGE_DIFF3;
+		else if (!strcmp(value, "merge"))
+			git_xmerge_style = 0;
+		else
+			die("unknown style '%s' given for '%s'",
+			    value, var);
+		return 0;
+	}
+	return git_default_config(var, value, cb);
 }

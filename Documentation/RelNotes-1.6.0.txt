@@ -5,7 +5,7 @@ User visible changes
 --------------------
 
 With the default Makefile settings, most of the programs are now
-installed outside your $PATH, except for "git", "gitk", "git-gui" and
+installed outside your $PATH, except for "git", "gitk" and
 some server side programs that need to be accessible for technical
 reasons.  Invoking a git subcommand as "git-xyzzy" from the command
 line has been deprecated since early 2006 (and officially announced in
@@ -14,6 +14,9 @@ output from "git --exec-path" to the $PATH is still supported in this
 release, but users are again strongly encouraged to adjust their
 scripts to use "git xyzzy" form, as we will stop installing
 "git-xyzzy" hardlinks for built-in commands in later releases.
+
+An earlier change to page "git status" output was overwhelmingly unpopular
+and has been reverted.
 
 Source changes needed for porting to MinGW environment are now all in the
 main git.git codebase.
@@ -24,6 +27,16 @@ allows larger packs and added robustness thanks to its CRC checking,
 introduced in v1.5.2 and v1.4.4.5.  If you want to keep your repositories
 backwards compatible past these versions, set repack.useDeltaBaseOffset
 to false or pack.indexVersion to 1, respectively.
+
+We used to prevent sample hook scripts shipped in templates/ from
+triggering by default by relying on the fact that we install them as
+unexecutable, but on some filesystems, this approach does not work.
+They are now shipped with ".sample" suffix.  If you want to activate
+any of these samples as-is, rename them to drop the ".sample" suffix,
+instead of running "chmod +x" on them.  For example, you can rename
+hooks/post-update.sample to hooks/post-update to enable the sample
+hook that runs update-server-info, in order to make repositories
+friendly to dumb protocols (i.e. HTTP).
 
 GIT_CONFIG, which was only documented as affecting "git config", but
 actually affected all git commands, now only affects "git config".
@@ -53,11 +66,7 @@ Updates since v1.5.6
   gangs.
 
 * Sample hook scripts shipped in templates/ are now suffixed with
-  *.sample.  We used to prevent them from triggering by default by
-  relying on the fact that we install them as unexecutable, but on
-  some filesystems this approach does not work.  Instead of running
-  "chmod +x" on them, the users who want to activate these samples
-  as-is can now rename them dropping *.sample suffix.
+  *.sample.
 
 * perl's in-place edit (-i) does not work well without backup files on Windows;
   some tests are rewritten to cope with this.
@@ -139,6 +148,10 @@ Updates since v1.5.6
 * git-archive uses the zlib default compression level when creating
   zip archive.
 
+* git-archive's command line options --exec and --remote can take their
+  parameters as separate command line arguments, similar to other commands.
+  IOW, both "--exec=path" and "--exec path" are now supported.
+
 * With -v option, git-branch describes the remote tracking statistics
   similar to the way git-checkout reports by how many commits your branch
   is ahead/behind.
@@ -158,9 +171,15 @@ Updates since v1.5.6
 * git-clone can clone from a remote whose URL would be rewritten by
   configuration stored in $HOME/.gitconfig now.
 
+* "git-clone --mirror" is a handy way to set up a bare mirror repository.
+
 * git-cvsserver learned to respond to "cvs co -c".
 
 * git-diff --check now checks leftover merge conflict markers.
+
+* "git-diff -p" learned to grab a better hunk header lines in
+  BibTex, Pascal/Delphi, and Ruby files and also pays attention to
+  chapter and part boundary in TeX documents.
 
 * When remote side used to have branch 'foo' and git-fetch finds that now
   it has branch 'foo/bar', it refuses to lose the existing remote tracking
@@ -173,14 +192,22 @@ Updates since v1.5.6
 
 * fast-import and fast-export learned to export and import gitlinks.
 
+* "gitk" left background process behind after being asked to dig very deep
+  history and the user killed the UI; the process is killed when the UI goes
+  away now.
+
 * git-rebase records the original tip of branch in ORIG_HEAD before it is
   rewound.
 
 * "git rerere" can be told to update the index with auto-reused resolution
   with rerere.autoupdate configuration variable.
 
+* git-rev-parse learned $commit^! and $commit^@ notations used in "log"
+  family.  These notations are available in gitk as well, because the gitk
+  command internally uses rev-parse to interpret its arguments.
+
 * git-rev-list learned --children option to show child commits it
-  encountered during the traversal, instead of shoing parent commits.
+  encountered during the traversal, instead of showing parent commits.
 
 * git-send-mail can talk not just over SSL but over TLS now.
 
@@ -195,6 +222,9 @@ Updates since v1.5.6
 
 * git-status gives the remote tracking statistics similar to the way
   git-checkout reports by how many commits your branch is ahead/behind.
+
+* "git-svn dcommit" is now aware of auto-props setting the subversion user
+  has.
 
 * You can tell "git status -u" to even more aggressively omit checking
   untracked files with --untracked-files=no.
@@ -215,8 +245,14 @@ Fixes since v1.5.6
 All of the fixes in v1.5.6 maintenance series are included in
 this release, unless otherwise noted.
 
----
-exec >/var/tmp/1
-O=v1.5.6.4-432-g6796399
-echo O=$(git describe refs/heads/master)
-git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint
+ * git-clone ignored its -u option; the fix needs to be backported to
+   'maint';
+
+ * git-mv used to lose the distinction between changes that are staged
+   and that are only in the working tree, by staging both in the index
+   after moving such a path.
+
+ * "git-rebase -i -p" rewrote the parents to wrong ones when amending
+   (either edit or squash) was involved, and did not work correctly
+   when fast forwarding.
+

@@ -3,7 +3,7 @@
 # Copyright (c) 2007 Lars Hjemli
 #
 
-test_description='git-merge
+test_description='git merge
 
 Testing basic merge operations/option parsing.'
 
@@ -230,9 +230,23 @@ test_expect_success 'test option parsing' '
 	test_must_fail git merge
 '
 
+test_expect_success 'reject non-strategy with a git-merge-foo name' '
+	test_must_fail git merge -s index c1
+'
+
 test_expect_success 'merge c0 with c1' '
 	git reset --hard c0 &&
 	git merge c1 &&
+	verify_merge file result.1 &&
+	verify_head "$c1"
+'
+
+test_debug 'gitk --all'
+
+test_expect_success 'merge c0 with c1 with --ff-only' '
+	git reset --hard c0 &&
+	git merge --ff-only c1 &&
+	git merge --ff-only HEAD c0 c1 &&
 	verify_merge file result.1 &&
 	verify_head "$c1"
 '
@@ -258,6 +272,14 @@ test_expect_success 'merge c1 with c2 and c3' '
 '
 
 test_debug 'gitk --all'
+
+test_expect_success 'failing merges with --ff-only' '
+	git reset --hard c1 &&
+	test_tick &&
+	test_must_fail git merge --ff-only c2 &&
+	test_must_fail git merge --ff-only c3 &&
+	test_must_fail git merge --ff-only c2 c3
+'
 
 test_expect_success 'merge c0 with c1 (no-commit)' '
 	git reset --hard c0 &&
@@ -299,6 +321,17 @@ test_expect_success 'merge c0 with c1 (squash)' '
 
 test_debug 'gitk --all'
 
+test_expect_success 'merge c0 with c1 (squash, ff-only)' '
+	git reset --hard c0 &&
+	git merge --squash --ff-only c1 &&
+	verify_merge file result.1 &&
+	verify_head $c0 &&
+	verify_no_mergehead &&
+	verify_diff squash.1 .git/SQUASH_MSG "[OOPS] bad squash message"
+'
+
+test_debug 'gitk --all'
+
 test_expect_success 'merge c1 with c2 (squash)' '
 	git reset --hard c1 &&
 	git merge --squash c2 &&
@@ -306,6 +339,13 @@ test_expect_success 'merge c1 with c2 (squash)' '
 	verify_head $c1 &&
 	verify_no_mergehead &&
 	verify_diff squash.1-5 .git/SQUASH_MSG "[OOPS] bad squash message"
+'
+
+test_debug 'gitk --all'
+
+test_expect_success 'unsuccesful merge of c1 with c2 (squash, ff-only)' '
+	git reset --hard c1 &&
+	test_must_fail git merge --squash --ff-only c2
 '
 
 test_debug 'gitk --all'
@@ -428,6 +468,11 @@ test_expect_success 'combining --squash and --no-ff is refused' '
 	test_must_fail git merge --no-ff --squash c1
 '
 
+test_expect_success 'combining --ff-only and --no-ff is refused' '
+	test_must_fail git merge --ff-only --no-ff c1 &&
+	test_must_fail git merge --no-ff --ff-only c1
+'
+
 test_expect_success 'merge c0 with c1 (ff overrides no-ff)' '
 	git reset --hard c0 &&
 	git config branch.master.mergeoptions "--no-ff" &&
@@ -484,6 +529,74 @@ test_expect_success 'merge c1 with c1 and c2' '
        git merge c1 c2 &&
        verify_merge file result.1-5 &&
        verify_parents $c1 $c2
+'
+
+test_debug 'gitk --all'
+
+test_expect_success 'merge fast-forward in a dirty tree' '
+       git reset --hard c0 &&
+       mv file file1 &&
+       cat file1 >file &&
+       rm -f file1 &&
+       git merge c2
+'
+
+test_debug 'gitk --all'
+
+test_expect_success 'in-index merge' '
+	git reset --hard c0 &&
+	git merge --no-ff -s resolve c1 > out &&
+	grep "Wonderful." out &&
+	verify_parents $c0 $c1
+'
+
+test_debug 'gitk --all'
+
+test_expect_success 'refresh the index before merging' '
+	git reset --hard c1 &&
+	sleep 1 &&
+	touch file &&
+	git merge c3
+'
+
+cat >expected <<EOF
+Merge branch 'c5' (early part)
+EOF
+
+test_expect_success 'merge early part of c2' '
+	git reset --hard c3 &&
+	echo c4 > c4.c &&
+	git add c4.c &&
+	git commit -m c4 &&
+	git tag c4 &&
+	echo c5 > c5.c &&
+	git add c5.c &&
+	git commit -m c5 &&
+	git tag c5 &&
+	git reset --hard c3 &&
+	echo c6 > c6.c &&
+	git add c6.c &&
+	git commit -m c6 &&
+	git tag c6 &&
+	git merge c5~1 &&
+	git show -s --pretty=format:%s HEAD > actual &&
+	test_cmp actual expected
+'
+
+test_debug 'gitk --all'
+
+test_expect_success 'merge --no-ff --no-commit && commit' '
+	git reset --hard c0 &&
+	git merge --no-ff --no-commit c1 &&
+	EDITOR=: git commit &&
+	verify_parents $c0 $c1
+'
+
+test_debug 'gitk --all'
+
+test_expect_success 'amending no-ff merge commit' '
+	EDITOR=: git commit --amend &&
+	verify_parents $c0 $c1
 '
 
 test_debug 'gitk --all'

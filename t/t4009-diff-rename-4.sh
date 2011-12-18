@@ -7,11 +7,11 @@ test_description='Same rename detection as t4003 but testing diff-raw -z.
 
 '
 . ./test-lib.sh
-. ../diff-lib.sh ;# test-lib chdir's into trash
+. "$TEST_DIRECTORY"/diff-lib.sh ;# test-lib chdir's into trash
 
 test_expect_success \
     'prepare reference tree' \
-    'cat ../../COPYING >COPYING &&
+    'cat "$TEST_DIRECTORY"/../COPYING >COPYING &&
      echo frotz >rezrov &&
     git update-index --add COPYING rezrov &&
     tree=$(git write-tree) &&
@@ -78,7 +78,7 @@ test_expect_success \
 
 test_expect_success \
     'prepare work tree once again' \
-    'cat ../../COPYING >COPYING &&
+    'cat "$TEST_DIRECTORY"/../COPYING >COPYING &&
      git update-index --add --remove COPYING COPYING.1'
 
 git diff-index -z -C --find-copies-harder $tree >current

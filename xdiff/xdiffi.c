@@ -26,7 +26,7 @@
 
 #define XDL_MAX_COST_MIN 256
 #define XDL_HEUR_MIN_COST 256
-#define XDL_LINE_MAX (long)((1UL << (8 * sizeof(long) - 1)) - 1)
+#define XDL_LINE_MAX (long)((1UL << (CHAR_BIT * sizeof(long) - 1)) - 1)
 #define XDL_SNAKE_CNT 20
 #define XDL_K_HEUR 4
 
@@ -293,15 +293,14 @@ int xdl_recs_cmp(diffdata_t *dd1, long off1, long lim1,
 		for (; off1 < lim1; off1++)
 			rchg1[rindex1[off1]] = 1;
 	} else {
-		long ec;
 		xdpsplit_t spl;
 		spl.i1 = spl.i2 = 0;
 
 		/*
 		 * Divide ...
 		 */
-		if ((ec = xdl_split(ha1, off1, lim1, ha2, off2, lim2, kvdf, kvdb,
-				    need_min, &spl, xenv)) < 0) {
+		if (xdl_split(ha1, off1, lim1, ha2, off2, lim2, kvdf, kvdb,
+			      need_min, &spl, xenv) < 0) {
 
 			return -1;
 		}
@@ -328,6 +327,9 @@ int xdl_do_diff(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp,
 	long *kvd, *kvdf, *kvdb;
 	xdalgoenv_t xenv;
 	diffdata_t dd1, dd2;
+
+	if (xpp->flags & XDF_PATIENCE_DIFF)
+		return xdl_do_patience_diff(mf1, mf2, xpp, xe);
 
 	if (xdl_prepare_env(mf1, mf2, xpp, xe) < 0) {
 
@@ -454,7 +456,7 @@ int xdl_change_compact(xdfile_t *xdf, xdfile_t *xdfo, long flags) {
 			/*
 			 * Record the end-of-group position in case we are matched
 			 * with a group of changes in the other file (that is, the
-			 * change record before the enf-of-group index in the other
+			 * change record before the end-of-group index in the other
 			 * file is set).
 			 */
 			ixref = rchgo[ixo - 1] ? ix: nrec;
@@ -538,6 +540,8 @@ int xdl_diff(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp,
 	     xdemitconf_t const *xecfg, xdemitcb_t *ecb) {
 	xdchange_t *xscr;
 	xdfenv_t xe;
+	emit_func_t ef = xecfg->emit_func ?
+		(emit_func_t)xecfg->emit_func : xdl_emit_diff;
 
 	if (xdl_do_diff(mf1, mf2, xpp, &xe) < 0) {
 
@@ -551,7 +555,7 @@ int xdl_diff(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp,
 		return -1;
 	}
 	if (xscr) {
-		if (xdl_emit_diff(&xe, xscr, ecb, xecfg) < 0) {
+		if (ef(&xe, xscr, ecb, xecfg) < 0) {
 
 			xdl_free_script(xscr);
 			xdl_free_env(&xe);

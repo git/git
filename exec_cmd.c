@@ -5,54 +5,66 @@
 
 extern char **environ;
 static const char *argv_exec_path;
-
-static const char *builtin_exec_path(void)
-{
-#ifndef __MINGW32__
-	return GIT_EXEC_PATH;
-#else
-	int len;
-	char *p, *q, *sl;
-	static char *ep;
-	if (ep)
-		return ep;
-
-	len = strlen(_pgmptr);
-	if (len < 2)
-		return ep = ".";
-
-	p = ep = xmalloc(len+1);
-	q = _pgmptr;
-	sl = NULL;
-	/* copy program name, turn '\\' into '/', skip last part */
-	while ((*p = *q)) {
-		if (*q == '\\' || *q == '/') {
-			*p = '/';
-			sl = p;
-		}
-		p++, q++;
-	}
-	if (sl)
-		*sl = '\0';
-	else
-		ep[0] = '.', ep[1] = '\0';
-	return ep;
-#endif
-}
+static const char *argv0_path;
 
 const char *system_path(const char *path)
 {
-	if (!is_absolute_path(path)) {
-		struct strbuf d = STRBUF_INIT;
-		strbuf_addf(&d, "%s/%s", git_exec_path(), path);
-		path = strbuf_detach(&d, NULL);
+#ifdef RUNTIME_PREFIX
+	static const char *prefix;
+#else
+	static const char *prefix = PREFIX;
+#endif
+	struct strbuf d = STRBUF_INIT;
+
+	if (is_absolute_path(path))
+		return path;
+
+#ifdef RUNTIME_PREFIX
+	assert(argv0_path);
+	assert(is_absolute_path(argv0_path));
+
+	if (!prefix &&
+	    !(prefix = strip_path_suffix(argv0_path, GIT_EXEC_PATH)) &&
+	    !(prefix = strip_path_suffix(argv0_path, BINDIR)) &&
+	    !(prefix = strip_path_suffix(argv0_path, "git"))) {
+		prefix = PREFIX;
+		fprintf(stderr, "RUNTIME_PREFIX requested, "
+				"but prefix computation failed.  "
+				"Using static fallback '%s'.\n", prefix);
 	}
+#endif
+
+	strbuf_addf(&d, "%s/%s", prefix, path);
+	path = strbuf_detach(&d, NULL);
 	return path;
+}
+
+const char *git_extract_argv0_path(const char *argv0)
+{
+	const char *slash;
+
+	if (!argv0 || !*argv0)
+		return NULL;
+	slash = argv0 + strlen(argv0);
+
+	while (argv0 <= slash && !is_dir_sep(*slash))
+		slash--;
+
+	if (slash >= argv0) {
+		argv0_path = xstrndup(argv0, slash - argv0);
+		return slash + 1;
+	}
+
+	return argv0;
 }
 
 void git_set_argv_exec_path(const char *exec_path)
 {
 	argv_exec_path = exec_path;
+	/*
+	 * Propagate this setting to external programs.
+	 */
+	setenv(EXEC_PATH_ENVIRONMENT, exec_path, 1);
 }
 
 
@@ -69,7 +81,7 @@ const char *git_exec_path(void)
 		return env;
 	}
 
-	return builtin_exec_path();
+	return system_path(GIT_EXEC_PATH);
 }
 
 static void add_path(struct strbuf *out, const char *path)
@@ -78,23 +90,19 @@ static void add_path(struct strbuf *out, const char *path)
 		if (is_absolute_path(path))
 			strbuf_addstr(out, path);
 		else
-			strbuf_addstr(out, make_absolute_path(path));
+			strbuf_addstr(out, make_nonrelative_path(path));
 
 		strbuf_addch(out, PATH_SEP);
 	}
 }
 
-void setup_path(const char *cmd_path)
+void setup_path(void)
 {
 	const char *old_path = getenv("PATH");
-	struct strbuf new_path;
+	struct strbuf new_path = STRBUF_INIT;
 
-	strbuf_init(&new_path, 0);
-
-	add_path(&new_path, argv_exec_path);
-	add_path(&new_path, getenv(EXEC_PATH_ENVIRONMENT));
-	add_path(&new_path, builtin_exec_path());
-	add_path(&new_path, cmd_path);
+	add_path(&new_path, git_exec_path());
+	add_path(&new_path, argv0_path);
 
 	if (old_path)
 		strbuf_addstr(&new_path, old_path);
@@ -106,7 +114,7 @@ void setup_path(const char *cmd_path)
 	strbuf_release(&new_path);
 }
 
-int execv_git_cmd(const char **argv)
+const char **prepare_git_cmd(const char **argv)
 {
 	int argc;
 	const char **nargv;
@@ -119,6 +127,11 @@ int execv_git_cmd(const char **argv)
 	for (argc = 0; argv[argc]; argc++)
 		nargv[argc + 1] = argv[argc];
 	nargv[argc + 1] = NULL;
+	return nargv;
+}
+
+int execv_git_cmd(const char **argv) {
+	const char **nargv = prepare_git_cmd(argv);
 	trace_argv_printf(nargv, "trace: exec:");
 
 	/* execvp() can only ever return if it fails */

@@ -29,7 +29,9 @@ test_expect_success setup '
 		git checkout -b b4 origin &&
 		advance e &&
 		advance f
-	)
+	) &&
+	git checkout -b follower --track master &&
+	advance g
 '
 
 script='s/^..\(b.\)[	 0-9a-f]*\[\([^]]*\)\].*/\1 \2/p'
@@ -53,7 +55,13 @@ test_expect_success 'checkout' '
 	(
 		cd test && git checkout b1
 	) >actual &&
-	grep -e "have 1 and 1 different" actual
+	grep "have 1 and 1 different" actual
+'
+
+test_expect_success 'checkout with local tracked branch' '
+	git checkout master &&
+	git checkout follower >actual
+	grep "is ahead of" actual
 '
 
 test_expect_success 'status' '
@@ -61,10 +69,45 @@ test_expect_success 'status' '
 		cd test &&
 		git checkout b1 >/dev/null &&
 		# reports nothing to commit
-		test_must_fail git status
+		test_must_fail git commit --dry-run
 	) >actual &&
-	grep -e "have 1 and 1 different" actual
+	grep "have 1 and 1 different" actual
 '
 
+test_expect_success 'status when tracking lightweight tags' '
+	git checkout master &&
+	git tag light &&
+	git branch --track lighttrack light >actual &&
+	grep "set up to track" actual &&
+	git checkout lighttrack
+'
 
+test_expect_success 'status when tracking annotated tags' '
+	git checkout master &&
+	git tag -m heavy heavy &&
+	git branch --track heavytrack heavy >actual &&
+	grep "set up to track" actual &&
+	git checkout heavytrack
+'
+
+test_expect_success 'setup tracking with branch --set-upstream on existing branch' '
+	git branch from-master master &&
+	test_must_fail git config branch.from-master.merge > actual &&
+	git branch --set-upstream from-master master &&
+	git config branch.from-master.merge > actual &&
+	grep -q "^refs/heads/master$" actual
+'
+
+test_expect_success '--set-upstream does not change branch' '
+	git branch from-master2 master &&
+	test_must_fail git config branch.from-master2.merge > actual &&
+	git rev-list from-master2 &&
+	git update-ref refs/heads/from-master2 from-master2^ &&
+	git rev-parse from-master2 >expect2 &&
+	git branch --set-upstream from-master2 master &&
+	git config branch.from-master.merge > actual &&
+	git rev-parse from-master2 >actual2 &&
+	grep -q "^refs/heads/master$" actual &&
+	cmp expect2 actual2
+'
 test_done

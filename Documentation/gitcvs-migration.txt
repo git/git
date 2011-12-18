@@ -47,25 +47,25 @@ them first before running git pull.
 [NOTE]
 ================================
 The 'pull' command knows where to get updates from because of certain
-configuration variables that were set by the first 'git-clone'
+configuration variables that were set by the first 'git clone'
 command; see `git config -l` and the linkgit:git-config[1] man
 page for details.
 ================================
 
 You can update the shared repository with your changes by first committing
-your changes, and then using the 'git-push' command:
+your changes, and then using the 'git push' command:
 
 ------------------------------------------------
 $ git push origin master
 ------------------------------------------------
 
 to "push" those commits to the shared repository.  If someone else has
-updated the repository more recently, 'git-push', like 'cvs commit', will
+updated the repository more recently, 'git push', like 'cvs commit', will
 complain, in which case you must pull any changes before attempting the
 push again.
 
-In the 'git-push' command above we specify the name of the remote branch
-to update (`master`).  If we leave that out, 'git-push' tries to update
+In the 'git push' command above we specify the name of the remote branch
+to update (`master`).  If we leave that out, 'git push' tries to update
 any branches in the remote repository that have the same name as a branch
 in the local repository.  So the last 'push' can be done with either of:
 
@@ -118,7 +118,7 @@ Importing a CVS archive
 First, install version 2.1 or higher of cvsps from
 link:http://www.cobite.com/cvsps/[http://www.cobite.com/cvsps/] and make
 sure it is in your path.  Then cd to a checked out CVS working directory
-of the project you are interested in and run 'git-cvsimport':
+of the project you are interested in and run linkgit:git-cvsimport[1]:
 
 -------------------------------------------
 $ git cvsimport -C <destination> <module>

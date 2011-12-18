@@ -20,9 +20,18 @@ struct ref_lock {
 typedef int each_ref_fn(const char *refname, const unsigned char *sha1, int flags, void *cb_data);
 extern int head_ref(each_ref_fn, void *);
 extern int for_each_ref(each_ref_fn, void *);
+extern int for_each_ref_in(const char *, each_ref_fn, void *);
 extern int for_each_tag_ref(each_ref_fn, void *);
 extern int for_each_branch_ref(each_ref_fn, void *);
 extern int for_each_remote_ref(each_ref_fn, void *);
+extern int for_each_replace_ref(each_ref_fn, void *);
+extern int for_each_glob_ref(each_ref_fn, const char *pattern, void *);
+extern int for_each_glob_ref_in(each_ref_fn, const char *pattern, const char* prefix, void *);
+
+/* can be used to learn about broken ref and symref */
+extern int for_each_rawref(each_ref_fn, void *);
+
+extern void warn_dangling_symref(FILE *fp, const char *msg_fmt, const char *refname);
 
 /*
  * Extra refs will be listed by for_each_ref() before any actual refs
@@ -60,6 +69,7 @@ extern int read_ref_at(const char *ref, unsigned long at_time, int cnt, unsigned
 /* iterate over reflog entries */
 typedef int each_reflog_ent_fn(unsigned char *osha1, unsigned char *nsha1, const char *, unsigned long, int, const char *, void *);
 int for_each_reflog_ent(const char *ref, each_reflog_ent_fn fn, void *cb_data);
+int for_each_recent_reflog_ent(const char *ref, each_reflog_ent_fn fn, long, void *cb_data);
 
 /*
  * Calls the specified function for each reflog file until it returns nonzero,
@@ -72,6 +82,9 @@ extern int for_each_reflog(each_ref_fn, void *);
 #define CHECK_REF_FORMAT_ONELEVEL (-2)
 #define CHECK_REF_FORMAT_WILDCARD (-3)
 extern int check_ref_format(const char *target);
+
+extern const char *prettify_refname(const char *refname);
+extern char *shorten_unambiguous_ref(const char *ref, int strict);
 
 /** rename ref, return 0 on success **/
 extern int rename_ref(const char *oldref, const char *newref, const char *logmsg);

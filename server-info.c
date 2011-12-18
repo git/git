@@ -25,7 +25,7 @@ static int add_info_ref(const char *path, const unsigned char *sha1, int flag, v
 
 static int update_info_refs(int force)
 {
-	char *path0 = xstrdup(git_path("info/refs"));
+	char *path0 = git_pathdup("info/refs");
 	int len = strlen(path0);
 	char *path1 = xmalloc(len + 2);
 
@@ -132,8 +132,8 @@ static int read_pack_info_file(const char *infofile)
 
 static int compare_info(const void *a_, const void *b_)
 {
-	struct pack_info * const* a = a_;
-	struct pack_info * const* b = b_;
+	struct pack_info *const *a = a_;
+	struct pack_info *const *b = b_;
 
 	if (0 <= (*a)->old_num && 0 <= (*b)->old_num)
 		/* Keep the order in the original */
@@ -246,7 +246,7 @@ int update_server_info(int force)
 	errs = errs | update_info_packs(force);
 
 	/* remove leftover rev-cache file if there is any */
-	unlink(git_path("info/rev-cache"));
+	unlink_or_warn(git_path("info/rev-cache"));
 
 	return errs;
 }

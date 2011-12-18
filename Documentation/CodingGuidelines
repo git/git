@@ -21,8 +21,13 @@ code.  For git in general, three rough rules are:
 
 As for more concrete guidelines, just imitate the existing code
 (this is a good guideline, no matter which project you are
-contributing to).  But if you must have a list of rules,
-here they are.
+contributing to). It is always preferable to match the _local_
+convention. New code added to git suite is expected to match
+the overall style of existing code. Modifications to existing
+code is expected to match the style the surrounding code already
+uses (even if it doesn't match the overall style of existing code).
+
+But if you must have a list of rules, here they are.
 
 For shell scripts specifically (not exhaustive):
 
@@ -124,3 +129,6 @@ For C programs:
    used in the git core command set (unless your command is clearly
    separate from it, such as an importer to convert random-scm-X
    repositories to git).
+
+ - When we pass <string, length> pair to functions, we should try to
+   pass them in that order.

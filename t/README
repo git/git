@@ -39,7 +39,8 @@ this:
     * passed all 3 test(s)
 
 You can pass --verbose (or -v), --debug (or -d), and --immediate
-(or -i) command line argument to the test.
+(or -i) command line argument to the test, or by setting GIT_TEST_OPTS
+appropriately before running "make".
 
 --verbose::
 	This makes the test more verbose.  Specifically, the
@@ -57,6 +58,43 @@ You can pass --verbose (or -v), --debug (or -d), and --immediate
 --long-tests::
 	This causes additional long-running tests to be run (where
 	available), for more exhaustive testing.
+
+--valgrind::
+	Execute all Git binaries with valgrind and exit with status
+	126 on errors (just like regular tests, this will only stop
+	the test script when running under -i).  Valgrind errors
+	go to stderr, so you might want to pass the -v option, too.
+
+	Since it makes no sense to run the tests with --valgrind and
+	not see any output, this option implies --verbose.  For
+	convenience, it also implies --tee.
+
+--tee::
+	In addition to printing the test output to the terminal,
+	write it to files named 't/test-results/$TEST_NAME.out'.
+	As the names depend on the tests' file names, it is safe to
+	run the tests with this option in parallel.
+
+--with-dashes::
+	By default tests are run without dashed forms of
+	commands (like git-commit) in the PATH (it only uses
+	wrappers from ../bin-wrappers).  Use this option to include
+	the build directory (..) in the PATH, which contains all
+	the dashed forms of commands.  This option is currently
+	implied by other options like --valgrind and
+	GIT_TEST_INSTALLED.
+
+You can also set the GIT_TEST_INSTALLED environment variable to
+the bindir of an existing git installation to test that installation.
+You still need to have built this git sandbox, from which various
+test-* support programs, templates, and perl libraries are used.
+If your installed git is incomplete, it will silently test parts of
+your built version instead.
+
+When using GIT_TEST_INSTALLED, you can also set GIT_TEST_EXEC_PATH to
+override the location of the dashed-form subcommands (what
+GIT_EXEC_PATH would be used for during normal operation).
+GIT_TEST_EXEC_PATH defaults to `$GIT_TEST_INSTALLED/git --exec-path`.
 
 
 Skipping Tests
@@ -212,6 +250,24 @@ library for your script to use.
    is to summarize successes and failures in the test script and
    exit with an appropriate error code.
 
+ - test_tick
+
+   Make commit and tag names consistent by setting the author and
+   committer times to defined stated.  Subsequent calls will
+   advance the times by a fixed amount.
+
+ - test_commit <message> [<filename> [<contents>]]
+
+   Creates a commit with the given message, committing the given
+   file with the given contents (default for both is to reuse the
+   message string), and adds a tag (again reusing the message
+   string as name).  Calls test_tick to make the SHA-1s
+   reproducible.
+
+ - test_merge <message> <commit-or-tag>
+
+   Merges the given rev using the given message.  Like test_commit,
+   creates a tag and calls test_tick before committing.
 
 Tips for Writing Tests
 ----------------------

@@ -10,7 +10,7 @@ static unsigned int contains(struct diff_filespec *one,
 			     regex_t *regexp)
 {
 	unsigned int cnt;
-	unsigned long offset, sz;
+	unsigned long sz;
 	const char *data;
 	if (diff_populate_filespec(one, 0))
 		return 0;
@@ -25,23 +25,23 @@ static unsigned int contains(struct diff_filespec *one,
 		regmatch_t regmatch;
 		int flags = 0;
 
+		assert(data[sz] == '\0');
 		while (*data && !regexec(regexp, data, 1, &regmatch, flags)) {
 			flags |= REG_NOTBOL;
-			data += regmatch.rm_so;
-			if (*data) data++;
+			data += regmatch.rm_eo;
+			if (*data && regmatch.rm_so == regmatch.rm_eo)
+				data++;
 			cnt++;
 		}
 
 	} else { /* Classic exact string match */
-		/* Yes, I've heard of strstr(), but the thing is *data may
-		 * not be NUL terminated.  Sue me.
-		 */
-		for (offset = 0; offset + len <= sz; offset++) {
-			/* we count non-overlapping occurrences of needle */
-			if (!memcmp(needle, data + offset, len)) {
-				offset += len - 1;
-				cnt++;
-			}
+		while (sz) {
+			const char *found = memmem(data, sz, needle, len);
+			if (!found)
+				break;
+			sz -= found - data + len;
+			data = found + len;
+			cnt++;
 		}
 	}
 	diff_free_filespec_data(one);

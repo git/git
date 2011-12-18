@@ -7,7 +7,7 @@ test_description='Test diff raw-output.
 
 '
 . ./test-lib.sh
-. ../lib-read-tree-m-3way.sh
+. "$TEST_DIRECTORY"/lib-read-tree-m-3way.sh
 
 cat >.test-plain-OA <<\EOF
 :000000 100644 0000000000000000000000000000000000000000 ccba72ad3888a3520b39efcf780b9ee64167535d A	AA
@@ -169,6 +169,20 @@ test_expect_success \
      cmp -s .test-a .test-recursive-AB'
 
 test_expect_success \
+    'diff-tree --stdin of known trees.' \
+    'echo $tree_A $tree_B | git diff-tree --stdin > .test-a &&
+     echo $tree_A $tree_B > .test-plain-ABx &&
+     cat .test-plain-AB >> .test-plain-ABx &&
+     cmp -s .test-a .test-plain-ABx'
+
+test_expect_success \
+    'diff-tree --stdin of known trees.' \
+    'echo $tree_A $tree_B | git diff-tree -r --stdin > .test-a &&
+     echo $tree_A $tree_B > .test-recursive-ABx &&
+     cat .test-recursive-AB >> .test-recursive-ABx &&
+     cmp -s .test-a .test-recursive-ABx'
+
+test_expect_success \
     'diff-cache O with A in cache' \
     'git read-tree $tree_A &&
      git diff-index --cached $tree_O >.test-a &&
@@ -243,5 +257,13 @@ test_expect_success \
     'git diff-tree -r $tree_B $tree_A >.test-a &&
     git diff-tree -r -R $tree_A $tree_B >.test-b &&
     cmp -s .test-a .test-b'
+
+test_expect_success \
+    'diff can read from stdin' \
+    'test_must_fail git diff --no-index -- MN - < NN |
+        grep -v "^index" | sed "s#/-#/NN#" >.test-a &&
+    test_must_fail git diff --no-index -- MN NN |
+        grep -v "^index" >.test-b &&
+    test_cmp .test-a .test-b'
 
 test_done

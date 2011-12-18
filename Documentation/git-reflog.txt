@@ -28,7 +28,7 @@ updated.  This command is to manage the information recorded in it.
 
 The subcommand "expire" is used to prune older reflog entries.
 Entries older than `expire` time, or entries older than
-`expire-unreachable` time and are not reachable from the current
+`expire-unreachable` time and not reachable from the current
 tip, are removed from the reflog.  This is typically not used
 directly by the end users -- instead, see linkgit:git-gc[1].
 
@@ -60,7 +60,7 @@ OPTIONS
 	refs.
 +
 This computation involves traversing all the reachable objects, i.e. it
-has the same cost as 'git-prune'.  Fortunately, once this is run, we
+has the same cost as 'git prune'.  Fortunately, once this is run, we
 should not have to ever worry about missing objects, because the current
 prune and pack-objects know about reflogs and protect objects referred by
 them.
@@ -71,7 +71,7 @@ them.
 	which in turn defaults to 90 days.
 
 --expire-unreachable=<time>::
-	Entries older than this time and are not reachable from
+	Entries older than this time and not reachable from
 	the current tip of the branch are pruned.  Without the
 	option it is taken from configuration
 	`gc.reflogExpireUnreachable`, which in turn defaults to

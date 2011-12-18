@@ -9,15 +9,11 @@ use Test::More qw(no_plan);
 
 use Cwd;
 use File::Basename;
-use File::Temp;
 
 BEGIN { use_ok('Git') }
 
 # set up
-our $repo_dir = "trash directory";
-our $abs_repo_dir = Cwd->cwd;
-die "this must be run by calling the t/t97* shell script(s)\n"
-    if basename(Cwd->cwd) ne $repo_dir;
+our $abs_repo_dir = cwd();
 ok(our $r = Git->repository(Directory => "."), "open repository");
 
 # config
@@ -38,7 +34,7 @@ is($r->get_color("color.test.slot1", "red"), $ansi_green, "get_color");
 # Failure cases for config:
 # Save and restore STDERR; we will probably extract this into a
 # "dies_ok" method and possibly move the STDERR handling to Git.pm.
-open our $tmpstderr, ">&", STDERR or die "cannot save STDERR"; close STDERR;
+open our $tmpstderr, ">&STDERR" or die "cannot save STDERR"; close STDERR;
 eval { $r->config("test.dupstring") };
 ok($@, "config: duplicate entry in scalar context fails");
 eval { $r->config_bool("test.boolother") };
@@ -69,32 +65,43 @@ is($r->ident_person("Name", "email", "123 +0000"), "Name <email>",
 
 # objects and hashes
 ok(our $file1hash = $r->command_oneline('rev-parse', "HEAD:file1"), "(get file hash)");
-our $tmpfile = File::Temp->new;
-is($r->cat_blob($file1hash, $tmpfile), 15, "cat_blob: size");
+my $tmpfile = "file.tmp";
+open TEMPFILE, "+>$tmpfile" or die "Can't open $tmpfile: $!";
+is($r->cat_blob($file1hash, \*TEMPFILE), 15, "cat_blob: size");
 our $blobcontents;
-{ local $/; seek $tmpfile, 0, 0; $blobcontents = <$tmpfile>; }
+{ local $/; seek TEMPFILE, 0, 0; $blobcontents = <TEMPFILE>; }
 is($blobcontents, "changed file 1\n", "cat_blob: data");
-seek $tmpfile, 0, 0;
+close TEMPFILE or die "Failed writing to $tmpfile: $!";
 is(Git::hash_object("blob", $tmpfile), $file1hash, "hash_object: roundtrip");
-$tmpfile = File::Temp->new();
-print $tmpfile my $test_text = "test blob, to be inserted\n";
+open TEMPFILE, ">$tmpfile" or die "Can't open $tmpfile: $!";
+print TEMPFILE my $test_text = "test blob, to be inserted\n";
+close TEMPFILE or die "Failed writing to $tmpfile: $!";
 like(our $newhash = $r->hash_and_insert_object($tmpfile), qr/[0-9a-fA-F]{40}/,
      "hash_and_insert_object: returns hash");
-$tmpfile = File::Temp->new;
-is($r->cat_blob($newhash, $tmpfile), length $test_text, "cat_blob: roundtrip size");
-{ local $/; seek $tmpfile, 0, 0; $blobcontents = <$tmpfile>; }
+open TEMPFILE, "+>$tmpfile" or die "Can't open $tmpfile: $!";
+is($r->cat_blob($newhash, \*TEMPFILE), length $test_text, "cat_blob: roundtrip size");
+{ local $/; seek TEMPFILE, 0, 0; $blobcontents = <TEMPFILE>; }
 is($blobcontents, $test_text, "cat_blob: roundtrip data");
+close TEMPFILE;
+unlink $tmpfile;
 
 # paths
-is($r->repo_path, "./.git", "repo_path");
+is($r->repo_path, $abs_repo_dir . "/.git", "repo_path");
 is($r->wc_path, $abs_repo_dir . "/", "wc_path");
 is($r->wc_subdir, "", "wc_subdir initial");
 $r->wc_chdir("directory1");
 is($r->wc_subdir, "directory1", "wc_subdir after wc_chdir");
-TODO: {
-	local $TODO = "commands do not work after wc_chdir";
-	# Failure output is active even in non-verbose mode and thus
-	# annoying.  Hence we skip these tests as long as they fail.
-	todo_skip 'config after wc_chdir', 1;
-	is($r->config("color.string"), "value", "config after wc_chdir");
-}
+is($r->config("test.string"), "value", "config after wc_chdir");
+
+# Object generation in sub directory
+chdir("directory2");
+my $r2 = Git->repository();
+is($r2->repo_path, $abs_repo_dir . "/.git", "repo_path (2)");
+is($r2->wc_path, $abs_repo_dir . "/", "wc_path (2)");
+is($r2->wc_subdir, "directory2/", "wc_subdir initial (2)");
+
+# commands in sub directory
+my $last_commit = $r2->command_oneline(qw(rev-parse --verify HEAD));
+like($last_commit, qr/^[0-9a-fA-F]{40}$/, 'rev-parse returned hash');
+my $dir_commit = $r2->command_oneline('log', '-n1', '--pretty=format:%H', '.');
+isnt($last_commit, $dir_commit, 'log . does not show last commit');

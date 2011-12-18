@@ -2,7 +2,7 @@
 #
 #
 
-test_description='git-mktag: tag object verify test'
+test_description='git mktag: tag object verify test'
 
 . ./test-lib.sh
 
@@ -14,7 +14,7 @@ test_description='git-mktag: tag object verify test'
 check_verify_failure () {
 	expect="$2"
 	test_expect_success "$1" '
-		( test_must_fail git-mktag <tag.sig 2>message ) &&
+		( test_must_fail git mktag <tag.sig 2>message ) &&
 		grep "$expect" message
 	'
 }
@@ -24,7 +24,7 @@ check_verify_failure () {
 # for the tag.
 echo Hello >A
 git update-index --add A
-git-commit -m "Initial commit"
+git commit -m "Initial commit"
 head=$(git rev-parse --verify HEAD)
 
 ############################################################
@@ -222,7 +222,7 @@ EOF
 
 test_expect_success \
     'allow empty tag email' \
-    'git-mktag <tag.sig >.git/refs/tags/mytag 2>message'
+    'git mktag <tag.sig >.git/refs/tags/mytag 2>message'
 
 ############################################################
 # 16. disallow spaces in tag email
@@ -350,14 +350,14 @@ EOF
 
 test_expect_success \
     'create valid tag' \
-    'git-mktag <tag.sig >.git/refs/tags/mytag 2>message'
+    'git mktag <tag.sig >.git/refs/tags/mytag 2>message'
 
 ############################################################
 # 25. check mytag
 
 test_expect_success \
     'check mytag' \
-    'git-tag -l | grep mytag'
+    'git tag -l | grep mytag'
 
 
 test_done

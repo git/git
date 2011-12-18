@@ -22,6 +22,8 @@
 
 #define MINIMUM_BREAK_SIZE     400 /* do not break a file smaller than this */
 
+struct userdiff_driver;
+
 struct diff_filespec {
 	unsigned char sha1[20];
 	char *path;
@@ -40,8 +42,11 @@ struct diff_filespec {
 #define DIFF_FILE_VALID(spec) (((spec)->mode) != 0)
 	unsigned should_free : 1; /* data should be free()'ed */
 	unsigned should_munmap : 1; /* data should be munmap()'ed */
-	unsigned checked_attr : 1;
-	unsigned is_binary : 1; /* data should be considered "binary" */
+	unsigned dirty_submodule : 1;  /* For submodules: its work tree is dirty */
+
+	struct userdiff_driver *driver;
+	/* data should be considered "binary"; -1 means "don't know yet" */
+	int is_binary;
 };
 
 extern struct diff_filespec *alloc_filespec(const char *);
@@ -58,7 +63,7 @@ struct diff_filepair {
 	struct diff_filespec *one;
 	struct diff_filespec *two;
 	unsigned short int score;
-	char status; /* M C R N D U (see Documentation/diff-format.txt) */
+	char status; /* M C R A D U etc. (see Documentation/diff-format.txt or DIFF_STATUS_* in diff.h) */
 	unsigned broken_pair : 1;
 	unsigned renamed_pair : 1;
 	unsigned is_unmerged : 1;
@@ -92,7 +97,6 @@ extern struct diff_filepair *diff_queue(struct diff_queue_struct *,
 					struct diff_filespec *);
 extern void diff_q(struct diff_queue_struct *, struct diff_filepair *);
 
-extern void diffcore_pathspec(const char **pathspec);
 extern void diffcore_break(int);
 extern void diffcore_rename(struct diff_options *);
 extern void diffcore_merge_broken(void);

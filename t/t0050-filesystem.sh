@@ -8,7 +8,9 @@ auml=`printf '\xc3\xa4'`
 aumlcdiar=`printf '\x61\xcc\x88'`
 
 case_insensitive=
-test_expect_success 'see if we expect ' '
+unibad=
+no_symlinks=
+test_expect_success 'see what we expect' '
 
 	test_case=test_expect_success
 	test_unicode=test_expect_success
@@ -19,7 +21,6 @@ test_expect_success 'see if we expect ' '
 	then
 		test_case=test_expect_failure
 		case_insensitive=t
-		say "will test on a case insensitive filesystem"
 	fi &&
 	rm -fr junk &&
 	mkdir junk &&
@@ -27,12 +28,25 @@ test_expect_success 'see if we expect ' '
 	case "$(cd junk && echo *)" in
 	"$aumlcdiar")
 		test_unicode=test_expect_failure
-		say "will test on a unicode corrupting filesystem"
+		unibad=t
 		;;
 	*)	;;
 	esac &&
-	rm -fr junk
+	rm -fr junk &&
+	{
+		ln -s x y 2> /dev/null &&
+		test -h y 2> /dev/null ||
+		no_symlinks=1
+		rm -f y
+	}
 '
+
+test "$case_insensitive" &&
+	say "will test on a case insensitive filesystem"
+test "$unibad" &&
+	say "will test on a unicode corrupting filesystem"
+test "$no_symlinks" &&
+	say "will test on a filesystem lacking symbolic links"
 
 if test "$case_insensitive"
 then
@@ -45,6 +59,21 @@ test_expect_success "detection of case insensitive filesystem during repo init" 
 
 	test_must_fail git config --bool core.ignorecase >/dev/null ||
 	test $(git config --bool core.ignorecase) = false
+'
+fi
+
+if test "$no_symlinks"
+then
+test_expect_success "detection of filesystem w/o symlink support during repo init" '
+
+	v=$(git config --bool core.symlinks) &&
+	test "$v" = false
+'
+else
+test_expect_success "detection of filesystem w/o symlink support during repo init" '
+
+	test_must_fail git config --bool core.symlinks ||
+	test "$(git config --bool core.symlinks)" = true
 '
 fi
 
@@ -85,7 +114,7 @@ $test_case 'add (with different case)' '
 	rm camelcase &&
 	echo 1 >CamelCase &&
 	git add CamelCase &&
-	test $(git-ls-files | grep -i camelcase | wc -l) = 1
+	test $(git ls-files | grep -i camelcase | wc -l) = 1
 
 '
 

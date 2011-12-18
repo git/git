@@ -21,7 +21,7 @@ cat >"$p0" <<\EOF
 3. A quick brown fox jumps over the lazy cat, oops dog.
 EOF
 
-cat >"$p1" "$p0"
+cat 2>/dev/null >"$p1" "$p0"
 echo 'Foo Bar Baz' >"$p2"
 
 test -f "$p1" && cmp "$p0" "$p1" || {

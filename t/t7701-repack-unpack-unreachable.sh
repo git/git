@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='git-repack works correctly'
+test_description='git repack works correctly'
 
 . ./test-lib.sh
 
@@ -8,7 +8,7 @@ fsha1=
 csha1=
 tsha1=
 
-test_expect_success '-A option leaves unreachable objects unpacked' '
+test_expect_success '-A with -d option leaves unreachable objects unpacked' '
 	echo content > file1 &&
 	git add . &&
 	git commit -m initial_commit &&
@@ -29,7 +29,7 @@ test_expect_success '-A option leaves unreachable objects unpacked' '
 	git repack -A -d -l &&
 	# verify objects are packed in repository
 	test 3 = $(git verify-pack -v -- .git/objects/pack/*.idx |
-		   grep -e "^$fsha1 " -e "^$csha1 " -e "^$tsha1 " |
+		   egrep "^($fsha1|$csha1|$tsha1) " |
 		   sort | uniq | wc -l) &&
 	git show $fsha1 &&
 	git show $csha1 &&
@@ -41,7 +41,7 @@ test_expect_success '-A option leaves unreachable objects unpacked' '
 	git repack -A -d -l &&
 	# verify objects are retained unpacked
 	test 0 = $(git verify-pack -v -- .git/objects/pack/*.idx |
-		   grep -e "^$fsha1 " -e "^$csha1 " -e "^$tsha1 " |
+		   egrep "^($fsha1|$csha1|$tsha1) " |
 		   sort | uniq | wc -l) &&
 	git show $fsha1 &&
 	git show $csha1 &&
@@ -50,15 +50,13 @@ test_expect_success '-A option leaves unreachable objects unpacked' '
 
 compare_mtimes ()
 {
-	perl -e 'my $reference = shift;
-		 foreach my $file (@ARGV) {
-			exit(1) unless(-f $file && -M $file == -M $reference);
-		 }
-		 exit(0);
-		' -- "$@"
+	read tref rest &&
+	while read t rest; do
+		test "$tref" = "$t" || break
+	done
 }
 
-test_expect_success 'unpacked objects receive timestamp of pack file' '
+test_expect_success '-A without -d option leaves unreachable objects packed' '
 	fsha1path=$(echo "$fsha1" | sed -e "s|\(..\)|\1/|") &&
 	fsha1path=".git/objects/$fsha1path" &&
 	csha1path=$(echo "$csha1" | sed -e "s|\(..\)|\1/|") &&
@@ -75,7 +73,21 @@ test_expect_success 'unpacked objects receive timestamp of pack file' '
 	git branch -D transient_branch &&
 	sleep 1 &&
 	git repack -A -l &&
-	compare_mtimes "$packfile" "$fsha1path" "$csha1path" "$tsha1path"
+	test ! -f "$fsha1path" &&
+	test ! -f "$csha1path" &&
+	test ! -f "$tsha1path" &&
+	git show $fsha1 &&
+	git show $csha1 &&
+	git show $tsha1
+'
+
+test_expect_success 'unpacked objects receive timestamp of pack file' '
+	tmppack=".git/objects/pack/tmp_pack" &&
+	ln "$packfile" "$tmppack" &&
+	git repack -A -l -d &&
+	test-chmtime -v +0 "$tmppack" "$fsha1path" "$csha1path" "$tsha1path" \
+		> mtimes &&
+	compare_mtimes < mtimes
 '
 
 test_done

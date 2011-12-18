@@ -56,8 +56,9 @@ require Exporter;
 @EXPORT_OK = qw(command command_oneline command_noisy
                 command_output_pipe command_input_pipe command_close_pipe
                 command_bidi_pipe command_close_bidi_pipe
-                version exec_path hash_object git_cmd_try
-                remote_refs);
+                version exec_path html_path hash_object git_cmd_try
+                remote_refs
+                temp_acquire temp_release temp_reset temp_path);
 
 
 =head1 DESCRIPTION
@@ -90,7 +91,7 @@ TODO: In the future, we might also do
 Currently, the module merely wraps calls to external Git tools. In the future,
 it will provide a much faster way to interact with Git by linking directly
 to libgit. This should be completely opaque to the user, though (performance
-increate nonwithstanding).
+increase notwithstanding).
 
 =cut
 
@@ -99,7 +100,7 @@ use Carp qw(carp croak); # but croak is bad - throw instead
 use Error qw(:try);
 use Cwd qw(abs_path);
 use IPC::Open2 qw(open2);
-
+use Fcntl qw(SEEK_SET SEEK_CUR);
 }
 
 
@@ -165,11 +166,12 @@ sub repository {
 		}
 	}
 
-	if (not defined $opts{Repository} and not defined $opts{WorkingCopy}) {
-		$opts{Directory} ||= '.';
+	if (not defined $opts{Repository} and not defined $opts{WorkingCopy}
+		and not defined $opts{Directory}) {
+		$opts{Directory} = '.';
 	}
 
-	if ($opts{Directory}) {
+	if (defined $opts{Directory}) {
 		-d $opts{Directory} or throw Error::Simple("Directory not found: $!");
 
 		my $search = Git->repository(WorkingCopy => $opts{Directory});
@@ -183,7 +185,7 @@ sub repository {
 
 		if ($dir) {
 			$dir =~ m#^/# or $dir = $opts{Directory} . '/' . $dir;
-			$opts{Repository} = $dir;
+			$opts{Repository} = abs_path($dir);
 
 			# If --git-dir went ok, this shouldn't die either.
 			my $prefix = $search->command_oneline('rev-parse', '--show-prefix');
@@ -202,15 +204,15 @@ sub repository {
 			$dir = $opts{Directory};
 
 			unless (-d "$dir/refs" and -d "$dir/objects" and -e "$dir/HEAD") {
-				# Mimick git-rev-parse --git-dir error message:
-				throw Error::Simple('fatal: Not a git repository');
+				# Mimic git-rev-parse --git-dir error message:
+				throw Error::Simple("fatal: Not a git repository: $dir");
 			}
 			my $search = Git->repository(Repository => $dir);
 			try {
 				$search->command('symbolic-ref', 'HEAD');
 			} catch Git::Error::Command with {
-				# Mimick git-rev-parse --git-dir error message:
-				throw Error::Simple('fatal: Not a git repository');
+				# Mimic git-rev-parse --git-dir error message:
+				throw Error::Simple("fatal: Not a git repository: $dir");
 			}
 
 			$opts{Repository} = abs_path($dir);
@@ -417,6 +419,7 @@ have more complicated structure.
 =cut
 
 sub command_close_bidi_pipe {
+	local $?;
 	my ($pid, $in, $out, $ctx) = @_;
 	foreach my $fh ($in, $out) {
 		unless (close $fh) {
@@ -487,6 +490,16 @@ C<git --exec-path>). Useful mostly only internally.
 =cut
 
 sub exec_path { command_oneline('--exec-path') }
+
+
+=item html_path ()
+
+Return path to the Git html documentation (the same as
+C<git --html-path>). Useful mostly only internally.
+
+=cut
+
+sub html_path { command_oneline('--html-path') }
 
 
 =item repo_path ()
@@ -730,7 +743,7 @@ This suite of functions retrieves and parses ident information, as stored
 in the commit and tag objects or produced by C<var GIT_type_IDENT> (thus
 C<TYPE> can be either I<author> or I<committer>; case is insignificant).
 
-The C<ident> method retrieves the ident information from C<git-var>
+The C<ident> method retrieves the ident information from C<git var>
 and either returns it as a scalar string or as an array with the fields parsed.
 Alternatively, it can take a prepared ident string (e.g. from the commit
 object) and just parse it.
@@ -839,8 +852,8 @@ sub _close_hash_and_insert_object {
 
 	my @vars = map { 'hash_object_' . $_ } qw(pid in out ctx);
 
-	command_close_bidi_pipe($self->{@vars});
-	delete $self->{@vars};
+	command_close_bidi_pipe(@$self{@vars});
+	delete @$self{@vars};
 }
 
 =item cat_blob ( SHA1, FILEHANDLE )
@@ -928,9 +941,157 @@ sub _close_cat_blob {
 
 	my @vars = map { 'cat_blob_' . $_ } qw(pid in out ctx);
 
-	command_close_bidi_pipe($self->{@vars});
-	delete $self->{@vars};
+	command_close_bidi_pipe(@$self{@vars});
+	delete @$self{@vars};
 }
+
+
+{ # %TEMP_* Lexical Context
+
+my (%TEMP_FILEMAP, %TEMP_FILES);
+
+=item temp_acquire ( NAME )
+
+Attempts to retreive the temporary file mapped to the string C<NAME>. If an
+associated temp file has not been created this session or was closed, it is
+created, cached, and set for autoflush and binmode.
+
+Internally locks the file mapped to C<NAME>. This lock must be released with
+C<temp_release()> when the temp file is no longer needed. Subsequent attempts
+to retrieve temporary files mapped to the same C<NAME> while still locked will
+cause an error. This locking mechanism provides a weak guarantee and is not
+threadsafe. It does provide some error checking to help prevent temp file refs
+writing over one another.
+
+In general, the L<File::Handle> returned should not be closed by consumers as
+it defeats the purpose of this caching mechanism. If you need to close the temp
+file handle, then you should use L<File::Temp> or another temp file faculty
+directly. If a handle is closed and then requested again, then a warning will
+issue.
+
+=cut
+
+sub temp_acquire {
+	my $temp_fd = _temp_cache(@_);
+
+	$TEMP_FILES{$temp_fd}{locked} = 1;
+	$temp_fd;
+}
+
+=item temp_release ( NAME )
+
+=item temp_release ( FILEHANDLE )
+
+Releases a lock acquired through C<temp_acquire()>. Can be called either with
+the C<NAME> mapping used when acquiring the temp file or with the C<FILEHANDLE>
+referencing a locked temp file.
+
+Warns if an attempt is made to release a file that is not locked.
+
+The temp file will be truncated before being released. This can help to reduce
+disk I/O where the system is smart enough to detect the truncation while data
+is in the output buffers. Beware that after the temp file is released and
+truncated, any operations on that file may fail miserably until it is
+re-acquired. All contents are lost between each release and acquire mapped to
+the same string.
+
+=cut
+
+sub temp_release {
+	my ($self, $temp_fd, $trunc) = _maybe_self(@_);
+
+	if (exists $TEMP_FILEMAP{$temp_fd}) {
+		$temp_fd = $TEMP_FILES{$temp_fd};
+	}
+	unless ($TEMP_FILES{$temp_fd}{locked}) {
+		carp "Attempt to release temp file '",
+			$temp_fd, "' that has not been locked";
+	}
+	temp_reset($temp_fd) if $trunc and $temp_fd->opened;
+
+	$TEMP_FILES{$temp_fd}{locked} = 0;
+	undef;
+}
+
+sub _temp_cache {
+	my ($self, $name) = _maybe_self(@_);
+
+	_verify_require();
+
+	my $temp_fd = \$TEMP_FILEMAP{$name};
+	if (defined $$temp_fd and $$temp_fd->opened) {
+		if ($TEMP_FILES{$$temp_fd}{locked}) {
+			throw Error::Simple("Temp file with moniker '" .
+				$name . "' already in use");
+		}
+	} else {
+		if (defined $$temp_fd) {
+			# then we're here because of a closed handle.
+			carp "Temp file '", $name,
+				"' was closed. Opening replacement.";
+		}
+		my $fname;
+
+		my $tmpdir;
+		if (defined $self) {
+			$tmpdir = $self->repo_path();
+		}
+
+		($$temp_fd, $fname) = File::Temp->tempfile(
+			'Git_XXXXXX', UNLINK => 1, DIR => $tmpdir,
+			) or throw Error::Simple("couldn't open new temp file");
+
+		$$temp_fd->autoflush;
+		binmode $$temp_fd;
+		$TEMP_FILES{$$temp_fd}{fname} = $fname;
+	}
+	$$temp_fd;
+}
+
+sub _verify_require {
+	eval { require File::Temp; require File::Spec; };
+	$@ and throw Error::Simple($@);
+}
+
+=item temp_reset ( FILEHANDLE )
+
+Truncates and resets the position of the C<FILEHANDLE>.
+
+=cut
+
+sub temp_reset {
+	my ($self, $temp_fd) = _maybe_self(@_);
+
+	truncate $temp_fd, 0
+		or throw Error::Simple("couldn't truncate file");
+	sysseek($temp_fd, 0, SEEK_SET) and seek($temp_fd, 0, SEEK_SET)
+		or throw Error::Simple("couldn't seek to beginning of file");
+	sysseek($temp_fd, 0, SEEK_CUR) == 0 and tell($temp_fd) == 0
+		or throw Error::Simple("expected file position to be reset");
+}
+
+=item temp_path ( NAME )
+
+=item temp_path ( FILEHANDLE )
+
+Returns the filename associated with the given tempfile.
+
+=cut
+
+sub temp_path {
+	my ($self, $temp_fd) = _maybe_self(@_);
+
+	if (exists $TEMP_FILEMAP{$temp_fd}) {
+		$temp_fd = $TEMP_FILEMAP{$temp_fd};
+	}
+	$TEMP_FILES{$temp_fd}{fname};
+}
+
+sub END {
+	unlink values %TEMP_FILEMAP if %TEMP_FILEMAP;
+}
+
+} # %TEMP_* Lexical Context
 
 =back
 
@@ -1058,8 +1219,7 @@ either version 2, or (at your option) any later version.
 # the method was called upon an instance and (undef, @args) if
 # it was called directly.
 sub _maybe_self {
-	# This breaks inheritance. Oh well.
-	ref $_[0] eq 'Git' ? @_ : (undef, @_);
+	UNIVERSAL::isa($_[0], 'Git') ? @_ : (undef, @_);
 }
 
 # Check if the command id is something reasonable.
@@ -1120,6 +1280,8 @@ sub _cmd_exec {
 	my ($self, @args) = @_;
 	if ($self) {
 		$self->repo_path() and $ENV{'GIT_DIR'} = $self->repo_path();
+		$self->repo_path() and $self->wc_path()
+			and $ENV{'GIT_WORK_TREE'} = $self->wc_path();
 		$self->wc_path() and chdir($self->wc_path());
 		$self->wc_subdir() and chdir($self->wc_subdir());
 	}

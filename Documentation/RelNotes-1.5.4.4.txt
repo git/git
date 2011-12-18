@@ -55,7 +55,7 @@ Fixes since v1.5.4.3
 
  * "git log --merge" did not work well with --left-right option.
 
- * "git svn" promprted for client cert password every time it accessed the
+ * "git svn" prompted for client cert password every time it accessed the
    server.
 
  * The reset command in "git fast-import" data stream was documented to

@@ -17,10 +17,12 @@ test_expect_success setup '
 	for i in 2 3 4 5 6
 	do
 		echo $i >>file-1 &&
+		echo $i >otherfile-$i &&
+		git add otherfile-$i &&
 		test_tick &&
 		git commit -a -m $i || break
 	done &&
-	git format-patch initial &&
+	git format-patch --no-numbered initial &&
 	git checkout -b side initial &&
 	echo local change >file-2-expect
 '
@@ -42,14 +44,14 @@ do
 	'
 
 	test_expect_success "am$with3 --skip continue after failed am$with3" '
-		test_must_fail git-am$with3 --skip >output &&
+		test_must_fail git am$with3 --skip >output &&
 		test "$(grep "^Applying" output)" = "Applying: 6" &&
 		test_cmp file-2-expect file-2 &&
 		test ! -f .git/rr-cache/MERGE_RR
 	'
 
 	test_expect_success "am --abort goes back after failed am$with3" '
-		git-am --abort &&
+		git am --abort &&
 		git rev-parse HEAD >actual &&
 		git rev-parse initial >expect &&
 		test_cmp expect actual &&

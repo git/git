@@ -162,8 +162,8 @@ add RE(t),RE(t),%r0;  rotlwi RB(t),RB(t),30
 	STEPUP4(fn, (t)+12, (s)+12,);	\
 	STEPUP4(fn, (t)+16, (s)+16, loadk)
 
-	.globl	sha1_core
-sha1_core:
+	.globl	ppc_sha1_core
+ppc_sha1_core:
 	stwu	%r1,-80(%r1)
 	stmw	%r13,4(%r1)
 

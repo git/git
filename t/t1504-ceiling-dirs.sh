@@ -13,7 +13,7 @@ test_fail() {
 	"git rev-parse --show-prefix"
 }
 
-TRASH_ROOT="$(pwd)"
+TRASH_ROOT="$PWD"
 ROOT_PARENT=$(dirname "$TRASH_ROOT")
 
 
@@ -93,13 +93,13 @@ GIT_CEILING_DIRECTORIES="$TRASH_ROOT/subdi"
 test_prefix subdir_ceil_at_subdi_slash "sub/dir/"
 
 
-GIT_CEILING_DIRECTORIES="foo:$TRASH_ROOT/sub"
+GIT_CEILING_DIRECTORIES="/foo:$TRASH_ROOT/sub"
 test_fail second_of_two
 
-GIT_CEILING_DIRECTORIES="$TRASH_ROOT/sub:bar"
+GIT_CEILING_DIRECTORIES="$TRASH_ROOT/sub:/bar"
 test_fail first_of_two
 
-GIT_CEILING_DIRECTORIES="foo:$TRASH_ROOT/sub:bar"
+GIT_CEILING_DIRECTORIES="/foo:$TRASH_ROOT/sub:/bar"
 test_fail second_of_three
 
 

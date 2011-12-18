@@ -7,7 +7,7 @@ test_description='Test special whitespace in diff engine.
 
 '
 . ./test-lib.sh
-. ../diff-lib.sh
+. "$TEST_DIRECTORY"/diff-lib.sh
 
 # Ray Lehtiniemi's example
 
@@ -93,11 +93,15 @@ git diff > out
 test_expect_success 'another test, without options' 'test_cmp expect out'
 
 cat << EOF > expect
-diff --git a/x b/x
-index d99af23..8b32fb5 100644
 EOF
 git diff -w > out
 test_expect_success 'another test, with -w' 'test_cmp expect out'
+git diff -w -b > out
+test_expect_success 'another test, with -w -b' 'test_cmp expect out'
+git diff -w --ignore-space-at-eol > out
+test_expect_success 'another test, with -w --ignore-space-at-eol' 'test_cmp expect out'
+git diff -w -b --ignore-space-at-eol > out
+test_expect_success 'another test, with -w -b --ignore-space-at-eol' 'test_cmp expect out'
 
 tr 'Q' '\015' << EOF > expect
 diff --git a/x b/x
@@ -116,6 +120,27 @@ index d99af23..8b32fb5 100644
 EOF
 git diff -b > out
 test_expect_success 'another test, with -b' 'test_cmp expect out'
+git diff -b --ignore-space-at-eol > out
+test_expect_success 'another test, with -b --ignore-space-at-eol' 'test_cmp expect out'
+
+tr 'Q' '\015' << EOF > expect
+diff --git a/x b/x
+index d99af23..8b32fb5 100644
+--- a/x
++++ b/x
+@@ -1,6 +1,6 @@
+-whitespace at beginning
+-whitespace change
+-whitespace in the middle
++	whitespace at beginning
++whitespace 	 change
++white space in the middle
+ whitespace at end
+ unchanged line
+ CR at endQ
+EOF
+git diff --ignore-space-at-eol > out
+test_expect_success 'another test, with --ignore-space-at-eol' 'test_cmp expect out'
 
 test_expect_success 'check mixed spaces and tabs in indent' '
 
@@ -335,10 +360,56 @@ test_expect_success 'line numbers in --check output are correct' '
 
 '
 
-test_expect_success 'checkdiff detects trailing blank lines' '
+test_expect_success 'checkdiff detects new trailing blank lines (1)' '
 	echo "foo();" >x &&
 	echo "" >>x &&
-	git diff --check | grep "ends with blank"
+	git diff --check | grep "new blank line"
+'
+
+test_expect_success 'checkdiff detects new trailing blank lines (2)' '
+	{ echo a; echo b; echo; echo; } >x &&
+	git add x &&
+	{ echo a; echo; echo; echo; echo; } >x &&
+	git diff --check | grep "new blank line"
+'
+
+test_expect_success 'checkdiff allows new blank lines' '
+	git checkout x &&
+	mv x y &&
+	(
+		echo "/* This is new */" &&
+		echo "" &&
+		cat y
+	) >x &&
+	git diff --check
+'
+
+cat <<EOF >expect
+EOF
+test_expect_success 'whitespace-only changes not reported' '
+	git reset --hard &&
+	echo >x "hello world" &&
+	git add x &&
+	git commit -m "hello 1" &&
+	echo >x "hello  world" &&
+	git diff -b >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'combined diff with autocrlf conversion' '
+
+	git reset --hard &&
+	echo >x hello &&
+	git commit -m "one side" x &&
+	git checkout HEAD^ &&
+	echo >x goodbye &&
+	git commit -m "the other side" x &&
+	git config core.autocrlf true &&
+	test_must_fail git merge master &&
+
+	git diff | sed -e "1,/^@@@/d" >actual &&
+	! grep "^-" actual
+
 '
 
 test_done

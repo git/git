@@ -6,12 +6,12 @@ test_description='rewrite diff'
 
 test_expect_success setup '
 
-	cat ../../COPYING >test &&
+	cat "$TEST_DIRECTORY"/../COPYING >test &&
 	git add test &&
 	tr \
 	  "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" \
 	  "nopqrstuvwxyzabcdefghijklmNOPQRSTUVWXYZABCDEFGHIJKLM" \
-	  <../../COPYING >test
+	  <"$TEST_DIRECTORY"/../COPYING >test
 
 '
 
