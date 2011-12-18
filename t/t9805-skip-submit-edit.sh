@@ -38,7 +38,7 @@ test_expect_success 'no config, unedited, say no' '
 		cd "$git" &&
 		echo line >>file1 &&
 		git commit -a -m "change 3 (not really)" &&
-		printf "bad response\nn\n" | "$GITP4" submit
+		printf "bad response\nn\n" | "$GITP4" submit &&
 		p4 changes //depot/... >wc &&
 		test_line_count = 2 wc
 	)
@@ -74,6 +74,28 @@ test_expect_success 'skipSubmitEditCheck' '
 	)
 '
 
+# check the normal case, where the template really is edited
+test_expect_success 'no config, edited' '
+	"$GITP4" clone --dest="$git" //depot &&
+	test_when_finished cleanup_git &&
+	ed="$TRASH_DIRECTORY/ed.sh" &&
+	test_when_finished "rm \"$ed\"" &&
+	cat >"$ed" <<-EOF &&
+		#!$SHELL_PATH
+		sleep 1
+		touch "\$1"
+		exit 0
+	EOF
+	chmod 755 "$ed" &&
+	(
+		cd "$git" &&
+		echo line >>file1 &&
+		git commit -a -m "change 5" &&
+		EDITOR="\"$ed\"" "$GITP4" submit &&
+		p4 changes //depot/... >wc &&
+		test_line_count = 5 wc
+	)
+'
 
 test_expect_success 'kill p4d' '
 	kill_p4d

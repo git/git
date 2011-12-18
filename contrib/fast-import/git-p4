@@ -872,13 +872,16 @@ class P4Submit(Command, P4UserMap):
         if gitConfig("git-p4.skipSubmitEditCheck") == "true":
             return True
 
-        if os.stat(template_file).st_mtime <= mtime:
-            while True:
-                response = raw_input("Submit template unchanged. Submit anyway? [y]es, [n]o (skip this patch) ")
-                if response == 'y':
-                    return True
-                if response == 'n':
-                    return False
+        # modification time updated means user saved the file
+        if os.stat(template_file).st_mtime > mtime:
+            return True
+
+        while True:
+            response = raw_input("Submit template unchanged. Submit anyway? [y]es, [n]o (skip this patch) ")
+            if response == 'y':
+                return True
+            if response == 'n':
+                return False
 
     def applyCommit(self, id):
         print "Applying %s" % (read_pipe("git log --max-count=1 --pretty=oneline %s" % id))
@@ -1062,6 +1065,7 @@ class P4Submit(Command, P4UserMap):
                         self.modifyChangelistUser(changelist, p4User)
             else:
                 # skip this patch
+                print "Submission cancelled, undoing p4 changes."
                 for f in editedFiles:
                     p4_revert(f)
                 for f in filesToAdd:
