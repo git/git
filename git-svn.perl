@@ -2028,6 +2028,7 @@ use Carp qw/croak/;
 use File::Path qw/mkpath/;
 use File::Copy qw/copy/;
 use IPC::Open3;
+use Time::Local;
 use Memoize;  # core since 5.8.0, Jul 2002
 use Memoize::Storable;
 
@@ -3286,6 +3287,14 @@ sub get_untracked {
 	\@out;
 }
 
+sub get_tz {
+	# some systmes don't handle or mishandle %z, so be creative.
+	my $t = shift || time;
+	my $gm = timelocal(gmtime($t));
+	my $sign = qw( + + - )[ $t <=> $gm ];
+	return sprintf("%s%02d%02d", $sign, (gmtime(abs($t - $gm)))[2,1]);
+}
+
 # parse_svn_date(DATE)
 # --------------------
 # Given a date (in UTC) from Subversion, return a string in the format
@@ -3318,8 +3327,7 @@ sub parse_svn_date {
 			delete $ENV{TZ};
 		}
 
-		my $our_TZ =
-		    POSIX::strftime('%Z', $S, $M, $H, $d, $m - 1, $Y - 1900);
+		my $our_TZ = get_tz();
 
 		# This converts $epoch_in_UTC into our local timezone.
 		my ($sec, $min, $hour, $mday, $mon, $year,
@@ -5993,7 +6001,6 @@ package Git::SVN::Log;
 use strict;
 use warnings;
 use POSIX qw/strftime/;
-use Time::Local;
 use constant commit_log_separator => ('-' x 72) . "\n";
 use vars qw/$TZ $limit $color $pager $non_recursive $verbose $oneline
             %rusers $show_commit $incremental/;
@@ -6103,11 +6110,8 @@ sub run_pager {
 }
 
 sub format_svn_date {
-	# some systmes don't handle or mishandle %z, so be creative.
 	my $t = shift || time;
-	my $gm = timelocal(gmtime($t));
-	my $sign = qw( + + - )[ $t <=> $gm ];
-	my $gmoff = sprintf("%s%02d%02d", $sign, (gmtime(abs($t - $gm)))[2,1]);
+	my $gmoff = Git::SVN::get_tz($t);
 	return strftime("%Y-%m-%d %H:%M:%S $gmoff (%a, %d %b %Y)", localtime($t));
 }
 
