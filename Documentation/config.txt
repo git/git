@@ -115,35 +115,32 @@ in the appropriate manual page. You will find a description of non-core
 porcelain configuration variables in the respective porcelain documentation.
 
 advice.*::
-	When set to 'true', display the given optional help message.
-	When set to 'false', do not display. The configuration variables
-	are:
+	These variables control various optional help messages designed to
+	aid new users. All 'advice.*' variables default to 'true', and you
+	can tell Git that you do not need help by setting these to 'false':
 +
 --
 	pushNonFastForward::
 		Advice shown when linkgit:git-push[1] refuses
-		non-fast-forward refs. Default: true.
+		non-fast-forward refs.
 	statusHints::
 		Directions on how to stage/unstage/add shown in the
 		output of linkgit:git-status[1] and the template shown
-		when writing commit messages. Default: true.
+		when writing commit messages.
 	commitBeforeMerge::
 		Advice shown when linkgit:git-merge[1] refuses to
 		merge to avoid overwriting local changes.
-		Default: true.
 	resolveConflict::
 		Advices shown by various commands when conflicts
 		prevent the operation from being performed.
-		Default: true.
 	implicitIdentity::
 		Advice on how to set your identity configuration when
 		your information is guessed from the system username and
-		domain name. Default: true.
-
+		domain name.
 	detachedHead::
-		Advice shown when you used linkgit::git-checkout[1] to
+		Advice shown when you used linkgit:git-checkout[1] to
 		move to the detach HEAD state, to instruct how to create
-		a local branch after the fact.  Default: true.
+		a local branch after the fact.
 --
 
 core.fileMode::
