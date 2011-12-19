@@ -1,14 +1,19 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Dec 2011, #05; Thu, 15)
-X-master-at: 10f4eb652ee4e592f91f638e579d1afcb96c0408
-X-next-at: d65a830db872dde05a0cb8e8d289f4f5a50b7818
+Subject: What's cooking in git.git (Dec 2011, #06; Sun, 18)
+X-master-at: d16520499d2652b5b59dfb25f9cf2d56a4c6913a
+X-next-at: 03f4636270a389f701ff4d876e0535fb9fbdc969
 
-What's cooking in git.git (Dec 2011, #05; Thu, 15)
+What's cooking in git.git (Dec 2011, #06; Sun, 18)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' (proposed updates) while commits prefixed with '+' are in
 'next'.
+
+A handful of topics have graduated to 'master', but they are all minor.
+More important features for 1.7.9 will come in the next batch (marked as
+'Will merge to "master"' below), which should happen in a couple of days;
+Peff's credential series is among them.
 
 Here are the repositories that have my integration branches:
 
@@ -36,23 +41,163 @@ The preformatted documentation in HTML and man format are found in:
         https://github.com/gitster/git-{htmldocs,manpages}.git/
 
 --------------------------------------------------
+[Graduated to "master"]
+
+* aw/rebase-i-stop-on-failure-to-amend (2011-11-30) 1 commit
+  (merged to 'next' on 2011-12-09 at a117e83)
+ + rebase -i: interrupt rebase when "commit --amend" failed during "reword"
+
+* jc/commit-amend-no-edit (2011-12-08) 5 commits
+  (merged to 'next' on 2011-12-09 at b9cfa4e)
+ + test: commit --amend should honor --no-edit
+ + commit: honour --no-edit
+ + t7501 (commit): modernize style
+ + test: remove a porcelain test that hard-codes commit names
+ + test: add missing "&&" after echo command
+
+* jc/stream-to-pack (2011-12-01) 5 commits
+  (merged to 'next' on 2011-12-09 at d0fd605)
+ + bulk-checkin: replace fast-import based implementation
+ + csum-file: introduce sha1file_checkpoint
+ + finish_tmp_packfile(): a helper function
+ + create_tmp_packfile(): a helper function
+ + write_pack_header(): a helper function
+ (this branch is used by jc/split-blob.)
+
+Teaches "git add" to send large-ish blob data straight to a packfile.
+This is a continuation to the "large file support" topic. The codepath to
+move data from worktree to repository is made aware of streaming, just
+like the checkout codepath that goes the other way, which was done in the
+previous "large file support" topic in the 1.7.7 cycle.
+
+* jh/fast-import-notes (2011-11-28) 3 commits
+  (merged to 'next' on 2011-12-09 at 2b01132)
+ + fast-import: Fix incorrect fanout level when modifying existing notes refs
+ + t9301: Add 2nd testcase exposing bugs in fast-import's notes fanout handling
+ + t9301: Fix testcase covering up a bug in fast-import's notes fanout handling
+
+* jk/upload-archive-use-start-command (2011-11-21) 1 commit
+  (merged to 'next' on 2011-12-09 at 88cb83a)
+ + upload-archive: use start_command instead of fork
+
+--------------------------------------------------
 [New Topics]
+
+* cn/maint-lf-to-crlf-filter (2011-12-16) 1 commit
+ - lf_to_crlf_filter(): tell the caller we added "\n" when draining
+ (this branch is used by jc/maint-lf-to-crlf-keep-crlf.)
+
+A recent fix to the codepath was not quite correct.
+
+Will merge to "next".
+
+* jc/maint-lf-to-crlf-keep-crlf (2011-12-18) 1 commit
+ - lf_to_crlf_filter(): resurrect CRLF->CRLF hack
+ (this branch uses cn/maint-lf-to-crlf-filter.)
+
+The lf-to-crlf filter in the streaming checkout codepath forgot that we
+try not to convert LF to CRLF if the repository data already has CRLF.
+
+Will merge to "next".
+
+* jc/request-pull-show-head-4 (2011-12-16) 1 commit
+  (merged to 'next' on 2011-12-16 at bea51ac)
+ + request-pull: update the "pull" command generation logic
+
+Will merge to "master".
+
+* jk/doc-fsck (2011-12-16) 1 commit
+ - docs: brush up obsolete bits of git-fsck manpage
+
+Will merge to "next".
+
+* jk/follow-rename-score (2011-12-16) 1 commit
+ - use custom rename score during --follow
+
+Will merge to "next".
+
+* jk/pretty-reglog-ent (2011-12-16) 1 commit
+ - pretty: give placeholders to reflog identity
+
+Will merge to "next".
+
+* jk/http-push-to-empty (2011-12-17) 1 commit
+ - remote-curl: don't pass back fake refs
+
+Will merge to "next".
+
+* jk/maint-push-v-is-verbose (2011-12-17) 1 commit
+ - make "git push -v" actually verbose
+
+Will merge to "next".
+
+* jk/maint-strbuf-missing-init (2011-12-18) 2 commits
+ - Update jk/maint-strbuf-missing-init to builtin/ rename
+ - commit, merge: initialize static strbuf
+
+Will merge to "next".
+
+* rs/diff-tree-combined-clean-up (2011-12-17) 3 commits
+ - submodule: use diff_tree_combined_merge() instead of diff_tree_combined()
+ - pass struct commit to diff_tree_combined_merge()
+ - use struct sha1_array in diff_tree_combined()
+
+Will merge to "next".
+
+* jn/maint-gitweb-utf8-fix (2011-12-18) 4 commits
+ - gitweb: Fix fallback mode of to_utf8 subroutine
+ - gitweb: Output valid utf8 in git_blame_common('data')
+ - gitweb: esc_html() site name for title in OPML
+ - gitweb: Call to_utf8() on input string in chop_and_escape_str()
+
+Will merge to "next".
+
+* pw/p4-docs-and-tests (2011-12-18) 11 commits
+ - git-p4: document and test submit options
+ - git-p4: test and document --use-client-spec
+ - git-p4: test --keep-path
+ - git-p4: test --max-changes
+ - git-p4: document and test --import-local
+ - git-p4: honor --changesfile option and test
+ - git-p4: document and test clone --branch
+ - git-p4: test cloning with two dirs, clarify doc
+ - git-p4: clone does not use --git-dir
+ - git-p4: test debug macro
+ - git-p4: introduce asciidoc documentation
+
+* jc/advise-push-default (2011-12-18) 2 commits
+ - push: hint to use push.default=upstream when appropriate
+ - advice: Document that they all default to true
+
+A counter-proposal to jc/push-ignore-stale that may encourage a bad
+workflow.
+
+--------------------------------------------------
+[Cooking]
 
 * ef/setenv-putenv (2011-12-14) 2 commits
  - compat/setenv.c: error if name contains '='
  - compat/setenv.c: update errno when erroring out
  (this branch is used by ef/x-setenv-putenv.)
 
+Will merge to "next".
+
 * jk/maint-do-not-feed-stdin-to-tests (2011-12-15) 1 commit
  - test-lib: redirect stdin of tests
 
+Will merge to "next".
+
 * jn/test-cleanup-7006 (2011-12-14) 1 commit
  - test: errors preparing for a test are not special
+
+Will merge to "next".
 
 * nd/war-on-nul-in-commit (2011-12-15) 3 commits
  - commit_tree(): refuse commit messages that contain NULs
  - Convert commit_tree() to take strbuf as message
  - merge: abort if fails to commit
+
+Will merge to "next".
 
 * jk/git-prompt (2011-12-12) 10 commits
  - contrib: add credential helper for OS X Keychain
@@ -110,77 +255,11 @@ Will merge to 'next' after taking another look.
 The API for extra anchoring points may require rethought first; that would
 hopefully make the "ref" part a lot simpler.
 
---------------------------------------------------
-[Graduated to "master"]
-
-* bc/maint-apply-check-no-patch (2011-12-05) 2 commits
-  (merged to 'next' on 2011-12-09 at fc780cd)
- + builtin/apply.c: report error on failure to recognize input
- + t/t4131-apply-fake-ancestor.sh: fix broken test
-
-* cn/maint-lf-to-crlf-filter (2011-11-28) 1 commit
-  (merged to 'next' on 2011-12-09 at c374d14)
- + convert: track state in LF-to-CRLF filter
-
-* jk/maint-1.6.2-upload-archive (2011-11-21) 1 commit
- + archive: don't let remote clients get unreachable commits
- (this branch is used by jk/maint-upload-archive.)
-
-* jk/maint-fetch-status-table (2011-12-09) 1 commit
-  (merged to 'next' on 2011-12-09 at 159415e)
- + fetch: create status table using strbuf
-
-* jk/maint-upload-archive (2011-11-21) 1 commit
-  (merged to 'next' on 2011-12-09 at 03deb16)
- + Merge branch 'jk/maint-1.6.2-upload-archive' into jk/maint-upload-archive
- (this branch uses jk/maint-1.6.2-upload-archive.)
-
-* jl/submodule-status-failure-report (2011-12-08) 1 commit
-  (merged to 'next' on 2011-12-09 at 53eb3b3)
- + diff/status: print submodule path when looking for changes fails
-
-* jn/branch-move-to-self (2011-11-28) 2 commits
-  (merged to 'next' on 2011-12-09 at 7d27260)
- + Allow checkout -B <current-branch> to update the current branch
- + branch: allow a no-op "branch -M <current-branch> HEAD"
-
-* jn/gitweb-side-by-side-diff (2011-10-31) 8 commits
-  (merged to 'next' on 2011-12-09 at 7662e58)
- + gitweb: Add navigation to select side-by-side diff
- + gitweb: Use href(-replay=>1,...) for formats links in "commitdiff"
- + t9500: Add basic sanity tests for side-by-side diff in gitweb
- + t9500: Add test for handling incomplete lines in diff by gitweb
- + gitweb: Give side-by-side diff extra CSS styling
- + gitweb: Add a feature to show side-by-side diff
- + gitweb: Extract formatting of diff chunk header
- + gitweb: Refactor diff body line classification
-
-Replaces a series from Kato Kazuyoshi on the same topic.
-
-* ks/tag-cleanup (2011-12-09) 1 commit
-  (merged to 'next' on 2011-12-09 at cbea045)
- + git-tag: introduce --cleanup option
-
-* nd/ignore-might-be-precious (2011-11-28) 2 commits
-  (merged to 'next' on 2011-12-09 at 1a94553)
- + checkout,merge: disallow overwriting ignored files with --no-overwrite-ignore
- + Merge branch 'nd/maint-ignore-exclude' into nd/ignore-might-be-precious
-
-* tj/maint-imap-send-remove-unused (2011-11-23) 2 commits
-  (merged to 'next' on 2011-12-09 at 877cc11)
- + Merge branch 'maint' into tj/imap-send-remove-unused
- + imap-send: Remove unused 'use_namespace' variable
-
-* tr/userdiff-c-returns-pointer (2011-12-06) 1 commit
-  (merged to 'next' on 2011-12-09 at 0b6a092)
- + userdiff: allow * between cpp funcname words
-
---------------------------------------------------
-[Cooking]
-
 * ci/stripspace-docs (2011-12-12) 1 commit
   (merged to 'next' on 2011-12-13 at 35b2cdf)
  + Update documentation for stripspace
+
+Will merge to "master".
 
 * jk/maint-mv (2011-12-12) 5 commits
   (merged to 'next' on 2011-12-13 at 58caedb)
@@ -190,9 +269,13 @@ Replaces a series from Kato Kazuyoshi on the same topic.
  + mv: honor --verbose flag
  + docs: mention "-k" for both forms of "git mv"
 
+Will merge to "master".
+
 * jk/maint-snprintf-va-copy (2011-12-12) 1 commit
   (merged to 'next' on 2011-12-13 at d37a7e1)
  + compat/snprintf: don't look at va_list twice
+
+Will merge to "master".
 
 * jn/maint-sequencer-fixes (2011-12-12) 7 commits
   (merged to 'next' on 2011-12-13 at 5b3950c)
@@ -204,6 +287,8 @@ Replaces a series from Kato Kazuyoshi on the same topic.
  + revert: allow cherry-pick --continue to commit before resuming
  + revert: give --continue handling its own function
  (this branch is used by rr/revert-cherry-pick.)
+
+Will merge to "master".
 
 * mh/ref-api (2011-12-12) 16 commits
   (merged to 'next' on 2011-12-15 at d65a830)
@@ -227,13 +312,17 @@ Replaces a series from Kato Kazuyoshi on the same topic.
 
 Later part split out to expedite moving the earlier good bits forward.
 
+Will merge to "master".
+
 * nd/resolve-ref (2011-12-13) 3 commits
   (merged to 'next' on 2011-12-13 at c7002e9)
  + Rename resolve_ref() to resolve_ref_unsafe()
  + Convert resolve_ref+xstrdup to new resolve_refdup function
  + revert: convert resolve_ref() to read_ref_full()
 
-* tr/grep-threading (2011-12-12) 3 commits
+Will merge to "master".
+
+* tr/grep-threading (2011-12-16) 3 commits
  - grep: disable threading in non-worktree case
  - grep: enable threading with -p and -W using lazy attribute lookup
  - grep: load funcname patterns for -W
@@ -245,9 +334,18 @@ Will merge to 'next' after taking another look.
  - test-terminal: set output terminals to raw mode
  - test-terminal: give the child an empty stdin TTY
 
+The test breakage that originally triggered interest in this topic is
+fixed more cleanly with Peff's jk/maint-do-not-feed-stdin-to-tests but
+this series may independently be useful.
+
+Jonathan had good review comments, and this would need to be rerolled.
+
 * jc/push-ignore-stale (2011-12-14) 2 commits
  - push: --ignore-stale option
  - set_ref_status_for_push(): use transport-flags abstraction
+
+Probably solving a wrong problem and encouraging a wrong workflow while at
+it. Will drop. jc/advise-push-default might be a better approach.
 
 * jk/fetch-no-tail-match-refs (2011-12-13) 4 commits
   (merged to 'next' on 2011-12-13 at 805c018)
@@ -256,10 +354,14 @@ Will merge to 'next' after taking another look.
  + t5500: give fully-qualified refs to fetch-pack
  + drop "match" parameter from get_remote_heads
 
+Will merge to "master".
+
 * jk/maint-push-over-dav (2011-12-13) 2 commits
   (merged to 'next' on 2011-12-13 at 45e376c)
  + http-push: enable "proactive auth"
  + t5540: test DAV push with authentication
+
+Will merge to "master".
 
 * rr/revert-cherry-pick (2011-12-15) 6 commits
  - t3502, t3510: clarify cherry-pick -m failure
@@ -271,6 +373,8 @@ Will merge to 'next' after taking another look.
  (this branch uses jn/maint-sequencer-fixes.)
 
 Picked up only the earlier bits that are reasonably clear for now.
+
+Will merge to "next".
 
 * ew/keepalive (2011-12-05) 1 commit
   (merged to 'next' on 2011-12-13 at 1b5d5c4)
@@ -284,6 +388,8 @@ Picked up only the earlier bits that are reasonably clear for now.
   (merged to 'next' on 2011-12-09 at c946009)
  + checkout -m: no need to insist on having all 3 stages
 
+Will merge to "master".
+
 * tr/cache-tree (2011-12-06) 5 commits
   (merged to 'next' on 2011-12-13 at e0da64d)
  + reset: update cache-tree data when appropriate
@@ -292,15 +398,7 @@ Picked up only the earlier bits that are reasonably clear for now.
  + Test the current state of the cache-tree optimization
  + Add test-scrap-cache-tree
 
-* jc/commit-amend-no-edit (2011-12-08) 5 commits
-  (merged to 'next' on 2011-12-09 at b9cfa4e)
- + test: commit --amend should honor --no-edit
- + commit: honour --no-edit
- + t7501 (commit): modernize style
- + test: remove a porcelain test that hard-codes commit names
- + test: add missing "&&" after echo command
-
-Will merge to 'master'.
+Will merge to "master".
 
 * rr/test-chaining (2011-12-11) 7 commits
   (merged to 'next' on 2011-12-13 at b08445e)
@@ -312,11 +410,7 @@ Will merge to 'master'.
  + test: fix '&&' chaining
  + t3200 (branch): fix '&&' chaining
 
-* aw/rebase-i-stop-on-failure-to-amend (2011-11-30) 1 commit
-  (merged to 'next' on 2011-12-09 at a117e83)
- + rebase -i: interrupt rebase when "commit --amend" failed during "reword"
-
-Will merge to 'master'.
+Will merge to "master".
 
 * jc/split-blob (2011-12-01) 6 commits
  . WIP (streaming chunked)
@@ -325,19 +419,10 @@ Will merge to 'master'.
  - bulk-checkin: allow the same data to be multiply hashed
  - new representation types in the packstream
  - varint-in-pack: refactor varint encoding/decoding
- (this branch uses jc/stream-to-pack.)
 
 Not ready. At least pack-objects and fsck need to learn the new encoding
 for the series to be usable locally, and then index-pack/unpack-objects
 needs to learn it to be used remotely.
-
-* jh/fast-import-notes (2011-11-28) 3 commits
-  (merged to 'next' on 2011-12-09 at 2b01132)
- + fast-import: Fix incorrect fanout level when modifying existing notes refs
- + t9301: Add 2nd testcase exposing bugs in fast-import's notes fanout handling
- + t9301: Fix testcase covering up a bug in fast-import's notes fanout handling
-
-Will merge to 'master'.
 
 * jk/credentials (2011-12-12) 14 commits
   (merged to 'next' on 2011-12-12 at 7a6d658)
@@ -359,11 +444,7 @@ Will merge to 'master'.
 
 Later part split out to expedite moving the earlier good bits forward.
 
-* jk/upload-archive-use-start-command (2011-11-21) 1 commit
-  (merged to 'next' on 2011-12-09 at 88cb83a)
- + upload-archive: use start_command instead of fork
-
-Will merge to 'master'.
+Will merge to "master".
 
 * ab/enable-i18n (2011-12-05) 1 commit
   (merged to 'next' on 2011-12-13 at 65af8cd)
@@ -377,20 +458,3 @@ Will merge to 'master'.
  - commit: teach --gpg-sign option
 
 Not exactly urgent.
-
-* jc/stream-to-pack (2011-12-01) 5 commits
-  (merged to 'next' on 2011-12-09 at d0fd605)
- + bulk-checkin: replace fast-import based implementation
- + csum-file: introduce sha1file_checkpoint
- + finish_tmp_packfile(): a helper function
- + create_tmp_packfile(): a helper function
- + write_pack_header(): a helper function
- (this branch is used by jc/split-blob.)
-
-Teaches "git add" to send large-ish blob data straight to a packfile.
-This is a continuation to the "large file support" topic. The codepath to
-move data from worktree to repository is made aware of streaming, just
-like the checkout codepath that goes the other way, which was done in the
-previous "large file support" topic in the 1.7.7 cycle.
-
-Will merge to 'master'.
