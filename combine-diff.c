@@ -8,6 +8,7 @@
 #include "log-tree.h"
 #include "refs.h"
 #include "userdiff.h"
+#include "sha1-array.h"
 
 static struct combine_diff_path *intersect_paths(struct combine_diff_path *curr, int n, int num_parent)
 {
@@ -1116,15 +1117,14 @@ static void handle_combined_callback(struct diff_options *opt,
 }
 
 void diff_tree_combined(const unsigned char *sha1,
-			const unsigned char parent[][20],
-			int num_parent,
+			const struct sha1_array *parents,
 			int dense,
 			struct rev_info *rev)
 {
 	struct diff_options *opt = &rev->diffopt;
 	struct diff_options diffopts;
 	struct combine_diff_path *p, *paths = NULL;
-	int i, num_paths, needsep, show_log_first;
+	int i, num_paths, needsep, show_log_first, num_parent = parents->nr;
 
 	diffopts = *opt;
 	diffopts.output_format = DIFF_FORMAT_NO_OUTPUT;
@@ -1144,7 +1144,7 @@ void diff_tree_combined(const unsigned char *sha1,
 			diffopts.output_format = stat_opt;
 		else
 			diffopts.output_format = DIFF_FORMAT_NO_OUTPUT;
-		diff_tree_sha1(parent[i], sha1, "", &diffopts);
+		diff_tree_sha1(parents->sha1[i], sha1, "", &diffopts);
 		diffcore_std(&diffopts);
 		paths = intersect_paths(paths, i, num_parent);
 
@@ -1196,25 +1196,16 @@ void diff_tree_combined(const unsigned char *sha1,
 	}
 }
 
-void diff_tree_combined_merge(const unsigned char *sha1,
-			     int dense, struct rev_info *rev)
+void diff_tree_combined_merge(const struct commit *commit, int dense,
+			      struct rev_info *rev)
 {
-	int num_parent;
-	const unsigned char (*parent)[20];
-	struct commit *commit = lookup_commit(sha1);
-	struct commit_list *parents;
+	struct commit_list *parent = commit->parents;
+	struct sha1_array parents = SHA1_ARRAY_INIT;
 
-	/* count parents */
-	for (parents = commit->parents, num_parent = 0;
-	     parents;
-	     parents = parents->next, num_parent++)
-		; /* nothing */
-
-	parent = xmalloc(num_parent * sizeof(*parent));
-	for (parents = commit->parents, num_parent = 0;
-	     parents;
-	     parents = parents->next, num_parent++)
-		hashcpy((unsigned char *)(parent + num_parent),
-			parents->item->object.sha1);
-	diff_tree_combined(sha1, parent, num_parent, dense, rev);
+	while (parent) {
+		sha1_array_append(&parents, parent->item->object.sha1);
+		parent = parent->next;
+	}
+	diff_tree_combined(commit->object.sha1, &parents, dense, rev);
+	sha1_array_clear(&parents);
 }
