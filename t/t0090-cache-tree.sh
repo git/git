@@ -17,15 +17,13 @@ cmp_cache_tree () {
 # test-dump-cache-tree already verifies that all existing data is
 # correct.
 test_shallow_cache_tree () {
-	echo "SHA " \
-	    "($(git ls-files|wc -l) entries, 0 subtrees)" >expect &&
+	printf "SHA  (%d entries, 0 subtrees)\n" $(git ls-files|wc -l) >expect &&
 	cmp_cache_tree expect
 }
 
 test_invalid_cache_tree () {
 	echo "invalid                                   (0 subtrees)" >expect &&
-	echo "SHA #(ref) " \
-	    "($(git ls-files|wc -l) entries, 0 subtrees)" >>expect &&
+	printf "SHA #(ref)  (%d entries, 0 subtrees)\n" $(git ls-files|wc -l) >>expect &&
 	cmp_cache_tree expect
 }
 
