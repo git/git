@@ -17,7 +17,9 @@ test_expect_success setup '
 	test_commit added_in_topic each.txt in_topic
 '
 
-test_must_fail git merge master
+test_expect_success 'git merge master' '
+    test_must_fail git merge master
+'
 
 clean_branchnames () {
 	# Remove branch names after conflict lines
