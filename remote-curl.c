@@ -859,7 +859,7 @@ int main(int argc, const char **argv)
 
 	url = strbuf_detach(&buf, NULL);
 
-	http_init(remote, url);
+	http_init(remote, url, 0);
 
 	do {
 		if (strbuf_getline(&buf, stdin, '\n') == EOF) {

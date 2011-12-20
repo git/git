@@ -40,6 +40,22 @@ test_expect_success 'setup remote repository' '
 	mv test_repo.git "$HTTPD_DOCUMENT_ROOT_PATH"
 '
 
+test_expect_success 'create password-protected repository' '
+	mkdir -p "$HTTPD_DOCUMENT_ROOT_PATH/auth/dumb" &&
+	cp -Rf "$HTTPD_DOCUMENT_ROOT_PATH/test_repo.git" \
+	       "$HTTPD_DOCUMENT_ROOT_PATH/auth/dumb/test_repo.git"
+'
+
+test_expect_success 'setup askpass helper' '
+	cat >askpass <<-\EOF &&
+	#!/bin/sh
+	echo user@host
+	EOF
+	chmod +x askpass &&
+	GIT_ASKPASS="$PWD/askpass" &&
+	export GIT_ASKPASS
+'
+
 test_expect_success 'clone remote repository' '
 	cd "$ROOT_PATH" &&
 	git clone $HTTPD_URL/dumb/test_repo.git test_repo_clone
@@ -143,6 +159,24 @@ test_expect_success 'PUT and MOVE sends object to URLs with SHA-1 hash suffix' '
 
 test_http_push_nonff "$HTTPD_DOCUMENT_ROOT_PATH"/test_repo.git \
 	"$ROOT_PATH"/test_repo_clone master
+
+test_expect_success 'push to password-protected repository (user in URL)' '
+	test_commit pw-user &&
+	git push "$HTTPD_URL_USER/auth/dumb/test_repo.git" HEAD &&
+	git rev-parse --verify HEAD >expect &&
+	git --git-dir="$HTTPD_DOCUMENT_ROOT_PATH/auth/dumb/test_repo.git" \
+		rev-parse --verify HEAD >actual &&
+	test_cmp expect actual
+'
+
+test_expect_failure 'push to password-protected repository (no user in URL)' '
+	test_commit pw-nouser &&
+	git push "$HTTPD_URL/auth/dumb/test_repo.git" HEAD &&
+	git rev-parse --verify HEAD >expect &&
+	git --git-dir="$HTTPD_DOCUMENT_ROOT_PATH/auth/dumb/test_repo.git" \
+		rev-parse --verify HEAD >actual &&
+	test_cmp expect actual
+'
 
 stop_httpd
 
