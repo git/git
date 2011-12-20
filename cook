@@ -658,7 +658,7 @@ sub wildo {
 		next if (/^ /);
 		next unless defined $topic;
 		if (/^Will (?:\S+ ){0,2}(keep|merge|drop|discard|cook|kick)[,. ]/ ||
-		    /^Not urgent/ ||
+		    /^Not urgent/ || /^Not ready/ || /^Waiting for / ||
 		    /^Needs? /) {
 			wildo_queue(\%what, $_, $topic);
 			$topic = undef;
