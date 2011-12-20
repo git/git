@@ -34,7 +34,7 @@ assert_blob_equals() {
 }
 
 test_expect_success setup '
-	cp -R "$TEST_DIRECTORY/t1013/objects" .git/
+	cp -R "$TEST_DIRECTORY/t1013/objects" .git/ &&
 	git --version
 '
 

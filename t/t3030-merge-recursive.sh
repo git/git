@@ -285,17 +285,7 @@ test_expect_success 'merge-recursive simple' '
 	rm -fr [abcd] &&
 	git checkout -f "$c2" &&
 
-	git merge-recursive "$c0" -- "$c2" "$c1"
-	status=$?
-	case "$status" in
-	1)
-		: happy
-		;;
-	*)
-		echo >&2 "why status $status!!!"
-		false
-		;;
-	esac
+	test_expect_code 1 git merge-recursive "$c0" -- "$c2" "$c1"
 '
 
 test_expect_success 'merge-recursive result' '
@@ -334,17 +324,7 @@ test_expect_success 'merge-recursive remove conflict' '
 	rm -fr [abcd] &&
 	git checkout -f "$c1" &&
 
-	git merge-recursive "$c0" -- "$c1" "$c5"
-	status=$?
-	case "$status" in
-	1)
-		: happy
-		;;
-	*)
-		echo >&2 "why status $status!!!"
-		false
-		;;
-	esac
+	test_expect_code 1 git merge-recursive "$c0" -- "$c1" "$c5"
 '
 
 test_expect_success 'merge-recursive remove conflict' '
@@ -388,17 +368,7 @@ test_expect_success 'merge-recursive d/f conflict' '
 	git reset --hard &&
 	git checkout -f "$c1" &&
 
-	git merge-recursive "$c0" -- "$c1" "$c4"
-	status=$?
-	case "$status" in
-	1)
-		: happy
-		;;
-	*)
-		echo >&2 "why status $status!!!"
-		false
-		;;
-	esac
+	test_expect_code 1 git merge-recursive "$c0" -- "$c1" "$c4"
 '
 
 test_expect_success 'merge-recursive d/f conflict result' '
@@ -422,17 +392,7 @@ test_expect_success 'merge-recursive d/f conflict the other way' '
 	git reset --hard &&
 	git checkout -f "$c4" &&
 
-	git merge-recursive "$c0" -- "$c4" "$c1"
-	status=$?
-	case "$status" in
-	1)
-		: happy
-		;;
-	*)
-		echo >&2 "why status $status!!!"
-		false
-		;;
-	esac
+	test_expect_code 1 git merge-recursive "$c0" -- "$c4" "$c1"
 '
 
 test_expect_success 'merge-recursive d/f conflict result the other way' '
@@ -456,17 +416,7 @@ test_expect_success 'merge-recursive d/f conflict' '
 	git reset --hard &&
 	git checkout -f "$c1" &&
 
-	git merge-recursive "$c0" -- "$c1" "$c6"
-	status=$?
-	case "$status" in
-	1)
-		: happy
-		;;
-	*)
-		echo >&2 "why status $status!!!"
-		false
-		;;
-	esac
+	test_expect_code 1 git merge-recursive "$c0" -- "$c1" "$c6"
 '
 
 test_expect_success 'merge-recursive d/f conflict result' '
@@ -490,17 +440,7 @@ test_expect_success 'merge-recursive d/f conflict' '
 	git reset --hard &&
 	git checkout -f "$c6" &&
 
-	git merge-recursive "$c0" -- "$c6" "$c1"
-	status=$?
-	case "$status" in
-	1)
-		: happy
-		;;
-	*)
-		echo >&2 "why status $status!!!"
-		false
-		;;
-	esac
+	test_expect_code 1 git merge-recursive "$c0" -- "$c6" "$c1"
 '
 
 test_expect_success 'merge-recursive d/f conflict result' '

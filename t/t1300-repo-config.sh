@@ -38,7 +38,7 @@ cat > expect << EOF
 	WhatEver = Second
 EOF
 test_expect_success 'similar section' '
-	git config Cores.WhatEver Second
+	git config Cores.WhatEver Second &&
 	test_cmp expect .git/config
 '
 

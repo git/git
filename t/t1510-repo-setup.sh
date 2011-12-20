@@ -603,7 +603,7 @@ test_expect_success '#22a: core.worktree = GIT_DIR = .git dir' '
 	# like case #6.
 
 	setup_repo 22a "$here/22a/.git" "" unset &&
-	setup_repo 22ab . "" unset
+	setup_repo 22ab . "" unset &&
 	mkdir -p 22a/.git/sub 22a/sub &&
 	mkdir -p 22ab/.git/sub 22ab/sub &&
 	try_case 22a/.git unset . \
@@ -742,7 +742,7 @@ test_expect_success '#28: core.worktree and core.bare conflict (gitfile case)' '
 # Case #29: GIT_WORK_TREE(+core.worktree) overrides core.bare (gitfile case).
 test_expect_success '#29: setup' '
 	setup_repo 29 non-existent gitfile true &&
-	mkdir -p 29/sub/sub 29/wt/sub
+	mkdir -p 29/sub/sub 29/wt/sub &&
 	(
 		cd 29 &&
 		GIT_WORK_TREE="$here/29" &&
