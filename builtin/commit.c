@@ -1484,8 +1484,12 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 		exit(1);
 	}
 
-	if (amend)
+	if (amend) {
 		extra = read_commit_extra_headers(current_head);
+	} else {
+		struct commit_extra_header **tail = &extra;
+		append_merge_tag_headers(parents, &tail);
+	}
 
 	if (commit_tree_extended(sb.buf, active_cache_tree->sha1, parents, sha1,
 				 author_ident.buf, extra)) {
