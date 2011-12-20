@@ -879,7 +879,8 @@ int is_null_stream_filter(struct stream_filter *filter)
 
 struct lf_to_crlf_filter {
 	struct stream_filter filter;
-	unsigned want_lf:1;
+	unsigned has_held:1;
+	char held;
 };
 
 static int lf_to_crlf_filter_fn(struct stream_filter *filter,
@@ -889,10 +890,14 @@ static int lf_to_crlf_filter_fn(struct stream_filter *filter,
 	size_t count, o = 0;
 	struct lf_to_crlf_filter *lf_to_crlf = (struct lf_to_crlf_filter *)filter;
 
-	/* Output a pending LF if we need to */
-	if (lf_to_crlf->want_lf) {
-		output[o++] = '\n';
-		lf_to_crlf->want_lf = 0;
+	/*
+	 * We may be holding onto the CR to see if it is followed by a
+	 * LF, in which case we would need to go to the main loop.
+	 * Otherwise, just emit it to the output stream.
+	 */
+	if (lf_to_crlf->has_held && (lf_to_crlf->held != '\r' || !input)) {
+		output[o++] = lf_to_crlf->held;
+		lf_to_crlf->has_held = 0;
 	}
 
 	/* We are told to drain */
@@ -902,22 +907,57 @@ static int lf_to_crlf_filter_fn(struct stream_filter *filter,
 	}
 
 	count = *isize_p;
-	if (count) {
+	if (count || lf_to_crlf->has_held) {
 		size_t i;
+		int was_cr = 0;
+
+		if (lf_to_crlf->has_held) {
+			was_cr = 1;
+			lf_to_crlf->has_held = 0;
+		}
+
 		for (i = 0; o < *osize_p && i < count; i++) {
 			char ch = input[i];
+
 			if (ch == '\n') {
 				output[o++] = '\r';
-				if (o >= *osize_p) {
-					lf_to_crlf->want_lf = 1;
-					continue; /* We need to increase i */
-				}
+			} else if (was_cr) {
+				/*
+				 * Previous round saw CR and it is not followed
+				 * by a LF; emit the CR before processing the
+				 * current character.
+				 */
+				output[o++] = '\r';
 			}
+
+			/*
+			 * We may have consumed the last output slot,
+			 * in which case we need to break out of this
+			 * loop; hold the current character before
+			 * returning.
+			 */
+			if (*osize_p <= o) {
+				lf_to_crlf->has_held = 1;
+				lf_to_crlf->held = ch;
+				continue; /* break but increment i */
+			}
+
+			if (ch == '\r') {
+				was_cr = 1;
+				continue;
+			}
+
+			was_cr = 0;
 			output[o++] = ch;
 		}
 
 		*osize_p -= o;
 		*isize_p -= i;
+
+		if (!lf_to_crlf->has_held && was_cr) {
+			lf_to_crlf->has_held = 1;
+			lf_to_crlf->held = '\r';
+		}
 	}
 	return 0;
 }
