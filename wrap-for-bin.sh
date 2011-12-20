@@ -15,7 +15,8 @@ else
 	export GIT_TEMPLATE_DIR
 fi
 GITPERLLIB='@@BUILD_DIR@@/perl/blib/lib'
+GIT_TEXTDOMAINDIR='@@BUILD_DIR@@/po/build/locale'
 PATH='@@BUILD_DIR@@/bin-wrappers:'"$PATH"
-export GIT_EXEC_PATH GITPERLLIB PATH
+export GIT_EXEC_PATH GITPERLLIB PATH GIT_TEXTDOMAINDIR
 
 exec "${GIT_EXEC_PATH}/@@PROG@@" "$@"
