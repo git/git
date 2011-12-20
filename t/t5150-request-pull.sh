@@ -180,7 +180,7 @@ test_expect_success 'request names an appropriate branch' '
 		read branch
 	} <digest &&
 	{
-		test "$branch" = tag--full ||
+		test "$branch" = full ||
 		test "$branch" = master ||
 		test "$branch" = for-upstream
 	}
