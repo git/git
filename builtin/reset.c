@@ -43,6 +43,7 @@ static int reset_index_file(const unsigned char *sha1, int reset_type, int quiet
 	int nr = 1;
 	int newfd;
 	struct tree_desc desc[2];
+	struct tree *tree;
 	struct unpack_trees_options opts;
 	struct lock_file *lock = xcalloc(1, sizeof(struct lock_file));
 
@@ -84,6 +85,12 @@ static int reset_index_file(const unsigned char *sha1, int reset_type, int quiet
 		return error(_("Failed to find tree of %s."), sha1_to_hex(sha1));
 	if (unpack_trees(nr, desc, &opts))
 		return -1;
+
+	if (reset_type == MIXED || reset_type == HARD) {
+		tree = parse_tree_indirect(sha1);
+		prime_cache_tree(&active_cache_tree, tree);
+	}
+
 	if (write_cache(newfd, active_cache, active_nr) ||
 	    commit_locked_index(lock))
 		return error(_("Could not write new index file."));
