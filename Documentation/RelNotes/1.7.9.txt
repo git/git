@@ -10,10 +10,22 @@ Updates since v1.7.8
 
  * git-p4 (in contrib/) updates.
 
+ * i18n effort is going forward and Git uses localized messages if
+   available.
+
  * Porcelain commands like "git reset" did not distinguish deletions
    and type-changes from ordinary modification, and reported them with
    the same 'M' moniker. They now use 'D' (for deletion) and 'T' (for
    type-change) to match "git status -s" and "git diff --name-status".
+
+ * The code to handle username/password for HTTP transaction used in
+   "git push" & "git fetch" learned to talk "credential API" to
+   external programs to cache or store them, to allow integration with
+   platform native keychain mechanisms.
+
+ * "git commit" and "git reset" re-learned the optimization to prime
+   the cache-tree information in the index, which makes it faster to
+   write a tree object out after the index entries are updated.
 
  * "git add" learned to stream large files directly into a packfile
    instead of writing them into individual loose object files.
@@ -79,9 +91,17 @@ Fixes since v1.7.8
    function.
    (merge 37e7793 tr/userdiff-c-returns-pointer later to maint).
 
+ * The replacement implemention for snprintf used on platforms with
+   native snprintf that is broken did not use va_copy correctly.
+   (merge a9bfbc5 jk/maint-snprintf-va-copy later to maint).
+
  * LF-to-CRLF streaming filter used when checking out a large-ish blob
    fell into an infinite loop with a rare input.
    (merge 284e3d2 cn/maint-lf-to-crlf-filter later to maint).
+
+ * git native connection going over TCP (not over SSH) did not set
+   SO_KEEPALIVE option which failed to receive link layer errors.
+   (merge e47a858 ew/keepalive later to maint).
 
  * "git archive" mistakenly allowed remote clients to ask for commits
    that are not at the tip of any ref.
@@ -91,6 +111,16 @@ Fixes since v1.7.8
    without any patch.
    (merge cc64b31 bc/maint-apply-check-no-patch later to maint).
 
+ * "git checkout -m" did not recreate the conflicted state in a "both
+   sides added, without any common ancestor version" conflict
+   situation.
+   (merge 335c6e4 jc/checkout-m-twoway later to maint).
+
+ * "git cherry-pick $commit" (not a range) created an unnecessary
+   sequencer state and interfered with valid workflow to use the
+   command during a session to cherry-pick multiple commits.
+   (merge d596118 jn/maint-sequencer-fixes later to maint).
+
  * The error message from "git diff" and "git status" when they fail
    to inspect changes in submodules did not report which submodule they
    had trouble with.
@@ -99,14 +129,31 @@ Fixes since v1.7.8
  * "fast-import" did not correctly update an existing notes tree,
    possibly corrupting the fan-out.
 
+ * "git fetch-pack" accepted unqualified refs that do not begin with
+   refs/ by mistake and compensated it by matching the refspec with
+   tail-match, which was doubly wrong. This broke fetching from a
+   repository with a funny named ref "refs/foo/refs/heads/master" and a
+   'master' branch with "git fetch-pack refs/heads/master", as the
+   command incorrectly considered the former a "match".
+   (merge bab8d28 jk/fetch-no-tail-match-refs later to maint).
+
+ * "git mv" gave suboptimal error/warning messages when it overwrites
+   target files. It also did not pay attention to "-v" option.
+   (merge 534376c jk/maint-mv later to maint).
+
  * When a "reword" action in "git rebase -i" failed to run "commit --amend",
    we did not give the control back to the user to resolve the situation, and
    instead kept the original commit log message.
    (merge 0becb3e aw/rebase-i-stop-on-failure-to-amend later to maint).
 
+ * Authenticated "git push" over dumb HTTP were broken with a recent
+   change and failed without asking for password when username is
+   given.
+   (merge a4ddbc3 jk/maint-push-over-dav later to maint).
+
 --
 exec >/var/tmp/1
-O=v1.7.8-282-ga2add85
+O=v1.7.8-351-g2dccad3
 echo O=$(git describe master)
 git log --first-parent --oneline --reverse ^$O master
 echo
