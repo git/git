@@ -3,6 +3,7 @@
 #include "sideband.h"
 #include "run-command.h"
 #include "url.h"
+#include "credential.h"
 
 int active_requests;
 int http_is_verbose;
@@ -41,7 +42,7 @@ static long curl_low_speed_time = -1;
 static int curl_ftp_no_epsv;
 static const char *curl_http_proxy;
 static const char *curl_cookie_file;
-static char *user_name, *user_pass, *description;
+static struct credential http_auth = CREDENTIAL_INIT;
 static const char *user_agent;
 
 #if LIBCURL_VERSION_NUM >= 0x071700
@@ -52,7 +53,7 @@ static const char *user_agent;
 #define CURLOPT_KEYPASSWD CURLOPT_SSLCERTPASSWD
 #endif
 
-static char *ssl_cert_password;
+static struct credential cert_auth = CREDENTIAL_INIT;
 static int ssl_cert_password_required;
 
 static struct curl_slist *pragma_header;
@@ -136,27 +137,6 @@ static void process_curl_messages(void)
 }
 #endif
 
-static char *git_getpass_with_description(const char *what, const char *desc)
-{
-	struct strbuf prompt = STRBUF_INIT;
-	char *r;
-
-	if (desc)
-		strbuf_addf(&prompt, "%s for '%s': ", what, desc);
-	else
-		strbuf_addf(&prompt, "%s: ", what);
-	/*
-	 * NEEDSWORK: for usernames, we should do something less magical that
-	 * actually echoes the characters. However, we need to read from
-	 * /dev/tty and not stdio, which is not portable (but getpass will do
-	 * it for us). http.c uses the same workaround.
-	 */
-	r = git_getpass(prompt.buf);
-
-	strbuf_release(&prompt);
-	return xstrdup(r);
-}
-
 static int http_options(const char *var, const char *value, void *cb)
 {
 	if (!strcmp("http.sslverify", var)) {
@@ -229,11 +209,11 @@ static int http_options(const char *var, const char *value, void *cb)
 
 static void init_curl_http_auth(CURL *result)
 {
-	if (user_name) {
+	if (http_auth.username) {
 		struct strbuf up = STRBUF_INIT;
-		if (!user_pass)
-			user_pass = xstrdup(git_getpass_with_description("Password", description));
-		strbuf_addf(&up, "%s:%s", user_name, user_pass);
+		credential_fill(&http_auth);
+		strbuf_addf(&up, "%s:%s",
+			    http_auth.username, http_auth.password);
 		curl_easy_setopt(result, CURLOPT_USERPWD,
 				 strbuf_detach(&up, NULL));
 	}
@@ -241,18 +221,14 @@ static void init_curl_http_auth(CURL *result)
 
 static int has_cert_password(void)
 {
-	if (ssl_cert_password != NULL)
-		return 1;
 	if (ssl_cert == NULL || ssl_cert_password_required != 1)
 		return 0;
-	/* Only prompt the user once. */
-	ssl_cert_password_required = -1;
-	ssl_cert_password = git_getpass_with_description("Certificate Password", description);
-	if (ssl_cert_password != NULL) {
-		ssl_cert_password = xstrdup(ssl_cert_password);
-		return 1;
-	} else
-		return 0;
+	if (!cert_auth.password) {
+		cert_auth.protocol = xstrdup("cert");
+		cert_auth.path = xstrdup(ssl_cert);
+		credential_fill(&cert_auth);
+	}
+	return 1;
 }
 
 static CURL *get_curl_handle(void)
@@ -279,7 +255,7 @@ static CURL *get_curl_handle(void)
 	if (ssl_cert != NULL)
 		curl_easy_setopt(result, CURLOPT_SSLCERT, ssl_cert);
 	if (has_cert_password())
-		curl_easy_setopt(result, CURLOPT_KEYPASSWD, ssl_cert_password);
+		curl_easy_setopt(result, CURLOPT_KEYPASSWD, cert_auth.password);
 #if LIBCURL_VERSION_NUM >= 0x070903
 	if (ssl_key != NULL)
 		curl_easy_setopt(result, CURLOPT_SSLKEY, ssl_key);
@@ -319,42 +295,6 @@ static CURL *get_curl_handle(void)
 		curl_easy_setopt(result, CURLOPT_PROXY, curl_http_proxy);
 
 	return result;
-}
-
-static void http_auth_init(const char *url)
-{
-	const char *at, *colon, *cp, *slash, *host;
-
-	cp = strstr(url, "://");
-	if (!cp)
-		return;
-
-	/*
-	 * Ok, the URL looks like "proto://something".  Which one?
-	 * "proto://<user>:<pass>@<host>/...",
-	 * "proto://<user>@<host>/...", or just
-	 * "proto://<host>/..."?
-	 */
-	cp += 3;
-	at = strchr(cp, '@');
-	colon = strchr(cp, ':');
-	slash = strchrnul(cp, '/');
-	if (!at || slash <= at) {
-		/* No credentials, but we may have to ask for some later */
-		host = cp;
-	}
-	else if (!colon || at <= colon) {
-		/* Only username */
-		user_name = url_decode_mem(cp, at - cp);
-		user_pass = NULL;
-		host = at + 1;
-	} else {
-		user_name = url_decode_mem(cp, colon - cp);
-		user_pass = url_decode_mem(colon + 1, at - (colon + 1));
-		host = at + 1;
-	}
-
-	description = url_decode_mem(host, slash - host);
 }
 
 static void set_from_env(const char **var, const char *envname)
@@ -429,7 +369,7 @@ void http_init(struct remote *remote, const char *url)
 		curl_ftp_no_epsv = 1;
 
 	if (url) {
-		http_auth_init(url);
+		credential_from_url(&http_auth, url);
 		if (!ssl_cert_password_required &&
 		    getenv("GIT_SSL_CERT_PASSWORD_PROTECTED") &&
 		    !prefixcmp(url, "https://"))
@@ -478,10 +418,10 @@ void http_cleanup(void)
 		curl_http_proxy = NULL;
 	}
 
-	if (ssl_cert_password != NULL) {
-		memset(ssl_cert_password, 0, strlen(ssl_cert_password));
-		free(ssl_cert_password);
-		ssl_cert_password = NULL;
+	if (cert_auth.password != NULL) {
+		memset(cert_auth.password, 0, strlen(cert_auth.password));
+		free(cert_auth.password);
+		cert_auth.password = NULL;
 	}
 	ssl_cert_password_required = 0;
 }
@@ -837,17 +777,11 @@ static int http_request(const char *url, void *result, int target, int options)
 		else if (missing_target(&results))
 			ret = HTTP_MISSING_TARGET;
 		else if (results.http_code == 401) {
-			if (user_name && user_pass) {
+			if (http_auth.username && http_auth.password) {
+				credential_reject(&http_auth);
 				ret = HTTP_NOAUTH;
 			} else {
-				/*
-				 * git_getpass is needed here because its very likely stdin/stdout are
-				 * pipes to our parent process.  So we instead need to use /dev/tty,
-				 * but that is non-portable.  Using git_getpass() can at least be stubbed
-				 * on other platforms with a different implementation if/when necessary.
-				 */
-				if (!user_name)
-					user_name = xstrdup(git_getpass_with_description("Username", description));
+				credential_fill(&http_auth);
 				init_curl_http_auth(slot->curl);
 				ret = HTTP_REAUTH;
 			}
@@ -865,6 +799,9 @@ static int http_request(const char *url, void *result, int target, int options)
 
 	curl_slist_free_all(headers);
 	strbuf_release(&buf);
+
+	if (ret == HTTP_OK)
+		credential_approve(&http_auth);
 
 	return ret;
 }
