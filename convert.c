@@ -879,7 +879,7 @@ int is_null_stream_filter(struct stream_filter *filter)
 
 struct lf_to_crlf_filter {
 	struct stream_filter filter;
-	int want_lf;
+	unsigned want_lf:1;
 };
 
 static int lf_to_crlf_filter_fn(struct stream_filter *filter,
@@ -895,8 +895,11 @@ static int lf_to_crlf_filter_fn(struct stream_filter *filter,
 		lf_to_crlf->want_lf = 0;
 	}
 
-	if (!input)
-		return 0; /* We've already dealt with the state */
+	/* We are told to drain */
+	if (!input) {
+		*osize_p -= o;
+		return 0;
+	}
 
 	count = *isize_p;
 	if (count) {
@@ -931,10 +934,9 @@ static struct stream_filter_vtbl lf_to_crlf_vtbl = {
 
 static struct stream_filter *lf_to_crlf_filter(void)
 {
-	struct lf_to_crlf_filter *lf_to_crlf = xmalloc(sizeof(*lf_to_crlf));
+	struct lf_to_crlf_filter *lf_to_crlf = xcalloc(1, sizeof(*lf_to_crlf));
 
 	lf_to_crlf->filter.vtbl = &lf_to_crlf_vtbl;
-	lf_to_crlf->want_lf = 0;
 	return (struct stream_filter *)lf_to_crlf;
 }
 
