@@ -1,19 +1,18 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Dec 2011, #06; Sun, 18)
-X-master-at: d16520499d2652b5b59dfb25f9cf2d56a4c6913a
-X-next-at: 03f4636270a389f701ff4d876e0535fb9fbdc969
+Subject: What's cooking in git.git (Dec 2011, #07; Mon, 19)
+X-master-at: 876a6f4991abdd72ea707b193b4f2b831096ad3c
+X-next-at: 0b410e5c3b357520ddace5bff4c5bfa3699f9220
 
-What's cooking in git.git (Dec 2011, #06; Sun, 18)
+What's cooking in git.git (Dec 2011, #07; Mon, 19)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' (proposed updates) while commits prefixed with '+' are in
 'next'.
 
-A handful of topics have graduated to 'master', but they are all minor.
-More important features for 1.7.9 will come in the next batch (marked as
-'Will merge to "master"' below), which should happen in a couple of days;
-Peff's credential series is among them.
+The second large batch of topics for 1.7.9 graduated to 'master', and the
+tip of it should be 85% feature complete for this cycle (modulo fixes and
+tweaks).
 
 Here are the repositories that have my integration branches:
 
@@ -41,47 +40,117 @@ The preformatted documentation in HTML and man format are found in:
         https://github.com/gitster/git-{htmldocs,manpages}.git/
 
 --------------------------------------------------
-[Graduated to "master"]
+[New Topics]
 
-* aw/rebase-i-stop-on-failure-to-amend (2011-11-30) 1 commit
-  (merged to 'next' on 2011-12-09 at a117e83)
- + rebase -i: interrupt rebase when "commit --amend" failed during "reword"
+* jc/advice-doc (2011-12-18) 1 commit
+  (merged to 'next' on 2011-12-19 at 0b410e5)
+ + advice: Document that they all default to true
+ (this branch is used by jc/advise-push-default.)
 
-* jc/commit-amend-no-edit (2011-12-08) 5 commits
-  (merged to 'next' on 2011-12-09 at b9cfa4e)
- + test: commit --amend should honor --no-edit
- + commit: honour --no-edit
- + t7501 (commit): modernize style
- + test: remove a porcelain test that hard-codes commit names
- + test: add missing "&&" after echo command
-
-* jc/stream-to-pack (2011-12-01) 5 commits
-  (merged to 'next' on 2011-12-09 at d0fd605)
- + bulk-checkin: replace fast-import based implementation
- + csum-file: introduce sha1file_checkpoint
- + finish_tmp_packfile(): a helper function
- + create_tmp_packfile(): a helper function
- + write_pack_header(): a helper function
- (this branch is used by jc/split-blob.)
-
-Teaches "git add" to send large-ish blob data straight to a packfile.
-This is a continuation to the "large file support" topic. The codepath to
-move data from worktree to repository is made aware of streaming, just
-like the checkout codepath that goes the other way, which was done in the
-previous "large file support" topic in the 1.7.7 cycle.
-
-* jh/fast-import-notes (2011-11-28) 3 commits
-  (merged to 'next' on 2011-12-09 at 2b01132)
- + fast-import: Fix incorrect fanout level when modifying existing notes refs
- + t9301: Add 2nd testcase exposing bugs in fast-import's notes fanout handling
- + t9301: Fix testcase covering up a bug in fast-import's notes fanout handling
-
-* jk/upload-archive-use-start-command (2011-11-21) 1 commit
-  (merged to 'next' on 2011-12-09 at 88cb83a)
- + upload-archive: use start_command instead of fork
+Will merge to "master".
 
 --------------------------------------------------
-[New Topics]
+[Graduated to "master"]
+
+* ab/enable-i18n (2011-12-05) 1 commit
+  (merged to 'next' on 2011-12-13 at 65af8cd)
+ + i18n: add infrastructure for translating Git with gettext
+
+* ci/stripspace-docs (2011-12-12) 1 commit
+  (merged to 'next' on 2011-12-13 at 35b2cdf)
+ + Update documentation for stripspace
+
+* ew/keepalive (2011-12-05) 1 commit
+  (merged to 'next' on 2011-12-13 at 1b5d5c4)
+ + enable SO_KEEPALIVE for connected TCP sockets
+
+* jc/checkout-m-twoway (2011-12-15) 3 commits
+  (merged to 'next' on 2011-12-15 at cc64fed)
+ + checkout_merged(): squelch false warning from some gcc
+  (merged to 'next' on 2011-12-11 at b61057f)
+ + Test 'checkout -m -- path'
+  (merged to 'next' on 2011-12-09 at c946009)
+ + checkout -m: no need to insist on having all 3 stages
+
+* jk/credentials (2011-12-12) 14 commits
+  (merged to 'next' on 2011-12-12 at 7a6d658)
+ + t: add test harness for external credential helpers
+ + credentials: add "store" helper
+ + strbuf: add strbuf_add*_urlencode
+ + Makefile: unix sockets may not available on some platforms
+ + credentials: add "cache" helper
+ + docs: end-user documentation for the credential subsystem
+ + credential: make relevance of http path configurable
+ + credential: add credential.*.username
+ + credential: apply helper config
+ + http: use credential API to get passwords
+ + credential: add function for parsing url components
+ + introduce credentials API
+ + t5550: fix typo
+ + test-lib: add test_config_global variant
+ (this branch is used by jk/git-prompt.)
+
+* jk/fetch-no-tail-match-refs (2011-12-13) 4 commits
+  (merged to 'next' on 2011-12-13 at 805c018)
+ + connect.c: drop path_match function
+ + fetch-pack: match refs exactly
+ + t5500: give fully-qualified refs to fetch-pack
+ + drop "match" parameter from get_remote_heads
+
+* jk/maint-mv (2011-12-12) 5 commits
+  (merged to 'next' on 2011-12-13 at 58caedb)
+ + mv: be quiet about overwriting
+ + mv: improve overwrite warning
+ + mv: make non-directory destination error more clear
+ + mv: honor --verbose flag
+ + docs: mention "-k" for both forms of "git mv"
+
+* jk/maint-push-over-dav (2011-12-13) 2 commits
+  (merged to 'next' on 2011-12-13 at 45e376c)
+ + http-push: enable "proactive auth"
+ + t5540: test DAV push with authentication
+
+* jk/maint-snprintf-va-copy (2011-12-12) 1 commit
+  (merged to 'next' on 2011-12-13 at d37a7e1)
+ + compat/snprintf: don't look at va_list twice
+
+* jn/maint-sequencer-fixes (2011-12-12) 7 commits
+  (merged to 'next' on 2011-12-13 at 5b3950c)
+ + revert: stop creating and removing sequencer-old directory
+ + Revert "reset: Make reset remove the sequencer state"
+ + revert: do not remove state until sequence is finished
+ + revert: allow single-pick in the middle of cherry-pick sequence
+ + revert: pass around rev-list args in already-parsed form
+ + revert: allow cherry-pick --continue to commit before resuming
+ + revert: give --continue handling its own function
+ (this branch is used by rr/revert-cherry-pick.)
+
+* nd/resolve-ref (2011-12-13) 3 commits
+  (merged to 'next' on 2011-12-13 at c7002e9)
+ + Rename resolve_ref() to resolve_ref_unsafe()
+ + Convert resolve_ref+xstrdup to new resolve_refdup function
+ + revert: convert resolve_ref() to read_ref_full()
+
+* rr/test-chaining (2011-12-11) 7 commits
+  (merged to 'next' on 2011-12-13 at b08445e)
+ + t3401: use test_commit in setup
+ + t3401: modernize style
+ + t3040 (subprojects-basic): fix '&&' chaining, modernize style
+ + t1510 (worktree): fix '&&' chaining
+ + t3030 (merge-recursive): use test_expect_code
+ + test: fix '&&' chaining
+ + t3200 (branch): fix '&&' chaining
+
+* tr/cache-tree (2011-12-06) 5 commits
+  (merged to 'next' on 2011-12-13 at e0da64d)
+ + reset: update cache-tree data when appropriate
+ + commit: write cache-tree data when writing index anyway
+ + Refactor cache_tree_update idiom from commit
+ + Test the current state of the cache-tree optimization
+ + Add test-scrap-cache-tree
+
+--------------------------------------------------
+[Cooking]
 
 * cn/maint-lf-to-crlf-filter (2011-12-16) 1 commit
  - lf_to_crlf_filter(): tell the caller we added "\n" when draining
@@ -100,7 +169,9 @@ try not to convert LF to CRLF if the repository data already has CRLF.
 
 Will merge to "next".
 
-* jc/request-pull-show-head-4 (2011-12-16) 1 commit
+* jc/request-pull-show-head-4 (2011-12-19) 2 commits
+  (merged to 'next' on 2011-12-19 at 771939b)
+ + request-pull: do not emit "tag" before the tagname
   (merged to 'next' on 2011-12-16 at bea51ac)
  + request-pull: update the "pull" command generation logic
 
@@ -121,10 +192,9 @@ Will merge to "next".
 
 Will merge to "next".
 
-* jk/http-push-to-empty (2011-12-17) 1 commit
- - remote-curl: don't pass back fake refs
-
-Will merge to "next".
+* jk/http-push-to-empty (2011-12-19) 1 commit
+  (merged to 'next' on 2011-12-19 at 845e2a1)
+ + remote-curl: don't pass back fake refs
 
 * jk/maint-push-v-is-verbose (2011-12-17) 1 commit
  - make "git push -v" actually verbose
@@ -144,7 +214,7 @@ Will merge to "next".
 
 Will merge to "next".
 
-* jn/maint-gitweb-utf8-fix (2011-12-18) 4 commits
+* jn/maint-gitweb-utf8-fix (2011-12-19) 4 commits
  - gitweb: Fix fallback mode of to_utf8 subroutine
  - gitweb: Output valid utf8 in git_blame_common('data')
  - gitweb: esc_html() site name for title in OPML
@@ -165,15 +235,17 @@ Will merge to "next".
  - git-p4: test debug macro
  - git-p4: introduce asciidoc documentation
 
-* jc/advise-push-default (2011-12-18) 2 commits
+Waiting for a reroll.
+
+* jc/advise-push-default (2011-12-18) 1 commit
  - push: hint to use push.default=upstream when appropriate
- - advice: Document that they all default to true
+ (this branch uses jc/advice-doc.)
 
-A counter-proposal to jc/push-ignore-stale that may encourage a bad
-workflow.
+Peff had a good suggestion outlining an updated code structure so that
+somebody new can try to dip his or her toes in the development. Any
+takers?
 
---------------------------------------------------
-[Cooking]
+Waiting for a reroll.
 
 * ef/setenv-putenv (2011-12-14) 2 commits
  - compat/setenv.c: error if name contains '='
@@ -210,7 +282,6 @@ Will merge to "next".
  - move git_getpass to its own source file
  - imap-send: don't check return value of git_getpass
  - imap-send: avoid buffer overflow
- (this branch uses jk/credentials.)
 
 Will merge to 'next' after taking another look.
 
@@ -255,40 +326,7 @@ Will merge to 'next' after taking another look.
 The API for extra anchoring points may require rethought first; that would
 hopefully make the "ref" part a lot simpler.
 
-* ci/stripspace-docs (2011-12-12) 1 commit
-  (merged to 'next' on 2011-12-13 at 35b2cdf)
- + Update documentation for stripspace
-
-Will merge to "master".
-
-* jk/maint-mv (2011-12-12) 5 commits
-  (merged to 'next' on 2011-12-13 at 58caedb)
- + mv: be quiet about overwriting
- + mv: improve overwrite warning
- + mv: make non-directory destination error more clear
- + mv: honor --verbose flag
- + docs: mention "-k" for both forms of "git mv"
-
-Will merge to "master".
-
-* jk/maint-snprintf-va-copy (2011-12-12) 1 commit
-  (merged to 'next' on 2011-12-13 at d37a7e1)
- + compat/snprintf: don't look at va_list twice
-
-Will merge to "master".
-
-* jn/maint-sequencer-fixes (2011-12-12) 7 commits
-  (merged to 'next' on 2011-12-13 at 5b3950c)
- + revert: stop creating and removing sequencer-old directory
- + Revert "reset: Make reset remove the sequencer state"
- + revert: do not remove state until sequence is finished
- + revert: allow single-pick in the middle of cherry-pick sequence
- + revert: pass around rev-list args in already-parsed form
- + revert: allow cherry-pick --continue to commit before resuming
- + revert: give --continue handling its own function
- (this branch is used by rr/revert-cherry-pick.)
-
-Will merge to "master".
+Waiting for a reroll.
 
 * mh/ref-api (2011-12-12) 16 commits
   (merged to 'next' on 2011-12-15 at d65a830)
@@ -314,14 +352,6 @@ Later part split out to expedite moving the earlier good bits forward.
 
 Will merge to "master".
 
-* nd/resolve-ref (2011-12-13) 3 commits
-  (merged to 'next' on 2011-12-13 at c7002e9)
- + Rename resolve_ref() to resolve_ref_unsafe()
- + Convert resolve_ref+xstrdup to new resolve_refdup function
- + revert: convert resolve_ref() to read_ref_full()
-
-Will merge to "master".
-
 * tr/grep-threading (2011-12-16) 3 commits
  - grep: disable threading in non-worktree case
  - grep: enable threading with -p and -W using lazy attribute lookup
@@ -329,39 +359,20 @@ Will merge to "master".
 
 Will merge to 'next' after taking another look.
 
-* tr/pty-all (2011-12-12) 3 commits
- - t/lib-terminal: test test-terminal's sanity
+* tr/pty-all (2011-12-19) 1 commit
  - test-terminal: set output terminals to raw mode
- - test-terminal: give the child an empty stdin TTY
 
-The test breakage that originally triggered interest in this topic is
-fixed more cleanly with Peff's jk/maint-do-not-feed-stdin-to-tests but
-this series may independently be useful.
-
-Jonathan had good review comments, and this would need to be rerolled.
+Kept only the second one from the original.
+Will merge to "next".
 
 * jc/push-ignore-stale (2011-12-14) 2 commits
  - push: --ignore-stale option
  - set_ref_status_for_push(): use transport-flags abstraction
 
 Probably solving a wrong problem and encouraging a wrong workflow while at
-it. Will drop. jc/advise-push-default might be a better approach.
+it. jc/advise-push-default might be a better approach.
 
-* jk/fetch-no-tail-match-refs (2011-12-13) 4 commits
-  (merged to 'next' on 2011-12-13 at 805c018)
- + connect.c: drop path_match function
- + fetch-pack: match refs exactly
- + t5500: give fully-qualified refs to fetch-pack
- + drop "match" parameter from get_remote_heads
-
-Will merge to "master".
-
-* jk/maint-push-over-dav (2011-12-13) 2 commits
-  (merged to 'next' on 2011-12-13 at 45e376c)
- + http-push: enable "proactive auth"
- + t5540: test DAV push with authentication
-
-Will merge to "master".
+Will drop.
 
 * rr/revert-cherry-pick (2011-12-15) 6 commits
  - t3502, t3510: clarify cherry-pick -m failure
@@ -370,47 +381,8 @@ Will merge to "master".
  - revert: tolerate extra spaces, tabs in insn sheet
  - revert: make commit subjects in insn sheet optional
  - revert: free msg in format_todo()
- (this branch uses jn/maint-sequencer-fixes.)
-
-Picked up only the earlier bits that are reasonably clear for now.
 
 Will merge to "next".
-
-* ew/keepalive (2011-12-05) 1 commit
-  (merged to 'next' on 2011-12-13 at 1b5d5c4)
- + enable SO_KEEPALIVE for connected TCP sockets
-
-* jc/checkout-m-twoway (2011-12-15) 3 commits
-  (merged to 'next' on 2011-12-15 at cc64fed)
- + checkout_merged(): squelch false warning from some gcc
-  (merged to 'next' on 2011-12-11 at b61057f)
- + Test 'checkout -m -- path'
-  (merged to 'next' on 2011-12-09 at c946009)
- + checkout -m: no need to insist on having all 3 stages
-
-Will merge to "master".
-
-* tr/cache-tree (2011-12-06) 5 commits
-  (merged to 'next' on 2011-12-13 at e0da64d)
- + reset: update cache-tree data when appropriate
- + commit: write cache-tree data when writing index anyway
- + Refactor cache_tree_update idiom from commit
- + Test the current state of the cache-tree optimization
- + Add test-scrap-cache-tree
-
-Will merge to "master".
-
-* rr/test-chaining (2011-12-11) 7 commits
-  (merged to 'next' on 2011-12-13 at b08445e)
- + t3401: use test_commit in setup
- + t3401: modernize style
- + t3040 (subprojects-basic): fix '&&' chaining, modernize style
- + t1510 (worktree): fix '&&' chaining
- + t3030 (merge-recursive): use test_expect_code
- + test: fix '&&' chaining
- + t3200 (branch): fix '&&' chaining
-
-Will merge to "master".
 
 * jc/split-blob (2011-12-01) 6 commits
  . WIP (streaming chunked)
@@ -420,35 +392,11 @@ Will merge to "master".
  - new representation types in the packstream
  - varint-in-pack: refactor varint encoding/decoding
 
-Not ready. At least pack-objects and fsck need to learn the new encoding
-for the series to be usable locally, and then index-pack/unpack-objects
-needs to learn it to be used remotely.
+Not ready.
 
-* jk/credentials (2011-12-12) 14 commits
-  (merged to 'next' on 2011-12-12 at 7a6d658)
- + t: add test harness for external credential helpers
- + credentials: add "store" helper
- + strbuf: add strbuf_add*_urlencode
- + Makefile: unix sockets may not available on some platforms
- + credentials: add "cache" helper
- + docs: end-user documentation for the credential subsystem
- + credential: make relevance of http path configurable
- + credential: add credential.*.username
- + credential: apply helper config
- + http: use credential API to get passwords
- + credential: add function for parsing url components
- + introduce credentials API
- + t5550: fix typo
- + test-lib: add test_config_global variant
- (this branch is used by jk/git-prompt.)
-
-Later part split out to expedite moving the earlier good bits forward.
-
-Will merge to "master".
-
-* ab/enable-i18n (2011-12-05) 1 commit
-  (merged to 'next' on 2011-12-13 at 65af8cd)
- + i18n: add infrastructure for translating Git with gettext
+At least pack-objects and fsck need to learn the new encoding for the
+series to be usable locally, and then index-pack/unpack-objects needs to
+learn it to be used remotely.
 
 * jc/signed-commit (2011-11-29) 5 commits
  - gpg-interface: allow use of a custom GPG binary
@@ -457,4 +405,4 @@ Will merge to "master".
  - log: --show-signature
  - commit: teach --gpg-sign option
 
-Not exactly urgent.
+Not urgent.
