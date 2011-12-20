@@ -163,7 +163,7 @@ static void set_upstreams(struct transport *transport, struct ref *refs,
 		/* Follow symbolic refs (mainly for HEAD). */
 		localname = ref->peer_ref->name;
 		remotename = ref->name;
-		tmp = resolve_ref(localname, sha, 1, &flag);
+		tmp = resolve_ref_unsafe(localname, sha, 1, &flag);
 		if (tmp && flag & REF_ISSYMREF &&
 			!prefixcmp(tmp, "refs/heads/"))
 			localname = tmp;

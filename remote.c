@@ -482,7 +482,7 @@ static void read_config(void)
 		return;
 	default_remote_name = xstrdup("origin");
 	current_branch = NULL;
-	head_ref = resolve_ref("HEAD", sha1, 0, &flag);
+	head_ref = resolve_ref_unsafe("HEAD", sha1, 0, &flag);
 	if (head_ref && (flag & REF_ISSYMREF) &&
 	    !prefixcmp(head_ref, "refs/heads/")) {
 		current_branch =
@@ -1007,7 +1007,7 @@ static char *guess_ref(const char *name, struct ref *peer)
 	struct strbuf buf = STRBUF_INIT;
 	unsigned char sha1[20];
 
-	const char *r = resolve_ref(peer->name, sha1, 1, NULL);
+	const char *r = resolve_ref_unsafe(peer->name, sha1, 1, NULL);
 	if (!r)
 		return NULL;
 
@@ -1058,7 +1058,7 @@ static int match_explicit(struct ref *src, struct ref *dst,
 		unsigned char sha1[20];
 		int flag;
 
-		dst_value = resolve_ref(matched_src->name, sha1, 1, &flag);
+		dst_value = resolve_ref_unsafe(matched_src->name, sha1, 1, &flag);
 		if (!dst_value ||
 		    ((flag & REF_ISSYMREF) &&
 		     prefixcmp(dst_value, "refs/heads/")))

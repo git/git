@@ -37,6 +37,7 @@ static int prefer_ofs_delta = 1;
 static int auto_update_server_info;
 static int auto_gc = 1;
 static const char *head_name;
+static void *head_name_to_free;
 static int sent_capabilities;
 
 static enum deny_action parse_deny_action(const char *var, const char *value)
@@ -571,7 +572,7 @@ static void check_aliased_update(struct command *cmd, struct string_list *list)
 	int flag;
 
 	strbuf_addf(&buf, "%s%s", get_git_namespace(), cmd->ref_name);
-	dst_name = resolve_ref(buf.buf, sha1, 0, &flag);
+	dst_name = resolve_ref_unsafe(buf.buf, sha1, 0, &flag);
 	strbuf_release(&buf);
 
 	if (!(flag & REF_ISSYMREF))
@@ -695,10 +696,8 @@ static void execute_commands(struct command *commands, const char *unpacker_erro
 
 	check_aliased_updates(commands);
 
-	free((char *)head_name);
-	head_name = resolve_ref("HEAD", sha1, 0, NULL);
-	if (head_name)
-		head_name = xstrdup(head_name);
+	free(head_name_to_free);
+	head_name = head_name_to_free = resolve_refdup("HEAD", sha1, 0, NULL);
 
 	for (cmd = commands; cmd; cmd = cmd->next)
 		if (!cmd->skip_update)
