@@ -57,12 +57,38 @@ headrev=$(git rev-parse --verify "$head"^0) || exit
 merge_base=$(git merge-base $baserev $headrev) ||
 die "fatal: No commits in common between $base and $head"
 
-find_matching_branch="/^$headrev	"'refs\/heads\//{
-	s/^.*	refs\/heads\///
-	p
-	q
-}'
-branch=$(git ls-remote "$url" | sed -n -e "$find_matching_branch")
+# $head is the token given from the command line. If a ref with that
+# name exists at the remote and their values match, we should use it.
+# Otherwise find a ref that matches $headrev.
+find_matching_ref='
+	sub abbr {
+		my $ref = shift;
+		if ($ref =~ s|refs/heads/|| || $ref =~ s|refs/tags/||) {
+			return $ref;
+		} else {
+			return $ref;
+		}
+	}
+
+	my ($exact, $found);
+	while (<STDIN>) {
+		my ($sha1, $ref, $deref) = /^(\S+)\s+(\S+?)(\^\{\})?$/;
+		next unless ($sha1 eq $ARGV[1]);
+		$found = abbr($ref);
+		if ($ref =~ m|/\Q$ARGV[0]\E$|) {
+			$exact = $found;
+			last;
+		}
+	}
+	if ($exact) {
+		print "$exact\n";
+	} elsif ($found) {
+		print "$found\n";
+	}
+'
+
+ref=$(git ls-remote "$url" | perl -e "$find_matching_ref" "$head" "$headrev")
+
 url=$(git ls-remote --get-url "$url")
 
 git show -s --format='The following changes since commit %H:
@@ -71,7 +97,7 @@ git show -s --format='The following changes since commit %H:
 
 are available in the git repository at:
 ' $baserev &&
-echo "  $url${branch+ $branch}" &&
+echo "  $url${ref+ $ref}" &&
 git show -s --format='
 for you to fetch changes up to %H:
 
@@ -81,7 +107,7 @@ for you to fetch changes up to %H:
 
 if test -n "$branch_name"
 then
-	echo "(from the branch description for $branch local branch)"
+	echo "(from the branch description for $branch_name local branch)"
 	echo
 	git config "branch.$branch_name.description"
 fi &&
@@ -101,7 +127,7 @@ fi &&
 git shortlog ^$baserev $headrev &&
 git diff -M --stat --summary $patch $merge_base..$headrev || status=1
 
-if test -z "$branch"
+if test -z "$ref"
 then
 	echo "warn: No branch of $url is at:" >&2
 	git show -s --format='warn:   %h: %s' $headrev >&2

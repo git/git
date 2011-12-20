@@ -67,9 +67,11 @@ test_expect_success 'setup: two scripts for reading pull requests' '
 
 	cat <<-\EOT >read-request.sed &&
 	#!/bin/sed -nf
+	# Note that a request could ask for "tag $tagname"
 	/ in the git repository at:$/!d
 	n
 	/^$/ n
+	s/ tag \([^ ]*\)$/ tag--\1/
 	s/^[ 	]*\(.*\) \([^ ]*\)/please pull\
 	\1\
 	\2/p
@@ -178,6 +180,7 @@ test_expect_success 'request names an appropriate branch' '
 		read branch
 	} <digest &&
 	{
+		test "$branch" = full ||
 		test "$branch" = master ||
 		test "$branch" = for-upstream
 	}
