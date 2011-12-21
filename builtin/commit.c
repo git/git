@@ -138,7 +138,7 @@ static struct option builtin_commit_options[] = {
 	OPT_STRING('C', "reuse-message", &use_message, "commit", "reuse message from specified commit"),
 	OPT_STRING(0, "fixup", &fixup_message, "commit", "use autosquash formatted message to fixup specified commit"),
 	OPT_STRING(0, "squash", &squash_message, "commit", "use autosquash formatted message to squash specified commit"),
-	OPT_BOOLEAN(0, "reset-author", &renew_authorship, "the commit is authored by me now (used with -C-c/--amend)"),
+	OPT_BOOLEAN(0, "reset-author", &renew_authorship, "the commit is authored by me now (used with -C/-c/--amend)"),
 	OPT_BOOLEAN('s', "signoff", &signoff, "add Signed-off-by:"),
 	OPT_FILENAME('t', "template", &template_file, "use specified template file"),
 	OPT_BOOLEAN('e', "edit", &edit_flag, "force edit of commit"),
