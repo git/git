@@ -35,7 +35,7 @@ test_expect_success 'cherry-pick a non-merge with -m should fail' '
 
 	git reset --hard &&
 	git checkout a^0 &&
-	test_must_fail git cherry-pick -m 1 b &&
+	test_expect_code 128 git cherry-pick -m 1 b &&
 	git diff --exit-code a --
 
 '
