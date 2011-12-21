@@ -31,7 +31,7 @@ static void strtonode(struct int_node *item, const char *s)
 int main(int argc, char *argv[])
 {
 	struct strbuf sb = STRBUF_INIT;
-	struct trp_root root = { ~0 };
+	struct trp_root root = { ~0U };
 	uint32_t item;
 
 	if (argc != 1)

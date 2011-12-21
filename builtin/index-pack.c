@@ -172,10 +172,10 @@ static const char *open_pack_file(const char *pack_name)
 	if (from_stdin) {
 		input_fd = 0;
 		if (!pack_name) {
-			static char tmpfile[PATH_MAX];
-			output_fd = odb_mkstemp(tmpfile, sizeof(tmpfile),
+			static char tmp_file[PATH_MAX];
+			output_fd = odb_mkstemp(tmp_file, sizeof(tmp_file),
 						"pack/tmp_pack_XXXXXX");
-			pack_name = xstrdup(tmpfile);
+			pack_name = xstrdup(tmp_file);
 		} else
 			output_fd = open(pack_name, O_CREAT|O_EXCL|O_RDWR, 0600);
 		if (output_fd < 0)
