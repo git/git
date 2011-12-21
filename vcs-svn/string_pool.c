@@ -8,7 +8,7 @@
 #include "obj_pool.h"
 #include "string_pool.h"
 
-static struct trp_root tree = { ~0 };
+static struct trp_root tree = { ~0U };
 
 struct node {
 	uint32_t offset;
@@ -78,7 +78,7 @@ void pool_print_seq(uint32_t len, uint32_t *seq, char delim, FILE *stream)
 uint32_t pool_tok_seq(uint32_t sz, uint32_t *seq, const char *delim, char *str)
 {
 	char *context = NULL;
-	uint32_t token = ~0;
+	uint32_t token = ~0U;
 	uint32_t length;
 
 	if (sz == 0)
