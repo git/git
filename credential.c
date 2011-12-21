@@ -3,6 +3,7 @@
 #include "string-list.h"
 #include "run-command.h"
 #include "url.h"
+#include "prompt.h"
 
 void credential_init(struct credential *c)
 {
@@ -108,7 +109,8 @@ static void credential_describe(struct credential *c, struct strbuf *out)
 		strbuf_addf(out, "/%s", c->path);
 }
 
-static char *credential_ask_one(const char *what, struct credential *c)
+static char *credential_ask_one(const char *what, struct credential *c,
+				int flags)
 {
 	struct strbuf desc = STRBUF_INIT;
 	struct strbuf prompt = STRBUF_INIT;
@@ -120,11 +122,7 @@ static char *credential_ask_one(const char *what, struct credential *c)
 	else
 		strbuf_addf(&prompt, "%s: ", what);
 
-	/* FIXME: for usernames, we should do something less magical that
-	 * actually echoes the characters. However, we need to read from
-	 * /dev/tty and not stdio, which is not portable (but getpass will do
-	 * it for us). http.c uses the same workaround. */
-	r = git_getpass(prompt.buf);
+	r = git_prompt(prompt.buf, flags);
 
 	strbuf_release(&desc);
 	strbuf_release(&prompt);
@@ -134,9 +132,11 @@ static char *credential_ask_one(const char *what, struct credential *c)
 static void credential_getpass(struct credential *c)
 {
 	if (!c->username)
-		c->username = credential_ask_one("Username", c);
+		c->username = credential_ask_one("Username", c,
+						 PROMPT_ASKPASS|PROMPT_ECHO);
 	if (!c->password)
-		c->password = credential_ask_one("Password", c);
+		c->password = credential_ask_one("Password", c,
+						 PROMPT_ASKPASS);
 }
 
 int credential_read(struct credential *c, FILE *fp)
