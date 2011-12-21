@@ -8,6 +8,7 @@
 #include "refs.h"
 #include "string-list.h"
 #include "color.h"
+#include "gpg-interface.h"
 
 struct decoration name_decoration = { "object names" };
 
@@ -403,6 +404,41 @@ void log_write_email_headers(struct rev_info *opt, struct commit *commit,
 	*extra_headers_p = extra_headers;
 }
 
+static void show_signature(struct rev_info *opt, struct commit *commit)
+{
+	struct strbuf payload = STRBUF_INIT;
+	struct strbuf signature = STRBUF_INIT;
+	struct strbuf gpg_output = STRBUF_INIT;
+	int status;
+	const char *color, *reset, *bol, *eol;
+
+	if (parse_signed_commit(commit->object.sha1, &payload, &signature) <= 0)
+		goto out;
+
+	status = verify_signed_buffer(payload.buf, payload.len,
+				      signature.buf, signature.len,
+				      &gpg_output);
+	if (status && !gpg_output.len)
+		strbuf_addstr(&gpg_output, "No signature\n");
+
+	color = diff_get_color_opt(&opt->diffopt,
+				   status ? DIFF_WHITESPACE : DIFF_FRAGINFO);
+	reset = diff_get_color_opt(&opt->diffopt, DIFF_RESET);
+
+	bol = gpg_output.buf;
+	while (*bol) {
+		eol = strchrnul(bol, '\n');
+		printf("%s%.*s%s%s", color, (int)(eol - bol), bol, reset,
+		       *eol ? "\n" : "");
+		bol = (*eol) ? (eol + 1) : eol;
+	}
+
+ out:
+	strbuf_release(&gpg_output);
+	strbuf_release(&payload);
+	strbuf_release(&signature);
+}
+
 void show_log(struct rev_info *opt)
 {
 	struct strbuf msgbuf = STRBUF_INIT;
@@ -513,6 +549,9 @@ void show_log(struct rev_info *opt)
 				return;
 		}
 	}
+
+	if (opt->show_signature)
+		show_signature(opt, commit);
 
 	if (!commit->buffer)
 		return;

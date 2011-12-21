@@ -193,11 +193,11 @@ extern void append_merge_tag_headers(struct commit_list *parents,
 
 extern int commit_tree(const struct strbuf *msg, unsigned char *tree,
 		       struct commit_list *parents, unsigned char *ret,
-		       const char *author);
+		       const char *author, const char *sign_commit);
 
 extern int commit_tree_extended(const struct strbuf *msg, unsigned char *tree,
 				struct commit_list *parents, unsigned char *ret,
-				const char *author,
+				const char *author, const char *sign_commit,
 				struct commit_extra_header *);
 
 extern struct commit_extra_header *read_commit_extra_headers(struct commit *);
@@ -218,4 +218,6 @@ struct merge_remote_desc {
  */
 struct commit *get_merge_parent(const char *name);
 
+extern int parse_signed_commit(const unsigned char *sha1,
+			       struct strbuf *message, struct strbuf *signature);
 #endif /* COMMIT_H */
