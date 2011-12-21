@@ -73,8 +73,6 @@ static int decorate_callback(const struct option *opt, const char *arg, int unse
 
 static void cmd_log_init_defaults(struct rev_info *rev)
 {
-	rev->abbrev = DEFAULT_ABBREV;
-	rev->commit_format = CMIT_FMT_DEFAULT;
 	if (fmt_pretty)
 		get_commit_format(fmt_pretty, rev);
 	rev->verbose_header = 1;
