@@ -876,24 +876,42 @@ int is_null_stream_filter(struct stream_filter *filter)
 /*
  * LF-to-CRLF filter
  */
+
+struct lf_to_crlf_filter {
+	struct stream_filter filter;
+	unsigned want_lf:1;
+};
+
 static int lf_to_crlf_filter_fn(struct stream_filter *filter,
 				const char *input, size_t *isize_p,
 				char *output, size_t *osize_p)
 {
-	size_t count;
+	size_t count, o = 0;
+	struct lf_to_crlf_filter *lf_to_crlf = (struct lf_to_crlf_filter *)filter;
 
-	if (!input)
-		return 0; /* we do not keep any states */
+	/* Output a pending LF if we need to */
+	if (lf_to_crlf->want_lf) {
+		output[o++] = '\n';
+		lf_to_crlf->want_lf = 0;
+	}
+
+	/* We are told to drain */
+	if (!input) {
+		*osize_p -= o;
+		return 0;
+	}
+
 	count = *isize_p;
 	if (count) {
-		size_t i, o;
-		for (i = o = 0; o < *osize_p && i < count; i++) {
+		size_t i;
+		for (i = 0; o < *osize_p && i < count; i++) {
 			char ch = input[i];
 			if (ch == '\n') {
-				if (o + 1 < *osize_p)
-					output[o++] = '\r';
-				else
-					break;
+				output[o++] = '\r';
+				if (o >= *osize_p) {
+					lf_to_crlf->want_lf = 1;
+					continue; /* We need to increase i */
+				}
 			}
 			output[o++] = ch;
 		}
@@ -904,15 +922,23 @@ static int lf_to_crlf_filter_fn(struct stream_filter *filter,
 	return 0;
 }
 
+static void lf_to_crlf_free_fn(struct stream_filter *filter)
+{
+	free(filter);
+}
+
 static struct stream_filter_vtbl lf_to_crlf_vtbl = {
 	lf_to_crlf_filter_fn,
-	null_free_fn,
+	lf_to_crlf_free_fn,
 };
 
-static struct stream_filter lf_to_crlf_filter_singleton = {
-	&lf_to_crlf_vtbl,
-};
+static struct stream_filter *lf_to_crlf_filter(void)
+{
+	struct lf_to_crlf_filter *lf_to_crlf = xcalloc(1, sizeof(*lf_to_crlf));
 
+	lf_to_crlf->filter.vtbl = &lf_to_crlf_vtbl;
+	return (struct stream_filter *)lf_to_crlf;
+}
 
 /*
  * Cascade filter
@@ -1194,7 +1220,7 @@ struct stream_filter *get_stream_filter(const char *path, const unsigned char *s
 
 	else if (output_eol(crlf_action) == EOL_CRLF &&
 		 !(crlf_action == CRLF_AUTO || crlf_action == CRLF_GUESS))
-		filter = cascade_filter(filter, &lf_to_crlf_filter_singleton);
+		filter = cascade_filter(filter, lf_to_crlf_filter());
 
 	return filter;
 }
