@@ -806,10 +806,46 @@ static void show_line(struct grep_opt *opt, char *bol, char *eol,
 	opt->output(opt, "\n", 1);
 }
 
-static int match_funcname(struct grep_opt *opt, char *bol, char *eol)
+#ifndef NO_PTHREADS
+/*
+ * This lock protects access to the gitattributes machinery, which is
+ * not thread-safe.
+ */
+pthread_mutex_t grep_attr_mutex;
+
+static inline void grep_attr_lock(struct grep_opt *opt)
+{
+	if (opt->use_threads)
+		pthread_mutex_lock(&grep_attr_mutex);
+}
+
+static inline void grep_attr_unlock(struct grep_opt *opt)
+{
+	if (opt->use_threads)
+		pthread_mutex_unlock(&grep_attr_mutex);
+}
+#else
+#define grep_attr_lock(opt)
+#define grep_attr_unlock(opt)
+#endif
+
+static int match_funcname(struct grep_opt *opt, const char *name, char *bol, char *eol)
 {
 	xdemitconf_t *xecfg = opt->priv;
-	if (xecfg && xecfg->find_func) {
+	if (xecfg && !xecfg->find_func) {
+		struct userdiff_driver *drv;
+		grep_attr_lock(opt);
+		drv = userdiff_find_by_path(name);
+		grep_attr_unlock(opt);
+		if (drv && drv->funcname.pattern) {
+			const struct userdiff_funcname *pe = &drv->funcname;
+			xdiff_set_find_func(xecfg, pe->pattern, pe->cflags);
+		} else {
+			xecfg = opt->priv = NULL;
+		}
+	}
+
+	if (xecfg) {
 		char buf[1];
 		return xecfg->find_func(bol, eol - bol, buf, 1,
 					xecfg->find_func_priv) >= 0;
@@ -835,7 +871,7 @@ static void show_funcname_line(struct grep_opt *opt, const char *name,
 		if (lno <= opt->last_shown)
 			break;
 
-		if (match_funcname(opt, bol, eol)) {
+		if (match_funcname(opt, name, bol, eol)) {
 			show_line(opt, bol, eol, name, lno, '=');
 			break;
 		}
@@ -848,7 +884,7 @@ static void show_pre_context(struct grep_opt *opt, const char *name, char *buf,
 	unsigned cur = lno, from = 1, funcname_lno = 0;
 	int funcname_needed = !!opt->funcname;
 
-	if (opt->funcbody && !match_funcname(opt, bol, end))
+	if (opt->funcbody && !match_funcname(opt, name, bol, end))
 		funcname_needed = 2;
 
 	if (opt->pre_context < lno)
@@ -864,7 +900,7 @@ static void show_pre_context(struct grep_opt *opt, const char *name, char *buf,
 		while (bol > buf && bol[-1] != '\n')
 			bol--;
 		cur--;
-		if (funcname_needed && match_funcname(opt, bol, eol)) {
+		if (funcname_needed && match_funcname(opt, name, bol, eol)) {
 			funcname_lno = cur;
 			funcname_needed = 0;
 		}
@@ -942,19 +978,6 @@ static int look_ahead(struct grep_opt *opt,
 	return 0;
 }
 
-int grep_threads_ok(const struct grep_opt *opt)
-{
-	/* If this condition is true, then we may use the attribute
-	 * machinery in grep_buffer_1. The attribute code is not
-	 * thread safe, so we disable the use of threads.
-	 */
-	if (opt->funcname && !opt->unmatch_name_only && !opt->status_only &&
-	    !opt->name_only)
-		return 0;
-
-	return 1;
-}
-
 static void std_output(struct grep_opt *opt, const void *buf, size_t size)
 {
 	fwrite(buf, size, 1, stdout);
@@ -1008,15 +1031,8 @@ static int grep_buffer_1(struct grep_opt *opt, const char *name,
 	}
 
 	memset(&xecfg, 0, sizeof(xecfg));
-	if (opt->funcname && !opt->unmatch_name_only && !opt->status_only &&
-	    !opt->name_only && !binary_match_only && !collect_hits) {
-		struct userdiff_driver *drv = userdiff_find_by_path(name);
-		if (drv && drv->funcname.pattern) {
-			const struct userdiff_funcname *pe = &drv->funcname;
-			xdiff_set_find_func(&xecfg, pe->pattern, pe->cflags);
-			opt->priv = &xecfg;
-		}
-	}
+	opt->priv = &xecfg;
+
 	try_lookahead = should_lookahead(opt);
 
 	while (left) {
@@ -1092,7 +1108,7 @@ static int grep_buffer_1(struct grep_opt *opt, const char *name,
 				show_function = 1;
 			goto next_line;
 		}
-		if (show_function && match_funcname(opt, bol, eol))
+		if (show_function && match_funcname(opt, name, bol, eol))
 			show_function = 0;
 		if (show_function ||
 		    (last_hit && lno <= last_hit + opt->post_context)) {
