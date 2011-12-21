@@ -111,7 +111,7 @@ __git_ps1_show_upstream ()
 
 	# get some config options from git-config
 	local output="$(git config -z --get-regexp '^(svn-remote\..*\.url|bash\.showupstream)$' 2>/dev/null | tr '\0\n' '\n ')"
-	while read key value; do
+	while read -r key value; do
 		case "$key" in
 		bash.showupstream)
 			GIT_PS1_SHOWUPSTREAM="$value"
@@ -589,7 +589,7 @@ __git_refs ()
 			local ref entry
 			git --git-dir="$dir" for-each-ref --shell --format="ref=%(refname:short)" \
 				"refs/remotes/" | \
-			while read entry; do
+			while read -r entry; do
 				eval "$entry"
 				ref="${ref#*/}"
 				if [[ "$ref" == "$cur"* ]]; then
@@ -602,7 +602,7 @@ __git_refs ()
 	case "$cur" in
 	refs|refs/*)
 		git ls-remote "$dir" "$cur*" 2>/dev/null | \
-		while read hash i; do
+		while read -r hash i; do
 			case "$i" in
 			*^{}) ;;
 			*) echo "$i" ;;
@@ -611,7 +611,7 @@ __git_refs ()
 		;;
 	*)
 		git ls-remote "$dir" HEAD ORIG_HEAD 'refs/tags/*' 'refs/heads/*' 'refs/remotes/*' 2>/dev/null | \
-		while read hash i; do
+		while read -r hash i; do
 			case "$i" in
 			*^{}) ;;
 			refs/*) echo "${i#refs/*/}" ;;
@@ -636,7 +636,7 @@ __git_refs_remotes ()
 {
 	local i hash
 	git ls-remote "$1" 'refs/heads/*' 2>/dev/null | \
-	while read hash i; do
+	while read -r hash i; do
 		echo "$i:refs/remotes/$1/${i#refs/heads/}"
 	done
 }
@@ -1863,7 +1863,7 @@ __git_config_get_set_variables ()
 	done
 
 	git --git-dir="$(__gitdir)" config $config_file --list 2>/dev/null |
-	while read line
+	while read -r line
 	do
 		case "$line" in
 		*.*=*)
