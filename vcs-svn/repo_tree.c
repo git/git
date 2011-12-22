@@ -109,7 +109,7 @@ static struct repo_dirent *repo_read_dirent(uint32_t revision,
 static void repo_write_dirent(const uint32_t *path, uint32_t mode,
 			      uint32_t content_offset, uint32_t del)
 {
-	uint32_t name, revision, dir_o = ~0, parent_dir_o = ~0;
+	uint32_t name, revision, dir_o = ~0U, parent_dir_o = ~0U;
 	struct repo_dir *dir;
 	struct repo_dirent *key;
 	struct repo_dirent *dent = NULL;

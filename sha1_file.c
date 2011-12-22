@@ -2452,15 +2452,15 @@ static int write_loose_object(const unsigned char *sha1, char *hdr, int hdrlen,
 	git_SHA_CTX c;
 	unsigned char parano_sha1[20];
 	char *filename;
-	static char tmpfile[PATH_MAX];
+	static char tmp_file[PATH_MAX];
 
 	filename = sha1_file_name(sha1);
-	fd = create_tmpfile(tmpfile, sizeof(tmpfile), filename);
+	fd = create_tmpfile(tmp_file, sizeof(tmp_file), filename);
 	if (fd < 0) {
 		if (errno == EACCES)
 			return error("insufficient permission for adding an object to repository database %s\n", get_object_directory());
 		else
-			return error("unable to create temporary sha1 filename %s: %s\n", tmpfile, strerror(errno));
+			return error("unable to create temporary sha1 filename %s: %s\n", tmp_file, strerror(errno));
 	}
 
 	/* Set it up */
@@ -2505,12 +2505,12 @@ static int write_loose_object(const unsigned char *sha1, char *hdr, int hdrlen,
 		struct utimbuf utb;
 		utb.actime = mtime;
 		utb.modtime = mtime;
-		if (utime(tmpfile, &utb) < 0)
+		if (utime(tmp_file, &utb) < 0)
 			warning("failed utime() on %s: %s",
-				tmpfile, strerror(errno));
+				tmp_file, strerror(errno));
 	}
 
-	return move_temp_to_file(tmpfile, filename);
+	return move_temp_to_file(tmp_file, filename);
 }
 
 int write_sha1_file(const void *buf, unsigned long len, const char *type, unsigned char *returnsha1)

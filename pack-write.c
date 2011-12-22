@@ -73,9 +73,9 @@ const char *write_idx_file(const char *index_name, struct pack_idx_entry **objec
 		f = sha1fd_check(index_name);
 	} else {
 		if (!index_name) {
-			static char tmpfile[PATH_MAX];
-			fd = odb_mkstemp(tmpfile, sizeof(tmpfile), "pack/tmp_idx_XXXXXX");
-			index_name = xstrdup(tmpfile);
+			static char tmp_file[PATH_MAX];
+			fd = odb_mkstemp(tmp_file, sizeof(tmp_file), "pack/tmp_idx_XXXXXX");
+			index_name = xstrdup(tmp_file);
 		} else {
 			unlink(index_name);
 			fd = open(index_name, O_CREAT|O_EXCL|O_WRONLY, 0600);
