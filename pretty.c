@@ -822,6 +822,23 @@ static void rewrap_message_tail(struct strbuf *sb,
 	c->indent2 = new_indent2;
 }
 
+static int format_reflog_person(struct strbuf *sb,
+				char part,
+				struct reflog_walk_info *log,
+				enum date_mode dmode)
+{
+	const char *ident;
+
+	if (!log)
+		return 2;
+
+	ident = get_reflog_ident(log);
+	if (!ident)
+		return 2;
+
+	return format_person_part(sb, part, ident, strlen(ident), dmode);
+}
+
 static size_t format_commit_one(struct strbuf *sb, const char *placeholder,
 				void *context)
 {
@@ -963,6 +980,14 @@ static size_t format_commit_one(struct strbuf *sb, const char *placeholder,
 			if (c->pretty_ctx->reflog_info)
 				get_reflog_message(sb, c->pretty_ctx->reflog_info);
 			return 2;
+		case 'n':
+		case 'N':
+		case 'e':
+		case 'E':
+			return format_reflog_person(sb,
+						    placeholder[1],
+						    c->pretty_ctx->reflog_info,
+						    c->pretty_ctx->date_mode);
 		}
 		return 0;	/* unknown %g placeholder */
 	case 'N':

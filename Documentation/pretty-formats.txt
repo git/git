@@ -132,6 +132,10 @@ The placeholders are:
 - '%N': commit notes
 - '%gD': reflog selector, e.g., `refs/stash@\{1\}`
 - '%gd': shortened reflog selector, e.g., `stash@\{1\}`
+- '%gn': reflog identity name
+- '%gN': reflog identity name (respecting .mailmap, see linkgit:git-shortlog[1] or linkgit:git-blame[1])
+- '%ge': reflog identity email
+- '%gE': reflog identity email (respecting .mailmap, see linkgit:git-shortlog[1] or linkgit:git-blame[1])
 - '%gs': reflog subject
 - '%Cred': switch color to red
 - '%Cgreen': switch color to green
