@@ -10,8 +10,10 @@ Updates since v1.7.8
 
  * git-p4 (in contrib/) updates.
 
- * i18n effort is going forward and Git uses localized messages if
-   available.
+ * Git uses gettext to translate its most common interface messages
+   into the user's language if translations are available and the
+   locale is appropriately set. Distributors can drop in new PO files
+   in po/ to add new translations.
 
  * Porcelain commands like "git reset" did not distinguish deletions
    and type-changes from ordinary modification, and reported them with
@@ -23,9 +25,9 @@ Updates since v1.7.8
    external programs to cache or store them, to allow integration with
    platform native keychain mechanisms.
 
- * "git commit" and "git reset" re-learned the optimization to prime
-   the cache-tree information in the index, which makes it faster to
-   write a tree object out after the index entries are updated.
+ * The prompted input in the terminal use our own getpass() replacement
+   when possible. HTTP transactions used to ask username without echoing
+   back what was typed, but with this change you will see it as you type.
 
  * "git add" learned to stream large files directly into a packfile
    instead of writing them into individual loose object files.
@@ -43,12 +45,26 @@ Updates since v1.7.8
    user is amending the tree being recorded, without updating the
    commit log message.
 
+ * "git commit" and "git reset" re-learned the optimization to prime
+   the cache-tree information in the index, which makes it faster to
+   write a tree object out after the index entries are updated.
+
+ * "git commit" detects and rejects an attempt to stuff NUL byte in
+   the commit log message.
+
  * fsck and prune are relatively lengthy operations that still go
    silent while making the end-user wait. They learned to give progress
    output like other slow operations.
 
  * The set of built-in function-header patterns for various languages
    knows MATLAB.
+
+ * "git log --follow" honors the rename threshold score given with the
+   -M option (e.g. "-M50%").
+
+ * "git log --format='<format>'" learned new %g[nNeE] specifiers to
+   show information from the reflog entries when warlking the reflog
+   (i.e. with "-g").
 
  * "git pull" can be used to fetch and merge an annotated/signed tag,
    instead of the tip of a topic branch. The GPG signature from the
@@ -86,45 +102,34 @@ Also contains minor documentation updates and code clean-ups.
 Fixes since v1.7.8
 ------------------
 
- * The function header pattern for files with "diff=cpp" attribute did
-   not consider "type *funcname(type param1,..." as the beginning of a
-   function.
-   (merge 37e7793 tr/userdiff-c-returns-pointer later to maint).
-
  * The replacement implemention for snprintf used on platforms with
    native snprintf that is broken did not use va_copy correctly.
    (merge a9bfbc5 jk/maint-snprintf-va-copy later to maint).
-
- * LF-to-CRLF streaming filter used when checking out a large-ish blob
-   fell into an infinite loop with a rare input.
-   (merge 284e3d2 cn/maint-lf-to-crlf-filter later to maint).
 
  * git native connection going over TCP (not over SSH) did not set
    SO_KEEPALIVE option which failed to receive link layer errors.
    (merge e47a858 ew/keepalive later to maint).
 
- * "git archive" mistakenly allowed remote clients to ask for commits
-   that are not at the tip of any ref.
-   (merge 7b51c33 jk/maint-upload-archive later to maint).
-
- * "git apply --check" did not error out when given an empty input
-   without any patch.
-   (merge cc64b31 bc/maint-apply-check-no-patch later to maint).
+ * LF-to-CRLF streaming filter replaced all LF with CRLF, which might
+   be techinically correct but not friendly to people who are trying
+   to recover from earlier mistakes of using CRLF in the repository
+   data in the first place. It now refrains from doing so for LF that
+   follows a CR.
+   (merge 8496f56 jc/maint-lf-to-crlf-keep-crlf later to maint).
 
  * "git checkout -m" did not recreate the conflicted state in a "both
    sides added, without any common ancestor version" conflict
    situation.
-   (merge 335c6e4 jc/checkout-m-twoway later to maint).
+   (merge 5cd7fadc jc/checkout-m-twoway later to maint).
 
  * "git cherry-pick $commit" (not a range) created an unnecessary
    sequencer state and interfered with valid workflow to use the
    command during a session to cherry-pick multiple commits.
    (merge d596118 jn/maint-sequencer-fixes later to maint).
 
- * The error message from "git diff" and "git status" when they fail
-   to inspect changes in submodules did not report which submodule they
-   had trouble with.
-   (merge 6a5ceda jl/submodule-status-failure-report later to maint).
+ * You could make "git commit" segfault by giving the "--no-message"
+   option.
+   (merge 03f94ae jk/maint-strbuf-missing-init later to maint).
 
  * "fast-import" did not correctly update an existing notes tree,
    possibly corrupting the fan-out.
@@ -151,9 +156,16 @@ Fixes since v1.7.8
    given.
    (merge a4ddbc3 jk/maint-push-over-dav later to maint).
 
+ * "git push" to an empty repository over HTTP were broken with a
+   recent change to the ref handling.
+   (merge 02f7914 jk/http-push-to-empty later to maint).
+
+ * "git push -v" forgot how to be verbose by mistake. It now properly is.
+   (merge bd2c86e jk/maint-push-v-is-verbose later to maint).
+
 --
 exec >/var/tmp/1
-O=v1.7.8-351-g2dccad3
+O=v1.7.8.1-361-g1aea303
 echo O=$(git describe master)
 git log --first-parent --oneline --reverse ^$O master
 echo
