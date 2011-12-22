@@ -29,6 +29,10 @@ Updates since v1.7.8
    when possible. HTTP transactions used to ask username without echoing
    back what was typed, but with this change you will see it as you type.
 
+ * The internal of "revert/cherry-pick" has been tweaked to prepare
+   building more generic "sequencer" on top of the implementation that
+   drives them.
+
  * "git add" learned to stream large files directly into a packfile
    instead of writing them into individual loose object files.
 
@@ -163,9 +167,13 @@ Fixes since v1.7.8
  * "git push -v" forgot how to be verbose by mistake. It now properly is.
    (merge bd2c86e jk/maint-push-v-is-verbose later to maint).
 
+ * gitweb did not correctly fall back to configured $fallback_encoding
+   that is not 'latin1'.
+   (merge b13e3ea jn/maint-gitweb-utf8-fix later to maint).
+
 --
 exec >/var/tmp/1
-O=v1.7.8.1-361-g1aea303
+O=v1.7.8.1-384-g2b6dd6a
 echo O=$(git describe master)
 git log --first-parent --oneline --reverse ^$O master
 echo
