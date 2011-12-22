@@ -14,6 +14,7 @@
 #include "log-tree.h"
 #include "builtin.h"
 #include "submodule.h"
+#include "sha1-array.h"
 
 struct blobinfo {
 	unsigned char sha1[20];
@@ -169,7 +170,7 @@ static int builtin_diff_combined(struct rev_info *revs,
 				 struct object_array_entry *ent,
 				 int ents)
 {
-	const unsigned char (*parent)[20];
+	struct sha1_array parents = SHA1_ARRAY_INIT;
 	int i;
 
 	if (argc > 1)
@@ -177,12 +178,11 @@ static int builtin_diff_combined(struct rev_info *revs,
 
 	if (!revs->dense_combined_merges && !revs->combine_merges)
 		revs->dense_combined_merges = revs->combine_merges = 1;
-	parent = xmalloc(ents * sizeof(*parent));
-	for (i = 0; i < ents; i++)
-		hashcpy((unsigned char *)(parent + i), ent[i].item->sha1);
-	diff_tree_combined(parent[0], parent + 1, ents - 1,
+	for (i = 1; i < ents; i++)
+		sha1_array_append(&parents, ent[i].item->sha1);
+	diff_tree_combined(ent[0].item->sha1, &parents,
 			   revs->dense_combined_merges, revs);
-	free((void *)parent);
+	sha1_array_clear(&parents);
 	return 0;
 }
 
