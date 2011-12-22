@@ -1492,7 +1492,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 		append_merge_tag_headers(parents, &tail);
 	}
 
-	if (commit_tree_extended(sb.buf, active_cache_tree->sha1, parents, sha1,
+	if (commit_tree_extended(&sb, active_cache_tree->sha1, parents, sha1,
 				 author_ident.buf, extra)) {
 		rollback_index_files();
 		die(_("failed to write commit object"));

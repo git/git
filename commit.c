@@ -973,7 +973,7 @@ void free_commit_extra_headers(struct commit_extra_header *extra)
 	}
 }
 
-int commit_tree(const char *msg, unsigned char *tree,
+int commit_tree(const struct strbuf *msg, unsigned char *tree,
 		struct commit_list *parents, unsigned char *ret,
 		const char *author)
 {
@@ -991,7 +991,7 @@ static const char commit_utf8_warn[] =
 "You may want to amend it after fixing the message, or set the config\n"
 "variable i18n.commitencoding to the encoding your project uses.\n";
 
-int commit_tree_extended(const char *msg, unsigned char *tree,
+int commit_tree_extended(const struct strbuf *msg, unsigned char *tree,
 			 struct commit_list *parents, unsigned char *ret,
 			 const char *author, struct commit_extra_header *extra)
 {
@@ -1000,6 +1000,9 @@ int commit_tree_extended(const char *msg, unsigned char *tree,
 	struct strbuf buffer;
 
 	assert_sha1_type(tree, OBJ_TREE);
+
+	if (memchr(msg->buf, '\0', msg->len))
+		return error("a NUL byte in commit log message not allowed.");
 
 	/* Not having i18n.commitencoding is the same as having utf-8 */
 	encoding_is_utf8 = is_encoding_utf8(git_commit_encoding);
@@ -1037,7 +1040,7 @@ int commit_tree_extended(const char *msg, unsigned char *tree,
 	strbuf_addch(&buffer, '\n');
 
 	/* And add the comment */
-	strbuf_addstr(&buffer, msg);
+	strbuf_addbuf(&buffer, msg);
 
 	/* And check the encoding */
 	if (encoding_is_utf8 && !is_utf8(buffer.buf))

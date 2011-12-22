@@ -191,11 +191,11 @@ struct commit_extra_header {
 extern void append_merge_tag_headers(struct commit_list *parents,
 				     struct commit_extra_header ***tail);
 
-extern int commit_tree(const char *msg, unsigned char *tree,
+extern int commit_tree(const struct strbuf *msg, unsigned char *tree,
 		       struct commit_list *parents, unsigned char *ret,
 		       const char *author);
 
-extern int commit_tree_extended(const char *msg, unsigned char *tree,
+extern int commit_tree_extended(const struct strbuf *msg, unsigned char *tree,
 				struct commit_list *parents, unsigned char *ret,
 				const char *author,
 				struct commit_extra_header *);
