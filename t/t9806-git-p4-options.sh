@@ -61,6 +61,28 @@ test_expect_success 'clone --changesfile, @all' '
 	test_must_fail "$GITP4" clone --changesfile="$cf" --dest="$git" //depot@all
 '
 
+# imports both master and p4/master in refs/heads
+# requires --import-local on sync to find p4 refs/heads
+# does not update master on sync, just p4/master
+test_expect_success 'clone/sync --import-local' '
+	"$GITP4" clone --import-local --dest="$git" //depot@1,2 &&
+	test_when_finished cleanup_git &&
+	(
+		cd "$git" &&
+		git log --oneline refs/heads/master >lines &&
+		test_line_count = 2 lines &&
+		git log --oneline refs/heads/p4/master >lines &&
+		test_line_count = 2 lines &&
+		test_must_fail "$GITP4" sync &&
+
+		"$GITP4" sync --import-local &&
+		git log --oneline refs/heads/master >lines &&
+		test_line_count = 2 lines &&
+		git log --oneline refs/heads/p4/master >lines &&
+		test_line_count = 3 lines
+	)
+'
+
 test_expect_success 'kill p4d' '
 	kill_p4d
 '

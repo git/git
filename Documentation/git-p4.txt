@@ -211,7 +211,9 @@ git repository:
 	By default, p4 branches are stored in 'refs/remotes/p4/',
 	where they will be treated as remote-tracking branches by
 	linkgit:git-branch[1] and other commands.  This option instead
-	puts p4 branches in 'refs/heads/p4/'.
+	puts p4 branches in 'refs/heads/p4/'.  Note that future
+	sync operations must specify '--import-local' as well so that
+	they can find the p4 branches in refs/heads.
 
 --max-changes <n>::
 	Limit the number of imported changes to 'n'.  Useful to
