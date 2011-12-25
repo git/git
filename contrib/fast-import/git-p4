@@ -362,6 +362,11 @@ def isValidGitDir(path):
 def parseRevision(ref):
     return read_pipe("git rev-parse %s" % ref).strip()
 
+def branchExists(ref):
+    rev = read_pipe(["git", "rev-parse", "-q", "--verify", ref],
+                     ignore_error=True)
+    return len(rev) > 0
+
 def extractLogMessageFromGitCommit(commit):
     logMessage = ""
 
@@ -1089,6 +1094,8 @@ class P4Submit(Command, P4UserMap):
                 die("Detecting current git branch failed!")
         elif len(args) == 1:
             self.master = args[0]
+            if not branchExists(self.master):
+                die("Branch %s does not exist" % self.master)
         else:
             return False
 
