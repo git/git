@@ -83,6 +83,16 @@ test_expect_success 'clone/sync --import-local' '
 	)
 '
 
+test_expect_success 'clone --max-changes' '
+	"$GITP4" clone --dest="$git" --max-changes 2 //depot@all &&
+	test_when_finished cleanup_git &&
+	(
+		cd "$git" &&
+		git log --oneline refs/heads/master >lines &&
+		test_line_count = 2 lines
+	)
+'
+
 test_expect_success 'kill p4d' '
 	kill_p4d
 '
