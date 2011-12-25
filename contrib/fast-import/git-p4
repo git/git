@@ -2335,7 +2335,8 @@ def main():
     args = sys.argv[2:]
 
     if len(options) > 0:
-        options.append(optparse.make_option("--git-dir", dest="gitdir"))
+        if cmd.needsGit:
+            options.append(optparse.make_option("--git-dir", dest="gitdir"))
 
         parser = optparse.OptionParser(cmd.usage.replace("%prog", "%prog " + cmdName),
                                        options,
