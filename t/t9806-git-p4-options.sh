@@ -27,6 +27,17 @@ test_expect_success 'clone no --git-dir' '
 	test_must_fail "$GITP4" clone --git-dir=xx //depot
 '
 
+test_expect_success 'clone --branch' '
+	"$GITP4" clone --branch=refs/remotes/p4/sb --dest="$git" //depot &&
+	test_when_finished cleanup_git &&
+	(
+		cd "$git" &&
+		git ls-files >files &&
+		test_line_count = 0 files &&
+		test_path_is_file .git/refs/remotes/p4/sb
+	)
+'
+
 test_expect_success 'kill p4d' '
 	kill_p4d
 '
