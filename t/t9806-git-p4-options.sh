@@ -117,6 +117,52 @@ test_expect_success 'clone --keep-path' '
 	)
 '
 
+# clone --use-client-spec must still specify a depot path
+# if given, it should rearrange files according to client spec
+# when it has view lines that match the depot path
+# XXX: should clone/sync just use the client spec exactly, rather
+# than needing depot paths?
+test_expect_success 'clone --use-client-spec' '
+	(
+		# big usage message
+		exec >/dev/null &&
+		test_must_fail "$GITP4" clone --dest="$git" --use-client-spec
+	) &&
+	cli2="$TRASH_DIRECTORY/cli2" &&
+	mkdir -p "$cli2" &&
+	test_when_finished "rmdir \"$cli2\"" &&
+	(
+		cd "$cli2" &&
+		p4 client -i <<-EOF
+		Client: client2
+		Description: client2
+		Root: $cli2
+		View: //depot/sub/... //client2/bus/...
+		EOF
+	) &&
+	P4CLIENT=client2 &&
+	test_when_finished cleanup_git &&
+	"$GITP4" clone --dest="$git" --use-client-spec //depot/... &&
+	(
+		cd "$git" &&
+		test_path_is_file bus/dir/f4 &&
+		test_path_is_file file1
+	) &&
+	cleanup_git &&
+
+	# same thing again, this time with variable instead of option
+	mkdir "$git" &&
+	(
+		cd "$git" &&
+		git init &&
+		git config git-p4.useClientSpec true &&
+		"$GITP4" sync //depot/... &&
+		git checkout -b master p4/master &&
+		test_path_is_file bus/dir/f4 &&
+		test_path_is_file file1
+	)
+'
+
 test_expect_success 'kill p4d' '
 	kill_p4d
 '

@@ -1951,7 +1951,10 @@ class P4Sync(Command, P4UserMap):
             if not gitBranchExists(self.refPrefix + "HEAD") and self.importIntoRemotes and gitBranchExists(self.branch):
                 system("git symbolic-ref %sHEAD %s" % (self.refPrefix, self.branch))
 
-        if self.useClientSpec or gitConfig("git-p4.useclientspec") == "true":
+        if not self.useClientSpec:
+            if gitConfig("git-p4.useclientspec", "--bool") == "true":
+                self.useClientSpec = True
+        if self.useClientSpec:
             self.getClientSpec()
 
         # TODO: should always look at previous commits,
@@ -2380,6 +2383,7 @@ def main():
 
     if not cmd.run(args):
         parser.print_help()
+        sys.exit(2)
 
 
 if __name__ == '__main__':
