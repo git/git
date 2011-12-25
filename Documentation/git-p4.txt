@@ -276,8 +276,15 @@ p4 revision specifier on the end:
 "//depot/my/project@1,6"::
     Import only changes 1 through 6.
 
-"//depot/proj1 //depot/proj2@all"::
-    Import all changes from both named depot paths.
+"//depot/proj1@all //depot/proj2@all"::
+    Import all changes from both named depot paths into a single
+    repository.  Only files below these directories are included.
+    There is not a subdirectory in git for each "proj1" and "proj2".
+    You must use the '--destination' option when specifying more
+    than one depot path.  The revision specifier must be specified
+    identically on each depot path.  If there are files in the
+    depot paths with the same name, the path with the most recently
+    updated version of the file is the one that appears in git.
 
 See 'p4 help revisions' for the full syntax of p4 revision specifiers.
 
