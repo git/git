@@ -93,6 +93,30 @@ test_expect_success 'clone --max-changes' '
 	)
 '
 
+test_expect_success 'clone --keep-path' '
+	(
+		cd "$cli" &&
+		mkdir -p sub/dir &&
+		echo f4 >sub/dir/f4 &&
+		p4 add sub/dir/f4 &&
+		p4 submit -d "change 4"
+	) &&
+	"$GITP4" clone --dest="$git" --keep-path //depot/sub/dir@all &&
+	test_when_finished cleanup_git &&
+	(
+		cd "$git" &&
+		test_path_is_missing f4 &&
+		test_path_is_file sub/dir/f4
+	) &&
+	cleanup_git &&
+	"$GITP4" clone --dest="$git" //depot/sub/dir@all &&
+	(
+		cd "$git" &&
+		test_path_is_file f4 &&
+		test_path_is_missing sub/dir/f4
+	)
+'
+
 test_expect_success 'kill p4d' '
 	kill_p4d
 '
