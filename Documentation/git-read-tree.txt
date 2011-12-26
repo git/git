@@ -342,7 +342,7 @@ since you pulled from him:
 
 ----------------
 $ git fetch git://.... linus
-$ LT=`cat .git/FETCH_HEAD`
+$ LT=`git rev-parse FETCH_HEAD`
 ----------------
 
 Your work tree is still based on your HEAD ($JC), but you have
