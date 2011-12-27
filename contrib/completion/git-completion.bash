@@ -23,7 +23,7 @@
 #
 #    3) Consider changing your PS1 to also show the current branch:
 #         Bash: PS1='[\u@\h \W$(__git_ps1 " (%s)")]\$ '
-#         ZSH:  PS1="[%n@%m %c$(__git_ps1 " (%s)")]\$ "
+#         ZSH:  PS1="[%n@%m %c"'$(__git_ps1 " (%s)")'"]\$ "
 #
 #       The argument to __git_ps1 will be displayed only if you
 #       are currently in a git repository.  The %s token will be
