@@ -59,6 +59,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 	int i, newfd;
 	int verbose = 0, show_only = 0, force = 0, ignore_errors = 0;
 	struct option builtin_mv_options[] = {
+		OPT__VERBOSE(&verbose, "be verbose"),
 		OPT__DRY_RUN(&show_only, "dry run"),
 		OPT__FORCE(&force, "force move/rename even if target exists"),
 		OPT_BOOLEAN('k', NULL, &ignore_errors, "skip move/rename errors"),
@@ -93,7 +94,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 		destination = copy_pathspec(dest_path[0], argv, argc, 1);
 	} else {
 		if (argc != 1)
-			usage_with_options(builtin_mv_usage, builtin_mv_options);
+			die("destination '%s' is not a directory", dest_path[0]);
 		destination = dest_path;
 	}
 
@@ -176,7 +177,8 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 				 * check both source and destination
 				 */
 				if (S_ISREG(st.st_mode) || S_ISLNK(st.st_mode)) {
-					warning(_("%s; will overwrite!"), bad);
+					if (verbose)
+						warning(_("overwriting '%s'"), dst);
 					bad = NULL;
 				} else
 					bad = _("Cannot overwrite");
