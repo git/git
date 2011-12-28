@@ -215,7 +215,7 @@ static struct ref *get_refs_via_rsync(struct transport *transport, int for_push)
 	rsync.argv = args;
 	rsync.stdout_to_stderr = 1;
 	args[0] = "rsync";
-	args[1] = (transport->verbose > 0) ? "-rv" : "-r";
+	args[1] = (transport->verbose > 1) ? "-rv" : "-r";
 	args[2] = buf.buf;
 	args[3] = temp_dir.buf;
 	args[4] = NULL;
@@ -268,7 +268,7 @@ static int fetch_objs_via_rsync(struct transport *transport,
 	rsync.argv = args;
 	rsync.stdout_to_stderr = 1;
 	args[0] = "rsync";
-	args[1] = (transport->verbose > 0) ? "-rv" : "-r";
+	args[1] = (transport->verbose > 1) ? "-rv" : "-r";
 	args[2] = "--ignore-existing";
 	args[3] = "--exclude";
 	args[4] = "info";
@@ -351,7 +351,7 @@ static int rsync_transport_push(struct transport *transport,
 	args[i++] = "-a";
 	if (flags & TRANSPORT_PUSH_DRY_RUN)
 		args[i++] = "--dry-run";
-	if (transport->verbose > 0)
+	if (transport->verbose > 1)
 		args[i++] = "-v";
 	args[i++] = "--ignore-existing";
 	args[i++] = "--exclude";
@@ -527,7 +527,7 @@ static int fetch_refs_via_pack(struct transport *transport,
 	args.lock_pack = 1;
 	args.use_thin_pack = data->options.thin;
 	args.include_tag = data->options.followtags;
-	args.verbose = (transport->verbose > 0);
+	args.verbose = (transport->verbose > 1);
 	args.quiet = (transport->verbose < 0);
 	args.no_progress = !transport->progress;
 	args.depth = data->options.depth;
@@ -980,7 +980,7 @@ int transport_set_option(struct transport *transport,
 void transport_set_verbosity(struct transport *transport, int verbosity,
 	int force_progress)
 {
-	if (verbosity >= 2)
+	if (verbosity >= 1)
 		transport->verbose = verbosity <= 3 ? verbosity : 3;
 	if (verbosity < 0)
 		transport->verbose = -1;
