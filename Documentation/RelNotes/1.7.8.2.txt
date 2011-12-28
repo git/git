@@ -1,0 +1,71 @@
+Git v1.7.8.2 Release Notes
+==========================
+
+Fixes since v1.7.8.1
+--------------------
+
+ * Porcelain commands like "git reset" did not distinguish deletions
+   and type-changes from ordinary modification, and reported them with
+   the same 'M' moniker. They now use 'D' (for deletion) and 'T' (for
+   type-change) to match "git status -s" and "git diff --name-status".
+
+ * The configuration file parser used for sizes (e.g. bigFileThreshold)
+   did not correctly interpret 'g' suffix.
+
+ * The replacement implemention for snprintf used on platforms with
+   native snprintf that is broken did not use va_copy correctly.
+
+ * LF-to-CRLF streaming filter replaced all LF with CRLF, which might
+   be techinically correct but not friendly to people who are trying
+   to recover from earlier mistakes of using CRLF in the repository
+   data in the first place. It now refrains from doing so for LF that
+   follows a CR.
+
+ * git native connection going over TCP (not over SSH) did not set
+   SO_KEEPALIVE option which failed to receive link layer errors.
+
+ * "git branch -m <current branch> HEAD" is an obvious no-op but was not
+   allowed.
+
+ * "git checkout -m" did not recreate the conflicted state in a "both
+   sides added, without any common ancestor version" conflict
+   situation.
+
+ * "git cherry-pick $commit" (not a range) created an unnecessary
+   sequencer state and interfered with valid workflow to use the
+   command during a session to cherry-pick multiple commits.
+
+ * You could make "git commit" segfault by giving the "--no-message"
+   option.
+
+ * "fast-import" did not correctly update an existing notes tree,
+   possibly corrupting the fan-out.
+
+ * "git fetch-pack" accepted unqualified refs that do not begin with
+   refs/ by mistake and compensated it by matching the refspec with
+   tail-match, which was doubly wrong. This broke fetching from a
+   repository with a funny named ref "refs/foo/refs/heads/master" and a
+   'master' branch with "git fetch-pack refs/heads/master", as the
+   command incorrectly considered the former a "match".
+
+ * "git log --follow" did not honor the rename threshold score given
+   with the -M option (e.g. "-M50%").
+
+ * "git mv" gave suboptimal error/warning messages when it overwrites
+   target files. It also did not pay attention to "-v" option.
+
+ * Authenticated "git push" over dumb HTTP were broken with a recent
+   change and failed without asking for password when username is
+   given.
+
+ * "git push" to an empty repository over HTTP were broken with a
+   recent change to the ref handling.
+
+ * "git push -v" forgot how to be verbose by mistake. It now properly
+   becomes verbose when asked to.
+
+ * When a "reword" action in "git rebase -i" failed to run "commit --amend",
+   we did not give the control back to the user to resolve the situation, and
+   instead kept the original commit log message.
+
+Also contains minor fixes and documentation updates.
