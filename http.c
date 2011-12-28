@@ -42,6 +42,7 @@ static int curl_ftp_no_epsv;
 static const char *curl_http_proxy;
 static const char *curl_cookie_file;
 static char *user_name, *user_pass, *description;
+static int http_proactive_auth;
 static const char *user_agent;
 
 #if LIBCURL_VERSION_NUM >= 0x071700
@@ -276,6 +277,9 @@ static CURL *get_curl_handle(void)
 	curl_easy_setopt(result, CURLOPT_HTTPAUTH, CURLAUTH_ANY);
 #endif
 
+	if (http_proactive_auth)
+		init_curl_http_auth(result);
+
 	if (ssl_cert != NULL)
 		curl_easy_setopt(result, CURLOPT_SSLCERT, ssl_cert);
 	if (has_cert_password())
@@ -364,7 +368,7 @@ static void set_from_env(const char **var, const char *envname)
 		*var = val;
 }
 
-void http_init(struct remote *remote, const char *url)
+void http_init(struct remote *remote, const char *url, int proactive_auth)
 {
 	char *low_speed_limit;
 	char *low_speed_time;
@@ -374,6 +378,8 @@ void http_init(struct remote *remote, const char *url)
 	git_config(http_options, NULL);
 
 	curl_global_init(CURL_GLOBAL_ALL);
+
+	http_proactive_auth = proactive_auth;
 
 	if (remote && remote->http_proxy)
 		curl_http_proxy = xstrdup(remote->http_proxy);
