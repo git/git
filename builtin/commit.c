@@ -103,7 +103,7 @@ static enum commit_whence whence;
 static int use_editor = 1, include_status = 1;
 static int show_ignored_in_status;
 static const char *only_include_assumed;
-static struct strbuf message;
+static struct strbuf message = STRBUF_INIT;
 
 static int null_termination;
 static enum {
