@@ -6,7 +6,10 @@ int gitsetenv(const char *name, const char *value, int replace)
 	size_t namelen, valuelen;
 	char *envstr;
 
-	if (!name || !value) return -1;
+	if (!name || strchr(name, '=') || !value) {
+		errno = EINVAL;
+		return -1;
+	}
 	if (!replace) {
 		char *oldval = NULL;
 		oldval = getenv(name);
@@ -16,7 +19,10 @@ int gitsetenv(const char *name, const char *value, int replace)
 	namelen = strlen(name);
 	valuelen = strlen(value);
 	envstr = malloc((namelen + valuelen + 2));
-	if (!envstr) return -1;
+	if (!envstr) {
+		errno = ENOMEM;
+		return -1;
+	}
 
 	memcpy(envstr, name, namelen);
 	envstr[namelen] = '=';
