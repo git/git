@@ -75,7 +75,7 @@ int cmd_stripspace(int argc, const char **argv, const char *prefix)
 				!strcmp(argv[1], "--strip-comments")))
 		strip_comments = 1;
 	else if (argc > 1)
-		usage("git stripspace [-s | --strip-comments] < <stream>");
+		usage("git stripspace [-s | --strip-comments] < input");
 
 	if (strbuf_read(&buf, 0, 1024) < 0)
 		die_errno("could not read the input");
