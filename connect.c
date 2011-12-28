@@ -53,7 +53,6 @@ static void add_extra_have(struct extra_have_objects *extra, unsigned char *sha1
  * Read all the refs from the other end
  */
 struct ref **get_remote_heads(int in, struct ref **list,
-			      int nr_match, char **match,
 			      unsigned int flags,
 			      struct extra_have_objects *extra_have)
 {
@@ -92,8 +91,6 @@ struct ref **get_remote_heads(int in, struct ref **list,
 
 		if (!check_ref(name, name_len, flags))
 			continue;
-		if (nr_match && !path_match(name, nr_match, match))
-			continue;
 		ref = alloc_ref(buffer + 41);
 		hashcpy(ref->old_sha1, old_sha1);
 		*list = ref;
@@ -106,27 +103,6 @@ int server_supports(const char *feature)
 {
 	return server_capabilities &&
 		strstr(server_capabilities, feature) != NULL;
-}
-
-int path_match(const char *path, int nr, char **match)
-{
-	int i;
-	int pathlen = strlen(path);
-
-	for (i = 0; i < nr; i++) {
-		char *s = match[i];
-		int len = strlen(s);
-
-		if (!len || len > pathlen)
-			continue;
-		if (memcmp(path + pathlen - len, s, len))
-			continue;
-		if (pathlen > len && path[pathlen - len - 1] != '/')
-			continue;
-		*s = 0;
-		return (i + 1);
-	}
-	return 0;
 }
 
 enum protocol {
