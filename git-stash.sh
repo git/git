@@ -115,7 +115,8 @@ create_stash () {
 			git read-tree --index-output="$TMPindex" -m $i_tree &&
 			GIT_INDEX_FILE="$TMPindex" &&
 			export GIT_INDEX_FILE &&
-			git diff --name-only -z HEAD | git update-index -z --add --remove --stdin &&
+			git diff --name-only -z HEAD -- >"$TMP-stagenames" &&
+			git update-index -z --add --remove --stdin <"$TMP-stagenames" &&
 			git write-tree &&
 			rm -f "$TMPindex"
 		) ) ||
@@ -134,7 +135,7 @@ create_stash () {
 		w_tree=$(GIT_INDEX_FILE="$TMP-index" git write-tree) ||
 		die "$(gettext "Cannot save the current worktree state")"
 
-		git diff-tree -p HEAD $w_tree > "$TMP-patch" &&
+		git diff-tree -p HEAD $w_tree -- >"$TMP-patch" &&
 		test -s "$TMP-patch" ||
 		die "$(gettext "No changes selected")"
 
@@ -491,7 +492,7 @@ drop_stash () {
 		die "$(eval_gettext "\${REV}: Could not drop stash entry")"
 
 	# clear_stash if we just dropped the last stash entry
-	git rev-parse --verify "$ref_stash@{0}" > /dev/null 2>&1 || clear_stash
+	git rev-parse --verify "$ref_stash@{0}" >/dev/null 2>&1 || clear_stash
 }
 
 apply_to_branch () {
