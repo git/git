@@ -107,7 +107,7 @@ test_expect_success 'wildcard ... only supported at end of spec' '
 	test_must_fail "$GITP4" clone --use-client-spec --dest="$git" //depot
 '
 
-test_expect_failure 'basic map' '
+test_expect_success 'basic map' '
 	client_view "//depot/dir1/... //client/cli1/..." &&
 	files="cli1/file11 cli1/file12" &&
 	client_verify $files &&
@@ -116,7 +116,7 @@ test_expect_failure 'basic map' '
 	git_verify $files
 '
 
-test_expect_failure 'client view with no mappings' '
+test_expect_success 'client view with no mappings' '
 	client_view &&
 	client_verify &&
 	test_when_finished cleanup_git &&
@@ -124,7 +124,7 @@ test_expect_failure 'client view with no mappings' '
 	git_verify
 '
 
-test_expect_failure 'single file map' '
+test_expect_success 'single file map' '
 	client_view "//depot/dir1/file11 //client/file11" &&
 	files="file11" &&
 	client_verify $files &&
@@ -144,7 +144,7 @@ test_expect_success 'later mapping takes precedence (entire repo)' '
 	git_verify $files
 '
 
-test_expect_failure 'later mapping takes precedence (partial repo)' '
+test_expect_success 'later mapping takes precedence (partial repo)' '
 	client_view "//depot/dir1/... //client/..." \
 		    "//depot/dir2/... //client/..." &&
 	files="file21 file22" &&
@@ -159,7 +159,7 @@ test_expect_failure 'later mapping takes precedence (partial repo)' '
 #   dir1 cannot go to cli12 since it was filled by dir2
 #   dir1 also does not go to cli3, since the second rule
 #     noticed that it matched, but was already filled
-test_expect_failure 'depot path matching rejected client path' '
+test_expect_success 'depot path matching rejected client path' '
 	client_view "//depot/dir1/... //client/cli3/..." \
 		    "//depot/dir1/... //client/cli12/..." \
 		    "//depot/dir2/... //client/cli12/..." &&
@@ -172,7 +172,7 @@ test_expect_failure 'depot path matching rejected client path' '
 
 # since both have the same //client/..., the exclusion
 # rule keeps everything out
-test_expect_failure 'exclusion wildcard, client rhs same (odd)' '
+test_expect_success 'exclusion wildcard, client rhs same (odd)' '
 	client_view "//depot/... //client/..." \
 		    "-//depot/dir2/... //client/..." &&
 	client_verify &&
@@ -201,7 +201,7 @@ test_expect_success 'exclusion single file' '
 	git_verify $files
 '
 
-test_expect_failure 'overlay wildcard' '
+test_expect_success 'overlay wildcard' '
 	client_view "//depot/dir1/... //client/cli/..." \
 		    "+//depot/dir2/... //client/cli/...\n" &&
 	files="cli/file11 cli/file12 cli/file21 cli/file22" &&
@@ -211,7 +211,7 @@ test_expect_failure 'overlay wildcard' '
 	git_verify $files
 '
 
-test_expect_failure 'overlay single file' '
+test_expect_success 'overlay single file' '
 	client_view "//depot/dir1/... //client/cli/..." \
 		    "+//depot/dir2/file21 //client/cli/file21" &&
 	files="cli/file11 cli/file12 cli/file21" &&
@@ -221,7 +221,7 @@ test_expect_failure 'overlay single file' '
 	git_verify $files
 '
 
-test_expect_failure 'exclusion with later inclusion' '
+test_expect_success 'exclusion with later inclusion' '
 	client_view "//depot/... //client/..." \
 		    "-//depot/dir2/... //client/dir2/..." \
 		    "//depot/dir2/... //client/dir2incl/..." &&
@@ -232,7 +232,7 @@ test_expect_failure 'exclusion with later inclusion' '
 	git_verify $files
 '
 
-test_expect_failure 'quotes on rhs only' '
+test_expect_success 'quotes on rhs only' '
 	client_view "//depot/dir1/... \"//client/cdir 1/...\"" &&
 	client_verify "cdir 1/file11" "cdir 1/file12" &&
 	test_when_finished cleanup_git &&
@@ -266,7 +266,7 @@ test_expect_success 'rename files to introduce spaces' '
 		      "dir 2/file21" "dir 2/file22"
 '
 
-test_expect_failure 'quotes on lhs only' '
+test_expect_success 'quotes on lhs only' '
 	client_view "\"//depot/dir 1/...\" //client/cdir1/..." &&
 	files="cdir1/file11 cdir1/file12" &&
 	client_verify $files &&
@@ -275,7 +275,7 @@ test_expect_failure 'quotes on lhs only' '
 	client_verify $files
 '
 
-test_expect_failure 'quotes on both sides' '
+test_expect_success 'quotes on both sides' '
 	client_view "\"//depot/dir 1/...\" \"//client/cdir 1/...\"" &&
 	client_verify "cdir 1/file11" "cdir 1/file12" &&
 	test_when_finished cleanup_git &&
