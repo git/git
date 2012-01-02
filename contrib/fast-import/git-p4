@@ -1924,10 +1924,17 @@ class P4Sync(Command, P4UserMap):
                     else:
                         include = len(v)
 
-                    temp[v] = (include, cv)
+                    # store the View #number for sorting
+                    # and the View string itself (this last for documentation)
+                    temp[v] = (include, cv, int(k[4:]),k)
 
         self.clientSpecDirs = temp.items()
-        self.clientSpecDirs.sort( lambda x, y: abs( y[1][0] ) - abs( x[1][0] ) )
+        # Perforce ViewNN with higher #numbers override those with lower
+        # reverse sort on the View #number
+        self.clientSpecDirs.sort( lambda x, y:  y[1][2] -  x[1][2]  )
+        if self.verbose:
+            for val in self.clientSpecDirs:
+                    print "clientSpecDirs: %s %s" % (val[0],val[1])
 
     def run(self, args):
         self.depotPaths = []

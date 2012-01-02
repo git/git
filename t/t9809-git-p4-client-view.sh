@@ -133,7 +133,7 @@ test_expect_failure 'single file map' '
 	git_verify $files
 '
 
-test_expect_failure 'later mapping takes precedence (entire repo)' '
+test_expect_success 'later mapping takes precedence (entire repo)' '
 	client_view "//depot/dir1/... //client/cli1/..." \
 		    "//depot/... //client/cli2/..." &&
 	files="cli2/dir1/file11 cli2/dir1/file12
