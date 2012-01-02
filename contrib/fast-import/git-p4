@@ -1217,6 +1217,7 @@ class P4Sync(Command, P4UserMap):
         self.cloneExclude = []
         self.useClientSpec = False
         self.clientSpecDirs = []
+        self.haveSingleFileClientViews = False
 
         if gitConfig("git-p4.syncFromOrigin") == "false":
             self.syncWithOrigin = False
@@ -1274,6 +1275,16 @@ class P4Sync(Command, P4UserMap):
             # will end up putting all foo/branch files into
             #  branch/foo/
             for val in self.clientSpecDirs:
+                if self.haveSingleFileClientViews and len(path) == abs(val[1][0]) and path == val[0]:
+                    # since 'path' is a depot file path, if it matches the LeftMap,
+                    # then the View is a single file mapping, so use the entire rightMap
+                    # first two tests above avoid the last == test for common cases
+                    path =  val[1][1]
+                    # now strip out the client (//client/...)
+                    path = re.sub("^(//[^/]+/)", '', path)
+                    # the rest is local client path
+                    return path
+
                 if path.startswith(val[0]):
                     # replace the depot path with the client path
                     path = path.replace(val[0], val[1][1])
@@ -1905,19 +1916,19 @@ class P4Sync(Command, P4UserMap):
                     # save the "client view"; i.e the RHS of the view
                     # line that tells the client where to put the
                     # files for this view.
-                    cv = v[index+3:].strip() # +3 to remove previous '...'
 
-                    # if the client view doesn't end with a
-                    # ... wildcard, then we're going to mess up the
-                    # output directory, so fail gracefully.
-                    if not cv.endswith('...'):
-                        print 'Sorry, client view in "%s" needs to end with wildcard' % (k)
-                        sys.exit(1)
-                    cv=cv[:-3]
+                    # check for individual file mappings - those which have no '...'
+                    if  index < 0 :
+                        v,cv = v.strip().split()
+                        v = v[start:]
+                        self.haveSingleFileClientViews = True
+                    else:
+                        cv = v[index+3:].strip() # +3 to remove previous '...'
+                        cv=cv[:-3]
+                        v = v[start:index]
 
                     # now save the view; +index means included, -index
                     # means it should be filtered out.
-                    v = v[start:index]
                     if v.startswith("-"):
                         v = v[1:]
                         include = -len(v)

@@ -191,7 +191,7 @@ test_expect_success 'exclusion wildcard, client rhs different (normal)' '
 	git_verify $files
 '
 
-test_expect_failure 'exclusion single file' '
+test_expect_success 'exclusion single file' '
 	client_view "//depot/... //client/..." \
 		    "-//depot/dir2/file22 //client/file22" &&
 	files="dir1/file11 dir1/file12 dir2/file21" &&
