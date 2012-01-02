@@ -1889,8 +1889,11 @@ class P4Sync(Command, P4UserMap):
 
                     # p4 has these %%1 to %%9 arguments in specs to
                     # reorder paths; which we can't handle (yet :)
-                    if re.match('%%\d', v) != None:
+                    if re.search('%%\d', v) != None:
                         print "Sorry, can't handle %%n arguments in client specs"
+                        sys.exit(1)
+                    if re.search('\*', v) != None:
+                        print "Sorry, can't handle * mappings in client specs"
                         sys.exit(1)
 
                     if v.startswith('"'):

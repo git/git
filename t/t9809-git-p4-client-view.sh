@@ -89,13 +89,13 @@ test_expect_success 'init depot' '
 '
 
 # double % for printf
-test_expect_failure 'unsupported view wildcard %%n' '
+test_expect_success 'unsupported view wildcard %%n' '
 	client_view "//depot/%%%%1/sub/... //client/sub/%%%%1/..." &&
 	test_when_finished cleanup_git &&
 	test_must_fail "$GITP4" clone --use-client-spec --dest="$git" //depot
 '
 
-test_expect_failure 'unsupported view wildcard *' '
+test_expect_success 'unsupported view wildcard *' '
 	client_view "//depot/*/bar/... //client/*/bar/..." &&
 	test_when_finished cleanup_git &&
 	test_must_fail "$GITP4" clone --use-client-spec --dest="$git" //depot
