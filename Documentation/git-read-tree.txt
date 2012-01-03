@@ -83,11 +83,10 @@ OPTIONS
 
 --prefix=<prefix>/::
 	Keep the current index contents, and read the contents
-	of the named tree-ish under the directory at `<prefix>`. The
-	original index file cannot have anything at the path
-	`<prefix>` itself, nor anything in the `<prefix>/`
-	directory.  Note that the `<prefix>/` value must end
-	with a slash.
+	of the named tree-ish under the directory at `<prefix>`.
+	The command will refuse to overwrite entries that already
+	existed in the original index file. Note that the `<prefix>/`
+	value must end with a slash.
 
 --exclude-per-directory=<gitignore>::
 	When running the command with `-u` and `-m` options, the

@@ -1,5 +1,6 @@
 perl.mak
 perl.mak.old
+MYMETA.json
 MYMETA.yml
 blib
 blibdirs
