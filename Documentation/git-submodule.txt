@@ -79,7 +79,12 @@ to exist in the superproject. If <path> is not given, the
 <repository> is the URL of the new submodule's origin repository.
 This may be either an absolute URL, or (if it begins with ./
 or ../), the location relative to the superproject's origin
-repository. If the superproject doesn't have an origin configured
+repository (Please note that to specify a repository 'foo.git'
+which is located right next to a superproject 'bar.git', you'll
+have to use '../foo.git' instead of './foo.git' - as one might expect
+when following the rules for relative URLs - because the evaluation
+of relative URLs in Git is identical to that of relative directories).
+If the superproject doesn't have an origin configured
 the superproject is its own authoritative upstream and the current
 working directory is used instead.
 +

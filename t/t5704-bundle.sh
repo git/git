@@ -53,4 +53,10 @@ test_expect_failure 'bundle --stdin <rev-list options>' '
 
 '
 
+test_expect_success 'empty bundle file is rejected' '
+
+    >empty-bundle && test_must_fail git fetch empty-bundle
+
+'
+
 test_done
