@@ -31,8 +31,8 @@ static int strbuf_readline_fd(struct strbuf *sb, int fd)
 	while (1) {
 		char ch;
 		ssize_t len = xread(fd, &ch, 1);
-		if (len < 0)
-			return -1;
+		if (len <= 0)
+			return len;
 		strbuf_addch(sb, ch);
 		if (ch == '\n')
 			break;
