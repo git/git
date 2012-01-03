@@ -362,6 +362,11 @@ def isValidGitDir(path):
 def parseRevision(ref):
     return read_pipe("git rev-parse %s" % ref).strip()
 
+def branchExists(ref):
+    rev = read_pipe(["git", "rev-parse", "-q", "--verify", ref],
+                     ignore_error=True)
+    return len(rev) > 0
+
 def extractLogMessageFromGitCommit(commit):
     logMessage = ""
 
@@ -1089,6 +1094,8 @@ class P4Submit(Command, P4UserMap):
                 die("Detecting current git branch failed!")
         elif len(args) == 1:
             self.master = args[0]
+            if not branchExists(self.master):
+                die("Branch %s does not exist" % self.master)
         else:
             return False
 
@@ -1951,7 +1958,10 @@ class P4Sync(Command, P4UserMap):
             if not gitBranchExists(self.refPrefix + "HEAD") and self.importIntoRemotes and gitBranchExists(self.branch):
                 system("git symbolic-ref %sHEAD %s" % (self.refPrefix, self.branch))
 
-        if self.useClientSpec or gitConfig("git-p4.useclientspec") == "true":
+        if not self.useClientSpec:
+            if gitConfig("git-p4.useclientspec", "--bool") == "true":
+                self.useClientSpec = True
+        if self.useClientSpec:
             self.getClientSpec()
 
         # TODO: should always look at previous commits,
@@ -2024,6 +2034,17 @@ class P4Sync(Command, P4UserMap):
         revision = ""
         self.users = {}
 
+        # Make sure no revision specifiers are used when --changesfile
+        # is specified.
+        bad_changesfile = False
+        if len(self.changesFile) > 0:
+            for p in self.depotPaths:
+                if p.find("@") >= 0 or p.find("#") >= 0:
+                    bad_changesfile = True
+                    break
+        if bad_changesfile:
+            die("Option --changesfile is incompatible with revision specifiers")
+
         newPaths = []
         for p in self.depotPaths:
             if p.find("@") != -1:
@@ -2040,7 +2061,10 @@ class P4Sync(Command, P4UserMap):
                 revision = p[hashIdx:]
                 p = p[:hashIdx]
             elif self.previousDepotPaths == []:
-                revision = "#head"
+                # pay attention to changesfile, if given, else import
+                # the entire p4 tree at the head revision
+                if len(self.changesFile) == 0:
+                    revision = "#head"
 
             p = re.sub ("\.\.\.$", "", p)
             if not p.endswith("/"):
@@ -2335,7 +2359,8 @@ def main():
     args = sys.argv[2:]
 
     if len(options) > 0:
-        options.append(optparse.make_option("--git-dir", dest="gitdir"))
+        if cmd.needsGit:
+            options.append(optparse.make_option("--git-dir", dest="gitdir"))
 
         parser = optparse.OptionParser(cmd.usage.replace("%prog", "%prog " + cmdName),
                                        options,
@@ -2365,6 +2390,7 @@ def main():
 
     if not cmd.run(args):
         parser.print_help()
+        sys.exit(2)
 
 
 if __name__ == '__main__':

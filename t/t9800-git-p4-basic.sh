@@ -65,6 +65,66 @@ test_expect_success 'git-p4 sync new branch' '
 	)
 '
 
+test_expect_success 'clone two dirs' '
+	(
+		cd "$cli" &&
+		mkdir sub1 sub2 &&
+		echo sub1/f1 >sub1/f1 &&
+		echo sub2/f2 >sub2/f2 &&
+		p4 add sub1/f1 &&
+		p4 submit -d "sub1/f1" &&
+		p4 add sub2/f2 &&
+		p4 submit -d "sub2/f2"
+	) &&
+	"$GITP4" clone --dest="$git" //depot/sub1 //depot/sub2 &&
+	test_when_finished cleanup_git &&
+	(
+		cd "$git" &&
+		git ls-files >lines &&
+		test_line_count = 2 lines &&
+		git log --oneline p4/master >lines &&
+		test_line_count = 1 lines
+	)
+'
+
+test_expect_success 'clone two dirs, @all' '
+	(
+		cd "$cli" &&
+		echo sub1/f3 >sub1/f3 &&
+		p4 add sub1/f3 &&
+		p4 submit -d "sub1/f3"
+	) &&
+	"$GITP4" clone --dest="$git" //depot/sub1@all //depot/sub2@all &&
+	test_when_finished cleanup_git &&
+	(
+		cd "$git" &&
+		git ls-files >lines &&
+		test_line_count = 3 lines &&
+		git log --oneline p4/master >lines &&
+		test_line_count = 3 lines
+	)
+'
+
+test_expect_success 'clone two dirs, @all, conflicting files' '
+	(
+		cd "$cli" &&
+		echo sub2/f3 >sub2/f3 &&
+		p4 add sub2/f3 &&
+		p4 submit -d "sub2/f3"
+	) &&
+	"$GITP4" clone --dest="$git" //depot/sub1@all //depot/sub2@all &&
+	test_when_finished cleanup_git &&
+	(
+		cd "$git" &&
+		git ls-files >lines &&
+		test_line_count = 3 lines &&
+		git log --oneline p4/master >lines &&
+		test_line_count = 4 lines &&
+		echo sub2/f3 >expected &&
+		test_cmp expected f3
+	)
+'
+
 test_expect_success 'exit when p4 fails to produce marshaled output' '
 	badp4dir="$TRASH_DIRECTORY/badp4dir" &&
 	mkdir "$badp4dir" &&
