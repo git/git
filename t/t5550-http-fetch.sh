@@ -162,8 +162,7 @@ test_expect_success 'http remote detects correct HEAD' '
 test_expect_success 'fetch packed objects' '
 	cp -R "$HTTPD_DOCUMENT_ROOT_PATH"/repo.git "$HTTPD_DOCUMENT_ROOT_PATH"/repo_pack.git &&
 	(cd "$HTTPD_DOCUMENT_ROOT_PATH"/repo_pack.git &&
-	 git --bare repack &&
-	 git --bare prune-packed
+	 git --bare repack -a -d
 	) &&
 	git clone $HTTPD_URL/dumb/repo_pack.git
 '
