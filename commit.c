@@ -981,14 +981,15 @@ static void add_extra_header(struct strbuf *buffer,
 		strbuf_addch(buffer, '\n');
 }
 
-struct commit_extra_header *read_commit_extra_headers(struct commit *commit)
+struct commit_extra_header *read_commit_extra_headers(struct commit *commit,
+						      const char **exclude)
 {
 	struct commit_extra_header *extra = NULL;
 	unsigned long size;
 	enum object_type type;
 	char *buffer = read_sha1_file(commit->object.sha1, &type, &size);
 	if (buffer && type == OBJ_COMMIT)
-		extra = read_commit_extra_header_lines(buffer, size);
+		extra = read_commit_extra_header_lines(buffer, size, exclude);
 	free(buffer);
 	return extra;
 }
@@ -1002,7 +1003,23 @@ static inline int standard_header_field(const char *field, size_t len)
 		(len == 8 && !memcmp(field, "encoding ", 9)));
 }
 
-struct commit_extra_header *read_commit_extra_header_lines(const char *buffer, size_t size)
+static int excluded_header_field(const char *field, size_t len, const char **exclude)
+{
+	if (!exclude)
+		return 0;
+
+	while (*exclude) {
+		size_t xlen = strlen(*exclude);
+		if (len == xlen &&
+		    !memcmp(field, *exclude, xlen) && field[xlen] == ' ')
+			return 1;
+		exclude++;
+	}
+	return 0;
+}
+
+struct commit_extra_header *read_commit_extra_header_lines(const char *buffer, size_t size,
+							   const char **exclude)
 {
 	struct commit_extra_header *extra = NULL, **tail = &extra, *it = NULL;
 	const char *line, *next, *eof, *eob;
@@ -1028,7 +1045,8 @@ struct commit_extra_header *read_commit_extra_header_lines(const char *buffer, s
 		if (next <= eof)
 			eof = next;
 
-		if (standard_header_field(line, eof - line))
+		if (standard_header_field(line, eof - line) ||
+		    excluded_header_field(line, eof - line, exclude))
 			continue;
 
 		it = xcalloc(1, sizeof(*it));

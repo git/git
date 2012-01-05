@@ -404,13 +404,27 @@ void log_write_email_headers(struct rev_info *opt, struct commit *commit,
 	*extra_headers_p = extra_headers;
 }
 
+static void show_sig_lines(struct rev_info *opt, int status, const char *bol)
+{
+	const char *color, *reset, *eol;
+
+	color = diff_get_color_opt(&opt->diffopt,
+				   status ? DIFF_WHITESPACE : DIFF_FRAGINFO);
+	reset = diff_get_color_opt(&opt->diffopt, DIFF_RESET);
+	while (*bol) {
+		eol = strchrnul(bol, '\n');
+		printf("%s%.*s%s%s", color, (int)(eol - bol), bol, reset,
+		       *eol ? "\n" : "");
+		bol = (*eol) ? (eol + 1) : eol;
+	}
+}
+
 static void show_signature(struct rev_info *opt, struct commit *commit)
 {
 	struct strbuf payload = STRBUF_INIT;
 	struct strbuf signature = STRBUF_INIT;
 	struct strbuf gpg_output = STRBUF_INIT;
 	int status;
-	const char *color, *reset, *bol, *eol;
 
 	if (parse_signed_commit(commit->object.sha1, &payload, &signature) <= 0)
 		goto out;
@@ -421,22 +435,96 @@ static void show_signature(struct rev_info *opt, struct commit *commit)
 	if (status && !gpg_output.len)
 		strbuf_addstr(&gpg_output, "No signature\n");
 
-	color = diff_get_color_opt(&opt->diffopt,
-				   status ? DIFF_WHITESPACE : DIFF_FRAGINFO);
-	reset = diff_get_color_opt(&opt->diffopt, DIFF_RESET);
-
-	bol = gpg_output.buf;
-	while (*bol) {
-		eol = strchrnul(bol, '\n');
-		printf("%s%.*s%s%s", color, (int)(eol - bol), bol, reset,
-		       *eol ? "\n" : "");
-		bol = (*eol) ? (eol + 1) : eol;
-	}
+	show_sig_lines(opt, status, gpg_output.buf);
 
  out:
 	strbuf_release(&gpg_output);
 	strbuf_release(&payload);
 	strbuf_release(&signature);
+}
+
+static int which_parent(const unsigned char *sha1, const struct commit *commit)
+{
+	int nth;
+	const struct commit_list *parent;
+
+	for (nth = 0, parent = commit->parents; parent; parent = parent->next) {
+		if (!hashcmp(parent->item->object.sha1, sha1))
+			return nth;
+		nth++;
+	}
+	return -1;
+}
+
+static int is_common_merge(const struct commit *commit)
+{
+	return (commit->parents
+		&& commit->parents->next
+		&& !commit->parents->next->next);
+}
+
+static void show_one_mergetag(struct rev_info *opt,
+			      struct commit_extra_header *extra,
+			      struct commit *commit)
+{
+	unsigned char sha1[20];
+	struct tag *tag;
+	struct strbuf verify_message;
+	int status, nth;
+	size_t payload_size, gpg_message_offset;
+
+	hash_sha1_file(extra->value, extra->len, typename(OBJ_TAG), sha1);
+	tag = lookup_tag(sha1);
+	if (!tag)
+		return; /* error message already given */
+
+	strbuf_init(&verify_message, 256);
+	if (parse_tag_buffer(tag, extra->value, extra->len))
+		strbuf_addstr(&verify_message, "malformed mergetag\n");
+	else if (is_common_merge(commit) &&
+		 !hashcmp(tag->tagged->sha1,
+			  commit->parents->next->item->object.sha1))
+		strbuf_addf(&verify_message,
+			    "merged tag '%s'\n", tag->tag);
+	else if ((nth = which_parent(tag->tagged->sha1, commit)) < 0)
+		strbuf_addf(&verify_message, "tag %s names a non-parent %s\n",
+				    tag->tag, tag->tagged->sha1);
+	else
+		strbuf_addf(&verify_message,
+			    "parent #%d, tagged '%s'\n", nth + 1, tag->tag);
+	gpg_message_offset = verify_message.len;
+
+	payload_size = parse_signature(extra->value, extra->len);
+	if ((extra->len <= payload_size) ||
+	    (verify_signed_buffer(extra->value, payload_size,
+				  extra->value + payload_size,
+				  extra->len - payload_size,
+				  &verify_message) &&
+	     verify_message.len <= gpg_message_offset)) {
+		strbuf_addstr(&verify_message, "No signature\n");
+		status = -1;
+	}
+	else if (strstr(verify_message.buf + gpg_message_offset,
+			": Good signature from "))
+		status = 0;
+	else
+		status = -1;
+
+	show_sig_lines(opt, status, verify_message.buf);
+	strbuf_release(&verify_message);
+}
+
+static void show_mergetag(struct rev_info *opt, struct commit *commit)
+{
+	struct commit_extra_header *extra, *to_free;
+
+	to_free = read_commit_extra_headers(commit, NULL);
+	for (extra = to_free; extra; extra = extra->next) {
+		if (strcmp(extra->key, "mergetag"))
+			continue; /* not a merge tag */
+		show_one_mergetag(opt, extra, commit);
+	}
+	free_commit_extra_headers(to_free);
 }
 
 void show_log(struct rev_info *opt)
@@ -550,8 +638,10 @@ void show_log(struct rev_info *opt)
 		}
 	}
 
-	if (opt->show_signature)
+	if (opt->show_signature) {
 		show_signature(opt, commit);
+		show_mergetag(opt, commit);
+	}
 
 	if (!commit->buffer)
 		return;

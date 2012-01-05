@@ -95,10 +95,7 @@ int sign_buffer(struct strbuf *buffer, struct strbuf *signature, const char *sig
 
 /*
  * Run "gpg" to see if the payload matches the detached signature.
- * gpg_output_to tells where the output from "gpg" should go:
- *   < 0: /dev/null
- *   = 0: standard error of the calling process
- *   > 0: the specified file descriptor
+ * gpg_output, when set, receives the diagnostic output from GPG.
  */
 int verify_signed_buffer(const char *payload, size_t payload_size,
 			 const char *signature, size_t signature_size,

@@ -1495,7 +1495,8 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 	}
 
 	if (amend) {
-		extra = read_commit_extra_headers(current_head);
+		const char *exclude_gpgsig[2] = { "gpgsig", NULL };
+		extra = read_commit_extra_headers(current_head, exclude_gpgsig);
 	} else {
 		struct commit_extra_header **tail = &extra;
 		append_merge_tag_headers(parents, &tail);
