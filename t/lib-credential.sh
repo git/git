@@ -23,6 +23,10 @@ check() {
 		dos2unix -q stderr
 	fi &&
 	test_cmp expect-stdout stdout &&
+	if test_have_prereq MINGW
+	then
+		dos2unix stderr
+	fi &&
 	test_cmp expect-stderr stderr
 }
 
