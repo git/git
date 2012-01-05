@@ -5715,7 +5715,7 @@ sub git_search_files {
 	my $lastfile = '';
 	while (my $line = <$fd>) {
 		chomp $line;
-		my ($file, $lno, $ltext, $binary);
+		my ($file, $file_href, $lno, $ltext, $binary);
 		last if ($matches++ > 1000);
 		if ($line =~ /^Binary file (.+) matches$/) {
 			$file = $1;
@@ -5730,10 +5730,10 @@ sub git_search_files {
 			} else {
 				print "<tr class=\"light\">\n";
 			}
+			$file_href = href(action=>"blob", hash_base=>$co{'id'},
+			                  file_name=>$file);
 			print "<td class=\"list\">".
-				$cgi->a({-href => href(action=>"blob", hash=>$co{'hash'},
-						       file_name=>"$file"),
-					-class => "list"}, esc_path($file));
+				$cgi->a({-href => $file_href, -class => "list"}, esc_path($file));
 			print "</td><td>\n";
 			$lastfile = $file;
 		}
@@ -5751,10 +5751,9 @@ sub git_search_files {
 				$ltext = esc_html($ltext, -nbsp=>1);
 			}
 			print "<div class=\"pre\">" .
-				$cgi->a({-href => href(action=>"blob", hash=>$co{'hash'},
-						       file_name=>"$file").'#l'.$lno,
-					-class => "linenr"}, sprintf('%4i', $lno))
-				. ' ' .  $ltext . "</div>\n";
+				$cgi->a({-href => $file_href.'#l'.$lno,
+				        -class => "linenr"}, sprintf('%4i', $lno)) .
+				' ' .  $ltext . "</div>\n";
 		}
 	}
 	if ($lastfile) {
