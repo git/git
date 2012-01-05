@@ -200,8 +200,8 @@ extern int commit_tree_extended(const char *msg, unsigned char *tree,
 				const char *author, const char *sign_commit,
 				struct commit_extra_header *);
 
-extern struct commit_extra_header *read_commit_extra_headers(struct commit *);
-extern struct commit_extra_header *read_commit_extra_header_lines(const char *buf, size_t len);
+extern struct commit_extra_header *read_commit_extra_headers(struct commit *, const char **);
+extern struct commit_extra_header *read_commit_extra_header_lines(const char *buf, size_t len, const char **);
 
 extern void free_commit_extra_headers(struct commit_extra_header *extra);
 

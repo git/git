@@ -24,7 +24,8 @@ test_expect_success GPG 'create signed commits' '
 	echo 4 >file && test_tick && git commit -a -m "fourth unsigned" &&
 	git tag fourth-unsigned &&
 
-	test_tick && git commit --amend -S -m "fourth signed"
+	test_tick && git commit --amend -S -m "fourth signed" &&
+	git tag fourth-signed
 '
 
 test_expect_success GPG 'show signatures' '
@@ -66,6 +67,14 @@ test_expect_success GPG 'detect fudged signature with NUL' '
 	git show --pretty=short --show-signature $(cat forged2.commit) >actual2 &&
 	grep "BAD signature from" actual2 &&
 	! grep "Good signature from" actual2
+'
+
+test_expect_success GPG 'amending already signed commit' '
+	git checkout fourth-signed^0 &&
+	git commit --amend -S --no-edit &&
+	git show -s --show-signature HEAD >actual &&
+	grep "Good signature from" actual &&
+	! grep "BAD signature from" actual
 '
 
 test_done
