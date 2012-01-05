@@ -1,20 +1,17 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Dec 2011, #09; Tue, 27)
-X-master-at: ec330158ec04849fe5ff2cb8749797cd63ae592b
-X-next-at: 551ac8f4336eaa5d2cf05fd3dec4a3676b57379f
+Subject: What's cooking in git.git (Jan 2012, #01; Thu, 5)
+X-master-at: 247f9d23da8cfd255533433ad2aa07d172afac0b
+X-next-at: 5da3ae2f29b4c8b897e934b1856cbb7753383aee
 
-What's cooking in git.git (Dec 2011, #09; Tue, 27)
+What's cooking in git.git (Jan 2012, #01; Thu, 5)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' (proposed updates) while commits prefixed with '+' are in
 'next'.
 
-By now I know a bit better than taking the lack of serious regression
-reports during the holiday weekend as a sign of perfection of the upcoming
-release, but I will tag -rc0 soonish anyway. As far as I can see the tip
-of 'master' is feature complete for 1.7.9, modulo possible bugs and
-regressions.
+I'll be tagging 1.7.9-rc0 after merging a few topics to "master" to make
+it feature complete for the upcoming release tomorrow.
 
 Here are the repositories that have my integration branches:
 
@@ -44,16 +41,112 @@ The preformatted documentation in HTML and man format are found in:
 --------------------------------------------------
 [New Topics]
 
-* jh/fetch-head-update (2011-12-27) 1 commit
- - write first for-merge ref to FETCH_HEAD first
+* ss/git-svn-prompt-sans-terminal (2012-01-04) 3 commits
+ - fixup! 15eaaf4
+ - git-svn, perl/Git.pm: extend Git::prompt helper for querying users
+  (merged to 'next' on 2012-01-05 at 954f125)
+ + perl/Git.pm: "prompt" helper to honor GIT_ASKPASS and SSH_ASKPASS
 
-Needs sign-off. I have squashed minimal fixes in.
+The bottom one has been replaced with a rewrite based on comments from
+Ævar. The second one needs more work, both in perl/Git.pm and prompt.c, to
+give precedence to tty over SSH_ASKPASS when terminal is available.
+
+I think it is OK to include the first one in the upcoming release, but we
+may want to wait and defer both to the next cycle.
+
+* pw/p4-view-updates (2012-01-03) 6 commits
+  (merged to 'next' on 2012-01-03 at c3b5872)
+ + git-p4: view spec documentation
+ + git-p4: rewrite view handling
+ + git-p4: support single file p4 client view maps
+ + git-p4: sort client views by reverse View number
+ + git-p4: fix test for unsupported P4 Client Views
+ + git-p4: test client view handling
+
+Will merge to 'master' by 1.7.9 final.
+Unless real git-p4 users object (I am not one of them, so I cannot really
+judge), that is.
+
+* cb/git-daemon-tests (2012-01-04) 1 commit
+  (merged to 'next' on 2012-01-05 at 86f3e93)
+ + daemon: add tests
+
+It stirred a related discussion on how the process termination should be
+handled in the daemon, but the test queued should be OK as-is on systems
+that have "pkill" (which is outside POSIX).
+
+* jc/show-sig (2012-01-05) 6 commits
+  (merged to 'next' on 2012-01-05 at 5da3ae2)
+ + log --show-signature: reword the common two-head merge case
+ + log-tree: show mergetag in log --show-signature output
+ + log-tree.c: small refactor in show_signature()
+ + commit --amend -S: strip existing gpgsig headers
+ + verify_signed_buffer: fix stale comment
+ + Merge branch 'jc/signed-commit' and 'jc/pull-signed-tag'
+ (this branch uses jc/signed-commit.)
+
+Finishing touches to the already graduated "pull signed tags" topic.
+
+Will merge to 'master' by 1.7.9 final.
+
+* jm/stash-diff-disambiguate (2012-01-01) 1 commit
+  (merged to 'next' on 2012-01-05 at 75a283b)
+ + stash: Don't fail if work dir contains file named 'HEAD'
+
+Will merge to 'master' by 1.7.9 final.
+
+* mm/maint-gitweb-project-maxdepth (2012-01-04) 1 commit
+ - gitweb: accept trailing "/" in $project_list
+
+Looked quite sensible.
+Will merge to 'master' by 1.7.9 final.
+
+* nd/shallow-clone-without-tag-following (2012-01-05) 1 commit
+ - Limit refs to fetch to minimum in shallow clones
+
+Needs adjustment of t5500 at least, and possibly an option to ask for the
+traditional "shallowly clone all branches" behaviour.
+
+* jk/parse-object-cached (2012-01-05) 1 commit
+ - parse_object: try internal cache before reading object db
+
+This is a bit scary change, but I do not think of a way it would break
+anything that is currently working correctly.
+
+* jn/maint-gitweb-grep-fix (2012-01-05) 2 commits
+ - gitweb: Harden "grep" search against filenames with ':'
+ - gitweb: Fix file links in "grep" search
+
+Waiting for a confirmation from bug reporter.
+
+--------------------------------------------------
+[Graduated to "master"]
 
 * jv/maint-config-set (2011-12-27) 1 commit
   (merged to 'next' on 2011-12-27 at 551ac8f)
  + Fix an incorrect reference to --set-all.
 
-Will merge to "master" before -rc0.
+* pw/p4-docs-and-tests (2011-12-27) 11 commits
+  (merged to 'next' on 2011-12-28 at 8acf26e)
+ + git-p4: document and test submit options
+ + git-p4: test and document --use-client-spec
+ + git-p4: test --keep-path
+ + git-p4: test --max-changes
+ + git-p4: document and test --import-local
+ + git-p4: honor --changesfile option and test
+ + git-p4: document and test clone --branch
+ + git-p4: test cloning with two dirs, clarify doc
+ + git-p4: clone does not use --git-dir
+ + git-p4: introduce asciidoc documentation
+ + rename git-p4 tests
+
+--------------------------------------------------
+[Stalled]
+
+* bw/maint-t8006-sed-incomplete-line (2012-01-03) 1 commit
+ - Work around sed portability issue in t8006-blame-textconv
+
+Waiting for a clarification of the reasoning in the log message.
 
 * nd/index-pack-no-recurse (2011-12-27) 4 commits
  - fixup! 3413d4d
@@ -62,57 +155,6 @@ Will merge to "master" before -rc0.
  - Eliminate recursion in setting/clearing marks in commit list
 
 Expecting a reroll.
-
-* ss/git-svn-askpass (2011-12-27) 5 commits
- - make askpass_prompt a global prompt method for asking users
- - ignore empty *_ASKPASS variables
- - honour *_ASKPASS for querying username and for querying further actions like unknown certificates
- - switch to central prompt method
- - add central method for prompting a user using GIT_ASKPASS or SSH_ASKPASS
-
-Expecting a reroll.
-
---------------------------------------------------
-[Graduated to "master"]
-
-* ab/sun-studio-portability (2011-12-21) 3 commits
-  (merged to 'next' on 2011-12-21 at 0cc5a63)
- + Appease Sun Studio by renaming "tmpfile"
- + Fix a bitwise negation assignment issue spotted by Sun Studio
- + Fix an enum assignment issue spotted by Sun Studio
-
-* jn/maint-gitweb-utf8-fix (2011-12-19) 4 commits
-  (merged to 'next' on 2011-12-20 at b816812)
- + gitweb: Fix fallback mode of to_utf8 subroutine
- + gitweb: Output valid utf8 in git_blame_common('data')
- + gitweb: esc_html() site name for title in OPML
- + gitweb: Call to_utf8() on input string in chop_and_escape_str()
-
-* rr/revert-cherry-pick (2011-12-15) 6 commits
-  (merged to 'next' on 2011-12-21 at d0428dc)
- + t3502, t3510: clarify cherry-pick -m failure
- + t3510 (cherry-pick-sequencer): use exit status
- + revert: simplify getting commit subject in format_todo()
- + revert: tolerate extra spaces, tabs in insn sheet
- + revert: make commit subjects in insn sheet optional
- + revert: free msg in format_todo()
-
-* tr/bash-read-unescaped (2011-12-21) 1 commit
-  (merged to 'next' on 2011-12-21 at de865c1)
- + bash completion: use read -r everywhere
-
-* tr/doc-sh-setup (2011-12-20) 1 commit
-  (merged to 'next' on 2011-12-21 at bd73695)
- + git-sh-setup: make require_clean_work_tree part of the interface
-
-* tr/pty-all (2011-12-19) 1 commit
-  (merged to 'next' on 2011-12-20 at 9b637d3)
- + test-terminal: set output terminals to raw mode
-
-Kept only the second one from the original.
-
---------------------------------------------------
-[Stalled]
 
 * jc/advise-push-default (2011-12-18) 1 commit
  - push: hint to use push.default=upstream when appropriate
@@ -191,21 +233,11 @@ should never be translated.
 --------------------------------------------------
 [Cooking]
 
-* pw/p4-docs-and-tests (2011-12-27) 11 commits
- - git-p4: document and test submit options
- - git-p4: test and document --use-client-spec
- - git-p4: test --keep-path
- - git-p4: test --max-changes
- - git-p4: document and test --import-local
- - git-p4: honor --changesfile option and test
- - git-p4: document and test clone --branch
- - git-p4: test cloning with two dirs, clarify doc
- - git-p4: clone does not use --git-dir
- - git-p4: introduce asciidoc documentation
- - rename git-p4 tests
+* jh/fetch-head-update (2012-01-03) 1 commit
+  (merged to 'next' on 2012-01-04 at b5778e1)
+ + write first for-merge ref to FETCH_HEAD first
 
-Rorolled.
-Not urgent.
+Will merge to 'master' by 1.7.9 final.
 
 * jc/signed-commit (2011-11-29) 5 commits
   (merged to 'next' on 2011-12-21 at 8fcbf00)
@@ -214,8 +246,22 @@ Not urgent.
  + test "commit -S" and "log --show-signature"
  + log: --show-signature
  + commit: teach --gpg-sign option
+ (this branch is used by jc/show-sig.)
 
-I am ambivalent on this one. I do not desperately need it myself, I know
-the kernel folks do not, I heard some other people might.
+The infrastructure this series adds is used by the finishing touches to
+the earlier "pull signed tags" topic, so this will graduate to "master"
+together with it when the latter matures, hopefully before 1.7.9 final.
 
-Opinions?
+--------------------------------------------------
+[Discarded]
+
+* ss/git-svn-askpass (2011-12-27) 5 commits
+ - make askpass_prompt a global prompt method for asking users
+ - ignore empty *_ASKPASS variables
+ - honour *_ASKPASS for querying username and for querying further actions like unknown certificates
+ - switch to central prompt method
+ - add central method for prompting a user using GIT_ASKPASS or SSH_ASKPASS
+
+This has become more about "prompt without terminal", and was rerolled
+into a two-patch series, which is structured a lot nicer than this
+original.
