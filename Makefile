@@ -1288,6 +1288,7 @@ ifneq (,$(wildcard ../THIS_IS_MSYSGIT))
 	NO_R_TO_GCC_LINKER = YesPlease
 	INTERNAL_QSORT = YesPlease
 	HAVE_LIBCHARSET_H = YesPlease
+	NO_GETTEXT = YesPlease
 else
 	NO_CURL = YesPlease
 endif
