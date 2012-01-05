@@ -5699,7 +5699,7 @@ sub git_search_files {
 	my %co = @_;
 
 	local $/ = "\n";
-	open my $fd, "-|", git_cmd(), 'grep', '-n',
+	open my $fd, "-|", git_cmd(), 'grep', '-n', '-z',
 		$search_use_regexp ? ('-E', '-i') : '-F',
 		$searchtext, $co{'tree'}
 			or die_error(500, "Open git-grep failed");
@@ -5721,7 +5721,8 @@ sub git_search_files {
 			$file = $1;
 			$binary = 1;
 		} else {
-			(undef, $file, $lno, $ltext) = split(/:/, $line, 4);
+			($file, $lno, $ltext) = split(/\0/, $line, 3);
+			$file =~ s/^$co{'tree'}://;
 		}
 		if ($file ne $lastfile) {
 			$lastfile and print "</td></tr>\n";
