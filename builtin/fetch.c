@@ -574,7 +574,7 @@ static void find_non_local_tags(struct transport *transport,
 
 	for_each_ref(add_existing, &existing_refs);
 	for (ref = transport_get_remote_refs(transport); ref; ref = ref->next) {
-		if (prefixcmp(ref->name, "refs/tags"))
+		if (prefixcmp(ref->name, "refs/tags/"))
 			continue;
 
 		/*

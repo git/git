@@ -119,9 +119,9 @@ static int add_ref_decoration(const char *refname, const unsigned char *sha1, in
 		type = DECORATION_REF_REMOTE;
 	else if (!prefixcmp(refname, "refs/tags/"))
 		type = DECORATION_REF_TAG;
-	else if (!prefixcmp(refname, "refs/stash"))
+	else if (!strcmp(refname, "refs/stash"))
 		type = DECORATION_REF_STASH;
-	else if (!prefixcmp(refname, "HEAD"))
+	else if (!strcmp(refname, "HEAD"))
 		type = DECORATION_REF_HEAD;
 
 	if (!cb_data || *(int *)cb_data == DECORATE_SHORT_REFS)
