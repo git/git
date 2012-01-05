@@ -456,6 +456,13 @@ static int which_parent(const unsigned char *sha1, const struct commit *commit)
 	return -1;
 }
 
+static int is_common_merge(const struct commit *commit)
+{
+	return (commit->parents
+		&& commit->parents->next
+		&& !commit->parents->next->next);
+}
+
 static void show_one_mergetag(struct rev_info *opt,
 			      struct commit_extra_header *extra,
 			      struct commit *commit)
@@ -474,6 +481,11 @@ static void show_one_mergetag(struct rev_info *opt,
 	strbuf_init(&verify_message, 256);
 	if (parse_tag_buffer(tag, extra->value, extra->len))
 		strbuf_addstr(&verify_message, "malformed mergetag\n");
+	else if (is_common_merge(commit) &&
+		 !hashcmp(tag->tagged->sha1,
+			  commit->parents->next->item->object.sha1))
+		strbuf_addf(&verify_message,
+			    "merged tag '%s'\n", tag->tag);
 	else if ((nth = which_parent(tag->tagged->sha1, commit)) < 0)
 		strbuf_addf(&verify_message, "tag %s names a non-parent %s\n",
 				    tag->tag, tag->tagged->sha1);
