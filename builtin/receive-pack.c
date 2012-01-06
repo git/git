@@ -114,7 +114,7 @@ static int receive_pack_config(const char *var, const char *value, void *cb)
 	return git_default_config(var, value, cb);
 }
 
-static int show_ref(const char *path, const unsigned char *sha1, int flag, void *cb_data)
+static void show_ref(const char *path, const unsigned char *sha1)
 {
 	if (sent_capabilities)
 		packet_write(1, "%s %s\n", sha1_to_hex(sha1), path);
@@ -124,10 +124,9 @@ static int show_ref(const char *path, const unsigned char *sha1, int flag, void 
 			     " report-status delete-refs side-band-64k",
 			     prefer_ofs_delta ? " ofs-delta" : "");
 	sent_capabilities = 1;
-	return 0;
 }
 
-static int show_ref_cb(const char *path, const unsigned char *sha1, int flag, void *cb_data)
+static int show_ref_cb(const char *path, const unsigned char *sha1, int flag, void *unused)
 {
 	path = strip_namespace(path);
 	/*
@@ -140,7 +139,8 @@ static int show_ref_cb(const char *path, const unsigned char *sha1, int flag, vo
 	 */
 	if (!path)
 		path = ".have";
-	return show_ref(path, sha1, flag, cb_data);
+	show_ref(path, sha1);
+	return 0;
 }
 
 static void add_one_alternate_sha1(const unsigned char sha1[20], void *unused)
@@ -162,7 +162,7 @@ static void write_head_info(void)
 	sha1_array_clear(&sa);
 	for_each_ref(show_ref_cb, NULL);
 	if (!sent_capabilities)
-		show_ref("capabilities^{}", null_sha1, 0, NULL);
+		show_ref("capabilities^{}", null_sha1);
 	clear_extra_refs();
 
 	/* EOF */
