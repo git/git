@@ -143,9 +143,9 @@ static int show_ref_cb(const char *path, const unsigned char *sha1, int flag, vo
 	return 0;
 }
 
-static void add_one_alternate_sha1(const unsigned char sha1[20], void *unused)
+static void show_one_alternate_sha1(const unsigned char sha1[20], void *unused)
 {
-	add_extra_ref(".have", sha1, 0);
+	show_ref(".have", sha1);
 }
 
 static void collect_one_alternate_ref(const struct ref *ref, void *data)
@@ -158,12 +158,11 @@ static void write_head_info(void)
 {
 	struct sha1_array sa = SHA1_ARRAY_INIT;
 	for_each_alternate_ref(collect_one_alternate_ref, &sa);
-	sha1_array_for_each_unique(&sa, add_one_alternate_sha1, NULL);
+	sha1_array_for_each_unique(&sa, show_one_alternate_sha1, NULL);
 	sha1_array_clear(&sa);
 	for_each_ref(show_ref_cb, NULL);
 	if (!sent_capabilities)
 		show_ref("capabilities^{}", null_sha1);
-	clear_extra_refs();
 
 	/* EOF */
 	packet_flush(1);
