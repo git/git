@@ -1737,10 +1737,10 @@ rerere.autoupdate::
 
 rerere.enabled::
 	Activate recording of resolved conflicts, so that identical
-	conflict hunks can be resolved automatically, should they
-	be encountered again.  linkgit:git-rerere[1] command is by
-	default enabled if you create `rr-cache` directory under
-	`$GIT_DIR`, but can be disabled by setting this option to false.
+	conflict hunks can be resolved automatically, should they be
+	encountered again.  By default, linkgit:git-rerere[1] is
+	enabled if there is an `rr-cache` directory under the
+	`$GIT_DIR`.
 
 sendemail.identity::
 	A configuration identity. When given, causes values in the
