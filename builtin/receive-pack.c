@@ -143,12 +143,30 @@ static int show_ref_cb(const char *path, const unsigned char *sha1, int flag, vo
 	return show_ref(path, sha1, flag, cb_data);
 }
 
+static void add_one_alternate_sha1(const unsigned char sha1[20], void *unused)
+{
+	add_extra_ref(".have", sha1, 0);
+}
+
+static void collect_one_alternate_ref(const struct ref *ref, void *data)
+{
+	struct sha1_array *sa = data;
+	sha1_array_append(sa, ref->old_sha1);
+}
+
 static void write_head_info(void)
 {
+	struct sha1_array sa = SHA1_ARRAY_INIT;
+	for_each_alternate_ref(collect_one_alternate_ref, &sa);
+	sha1_array_for_each_unique(&sa, add_one_alternate_sha1, NULL);
+	sha1_array_clear(&sa);
 	for_each_ref(show_ref_cb, NULL);
 	if (!sent_capabilities)
 		show_ref("capabilities^{}", null_sha1, 0, NULL);
+	clear_extra_refs();
 
+	/* EOF */
+	packet_flush(1);
 }
 
 struct command {
@@ -870,25 +888,6 @@ static int delete_only(struct command *commands)
 	return 1;
 }
 
-static void add_one_alternate_sha1(const unsigned char sha1[20], void *unused)
-{
-	add_extra_ref(".have", sha1, 0);
-}
-
-static void collect_one_alternate_ref(const struct ref *ref, void *data)
-{
-	struct sha1_array *sa = data;
-	sha1_array_append(sa, ref->old_sha1);
-}
-
-static void add_alternate_refs(void)
-{
-	struct sha1_array sa = SHA1_ARRAY_INIT;
-	for_each_alternate_ref(collect_one_alternate_ref, &sa);
-	sha1_array_for_each_unique(&sa, add_one_alternate_sha1, NULL);
-	sha1_array_clear(&sa);
-}
-
 int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 {
 	int advertise_refs = 0;
@@ -938,12 +937,7 @@ int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 		unpack_limit = receive_unpack_limit;
 
 	if (advertise_refs || !stateless_rpc) {
-		add_alternate_refs();
 		write_head_info();
-		clear_extra_refs();
-
-		/* EOF */
-		packet_flush(1);
 	}
 	if (advertise_refs)
 		return 0;
