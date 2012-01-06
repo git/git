@@ -601,4 +601,28 @@ test_expect_success 'stash apply shows status same as git status (relative to cu
 	test_cmp expect actual
 '
 
+cat > expect << EOF
+diff --git a/HEAD b/HEAD
+new file mode 100644
+index 0000000..fe0cbee
+--- /dev/null
++++ b/HEAD
+@@ -0,0 +1 @@
++file-not-a-ref
+EOF
+
+test_expect_success 'stash where working directory contains "HEAD" file' '
+	git stash clear &&
+	git reset --hard &&
+	echo file-not-a-ref > HEAD &&
+	git add HEAD &&
+	test_tick &&
+	git stash &&
+	git diff-files --quiet &&
+	git diff-index --cached --quiet HEAD &&
+	test "$(git rev-parse stash^)" = "$(git rev-parse HEAD)" &&
+	git diff stash^..stash > output &&
+	test_cmp output expect
+'
+
 test_done
