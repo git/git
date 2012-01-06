@@ -741,8 +741,7 @@ static int send_ref(const char *refname, const unsigned char *sha1, int flag, vo
 		nr_our_refs++;
 	}
 	if (o->type == OBJ_TAG) {
-		o = parse_object(o->sha1);
-		o = deref_tag(o, refname, 0);
+		o = deref_tag_noverify(o);
 		if (o)
 			packet_write(1, "%s %s^{}\n", sha1_to_hex(o->sha1), refname_nons);
 	}
