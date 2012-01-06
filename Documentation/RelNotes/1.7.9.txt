@@ -48,6 +48,9 @@ Updates since v1.7.8
  * "git commit" detects and rejects an attempt to stuff NUL byte in
    the commit log message.
 
+ * "git commit" learned "-S" to GPG-sign the commit; this can be shown
+   with the "--show-signature" option to "git log".
+
  * fsck and prune are relatively lengthy operations that still go
    silent while making the end-user wait. They learned to give progress
    output like other slow operations.
@@ -63,6 +66,10 @@ Updates since v1.7.8
    instead of the tip of a topic branch. The GPG signature from the
    signed tag is recorded in the resulting merge commit for later
    auditing.
+
+ * "git log" learned "--show-signature" option to show the signed tag
+   that was merged that is embedded in the merge commit. It also can
+   show the signature made on the commit with "git commit -S".
 
  * "git branch --edit-description" can be used to add descriptive text
    to explain what a topic branch is about.
