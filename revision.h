@@ -110,6 +110,7 @@ struct rev_info {
 			show_merge:1,
 			show_notes:1,
 			show_notes_given:1,
+			show_signature:1,
 			pretty_given:1,
 			abbrev_commit:1,
 			abbrev_commit_given:1,

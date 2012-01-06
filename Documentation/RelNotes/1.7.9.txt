@@ -99,10 +99,6 @@ Unless otherwise noted, all the fixes since v1.7.8 in the maintenance
 releases are contained in this release (see release notes to them for
 details).
 
- * gitweb did not correctly fall back to configured $fallback_encoding
-   that is not 'latin1'.
-   (merge b13e3ea jn/maint-gitweb-utf8-fix later to maint).
-
 --
 exec >/var/tmp/1
 O=v1.7.8.2-301-g48de656
