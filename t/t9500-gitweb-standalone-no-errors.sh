@@ -404,6 +404,14 @@ test_expect_success \
 	'gitweb_run "" "/.git/master:foo/"'
 
 test_expect_success \
+	'path_info: project/branch (non-existent)' \
+	'gitweb_run "" "/.git/non-existent"'
+
+test_expect_success \
+	'path_info: project/branch:filename (non-existent branch)' \
+	'gitweb_run "" "/.git/non-existent:non-existent"'
+
+test_expect_success \
 	'path_info: project/branch:file (non-existent)' \
 	'gitweb_run "" "/.git/master:non-existent"'
 
