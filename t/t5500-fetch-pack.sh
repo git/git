@@ -114,8 +114,19 @@ pull_to_client 2nd "refs/heads/B" $((64*3))
 
 pull_to_client 3rd "refs/heads/A" $((1*3))
 
+test_expect_success 'single branch clone' '
+	git clone --single-branch "file://$(pwd)/." singlebranch
+'
+
+test_expect_success 'single branch object count' '
+	GIT_DIR=singlebranch/.git git count-objects -v |
+		grep "^in-pack:" > count.singlebranch &&
+	echo "in-pack: 198" >expected &&
+	test_cmp expected count.singlebranch
+'
+
 test_expect_success 'clone shallow' '
-	git clone --depth 2 "file://$(pwd)/." shallow
+	git clone --no-single-branch --depth 2 "file://$(pwd)/." shallow
 '
 
 test_expect_success 'clone shallow object count' '
@@ -246,6 +257,65 @@ test_expect_success 'clone shallow object count' '
 		git count-objects -v
 	) > count.shallow &&
 	grep "^count: 52" count.shallow
+'
+
+test_expect_success 'clone shallow without --no-single-branch' '
+	git clone --depth 1 "file://$(pwd)/." shallow2
+'
+
+test_expect_success 'clone shallow object count' '
+	(
+		cd shallow2 &&
+		git count-objects -v
+	) > count.shallow2 &&
+	grep "^in-pack: 6" count.shallow2
+'
+
+test_expect_success 'clone shallow with --branch' '
+	git clone --depth 1 --branch A "file://$(pwd)/." shallow3
+'
+
+test_expect_success 'clone shallow object count' '
+	echo "in-pack: 12" > count3.expected &&
+	GIT_DIR=shallow3/.git git count-objects -v |
+		grep "^in-pack" > count3.actual &&
+	test_cmp count3.expected count3.actual
+'
+
+test_expect_success 'clone shallow with nonexistent --branch' '
+	git clone --depth 1 --branch Z "file://$(pwd)/." shallow4 &&
+	GIT_DIR=shallow4/.git git rev-parse HEAD >actual &&
+	git rev-parse HEAD >expected &&
+	test_cmp expected actual
+'
+
+test_expect_success 'clone shallow with detached HEAD' '
+	git checkout HEAD^ &&
+	git clone --depth 1 "file://$(pwd)/." shallow5 &&
+	git checkout - &&
+	GIT_DIR=shallow5/.git git rev-parse HEAD >actual &&
+	git rev-parse HEAD^ >expected &&
+	test_cmp expected actual
+'
+
+test_expect_success 'shallow clone pulling tags' '
+	git tag -a -m A TAGA1 A &&
+	git tag -a -m B TAGB1 B &&
+	git tag TAGA2 A &&
+	git tag TAGB2 B &&
+	git clone --depth 1 "file://$(pwd)/." shallow6 &&
+
+	cat >taglist.expected <<\EOF &&
+TAGB1
+TAGB2
+EOF
+	GIT_DIR=shallow6/.git git tag -l >taglist.actual &&
+	test_cmp taglist.expected taglist.actual &&
+
+	echo "in-pack: 7" > count6.expected &&
+	GIT_DIR=shallow6/.git git count-objects -v |
+		grep "^in-pack" > count6.actual &&
+	test_cmp count6.expected count6.actual
 '
 
 test_done
