@@ -38,6 +38,7 @@ struct child_process {
 	unsigned silent_exec_failure:1;
 	unsigned stdout_to_stderr:1;
 	unsigned use_shell:1;
+	unsigned clean_on_exit:1;
 	void (*preexec_cb)(void);
 };
 
