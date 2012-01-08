@@ -5,7 +5,6 @@
 
 test_description='test smart pushing over http via http-backend'
 . ./test-lib.sh
-. "$TEST_DIRECTORY"/lib-terminal.sh
 
 if test -n "$NO_CURL"; then
 	skip_all='skipping test, git built without http support'
@@ -15,6 +14,7 @@ fi
 ROOT_PATH="$PWD"
 LIB_HTTPD_PORT=${LIB_HTTPD_PORT-'5541'}
 . "$TEST_DIRECTORY"/lib-httpd.sh
+. "$TEST_DIRECTORY"/lib-terminal.sh
 start_httpd
 
 test_expect_success 'setup remote repository' '
