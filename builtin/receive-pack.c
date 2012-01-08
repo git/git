@@ -731,9 +731,10 @@ static struct command *read_head_info(void)
 		refname = line + 82;
 		reflen = strlen(refname);
 		if (reflen + 82 < len) {
-			if (strstr(refname + reflen + 1, "report-status"))
+			const char *feature_list = refname + reflen + 1;
+			if (parse_feature_request(feature_list, "report-status"))
 				report_status = 1;
-			if (strstr(refname + reflen + 1, "side-band-64k"))
+			if (parse_feature_request(feature_list, "side-band-64k"))
 				use_sideband = LARGE_PACKET_MAX;
 		}
 		cmd = xcalloc(1, sizeof(struct command) + len - 80);
