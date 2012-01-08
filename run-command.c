@@ -1,7 +1,65 @@
 #include "cache.h"
 #include "run-command.h"
 #include "exec_cmd.h"
+#include "sigchain.h"
 #include "argv-array.h"
+
+struct child_to_clean {
+	pid_t pid;
+	struct child_to_clean *next;
+};
+static struct child_to_clean *children_to_clean;
+static int installed_child_cleanup_handler;
+
+static void cleanup_children(int sig)
+{
+	while (children_to_clean) {
+		struct child_to_clean *p = children_to_clean;
+		children_to_clean = p->next;
+		kill(p->pid, sig);
+		free(p);
+	}
+}
+
+static void cleanup_children_on_signal(int sig)
+{
+	cleanup_children(sig);
+	sigchain_pop(sig);
+	raise(sig);
+}
+
+static void cleanup_children_on_exit(void)
+{
+	cleanup_children(SIGTERM);
+}
+
+static void mark_child_for_cleanup(pid_t pid)
+{
+	struct child_to_clean *p = xmalloc(sizeof(*p));
+	p->pid = pid;
+	p->next = children_to_clean;
+	children_to_clean = p;
+
+	if (!installed_child_cleanup_handler) {
+		atexit(cleanup_children_on_exit);
+		sigchain_push_common(cleanup_children_on_signal);
+		installed_child_cleanup_handler = 1;
+	}
+}
+
+static void clear_child_for_cleanup(pid_t pid)
+{
+	struct child_to_clean **last, *p;
+
+	last = &children_to_clean;
+	for (p = children_to_clean; p; p = p->next) {
+		if (p->pid == pid) {
+			*last = p->next;
+			free(p);
+			return;
+		}
+	}
+}
 
 static inline void close_pair(int fd[2])
 {
@@ -130,6 +188,9 @@ static int wait_or_whine(pid_t pid, const char *argv0, int silent_exec_failure)
 	} else {
 		error("waitpid is confused (%s)", argv0);
 	}
+
+	clear_child_for_cleanup(pid);
+
 	errno = failed_errno;
 	return code;
 }
@@ -292,6 +353,8 @@ fail_pipe:
 	if (cmd->pid < 0)
 		error("cannot fork() for %s: %s", cmd->argv[0],
 			strerror(failed_errno = errno));
+	else if (cmd->clean_on_exit)
+		mark_child_for_cleanup(cmd->pid);
 
 	/*
 	 * Wait for child's execvp. If the execvp succeeds (or if fork()
@@ -312,6 +375,7 @@ fail_pipe:
 		cmd->pid = -1;
 	}
 	close(notify_pipe[0]);
+
 }
 #else
 {
@@ -356,6 +420,8 @@ fail_pipe:
 	failed_errno = errno;
 	if (cmd->pid < 0 && (!cmd->silent_exec_failure || errno != ENOENT))
 		error("cannot spawn %s: %s", cmd->argv[0], strerror(errno));
+	if (cmd->clean_on_exit && cmd->pid >= 0)
+		mark_child_for_cleanup(cmd->pid);
 
 	if (cmd->env)
 		free_environ(env);
@@ -431,6 +497,7 @@ static void prepare_run_command_v_opt(struct child_process *cmd,
 	cmd->stdout_to_stderr = opt & RUN_COMMAND_STDOUT_TO_STDERR ? 1 : 0;
 	cmd->silent_exec_failure = opt & RUN_SILENT_EXEC_FAILURE ? 1 : 0;
 	cmd->use_shell = opt & RUN_USING_SHELL ? 1 : 0;
+	cmd->clean_on_exit = opt & RUN_CLEAN_ON_EXIT ? 1 : 0;
 }
 
 int run_command_v_opt(const char **argv, int opt)
@@ -539,6 +606,8 @@ int start_async(struct async *async)
 			close(fdout[0]);
 		exit(!!async->proc(proc_in, proc_out, async->data));
 	}
+
+	mark_child_for_cleanup(async->pid);
 
 	if (need_in)
 		close(fdin[0]);
