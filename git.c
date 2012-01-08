@@ -495,7 +495,7 @@ static void execv_dashed_external(const char **argv)
 	 * if we fail because the command is not found, it is
 	 * OK to return. Otherwise, we just pass along the status code.
 	 */
-	status = run_command_v_opt(argv, RUN_SILENT_EXEC_FAILURE);
+	status = run_command_v_opt(argv, RUN_SILENT_EXEC_FAILURE | RUN_CLEAN_ON_EXIT);
 	if (status >= 0 || errno != ENOENT)
 		exit(status);
 
