@@ -210,6 +210,7 @@ my %config_bool_settings = (
     "signedoffbycc" => [\$signed_off_by_cc, undef],
     "signedoffcc" => [\$signed_off_by_cc, undef],      # Deprecated
     "validate" => [\$validate, 1],
+    "multiedit" => [\$multiedit, undef]
 );
 
 my %config_settings = (
@@ -227,7 +228,6 @@ my %config_settings = (
     "bcc" => \@bcclist,
     "suppresscc" => \@suppress_cc,
     "envelopesender" => \$envelope_sender,
-    "multiedit" => \$multiedit,
     "confirm"   => \$confirm,
     "from" => \$sender,
     "assume8bitencoding" => \$auto_8bit_encoding,
