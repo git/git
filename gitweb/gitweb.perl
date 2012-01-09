@@ -2836,8 +2836,8 @@ sub git_get_projects_list {
 		my $dir = $projects_list;
 		# remove the trailing "/"
 		$dir =~ s!/+$!!;
-		my $pfxlen = length("$projects_list");
-		my $pfxdepth = ($projects_list =~ tr!/!!);
+		my $pfxlen = length("$dir");
+		my $pfxdepth = ($dir =~ tr!/!!);
 		# when filtering, search only given subdirectory
 		if ($filter) {
 			$dir .= "/$filter";
