@@ -1786,7 +1786,8 @@ rerere.enabled::
 	conflict hunks can be resolved automatically, should they be
 	encountered again.  By default, linkgit:git-rerere[1] is
 	enabled if there is an `rr-cache` directory under the
-	`$GIT_DIR`.
+	`$GIT_DIR`, e.g. if "rerere" was previously used in the
+	repository.
 
 sendemail.identity::
 	A configuration identity. When given, causes values in the
