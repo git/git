@@ -488,48 +488,49 @@ static int git_attr_config(const char *var, const char *value, void *dummy)
 
 static void bootstrap_attr_stack(void)
 {
-	if (!attr_stack) {
-		struct attr_stack *elem;
+	struct attr_stack *elem;
 
-		elem = read_attr_from_array(builtin_attr);
-		elem->origin = NULL;
-		elem->prev = attr_stack;
-		attr_stack = elem;
+	if (attr_stack)
+		return;
 
-		if (git_attr_system()) {
-			elem = read_attr_from_file(git_etc_gitattributes(), 1);
-			if (elem) {
-				elem->origin = NULL;
-				elem->prev = attr_stack;
-				attr_stack = elem;
-			}
-		}
+	elem = read_attr_from_array(builtin_attr);
+	elem->origin = NULL;
+	elem->prev = attr_stack;
+	attr_stack = elem;
 
-		git_config(git_attr_config, NULL);
-		if (attributes_file) {
-			elem = read_attr_from_file(attributes_file, 1);
-			if (elem) {
-				elem->origin = NULL;
-				elem->prev = attr_stack;
-				attr_stack = elem;
-			}
-		}
-
-		if (!is_bare_repository() || direction == GIT_ATTR_INDEX) {
-			elem = read_attr(GITATTRIBUTES_FILE, 1);
-			elem->origin = strdup("");
+	if (git_attr_system()) {
+		elem = read_attr_from_file(git_etc_gitattributes(), 1);
+		if (elem) {
+			elem->origin = NULL;
 			elem->prev = attr_stack;
 			attr_stack = elem;
-			debug_push(elem);
 		}
+	}
 
-		elem = read_attr_from_file(git_path(INFOATTRIBUTES_FILE), 1);
-		if (!elem)
-			elem = xcalloc(1, sizeof(*elem));
-		elem->origin = NULL;
+	git_config(git_attr_config, NULL);
+	if (attributes_file) {
+		elem = read_attr_from_file(attributes_file, 1);
+		if (elem) {
+			elem->origin = NULL;
+			elem->prev = attr_stack;
+			attr_stack = elem;
+		}
+	}
+
+	if (!is_bare_repository() || direction == GIT_ATTR_INDEX) {
+		elem = read_attr(GITATTRIBUTES_FILE, 1);
+		elem->origin = strdup("");
 		elem->prev = attr_stack;
 		attr_stack = elem;
+		debug_push(elem);
 	}
+
+	elem = read_attr_from_file(git_path(INFOATTRIBUTES_FILE), 1);
+	if (!elem)
+		elem = xcalloc(1, sizeof(*elem));
+	elem->origin = NULL;
+	elem->prev = attr_stack;
+	attr_stack = elem;
 }
 
 static void prepare_attr_stack(const char *path, int dirlen)
