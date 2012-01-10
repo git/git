@@ -568,7 +568,7 @@ static void prepare_attr_stack(const char *path, int dirlen)
 	 * Pop the ones from directories that are not the prefix of
 	 * the path we are checking.
 	 */
-	while (attr_stack && attr_stack->origin) {
+	while (attr_stack->origin) {
 		int namelen = strlen(attr_stack->origin);
 
 		elem = attr_stack;
