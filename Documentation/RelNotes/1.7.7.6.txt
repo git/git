@@ -1,0 +1,11 @@
+Git v1.7.7.6 Release Notes
+==========================
+
+Fixes since v1.7.7.5
+--------------------
+
+ * The code to look up attributes for paths reused entries from a wrong
+   directory when two paths in question are in adjacent directories and
+   the name of the one directory is a prefix of the other.
+
+Also contains minor fixes and documentation updates.
