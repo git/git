@@ -1,0 +1,14 @@
+Git v1.7.8.4 Release Notes
+==========================
+
+Fixes since v1.7.8.3
+--------------------
+
+ * The code to look up attributes for paths reused entries from a wrong
+   directory when two paths in question are in adjacent directories and
+   the name of the one directory is a prefix of the other.
+
+ * "git send-email" did not properly treat sendemail.multiedit as a
+   boolean (e.g. setting it to "false" did not turn it off).
+
+Also contains minor fixes and documentation updates.
