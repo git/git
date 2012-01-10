@@ -60,6 +60,16 @@ test_expect_success 'attribute test' '
 
 '
 
+test_expect_success 'prefixes are not confused with leading directories' '
+	attr_check a_plus/g unspecified &&
+	cat >expect <<-\EOF &&
+	a/g: test: a/g
+	a_plus/g: test: unspecified
+	EOF
+	git check-attr test a/g a_plus/g >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'core.attributesfile' '
 	attr_check global unspecified &&
 	git config core.attributesfile "$HOME/global-gitattributes" &&

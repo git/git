@@ -573,7 +573,8 @@ static void prepare_attr_stack(const char *path, int dirlen)
 
 		elem = attr_stack;
 		if (namelen <= dirlen &&
-		    !strncmp(elem->origin, path, namelen))
+		    !strncmp(elem->origin, path, namelen) &&
+		    (!namelen || path[namelen] == '/'))
 			break;
 
 		debug_pop(elem);
