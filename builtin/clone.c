@@ -37,7 +37,7 @@ static const char * const builtin_clone_usage[] = {
 	NULL
 };
 
-static int option_no_checkout, option_bare, option_mirror;
+static int option_no_checkout, option_bare, option_mirror, option_single_branch = -1;
 static int option_local, option_no_hardlinks, option_shared, option_recursive;
 static char *option_template, *option_depth;
 static char *option_origin = NULL;
@@ -48,6 +48,7 @@ static int option_verbosity;
 static int option_progress;
 static struct string_list option_config;
 static struct string_list option_reference;
+static const char *src_ref_prefix = "refs/heads/";
 
 static int opt_parse_reference(const struct option *opt, const char *arg, int unset)
 {
@@ -92,6 +93,8 @@ static struct option builtin_clone_options[] = {
 		   "path to git-upload-pack on the remote"),
 	OPT_STRING(0, "depth", &option_depth, "depth",
 		    "create a shallow clone of that depth"),
+	OPT_BOOL(0, "single-branch", &option_single_branch,
+		    "clone only one branch, HEAD or --branch"),
 	OPT_STRING(0, "separate-git-dir", &real_git_dir, "gitdir",
 		   "separate git dir from working tree"),
 	OPT_STRING_LIST('c', "config", &option_config, "key=value",
@@ -427,8 +430,28 @@ static struct ref *wanted_peer_refs(const struct ref *refs,
 	struct ref *local_refs = head;
 	struct ref **tail = head ? &head->next : &local_refs;
 
-	get_fetch_map(refs, refspec, &tail, 0);
-	if (!option_mirror)
+	if (option_single_branch) {
+		struct ref *remote_head = NULL;
+
+		if (!option_branch)
+			remote_head = guess_remote_head(head, refs, 0);
+		else {
+			struct strbuf sb = STRBUF_INIT;
+			strbuf_addstr(&sb, src_ref_prefix);
+			strbuf_addstr(&sb, option_branch);
+			remote_head = find_ref_by_name(refs, sb.buf);
+			strbuf_release(&sb);
+		}
+
+		if (!remote_head && option_branch)
+			warning(_("Could not find remote branch %s to clone."),
+				option_branch);
+		else
+			get_fetch_map(remote_head, refspec, &tail, 0);
+	} else
+		get_fetch_map(refs, refspec, &tail, 0);
+
+	if (!option_mirror && !option_single_branch)
 		get_fetch_map(refs, tag_refspec, &tail, 0);
 
 	return local_refs;
@@ -446,6 +469,21 @@ static void write_remote_refs(const struct ref *local_refs)
 
 	pack_refs(PACK_REFS_ALL);
 	clear_extra_refs();
+}
+
+static void write_followtags(const struct ref *refs, const char *msg)
+{
+	const struct ref *ref;
+	for (ref = refs; ref; ref = ref->next) {
+		if (prefixcmp(ref->name, "refs/tags/"))
+			continue;
+		if (!suffixcmp(ref->name, "^{}"))
+			continue;
+		if (!has_sha1_file(ref->old_sha1))
+			continue;
+		update_ref(msg, ref->name, ref->old_sha1,
+			   NULL, 0, DIE_ON_ERR);
+	}
 }
 
 static int write_one_config(const char *key, const char *value, void *data)
@@ -478,7 +516,6 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	struct strbuf key = STRBUF_INIT, value = STRBUF_INIT;
 	struct strbuf branch_top = STRBUF_INIT, reflog_msg = STRBUF_INIT;
 	struct transport *transport = NULL;
-	char *src_ref_prefix = "refs/heads/";
 	int err = 0;
 
 	struct refspec *refspec;
@@ -497,6 +534,9 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	if (argc == 0)
 		usage_msg_opt(_("You must specify a repository to clone."),
 			builtin_clone_usage, builtin_clone_options);
+
+	if (option_single_branch == -1)
+		option_single_branch = option_depth ? 1 : 0;
 
 	if (option_mirror)
 		option_bare = 1;
@@ -645,6 +685,8 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		if (option_depth)
 			transport_set_option(transport, TRANS_OPT_DEPTH,
 					     option_depth);
+		if (option_single_branch)
+			transport_set_option(transport, TRANS_OPT_FOLLOWTAGS, "1");
 
 		transport_set_verbosity(transport, option_verbosity, option_progress);
 
@@ -663,6 +705,8 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		clear_extra_refs();
 
 		write_remote_refs(mapped_refs);
+		if (option_single_branch)
+			write_followtags(refs, reflog_msg.buf);
 
 		remote_head = find_ref_by_name(refs, "HEAD");
 		remote_head_points_at =
