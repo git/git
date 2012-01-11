@@ -1263,7 +1263,7 @@ class View(object):
             if self.exclude:
                 c = "-"
             return "View.Mapping: %s%s -> %s" % \
-                   (c, self.depot_side, self.client_side)
+                   (c, self.depot_side.path, self.client_side.path)
 
         def map_depot_to_client(self, depot_path):
             """Calculate the client path if using this mapping on the
