@@ -266,7 +266,7 @@ cmd_add()
 	then
 		cat >&2 <<EOF
 The following path is ignored by one of your .gitignore files:
-$(modulepath=$path eval_gettextln $modulepath)
+$(modulepath=$path eval_gettextln "\$modulepath")
 Use -f if you really want to add it.
 EOF
 		exit 1
