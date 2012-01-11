@@ -73,25 +73,29 @@ static int unix_sockaddr_init(struct sockaddr_un *sa, const char *path,
 
 int unix_stream_connect(const char *path)
 {
-	int fd;
+	int fd, saved_errno;
 	struct sockaddr_un sa;
 	struct unix_sockaddr_context ctx;
 
 	if (unix_sockaddr_init(&sa, path, &ctx) < 0)
 		return -1;
 	fd = unix_stream_socket();
-	if (connect(fd, (struct sockaddr *)&sa, sizeof(sa)) < 0) {
-		unix_sockaddr_cleanup(&ctx);
-		close(fd);
-		return -1;
-	}
+	if (connect(fd, (struct sockaddr *)&sa, sizeof(sa)) < 0)
+		goto fail;
 	unix_sockaddr_cleanup(&ctx);
 	return fd;
+
+fail:
+	saved_errno = errno;
+	unix_sockaddr_cleanup(&ctx);
+	close(fd);
+	errno = saved_errno;
+	return -1;
 }
 
 int unix_stream_listen(const char *path)
 {
-	int fd;
+	int fd, saved_errno;
 	struct sockaddr_un sa;
 	struct unix_sockaddr_context ctx;
 
@@ -100,18 +104,19 @@ int unix_stream_listen(const char *path)
 	fd = unix_stream_socket();
 
 	unlink(path);
-	if (bind(fd, (struct sockaddr *)&sa, sizeof(sa)) < 0) {
-		unix_sockaddr_cleanup(&ctx);
-		close(fd);
-		return -1;
-	}
+	if (bind(fd, (struct sockaddr *)&sa, sizeof(sa)) < 0)
+		goto fail;
 
-	if (listen(fd, 5) < 0) {
-		unix_sockaddr_cleanup(&ctx);
-		close(fd);
-		return -1;
-	}
+	if (listen(fd, 5) < 0)
+		goto fail;
 
 	unix_sockaddr_cleanup(&ctx);
 	return fd;
+
+fail:
+	saved_errno = errno;
+	unix_sockaddr_cleanup(&ctx);
+	close(fd);
+	errno = saved_errno;
+	return -1;
 }
