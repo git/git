@@ -96,7 +96,7 @@ git show -s --format='The following changes since commit %H:
   %s (%ci)
 
 are available in the git repository at:
-' $baserev &&
+' $merge_base &&
 echo "  $url${ref+ $ref}" &&
 git show -s --format='
 for you to fetch changes up to %H:
