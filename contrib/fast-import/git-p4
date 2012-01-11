@@ -1363,7 +1363,8 @@ class View(object):
             else:
                 # This mapping matched; no need to search any further.
                 # But, the mapping could be rejected if the client path
-                # has already been claimed by an earlier mapping.
+                # has already been claimed by an earlier mapping (i.e.
+                # one later in the list, which we are walking backwards).
                 already_mapped_in_client = False
                 for f in paths_filled:
                     # this is View.Path.match
