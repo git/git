@@ -101,8 +101,14 @@ test_expect_success 'unsupported view wildcard *' '
 	test_must_fail "$GITP4" clone --use-client-spec --dest="$git" //depot
 '
 
-test_expect_success 'wildcard ... only supported at end of spec' '
+test_expect_success 'wildcard ... only supported at end of spec 1' '
 	client_view "//depot/.../file11 //client/.../file11" &&
+	test_when_finished cleanup_git &&
+	test_must_fail "$GITP4" clone --use-client-spec --dest="$git" //depot
+'
+
+test_expect_success 'wildcard ... only supported at end of spec 2' '
+	client_view "//depot/.../a/... //client/.../a/..." &&
 	test_when_finished cleanup_git &&
 	test_must_fail "$GITP4" clone --use-client-spec --dest="$git" //depot
 '

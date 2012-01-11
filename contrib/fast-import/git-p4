@@ -1207,8 +1207,8 @@ class View(object):
                 die("Can't handle * wildcards in view: %s" % self.path)
             triple_dot_index = self.path.find("...")
             if triple_dot_index >= 0:
-                if not self.path.endswith("..."):
-                    die("Can handle ... wildcard only at end of path: %s" %
+                if triple_dot_index != len(self.path) - 3:
+                    die("Can handle only single ... wildcard, at end: %s" %
                         self.path)
                 self.ends_triple_dot = True
 
