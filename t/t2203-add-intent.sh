@@ -41,7 +41,7 @@ test_expect_success 'cannot commit with i-t-a entry' '
 	echo frotz >nitfol &&
 	git add rezrov &&
 	git add -N nitfol &&
-	test_must_fail git commit
+	test_must_fail git commit -m initial
 '
 
 test_expect_success 'can commit with an unrelated i-t-a entry in index' '
