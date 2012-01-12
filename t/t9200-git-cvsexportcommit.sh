@@ -19,9 +19,9 @@ then
     test_done
 fi
 
-CVSROOT=$(pwd)/cvsroot
-CVSWORK=$(pwd)/cvswork
-GIT_DIR=$(pwd)/.git
+CVSROOT=$PWD/cvsroot
+CVSWORK=$PWD/cvswork
+GIT_DIR=$PWD/.git
 export CVSROOT CVSWORK GIT_DIR
 
 rm -rf "$CVSROOT" "$CVSWORK"
