@@ -286,6 +286,7 @@ static void free_attr_elem(struct attr_stack *e)
 		}
 		free(a);
 	}
+	free(e->attrs);
 	free(e);
 }
 
