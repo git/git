@@ -1111,6 +1111,15 @@ static void fn_out_consume(void *priv, char *line, unsigned long len)
 			diff_words_append(line, len,
 					  &ecbdata->diff_words->plus);
 			return;
+		} else if (!prefixcmp(line, "\\ ")) {
+			/*
+			 * Eat the "no newline at eof" marker as if we
+			 * saw a "+" or "-" line with nothing on it,
+			 * and return without diff_words_flush() to
+			 * defer processing. If this is the end of
+			 * preimage, more "+" lines may come after it.
+			 */
+			return;
 		}
 		diff_words_flush(ecbdata);
 		if (ecbdata->diff_words->type == DIFF_WORDS_PORCELAIN) {
