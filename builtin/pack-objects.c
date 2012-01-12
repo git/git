@@ -1248,11 +1248,16 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 		return -1;
 
 	/*
-	 * We do not bother to try a delta that we discarded
-	 * on an earlier try, but only when reusing delta data.
+	 * We do not bother to try a delta that we discarded on an
+	 * earlier try, but only when reusing delta data.  Note that
+	 * src_entry that is marked as the preferred_base should always
+	 * be considered, as even if we produce a suboptimal delta against
+	 * it, we will still save the transfer cost, as we already know
+	 * the other side has it and we won't send src_entry at all.
 	 */
 	if (reuse_delta && trg_entry->in_pack &&
 	    trg_entry->in_pack == src_entry->in_pack &&
+	    !src_entry->preferred_base &&
 	    trg_entry->in_pack_type != OBJ_REF_DELTA &&
 	    trg_entry->in_pack_type != OBJ_OFS_DELTA)
 		return 0;
