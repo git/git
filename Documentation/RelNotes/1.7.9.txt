@@ -28,6 +28,10 @@ Updates since v1.7.8
    building more generic "sequencer" on top of the implementation that
    drives them.
 
+ * "git rev-parse FETCH_HEAD" after "git fetch" without specifying
+   what to fetch from the command line will now show the commit that
+   would be merged if the command were "git pull".
+
  * "git add" learned to stream large files directly into a packfile
    instead of writing them into individual loose object files.
 
@@ -108,7 +112,7 @@ details).
 
 --
 exec >/var/tmp/1
-O=v1.7.8.2-301-g48de656
+O=v1.7.9-rc0-44-g478c446
 echo O=$(git describe master)
 git log --first-parent --oneline --reverse ^$O master
 echo
