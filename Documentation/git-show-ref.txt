@@ -73,7 +73,7 @@ OPTIONS
 --exclude-existing[=<pattern>]::
 
 	Make 'git show-ref' act as a filter that reads refs from stdin of the
-	form "{caret}(?:<anything>\s)?<refname>(?:{backslash}{caret}{})?$"
+	form "`{caret}(?:<anything>\s)?<refname>(?:{backslash}{caret}{})?$`"
 	and performs the following actions on each:
 	(1) strip "{caret}{}" at the end of line if any;
 	(2) ignore if pattern is provided and does not head-match refname;
