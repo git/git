@@ -25,13 +25,24 @@ command directly.  See linkgit:git-am[1] instead.
 OPTIONS
 -------
 -k::
-	Usually the program 'cleans up' the Subject: header line
-	to extract the title line for the commit log message,
-	among which (1) remove 'Re:' or 're:', (2) leading
-	whitespaces, (3) '[' up to ']', typically '[PATCH]', and
-	then prepends "[PATCH] ".  This flag forbids this
-	munging, and is most useful when used to read back
-	'git format-patch -k' output.
+	Usually the program removes email cruft from the Subject:
+	header line to extract the title line for the commit log
+	message.  This option prevents this munging, and is most
+	useful when used to read back 'git format-patch -k' output.
++
+Specifically, the following are removed until none of them remain:
++
+--
+*	Leading and trailing whitespace.
+
+*	Leading `Re:`, `re:`, and `:`.
+
+*	Leading bracketed strings (between `[` and `]`, usually
+	`[PATCH]`).
+--
++
+Finally, runs of whitespace are normalized to a single ASCII space
+character.
 
 -b::
 	When -k is not in effect, all leading strings bracketed with '['
