@@ -5836,7 +5836,7 @@ sub git_search_files {
 	my %co = @_;
 
 	local $/ = "\n";
-	open my $fd, "-|", git_cmd(), 'grep', '-n',
+	open my $fd, "-|", git_cmd(), 'grep', '-n', '-z',
 		$search_use_regexp ? ('-E', '-i') : '-F',
 		$searchtext, $co{'tree'}
 			or die_error(500, "Open git-grep failed");
@@ -5852,13 +5852,14 @@ sub git_search_files {
 	my $lastfile = '';
 	while (my $line = <$fd>) {
 		chomp $line;
-		my ($file, $lno, $ltext, $binary);
+		my ($file, $file_href, $lno, $ltext, $binary);
 		last if ($matches++ > 1000);
 		if ($line =~ /^Binary file (.+) matches$/) {
 			$file = $1;
 			$binary = 1;
 		} else {
-			(undef, $file, $lno, $ltext) = split(/:/, $line, 4);
+			($file, $lno, $ltext) = split(/\0/, $line, 3);
+			$file =~ s/^$co{'tree'}://;
 		}
 		if ($file ne $lastfile) {
 			$lastfile and print "</td></tr>\n";
@@ -5867,10 +5868,10 @@ sub git_search_files {
 			} else {
 				print "<tr class=\"light\">\n";
 			}
+			$file_href = href(action=>"blob", hash_base=>$co{'id'},
+			                  file_name=>$file);
 			print "<td class=\"list\">".
-				$cgi->a({-href => href(action=>"blob", hash=>$co{'hash'},
-						       file_name=>"$file"),
-					-class => "list"}, esc_path($file));
+				$cgi->a({-href => $file_href, -class => "list"}, esc_path($file));
 			print "</td><td>\n";
 			$lastfile = $file;
 		}
@@ -5888,10 +5889,9 @@ sub git_search_files {
 				$ltext = esc_html($ltext, -nbsp=>1);
 			}
 			print "<div class=\"pre\">" .
-				$cgi->a({-href => href(action=>"blob", hash=>$co{'hash'},
-						       file_name=>"$file").'#l'.$lno,
-					-class => "linenr"}, sprintf('%4i', $lno))
-				. ' ' .  $ltext . "</div>\n";
+				$cgi->a({-href => $file_href.'#l'.$lno,
+				        -class => "linenr"}, sprintf('%4i', $lno)) .
+				' ' .  $ltext . "</div>\n";
 		}
 	}
 	if ($lastfile) {
