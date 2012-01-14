@@ -10,7 +10,7 @@ typedef struct DIR DIR;
 
 struct dirent {
 	unsigned char d_type;      /* file type to prevent lstat after readdir */
-	char d_name[MAX_PATH];     /* file name */
+	char d_name[MAX_PATH * 3]; /* file name (* 3 for UTF-8 conversion) */
 };
 
 DIR *opendir(const char *dirname);
