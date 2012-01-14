@@ -335,12 +335,6 @@ void mingw_open_html(const char *path);
 void mingw_mark_as_git_dir(const char *dir);
 #define mark_as_git_dir mingw_mark_as_git_dir
 
-/*
- * helpers
- */
-
-char **make_augmented_environ(const char *const *vars);
-void free_environ(char **env);
 
 /**
  * Converts UTF-8 encoded string to UTF-16LE.
