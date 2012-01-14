@@ -737,6 +737,53 @@ char *mingw_getcwd(char *pointer, int len)
 	return pointer;
 }
 
+static int env_compare(const void *a, const void *b)
+{
+	char *const *ea = a;
+	char *const *eb = b;
+	return strcasecmp(*ea, *eb);
+}
+
+static int lookup_env(char **env, const char *name, size_t nmln)
+{
+	int i;
+
+	for (i = 0; env[i]; i++) {
+		if (!strncasecmp(env[i], name, nmln) && '=' == env[i][nmln])
+			/* matches */
+			return i;
+	}
+	return -1;
+}
+
+/*
+ * If name contains '=', then sets the variable, otherwise it unsets it
+ */
+static char **env_setenv(char **env, const char *name)
+{
+	char *eq = strchrnul(name, '=');
+	int i = lookup_env(env, name, eq-name);
+
+	if (i < 0) {
+		if (*eq) {
+			for (i = 0; env[i]; i++)
+				;
+			env = xrealloc(env, (i+2)*sizeof(*env));
+			env[i] = (char*) name;
+			env[i+1] = NULL;
+		}
+	}
+	else {
+		free(env[i]);
+		if (*eq)
+			env[i] = (char*) name;
+		else
+			for (; env[i]; i++)
+				env[i] = env[i+1];
+	}
+	return env;
+}
+
 #undef getenv
 char *mingw_getenv(const char *name)
 {
@@ -752,6 +799,12 @@ char *mingw_getenv(const char *name)
 		result = "winansi";
 	}
 	return result;
+}
+
+int mingw_putenv(const char *namevalue)
+{
+	environ = env_setenv(environ, namevalue);
+	return 0;
 }
 
 /*
@@ -934,13 +987,6 @@ static char *path_lookup(const char *cmd, char **path, int exe_only)
 		prog = lookup_prog(*path++, cmd, isexe, exe_only);
 
 	return prog;
-}
-
-static int env_compare(const void *a, const void *b)
-{
-	char *const *ea = a;
-	char *const *eb = b;
-	return strcasecmp(*ea, *eb);
 }
 
 struct pinfo_t {
@@ -1223,46 +1269,6 @@ void free_environ(char **env)
 	free(env);
 }
 
-static int lookup_env(char **env, const char *name, size_t nmln)
-{
-	int i;
-
-	for (i = 0; env[i]; i++) {
-		if (!strncasecmp(env[i], name, nmln) && '=' == env[i][nmln])
-			/* matches */
-			return i;
-	}
-	return -1;
-}
-
-/*
- * If name contains '=', then sets the variable, otherwise it unsets it
- */
-static char **env_setenv(char **env, const char *name)
-{
-	char *eq = strchrnul(name, '=');
-	int i = lookup_env(env, name, eq-name);
-
-	if (i < 0) {
-		if (*eq) {
-			for (i = 0; env[i]; i++)
-				;
-			env = xrealloc(env, (i+2)*sizeof(*env));
-			env[i] = (char*) name;
-			env[i+1] = NULL;
-		}
-	}
-	else {
-		free(env[i]);
-		if (*eq)
-			env[i] = (char*) name;
-		else
-			for (; env[i]; i++)
-				env[i] = env[i+1];
-	}
-	return env;
-}
-
 /*
  * Copies global environ and adjusts variables as specified by vars.
  */
@@ -1275,12 +1281,6 @@ char **make_augmented_environ(const char *const *vars)
 		env = env_setenv(env, strchr(v, '=') ? xstrdup(v) : v);
 	}
 	return env;
-}
-
-int mingw_putenv(const char *namevalue)
-{
-	environ = env_setenv(environ, namevalue);
-	return 0;
 }
 
 /*
