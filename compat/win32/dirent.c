@@ -6,10 +6,10 @@ struct DIR {
 	int dd_stat;          /* 0-based index */
 };
 
-static inline void finddata2dirent(struct dirent *ent, WIN32_FIND_DATAA *fdata)
+static inline void finddata2dirent(struct dirent *ent, WIN32_FIND_DATAW *fdata)
 {
-	/* copy file name from WIN32_FIND_DATA to dirent */
-	memcpy(ent->d_name, fdata->cFileName, sizeof(ent->d_name));
+	/* convert UTF-16 name to UTF-8 */
+	xwcstoutf(ent->d_name, fdata->cFileName, sizeof(ent->d_name));
 
 	/* Set file type, based on WIN32_FIND_DATA */
 	if (fdata->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
@@ -20,25 +20,15 @@ static inline void finddata2dirent(struct dirent *ent, WIN32_FIND_DATAA *fdata)
 
 DIR *opendir(const char *name)
 {
-	char pattern[MAX_PATH];
-	WIN32_FIND_DATAA fdata;
+	wchar_t pattern[MAX_PATH + 2]; /* + 2 for '/' '*' */
+	WIN32_FIND_DATAW fdata;
 	HANDLE h;
 	int len;
 	DIR *dir;
 
-	/* check that name is not NULL */
-	if (!name) {
-		errno = EINVAL;
+	/* convert name to UTF-16 and check length < MAX_PATH */
+	if ((len = xutftowcs_path(pattern, name)) < 0)
 		return NULL;
-	}
-	/* check that the pattern won't be too long for FindFirstFileA */
-	len = strlen(name);
-	if (len + 2 >= MAX_PATH) {
-		errno = ENAMETOOLONG;
-		return NULL;
-	}
-	/* copy name to temp buffer */
-	memcpy(pattern, name, len + 1);
 
 	/* append optional '/' and wildcard '*' */
 	if (len && !is_dir_sep(pattern[len - 1]))
@@ -47,7 +37,7 @@ DIR *opendir(const char *name)
 	pattern[len] = 0;
 
 	/* open find handle */
-	h = FindFirstFileA(pattern, &fdata);
+	h = FindFirstFileW(pattern, &fdata);
 	if (h == INVALID_HANDLE_VALUE) {
 		DWORD err = GetLastError();
 		errno = (err == ERROR_DIRECTORY) ? ENOTDIR : err_win_to_posix(err);
@@ -72,8 +62,8 @@ struct dirent *readdir(DIR *dir)
 	/* if first entry, dirent has already been set up by opendir */
 	if (dir->dd_stat) {
 		/* get next entry and convert from WIN32_FIND_DATA to dirent */
-		WIN32_FIND_DATAA fdata;
-		if (FindNextFileA(dir->dd_handle, &fdata)) {
+		WIN32_FIND_DATAW fdata;
+		if (FindNextFileW(dir->dd_handle, &fdata)) {
 			finddata2dirent(&dir->dd_dir, &fdata);
 		} else {
 			DWORD lasterr = GetLastError();
