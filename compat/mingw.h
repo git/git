@@ -317,14 +317,10 @@ int mingw_raise(int sig);
  * ANSI emulation wrappers
  */
 
-int winansi_fputs(const char *str, FILE *stream);
-int winansi_printf(const char *format, ...) __attribute__((format (printf, 1, 2)));
-int winansi_fprintf(FILE *stream, const char *format, ...) __attribute__((format (printf, 2, 3)));
-int winansi_vfprintf(FILE *stream, const char *format, va_list list);
-#define fputs winansi_fputs
-#define printf(...) winansi_printf(__VA_ARGS__)
-#define fprintf(...) winansi_fprintf(__VA_ARGS__)
-#define vfprintf winansi_vfprintf
+void winansi_init(void);
+int winansi_isatty(int fd);
+HANDLE winansi_get_osfhandle(int fd);
+#define isatty winansi_isatty
 
 /*
  * git specific compatibility

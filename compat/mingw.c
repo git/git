@@ -865,9 +865,9 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **env,
 	memset(&si, 0, sizeof(si));
 	si.cb = sizeof(si);
 	si.dwFlags = STARTF_USESTDHANDLES;
-	si.hStdInput = (HANDLE) _get_osfhandle(fhin);
-	si.hStdOutput = (HANDLE) _get_osfhandle(fhout);
-	si.hStdError = (HANDLE) _get_osfhandle(fherr);
+	si.hStdInput = winansi_get_osfhandle(fhin);
+	si.hStdOutput = winansi_get_osfhandle(fhout);
+	si.hStdError = winansi_get_osfhandle(fherr);
 
 	/* concatenate argv, quoting args as we go */
 	strbuf_init(&args, 0);
@@ -1946,4 +1946,7 @@ void mingw_startup()
 	_setmode(_fileno(stdin), _O_BINARY);
 	_setmode(_fileno(stdout), _O_BINARY);
 	_setmode(_fileno(stderr), _O_BINARY);
+
+	/* initialize Unicode console */
+	winansi_init();
 }
