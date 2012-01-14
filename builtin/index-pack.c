@@ -515,14 +515,52 @@ static int is_delta_type(enum object_type type)
 	return (type == OBJ_REF_DELTA || type == OBJ_OFS_DELTA);
 }
 
+/*
+ * This function is part of find_unresolved_deltas(). There are two
+ * walkers going in the opposite ways.
+ *
+ * The first one in find_unresolved_deltas() traverses down from
+ * parent node to children, deflating nodes along the way. However,
+ * memory for deflated nodes is limited by delta_base_cache_limit, so
+ * at some point parent node's deflated content may be freed.
+ *
+ * The second walker is this function, which goes from current node up
+ * to top parent if necessary to deflate the node. In normal
+ * situation, its parent node would be already deflated, so it just
+ * needs to apply delta.
+ *
+ * In the worst case scenario, parent node is no longer deflated because
+ * we're running out of delta_base_cache_limit; we need to re-deflate
+ * parents, possibly up to the top base.
+ *
+ * All deflated objects here are subject to be freed if we exceed
+ * delta_base_cache_limit, just like in find_unresolved_deltas(), we
+ * just need to make sure the last node is not freed.
+ */
 static void *get_base_data(struct base_data *c)
 {
 	if (!c->data) {
 		struct object_entry *obj = c->obj;
+		struct base_data **delta = NULL;
+		int delta_nr = 0, delta_alloc = 0;
 
-		if (is_delta_type(obj->type)) {
-			void *base = get_base_data(c->base);
-			void *raw = get_data_from_pack(obj);
+		while (is_delta_type(c->obj->type) && !c->data) {
+			ALLOC_GROW(delta, delta_nr + 1, delta_alloc);
+			delta[delta_nr++] = c;
+			c = c->base;
+		}
+		if (!delta_nr) {
+			c->data = get_data_from_pack(obj);
+			c->size = obj->size;
+			base_cache_used += c->size;
+			prune_base_data(c);
+		}
+		for (; delta_nr > 0; delta_nr--) {
+			void *base, *raw;
+			c = delta[delta_nr - 1];
+			obj = c->obj;
+			base = get_base_data(c->base);
+			raw = get_data_from_pack(obj);
 			c->data = patch_delta(
 				base, c->base->size,
 				raw, obj->size,
@@ -530,13 +568,10 @@ static void *get_base_data(struct base_data *c)
 			free(raw);
 			if (!c->data)
 				bad_object(obj->idx.offset, "failed to apply delta");
-		} else {
-			c->data = get_data_from_pack(obj);
-			c->size = obj->size;
+			base_cache_used += c->size;
+			prune_base_data(c);
 		}
-
-		base_cache_used += c->size;
-		prune_base_data(c);
+		free(delta);
 	}
 	return c->data;
 }
