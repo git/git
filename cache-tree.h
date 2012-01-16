@@ -29,13 +29,15 @@ void cache_tree_write(struct strbuf *, struct cache_tree *root);
 struct cache_tree *cache_tree_read(const char *buffer, unsigned long size);
 
 int cache_tree_fully_valid(struct cache_tree *);
-int cache_tree_update(struct cache_tree *, struct cache_entry **, int, int, int, int);
+int cache_tree_update(struct cache_tree *, struct cache_entry **, int, int);
 
 int update_main_cache_tree(int);
 
 /* bitmasks to write_cache_as_tree flags */
 #define WRITE_TREE_MISSING_OK 1
 #define WRITE_TREE_IGNORE_CACHE_TREE 2
+#define WRITE_TREE_DRY_RUN 4
+#define WRITE_TREE_SILENT 8
 
 /* error return codes */
 #define WRITE_TREE_UNREADABLE_INDEX (-1)
