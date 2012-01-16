@@ -364,13 +364,8 @@ static void copy_or_link_directory(struct strbuf *src, struct strbuf *dest,
 	closedir(dir);
 }
 
-static const struct ref *clone_local(const char *src_repo,
-				     const char *dest_repo)
+static void clone_local(const char *src_repo, const char *dest_repo)
 {
-	const struct ref *ret;
-	struct remote *remote;
-	struct transport *transport;
-
 	if (option_shared) {
 		struct strbuf alt = STRBUF_INIT;
 		strbuf_addf(&alt, "%s/objects", src_repo);
@@ -386,13 +381,8 @@ static const struct ref *clone_local(const char *src_repo,
 		strbuf_release(&dest);
 	}
 
-	remote = remote_get(src_repo);
-	transport = transport_get(remote, src_repo);
-	ret = transport_get_remote_refs(transport);
-	transport_disconnect(transport);
 	if (0 <= option_verbosity)
 		printf(_("done.\n"));
-	return ret;
 }
 
 static const char *junk_work_tree;
@@ -619,6 +609,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	struct strbuf key = STRBUF_INIT, value = STRBUF_INIT;
 	struct strbuf branch_top = STRBUF_INIT, reflog_msg = STRBUF_INIT;
 	struct transport *transport = NULL;
+	struct remote *remote;
 	int err = 0;
 
 	struct refspec *refspec;
@@ -773,13 +764,10 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 
 	strbuf_reset(&value);
 
-	if (is_local) {
-		refs = clone_local(path, git_dir);
-		mapped_refs = wanted_peer_refs(refs, refspec);
-	} else {
-		struct remote *remote = remote_get(option_origin);
-		transport = transport_get(remote, remote->url[0]);
+	remote = remote_get(option_origin);
+	transport = transport_get(remote, remote->url[0]);
 
+	if (!is_local) {
 		if (!transport->get_refs_list || !transport->fetch)
 			die(_("Don't know how to clone %s"), transport->url);
 
@@ -796,13 +784,22 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		if (option_upload_pack)
 			transport_set_option(transport, TRANS_OPT_UPLOADPACK,
 					     option_upload_pack);
-
-		refs = transport_get_remote_refs(transport);
-		if (refs) {
-			mapped_refs = wanted_peer_refs(refs, refspec);
-			transport_fetch_refs(transport, mapped_refs);
-		}
 	}
+
+	refs = transport_get_remote_refs(transport);
+	mapped_refs = refs ? wanted_peer_refs(refs, refspec) : NULL;
+
+	/*
+	 * mapped_refs may be updated if transport-helper is used so
+	 * we need fetch it early because remote_head code below
+	 * relies on it.
+	 *
+	 * for normal clones, transport_get_remote_refs() should
+	 * return reliable ref set, we can delay cloning until after
+	 * remote HEAD check.
+	 */
+	if (!is_local && remote->foreign_vcs && refs)
+		transport_fetch_refs(transport, mapped_refs);
 
 	if (refs) {
 		remote_head = find_ref_by_name(refs, "HEAD");
@@ -838,15 +835,18 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 					      "refs/heads/master");
 	}
 
+	if (is_local)
+		clone_local(path, git_dir);
+	else if (refs && !remote->foreign_vcs)
+		transport_fetch_refs(transport, mapped_refs);
+
 	update_remote_refs(refs, mapped_refs, remote_head_points_at,
 			   branch_top.buf, reflog_msg.buf);
 
 	update_head(our_head_points_at, remote_head, reflog_msg.buf);
 
-	if (transport) {
-		transport_unlock_pack(transport);
-		transport_disconnect(transport);
-	}
+	transport_unlock_pack(transport);
+	transport_disconnect(transport);
 
 	err = checkout();
 
