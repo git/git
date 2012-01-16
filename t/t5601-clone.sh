@@ -271,4 +271,13 @@ test_expect_success 'clone from original with relative alternate' '
 	grep /src/\\.git/objects target-10/objects/info/alternates
 '
 
+test_expect_success 'clone checking out a tag' '
+	git clone --branch=some-tag src dst.tag &&
+	GIT_DIR=src/.git git rev-parse some-tag >expected &&
+	test_cmp expected dst.tag/.git/HEAD &&
+	GIT_DIR=dst.tag/.git git config remote.origin.fetch >fetch.actual &&
+	echo "+refs/heads/*:refs/remotes/origin/*" >fetch.expected &&
+	test_cmp fetch.expected fetch.actual
+'
+
 test_done

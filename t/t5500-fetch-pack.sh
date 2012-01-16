@@ -311,4 +311,19 @@ EOF
 	test_cmp count6.expected count6.actual
 '
 
+test_expect_success 'shallow cloning single tag' '
+	git clone --depth 1 --branch=TAGB1 "file://$(pwd)/." shallow7 &&
+	cat >taglist.expected <<\EOF &&
+TAGB1
+TAGB2
+EOF
+	GIT_DIR=shallow7/.git git tag -l >taglist.actual &&
+	test_cmp taglist.expected taglist.actual &&
+
+	echo "in-pack: 7" > count7.expected &&
+	GIT_DIR=shallow7/.git git count-objects -v |
+		grep "^in-pack" > count7.actual &&
+	test_cmp count7.expected count7.actual
+'
+
 test_done

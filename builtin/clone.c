@@ -420,6 +420,15 @@ static struct ref *find_remote_branch(const struct ref *refs, const char *branch
 	strbuf_addstr(&head, branch);
 	ref = find_ref_by_name(refs, head.buf);
 	strbuf_release(&head);
+
+	if (ref)
+		return ref;
+
+	strbuf_addstr(&head, "refs/tags/");
+	strbuf_addstr(&head, branch);
+	ref = find_ref_by_name(refs, head.buf);
+	strbuf_release(&head);
+
 	return ref;
 }
 
@@ -441,8 +450,12 @@ static struct ref *wanted_peer_refs(const struct ref *refs,
 		if (!remote_head && option_branch)
 			warning(_("Could not find remote branch %s to clone."),
 				option_branch);
-		else
+		else {
 			get_fetch_map(remote_head, refspec, &tail, 0);
+
+			/* if --branch=tag, pull the requested tag explicitly */
+			get_fetch_map(remote_head, tag_refspec, &tail, 0);
+		}
 	} else
 		get_fetch_map(refs, refspec, &tail, 0);
 
@@ -515,6 +528,11 @@ static void update_head(const struct ref *our, const struct ref *remote,
 			update_ref(msg, "HEAD", our->old_sha1, NULL, 0, DIE_ON_ERR);
 			install_branch_config(0, head, option_origin, our->name);
 		}
+	} else if (our) {
+		struct commit *c = lookup_commit_reference(our->old_sha1);
+		/* --branch specifies a non-branch (i.e. tags), detach HEAD */
+		update_ref(msg, "HEAD", c->object.sha1,
+			   NULL, REF_NODEREF, DIE_ON_ERR);
 	} else if (remote) {
 		/*
 		 * We know remote HEAD points to a non-branch, or
