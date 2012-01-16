@@ -486,6 +486,29 @@ static void write_followtags(const struct ref *refs, const char *msg)
 	}
 }
 
+static void update_head(const struct ref *our, const struct ref *remote,
+			const char *msg)
+{
+	if (our) {
+		/* Local default branch link */
+		create_symref("HEAD", our->name, NULL);
+		if (!option_bare) {
+			const char *head = skip_prefix(our->name, "refs/heads/");
+			update_ref(msg, "HEAD", our->old_sha1, NULL, 0, DIE_ON_ERR);
+			install_branch_config(0, head, option_origin, our->name);
+		}
+	} else if (remote) {
+		/*
+		 * We know remote HEAD points to a non-branch, or
+		 * HEAD points to a branch but we don't know which one, or
+		 * we asked for a specific branch but it did not exist.
+		 * Detach HEAD in all these cases.
+		 */
+		update_ref(msg, "HEAD", remote->old_sha1,
+			   NULL, REF_NODEREF, DIE_ON_ERR);
+	}
+}
+
 static int checkout(void)
 {
 	unsigned char sha1[20];
@@ -807,23 +830,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 			      reflog_msg.buf);
 	}
 
-	if (our_head_points_at) {
-		/* Local default branch link */
-		create_symref("HEAD", our_head_points_at->name, NULL);
-		if (!option_bare) {
-			const char *head = skip_prefix(our_head_points_at->name,
-						       "refs/heads/");
-			update_ref(reflog_msg.buf, "HEAD",
-				   our_head_points_at->old_sha1,
-				   NULL, 0, DIE_ON_ERR);
-			install_branch_config(0, head, option_origin,
-					      our_head_points_at->name);
-		}
-	} else if (remote_head) {
-		/* Source had detached HEAD pointing somewhere. */
-		update_ref(reflog_msg.buf, "HEAD", remote_head->old_sha1,
-			   NULL, REF_NODEREF, DIE_ON_ERR);
-	}
+	update_head(our_head_points_at, remote_head, reflog_msg.buf);
 
 	if (transport) {
 		transport_unlock_pack(transport);
