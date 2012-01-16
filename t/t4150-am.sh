@@ -244,7 +244,7 @@ test_expect_success 'am --keep really keeps the subject' '
 	grep "Re: Re: Re: \[PATCH 1/5 v2\] \[foo\] third" actual
 '
 
-test_expect_failure 'am --keep-non-patch really keeps the non-patch part' '
+test_expect_success 'am --keep-non-patch really keeps the non-patch part' '
 	rm -fr .git/rebase-apply &&
 	git reset --hard &&
 	git checkout HEAD^ &&
