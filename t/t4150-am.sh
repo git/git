@@ -219,7 +219,7 @@ test_expect_success 'am stays in branch' '
 
 test_expect_success 'am --signoff does not add Signed-off-by: line if already there' '
 	git format-patch --stdout HEAD^ >patch3 &&
-	sed -e "/^Subject/ s,\[PATCH,Re: Re: Re: & 1/5 v2," patch3 >patch4 &&
+	sed -e "/^Subject/ s,\[PATCH,Re: Re: Re: & 1/5 v2] [foo," patch3 >patch4 &&
 	rm -fr .git/rebase-apply &&
 	git reset --hard &&
 	git checkout HEAD^ &&
@@ -241,7 +241,17 @@ test_expect_success 'am --keep really keeps the subject' '
 	git am --keep patch4 &&
 	! test -d .git/rebase-apply &&
 	git cat-file commit HEAD >actual &&
-	grep "Re: Re: Re: \[PATCH 1/5 v2\] third" actual
+	grep "Re: Re: Re: \[PATCH 1/5 v2\] \[foo\] third" actual
+'
+
+test_expect_failure 'am --keep-non-patch really keeps the non-patch part' '
+	rm -fr .git/rebase-apply &&
+	git reset --hard &&
+	git checkout HEAD^ &&
+	git am --keep-non-patch patch4 &&
+	! test -d .git/rebase-apply &&
+	git cat-file commit HEAD >actual &&
+	grep "^\[foo\] third" actual
 '
 
 test_expect_success 'am -3 falls back to 3-way merge' '

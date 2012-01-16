@@ -39,6 +39,9 @@ OPTIONS
 --keep::
 	Pass `-k` flag to 'git mailinfo' (see linkgit:git-mailinfo[1]).
 
+--keep-non-patch::
+	Pass `-b` flag to 'git mailinfo' (see linkgit:git-mailinfo[1]).
+
 --keep-cr::
 --no-keep-cr::
 	With `--keep-cr`, call 'git mailsplit' (see linkgit:git-mailsplit[1])
