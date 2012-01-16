@@ -563,7 +563,10 @@ static int checkout(void)
 			  "unable to checkout.\n"));
 		return 0;
 	}
-	if (strcmp(head, "HEAD")) {
+	if (!strcmp(head, "HEAD")) {
+		if (advice_detached_head)
+			detach_advice(sha1_to_hex(sha1));
+	} else {
 		if (prefixcmp(head, "refs/heads/"))
 			die(_("HEAD not found below refs/heads!"));
 	}
