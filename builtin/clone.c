@@ -518,8 +518,7 @@ static void update_head(const struct ref *our, const struct ref *remote,
 	} else if (remote) {
 		/*
 		 * We know remote HEAD points to a non-branch, or
-		 * HEAD points to a branch but we don't know which one, or
-		 * we asked for a specific branch but it did not exist.
+		 * HEAD points to a branch but we don't know which one.
 		 * Detach HEAD in all these cases.
 		 */
 		update_ref(msg, "HEAD", remote->old_sha1,
@@ -816,12 +815,9 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 			our_head_points_at =
 				find_remote_branch(mapped_refs, option_branch);
 
-			if (!our_head_points_at) {
-				warning(_("Remote branch %s not found in "
-					"upstream %s, using HEAD instead"),
-					option_branch, option_origin);
-				our_head_points_at = remote_head_points_at;
-			}
+			if (!our_head_points_at)
+				die(_("Remote branch %s not found in upstream %s"),
+				    option_branch, option_origin);
 		}
 		else
 			our_head_points_at = remote_head_points_at;

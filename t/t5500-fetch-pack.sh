@@ -282,13 +282,6 @@ test_expect_success 'clone shallow object count' '
 	test_cmp count3.expected count3.actual
 '
 
-test_expect_success 'clone shallow with nonexistent --branch' '
-	git clone --depth 1 --branch Z "file://$(pwd)/." shallow4 &&
-	GIT_DIR=shallow4/.git git rev-parse HEAD >actual &&
-	git rev-parse HEAD >expected &&
-	test_cmp expected actual
-'
-
 test_expect_success 'clone shallow with detached HEAD' '
 	git checkout HEAD^ &&
 	git clone --depth 1 "file://$(pwd)/." shallow5 &&
