@@ -48,7 +48,6 @@ static int option_verbosity;
 static int option_progress;
 static struct string_list option_config;
 static struct string_list option_reference;
-static const char *src_ref_prefix = "refs/heads/";
 
 static int opt_parse_reference(const struct option *opt, const char *arg, int unset)
 {
@@ -413,6 +412,17 @@ static void remove_junk_on_signal(int signo)
 	raise(signo);
 }
 
+static struct ref *find_remote_branch(const struct ref *refs, const char *branch)
+{
+	struct ref *ref;
+	struct strbuf head = STRBUF_INIT;
+	strbuf_addstr(&head, "refs/heads/");
+	strbuf_addstr(&head, branch);
+	ref = find_ref_by_name(refs, head.buf);
+	strbuf_release(&head);
+	return ref;
+}
+
 static struct ref *wanted_peer_refs(const struct ref *refs,
 		struct refspec *refspec)
 {
@@ -425,13 +435,8 @@ static struct ref *wanted_peer_refs(const struct ref *refs,
 
 		if (!option_branch)
 			remote_head = guess_remote_head(head, refs, 0);
-		else {
-			struct strbuf sb = STRBUF_INIT;
-			strbuf_addstr(&sb, src_ref_prefix);
-			strbuf_addstr(&sb, option_branch);
-			remote_head = find_ref_by_name(refs, sb.buf);
-			strbuf_release(&sb);
-		}
+		else
+			remote_head = find_remote_branch(refs, option_branch);
 
 		if (!remote_head && option_branch)
 			warning(_("Could not find remote branch %s to clone."),
@@ -502,7 +507,7 @@ static void update_remote_refs(const struct ref *refs,
 static void update_head(const struct ref *our, const struct ref *remote,
 			const char *msg)
 {
-	if (our) {
+	if (our && !prefixcmp(our->name, "refs/heads/")) {
 		/* Local default branch link */
 		create_symref("HEAD", our->name, NULL);
 		if (!option_bare) {
@@ -609,6 +614,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	struct strbuf key = STRBUF_INIT, value = STRBUF_INIT;
 	struct strbuf branch_top = STRBUF_INIT, reflog_msg = STRBUF_INIT;
 	struct transport *transport = NULL;
+	const char *src_ref_prefix = "refs/heads/";
 	struct remote *remote;
 	int err = 0;
 
@@ -807,12 +813,8 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 			guess_remote_head(remote_head, mapped_refs, 0);
 
 		if (option_branch) {
-			struct strbuf head = STRBUF_INIT;
-			strbuf_addstr(&head, src_ref_prefix);
-			strbuf_addstr(&head, option_branch);
 			our_head_points_at =
-				find_ref_by_name(mapped_refs, head.buf);
-			strbuf_release(&head);
+				find_remote_branch(mapped_refs, option_branch);
 
 			if (!our_head_points_at) {
 				warning(_("Remote branch %s not found in "
