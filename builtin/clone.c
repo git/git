@@ -764,12 +764,9 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		}
 	} else if (remote_head) {
 		/* Source had detached HEAD pointing somewhere. */
-		if (!option_bare) {
-			update_ref(reflog_msg.buf, "HEAD",
-				   remote_head->old_sha1,
-				   NULL, REF_NODEREF, DIE_ON_ERR);
-			our_head_points_at = remote_head;
-		}
+		update_ref(reflog_msg.buf, "HEAD", remote_head->old_sha1,
+			   NULL, REF_NODEREF, DIE_ON_ERR);
+		our_head_points_at = remote_head;
 	} else {
 		/* Nothing to checkout out */
 		if (!option_no_checkout)

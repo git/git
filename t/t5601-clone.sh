@@ -12,7 +12,10 @@ test_expect_success setup '
 		cd src &&
 		>file &&
 		git add file &&
-		git commit -m initial
+		git commit -m initial &&
+		echo 1 >file &&
+		git add file &&
+		git commit -m updated
 	)
 
 '
@@ -85,6 +88,26 @@ test_expect_success 'clone --mirror' '
 	test "+refs/*:refs/*" = "$FETCH" &&
 	MIRROR="$(cd mirror && git config --bool remote.origin.mirror)" &&
 	test "$MIRROR" = true
+
+'
+
+test_expect_success 'clone --mirror with detached HEAD' '
+
+	( cd src && git checkout HEAD^ && git rev-parse HEAD >../expected ) &&
+	git clone --mirror src mirror.detached &&
+	( cd src && git checkout - ) &&
+	GIT_DIR=mirror.detached git rev-parse HEAD >actual &&
+	test_cmp expected actual
+
+'
+
+test_expect_success 'clone --bare with detached HEAD' '
+
+	( cd src && git checkout HEAD^ && git rev-parse HEAD >../expected ) &&
+	git clone --bare src bare.detached &&
+	( cd src && git checkout - ) &&
+	GIT_DIR=bare.detached git rev-parse HEAD >actual &&
+	test_cmp expected actual
 
 '
 
