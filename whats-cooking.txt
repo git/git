@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jan 2012, #03; Wed, 11)
-X-master-at: 0e1cfc52de002e2d9b0e6562e8672fee3bf45a67
-X-next-at: 5c0bfa96c2f67a7ac76afe5096f622dced39734f
+Subject: What's cooking in git.git (Jan 2012, #04; Mon, 16)
+X-master-at: b63103e908af54e5e2eaa3faad350e4738ef0047
+X-next-at: 01892647622b2d0497b1bd74eff0113b8e0abc5c
 
-What's cooking in git.git (Jan 2012, #03; Wed, 11)
+What's cooking in git.git (Jan 2012, #04; Mon, 16)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -38,14 +38,28 @@ The preformatted documentation in HTML and man format are found in:
 --------------------------------------------------
 [New Topics]
 
-* jc/pull-signed-tag (2012-01-11) 1 commit
- - merge: use editor by default in interactive sessions
+* mh/maint-show-ref-doc (2012-01-13) 2 commits
+  (merged to 'next' on 2012-01-16 at 8573f09)
+ + git-show-ref doc: typeset regexp in fixed width font
+ + git-show-ref: fix escaping in asciidoc source
 
-Per Linus's strong suggestion, sugarcoated (aka "taking blame for the
-original UI screw-ups") so that it is easier for me to swallow and accept
-a potentially huge backward incompatibility issue, "git merge" is made to
-launch an editor to explain the merge in the merge commit by default in
-interactive sessions.
+Will merge to 'master' by v1.7.9-rc2.
+
+* nd/pathspec-recursion-cleanup (2012-01-16) 2 commits
+  (merged to 'next' on 2012-01-16 at 0189264)
+ + diff-index: enable recursive pathspec matching in unpack_trees
+ + Document limited recursion pathspec matching with wildcards
+
+Will merge to 'master' by v1.7.9-rc2.
+
+* tr/maint-word-diff-incomplete-line (2012-01-12) 1 commit
+  (merged to 'next' on 2012-01-16 at 58ddaaf)
+ + word-diff: ignore '\ No newline at eof' marker
+
+Will merge to 'master' by v1.7.9-rc2.
+
+--------------------------------------------------
+[Graduated to "master"]
 
 * jc/request-pull-show-head-4 (2012-01-10) 1 commit
   (merged to 'next' on 2012-01-11 at 8d98a6b)
@@ -53,8 +67,6 @@ interactive sessions.
 
 Hopefully the final finishing touch to the request-pull script that was
 updated during this cycle.
-
-Will merge by 1.7.9-rc1.
 
 * jk/maint-upload-archive (2012-01-11) 1 commit
   (merged to 'next' on 2012-01-11 at 5c0bfa9)
@@ -64,57 +76,15 @@ Running "git archive" remotely and asking for a partial tree of a ref,
 e.g. HEAD:$path was forbidden by a recent change to tighten security, but
 was found to be overly restrictive.
 
-Will merge by 1.7.9-rc1.
-
-* nd/commit-ignore-i-t-a (2012-01-11) 2 commits
- - commit: add --skip-intent-to-add to allow commit with i-t-a entries in index
- - cache-tree: update API to take abitrary flags
-
-* nd/maint-refname-in-hierarchy-check (2012-01-11) 1 commit
- - Fix incorrect ref namespace check
-
-Avoid getting confused by "ref/headxxx" and mistaking it as if it is under
-the "refs/heads/" hierarchy.
-Not urgent.
-
-* rr/sequencer (2012-01-11) 2 commits
- - sequencer: factor code out of revert builtin
- - revert: prepare to move replay_action to header
-
-Moving large chunk of code out of cherry-pick/revert for later reuse,
-primarily to prepare for the next cycle.
-Not urgent.
+* jn/maint-gitweb-grep-fix (2012-01-05) 2 commits
+  (merged to 'next' on 2012-01-13 at a15e6ab)
+ + gitweb: Harden "grep" search against filenames with ':'
+ + gitweb: Fix file links in "grep" search
 
 * ss/maint-msys-cvsexportcommit (2012-01-11) 2 commits
   (merged to 'next' on 2012-01-11 at 007aab1)
  + git-cvsexportcommit: Fix calling Perl's rel2abs() on MSYS
  + t9200: On MSYS, do not pass Windows-style paths to CVS
-
-Will merge by 1.7.9-rc1.
-
-* tr/maint-mailinfo (2012-01-11) 1 commit
-  (merged to 'next' on 2012-01-11 at d9e344a)
- + mailinfo documentation: accurately describe non -k case
-
-Will merge by 1.7.9-rc1.
-
-* jk/credentials (2012-01-11) 3 commits
- - unix-socket: do not let close() or chdir() clobber errno during cleanup
- - credential-cache: report more daemon connection errors
- - unix-socket: handle long socket pathnames
-
-* pw/p4-view-updates (2012-01-11) 5 commits
- - git-p4: add tests demonstrating spec overlay ambiguities
- - git-p4: adjust test to adhere to stricter useClientSpec
- - git-p4: clarify comment
- - git-p4: fix verbose comment typo
- - git-p4: only a single ... wildcard is supported
-
---------------------------------------------------
-[Graduated to "master"]
-
-* bw/maint-t8006-sed-incomplete-line (2012-01-03) 1 commit
- + Work around sed portability issue in t8006-blame-textconv
 
 --------------------------------------------------
 [Stalled]
@@ -142,6 +112,39 @@ At least pack-objects and fsck need to learn the new encoding for the
 series to be usable locally, and then index-pack/unpack-objects needs to
 learn it to be used remotely.
 
+--------------------------------------------------
+[Cooking]
+
+* jc/pull-signed-tag (2012-01-11) 1 commit
+ - merge: use editor by default in interactive sessions
+
+Per Linus's strong suggestion, sugarcoated (aka "taking blame for the
+original UI screw-ups") so that it is easier for me to swallow and accept
+a potentially huge backward incompatibility issue, "git merge" is made to
+launch an editor to explain the merge in the merge commit by default in
+interactive sessions.
+
+May need renaming the backward compatibility "GIT_MERGE_LEGACY"
+environment variable, and also will need a smoother migration plan.
+
+Will defer till the next cycle.
+
+* nd/commit-ignore-i-t-a (2012-01-16) 2 commits
+ - commit, write-tree: allow to ignore CE_INTENT_TO_ADD while writing trees
+ - cache-tree: update API to take abitrary flags
+
+May want to consider this as fixing an earlier UI mistake, and not as a
+feature that devides the userbase.
+
+Will defer till the next cycle.
+
+* nd/maint-refname-in-hierarchy-check (2012-01-11) 1 commit
+ - Fix incorrect ref namespace check
+
+Avoid getting confused by "ref/headxxx" and mistaking it as if it is under
+the "refs/heads/" hierarchy.
+Not urgent.
+
 * jc/advise-i18n (2011-12-22) 1 commit
  - i18n of multi-line advice messages
 
@@ -150,9 +153,38 @@ multi-line formatted. For now this is deliberately limited to advise()
 interface and not vreportf() in general as touching the latter has
 interactions with error() that has plumbing callers whose prefix "error: "
 should never be translated.
+Not urgent.
 
---------------------------------------------------
-[Cooking]
+* rr/sequencer (2012-01-11) 2 commits
+ - sequencer: factor code out of revert builtin
+ - revert: prepare to move replay_action to header
+
+Moving large chunk of code out of cherry-pick/revert for later reuse,
+primarily to prepare for the next cycle.
+Not urgent.
+
+* tr/maint-mailinfo (2012-01-16) 2 commits
+ - mailinfo: with -b, keep space after [foo]
+ - am: learn passing -b to mailinfo
+
+Looked reasonable.
+Not urgent.
+
+* jk/credentials (2012-01-11) 3 commits
+  (merged to 'next' on 2012-01-16 at 1c6c94a)
+ + unix-socket: do not let close() or chdir() clobber errno during cleanup
+ + credential-cache: report more daemon connection errors
+ + unix-socket: handle long socket pathnames
+
+Minor fix-ups to the new feature.
+Will merge to 'master' by v1.7.9-rc2.
+
+* pw/p4-view-updates (2012-01-11) 5 commits
+ - git-p4: add tests demonstrating spec overlay ambiguities
+ - git-p4: adjust test to adhere to stricter useClientSpec
+ - git-p4: clarify comment
+ - git-p4: fix verbose comment typo
+ - git-p4: only a single ... wildcard is supported
 
 * rs/diff-postimage-in-context (2012-01-06) 1 commit
   (merged to 'next' on 2012-01-09 at 9635032)
@@ -169,25 +201,26 @@ Not urgent.
 Looked reasonable.
 Not urgent.
 
-* nd/clone-detached (2012-01-11) 11 commits
+* nd/clone-detached (2012-01-16) 10 commits
  - clone: print advice on checking out detached HEAD
  - clone: allow --branch to take a tag
  - clone: refuse to clone if --branch points to bogus ref
  - clone: --branch=<branch> always means refs/heads/<branch>
- - fixup! acd8f20
  - clone: delay cloning until after remote HEAD checking
  - clone: factor out remote ref writing
  - clone: factor out HEAD update code
  - clone: factor out checkout code
  - clone: write detached HEAD in bare repositories
  - t5601: add missing && cascade
+ (this branch uses nd/clone-single-branch.)
 
-Looking good, but I may have screwed up the merge of this into 'pu'.
+Looking good.
 Not urgent.
 
 * nd/clone-single-branch (2012-01-08) 1 commit
   (merged to 'next' on 2012-01-09 at 6c3c759)
  + clone: add --single-branch to fetch only one branch
+ (this branch is used by nd/clone-detached.)
 
 Looked reasonable.
 Not urgent.
@@ -198,14 +231,12 @@ Not urgent.
 Looked reasonable.
 Not urgent.
 
-* nd/index-pack-no-recurse (2012-01-09) 3 commits
- - index-pack: eliminate unlimited recursion in get_delta_base()
+* nd/index-pack-no-recurse (2012-01-16) 3 commits
+ - index-pack: eliminate unlimited recursion in get_base_data()
  - index-pack: eliminate recursion in find_unresolved_deltas
  - Eliminate recursion in setting/clearing marks in commit list
 
-The first one looked sensible; I am not sure if the second and third ones
-take the right approach.
-
+Much better explained than the previous round.
 Will defer till the next cycle.
 
 * mh/ref-api-rest (2011-12-12) 35 commits
@@ -281,9 +312,3 @@ Will defer till the next cycle.
 
 These are a bit scary changes, but I do think they are worth doing.
 Will defer till the next cycle.
-
-* jn/maint-gitweb-grep-fix (2012-01-05) 2 commits
- - gitweb: Harden "grep" search against filenames with ':'
- - gitweb: Fix file links in "grep" search
-
-Waiting for a confirmation from bug reporter.
