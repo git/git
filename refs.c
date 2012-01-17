@@ -17,6 +17,15 @@ struct ref_entry {
 
 struct ref_array {
 	int nr, alloc;
+
+	/*
+	 * Entries with index 0 <= i < sorted are sorted by name.  New
+	 * entries are appended to the list unsorted, and are sorted
+	 * only when required; thus we avoid the need to sort the list
+	 * after the addition of every reference.
+	 */
+	int sorted;
+
 	struct ref_entry **refs;
 };
 
@@ -105,12 +114,18 @@ static int is_dup_ref(const struct ref_entry *ref1, const struct ref_entry *ref2
 	}
 }
 
+/*
+ * Sort the entries in array (if they are not already sorted).
+ */
 static void sort_ref_array(struct ref_array *array)
 {
 	int i, j;
 
-	/* Nothing to sort unless there are at least two entries */
-	if (array->nr < 2)
+	/*
+	 * This check also prevents passing a zero-length array to qsort(),
+	 * which is a problem on some platforms.
+	 */
+	if (array->sorted == array->nr)
 		return;
 
 	qsort(array->refs, array->nr, sizeof(*array->refs), ref_entry_cmp);
@@ -124,7 +139,7 @@ static void sort_ref_array(struct ref_array *array)
 		}
 		array->refs[++i] = array->refs[j];
 	}
-	array->nr = i + 1;
+	array->sorted = array->nr = i + 1;
 }
 
 static struct ref_entry *search_ref_array(struct ref_array *array, const char *refname)
@@ -137,7 +152,7 @@ static struct ref_entry *search_ref_array(struct ref_array *array, const char *r
 
 	if (!array->nr)
 		return NULL;
-
+	sort_ref_array(array);
 	len = strlen(refname) + 1;
 	e = xmalloc(sizeof(struct ref_entry) + len);
 	memcpy(e->name, refname, len);
@@ -168,6 +183,10 @@ static struct ref_cache {
 
 static struct ref_entry *current_ref;
 
+/*
+ * Never call sort_ref_array() on the extra_refs, because it is
+ * allowed to contain entries with duplicate names.
+ */
 static struct ref_array extra_refs;
 
 static void clear_ref_array(struct ref_array *array)
@@ -176,7 +195,7 @@ static void clear_ref_array(struct ref_array *array)
 	for (i = 0; i < array->nr; i++)
 		free(array->refs[i]);
 	free(array->refs);
-	array->nr = array->alloc = 0;
+	array->sorted = array->nr = array->alloc = 0;
 	array->refs = NULL;
 }
 
@@ -268,7 +287,6 @@ static void read_packed_refs(FILE *f, struct ref_array *array)
 		    !get_sha1_hex(refline + 1, sha1))
 			hashcpy(last->peeled, sha1);
 	}
-	sort_ref_array(array);
 }
 
 void add_extra_ref(const char *refname, const unsigned char *sha1, int flag)
@@ -404,7 +422,6 @@ static struct ref_array *get_loose_refs(struct ref_cache *refs)
 {
 	if (!refs->did_loose) {
 		get_ref_dir(refs, "refs", &refs->loose);
-		sort_ref_array(&refs->loose);
 		refs->did_loose = 1;
 	}
 	return &refs->loose;
@@ -720,6 +737,8 @@ static int do_for_each_ref(const char *submodule, const char *base, each_ref_fn 
 	for (i = 0; i < extra->nr; i++)
 		retval = do_one_ref(base, fn, trim, flags, cb_data, extra->refs[i]);
 
+	sort_ref_array(packed);
+	sort_ref_array(loose);
 	while (p < packed->nr && l < loose->nr) {
 		struct ref_entry *entry;
 		int cmp = strcmp(packed->refs[p]->name, loose->refs[l]->name);
