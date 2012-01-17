@@ -143,7 +143,6 @@ int pack_refs(unsigned int flags)
 	packed.fd = -1;
 	if (commit_lock_file(&packed) < 0)
 		die_errno("unable to overwrite old ref-pack file");
-	if (cbdata.flags & PACK_REFS_PRUNE)
-		prune_refs(cbdata.ref_to_prune);
+	prune_refs(cbdata.ref_to_prune);
 	return 0;
 }
