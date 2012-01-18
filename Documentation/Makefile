@@ -20,7 +20,10 @@ ARTICLES += everyday
 ARTICLES += git-tools
 ARTICLES += git-bisect-lk2009
 # with their own formatting rules.
-SP_ARTICLES = howto/revert-branch-rebase howto/using-merge-subtree user-manual
+SP_ARTICLES = user-manual
+SP_ARTICLES += howto/revert-branch-rebase
+SP_ARTICLES += howto/using-merge-subtree
+SP_ARTICLES += howto/using-signed-tag-in-pull-request
 API_DOCS = $(patsubst %.txt,%,$(filter-out technical/api-index-skel.txt technical/api-index.txt, $(wildcard technical/api-*.txt)))
 SP_ARTICLES += $(API_DOCS)
 SP_ARTICLES += technical/api-index
