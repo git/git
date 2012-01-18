@@ -1,4 +1,4 @@
-Git v1.7.9 Release Notes (draft)
+Git v1.7.9 Release Notes
 ========================
 
 Updates since v1.7.8
@@ -109,11 +109,3 @@ Fixes since v1.7.8
 Unless otherwise noted, all the fixes since v1.7.8 in the maintenance
 releases are contained in this release (see release notes to them for
 details).
-
---
-exec >/var/tmp/1
-O=v1.7.9-rc0-44-g478c446
-echo O=$(git describe master)
-git log --first-parent --oneline --reverse ^$O master
-echo
-git shortlog --no-merges ^$O ^maint master
