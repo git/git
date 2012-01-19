@@ -799,7 +799,7 @@ class P4Submit(Command, P4UserMap):
     def canChangeChangelists(self):
         # check to see if we have p4 admin or super-user permissions, either of
         # which are required to modify changelists.
-        results = p4CmdList("protects %s" % self.depotPath)
+        results = p4CmdList(["protects", self.depotPath])
         for r in results:
             if r.has_key('perm'):
                 if r['perm'] == 'admin':
@@ -1758,7 +1758,7 @@ class P4Sync(Command, P4UserMap):
     def getLabels(self):
         self.labels = {}
 
-        l = p4CmdList("labels %s..." % ' '.join (self.depotPaths))
+        l = p4CmdList(["labels"] + ["%s..." % p for p in self.depotPaths])
         if len(l) > 0 and not self.silent:
             print "Finding files belonging to labels in %s" % `self.depotPaths`
 
@@ -1800,7 +1800,7 @@ class P4Sync(Command, P4UserMap):
             command = "branches"
 
         for info in p4CmdList(command):
-            details = p4Cmd("branch -o %s" % info["branch"])
+            details = p4Cmd(["branch", "-o", info["branch"]])
             viewIdx = 0
             while details.has_key("View%s" % viewIdx):
                 paths = details["View%s" % viewIdx].split(" ")
@@ -1938,7 +1938,7 @@ class P4Sync(Command, P4UserMap):
         sourceRef = self.gitRefForBranch(sourceBranch)
         #print "source " + sourceBranch
 
-        branchParentChange = int(p4Cmd("changes -m 1 %s...@1,%s" % (sourceDepotPath, firstChange))["change"])
+        branchParentChange = int(p4Cmd(["changes", "-m", "1", "%s...@1,%s" % (sourceDepotPath, firstChange)])["change"])
         #print "branch parent: %s" % branchParentChange
         gitParent = self.gitCommitByP4Change(sourceRef, branchParentChange)
         if len(gitParent) > 0:
