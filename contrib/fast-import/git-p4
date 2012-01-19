@@ -563,6 +563,26 @@ class Command:
 class P4UserMap:
     def __init__(self):
         self.userMapFromPerforceServer = False
+        self.myP4UserId = None
+
+    def p4UserId(self):
+        if self.myP4UserId:
+            return self.myP4UserId
+
+        results = p4CmdList("user -o")
+        for r in results:
+            if r.has_key('User'):
+                self.myP4UserId = r['User']
+                return r['User']
+        die("Could not find your p4 user id")
+
+    def p4UserIsMe(self, p4User):
+        # return True if the given p4 user is actually me
+        me = self.p4UserId()
+        if not p4User or p4User != me:
+            return False
+        else:
+            return True
 
     def getUserCacheFilename(self):
         home = os.environ.get("HOME", os.environ.get("USERPROFILE"))
@@ -700,7 +720,6 @@ class P4Submit(Command, P4UserMap):
         self.verbose = False
         self.preserveUser = gitConfig("git-p4.preserveUser").lower() == "true"
         self.isWindows = (platform.system() == "Windows")
-        self.myP4UserId = None
 
     def check(self):
         if len(p4CmdList("opened ...")) > 0:
@@ -807,25 +826,6 @@ class P4Submit(Command, P4UserMap):
                 if r['perm'] == 'super':
                     return 1
         return 0
-
-    def p4UserId(self):
-        if self.myP4UserId:
-            return self.myP4UserId
-
-        results = p4CmdList("user -o")
-        for r in results:
-            if r.has_key('User'):
-                self.myP4UserId = r['User']
-                return r['User']
-        die("Could not find your p4 user id")
-
-    def p4UserIsMe(self, p4User):
-        # return True if the given p4 user is actually me
-        me = self.p4UserId()
-        if not p4User or p4User != me:
-            return False
-        else:
-            return True
 
     def prepareSubmitTemplate(self):
         # remove lines in the Files section that show changes to files outside the depot path we're committing into
@@ -1664,6 +1664,12 @@ class P4Sync(Command, P4UserMap):
             if self.stream_file.has_key('depotFile'):
                 self.streamOneP4File(self.stream_file, self.stream_contents)
 
+    def make_email(self, userid):
+        if userid in self.users:
+            return self.users[userid]
+        else:
+            return "%s <a@b>" % userid
+
     def commit(self, details, files, branch, branchPrefixes, parent = ""):
         epoch = details["time"]
         author = details["user"]
@@ -1687,10 +1693,7 @@ class P4Sync(Command, P4UserMap):
         committer = ""
         if author not in self.users:
             self.getUserMapFromPerforceServer()
-        if author in self.users:
-            committer = "%s %s %s" % (self.users[author], epoch, self.tz)
-        else:
-            committer = "%s <a@b> %s %s" % (author, epoch, self.tz)
+        committer = "%s %s %s" % (self.make_email(author), epoch, self.tz)
 
         self.gitStream.write("committer %s\n" % committer)
 
@@ -1735,11 +1738,15 @@ class P4Sync(Command, P4UserMap):
                     self.gitStream.write("from %s\n" % branch)
 
                     owner = labelDetails["Owner"]
-                    tagger = ""
-                    if author in self.users:
-                        tagger = "%s %s %s" % (self.users[owner], epoch, self.tz)
+
+                    # Try to use the owner of the p4 label, or failing that,
+                    # the current p4 user id.
+                    if owner:
+                        email = self.make_email(owner)
                     else:
-                        tagger = "%s <a@b> %s %s" % (owner, epoch, self.tz)
+                        email = self.make_email(self.p4UserId())
+                    tagger = "%s %s %s" % (email, epoch, self.tz)
+
                     self.gitStream.write("tagger %s\n" % tagger)
 
                     description = labelDetails["Description"]
