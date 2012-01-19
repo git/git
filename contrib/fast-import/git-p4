@@ -1741,9 +1741,11 @@ class P4Sync(Command, P4UserMap):
                     else:
                         tagger = "%s <a@b> %s %s" % (owner, epoch, self.tz)
                     self.gitStream.write("tagger %s\n" % tagger)
-                    self.gitStream.write("data <<EOT\n")
-                    self.gitStream.write(labelDetails["Description"])
-                    self.gitStream.write("EOT\n\n")
+
+                    description = labelDetails["Description"]
+                    self.gitStream.write("data %d\n" % len(description))
+                    self.gitStream.write(description)
+                    self.gitStream.write("\n")
 
                 else:
                     if not self.silent:
