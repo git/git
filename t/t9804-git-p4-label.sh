@@ -65,6 +65,47 @@ test_expect_success 'basic p4 labels' '
 	)
 '
 
+# Test some label corner cases:
+#
+# - two tags on the same file; both should be available
+# - a tag that is only on one file; this kind of tag
+#   cannot be imported (at least not easily).
+
+test_expect_failure 'two labels on the same changelist' '
+	test_when_finished cleanup_git &&
+	(
+		cd "$cli" &&
+		mkdir -p main &&
+
+		p4 edit main/f1 main/f2 &&
+		echo "hello world" >main/f1 &&
+		echo "not in the tag" >main/f2 &&
+		p4 submit -d "main/f[12]: testing two labels" &&
+
+		p4 tag -l tag_f1_1 main/... &&
+		p4 tag -l tag_f1_2 main/... &&
+
+		p4 labels ... &&
+
+		"$GITP4" clone --dest="$git" --detect-labels //depot@all &&
+		cd "$git" &&
+
+		git tag | grep tag_f1 &&
+		git tag | grep -q tag_f1_1 &&
+		git tag | grep -q tag_f1_2 &&
+
+		cd main &&
+
+		git checkout tag_tag_f1_1 &&
+		ls &&
+		test -f f1 &&
+
+		git checkout tag_tag_f1_2 &&
+		ls &&
+		test -f f1
+	)
+'
+
 test_expect_success 'kill p4d' '
 	kill_p4d
 '
