@@ -146,7 +146,7 @@ test_expect_success 'clone --use-client-spec' '
 	(
 		cd "$git" &&
 		test_path_is_file bus/dir/f4 &&
-		test_path_is_file file1
+		test_path_is_missing file1
 	) &&
 	cleanup_git &&
 
@@ -159,7 +159,7 @@ test_expect_success 'clone --use-client-spec' '
 		"$GITP4" sync //depot/... &&
 		git checkout -b master p4/master &&
 		test_path_is_file bus/dir/f4 &&
-		test_path_is_file file1
+		test_path_is_missing file1
 	)
 '
 

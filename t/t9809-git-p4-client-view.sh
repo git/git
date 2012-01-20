@@ -101,8 +101,14 @@ test_expect_success 'unsupported view wildcard *' '
 	test_must_fail "$GITP4" clone --use-client-spec --dest="$git" //depot
 '
 
-test_expect_success 'wildcard ... only supported at end of spec' '
+test_expect_success 'wildcard ... only supported at end of spec 1' '
 	client_view "//depot/.../file11 //client/.../file11" &&
+	test_when_finished cleanup_git &&
+	test_must_fail "$GITP4" clone --use-client-spec --dest="$git" //depot
+'
+
+test_expect_success 'wildcard ... only supported at end of spec 2' '
+	client_view "//depot/.../a/... //client/.../a/..." &&
 	test_when_finished cleanup_git &&
 	test_must_fail "$GITP4" clone --use-client-spec --dest="$git" //depot
 '
@@ -238,6 +244,393 @@ test_expect_success 'quotes on rhs only' '
 	test_when_finished cleanup_git &&
 	"$GITP4" clone --use-client-spec --dest="$git" //depot &&
 	git_verify "cdir 1/file11" "cdir 1/file12"
+'
+
+#
+# What happens when two files of the same name are overlayed together?
+# The last-listed file should take preference.
+#
+# //depot
+#   - dir1
+#     - file11
+#     - file12
+#     - filecollide
+#   - dir2
+#     - file21
+#     - file22
+#     - filecollide
+#
+test_expect_success 'overlay collision setup' '
+	client_view "//depot/... //client/..." &&
+	(
+		cd "$cli" &&
+		p4 sync &&
+		echo dir1/filecollide >dir1/filecollide &&
+		p4 add dir1/filecollide &&
+		p4 submit -d dir1/filecollide &&
+		echo dir2/filecollide >dir2/filecollide &&
+		p4 add dir2/filecollide &&
+		p4 submit -d dir2/filecollide
+	)
+'
+
+test_expect_success 'overlay collision 1 to 2' '
+	client_view "//depot/dir1/... //client/..." \
+		    "+//depot/dir2/... //client/..." &&
+	files="file11 file12 file21 file22 filecollide" &&
+	echo dir2/filecollide >actual &&
+	client_verify $files &&
+	test_cmp actual "$cli"/filecollide &&
+	test_when_finished cleanup_git &&
+	"$GITP4" clone --use-client-spec --dest="$git" //depot &&
+	git_verify $files &&
+	test_cmp actual "$git"/filecollide
+'
+
+test_expect_failure 'overlay collision 2 to 1' '
+	client_view "//depot/dir2/... //client/..." \
+		    "+//depot/dir1/... //client/..." &&
+	files="file11 file12 file21 file22 filecollide" &&
+	echo dir1/filecollide >actual &&
+	client_verify $files &&
+	test_cmp actual "$cli"/filecollide &&
+	test_when_finished cleanup_git &&
+	"$GITP4" clone --use-client-spec --dest="$git" //depot &&
+	git_verify $files &&
+	test_cmp actual "$git"/filecollide
+'
+
+test_expect_success 'overlay collision delete 2' '
+	client_view "//depot/... //client/..." &&
+	(
+		cd "$cli" &&
+		p4 sync &&
+		p4 delete dir2/filecollide &&
+		p4 submit -d "remove dir2/filecollide"
+	)
+'
+
+# no filecollide, got deleted with dir2
+test_expect_failure 'overlay collision 1 to 2, but 2 deleted' '
+	client_view "//depot/dir1/... //client/..." \
+		    "+//depot/dir2/... //client/..." &&
+	files="file11 file12 file21 file22" &&
+	client_verify $files &&
+	test_when_finished cleanup_git &&
+	"$GITP4" clone --use-client-spec --dest="$git" //depot &&
+	git_verify $files
+'
+
+test_expect_success 'overlay collision update 1' '
+	client_view "//depot/dir1/... //client/dir1/..." &&
+	(
+		cd "$cli" &&
+		p4 sync &&
+		p4 open dir1/filecollide &&
+		echo dir1/filecollide update >dir1/filecollide &&
+		p4 submit -d "update dir1/filecollide"
+	)
+'
+
+# still no filecollide, dir2 still wins with the deletion even though the
+# change to dir1 is more recent
+test_expect_failure 'overlay collision 1 to 2, but 2 deleted, then 1 updated' '
+	client_view "//depot/dir1/... //client/..." \
+		    "+//depot/dir2/... //client/..." &&
+	files="file11 file12 file21 file22" &&
+	client_verify $files &&
+	test_when_finished cleanup_git &&
+	"$GITP4" clone --use-client-spec --dest="$git" //depot &&
+	git_verify $files
+'
+
+test_expect_success 'overlay collision delete filecollides' '
+	client_view "//depot/... //client/..." &&
+	(
+		cd "$cli" &&
+		p4 sync &&
+		p4 delete dir1/filecollide dir2/filecollide &&
+		p4 submit -d "remove filecollides"
+	)
+'
+
+#
+# Overlays as part of sync, rather than initial checkout:
+#   1.  add a file in dir1
+#   2.  sync to include it
+#   3.  add same file in dir2
+#   4.  sync, make sure content switches as dir2 has priority
+#   5.  add another file in dir1
+#   6.  sync
+#   7.  add/delete same file in dir2
+#   8.  sync, make sure it disappears, again dir2 wins
+#   9.  cleanup
+#
+# //depot
+#   - dir1
+#     - file11
+#     - file12
+#     - colA
+#     - colB
+#   - dir2
+#     - file21
+#     - file22
+#     - colA
+#     - colB
+#
+test_expect_success 'overlay sync: add colA in dir1' '
+	client_view "//depot/dir1/... //client/dir1/..." &&
+	(
+		cd "$cli" &&
+		p4 sync &&
+		echo dir1/colA >dir1/colA &&
+		p4 add dir1/colA &&
+		p4 submit -d dir1/colA
+	)
+'
+
+test_expect_success 'overlay sync: initial git checkout' '
+	client_view "//depot/dir1/... //client/..." \
+		    "+//depot/dir2/... //client/..." &&
+	files="file11 file12 file21 file22 colA" &&
+	echo dir1/colA >actual &&
+	client_verify $files &&
+	test_cmp actual "$cli"/colA &&
+	"$GITP4" clone --use-client-spec --dest="$git" //depot &&
+	git_verify $files &&
+	test_cmp actual "$git"/colA
+'
+
+test_expect_success 'overlay sync: add colA in dir2' '
+	client_view "//depot/dir2/... //client/dir2/..." &&
+	(
+		cd "$cli" &&
+		p4 sync &&
+		echo dir2/colA >dir2/colA &&
+		p4 add dir2/colA &&
+		p4 submit -d dir2/colA
+	)
+'
+
+test_expect_success 'overlay sync: colA content switch' '
+	client_view "//depot/dir1/... //client/..." \
+		    "+//depot/dir2/... //client/..." &&
+	files="file11 file12 file21 file22 colA" &&
+	echo dir2/colA >actual &&
+	client_verify $files &&
+	test_cmp actual "$cli"/colA &&
+	(
+		cd "$git" &&
+		"$GITP4" sync --use-client-spec &&
+		git merge --ff-only p4/master
+	) &&
+	git_verify $files &&
+	test_cmp actual "$git"/colA
+'
+
+test_expect_success 'overlay sync: add colB in dir1' '
+	client_view "//depot/dir1/... //client/dir1/..." &&
+	(
+		cd "$cli" &&
+		p4 sync &&
+		echo dir1/colB >dir1/colB &&
+		p4 add dir1/colB &&
+		p4 submit -d dir1/colB
+	)
+'
+
+test_expect_success 'overlay sync: colB appears' '
+	client_view "//depot/dir1/... //client/..." \
+		    "+//depot/dir2/... //client/..." &&
+	files="file11 file12 file21 file22 colA colB" &&
+	echo dir1/colB >actual &&
+	client_verify $files &&
+	test_cmp actual "$cli"/colB &&
+	(
+		cd "$git" &&
+		"$GITP4" sync --use-client-spec &&
+		git merge --ff-only p4/master
+	) &&
+	git_verify $files &&
+	test_cmp actual "$git"/colB
+'
+
+test_expect_success 'overlay sync: add/delete colB in dir2' '
+	client_view "//depot/dir2/... //client/dir2/..." &&
+	(
+		cd "$cli" &&
+		p4 sync &&
+		echo dir2/colB >dir2/colB &&
+		p4 add dir2/colB &&
+		p4 submit -d dir2/colB &&
+		p4 delete dir2/colB &&
+		p4 submit -d "delete dir2/colB"
+	)
+'
+
+test_expect_success 'overlay sync: colB disappears' '
+	client_view "//depot/dir1/... //client/..." \
+		    "+//depot/dir2/... //client/..." &&
+	files="file11 file12 file21 file22 colA" &&
+	client_verify $files &&
+	test_when_finished cleanup_git &&
+	(
+		cd "$git" &&
+		"$GITP4" sync --use-client-spec &&
+		git merge --ff-only p4/master
+	) &&
+	git_verify $files
+'
+
+test_expect_success 'overlay sync: cleanup' '
+	client_view "//depot/... //client/..." &&
+	(
+		cd "$cli" &&
+		p4 sync &&
+		p4 delete dir1/colA dir2/colA dir1/colB &&
+		p4 submit -d "remove overlay sync files"
+	)
+'
+
+#
+# Overlay tests again, but swapped so dir1 has priority.
+#   1.  add a file in dir1
+#   2.  sync to include it
+#   3.  add same file in dir2
+#   4.  sync, make sure content does not switch
+#   5.  add another file in dir1
+#   6.  sync
+#   7.  add/delete same file in dir2
+#   8.  sync, make sure it is still there
+#   9.  cleanup
+#
+# //depot
+#   - dir1
+#     - file11
+#     - file12
+#     - colA
+#     - colB
+#   - dir2
+#     - file21
+#     - file22
+#     - colA
+#     - colB
+#
+test_expect_success 'overlay sync swap: add colA in dir1' '
+	client_view "//depot/dir1/... //client/dir1/..." &&
+	(
+		cd "$cli" &&
+		p4 sync &&
+		echo dir1/colA >dir1/colA &&
+		p4 add dir1/colA &&
+		p4 submit -d dir1/colA
+	)
+'
+
+test_expect_success 'overlay sync swap: initial git checkout' '
+	client_view "//depot/dir2/... //client/..." \
+		    "+//depot/dir1/... //client/..." &&
+	files="file11 file12 file21 file22 colA" &&
+	echo dir1/colA >actual &&
+	client_verify $files &&
+	test_cmp actual "$cli"/colA &&
+	"$GITP4" clone --use-client-spec --dest="$git" //depot &&
+	git_verify $files &&
+	test_cmp actual "$git"/colA
+'
+
+test_expect_success 'overlay sync swap: add colA in dir2' '
+	client_view "//depot/dir2/... //client/dir2/..." &&
+	(
+		cd "$cli" &&
+		p4 sync &&
+		echo dir2/colA >dir2/colA &&
+		p4 add dir2/colA &&
+		p4 submit -d dir2/colA
+	)
+'
+
+test_expect_failure 'overlay sync swap: colA no content switch' '
+	client_view "//depot/dir2/... //client/..." \
+		    "+//depot/dir1/... //client/..." &&
+	files="file11 file12 file21 file22 colA" &&
+	echo dir1/colA >actual &&
+	client_verify $files &&
+	test_cmp actual "$cli"/colA &&
+	(
+		cd "$git" &&
+		"$GITP4" sync --use-client-spec &&
+		git merge --ff-only p4/master
+	) &&
+	git_verify $files &&
+	test_cmp actual "$git"/colA
+'
+
+test_expect_success 'overlay sync swap: add colB in dir1' '
+	client_view "//depot/dir1/... //client/dir1/..." &&
+	(
+		cd "$cli" &&
+		p4 sync &&
+		echo dir1/colB >dir1/colB &&
+		p4 add dir1/colB &&
+		p4 submit -d dir1/colB
+	)
+'
+
+test_expect_success 'overlay sync swap: colB appears' '
+	client_view "//depot/dir2/... //client/..." \
+		    "+//depot/dir1/... //client/..." &&
+	files="file11 file12 file21 file22 colA colB" &&
+	echo dir1/colB >actual &&
+	client_verify $files &&
+	test_cmp actual "$cli"/colB &&
+	(
+		cd "$git" &&
+		"$GITP4" sync --use-client-spec &&
+		git merge --ff-only p4/master
+	) &&
+	git_verify $files &&
+	test_cmp actual "$git"/colB
+'
+
+test_expect_success 'overlay sync swap: add/delete colB in dir2' '
+	client_view "//depot/dir2/... //client/dir2/..." &&
+	(
+		cd "$cli" &&
+		p4 sync &&
+		echo dir2/colB >dir2/colB &&
+		p4 add dir2/colB &&
+		p4 submit -d dir2/colB &&
+		p4 delete dir2/colB &&
+		p4 submit -d "delete dir2/colB"
+	)
+'
+
+test_expect_failure 'overlay sync swap: colB no change' '
+	client_view "//depot/dir2/... //client/..." \
+		    "+//depot/dir1/... //client/..." &&
+	files="file11 file12 file21 file22 colA colB" &&
+	echo dir1/colB >actual &&
+	client_verify $files &&
+	test_cmp actual "$cli"/colB &&
+	test_when_finished cleanup_git &&
+	(
+		cd "$git" &&
+		"$GITP4" sync --use-client-spec &&
+		git merge --ff-only p4/master
+	) &&
+	git_verify $files &&
+	test_cmp actual "$cli"/colB
+'
+
+test_expect_success 'overlay sync swap: cleanup' '
+	client_view "//depot/... //client/..." &&
+	(
+		cd "$cli" &&
+		p4 sync &&
+		p4 delete dir1/colA dir2/colA dir1/colB &&
+		p4 submit -d "remove overlay sync files"
+	)
 '
 
 #

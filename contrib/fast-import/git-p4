@@ -1207,8 +1207,8 @@ class View(object):
                 die("Can't handle * wildcards in view: %s" % self.path)
             triple_dot_index = self.path.find("...")
             if triple_dot_index >= 0:
-                if not self.path.endswith("..."):
-                    die("Can handle ... wildcard only at end of path: %s" %
+                if triple_dot_index != len(self.path) - 3:
+                    die("Can handle only single ... wildcard, at end: %s" %
                         self.path)
                 self.ends_triple_dot = True
 
@@ -1263,7 +1263,7 @@ class View(object):
             if self.exclude:
                 c = "-"
             return "View.Mapping: %s%s -> %s" % \
-                   (c, self.depot_side, self.client_side)
+                   (c, self.depot_side.path, self.client_side.path)
 
         def map_depot_to_client(self, depot_path):
             """Calculate the client path if using this mapping on the
@@ -1363,7 +1363,8 @@ class View(object):
             else:
                 # This mapping matched; no need to search any further.
                 # But, the mapping could be rejected if the client path
-                # has already been claimed by an earlier mapping.
+                # has already been claimed by an earlier mapping (i.e.
+                # one later in the list, which we are walking backwards).
                 already_mapped_in_client = False
                 for f in paths_filled:
                     # this is View.Path.match
