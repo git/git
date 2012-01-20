@@ -14,6 +14,7 @@ fi
 ROOT_PATH="$PWD"
 LIB_HTTPD_PORT=${LIB_HTTPD_PORT-'5541'}
 . "$TEST_DIRECTORY"/lib-httpd.sh
+. "$TEST_DIRECTORY"/lib-terminal.sh
 start_httpd
 
 test_expect_success 'setup remote repository' '
@@ -184,6 +185,13 @@ test_expect_success 'push --mirror to repo with alternates' '
 	git --git-dir="$d" config http.receivepack true &&
 	git --git-dir="$d" repack -adl &&
 	git push --mirror "$HTTPD_URL"/smart/alternates-mirror.git
+'
+
+test_expect_success TTY 'quiet push' '
+	cd "$ROOT_PATH"/test_repo_clone &&
+	test_commit quiet &&
+	test_terminal git push --quiet --no-progress 2>&1 | tee output &&
+	test_cmp /dev/null output
 '
 
 stop_httpd
