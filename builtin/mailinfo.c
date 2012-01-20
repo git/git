@@ -250,8 +250,17 @@ static void cleanup_subject(struct strbuf *subject)
 			    (7 <= remove &&
 			     memmem(subject->buf + at, remove, "PATCH", 5)))
 				strbuf_remove(subject, at, remove);
-			else
+			else {
 				at += remove;
+				/*
+				 * If the input had a space after the ], keep
+				 * it.  We don't bother with finding the end of
+				 * the space, since we later normalize it
+				 * anyway.
+				 */
+				if (isspace(subject->buf[at]))
+					at += 1;
+			}
 			continue;
 		}
 		break;
