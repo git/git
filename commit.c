@@ -422,7 +422,8 @@ struct commit *pop_most_recent_commit(struct commit_list **list,
 	return ret;
 }
 
-void clear_commit_marks(struct commit *commit, unsigned int mark)
+static void clear_commit_marks_1(struct commit_list **plist,
+				 struct commit *commit, unsigned int mark)
 {
 	while (commit) {
 		struct commit_list *parents;
@@ -437,10 +438,18 @@ void clear_commit_marks(struct commit *commit, unsigned int mark)
 			return;
 
 		while ((parents = parents->next))
-			clear_commit_marks(parents->item, mark);
+			commit_list_insert(parents->item, plist);
 
 		commit = commit->parents->item;
 	}
+}
+
+void clear_commit_marks(struct commit *commit, unsigned int mark)
+{
+	struct commit_list *list = NULL;
+	commit_list_insert(commit, &list);
+	while (list)
+		clear_commit_marks_1(&list, pop_commit(&list), mark);
 }
 
 void clear_commit_marks_for_object_array(struct object_array *a, unsigned mark)

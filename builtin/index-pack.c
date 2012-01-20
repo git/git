@@ -34,6 +34,8 @@ struct base_data {
 	struct object_entry *obj;
 	void *data;
 	unsigned long size;
+	int ref_first, ref_last;
+	int ofs_first, ofs_last;
 };
 
 /*
@@ -219,6 +221,15 @@ static NORETURN void bad_object(unsigned long offset, const char *format, ...)
 	vsnprintf(buf, sizeof(buf), format, params);
 	va_end(params);
 	die("pack has bad object at offset %lu: %s", offset, buf);
+}
+
+static struct base_data *alloc_base_data(void)
+{
+	struct base_data *base = xmalloc(sizeof(struct base_data));
+	memset(base, 0, sizeof(*base));
+	base->ref_last = -1;
+	base->ofs_last = -1;
+	return base;
 }
 
 static void free_base_data(struct base_data *c)
@@ -504,14 +515,52 @@ static int is_delta_type(enum object_type type)
 	return (type == OBJ_REF_DELTA || type == OBJ_OFS_DELTA);
 }
 
+/*
+ * This function is part of find_unresolved_deltas(). There are two
+ * walkers going in the opposite ways.
+ *
+ * The first one in find_unresolved_deltas() traverses down from
+ * parent node to children, deflating nodes along the way. However,
+ * memory for deflated nodes is limited by delta_base_cache_limit, so
+ * at some point parent node's deflated content may be freed.
+ *
+ * The second walker is this function, which goes from current node up
+ * to top parent if necessary to deflate the node. In normal
+ * situation, its parent node would be already deflated, so it just
+ * needs to apply delta.
+ *
+ * In the worst case scenario, parent node is no longer deflated because
+ * we're running out of delta_base_cache_limit; we need to re-deflate
+ * parents, possibly up to the top base.
+ *
+ * All deflated objects here are subject to be freed if we exceed
+ * delta_base_cache_limit, just like in find_unresolved_deltas(), we
+ * just need to make sure the last node is not freed.
+ */
 static void *get_base_data(struct base_data *c)
 {
 	if (!c->data) {
 		struct object_entry *obj = c->obj;
+		struct base_data **delta = NULL;
+		int delta_nr = 0, delta_alloc = 0;
 
-		if (is_delta_type(obj->type)) {
-			void *base = get_base_data(c->base);
-			void *raw = get_data_from_pack(obj);
+		while (is_delta_type(c->obj->type) && !c->data) {
+			ALLOC_GROW(delta, delta_nr + 1, delta_alloc);
+			delta[delta_nr++] = c;
+			c = c->base;
+		}
+		if (!delta_nr) {
+			c->data = get_data_from_pack(obj);
+			c->size = obj->size;
+			base_cache_used += c->size;
+			prune_base_data(c);
+		}
+		for (; delta_nr > 0; delta_nr--) {
+			void *base, *raw;
+			c = delta[delta_nr - 1];
+			obj = c->obj;
+			base = get_base_data(c->base);
+			raw = get_data_from_pack(obj);
 			c->data = patch_delta(
 				base, c->base->size,
 				raw, obj->size,
@@ -519,13 +568,10 @@ static void *get_base_data(struct base_data *c)
 			free(raw);
 			if (!c->data)
 				bad_object(obj->idx.offset, "failed to apply delta");
-		} else {
-			c->data = get_data_from_pack(obj);
-			c->size = obj->size;
+			base_cache_used += c->size;
+			prune_base_data(c);
 		}
-
-		base_cache_used += c->size;
-		prune_base_data(c);
+		free(delta);
 	}
 	return c->data;
 }
@@ -553,58 +599,76 @@ static void resolve_delta(struct object_entry *delta_obj,
 	nr_resolved_deltas++;
 }
 
-static void find_unresolved_deltas(struct base_data *base,
-				   struct base_data *prev_base)
+static struct base_data *find_unresolved_deltas_1(struct base_data *base,
+						  struct base_data *prev_base)
 {
-	int i, ref_first, ref_last, ofs_first, ofs_last;
-
-	/*
-	 * This is a recursive function. Those brackets should help reducing
-	 * stack usage by limiting the scope of the delta_base union.
-	 */
-	{
+	if (base->ref_last == -1 && base->ofs_last == -1) {
 		union delta_base base_spec;
 
 		hashcpy(base_spec.sha1, base->obj->idx.sha1);
 		find_delta_children(&base_spec,
-				    &ref_first, &ref_last, OBJ_REF_DELTA);
+				    &base->ref_first, &base->ref_last, OBJ_REF_DELTA);
 
 		memset(&base_spec, 0, sizeof(base_spec));
 		base_spec.offset = base->obj->idx.offset;
 		find_delta_children(&base_spec,
-				    &ofs_first, &ofs_last, OBJ_OFS_DELTA);
+				    &base->ofs_first, &base->ofs_last, OBJ_OFS_DELTA);
+
+		if (base->ref_last == -1 && base->ofs_last == -1) {
+			free(base->data);
+			return NULL;
+		}
+
+		link_base_data(prev_base, base);
 	}
 
-	if (ref_last == -1 && ofs_last == -1) {
-		free(base->data);
-		return;
-	}
-
-	link_base_data(prev_base, base);
-
-	for (i = ref_first; i <= ref_last; i++) {
-		struct object_entry *child = objects + deltas[i].obj_no;
-		struct base_data result;
+	if (base->ref_first <= base->ref_last) {
+		struct object_entry *child = objects + deltas[base->ref_first].obj_no;
+		struct base_data *result = alloc_base_data();
 
 		assert(child->real_type == OBJ_REF_DELTA);
-		resolve_delta(child, base, &result);
-		if (i == ref_last && ofs_last == -1)
+		resolve_delta(child, base, result);
+		if (base->ref_first == base->ref_last && base->ofs_last == -1)
 			free_base_data(base);
-		find_unresolved_deltas(&result, base);
+
+		base->ref_first++;
+		return result;
 	}
 
-	for (i = ofs_first; i <= ofs_last; i++) {
-		struct object_entry *child = objects + deltas[i].obj_no;
-		struct base_data result;
+	if (base->ofs_first <= base->ofs_last) {
+		struct object_entry *child = objects + deltas[base->ofs_first].obj_no;
+		struct base_data *result = alloc_base_data();
 
 		assert(child->real_type == OBJ_OFS_DELTA);
-		resolve_delta(child, base, &result);
-		if (i == ofs_last)
+		resolve_delta(child, base, result);
+		if (base->ofs_first == base->ofs_last)
 			free_base_data(base);
-		find_unresolved_deltas(&result, base);
+
+		base->ofs_first++;
+		return result;
 	}
 
 	unlink_base_data(base);
+	return NULL;
+}
+
+static void find_unresolved_deltas(struct base_data *base)
+{
+	struct base_data *new_base, *prev_base = NULL;
+	for (;;) {
+		new_base = find_unresolved_deltas_1(base, prev_base);
+
+		if (new_base) {
+			prev_base = base;
+			base = new_base;
+		} else {
+			free(base);
+			base = prev_base;
+			if (!base)
+				return;
+			prev_base = base->base;
+		}
+	}
 }
 
 static int compare_delta_entry(const void *a, const void *b)
@@ -684,13 +748,13 @@ static void parse_pack_objects(unsigned char *sha1)
 		progress = start_progress("Resolving deltas", nr_deltas);
 	for (i = 0; i < nr_objects; i++) {
 		struct object_entry *obj = &objects[i];
-		struct base_data base_obj;
+		struct base_data *base_obj = alloc_base_data();
 
 		if (is_delta_type(obj->type))
 			continue;
-		base_obj.obj = obj;
-		base_obj.data = NULL;
-		find_unresolved_deltas(&base_obj, NULL);
+		base_obj->obj = obj;
+		base_obj->data = NULL;
+		find_unresolved_deltas(base_obj);
 		display_progress(progress, nr_resolved_deltas);
 	}
 }
@@ -783,20 +847,20 @@ static void fix_unresolved_deltas(struct sha1file *f, int nr_unresolved)
 	for (i = 0; i < n; i++) {
 		struct delta_entry *d = sorted_by_pos[i];
 		enum object_type type;
-		struct base_data base_obj;
+		struct base_data *base_obj = alloc_base_data();
 
 		if (objects[d->obj_no].real_type != OBJ_REF_DELTA)
 			continue;
-		base_obj.data = read_sha1_file(d->base.sha1, &type, &base_obj.size);
-		if (!base_obj.data)
+		base_obj->data = read_sha1_file(d->base.sha1, &type, &base_obj->size);
+		if (!base_obj->data)
 			continue;
 
-		if (check_sha1_signature(d->base.sha1, base_obj.data,
-				base_obj.size, typename(type)))
+		if (check_sha1_signature(d->base.sha1, base_obj->data,
+				base_obj->size, typename(type)))
 			die("local object %s is corrupt", sha1_to_hex(d->base.sha1));
-		base_obj.obj = append_obj_to_pack(f, d->base.sha1,
-					base_obj.data, base_obj.size, type);
-		find_unresolved_deltas(&base_obj, NULL);
+		base_obj->obj = append_obj_to_pack(f, d->base.sha1,
+					base_obj->data, base_obj->size, type);
+		find_unresolved_deltas(base_obj);
 		display_progress(progress, nr_resolved_deltas);
 	}
 	free(sorted_by_pos);
