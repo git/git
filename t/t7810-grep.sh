@@ -246,6 +246,28 @@ do
 done
 
 cat >expected <<EOF
+file
+EOF
+test_expect_success 'grep -l -C' '
+	git grep -l -C1 foo >actual &&
+	test_cmp expected actual
+'
+
+cat >expected <<EOF
+file:5
+EOF
+test_expect_success 'grep -l -C' '
+	git grep -c -C1 foo >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'grep -L -C' '
+	git ls-files >expected &&
+	git grep -L -C1 nonexistent_string >actual &&
+	test_cmp expected actual
+'
+
+cat >expected <<EOF
 file:foo mmap bar_mmap
 EOF
 

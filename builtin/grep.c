@@ -1034,8 +1034,9 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 
 #ifndef NO_PTHREADS
 	if (use_threads) {
-		if (opt.pre_context || opt.post_context || opt.file_break ||
-		    opt.funcbody)
+		if (!(opt.name_only || opt.unmatch_name_only || opt.count)
+		    && (opt.pre_context || opt.post_context ||
+			opt.file_break || opt.funcbody))
 			skip_first_line = 1;
 		start_threads(&opt);
 	}
