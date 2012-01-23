@@ -57,12 +57,8 @@ test_expect_success 'clone -b does not munge remotes/origin/HEAD' '
 	)
 '
 
-test_expect_success 'clone -b with bogus branch chooses HEAD' '
-	git clone -b bogus parent clone-bogus &&
-	(cd clone-bogus &&
-	 check_HEAD master &&
-	 check_file one
-	)
+test_expect_success 'clone -b with bogus branch' '
+	test_must_fail git clone -b bogus parent clone-bogus
 '
 
 test_done

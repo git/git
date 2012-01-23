@@ -147,8 +147,9 @@ objects from the source repository into a pack in the cloned repository.
 -b <name>::
 	Instead of pointing the newly created HEAD to the branch pointed
 	to by the cloned repository's HEAD, point to `<name>` branch
-	instead. In a non-bare repository, this is the branch that will
-	be checked out.
+	instead. `--branch` can also take tags and treat them like
+	detached HEAD. In a non-bare repository, this is the branch
+	that will be checked out.
 
 --upload-pack <upload-pack>::
 -u <upload-pack>::

@@ -899,8 +899,10 @@ struct transport *transport_get(struct remote *remote, const char *url)
 
 		while (is_urlschemechar(p == url, *p))
 			p++;
-		if (!prefixcmp(p, "::"))
+		if (!prefixcmp(p, "::")) {
 			helper = xstrndup(url, p - url);
+			remote->foreign_vcs = helper;
+		}
 	}
 
 	if (helper) {
@@ -942,6 +944,7 @@ struct transport *transport_get(struct remote *remote, const char *url)
 		char *handler = xmalloc(len + 1);
 		handler[len] = 0;
 		strncpy(handler, url, len);
+		remote->foreign_vcs = handler;
 		transport_helper_init(ret, handler);
 	}
 

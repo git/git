@@ -282,13 +282,6 @@ test_expect_success 'clone shallow object count' '
 	test_cmp count3.expected count3.actual
 '
 
-test_expect_success 'clone shallow with nonexistent --branch' '
-	git clone --depth 1 --branch Z "file://$(pwd)/." shallow4 &&
-	GIT_DIR=shallow4/.git git rev-parse HEAD >actual &&
-	git rev-parse HEAD >expected &&
-	test_cmp expected actual
-'
-
 test_expect_success 'clone shallow with detached HEAD' '
 	git checkout HEAD^ &&
 	git clone --depth 1 "file://$(pwd)/." shallow5 &&
@@ -316,6 +309,21 @@ EOF
 	GIT_DIR=shallow6/.git git count-objects -v |
 		grep "^in-pack" > count6.actual &&
 	test_cmp count6.expected count6.actual
+'
+
+test_expect_success 'shallow cloning single tag' '
+	git clone --depth 1 --branch=TAGB1 "file://$(pwd)/." shallow7 &&
+	cat >taglist.expected <<\EOF &&
+TAGB1
+TAGB2
+EOF
+	GIT_DIR=shallow7/.git git tag -l >taglist.actual &&
+	test_cmp taglist.expected taglist.actual &&
+
+	echo "in-pack: 7" > count7.expected &&
+	GIT_DIR=shallow7/.git git count-objects -v |
+		grep "^in-pack" > count7.actual &&
+	test_cmp count7.expected count7.actual
 '
 
 test_done

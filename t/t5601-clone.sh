@@ -9,10 +9,13 @@ test_expect_success setup '
 	rm -fr .git &&
 	test_create_repo src &&
 	(
-		cd src
-		>file
-		git add file
-		git commit -m initial
+		cd src &&
+		>file &&
+		git add file &&
+		git commit -m initial &&
+		echo 1 >file &&
+		git add file &&
+		git commit -m updated
 	)
 
 '
@@ -85,6 +88,26 @@ test_expect_success 'clone --mirror' '
 	test "+refs/*:refs/*" = "$FETCH" &&
 	MIRROR="$(cd mirror && git config --bool remote.origin.mirror)" &&
 	test "$MIRROR" = true
+
+'
+
+test_expect_success 'clone --mirror with detached HEAD' '
+
+	( cd src && git checkout HEAD^ && git rev-parse HEAD >../expected ) &&
+	git clone --mirror src mirror.detached &&
+	( cd src && git checkout - ) &&
+	GIT_DIR=mirror.detached git rev-parse HEAD >actual &&
+	test_cmp expected actual
+
+'
+
+test_expect_success 'clone --bare with detached HEAD' '
+
+	( cd src && git checkout HEAD^ && git rev-parse HEAD >../expected ) &&
+	git clone --bare src bare.detached &&
+	( cd src && git checkout - ) &&
+	GIT_DIR=bare.detached git rev-parse HEAD >actual &&
+	test_cmp expected actual
 
 '
 
@@ -246,6 +269,15 @@ test_expect_success 'clone from original with relative alternate' '
 	echo ../../../src/.git/objects >nest/src-5/objects/info/alternates &&
 	git clone --bare nest/src-5 target-10 &&
 	grep /src/\\.git/objects target-10/objects/info/alternates
+'
+
+test_expect_success 'clone checking out a tag' '
+	git clone --branch=some-tag src dst.tag &&
+	GIT_DIR=src/.git git rev-parse some-tag >expected &&
+	test_cmp expected dst.tag/.git/HEAD &&
+	GIT_DIR=dst.tag/.git git config remote.origin.fetch >fetch.actual &&
+	echo "+refs/heads/*:refs/remotes/origin/*" >fetch.expected &&
+	test_cmp fetch.expected fetch.actual
 '
 
 test_done
