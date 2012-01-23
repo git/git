@@ -534,6 +534,12 @@ __gitcomp_nl ()
 		fi
 	fi
 
+	# ZSH would quote the trailing space added with -S. bash users
+	# will appreciate the extra space to compensate the use of -o nospace.
+	if [ -n "${ZSH_VERSION-}" ] && [ "$suffix" = " " ]; then
+		suffix=""
+	fi
+
 	IFS=$s
 	COMPREPLY=($(compgen -P "${2-}" -S "$suffix" -W "$1" -- "$cur_"))
 }
