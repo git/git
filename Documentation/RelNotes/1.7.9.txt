@@ -63,7 +63,7 @@ Updates since v1.7.8
    knows MATLAB.
 
  * "git log --format='<format>'" learned new %g[nNeE] specifiers to
-   show information from the reflog entries when warlking the reflog
+   show information from the reflog entries when walking the reflog
    (i.e. with "-g").
 
  * "git pull" can be used to fetch and merge an annotated/signed tag,
