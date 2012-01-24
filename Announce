@@ -14,7 +14,7 @@ case "$branch" in
 maint)
 	kind="The latest maintenance release" ;;
 mainto/* | maint-[0-9]*)
-	kind="An maintenance release" ;;
+	kind="A maintenance release" ;;
 master)
 	kind="The latest feature release" ;;
 esac
