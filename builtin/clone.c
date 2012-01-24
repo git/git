@@ -631,12 +631,13 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	const struct ref *remote_head_points_at;
 	const struct ref *our_head_points_at;
 	struct ref *mapped_refs;
+	const struct ref *ref;
 	struct strbuf key = STRBUF_INIT, value = STRBUF_INIT;
 	struct strbuf branch_top = STRBUF_INIT, reflog_msg = STRBUF_INIT;
 	struct transport *transport = NULL;
 	const char *src_ref_prefix = "refs/heads/";
 	struct remote *remote;
-	int err = 0;
+	int err = 0, complete_refs_before_fetch = 1;
 
 	struct refspec *refspec;
 	const char *fetch_pattern;
@@ -816,15 +817,22 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	mapped_refs = refs ? wanted_peer_refs(refs, refspec) : NULL;
 
 	/*
-	 * mapped_refs may be updated if transport-helper is used so
-	 * we need fetch it early because remote_head code below
-	 * relies on it.
+	 * transport_get_remote_refs() may return refs with null sha-1
+	 * in mapped_refs (see struct transport->get_refs_list
+	 * comment). In that case we need fetch it early because
+	 * remote_head code below relies on it.
 	 *
 	 * for normal clones, transport_get_remote_refs() should
 	 * return reliable ref set, we can delay cloning until after
 	 * remote HEAD check.
 	 */
-	if (!is_local && remote->foreign_vcs && refs)
+	for (ref = refs; ref; ref = ref->next)
+		if (is_null_sha1(ref->old_sha1)) {
+			complete_refs_before_fetch = 0;
+			break;
+		}
+
+	if (!is_local && !complete_refs_before_fetch && refs)
 		transport_fetch_refs(transport, mapped_refs);
 
 	if (refs) {
@@ -856,7 +864,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 
 	if (is_local)
 		clone_local(path, git_dir);
-	else if (refs && !remote->foreign_vcs)
+	else if (refs && complete_refs_before_fetch)
 		transport_fetch_refs(transport, mapped_refs);
 
 	update_remote_refs(refs, mapped_refs, remote_head_points_at,
