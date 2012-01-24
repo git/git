@@ -629,14 +629,19 @@ sub wildo_queue {
 }
 
 sub wildo {
-	my (%what, $topic, $last_merge_to_next);
+	my (%what, $topic, $last_merge_to_next, $in_stalled);
 	my $too_recent = '9999-99-99';
 	while (<>) {
 		chomp;
 
 		next if (/^\[Graduated to/../^-{20,}$/);
-		next if (/^\[Stalled\]/../^-{20,}$/);
 		next if (/^\[Discarded\]/../^-{20,}$/);
+
+		if (/^\[Stalled\]/../^-{20,}$/) {
+			$in_stalled = 1;
+		} else {
+			$in_stalled = 0;
+		}
 
 		if (/^\* (\S+) \(([-0-9]+)\) (\d+) commits?$/) {
 			if (defined $topic) {
@@ -657,7 +662,12 @@ sub wildo {
 		}
 		next if (/^ /);
 		next unless defined $topic;
-		if (/^Will (?:\S+ ){0,2}(keep|merge|drop|discard|cook|kick)[,. ]/ ||
+
+		if ($in_stalled) {
+			wildo_queue(\%what, "Stalled", $topic);
+			$topic = undef;
+		}
+		if (/^Will (?:\S+ ){0,2}(keep|merge|drop|discard|cook|kick|defer)[,. ]/ ||
 		    /^Not urgent/ || /^Not ready/ || /^Waiting for / ||
 		    /^Needs? / || /Expecting /) {
 			wildo_queue(\%what, $_, $topic);
