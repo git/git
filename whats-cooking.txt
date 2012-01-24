@@ -1,9 +1,9 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jan 2012, #04; Mon, 16)
-X-master-at: b63103e908af54e5e2eaa3faad350e4738ef0047
-X-next-at: 01892647622b2d0497b1bd74eff0113b8e0abc5c
+Subject: What's cooking in git.git (Jan 2012, #05; Mon, 23)
+X-master-at: 69204d0ab18d28d07ee2c8c9b50bbf5bd80343ab
+X-next-at: bee31c659a45b507c95fb5bc777eb04fad181b4d
 
-What's cooking in git.git (Jan 2012, #04; Mon, 16)
+What's cooking in git.git (Jan 2012, #05; Mon, 23)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
@@ -36,55 +36,127 @@ The preformatted documentation in HTML and man format are found in:
         https://github.com/gitster/git-{htmldocs,manpages}.git/
 
 --------------------------------------------------
-[New Topics]
+[Graduated to "master"]
+
+* jc/pull-signed-tag-doc (2012-01-17) 1 commit
+ + pulling signed tag: add howto document
+
+* jk/credentials (2012-01-16) 4 commits
+  (merged to 'next' on 2012-01-16 at 2810b82)
+ + credential-cache: ignore "connection refused" errors
+  (merged to 'next' on 2012-01-16 at 1c6c94a)
+ + unix-socket: do not let close() or chdir() clobber errno during cleanup
+ + credential-cache: report more daemon connection errors
+ + unix-socket: handle long socket pathnames
+
+Minor fix-ups to the new feature.
 
 * mh/maint-show-ref-doc (2012-01-13) 2 commits
   (merged to 'next' on 2012-01-16 at 8573f09)
  + git-show-ref doc: typeset regexp in fixed width font
  + git-show-ref: fix escaping in asciidoc source
 
-Will merge to 'master' by v1.7.9-rc2.
-
 * nd/pathspec-recursion-cleanup (2012-01-16) 2 commits
   (merged to 'next' on 2012-01-16 at 0189264)
  + diff-index: enable recursive pathspec matching in unpack_trees
  + Document limited recursion pathspec matching with wildcards
 
-Will merge to 'master' by v1.7.9-rc2.
-
 * tr/maint-word-diff-incomplete-line (2012-01-12) 1 commit
   (merged to 'next' on 2012-01-16 at 58ddaaf)
  + word-diff: ignore '\ No newline at eof' marker
 
-Will merge to 'master' by v1.7.9-rc2.
-
 --------------------------------------------------
-[Graduated to "master"]
+[New Topics]
 
-* jc/request-pull-show-head-4 (2012-01-10) 1 commit
-  (merged to 'next' on 2012-01-11 at 8d98a6b)
- + request-pull: use the real fork point when preparing the message
+* jl/test-pause (2012-01-17) 1 commit
+  (merged to 'next' on 2012-01-20 at ee56335)
+ + test-lib: add the test_pause convenience function
 
-Hopefully the final finishing touch to the request-pull script that was
-updated during this cycle.
+Looked reasonable.
+Will merge early in the next cycle.
 
-* jk/maint-upload-archive (2012-01-11) 1 commit
-  (merged to 'next' on 2012-01-11 at 5c0bfa9)
- + archive: re-allow HEAD:Documentation on a remote invocation
+* mh/ref-clone-without-extra-refs (2012-01-17) 4 commits
+  (merged to 'next' on 2012-01-20 at 2e9645e)
+ + write_remote_refs(): create packed (rather than extra) refs
+ + add_packed_ref(): new function in the refs API.
+ + ref_array: keep track of whether references are sorted
+ + pack_refs(): remove redundant check
 
-Running "git archive" remotely and asking for a partial tree of a ref,
-e.g. HEAD:$path was forbidden by a recent change to tighten security, but
-was found to be overly restrictive.
+Looked reasonable; will hopefully help making mh/ref-api-rest simpler and
+cleaner.
 
-* jn/maint-gitweb-grep-fix (2012-01-05) 2 commits
-  (merged to 'next' on 2012-01-13 at a15e6ab)
- + gitweb: Harden "grep" search against filenames with ':'
- + gitweb: Fix file links in "grep" search
+Will merge early in the next cycle.
 
-* ss/maint-msys-cvsexportcommit (2012-01-11) 2 commits
-  (merged to 'next' on 2012-01-11 at 007aab1)
- + git-cvsexportcommit: Fix calling Perl's rel2abs() on MSYS
- + t9200: On MSYS, do not pass Windows-style paths to CVS
+* mm/zsh-completion-regression-fix (2012-01-17) 1 commit
+  (merged to 'next' on 2012-01-23 at 7bc2e0a)
+ + bash-completion: don't add quoted space for ZSH (fix regression)
+
+Will merge early in the next cycle and deal with any fallout in 'master'.
+
+* ar/i18n-no-gettext (2012-01-23) 3 commits
+  (merged to 'next' on 2012-01-23 at 694a94e)
+ + i18n: Make NO_GETTEXT imply fallthrough scheme in shell l10n
+ + add a Makefile switch to avoid gettext translation in shell scripts
+ + git-sh-i18n: restructure the logic to compute gettext.sh scheme
+
+Will merge early in the next cycle and deal with any fallout in 'master'.
+
+* da/maint-mergetool-twoway (2012-01-23) 1 commit
+  (merged to 'next' on 2012-01-23 at f927323)
+ + mergetool: Provide an empty file when needed
+
+Caters to GUI merge backends that cannot merge two files without
+a base by giving them an empty file as a "pretend" common ancestor.
+
+Will merge early in the next cycle and deal with any fallout in 'master'.
+
+* jc/maint-log-first-parent-pathspec (2012-01-19) 1 commit
+  (merged to 'next' on 2012-01-20 at fb2b35f)
+ + Making pathspec limited log play nicer with --first-parent
+
+A bugfix.
+Will merge early in the next cycle.
+
+* ld/git-p4-branches-and-labels (2012-01-20) 5 commits
+  (merged to 'next' on 2012-01-23 at 9020ec4)
+ + git-p4: label import fails with multiple labels at the same changelist
+ + git-p4: add test for p4 labels
+ + git-p4: importing labels should cope with missing owner
+ + git-p4: cope with labels with empty descriptions
+ + git-p4: handle p4 branches and labels containing shell chars
+ (this branch is used by va/git-p4-branch.)
+
+Will merge early in the next cycle.
+
+* va/git-p4-branch (2012-01-20) 3 commits
+ - git-p4: Add test case for complex branch import
+ - git-p4: Search for parent commit on branch creation
+ - git-p4: Add checkpoint() task
+ (this branch uses ld/git-p4-branches-and-labels.)
+
+A handful of review comments seen.
+Expecting a re-roll.
+
+* sp/smart-http-failure-to-push (2012-01-20) 1 commit
+  (merged to 'next' on 2012-01-20 at a892434)
+ + remote-curl: Fix push status report when all branches fail
+
+Looked reasonable.
+Will merge early in the next cycle.
+
+* ks/sort-wildcard-in-makefile (2012-01-22) 1 commit
+  (merged to 'next' on 2012-01-23 at e2e0c1d)
+ + t/Makefile: Use $(sort ...) explicitly where needed
+
+Looked reasonable.
+Will merge early in the next cycle.
+
+* tr/grep-l-with-decoration (2012-01-23) 1 commit
+  (merged to 'next' on 2012-01-23 at 42b8795)
+ + grep: fix -l/-L interaction with decoration lines
+
+Looked reasonable.
+Will merge early in the next cycle.
 
 --------------------------------------------------
 [Stalled]
@@ -112,173 +184,46 @@ At least pack-objects and fsck need to learn the new encoding for the
 series to be usable locally, and then index-pack/unpack-objects needs to
 learn it to be used remotely.
 
---------------------------------------------------
-[Cooking]
-
-* jc/pull-signed-tag (2012-01-11) 1 commit
- - merge: use editor by default in interactive sessions
-
-Per Linus's strong suggestion, sugarcoated (aka "taking blame for the
-original UI screw-ups") so that it is easier for me to swallow and accept
-a potentially huge backward incompatibility issue, "git merge" is made to
-launch an editor to explain the merge in the merge commit by default in
-interactive sessions.
-
-May need renaming the backward compatibility "GIT_MERGE_LEGACY"
-environment variable, and also will need a smoother migration plan.
-
-Will defer till the next cycle.
-
-* nd/commit-ignore-i-t-a (2012-01-16) 2 commits
- - commit, write-tree: allow to ignore CE_INTENT_TO_ADD while writing trees
- - cache-tree: update API to take abitrary flags
-
-May want to consider this as fixing an earlier UI mistake, and not as a
-feature that devides the userbase.
-
-Will defer till the next cycle.
-
-* nd/maint-refname-in-hierarchy-check (2012-01-11) 1 commit
- - Fix incorrect ref namespace check
-
-Avoid getting confused by "ref/headxxx" and mistaking it as if it is under
-the "refs/heads/" hierarchy.
-Not urgent.
-
-* jc/advise-i18n (2011-12-22) 1 commit
- - i18n of multi-line advice messages
-
-Allow localization of advice messages that tend to be longer and
-multi-line formatted. For now this is deliberately limited to advise()
-interface and not vreportf() in general as touching the latter has
-interactions with error() that has plumbing callers whose prefix "error: "
-should never be translated.
-Not urgent.
-
-* rr/sequencer (2012-01-11) 2 commits
- - sequencer: factor code out of revert builtin
- - revert: prepare to move replay_action to header
-
-Moving large chunk of code out of cherry-pick/revert for later reuse,
-primarily to prepare for the next cycle.
-Not urgent.
-
-* tr/maint-mailinfo (2012-01-16) 2 commits
- - mailinfo: with -b, keep space after [foo]
- - am: learn passing -b to mailinfo
-
-Looked reasonable.
-Not urgent.
-
-* jk/credentials (2012-01-11) 3 commits
-  (merged to 'next' on 2012-01-16 at 1c6c94a)
- + unix-socket: do not let close() or chdir() clobber errno during cleanup
- + credential-cache: report more daemon connection errors
- + unix-socket: handle long socket pathnames
-
-Minor fix-ups to the new feature.
-Will merge to 'master' by v1.7.9-rc2.
-
-* pw/p4-view-updates (2012-01-11) 5 commits
- - git-p4: add tests demonstrating spec overlay ambiguities
- - git-p4: adjust test to adhere to stricter useClientSpec
- - git-p4: clarify comment
- - git-p4: fix verbose comment typo
- - git-p4: only a single ... wildcard is supported
-
-* rs/diff-postimage-in-context (2012-01-06) 1 commit
-  (merged to 'next' on 2012-01-09 at 9635032)
- + xdiff: print post-image for common records instead of pre-image
-
-Looked reasonable.
-Not urgent.
-
-* cb/push-quiet (2012-01-08) 3 commits
- - t5541: avoid TAP test miscounting
- - fix push --quiet: add 'quiet' capability to receive-pack
- - server_supports(): parse feature list more carefully
-
-Looked reasonable.
-Not urgent.
-
-* nd/clone-detached (2012-01-16) 10 commits
- - clone: print advice on checking out detached HEAD
- - clone: allow --branch to take a tag
- - clone: refuse to clone if --branch points to bogus ref
- - clone: --branch=<branch> always means refs/heads/<branch>
- - clone: delay cloning until after remote HEAD checking
- - clone: factor out remote ref writing
- - clone: factor out HEAD update code
- - clone: factor out checkout code
- - clone: write detached HEAD in bare repositories
- - t5601: add missing && cascade
- (this branch uses nd/clone-single-branch.)
-
-Looking good.
-Not urgent.
-
-* nd/clone-single-branch (2012-01-08) 1 commit
-  (merged to 'next' on 2012-01-09 at 6c3c759)
- + clone: add --single-branch to fetch only one branch
- (this branch is used by nd/clone-detached.)
-
-Looked reasonable.
-Not urgent.
-
-* jn/gitweb-unspecified-action (2012-01-09) 1 commit
- - gitweb: Fix actionless dispatch for non-existent objects
-
-Looked reasonable.
-Not urgent.
-
-* nd/index-pack-no-recurse (2012-01-16) 3 commits
- - index-pack: eliminate unlimited recursion in get_base_data()
- - index-pack: eliminate recursion in find_unresolved_deltas
- - Eliminate recursion in setting/clearing marks in commit list
-
-Much better explained than the previous round.
-Will defer till the next cycle.
-
 * mh/ref-api-rest (2011-12-12) 35 commits
- - repack_without_ref(): call clear_packed_ref_cache()
- - read_packed_refs(): keep track of the directory being worked in
- - is_refname_available(): query only possibly-conflicting references
- - refs: read loose references lazily
- - read_loose_refs(): take a (ref_entry *) as argument
- - struct ref_dir: store a reference to the enclosing ref_cache
- - sort_ref_dir(): take (ref_entry *) instead of (ref_dir *)
- - do_for_each_ref_in_dir*(): take (ref_entry *) instead of (ref_dir *)
- - add_entry(): take (ref_entry *) instead of (ref_dir *)
- - search_ref_dir(): take (ref_entry *) instead of (ref_dir *)
- - find_containing_direntry(): use (ref_entry *) instead of (ref_dir *)
- - add_ref(): take (ref_entry *) instead of (ref_dir *)
- - read_packed_refs(): take (ref_entry *) instead of (ref_dir *)
- - find_ref(): take (ref_entry *) instead of (ref_dir *)
- - is_refname_available(): take (ref_entry *) instead of (ref_dir *)
- - get_loose_refs(): return (ref_entry *) instead of (ref_dir *)
- - get_packed_refs(): return (ref_entry *) instead of (ref_dir *)
- - refs: wrap top-level ref_dirs in ref_entries
- - get_ref_dir(): keep track of the current ref_dir
- - do_for_each_ref(): only iterate over the subtree that was requested
- - refs: sort ref_dirs lazily
- - sort_ref_dir(): do not sort if already sorted
- - refs: store references hierarchically
- - refs.c: rename ref_array -> ref_dir
- - struct ref_entry: nest the value part in a union
- - check_refname_component(): return 0 for zero-length components
- - free_ref_entry(): new function
- - refs.c: reorder definitions more logically
- - is_refname_available(): reimplement using do_for_each_ref_in_array()
- - names_conflict(): simplify implementation
- - names_conflict(): new function, extracted from is_refname_available()
- - repack_without_ref(): reimplement using do_for_each_ref_in_array()
- - do_for_each_ref_in_arrays(): new function
- - do_for_each_ref_in_array(): new function
- - do_for_each_ref(): correctly terminate while processesing extra_refs
+ . repack_without_ref(): call clear_packed_ref_cache()
+ . read_packed_refs(): keep track of the directory being worked in
+ . is_refname_available(): query only possibly-conflicting references
+ . refs: read loose references lazily
+ . read_loose_refs(): take a (ref_entry *) as argument
+ . struct ref_dir: store a reference to the enclosing ref_cache
+ . sort_ref_dir(): take (ref_entry *) instead of (ref_dir *)
+ . do_for_each_ref_in_dir*(): take (ref_entry *) instead of (ref_dir *)
+ . add_entry(): take (ref_entry *) instead of (ref_dir *)
+ . search_ref_dir(): take (ref_entry *) instead of (ref_dir *)
+ . find_containing_direntry(): use (ref_entry *) instead of (ref_dir *)
+ . add_ref(): take (ref_entry *) instead of (ref_dir *)
+ . read_packed_refs(): take (ref_entry *) instead of (ref_dir *)
+ . find_ref(): take (ref_entry *) instead of (ref_dir *)
+ . is_refname_available(): take (ref_entry *) instead of (ref_dir *)
+ . get_loose_refs(): return (ref_entry *) instead of (ref_dir *)
+ . get_packed_refs(): return (ref_entry *) instead of (ref_dir *)
+ . refs: wrap top-level ref_dirs in ref_entries
+ . get_ref_dir(): keep track of the current ref_dir
+ . do_for_each_ref(): only iterate over the subtree that was requested
+ . refs: sort ref_dirs lazily
+ . sort_ref_dir(): do not sort if already sorted
+ . refs: store references hierarchically
+ . refs.c: rename ref_array -> ref_dir
+ . struct ref_entry: nest the value part in a union
+ . check_refname_component(): return 0 for zero-length components
+ . free_ref_entry(): new function
+ . refs.c: reorder definitions more logically
+ . is_refname_available(): reimplement using do_for_each_ref_in_array()
+ . names_conflict(): simplify implementation
+ . names_conflict(): new function, extracted from is_refname_available()
+ . repack_without_ref(): reimplement using do_for_each_ref_in_array()
+ . do_for_each_ref_in_arrays(): new function
+ . do_for_each_ref_in_array(): new function
+ . do_for_each_ref(): correctly terminate while processesing extra_refs
 
-The API for extra anchoring points may require rethought first; that would
-hopefully make the "ref" part a lot simpler. And that is happening in
-another topic (which has graduated to 'master').
+I had to remove this temporarily out of 'pu' as I didn't want to deal with
+merge conflicts with the mh/ref-clone-without-extra-refs topic that
+removes yet another caller of add_extra_ref() that this series touches.
 
 Will defer till the next cycle.
 
@@ -294,6 +239,143 @@ give precedence to tty over SSH_ASKPASS when terminal is available.
 
 Will defer till the next cycle.
 
+* nd/commit-ignore-i-t-a (2012-01-16) 2 commits
+ - commit, write-tree: allow to ignore CE_INTENT_TO_ADD while writing trees
+ - cache-tree: update API to take abitrary flags
+
+May want to consider this as fixing an earlier UI mistake, and not as a
+feature that devides the userbase.
+
+Will defer till the next cycle.
+
+--------------------------------------------------
+[Cooking]
+
+* jc/pull-signed-tag (2012-01-23) 1 commit
+  (merged to 'next' on 2012-01-23 at 4257553)
+ + merge: use editor by default in interactive sessions
+
+Per Linus's strong suggestion, sugarcoated (aka "taking blame for the
+original UI screw-ups") so that it is easier for me to swallow and accept
+a potentially huge backward incompatibility issue, "git merge" is made to
+launch an editor to explain the merge in the merge commit by default in
+interactive sessions.
+
+I've updated the special-case environment variable to MERGE_AUTOEDIT that
+scripts can set to "no" when they start. There is no plan to encourage
+humans to keep using the historical behaviour, hence there is no support
+for configuration variable (e.g. merge.autoedit) that can be set to 'no'.
+Oh, also I updated the documentation a bit.
+
+Will merge early in the next cycle and deal with any fallout in 'master'.
+
+* nd/maint-refname-in-hierarchy-check (2012-01-11) 1 commit
+  (merged to 'next' on 2012-01-20 at acb5611)
+ + Fix incorrect ref namespace check
+
+Avoid getting confused by "ref/headxxx" and mistaking it as if it is under
+the "refs/heads/" hierarchy.
+Will merge early in the next cycle.
+
+* jc/advise-i18n (2011-12-22) 1 commit
+  (merged to 'next' on 2012-01-23 at 6447013)
+ + i18n of multi-line advice messages
+
+Allow localization of advice messages that tend to be longer and
+multi-line formatted. For now this is deliberately limited to advise()
+interface and not vreportf() in general as touching the latter has
+interactions with error() that has plumbing callers whose prefix "error: "
+should never be translated.
+
+Will merge early in the next cycle.
+
+* rr/sequencer (2012-01-11) 2 commits
+  (merged to 'next' on 2012-01-23 at f349b56)
+ + sequencer: factor code out of revert builtin
+ + revert: prepare to move replay_action to header
+
+Moving large chunk of code out of cherry-pick/revert for later reuse,
+primarily to prepare for the next cycle.
+
+Will merge early in the next cycle.
+
+* tr/maint-mailinfo (2012-01-16) 2 commits
+  (merged to 'next' on 2012-01-20 at 278fae1)
+ + mailinfo: with -b, keep space after [foo]
+ + am: learn passing -b to mailinfo
+
+Looked reasonable.
+Will merge early in the next cycle.
+
+* pw/p4-view-updates (2012-01-11) 5 commits
+  (merged to 'next' on 2012-01-20 at 8ca2c7b)
+ + git-p4: add tests demonstrating spec overlay ambiguities
+ + git-p4: adjust test to adhere to stricter useClientSpec
+ + git-p4: clarify comment
+ + git-p4: fix verbose comment typo
+ + git-p4: only a single ... wildcard is supported
+
+Will merge early in the next cycle.
+
+* rs/diff-postimage-in-context (2012-01-06) 1 commit
+  (merged to 'next' on 2012-01-09 at 9635032)
+ + xdiff: print post-image for common records instead of pre-image
+
+Looked reasonable.
+Will merge early in the next cycle and deal with any fallout in 'master'.
+
+* cb/push-quiet (2012-01-08) 3 commits
+  (merged to 'next' on 2012-01-20 at 4326dda)
+ + t5541: avoid TAP test miscounting
+ + fix push --quiet: add 'quiet' capability to receive-pack
+ + server_supports(): parse feature list more carefully
+
+Looked reasonable.
+Will merge early in the next cycle.
+
+* nd/clone-detached (2012-01-23) 11 commits
+  (merged to 'next' on 2012-01-23 at bee31c6)
+ + push: do not let configured foreign-vcs permanently clobbered
+  (merged to 'next' on 2012-01-23 at 9cab64e)
+ + clone: print advice on checking out detached HEAD
+ + clone: allow --branch to take a tag
+ + clone: refuse to clone if --branch points to bogus ref
+ + clone: --branch=<branch> always means refs/heads/<branch>
+ + clone: delay cloning until after remote HEAD checking
+ + clone: factor out remote ref writing
+ + clone: factor out HEAD update code
+ + clone: factor out checkout code
+ + clone: write detached HEAD in bare repositories
+ + t5601: add missing && cascade
+ (this branch uses nd/clone-single-branch.)
+
+Applied a band-aid to a corner-case regression.
+Will merge early in the next cycle and deal with any fallout in 'master'.
+
+* nd/clone-single-branch (2012-01-08) 1 commit
+  (merged to 'next' on 2012-01-09 at 6c3c759)
+ + clone: add --single-branch to fetch only one branch
+ (this branch is used by nd/clone-detached.)
+
+Looked reasonable.
+Will merge early in the next cycle.
+
+* jn/gitweb-unspecified-action (2012-01-09) 1 commit
+  (merged to 'next' on 2012-01-20 at 2b31714)
+ + gitweb: Fix actionless dispatch for non-existent objects
+
+Looked reasonable.
+Will merge early in the next cycle.
+
+* nd/index-pack-no-recurse (2012-01-16) 3 commits
+  (merged to 'next' on 2012-01-20 at d1e964e)
+ + index-pack: eliminate unlimited recursion in get_base_data()
+ + index-pack: eliminate recursion in find_unresolved_deltas
+ + Eliminate recursion in setting/clearing marks in commit list
+
+Much better explained than the previous round.
+Will merge early in the next cycle and deal with any fallout in 'master'.
+
 * cb/git-daemon-tests (2012-01-08) 5 commits
   (merged to 'next' on 2012-01-08 at 1db8351)
  + git-daemon tests: wait until daemon is ready
@@ -302,7 +384,7 @@ Will defer till the next cycle.
  + dashed externals: kill children on exit
  + run-command: optionally kill children on exit
 
-Will defer till the next cycle.
+Will merge early in the next cycle.
 
 * jk/parse-object-cached (2012-01-06) 3 commits
   (merged to 'next' on 2012-01-08 at 8c6fa4a)
@@ -311,4 +393,4 @@ Will defer till the next cycle.
  + parse_object: try internal cache before reading object db
 
 These are a bit scary changes, but I do think they are worth doing.
-Will defer till the next cycle.
+Will merge early in the next cycle and deal with any fallout in 'master'.
