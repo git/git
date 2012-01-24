@@ -611,4 +611,12 @@ test_expect_success 'submodule update places git-dir in superprojects git-dir re
 	)
 '
 
+test_expect_success 'submodule add properly re-creates deeper level submodules' '
+	(cd super &&
+	 git reset --hard master &&
+	 rm -rf deeper/ &&
+	 git submodule add ../submodule deeper/submodule
+	)
+'
+
 test_done
