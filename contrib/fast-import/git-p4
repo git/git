@@ -1984,7 +1984,7 @@ class P4Sync(Command, P4UserMap):
     def importChanges(self, changes):
         cnt = 1
         for change in changes:
-            description = p4Cmd("describe %s" % change)
+            description = p4Cmd(["describe", str(change)])
             self.updateOptionDict(description)
 
             if not self.silent:
