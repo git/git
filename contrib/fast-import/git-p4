@@ -1430,6 +1430,8 @@ class P4Sync(Command, P4UserMap):
         self.cloneExclude = []
         self.useClientSpec = False
         self.clientSpecDirs = None
+        self.tempBranches = []
+        self.tempBranchLocation = "git-p4-tmp"
 
         if gitConfig("git-p4.syncFromOrigin") == "false":
             self.syncWithOrigin = False
@@ -1450,6 +1452,14 @@ class P4Sync(Command, P4UserMap):
                    .replace("%40", "@") \
                    .replace("%25", "%")
         return path
+
+    # Force a checkpoint in fast-import and wait for it to finish
+    def checkpoint(self):
+        self.gitStream.write("checkpoint\n\n")
+        self.gitStream.write("progress checkpoint\n\n")
+        out = self.gitOutput.readline()
+        if self.verbose:
+            print "checkpoint finished: " + out
 
     def extractFilesFromCommit(self, commit):
         self.cloneExclude = [re.sub(r"\.\.\.$", "", path)
@@ -1958,10 +1968,24 @@ class P4Sync(Command, P4UserMap):
         self.importChanges(changes)
         return True
 
+    def searchParent(self, parent, branch, target):
+        parentFound = False
+        for blob in read_pipe_lines(["git", "rev-list", "--reverse", "--no-merges", parent]):
+            blob = blob.strip()
+            if len(read_pipe(["git", "diff-tree", blob, target])) == 0:
+                parentFound = True
+                if self.verbose:
+                    print "Found parent of %s in commit %s" % (branch, blob)
+                break
+        if parentFound:
+            return blob
+        else:
+            return None
+
     def importChanges(self, changes):
         cnt = 1
         for change in changes:
-            description = p4Cmd("describe %s" % change)
+            description = p4Cmd(["describe", str(change)])
             self.updateOptionDict(description)
 
             if not self.silent:
@@ -2014,7 +2038,21 @@ class P4Sync(Command, P4UserMap):
                             parent = self.initialParents[branch]
                             del self.initialParents[branch]
 
-                        self.commit(description, filesForCommit, branch, [branchPrefix], parent)
+                        blob = None
+                        if len(parent) > 0:
+                            tempBranch = os.path.join(self.tempBranchLocation, "%d" % (change))
+                            if self.verbose:
+                                print "Creating temporary branch: " + tempBranch
+                            self.commit(description, filesForCommit, tempBranch, [branchPrefix])
+                            self.tempBranches.append(tempBranch)
+                            self.checkpoint()
+                            blob = self.searchParent(parent, branch, tempBranch)
+                        if blob:
+                            self.commit(description, filesForCommit, branch, [branchPrefix], blob)
+                        else:
+                            if self.verbose:
+                                print "Parent of %s not found. Committing into head of %s" % (branch, parent)
+                            self.commit(description, filesForCommit, branch, [branchPrefix], parent)
                 else:
                     files = self.extractFilesFromCommit(description)
                     self.commit(description, files, self.branch, self.depotPaths,
@@ -2348,6 +2386,12 @@ class P4Sync(Command, P4UserMap):
             die("fast-import failed: %s" % self.gitError.read())
         self.gitOutput.close()
         self.gitError.close()
+
+        # Cleanup temporary branches created during import
+        if self.tempBranches != []:
+            for branch in self.tempBranches:
+                read_pipe("git update-ref -d %s" % branch)
+            os.rmdir(os.path.join(os.environ.get("GIT_DIR", ".git"), self.tempBranchLocation))
 
         return True
 
