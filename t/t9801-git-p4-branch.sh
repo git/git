@@ -208,7 +208,7 @@ test_expect_success 'git-p4 clone simple branches' '
 		test -f file1 &&
 		test -f file2 &&
 		test ! -f file3 &&
-		test_must_fail grep update file2 &&
+		! grep update file2 &&
 		git reset --hard p4/depot/branch3 &&
 		test -f file1 &&
 		test -f file2 &&
@@ -286,7 +286,7 @@ test_expect_success 'git-p4 clone complex branches' '
 		test_path_is_file file1 &&
 		test_path_is_file file2 &&
 		test_path_is_missing file3 &&
-		test_must_fail grep update file2 &&
+		! grep update file2 &&
 		git reset --hard p4/depot/branch3 &&
 		test_path_is_file file1 &&
 		test_path_is_file file2 &&
@@ -296,12 +296,12 @@ test_expect_success 'git-p4 clone complex branches' '
 		test_path_is_file file1 &&
 		test_path_is_file file2 &&
 		test_path_is_missing file3 &&
-		test_must_fail grep update file2 &&
+		! grep update file2 &&
 		git reset --hard p4/depot/branch5 &&
 		test_path_is_file file1 &&
 		test_path_is_file file2 &&
 		test_path_is_file file3 &&
-		test_must_fail grep update file2 &&
+		! grep update file2 &&
 		test_path_is_missing .git/git-p4-tmp
 	)
 '
