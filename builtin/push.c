@@ -204,13 +204,11 @@ static int do_push(const char *repo, int flags)
 		url_nr = remote->url_nr;
 	}
 	if (url_nr) {
-		const char *configured_foreign_vcs = remote->foreign_vcs;
 		for (i = 0; i < url_nr; i++) {
 			struct transport *transport =
 				transport_get(remote, url[i]);
 			if (push_with_options(transport, flags))
 				errs++;
-			remote->foreign_vcs = configured_foreign_vcs;
 		}
 	} else {
 		struct transport *transport =
