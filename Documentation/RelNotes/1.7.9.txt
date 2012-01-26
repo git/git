@@ -12,19 +12,20 @@ Updates since v1.7.8
 
  * Git uses gettext to translate its most common interface messages
    into the user's language if translations are available and the
-   locale is appropriately set. Distributors can drop in new PO files
+   locale is appropriately set. Distributors can drop new PO files
    in po/ to add new translations.
 
- * The code to handle username/password for HTTP transaction used in
+ * The code to handle username/password for HTTP transactions used in
    "git push" & "git fetch" learned to talk "credential API" to
    external programs to cache or store them, to allow integration with
    platform native keychain mechanisms.
 
- * The prompted input in the terminal use our own getpass() replacement
-   when possible. HTTP transactions used to ask username without echoing
-   back what was typed, but with this change you will see it as you type.
+ * The input prompts in the terminal use our own getpass() replacement
+   when possible. HTTP transactions used to ask for the username without
+   echoing back what was typed, but with this change you will see it as
+   you type.
 
- * The internal of "revert/cherry-pick" has been tweaked to prepare
+ * The internals of "revert/cherry-pick" have been tweaked to prepare
    building more generic "sequencer" on top of the implementation that
    drives them.
 

@@ -2637,6 +2637,10 @@ _git ()
 		# workaround zsh's bug that leaves 'words' as a special
 		# variable in versions < 4.3.12
 		typeset -h words
+
+		# workaround zsh's bug that quotes spaces in the COMPREPLY
+		# array if IFS doesn't contain spaces.
+		typeset -h IFS
 	fi
 
 	local cur words cword prev
@@ -2693,6 +2697,10 @@ _gitk ()
 		# workaround zsh's bug that leaves 'words' as a special
 		# variable in versions < 4.3.12
 		typeset -h words
+
+		# workaround zsh's bug that quotes spaces in the COMPREPLY
+		# array if IFS doesn't contain spaces.
+		typeset -h IFS
 	fi
 
 	local cur words cword prev
