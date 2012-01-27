@@ -38,7 +38,7 @@ echo "Subject: [ANNOUNCE] Git $vername
 "
 
 fmt -70 <<EOF
-$kind Git $vername is available$for_testing.
+$kind Git $vername is now available$for_testing at the usual places.
 EOF
 
 cat <<EOF
