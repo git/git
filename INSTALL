@@ -83,7 +83,11 @@ Issues of note:
 	- "Perl" version 5.8 or later is needed to use some of the
 	  features (e.g. preparing a partial commit using "git add -i/-p",
 	  interacting with svn repositories with "git svn").  If you can
-	  live without these, use NO_PERL.
+	  live without these, use NO_PERL.  Note that recent releases of
+	  Redhat/Fedora are reported to ship Perl binary package with some
+	  core modules stripped away (see http://lwn.net/Articles/477234/),
+	  so you might need to install additional packages other than Perl
+	  itself, e.g. Time::HiRes.
 
 	- "openssl" library is used by git-imap-send to use IMAP over SSL.
 	  If you don't need it, use NO_OPENSSL.
