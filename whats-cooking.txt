@@ -1,14 +1,16 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jan 2012, #05; Mon, 23)
-X-master-at: 69204d0ab18d28d07ee2c8c9b50bbf5bd80343ab
-X-next-at: bee31c659a45b507c95fb5bc777eb04fad181b4d
+Subject: What's cooking in git.git (Jan 2012, #06; Fri, 27)
+X-master-at: 828ea97de486c1693d6e4f2c7347acb50235a85d
+X-next-at: db81badb8172f91f47582d00408dd94bbe9b4d93
 
-What's cooking in git.git (Jan 2012, #05; Mon, 23)
+What's cooking in git.git (Jan 2012, #06; Fri, 27)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with '-' are
 only in 'pu' (proposed updates) while commits prefixed with '+' are in
 'next'.
+
+Now 1.7.9 is out, the development cycle for 1.7.10 will start shortly.
 
 Here are the repositories that have my integration branches:
 
@@ -36,126 +38,61 @@ The preformatted documentation in HTML and man format are found in:
         https://github.com/gitster/git-{htmldocs,manpages}.git/
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* jc/pull-signed-tag-doc (2012-01-17) 1 commit
- + pulling signed tag: add howto document
-
-* jk/credentials (2012-01-16) 4 commits
-  (merged to 'next' on 2012-01-16 at 2810b82)
- + credential-cache: ignore "connection refused" errors
-  (merged to 'next' on 2012-01-16 at 1c6c94a)
- + unix-socket: do not let close() or chdir() clobber errno during cleanup
- + credential-cache: report more daemon connection errors
- + unix-socket: handle long socket pathnames
-
-Minor fix-ups to the new feature.
-
-* mh/maint-show-ref-doc (2012-01-13) 2 commits
-  (merged to 'next' on 2012-01-16 at 8573f09)
- + git-show-ref doc: typeset regexp in fixed width font
- + git-show-ref: fix escaping in asciidoc source
-
-* nd/pathspec-recursion-cleanup (2012-01-16) 2 commits
-  (merged to 'next' on 2012-01-16 at 0189264)
- + diff-index: enable recursive pathspec matching in unpack_trees
- + Document limited recursion pathspec matching with wildcards
-
-* tr/maint-word-diff-incomplete-line (2012-01-12) 1 commit
-  (merged to 'next' on 2012-01-16 at 58ddaaf)
- + word-diff: ignore '\ No newline at eof' marker
-
---------------------------------------------------
 [New Topics]
 
-* jl/test-pause (2012-01-17) 1 commit
-  (merged to 'next' on 2012-01-20 at ee56335)
- + test-lib: add the test_pause convenience function
+* jl/submodule-re-add (2012-01-24) 1 commit
+  (merged to 'next' on 2012-01-26 at 482553e)
+ + submodule add: fix breakage when re-adding a deep submodule
 
-Looked reasonable.
+Low-impact fix to an old issue. 
 Will merge early in the next cycle.
 
-* mh/ref-clone-without-extra-refs (2012-01-17) 4 commits
-  (merged to 'next' on 2012-01-20 at 2e9645e)
- + write_remote_refs(): create packed (rather than extra) refs
- + add_packed_ref(): new function in the refs API.
- + ref_array: keep track of whether references are sorted
- + pack_refs(): remove redundant check
+* jn/svn-fe (2012-01-27) 44 commits
+ - vcs-svn/svndiff.c: squelch false "unused" warning from gcc
+ - Merge branch 'svn-fe' of git://repo.or.cz/git/jrn into jn/svn-fe
+ - vcs-svn: reset first_commit_done in fast_export_init
+ - Merge branch 'db/text-delta' into svn-fe
+ - vcs-svn: do not initialize report_buffer twice
+ - Merge branch 'db/text-delta' into svn-fe
+ - vcs-svn: avoid hangs from corrupt deltas
+ - vcs-svn: guard against overflow when computing preimage length
+ - Merge branch 'db/delta-applier' into db/text-delta
+ - vcs-svn: implement text-delta handling
+ - Merge branch 'db/delta-applier' into db/text-delta
+ - Merge branch 'db/delta-applier' into svn-fe
+ - vcs-svn: cap number of bytes read from sliding view
+ - test-svn-fe: split off "test-svn-fe -d" into a separate function
+ - vcs-svn: let deltas use data from preimage
+ - vcs-svn: let deltas use data from postimage
+ - vcs-svn: verify that deltas consume all inline data
+ - vcs-svn: implement copyfrom_data delta instruction
+ - vcs-svn: read instructions from deltas
+ - vcs-svn: read inline data from deltas
+ - vcs-svn: read the preimage when applying deltas
+ - vcs-svn: parse svndiff0 window header
+ - vcs-svn: skeleton of an svn delta parser
+ - vcs-svn: make buffer_read_binary API more convenient
+ - vcs-svn: learn to maintain a sliding view of a file
+ - Makefile: list one vcs-svn/xdiff object or header per line
+ - Merge branch 'db/svn-fe-code-purge' into svn-fe
+ - vcs-svn: drop obj_pool
+ - vcs-svn: drop treap
+ - vcs-svn: drop string_pool
+ - vcs-svn: pass paths through to fast-import
+ - Merge branch 'db/strbufs-for-metadata' into db/svn-fe-code-purge
+ - Merge branch 'db/length-as-hash' (early part) into db/svn-fe-code-purge
+ - Merge branch 'db/vcs-svn-incremental' into svn-fe
+ - vcs-svn: avoid using ls command twice
+ - vcs-svn: use mark from previous import for parent commit
+ - vcs-svn: handle filenames with dq correctly
+ - vcs-svn: quote paths correctly for ls command
+ - vcs-svn: eliminate repo_tree structure
+ - vcs-svn: add a comment before each commit
+ - vcs-svn: save marks for imported commits
+ - vcs-svn: use higher mark numbers for blobs
+ - vcs-svn: set up channel to read fast-import cat-blob response
+ - Merge commit 'v1.7.5' into svn-fe
 
-Looked reasonable; will hopefully help making mh/ref-api-rest simpler and
-cleaner.
-
-Will merge early in the next cycle.
-
-* mm/zsh-completion-regression-fix (2012-01-17) 1 commit
-  (merged to 'next' on 2012-01-23 at 7bc2e0a)
- + bash-completion: don't add quoted space for ZSH (fix regression)
-
-Will merge early in the next cycle and deal with any fallout in 'master'.
-
-* ar/i18n-no-gettext (2012-01-23) 3 commits
-  (merged to 'next' on 2012-01-23 at 694a94e)
- + i18n: Make NO_GETTEXT imply fallthrough scheme in shell l10n
- + add a Makefile switch to avoid gettext translation in shell scripts
- + git-sh-i18n: restructure the logic to compute gettext.sh scheme
-
-Will merge early in the next cycle and deal with any fallout in 'master'.
-
-* da/maint-mergetool-twoway (2012-01-23) 1 commit
-  (merged to 'next' on 2012-01-23 at f927323)
- + mergetool: Provide an empty file when needed
-
-Caters to GUI merge backends that cannot merge two files without
-a base by giving them an empty file as a "pretend" common ancestor.
-
-Will merge early in the next cycle and deal with any fallout in 'master'.
-
-* jc/maint-log-first-parent-pathspec (2012-01-19) 1 commit
-  (merged to 'next' on 2012-01-20 at fb2b35f)
- + Making pathspec limited log play nicer with --first-parent
-
-A bugfix.
-Will merge early in the next cycle.
-
-* ld/git-p4-branches-and-labels (2012-01-20) 5 commits
-  (merged to 'next' on 2012-01-23 at 9020ec4)
- + git-p4: label import fails with multiple labels at the same changelist
- + git-p4: add test for p4 labels
- + git-p4: importing labels should cope with missing owner
- + git-p4: cope with labels with empty descriptions
- + git-p4: handle p4 branches and labels containing shell chars
- (this branch is used by va/git-p4-branch.)
-
-Will merge early in the next cycle.
-
-* va/git-p4-branch (2012-01-20) 3 commits
- - git-p4: Add test case for complex branch import
- - git-p4: Search for parent commit on branch creation
- - git-p4: Add checkpoint() task
- (this branch uses ld/git-p4-branches-and-labels.)
-
-A handful of review comments seen.
-Expecting a re-roll.
-
-* sp/smart-http-failure-to-push (2012-01-20) 1 commit
-  (merged to 'next' on 2012-01-20 at a892434)
- + remote-curl: Fix push status report when all branches fail
-
-Looked reasonable.
-Will merge early in the next cycle.
-
-* ks/sort-wildcard-in-makefile (2012-01-22) 1 commit
-  (merged to 'next' on 2012-01-23 at e2e0c1d)
- + t/Makefile: Use $(sort ...) explicitly where needed
-
-Looked reasonable.
-Will merge early in the next cycle.
-
-* tr/grep-l-with-decoration (2012-01-23) 1 commit
-  (merged to 'next' on 2012-01-23 at 42b8795)
- + grep: fix -l/-L interaction with decoration lines
-
-Looked reasonable.
 Will merge early in the next cycle.
 
 --------------------------------------------------
@@ -169,20 +106,6 @@ somebody new can try to dip his or her toes in the development. Any
 takers?
 
 Waiting for a reroll.
-
-* jc/split-blob (2011-12-01) 6 commits
- . WIP (streaming chunked)
- - chunked-object: fallback checkout codepaths
- - bulk-checkin: support chunked-object encoding
- - bulk-checkin: allow the same data to be multiply hashed
- - new representation types in the packstream
- - varint-in-pack: refactor varint encoding/decoding
-
-Not ready.
-
-At least pack-objects and fsck need to learn the new encoding for the
-series to be usable locally, and then index-pack/unpack-objects needs to
-learn it to be used remotely.
 
 * mh/ref-api-rest (2011-12-12) 35 commits
  . repack_without_ref(): call clear_packed_ref_cache()
@@ -250,6 +173,128 @@ Will defer till the next cycle.
 
 --------------------------------------------------
 [Cooking]
+
+* jc/split-blob (2012-01-24) 6 commits
+ - chunked-object: streaming checkout
+ - chunked-object: fallback checkout codepaths
+ - bulk-checkin: support chunked-object encoding
+ - bulk-checkin: allow the same data to be multiply hashed
+ - new representation types in the packstream
+ - varint-in-pack: refactor varint encoding/decoding
+
+Not ready.
+
+I finished the streaming checkout codepath, but as explained in 127b177
+(bulk-checkin: support chunked-object encoding, 2011-11-30), these are
+still early steps of a long and painful journey. At least pack-objects and
+fsck need to learn the new encoding for the series to be usable locally,
+and then index-pack/unpack-objects needs to learn it to be used remotely.
+
+Given that I heard a lot of noise that people want large files, and that I
+was asked by somebody at GitTogether'11 privately for an advice on how to
+pay developers (not me) to help adding necessary support, I am somewhat
+dissapointed that the original patch series that was sent almost two
+months ago still remains here without much comments and updates from the
+developer community. I even made the interface to the logic that decides
+where to split chunks easily replaceable, and I deliberately made the
+logic in the original patch extremely stupid to entice others, especially
+the "bup" fanboys, to come up with a better logic, thinking that giving
+people an easy target to shoot for, they may be encouraged to help
+out. The plan is not working :-(.
+
+* jl/test-pause (2012-01-17) 1 commit
+  (merged to 'next' on 2012-01-20 at ee56335)
+ + test-lib: add the test_pause convenience function
+
+Looked reasonable.
+Will merge early in the next cycle.
+
+* mh/ref-clone-without-extra-refs (2012-01-17) 4 commits
+  (merged to 'next' on 2012-01-20 at 2e9645e)
+ + write_remote_refs(): create packed (rather than extra) refs
+ + add_packed_ref(): new function in the refs API.
+ + ref_array: keep track of whether references are sorted
+ + pack_refs(): remove redundant check
+
+Looked reasonable; will hopefully help making mh/ref-api-rest simpler and
+cleaner.
+
+Will merge early in the next cycle.
+
+* mm/zsh-completion-regression-fix (2012-01-17) 1 commit
+  (merged to 'next' on 2012-01-23 at 7bc2e0a)
+ + bash-completion: don't add quoted space for ZSH (fix regression)
+
+Will merge early in the next cycle and deal with any fallout in 'master'.
+
+* ar/i18n-no-gettext (2012-01-27) 4 commits
+  (merged to 'next' on 2012-01-27 at 0ecf258)
+ + i18n: Do not force USE_GETTEXT_SCHEME=fallthrough on NO_GETTEXT
+  (merged to 'next' on 2012-01-23 at 694a94e)
+ + i18n: Make NO_GETTEXT imply fallthrough scheme in shell l10n
+ + add a Makefile switch to avoid gettext translation in shell scripts
+ + git-sh-i18n: restructure the logic to compute gettext.sh scheme
+
+Will merge early in the next cycle and deal with any fallout in 'master'.
+
+* da/maint-mergetool-twoway (2012-01-23) 1 commit
+  (merged to 'next' on 2012-01-23 at f927323)
+ + mergetool: Provide an empty file when needed
+
+Caters to GUI merge backends that cannot merge two files without
+a base by giving them an empty file as a "pretend" common ancestor.
+
+Will merge early in the next cycle and deal with any fallout in 'master'.
+
+* jc/maint-log-first-parent-pathspec (2012-01-19) 1 commit
+  (merged to 'next' on 2012-01-20 at fb2b35f)
+ + Making pathspec limited log play nicer with --first-parent
+
+A bugfix.
+Will merge early in the next cycle.
+
+* ld/git-p4-branches-and-labels (2012-01-20) 5 commits
+  (merged to 'next' on 2012-01-23 at 9020ec4)
+ + git-p4: label import fails with multiple labels at the same changelist
+ + git-p4: add test for p4 labels
+ + git-p4: importing labels should cope with missing owner
+ + git-p4: cope with labels with empty descriptions
+ + git-p4: handle p4 branches and labels containing shell chars
+ (this branch is used by va/git-p4-branch.)
+
+Will merge early in the next cycle.
+
+* va/git-p4-branch (2012-01-26) 4 commits
+  (merged to 'next' on 2012-01-26 at e67c52a)
+ + t9801: do not overuse test_must_fail
+ + git-p4: Change p4 command invocation
+ + git-p4: Add test case for complex branch import
+ + git-p4: Search for parent commit on branch creation
+ (this branch uses ld/git-p4-branches-and-labels.)
+
+Rerolled and Acked.
+Will merge early in the next cycle.
+
+* sp/smart-http-failure-to-push (2012-01-20) 1 commit
+  (merged to 'next' on 2012-01-20 at a892434)
+ + remote-curl: Fix push status report when all branches fail
+
+Looked reasonable.
+Will merge early in the next cycle.
+
+* ks/sort-wildcard-in-makefile (2012-01-22) 1 commit
+  (merged to 'next' on 2012-01-23 at e2e0c1d)
+ + t/Makefile: Use $(sort ...) explicitly where needed
+
+Looked reasonable.
+Will merge early in the next cycle.
+
+* tr/grep-l-with-decoration (2012-01-23) 1 commit
+  (merged to 'next' on 2012-01-23 at 42b8795)
+ + grep: fix -l/-L interaction with decoration lines
+
+Looked reasonable.
+Will merge early in the next cycle.
 
 * jc/pull-signed-tag (2012-01-23) 1 commit
   (merged to 'next' on 2012-01-23 at 4257553)
@@ -333,7 +378,9 @@ Will merge early in the next cycle and deal with any fallout in 'master'.
 Looked reasonable.
 Will merge early in the next cycle.
 
-* nd/clone-detached (2012-01-23) 11 commits
+* nd/clone-detached (2012-01-24) 12 commits
+  (merged to 'next' on 2012-01-26 at 7b0cc8a)
+ + clone: fix up delay cloning conditions
   (merged to 'next' on 2012-01-23 at bee31c6)
  + push: do not let configured foreign-vcs permanently clobbered
   (merged to 'next' on 2012-01-23 at 9cab64e)
@@ -349,7 +396,7 @@ Will merge early in the next cycle.
  + t5601: add missing && cascade
  (this branch uses nd/clone-single-branch.)
 
-Applied a band-aid to a corner-case regression.
+Applied two band-aids to a corner-case regression.
 Will merge early in the next cycle and deal with any fallout in 'master'.
 
 * nd/clone-single-branch (2012-01-08) 1 commit
