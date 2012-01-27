@@ -295,7 +295,7 @@ int svndiff0_apply(struct line_buffer *delta, off_t delta_len,
 	if (read_magic(delta, &delta_len))
 		return -1;
 	while (delta_len) {	/* For each window: */
-		off_t pre_off;
+		off_t pre_off = pre_off; /* stupid GCC... */
 		size_t pre_len;
 
 		if (read_offset(delta, &pre_off, &delta_len) ||
