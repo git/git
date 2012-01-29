@@ -329,6 +329,19 @@ test_tick () {
 	export GIT_COMMITTER_DATE GIT_AUTHOR_DATE
 }
 
+# Stop execution and start a shell. This is useful for debugging tests and
+# only makes sense together with "-v".
+#
+# Be sure to remove all invocations of this command before submitting.
+
+test_pause () {
+	if test "$verbose" = t; then
+		"$SHELL_PATH" <&6 >&3 2>&4
+	else
+		error >&5 "test_pause requires --verbose"
+	fi
+}
+
 # Call test_commit with the arguments "<message> [<file> [<contents>]]"
 #
 # This will commit a file with the given contents and the given commit

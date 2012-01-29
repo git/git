@@ -548,6 +548,19 @@ library for your script to use.
 		...
 	'
 
+ - test_pause
+
+	This command is useful for writing and debugging tests and must be
+	removed before submitting. It halts the execution of the test and
+	spawns a shell in the trash directory. Exit the shell to continue
+	the test. Example:
+
+	test_expect_success 'test' '
+		git do-something >actual &&
+		test_pause &&
+		test_cmp expected actual
+	'
+
 Prerequisites
 -------------
 
