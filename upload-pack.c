@@ -724,11 +724,14 @@ static int send_ref(const char *refname, const unsigned char *sha1, int flag, vo
 	static const char *capabilities = "multi_ack thin-pack side-band"
 		" side-band-64k ofs-delta shallow no-progress"
 		" include-tag multi_ack_detailed";
-	struct object *o = parse_object(sha1);
+	struct object *o = lookup_unknown_object(sha1);
 	const char *refname_nons = strip_namespace(refname);
 
-	if (!o)
-		die("git upload-pack: cannot find object %s:", sha1_to_hex(sha1));
+	if (o->type == OBJ_NONE) {
+		o->type = sha1_object_info(sha1, NULL);
+		if (o->type < 0)
+		    die("git upload-pack: cannot find object %s:", sha1_to_hex(sha1));
+	}
 
 	if (capabilities)
 		packet_write(1, "%s %s%c%s%s\n", sha1_to_hex(sha1), refname_nons,
@@ -742,7 +745,7 @@ static int send_ref(const char *refname, const unsigned char *sha1, int flag, vo
 		nr_our_refs++;
 	}
 	if (o->type == OBJ_TAG) {
-		o = deref_tag(o, refname, 0);
+		o = deref_tag_noverify(o);
 		if (o)
 			packet_write(1, "%s %s^{}\n", sha1_to_hex(o->sha1), refname_nons);
 	}
