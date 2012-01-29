@@ -1,0 +1,69 @@
+Git v1.7.10 Release Notes
+=========================
+
+Updates since v1.7.9
+--------------------
+
+UI, Workflows & Features
+
+ * Improved handling of views, labels and branches in git-p4 (in contrib).
+
+ * "git am" learned to pass "-b" option to underlying "git mailinfo", so
+   that bracketed string other than "PATCH" at the beginning can be kept.
+
+ * "git clone" learned "--single-branch" option to limit cloning to a
+   single branch (surprise!).
+
+ * When showing a patch while ignoring whitespace changes, the context
+   lines are taken from the postimage, in order to make it easier to
+   view the output.
+
+Performance
+
+ * During "git upload-pack" in respose to "git fetch", unnecessary calls
+   to parse_object() have been eliminated, to help performance in
+   repositories with excessive number of refs.
+
+Internal Implementation
+
+ * Recursive call chains in "git index-pack" to deal with long delta
+   chains have been flattened, to reduce the stack footprint.
+
+ * Use of add_extra_ref() API is slowly getting removed, to make it
+   possible to cleanly restructure the overall refs API.
+
+ * The test suite supports the new "test_pause" helper function.
+
+Also contains minor documentation updates and code clean-ups.
+
+
+Fixes since v1.7.9
+------------------
+
+Unless otherwise noted, all the fixes since v1.7.9 in the maintenance
+releases are contained in this release (see release notes to them for
+details).
+
+ * When "git push" fails to update any refs, the client side did not
+   report an error correctly to the end user.
+   (merge 5238cbf sp/smart-http-failure-to-push later to maint).
+
+ * "git push -q" was not sufficiently quiet.
+   (merge d336572 cb/push-quiet later to maint).
+
+ * "git log --first-parent $pathspec" did not stay on the first parent
+   chain and veered into side branch from which the whole change to the
+   specified paths came.
+   (merge 36ed191 jc/maint-log-first-parent-pathspec later to maint).
+
+ * Subprocesses spawned from various git programs were often left running
+   to completion even when the top-level process was killed.
+   (merge 10c6cdd cb/maint-kill-subprocess-upon-signal later to maint).
+
+---
+exec >/var/tmp/1
+O=v1.7.9
+echo O=$(git describe)
+git log --first-parent --oneline ^maint $O..
+echo
+git shortlog --no-merges ^maint $O..
