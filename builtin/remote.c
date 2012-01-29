@@ -534,7 +534,7 @@ static int add_branch_for_removal(const char *refname,
 	}
 
 	/* don't delete non-remote-tracking refs */
-	if (prefixcmp(refname, "refs/remotes")) {
+	if (prefixcmp(refname, "refs/remotes/")) {
 		/* advise user how to delete local branches */
 		if (!prefixcmp(refname, "refs/heads/"))
 			string_list_append(branches->skipped,
