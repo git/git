@@ -87,7 +87,7 @@ static long def_ff(const char *rec, long len, char *buf, long sz, void *priv)
 
 static int xdl_emit_common(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
                            xdemitconf_t const *xecfg) {
-	xdfile_t *xdf = &xe->xdf1;
+	xdfile_t *xdf = &xe->xdf2;
 	const char *rchg = xdf->rchg;
 	long ix;
 
@@ -204,8 +204,8 @@ int xdl_emit_diff(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
 		/*
 		 * Emit pre-context.
 		 */
-		for (; s1 < xch->i1; s1++)
-			if (xdl_emit_record(&xe->xdf1, s1, " ", ecb) < 0)
+		for (; s2 < xch->i2; s2++)
+			if (xdl_emit_record(&xe->xdf2, s2, " ", ecb) < 0)
 				return -1;
 
 		for (s1 = xch->i1, s2 = xch->i2;; xch = xch->next) {
@@ -213,7 +213,7 @@ int xdl_emit_diff(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
 			 * Merge previous with current change atom.
 			 */
 			for (; s1 < xch->i1 && s2 < xch->i2; s1++, s2++)
-				if (xdl_emit_record(&xe->xdf1, s1, " ", ecb) < 0)
+				if (xdl_emit_record(&xe->xdf2, s2, " ", ecb) < 0)
 					return -1;
 
 			/*
@@ -239,8 +239,8 @@ int xdl_emit_diff(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
 		/*
 		 * Emit post-context.
 		 */
-		for (s1 = xche->i1 + xche->chg1; s1 < e1; s1++)
-			if (xdl_emit_record(&xe->xdf1, s1, " ", ecb) < 0)
+		for (s2 = xche->i2 + xche->chg2; s2 < e2; s2++)
+			if (xdl_emit_record(&xe->xdf2, s2, " ", ecb) < 0)
 				return -1;
 	}
 
