@@ -86,5 +86,6 @@ check_result 'I H E C B A' --full-history --date-order -- file
 check_result 'I E C B A' --simplify-merges -- file
 check_result 'I B A' -- file
 check_result 'I B A' --topo-order -- file
+check_result 'H' --first-parent -- another-file
 
 test_done
