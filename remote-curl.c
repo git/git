@@ -807,7 +807,7 @@ static int push(int nr_spec, char **specs)
 static void parse_push(struct strbuf *buf)
 {
 	char **specs = NULL;
-	int alloc_spec = 0, nr_spec = 0, i;
+	int alloc_spec = 0, nr_spec = 0, i, ret;
 
 	do {
 		if (!prefixcmp(buf->buf, "push ")) {
@@ -824,11 +824,12 @@ static void parse_push(struct strbuf *buf)
 			break;
 	} while (1);
 
-	if (push(nr_spec, specs))
-		exit(128); /* error already reported */
-
+	ret = push(nr_spec, specs);
 	printf("\n");
 	fflush(stdout);
+
+	if (ret)
+		exit(128); /* error already reported */
 
  free_specs:
 	for (i = 0; i < nr_spec; i++)
