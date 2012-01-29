@@ -51,6 +51,12 @@ extern int for_each_rawref(each_ref_fn, void *);
 extern void warn_dangling_symref(FILE *fp, const char *msg_fmt, const char *refname);
 
 /*
+ * Add a reference to the in-memory packed reference cache.  To actually
+ * write the reference to the packed-refs file, call pack_refs().
+ */
+extern void add_packed_ref(const char *refname, const unsigned char *sha1);
+
+/*
  * Extra refs will be listed by for_each_ref() before any actual refs
  * for the duration of this process or until clear_extra_refs() is
  * called. Only extra refs added before for_each_ref() is called will

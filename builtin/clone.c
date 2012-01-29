@@ -464,11 +464,10 @@ static void write_remote_refs(const struct ref *local_refs)
 	for (r = local_refs; r; r = r->next) {
 		if (!r->peer_ref)
 			continue;
-		add_extra_ref(r->peer_ref->name, r->old_sha1, 0);
+		add_packed_ref(r->peer_ref->name, r->old_sha1);
 	}
 
 	pack_refs(PACK_REFS_ALL);
-	clear_extra_refs();
 }
 
 static void write_followtags(const struct ref *refs, const char *msg)
