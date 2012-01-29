@@ -10,6 +10,9 @@ INSTALL_DATA = $(INSTALL) -c -m 0644
 INSTALL_EXE = $(INSTALL) -c -m 0755
 INSTALL_DIR = $(INSTALL) -c -d -m 0755
 
+ASCIIDOC_CONF      = ../../Documentation/asciidoc.conf
+MANPAGE_NORMAL_XSL =  ../../Documentation/manpage-normal.xsl
+
 default:
 	@echo "git-subtree doesn't need to be built."
 	@echo "Just copy it somewhere on your PATH, like /usr/local/bin."
@@ -31,12 +34,12 @@ install-doc: git-subtree.1
 doc: git-subtree.1
 
 %.1: %.xml
-	xmlto -m manpage-normal.xsl  man $^
+	xmlto -m $(MANPAGE_NORMAL_XSL)  man $^
 
 %.xml: %.txt
-	asciidoc -b docbook -d manpage -f asciidoc.conf \
+	asciidoc -b docbook -d manpage -f $(ASCIIDOC_CONF) \
 		-agit_version=$(gitver) $^
-		
+
 test:
 	./test.sh
 
