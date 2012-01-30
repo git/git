@@ -916,6 +916,17 @@ static int parse_branchname_arg(int argc, const char **argv,
 	return argcount;
 }
 
+static int switch_unborn_to_new_branch(struct checkout_opts *opts)
+{
+	int status;
+	struct strbuf branch_ref = STRBUF_INIT;
+
+	strbuf_addf(&branch_ref, "refs/heads/%s", opts->new_branch);
+	status = create_symref("HEAD", branch_ref.buf, "checkout -b");
+	strbuf_release(&branch_ref);
+	return status;
+}
+
 int cmd_checkout(int argc, const char **argv, const char *prefix)
 {
 	struct checkout_opts opts;
@@ -1089,5 +1100,13 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 	if (opts.writeout_stage)
 		die(_("--ours/--theirs is incompatible with switching branches."));
 
+	if (!new.commit) {
+		unsigned char rev[20];
+		int flag;
+
+		resolve_ref("HEAD", rev, 0, &flag);
+		if ((flag & REF_ISSYMREF) && is_null_sha1(rev))
+			return switch_unborn_to_new_branch(&opts);
+	}
 	return switch_branches(&opts, &new);
 }
