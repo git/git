@@ -760,6 +760,7 @@ our @cgi_param_mapping = (
 	search_use_regexp => "sr",
 	ctag => "by_tag",
 	diff_style => "ds",
+	project_filter => "pf",
 	# this must be last entry (for manipulation from JavaScript)
 	javascript => "js"
 );
@@ -976,7 +977,7 @@ sub evaluate_path_info {
 
 our ($action, $project, $file_name, $file_parent, $hash, $hash_parent, $hash_base,
      $hash_parent_base, @extra_options, $page, $searchtype, $search_use_regexp,
-     $searchtext, $search_regexp);
+     $searchtext, $search_regexp, $project_filter);
 sub evaluate_and_validate_params {
 	our $action = $input_params{'action'};
 	if (defined $action) {
@@ -991,6 +992,13 @@ sub evaluate_and_validate_params {
 		if (!validate_project($project)) {
 			undef $project;
 			die_error(404, "No such project");
+		}
+	}
+
+	our $project_filter = $input_params{'project_filter'};
+	if (defined $project_filter) {
+		if (!validate_pathname($project_filter)) {
+			die_error(404, "Invalid project_filter parameter");
 		}
 	}
 
@@ -3732,7 +3740,12 @@ sub run_highlighter {
 sub get_page_title {
 	my $title = to_utf8($site_name);
 
-	return $title unless (defined $project);
+	unless (defined $project) {
+		if (defined $project_filter) {
+			$title .= " - " . to_utf8($project_filter);
+		}
+		return $title;
+	}
 	$title .= " - " . to_utf8($project);
 
 	return $title unless (defined $action);
@@ -5982,7 +5995,7 @@ sub git_project_list {
 		die_error(400, "Unknown order parameter");
 	}
 
-	my @list = git_get_projects_list();
+	my @list = git_get_projects_list($project_filter, $strict_export);
 	if (!@list) {
 		die_error(404, "No projects found");
 	}
@@ -6023,7 +6036,7 @@ sub git_forks {
 }
 
 sub git_project_index {
-	my @projects = git_get_projects_list();
+	my @projects = git_get_projects_list($project_filter, $strict_export);
 	if (!@projects) {
 		die_error(404, "No projects found");
 	}
@@ -7862,7 +7875,7 @@ sub git_atom {
 }
 
 sub git_opml {
-	my @list = git_get_projects_list();
+	my @list = git_get_projects_list($project_filter, $strict_export);
 	if (!@list) {
 		die_error(404, "No projects found");
 	}
@@ -7873,11 +7886,17 @@ sub git_opml {
 		-content_disposition => 'inline; filename="opml.xml"');
 
 	my $title = esc_html($site_name);
+	my $filter = " within subdirectory ";
+	if (defined $project_filter) {
+		$filter .= esc_html($project_filter);
+	} else {
+		$filter = "";
+	}
 	print <<XML;
 <?xml version="1.0" encoding="utf-8"?>
 <opml version="1.0">
 <head>
-  <title>$title OPML Export</title>
+  <title>$title OPML Export$filter</title>
 </head>
 <body>
 <outline text="git RSS feeds">
