@@ -10751,7 +10751,7 @@ proc fontok {} {
     if {$fontparam(slant) eq "italic"} {
 	lappend fontpref($f) "italic"
     }
-    set w $prefstop.$f
+    set w $prefstop.notebook.fonts.$f
     $w conf -text $fontparam(family) -font $fontpref($f)
 
     fontcan
