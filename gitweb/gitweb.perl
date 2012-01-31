@@ -5161,11 +5161,18 @@ sub git_patchset_body {
 sub git_project_search_form {
 	my ($searchtext, $search_use_regexp);
 
+	my $limit = '';
+	if ($project_filter) {
+		$limit = " in '$project_filter/'";
+	}
+
 	print "<div class=\"projsearch\">\n";
 	print $cgi->startform(-method => 'get', -action => $my_uri) .
-	      $cgi->hidden(-name => 'a', -value => 'project_list') . "\n" .
-	      $cgi->textfield(-name => 's', -value => $searchtext,
-	                      -title => 'Search project by name and description',
+	      $cgi->hidden(-name => 'a', -value => 'project_list')  . "\n";
+	print $cgi->hidden(-name => 'pf', -value => $project_filter). "\n"
+		if (defined $project_filter);
+	print $cgi->textfield(-name => 's', -value => $searchtext,
+	                      -title => "Search project by name and description$limit",
 	                      -size => 60) . "\n" .
 	      "<span title=\"Extended regular expression\">" .
 	      $cgi->checkbox(-name => 'sr', -value => 1, -label => 're',
@@ -5173,8 +5180,9 @@ sub git_project_search_form {
 	      "</span>\n" .
 	      $cgi->submit(-name => 'btnS', -value => 'Search') .
 	      $cgi->end_form() . "\n" .
-	      $cgi->a({-href => href(project => undef, searchtext => undef)},
-	              'List all projects') . "<br />\n";
+	      $cgi->a({-href => href(project => undef, searchtext => undef,
+	                             project_filter => $project_filter)},
+	              esc_html("List all projects$limit")) . "<br />\n";
 	print "</div>\n";
 }
 
