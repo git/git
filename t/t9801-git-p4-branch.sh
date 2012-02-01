@@ -172,9 +172,9 @@ test_expect_success 'add simple p4 branches' '
 		echo file1 >file1 &&
 		echo file2 >file2 &&
 		p4 add file1 file2 &&
-		p4 submit -d "branch1" &&
+		p4 submit -d "Create branch1" &&
 		p4 integrate //depot/branch1/... //depot/branch2/... &&
-		p4 submit -d "branch2" &&
+		p4 submit -d "Integrate branch2 from branch1" &&
 		echo file3 >file3 &&
 		p4 add file3 &&
 		p4 submit -d "add file3 in branch1" &&
@@ -182,7 +182,7 @@ test_expect_success 'add simple p4 branches' '
 		echo update >>file2 &&
 		p4 submit -d "update file2 in branch1" &&
 		p4 integrate //depot/branch1/... //depot/branch3/... &&
-		p4 submit -d "branch3"
+		p4 submit -d "Integrate branch3 from branch1"
 	)
 '
 
@@ -203,17 +203,17 @@ test_expect_success 'git-p4 clone simple branches' '
 		test -f file1 &&
 		test -f file2 &&
 		test -f file3 &&
-		grep -q update file2 &&
+		grep update file2 &&
 		git reset --hard p4/depot/branch2 &&
 		test -f file1 &&
 		test -f file2 &&
 		test ! -f file3 &&
-		test_must_fail grep -q update file2 &&
+		! grep update file2 &&
 		git reset --hard p4/depot/branch3 &&
 		test -f file1 &&
 		test -f file2 &&
 		test -f file3 &&
-		grep -q update file2 &&
+		grep update file2 &&
 		cd "$cli" &&
 		cd branch1 &&
 		p4 edit file2 &&
@@ -222,7 +222,87 @@ test_expect_success 'git-p4 clone simple branches' '
 		cd "$git" &&
 		git reset --hard p4/depot/branch1 &&
 		"$GITP4" rebase &&
-		grep -q file2_ file2
+		grep file2_ file2
+	)
+'
+
+# Create a complex branch structure in P4 depot to check if they are correctly
+# cloned. The branches are created from older changelists to check if git-p4 is
+# able to correctly detect them.
+# The final expected structure is:
+# `branch1
+# | `- file1
+# | `- file2 (updated)
+# | `- file3
+# `branch2
+# | `- file1
+# | `- file2
+# `branch3
+# | `- file1
+# | `- file2 (updated)
+# | `- file3
+# `branch4
+# | `- file1
+# | `- file2
+# `branch5
+#   `- file1
+#   `- file2
+#   `- file3
+test_expect_success 'git-p4 add complex branches' '
+	test_when_finished cleanup_git &&
+	test_create_repo "$git" &&
+	(
+		cd "$cli" &&
+		changelist=$(p4 changes -m1 //depot/... | cut -d" " -f2) &&
+		changelist=$(($changelist - 5)) &&
+		p4 integrate //depot/branch1/...@$changelist //depot/branch4/... &&
+		p4 submit -d "Integrate branch4 from branch1@${changelist}" &&
+		changelist=$(($changelist + 2)) &&
+		p4 integrate //depot/branch1/...@$changelist //depot/branch5/... &&
+		p4 submit -d "Integrate branch5 from branch1@${changelist}"
+	)
+'
+
+# Configure branches through git-config and clone them. git-p4 will only be able
+# to clone the original structure if it is able to detect the origin changelist
+# of each branch.
+test_expect_success 'git-p4 clone complex branches' '
+	test_when_finished cleanup_git &&
+	test_create_repo "$git" &&
+	(
+		cd "$git" &&
+		git config git-p4.branchList branch1:branch2 &&
+		git config --add git-p4.branchList branch1:branch3 &&
+		git config --add git-p4.branchList branch1:branch4 &&
+		git config --add git-p4.branchList branch1:branch5 &&
+		"$GITP4" clone --dest=. --detect-branches //depot@all &&
+		git log --all --graph --decorate --stat &&
+		git reset --hard p4/depot/branch1 &&
+		test_path_is_file file1 &&
+		test_path_is_file file2 &&
+		test_path_is_file file3 &&
+		grep update file2 &&
+		git reset --hard p4/depot/branch2 &&
+		test_path_is_file file1 &&
+		test_path_is_file file2 &&
+		test_path_is_missing file3 &&
+		! grep update file2 &&
+		git reset --hard p4/depot/branch3 &&
+		test_path_is_file file1 &&
+		test_path_is_file file2 &&
+		test_path_is_file file3 &&
+		grep update file2 &&
+		git reset --hard p4/depot/branch4 &&
+		test_path_is_file file1 &&
+		test_path_is_file file2 &&
+		test_path_is_missing file3 &&
+		! grep update file2 &&
+		git reset --hard p4/depot/branch5 &&
+		test_path_is_file file1 &&
+		test_path_is_file file2 &&
+		test_path_is_file file3 &&
+		! grep update file2 &&
+		test_path_is_missing .git/git-p4-tmp
 	)
 '
 
