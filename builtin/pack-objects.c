@@ -2484,23 +2484,10 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		usage(pack_usage);
 	}
 
-	/* Traditionally "pack-objects [options] base extra" failed;
-	 * we would however want to take refs parameter that would
-	 * have been given to upstream rev-list ourselves, which means
-	 * we somehow want to say what the base name is.  So the
-	 * syntax would be:
-	 *
-	 * pack-objects [options] base <refs...>
-	 *
-	 * in other words, we would treat the first non-option as the
-	 * base_name and send everything else to the internal revision
-	 * walker.
-	 */
-
 	if (!pack_to_stdout)
 		base_name = argv[i++];
 
-	if (pack_to_stdout != !base_name)
+	if (pack_to_stdout != !base_name || argv[i])
 		usage(pack_usage);
 
 	if (!pack_to_stdout && !pack_size_limit)
