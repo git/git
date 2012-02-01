@@ -109,7 +109,7 @@ The resulting msg.txt file begins like so:
 
  are available in the git repository at:
 
-   example.com:/git/froboz.git frotz-for-xyzzy
+   example.com:/git/froboz.git tags/frotz-for-xyzzy
 
  for you to fetch changes up to 703f05ad5835c...:
 
@@ -141,7 +141,7 @@ After receiving such a pull request message, the integrator fetches and
 integrates the tag named in the request, with:
 
 ------------
- $ git pull example.com:/git/froboz.git/ frotz-for-xyzzy
+ $ git pull example.com:/git/froboz.git/ tags/frotz-for-xyzzy
 ------------
 
 This operation will always open an editor to allow the integrator to fine
