@@ -47,6 +47,9 @@ all::
 # A translated Git requires GNU libintl or another gettext implementation,
 # plus libintl-perl at runtime.
 #
+# Define USE_GETTEXT_SCHEME and set it to 'fallthrough', if you don't trust
+# the installed gettext translation of the shell scripts output.
+#
 # Define HAVE_LIBCHARSET_H if you haven't set NO_GETTEXT and you can't
 # trust the langinfo.h's nl_langinfo(CODESET) function to return the
 # current character set. GNU and Solaris have a nl_langinfo(CODESET),
@@ -1521,6 +1524,7 @@ ifdef GETTEXT_POISON
 endif
 ifdef NO_GETTEXT
 	BASIC_CFLAGS += -DNO_GETTEXT
+	USE_GETTEXT_SCHEME ?= fallthrough
 endif
 ifdef NO_STRCASESTR
 	COMPAT_CFLAGS += -DNO_STRCASESTR
@@ -1887,6 +1891,7 @@ sed -e '1s|#!.*/sh|#!$(SHELL_PATH_SQ)|' \
     -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
     -e 's|@@LOCALEDIR@@|$(localedir_SQ)|g' \
     -e 's/@@NO_CURL@@/$(NO_CURL)/g' \
+    -e 's/@@USE_GETTEXT_SCHEME@@/$(USE_GETTEXT_SCHEME)/g' \
     -e $(BROKEN_PATH_FIX) \
     $@.sh >$@+
 endef
@@ -2264,7 +2269,7 @@ cscope:
 ### Detect prefix changes
 TRACK_CFLAGS = $(CC):$(subst ','\'',$(ALL_CFLAGS)):\
              $(bindir_SQ):$(gitexecdir_SQ):$(template_dir_SQ):$(prefix_SQ):\
-             $(localedir_SQ)
+             $(localedir_SQ):$(USE_GETTEXT_SCHEME)
 
 GIT-CFLAGS: FORCE
 	@FLAGS='$(TRACK_CFLAGS)'; \
